@@ -1,0 +1,2185 @@
+.\"
+.TH MPlayerXP 1
+.SH NAME
+MPlayerXP \- mplayer with extra performance
+.SH SYNOPSIS
+.B mplayerxp <-options> streamname
+.PP
+.SH DESCRIPTION
+.I mplayerxp
+MPlayerXP is a branch of well known mplayer (http://mplayerhq.hu)
+(runs on many Unices, and non-x86 CPUs, see section 6). It plays most
+MPEG, AVI, MOV/QT and ASF/WMV files, supported by many native and Win32
+DLL codecs. You can watch VideoCD, SVCD, DVD, and even DivX movies too.
+
+Unique big features of mplayer(xp) are
+.I VIDIX
+technology which provides direct access
+to BES of video cards. Due this feature MPlayerXP is first player under *nix
+.B BUSMASTERING
+- the case when decoded frames are transfered into videomemory without
+CPU usage.
+.I VESA
+Provides movie playback on every VESA compatible card, even without X!,
+and enables TV-out no many cards.
+
+Main difference of
+.I MPlayerXP
+from
+.I MPlayer
+is new thread-based core. This core was designed for
+.B DECODING AHEAD
+feature which provides EXTRA performance of movie playback.
+
+Several subtitles types are supported (curently 9 !) and the fonts are
+rendered with nice big antialiased shaded fonts ! Of course there is support
+for european/ISO 8859-1,2 (hungarian, english, czech, etc), cyrillic, korean
+fonts.
+
+.LP
+.SH "XP OPTIONS"
+.TP
+.B \-xp\ <0-4>
+start MPlayerXP in XP mode. You should get smoothness (fixed FPS on the screen)
+with UP systems and decoding speedup with SMP.
+    0 : XP mode off
+    1 : Decode video in separate thread
+    2 : Decode audio and video in the same separate thread
+    3 : As 2 plus audio playing in separate thread
+.B [default]
+    4 : Decode video and audio and play audio in three different threads
+.TP
+.B \-da_buffs
+Allows you specify number of buffers for decoding ahead.
+You can set it from 5 upto 64. 64 is default. (I recommend to use
+10 buffers as minimum to avoid screen juddering and other negative factors).
+.I NOTE:
+.B (For both - UP and SMP)
+drivers which provide direct BES access will change it automatically
+but you may force this number to decrease number of buffers. From
+other side - than more buffers you are using than less number of delays
+you will have during decoding and you will be able to watch frame 
+which take longer time to be decoded just in time.
+.IP
+.SH "AUDIO-VIDEO SYNCHRONIZATION"
+.I Introduction:
+Almost all movies consist from two independed streams (audio and video) at least.
+These streams have different bitrate and number of total frames per movie.
+To play them synchronously we need to have some control points when both audio
+and video should be presented simultaneously at the same moment of time.
+From historical reasons, mplayerxp had two methods of A-V synchronizations:
+so-called
+.B dapsync
+and so-called
+.B Arpi's
+method. But version
+.I 0.5
+of mplayerxp introduces new
+.B PTS-based
+method of A-V synchronization.
+.SS PTS-based method.
+From point of player PTS-based synchronization is the best choise since player
+knows PTS of every audio and video packet and knows when they should be present.
+But there are some negative sides - movies which were produced with violating of
+all laws of video industry. For example, simplest merging of independed files
+into single one or dumping DVDs without PTS fixing :(
+But even in case of such movies there are chances to reach A-V synchronization
+within of short time. (Of course, if player won't sleep in case when audio PTS
+is already 0 but video PTS still much large than 0).
+Main positive side of this method is
+.B auto-convergence
+from point of synchronization.
+.SS DAP and Arpi's methods.
+Both methods are based of frame duration instead of PTS and that even worse -
+both methods handle PTS info for video part of movie only ignoring audio PTS.
+They assume that audio stream has constant bitrate and since audio frames can't
+be dropped and/or played faster or slower then player can use timer of audio card
+as the measure for video pts. Main negative side of this method is impossibility
+to detect A-V resync if it happens by some reasons (VBR audio as one of them) or
+when there exists drift between streams (due not a perfect hardware/drivers for
+example).
+.TP
+.B \-pts
+use PTS based method of A/V synchronization.
+.I [default]
+in XP mode.
+.TP
+.B \-force_pts_fix
+force PTS fixing for "bad" (see PTS-based method explanation above) files.
+Useful as "cure" tool during stream remuxing (see 
+.B "MUXING"
+section below).
+.I Note:
+It's default mode during DVD
+.B riping/playback
+.I Note2:
+It's useful only with described above cases and is not acceptable in other cases.
+.I Note3:
+It may cause problems after seeking in some cases.
+.TP
+.B \-force_pts_fix2
+.I [default]
+in XP mode for MPEG with -pts.
+Difference from the previous method is that PTS are not changed, instead are the
+frame duration temporarily used until both audio and video PTS has restarted from 0.
+This method does not have the problem after seeking but it can not be used together
+with -nopts and it is default off in that case. If -force_pts_fix is set than that
+method will be used even if -force_pts_fix2 is set to. 
+.TP
+.B \-nopts
+use Arpi's A/V sync method.
+.TP
+.B \-nopts \-dapsync
+use alternative A/V sync method. Where is it useful?
+(is not available in
+.I XP
+mode)
+.TP
+.B \-frame_reorder
+.I [default]
+in XP mode.
+Useful with -pts in XP mode on some MPEG where the frames are not stored in order.
+The frames pts is reordered as they are add to buffer.
+.TP
+.B \-delay\ <secs>
+audio delay in seconds (may be +/- float value)
+.TP
+.B \-fps\ <value>
+force frame rate (if value is wrong in the header) (float number)
+(works with
+.I \-nopts
+key only)
+.TP
+.B \-mc\ <seconds/5frame>
+maximum sync correction per 5 frames (in seconds)
+(works with
+.I \-nopts
+key only)
+.TP
+.B \-noframedrop
+no frame dropping : every frame is played, audio and video may be out of
+sync
+.I [default]
+.TP
+.B \-framedrop
+frame dropping : decodes all video frames, but skips displaying some ones
+(useful for slow cpu/systems)
+.TP
+.B \-hardframedrop
+hardframe dropping : skips displaying and decoding of some frames
+.I Note:
+may produce image distortion with some codecs
+(useful for very slow cpu/systems)
+.TP
+.B \-softsleep
+uses high quality software timers. Efficient as the RTC, doesn't need root,
+but requires more CPU.
+.TP
+.B \-nortc
+Disables using of /dev/rtc (real-time clock - high precision x86 chip)
+to compute PTS.
+.LP
+.SH "BUS MASTERING OPTIONS (OR SPEEDUP)"
+.I Introduction:
+Many modern chips have the ability to act as a bus master.
+Bus mastering allows to transfer data from system memory to the
+frame buffer and vice versa with minimal CPU usage. When chip
+acts as a bus master then it frees CPU for other useful work
+and acts similar to second CPU on SMP. Performance is differ
+on slow and fast CPUs and on different chips but anyway bus
+mastering should povide speedup on any system.
+.TP
+.B \-enable_bm
+Enables using of bus mastering if it's available for given OS/videocard.
+.I Note:
+1.
+To use this feature you should load dhahelper (linux-kernel driver)
+which provides some function which are unavailable from user-space.
+2.
+You need to use VIDIX.
+3.
+VIDIX driver for your card should provide but card should support
+bus mastering.
+4. You need to use XP mode.
+.TP
+.I Examlpe:
+.TP
+cd mplayerxp/libdha/dhahelper
+.TP
+make all install
+.TP
+modprobe dhahelper
+.TP
+mplayerxp -vo xvidix -xp -enable_bm -fs -zoom videoout.avi
+.SS
+.I Another ways to speedup playback:
+In general, there are two ways to increase performance of playback -
+.I 1.
+Using of additional hardware (most effective way) and 
+.I 2.
+optimizing software to descrease number of cpu clocks required per frame
+playback (most difficult and limited way). Well,
+.B busmastering
+is one of ways to attract additional hardware.
+But not only video card may act as master. Almost all modern hardware
+is able to be master in system. You should spend your attention
+to investigate this quesion to have maximal performance of your
+system. Under linux exists generic way to attempt enable DMA transfer
+from HDD (CDROM,DVDROM) through hdparm utility:
+.PP
+hdparm -u1 -d1 -a8 /dev/hdX
+.PP
+where hdX is device with file or movie.
+.TP
+.I Examlpe:
+hdparm -u1 -d1 -a8 /dev/cdrom
+.TP
+.I Note:
+This command doesn't increase the speed of data transfer but
+frees CPU for other useful work.
+.SS
+.I DMA for audio:
+The best way to have DMA for audio stream is installing of SBLive! like
+cards which don't have on-board memory and always act as masters. In other
+case you should study options of your kernel drivers (OSS or ALSA) to find
+out way to enable data transfer from RAM into audio card without CPU usage.
+.SS
+.I See also:
+If you have very slow system (means: nothing helps) then please read also
+.B "LongPlay"
+description in
+.I POSTPROCESSING
+section
+.LP
+.SH "GENERAL OPTIONS"
+.TP
+.I NOTE
+Every "flag" option has "noflag" pair, e.g. -fs opposite is -nofs
+.TP
+.B \-vo\ <driver>[:<device>]
+select video output driver and optinaly device. "device" is valid with
+SDL and GGI too, it means sub-driver then (for example: -vo sdl:aalib).
+
+you can get the list of available drivers executing
+.I mplayerxp -vo help
+
+.TP
+.B \-ao\ <driver>[:<device>]
+select audio output driver and optinaly device. "device" is valid with
+SDL too, it means sub-driver then (for example: -vo sdl:esd).
+
+If using OSS, you can specify which sound device to use like this :
+-ao oss:/dev/dsp1     (replaces the old -dsp option)
+
+you can get the list of available drivers executing
+.I mplayerxp -ao help
+
+.TP
+.B \-lircconf\ <config\ file>
+specifies a configfile for LIRC (see http://www.lirc.org) if you don't like the default ~/.lircrc
+.TP
+.B \-v
+enable verbose output (more -v means more verbosity)
+.TP
+.B \-benchmark
+Performs benchmarking. Currently it displays 3 characteristics of movie playback:
+MIN benchmark, AVE benchmark and MAX benchmark. You can estimate possibility of
+usage of
+.B -xp
+key: you should have no dropped frames if both MIN and AVE BENCH are less than 100%.
+.I Note:
+The more is the difference between MIN and MAX BENCHS, the better is the performance
+of new core.
+.I Note:
+If MIN BENCH is more than 100% then MPlayerXP will not help you! (Same as MPlayer).
+.TP
+.B \-playlist <file>
+play files according to this filelist (1 file/row or Winamp or ASX format).
+.TP
+.B \-ss\ <time>
+seek to given time position. For example :
+
+    -ss 56         seeks to 56 seconds
+    -ss 01:10:00   seeks to 1 hour 10 min
+    -ss 00:40:20.3 seeks to 40 minutes and 20.3 seconds
+.TP
+.B \-sb\ <byte\ position>
+seek to byte position
+.TP
+.B \-loop\ <num>
+loops movie playback <num> times. 0 means forever.
+.TP
+.B \-conf\ <path\ to\ input.conf\ file>
+get input bindings from an alternative input.conf file (default :
+~/.mplayerxp/input.conf).
+.TP
+.B \-speed\ <factor>
+Sets playback speed factor (default: 1.0)
+
+.TP
+.B \-vc <name>
+force usage of a specific video codec, according to its name in codecs.conf,
+for example :
+
+    -vc divx       use VFW DivX codec
+    -vc divxds     use DirectShow DivX codec
+    -vc ffdivx     use libavcodec's DivX codec
+    -vc ffmpeg12   use libavcodec's MPEG1/2 codec
+    -vc divx4      use ProjectMayo's DivX codec
+
+See '-vc help' for FULL list !
+.TP
+.B \-ac <name>
+force usage of a specific audio codec, according to its name in codecs.conf,
+for example :
+
+    -ac mp3        use libmp3 MP3 codec
+    -ac mp3acm     use l3codeca.acm MP3 codec
+    -ac ac3        use AC3 codec
+    -ac hwac3      enable Hardware AC3 passthrough
+    -ac vorbis     use libvorbis
+    -ac ffmp3      use ffmpeg's MP3 decoder (SLOW)
+
+See '-ac help' for FULL list !
+
+.TP
+.SH "AUDIO CODEC PARAMETERS"
+Currently only one codec supports parameters:
+.B -ac mp3
+You may pass to it the value which will change mp3 scaling
+.B -ac mp3:scaler=<val>
+here
+.B <val>
+may accept any value in floating=point form.
+Example:
+.I mplayerxp -ac mp3:scaler=0.1
+
+.B Why we need that?
+I've found out that many mp3 streams were badly
+coded (without volume decreasing before coding). During decoding
+of such streams all codecs produce extremely distorted output.
+This parameter helps us to descrease harmonical distortions
+during decoding of such streams.
+I've tested the maximal values of the signal of such stream and they
+were much large than
+.B 32767
+(that is maximal value of 16-bit signed integer type)
+that don't allow us to have the right form of signal since the codec
+cuts out high part of the signal that produces harmonical distortions.
+This coeffecient allows us to decrease the volume before converting
+the signal from floating-point form (this is main form of signal
+within of the codec) into integer form. Thus scaler has the similar
+behaviour as volume control but works within of codec before
+point where distortions may have place.
+.B Important:
+volume control (instead of scaler) won't help with such streams since
+the signal is already distrorted within of the codec.
+Indeed, this parameter can't make absolutedly crystal clear sound
+from badly coded streams and they require more complex mathematical
+convertions but it helps a lot and significandly improves quality
+of such streams.
+
+.TP
+.B \-vfm <video\ codec\ family>
+force usage of a specific codec FAMILY, and FALLBACK to default if failed.
+For example:
+
+    -vfm vfw       use VFW (Win32) codecs
+    -vfm divx4     use DivX4 codec (YV12)
+                   (same as -vc divx4 but fallback)
+    -vfm dshow     use DirectShow (Win32) codecs
+    -vfm ffmpeg    use libavcodec codecs
+    -vfm xanim     use XAnim codecs
+
+See -vc help for FULL list !
+
+.TP
+.SH "VIDEO CODEC FAMILY PARAMETERS"
+Currently only one family of codecs supports parameters:
+.B -vfm ffmpeg
+List of parameters:
+.TP
+.B ffmpeg_debug=<value>
+display debugging information:
+      0:  disabled
+      1:  picture info
+      2:  rate control
+      4:  bitstream
+      8:  macroblock (MB) type
+     16:  per-block quantization parameter (QP)
+     32:  motion vector
+ 0x0040:  motion vector visualization (use \-noslices)
+ 0x0080:  macroblock (MB) skip
+ 0x0100:  startcode
+ 0x0200:  PTS
+ 0x0400:  error resilience
+ 0x0800:  memory management control operations (H.264)
+ 0x1000:  bugs
+ 0x2000:  Visualize quantization parameter (QP),
+          lower QP are tinted greener.
+ 0x4000:  Visualize block types.
+.TP
+.B ffmpeg_ec=<value>
+Set error concealment strategy:
+   1: Use strong deblock filter for damaged MBs.
+   2: iterative motion vector (MV) search (slow)
+   3: all (default)
+.TP
+.B ffmpeg_er=<value>
+Set error resilience strategy:
+   0: disabled
+   1: careful (Should work with broken encoders.)
+   2: normal (default) (Works with compliant encoders.)
+   3: aggressive (More checks, but might cause problems
+      even for valid bitstreams.)
+   4: very aggressive
+.TP
+.B ffmpeg_idct=<0\-99>
+For best decoding quality use the same IDCT algorithm for decoding and encoding.
+This may come at a price in accuracy, though.
+.TP
+.B ffmpeg_vstats
+Prints some statistics and stores them in ./vstats_*.log.
+.TP
+.B ffmpeg_vismv=<value>
+Visualize motion vectors:
+   0: disabled
+   1: Visualize forward predicted MVs of P-frames.
+   2: Visualize forward predicted MVs of B-frames.
+   4: Visualize backward predicted MVs of B-frames.
+.TP
+.B ffmpeg_sb=<number> (MPEG-2 only)
+Skip the given number of macroblock rows at the bottom.
+.TP
+.B ffmpeg_st=<number> (MPEG-2 only)
+Skip the given number of macroblock rows at the top.
+.TP
+.B ffmpeg_lowres=<number>[,<w>]
+Decode at lower resolutions. Low resolution decoding is not
+supported by all codecs, and it will often result in ugly artifacts.
+This is not a bug, but a side effect of not decoding at full resolution:
+   0: disabled
+   1: 1/2 resolution
+   2: 1/4 resolution
+   3: 1/8 resolution
+
+If
+.I <w>
+is specified lowres decoding will be used only if the width of the
+video is major than or equal to
+.I <w>.
+.TP
+.B ffmpeg_skiploopfilter=<skipvalue> (H.264 only)
+Skips the loop filter (AKA deblocking) during H.264 decoding.
+Since the filtered frame is supposed to be used as reference
+for decoding dependent frames this has a worse effect on quality
+than not doing deblocking on e.g.\& MPEG-2 video.
+But at least for high bitrate HDTV this provides a big speedup with
+no visible quality loss.
+.I <skipvalue>
+can be either one of the following:
+    none:     Never skip.
+    default:  Skip useless processing steps (e.g. 0
+              size packets in AVI).
+    nonref:   Skip frames that are not referenced (i.e.
+              not used for decoding other frames, the
+              error cannot "build up").
+    bidir:    Skip B-Frames.
+    nonkey:   Skip all frames except keyframes.
+    all:      Skip all frames.
+.TP
+.B ffmpeg_skipidct=<skipvalue> (MPEG-1/2 only)
+Skips the IDCT step.
+This degrades quality a lot of in almost all cases
+(see skiploopfilter for available skip values).
+.TP
+.B ffmpeg_skipframe=<skipvalue>
+Skips decoding of frames completely.
+Big speedup, but jerky motion and sometimes bad artifacts
+(see skiploopfilter for available skip values).
+.TP
+.B ffmpeg_threads=<1\-8> (MPEG-1/2 and H.264 only)
+number of threads to use for decoding (default: 1)
+.TP
+.B ffmpeg_o=<key>=<value>[,<key>=<value>[,...]]
+Pass AVOptions to libavcodec decoder.
+Note, a patch to make the o= unneeded and pass all unknown options through
+the AVOption system is welcome.
+A full list of AVOptions can be found in the FFmpeg manual.
+Note that some options may conflict with MEncoder options.
+
+.I EXAMPLE:
+  ffmpeg_o=debug=pict
+
+.TP
+.B \-afm <audio\ codec\ family>
+force usage of a specific audio format. For example:
+
+    -afm mp3lib    use mp3lib (mp2/mp3 only)
+    -afm pcm       suppose raw PCM audio
+    -afm liba52    use liba52
+    -afm dshow     use DirectShow (Win32) codecs
+    -afm alaw      use aLaw/uLaw driver
+    -afm libvorbis use libvorbis
+    -afm ffmpeg    use ffmpeg's MP3 decoder
+                   (even mp1)
+
+See -ac help for FULL list !
+.TP
+.B \-slave
+This option switches on slave mode. This is intended for use
+of MPlayerXP as a backend to other programs. Instead of intercepting keyboard
+events, MPlayerXP will read simplistic command lines from its stdin.
+See section
+.B SLAVE MODE PROTOCOL
+for the syntax.
+.TP
+.B \-include configfile
+specify config file to be parsed after the default
+.TP
+.B \-z\ <0-9>
+specifies compression level for PNG output
+          0 : no compression
+          9 : max compression
+.TP
+.B \-nodshow
+disables usage of DirectShow video codecs
+.TP
+.B \-noxv (SDL only)
+disable XVideo hardware acceleration
+.TP
+.B \-forcexv (SDL only)
+force using XVideo hardware acceleration
+.TP
+.B \-forcegl (SDL only)
+force using OpenGL. (May help with cards which lack overlay/scaler
+but have powerful 3D-engine. Example: some SGI cards)
+.TP
+.B \-config <config\ file>
+specifies where to search for config file
+.TP
+.B \-frames\ number
+MPlayerXP plays <number> frames, then quits.
+.TP
+.B \-cache\ <kbytes>
+This option specifies how much memory to use when precaching a file/URL.
+Especially useful on slow media with variable speed of data transfer
+(sharped CDROM for example or network). Default is 1MB.
+.I Note:
+This options will eat from 2% upto 25% of your CPU usage depending on
+bandwidth of input streams (it dramatically slowdowns DVD playback).
+.TP
+.B \-use-stdin
+Forces reading of keyboard codes from STDIN instead of terminal's console.
+
+.LP
+.SH "DVD PLAYBACK"
+.I NOTE:
+These options are valid only with DVD support compiled in.
+.I NOTE:
+DVD playback sometimes requires deinterlacing
+.B '-vf pp=lb'
+.TP
+.B dvdnav://
+Provides graceful technology to playback whole DVD disk with correct chapter's
+order. It's enough to specify:
+.I mplayerxp dvdnav://
+to run mplayerxp as dvdplayer.
+The key
+.B skipopening
+should remove timer's stalls during transfering of control between chapters.
+.I mplayerxp dvdnav://skipopening=on,T=1,C=2
+Other example:
+.I mplayerxp dvdnav://@/dev/dvd2#skipopening=off,T=2,C=14
+will play
+.I chapter
+14 of
+.I title
+2 from
+.I /dev/dvd2
+with stalls during transfering of control between chapters.
+.TP
+.B dvdread://titleid,chapterid,angleid
+tell MPlayerXP which movies (marked with titleid) to play. For example
+sometimes '1' are trailers, and '2' is the real movie.
+.B chapterid
+is optional argument which specifies chapter of title for playback.
+.B angleid
+some DVD discs contain scenes that can be viewed from multiple angles.
+Examples can be found below.
+.TP
+.B \-dvdauth\ <device>
+provides authentification of encrypted DVD disk with using of libcss
+.TP
+.B \-dvdkey key
+key to decrypt stream encrypted with CSS. For example : -dvdkey F169072699
+(this is NOT for DVD playing! For DVD use the dvdnav:// option!)
+.TP
+.B \-csslib\ <path to libcss.so>
+This option is useful only if libcss.so can't be autodetected
+.TP
+.B \-alang\ <audio\ stream\ language>
+Used when playing DVD disks. Expects a two-letter country code(s) as
+parameter, and always tries to play back audio streams those language
+matches the given code. For example: -alang hu,en will always try to play
+hungarian or if it's non-existant then english audio streams if there are any.
+.TP
+.B \-slang\ <subtitle\ language>
+See the -sid option, but this one needs a two-letter parameter, a country code.
+Like: -slang hu,en will always select hungarian or if it's non existant then
+english subtitles, if there are any. For the list of available subtitles, use
+with the -v switch and look at the output.
+.TP
+.B \-spuaa <mode> (OSD only)
+Antialiasing/\:scaling mode for DVD/\:VOBsub.
+A value of 16 may be added to <mode> in order to force scaling even
+when original and scaled frame size already match.
+This can be employed to e.g.\& smooth subtitles with gaussian blur.
+Available modes are:
+    0 : none (fastest, very ugly)
+    1 : approximate (broken?)
+    2 : full (slow)
+    3 : bilinear (default, fast and not too bad)
+    4 : uses swscaler gaussian blur (looks very good)
+.TP
+.B \-spualign <-1\-2> (OSD only)
+Specify how SPU (DVD/\:VOBsub) subtitles should be aligned.
+    -1 : original position
+     0 : Align at top (original behavior, default).
+     1 : Align at center.
+     2 : Align at bottom.
+.TP
+.B \-spugauss <0.0\-3.0> (OSD only)
+Variance parameter of gaussian used by \-spuaa 4.
+Higher means more blur (default: 1.0).
+
+.TP
+.B \-subcc
+Display DVD Closed Caption (CC) subtitles.
+These are
+.B not
+the VOB subtitles, these are special ASCII subtitles for the
+hearing impaired encoded in the VOB userdata stream on most region 1 DVDs.
+CC subtitles have not been spotted on DVDs from other regions so far.
+
+
+.LP
+.SH "FRAME'S GEOMETRY CONTROL"
+.B \-flip
+flip image (useful for example for old Indeo codecs). Supported only(?)
+by the 'sdl' and 'x11' outputs.
+.TP
+.B \-aspect <ratio>
+set aspect ratio of movies. It's autodetected on MPEG files, and can't be
+autodetected on AVI files. Examples:
+
+    -aspect 4:3  or -aspect 1.3333
+    -aspect 16:9 or -aspect 1.7777
+
+.TP
+.B \-monitorpixelaspect <ratio>
+Set the aspect of a single pixel of your monitor or TV screen (default: 1).
+A value of 1 means square pixels (correct for almost all LCDs).
+Examples:
+
+    -monitorpixelaspect 4:3  or 1.3333
+.TP
+.B \-x\ <x>
+scale image to x width (if driver suppports)
+.TP
+.B \-y\ <y>
+scale image to y height (if driver supports)
+.TP
+.B \-xy\ <factor>
+scale image by <factor>
+.TP
+
+.LP
+.SH "SCREEN CONTROL"
+.TP
+.B \-display <name>
+specify the hostname and display number of the X server you want
+to display on. For example : -display xtest.localdomain:0
+.TP
+.B \-xineramascreen <screen number>
+in Xinerama configurations (i.e. a single desktop that spans across multiple
+displays) this option tells MPlayerXP which screen to display movie on. Range
+0 - ...
+.TP
+.B \-wid\ <window\ id>
+This tells MPlayerXP to use a X11 window, which is useful to embed MPlayerXP in a
+browser (with the plugger extension for instance)
+.TP
+.B \-fsmode\ mode
+This option workarounds some problems when using specific windowmanagers and
+fullscreen mode. If you experience fullscreen problems, try changing this
+value between 0 and 7.
+
+        -fsmode 0      new method
+        -fsmode 1      ICCCWM patch
+                       (for KDE2/icewm)
+        -fsmode 2      old method
+        -fsmode 3      ICCCWM patch
+                       plus Motif method
+.TP
+.B \-fs
+fullscreen playing (centers movie, makes black bands around it and uses SW
+scaler if there is no HW one available). Toggle it with the 'f' key (not
+all video outputs support it).
+.TP
+.B \-vm
+try to change to a different video mode. dga2, x11 (XF86VidMode) and sdl
+output drivers support it.
+.TP
+.B \-zoom
+Keeps aspect ratio on the screen
+.I [default]
+.TP
+.B \-bpp\ <depth>
+use different color depth than autodetect. Not all -vo drivers support
+it (fbdev, dga2, svga, vesa).
+.TP
+.B \-rootwin
+play movie in the root window (desktop background) instead of opening
+a new one. Works only with the xv and xmga drivers.
+.TP
+.B \-screenw\ <pixels>
+If you use an output driver which can't know the resolution of the screen
+(fbdev/x11 and/or TVout) this is where you can specify the horizontal
+resolution.
+.TP
+.B \-screenh\ <pixels>
+If you use an output driver which can't know the resolution of the screen
+(fbdev/x11 and/or TVout) this is where you can specify the vertical
+resolution.
+
+.LP
+.SS "DRIVER SPECIFIC SCREEN CONTROL"
+.TP
+.B \-vo fbdev
+You may pass a several arguments to this driver.
+.B vidix
+forcing VIDIX usage.
+.B fbdev_name:fb_mode#modeconfig=value,hfreq=val,vfreq=val,dotclock=val
+Here:
+.B dev_name
+Specifies the framebuffer device to use. By default it uses /dev/fb0 .
+.B fb_mode
+Change videomode to the one that is labelled as <modename> in /etc/fb.modes .
+.B modeconfig
+Use this config file instead of the default /etc/fb.modes .
+Only valid for the fbdev driver.
+.B hfreq
+specifies horizontal monitor frequency.
+.B vfreq
+specifies vertical monitor frequency.
+.B dotclock
+specifies monitor's dotclock.
+Example:
+.I -vo fbdev:vidix
+or
+.I -vo fbdev:/dev/fb2/:800x600-56#modeconfig=/user/fbmodes.etc,dotclock=27778
+.TP
+.B \-vo vesa
+You may specify several arguments for this driver:
+.B vidix
+to force vidix usage
+.B dga
+to force dga access
+.B nodga
+to disable dga access
+.TP
+.B \-vo sdl
+You may force video driver through argument's line of this driver.
+Example:
+.I -vo sdl:ggi
+To force vidix usage please use
+.I -vo sdl:vidix
+
+
+.LP
+.SH "POSTPROCESSING"
+.I Introduction:
+Main goal of postprocessing is an attempt to improve the quality of the final image
+to smooth some flaws of decoders and/or restore brightness/color balance if
+it was lost during capturing/encoding.
+
+.I NOTE:
+You should have enough power CPU to apply postprocessing or have its hardware
+implementation in videocard.
+.SS GENERIC
+.I NOTE:
+Listed below options are implemented on software level and don't required
+special hardware.
+.TP
+.B \-autoq\ <quality>
+dynamically changes the level of postprocess, depending on spare CPU time
+available. The number you specify will be the maximum level used. Usually you
+can use some big number. You may not use together with -vf pp but it's ok with
+it!
+.I Note:
+In XP mode it depends on tile of free buffers for decoding ahead.
+.I Example:
+-autoq 100 -vf pp=de
+.I Note:
+If you have not enough power CPU then it would be reasonable to limit
+-autoq with 1 or 2 only.
+.TP
+.B \-sws\ <software\ scaler\ type>
+this option sets the quality (and speed, respectively) of the software scaler,
+with the -zoom option. For example with x11 or other outputs which lack
+hardware scaler. Possible settings are:
+
+    0 - fast bilinear (default)
+    1 - bilinear
+    2 - bicubic (best quality)
+    3 - ?
+    4 - nearest neighbor (bad quality)
+    5 - area averageing scaling support
+.SS VIDEO EQUALIZING
+.I NOTE:
+Every option in this section requires as an argument the number in range
+from
+.B -1000
+to
+.B +1000
+If your hardware supports video equalizing then these options will be passed
+into video hardware. Else MplayerXP will try to correct video image with using
+of software code.
+.I Note:
+Currently only dshow and divx4linux codecs support this feature.
+.TP
+.B \-brightness
+Corrects brightness of video image (from black screen).
+.TP
+.B \-saturation
+Corrects satuartion of video image (from grayscaled image).
+.TP
+.B \-contrast
+Corrects contrast of video image (from black screen).
+.TP
+.B \-hue
+Corrects hues of video image.
+.TP
+.B \-red_intensity
+.TP
+.B \-green_intensity
+.TP
+.B \-blue_intensity
+Correct RGB intensity of video image.
+
+.B Example: 
+mplayerxp -brightness 300 -contrast -237 -red_intensity 57 filename
+
+.SS VIDEO POSTPROCESSING
+.I Note:
+Video postprocessing was implemented as filters whcih can be chained to build
+complex effects.
+.TP
+.B \-vf
+selects video filter. Video filters can be used for changing the properties
+of the video data before the image reaches the video card.
+The filters can also have arguments that changes their behaviour.
+.I Example:
+
+mplayerxp -vf mirror=x,swapuv,smartblur=1:1:1:1 media.avi
+
+would mirror image realtively line of horizont then swap U,V planes
+and apply bluring.
+
+.I The list of video filters:
+
+.B 1bpp
+Converts 1bpp bitmap into 8/15/16/32 bits YUV/BGR images
+
+.B 2xsai
+Scale and smooth the image with the
+.I 2x
+scale and interpolate algorithm.
+
+.B aspect
+Resets displaysize/aspect.
+You may specify a several forms of aspect:
+.I 1
+as X/Y
+.I 2
+as constant
+.I 3
+as string
+.I 'dvb'
+. Inlast case will be applied speial aspect for DVB cards!
+.IP
+.I Example:
+.IP
+mplayerxp -vf dsize=1.3 -fs movie.avi
+.IP
+mplayerxp -vf dsize=4/3 movie.avi
+.IP
+mplayerxp -vf dsize=dvb movie.avi
+
+.B crop
+Crops the given part of the image and discards the rest.
+Useful to remove black bands from widescreen movies.
+Accepts the following arguments:
+.I x,y,w,h
+
+.B delogo
+Simple logo remover.
+
+.B denoise3d
+Variable lowpass filter. Accepts 4 arguments: LumaSpac, LumaTmp, ChromaSpac, ChromaTmp
+You may specify any number of arguments from 0 upto 4. If you have specified 4 arguments
+then will be activated
+.I High-quality
+filter. If number of arguments < 4 then ordinal filter will be used. If you want to use
+high-quality filter with default parameters then call it as:
+.IP
+.I mplayerxp -vf denoise3d=4:3:6:8 movie.avi
+
+.B dint
+Deinterlacer. You may specify from 2 to 5 arguments.
+If you have specified 2 arguments (sense and level) then drop-frame method will be used.
+If you have specified 5 arguments (treshold, map, ordr, sharp, twoway) then kernel
+deinterlacer will be used. Defaul values for
+.I drop-frame method
+are: 0.1 0.15. For 
+.I kernel method
+are: 0 0 10 0 0
+Example:
+.IP
+.I mplayerxp -dint=0:0:10:0:0 movie.avi
+.IP
+.I mplayerxp -dint movie.avi
+
+
+.B down3dright
+Converts stereo movie from top-bottom to left-right field
+
+.B eq
+Software equalizer. Accepts upto 8 arguments:
+gamma, contrast, brightness, saturation, red intensity, green intensity, blue intensity, gamma weight
+Default values are:
+.I 1.:1.:0.:1.:1.:1.:1.:1.
+
+.B expand
+Expands image height to move OSD out of picture.
+May accept 2 arguments: up slice height, down slice height.
+Will autodetect heigts of black area if no arguments specified.
+Example:
+.IP
+.I mplayerxp -vf expand movie.avi
+
+.B format
+Forces(disallow) output format. To force output format you should specify its
+name as argument. To disallow output format you should specify
+.I '!'
+character before format name.
+Forcing example:
+.IP
+.I mplayerxp -vf format=yuy2 movie.avi
+Disallowing example:
+.IP
+.I mplayerxp -vf format=!yuy2 movie.avi
+
+.B framestep=<I|i|step>
+Renders only every nth frame or every intra frame (keyframe).
+If you call the filter with
+.I I (uppercase)
+as the parameter, then only keyframes are rendered.
+For DVDs it generally means one in every 15/12 frames (IBBPBBPBBPBBPBB),
+for AVI it means every scene change or every keyint value.
+
+When a keyframe is found, an 
+.I 'I!'
+string followed by a newline character is printed, leaving the current line
+of MPlayer output on the screen, because it contains the time (in seconds) and
+frame number of the keyframe (You can use this information to split the AVI).
+If you call the filter with a numeric parameter
+.I 'step'
+then only one in every 'step' frames is rendered.
+
+If you put an
+.I 'i' (lowercase)
+before the number then an 'I!' is printed (like the I parameter).
+If you give only the i then nothing is done to the frames, only I! is
+printed.
+
+.B il
+(De)interleaver.
+
+.B menu=<item>
+Turns on OSD menu support. OSD menu maybe show by F3 key pressing.
+
+.B mirror
+Mirrors (flip) image vertically or horizontally.
+Takes 1 argument:
+.I x
+or
+.I y
+which indecates mirror direction.
+
+.B noise
+Noise generator.
+
+.B ow=<depth>:<luma_strength>:<chroma_strength>:<mode>:<delta>
+Overcomplete Wavelet denoiser. Takes 5 argumens:
+.I <depth>
+Larger depth values will denoise lower frequency components more, but
+slow down filtering (default: 8).
+.I <luma_strength>
+luma strength (default: 1.0)
+.I <chroma_strength>
+chroma strength (default: 1.0)
+.I <mode>
+currently unused
+.I <delta>
+currently unused (default: 1.0)
+
+.B palette
+8bpp indexed (using palette) -> BGR 15/16/24/32 conversion.
+
+.B panscan
+Enables pan-and-scan functionality. Truncates widescreen movies
+by given coefficient (and vice-versa).
+.IP
+.I Examlpe:
+To convert widescreen movie 16:9 (1.85/1) to normal 4:3 (1.33/1)
+you need to specify
+.I 1.333333
+as argument from the next computing:
+.IP
+.I (4/3)*3=(12/9)
+then
+.IP 
+.I 16/9 : 12/9 = 16 / 12 = 1.333333
+.IP
+.I Example:
+mplayerxp -vf panscan=1.33333 movie.avi
+
+.I Examlpe:
+To convert normalscreen movie 4:3 (1.33/1) to widescreen one 16:9 (1.85/1)
+you need to specify
+.I 0.333333
+as argument from the next computing:
+.IP
+.I (4/3)*3=(12/9)
+then
+.IP 
+.I 12/9 : 16/9 = 12 / 16 = 0.75
+.IP
+.I Example:
+mplayerxp -vf panscan=0.75 movie.avi
+.IP
+To convert normalscreen movie 4:3 (1.33/1) to widescreen one 16:10 you
+need to specify:
+.IP
+.I Example:
+mplayerxp -vf panscan=0.8333333 movie.avi
+
+.B perspective
+Perspective correcture. Requires 9 arguments: 8 refs and 1 cubic decriptor
+
+.B pp
+Postprocessing. requires codec which provides quant-info.
+
+.B rectangle
+Draws rectangle. Accepts 4 arguments: width, height, x, y.
+
+.B rgb2bgr
+Fast 24/32bpp RGB<->BGR conversion.
+
+.B rotate
+Rotates image on 90, 180, 270 degrees. Accepts 1 argument number of desrees to rotate.
+
+.B scale
+Software scaling. Accepts 6 arguments: width, height, change framedroppng flag, param1, param2.
+.I Example:
+.IP
+mplayerxp -vo scale=800:600:0:123456:123456 media.avi
+
+.B smartblur
+Smart bluring. Requires 8 argument:
+luma raduis
+lume strength
+luma preFilterRadius
+luma threshold
+chroma radius
+chroma strength
+chroma preFilterRadius
+chroma threshold.
+You may specify first 4 only. In this case chroma will have the same values as luma.
+If you specify
+.I preFilterRadius
+then will be activated
+.I 'smart adaptive blur'
+algorithm. If you specify threshold as
+.I 0
+then will be activated
+.I 'box blur'
+algorithm. If preFilterRadius is ZERO and threshold is non ZERO will be activated
+.I 'smart blur'
+algorithm.
+
+.B softpulldown
+mpeg2 soft 3:2 pulldown.
+
+.B swapuv
+Swaps U,V planes.
+
+.B unsharp
+You may increase sharpness or increase bluring of picture. Requires complex number of arguments:
+.I c:XxY:A:l:XxY:A
+here
+.I c
+means chroma
+.I XxY
+specified matrix size
+.I A
+specified amount level. If A is negative value then bluring is applied. If A is possitive
+value then sharpness is applied. If A is ZERO then plane is untouched.
+You may specify different matrixes and levels for chroma and luma. Even more: apply
+sharpness for luma and bluring for chroma and vice-versa.
+Example:
+.IP
+.I mplayerxp -vf unsharp=c:3x5:2:l3x7:-0.5 movie.avi
+.IP
+Here chroma plane will be sharped in 4 times and luma plane will blured on 50%.
+
+.B yuvcsp
+Yuv colorspace converter.
+
+.B yuy2
+Fast YV12/Y422p -> YUY2 conversion.
+
+.B yvu9
+Fast YVU9->YV12 conversion.
+
+.SS AUDIO POSTPROCESSING
+.I Note:
+Regardless the fact that output bandwidth of audio is much less than video
+applying postprocessing to audio may load your CPU a lot.
+.TP
+.B \-af
+selects audio filter. Audio filters can be used for
+changing the properties of the audio data before the sound reaches
+the sound card.
+The filters can also have arguments that changes their behaviour.
+.I Example:
+
+mplayerxp -af resample=48000:0:0,format=S32LE media.avi
+
+would set the output frequency of the resample plugin to 48000Hz
+and the output format of the format plugin to AFMT_S32_LE.
+
+.I The list of audio filters:
+
+.B center=<ch>
+Creates a center channel from the front channels.
+May currently be low quality as it does not implement a
+high-pass filter for proper extraction yet, but averages and
+halves the channels instead.
+The argument
+.I ch
+determines the channel number in which to insert the center channel.
+Channel number can be between 0 and 5 (default: 5).
+Observe that the number of channels will automatically
+be increased to
+.I ch
+if necessary.
+
+.B channels=<required number of channels>:<required number of routers>:<from:to routers>
+If your sound card driver doesn't support mono signal, this
+filter can be used to change the number of channels to stereo
+or more.
+Example 1:
+.I -af channels=6:4:0:0:0:1:0:2:0:3 media.avi
+would change the number of channels to 6 and set up 4 routes that copy
+channel 0 to channels 0 to 3. Channel 4 and 5 will contain silence.
+Example 2:
+.I -af channels=2:0 media.avi
+would change the number of channels to 2 and set up 0 routes.
+
+.B comp
+The compressor/expander audio filter. Unfortunatedly it's unfinished.
+
+.B crystality=<bext>:<echo>:<stereo>:<filter>:<feedback>:<threshold>:<harmonics>
+Most complex filter tries to patch mp3 format flaws by appliyng sound
+crystalization technology! This filter tries to restore lost bands of
+frequencies (above of 15KHz) after that slightly amplifies higher
+frequencies of sound. Adds "energy" and 3d stereo to the sound.
+This filter is still under development but ready for usage.
+.I bext
+specifies level of bandwidth extender ("exciter").
+.I echo
+specifies level of 3d echo.
+.I stereo
+specifies level of extra stereo
+.I filter
+specifies level of pitch shifting (to play short fragments longer)
+.I feedback threshold
+specify levels of lowpass reverberation.
+.I harmonics
+specifies level of nonlinear extra even harmonics to reach "audiophile
+quality" (currently unimplemented).
+Default values are:
+.I af crystality=28:11:11:3:30:20:43
+
+.B delay=<delay1>:<delay2>:<delay3>
+This filter delays the sound to the loudspeakers such that the sound from
+the different channels arrives at the listening position simultaneously.
+It is only useful if you have more than 2 loudspeakers. This filter has a
+variable number of parameters. Parameters are floating point numbers
+representing the delays in ms that should be imposed on the different
+channels. The minimum delay is 0ms and the maximum is 1000ms.
+Example:
+.I -af delay=10.5:10.5:0:0:7:0 media.avi
+would delay front left and right by 10.5ms, the two rear channels and the sub
+by 0ms and the center channel by 7ms.
+
+.B dyn=<gain>
+This filter compands dynamic range of the sound.
+Example:
+.I -af dyn=8 media.avi
+
+.B echo3d=<echos>:<level>:<feedback>
+The 3d echo filter performs effects of cathedral's hall sound.
+.I echos
+specifies number of echo (maximum 3).
+.I level feedback
+specify levels of loudness and reverb.
+.I -af echo=3:11:30
+
+.B equalizer=<gain1>:<gain2>:...<gain10>
+The equalizer filter represents a 10 octave band graphic equalizer, implemented
+using 10 IIR band pass filters. This means that it works regardless of what type
+of audio is being played back. The center frequencies for the 10 bands are:
+.I 31.25 62.5 125 250 500 1000 2000 4000 8000 16000 
+This filter has 10 parameters which are floating point numbers between -12 and+12
+representing the gain in dB for each frequency band.
+Example:
+.I -af equalizer=11:11:10:5:0:-12:0:5:12:12 media.avi
+would amplify the sound in the upper and lower frequency region while
+canceling it almost completely around 1kHz.
+
+.B export
+This audio filter exports the incoming signal to other processes using memory
+mapping (mmap()). Memory mapped areas contain a header:
+.I <int number of channels><int buffer size><unsigned long long counter to keep sync,
+.I it's updated every time new data is exported.>
+The rest is payload (non-interleaved) 16bit data.
+
+.B extrastereo=<mul>
+This audio filter (linearly) increases the difference between left and right
+channels (like the XMMS extrastereo plugin) which adds some sort of live effect
+to playback.
+This filter has one parameter:
+.I mul
+is the difference coefficient, an optional floating point number that defaults
+to 2.5. If you set it to 0.0, you will have mono sound (average of both channels).
+If you set it to 1.0, sound will be unchanged, if you set it to -1.0, left and
+right channels will be swapped.
+.I Usage : mplayerxp -af extrastereo media.avi
+
+.I mplayerxp -af extrastereo=3.45 media.avi
+
+.B ffenc=<codec>:<bitrate>
+This audio filter converts raw audio stream into compressed by selected codec.
+Compressed audio stream can be used for dumping into file.
+.I Usage : mplayerxp -ao null -af ffenc=mp3:128000,raw=1.mp3 cdda://1
+To get list of available audio encoder please type:
+.I -af ffenc=help
+
+.B format=<required output format>
+If your sound card driver doesn't support signed 16bit int, this
+filter can be used to change the format to one which your sound card
+can understand.
+Example:
+.I -af format=S32LE
+
+.B gate
+The noise gate audio filter audio filter. Unfortunatedly it's unfinished.
+
+.B hrtf=<mode>
+Experimental audio filter that mixes 5.1 and 5.1 with matrix
+encoded rear channels into headphone signal using FIR filtering
+with HRTF (Head Related Transfer Function).
+Although it is not possible to exactly imitate a surround system,
+.I MPlayerXP's
+HRTF filter does provide more spatially immersive audio in
+2-channel headphones. Regular downmixing simply combines all the channels
+into two; besides combining the channels, 
+.I hrtf
+generates surround echoes, increases the stereo separation slightly, and alters
+the volume of some frequencies. Whether HRTF sounds better may be dependent on
+the source audio and a matter of personal taste, but it is definitely worth
+trying out.
+.B "Mode Meaning:"
+.I m -
+matrix decoding of the rear channel
+.I s -
+2-channel matrix decoding
+.I 0 -
+no matrix decoding (default)
+To play a DVD with HRTF:
+.I mplayerxp -ao alsa -af hrtf dvdread://@/dev/sr0#1 
+.B hrtf
+only works well with 5 or 6 channels. Also,
+.B hrtf
+requires 48 kHz audio. DVD audio is already 48 kHz, but if
+you have a file with a different sampling rate that you want to play using
+.B hrtf
+you must resample it:
+.I mplayerxp filename -af resample=48000,hrtf
+
+.B karaoke
+Simple voice removal filter exploiting the fact that voice is
+usually recorded with mono gear and later 'center' mixed onto
+the final audio stream.
+Beware that this filter will turn your signal into mono.
+Works well for 2 channel tracks; do not bother trying it
+on anything but 2 channel stereo.
+
+.B lp=<faked out> (aka LongPlay)
+This filter fakes audio resampling. This trick helps to play sound longer
+if your card support a several sample rates. So if you have slow machine
+then you may avoid framedropping by
+.B playing
+movie
+.B longer.
+Althourgh you will have bassed sound.
+.I Note:
+You may also speedup playback by faking of highrated audio stream but it's
+not very useful
+.I Example: -af lp=32000 media.avi
+
+.B pan=<channels>:<in1>:<in2>...<out1>:<out2>...<out8>
+Use the pan filter to mix channels arbitrarily. It is basically a combination
+of the volume control and the channels filter. There are two major uses for
+this filter:
+Down-mixing many channels to only a few, stereo to mono for example.
+Varying the "width" of the center speaker in a surround sound system.
+This filter is hard to use, and will require some tinkering before the
+desired result is obtained. The number of options for this filter
+depends on the number of output channels:
+.I channels
+is an integer between 1 and 8 and is used for setting the number of input
+channels. This option is required, leaving it empty results in a runtime
+error.
+.I <in1>...<out8>
+are floating point values between 0 and 1. l[i][j] determines how much of
+input channel j is mixed into output channel i.
+Example 1:
+.I -af pan=1:0.5:0.5 -channels 1 media.avi
+would down-mix from stereo to mono.
+Example 2:
+.I -af pan=3:1:0:1:0.5:0.5 -channels 3 media.avi
+would give 3 channel output leaving channels 0 and 1 intact, and mix
+channels 0 and 1 into output channel 2 (which could be sent to a
+sub-woofer for example).
+
+.B raw=filename
+This audio filter stores audio stream into file in raw format.
+Usefull as satelite for
+.B ffenc
+filter.
+.I Usage : mplayerxp -ao null -af ffenc=mp3:128000,raw=1.mp3 cdda://1
+Note: if filename ends with
+.I .wav
+then RIFF WAVE header will be added automatically.
+
+.B resample=<Frequency in Hz>:<sloppy>:<type>
+This filter can for example be used if you have a fixed frequency
+sound card or if you are stuck with an old sound card that is only
+capable of max 44.1kHz. Limitations in your hardware are not auto
+detected, so you have to specify the sample frequency explicitly.
+.I sloppy
+This option can be used if the startup of the playback is extremely slow.
+It's enabled by default.
+.B type
+.I 0 
+- represents linear interpolation.
+.I 1 
+- represents resampling using a poly-phase filter-bank and integer processing.
+.I 2
+- represents resampling using a poly-phase filter-bank and floating point processing.
+
+.B scaletempo=<scale>:<stride>:<overlap>:<search>:<speed>
+Scales audio tempo without altering pitch, optionally synced to playback
+speed (default).
+
+This works by playing
+.I 'stride'
+ms of audio at normal speed then
+consuming
+.I 'stride*scale'
+ms of input audio. It pieces the strides together by blending
+.I 'overlap'%
+of stride with audio following the previous stride.
+It optionally performs a short statistical analysis on the next
+.I 'search'
+ms of audio to determine the best overlap position.
+.B scale=<amount>
+Nominal amount to scale tempo.
+Scales this amount in addition to speed.
+(default: 1.0)
+.B stride=<amount>
+Length in milliseconds to output each stride.
+Too high of value will cause noticable skips at high scale amounts and
+an echo at low scale amounts.
+Very low values will alter pitch.
+Increasing improves performance.
+(default: 60)
+.B overlap=<percent>
+Percentage of stride to overlap.
+Decreasing improves performance.
+(default: .20)
+.B search=<amount>
+Length in milliseconds to search for best overlap position.
+Decreasing improves performance greatly.
+On slow systems, you will probably want to set this very low.
+(default: 14)
+.B speed=<tempo|pitch|both|none>
+Set response to speed change. Scale tempo in sync with speed (default)
+.I pitch
+Reverses effect of filter. Scales pitch without altering tempo.
+.I WARNING:
+Looses synch with video. Scale both tempo and pitch. Ignores speed changes
+
+.B sinesuppress=<freq>:<delay>
+Remove a sine at the specified frequency.
+Useful to get rid of the 50/60hz noise on low quality audio equipment.
+It probably only works on mono input.
+.I <freq>
+The frequency of the sine which should be removed (in Hz) (default: 50)
+.I <delay>
+Controls the adaptivity (a larger value will make the filter adapt to
+amplitude and phase changes quicker, a smaller value will make the
+adaptation slower) (default: 0.0001).
+Reasonable values are around 0.001.
+
+.B sub=<cutoff freq>:<channel>
+This filter adds a sub woofer channel to the audio stream. The audio data used
+for creating the sub-woofer channel is an average of the sound in channel 0 and
+channel 1. The resulting sound is then low-pass filtered by a 4th order Butterworth
+filter with a default cutoff frequency of 60Hz and added to a separate channel in
+the audio stream. Warning: Disable this filter when you are playing DVDs with Dolby
+Digital 5.1 sound, otherwise this filter will disrupt the sound to the sub-woofer.
+This filter has two parameters:
+.I cutoff freq.
+is an optional floating point number used for setting the cutoff frequency for the
+filter in Hz. The valid range is 20Hz to 300Hz. For the best result try setting the
+cutoff frequency as low as possible. This will improve the stereo or surround sound
+experience. The default cutoff frequency is 60Hz.
+.I channel
+is an optional integer between 0 and 5 which determines the channel number in which
+to insert the sub-channel audio. The default is channel number 5. Observe that the
+number of channels will automatically be increased to given value if necessary.
+
+.B surround=<delay>
+Matrix encoded surround sound can be decoded by the surround filter.
+Dolby Surround is an example of a matrix encoded format. Many files with 2
+channel audio actually contain matrixed surround sound. To use this feature
+you need a sound card supporting at least 4 channels. This filter has one
+parameter that is an optional floating point number between 0 and 1000 used
+for setting the delay time in ms for the rear speakers. The default value for
+delay is 20ms.
+Example:
+.I -af surround=15 -channels 4 media.avi
+would add surround sound decoding with 15ms delay for the sound to the
+rear speakers.
+
+.B volnorm
+This audio filter maximizes the volume without distorting the sound.
+.I Usage: mplayerxp -af volnorm media.avi
+
+.B volume=<volume>:<softclip>
+Software volume control is implemented by the volume audio filter. Use this
+filter with caution since it can reduce the signal to noise ratio of the sound.
+In most cases it is best to set the level for the PCM sound to max, leave this
+filter out and control the output level to your speakers with the master volume
+control of the mixer. In case your sound card has a digital PCM mixer instead of
+an analog one, and you hear distortion, use the MASTER mixer instead. If there is
+an external amplifier connected to the computer (this is almost always the case),
+the noise level can be minimized by adjusting the master level and the volume
+knob on the amplifier until the hissing noise in the background is gone. This
+filter has two options:
+.I volume <-200 - +60>
+is a floating point number between -200 and +60 which represents the volume level
+in dB. The default level is 0dB.
+.I softclip
+is a binary control that turns soft clipping on and off. Soft-clipping can make
+the sound more smooth if very high volume levels are used. Enable this option if
+the dynamic range of the loudspeakers is very low. Be aware that this feature
+creates distortion and should be considered a last resort.
+
+.LP
+.SH "DIRECT RENDERING"
+.I NOTE:
+Direct rendering is case when codec decodes to extrenal buffer.
+Main goal of direct rendering implementing is decoding directly
+into video memory but many VO drivers provide direct rendering
+into their temporary buffers to avoid multiple copying between
+buffers. Currently, only
+.B VIDIX
+provides real direct rendering into video memory.
+.TP
+.B \-vaa_dr
+Enables direct rendering (by default)
+.TP
+.B \-vaa_nodr
+Disables direct rendering. It's useful if MPlayerXP has
+some not fixed bugs only.
+.TP
+.B \-nodouble
+disables doublebuffering.
+With the DGA driver this also disables OSD support but yields some speed gain.
+.TP
+.B \-double
+enables doublebuffering.
+Double buffering is technology when video output is performed into separate
+video buffers. It supresses OSD flickering. When you specify
+.I -xp
+key it forces multibuffering mode and uses all available (video) memory
+to enable
+.I decoding ahead
+.TP
+.B \-vsync
+forces video hardware to wait VSYNC signal before buffer switching
+in doublebuffered mode. This key is useful only to supressing screen
+juddering during buffer switching.
+
+.LP
+.SH "OSD CONTROL"
+.TP
+.B \-font\ <path\ to\ font.desc\ file>
+search for the OSD/SUB fonts in an alternative directory (default :
+~/.mplayerxp/font/font.desc). For example:
+
+    -font ~/.mplayerxp/arial-14/font.desc
+.TP
+.B \-ffactor\ <number>
+resample alphamap of the font. Can be:
+
+        0    plain white fonts
+        0.75 very narrow black outline [default]
+        1    narrow black outline
+        10   bold black outline
+.TP
+.B \-sub\ <subtitle\ file>
+use/display this subtitle file
+.TP
+.B \-subfps\ <rate>
+specify frame/sec rate of subtitle file (float number)
+(ONLY for frame-based SUB files, i.e. NOT MicroDVD format!)
+(default: the same fps as the movie)
+.TP
+.B \-subdelay\ <sec>
+delays subtitles by <sec> seconds. Can be negative.
+.TP
+.B \-vobsub\ <vobsub\ file\ without\ extention>
+specify the VobSub files that are to be used for subtitle.  This is
+the full pathname without extensions, i.e. without the ".idx", ".ifo"
+or ".sub".
+.TP
+.B \-vobsubid\ <vobsub\ subtitle\ id>
+specify the VobSub subtitle id.  Valid values range from 0 to 31.
+.TP
+.B \-osdlevel\ <level>
+specifies which mode the OSD should start in (0 : none, 1 : seek, 2: seek+timer)
+(default = 2)
+.TP
+.B \-subcp\ codepage
+If your system supports iconv(3), you can use this option to
+specify codepage of the subtitle. Examples:
+
+        -subcp latin2
+        -subcp cp1250
+.TP
+.B \-unicode
+tells MPlayerXP to handle the subtitle file as UNICODE.
+Contrary: -nounicode
+.TP
+.B \-utf8
+tells MPlayerXP to handle the subtitle file as UTF8.
+
+.IP
+.SH SOUND CONTROL
+.TP
+.B \-mixer\ <device>
+this option will tell MPlayerXP to use a different device for mixing than
+/dev/mixer.
+.TP
+.B \-master
+obsoleted option, use Software audio mixer plugin instead (see DOCS).
+.TP
+.B \-nosound
+don't play sound
+.TP
+.B \-abs\ <bytes>
+sound card audio buffer size (in bytes, default: measuring)
+.TP
+.B \-stereo mode
+select type of MP2/MP3 stereo output.
+
+        Stereo         0
+        Left channel   1
+        Right channel  2
+.TP
+.B \-channels n
+select number of audio output channels to be used
+
+        Stereo         2
+        Surround       4
+        Full 5.1       6
+
+Currently this option is only honoured for AC3 audio.
+.TP
+.B \-srate <Hz>
+specifies Hz to playback audio on. Has effect on playback speed!
+
+.LP
+.SS "DRIVER SPECIFIC SOUND CONTROL"
+.TP
+.B \-ao alsa
+Forces to put audio stream into ALSA (Advaced Linux Sound Architecture).
+You may pass a several arguments to this driver.
+.B alsa_device#mmap=value,noblock=val
+Here:
+.B alsa_device
+specifies non-default alsa device
+.B mmap
+sets mmap mode of soundcard access.
+.B noblock
+sets nonblock mode of soundcard access.
+Example:
+.I -ao alsa:hw:0,3#mmap=on,noblock=off
+configures
+.B alsa
+playback on third device of first soundcard in mmap block mode.
+.I -ao alsa:hw:0,-1
+will show driver/soundcard #0 capabilities.
+.I -ao alsa:hw:2,-1
+will show driver/soundcard #2 capabilities.
+.TP
+.B \-ao oss
+Forces to put audio stream into OSS (Open Sound System).
+You may specify DSP defice as argument of this driver.
+Example:
+.I -ao oss:/dev/dsp2
+also you may display capabilities of soundcard/driver capabilities as:
+.I -ao oss:/dev/dsp:-1
+.TP
+.B \-ao sdl
+Forces to put audio stream into SDL (Simple Direct Layer).
+You may force audio driver through argument's line of this driver.
+Example:
+.I -ao sdl:esd
+.TP
+.B \-ao null
+Forces to put audio stream into /dev/null.
+You may write audio stream into file instead of /dev/null by specifing
+filename and mode as arguments:
+Example:
+.I -ao null
+will use /dev/null.
+.I -ao null:@filename.raw:pcm
+will write audio bytes into file as PCM stream.
+.I -ao null:@filename.wav:wav
+will write audio bytes into file as RIFF WAV format.
+
+.LP
+.SH "STREAM CONTROL"
+.I Note:
+Almost all stream's driver support help on-demand. To get it
+please type stream://help. For example: dvdnav://help
+.TP
+.B file://filename
+play specified filename
+.TP
+.B http://URL
+play specified network location
+.TP
+.B cdda:// <track>
+play CD DA track from device instead of plain file
+.TP
+.B vcd:// <track>
+play Video CD track from device instead of plain file
+.TP
+.B vcdnav://
+play whole Video CD with using libvcd.so
+.TP
+.B dvd:// <track>
+play DVD track from device instead of plain file
+.TP
+.B dvdnav://
+play DVD with using of libdvdnav.so
+.TP
+.B dvdplay://
+play DVD with using of libdvdplay.so
+.TP
+.B tv:// <suboptions>
+This option enables the TV grabbing feature of MPlayerXP.
+This code is not tested!!!
+.TP
+.B oss://<@device>#<channels>,<samplerate>,<sampleformat>
+This option enables the OSS grabbing feature of MPlayerXP.
+.TP
+.B -shuffle
+Play files in random order.
+.TP
+.B -ipv4 (network only)
+will force mplayerxp to use IPv4 protocol over network. That is
+default settings.
+.TP
+.B -ipv6 (network only)
+will force mplayerxp to use IPv6 protocol over network.
+.TP
+.B -ipv4-only-proxy (network only)
+Skip the proxy for IPv6 addresses.
+It will still be used for IPv4 connections.
+.TP
+.B -cookies (network only)
+Send cookies when making HTTP requests.
+.TP
+.B -cookies-file <filename> (network only)
+Read HTTP cookies from <filename> (default: ~/.mozilla/ and ~/.netscape/)
+and skip reading from default locations.
+The file is assumed to be in Netscape format.
+.TP
+.B -netpass <password> (network only)
+Specify password for HTTP authentication.
+.TP
+.B -netuser <username> (network only)
+Specify username for HTTP authentication.
+.TP
+.B -net-user-agent <string>
+Use <string> as user agent for HTTP streaming.
+.TP
+.B -netbandwidth <value> (network only)
+Specify the maximum bandwidth for network streaming (for servers that are
+able to send content in different bitrates).
+Useful if you want to watch live streamed media behind a slow connection.
+With Real RTSP streaming, it is also used to set the maximum delivery
+bandwidth allowing faster cache filling and stream dumping.
+.LP
+.SH "MOVIE PARSER OR DEMUXING"
+.TP
+.B \-aid\ <id>
+select audio channel [MPG: 0-31 AVI: 1-99 ASF: 0-127 VOB: 128-...]
+.TP
+.B \-vid\ <id>
+select video channel [MPG: 0-15  AVI:  -- ]
+.TP
+.B \-sid\ <id>
+Turns on DVD subtitle displaying. Also, you MUST specify a number which
+corresponds to a DVD subtitle language (0-31). For the list of available
+subtitles, use with the -v switch and look at the output.
+.TP
+.B \-ni
+force usage of non-interleaved AVI parser (fixes playing
+of some bad AVI files)
+.TP
+.B \-idx
+rebuilds INDEX of the AVI, thus allowing seeking. Useful with broken/incomplete
+downloads, or badly created AVIs.
+.TP
+.B \-noidx
+disregards INDEX of the AVI. Useful for files with broken index (desyncs, etc).
+Seeking will NOT be possible. You can fix the index permanently
+with
+.I MUXING
+, see below.
+.TP
+.B \-forceidx
+force rebuilding of INDEX. Useful for files with broken index (desyncs, etc).
+Seeking will be possible. You can fix the index permanently with
+.I MUXING
+, see below.
+
+
+.LP
+.SH "MUXING"
+.I Introduction:
+This method was designed network as sucker and as facility to dump DVD into signle
+files but you may use it as "cure" tool in some cases (see
+.B \-force_pts_fix
+for detail).
+.I Note:
+Also you may specify
+.B -ss
+and
+.B -frames
+options to proceed only part of source stream.
+.TP
+.B \-dump @<type>:<sname/subtype>
+specifies dump type and stream name
+.SS Dumping types
+.TP
+.B stream
+The most simplest method of stream copy. Dumps the stream into sname.
+Useful for example as network sucker.
+.I Example:
+-dump @stream:my_file.ext
+.TP
+.B raw
+dumps raw stream into file. You may specify which part of movie should be
+dumped. Examples:
+
+.I -dump @raw:audio
+ - will dump audio data only in raw format into a_dump.raw
+
+.I -dump @raw:video
+ - will dump video data only in raw format into v_dump.raw
+
+.I -dump @raw:sub
+ - will dump subtitles only in raw format into s_dump.raw
+
+.I -dump @raw:filename.ext
+ - will dump all streams in raw format into filename.ext
+
+.TP
+.B mpxp
+remulitplexes any stream which can be recognized by demuxer
+into the stream of MPXPAV64 format. (Most compact A-V container
+today) Examples:
+
+.I -dump @mpxp:filename.ext
+ - will dump all streams in MPXPAV64 format into filename.ext
+
+.I -dump @mpxp:audio
+ - will dump audio data only in MPXPAV64 format into a_dump.raw
+
+.I -dump @mpxp:video
+ - will dump video data only in MPXPAV64 format into v_dump.raw
+
+.I -dump @mpxp:sub
+ - will dump subtitles only in MPXPAV64 format into s_dump.raw
+
+.TP
+.B \-lavf
+remulitplexes any stream which can be recognized by demuxer
+into any stream which is supported by libavformat library.
+ Examples:
+
+.I -dump @lavf:avi
+ - will dump all streams in AVI format into avs_dump.avi
+
+.I -dump @lavf:asf
+ - will dump all streams in ASF format into avs_dump.asf
+
+.I Note:
+you have no possibility to write audio or video part of stream
+in this case.
+
+.IP
+.SH KEYBOARD CONTROL
+.TP
+.I NOTE
+These keys may/may not work, depending on your output drivers and input demuxer.
+.SS navigation keys
+.TP
+.B arrow_left/arrow_right
+seek backward/forward  10 seconds
+.TP
+.B arrow_up/arrow_down
+seek backward/forward   1 minute
+.TP
+.B pgup/pgdown
+seek backward/forward  10 minutes
+.TP
+.B [ / ]
+Decrease/increase playback speed by 10%
+.TP
+.B { / }
+Halve/double current playback speed
+.TP
+.B backspace
+Resets playback speed to normal
+
+.SS playlist navigation keys
+.TP
+.B < / >
+Go backward/forward in playlist
+.TP
+.B enter
+Go forward in playlist, even over the end
+.TP
+.B home/end
+Next/prevous playtree entry in parent list
+.TP
+.B ins/del
+(ASX only) next/prevous alternative source
+
+.SS manual A-V synchronization keys
+.TP
+.B +/-
+adjust audio delay by +/- 0.1 second
+.TP
+.B z/x
+adjust subtitle delay by +/- 0.1 second
+.TP
+.B d
+Toggle frame droping states: noframedrop/framedrop/hardframedrop
+.SS general purposes keys
+.TP
+.B p
+or
+.B SPACE
+pause movie (press any key)
+.TP
+.B q
+stops stream reading than plays unfinished buffers and quits program
+.B ESC
+stop playing and quit program immediately
+.TP
+.B / *
+decrease/increase volume
+.TP
+.B m
+mute sound
+.TP
+.B o
+toggle OSD: none / seek / seek+timer
+.TP
+.B r/t 
+Move subtitles up/down
+.SS special purposes keys
+(the following keys are valid only when using -vo xv OR -vo [vesa|fbdev]:vidix
+OR -vo xvidix OR -vc divxds. The latter is slow!)
+.TP
+.B 1/2
+adjust contrast
+.TP
+.B 3/4
+adjust brightness
+.TP
+.B 5/6
+adjust hue
+.TP
+.B 7/8
+adjust saturation
+.TP
+.B s
+grab screenshot
+.TP
+.B f
+toggle fullscreen mode
+.TP
+.B a
+Cycle through the available audio tracks
+.TP
+.B v
+Cycle through the available video tracks
+.TP
+.B c
+Cycle through the available subtitles
+.SS TV purposes keys
+These keys are only valid if MPlayerXP was compiled with TV
+input support
+.TP
+.B h/k
+select previous/next TV channel
+.TP
+.B n
+Change norm
+.TP
+.B u
+Change channel list
+.SS DVDNAV purposes keys
+.TP
+.B Keypad-8
+Select upper button
+.TP
+.B Keypad-2
+Select lower button
+.TP
+.B Keypad-4
+Select left button
+.TP
+.B keypad-6
+Select right button
+.TP
+.B Keypad-5
+Select DVD's menu
+.TP
+.B Keypad-Ins
+Activate (press) selected button
+.TP
+.B b g i j l y
+Reserved keys 
+.IP
+.SH SLAVE MODE PROTOCOL
+If the -slave switch is given, playback is controlled by a 
+line-based protocol with the following tokens:
+.TP
+       stop            pause playback
+
+play            resume playback
+
+seek <NUM>      continue at second NUM
+
+skip <NUM>      skip NUM seconds (may be negative)
+
+quit            exit MPlayerXP
+
+.IP
+.SH FILES AND DIRECTORIES
+.TP
+.I CONFIG FILES
+Settings are stored system-wide in the /etc/mplayer.conf file,
+and per-user in $HOME/.mplayerxp/config. The directory
+$HOME/.mplayerxp and the 'config' are created if doesn't exist.
+.TP
+.I FONTS
+Fonts are searched in $HOME/.mplayerxp/font. There must be a font.desc
+file, and files with .RAW extension.
+.TP
+.I SUBTITLE FILES
+MPlayerXP currently supports 10 subtitle formats : MicroDVD, SubRip, unnamed,
+SAMI (smi), vplayer, RealMedia RT, ssa (Sub Station Alpha), AQT, VobSub, and our own: MPsub.
+Sub files are searched in this priority : (for example /mnt/cdrom/movie.avi)
+    /mnt/cdrom/movie.sub
+     (utf/UTF/sub/SUB/srt/SRT/smi/SMI/rt/RT/txt/TXT/ssa/SSA)
+    $HOME/.mplayerxp/sub/movie.sub
+     (utf/UTF/sub/SUB/srt/SRT/smi/SMI/rt/RT/txt/TXT/ssa/SSA)
+    $HOME/.mplayerxp/default.sub
+.IP
+.SH MRL
+MPlayerXP supports MRL (media resource locator). This means that you may
+change default location of media resources through specifying them as
+arguments of protocol. Main concepts of MPlayerXP's MRL is:
+.B UPR://~user*pass@media_source:port#arg1=value1,arg2=value2,arg3=value3
+Here:
+.B UPR
+is Unified Protocol Request
+.B user
+is username (maybe useful in rare cases)
+.B pass
+is user's password (maybe useful in rare cases)
+.B media_source
+is location of media source
+.B port
+is port of media source
+.B arg=value
+are plugin specific parameters
+Almost all stream plugins support MRL.
+Example:
+.B dvdread://@/tmp/dvd_image.udf#1,5-7
+
+.IP
+.SH "EXAMPLES"
+.TP
+.B Quickstart DVD playing
+mplayerxp dvdnav://
+.TP
+.B Playing title2 of DVD from non default device
+mplayerxp dvdnav://@/dev/cdrom2#T=2
+.TP
+.B Play only chapters 5, 6, 7
+mplayerxp dvdread://1,5-7
+.TP
+.B Play only titles 1, 5, 7
+mplayerxp dvdread://@/dev/sr0#1 dvdread://@/dev/sr0#5 dvdread://@/dev/sr0#7
+.TP
+.B Play chapters 8, 9 from non default device
+mplayerxp dvdread://@/dev/dvd2#1,5-7
+.TP
+.B Multiangle DVD playing
+mplayerxp dvdread://1,1-0,2
+.TP
+.B Quickstart Video CD playing
+mplayerxp vcdnav://
+.TP
+.B Quickstart Video CD playing from cd_image
+mplayerxp vcdnav://@/tmp/cd_image.iso
+.TP
+.B Play track 2 of Video CD only from CD image
+mplayerxp vcd://@/tmp/cd_image.iso#2
+.TP
+.B Play track 3 of Video CD only
+mplayerxp vcd:///3
+.TP
+.B Stream from HTTP
+mplayerxp http://mplayerhq.hu/example.avi
+.TP
+.B Play 5th track from CDDA
+mplayerxp cdda://5
+.TP
+.B Convert subtitle to MPsub (to ./dump.mpsub)
+mplayerxp dummy.avi -sub source.sub -dumpmpsub
+.TP
+.B DVD ripping
+mplayerxp dvdnav:// -asfdump
+.TP
+.B Fixing PTS for some MPEGS
+mplayerxp file.mpg -asfdump -nopts
+.TP
+.B Clip creating
+mplayerxp file.ext -asfdump -ss 00:31:20 -frames 4672
+.TP
+.B Playing files with specific names
+mplayerxp file://--help
+.TP
+.B Capturing FM radio
+1. Select your favorite FM radio with
+.B fmio
+or other tools:
+.I fmio -d v4l -f 101.9 
+2. Save it as MP3 stream:
+.I mplayerxp oss:// -af ffenc=mp3:96000,raw=101_9-radio.mp3 -ao null
+Note: You need to have P2-400 or better to perform capturing in
+real-time mode. Less CPU burning mode:
+.I mplayerxp oss://2,32000,S16LE -af ffenc=mp3:96000,raw=1019.wav -ao null
+Unfortunatedly, on old Cel-266 is only way to perform real-time FM grabbing is
+storing uncompressed 32KHz stream into raw file:
+.I mplayerxp oss://2,32000,S16LE -af raw=1019.wav -ao null
+You may be happy with:
+.I mplayerxp oss://2,44100,S16LE -ao null:@1058.wav:wav
+
+.TP
+.B CDDA grabbing
+Using tradional
+.B mp3
+codec:
+.I mplayerxp cdda://1 -af ffenc=mp3:256000,raw=1.mp3 -ao null
+You may increase quality with using other codecs:
+.I mplayerxp cdda://1 -af ffenc=ac3:320000,raw=1.ac3 -ao null
+
+.LP
+.SH ENVIRONMENT VARIABLES
+To have correct NLS support please check that your system have
+correctly defined variables:
+.TP
+.B LANG
+The POSIX method of locale definition (have main priority).
+Example for *nix:
+.I set LANG=ru_RU.KOI8-R
+.TP
+.B LANGUAGE
+The POSIX method of locale definition (have second priority after`LANG').
+Example for win32:
+.I set LANGUAGE=ru_RU.CP1251
+
+.LP
+.SH BUGS
+Probably exist. E-Mail them to developers ;)
+
+.LP
+.SH AUTHORS
+See AUTHORS file.
+
+MPlayerXP is (C) 2002
+.I Nickols_K <nickols_k@mail.ru>
+2000-2002
+.I Arpad Gereoffy <sendmail@to.mplayer-users>
+
+This manpage is written and maintained by
+.I Gabucino .
+and modified by
+.I Nickols_K.
+.LP
+.SH STANDARD DISCLAIMER
+Use only at your own risk! There may be errors and inaccuracies that could
+be damaging to your system or your eye. Proceed with caution, and although
+this is highly unlikely, the author doesn't take any responsibility for that!
+.\" end of file

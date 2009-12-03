@@ -1,0 +1,22 @@
+--- Makefile.orig	Mon Feb 13 12:14:59 2006
++++ Makefile	Mon Feb 13 18:10:17 2006
+@@ -279,7 +279,7 @@
+ endif
+ endif
+ 
+-EXTRALIBS += -L../libavutil -lavutil$(BUILDSUF)
++EXTRALIBS += -L../libavutil -lavutil
+ 
+ # currently using libdts for dts decoding
+ ifeq ($(CONFIG_DTS),yes)
+@@ -321,6 +321,10 @@
+ OBJS += libgsm.o
+ endif
+ 
++ifneq ($(CONFIG_WIN32),yes)
++LDFLAGS+=-Xlinker -rpath "$(prefix)/lib/$(PROGNAME)/codecs/"
++endif
++
+ # i386 mmx specific stuff
+ ifeq ($(TARGET_MMX),yes)
+ OBJS += i386/fdct_mmx.o i386/cputest.o \

@@ -1,0 +1,27 @@
+MplayerXP dependencies:
+~~~~~~~~~~~~~~~~~~~~~~~
+Currently the project contains many codecs within of package.
+But you should obtain additional codecs to have maximal performance:
+
+libffmpeg.so
+~~~~~~~~~~~~
+Please use the latest CVS version which can be obtained at
+http://ffmpeg.sf.net
+
+you should compile it in form of shared object:
+./configure --prefix=/usr --enable-shared=yes
+make
+make install
+
+(But I suggest you to use snapshot of this package at 2002-03-15
+which can be obtained on http://mplayerxp.sf.net)
+
+libdivxdecore.so
+~~~~~~~~~~~~~~~~
+This module is closed source project.
+You can obtain it at:
+http://www.divx.com
+
+Please don't mix that with odivx project which have the same name
+of shared object. This project is not supported by mplayerxp because
+odivx format can be handled by many other competitors of Mayo product.

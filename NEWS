@@ -1,0 +1,213 @@
+MplayerXP NEWS -- history of user-visible changes.
+
+Version 0.7.2
+
+* Fixed configuring and compilation under some platforms
+* Added additional parallelism into some parts of the project
+
+Version 0.7.1
+
+* many 64-bit related fixes
+* new and updated ffmpeg's codecs
+* fixed some bugs
+
+Version 0.7.0
+
+* Fixed widescreen scaling
+* New and updated ffmpeg's codecs
+* imported new code from mphq:
+  - random playback
+  - scaletempo audio filter
+  - overcomplete wavelet denoiser
+  - 2xsai scaler
+  - framestep filter
+  - crop filter
+  - closed caption subtitre support
+  - libmenu
+* reworked xvid wrapper. Now it supports xvidcore-1.1.3+
+* reworked divx-6 wrapper. Now it supports divx-6.1.1+
+* ffmpeg's codecs now have lowest priority during auto codecs choosing.
+* fixed bug #1806169: compile error (project is not ready for X86_64 architecture)
+* added support for IPv6 protocol and better network configuration
+* libmpeg was upgraded upto 0.4.1
+* older gcc (like gcc-2.95.3) are not longer supported. MplayerXP
+  requires now gcc-3.2.3 version of gcc or higher.
+* fixed gcc4 compilation
+
+Version 0.6.3
+
+* Allow multiple extra include and extra library directories
+
+Version 0.6.2
+
+* synchronized libloader with mplayerhq
+* updated ffmpeg codecs (fixes some lacks of prev release)
+* added support for new codecs
+* fixed segfault in MPC demuxer
+
+Version 0.6.1.1
+
+* win32 config file reading related changes
+
+Version 0.6.1
+
+* restored swscaler functionality
+* restored QT codecs functionality
+* added support for new codecs
+* fixed gcc-4 compilation
+* improved cygwin port and portability
+* added SOFT-quit functionality
+* framestepping with -key argument
+
+Version 0.6.0
+
+* added support for multiple titles playback with 'dvdread'.
+* many improvements / fixes in DVD subtitles and OSD by Olov Gustavsson
+* added audio track switching on the fly
+* added DTS Coherent Acoustics decoder support. (MPlayerXP is now ready for
+  DVD2=H264+DTS)
+* new unified MRL syntax of all protocols instead of multiple keys specifications
+* new MRL: 'oss://' (with encoding possibilities -af ffenc,raw)
+* new MRL: 'vcdnav://' (requires libvcd.so from vcdimager project)
+* fixed problem of PTS discontinuities with (dvdnav,dvdread):// readers (happens
+  on some DVDs).
+* big cleanup of code
+* use GNU's system guessing
+* added '--program-suffix' parameter into configure script
+* multiple demuxer's fixes (added ON2, AVIX support)
+* designed our own muxer/demuxer MPXPAV64.
+* Initial x86-64 support
+* Initial Cygwin-1.5 port (requires libSDL)
+* disable SSE optimization for liba52
+
+Version 0.5.1
+
+* fixed potential deadlock in demuxer
+* applied workarounds for bad mpeg & mp3 streams
+* imported/upgraded some demuxer's stuff from mphq
+* fixed compilation on some platforms
+* reduced number of compiler's warnings
+
+Version 0.5.0
+
+Most noticeable:
+* Changed method of default A-V synchronization: mplayerxp now handles PTS-info
+  for both audio and video streams to setup internal timers.
+  (Has a lot of positive sides and introduces many bug-fixes and
+  code simplification. This method is auto-convergitive from point
+  of A-V synchronization. And so on and so on and so on... )
+* increased number of simultaneously working threads upto 5
+* Fixed frame-dropping
+* increased max. number of buffers for decoding ahead upto 1024
+* added loops to await of previous busmastering transfer completness.
+* mplayerxp is able to provide any bitness of audio samples from codec
+  to audio card to reach the best audio quality (mainly using alsa drivers).
+
+Other:
+* was implemented muxer (mainly for correct DVD dumping).
+* stream and demuxer's levels were redesigned to be easy expandable.
+* imported audio and video filters from mplayerhq
+  * video filters were redesigned for slices.
+  * implemented new ones.
+* added new codecs from ffmpeg.
+* cache2 was implemented as thread (instead of vfork)
+* multiple imports from mplayerhq (include demuxers, codecs's interface, dmo, QT
+  and other). Note: qtxsdk doesn't work in XP mode :(
+* use sliced output for ffmpeg's codecs.
+* Benchmark feature was redesigned to display human understandable numbers ;)
+* Use official version of libdvdnav. Implemented seeking with libdvdnav
+* postprocessing became an independent project as part of ffmpeg.
+* keep aspect ratio on window_resize if -zoom key was specified
+* VIDIX became an independent project (from its history):
+  * fixed colorkey engine programing on radeons.
+  * fixed system lookup during busmastering on many ATI Mach64 cards.
+  * implemented busmastering for 3DLabs Permedia
+  * expanded set of known Radeons.
+  * extended and improved libdha+dhahelper (to handle all requests
+    through kernel driver)
+* libmpeg2 was upgraded upto 0.4.0.
+* libmp3:
+  * more correct handling of broken frames
+  * proper handling of Xing's stream
+  * added scaling into libmp3.so.
+  * restored floating-point decoder for 3dNow! cpus.
+  * added layer1 decoder.
+* builtin audio decoders (libmp3, libfaad2, libac3):
+  * added support for float32 output samples.
+
+Version 0.1.9
+(Note: It's not scheduled release. It's collection of stable patches
+from mplayerxp-CVS applied into mplayerxp-0.1.0. This release is still
+supports 2 threads only. The release which will support upto 4 threads
+is comming soon).
+
+* applied thread-safe interface to demuxer
+* added support for ffwma
+* added ppc port of libdha by Colin Leroy
+* applied some OSD fixes by Olov Gustavsson
+* alsa5 driver was removed
+* slightly improved fastmemcpy
+* added some 3DNow! optimization into libac3
+* -xp mode now is used by default.
+* added PANSCAN mode
+* added possibility to use VIDIX without ROOT privilegies.
+* added BUS MASTERING for Mach64 and Rage128 compatible video cards
+* added new vidix driver pm2_vid
+* updated ATI and Matrox drivers in VIDIX
+
+Version 0.1.0
+
+* new dri based libvo interface
+* picture viewer
+* restored postprocessing with libmpeg2 and ffmpeg.
+* UPDATED description of MplayerXP (see README)
+* NEW XP-core! Works in the same way as previous one except the facts
+  when you watched previously decoded frames on out of buffer and
+  screen juddering by simultaneous writing from thread and OSD sides
+  Were removed man dead-locks (mainly related with broken movies)
+* Fixed frame dropping algorithm! Now the project uses adaptive
+  frame dropping in XP-mode
+* restored screenshot facility
+* Imported single threaded Arpi's core from mplayer-0.9-pre
+* codec family selection changed: now you should specify name of family
+  but not a number.
+* added libmpeg2 dec-alpha MVI optimizations by Mans Rullgard
+* new Permedia3 driver by Mans Rullgard and 64-bit related improvement
+  of libdha and yv12toyuy2().
+* mmst support by Abhijeet Phatak
+* fixed a lot of bugs in vo_dga.
+* fixed background cleaning under OSD in vo_vesa and vo_dga
+* fixed rewind and FF in XP-mode
+* restored support of ogg-vorbis xanim and xvid codecs
+* new sign_handler (creates coredumps with correct terminating of the program)
+* added DECODING AHEAD with VESA, DGA, X11 (was XV, *VIDIX only)
+* libdvdnav support
+* fixed almost all streams (include ASF and QT-MOV) to make them ready for
+  XP-mode.
+* recognizing version of divx4linux in binary form *from 4.beta upto 5.x)
+* fixed (un)install of the project
+* imported countless number of new things and fixes from mplayer
+
+Version 0.0.1
+
+* removed outdistance between audio and video.
+* first attempt to fix a-v resync when -xp key causes
+  frame dropping (it seems working).
+* using codecs in form of shared objects -> less number of bugs +
+  reliable code + no dependencies at compile-time from installed
+  libraries.
+* Code cleanup:
+   removed:
+    - Gui
+    - mencoer
+    - non-GPL'ed code: g72, xa (I hope it's final cleaning)
+    - ogg vorbis, mad, xanim, mpng, ijpg codec support
+   disabled:
+    - dxr3 (currently it's buggy)
+
+Version 0.0.0
+
+* restructurizing
+* Cleaning program to be GPL'ed.
+  (You can redistribute it in binary form if you want)
+* Initial fork and applying of extra performance patch.

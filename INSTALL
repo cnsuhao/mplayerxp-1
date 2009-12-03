@@ -1,0 +1,91 @@
+This is a INSTALL instruction for mplayerxp:
+********************************************
+run ./configure --help to get help about options.
+rerun ./configure with your options
+then type:
+make
+make install
+
+Use it! ;)
+
+P.S.: This project optionally requires other libraries
+so please read the file 'Dependencies' to know where you
+can obtain and how to install them.
+
+Compiling and installing under Win32!
+=====================================
+1. You need download and install Cygwin-1.5+ package which can
+   be obtained at http://www.cygwin.com/.
+   You may enter Cygwin's shell with using this .cmd script:
+	@ECHO OFF
+	SET TERM=UNIX
+	SET MODE=UNIX
+	SET MAKE_MODE=UNIX
+	SET PATH=C:\PATH_WHERE_CYGWIN_WAS_INSTALLED\usr\bin;%PATH%
+	SET CYGWIN=E:\usr
+	SET HOMEDRIVE=E:\usr
+	umount --remove-all-mounts
+	mount C:/PATH_WHERE_CYGWIN_WAS_INSTALLED /
+	bash
+	exit
+2. You need download and install SDL package which can be obtained at
+   http://www.libsdl.org
+   Note: with cygwin you don't need to have libSDL.a. Linking
+   may be performed with non-stripped SDL.dll which sould be
+   located in directory described in PATH environment variable.
+3. run ./configure --help to get help about options.
+   rerun ./configure with your options
+   then type:
+   make
+4. Manual installing!
+   After finishing compilation you may place binaries of mplayerxp in
+   any directory. For example: C:\Program Files\mplayerxp 
+   Folder which contains mplayerxp should be filled like it described below:
+   PATH_WHERE_MPLAYERXP_WAS_INSTALLED\
+	codecs.conf
+	cygiconv-2.dll
+	cygwin1.dll
+	cygz.dll
+	eqbands
+	input.conf
+	libavcodec.dll
+	libavformat.dll
+	libavutil.dll
+	libdha.dll
+	libpostproc.dll
+	libvidix.dll
+	mplayerxp.exe
+	sdl.dll
+	<codecs>
+		libMP3.dll
+		liba52.dll
+		libdca.dll
+		libfaad2.dll
+		libmpeg2.dll
+		libnuppelvideo.dll
+	<lib>
+		<vidix>
+			cyberblade_vid.so
+			genfb_vid.so
+			mach64_vid.so
+			mga_crtc2_vid.so
+			mga_tv_vid.so
+			mga_vid.so
+			nvidia_vid.so
+			pm2_vid.so
+			pm3_vid.so
+			radeon_vid.so
+			rage128_vid.so
+			savage_vid.so
+			sis_vid.so
+			unichrome_vid.so
+	<wine>
+		DMO_Filter.dll
+		DS_Filter.dll
+		libloader.dll
+	<font>
+		font.desc
+		FONTS.raw
+5. Use it!
+
+Enjoy! ;)

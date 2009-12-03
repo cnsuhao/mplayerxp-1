@@ -1,0 +1,11 @@
+TODO for mplayerxp:
+
+- replace built-in asm with "mmintrin" extensions of GCC (alse available in MSVC, ICC, ...)
+- replace network support with using of libavformat
+- implement distributed video playback with using of PVM. (need volunteers)
+- run filters in independent threads (useful for encoding)
+- use original wine instead of loader. (adapt DMO_filter.so for wine)
+- redesign demux_mkv and other in demux_asf like manner. (will allow to avoid 1
+  unnecessary memcpy for input video bandwidth)
+- remove DEMUXER_TYPE_* and STREAMTYPE_* (make modules in libmpdemux more
+  independent ones)

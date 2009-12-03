@@ -1,0 +1,31 @@
+#ifdef __AD_ACM /* simply ugly hack */
+#include "wine/msacm.h"
+#endif
+#include "codec-cfg.h"
+
+#include "stream.h"
+#include "demuxer.h"
+#include "demuxer_r.h"
+#include "stheader.h"
+
+#include "ad.h"
+
+#include "ad_msg.h"
+
+static const config_t options[];
+static int init(sh_audio_t *sh);
+static int preinit(sh_audio_t *sh);
+static void uninit(sh_audio_t *sh);
+static int control(sh_audio_t *sh,int cmd,void* arg, ...);
+static int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts);
+
+#define LIBAD_EXTERN(x) const ad_functions_t mpcodecs_ad_##x = {\
+	&info,\
+	&options,\
+	preinit,\
+	init,\
+        uninit,\
+	control,\
+	decode_audio\
+};
+

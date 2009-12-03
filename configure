@@ -1,0 +1,18 @@
+#!/bin/sh
+# The simplest configure for mplayerxp
+for parm in "$@" ; do
+  if test "$parm" = "--help" || test "$parm" = "-help" || test "$parm" = "-h" ; then
+cd mplayerxp
+./configure --help
+cd ..
+exit 0
+  fi
+done # for parm in ...
+
+for _i in codecs loader mplayerxp etc DOCS; do
+    echo Entering \'"$_i"\' directory
+    cd $_i
+    ./configure "$@"
+    cd ..
+    echo Leaving \'"$_i"\' directory
+done

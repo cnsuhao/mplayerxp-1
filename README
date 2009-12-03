@@ -1,0 +1,123 @@
+It's new branch of well known mplayer (by Arpad Gereoffy) which uses
+new thread-based core (which was refused by Arpi without any reasons).
+It's really untested release and if you want stability, then please
+use mplayer: http://mplayerhq.hu
+If you want extra performance and don't afraid of troubles then you are
+welcomed.
+
+A few words about "new" technology:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+(Indeed, this technology is old as the world).
+
+It provides multithreading decoding of video stream for now.
+It means that thread of mplayerxp can decode frames without delays.
+This feature is useful only if average benchmark shows you less of 100%
+of cpu usage.
+
+Indeed decoding of video stream is non monotous process and requires
+different cpu time for decoding of different frames.
+There are so-called B-frames which require more cpu time to be decoded
+but I,P-frames require less of cpu time.
+I found out that decoding of 720x480@30 mpeg4 requires 30% of ave cpu
+loading but maximal performance is 150% on my cpu. Although I have
+enough powerful cpu (Duron-700) mplayer drops frames during playback of
+such movies. So I've understand that I should redistribute decoding of
+B-frames within of decoding of I,P-frames.
+
+Please look at diagram of cpu decoding:
+1. Case when -(hard)framedrop is specified:
+
+^ CPU loading           /\
+|                      |  |
+|----------------------|--|------------------------- 100%
+|             /\       |  |
+|            |  |      |  | /---------This frame was dropped
+|  /\        |  |      |  || /\
+| |  | Pause |  |Pause |  |||  |Pause
+----------------------------------------------------->
+						    t
+
+Indeed, the place where the diagram shows more of 100% cpu usage
+doesn't exists, and mplayer drops next frame. (We really can't
+get more than 100% ;)
+But there are places with 0% of cpu usage - they are pauses
+between frame decoding. Main goal of this technology is fill
+them by frame decoding to have predecoded frames before PTS
+(presentation time-stamp).
+Indeed, the digits 30% and 150% are disputable but I had them.
+And it's doesn't matter what causes them: decoding of B-frames
+or delays during media reading - they really existed.
+Of course, it's rare case and it's hardly that someone will
+specify -(hard)framedrop key(s) if he doesn't have A-V resync
+during movie playback. This means that mplayerxp will not drop
+frames only if total number of frames which should be dropped
+is less than 100-200 per movie.
+
+2. Case when -(hard)framedrop is not specified:
+
+^ CPU loading          
+|                      
+|-+=====+-----+=====+-----+=================+=====+------ 100%
+| |A    |     |B    |     | C frame         |D    |
+| |frame|     |frame|     | requires 240ms  |frame|
+| |20ms |20ms |20ms |20ms | to be decoded   |20ms |
+| |     |Pause|     |Pause|                 |     |
+--------+=====+-----+=====+------------------------->
+						    t
+
+As you can see from this diagram frame #C requires 240ms to be
+decoded. With mplayer this means that you will watch frame #B
+during 260 ms on the screen instead of 40 ms (25 fps). Mplayer
+will eliminate pauses between frame #C and other frames until
+A-V syncronization will not be reached. So after X frames you 
+will have synced A-V stream again. With MplayerXP you will watch
+every frame during 40 ms. This means that decoding ahead in
+multithreaded model performes decoding "behind the scene". Thus
+new technology allow us to have fixed FPS on the screen. IMHO
+when you are watching the same frame during 0.5-2 sec then
+movie is unwatchable in general.
+(Arpi said that such movies are rare ones, as for me - every
+my second movie has a lots of frames per movie which reqiure
+more than 40 ms to be decoded)
+
+Conslusion: New technology provides better visual perception of
+movie's watching that is impossible with single thread decoding.
+
+MplayerXP provides in short:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+for UP users - smoothness
+for SMP users- smoothness + decoding speedup
+
+Note: If mplayer can't decode movie without frame dropping
+(means - you are UP's user and you have A-V resync without
+-(hard)framedrop key(s) therefore this project is useless 
+for you since it doesn't matter which player will cause
+interruptible playback for you).
+
+What about the speed of decoding on UP systems: mplayer and
+mplayerxp have almost the same number of dropped frames
+per 1000 frames with the same movie. So I prone to decide
+that there are no visible difference in the speed on UP systems.
+
+Usage:
+~~~~~~
+All VIDEO drivers of mplayerxp support new technology:
+
+mplayerxp -vo [*]vidix ... filename
+mplayerxp -vo xv ... filename
+mplayerxp -vo vesa ... filename
+mplayerxp -vo sdl ... filename
+
+[*]vidix here means:
+xvidix
+vesa:vidix
+fbdev:vidix
+
+Note: mplayerxp will try to use 64 buffers for decoding ahead
+so if you have speed degradation try to decrease number of
+buffers for decoding ahead through -da_buffs flag.
+
+By passing of -noxp key you disable new core and get 'old' good classic
+mplayer.
+
+Best regards! Nickols_K

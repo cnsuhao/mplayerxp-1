@@ -1,0 +1,488 @@
+#include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <inttypes.h>
+#include <limits.h>
+#include "config.h"
+#include "demux_msg.h"
+#include "help_mp.h"
+
+#include "bswap.h"
+#include "aviheader.h"
+
+#include "muxer.h"
+#include "stream.h"
+#include "demuxer.h"
+#include "stheader.h"
+#ifdef HAVE_LOCAL_FFMPEG
+#include "../../codecs/libavformat/avformat.h"
+#include "../libmpcodecs/codecs_ld.h"
+
+extern unsigned int codec_get_wav_tag(int id);
+extern enum CodecID codec_get_bmp_id(unsigned int tag);
+extern enum CodecID codec_get_wav_id(unsigned int tag);
+
+typedef struct {
+	//AVInputFormat *avif;
+	AVFormatContext *oc;
+	ByteIOContext *pb;
+	int audio_streams;
+	int video_streams;
+	int64_t last_pts;
+} muxer_priv_t;
+
+typedef struct {
+	int64_t last_pts;
+	AVStream *avstream;
+} muxer_stream_priv_t;
+
+static void mpxp_free(void *ptr)
+{
+    /* XXX: this test should not be needed on most libcs */
+    if (ptr)
+#ifdef MEMALIGN_HACK
+        free(ptr - ((char*)ptr)[-1]);
+#else
+        free(ptr);
+#endif
+}
+
+static void mpxp_freep(void *arg)
+{
+    void **ptr= (void**)arg;
+    mpxp_free(*ptr);
+    *ptr = NULL;
+}
+
+
+static void (*av_register_all_ptr)(void);
+#define av_register_all() (*av_register_all_ptr)()
+static AVStream *(*av_new_stream_ptr)(AVFormatContext *s, int id);
+#define av_new_stream(a,b) (*av_new_stream_ptr)(a,b)
+static int (*av_interleaved_write_frame_ptr)(AVFormatContext *s, AVPacket *pkt);
+#define av_interleaved_write_frame(a,b) (*av_interleaved_write_frame_ptr)(a,b)
+static int (*av_write_frame_ptr)(AVFormatContext *s, AVPacket *pkt);
+#define av_write_frame(a,b) (*av_write_frame_ptr)(a,b)
+static int (*av_write_header_ptr)(AVFormatContext *s);
+#define av_write_header(a) (*av_write_header_ptr)(a)
+static int (*av_write_trailer_ptr)(AVFormatContext *s);
+#define av_write_trailer(a) (*av_write_trailer_ptr)(a)
+static int (*url_fclose_ptr)(ByteIOContext *s);
+#define url_fclose(a) (*url_fclose_ptr)(a)
+static int (*url_fopen_ptr)(ByteIOContext *s, const char *filename, int flags);
+#define url_fopen(a,b,c) (*url_fopen_ptr)(a,b,c)
+static void (*av_destruct_packet_nofree_ptr)(AVPacket *pkt);
+#define av_destruct_packet_nofree(a) (*av_destruct_packet_nofree_ptr)(a)
+static AVFormatContext *(*av_alloc_format_context_ptr)(void);
+#define av_alloc_format_context() (*av_alloc_format_context_ptr)()
+static AVOutputFormat *(*guess_format_ptr)(const char *short_name,
+                             const char *filename, const char *mime_type);
+#define guess_format(a,b,c) (*guess_format_ptr)(a,b,c)
+static int (*av_set_parameters_ptr)(AVFormatContext *s, AVFormatParameters *ap);
+#define av_set_parameters(a,b) (*av_set_parameters_ptr)(a,b)
+static int (*register_protocol_ptr)(URLProtocol *protocol);
+#define register_protocol(a) (*register_protocol_ptr)(a)
+static enum CodecID (*codec_get_bmp_id_ptr)(unsigned int tag);
+#define codec_get_bmp_id(a) (*codec_get_bmp_id_ptr)(a)
+static enum CodecID (*codec_get_wav_id_ptr)(unsigned int tag);
+#define codec_get_wav_id(a) (*codec_get_wav_id_ptr)(a)
+
+
+static void *dll_handle;
+static int load_dll(const char *libname)
+{
+  if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
+  av_register_all_ptr = ld_sym(dll_handle,"av_register_all");
+  av_new_stream_ptr = ld_sym(dll_handle,"av_new_stream");
+  av_destruct_packet_nofree_ptr = ld_sym(dll_handle,"av_destruct_packet_nofree");
+  av_interleaved_write_frame_ptr = ld_sym(dll_handle,"av_interleaved_write_frame");
+  av_write_frame_ptr = ld_sym(dll_handle,"av_write_frame");
+  av_write_header_ptr = ld_sym(dll_handle,"av_write_header");
+  av_write_trailer_ptr = ld_sym(dll_handle,"av_write_trailer");
+  url_fclose_ptr = ld_sym(dll_handle,"url_fclose");
+  url_fopen_ptr = ld_sym(dll_handle,"url_fopen");
+  av_alloc_format_context_ptr = ld_sym(dll_handle,"av_alloc_format_context");
+  guess_format_ptr = ld_sym(dll_handle,"guess_format");
+  av_set_parameters_ptr = ld_sym(dll_handle,"av_set_parameters");
+  register_protocol_ptr = ld_sym(dll_handle,"register_protocol");
+  codec_get_bmp_id_ptr = ld_sym(dll_handle,"codec_get_bmp_id");
+  codec_get_wav_id_ptr = ld_sym(dll_handle,"codec_get_wav_id");
+  return av_register_all_ptr && av_new_stream_ptr && url_fopen_ptr &&
+	 av_destruct_packet_nofree_ptr && av_interleaved_write_frame_ptr &&
+	 av_write_header_ptr && av_write_trailer_ptr && url_fclose_ptr &&
+	 av_alloc_format_context_ptr && guess_format_ptr &&
+	 av_set_parameters_ptr && register_protocol_ptr && av_write_frame_ptr &&
+	 codec_get_bmp_id_ptr && codec_get_wav_id_ptr;
+}
+
+static int mux_rate= 0;
+static int mux_packet_size= 0;
+static float mux_preload= 0.5;
+static float mux_max_delay= 0.7;
+
+static int mpxp_open(URLContext *h, const char *filename, int flags)
+{
+	return 0;
+}
+
+static int mpxp_close(URLContext *h)
+{
+	return 0;
+}
+
+
+static int mpxp_read(URLContext *h, unsigned char *buf, int size)
+{
+	fprintf(stderr, "READ %d\n", size);
+	return -1;
+}
+
+static int mpxp_write(URLContext *h, unsigned char *buf, int size)
+{
+	muxer_t *muxer = (muxer_t*)h->priv_data;
+	return fwrite(buf, 1, size, muxer->file);
+}
+
+static int64_t mpxp_seek(URLContext *h, int64_t pos, int whence)
+{
+	muxer_t *muxer = (muxer_t*)h->priv_data;
+	fprintf(stderr, "SEEK %"PRIu64"\n", (int64_t)pos);
+	return fseeko(muxer->file, pos, whence);
+}
+
+
+static URLProtocol mp_protocol = {
+	"mpxp",
+	mpxp_open,
+	mpxp_read,
+	mpxp_write,
+	mpxp_seek,
+	mpxp_close,
+	NULL, /*  struct URLProtocol *next; */
+	NULL, /* int (*url_read_play)(URLContext *h); */
+	NULL, /* int (*url_read_pause)(URLContext *h); */
+	NULL  /* int (*url_read_seek)(URLContext *h,
+                         int stream_index, int64_t timestamp, int flags); */
+};
+
+static muxer_stream_t* lavf_new_stream(muxer_t *muxer, int type)
+{
+	muxer_priv_t *priv = (muxer_priv_t*) muxer->priv;
+	muxer_stream_t *stream;
+	muxer_stream_priv_t *spriv;
+	AVCodecContext *ctx;
+
+	if(!muxer || (type != MUXER_TYPE_VIDEO && type != MUXER_TYPE_AUDIO && type != MUXER_TYPE_SUBS))
+	{
+		MSG_ERR("UNKNOW TYPE %d\n", type);
+		return NULL;
+	}
+	
+	stream = (muxer_stream_t*) calloc(1, sizeof(muxer_stream_t));
+	if(!stream)
+	{
+		MSG_ERR("Could not alloc muxer_stream, EXIT\n");
+		return NULL;
+	}
+	muxer->streams[muxer->avih.dwStreams] = stream;
+	spriv = (muxer_stream_priv_t*) calloc(1, sizeof(muxer_stream_priv_t));
+	if(!spriv) 
+	{
+		free(stream);
+		return NULL;
+	}
+	stream->priv = spriv;
+	
+	spriv->avstream = av_new_stream(priv->oc, 1);
+	if(!spriv->avstream) 
+	{
+		MSG_ERR("Could not alloc avstream, EXIT\n");
+		return NULL;
+	}
+	spriv->avstream->stream_copy = 1;
+	
+#if LIBAVFORMAT_BUILD >= 4629
+	ctx = spriv->avstream->codec;
+#else
+	ctx = &(spriv->avstream->codec);
+#endif
+	ctx->codec_id = muxer->avih.dwStreams;
+	switch(type) 
+	{
+		case MUXER_TYPE_VIDEO:
+			ctx->codec_type = CODEC_TYPE_VIDEO;
+			break;
+		case MUXER_TYPE_AUDIO:
+			ctx->codec_type = CODEC_TYPE_AUDIO;
+			break;
+	}
+
+	muxer->avih.dwStreams++;
+	stream->muxer = muxer;
+	stream->type = type;
+	MSG_V("ALLOCATED STREAM N. %d, type=%d\n", muxer->avih.dwStreams, type);
+	return stream;
+}
+
+static void fix_parameters(struct muxer_t *muxer)
+{
+    unsigned i;
+    for(i=0;i<muxer->avih.dwStreams;i++)
+    {
+	muxer_stream_t *stream=muxer->streams[i];
+	muxer_stream_priv_t *spriv = stream->priv;
+	AVCodecContext *ctx;
+	
+#if LIBAVFORMAT_BUILD >= 4629
+	ctx = spriv->avstream->codec;
+#else
+	ctx = &(spriv->avstream->codec);
+#endif
+	
+        if(stream->wf && stream->wf->nAvgBytesPerSec)
+            ctx->bit_rate = stream->wf->nAvgBytesPerSec * 8;
+        ctx->rc_buffer_size=0;
+        ctx->rc_max_rate=0;
+
+	if(stream->type == MUXER_TYPE_AUDIO)
+	{
+		ctx->codec_id = codec_get_wav_id(stream->wf->wFormatTag); 
+#if 0 //breaks aac in mov at least
+		ctx->codec_tag = codec_get_wav_tag(ctx->codec_id);
+#endif
+		MSG_INFO("AUDIO CODEC ID: %x, TAG: %x\n", ctx->codec_id, (uint32_t) ctx->codec_tag);
+		ctx->sample_rate = stream->wf->nSamplesPerSec;
+//                mp_msg(MSGT_MUXER, MSGL_INFO, "stream->h.dwSampleSize: %d\n", stream->h.dwSampleSize);
+		ctx->channels = stream->wf->nChannels;
+                if(stream->h.dwRate && (stream->h.dwScale * (int64_t)ctx->sample_rate) % stream->h.dwRate == 0)
+                    ctx->frame_size= (stream->h.dwScale * (int64_t)ctx->sample_rate) / stream->h.dwRate;
+                MSG_V("MUXER_LAVF(audio stream) frame_size: %d, scale: %u, sps: %u, rate: %u, ctx->block_align = stream->wf->nBlockAlign; %d=%d stream->wf->nAvgBytesPerSec:%d\n", 
+			ctx->frame_size, stream->h.dwScale, ctx->sample_rate, stream->h.dwRate,
+			ctx->block_align, stream->wf->nBlockAlign, stream->wf->nAvgBytesPerSec);
+		ctx->block_align = stream->h.dwSampleSize;
+		if(stream->wf+1 && stream->wf->cbSize)
+		{
+			ctx->extradata = malloc(stream->wf->cbSize);
+			if(ctx->extradata != NULL)
+			{
+				ctx->extradata_size = stream->wf->cbSize;
+				memcpy(ctx->extradata, stream->wf+1, ctx->extradata_size);
+			}
+			else
+				MSG_ERR("MUXER_LAVF(audio stream) error! couldn't allocate %d bytes for extradata\n",
+					stream->wf->cbSize);
+		}
+	}
+	else if(stream->type == MUXER_TYPE_VIDEO)
+	{
+		ctx->codec_id = codec_get_bmp_id(stream->bih->biCompression);
+                if(ctx->codec_id <= 0)
+                    ctx->codec_tag= stream->bih->biCompression;
+		MSG_INFO("VIDEO CODEC ID: %d\n", ctx->codec_id);
+		ctx->width = stream->bih->biWidth;
+		ctx->height = stream->bih->biHeight;
+		ctx->bit_rate = 800000;
+#if (LIBAVFORMAT_BUILD >= 4624)
+		ctx->time_base.den = stream->h.dwRate;
+		ctx->time_base.num = stream->h.dwScale;
+#else
+		ctx->frame_rate = stream->h.dwRate;
+		ctx->frame_rate_base = stream->h.dwScale;
+#endif
+		if(stream->bih+1 && (stream->bih->biSize > sizeof(BITMAPINFOHEADER)))
+		{
+			ctx->extradata = malloc(stream->bih->biSize - sizeof(BITMAPINFOHEADER));
+			if(ctx->extradata != NULL)
+			{
+				ctx->extradata_size = stream->bih->biSize - sizeof(BITMAPINFOHEADER);
+				memcpy(ctx->extradata, stream->bih+1, ctx->extradata_size);
+			}
+			else
+				MSG_ERR("MUXER_LAVF(video stream) error! couldn't allocate %d bytes for extradata\n",
+					stream->bih->biSize - sizeof(BITMAPINFOHEADER));
+		}
+	}
+    }
+}
+
+/* initialize optional fields of a packet */
+static inline void av_init_pkt(AVPacket *pkt)
+{
+    pkt->pts   = AV_NOPTS_VALUE;
+    pkt->dts   = AV_NOPTS_VALUE;
+    pkt->pos   = -1;
+    pkt->duration = 0;
+    pkt->flags = 0;
+    pkt->stream_index = 0;
+    pkt->destruct= av_destruct_packet_nofree_ptr;
+}
+
+static void write_chunk(muxer_stream_t *stream, size_t len, unsigned int flags, float pts)
+{
+	muxer_t *muxer = (muxer_t*) stream->muxer;
+	muxer_priv_t *priv = (muxer_priv_t *) muxer->priv;
+	muxer_stream_priv_t *spriv = (muxer_stream_priv_t *) stream->priv;
+	AVPacket pkt;
+	
+	if(len)
+	{
+	av_init_pkt(&pkt);
+	pkt.size = len;
+	pkt.stream_index= spriv->avstream->index;
+	pkt.data = stream->buffer;
+	
+	if(flags & AVIIF_KEYFRAME)
+		pkt.flags |= PKT_FLAG_KEY;
+	else
+		pkt.flags = 0;
+	
+	
+	//pkt.pts = AV_NOPTS_VALUE; 
+#if LIBAVFORMAT_BUILD >= 4624
+	pkt.pts = (stream->timer / av_q2d(priv->oc->streams[pkt.stream_index]->time_base) + 0.5);
+#else
+	pkt.pts = AV_TIME_BASE * stream->timer;
+#endif
+//fprintf(stderr, "%Ld %Ld id:%d tb:%f %f\n", pkt.dts, pkt.pts, pkt.stream_index, av_q2d(priv->oc->streams[pkt.stream_index]->time_base), stream->timer);
+	
+	if(muxer->avih.dwStreams>1)
+	{
+	    if(av_interleaved_write_frame(priv->oc, &pkt) != 0) //av_write_frame(priv->oc, &pkt)
+	    {
+		MSG_ERR("Error while writing frame\n");
+	    }
+	}else{
+	}
+	    if(av_write_frame(priv->oc, &pkt) != 0)
+	    {
+		MSG_ERR("Error while writing frame\n");
+	    }
+	}
+	
+	return;
+}
+
+
+static void write_header(muxer_t *muxer,demuxer_t*dinfo)
+{
+	const char *sname;
+	muxer_priv_t *priv = (muxer_priv_t *) muxer->priv;
+	
+	MSG_INFO("Writing header\n");
+	
+	if((sname=demux_info_get(dinfo,INFOT_NAME))!=NULL)
+	    if(sname[0]) strncpy(priv->oc->title,sname,512);
+	if((sname=demux_info_get(dinfo,INFOT_AUTHOR))!=NULL)
+	    if(sname[0]) strncpy(priv->oc->author,sname,512);
+	if((sname=demux_info_get(dinfo,INFOT_COPYRIGHT))!=NULL)
+	    if(sname[0]) strncpy(priv->oc->copyright,sname,512);
+	if((sname=demux_info_get(dinfo,INFOT_COMMENTS))!=NULL)
+	    if(sname[0]) strncpy(priv->oc->comment,sname,512);
+	if((sname=demux_info_get(dinfo,INFOT_ALBUM))!=NULL)
+	    if(sname[0]) strncpy(priv->oc->album,sname,512);
+	if((sname=demux_info_get(dinfo,INFOT_GENRE))!=NULL)
+	    if(sname[0]) strncpy(priv->oc->genre,sname,32);
+	if((sname=demux_info_get(dinfo,INFOT_TRACK))!=NULL)
+	    if(sname[0]) priv->oc->track=atoi(sname);
+	if((sname=demux_info_get(dinfo,INFOT_DATE))!=NULL)
+	    if(sname[0]) priv->oc->year=atoi(sname);
+	av_write_header(priv->oc);
+	muxer->cont_write_header = NULL;
+}
+
+
+static void write_index(muxer_t *muxer)
+{
+	int i;
+	muxer_priv_t *priv = (muxer_priv_t *) muxer->priv;
+	
+	MSG_INFO("Writing indexes\n");
+	av_write_trailer(priv->oc);
+	for(i = 0; i < priv->oc->nb_streams; i++) 
+	{
+		mpxp_freep(&(priv->oc->streams[i]));
+	}
+
+	url_fclose(priv->oc->pb);
+
+	mpxp_free(priv->oc);
+}
+
+int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
+{
+	muxer_priv_t *priv;
+	AVOutputFormat *fmt = NULL;
+	char mp_filename[256] = "mpxp://stream.dummy";
+
+	MSG_WARN(
+"** MUXER_LAVF *****************************************************************\n"
+"If you wish to use libavformat muxing, you must ensure that your video stream\n"
+"does not contain B frames (out of order decoding)\n"
+"REMEMBER: libavformat muxing is presently broken and will generate\n"
+"INCORRECT files in the presence of B frames\n"
+"*******************************************************************************\n");
+	priv = (muxer_priv_t *) calloc(1, sizeof(muxer_priv_t));
+	if(priv == NULL)
+		return 0;
+
+	if(!load_dll(codec_name("libavformat"SLIBSUFFIX))) /* try local copy first */
+	{
+	    MSG_ERR("Detected error during loading libavformat.so! Try to upgrade this library\n");
+	    return 0;
+	}
+	av_register_all();
+	
+	priv->oc = av_alloc_format_context();
+	if(!priv->oc) 
+	{
+		MSG_FATAL("Couldn't get format context\n");
+		goto fail;
+	}
+
+	if(!(fmt = guess_format(subtype, NULL, NULL)))
+	{
+		MSG_FATAL("CAN'T GET SPECIFIED FORMAT '%s'\n",subtype);
+		goto fail;
+	}
+	priv->oc->oformat = fmt;
+
+	
+	if(av_set_parameters(priv->oc, NULL) < 0) 
+	{
+		MSG_FATAL("Invalid output format parameters\n");
+		goto fail;
+	}
+	priv->oc->packet_size= mux_packet_size;
+        priv->oc->mux_rate= mux_rate;
+        priv->oc->preload= (int)(mux_preload*AV_TIME_BASE);
+        priv->oc->max_delay= (int)(mux_max_delay*AV_TIME_BASE);
+
+	register_protocol(&mp_protocol);
+
+	if(url_fopen(priv->oc->pb, mp_filename, URL_WRONLY))
+	{
+		MSG_FATAL("Coulnd't open outfile\n");
+		goto fail;
+        }
+	
+	((URLContext*)(priv->oc->pb->opaque))->priv_data= muxer;
+	
+	muxer->priv = (void *) priv;
+	muxer->cont_new_stream = &lavf_new_stream;
+	muxer->cont_write_chunk = &write_chunk;
+	muxer->cont_write_header = &write_header;
+	muxer->cont_write_index = &write_index;
+	muxer->fix_parameters = &fix_parameters;
+	MSG_V("OK, exit\n");
+	return 1;
+	
+fail:
+	dlclose(dll_handle);
+	free(priv);
+	return 0;
+}
+#else //HAVE_LOCAL_FFMPEG
+int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype) { return 0; }
+#endif

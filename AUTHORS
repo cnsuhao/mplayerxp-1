@@ -1,0 +1,73 @@
+Since 2002 the mplayerxp is maintained by Nickols_K <nickols_k@mail.ru>
+
+The people who participate with mplayerxp:
+- Mans Rullgard <mru@users.sourceforge.net>
+  (ALPHA-related porting, testing, GLINT R3 vidix driver, RISC optimization)
+- Zdenek Kabelac <kabi@informatics.muni.cz>
+  (vidix related improvements)
+- Olov Gustavsson <olov@algonet.se>
+  (core-developer: thread and core related improvements and new features)
+
+The people who did original mplayer:
+- Arpad Gereoffy <mplayer-users@mplayerhq.hu>
+- Zoltán Ponekker (Pontscho/Fresh!) <pontscho@makacs.poliod.hu>
+- Gábor Lénárt <lgb@lgb.hu>
+- Gábor Bérczi (Gabucino) <gabucino@mplayerhq.hu>
+- Szabolcs Berecz (Szabi) <szabi@inf.elte.hu>
+- László Megyer (Lez, Laaz) lez@sch.bme.hu
+- Gyula László (Chass, Tégla) <chass-@freemail.hu>
+- Zoltán Márk Vicián (Se7en) <se7en@sch.bme.hu>
+- Alex Beregszaszi (al3x) <alex@naxine.org>
+- Andreas Ackermann (Acki) <asackerm@stud.informatik.uni-erlangen.de>
+- Felix Bünemann (Atmos) <atmosfear@users.sourceforge.net>
+- TeLeNiEkO <telenieko@telenieko.com>
+- Michael Graffam <mgraffam@idsi.net>
+- Jens Hoffmann <hoffmajs@gmx.de>
+- Nickols_K <nickols_k@mail.ru>
+- German Gomez Garcia <german@piraos.com>
+- Dariusz Pietrzak (Eyck) <eyck@incubus.ar.lublin.pl>
+- Marcus Comstedt <marcus@idonex.se>
+- Jürgen Keil <jk@tools.de>
+- Vladimir Kushnir <vkushnir@Alfacom.net>
+- Bertrand BAUDET <bertrand_baudet@yahoo.com>
+- Alban Bedel <albeu@free.fr>
+- Derek J Witt <djw@flinthills.com>
+- Artur Zaprzala <zybi@fanthom.irc.pl>
+- lanzz@lanzz.org
+- Adam Tla/lka <atlka@pg.gda.pl>
+- Folke Ashberg <folke@ashberg.de>
+- Kamil Toman <ktoman@email.cz>
+- Ivan Kalvatchev <iive@yahoo.com>
+- pl <p_l@gmx.fr>
+- Michael Niedermayer <michaelni@gmx.at>
+- Sven Goethel <sgoethel@jausoft.com>
+- joy_ping <joy@pingfm.org>
+- Eric Anholt <eanholt@gladstone.uoregon.edu>
+- Jiri Svoboda <Jiri.Svoboda@seznam.cz>
+- Oliver Schoenbrunner <oliver.schoenbrunner@jku.at>
+- Jeroen Dobbelaere <jeroen.dobbelaere@acunia.com>
+- David Holm <dholm@telia.com>
+- Panagiotis Issaris <takis@lumumba.luc.ac.be>
+- Mike Melanson <melanson@pcisys.net>
+- Tobias Diedrich <ranma@gmx.at>
+- Kilian A. Foth <foth@informatik.uni-hamburg.de>
+- Tim Ferguson <timf@mail.csse.monash.edu.au>
+- Sam Lin <itrs@softwell.com.tw>
+- Johannes Feigl <johannes.feigl@mcse.at>
+- Kim Minh Kaplan <kmkaplan@selfoffice.com>
+- Brian Kuschak <bkuschak@yahoo.com>
+- Stephen Davies <steve@daviesfam.org>
+- Rik Snel <rsnel@cube.dyndns.org>
+- Anders Johansson <ajh@atri.curtin.edu.au>
+- Roberto Togni <rtogni@freemail.it>
+- Wojtek Kaniewski <wojtekka@bydg.pdi.net>
+
+Main testers:
+
+Tibor Balázs (Tibcu)
+Péter Sasi (SaPe)
+Christoph H. Lampert
+Attila Kinali
+Dirk Vornheder
+Bohdan Horst (Nexus)
+

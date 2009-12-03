@@ -1,0 +1,276 @@
+#!/bin/sh
+
+. ../functions
+
+# The simplest configure for win loader
+for parm in "$@" ; do
+  if test "$parm" = "--help" || test "$parm" = "-help" || test "$parm" = "-h" ; then
+    cat << EOF
+
+Usage: $0 [OPTIONS]...
+
+Configuration:
+  -h, --help               display this help and exit
+
+Installation directories:
+  --prefix=DIR           use this prefix for installing mplayer [/usr/local]
+
+Fine tuning of the installation directories:
+  --datadir=DIR          use this prefix for installing machine independent
+                         data files (fonts, skins) [PREFIX/share/mplayer]
+  --confdir=DIR          use this prefix for installing configuration files
+                         [same as datadir]
+  --libdir=DIR           use this prefix to specify library location
+                         [PREFIX/lib]
+  --codecdir=DIR         use this prefix for installing shared libraries
+                         [LIBDIR/mplayerxp]
+
+System types:
+  --build=BUILD          configure for building on BUILD [guessed]
+  --host=HOST            cross-compile to build program to run on HOST [BUILD]
+
+Program names:
+  --program-suffix=SUFX  append SUFX to installed program names
+
+Use these options if autodetection fails:
+  --with-extraincdir=DIR   extra headers (png, dvb, mad, sdl, css, ...) in DIR
+  --with-extralibdir=DIR   extra library files (png, SDL, ...) in DIR
+  --with-extraldflags=LIST extra LDFLAGS
+  --with-win32libdir=DIR   Windows DLL files in DIR
+
+Miscellaneous options:
+  --cc=COMPILER          use this C compiler to build MPlayer [gcc]
+  --enable-debug[=1-3]   compile debugging information into mplayer [disable]
+  --enable-profile       compile profiling information into mplayer [disable]
+  --disable-fastcall     disable regparm method on x86 systems [autodetect]
+
+Environment variables:
+  MAKE      Make command (example: "make -j")
+  AS        Assembler command
+  CC        C compiler command (example: "gcc -m64 -mveclibabi=acml")
+  CFLAGS    C compiler flags (example:
+             "-O3 -msse -msse2 -msse3 -mfpmath=387,sse -mfancy-math-387
+              -ffast-math -funroll-all-loops -ftree-loop-optimize
+              -ftree-vect-loop-version -ftree-vectorize -fomit-frame-pointer
+              -finline-functions-called-once -funit-at-a-time -pipe")
+  LDFLAGS   linker flags, e.g. -L<lib dir> if you have libraries in a
+            nonstandard directory <lib dir>
+  LIBS      specifies additional libs (like: export LIBS=-lacml_mv)
+  DESTDIR   specifies base of installation
+
+EOF
+    exit 0
+  fi
+done # for parm in ...
+
+# Check how echo works in this /bin/sh
+case `echo -n` in
+  -n)	_echo_n=	_echo_c='\c'	;;	# SysV echo
+  *)	_echo_n='-n '	_echo_c=	;;	# BSD echo
+esac
+
+# LGB: temporary files
+for I in "$TMPDIR" "$TEMPDIR" "/tmp" ; do
+  test "$I" && break
+done
+
+mktmps
+
+_cc=gcc
+test "$CC" && _cc="$CC"
+_prefix="/usr/local"
+_profile=
+_debug=
+_fastcall=auto
+_psuffix=
+for ac_option do
+  case "$ac_option" in
+  --prefix=*)
+    _prefix=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --datadir=*)
+    _datadir=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --confdir=*)
+    _confdir=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --libdir=*)
+    _libdir=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --codecdir=*)
+    _codecdir=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --program-suffix=*)
+    _psuffix=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --with-win32libdir=*)
+    _win32libdir=`echo $ac_option | cut -d '=' -f 2`
+    _win32=yes
+    ;;
+  --with-extraincdir=*)
+    _inc_extra="$_inc_extra -I`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -I,g'`"
+    ;;
+  --with-extralibdir=*)
+    _ld_extra="$_ld_extra -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
+    ;;
+  --with-extraldflags=*)
+    _exld_flags="$_exld_flags -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
+    ;;
+  --build=*)
+    _build=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --host=*)
+    _host=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --cc=*)
+    _cc=`echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --enable-profile)
+    _profile='-pg'
+    ;;
+  --enable-debug)
+    _debug='-g'
+    ;;
+  --enable-debug=*)
+    _debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
+    ;;
+  --enable-fastcall)	_fastcall=yes	;;
+  --disable-fastcall)	_fastcall=no	;;
+  *)
+    ;;
+  esac
+done
+
+guess_target config.mak config.h
+test_optimizations config.mak config.h
+
+test -n "$_ld_extra"	&& add_extralibs $_ld_extra
+test -n "$_exld_flags"	&& add_ldflags $_exld_flags
+test -n "$_inc_extra"	&& add_cflags $_inc_extra
+
+if win32 ; then
+    _def_win32_cmt='/* using native windows system */'
+    _def_win32_loader='#undef WIN32_LOADER'
+else
+    _def_win32_cmt='/* using non-native windows system */'
+    _def_win32_loader='#define WIN32_LOADER 1'
+fi
+
+echo -n "Checking for win32 dll's ... "
+if test -z "$_win32libdir" ; then
+  for I in /usr/local/lib/win32 /usr/lib/win32 ; do
+    if test -d "$I" ; then
+      _win32libdir="$I"
+      break;
+    fi;
+  done
+fi
+echo "$_win32libdir"
+
+echocheck "Program name"
+_prog_alias="mplayerxp$_psuffix"
+echores "$_prog_alias"
+# Atmos: moved this here, to be correct, if --prefix is specified
+test -z "$_datadir" && _datadir="$_prefix/share/$_prog_alias"
+test -z "$_confdir" && _confdir="$_datadir"
+test -z "$_libdir" && _libdir="$_prefix/lib"
+test -z "$_codecdir" && _codecdir="$_libdir/$_prog_alias"
+
+cc_version=`$_cc -dumpversion`
+if test "$_fastcall" = auto ; then
+echocheck "__fastcall optimization abilities"
+case $cc_version in
+    '')
+      _fastcall=no
+      ;;
+    # avoid fastcall usage on gcc-2.95.2 and older
+    2.95.[3-9]|2.95.[3-9].[0-9]|3.[0-9]|3.[0-9].[0-9]|4.[0-9].[0-9])
+      _fastcall=yes
+      ;;
+    *)
+      _fastcall=no
+      ;;
+esac
+echores "$_fastcall"
+fi
+
+# Checking for CFLAGS
+_def_fastcall='#undef __USE_FASTCALL'
+if test "$_fastcall" = yes && test -z "$_profile" ; then
+_def_fastcall='#define __USE_FASTCALL 1'
+fi
+
+if test "$_profile" || test "$_debug" ; then
+  CFLAGS="-W -Wall -O2 $_debug $_profile -fno-builtin"
+cat >> config.h << EOF
+#define DEBUG
+EOF
+elif test -z "$CFLAGS" ; then
+    CFLAGS="-O2"
+fi
+
+check_func2 "sys/types.h sys/mman.h" mmap
+mman_h=$mmap
+print_config HAVE_SYS_ config.h config.mak mman_h
+
+#############################################################################
+echo "Creating config.mak"
+cat >> config.mak << EOF
+# -------- Generated by configure -----------
+PROGNAME = $_prog_alias
+prefix = $_prefix
+DATADIR = $_datadir
+CONFDIR = $_confdir
+LIBDIR = $_libdir
+CODECDIR = $_codecdir
+CONFDIR = $_confdir
+DESTDIR = $DESTDIR
+WIN32_PATH = -DWIN32_PATH=\\"$_win32libdir\\"
+CFLAGS = $CFLAGS
+CC=$_cc
+
+EOF
+
+echo "EXTRALIBS=$extralibs" >> config.mak
+echo "LDFLAGS=$LDFLAGS" >> config.mak
+echo "ASFLAGS=$ASFLAGS" >> config.mak
+
+
+#############################################################################
+echo "Creating config.h"
+cat >> config.h << EOF
+/* -------- This file has been automatically generated by configure --------- */
+
+/* Common data directory (for fonts, etc) */
+#define PROGNAME "$_prog_alias"
+#define DATADIR "$_datadir"
+#define CONFDIR "$_confdir"
+#define LIBDIR "$_libdir"
+#define CODECDIR "$_codecdir"
+
+#ifdef DEBUG
+#define TRACE printf
+#define dbg_printf printf
+#else
+#define TRACE(...)
+#define dbg_printf(...)
+#endif
+
+$_def_fastcall
+$_def_win32_cmt
+$_def_win32_loader
+
+/* Defined to some form of __attribute__ ((...)) if the compiler supports
+   a different, more efficient calling convention.  */
+#if defined ( __USE_FASTCALL ) && defined ( ARCH_X86 )
+/*# define internal_function __attribute__ ((regparm (3), stdcall))*/
+# define __FASTCALL__ __attribute__ ((regparm (3)))
+#else
+# define __FASTCALL__
+#endif
+
+EOF
+
+# Last move:
+rmtmps
+

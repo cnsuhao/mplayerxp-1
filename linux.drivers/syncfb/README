@@ -1,0 +1,86 @@
+
+syncfb: YUV Overlay kernel module, synchronizing video with 
+	the monitor's frequency ( currently G200/G400 only )
+
+
+
+                       WARNING  -----  WARNING
+
+This code messes with your video card and your xserver. It will probably
+lock up your box, format your hard drive, and cause your brand new g400
+MAX to spout 6 inch flames. You have been warned.
+
+                       WARNING  -----  WARNING
+
+
+
+
+Syncfb is a kernel module that synchronizes the output
+of video frames with the monitor frequency to avoid
+vertical artifacts (tearing) in the picture.
+
+This is done by creating a FIFO buffer inside the 
+video ram of the graphics card and switching from
+one buffer to the next on vertical blanking interrupt.
+
+Syncfb also provides support for other video
+related hardware accelerations like scaling, hardware
+de-interlacing (usually only bi-linear interpolation of
+fields) and YUV->RGB conversion if available.
+
+
+HOW GO?
+
+1) create the device file
+
+It's entirely possible this major conflicts with something else (mga_vid? ;-))
+mknod /dev/syncfb c 178 0 
+
+2) compile & insmod
+make
+insmod syncfb.o
+
+3) test
+   run ./syncfb_test
+   it should draw some colored squares & patterns on your
+   screen. it shouldn't mess up your screen anymore...
+
+   You can run it either with X or on the fbdev console. 
+   be sure to choose a resolution that leaves enough
+   memory on your graphic card for the overlay memory.
+   On the console, it is a good idea to set the virtual
+   resolution to match the physical resolution:
+
+   fbset -g 1024 768 1024 768 8
+
+   the last number is the color depth - everything
+   up to 24 should be ok if your card has at least 8 megs.
+
+
+4) put syncfb_off in your path!!!
+   Whenever an application forgets to turn off syncfb,
+   you are left with an overlay that doesn't go away...
+   syncfb_off simply turns the overlay off.
+
+
+
+5) Using syncfb with applications
+   Syncfb synchronizes a video output with your screen's
+   frequency. That means, that you must set your screen 
+   framerate to whatever you expect to be the video 
+   framerate. Syncfb can also repeat frames, so that
+   your screen framerate can be a multiple of the video
+   framerate. In the future, some applications might be 
+   able to set the right framerate themselves, until now,
+   you need the right modelines. A few are supplied in the
+   fb.modes file (for fbdev - use fbset -x to convert
+   them to X Modelines) but a lot remains to be done...
+
+
+Have fun
+.mao
+
+
+
+
+

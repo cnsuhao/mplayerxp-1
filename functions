@@ -1,0 +1,1181 @@
+#!/bin/sh
+#
+# functions	This file contains functions to be used by all
+#		shell scripts of the mplayerxp
+
+# Prefer these macros to full length text !
+# These macros only return an error code - NO display is done
+log(){
+    echo "$@" >>"$TMPLOG"
+}
+
+log_file(){
+    log BEGIN $1
+    cat -n $1 >>"$TMPLOG"
+    log END $1
+}
+
+echolog(){
+    log "$@"
+    echo "$@"
+}
+
+# "tr '[a-z]' '[A-Z]'" is a workaround for Solaris tr not grokking "tr a-z A-Z"
+toupper(){
+    echo "$@" | tr '[a-z]' '[A-Z]'
+}
+
+tolower(){
+    echo "$@" | tr '[A-Z]' '[a-z]'
+}
+
+set_all(){
+    value=$1
+    shift
+    for var in $*; do
+        eval $var=$value
+    done
+}
+
+set_weak(){
+    value=$1
+    shift
+    for var; do
+        eval : \${$var:=$value}
+    done
+}
+
+pushvar(){
+    for var in $*; do
+        eval level=\${${var}_level:=0}
+        eval ${var}_${level}="\$$var"
+        eval ${var}_level=$(($level+1))
+    done
+}
+
+popvar(){
+    for var in $*; do
+        eval level=\${${var}_level:-0}
+        test $level = 0 && continue
+        eval level=$(($level-1))
+        eval $var="\${${var}_${level}}"
+        eval ${var}_level=$level
+        eval unset ${var}_${level}
+    done
+}
+
+enable_weak(){
+    set_weak yes $*
+}
+
+disable_weak(){
+    set_weak no $*
+}
+
+do_enable_deep(){
+    for var; do
+        enabled $var && continue
+        eval sel="\$${var}_select"
+        eval sgs="\$${var}_suggest"
+        pushvar var sgs
+        enable_deep $sel
+        popvar sgs
+        enable_deep_weak $sgs
+        popvar var
+    done
+}
+
+enable_deep(){
+    do_enable_deep $*
+    enable $*
+}
+
+enable_deep_weak(){
+    do_enable_deep $*
+    enable_weak $*
+}
+
+enable(){
+    set_all yes $*
+}
+
+disable(){
+    set_all no $*
+}
+
+#enabled(){
+#    test "${1#!}" = "$1" && op== || op=!=
+#    eval test "x\$${1#!}" $op "xyes"
+#}
+#
+#disabled(){
+#    test "${1#!}" = "$1" && op== || op=!=
+#    eval test "x\$${1#!}" $op "xno"
+#}
+enabled(){
+    eval test "x\$$1" = "xyes"
+}
+
+disabled(){
+    eval test "x\$$1" = "xno"
+}
+
+enabled_all(){
+    for opt; do
+        enabled $opt || return 1
+    done
+}
+
+disabled_all(){
+    for opt; do
+        disabled $opt || return 1
+    done
+}
+
+enabled_any(){
+    for opt; do
+        enabled $opt && return 0
+    done
+}
+
+disabled_any(){
+    for opt; do
+        disabled $opt && return 0
+    done
+}
+
+check_deps(){
+    for cfg; do
+        cfg="${cfg#!}"
+        enabled ${cfg}_checking && die "Circular dependency for $cfg = ${cfg}"
+        disabled ${cfg}_checking && continue
+        enable ${cfg}_checking
+
+        eval dep_all="\$${cfg}_deps"
+        eval dep_any="\$${cfg}_deps_any"
+        eval dep_sel="\$${cfg}_select"
+        eval dep_sgs="\$${cfg}_suggest"
+
+        pushvar cfg dep_all dep_any dep_sel dep_sgs
+        check_deps $dep_all $dep_any $dep_sel $dep_sgs
+        popvar cfg dep_all dep_any dep_sel dep_sgs
+
+        enabled_all  $dep_all || disable $cfg
+        enabled_any  $dep_any || disable $cfg
+        disabled_any $dep_sel && disable $cfg
+
+        if enabled $cfg; then
+            eval dep_extralibs="\$${cfg}_extralibs"
+            test -n "$dep_extralibs" && add_extralibs $dep_extralibs
+            enable_deep $dep_sel
+            enable_deep_weak $dep_sgs
+        fi
+
+        disable ${cfg}_checking
+    done
+}
+
+print_config(){
+    pfx=$1
+    header=$2
+    makefile=$3
+    shift 3
+    for cfg; do
+        ucname="${pfx}`toupper $cfg`"
+        if enabled $cfg; then
+            echo "#define ${ucname} 1" >> $header
+            echo "${ucname}=yes" >> $makefile
+	else
+#            echo "#undef ${ucname}" >> $header
+            echo "${ucname}=no" >> $makefile
+        fi
+    done
+}
+
+check_type(){
+    log check_type "$@"
+    headers=$1
+    type=$2
+    shift 2
+    disable $type
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include <$hdr>"
+    done
+    check_cc "$@" <<EOF && enable $type
+$incs
+$type v;
+EOF
+}
+
+flags_saved(){
+    (: ${SAVE_CFLAGS?}) 2>/dev/null
+}
+
+save_flags(){
+    flags_saved && return
+    SAVE_CFLAGS="$CFLAGS"
+    SAVE_LDFLAGS="$LDFLAGS"
+    SAVE_ASFLAGS="$ASFLAGS"
+    SAVE_extralibs="$extralibs"
+}
+
+restore_flags(){
+    flags_saved || return
+    CFLAGS="$SAVE_CFLAGS"
+    LDFLAGS="$SAVE_LDFLAGS"
+    ASFLAGS="$SAVE_ASFLAGS"
+    extralibs="$SAVE_extralibs"
+    unset SAVE_CFLAGS
+    unset SAVE_LDFLAGS
+    unset SAVE_ASFLAGS
+    unset SAVE_extralibs
+}
+
+temp_cflags(){
+    save_flags
+    CFLAGS="$CFLAGS $*"
+}
+
+temp_asflags(){
+    save_flags
+    ASFLAGS="$ASFLAGS $*"
+}
+
+temp_ldflags(){
+    save_flags
+    LDFLAGS="$LDFLAGS $*"
+}
+
+temp_extralibs(){
+    save_flags
+    extralibs="$extralibs $*"
+}
+
+append(){
+    var=$1
+    shift
+    flags_saved && eval "SAVE_$var=\"\$SAVE_$var $*\""
+    eval "$var=\"\$$var $*\""
+}
+
+add_cflags(){
+    append CFLAGS "$@"
+}
+
+add_asflags(){
+    append ASFLAGS "$@"
+}
+
+add_ldflags(){
+    append LDFLAGS "$@"
+}
+
+add_extralibs(){
+    append extralibs "$@"
+}
+
+check_cmd(){
+    log "$@"
+    "$@" >>"$TMPLOG" 2>&1
+}
+
+check_cc(){
+    log check_cc "$@"
+    cat >$TMPC
+    log_file $TMPC
+    check_cmd $_cc $CFLAGS "$@" -c -o $TMPO $TMPC
+}
+
+check_cpp(){
+    log check_cpp "$@"
+    cat >$TMPC
+    log_file $TMPC
+    check_cmd $_cc $CFLAGS "$@" -E -o $TMPO $TMPC
+}
+
+check_asm(){
+    log check_asm "$@"
+    name="$1"
+    asm="$2"
+    shift 2
+    check_cc "$@" <<EOF && enable $name || disable $name
+int foo(void){
+    asm volatile($asm);
+}
+EOF
+}
+
+check_ld(){
+    log check_ld "$@"
+    check_cc || return
+    check_cmd $_cc $LDFLAGS "$@" -o $TMPE $TMPO $extralibs
+}
+
+check_cflags(){
+    log check_cflags "$@"
+    check_cc "$@" <<EOF && add_cflags "$@"
+int x;
+EOF
+}
+
+check_ldflags(){
+    log check_ldflags "$@"
+    check_ld "$@" <<EOF && add_ldflags "$@"
+int main(void){
+    return 0;
+}
+EOF
+}
+
+check_header(){
+    log check_header "$@"
+    header=$1
+    shift
+    var=`echo $header | sed 's/[^A-Za-z0-9_]/_/g'`
+    disable $var
+    check_cpp "$@" <<EOF && enable $var
+#include <$header>
+int x;
+EOF
+}
+
+check_headerl(){
+    log check_headerl "$@"
+    header=$1
+    shift
+    var=`echo $header | sed 's/[^A-Za-z0-9_]/_/g'`
+    disable $var
+    check_cpp "$@" <<EOF && enable $var
+#include "$header"
+int x;
+EOF
+}
+
+check_lheader(){
+    echocheck "$1"
+    log check_lheader "$@"
+    name=$1
+    header=$2
+    shift 2
+    disable $name
+    check_cpp "$@" <<EOF && enable $name
+#include "$header"
+int x;
+EOF
+    enabled $name && answer="yes" || answer="no"
+    echores $answer
+    enabled $name && return 0 || return 1
+}
+
+check_sheader(){
+    echocheck "$1"
+    log check_sheader "$@"
+    name=$1
+    header=$2
+    shift 2
+    disable $name
+    check_cpp "$@" <<EOF && enable $name
+#include <$header>
+int x;
+EOF
+    enabled $name && answer="yes" || answer="no"
+    echores $answer
+    enabled $name && return 0 || return 1
+}
+
+check_func(){
+    echocheck "$1"
+    log check_func "$@"
+    func=$1
+    shift
+    disable $func
+    check_ld "$@" <<EOF && enable $func
+extern int $func(void);
+long x;
+int main(void){
+    x=(long)$func();
+}
+EOF
+    enabled $func && answer="yes" || answer="no"
+    echores $answer
+    enabled $func && return 0 || return 1
+}
+
+check_func2(){
+    echocheck "$2"
+    log check_func2 "$@"
+    headers=$1
+    func=$2
+    shift 2
+    disable $func
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include <$hdr>"
+    done
+    check_ld "$@" <<EOF && enable $func
+$incs
+long x;
+int main(void){
+    x=(long)$func;
+    return 0;
+}
+EOF
+    enabled $func && answer="yes" || answer="no"
+    echores $answer
+    enabled $func && return 0 || return 1
+}
+
+check_func3(){
+    echocheck "$3"
+    log check_func3 "$@"
+    defines=$1
+    headers=$2
+    func=$3
+    shift 3
+    disable $func
+    defs=""
+    for dfn in $defines; do
+        defs="$defs
+#define $dfn 1"
+    done
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include <$hdr>"
+    done
+    check_ld "$@" <<EOF && enable $func
+$defs
+$incs
+long x;
+int main(void){
+    x=(long)$func;
+    return 0;
+}
+EOF
+    enabled $func && answer="yes" || answer="no"
+    echores $answer
+    enabled $func && return 0 || return 1
+}
+
+check_lfunc2(){
+    echocheck "$2"
+    log check_lfunc2 "$@"
+    headers=$1
+    func=$2
+    shift 2
+    disable $func
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include "$hdr""
+    done
+    check_ld "$@" <<EOF && enable $func
+$incs
+long x;
+int main(void){
+    x=(long)$func;
+    return 0;
+}
+EOF
+    enabled $func && answer="yes" || answer="no"
+    echores $answer
+    enabled $func && return 0 || return 1
+}
+
+check_lfunc3(){
+    echocheck "$3"
+    log check_lfunc3 "$@"
+    defines=$1
+    headers=$2
+    func=$3
+    shift 3
+    disable $func
+    defs=""
+    for dfn in $defines; do
+        defs="$defs
+#define $dfn 1"
+    done
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include "$hdr""
+    done
+    check_ld "$@" <<EOF && enable $func
+$defs
+$incs
+long x;
+int main(void){
+    x=(long)$func;
+    return 0;
+}
+EOF
+    enabled $func && answer="yes" || answer="no"
+    echores $answer
+    enabled $func && return 0 || return 1
+}
+
+check_lib(){
+    log check_lib "$@"
+    header="$1"
+    func="$2"
+    shift 2
+    temp_extralibs "$@"
+    check_header $header && check_func $func && add_extralibs "$@"
+    err=$?
+    restore_flags
+    return $err
+}
+
+check_lib2(){
+    log check_lib2 "$@"
+    headers="$1"
+    func="$2"
+    shift 2
+    temp_extralibs "$@"
+    check_func2 "$headers" $func && add_extralibs "$@"
+    err=$?
+    restore_flags
+    return $err
+}
+
+check_lib3(){
+    log check_lib3 "$@"
+    defs="$1"
+    headers="$2"
+    func="$3"
+    shift 3
+    temp_extralibs "$@"
+    check_func3 "$defs" "$headers" $func && add_extralibs "$@"
+    err=$?
+    restore_flags
+    return $err
+}
+
+check_llib(){
+    log check_lib "$@"
+    header="$1"
+    func="$2"
+    shift 2
+    temp_extralibs "$@"
+    check_headerl $header && check_func $func && add_extralibs "$@"
+    err=$?
+    restore_flags
+    return $err
+}
+
+check_llib2(){
+    log check_llib2 "$@"
+    headers="$1"
+    func="$2"
+    shift 2
+    temp_extralibs "$@"
+    check_lfunc2 "$headers" $func && add_extralibs "$@"
+    err=$?
+    restore_flags
+    return $err
+}
+
+check_llib3(){
+    log check_llib3 "$@"
+    defs="$1"
+    headers="$2"
+    func="$3"
+    shift 3
+    temp_extralibs "$@"
+    check_lfunc3 "$defs" "$headers" $func && add_extralibs "$@"
+    err=$?
+    restore_flags
+    return $err
+}
+
+check_macro(){
+    echocheck "$1"
+    log check_macro "$@"
+    macro=$1
+    shift
+    disable $macro
+    check_cc "$@" <<EOF && enable $macro
+#ifndef $macro
+#error Macro $macro is undefined
+#endif
+int x;
+EOF
+    enabled $macro && answer="yes" || answer="no"
+    echores $answer
+    enabled $macro && return 0 || return 1
+}
+
+check_macro2(){
+    echocheck "$2"
+    log check_macro2 "$@"
+    headers=$1
+    macro=$2
+    shift 2
+    disable $macro
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include <$hdr>"
+    done
+    check_cc "$@" <<EOF && enable $macro
+$incs
+#ifndef $macro
+#error Macro $macro is undefined
+#endif
+int x;
+EOF
+    enabled $macro && answer="yes" || answer="no"
+    echores $answer
+    enabled $macro && return 0 || return 1
+}
+
+check_macro3(){
+    echocheck "$3"
+    log check_macro3 "$@"
+    defines=$1
+    headers=$2
+    macro=$3
+    shift 3
+    disable $macro
+    defs=""
+    for dfn in $defines; do
+        defs="$defs
+#define $dfn 1"
+    done
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include <$hdr>"
+    done
+    check_cc "$@" <<EOF && enable $macro
+$defs
+$incs
+#ifndef $macro
+#error Macro $macro is undefined
+#endif
+int x;
+EOF
+    enabled $macro && answer="yes" || answer="no"
+    echores $answer
+    enabled $macro && return 0 || return 1
+}
+
+check_lmacro2(){
+    echocheck "$2"
+    log check_lmacro2 "$@"
+    headers=$1
+    macro=$2
+    shift 2
+    disable $macro
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include "$hdr""
+    done
+    check_cc "$@" <<EOF && enable $macro
+$incs
+#ifndef $macro
+#error Macro $macro is undefined
+#endif
+int x;
+EOF
+    enabled $macro && answer="yes" || answer="no"
+    echores $answer
+    enabled $macro && return 0 || return 1
+}
+
+check_lmacro3(){
+    echocheck "$3"
+    log check_lmacro3 "$@"
+    defines=$1
+    headers=$2
+    macro=$3
+    shift 3
+    disable $macro
+    defs=""
+    for dfn in $defines; do
+        defs="$defs
+#define $dfn 1"
+    done
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include "$hdr""
+    done
+    check_cc "$@" <<EOF && enable $macro
+$defs
+$incs
+#ifndef $macro
+#error Macro $macro is undefined
+#endif
+int x;
+EOF
+    enabled $macro && answer="yes" || answer="no"
+    echores $answer
+    enabled $macro && return 0 || return 1
+}
+
+check_exec(){
+    check_ld "$@" && { enabled cross_compile || $TMPE >>"$TMPLOG" 2>&1; }
+}
+
+require(){
+    echocheck "$1"
+    name="$1"
+    header="$2"
+    func="$3"
+    shift 3
+    disable $name
+    check_lib $header $func "$@" && enable $name
+    answer="no"
+    enabled $name && answer="yes"
+    echores $answer
+}
+
+require2(){
+    echocheck "$1"
+    name="$1"
+    headers="$2"
+    func="$3"
+    shift 3
+    disable $name
+    check_lib2 "$headers" $func "$@" && enable $name
+    answer="no"
+    enabled $name && answer="yes"
+    echores $answer
+}
+
+require3(){
+    echocheck "$1"
+    name="$1"
+    headers="$2"
+    macros="$3"
+    func="$4"
+    shift 4
+    disable $name
+    check_macro2 "$headers" $macros && check_lib2 "$headers" $func "$@" && enable $name
+    answer="no"
+    enabled $name && answer="yes"
+    echores $answer
+}
+
+lrequire(){
+    echocheck "$1"
+    name="$1"
+    header="$2"
+    func="$3"
+    shift 3
+    disable $name
+    check_llib $header $func "$@" && enable $name
+    answer="no"
+    enabled $name && answer="yes"
+    echores $answer
+}
+
+lrequire2(){
+    echocheck "$1"
+    name="$1"
+    headers="$2"
+    func="$3"
+    shift 3
+    disable $name
+    check_llib2 "$headers" $func "$@" && enable $name
+    answer="no"
+    enabled $name && answer="yes"
+    echores $answer
+}
+
+lrequire3(){
+    echocheck "$1"
+    name="$1"
+    headers="$2"
+    macros="$3"
+    func="$4"
+    shift 4
+    disable $name
+    check_lmacro2 "$headers" $macros && check_lib2 "$headers" $func "$@" && enable $name
+    answer="no"
+    enabled $name && answer="yes"
+    echores $answer
+}
+
+check_foo_config(){
+    cfg=$1
+    pkg=$2
+    header=$3
+    func=$4
+    shift 4
+    disable $cfg
+    check_cmd ${pkg}-config --version
+    err=$?
+    if test "$err" = 0; then
+        temp_cflags `${pkg}-config --cflags`
+        temp_extralibs `${pkg}-config --libs`
+        check_lib "$@" $header $func && enable $cfg
+    fi
+    return $err
+}
+
+apply(){
+    file=$1
+    shift
+    "$@" < "$file" > "$file.tmp" && mv "$file.tmp" "$file" || rm "$file.tmp"
+}
+
+# Below is our OLD stuff
+
+cc_check() {
+  echo >> "$TMPLOG"
+  cat "$TMPC" >> "$TMPLOG"
+  echo >> "$TMPLOG"
+  ( check_cmd $_cc $CFLAGS $_inc_extra $_ld_static $_ld_extra "$TMPC" -o "$TMPO" "$@" ) >> "$TMPLOG" 2>&1
+  TMP="$?"
+  echo >> "$TMPLOG"
+  echo "ldd $TMPO" >> "$TMPLOG"
+  ( ldd "$TMPO" ) >> "$TMPLOG" 2>&1
+  echo >> "$TMPLOG"
+  return "$TMP"
+}
+
+# Display error message, flushes tempfile, exit
+die() {
+  log "Error: $@"
+  echo
+  echo "Error: $@" >&2
+  echo >&2
+  rmtmps
+  echo "Check "$TMPLOG" if you do not understand why it failed."
+  exit 1
+}
+
+mktmps() {
+TMPLOG="configure.log"
+rm -f "$TMPLOG"
+TMPC="$I/mplayerxp-conf-$RANDOM-$$.c"
+TMPCPP="$I/mplayerxp-conf-$RANDOM-$$.cpp"
+TMPO="$I/mplayerxp-conf-$RANDOM-$$.o"
+TMPE="$I/mplayerxp-conf-$RANDOM-$$.exe"
+TMPS="$I/mplayerxp-conf-$RANDOM-$$.S"
+TMPH="$I/mplayerxp-conf-$RANDOM-$$.h"
+}
+
+rmtmps() {
+  rm -f "$TMPO" "$TMPC" "$TMPS" "$TMPCPP" "$TMPH" "$TMPE"
+}
+
+# OS test booleans functions
+issystem() {
+  test "`echo $_host_os | tr A-Z a-z`" = "`echo $1 | tr A-Z a-z`"
+}
+linux()   { issystem "Linux-GNU"; return "$?" ; }
+sunos()   { issystem "SunOS"   ; return "$?" ; }
+hpux()    { issystem "HP-UX"   ; return "$?" ; }
+irix()    { issystem "IRIX"    ; return "$?" ; }
+aix()     { issystem "AIX"     ; return "$?" ; }
+cygwin()  { issystem "CYGWIN"  ; return "$?" ; }
+mingw32() { issystem "MINGW32" ; return "$?" ; }
+win32()   { cygwin || mingw32  ; return "$?" ; }
+freebsd() { issystem "FreeBSD" ; return "$?" ; }
+netbsd()  { issystem "NetBSD"  ; return "$?" ; }
+bsdos()   { issystem "BSD/OS"  ; return "$?" ; }
+openbsd() { issystem "OpenBSD" ; return "$?" ; }
+bsd()     { freebsd || netbsd || bsdos || openbsd ; return "$?" ; }
+qnx()     { issystem "QNX"     ; return "$?" ; }
+darwin()  { issystem "Darwin"  ; return "$?" ; }
+gnu()     { issystem "GNU"     ; return "$?" ; }
+morphos() { issystem "MorphOS" ; return "$?" ; }
+beos()    { issystem "BEOS"    ; return "$?" ; }
+
+# arch test boolean functions
+x86_32() {
+  case "$_host_arch" in
+    i*86|x86|x86pc|k5|k6|k6-2|k6-3|pentium*|athlon*)
+	return 0
+	;;
+    *)  return 1
+	;;
+  esac
+  return 1
+}
+
+x86_64() {
+  case "$_host_arch" in
+    x86_64|amd64)
+	return 0
+	;;
+    *)  return 1
+	;;
+  esac
+  return 1
+}
+
+x86() {
+  x86_32 && return 0
+  x86_64 && return 0
+  return 1
+}
+
+ppc() {
+  case "$_host_arch" in
+    ppc) return 0;;
+    *) return 1;;
+  esac
+}
+
+mips() {
+  case "$_host_arch" in
+    mips) return 0;;
+    *) return 1;;
+  esac
+}
+
+alpha() {
+  case "$_host_arch" in
+    alpha) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+arm() {
+  case "$_host_arch" in
+    arm) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+
+# not boolean test: implement the posix shell "!" operator for a
+# non-posix /bin/sh.
+#   usage:  not {command}
+# returns exit status "success" when the execution of "command"
+# fails.
+not() {
+  eval "$@"
+  test $? -ne 0
+}
+
+# Use this before starting a check
+echocheck() {
+  if test "$_echocheked" != "yes"; then
+  _echocheked=yes
+  echo "============ Checking for $@ ============" >> "$TMPLOG"
+  echo ${_echo_n} "Checking for $@ ... ${_echo_c}"
+  fi
+}
+
+# Use this to echo the results of a check
+echores() {
+  if test "$_echocheked" = "yes"; then
+  _echocheked=no
+  echo "Result is: $@" >> "$TMPLOG"
+  echo "##########################################" >> "$TMPLOG"
+  echo "" >> "$TMPLOG"
+  echo "$@"
+  fi
+}
+#############################################################################
+
+# Check how echo works in this /bin/sh
+case `echo -n` in
+  -n)	_echo_n=	_echo_c='\c'	;;	# SysV echo
+  *)	_echo_n='-n '	_echo_c=	;;	# BSD echo
+esac
+
+# Guessing target system
+guess_target() {
+echocheck "build system type"
+local config_mak=$1
+local config_h=$2
+config_guess="../config.guess"
+config_sub="../config.sub"
+if test -z "$_build" ; then
+_build=`$config_guess`
+test -z "$_build" && echores "cannot guess build type; you must specify one"
+fi
+# Canonize it
+$config_sub sun4 >/dev/null 2>&1 || echores "cannot run $_config_sub"
+_build=`$config_sub $_build`
+echores "$_build"
+_build_cpu=`echo $_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+_build_vendor=`echo $_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+_build_os=`echo $_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+echocheck "host system type"
+if test -z "$_host" ; then
+_host=$_build
+fi
+_host=`$config_sub $_host`
+_host_cpu=`echo $_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+_host_vendor=`echo $_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+_host_os=`echo $_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+echores "$_host"
+
+# Printout architecture
+case "$_host_cpu" in
+  i*86)
+  _host_arch="x86"
+  _icpu=`echo $_host_cpu | sed -n 's/^i\([0-9]*\)$/\1/p'`
+    ;;
+  *)
+  _host_arch=$_host_cpu
+  _icpu=$_host_cpu
+    ;;
+esac
+_def_words_endian='#define WORDS_BIGENDIAN 1'
+x86   && _def_words_endian="#undef WORDS_BIGENDIAN"
+arm   && _def_words_endian="#undef WORDS_BIGENDIAN"
+alpha && _def_words_endian="#undef WORDS_BIGENDIAN"
+
+_lc_host_arch=`echo $_host_arch | tr [:lower:] [:upper:]`
+_lc_host_os=`echo $_host_os | tr [:lower:] [:upper:]`
+_lc_host_sys=$_lc_host_os
+if win32 ; then
+_lc_host_os=WIN32
+_slibsuf=".dll"
+else
+_slibsuf=".so"
+fi
+#tune architecture
+x86_64 && _lc_host_arch="X86_64"
+x86_64 && _icpu="k8"
+x86_32 && _lc_host_arch="X86"
+x86_32 && _icpu="athlon" # it enables -m3dnowa support which can't be enabled through command line
+_lc_host_os=`echo $_lc_host_os | sed 's/[^A-Za-z0-9_]/_/g'`
+
+cat > $config_mak << EOF
+# -------- Generated by guess_target() -----------
+TARGET_OS = $_lc_host_os
+TARGET_SYS = $_lc_host_sys
+TARGET_ARCH_$_lc_host_arch = yes
+TARGET_CPU = $_icpu
+SLIBSUF = $_slibsuf
+EOF
+
+cat > $config_h << EOF
+/* -------- Generated by guess_target() ----------- */
+#ifndef MPXP_CONFIG_ARCH
+#define MPXP_CONFIG_ARCH 1
+#define ARCH_$_lc_host_arch 1
+#define __CPU__ $_icpu
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+$_def_words_endian
+#define TARGET_$_lc_host_os 1
+#define SLIBSUFFIX "$_slibsuf"
+EOF
+
+case "$_lc_host_arch" in
+  X86)
+    echo "#define ARCH_X86_32 1" >> $config_h
+    ;;
+  *)
+    ;;
+esac
+}
+
+
+test_optimizations() {
+local config_mak=$1
+local config_h=$2
+
+
+_locarch="-O3"
+if x86_64 ; then
+_locarch="-march=$_icpu -m64 $_locarch"
+add_ldflags -m64
+add_asflags --64
+elif x86_32 ; then
+_locarch="-march=$_icpu -m32 $_locarch"
+add_ldflags -m32
+add_asflags --32
+fi
+
+if test "$_profile" || test "$_debug" ; then
+  CFLAGS="-O2 -fno-builtin $_dbg_flags $_debug $_profile"
+elif test -z "$CFLAGS" ; then
+  CFLAGS="$_locarch -ffast-math"
+  mips   || CFLAGS="$CFLAGS -pipe"
+  x86_32 && CFLAGS="$CFLAGS -fomit-frame-pointer"
+# -fomit-frame-pointer is not needed for x86_64
+fi
+check_cflags -mtune=generic
+
+disable _mmx_test
+x86_32 && enable _mmx_test
+_def_mmx=
+_def_mmx2=
+_def_3dnow=
+_def_3dnow2=
+_def_sse=
+_def_sse2=
+_def_sse3=
+_def_ssse3=
+_def_sse3=
+_def_avx=
+if enabled _mmx_test ; then
+check_cflags -mmmx	&& _def_mmx='#define CAN_COMPILE_MMX 1'
+check_cflags -m3dnow	&& _def_3dnow='#define CAN_COMPILE_3DNOW 1'
+check_cflags -msse	&& _def_sse='#define CAN_COMPILE_SSE 1'
+check_cflags -msse2	&& _def_sse2='#define CAN_COMPILE_SSE2 1'
+check_cflags -msse3	&& _def_sse3='#define CAN_COMPILE_SSE3 1'
+check_cflags -mssse3	&& _def_ssse3='#define CAN_COMPILE_SSSE3 1'
+check_cflags -msse4	&& _def_sse4='#define CAN_COMPILE_SSE4 1'
+check_cflags -mavx	&& _def_avx='#define CAN_COMPILE_AVX 1'
+_fpu_clob='#define FPU_CLOBBERED "st","st(1)","st(2)","st(3)","st(4)","st(5)","st(6)","st(7)"'
+_mmx_clob='#define MMX_CLOBBERED "mm0","mm1","mm2","mm3","mm4","mm5","mm6","mm7"'
+_sse_clob='#define SSE_CLOBBERED "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5","xmm6","xmm7"'
+fi
+if test -n "$_def_3dnow" || test -n "$_def_sse" ; then
+_def_mmx2='#define CAN_COMPILE_MMX2 1'
+fi
+
+cat >> $config_h << EOF
+/* Extension defines */
+$_def_mmx
+$_def_mmx2
+$_def_3dnow
+$_def_sse
+$_def_sse2
+$_def_sse3
+$_def_ssse3
+$_def_sse4
+$_def_avx
+$_fpu_clob
+$_mmx_clob
+$_sse_clob
+EOF
+
+if (alpha) ; then
+  echocheck "CPU type"
+cat > $TMPC << EOF
+int main(void) {
+    unsigned long ver, mask;
+    asm ("implver %0" : "=r" (ver));
+    asm ("amask %1, %0" : "=r" (mask) : "r" (-1));
+    printf("%ld-%x\n", ver, ~mask);
+    return 0;
+}
+EOF
+  _def_mvi='#undef HAVE_MVI'
+  $_cc -o "$TMPO" "$TMPC"
+  _lc_ver_mask=`$TMPO`
+  case "$_lc_ver_mask" in
+    0-0) proc="ev4" ;;
+    1-0) proc="ev5" ;;
+    1-1) proc="ev56" ;;
+    1-101) proc="pca56"; _def_mvi='#define HAVE_MVI 1' ;;
+    2-303) proc="ev6"; _def_mvi='#define HAVE_MVI 1' ;;
+    2-307) proc="ev67"; _def_mvi='#define HAVE_MVI 1' ;;
+    2-1307) proc="ev68"; _def_mvi='#define HAVE_MVI 1' ;;
+  esac
+  echores "$proc"
+cat >> $config_h << EOF
+$_def_mvi
+EOF
+fi
+cat >> $config_h << EOF
+#endif /* MPXP_CONFIG_ARCH */
+EOF
+}

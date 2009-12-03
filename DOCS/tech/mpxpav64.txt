@@ -1,0 +1,459 @@
+
+                             MPXPAV64
+			     ========
+		MPlayerXP's 64-bit Audio-Video container
+			   
+			   Specification
+			   -------------
+			(Public draft v2.1)
+			 
+Disclaimer
+==========
+This document presumes a basic level of multimedia and networking
+knowledge on the part of the reader. Anyone not familiar with
+basic multimedia concepts such as audio and video compression,
+multimedia synchronization, and so on. may misunderstand some of
+the terminology or arguments presented in this document.
+
+What is MPXPAV64?
+=================
+MPlayerXP's 64-bit Audio-Video container is extensible file format
+designed to store synchronized multimedia data. The main explicit goal
+of MPXPAV64 design is *COMPACTNESS* of multimedia data storing. Each
+MPXPAV64 file is composed of one or more media streams. The presentation
+of all media stream data is synchronized to a common timebase. MPXPAV64
+maybe extended to store any media streams. Finally, MPXPAV64 was designed
+to support the transmission of "live content" over a network. This use
+explicitly and solely means that information describing the multimedia
+content must have been received before the multimedia data itself is
+received. Specifically, this use explicitly does not refer to (or
+contain) any information about network control protocols or network
+transmission protocols. It refers solely to the order of information
+arrival (header semantics before data) and the data format.
+
+Comparison of MPXPAV64 with other formats
+==========================================
+
+1. Regardless the fact, that RIFF AVI is most compact universal container
+it has several lacks:
+  - it's limited by 2Gb file boundary (Except ODML AVIX extension).
+  - it lacks PTS info for each frame so for irrational FPS values
+    A-V resynchronization is guaranteed.
+  - it has redundant information per frame chunk: ckid|size32 per frame in
+    LISTmovi chunk + ckid|flags|off32|len32 in index entries so totally we
+    have 24 bytes per frame of additional information. With MPXPAV64 we have
+    2-16 bytes per frame of additional information (these bytes contains
+    key-frame info + pts which are lost in RIFF AVI format).
+    Regular movie has 1h30min. With 25fps we have 135000 video frames.
+    So MPXPAV64 will have on ~4-6Mb less size than AVI.
+    (Index chunk of MPXPAV64 will take ~8Kb for such movie).
+  - MPXPAV64 is better then RIFFwav container for audio only streams too!
+    It makes audio streams seek-able for any type of audio codecs.
+2. ASF fixes all lacks of AVI format except the fact that it should have
+fixed packet size that causes dramatical growing of file size.
+3. MOV does not support the transmission of "live content" over a network.
+This means that you need to download whole file before watching movie.
+4. RealMedia (rm) has 16-bit limitation for packets and explicitly is not
+ready for HDTV content.
+5. MPG was designed to contain mpeg video and audio streams and not ready
+for any codecs.
+6. Matroska is too complex format (like .MOV) with many useless elements
+of internal structures. I would say it has codec depended elements so
+parser should know and handle almost all codec types that's wrong from
+media container point of view.
+
+Goals of MPXPAV64
+=================
+
+1) Compactness!!! See above
+2) 64-bitness!!! MPXPAV64 is genuine 64-bit file format. It allows to
+contain frames with more than 4Gb size! It supports 64-bit PTS that
+allows to contain movies with playback time up to eternity ;)
+3) PTS-basing!!! MPXPAV64 provides PTS-info for each frame like ASF.
+Thus, implements common timebase for each stream.
+4) Transmission!!! MPXPAV64 provides efficient playback from media
+servers, HTTP servers, and local storage devices.
+5) Extensibility!!! MPXPAV64 format provides sufficient flexibility
+to define new media types.
+6) Scalable Media Types!!! MPXPAV64 is designed to express the
+dependency relationships between logical "bands" of scalable media
+types. It stores each band as a distinct media stream. Dependency
+information among these media streams is stored in the stream headers.
+7) Multiple Languages!!! MPXPAV64 is designed to support multiple
+languages. Media streams can  optionally indicate the language of the
+contained media. This feature is typically used for audio or text streams.
+A multi-lingual ASF file indicates that a set of media streams contains
+different language versions of the same content, allowing an
+implementation to choose the most appropriate version for a given client.
+8) Audio tracks/DVD's chapters support!!! MPXPAV64 may contain information
+about chapters of one movie or to be used as collection of songs or movies.
+
+MPXPAV64 rules
+==============
+- All data are stored in Little Endian order!
+- All numbers are counted from zero. (like in C-language: first element of
+  array has index 0).
+- Logically MPXPAV64 files are composed of 3-levels:
+  * Header which contains description of media data
+  * Media data itself
+  * Indexes (very optional)
+  It's possible to change order of data and indexes without breaking transmission
+  goal but that will require second pass of multiplexing.
+
+/== offset: 0 =============================================\
+||MPXPAV64|mpxpavsize64                                     |
+|/-- offset: 16 -------------------------------------------\|
+||HEADER64|HeaderSize64                                    ||
+||FPRP|size32|FileProperties                               ||
+||FCNT|size32|FileContentDesc                              ||
+||ST64|size32|type|dataoff64|idxoff64|StreamProp|StreamDesc||
+||...                                                      ||
+||ST64|size32|type|dataoff64|idxoff64|StreamProp|StreamDesc||
+|\-- offset: HeaderSize64+32 ------------------------------/|
+|/-- offset: HeaderSize64+32 ----------\                    |
+||AVDATA64|DataSize64                  |                    |
+||SEEKx|stn|size|pts|streamdata of size|                    |
+||dx|stn|size|pts|stream data of size32|                    |
+||Dx|stn|size|pts|stream data of size32|                    |
+||dx|stn|size|pts|stream data of size32|                    |
+||...                                  |                    |
+||SEEKx|stn|size|pts|streamdata of size|                    |
+|\- offset: HeaderSize64+DataSize64+48 /                    |
+|/---------------\    /-----------------------\             |
+||IX32|size32|stn| or |INDEX_64|IdxSize64|stn |             |
+||keyframe0_off32|    |videokeyframe0_offset64|             |
+||keyframe1_off32|    |videokeyframe1_offset64|             |
+||...            |    |...                    |             |
+||keyframeZ_off32|    |videokeyframeZ_offset64|             |
+|\---------------/    \-----------------------/             |
+|/---------------\    /-----------------------\             |
+||IX32|size32|stn| or |INDEX_64|IdxSize64|stn |             |
+||keyframe0_off32|    |videokeyframe0_offset64|             |
+||keyframe1_off32|    |videokeyframe1_offset64|             |
+||...            |    |...                    |             |
+||keyframeZ_off32|    |videokeyframeZ_offset64|             |
+|\---------------/    \-----------------------/             |
+\== offset: mpxpavsize64+16 ================================/
+
+MPXPAV64
+========
+Identifies begin of media file.
+
+HEADER64
+========
+Identifies begin of file and stream descriptors.
+
+FPRP (must be present)
+====
+This object defines the global characteristics of the combined media
+streams found within the Data Object.
+
+struct FileProperties
+{
+    uint64_t num_packets;  //Number of 'SEEK(Dd)x' packets
+    uint64_t num_bytes;    //Total size of media (Sum of all 'SEEK(Dd)x' in bytes).
+    uint64_t flags;        //Flags
+			   // 0x0000000000000000 - FCNT has UTF-7 format
+			   // 0x0000000000000001 - FCNT has UTF-8 format
+			   // 0x0000000000000002 - FCNT has UTF-16LE format
+			   // 0x0000000000000003 - FCNT has UTF-32LE format
+			   // other bits are resevred and must be set to 0
+    uint64_t PlayDuration; //Timestamp of the end position of media (in milliseconds)
+    uint32_t Preroll;      //Timestamp of the first position of media (in milliseconds)
+    uint32_t MaxBitrate;   //Maximum bit-rate of the media (sum of all the stream in bytes/s)
+    uint32_t AveBitrate;   //Average bit-rate of the media (sum of all the stream in bytes/s)
+    uint16_t StreamCount;  //Number of StreamProp Objects
+}
+
+FCNT (if size32 is 0 then omitted)
+====
+This object permits authors to record human-readable, pertinent data about
+the file and its contents.
+
+do
+FileContentDesc
+{
+    uint32_t fourcc; // see below
+    uint16_t size16; // size of value in bytes
+    uint16_t utf16_value[size16/2]; /* codepage: UTF-16LE */
+}
+while(ftello()<FCNT.size);
+
+File Content FOURCCs
+--------------------
+ALBM - Name of album where track was found.
+AUTH - Author of movie/song.
+AWAR - Awards
+CMTS - Commentaries in free form
+CPYR - Describes the copyright information for the file.
+CRDR - Media (not the file) creation date (Release date).
+DESC - Description of media content.
+ENGN - Stores the of the engineer who worked on the file
+GENR - Genre of media (rock/pop/alternative ... drama/adult)
+IURL - Official media web-page
+KWDS - Describes a list of keywords that refer to the file
+LNGS - List of languages.
+MAIL - e-mail of vendor/media provider.
+MIME - mime-type of media
+NAME - Name of movie/song.
+ORGF - Original filename
+PHON - Phone of vendor/media provider.
+RATE - Media rating
+SOFT - Software encoder's name
+SRCM - Source media where media was found.
+SUBJ - Subject. Describes the contents of the file.
+TAUD - Target audience
+TRCK - Song track number/name.
+TECH - Identifies the technician who digitized the subject file
+UEAN - Universal Product Code/European Article Number ("bar code")
+UFID - Unique file identifier
+USID - Unique source media(CD/DVD) identifier
+USRD - User-defined information
+...
+Any user-defined FOURCCs here
+
+
+ST64
+====
+Identifies begin of stream descriptor
+
+type      - Standard stream types fourcc:
+	    'vids' - describes Video streams
+		     Stream is used to provide video information to be displayed
+		     on TV or PC's monitor.
+	    'auds' - describes Audio streams
+		     Stream is used to provide audio information to be played
+		     on speakers.
+	    'mids' - describes MIDI streams
+		     Stream is used to provide MIDI information to be played
+		     on speakers.
+	    'txts' - describes TEXT/SUBTITLE streams
+		     Stream is used to provide text information to be rendered
+		     on TV or PC's monitor in form of subtitles which optionally
+		     may contain XY-position, color, overlay mask.
+	    'trks' - describes Audio tracks/DVD's chapters streams
+		     (like Marker Object in ASF).
+		     Stream is used to provide named "jump points" within a file.
+		     This allows a content author to divide a piece of content
+		     into logical sections such as song boundaries in an entire
+		     CD or topic changes during a long presentation, and to
+		     assign a human-readable name to each section of a file. This
+		     index information is then available to the client to permit
+		     the user to "jump" directly to those points within the
+		     presentation.
+	    'pics' - describes PICTURE streams
+		     Stream is used to provide one or more logical Image files
+		     which can be displayed during audio playback for example.
+		     This stream can be used alsa as still-frames of DVD's menu.
+	    ... [any user defined types here]
+dataoff64 - offset from beginning of file to first SEEKx record for this stream.
+idxoff64  - offset from beginning of file to INDEX_64 record for this stream.
+	    (if idxoff64==0 then no indexes are present for this stream)
+StreamProp- describes the specific properties and characteristics of a media
+	    stream.
+	    struct StreamProp
+	    {
+		uint64_t num_packets;  //Number of 'SEEK(Dd)x' packets of this stream type
+		uint64_t num_bytes;    //Number of 'SEEK(Dd)x' bytes of this stream type
+		uint64_t flags;        //Flags
+				       // 0x0000000000000000 all bits must set to 0.
+		uint64_t PlayDuration; //Timestamp of the end position (in milliseconds)
+		uint32_t Preroll;      //Timestamp of the first position (in milliseconds)
+		uint32_t MaxPacketSize;//Maximum packet size (in bytes)
+		uint32_t AvePacketSize;//Average packet size (in bytes)
+		uint32_t MinPacketSize;//Average packet size (in bytes)
+		uint32_t MaxFrameDuration;//Maximum packet size (in seconds/pts_rate)
+		uint32_t AveFrameDuration;//Average packet size (in seconds/pts_rate)
+		uint32_t MinFrameDuration;//Average packet size (in seconds/pts_rate)
+		uint32_t MaxBitrate;   //Maximum bit-rate of the media (in bytes/s)
+		uint32_t AveBitrate;   //Average bit-rate of the media (in bytes/s)
+		uint32_t MinBitrate;   //Average bit-rate of the media (in bytes/s)
+		uint64_t pts_rate;     //Denominator of PTS fields to get time in seconds (default: 1000)
+		uint64_t size_scaler;  //Numerator of SIZE fields to get size in bytes (default: 1)
+		uint8_t  mimetype_len; //length of mime-type
+		uint8_t  ascii[mimetype_len];//mime-type: 'video/x-video', 'audio/x-audio', 'text/x-text'
+	    }
+	    Note:
+		- Non default values for pts_rate are useful when you want to write precision
+		  media dump. (Most probably it's shouldn't be great than sample-rate for audio
+		  streams and less than 1/fps for video streams).
+		- Non default values for size_rate are useful when stream consists from
+		  fixed-length packets (CBR mp3 for example) or when packets have guaranteed
+		  granularity of size.
+
+do
+StreamDesc	// describes type specific properties and characteristics of a media stream.
+{
+    uint32_t fourcc;
+    uint32_t size32;
+    uint8_t  data[size32];
+}
+while(ftello()<ST64.size);
+
+For different stream types maybe available limited kind of fourccs:
+switch (type)
+{
+    case FOURCC('vids'): // video stream
+	switch(fourcc)
+	{
+	    case FOURCC('BIH '): // means BITMAPINFOHEADER
+	    case FOURCC('vprp'): // means VideoPropHeader
+	    case FOURCC('IMGD'): // means ImageDesc
+	    case FOURCC('conc'): // means stream concealment
+	    case FOURCC('mime'): // means mime type. Example: x-pn-realvideo
+	    default: // any user defined fourcc here
+	}
+    case FOURCC('auds'): // audio stream
+	switch(fourcc)
+	{
+	    case FOURCC('WAVE'): // means WAVEFORMATEX
+	    case FOURCC('conc'): // means stream concealment
+	    case FOURCC('mime'): // means mime type. Example: x-pn-realaudio
+	    case FOURCC('LANG'): // means Language. Ex: en_US, ru_RU
+	    case FOURCC('FRCC'): // means Audio FOURCC. Note wFormatTag is not enough for many formats!
+	    default: // any user defined fourcc here
+	}
+    case FOURCC('txts'): // subtitle/text stream
+	switch(fourcc)
+	{
+	    case FOURCC('LANG'): // means Language: Ex: en_US, ru_RU.KOI8-R, zh_TW.BIG5
+	    default: // any user defined fourcc here
+	}
+    case FOURCC('mids'): // MIDI stream
+	switch(fourcc)
+	{
+	    default: // any user defined fourcc here
+	}
+    case FOURCC('pics'): // Pictures stream
+	switch(fourcc)
+	{
+	    case FOURCC('BIH '): // means BITMAPINFOHEADER
+	    case FOURCC('vprp'): // means VideoPropHeader
+	    case FOURCC('IMGD'): // means ImageDesc
+	    default: // any user defined fourcc here
+	}
+    case FOURCC('trks'): // Audio tracks/DVD's chapters description stream
+	switch(fourcc)
+	{
+	    default: // any user defined fourcc here
+	}
+}
+
+AVDATA64
+========
+Identifies begin of media data
+
+SEEK(Dd)x
+========
+Identifies begin of frame record
+
+SEEK/D/d  - indicate key-frame(SEEK-point or D) or non-keyframe(d)
+	    D differs from SEEK by meaning that it's non seekable key-frame.
+	    Non seekable keyframes were caused by compactness goals
+	    (Some streams provide 1 key-frame every 3-5 frames).
+	    'D' key-frame has the same behaviour as 'd' frame. (Means,
+	    doesn't require full PTS, may lose stream_id, length fields).
+
+x	  - flags. Flags indicates:
+	    (x&0x03)>>0 indicates length of size field:
+	     0 - size is represented as 1-byte field
+	     1 - size is represented as 2-byte field
+	     2 - size is represented as 4-byte field
+	     3 - size is represented as 8-byte field
+	    (x&0x0C)>>2 indicates length of pts field:
+	     0 - pts is represented as 1-byte field
+	     1 - pts is represented as 2-byte field
+	     2 - pts is represented as 4-byte field
+	     3 - pts is represented as 8-byte field
+	    (x&0x10) - stn has 16-bit length if set else 8-bit length
+	    (x&0x20) indicates that PTS field is present
+	     else PTS field has the same delta as in prev packet.
+	     !(x&0x20) is illegal for keyframes same as for 1-st
+	     D-packet of non-video type after SEEK-packet.
+	    (x&0x40) indicates that length field is present
+	     else length field has the same size as in prev packet of
+	     this stream type. !(x&0x40) is illegal for keyframes
+	     same as for 1-st D-packet of non-video type after
+	     SEEK-packet.
+	    (x&0x80) indicates that stream id fields is present
+	     else stream id has the same value as in prev packet in file.
+	     !(x&0x80) is illegal for keyframes same as for 1-st
+	     D-packet of non-video type after SEEK-packet.
+stn       - stream number. First stream has number 0.
+size      - size of frame. Every SEEK(D)x record must contain one frame!
+	    size of field in bytes is
+		size*stream_prop.size_scaler
+pts       - Presentation time-stamp of this frame in
+		seconds/stream_prop.pts_rate!
+	    if size of pts field is 4 or 8 bytes then it contains explicit PTS
+	    of the frame
+	    else 
+	     if size of pts is 1 or 2 bytes then it contains duration of
+	     previous frame in seconds/stream_prop.pts_rate. To compute PTS of
+	     this frame you need duration of previous frame to PTS of previous frame.
+	    Note: Every video key-frame (x&0x80) must contain explicit PTS!
+	          I.e. if(x&0x80 && ((x>>2)&0x04<4)) then this is illegal
+		  record for video streams!
+		  if(x&0x80 && (x&0x60==0)) then illegal record!
+	    Note2:First frame which follows immediately after video
+		  key-frame must have stream_id and size fields!
+		  if(was_keyframe && (x&0x60==0)) then illegal record!
+	    Note2:First non-video frame which follows immediately after video
+		  key-frame must contain explicit PTS!
+
+IX32 
+====
+Identifies block of 32-bit indexes.
+Note! It's an very optional record. Parser must have possibility to perform
+seeking without this block!!!
+Note2: This block can be used only when total size of AVDATA64 is less than 4Gb
+
+    stn   - unique 32-bit stream identifier which is binded to STREAM64 descriptor.
+off32     - array of 32-bit offsets from begin of file to SEEKx records which
+	    contain key-frame
+Note:       Every record of IX32 block should describe video key-frame only!!!
+	    Main goal of this block is speedup of SEEKing operations.
+
+INDEX_64 
+========
+Identifies block of indexes.
+Note! It's an very optional record. Parser must have possibility to perform
+seeking without this block!!!
+
+    stn   - unique 32-bit stream identifier which is binded to STREAM64 descriptor.
+offset64  - array of offsets from begin of file to SEEKx records which contain
+	    key-frame
+Note:       Every record of INDEX_64 block should describe video key-frame only!!!
+	    Main goal of this block is speedup of SEEKing operations.
+
+Hint: For pure audio it is far enough to put only 1 'SEEKx' record:
+SEEK aud10FFF0000audio data 986'895 bytes in length with PTS 0 + fileprop.preroll...
+But if you want to keep stream seekable for any generic codec types then
+you need to keep packetized structure of file.
+
+Seeking:
+1) Please compute place where you need to seek as 
+   (userdef_time-fileprop.Preroll)*fileprop.AveBitrate
+2) Perform stream reading until 'SEEKx' bytes will not be readed!
+3) Be sure that SEEKx is a part of frame's data:
+   - read 'stn' and make sure that this is less than fileprop.stream_number!
+   - read size and make sure that next record is beginning with DATx fourcc!
+   - read pts and make sure that it's less than fileprop.PlayDuration!
+   - please test x field of SEEKx bytes!
+   - Synchronization: please make such tests for the next 5-6 records!
+     If everything fine then you are staying on begin of DATA record.
+   - All what you need after that is to read 'Dx' or 'dx' records until 'SEEKx'
+     record is not meet again and pts32 < user_time. (Probably, every audio
+     frame may be packet into 'SEEKx' or 'Dx' packet ;)
+   - Make sure that next audio frame after SEEKable video key-frame has explicit
+     id, size, PTS!
+Note: such technique of stream positioning will take less than 1 sec on modern
+	computers!
+Note2: to synchronize .mp3 stream is far enough 2-byte identifier of mp3 header.
+       Guess that 4-byte 'SEEK' identifier is enough reliable stream synchronizer.
+---------------------------------------------------------------------------------
+GNU Free Documentation License
+Version 1.2, November 2002
+
+STATUS: betta! Changes are possible
+---------------------------------------------------------------------------------
