@@ -31,36 +31,71 @@ extern int mplayer_audio_read(char *buf,int size);
 extern int fakemono;
 static sh_audio_t* dec_audio_sh=NULL;
 
-static void (*MP3_Init_ptr)(int fakemono,unsigned accel,int (*audio_read)(char *buf,int size),const char *param);
-#define MP3_Init(a,b,c,d) (*MP3_Init_ptr)(a,b,c,d)
-static int (*MP3_DecodeFrame_ptr)(unsigned char *hova,short single,float *pts);
-#define MP3_DecodeFrame(a,b,c) (*MP3_DecodeFrame_ptr)(a,b,c)
-static void (*MP3_PrintHeader_ptr)(void);
-#define MP3_PrintHeader() (*MP3_PrintHeader_ptr)()
+static void (*mpg123_init_ptr)(void);
+#define mpg123_init() (*mpg123_init_ptr)()
+static void (*mpg123_exit_ptr)(void);
+#define mpg123_exit() (*mpg123_exit_ptr)()
+static mpg123_handle * (*mpg123_new_ptr)(const char* decoder, int *error);
+#define mpg123_new(a,b) (*mpg123_new_ptr)(a,b)
+static void (*mpg123_delete_ptr)(mpg123_handle *mh);
+#define mpg123_delete(a) (*mpg123_delete_ptr)(a)
 
-static int (*MP3_channels_ptr);
-static int (*MP3_ave_bitrate_ptr);
-static int (*MP3_samplerate_ptr);
+static const char* (*mpg123_plain_strerror_ptr)(int errcode);
+#define mpg123_plain_strerror(a) (*mpg123_plain_strerror_ptr)(a)
+static int (*mpg123_open_feed_ptr)(mpg123_handle *mh);
+#define mpg123_open_feed(a) (*mpg123_open_feed_ptr)(a)
+static int (*mpg123_close_ptr)(mpg123_handle *mh);
+#define mpg123_close(a) (*mpg123_close_ptr)(a)
+static int (*mpg123_read_ptr)(mpg123_handle *mh, unsigned char *outmemory, size_t outmemsize, size_t *done);
+#define mpg123_read(a,b,c,d) (*mpg123_read_ptr)(a,b,c,d)
+static int (*mpg123_feed_ptr)(mpg123_handle *mh, const unsigned char *in, size_t size);
+#define mpg123_feed(a,b,c) (*mpg123_feed_ptr)(a,b,c)
+static int (*mpg123_decode_ptr)(mpg123_handle *mh, const unsigned char *inmemory, size_t inmemsize,
+                         unsigned char *outmemory, size_t outmemsize, size_t *done);
+#define mpg123_decode(a,b,c,d,e,f) (*mpg123_decode_ptr)(a,b,c,d,e,f)
+static int (*mpg123_getformat_ptr)(mpg123_handle *mh, long *rate, int *channels, int *encoding);
+#define mpg123_getformat(a,b,c,d) (*mpg123_getformat_ptr)(a,b,c,d)
+static int (*mpg123_param_ptr)(mpg123_handle *mh, enum mpg123_parms type, long value, double fvalue);
+#define mpg123_param(a,b,c,d) (*mpg123_param_ptr)(a,b,c,d)
+static int (*mpg123_info_ptr)(mpg123_handle *mh, struct mpg123_frameinfo *mi);
+#define mpg123_info(a,b) (*mpg123_info_ptr)(a,b)
+static const char* (*mpg123_current_decoder_ptr)(mpg123_handle *mh);
+#define mpg123_current_decoder(a) (*mpg123_current_decoder_ptr)(a)
+
 
 static void *dll_handle;
 static int load_dll(const char *libname)
 {
   if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  MP3_DecodeFrame_ptr = ld_sym(dll_handle,"MP3_DecodeFrame");
-  MP3_Init_ptr = ld_sym(dll_handle,"MP3_Init");
-  MP3_PrintHeader_ptr = ld_sym(dll_handle,"MP3_PrintHeader");
-  MP3_channels_ptr = ld_sym(dll_handle,"MP3_channels");
-  MP3_ave_bitrate_ptr = ld_sym(dll_handle,"MP3_ave_bitrate");
-  MP3_samplerate_ptr = ld_sym(dll_handle,"MP3_samplerate");
-  return MP3_DecodeFrame_ptr && MP3_Init_ptr && MP3_PrintHeader_ptr &&
-	 MP3_channels_ptr && MP3_ave_bitrate_ptr && MP3_samplerate_ptr;
+  mpg123_init_ptr = ld_sym(dll_handle,"mpg123_init");
+  mpg123_exit_ptr = ld_sym(dll_handle,"mpg123_exit");
+  mpg123_new_ptr = ld_sym(dll_handle,"mpg123_new");
+  mpg123_delete_ptr = ld_sym(dll_handle,"mpg123_delete");
+  mpg123_plain_strerror_ptr = ld_sym(dll_handle,"mpg123_plain_strerror");
+  mpg123_open_feed_ptr = ld_sym(dll_handle,"mpg123_open_feed");
+  mpg123_close_ptr = ld_sym(dll_handle,"mpg123_close");
+  mpg123_getformat_ptr = ld_sym(dll_handle,"mpg123_getformat");
+  mpg123_param_ptr = ld_sym(dll_handle,"mpg123_param");
+  mpg123_info_ptr = ld_sym(dll_handle,"mpg123_info");
+  mpg123_current_decoder_ptr = ld_sym(dll_handle,"mpg123_current_decoder");
+  mpg123_decode_ptr = ld_sym(dll_handle,"mpg123_decode");
+  mpg123_read_ptr = ld_sym(dll_handle,"mpg123_read");
+  mpg123_feed_ptr = ld_sym(dll_handle,"mpg123_feed");
+  return mpg123_decode_ptr && mpg123_init_ptr && mpg123_exit_ptr &&
+	 mpg123_new_ptr && mpg123_delete_ptr && mpg123_plain_strerror_ptr &&
+	 mpg123_open_feed_ptr && mpg123_close_ptr && mpg123_getformat_ptr &&
+	 mpg123_param_ptr && mpg123_info_ptr && mpg123_current_decoder_ptr &&
+	 mpg123_read_ptr && mpg123_feed_ptr;
 }
 
 
 int preinit(sh_audio_t *sh)
 {
+  int rval;
   sh->audio_out_minsize=9216;
-  return load_dll(codec_name("libMP3"SLIBSUFFIX));
+  rval = load_dll("libmpg123"SLIBSUFFIX); /* try standard libmpg123 first */
+  if(!rval) rval = load_dll(codec_name("libMP3"SLIBSUFFIX)); /* if fail then fallback to internal codec */
+  return rval;
 }
 
 extern char *audio_codec_param;
@@ -68,21 +103,76 @@ int init(sh_audio_t *sh)
 {
   // MPEG Audio:
   float pts;
+  long param,rate;
+  size_t indata_size,done;
+  int err=0,nch,enc;
+  unsigned char *indata;
+  struct mpg123_frameinfo fi;
   dec_audio_sh=sh; // save sh_audio for the callback:
   sh->samplesize=4;
   sh->sample_format=AFMT_FLOAT32;
-  MP3_Init(fakemono,mplayer_accel,&mplayer_audio_read,audio_codec_param);
-  *MP3_samplerate_ptr=*MP3_channels_ptr=0;
-  sh->a_buffer_len=MP3_DecodeFrame(sh->a_buffer,-1,&pts);
-  sh->channels=2; // hack
-  sh->samplerate=*MP3_samplerate_ptr;
-  sh->i_bps=*MP3_ave_bitrate_ptr/8;
-  MP3_PrintHeader();
+  mpg123_init();
+  sh->context = mpg123_new(NULL,&err);
+  if(err) {
+    err_exit:
+    MSG_ERR("mpg123_init: %s\n",mpg123_plain_strerror(err));
+    if(sh->context) mpg123_delete(sh->context);
+    mpg123_exit();
+    return 0;
+  }
+  if((err=mpg123_open_feed(sh->context))!=0) goto err_exit;
+  param = MPG123_FORCE_STEREO|MPG123_FORCE_FLOAT;
+  if(!verbose) param|=MPG123_QUIET;
+  mpg123_param(sh->context,MPG123_FLAGS,param,0);
+  // Decode first frame (to get header filled)
+  err=MPG123_NEED_MORE;
+  while(err==MPG123_NEED_MORE) {
+    indata_size=ds_get_packet_r(sh->ds,&indata,&pts);
+    mpg123_feed(sh->context,indata,indata_size);
+    err=mpg123_read(sh->context,sh->a_buffer,sh->a_buffer_size,&done);
+  }
+  if(err!=MPG123_NEW_FORMAT) {
+    MSG_ERR("mpg123_init: within [%d] can't retrieve stream property: %s\n",indata_size,mpg123_plain_strerror(err));
+    mpg123_close(sh->context);
+    mpg123_delete(sh->context);
+    mpg123_exit();
+    return 0;
+  }
+  mpg123_getformat(sh->context, &rate, &nch, &enc);
+  sh->samplerate = rate;
+  sh->channels = nch;
+  mpg123_info(sh->context,&fi);
+  sh->i_bps=fi.abr_rate?fi.abr_rate:fi.bitrate;
+  // Prints first frame header in ascii.
+  {
+    static const char *modes[4] = { "Stereo", "Joint-Stereo", "Dual-Channel", "Mono" };
+    static const char *layers[4] = { "???" , "I", "II", "III" };
+    static const char *vers[4] = { "1.0", "2.0", "2.5", "???" };
+    static const char *xbr[4]  = { "CBR", "VBR", "ABR", "???" };
+
+    MSG_INFO("\rmpg123_init: MPEG-%s [Layer:%s (%s)], Hz=%d %d-kbit %s, BPF=%d Out=32-bit\n"
+	,vers[fi.version&0x3]
+	,layers[fi.layer&0x3]
+	,xbr[fi.vbr&0x3]
+	,fi.rate
+	,sh->i_bps
+	,modes[fi.mode&0x3]
+	,fi.framesize);
+    MSG_INFO("mpg123_init: Copyrght=%s Orig=%s CRC=%s Priv=%s Emphas=%d Optimiz=%s\n"
+	,fi.flags&MPG123_COPYRIGHT?"Yes":"No"
+	,fi.flags&MPG123_ORIGINAL?"Yes":"No"
+	,fi.flags&MPG123_CRC?"Yes":"No"
+	,fi.flags&MPG123_PRIVATE?"Yes":"No"
+	,fi.emphasis,mpg123_current_decoder(sh->context));
+  }
   return 1;
 }
 
 void uninit(sh_audio_t *sh)
 {
+  mpg123_close(sh->context);
+  mpg123_delete(sh->context);
+  mpg123_exit();
   dlclose(dll_handle);
 }
 
@@ -92,12 +182,16 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
     switch(cmd)
     {
       case ADCTRL_RESYNC_STREAM:
+#if 0
           MP3_DecodeFrame(NULL,-2,&pts); // resync
           MP3_DecodeFrame(NULL,-2,&pts); // resync
           MP3_DecodeFrame(NULL,-2,&pts); // resync
+#endif
 	  return CONTROL_TRUE;
       case ADCTRL_SKIP_FRAME:
+#if 0
 	  MP3_DecodeFrame(NULL,-2,&pts); // skip MPEG frame
+#endif
 	  return CONTROL_TRUE;
       default:
 	  return CONTROL_UNKNOWN;
@@ -105,13 +199,15 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
 {
-   int retval=-1;
-   while(retval<0)
-   {
-    retval = MP3_DecodeFrame(buf,-1,pts);
-    if(retval<0) control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
-   }
-   return retval;
+    unsigned char *indata=NULL;
+    int err,indata_size;
+    size_t done;
+    indata_size=ds_get_packet_r(sh->ds,&indata,&pts);
+    mpg123_feed(sh->context,indata,indata_size);
+    err=mpg123_read(sh->context,buf,maxlen,&done);
+    if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE)))
+	MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
+    return done;
 }
