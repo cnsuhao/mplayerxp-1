@@ -1,17 +1,18 @@
 #!/bin/sh
 
-if test -e "CVS/Entries"; then
+# define here official release digits. Example: "1.0"
+version="0.8"
 
-last_cvs_update=`date -r CVS/Entries +%y%m%d-%H:%M 2>/dev/null`
-if [ $? -ne 0 ]; then
-	# probably no gnu date installed(?), use current date
-	last_cvs_update=`date +%y%m%d-%H:%M`
-fi
+svn_exec=$(LC_ALL=C which svn)
+svn_revision=
+test -n "$svn_exec" && svn_revision=$(LC_ALL=C svn info 2>/dev/null | grep Revision | cut -d' ' -f2)
+test -z $svn_revision && svn_revision=$version || svn_revision="svn.$svn_revision"
 
-echo "#define VERSION \"CVS-${last_cvs_update}-$1 \"" >version.h
+cat << EOF > version.h
+#ifndef __VERSION_H
+#define __VERSION_H
 
-else
+#define VERSION "$svn_revision"
 
-echo "#define VERSION \"0.7.2 \"" >version.h
-
-fi
+#endif
+EOF
