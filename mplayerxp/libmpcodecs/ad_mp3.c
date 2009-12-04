@@ -204,7 +204,7 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
     unsigned char *indata=NULL;
     int err,indata_size;
     size_t done;
-    indata_size=ds_get_packet_r(sh->ds,&indata,&pts);
+    indata_size=ds_get_packet_r(sh->ds,&indata,pts);
     mpg123_feed(sh->context,indata,indata_size);
     err=mpg123_read(sh->context,buf,maxlen,&done);
     if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE)))
