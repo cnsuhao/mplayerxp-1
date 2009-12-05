@@ -208,7 +208,9 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
     size_t len=0,done;
     while(len<minlen) {
 	indata_size=ds_get_packet_r(sh->ds,&indata,len>0?&apts:pts);
+	if(!indata_size) break;
 	err=mpg123_decode(sh->context,indata,indata_size,buf,maxlen,&done);
+	if(!done) break;
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE)))
 	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
 	buf+=done;
