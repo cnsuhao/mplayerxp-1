@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include "config.h"
 #include "mp_msg.h"
+#include "nls/nls.h"
 
 #define _bg(x) ((x) >> 4)
 #define _fg(x) ((x) & 0x0f)

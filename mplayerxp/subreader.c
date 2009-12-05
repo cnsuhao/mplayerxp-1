@@ -435,10 +435,10 @@ static subtitle * __FASTCALL__ sub_read_line_aqt(FILE *fd,subtitle *current) {
         if (!(sscanf (line, "-->> %ld", &(current->start)) <1))
 		break;
     }
-    
-    if (previous_aqt_sub != NULL) 
+
+    if (previous_aqt_sub != NULL)
 	previous_aqt_sub->end = current->start-1;
-    
+
     previous_aqt_sub = current;
 
     if (!fgets (line, LINE_LEN, fd))
@@ -454,7 +454,7 @@ static subtitle * __FASTCALL__ sub_read_line_aqt(FILE *fd,subtitle *current) {
     sub_readtext(line,&current->text[1]);
     current->lines = 2;
 
-    if ((current->text[0]=="") && (current->text[1]=="")) {
+    if (strcmp(current->text[0],"")==0 && strcmp(current->text[1],"")==0) {
 	// void subtitle -> end of previous marked and exit
 	previous_aqt_sub = NULL;
 	return NULL;

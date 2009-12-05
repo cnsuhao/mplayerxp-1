@@ -30,7 +30,7 @@ typedef struct {
 
     unsigned long start;
     unsigned long end;
-    
+
     char *text[SUB_MAX_TEXT];
 } subtitle;
 
