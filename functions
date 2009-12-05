@@ -1095,7 +1095,8 @@ fi
 if test "$_profile" || test "$_debug" ; then
   CFLAGS="-O2 -fno-builtin $_dbg_flags $_debug $_profile"
 elif test -z "$CFLAGS" ; then
-  CFLAGS="$_locarch -ffast-math"
+# -ffast-math produces incorrect output in 64-bit mode on x86_64 cpus. Tested with many gcc-4.x series
+  CFLAGS="$_locarch"
   mips   || CFLAGS="$CFLAGS -pipe"
   x86_32 && CFLAGS="$CFLAGS -fomit-frame-pointer"
 # -fomit-frame-pointer is not needed for x86_64
