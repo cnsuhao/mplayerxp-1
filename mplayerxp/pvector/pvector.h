@@ -3,7 +3,30 @@
 */
 #define HAVE_INT_PVECTOR 1
 
-#if defined( HAVE_MMX )
+#ifdef OPTIMIZE_AVX
+#define OPTIMIZE_AES
+#endif
+#ifdef OPTIMIZE_AES
+#define OPTIMIZE_SSE4
+#endif
+#ifdef OPTIMIZE_SSE4
+#define OPTIMIZE_SSSE3
+#endif
+#ifdef OPTIMIZE_SSSE3
+#define OPTIMIZE_SSE3
+#endif
+#ifdef OPTIMIZE_SSE3
+#define OPTIMIZE_SSE2
+#endif
+#ifdef OPTIMIZE_SSE2
+#define OPTIMIZE_SSE
+#define OPTIMIZE_MMX2
+#endif
+#ifdef OPTIMIZE_MMX2
+#define OPTIMIZE_MMX
+#endif
+
+#if defined( OPTIMIZE_MMX )
 #include "pvector_int_x86.h"
 #else
 //#warning "pvector's generic version isn't yet ready"

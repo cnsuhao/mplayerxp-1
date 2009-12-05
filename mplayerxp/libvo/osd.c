@@ -16,99 +16,57 @@
 #include "../mplayer.h"
 #include "osd.h"
 
-#if defined(CAN_COMPILE_MMX)
+#if defined(__MMX__)
 static const uint64_t bFF __attribute__((used))  __attribute__((aligned(8))) = 0xFFFFFFFFFFFFFFFFULL;
 static const unsigned long long mask24lh  __attribute__((used)) __attribute__((aligned(8))) = 0xFFFF000000000000ULL;
 static const unsigned long long mask24hl  __attribute__((used)) __attribute__((aligned(8))) = 0x0000FFFFFFFFFFFFULL;
-
-/*Note: we have C, X86-nommx, MMX, MMX2, 3DNOW version therse no 3DNOW+MMX2 one
-  Plain C versions*/
-
-/*MMX versions*/
-#ifdef CAN_COMPILE_MMX
-#undef RENAME
-#define HAVE_MMX
-#undef HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _MMX
-#include "osd_template.c"
 #endif
 
-/*MMX2 versions*/
-#ifdef CAN_COMPILE_MMX2
+/* generic version */
+#undef OPTIMIZE_AVX
+#undef OPTIMIZE_SSE4
+#undef OPTIMIZE_SSSE3
+#undef OPTIMIZE_SSE3
+#undef OPTIMIZE_SSE2
+#undef OPTIMIZE_SSE
+#undef OPTIMIZE_MMX2
+#undef OPTIMIZE_MMX
+#define RENAME(a) a ## _C
+#include "osd_template.c"
+
+#ifndef __x86_64__
+#ifdef __MMX2__
+#define OPTIMIZE_MMX2
 #undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#undef HAVE_3DNOW
 #define RENAME(a) a ## _MMX2
 #include "osd_template.c"
 #endif
-
-/*SSE2 versions*/
-#ifdef CAN_COMPILE_SSE2
+#endif // __x86_64__
+#ifdef __SSE2__
+#define OPTIMIZE_SSE2
 #undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#define HAVE_SSE
-#define HAVE_SSE2
-#undef HAVE_3DNOW
 #define RENAME(a) a ## _SSE2
 #include "osd_template.c"
 #endif
-
-/*SSE3 versions*/
-#ifdef CAN_COMPILE_SSE3
+#ifdef __SSE3__
+#define OPTIMIZE_SSE3
 #undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#define HAVE_SSE
-#define HAVE_SSE2
-#define HAVE_SSE3
-#undef HAVE_3DNOW
 #define RENAME(a) a ## _SSE3
 #include "osd_template.c"
 #endif
-
-/*SSSE3 versions*/
-#ifdef CAN_COMPILE_SSSE3
+#ifdef __SSSE3__
+#define OPTIMIZE_SSSE3
 #undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#define HAVE_SSE
-#define HAVE_SSE2
-#define HAVE_SSE3
-#define HAVE_SSSE3
-#undef HAVE_3DNOW
 #define RENAME(a) a ## _SSSE3
 #include "osd_template.c"
 #endif
-
-/*SSE4 versions*/
-#ifdef CAN_COMPILE_SSE4
+#ifdef __SSE4_1__
+#define OPTIMIZE_SSE4
 #undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#define HAVE_SSE
-#define HAVE_SSE2
-#define HAVE_SSE3
-#define HAVE_SSSE3
-#define HAVE_SSE4
-#undef HAVE_3DNOW
 #define RENAME(a) a ## _SSE4
 #include "osd_template.c"
 #endif
 
-#endif /*CAN_COMPILE_X86_ASM*/
-
-/* generic version */
-#undef RENAME
-#undef ARCH_X86
-#undef ARCH_X86_64
-#undef HAVE_MMX
-#undef HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _C
-#include "osd_template.c"
 
 #ifdef FAST_OSD_TABLE
 static unsigned short fast_osd_15bpp_table[256];
@@ -200,7 +158,7 @@ void vo_draw_alpha_init( void ){
 #endif
 /*FIXME the optimized stuff is a lie for 15/16bpp as they arent optimized yet*/
 // ordered per speed fasterst first
-#ifdef CAN_COMPILE_SSE4
+#ifdef __SSE4_1__
 if(gCpuCaps.hasSSE41)
 {
 	MSG_V("Using SSE4 Optimized OnScreenDisplay\n");
@@ -211,7 +169,7 @@ if(gCpuCaps.hasSSE41)
 }
 else
 #endif
-#ifdef CAN_COMPILE_SSSE3
+#ifdef __SSSE3__
 if(gCpuCaps.hasSSSE3)
 {
 	MSG_V("Using SSSE3 Optimized OnScreenDisplay\n");
@@ -222,7 +180,7 @@ if(gCpuCaps.hasSSSE3)
 }
 else
 #endif
-#ifdef CAN_COMPILE_SSE3
+#ifdef __SSE3__
 if(gCpuCaps.hasSSE3)
 {
 	MSG_V("Using SSE3 Optimized OnScreenDisplay\n");
@@ -233,7 +191,7 @@ if(gCpuCaps.hasSSE3)
 }
 else
 #endif
-#ifdef CAN_COMPILE_SSE2
+#ifdef __SSE2__
 if(gCpuCaps.hasSSE2)
 {
 	MSG_V("Using SSE2 Optimized OnScreenDisplay\n");
@@ -244,7 +202,8 @@ if(gCpuCaps.hasSSE2)
 }
 else
 #endif
-#ifdef CAN_COMPILE_MMX2
+#ifndef __x86_64__
+#ifdef __MMX2__
 if(gCpuCaps.hasMMX2)
 {
 	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
@@ -255,16 +214,6 @@ if(gCpuCaps.hasMMX2)
 }
 else
 #endif
-#ifdef CAN_COMPILE_MMX
-if(gCpuCaps.hasMMX)
-{
-	MSG_V("Using MMX Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_MMX;
-}
-else
 #endif
 {
 	MSG_V("Using generic OnScreenDisplay\n");
