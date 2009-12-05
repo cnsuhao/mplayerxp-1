@@ -93,6 +93,7 @@ int preinit(sh_audio_t *sh)
 {
   int rval;
   sh->audio_out_minsize=9216;
+  rval=0;
   rval = load_dll("libmpg123"SLIBSUFFIX); /* try standard libmpg123 first */
   if(!rval) rval = load_dll(codec_name("libMP3"SLIBSUFFIX)); /* if fail then fallback to internal codec */
   return rval;
@@ -205,8 +206,7 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
     int err,indata_size;
     size_t done;
     indata_size=ds_get_packet_r(sh->ds,&indata,pts);
-    mpg123_feed(sh->context,indata,indata_size);
-    err=mpg123_read(sh->context,buf,maxlen,&done);
+    err=mpg123_decode(sh->context,indata,indata_size,buf,maxlen,&done);
     if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE)))
 	MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
     return done;
