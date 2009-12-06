@@ -48,7 +48,7 @@
 #define MSG_D(args...)
 #define LOCK_VDECODING() { MSG_D(DA_PREFIX"LOCK_VDECODING\n"); pthread_mutex_lock(&vdecoding_mutex); }
 
-#include "../postproc/rgb2rgb.h" /* for MODE_RGB(BGR) definitions */
+#include "../postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
 #include "video_out_internal.h"
 #include "dri_vo.h"
 #include "../mp_image.h"

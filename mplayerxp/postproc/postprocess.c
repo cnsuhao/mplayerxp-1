@@ -30,12 +30,12 @@ static char **pp_help_ptr=NULL;
 static int load_dll(const char *libname)
 {
   if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
-  pp_postprocess_ptr=dlsym(dll_handle,"pp_postprocess");
-  pp_get_context_ptr=dlsym(dll_handle,"pp_get_context");
-  pp_free_context_ptr=dlsym(dll_handle,"pp_free_context");
-  pp_get_mode_by_name_and_quality_ptr=dlsym(dll_handle,"pp_get_mode_by_name_and_quality");
-  pp_free_mode_ptr=dlsym(dll_handle,"pp_free_mode");
-  pp_help_ptr=dlsym(dll_handle,"pp_help");
+  pp_postprocess_ptr=ld_sym(dll_handle,"pp_postprocess");
+  pp_get_context_ptr=ld_sym(dll_handle,"pp_get_context");
+  pp_free_context_ptr=ld_sym(dll_handle,"pp_free_context");
+  pp_get_mode_by_name_and_quality_ptr=ld_sym(dll_handle,"pp_get_mode_by_name_and_quality");
+  pp_free_mode_ptr=ld_sym(dll_handle,"pp_free_mode");
+  pp_help_ptr=ld_sym(dll_handle,"pp_help");
   return pp_postprocess_ptr && pp_get_context_ptr && pp_free_context_ptr &&
 	 pp_get_mode_by_name_and_quality_ptr && pp_free_mode_ptr;
 }
@@ -48,8 +48,8 @@ static int load_avcodec( void )
 	{
 	    MSG_ERR("Detected error during loading libpostproc"SLIBSUFFIX"! Try to upgrade this codec\n");
 	    return 0;
-	} 
-	return 1;   
+	}
+	return 1;
 }
 
 extern void exit_player(char *);

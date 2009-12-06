@@ -11,7 +11,7 @@
 #include "vf.h"
 
 #include "../libvo/fastmemcpy.h"
-#include "../postproc/rgb2rgb.h"
+#include "../postproc/swscale.h"
 
 typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt);
 struct vf_priv_s {

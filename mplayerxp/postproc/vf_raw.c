@@ -15,7 +15,7 @@
 #include "vf.h"
 
 #include "../libvo/fastmemcpy.h"
-#include "../postproc/rgb2rgb.h"
+#include "../postproc/swscale.h"
 
 struct vf_priv_s {
     FILE *out;

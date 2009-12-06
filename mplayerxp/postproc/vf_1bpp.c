@@ -10,7 +10,7 @@
 #include "mp_image.h"
 #include "vf.h"
 
-#include "../postproc/rgb2rgb.h"
+#include "../postproc/swscale.h"
 
 //===========================================================================//
 

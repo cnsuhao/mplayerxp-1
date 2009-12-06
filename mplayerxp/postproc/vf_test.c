@@ -27,7 +27,7 @@
 #include "../libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
-#include "rgb2rgb.h"
+#include "swscale.h"
 #include "../libvo/fastmemcpy.h"
 
 //===========================================================================//

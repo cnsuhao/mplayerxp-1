@@ -40,10 +40,10 @@ static void *dll_handle;
 static int load_lib( const char *libname )
 {
   if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  DS_AudioDecoder_Open_ptr = dlsym(dll_handle,"DS_AudioDecoder_Open");
-  DS_AudioDecoder_Destroy_ptr = dlsym(dll_handle,"DS_AudioDecoder_Destroy");
-  DS_AudioDecoder_Convert_ptr = dlsym(dll_handle,"DS_AudioDecoder_Convert");
-  DS_AudioDecoder_GetSrcSize_ptr = dlsym(dll_handle,"DS_AudioDecoder_GetSrcSize");
+  DS_AudioDecoder_Open_ptr = ld_sym(dll_handle,"DS_AudioDecoder_Open");
+  DS_AudioDecoder_Destroy_ptr = ld_sym(dll_handle,"DS_AudioDecoder_Destroy");
+  DS_AudioDecoder_Convert_ptr = ld_sym(dll_handle,"DS_AudioDecoder_Convert");
+  DS_AudioDecoder_GetSrcSize_ptr = ld_sym(dll_handle,"DS_AudioDecoder_GetSrcSize");
   return DS_AudioDecoder_Open_ptr && DS_AudioDecoder_Convert_ptr &&
 	 DS_AudioDecoder_GetSrcSize_ptr && DS_AudioDecoder_Destroy_ptr;
 }

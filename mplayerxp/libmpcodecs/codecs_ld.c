@@ -43,7 +43,8 @@ char * wineld_name( const char *name )
 void * ld_sym(void *handle,const char *sym_name)
 {
   void *rval;
-  if(!(rval=dlsym(handle,sym_name)))
+  if(!(rval=dlsym(handle,sym_name))) {
     MSG_ERR(MSGTR_CODEC_DLL_SYM_ERR,sym_name);
+  }
   return rval;
 }

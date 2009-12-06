@@ -655,7 +655,7 @@ void uninit_player(unsigned int mask){
     pinfo[xp_id].current_module="uninit_xp";
     uninit_dec_ahead(0);
   }
-  
+
   if (mask&INITED_SPUDEC){
     inited_flags&=~INITED_SPUDEC;
     pinfo[xp_id].current_module="uninit_spudec";
@@ -746,6 +746,7 @@ void exit_player(char* how){
 
   pinfo[xp_id].current_module="exit_player";
 
+  sws_uninit();
   if(how) MSG_HINT(MSGTR_Exiting,how);
   MSG_DBG2("max framesize was %d bytes\n",max_framesize);
   mp_msg_uninit();
@@ -2048,7 +2049,6 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
     memset(&vstat,0,sizeof(video_stat_t));
 
     mp_msg_init(MSGL_STATUS);
-
     MSG_INFO("%s",banner_text);
 //  memset(&vtune,0,sizeof(vo_tune_info_t));
   /* Test for cpu capabilities (and corresponding OS support) for optimizing */
@@ -2065,8 +2065,12 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 
     xp_num_cpu=get_number_cpu();
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-  get_mmx_optimizations();
+    get_mmx_optimizations();
 #endif
+    if(!sws_init()) {
+	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
+	return 0;
+    }
     if(shuffle_playback) playtree->flags|=PLAY_TREE_RND;
     else		 playtree->flags&=~PLAY_TREE_RND;
     playtree = play_tree_cleanup(playtree);
@@ -2090,7 +2094,7 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
     if(!filename){
 	// no file/vcd/dvd -> show HELP:
 	MSG_INFO("%s",help_text);
-	exit(0);
+	return 0;
     }
 
     // Many users forget to include command line in bugreports...
