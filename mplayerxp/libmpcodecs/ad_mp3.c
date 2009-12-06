@@ -105,7 +105,7 @@ int init(sh_audio_t *sh)
   // MPEG Audio:
   float pts;
   long param,rate;
-  size_t indata_size,done;
+  size_t indata_size,done,len;
   int err=0,nch,enc;
   unsigned char *indata;
   struct mpg123_frameinfo fi;
@@ -127,11 +127,14 @@ int init(sh_audio_t *sh)
   mpg123_param(sh->context,MPG123_FLAGS,param,0);
   // Decode first frame (to get header filled)
   err=MPG123_NEED_MORE;
+  len=0;
   while(err==MPG123_NEED_MORE) {
     indata_size=ds_get_packet_r(sh->ds,&indata,&pts);
     mpg123_feed(sh->context,indata,indata_size);
     err=mpg123_read(sh->context,sh->a_buffer,sh->a_buffer_size,&done);
+    len+=done;
   }
+  sh->a_buffer_len=len;
   if(err!=MPG123_NEW_FORMAT) {
     MSG_ERR("mpg123_init: within [%d] can't retrieve stream property: %s\n",indata_size,mpg123_plain_strerror(err));
     mpg123_close(sh->context);
@@ -143,7 +146,7 @@ int init(sh_audio_t *sh)
   sh->samplerate = rate;
   sh->channels = nch;
   mpg123_info(sh->context,&fi);
-  sh->i_bps=fi.abr_rate?fi.abr_rate:fi.bitrate;
+  sh->i_bps=((fi.abr_rate?fi.abr_rate:fi.bitrate)/8)*1000;
   // Prints first frame header in ascii.
   {
     static const char *modes[4] = { "Stereo", "Joint-Stereo", "Dual-Channel", "Mono" };
@@ -156,7 +159,7 @@ int init(sh_audio_t *sh)
 	,layers[fi.layer&0x3]
 	,xbr[fi.vbr&0x3]
 	,fi.rate
-	,sh->i_bps
+	,(sh->i_bps*8)/1000
 	,modes[fi.mode&0x3]
 	,fi.framesize);
     MSG_INFO("mpg123_init: Copyrght=%s Orig=%s CRC=%s Priv=%s Emphas=%d Optimiz=%s\n"
@@ -210,9 +213,10 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
 	indata_size=ds_get_packet_r(sh->ds,&indata,len>0?&apts:pts);
 	if(!indata_size) break;
 	err=mpg123_decode(sh->context,indata,indata_size,buf,maxlen,&done);
-	if(!done) break;
-	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE)))
+	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
 	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
+	    break;
+	}
 	buf+=done;
 	len+=done;
 	maxlen-=done;
