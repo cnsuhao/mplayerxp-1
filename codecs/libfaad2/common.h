@@ -329,6 +329,7 @@ char *strchr(), *strrchr();
   }
 #endif
 
+#ifndef HAVE_LRINT
 static inline long int lrintf(float x)
 {
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
@@ -342,6 +343,7 @@ static inline long int lrintf(float x)
     return ((int32_t)(x));
 #endif
 }
+#endif
 
 typedef real_t complex_t[2];
 #define RE(A) A[0]
