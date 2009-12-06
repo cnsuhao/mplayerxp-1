@@ -216,7 +216,7 @@ static void __FASTCALL__ echo3d(af_crystality_t *setup,float *data, unsigned dat
   for (x = 0; x < datasize; x += 8) {
 
     // ************ load sample **********
-    left[0] = dataptr[0];	
+    left[0] = dataptr[0];
     right[0] = dataptr[1];
 
     // ************ calc 4 echos **********
@@ -237,7 +237,7 @@ static void __FASTCALL__ echo3d(af_crystality_t *setup,float *data, unsigned dat
 
 	// ************ compute echo  **********
 	left[i+1] = buf[bufPos[i]++];
-	if (bufPos[i] == BUF_SIZE) bufPos[i] = 0;	
+	if (bufPos[i] == BUF_SIZE) bufPos[i] = 0;
 	right[i+1] = buf[bufPos[i]++];
 	if (bufPos[i] == BUF_SIZE) bufPos[i] = 0;
     }
@@ -287,10 +287,9 @@ static void __FASTCALL__ echo3d(af_crystality_t *setup,float *data, unsigned dat
     right0p = right[0];
 
     // ************ store sample **********
-    dataptr[0] = clamp(_left,INT_MIN,INT_MAX);
-    dataptr[1] = clamp(_right,INT_MIN,INT_MAX);
+    dataptr[0] = _left; //clamp(_left,-1.0,1.0);
+    dataptr[1] = _right;//clamp(_right,-1.0,1.0);
     dataptr += 2;
-
    }
 }
 
@@ -457,9 +456,9 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
 	    rprev[i]=right[i];
 	}
 	// ************ END highpass filter part 2 **********
-	dataptr[0] = clamp(_left,INT_MIN,INT_MAX);
-       	dataptr[1] = clamp(_right,INT_MIN,INT_MAX);
-       	dataptr += 2;
+	dataptr[0] = _left;//clamp(_left,-1.0,+1.0);
+	dataptr[1] = _right;//clamp(_right,-1.0,+1.0);
+	dataptr += 2;
     }
 }
 
@@ -470,7 +469,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
-    unsigned i_bps,fmt;    
+    unsigned i_bps,fmt;
     // Sanity check
     if(!arg) return AF_ERROR;
     if(((af_data_t*)arg)->nch!=2) return AF_ERROR;
@@ -487,7 +486,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
 	((af_crystality_t *)af->setup)->hf_div=i_bps/6000;
     }
     else ((af_crystality_t *)af->setup)->hf_div=32;
-    
+
     return af_test_output(af,arg);
   }
   case AF_CONTROL_COMMAND_LINE:{
@@ -520,7 +519,6 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
 {
     af_data_t* c = data; /* Current working data */
-
     echo3d(af->setup,(float*)c->audio, c->len);
     bandext(af->setup,(float*)c->audio, c->len);
     return c;
