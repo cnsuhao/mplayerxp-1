@@ -1,4 +1,4 @@
-SUBDIRS = mplayerxp codecs loader etc DOCS
+SUBDIRS = codecs loader mplayerxp etc DOCS
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 
