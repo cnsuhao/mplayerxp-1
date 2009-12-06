@@ -7,7 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#include "../config.h"
+#include "../mp_config.h"
 #ifdef HAVE_RTC
 #include <linux/rtc.h>
 #endif

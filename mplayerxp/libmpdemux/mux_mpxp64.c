@@ -11,7 +11,7 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "../version.h"
 #include "../nls/nls.h"
 

@@ -17,7 +17,7 @@
 #include <string.h>
 #include <sys/poll.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "../mplayer.h"
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #define ALSA_PCM_NEW_SW_PARAMS_API

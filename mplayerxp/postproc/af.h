@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "af_mp.h"
-#include "../config.h"
+#include "../mp_config.h"
 #include "af_control.h"
 #include "af_format.h"
 

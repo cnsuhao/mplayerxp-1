@@ -4,7 +4,7 @@
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
 #include "interface/mp3.h"
-#include "config.h"
+#include "mp_config.h"
 #include "../mplayer.h"
 #include "../cpudetect.h"
 #include "../mm_accel.h"

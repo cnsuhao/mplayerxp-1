@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include "config.h"
+#include "../mp_config.h"
 //#define ENABLE_PROFILE
 #include "../my_profile.h"
 #include <inttypes.h>

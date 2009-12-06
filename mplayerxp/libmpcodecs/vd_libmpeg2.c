@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "config.h"
+#include "mp_config.h"
 #include "../mplayer.h"
 #include "vd_internal.h"
 #include "../cpudetect.h"

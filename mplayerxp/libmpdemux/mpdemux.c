@@ -1,5 +1,5 @@
 
-#include "config.h"
+#include "../mp_config.h"
 #include <stdlib.h>
 #include "../input/input.h"
 #include "demux_msg.h"

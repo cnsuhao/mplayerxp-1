@@ -1,4 +1,4 @@
-#include "config.h"
+#include "../mp_config.h"
 
 #define READ_USLEEP_TIME 10000
 #define FILL_USLEEP_TIME 50000

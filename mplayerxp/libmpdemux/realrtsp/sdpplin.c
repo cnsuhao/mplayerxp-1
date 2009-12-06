@@ -26,7 +26,7 @@
  *
  */
  
-#include "config.h"
+#include "mp_config.h"
 #include "../librtsp/rtsp.h"
 #include "sdpplin.h"
 #include "xbuffer.h"

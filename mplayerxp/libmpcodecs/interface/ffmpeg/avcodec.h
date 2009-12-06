@@ -1,5 +1,5 @@
 #ifdef HAVE_LOCAL_FFMPEG
-#include "../../codecs/libavcodec/avcodec.h"
+#include "../../codecs/ffmpeg/libavcodec/avcodec.h"
 #elif HAVE_GLOBAL_FFMPEG
 #include <ffmpeg/avcodec.h>
 #else

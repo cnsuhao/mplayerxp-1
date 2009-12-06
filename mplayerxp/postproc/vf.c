@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #ifdef HAVE_MALLOC
 #include <malloc.h>
 #endif

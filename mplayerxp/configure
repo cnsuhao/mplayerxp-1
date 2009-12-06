@@ -19,7 +19,7 @@
 #
 # GOTCHAS:
 #  - config files are currently:
-#    config.h config.mak libvo/config.mak libao2/config.mak
+#    mp_config.h mp_config.mak libvo/mp_config.mak libao2/mp_config.mak
 #
 #############################################################################
 . ../functions
@@ -208,7 +208,7 @@ done
 mktmps
 
 
-guess_target config.mak config.h
+guess_target mp_config.mak mp_config.h
 
 # config files
 
@@ -562,6 +562,8 @@ test -z "$_libdir" && _libdir="$_prefix/lib"
 test -z "$_codecdir" && _codecdir="$_libdir/$_prog_alias"
 fi
 
+_srcdir=`pwd`
+
 #checking for pkg-config
 _pkg_config=pkg-config
 test $($_pkg_config --version 2>/dev/null) || die "no pkg-config found"
@@ -601,14 +603,14 @@ _dbg_flags="-finline-limit-5"
 fi
 
 test -n "$_profile"	&& disable fastcall
-print_config __USE config.h config.mak fastcall
+print_config __USE mp_config.h mp_config.mak fastcall
 
 # Checking for LDFLAGS
 if test "$_profile" || test "$_debug" ; then
     LDFLAGS="$_debug $_profile"
 fi
 
-test_optimizations config.mak config.h
+test_optimizations mp_config.mak mp_config.h
 
 # Checking for GOMP
 enabled gomp && check_ldflags -fopenmp || disable gomp
@@ -650,16 +652,16 @@ echores   $LDFLAGS
 check_header inttypes.h	|| die "cannot find header inttypes.h (see in DOC/faq.html)"
 
 require2 libdl dlfcn.h dlsym -ldl ||  die "dynamic loader was not found"
-print_config HAVE_ config.h config.mak libdl
+print_config HAVE_ mp_config.h mp_config.mak libdl
 
 require2 libkstat kstat.h kstat_open -lkstat
-print_config HAVE_ config.h config.mak libkstat
+print_config HAVE_ mp_config.h mp_config.mak libkstat
 
 require2 posix4 time.h nanosleep -lposix4
-print_config HAVE_ config.h config.mak posix4
+print_config HAVE_ mp_config.h mp_config.mak posix4
 
 check_func2 time.h nanosleep
-print_config HAVE_ config.h config.mak nanosleep
+print_config HAVE_ mp_config.h mp_config.mak nanosleep
 
 disable inet_pton
 if enabled streaming ; then
@@ -673,36 +675,36 @@ disabled inet_pton	&& require2 inet_pton "sys/types.h sys/socket.h arpa/inet.h" 
 # well, try alternative
 if disabled inet_pton ; then
 require2 aton "sys/types.h sys/socket.h arpa/inet.h" inet_aton
-print_config USE_ config.h config.mak aton
+print_config USE_ mp_config.h mp_config.mak aton
 fi
-print_config HAVE_ config.h config.mak socklib
+print_config HAVE_ mp_config.h mp_config.mak socklib
 
 if enabled winsock2 && ! cygwin ; then
 require2 winsock2 winsock2.h gethostbyname -lws2_32
-print_config HAVE_ config.h config.mak winsock2
+print_config HAVE_ mp_config.h mp_config.mak winsock2
 fi
 fi #enabled streaming
 
 disabled inet_pton	&& disable streaming
-print_config HAVE_ config.h config.mak streaming
+print_config HAVE_ mp_config.h mp_config.mak streaming
 
 disabled streaming	&& disable af_inet6
 
 if enabled af_inet6 ; then
 enabled winsock2	&& require3 af_inet6 ws2tcpip.h AF_INET6 socket
 disabled winsock2	&& require3 af_inet6 "sys/socket.h netinet/in.h" AF_INET6 socket
-print_config HAVE_ config.h config.mak af_inet6
+print_config HAVE_ mp_config.h mp_config.mak af_inet6
 fi
 
 check_func2 malloc.h malloc
 freebsd		&& disable malloc
-print_config HAVE_ config.h config.mak malloc
+print_config HAVE_ mp_config.h mp_config.mak malloc
 if enabled malloc; then
 check_func2 malloc.h memalign
-print_config HAVE_ config.h config.mak memalign
+print_config HAVE_ mp_config.h mp_config.mak memalign
 fi
 check_func2 alloca.h alloca
-print_config HAVE_ config.h config.mak alloca
+print_config HAVE_ mp_config.h mp_config.mak alloca
 
 # find if .align arg is power-of-two or not
 echocheck ".align is power-of-two"
@@ -719,22 +721,22 @@ else
 fi
 
 check_func3 _ISOC9X_SOURCE math.h lrint -lm
-print_config HAVE_ config.h config.mak lrint
+print_config HAVE_ mp_config.h mp_config.mak lrint
 
 check_func3 _ISOC9X_SOURCE math.h llrint -lm
-print_config HAVE_ config.h config.mak llrint
+print_config HAVE_ mp_config.h mp_config.mak llrint
 
 check_func3 _ISOC9X_SOURCE math.h HUGE -lm
-print_config HAVE_ config.h config.mak HUGE
+print_config HAVE_ mp_config.h mp_config.mak HUGE
 
 check_func2 "sys/types.h sys/mman.h" mmap
 sys_mman_h=$mmap
-print_config HAVE_ config.h config.mak sys_mman_h
+print_config HAVE_ mp_config.h mp_config.mak sys_mman_h
 enabled mmap	&& check_func2 "sys/mman.h" mlock
-print_config HAVE_ config.h config.mak mlock
+print_config HAVE_ mp_config.h mp_config.mak mlock
 
 check_func2 "stdarg.h" vsscanf
-print_config HAVE_ config.h config.mak vsscanf
+print_config HAVE_ mp_config.h mp_config.mak vsscanf
 
 if enabled termcap; then
 disable termcap
@@ -742,43 +744,43 @@ for _ld_i in "-ltermcap" "-lncurses" "-ltinfo" ; do
 disabled termcap	&& require2 termcap stdio.h tgetent $_ld_i
 enabled termcap	&& break
 done
-print_config HAVE_ config.h config.mak termcap
+print_config HAVE_ mp_config.h mp_config.mak termcap
 fi
 
 if enabled termios; then
 check_header sys/termios.h
-print_config HAVE_ config.h config.mak sys_termios_h
+print_config HAVE_ mp_config.h mp_config.mak sys_termios_h
 disabled sys_termios_h	&& check_header termios.h 
-disabled sys_termios_h	&& print_config HAVE_ config.h config.mak termios_h
+disabled sys_termios_h	&& print_config HAVE_ mp_config.h mp_config.mak termios_h
 fi
 
 enabled shm	&& require2 shm "sys/types.h sys/shm.h" shmget
-print_config HAVE_ config.h config.mak shm
+print_config HAVE_ mp_config.h mp_config.mak shm
 
 require2 zlib zlib.h inflate -lz
-print_config HAVE_ config.h config.mak zlib
+print_config HAVE_ mp_config.h mp_config.mak zlib
 
 if linux; then
 enabled rtc	&& require2 rtc "sys/ioctl.h linux/rtc.h" RTC_IRQP_READ
-print_config HAVE_ config.h config.mak rtc
+print_config HAVE_ mp_config.h mp_config.mak rtc
 fi
 
 if enabled iconv; then
 require2 giconv giconv.h iconv_open -lgiconv
-print_config HAVE_ config.h config.mak giconv
+print_config HAVE_ mp_config.h mp_config.mak giconv
 disable iconv
 for _ld_i in "" -liconv ; do
 disabled iconv	&& require2 iconv iconv.h iconv_open $_ld_i
 enabled iconv	&& break
 done
-print_config HAVE_ config.h config.mak iconv
+print_config HAVE_ mp_config.h mp_config.mak iconv
 fi
 
 enabled lirc	&& require2 lirc lirc/lirc_client.h lirc_init -llirc_client
-print_config HAVE_ config.h config.mak lirc
+print_config HAVE_ mp_config.h mp_config.mak lirc
 
 enabled lircc	&& require2 lircc lirc/lircc.h lircc_init -llircc
-print_config HAVE_ config.h config.mak lircc
+print_config HAVE_ mp_config.h mp_config.mak lircc
 
 disable pthread
 for _ld_i in "-lpthreadGC2" "-lpthread" "-pthread" "" ; do
@@ -786,12 +788,12 @@ disabled pthread	&& require3 pthread "signal.h pthread.h" PTHREAD_COND_INITIALIZ
 enabled pthread	&& break
 done
 disabled pthread	&& die "Lib pthread not found. (needed by xp mode)"
-print_config HAVE_ config.h config.mak pthread
+print_config HAVE_ mp_config.h mp_config.mak pthread
 
 require2 sys_soundcard_h sys/soundcard.h SNDCARD_SB
-print_config HAVE_ config.h config.mak sys_soundcard_h
+print_config HAVE_ mp_config.h mp_config.mak sys_soundcard_h
 require2 soundcard_h soundcard.h SNDCARD_SB
-print_config HAVE_ config.h config.mak soundcard_h
+print_config HAVE_ mp_config.h mp_config.mak soundcard_h
 
 # XXX: FIXME, add runtime checking
 echocheck "linux devfs"
@@ -816,19 +818,19 @@ test -f nls/help_mp-$_linguas.h || die "nls/help_mp-$_linguas.h not found"
 enabled x11 && check_cflags $($_pkg_config x11 --cflags) && add_cflags $($_pkg_config x11 --cflags) || disable x11
 enabled x11 && check_ldflags $($_pkg_config x11 --libs) && add_extralibs $($_pkg_config x11 --libs) || disable x11
 enabled x11 && require2 x11 "X11/Xlib.h X11/Xutil.h" XCreateWindow -lXext
-print_config HAVE_ config.h config.mak x11
+print_config HAVE_ mp_config.h mp_config.mak x11
 enabled x11 && _vomodules="x11 $_vomodules" || _novomodules="x11 $_novomodules"
 
 enabled xdpms	&& require2 xdpms "X11/Xlib.h X11/extensions/dpms.h" DPMSQueryExtension
 disabled xdpms	&& require2 xdpms "X11/Xlib.h X11/extensions/dpms.h" DPMSQueryExtension -lXdpms
-print_config HAVE_ config.h config.mak xdpms
+print_config HAVE_ mp_config.h mp_config.mak xdpms
 
 enabled xv	&& require2 xv "X11/Xlib.h X11/extensions/Xvlib.h" XvGetPortAttribute -lXv
-print_config HAVE_ config.h config.mak xv
+print_config HAVE_ mp_config.h mp_config.mak xv
 enabled xv	&& _vomodules="xv $_vomodules" || _novomodules="xv $_novomodules"
 
 enabled xinerama	&& require2 xinerama "X11/Xlib.h X11/extensions/Xinerama.h" XineramaIsActive -lXinerama
-print_config HAVE_ config.h config.mak xv
+print_config HAVE_ mp_config.h mp_config.mak xv
 
 # Note: the -lXxf86vm library is the VideoMode extension and though it's not
 # needed for DGA, AFAIK every distribution packages together with DGA stuffs
@@ -836,19 +838,19 @@ print_config HAVE_ config.h config.mak xv
 # This check may be useful for future mplayerxp versions (to change resolution)
 # If you run into problems, remove '-lXxf86vm'.
 enabled xf86vm	&& require2 xf86vm "X11/Xlib.h X11/extensions/xf86vmode.h" XF86VidModeQueryExtension -lXxf86vm
-print_config HAVE_ config.h config.mak xf86vm
+print_config HAVE_ mp_config.h mp_config.mak xf86vm
 
 if enabled dga ; then
 require2 dga2 "X11/Xlib.h X11/extensions/xf86dga.h" XDGASetViewport -lXxf86dga
-print_config HAVE_ config.h config.mak dga2
+print_config HAVE_ mp_config.h mp_config.mak dga2
 enabled dga2	&& enable dga
 disabled dga2	&& require2 dga "X11/Xlib.h X11/extensions/xf86dga.h" XF86DGASetViewPort -lXxf86dga
-print_config HAVE_ config.h config.mak dga
+print_config HAVE_ mp_config.h mp_config.mak dga
 enabled dga	&& _vomodules="dga $_vomodules" || _novomodules="dga $_novomodules"
 fi
 
 enabled fbdev	&& require2 fbdev "sys/ioctl.h linux/fb.h" ioctl
-print_config HAVE_ config.h config.mak fbdev
+print_config HAVE_ mp_config.h mp_config.mak fbdev
 enabled fbdev	&& _vomodules="fbdev $_vomodules" || _novomodules="fbdev $_novomodules"
 if test "$_fbdev_nocopy" = yes ; then
     _def_fbdev_nocopy='#define USE_CONVERT2FB 1'
@@ -856,19 +858,19 @@ fi
 
 if enabled png; then
 require2 png png.h PNG_LIBPNG_VER_STRING -lpng
-print_config HAVE_ config.h config.mak png
+print_config HAVE_ mp_config.h mp_config.mak png
 disabled png	&& require2 libpng_png libpng/png.h PNG_LIBPNG_VER_STRING -lpng -lm
-print_config HAVE_ config.h config.mak libpng_png
+print_config HAVE_ mp_config.h mp_config.mak libpng_png
 enabled libpng_png	&& enable png
 fi
 enabled png	&& _vomodules="png $_vomodules" || _novomodules="png $_novomodules"
 
 enabled jpg	&& require2 jpeg "stdio.h stdlib.h setjmp.h string.h jpeglib.h" jpeg_write_scanlines -ljpeg
-print_config HAVE_ config.h config.mak jpeg
+print_config HAVE_ mp_config.h mp_config.mak jpeg
 enabled jpeg	&& _vomodules="jpeg $_vomodules" || _novomodules="jpeg $_novomodules"
 
 enabled vesa	&& require3 vesa "asm/vm86.h string.h" VIF_MASK memset
-print_config HAVE_ config.h config.mak vesa
+print_config HAVE_ mp_config.h mp_config.mak vesa
 
 enabled vesa	&& _vomodules="vesa $_vomodules" || _novomodules="vesa $_novomodules"
 
@@ -879,17 +881,17 @@ enabled vesa	&& _vomodules="vesa $_vomodules" || _novomodules="vesa $_novomodule
 enabled sdl && check_cflags $($_pkg_config sdl --cflags) && add_cflags $($_pkg_config sdl --cflags) || disable sdl
 enabled sdl && check_ldflags $($_pkg_config sdl --libs) && add_extralibs $($_pkg_config sdl --libs) || disable sdl
 enabled sdl && require2 sdl SDL/SDL.h SDL_CreateYUVOverlay
-print_config HAVE_ config.h config.mak sdl
+print_config HAVE_ mp_config.h mp_config.mak sdl
 if enabled sdl; then
 enabled sdl_image	&& require2 sdl_image SDL/SDL_image.h IMG_Load_RW -lSDL_image
-print_config HAVE_ config.h config.mak sdl_image
+print_config HAVE_ mp_config.h mp_config.mak sdl_image
 fi
 enabled sdl	&& _aomodules="sdl $_aomodules" || _noaomodules="sdl $_noaomodules"
 enabled sdl	&& _vomodules="sdl $_vomodules" || _novomodules="sdl $_novomodules"
 
 enabled cdparanoia	&& require2 cdparanoia "cdda_interface.h cdda_paranoia.h" cdda_open -lcdda_interface -lcdda_paranoia
 cdda=$cdparanoia
-print_config HAVE_ config.h config.mak cdda
+print_config HAVE_ mp_config.h mp_config.mak cdda
 enabled cdparanoia	&& _inputmodules="cdda $_inputmodules" || _noinputmodules="cdda $_noinputmodules"
 
 #########
@@ -898,7 +900,7 @@ enabled cdparanoia	&& _inputmodules="cdda $_inputmodules" || _noinputmodules="cd
 
 enabled ossaudio	&& require2 ossaudio sys/soundcard.h SNDCTL_DSP_SETFRAGMENT
 oss_audio=$ossaudio
-print_config USE_ config.h config.mak oss_audio
+print_config USE_ mp_config.h mp_config.mak oss_audio
 enabled ossaudio	&& _aomodules="oss $_aomodules" || _noaomodules="oss $_noaomodules"
 if test "$_linux_devfs" = yes; then
     _def_ossaudio_devdsp='#define PATH_DEV_DSP "/dev/sound/dsp"'
@@ -909,74 +911,74 @@ else
 fi  
 
 enabled alsa && require2 alsa alsa/asoundlib.h SND_LIB_MAJOR -lasound
-print_config HAVE_ config.h config.mak alsa
+print_config HAVE_ mp_config.h mp_config.mak alsa
 enabled alsa	&& _aomodules="alsa $_aomodules" || _noaomodules="alsa $_noaomodules"
 
 # It seems that aRts doesn't support pkg-config
 enabled arts && check_cflags $(artsc-config --cflags) && add_cflags $(artsc-config --cflags) || disable arts
 enabled arts && check_ldflags $(artsc-config --libs) && add_extralibs $(artsc-config --libs) || disable arts
 enabled arts && require2 arts artsc.h arts_write -lartsc
-print_config HAVE_ config.h config.mak arts
+print_config HAVE_ mp_config.h mp_config.mak arts
 enabled arts	&& _aomodules="arts $_aomodules" || _noaomodules="arts $_noaomodules"
 
 enabled esd && check_cflags $($_pkg_config esound --cflags) && add_cflags $($_pkg_config esound --cflags) || disable esd
 enabled esd && check_ldflags $($_pkg_config esound --libs) && add_extralibs $($_pkg_config esound --libs) || disable esd
 enabled esd && require2 esd esd.h esd_open_sound
-print_config HAVE_ config.h config.mak esd
+print_config HAVE_ mp_config.h mp_config.mak esd
 enabled esd	&& _aomodules="esd $_aomodules" || _noaomodules="esd $_noaomodules"
 
 enabled openal && require2 openal AL/al.h alSourceQueueBuffers -lopenal
-print_config HAVE_ config.h config.mak openal
+print_config HAVE_ mp_config.h mp_config.mak openal
 enabled openal && _aomodules="openal $_aomodules" || _noaomodules="openal $_noaomodules"
 
 enabled nas && require2 nas audio/audiolib.h AuOpenServer -laudio
-print_config HAVE_ config.h config.mak nas
+print_config HAVE_ mp_config.h mp_config.mak nas
 enabled nas && _aomodules="nas $_aomodules" || _noaomodules="nas $_noaomodules"
 
 enabled jack && check_cflags $($_pkg_config jack --cflags) && add_cflags $($_pkg_config jack --cflags) || disable jack
 enabled jack && check_ldflags $($_pkg_config jack --libs) && add_extralibs $($_pkg_config jack --libs) || disable jack
 enabled jack && require2 jack jack/jack.h jack_client_open
-print_config HAVE_ config.h config.mak jack
+print_config HAVE_ mp_config.h mp_config.mak jack
 enabled jack && _aomodules="jack $_aomodules" || _noaomodules="jack $_noaomodules"
 
 enabled libcss	&& require2 libcss css.h CSSisEncrypted -lcss
-print_config HAVE_ config.h config.mak libcss
+print_config HAVE_ mp_config.h mp_config.mak libcss
 enabled libcss	&& _inputmodules="css $_inputmodules" || _noinputmodules="css $_noinputmodules"
 
 enabled libdvdread	&& require2 libdvdread "stdint.h dvdread/dvd_reader.h dvdread/ifo_types.h dvdread/ifo_read.h dvdread/nav_read.h" DVDOpenFile -ldvdread
 dvdread=$libdvdread
-print_config USE_ config.h config.mak dvdread
+print_config USE_ mp_config.h mp_config.mak dvdread
 enabled libdvdread	&& _inputmodules="dvdread $_inputmodules" || _noinputmodules="dvdread $_noinputmodules"
 
 enabled libdvdnav	&& require2 libdvdnav dvdnav/dvdnav.h dvdnav_set_PGC_positioning_flag -ldvdnav
 dvdnav=$libdvdnav
-print_config USE_ config.h config.mak dvdnav
+print_config USE_ mp_config.h mp_config.mak dvdnav
 enabled libdvdnav	&& _inputmodules="dvdnav $_inputmodules" || _noinputmodules="dvdnav $_noinputmodules"
 
 enabled libdvdplay	&& require2 libdvdplay dvdplay/dvdplay.h dvdplay_open -ldvdplay
 dvdplay=$libdvdplay
-print_config USE_ config.h config.mak dvdplay
+print_config USE_ mp_config.h mp_config.mak dvdplay
 enabled libdvdplay	&& _inputmodules="dvdplay $_inputmodules" || _noinputmodules="dvdplay $_noinputmodules"
 
 enabled libvcd && require2 libvcd libvcd/info.h vcdinfo_open -lvcdinfo
-print_config USE_ config.h config.mak libvcd
+print_config USE_ mp_config.h mp_config.mak libvcd
 enabled libvcd	&& _inputmodules="libvcd $_inputmodules" || _noinputmodules="libvcd $_noinputmodules"
 
 enabled fastmemcpy	&& x86	|| disable fastmemcpy
-print_config USE_ config.h config.mak fastmemcpy
+print_config USE_ mp_config.h mp_config.mak fastmemcpy
 
 test linux -o bsdos -o freebsd -o sunos	&& enable vcd	|| disable vcd
-print_config HAVE_ config.h config.mak tv
+print_config HAVE_ mp_config.h mp_config.mak tv
 enabled vcd	&& _inputmodules="vcd $_inputmodules" || _noinputmodules="vcd $_noinputmodules"
 
-print_config USE_ config.h config.mak tv
+print_config USE_ mp_config.h mp_config.mak tv
 enabled tv	&& _inputmodules="tv $_inputmodules" || _noinputmodules="tv $_noinputmodules"
 
 enabled tv_v4l && require2 tv_v4l "stdlib.h linux/videodev.h" video_devdata
-print_config HAVE_ config.h config.mak tv_v4l
+print_config HAVE_ mp_config.h mp_config.mak tv_v4l
 enabled tv_v4l	&& _vomodules="tv-v4l $_vomodules" || _novomodules="tv-v4l $_novomodules"
 
-print_config HAVE_ config.h config.mak audio_select
+print_config HAVE_ mp_config.h mp_config.mak audio_select
 
 CFLAGS="$CFLAGS -W -Wall"
 # Thread support
@@ -1008,15 +1010,16 @@ test "$_debug" && _def_debug='#define MP_DEBUG 1' || _def_debug='#undef MP_DEBUG
 
 # Checking for VIDIX
 enabled vidix	&& require2 vidix vidix/vidixlib.h vdlAllocFourccS -lvidix
-print_config CONFIG_ config.h config.mak vidix
+print_config CONFIG_ mp_config.h mp_config.mak vidix
 enabled x11	&& enabled vidix	&& _vomodules="xvidix $_vomodules" || _novomodules="xvidix $_novomodules"
 
 _def_ffmpeg=
 disable _ffmpeg
 # Checking for FFMPEG
-test -f "../codecs/libavcodec/avcodec.h" && enable _ffmpeg
+test -f "../codecs/ffmpeg/libavcodec/avcodec.h" && enable _ffmpeg
 if enabled _ffmpeg ; then
 _def_ffmpeg='#define HAVE_LOCAL_FFMPEG 1'
+add_cflags "-I$_srcdir/../codecs/ffmpeg"
 _codecmodules="$_codecmodules builtin-ffmpeg"
 else
 _nocodecmodules="$_nocodecmodules builtin-ffmpeg"
@@ -1027,11 +1030,11 @@ fi
 fi
 
 enabled joystick	&& test linux	|| disable joystick
-print_config HAVE_ config.h config.mak joystick
+print_config HAVE_ mp_config.h mp_config.mak joystick
 
 #############################################################################
-echo "Creating config.mak"
-cat >> config.mak << EOF
+echo "Creating mp_config.mak"
+cat >> mp_config.mak << EOF
 # -------- Generated by configure -----------
 
 LANG = C
@@ -1053,12 +1056,12 @@ DEBUG = -DDEBUG
 # --- HAZARDOUS STUFF
 
 EOF
-echo "EXTRALIBS=$extralibs" >> config.mak
-echo "LDFLAGS=$LDFLAGS" >> config.mak
+echo "EXTRALIBS=$extralibs" >> mp_config.mak
+echo "LDFLAGS=$LDFLAGS" >> mp_config.mak
 
 #############################################################################
-echo "Creating config.h"
-cat >> config.h << EOF
+echo "Creating mp_config.h"
+cat >> mp_config.h << EOF
 #ifndef MPXP_CONFIG_H
 #define MPXP_CONFIG_H 1
 /* -------- This file has been automatically generated by configure ---------

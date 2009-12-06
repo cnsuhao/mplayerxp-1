@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "img_format.h"
-#include "avutil.h"
+#include "../../codecs/ffmpeg/libavutil/avutil.h"
 
 const char * __FASTCALL__ vo_format_name(int format)
 {

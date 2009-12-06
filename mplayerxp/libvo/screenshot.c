@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "../mplayer.h"
 #ifdef HAVE_PNG
 #ifdef HAVE_LIBPNG_PNG

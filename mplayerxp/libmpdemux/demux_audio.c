@@ -1,4 +1,4 @@
-#include "config.h"
+#include "../mp_config.h"
 #include "demux_msg.h"
 
 #include <stdlib.h>

@@ -1,7 +1,7 @@
 #ifndef __ASF_H
 #define __ASF_H
 
-//#include "config.h"	/* for WORDS_BIGENDIAN */
+//#include "cp_config.h"	/* for WORDS_BIGENDIAN */
 #include <inttypes.h>
 #include "bswap.h"
 

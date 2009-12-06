@@ -12,7 +12,7 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */

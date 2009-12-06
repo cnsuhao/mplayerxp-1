@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <dlfcn.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "vd_msg.h"
 #include "help_mp.h"
 #include "codecs_ld.h"

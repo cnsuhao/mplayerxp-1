@@ -24,7 +24,7 @@
 #include "libvo/img_format.h"
 #include "osdep/timer.h"
 #include "libvo/fastmemcpy.h"
-#include "config.h"
+#include "mp_config.h"
 #include "vd_internal.h"
 #include "codecs_ld.h"
 

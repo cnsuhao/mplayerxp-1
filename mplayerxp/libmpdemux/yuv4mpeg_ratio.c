@@ -21,7 +21,7 @@
  *
  */
 
-#include "config.h"
+#include "../mp_config.h"
 
 #include <string.h>
 #include "yuv4mpeg.h"

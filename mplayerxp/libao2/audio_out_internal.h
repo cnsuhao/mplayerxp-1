@@ -1,4 +1,4 @@
-#include "../config.h"
+#include "../mp_config.h"
 // prototypes:
 //static ao_info_t info;
 static int __FASTCALL__ control(int cmd,long arg);

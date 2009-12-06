@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "video_out.h"
 
 #include "../osdep/shmem.h"

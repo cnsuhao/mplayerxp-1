@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#include "config.h"
+#include "mp_config.h"
 #define MSGT_CLASS MSGT_CFGPARSER
 #include "__mp_msg.h"
 

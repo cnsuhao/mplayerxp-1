@@ -22,7 +22,7 @@
 #include <fcntl.h>
 
 #include "version.h"
-#include "config.h"
+#include "mp_config.h"
 #include "sig_hand.h"
 #include "mplayer.h"
 #define HELP_MP_DEFINE_STATIC

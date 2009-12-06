@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "mplayer.h"
 #include "stream.h"
 #include "vobsub.h"

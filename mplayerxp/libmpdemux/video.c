@@ -1,6 +1,6 @@
 // read vmpideo frame
 
-#include "config.h"
+#include "../mp_config.h"
 #include <stdio.h>
 #ifdef HAVE_MALLOC
 #include <malloc.h>

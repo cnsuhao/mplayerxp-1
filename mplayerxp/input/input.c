@@ -1,4 +1,4 @@
-#include "../config.h"
+#include "../mp_config.h"
 
 #include <stdlib.h>
 #include <string.h>

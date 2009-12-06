@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"

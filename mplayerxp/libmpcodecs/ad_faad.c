@@ -12,7 +12,7 @@
 #include "help_mp.h"
 #include "bswap.h"
 #include "codecs_ld.h"
-#include "config.h"
+#include "mp_config.h"
 #include "ad_internal.h"
 #include "../mplayer.h"
 #include "../../codecs/libfaad2/faad.h"

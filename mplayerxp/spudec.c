@@ -11,7 +11,7 @@
    and <URL:http://members.aol.com/mpucoder/DVD/spu.html>
 
  */
-#include "config.h"
+#include "mp_config.h"
 #define MSGT_CLASS MSGT_SPUDEC
 #include "__mp_msg.h"
 

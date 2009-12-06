@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "vo_msg.h"
-#include "config.h"
+#include "../mp_config.h"
 #include "font_load.h"
 #include "sub.h"
 #include "../osdep/get_path.h"

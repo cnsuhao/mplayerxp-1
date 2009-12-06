@@ -1,7 +1,7 @@
 #ifndef __STREAM_H
 #define __STREAM_H
 
-#include "../config.h"
+#include "../mp_config.h"
 
 #include "demux_msg.h"
 #include <inttypes.h>

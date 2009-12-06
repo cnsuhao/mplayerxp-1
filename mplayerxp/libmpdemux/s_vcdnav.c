@@ -1,7 +1,7 @@
 /*
     s_vcdnav - libVCD's stream interface (based on xine's input plugin)
 */
-#include "../config.h"
+#include "../mp_config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

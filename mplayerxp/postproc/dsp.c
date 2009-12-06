@@ -660,7 +660,7 @@ extern void store24bit(void* data, int pos, uint32_t expanded_value);
 
 /* MMX optimized stugff */
 #include <limits.h>
-#include "../config.h"
+#include "../mp_config.h"
 #include "../cpudetect.h"
 
 #undef HAVE_MMX

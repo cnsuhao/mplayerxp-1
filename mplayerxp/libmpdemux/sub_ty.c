@@ -13,7 +13,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "demux_msg.h"
 #include "help_mp.h"
 

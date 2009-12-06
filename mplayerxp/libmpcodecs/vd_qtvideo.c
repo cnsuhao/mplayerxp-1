@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "../mplayer.h"
 #include "mp_msg.h"
 

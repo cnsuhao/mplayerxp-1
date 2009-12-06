@@ -7,7 +7,7 @@
 # a BSD compatible 'install' program
 INSTALL = install
 
-include config.mak
+include mp_config.mak
 
 PRG = $(PROGNAME)
 PRG_FIBMAP = fibmap_mplayerxp
@@ -21,6 +21,7 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 BINDIR = ${prefix}/bin
 # BINDIR = /usr/local/bin
 MANDIR = ${prefix}/man
+LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
 
 SRCS_COMMON = cpudetect.c mp_msg.c codec-cfg.c cfgparser.c my_profile.c my_malloc.c spudec.c playtree.c playtreeparser.c asxparser.c mp_image.c
@@ -108,7 +109,7 @@ distclean:
 	$(DO_MAKE)
 	-rm -f *~ $(PRG) $(PRG_FIBMAP) $(OBJS)
 	-rm -f *.o *.a .depend configure.log
-	-rm -f config.h config.mak version.h
+	-rm -f mp_config.h mp_config.mak version.h
 	-rm -f cpuinfo help_mp.h
 
 version.h:

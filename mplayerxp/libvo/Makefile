@@ -1,5 +1,5 @@
 
-include ../config.mak
+include ../mp_config.mak
 
 LIBNAME = libvo.a
 
@@ -53,7 +53,7 @@ clean:
 	rm -f *.o *.a *~
 
 distclean:
-	rm -f Makefile.bak *.o *.a *~ .depend config.mak
+	rm -f Makefile.bak *.o *.a *~ .depend
 
 dep:    depend
 

@@ -1,6 +1,6 @@
 /* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
 
-#include "../config.h"
+#include "../mp_config.h"
 
 //#define HAVE_TERMCAP
 #define USE_IOCTL

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "pp_msg.h"
 
 #include "../libvo/img_format.h"

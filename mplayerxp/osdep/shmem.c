@@ -6,7 +6,7 @@
  *   Sun Apr  6 02:26:26 MET DST 1997
  */
 
-#include "../config.h"
+#include "../mp_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

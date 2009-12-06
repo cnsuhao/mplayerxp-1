@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "config.h"
+#include "mp_config.h"
 #ifdef USE_FASTMEMCPY
 #include "fastmemcpy.h"
 #endif

@@ -241,10 +241,8 @@ test -z "$_mlibdir" && _mlibdir="$MLIBHOME"
 
 # Fix libavcodec
 if test "$_ffmpeg" = yes ; then
-cd libavcodec
-if ! test -f Makefile ; then
-#patch --force <../libavcodec.diff
-#else
+cd ffmpeg
+if ! test -f configure ; then
 echo "**WARNING**: local copy of libavcodec doesn't exist! Please copy libavcodec"
 echo "from ffmpeg distro into mplayerxp/codecs/libavcodec subfolder."
 echo "Otherwise support of builtin ffmpeg's codecs will be disabled"
@@ -252,41 +250,21 @@ echo "Press any key"
 read _answer
 _ffmpeg=no
 fi
-cd ../libavutil
-if ! test -f Makefile ; then
-echo "**WARNING**: local copy of libavutil doesn't exist! Please copy libavutil"
-echo "from ffmpeg distro into mplayerxp/codecs/libavutil subfolder."
-echo "Otherwise support of builtin ffmpeg's codecs will be disabled"
-echo "Press any key"
-read _answer
-_ffmpeg=no
+_ffmpeg_args="--prefix=$_codecdir/ffmpeg --libdir=$_codecdir --shlibdir=$_codecdir --enable-shared --disable-static --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --enable-pic --enable-postproc --enable-gpl"
+if test -n $_host ; then
+_arch=$_host_arch
+x86_32 && _arch="x86_32"
+x86_64 && _arch="x86_64"
+_ffmpeg_args="--arch=$_arch $_ffmpeg_args"
 fi
-cd ../libavformat
-if ! test -f Makefile ; then
-#patch --force <../libavformat.diff
-#else
-echo "**WARNING**: local copy of libavformat doesn't exist! Please copy libavformat"
-echo "from ffmpeg distro into mplayerxp/codecs/libavformat subfolder."
-echo "Otherwise support of builtin ffmpeg's codecs will be disabled"
-echo "Press any key"
-read _answer
-_ffmpeg=no
-fi
-cd ../libpostproc
-if ! test -f Makefile ; then
-echo "**WARNING**: local copy of libpostproc doesn't exist! Please copy libpostproc"
-echo "from ffmpeg distro into mplayerxp/codecs/libpostproc subfolder."
-echo "Otherwise support of builtin ffmpeg's codecs will be disabled"
-echo "Press any key"
-read _answer
-_ffmpeg=no
-fi
+echo "configuring ffmpeg stuff:"
+echo "$_ffmpeg_args"
+$(LC_ALL=C ./configure $_ffmpeg_args)
 cd ..
 fi
-
 _subdirs="mp3lib liba52 libdca libfaad2 libmpeg2"
 if test "$_ffmpeg" = yes ; then
-_subdirs="$_subdirs libavutil libavcodec libpostproc libavformat libswscale"
+_subdirs="$_subdirs ffmpeg"
 fi
 
 cc_version=`$_cc -dumpversion`
@@ -419,17 +397,6 @@ SHCFLAGS = $CFLAGS -fPIC
 MLIB_LIB =  $_ld_mlib
 MLIB_INC = $_inc_mlib
 
-# For embeddeded libavcodec
-CONFIG_GPL=yes
-CONFIG_RISKY = yes
-CONFIG_ENCODERS=yes
-CONFIG_DECODERS=yes
-CONFIG_MUXERS=yes
-CONFIG_DEMUXERS=yes
-CONFIG_BSFS=yes
-CONFIG_PROTOCOLS=yes
-CONFIG_PP=yes
-
 BUILD_SHARED=yes
 SRC_PATH=$source_path
 BUILD_ROOT=$source_path
@@ -492,27 +459,6 @@ static inline long long int llrint(double x)
 #define INFINITY HUGE_VAL
 #endif
 
-#define CONFIG_ENCODERS 1
-#define CONFIG_DECODERS 1
-#define CONFIG_MUXERS 1
-#define CONFIG_DEMUXERS 1
-#define CONFIG_BSFS 1
-#define CONFIG_PROTOCOLS 1
-#define CONFIG_PP 1
-#define CONFIG_RISKY 1
-#define CONFIG_GPL 1
-#define ENABLE_SMALL 0
-#define ENABLE_MMX 0 /* ffmpeg's build-in asm is incompatible with modern gcc-4 */
-#define ENABLE_ARMV4L 0
-#define ENABLE_MLIB 0
-#define ENABLE_VIS 0
-#define ENABLE_ALPHA 0
-#define ENABLE_POWERPC 0
-#define ENABLE_MMI 0
-#define ENABLE_SH4 0
-#define ENABLE_BFIN 0
-#define ENABLE_GRAY 1
-
 #ifdef HAVE_PTHREADS
 /* BeOS workaround */
 #define HAVE_THREADS 1
@@ -534,335 +480,6 @@ $_def_fastcall
 
 EOF
 echo "#define restrict $_restrict" >> config.h
-
-# find if .align arg is power-of-two or not
-echocheck ".align is power-of-two"
-cat > $TMPC << EOF
-asm (".align 3");
-EOF
-asmalign_pot="no"
-cc_check && asmalign_pot="yes"
-echores $asmalign_pot
-if test "$asmalign_pot" = "yes" ; then
-  printf '#define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\\n\\t"\n' >> config.h
-else
-  printf '#define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\\n\\t"\n' >> config.h
-fi
-
-check_cc <<EOF || die "Symbol mangling check failed."
-int ff_extern;
-EOF
-sym=$($nm -P -g $TMPO | grep ff_extern)
-extern_prefix=${sym%%ff_extern*}
-echo "#define EXTERN_PREFIX \"${extern_prefix}\"" >> config.h
-
-# Addon for newest ffmpeg's versions
-echo "Generating list of ffmpeg's codecs! Please wait"
-ENCODER_LIST=`sed -n 's/^[^#]*ENC.*, *\(.*\)).*/\1_encoder/p' "$source_path/libavcodec/allcodecs.c"`
-DECODER_LIST=`sed -n 's/^[^#]*DEC.*, *\(.*\)).*/\1_decoder/p' "$source_path/libavcodec/allcodecs.c"`
-PARSER_LIST=`sed -n 's/^[^#]*PARSER.*, *\(.*\)).*/\1_parser/p' "$source_path/libavcodec/allcodecs.c"`
-MUXER_LIST=`sed -n 's/^[^#]*_MUX.*, *\(.*\)).*/\1_muxer/p' "$source_path/libavformat/allformats.c"`
-DEMUXER_LIST=`sed -n 's/^[^#]*DEMUX.*, *\(.*\)).*/\1_demuxer/p' "$source_path/libavformat/allformats.c"`
-BSF_LIST=`sed -n 's/^[^#]*BSF.*(.*, *\(.*\)).*/\1_bsf/p' "$source_path/libavcodec/allcodecs.c"`
-PROTOCOL_LIST=`sed -n 's/^[^#]*PROTOCOL.*(.*, *\(.*\)).*/\1_protocol/p' "$source_path/libavformat/allformats.c"`
-
-CONFIG_LIST='
-    bsfs
-    decoders
-    demuxers
-    encoders
-    muxers
-    parsers
-    protocols
-    avisynth
-    gray
-    ipv6
-    liba52
-    libamr_nb
-    libamr_wb
-    libdc1394
-    libfaac
-    libfaad
-    libspeex
-    libschroedinger
-    libdirac
-    libgsm
-    libmp3lame
-    libnut
-    libogg
-    libtheora
-    libvorbis
-    libx264
-    libxvid
-    mpegaudio_hp
-    network
-    powerpc_perf
-    mlib
-    pp
-    zlib
-    mdct
-    fft
-    golomb
-    aandct
-'
-
-DEVICE_LIST='
-    audio_beos
-    bktr
-    dv1394
-    oss
-    v4l2
-    v4l
-    x11_grab_device
-    libdc1394
-'
-
-HAVE_LIST='
-    altivec_h
-    arpa_inet_h
-    bswap
-    closesocket
-    cmov
-    conio_h
-    dcbzl
-    dev_bktr_ioctl_bt848_h
-    dev_bktr_ioctl_meteor_h
-    dev_ic_bt8xx_h
-    dev_video_meteor_ioctl_meteor_h
-    dev_video_bktr_ioctl_bt848_h
-    dlfcn_h
-    dlopen
-    dos_paths
-    ebp_available
-    ebx_available
-    fast_64bit
-    fast_cmov
-    fast_unaligned
-    fork
-    freetype2
-    gethrtime
-    GetProcessTimes
-    getrusage
-    imlib2
-    inet_aton
-    inline_asm
-    libdc1394_1
-    libdc1394_2
-    llrint
-    lrint
-    lrintf
-    machine_ioctl_bt848_h
-    machine_ioctl_meteor_h
-    malloc_h
-    memalign
-    mkstemp
-    pld
-    ppc
-    ppc64
-    round
-    roundf
-    sdl
-    sdl_video_size
-    socklen_t
-    soundcard_h
-    poll_h
-    sys_mman_h
-    sys_resource_h
-    sys_select_h
-    sys_soundcard_h
-    sys_videoio_h
-    termios_h
-    threads
-    winsock2_h
-    yasm
-'
-ARCH_LIST='
-    alpha
-    arm
-    bfin
-    ia64
-    m68k
-    mips
-    parisc
-    powerpc
-    s390
-    sh4
-    sparc
-    sparc64
-    x86
-    x86_32
-    x86_64
-'
-
-# decoders / encoders
-ac3_decoder_deps="gpl"
-dxa_decoder_deps="zlib"
-flashsv_decoder_deps="zlib"
-flashsv_encoder_deps="zlib"
-flv_decoder_deps="h263_decoder"
-h263_decoder_deps="h263_parser mpeg4video_parser"
-h263i_decoder_deps="h263_decoder"
-h264_decoder_deps="h264_parser"
-mpeg_xvmc_decoder_deps="xvmc"
-mpeg4_decoder_deps="h263_decoder"
-msmpeg4v1_decoder_deps="h263_decoder"
-msmpeg4v2_decoder_deps="h263_decoder"
-msmpeg4v3_decoder_deps="h263_decoder"
-png_decoder_deps="zlib"
-png_encoder_deps="zlib"
-svq3_decoder_deps="h264_parser"
-vc1_decoder_deps="h263_decoder"
-wmv1_decoder_deps="h263_decoder"
-wmv2_decoder_deps="h263_decoder"
-wmv3_decoder_deps="h263_decoder"
-zmbv_decoder_deps="zlib"
-zmbv_encoder_deps="zlib"
-
-# external libraries
-liba52_decoder_deps="liba52"
-liba52bin_decoder_extralibs='$ldl'
-libamr_nb_decoder_deps="libamr_nb"
-libamr_nb_encoder_deps="libamr_nb"
-libamr_wb_decoder_deps="libamr_wb"
-libamr_wb_encoder_deps="libamr_wb"
-libdirac_decoder_deps="libdirac !libschroedinger"
-libdirac_encoder_deps="libdirac"
-libschroedinger_decoder_deps="libschroedinger"
-libschroedinger_encoder_deps="libschroedinger"
-libspeex_decoder_deps="libspeex"
-libfaac_encoder_deps="libfaac"
-libfaad_decoder_deps="libfaad"
-libfaadbin_decoder_extralibs='$ldl'
-libgsm_decoder_deps="libgsm"
-libgsm_encoder_deps="libgsm"
-libgsm_ms_decoder_deps="libgsm"
-libgsm_ms_encoder_deps="libgsm"
-libmp3lame_encoder_deps="libmp3lame"
-libtheora_encoder_deps="libtheora"
-libvorbis_encoder_deps="libvorbis"
-libx264_encoder_deps="libx264"
-libxvid_encoder_deps="libxvid"
-mpeg4aac_decoder_deps="libfaad"
-
-# demuxers / muxers
-ac3_demuxer_deps="ac3_parser"
-audio_beos_demuxer_deps="audio_beos"
-audio_beos_demuxer_extralibs="-lmedia -lbe"
-audio_beos_muxer_deps="audio_beos"
-audio_beos_muxer_extralibs="-lmedia -lbe"
-avisynth_demuxer_deps="avisynth"
-bktr_demuxer_deps_any="dev_bktr_ioctl_bt848_h machine_ioctl_bt848_h dev_video_bktr_ioctl_bt848_h dev_ic_bt8xx_h"
-dv1394_demuxer_deps="dv1394"
-libdc1394_demuxer_deps="libdc1394"
-libnut_demuxer_deps="libnut"
-libnut_muxer_deps="libnut"
-mp3_demuxer_deps="mpegaudio_parser"
-oss_demuxer_deps_any="soundcard_h sys_soundcard_h"
-oss_muxer_deps_any="soundcard_h sys_soundcard_h"
-redir_demuxer_deps="network"
-rtp_muxer_deps="network mpegts_demuxer"
-rtsp_demuxer_deps="rtp_protocol rtp_muxer"
-sdp_demuxer_deps="rtsp_demuxer"
-v4l2_demuxer_deps="linux_videodev2_h"
-v4l_demuxer_deps="linux_videodev_h"
-x11_grab_device_demuxer_deps="x11grab XShmCreateImage"
-x11_grab_device_demuxer_extralibs="-lX11 -lXext"
-
-# protocols
-http_protocol_deps="network"
-rtp_protocol_deps="udp_protocol"
-tcp_protocol_deps="network"
-udp_protocol_deps="network"
-
-
-enable $ENCODER_LIST $DECODER_LIST $PARSER_LIST $MUXER_LIST $DEMUXER_LIST $PROTOCOL_LIST $BSF_LIST $CONFIG_LIST
-enabled_any $ENCODER_LIST && enable encoders
-enabled_any $DECODER_LIST && enable decoders
-enabled_any $MUXER_LIST   && enable muxers
-enabled_any $DEMUXER_LIST && enable demuxers
-enabled_any $BSF_LIST && enable bsfs
-enabled_any $PROTOCOLS_LIST && enable protocols
-
-enabled_any pthreads beosthreads os2threads w32threads && enable threads
-
-# suppress ffmpeg's device stuff
-disable $DEVICE_LIST
-disable mpeg_xvmc_decoder 
-
-##########################################
-# Network check
-
-if enabled network; then
-    # Prefer arpa/inet.h over winsock2
-    check_type sys/socket.h socklen_t
-    if check_header arpa/inet.h ; then
-        check_func closesocket
-    elif check_header winsock2.h ; then
-        network_extralibs="-lws2_32"
-        check_func2 winsock2.h closesocket
-    fi
-enabled ipv6	&& require2 ipv6 "sys/types.h sys/socket.h netinet/in.h netdb.h" IN6_IS_ADDR_MULTICAST
-fi
-
-# check configurable stuff
-enabled liba52            && require2 liba52 a52dec/a52.h a52_init -la52
-enabled libdts            && require2 libdts dts.h dts_init -ldts -lm
-enabled libgsm            && require2 libgsm gsm.h gsm_create -lgsm
-enabled libmp3lame        && require2 libmp3lame lame/lame.h lame_init -lmp3lame -lm
-enabled libtheora         && require3 libtheora theora/theora.h OC_PF_420 theora_info_init -ltheora -logg
-enabled libvorbis         && require2 libvorbis vorbis/vorbisenc.h vorbis_info_init -lvorbis -lvorbisenc -logg
-enabled libogg            && require2 libogg ogg/ogg.h ogg_sync_init -logg
-enabled libxvid           && require2 libxvid xvid.h xvid_global -lxvidcore
-enabled libx264           && require2 libx264 x264.h x264_encoder_open -lx264
-enabled libfaac           && require2 libfaac "stdint.h faac.h" faacEncGetVersion -lfaac
-enabled libfaad           && require2 libfaad faad.h faacDecOpen -lfaad
-enabled avisynth          && require2 avisynth "windows.h vfw.h" AVIFileInit -lvfw32
-enabled libnut            && require2 libnut libnut.h nut_demuxer_init -lnut
-enabled libspeex          && require  libspeex speex/speex.h speex_decoder_init -lspeex
-enabled mlib              && require  mlib mlib_types.h mlib_VectorSub_S16_U8_Mod -lmlib
-# NON FREE stuff:
-enabled libdirac   && add_cflags $(pkg-config --cflags dirac) &&
-                      require  libdirac libdirac_decoder/dirac_parser.h dirac_decoder_init -ldirac_decoder &&
-                      require  libdirac libdirac_encoder/dirac_encoder.h dirac_encoder_init -ldirac_encoder
-enabled libschroedinger && add_cflags $(pkg-config --cflags schroedinger-1.0) &&
-                           require libschroedinger schroedinger/schro.h schro_init $(pkg-config --libs schroedinger-1.0)
-
-if enabled libdc1394; then
-    { check_lib dc1394/dc1394.h dc1394_new -ldc1394 -lraw1394 &&
-        enable libdc1394_2; } ||
-    { check_lib libdc1394/dc1394_control.h dc1394_create_handle -ldc1394_control -lraw1394 &&
-        enable libdc1394_1; } ||
-    die "ERROR: No version of libdc1394 found "
-fi
-
-check_deps $CONFIG_LIST $HAVE_LIST $DECODER_LIST $ENCODER_LIST $PARSER_LIST \
-    $BSF_LIST $DEMUXER_LIST $MUXER_LIST $PROTOCOL_LIST
-
-print_config ARCH_   config.h config.mak $ARCH_LIST
-print_config HAVE_   config.h config.mak $HAVE_LIST
-
-enabled v4l_demuxer       && check_sheader v4l_demuxer linux/videodev.h
-enabled v4l2_demuxer      && check_sheader v4l2_demuxer linux/videodev2.h
-enabled libamr_nb         && require libamr_nb amrnb/interf_dec.h Speech_Decode_Frame_init -lamrnb -lm
-enabled libamr_wb         && require libamr_wb amrwb/dec_if.h D_IF_init -lamrwb -lm
-
-disabled libamr_nb        && disable libamr_nb_decoder && disable libamr_nb_encoder
-disabled libamr_wb        && disable libamr_wb_decoder && disable libamr_wb_encoder
-
-echo "/* List of ffmpeg's codecs! */" >> config.h
-echo "# List of ffmpeg's codecs!" >> config.mak
-for codec in $CONFIG_LIST $DECODER_LIST $ENCODER_LIST $PARSER_LIST $DEMUXER_LIST $PROTOCOL_LIST $BSF_LIST $MUXER_LIST; do
-    ucname="`toupper $codec`"
-    config_name="CONFIG_$ucname"
-    enabled_name="ENABLE_$ucname"
-    if enabled $codec; then
-        echo "#define $config_name 1" >> config.h
-        echo "#define $enabled_name 1" >> config.h
-        echo "$config_name=yes" >> config.mak
-    else
-        echo "#define $enabled_name 0" >> config.h
-    fi
-done
 
 echo "EXTRALIBS=$extralibs" >> config.mak
 echo "LDFLAGS=$LDFLAGS" >> config.mak

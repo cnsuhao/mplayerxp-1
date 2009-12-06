@@ -17,7 +17,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
-#include "../mplayerxp/config.h"
+#include "../mplayerxp/mp_config.h"
 #include "../mplayerxp/cpudetect.h"
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)

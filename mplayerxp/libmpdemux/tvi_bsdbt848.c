@@ -10,7 +10,7 @@
                             audio parameters.
 */
 
-#include "config.h"
+#include "../mp_config.h"
 
 #if defined(USE_TV) && defined(HAVE_TV_BSDBT848)
 

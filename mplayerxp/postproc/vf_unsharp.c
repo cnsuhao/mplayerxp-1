@@ -23,7 +23,7 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "pp_msg.h"
 #include "../cpudetect.h"
 

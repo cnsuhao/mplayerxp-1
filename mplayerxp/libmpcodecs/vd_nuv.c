@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
-#include "config.h"
+#include "mp_config.h"
 
 #include "vd_internal.h"
 #include "codecs_ld.h"

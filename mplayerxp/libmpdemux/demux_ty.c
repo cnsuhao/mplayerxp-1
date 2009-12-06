@@ -35,7 +35,7 @@
 #include <time.h>
 #include <stdarg.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "bswap.h"
 #include "demux_msg.h"
 #include "help_mp.h"

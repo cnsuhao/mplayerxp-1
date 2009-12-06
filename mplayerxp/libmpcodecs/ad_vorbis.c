@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
-#include "config.h"
+#include "mp_config.h"
 #include "codecs_ld.h"
 #include "ad_internal.h"
 #include "libao2/afmt.h"

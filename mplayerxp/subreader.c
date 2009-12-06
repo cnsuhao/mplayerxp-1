@@ -13,7 +13,7 @@
 #include <ctype.h>
 #define MSGT_CLASS MSGT_SUBREADER
 #include "__mp_msg.h"
-#include "config.h"
+#include "mp_config.h"
 #include "subreader.h"
 
 #define ERR ((void *) -1)

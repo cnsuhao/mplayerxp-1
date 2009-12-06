@@ -12,7 +12,7 @@
  *
  */
 
-#include "config.h"
+#include "../mp_config.h"
 
 #if defined(HAVE_CDDA) && defined(HAVE_STREAMING)
 

@@ -5,7 +5,7 @@
     Note: Please use it with '-nocache' option.
 	  Requires PTS fixing :(
 */
-#include "../config.h"
+#include "../mp_config.h"
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"

@@ -6,7 +6,7 @@
  * Licence: GPL
  */
 #define USE_QTX_CODECS 1
-#include "config.h"
+#include "../mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>

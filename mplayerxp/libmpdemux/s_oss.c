@@ -1,7 +1,7 @@
 /*
     s_oss - stream interface for oss capturing.
 */
-#include "../config.h"
+#include "../mp_config.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

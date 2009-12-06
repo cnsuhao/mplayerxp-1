@@ -1,4 +1,4 @@
-#include "config.h"
+#include "../mp_config.h"
 // based on libmpeg2/header.c by Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
 #ifdef HAVE_MALLOC
 #include <malloc.h>

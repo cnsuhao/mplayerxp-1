@@ -1,7 +1,7 @@
 #ifndef _aviheader_h
 #define	_aviheader_h
 
-//#include "config.h"	/* get correct definition WORDS_BIGENDIAN */
+//#include "mp_config.h"	/* get correct definition WORDS_BIGENDIAN */
 #include "bswap.h"
 
 /*

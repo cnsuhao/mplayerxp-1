@@ -14,7 +14,7 @@
 		support for libcss libraries with new API		     */
 
 /* don't do anything with this source if css support was not requested */
-#include "config.h"
+#include "../mp_config.h"
 #ifdef HAVE_LIBCSS
 
 #warning FIXME: Dynamic loading of libcss.so with newer (ver>0.1) libcss API is not supported in this version!

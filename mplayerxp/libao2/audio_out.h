@@ -1,6 +1,6 @@
 #ifndef __AUDIO_OUT_H
 #define __AUDIO_OUT_H 1
-#include "../config.h"
+#include "../mp_config.h"
 /** Text description of AO-driver */
 typedef struct ao_info_s
 {

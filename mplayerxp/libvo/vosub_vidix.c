@@ -20,7 +20,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "../mplayer.h"
 #ifdef HAVE_MEMALIGN
 #include <malloc.h>

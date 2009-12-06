@@ -12,7 +12,7 @@
 #include <limits.h>
 
 
-#include "config.h"
+#include "mp_config.h"
 #include "../pp_msg.h"
 #include "help_mp.h"
 

@@ -1,5 +1,5 @@
 
-#include "config.h"
+#include "mp_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "../mplayer.h"
 #include "demux_msg.h"
 #include "help_mp.h"

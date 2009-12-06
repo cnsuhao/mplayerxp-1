@@ -8,7 +8,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include "../config.h"
+#include "../mp_config.h"
 
 #include "../bswap.h"
 #include <sys/types.h>

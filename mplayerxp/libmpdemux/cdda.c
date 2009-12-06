@@ -1,4 +1,4 @@
-#include "config.h"
+#include "../mp_config.h"
 
 #ifdef HAVE_CDDA
 

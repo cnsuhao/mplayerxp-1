@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "help_mp.h"

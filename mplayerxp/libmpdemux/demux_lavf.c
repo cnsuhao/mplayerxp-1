@@ -18,7 +18,7 @@
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include <stdlib.h>
-#include "config.h"
+#include "../mp_config.h"
 
 #include "stream.h"
 #include "demuxer.h"
@@ -27,7 +27,7 @@
 #include "help_mp.h"
 
 #ifdef HAVE_LOCAL_FFMPEG
-#include "../../codecs/libavformat/avformat.h"
+#include "../../codecs/ffmpeg/libavformat/avformat.h"
 #include "../libmpcodecs/codecs_ld.h"
 
 #define PROBE_BUF_SIZE 2048
@@ -133,6 +133,9 @@ static unsigned int (*codec_get_tag_ptr)(const void *tags,int id);
 #define codec_get_tag(a,b) (*codec_get_tag_ptr)(a,b)
 static AVInputFormat* (*av_iformat_next_ptr)(AVInputFormat *f);
 #define av_iformat_next(a) (*av_iformat_next_ptr)(a)
+static void (*av_free_packet_ptr)(AVPacket *pkt);
+#define av_free_packet(a) (*av_free_packet_ptr)(a)
+
 
 static void **codec_bmp_tags_ptr;
 static void **codec_wav_tags_ptr;

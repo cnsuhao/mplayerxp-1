@@ -8,7 +8,7 @@
 #include <limits.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "demux_msg.h"
 #include "help_mp.h"
 

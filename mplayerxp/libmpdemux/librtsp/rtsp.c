@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
-#include "config.h"
+#include "mp_config.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close
 #include <sys/socket.h>

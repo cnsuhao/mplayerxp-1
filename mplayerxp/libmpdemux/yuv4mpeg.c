@@ -22,7 +22,7 @@
  *
  */
 
-#include "config.h"
+#include "../mp_config.h"
 
 #include <unistd.h>
 #include <stdio.h>

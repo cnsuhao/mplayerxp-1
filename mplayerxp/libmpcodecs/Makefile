@@ -1,5 +1,5 @@
 
-include ../config.mak
+include ../mp_config.mak
 
 LIBNAME = libmpcodecs.a
 

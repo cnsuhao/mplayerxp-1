@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "mp_config.h"
 
 #include <stddef.h>
 #include <dlfcn.h>

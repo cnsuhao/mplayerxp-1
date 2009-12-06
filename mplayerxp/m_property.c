@@ -2,7 +2,7 @@
 /// \file
 /// \ingroup Properties
 
-#include "config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>

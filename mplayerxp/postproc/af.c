@@ -7,7 +7,7 @@
 #endif
 
 #include "af.h"
-#include "../config.h"
+#include "../mp_config.h"
 #include "../help_mp.h"
 #include "../libao2/audio_out.h"
 

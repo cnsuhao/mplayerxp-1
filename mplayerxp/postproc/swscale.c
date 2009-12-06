@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "config.h"
+#include "../mp_config.h"
 #include "swscale.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "../cpudetect.h"

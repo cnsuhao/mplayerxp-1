@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #define __USE_GNU
 #include <unistd.h>
-#include "../config.h"
+#include "../mp_config.h"
 #include "stream.h"
 #include "demux_msg.h"
 #include "help_mp.h"

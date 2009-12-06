@@ -12,7 +12,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include "../config.h"
+#include "../mp_config.h"
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/types.h>

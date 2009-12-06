@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "demux_msg.h"
 
 //----------------------- mp3 audio frame header parser -----------------------

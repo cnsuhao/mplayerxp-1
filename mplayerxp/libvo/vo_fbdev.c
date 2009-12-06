@@ -22,7 +22,7 @@
 #include <sys/kd.h>
 #include <linux/fb.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "../mplayer.h"
 #include "video_out.h"
 #include "video_out_internal.h"

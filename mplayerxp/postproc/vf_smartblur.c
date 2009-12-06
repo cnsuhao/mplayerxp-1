@@ -22,7 +22,7 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "pp_msg.h"
 
 #ifdef USE_SETLOCALE

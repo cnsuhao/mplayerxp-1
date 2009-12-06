@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #include <inttypes.h>
 
-#include "config.h"
+#include "mp_config.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>

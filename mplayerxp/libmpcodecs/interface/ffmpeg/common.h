@@ -20,7 +20,7 @@
 
 #ifdef HAVE_AV_CONFIG_H
 /* only include the following when compiling package */
-#    include "config.h"
+#    include "mp_config.h"
 
 #    include <stdlib.h>
 #    include <stdio.h>

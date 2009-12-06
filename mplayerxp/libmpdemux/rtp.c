@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <ctype.h>
-#include "config.h"
+#include "../mp_config.h"
 #ifndef HAVE_WINSOCK2
 #include <netinet/in.h>
 #include <sys/socket.h>

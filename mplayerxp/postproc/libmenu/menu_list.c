@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "config.h"
+#include "mp_config.h"
 
 #include "libvo/img_format.h"
 #include "libvo/sub.h"

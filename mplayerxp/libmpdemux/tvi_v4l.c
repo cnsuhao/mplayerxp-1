@@ -9,7 +9,7 @@
   CODE IS UNDER DEVELOPMENT, NO FEATURE REQUESTS PLEASE!
 */
 
-#include "config.h"
+#include "../mp_config.h"
 
 #if defined(USE_TV) && defined(HAVE_TV_V4L)
 

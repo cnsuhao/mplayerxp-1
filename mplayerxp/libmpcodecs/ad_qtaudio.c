@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <dlfcn.h>
-#include "config.h"
+#include "mp_config.h"
 
 #include "ad_internal.h"
 #include "bswap.h"

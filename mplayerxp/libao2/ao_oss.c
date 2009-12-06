@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "../mixer.h"
 
 #include "afmt.h"
@@ -292,7 +292,7 @@ ac3_retry:
       int r=0;
       MSG_WARN("OSS-CONF: driver doesn't support SNDCTL_DSP_GETOSPACE :-(\n");
       if(ioctl(audio_fd, SNDCTL_DSP_GETBLKSIZE, &r)==-1){
-          MSG_V("OSS-CONF: %d bytes/frag (config.h)\n",ao_data.outburst);
+          MSG_V("OSS-CONF: %d bytes/frag (mp_config.h)\n",ao_data.outburst);
       } else {
           ao_data.outburst=r;
           MSG_V("OSS-CONF: %d bytes/frag (GETBLKSIZE)\n",ao_data.outburst);
@@ -322,7 +322,7 @@ ac3_retry:
     free(data);
     if(ao_data.buffersize==0){
         MSG_ERR("\n   *** OSS-CONF: Your audio driver DOES NOT support select()  ***\n"
-          "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in config.h !\n\n");
+          "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mp_config.h !\n\n");
         return 0;
     }
 #endif

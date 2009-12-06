@@ -107,7 +107,7 @@
 #include <inttypes.h>
 #include <errno.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "../mplayer.h"
 #include "video_out.h"
 

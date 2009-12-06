@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "../mplayer.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close

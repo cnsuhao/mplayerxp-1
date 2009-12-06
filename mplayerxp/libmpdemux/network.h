@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include "config.h"
+#include "../mp_config.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>

@@ -7,7 +7,7 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "config.h"
+#include "mp_config.h"
 
 #include "dump.h"
 #define MSGT_CLASS MSGT_GLOBAL

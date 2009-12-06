@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <sys/time.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "../bswap.h"
 
 #include "ao_msg.h"

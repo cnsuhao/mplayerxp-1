@@ -15,7 +15,7 @@
     note: triple buffering requires VBE 3.0 - need volunteers.
   - refresh rate support (need additional info from mplayer)
 */
-#include "config.h"
+#include "mp_config.h"
 
 #include <stdio.h>
 #ifdef HAVE_MALLOC

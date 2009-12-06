@@ -1,4 +1,4 @@
-#include "config.h"
+#include "mp_config.h"
 #include "cpudetect.h"
 #define MSGT_CLASS MSGT_CPUDETECT
 #include "__mp_msg.h"

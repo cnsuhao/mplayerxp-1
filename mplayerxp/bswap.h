@@ -2,7 +2,7 @@
 #define __BSWAP_H__
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "mp_config.h"
 #endif
 
 #ifdef HAVE_BYTESWAP_H
@@ -21,7 +21,7 @@
         ((short)(unsigned char)(ch1) << 8))
 
 
-#ifdef ARCH_X86
+#if defined(__i386__)
 inline static unsigned short ByteSwap16(unsigned short x)
 {
   __asm("xchgb %b0,%h0"	:
@@ -58,7 +58,7 @@ inline static unsigned long long int ByteSwap64(unsigned long long int x)
 }
 #define bswap_64(x) ByteSwap64(x)
 
-#elif defined(ARCH_X86_64)
+#elif defined(__x86_64__)
 
 inline static unsigned short ByteSwap16(unsigned short x)
 {

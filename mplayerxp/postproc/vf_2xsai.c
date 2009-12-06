@@ -3,7 +3,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "pp_msg.h"
 
 #include "../libvo/img_format.h"

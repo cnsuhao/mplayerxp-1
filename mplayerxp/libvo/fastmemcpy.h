@@ -1,7 +1,7 @@
 #ifndef __MPLAYER_MEMCPY
 #define __MPLAYER_MEMCPY 1
 
-#include "../config.h"
+#include "../mp_config.h"
 
 #ifdef USE_FASTMEMCPY
 #include <stddef.h>

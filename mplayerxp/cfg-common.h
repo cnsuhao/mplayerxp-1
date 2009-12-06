@@ -78,7 +78,7 @@
 
 #else
 
-#include "config.h"
+#include "mp_config.h"
 
 extern int sws_chr_vshift;
 extern int sws_chr_hshift;

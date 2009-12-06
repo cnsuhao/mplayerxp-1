@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "sub_cc.h"
 
 #include "../subreader.h"

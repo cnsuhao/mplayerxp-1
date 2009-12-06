@@ -53,7 +53,7 @@
 #include <limits.h>
 #include <audio/audiolib.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "ao_msg.h"
 
 #include "audio_out.h"

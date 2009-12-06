@@ -5,7 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <pthread.h>
-#include "config.h"
+#include "mp_config.h"
 #include "mp_msg.h"
 #include "nls/nls.h"
 

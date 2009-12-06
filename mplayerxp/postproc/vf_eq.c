@@ -15,7 +15,7 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "pp_msg.h"
 #include "cpudetect.h"
 

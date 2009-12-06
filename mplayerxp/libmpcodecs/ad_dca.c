@@ -7,7 +7,7 @@
 #include "ad_internal.h"
 #include "codecs_ld.h"
 
-#include "config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 #include "cpudetect.h"
 

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "../mp_config.h"
 
 #include "stream.h"
 #include "demuxer.h"

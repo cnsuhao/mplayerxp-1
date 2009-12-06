@@ -27,7 +27,7 @@
  */
 
 #include <sys/types.h>
-#include "config.h"
+#include "mp_config.h"
 #ifndef HAVE_WINSOCK2
 #include <sys/socket.h>
 #include <netinet/in.h>

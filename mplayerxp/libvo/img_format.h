@@ -2,7 +2,7 @@
 #ifndef __IMG_FORMAT_H
 #define __IMG_FORMAT_H
 #include <inttypes.h>
-#include "../config.h"
+#include "../mp_config.h"
 /* RGB/BGR Formats */
 
 #define IMGFMT_RGB_MASK 0xFFFFFF00

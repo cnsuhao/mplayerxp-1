@@ -11,7 +11,7 @@
 #ifndef	_DSP_H
 #define	_DSP_H 	1
 
-#include "../config.h"
+#include "../mp_config.h"
 /* Implementation of routines used for DSP */
 
 /* Size of floating point type used in routines */

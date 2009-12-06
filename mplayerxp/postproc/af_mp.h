@@ -2,7 +2,7 @@
 #ifndef __af_mp_h__
 #define __af_mp_h__
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "pp_msg.h"
 #include "../cpudetect.h"
 #include "../libao2/afmt.h"

@@ -2,7 +2,7 @@
 #define HAVE_PP_H 1
 
 #ifdef HAVE_LOCAL_FFMPEG
-#include "../../codecs/libpostproc/postprocess.h"
+#include "../../codecs/ffmpeg/libpostproc/postprocess.h"
 #else
 /*
     Copyright (C) 2001-2003 Michael Niedermayer (michaelni@gmx.at)

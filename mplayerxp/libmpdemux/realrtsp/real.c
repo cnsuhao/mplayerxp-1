@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../config.h"
+#include "../../mp_config.h"
 #include "../../bswap.h"
 //#include "libavutil/common.h"
 #include "real.h"

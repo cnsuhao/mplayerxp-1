@@ -34,7 +34,7 @@
 #include <sys/time.h>
 #include <inttypes.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "bswap.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close

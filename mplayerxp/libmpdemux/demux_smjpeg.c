@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <string.h> /* strtok */
 
-#include "config.h"
+#include "../mp_config.h"
 #include "demux_msg.h"
 #include "help_mp.h"
 

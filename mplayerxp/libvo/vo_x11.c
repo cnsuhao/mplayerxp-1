@@ -27,7 +27,7 @@
 #endif
 #include <errno.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "../mplayer.h"
 #include "../dec_ahead.h"
 #include "aspect.h"

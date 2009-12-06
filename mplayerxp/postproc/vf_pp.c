@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <errno.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "pp_msg.h"
 #include "../cpudetect.h"
 

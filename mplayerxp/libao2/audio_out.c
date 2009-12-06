@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../config.h"
+#include "../mp_config.h"
 #include "audio_out.h"
 #include "afmt.h"
 #include "ao_msg.h"

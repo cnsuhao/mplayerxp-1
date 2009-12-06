@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "mp_config.h"
 
 #include "stream.h"
 #include "demuxer.h"

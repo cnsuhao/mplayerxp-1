@@ -3,7 +3,7 @@
     They work with triplex - ptr,size,crc to control memory boundaries
     at run-time. They are useful only when you have builded mplayerxp
     with debug info (./configure --enable_debug[=3]).
-    To use them please add '#include "my_malloc.h"' at end of config.h
+    To use them please add '#include "my_malloc.h"' at end of mp_config.h
     manually.
 */
 #ifndef __MY_MALLOC_H

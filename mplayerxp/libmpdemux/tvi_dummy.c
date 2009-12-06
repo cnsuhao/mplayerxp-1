@@ -2,7 +2,7 @@
     Only a sample!
 */
 
-#include "config.h"
+#include "../mp_config.h"
 
 #ifdef USE_TV
 

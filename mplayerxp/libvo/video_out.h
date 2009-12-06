@@ -9,7 +9,7 @@
 #ifndef __VIDEO_OUT_H
 #define __VIDEO_OUT_H 1
 
-#include "../config.h"
+#include "../mp_config.h"
 #include <inttypes.h>
 #include <stdarg.h>
 

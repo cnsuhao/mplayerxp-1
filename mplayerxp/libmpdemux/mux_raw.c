@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "../mp_config.h"
 #include "../version.h"
 
 //#include "stream.h"
