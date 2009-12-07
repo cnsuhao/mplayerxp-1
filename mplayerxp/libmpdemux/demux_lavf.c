@@ -156,6 +156,7 @@ static int load_dll(const char *libname)
   av_seek_frame_ptr = ld_sym(dll_handle,"av_seek_frame");
   av_iformat_next_ptr = ld_sym(dll_handle,"av_iformat_next");
   av_close_input_file_ptr = ld_sym(dll_handle,"av_close_input_file");
+  av_free_packet_ptr = ld_sym(dll_handle,"av_free_packet");
   ff_codec_get_tag_ptr = ld_sym(dll_handle,"ff_codec_get_tag");
   ff_codec_bmp_tags_ptr = ld_sym(dll_handle,"ff_codec_bmp_tags");
   ff_codec_wav_tags_ptr = ld_sym(dll_handle,"ff_codec_wav_tags");
@@ -163,7 +164,7 @@ static int load_dll(const char *libname)
 	register_protocol_ptr && url_fopen_ptr && av_open_input_stream_ptr &&
 	av_find_stream_info_ptr && av_read_frame_ptr && av_seek_frame_ptr &&
 	av_close_input_file_ptr && ff_codec_get_tag_ptr && ff_codec_bmp_tags_ptr &&
-	ff_codec_wav_tags_ptr && av_find_input_format_ptr && av_iformat_next_ptr;
+	ff_codec_wav_tags_ptr && av_find_input_format_ptr && av_iformat_next_ptr && av_free_packet_ptr;
 }
 
 static int mpxp_open(URLContext *h, const char *filename, int flags){
