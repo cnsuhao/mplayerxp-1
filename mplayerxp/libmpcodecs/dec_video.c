@@ -25,8 +25,7 @@
 #include "vd.h"
 
 #include "dec_video.h"
-#define MSGT_CLASS MSGT_DECVIDEO
-#include "../__mp_msg.h"
+#include "vd_msg.h"
 
 // ===================================================================
 

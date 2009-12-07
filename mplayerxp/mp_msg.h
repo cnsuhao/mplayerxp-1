@@ -56,7 +56,7 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
 
 #ifdef __GNUC__
 static inline void mp_msg_dummy(void) {}
-#define mp_msg(mod,lev, file, args... ) (lev<verbose+MSGL_V?(mp_msg_c(((lev&0xF)<<28)|(mod&0x0FFFFFFF),file,## args)):(mp_msg_dummy()))
+#define mp_msg(mod,lev, file, args... ) ((lev<(verbose+MSGL_V))?(mp_msg_c(((lev&0xF)<<28)|(mod&0x0FFFFFFF),file,## args)):(mp_msg_dummy()))
 #else
 #define mp_msg(mod,lev, file, ... ) mp_msg_c(((lev&0xF)<<28)|(mod&0x0FFFFFFF),file,__VA_ARGS__)
 #endif

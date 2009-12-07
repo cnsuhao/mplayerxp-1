@@ -16,7 +16,6 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-
 #include "vd.h"
 #include "../postproc/vf.h"
 #include "vd_msg.h"
@@ -110,16 +109,17 @@ csp_again:
 	out_fmt=sh->codec->outfmt[i];
 	if(out_fmt==(signed int)0xFFFFFFFF) continue;
 	flags=vf_query_format(vf,out_fmt,w,h);
-	MSG_DBG2("vo_debug[step i=%d]: query(%s %ix%i) returned 0x%X for:\n",i,vo_format_name(out_fmt),w,h,vo_flags);
+	MSG_DBG2("vo_debug[step i=%d]: query(%s %ix%i) returned 0x%X for:\n",i,vo_format_name(out_fmt),w,h,flags);
 	if(verbose>1) if(verbose) vf_showlist(vf);
 	if((flags&VFCAP_CSP_SUPPORTED_BY_HW) || ((flags&VFCAP_CSP_SUPPORTED) && j<0)){
 	    // check (query) if codec really support this outfmt...
 	    sh->outfmtidx=j; // pass index to the control() function this way
 	    if(mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)==CONTROL_FALSE) {
-		MSG_DBG2("vo_debug: codec query_format(%s) returned FALSE\n",vo_format_name(out_fmt));
+		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",mpvdec->info->driver_name,vo_format_name(out_fmt));
 		continue;
 	    }
-	    j=i; vo_flags=flags; if(flags&VFCAP_CSP_SUPPORTED_BY_HW) break;
+	    j=i; vo_flags=flags;
+	    if(flags&VFCAP_CSP_SUPPORTED_BY_HW) break;
 	} else
 	if(!palette && !(vo_flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
@@ -130,7 +130,13 @@ csp_again:
     if(j<0){
 	// TODO: no match - we should use conversion...
 	if(strcmp(vf->info->name,"fmtcvt") && palette!=1){
-	    MSG_INFO("Can't find colorspace! Trying -vf fmtcvt\n");
+	    int ind;
+	    MSG_WARN("Can't find colorspace for: ");
+	    for(ind=0;ind<CODECS_MAX_OUTFMT;ind++) {
+		if(sh->codec->outfmt[ind]==(signed int)0xFFFFFFFF) break;
+		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
+	    }
+	    MSG_WARN("Trying -vf fmtcvt\n");
 	    sc=vf=vf_open_filter(vf,sh,"fmtcvt",NULL);
 	    goto csp_again;
 	} else

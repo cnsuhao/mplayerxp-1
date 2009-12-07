@@ -4,7 +4,6 @@
 #include <inttypes.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 #include "../cpudetect.h"
 
 #include "../libvo/img_format.h"
@@ -14,6 +13,7 @@
 #include "../libvo/fastmemcpy.h"
 #include "swscale.h"
 #include "vf_scale.h"
+#include "pp_msg.h"
 
 struct vf_priv_s {
     int w,h,ofmt;
@@ -99,7 +99,7 @@ static unsigned int __FASTCALL__ find_best_out(vf_instance_t *vf,unsigned w,unsi
 	if(ret&VFCAP_CSP_SUPPORTED_BY_HW){
             best=format; // no conversion -> bingo!
             break;
-        } 
+        }
 	if(ret&VFCAP_CSP_SUPPORTED && !best) 
             best=format; // best with conversion
     }
@@ -394,7 +394,7 @@ static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* dat
     default:
 	break;
     }
-    
+
     return vf_next_control(vf,request,data);
 }
 
@@ -403,7 +403,7 @@ static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* dat
 //  supported Input formats: YV12, I420, IYUV, YUY2, UYVY, BGR32, BGR24, BGR16, BGR15, RGB32, RGB24, Y8, Y800
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
-    MSG_DBG3("vf_scale: query_format(%p, %X, %u, %u\n",vf,fmt,w,h);
+    MSG_DBG3("vf_scale: query_format(%p, %X(%s), %u, %u\n",vf,fmt,vo_format_name(fmt),w,h);
     switch(fmt){
     case IMGFMT_YV12:
     case IMGFMT_I420:
@@ -416,13 +416,13 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     case IMGFMT_BGR15:
     case IMGFMT_RGB32:
     case IMGFMT_RGB24:
-    case IMGFMT_Y800: 
-    case IMGFMT_Y8: 
-    case IMGFMT_YVU9: 
-    case IMGFMT_IF09: 
-    case IMGFMT_444P: 
-    case IMGFMT_422P: 
-    case IMGFMT_411P: 
+    case IMGFMT_Y800:
+    case IMGFMT_Y8:
+    case IMGFMT_YVU9:
+    case IMGFMT_IF09:
+    case IMGFMT_444P:
+    case IMGFMT_422P:
+    case IMGFMT_411P:
     {
 	unsigned int best=find_best_out(vf,w,h);
 	int flags;
@@ -435,9 +435,11 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 	    MSG_DBG2("[sw_scale] Can't find HW support for %s on %s\n",vo_format_name(best),vf->next->info->name);
 	    return 0; // huh?
 	}
+	MSG_DBG3("[sw_scale] %s supported on %s like %u\n",vo_format_name(best),vf->next->info->name,flags);
 	if(fmt!=best) flags&=~VFCAP_CSP_SUPPORTED_BY_HW;
 	// do not allow scaling, if we are before the PP fliter!
 	if(!(flags&VFCAP_POSTPROC)) flags|=VFCAP_SWSCALE;
+	MSG_DBG3("[sw_scale] returning: %u\n",flags);
 	return flags;
       }
     }

@@ -80,10 +80,12 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
     if(verbose>1 && was_eol)
     {
 	unsigned mod_name;
+	const char *smod=NULL;
 	mod_name = 0;
 	while((mod&0x1)==0) { mod_name++; mod>>=1; }
 	if(mod_name < sizeof(msg_prefix)/sizeof(msg_prefix[0]))
-			fprintf(stderr,"%s.%s(%u): ",msg_prefix[mod_name],srcfile,linenum);
+		smod = msg_prefix[mod_name];
+	fprintf(stderr,"%s.%s(%u): ",smod?smod:"UNKNOWN",srcfile,linenum);
     }
     ssize=vsprintf(sbuf,format, va);
     if(strcmp(nls_get_screen_cp(),"UTF-8")!=0) {

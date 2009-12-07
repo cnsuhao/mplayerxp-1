@@ -7,7 +7,6 @@
 #include <malloc.h>
 #endif
 #include "../mplayer.h"
-#include "pp_msg.h"
 #include "../help_mp.h"
 
 #include "../libvo/img_format.h"
@@ -17,6 +16,7 @@
 
 #include "../libvo/fastmemcpy.h"
 #include "codec-cfg.h"
+#include "pp_msg.h"
 
 extern const vf_info_t vf_info_1bpp;
 extern const vf_info_t vf_info_2xsai;
