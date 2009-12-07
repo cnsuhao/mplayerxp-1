@@ -165,7 +165,11 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 	}
 	case VDCTRL_QUERY_FORMAT:
         {
-            int format =(*((int*)arg));
+            uint32_t format =(*((int*)arg));
+	    if(avctx->pix_fmt == -1) avctx->pix_fmt = avctx->get_format(avctx, avctx->codec->pix_fmts);
+	    MSG_DBG2("[vd_ffmpeg QUERY_FORMAT for %c%c%c%c] pixfmt = %X\n"
+		,((char *)&format)[0],((char *)&format)[1],((char *)&format)[2],((char *)&format)[3]
+		,avctx->pix_fmt);
 //	    if( format == ctx->best_csp ) return CONTROL_TRUE;//supported
 	// possible conversions:
 	    switch( format ){
@@ -389,7 +393,9 @@ static int init(sh_video_t *sh){
         MSG_ERR( MSGTR_CantOpenCodec);
         return 0;
     }
-    MSG_V("INFO: libavcodec.so (%06X) video codec init OK!\n",avc_version);
+    MSG_V("INFO: libavcodec.so (%06X) video codec[%c%c%c%c] init OK!\n"
+    ,avc_version
+    ,((char *)&sh->format)[0],((char *)&sh->format)[1],((char *)&sh->format)[2],((char *)&sh->format)[3]);
     if(npp_options)
     {
 	pp_flags=0;
