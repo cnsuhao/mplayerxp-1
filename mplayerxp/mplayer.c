@@ -140,9 +140,6 @@ unsigned mplayer_accel=0;
 /**************************************************************************
              Config file
 **************************************************************************/
-#ifndef UNUSED
-#define UNUSED(x) ((void)(x)) /* Removes warning about unused arguments */
-#endif
 static int cfg_inc_verbose(struct config *conf){ UNUSED(conf); ++verbose; return 0;}
 
 static int cfg_include(struct config *conf, char *filename){

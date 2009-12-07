@@ -17,8 +17,13 @@
 #define MSG_ERR(args...) mp_msg(MSGT_NLS,MSGL_ERR,__FILE__,__LINE__,##args )
 #define MSG_V(args...) mp_msg(MSGT_NLS,MSGL_V,__FILE__,__LINE__,##args )
 #define MSG_OK(args...) mp_msg(MSGT_NLS,MSGL_OK,__FILE__,__LINE__,##args )
-#define MSG_DBG2(args...) mp_msg(MSGT_NLS,MSGL_DBG2,__FILE__,__LINE__,##args )
-#define MSG_DBG3(args...) mp_msg(MSGT_NLS,MSGL_DBG3,__FILE__,__LINE__,##args )
 #define MSG_HINT(args...) mp_msg(MSGT_NLS,MSGL_HINT,__FILE__,__LINE__,##args )
 #define MSG_STATUS(args...) mp_msg(MSGT_NLS,MSGL_STATUS,__FILE__,__LINE__,##args )
+#ifndef NDEBUG
+#define MSG_DBG2(args...) mp_msg(MSGT_NLS,MSGL_DBG2,__FILE__,__LINE__,##args )
+#define MSG_DBG3(args...) mp_msg(MSGT_NLS,MSGL_DBG3,__FILE__,__LINE__,##args )
+#else
+#define MSG_DBG2(args...)
+#define MSG_DBG3(args...)
+#endif
 #endif

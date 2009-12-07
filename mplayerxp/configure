@@ -1204,6 +1204,9 @@ $_def_fbdev_nocopy
 #endif
 #endif
 
+/* Removes warning about unused arguments */
+# define UNUSED(x) ((void)(x))
+
 #endif /* MPXP_CONFIG_H */
 EOF
 

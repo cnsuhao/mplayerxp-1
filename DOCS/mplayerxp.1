@@ -281,6 +281,31 @@ specifies a configfile for LIRC (see http://www.lirc.org) if you don't like the 
 .B \-v
 enable verbose output (more -v means more verbosity)
 .TP
+.B \-msgfilter
+enable filtering of verbosed messages. The value is combination of these fields:
+    MSGT_GLOBAL         0x00000001
+    MSGT_CPLAYER        0x00000002
+    MSGT_VO             0x00000004
+    MSGT_AO             0x00000008
+    MSGT_DEMUXER        0x00000010
+    MSGT_CFGPARSER      0x00000020
+    MSGT_DECAUDIO       0x00000040
+    MSGT_DECVIDEO       0x00000080
+    MSGT_VOBSUB         0x00000100
+    MSGT_OSDEP          0x00000200
+    MSGT_SPUDEC         0x00000400
+    MSGT_PLAYTREE       0x00000800
+    MSGT_INPUT          0x00001000
+    MSGT_OSD            0x00002000
+    MSGT_CPUDETECT      0x00004000
+    MSGT_CODECCFG       0x00008000
+    MSGT_SWS            0x00010000
+    MSGT_FINDSUB        0x00020000
+    MSGT_SUBREADER      0x00040000
+    MSGT_PP             0x00080000
+    MSGT_NLS            0x00100000
+
+.TP
 .B \-benchmark
 Performs benchmarking. Currently it displays 3 characteristics of movie playback:
 MIN benchmark, AVE benchmark and MAX benchmark. You can estimate possibility of

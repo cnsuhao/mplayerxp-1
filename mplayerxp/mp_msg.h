@@ -9,17 +9,17 @@ extern unsigned verbose; // defined in mplayer.c
 // stuff from level MSGL_FATAL-MSGL_HINT should be translated.
 
 /* TODO: more highlighted levels */
-#define MSGL_FATAL	 0U /* will exit/abort		LightRed */
+#define MSGL_FATAL	 0U /* will exit/abort			LightRed */
 #define MSGL_ERR	 1U /* continues			Red */
-#define MSGL_WARN	 2U /* only warning		Yellow */
+#define MSGL_WARN	 2U /* only warning			Yellow */
 #define MSGL_OK		 3U /* checkpoint was passed OK.	LightGreen */
 #define MSGL_HINT	 4U /* short help message		LightCyan */
-#define MSGL_INFO	 5U /* -quiet			LightGray */
-#define MSGL_STATUS	 6U /* v=0 (old status line)	LightBlue */
-#define MSGL_V		 7U /* v=1			Cyan */
-#define MSGL_DBG2	 8U /* v=2			LightGray */
-#define MSGL_DBG3	 9U /* v=3			LightGray */
-#define MSGL_DBG4	10U /* v=4			LightGray */
+#define MSGL_INFO	 5U /* -quiet				LightGray */
+#define MSGL_STATUS	 6U /* v=0 (old status line)		LightBlue */
+#define MSGL_V		 7U /* v=1				Cyan */
+#define MSGL_DBG2	 8U /* v=2				LightGray */
+#define MSGL_DBG3	 9U /* v=3				LightGray */
+#define MSGL_DBG4	10U /* v=4				LightGray */
 
 // code/module:
 

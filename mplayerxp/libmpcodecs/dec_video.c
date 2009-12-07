@@ -83,21 +83,37 @@ extern char *video_codec;
 int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
     unsigned o_bps,bpp;
     sh_video->codec=NULL;
+    MSG_DBG3("init_video(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->format,
       sh_video->bih?((unsigned int*) &sh_video->bih->biCompression):NULL,
       sh_video->codec,0) )){
 	// ok we found one codec
 	int i;
-	if(sh_video->codec->flags&CODECS_FLAG_SELECTED) continue; // already tried & failed
-	if(codecname && strcmp(sh_video->codec->codec_name,codecname)) continue; // -vc
-	if(vfm && strcmp(sh_video->codec->driver_name,vfm)!=0) continue; // vfm doesn't match
-	if(sh_video->codec->status<status) continue; // too unstable
+	if(sh_video->codec->flags&CODECS_FLAG_SELECTED) {
+	    MSG_DBG3("init_video: %s already tried and failed\n",sh_video->codec->codec_name);
+	    continue;
+	}
+	if(codecname && strcmp(sh_video->codec->codec_name,codecname)) {
+	    MSG_DBG3("init_video: %s != %s [-vc]\n",sh_video->codec->codec_name,codecname);
+	    continue;
+	}
+	if(vfm && strcmp(sh_video->codec->driver_name,vfm)!=0) {
+	    MSG_DBG3("init_video: vfm doesn't match %s != %s\n",vfm,sh_video->codec->driver_name);
+	    continue; // vfm doesn't match
+	}
+	if(sh_video->codec->status<status) {
+	    MSG_DBG3("init_video: %s too unstable\n",sh_video->codec->codec_name);
+	    continue;
+	}
 	sh_video->codec->flags|=CODECS_FLAG_SELECTED; // tagging it
 	// ok, it matches all rules, let's find the driver!
 	for (i=0; mpcodecs_vd_drivers[i] != NULL; i++)
 	    if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,sh_video->codec->driver_name)==0) break;
 	mpvdec=mpcodecs_vd_drivers[i];
-	if(!mpvdec) continue;
+	if(!mpvdec) {
+	    MSG_DBG3("init_video: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
+	    continue;
+	}
 	// it's available, let's try to init!
 	if(!mpvdec->init(sh_video)){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);

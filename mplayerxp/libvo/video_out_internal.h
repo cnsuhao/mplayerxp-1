@@ -44,6 +44,4 @@ static uint32_t __FASTCALL__ preinit(const char *);
 
 #include "osd.h"
 
-#define UNUSED(x) ((void)(x)) /* Removes warning about unused arguments */
-
 #endif

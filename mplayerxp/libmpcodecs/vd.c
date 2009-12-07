@@ -223,6 +223,7 @@ csp_again:
                       fullscreen|(vidmode<<1)|(softzoom<<2)|(flip<<3),
                       "MPlayerXP",vo_format_name(out_fmt));
 
+    MSG_DBG2("vf configuring: %s\n",vf->info->name);
     if(vf->config(vf,sh->disp_w,sh->disp_h,
                       screen_size_x,screen_size_y,
                       fullscreen|(vidmode<<1)|(softzoom<<2)|(flip<<3),
@@ -231,6 +232,11 @@ csp_again:
 	sh->vfilter_inited=-1;
 	return 0;
     }
+    MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s',%p)\n",
+                      sh->disp_w,sh->disp_h,
+                      screen_size_x,screen_size_y,
+                      fullscreen|(vidmode<<1)|(softzoom<<2)|(flip<<3),
+                      vo_format_name(out_fmt),tune);
     return 1;
 }
 

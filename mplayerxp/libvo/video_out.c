@@ -481,7 +481,7 @@ uint32_t __FASTCALL__ vo_query_format( uint32_t* fourcc, unsigned src_w, unsigne
 {
     uint32_t retval,dri_forced_fourcc;
     vo_query_fourcc_t qfourcc;
-    MSG_DBG3("dri_vo_dbg: vo_query_format(%08lX)\n",fourcc);
+    MSG_DBG3("dri_vo_dbg: vo_query_format(%08lX)\n",*fourcc);
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
@@ -921,6 +921,8 @@ void vo_uninit( void )
 
 uint32_t __FASTCALL__ vo_control(uint32_t request, void *data)
 {
-    MSG_DBG3("dri_vo_dbg: vo_control %u\n",request);
-    return video_out->control(request,data);
+    uint32_t rval;
+    rval=video_out->control(request,data);
+    MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
+    return rval;
 }

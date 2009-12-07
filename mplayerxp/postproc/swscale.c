@@ -91,19 +91,19 @@ void sws_freeContext(struct SwsContext *swsContext) {
 struct SwsContext *sws_getContext(int srcW, int srcH, int srcFormat, int dstW, int dstH, int dstFormat, int flags,
 			 SwsFilter *srcFilter, SwsFilter *dstFilter, double *param)
 {
-    return (*sws_getContext)(srcW,srcH,srcFormat,dstW,dstH,dstFormat,flags,srcFilter,dstFilter,param);
+    return (*sws_getContext_ptr)(srcW,srcH,srcFormat,dstW,dstH,dstFormat,flags,srcFilter,dstFilter,param);
 }
 
 int sws_scale(struct SwsContext *context, uint8_t* src[], int srcStride[], int srcSliceY,
                            int srcSliceH, uint8_t* dst[], int dstStride[])
 {
-    return (*sws_scale)(context,src,srcStride,srcSliceY,srcSliceH,dst,dstStride);
+    return (*sws_scale_ptr)(context,src,srcStride,srcSliceY,srcSliceH,dst,dstStride);
 }
 
 int sws_scale_ordered(struct SwsContext *context, uint8_t* src[], int srcStride[], int srcSliceY,
                            int srcSliceH, uint8_t* dst[], int dstStride[])
 {
-    return (*sws_scale_ordered)(context,src,srcStride,srcSliceY,srcSliceH,dst,dstStride);
+    return (*sws_scale_ordered_ptr)(context,src,srcStride,srcSliceY,srcSliceH,dst,dstStride);
 }
 
 int sws_setColorspaceDetails(struct SwsContext *c, const int inv_table[4], int srcRange, const int table[4], int dstRange, int brightness, int contrast, int saturation)

@@ -129,16 +129,16 @@ static int (*av_seek_frame_ptr)(AVFormatContext *s, int stream_index, int64_t ti
 #define av_seek_frame(a,b,c,d) (*av_seek_frame_ptr)(a,b,c,d)
 static void (*av_close_input_file_ptr)(AVFormatContext *s);
 #define av_close_input_file(a) (*av_close_input_file_ptr)(a)
-static unsigned int (*codec_get_tag_ptr)(const void *tags,int id);
-#define codec_get_tag(a,b) (*codec_get_tag_ptr)(a,b)
+static unsigned int (*ff_codec_get_tag_ptr)(const void *tags,int id);
+#define ff_codec_get_tag(a,b) (*ff_codec_get_tag_ptr)(a,b)
 static AVInputFormat* (*av_iformat_next_ptr)(AVInputFormat *f);
 #define av_iformat_next(a) (*av_iformat_next_ptr)(a)
 static void (*av_free_packet_ptr)(AVPacket *pkt);
 #define av_free_packet(a) (*av_free_packet_ptr)(a)
 
 
-static void **codec_bmp_tags_ptr;
-static void **codec_wav_tags_ptr;
+static void **ff_codec_bmp_tags_ptr;
+static void **ff_codec_wav_tags_ptr;
 
 
 static void *dll_handle;
@@ -156,14 +156,14 @@ static int load_dll(const char *libname)
   av_seek_frame_ptr = ld_sym(dll_handle,"av_seek_frame");
   av_iformat_next_ptr = ld_sym(dll_handle,"av_iformat_next");
   av_close_input_file_ptr = ld_sym(dll_handle,"av_close_input_file");
-  codec_get_tag_ptr = ld_sym(dll_handle,"codec_get_tag");
-  codec_bmp_tags_ptr = ld_sym(dll_handle,"codec_bmp_tags");
-  codec_wav_tags_ptr = ld_sym(dll_handle,"codec_wav_tags");
+  ff_codec_get_tag_ptr = ld_sym(dll_handle,"ff_codec_get_tag");
+  ff_codec_bmp_tags_ptr = ld_sym(dll_handle,"ff_codec_bmp_tags");
+  ff_codec_wav_tags_ptr = ld_sym(dll_handle,"ff_codec_wav_tags");
   return av_register_all_ptr && av_probe_input_format_ptr &&
 	register_protocol_ptr && url_fopen_ptr && av_open_input_stream_ptr &&
 	av_find_stream_info_ptr && av_read_frame_ptr && av_seek_frame_ptr &&
-	av_close_input_file_ptr && codec_get_tag_ptr && codec_bmp_tags_ptr &&
-	codec_wav_tags_ptr && av_find_input_format_ptr && av_iformat_next_ptr;
+	av_close_input_file_ptr && ff_codec_get_tag_ptr && ff_codec_bmp_tags_ptr &&
+	ff_codec_wav_tags_ptr && av_find_input_format_ptr && av_iformat_next_ptr;
 }
 
 static int mpxp_open(URLContext *h, const char *filename, int flags){
@@ -219,6 +219,7 @@ static URLProtocol mp_protocol = {
     NULL,
     NULL, /*int (*url_read_pause)(URLContext *h);*/
     NULL, /*int (*url_read_seek)(URLContext *h,*/
+    NULL  /*int (*url_get_file_handle)(URLContext *h);*/
 };
 
 static void list_formats(void) {
@@ -364,7 +365,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
             sh_audio_t* sh_audio=new_sh_audio(demuxer, i);
             priv->audio_streams++;
             if(!codec->codec_tag)
-                codec->codec_tag= codec_get_tag(codec_wav_tags_ptr,codec->codec_id);
+                codec->codec_tag= ff_codec_get_tag(ff_codec_wav_tags_ptr,codec->codec_id);
             if(!codec->codec_tag)
                 codec->codec_tag= mpxp_codec_get_tag(mp_wav_tags, codec->codec_id);
             wf->wFormatTag= codec->codec_tag;
@@ -432,7 +433,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 
 	    priv->video_streams++;
             if(!codec->codec_tag)
-                codec->codec_tag= codec_get_tag(codec_bmp_tags_ptr,codec->codec_id);
+                codec->codec_tag= ff_codec_get_tag(ff_codec_bmp_tags_ptr,codec->codec_id);
             if(!codec->codec_tag)
                 codec->codec_tag= mpxp_codec_get_tag(mp_bmp_tags, codec->codec_id);
             bih->biSize= sizeof(BITMAPINFOHEADER) + codec->extradata_size;

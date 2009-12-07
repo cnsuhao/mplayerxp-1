@@ -127,7 +127,8 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     }
     
     vo_flags=vf_next_query_format(vf,best,d_width,d_height);
-    
+    MSG_DBG2("vf_scale: %i=vf_next_query_format(%p,%X,%u,%u);\n"
+	    ,vo_flags,vf,best,d_width,d_height);
     // scaling to dwidth*d_height, if all these TRUE:
     // - option -zoom
     // - no other sw/hw up/down scaling avail.
@@ -193,13 +194,21 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     
     // new swscaler:
     sws_getFlagsAndFilterFromCmdLine(&int_sws_flags, &srcFilter, &dstFilter);
+    MSG_DBG2("vf_scale: sws_getFlagsAndFilterFromCmdLine(...);\n");
     int_sws_flags|= vf->priv->v_chr_drop << SWS_SRC_V_CHR_DROP_SHIFT;
 
+    MSG_DBG2("vf_scale: sws_getContext(%u, %u, %s, %u, %u, %s, %X);\n"
+	    ,width,height >> vf->priv->interlaced
+	    ,vo_format_name(outfmt),vf->priv->w
+	    ,vf->priv->h >> vf->priv->interlaced
+	    ,vo_format_name(best),int_sws_flags | get_sws_cpuflags() | SWS_PRINT_INFO);
     vf->priv->ctx=sws_getContext(width, height >> vf->priv->interlaced,
 	    pixfmt_from_fourcc(outfmt),
 		  vf->priv->w, vf->priv->h >> vf->priv->interlaced,
 	    pixfmt_from_fourcc(best),
-	    int_sws_flags | get_sws_cpuflags() | SWS_PRINT_INFO, srcFilter, dstFilter, vf->priv->param);
+	    int_sws_flags | get_sws_cpuflags() | SWS_PRINT_INFO,
+	    srcFilter, dstFilter, vf->priv->param);
+    MSG_DBG2("vf_scale: %p=sws_getContext\n",vf->priv->ctx);
     if(vf->priv->interlaced){
         vf->priv->ctx2=sws_getContext(width, height >> 1,
 	    pixfmt_from_fourcc(outfmt),
@@ -212,6 +221,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	MSG_WARN("Couldn't init SwScaler for this setup %p\n",vf->priv->ctx);
 	return 0;
     }
+    MSG_DBG2("vf_scale: SwScaler for was inited\n");
     vf->priv->fmt=best;
 
     if(vf->priv->palette){
@@ -393,6 +403,7 @@ static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* dat
 //  supported Input formats: YV12, I420, IYUV, YUY2, UYVY, BGR32, BGR24, BGR16, BGR15, RGB32, RGB24, Y8, Y800
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+    MSG_DBG3("vf_scale: query_format(%p, %X, %u, %u\n",vf,fmt,w,h);
     switch(fmt){
     case IMGFMT_YV12:
     case IMGFMT_I420:
@@ -500,17 +511,6 @@ void sws_getFlagsAndFilterFromCmdLine(int *flags, SwsFilter **srcFilterParam, Sw
 {
 	*flags=0;
 
-#ifdef CAN_COMPILE_MMX
-	if(gCpuCaps.hasMMX)
-		asm volatile("emms\n\t":::"memory"
-#ifdef FPU_CLOBBERED
-					,FPU_CLOBBERED
-#endif
-#ifdef MMX_CLOBBERED
-					,MMX_CLOBBERED
-#endif
-		); //FIXME this shouldnt be required but it IS (even for non mmx versions)
-#endif
 	if(firstTime)
 	{
 		firstTime=0;
