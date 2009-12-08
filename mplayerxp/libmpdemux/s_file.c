@@ -14,7 +14,6 @@
 #include "../mplayer.h"
 #include "stream.h"
 
-
 typedef struct file_priv_s
 {
     int was_open;

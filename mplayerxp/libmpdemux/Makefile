@@ -5,7 +5,7 @@ include ../mp_config.mak
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 
-SRCS  = s_file.c
+SRCS  = s_file.c s_ffmpeg.c
 ifeq ($(HAVE_CDDA),yes)
 SRCS += s_cdd.c
 endif
