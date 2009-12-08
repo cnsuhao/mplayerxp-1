@@ -28,7 +28,7 @@ all: $(SUBDIRS) $(LIB_NUPPELVIDEO)
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	export SUBDIR=liba52 libdca libfaad2 libmpeg2 mp3lib
+	export SUBDIR=liba52 libdca libmpeg2 mp3lib
 	$(MAKE) -C $@
 
 $(LIB_NUPPELVIDEO):	$(OBJ_NUPPELVIDEO)

@@ -262,7 +262,7 @@ $(LC_ALL=C ./configure --cc="$_cc" $_ffmpeg_args)
 cd ..
 echores "done"
 fi
-_subdirs="mp3lib liba52 libdca libfaad2 libmpeg2"
+_subdirs="mp3lib liba52 libdca libmpeg2"
 if test "$_ffmpeg" = yes ; then
 _subdirs="$_subdirs ffmpeg"
 fi
