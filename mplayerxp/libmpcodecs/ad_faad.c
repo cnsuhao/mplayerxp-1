@@ -15,7 +15,6 @@
 #include "mp_config.h"
 #include "ad_internal.h"
 #include "../mplayer.h"
-#include "../../codecs/libfaad2/faad.h"
 #include "../cpudetect.h"
 #include "../mm_accel.h"
 #include "libao2/afmt.h"
@@ -41,59 +40,116 @@ typedef struct faad_priv_s
   float pts;
 }faad_priv_t;
 
+typedef void *NeAACDecHandle;
+typedef struct NeAACDecConfiguration
+{
+    unsigned char defObjectType;
+    unsigned long defSampleRate;
+    unsigned char outputFormat;
+    unsigned char downMatrix;
+    unsigned char useOldADTSFormat;
+    unsigned char dontUpSampleImplicitSBR;
+} NeAACDecConfiguration, *NeAACDecConfigurationPtr;
+struct NeAACDecFrameInfo;
+typedef struct NeAACDecFrameInfo
+{
+    unsigned long bytesconsumed;
+    unsigned long samples;
+    unsigned char channels;
+    unsigned char error;
+    unsigned long samplerate;
+
+    /* SBR: 0: off, 1: on; upsample, 2: on; downsampled, 3: off; upsampled */
+    unsigned char sbr;
+
+    /* MPEG-4 ObjectType */
+    unsigned char object_type;
+
+    /* AAC header type; MP4 will be signalled as RAW also */
+    unsigned char header_type;
+
+    /* multichannel configuration */
+    unsigned char num_front_channels;
+    unsigned char num_side_channels;
+    unsigned char num_back_channels;
+    unsigned char num_lfe_channels;
+    unsigned char channel_position[64];
+
+    /* PS: 0: off, 1: on */
+    unsigned char ps;
+} NeAACDecFrameInfo;
+#define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
 /* configure maximum supported channels, *
  * this is theoretically max. 64 chans   */
 #define FAAD_MAX_CHANNELS 6
 #define FAAD_BUFFLEN (FAAD_MIN_STREAMSIZE*FAAD_MAX_CHANNELS)		       
+#ifdef _WIN32
+  #pragma pack(push, 8)
+  #ifndef NEAACDECAPI
+    #define NEAACDECAPI __cdecl
+  #endif
+#else
+  #ifndef NEAACDECAPI
+    #define NEAACDECAPI
+  #endif
+#endif
+/* library output formats */
+#define FAAD_FMT_16BIT  1
+#define FAAD_FMT_24BIT  2
+#define FAAD_FMT_32BIT  3
+#define FAAD_FMT_FLOAT  4
+#define FAAD_FMT_FIXED  FAAD_FMT_FLOAT
+#define FAAD_FMT_DOUBLE 5
 
-static faacDecHandle (*FAADAPI faacDecOpen_ptr)(unsigned);
-#define faacDecOpen(a) (*faacDecOpen_ptr)(a)
-static faacDecConfigurationPtr (*FAADAPI faacDecGetCurrentConfiguration_ptr)(faacDecHandle hDecoder);
-#define faacDecGetCurrentConfiguration(a) (*faacDecGetCurrentConfiguration_ptr)(a)
-static unsigned char FAADAPI (*faacDecSetConfiguration_ptr)(faacDecHandle hDecoder,
-                                    faacDecConfigurationPtr config);
-#define faacDecSetConfiguration(a,b) (*faacDecSetConfiguration_ptr)(a,b)
-static long (*FAADAPI faacDecInit_ptr)(faacDecHandle hDecoder,
+
+static NeAACDecHandle (*NEAACDECAPI NeAACDecOpen_ptr)(unsigned);
+#define NeAACDecOpen(a) (*NeAACDecOpen_ptr)(a)
+static NeAACDecConfigurationPtr (*NEAACDECAPI NeAACDecGetCurrentConfiguration_ptr)(NeAACDecHandle hDecoder);
+#define NeAACDecGetCurrentConfiguration(a) (*NeAACDecGetCurrentConfiguration_ptr)(a)
+static unsigned char NEAACDECAPI (*NeAACDecSetConfiguration_ptr)(NeAACDecHandle hDecoder,
+                                    NeAACDecConfigurationPtr config);
+#define NeAACDecSetConfiguration(a,b) (*NeAACDecSetConfiguration_ptr)(a,b)
+static long (*NEAACDECAPI NeAACDecInit_ptr)(NeAACDecHandle hDecoder,
                         unsigned char *buffer,
                         unsigned long buffer_size,
                         unsigned long *samplerate,
                         unsigned char *channels);
-#define faacDecInit(a,b,c,d,e) (*faacDecInit_ptr)(a,b,c,d,e)
-static char (*FAADAPI faacDecInit2_ptr)(faacDecHandle hDecoder, unsigned char *pBuffer,
+#define NeAACDecInit(a,b,c,d,e) (*NeAACDecInit_ptr)(a,b,c,d,e)
+static char (*NEAACDECAPI NeAACDecInit2_ptr)(NeAACDecHandle hDecoder, unsigned char *pBuffer,
                          unsigned long SizeOfDecoderSpecificInfo,
                          unsigned long *samplerate, unsigned char *channels);
-#define faacDecInit2(a,b,c,d,e) (*faacDecInit2_ptr)(a,b,c,d,e)
+#define NeAACDecInit2(a,b,c,d,e) (*NeAACDecInit2_ptr)(a,b,c,d,e)
 
-static void (*FAADAPI faacDecClose_ptr)(faacDecHandle hDecoder);
-#define faacDecClose(a) (*faacDecClose_ptr)(a)
-static void* (*FAADAPI faacDecDecode_ptr)(faacDecHandle hDecoder,
-                            faacDecFrameInfo *hInfo,
+static void (*NEAACDECAPI NeAACDecClose_ptr)(NeAACDecHandle hDecoder);
+#define NeAACDecClose(a) (*NeAACDecClose_ptr)(a)
+static void* (*NEAACDECAPI NeAACDecDecode_ptr)(NeAACDecHandle hDecoder,
+                            NeAACDecFrameInfo *hInfo,
                             unsigned char *buffer,
                             unsigned long buffer_size);
-#define faacDecDecode(a,b,c,d) (*faacDecDecode_ptr)(a,b,c,d)
-static char* (*FAADAPI faacDecGetErrorMessage_ptr)(unsigned char errcode);
-#define faacDecGetErrorMessage(a) (*faacDecGetErrorMessage_ptr)(a)
+#define NeAACDecDecode(a,b,c,d) (*NeAACDecDecode_ptr)(a,b,c,d)
+static char* (*NEAACDECAPI NeAACDecGetErrorMessage_ptr)(unsigned char errcode);
+#define NeAACDecGetErrorMessage(a) (*NeAACDecGetErrorMessage_ptr)(a)
 
-//#define AAC_DUMP_COMPRESSED  
+//#define AAC_DUMP_COMPRESSED
 
-static faacDecHandle faac_hdec;
-static faacDecFrameInfo faac_finfo;
+static NeAACDecHandle NeAAC_hdec;
+static NeAACDecFrameInfo NeAAC_finfo;
 
 static void *dll_handle;
 static int load_dll(const char *libname)
 {
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  faacDecOpen_ptr = ld_sym(dll_handle,"faacDecOpen");
-  faacDecGetCurrentConfiguration_ptr = ld_sym(dll_handle,"faacDecGetCurrentConfiguration");
-  faacDecSetConfiguration_ptr = ld_sym(dll_handle,"faacDecSetConfiguration");
-  faacDecInit_ptr = ld_sym(dll_handle,"faacDecInit");
-  faacDecInit2_ptr = ld_sym(dll_handle,"faacDecInit2");
-  faacDecClose_ptr = ld_sym(dll_handle,"faacDecClose");
-  faacDecDecode_ptr = ld_sym(dll_handle,"faacDecDecode");
-  faacDecGetErrorMessage_ptr = ld_sym(dll_handle,"faacDecGetErrorMessage");
-  return faacDecOpen_ptr && faacDecGetCurrentConfiguration_ptr &&
-	faacDecInit_ptr && faacDecInit2_ptr && faacDecGetCurrentConfiguration_ptr &&
-	faacDecClose_ptr && faacDecDecode_ptr && faacDecGetErrorMessage_ptr;
+  if(!(dll_handle=ld_codec(libname,"http://www.audiocoding.com/faad2.html"))) return 0;
+  NeAACDecOpen_ptr = ld_sym(dll_handle,"NeAACDecOpen");
+  NeAACDecGetCurrentConfiguration_ptr = ld_sym(dll_handle,"NeAACDecGetCurrentConfiguration");
+  NeAACDecSetConfiguration_ptr = ld_sym(dll_handle,"NeAACDecSetConfiguration");
+  NeAACDecInit_ptr = ld_sym(dll_handle,"NeAACDecInit");
+  NeAACDecInit2_ptr = ld_sym(dll_handle,"NeAACDecInit2");
+  NeAACDecClose_ptr = ld_sym(dll_handle,"NeAACDecClose");
+  NeAACDecDecode_ptr = ld_sym(dll_handle,"NeAACDecDecode");
+  NeAACDecGetErrorMessage_ptr = ld_sym(dll_handle,"NeAACDecGetErrorMessage");
+  return NeAACDecOpen_ptr && NeAACDecGetCurrentConfiguration_ptr &&
+	NeAACDecInit_ptr && NeAACDecInit2_ptr && NeAACDecGetCurrentConfiguration_ptr &&
+	NeAACDecClose_ptr && NeAACDecDecode_ptr && NeAACDecGetErrorMessage_ptr;
 
 }
 
@@ -103,17 +159,17 @@ static int preinit(sh_audio_t *sh)
   sh->audio_out_minsize=8192*FAAD_MAX_CHANNELS;
   sh->audio_in_minsize=FAAD_BUFFLEN;
   if(!(sh->context=malloc(sizeof(faad_priv_t)))) return 0;
-  return load_dll(codec_name("libfaad2"SLIBSUFFIX));
+  return load_dll("libfaad"SLIBSUFFIX);
 }
 
 static int init(sh_audio_t *sh)
 {
-  unsigned long faac_samplerate;
-  unsigned char faac_channels;
+  unsigned long NeAAC_samplerate;
+  unsigned char NeAAC_channels;
   float pts;
-  int faac_init;
-  faacDecConfigurationPtr faac_conf;
-  if(!(faac_hdec = faacDecOpen(mplayer_accel)))
+  int NeAAC_init;
+  NeAACDecConfigurationPtr NeAAC_conf;
+  if(!(NeAAC_hdec = NeAACDecOpen(mplayer_accel)))
   {
     MSG_WARN("FAAD: Failed to open the decoder!\n"); // XXX: deal with cleanup!
     return 0;
@@ -124,44 +180,44 @@ static int init(sh_audio_t *sh)
     sh->codecdata = (char*)(sh->wf+1);
     MSG_DBG2("FAAD: codecdata extracted from WAVEFORMATEX\n");
   }
-  faac_conf = faacDecGetCurrentConfiguration(faac_hdec);
-  if(sh->samplerate) faac_conf->defSampleRate = sh->samplerate;
+  NeAAC_conf = NeAACDecGetCurrentConfiguration(NeAAC_hdec);
+  if(sh->samplerate) NeAAC_conf->defSampleRate = sh->samplerate;
 #ifdef WORDS_BIGENDIAN
-#define FAAC_FMT32 AFMT_S32_BE
-#define FAAC_FMT24 AFMT_S24_BE
-#define FAAC_FMT16 AFMT_S16_BE
+#define NeAAC_FMT32 AFMT_S32_BE
+#define NeAAC_FMT24 AFMT_S24_BE
+#define NeAAC_FMT16 AFMT_S16_BE
 #else
-#define FAAC_FMT32 AFMT_S32_LE
-#define FAAC_FMT24 AFMT_S24_LE
-#define FAAC_FMT16 AFMT_S16_LE
+#define NeAAC_FMT32 AFMT_S32_LE
+#define NeAAC_FMT24 AFMT_S24_LE
+#define NeAAC_FMT16 AFMT_S16_LE
 #endif
   /* Set the maximal quality */
   /* This is useful for expesive audio cards */
   if(af_query_fmt(sh->afilter,AFMT_FLOAT32) == CONTROL_OK ||
-     af_query_fmt(sh->afilter,FAAC_FMT32) == CONTROL_OK ||
-     af_query_fmt(sh->afilter,FAAC_FMT24) == CONTROL_OK)
+     af_query_fmt(sh->afilter,NeAAC_FMT32) == CONTROL_OK ||
+     af_query_fmt(sh->afilter,NeAAC_FMT24) == CONTROL_OK)
   {
     sh->samplesize=4;
     sh->sample_format=AFMT_FLOAT32;
-    faac_conf->outputFormat=FAAD_FMT_FLOAT;
+    NeAAC_conf->outputFormat=FAAD_FMT_FLOAT;
   }
   else
   {
     sh->samplesize=2;
-    sh->sample_format=FAAC_FMT16;
-    faac_conf->outputFormat=FAAD_FMT_16BIT;
+    sh->sample_format=NeAAC_FMT16;
+    NeAAC_conf->outputFormat=FAAD_FMT_16BIT;
   }
   /* Set the default object type and samplerate */
-  faacDecSetConfiguration(faac_hdec, faac_conf);
+  NeAACDecSetConfiguration(NeAAC_hdec, NeAAC_conf);
   if(!sh->codecdata_len) {
 
     sh->a_in_buffer_len = demux_read_data_r(sh->ds, sh->a_in_buffer, sh->a_in_buffer_size,&pts);
 
     /* init the codec */
-    faac_init = faacDecInit(faac_hdec, sh->a_in_buffer,
-       sh->a_in_buffer_len, &faac_samplerate, &faac_channels);
+    NeAAC_init = NeAACDecInit(NeAAC_hdec, sh->a_in_buffer,
+       sh->a_in_buffer_len, &NeAAC_samplerate, &NeAAC_channels);
 
-    sh->a_in_buffer_len -= (faac_init > 0)?faac_init:0; // how many bytes init consumed
+    sh->a_in_buffer_len -= (NeAAC_init > 0)?NeAAC_init:0; // how many bytes init consumed
     // XXX FIXME: shouldn't we memcpy() here in a_in_buffer ?? --A'rpi
 
   } else { // We have ES DS in codecdata
@@ -171,24 +227,20 @@ static int init(sh_audio_t *sh)
       printf("codecdata_dump[%d]=0x%02X\n", i, sh->codecdata[i]);
 #endif
 
-    faac_init = faacDecInit2(faac_hdec, sh->codecdata,
-       sh->codecdata_len,	&faac_samplerate, &faac_channels);
+    NeAAC_init = NeAACDecInit2(NeAAC_hdec, sh->codecdata,
+       sh->codecdata_len,	&NeAAC_samplerate, &NeAAC_channels);
   }
-  if(faac_init < 0) {
+  if(NeAAC_init < 0) {
     MSG_WARN("FAAD: Failed to initialize the decoder!\n"); // XXX: deal with cleanup!
-    faacDecClose(faac_hdec);
+    NeAACDecClose(NeAAC_hdec);
     // XXX: free a_in_buffer here or in uninit?
     return 0;
   } else {
-    faac_conf = faacDecGetCurrentConfiguration(faac_hdec);
-    sh->channels = faac_channels;
-    sh->samplerate = faac_samplerate;
-    switch(faac_conf->outputFormat){
+    NeAAC_conf = NeAACDecGetCurrentConfiguration(NeAAC_hdec);
+    sh->channels = NeAAC_channels;
+    sh->samplerate = NeAAC_samplerate;
+    switch(NeAAC_conf->outputFormat){
 	default:
-	case FAAD_FMT_16BIT_DITHER:
-	case FAAD_FMT_16BIT_L_SHAPE:
-	case FAAD_FMT_16BIT_M_SHAPE:
-	case FAAD_FMT_16BIT_H_SHAPE:
 	case FAAD_FMT_16BIT: sh->samplesize=2; break;
 	case FAAD_FMT_24BIT: sh->samplesize=3; break;
 	case FAAD_FMT_FLOAT:
@@ -196,8 +248,8 @@ static int init(sh_audio_t *sh)
 	case FAAD_FMT_DOUBLE: sh->samplesize=8; break;
     }
     MSG_V("FAAD: Decoder init done (%dBytes)!\n", sh->a_in_buffer_len); // XXX: remove or move to debug!
-    MSG_V("FAAD: Negotiated samplerate: %dHz  channels: %d bps: %d\n", faac_samplerate, faac_channels,sh->samplesize);
-    //sh->o_bps = sh->samplesize*faac_channels*faac_samplerate;
+    MSG_V("FAAD: Negotiated samplerate: %dHz  channels: %d bps: %d\n", NeAAC_samplerate, NeAAC_channels,sh->samplesize);
+    //sh->o_bps = sh->samplesize*NeAAC_channels*NeAAC_samplerate;
     if(!sh->i_bps) {
       MSG_WARN("FAAD: compressed input bitrate missing, assuming 128kbit/s!\n");
       sh->i_bps = 128*1000/8; // XXX: HACK!!! ::atmos
@@ -210,21 +262,24 @@ static int init(sh_audio_t *sh)
 static void uninit(sh_audio_t *sh)
 {
   MSG_V("FAAD: Closing decoder!\n");
-  faacDecClose(faac_hdec);
+  NeAACDecClose(NeAAC_hdec);
   free(sh->context);
 }
 
 static int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
+  UNUSED(sh);
+  UNUSED(cmd);
+  UNUSED(arg);
   return CONTROL_UNKNOWN;
 }
 
 static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
 {
   faad_priv_t *priv=sh->context;
-  int j = 0, len = 0;	      
-  void *faac_sample_buffer;
-
+  int j = 0, len = 0;
+  void *NeAAC_sample_buffer;
+  UNUSED(maxlen);
   while(len < minlen) {
 
     /* update buffer for raw aac streams: */
@@ -248,20 +303,20 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
   if(!sh->codecdata_len){
    // raw aac stream:
    do {
-    faac_sample_buffer = faacDecDecode(faac_hdec, &faac_finfo, sh->a_in_buffer+j, sh->a_in_buffer_len);
+    NeAAC_sample_buffer = NeAACDecDecode(NeAAC_hdec, &NeAAC_finfo, sh->a_in_buffer+j, sh->a_in_buffer_len);
 	
-    /* update buffer index after faacDecDecode */
-    if(faac_finfo.bytesconsumed >= sh->a_in_buffer_len) {
+    /* update buffer index after NeAACDecDecode */
+    if(NeAAC_finfo.bytesconsumed >= sh->a_in_buffer_len) {
       sh->a_in_buffer_len=0;
     } else {
-      sh->a_in_buffer_len-=faac_finfo.bytesconsumed;
-      memcpy(sh->a_in_buffer,&sh->a_in_buffer[faac_finfo.bytesconsumed],sh->a_in_buffer_len);
-      priv->pts=FIX_APTS(sh,priv->pts,faac_finfo.bytesconsumed);
+      sh->a_in_buffer_len-=NeAAC_finfo.bytesconsumed;
+      memcpy(sh->a_in_buffer,&sh->a_in_buffer[NeAAC_finfo.bytesconsumed],sh->a_in_buffer_len);
+      priv->pts=FIX_APTS(sh,priv->pts,NeAAC_finfo.bytesconsumed);
     }
 
-    if(faac_finfo.error > 0) {
+    if(NeAAC_finfo.error > 0) {
       MSG_WARN("FAAD: error: %s, trying to resync!\n",
-              faacDecGetErrorMessage(faac_finfo.error));
+              NeAACDecGetErrorMessage(NeAAC_finfo.error));
       j++;
     } else
       break;
@@ -271,22 +326,22 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
     unsigned char* bufptr=NULL;
     int buflen=ds_get_packet_r(sh->ds, &bufptr,pts);
     if(buflen<=0) break;
-    faac_sample_buffer = faacDecDecode(faac_hdec, &faac_finfo, bufptr, buflen);
-//    printf("FAAC decoded %d of %d  (err: %d)  \n",faac_finfo.bytesconsumed,buflen,faac_finfo.error);
+    NeAAC_sample_buffer = NeAACDecDecode(NeAAC_hdec, &NeAAC_finfo, bufptr, buflen);
+//    printf("NeAAC decoded %d of %d  (err: %d)  \n",NeAAC_finfo.bytesconsumed,buflen,NeAAC_finfo.error);
   }
   
-    if(faac_finfo.error > 0) {
+    if(NeAAC_finfo.error > 0) {
       MSG_WARN("FAAD: Failed to decode frame: %s \n",
-      faacDecGetErrorMessage(faac_finfo.error));
-    } else if (faac_finfo.samples == 0) {
+      NeAACDecGetErrorMessage(NeAAC_finfo.error));
+    } else if (NeAAC_finfo.samples == 0) {
       MSG_DBG2("FAAD: Decoded zero samples!\n");
     } else {
       /* XXX: samples already multiplied by channels! */
       MSG_DBG2("FAAD: Successfully decoded frame (%d Bytes)!\n",
-      sh->samplesize*faac_finfo.samples);
-      memcpy(buf+len,faac_sample_buffer, sh->samplesize*faac_finfo.samples);
-      len += sh->samplesize*faac_finfo.samples;
-    //printf("FAAD: buffer: %d bytes  consumed: %d \n", k, faac_finfo.bytesconsumed);
+      sh->samplesize*NeAAC_finfo.samples);
+      memcpy(buf+len,NeAAC_sample_buffer, sh->samplesize*NeAAC_finfo.samples);
+      len += sh->samplesize*NeAAC_finfo.samples;
+    //printf("FAAD: buffer: %d bytes  consumed: %d \n", k, NeAAC_finfo.bytesconsumed);
     }
   }
   return len;
