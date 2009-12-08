@@ -25,7 +25,6 @@
 #include "stheader.h"
 #include "help_mp.h"
 
-#ifdef HAVE_LOCAL_FFMPEG
 #include "../../codecs/ffmpeg/libavformat/avformat.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
@@ -602,29 +601,6 @@ static void lavf_close(demuxer_t *demuxer)
     }
     dlclose(dll_handle);
 }
-
-#else //HAVE_LOCAL_FFMPEG
-static int lavf_probe(demuxer_t *demuxer){
-    return 0;
-}
-static demuxer_t* lavf_open(demuxer_t* demuxer){
-    return NULL;
-}
-static int lavf_demux(demuxer_t *demux,demux_stream_t *__ds){
-    return 0;
-}
-static void lavf_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
-}
-static void lavf_close(demuxer_t *demuxer) {}
-static int lavf_control(demuxer_t *demuxer,int cmd,void *args)
-{
-    return DEMUX_UNKNOWN;
-}
-
-const m_option_t lavfdopts_conf[] = {
-	{NULL, NULL, 0, 0, 0, 0, NULL}
-}
-#endif
 
 demuxer_driver_t demux_lavf =
 {

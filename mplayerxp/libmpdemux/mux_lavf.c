@@ -15,7 +15,6 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#ifdef HAVE_LOCAL_FFMPEG
 #include "../../codecs/ffmpeg/libavformat/avformat.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
@@ -483,6 +482,3 @@ fail:
 	free(priv);
 	return 0;
 }
-#else //HAVE_LOCAL_FFMPEG
-int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype) { return 0; }
-#endif
