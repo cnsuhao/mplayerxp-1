@@ -3,7 +3,7 @@
 #include <string.h>
 #include <dlfcn.h>
 #include "mp_config.h"
-#include "../libmpcodecs/interface/ffmpeg/avcodec.h"
+#include "../../codecs/ffmpeg/libavcodec/avcodec.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "../libvo/fastmemcpy.h"
 #include "af.h"

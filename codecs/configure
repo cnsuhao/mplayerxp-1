@@ -108,9 +108,6 @@ Advanced options:
   --enable-profile       compile profiling information into mplayer [disable]
   --disable-fastcall     disable regparm method on x86 systems [autodetect]
 
-Expert options:
-  --disable-builtin-ffmpeg disable builtin support for ffmpeg codecs
-
 Environment variables:
   MAKE      Make command (example: "make -j")
   AS        Assembler command
@@ -146,7 +143,6 @@ fi
 mlib=yes
 gomp=yes
 _prefix="/usr/local"
-_ffmpeg=yes
 _fastcall=auto
 _psuffix=
 _as=auto
@@ -211,7 +207,6 @@ for ac_option do
   --disable-mlib)	mlib=no	;;
   --enable-gomp)	gomp=yes	;;
   --disable-gomp)	gomp=no	;;
-  --disable-builtin-ffmpeg)    _ffmpeg=no	;;
   --enable-fastcall)	_fastcall=yes	;;
   --disable-fastcall)	_fastcall=no	;;
   *)
@@ -239,16 +234,8 @@ test -z "$_codecdir" && _codecdir="$_libdir/$_prog_alias/codecs"
 fi
 test -z "$_mlibdir" && _mlibdir="$MLIBHOME"
 
-# Fix libavcodec
-if test "$_ffmpeg" = yes ; then
-cd ffmpeg
-if ! test -f configure ; then
-echo "**WARNING**: local copy of libavcodec doesn't exist! Please copy libavcodec"
-echo "from ffmpeg distro into mplayerxp/codecs/libavcodec subfolder."
-echo "Otherwise support of builtin ffmpeg's codecs will be disabled"
-echo "Press any key"
-read _answer
-_ffmpeg=no
+if ! test -f ffmpeg/configure ; then
+die "*** local copy of ffmpeg was not found ***"
 fi
 _ffmpeg_args="--prefix=$_codecdir/ffmpeg --libdir=$_codecdir --shlibdir=$_codecdir --enable-shared --disable-static --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --enable-pic --enable-postproc --enable-gpl --enable-pthreads"
 if test -n $_host ; then
@@ -258,10 +245,11 @@ x86_64 && _arch="x86_64"
 _ffmpeg_args="--arch=$_arch $_ffmpeg_args"
 fi
 echocheck "configuring ffmpeg stuff: --cc=\"$_cc\" $_ffmpeg_args"
+cd ffmpeg
 $(LC_ALL=C ./configure --cc="$_cc" $_ffmpeg_args)
 cd ..
 echores "done"
-fi
+
 _subdirs="mp3lib liba52 libdca libmpeg2"
 if test "$_ffmpeg" = yes ; then
 _subdirs="$_subdirs ffmpeg"

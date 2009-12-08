@@ -563,6 +563,14 @@ _srcdir=`pwd`
 _pkg_config=pkg-config
 test $($_pkg_config --version 2>/dev/null) || die "no pkg-config found"
 
+disable ffmpeg
+# Checking for FFMPEG
+test -f "../codecs/ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
+disabled ffmpeg && die "**FATAL**: local copy of libavcodec doesn't exist! Please use latest svn to checkout external repository in mplayerxp source tree."
+
+print_config HAVE_ mp_config.h mp_config.mak ffmpeg
+
+
 # Checking kernel version...
 if x86 && linux ; then
   _k_verc_problem=no
@@ -1003,21 +1011,6 @@ enabled vidix	&& require2 vidix vidix/vidixlib.h vdlAllocFourccS -lvidix
 print_config CONFIG_ mp_config.h mp_config.mak vidix
 enabled x11	&& enabled vidix	&& _vomodules="xvidix $_vomodules" || _novomodules="xvidix $_novomodules"
 
-_def_ffmpeg=
-disable _ffmpeg
-# Checking for FFMPEG
-test -f "../codecs/ffmpeg/libavcodec/avcodec.h" && enable _ffmpeg
-if enabled _ffmpeg ; then
-_def_ffmpeg='#define HAVE_LOCAL_FFMPEG 1'
-add_cflags "-I$_srcdir/../codecs/ffmpeg"
-_codecmodules="$_codecmodules builtin-ffmpeg"
-else
-_nocodecmodules="$_nocodecmodules builtin-ffmpeg"
-check_sheader _ffmpeg "ffmpeg/avcodec.h"
-if enabled _ffmpeg ; then
-_def_ffmpeg='#define HAVE_GLOBAL_FFMPEG 1'
-fi
-fi
 
 enabled joystick	&& test linux	|| disable joystick
 print_config HAVE_ mp_config.h mp_config.mak joystick
@@ -1157,8 +1150,6 @@ $_def_win32_loader
 #ifdef CAN_COMPILE_MMX
 #define USE_MMX_IDCT 1
 #endif
-
-$_def_ffmpeg
 
 /* libvo options */
 #define SCREEN_SIZE_X 1

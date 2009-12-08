@@ -11,7 +11,7 @@
 #include "help_mp.h"
 #include "bswap.h"
 
-#include "interface/ffmpeg/avcodec.h"
+#include "../../codecs/ffmpeg/libavcodec/avcodec.h"
 #include "codecs_ld.h"
 
 #ifndef FF_INPUT_BUFFER_PADDING_SIZE
