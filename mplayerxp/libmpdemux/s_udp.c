@@ -28,16 +28,21 @@ static int __FASTCALL__ udp_read(stream_t *s,stream_packet_t*sp)
 
 static off_t __FASTCALL__ udp_seek(stream_t *s,off_t newpos)
 {
+    UNUSED(s);
     return newpos;
 }
 
 static off_t __FASTCALL__ udp_tell(stream_t *stream)
 {
+    UNUSED(stream);
     return 0;
 }
 
 static int __FASTCALL__ udp_ctrl(stream_t *s,unsigned cmd,void *args)
 {
+    UNUSED(s);
+    UNUSED(cmd);
+    UNUSED(args);
     return SCTRL_UNKNOWN;
 }
 
@@ -57,7 +62,7 @@ static int __FASTCALL__ udp_streaming_start (stream_t *stream)
 
   streaming_ctrl = stream->streaming_ctrl;
   fd = stream->fd;
-	
+
   if (fd < 0)
   {
     fd = udp_open_socket (streaming_ctrl->url); 
@@ -71,7 +76,7 @@ static int __FASTCALL__ udp_streaming_start (stream_t *stream)
   streaming_ctrl->prebuffer_size = 64 * 1024; /* 64 KBytes */
   streaming_ctrl->buffering = 0;
   streaming_ctrl->status = streaming_playing_e;
-  
+
   return 0;
 }
 
@@ -79,8 +84,7 @@ extern int network_bandwidth;
 static int __FASTCALL__ udp_open (stream_t *stream,const char *filename,unsigned flags)
 {
   URL_t *url;
-  
-  if(strncmp(filename,"udp://",6)!=0) return 0;
+  UNUSED(flags);
   MSG_V("STREAM_UDP, URL: %s\n", filename);
   stream->streaming_ctrl = streaming_ctrl_new ();
   if (!stream->streaming_ctrl)
@@ -95,7 +99,7 @@ static int __FASTCALL__ udp_open (stream_t *stream,const char *filename,unsigned
     MSG_ERR("You must enter a port number for UDP streams!\n");
     streaming_ctrl_free (stream->streaming_ctrl);
     stream->streaming_ctrl = NULL;
-  
+
     return 0;
   }
 
@@ -104,20 +108,21 @@ static int __FASTCALL__ udp_open (stream_t *stream,const char *filename,unsigned
     MSG_ERR("udp_streaming_start failed\n");
     streaming_ctrl_free (stream->streaming_ctrl);
     stream->streaming_ctrl = NULL;
-  
+
     return 0;
   }
 
   stream->type = STREAMTYPE_STREAM;
   fixup_network_stream_cache (stream);
-  
+
   return 1;
 }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 const stream_driver_t udp_stream =
 {
-    "udp",
+    "udp://",
+    "reads multimedia stream directly from User Datagram Protocol (UDP)",
     udp_open,
     udp_read,
     udp_seek,

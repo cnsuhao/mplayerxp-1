@@ -3,6 +3,7 @@
 */
 
 #include "../mp_config.h"
+#ifdef USE_DVDREAD
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -10,7 +11,6 @@
 #include "help_mp.h"
 #include "demux_msg.h"
 
-#ifdef USE_DVDREAD
 
 #include <dvdread/dvd_reader.h>
 #include <dvdread/ifo_types.h>
@@ -610,13 +610,12 @@ static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,uns
     ifo_handle_t *vmg_file;
     tt_srpt_t *tt_srpt;
 
-    if(strncmp(filename,"dvdread://",10)!=0) return 0;
-    if(strcmp(&filename[10],"help") == 0 || strlen(filename)==10)
+    if(strcmp(filename,"help") == 0 || strlen(filename)==10)
     {
 	MSG_HINT("Usage: dvdread://<@device>#<titleno>-<lasttitle>,<chapter>-<lastchapter>,<angle>\n");
 	return 0;
     }
-    args=mrl_parse_line(&filename[10],NULL,NULL,&dvd_device,NULL);
+    args=mrl_parse_line(filename,NULL,NULL,&dvd_device,NULL);
     strncpy(param,args,sizeof(param));
     comma=strchr(param,',');
     tilde=strchr(param,'-');
@@ -818,38 +817,11 @@ static int __FASTCALL__ __dvdread_ctrl(stream_t *s,unsigned cmd,void *args)
     }
     return SCTRL_FALSE;
 }
-#else
-static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,unsigned flags)
-{
-    if(strncmp(filename,"dvdread://",10)==0)
-	MSG_ERR("MplayerXP has been compiled without DVDREAD support\n");
-    return 0;
-}
-static int __FASTCALL__ __dvdread_read(stream_t *stream,stream_packet_t *sp)
-{
-    return 0;
-}
-static off_t __FASTCALL__ __dvdread_seek(stream_t *stream,off_t newpos)
-{
-    return 0;
-}
-static off_t __FASTCALL__ __dvdread_tell(stream_t *stream)
-{
-    return 0;
-}
-static void __FASTCALL__ __dvdread_close(stream_t *stream) {}
-
-unsigned int * __FASTCALL__ dvdread_stream_get_palette(stream_t *stream)
-{
-  return 0;
-}
-
-static int __FASTCALL__ __dvdread_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
-#endif
 
 const stream_driver_t dvdread_stream =
 {
-    "dvdread",
+    "dvdread://",
+    "reads multimedia stream using low-level libdvdread access",
     __dvdread_open,
     __dvdread_read,
     __dvdread_seek,
@@ -857,3 +829,5 @@ const stream_driver_t dvdread_stream =
     __dvdread_close,
     __dvdread_ctrl
 };
+#endif
+

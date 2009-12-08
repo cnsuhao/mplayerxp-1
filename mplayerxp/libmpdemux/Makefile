@@ -5,11 +5,27 @@ include ../mp_config.mak
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 
-SRCS  = s_cdd.c s_dvdplay.c s_dvdnav.c s_dvdread.c s_file.c s_tv.c  url.c
+SRCS  = s_file.c
+ifeq ($(HAVE_CDDA),yes)
+SRCS += s_cdd.c
+endif
+ifeq ($(USE_DVDNAV),yes)
+SRCS += s_dvdnav.c
+endif
+ifeq ($(USE_DVDREAD),yes)
+SRCS += s_dvdread.c
+endif
+SRCS  += s_tv.c  url.c
 ifeq ($(USE_OSS_AUDIO),yes)
 SRCS += s_oss.c
 endif
-SRCS += s_vcd.c s_vcdnav.c cache2.c dvdauth.c stream.c tvi_dummy.c tvi_v4l.c
+ifeq ($(USE_LIBVCD),yes)
+SRCS += s_vcdnav.c
+endif
+ifeq ($(HAVE_VCD),yes)
+SRCS += s_vcd.c
+endif
+SRCS += cache2.c dvdauth.c stream.c tvi_dummy.c tvi_v4l.c
 SRCS += tvi_bsdbt848.c frequencies.c cdda.c cddb.c mrl.c
 
 SRCS += demuxer_r.c mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c

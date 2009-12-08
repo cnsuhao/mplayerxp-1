@@ -2,6 +2,7 @@
     s_dvdnav - DVDNAV's stream interface
 */
 #include "../mp_config.h"
+#ifdef USE_DVDNAV
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -14,7 +15,6 @@
 #include "../mplayer.h"
 #include "demux_msg.h"
 
-#ifdef USE_DVDNAV
 #include <dvdnav/dvdnav.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -171,6 +171,8 @@ static unsigned int * __FASTCALL__ dvdnav_stream_get_palette(stream_t * stream) 
     return NULL;
   }
   return dvdnav_priv->dvdnav->vm->state.pgc->palette;
+#else
+  UNUSED(stream);
 #endif
   return 0;
 }
@@ -191,10 +193,9 @@ static int __FASTCALL__ __dvdnav_open(stream_t *stream,const char *filename,unsi
     const char *param;
     char *dvd_device;
     int ntitles;
-
-    if(strncmp(filename,"dvdnav://",9)!=0) return 0;
+    UNUSED(flags);
     stream->type = STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM;
-    param=mrl_parse_line(&filename[9],NULL,NULL,&dvd_device,NULL);
+    param=mrl_parse_line(filename,NULL,NULL,&dvd_device,NULL);
     if(strcmp(param,"help") == 0)
     {
 	MSG_HINT("Usage: dvdnav://<title>,<chapter>\n");
@@ -467,7 +468,7 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
 				for (btnum = 0; btnum < pnavpci->hli.hl_gi.btn_ns; btnum++) {
 					btni_t *btni = &(pnavpci->hli.btnit[btnum]);
 
-					if (priv->hlev.buttonN == btnum + 1) {
+					if (priv->hlev.buttonN == (unsigned)btnum + 1) {
 					    priv->hlev.sx = min (btni->x_start, btni->x_end);
 					    priv->hlev.ex = max (btni->x_start, btni->x_end);
 					    priv->hlev.sy = min (btni->y_start, btni->y_end);
@@ -649,35 +650,11 @@ static int __FASTCALL__ __dvdnav_ctrl(stream_t *s,unsigned cmd,void *args)
     }
     return SCTRL_FALSE;
 }
-#else
-static int __FASTCALL__ __dvdnav_open(stream_t *stream,const char *filename,unsigned flags)
-{
-    if(strncmp(filename,"dvdnav://",9)==0)
-	MSG_ERR("MPlayerXP has been compiled without DVDNAV support\n");
-    return 0;
-}
-static int __FASTCALL__ __dvdnav_read(stream_t *stream,stream_packet_t * sp)
-{
-    return 0;
-}
-static off_t __FASTCALL__ __dvdnav_seek(stream_t *stream,off_t pos)
-{
-    return 0;
-}
-static off_t __FASTCALL__ __dvdnav_tell(stream_t *stream)
-{
-    return 0;
-}
-static void __FASTCALL__ __dvdnav_close(stream_t *stream)
-{
-}
-
-static int __FASTCALL__ __dvdnav_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
-#endif
 
 const stream_driver_t dvdnav_stream=
 {
-    "dvdnav",
+    "dvdnav://",
+    "reads multimedia stream with using of libdvdnav library",
     __dvdnav_open,
     __dvdnav_read,
     __dvdnav_seek,
@@ -685,3 +662,4 @@ const stream_driver_t dvdnav_stream=
     __dvdnav_close,
     __dvdnav_ctrl
 };
+#endif

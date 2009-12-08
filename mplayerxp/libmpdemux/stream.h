@@ -159,8 +159,8 @@ typedef struct {
 /** Stream-driver interface */
 typedef struct stream_driver_s
 {
-    const char 		*name;		/**< short name of stream driver (often - MRL) */
-
+    const char		*mrl;	/**< MRL of stream driver */
+    const char		*descr;	/**< description of the driver */
 		/** Opens stream with given name
 		  * @param _this	points structure to be filled by driver
 		  * @param filename	points MRL of stream (vcdnav://, file://, http://, ...)
@@ -202,6 +202,8 @@ typedef struct stream_driver_s
 		**/
     int		(* __FASTCALL__ control)(stream_t *_this,unsigned cmd,void *param);
 }stream_driver_t;
+
+void print_stream_drivers(void);
 
 #define MAX_STREAM_PROTOCOLS 10
 typedef struct stream_info_st {

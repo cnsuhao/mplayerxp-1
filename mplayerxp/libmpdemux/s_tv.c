@@ -12,6 +12,7 @@
 */
 
 #include "../mp_config.h"
+#ifdef USE_TV
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
@@ -51,7 +52,6 @@ static mrl_config_t tvopts_conf[]={
 	{NULL, NULL, 0, 0, 0 }
 };
 
-#ifdef USE_TV
 #include "tv.h"
 #include "demux_msg.h"
 #include "help_mp.h"
@@ -119,7 +119,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
     int i;
     tvi_functions_t *funcs = tvh->functions;
     int picture_format = 0;
-
+    UNUSED(stream);
     if (funcs->control(tvh->priv, TVI_CONTROL_IS_VIDEO, 0) != TVI_CONTROL_TRUE)
     {
 	MSG_ERR( "Error: no video input present!\n");
@@ -548,18 +548,20 @@ int __FASTCALL__ tv_step_channel(tvi_handle_t *tvh, int direction)
 
 int __FASTCALL__ tv_step_norm(tvi_handle_t *tvh)
 {
+    UNUSED(tvh);
     return 0;
 }
 
 int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
 {
+    UNUSED(tvh);
     return 0;
 }
 
 static int __FASTCALL__ _tv_open(stream_t*stream,const char *filename,unsigned flags)
 {
-    if(strncmp(filename,"tv://",4)!=0) return 0;
-    mrl_parse_params(&filename[5],tvopts_conf);
+    UNUSED(flags);
+    mrl_parse_params(filename,tvopts_conf);
     /* create tvi handler */
     if(!(stream->priv = tv_begin())) goto tv_err;
 
@@ -581,16 +583,20 @@ tv_err:
 
 static int __FASTCALL__ _tv_read(stream_t *stream,stream_packet_t*sp)
 {
+    UNUSED(stream);
+    UNUSED(sp);
     return 0;
 }
 
 static off_t __FASTCALL__ _tv_seek(stream_t *stream,off_t pos)
 {
+    UNUSED(stream);
     return pos;
 }
 
 static off_t __FASTCALL__ _tv_tell(stream_t *stream)
 {
+    UNUSED(stream);
     return 0;
 }
 
@@ -630,33 +636,11 @@ static int __FASTCALL__ _tv_ctrl(stream_t *s,unsigned cmd,void *args)
     }
     return SCTRL_UNKNOWN;
 }
-#else
-static int __FASTCALL__ _tv_open(stream_t*stream,const char *filename,unsigned flags)
-{
-  if(strncmp(filename,"tv://",5)==0)
-    MSG_ERR("MplayerXP has been compiled without TV support\n");
-  return 0;
-}
-static int __FASTCALL__ _tv_read(stream_t *stream,stream_packet_t*sp)
-{
-    sp->type=sp->len=0;
-    return sp->len;
-}
-static off_t __FASTCALL__ _tv_seek(stream_t *stream,off_t pos)
-{
-    return 0;
-}
-static off_t __FASTCALL__ _tv_tell(stream_t *stream)
-{
-    return 0;
-}
-static void __FASTCALL__ _tv_close(stream_t*stream) {}
-static int __FASTCALL__ _tv_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
-#endif
 
 const stream_driver_t tv_stream=
 {
-    "tv",
+    "tv://",
+    "reads multimedia stream directly from TV tunner",
     _tv_open,
     _tv_read,
     _tv_seek,
@@ -664,3 +648,5 @@ const stream_driver_t tv_stream=
     _tv_close,
     _tv_ctrl
 };
+#endif
+

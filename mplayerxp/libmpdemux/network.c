@@ -816,7 +816,7 @@ rtp_streaming_start( stream_t *stream, int raw_udp ) {
 	fd = stream->fd;
 	
 	if( fd<0 ) {
-		fd = udp_open_socket( (streaming_ctrl->url) ); 
+		fd = udp_open_socket( (streaming_ctrl->url) );
 		if( fd<0 ) return -1;
 		stream->fd = fd;
 	}
@@ -827,7 +827,7 @@ rtp_streaming_start( stream_t *stream, int raw_udp ) {
 		streaming_ctrl->streaming_read = rtp_streaming_read;
 	streaming_ctrl->streaming_read = rtp_streaming_read;
 	streaming_ctrl->streaming_seek = nop_streaming_seek;
-	streaming_ctrl->prebuffer_size = 64*1024;	// KBytes	
+	streaming_ctrl->prebuffer_size = 64*1024;	// KBytes
 	streaming_ctrl->buffering = 0;
 	streaming_ctrl->status = streaming_playing_e;
 	return 0;

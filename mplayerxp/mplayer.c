@@ -2091,6 +2091,7 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
     if(!filename){
 	// no file/vcd/dvd -> show HELP:
 	MSG_INFO("%s",help_text);
+	print_stream_drivers();
 	return 0;
     }
 

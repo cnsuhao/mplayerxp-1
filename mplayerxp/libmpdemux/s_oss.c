@@ -41,15 +41,15 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
     oss_priv_t *oss_priv;
     unsigned tmp,param;
     int err;
-    if(strncmp(filename,"oss://",6)!=0) return 0;
+    UNUSED(flags);
     if(!(stream->priv = malloc(sizeof(oss_priv_t)))) return 0;
     oss_priv=stream->priv;
-    if(strcmp(&filename[6],"help") == 0)
+    if(strcmp(filename,"help") == 0)
     {
 	MSG_HINT("Usage: oss://<@device>#<channels>,<samplerate>,<sampleformat>\n");
 	return 0;
     }
-    args=mrl_parse_line(&filename[6],NULL,NULL,&oss_device,NULL);
+    args=mrl_parse_line(filename,NULL,NULL,&oss_device,NULL);
     comma=strchr(args,',');
     if(comma) *comma=0;
     oss_priv->nchannels=args[0]?atoi(args):2;
@@ -150,6 +150,7 @@ static int __FASTCALL__ oss_read(stream_t*stream,stream_packet_t*sp)
 
 static off_t __FASTCALL__ oss_seek(stream_t*stream,off_t pos)
 {
+    UNUSED(pos);
     oss_priv_t *p=stream->priv;
     stream->_Errno=ENOSYS;
     return p->spos;
@@ -180,7 +181,7 @@ static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,void *args)
 	    rval = oss_priv->nchannels;
 	    if (rval > 2) {
 		if ( ioctl(s->fd, SNDCTL_DSP_CHANNELS, &rval) == -1 ||
-		rval != oss_priv->nchannels ) return SCTRL_FALSE;
+		(unsigned)rval != oss_priv->nchannels ) return SCTRL_FALSE;
 		*(int *)args=rval;
 		return SCTRL_OK;
 	    }
@@ -276,7 +277,8 @@ static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,void *args)
 
 const stream_driver_t oss_stream =
 {
-    "oss",
+    "oss://",
+    "reads multimedia stream from OSS audio capturing interface",
     oss_open,
     oss_read,
     oss_seek,

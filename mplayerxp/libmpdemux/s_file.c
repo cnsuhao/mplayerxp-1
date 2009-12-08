@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -19,11 +21,11 @@ typedef struct file_priv_s
     off_t spos;
 }file_priv_t;
 
+
 static int __FASTCALL__ file_open(stream_t *stream,const char *filename,unsigned flags)
 {
+    UNUSED(flags);
     if(!(stream->priv = malloc(sizeof(file_priv_t)))) return 0;
-    if(strncmp(filename,"stdin://",8)==0) filename="-";
-    if(strncmp(filename,"file://",7)==0) filename = &filename[7];
     if(strcmp(filename,"-")==0) stream->fd=0;
     else stream->fd=open(filename,O_RDONLY);
     if(stream->fd<0) { free(stream->priv); return 0; }
@@ -38,6 +40,11 @@ static int __FASTCALL__ file_open(stream_t *stream,const char *filename,unsigned
     stream->sector_size=stream_cache_size?stream_cache_size*1024/10:STREAM_BUFFER_SIZE;
     ((file_priv_t*)stream->priv)->spos = 0;
     return 1;
+}
+
+static int __FASTCALL__ stdin_open(stream_t *stream,const char *filename,unsigned flags) {
+    UNUSED(filename);
+    return file_open(stream,"-",flags);
 }
 
 #ifndef TEMP_FAILURE_RETRY
@@ -85,11 +92,29 @@ static void __FASTCALL__ file_close(stream_t *stream)
     free(stream->priv);
 }
 
-static int __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
+static int __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,void *args) {
+    UNUSED(s);
+    UNUSED(cmd);
+    UNUSED(args);
+    return SCTRL_UNKNOWN;
+}
+
+const stream_driver_t stdin_stream =
+{
+    "stdin://",
+    "reads multimedia stream from standard input",
+    stdin_open,
+    file_read,
+    file_seek,
+    file_tell,
+    file_close,
+    file_ctrl
+};
 
 const stream_driver_t file_stream =
 {
-    "file",
+    "file://",
+    "reads multimedia stream from regular file",
     file_open,
     file_read,
     file_seek,

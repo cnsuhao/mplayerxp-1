@@ -80,7 +80,6 @@ Optional features:
   --disable-libcss       Disable libcss support [autodetect]
   --disable-libdvdread   Disable libdvdread support [autodetect]
   --disable-libdvdnav    Disable libdvdnav support [autodetect]
-  --disable-libdvdplay   Disable libdvdplay support [autodetect]
   --disable-vcd          Disable VCD support [autodetect]
 Video:
   --enable-dga           build with DGA1 or DGA2 support [autodetect]
@@ -362,7 +361,6 @@ AUTOCONF_LIST='
     libcss
     libdvdread
     libdvdnav
-    libdvdplay
     png
     sdl
     sdl_image
@@ -383,7 +381,6 @@ AUTOCONF_LIST='
 enable $AUTOCONF_LIST
 
 _dvdnavdir=/usr
-_dvdplaydir=/usr
 _language=en
 _linux_devfs=no
 _bad_options=
@@ -441,8 +438,6 @@ for ac_option do
   --disable-libdvdread)	libdvdread=no	;;
   --enable-libdvdnav)	libdvdnav=yes	;;
   --disable-libdvdnav)	libdvdnav=no	;;
-  --enable-libdvdplay)	libdvdplay=yes	;;
-  --disable-libdvdplay)	libdvdplay=no	;;
   --enable-xinerama)	xinerama=yes	;;
   --disable-xinerama)	xinerama=no	;;
   --enable-alsa)	alsa=yes	;;
@@ -955,11 +950,6 @@ dvdnav=$libdvdnav
 print_config USE_ mp_config.h mp_config.mak dvdnav
 enabled libdvdnav	&& _inputmodules="dvdnav $_inputmodules" || _noinputmodules="dvdnav $_noinputmodules"
 
-enabled libdvdplay	&& require2 libdvdplay dvdplay/dvdplay.h dvdplay_open -ldvdplay
-dvdplay=$libdvdplay
-print_config USE_ mp_config.h mp_config.mak dvdplay
-enabled libdvdplay	&& _inputmodules="dvdplay $_inputmodules" || _noinputmodules="dvdplay $_noinputmodules"
-
 enabled libvcd && require2 libvcd libvcd/info.h vcdinfo_open -lvcdinfo
 print_config USE_ mp_config.h mp_config.mak libvcd
 enabled libvcd	&& _inputmodules="libvcd $_inputmodules" || _noinputmodules="libvcd $_noinputmodules"
@@ -968,10 +958,10 @@ enabled fastmemcpy	&& x86	|| disable fastmemcpy
 print_config USE_ mp_config.h mp_config.mak fastmemcpy
 
 test linux -o bsdos -o freebsd -o sunos	&& enable vcd	|| disable vcd
-print_config HAVE_ mp_config.h mp_config.mak tv
+print_config HAVE_ mp_config.h mp_config.mak vcd
 enabled vcd	&& _inputmodules="vcd $_inputmodules" || _noinputmodules="vcd $_noinputmodules"
 
-print_config USE_ mp_config.h mp_config.mak tv
+enabled tv && print_config USE_ mp_config.h mp_config.mak tv
 enabled tv	&& _inputmodules="tv $_inputmodules" || _noinputmodules="tv $_noinputmodules"
 
 enabled tv_v4l && require2 tv_v4l "stdlib.h linux/videodev.h" video_devdata

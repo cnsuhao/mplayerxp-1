@@ -11,23 +11,40 @@
 #include "mrl.h"
 
 static int track_idx=-1;
-static int __FASTCALL__ cdd_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ _cdda_open(stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *device;
     int retval;
+    UNUSED(flags);
     stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
     stream->sector_size=CD_FRAMESIZE_RAW;
-    if(!(strncmp(filename,"cdda://",7)==0 || strncmp(filename,"cddb://",7)==0)) return 0;
-    if(strcmp(&filename[7],"help") == 0)
+    if(strcmp(filename,"help") == 0)
     {
-	MSG_HINT("Usage: cdda://<@device><#trackno> or cddb://<@device><#trackno>\n");
+	MSG_HINT("Usage: cdda://<@device><#trackno>\n");
 	return 0;
     }
-    param=mrl_parse_line(&filename[7],NULL,NULL,&device,NULL);
-    retval =
-    strncmp(filename,"cdda://",7)==0?open_cdda(stream,device ? device : DEFAULT_CDROM_DEVICE,param):
-				     open_cddb(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
+    param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
+    retval = open_cdda(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
+    if(device) free(device);
+    return retval;
+}
+
+static int __FASTCALL__ _cddb_open(stream_t *stream,const char *filename,unsigned flags)
+{
+    const char *param;
+    char *device;
+    int retval;
+    UNUSED(flags);
+    stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
+    stream->sector_size=CD_FRAMESIZE_RAW;
+    if(strcmp(filename,"help") == 0)
+    {
+	MSG_HINT("Usage: cddb://<@device><#trackno>\n");
+	return 0;
+    }
+    param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
+    retval = open_cddb(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
     if(device) free(device);
     return retval;
 }
@@ -88,133 +105,28 @@ static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,void *args)
     }
     return SCTRL_FALSE;
 }
-#elif defined( HAVE_SDL )
-#include <SDL/SDL.h>
-static SDL_CD* sdlcd;
-static int __FASTCALL__ cdd_open(stream_t *stream,const char *filename,unsigned flags)
-{
-    int start_track = 0;
-    int end_track = 0;
-    const char *track;
-    char* end;
-    stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
-    stream->sector_size=2352;
-    if(!(strncmp(filename,"cdda://",7)==0 || strncmp(filename,"cddb://",7)==0)) return 0;
-    if(strcmp(&filename[7],"help") == 0)
-    {
-	MSG_HINT("Usage: cdda://<trackno> or cddb://<trackno>\n");
-	return 0;
-    }
-    track=&filename[7];
-    end = strchr(track,'-');
-    if(!end) start_track = end_track = atoi(track);
-    else {
-	int st_len = end - track;
-	int ed_len = strlen(track) - 1 - st_len;
 
-	if(st_len) {
-	    char st[st_len + 1];
-	    strncpy(st,track,st_len);
-	    st[st_len] = '\0';
-	    start_track = atoi(st);
-	}
-	if(ed_len) {
-	    char ed[ed_len + 1];
-	    strncpy(ed,end+1,ed_len);
-	    ed[ed_len] = '\0';
-	end_track = atoi(ed);
-	}
-    }
-    if (!SDL_WasInit(SDL_INIT_CDROM)) {
-        if (SDL_Init (SDL_INIT_CDROM)) {
-            MSG_ERR("SDL: Initializing of SDL failed: %s.\n", SDL_GetError());
-            return -1;
-        }
-    }
-    /* TODO: selectable cd number */
-    sdlcd = SDL_CDOpen(0);
-    if(CD_INDRIVE(SDL_CDStatus(sdlcd)))
-	SDL_CDPlayTracks(sdlcd,start_track,0,end_track-start_track,0);
-    return 1;
-}
-
-static int __FASTCALL__ cdd_read(stream_t*stream,stream_packet_t*sp)
+const stream_driver_t cdda_stream=
 {
-    return 0;
-}
-
-static off_t __FASTCALL__ cdd_seek(stream_t*stream,off_t pos)
-{
-    return 0;
-}
-
-static off_t __FASTCALL__ cdd_tell(stream_t*stream)
-{
-    return 0;
-}
-static void __FASTCALL__ cdd_close(stream_t*stream)
-{
-    SDL_CDStop(sdlcd);
-    SDL_CDClose(sdlcd);
-    if (SDL_WasInit(SDL_INIT_CDROM));
-        SDL_QuitSubSystem(SDL_INIT_CDROM);
-}
-
-static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,void *args)
-{
-    switch(cmd)
-    {
-	case SCTRL_AUD_GET_CHANNELS:
-		*(int *)args=2;
-		return SCTRL_OK;
-	case SCTRL_AUD_GET_SAMPLERATE:
-		*(int *)args = 44100;
-		return SCTRL_OK;
-	case SCTRL_AUD_GET_SAMPLESIZE:
-		*(int *)args=2;
-		return SCTRL_OK;
-	case SCTRL_AUD_GET_FORMAT:
-		*(int *)args=0x01; /* Raw PCM */
-		return SCTRL_OK;
-	default: break;
-    }
-    return SCTRL_UNKNOWN;
-}
-#else
-#include "demux_msg.h"
-static int __FASTCALL__ cdd_open(stream_t *stream,const char *filename,unsigned flags)
-{
-    if(strncmp(filename,"cdda://",7)==0 || strncmp(filename,"cddb://",7)==0)
-	MSG_ERR("MplayerXP has been compiled without CDDA(B) support\n");
-    return 0;
-}
-
-static int __FASTCALL__ cdd_read(stream_t*stream,char *buf,unsigned size)
-{
-    return 0;
-}
-
-static off_t __FASTCALL__ cdd_seek(stream_t*stream,off_t pos)
-{
-    return 0;
-}
-
-static off_t __FASTCALL__ cdd_tell(stream_t*stream)
-{
-    return 0;
-}
-static void __FASTCALL__ cdd_close(stream_t*stream) {}
-
-static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
-#endif
-
-const stream_driver_t cdd_stream=
-{
-    "cdd",
-    cdd_open,
+    "cdda://",
+    "reads multimedia stream directly from Compact Disc Digital Audio system, or CD-DA",
+    _cdda_open,
     cdd_read,
     cdd_seek,
     cdd_tell,
     cdd_close,
     cdd_ctrl
 };
+
+const stream_driver_t cddb_stream=
+{
+    "cddb://",
+    "reads multimedia stream from Compact Disc Database or CD-DB",
+    _cddb_open,
+    cdd_read,
+    cdd_seek,
+    cdd_tell,
+    cdd_close,
+    cdd_ctrl
+};
+#endif

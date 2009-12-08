@@ -22,29 +22,57 @@
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-extern const stream_driver_t cdd_stream;
+#ifdef HAVE_CDDA
+extern const stream_driver_t cdda_stream;
+extern const stream_driver_t cddb_stream;
+#endif
+#ifdef USE_DVDNAV
 extern const stream_driver_t dvdnav_stream;
-extern const stream_driver_t dvdplay_stream;
+#endif
+#ifdef USE_DVDREAD
 extern const stream_driver_t dvdread_stream;
-extern const stream_driver_t file_stream;
+#endif
+#ifdef USE_TV
+extern const stream_driver_t tv_stream;
+#endif
+#ifdef HAVE_STREAMING
 extern const stream_driver_t ftp_stream;
 extern const stream_driver_t network_stream;
+#endif
 #ifdef USE_OSS_AUDIO
 extern const stream_driver_t oss_stream;
 #endif
-extern const stream_driver_t tv_stream;
+#ifdef HAVE_VCD
 extern const stream_driver_t vcd_stream;
+#endif
+#ifdef USE_LIBVCD
 extern const stream_driver_t vcdnav_stream;
+#endif
+
+extern const stream_driver_t stdin_stream;
+extern const stream_driver_t file_stream;
 
 static const stream_driver_t *sdrivers[] =
 {
-    &cdd_stream,
+#ifdef HAVE_CDDA
+    &cdda_stream,
+    &cddb_stream,
+#endif
+#ifdef USE_DVDNAV
     &dvdnav_stream,
-    &dvdplay_stream,
+#endif
+#ifdef USE_DVDREAD
     &dvdread_stream,
-    &vcd_stream,
-    &vcdnav_stream,
+#endif
+#ifdef USE_TV
     &tv_stream,
+#endif
+#ifdef HAVE_VCD
+    &vcd_stream,
+#endif
+#ifdef USE_LIBVCD
+    &vcdnav_stream,
+#endif
 #ifdef USE_OSS_AUDIO
     &oss_stream,
 #endif
@@ -52,6 +80,7 @@ static const stream_driver_t *sdrivers[] =
     &ftp_stream,
     &network_stream,
 #endif
+    &stdin_stream,
     &file_stream,
 };
 
@@ -59,26 +88,47 @@ static unsigned int nsdrivers=sizeof(sdrivers)/sizeof(stream_driver_t*);
 
 stream_t* __FASTCALL__ open_stream(const char* filename,int* file_format,stream_callback event_handler)
 {
-  unsigned i;
+  unsigned i,done;
+  unsigned mrl_len;
   stream_t* stream=new_stream(STREAMTYPE_STREAM); /* No flags here */
   stream->file_format=*file_format;
+  done=0;
   for(i=0;i<nsdrivers;i++)
   {
-	MSG_V("Probing %s ... ",sdrivers[i]->name);
-	if(sdrivers[i]->open(stream,filename,0))
-	{
-	    MSG_V("OK\n");
-	    *file_format = stream->file_format;
-	    stream->driver=sdrivers[i];
-	    stream->event_handler=event_handler;
-	    stream->buffer=realloc(stream->buffer,stream->sector_size);
-	    return stream;
+	mrl_len=strlen(sdrivers[i]->mrl);
+	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0) {
+	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
+	    if(sdrivers[i]->open(stream,&filename[mrl_len],0)) {
+		MSG_V("OK\n");
+		*file_format = stream->file_format;
+		stream->driver=sdrivers[i];
+		stream->event_handler=event_handler;
+		stream->buffer=realloc(stream->buffer,stream->sector_size);
+		return stream;
+	    }
+	    MSG_V("False\n");
 	}
-	MSG_V("False\n");
+  }
+  /* Last hope */
+  if(file_stream.open(stream,filename,0)) {
+	*file_format = stream->file_format;
+	stream->driver=&file_stream;
+	stream->event_handler=event_handler;
+	stream->buffer=realloc(stream->buffer,stream->sector_size);
+	return stream;
   }
   free(stream->buffer);
   free(stream);
   return NULL;
+}
+
+void print_stream_drivers( void )
+{
+  unsigned i;
+  MSG_INFO("Available stream drivers:\n");
+  for(i=0;i<nsdrivers;i++) {
+    MSG_INFO(" %-10s %s\n",sdrivers[i]->mrl,sdrivers[i]->descr);
+  }
 }
 
 #define FILE_POS(s) (s->pos-s->buf_len)
@@ -111,8 +161,8 @@ int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
 	MSG_DBG3("nc_stream_read_cbuffer: Guess EOF\n");
 	s->eof=1;
 	s->buf_pos=s->buf_len=0;
-	if(s->_Errno) { MSG_WARN("nc_stream_read_cbuffer(drv:%s) error: %s\n",s->driver->name,strerror(s->_Errno)); s->_Errno=0; }
-	return 0; 
+	if(s->_Errno) { MSG_WARN("nc_stream_read_cbuffer(drv:%s) error: %s\n",s->driver->mrl,strerror(s->_Errno)); s->_Errno=0; }
+	return 0;
     }
     break;
   }
@@ -138,7 +188,7 @@ int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos)
   {
     if(!s->driver) { s->eof=1; return 0; }
     s->pos = s->driver->seek(s,newpos);
-    if(s->_Errno) { MSG_WARN("nc_stream_seek(drv:%s) error: %s\n",s->driver->name,strerror(s->_Errno)); s->_Errno=0; }
+    if(s->_Errno) { MSG_WARN("nc_stream_seek(drv:%s) error: %s\n",s->driver->mrl,strerror(s->_Errno)); s->_Errno=0; }
   }
   MSG_DBG3("nc_stream_seek_long after: %llu\n",s->pos);
 
@@ -203,7 +253,7 @@ stream_t* __FASTCALL__ new_stream(int type){
 }
 
 void __FASTCALL__ free_stream(stream_t *s){
-  MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",s->driver->name,s->_Errno);
+  MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",s->driver->mrl,s->_Errno);
   if(s->cache_data) stream_disable_cache(s);
   if(s->driver) s->driver->close(s);
   free(s->buffer);

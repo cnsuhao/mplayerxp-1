@@ -2,12 +2,12 @@
     s_vcd - VCD's stream interface
 */
 #include "../mp_config.h"
+#ifdef HAVE_VCD
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "stream.h"
 
-#ifdef HAVE_VCD
 
 #ifdef __FreeBSD__
 #include <sys/cdrio.h>
@@ -18,9 +18,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #ifdef __FreeBSD__
-#include "vcd_read_fbsd.h" 
+#include "vcd_read_fbsd.h"
 #elif defined(__NetBSD__)
-#include "vcd_read_nbsd.h" 
+#include "vcd_read_nbsd.h"
 #else
 #include "vcd_read.h"
 #endif
@@ -44,16 +44,14 @@ static int __FASTCALL__ _vcd_open(stream_t *stream,const char *filename,unsigned
 #ifdef __FreeBSD__
     int bsize=VCD_SECTOR_SIZE;
 #endif
-
-
+    UNUSED(flags);
 /* originally was vcd:// but playtree parser replaced it */
-    if(strncmp(filename,"vcd://",6)!=0) return 0;
-    if(strcmp(&filename[6],"help") == 0)
+    if(strcmp(filename,"help") == 0)
     {
 	MSG_HINT("Usage: vcd://<@device><#trackno>\n");
 	return 0;
     }
-    param=mrl_parse_line(&filename[6],NULL,NULL,&device,NULL);
+    param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     vcd_track=atoi(param);
     if(!device) device=DEFAULT_CDROM_DEVICE;
     stream->fd=open(device,O_RDONLY);
@@ -100,7 +98,7 @@ static int __FASTCALL__ _vcd_read(stream_t *stream,stream_packet_t*sp)
 static off_t __FASTCALL__ _vcd_seek(stream_t *stream,off_t pos)
 {
     vcd_priv_t *p=stream->priv;
-    off_t newpos;
+    off_t newpos=pos;
     if(newpos<stream->start_pos) newpos=stream->start_pos;
     if(newpos>stream->end_pos) newpos=stream->end_pos;
     newpos=pos/VCD_SECTOR_DATA;
@@ -122,32 +120,17 @@ static void __FASTCALL__ _vcd_close(stream_t*stream)
     free(stream->priv);
     close(stream->fd);
 }
-#else
-static int __FASTCALL__ _vcd_open(stream_t *stream,const char *filename,unsigned flags)
-{
-    if(strncmp(filename,"vcd://",6)==0)
-	MSG_ERR("MPlayerXP has been compiled without VCD support\n");
-    return 0;
+static int __FASTCALL__ _vcd_ctrl(stream_t *s,unsigned cmd,void *args) {
+    UNUSED(s);
+    UNUSED(cmd);
+    UNUSED(args);
+    return SCTRL_UNKNOWN;
 }
-static int __FASTCALL__ _vcd_read(stream_t *stream,stream_packet_t *sp)
-{
-    return 0;
-}
-static off_t __FASTCALL__ _vcd_seek(stream_t *stream,off_t pos)
-{
-    return 0;
-}
-static off_t __FASTCALL__ _vcd_tell(stream_t *stream)
-{
-    return 0;
-}
-static void __FASTCALL__ _vcd_close(stream_t*stream) {}
-#endif
-static int __FASTCALL__ _vcd_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
 
 const stream_driver_t vcd_stream=
 {
-    "vcd",
+    "vcd://",
+    "reads multimedia stream using low-level Video-CD access",
     _vcd_open,
     _vcd_read,
     _vcd_seek,
@@ -155,3 +138,4 @@ const stream_driver_t vcd_stream=
     _vcd_close,
     _vcd_ctrl
 };
+#endif

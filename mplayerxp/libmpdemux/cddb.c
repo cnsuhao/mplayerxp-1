@@ -488,7 +488,7 @@ void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
 		}
 		user_name = getenv("LOGNAME");
 	}
-	sprintf( cddb_data->cddb_hello, "&hello=%s+%s+%s+%s", user_name, host_name, "MPlayer", VERSION );
+	sprintf( cddb_data->cddb_hello, "&hello=%s+%s+%s+%s", user_name, host_name, "MPlayerXP", VERSION );
 }
 
 int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {

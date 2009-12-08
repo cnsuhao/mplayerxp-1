@@ -2,13 +2,13 @@
     s_vcdnav - libVCD's stream interface (based on xine's input plugin)
 */
 #include "../mp_config.h"
+#ifdef USE_LIBVCD
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "stream.h"
 #include "demux_msg.h"
 
-#ifdef USE_LIBVCD
 #include <libvcd/info.h>
 #include <libvcd/logging.h>
 #include "mrl.h"
@@ -64,13 +64,13 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     unsigned i;
     int vcd_track=-1;
     vcdinfo_open_return_t open_rc;
-    if(strncmp(filename,"vcdnav://",9)!=0) return 0;
-    if(strcmp(&filename[9],"help") == 0)
+    UNUSED(flags);
+    if(strcmp(filename,"help") == 0)
     {
 	MSG_HINT("Usage: vcdnav://<@device><#trackno>\n");
 	return 0;
     }
-    param=mrl_parse_line(&filename[9],NULL,NULL,&device,NULL);
+    param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     if(param) vcd_track=atoi(param);
     priv=stream->priv=calloc(1,sizeof(vcd_priv_t));
 //    vcdinfo_init(priv->fd);
@@ -232,7 +232,6 @@ static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp)
 static off_t __FASTCALL__ _vcdnav_seek(stream_t *stream,off_t pos)
 {
     vcd_priv_t *p=stream->priv;
-    off_t newpos;
     lsn_t oldlsn=p->lsn;
     CdIo *img = vcdinfo_get_cd_image(p->fd);
     p->lsn=pos/sizeof(vcdsector_t);
@@ -262,32 +261,17 @@ static void __FASTCALL__ _vcdnav_close(stream_t*stream)
     if(priv->segment) free(priv->segment);
     free(stream->priv);
 }
-#else
-static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsigned flags)
-{
-    if(strncmp(filename,"vcdnav://",9)==0)
-	MSG_ERR("MPlayerXP has been compiled without libVCD support\n");
-    return 0;
+static int __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,void *args) {
+    UNUSED(s);
+    UNUSED(cmd);
+    UNUSED(args);
+    return SCTRL_UNKNOWN;
 }
-static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t *sp)
-{
-    return 0;
-}
-static off_t __FASTCALL__ _vcdnav_seek(stream_t *stream,off_t pos)
-{
-    return 0;
-}
-static off_t __FASTCALL__ _vcdnav_tell(stream_t *stream)
-{
-    return 0;
-}
-static void __FASTCALL__ _vcdnav_close(stream_t*stream) {}
-#endif
-static int __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
 
 const stream_driver_t vcdnav_stream=
 {
-    "vcdnav",
+    "vcdnav://",
+    "reads multimedia stream from libVCD's interface",
     _vcdnav_open,
     _vcdnav_read,
     _vcdnav_seek,
@@ -295,3 +279,4 @@ const stream_driver_t vcdnav_stream=
     _vcdnav_close,
     _vcdnav_ctrl
 };
+#endif

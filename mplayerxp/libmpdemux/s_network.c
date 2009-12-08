@@ -1,17 +1,19 @@
 /*
     s_network - network stream inetrface
 */
+#include "../mp_config.h"
+#ifdef HAVE_STREAMING
 
 #include <errno.h>
 #include <stdlib.h>
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
 #include <unistd.h>
-#include "../mp_config.h"
 #include "stream.h"
 #include "help_mp.h"
 #include "demux_msg.h"
 
-#ifdef HAVE_STREAMING
 
 #include "url.h"
 #include "network.h"
@@ -28,6 +30,7 @@ typedef struct network_priv_s
 static int __FASTCALL__ network_open(stream_t *stream,const char *filename,unsigned flags)
 {
   URL_t* url;
+  UNUSED(flags);
   url = url_new(filename);
   if(url) {
 	if(streaming_start(stream, &stream->file_format, url)<0){
@@ -88,30 +91,17 @@ static void __FASTCALL__ network_close(stream_t *stream)
     if(stream->fd>0) close(stream->fd);
 }
 
-#else
-static int __FASTCALL__ network_open(stream_t *stream,const char *filename,unsigned flags)
-{
-    return 0;
+static int __FASTCALL__ network_ctrl(stream_t *s,unsigned cmd,void *args) {
+    UNUSED(s);
+    UNUSED(cmd);
+    UNUSED(args);
+    return SCTRL_UNKNOWN;
 }
-static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t *sp)
-{
-    return 0;
-}
-static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
-{
-    return 0;
-}
-static off_t __FASTCALL__ network_tell(stream_t *stream)
-{
-    return 0;
-}
-static void __FASTCALL__ network_close(stream_t *stream) {}
-#endif
-static int __FASTCALL__ network_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
 
 const stream_driver_t network_stream =
 {
-    "network",
+    "inet:",
+    "reads multimedia stream from any known network protocol. Example: inet:http://myserver.com",
     network_open,
     network_read,
     network_seek,
@@ -119,3 +109,4 @@ const stream_driver_t network_stream =
     network_close,
     network_ctrl
 };
+#endif

@@ -32,16 +32,21 @@ static int __FASTCALL__ rtsp_stream_read(stream_t *s,stream_packet_t*sp)
 
 static off_t __FASTCALL__ rtsp_seek(stream_t *s,off_t newpos)
 {
+    UNUSED(s);
     return newpos;
 }
 
 static off_t __FASTCALL__ rtsp_tell(stream_t *stream)
 {
+    UNUSED(stream);
     return 0;
 }
 
 static int __FASTCALL__ rtsp_ctrl(stream_t *s,unsigned cmd,void *args)
 {
+    UNUSED(s);
+    UNUSED(cmd);
+    UNUSED(args);
     return SCTRL_UNKNOWN;
 }
 
@@ -132,9 +137,9 @@ extern int index_mode;
 static int __FASTCALL__ rtsp_open (stream_t *stream,const char *filename,unsigned flags)
 {
   URL_t *url;
-  
+  UNUSED(flags);
   if(strncmp(filename,"rtsp://",7)!=0) return 0;
-  
+
   MSG_V("STREAM_RTSP, URL: %s\n", filename);
   stream->streaming_ctrl = streaming_ctrl_new ();
   if (!stream->streaming_ctrl)
@@ -163,6 +168,7 @@ static int __FASTCALL__ rtsp_open (stream_t *stream,const char *filename,unsigne
 const stream_driver_t rtsp_stream =
 {
     "rtsp",
+    "reads multimedia stream from Real Time Streaming Protocol (RTSP)",
     rtsp_open,
     rtsp_stream_read,
     rtsp_seek,

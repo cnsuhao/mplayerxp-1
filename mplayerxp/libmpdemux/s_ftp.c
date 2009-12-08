@@ -355,11 +355,16 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
 {
   int len = 0,resp;
   struct stream_priv_s* p;
-  URL_t* url,*rurl;
+  URL_t* url;
   char str[256],rsp_txt[256];
+  char *uname;
 
-  if(strncmp(filename,"ftp://",6)!=0) return 0;
-  if(!(url=url_new(filename))) goto bad_url;
+  UNUSED(flags);
+  if(!(uname=malloc(strlen(filename)+7))) return 0;
+  strcpy(uname,"ftp://");
+  strcat(uname,filename);
+  if(!(url=url_new(uname))) goto bad_url;
+  free(uname);
 //  url = check4proxies (rurl);
   if(!(url->hostname && url->file)) {
     bad_url:
@@ -374,10 +379,10 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
   p->port=url->port?url->port:21;
   p->filename=url->file;
   MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n",p->user,p->pass,p->host,p->port,p->filename);
-  
+
   // Open the control connection
   p->handle = tcp_connect2Server(p->host,p->port,1);
-  
+
   if(p->handle < 0) {
     url_free(url);
     free(stream->priv);
@@ -414,7 +419,7 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
     return 0;
   }
 
-    
+
   // Set the transfer type
   resp = FtpSendCmd("TYPE I",p,rsp_txt);
   if(resp != 2) {
@@ -470,12 +475,18 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
   return 1;
 }
 
-static int __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,void *args) { return SCTRL_UNKNOWN; }
+static int __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,void *args) {
+    UNUSED(s);
+    UNUSED(cmd);
+    UNUSED(args);
+    return SCTRL_UNKNOWN;
+}
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 const stream_driver_t ftp_stream =
 {
-    "ftp",
+    "ftp://",
+    "reads multimedia stream from File Transfer Protocol (FTP)",
     ftp_open,
     ftp_read,
     ftp_seek,
