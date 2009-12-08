@@ -41,8 +41,8 @@
 #ifndef STREAMING_LIVE_DOT_COM
 #include "rtp.h"
 #endif
-#include "demux_msg.h"
 #include "../version.h"
+#include "demux_msg.h"
 
 /* Variables for the command line option -user, -passwd & -bandwidth */
 char *network_username=NULL;

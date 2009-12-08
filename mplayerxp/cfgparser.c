@@ -16,8 +16,6 @@
 #include <string.h>
 #include <errno.h>
 #include "mp_config.h"
-#define MSGT_CLASS MSGT_CFGPARSER
-#include "__mp_msg.h"
 
 #define COMMAND_LINE		0
 #define CONFIG_FILE		1
@@ -39,6 +37,8 @@
 
 #include "libmpdemux/stream.h"
 #include "cfgparser.h"
+#define MSGT_CLASS MSGT_CFGPARSER
+#include "__mp_msg.h"
 
 typedef int (*cfg_func_arg_param_t)(config_t *,const char *,const char *);
 typedef int (*cfg_func_param_t)(config_t *,const char *);

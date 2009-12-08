@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "demux_msg.h"
 #include "stream.h"
 #include "../sig_hand.h"
 #include "../osdep/timer.h"
@@ -22,6 +21,7 @@
 #include "../help_mp.h"
 #include "mpdemux.h"
 #include "../mplayer.h"
+#include "demux_msg.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))

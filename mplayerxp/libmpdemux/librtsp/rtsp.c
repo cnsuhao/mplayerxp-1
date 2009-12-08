@@ -51,10 +51,10 @@
 #include <sys/types.h>
 #include <inttypes.h>
 
-#include "../demux_msg.h"
 #include "rtsp.h"
 #include "rtsp_session.h"
 #include "osdep/timer.h"
+#include "../demux_msg.h"
 
 /*
 #define LOG

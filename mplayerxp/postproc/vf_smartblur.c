@@ -23,7 +23,6 @@
 #include <assert.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 
 #ifdef USE_SETLOCALE
 #include <locale.h>
@@ -39,6 +38,7 @@
 #include "../libvo/fastmemcpy.h"
 #include "../postproc/swscale.h"
 #include "vf_scale.h"
+#include "pp_msg.h"
 
 //===========================================================================//
 

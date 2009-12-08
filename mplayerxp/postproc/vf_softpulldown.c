@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 
 #include "../libvo/img_format.h"
 #include "mp_image.h"
@@ -11,6 +10,7 @@
 
 #include "../libvo/fastmemcpy.h"
 #include "../libvo/sub.h"
+#include "pp_msg.h"
 
 struct vf_priv_s {
 	int state;

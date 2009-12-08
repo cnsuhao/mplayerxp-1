@@ -6,7 +6,6 @@
 #include <inttypes.h>
 #include <limits.h>
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "bswap.h"
@@ -19,6 +18,7 @@
 #ifdef HAVE_LOCAL_FFMPEG
 #include "../../codecs/ffmpeg/libavformat/avformat.h"
 #include "../libmpcodecs/codecs_ld.h"
+#include "demux_msg.h"
 
 extern unsigned int codec_get_wav_tag(int id);
 extern enum CodecID codec_get_bmp_id(unsigned int tag);

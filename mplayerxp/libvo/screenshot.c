@@ -25,9 +25,9 @@
 
 #include "screenshot.h"
 #include "img_format.h"
-#include "vo_msg.h"
 #include "../postproc/swscale.h"
 #include "../postproc/vf_scale.h"
+#include "vo_msg.h"
 
 #define RGB 0
 #define BGR 1

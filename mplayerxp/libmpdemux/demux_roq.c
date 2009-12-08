@@ -13,12 +13,12 @@
 #include <unistd.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
+#include "demux_msg.h"
 
 #define RoQ_INFO           0x1001
 #define RoQ_QUAD_CODEBOOK  0x1002

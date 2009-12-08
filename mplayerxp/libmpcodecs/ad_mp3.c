@@ -66,7 +66,7 @@ static const char* (*mpg123_current_decoder_ptr)(mpg123_handle *mh);
 static void *dll_handle;
 static int load_dll(const char *libname)
 {
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
+  if(!(dll_handle=ld_codec(libname,"http://www.mpg123.de"))) return 0;
   mpg123_init_ptr = ld_sym(dll_handle,"mpg123_init");
   mpg123_exit_ptr = ld_sym(dll_handle,"mpg123_exit");
   mpg123_new_ptr = ld_sym(dll_handle,"mpg123_new");

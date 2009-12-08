@@ -11,8 +11,8 @@
 #ifdef USE_LIBVCD
 #include <libvcd/info.h>
 #include <libvcd/logging.h>
-#include "help_mp.h"
 #include "mrl.h"
+#include "help_mp.h"
 
 typedef struct {
     uint8_t subheader	[CDIO_CD_SUBHEADER_SIZE];

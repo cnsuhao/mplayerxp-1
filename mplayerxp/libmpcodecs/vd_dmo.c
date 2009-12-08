@@ -4,7 +4,6 @@
 
 #include "mp_config.h"
 
-#include "mp_msg.h"
 #include "help_mp.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
@@ -13,6 +12,7 @@
 #include "codecs_ld.h"
 
 #include "../../loader/dmo/DMO_VideoDecoder.h"
+#include "vd_msg.h"
 
 static const vd_info_t info = {
 	"DMO video codecs",

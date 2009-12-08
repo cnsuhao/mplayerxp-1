@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 #include <ctype.h>
 
-#include "../pp_msg.h"
 #include "help_mp.h"
 
 #include "libmpdemux/stream.h"
@@ -28,6 +27,7 @@
 #include "input/input.h"
 #include "osdep/keycodes.h"
 //#include "command.h"
+#include "../pp_msg.h"
 
 struct list_entry_s {
   struct list_entry p;

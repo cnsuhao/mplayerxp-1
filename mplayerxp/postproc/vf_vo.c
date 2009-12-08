@@ -3,13 +3,13 @@
 #include <string.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 
 #include "mp_image.h"
 #include "vf.h"
 #include "vfcap.h"
 #include "../libvo/video_out.h"
 #include "../libvo/dri_vo.h"
+#include "pp_msg.h"
 
 //===========================================================================//
 struct vf_priv_s {

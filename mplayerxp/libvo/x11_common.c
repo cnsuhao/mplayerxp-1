@@ -11,7 +11,6 @@
 #include <sys/mman.h>
 
 #include "video_out.h"
-#include "vo_msg.h"
 #include "x11_common.h"
 #include <X11/Xmd.h>
 #include <X11/Xlib.h>
@@ -33,6 +32,7 @@
 
 #include "../input/input.h"
 #include "../input/mouse.h"
+#include "vo_msg.h"
 
 /*
  * If SCAN_VISUALS is defined, vo_x11_init() scans all available TrueColor

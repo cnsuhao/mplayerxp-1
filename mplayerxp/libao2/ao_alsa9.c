@@ -26,8 +26,8 @@
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "afmt.h"
-#include "ao_msg.h"
 #include "../libmpdemux/mrl.h"
+#include "ao_msg.h"
 
 static ao_info_t info = 
 {

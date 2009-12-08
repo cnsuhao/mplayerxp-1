@@ -19,7 +19,6 @@
 #include "tcp.h"
 #include "url.h"
 #include "asf.h"
-#include "demux_msg.h"
 #include "stream.h"
 
 #include "network.h"
@@ -43,6 +42,7 @@
 #include <langinfo.h>
 #endif
 #endif
+#include "demux_msg.h"
 
 extern int audio_id;
 extern int video_id;

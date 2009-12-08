@@ -20,8 +20,6 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
-#include "osdep_msg.h"
-
 #ifdef AIX
 #include <sys/select.h>
 #endif
@@ -32,6 +30,7 @@
 #endif
 
 #include "../help_mp.h"
+#include "osdep_msg.h"
 
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
 #define MAP_ANON MAP_ANONYMOUS

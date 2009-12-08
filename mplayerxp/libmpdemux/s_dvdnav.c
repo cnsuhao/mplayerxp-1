@@ -6,13 +6,13 @@
 #include <string.h>
 #include <math.h>
 #include "stream.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "demuxer.h"
 #include "../spudec.h"
 #include "../libvo/sub.h"
 #include "../input/input.h"
 #include "../mplayer.h"
+#include "demux_msg.h"
 
 #ifdef USE_DVDNAV
 #include <dvdnav/dvdnav.h>

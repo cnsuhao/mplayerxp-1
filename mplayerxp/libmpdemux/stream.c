@@ -12,11 +12,11 @@
 
 #include "../mp_config.h"
 #include "../mplayer.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
+#include "demux_msg.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))

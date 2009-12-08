@@ -34,10 +34,10 @@
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "dri_vo.h"
-#include "vo_msg.h"
 #ifdef CONFIG_VIDIX
 #include <vidix/vidixlib.h>
 #endif
+#include "vo_msg.h"
 
 LIBVO_EXTERN(null)
 

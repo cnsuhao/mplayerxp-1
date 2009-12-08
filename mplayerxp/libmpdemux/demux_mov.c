@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
@@ -35,6 +34,7 @@
 #include "parse_mp4.h" // .MP4 specific stuff
 
 #include "../../loader/qtx/qtxsdk/components.h"
+#include "demux_msg.h"
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>

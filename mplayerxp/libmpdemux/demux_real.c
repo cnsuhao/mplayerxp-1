@@ -24,7 +24,6 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include <unistd.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
@@ -33,6 +32,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include "bswap.h"
 #include "aviprint.h"
 #include "../libmpcodecs/dec_audio.h"
+#include "demux_msg.h"
 
 #define MKTAG(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))
 

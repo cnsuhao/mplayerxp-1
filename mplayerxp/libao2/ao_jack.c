@@ -27,7 +27,6 @@
 #include <unistd.h>
 
 #include "mp_config.h"
-#include "ao_msg.h"
 
 #include "audio_out.h"
 #include "audio_out_internal.h"
@@ -36,8 +35,8 @@
 #include "osdep/timer.h"
 
 #include "../fifo.h"
-
 #include <jack/jack.h>
+#include "ao_msg.h"
 
 static const ao_info_t info =
 {

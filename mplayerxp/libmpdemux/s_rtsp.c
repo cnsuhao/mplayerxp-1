@@ -15,13 +15,13 @@
 #include <winsock2.h>
 #endif
 
-#include "demux_msg.h"
 #include "stream.h"
 #include "help_mp.h"
 #include "url.h"
 #include "tcp.h"
 #include "librtsp/rtsp.h"
 #include "librtsp/rtsp_session.h"
+#include "demux_msg.h"
 
 #define RTSP_DEFAULT_PORT 554
 

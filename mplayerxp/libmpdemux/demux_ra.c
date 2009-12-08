@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
@@ -17,6 +16,7 @@
 #include "stheader.h"
 #include "bswap.h"
 #include "aviprint.h"
+#include "demux_msg.h"
 
 #define FOURCC_DOTRA mmioFOURCC('.','r','a', 0xfd)
 #define FOURCC_144 mmioFOURCC('1','4','_','4')

@@ -1,8 +1,8 @@
 #include "mp_config.h"
 #include "cpudetect.h"
+#include "help_mp.h"
 #define MSGT_CLASS MSGT_CPUDETECT
 #include "__mp_msg.h"
-#include "help_mp.h"
 CpuCaps gCpuCaps;
 
 #ifdef HAVE_MALLOC

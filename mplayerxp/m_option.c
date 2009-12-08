@@ -15,9 +15,9 @@
 #include "libmpdemux/stream.h"
 #include "cfgparser.h"
 #include "m_option.h"
+#include "libmpdemux/url.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "__mp_msg.h"
-#include "libmpdemux/url.h"
 
 // Don't free for 'production' atm
 #ifndef MP_DEBUG

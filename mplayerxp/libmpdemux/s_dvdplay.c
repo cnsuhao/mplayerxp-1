@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
-#include "demux_msg.h"
 #include "help_mp.h"
+#include "demux_msg.h"
 
 #ifdef USE_DVDPLAY
 typedef unsigned char byte_t;

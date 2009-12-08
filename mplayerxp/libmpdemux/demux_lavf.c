@@ -23,12 +23,12 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #ifdef HAVE_LOCAL_FFMPEG
 #include "../../codecs/ffmpeg/libavformat/avformat.h"
 #include "../libmpcodecs/codecs_ld.h"
+#include "demux_msg.h"
 
 #define PROBE_BUF_SIZE 2048
 

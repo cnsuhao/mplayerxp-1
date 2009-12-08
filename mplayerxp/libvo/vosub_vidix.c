@@ -30,13 +30,13 @@
 
 #include "video_out.h"
 #include "vosub_vidix.h"
-#include "vo_msg.h"
 #include "fastmemcpy.h"
 #include "osd.h"
 #include "sub.h"
 #include "video_out.h"
 #include "dri_vo.h"
 #include "../mp_image.h"
+#include "vo_msg.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))

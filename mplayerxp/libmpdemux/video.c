@@ -9,7 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "sub_cc.h"
 
@@ -19,6 +18,7 @@
 #include "parse_es.h"
 #include "mpeg_hdr.h"
 #include "../mplayer.h"
+#include "demux_msg.h"
 
 /* biCompression constant */
 #define BI_RGB        0L

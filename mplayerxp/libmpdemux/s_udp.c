@@ -15,11 +15,11 @@
 #include <winsock2.h>
 #endif
 
-#include "demux_msg.h"
 #include "stream.h"
 #include "help_mp.h"
 #include "udp.h"
 #include "url.h"
+#include "demux_msg.h"
 
 static int __FASTCALL__ udp_read(stream_t *s,stream_packet_t*sp)
 {

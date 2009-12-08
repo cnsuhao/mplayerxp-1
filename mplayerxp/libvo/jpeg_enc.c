@@ -31,7 +31,6 @@
 #ifdef USE_FASTMEMCPY
 #include "fastmemcpy.h"
 #endif
-#include "vo_msg.h"
 /* We need this #define because we need ../libavcodec/common.h to #define 
  * be2me_32, otherwise the linker will complain that it doesn't exist */
 #define HAVE_AV_CONFIG_H
@@ -40,6 +39,7 @@
 //#include "../libavcodec/mpegvideo.h"
 
 #include "jpeg_enc.h"
+#include "vo_msg.h"
 
 /* zr_mjpeg_encode_mb needs access to these tables for the black & white 
  * option */

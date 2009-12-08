@@ -17,13 +17,13 @@
 #include <string.h> /* strtok */
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "bswap.h"
+#include "demux_msg.h"
 
 static int smjpeg_probe(demuxer_t* demuxer){
     int orig_pos = stream_tell(demuxer->stream);

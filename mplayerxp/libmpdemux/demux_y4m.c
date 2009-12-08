@@ -11,7 +11,6 @@
 #include <string.h> /* strtok */
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "yuv4mpeg.h"
 
@@ -19,6 +18,7 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "bswap.h"
+#include "demux_msg.h"
 
 typedef struct {
     int framenum; 

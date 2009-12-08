@@ -40,8 +40,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "../demux_msg.h"
 #include "asmrp.h"
+#include "../demux_msg.h"
 
 /*
 #define LOG

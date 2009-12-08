@@ -15,11 +15,11 @@
 #include <winsock2.h>
 #endif
 
-#include "demux_msg.h"
 #include "stream.h"
 #include "help_mp.h"
 #include "tcp.h"
 #include "url.h"
+#include "demux_msg.h"
 
 
 struct stream_priv_s {

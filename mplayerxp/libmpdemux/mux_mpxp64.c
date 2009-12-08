@@ -28,9 +28,8 @@
 #include "muxer.h"
 #include "aviheader.h"
 
-#include "demux_msg.h"
-
 #include "mpxpav64.h"
+#include "demux_msg.h"
 
 typedef struct priv_mpxpav64_stream_s
 {

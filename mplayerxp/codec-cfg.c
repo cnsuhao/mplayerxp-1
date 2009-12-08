@@ -25,10 +25,10 @@
 
 // for mmioFOURCC:
 #include "wine/avifmt.h"
-#define MSGT_CLASS MSGT_CODECCFG
-#include "__mp_msg.h"
 #include "libvo/img_format.h"
 #include "codec-cfg.h"
+#define MSGT_CLASS MSGT_CODECCFG
+#include "__mp_msg.h"
 
 
 #define MAX_NR_TOKEN	16

@@ -37,7 +37,6 @@
 
 #include "../mp_config.h"
 #include "bswap.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
@@ -45,6 +44,7 @@
 #include "parse_es.h"
 #include "stheader.h"
 #include "sub_cc.h"
+#include "demux_msg.h"
 
 
 #define AV_RB24(x)  ((((uint8_t*)(x))[0] << 16) | \

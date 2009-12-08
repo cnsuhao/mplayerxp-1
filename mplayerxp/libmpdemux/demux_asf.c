@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "bswap.h"
 
@@ -15,6 +14,7 @@
 #include "stheader.h"
 #include "../libmpcodecs/dec_audio.h"
 #include "aviprint.h"
+#include "demux_msg.h"
 /*
  * Load 16/32-bit values in little endian byte order
  * from an unaligned address

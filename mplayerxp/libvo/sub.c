@@ -8,8 +8,6 @@
 #endif
 
 #include "../mplayer.h"
-#define MSGT_CLASS MSGT_OSD
-#include "../__mp_msg.h"
 #include "video_out.h"
 #include "font_load.h"
 #include "sub.h"
@@ -17,6 +15,8 @@
 #include "../spudec.h"
 #include "../vobsub.h"
 #include "../libmpdemux/stream.h"
+#define MSGT_CLASS MSGT_OSD
+#include "../__mp_msg.h"
 #define UNUSED(x) ((void)(x)) /* Removes warning about unused arguments */
 
 char * __sub_osd_names[]={

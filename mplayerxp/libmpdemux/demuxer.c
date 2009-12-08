@@ -11,7 +11,6 @@
 
 #include "stream.h"
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "../mplayer.h"
 #include "../subreader.h"
@@ -22,6 +21,7 @@
 #include "stheader.h"
 
 #include "../libvo/fastmemcpy.h"
+#include "demux_msg.h"
 
 extern demuxer_driver_t demux_aiff;
 extern demuxer_driver_t demux_rawaudio;

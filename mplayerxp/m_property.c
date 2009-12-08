@@ -12,9 +12,9 @@
 
 #include "m_option.h"
 #include "m_property.h"
+#include "help_mp.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "__mp_msg.h"
-#include "help_mp.h"
 
 #define ROUND(x) ((int)((x)<0 ? (x)-0.5 : (x)+0.5))
 

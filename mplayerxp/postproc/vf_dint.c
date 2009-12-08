@@ -4,12 +4,12 @@
 #include <inttypes.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 #include "../libvo/fastmemcpy.h"
 
 #include "mp_image.h"
 #include "../libvo/img_format.h"
 #include "vf.h"
+#include "pp_msg.h"
 
 struct vf_priv_s {
   float sense; // first parameter

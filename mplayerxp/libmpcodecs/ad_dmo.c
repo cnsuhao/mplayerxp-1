@@ -6,10 +6,9 @@
 #include "codecs_ld.h"
 
 #include "mp_config.h"
-#include "mp_msg.h"
 #include "help_mp.h"
-
 #include "ad_internal.h"
+#include "ad_msg.h"
 
 static const ad_info_t info = 
 {

@@ -3,7 +3,6 @@
 
 #include "mp_config.h"
 #include "../mplayer.h"
-#include "mp_msg.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
@@ -14,6 +13,7 @@
 #include "../../loader/ldt_keeper.h"
 #endif
 #include "codecs_ld.h"
+#include "vd_msg.h"
 
 static const vd_info_t info = {
 	"Quicktime Video decoder",

@@ -1,6 +1,5 @@
 
 #include "mp_config.h"
-#include "../pp_msg.h"
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -19,6 +18,7 @@
 
 #include "libvo/font_load.h"
 #include "osdep/keycodes.h"
+#include "../pp_msg.h"
 
 struct menu_priv_s {
   char** lines;

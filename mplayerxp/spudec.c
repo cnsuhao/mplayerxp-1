@@ -12,8 +12,6 @@
 
  */
 #include "mp_config.h"
-#define MSGT_CLASS MSGT_SPUDEC
-#include "__mp_msg.h"
 
 #include <errno.h>
 #include <limits.h>
@@ -25,6 +23,8 @@
 #include "libvo/video_out.h"
 #include "spudec.h"
 #include "postproc/swscale.h"
+#define MSGT_CLASS MSGT_SPUDEC
+#include "__mp_msg.h"
 
 #ifndef MIN
 #define MIN(a, b)	((a)<(b)?(a):(b))

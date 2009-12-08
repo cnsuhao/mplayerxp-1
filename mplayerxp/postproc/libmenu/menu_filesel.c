@@ -13,7 +13,6 @@
 
 
 #include "mp_config.h"
-#include "../pp_msg.h"
 #include "help_mp.h"
 
 #include "libmpdemux/stream.h"
@@ -28,6 +27,7 @@
 #include "menu_list.h"
 #include "input/input.h"
 #include "osdep/keycodes.h"
+#include "../pp_msg.h"
 
 #define MENU_KEEP_PATH "/tmp/mp_current_path"
 

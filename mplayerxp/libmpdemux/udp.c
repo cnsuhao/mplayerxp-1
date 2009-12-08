@@ -39,9 +39,9 @@
 #include <ws2tcpip.h>
 #endif
 
-#include "demux_msg.h"
 #include "url.h"
 #include "udp.h"
+#include "demux_msg.h"
 
 int reuse_socket=0;
 

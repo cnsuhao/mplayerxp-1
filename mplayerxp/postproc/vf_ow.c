@@ -32,7 +32,6 @@
 
 #include "mp_config.h"
 
-#include "pp_msg.h"
 
 #ifdef HAVE_MALLOC
 #include <malloc.h>
@@ -41,6 +40,7 @@
 #include "../libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
+#include "pp_msg.h"
 
 //===========================================================================//
 static const uint8_t  __attribute__((aligned(8))) dither[8][8]={

@@ -17,7 +17,6 @@
 
 #include "../mp_config.h"
 
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "../input/input.h"
 
@@ -33,6 +32,7 @@
 #endif
 
 #include "tcp.h"
+#include "demux_msg.h"
 
 /* IPv6 options */
 extern int   network_prefer_ipv4;

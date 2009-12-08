@@ -5,11 +5,11 @@
 #include <dlfcn.h>
 
 #include "mp_config.h"
-#include "vd_msg.h"
 #include "help_mp.h"
 #include "codecs_ld.h"
 
 #include "vd_internal.h"
+#include "vd_msg.h"
 
 static const vd_info_t info = {
    "Theora/VP3",

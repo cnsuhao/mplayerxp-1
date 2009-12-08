@@ -4,11 +4,11 @@
 #include <string.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
+#include "demux_msg.h"
 
 //--------------------------
 

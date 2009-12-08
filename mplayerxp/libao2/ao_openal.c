@@ -28,14 +28,13 @@
 #include <AL/alc.h>
 #include <AL/al.h>
 
-#include "ao_msg.h"
-
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "postproc/af_format.h"
 #include "afmt.h"
 #include "osdep/timer.h"
 //#include "subopt-helper.h"
+#include "ao_msg.h"
 
 static const ao_info_t info =
 {

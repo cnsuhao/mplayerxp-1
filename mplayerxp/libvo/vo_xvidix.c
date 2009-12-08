@@ -30,10 +30,10 @@
 
 #include "x11_common.h"
 #include "aspect.h"
-#include "vo_msg.h"
 
 #include "vosub_vidix.h"
 #include <vidix/vidixlib.h>
+#include "vo_msg.h"
 
 LIBVO_EXTERN(xvidix)
 

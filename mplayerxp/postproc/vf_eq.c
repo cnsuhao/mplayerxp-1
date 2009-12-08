@@ -16,7 +16,6 @@
 #include <inttypes.h>
 
 #include "mp_config.h"
-#include "pp_msg.h"
 #include "cpudetect.h"
 
 #include "../libvo/img_format.h"
@@ -27,6 +26,7 @@
 #ifdef USE_SETLOCALE
 #include <locale.h>
 #endif
+#include "pp_msg.h"
 
 #define LUT16
 

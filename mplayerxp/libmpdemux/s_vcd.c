@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "stream.h"
-#include "demux_msg.h"
 
 #ifdef HAVE_VCD
 
@@ -27,6 +26,7 @@
 #endif
 #include "help_mp.h"
 #include "mrl.h"
+#include "demux_msg.h"
 
 typedef struct vcd_priv_s
 {

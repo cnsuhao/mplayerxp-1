@@ -44,7 +44,6 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../demux_msg.h"
 #include "../url.h"
 #include "../rtp.h"
 #include "rtsp.h"
@@ -54,6 +53,7 @@
 #include "../realrtsp/rmff.h"
 #include "../realrtsp/asmrp.h"
 #include "../realrtsp/xbuffer.h"
+#include "../demux_msg.h"
 
 /*
 #define LOG

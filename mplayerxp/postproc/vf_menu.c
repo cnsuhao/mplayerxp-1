@@ -1,6 +1,5 @@
 
 #include "mp_config.h"
-#include "mp_msg.h"
 #include "help_mp.h"
 
 #include <stdio.h>
@@ -12,7 +11,6 @@
 #endif
 
 #include "mplayer.h"
-#include "pp_msg.h"
 
 #include "libvo/img_format.h"
 #include "mp_image.h"
@@ -25,6 +23,7 @@
 #include "m_struct.h"
 #include "libmenu/menu.h"
 //#include "access_mpcontext.h"
+#include "pp_msg.h"
 
 
 static struct vf_priv_s* st_priv = NULL;

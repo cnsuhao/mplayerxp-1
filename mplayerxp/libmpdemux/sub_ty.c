@@ -14,11 +14,11 @@
 #include <string.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "sub_cc.h"
 #include "../libvo/sub.h"
+#include "demux_msg.h"
 
 extern int sub_justify;
 

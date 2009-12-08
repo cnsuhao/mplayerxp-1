@@ -9,8 +9,8 @@
 #include <dlfcn.h>
 
 #include "ad_internal.h"
-#include "ad_msg.h"
 #include "codecs_ld.h"
+#include "ad_msg.h"
 static const ad_info_t info =  {
 	"RealAudio decoder",
 	"realaud",

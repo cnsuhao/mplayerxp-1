@@ -8,11 +8,11 @@
 
 #include <stdio.h>
 #include <limits.h>
-#define MSGT_CLASS MSGT_FINDSUB
-#include "__mp_msg.h"
 #include "libvo/video_out.h"
 #include "libvo/sub.h"
 #include "subreader.h"
+#define MSGT_CLASS MSGT_FINDSUB
+#include "__mp_msg.h"
 
 static int current_sub=0;
 

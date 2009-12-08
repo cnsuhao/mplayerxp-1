@@ -7,8 +7,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "stream.h"
-#include "demux_msg.h"
 #include "help_mp.h"
+#include "demux_msg.h"
 
 #ifdef USE_DVDREAD
 

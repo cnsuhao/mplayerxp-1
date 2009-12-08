@@ -9,7 +9,6 @@
 
 #include "../mplayer.h"
 #include "bswap.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "stream.h"
 #include "demuxer.h"
@@ -21,6 +20,7 @@
 #include "../libmpcodecs/codecs_ld.h"
 #include "../libmpcodecs/dec_audio.h"
 #include "../libvo/sub.h"
+#include "demux_msg.h"
 
 #define BLOCK_SIZE 4096
 #define FOURCC_VORBIS mmioFOURCC('v', 'r', 'b', 's')

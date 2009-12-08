@@ -5,7 +5,6 @@
 #include <errno.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 #include "../cpudetect.h"
 
 #ifdef HAVE_MALLOC
@@ -17,6 +16,7 @@
 #include "vf.h"
 
 #include "postprocess.h"
+#include "pp_msg.h"
 
 struct vf_priv_s {
     int pp;

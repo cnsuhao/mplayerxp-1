@@ -12,8 +12,8 @@
 #endif
 #include <stdlib.h>
 #include "parse_mp4.h"
-#include "demux_msg.h"
 #include "stream.h"
+#include "demux_msg.h"
 
 //#define MP4_DUMPATOM
 

@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 
 #include "../libvo/img_format.h"
 #include "mp_image.h"
@@ -17,6 +16,7 @@
 #include "../libvo/sub.h"
 #include "../libvo/osd.h"
 #endif
+#include "pp_msg.h"
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

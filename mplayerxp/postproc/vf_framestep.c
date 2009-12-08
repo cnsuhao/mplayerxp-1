@@ -52,13 +52,13 @@
 #include <string.h>
 
 #include "mp_config.h"
-#include "pp_msg.h"
 #include "help_mp.h"
 #include "cpudetect.h"
 
 #include "../libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
+#include "pp_msg.h"
 
 /* Uncomment if you want to print some info on the format */
 // #define DUMP_FORMAT_DATA

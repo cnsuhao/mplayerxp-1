@@ -1,6 +1,5 @@
 
 #include "mp_config.h"
-#include "../pp_msg.h"
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -28,6 +27,7 @@
 #include "osdep/keycodes.h"
 #include "input/input.h"
 #include "osdep/timer.h"
+#include "../pp_msg.h"
 
 typedef struct history_st history_t;
 

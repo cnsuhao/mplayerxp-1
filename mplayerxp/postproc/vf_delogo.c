@@ -25,7 +25,6 @@
 #include <math.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 #include "../cpudetect.h"
 
 #ifdef HAVE_MALLOC
@@ -36,6 +35,7 @@
 #include "mp_image.h"
 #include "vf.h"
 #include "../libvo/fastmemcpy.h"
+#include "pp_msg.h"
 
 //===========================================================================//
 

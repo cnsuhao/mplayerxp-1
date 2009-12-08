@@ -28,8 +28,8 @@
 /* MPEG-2 TS RTP stack */
 
 #define DEBUG        1
-#include "demux_msg.h"
 #include "rtp.h"
+#include "demux_msg.h"
 
 // RTP reorder routines
 // Also handling of repeated UDP packets (a bug of ExtremeNetworks switches firmware)

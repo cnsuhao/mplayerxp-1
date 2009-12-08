@@ -1,6 +1,5 @@
 
 #include "../../mp_config.h"
-#include "../pp_msg.h"
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -22,6 +21,7 @@
 #include "m_option.h"
 #include "m_struct.h"
 #include "menu.h"
+#include "../pp_msg.h"
 
 extern menu_info_t menu_info_cmdlist;
 extern menu_info_t menu_info_pt;

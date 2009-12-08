@@ -12,9 +12,9 @@
 #include <inttypes.h>
 #include "../cpudetect.h"
 #include "../mangle.h"
-#include "vo_msg.h"
 #include "../mplayer.h"
 #include "osd.h"
+#include "vo_msg.h"
 
 #if defined(__MMX__)
 static const uint64_t bFF __attribute__((used))  __attribute__((aligned(8))) = 0xFFFFFFFFFFFFFFFFULL;

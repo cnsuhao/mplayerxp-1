@@ -19,9 +19,9 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "osdep_msg.h"
 #include "../mplayer.h"
 #include "../cpudetect.h"
+#include "osdep_msg.h"
 
 
 static struct VesaProtModeInterface vbe_pm_info;

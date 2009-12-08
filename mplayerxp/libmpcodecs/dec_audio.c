@@ -20,9 +20,8 @@
 #include "../mplayer.h"
 #include "../libmpdemux/demuxer_r.h"
 #include "../postproc/af.h"
-#define MSGT_CLASS MSGT_DECAUDIO
-#include "../__mp_msg.h"
 #include "../libvo/fastmemcpy.h"
+#include "ad_msg.h"
 
 #ifdef USE_FAKE_MONO
 int fakemono=0;

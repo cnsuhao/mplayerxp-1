@@ -4,13 +4,13 @@
 #include <inttypes.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 
 #include "../libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 
 #include "../postproc/swscale.h"
+#include "pp_msg.h"
 
 //===========================================================================//
 

@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "mp_config.h"
-#include "../pp_msg.h"
 #include "help_mp.h"
 
 #include "libvo/img_format.h"
@@ -18,6 +17,7 @@
 #include "libmpdemux/stream.h"
 #include "playtree.h"
 #include "input/input.h"
+#include "../pp_msg.h"
 
 #define mp_basename(s) (strrchr((s),'/')==NULL?(char*)(s):(strrchr((s),'/')+1))
 

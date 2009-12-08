@@ -8,11 +8,11 @@
 #include <signal.h>
 #include <sys/resource.h>
 #include "sig_hand.h"
-#include "mp_msg.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include "dec_ahead.h"
+#include "mp_msg.h"
 
 pth_info_t pinfo[MAX_XPTHREADS];
 int xp_threads = 0;

@@ -10,14 +10,14 @@
 #include "mp_config.h"
 
 #include "dump.h"
-#define MSGT_CLASS MSGT_GLOBAL
-#include "__mp_msg.h"
 #include "sig_hand.h"
 #include "help_mp.h"
 #include "input/input.h"
 #include "../mplayer.h"
 #include "libmpdemux/muxer.h"
 #include "libmpdemux/mrl.h"
+#define MSGT_CLASS MSGT_GLOBAL
+#include "__mp_msg.h"
 
 static char *media=NULL,*port=NULL;
 

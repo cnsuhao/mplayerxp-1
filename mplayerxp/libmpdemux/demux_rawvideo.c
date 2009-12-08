@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "demux_msg.h"
 
 #include "stream.h"
 #include "demuxer.h"
@@ -13,6 +12,7 @@
 #include "../cfgparser.h"
 
 #include "../libvo/img_format.h"
+#include "demux_msg.h"
 
 int use_rawvideo = 0;
 static int format = IMGFMT_I420;

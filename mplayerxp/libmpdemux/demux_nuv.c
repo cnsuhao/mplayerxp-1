@@ -15,12 +15,12 @@
 #include <unistd.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "nuppelvideo.h" 
+#include "demux_msg.h"
 
 
 struct nuv_signature

@@ -1,6 +1,5 @@
 
 #include "mp_config.h"
-#include "../pp_msg.h"
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -22,8 +21,7 @@
 
 #include "input/input.h"
 #include "version.h"
-
-
+#include "../pp_msg.h"
 
 struct list_entry_s {
   struct list_entry p;

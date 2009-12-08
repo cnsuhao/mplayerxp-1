@@ -18,7 +18,6 @@
 #include "stheader.h"
 #include "matroska.h"
 
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include <dlfcn.h>
@@ -32,6 +31,7 @@
 #ifdef USE_QTX_CODECS
 #include "../../loader/qtx/qtxsdk/components.h"
 #endif
+#include "demux_msg.h"
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>

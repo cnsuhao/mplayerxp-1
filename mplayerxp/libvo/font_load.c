@@ -5,11 +5,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "vo_msg.h"
 #include "../mp_config.h"
 #include "font_load.h"
 #include "sub.h"
 #include "../osdep/get_path.h"
+#include "vo_msg.h"
 
 raw_file* load_raw(char *name,int verbose){
     int bpp;

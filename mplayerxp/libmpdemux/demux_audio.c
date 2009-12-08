@@ -1,5 +1,4 @@
 #include "../mp_config.h"
-#include "demux_msg.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,6 +15,7 @@
 #ifdef MP_DEBUG
 #include <assert.h>
 #endif
+#include "demux_msg.h"
 
 #define RAW_MP1 1
 #define RAW_MP2 2

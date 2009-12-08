@@ -11,13 +11,13 @@
 #include <string.h> /* strtok */
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "bswap.h"
+#include "demux_msg.h"
 
 /* parameters ! */
 static int vivo_param_version = -1;

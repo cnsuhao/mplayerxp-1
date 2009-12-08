@@ -25,15 +25,13 @@
 #include "vd.h"
 
 #include "dec_video.h"
-#include "vd_msg.h"
-
 // ===================================================================
-
 vf_cfg_t vf_cfg; // Configuration for audio filters
 
 #include "postproc/postprocess.h"
 
 #include "cpudetect.h"
+#include "vd_msg.h"
 
 extern int v_bright;
 extern int v_cont;

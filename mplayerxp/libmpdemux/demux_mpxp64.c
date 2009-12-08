@@ -10,7 +10,6 @@
 #include <math.h>
 
 #include "../mp_config.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 
 #include "stream.h"
@@ -25,6 +24,7 @@
 #include "../libmpcodecs/dec_audio.h"
 #include "aviprint.h"
 #include "mpxpav64.h"
+#include "demux_msg.h"
 
 #define MAX_AV_STREAMS MAX_V_STREAMS+MAX_A_STREAMS+MAX_S_STREAMS
 

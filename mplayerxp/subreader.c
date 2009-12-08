@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#define MSGT_CLASS MSGT_SUBREADER
-#include "__mp_msg.h"
 #include "mp_config.h"
 #include "subreader.h"
 
@@ -25,6 +23,8 @@
 #include <iconv.h>
 #endif
 #endif
+#define MSGT_CLASS MSGT_SUBREADER
+#include "__mp_msg.h"
 char *sub_cp=NULL;
 
 /* Maximal length of line of a subtitle */

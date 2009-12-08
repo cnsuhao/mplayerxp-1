@@ -29,7 +29,6 @@
 
 #include "../mp_config.h"
 #include "../mplayer.h"
-#include "demux_msg.h"
 #include "help_mp.h"
 #include "stream.h"
 #include "demuxer.h"
@@ -39,6 +38,7 @@
 
 #include "bswap.h"
 #include "mpeg_hdr.h"
+#include "demux_msg.h"
 
 #define TS_PH_PACKET_SIZE 192
 #define TS_FEC_PACKET_SIZE 204

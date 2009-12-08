@@ -54,12 +54,12 @@
 #include <audio/audiolib.h>
 
 #include "mp_config.h"
-#include "ao_msg.h"
 
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "postproc/af_format.h"
 #include "afmt.h"
+#include "ao_msg.h"
 
 /* NAS_FRAG_SIZE must be a power-of-two value */
 #define NAS_FRAG_SIZE 4096

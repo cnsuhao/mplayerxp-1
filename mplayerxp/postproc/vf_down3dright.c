@@ -4,7 +4,6 @@
 #include <inttypes.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 #include "../cpudetect.h"
 
 #include "../libvo/img_format.h"
@@ -13,6 +12,7 @@
 
 #include "../libvo/fastmemcpy.h"
 #include "../postproc/swscale.h"
+#include "pp_msg.h"
 
 struct vf_priv_s {
 	int skipline;

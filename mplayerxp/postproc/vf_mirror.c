@@ -4,7 +4,6 @@
 #include <inttypes.h>
 
 #include "../mp_config.h"
-#include "pp_msg.h"
 
 #include "../libvo/img_format.h"
 #include "mp_image.h"
@@ -12,6 +11,7 @@
 
 #include "../libvo/fastmemcpy.h"
 #include "../postproc/swscale.h"
+#include "pp_msg.h"
 
 typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt);
 struct vf_priv_s {

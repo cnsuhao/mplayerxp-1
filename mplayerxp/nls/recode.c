@@ -10,8 +10,8 @@
 #include <iconv.h>
 #endif
 #endif
-#include "nls_msg.h"
 #include "./nls.h"
+#include "nls_msg.h"
 
 /*
  *We have to proceed with the POSIX methods of looking to `LANG'.
