@@ -156,4 +156,9 @@ struct SwsContext *sws_getCachedContext(struct SwsContext *context,
 extern int sws_init(void);
 extern void sws_uninit(void);
 
+extern void palette8tobgr32(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
+extern void palette8tobgr24(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
+extern void palette8torgb32(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
+extern void palette8torgb24(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
+
 #endif

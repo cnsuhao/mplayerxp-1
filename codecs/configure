@@ -255,6 +255,7 @@ echores "done"
 
 _subdirs="ffmpeg mp3lib liba52 libdca libmpeg2"
 
+
 cc_version=`$_cc -dumpversion`
 if test "$_fastcall" = auto ; then
 echocheck "__fastcall optimization abilities"
@@ -307,6 +308,8 @@ enabled gomp && check_ldflags -fopenmp || disable gomp
 enabled gomp && require2 gomp omp.h omp_get_thread_num -lgomp || disable gomp
 enabled gomp && check_cflags -fopenmp || disable gomp
 #enabled gomp && check_cflags -ftree-parallelize-loops=4
+
+add_cflags "-Werror-implicit-function-declaration"
 
 check_func2 malloc.h malloc
 print_config HAVE_ config.h config.mak malloc

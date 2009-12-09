@@ -25,6 +25,7 @@
 #include "mp_config.h"
 #include "sig_hand.h"
 #include "mplayer.h"
+#include "postproc/swscale.h"
 #define HELP_MP_DEFINE_STATIC
 #include "help_mp.h"
 

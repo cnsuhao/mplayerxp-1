@@ -209,9 +209,14 @@ elif test -z "$CFLAGS" ; then
     CFLAGS="-O2"
 fi
 
+require2 vsscanf "stdio.h stdarg.h" vsscanf
+print_config HAVE_ config.h config.mak vsscanf
+
 check_func2 "sys/types.h sys/mman.h" mmap
 mman_h=$mmap
 print_config HAVE_SYS_ config.h config.mak mman_h
+
+add_cflags "-Werror-implicit-function-declaration"
 
 #############################################################################
 echo "Creating config.mak"

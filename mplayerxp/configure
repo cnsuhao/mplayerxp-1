@@ -644,6 +644,8 @@ echores   $LDFLAGS
 # MAIN TESTS GO HERE #
 ######################
 
+add_cflags "-Werror-implicit-function-declaration"
+
 disable ffmpeg
 # Checking for FFMPEG
 test -f "../codecs/ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
