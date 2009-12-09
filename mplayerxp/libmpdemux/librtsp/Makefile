@@ -8,7 +8,6 @@ SRCS = rtsp.c \
 OBJS=$(SRCS:.c=.o)
 
 CFLAGS  = $(OPTFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
-# -I/usr/X11R6/include/
 
 .SUFFIXES: .c .o
 

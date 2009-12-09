@@ -9,7 +9,7 @@ SRCS+=codecs_ld.c
 
 OBJS=$(SRCS:.c=.o)
 
-CFLAGS = $(OPTFLAGS) -I. -I.. -I../libmpdemux -I../../codecs -I../../codecs/libavutil -I../loader -Wall 
+CFLAGS = $(OPTFLAGS) -I. -I.. -I../libmpdemux -I../loader -Wall 
 
 .SUFFIXES: .c .o
 

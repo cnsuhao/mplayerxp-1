@@ -15,7 +15,7 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "../../codecs/ffmpeg/libavformat/avformat.h"
+#include "libavformat/avformat.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
 

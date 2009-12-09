@@ -59,7 +59,7 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(ffmpeg)
 
-#include "../../codecs/ffmpeg/libavcodec/avcodec.h"
+#include "libavcodec/avcodec.h"
 #include "libvo/video_out.h"
 
 extern char *npp_options;

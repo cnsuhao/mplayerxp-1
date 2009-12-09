@@ -45,7 +45,7 @@ SUBDIRS =
 endif
 
 OBJS	= $(SRCS:.c=.o)
-INCLUDE = -I../loader -I../../codecs/ -I../../codecs/libavcodec -I../../codecs/libavutil
+INCLUDE = -I../loader
 CFLAGS  = $(OPTFLAGS) $(INCLUDE) -W -Wall
 
 .SUFFIXES: .c .o

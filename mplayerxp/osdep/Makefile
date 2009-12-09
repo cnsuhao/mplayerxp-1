@@ -17,7 +17,6 @@ endif
 
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall
-# -I/usr/X11R6/include/
 
 .SUFFIXES: .c .o
 

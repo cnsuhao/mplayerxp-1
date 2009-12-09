@@ -29,13 +29,12 @@ ifeq ($(CONFIG_VIDIX),yes)
 SRCS += vosub_vidix.c
 endif
 
-CFLAGS  = $(OPTFLAGS) -I. -I.. -I../../codecs/libavutil -DMPG12PLAY -Wall -W
+CFLAGS  = $(OPTFLAGS) -I. -I.. -DMPG12PLAY -Wall -W
 ifeq ($(CONFIG_VIDIX),yes)
 CFLAGS += -DVIDIX_PATH='"$(LIBDIR)/vidix/"'
 endif
 
 OBJS=$(SRCS:.c=.o)
-# -I/usr/X11R6/include/
 
 .SUFFIXES: .c .o
 

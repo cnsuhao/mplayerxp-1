@@ -1,7 +1,9 @@
-#include "config.h"
+#include "../mp_config.h"
 
-#include "../../codecs/ffmpeg/libavformat/avformat.h"
-#include "../../codecs/ffmpeg/libavformat/avio.h"
+#include <dlfcn.h>
+#include "libavformat/avformat.h"
+#include "libavformat/avio.h"
+#include "../libmpcodecs/codecs_ld.h"
 #include "stream.h"
 #include "demux_msg.h"
 
@@ -104,6 +106,7 @@ static int __FASTCALL__ ffmpeg_open(stream_t *stream,const char *filename,unsign
     if (size >= 0)
         stream->end_pos = size;
     stream->type = STREAMTYPE_SEEKABLE;
+    stream->priv = p;
     if (ctx->is_streamed) stream->type = STREAMTYPE_STREAM;
     return 1;
 }

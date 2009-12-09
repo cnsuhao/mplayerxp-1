@@ -563,14 +563,6 @@ _srcdir=`pwd`
 _pkg_config=pkg-config
 test $($_pkg_config --version 2>/dev/null) || die "no pkg-config found"
 
-disable ffmpeg
-# Checking for FFMPEG
-test -f "../codecs/ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
-disabled ffmpeg && die "**FATAL**: local copy of libavcodec doesn't exist! Please use latest svn to checkout external repository in mplayerxp source tree."
-
-print_config HAVE_ mp_config.h mp_config.mak ffmpeg
-
-
 # Checking kernel version...
 if x86 && linux ; then
   _k_verc_problem=no
@@ -651,6 +643,13 @@ echores   $LDFLAGS
 ######################
 # MAIN TESTS GO HERE #
 ######################
+
+disable ffmpeg
+# Checking for FFMPEG
+test -f "../codecs/ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
+disabled ffmpeg && die "**FATAL**: local copy of libavcodec doesn't exist! Please use latest svn to checkout external repository in mplayerxp source tree."
+add_cflags "-I$_srcdir/../codecs/ffmpeg"
+print_config HAVE_ mp_config.h mp_config.mak ffmpeg
 
 check_header inttypes.h	|| die "cannot find header inttypes.h (see in DOC/faq.html)"
 

@@ -199,9 +199,11 @@ for ac_option do
     ;;
   --enable-debug)
     _debug='-g'
+    _debug_level=1
     ;;
   --enable-debug=*)
     _debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
+    _debug_level=`echo $_echo_n echo $ac_option | cut -d '=' -f 2`
     ;;
   --enable-mlib)	mlib=yes	;;
   --disable-mlib)	mlib=no	;;
@@ -244,16 +246,14 @@ x86_32 && _arch="x86_32"
 x86_64 && _arch="x86_64"
 _ffmpeg_args="--arch=$_arch $_ffmpeg_args"
 fi
+test -n $_debug_level      && _ffmpeg_args="$_ffmpeg_args --enable-debug=$_debug_level"
 echocheck "configuring ffmpeg stuff: --cc=\"$_cc\" $_ffmpeg_args"
 cd ffmpeg
 $(LC_ALL=C ./configure --cc="$_cc" $_ffmpeg_args)
 cd ..
 echores "done"
 
-_subdirs="mp3lib liba52 libdca libmpeg2"
-if test "$_ffmpeg" = yes ; then
-_subdirs="$_subdirs ffmpeg"
-fi
+_subdirs="ffmpeg mp3lib liba52 libdca libmpeg2"
 
 cc_version=`$_cc -dumpversion`
 if test "$_fastcall" = auto ; then

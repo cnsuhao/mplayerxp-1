@@ -22,7 +22,7 @@
 #ifndef SWSCALE_H
 #define SWSCALE_H
 
-#include "../../codecs/ffmpeg/libswscale/rgb2rgb.h"
+#include "libswscale/rgb2rgb.h"
 #define MODE_RGB  0x1
 #define MODE_BGR  0x2
 
