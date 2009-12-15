@@ -7,6 +7,9 @@ SRCS=aspect.c aclib.c osd.c font_load.c video_out.c vo_null.c img_format.c sub.c
 ifeq ($(HAVE_SDL),yes)
 SRCS+=vo_sdl.c
 endif
+ifeq ($(HAVE_OPENGL),yes)
+SRCS+=gl_common.c vo_opengl.c
+endif
 ifeq ($(HAVE_X11),yes)
 SRCS+=vo_x11.c x11_common.c
 ifeq ($(CONFIG_VIDIX),yes)

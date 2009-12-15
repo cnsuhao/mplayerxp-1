@@ -110,6 +110,7 @@ extern vo_functions_t video_out_pgm;
 extern vo_functions_t video_out_md5;
 extern vo_functions_t video_out_fbdev;
 extern vo_functions_t video_out_png;
+extern vo_functions_t video_out_opengl;
 #ifdef HAVE_VESA
 extern vo_functions_t video_out_vesa;
 #endif
@@ -121,6 +122,9 @@ const vo_functions_t* video_out_drivers[] =
 {
 #ifdef HAVE_XV
         &video_out_xv,
+#endif
+#ifdef HAVE_OPENGL
+        &video_out_opengl,
 #endif
 #if defined(CONFIG_VIDIX) && defined(HAVE_X11) 
 	&video_out_xvidix,

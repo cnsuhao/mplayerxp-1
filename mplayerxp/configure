@@ -91,6 +91,7 @@ Video:
   --enable-xinerama      build with Xinerama support for X11 [autodetect]
   --enable-xf86vm        build with Xf86vm support for X11 [autodetect]
   --enable-xv            build with Xv render support for X 4.x [autodetect]
+  --enable-opengl        build with OpenGL render support [autodetect]
   --enable-fbdev         build with FBDev render support [autodetect]
   --enable-fbdev=nocopy  yuv12 converts directly into framebuffer
   --enable-mlib          build with MLIB support (Solaris only) [autodetect]
@@ -372,6 +373,7 @@ AUTOCONF_LIST='
     xv
     xinerama
     xf86vm
+    opengl
     dga
     vesa
     vidix
@@ -411,6 +413,8 @@ for ac_option do
   --disable-xdpms)	xdpms=no	;;
   --enable-xv)		xv=yes		;;
   --disable-xv)		xv=no		;;
+  --enable-opengl)	opengl=yes	;;
+  --disable-opengl)	opengl=no	;;
   --enable-sdl)		sdl=yes		;;
   --disable-sdl)	sdl=no		;;
   --enable-sdl-image)	sdl_image=yes	;;
@@ -835,6 +839,14 @@ enabled xv	&& _vomodules="xv $_vomodules" || _novomodules="xv $_novomodules"
 
 enabled xinerama	&& require2 xinerama "X11/Xlib.h X11/extensions/Xinerama.h" XineramaIsActive -lXinerama
 print_config HAVE_ mp_config.h mp_config.mak xv
+
+if win32 ; then
+enabled opengl	&& require2 opengl "windows.h GL/gl.h" wglCreateContext -lopengl32 -lgdi32
+else
+enabled opengl  && require2 opengl "GL/gl.h GL/glx.h GL/glut.h" glutInitWindowSize -lglut -lGL 
+fi
+print_config HAVE_ mp_config.h mp_config.mak opengl
+enabled opengl	&& _vomodules="opengl $_vomodules" || _novomodules="opengl $_novomodules"
 
 # Note: the -lXxf86vm library is the VideoMode extension and though it's not
 # needed for DGA, AFAIK every distribution packages together with DGA stuffs

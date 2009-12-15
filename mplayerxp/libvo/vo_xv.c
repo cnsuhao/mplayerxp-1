@@ -324,13 +324,13 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
  softzoom=flags&VOFLAG_SWSCALE;
  if ( vo_fs )
   { vo_old_width=d_width; vo_old_height=d_height; }
-     
+
 #ifdef HAVE_XF86VM
  if( flags&0x02 ) vm = 1;
 #endif
  flip_flag=flags&VOFLAG_FLIPPING;
  num_buffers=vo_doublebuffering?vo_da_buffs:1;
- 
+
 
  aspect_save_screenres(vo_screenwidth,vo_screenheight);
 
@@ -362,7 +362,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
       vo_window = WinID ? ((Window)WinID) : RootWindow(mDisplay,mScreen);
       XUnmapWindow( mDisplay,vo_window );
       XChangeWindowAttributes( mDisplay,vo_window,xswamask,&xswa );
-    } else 
+    } else
 
    vo_window = XCreateWindow(mDisplay, RootWindow(mDisplay,mScreen),
        hint.x, hint.y, hint.width, hint.height,

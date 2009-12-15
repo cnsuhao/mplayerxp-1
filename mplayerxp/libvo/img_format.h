@@ -26,17 +26,21 @@
 #define IMGFMT_BGR16 (IMGFMT_BGR|16)
 #define IMGFMT_BGR24 (IMGFMT_BGR|24)
 #define IMGFMT_BGR32 (IMGFMT_BGR|32)
+#define IMGFMT_RGB48LE (IMGFMT_RGB|48)
+#define IMGFMT_RGB48BE (IMGFMT_RGB|48|128)
 
 #ifdef WORDS_BIGENDIAN
 #define IMGFMT_ABGR IMGFMT_RGB32
 #define IMGFMT_BGRA (IMGFMT_RGB32|64)
 #define IMGFMT_ARGB IMGFMT_BGR32
 #define IMGFMT_RGBA (IMGFMT_BGR32|64)
+#define IMGFMT_RGB48NE IMGFMT_RGB48BE
 #else
 #define IMGFMT_ABGR (IMGFMT_BGR32|64)
 #define IMGFMT_BGRA IMGFMT_BGR32
 #define IMGFMT_ARGB (IMGFMT_RGB32|64)
 #define IMGFMT_RGBA IMGFMT_RGB32
+#define IMGFMT_RGB48NE IMGFMT_RGB48LE
 #endif
 
 /* old names for compatibility */
@@ -45,6 +49,8 @@
 
 #define IMGFMT_IS_RGB(fmt) (((fmt)&IMGFMT_RGB_MASK)==IMGFMT_RGB)
 #define IMGFMT_IS_BGR(fmt) (((fmt)&IMGFMT_BGR_MASK)==IMGFMT_BGR)
+#define IMGFMT_RGB_DEPTH(fmt) ((fmt)&0x3F)
+#define IMGFMT_BGR_DEPTH(fmt) ((fmt)&0x3F)
 
 /* Planar YUV Formats */
 
@@ -103,6 +109,17 @@
 //these are chroma420
 #define IMGFMT_XVMC_MOCO_MPEG2 (IMGFMT_XVMC|0x02)
 #define IMGFMT_XVMC_IDCT_MPEG2 (IMGFMT_XVMC|0x82)
+
+// VDPAU specific format.
+#define IMGFMT_VDPAU               0x1DC80000
+#define IMGFMT_VDPAU_MASK          0xFFFF0000
+#define IMGFMT_IS_VDPAU(fmt)       (((fmt)&IMGFMT_VDPAU_MASK)==IMGFMT_VDPAU)
+#define IMGFMT_VDPAU_MPEG1         (IMGFMT_VDPAU|0x01)
+#define IMGFMT_VDPAU_MPEG2         (IMGFMT_VDPAU|0x02)
+#define IMGFMT_VDPAU_H264          (IMGFMT_VDPAU|0x03)
+#define IMGFMT_VDPAU_WMV3          (IMGFMT_VDPAU|0x04)
+#define IMGFMT_VDPAU_VC1           (IMGFMT_VDPAU|0x05)
+#define IMGFMT_VDPAU_MPEG4         (IMGFMT_VDPAU|0x06)
 
 typedef struct {
     void* data;

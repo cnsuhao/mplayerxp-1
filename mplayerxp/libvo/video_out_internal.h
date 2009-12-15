@@ -29,7 +29,6 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 static const vo_info_t* get_info(void);
 static void __FASTCALL__ flip_page(unsigned idx);
 static void uninit(void);
-static uint32_t __FASTCALL__ query_format(vo_query_fourcc_t* format);
 static uint32_t __FASTCALL__ preinit(const char *);
 
 #define LIBVO_EXTERN(x) vo_functions_t video_out_##x =\
