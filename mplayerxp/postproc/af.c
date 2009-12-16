@@ -117,16 +117,17 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
   if(!_new){
     MSG_ERR(MSGTR_OutOfMemory);
     return NULL;
-  }  
+  }
   memset(_new,0,sizeof(af_instance_t));
   _new->parent=s;
   // Check for commandline parameters
   strsep(&cmdline, "=");
 
   // Find filter from name
-  if(NULL == (_new->info=af_find(name)))
+  if(NULL == (_new->info=af_find(name))) {
+    free(_new);
     return NULL;
-
+  }
   /* Make sure that the filter is not already in the list if it is
      non-reentrant */
   if(_new->info->flags & AF_FLAGS_NOT_REENTRANT){
@@ -137,9 +138,9 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
       return NULL;
     }
   }
-  
+
   MSG_V("[libaf] Adding filter %s \n",name);
-  
+
   // Initialize the new filter
   if(AF_OK == _new->info->open(_new) && 
      AF_ERROR < _new->control(_new,AF_CONTROL_POST_CREATE,&s->cfg)){
@@ -148,12 +149,11 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
 	return _new;
     }
     else
-      return _new; 
+      return _new;
   }
-  
+
   free(_new);
-  MSG_ERR("[libaf] Couldn't create or open audio filter '%s'\n",
-	 name);  
+  MSG_ERR("[libaf] Couldn't create or open audio filter '%s'\n", name);
   return NULL;
 }
 

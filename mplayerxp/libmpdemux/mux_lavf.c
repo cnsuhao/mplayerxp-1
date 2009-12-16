@@ -429,6 +429,7 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	if(!load_dll(codec_name("libavformat"SLIBSUFFIX))) /* try local copy first */
 	{
 	    MSG_ERR("Detected error during loading libavformat.so! Try to upgrade this library\n");
+	    free(priv);
 	    return 0;
 	}
 	av_register_all();

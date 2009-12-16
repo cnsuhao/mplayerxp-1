@@ -659,9 +659,9 @@ subtitle* sub_read_file (const char *filename, float fps) {
     fd=fopen (filename, "r"); if (!fd) return NULL;
 
     sub_format=sub_autodetect (fd);
-    if (sub_format==SUB_INVALID) { MSG_ERR ("SUB: Could not determine file format\n");return NULL;}
+    if (sub_format==SUB_INVALID) { MSG_ERR ("SUB: Could not determine file format\n"); fclose(fd); return NULL;}
     MSG_INFO ("SUB: Detected subtitle file format: %s\n", fmtname[sub_format]);
-    
+
     rewind (fd);
 
 #ifdef USE_ICONV
@@ -670,8 +670,8 @@ subtitle* sub_read_file (const char *filename, float fps) {
 
     sub_num=0;n_max=32;
     first=(subtitle *)malloc(n_max*sizeof(subtitle));
-    if(!first) return NULL;
-    
+    if(!first) { fclose(fd); return NULL; }
+
     while(1){
         subtitle *sub;
         if(sub_num>=n_max){
@@ -749,11 +749,11 @@ char * sub_filename(const char* path,const char * fname )
 
 
  if ( fname == NULL ) return NULL;
- 
+
  sub_name1=strrchr(fname,'.');
  if (!sub_name1) return NULL;
  pos=sub_name1-fname;
- 
+
  sub_name1=malloc(strlen(fname)+8);
  strcpy(sub_name1,fname);
 
@@ -762,17 +762,17 @@ char * sub_filename(const char* path,const char * fname )
 	 sprintf (sub_name2, "%s%s", path, tmp+1);
  else
 	 sprintf (sub_name2, "%s%s", path, fname);
- 
+
  aviptr1=strrchr(sub_name1,'.');
  aviptr2=strrchr(sub_name2,'.');
- 
+
  for(j=0;j<=1;j++){
   char* sub_name=j?sub_name1:sub_name2;
 #ifdef USE_ICONV
   for ( i=(sub_cp?2:0);i<(sizeof(sub_exts)/sizeof(char*));i++ ) {
 #else
   for ( i=0;i<(sizeof(sub_exts)/sizeof(char*));i++ ) {
-#endif	  
+#endif
    strcpy(j?aviptr1:aviptr2,sub_exts[i]);
    if((f=fopen( sub_name,"rt" ))) {
      fclose( f );
@@ -782,7 +782,8 @@ char * sub_filename(const char* path,const char * fname )
    }
   }
  }
- 
+ free(sub_name1);
+ free(sub_name2);
  return NULL;
 }
 

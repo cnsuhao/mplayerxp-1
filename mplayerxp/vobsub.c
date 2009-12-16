@@ -100,8 +100,10 @@ static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 	    if (err)
 		close(fd);
 	}
-	if (err)
+	else {
 	    free(res);
+	    close(fd);
+	}
     }
     return err ? NULL : res;
 }

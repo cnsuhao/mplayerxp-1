@@ -590,7 +590,7 @@ static int ty_XDSdecode( char b1, char b2 )
 {
    char line[ 80 ];
 
-   if ( b1 < 0x0F ) 
+   if ( b1 < 0x0F )
    {                                        // start packet 
       TY_XDS_length = 0;
       TY_XDS_mode = b1 >> 1;                // every other mode is a resume
@@ -600,7 +600,7 @@ static int ty_XDSdecode( char b1, char b2 )
    }
 
    TY_XDS_checksum += b1 + b2;
-  
+
    // eof (next byte is checksum)
    if ( b1 == 0x0F ) 
    {        
@@ -609,10 +609,10 @@ static int ty_XDSdecode( char b1, char b2 )
       {
          if ( TY_OSD_debug > 3 && !TY_XDS_length ) 
          {
-            MSG_DBG3( 
+            MSG_DBG3(
                "%% TY_XDS CHECKSUM ERROR (ignoring)\n" );
-         } 
-         else 
+         }
+         else
          {
             TY_XDS_mode = 0;
             TY_XDS_type = 0;
@@ -655,14 +655,14 @@ static int ty_XDSdecode( char b1, char b2 )
             case 0x0301:                    // future
             {
                char *mon[] = 
-               { 
+               {
                   "0", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
                   "Aug", "Sep", "Oct", "Nov", "Dec", "13", "14", "15"
                };
                ty_AddXDSToDisplay( "AIR DATE: %s %2d %d:%02d:00",
                  mon[ TY_XDS_ptr[ 3 ] & 0x0f ], 
                  TY_XDS_ptr[ 2 ] & 0x1f,
-                 TY_XDS_ptr[ 1 ] & 0x1f, 
+                 TY_XDS_ptr[ 1 ] & 0x1f,
                  TY_XDS_ptr[ 0 ] & 0x3f
                  );
 
@@ -713,19 +713,19 @@ static int ty_XDSdecode( char b1, char b2 )
                sprintf( line, "%sRATING: %s", line,
                   TY_XDS_CHIP[ ( TY_XDS_ptr[ 0 ] & 0x08 ) >> 3 ]
                   [ TY_XDS_ptr[ 1 ] & 0x07 ] );
-               if ( TY_XDS_ptr[ 0 ] & 0x20 ) 
+               if ( TY_XDS_ptr[ 0 ] & 0x20 )
                   sprintf( line, "%s DIALOGUE", line );
-               if ( TY_XDS_ptr[ 1 ] & 0x08 ) 
+               if ( TY_XDS_ptr[ 1 ] & 0x08 )
                   sprintf( line, "%s LANGUAGE", line );
-               if ( TY_XDS_ptr[ 1 ] & 0x10 ) 
+               if ( TY_XDS_ptr[ 1 ] & 0x10 )
                   sprintf( line, "%s SEXUAL", line );
-               if ( TY_XDS_ptr[ 1 ] & 0x20 ) 
+               if ( TY_XDS_ptr[ 1 ] & 0x20 )
                   sprintf( line, "%s VIOLENCE", line );
                ty_AddXDSToDisplay( line );
 
                // raw output for verification.
                if ( TY_OSD_debug > 1 )
-                  MSG_DBG3( " (%02x %02x)", 
+                  MSG_DBG3( " (%02x %02x)",
                      TY_XDS_ptr[ 0 ], TY_XDS_ptr[ 1 ] );
                break;
             }
@@ -734,7 +734,7 @@ static int ty_XDSdecode( char b1, char b2 )
             case 0x0306:                    // future
             {
                // requires table, never actually seen it used either
-               ty_AddXDSToDisplay( "AUDIO: %02x %02x", TY_XDS_ptr[ 0 ], 
+               ty_AddXDSToDisplay( "AUDIO: %02x %02x", TY_XDS_ptr[ 0 ],
                   TY_XDS_ptr[ 1 ] );
                break;
             }
@@ -743,7 +743,7 @@ static int ty_XDSdecode( char b1, char b2 )
             case 0x0309:                    // future
             {
                // requires table, rare
-               ty_AddXDSToDisplay( "ASPECT: %02x %02x", 
+               ty_AddXDSToDisplay( "ASPECT: %02x %02x",
                   TY_XDS_ptr[ 0 ], TY_XDS_ptr[ 1 ] );
                break;
             }
@@ -763,13 +763,13 @@ static int ty_XDSdecode( char b1, char b2 )
 
             case 0x0501:                    // channel network name
             {
-               ty_AddXDSToDisplay( "NETWORK: %s", TY_XDS_ptr ); 
+               ty_AddXDSToDisplay( "NETWORK: %s", TY_XDS_ptr );
                break;
             }
 
             case 0x0502:                    // channel network call letters
             {
-               ty_AddXDSToDisplay( "CALLSIGN: %s", TY_XDS_ptr ); 
+               ty_AddXDSToDisplay( "CALLSIGN: %s", TY_XDS_ptr );
                break;
             }
 
@@ -792,11 +792,11 @@ static int ty_XDSdecode( char b1, char b2 )
 
                time_t time_t = mktime( &tm );
                char *timestr;
-    
+
                time_t -= ( ( TIMEZONE - DST ) * 60 * 60 );
                timestr = ctime( &time_t );
                timestr[ strlen( timestr ) - 1 ] = 0;
-    
+
                sprintf( line, "%sCUR.TIME: %s ", line, timestr );
                if ( TY_XDS[ 3 ][ 4 ][ 0 ] ) 
                {
@@ -813,7 +813,7 @@ static int ty_XDSdecode( char b1, char b2 )
 
             case 0x0704:                    //misc. local time zone
             {
-               sprintf( line, "%sTIMEZONE: UTC-%d", 
+               sprintf( line, "%sTIMEZONE: UTC-%d",
                   line, TY_XDS_ptr[ 0 ] & 0x1f );
                if ( TY_XDS_ptr[ 0 ] & 0x20 ) sprintf( line, "%s DST", line );
                ty_AddXDSToDisplay( line );
@@ -822,26 +822,26 @@ static int ty_XDSdecode( char b1, char b2 )
 
             default:
             {
-               MSG_DBG3( "UNKNOWN CLASS %d TYPE %d", 
+               MSG_DBG3( "UNKNOWN CLASS %d TYPE %d",
                   ( TY_XDS_mode << 1 ) + 1, TY_XDS_type );
-              if ( TY_OSD_debug > 1 ) 
+              if ( TY_OSD_debug > 1 )
               {
                   int x;
                   MSG_DBG3( "\nDUMP:\n" );
                   for ( x = 0 ; x < TY_XDS_length ; x++ )
-                    MSG_DBG3( " %02x %c", 
+                    MSG_DBG3( " %02x %c",
                        TY_XDS_ptr[ x ], TY_XDS_ptr[ x ] );
                   MSG_DBG3( "\n" );
-               } 
+               }
             }
          }
-         if ( TY_OSD_debug > 1 ) 
+         if ( TY_OSD_debug > 1 )
             MSG_DBG3( " (%d)", TY_XDS_length );
       }
       TY_XDS_mode = 0;
       TY_XDS_type = 0;
    } 
-   else if ( TY_XDS_length < 34 ) 
+   else if ( TY_XDS_length < 34 )
    {
       TY_XDS_new[ TY_XDS_mode ][ TY_XDS_type ][ TY_XDS_length++ ] = b1;
       TY_XDS_new[ TY_XDS_mode ][ TY_XDS_type ][ TY_XDS_length++ ] = b2;
@@ -895,7 +895,7 @@ void ty_processuserdata(const unsigned char* buf, int len )
          //    printf( "OSD:%d:%s\n", index, ty_OSD1.text[ index ] );
          // }
 		   vo_sub = &ty_OSD1;
-   		vo_osd_changed( OSDTYPE_SUBTITLE );
+		vo_osd_changed( OSDTYPE_SUBTITLE );
 			tyOSDUpdate = 0;
 		}
 	}

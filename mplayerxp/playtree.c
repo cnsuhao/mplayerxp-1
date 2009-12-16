@@ -816,6 +816,7 @@ play_tree_iter_get_file(play_tree_iter_t* iter, int d) {
 	  strncpy(s,entry,val-e);
 	  s[val-e] = '\0';
 	}
+	free(val);
 	return playtree_ret_filename;
       } else {
 	if(iter->config)

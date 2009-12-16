@@ -288,6 +288,7 @@ http_set_field( HTTP_header_t *http_hdr, const char *field_name ) {
 	new_field->field_name = (char*)malloc(strlen(field_name)+1);
 	if( new_field->field_name==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
+		free(new_field);
 		return;
 	}
 	strcpy( new_field->field_name, field_name );

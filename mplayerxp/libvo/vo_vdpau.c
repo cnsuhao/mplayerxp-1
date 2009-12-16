@@ -146,7 +146,7 @@ static VdpPreemptionCallbackRegister             *vdp_preemption_callback_regist
 #define osd_surface output_surfaces[NUM_OUTPUT_SURFACES]
 static VdpOutputSurface                   output_surfaces[NUM_OUTPUT_SURFACES + 1];
 static VdpVideoSurface                    deint_surfaces[3];
-static mp_image_t                        *deint_mpi[2];
+static mp_image_t                        *deint_mpi[3];
 static uint32_t                           output_surface_width, output_surface_height;
 
 static VdpVideoMixer                      video_mixer;

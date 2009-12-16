@@ -16,15 +16,15 @@ raw_file* load_raw(char *name,int verbose){
     raw_file* raw=malloc(sizeof(raw_file));
     unsigned char head[32];
     FILE *f=fopen(name,"rb");
-    if(!f) return NULL;                        // can't open
-    if(fread(head,32,1,f)<1) return NULL;        // too small
-    if(memcmp(head,"mhwanh",6)) return NULL;        // not raw file
+    if(!f) { free(raw); return NULL; } // can't open
+    if(fread(head,32,1,f)<1) { free(raw); fclose(f); return NULL; } // too small
+    if(memcmp(head,"mhwanh",6)) { free(raw); fclose(f); return NULL; } // not raw file
     raw->w=head[8]*256+head[9];
     raw->h=head[10]*256+head[11];
     raw->c=head[12]*256+head[13];
     if(raw->w == 0) /* 2 bytes were not enough for the width... read 4 bytes from the end of the header */
 	raw->w = ((head[28]*0x100 + head[29])*0x100 + head[30])*0x100 + head[31];
-    if(raw->c>256) return NULL;                 // too many colors!?
+    if(raw->c>256) { free(raw); fclose(f); return NULL; }  // too many colors!?
     MSG_V("RAW: %s  %d x %d, %d colors\n",name,raw->w,raw->h,raw->c);
     if(raw->c){
         raw->pal=malloc(raw->c*3);
@@ -55,7 +55,7 @@ int version=0;
 desc=malloc(sizeof(font_desc_t));if(!desc) return NULL;
 memset(desc,0,sizeof(font_desc_t));
 
-f=fopen(fname,"rt");if(!f){ MSG_ERR("font: can't open file: %s\n",fname); return NULL;}
+f=fopen(fname,"rt");if(!f){ MSG_ERR("font: can't open file: %s\n",fname); free(desc); return NULL;}
 
 i = strlen (fname) - 9;
 if ((dn = malloc(i+1))){

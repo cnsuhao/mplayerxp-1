@@ -452,8 +452,10 @@ int glCreatePPMTex(GLenum target, GLenum fmt, GLint filter,
     return 0;
   bpp = (m > 255) ? 6 : 3;
   data = malloc(w * h * bpp);
-  if (fread(data, w * bpp, h, f) != h)
+  if (fread(data, w * bpp, h, f) != h) {
+    free(data);
     return 0;
+  }
   if (!fmt) {
     fmt = (m > 255) ? hqtexfmt : 3;
     if (fmt == GL_FLOAT_RGB32_NV && target != GL_TEXTURE_RECTANGLE)

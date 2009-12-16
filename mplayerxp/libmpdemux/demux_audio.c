@@ -958,7 +958,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     else
     {
 	int fmt;
-	char b[12];
+	char b[21];
 	MSG_DBG2("initial mp3_header: 0x%08X at %lu\n",*(uint32_t *)hdr,st_pos);
 	if((n = mp_decode_mp3_header(hdr,&fmt,&mp3_brate,&mp3_samplerate,&mp3_channels)) > 0)
 	{

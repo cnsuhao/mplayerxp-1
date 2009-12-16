@@ -109,11 +109,13 @@ static char *load_file(const char *filename, off_t * length)
 
     if (*length < 0) {
 	MSG_V("Could not find EOF");
+	close(fd);
 	return NULL;
     }
 
     if (*length > SIZE_MAX - 1) {
 	MSG_V("File too big, could not malloc.");
+	close(fd);
 	return NULL;
     }
 
@@ -121,11 +123,14 @@ static char *load_file(const char *filename, off_t * length)
 
     if (!(buffer = malloc(*length + 1))) {
 	MSG_V("Could not malloc.");
+	close(fd);
 	return NULL;
     }
 
     if (read(fd, buffer, *length) != *length) {
+	free(buffer);
 	MSG_V("Read is behaving funny.");
+	close(fd);
 	return NULL;
     }
     close(fd);

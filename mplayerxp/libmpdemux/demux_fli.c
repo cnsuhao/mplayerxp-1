@@ -94,12 +94,14 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   demuxer->movi_end = stream_read_dword_le(demuxer->stream);
 
   magic_number = stream_read_word_le(demuxer->stream);
-  
+
   if ((magic_number != 0xAF11) && (magic_number != 0xAF12))
   {
     MSG_ERR("Bad/unknown magic number (%04x)\n",
 	magic_number);
-    return(NULL);    
+    free(header);
+    free(frames);
+    return(NULL);
   }
 
   // fetch the number of frames
