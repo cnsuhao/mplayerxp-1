@@ -16,7 +16,7 @@ int main(int argc,char* argv[]){
     { 0x9f, 0xe5, 0x00, 0x60, 0x97, 0x78, 0xaa, 0xaa}};
 
     f=fopen("test.divx","rb");
-    
+
     fread(&bih,sizeof(BITMAPINFOHEADER),1,f);
     printf("frame dim: %d x %d \n",(int)bih.biWidth,(int)bih.biHeight);
 
@@ -41,10 +41,10 @@ int main(int argc,char* argv[]){
     f2=fopen("test.yuy2","wb");
     fwrite(dst,bih.biWidth*bih.biHeight*2,1,f2);
     fclose(f2);
-#endif    
+#endif
 
       { unsigned char raw_head[32];
-        FILE *f=fopen("test.raw","wb");
+        FILE *f3=fopen("test.raw","wb");
 
         strcpy((char*)raw_head,"mhwanh");
         raw_head[7]=4;
@@ -56,12 +56,12 @@ int main(int argc,char* argv[]){
         raw_head[14]=1;raw_head[15]=0x2C;
         raw_head[16]=1;raw_head[17]=0x2C;
         memset(raw_head+18,0,32-18);
-        fwrite(raw_head,32,1,f);
-        
-        fwrite(dst,bih.biWidth*bih.biHeight*3,1,f);
-        fclose(f);
+        fwrite(raw_head,32,1,f3);
+
+        fwrite(dst,bih.biWidth*bih.biHeight*3,1,f3);
+        fclose(f3);
       }
 
-
-return 0;
+    fclose(f);
+    return 0;
 }
