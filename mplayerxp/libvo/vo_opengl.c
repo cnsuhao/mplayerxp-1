@@ -28,6 +28,7 @@
 #include "video_out_internal.h"
 #include "font_load.h"
 #include "sub.h"
+#include "subopt-helper.h"
 
 #include "gl_common.h"
 #include "aspect.h"
@@ -423,6 +424,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     return -1;
 #else
   {
+#if 0
     XVisualInfo *vinfo=glXChooseVisual( mDisplay,mScreen,wsGLXAttrib );
     if (vinfo == NULL)
     {
@@ -430,12 +432,9 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
       return -1;
     }
     MSG_V("[gl] GLX chose visual with ID 0x%x\n", (int)vinfo->visualid);
-
+#endif
     vo_x11_calcpos(&hint,d_width,d_height,flags);
     glutInitDisplayMode(GLUT_RGBA);
-#if (GLUT_API_VERSION >= 4 || GLUT_XLIB_IMPLEMENTATION >= 9)
-    glutInitDisplayString("MPlayerXP");
-#endif
     glutInitWindowPosition(hint.x, hint.y);
     glutInitWindowSize(hint.width, hint.height);
     gl_win=glutCreateWindow("MPlayerXP");
@@ -853,7 +852,6 @@ uninit(void)
   glutDestroyWindow(gl_win);
 }
 
-#if 0
 static const opt_t subopts[] = {
   {"manyfmts",     OPT_ARG_BOOL, &many_fmts,    NULL},
   {"osd",          OPT_ARG_BOOL, &use_osd,      NULL},
@@ -878,7 +876,6 @@ static const opt_t subopts[] = {
   {"osdcolor",     OPT_ARG_INT,  &osd_color,    NULL},
   {NULL}
 };
-#endif
 
 static uint32_t __FASTCALL__ preinit(const char *arg)
 {
@@ -904,7 +901,7 @@ static uint32_t __FASTCALL__ preinit(const char *arg)
     custom_tlin = 1;
     custom_trect = 0;
     osd_color = 0xffffff;
-#if 0
+
     if (subopt_parse(arg, subopts) != 0) {
       MSG_FATAL(
               "\n-vo gl command line help:\n"
@@ -968,7 +965,7 @@ static uint32_t __FASTCALL__ preinit(const char *arg)
               "\n" );
       return -1;
     }
-#endif
+
     if (use_rectangle == 1)
       gl_target = GL_TEXTURE_RECTANGLE;
     else

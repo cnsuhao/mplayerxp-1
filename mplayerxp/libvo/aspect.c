@@ -12,25 +12,25 @@ float monitor_aspect=0;
 float monitor_pixel_aspect=1;
 
 static struct {
-  int orgw; // real width
-  int orgh; // real height
-  int prew; // prescaled width
-  int preh; // prescaled height
-  int scrw; // horizontal resolution
-  int scrh; // vertical resolution
+  uint32_t orgw; // real width
+  uint32_t orgh; // real height
+  uint32_t prew; // prescaled width
+  uint32_t preh; // prescaled height
+  uint32_t scrw; // horizontal resolution
+  uint32_t scrh; // vertical resolution
 } aspdat;
 
-void __FASTCALL__ aspect_save_orig(int orgw, int orgh){
+void __FASTCALL__ aspect_save_orig(uint32_t orgw, uint32_t orgh){
   aspdat.orgw = orgw;
   aspdat.orgh = orgh;
 }
 
-void __FASTCALL__ aspect_save_prescale(int prew, int preh){
+void __FASTCALL__ aspect_save_prescale(uint32_t prew, uint32_t preh){
   aspdat.prew = prew;
   aspdat.preh = preh;
 }
 
-void __FASTCALL__ aspect_save_screenres(int scrw, int scrh){
+void __FASTCALL__ aspect_save_screenres(uint32_t scrw, uint32_t scrh){
   aspdat.scrw = scrw;
   aspdat.scrh = scrh;
   monitor_aspect = monitor_pixel_aspect * scrw / scrh;
@@ -40,8 +40,8 @@ void __FASTCALL__ aspect_save_screenres(int scrw, int scrh){
  * resolution, that the scaled image should fit into
  */
 
-void __FASTCALL__ aspect(int *srcw, int *srch, int zoom){
-  int tmpw;
+void __FASTCALL__ aspect(uint32_t *srcw, uint32_t *srch, int zoom){
+  uint32_t tmpw;
 
 #ifdef ASPECT_DEBUG
   MSG_DBG2("aspect(0) fitin: %dx%d zoom: %d \n",aspdat.scrw,aspdat.scrh,zoom);
@@ -52,19 +52,19 @@ void __FASTCALL__ aspect(int *srcw, int *srch, int zoom){
     {
 	/* Landscape mode */
 	*srcw = aspdat.scrw;
-	*srch = (int)(((float)aspdat.scrw / (float)aspdat.prew * (float)aspdat.preh)
+	*srch = (uint32_t)(((float)aspdat.scrw / (float)aspdat.prew * (float)aspdat.preh)
 		* ((float)aspdat.scrh / ((float)aspdat.scrw / monitor_aspect)));
     }
     else
     {
 	/* Portrait mode */
 	*srch = aspdat.scrh;
-	*srcw = (int)(((float)aspdat.scrh / (float)aspdat.preh * (float)aspdat.prew)
+	*srcw = (uint32_t)(((float)aspdat.scrh / (float)aspdat.preh * (float)aspdat.prew)
 		* ((float)aspdat.scrw / ((float)aspdat.scrh * monitor_aspect)));
     }
   }else{
     *srcw = aspdat.prew;
-    *srch = (int)((float)aspdat.preh
+    *srch = (uint32_t)((float)aspdat.preh
                * ((float)aspdat.scrh / ((float)aspdat.scrw / monitor_aspect)));
   }
   (*srch)+= (*srch)%2; // round
@@ -73,10 +73,10 @@ void __FASTCALL__ aspect(int *srcw, int *srch, int zoom){
 #endif
   if(*srch>aspdat.scrh || *srch<aspdat.orgh){
     if(zoom)
-      tmpw = (int)(((float)aspdat.scrh / (float)aspdat.preh * (float)aspdat.prew)
+      tmpw = (uint32_t)(((float)aspdat.scrh / (float)aspdat.preh * (float)aspdat.prew)
                 * ((float)aspdat.scrw / ((float)aspdat.scrh / (1.0/monitor_aspect))));
     else
-      tmpw = (int)((float)aspdat.prew
+      tmpw = (uint32_t)((float)aspdat.prew
                 * ((float)aspdat.scrw / ((float)aspdat.scrh / (1.0/monitor_aspect))));
     if(tmpw<=aspdat.scrw && tmpw>=aspdat.orgw){
       *srch = zoom?aspdat.scrh:aspdat.preh;

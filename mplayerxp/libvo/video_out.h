@@ -182,6 +182,10 @@ extern void		vo_draw_osd(void);
 extern void		vo_uninit( void );
 extern uint32_t __FASTCALL__ vo_control(uint32_t request, void *data);
 
+struct vo_rect {
+  int left, right, top, bottom, width, height;
+};
+
 /** Contains geometry of fourcc */
 typedef struct s_vo_format_desc
 {

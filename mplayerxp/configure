@@ -92,6 +92,7 @@ Video:
   --enable-xf86vm        build with Xf86vm support for X11 [autodetect]
   --enable-xv            build with Xv render support for X 4.x [autodetect]
   --enable-opengl        build with OpenGL render support [autodetect]
+  --enable-vdpau         build with VDPAU render support [autodetect]
   --enable-fbdev         build with FBDev render support [autodetect]
   --enable-fbdev=nocopy  yuv12 converts directly into framebuffer
   --enable-mlib          build with MLIB support (Solaris only) [autodetect]
@@ -374,6 +375,7 @@ AUTOCONF_LIST='
     xinerama
     xf86vm
     opengl
+    vdpau
     dga
     vesa
     vidix
@@ -415,6 +417,8 @@ for ac_option do
   --disable-xv)		xv=no		;;
   --enable-opengl)	opengl=yes	;;
   --disable-opengl)	opengl=no	;;
+  --enable-vdpau)	vdpau=yes	;;
+  --disable-vdpau)	vdpau=no	;;
   --enable-sdl)		sdl=yes		;;
   --disable-sdl)	sdl=no		;;
   --enable-sdl-image)	sdl_image=yes	;;
@@ -847,6 +851,10 @@ enabled opengl  && require2 opengl "GL/gl.h GL/glx.h GL/glut.h" glutInitWindowSi
 fi
 print_config HAVE_ mp_config.h mp_config.mak opengl
 enabled opengl	&& _vomodules="opengl $_vomodules" || _novomodules="opengl $_novomodules"
+
+enabled vdpau	&& require3 vdpau "vdpau/vdpau_x11.h" VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 vdp_device_create_x11 -lvdpau
+print_config HAVE_ mp_config.h mp_config.mak vdpau
+enabled vdpau	&& _vomodules="vdpau $_vomodules" || _novomodules="vdpau $_novomodules"
 
 # Note: the -lXxf86vm library is the VideoMode extension and though it's not
 # needed for DGA, AFAIK every distribution packages together with DGA stuffs
