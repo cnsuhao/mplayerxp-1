@@ -602,8 +602,8 @@ static int ty_XDSdecode( char b1, char b2 )
    TY_XDS_checksum += b1 + b2;
 
    // eof (next byte is checksum)
-   if ( b1 == 0x0F ) 
-   {        
+   if ( b1 == 0x0F )
+   {
       // validity check
       if ( !TY_XDS_length || TY_XDS_checksum & 0x7F )  
       {
@@ -697,7 +697,7 @@ static int ty_XDSdecode( char b1, char b2 )
                // for now just print out the raw data
                // requires a 127 string array to parse
                // properly and isn't worth it.
-               sprintf ( line, "%sGENRE:", line );
+               strcat ( line, "GENRE:");
                {
                   int x;
                   for ( x = 0 ; x < TY_XDS_length ; x++ )
@@ -714,13 +714,13 @@ static int ty_XDSdecode( char b1, char b2 )
                   TY_XDS_CHIP[ ( TY_XDS_ptr[ 0 ] & 0x08 ) >> 3 ]
                   [ TY_XDS_ptr[ 1 ] & 0x07 ] );
                if ( TY_XDS_ptr[ 0 ] & 0x20 )
-                  sprintf( line, "%s DIALOGUE", line );
+                  strcat( line, " DIALOGUE");
                if ( TY_XDS_ptr[ 1 ] & 0x08 )
-                  sprintf( line, "%s LANGUAGE", line );
+                  strcat( line, " LANGUAGE");
                if ( TY_XDS_ptr[ 1 ] & 0x10 )
-                  sprintf( line, "%s SEXUAL", line );
+                  strcat( line, " SEXUAL");
                if ( TY_XDS_ptr[ 1 ] & 0x20 )
-                  sprintf( line, "%s VIOLENCE", line );
+                  strcat( line, " VIOLENCE");
                ty_AddXDSToDisplay( line );
 
                // raw output for verification.
@@ -798,13 +798,13 @@ static int ty_XDSdecode( char b1, char b2 )
                timestr[ strlen( timestr ) - 1 ] = 0;
 
                sprintf( line, "%sCUR.TIME: %s ", line, timestr );
-               if ( TY_XDS[ 3 ][ 4 ][ 0 ] ) 
+               if ( TY_XDS[ 3 ][ 4 ][ 0 ] )
                {
                   sprintf( line, "%sUTC-%d", line, TIMEZONE );
-                  if (DST) sprintf( line, "%s DST", line );
-               } 
+                  if (DST) strcat( line, " DST");
+               }
                else
-                  sprintf( line, "%sUTC", line );
+                  strcat( line, "UTC");
 
                ty_AddXDSToDisplay( line );
 
@@ -815,7 +815,7 @@ static int ty_XDSdecode( char b1, char b2 )
             {
                sprintf( line, "%sTIMEZONE: UTC-%d",
                   line, TY_XDS_ptr[ 0 ] & 0x1f );
-               if ( TY_XDS_ptr[ 0 ] & 0x20 ) sprintf( line, "%s DST", line );
+               if ( TY_XDS_ptr[ 0 ] & 0x20 ) strcat( line, " DST");
                ty_AddXDSToDisplay( line );
                break;
             }
