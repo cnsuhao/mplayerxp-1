@@ -76,66 +76,66 @@ done
 
 mktmps
 
-_cc=gcc
-test "$CC" && _cc="$CC"
-_prefix="/usr/local"
-_profile=
-_debug=
-_fastcall=auto
-_psuffix=
+cc=gcc
+test "$CC" && cc="$CC"
+prefix="/usr/local"
+profile=
+debug=
+fastcall=auto
+psuffix=
 for ac_option do
   case "$ac_option" in
   --prefix=*)
-    _prefix=`echo $ac_option | cut -d '=' -f 2`
+    prefix=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --datadir=*)
-    _datadir=`echo $ac_option | cut -d '=' -f 2`
+    datadir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --confdir=*)
-    _confdir=`echo $ac_option | cut -d '=' -f 2`
+    confdir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --libdir=*)
-    _libdir=`echo $ac_option | cut -d '=' -f 2`
+    libdir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --codecdir=*)
-    _codecdir=`echo $ac_option | cut -d '=' -f 2`
+    codecdir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --program-suffix=*)
-    _psuffix=`echo $ac_option | cut -d '=' -f 2`
+    psuffix=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --with-win32libdir=*)
-    _win32libdir=`echo $ac_option | cut -d '=' -f 2`
-    _win32=yes
+    win32libdir=`echo $ac_option | cut -d '=' -f 2`
+    win32=yes
     ;;
   --with-extraincdir=*)
-    _inc_extra="$_inc_extra -I`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -I,g'`"
+    inc_extra="$inc_extra -I`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -I,g'`"
     ;;
   --with-extralibdir=*)
-    _ld_extra="$_ld_extra -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
+    ld_extra="$ld_extra -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
     ;;
   --with-extraldflags=*)
-    _exld_flags="$_exld_flags -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
+    exld_flags="$exld_flags -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
     ;;
   --build=*)
-    _build=`echo $ac_option | cut -d '=' -f 2`
+    build=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --host=*)
-    _host=`echo $ac_option | cut -d '=' -f 2`
+    host=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --cc=*)
-    _cc=`echo $ac_option | cut -d '=' -f 2`
+    cc=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --enable-profile)
-    _profile='-pg'
+    profile='-pg'
     ;;
   --enable-debug)
-    _debug='-g'
+    debug='-g'
     ;;
   --enable-debug=*)
-    _debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
+    debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
     ;;
-  --enable-fastcall)	_fastcall=yes	;;
-  --disable-fastcall)	_fastcall=no	;;
+  --enable-fastcall)	fastcall=yes	;;
+  --disable-fastcall)	fastcall=no	;;
   *)
     ;;
   esac
@@ -144,64 +144,64 @@ done
 guess_target config.mak config.h
 test_optimizations config.mak config.h
 
-test -n "$_ld_extra"	&& add_extralibs $_ld_extra
-test -n "$_exld_flags"	&& add_ldflags $_exld_flags
-test -n "$_inc_extra"	&& add_cflags $_inc_extra
+test -n "$ld_extra"	&& add_extralibs $ld_extra
+test -n "$exld_flags"	&& add_ldflags $exld_flags
+test -n "$inc_extra"	&& add_cflags $inc_extra
 
 if win32 ; then
-    _def_win32_cmt='/* using native windows system */'
-    _def_win32_loader='#undef WIN32_LOADER'
+    def_win32_cmt='/* using native windows system */'
+    def_win32_loader='#undef WIN32_LOADER'
 else
-    _def_win32_cmt='/* using non-native windows system */'
-    _def_win32_loader='#define WIN32_LOADER 1'
+    def_win32_cmt='/* using non-native windows system */'
+    def_win32_loader='#define WIN32_LOADER 1'
 fi
 
 echo -n "Checking for win32 dll's ... "
-if test -z "$_win32libdir" ; then
+if test -z "$win32libdir" ; then
   for I in /usr/local/lib/win32 /usr/lib/win32 ; do
     if test -d "$I" ; then
-      _win32libdir="$I"
+      win32libdir="$I"
       break;
     fi;
   done
 fi
-echo "$_win32libdir"
+echo "$win32libdir"
 
 echocheck "Program name"
-_prog_alias="mplayerxp$_psuffix"
-echores "$_prog_alias"
+prog_alias="mplayerxp$psuffix"
+echores "$prog_alias"
 # Atmos: moved this here, to be correct, if --prefix is specified
-test -z "$_datadir" && _datadir="$_prefix/share/$_prog_alias"
-test -z "$_confdir" && _confdir="$_datadir"
-test -z "$_libdir" && _libdir="$_prefix/lib"
-test -z "$_codecdir" && _codecdir="$_libdir/$_prog_alias"
+test -z "$datadir" && datadir="$prefix/share/$prog_alias"
+test -z "$confdir" && confdir="$datadir"
+test -z "$libdir" && libdir="$prefix/lib"
+test -z "$codecdir" && codecdir="$libdir/$prog_alias"
 
-cc_version=`$_cc -dumpversion`
-if test "$_fastcall" = auto ; then
+cc_version=`$cc -dumpversion`
+if test "$fastcall" = auto ; then
 echocheck "__fastcall optimization abilities"
 case $cc_version in
     '')
-      _fastcall=no
+      fastcall=no
       ;;
     # avoid fastcall usage on gcc-2.95.2 and older
     2.95.[3-9]|2.95.[3-9].[0-9]|3.[0-9]|3.[0-9].[0-9]|4.[0-9].[0-9])
-      _fastcall=yes
+      fastcall=yes
       ;;
     *)
-      _fastcall=no
+      fastcall=no
       ;;
 esac
-echores "$_fastcall"
+echores "$fastcall"
 fi
 
 # Checking for CFLAGS
 _def_fastcall='#undef __USE_FASTCALL'
-if test "$_fastcall" = yes && test -z "$_profile" ; then
+if test "$fastcall" = yes && test -z "$profile" ; then
 _def_fastcall='#define __USE_FASTCALL 1'
 fi
 
-if test "$_profile" || test "$_debug" ; then
-  CFLAGS="-W -Wall -O2 $_debug $_profile -fno-builtin"
+if test "$profile" || test "$debug" ; then
+  CFLAGS="-W -Wall -O2 $debug $profile -fno-builtin"
 cat >> config.h << EOF
 #define DEBUG
 EOF
@@ -222,17 +222,17 @@ add_cflags "-Werror-implicit-function-declaration"
 echo "Creating config.mak"
 cat >> config.mak << EOF
 # -------- Generated by configure -----------
-PROGNAME = $_prog_alias
-prefix = $_prefix
-DATADIR = $_datadir
-CONFDIR = $_confdir
-LIBDIR = $_libdir
-CODECDIR = $_codecdir
-CONFDIR = $_confdir
+PROGNAME = $prog_alias
+prefix = $prefix
+DATADIR = $datadir
+CONFDIR = $confdir
+LIBDIR = $libdir
+CODECDIR = $codecdir
+CONFDIR = $confdir
 DESTDIR = $DESTDIR
-WIN32_PATH = -DWIN32_PATH=\\"$_win32libdir\\"
+WIN32_PATH = -DWIN32_PATH=\\"$win32libdir\\"
 CFLAGS = $CFLAGS
-CC=$_cc
+CC=$cc
 
 EOF
 
@@ -247,11 +247,11 @@ cat >> config.h << EOF
 /* -------- This file has been automatically generated by configure --------- */
 
 /* Common data directory (for fonts, etc) */
-#define PROGNAME "$_prog_alias"
-#define DATADIR "$_datadir"
-#define CONFDIR "$_confdir"
-#define LIBDIR "$_libdir"
-#define CODECDIR "$_codecdir"
+#define PROGNAME "$prog_alias"
+#define DATADIR "$datadir"
+#define CONFDIR "$confdir"
+#define LIBDIR "$libdir"
+#define CODECDIR "$codecdir"
 
 #ifdef DEBUG
 #define TRACE printf
@@ -261,9 +261,9 @@ cat >> config.h << EOF
 #define dbg_printf(...)
 #endif
 
-$_def_fastcall
-$_def_win32_cmt
-$_def_win32_loader
+$def_fastcall
+$def_win32_cmt
+$def_win32_loader
 
 /* Defined to some form of __attribute__ ((...)) if the compiler supports
    a different, more efficient calling convention.  */

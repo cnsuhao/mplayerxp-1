@@ -144,6 +144,23 @@ disabled_any(){
     done
 }
 
+filter(){
+    pat=$1
+    shift
+    for v; do
+        eval "case $v in $pat) echo $v ;; esac"
+    done
+}
+
+is_in(){
+    value=$1
+    shift
+    for var in $*; do
+        [ $var = $value ] && return 0
+    done
+    return 1
+}
+
 check_deps(){
     for cfg; do
         cfg="${cfg#!}"
@@ -285,14 +302,14 @@ check_cc(){
     log check_cc "$@"
     cat >$TMPC
     log_file $TMPC
-    check_cmd $_cc $CFLAGS "$@" -c -o $TMPO $TMPC
+    check_cmd $cc $CFLAGS "$@" -c -o $TMPO $TMPC
 }
 
 check_cpp(){
     log check_cpp "$@"
     cat >$TMPC
     log_file $TMPC
-    check_cmd $_cc $CFLAGS "$@" -E -o $TMPO $TMPC
+    check_cmd $cc $CFLAGS "$@" -E -o $TMPO $TMPC
 }
 
 check_asm(){
@@ -310,7 +327,7 @@ EOF
 check_ld(){
     log check_ld "$@"
     check_cc || return
-    check_cmd $_cc $LDFLAGS "$@" -o $TMPE $TMPO $extralibs
+    check_cmd $cc $LDFLAGS "$@" -o $TMPE $TMPO $extralibs
 }
 
 check_cflags(){
@@ -831,7 +848,7 @@ cc_check() {
   echo >> "$TMPLOG"
   cat "$TMPC" >> "$TMPLOG"
   echo >> "$TMPLOG"
-  ( check_cmd $_cc $CFLAGS $_inc_extra $_ld_static $_ld_extra "$TMPC" -o "$TMPO" "$@" ) >> "$TMPLOG" 2>&1
+  ( check_cmd $cc $CFLAGS $inc_extra $ld_static $ld_extra "$TMPC" -o "$TMPO" "$@" ) >> "$TMPLOG" 2>&1
   TMP="$?"
   echo >> "$TMPLOG"
   echo "ldd $TMPO" >> "$TMPLOG"
@@ -868,7 +885,7 @@ rmtmps() {
 
 # OS test booleans functions
 issystem() {
-  test "`echo $_host_os | tr A-Z a-z`" = "`echo $1 | tr A-Z a-z`"
+  test "`echo $host_os | tr A-Z a-z`" = "`echo $1 | tr A-Z a-z`"
 }
 linux()   { issystem "Linux-GNU"; return "$?" ; }
 sunos()   { issystem "SunOS"   ; return "$?" ; }
@@ -891,7 +908,7 @@ beos()    { issystem "BEOS"    ; return "$?" ; }
 
 # arch test boolean functions
 x86_32() {
-  case "$_host_arch" in
+  case "$host_arch" in
     i*86|x86|x86pc|k5|k6|k6-2|k6-3|pentium*|athlon*)
 	return 0
 	;;
@@ -902,7 +919,7 @@ x86_32() {
 }
 
 x86_64() {
-  case "$_host_arch" in
+  case "$host_arch" in
     x86_64|amd64)
 	return 0
 	;;
@@ -919,28 +936,28 @@ x86() {
 }
 
 ppc() {
-  case "$_host_arch" in
+  case "$host_arch" in
     ppc) return 0;;
     *) return 1;;
   esac
 }
 
 mips() {
-  case "$_host_arch" in
+  case "$host_arch" in
     mips) return 0;;
     *) return 1;;
   esac
 }
 
 alpha() {
-  case "$_host_arch" in
+  case "$host_arch" in
     alpha) return 0 ;;
     *) return 1 ;;
   esac
 }
 
 arm() {
-  case "$_host_arch" in
+  case "$host_arch" in
     arm) return 0 ;;
     *) return 1 ;;
   esac
@@ -959,8 +976,8 @@ not() {
 
 # Use this before starting a check
 echocheck() {
-  if test "$_echocheked" != "yes"; then
-  _echocheked=yes
+  if test "$echocheked" != "yes"; then
+  echocheked=yes
   echo "============ Checking for $@ ============" >> "$TMPLOG"
   echo ${_echo_n} "Checking for $@ ... ${_echo_c}"
   fi
@@ -968,8 +985,8 @@ echocheck() {
 
 # Use this to echo the results of a check
 echores() {
-  if test "$_echocheked" = "yes"; then
-  _echocheked=no
+  if test "$echocheked" = "yes"; then
+  echocheked=no
   echo "Result is: $@" >> "$TMPLOG"
   echo "##########################################" >> "$TMPLOG"
   echo "" >> "$TMPLOG"
@@ -991,82 +1008,82 @@ local config_mak=$1
 local config_h=$2
 config_guess="../config.guess"
 config_sub="../config.sub"
-if test -z "$_build" ; then
-_build=`$config_guess`
-test -z "$_build" && echores "cannot guess build type; you must specify one"
+if test -z "$build" ; then
+build=`$config_guess`
+test -z "$build" && echores "cannot guess build type; you must specify one"
 fi
 # Canonize it
-$config_sub sun4 >/dev/null 2>&1 || echores "cannot run $_config_sub"
-_build=`$config_sub $_build`
-echores "$_build"
-_build_cpu=`echo $_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-_build_vendor=`echo $_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-_build_os=`echo $_build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+$config_sub sun4 >/dev/null 2>&1 || echores "cannot run $config_sub"
+build=`$config_sub $build`
+echores "$build"
+build_cpu=`echo $build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+build_vendor=`echo $build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+build_os=`echo $build | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 echocheck "host system type"
-if test -z "$_host" ; then
-_host=$_build
+if test -z "$host" ; then
+host=$build
 fi
-_host=`$config_sub $_host`
-_host_cpu=`echo $_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-_host_vendor=`echo $_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-_host_os=`echo $_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-echores "$_host"
+host=`$config_sub $host`
+host_cpu=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+host_vendor=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+host_os=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+echores "$host"
 
 # Printout architecture
-case "$_host_cpu" in
+case "$host_cpu" in
   i*86)
-  _host_arch="x86"
-  _icpu=`echo $_host_cpu | sed -n 's/^i\([0-9]*\)$/\1/p'`
+  host_arch="x86"
+  icpu=`echo $host_cpu | sed -n 's/^i\([0-9]*\)$/\1/p'`
     ;;
   *)
-  _host_arch=$_host_cpu
-  _icpu=$_host_cpu
+  host_arch=$host_cpu
+  icpu=$host_cpu
     ;;
 esac
-_def_words_endian='#define WORDS_BIGENDIAN 1'
-x86   && _def_words_endian="#undef WORDS_BIGENDIAN"
-arm   && _def_words_endian="#undef WORDS_BIGENDIAN"
-alpha && _def_words_endian="#undef WORDS_BIGENDIAN"
+def_words_endian='#define WORDS_BIGENDIAN 1'
+x86   && def_words_endian="#undef WORDS_BIGENDIAN"
+arm   && def_words_endian="#undef WORDS_BIGENDIAN"
+alpha && def_words_endian="#undef WORDS_BIGENDIAN"
 
-_lc_host_arch=`echo $_host_arch | tr [:lower:] [:upper:]`
-_lc_host_os=`echo $_host_os | tr [:lower:] [:upper:]`
-_lc_host_sys=$_lc_host_os
+lc_host_arch=`echo $host_arch | tr [:lower:] [:upper:]`
+lc_host_os=`echo $host_os | tr [:lower:] [:upper:]`
+lc_host_sys=$lc_host_os
 if win32 ; then
-_lc_host_os=WIN32
-_slibsuf=".dll"
+lc_host_os=WIN32
+slibsuf=".dll"
 else
-_slibsuf=".so"
+slibsuf=".so"
 fi
 #tune architecture
-x86_64 && _lc_host_arch="X86_64"
-x86_64 && _icpu="k8"
-x86_32 && _lc_host_arch="X86"
-x86_32 && _icpu="athlon" # it enables -m3dnowa support which can't be enabled through command line
-_lc_host_os=`echo $_lc_host_os | sed 's/[^A-Za-z0-9_]/_/g'`
+x86_64 && lc_host_arch="X86_64"
+x86_64 && icpu="k8"
+x86_32 && lc_host_arch="X86"
+x86_32 && icpu="athlon" # it enables -m3dnowa support which can't be enabled through command line
+lc_host_os=`echo $lc_host_os | sed 's/[^A-Za-z0-9_]/_/g'`
 
 cat > $config_mak << EOF
 # -------- Generated by guess_target() -----------
-TARGET_OS = $_lc_host_os
-TARGET_SYS = $_lc_host_sys
-TARGET_ARCH_$_lc_host_arch = yes
-TARGET_CPU = $_icpu
-SLIBSUF = $_slibsuf
+TARGET_OS = $lc_host_os
+TARGET_SYS = $lc_host_sys
+TARGET_ARCH_$lc_host_arch = yes
+TARGET_CPU = $icpu
+SLIBSUF = $slibsuf
 EOF
 
 cat > $config_h << EOF
 /* -------- Generated by guess_target() ----------- */
 #ifndef MPXP_CONFIG_ARCH
 #define MPXP_CONFIG_ARCH 1
-#define ARCH_$_lc_host_arch 1
-#define __CPU__ $_icpu
+#define ARCH_$lc_host_arch 1
+#define __CPU__ $icpu
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
-$_def_words_endian
-#define TARGET_$_lc_host_os 1
-#define SLIBSUFFIX "$_slibsuf"
+$def_words_endian
+#define TARGET_$lc_host_os 1
+#define SLIBSUFFIX "$slibsuf"
 EOF
 
-case "$_lc_host_arch" in
+case "$lc_host_arch" in
   X86)
     echo "#define ARCH_X86_32 1" >> $config_h
     ;;
@@ -1081,71 +1098,74 @@ local config_mak=$1
 local config_h=$2
 
 
-_locarch="-O3"
+locarch=""
 if x86_64 ; then
-_locarch="-march=$_icpu -m64 $_locarch"
+locarch="-march=$icpu -m64"
 add_ldflags -m64
 add_asflags --64
 elif x86_32 ; then
-_locarch="-march=$_icpu -m32 $_locarch"
+locarch="-march=$icpu -m32"
 add_ldflags -m32
 add_asflags --32
 fi
 
-if test "$_profile" || test "$_debug" ; then
-  CFLAGS="-O2 -fno-builtin $_dbg_flags $_debug $_profile"
-elif test -z "$CFLAGS" ; then
+add_cflags $locarch
+if enabled profile || test "$debug" || enabled gcov; then
+  add_cflags "-O2 -fno-builtin $debug $profile"
+else
+  add_cflags "-O3"
 # -ffast-math produces incorrect output in 64-bit mode on x86_64 cpus. Tested with many gcc-4.x series
-  CFLAGS="$_locarch"
-  mips   || CFLAGS="$CFLAGS -pipe"
-  x86_32 && CFLAGS="$CFLAGS -fomit-frame-pointer"
+  add_cflags "-fno-fast-math -fno-math-errno"
+  mips   || add_cflags "-pipe"
+  x86_32 && add_cflags "-fomit-frame-pointer"
 # -fomit-frame-pointer is not needed for x86_64
 fi
-check_cflags -mtune=generic
+check_cflags "-mfancy-math-387"
+check_cflags "-mtune=generic"
 
-disable _mmx_test
-x86_32 && enable _mmx_test
-_def_mmx=
-_def_mmx2=
-_def_3dnow=
-_def_3dnow2=
-_def_sse=
-_def_sse2=
-_def_sse3=
-_def_ssse3=
-_def_sse3=
-_def_avx=
-if enabled _mmx_test ; then
-check_cflags -mmmx	&& _def_mmx='#define CAN_COMPILE_MMX 1'
-check_cflags -m3dnow	&& _def_3dnow='#define CAN_COMPILE_3DNOW 1'
-check_cflags -msse	&& _def_sse='#define CAN_COMPILE_SSE 1'
-check_cflags -msse2	&& _def_sse2='#define CAN_COMPILE_SSE2 1'
-check_cflags -msse3	&& _def_sse3='#define CAN_COMPILE_SSE3 1'
-check_cflags -mssse3	&& _def_ssse3='#define CAN_COMPILE_SSSE3 1'
-check_cflags -msse4	&& _def_sse4='#define CAN_COMPILE_SSE4 1'
-check_cflags -mavx	&& _def_avx='#define CAN_COMPILE_AVX 1'
-_fpu_clob='#define FPU_CLOBBERED "st","st(1)","st(2)","st(3)","st(4)","st(5)","st(6)","st(7)"'
-_mmx_clob='#define MMX_CLOBBERED "mm0","mm1","mm2","mm3","mm4","mm5","mm6","mm7"'
-_sse_clob='#define SSE_CLOBBERED "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5","xmm6","xmm7"'
+disable mmx_test
+x86_32 && enable mmx_test
+def_mmx=
+def_mmx2=
+def_3dnow=
+def_3dnow2=
+def_sse=
+def_sse2=
+def_sse3=
+def_ssse3=
+def_sse3=
+def_avx=
+if enabled mmx_test ; then
+check_cflags -mmmx	&& def_mmx='#define CAN_COMPILE_MMX 1'
+check_cflags -m3dnow	&& def_3dnow='#define CAN_COMPILE_3DNOW 1'
+check_cflags -msse	&& def_sse='#define CAN_COMPILE_SSE 1'
+check_cflags -msse2	&& def_sse2='#define CAN_COMPILE_SSE2 1'
+check_cflags -msse3	&& def_sse3='#define CAN_COMPILE_SSE3 1'
+check_cflags -mssse3	&& def_ssse3='#define CAN_COMPILE_SSSE3 1'
+check_cflags -msse4	&& def_sse4='#define CAN_COMPILE_SSE4 1'
+check_cflags -mavx	&& def_avx='#define CAN_COMPILE_AVX 1'
+fpu_clob='#define FPU_CLOBBERED "st","st(1)","st(2)","st(3)","st(4)","st(5)","st(6)","st(7)"'
+mmx_clob='#define MMX_CLOBBERED "mm0","mm1","mm2","mm3","mm4","mm5","mm6","mm7"'
+sse_clob='#define SSE_CLOBBERED "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5","xmm6","xmm7"'
 fi
-if test -n "$_def_3dnow" || test -n "$_def_sse" ; then
-_def_mmx2='#define CAN_COMPILE_MMX2 1'
+if test -n "$def_3dnow" || test -n "$def_sse" ; then
+def_mmx2='#define CAN_COMPILE_MMX2 1'
 fi
 
 cat >> $config_h << EOF
 /* Extension defines */
-$_def_mmx
-$_def_mmx2
-$_def_3dnow
-$_def_sse
-$_def_sse2
-$_def_sse3
-$_def_ssse3
-$_def_sse4
-$_def_avx
-$_fpu_clob
-$_mmx_clob
-$_sse_clob
+$def_mmx
+$def_mmx2
+$def_3dnow
+$def_sse
+$def_sse2
+$def_sse3
+$def_ssse3
+$def_sse4
+$def_avx
+$fpu_clob
+$mmx_clob
+$sse_clob
 EOF
 
 if (alpha) ; then
@@ -1159,21 +1179,21 @@ int main(void) {
     return 0;
 }
 EOF
-  _def_mvi='#undef HAVE_MVI'
-  $_cc -o "$TMPO" "$TMPC"
-  _lc_ver_mask=`$TMPO`
-  case "$_lc_ver_mask" in
+  def_mvi='#undef HAVE_MVI'
+  $cc -o "$TMPO" "$TMPC"
+  lc_ver_mask=`$TMPO`
+  case "$lc_ver_mask" in
     0-0) proc="ev4" ;;
     1-0) proc="ev5" ;;
     1-1) proc="ev56" ;;
-    1-101) proc="pca56"; _def_mvi='#define HAVE_MVI 1' ;;
-    2-303) proc="ev6"; _def_mvi='#define HAVE_MVI 1' ;;
-    2-307) proc="ev67"; _def_mvi='#define HAVE_MVI 1' ;;
-    2-1307) proc="ev68"; _def_mvi='#define HAVE_MVI 1' ;;
+    1-101) proc="pca56"; def_mvi='#define HAVE_MVI 1' ;;
+    2-303) proc="ev6"; def_mvi='#define HAVE_MVI 1' ;;
+    2-307) proc="ev67"; def_mvi='#define HAVE_MVI 1' ;;
+    2-1307) proc="ev68"; def_mvi='#define HAVE_MVI 1' ;;
   esac
   echores "$proc"
 cat >> $config_h << EOF
-$_def_mvi
+$def_mvi
 EOF
 fi
 cat >> $config_h << EOF

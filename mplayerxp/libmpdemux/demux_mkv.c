@@ -26,7 +26,7 @@
 #include "../subreader.h"
 #include "../libvo/sub.h"
 #include "../libmpcodecs/codecs_ld.h"
-#include "../../codecs/minilzo.h"
+#include "../libmpcodecs/libnuppelvideo/minilzo.h"
 
 #ifdef USE_QTX_CODECS
 #include "../../loader/qtx/qtxsdk/components.h"
@@ -565,23 +565,7 @@ static int mkv_add_chapter(mkv_demuxer_t* demuxer, const char* name, uint64_t st
     return demuxer->num_chapters ++;
 }
 
-static int (*__lzo_init2_ptr)(unsigned,int,int,int,int,int,int,int,int,int);
-#define __lzo_init2(a,b,c,d,e,f,g,h,i,j) (*__lzo_init2_ptr)(a,b,c,d,e,f,g,h,i,j)
-static int
-(*lzo1x_decompress_safe_ptr)   ( const lzo_byte *src, lzo_uint  src_len,
-                                lzo_byte *dst, lzo_uint *dst_len,
-                                lzo_voidp wrkmem /* NOT USED */ );
-#define lzo1x_decompress_safe(a,b,c,d,e) (*lzo1x_decompress_safe_ptr)(a,b,c,d,e)
 #define lzo1x_decode(a,b,c,d) lzo1x_decompress_safe(a,b,c,d,0)
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  __lzo_init2_ptr = ld_sym(dll_handle,"__lzo_init2");
-  lzo1x_decompress_safe_ptr = ld_sym(dll_handle,"lzo1x_decompress_safe");
-  return __lzo_init2_ptr && lzo1x_decompress_safe_ptr;
-}
 
 static int dvd_last_chapter;
 static int dvd_chapter;
@@ -2758,12 +2742,6 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
   mkv_track_t *track;
   int i, version, cont = 0;
   char *str;
-
-  if(!load_dll(codec_name("libnuppelvideo"SLIBSUFFIX))) /* for minilzo stuff */
-  {
-    MSG_ERR("MKV: Can't init minilzo stuff\n");
-    return NULL;
-  }
 
   stream_seek(s, s->start_pos);
   str = ebml_read_header (s, &version);

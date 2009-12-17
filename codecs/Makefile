@@ -8,11 +8,6 @@ SHLIBDIR = $(BINDIR)
 INSTALL = install
 
 DO_MAKE = @ for i in $(SUBDIRS); do SUBDIR=$@ && $(MAKE) -C $$i $@ || exit; done
-LIB_NUPPELVIDEO=libnuppelvideo$(SLIBSUF)
-SRC_NUPPELVIDEO=nuppelvideo.c RTjpegN.c minilzo.c
-OBJ_NUPPELVIDEO=$(SRC_NUPPELVIDEO:.c=.o)
-# just for: make dep
-SRCS=$(SRC_NUPPELVIDEO)
 
 CFLAGS  = $(MLIB_INC) $(OPTFLAGS)
 ifneq ($(TARGET_ARCH_X86),yes)
@@ -21,7 +16,7 @@ endif
 
 .SUFFIXES: .c .o
 
-all: $(SUBDIRS) $(LIB_NUPPELVIDEO)
+all: $(SUBDIRS)
 
 .PHONY: subdirs $(SUBDIRS)
 
@@ -31,8 +26,6 @@ $(SUBDIRS):
 	export SUBDIR=ffmpeg liba52 libdca libmpeg2 mp3lib
 	$(MAKE) -C $@
 
-$(LIB_NUPPELVIDEO):	$(OBJ_NUPPELVIDEO)
-	$(CC) --shared $(LDFLAGS) -o $@ $(OBJ_NUPPELVIDEO) -lc
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
 
@@ -40,7 +33,6 @@ $(LIB_NUPPELVIDEO):	$(OBJ_NUPPELVIDEO)
 install:
 	rm -f $(DESTDIR)$(BINDIR)/*$(SLIBSUF)
 	$(DO_MAKE)
-	$(INSTALL) -m 755 -s -p *$(DESTDIR)$(SLIBSUF) $(BINDIR)
 
 clean:
 	rm -f *.o *$(SLIBSUF)
@@ -59,7 +51,7 @@ uninstall:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(DO_MAKE)
 
 #
 # include dependency files if they exist

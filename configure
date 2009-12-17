@@ -9,10 +9,10 @@ exit 0
   fi
 done # for parm in ...
 
-for _i in codecs loader etc DOCS mplayerxp ; do
-    echo Entering \'"$_i"\' directory
-    cd $_i
+for i in codecs loader etc DOCS mplayerxp ; do
+    echo Entering \'"$i"\' directory
+    cd $i
     ./configure "$@"
     cd ..
-    echo Leaving \'"$_i"\' directory
+    echo Leaving \'"$i"\' directory
 done

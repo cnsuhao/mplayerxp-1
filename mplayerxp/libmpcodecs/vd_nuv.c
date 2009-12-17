@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 #include "mp_config.h"
-
+#include "libnuppelvideo/nuppelvideo.h"
 #include "vd_internal.h"
 #include "codecs_ld.h"
 
@@ -20,22 +19,6 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(nuv)
 
-static void (*decode_nuv_ptr)(
-  unsigned char *encoded,
-  int encoded_size,
-  unsigned char *decoded,
-  int width,
-  int height);
-#define decode_nuv(a,b,c,d,e) (*decode_nuv_ptr)(a,b,c,d,e)
-
-static void *dll_handle;
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  decode_nuv_ptr = ld_sym(dll_handle,"decode_nuv");
-  return decode_nuv_ptr != NULL;
-}
-
 // to set/get/query special features/parameters
 static int control(sh_video_t *sh,int cmd,void* arg,...){
     switch(cmd) {
@@ -51,13 +34,11 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 
 // init driver
 static int init(sh_video_t *sh){
-    if(!load_lib(codec_name("libnuppelvideo"SLIBSUFFIX))) return 0;
     return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
 }
 
 // uninit driver
 static void uninit(sh_video_t *sh){
-  dlclose(dll_handle);
 }
 
 // decode a frame

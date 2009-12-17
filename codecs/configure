@@ -136,81 +136,81 @@ done
 mktmps
 
 if test -z "$CC"; then
-_cc=gcc
+cc=gcc
 else
-_cc="$CC"
+cc="$CC"
 fi
 mlib=yes
 gomp=yes
-_prefix="/usr/local"
-_fastcall=auto
-_psuffix=
-_as=auto
+prefix="/usr/local"
+fastcall=auto
+psuffix=
+as=auto
 for ac_option do
   case "$ac_option" in
   --build=*)
-    _build=`echo $ac_option | cut -d '=' -f 2`
+    build=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --host=*)
-    _host=`echo $ac_option | cut -d '=' -f 2`
+    host=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --prefix=*)
-    _prefix=`echo $ac_option | cut -d '=' -f 2`
+    prefix=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --datadir=*)
-    _datadir=`echo $ac_option | cut -d '=' -f 2`
+    datadir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --confdir=*)
-    _confdir=`echo $ac_option | cut -d '=' -f 2`
+    confdir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --libdir=*)
-    _libdir=`echo $ac_option | cut -d '=' -f 2`
+    libdir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --codecdir=*)
-    _codecdir=`echo $ac_option | cut -d '=' -f 2`
+    codecdir=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --program-suffix=*)
-    _psuffix=`echo $ac_option | cut -d '=' -f 2`
+    psuffix=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --with-extraincdir=*)
-    _inc_extra="$_inc_extra -I`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -I,g'`"
+    inc_extra="$inc_extra -I`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -I,g'`"
     ;;
   --with-extralibdir=*)
-    _ld_extra="$_ld_extra -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
+    ld_extra="$ld_extra -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
     ;;
   --with-extraldflags=*)
-    _exld_flags="$_exld_flags -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
+    exld_flags="$exld_flags -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
     ;;
   --with-mlibdir=*)
-    _mlibdir=`echo $ac_option | cut -d '=' -f 2`
-    _mlib=yes
+    mlibdir=`echo $ac_option | cut -d '=' -f 2`
+    mlib=yes
     ;;
   --cc=*)
-    _cc=`echo $ac_option | cut -d '=' -f 2`
+    cc=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --as=*)
-    _as=`echo $ac_option | cut -d '=' -f 2`
+    as=`echo $ac_option | cut -d '=' -f 2`
     ;;
   --disable-profile)
-    _profile=
+    profile=
     ;;
   --enable-profile)
-    _profile='-p'
+    profile='-p'
     ;;
   --enable-debug)
-    _debug='-g'
-    _debug_level=1
+    debug='-g'
+    debug_level=1
     ;;
   --enable-debug=*)
-    _debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
-    _debug_level=`echo $_echo_n echo $ac_option | cut -d '=' -f 2`
+    debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
+    debug_level=`echo $_echo_n echo $ac_option | cut -d '=' -f 2`
     ;;
   --enable-mlib)	mlib=yes	;;
   --disable-mlib)	mlib=no	;;
   --enable-gomp)	gomp=yes	;;
   --disable-gomp)	gomp=no	;;
-  --enable-fastcall)	_fastcall=yes	;;
-  --disable-fastcall)	_fastcall=no	;;
+  --enable-fastcall)	fastcall=yes	;;
+  --disable-fastcall)	fastcall=no	;;
   *)
     ;;
   esac
@@ -219,89 +219,89 @@ done
 guess_target config.mak config.h
 
 echocheck "Program name"
-_prog_alias="mplayerxp$_psuffix"
-echores "$_prog_alias"
+prog_alias="mplayerxp$psuffix"
+echores "$prog_alias"
 
 # Atmos: moved this here, to be correct, if --prefix is specified
 if cygwin ; then
-test -z "$_datadir" && _datadir="."
-test -z "$_confdir" && _confdir="."
-test -z "$_libdir" && _libdir="."
-test -z "$_codecdir" && _codecdir="."
+test -z "$datadir" && datadir="."
+test -z "$confdir" && confdir="."
+test -z "$libdir" && libdir="."
+test -z "$codecdir" && codecdir="."
 else
-test -z "$_datadir" && _datadir="$_prefix/share/$_prog_alias"
-test -z "$_confdir" && _confdir="$_datadir"
-test -z "$_libdir" && _libdir="$_prefix/lib"
-test -z "$_codecdir" && _codecdir="$_libdir/$_prog_alias/codecs"
+test -z "$datadir" && datadir="$prefix/share/$prog_alias"
+test -z "$confdir" && confdir="$datadir"
+test -z "$libdir" && libdir="$prefix/lib"
+test -z "$codecdir" && codecdir="$libdir/$prog_alias/codecs"
 fi
-test -z "$_mlibdir" && _mlibdir="$MLIBHOME"
+test -z "$mlibdir" && mlibdir="$MLIBHOME"
 
 if ! test -f ffmpeg/configure ; then
 die "*** local copy of ffmpeg was not found ***"
 fi
-_ffmpeg_args="--prefix=$_codecdir/ffmpeg --libdir=$_codecdir --shlibdir=$_codecdir --enable-shared --disable-static --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --enable-pic --enable-postproc --enable-gpl --enable-pthreads"
-if test -n $_host ; then
-_arch=$_host_arch
+ffmpeg_args="--prefix=$codecdir/ffmpeg --libdir=$codecdir --shlibdir=$codecdir --enable-shared --disable-static --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --enable-pic --enable-postproc --enable-gpl --enable-pthreads"
+if test -n $host ; then
+_arch=$host_arch
 x86_32 && _arch="x86_32"
 x86_64 && _arch="x86_64"
-_ffmpeg_args="--arch=$_arch $_ffmpeg_args"
+ffmpeg_args="--arch=$arch $ffmpeg_args"
 fi
-test -n $_debug_level      && _ffmpeg_args="$_ffmpeg_args --enable-debug=$_debug_level"
-echocheck "configuring ffmpeg stuff: --cc=\"$_cc\" $_ffmpeg_args"
+test -n $debug_level      && ffmpeg_args="$ffmpeg_args --enable-debug=$debug_level"
+echocheck "configuring ffmpeg stuff: --cc=\"$cc\" $ffmpeg_args"
 cd ffmpeg
-$(LC_ALL=C ./configure --cc="$_cc" $_ffmpeg_args)
+$(LC_ALL=C ./configure --cc="$cc" $ffmpeg_args)
 cd ..
 echores "done"
 
-_subdirs="ffmpeg mp3lib liba52 libdca libmpeg2"
+subdirs="ffmpeg mp3lib liba52 libdca libmpeg2"
 
 
-cc_version=`$_cc -dumpversion`
-if test "$_fastcall" = auto ; then
+cc_version=`$cc -dumpversion`
+if test "$fastcall" = auto ; then
 echocheck "__fastcall optimization abilities"
 case $cc_version in
     '')
-      _fastcall=no
+      fastcall=no
       ;;
     # avoid fastcall usage on gcc-2.95.2 and older
     2.95.[3-9]|2.95.[3-9].[0-9]|3.[0-9]|3.[0-9].[0-9]|4.[0-9].[0-9])
-      _fastcall=yes
+      fastcall=yes
       ;;
     *)
-      _fastcall=no
+      fastcall=no
       ;;
 esac
-echores "$_fastcall"
+echores "$fastcall"
 fi
 
 # now that we know what compiler should be used for compilation, try to find
-# out which assembler is used by the $_cc compiler
+# out which assembler is used by the $cc compiler
 echocheck "as"
-if test "$_as" = auto ; then
-  _as=`$_cc -print-prog-name=as`
-  test -z "$_as" && _as=as
+if test "$as" = auto ; then
+  as=`$cc -print-prog-name=as`
+  test -z "$as" && _as=as
 fi
-echores "$_as"
+echores "$as"
 
 # Checking for CFLAGS
-_dbg_flags=
-if test "$_debug" = "-g3"; then
-_dbg_flags="-finline-limit-5"
+dbg_flags=
+if test "$debug" = "-g3"; then
+dbg_flags="-finline-limit-5"
 fi
 
-test -n "$_profile"	&& disable fastcall
+test -n "$profile"	&& disable fastcall
 print_config __USE config.h config.mak fastcall
 
 # Checking for LDFLAGS
-if test "$_profile" || test "$_debug" ; then
-    LDFLAGS="$_debug $_profile"
+if test "$profile" || test "$debug" ; then
+    LDFLAGS="$debug $profile"
 fi
 
 test_optimizations config.mak config.h
 
-test -n "$_ld_extra"	&& add_extralibs $_ld_extra
-test -n "$_exld_flags"	&& add_ldflags $_exld_flags
-test -n "$_inc_extra"	&& add_cflags $_inc_extra
+test -n "$ld_extra"	&& add_extralibs $ld_extra
+test -n "$exld_flags"	&& add_ldflags $exld_flags
+test -n "$inc_extra"	&& add_cflags $inc_extra
 
 # Checking for GOMP
 enabled gomp && check_ldflags -fopenmp || disable gomp
@@ -324,8 +324,8 @@ enabled mlib	&& require2 mlib mlib.h mlib_VideoColorYUV2ABGR420 -lmlib
 print_config	HAVE_ config.h config.mak mlib
 
 disable pthreads
-for _ld_i in "-lpthreadGC2" "" "-lpthread" "-pthread" ; do
-disabled pthreads	&& require3 pthreads pthread.h PTHREAD_COND_INITIALIZER pthread_cond_timedwait $_ld_i
+for ld_i in "-lpthreadGC2" "" "-lpthread" "-pthread" ; do
+disabled pthreads	&& require3 pthreads pthread.h PTHREAD_COND_INITIALIZER pthread_cond_timedwait $ld_i
 enabled pthreads	&& break
 done
 disabled pthreads	&& die "Lib pthread not found. (needed by xp mode)"
@@ -369,31 +369,31 @@ done
 
 source_path=`pwd`
 
-_buildsuf=
+buildsuf=
 #############################################################################
 echo "Creating config.mak"
 cat >> config.mak << EOF
 # -------- Generated by configure -----------
 
-prefix = $_prefix
-PROGNAME = $_prog_alias
-DATADIR = $_datadir
-CONFDIR = $_confdir
-LIBDIR = $_libdir
-CODECDIR = $_codecdir
-SUBDIRS = $_subdirs
+prefix = $prefix
+PROGNAME = $prog_alias
+DATADIR = $datadir
+CONFDIR = $confdir
+LIBDIR = $libdir
+CODECDIR = $codecdir
+SUBDIRS = $subdirs
 DESTDIR = $DESTDIR
 OPTFLAGS = $CFLAGS -fPIC
 SHCFLAGS = $CFLAGS -fPIC
-MLIB_LIB =  $_ld_mlib
-MLIB_INC = $_inc_mlib
+MLIB_LIB =  $ld_mlib
+MLIB_INC = $inc_mlib
 
 BUILD_SHARED=yes
 SRC_PATH=$source_path
 BUILD_ROOT=$source_path
 
 MAKE=make
-CC=$_cc
+CC=$cc
 LN_S=ln -s -f
 AR=ar
 RANLIB=ranlib
@@ -418,11 +418,11 @@ cat >> config.h << EOF
 /* -------- This file has been automatically generated by configure ---------*/
 
 /* Common data directory (for fonts, etc) */
-#define PROGNAME "$_prog_alias"
-#define DATADIR "$_datadir"
-#define CONFDIR "$_confdir"
-#define LIBDIR "$_libdir"
-#define CODECDIR "$_codecdir"
+#define PROGNAME "$prog_alias"
+#define DATADIR "$datadir"
+#define CONFDIR "$confdir"
+#define LIBDIR "$libdir"
+#define CODECDIR "$codecdir"
 
 /* libmpeg2 uses a different feature test macro for mediaLib */
 #ifdef HAVE_MLIB
@@ -430,13 +430,13 @@ cat >> config.h << EOF
 #endif
 
 /* memalign is mapped to malloc if unsupported */
-$_def_memalign
+$def_memalign
 #ifndef HAVE_MEMALIGN
 # define memalign(a,b) malloc(b)
 #endif
 
 /* Define if your cpu has the MVI intruction set */
-$_def_mvi
+$def_mvi
 
 #ifndef HAVE_LLRINT
 #define HAVE_LLRINT 1
@@ -458,7 +458,7 @@ static inline long long int llrint(double x)
 #define ENABLE_THREADS 0
 #endif
 
-$_def_fastcall
+$def_fastcall
 
 /* Defined to some form of __attribute__ ((...)) if the compiler supports
    a different, more efficient calling convention.  */
@@ -470,7 +470,7 @@ $_def_fastcall
 #endif
 
 EOF
-echo "#define restrict $_restrict" >> config.h
+echo "#define restrict $restrict" >> config.h
 
 echo "EXTRALIBS=$extralibs" >> config.mak
 echo "LDFLAGS=$LDFLAGS" >> config.mak

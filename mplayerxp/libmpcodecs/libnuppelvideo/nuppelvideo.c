@@ -31,7 +31,7 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 #ifdef KEEP_BUFFER
 	static unsigned char *previous_buffer = 0; /* to support Last-frame-copy */
 #endif
-	static is_lzo_inited = 0;
+	static int is_lzo_inited = 0;
 
 //	printf("frametype: %c, comtype: %c, encoded_size: %d, width: %d, height: %d\n",
 //	    encodedh->frametype, encodedh->comptype, encoded_size, width, height);
