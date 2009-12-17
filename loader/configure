@@ -24,6 +24,7 @@ Fine tuning of the installation directories:
                          [PREFIX/lib]
   --codecdir=DIR         use this prefix for installing shared libraries
                          [LIBDIR/mplayerxp]
+  --win32libdir=DIR      use this prefix to specify win32 .dll locations [/usr/lib/win32]
 
 System types:
   --build=BUILD          configure for building on BUILD [guessed]
@@ -33,10 +34,10 @@ Program names:
   --program-suffix=SUFX  append SUFX to installed program names
 
 Use these options if autodetection fails:
-  --with-extraincdir=DIR   extra headers (png, dvb, mad, sdl, css, ...) in DIR
-  --with-extralibdir=DIR   extra library files (png, SDL, ...) in DIR
-  --with-extraldflags=LIST extra LDFLAGS
-  --with-win32libdir=DIR   Windows DLL files in DIR
+  --asflags=ASFLAGS       add ASFLAGS to [$ASFLAGS]
+  --cflags=ECFLAGS        add ECFLAGS to CFLAGS [$CFLAGS]
+  --ldflags=ELDFLAGS      add ELDFLAGS to LDFLAGS [$LDFLAGS]
+  --extralibs=ELIBS       add ELIBS [$ELIBS]
 
 Miscellaneous options:
   --cc=COMPILER          use this C compiler to build MPlayer [gcc]
@@ -76,70 +77,105 @@ done
 
 mktmps
 
+ENABLED_LIST='
+    fastcall
+    shared
+'
+
+DISABLED_LIST='
+    gcov
+    profile
+    static
+'
+
+enable $ENABLED_LIST
+disable $DISABLED_LIST
+
+AUTOCONF_LIST="
+    $ENABLED_LIST
+    $DISABLED_LIST
+"
+
+PATH_LIST='
+    prefix
+    datadir
+    confdir
+    libdir
+    codecdir
+    win32libdir
+'
+
+SYSCONF_LIST="
+    build
+    host
+    cc
+    as
+    ld
+    ldconfig
+    install
+    program_suffix
+    $PATH_LIST
+"
+
+EXTRA_LIST='
+    asflags
+    cflags
+    ldflags
+    extralibs
+'
+
 cc=gcc
 test "$CC" && cc="$CC"
 prefix="/usr/local"
-profile=
-debug=
 fastcall=auto
-psuffix=
 for ac_option do
+  optval="${ac_option#*=}"
   case "$ac_option" in
-  --prefix=*)
-    prefix=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --datadir=*)
-    datadir=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --confdir=*)
-    confdir=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --libdir=*)
-    libdir=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --codecdir=*)
-    codecdir=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --program-suffix=*)
-    psuffix=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --with-win32libdir=*)
-    win32libdir=`echo $ac_option | cut -d '=' -f 2`
-    win32=yes
-    ;;
-  --with-extraincdir=*)
-    inc_extra="$inc_extra -I`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -I,g'`"
-    ;;
-  --with-extralibdir=*)
-    ld_extra="$ld_extra -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
-    ;;
-  --with-extraldflags=*)
-    exld_flags="$exld_flags -L`echo $ac_option | cut -d '=' -f 2 | sed 's,:, -L,g'`"
-    ;;
-  --build=*)
-    build=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --host=*)
-    host=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --cc=*)
-    cc=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  --enable-profile)
-    profile='-pg'
-    ;;
   --enable-debug)
     debug='-g'
     ;;
   --enable-debug=*)
     debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
     ;;
-  --enable-fastcall)	fastcall=yes	;;
-  --disable-fastcall)	fastcall=no	;;
-  *)
+  --enable-*=*|--disable-*=*)
+    eval $(echo "${ac_option%%=*}" | sed 's/--/action=/;s/-/ thing=/')
+    is_in ${thing} $AUTOCONF_LIST || bad_options="$ac_option $bad_options"
+    if test "$action" = "disable"; then
+      test "${optval}" = "no" && action=enable
+    else
+      test "${optval}" = "no" && action=disable
+    fi
+    $action ${thing}
+    ;;
+
+    --enable-?*|--disable-?*)
+    eval $(echo "$ac_option" | sed 's/--/action=/;s/-/ thing=/;s/-/_/g')
+    is_in ${thing} $AUTOCONF_LIST || bad_options="$ac_option $bad_options"
+    $action ${thing}
+    ;;
+    *)
+    optname="${ac_option%%=*}"
+    optname="${optname#--}"
+    optname=$(echo "$optname" | sed 's/-/_/g')
+    if is_in $optname $SYSCONF_LIST; then
+        eval $optname=$optval
+    elif is_in $optname $EXTRA_LIST; then
+	action="add_$optname"
+	$action ${optval}
+    else
+        bad_options="$ac_option $bad_options"
+    fi
     ;;
   esac
 done
+
+enabled profile     && add_ldflags "-pg"
+test -n $debug      && add_ldflags $debug
+
+if enabled gcov ; then
+add_cflags "-fprofile-arcs -ftest-coverage"
+add_extralibs "-lgcov"
+fi
 
 guess_target config.mak config.h
 test_optimizations config.mak config.h
@@ -168,7 +204,7 @@ fi
 echo "$win32libdir"
 
 echocheck "Program name"
-prog_alias="mplayerxp$psuffix"
+prog_alias="mplayerxp$program_suffix"
 echores "$prog_alias"
 # Atmos: moved this here, to be correct, if --prefix is specified
 test -z "$datadir" && datadir="$prefix/share/$prog_alias"
@@ -194,19 +230,14 @@ esac
 echores "$fastcall"
 fi
 
-# Checking for CFLAGS
-_def_fastcall='#undef __USE_FASTCALL'
-if test "$fastcall" = yes && test -z "$profile" ; then
-_def_fastcall='#define __USE_FASTCALL 1'
-fi
+
+test -n "$profile"	&& disable fastcall
+print_config __USE mp_config.h mp_config.mak fastcall
 
 if test "$profile" || test "$debug" ; then
-  CFLAGS="-W -Wall -O2 $debug $profile -fno-builtin"
 cat >> config.h << EOF
 #define DEBUG
 EOF
-elif test -z "$CFLAGS" ; then
-    CFLAGS="-O2"
 fi
 
 require2 vsscanf "stdio.h stdarg.h" vsscanf
@@ -240,7 +271,6 @@ echo "EXTRALIBS=$extralibs" >> config.mak
 echo "LDFLAGS=$LDFLAGS" >> config.mak
 echo "ASFLAGS=$ASFLAGS" >> config.mak
 
-
 #############################################################################
 echo "Creating config.h"
 cat >> config.h << EOF
@@ -261,7 +291,6 @@ cat >> config.h << EOF
 #define dbg_printf(...)
 #endif
 
-$def_fastcall
 $def_win32_cmt
 $def_win32_loader
 

@@ -414,7 +414,7 @@ test -n "$profile"	&& disable fastcall
 print_config __USE mp_config.h mp_config.mak fastcall
 
 enabled profile     && add_ldflags "-pg"
-test -n $debug	    && add_ldflags $debug
+test -n $debug      && add_ldflags $debug
 
 if enabled gcov ; then
 add_cflags "-fprofile-arcs -ftest-coverage"
