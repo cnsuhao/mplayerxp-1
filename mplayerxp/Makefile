@@ -29,21 +29,14 @@ SRCS_MPLAYER = mplayer.c $(SRCS_COMMON) find_sub.c subreader.c mixer.c vobsub.c 
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 
-MP_LIBS = libmpdemux/libmpdemux.a
-ifeq ($(HAVE_CSS),yes)
-MP_LIBS += libmpdemux/librtsp/librtsp.a \
-           libmpdemux/realrtsp/librealrtsp.a \
-	   libmpdemux/freesdp/libfreesdp.a
-endif
-MP_LIBS += libmpcodecs/libmpcodecs.a \
-	   libmpcodecs/libnuppelvideo/libnuppelvideo.a \
-	   libao2/libao2.a \
-	   postproc/libpostproc.a \
-	   postproc/libmenu/libmenu.a \
-	   input/libinput.a \
-	   libvo/libvo.a \
-	   osdep/libosdep.a \
-	   nls/libnls.a
+MP_LIBS = libmpdemux/libmpdemux.a \
+	  libmpcodecs/libmpcodecs.a \
+	  libao2/libao2.a \
+	  postproc/libpostproc.a \
+	  input/libinput.a \
+	  libvo/libvo.a \
+	  osdep/libosdep.a \
+	  nls/libnls.a
 
 COMMON_LIBS = $(MP_LIBS) $(EXTRALIBS) -lm
 CFLAGS = $(OPTFLAGS) -Ilibmpdemux -Ilibvo $(EXTRA_INC)

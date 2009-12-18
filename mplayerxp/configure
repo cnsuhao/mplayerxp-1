@@ -257,6 +257,7 @@ program_suffix=
 pkg_config=pkg-config
 debug=
 language=
+prefix="/usr/local"
 for ac_option do
   optval="${ac_option#*=}"
   case "$ac_option" in

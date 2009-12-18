@@ -1,7 +1,5 @@
 include ../../mp_config.mak
 
-LIBNAME = librtsp.a
-
 SRCS = rtsp.c \
        rtsp_rtp.c  \
        rtsp_session.c
@@ -11,16 +9,10 @@ CFLAGS  = $(OPTFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
 
 .SUFFIXES: .c .o
 
-# .PHONY: all clean
-
-all:    $(LIBNAME)
+all:    $(OBJS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
-
-$(LIBNAME):     $(OBJS)
-	$(AR) r $(LIBNAME) $(OBJS)
-
 
 clean:
 	rm -f *.o *.a *~

@@ -4,6 +4,7 @@ LIBNAME = libmpdemux.a
 include ../mp_config.mak
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
+DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 SRCS  = s_file.c s_ffmpeg.c
 ifeq ($(HAVE_CDDA),yes)
@@ -50,16 +51,24 @@ CFLAGS  = $(OPTFLAGS) $(INCLUDE) -W -Wall
 
 .SUFFIXES: .c .o
 
-# .PHONY: all clean
+.PHONY: $(SUBDIRS)
 
-all:	$(LIBNAME) $(SUBDIRS)
-	$(DO_MAKE)
+all:	$(LIBNAME)
+
+$(SUBDIRS):
+	$(DO_ALL)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-$(LIBNAME):	$(OBJS)
+$(LIBNAME): $(SUBDIRS) $(OBJS)
 	$(AR) r $(LIBNAME) $(OBJS)
+ifeq ($(HAVE_STREAMING),yes)
+	$(AR) r $(LIBNAME) \
+	$(wildcard freesdp/*.o) \
+	$(wildcard librtsp/*.o) \
+	$(wildcard realrtsp/*.o)
+endif
 
 test:	$(LIBNAME) test.c
 	$(CC) $(CFLAGS) test.c ../mp_msg.c ../linux/shmem.c -o test -L. -lmpdemux -ldvdread -lz -lpthread
