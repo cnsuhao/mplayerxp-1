@@ -169,14 +169,6 @@ for ac_option do
   esac
 done
 
-enabled profile     && add_ldflags "-pg"
-test -n $debug      && add_ldflags $debug
-
-if enabled gcov ; then
-add_cflags "-fprofile-arcs -ftest-coverage"
-add_extralibs "-lgcov"
-fi
-
 guess_target config.mak config.h
 test_optimizations config.mak config.h
 

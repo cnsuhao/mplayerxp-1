@@ -7,8 +7,11 @@ DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 SRCS  = s_file.c s_ffmpeg.c
-ifeq ($(HAVE_CDDA),yes)
-SRCS += s_cdd.c
+ifeq ($(HAVE_LIBCDIO),yes)
+SRCS += s_cdd.c cdda.c
+ifeq ($(HAVE_STREAMING),yes)
+SRCS += cddb.c
+endif
 endif
 ifeq ($(USE_DVDNAV),yes)
 SRCS += s_dvdnav.c
@@ -27,7 +30,7 @@ ifeq ($(HAVE_VCD),yes)
 SRCS += s_vcd.c
 endif
 SRCS += cache2.c dvdauth.c stream.c tvi_dummy.c tvi_v4l.c
-SRCS += tvi_bsdbt848.c frequencies.c cdda.c cddb.c mrl.c
+SRCS += tvi_bsdbt848.c frequencies.c mrl.c
 
 SRCS += demuxer_r.c mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
 SRCS += demux_avi.c demux_mov.c parse_mp4.c demux_mpg.c demux_viv.c demuxer.c

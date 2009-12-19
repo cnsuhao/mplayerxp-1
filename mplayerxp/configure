@@ -76,7 +76,7 @@ Optional features:
   --disable-vidix        disable VIDIX stuff [autodetect]
   --enable-joystick      enable joystick support [autodetect]
   --disable-sdl-image    build with SDL_image support [autodetect]
-  --disable-cdparanoia   Disable cdparanoia support [autodetect]
+  --disable-libcdio      Disable libcdio support [autodetect]
   --disable-libcss       Disable libcss support [autodetect]
   --disable-libdvdread   Disable libdvdread support [autodetect]
   --disable-libdvdnav    Disable libdvdnav support [autodetect]
@@ -171,7 +171,7 @@ ENABLED_LIST='
     openal
     nas
     jack
-    cdparanoia
+    libcdio
     fbdev
     jpg
     lirc
@@ -413,14 +413,6 @@ test $($pkg_config --version 2>/dev/null) || die "no pkg-config found"
 #############################################################################
 test -n "$profile"	&& disable fastcall
 print_config __USE mp_config.h mp_config.mak fastcall
-
-enabled profile     && add_ldflags "-pg"
-test -n $debug      && add_ldflags $debug
-
-if enabled gcov ; then
-add_cflags "-fprofile-arcs -ftest-coverage"
-add_extralibs "-lgcov"
-fi
 
 test_optimizations mp_config.mak mp_config.h
 
@@ -707,10 +699,9 @@ fi
 enabled sdl	&& aomodules="sdl $aomodules" || noaomodules="sdl $noaomodules"
 enabled sdl	&& vomodules="sdl $vomodules" || novomodules="sdl $novomodules"
 
-enabled cdparanoia	&& require2 cdparanoia "cdda_interface.h cdda_paranoia.h" cdda_open -lcdda_interface -lcdda_paranoia
-cdda=$cdparanoia
-print_config HAVE_ mp_config.h mp_config.mak cdda
-enabled cdparanoia	&& inputmodules="cdda $inputmodules" || noinputmodules="cdda $noinputmodules"
+enabled libcdio	&& require2 libcdio "cdio/paranoia.h" cdio_paranoia_read -lcdio_paranoia
+print_config HAVE_ mp_config.h mp_config.mak libcdio
+enabled libcdio	&& inputmodules="cdda $inputmodules" || noinputmodules="cdda $noinputmodules"
 
 #########
 # AUDIO #

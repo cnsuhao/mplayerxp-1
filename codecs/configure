@@ -292,11 +292,6 @@ fi
 test -n "$profile"	&& disable fastcall
 print_config __USE config.h config.mak fastcall
 
-# Checking for LDFLAGS
-if test "$profile" || test "$debug" ; then
-    LDFLAGS="$debug $profile"
-fi
-
 test_optimizations config.mak config.h
 
 test -n "$ld_extra"	&& add_extralibs $ld_extra

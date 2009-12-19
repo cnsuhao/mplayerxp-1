@@ -14,7 +14,7 @@
 
 #include "../mp_config.h"
 
-#if defined(HAVE_CDDA) && defined(HAVE_STREAMING)
+#if defined(HAVE_LIBCDIO) && defined(HAVE_STREAMING)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,7 +127,7 @@ unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
 	unsigned int i, t = 0, n = 0;
 
 	i = 0;
-	while (i < tot_trks) {
+	while (i < (unsigned)tot_trks) {
 		n = n + cddb_sum((cdtoc[i].min * 60) + cdtoc[i].sec);
 		i++;
 	}
@@ -251,7 +251,7 @@ int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
 		close(file_fd);
 		return -1;
 	}
-	if( wrote!=cddb_data->xmcd_file_size ) {
+	if( (unsigned)wrote!=cddb_data->xmcd_file_size ) {
 		MSG_FATAL("Not all the xmcd file has been written\n");
 		close(file_fd);
 		return -1;
@@ -301,7 +301,7 @@ static int cddb_read_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 			}
 			// Ok found the end
 			// do a sanity check
-			if( http_hdr->body_size<(ptr2-ptr) ) {
+			if( http_hdr->body_size<(unsigned long)(ptr2-ptr) ) {
 				MSG_ERR("Unexpected fix me\n");
 				return -1;
 			}
@@ -446,7 +446,7 @@ int __FASTCALL__ cddb_get_proto_level(cddb_data_t *cddb_data) {
 
 static int cddb_freedb_sites_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 	int ret, status;
-	
+	UNUSED(cddb_data);
 	ret = sscanf( http_hdr->body, "%d ", &status);
 	if( ret!=1 ) {
 		MSG_ERR("Parse error\n");
@@ -494,11 +494,12 @@ void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
 int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	char offsets[1024], command[1024];
 	char *ptr;
+	unsigned idx;
 	int i, time_len;
 
 	ptr = offsets;
-	for( i=0; i<cddb_data->tracks ; i++ ) {
-		ptr += sprintf(ptr, "%d+", cdtoc[i].frame );
+	for( idx=0; idx<cddb_data->tracks ; idx++ ) {
+		ptr += sprintf(ptr, "%d+", cdtoc[idx].frame );
 	}
 	time_len = (cdtoc[cddb_data->tracks].frame)/75;
 
@@ -584,7 +585,6 @@ cd_info_t* __FASTCALL__ cd_info_new() {
 
 void __FASTCALL__ cd_info_free(cd_info_t *cd_info) {
 	cd_track_t *cd_track, *cd_track_next;
-	int i;
 	if( cd_info==NULL ) return;
 	if( cd_info->artist!=NULL ) free(cd_info->artist);
 	if( cd_info->album!=NULL ) free(cd_info->album);
@@ -600,7 +600,7 @@ void __FASTCALL__ cd_info_free(cd_info_t *cd_info) {
 }
 
 cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name, unsigned int track_nb, unsigned int min, unsigned int sec, unsigned int msec, unsigned long frame_begin, unsigned long frame_length) {
-	cd_track_t *cd_track, current_track;
+	cd_track_t *cd_track;
 	
 	if( cd_info==NULL || track_name==NULL ) return NULL;
 	
@@ -769,14 +769,14 @@ cd_info_t* __FASTCALL__ cddb_parse_xmcd(char *xmcd_file) {
 			// Search for the genre
 			else if( xmcd_parse_dgenre(cd_info, ptr) );
 			// Search for a track title
-			else if( xmcd_parse_ttitle(cd_info, ptr) );
+			else if( xmcd_parse_ttitle(cd_info, ptr) ){}
 		}
 		if( ptr2[1]=='\n' ) ptr2++;
 		pos = (ptr2+1)-ptr;
 		ptr = ptr2+1;
 	}
 
-	audiolen = cdtoc[cd_info->nb_tracks].frame-cdtoc[0].frame;	
+	audiolen = cdtoc[cd_info->nb_tracks].frame-cdtoc[0].frame;
 	cd_info->min  = (unsigned int)(audiolen/(60*75));
 	cd_info->sec  = (unsigned int)((audiolen/75)%60);
 	cd_info->msec = (unsigned int)(audiolen%75);
@@ -786,7 +786,6 @@ cd_info_t* __FASTCALL__ cddb_parse_xmcd(char *xmcd_file) {
 
 int __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *track) {
 	cd_info_t *cd_info = NULL;
-	cdda_priv *priv;
 	char *xmcd_file = NULL;
 	int ret;
 	
@@ -794,19 +793,10 @@ int __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *track) 
 	if( ret==0 ) {
 		cd_info = cddb_parse_xmcd(xmcd_file);
 		free(xmcd_file);
-		cd_info_debug( cd_info );	
+		cd_info_debug( cd_info );
 	}
 	ret = open_cdda(stream, dev, track);
 
-	priv = ((cdda_priv*)(stream->priv));
-	if(priv)
-	{
-	    cd_info_debug(priv->cd_info);
-	    if( cd_info!=NULL ) { 
-		cd_info_free(priv->cd_info);
-		priv->cd_info = cd_info;
-	    }	
-	}
 	return ret;
 }
 #endif

@@ -1109,9 +1109,23 @@ add_ldflags -m32
 add_asflags --32
 fi
 
+if test -z $CFLAGS ; then
 add_cflags $locarch
+fi
 if enabled profile || test "$debug" || enabled gcov; then
-  add_cflags "-O2 -fno-builtin $debug $profile"
+    add_cflags "-O2 -fno-builtin"
+if enabled profile ; then
+    add_cflags  "-pg"
+    add_ldflags "-pg"
+fi
+if test -n $debug ; then
+    add_cflags $debug
+    add_ldflags $debug
+fi
+if enabled gcov ; then
+add_cflags "-fprofile-arcs -ftest-coverage"
+add_extralibs "-lgcov"
+fi
 else
   add_cflags "-O3"
 # -ffast-math produces incorrect output in 64-bit mode on x86_64 cpus. Tested with many gcc-4.x series

@@ -1,8 +1,8 @@
 #ifndef __CDD_H__
 #define __CDD_H__
 
-#include <cdda_interface.h>
-#include <cdda_paranoia.h>
+#include <cdio/cdda.h>
+#include <cdio/paranoia.h>
 
 typedef struct {
 	char cddb_hello[1024];
@@ -47,13 +47,22 @@ typedef struct {
 	cd_track_t *current;
 } cd_info_t;
 
+typedef struct my_track_s {
+	int play;
+	unsigned long start_sector;
+	unsigned long end_sector;
+}my_track_t;
+
 typedef struct {
-	cdrom_drive* cd;
-	cdrom_paranoia* cdp;
-	int sector;
-	int start_sector;
-	int end_sector;
-	cd_info_t *cd_info;
+	cdrom_drive_t* cd;
+	cdrom_paranoia_t* cdp;
+	my_track_t tracks[256]; /* hope that's enough */
+	unsigned min;
+	unsigned sec;
+	unsigned msec;
+	unsigned long sector;
+	unsigned long start_sector;
+	unsigned long end_sector;
 } cdda_priv;
 
 cd_info_t* __FASTCALL__ cd_info_new();
@@ -63,8 +72,8 @@ cd_track_t* __FASTCALL__ cd_info_get_track(cd_info_t *cd_info, unsigned int trac
 
 int __FASTCALL__ open_cdda(stream_t*,const char* dev,const char* track);
 int __FASTCALL__ open_cddb(stream_t*,const char* dev,const char* track);
-int __FASTCALL__ read_cdda(stream_t* s,char *buf,int* trackidx);
-void __FASTCALL__ seek_cdda(stream_t* s,off_t pos);
+int __FASTCALL__ read_cdda(stream_t* s,char *buf,track_t* trackidx);
+void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *trackidx);
 off_t __FASTCALL__ tell_cdda(stream_t* s);
 void __FASTCALL__ close_cdda(stream_t* s);
 void cdda_register_options(m_config_t* cfg);

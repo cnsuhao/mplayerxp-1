@@ -2,15 +2,16 @@
     s_cdd - cdda & cddb streams interface
 */
 #include "../mp_config.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
 
-#ifdef HAVE_CDDA
+#ifdef HAVE_LIBCDIO
 #include "cdd.h"
 #include "mrl.h"
 
-static int track_idx=-1;
+static track_t track_idx=255;
 static int __FASTCALL__ _cdda_open(stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
@@ -58,7 +59,7 @@ static int __FASTCALL__ cdd_read(stream_t*stream,stream_packet_t*sp)
 
 static off_t __FASTCALL__ cdd_seek(stream_t*stream,off_t pos)
 {
-    seek_cdda(stream,pos);
+    seek_cdda(stream,pos,&track_idx);
     return pos;
 }
 
@@ -74,23 +75,20 @@ static void __FASTCALL__ cdd_close(stream_t*stream)
 
 static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,void *args)
 {
-    cdda_priv *priv=s->priv;
-    cd_track_t*tr=NULL;
+    cdda_priv *p=s->priv;
     switch(cmd)
     {
 	case SCTRL_TXT_GET_STREAM_NAME:
 	{
-	    if(track_idx!=-1) tr=cd_info_get_track(priv->cd_info,track_idx);
-	    if(tr)
-	    {
-		strncpy(args,tr->name,256);
-		((char *)args)[255]=0;
-	    }
+	    if(track_idx!=255)
+		sprintf((char *)args,"Track %d",track_idx);
 	    return SCTRL_OK;
 	}
 	break;
 	case SCTRL_AUD_GET_CHANNELS:
-		*(int *)args=2;
+		*(int *)args=cdio_cddap_track_channels(p->cd, track_idx);
+		if(*(int *)args<=0) *(int *)args=2;
+		MSG_V("cdda channels: %u\n",*(int *)args);
 		return SCTRL_OK;
 	case SCTRL_AUD_GET_SAMPLERATE:
 		*(int *)args = 44100;

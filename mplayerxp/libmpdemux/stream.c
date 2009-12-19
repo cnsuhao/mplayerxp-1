@@ -22,7 +22,7 @@
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-#ifdef HAVE_CDDA
+#ifdef HAVE_LIBCDIO
 extern const stream_driver_t cdda_stream;
 extern const stream_driver_t cddb_stream;
 #endif
@@ -54,9 +54,11 @@ extern const stream_driver_t file_stream;
 
 static const stream_driver_t *sdrivers[] =
 {
-#ifdef HAVE_CDDA
+#ifdef HAVE_LIBCDIO
     &cdda_stream,
+#ifdef HAVE_STREAMING
     &cddb_stream,
+#endif
 #endif
 #ifdef USE_DVDNAV
     &dvdnav_stream,
