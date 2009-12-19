@@ -73,18 +73,18 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* track) {
       end_track = atoi(ed);
     }
   }
-    
+
   if(generic_dev)
-    cdd = cdda_identify_scsi(generic_dev,dev,0,NULL);
+    cdd = cdda_identify_scsi(generic_dev,dev,verbose?1:0,NULL);
   else
-    cdd = cdda_identify(dev,0,NULL);
+    cdd = cdda_identify(dev,verbose?1:0,NULL);
 
   if(!cdd) {
-    MSG_ERR("Can't open cdda device\n");
+    MSG_ERR("Can't open cdda device: %s\n",dev);
     return 0;
   }
 
-  cdda_verbose_set(cdd, CDDA_MESSAGE_FORGETIT, CDDA_MESSAGE_FORGETIT);
+  cdda_verbose_set(cdd, verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT, verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT);
 
   if(sector_size) {
     cdd->nsectors = sector_size;
@@ -154,7 +154,7 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* track) {
     mode = PARANOIA_MODE_OVERLAP;
   else
     mode = PARANOIA_MODE_FULL;
-  
+
   if(no_skip)
     mode |= PARANOIA_MODE_NEVERSKIP;
 
@@ -180,8 +180,8 @@ int __FASTCALL__ read_cdda(stream_t* s,char *buf,int *tr) {
   cd_track_t *cd_track;
   int16_t * _buf;
   unsigned int i;
-  
-  *tr==-1;
+
+  *tr=-1;
   _buf = paranoia_read(p->cdp,cdparanoia_callback);
 
   p->sector++;
