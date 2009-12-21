@@ -7,7 +7,7 @@ DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 SRCS  = s_file.c s_ffmpeg.c
-ifeq ($(HAVE_LIBCDIO),yes)
+ifeq ($(HAVE_LIBCDIO_CDDA),yes)
 SRCS += s_cdd.c cdda.c
 ifeq ($(HAVE_STREAMING),yes)
 SRCS += cddb.c
@@ -26,7 +26,7 @@ endif
 ifeq ($(USE_LIBVCD),yes)
 SRCS += s_vcdnav.c
 endif
-ifeq ($(HAVE_VCD),yes)
+ifeq ($(HAVE_LIBCDIO),yes)
 SRCS += s_vcd.c
 endif
 SRCS += cache2.c dvdauth.c stream.c tvi_dummy.c tvi_v4l.c

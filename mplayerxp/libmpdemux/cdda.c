@@ -11,13 +11,11 @@
 #include "cdd.h"
 #include "demux_msg.h"
 static int speed = -1;
-static int paranoia_mode = 1;
 static int search_overlap = -1;
 static int no_skip = 0;
 
 static const config_t cdda_opts[] = {
   { "speed", &speed, CONF_TYPE_INT, CONF_RANGE,1,100, NULL },
-  { "paranoia", &paranoia_mode, CONF_TYPE_INT,CONF_RANGE, 0, 2, NULL },
   { "overlap", &search_overlap, CONF_TYPE_INT, CONF_RANGE,0,75, NULL },
   { "noskip", &no_skip, CONF_TYPE_FLAG, 0 , 0, 1, NULL },
   { "skip", &no_skip, CONF_TYPE_FLAG, 0 , 1, 0, NULL },
@@ -72,8 +70,6 @@ static unsigned cdda_parse_tracks(unsigned char *arr,unsigned nelem,const char *
 }
 
 int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
-  lsn_t lsn;
-  int mode = paranoia_mode;
   unsigned cd_tracks;
   cdda_priv* priv;
   unsigned int audiolen=0;
@@ -128,47 +124,20 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
   if(speed)
     cdio_cddap_speed_set(priv->cd,speed);
 
-  priv->cdp = cdio_paranoia_init(priv->cd);
-  if(priv->cdp == NULL) {
-    cdio_cddap_close(priv->cd);
-    free(priv);
-    return 0;
-  }
-
-  mode = PARANOIA_MODE_FULL;
-  if(mode == 0)
-    mode = PARANOIA_MODE_DISABLE;
-  else if(mode == 1)
-    mode = PARANOIA_MODE_OVERLAP;
-
-  if(no_skip)
-    mode |= PARANOIA_MODE_NEVERSKIP;
-
-  cdio_paranoia_modeset(priv->cdp,mode);
-  if(search_overlap >= 0)
-    cdio_paranoia_overlapset(priv->cdp,search_overlap);
-
-  lsn=cdio_paranoia_seek(priv->cdp,priv->start_sector,SEEK_SET);
-  MSG_DBG2("[CDDA] %ld=cdio_paranoia_seek(%p,%ld,SEEK_SET)\n",lsn,priv->cdp,priv->start_sector);
   priv->sector = priv->start_sector;
 
   st->type = STREAMTYPE_SEEKABLE|STREAMTYPE_RAWAUDIO;
   st->priv = priv;
-  st->start_pos = priv->start_sector*CD_FRAMESIZE_RAW;
-  st->end_pos = priv->end_sector*CD_FRAMESIZE_RAW;
+  st->start_pos = priv->start_sector*CDIO_CD_FRAMESIZE_RAW;
+  st->end_pos = priv->end_sector*CDIO_CD_FRAMESIZE_RAW;
 
   return 1;
 }
 
-static void cdparanoia_callback(long int inpos, paranoia_cb_mode_t function) {
-    UNUSED(inpos);
-    UNUSED(function);
-}
-
-static unsigned long map_sector(cdda_priv*p,unsigned long sector,track_t *tr)
+static lsn_t map_sector(cdda_priv*p,lsn_t sector,track_t *tr)
 {
     unsigned i,j;
-    unsigned long cd_track=sector;
+    lsn_t cd_track=sector;
     for(i=0;i<256;i++){
 	if(p->tracks[i].play && p->tracks[i].end_sector==sector-1) {
 		cd_track=0;
@@ -184,8 +153,8 @@ static unsigned long map_sector(cdda_priv*p,unsigned long sector,track_t *tr)
 /* return physical sector address */
 static unsigned long psa(cdda_priv*p,unsigned long sector)
 {
-    unsigned i,j;
-    unsigned long got_sectors=0,track_len;
+    unsigned i;
+    unsigned long got_sectors=p->start_sector,track_len;
     for(i=0;i<256;i++){
 	if(p->tracks[i].play) {
 	    track_len=p->tracks[i].end_sector-p->tracks[i].start_sector;
@@ -198,35 +167,30 @@ static unsigned long psa(cdda_priv*p,unsigned long sector)
 
 int __FASTCALL__ read_cdda(stream_t* s,char *buf,track_t *tr) {
   cdda_priv* p = (cdda_priv*)s->priv;
-  unsigned long cd_track;
-  int16_t * _buf;
   track_t i=255;
 
   *tr=255;
-  _buf = cdio_paranoia_read(p->cdp,cdparanoia_callback);
-
+  if(cdio_cddap_read(p->cd, buf, p->sector, 1)==0) {
+    MSG_ERR("[CD-DA]: read error occured\n");
+    return -1; /* EOF */
+  }
   p->sector++;
-  memcpy(buf,_buf,CD_FRAMESIZE_RAW);
+  if(p->sector == p->end_sector) return -1; /* EOF */
 
-  if(p->sector == p->end_sector) return -1;
-
-  cd_track=map_sector(p,p->sector,&i);
-  if(!cd_track) return -1;
+  p->sector=map_sector(p,p->sector,&i);
+  if(!p->sector) return -1;
   *tr=i+1;
-  MSG_V("Track %d, sector=%d\n", *tr, cd_track);
-  if(cd_track!=p->sector) { cdio_paranoia_seek(p->cdp,cd_track,SEEK_SET); p->sector=cd_track; }
-  return CD_FRAMESIZE_RAW;
+  MSG_V("Track %d, sector=%d\n", *tr, p->sector);
+  return CDIO_CD_FRAMESIZE_RAW;
 }
 
 void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *tr) {
     cdda_priv* p = (cdda_priv*)s->priv;
     long sec;
-    long current_track=0, seeked_track=0;
-    unsigned i;
-    lsn_t lsn;
+    long seeked_track=0;
     track_t j=255;
 
-    sec = pos/CD_FRAMESIZE_RAW;
+    sec = pos/CDIO_CD_FRAMESIZE_RAW;
     MSG_DBG2("[CDDA] prepare seek to %ld\n",sec);
     seeked_track=sec;
     *tr=255;
@@ -234,20 +198,16 @@ void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *tr) {
 	seeked_track = map_sector(p,seeked_track,&j);
 	if(seeked_track) *tr=j+1;
     }
-
-    lsn=cdio_paranoia_seek(p->cdp,seeked_track,SEEK_SET);
-    MSG_DBG2("[CDDA] %ld=cdio_paranoia_seek(%p,%ld,SEEK_SET)\n",lsn,p->cdp,seeked_track);
     p->sector=seeked_track;
 }
 
 off_t __FASTCALL__ tell_cdda(stream_t* s) {
   cdda_priv* p = (cdda_priv*)s->priv;
-  return p->sector*CD_FRAMESIZE_RAW;
+  return p->sector*CDIO_CD_FRAMESIZE_RAW;
 }
 
 void __FASTCALL__ close_cdda(stream_t* s) {
   cdda_priv* p = (cdda_priv*)s->priv;
-  cdio_paranoia_free(p->cdp);
   cdio_cddap_close(p->cd);
   free(p);
 }

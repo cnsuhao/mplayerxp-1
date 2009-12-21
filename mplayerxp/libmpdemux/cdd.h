@@ -2,7 +2,6 @@
 #define __CDD_H__
 
 #include <cdio/cdda.h>
-#include <cdio/paranoia.h>
 
 typedef struct {
 	char cddb_hello[1024];
@@ -49,20 +48,19 @@ typedef struct {
 
 typedef struct my_track_s {
 	int play;
-	unsigned long start_sector;
-	unsigned long end_sector;
+	lsn_t start_sector;
+	lsn_t end_sector;
 }my_track_t;
 
 typedef struct {
 	cdrom_drive_t* cd;
-	cdrom_paranoia_t* cdp;
 	my_track_t tracks[256]; /* hope that's enough */
 	unsigned min;
 	unsigned sec;
 	unsigned msec;
-	unsigned long sector;
-	unsigned long start_sector;
-	unsigned long end_sector;
+	lsn_t sector;
+	lsn_t start_sector;
+	lsn_t end_sector;
 } cdda_priv;
 
 cd_info_t* __FASTCALL__ cd_info_new();

@@ -107,7 +107,7 @@ static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,void *args)
 const stream_driver_t cdda_stream=
 {
     "cdda://",
-    "reads multimedia stream directly from Compact Disc Digital Audio system, or CD-DA",
+    "reads multimedia stream directly from Digital Audio Compact Disc [CD-DA]",
     _cdda_open,
     cdd_read,
     cdd_seek,
@@ -119,7 +119,7 @@ const stream_driver_t cdda_stream=
 const stream_driver_t cddb_stream=
 {
     "cddb://",
-    "reads multimedia stream from Compact Disc Database or CD-DB",
+    "reads multimedia stream from CD-DA but tracks names from CDDB servers",
     _cddb_open,
     cdd_read,
     cdd_seek,

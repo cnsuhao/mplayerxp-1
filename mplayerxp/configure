@@ -80,7 +80,6 @@ Optional features:
   --disable-libcss       Disable libcss support [autodetect]
   --disable-libdvdread   Disable libdvdread support [autodetect]
   --disable-libdvdnav    Disable libdvdnav support [autodetect]
-  --disable-vcd          Disable VCD support [autodetect]
 Video:
   --enable-dga           build with DGA1 or DGA2 support [autodetect]
   --enable-vesa          build with VESA support [autodetect]
@@ -185,7 +184,6 @@ ENABLED_LIST='
     sdl
     sdl_image
     libvcd
-    vcd
     tv_v4l
     x11
     xdpms
@@ -699,9 +697,14 @@ fi
 enabled sdl	&& aomodules="sdl $aomodules" || noaomodules="sdl $noaomodules"
 enabled sdl	&& vomodules="sdl $vomodules" || novomodules="sdl $novomodules"
 
-enabled libcdio	&& require2 libcdio "cdio/paranoia.h" cdio_paranoia_read -lcdio_paranoia
+enabled libcdio	&& require2 libcdio "cdio/cdio.h" cdio_read_mode2_sectors -lcdio
 print_config HAVE_ mp_config.h mp_config.mak libcdio
-enabled libcdio	&& inputmodules="cdda $inputmodules" || noinputmodules="cdda $noinputmodules"
+enabled libcdio	&& inputmodules="vcd $inputmodules" || noinputmodules="vcd $noinputmodules"
+
+
+enabled libcdio && require2 libcdio_cdda "cdio/cdda.h" cdio_cddap_read -lcdio_cdda
+print_config HAVE_ mp_config.h mp_config.mak libcdio_cdda
+enabled libcdio_cdda	&& inputmodules="cdda $inputmodules" || noinputmodules="cdda $noinputmodules"
 
 #########
 # AUDIO #
@@ -770,10 +773,6 @@ enabled libvcd	&& inputmodules="libvcd $inputmodules" || noinputmodules="libvcd 
 
 enabled fastmemcpy	&& x86	|| disable fastmemcpy
 print_config USE_ mp_config.h mp_config.mak fastmemcpy
-
-test linux -o bsdos -o freebsd -o sunos	&& enable vcd	|| disable vcd
-print_config HAVE_ mp_config.h mp_config.mak vcd
-enabled vcd	&& inputmodules="vcd $inputmodules" || noinputmodules="vcd $noinputmodules"
 
 enabled tv && print_config USE_ mp_config.h mp_config.mak tv
 enabled tv	&& inputmodules="tv $inputmodules" || noinputmodules="tv $noinputmodules"
