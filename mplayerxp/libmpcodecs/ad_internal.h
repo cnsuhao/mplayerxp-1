@@ -1,5 +1,5 @@
 #ifdef __AD_ACM /* simply ugly hack */
-#include "wine/msacm.h"
+#include "loader/wine/msacm.h"
 #endif
 #include "codec-cfg.h"
 

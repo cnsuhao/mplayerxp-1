@@ -12,9 +12,9 @@
 //#include "demuxer.h"
 //#include "stheader.h"
 
-#include "wine/mmreg.h"
-#include "wine/avifmt.h"
-#include "wine/vfw.h"
+#include "loader/wine/mmreg.h"
+#include "loader/wine/avifmt.h"
+#include "loader/wine/vfw.h"
 #include "bswap.h"
 
 #include "muxer.h"

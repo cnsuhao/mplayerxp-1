@@ -13,7 +13,7 @@
 #include "af.h"
 #include "../bswap.h"
 #include "dsp.h"
-#include "../../loader/wine/mmreg.h"
+#include "loader/wine/mmreg.h"
 
 // Integer to float conversion through lrintf()
 #ifdef HAVE_LRINTF

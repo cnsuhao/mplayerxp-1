@@ -25,38 +25,13 @@ static const config_t options[] = {
 LIBAD_EXTERN(dmo)
 
 
-#include "../../loader/dmo/DMO_AudioDecoder.h"
+#include "loader/dmo/DMO_AudioDecoder.h"
 
 typedef struct dmo_priv_s
 {
   float pts;
   DMO_AudioDecoder* ds_adec;
 }dmo_priv_t;
-
-static DMO_AudioDecoder* (*DMO_AudioDecoder_Open_ptr)(char* dllname, GUID* guid, WAVEFORMATEX* wf,int out_channels);
-static void (*DMO_AudioDecoder_Destroy_ptr)(DMO_AudioDecoder *this);
-static int (*DMO_AudioDecoder_Convert_ptr)(DMO_AudioDecoder *this, const void* in_data, unsigned int in_size,
-			     void* out_data, unsigned int out_size,
-			     unsigned int* size_read, unsigned int* size_written);
-static int (*DMO_AudioDecoder_GetSrcSize_ptr)(DMO_AudioDecoder *this, int dest_size);
-
-#define DMO_AudioDecoder_Open(a,b,c,d) (*DMO_AudioDecoder_Open_ptr)(a,b,c,d)
-#define DMO_AudioDecoder_Destroy(a) (*DMO_AudioDecoder_Destroy_ptr)(a)
-#define DMO_AudioDecoder_Convert(a,b,c,d,e,f,g) (*DMO_AudioDecoder_Convert_ptr)(a,b,c,d,e,f,g)
-#define DMO_AudioDecoder_GetSrcSize(a,b) (*DMO_AudioDecoder_GetSrcSize_ptr)(a,b)
-
-static void *dll_handle;
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  DMO_AudioDecoder_Open_ptr = ld_sym(dll_handle,"DMO_AudioDecoder_Open");
-  DMO_AudioDecoder_Destroy_ptr = ld_sym(dll_handle,"DMO_AudioDecoder_Destroy");
-  DMO_AudioDecoder_Convert_ptr = ld_sym(dll_handle,"DMO_AudioDecoder_Convert");
-  DMO_AudioDecoder_GetSrcSize_ptr = ld_sym(dll_handle,"DMO_AudioDecoder_GetSrcSize");
-  return DMO_AudioDecoder_Open_ptr && DMO_AudioDecoder_Destroy_ptr && DMO_AudioDecoder_Convert_ptr &&
-	 DMO_AudioDecoder_GetSrcSize_ptr;
-}
-
 
 static int init(sh_audio_t *sh)
 {
@@ -72,7 +47,6 @@ static int preinit(sh_audio_t *sh_audio)
       audio_output_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
   if(!(sh_audio->context=malloc(sizeof(dmo_priv_t)))) return 0;
   priv=sh_audio->context;
-  if(!load_lib(wineld_name("DMO_Filter"SLIBSUFFIX))) return 0;
   if(!(priv->ds_adec=DMO_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf,chans)))
   {
     MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
@@ -94,7 +68,6 @@ static void uninit(sh_audio_t *sh)
     dmo_priv_t*priv = sh->context;
     DMO_AudioDecoder_Destroy(priv->ds_adec);
     free(priv);
-    dlclose(dll_handle);
 }
 
 static int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)

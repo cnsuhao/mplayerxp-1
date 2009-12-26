@@ -8,9 +8,9 @@
 #include "../mp_config.h"
 #include "../version.h"
 
-#include "wine/mmreg.h"
-#include "wine/avifmt.h"
-#include "wine/vfw.h"
+#include "loader/wine/mmreg.h"
+#include "loader/wine/avifmt.h"
+#include "loader/wine/vfw.h"
 
 #include "muxer.h"
 

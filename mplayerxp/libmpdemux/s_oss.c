@@ -20,7 +20,7 @@
 #include "../postproc/af.h"
 #include "../libao2/afmt.h"
 #include "../libao2/audio_out.h"
-#include "../../loader/wine/mmreg.h"
+#include "loader/wine/mmreg.h"
 #include "stream.h"
 #include "mrl.h"
 

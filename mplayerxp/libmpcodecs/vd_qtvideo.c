@@ -10,7 +10,7 @@
 #include "codecs_ld.h"
 
 #ifdef WIN32_LOADER
-#include "../../loader/ldt_keeper.h"
+#include "loader/ldt_keeper.h"
 #endif
 #include "codecs_ld.h"
 #include "vd_msg.h"
@@ -35,45 +35,19 @@ LIBVD_EXTERN(qtvideo)
 #include <QuickTime/ImageCodec.h>
 #define dump_ImageDescription(x)
 #else
-#include "../../loader/qtx/qtxsdk/components.h"
+#include "loader/qtx/qtxsdk/components.h"
 #endif
 
 //#include "wine/windef.h"
-
-static HMODULE  (* WINAPI LoadLibraryA_ptr)(LPCSTR);
-static FARPROC  (* WINAPI GetProcAddress_ptr)(HMODULE,LPCSTR);
-static int      (* WINAPI FreeLibrary_ptr)(HMODULE);
-#ifdef WIN32_LOADER
-static ldt_fs_t* (*Setup_LDT_Keeper_ptr)(void);
-#endif
-
-#define LoadLibraryA(a) (*LoadLibraryA_ptr)(a)
-#define GetProcAddress(a,b) (*GetProcAddress_ptr)(a,b)
-#define FreeLibrary(a) (*FreeLibrary_ptr)(a)
-#define Setup_LDT_Keeper() (*Setup_LDT_Keeper_ptr)()
-
-static void *dll_handle;
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  LoadLibraryA_ptr = ld_sym(dll_handle,"LoadLibraryA");
-  GetProcAddress_ptr = ld_sym(dll_handle,"GetProcAddress");
-  FreeLibrary_ptr = ld_sym(dll_handle,"FreeLibrary");
-#ifdef WIN32_LOADER
-  Setup_LDT_Keeper_ptr = ld_sym(dll_handle,"Setup_LDT_Keeper");
-#endif
-  return LoadLibraryA_ptr && GetProcAddress_ptr && FreeLibrary_ptr
-#ifdef WIN32_LOADER
-	&& Setup_LDT_Keeper_ptr
-#endif
-	;
-}
+HMODULE   WINAPI LoadLibraryA(LPCSTR);
+FARPROC   WINAPI GetProcAddress(HMODULE,LPCSTR);
+int       WINAPI FreeLibrary(HMODULE);
 
 //static ComponentDescription desc; // for FindNextComponent()
 static ComponentInstance ci=NULL; // codec handle
 //static CodecInfo cinfo;	// for ImageCodecGetCodecInfo()
 //Component prev=NULL;
-//ComponentResult cres; // 
+//ComponentResult cres; //
 static CodecCapabilities codeccap; // for decpar
 static CodecDecompressParams decpar; // for ImageCodecPreDecompress()
 //static ImageSubCodecDecompressCapabilities icap; // for ImageCodecInitialize()
@@ -108,7 +82,7 @@ static    ComponentResult (*ImageCodecPreDecompress)(ComponentInstance      ci,
                                  CodecDecompressParams * params);
 static    ComponentResult (*ImageCodecBandDecompress)(ComponentInstance      ci,
                                  CodecDecompressParams * params);
-static    PixMapHandle    (*GetGWorldPixMap)(GWorldPtr offscreenGWorld);                  
+static    PixMapHandle    (*GetGWorldPixMap)(GWorldPtr offscreenGWorld);
 static    OSErr           (*QTNewGWorldFromPtr)(GWorldPtr *gw,
 			       OSType pixelFormat,
 			       const Rect *boundsRect,
@@ -117,7 +91,7 @@ static    OSErr           (*QTNewGWorldFromPtr)(GWorldPtr *gw,
                                GWorldFlags flags,
                                void *baseAddr,
                                long rowBytes); 
-static    OSErr           (*NewHandleClear)(Size byteCount);                          
+static    OSErr           (*NewHandleClear)(Size byteCount);
 
 // to set/get/query special features/parameters
 static int control(sh_video_t *sh,int cmd,void* arg,...){
@@ -155,8 +129,6 @@ static int init(sh_video_t *sh){
 	MSG_FATAL("Disabling video:\nwin32 quicktime DLLs must be initialized in single-threaded mode! Try -nocache\n");
 	return 0;
     }
-    if(!load_lib(wineld_name("libloader"SLIBSUFFIX))) return 0;
-
 #ifdef MACOSX
     EnterMovies();
 #else
@@ -335,7 +307,6 @@ static void uninit(sh_video_t *sh){
 #ifdef MACOSX
     ExitMovies();
 #endif
-    dlclose(dll_handle);
 }
 
 // decode a frame

@@ -5,7 +5,7 @@
 #include "ad_internal.h"
 #include "mp_config.h"
 #include "help_mp.h"
-#include "interface/dshow/DS_AudioDecoder.h"
+#include "loader/dshow/DS_AudioDecoder.h"
 #include "codecs_ld.h"
 
 static const ad_info_t info =
@@ -20,34 +20,13 @@ static const config_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-LIBAD_EXTERN(divx)
+LIBAD_EXTERN(dshow)
 
 typedef struct dshow_priv_s
 {
   float pts;
   DS_AudioDecoder* ds_adec;
 }dshow_priv_t;
-
-DS_AudioDecoder * (*DS_AudioDecoder_Open_ptr)(char* dllname, GUID* guid, WAVEFORMATEX* wf);
-int (*DS_AudioDecoder_Convert_ptr)(DS_AudioDecoder *this, const void* in_data, unsigned int in_size,
-			     void* out_data, unsigned int out_size,
-			     unsigned int* size_read, unsigned int* size_written);
-int (*DS_AudioDecoder_GetSrcSize_ptr)(DS_AudioDecoder *this, int dest_size);
-void (*DS_AudioDecoder_Destroy_ptr)(DS_AudioDecoder *this);
-
-static void *dll_handle;
-
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  DS_AudioDecoder_Open_ptr = ld_sym(dll_handle,"DS_AudioDecoder_Open");
-  DS_AudioDecoder_Destroy_ptr = ld_sym(dll_handle,"DS_AudioDecoder_Destroy");
-  DS_AudioDecoder_Convert_ptr = ld_sym(dll_handle,"DS_AudioDecoder_Convert");
-  DS_AudioDecoder_GetSrcSize_ptr = ld_sym(dll_handle,"DS_AudioDecoder_GetSrcSize");
-  return DS_AudioDecoder_Open_ptr && DS_AudioDecoder_Convert_ptr &&
-	 DS_AudioDecoder_GetSrcSize_ptr && DS_AudioDecoder_Destroy_ptr;
-}
-
 
 int init(sh_audio_t *sh)
 {
@@ -58,9 +37,8 @@ int preinit(sh_audio_t *sh_audio)
 {
   dshow_priv_t *priv;
   if(!(sh_audio->context=malloc(sizeof(dshow_priv_t)))) return 0;
-  if(!load_lib(wineld_name("DS_Filter"SLIBSUFFIX))) return 0;
   priv=sh_audio->context;
-  if(!(priv->ds_adec=(*DS_AudioDecoder_Open_ptr)(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf)))
+  if(!(priv->ds_adec=DS_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf)))
   {
     MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
     free(sh_audio->context);
@@ -79,9 +57,8 @@ int preinit(sh_audio_t *sh_audio)
 void uninit(sh_audio_t *sh)
 {
   dshow_priv_t* priv = sh->context;
-  (*DS_AudioDecoder_Destroy_ptr)(priv->ds_adec);
+  DS_AudioDecoder_Destroy(priv->ds_adec);
   free(priv);
-  dlclose(dll_handle);
 }
 
 int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)
@@ -115,7 +92,7 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,f
   int len=-1;
       { int size_in=0;
         int size_out=0;
-        int srcsize=(*DS_AudioDecoder_GetSrcSize_ptr)(priv->ds_adec, maxlen);
+        int srcsize=DS_AudioDecoder_GetSrcSize(priv->ds_adec, maxlen);
         MSG_DBG3("DShow says: srcsize=%d  (buffsize=%d)  out_size=%d\n",srcsize,sh_audio->a_in_buffer_size,maxlen);
         if(srcsize>sh_audio->a_in_buffer_size) srcsize=sh_audio->a_in_buffer_size; // !!!!!!
         if(sh_audio->a_in_buffer_len<srcsize){
@@ -127,7 +104,7 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,f
 	    priv->pts=*pts;
         }
 	else *pts=priv->pts;
-        (*DS_AudioDecoder_Convert_ptr)(priv->ds_adec, sh_audio->a_in_buffer,sh_audio->a_in_buffer_len,
+        DS_AudioDecoder_Convert(priv->ds_adec, sh_audio->a_in_buffer,sh_audio->a_in_buffer_len,
             buf,maxlen, &size_in,&size_out);
         MSG_DBG2("DShow: audio %d -> %d converted  (in_buf_len=%d of %d)  %d\n",size_in,size_out,sh_audio->a_in_buffer_len,sh_audio->a_in_buffer_size,ds_tell_pts_r(sh_audio->ds));
         if(size_in>=sh_audio->a_in_buffer_len){

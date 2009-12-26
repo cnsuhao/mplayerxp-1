@@ -15,7 +15,7 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "../../loader/qtx/qtxsdk/components.h"
+#include "loader/qtx/qtxsdk/components.h"
 #include "../nls/nls.h"
 #include "../subreader.h"
 

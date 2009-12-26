@@ -24,7 +24,7 @@
 #include <string.h>
 
 // for mmioFOURCC:
-#include "wine/avifmt.h"
+#include "loader/wine/avifmt.h"
 #include "libvo/img_format.h"
 #include "codec-cfg.h"
 #define MSGT_CLASS MSGT_CODECCFG

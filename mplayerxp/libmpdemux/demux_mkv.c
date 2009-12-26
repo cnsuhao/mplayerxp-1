@@ -29,7 +29,7 @@
 #include "../libmpcodecs/libnuppelvideo/minilzo.h"
 
 #ifdef USE_QTX_CODECS
-#include "../../loader/qtx/qtxsdk/components.h"
+#include "loader/qtx/qtxsdk/components.h"
 #endif
 #include "demux_msg.h"
 

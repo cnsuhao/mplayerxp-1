@@ -6,7 +6,7 @@
 #define __AD_ACM
 #include "ad_internal.h"
 #include "codecs_ld.h"
-#include "../../loader/wineacm.h"
+#include "loader/wineacm.h"
 #include "../libmpdemux/aviprint.h"
 #include "help_mp.h"
 
@@ -24,46 +24,12 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(msacm)
 
-/* ACM audio and VfW video codecs initialization */
-/* based on the avifile library [http://divx.euro.ru] */
-static MMRESULT WINAPI (*acmStreamConvert_ptr)(HACMSTREAM has, PACMSTREAMHEADER pash, DWORD fdwConvert);
-static MMRESULT WINAPI (*acmStreamOpen_ptr)(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pwfxSrc,PWAVEFORMATEX pwfxDst, PWAVEFILTER pwfltr, DWORD dwCallback,DWORD dwInstance, DWORD fdwOpen);
-static MMRESULT WINAPI (*acmStreamClose_ptr)(HACMSTREAM has, DWORD fdwClose);
-static MMRESULT WINAPI (*acmStreamPrepareHeader_ptr)(HACMSTREAM has, PACMSTREAMHEADER pash, DWORD fdwPrepare);
-static MMRESULT WINAPI (*acmStreamSize_ptr)(HACMSTREAM has, DWORD cbInput,LPDWORD pdwOutputBytes, DWORD fdwSize);
-static MMRESULT WINAPI (*acmStreamUnprepareHeader_ptr)(HACMSTREAM has, PACMSTREAMHEADER pash, DWORD fdwUnprepare);
-static PWINE_ACMDRIVERID (*MSACM_RegisterDriver_ptr)(const char* pszFileName,WORD wFormatTag,HINSTANCE hinstModule);
-#define acmStreamConvert(a,b,c) (*acmStreamConvert_ptr)(a,b,c)
-#define acmStreamOpen(a,b,c,d,e,f,g,h) (*acmStreamOpen_ptr)(a,b,c,d,e,f,g,h)
-#define acmStreamClose(a,b) (*acmStreamClose_ptr)(a,b)
-#define acmStreamPrepareHeader(a,b,c) (*acmStreamPrepareHeader_ptr)(a,b,c)
-#define acmStreamSize(a,b,c,d) (*acmStreamSize_ptr)(a,b,c,d)
-#define acmStreamUnprepareHeader(a,b,c) (*acmStreamUnprepareHeader_ptr)(a,b,c)
-#define MSACM_RegisterDriver(a,b,c) (*MSACM_RegisterDriver_ptr)(a,b,c)
-
 typedef struct acm_priv_s
 {
   float pts;
   WAVEFORMATEX o_wf;   // out format
   HACMSTREAM srcstream;  // handle
 }acm_priv_t;
-
-static void *dll_handle;
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  acmStreamConvert_ptr = ld_sym(dll_handle,"acmStreamConvert");
-  acmStreamOpen_ptr = ld_sym(dll_handle,"acmStreamOpen");
-  acmStreamClose_ptr = ld_sym(dll_handle,"acmStreamClose");
-  acmStreamPrepareHeader_ptr = ld_sym(dll_handle,"acmStreamPrepareHeader");
-  acmStreamSize_ptr = ld_sym(dll_handle,"acmStreamSize");
-  acmStreamUnprepareHeader_ptr = ld_sym(dll_handle,"acmStreamUnprepareHeader");
-  MSACM_RegisterDriver_ptr = ld_sym(dll_handle,"MSACM_RegisterDriver");
-  return acmStreamConvert_ptr && acmStreamOpen_ptr &&
-	 acmStreamPrepareHeader_ptr && acmStreamSize_ptr &&
-	 acmStreamUnprepareHeader_ptr && acmStreamClose_ptr &&
-	 MSACM_RegisterDriver_ptr;
-}
 
 static int init_acm_audio_codec(sh_audio_t *sh_audio){
     HRESULT ret;
@@ -123,8 +89,6 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     if(srcsize<in_fmt->nBlockAlign) srcsize=2*in_fmt->nBlockAlign;
     sh_audio->audio_in_minsize=srcsize; // audio input min. size
     MSG_V("Audio ACM input buffer min. size: %ld\n",srcsize);
-    
-
     sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
     sh_audio->channels=priv->o_wf.nChannels;
     sh_audio->samplerate=priv->o_wf.nSamplesPerSec;
@@ -140,9 +104,9 @@ static int close_acm_audio_codec(sh_audio_t *sh_audio)
 {
     HRESULT ret;
     acm_priv_t *priv=sh_audio->context;
-    
+
     ret = acmStreamClose(priv->srcstream, 0);
-    
+
     if (ret)
     switch(ret)
     {
@@ -157,7 +121,7 @@ static int close_acm_audio_codec(sh_audio_t *sh_audio)
 	default:
 	    MSG_WARN( "ACM_Decoder: unknown error occured: %d\n", ret);
 	    return(0);
-    }    
+    }
 /*    MSACM_UnregisterAllDrivers();*/
     return(1);
 }
@@ -180,7 +144,6 @@ int preinit(sh_audio_t *sh_audio)
   acm_priv_t *priv;
   if(!(sh_audio->context=malloc(sizeof(acm_priv_t)))) return 0;
   priv=sh_audio->context;
-  if(!load_lib(wineld_name("libloader"SLIBSUFFIX))) return 0;
   if(!init_acm_audio_codec(sh_audio)){
     MSG_ERR(MSGTR_ACMiniterror);
     return 0;
@@ -193,7 +156,6 @@ void uninit(sh_audio_t *sh)
 {
   close_acm_audio_codec(sh);
   free(sh->context);
-  dlclose(dll_handle);
 }
 
 int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)
@@ -268,13 +230,13 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,f
 	}
 	hr=acmStreamConvert(priv->srcstream,&ash,0);
 	if(hr){
-	MSG_DBG2("ACM_Decoder: acmStreamConvert error %d\n",(int)hr);
-	switch(hr)
-	{
-	    case ACMERR_NOTPOSSIBLE:
-	    case ACMERR_UNPREPARED:
-		MSG_DBG2( "ACM_Decoder: acmStreamConvert error: probarly not initialized!\n");
-	    }  
+	    MSG_DBG2("ACM_Decoder: acmStreamConvert error %d\n",(int)hr);
+	    switch(hr)
+	    {
+		case ACMERR_NOTPOSSIBLE:
+		case ACMERR_UNPREPARED:
+		    MSG_DBG2( "ACM_Decoder: acmStreamConvert error: probarly not initialized!\n");
+	    }
 	}
 	MSG_DBG2("acm converted %d -> %d\n",ash.cbSrcLengthUsed,ash.cbDstLengthUsed);
 	if(ash.cbSrcLengthUsed>=sh_audio->a_in_buffer_len){

@@ -6,9 +6,8 @@
 #include "ad_internal.h"
 #include "codecs_ld.h"
 #include "interface/vqf.h"
-#ifdef WIN32_LOADER
-#include "../../loader/ldt_keeper.h"
-#endif
+#include "loader/ldt_keeper.h"
+#include "loader/wine/windef.h"
 #include "../libao2/afmt.h"
 #include "../libmpdemux/aviprint.h"
 
@@ -28,16 +27,9 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(twin)
 
-static HMODULE  (* WINAPI LoadLibraryA_ptr)(LPCSTR);
-static FARPROC  (* WINAPI GetProcAddress_ptr)(HMODULE,LPCSTR);
-static int      (* WINAPI FreeLibrary_ptr)(HMODULE);
-#ifdef WIN32_LOADER
-static ldt_fs_t* (*Setup_LDT_Keeper_ptr)(void);
-#endif
-#define LoadLibraryA(a) (*LoadLibraryA_ptr)(a)
-#define GetProcAddress(a,b) (*GetProcAddress_ptr)(a,b)
-#define FreeLibrary(a) (*FreeLibrary_ptr)(a)
-#define Setup_LDT_Keeper() (*Setup_LDT_Keeper_ptr)()
+extern void* WINAPI LoadLibraryA(char* name);
+extern void*  WINAPI GetProcAddress(void* handle, char* func);
+extern int WINAPI FreeLibrary(void* handle);
 
 static int (*TvqInitialize_ptr)( headerInfo *setupInfo, INDEX *index, int dispErrorMessageBox );
 #define TvqInitialize(a,b,c) (*TvqInitialize_ptr)(a,b,c)
@@ -81,23 +73,7 @@ typedef struct vqf_priv_s
   char buf[BBUFSIZ];  /* the bit buffer */
 }vqf_priv_t;
 
-static void *dll_handle;
 static HINSTANCE vqf_dll;
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  LoadLibraryA_ptr = ld_sym(dll_handle,"LoadLibraryA");
-  GetProcAddress_ptr = ld_sym(dll_handle,"GetProcAddress");
-  FreeLibrary_ptr = ld_sym(dll_handle,"FreeLibrary");
-#ifdef WIN32_LOADER
-  Setup_LDT_Keeper_ptr = ld_sym(dll_handle,"Setup_LDT_Keeper");
-#endif
-  return LoadLibraryA_ptr && GetProcAddress_ptr && FreeLibrary_ptr
-#ifdef WIN32_LOADER
-	 && Setup_LDT_Keeper_ptr
-#endif
-	;
-}
 
 static int load_dll( const char *libname )
 {
@@ -199,7 +175,6 @@ int preinit(sh_audio_t *sh_audio)
   vqf_priv_t *priv;
   if(!(sh_audio->context=malloc(sizeof(vqf_priv_t)))) return 0;
   priv=sh_audio->context;
-  if(!load_lib(wineld_name("libloader"SLIBSUFFIX))) return 0;
   if(!load_dll((const char *)sh_audio->codec->dll_name))
   {
     MSG_ERR("win32.dll looks broken :(\n");
@@ -218,7 +193,6 @@ void uninit(sh_audio_t *sh)
   close_vqf_audio_codec(sh);
   free(sh->context);
   FreeLibrary(vqf_dll);
-  dlclose(dll_handle);
 }
 
 int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)

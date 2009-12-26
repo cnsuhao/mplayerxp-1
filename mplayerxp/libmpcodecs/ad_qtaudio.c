@@ -49,23 +49,23 @@ typedef int (__cdecl* LPFUNC1)(long flag);
 typedef int (__cdecl* LPFUNC2)(const SoundComponentData *, const SoundComponentData *,SoundConverter *);
 typedef int (__cdecl* LPFUNC3)(SoundConverter sc);
 typedef int (__cdecl* LPFUNC4)(void);
-typedef int (__cdecl* LPFUNC5)(SoundConverter sc, OSType selector,void * infoPtr);                          
-typedef int (__cdecl* LPFUNC6)(SoundConverter sc, 
-								unsigned long inputBytesTarget,
-								unsigned long *inputFrames,
-								unsigned long *inputBytes,
-								unsigned long *outputBytes );
-typedef int (__cdecl* LPFUNC7)(SoundConverter sc, 
-								const void    *inputPtr, 
-								unsigned long inputFrames,
-								void          *outputPtr,
-								unsigned long *outputFrames,
-								unsigned long *outputBytes );
+typedef int (__cdecl* LPFUNC5)(SoundConverter sc, OSType selector,void * infoPtr);
+typedef int (__cdecl* LPFUNC6)(SoundConverter sc,
+				unsigned long inputBytesTarget,
+				unsigned long *inputFrames,
+				unsigned long *inputBytes,
+				unsigned long *outputBytes );
+typedef int (__cdecl* LPFUNC7)(SoundConverter sc,
+				const void    *inputPtr,
+				unsigned long inputFrames,
+				void          *outputPtr,
+				unsigned long *outputFrames,
+				unsigned long *outputBytes );
 typedef int (__cdecl* LPFUNC8)(SoundConverter sc,
-								void      *outputPtr,
+				void      *outputPtr,
                                 unsigned long *outputFrames,
                                 unsigned long *outputBytes);
-typedef int (__cdecl* LPFUNC9)(SoundConverter         sc) ;                                
+typedef int (__cdecl* LPFUNC9)(SoundConverter         sc);
 
 static HINSTANCE qtml_dll;
 static LPFUNC1 InitializeQTML;
@@ -80,34 +80,9 @@ static LPFUNC9 SoundConverterBeginConversion;
 
 #define siDecompressionParams 2002876005 // siDecompressionParams = FOUR_CHAR_CODE('wave')
 
-static HMODULE  (* WINAPI LoadLibraryA_ptr)(LPCSTR);
-static FARPROC  (* WINAPI GetProcAddress_ptr)(HMODULE,LPCSTR);
-static int      (* WINAPI FreeLibrary_ptr)(HMODULE);
-#ifdef WIN32_LOADER
-static ldt_fs_t* (*Setup_LDT_Keeper_ptr)(void);
-#endif
-#define LoadLibraryA(a) (*LoadLibraryA_ptr)(a)
-#define GetProcAddress(a,b) (*GetProcAddress_ptr)(a,b)
-#define FreeLibrary(a) (*FreeLibrary_ptr)(a)
-#define Setup_LDT_Keeper() (*Setup_LDT_Keeper_ptr)()
-
-static void *dll_handle;
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  LoadLibraryA_ptr = ld_sym(dll_handle,"LoadLibraryA");
-  GetProcAddress_ptr = ld_sym(dll_handle,"GetProcAddress");
-  FreeLibrary_ptr = ld_sym(dll_handle,"FreeLibrary");
-#ifdef WIN32_LOADER
-  Setup_LDT_Keeper_ptr = ld_sym(dll_handle,"Setup_LDT_Keeper");
-#endif
-  return LoadLibraryA_ptr && GetProcAddress_ptr && FreeLibrary_ptr
-#ifdef WIN32_LOADER
-	 && Setup_LDT_Keeper_ptr
-#endif
-	;
-}
-
+HMODULE   WINAPI LoadLibraryA(LPCSTR);
+FARPROC   WINAPI GetProcAddress(HMODULE,LPCSTR);
+int       WINAPI FreeLibrary(HMODULE);
 
 static int loader_init()
 {
@@ -181,8 +156,8 @@ static int loader_init()
     return 0;
 }
 
-static SoundConverter			   myConverter = NULL;
-static SoundComponentData		   InputFormatInfo,OutputFormatInfo;
+static SoundConverter			myConverter = NULL;
+static SoundComponentData		InputFormatInfo,OutputFormatInfo;
 
 static int InFrameSize;
 static int OutFrameSize;
@@ -200,20 +175,19 @@ static int preinit(sh_audio_t *sh){
 	return 0;
     }
     MSG_INFO("win32 libquicktime loader (c) Sascha Sommer\n");
-    if(!load_lib(wineld_name("libloader"SLIBSUFFIX))) return 0;
 
 #ifdef MACOSX
     EnterMovies();
 #else
     if(loader_init()) return 0; // failed to load DLL
-    
+
     MSG_V("loader_init DONE!\n");
 
     error = InitializeQTML(6+16);
     MSG_ERR("InitializeQTML:%i\n",error);
     if(error) return 0;
 #endif
-    
+
 #if 1
 	OutputFormatInfo.flags = InputFormatInfo.flags = 0;
 	OutputFormatInfo.sampleCount = InputFormatInfo.sampleCount = 0;
@@ -244,7 +218,7 @@ static int preinit(sh_audio_t *sh){
     MSG_V("InputBufferSize  = %li\n",InputBufferSize);
     MSG_V("OutputBufferSize = %li\n",OutputBufferSize);
     MSG_V("FramesToGet = %li\n",FramesToGet);
-    
+
     InFrameSize=(InputBufferSize+FramesToGet-1)/FramesToGet;
     OutFrameSize=OutputBufferSize/FramesToGet;
 
@@ -256,7 +230,7 @@ static int preinit(sh_audio_t *sh){
 
     sh->audio_out_minsize=OutputBufferSize;
     sh->audio_in_minsize=InputBufferSize;
-  
+ 
     sh->channels=sh->wf->nChannels;
     sh->samplerate=sh->wf->nSamplesPerSec;
     sh->samplesize=2; //(sh->wf->wBitsPerSample+7)/8;
@@ -301,7 +275,6 @@ static void uninit(sh_audio_t *sh){
 #ifdef MACOSX
     ExitMovies();
 #endif
-    dlclose(dll_handle);
 }
 
 static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts){
@@ -310,7 +283,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
     unsigned long InputBufferSize=0; //size of the input buffer
     unsigned long ConvertedFrames=0;
     unsigned long ConvertedBytes=0;
-    
+
     FramesToGet=minlen/OutFrameSize;
     if(FramesToGet*OutFrameSize<minlen &&
        (FramesToGet+1)*OutFrameSize<=maxlen) ++FramesToGet;
@@ -329,7 +302,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 	if(InputBufferSize>sh->a_in_buffer_len)
 	    FramesToGet=sh->a_in_buffer_len/InFrameSize; // not enough data!
     }
-    
+
 //    printf("\nSoundConverterConvertBuffer(myConv=%p,inbuf=%p,frames=%d,outbuf=%p,&convframes=%p,&convbytes=%p)\n",
 //	myConverter,sh->a_in_buffer,FramesToGet,buf,&ConvertedFrames,&ConvertedBytes);
     error = SoundConverterConvertBuffer(myConverter,sh->a_in_buffer,
@@ -337,7 +310,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 //    printf("SoundConverterConvertBuffer:%i\n",error);
 //    printf("ConvertedFrames = %li\n",ConvertedFrames);
 //    printf("ConvertedBytes = %li\n",ConvertedBytes);
-    
+
 //    InputBufferSize=(ConvertedBytes/OutFrameSize)*InFrameSize; // FIXME!!
     InputBufferSize=FramesToGet*InFrameSize;
     sh->a_in_buffer_len-=InputBufferSize;

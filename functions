@@ -5,6 +5,14 @@
 
 # Prefer these macros to full length text !
 # These macros only return an error code - NO display is done
+# Check how echo works in this /bin/sh
+init_functions(){
+case `echo -n` in
+  -n)	echo_n=	     echo_c='\c';;	# SysV echo
+  *)	echo_n='-n ' echo_c=	;;	# BSD echo
+esac
+}
+
 log(){
     echo "$@" >>"$TMPLOG"
 }
@@ -869,6 +877,10 @@ die() {
 }
 
 mktmps() {
+local I
+for I in "$TMPDIR" "$TEMPDIR" "/tmp" ; do
+  test "$I" && break
+done
 TMPLOG="configure.log"
 rm -f "$TMPLOG"
 TMPC="$I/mplayerxp-conf-$RANDOM-$$.c"
@@ -978,8 +990,8 @@ not() {
 echocheck() {
   if test "$echocheked" != "yes"; then
   echocheked=yes
-  echo "============ Checking for $@ ============" >> "$TMPLOG"
-  echo ${_echo_n} "Checking for $@ ... ${_echo_c}"
+  log "============ Checking for $@ ============"
+  echo $echo_n "Checking for $@ ... "$echo_c
   fi
 }
 
@@ -987,19 +999,14 @@ echocheck() {
 echores() {
   if test "$echocheked" = "yes"; then
   echocheked=no
-  echo "Result is: $@" >> "$TMPLOG"
-  echo "##########################################" >> "$TMPLOG"
-  echo "" >> "$TMPLOG"
+  log "Result is: $@"
+  log "##########################################"
+  log ""
   echo "$@"
   fi
 }
 #############################################################################
 
-# Check how echo works in this /bin/sh
-case `echo -n` in
-  -n)	_echo_n=	_echo_c='\c'	;;	# SysV echo
-  *)	_echo_n='-n '	_echo_c=	;;	# BSD echo
-esac
 
 # Guessing target system
 guess_target() {
@@ -1112,15 +1119,15 @@ fi
 if test -z $CFLAGS ; then
 add_cflags $locarch
 fi
-if enabled profile || test "$debug" || enabled gcov; then
+if enabled profile || test $debug -gt 0 || enabled gcov; then
     add_cflags "-O2 -fno-builtin"
 if enabled profile ; then
     add_cflags  "-pg"
     add_ldflags "-pg"
 fi
-if test -n $debug ; then
-    add_cflags $debug
-    add_ldflags $debug
+if test $debug -gt 0 ; then
+    add_cflags "-g$debug"
+    add_ldflags "-g$debug"
 fi
 if enabled gcov ; then
 add_cflags "-fprofile-arcs -ftest-coverage"
@@ -1213,4 +1220,157 @@ fi
 cat >> $config_h << EOF
 #endif /* MPXP_CONFIG_ARCH */
 EOF
+}
+
+trim()
+{
+    local trimmed=$1
+    trimmed=${trimmed%% }
+    trimmed=${trimmed## }
+    echo $trimmed
+}
+
+print_help(){
+echo "Usage: $0 [OPTION]... [VAR=VALUE]...
+
+To assign environment variables (e.g., CC, CFLAGS...), specify them as
+VAR=VALUE.  See below for descriptions of some of the useful variables.
+
+Defaults for the options are specified in brackets."
+local list="$1[*]"
+list=${!list}
+local index=1
+OLD_IFS=$IFS
+IFS=
+while true
+do
+    local line=$(trim `echo $list | cut -d ',' -f $index`)
+    test -z $line && break
+    local opt=$(trim `echo $line | cut -d '|' -f 1`)
+    local descr=$(trim `echo $line | cut -s -d '|' -f 2`)
+    local opref=$(trim `echo $line | cut -s -d '|' -f 3`)
+    echo "$descr:"
+    opt="$opt[*]"
+    opt=${!opt}
+    local i=1
+    while true
+    do
+	local oval=$(trim `echo $opt | cut -d ',' -f $i`)
+	test -z $oval && break
+	local oopt=$(trim `echo $oval | cut -d '|' -f 1`)
+	local odesc=$(trim `echo $oval | cut -s -d '|' -f 2`)
+	local odef=$(trim `echo $oval | cut -s -d '|' -f 3`)
+	printf "  "
+	test -z $opref || printf "%s" $opref
+#	((for(j=0;j<(25-lpref);j++))) printf " "
+	printf "%-25s %s " ${oopt//_/-} $odesc
+	test -z $odef && echo "" || echo "[$odef]"
+	(( i++ ))
+    done
+    (( index++ ))
+done
+IFS=$OLD_IFS
+}
+
+make_defaults(){
+local list="$1[*]"
+list=${!list}
+local index=1
+OLD_IFS=$IFS
+IFS=
+while true
+do
+    local line=$(trim `echo $list | cut -d ',' -f $index`)
+    test -z $line && break
+    local opt=$(trim `echo $line | cut -d '|' -f 1`)
+    opt="$opt[*]"
+    opt=${!opt}
+    local i=1
+    while true
+    do
+	local oval=$(trim `echo $opt | cut -d ',' -f $i`)
+	test -z $oval && break
+	local oopt=$(trim `echo $oval | cut -d '|' -f 1`)
+	local odef=$(trim `echo $oval | cut -s -d '|' -f 3`)
+	test -z $odef || eval "$oopt=\"$odef\""
+	(( i++ ))
+    done
+    (( index++ ))
+done
+IFS=$OLD_IFS
+}
+
+in_list(){
+local list="$1[*]"
+list=${!list}
+local index=1
+OLD_IFS=$IFS
+IFS=
+while true
+do
+    local line=$(trim `echo $list | cut -d ',' -f $index`)
+    test -z $line && break
+    local opt=$(trim `echo $line | cut -d '|' -f 1`)
+    opt="$opt[*]"
+    opt=${!opt}
+    local i=1
+    while true
+    do
+	local oval=$(trim `echo $opt | cut -d ',' -f $i`)
+	test -z $oval && break
+	local oopt=$(trim `echo $oval | cut -d '|' -f 1`)
+	if test $2 = $oopt ; then
+	    IFS=$OLD_IFS
+	    return 0
+	fi
+	(( i++ ))
+    done
+    (( index++ ))
+done
+IFS=$OLD_IFS
+return 1
+}
+
+make_environment(){
+local list="$1[*]"
+list=${!list}
+local i=1
+OLD_IFS=$IFS
+IFS=
+while true
+do
+	local oval=$(trim `echo $list | cut -s -d ',' -f $i`)
+	test -z $oval && break
+	local oopt=$(trim `echo $oval | cut -d '|' -f 3`)
+	local odef=$(trim `echo $oval | cut -s -d '|' -f 1`)
+	eval "odef=\$$odef"
+	test -z $oopt || test -z $odef || eval "$oopt=\"$odef\""
+	(( i++ ))
+done
+IFS=$OLD_IFS
+}
+
+set_list(){
+local list="$1[*]"
+list=${!list}
+local i=1
+OLD_IFS=$IFS
+IFS=
+while true
+do
+	local oval=$(trim `echo $list | cut -s -d ',' -f $i`)
+	test -z $oval && break
+	local oopt=$(trim `echo $oval | cut -d '|' -f 1`)
+	eval "$oopt=$2"
+	(( i++ ))
+done
+IFS=$OLD_IFS
+}
+
+enable_list(){
+set_list $1 yes
+}
+
+disable_list(){
+set_list $1 no
 }

@@ -24,272 +24,193 @@
 #############################################################################
 . ../functions
 
+init_functions
+
 cd nls
 LANGUAGES=`echo help_mp-??.h | sed "s/help_mp-\(..\).h/\1/g"`
 cd ..
-
-for parm in "$@" ; do
-  if test "$parm" = "--help" || test "$parm" = "-help" || test "$parm" = "-h" ; then
-    cat << EOF
-
-Usage: $0 [OPTIONS]...
-
-Configuration:
-  -h, --help             display this help and exit
-
-Installation directories:
-  --prefix=DIR           use this prefix for installing mplayerxp [/usr/local]
-
-Fine tuning of the installation directories:
-  --datadir=DIR          use this prefix for installing machine independent
-                         data files (fonts, skins) [PREFIX/share/mplayerxp]
-  --confdir=DIR          use this prefix for installing configuration files
-                         [same as datadir]
-  --libdir=DIR           use this prefix to specify library location
-                         [PREFIX/lib]
-  --codecdir=DIR         use this prefix for installing shared libraries
-                         [LIBDIR/mplayerxp]
-System types:
-  --build=BUILD          configure for building on BUILD [guessed]
-  --host=HOST            cross-compile to build program to run on HOST [BUILD]
-
-Program names:
-  --program-suffix=SUFX  append SUFX to installed program names
-
-Optional features:
-  --enable-gomp          enable GNU OpenMP (requires gcc-4.3+) [autodetect]
-  --enable-largefiles    enable support for files >2^32 bytes long [enable]
-  --enable-linux-devfs   set default devices to devfs ones [disable]
-  --enable-termcap       use termcap database for key codes [autodetect]
-  --enable-lirc          enable LIRC (remote control) support [autodetect]
-  --enable-lircc         enable LIRCC (remote daemon control) support [autodetect]
-  --enable-png		 enable png support [autodetect]
-  --enable-jpeg		 enable jpeg support [autodetect]
-  --disable-tv           disable TV Interface (tv/dvb grabbers) [enable]
-  --disable-tv-v4l       disable Video 4 Linux TV Interface support [autodetect]
-  --disable-iconv        do not use iconv(3) function [autodetect]
-  --disable-rtc          disable RTC (/dev/rtc) on Linux [autodetect]
-  --disable-streaming    disable network streaming support
-                         (support for: http/mms/rtp) [enable]
-  --disable-ipv6         disable network IPv6 support [autodetect]
-  --enable-winsock2      enable winsock2 [autodetect]
-  --disable-vidix        disable VIDIX stuff [autodetect]
-  --enable-joystick      enable joystick support [autodetect]
-  --disable-sdl-image    build with SDL_image support [autodetect]
-  --disable-libcdio      Disable libcdio support [autodetect]
-  --disable-libcss       Disable libcss support [autodetect]
-  --disable-libdvdread   Disable libdvdread support [autodetect]
-  --disable-libdvdnav    Disable libdvdnav support [autodetect]
-Video:
-  --enable-dga           build with DGA1 or DGA2 support [autodetect]
-  --enable-vesa          build with VESA support [autodetect]
-  --enable-sdl           build with SDL render support [autodetect]
-  --enable-vm            build with XF86VidMode support for X11 [autodetect]
-  --enable-x11           build with X11 render support [autodetect]
-  --enable-xdpms         build with X11 DPMS support [autodetect]
-  --enable-xinerama      build with Xinerama support for X11 [autodetect]
-  --enable-xf86vm        build with Xf86vm support for X11 [autodetect]
-  --enable-xv            build with Xv render support for X 4.x [autodetect]
-  --enable-opengl        build with OpenGL render support [autodetect]
-  --enable-vdpau         build with VDPAU render support [autodetect]
-  --enable-fbdev         build with FBDev render support [autodetect]
-  --enable-fbdev=nocopy  yuv12 converts directly into framebuffer
-  --enable-mlib          build with MLIB support (Solaris only) [autodetect]
-
-Audio:
-  --disable-ossaudio     disable OSS sound support [autodetect]
-  --disable-alsa         disable alsa sound support [autodetect]
-  --disable-arts         disable aRts audio output [autodetect]
-  --disable-esd          disable ESound audio output [autodetect]
-  --disable-openal       disable OpenAL audio output [autodetect]
-  --disable-nas          disable NAS audio output [autodetect]
-  --disable-jack         disable JACK audio output [autodetect]
-  --disable-audio_select disable using select() on OSS audio device [enable]
-
-Miscellaneous options:
-  --cc=COMPILER          use this C compiler to build MPlayerXP [gcc]
-  --as=ASSEMBLER         use this ASSEMBLER to build MPlayerXP [as]
-  --ld=LINKER            use this LINKER to build MPlayerXP [gcc]
-  --ldconfig=LDCONFIG    use this LDCONFIG to install MPlayerXP [ldconfig]
-  --install=INSTALL      use this INSTALL to install MPlayerXP [install]
-  --language=xx          select a language [en]
-                         (Available: $LANGUAGES)
-
-Advanced options:
-  --disable-fastmemcpy   disable 3dnow/sse/mmx optimized memcpy() [enable]
-  --disable-fastcall     disable regparm method on x86 systems [autodetect]
-  --enable-debug[=1-3]   compile debugging information into mplayerxp [disable]
-  --enable-profile       compile profiling information into mplayerxp [disable]
-  --enable-gcov          compile gnu coverage information into biew [disable]
-
-Use these options if autodetection fails:
-  --asflags=ASFLAGS       add ASFLAGS to [$ASFLAGS]
-  --cflags=ECFLAGS        add ECFLAGS to CFLAGS [$CFLAGS]
-  --ldflags=ELDFLAGS      add ELDFLAGS to LDFLAGS [$LDFLAGS]
-  --extralibs=ELIBS       add ELIBS [$ELIBS]
-
-Environment variables:
-  MAKE      Make command (example: "make -j")
-  AS        Assembler command
-  CC        C compiler command (example: "gcc -m64 -mveclibabi=acml")
-  CFLAGS    C compiler flags (example:
-             "-O3 -msse -msse2 -msse3 -mfpmath=387,sse -mfancy-math-387
-              -ffast-math -funroll-all-loops -ftree-loop-optimize
-              -ftree-vect-loop-version -ftree-vectorize -fomit-frame-pointer
-              -finline-functions-called-once -funit-at-a-time -pipe")
-  LDFLAGS   linker flags, e.g. -L<lib dir> if you have libraries in a
-            nonstandard directory <lib dir>
-  LIBS      specifies additional libs (like: export LIBS=-lacml_mv)
-  DESTDIR   specifies base of installation
-
-EOF
-    exit 0
-  fi
-done # for parm in ...
+linguas=`echo $LANG | sed 's/^\([^_]*\).*$/\1/'`
+test -z $linguas && linguas=en
 
 # GOTCHA: the variables below defines the default behavior for autodetection
 # and have - unless stated otherwise - at least 2 states : yes no
 # If autodetection is available then the third state is: auto
-ENABLED_LIST='
-    shared
-    gomp
-    fastcall
-    fastmemcpy
-    streaming
-    af_inet6
-    termcap
-    termios
-    shm
-    rtc
-    iconv
-    winsock2
-    largefiles
-    alsa
-    arts
-    esd
-    openal
-    nas
-    jack
-    libcdio
-    fbdev
-    jpg
-    lirc
-    lircc
-    ossaudio
-    joystick
-    libcss
-    libdvdread
-    libdvdnav
-    png
-    sdl
-    sdl_image
-    libvcd
-    tv_v4l
-    x11
-    xdpms
-    xv
-    xinerama
-    xf86vm
-    opengl
-    vdpau
-    dga
-    vesa
-    vidix
-    audio_select
-    tv
-'
-DISABLED_LIST='
-    gcov
-    profile
-    static
-'
+ENABLED_LIST=(
+    "shared|build shared libraries",
+    "gomp|use GNU OpenMP (requires gcc-4.3+)",
+    "fastcall|use regparm method on x86 systems",
+    "fastmemcpy|use 3dnow/sse/mmx optimized memcpy()",
+    "streaming|build with network support (http/mms/rtp)",
+    "af_inet6|build with support for IPv6 protocol",
+    "termcap|build with termcap database for key codes",
+    "termios|build with termios database for key codes",
+    "shm|build with shared memory if possible",
+    "rtc|use RTC (/dev/rtc) on Linux",
+    "iconv|build with iconv for encoding conversion",
+    "winsock2|use winsock2.h if possible",
+    "largefiles|enable support for files > 2GB",
+    "ossaudio|build with OSS audio output",
+    "audio_select|use select() on OSS audio device",
+    "alsa|build with ALSA audio output",
+    "arts|build with ARTS audio output",
+    "esd|build with ESD audio ouput",
+    "openal|build with OpenAL audio output",
+    "nas|build with NAS uadio output",
+    "jack|build with JACK audio output",
+    "libcdio|build with libcdio support",
+    "x11|build with X11 video ouput",
+    "xv|build with Xv video output",
+    "sdl|build with SDL video and audio output",
+    "sdl_image|build with SDL_image for screenshots",
+    "fbdev|build with FBDev video ouput",
+    "jpg|build with JPEG for screenshots",
+    "png|build with PNG for screenshots",
+    "opengl|build with OpenGL video output",
+    "vdpau|build with VDPAU video output",
+    "dga|build with DGA video output",
+    "vesa|build with VESA video output",
+    "vidix|build with VIDIX video output",
+    "xdpms|build with X11 DPMS support",
+    "xinerama|build with X11 Xinerama support",
+    "xf86vm|build with X11 XF86Vm support",
+    "tv|build wuth TV Interface (tv/dvb grabbers)",
+    "tv_v4l|build with Video 4 Linux TV Interface support",
+    "lirc|build with LIRC (remote control) support",
+    "lircc|build with LIRCC (remote daemon control) support",
+    "joystick|build with joystick support",
+    "libcss|build with libcss support",
+    "libdvdread|build with libdvdread support",
+    "libdvdnav|build with libdvdnav support",
+    "libvcd|build with libvcd support"
+)
+DISABLED_LIST=(
+    "gcov|compile gnu coverage information into PROGRAM",
+    "profile|compile profiling information into PROGRAM",
+    "static|build static libraries"
+)
 
-enable $ENABLED_LIST
-disable $DISABLED_LIST
+AUTOCONF_LIST=(
+    "ENABLED_LIST",
+    "DISABLED_LIST"
+)
 
-AUTOCONF_LIST="
-    $ENABLED_LIST
-    $DISABLED_LIST
-"
+PATH_LIST=(
+    "prefix|architecture-independent files|/usr/local",
+    "exec_prefix|architecture-dependent files|\$prefix",
+    "bindir|user executables|\$exec_prefix/bin",
+    "libdir|object code libraries|\$exec_prefix/lib",
+    "datadir|read-only architecture-independent data|\$prefix/share",
+    "confdir|read-only configuration files|\$prefix/share",
+    "codecdir|codec's shared libraries|\$libdir/mplayerxp",
+    "win32libdir|win32 .dll locations [/usr/lib/win32]"
+)
 
-PATH_LIST='
-    prefix
-    datadir
-    confdir
-    libdir
-    codecdir
-'
+PROGNAME_LIST=(
+  "program_prefix|prepend PREFIX to installed program names",
+  "program_suffix|append SUFFIX to installed program names",
+  "program_transform_name|use TRANSFORM_NAME as program name|mplayerxp"
+)
 
-SYSCONF_LIST="
-    build
-    host
-    cc
-    as
-    ld
-    ldconfig
-    install
-    program_suffix
-    pkg_config
-    language
-    $PATH_LIST
-"
+SYSTYPES_LIST=(
+    "build|configure for building on BUILD [guessed]",
+    "host|cross-compile to build program to run on HOST [BUILD]",
+    "cc|use this C compiler to build PROGRAM|gcc",
+    "as|use this ASSEMBLER to build PROGRAM|as",
+    "ld|use this LINKER to build PROGRAM|gcc",
+    "ldconfig|use this LDCONFIG to install PROGRAM|ldconfig",
+    "install|use this INSTALL to install PROGRAM|install",
+    "pkg_config|use this PKG-CONFIG to configure PROGRAM|pkg-config",
+    "debug|compile debugging information into PROGRAM|0",
+    "language|force this language as default for PROGRAM (Available: $LANGUAGES)|$linguas"
+)
 
-EXTRA_LIST='
-    asflags
-    cflags
-    ldflags
-    extralibs
-'
+SYSCONF_LIST=(
+    "SYSTYPES_LIST",
+    "PROGNAME_LIST",
+    "PATH_LIST"
+)
 
-# 1st pass checking for vital options
-cc=gcc
-test "$CC" && cc="$CC"
-as=`$cc -print-prog-name=as`
-test -z "$as" && as=as
-ld=$cc
-ldconfig=ldconfig
-install=install
-linux_devfs=no
-bad_options=
-program_suffix=
-pkg_config=pkg-config
-debug=
-language=
-prefix="/usr/local"
+EXTRA_LIST=(
+    "asflags|add these FLAGS to [\$ASFLAGS=$ASFLAGS]",
+    "cflags|add these FLAGS to [\$CFLAGS=$CFLAGS]",
+    "ldflags|add these FLAGS to [\$LDFLAGS=$LDFLAGS]",
+    "extralibs|add these LIBS to [\$LIBS=$LIBS]"
+)
+
+ADD_LIST=(
+    "EXTRA_LIST",
+)
+
+ENVIRONMENT_LIST=(
+    "MAKE|Make command (example: 'make -j')|make",
+    "AS|Assembler command|as",
+    "CC|C compiler command (example: 'gcc -m64')|cc",
+    "CFLAGS|C compiler flags (example: '-funit-at-a-time')",
+    "LDFLAGS|linker flags (example: '-L/opt/lib64')",
+    "LIBS|additional libraries (example: 'LIBS=-lacml_mv')",
+    "DESTDIR|specifies base of installation"
+)
+
+HELP_LIST=(
+    "PATH_LIST|Fine tuning of the installation directories|--",
+    "PROGNAME_LIST|Program names|--",
+    "SYSTYPES_LIST|System types|--",
+    "EXTRA_LIST|Extralist|--",
+    "ENABLED_LIST|Optional list of enabled fautures|--disable-",
+    "DISABLED_LIST|Optional list of disabled fautures|--enable-",
+    "ENVIRONMENT_LIST|Environment variables|  "
+)
+
+DEFAULT_LIST=(
+    "PATH_LIST|Fine tuning of the installation directories|--",
+    "SYSTYPES_LIST|System types|--",
+    "PROGNAME_LIST|Program names|--",
+    "EXTRA_LIST|Extralist|--"
+)
+
+enable_list "ENABLED_LIST"
+disable_list "DISABLED_LIST"
+make_defaults "DEFAULT_LIST"
+make_environment "ENVIRONMENT_LIST"
+
+gas=`$cc -print-prog-name=as`
+test -n $gas && as=$gas
+
 for ac_option do
   optval="${ac_option#*=}"
   case "$ac_option" in
-  --enable-debug)
-    debug='-g'
+  --help)
+    print_help "HELP_LIST"
+    exit 0
     ;;
-  --enable-debug=*)
-    debug=`echo $_echo_n '-g'$_echo_c; echo $ac_option | cut -d '=' -f 2`
-    ;;
-
   --enable-*=*|--disable-*=*)
     eval $(echo "${ac_option%%=*}" | sed 's/--/action=/;s/-/ thing=/')
-    is_in ${thing} $AUTOCONF_LIST || bad_options="$ac_option $bad_options"
+    in_list "AUTOCONF_LIST" ${thing} || bad_options="$ac_option $bad_options"
     if test "$action" = "disable"; then
       test "${optval}" = "no" && action=enable
     else
       test "${optval}" = "no" && action=disable
     fi
+    echo "$action ${thing}"
     $action ${thing}
     ;;
 
     --enable-?*|--disable-?*)
     eval $(echo "$ac_option" | sed 's/--/action=/;s/-/ thing=/;s/-/_/g')
-    is_in ${thing} $AUTOCONF_LIST || bad_options="$ac_option $bad_options"
+    in_list "AUTOCONF_LIST" ${thing} || bad_options="$ac_option $bad_options"
+#    echo "$action ${thing}"
     $action ${thing}
     ;;
     *)
     optname="${ac_option%%=*}"
     optname="${optname#--}"
-    optname=$(echo "$optname" | sed 's/-/_/g')
-    if is_in $optname $SYSCONF_LIST; then
+    optname=${optname//-/_}
+    if in_list "SYSCONF_LIST" $optname ; then
+#	echo "eval $optname=$optval"
         eval $optname=$optval
-    elif is_in $optname $EXTRA_LIST; then
+    elif in_list "ADD_LIST" $optname ; then
 	action="add_$optname"
+#	echo "$action ${optval}"
 	$action ${optval}
     else
         bad_options="$ac_option $bad_options"
@@ -297,13 +218,6 @@ for ac_option do
     ;;
   esac
 done
-
-# LGB: temporary files
-for I in "$TMPDIR" "$TEMPDIR" "/tmp" ; do
-  test "$I" && break
-done
-
-enabled static && add_ldflags "-static"
 
 mktmps
 guess_target mp_config.mak mp_config.h
@@ -316,6 +230,7 @@ guess_target mp_config.mak mp_config.h
 # (libraries) which might be installed into /usr/local.  Let users use this
 # stuff explicitly as command line argument.  In other words: It would be
 # resonable have or only /usr/include or only /usr/local/include.
+enabled static && add_ldflags "-static"
 
 if freebsd ; then
   add_ldflags "-L/usr/local/lib"
@@ -386,7 +301,8 @@ prefix="."
 fi
 
 echocheck "Program name"
-prog_alias="mplayerxp$program_suffix"
+prog_alias=$program_transform_name
+prog_alias="$program_prefix$prog_alias$program_suffix"
 echores "$prog_alias"
 
 # Atmos: moved this here, to be correct, if --prefix is specified
@@ -397,9 +313,6 @@ test -z "$confdir" && confdir="."
 test -z "$libdir" && libdir="."
 test -z "$codecdir" && codecdir="."
 else
-test -z "$datadir" && datadir="$prefix/share/$prog_alias"
-test -z "$confdir" && confdir="$datadir"
-test -z "$libdir" && libdir="$prefix/lib"
 test -z "$codecdir" && codecdir="$libdir/$prog_alias"
 fi
 
@@ -436,6 +349,7 @@ echores   $extralibs
 ######################
 # MAIN TESTS GO HERE #
 ######################
+add_cflags "-I$srcdir"
 
 
 disable ffmpeg
@@ -531,7 +445,7 @@ print_config HAVE_ mp_config.h mp_config.mak sys_mman_h
 enabled mmap	&& check_func2 "sys/mman.h" mlock
 print_config HAVE_ mp_config.h mp_config.mak mlock
 
-check_func2 "stdarg.h" vsscanf
+check_func2 "stdio.h stdarg.h" vsscanf
 print_config HAVE_ mp_config.h mp_config.mak vsscanf
 
 if enabled termcap; then
@@ -607,6 +521,25 @@ else
 fi
 mp_help="nls/help_mp-$linguas.h"
 test -f nls/help_mp-$linguas.h || die "nls/help_mp-$linguas.h not found"
+
+enable win32loader
+if win32 || ! x86_32 ; then
+disable win32loader
+fi
+win32 && add_ldflags -lkernel32
+print_config HAVE_ mp_config.h mp_config.mak win32loader
+
+echo -n "win32 dll's ... "
+if test -z "$win32libdir" ; then
+  for I in /usr/local/lib/win32 /usr/lib/win32 ; do
+    if test -d "$I" ; then
+      win32libdir="$I"
+      break;
+    fi;
+  done
+fi
+echo "$win32libdir"
+echo "#define WIN32_PATH \"$win32libdir\"" >>mp_config.h
 
 #########
 # VIDEO #
@@ -795,15 +728,6 @@ fi
 # 64 bit file offsets?
 enabled largefiles	&& CFLAGS="$CFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D__USE_FILE_OFFSET64 -D__USE_LARGEFILE -D_LARGEFILE64_SOURCE"
 
-# Determine OS dependent libs
-if win32 ; then
-    def_win32_cmt='/* using native windows system */'
-    def_win32_loader='#undef WIN32_LOADER'
-else
-    def_win32_cmt='/* using non-native windows system */'
-    def_win32_loader='#define WIN32_LOADER 1'
-fi
-
 # Dynamic linking flags 
 # (FIXME: 'echocheck "dynamic linking"' above and modify here accordingly)
 bsd && add_ldflags "-rdynamic"
@@ -827,6 +751,7 @@ cat >> mp_config.mak << EOF
 
 LANG = C
 prefix = $prefix
+BINDIR = $bindir
 DATADIR = $datadir
 CONFDIR = $confdir
 LIBDIR = $libdir
@@ -868,6 +793,7 @@ $def_debug
 
 /* Common data directory (for fonts, etc) */
 #define PROGNAME "$prog_alias"
+#define BINDIR "$bindir"
 #define DATADIR "$datadir"
 #define CONFDIR "$confdir"
 #define LIBDIR "$libdir"
@@ -932,9 +858,6 @@ static inline long int lrint(double x)
 /* Audio output drivers */
 $def_ossaudio_devdsp
 $def_ossaudio_devmixer
-
-$def_win32_cmt
-$def_win32_loader
 
 #ifdef sun
 #define	DEFAULT_CDROM_DEVICE	"/vol/dev/aliases/cdrom0"

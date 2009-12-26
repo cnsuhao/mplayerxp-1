@@ -11,7 +11,7 @@
 #include "vd_internal.h"
 #include "codecs_ld.h"
 
-#include "../../loader/dmo/DMO_VideoDecoder.h"
+#include "loader/dmo/DMO_VideoDecoder.h"
 #include "vd_msg.h"
 
 static const vd_info_t info = {
@@ -27,31 +27,6 @@ static const config_t options[] = {
 };
 
 LIBVD_EXTERN(dmo)
-
-static DMO_VideoDecoder * (*DMO_VideoDecoder_Open_ptr)(char* dllname, GUID* guid, BITMAPINFOHEADER * format, int flip, int maxauto);
-static void (*DMO_VideoDecoder_Destroy_ptr)(DMO_VideoDecoder *this);
-static void (*DMO_VideoDecoder_StartInternal_ptr)(DMO_VideoDecoder *this);
-static int (*DMO_VideoDecoder_DecodeInternal_ptr)(DMO_VideoDecoder *this, const void* src, int size, int is_keyframe, char* pImage);
-static int (*DMO_VideoDecoder_SetDestFmt_ptr)(DMO_VideoDecoder *this, int bits, unsigned int csp);
-
-#define DMO_VideoDecoder_Open(a,b,c,d,e) (*DMO_VideoDecoder_Open_ptr)(a,b,c,d,e)
-#define DMO_VideoDecoder_Destroy(a) (*DMO_VideoDecoder_Destroy_ptr)(a)
-#define DMO_VideoDecoder_StartInternal(a) (*DMO_VideoDecoder_StartInternal_ptr)(a)
-#define DMO_VideoDecoder_DecodeInternal(a,b,c,d,e) (*DMO_VideoDecoder_DecodeInternal_ptr)(a,b,c,d,e)
-#define DMO_VideoDecoder_SetDestFmt(a,b,c) (*DMO_VideoDecoder_SetDestFmt_ptr)(a,b,c)
-
-static void *dll_handle;
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  DMO_VideoDecoder_Open_ptr = ld_sym(dll_handle,"DMO_VideoDecoder_Open");
-  DMO_VideoDecoder_Destroy_ptr = ld_sym(dll_handle,"DMO_VideoDecoder_Destroy");
-  DMO_VideoDecoder_StartInternal_ptr = ld_sym(dll_handle,"DMO_VideoDecoder_StartInternal");
-  DMO_VideoDecoder_DecodeInternal_ptr = ld_sym(dll_handle,"DMO_VideoDecoder_DecodeInternal");
-  DMO_VideoDecoder_SetDestFmt_ptr = ld_sym(dll_handle,"DMO_VideoDecoder_SetDestFmt");
-  return DMO_VideoDecoder_Open_ptr && DMO_VideoDecoder_Destroy_ptr && DMO_VideoDecoder_StartInternal_ptr &&
-	 DMO_VideoDecoder_DecodeInternal_ptr && DMO_VideoDecoder_SetDestFmt_ptr;
-}
 
 // to set/get/query special features/parameters
 static int control(sh_video_t *sh,int cmd,void* arg,...){
@@ -73,7 +48,6 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 // init driver
 static int init(sh_video_t *sh){
     unsigned int out_fmt;
-    if(!load_lib(wineld_name("DMO_Filter"SLIBSUFFIX))) return 0;
     if(!(sh->context=DMO_VideoDecoder_Open(sh->codec->dll_name,&sh->codec->guid, sh->bih, 0, 0))){
         MSG_ERR(MSGTR_MissingDLLcodec,sh->codec->dll_name);
         MSG_HINT("Maybe you forget to upgrade your win32 codecs?? It's time to download the new\n"
@@ -103,7 +77,6 @@ static int init(sh_video_t *sh){
 // uninit driver
 static void uninit(sh_video_t *sh){
     DMO_VideoDecoder_Destroy(sh->context);
-    dlclose(dll_handle);
 }
 
 // decode a frame

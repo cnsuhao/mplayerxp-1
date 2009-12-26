@@ -23,7 +23,7 @@ extern const ad_functions_t mpcodecs_ad_dca;
 extern const ad_functions_t mpcodecs_ad_hwac3;
 extern const ad_functions_t mpcodecs_ad_pcm;
 extern const ad_functions_t mpcodecs_ad_dvdpcm;
-extern const ad_functions_t mpcodecs_ad_divx;
+extern const ad_functions_t mpcodecs_ad_dshow;
 extern const ad_functions_t mpcodecs_ad_msacm;
 extern const ad_functions_t mpcodecs_ad_faad;
 extern const ad_functions_t mpcodecs_ad_vorbis;
@@ -42,14 +42,16 @@ const ad_functions_t* mpcodecs_ad_drivers[] =
   &mpcodecs_ad_ffmp3,
   &mpcodecs_ad_pcm,
   &mpcodecs_ad_dvdpcm,
-  &mpcodecs_ad_divx,
-  &mpcodecs_ad_msacm,
   &mpcodecs_ad_faad,
   &mpcodecs_ad_vorbis,
   &mpcodecs_ad_real,
+#ifdef HAVE_WIN32LOADER
+  &mpcodecs_ad_dshow,
   &mpcodecs_ad_twin,
+  &mpcodecs_ad_msacm,
   &mpcodecs_ad_dmo,
   &mpcodecs_ad_qtaudio,
+#endif
   NULL
 };
 

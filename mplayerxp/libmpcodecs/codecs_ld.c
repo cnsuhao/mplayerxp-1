@@ -33,13 +33,6 @@ char * codec_name( const char *name )
   return cname;
 }
 
-char * wineld_name( const char *name )
-{
-  strcpy(cname,CODECDIR"/wine/");
-  strcat(cname,name);
-  return cname;
-}
-
 void * ld_sym(void *handle,const char *sym_name)
 {
   void *rval;

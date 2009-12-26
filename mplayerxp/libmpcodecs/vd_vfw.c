@@ -11,9 +11,9 @@
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
-#include "../libmpdemux/wine/vfw.h"
-#include "../libmpdemux/wine/driver.h"
-#include "../libmpdemux/aviprint.h"
+#include "loader/wine/vfw.h"
+#include "loader/wine/driver.h"
+#include "libmpdemux/aviprint.h"
 
 static const vd_info_t info_vfw = {
 	"Win32/VfW video codecs",
@@ -43,19 +43,6 @@ LIBVD_EXTERN(vfw)
 LIBVD_EXTERN(vfwex)
 #undef info
 
-static HIC	VFWAPI	(*ICOpen_ptr)(long fccType, long fccHandler, UINT wMode);
-#define ICOpen(a,b,c) (*ICOpen_ptr)(a,b,c)
-static LRESULT	VFWAPI (*ICSendMessage_ptr)(HIC hic, unsigned int msg, long dw1, long dw2);
-#define ICSendMessage(a,b,c,d) (*ICSendMessage_ptr)(a,b,c,d)
-static long VFWAPIV (*ICDecompress_ptr)(HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiFormat,void* lpData,LPBITMAPINFOHEADER lpbi,void* lpBits);
-#define ICDecompress(a,b,c,d,e,f) (*ICDecompress_ptr)(a,b,c,d,e,f)
-static LRESULT VFWAPI (*ICClose_ptr)(HIC hic);
-#define ICClose(a) (*ICClose_ptr)(a)
-static long VFWAPIV (*ICUniversalEx_ptr)(HIC hic,int command,LPBITMAPINFOHEADER lpbiFormat,LPBITMAPINFOHEADER lpbi);
-#define ICUniversalEx(a,b,c,d) (*ICUniversalEx_ptr)(a,b,c,d)
-static long VFWAPIV (*ICDecompressEx_ptr)(HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiFormat,void* lpData,LPBITMAPINFOHEADER  lpbi,void* lpBits);
-#define ICDecompressEx(a,b,c,d,e,f) (*ICDecompressEx_ptr)(a,b,c,d,e,f)
-
 typedef struct vfw_priv_s
 {
     BITMAPINFOHEADER *o_bih; /* out format */
@@ -63,8 +50,6 @@ typedef struct vfw_priv_s
     int ex;
     unsigned char *palette;
 }vfw_priv_t;
-
-static void *dll_handle;
 
 static void set_csp(BITMAPINFOHEADER *o_bih,unsigned int outfmt){
     int yuv = 0;
@@ -122,19 +107,6 @@ static void set_csp(BITMAPINFOHEADER *o_bih,unsigned int outfmt){
 	    o_bih->biCompression = outfmt;
 	else
 	    o_bih->biCompression = 0;
-}
-
-static int load_lib( const char *libname )
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  ICOpen_ptr = ld_sym(dll_handle,"ICOpen");
-  ICClose_ptr = ld_sym(dll_handle,"ICClose");
-  ICSendMessage_ptr = ld_sym(dll_handle,"ICSendMessage");
-  ICDecompress_ptr = ld_sym(dll_handle,"ICDecompress");
-  ICUniversalEx_ptr = ld_sym(dll_handle,"ICUniversalEx");
-  ICDecompressEx_ptr = ld_sym(dll_handle,"ICDecompressEx");
-  return ICOpen_ptr && ICSendMessage_ptr && ICDecompressEx_ptr &&
-	 ICDecompress_ptr && ICClose_ptr && ICUniversalEx_ptr;
 }
 
 #define IC_FCCTYPE	sh_video->codec->dll_name
@@ -287,14 +259,12 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 static int init(sh_video_t *sh){
     vfw_priv_t *priv;
     int vfw_ex;
-    if(!load_lib(wineld_name("libloader"SLIBSUFFIX))) return 0;
     if(strcmp(sh->codec->driver_name,"vfwex") == 0) vfw_ex=1;
     else					    vfw_ex=0;
     if(!(priv = malloc(sizeof(vfw_priv_t)))) 
     { 
 	MSG_ERR(MSGTR_OutOfMemory);
-	dlclose(dll_handle);
-	return 0; 
+	return 0;
     }
     sh->context = priv;
     priv->ex = vfw_ex;
@@ -310,7 +280,6 @@ static void uninit(sh_video_t *sh)
   vfw_close_video_codec(sh);
   free(priv->o_bih);
   free(sh->context);
-  dlclose(dll_handle);
 }
 
 // decode a frame
