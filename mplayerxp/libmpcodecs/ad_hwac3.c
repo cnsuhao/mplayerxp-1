@@ -159,14 +159,6 @@ extern ad_functions_t mpcodecs_ad_a52;
 static a52_state_t * (*a52_init_ptr) (uint32_t mm_accel);
 #define a52_init(a) (*a52_init_ptr)(a)
 
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  a52_init_ptr = ld_sym(dll_handle,"a52_init");
-  return a52_init_ptr!=NULL;
-}
-
 int preinit(sh_audio_t *sh)
 {
   /* Dolby AC3 audio: */
@@ -175,7 +167,7 @@ int preinit(sh_audio_t *sh)
   sh->audio_in_minsize=3840;
   sh->channels=2;
   sh->sample_format=AFMT_AC3;
-  return load_dll("liba52"SLIBSUFFIX);
+  return 1;
 }
 
 int init(sh_audio_t *sh_audio)
@@ -208,7 +200,6 @@ int init(sh_audio_t *sh_audio)
 void uninit(sh_audio_t *sh)
 {
   mpcodecs_ad_a52.uninit(sh);
-  dlclose(dll_handle);
 }
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
