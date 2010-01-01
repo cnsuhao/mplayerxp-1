@@ -1,6 +1,8 @@
-SUBDIRS = ffmpeg mplayerxp etc DOCS
+INSTALLABLE_SUBDIRS = mplayerxp etc DOCS
+SUBDIRS = ffmpeg $(INSTALLABLE_SUBDIRS)
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
+DO_IMAKE = @ for i in $(INSTALLABLE_SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 
 all: $(SUBDIRS)
 
@@ -18,7 +20,7 @@ endif
 	$(MAKE) -C $@
 
 install:
-	$(DO_MAKE)
+	$(DO_IMAKE)
 
 clean:
 	$(DO_MAKE)
@@ -28,7 +30,7 @@ distclean:
 	rm -f config.h config.mak
 
 uninstall:
-	$(DO_MAKE)
+	$(DO_IMAKE)
 
 dep:
 	$(DO_MAKE)
