@@ -50,7 +50,7 @@ int preinit(sh_audio_t *sh_audio)
   sh_audio->audio_in_minsize=2*sh_audio->wf->nBlockAlign;
   if(sh_audio->audio_in_minsize<8192) sh_audio->audio_in_minsize=8192;
   sh_audio->audio_out_minsize=16384;
-  MSG_V("INFO: Win32/DShow (%s) audio codec init OK!\n",CODECDIR"/wine/DS_Filter"SLIBSUFFIX);
+  MSG_V("INFO: Win32/DShow init OK!\n");
   return 1;
 }
 

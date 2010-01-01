@@ -148,7 +148,7 @@ int preinit(sh_audio_t *sh_audio)
     MSG_ERR(MSGTR_ACMiniterror);
     return 0;
   }
-  MSG_V("INFO: Win32/DShow (%s) audio codec init OK!\n",CODECDIR"/wine/libloader"SLIBSUFFIX);
+  MSG_V("INFO: Win32/ACM init OK!\n");
   return 1;
 }
 

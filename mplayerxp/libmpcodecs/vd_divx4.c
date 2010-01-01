@@ -35,11 +35,97 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(divx4)
 
-#include "interface/divx4linux.h"
-
 #define DIVX4LINUX_BETA 0
 #define DIVX4LINUX	1
 #define DIVX5LINUX	2
+
+#define DEC_OPT_INIT 0 ///< Initialize the decoder.  See LibQDecoreFunction for example usage.
+#define DEC_OPT_RELEASE 1 ///< Release the decoder.  See LibQDecoreFunction for example usage.
+#define DEC_OPT_INFO 2 ///<  Obtain information about the video.  See LibQDecoreFunction for example usage.
+#define DEC_OPT_FRAME 3 ///<  Decode a frame.  See LibQDecoreFunction for example usage.
+#define DEC_OPT_SET 4 ///< Specify a parameter to adjust/set. 
+#define DEC_OPT_FLUSH 5 ///< Flush the decoder status.
+
+// Decoder parameter specifier
+
+#define DEC_PAR_OUTPUT 0 ///< Specify a different output format. pParam2 will point to a DecInit structure
+#define DEC_PAR_POSTPROCESSING 1 ///< pParam2 will specify a postprocessing level.
+#define DEC_PAR_POSTPROCDEBLOC 2 ///< pParam2 will specify a deblocking level.
+#define DEC_PAR_POSTPROCDERING 3 ///< pParam2 will specify a deringing level.
+#define DEC_PAR_WARMTHLEVEL 4 ///< pParam2 will specify a level for the warmth filter (film effect).
+#define DEC_PAR_CONTRAST 5 ///< pParam2 will specify the contrast of the output image.
+#define DEC_PAR_BRIGHTNESS 6 ///< pParam2 will specify the brightness of the output image.
+#define DEC_PAR_SATURATION 7 ///< pParam2 will specify the saturation of the output image.
+#define DEC_PAR_LOGO 8 ///< Display the DivX logo on the bottom right of the picture when pParam is the to 1.
+#define DEC_PAR_SMOOTH 9 ///< Use smooth playback when pParam is set to 1.
+#define DEC_PAR_SHOWPP 10 ///< Show the postprocessing level in use on the top left corner of the output image.
+
+// Decoder return values. 
+
+#define DEC_OK 0 ///< Decoder call succeded. 
+#define DEC_INVALID_SYNTAX -1 ///< A semantic error occourred while parsing the stream. 
+#define DEC_FAIL 1 ///< General failure message. An unexpected problem occourred. 
+#define DEC_INVALID_ARGUMENT 3 ///< One of the arguments passed to the decoder is invalid. 
+#define DEC_NOT_IMPLEMENTED 4 ///< The stream requires tools that have not been implemented. 
+
+typedef int (LibQDecoreFunction)(void* pHandle, int decOpt, void* pParam1, void* pParam2);
+
+/// Four Character Code used to decribe the media type of both compressed
+/// and uncompressed video.
+typedef uint32_t FourCC;
+/// Describes a compressed or uncompressed video format.
+typedef struct FormatInfo
+{
+    FourCC fourCC; /// Four CC of the video format.
+    int bpp; /// Bits per pixel for RGB (zero if not known).
+    int width; /// Width of the image in pixels.
+    int height; /// Height of the image in pixels.
+    int inverted; /// Set non-zero if the bottom line of the image appears first in the buffer.
+    int pixelAspectX; /// Pixel aspect ratio:  horizontal part.
+    int pixelAspectY; /// Pixel aspect ratio:  vertical part.
+    int sizeMax; /// Maximum size in bytes of a video frame of this format.
+    int timescale; /// Number of units of time in a second.
+    int framePeriod; /// Duration of each frame, in units of time defined by timescale.  In the case of variable framerate, this should be set to the maximum expected frame period.
+    int framePeriodIsConstant; /// 1 if frame rate is constant; 0 otherwise.
+}FormatInfo;
+
+/// Structure containing compressed video bitstream.
+typedef struct DecBitstream
+{
+    void* pBuff; ///< Bitstream buffer.  Allocated by caller.  May be modified by decoder.
+    int iLength;  ///< Length of bitstream buffer in bytes.
+}DecBitstream;
+
+/// Structure used to obtain information about the decoded video.
+typedef struct DecInfo
+{
+    DecBitstream bitstream; ///< Bitstream buffer.  Allocated by caller.  Bitstream will not be modified by DecInfo.
+    FormatInfo formatOut; ///< Populated by decoder.
+}DecInfo;
+
+/// Structure containing input bitstream and decoder frame buffer.
+/// Default settings are when the structure is memset() to 0.
+typedef struct DecFrame
+{
+    DecBitstream bitstream; ///< Input bitstream to be decoded.
+    void* pBmp; ///< Decoded bitmap buffer.  Allocated by caller. If the buffer pointer is 0 the bitmap will not be rendered (fast decode).
+    int bmpStride; ///< Bitmap stride in pixels.  Set by caller.  Currently ignored by decoder.
+    int bConstBitstream; ///< Set zero if it is OK for decoder to trash the input bitstream when it is decoded.  This gives a small performance boost.
+    int bBitstreamUpdated;    ///< Notify API that the bitstream is updated [Used by the reference decoder to dump the bitstream to a disk file so that it can be read in].
+    int bBitstreamIsEOS; ///< Set non-zero to tell the decoder that bitstream is the last part of the stream.
+    int frameWasDecoded; ///< Non-zero value means that a frame was successfully decoded.  Set by decoder.
+    int timestampDisplay; ///< Display timestamp of the decoded frame.  Set by decoder.
+    int shallowDecode; ///< Set non-zero to allow the decoder not to decode any video data (just parse headers).
+    int bSingleFrame; ///< Set non-zero to indicate that the decoder is receiving a single frame in this buffer (no packet B-frames)
+}DecFrame;
+
+typedef struct DecInit
+{
+    FormatInfo formatOut; ///< Desired output video format.
+    FormatInfo formatIn; ///< Given input video format
+    int isQ; ///< Reserved parameter, value ignored.
+}DecInit;
+
 
 typedef struct
 {

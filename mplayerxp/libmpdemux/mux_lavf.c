@@ -16,12 +16,11 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "libavformat/avformat.h"
+#include "libavformat/riff.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
 
 extern unsigned int codec_get_wav_tag(int id);
-extern enum CodecID codec_get_bmp_id(unsigned int tag);
-extern enum CodecID codec_get_wav_id(unsigned int tag);
 
 typedef struct {
 	//AVInputFormat *avif;
@@ -53,67 +52,6 @@ static void mpxp_freep(void *arg)
     void **ptr= (void**)arg;
     mpxp_free(*ptr);
     *ptr = NULL;
-}
-
-
-static void (*av_register_all_ptr)(void);
-#define av_register_all() (*av_register_all_ptr)()
-static AVStream *(*av_new_stream_ptr)(AVFormatContext *s, int id);
-#define av_new_stream(a,b) (*av_new_stream_ptr)(a,b)
-static int (*av_interleaved_write_frame_ptr)(AVFormatContext *s, AVPacket *pkt);
-#define av_interleaved_write_frame(a,b) (*av_interleaved_write_frame_ptr)(a,b)
-static int (*av_write_frame_ptr)(AVFormatContext *s, AVPacket *pkt);
-#define av_write_frame(a,b) (*av_write_frame_ptr)(a,b)
-static int (*av_write_header_ptr)(AVFormatContext *s);
-#define av_write_header(a) (*av_write_header_ptr)(a)
-static int (*av_write_trailer_ptr)(AVFormatContext *s);
-#define av_write_trailer(a) (*av_write_trailer_ptr)(a)
-static int (*url_fclose_ptr)(ByteIOContext *s);
-#define url_fclose(a) (*url_fclose_ptr)(a)
-static int (*url_fopen_ptr)(ByteIOContext *s, const char *filename, int flags);
-#define url_fopen(a,b,c) (*url_fopen_ptr)(a,b,c)
-static void (*av_destruct_packet_nofree_ptr)(AVPacket *pkt);
-#define av_destruct_packet_nofree(a) (*av_destruct_packet_nofree_ptr)(a)
-static AVFormatContext *(*av_alloc_format_context_ptr)(void);
-#define av_alloc_format_context() (*av_alloc_format_context_ptr)()
-static AVOutputFormat *(*guess_format_ptr)(const char *short_name,
-                             const char *filename, const char *mime_type);
-#define guess_format(a,b,c) (*guess_format_ptr)(a,b,c)
-static int (*av_set_parameters_ptr)(AVFormatContext *s, AVFormatParameters *ap);
-#define av_set_parameters(a,b) (*av_set_parameters_ptr)(a,b)
-static int (*register_protocol_ptr)(URLProtocol *protocol);
-#define register_protocol(a) (*register_protocol_ptr)(a)
-static enum CodecID (*codec_get_bmp_id_ptr)(unsigned int tag);
-#define codec_get_bmp_id(a) (*codec_get_bmp_id_ptr)(a)
-static enum CodecID (*codec_get_wav_id_ptr)(unsigned int tag);
-#define codec_get_wav_id(a) (*codec_get_wav_id_ptr)(a)
-
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
-  av_register_all_ptr = ld_sym(dll_handle,"av_register_all");
-  av_new_stream_ptr = ld_sym(dll_handle,"av_new_stream");
-  av_destruct_packet_nofree_ptr = ld_sym(dll_handle,"av_destruct_packet_nofree");
-  av_interleaved_write_frame_ptr = ld_sym(dll_handle,"av_interleaved_write_frame");
-  av_write_frame_ptr = ld_sym(dll_handle,"av_write_frame");
-  av_write_header_ptr = ld_sym(dll_handle,"av_write_header");
-  av_write_trailer_ptr = ld_sym(dll_handle,"av_write_trailer");
-  url_fclose_ptr = ld_sym(dll_handle,"url_fclose");
-  url_fopen_ptr = ld_sym(dll_handle,"url_fopen");
-  av_alloc_format_context_ptr = ld_sym(dll_handle,"av_alloc_format_context");
-  guess_format_ptr = ld_sym(dll_handle,"guess_format");
-  av_set_parameters_ptr = ld_sym(dll_handle,"av_set_parameters");
-  register_protocol_ptr = ld_sym(dll_handle,"register_protocol");
-  codec_get_bmp_id_ptr = ld_sym(dll_handle,"codec_get_bmp_id");
-  codec_get_wav_id_ptr = ld_sym(dll_handle,"codec_get_wav_id");
-  return av_register_all_ptr && av_new_stream_ptr && url_fopen_ptr &&
-	 av_destruct_packet_nofree_ptr && av_interleaved_write_frame_ptr &&
-	 av_write_header_ptr && av_write_trailer_ptr && url_fclose_ptr &&
-	 av_alloc_format_context_ptr && guess_format_ptr &&
-	 av_set_parameters_ptr && register_protocol_ptr && av_write_frame_ptr &&
-	 codec_get_bmp_id_ptr && codec_get_wav_id_ptr;
 }
 
 static int mux_rate= 0;
@@ -247,7 +185,7 @@ static void fix_parameters(struct muxer_t *muxer)
 
 	if(stream->type == MUXER_TYPE_AUDIO)
 	{
-		ctx->codec_id = codec_get_wav_id(stream->wf->wFormatTag); 
+		ctx->codec_id = av_codec_get_id(ff_codec_wav_tags,stream->wf->wFormatTag);
 #if 0 //breaks aac in mov at least
 		ctx->codec_tag = codec_get_wav_tag(ctx->codec_id);
 #endif
@@ -276,7 +214,7 @@ static void fix_parameters(struct muxer_t *muxer)
 	}
 	else if(stream->type == MUXER_TYPE_VIDEO)
 	{
-		ctx->codec_id = codec_get_bmp_id(stream->bih->biCompression);
+		ctx->codec_id = av_codec_get_id(ff_codec_bmp_tags,stream->bih->biCompression);
                 if(ctx->codec_id <= 0)
                     ctx->codec_tag= stream->bih->biCompression;
 		MSG_INFO("VIDEO CODEC ID: %d\n", ctx->codec_id);
@@ -315,7 +253,7 @@ static inline void av_init_pkt(AVPacket *pkt)
     pkt->duration = 0;
     pkt->flags = 0;
     pkt->stream_index = 0;
-    pkt->destruct= av_destruct_packet_nofree_ptr;
+    pkt->destruct= av_destruct_packet_nofree;
 }
 
 static void write_chunk(muxer_stream_t *stream, size_t len, unsigned int flags, float pts)
@@ -426,12 +364,6 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	if(priv == NULL)
 		return 0;
 
-	if(!load_dll(codec_name("libavformat"SLIBSUFFIX))) /* try local copy first */
-	{
-	    MSG_ERR("Detected error during loading libavformat.so! Try to upgrade this library\n");
-	    free(priv);
-	    return 0;
-	}
 	av_register_all();
 	
 	priv->oc = av_alloc_format_context();
@@ -479,7 +411,6 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	return 1;
 	
 fail:
-	dlclose(dll_handle);
 	free(priv);
 	return 0;
 }

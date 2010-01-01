@@ -43,7 +43,9 @@ const ad_functions_t* mpcodecs_ad_drivers[] =
   &mpcodecs_ad_pcm,
   &mpcodecs_ad_dvdpcm,
   &mpcodecs_ad_faad,
+#ifdef HAVE_LIBVORBIS
   &mpcodecs_ad_vorbis,
+#endif
   &mpcodecs_ad_real,
 #ifdef HAVE_WIN32LOADER
   &mpcodecs_ad_dshow,

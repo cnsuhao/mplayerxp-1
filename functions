@@ -1374,3 +1374,21 @@ set_list $1 yes
 disable_list(){
 set_list $1 no
 }
+
+check_pkg(){
+    name=$1
+    package=$2
+    answer="no"
+    echocheck $name
+    $pkg_config --exists $package
+    test "$?" -ne 0 && disable $name
+    if enabled $name ; then
+	version=`echo $($pkg_config $package --modversion)`
+	log "found version: $version of $package"
+	check_cflags $($pkg_config $package --cflags) || disable $name
+	check_ldflags $($pkg_config $package --libs) || disable $name
+	answer=`echo "yes ($version)"`
+    fi
+    log "pkg-config --exists $package = $answer"
+    echores $answer
+}

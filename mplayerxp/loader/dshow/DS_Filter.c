@@ -1,4 +1,4 @@
-#include "../config.h"
+#include "../../mp_config.h"
 #include "DS_Filter.h"
 #include "driver.h"
 #include "com.h"
@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "win32.h" // printf macro
 
-#ifndef HAVE_WIN32LOADER
+//#ifndef HAVE_WIN32LOADER
 const GUID IID_IUnknown =
 {
     0x00000000, 0x0000, 0x0000,
@@ -18,9 +18,9 @@ const GUID IID_IClassFactory =
     0x00000001, 0x0000, 0x0000,
     {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}
 };
-HRESULT STDCALL CoInitialize(LPVOID pvReserved); 
-void STDCALL CoUninitialize(void); 
-#endif
+HRESULT STDCALL CoInitialize(LPVOID pvReserved);
+void STDCALL CoUninitialize(void);
+//#endif
 
 typedef long STDCALL (*GETCLASS) (const GUID*, const GUID*, void**);
 

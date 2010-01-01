@@ -36,9 +36,12 @@ SRCS += demuxer_r.c mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
 SRCS += demux_avi.c demux_mov.c parse_mp4.c demux_mpg.c demux_viv.c demuxer.c
 SRCS += parse_es.c demux_fli.c demux_ra.c demux_real.c demux_y4m.c yuv4mpeg.c yuv4mpeg_ratio.c
 SRCS += demux_nuv.c demux_film.c demux_roq.c demux_audio.c demux_demuxers.c
-SRCS += mpdemux.c demux_ogg.c demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
+SRCS += mpdemux.c demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
 SRCS += demux_pva.c demux_rawvideo.c demux_smjpeg.c demux_ts.c demux_ty.c demux_nsv.c
 SRCS += demux_mkv.c demux_mpxp64.c demux_lavf.c sub_cc.c sub_ty.c
+ifeq ($(HAVE_LIBVORBIS),yes)
+SRCS += demux_ogg.c
+endif
 
 SRCS += muxer.c mux_mpxp64.c mux_lavf.c mux_raw.c
 ifeq ($(HAVE_STREAMING),yes)

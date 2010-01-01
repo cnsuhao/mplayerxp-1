@@ -6,7 +6,7 @@ include config.mak
 all:
 clean:
 distclean:
-	rm -f config.mak
+	rm -f config.mak configure.log
 install:
 	$(INSTALL) -D -b -c -m 644 codecs.conf $(CONFDIR)/codecs.conf
 	$(INSTALL) -D -b -c -m 644 menu.conf $(CONFDIR)/menu.conf

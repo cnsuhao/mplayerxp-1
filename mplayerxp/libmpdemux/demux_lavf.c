@@ -105,67 +105,6 @@ static unsigned int mpxp_codec_get_tag(const mpxpCodecTag *tags, uint32_t id)
     return 0;
 }
 
-static void (*av_register_all_ptr)(void);
-#define av_register_all() (*av_register_all_ptr)()
-static AVInputFormat *(*av_probe_input_format_ptr)(AVProbeData *pd, int is_opened);
-#define av_probe_input_format(a,b) (*av_probe_input_format_ptr)(a,b)
-static int (*register_protocol_ptr)(URLProtocol *protocol);
-#define register_protocol(a) (*register_protocol_ptr)(a)
-static int (*url_fopen_ptr)(ByteIOContext **s, const char *filename, int flags);
-#define url_fopen(a,b,c) (*url_fopen_ptr)(a,b,c)
-static int (*av_open_input_stream_ptr)(AVFormatContext **ic_ptr,
-                         ByteIOContext *pb, const char *filename,
-                         AVInputFormat *fmt, AVFormatParameters *ap);
-#define av_open_input_stream(a,b,c,d,e) (*av_open_input_stream_ptr)(a,b,c,d,e)
-static int (*av_find_stream_info_ptr)(AVFormatContext *ic);
-#define av_find_stream_info(a) (*av_find_stream_info_ptr)(a)
-static AVInputFormat* (*av_find_input_format_ptr)(const char *short_name);
-#define av_find_input_format(a) (*av_find_input_format_ptr)(a)
-
-static int (*av_read_frame_ptr)(AVFormatContext *s, AVPacket *pkt);
-#define av_read_frame(a,b) (*av_read_frame_ptr)(a,b)
-static int (*av_seek_frame_ptr)(AVFormatContext *s, int stream_index, int64_t timestamp, int flags);
-#define av_seek_frame(a,b,c,d) (*av_seek_frame_ptr)(a,b,c,d)
-static void (*av_close_input_file_ptr)(AVFormatContext *s);
-#define av_close_input_file(a) (*av_close_input_file_ptr)(a)
-static unsigned int (*ff_codec_get_tag_ptr)(const void *tags,int id);
-#define ff_codec_get_tag(a,b) (*ff_codec_get_tag_ptr)(a,b)
-static AVInputFormat* (*av_iformat_next_ptr)(AVInputFormat *f);
-#define av_iformat_next(a) (*av_iformat_next_ptr)(a)
-static void (*av_free_packet_ptr)(AVPacket *pkt);
-#define av_free_packet(a) (*av_free_packet_ptr)(a)
-
-
-static void **ff_codec_bmp_tags_ptr;
-static void **ff_codec_wav_tags_ptr;
-
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
-  av_register_all_ptr = ld_sym(dll_handle,"av_register_all");
-  av_probe_input_format_ptr = ld_sym(dll_handle,"av_probe_input_format");
-  register_protocol_ptr = ld_sym(dll_handle,"register_protocol");
-  url_fopen_ptr = ld_sym(dll_handle,"url_fopen");
-  av_open_input_stream_ptr = ld_sym(dll_handle,"av_open_input_stream");
-  av_find_stream_info_ptr = ld_sym(dll_handle,"av_find_stream_info");
-  av_find_input_format_ptr = ld_sym(dll_handle,"av_find_input_format");
-  av_read_frame_ptr = ld_sym(dll_handle,"av_read_frame");
-  av_seek_frame_ptr = ld_sym(dll_handle,"av_seek_frame");
-  av_iformat_next_ptr = ld_sym(dll_handle,"av_iformat_next");
-  av_close_input_file_ptr = ld_sym(dll_handle,"av_close_input_file");
-  av_free_packet_ptr = ld_sym(dll_handle,"av_free_packet");
-  ff_codec_get_tag_ptr = ld_sym(dll_handle,"ff_codec_get_tag");
-  ff_codec_bmp_tags_ptr = ld_sym(dll_handle,"ff_codec_bmp_tags");
-  ff_codec_wav_tags_ptr = ld_sym(dll_handle,"ff_codec_wav_tags");
-  return av_register_all_ptr && av_probe_input_format_ptr &&
-	register_protocol_ptr && url_fopen_ptr && av_open_input_stream_ptr &&
-	av_find_stream_info_ptr && av_read_frame_ptr && av_seek_frame_ptr &&
-	av_close_input_file_ptr && ff_codec_get_tag_ptr && ff_codec_bmp_tags_ptr &&
-	ff_codec_wav_tags_ptr && av_find_input_format_ptr && av_iformat_next_ptr && av_free_packet_ptr;
-}
-
 static int mpxp_open(URLContext *h, const char *filename, int flags){
     return 0;
 }
@@ -188,7 +127,7 @@ static int mpxp_write(URLContext *h, unsigned char *buf, int size){
 
 static int64_t mpxp_seek(URLContext *h, int64_t pos, int whence){
     stream_t *stream = (stream_t*)h->priv_data;
-    
+
     MSG_DBG2("mpxp_seek(%p, %d, %d)\n", h, (int)pos, whence);
     if(whence == SEEK_CUR)
         pos +=stream_tell(stream);
@@ -250,14 +189,7 @@ static int lavf_probe(demuxer_t *demuxer){
     AVProbeData avpd;
     uint8_t buf[PROBE_BUF_SIZE];
     lavf_priv_t *priv;
-    
-    if(!load_dll(codec_name("libavformat"SLIBSUFFIX))) /* try local copy first */
-	if(!load_dll("libavformat"SLIBSUFFIX))
-	{
-		MSG_ERR("Detected error during loading libavformat"SLIBSUFFIX"! Try to upgrade this library\n");
-		return 0;
-	}
-    if(!demuxer->priv) 
+    if(!demuxer->priv)
         demuxer->priv=calloc(sizeof(lavf_priv_t),1);
     priv= demuxer->priv;
 
@@ -265,7 +197,6 @@ static int lavf_probe(demuxer_t *demuxer){
 
     if(stream_read(demuxer->stream, buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE)
     {
-	dlclose(dll_handle);
 	free(demuxer->priv);
         return 0;
     }
@@ -289,7 +220,6 @@ static int lavf_probe(demuxer_t *demuxer){
     priv->avif= av_probe_input_format(&avpd, 1);
     if(!priv->avif){
         MSG_V("LAVF_check: no clue about this gibberish!\n");
-	dlclose(dll_handle);
 	free(demuxer->priv);
         return 0;
     }else
@@ -298,6 +228,10 @@ static int lavf_probe(demuxer_t *demuxer){
 
     return 1;
 }
+
+extern const unsigned char ff_codec_bmp_tags[];
+extern const unsigned char ff_codec_wav_tags[];
+extern unsigned int ff_codec_get_tag(const void *tags, int id);
 
 static demuxer_t* lavf_open(demuxer_t *demuxer){
     AVFormatContext *avfc;
@@ -341,13 +275,13 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
     if(avfc->album    [0]) demux_info_add(demuxer, INFOT_ALBUM    , avfc->album    );
     if(avfc->year        )
     {
-			    sprintf(mp_filename,"%u",avfc->year);
-			    demux_info_add(demuxer, INFOT_DATE    , mp_filename);
+			sprintf(mp_filename,"%u",avfc->year);
+			demux_info_add(demuxer, INFOT_DATE    , mp_filename);
     }
     if(avfc->track       )
     {
-			    sprintf(mp_filename,"%u",avfc->track);
-			    demux_info_add(demuxer, INFOT_TRACK    , mp_filename);
+			sprintf(mp_filename,"%u",avfc->track);
+			demux_info_add(demuxer, INFOT_TRACK    , mp_filename);
     }
     if(avfc->genre    [0]) demux_info_add(demuxer, INFOT_GENRE    , avfc->genre    );
 
@@ -358,14 +292,14 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 #else
         AVCodecContext *codec= &st->codec;
 #endif
-        
+
         switch(codec->codec_type){
         case CODEC_TYPE_AUDIO:{
             WAVEFORMATEX *wf= calloc(sizeof(WAVEFORMATEX) + codec->extradata_size, 1);
             sh_audio_t* sh_audio=new_sh_audio(demuxer, i);
             priv->audio_streams++;
             if(!codec->codec_tag)
-                codec->codec_tag= ff_codec_get_tag(ff_codec_wav_tags_ptr,codec->codec_id);
+                codec->codec_tag= ff_codec_get_tag(ff_codec_wav_tags,codec->codec_id);
             if(!codec->codec_tag)
                 codec->codec_tag= mpxp_codec_get_tag(mp_wav_tags, codec->codec_id);
             wf->wFormatTag= codec->codec_tag;
@@ -377,7 +311,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
             wf->cbSize= codec->extradata_size;
             if(codec->extradata_size){
                 memcpy(
-                    wf + 1, 
+                    wf + 1,
                     codec->extradata,
                     codec->extradata_size);
             }
@@ -433,7 +367,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 
 	    priv->video_streams++;
             if(!codec->codec_tag)
-                codec->codec_tag= ff_codec_get_tag(ff_codec_bmp_tags_ptr,codec->codec_id);
+                codec->codec_tag= ff_codec_get_tag(ff_codec_bmp_tags,codec->codec_id);
             if(!codec->codec_tag)
                 codec->codec_tag= mpxp_codec_get_tag(mp_bmp_tags, codec->codec_id);
             bih->biSize= sizeof(BITMAPINFOHEADER) + codec->extradata_size;
@@ -599,7 +533,6 @@ static void lavf_close(demuxer_t *demuxer)
 	}
 	free(priv); demuxer->priv= NULL;
     }
-    dlclose(dll_handle);
 }
 
 demuxer_driver_t demux_lavf =

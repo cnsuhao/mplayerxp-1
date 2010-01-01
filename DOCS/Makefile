@@ -8,7 +8,7 @@ MANDIR = ${prefix}/man
 all:
 clean:
 distclean:
-	rm -f config.mak
+	rm -f config.mak configure.log
 install:
 	$(INSTALL) -D -c -m 644 mplayerxp.1 $(DESTDIR)$(MANDIR)/man1/$(PROGNAME).1
 uninstall:

@@ -7,33 +7,6 @@
 #include "stream.h"
 #include "demux_msg.h"
 
-static void (*av_register_all_ptr)(void);
-#define av_register_all() (*av_register_all_ptr)()
-static int64_t (*url_seek_ptr)(URLContext *h, int64_t pos, int whence);
-#define url_seek(a,b,c) (*url_seek_ptr)(a,b,c)
-static int (*url_close_ptr)(URLContext *h);
-#define url_close(a) (*url_close_ptr)(a)
-static int (*url_read_complete_ptr)(URLContext *h, unsigned char *buf, int size);
-#define url_read_complete(a,b,c) (*url_read_complete_ptr)(a,b,c)
-static int (*url_open_ptr)(URLContext **h, const char *filename, int flags);
-#define url_open(a,b,c) (*url_open_ptr)(a,b,c)
-static int64_t (*url_filesize_ptr)(URLContext *h);
-#define url_filesize(a) (*url_filesize_ptr)(a)
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
-  av_register_all_ptr = ld_sym(dll_handle,"av_register_all");
-  url_seek_ptr = ld_sym(dll_handle,"url_seek");
-  url_close_ptr = ld_sym(dll_handle,"url_close");
-  url_read_complete_ptr = ld_sym(dll_handle,"url_read_complete");
-  url_open_ptr = ld_sym(dll_handle,"url_open");
-  url_filesize_ptr = ld_sym(dll_handle,"url_filesize");
-  return av_register_all_ptr && url_seek_ptr && url_close_ptr &&
-	url_read_complete_ptr && url_open_ptr && url_filesize_ptr;
-}
-
 typedef struct ffmpeg_priv_s
 {
     URLContext *ctx;
@@ -77,8 +50,6 @@ static void __FASTCALL__ ffmpeg_close(stream_t *stream)
 {
     ffmpeg_priv_t*p=stream->priv;
     url_close(p->ctx);
-    dlclose(dll_handle);
-    dll_handle=NULL;
     free(p);
 }
 
@@ -91,10 +62,6 @@ static int __FASTCALL__ ffmpeg_open(stream_t *stream,const char *filename,unsign
     int64_t size;
 
     UNUSED(flags);
-    if(!load_dll(codec_name("libavformat"SLIBSUFFIX))) {
-	MSG_ERR("Detected error during loading libavformat"SLIBSUFFIX"! Try to upgrade this library\n");
-	return 0;
-    }
     av_register_all();
     MSG_V("[ffmpeg] Opening %s\n", filename);
 

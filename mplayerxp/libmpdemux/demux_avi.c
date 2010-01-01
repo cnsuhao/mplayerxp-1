@@ -1312,6 +1312,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
   {
    sh_audio_t* sh_a;
    sh_a = (sh_audio_t*)demuxer->audio->sh;
+#ifdef HAVE_LIBVORBIS
    if(demuxer->audio->id != -2 && sh_a) {
     /* support for Ogg-in-AVI: */
      if(sh_a->format == mmioFOURCC('v','r','b','s'))
@@ -1329,7 +1330,8 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
        } else
 	 demuxer = new_demuxers_demuxer(demuxer,od,demuxer);
      }
-   }       
+   }
+#endif
   }
   return demuxer;
 }

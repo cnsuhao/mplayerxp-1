@@ -28,6 +28,12 @@ SRCS_MPLAYER = mplayer.c $(SRCS_COMMON) find_sub.c subreader.c mixer.c vobsub.c 
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 
+FF_LIBS = ../ffmpeg/libavcodec/libavcodec.a \
+	  ../ffmpeg/libswscale/libswscale.a \
+	  ../ffmpeg/libpostproc/libpostproc.a \
+	  ../ffmpeg/libavformat/libavformat.a \
+	  ../ffmpeg/libavutil/libavutil.a
+
 MP_LIBS = libmpdemux/libmpdemux.a \
 	  libmpcodecs/libmpcodecs.a \
 	  libao2/libao2.a \
@@ -40,7 +46,7 @@ ifeq ($(TARGET_ARCH_X86),yes)
 	  MP_LIBS += loader/libloader.a
 endif
 
-COMMON_LIBS = $(MP_LIBS) $(EXTRALIBS) -lm
+COMMON_LIBS = $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
 CFLAGS = $(OPTFLAGS) -Ilibmpdemux -Ilibvo $(EXTRA_INC)
 
 ALL_PRG = $(PRG)

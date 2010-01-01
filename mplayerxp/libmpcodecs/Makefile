@@ -1,7 +1,7 @@
 include ../mp_config.mak
 
 LIBNAME = libmpcodecs.a
-SUBDIRS = libnuppelvideo
+SUBDIRS = libnuppelvideo liba52 libdca
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
@@ -24,15 +24,20 @@ SRCS=dec_video.c \
      ad_null.c \
      ad_ffmp3.c \
      ad_mp3.c \
-     ad_a52.c \
-     ad_dca.c \
      ad_hwac3.c \
      ad_pcm.c \
      ad_dvdpcm.c \
-     ad_vorbis.c \
      ad_real.c \
      ad_faad.c \
+     ad_a52.c \
+     ad_dca.c \
      codecs_ld.c
+ifeq ($(HAVE_LIBVORBIS),yes)
+SRCS+=ad_vorbis.c
+endif
+ifeq ($(HAVE_LIBTHEORA),yes)
+SRCS+=vd_theora.c
+endif
 
 ifeq ($(HAVE_WIN32LOADER),yes)
 SRCS+=vd_dshow.c \
@@ -64,7 +69,9 @@ $(SUBDIRS):
 
 $(LIBNAME): $(SUBDIRS) $(OBJS) 
 	$(AR) r $(LIBNAME) $(OBJS) \
-	$(wildcard libnuppelvideo/*.o)
+	$(wildcard libnuppelvideo/*.o) \
+	$(wildcard liba52/*.o) \
+	$(wildcard libdca/*.o)
 	
 
 clean:

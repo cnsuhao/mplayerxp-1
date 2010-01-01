@@ -1,4 +1,0 @@
-{
-global: mpg123_*;
-local: *; 
-};

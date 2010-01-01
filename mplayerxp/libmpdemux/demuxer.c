@@ -69,7 +69,9 @@ static demuxer_driver_t *ddrivers[] =
     &demux_film,
     &demux_roq,
     &demux_bmp,
+#ifdef HAVE_LIBVORBIS
     &demux_ogg,
+#endif
     &demux_pva,
     &demux_smjpeg,
     &demux_vqf,

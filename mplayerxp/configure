@@ -81,7 +81,10 @@ ENABLED_LIST=(
     "libcss|build with libcss support",
     "libdvdread|build with libdvdread support",
     "libdvdnav|build with libdvdnav support",
-    "libvcd|build with libvcd support"
+    "libvcd|build with libvcd support",
+    "libvorbis|build with libvorbis support",
+    "libtheora|build with libtheora support",
+    "libbz2|build with libbz2 support"
 )
 DISABLED_LIST=(
     "gcov|compile gnu coverage information into PROGRAM",
@@ -101,7 +104,6 @@ PATH_LIST=(
     "libdir|object code libraries|\$exec_prefix/lib",
     "datadir|read-only architecture-independent data|\$prefix/share/mplayerxp",
     "confdir|read-only configuration files|\$prefix/share/mplayerxp",
-    "codecdir|codec's shared libraries|\$libdir/mplayerxp",
     "win32libdir|win32 .dll locations [/usr/lib/win32]"
 )
 
@@ -198,7 +200,6 @@ for ac_option do
     --enable-?*|--disable-?*)
     eval $(echo "$ac_option" | sed 's/--/action=/;s/-/ thing=/;s/-/_/g')
     in_list "AUTOCONF_LIST" ${thing} || bad_options="$ac_option $bad_options"
-#    echo "$action ${thing}"
     $action ${thing}
     ;;
     *)
@@ -206,11 +207,9 @@ for ac_option do
     optname="${optname#--}"
     optname=${optname//-/_}
     if in_list "SYSCONF_LIST" $optname ; then
-#	echo "eval $optname=$optval"
         eval $optname=$optval
     elif in_list "ADD_LIST" $optname ; then
 	action="add_$optname"
-#	echo "$action ${optval}"
 	$action ${optval}
     else
         bad_options="$ac_option $bad_options"
@@ -311,13 +310,9 @@ if cygwin ; then
 test -z "$datadir" && datadir="."
 test -z "$confdir" && confdir="."
 test -z "$libdir" && libdir="."
-test -z "$codecdir" && codecdir="."
-else
-codecdir="$libdir/$prog_alias"
 fi
 
 srcdir=`pwd`
-
 #checking for pkg-config
 test $($pkg_config --version 2>/dev/null) || die "no pkg-config found"
 
@@ -354,10 +349,26 @@ add_cflags "-I$srcdir"
 
 disable ffmpeg
 # Checking for FFMPEG
-test -f "../codecs/ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
+test -f "../ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
 disabled ffmpeg && die "**FATAL**: local copy of libavcodec doesn't exist! Please use latest svn to checkout external repository in mplayerxp source tree."
-add_cflags "-I$srcdir/../codecs/ffmpeg"
+add_cflags "-I$srcdir/../ffmpeg"
 print_config HAVE_ mp_config.h mp_config.mak ffmpeg
+# Configuring external ffmpeg stuff
+ffmpeg_args="--enable-static --disable-shared --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --enable-postproc --enable-gpl --enable-pthreads"
+if test -n $host ; then
+_arch=$host_arch
+x86_32 && _arch="x86_32"
+x86_64 && _arch="x86_64"
+ffmpeg_args="--arch=$arch $ffmpeg_args"
+fi
+test "$debug" -gt "0" && ffmpeg_args="$ffmpeg_args --enable-debug=$debug"
+enabled $profile  && ffmpeg_args="$ffmpeg_args --enable-profile"
+echocheck "configuring ffmpeg stuff: --cc=\"$cc\" $ffmpeg_args"
+cd ../ffmpeg
+$(LC_ALL=C ./configure --cc="$cc" $ffmpeg_args)
+cd $srcdir
+echores "done"
+###################################
 
 check_header inttypes.h	|| die "cannot find header inttypes.h (see in DOC/faq.html)"
 
@@ -544,8 +555,7 @@ echo "#define WIN32_PATH \"$win32libdir\"" >>mp_config.h
 #########
 # VIDEO #
 #########
-enabled x11 && check_cflags $($pkg_config x11 --cflags) && add_cflags $($pkg_config x11 --cflags) || disable x11
-enabled x11 && check_ldflags $($pkg_config x11 --libs) && add_extralibs $($pkg_config x11 --libs) || disable x11
+check_pkg x11 x11
 enabled x11 && require2 x11 "X11/Xlib.h X11/Xutil.h" XCreateWindow -lXext
 print_config HAVE_ mp_config.h mp_config.mak x11
 enabled x11 && vomodules="x11 $vomodules" || novomodules="x11 $novomodules"
@@ -619,8 +629,7 @@ enabled vesa	&& vomodules="vesa $vomodules" || novomodules="vesa $novomodules"
 # VIDEO + AUDIO #
 #################
 
-enabled sdl && check_cflags $($pkg_config sdl --cflags) && add_cflags $($pkg_config sdl --cflags) || disable sdl
-enabled sdl && check_ldflags $($pkg_config sdl --libs) && add_extralibs $($pkg_config sdl --libs) || disable sdl
+check_pkg sdl sdl
 enabled sdl && require2 sdl SDL/SDL.h SDL_CreateYUVOverlay
 print_config HAVE_ mp_config.h mp_config.mak sdl
 if enabled sdl; then
@@ -666,8 +675,7 @@ enabled arts && require2 arts artsc.h arts_write -lartsc
 print_config HAVE_ mp_config.h mp_config.mak arts
 enabled arts	&& aomodules="arts $aomodules" || noaomodules="arts $noaomodules"
 
-enabled esd && check_cflags $($pkg_config esound --cflags) && add_cflags $($pkg_config esound --cflags) || disable esd
-enabled esd && check_ldflags $($pkg_config esound --libs) && add_extralibs $($pkg_config esound --libs) || disable esd
+check_pkg esd esound
 enabled esd && require2 esd esd.h esd_open_sound
 print_config HAVE_ mp_config.h mp_config.mak esd
 enabled esd	&& aomodules="esd $aomodules" || noaomodules="esd $noaomodules"
@@ -680,8 +688,7 @@ enabled nas && require2 nas audio/audiolib.h AuOpenServer -laudio
 print_config HAVE_ mp_config.h mp_config.mak nas
 enabled nas && aomodules="nas $aomodules" || noaomodules="nas $noaomodules"
 
-enabled jack && check_cflags $($pkg_config jack --cflags) && add_cflags $($pkg_config jack --cflags) || disable jack
-enabled jack && check_ldflags $($pkg_config jack --libs) && add_extralibs $($pkg_config jack --libs) || disable jack
+check_pkg jack jack
 enabled jack && require2 jack jack/jack.h jack_client_open
 print_config HAVE_ mp_config.h mp_config.mak jack
 enabled jack && aomodules="jack $aomodules" || noaomodules="jack $noaomodules"
@@ -715,6 +722,17 @@ print_config HAVE_ mp_config.h mp_config.mak tv_v4l
 enabled tv_v4l	&& vomodules="tv-v4l $vomodules" || novomodules="tv-v4l $novomodules"
 
 print_config HAVE_ mp_config.h mp_config.mak audio_select
+
+enabled libvorbis && check_pkg libvorbis vorbis
+print_config HAVE_ mp_config.h mp_config.mak libvorbis
+enabled libvorbis && inputmodules="vorbis $inputmodules" || noinputmodules="vorbis $noinputmodules"
+
+enabled libtheora && check_pkg libtheora theora
+print_config HAVE_ mp_config.h mp_config.mak libtheora
+enabled libtheora && inputmodules="theora $inputmodules" || noinputmodules="theora $noinputmodules"
+
+enabled libbz2 && require2 libbz2 bzlib.h BZ2_bzlibVersion -lbz2 || disable libbz2
+print_config HAVE_ mp_config.h mp_config.mak libbz2
 
 CFLAGS="$CFLAGS -W -Wall"
 # Thread support
@@ -755,7 +773,6 @@ BINDIR = $bindir
 DATADIR = $datadir
 CONFDIR = $confdir
 LIBDIR = $libdir
-CODECDIR = $codecdir
 DESTDIR = $DESTDIR
 PROGNAME = $prog_alias
 AR = ar
@@ -797,7 +814,6 @@ $def_debug
 #define DATADIR "$datadir"
 #define CONFDIR "$confdir"
 #define LIBDIR "$libdir"
-#define CODECDIR "$codecdir"
 
 /* Define this to enable avg. byte/sec-based AVI sync method by default:
    (use -bps or -nobps commandline option for run-time method selection)

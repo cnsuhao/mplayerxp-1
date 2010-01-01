@@ -11,9 +11,9 @@
 #include "help_mp.h"
 #include "cpudetect.h"
 
-#include "interface/a52.h"
 #include "../mm_accel.h"
 #include "../mplayer.h"
+#include "liba52/a52.h"
 #include "ad_a52.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
@@ -40,60 +40,6 @@ static const config_t options[] = {
 };
 
 LIBAD_EXTERN(a52)
-
-static int (*a52_syncinfo_ptr) (uint8_t * buf, int * flags,
-		  int * sample_rate, int * bit_rate);
-#define a52_syncinfo(a,b,c,d) (*a52_syncinfo_ptr)(a,b,c,d)
-static uint16_t (*crc16_block_ptr)(uint8_t *data,uint32_t num_bytes);
-#define crc16_block(a,b) (*crc16_block_ptr)(a,b)
-static a52_state_t * (*a52_init_ptr) (uint32_t mm_accel);
-#define a52_init(a) (*a52_init_ptr)(a)
-static int (*a52_frame_ptr)(a52_state_t * state, uint8_t * buf, int * flags,
-	       sample_t * level, sample_t bias);
-#define a52_frame(a,b,c,d,e) (*a52_frame_ptr)(a,b,c,d,e)
-
-static int (*a52_block_ptr) (a52_state_t * state);
-#define a52_block(a) (*a52_block_ptr)(a)
-
-static void (*a52_dynrng_ptr) (a52_state_t * state,
-		 sample_t (* call) (sample_t, void *), void * data);
-#define a52_dynrng(a,b,c) (*a52_dynrng_ptr)(a,b,c)
-
-static sample_t* (*a52_samples_ptr) (a52_state_t * state);
-#define a52_samples(a) (*a52_samples_ptr)(a)
-
-static void* (*a52_resample_init_ptr)(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
-#define a52_resample_init(a,b,c,d) (*a52_resample_init_ptr)(a,b,c,d)
-
-static int (** a52_resample_ptr) (float * _f, int16_t * s16);
-#define a52_resample(a,b) (*a52_resample_ptr)(a,b)
-
-static void* (*a52_resample_init_float_ptr)(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
-#define a52_resample_init_float(a,b,c,d) (*a52_resample_init_float_ptr)(a,b,c,d)
-
-static int (** a52_resample32_ptr) (float * _f, float * s32);
-#define a52_resample32(a,b) (*a52_resample32_ptr)(a,b)
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  a52_syncinfo_ptr = ld_sym(dll_handle,"a52_syncinfo");
-  a52_init_ptr = ld_sym(dll_handle,"a52_init");
-  a52_frame_ptr = ld_sym(dll_handle,"a52_frame");
-  a52_block_ptr = ld_sym(dll_handle,"a52_block");
-  a52_resample_init_ptr = ld_sym(dll_handle,"a52_resample_init");
-  a52_dynrng_ptr = ld_sym(dll_handle,"a52_dynrng");
-  a52_samples_ptr = ld_sym(dll_handle,"a52_samples");
-  a52_resample_ptr = ld_sym(dll_handle,"a52_resample");
-  a52_resample_init_float_ptr = ld_sym(dll_handle,"a52_resample_init_float");
-  a52_resample32_ptr = ld_sym(dll_handle,"a52_resample32");
-  crc16_block_ptr = ld_sym(dll_handle,"crc16_block");
-  return a52_syncinfo_ptr && crc16_block_ptr && a52_frame_ptr &&
-	 a52_init_ptr && a52_block_ptr && a52_resample_init_ptr &&
-	 a52_resample_ptr && a52_resample_init_float_ptr && a52_resample32_ptr &&
-	 a52_samples_ptr && a52_dynrng_ptr;
-}
 
 extern int audio_output_channels;
 
@@ -130,7 +76,6 @@ while(1){
     a52_priv->last_pts=*pts=apts;
     if(crc16_block(sh_audio->a_in_buffer+2,length-2)!=0)
 	MSG_STATUS("a52: CRC check failed!  \n");
-    
     return length;
 }
 
@@ -184,7 +129,7 @@ int preinit(sh_audio_t *sh)
   sh->audio_out_minsize=audio_output_channels*sh->samplesize*256*6;
   sh->audio_in_minsize=MAX_AC3_FRAME;
   sh->context=malloc(sizeof(a52_priv_t));
-  return load_dll(codec_name("liba52"SLIBSUFFIX));
+  return 1;
 }
 
 int init(sh_audio_t *sh_audio)
@@ -246,7 +191,6 @@ while(sh_audio->channels>0){
 void uninit(sh_audio_t *sh)
 {
   free(sh->context);
-  dlclose(dll_handle);
 }
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)

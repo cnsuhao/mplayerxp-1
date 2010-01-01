@@ -107,49 +107,6 @@ const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
     5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8
 };
 
-unsigned (*avcodec_version_ptr)(void);
-void (*avcodec_init_ptr)(void);
-void (*avcodec_register_all_ptr)(void);
-AVCodec * (*avcodec_find_decoder_by_name_ptr)(const char *name);
-int (*avcodec_open_ptr)(AVCodecContext *avctx, AVCodec *codec);
-int (*avcodec_close_ptr)(AVCodecContext *avctx);
-int (*avcodec_decode_video_ptr)(AVCodecContext *avctx, AVFrame *picture,
-                         int *got_picture_ptr,
-                         uint8_t *buf, int buf_size);
-AVCodecContext* (*avcodec_alloc_context_ptr)(void);
-AVFrame* (*avcodec_alloc_frame_ptr)(void);
-int (*avcodec_default_get_buffer_ptr)(AVCodecContext *s, AVFrame *pic);
-void (*avcodec_default_release_buffer_ptr)(AVCodecContext *s, AVFrame *pic);
-void (*avcodec_flush_buffers_ptr)(AVCodecContext *avctx);
-int (*avcodec_thread_init_ptr)(AVCodecContext *s, int thread_count);
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
-  avcodec_version_ptr = ld_sym(dll_handle,"avcodec_version");
-  avcodec_init_ptr = ld_sym(dll_handle,"avcodec_init");
-  avcodec_register_all_ptr = ld_sym(dll_handle,"avcodec_register_all");
-  avcodec_find_decoder_by_name_ptr = ld_sym(dll_handle,"avcodec_find_decoder_by_name");
-  avcodec_open_ptr = ld_sym(dll_handle,"avcodec_open");
-  avcodec_close_ptr = ld_sym(dll_handle,"avcodec_close");
-  avcodec_decode_video_ptr = ld_sym(dll_handle,"avcodec_decode_video");
-  avcodec_alloc_context_ptr = ld_sym(dll_handle,"avcodec_alloc_context");
-  avcodec_alloc_frame_ptr = ld_sym(dll_handle,"avcodec_alloc_frame");
-  avcodec_default_get_buffer_ptr = ld_sym(dll_handle,"avcodec_default_get_buffer");
-  avcodec_default_release_buffer_ptr = ld_sym(dll_handle,"avcodec_default_release_buffer");
-  avcodec_flush_buffers_ptr = ld_sym(dll_handle,"avcodec_flush_buffers");
-  avcodec_thread_init_ptr = ld_sym(dll_handle,"avcodec_thread_init");
-  return avcodec_version_ptr && avcodec_init_ptr && avcodec_register_all_ptr &&
-	avcodec_find_decoder_by_name_ptr && avcodec_open_ptr && avcodec_close_ptr &&
-	avcodec_decode_video_ptr && avcodec_alloc_context_ptr &&
-	avcodec_alloc_frame_ptr && avcodec_default_get_buffer_ptr &&
-	avcodec_default_release_buffer_ptr && avcodec_flush_buffers_ptr &&
-	avcodec_thread_init_ptr;
-}
-
-#define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)
-
 /* to set/get/query special features/parameters */
 static int control(sh_video_t *sh,int cmd,void* arg,...){
     priv_t *ctx = sh->context;
@@ -193,7 +150,7 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
         }
 	break;
 	case VDCTRL_RESYNC_STREAM:
-	    (*avcodec_flush_buffers_ptr)(avctx);
+	    avcodec_flush_buffers(avctx);
 	    return CONTROL_TRUE;
     }
     return CONTROL_UNKNOWN;
@@ -232,35 +189,21 @@ static int init(sh_video_t *sh){
     int pp_flags;
     if(npp_options) pp2_init();
     if(!vcodec_inited){
-     if(!load_dll(codec_name("libavcodec"SLIBSUFFIX))) /* try local copy first */
-      if(!load_dll("libavcodec-0.4.9"SLIBSUFFIX))
-	if(!load_dll("libavcodec"SLIBSUFFIX))
-	{
-	    MSG_ERR("Detected error during loading libffmpeg"SLIBSUFFIX"! Try to upgrade this codec\n");
-	    return 0;
-	}
-	avc_version = (*avcodec_version_ptr)();
-	if(avc_version < MIN_LIBAVCODEC_VERSION_INT)
-	{
-	    MSG_ERR("You have wrong version of libavcodec %06X < %06X\n",
-		    avc_version,MIN_LIBAVCODEC_VERSION_INT);
-	    return 0;
-	}
-        (*avcodec_init_ptr)();
-        (*avcodec_register_all_ptr)();
-        vcodec_inited=1;
+	avcodec_init();
+	avcodec_register_all();
+	vcodec_inited=1;
     }
     vdff_ctx=malloc(sizeof(priv_t));
     memset(vdff_ctx,0,sizeof(priv_t));
     sh->context = vdff_ctx;
-    vdff_ctx->lavc_codec = (AVCodec *)(*avcodec_find_decoder_by_name_ptr)(sh->codec->dll_name);
+    vdff_ctx->lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
     if(!vdff_ctx->lavc_codec){
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh->codec->dll_name);
 	return 0;
     }
     
-    vdff_ctx->ctx = (*avcodec_alloc_context_ptr)();
-    vdff_ctx->lavc_picture = (*avcodec_alloc_frame_ptr)();
+    vdff_ctx->ctx = avcodec_alloc_context();
+    vdff_ctx->lavc_picture = avcodec_alloc_frame();
     if(!(vdff_ctx->ctx && vdff_ctx->lavc_picture))
     {
         MSG_ERR(MSGTR_OutOfMemory);
@@ -388,13 +331,13 @@ static int init(sh_video_t *sh){
 
     if(lavc_param_threads < 0) lavc_param_threads = xp_num_cpu;
     if(lavc_param_threads > 1) {
-        (*avcodec_thread_init_ptr)(vdff_ctx->ctx, lavc_param_threads);
-        MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
+	avcodec_thread_init(vdff_ctx->ctx, lavc_param_threads);
+	MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
     }
     /* open it */
-    if ((*avcodec_open_ptr)(vdff_ctx->ctx, vdff_ctx->lavc_codec) < 0) {
-        MSG_ERR( MSGTR_CantOpenCodec);
-        return 0;
+    if (avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec) < 0) {
+	MSG_ERR( MSGTR_CantOpenCodec);
+	return 0;
     }
     MSG_V("INFO: libavcodec.so (%06X) video codec[%c%c%c%c] init OK!\n"
     ,avc_version
@@ -435,8 +378,8 @@ static int init(sh_video_t *sh){
 // uninit driver
 static void uninit(sh_video_t *sh){
     priv_t *vdff_ctx=sh->context;
-    if ((*avcodec_close_ptr)(vdff_ctx->ctx) < 0)
-    	    MSG_ERR( MSGTR_CantCloseCodec);
+    if (avcodec_close(vdff_ctx->ctx) < 0)
+	MSG_ERR( MSGTR_CantCloseCodec);
     if (vdff_ctx->ctx->extradata_size)
 	free(vdff_ctx->ctx->extradata);
     free(vdff_ctx->ctx);
@@ -445,7 +388,6 @@ static void uninit(sh_video_t *sh){
     if(ppContext) pp2_free_context(ppContext);
     ppContext=NULL;
     pp2_uninit();
-    dlclose(dll_handle);
     vcodec_inited=0;
 }
 
@@ -496,11 +438,10 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
   if (!pic->buffer_hints) {
 #endif
     if(vdff_ctx->b_count>1 || vdff_ctx->ip_count>2){
-        MSG_WARN("DR1 failure\n");
-
-        vdff_ctx->use_dr1=0; //FIXME
-        avctx->get_buffer= avcodec_default_get_buffer_ptr;
-        return avctx->get_buffer(avctx, pic);
+	MSG_WARN("DR1 failure\n");
+	vdff_ctx->use_dr1=0; //FIXME
+	avctx->get_buffer= avcodec_default_get_buffer;
+	return avctx->get_buffer(avctx, pic);
     }
 
     if(avctx->has_b_frames){
@@ -573,7 +514,7 @@ static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
 
 #if LIBAVCODEC_BUILD >= 4644
     if(pic->type!=FF_BUFFER_TYPE_USER){
-        (*avcodec_default_release_buffer_ptr)(avctx, pic);
+	avcodec_default_release_buffer(avctx, pic);
         return;
     }
 #endif
@@ -708,10 +649,8 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 	vdff_ctx->ctx->draw_horiz_band=draw_slice;
     }
     else vdff_ctx->ctx->draw_horiz_band=NULL; /* skip draw_slice on framedropping */
-
-    ret = (*avcodec_decode_video_ptr)(vdff_ctx->ctx, vdff_ctx->lavc_picture,
-	     &got_picture, data, len);
-    
+    ret = avcodec_decode_video(vdff_ctx->ctx, vdff_ctx->lavc_picture,
+				&got_picture, data, len);
     if(ret<0) MSG_WARN("Error while decoding frame!\n");
     if(!got_picture) return NULL;	// skipped image
     if(!vdff_ctx->ctx->draw_horiz_band)

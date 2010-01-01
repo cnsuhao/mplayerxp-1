@@ -86,7 +86,7 @@ static int init(sh_video_t *sh){
     }
     DS_SetAttr_DivX("Quality",divx_quality);
     DS_VideoDecoder_StartInternal(sh->context);
-    MSG_V("INFO: Win32/DShow (%s) video codec init OK!\n",CODECDIR"/wine/DS_Filter"SLIBSUFFIX);
+    MSG_V("INFO: Win32/DShow init OK!\n");
     return 1;
 }
 

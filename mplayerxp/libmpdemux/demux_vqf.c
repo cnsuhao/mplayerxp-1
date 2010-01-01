@@ -8,8 +8,30 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "../cfgparser.h"
-#include "../libmpcodecs/interface/vqf.h"
 #include "../libmpcodecs/dec_audio.h"
+
+#define	KEYWORD_BYTES	4
+#define	VERSION_BYTES	8
+#define ELEM_BYTES      sizeof(unsigned long)
+typedef struct{
+	char		ID[KEYWORD_BYTES+VERSION_BYTES+1];
+	int size;
+	/* Common Chunk */
+	int channelMode;   /* channel mode (mono:0/stereo:1) */
+	int bitRate;       /* bit rate (kbit/s) */
+	int samplingRate;  /* sampling rate (44.1 kHz -> 44) */
+	int securityLevel; /* security level (always 0) */
+	/* Text Chunk */
+	char	Name[BUFSIZ];
+	char	Comt[BUFSIZ];
+	char	Auth[BUFSIZ];
+	char	Cpyr[BUFSIZ];
+	char	File[BUFSIZ];
+	char	Extr[BUFSIZ];  // add by OKAMOTO 99.12.21
+	/* Data size chunk*/
+	int		Dsiz;
+} headerInfo;
+
 
 static int vqf_probe(demuxer_t* demuxer) 
 {

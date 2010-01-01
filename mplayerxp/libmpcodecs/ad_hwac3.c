@@ -12,7 +12,6 @@
 #include "codecs_ld.h"
 #include "cpudetect.h"
 
-#include "interface/a52.h"
 #include "../libao2/afmt.h"
 #include "ad_a52.h"
 
@@ -136,10 +135,11 @@ int ac3_iec958_parse_syncinfo(unsigned char *buf, int size, struct hwac3info *ai
 	return 0;
 }
 
+typedef struct a52_state_s a52_state_t;
 extern a52_state_t *mpxp_a52_state;
 extern uint32_t mpxp_a52_accel;
 extern uint32_t mpxp_a52_flags;
-extern int a52_fillbuff(sh_audio_t *sh_audio,float *pts);
+int a52_fillbuff(sh_audio_t *sh_audio,float *pts);
 
 static const ad_info_t info =
 {
@@ -175,7 +175,7 @@ int preinit(sh_audio_t *sh)
   sh->audio_in_minsize=3840;
   sh->channels=2;
   sh->sample_format=AFMT_AC3;
-  return load_dll(codec_name("liba52"SLIBSUFFIX));
+  return load_dll("liba52"SLIBSUFFIX);
 }
 
 int init(sh_audio_t *sh_audio)

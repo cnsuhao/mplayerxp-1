@@ -4,7 +4,7 @@
 	Copyright 2000 Eugene Kuznetsov  (divx@euro.ru)
 
 *********************************************************/
-#include "../config.h"
+#include "../../mp_config.h"
 #include "guids.h"
 #include "interfaces.h"
 #include "registry.h"

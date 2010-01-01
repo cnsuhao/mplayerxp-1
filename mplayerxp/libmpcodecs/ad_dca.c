@@ -11,7 +11,7 @@
 #include "help_mp.h"
 #include "cpudetect.h"
 
-#include "interface/dca.h"
+#include "libdca/dca.h"
 #include "../mm_accel.h"
 #include "../mplayer.h"
 #include "../bswap.h"
@@ -33,7 +33,7 @@ typedef struct dca_priv_s
 
 #include "bswap.h"
 
-static const ad_info_t info = 
+static const ad_info_t info =
 {
 	"DTS Coherent Acoustics",
 	"libdca",
@@ -46,64 +46,6 @@ static const config_t options[] = {
 };
 
 LIBAD_EXTERN(dca)
-
-static int (*dca_syncinfo_ptr) (dca_state_t *state, uint8_t * buf, int * flags,
-                  int * sample_rate, int * bit_rate, int *frame_length);
-#define dca_syncinfo(a,b,c,d,e,f) (*dca_syncinfo_ptr)(a,b,c,d,e,f)
-
-static dca_state_t * (*dca_init_ptr) (uint32_t mm_accel);
-#define dca_init(a) (*dca_init_ptr)(a)
-
-static int (*dca_frame_ptr)(dca_state_t * state, uint8_t * buf, int * flags,
-               level_t * level, sample_t bias);
-#define dca_frame(a,b,c,d,e) (*dca_frame_ptr)(a,b,c,d,e)
-
-static int (*dca_block_ptr) (dca_state_t * state);
-#define dca_block(a) (*dca_block_ptr)(a)
-
-static int (*dca_blocks_num_ptr) (dca_state_t * state);
-#define dca_blocks_num(a) (*dca_blocks_num_ptr)(a)
-
-static void (*dca_dynrng_ptr) (dca_state_t * state,
-		 sample_t (* call) (sample_t, void *), void * data);
-#define dca_dynrng(a,b,c) (*dca_dynrng_ptr)(a,b,c)
-
-static sample_t* (*dca_samples_ptr) (dca_state_t * state);
-#define dca_samples(a) (*dca_samples_ptr)(a)
-
-static void* (*dca_resample_init_ptr)(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
-#define dca_resample_init(a,b,c,d) (*dca_resample_init_ptr)(a,b,c,d)
-
-static int (** dca_resample_ptr) (float * _f, int16_t * s16);
-#define dca_resample(a,b) (*dca_resample_ptr)(a,b)
-
-static void* (*dca_resample_init_float_ptr)(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
-#define dca_resample_init_float(a,b,c,d) (*dca_resample_init_float_ptr)(a,b,c,d)
-
-static int (** dca_resample32_ptr) (float * _f, float * s32);
-#define dca_resample32(a,b) (*dca_resample32_ptr)(a,b)
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
-  dca_syncinfo_ptr = ld_sym(dll_handle,"dca_syncinfo");
-  dca_init_ptr = ld_sym(dll_handle,"dca_init");
-  dca_frame_ptr = ld_sym(dll_handle,"dca_frame");
-  dca_block_ptr = ld_sym(dll_handle,"dca_block");
-  dca_blocks_num_ptr = ld_sym(dll_handle,"dca_blocks_num");
-  dca_dynrng_ptr = ld_sym(dll_handle,"dca_dynrng");
-  dca_samples_ptr = ld_sym(dll_handle,"dca_samples");
-  dca_resample_init_ptr = ld_sym(dll_handle,"dca_resample_init");
-  dca_resample_ptr = ld_sym(dll_handle,"dca_resample");
-  dca_resample_init_float_ptr = ld_sym(dll_handle,"dca_resample_init_float");
-  dca_resample32_ptr = ld_sym(dll_handle,"dca_resample32");
-  return dca_syncinfo_ptr && dca_frame_ptr &&  dca_init_ptr &&
-	 dca_block_ptr && dca_samples_ptr && dca_dynrng_ptr &&
-	 dca_blocks_num_ptr && dca_resample_init_float_ptr &&
-	 dca_resample32_ptr && dca_resample_init_ptr &&
-	 dca_resample_ptr;
-}
 
 extern int audio_output_channels;
 
@@ -135,7 +77,7 @@ while(1){
     sh_audio->i_bps=bit_rate/8;
     demux_read_data_r(sh_audio->ds,sh_audio->a_in_buffer+16,length-16,apts?&null_pts:&apts);
     dca_priv->last_pts=*pts=apts;
-    
+
     return length;
 }
 
@@ -189,7 +131,7 @@ int preinit(sh_audio_t *sh)
     sh->audio_out_minsize=audio_output_channels*sh->samplesize*256*8;
     sh->audio_in_minsize=MAX_AC5_FRAME;
     sh->context=malloc(sizeof(dca_priv_t));
-    return load_dll(codec_name("libdca"SLIBSUFFIX));
+    return 1;
 }
 
 int init(sh_audio_t *sh_audio)
@@ -213,14 +155,14 @@ int init(sh_audio_t *sh_audio)
   sh_audio->channels=audio_output_channels;
 while(sh_audio->channels>0){
   switch(sh_audio->channels){
-	    case 1: mpxp_dca_flags=DCA_MONO; break;
-	    case 2: mpxp_dca_flags=DCA_STEREO; break;
-/*	    case 2: mpxp_dca_flags=DCA_DOLBY; break; */
-/*	    case 3: mpxp_dca_flags=DCA_3F; break; */
-	    case 3: mpxp_dca_flags=DCA_2F1R; break;
-	    case 4: mpxp_dca_flags=DCA_2F2R; break; /* 2+2*/
-	    case 5: mpxp_dca_flags=DCA_3F2R; break;
-	    case 6: mpxp_dca_flags=DCA_3F2R|DCA_LFE; break; /* 5.1*/
+	case 1: mpxp_dca_flags=DCA_MONO; break;
+	case 2: mpxp_dca_flags=DCA_STEREO; break;
+/*	case 2: mpxp_dca_flags=DCA_DOLBY; break; */
+/*	case 3: mpxp_dca_flags=DCA_3F; break; */
+	case 3: mpxp_dca_flags=DCA_2F1R; break;
+	case 4: mpxp_dca_flags=DCA_2F2R; break; /* 2+2*/
+	case 5: mpxp_dca_flags=DCA_3F2R; break;
+	case 6: mpxp_dca_flags=DCA_3F2R|DCA_LFE; break; /* 5.1*/
   }
   /* test:*/
   flags=mpxp_dca_flags|DCA_ADJUST_LEVEL;
@@ -250,7 +192,6 @@ while(sh_audio->channels>0){
 void uninit(sh_audio_t *sh)
 {
   free(sh->context);
-  dlclose(dll_handle);
 }
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)

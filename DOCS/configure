@@ -1,73 +1,106 @@
 #!/bin/sh
 # The simplest configure for win loader
 
-for parm in "$@" ; do
-  if test "$parm" = "--help" || test "$parm" = "-help" || test "$parm" = "-h" ; then
-    cat << EOF
-
-Usage: $0 [OPTIONS]...
-
-Configuration:
-  -h, --help               display this help and exit
-
-Installation directories:
-  --prefix=DIR           use this prefix for installing mplayer [/usr/local]
-
-Fine tuning of the installation directories:
-  --datadir=DIR          use this prefix for installing machine independent
-                         data files (fonts, skins) [PREFIX/share/mplayer]
-  --confdir=DIR          use this prefix for installing configuration files
-                         [same as datadir]
-Program names:
-  --program-suffix=SUFX  append SUFX to installed program names
-
-Environment variables:
-  DESTDIR   specifies base of installation
-
-EOF
-    exit 0
-  fi
-done # for parm in ...
+. ../functions
+init_functions
 
 
-# LGB: temporary files
-for I in "$TMPDIR" "$TEMPDIR" "/tmp" ; do
-  test "$I" && break
-done
+PATH_LIST=(
+    "prefix|architecture-independent files|/usr/local",
+    "datadir|read-only architecture-independent data|\$prefix/share/mplayerxp",
+    "confdir|read-only configuration files|\$prefix/share/mplayerxp"
+)
 
-TMPLOG="configure.log"
-rm -f "$TMPLOG"
-TMPC="$I/mplayerxp-conf-$RANDOM-$$.c"
-TMPCPP="$I/mplayerxp-conf-$RANDOM-$$.cpp"
-TMPO="$I/mplayerxp-conf-$RANDOM-$$.o"
-TMPS="$I/mplayerxp-conf-$RANDOM-$$.S"
+PROGNAME_LIST=(
+  "program_prefix|prepend PREFIX to installed program names",
+  "program_suffix|append SUFFIX to installed program names",
+  "program_transform_name|use TRANSFORM_NAME as program name|mplayerxp"
+)
 
-prefix="/usr/local"
-psuffix=
+SYSTYPES_LIST=(
+    "build|configure for building on BUILD [guessed]",
+    "host|cross-compile to build program to run on HOST [BUILD]",
+    "install|use this INSTALL to install PROGRAM|install",
+    "pkg_config|use this PKG-CONFIG to configure PROGRAM|pkg-config"
+)
+
+SYSCONF_LIST=(
+    "SYSTYPES_LIST",
+    "PROGNAME_LIST",
+    "PATH_LIST"
+)
+
+ENVIRONMENT_LIST=(
+    "MAKE|Make command (example: 'make -j')|make",
+    "DESTDIR|specifies base of installation"
+)
+
+HELP_LIST=(
+    "PATH_LIST|Fine tuning of the installation directories|--",
+    "PROGNAME_LIST|Program names|--",
+    "SYSTYPES_LIST|System types|--",
+    "ENVIRONMENT_LIST|Environment variables|  "
+)
+
+DEFAULT_LIST=(
+    "PATH_LIST|Fine tuning of the installation directories|--",
+    "SYSTYPES_LIST|System types|--",
+    "PROGNAME_LIST|Program names|--"
+)
+
+make_defaults "DEFAULT_LIST"
+make_environment "ENVIRONMENT_LIST"
+
 for ac_option do
+  optval="${ac_option#*=}"
   case "$ac_option" in
-  --prefix=*)
-    prefix=`echo $ac_option | cut -d '=' -f 2`
+  --help)
+    print_help "HELP_LIST"
+    exit 0
     ;;
-  --datadir=*)
-    datadir=`echo $ac_option | cut -d '=' -f 2`
+  --enable-*=*|--disable-*=*)
+    eval $(echo "${ac_option%%=*}" | sed 's/--/action=/;s/-/ thing=/')
+    in_list "AUTOCONF_LIST" ${thing} || bad_options="$ac_option $bad_options"
+    if test "$action" = "disable"; then
+      test "${optval}" = "no" && action=enable
+    else
+      test "${optval}" = "no" && action=disable
+    fi
+    echo "$action ${thing}"
+    $action ${thing}
     ;;
-  --confdir=*)
-    confdir=`echo $ac_option | cut -d '=' -f 2`
+
+    --enable-?*|--disable-?*)
+    eval $(echo "$ac_option" | sed 's/--/action=/;s/-/ thing=/;s/-/_/g')
+    in_list "AUTOCONF_LIST" ${thing} || bad_options="$ac_option $bad_options"
+    $action ${thing}
     ;;
-  --program-suffix=*)
-    psuffix=`echo $ac_option | cut -d '=' -f 2`
-    ;;
-  *)
+    *)
+    optname="${ac_option%%=*}"
+    optname="${optname#--}"
+    optname=${optname//-/_}
+    if in_list "SYSCONF_LIST" $optname ; then
+        eval $optname=$optval
+    else
+        bad_options="$ac_option $bad_options"
+    fi
     ;;
   esac
 done
 
-prog_alias="mplayerxp$psuffix"
+mktmps
 
-# Atmos: moved this here, to be correct, if --prefix is specified
-test -z "$_datadir" && datadir="$prefix/share/$prog_alias"
-test -z "$_confdir" && confdir="$datadir"
+echocheck "Program name"
+prog_alias=$program_transform_name
+prog_alias="$program_prefix$prog_alias$program_suffix"
+echores "$prog_alias"
+
+if cygwin ; then
+# Keep everything in .exe folder
+test -z "$datadir" && datadir="."
+test -z "$confdir" && confdir="."
+test -z "$libdir" && libdir="."
+fi
 
 #############################################################################
 echo "Creating config.mak"

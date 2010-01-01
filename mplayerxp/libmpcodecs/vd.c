@@ -61,7 +61,9 @@ const vd_functions_t* mpcodecs_vd_drivers[] = {
 	&mpcodecs_vd_huffyuv,
 	&mpcodecs_vd_xanim,
 	&mpcodecs_vd_real,
+#ifdef HAVE_LIBTHEORA
 	&mpcodecs_vd_theora,
+#endif
 	NULL
 };
 static unsigned int nddrivers=sizeof(mpcodecs_vd_drivers)/sizeof(vd_functions_t*);

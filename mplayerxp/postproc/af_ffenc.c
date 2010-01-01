@@ -3,58 +3,12 @@
 #include <string.h>
 #include <dlfcn.h>
 #include "mp_config.h"
-#include "../../codecs/ffmpeg/libavcodec/avcodec.h"
+#include "libavcodec/avcodec.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "../libvo/fastmemcpy.h"
 #include "af.h"
 
 #define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)
-
-static void (*avcodec_init_ptr)(void);
-#define avcodec_init() (*avcodec_init_ptr)()
-
-static unsigned (*avcodec_version_ptr)(void);
-#define avcodec_version() (*avcodec_version_ptr)()
-
-static void (*avcodec_register_all_ptr)(void);
-#define avcodec_register_all() (*avcodec_register_all_ptr)()
-
-static AVCodec* (*avcodec_find_encoder_by_name_ptr)(const char *name);
-#define avcodec_find_encoder_by_name(a) (*avcodec_find_encoder_by_name_ptr)(a)
-
-static AVCodecContext* (*avcodec_alloc_context_ptr)(void);
-#define avcodec_alloc_context() (*avcodec_alloc_context_ptr)()
-
-static int (*avcodec_open_ptr)(AVCodecContext *avctx, AVCodec *codec);
-#define avcodec_open(a,b) (*avcodec_open_ptr)(a,b)
-
-static int (*avcodec_encode_audio_ptr)(AVCodecContext *avctx, uint8_t *buf, int buf_size, const short *samples);
-#define avcodec_encode_audio(a,b,c,d) (*avcodec_encode_audio_ptr)(a,b,c,d)
-
-static int (*avcodec_close_ptr)(AVCodecContext *avctx);
-#define avcodec_close(a) (*avcodec_close_ptr)(a)
-
-static AVCodec* (*first_avcodec_ptr);
-#define first_avcodec (*first_avcodec_ptr)
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
-  avcodec_init_ptr = ld_sym(dll_handle,"avcodec_init");
-  avcodec_version_ptr = ld_sym(dll_handle,"avcodec_version");
-  avcodec_register_all_ptr = ld_sym(dll_handle,"avcodec_register_all");
-  avcodec_find_encoder_by_name_ptr = ld_sym(dll_handle,"avcodec_find_encoder_by_name");
-  avcodec_alloc_context_ptr = ld_sym(dll_handle,"avcodec_alloc_context");
-  avcodec_open_ptr = ld_sym(dll_handle,"avcodec_open");
-  avcodec_close_ptr = ld_sym(dll_handle,"avcodec_close");
-  avcodec_encode_audio_ptr = ld_sym(dll_handle,"avcodec_encode_audio");
-  first_avcodec_ptr = ld_sym(dll_handle,"first_avcodec");
-  return avcodec_init_ptr && avcodec_register_all_ptr && avcodec_find_encoder_by_name_ptr
-	 && avcodec_open_ptr && avcodec_close_ptr && avcodec_encode_audio_ptr
-	 && avcodec_version_ptr && avcodec_alloc_context_ptr
-	 && first_avcodec_ptr;
-}
 
 // Data for specific instances of this filter
 typedef struct af_ffenc_s
@@ -71,6 +25,7 @@ typedef struct af_ffenc_s
 
 static void print_encoders(void)
 {
+#if 0
     AVCodec *p;
     p = first_avcodec;
     while (p) {
@@ -79,6 +34,8 @@ static void print_encoders(void)
         p = p->next;
     }
     MSG_INFO("\n");
+#endif
+    MSG_INFO("Not ready yet!!!\n");
 }
 
 static uint32_t find_atag(const char *codec)
@@ -194,7 +151,6 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
     free(af->data);
   if(af->setup)
     free(af->setup);
-  dlclose(dll_handle);
 }
 
 // Filter data through filter
@@ -250,21 +206,6 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
 
 // Allocate memory and set function pointers
 static int __FASTCALL__ open(af_instance_t* af){
-  unsigned avc_version;
-  if(!load_dll(codec_name("libavcodec"SLIBSUFFIX))) /* try local copy first */
-   if(!load_dll("libavcodec-0.4.8"SLIBSUFFIX))
-    if(!load_dll("libavcodec"SLIBSUFFIX))
-    {
-	MSG_ERR("Detected error during loading libffmpeg.so! Try to upgrade this codec\n");
-	return AF_ERROR;
-    }
-    avc_version = (*avcodec_version_ptr)();
-    if(avc_version < MIN_LIBAVCODEC_VERSION_INT)
-    {
-	MSG_ERR("You have wrong version of libavcodec %06X < %06X\n",
-		avc_version,MIN_LIBAVCODEC_VERSION_INT);
-	return AF_ERROR;
-    }
   af->control=control;
   af->uninit=uninit;
   af->play=play;

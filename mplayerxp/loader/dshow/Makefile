@@ -21,7 +21,7 @@ CFLAGS  = $(OPTFLAGS) $(INCLUDE)
 
 # .PHONY: all clean
 
-all:	$(OBJ)
+all:	$(OBJS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<

@@ -24,6 +24,7 @@ void * ld_codec(const char *name,const char *url_hint)
   return dll_handle;
 }
 
+#if 0
 /* this code should be called before thread creating */
 static char cname[FILENAME_MAX];
 char * codec_name( const char *name )
@@ -32,6 +33,7 @@ char * codec_name( const char *name )
   strcat(cname,name);
   return cname;
 }
+#endif
 
 void * ld_sym(void *handle,const char *sym_name)
 {

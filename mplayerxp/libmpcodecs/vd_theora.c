@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <dlfcn.h>
 
+#include <theora/theora.h>
+
 #include "mp_config.h"
 #include "help_mp.h"
 #include "codecs_ld.h"
@@ -25,8 +27,6 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(theora)
 
-#include "interface/vorbis/theora.h"
-
 #define THEORA_NUM_HEADER_PACKETS 3
 
 
@@ -35,40 +35,6 @@ typedef struct theora_struct_st {
     theora_comment cc;
     theora_info inf;
 } theora_struct_t;
-
-static void (*theora_info_init_ptr)(theora_info *c);
-#define theora_info_init(a) (*theora_info_init_ptr)(a)
-static void (*theora_comment_init_ptr)(theora_comment *tc);
-#define theora_comment_init(a) (*theora_comment_init_ptr)(a)
-static int (*theora_decode_header_ptr)(theora_info *ci, theora_comment *cc,
-                                ogg_packet *op);
-#define theora_decode_header(a,b,c) (*theora_decode_header_ptr)(a,b,c)
-static int (*theora_decode_init_ptr)(theora_state *th, theora_info *c);
-#define theora_decode_init(a,b) (*theora_decode_init_ptr)(a,b)
-static int (*theora_decode_packetin_ptr)(theora_state *th,ogg_packet *op);
-#define theora_decode_packetin(a,b) (*theora_decode_packetin_ptr)(a,b)
-static int (*theora_decode_YUVout_ptr)(theora_state *th,yuv_buffer *yuv);
-#define theora_decode_YUVout(a,b) (*theora_decode_YUVout_ptr)(a,b)
-static void (*theora_clear_ptr)(theora_state *t);
-#define theora_clear(a) (*theora_clear_ptr)(a)
-
-
-static void *dll_handle;
-static int load_dll(const char *libname)
-{
-  if(!(dll_handle=ld_codec(libname,"http://ffmpeg.sf.net"))) return 0;
-  theora_info_init_ptr=ld_sym(dll_handle,"theora_info_init");
-  theora_comment_init_ptr=ld_sym(dll_handle,"theora_comment_init");
-  theora_decode_init_ptr=ld_sym(dll_handle,"theora_decode_init");
-  theora_decode_header_ptr=ld_sym(dll_handle,"theora_decode_header");
-  theora_decode_packetin_ptr=ld_sym(dll_handle,"theora_decode_packetin");
-  theora_decode_YUVout_ptr=ld_sym(dll_handle,"theora_decode_YUVout");
-  theora_clear_ptr=ld_sym(dll_handle,"theora_clear");
-  return theora_info_init_ptr && theora_comment_init_ptr &&
-	 theora_decode_init_ptr && theora_decode_header_ptr && 
-	 theora_decode_packetin_ptr && theora_decode_YUVout_ptr &&
-	 theora_clear_ptr;
-}
 
 // to set/get/query special features/parameters
 static int control(sh_video_t *sh,int cmd,void* arg,...){
@@ -93,7 +59,6 @@ static int init(sh_video_t *sh){
     int i;
     float pts;
 
-    if(!load_dll("libtheora"SLIBSUFFIX)) return 0;
     /* check whether video output format is supported */
     switch(sh->codec->outfmt[sh->outfmtidx])
     {
@@ -114,7 +79,7 @@ static int init(sh_video_t *sh){
 
        theora_info_init(&context->inf);
        theora_comment_init(&context->cc);
-       
+
        /* Read all header packets, pass them to theora_decode_header. */
        for (i = 0; i < THEORA_NUM_HEADER_PACKETS; i++)
        {
@@ -155,13 +120,13 @@ static int init(sh_video_t *sh){
        sh->aspect = (float)(context->inf.aspect_numerator * context->inf.frame_width)/
           (context->inf.aspect_denominator * context->inf.frame_height);
     }
-    
+
     MSG_V("INFO: Theora video init ok!\n");
 
     return mpcodecs_config_vo (sh,sh->disp_w,sh->disp_h,NULL);
 }
 
-/* 
+/*
  * uninit driver
  */
 static void uninit(sh_video_t *sh)
@@ -173,7 +138,6 @@ static void uninit(sh_video_t *sh)
       theora_clear (&context->st);
       free (context);
    }
-   dlclose(dll_handle);
 }
 
 /*

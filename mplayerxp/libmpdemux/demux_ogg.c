@@ -6,6 +6,11 @@
 #include <assert.h>
 #include <math.h>
 #include <dlfcn.h>
+#include <ogg/ogg.h>
+#include <vorbis/codec.h>
+#ifdef HAVE_LIBTHEORA
+#include <theora/theora.h>
+#endif
 
 #include "../mplayer.h"
 #include "bswap.h"
@@ -14,9 +19,6 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "aviprint.h"
-#include "../libmpcodecs/interface/vorbis/ogg.h"
-#include "../libmpcodecs/interface/vorbis/codec.h"
-#include "../libmpcodecs/interface/vorbis/theora.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "../libmpcodecs/dec_audio.h"
 #include "../libvo/sub.h"
@@ -152,125 +154,6 @@ typedef struct ogg_demuxer {
 static subtitle ogg_sub;
 static float clear_sub;
 //FILE* subout;
-
-static int (*ogg_stream_init_ptr)(ogg_stream_state *os,int serialno);
-#define ogg_stream_init(a,b) (*ogg_stream_init_ptr)((ogg_stream_state *)a,b)
-static int (*ogg_page_serialno_ptr)(ogg_page *og);
-#define ogg_page_serialno(a) (*ogg_page_serialno_ptr)(a)
-static int (*ogg_sync_pageout_ptr)(ogg_sync_state *oy, ogg_page *og);
-#define ogg_sync_pageout(a,b) (*ogg_sync_pageout_ptr)(a,b)
-static int (*ogg_stream_pagein_ptr)(ogg_stream_state *os, ogg_page *og);
-#define ogg_stream_pagein(a,b) (*ogg_stream_pagein_ptr)(a,b)
-static int (*ogg_stream_packetout_ptr)(ogg_stream_state *os,ogg_packet *op);
-#define ogg_stream_packetout(a,b) (*ogg_stream_packetout_ptr)(a,b)
-static int (*ogg_sync_init_ptr)(ogg_sync_state *oy);
-#define ogg_sync_init(a) (*ogg_sync_init_ptr)(a)
-static int (*ogg_sync_reset_ptr)(ogg_sync_state *oy);
-#define ogg_sync_reset(a) (*ogg_sync_reset_ptr)(a)
-static char* (*ogg_sync_buffer_ptr)(ogg_sync_state *oy, long size);
-#define ogg_sync_buffer(a,b) (*ogg_sync_buffer_ptr)(a,b)
-static int (*ogg_sync_wrote_ptr)(ogg_sync_state *oy, long bytes);
-#define ogg_sync_wrote(a,b) (*ogg_sync_wrote_ptr)(a,b)
-static int (*ogg_stream_reset_ptr)(ogg_stream_state *os);
-#define ogg_stream_reset(a) (*ogg_stream_reset_ptr)(a)
-static int (*ogg_page_continued_ptr)(ogg_page *og);
-#define ogg_page_continued(a) (*ogg_page_continued_ptr)(a)
-static int (*ogg_page_bos_ptr)(ogg_page *og);
-#define ogg_page_bos(a) (*ogg_page_bos_ptr)(a)
-static long (*ogg_sync_pageseek_ptr)(ogg_sync_state *oy,ogg_page *og);
-#define ogg_sync_pageseek(a,b) (*ogg_sync_pageseek_ptr)(a,b)
-static int  (*ogg_stream_packetpeek_ptr)(ogg_stream_state *os,ogg_packet *op);
-#define ogg_stream_packetpeek(a,b) (*ogg_stream_packetpeek_ptr)(a,b)
-static int  (*ogg_sync_clear_ptr)(ogg_sync_state *oy);
-#define ogg_sync_clear(a) (*ogg_sync_clear_ptr)(a) 
-static int  (*ogg_stream_clear_ptr)(ogg_stream_state *os);
-#define ogg_stream_clear(a) (*ogg_stream_clear_ptr)(a) 
-
-
-static long (*vorbis_packet_blocksize_ptr)(vorbis_info *vi,ogg_packet *op);
-#define vorbis_packet_blocksize(a,b) (*vorbis_packet_blocksize_ptr)(a,b)
-static void (*vorbis_info_init_ptr)(vorbis_info *vi);
-#define vorbis_info_init(a) (*vorbis_info_init_ptr)(a)
-static void (*vorbis_info_clear_ptr)(vorbis_info *vi);
-#define vorbis_info_clear(a) (*vorbis_info_clear_ptr)(a)
-static void (*vorbis_comment_init_ptr)(vorbis_comment *vc);
-#define vorbis_comment_init(a) (*vorbis_comment_init_ptr)(a)
-static void (*vorbis_comment_clear_ptr)(vorbis_comment *vc);
-#define vorbis_comment_clear(a) (*vorbis_comment_clear_ptr)(a)
-static int  (*vorbis_synthesis_headerin_ptr)(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op);
-#define vorbis_synthesis_headerin(a,b,c) (*vorbis_synthesis_headerin_ptr)(a,b,c)
-static ogg_int32_t  (*_ilog_ptr)(ogg_int32_t);
-#define _ilog(a) (*_ilog_ptr)(a)
-
-static void (*theora_info_init_ptr)(theora_info *c);
-#define theora_info_init(a) (*theora_info_init_ptr)(a)
-static void (*theora_comment_init_ptr)(theora_comment *tc);
-#define theora_comment_init(a) (*theora_comment_init_ptr)(a)
-static int (*theora_decode_header_ptr)(theora_info *ci, theora_comment *cc,
-                                ogg_packet *op);
-#define theora_decode_header(a,b,c) (*theora_decode_header_ptr)(a,b,c)
-
-
-static void *dll_handle;
-static void *dll2_handle;
-static void *dll3_handle;
-static int have_theora=1;
-static int load_ogg_lib( void )
-{
-  int theora_init=1;
-  if(!(dll_handle=ld_codec("libogg"SLIBSUFFIX,NULL))) return 0;
-  if(!(dll2_handle=ld_codec("libvorbis"SLIBSUFFIX,NULL)))
-  {
-    dlclose(dll_handle);
-    return 0;
-  }
-  if(!(dll3_handle=ld_codec("libtheora"SLIBSUFFIX,NULL)))
-  {
-    have_theora = 0;
-  }
-  ogg_stream_init_ptr = ld_sym(dll_handle,"ogg_stream_init");
-  ogg_page_serialno_ptr = ld_sym(dll_handle,"ogg_page_serialno");
-  ogg_sync_pageout_ptr = ld_sym(dll_handle,"ogg_sync_pageout");
-  ogg_stream_pagein_ptr = ld_sym(dll_handle,"ogg_stream_pagein");
-  ogg_stream_packetout_ptr = ld_sym(dll_handle,"ogg_stream_packetout");
-  ogg_sync_init_ptr = ld_sym(dll_handle,"ogg_sync_init");
-  ogg_sync_reset_ptr = ld_sym(dll_handle,"ogg_sync_reset");
-  ogg_sync_buffer_ptr = ld_sym(dll_handle,"ogg_sync_buffer");
-  ogg_sync_wrote_ptr = ld_sym(dll_handle,"ogg_sync_wrote");
-  ogg_sync_clear_ptr = ld_sym(dll_handle,"ogg_sync_clear");
-  ogg_stream_reset_ptr = ld_sym(dll_handle,"ogg_stream_reset");
-  ogg_page_continued_ptr = ld_sym(dll_handle,"ogg_page_continued");
-  ogg_page_bos_ptr = ld_sym(dll_handle,"ogg_page_bos");
-  ogg_sync_pageseek_ptr = ld_sym(dll_handle,"ogg_sync_pageseek");
-  ogg_stream_packetpeek_ptr = ld_sym(dll_handle,"ogg_stream_packetpeek");
-  ogg_stream_clear_ptr = ld_sym(dll_handle,"ogg_stream_clear");
-  vorbis_packet_blocksize_ptr = ld_sym(dll2_handle,"vorbis_packet_blocksize");
-  vorbis_info_init_ptr = ld_sym(dll2_handle,"vorbis_info_init");
-  vorbis_info_clear_ptr = ld_sym(dll2_handle,"vorbis_info_clear");
-  vorbis_comment_init_ptr = ld_sym(dll2_handle,"vorbis_comment_init");
-  vorbis_comment_clear_ptr = ld_sym(dll2_handle,"vorbis_comment_clear");
-  vorbis_synthesis_headerin_ptr = ld_sym(dll2_handle,"vorbis_synthesis_headerin");
-  _ilog_ptr = ld_sym(dll2_handle,"_ilog");
-  if(have_theora)
-  {
-    theora_info_init_ptr=ld_sym(dll3_handle,"theora_info_init");
-    theora_comment_init_ptr=ld_sym(dll3_handle,"theora_comment_init");
-    theora_decode_header_ptr=ld_sym(dll3_handle,"theora_decode_header");
-    theora_init=theora_info_init_ptr&&theora_comment_init_ptr&&theora_decode_header_ptr;
-  }
-  return ogg_stream_init_ptr && ogg_page_serialno_ptr &&
-	 ogg_stream_pagein_ptr && ogg_sync_pageout_ptr &&
-	 ogg_stream_packetout_ptr && ogg_sync_init_ptr &&
-	 ogg_sync_reset_ptr && ogg_sync_buffer_ptr &&
-	 ogg_sync_wrote_ptr && ogg_stream_reset_ptr &&
-	 ogg_sync_clear_ptr && ogg_stream_clear_ptr &&
-	 ogg_page_continued_ptr && ogg_page_bos_ptr &&
-	 ogg_sync_pageseek_ptr && ogg_stream_packetpeek_ptr &&
-	 vorbis_packet_blocksize_ptr && vorbis_info_init_ptr &&
-	 vorbis_info_clear_ptr && vorbis_comment_init_ptr &&
-	 vorbis_comment_clear_ptr && vorbis_synthesis_headerin_ptr &&
-	 _ilog_ptr && theora_init;
-}
 
 static int ogg_probe(demuxer_t *demuxer)
 {
@@ -483,7 +366,7 @@ static unsigned char* demux_ogg_read_packet(ogg_stream_t* os,ogg_packet* pack,vo
      if (context != NULL && !(*data&0x80))
      {
         theora_info *thi = ((theora_struct_t*)context)->st.i;
-        int keyframe_granule_shift=_ilog(thi->keyframe_frequency_force-1);
+        int keyframe_granule_shift=logf(thi->keyframe_frequency_force-1);
         int64_t iframemask = (1 << keyframe_granule_shift) - 1;
 
 	if (pack->granulepos >= 0)
@@ -856,7 +739,6 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
   sh_audio_t* sh_a;
   sh_video_t* sh_v;
 
-  if(!load_ogg_lib()) return 0;
 #ifdef USE_ICONV
   subcp_open();
 #endif
@@ -930,7 +812,9 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
       MSG_V("Ogg : stream %d is vorbis\n",ogg_d->num_sub);
 
       // check for Theora
-    } else if (pack.bytes >= 7 && !strncmp (&pack.packet[1], "theora", 6) && have_theora) {
+    } else
+#ifdef HAVE_LIBTHEORA
+    if (pack.bytes >= 7 && !strncmp (&pack.packet[1], "theora", 6)) {
 	int errorCode = 0;
 	theora_info inf;
 	theora_comment cc;
@@ -942,8 +826,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	if (errorCode)
 	    MSG_ERR("Theora header parsing failed: %i \n",
 		   errorCode);
-	else
-	{
+	else {
 	    sh_v = new_sh_video(demuxer,ogg_d->num_sub);
 
 	    sh_v->context = NULL;
@@ -975,7 +858,9 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 		   inf.aspect_numerator, inf.aspect_denominator);
 	    if(verbose>0) print_video_header(sh_v->bih,sizeof(BITMAPINFOHEADER));
 	}
-    } else if (pack.bytes >= 4 && !strncmp (&pack.packet[0], "fLaC", 4)) {
+    }
+#endif
+    else if (pack.bytes >= 4 && !strncmp (&pack.packet[0], "fLaC", 4)) {
 	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
 	sh_a->format =  mmioFOURCC('f', 'L', 'a', 'C');
 	ogg_d->subs[ogg_d->num_sub].id = n_audio;
@@ -1570,9 +1455,6 @@ static void ogg_close(demuxer_t* demuxer) {
     free(ogg_d->text_langs);
   }
   free(ogg_d);
-  dlclose(dll_handle);
-  dlclose(dll2_handle);
-  if(have_theora) dlclose(dll3_handle);
 }
 
 static int ogg_control(demuxer_t *demuxer,int cmd,void *args)

@@ -1,4 +1,4 @@
-#include "../config.h"
+#include "../../mp_config.h"
 #include "DMO_Filter.h"
 #include "driver.h"
 #include "com.h"

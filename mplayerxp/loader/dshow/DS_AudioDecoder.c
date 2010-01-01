@@ -4,7 +4,7 @@
 	 Copyright 2001 Eugene Kuznetsov  (divx@euro.ru)
 
 *********************************************************/
-#include "../config.h"
+#include "../../mp_config.h"
 
 #ifndef NOAVIFILE_HEADERS
 #include "audiodecoder.h"

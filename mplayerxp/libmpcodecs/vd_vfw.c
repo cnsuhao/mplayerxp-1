@@ -269,7 +269,7 @@ static int init(sh_video_t *sh){
     sh->context = priv;
     priv->ex = vfw_ex;
     if(!init_vfw_video_codec(sh)) return 0;
-    MSG_V("INFO: Win32 video codec (%s) init OK!\n",CODECDIR"/wine/libloader"SLIBSUFFIX);
+    MSG_V("INFO: Win32/VFW init OK!\n");
     return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
 }
 

@@ -1,4 +1,4 @@
-SUBDIRS = codecs loader mplayerxp etc DOCS
+SUBDIRS = ffmpeg mplayerxp etc DOCS
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 

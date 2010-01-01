@@ -1,4 +1,4 @@
-#include "../config.h"
+#include "../../mp_config.h"
 #include "allocator.h"
 #include "com.h"
 #include "wine/winerror.h"

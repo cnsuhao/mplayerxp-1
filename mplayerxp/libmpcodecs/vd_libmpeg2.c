@@ -35,18 +35,101 @@ LIBVD_EXTERN(libmpeg2)
 
 #include "libmpdemux/parse_es.h"
 #include "libvo/video_out.h"
-#include "interface/mpeg2.h"
 #ifdef ATTRIBUTE_ALIGNED_MAX
 #define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
 #else
 #define ATTR_ALIGN(align)
 #endif
-#include "interface/mpeg2_internal.h"
+
+typedef struct mpeg2dec_s mpeg2dec_t;
 
 typedef struct priv_s
 {
     mpeg2dec_t *mpeg2dec;
 }priv_t;
+
+typedef struct mpeg2_sequence_s {
+    unsigned int width, height;
+    unsigned int chroma_width, chroma_height;
+    unsigned int byte_rate;
+    unsigned int vbv_buffer_size;
+    uint32_t flags;
+
+    unsigned int picture_width, picture_height;
+    unsigned int display_width, display_height;
+    unsigned int pixel_width, pixel_height;
+    unsigned int frame_period;
+
+    uint8_t profile_level_id;
+    uint8_t colour_primaries;
+    uint8_t transfer_characteristics;
+    uint8_t matrix_coefficients;
+} mpeg2_sequence_t;
+
+typedef struct mpeg2_gop_s {
+    uint8_t hours;
+    uint8_t minutes;
+    uint8_t seconds;
+    uint8_t pictures;
+    uint32_t flags;
+} mpeg2_gop_t;
+
+#define PIC_MASK_CODING_TYPE 7
+#define PIC_FLAG_CODING_TYPE_I 1
+#define PIC_FLAG_CODING_TYPE_P 2
+#define PIC_FLAG_CODING_TYPE_B 3
+#define PIC_FLAG_CODING_TYPE_D 4
+#define PIC_FLAG_TOP_FIELD_FIRST 8
+#define PIC_FLAG_PROGRESSIVE_FRAME 16
+#define PIC_FLAG_COMPOSITE_DISPLAY 32
+#define PIC_FLAG_SKIP 64
+#define PIC_FLAG_TAGS 128
+#define PIC_FLAG_REPEAT_FIRST_FIELD 256
+#define PIC_MASK_COMPOSITE_DISPLAY 0xfffff000
+typedef struct mpeg2_picture_s {
+    unsigned int temporal_reference;
+    unsigned int nb_fields;
+    uint32_t tag, tag2;
+    uint32_t flags;
+    struct {
+	int x, y;
+    } display_offset[3];
+} mpeg2_picture_t;
+
+typedef struct mpeg2_fbuf_s {
+    uint8_t * buf[3];
+    void * id;
+} mpeg2_fbuf_t;
+
+typedef struct mpeg2_info_s {
+    const mpeg2_sequence_t * sequence;
+    const mpeg2_gop_t * gop;
+    const mpeg2_picture_t * current_picture;
+    const mpeg2_picture_t * current_picture_2nd;
+    const mpeg2_fbuf_t * current_fbuf;
+    const mpeg2_picture_t * display_picture;
+    const mpeg2_picture_t * display_picture_2nd;
+    const mpeg2_fbuf_t * display_fbuf;
+    const mpeg2_fbuf_t * discard_fbuf;
+    const uint8_t * user_data;
+    unsigned int user_data_len;
+} mpeg2_info_t;
+
+typedef enum {
+    STATE_BUFFER = 0,
+    STATE_SEQUENCE = 1,
+    STATE_SEQUENCE_REPEATED = 2,
+    STATE_GOP = 3,
+    STATE_PICTURE = 4,
+    STATE_SLICE_1ST = 5,
+    STATE_PICTURE_2ND = 6,
+    STATE_SLICE = 7,
+    STATE_END = 8,
+    STATE_INVALID = 9,
+    STATE_INVALID_END = 10,
+    STATE_SEQUENCE_MODIFIED = 11
+} mpeg2_state_t;
+
 
 static mpeg2dec_t* (*mpeg2_init_ptr) (unsigned);
 #define mpeg2_init(a) (*mpeg2_init_ptr)(a)
@@ -103,7 +186,7 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 
 static int init(sh_video_t *sh){
     priv_t *priv;
-    if(!load_lib(codec_name("libmpeg2"SLIBSUFFIX))) return 0;
+    if(!load_lib("libmpeg2"SLIBSUFFIX)) return 0;
     priv=sh->context=malloc(sizeof(priv_t));
     if(!(priv->mpeg2dec=mpeg2_init(mplayer_accel))) return 0;
     return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
@@ -160,11 +243,13 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 		if(buf>2) return NULL; /* parsing of the passed buffer finished, return. */
 		break;
 	    case STATE_PICTURE:
+#if 0
 		    if(!priv->mpeg2dec->decoder.mpq_store)
 		    {
 			priv->mpeg2dec->decoder.mpq_stride=(info->sequence->picture_width+15)>>4;
 			priv->mpeg2dec->decoder.mpq_store=malloc(priv->mpeg2dec->decoder.mpq_stride*((info->sequence->picture_height+15)>>4));
 		    }
+#endif
 		    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
 					,info->sequence->width,info->sequence->height);
 		    mpeg2_stride(priv->mpeg2dec,mpi->stride[0]);
@@ -180,9 +265,11 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 		if (info->display_fbuf && mpi)
 		{
 		    mpi->pict_type=info->current_picture->flags&PIC_MASK_CODING_TYPE;
+#if 0
 		    mpi->qscale_type= 1;
 		    mpi->qscale=priv->mpeg2dec->decoder.mpq_store;
 		    mpi->qstride=priv->mpeg2dec->decoder.mpq_stride;
+#endif
 		    draw_frame (mpi,sh,info->sequence->width,info->display_fbuf);
 		    return mpi;
 		}
