@@ -126,9 +126,10 @@ int init(sh_audio_t *sh_audio)
         lavc_context->extradata = malloc(sh_audio->codecdata_len);
         lavc_context->extradata_size = sh_audio->codecdata_len;
         memcpy(lavc_context->extradata, (char *)sh_audio->codecdata, 
-               lavc_context->extradata_size);	
+               lavc_context->extradata_size);
     }
     lavc_context->codec_tag = sh_audio->format;
+    lavc_context->codec_type = lavc_codec->type;
     lavc_context->codec_id = lavc_codec->id;
     /* open it */
     if ((*avcodec_open_ptr)(lavc_context, lavc_codec) < 0) {

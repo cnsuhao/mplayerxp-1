@@ -99,8 +99,8 @@ PATH_LIST=(
     "exec_prefix|architecture-dependent files|\$prefix",
     "bindir|user executables|\$exec_prefix/bin",
     "libdir|object code libraries|\$exec_prefix/lib",
-    "datadir|read-only architecture-independent data|\$prefix/share",
-    "confdir|read-only configuration files|\$prefix/share",
+    "datadir|read-only architecture-independent data|\$prefix/share/mplayerxp",
+    "confdir|read-only configuration files|\$prefix/share/mplayerxp",
     "codecdir|codec's shared libraries|\$libdir/mplayerxp",
     "win32libdir|win32 .dll locations [/usr/lib/win32]"
 )
@@ -313,7 +313,7 @@ test -z "$confdir" && confdir="."
 test -z "$libdir" && libdir="."
 test -z "$codecdir" && codecdir="."
 else
-test -z "$codecdir" && codecdir="$libdir/$prog_alias"
+codecdir="$libdir/$prog_alias"
 fi
 
 srcdir=`pwd`
