@@ -161,7 +161,7 @@ static void __FASTCALL__ getMyXImage(unsigned idx)
      if (firstTime){
        MSG_V( "Sharing memory.\n" );
        firstTime=0;
-     } 
+     }
    }
  }
  else
@@ -197,7 +197,7 @@ static void __FASTCALL__ freeMyXImage(unsigned idx)
 static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
   uint32_t ret = vo_x11_check_events(mDisplay,adjust_size);
-  
+
    /* clear the old window */
   if (ret & VO_EVENT_RESIZE)
   {
@@ -415,7 +415,7 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
 static void __FASTCALL__ flip_page( unsigned idx ){
  Display_Image( myximage[idx] );
  if (num_buffers>1) XFlush(mDisplay);
- else XSync(mDisplay, False);   
+ else XSync(mDisplay, False);
  return;
 }
 
@@ -452,7 +452,7 @@ static void uninit(void)
 
 static uint32_t __FASTCALL__ preinit(const char *arg)
 {
-    if(arg) 
+    if(arg)
     {
 	MSG_ERR("vo_x11: Unknown subdevice: %s\n",arg);
 	return ENOSYS;
@@ -515,7 +515,7 @@ static uint32_t __FASTCALL__ control(uint32_t request, void *data)
   case DRI_GET_SURFACE_CAPS:
 	x11_dri_get_surface_caps(data);
 	return VO_TRUE;
-  case DRI_GET_SURFACE: 
+  case DRI_GET_SURFACE:
 	x11_dri_get_surface(data);
 	return VO_TRUE;
   }

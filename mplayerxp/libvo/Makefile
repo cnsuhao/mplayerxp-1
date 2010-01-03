@@ -8,7 +8,7 @@ ifeq ($(HAVE_SDL),yes)
 SRCS+=vo_sdl.c
 endif
 ifeq ($(HAVE_OPENGL),yes)
-SRCS+=gl_common.c vo_opengl.c
+SRCS+=vo_opengl.c
 endif
 ifeq ($(HAVE_VDPAU),yes)
 SRCS+=vo_vdpau.c

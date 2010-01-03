@@ -1119,7 +1119,7 @@ fi
 if test -z $CFLAGS ; then
 add_cflags $locarch
 fi
-if enabled profile || test $debug -gt 0 || enabled gcov; then
+if enabled profile || test "$debug" != "0" || enabled gcov; then
     add_cflags "-O2 -fno-builtin"
 if enabled profile ; then
     add_cflags  "-pg"

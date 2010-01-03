@@ -75,9 +75,9 @@ void __FASTCALL__ vo_hidecursor ( Display *disp , Window win )
 	if(WinID==0) return;	// do not hide, if we're playing at rootwin
 	
 	colormap = DefaultColormap(disp,DefaultScreen(disp));
-	XAllocNamedColor(disp,colormap,"black",&black,&dummy);	
-	bm_no = XCreateBitmapFromData(disp, win, bm_no_data, 8,8);    
-	no_ptr=XCreatePixmapCursor(disp, bm_no, bm_no,&black, &black,0, 0);									          
+	XAllocNamedColor(disp,colormap,"black",&black,&dummy);
+	bm_no = XCreateBitmapFromData(disp, win, bm_no_data, 8,8);
+	no_ptr=XCreatePixmapCursor(disp, bm_no, bm_no,&black, &black,0, 0);
 	XDefineCursor(disp,win,no_ptr);
 }
 
@@ -135,16 +135,16 @@ static int x11_errorhandler(Display *display, XErrorEvent *event)
 {
 #define MSGLEN 60
     char msg[MSGLEN];
-        
+
     XGetErrorText(display, event->error_code, (char *)&msg, MSGLEN);
-    
+
     MSG_ERR("X11 error: %s\n", msg);
-    
+
     MSG_V("Type: %x, display: %x, resourceid: %x, serial: %lx\n",
 	    event->type, event->display, event->resourceid, event->serial);
     MSG_V("Error code: %x, request code: %x, minor code: %x\n",
 	    event->error_code, event->request_code, event->minor_code);
-    
+
     exit_player("X11 error");
 #undef MSGLEN
     return 0;

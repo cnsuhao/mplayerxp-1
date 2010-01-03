@@ -705,7 +705,7 @@ static uint32_t __FASTCALL__ control(uint32_t request, void *data)
   case DRI_GET_SURFACE_CAPS:
 	xv_dri_get_surface_caps(data);
 	return VO_TRUE;
-  case DRI_GET_SURFACE: 
+  case DRI_GET_SURFACE:
 	xv_dri_get_surface(data);
 	return VO_TRUE;
   case VOCTRL_SET_EQUALIZER:

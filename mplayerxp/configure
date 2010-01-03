@@ -361,7 +361,7 @@ x86_32 && _arch="x86_32"
 x86_64 && _arch="x86_64"
 ffmpeg_args="--arch=$arch $ffmpeg_args"
 fi
-test "$debug" -gt "0" && ffmpeg_args="$ffmpeg_args --enable-debug=$debug"
+test "$debug" != "0" && ffmpeg_args="$ffmpeg_args --enable-debug=$debug"
 enabled $profile  && ffmpeg_args="$ffmpeg_args --enable-profile"
 echocheck "configuring ffmpeg stuff: --cc=\"$cc\" $ffmpeg_args"
 cd ../ffmpeg
