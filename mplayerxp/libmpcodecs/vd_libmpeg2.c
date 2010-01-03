@@ -151,7 +151,7 @@ static void (*mpeg2_reset_ptr) (mpeg2dec_t * mpeg2dec, int full_reset);
 static void *dll_handle;
 static int load_lib( const char *libname )
 {
-  if(!(dll_handle=ld_codec(libname,NULL))) return 0;
+  if(!(dll_handle=ld_codec(libname,"http://libmpeg2.sourceforge.net"))) return 0;
   mpeg2_init_ptr = ld_sym(dll_handle,"mpeg2_init");
   mpeg2_close_ptr = ld_sym(dll_handle,"mpeg2_close");
   mpeg2_info_ptr = ld_sym(dll_handle,"mpeg2_info");
