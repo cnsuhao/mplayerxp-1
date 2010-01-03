@@ -543,16 +543,16 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     switch ((bpp=myximage[0]->bits_per_pixel)){
 	case 32:gl_out_mode=GL_RGBA;
 		gl_out_format=is_bgr?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_INT_8_8_8_8;
-		out_format = IMGFMT_BGR32;
+		out_format = IMGFMT_RGB32;
 		break;
 	case 24:gl_out_format=is_bgr?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_INT_8_8_8_8;
-		out_format = IMGFMT_BGR24;
+		out_format = IMGFMT_RGB24;
 		break;
 	case 15:gl_out_format=is_bgr?GL_UNSIGNED_SHORT_1_5_5_5_REV:GL_UNSIGNED_SHORT_5_5_5_1;
-		out_format = IMGFMT_BGR15;
+		out_format = IMGFMT_RGB15;
 		break;
 	case 16:gl_out_format=is_bgr?GL_UNSIGNED_SHORT_5_6_5_REV:GL_UNSIGNED_SHORT_5_6_5;
-		out_format = IMGFMT_BGR16;
+		out_format = IMGFMT_RGB16;
 		break;
 	default: break;
     }
@@ -569,7 +569,11 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
 
 static void __FASTCALL__ gl_display_Image( XImage *myximage )
 {
-   glDrawPixels(image_width,
+//    float sx = (GLfloat) dwidth / (GLfloat)image_width;
+//    float sy = (GLfloat) dheight / (GLfloat)image_height;
+//    glRasterPos2i(0, 0);
+//    glPixelZoom(sx,-sy);
+    glDrawPixels(image_width,
 		image_height,
 		gl_out_mode,
 		gl_out_format,
@@ -578,19 +582,15 @@ static void __FASTCALL__ gl_display_Image( XImage *myximage )
 
 static void flip_page(unsigned idx) {
  gl_display_Image( myximage[idx] );
- if (num_buffers>1) XFlush(mDisplay);
- else XSync(mDisplay, False);
+ if (num_buffers>1) glXSwapBuffers(mDisplay, vo_window);
+ glFlush();
  return;
 }
 
 static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
 {
     MSG_DBG2("vo_x11: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
-#ifdef WORDS_BIGENDIAN
-    if (IMGFMT_IS_BGR(format->fourcc))
-#else
-    if (IMGFMT_IS_RGB(format->fourcc))
-#endif
+    if (IMGFMT_IS_BGR(format->fourcc)||IMGFMT_IS_RGB(format->fourcc))
     {
 	return  VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP |
 		VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN;
