@@ -641,8 +641,6 @@ enabled sdl	&& vomodules="sdl $vomodules" || novomodules="sdl $novomodules"
 
 enabled libcdio	&& require2 libcdio "cdio/cdio.h" cdio_read_mode2_sectors -lcdio
 print_config HAVE_ mp_config.h mp_config.mak libcdio
-enabled libcdio	&& inputmodules="vcd $inputmodules" || noinputmodules="vcd $noinputmodules"
-
 
 enabled libcdio && require2 libcdio_cdda "cdio/cdda.h" cdio_cddap_read -lcdio_cdda
 print_config HAVE_ mp_config.h mp_config.mak libcdio_cdda

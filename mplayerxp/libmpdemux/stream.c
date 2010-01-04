@@ -42,9 +42,6 @@ extern const stream_driver_t network_stream;
 #ifdef USE_OSS_AUDIO
 extern const stream_driver_t oss_stream;
 #endif
-#ifdef HAVE_LIBCDIO
-extern const stream_driver_t vcd_stream;
-#endif
 #ifdef USE_LIBVCD
 extern const stream_driver_t vcdnav_stream;
 #endif
@@ -68,9 +65,6 @@ static const stream_driver_t *sdrivers[] =
 #endif
 #ifdef USE_TV
     &tv_stream,
-#endif
-#ifdef HAVE_LIBCDIO
-    &vcd_stream,
 #endif
 #ifdef USE_LIBVCD
     &vcdnav_stream,
