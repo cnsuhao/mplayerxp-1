@@ -66,7 +66,6 @@ ENABLED_LIST=(
     "jpg|build with JPEG for screenshots",
     "png|build with PNG for screenshots",
     "opengl|build with OpenGL video output",
-    "vdpau|build with VDPAU video output",
     "dga|build with DGA video output",
     "vesa|build with VESA video output",
     "vidix|build with VIDIX video output",
@@ -578,10 +577,6 @@ enabled opengl  && require2 opengl "GL/gl.h GL/glx.h GL/glut.h" glutInitWindowSi
 fi
 print_config HAVE_ mp_config.h mp_config.mak opengl
 enabled opengl	&& vomodules="opengl $vomodules" || novomodules="opengl $novomodules"
-
-enabled vdpau	&& require3 vdpau "vdpau/vdpau_x11.h" VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1 vdp_device_create_x11 -lvdpau
-print_config HAVE_ mp_config.h mp_config.mak vdpau
-enabled vdpau	&& vomodules="vdpau $vomodules" || novomodules="vdpau $novomodules"
 
 # Note: the -lXxf86vm library is the VideoMode extension and though it's not
 # needed for DGA, AFAIK every distribution packages together with DGA stuffs
