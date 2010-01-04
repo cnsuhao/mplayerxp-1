@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "cdio/cdtext.h"
 #include "cdd.h"
 #include "demux_msg.h"
 static int speed = -1;
@@ -75,6 +76,7 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
   unsigned int audiolen=0;
   unsigned i;
   unsigned char arr[256];
+  int st_inited;
 
   priv = (cdda_priv*)malloc(sizeof(cdda_priv));
   memset(priv, 0, sizeof(cdda_priv));
@@ -103,9 +105,9 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
   cdda_parse_tracks(arr,sizeof(arr)/sizeof(unsigned),arg);
   for(i=1;i<=256;i++) if (arr[i]) priv->tracks[i-1].play=1;
 
+  st_inited=0;
   MSG_V("[CDDA] Queued tracks:");
   for(i=0;i<cd_tracks;i++) {
-    int st_inited=0;
     if(priv->tracks[i].play) {
 	priv->tracks[i].start_sector=cdio_cddap_track_firstsector(priv->cd,i+1);
 	priv->tracks[i].end_sector=cdio_cddap_track_lastsector(priv->cd,i+1);
@@ -125,12 +127,10 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
     cdio_cddap_speed_set(priv->cd,speed);
 
   priv->sector = priv->start_sector;
-
   st->type = STREAMTYPE_SEEKABLE|STREAMTYPE_RAWAUDIO;
   st->priv = priv;
   st->start_pos = priv->start_sector*CDIO_CD_FRAMESIZE_RAW;
   st->end_pos = priv->end_sector*CDIO_CD_FRAMESIZE_RAW;
-
   return 1;
 }
 
