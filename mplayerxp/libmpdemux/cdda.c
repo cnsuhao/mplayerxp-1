@@ -111,7 +111,7 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
     if(priv->tracks[i].play) {
 	priv->tracks[i].start_sector=cdio_cddap_track_firstsector(priv->cd,i+1);
 	priv->tracks[i].end_sector=cdio_cddap_track_lastsector(priv->cd,i+1);
-	MSG_V(" %d[%ld-%ld]",i+1,priv->tracks[i].start_sector,priv->tracks[i].end_sector);
+	MSG_V(" %d[%d-%d]",i+1,priv->tracks[i].start_sector,priv->tracks[i].end_sector);
 	if(!st_inited) { priv->start_sector=priv->tracks[i].start_sector; st_inited=1; }
 	priv->end_sector=priv->tracks[i].end_sector;
 	audiolen += priv->tracks[i].end_sector-priv->tracks[i].start_sector+1;
@@ -139,11 +139,15 @@ static lsn_t map_sector(cdda_priv*p,lsn_t sector,track_t *tr)
     unsigned i,j;
     lsn_t cd_track=sector;
     for(i=0;i<256;i++){
-	if(p->tracks[i].play && p->tracks[i].end_sector==sector-1) {
+	if(p->tracks[i].play && p->tracks[i].end_sector==sector) {
 		cd_track=0;
+		MSG_V("Found track changing. old track=%u Sector=%u",i,sector);
 		for(j=i+1;j<256;j++) {
-		    if(p->tracks[j].play) cd_track=p->tracks[j].start_sector;
-		    if(tr) *tr=j;
+		    if(p->tracks[j].play && p->tracks[j].start_sector==sector+1) {
+			cd_track=p->tracks[j].start_sector;
+			if(tr) *tr=j;
+			MSG_V("new track=%u Sector=%u",j,cd_track);
+		    }
 		}
 	}
     }
@@ -169,7 +173,6 @@ int __FASTCALL__ read_cdda(stream_t* s,char *buf,track_t *tr) {
   cdda_priv* p = (cdda_priv*)s->priv;
   track_t i=255;
 
-  *tr=255;
   if(cdio_cddap_read(p->cd, buf, p->sector, 1)==0) {
     MSG_ERR("[CD-DA]: read error occured\n");
     return -1; /* EOF */
@@ -179,8 +182,11 @@ int __FASTCALL__ read_cdda(stream_t* s,char *buf,track_t *tr) {
 
   p->sector=map_sector(p,p->sector,&i);
   if(!p->sector) return -1;
-  *tr=i+1;
-  MSG_V("Track %d, sector=%d\n", *tr, p->sector);
+  if(i!=255) {
+    *tr=i+1;
+    MSG_V("Track %d, sector=%d\n", *tr, p->sector);
+  }
+  else MSG_DBG2("Track %d, sector=%d\n", *tr, p->sector);
   return CDIO_CD_FRAMESIZE_RAW;
 }
 
