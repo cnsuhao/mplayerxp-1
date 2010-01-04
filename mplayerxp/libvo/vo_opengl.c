@@ -78,7 +78,7 @@ static const vo_info_t *get_info(void)
 static XWindowAttributes attribs;
 static XVisualInfo vinfo;
 static unsigned depth,bpp,gl_out_mode;
-static unsigned expose_idx=0,num_buffers=1; // default
+static unsigned num_buffers=1; // default
 static XImage *myximage[MAX_DRI_BUFFERS];
 static void     *glx_context;
 static uint32_t gl_out_format=0,out_format=0;
@@ -106,137 +106,6 @@ static XVisualInfo *get_visual_info(Display *dpy, Window win)
     XGetWindowAttributes(dpy, win, &wattr);
     vi_template.visualid = XVisualIDFromVisual(wattr.visual);
     return XGetVisualInfo(dpy, VisualIDMask, &vi_template, &dummy);
-}
-
-static PFNGLXBINDTEXIMAGEEXTPROC glx_bind_tex_image;
-static PFNGLXRELEASETEXIMAGEEXTPROC glx_release_tex_image;
-static PFNGLGENFRAMEBUFFERSEXTPROC gl_gen_framebuffers;
-static PFNGLDELETEFRAMEBUFFERSEXTPROC gl_delete_framebuffers;
-static PFNGLBINDFRAMEBUFFEREXTPROC gl_bind_framebuffer;
-static PFNGLGENRENDERBUFFERSEXTPROC gl_gen_renderbuffers;
-static PFNGLDELETERENDERBUFFERSEXTPROC gl_delete_renderbuffers;
-static PFNGLBINDRENDERBUFFEREXTPROC gl_bind_renderbuffer;
-static PFNGLRENDERBUFFERSTORAGEEXTPROC gl_renderbuffer_storage;
-static PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC gl_framebuffer_renderbuffer;
-static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC gl_framebuffer_texture_2d;
-static PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC gl_check_framebuffer_status;
-
-typedef void (*GLFuncPtr)(void);
-typedef GLFuncPtr (*GLXGetProcAddressProc)(const char *);
-
-static GLFuncPtr get_proc_address_default(const char *name)
-{
-    return NULL;
-}
-
-static GLXGetProcAddressProc get_proc_address_func(void)
-{
-    GLXGetProcAddressProc get_proc_func;
-
-    dlerror();
-    get_proc_func = (GLXGetProcAddressProc)
-        dlsym(RTLD_NEXT, "glXGetProcAddress");
-    if (dlerror() == NULL)
-        return get_proc_func;
-
-    get_proc_func = (GLXGetProcAddressProc)
-        dlsym(RTLD_NEXT, "glXGetProcAddressARB");
-    if (dlerror() == NULL)
-        return get_proc_func;
-
-    return get_proc_address_default;
-}
-
-static int check_extension(const char *name, const char *ext)
-{
-    const char *end;
-    int name_len, n;
-
-    if (name == NULL || ext == NULL)
-        return 0;
-
-    end = ext + strlen(ext);
-    name_len = strlen(name);
-    while (ext < end) {
-        n = strcspn(ext, " ");
-        if (n == name_len && strncmp(name, ext, n) == 0)
-            return 1;
-        ext += (n + 1);
-    }
-    return 0;
-}
-
-static inline GLFuncPtr get_proc_address(const char *name)
-{
-    static GLXGetProcAddressProc get_proc_func = NULL;
-    if (get_proc_func == NULL)
-        get_proc_func = get_proc_address_func();
-    return get_proc_func(name);
-}
-
-static int glx_init_FB_funcs(void)
-{
-    if (gl_gen_framebuffers == NULL) {
-        gl_gen_framebuffers = (PFNGLGENFRAMEBUFFERSEXTPROC)
-            get_proc_address("glGenFramebuffersEXT");
-        if (gl_gen_framebuffers == NULL)
-            return -1;
-    }
-    if (gl_delete_framebuffers == NULL) {
-        gl_delete_framebuffers = (PFNGLDELETEFRAMEBUFFERSEXTPROC)
-            get_proc_address("glDeleteFramebuffersEXT");
-        if (gl_delete_framebuffers == NULL)
-            return -1;
-    }
-    if (gl_bind_framebuffer == NULL) {
-        gl_bind_framebuffer = (PFNGLBINDFRAMEBUFFEREXTPROC)
-            get_proc_address("glBindFramebufferEXT");
-        if (gl_bind_framebuffer == NULL)
-            return -1;
-    }
-    if (gl_gen_renderbuffers == NULL) {
-        gl_gen_renderbuffers = (PFNGLGENRENDERBUFFERSEXTPROC)
-            get_proc_address("glGenRenderbuffersEXT");
-        if (gl_gen_renderbuffers == NULL)
-            return -1;
-    }
-    if (gl_delete_renderbuffers == NULL) {
-        gl_delete_renderbuffers = (PFNGLDELETERENDERBUFFERSEXTPROC)
-            get_proc_address("glDeleteRenderbuffersEXT");
-        if (gl_delete_renderbuffers == NULL)
-            return -1;
-    }
-    if (gl_bind_renderbuffer == NULL) {
-        gl_bind_renderbuffer = (PFNGLBINDRENDERBUFFEREXTPROC)
-            get_proc_address("glBindRenderbufferEXT");
-        if (gl_bind_renderbuffer == NULL)
-            return -1;
-    }
-    if (gl_renderbuffer_storage == NULL) {
-        gl_renderbuffer_storage = (PFNGLRENDERBUFFERSTORAGEEXTPROC)
-            get_proc_address("glRenderbufferStorageEXT");
-        if (gl_renderbuffer_storage == NULL)
-            return -1;
-    }
-    if (gl_framebuffer_renderbuffer == NULL) {
-        gl_framebuffer_renderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)
-            get_proc_address("glFramebufferRenderbufferEXT");
-        if (gl_framebuffer_renderbuffer == NULL)
-            return -1;
-    }
-    if (gl_framebuffer_texture_2d == NULL) {
-        gl_framebuffer_texture_2d = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)
-            get_proc_address("glFramebufferTexture2DEXT");
-        if (gl_framebuffer_texture_2d == NULL)
-            return -1;
-    }
-    if (gl_check_framebuffer_status == NULL) {
-        gl_check_framebuffer_status = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)
-            get_proc_address("glCheckFramebufferStatusEXT");
-        if (gl_check_framebuffer_status == NULL)
-            return -1;
-    }
-    return 0;
 }
 
 /* local data */
@@ -336,9 +205,43 @@ static void __FASTCALL__ freeMyXImage(unsigned idx)
 }
 
 
-static void resize(int x,int y){
-  unsigned ssa_border_x, ssa_border_y;
+static void gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height)
+{
+    float sx = (GLfloat) (d_width-x) / (GLfloat)image_width;
+    float sy = (GLfloat) (d_height-y) / (GLfloat)image_height;
 
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+#define FOVY     60.0f
+#define ASPECT   1.0f
+#define Z_NEAR   0.1f
+#define Z_FAR    100.0f
+#define Z_CAMERA 0.869f
+
+    glViewport(x, y, d_width, d_height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(FOVY, ASPECT, Z_NEAR, Z_FAR);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glTranslatef(-0.5f, -0.5f, -Z_CAMERA);
+    glScalef(1.0f / (GLfloat)d_width,
+             -1.0f / (GLfloat)d_height,
+             1.0f / (GLfloat)d_width);
+    glTranslatef(0.0f, -1.0f * (GLfloat)d_height, 0.0f);
+
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glRasterPos2i(x, y);
+    glPixelZoom(sx,vo_flipped?sy:-sy);
+}
+
+static void resize(int x,int y){
   MSG_V("[gl] Resize: %dx%d\n",x,y);
   if (WinID >= 0) {
     unsigned top = 0, left = 0, w = x, h = y;
@@ -347,41 +250,11 @@ static void resize(int x,int y){
     top=( vo_screenheight - (dheight > vo_screenheight?vo_screenheight:dheight) ) / 2;
     w=(dwidth > vo_screenwidth?vo_screenwidth:dwidth);
     h=(dheight > vo_screenheight?vo_screenheight:dheight);
-    glViewport(top, left, w, h);
+    gl_init_fb(left,top,w,h);
   } else
-  glViewport( 0, 0, x, y );
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  ssa_border_x = ssa_border_y = 0;
-  /*if(use_aspect)*/{
-    unsigned new_w, new_h;
-    GLdouble scale_x, scale_y;
-    aspect(&new_w, &new_h, A_ZOOM);
-//    panscan_calc_windowed();
-//    new_w += vo_panscan_x;
-//    new_h += vo_panscan_y;
-    scale_x = (GLdouble)new_w / (GLdouble)x;
-    scale_y = (GLdouble)new_h / (GLdouble)y;
-    glScaled(scale_x, scale_y, 1);
-    ssa_border_x = (vo_dwidth - new_w) / 2;
-    ssa_border_y = (vo_dheight - new_h) / 2;
-  }
-  glOrtho(0, image_width, image_height, 0, -1,1);
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  /*if (!scaled_osd)*/ {
-#ifdef CONFIG_FREETYPE
-  // adjust font size to display size
-  force_load_font = 1;
-#endif
-  vo_osd_changed(OSDTYPE_OSD);
-  }
+  gl_init_fb( 0, 0, x, y );
   glClear(GL_COLOR_BUFFER_BIT);
 }
-
 
 /* connect to server, create and map window,
  * allocate colors and (shared) memory
@@ -400,7 +273,6 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 #endif
 
  UNUSED(info);
- if(glx_init_FB_funcs()==-1) return -1;
  aspect_save_orig(width,height);
  aspect_save_prescale(d_width,d_height);
 
@@ -505,36 +377,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     }
   }
 #endif
-
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    glDisable(GL_CULL_FACE);
-    glDrawBuffer(GL_BACK);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-#define FOVY     60.0f
-#define ASPECT   1.0f
-#define Z_NEAR   0.1f
-#define Z_FAR    100.0f
-#define Z_CAMERA 0.869f
-
-    glViewport(0, 0, d_width, d_height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(FOVY, ASPECT, Z_NEAR, Z_FAR);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glTranslatef(-0.5f, -0.5f, -Z_CAMERA);
-    glScalef(1.0f / (GLfloat)d_width,
-             -1.0f / (GLfloat)d_height,
-             1.0f / (GLfloat)d_width);
-    glTranslatef(0.0f, -1.0f * (GLfloat)d_height, 0.0f);
-
-    glClearColor(1.0, 1.0, 1.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    gl_init_fb(0,0,d_width,d_height);
     /* allocate multibuffers */
     for(i=0;i<num_buffers;i++) getMyXImage(i);
 
@@ -569,10 +412,6 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
 
 static void __FASTCALL__ gl_display_Image( XImage *myximage )
 {
-//    float sx = (GLfloat) dwidth / (GLfloat)image_width;
-//    float sy = (GLfloat) dheight / (GLfloat)image_height;
-//    glRasterPos2i(0, 0);
-//    glPixelZoom(sx,-sy);
     glDrawPixels(image_width,
 		image_height,
 		gl_out_mode,
@@ -617,6 +456,7 @@ uninit(void)
 
 static uint32_t __FASTCALL__ preinit(const char *arg)
 {
+    UNUSED(arg);
     if (!vo_x11_init()) return -1;
     return 0;
 }
