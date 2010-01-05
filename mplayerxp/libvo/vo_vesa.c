@@ -245,9 +245,9 @@ static void __FASTCALL__ __vbeCopyData(uint8_t *image)
    }
 }
 
-static void __FASTCALL__ flip_page(unsigned idx)
+static void __FASTCALL__ change_frame(unsigned idx)
 {
-  MSG_DBG3("vo_vesa: flip_page was called\n");
+  MSG_DBG3("vo_vesa: change_frame was called\n");
   if(!HAS_DGA()) __vbeCopyData(dga_buffer);
   else
   {

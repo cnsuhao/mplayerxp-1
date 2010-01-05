@@ -1155,7 +1155,7 @@ static void __FASTCALL__ erase_area_1(int x_start, int width, int height, int pi
  *  returns : doesn't return
  **/
 
-static void __FASTCALL__ flip_page (unsigned idx)
+static void __FASTCALL__ change_frame(unsigned idx)
 {
 	struct sdl_priv_s *priv = &sdl_priv;
 

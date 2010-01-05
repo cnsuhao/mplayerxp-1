@@ -34,7 +34,7 @@
 #define VOCTRL_CHECK_EVENTS 9	/**< Notification that user performs key pressing. Takes (vo_resize_t *)&vrest as arg. Must return at least VO_EVENT_RESIZE */
 #define VOCTRL_GET_NUM_FRAMES 10/**< Query total number of allocated frames (multibuffering) */
 #define VOCTRL_UNUSED3 12
-#define VOCTRL_FLUSH_FRAME 13	/**< Flush frame from RAM into video memory (bus mastering) */
+#define VOCTRL_FLUSH_PAGES 13	/**< Flush pages of frame from RAM into video memory (bus mastering) */
 #define VOCTRL_UNUSED4 14
 #define VOCTRL_SET_EQUALIZER    1000 /**< Set video equalizer */
 #define VOCTRL_GET_EQUALIZER    1001 /**< Get video equalizer */
@@ -141,7 +141,7 @@ typedef struct vo_functions_s
         /** Blit/Flip buffer to the screen. Must be called after each frame!
 	 * @param idex	index of frame to be selected as active frame
          **/
-        void (* __FASTCALL__ flip_page)(unsigned idx);
+        void (* __FASTCALL__ change_frame)(unsigned idx);
 
         /** Closes driver. Should restore the original state of the system.
          **/
@@ -176,8 +176,8 @@ extern uint32_t	 __FASTCALL__ vo_set_active_frame( volatile unsigned * );
 extern uint32_t  __FASTCALL__ vo_draw_frame(const uint8_t *src[]);
 extern uint32_t  __FASTCALL__ vo_draw_slice(const uint8_t *src[], unsigned stride[], 
 				      unsigned w,unsigned h,unsigned x,unsigned y);
-extern void		vo_flip_page(void);
-extern void		vo_flush_frame(void);
+extern void		vo_change_frame(void);
+extern void		vo_flush_pages(void);
 extern void		vo_draw_osd(void);
 extern void		vo_uninit( void );
 extern uint32_t __FASTCALL__ vo_control(uint32_t request, void *data);

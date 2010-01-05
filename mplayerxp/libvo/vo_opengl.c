@@ -79,23 +79,8 @@ static XWindowAttributes attribs;
 static XVisualInfo vinfo;
 static unsigned depth,bpp,gl_out_mode;
 static unsigned num_buffers=1; // default
-static XImage *myximage[MAX_DRI_BUFFERS];
 static void     *glx_context;
 static uint32_t gl_out_format=0,out_format=0;
-
-#ifdef HAVE_SHM
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <X11/extensions/XShm.h>
-
-static int Shmem_Flag;
-static XShmSegmentInfo Shminfo[MAX_DRI_BUFFERS];
-static int gXErrorFlag;
-static int CompletionType=-1;
-
-/* since it doesn't seem to be defined on some platforms */
-extern int XShmGetEventBase( Display* );
-#endif
 
 static XVisualInfo *get_visual_info(Display *dpy, Window win)
 {
@@ -107,103 +92,6 @@ static XVisualInfo *get_visual_info(Display *dpy, Window win)
     vi_template.visualid = XVisualIDFromVisual(wattr.visual);
     return XGetVisualInfo(dpy, VisualIDMask, &vi_template, &dummy);
 }
-
-/* local data */
-#define ImageData(idx) ( uint8_t * ) myximage[idx]->data
-
-static void __FASTCALL__ getMyXImage(unsigned idx)
-{
-#ifdef HAVE_SHM
- if ( mLocalDisplay && XShmQueryExtension( mDisplay ) ) Shmem_Flag=1;
-  else
-   {
-    Shmem_Flag=0;
-    MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
-   }
- if ( Shmem_Flag ) CompletionType=XShmGetEventBase( mDisplay ) + ShmCompletion;
-
- if ( Shmem_Flag )
-  {
-   myximage[idx]=XShmCreateImage( mDisplay,vinfo.visual,depth,ZPixmap,NULL,&Shminfo[idx],image_width,image_height );
-   if ( myximage[idx] == NULL )
-    {
-     if ( myximage[idx] != NULL ) XDestroyImage( myximage[idx] );
-     MSG_V( "Shared memory error,disabling ( Ximage error )\n" );
-     goto shmemerror;
-    }
-   Shminfo[idx].shmid=shmget( IPC_PRIVATE,
-   myximage[idx]->bytes_per_line * myximage[idx]->height ,
-   IPC_CREAT | 0777 );
-   if ( Shminfo[idx].shmid < 0 )
-   {
-    XDestroyImage( myximage[idx] );
-    MSG_V( "%s\n",strerror( errno ) );
-    MSG_V( "Shared memory error,disabling ( seg id error )\n" );
-    goto shmemerror;
-   }
-   Shminfo[idx].shmaddr=( char * ) shmat( Shminfo[idx].shmid,0,0 );
-
-   if ( Shminfo[idx].shmaddr == ( ( char * ) -1 ) )
-   {
-    XDestroyImage( myximage[idx] );
-    if ( Shminfo[idx].shmaddr != ( ( char * ) -1 ) ) shmdt( Shminfo[idx].shmaddr );
-    MSG_V( "Shared memory error,disabling ( address error )\n" );
-    goto shmemerror;
-   }
-   myximage[idx]->data=Shminfo[idx].shmaddr;
-   Shminfo[idx].readOnly=False;
-   XShmAttach( mDisplay,&Shminfo[idx] );
-
-   XSync( mDisplay,False );
-
-   if ( gXErrorFlag )
-   {
-    XDestroyImage( myximage[idx] );
-    shmdt( Shminfo[idx].shmaddr );
-    MSG_V( "Shared memory error,disabling.\n" );
-    gXErrorFlag=0;
-    goto shmemerror;
-   }
-   else
-    shmctl( Shminfo[idx].shmid,IPC_RMID,0 );
-
-   {
-     static int firstTime=1;
-     if (firstTime){
-       MSG_V( "Sharing memory.\n" );
-       firstTime=0;
-     }
-   }
- }
- else
-  {
-   shmemerror:
-   Shmem_Flag=0;
-#endif
-   myximage[idx]=XGetImage( mDisplay,vo_window,0,0,
-   image_width,image_height,AllPlanes,ZPixmap );
-#ifdef HAVE_SHM
-  }
-#endif
-}
-
-static void __FASTCALL__ freeMyXImage(unsigned idx)
-{
-#ifdef HAVE_SHM
- if ( Shmem_Flag )
-  {
-   XShmDetach( mDisplay,&Shminfo[idx] );
-   XDestroyImage( myximage[idx] );
-   shmdt( Shminfo[idx].shmaddr );
-  }
-  else
-#endif
-  {
-   XDestroyImage( myximage[idx] );
-  }
-  myximage[idx]=NULL;
-}
-
 
 static void gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height)
 {
@@ -329,7 +217,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
        0, depth,CopyFromParent,vinfo.visual,xswamask,&xswa);
 
    vo_x11_classhint( mDisplay,vo_window,"opengl" );
-   vo_hidecursor(mDisplay,vo_window);
+   vo_x11_hidecursor(mDisplay,vo_window);
 
    XSelectInput(mDisplay, vo_window, StructureNotifyMask | KeyPressMask |
 	((WinID==0) ? 0 : (PointerMotionMask
@@ -379,11 +267,11 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 #endif
     gl_init_fb(0,0,d_width,d_height);
     /* allocate multibuffers */
-    for(i=0;i<num_buffers;i++) getMyXImage(i);
+    for(i=0;i<num_buffers;i++) vo_x11_getMyXImage(i,vinfo.visual,depth,image_width,image_height,0);
 
     gl_out_mode=GL_RGB;
-    is_bgr=(myximage[0]->blue_mask&0x01)!=0;
-    switch ((bpp=myximage[0]->bits_per_pixel)){
+    is_bgr=(vo_x11_myximage[0]->blue_mask&0x01)!=0;
+    switch ((bpp=vo_x11_myximage[0]->bits_per_pixel)){
 	case 32:gl_out_mode=GL_RGBA;
 		gl_out_format=is_bgr?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_INT_8_8_8_8;
 		out_format = IMGFMT_RGB32;
@@ -419,8 +307,8 @@ static void __FASTCALL__ gl_display_Image( XImage *myximage )
 		myximage->data);
 }
 
-static void flip_page(unsigned idx) {
- gl_display_Image( myximage[idx] );
+static void change_frame(unsigned idx) {
+ gl_display_Image( vo_x11_myximage[idx] );
  if (num_buffers>1) glXSwapBuffers(mDisplay, vo_window);
  glFlush();
  return;
@@ -448,7 +336,7 @@ uninit(void)
   glFinish();
   glXMakeCurrent(mDisplay, None, NULL);
   glXDestroyContext(mDisplay, glx_context);
-  for(i=0;i<num_buffers;i++)  freeMyXImage(i);
+  for(i=0;i<num_buffers;i++)  vo_x11_freeMyXImage(i);
   saver_on(mDisplay); // screen saver back on
 #ifdef HAVE_XF86VM
   vo_vm_close(mDisplay);
@@ -481,7 +369,7 @@ static void __FASTCALL__ gl_dri_get_surface_caps(dri_surface_cap_t *caps)
 
 static void __FASTCALL__ gl_dri_get_surface(dri_surface_t *surf)
 {
-    surf->planes[0] = ImageData(surf->idx);
+    surf->planes[0] = vo_x11_ImageData(surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;

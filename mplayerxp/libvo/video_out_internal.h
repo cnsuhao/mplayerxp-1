@@ -27,7 +27,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		     uint32_t d_height, uint32_t fullscreen, char *title,
 		     uint32_t format,const vo_tune_info_t *);
 static const vo_info_t* get_info(void);
-static void __FASTCALL__ flip_page(unsigned idx);
+static void __FASTCALL__ change_frame(unsigned idx);
 static void uninit(void);
 static uint32_t __FASTCALL__ preinit(const char *);
 
@@ -37,7 +37,7 @@ static uint32_t __FASTCALL__ preinit(const char *);
 	config,\
 	control,\
 	get_info,\
-	flip_page,\
+	change_frame,\
 	uninit\
 };
 

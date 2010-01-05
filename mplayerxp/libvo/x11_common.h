@@ -6,6 +6,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include "dri_vo.h"
 
 extern int vo_fs;
 
@@ -15,9 +16,15 @@ extern Window mRootWin;
 extern int mScreen;
 extern int mLocalDisplay;
 extern int WinID;
+extern XImage *vo_x11_myximage[MAX_DRI_BUFFERS];
+extern int vo_x11_Shmem_Flag;
 
 int vo_x11_init( void );
-void __FASTCALL__ vo_hidecursor ( Display* , Window );
+/* local data */
+#define vo_x11_ImageData(idx) ( uint8_t * ) vo_x11_myximage[idx]->data
+void __FASTCALL__ vo_x11_getMyXImage(unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h,int use_shmem);
+void __FASTCALL__ vo_x11_freeMyXImage(unsigned idx);
+void __FASTCALL__ vo_x11_hidecursor ( Display* , Window );
 void __FASTCALL__ vo_x11_decoration( Display * vo_Display,Window w,int d );
 void __FASTCALL__ vo_x11_classhint( Display * display,Window window,char *name );
 int __FASTCALL__ vo_x11_uninit(Display *display, Window window);

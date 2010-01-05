@@ -199,9 +199,9 @@ printf("frame is DMA copied\n");
 	}
 }
 
-void __FASTCALL__ vidix_flip_page(unsigned idx)
+void __FASTCALL__ vidix_change_frame(unsigned idx)
 {
-    MSG_DBG2("vidix_flip_page() was called\n");
+    MSG_DBG2("vidix_change_frame() was called\n");
     if(vo_use_bm == 1) vidix_copy_dma(idx,0);
     else vdlPlaybackFrameSelect(vidix_handler,idx);
 }
@@ -627,10 +627,10 @@ uint32_t __FASTCALL__ vidix_control(uint32_t request, void *data)
   case DRI_GET_SURFACE_CAPS:
 	vidix_dri_get_surface_caps(data);
 	return VO_TRUE;
-  case DRI_GET_SURFACE: 
+  case DRI_GET_SURFACE:
 	vidix_dri_get_surface(data);
 	return VO_TRUE;
-  case VOCTRL_FLUSH_FRAME:
+  case VOCTRL_FLUSH_PAGES:
 	if(vo_use_bm > 1) vidix_copy_dma(*(uint32_t *)data,1);
 	return VO_TRUE;
   case VOCTRL_GET_EQUALIZER:
@@ -672,7 +672,7 @@ int __FASTCALL__ vidix_preinit(const char *drvname,const void *server)
 	else MSG_V("Driver capability: %X\n",vidix_cap->flags);
 	MSG_V("Using: %s by %s\n",vidix_cap->name,vidix_cap->author);
 	/* we are able to tune up this stuff depend on fourcc format */
-	((vo_functions_t *)server)->flip_page=vidix_flip_page;
+	((vo_functions_t *)server)->change_frame=vidix_change_frame;
 	if(!reent) 
 	{
 	  server_control = ((vo_functions_t *)server)->control;

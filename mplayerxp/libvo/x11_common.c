@@ -1,4 +1,4 @@
-
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -64,13 +64,118 @@ XF86VidModeModeInfo **vidmodes=NULL;
 XF86VidModeModeLine modeline;
 #endif
 
-void __FASTCALL__ vo_hidecursor ( Display *disp , Window win )
+#ifdef HAVE_SHM
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <X11/extensions/XShm.h>
+
+int vo_x11_Shmem_Flag=0;
+static XShmSegmentInfo Shminfo[MAX_DRI_BUFFERS];
+static int gXErrorFlag;
+static int CompletionType=-1;
+
+/* since it doesn't seem to be defined on some platforms */
+extern int XShmGetEventBase( Display* );
+#endif
+
+XImage *vo_x11_myximage[MAX_DRI_BUFFERS];
+
+void __FASTCALL__ vo_x11_getMyXImage(unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h,int use_shmem)
+{
+#ifdef HAVE_SHM
+ if ( mLocalDisplay && XShmQueryExtension( mDisplay )&& use_shmem ) vo_x11_Shmem_Flag=1;
+ else {
+    vo_x11_Shmem_Flag=0;
+    if(use_shmem) MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
+ }
+ if ( vo_x11_Shmem_Flag ) CompletionType=XShmGetEventBase( mDisplay ) + ShmCompletion;
+ if ( vo_x11_Shmem_Flag ) {
+   vo_x11_myximage[idx]=XShmCreateImage( mDisplay,visual,depth,ZPixmap,NULL,&Shminfo[idx],w,h);
+   if ( vo_x11_myximage[idx] == NULL ) {
+     if ( vo_x11_myximage[idx] != NULL ) XDestroyImage( vo_x11_myximage[idx] );
+     MSG_V( "Shared memory error,disabling ( Ximage error )\n" );
+     goto shmemerror;
+   }
+   Shminfo[idx].shmid=shmget( IPC_PRIVATE,
+   vo_x11_myximage[idx]->bytes_per_line * vo_x11_myximage[idx]->height ,
+   IPC_CREAT | 0777 );
+   if ( Shminfo[idx].shmid < 0 ) {
+    XDestroyImage( vo_x11_myximage[idx] );
+    MSG_V( "%s\n",strerror( errno ) );
+    MSG_V( "Shared memory error,disabling ( seg id error )\n" );
+    goto shmemerror;
+   }
+   Shminfo[idx].shmaddr=( char * ) shmat( Shminfo[idx].shmid,0,0 );
+
+   if ( Shminfo[idx].shmaddr == ( ( char * ) -1 ) )
+   {
+    XDestroyImage( vo_x11_myximage[idx] );
+    if ( Shminfo[idx].shmaddr != ( ( char * ) -1 ) ) shmdt( Shminfo[idx].shmaddr );
+    MSG_V( "Shared memory error,disabling ( address error )\n" );
+    goto shmemerror;
+   }
+   vo_x11_myximage[idx]->data=Shminfo[idx].shmaddr;
+   Shminfo[idx].readOnly=False;
+   XShmAttach( mDisplay,&Shminfo[idx] );
+
+   XSync( mDisplay,False );
+
+   if ( gXErrorFlag )
+   {
+    XDestroyImage( vo_x11_myximage[idx] );
+    shmdt( Shminfo[idx].shmaddr );
+    MSG_V( "Shared memory error,disabling.\n" );
+    gXErrorFlag=0;
+    goto shmemerror;
+   }
+   else
+    shmctl( Shminfo[idx].shmid,IPC_RMID,0 );
+
+   {
+     static int firstTime=1;
+     if (firstTime){
+       MSG_V( "Sharing memory.\n" );
+       firstTime=0;
+     }
+   }
+ }
+ else
+  {
+   shmemerror:
+   vo_x11_Shmem_Flag=0;
+#endif
+   vo_x11_myximage[idx]=XGetImage( mDisplay,vo_window,0,0,
+				w,h,AllPlanes,ZPixmap );
+#ifdef HAVE_SHM
+  }
+#endif
+}
+
+void __FASTCALL__ vo_x11_freeMyXImage(unsigned idx)
+{
+#ifdef HAVE_SHM
+ if ( vo_x11_Shmem_Flag )
+  {
+   XShmDetach( mDisplay,&Shminfo[idx] );
+   XDestroyImage( vo_x11_myximage[idx] );
+   shmdt( Shminfo[idx].shmaddr );
+  }
+  else
+#endif
+  {
+   XDestroyImage( vo_x11_myximage[idx] );
+  }
+  vo_x11_myximage[idx]=NULL;
+}
+
+
+void __FASTCALL__ vo_x11_hidecursor ( Display *disp , Window win )
 {
 	Cursor no_ptr;
 	Pixmap bm_no;
 	XColor black,dummy;
 	Colormap colormap;
-	static unsigned char bm_no_data[] = { 0,0,0,0, 0,0,0,0  };
+	static char bm_no_data[] = { 0,0,0,0, 0,0,0,0  };
 
 	if(WinID==0) return;	// do not hide, if we're playing at rootwin
 	
@@ -596,9 +701,9 @@ uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__
            vo_dheight=nh;
 	   {
 	    Window root;
-	    int foo;
+	    unsigned foo;
 	    Window win;
-	    XGetGeometry(mydisplay, vo_window, &root, &foo, &foo, 
+	    XGetGeometry(mydisplay, vo_window, &root, &foo, &foo,
 		&foo/*width*/, &foo/*height*/, &foo, &foo);
 	    XTranslateCoordinates(mydisplay, vo_window, root, 0, 0,
 		&vo_dx, &vo_dy, &win);
@@ -780,12 +885,12 @@ void __FASTCALL__ vo_x11_xinerama_move(Display *dsp, Window w)
 #ifdef HAVE_XF86VM
 void __FASTCALL__ vo_vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int* modeline_height)
 {
-    unsigned int vm_event, vm_error;
-    unsigned int vm_ver, vm_rev;
+    int vm_event, vm_error;
+    int vm_ver, vm_rev;
     int i,j,have_vm=0;
 
     int modecount;
-    
+
     if (XF86VidModeQueryExtension(mDisplay, &vm_event, &vm_error)) {
       XF86VidModeQueryVersion(mDisplay, &vm_ver, &vm_rev);
       MSG_V("XF86VidMode Extension v%i.%i\n", vm_ver, vm_rev);
@@ -799,7 +904,7 @@ void __FASTCALL__ vo_vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int*
       j=0;
       *modeline_width=vidmodes[0]->hdisplay;
       *modeline_height=vidmodes[0]->vdisplay;
-      
+
       for (i=1; i<modecount; i++)
         if ((vidmodes[i]->hdisplay >= X) && (vidmodes[i]->vdisplay >= Y))
           if ( (vidmodes[i]->hdisplay <= *modeline_width ) && (vidmodes[i]->vdisplay <= *modeline_height) )
@@ -808,7 +913,7 @@ void __FASTCALL__ vo_vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int*
 	      *modeline_height=vidmodes[i]->vdisplay;
 	      j=i;
 	    }
-      
+
       MSG_V("XF86VM: Selected video mode %dx%d for image size %dx%d.\n",*modeline_width, *modeline_height, X, Y);
       XF86VidModeLockModeSwitch(mDisplay,mScreen,0);
       XF86VidModeSwitchToMode(mDisplay,mScreen,vidmodes[j]);

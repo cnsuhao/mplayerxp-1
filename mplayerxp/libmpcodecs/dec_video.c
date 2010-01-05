@@ -219,7 +219,7 @@ if(benchmark || frame_dropping)
 
 if(drop_frame) return 0;
 update_subtitle(pts);
-vo_flush_frame();
+vo_flush_pages();
 
 if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
     MSG_DBG2("Put whole frame\n");

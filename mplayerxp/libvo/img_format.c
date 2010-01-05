@@ -158,7 +158,7 @@ uint32_t	fourcc_from_pixfmt(int pixfmt)
     return -1;
 }
 
-int 	rgbfmt_depth(int fmt)
+unsigned rgbfmt_depth(unsigned fmt)
 {
     switch(pixfmt_from_fourcc(fmt)) {
 	case PIX_FMT_RGB48BE:

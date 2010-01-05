@@ -73,10 +73,10 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* data)
 {
     switch(request){
-    case VFCTRL_FLIP_PAGE:
+    case VFCTRL_CHANGE_FRAME:
     {
 	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
-	vo_flip_page();
+	vo_change_frame();
 	return CONTROL_TRUE;
     }
     case VFCTRL_SET_EQUALIZER:

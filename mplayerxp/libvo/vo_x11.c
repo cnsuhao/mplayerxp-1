@@ -62,36 +62,24 @@ static vo_info_t vo_info =
         ""
 };
 
-/* private prototypes */
-static void __FASTCALL__ Display_Image ( XImage * myximage );
-
-/* local data */
-#define ImageData(idx) ( uint8_t * ) myximage[idx]->data
-
-/*** X11 related variables ***/
-/* xp related variables */
-static unsigned num_buffers=1; // default
-
-static XImage *myximage[MAX_DRI_BUFFERS];
-static int depth,bpp,mode;
-static XWindowAttributes attribs;
-
-static int Flip_Flag;
-static int zoomFlag;
 
 #ifdef HAVE_SHM
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
-
-static int Shmem_Flag;
-static XShmSegmentInfo Shminfo[MAX_DRI_BUFFERS];
-static int gXErrorFlag;
-static int CompletionType=-1;
-
-/* since it doesn't seem to be defined on some platforms */
-extern int XShmGetEventBase( Display* );
 #endif
+/* private prototypes */
+static void __FASTCALL__ Display_Image ( XImage * myximage );
+
+/*** X11 related variables ***/
+/* xp related variables */
+static unsigned num_buffers=1; // default
+
+static unsigned depth,bpp,mode;
+static XWindowAttributes attribs;
+
+static int Flip_Flag;
+static int zoomFlag;
 
 static uint32_t image_width;
 static uint32_t image_height;
@@ -99,100 +87,6 @@ static uint32_t in_format;
 static uint32_t out_format=0;
 static int baseAspect; // 1<<16 based fixed point aspect, so that the aspect stays correct during resizing
 static XVisualInfo vinfo;
-
-static void __FASTCALL__ getMyXImage(unsigned idx)
-{
-#ifdef HAVE_SHM
- if ( mLocalDisplay && XShmQueryExtension( mDisplay ) ) Shmem_Flag=1;
-  else
-   {
-    Shmem_Flag=0;
-    MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
-   }
- if ( Shmem_Flag ) CompletionType=XShmGetEventBase( mDisplay ) + ShmCompletion;
-
- if ( Shmem_Flag )
-  {
-   myximage[idx]=XShmCreateImage( mDisplay,vinfo.visual,depth,ZPixmap,NULL,&Shminfo[idx],image_width,image_height );
-   if ( myximage[idx] == NULL )
-    {
-     if ( myximage[idx] != NULL ) XDestroyImage( myximage[idx] );
-     MSG_V( "Shared memory error,disabling ( Ximage error )\n" );
-     goto shmemerror;
-    }
-   Shminfo[idx].shmid=shmget( IPC_PRIVATE,
-   myximage[idx]->bytes_per_line * myximage[idx]->height ,
-   IPC_CREAT | 0777 );
-   if ( Shminfo[idx].shmid < 0 )
-   {
-    XDestroyImage( myximage[idx] );
-    MSG_V( "%s\n",strerror( errno ) );
-    MSG_V( "Shared memory error,disabling ( seg id error )\n" );
-    goto shmemerror;
-   }
-   Shminfo[idx].shmaddr=( char * ) shmat( Shminfo[idx].shmid,0,0 );
-
-   if ( Shminfo[idx].shmaddr == ( ( char * ) -1 ) )
-   {
-    XDestroyImage( myximage[idx] );
-    if ( Shminfo[idx].shmaddr != ( ( char * ) -1 ) ) shmdt( Shminfo[idx].shmaddr );
-    MSG_V( "Shared memory error,disabling ( address error )\n" );
-    goto shmemerror;
-   }
-   myximage[idx]->data=Shminfo[idx].shmaddr;
-   Shminfo[idx].readOnly=False;
-   XShmAttach( mDisplay,&Shminfo[idx] );
-
-   XSync( mDisplay,False );
-
-   if ( gXErrorFlag )
-   {
-    XDestroyImage( myximage[idx] );
-    shmdt( Shminfo[idx].shmaddr );
-    MSG_V( "Shared memory error,disabling.\n" );
-    gXErrorFlag=0;
-    goto shmemerror;
-   }
-   else
-    shmctl( Shminfo[idx].shmid,IPC_RMID,0 );
-
-   {
-     static int firstTime=1;
-     if (firstTime){
-       MSG_V( "Sharing memory.\n" );
-       firstTime=0;
-     }
-   }
- }
- else
-  {
-   shmemerror:
-   Shmem_Flag=0;
-#endif
-   myximage[idx]=XGetImage( mDisplay,vo_window,0,0,
-   image_width,image_height,AllPlanes,ZPixmap );
-#ifdef HAVE_SHM
-  }
-#endif
-}
-
-static void __FASTCALL__ freeMyXImage(unsigned idx)
-{
-#ifdef HAVE_SHM
- if ( Shmem_Flag )
-  {
-   XShmDetach( mDisplay,&Shminfo[idx] );
-   XDestroyImage( myximage[idx] );
-   shmdt( Shminfo[idx].shmaddr );
-  }
-  else
-#endif
-  {
-   XDestroyImage( myximage[idx] );
-  }
-  myximage[idx]=NULL;
-}
-
 
 static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
@@ -214,8 +108,8 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
 	if(enable_xp) LOCK_VDECODING();
 	for(idx=0;idx<num_buffers;idx++)
 	{
-	    freeMyXImage(idx);
-	    getMyXImage(idx);
+	    vo_x11_freeMyXImage(idx);
+	    vo_x11_getMyXImage(idx,vinfo.visual,depth,image_width,image_height,1);
 	}
    }
    return ret;
@@ -317,7 +211,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
                          xswa.border_pixel,depth,CopyFromParent,vinfo.visual,xswamask,&xswa );
 
     vo_x11_classhint( mDisplay,vo_window,"x11" );
-    vo_hidecursor(mDisplay,vo_window);
+    vo_x11_hidecursor(mDisplay,vo_window);
     if ( fullscreen ) vo_x11_decoration( mDisplay,vo_window,0 );
     XSelectInput( mDisplay,vo_window,StructureNotifyMask );
     XSetStandardProperties( mDisplay,vo_window,title,title,None,NULL,0,&hint );
@@ -347,9 +241,9 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
       XSetInputFocus(mDisplay, vo_window, RevertToNone, CurrentTime);
      }
 #endif
-  for(i=0;i<num_buffers;i++) getMyXImage(i);
+  for(i=0;i<num_buffers;i++) vo_x11_getMyXImage(i,vinfo.visual,depth,image_width,image_height,1);
 
-  switch ((bpp=myximage[0]->bits_per_pixel)){
+  switch ((bpp=vo_x11_myximage[0]->bits_per_pixel)){
 	case 24: out_format= IMGFMT_BGR24; break;
 	case 32: out_format= IMGFMT_BGR32; break;
 	case 15: out_format= IMGFMT_BGR15; break;
@@ -358,14 +252,14 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
   }
 
   /* If we have blue in the lowest bit then obviously RGB */
-  mode=( ( myximage[0]->blue_mask & 0x01 ) != 0 ) ? MODE_RGB : MODE_BGR;
+  mode=( ( vo_x11_myximage[0]->blue_mask & 0x01 ) != 0 ) ? MODE_RGB : MODE_BGR;
 #ifdef WORDS_BIGENDIAN
-  if ( myximage[0]->byte_order != MSBFirst )
+  if ( vo_x11_myximage[0]->byte_order != MSBFirst )
 #else
-  if ( myximage[0]->byte_order != LSBFirst )
+  if ( vo_x11_myximage[0]->byte_order != LSBFirst )
 #endif
   {
-    mode=( ( myximage[0]->blue_mask & 0x01 ) != 0 ) ? MODE_BGR : MODE_RGB;
+    mode=( ( vo_x11_myximage[0]->blue_mask & 0x01 ) != 0 ) ? MODE_BGR : MODE_RGB;
   }
 
 #ifdef WORDS_BIGENDIAN
@@ -382,7 +276,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
     MSG_ERR("BGR not supported, please contact the developers\n");
     return -1;
   }
-#endif  
+#endif
  saver_off(mDisplay);
  return 0;
 }
@@ -394,7 +288,7 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
 {
 #ifdef DISP
 #ifdef HAVE_SHM
- if ( Shmem_Flag )
+ if ( vo_x11_Shmem_Flag )
   {
    XShmPutImage( mDisplay,vo_window,vo_gc,myximage,
                  0,0,
@@ -412,8 +306,8 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
 #endif
 }
 
-static void __FASTCALL__ flip_page( unsigned idx ){
- Display_Image( myximage[idx] );
+static void __FASTCALL__ change_frame( unsigned idx ){
+ Display_Image( vo_x11_myximage[idx] );
  if (num_buffers>1) XFlush(mDisplay);
  else XSync(mDisplay, False);
  return;
@@ -440,7 +334,7 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
 static void uninit(void)
 {
  unsigned i;
- for(i=0;i<num_buffers;i++)  freeMyXImage(i);
+ for(i=0;i<num_buffers;i++)  vo_x11_freeMyXImage(i);
  saver_on(mDisplay); // screen saver back on
 
 #ifdef HAVE_XF86VM
@@ -489,7 +383,7 @@ static void __FASTCALL__ x11_dri_get_surface_caps(dri_surface_cap_t *caps)
 
 static void __FASTCALL__ x11_dri_get_surface(dri_surface_t *surf)
 {
-    surf->planes[0] = ImageData(surf->idx);
+    surf->planes[0] = vo_x11_ImageData(surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;

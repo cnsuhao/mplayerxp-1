@@ -56,7 +56,7 @@ static uint32_t pitch_y,pitch_u,pitch_v;
 static uint32_t offset_y,offset_u,offset_v;
 
 
-static void __FASTCALL__ flip_page(unsigned idx)
+static void __FASTCALL__ change_frame(unsigned idx)
 {
     UNUSED(idx);
 }
@@ -231,7 +231,7 @@ static uint32_t __FASTCALL__ control(uint32_t request, void *data)
     case DRI_GET_SURFACE: 
 	null_dri_get_surface(data);
 	return VO_TRUE;
-    case VOCTRL_FLUSH_FRAME:
+    case VOCTRL_FLUSH_PAGES:
 	return VO_TRUE;
   }
   return VO_NOTIMPL;

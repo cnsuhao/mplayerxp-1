@@ -1148,7 +1148,7 @@ static const vo_info_t *get_info(void)
 	return &vo_info;
 }
 
-static void __FASTCALL__ flip_page(unsigned idx)
+static void __FASTCALL__ change_frame(unsigned idx)
 {
 	unsigned i, out_offset = 0, in_offset = 0;
 

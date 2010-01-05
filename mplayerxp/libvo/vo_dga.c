@@ -240,7 +240,7 @@ static uint32_t check_events(void)
 
 #include "sub.h"
 
-static void __FASTCALL__ flip_page( unsigned idx )
+static void __FASTCALL__ change_frame( unsigned idx )
 {
 #ifdef HAVE_DGA2
     XDGASetViewport (mDisplay, XDefaultScreen(mDisplay), 

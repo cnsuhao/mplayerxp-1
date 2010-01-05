@@ -1376,7 +1376,7 @@ if(time_frame>0.001 && !(vo_flags&256)){
 
 //====================== FLIP PAGE (VIDEO BLT): =========================
 
-        pinfo[xp_id].current_module="flip_page1";
+        pinfo[xp_id].current_module="change_frame1";
 
 	vo_check_events(); /* check events AST */
         if(blit_frame && !frame_time_remaining){
@@ -1393,14 +1393,14 @@ if(time_frame>0.001 && !(vo_flags&256)){
 		vstat->too_slow_frame_cnt++;
 		/* printf ("PANIC: too slow frame (%.3f)!\n", j); */
 
-	   vo_flip_page();
+	   vo_change_frame();
 //        usec_sleep(50000); // test only!
 	   t2=GetTimer()-t2;
 	   tt = t2*0.000001f;
 	   vout_time_usage+=tt;
 	   if(benchmark)
 	   {
-		/* we need compute draw_slice+flip_page here */
+		/* we need compute draw_slice+change_frame here */
 		cur_vout_time_usage+=tt;
 		if(cur_vout_time_usage > max_vout_time_usage) max_vout_time_usage = cur_vout_time_usage;
 		if(cur_vout_time_usage < min_vout_time_usage) min_vout_time_usage = cur_vout_time_usage;
@@ -1623,7 +1623,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
     pinfo[xp_id].current_module="sleep_usleep";
     time_frame=SleepTime(rtc_fd,softsleep,time_frame);
     }
-    pinfo[xp_id].current_module="flip_page2";
+    pinfo[xp_id].current_module="change_frame2";
     vo_check_events();
     /* don't flip if there is nothing new to display */
     if(!blit_frame)
@@ -1650,7 +1650,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
     {
 	unsigned int t2=GetTimer();
 	double tt;
-	vo_flip_page();
+	vo_change_frame();
 	MSG_D("\ndec_ahead_main: schedule %u on screen (abs_active: %u loc_active: %u abs_blitted %u)\n",dec_ahead_active_frame,abs_dec_ahead_active_frame,loc_dec_ahead_active_frame,ada_blitted_frame);
 	LOCK_VDEC_ACTIVE();
 	dec_ahead_active_frame=(dec_ahead_active_frame+1)%xp_num_frames;
@@ -1668,7 +1668,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	vout_time_usage+=tt;
 	if(benchmark)
 	{
-		/* we need compute draw_slice+flip_page here */
+		/* we need compute draw_slice+change_frame here */
 		cur_vout_time_usage+=tt;
 		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo_fps > 1)
 							bench_dropped_frames ++;

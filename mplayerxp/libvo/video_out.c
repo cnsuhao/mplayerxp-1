@@ -670,7 +670,7 @@ uint32_t __FASTCALL__ vo_set_active_frame( volatile unsigned * fr)
 {
     MSG_DBG3("dri_vo_dbg: vo_set_active_frame(%u)\n",*fr);
     active_frame = *fr;
-    vo_flip_page();
+    vo_change_frame();
     return VO_TRUE;
 }
 
@@ -723,23 +723,23 @@ uint32_t __FASTCALL__ vo_draw_slice(const uint8_t *src[], unsigned stride[],
     return -1;
 }
 
-void vo_flip_page(void)
+void vo_change_frame(void)
 {
-    MSG_DBG3("dri_vo_dbg: vo_flip_page [active_frame=%u]\n",active_frame);
+    MSG_DBG3("dri_vo_dbg: vo_change_frame [active_frame=%u]\n",active_frame);
     if(vo_doublebuffering || (dri_cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
     {
-	video_out->flip_page(active_frame);
+	video_out->change_frame(active_frame);
 	active_frame = (active_frame+1)%dri_nframes;
 	if(!dri_has_thread) xp_frame = (xp_frame+1)%dri_nframes;
     }
 }
 
-void vo_flush_frame(void)
+void vo_flush_pages(void)
 {
-    MSG_DBG3("dri_vo_dbg: vo_flush_frame [active_frame=%u]\n",active_frame);
+    MSG_DBG3("dri_vo_dbg: vo_flush_pages [active_frame=%u]\n",active_frame);
     frame_counter++;
     if((dri_cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
-					video_out->control(VOCTRL_FLUSH_FRAME,&xp_frame);
+					video_out->control(VOCTRL_FLUSH_PAGES,&xp_frame);
 }
 
 /* DRAW OSD */

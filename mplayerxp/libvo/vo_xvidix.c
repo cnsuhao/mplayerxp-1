@@ -301,7 +301,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    vinfo.depth, InputOutput, vinfo.visual, xswamask, &xswa);
 
     vo_x11_classhint(mDisplay, vo_window, "xvidix");
-    vo_hidecursor(mDisplay, vo_window);
+    vo_x11_hidecursor(mDisplay, vo_window);
 
 #ifdef X11_FULLSCREEN
     if (vo_fs) /* fullscreen */
@@ -382,12 +382,12 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
     return event;
 }
 
-/* flip_page should be overwritten with vidix functions (vosub_vidix.c) */
+/* change_frame should be overwritten with vidix functions (vosub_vidix.c) */
 
-static void __FASTCALL__ flip_page(unsigned idx)
+static void __FASTCALL__ change_frame(unsigned idx)
 {
     UNUSED(idx);
-    MSG_FATAL( "[xvidix] error: didn't used vidix flip_page!\n");
+    MSG_FATAL( "[xvidix] error: didn't used vidix change_frame!\n");
     return;
 }
 

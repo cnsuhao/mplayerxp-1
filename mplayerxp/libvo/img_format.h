@@ -164,6 +164,6 @@ typedef struct {
 const char * __FASTCALL__ vo_format_name(int format);
 int		pixfmt_from_fourcc(uint32_t fourcc);
 uint32_t	fourcc_from_pixfmt(int pixfmt);
-extern int 	rgbfmt_depth(int fmt);
+extern unsigned rgbfmt_depth(unsigned fmt);
 
 #endif

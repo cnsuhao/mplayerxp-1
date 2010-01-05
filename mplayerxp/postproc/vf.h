@@ -76,16 +76,16 @@ typedef struct vf_seteq_s
     int value;
 } vf_equalizer_t;
 
-#define VFCTRL_QUERY_MAX_PP_LEVEL 4 /* test for postprocessing support (max level) */
-#define VFCTRL_SET_PP_LEVEL 5 /* set postprocessing level */
-#define VFCTRL_SET_EQUALIZER 6 /* set color options (brightness,contrast etc) */
-#define VFCTRL_GET_EQUALIZER 8 /* gset color options (brightness,contrast etc) */
-#define VFCTRL_START_FRAME 7
-#define VFCTRL_CHANGE_RECTANGLE 9 /* Change the rectangle boundaries */
-#define VFCTRL_FLIP_PAGE 10 /* Tell the vo to flip pages */
-#define VFCTRL_DUPLICATE_FRAME 11 /* For encoding - encode zero-change frame */
-#define VFCTRL_SKIP_NEXT_FRAME 12 /* For encoding - drop the next frame that passes thru */
-#define VFCTRL_FLUSH_FRAMES    13 /* For encoding - flush delayed frames */
+#define VFCTRL_QUERY_MAX_PP_LEVEL	4 /* test for postprocessing support (max level) */
+#define VFCTRL_SET_PP_LEVEL		5 /* set postprocessing level */
+#define VFCTRL_SET_EQUALIZER		6 /* set color options (brightness,contrast etc) */
+#define VFCTRL_GET_EQUALIZER		8 /* gset color options (brightness,contrast etc) */
+#define VFCTRL_START_FRAME		7
+#define VFCTRL_CHANGE_RECTANGLE		9 /* Change the rectangle boundaries */
+#define VFCTRL_CHANGE_FRAME		10 /* Tell the vo to flip pages */
+#define VFCTRL_DUPLICATE_FRAME		11 /* For encoding - encode zero-change frame */
+#define VFCTRL_SKIP_NEXT_FRAME		12 /* For encoding - drop the next frame that passes thru */
+#define VFCTRL_FLUSH_PAGES		13 /* For encoding - flush delayed frames */
 
 #include "vfcap.h"
 

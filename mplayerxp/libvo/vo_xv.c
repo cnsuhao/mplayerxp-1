@@ -369,7 +369,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
        0, depth,CopyFromParent,vinfo.visual,xswamask,&xswa);
 
    vo_x11_classhint( mDisplay,vo_window,"xv" );
-   vo_hidecursor(mDisplay,vo_window);
+   vo_x11_hidecursor(mDisplay,vo_window);
 
    XSelectInput(mDisplay, vo_window, StructureNotifyMask | KeyPressMask | 
 	((WinID==0) ? 0 : (PointerMotionMask
@@ -557,7 +557,7 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
   return e|VO_EVENT_FORCE_UPDATE;
 }
 
-static void __FASTCALL__ flip_page(unsigned idx)
+static void __FASTCALL__ change_frame(unsigned idx)
 {
  expose_idx=idx;
  XvShmPutImage(mDisplay, xv_port, vo_window, vo_gc, xvimage[idx],
