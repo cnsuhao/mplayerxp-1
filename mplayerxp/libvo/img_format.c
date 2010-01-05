@@ -14,6 +14,7 @@ const char * __FASTCALL__ vo_format_name(int format)
 	case IMGFMT_RGB15: return("RGB 15-bit");
 	case IMGFMT_RGB16: return("RGB 16-bit");
 	case IMGFMT_RGB24: return("RGB 24-bit");
+	case IMGFMT_RGB48NE: return("RGB 48-bit");
 //	case IMGFMT_RGB32: return("RGB 32-bit");
 	case IMGFMT_BGR1: return("BGR 1-bit");
 	case IMGFMT_BGR4: return("BGR 4-bit");
@@ -22,6 +23,7 @@ const char * __FASTCALL__ vo_format_name(int format)
 	case IMGFMT_BGR15: return("BGR 15-bit");
 	case IMGFMT_BGR16: return("BGR 16-bit");
 	case IMGFMT_BGR24: return("BGR 24-bit");
+	case IMGFMT_BGR48NE: return("BGR 48-bit");
 //	case IMGFMT_BGR32: return("BGR 32-bit");
 	case IMGFMT_ABGR: return("ABGR");
 	case IMGFMT_BGRA: return("BGRA");
@@ -61,6 +63,13 @@ const char * __FASTCALL__ vo_format_name(int format)
 	case IMGFMT_CLJR: return("Packed CLJR");
 	case IMGFMT_YUVP: return("Packed YUVP");
 	case IMGFMT_UYVP: return("Packed UYVP");
+	case IMGFMT_420A: return "Planar YV12 with alpha";
+	case IMGFMT_420P16_LE: return "Planar 420P 16-bit little-endian";
+	case IMGFMT_420P16_BE: return "Planar 420P 16-bit big-endian";
+	case IMGFMT_422P16_LE: return "Planar 422P 16-bit little-endian";
+	case IMGFMT_422P16_BE: return "Planar 422P 16-bit big-endian";
+	case IMGFMT_444P16_LE: return "Planar 444P 16-bit little-endian";
+	case IMGFMT_444P16_BE: return "Planar 444P 16-bit big-endian";
 	case IMGFMT_MPEGPES: return("Mpeg PES");
 	case IMGFMT_ZRMJPEGNI: return("Zoran MJPEG non-interlaced");
 	case IMGFMT_ZRMJPEGIT: return("Zoran MJPEG top field first");
@@ -88,6 +97,8 @@ static pix_fourcc pfcc[] =
     { PIX_FMT_YUV410P, IMGFMT_YVU9 },  ///< Planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
     { PIX_FMT_YUV410P, IMGFMT_IF09 },  ///< rough alias
     { PIX_FMT_YUV411P, IMGFMT_411P },  ///< Planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+    { PIX_FMT_RGB48BE, IMGFMT_RGB48BE },  ///< packed RGB 16:16:16, 48bpp, 16R, 16G, 16B, big-endian
+    { PIX_FMT_RGB48LE, IMGFMT_RGB48LE },  ///< packed RGB 16:16:16, 48bpp, 16R, 16G, 16B, little-endian
     { PIX_FMT_RGB565,  IMGFMT_RGB16},  ///< Packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), in cpu endianness
     { PIX_FMT_RGB555,  IMGFMT_RGB15},  ///< Packed RGB 5:5:5, 16bpp, (msb)1A 5R 5G 5B(lsb), in cpu endianness most significant bit to 1
     { PIX_FMT_GRAY8,   IMGFMT_Y800 },  ///<        Y        ,  8bpp
@@ -114,6 +125,14 @@ static pix_fourcc pfcc[] =
     { PIX_FMT_RGB4_BYTE,IMGFMT_RGB4_CHAR }, ///< Packed RGB 1:2:1,  8bpp, (msb)2R 3G 3B(lsb)
     { PIX_FMT_NV12,    IMGFMT_NV12 },   ///< Planar YUV 4:2:0, 12bpp, 1 plane for Y and 1 for UV
     { PIX_FMT_NV21,    IMGFMT_NV21 },  ///< as above, but U and V bytes are swapped
+
+    { PIX_FMT_YUVA420P,  IMGFMT_420A },///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
+    { PIX_FMT_YUV420P16LE, IMGFMT_420P16_LE }, ///< planar YUV 4:2:0, 24bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
+    { PIX_FMT_YUV420P16BE, IMGFMT_420P16_BE },///< planar YUV 4:2:0, 24bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
+    { PIX_FMT_YUV422P16LE, IMGFMT_422P16_LE },///< planar YUV 4:2:2, 32bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
+    { PIX_FMT_YUV422P16BE, IMGFMT_422P16_BE },///< planar YUV 4:2:2, 32bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
+    { PIX_FMT_YUV444P16LE, IMGFMT_444P16_LE },///< planar YUV 4:4:4, 48bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
+    { PIX_FMT_YUV444P16BE, IMGFMT_444P16_BE },///< planar YUV 4:4:4, 48bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
 
     { PIX_FMT_RGB32_1, IMGFMT_RGBA },  ///< Packed RGB 8:8:8, 32bpp, (msb)8R 8G 8B 8A(lsb), in cpu endianness
     { PIX_FMT_BGR32_1, IMGFMT_BGRA } ///< Packed RGB 8:8:8, 32bpp, (msb)8B 8G 8R 8A(lsb), in cpu endianness
@@ -142,6 +161,11 @@ uint32_t	fourcc_from_pixfmt(int pixfmt)
 int 	rgbfmt_depth(int fmt)
 {
     switch(pixfmt_from_fourcc(fmt)) {
+	case PIX_FMT_RGB48BE:
+	case PIX_FMT_RGB48LE:
+//	case PIX_FMT_BGR48BE:
+//	case PIX_FMT_BGR48LE:
+	    return 48;
         case PIX_FMT_BGRA:
         case PIX_FMT_ABGR:
         case PIX_FMT_RGBA:
@@ -169,6 +193,6 @@ int 	rgbfmt_depth(int fmt)
         case PIX_FMT_MONOBLACK:
             return 1;
         default:
-            return 0;
+            return 256;
     }
 }

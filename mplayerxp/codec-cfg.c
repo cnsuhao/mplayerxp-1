@@ -132,9 +132,19 @@ static const struct {
 {"CLJR",  IMGFMT_CLJR},
 {"CYUV",  IMGFMT_cyuv},
 
+{"444P16BE", IMGFMT_444P16_BE},
+{"444P16LE", IMGFMT_444P16_LE},
+{"444P16", IMGFMT_444P16},
+{"422P16BE", IMGFMT_422P16_BE},
+{"422P16LE", IMGFMT_422P16_LE},
+{"422P16", IMGFMT_422P16},
+{"420P16BE", IMGFMT_420P16_BE},
+{"420P16LE", IMGFMT_420P16_LE},
+{"420P16", IMGFMT_420P16},
 {"444P",  IMGFMT_444P},
 {"422P",  IMGFMT_422P},
 {"411P",  IMGFMT_411P},
+{"420A",  IMGFMT_420A},
 
 {"NV12",  IMGFMT_NV12},
 {"NV21",  IMGFMT_NV21},
@@ -156,6 +166,9 @@ static const struct {
 {"YUVP",  IMGFMT_YUVP},
 {"UYVP",  IMGFMT_UYVP},
 
+{"RGB48LE",IMGFMT_RGB48LE},
+{"RGB48BE",IMGFMT_RGB48BE},
+{"RGB48", IMGFMT_RGB48NE},
 {"RGB4",  IMGFMT_RGB|4},
 {"RGB8",  IMGFMT_RGB|8},
 {"RGB15", IMGFMT_RGB|15}, 
@@ -166,6 +179,9 @@ static const struct {
 {"ARGB",  IMGFMT_ARGB},
 {"RGB1",  IMGFMT_RGB|1},
 
+{"BGR48LE",IMGFMT_BGR48LE},
+{"BGR48BE",IMGFMT_BGR48BE},
+{"BGR48", IMGFMT_BGR48NE},
 {"BGR4",  IMGFMT_BGR|4},
 {"BGR8",  IMGFMT_BGR|8},
 {"BGR15", IMGFMT_BGR|15},
@@ -219,16 +235,20 @@ static int add_to_inout(const char *sfmt,const char *sflags, unsigned int *outfm
 			sflags+=strlen(flagstr[j]);
 		} while (*(sflags++) == ',');
 
-		if (*(--sflags) != '\0')
+		if (*(--sflags) != '\0') {
+			MSG_ERR("\n{found unparsed flg tile: %s}\n",sflags);
 			goto err_out_parse_error;
+		}
 	}
 
 	do {
 		for (j = 0; fmt_table[j].name != NULL; j++)
 			if (!strncmp(sfmt, fmt_table[j].name, strlen(fmt_table[j].name)))
 				break;
-		if (fmt_table[j].name == NULL)
+		if (fmt_table[j].name == NULL) {
+			MSG_ERR("\n{%s is not registered format}\n",sfmt);
 			goto err_out_parse_error;
+		}
 		outfmt[i] = fmt_table[j].num;
 		outflags[i] = flags;
                 ++i;
@@ -238,9 +258,11 @@ static int add_to_inout(const char *sfmt,const char *sflags, unsigned int *outfm
 	if (!freeslots)
 		goto err_out_too_many;
 
-	if (*(--sfmt) != '\0')
+	if (*(--sfmt) != '\0') {
+		MSG_ERR("\n{found unparsed tile %s}\n",sfmt);
 		goto err_out_parse_error;
-        
+	}
+
 	return 1;
 err_out_too_many:
 	MSG_ERR("too many out...");
@@ -378,14 +400,15 @@ int parse_codec_cfg(const char *cfgfile)
 	codecs_t **codecsp = NULL;// points to audio_codecs or to video_codecs
 	char *endptr;	// strtoul()...
 	int *nr_codecsp;
+	const char *err_hint=NULL;
 	int codec_type;		/* TYPE_VIDEO/TYPE_AUDIO */
 	int tmp, i;
 	
 	// in case we call it secont time
 	if(video_codecs!=NULL)free(video_codecs);
 	else video_codecs=NULL;
- 
- 	if(audio_codecs!=NULL)free(audio_codecs);
+
+	if(audio_codecs!=NULL)free(audio_codecs);
 	else audio_codecs=NULL;
 	
 	nr_vcodecs = 0;
@@ -414,8 +437,8 @@ int parse_codec_cfg(const char *cfgfile)
 		goto out;
 	if (!strcmp(token[0], "audiocodec") || !strcmp(token[0], "videocodec"))
 		goto loop_enter;
+	err_hint=token[0];
 	goto err_out_parse_error;
-
 	while ((tmp = get_token(1, 1)) != RET_EOF) {
 		if (tmp == RET_EOL)
 			continue;
@@ -440,7 +463,7 @@ int parse_codec_cfg(const char *cfgfile)
 			}
 		        if (!(*codecsp = (codecs_t *) realloc(*codecsp,
 				sizeof(codecs_t) * (*nr_codecsp + 2)))) {
-			    MSG_FATAL("can't realloc '*codecsp': %s\n", strerror(errno));
+			    MSG_FATAL(" can't realloc '*codecsp': %s\n", strerror(errno));
 			    goto err_out;
 		        }
 			codec=*codecsp + *nr_codecsp;
@@ -449,53 +472,71 @@ int parse_codec_cfg(const char *cfgfile)
 			memset(codec->fourcc, 0xff, sizeof(codec->fourcc));
 			memset(codec->outfmt, 0xff, sizeof(codec->outfmt));
 			memset(codec->infmt, 0xff, sizeof(codec->infmt));
-                        
+
 			if (get_token(1, 1) < 0)
 				goto err_out_parse_error;
 			for (i = 0; i < *nr_codecsp - 1; i++) {
 				if(( (*codecsp)[i].codec_name!=NULL) && 
 				    (!strcmp(token[0], (*codecsp)[i].codec_name)) ) {
-					MSG_ERR("codec name '%s' isn't unique", token[0]);
+					MSG_ERR(" codec name '%s' isn't unique", token[0]);
 					goto err_out_print_linenum;
 				}
 			}
 			strncpy(codec->codec_name,token[0],sizeof(codec->codec_name));
 			codec->codec_name[sizeof(codec->codec_name)-1]=0;
 		} else if (!strcmp(token[0], "info")) {
-			if (codec->s_info[0] || get_token(1, 1) < 0)
+			err_hint="info";
+			if (codec->s_info[0] || get_token(1, 1) < 0) {
 				goto err_out_parse_error;
+			}
 			strncpy(codec->s_info,token[0],sizeof(codec->s_info));
 			codec->s_info[sizeof(codec->s_info)-1]=0;
 		} else if (!strcmp(token[0], "comment")) {
-			if (get_token(1, 1) < 0)
+			err_hint="comment";
+			if (get_token(1, 1) < 0) {
 				goto err_out_parse_error;
+			}
 			strncat(codec->s_comment,token[0],sizeof(codec->s_comment));
 			codec->s_comment[sizeof(codec->s_comment)-1]=0;
 		} else if (!strcmp(token[0], "fourcc")) {
-			if (get_token(1, 2) < 0)
+			err_hint="fourcc";
+			if (get_token(1, 2) < 0) {
 				goto err_out_parse_error;
+			}
 			if (!add_to_fourcc(token[0], token[1],
 						codec->fourcc,
-						codec->fourccmap))
+						codec->fourccmap)) {
+				MSG_ERR(" can't add fourcc '%s'",token[0]);
 				goto err_out_print_linenum;
+			}
 		} else if (!strcmp(token[0], "format")) {
-			if (get_token(1, 1) < 0)
+			err_hint="format";
+			if (get_token(1, 1) < 0) {
 				goto err_out_parse_error;
-			if (!add_to_format(token[0], codec->fourcc,codec->fourccmap))
+			}
+			if (!add_to_format(token[0], codec->fourcc,codec->fourccmap)) {
+				MSG_ERR(" can't add format '%s'", token[0]);
 				goto err_out_print_linenum;
+			}
 		} else if (!strcmp(token[0], "driver")) {
-			if (get_token(1, 1) < 0)
+			err_hint="driver";
+			if (get_token(1, 1) < 0) {
 				goto err_out_parse_error;
+			}
 			strncpy(codec->driver_name,token[0],sizeof(codec->driver_name));
 			codec->driver_name[sizeof(codec->driver_name)-1]=0;
 		} else if (!strcmp(token[0], "dll")) {
-			if (get_token(1, 1) < 0)
+			err_hint="dll";
+			if (get_token(1, 1) < 0) {
 				goto err_out_parse_error;
+			}
 			strncpy(codec->dll_name,token[0],sizeof(codec->dll_name));
 			codec->dll_name[sizeof(codec->dll_name)-1]=0;
 		} else if (!strcmp(token[0], "guid")) {
-			if (get_token(11, 11) < 0)
+			err_hint="guid";
+			if (get_token(11, 11) < 0) {
 				goto err_out_parse_error;
+			}
                         codec->guid.f1=strtoul(token[0],&endptr,0);
 			if ((*endptr != ',' || *(endptr + 1) != '\0') &&
 					*endptr != '\0')
@@ -515,27 +556,39 @@ int parse_codec_cfg(const char *cfgfile)
 					goto err_out_parse_error;
 			}
 		} else if (!strcmp(token[0], "out")) {
-			if (get_token(1, 2) < 0)
+			err_hint="out";
+			if (get_token(1, 2) < 0) {
 				goto err_out_parse_error;
+			}
 			if (!add_to_inout(token[0], token[1], codec->outfmt,
-						codec->outflags))
+						codec->outflags)) {
+				MSG_ERR(" can't add outfmt '%s'", token[0]);
 				goto err_out_print_linenum;
+			}
 		} else if (!strcmp(token[0], "in")) {
-			if (get_token(1, 2) < 0)
+			err_hint="in";
+			if (get_token(1, 2) < 0) {
 				goto err_out_parse_error;
+			}
 			if (!add_to_inout(token[0], token[1], codec->infmt,
-						codec->inflags))
+						codec->inflags)) {
+				MSG_ERR(" can't add infmt '%s'", token[0]);
 				goto err_out_print_linenum;
+			}
 		} else if (!strcmp(token[0], "flags")) {
-			if (get_token(1, 1) < 0)
+			err_hint="flags";
+			if (get_token(1, 1) < 0) {
 				goto err_out_parse_error;
+			}
 			if (!strcmp(token[0], "seekable"))
 				codec->flags |= CODECS_FLAG_SEEKABLE;
 			else
 				goto err_out_parse_error;
 		} else if (!strcmp(token[0], "status")) {
-			if (get_token(1, 1) < 0)
+			err_hint="status";
+			if (get_token(1, 1) < 0) {
 				goto err_out_parse_error;
+			}
 			if (!strcasecmp(token[0], "working"))
 				codec->status = CODECS_STATUS_WORKING;
 			else if (!strcasecmp(token[0], "crashing"))
@@ -547,31 +600,34 @@ int parse_codec_cfg(const char *cfgfile)
 			else
 				goto err_out_parse_error;
 		} else if (!strcmp(token[0], "cpuflags")) {
+			err_hint="cpuflags";
 			if (get_token(1, 1) < 0)
 				goto err_out_parse_error;
 			if (!(codec->cpuflags = get_cpuflags(token[0])))
 				goto err_out_parse_error;
     } else if (!strcasecmp(token[0], "priority")) {
+			err_hint="priority";
 			if (get_token(1, 1) < 0)
 				goto err_out_parse_error;
-      codec->priority = atoi(token[0]);
-		} else
-			goto err_out_parse_error;
-	}
-	if (!validate_codec(codec, codec_type))
-		goto err_out_not_valid;
-	MSG_INFO("%d audio & %d video codecs\n", nr_acodecs, nr_vcodecs);
-	if(video_codecs) video_codecs[nr_vcodecs].codec_name[0] = '\0';
-	if(audio_codecs) audio_codecs[nr_acodecs].codec_name[0] = '\0';
+			codec->priority = atoi(token[0]);
+    } else
+	goto err_out_parse_error;
+    }
+    if (!validate_codec(codec, codec_type))
+	goto err_out_not_valid;
+    MSG_INFO("%d audio & %d video codecs\n", nr_acodecs, nr_vcodecs);
+    if(video_codecs) video_codecs[nr_vcodecs].codec_name[0] = '\0';
+    if(audio_codecs) audio_codecs[nr_acodecs].codec_name[0] = '\0';
 out:
-	free(line);
-	line=NULL;
-	fclose(fp);
-	return 1;
+    free(line);
+    line=NULL;
+    fclose(fp);
+    return 1;
 
 err_out_parse_error:
-	MSG_ERR("parse error");
+	MSG_ERR("parse error ");
 err_out_print_linenum:
+	if(err_hint) MSG_ERR("(%s)",err_hint);
 	PRINT_LINENUM;
 err_out:
 	if (audio_codecs)

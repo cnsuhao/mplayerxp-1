@@ -187,7 +187,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     image_width = width;
     image_format = format;
 
-    if (IMGFMT_IS_RGB(format) || IMGFMT_IS_BGR(format))
+    if ((IMGFMT_IS_RGB(format) || IMGFMT_IS_BGR(format)) && rgbfmt_depth(format)<48)
     {
 	image_depth = rgbfmt_depth(format);
     }

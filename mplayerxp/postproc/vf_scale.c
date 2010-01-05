@@ -50,6 +50,13 @@ void sws_getFlagsAndFilterFromCmdLine(int *flags, SwsFilter **srcFilterParam, Sw
 
 static const unsigned int outfmt_list[]={
 // YUV:
+    IMGFMT_444P16_LE,
+    IMGFMT_444P16_BE,
+    IMGFMT_422P16_LE,
+    IMGFMT_422P16_BE,
+    IMGFMT_420P16_LE,
+    IMGFMT_420P16_BE,
+    IMGFMT_420A,
     IMGFMT_444P,
     IMGFMT_422P,
     IMGFMT_YV12,
@@ -61,6 +68,8 @@ static const unsigned int outfmt_list[]={
     IMGFMT_YUY2,
     IMGFMT_UYVY,
 // RGB and grayscale (Y8 and Y800):
+    IMGFMT_RGB48LE,
+    IMGFMT_RGB48BE,
     IMGFMT_BGR32,
     IMGFMT_RGB32,
     IMGFMT_BGR24,

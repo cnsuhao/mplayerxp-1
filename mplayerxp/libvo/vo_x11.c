@@ -423,9 +423,9 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
 {
     MSG_DBG2("vo_x11: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
 #ifdef WORDS_BIGENDIAN
-    if (IMGFMT_IS_BGR(format->fourcc))
+    if (IMGFMT_IS_BGR(format->fourcc) && rgbfmt_depth(format->fourcc)<48)
 #else
-    if (IMGFMT_IS_RGB(format->fourcc))
+    if (IMGFMT_IS_RGB(format->fourcc) && rgbfmt_depth(format->fourcc)<48)
 #endif
     {
 	if (rgbfmt_depth(format->fourcc) == (unsigned)vo_depthonscreen)

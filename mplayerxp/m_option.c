@@ -1014,9 +1014,19 @@ static struct {
   const char* name;
   unsigned int fmt;
 } mp_imgfmt_list[] = {
+  {"444p16be", IMGFMT_444P16_BE},
+  {"444p16le", IMGFMT_444P16_LE},
+  {"444p16", IMGFMT_444P16},
+  {"422p16be", IMGFMT_422P16_BE},
+  {"422p16le", IMGFMT_422P16_LE},
+  {"422p16", IMGFMT_422P16},
+  {"420p16be", IMGFMT_420P16_BE},
+  {"420p16le", IMGFMT_420P16_LE},
+  {"420p16", IMGFMT_420P16},
   {"444p", IMGFMT_444P},
   {"422p", IMGFMT_422P},
   {"411p", IMGFMT_411P},
+  {"420a", IMGFMT_420A},
   {"yuy2", IMGFMT_YUY2},
   {"uyvy", IMGFMT_UYVY},
   {"yvu9", IMGFMT_YVU9},
@@ -1030,6 +1040,9 @@ static struct {
   {"y8", IMGFMT_Y8},
   {"nv12", IMGFMT_NV12},
   {"nv21", IMGFMT_NV21},
+  {"bgr48be", IMGFMT_BGR48BE},
+  {"bgr48le", IMGFMT_BGR48LE},
+  {"bgr48", IMGFMT_BGR48NE},
   {"bgr24", IMGFMT_BGR24},
   {"bgr32", IMGFMT_BGR32},
   {"bgr16", IMGFMT_BGR16},
@@ -1038,6 +1051,9 @@ static struct {
   {"bgr4", IMGFMT_BGR4},
   {"bg4b", IMGFMT_BG4B},
   {"bgr1", IMGFMT_BGR1},
+  {"rgb48be", IMGFMT_RGB48BE},
+  {"rgb48le", IMGFMT_RGB48LE},
+  {"rgb48", IMGFMT_RGB48NE},
   {"rgb24", IMGFMT_RGB24},
   {"rgb32", IMGFMT_RGB32},
   {"rgb16", IMGFMT_RGB16},
@@ -1196,7 +1212,6 @@ static double parse_timestring(const char *str)
     return d;
   return -1e100;
 }
-    
 
 static int parse_time(const m_option_t* opt,const char *name, char *param, void* dst, int src)
 {
@@ -1204,14 +1219,14 @@ static int parse_time(const m_option_t* opt,const char *name, char *param, void*
 
   if (param == NULL || strlen(param) == 0)
     return M_OPT_MISSING_PARAM;
-  
+
   time = parse_timestring(param);
   if (time == -1e100) {
     MSG_ERR("Option %s: invalid time: '%s'\n",
            name,param);
     return M_OPT_INVALID;
   }
-  
+
   if (dst)
     *(double *)dst = time;
   return 1;
@@ -1240,7 +1255,7 @@ static int parse_time_size(const m_option_t* opt,const char *name, char *param, 
 
   if (param == NULL || strlen(param) == 0)
     return M_OPT_MISSING_PARAM;
-  
+
   ts.pos=0;
   /* End at size parsing */
   if(sscanf(param, "%lf%3s", &end_at, unit) == 2) {
@@ -1269,7 +1284,7 @@ static int parse_time_size(const m_option_t* opt,const char *name, char *param, 
            name,param);
     return M_OPT_INVALID;
   }
-  
+
   ts.type = END_AT_TIME;
   ts.pos  = end_at;
 out:
@@ -1291,7 +1306,6 @@ const m_option_type_t m_option_type_time_size = {
   NULL
 };
 
- 
 //// Objects (i.e. filters, etc) settings
 
 #include "m_struct.h"
@@ -1439,7 +1453,7 @@ static int get_obj_params(const char* opt_name, const char* name,char* params,
   ret = malloc((n+2)*2*sizeof(char*));
   n = nold = 0;
   last_ptr = params;
-  
+
   while(last_ptr && last_ptr[0] != '\0') {
     ptr = strchr(last_ptr,separator);
     if(!ptr) {
@@ -1459,7 +1473,7 @@ static int get_obj_params(const char* opt_name, const char* name,char* params,
   }
   ret[n*2] = ret[n*2+1] = NULL;  
   *_ret = ret;
-  
+
   return 1;
 }
 
@@ -1489,7 +1503,7 @@ static int parse_obj_params(const m_option_t* opt,const char *name,
   for(r = 0 ; opts[r] ; r += 2)
     m_struct_set(desc,dst,opts[r],opts[r+1]);
 
-  return 1;     
+  return 1;
 }
 
 
@@ -1532,7 +1546,6 @@ static int parse_obj_settings(const char* opt,char* str,const m_obj_list_t* list
   char *param,**plist = NULL;
   const m_struct_t* desc;
   m_obj_settings_t *ret = _ret ? *_ret : NULL;
-  
 
   // Now check that the object exists
   param = strchr(str,'=');
@@ -1748,7 +1761,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
   if( ((opt->flags & M_OPT_MIN) && (n < opt->min)) || 
       ((opt->flags & M_OPT_MAX) && (n > opt->max)) )
     return M_OPT_OUT_OF_RANGE;
-  
+
   if(dst) {
     if(queue) {
       int qsize;
@@ -1767,7 +1780,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
       memcpy(&head[hsize],res,(n+1)*sizeof(m_obj_settings_t));
       free(res);
       res = head;
-    }      
+    }
     VAL(dst) = res;
   }
   return 1;
@@ -1802,9 +1815,7 @@ static void copy_obj_settings_list(const m_option_t* opt,void* dst, void* src) {
   if(VAL(dst))
     free_obj_settings_list(dst);
   if(!s) return;
-    
-    
-  
+
   for(n = 0 ; s[n].name ; n++)
     /* NOP */;
   d = malloc((n+1)*sizeof(m_obj_settings_t));
@@ -1830,8 +1841,6 @@ const m_option_type_t m_option_type_obj_settings_list = {
   copy_obj_settings_list,
   free_obj_settings_list,
 };
-
-
 
 static int parse_obj_presets(const m_option_t* opt,const char *name,
 			    char *param, void* dst, int src) {
@@ -1878,7 +1887,7 @@ static int parse_obj_presets(const m_option_t* opt,const char *name,
   }
 
   if(!dst) return 1;
-  
+
   for(i = 0 ; in_desc->fields[i].name ; i++) {
     const m_option_t* out_opt = m_option_list_find(out_desc->fields,
 					     in_desc->fields[i].name);
@@ -1910,7 +1919,7 @@ static int parse_custom_url(const m_option_t* opt,const char *name,
   int pos1, pos2, r, v6addr = 0;
   char *ptr1=NULL, *ptr2=NULL, *ptr3=NULL, *ptr4=NULL;
   m_struct_t* desc = opt->priv;
-  
+
   if(!desc) {
     MSG_ERR("Option %s: Custom URL needs a pointer to a m_struct_t in the priv field.\n",name);
     return M_OPT_PARSER_ERR;
@@ -1956,7 +1965,7 @@ static int parse_custom_url(const m_option_t* opt,const char *name,
     ptr2 = NULL;
   }
   if( ptr2!=NULL ) {
-    
+
     // We got something, at least a username...
     if(!m_option_list_find(desc->fields,"username")) {
       MSG_WARN("Option %s: This URL doesn't have a username part.\n",name);
@@ -2013,7 +2022,7 @@ static int parse_custom_url(const m_option_t* opt,const char *name,
     ptr2 = ptr3;
     v6addr = 1;
   } else {
-    ptr2 = ptr1;  
+    ptr2 = ptr1;
   }
 
   // look if the port is given
@@ -2113,4 +2122,4 @@ const m_option_type_t m_option_type_custom_url = {
   NULL,
   NULL,
   NULL
-};	
+};

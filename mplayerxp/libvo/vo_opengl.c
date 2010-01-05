@@ -428,12 +428,14 @@ static void flip_page(unsigned idx) {
 
 static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
 {
-    MSG_DBG2("vo_x11: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
-    if (IMGFMT_IS_BGR(format->fourcc)||IMGFMT_IS_RGB(format->fourcc))
+    MSG_DBG2("vo_opengl: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
+    if((IMGFMT_IS_BGR(format->fourcc)||IMGFMT_IS_RGB(format->fourcc))&&rgbfmt_depth(format->fourcc)<48)
     {
+	MSG_DBG2("vo_opengl: OK\n");
 	return  VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP |
 		VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN;
     }
+    MSG_DBG2("vo_opengl: FALSE\n");
     return 0;
 }
 
