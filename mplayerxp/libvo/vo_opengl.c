@@ -353,7 +353,9 @@ static uint32_t __FASTCALL__ preinit(const char *arg)
 
 static void __FASTCALL__ gl_dri_get_surface_caps(dri_surface_cap_t *caps)
 {
-    caps->caps = DRI_CAP_TEMP_VIDEO;
+    caps->caps =DRI_CAP_TEMP_VIDEO|
+		DRI_CAP_HORZSCALER|DRI_CAP_VERTSCALER|
+		DRI_CAP_DOWNSCALER|DRI_CAP_UPSCALER;
     caps->fourcc = out_format;
     caps->width=image_width;
     caps->height=image_height;
