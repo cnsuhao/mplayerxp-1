@@ -30,8 +30,6 @@
 #include "afmt.h"
 #include "ao_msg.h"
 
-#define OBTAIN_BITRATE(a) (((a != AFMT_U8) && (a != AFMT_S8)) ? 16 : 8)
-
 /* Feel free to experiment with the following values: */
 #define ARTS_PACKETS 10 /* Number of audio packets */
 #define ARTS_PACKET_SIZE_LOG2 11 /* Log2 of audio packet size */
@@ -59,15 +57,17 @@ static int init(int flags)
 	int frag_spec;
 
 	if( (err=arts_init()) ) {
-		MSG_ERR("aRts: can't init: %s\n", arts_error_text(err));
+		MSG_ERR("[aRts] init failed: %s\n", arts_error_text(err));
+		/*TODO: system("artsd -l0");*/
 		return 0;
 	}
-	MSG_INFO("aRts: connected to server\n");
+	MSG_INFO("[aRts] connected to server\n");
+	return 1;
 }
 
 static int __FASTCALL__ configure(int rate,int channels,int format)
 {
-	int frag_spec;
+	int frag_spec,samplesize;
 	/*
 	 * arts supports 8bit unsigned and 16bit signed sample formats
 	 * (16bit apparently in little endian format, even in the case
@@ -80,8 +80,26 @@ static int __FASTCALL__ configure(int rate,int channels,int format)
 	case AFMT_U8:
 	case AFMT_S8:
 	    format = AFMT_U8;
+	    samplesize=1;
 	    break;
+#if 0
+	case AFMT_S24_LE:
+	case AFMT_S24_BE:
+	case AFMT_U24_LE:
+	case AFMT_U24_BE:
+	    format = AFMT_S24_LE;
+	    samplesize=3;
+	    break;
+	case AFMT_S32_LE:
+	case AFMT_S32_BE:
+	case AFMT_U32_LE:
+	case AFMT_U32_BE:
+	    format = AFMT_S32_LE;
+	    samplesize=4;
+	    break;
+#endif
 	default:
+	    samplesize=2;
 	    format = AFMT_S16_LE;    /* artsd always expects little endian?*/
 	    break;
 	}
@@ -89,15 +107,12 @@ static int __FASTCALL__ configure(int rate,int channels,int format)
 	ao_data.format = format;
 	ao_data.channels = channels;
 	ao_data.samplerate = rate;
-	ao_data.bps = (rate*channels);
+	ao_data.bps = rate*channels*samplesize;
 
-	if(format != AFMT_U8 && format != AFMT_S8)
-		ao_data.bps*=2;
-
-	stream=arts_play_stream(rate, OBTAIN_BITRATE(format), channels, "MPlayerXP");
+	stream=arts_play_stream(rate, samplesize*8, channels, "MPlayerXP");
 
 	if(stream == NULL) {
-		MSG_ERR("ARts: Can't open stream\n");
+		MSG_ERR("[aRts] Can't open stream\n");
 		arts_free();
 		return 0;
 	}
@@ -108,10 +123,10 @@ static int __FASTCALL__ configure(int rate,int channels,int format)
 	frag_spec = ARTS_PACKET_SIZE_LOG2 | ARTS_PACKETS << 16;
 	arts_stream_set(stream, ARTS_P_PACKET_SETTINGS, frag_spec);
 	ao_data.buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
-	MSG_INFO("aRts: Stream opened\n");
+	MSG_INFO("[aRts] Stream opened\n");
 
-	MSG_V("aRts: buffersize=%u\n",ao_data.buffersize);
-	MSG_V("aRts: buffersize=%u\n", arts_stream_get(stream, ARTS_P_PACKET_SIZE));
+	MSG_V("[aRts] buffersize=%u\n",ao_data.buffersize);
+	MSG_V("[aRts] buffersize=%u\n", arts_stream_get(stream, ARTS_P_PACKET_SIZE));
 
 	return 1;
 }
