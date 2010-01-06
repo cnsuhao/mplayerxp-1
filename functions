@@ -1136,13 +1136,17 @@ fi
 else
   add_cflags "-O3"
 # -ffast-math produces incorrect output in 64-bit mode on x86_64 cpus. Tested with many gcc-4.x series
-  add_cflags "-fno-fast-math -fno-math-errno"
-  mips   || add_cflags "-pipe"
-  x86_32 && add_cflags "-fomit-frame-pointer"
+  mips   || check_cflags "-pipe"
+  x86_32 && check_cflags "-fomit-frame-pointer"
 # -fomit-frame-pointer is not needed for x86_64
 fi
+check_cflags "-fno-fast-math"
 check_cflags "-mfancy-math-387"
+check_cflags "-fno-math-errno"
+check_cflags "-fno-signed-zeros"
 check_cflags "-mtune=generic"
+# depend on compiler version
+#check_cflags "-fno-tree-vectorize"
 
 disable mmx_test
 x86_32 && enable mmx_test
