@@ -23,7 +23,6 @@
 #
 #############################################################################
 . ../functions
-
 init_functions
 
 cd nls
@@ -42,48 +41,48 @@ ENABLED_LIST=(
     "fastmemcpy|use 3dnow/sse/mmx optimized memcpy()",
     "streaming|build with network support (http/mms/rtp)",
     "af_inet6|build with support for IPv6 protocol",
-    "termcap|build with termcap database for key codes",
-    "termios|build with termios database for key codes",
+    "termcap|build with termcap database for key codes|http://www.catb.org/~esr/terminfo",
+    "termios|build with termios database for key codes|http://www.catb.org/~esr/terminfo",
     "shm|build with shared memory if possible",
     "rtc|use RTC (/dev/rtc) on Linux",
-    "iconv|build with iconv for encoding conversion",
+    "iconv|build with iconv for encoding conversion|http://www.gnu.org/software/libiconv",
     "winsock2|use winsock2.h if possible",
     "largefiles|enable support for files > 2GB",
     "ossaudio|build with OSS audio output",
     "audio_select|use select() on OSS audio device",
-    "alsa|build with ALSA audio output",
-    "arts|build with ARTS audio output",
-    "esd|build with ESD audio ouput",
-    "openal|build with OpenAL audio output",
-    "nas|build with NAS uadio output",
-    "jack|build with JACK audio output",
-    "libcdio|build with libcdio support",
-    "x11|build with X11 video ouput",
-    "xv|build with Xv video output",
-    "sdl|build with SDL video and audio output",
-    "sdl_image|build with SDL_image for screenshots",
+    "alsa|build with ALSA audio output|http://www.alsa-project.org",
+    "arts|build with ARTS audio output|http://www.arts-project.org",
+    "esd|build with ESD audio ouput|ftp://ftp.gnome.org/pub/gnome/sources/esound",
+    "openal|build with OpenAL audio output|http://connect.creativelabs.com/openal/default.aspx",
+    "nas|build with NAS uadio output|http://nas.sourceforge.net",
+    "jack|build with JACK audio output|http://jackaudio.org",
+    "libcdio|build with libcdio support|http://www.gnu.org/software/libcdio/index.html",
+    "x11|build with X11 video ouput|http://www.x.org",
+    "xv|build with Xv video output|http://www.x.org",
+    "sdl|build with SDL video and audio output|http://www.libsdl.org",
+    "sdl_image|build with SDL_image for screenshots|http://www.libsdl.org/projects/SDL_image",
     "fbdev|build with FBDev video ouput",
-    "jpg|build with JPEG for screenshots",
-    "png|build with PNG for screenshots",
-    "opengl|build with OpenGL video output",
-    "dga|build with DGA video output",
+    "jpg|build with JPEG for screenshots|http://www.ijg.org",
+    "png|build with PNG for screenshots|http://www.libpng.org/pub/png/libpng.html",
+    "opengl|build with OpenGL video output|http://mesa3d.org",
+    "dga|build with DGA video output|http://www.x.org",
     "vesa|build with VESA video output",
-    "vidix|build with VIDIX video output",
-    "xdpms|build with X11 DPMS support",
-    "xinerama|build with X11 Xinerama support",
-    "xf86vm|build with X11 XF86Vm support",
+    "vidix|build with VIDIX video output|http://vidix.sourceforge.net",
+    "xdpms|build with X11 DPMS support|http://www.x.org",
+    "xinerama|build with X11 Xinerama support|http://www.x.org",
+    "xf86vm|build with X11 XF86Vm support|http://www.x.org",
     "tv|build wuth TV Interface (tv/dvb grabbers)",
     "tv_v4l|build with Video 4 Linux TV Interface support",
-    "lirc|build with LIRC (remote control) support",
-    "lircc|build with LIRCC (remote daemon control) support",
+    "lirc|build with LIRC (remote control) support|http://www.lirc.org",
+    "lircc|build with LIRCC (remote daemon control) support|http://www.lirc.org",
     "joystick|build with joystick support",
-    "libcss|build with libcss support",
-    "libdvdread|build with libdvdread support",
-    "libdvdnav|build with libdvdnav support",
-    "libvcd|build with libvcd support",
-    "libvorbis|build with libvorbis support",
-    "libtheora|build with libtheora support",
-    "libbz2|build with libbz2 support"
+    "libcss|build with libcss support|http://download.videolan.org/pub/videolan/libdvdcss",
+    "libdvdread|build with libdvdread support|http://www.dtek.chalmers.se/groups/dvd/downloads.shtml",
+    "libdvdnav|build with libdvdnav support|http://dvd.sourceforge.net",
+    "libvcd|build with libvcd support|http://www.gnu.org/software/vcdimager",
+    "libvorbis|build with libvorbis support|http://www.vorbis.com",
+    "libtheora|build with libtheora support|http://www.theora.org",
+    "libbz2|build with libbz2 support|http://www.bzip.org"
 )
 DISABLED_LIST=(
     "gcov|compile gnu coverage information into PROGRAM",
@@ -633,6 +632,7 @@ print_config HAVE_ mp_config.h mp_config.mak sdl_image
 fi
 enabled sdl	&& aomodules="sdl $aomodules" || noaomodules="sdl $noaomodules"
 enabled sdl	&& vomodules="sdl $vomodules" || novomodules="sdl $novomodules"
+enabled sdl_image && vomodules="sdl_image $vomodules" || novomodules="sdl_image $novomodules"
 
 enabled libcdio	&& require2 libcdio "cdio/cdio.h" cdio_read_mode2_sectors -lcdio
 print_config HAVE_ mp_config.h mp_config.mak libcdio
@@ -688,7 +688,7 @@ enabled jack && aomodules="jack $aomodules" || noaomodules="jack $noaomodules"
 
 enabled libcss	&& require2 libcss css.h CSSisEncrypted -lcss
 print_config HAVE_ mp_config.h mp_config.mak libcss
-enabled libcss	&& inputmodules="css $inputmodules" || noinputmodules="css $noinputmodules"
+enabled libcss	&& inputmodules="libcss $inputmodules" || noinputmodules="libcss $noinputmodules"
 
 enabled libdvdread	&& require2 libdvdread "stdint.h dvdread/dvd_reader.h dvdread/ifo_types.h dvdread/ifo_read.h dvdread/nav_read.h" DVDOpenFile -ldvdread
 dvdread=$libdvdread
@@ -748,7 +748,7 @@ test "$debug" && def_debug='#define MP_DEBUG 1' || def_debug='#undef MP_DEBUG'
 # Checking for VIDIX
 enabled vidix	&& require2 vidix vidix/vidixlib.h vdlAllocFourccS -lvidix
 print_config CONFIG_ mp_config.h mp_config.mak vidix
-enabled x11	&& enabled vidix	&& vomodules="xvidix $vomodules" || novomodules="xvidix $novomodules"
+enabled x11	&& enabled vidix	&& vomodules="vidix $vomodules" || novomodules="vidix $novomodules"
 
 
 enabled joystick	&& test linux	|| disable joystick
@@ -953,14 +953,14 @@ Config files successfully generated by ./configure !
     Audio output: $aomodules
     Video output: $vomodules
   Disabled optional drivers:
-    Input: $noinputmodules
-    Codecs: $nocodecmodules
-    Audio output: $noaomodules
-    Video output: $novomodules
-  Picture support: $sdl_image
+EOF
+show_homepage "Input:" "noinputmodules" "AUTOCONF_LIST"
+show_homepage "Codecs:" "nocodecmodules" "AUTOCONF_LIST"
+show_homepage "Audio output:" "noaomodules" "AUTOCONF_LIST"
+show_homepage "Video output:" "novomodules" "AUTOCONF_LIST"
+cat << EOF | tee -a $TMPLOG
 'make' will now compile MPlayerXP and 'make install' will install it.
 Note: On non-Linux systems you might need to use 'gmake' instead of 'make'.
-
 EOF
 
 if disabled gomp ; then

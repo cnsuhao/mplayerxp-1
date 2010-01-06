@@ -1331,6 +1331,62 @@ IFS=$OLD_IFS
 return 1
 }
 
+find_in_list(){
+local list="$1[*]"
+list=${!list}
+local index=1
+OLD_IFS=$IFS
+IFS=
+while true
+do
+    local line=$(trim `echo $list | cut -d ',' -f $index`)
+    test -z $line && break
+    local opt=$(trim `echo $line | cut -d '|' -f 1`)
+    opt="$opt[*]"
+    opt=${!opt}
+    local i=1
+    while true
+    do
+	local oval=$(trim `echo $opt | cut -d ',' -f $i`)
+	test -z $oval && break
+	local oopt=$(trim `echo $oval | cut -d '|' -f 1`)
+	if test $2 = $oopt ; then
+	    IFS=$OLD_IFS
+	    echo "$oval"
+	    return 0
+	fi
+	(( i++ ))
+    done
+    (( index++ ))
+done
+IFS=$OLD_IFS
+return 1
+}
+
+show_homepage() {
+local name=$1
+local list="$2[*]"
+list=${!list}
+local descr
+local site
+echo "    $name"
+if [ -z $3 ]; then
+return
+else
+for i in $list ; do
+    descr=`find_in_list "$3" $i`
+    result=$?
+    site=$(trim `echo $descr | cut -d '|' -f 3`)
+    echo $echo_n "      $i " | tee -a $TMPLOG
+    if test -z $site ; then
+        echo $echo_c "" | tee -a $TMPLOG
+    else
+        echo $echo_c "(site: $site)" | tee -a $TMPLOG
+    fi
+done
+fi
+}
+
 make_environment(){
 local list="$1[*]"
 list=${!list}
