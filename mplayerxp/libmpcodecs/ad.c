@@ -69,3 +69,12 @@ void libmpcodecs_ad_register_options(m_config_t* cfg)
 	    m_config_register_options(cfg,mpcodecs_ad_drivers[i]->options);
   }
 }
+
+void afm_help(void) {
+  unsigned i;
+  for(i=0;i<nddrivers;i++) {
+    if(mpcodecs_ad_drivers[i])
+	if(mpcodecs_ad_drivers[i]->options)
+	    MSG_INFO(" %-10s %s\n",mpcodecs_ad_drivers[i]->info->driver_name,mpcodecs_ad_drivers[i]->info->descr);
+  }
+}

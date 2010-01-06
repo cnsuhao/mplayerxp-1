@@ -6,14 +6,14 @@
 
 typedef struct ad_info_s
 {
-        /* codec long name ("Autodesk FLI/FLC Animation decoder" */
-        const char *codec_name;
+        /* driver description ("Autodesk FLI/FLC Animation decoder" */
+        const char *descr;
         /* driver name ("dshow") */
         const char *driver_name;
         /* interface author/maintainer */
-        const char *maintainer;
-        /* any additional comments */
-        const char *comment;
+        const char *author;
+        /* URL of homepage */
+        const char *url;
 } ad_info_t;
 
 #define CONTROL_OK 1

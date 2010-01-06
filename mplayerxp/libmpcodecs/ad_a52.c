@@ -29,10 +29,10 @@ uint32_t mpxp_a52_flags=0;
 
 static const ad_info_t info = 
 {
-	"AC3-liba52",
+	"liba52 AC3 driver",
 	"liba52",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

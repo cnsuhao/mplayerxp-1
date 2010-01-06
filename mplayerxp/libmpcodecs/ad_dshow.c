@@ -10,10 +10,10 @@
 
 static const ad_info_t info =
 {
-	"Win32 direct show audio",
+	"Win32/DirectShow decoders",
 	"dshow",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

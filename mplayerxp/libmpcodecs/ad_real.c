@@ -15,7 +15,7 @@ static const ad_info_t info =  {
 	"RealAudio decoder",
 	"realaud",
 	"A'rpi",
-	"Florian Schneider"
+	"build-in"
 };
 
 static const config_t options[] = {
@@ -188,7 +188,7 @@ static int preinit(sh_audio_t *sh){
 
 static int init(sh_audio_t *sh_audio){
   // initialize the decoder, set tables etc...
-  
+
   // set sample format/rate parameters if you didn't do it in preinit() yet.
 
   return 1; // return values: 1=OK 0=ERROR

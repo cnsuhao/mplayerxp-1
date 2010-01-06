@@ -10,12 +10,12 @@
 #include "../libmpdemux/aviprint.h"
 #include "help_mp.h"
 
-static const ad_info_t info = 
+static const ad_info_t info =
 {
-	"DivX audio (WMA)",
+	"Win32/ACM decoders",
 	"acm",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

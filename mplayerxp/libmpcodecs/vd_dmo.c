@@ -15,11 +15,10 @@
 #include "vd_msg.h"
 
 static const vd_info_t info = {
-	"DMO video codecs",
+	"Win32/DMO video codecs",
 	"dmo",
 	"A'rpi",
-	"based on http://avifile.sf.net",
-	"win32 codecs"
+	"build-in
 };
 
 static const config_t options[] = {

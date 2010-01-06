@@ -38,7 +38,7 @@ static const ad_info_t info =
 	"DTS Coherent Acoustics",
 	"libdca",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

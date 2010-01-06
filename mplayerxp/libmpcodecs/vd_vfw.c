@@ -19,16 +19,14 @@ static const vd_info_t info_vfw = {
 	"Win32/VfW video codecs",
 	"vfw",
 	"A'rpi",
-	"based on http://avifile.sf.net",
-	"win32 codecs"
+	"build-in"
 };
 
 static const vd_info_t info_vfwex = {
 	"Win32/VfWex video codecs",
 	"vfwex",
 	"A'rpi",
-	"based on http://avifile.sf.net",
-	"win32 codecs"
+	"build-in"
 };
 
 static const config_t options[] = {

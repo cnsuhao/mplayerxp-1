@@ -8,9 +8,8 @@
 static const vd_info_t info = {
 	"NuppelVideo decoder",
 	"nuv",
-	"A'rpi",
-	"Alex & Panagiotis Issaris <takis@lumumba.luc.ac.be>",
-	"native codecs"
+	"A'rpi (Alex & Panagiotis Issaris <takis@lumumba.luc.ac.be>)",
+	"build-in"
 };
 
 static const config_t options[] = {

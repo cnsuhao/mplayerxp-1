@@ -14,11 +14,10 @@
 #include "vd_msg.h"
 
 static const vd_info_t info = {
-   "Theora/VP3",
+   "Theora/VP3 video decoder",
    "theora",
-   "David Kuehling",
-   "www.theora.org",
-   "Theora project's VP3 codec"
+   "David Kuehling (www.theora.org)",
+   "build-in"
 };
 
 static const config_t options[] = {

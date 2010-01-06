@@ -977,6 +977,20 @@ static void init_player( void )
       MSG_INFO("\n");
       exit(0);
     }
+
+    if(video_family && strcmp(video_family,"help")==0){
+      MSG_INFO("Available video codec families/drivers:\n");
+      vfm_help();
+      MSG_INFO("\n");
+      exit(0);
+    }
+
+    if(audio_family && strcmp(audio_family,"help")==0){
+      MSG_INFO("Available audio codec families/drivers:\n");
+      afm_help();
+      MSG_INFO("\n");
+      exit(0);
+    }
 }
 
 int decore_audio( int xp_id )

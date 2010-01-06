@@ -10,8 +10,7 @@ static const vd_info_t info =
 	"Null video decoder",
 	"null",
 	"A'rpi",
-	"A'rpi",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

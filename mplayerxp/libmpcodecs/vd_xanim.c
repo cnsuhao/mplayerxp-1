@@ -31,9 +31,8 @@
 static const vd_info_t info = {
 	"XAnim codecs",
 	"xanim",
-	"A'rpi & Alex",
-	"Xanim (http://xanim.va.pubnix.com/)",
-	"binary codec plugins"
+	"A'rpi & Alex <Xanim (http://xanim.va.pubnix.com/)>",
+	"build-in"
 };
 
 static const config_t options[] = {
@@ -275,7 +274,7 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
 	dlclose(codec_driver->file_handler);
 	return(0);
     }
-    
+
     MSG_INFO( "=== XAnim Codec ===\n");
     MSG_INFO( " Filename: %s (API revision: %x)\n", filename, mod_hdr->api_rev);
     MSG_INFO( " Codec: %s. Rev: %s\n", mod_hdr->desc, mod_hdr->rev);
@@ -301,7 +300,7 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
 	dlclose(codec_driver->file_handler);
 	return(0);
     }
-    
+
     MSG_DBG2( "Exported functions by codec: [functable: 0x%08x entries: %d]\n",
 	mod_hdr->funcs, mod_hdr->num_funcs);
     for (i = 0; i < mod_hdr->num_funcs; i++)
@@ -370,7 +369,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     char dll[1024];
     XA_CODEC_HDR codec_hdr;
     int i;
-    
+
     xacodec_driver = realloc(xacodec_driver, sizeof(struct xacodec_driver));
     if (xacodec_driver == NULL)
     {
@@ -581,7 +580,7 @@ xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_f
 	MSG_DBG2( "body\n");
 	return NULL;
     }
-    
+
     return NULL;
 }
 
@@ -794,7 +793,7 @@ void XA_YUV1611_Convert(unsigned char *image_p, unsigned int imagex, unsigned in
     // scale U,V planes by 2:
     imagex>>=2;
     imagey>>=2;
-    
+
     uvstride=(yuv->uv_w)?yuv->uv_w:imagex;
 
     for(y=0;y<imagey;y++){
@@ -925,7 +924,7 @@ static void uninit(sh_video_t *sh){
 static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     mp_image_t* mpi;
     xacodec_image_t* image;
-    
+
     if(len<=0) return NULL; // skipped frame
 
     image=xacodec_decode_frame(data,len,(flags&3)?1:0);
@@ -941,7 +940,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     mpi->stride[0]=image->stride[0];
     mpi->stride[1]=image->stride[1];
     mpi->stride[2]=image->stride[2];
-    
+
     return mpi;
 }
 

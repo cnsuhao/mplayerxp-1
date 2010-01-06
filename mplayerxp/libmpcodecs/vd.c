@@ -79,6 +79,15 @@ void libmpcodecs_vd_register_options(m_config_t* cfg)
   }
 }
 
+void vfm_help(void) {
+  unsigned i;
+  for(i=0;i<nddrivers;i++) {
+    if(mpcodecs_vd_drivers[i])
+	if(mpcodecs_vd_drivers[i]->options)
+	    MSG_INFO(" %-10s %s\n",mpcodecs_vd_drivers[i]->info->driver_name,mpcodecs_vd_drivers[i]->info->descr);
+  }
+}
+
 #include "libvo/video_out.h"
 
 extern const vd_functions_t* mpvdec; // FIXME!

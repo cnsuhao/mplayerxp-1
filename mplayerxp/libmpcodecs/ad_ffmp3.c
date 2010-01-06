@@ -24,10 +24,10 @@ static int acodec_inited;
 
 static const ad_info_t info =
 {
-	"FFmpeg layer-123 audio decoder - integer only",
+	"FFmpeg/libavcodec audio decoders",
 	"ffmpeg",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

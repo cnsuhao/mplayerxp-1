@@ -10,8 +10,7 @@ static const vd_info_t info =
 	"MPEG 1/2 Video passthrough",
 	"mpegpes",
 	"A'rpi",
-	"A'rpi",
-	"for hw decoders"
+	"build-in"
 };
 
 static const config_t options[] = {

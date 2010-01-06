@@ -19,8 +19,7 @@ static const vd_info_t info = {
 	"FFmpeg's libavcodec codec family",
 	"ffmpeg",
 	"A'rpi",
-	"http://ffmpeg.sf.net",
-	"native codecs"
+	"build-in"
 };
 
 static int lavc_param_error_resilience=2;

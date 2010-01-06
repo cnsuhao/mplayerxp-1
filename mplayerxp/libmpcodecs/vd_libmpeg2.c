@@ -20,11 +20,10 @@
 
 static const vd_info_t info =
 {
-	"MPEG 1/2 Video decoder",
+	"libmpeg2 MPEG 1/2 Video decoder",
 	"libmpeg2",
 	"A'rpi",
-	"Aaron & Walken",
-	"native"
+	"http://libmpeg2.sourceforge.net"
 };
 
 static const config_t options[] = {
@@ -151,7 +150,7 @@ static void (*mpeg2_reset_ptr) (mpeg2dec_t * mpeg2dec, int full_reset);
 static void *dll_handle;
 static int load_lib( const char *libname )
 {
-  if(!(dll_handle=ld_codec(libname,"http://libmpeg2.sourceforge.net"))) return 0;
+  if(!(dll_handle=ld_codec(libname,mpcodecs_vd_libmpeg2.info->url))) return 0;
   mpeg2_init_ptr = ld_sym(dll_handle,"mpeg2_init");
   mpeg2_close_ptr = ld_sym(dll_handle,"mpeg2_close");
   mpeg2_info_ptr = ld_sym(dll_handle,"mpeg2_info");

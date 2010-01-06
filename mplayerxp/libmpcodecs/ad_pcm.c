@@ -9,7 +9,7 @@ static const ad_info_t info =
 	"Uncompressed PCM audio decoder",
 	"pcm",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

@@ -8,7 +8,7 @@ static const ad_info_t info =
 	"Null audio decoder",
 	"null",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

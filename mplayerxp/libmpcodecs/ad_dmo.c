@@ -15,7 +15,7 @@ static const ad_info_t info =
 	"Win32/DMO decoders",
 	"dmo",
 	"A'rpi",
-	"avifile.sf.net"
+	"build-in"
 };
 
 static const config_t options[] = {

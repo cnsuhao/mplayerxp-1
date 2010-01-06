@@ -13,11 +13,10 @@
 #include "codecs_ld.h"
 
 static const vd_info_t info = {
-	"DirectShow video codecs",
+	"Win32/DirectShow video codecs",
 	"dshow",
 	"A'rpi",
-	"based on http://avifile.sf.net",
-	"win32 codecs"
+	"build-in"
 };
 
 static const config_t options[] = {

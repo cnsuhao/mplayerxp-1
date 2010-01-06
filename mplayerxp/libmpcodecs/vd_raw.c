@@ -8,9 +8,8 @@
 static const vd_info_t info = {
 	"RAW Uncompressed Video",
 	"raw",
-	"A'rpi",
 	"A'rpi & Alex",
-	"uncompressed"
+	"build-in"
 };
 
 static const config_t options[] = {

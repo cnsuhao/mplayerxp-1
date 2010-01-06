@@ -13,7 +13,7 @@ static const ad_info_t info =
 	"Ogg/Vorbis audio decoder",
 	"libvorbis",
 	"Felix Buenemann, A'rpi",
-	"buggy"
+	"build-in"
 };
 
 static const config_t options[] = {

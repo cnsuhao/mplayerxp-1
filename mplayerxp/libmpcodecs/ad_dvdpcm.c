@@ -7,10 +7,10 @@
 
 static const ad_info_t info =
 {
-	"Uncompressed DVD PCM audio decoder",
+	"Uncompressed DVD/VOB LPCM audio decoder",
 	"dvdpcm",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

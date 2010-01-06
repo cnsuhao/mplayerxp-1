@@ -21,7 +21,7 @@ static const ad_info_t info =  {
 	"QuickTime Audio Decoder",
 	"qtaudio",
 	"A'rpi & Sascha Sommer",
-	"uses win32 quicktime DLLs"
+	"build-in"
 };
 
 static const config_t options[] = {

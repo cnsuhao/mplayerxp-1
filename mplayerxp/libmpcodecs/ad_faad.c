@@ -26,7 +26,7 @@ static const ad_info_t info =
 	"AAC (MPEG2/4 Advanced Audio Coding)",
 	"faad",
 	"Felix Buenemann",
-	"faad2"
+	"http://www.audiocoding.com/faad2.html"
 };
 
 static const config_t options[] = {
@@ -82,7 +82,7 @@ typedef struct NeAACDecFrameInfo
 /* configure maximum supported channels, *
  * this is theoretically max. 64 chans   */
 #define FAAD_MAX_CHANNELS 6
-#define FAAD_BUFFLEN (FAAD_MIN_STREAMSIZE*FAAD_MAX_CHANNELS)		       
+#define FAAD_BUFFLEN (FAAD_MIN_STREAMSIZE*FAAD_MAX_CHANNELS)
 #ifdef _WIN32
   #pragma pack(push, 8)
   #ifndef NEAACDECAPI
@@ -138,7 +138,7 @@ static NeAACDecFrameInfo NeAAC_finfo;
 static void *dll_handle;
 static int load_dll(const char *libname)
 {
-  if(!(dll_handle=ld_codec(libname,"http://www.audiocoding.com/faad2.html"))) return 0;
+  if(!(dll_handle=ld_codec(libname,mpcodecs_ad_faad.info->url))) return 0;
   NeAACDecOpen_ptr = ld_sym(dll_handle,"NeAACDecOpen");
   NeAACDecGetCurrentConfiguration_ptr = ld_sym(dll_handle,"NeAACDecGetCurrentConfiguration");
   NeAACDecSetConfiguration_ptr = ld_sym(dll_handle,"NeAACDecSetConfiguration");

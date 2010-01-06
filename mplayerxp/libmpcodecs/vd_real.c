@@ -11,11 +11,10 @@
 #include "vd_msg.h"
 
 static const vd_info_t info = {
-	"RealPlayer 8 video codecs",
+	"RealPlayer video codecs",
 	"realvid",
-	"Florian Schneider",
-	"using original closed source codecs for Linux",
-	"binary real video codecs"
+	"Florian Schneider (using original closed source codecs for Linux)",
+	"build-in"
 };
 
 static const config_t options[] = {

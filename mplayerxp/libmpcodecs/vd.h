@@ -1,15 +1,13 @@
 typedef struct vd_info_s
 {
-        /* codec long name ("Autodesk FLI/FLC Animation decoder" */
-        const char *codec_name;
+        /* driver description ("Autodesk FLI/FLC Animation decoder" */
+        const char *descr;
         /* driver name ("dshow") */
         const char *driver_name;
         /* interface author/maintainer */
-        const char *maintainer;
-        /* codec author ("Aaron Holtzman <aholtzma@ess.engr.uvic.ca>") */
         const char *author;
-        /* any additional comments */
-        const char *comment;
+        /* URL of homepage */
+        const char *url;
 } vd_info_t;
 
 /* interface of video decoder drivers */

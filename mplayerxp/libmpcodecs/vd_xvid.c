@@ -19,9 +19,8 @@
 static const vd_info_t info = {
 	"XviD MPEG4 codec ",
 	"xvid",
-	"Nickols_K",
-	"http://www.xvid.org <(C) Christoph Lampert (gruel@web.de)>",
-	"native codecs"
+	"Nickols_K <(C) Christoph Lampert (gruel@web.de)>",
+	"http://www.xvid.org",
 };
 
 typedef struct {
@@ -192,7 +191,7 @@ static void *dll_handle;
 
 static int load_lib( const char *libname )
 {
-  if(!(dll_handle=ld_codec(libname,"http://www.xvid.org"))) return 0;
+  if(!(dll_handle=ld_codec(libname,mpcodecs_vd_xvid.info->url))) return 0;
   xvid_decore_ptr = ld_sym(dll_handle,"xvid_decore");
   xvid_global_ptr = ld_sym(dll_handle,"xvid_global");
   return xvid_decore_ptr != NULL && xvid_global_ptr!=NULL;

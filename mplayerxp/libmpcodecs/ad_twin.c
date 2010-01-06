@@ -17,7 +17,7 @@ static const ad_info_t info =
 	"TWinVQ decoder",
 	"vqf",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {

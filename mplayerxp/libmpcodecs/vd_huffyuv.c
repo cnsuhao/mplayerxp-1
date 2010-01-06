@@ -27,9 +27,8 @@
 static const vd_info_t info = {
 	"HuffYUV Video decoder",
 	"huffyuv",
-	"Roberto Togni",
-	"Roberto Togni",
-	"native codec, original win32 by Ben Rudiak-Gould http://www.math.berkeley.edu/~benrg/huffyuv.html"
+	"Roberto Togni (original win32 by Ben Rudiak-Gould http://www.math.berkeley.edu/~benrg/huffyuv.html)",
+	"build-in"
 };
 
 static const config_t options[] = {
@@ -55,7 +54,7 @@ LIBVD_EXTERN(huffyuv)
 #define DECORR_FLAG 64
 #define METHOD_LEFT_DECORR (METHOD_LEFT | DECORR_FLAG)
 #define METHOD_GRAD_DECORR (METHOD_GRAD | DECORR_FLAG)
-#define METHOD_OLD -2 
+#define METHOD_OLD -2
 
 #define FOURCC_HFYU mmioFOURCC('H','F','Y','U')
 
@@ -151,13 +150,13 @@ unsigned char classic_add_chroma[256] = {
  * Internal function prototypes
  */
 unsigned char* InitializeDecodeTable(unsigned char* hufftable,
-								unsigned char* shift, DecodeTable* decode_table);
+					unsigned char* shift, DecodeTable* decode_table);
 unsigned char* InitializeShiftAddTables(unsigned char* hufftable,
-								unsigned char* shift, unsigned* add_shifted);
+					unsigned char* shift, unsigned* add_shifted);
 unsigned char* DecompressHuffmanTable(unsigned char* hufftable,
-																			unsigned char* dst);
+					unsigned char* dst);
 unsigned char huff_decompress(unsigned int* in, unsigned int *pos,
-														  DecodeTable *decode_table, unsigned char *decode_shift);
+				DecodeTable *decode_table, unsigned char *decode_shift);
 
 
 
@@ -710,7 +709,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags)
 
 
 unsigned char* InitializeDecodeTable(unsigned char* hufftable,
-								unsigned char* shift, DecodeTable* decode_table)
+					unsigned char* shift, DecodeTable* decode_table)
 {
 	unsigned int add_shifted[256];
 	char code_lengths[256];
@@ -773,7 +772,7 @@ unsigned char* InitializeDecodeTable(unsigned char* hufftable,
 
 
 unsigned char* InitializeShiftAddTables(unsigned char* hufftable,
-								unsigned char* shift, unsigned* add_shifted)
+					unsigned char* shift, unsigned* add_shifted)
 {
 	int i, j;
 	unsigned int bits; // must be 32bit unsigned
@@ -822,7 +821,7 @@ unsigned char* InitializeShiftAddTables(unsigned char* hufftable,
 
 
 unsigned char* DecompressHuffmanTable(unsigned char* hufftable,
-																			unsigned char* dst)
+					unsigned char* dst)
 {
 	int val;
 	int repeat;

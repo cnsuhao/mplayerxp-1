@@ -25,8 +25,7 @@ static const vd_info_t info = {
 	"DivX4Linux lib (divx4/5 mode)",
 	"divx4",
 	"Nickols_K",
-	"http://www.divx.com",
-	"native codecs"
+	"http://labs.divx.com/DivXLinuxCodec"
 };
 
 static const config_t options[] = {
@@ -60,9 +59,9 @@ LIBVD_EXTERN(divx4)
 #define DEC_PAR_SMOOTH 9 ///< Use smooth playback when pParam is set to 1.
 #define DEC_PAR_SHOWPP 10 ///< Show the postprocessing level in use on the top left corner of the output image.
 
-// Decoder return values. 
+// Decoder return values.
 
-#define DEC_OK 0 ///< Decoder call succeded. 
+#define DEC_OK 0 ///< Decoder call succeded.
 #define DEC_INVALID_SYNTAX -1 ///< A semantic error occourred while parsing the stream. 
 #define DEC_FAIL 1 ///< General failure message. An unexpected problem occourred. 
 #define DEC_INVALID_ARGUMENT 3 ///< One of the arguments passed to the decoder is invalid. 
@@ -180,7 +179,7 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 
 static int load_lib( const char *libname )
 {
-  if(!(dll_handle=ld_codec(libname,"http://labs.divx.com/DivXLinuxCodec"))) return 0;
+  if(!(dll_handle=ld_codec(libname,mpcodecs_vd_divx4.info->url))) return 0;
   getDecore_ptr = ld_sym(dll_handle,"getDecore");
   return getDecore_ptr != NULL;
 }

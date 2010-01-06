@@ -143,10 +143,10 @@ int a52_fillbuff(sh_audio_t *sh_audio,float *pts);
 
 static const ad_info_t info =
 {
-	"AC3 through SPDIF",
+	"AC3/DTS pass-through S/PDIF",
 	"hwac3",
 	"Nickols_K",
-	""
+	"build-in"
 };
 
 static const config_t options[] = {
