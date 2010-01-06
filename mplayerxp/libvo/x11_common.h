@@ -22,7 +22,7 @@ extern int vo_x11_Shmem_Flag;
 int vo_x11_init( void );
 /* local data */
 #define vo_x11_ImageData(idx) ( uint8_t * ) vo_x11_myximage[idx]->data
-void __FASTCALL__ vo_x11_getMyXImage(unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h,int use_shmem);
+void __FASTCALL__ vo_x11_getMyXImage(unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h);
 void __FASTCALL__ vo_x11_freeMyXImage(unsigned idx);
 void __FASTCALL__ vo_x11_hidecursor ( Display* , Window );
 void __FASTCALL__ vo_x11_decoration( Display * vo_Display,Window w,int d );

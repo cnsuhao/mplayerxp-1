@@ -109,7 +109,7 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
 	for(idx=0;idx<num_buffers;idx++)
 	{
 	    vo_x11_freeMyXImage(idx);
-	    vo_x11_getMyXImage(idx,vinfo.visual,depth,image_width,image_height,1);
+	    vo_x11_getMyXImage(idx,vinfo.visual,depth,image_width,image_height);
 	}
    }
    return ret;
@@ -241,7 +241,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
       XSetInputFocus(mDisplay, vo_window, RevertToNone, CurrentTime);
      }
 #endif
-  for(i=0;i<num_buffers;i++) vo_x11_getMyXImage(i,vinfo.visual,depth,image_width,image_height,1);
+  for(i=0;i<num_buffers;i++) vo_x11_getMyXImage(i,vinfo.visual,depth,image_width,image_height);
 
   switch ((bpp=vo_x11_myximage[0]->bits_per_pixel)){
 	case 24: out_format= IMGFMT_BGR24; break;

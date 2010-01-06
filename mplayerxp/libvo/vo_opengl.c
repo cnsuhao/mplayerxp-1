@@ -267,7 +267,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 #endif
     gl_init_fb(0,0,d_width,d_height);
     /* allocate multibuffers */
-    for(i=0;i<num_buffers;i++) vo_x11_getMyXImage(i,vinfo.visual,depth,image_width,image_height,0);
+    for(i=0;i<num_buffers;i++) vo_x11_getMyXImage(i,vinfo.visual,depth,image_width,image_height);
 
     gl_out_mode=GL_RGB;
     is_bgr=(vo_x11_myximage[0]->blue_mask&0x01)!=0;

@@ -80,13 +80,13 @@ extern int XShmGetEventBase( Display* );
 
 XImage *vo_x11_myximage[MAX_DRI_BUFFERS];
 
-void __FASTCALL__ vo_x11_getMyXImage(unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h,int use_shmem)
+void __FASTCALL__ vo_x11_getMyXImage(unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h)
 {
 #ifdef HAVE_SHM
- if ( mLocalDisplay && XShmQueryExtension( mDisplay )&& use_shmem ) vo_x11_Shmem_Flag=1;
+ if ( mLocalDisplay && XShmQueryExtension( mDisplay )) vo_x11_Shmem_Flag=1;
  else {
     vo_x11_Shmem_Flag=0;
-    if(use_shmem) MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
+    MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
  }
  if ( vo_x11_Shmem_Flag ) CompletionType=XShmGetEventBase( mDisplay ) + ShmCompletion;
  if ( vo_x11_Shmem_Flag ) {
