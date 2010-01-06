@@ -51,7 +51,7 @@ static int fli_demux(demuxer_t *demuxer,demux_stream_t *__ds){
   // seem to do it, even though it takes a file offset as a parameter
   stream_seek(demuxer->stream, frames->filepos[frames->current_frame]);
   ds_read_packet(demuxer->video,
-    demuxer->stream, 
+    demuxer->stream,
     frames->frame_size[frames->current_frame],
     frames->current_frame/sh_video->fps,
     frames->filepos[frames->current_frame],

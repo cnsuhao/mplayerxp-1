@@ -452,6 +452,17 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
   ds->pts_bytes=0;
 }
 
+demux_packet_t* clone_demux_packet(demux_packet_t* pack){
+  demux_packet_t* dp=(demux_packet_t*)malloc(sizeof(demux_packet_t));
+//  while(pack->master) pack=pack->master; // find the master
+  memcpy(dp,pack,sizeof(demux_packet_t));
+//  dp->next=NULL;
+//  dp->refcount=0;
+//  dp->master=pack;
+//  pack->refcount++;
+  return dp;
+}
+
 int ds_get_packet(demux_stream_t *ds,unsigned char **start){
     while(1){
         int len;

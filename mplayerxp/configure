@@ -79,6 +79,7 @@ ENABLED_LIST=(
     "libcss|build with libcss support|http://download.videolan.org/pub/videolan/libdvdcss",
     "libdvdread|build with libdvdread support|http://www.dtek.chalmers.se/groups/dvd/downloads.shtml",
     "libdvdnav|build with libdvdnav support|http://dvd.sourceforge.net",
+    "libdv|build with libdv support|http://libdv.sourceforge.net/",
     "libvcd|build with libvcd support|http://www.gnu.org/software/vcdimager",
     "libvorbis|build with libvorbis support|http://www.vorbis.com",
     "libtheora|build with libtheora support|http://www.theora.org",
@@ -704,6 +705,11 @@ enabled libvcd && require2 libvcd libvcd/info.h vcdinfo_open -lvcdinfo
 print_config USE_ mp_config.h mp_config.mak libvcd
 enabled libvcd	&& inputmodules="libvcd $inputmodules" || noinputmodules="libvcd $noinputmodules"
 
+enabled libdv && check_pkg libdv libdv
+enabled libdv && require2 libdv "libdv/dv.h" dv_encoder_new -ldv
+print_config HAVE_ mp_config.h mp_config.mak libdv
+enabled libdv	&& inputmodules="libdv $inputmodules" || noinputmodules="libdv $noinputmodules"
+
 enabled fastmemcpy	&& x86	|| disable fastmemcpy
 print_config USE_ mp_config.h mp_config.mak fastmemcpy
 
@@ -718,11 +724,11 @@ print_config HAVE_ mp_config.h mp_config.mak audio_select
 
 enabled libvorbis && check_pkg libvorbis vorbis
 print_config HAVE_ mp_config.h mp_config.mak libvorbis
-enabled libvorbis && inputmodules="vorbis $inputmodules" || noinputmodules="vorbis $noinputmodules"
+enabled libvorbis && inputmodules="libvorbis $inputmodules" || noinputmodules="libvorbis $noinputmodules"
 
 enabled libtheora && check_pkg libtheora theora
 print_config HAVE_ mp_config.h mp_config.mak libtheora
-enabled libtheora && inputmodules="theora $inputmodules" || noinputmodules="theora $noinputmodules"
+enabled libtheora && inputmodules="libtheora $inputmodules" || noinputmodules="libtheora $noinputmodules"
 
 enabled libbz2 && require2 libbz2 bzlib.h BZ2_bzlibVersion -lbz2 || disable libbz2
 print_config HAVE_ mp_config.h mp_config.mak libbz2

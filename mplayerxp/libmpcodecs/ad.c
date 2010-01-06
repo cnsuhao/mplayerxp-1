@@ -22,6 +22,7 @@ extern const ad_functions_t mpcodecs_ad_a52;
 extern const ad_functions_t mpcodecs_ad_dca;
 extern const ad_functions_t mpcodecs_ad_hwac3;
 extern const ad_functions_t mpcodecs_ad_pcm;
+extern const ad_functions_t mpcodecs_ad_libdv;
 extern const ad_functions_t mpcodecs_ad_dvdpcm;
 extern const ad_functions_t mpcodecs_ad_dshow;
 extern const ad_functions_t mpcodecs_ad_msacm;
@@ -45,6 +46,9 @@ const ad_functions_t* mpcodecs_ad_drivers[] =
   &mpcodecs_ad_faad,
 #ifdef HAVE_LIBVORBIS
   &mpcodecs_ad_vorbis,
+#endif
+#ifdef HAVE_LIBDV
+  &mpcodecs_ad_libdv,
 #endif
   &mpcodecs_ad_real,
 #ifdef HAVE_WIN32LOADER

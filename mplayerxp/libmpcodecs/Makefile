@@ -38,6 +38,9 @@ endif
 ifeq ($(HAVE_LIBTHEORA),yes)
 SRCS+=vd_theora.c
 endif
+ifeq ($(HAVE_LIBDV),yes)
+SRCS+= ad_libdv.c vd_libdv.c
+endif
 
 ifeq ($(HAVE_WIN32LOADER),yes)
 SRCS+=vd_dshow.c \

@@ -27,6 +27,7 @@ extern const vd_functions_t mpcodecs_vd_vfw;
 extern const vd_functions_t mpcodecs_vd_vfwex;
 extern const vd_functions_t mpcodecs_vd_divx4;
 extern const vd_functions_t mpcodecs_vd_raw;
+extern const vd_functions_t mpcodecs_vd_libdv;
 extern const vd_functions_t mpcodecs_vd_xanim;
 extern const vd_functions_t mpcodecs_vd_fli;
 extern const vd_functions_t mpcodecs_vd_nuv;
@@ -63,6 +64,9 @@ const vd_functions_t* mpcodecs_vd_drivers[] = {
 	&mpcodecs_vd_real,
 #ifdef HAVE_LIBTHEORA
 	&mpcodecs_vd_theora,
+#endif
+#ifdef HAVE_LIBDV
+	&mpcodecs_vd_libdv,
 #endif
 	NULL
 };

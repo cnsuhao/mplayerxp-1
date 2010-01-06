@@ -191,6 +191,7 @@ inline static void free_demux_packet(demux_packet_t* dp){
   free(dp);
 }
 
+demux_packet_t* clone_demux_packet(demux_packet_t* pack);
 demux_stream_t* new_demuxer_stream(struct demuxer_st *demuxer,int id);
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id);
 void free_demuxer_stream(demux_stream_t *ds);

@@ -18,7 +18,7 @@ static const vd_info_t info = {
 	"Win32/DMO video codecs",
 	"dmo",
 	"A'rpi",
-	"build-in
+	"build-in"
 };
 
 static const config_t options[] = {

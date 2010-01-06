@@ -26,6 +26,9 @@ endif
 ifeq ($(USE_LIBVCD),yes)
 SRCS += s_vcdnav.c
 endif
+ifeq ($(HAVE_LIBDV),yes)
+SRCS += demux_dv.c
+endif
 SRCS += cache2.c dvdauth.c stream.c tvi_dummy.c tvi_v4l.c
 SRCS += tvi_bsdbt848.c frequencies.c mrl.c
 

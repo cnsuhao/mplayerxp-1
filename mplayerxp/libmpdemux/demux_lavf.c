@@ -454,7 +454,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 
     if(av_read_frame(priv->avfc, &pkt) < 0)
         return 0;
-        
+
     id= pkt.stream_index;
 
     if(id==demux->audio->id){
@@ -475,7 +475,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
         av_free_packet(&pkt);
         return 1;
     }
-        
+
     if(0/*pkt.destruct == av_destruct_packet*/){
         //ok kids, dont try this at home :)
         dp=(demux_packet_t*)malloc(sizeof(demux_packet_t));
@@ -510,7 +510,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 static void lavf_seek(demuxer_t *demuxer, float rel_seek_secs, int flags){
     lavf_priv_t *priv = demuxer->priv;
     MSG_DBG2("lavf_demux(%p, %f, %d)\n", demuxer, rel_seek_secs, flags);
-    
+
 #if LIBAVFORMAT_BUILD < 4619
     av_seek_frame(priv->avfc, -1, priv->last_pts + rel_seek_secs*AV_TIME_BASE);
 #else
