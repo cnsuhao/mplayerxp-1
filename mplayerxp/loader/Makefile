@@ -52,11 +52,11 @@ $(SUBDIRS):
 
 clean:
 	$(DO_MAKE)
-	-rm -f *.o $(LIBNAME)
+	-rm -f *.o *~ $(LIBNAME)
 
 distclean: clean
 	$(DO_MAKE)
-	-rm -f config.h config.mak configure.log
+	-rm -f config.h config.mak configure.log .depend
 
 .c.o: $@
 	$(CC) $(CFLAGS) $(DEFINES) -c $<
