@@ -930,6 +930,7 @@ static void get_mmx_optimizations( void )
 }
 #endif
 
+
 static void init_player( void )
 {
     if(video_driver && strcmp(video_driver,"help")==0)
@@ -937,11 +938,28 @@ static void init_player( void )
 	vo_print_help();
 	exit(0);
     }
-
     if(audio_driver && strcmp(audio_driver,"help")==0)
     {
 	ao_print_help();
 	exit(0);
+    }
+    if(video_family && strcmp(video_family,"help")==0){
+      vfm_help();
+      exit(0);
+    }
+    if(audio_family && strcmp(audio_family,"help")==0){
+      afm_help();
+      exit(0);
+    }
+    if(vf_cfg.list && strcmp(vf_cfg.list,"help")==0){
+      vf_help();
+      MSG_INFO("\n");
+      exit(0);
+    }
+    if(af_cfg.list && strcmp(af_cfg.list,"help")==0){
+      af_help();
+      MSG_INFO("\n");
+      exit(0);
     }
 
     /* check codec.conf*/
@@ -953,44 +971,39 @@ static void init_player( void )
     }
 
     if(audio_codec && strcmp(audio_codec,"help")==0){
-      MSG_INFO("Available audio codecs:\n");
       list_codecs(1);
-      MSG_INFO("\n");
       exit(0);
     }
-
-    if(vf_cfg.list && strcmp(vf_cfg.list,"help")==0){
-      vf_help();
-      MSG_INFO("\n");
-      exit(0);
-    }
-
-    if(af_cfg.list && strcmp(af_cfg.list,"help")==0){
-      af_help();
-      MSG_INFO("\n");
-      exit(0);
-    }
-
     if(video_codec && strcmp(video_codec,"help")==0){
-      MSG_INFO("Available video codecs:\n");
       list_codecs(0);
-      MSG_INFO("\n");
       exit(0);
     }
+}
 
-    if(video_family && strcmp(video_family,"help")==0){
-      MSG_INFO("Available video codec families/drivers:\n");
-      vfm_help();
-      MSG_INFO("\n");
-      exit(0);
-    }
+void show_help(void) {
+    // no file/vcd/dvd -> show HELP:
+    MSG_INFO("%s",help_text);
+    print_stream_drivers();
+    MSG_INFO("\nUse --long-help option for full help\n");
+}
 
-    if(audio_family && strcmp(audio_family,"help")==0){
-      MSG_INFO("Available audio codec families/drivers:\n");
-      afm_help();
-      MSG_INFO("\n");
-      exit(0);
+void show_long_help(void) {
+    show_help();
+    vo_print_help();
+    ao_print_help();
+    vf_help();
+    af_help();
+    vfm_help();
+    afm_help();
+    /* check codec.conf*/
+    if(!parse_codec_cfg(get_path("codecs.conf"))){
+      if(!parse_codec_cfg(CONFDIR"/codecs.conf")){
+        MSG_HINT(MSGTR_CopyCodecsConf);
+        exit(0);
+      }
     }
+    list_codecs(0);
+    list_codecs(1);
 }
 
 int decore_audio( int xp_id )
@@ -1003,17 +1016,17 @@ while(sh_audio){
   int playsize;
   float pts=HUGE;
   int ret=0;
-  
+
   ao_data.pts=sh_audio->timer*90000.0;
   playsize=ao_get_space();
-  
+
   if(!playsize) {
     if(sh_video)
       break; // buffer is full, do not block here!!!
     usec_sleep(10000); // Wait a tick before retry
     continue;
   }
-  
+
   if(playsize>MAX_OUTBURST) playsize=MAX_OUTBURST; // we shouldn't exceed it!
   //if(playsize>outburst) playsize=outburst;
 
@@ -2104,9 +2117,7 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
     init_player();
 
     if(!filename){
-	// no file/vcd/dvd -> show HELP:
-	MSG_INFO("%s",help_text);
-	print_stream_drivers();
+	show_help();
 	return 0;
     }
 

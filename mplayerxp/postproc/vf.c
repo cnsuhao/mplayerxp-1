@@ -468,10 +468,12 @@ void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf){
 
 void vf_help(){
     int i=0;
+    MSG_INFO( "Available video filters:\n");
     while(filter_list[i]){
         MSG_INFO("\t%-10s: %s\n",filter_list[i]->name,filter_list[i]->info);
         i++;
     }
+    MSG_INFO("\n");
 }
 
 extern vf_cfg_t vf_cfg;

@@ -86,7 +86,7 @@ m_config_save_option(m_config_t* config, config_t* conf,const char* opt,const ch
   }
   memset(&save[sl],0,2*sizeof(config_save_t));
   save[sl].opt = conf;
-  
+
   switch(conf->type) {
   case CONF_TYPE_FLAG :
   case CONF_TYPE_INT :
@@ -97,13 +97,13 @@ m_config_save_option(m_config_t* config, config_t* conf,const char* opt,const ch
     break;
   case CONF_TYPE_STRING :
     save[sl].param.as_pointer = *((char**)conf->p);
-    break;   
+    break;
   case CONF_TYPE_FUNC_FULL :
     if(strcasecmp(conf->name,opt) != 0) save->opt_name = strdup(opt);
   case CONF_TYPE_FUNC_PARAM :
     if(param)
       save->param.as_pointer = strdup(param);
-  case CONF_TYPE_FUNC :    
+  case CONF_TYPE_FUNC :
     break;
   default :
     MSG_ERR("Should never append in m_config_save_option : conf->type=%d\n",conf->type);
@@ -170,7 +170,7 @@ m_config_revert_option(m_config_t* config, config_save_t* save) {
       if (iter->param.as_pointer == NULL) {
 	MSG_ERR("We lost param for option %s?\n",iter->opt->name);
 	return -1;
-      } 
+      }
       if ((((cfg_func_param_t) iter->opt->p)(iter->opt, (char*)iter->param.as_pointer)) < 0)
 	return -1;
       break;
@@ -181,7 +181,7 @@ m_config_revert_option(m_config_t* config, config_save_t* save) {
       }else {
 	if (((cfg_func_arg_param_t) save->opt->p)(iter->opt, arg, (char*)iter->param.as_pointer) < 0) 
 	  return -1;
-	  
+
       }
       break;
     }
@@ -189,7 +189,7 @@ m_config_revert_option(m_config_t* config, config_save_t* save) {
   default :
     MSG_ERR("Why do we reverse this : name=%s type=%d ?\n",save->opt->name,save->opt->type);
   }
-			
+
   return 1;
 }
 
@@ -216,7 +216,7 @@ int
 m_config_pop(m_config_t* config) {
   int i,ret= 1;
   config_save_t* cs;
-  
+
 #ifdef MP_DEBUG
   assert(config != NULL);
   //assert(config->cs_level > 0);
@@ -393,7 +393,7 @@ static int config_is_entry_option(m_config_t *config,const char *opt,const char 
       free(pr);
       if(channel)
 	free(channel);
-	  
+
     }
   }
 
@@ -445,7 +445,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 	if (config->parser_mode == CONFIG_FILE)
 	  MSG_ERR( "invalid option: %s\n",opt);
 	ret = ERR_NOT_AN_OPTION;
-	goto out;	
+	goto out;
 	option_found :
 	MSG_DBG3( "read_option: name='%s' p=%p type=%d\n",
 	    conf[i].name, conf[i].p, conf[i].type);
@@ -639,7 +639,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 			    int sscanf_ret;
 			    /* clear out */
 			    subopt[0] = subparam[0] = 0;
-			    
+
 			    sscanf_ret = sscanf(token, "%[^=]=%s", subopt, subparam);
 
 			    MSG_DBG3( "token: '%s', i=%d, subopt='%s', subparam='%s' (ret: %d)\n", token, i, subopt, subparam, sscanf_ret);
@@ -930,6 +930,8 @@ out:
 	return ret;
 }
 
+extern void show_help(void);
+extern void show_long_help(void);
 int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char **envp)
 {
 	int i;
@@ -955,8 +957,16 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 	for (i = 1; i < argc; i++) {
 	  //next:
 		opt = argv[i];
+		if(strcmp(opt,"--help")==0) {
+		    show_help();
+		    exit(0);
+		}
+		if(strcmp(opt,"--long-help")==0) {
+		    show_long_help();
+		    exit(0);
+		}
 		/* check for -- (no more options id.) except --help! */
-		if ((*opt == '-') && (*(opt+1) == '-') && (*(opt+2) != 'h'))
+		if ((*opt == '-') && (*(opt+1) == '-'))
 		{
 			no_more_opts = 1;
 			if (i+1 >= argc)
@@ -969,7 +979,7 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 		if((opt[0] == '{') && (opt[1] == '\0'))
 		  {
 		    play_tree_t* entry = play_tree_new();
-		    UNSET_GLOBAL(config);		    
+		    UNSET_GLOBAL(config);
 		    if(config->last_entry == NULL) {
 		      play_tree_set_child(config->last_parent,entry);
 		    } else {
@@ -990,7 +1000,7 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 		    config->last_parent = config->last_entry->parent;
 		    continue;
 		  }
-			
+
 		if ((no_more_opts == 0) && (*opt == '-') && (*(opt+1) != 0)) /* option */
 		{
 		    /* remove leading '-' */
@@ -1022,8 +1032,8 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 		    /* opt is not an option -> treat it as a filename */
 		    UNSET_GLOBAL(config); // We start entry specific options
 		    if(config->last_entry == NULL)
-		      play_tree_set_child(config->last_parent,entry);		      
-		    else 
+		      play_tree_set_child(config->last_parent,entry);
+		    else
 		      play_tree_append_entry(config->last_entry,entry);
 		    config->last_entry = entry;
 		}
@@ -1034,7 +1044,7 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 	  MSG_ERR("Missing }- ?\n");
 	UNSET_GLOBAL(config);
 	SET_RUNNING(config);
-	return 1; 
+	return 1;
 #if 0
 err_out_mem:
 	MSG_ERR( "can't allocate memory for filenames (%s)\n", strerror(errno));
@@ -1054,12 +1064,12 @@ m_config_register_options(m_config_t *config,const config_t *args) {
   assert(config != NULL);
   assert(args != NULL);
 #endif
-  
+
   if(conf_list) {
     for ( ; conf_list[list_len] != NULL; list_len++)
       /* NOTHING */;
   }
-  
+
   conf_list = (config_t**)realloc(conf_list,sizeof(struct conf*)*(list_len+2));
   if(conf_list == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(struct conf*)*(list_len+2),strerror(errno));
@@ -1215,12 +1225,12 @@ int m_config_set_float(m_config_t *config,const char* arg,float val) {
 int
 m_config_switch_flag(m_config_t *config,const char* opt) {
   config_t *conf;
- 
+
 #ifdef MP_DEBUG
   assert(config != NULL);
   assert(opt != NULL);
 #endif
- 
+
   conf = m_config_get_option(config,opt);
   if(!conf || conf->type != CONF_TYPE_FLAG) return 0;
   if( AS_INT(conf) == conf->min) AS_INT(conf) = conf->max;
@@ -1229,7 +1239,7 @@ m_config_switch_flag(m_config_t *config,const char* opt) {
 
   return 1;
 }
-    
+
 int m_config_set_flag(m_config_t* config,const char* opt, int state) {
   config_t *conf;
 
@@ -1275,7 +1285,7 @@ int m_config_is_option_set(m_config_t const*config,const char* arg) {
 
   opt = m_config_get_option(config,arg);
 
-  if(!opt) 
+  if(!opt)
     return -1;
 
   for(l = config->cs_level ; l >= 0 ; l--) {

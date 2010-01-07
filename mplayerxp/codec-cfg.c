@@ -702,34 +702,39 @@ void codecs_reset_selection(int audioflag){
 }
 
 void list_codecs(int audioflag){
-	int i;
-	codecs_t *c;
+    int i;
+    codecs_t *c;
 
-		if (audioflag) {
-			i = nr_acodecs;
-			c = audio_codecs;
-			MSG_INFO("ac:      afm: status:   info:  [lib/dll]\n");
-		} else {
-			i = nr_vcodecs;
-			c = video_codecs;
-			MSG_INFO("vc:      vfm: status:   info:  [lib/dll]\n");
+	if (audioflag) {
+		i = nr_acodecs;
+		c = audio_codecs;
+		MSG_INFO("Available audio codecs:\n");
+	} else {
+		i = nr_vcodecs;
+		c = video_codecs;
+		MSG_INFO("Available video codecs:\n");
+	}
+	MSG_INFO("  %-11s %-10s  %s  %s  [%s]\n"
+		,audioflag?"ac:":"vc:"
+		,audioflag?"afm:":"vfm:"
+		,"status:"
+		,"info:"
+		,"lib/dll");
+	if(!i) return;
+	for (/* NOTHING */; i--; c++) {
+		char* s="unknown ";
+		switch(c->status){
+		  case CODECS_STATUS_WORKING:     s="working ";break;
+		  case CODECS_STATUS_PROBLEMS:    s="problems";break;
+		  case CODECS_STATUS_NOT_WORKING: s="crashing";break;
+		  case CODECS_STATUS_UNTESTED:    s="untested";break;
 		}
-		if(!i) return;
-		for (/* NOTHING */; i--; c++) {
-			char* s="unknown ";
-			switch(c->status){
-			  case CODECS_STATUS_WORKING:     s="working ";break;
-			  case CODECS_STATUS_PROBLEMS:    s="problems";break;
-			  case CODECS_STATUS_NOT_WORKING: s="crashing";break;
-			  case CODECS_STATUS_UNTESTED:    s="untested";break;
-			}
-			if(c->dll_name)
-			  MSG_INFO("%-11s %s  %s  %s  [%s]\n",c->codec_name,c->driver_name,s,c->s_info,c->dll_name);
-			else
-			  MSG_INFO("%-11s %s  %s  %s\n",c->codec_name,c->driver_name,s,c->s_info);
-			
-		}
-
+		if(c->dll_name)
+		  MSG_INFO("  %-11s %-10s  %s  %s  [%s]\n",c->codec_name,c->driver_name,s,c->s_info,c->dll_name);
+		else
+		  MSG_INFO("  %-11s %-10s  %s  %s\n",c->codec_name,c->driver_name,s,c->s_info);
+	}
+     MSG_INFO("\n");
 }
 
 

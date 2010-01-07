@@ -76,9 +76,11 @@ void libmpcodecs_ad_register_options(m_config_t* cfg)
 
 void afm_help(void) {
   unsigned i;
+  MSG_INFO("Available audio codec families/drivers:\n");
   for(i=0;i<nddrivers;i++) {
     if(mpcodecs_ad_drivers[i])
 	if(mpcodecs_ad_drivers[i]->options)
-	    MSG_INFO(" %-10s %s\n",mpcodecs_ad_drivers[i]->info->driver_name,mpcodecs_ad_drivers[i]->info->descr);
+	    MSG_INFO("\t%-10s %s\n",mpcodecs_ad_drivers[i]->info->driver_name,mpcodecs_ad_drivers[i]->info->descr);
   }
+  MSG_INFO("\n");
 }

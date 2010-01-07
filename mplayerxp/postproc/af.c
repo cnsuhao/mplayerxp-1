@@ -706,11 +706,12 @@ void af_help (void) {
   MSG_INFO( "Available audio filters:\n");
   while (filter_list[i]) {
     if (filter_list[i]->comment && filter_list[i]->comment[0])
-      MSG_INFO( "  %-15s: %s (%s)\n", filter_list[i]->name, filter_list[i]->info, filter_list[i]->comment);
+      MSG_INFO( "\t%-10s: %s (%s)\n", filter_list[i]->name, filter_list[i]->info, filter_list[i]->comment);
     else
-      MSG_INFO( "  %-15s: %s\n", filter_list[i]->name, filter_list[i]->info);
+      MSG_INFO( "\t%-10s: %s\n", filter_list[i]->name, filter_list[i]->info);
     i++;
   }
+  MSG_INFO("\n");
 }
 
 af_stream_t *af_new(void *_parent)
