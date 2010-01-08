@@ -109,7 +109,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
 	    (mpi->w+7)&(~7),(mpi->h+7)&(~7));
     }
-    
+
     if(vf->priv->pp || !(mpi->flags&MP_IMGFLAG_DIRECT)){
 	// do the postprocessing! (or copy if no DR)
 	pp2_postprocess(mpi->planes           ,mpi->stride,

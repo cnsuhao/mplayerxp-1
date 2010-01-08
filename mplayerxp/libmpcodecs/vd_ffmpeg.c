@@ -549,7 +549,7 @@ static void draw_slice(struct AVCodecContext *s,
     mpi->qstride=vdff_ctx->lavc_picture->qstride;
     mpi->pict_type=vdff_ctx->lavc_picture->pict_type;
     mpi->qscale_type=vdff_ctx->lavc_picture->qscale_type;
-    
+
     if(sh->codec->outfmt[sh->outfmtidx] == IMGFMT_I420 ||
        sh->codec->outfmt[sh->outfmtidx] == IMGFMT_IYUV)
     {

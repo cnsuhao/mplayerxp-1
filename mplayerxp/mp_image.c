@@ -192,7 +192,7 @@ mp_image_t* alloc_mpi(int w, int h, unsigned int fmt) {
     if(!mpi->stride[0]) mpi->stride[0]=mpi->width*mpi->bpp/8;
   }
   mpi->flags|=MP_IMGFLAG_ALLOCATED;
-  
+
   return mpi;
 }
 

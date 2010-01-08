@@ -159,7 +159,7 @@ const vf_info_t vf_info_vo = {
     "vo",
     "A'rpi",
     "for internal use",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 

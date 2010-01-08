@@ -291,7 +291,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		  dmpi->planes[0], dmpi->stride[0],
 		  mpi->x, mpi->y,
 		  mpi->w, mpi->h);
-    
+
     return vf_next_put_slice(vf,dmpi);
 }
 
@@ -319,7 +319,7 @@ const vf_info_t vf_info_2xsai = {
     "2xsai",
     "A'rpi",
     "http://elektron.its.tudelft.nl/~dalikifa/",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 

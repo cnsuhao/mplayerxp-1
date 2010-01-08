@@ -70,7 +70,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t* mpi){
 			mpi->w, mpi->h);
 
     memcpy_pic(dmpi->planes[0],mpi->planes[0],mpi->w*bpp, mpi->h,
-	       dmpi->stride[0],mpi->stride[0]);    
+	       dmpi->stride[0],mpi->stride[0]);
     if(mpi->flags&MP_IMGFLAG_PLANAR && mpi->flags&MP_IMGFLAG_YUV){
 	memcpy_pic(dmpi->planes[1],mpi->planes[1],
 		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,

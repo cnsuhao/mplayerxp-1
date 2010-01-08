@@ -664,12 +664,13 @@ const char * evt_names[] = {
 "ColormapNotify",
 "ClientMessage",
 "MappingNotify",
+"GenericEvent",
 "LASTEvent"
 };
 
 static const char * __FASTCALL__ evt_name(unsigned num)
 {
-    if(num >=2 && num <= 35)	return evt_names[num-2];
+    if(num >=2 && num <= 36)	return evt_names[num-2];
     else			return "Unknown";
 }
 
@@ -692,7 +693,7 @@ uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__
            ret|=VO_EVENT_EXPOSE;
            break;
       case ConfigureNotify:
-    	   nw = Event.xconfigure.width;
+	   nw = Event.xconfigure.width;
 	   nh = Event.xconfigure.height;
 	   if(adjust_size) adj_ret = (*adjust_size)(vo_dwidth,vo_dheight,&nw,&nh);
 	   ow = vo_dwidth;
@@ -717,7 +718,7 @@ uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__
            ret|=VO_EVENT_RESIZE;
            break;
       case KeyPress:
-           { 
+           {
 	    int key;
             XLookupString( &Event.xkey,buf,sizeof(buf),&keySym,&stat );
 #ifdef XF86XK_AudioPause

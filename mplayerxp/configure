@@ -325,6 +325,7 @@ test_optimizations mp_config.mak mp_config.h
 enabled gomp && check_ldflags -fopenmp || disable gomp
 enabled gomp && require2 gomp omp.h omp_get_thread_num -lgomp || disable gomp
 enabled gomp && check_cflags -fopenmp || disable gomp
+print_config HAVE_ mp_config.h mp_config.mak gomp
 #enabled gomp && check_cflags -ftree-parallelize-loops=4
 #####################################################
 add_cflags "-Werror-implicit-function-declaration"

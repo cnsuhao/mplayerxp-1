@@ -97,6 +97,7 @@ m_config_t* mconfig;
 #include "dec_ahead.h"
 
 int enable_xp=XP_VAPlay;
+int enable_gomp=1;
 volatile int dec_ahead_active_frame=0;
 volatile unsigned abs_dec_ahead_active_frame=0;
 volatile unsigned loc_dec_ahead_active_frame=0;

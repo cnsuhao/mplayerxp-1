@@ -191,7 +191,7 @@ static int __FASTCALL__ bb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		dmpi->stride[1], dmpi->stride[1], vf->priv->chroma.radius, vf->priv->chroma.strength);
 	vBlur(dmpi->planes[2], dmpi->planes[2], cw,ch, 
 		dmpi->stride[2], dmpi->stride[2], vf->priv->chroma.radius, vf->priv->chroma.strength);
-    
+
 	return vf_next_put_slice(vf,dmpi);
 }
 

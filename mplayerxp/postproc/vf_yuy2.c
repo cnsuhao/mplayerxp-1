@@ -21,12 +21,12 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	unsigned int flags, unsigned int outfmt,void *tune){
 
     sws_rgb2rgb_init(get_sws_cpuflags());
-    
+
     if(vf_next_query_format(vf,IMGFMT_YUY2,d_width,d_height)<=0){
 	MSG_ERR("yuy2 isn't supported by next filter/vo :(\n");
 	return 0;
     }
-    
+
     return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YUY2,tune);
 }
 
@@ -44,9 +44,9 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     else
     yv12toyuy2(mpi->planes[0],mpi->planes[1],mpi->planes[2], dmpi->planes[0],
 	    mpi->w,mpi->h, mpi->stride[0],mpi->stride[1],dmpi->stride[0]);
-    
+
     vf_clone_mpi_attributes(dmpi, mpi);
-    
+
     return vf_next_put_slice(vf,dmpi);
 }
 

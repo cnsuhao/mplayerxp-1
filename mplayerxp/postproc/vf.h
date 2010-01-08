@@ -8,8 +8,9 @@
 struct vf_instance_s;
 struct vf_priv_s;
 
-#define VF_FLAGS_THREADS	0x00000000UL /**< requires to be applied within of threads */
-#define VF_FLAGS_OSD		0x00000001UL /**< requires to be applied during page flipping */
+#define VF_FLAGS_THREADS	0x00000001UL /**< Thread safe plugin (requires to be applied within of threads) */
+#define VF_FLAGS_OSD		0x00000002UL /**< requires to be applied during page flipping */
+#define VF_FLAGS_SLICES		0x00000004UL /**< really can draw slices (requires to be applied on SMP etc) */
 
 typedef struct vf_info_s {
     const char *info;
@@ -114,6 +115,9 @@ int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt
 int __FASTCALL__ vf_next_put_slice(struct vf_instance_s* vf,mp_image_t *mpi);
 
 vf_instance_t* __FASTCALL__ append_filters(vf_instance_t* last);
+
+/* returns ANDed flags of whole chain */
+unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi);
 
 void vf_help();
 

@@ -118,7 +118,7 @@ const vf_info_t vf_info_noformat = {
     "noformat",
     "A'rpi",
     "FIXME! get_image()/put_image()",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_no_open
 };
 

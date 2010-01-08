@@ -56,7 +56,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
-    
+
     if(mpi->flags&MP_IMGFLAG_DIRECT){
 	dmpi=(mp_image_t*)mpi->priv;
     } else {
@@ -70,7 +70,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	dmpi->stride[2]=mpi->stride[1];
 	dmpi->width=mpi->width;
     }
-    
+
     vf_clone_mpi_attributes(dmpi, mpi);
     return vf_next_put_slice(vf,dmpi);
 }
@@ -104,7 +104,7 @@ const vf_info_t vf_info_swapuv = {
     "swapuv",
     "Michael Niedermayer",
     "",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 

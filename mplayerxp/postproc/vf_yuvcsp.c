@@ -38,7 +38,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     vf->dmpi=vf_get_image(vf->next,mpi->imgfmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	mpi->w, mpi->h);
-    
+
     y_in = mpi->planes[0];
     cb_in = mpi->planes[1];
     cr_in = mpi->planes[2];
@@ -46,27 +46,18 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     y_out = vf->dmpi->planes[0];
     cb_out = vf->dmpi->planes[1];
     cr_out = vf->dmpi->planes[2];
-#ifdef _OPENMP
-#pragma omp parallel sections
-{
-#pragma omp section
-#endif
-    for (i = 0; i < mpi->height; i++)
-	for (j = 0; j < mpi->width; j++)
+
+    for (i = mpi->y; i < mpi->height; i++)
+	for (j = mpi->x; j < mpi->width; j++)
 	    y_out[i*vf->dmpi->stride[0]+j] = clamp_y(y_in[i*mpi->stride[0]+j]);
 
-#ifdef _OPENMP
-#pragma omp section
-#endif
-    for (i = 0; i < mpi->chroma_height; i++)
-	for (j = 0; j < mpi->chroma_width; j++)
+    for (i = (mpi->y)>>(mpi->chroma_y_shift); i < mpi->chroma_height; i++)
+	for (j = (mpi->x)>>(mpi->chroma_x_shift); j < mpi->chroma_width; j++)
 	{
 	    cb_out[i*vf->dmpi->stride[1]+j] = clamp_c(cb_in[i*mpi->stride[1]+j]);
 	    cr_out[i*vf->dmpi->stride[2]+j] = clamp_c(cr_in[i*mpi->stride[2]+j]);
 	}
-#ifdef _OPENMP
-}
-#endif
+
     return vf_next_put_slice(vf,vf->dmpi);
 }
 
@@ -103,7 +94,7 @@ const vf_info_t vf_info_yuvcsp = {
     "yuvcsp",
     "Alex Beregszaszi",
     "",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 

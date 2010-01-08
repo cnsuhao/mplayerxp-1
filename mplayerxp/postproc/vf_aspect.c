@@ -66,7 +66,7 @@ const vf_info_t vf_info_aspect = {
     "aspect",
     "Rich Felker",
     "",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 

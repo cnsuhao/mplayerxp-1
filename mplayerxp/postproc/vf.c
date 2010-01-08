@@ -536,6 +536,18 @@ void __FASTCALL__ vf_showlist(vf_instance_t*vfi)
   }while(next);
 }
 
+unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
+{
+  unsigned flags=0xFFFFFFFF;
+  vf_instance_t *next=vfi;
+  do{
+	MSG_DBG2("[vf_%s] flags: %08X\n",next->info->name,next->info->flags);
+	flags &= next->info->flags;
+	next=next->next;
+  }while(next);
+  return flags;
+}
+
 static int __FASTCALL__ dummy_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
 	unsigned int voflags, unsigned int outfmt,void *tune){

@@ -103,7 +103,7 @@ static unsigned int __FASTCALL__ find_best_out(vf_instance_t *vf,unsigned w,unsi
             ret= vf_next_query_format(vf, outfmt_list[i],w,h);
             vf->priv->query_format_cache[i]= ret+1;
         }
-        
+
 	MSG_DBG2("scale: query(%s) -> %d\n",vo_format_name(format),ret&3);
 	if(ret&VFCAP_CSP_SUPPORTED_BY_HW){
             best=format; // no conversion -> bingo!
@@ -129,12 +129,12 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     int vo_flags;
     int int_sws_flags=0;
     SwsFilter *srcFilter, *dstFilter;
-    
+
     if(!best){
 	MSG_WARN("SwScale: no supported outfmt found :(\n");
 	return 0;
     }
-    
+
     vo_flags=vf_next_query_format(vf,best,d_width,d_height);
     MSG_DBG2("vf_scale: %i=vf_next_query_format(%p,%X,%u,%u);\n"
 	    ,vo_flags,vf,best,d_width,d_height);
@@ -193,14 +193,14 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     if(vf->priv->h==-2) vf->priv->h=vf->priv->w*d_height/d_width;
     break;
     }
-    
+
     if(vf->priv->h<0) vf->priv->h=height; else
     if(vf->priv->h==0) vf->priv->h=d_height;
-    
+
     // free old ctx:
     if(vf->priv->ctx) sws_freeContext(vf->priv->ctx);
     if(vf->priv->ctx2)sws_freeContext(vf->priv->ctx2);
-    
+
     // new swscaler:
     sws_getFlagsAndFilterFromCmdLine(&int_sws_flags, &srcFilter, &dstFilter);
     MSG_DBG2("vf_scale: sws_getFlagsAndFilterFromCmdLine(...);\n");
@@ -317,7 +317,7 @@ static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2,
         sws_scale_ordered(sws2, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
     }else{
         sws_scale_ordered(sws1, src, src_stride, y, h, dst, dst_stride);
-    }                  
+    }
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
@@ -493,7 +493,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     MSG_V("SwScale params: %d x %d (-1=no scaling)\n",
     vf->priv->w,
     vf->priv->h);
-    
+
     return 1;
 }
 
@@ -535,7 +535,7 @@ void sws_getFlagsAndFilterFromCmdLine(int *flags, SwsFilter **srcFilterParam, Sw
 		sws_lum_gblur, sws_chr_gblur,
 		sws_lum_sharpen, sws_chr_sharpen,
 		sws_chr_hshift, sws_chr_vshift, verbose>1);
-        
+
 	switch(sws_flags)
 	{
 		case 0: *flags|= SWS_FAST_BILINEAR; break;
@@ -587,7 +587,7 @@ const vf_info_t vf_info_scale = {
     "scale",
     "A'rpi",
     "",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 
@@ -597,7 +597,7 @@ const vf_info_t vf_info_fmtcvt = {
     "fmtcvt",
     "A'rpi",
     "",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 

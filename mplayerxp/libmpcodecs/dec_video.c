@@ -1,5 +1,9 @@
 #include "mp_config.h"
 
+#ifdef HAVE_GOMP
+#include <omp.h>
+#endif
+
 #include <stdio.h>
 #ifdef HAVE_MALLOC
 #include <malloc.h>
@@ -76,9 +80,16 @@ void uninit_video(sh_video_t *sh_video){
     sh_video->inited=0;
 }
 
+#ifdef HAVE_GOMP
+#define MPDEC_THREAD_COND (VF_FLAGS_THREADS|VF_FLAGS_SLICES)
+static unsigned smp_num_cpus=1;
+static unsigned use_vf_threads=0;
+extern int enable_gomp;
+#endif
+
 extern char *video_codec;
 int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
-    unsigned o_bps,bpp;
+    unsigned o_bps,bpp,vf_flags;
     sh_video->codec=NULL;
     MSG_DBG3("init_video(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->format,
@@ -153,6 +164,20 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	,o_bps);
 	// Yeah! We got it!
 	sh_video->inited=1;
+#ifdef HAVE_GOMP
+	if(enable_gomp) {
+	    smp_num_cpus=omp_get_num_procs();
+	    vf_flags=vf_query_flags(sh_video->vfilter);
+	    use_vf_threads=0;
+	    MSG_V("[mpdec] vf_flags=%08X num_cpus=%u\n",vf_flags,smp_num_cpus);
+	    if(((vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) {
+		MSG_OK("[VC] using %u threads for video filters\n",smp_num_cpus);
+		use_vf_threads=1;
+	    }
+	}
+#else
+	MSG_V("[mpdec] GOMP was not compiled-in! Using single threaded video filtering!\n");
+#endif
 	return 1;
     }
     return 0;
@@ -223,6 +248,33 @@ vo_flush_pages();
 
 if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
     MSG_DBG2("Put whole frame\n");
+#ifdef HAVE_GOMP
+    if(use_vf_threads) {
+	unsigned i,y,h_step,h;
+	mp_image_t ampi[smp_num_cpus];
+	h_step = mpi->h/smp_num_cpus;
+	h=mpi->height;
+	mpi->height=h_step;
+	y=0;
+	for(i=0;i<smp_num_cpus;i++) {
+	    ampi[i] = *mpi;
+	    ampi[i].y = y;
+	    ampi[i].height = h_step;
+	    y+=h_step;
+	}
+#pragma omp parallel for shared(vf) private(i)
+	for(i=0;i<smp_num_cpus;i++) {
+	    MSG_V("Put slice[%u %u] in threads\n",ampi[i].y,h_step);
+	    vf->put_slice(vf,&ampi[i]);
+	}
+	if(y<h) {
+	    ampi[0].y = y;
+	    ampi[0].height = h - ampi[0].y;
+	    vf->put_slice(vf,&ampi[0]);
+	}
+    }
+    else
+#endif
     vf->put_slice(vf,mpi);
 }
     t2=GetTimer()-t2;
