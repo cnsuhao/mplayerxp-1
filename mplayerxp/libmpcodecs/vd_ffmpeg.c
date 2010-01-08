@@ -5,6 +5,10 @@
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "mp_config.h"
+#ifdef HAVE_GOMP
+#include <omp.h>
+#endif
+
 #include "help_mp.h"
 
 #include "bswap.h"
@@ -60,6 +64,9 @@ LIBVD_EXTERN(ffmpeg)
 
 #include "libavcodec/avcodec.h"
 #include "libvo/video_out.h"
+
+int enable_ffslices=-1;
+extern int enable_gomp;
 
 extern char *npp_options;
 static int vcodec_inited=0;
@@ -200,7 +207,7 @@ static int init(sh_video_t *sh){
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh->codec->dll_name);
 	return 0;
     }
-    
+
     vdff_ctx->ctx = avcodec_alloc_context();
     vdff_ctx->lavc_picture = avcodec_alloc_frame();
     if(!(vdff_ctx->ctx && vdff_ctx->lavc_picture))
@@ -208,6 +215,14 @@ static int init(sh_video_t *sh){
         MSG_ERR(MSGTR_OutOfMemory);
         return 0;
     }
+#ifdef HAVE_GOMP
+    /* Note: Slices have effect on UNI-processor machines only */
+    if(enable_ffslices==-1) {
+	if(omp_get_num_procs()>1 && enable_gomp)enable_ffslices=0;
+	else					enable_ffslices=1;
+    }
+#endif
+
 #ifdef CODEC_FLAG_NOT_TRUNCATED
     vdff_ctx->ctx->flags|= CODEC_FLAG_NOT_TRUNCATED;
 #endif
@@ -323,7 +338,7 @@ static int init(sh_video_t *sh){
 #endif
     if(sh->bih)
 	vdff_ctx->ctx->bits_per_coded_sample= sh->bih->biBitCount;
-    if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DRAW_HORIZ_BAND) vdff_ctx->cap_slices=1;
+    if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DRAW_HORIZ_BAND && enable_ffslices) vdff_ctx->cap_slices=1;
 /* enable DR1 method */
     if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DR1) vdff_ctx->cap_dr1=1;
     vdff_ctx->ctx->flags|= CODEC_FLAG_EMU_EDGE;

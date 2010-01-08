@@ -79,6 +79,7 @@ extern int nortc;
 
 extern int enable_xp;
 extern int enable_gomp;
+extern int enable_ffslices;
 extern int enable_xp_audio;
 extern unsigned vo_da_buffs;
 extern unsigned vo_use_bm;
@@ -253,6 +254,8 @@ static const config_t mplayer_opts[]={
         {"noxp", &enable_xp, CONF_TYPE_FLAG, 0, 1, 0, NULL},
         {"gomp", &enable_gomp, CONF_TYPE_FLAG, 0, 0, 1, NULL},
         {"nogomp", &enable_gomp, CONF_TYPE_FLAG, 0, 1, 0, NULL},
+        {"ffslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, NULL},
+        {"noffslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, NULL},
         {"da_buffs", &vo_da_buffs, CONF_TYPE_INT, CONF_RANGE, 4, 1024, NULL},
         {"enable_bm", &vo_use_bm, CONF_TYPE_FLAG, 0, 0, 1, NULL},
         {"enable_bm2", &vo_use_bm, CONF_TYPE_FLAG, 0, 0, 2, NULL},
