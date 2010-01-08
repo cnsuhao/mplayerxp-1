@@ -1342,7 +1342,6 @@ int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, fl
 		      if(mpxp_after_seek) mpxp_after_seek--;
 		      else {
 			MSG_WARN(MSGTR_SystemTooSlow);
-			if(enable_xp != XP_None) MSG_WARN("Also try to decrease the number of buffers for decoding ahead: '-da_buffs'\n");
 		      }
 	         }
 		MSG_INFO("A-V SYNC: FRAMEDROP (SH_AV_delay=%.3f)!\n", SH_AV_delay);

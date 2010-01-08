@@ -79,7 +79,10 @@ static char help_text[]=
 " Also try study these keys:\n"\
 " -enable_bm (currently may work with some vidix drivers only) [speedup upto 30%]\n"\
 " '/bin/sh hdparm -u1 -d1 -a8 /dev/hdX' [25%]\n"\
-" Try disable OSD by pressing 'O' key twice [5-15%]\n\n"
+" Try disable OSD by pressing 'O' key twice [5-15%]\n"\
+"Also try to decrease the number of buffers for decoding ahead: '-da_buffs'\n"\
+"*******************************************************************************\n"\
+"On SMP -noffslices may help too\n"
 #endif
 
 #ifndef MSGTR_Exiting
