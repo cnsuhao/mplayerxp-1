@@ -616,6 +616,7 @@ enabled jpg	&& require2 jpeg "stdio.h stdlib.h setjmp.h string.h jpeglib.h" jpeg
 print_config HAVE_ mp_config.h mp_config.mak jpeg
 enabled jpeg	&& vomodules="jpeg $vomodules" || novomodules="jpeg $novomodules"
 
+x86_32 || disable vesa
 _vesa=$vesa
 enabled vesa	&& require3 vesa "asm/vm86.h string.h" VIF_MASK memset
 print_config HAVE_ mp_config.h mp_config.mak vesa
