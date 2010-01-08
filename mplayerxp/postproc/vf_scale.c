@@ -12,6 +12,7 @@
 
 #include "../libvo/fastmemcpy.h"
 #include "swscale.h"
+#include "libavutil/log.h"
 #include "vf_scale.h"
 #include "pp_msg.h"
 
@@ -493,7 +494,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     MSG_V("SwScale params: %d x %d (-1=no scaling)\n",
     vf->priv->w,
     vf->priv->h);
-
+    if(!verbose) av_log_set_level(AV_LOG_FATAL); /* suppress: slices start in the middle */
     return 1;
 }
 
