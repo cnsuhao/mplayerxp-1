@@ -199,14 +199,28 @@ mp_image_t* alloc_mpi(int w, int h, unsigned int fmt) {
 void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi) {
   if(mpi->flags&MP_IMGFLAG_PLANAR){
     memcpy_pic(dmpi->planes[0],mpi->planes[0], mpi->w, mpi->h,
-	       dmpi->stride[0],mpi->stride[0]);
+		dmpi->stride[0],mpi->stride[0]);
     memcpy_pic(dmpi->planes[1],mpi->planes[1], mpi->chroma_width, mpi->chroma_height,
-	       dmpi->stride[1],mpi->stride[1]);
+		dmpi->stride[1],mpi->stride[1]);
     memcpy_pic(dmpi->planes[2], mpi->planes[2], mpi->chroma_width, mpi->chroma_height,
-	       dmpi->stride[2],mpi->stride[2]);
+		dmpi->stride[2],mpi->stride[2]);
   } else {
-    memcpy_pic(dmpi->planes[0],mpi->planes[0], 
-	       mpi->w*(dmpi->bpp/8), mpi->h,
-	       dmpi->stride[0],mpi->stride[0]);
+    memcpy_pic(dmpi->planes[0],mpi->planes[0],
+		mpi->w*(dmpi->bpp/8), mpi->h,
+		dmpi->stride[0],mpi->stride[0]);
   }
+}
+
+void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned height)
+{
+    unsigned uv_off = (y>>mpi->chroma_y_shift);
+    *dmpi = *mpi;
+    dmpi->planes[0] = mpi->planes[0] + (mpi->stride[0]*y);
+    dmpi->planes[1] = mpi->planes[1] + (mpi->stride[1]*uv_off);
+    dmpi->planes[2] = mpi->planes[2] + (mpi->stride[2]*uv_off);
+    dmpi->planes[3] = mpi->planes[3] + (mpi->stride[3]*uv_off);
+    dmpi->qscale    = mpi->qscale    + (mpi->qstride*y);
+    dmpi->y = 0;
+    dmpi->h = height;
+    dmpi->chroma_height = (height >> mpi->chroma_y_shift);
 }

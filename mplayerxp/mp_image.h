@@ -106,5 +106,6 @@ extern mp_image_t* new_mp_image(int w,int h);
 extern void free_mp_image(mp_image_t* mpi);
 extern mp_image_t* alloc_mpi(int w, int h, unsigned int fmt);
 extern void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi);
+extern void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned height);
 
 #endif

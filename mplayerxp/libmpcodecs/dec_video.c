@@ -169,11 +169,8 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	    smp_num_cpus=omp_get_num_procs();
 	    vf_flags=vf_query_flags(sh_video->vfilter);
 	    use_vf_threads=0;
-	    MSG_V("[mpdec] vf_flags=%08X num_cpus=%u\n",vf_flags,smp_num_cpus);
-	    if(((vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) {
-		MSG_OK("[VC] using %u threads for video filters\n",smp_num_cpus);
-		use_vf_threads=1;
-	    }
+	    MSG_DBG2("[mpdec] vf_flags=%08X num_cpus=%u\n",vf_flags,smp_num_cpus);
+	    if(((vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
 	}
 #else
 	MSG_V("[mpdec] GOMP was not compiled-in! Using single threaded video filtering!\n");
@@ -225,6 +222,11 @@ if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
     if(use_vf_threads) {
 	unsigned i,y,h_step,h;
 	mp_image_t ampi[smp_num_cpus];
+	static int hello_printed=0;
+	if(!hello_printed) {
+		MSG_OK("[VC] using %u threads for video filters\n",smp_num_cpus);
+		hello_printed=1;
+	}
 	h_step = mpi->h/smp_num_cpus;
 	h=mpi->height;
 	mpi->height=h_step;
@@ -232,12 +234,13 @@ if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
 	for(i=0;i<smp_num_cpus;i++) {
 	    ampi[i] = *mpi;
 	    ampi[i].y = y;
-	    ampi[i].height = h_step+y;
+	    ampi[i].height = h_step;
+	    ampi[i].chroma_height = h_step >> mpi->chroma_y_shift;
 	    y+=h_step;
 	}
 #pragma omp parallel for shared(vf) private(i)
 	for(i=0;i<smp_num_cpus;i++) {
-	    MSG_V("Put slice[%u %u] in threads\n",ampi[i].y,h_step);
+	    MSG_DBG2("Put slice[%u %u] in threads\n",ampi[i].y,h_step);
 	    vf->put_slice(vf,&ampi[i]);
 	}
 	if(y<h) {

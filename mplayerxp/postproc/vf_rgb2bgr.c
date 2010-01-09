@@ -34,7 +34,7 @@ static unsigned int __FASTCALL__ getfmt(unsigned int outfmt,int forced){
     case IMGFMT_BGR24: return IMGFMT_RGB24;
     case IMGFMT_BGR32: return IMGFMT_RGB32;
     }
-    return 0;    
+    return 0;
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,

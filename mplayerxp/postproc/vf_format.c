@@ -109,7 +109,7 @@ const vf_info_t vf_info_format = {
     "format",
     "Nickols_K",
     "FIXME! get_image()/put_image()",
-    VF_FLAGS_THREADS,
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
     vf_open
 };
 

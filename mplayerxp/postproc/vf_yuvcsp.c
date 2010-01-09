@@ -31,7 +31,7 @@ static inline int clamp_c(int x){
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
-    int i,j;
+    unsigned i,j,y,x;
     uint8_t *y_in, *cb_in, *cr_in;
     uint8_t *y_out, *cb_out, *cr_out;
 
@@ -47,15 +47,19 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     cb_out = vf->dmpi->planes[1];
     cr_out = vf->dmpi->planes[2];
 
-    for (i = mpi->y; i < mpi->height; i++)
-	for (j = mpi->x; j < mpi->width; j++)
-	    y_out[i*vf->dmpi->stride[0]+j] = clamp_y(y_in[i*mpi->stride[0]+j]);
-
-    for (i = (mpi->y)>>(mpi->chroma_y_shift); i < mpi->chroma_height; i++)
+    for (i = 0; i < mpi->height; i++)
+	for (j = mpi->x; j < mpi->width; j++) {
+	    y = i+mpi->y;
+	    x = j+mpi->x;
+	    y_out[y*vf->dmpi->stride[0]+x] = clamp_y(y_in[y*mpi->stride[0]+x]);
+	}
+    for (i = 0; i < mpi->chroma_height; i++)
 	for (j = (mpi->x)>>(mpi->chroma_x_shift); j < mpi->chroma_width; j++)
 	{
-	    cb_out[i*vf->dmpi->stride[1]+j] = clamp_c(cb_in[i*mpi->stride[1]+j]);
-	    cr_out[i*vf->dmpi->stride[2]+j] = clamp_c(cr_in[i*mpi->stride[2]+j]);
+	    y=i+(mpi->y>>mpi->chroma_y_shift);
+	    x=j+(mpi->y>>mpi->chroma_x_shift);
+	    cb_out[y*vf->dmpi->stride[1]+x] = clamp_c(cb_in[y*mpi->stride[1]+x]);
+	    cr_out[y*vf->dmpi->stride[2]+x] = clamp_c(cr_in[y*mpi->stride[2]+x]);
 	}
 
     return vf_next_put_slice(vf,vf->dmpi);

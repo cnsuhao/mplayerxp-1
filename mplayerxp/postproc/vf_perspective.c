@@ -219,7 +219,7 @@ static inline void resampleLinear(uint8_t *dst, uint8_t *src, int w, int h, int 
 			index= u + v*srcStride;
 			subUI= SUB_PIXELS - subU;
 			subVI= SUB_PIXELS - subV;
-            
+
 			if((unsigned)u < (unsigned)(w - 1)){
 				if((unsigned)v < (unsigned)(h - 1)){
 					sum= subVI*(subUI*src[index          ] + subU*src[index          +1])
