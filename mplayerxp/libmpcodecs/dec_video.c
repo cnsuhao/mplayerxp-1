@@ -1,6 +1,6 @@
 #include "mp_config.h"
 
-#ifdef HAVE_GOMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
@@ -33,7 +33,7 @@
 vf_cfg_t vf_cfg; // Configuration for audio filters
 
 #include "postproc/postprocess.h"
-
+#include "pvector/pvector.h"
 #include "cpudetect.h"
 #include "vd_msg.h"
 
@@ -80,7 +80,7 @@ void uninit_video(sh_video_t *sh_video){
     sh_video->inited=0;
 }
 
-#ifdef HAVE_GOMP
+#ifdef _OPENMP
 #define MPDEC_THREAD_COND (VF_FLAGS_THREADS|VF_FLAGS_SLICES)
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
@@ -164,7 +164,7 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	,o_bps);
 	// Yeah! We got it!
 	sh_video->inited=1;
-#ifdef HAVE_GOMP
+#ifdef _OPENMP
 	if(enable_gomp) {
 	    smp_num_cpus=omp_get_num_procs();
 	    vf_flags=vf_query_flags(sh_video->vfilter);
@@ -199,35 +199,8 @@ mpi=mpvdec->decode(sh_video, start, in_size, drop_frame);
 MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
 /* ------------------------ frame decoded. -------------------- */
 
-#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-// some codecs is broken, and doesn't restore MMX state :(
-// it happens usually with broken/damaged files.
-#ifdef CAN_COMPILE_3DNOW
-if(gCpuCaps.has3DNow){
-	__asm __volatile ("femms\n\t"::
-	:"memory"
-#ifdef FPU_CLOBBERED
-	,FPU_CLOBBERED
-#endif
-#ifdef MMX_CLOBBERED
-	,MMX_CLOBBERED
-#endif
-	);
-}
-#endif
-#ifdef CAN_COMPILE_MMX
-else if(gCpuCaps.hasMMX){
-	__asm __volatile ("emms\n\t"::
-	:"memory"
-#ifdef FPU_CLOBBERED
-	,FPU_CLOBBERED
-#endif
-#ifdef MMX_CLOBBERED
-	,MMX_CLOBBERED
-#endif
-	);
-}
-#endif
+#ifdef HAVE_INT_PVECTOR
+    _ivec_empty();
 #endif
 
 if(!mpi) return 0; // error / skipped frame
@@ -248,7 +221,7 @@ vo_flush_pages();
 
 if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
     MSG_DBG2("Put whole frame\n");
-#ifdef HAVE_GOMP
+#ifdef _OPENMP
     if(use_vf_threads) {
 	unsigned i,y,h_step,h;
 	mp_image_t ampi[smp_num_cpus];
@@ -259,7 +232,7 @@ if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
 	for(i=0;i<smp_num_cpus;i++) {
 	    ampi[i] = *mpi;
 	    ampi[i].y = y;
-	    ampi[i].height = h_step;
+	    ampi[i].height = h_step+y;
 	    y+=h_step;
 	}
 #pragma omp parallel for shared(vf) private(i)
