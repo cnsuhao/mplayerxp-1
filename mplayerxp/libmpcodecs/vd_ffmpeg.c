@@ -128,7 +128,7 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 	}
 	case VDCTRL_QUERY_FORMAT:
         {
-            uint32_t format =(*((int*)arg));
+	    uint32_t format =(*((int*)arg));
 	    if(avctx->pix_fmt == -1 &&
 		avctx->get_format &&
 		avctx->codec->pix_fmts)
@@ -136,7 +136,14 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 	    MSG_DBG2("[vd_ffmpeg QUERY_FORMAT for %c%c%c%c] pixfmt = %X\n"
 		,((char *)&format)[0],((char *)&format)[1],((char *)&format)[2],((char *)&format)[3]
 		,avctx->pix_fmt);
-//	    if( format == ctx->best_csp ) return CONTROL_TRUE;//supported
+	    if(avctx->codec->pix_fmts) {
+	    unsigned i;
+		MSG_DBG2("[vd_ffmpeg]avctx->codec->pix_fmts:");
+		for(i=0;;i++) { MSG_DBG2("%X",avctx->codec->pix_fmts[i]); if(avctx->codec->pix_fmts[i]==-1) break; }
+		MSG_DBG2("\n");
+	    }
+	    else
+		MSG_DBG2("[vd_ffmpeg]avctx->codec->pix_fmts doesn't exist\n");
 	// possible conversions:
 	    switch( format ){
 		case IMGFMT_YV12:
@@ -145,6 +152,9 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 		    // "converted" using pointer/stride modification
 		    if(	avctx->pix_fmt==PIX_FMT_YUV420P || // u/v swap
 			avctx->pix_fmt==PIX_FMT_YUV422P) return CONTROL_TRUE;// half stride
+		    /* these codecs may return only: PIX_FMT_YUV422P, PIX_FMT_YUV444P, PIX_FMT_YUV420P*/
+		    if(	avctx->codec_id == CODEC_ID_MPEG1VIDEO ||
+			avctx->codec_id == CODEC_ID_MPEG2VIDEO) return CONTROL_TRUE;
 		    break;
 #ifdef HAVE_XVMC
 		case IMGFMT_XVMC_IDCT_MPEG2:
@@ -320,7 +330,7 @@ static int init(sh_video_t *sh){
 	vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
 	memcpy(vdff_ctx->ctx->extradata, ((int*)sh->ImageDesc)+1, vdff_ctx->ctx->extradata_size);
     }
-    
+
     /* Pass palette to codec */
 #if LIBAVCODEC_BUILD >= 4689
     if (sh->bih && (sh->bih->biBitCount <= 8)) {
@@ -492,13 +502,13 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
 
     if(pic->reference){
         pic->age= vdff_ctx->ip_age[0];
-        
+
         vdff_ctx->ip_age[0]= vdff_ctx->ip_age[1]+1;
         vdff_ctx->ip_age[1]= 1;
         vdff_ctx->b_age++;
     }else{
         pic->age= vdff_ctx->b_age;
-    
+
         vdff_ctx->ip_age[0]++;
 	vdff_ctx->ip_age[1]++;
         vdff_ctx->b_age=1;
@@ -604,7 +614,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 
     vdff_ctx->ctx->hurry_up=(flags&3)?((flags&2)?2:1):0;
     if(vdff_ctx->cap_slices)	vdff_ctx->use_slices=(divx_quality&&npp_options)?0:vdff_ctx->ctx->hurry_up?0:1;
-    else          		vdff_ctx->use_slices=0;
+    else			vdff_ctx->use_slices=0;
 /*
     if codec is capable DR1
     if sh->vfilter==vf_vo (DR1 is meaningless into temp buffer)
