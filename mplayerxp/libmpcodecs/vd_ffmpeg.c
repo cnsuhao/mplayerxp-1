@@ -116,6 +116,7 @@ const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
 /* to set/get/query special features/parameters */
 static int control(sh_video_t *sh,int cmd,void* arg,...){
     priv_t *ctx = sh->context;
+    uint32_t out_fourcc;
     AVCodecContext *avctx = ctx->ctx;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
@@ -139,11 +140,13 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 	    if(avctx->codec->pix_fmts) {
 	    unsigned i;
 		MSG_DBG2("[vd_ffmpeg]avctx->codec->pix_fmts:");
-		for(i=0;;i++) { MSG_DBG2("%X",avctx->codec->pix_fmts[i]); if(avctx->codec->pix_fmts[i]==-1) break; }
+		for(i=0;;i++) { MSG_DBG2(" %X",avctx->codec->pix_fmts[i]); if(avctx->codec->pix_fmts[i]==-1) break; }
 		MSG_DBG2("\n");
 	    }
 	    else
 		MSG_DBG2("[vd_ffmpeg]avctx->codec->pix_fmts doesn't exist\n");
+	    out_fourcc = fourcc_from_pixfmt(avctx->pix_fmt);
+	    if(out_fourcc==format) return CONTROL_TRUE;
 	// possible conversions:
 	    switch( format ){
 		case IMGFMT_YV12:
@@ -151,8 +154,10 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 		case IMGFMT_I420:
 		    // "converted" using pointer/stride modification
 		    if(	avctx->pix_fmt==PIX_FMT_YUV420P || // u/v swap
-			avctx->pix_fmt==PIX_FMT_YUV422P) return CONTROL_TRUE;// half stride
+			avctx->pix_fmt==PIX_FMT_YUV422P ||
+			avctx->pix_fmt==PIX_FMT_YUVJ420P) return CONTROL_TRUE;// half stride
 		    /* these codecs may return only: PIX_FMT_YUV422P, PIX_FMT_YUV444P, PIX_FMT_YUV420P*/
+		    /* TODO: we must test pix_fmt after decoding first frame at least */
 		    if(	avctx->codec_id == CODEC_ID_MPEG1VIDEO ||
 			avctx->codec_id == CODEC_ID_MPEG2VIDEO) return CONTROL_TRUE;
 		    break;
@@ -202,7 +207,7 @@ extern unsigned xp_num_cpu;
 static int init(sh_video_t *sh){
     unsigned avc_version=0;
     priv_t *vdff_ctx;
-    int pp_flags;
+    int pp_flags,rc;
     if(npp_options) pp2_init();
     if(!vcodec_inited){
 	avcodec_init();
@@ -359,7 +364,15 @@ static int init(sh_video_t *sh){
 	MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
     }
     /* open it */
-    if (avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec) < 0) {
+    rc = avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec);
+    if (rc < 0) {
+	if(lavc_param_threads > 1) {
+	    avcodec_thread_init(vdff_ctx->ctx, 1);
+	    MSG_STATUS("Reopen ffmpeg-codec using single-thread mode\n");
+	    rc = avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec);
+	}
+    }
+    if(rc<0) {
 	MSG_ERR( MSGTR_CantOpenCodec);
 	return 0;
     }
