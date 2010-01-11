@@ -26,6 +26,8 @@
 #include "sig_hand.h"
 #include "mplayer.h"
 #include "postproc/swscale.h"
+#include "postproc/af.h"
+#include "postproc/vf.h"
 #define HELP_MP_DEFINE_STATIC
 #include "help_mp.h"
 
@@ -990,6 +992,7 @@ void show_help(void) {
 
 void show_long_help(void) {
     show_help();
+    m_config_show_options(mplayer_opts);
     vo_print_help();
     ao_print_help();
     vf_help();

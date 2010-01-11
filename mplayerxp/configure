@@ -701,12 +701,12 @@ enabled libcss	&& inputmodules="libcss $inputmodules" || noinputmodules="libcss 
 enabled libdvdread	&& require2 libdvdread "stdint.h dvdread/dvd_reader.h dvdread/ifo_types.h dvdread/ifo_read.h dvdread/nav_read.h" DVDOpenFile -ldvdread
 dvdread=$libdvdread
 print_config USE_ mp_config.h mp_config.mak dvdread
-enabled libdvdread	&& inputmodules="dvdread $inputmodules" || noinputmodules="dvdread $noinputmodules"
+enabled libdvdread	&& inputmodules="libdvdread $inputmodules" || noinputmodules="libdvdread $noinputmodules"
 
 enabled libdvdnav	&& require2 libdvdnav dvdnav/dvdnav.h dvdnav_set_PGC_positioning_flag -ldvdnav
 dvdnav=$libdvdnav
 print_config USE_ mp_config.h mp_config.mak dvdnav
-enabled libdvdnav	&& inputmodules="dvdnav $inputmodules" || noinputmodules="dvdnav $noinputmodules"
+enabled libdvdnav	&& inputmodules="libdvdnav $inputmodules" || noinputmodules="libdvdnav $noinputmodules"
 
 enabled libvcd && require2 libvcd libvcd/info.h vcdinfo_open -lvcdinfo
 print_config USE_ mp_config.h mp_config.mak libvcd

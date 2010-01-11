@@ -18,7 +18,6 @@ SRCS=dec_video.c \
      vd_mpegpes.c \
      vd_huffyuv.c \
      vd_real.c \
-     vd_theora.c \
      ad.c \
      dec_audio.c \
      ad_null.c \

@@ -1055,8 +1055,25 @@ err_out:
 	return -1;
 }
 
-int
-m_config_register_options(m_config_t *config,const config_t *args) {
+void m_config_show_options(const config_t *args) {
+    unsigned i;
+    MSG_INFO("List of available command-line options:\n");
+    i=0;
+    while(args[i].name) {
+	if(args[i].type<=CONF_TYPE_PRINT)
+	MSG_INFO("  -%-11s (%-3s) %s\n"
+		,args[i].name
+		,args[i].type==CONF_TYPE_FLAG?"flg":
+		 args[i].type==CONF_TYPE_INT?"int":
+		 args[i].type==CONF_TYPE_FLOAT?"flt":
+		 args[i].type==CONF_TYPE_STRING?"str":""
+		,(args[i].type==CONF_TYPE_PRINT && strcmp(args[i].help,"show help")!=0)?args[i].p:args[i].help);
+	i++;
+    };
+}
+
+
+int m_config_register_options(m_config_t *config,const config_t *args) {
   int list_len = 0;
   const config_t** conf_list = config->opt_list;
 

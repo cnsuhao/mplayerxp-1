@@ -9,9 +9,9 @@
 #define CONF_TYPE_INT		1
 #define CONF_TYPE_FLOAT		2
 #define CONF_TYPE_STRING	3
-#define CONF_TYPE_FUNC		4
-#define CONF_TYPE_FUNC_PARAM	5
-#define CONF_TYPE_PRINT		6
+#define CONF_TYPE_PRINT		4
+#define CONF_TYPE_FUNC		5
+#define CONF_TYPE_FUNC_PARAM	6
 #define CONF_TYPE_FUNC_FULL	7
 #define CONF_TYPE_SUBCONFIG	8
 
@@ -49,6 +49,7 @@ struct config {
   /* Use this field when your need to do something before a new value is
      assigned to your option */
 	cfg_default_func_t default_func;
+	const char *help;
 };
 
 
@@ -106,6 +107,8 @@ int m_config_pop(m_config_t* config);
  * Return 0 on error 1 on success
  */
 int m_config_register_options(m_config_t *config,const config_t *args);
+
+void m_config_show_options(const config_t *args);
 
 /*
  * For all the following function when it's a subconfig option
