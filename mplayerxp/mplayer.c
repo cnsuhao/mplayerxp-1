@@ -991,8 +991,9 @@ void show_help(void) {
 }
 
 void show_long_help(void) {
-    show_help();
-    m_config_show_options(mplayer_opts);
+    m_config_show_options(mconfig);
+    mp_input_print_binds();
+    print_stream_drivers();
     vo_print_help();
     ao_print_help();
     vf_help();
@@ -2030,7 +2031,7 @@ static void show_benchmark_status(void)
 		,get_delay_audio_buffer()
 		);
 }
- 
+
 int v_bright=0;
 int v_cont=0;
 int v_hue=0;
@@ -2104,7 +2105,7 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
     playtree = play_tree_cleanup(playtree);
     if(playtree) {
       playtree_iter = play_tree_iter_new(playtree,mconfig);
-      if(playtree_iter) {  
+      if(playtree_iter) {
 	if(play_tree_iter_step(playtree_iter,0,0) != PLAY_TREE_ITER_ENTRY) {
 	  play_tree_iter_free(playtree_iter);
 	  playtree_iter = NULL;
@@ -2116,7 +2117,7 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
     ao_da_buffs = vo_da_buffs;
     if(enable_xp!=XP_None) vo_doublebuffering=1;
     else	  vo_use_bm = 0;
-	
+
     init_player();
 
     if(!filename){

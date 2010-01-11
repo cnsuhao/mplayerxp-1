@@ -948,7 +948,7 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 #endif
 	
 	if (init_conf(config, COMMAND_LINE) == -1)
-		return -1;	
+		return -1;
 	if(config->last_parent == NULL)
 	  config->last_parent = config->pt;
 	/* in order to work recursion detection properly in parse_config_file */
@@ -1055,22 +1055,6 @@ err_out:
 	return -1;
 }
 
-void m_config_show_options(const config_t *args) {
-    unsigned i;
-    MSG_INFO("List of available command-line options:\n");
-    i=0;
-    while(args[i].name) {
-	if(args[i].type<=CONF_TYPE_PRINT)
-	MSG_INFO("  -%-11s (%-3s) %s\n"
-		,args[i].name
-		,args[i].type==CONF_TYPE_FLAG?"flg":
-		 args[i].type==CONF_TYPE_INT?"int":
-		 args[i].type==CONF_TYPE_FLOAT?"flt":
-		 args[i].type==CONF_TYPE_STRING?"str":""
-		,(args[i].type==CONF_TYPE_PRINT && strcmp(args[i].help,"show help")!=0)?args[i].p:args[i].help);
-	i++;
-    };
-}
 
 
 int m_config_register_options(m_config_t *config,const config_t *args) {
@@ -1316,6 +1300,80 @@ int m_config_is_option_set(m_config_t const*config,const char* arg) {
   }
 
   return 0;
+}
+
+void m_config_show_options(const m_config_t *args) {
+    unsigned i,j;
+    const config_t *opts;
+    MSG_INFO("List of available command-line options:\n");
+    j=0;
+    while((opts=args->opt_list[j])!=NULL) {
+	i=0;
+	while(opts[i].name) {
+	    if(opts[i].type<=CONF_TYPE_PRINT) {
+		MSG_INFO("  -%-11s %s"
+		    ,opts[i].name
+		    ,(opts[i].type==CONF_TYPE_PRINT && strcmp(opts[i].help,"show help")!=0)?opts[i].p:opts[i].help);
+		if((opts[i].flags&CONF_NOCFG)==0) {
+		MSG_INFO(" {%s:",
+		    opts[i].type==CONF_TYPE_FLAG?"flg":
+		    opts[i].type==CONF_TYPE_INT?"int":
+		    opts[i].type==CONF_TYPE_FLOAT?"flt":
+		    opts[i].type==CONF_TYPE_STRING?"str":"");
+		switch(opts[i].type) {
+		case CONF_TYPE_FLAG: {
+		    int defv = *((int*)(opts[i].p));
+		    MSG_INFO("<default=%i>",defv);
+		}
+		break;
+		case CONF_TYPE_STRING: {
+		    const char *defv = (char*)(opts[i].p);
+		    MSG_INFO("'%s'",defv);
+		}
+		break;
+		case CONF_TYPE_INT: {
+		    int defv = *((int*)(opts[i].p));
+		    if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
+			MSG_INFO("[%i...%i]",(int)opts[i].min,(int)opts[i].max);
+		    }
+		    else
+		    if((opts[i].flags&CONF_MIN)==CONF_MIN) {
+			MSG_INFO("<min=%i>",(int)opts[i].min);
+		    }
+		    else
+		    if((opts[i].flags&CONF_MAX)==CONF_MAX) {
+			MSG_INFO("<max=%i>",(int)opts[i].max);
+		    }
+		    MSG_INFO("<default=%i>",defv);
+		}
+		break;
+		case CONF_TYPE_FLOAT: {
+		    float defv = *((float*)(opts[i].p));
+		    if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
+			MSG_INFO("[%f...%f]",(float)opts[i].min,(float)opts[i].max);
+		    }
+		    else
+		    if((opts[i].flags&CONF_MIN)==CONF_MIN) {
+			MSG_INFO("<min=%f>",(float)opts[i].min);
+		    }
+		    else
+		    if((opts[i].flags&CONF_MAX)==CONF_MAX) {
+			MSG_INFO("<float=%f>",(float)opts[i].max);
+		    }
+		    MSG_INFO("<default=%f>",defv);
+		}
+		break;
+		default:
+		break;
+		}
+		MSG_INFO("}");
+		}
+	    MSG_INFO("\n");
+	    }
+	    i++;
+	}
+	j++;
+    };
 }
 
 #undef AS_INT

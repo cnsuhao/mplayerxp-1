@@ -43,21 +43,21 @@ static int lavc_param_threads=-1;
 static char *lavc_avopt = NULL;
 
 static const config_t options[] = {
-	{"ffmpeg_er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL},
-	{"ffmpeg_idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL},
-	{"ffmpeg_ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL},
-	{"ffmpeg_vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-	{"ffmpeg_debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, NULL},
-	{"ffmpeg_vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, NULL},
-	{"ffmpeg_st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, NULL},
-	{"ffmpeg_sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, NULL},
-	{"ffmpeg_lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, NULL},
-	{"ffmpeg_skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, NULL},
-	{"ffmpeg_skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, NULL},
-	{"ffmpeg_skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, NULL},
-	{"ffmpeg_threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, NULL},
-	{"ffmpeg_o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, NULL},
-	{ NULL, NULL, 0, 0, 0, 0, NULL}
+	{"ffmpeg_er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error resilience for ffmpeg decoders"},
+	{"ffmpeg_idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies idct algorithm for ffmpeg decoders"},
+	{"ffmpeg_ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error concealment for ffmpeg decoders"},
+	{"ffmpeg_vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, NULL,"specifies vstat for ffmpeg decoders"},
+	{"ffmpeg_debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, NULL,"specifies debug level for ffmpeg decoders"},
+	{"ffmpeg_vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, NULL,"specifies visualize motion vectors (MVs) for ffmpeg decoders"},
+	{"ffmpeg_st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, NULL,"specifies skipping top lines for ffmpeg decoders"},
+	{"ffmpeg_sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, NULL,"specifies skipping bottom lines for ffmpeg decoders"},
+	{"ffmpeg_lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies decoding at 1= 1/2, 2=1/4, 3=1/8 resolutions for ffmpeg decoders"},
+	{"ffmpeg_skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies skipping of loop filters for ffmpeg decoders"},
+	{"ffmpeg_skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies skipping of IDCT filters for ffmpeg decoders"},
+	{"ffmpeg_skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"indicates frame skipping for ffmpeg decoders"},
+	{"ffmpeg_threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, NULL,"specifies number of threads for ffmpeg decoders"},
+	{"ffmpeg_o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies additional option for ffmpeg decoders"},
+	{ NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 LIBVD_EXTERN(ffmpeg)

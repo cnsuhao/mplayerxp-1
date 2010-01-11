@@ -91,7 +91,7 @@ static const mp_cmd_t mp_cmds[] = {
   { MP_CMD_CHELP, "help", 0, { {-1,{0}} } },
   { MP_CMD_CEXIT, "exit", 0, { {-1,{0}} } },
   { MP_CMD_CHIDE, "hide", 0, { {MP_CMD_ARG_INT,{3000}}, {-1,{0}} } },
-  
+
   { 0, NULL, 0, {} }
 };
 
@@ -229,7 +229,7 @@ static const mp_cmd_bind_t def_cmd_binds[] = {
   { {  MOUSE_BTN4, 0 }, "seek -10" },
   { {  MOUSE_BTN5, 0 }, "volume 1" },
   { {  MOUSE_BTN6, 0 }, "volume -1" },
-  
+
 #ifdef USE_DVDNAV
   { { KEY_KP8, 0 }, "dvdnav 1" },   // up
   { { KEY_KP2, 0 }, "dvdnav 2" },   // down
@@ -408,35 +408,32 @@ static int mp_input_print_cmd_list(config_t* cfg);
 
 // Our command line options
 static const config_t input_conf[] = {
-  { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL },
-  { "ar-delay", &ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL },
-  { "ar-rate", &ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL },
-  { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL },
-  { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL },
-  { "js-dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL },
-  { "file", &in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL },
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "" },
+  { "ar-delay", &ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "" },
+  { "ar-rate", &ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "" },
+  { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "" },
+  { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "" },
+  { "js-dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "" },
+  { "file", &in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "" },
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static const config_t mp_input_opts[] = {
-  { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
-  { "nojoystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL },
-  { "joystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL },
-  { "nolirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL },
-  { "lirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL },
-  { "nolircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL },
-  { "lircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL },
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, ""},
+  { "joystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of joystick" },
+  { "nojoystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of joystick" },
+  { "lirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc" },
+  { "nolirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc" },
+  { "lircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc daemon" },
+  { "nolircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc daemon" },
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
-static int
-mp_input_default_key_func(int fd);
+static int mp_input_default_key_func(int fd);
 
-static int
-mp_input_default_cmd_func(int fd,char* buf, int l);
+static int mp_input_default_cmd_func(int fd,char* buf, int l);
 
-static char*
-mp_input_get_key_name(int key);
+static char* mp_input_get_key_name(int key);
 
 
 int
@@ -598,7 +595,7 @@ mp_input_parse_cmd(char* str) {
 	if(e <= ptr2 || *(e - 1) != '\\') break;
 	ptr2 = e + 1;
       }
-      
+
       if(term != ' ' && (!e || e[0] == '\0')) {
 	MSG_ERR("Command %s : argument %d is unterminated\n",cmd_def->name,i+1);
 	ptr = NULL;
@@ -667,8 +664,8 @@ mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
     mp_fd->buffer = (char*)malloc(MP_CMD_MAX_SIZE*sizeof(char));
     mp_fd->pos = 0;
     mp_fd->size = MP_CMD_MAX_SIZE;
-  } 
-  
+  }
+
   // Get some data if needed/possible
   while( !(mp_fd->flags & MP_FD_GOT_CMD) && !(mp_fd->flags & MP_FD_EOF) && (mp_fd->size - mp_fd->pos > 1) ) {
     int r = ((mp_cmd_func_t)mp_fd->read_func)(mp_fd->fd,mp_fd->buffer+mp_fd->pos,mp_fd->size - 1 - mp_fd->pos);
@@ -728,7 +725,7 @@ mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
       memmove(mp_fd->buffer,end+1,mp_fd->pos-(l+1));
     mp_fd->pos -= l+1;
   }
-   
+
   if(*ret)
     return 1;
   else
@@ -764,7 +761,7 @@ mp_input_add_cmd_filter(mp_input_cmd_filter func, void* ctx) {
   filter->next = cmd_filters;
   cmd_filters = filter;
 }
-  
+
 
 static char*
 mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {
@@ -864,12 +861,12 @@ mp_input_read_key_code(int time) {
 if(n>0){
 
   if(time >= 0 ) {
-    tv.tv_sec=time/1000; 
+    tv.tv_sec=time/1000;
     tv.tv_usec = (time%1000)*1000;
     time_val = &tv;
   } else
     time_val = NULL;
-  
+
   while(1) {
     if(select(max_fd+1,&fds,NULL,NULL,time_val) < 0) {
       if(errno == EINTR)
@@ -916,7 +913,6 @@ if(n>0){
   }
   return MP_INPUT_NOTHING;
 }
-    
 
 static mp_cmd_t*
 mp_input_read_keys(int time,int paused) {
@@ -969,7 +965,7 @@ mp_input_read_keys(int time,int paused) {
       key_down[num_key_down] = code;
       num_key_down++;
       last_key_down = 1;
-    } 
+    }
     // We ignore key from last combination
     ret = last_key_down ? mp_input_get_cmd_from_keys(num_key_down,key_down,paused) : NULL;
     // Remove the key
@@ -1052,7 +1048,7 @@ mp_input_read_cmds(int time) {
     time_val = &tv;
   } else
     time_val = NULL;
-    
+
   while(n > 0) {
     if((i = select(max_fd+1,&fds,NULL,NULL,time_val)) <= 0) {
       if(i < 0) {
@@ -1096,9 +1092,9 @@ mp_input_read_cmds(int time) {
     last_loop = i;
     return ret;
   }
-  
+
   last_loop = 0;
-  return NULL;  
+  return NULL;
 }
 
 int
@@ -1119,14 +1115,14 @@ mp_input_get_queued_cmd(int peek_only) {
     return NULL;
 
   ret = cmd_queue[cmd_queue_start];
-  
+
   if (!peek_only) {
   cmd_queue_length--;
   cmd_queue_start = (cmd_queue_start + 1) % CMD_QUEUE_SIZE;
   }
-  
+
   return ret;
-}  
+}
 
 /**
  * \param peek_only when set, the returned command stays in the queue.
@@ -1209,7 +1205,7 @@ mp_input_get_key_name(int key) {
     if(key_names[i].key == key)
       return key_names[i].name;
   }
-  
+
   if(isascii(key)) {
     snprintf(key_str,12,"%c",(char)key);
     return key_str;
@@ -1285,7 +1281,7 @@ mp_input_bind_keys(int keys[MP_MAX_KEY_DOWN+1], char* cmd) {
       }
     }
   }
-  
+
   if(!bind) {
     cmd_binds = (mp_cmd_bind_t*)realloc(cmd_binds,(i+2)*sizeof(mp_cmd_bind_t));
     memset(&cmd_binds[i],0,2*sizeof(mp_cmd_bind_t));
@@ -1482,7 +1478,7 @@ mp_input_init(void) {
   file = config_file[0] != '/' ? get_path(config_file) : config_file;
   if(!file)
     return;
-  
+
   if(! mp_input_parse_config(file)) {
     // Try global conf dir
     file = CONFDIR "/input.conf";
@@ -1544,7 +1540,7 @@ mp_input_uninit(void) {
     if(cmd_fds[i].close_func)
       cmd_fds[i].close_func(cmd_fds[i].fd);
   }
-  
+
 }
 
 void
@@ -1552,21 +1548,52 @@ mp_input_register_options(m_config_t* cfg) {
   m_config_register_options(cfg,mp_input_opts);
 }
 
-static int mp_input_print_key_list(config_t* cfg) {
-  int i;
-  printf("\n");
+void mp_input_print_keys(void) {
+  unsigned i;
+  MSG_INFO("List of available KEYS:\n");
   for(i= 0; key_names[i].name != NULL ; i++)
-    printf("%s\n",key_names[i].name);
+    MSG_INFO("%s\n",key_names[i].name);
+}
+
+static int mp_input_print_key_list(config_t* cfg) {
+  mp_input_print_keys();
   exit(0);
 }
 
-static int mp_input_print_cmd_list(config_t* cfg) {
+static char defkname[2];
+static const char * mp_find_keyname(int keyval) {
+  unsigned i;
+  defkname[1]='\0';
+  if( keyval>' ' && keyval<='z' ) {
+    defkname[0]=keyval;
+    return defkname;
+  }
+  for(i= 0; key_names[i].name != NULL ; i++) {
+    if(keyval==key_names[i].key) return key_names[i].name;
+  }
+  return "unknown";
+}
+
+void mp_input_print_binds(void) {
+  unsigned i,j;
+  MSG_INFO("List of available key bindings:\n");
+  for(i=0; def_cmd_binds[i].cmd != NULL ; i++) {
+    MSG_INFO("  %-15s",def_cmd_binds[i].cmd);
+    for(j=0;def_cmd_binds[i].input[j] != 0;j++) {
+	MSG_INFO(" %s",mp_find_keyname(def_cmd_binds[i].input[j]));
+    }
+    MSG_INFO("\n");
+  }
+}
+
+void mp_input_print_cmds(void) {
   const mp_cmd_t *cmd;
   int i,j;
   char* type;
 
+  MSG_INFO("List of available input commands:\n");
   for(i = 0; (cmd = &mp_cmds[i])->name != NULL ; i++) {
-    printf("%-20.20s",cmd->name);
+    MSG_INFO("  %-20.20s",cmd->name);
     for(j= 0 ; j < MP_CMD_MAX_ARGS && cmd->args[j].type != -1 ; j++) {
       switch(cmd->args[j].type) {
       case MP_CMD_ARG_INT:
@@ -1582,12 +1609,16 @@ static int mp_input_print_cmd_list(config_t* cfg) {
 	type = "??";
       }
       if(j+1 > cmd->nargs)
-	printf(" [%s]",type);
+	MSG_INFO(" [%s]",type);
       else
-	printf(" %s",type);
+	MSG_INFO(" %s",type);
     }
-    printf("\n");
+    MSG_INFO("\n");
   }
+}
+
+static int mp_input_print_cmd_list(config_t* cfg) {
+  mp_input_print_cmds();
   exit(0);
 }
 

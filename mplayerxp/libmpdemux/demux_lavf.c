@@ -48,9 +48,9 @@ static char *opt_cryptokey;
 extern int ts_prog;
 
 const config_t lavfdopts_conf[] = {
-	{"lavf_format",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL},
-	{"lavf_cryptokey", &(opt_cryptokey), CONF_TYPE_STRING,       0,  0,       0, NULL},
-	{NULL, NULL, 0, 0, 0, 0, NULL}
+	{"lavf_format",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL, "forces format of lavf demuxer"},
+	{"lavf_cryptokey", &(opt_cryptokey), CONF_TYPE_STRING,       0,  0,       0, NULL, "specifies cryptokey for lavf demuxer"},
+	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static int64_t mpxp_gcd(int64_t a, int64_t b){

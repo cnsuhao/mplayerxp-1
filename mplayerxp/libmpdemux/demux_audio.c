@@ -1767,9 +1767,9 @@ static int audio_control(demuxer_t *demuxer,int cmd,void *args)
 #include "../cfgparser.h"
 
 static const config_t audio_opts[] = {
-  { "hr-mp3-seek", &hr_mp3_seek, CONF_TYPE_FLAG, 0, 0, 1, NULL },
-  { "nohr-mp3-seek", &hr_mp3_seek, CONF_TYPE_FLAG, 0, 1, 0, NULL},
-  {NULL, NULL, 0, 0, 0, 0, NULL}
+  { "hr-mp3-seek", &hr_mp3_seek, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables hight-resolution mp3 seeking" },
+  { "nohr-mp3-seek", &hr_mp3_seek, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables hight-resolution mp3 seeking"},
+  {NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 demuxer_driver_t demux_audio =

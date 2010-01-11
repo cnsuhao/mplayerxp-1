@@ -208,3 +208,6 @@ mp_input_uninit(void);
 int
 mp_input_check_interrupt(int time);
 
+void mp_input_print_keys(void);
+void mp_input_print_cmds(void);
+void mp_input_print_binds(void);

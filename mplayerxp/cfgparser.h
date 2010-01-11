@@ -5,6 +5,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+/* config types */
 #define CONF_TYPE_FLAG		0
 #define CONF_TYPE_INT		1
 #define CONF_TYPE_FLOAT		2
@@ -21,15 +22,14 @@
 #define ERR_OUT_OF_RANGE	-3
 #define ERR_FUNC_ERR		-4
 
-
-
+/* config flags */
 #define CONF_MIN		(1<<0)
 #define CONF_MAX		(1<<1)
 #define CONF_RANGE		(CONF_MIN|CONF_MAX)
 #define CONF_NOCFG		(1<<2)
 #define CONF_NOCMD		(1<<3)
 #define CONF_GLOBAL		(1<<4)
-#define CONF_NOSAVE                            (1<<5)
+#define CONF_NOSAVE		(1<<5)
 
 
 typedef struct config config_t;
@@ -108,11 +108,11 @@ int m_config_pop(m_config_t* config);
  */
 int m_config_register_options(m_config_t *config,const config_t *args);
 
-void m_config_show_options(const config_t *args);
+void m_config_show_options(const m_config_t* args);
 
 /*
  * For all the following function when it's a subconfig option
- * you must give an option name like 'tv:channel' and not just 
+ * you must give an option name like 'tv:channel' and not just
  * 'channel'
  */
 
