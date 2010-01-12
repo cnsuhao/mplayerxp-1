@@ -1327,8 +1327,8 @@ void m_config_show_options(const m_config_t *args) {
 		}
 		break;
 		case CONF_TYPE_STRING: {
-		    const char *defv = (char*)(opts[i].p);
-		    MSG_INFO("'%s'",defv);
+		    const char **defv = (char**)(opts[i].p);
+		    if(defv) MSG_INFO("'%s'",*defv);
 		}
 		break;
 		case CONF_TYPE_INT: {

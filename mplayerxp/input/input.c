@@ -1560,29 +1560,14 @@ static int mp_input_print_key_list(config_t* cfg) {
   exit(0);
 }
 
-static char defkname[2];
-static const char * mp_find_keyname(int keyval) {
-  unsigned i;
-  defkname[1]='\0';
-  if( keyval>' ' && keyval<='z' ) {
-    defkname[0]=keyval;
-    return defkname;
-  }
-  for(i= 0; key_names[i].name != NULL ; i++) {
-    if(keyval==key_names[i].key) return key_names[i].name;
-  }
-  return "unknown";
-}
-
 void mp_input_print_binds(void) {
   unsigned i,j;
   MSG_INFO("List of available key bindings:\n");
   for(i=0; def_cmd_binds[i].cmd != NULL ; i++) {
-    MSG_INFO("  %-15s",def_cmd_binds[i].cmd);
     for(j=0;def_cmd_binds[i].input[j] != 0;j++) {
-	MSG_INFO(" %s",mp_find_keyname(def_cmd_binds[i].input[j]));
+	MSG_INFO("  %-20s",mp_input_get_key_name(def_cmd_binds[i].input[j]));
     }
-    MSG_INFO("\n");
+    MSG_INFO(" %s\n",def_cmd_binds[i].cmd);
   }
 }
 
