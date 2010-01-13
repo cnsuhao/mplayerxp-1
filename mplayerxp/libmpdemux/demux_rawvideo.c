@@ -23,34 +23,34 @@ static float fps = 25;
 static int imgsize=0;
 
 static const config_t demux_rawvideo_opts[] = {
-  { "on", &use_rawvideo, CONF_TYPE_FLAG, 0,0, 1, NULL },
+  { "on", &use_rawvideo, CONF_TYPE_FLAG, 0,0, 1, NULL, "forces treating stream as raw-vidio" },
   // size:
-  { "w", &width, CONF_TYPE_INT,CONF_RANGE,1,8192, NULL },
-  { "h", &height, CONF_TYPE_INT,CONF_RANGE,1,8192, NULL },
-  { "sqcif", &size_id, CONF_TYPE_FLAG,0,0,1, NULL },
-  { "qcif", &size_id, CONF_TYPE_FLAG,0,0,2, NULL },
-  { "cif", &size_id, CONF_TYPE_FLAG,0,0,3, NULL },
-  { "4cif", &size_id, CONF_TYPE_FLAG,0,0,4, NULL },
-  { "pal", &size_id, CONF_TYPE_FLAG,0,0,5, NULL },
-  { "ntsc", &size_id, CONF_TYPE_FLAG,0,0,6, NULL },
-  { "16cif", &size_id, CONF_TYPE_FLAG,0,0,7, NULL },
-  { "sif", &size_id, CONF_TYPE_FLAG,0,0,8, NULL },
+  { "w", &width, CONF_TYPE_INT,CONF_RANGE,1,8192, NULL, "specifies image width of raw-video stream" },
+  { "h", &height, CONF_TYPE_INT,CONF_RANGE,1,8192, NULL, "specifies image height of raw-video stream" },
+  { "sqcif", &size_id, CONF_TYPE_FLAG,0,0,1, NULL, "sets image size to SQCIF standard" },
+  { "qcif", &size_id, CONF_TYPE_FLAG,0,0,2, NULL, "sets image size to QCIF standard" },
+  { "cif", &size_id, CONF_TYPE_FLAG,0,0,3, NULL, "sets image size to CIF standard" },
+  { "4cif", &size_id, CONF_TYPE_FLAG,0,0,4, NULL, "sets image size to 4CIF standard" },
+  { "pal", &size_id, CONF_TYPE_FLAG,0,0,5, NULL, "sets image size to PAL standard" },
+  { "ntsc", &size_id, CONF_TYPE_FLAG,0,0,6, NULL, "sets image size to NTSC standard" },
+  { "16cif", &size_id, CONF_TYPE_FLAG,0,0,7, NULL, "sets image size to 16CIF standard" },
+  { "sif", &size_id, CONF_TYPE_FLAG,0,0,8, NULL, "sets image size to SIF standard" },
   // format:
-  { "format", &format, CONF_TYPE_INT, 0, 0 , 0, NULL },
-  { "i420", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_I420, NULL },
-  { "yv12", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YV12, NULL },
-  { "yuy2", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YUY2, NULL },
-  { "uyvy", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_UYVY, NULL },
-  { "y8", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_Y8, NULL },
+  { "format", &format, CONF_TYPE_INT, 0, 0 , 0, NULL, "specifies colorspace (fourcc) in hex or string constant" },
+  { "i420", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_I420, NULL, "treats raw-video as I420 fourcc" },
+  { "yv12", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YV12, NULL, "treats raw-video as YV12 fourcc" },
+  { "yuy2", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YUY2, NULL, "treats raw-video as YUY2 fourcc" },
+  { "uyvy", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_UYVY, NULL, "treats raw-video as UYVY fourcc" },
+  { "y8", &format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_Y8, NULL, "treats raw-video as Y8 fourcc" },
   // misc:
-  { "fps", &fps, CONF_TYPE_FLOAT,CONF_RANGE,0.001,1000, NULL },
-  { "size", &imgsize, CONF_TYPE_INT, CONF_RANGE, 1 , 8192*8192*4, NULL },
+  { "fps", &fps, CONF_TYPE_FLOAT,CONF_RANGE,0.001,1000, NULL, "specifies rate in frames per second of raw-video stream" },
+  { "size", &imgsize, CONF_TYPE_INT, CONF_RANGE, 1 , 8192*8192*4, NULL, "specifies frame size in bytes" },
 
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t rawvideo_conf[] = {
-  { "rawvideo", &demux_rawvideo_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
+  { "rawvideo", &demux_rawvideo_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Raw-video specific options"},
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 

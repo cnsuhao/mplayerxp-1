@@ -47,9 +47,14 @@ static char *opt_format;
 static char *opt_cryptokey;
 extern int ts_prog;
 
+const config_t lavf_opts[] = {
+	{"format",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL, "forces format of lavf demuxer"},
+	{"cryptokey", &(opt_cryptokey), CONF_TYPE_STRING,       0,  0,       0, NULL, "specifies cryptokey for lavf demuxer"},
+	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+};
+
 const config_t lavfdopts_conf[] = {
-	{"lavf_format",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL, "forces format of lavf demuxer"},
-	{"lavf_cryptokey", &(opt_cryptokey), CONF_TYPE_STRING,       0,  0,       0, NULL, "specifies cryptokey for lavf demuxer"},
+	{"lavf", &lavf_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "LAVF-demuxer related options"},
 	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 

@@ -745,12 +745,17 @@ const char* demux_info_get(demuxer_t *demuxer, unsigned opt) {
 
 /******************* Options stuff **********************/
 
-static const config_t demuxer_opts[] = {
+static const config_t demux_opts[] = {
   { "audiofile", &audio_stream, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces reading of audio-stream from other file" },
   { "subfile", &sub_stream, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces reading of subtitles from other file" },
-  { "demuxer", &demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, NULL, "forces demxer by given number" },
-  { "audio-demuxer", &audio_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, NULL, "forces using of audio-demuxer" },
-  { "sub-demuxer", &sub_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, NULL, "forces using of subtitle-demuxer" },
+  { "type", &demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, NULL, "forces demuxer by given number" },
+  { "audio", &audio_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, NULL, "forces using of audio-demuxer" },
+  { "sub", &sub_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, NULL, "forces using of subtitle-demuxer" },
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+};
+
+static const config_t demuxer_opts[] = {
+  { "demuxer", &demux_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Demuxer related options" },
   { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 

@@ -408,18 +408,18 @@ static int mp_input_print_cmd_list(config_t* cfg);
 
 // Our command line options
 static const config_t input_conf[] = {
-  { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "" },
-  { "ar-delay", &ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "" },
-  { "ar-rate", &ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "" },
-  { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "" },
-  { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "" },
-  { "js-dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "" },
-  { "file", &in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "" },
+  { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies alternative input.conf" },
+  { "ar-delay", &ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "autorepeate a key delay in milliseconds (0 to disable)" },
+  { "ar-rate", &ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "number of key-presses per second generating on autorepeat" },
+  { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "prints all keys that can be bound to commands" },
+  { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "prints all commands that can be bound to keys" },
+  { "js-dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies the joystick device" },
+  { "file", &in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifes file with commands (useful for FIFO)" },
   { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static const config_t mp_input_opts[] = {
-  { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, ""},
+  { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Input specific options"},
   { "joystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of joystick" },
   { "nojoystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of joystick" },
   { "lirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc" },

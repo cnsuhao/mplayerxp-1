@@ -52,8 +52,6 @@ struct config {
 	const char *help;
 };
 
-
-
 struct m_config {
   const config_t** opt_list;
   config_save_t** config_stack;

@@ -311,92 +311,6 @@ static int config_is_entry_option(m_config_t *config,const char *opt,const char 
     }
   }
 
-  if(! IS_RUNNING(config)) {
-    if(strcasecmp(opt,"vcd") == 0) {
-      char* s;
-      if(!param)
-	return ERR_MISSING_PARAM;
-      s = (char*)malloc((strlen(param) + 6 + 1)*sizeof(char));
-      sprintf(s,"vcd://%s",param);
-      entry = play_tree_new();
-      play_tree_add_file(entry,s);
-      free(s);
-    } else if(strcasecmp(opt,"dvd") == 0) {
-      char* s;
-      if(!param)
-	return ERR_MISSING_PARAM;
-      s = (char*)malloc((strlen(param) + 6 + 1)*sizeof(char));
-      sprintf(s,"dvd://%s",param);
-      entry = play_tree_new();
-      play_tree_add_file(entry,s);
-      free(s);
-    } else if(strcasecmp(opt,"tv") == 0) {
-      char *s,*pr,*prs;
-      char *channel=NULL;
-      const char *ps,*pe;
-      char *as;
-      int on=0;
-      if(!param)
-	return ERR_MISSING_PARAM;
-      ps = param;
-      pe = strchr(param,':');
-      pr = prs = (char*)malloc((strlen(param)+1)*sizeof(char));
-      pr[0] = '\0';
-      while(ps) {
-	if(!pe)
-	  pe = ps + strlen(ps);
-
-	as = strchr(ps,'=');
-	if(as && as[1] != '\0' && pe-as > 0)
-	  as++;
-	else
-	  as = NULL;
-	if( !as && pe-ps == 2 &&  strncasecmp("on",ps,2) == 0 )
-	  on = 1;
-	else if(as  && as-ps == 8  && strncasecmp("channel",ps,6) == 0 && pe-as > 0) {
-	  channel = (char*)realloc(channel,(pe-as+1)*sizeof(char));
-	  strncpy(channel,as,pe-as);
-	  channel[pe-as] = '\0';
-	} else if(pe-ps > 0) {
-	  if(prs != pr) {
-	    prs[0] = ':';
-	    prs++;
-	  }
-	  strncpy(prs,ps,pe-ps);
-	  prs += pe-ps;
-	  prs[0] = '\0';
-	}
-
-	if(pe[0] != '\0') {
-	  ps = pe+1;
-	  pe = strchr(ps,':');
-	} else
-	  ps = NULL;
-      }
-
-      if(on) {
-	int l=5;
-	
-	if(channel)
-	  l += strlen(channel);
-	s = (char*) malloc((l+1)*sizeof(char));
-	if(channel)
-	  sprintf(s,"tv://%s",channel);
-	else
-	  sprintf(s,"tv://");
-	entry = play_tree_new();
-	play_tree_add_file(entry,s);
-	if(strlen(pr) > 0)
-	  play_tree_set_param(entry,"tv",pr);
-	free(s);
-      }
-      free(pr);
-      if(channel)
-	free(channel);
-
-    }
-  }
-
   if(entry) {
     if(config->last_entry)
       play_tree_append_entry(config->last_entry,entry);
@@ -409,8 +323,6 @@ static int config_is_entry_option(m_config_t *config,const char *opt,const char 
   } else
     return 0;
 }
-
-
 
 static int config_read_option(m_config_t *config,config_t** conf_list,const char *opt,const char *param)
 {
@@ -434,6 +346,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 		for (i = 0; conf[i].name != NULL; i++) {
 			int namelength;
 			/* allow 'aa*' in config.name */
+//			MSG_DBG3( "cmp_option: conf=%s opt='%s'\n",conf[i].name,opt);
 			namelength=strlen(conf[i].name);
 			if ( (conf[i].name[namelength-1]=='*') && 
 				    !memcmp(opt, conf[i].name, namelength-1))
@@ -442,8 +355,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 			  goto option_found;
 		}
 	}
-	if (config->parser_mode == CONFIG_FILE)
-	  MSG_ERR( "invalid option: %s\n",opt);
+	MSG_ERR( "invalid option: %s\n",opt);
 	ret = ERR_NOT_AN_OPTION;
 	goto out;
 	option_found :
@@ -465,7 +377,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 	  return ret;
 	else
 	  ret = -1;
-	if(! IS_RUNNING(config) && ! IS_GLOBAL(config) && 
+	if(! IS_RUNNING(config) && ! IS_GLOBAL(config) &&
 	   ! (conf[i].flags & CONF_GLOBAL)  && conf[i].type != CONF_TYPE_SUBCONFIG  )
 	  m_config_push(config);
 	if( !(conf[i].flags & CONF_NOSAVE) && ! (conf[i].flags & CONF_GLOBAL) )
@@ -498,6 +410,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 				ret = 1;
 			} else {	/* parser_mode == COMMAND_LINE */
 				*((int *) conf[i].p) = conf[i].max;
+				MSG_DBG3("assigning %s=%i as flag value\n",conf[i].name,conf[i].max);
 				ret = 0;
 			}
 			break;
@@ -527,6 +440,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 				}
 
 			*((int *) conf[i].p) = tmp_int;
+			MSG_DBG3("assigning %s=%i as int value\n",conf[i].name,tmp_int);
 			ret = 1;
 			break;
 		case CONF_TYPE_FLOAT:
@@ -560,6 +474,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 				}
 
 			*((float *) conf[i].p) = tmp_float;
+			MSG_DBG3("assigning %s=%f as float value\n",conf[i].name,tmp_float);
 			ret = 1;
 			break;
 		case CONF_TYPE_STRING:
@@ -582,6 +497,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 					goto out;
 				}
 			*((char **) conf[i].p) = strdup(param);
+			MSG_DBG3("assigning %s=%s as string value\n",conf[i].name,param);
 			ret = 1;
 			break;
 		case CONF_TYPE_FUNC_PARAM:
@@ -694,7 +610,7 @@ out:
 	  else if(ret > 0)
 	    play_tree_set_param(dest,o,param);
 	  free(o);
-	  m_config_pop(config); 
+	  m_config_pop(config);
 	}
 	return ret;
 err_missing_param:
@@ -703,14 +619,49 @@ err_missing_param:
 	goto out;
 }
 
+static const config_t* m_config_find_option(const config_t **list,const char *name);
+
 int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
   char *e;
+  const config_t **clist=config->opt_list;
 #ifdef MP_DEBUG
   assert(config != NULL);
   assert(config->opt_list != NULL);
   assert(opt != NULL);
 #endif
   MSG_DBG2( "Setting option %s=%s\n",opt,param);
+  clist = config->opt_list;
+#if 1
+  if(strchr(opt,'.')) {
+    int flg,ret;
+    const config_t *subconf=NULL;
+    config_t* olist[] = { NULL, NULL };
+    MSG_DBG2("Parsing %s as subconfig\n",opt);
+    do {
+	if(!(e = strchr(opt,'.'))) break;
+	if((e-opt)>0) {
+	    char* s = (char*)malloc((e-opt+1)*sizeof(char));
+	    strncpy(s,opt,e-opt);
+	    s[e-opt] = '\0';
+	    MSG_DBG2("Treat %s as subconfig name\n",s);
+	    subconf = m_config_find_option(clist?clist:olist,s);
+	    clist=NULL;
+	    free(s);
+	    MSG_DBG2("returned %p as subconfig name\n",subconf);
+	    if(!subconf) return ERR_NOT_AN_OPTION;
+	    if(subconf->type!=CONF_TYPE_SUBCONFIG) return ERR_NOT_AN_OPTION;
+	    olist[0] = subconf->p;
+	    opt = e+1;
+	    MSG_DBG2("switching next subconf=%s\n",subconf->name);
+	}
+    }while(1);
+    flg=config->flags;
+    config->flags|=CONFIG_GLOBAL;
+    ret=config_read_option(config,olist,opt,param);
+    config->flags=flg;
+    return ret;
+  }
+#endif
   e = strchr(opt,':');
   if(e && e[1] != '\0') {
     int ret;
@@ -1004,21 +955,43 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 		if ((no_more_opts == 0) && (*opt == '-') && (*(opt+1) != 0)) /* option */
 		{
 		    /* remove leading '-' */
+		    char *assign,*item,*parm;
 		    opt++;
 
-		    MSG_DBG3( "this_opt = option: %s\n", opt);
-		    tmp = m_config_set_option(config, opt, argv[i + 1]);
+		    MSG_DBG2( "this_option: %s\n", opt);
+		    parm = argv[i+1];
+		    item=opt;
+		    assign = strchr(opt,'=');
+		    if(assign) {
+			item = malloc(assign-opt);
+			memcpy(item,opt,assign-opt);
+			item[assign-opt]='\0';
+			parm = strdup(assign+1);
+		    }
+		    tmp = m_config_set_option(config, item, parm);
+		    if(!tmp && assign) 
+			MSG_ERR("Option '%s' doesn't require arguments\n",item);
+		    if(assign) {
+			free(item);
+			free(parm);
+		    }
+		    if(!tmp && assign) goto err_out;
 
 		    switch (tmp) {
 		    case ERR_NOT_AN_OPTION:
 		    case ERR_MISSING_PARAM:
 		    case ERR_OUT_OF_RANGE:
 		    case ERR_FUNC_ERR:
-			MSG_ERR( "Error %d while parsing option: '%s'!\n",
-			    tmp, opt);
+			MSG_ERR( "Error '%s' while parsing option: '%s'!\n"
+				,tmp==ERR_NOT_AN_OPTION?"no-option":
+				 tmp==ERR_MISSING_PARAM?"missing-param":
+				 tmp==ERR_OUT_OF_RANGE?"out-of-range":
+				 "func-error"
+				,opt);
 			goto err_out;
 		    default:
 			i += tmp;
+			if(assign) i--;
 			break;
 		    }
 		}
@@ -1084,12 +1057,25 @@ int m_config_register_options(m_config_t *config,const config_t *args) {
   return 1;
 }
 
+static const config_t* m_config_find_option(const config_t **list,const char *name) {
+  unsigned i,j;
+  const config_t *conf;
+  if(list) {
+    for(j = 0; list[j] != NULL ; j++) {
+      conf = list[j];
+      for(i=0; conf[i].name != NULL; i++) {
+	if(strcasecmp(conf[i].name,name) == 0)
+	  return &conf[i];
+      }
+    }
+  }
+  return NULL;
+}
+
 config_t* m_config_get_option(m_config_t const*config,const char* arg) {
-  int i,j;
   char *e;
-  config_t *conf;
-  config_t **conf_list;
-  config_t* cl[] = { NULL, NULL };
+  const config_t **conf_list;
+  const config_t* cl[] = { NULL, NULL };
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -1108,17 +1094,7 @@ config_t* m_config_get_option(m_config_t const*config,const char* arg) {
     free(s);
   } else
     conf_list = config->opt_list;
-
-  if(conf_list) {
-    for(j = 0 ; conf_list[j] != NULL ; j++) {
-      conf = conf_list[j];
-      for(i=0; conf[i].name != NULL; i++) {
-	if(strcasecmp(conf[i].name,arg) == 0)
-	  return &conf[i];
-      }
-    }
-  }
-  return NULL;
+  return m_config_find_option(conf_list,arg);
 }
 
 void* m_config_get_option_ptr(m_config_t const*config,const char* arg) {
@@ -1302,76 +1278,100 @@ int m_config_is_option_set(m_config_t const*config,const char* arg) {
   return 0;
 }
 
-void m_config_show_options(const m_config_t *args) {
-    unsigned i,j;
-    const config_t *opts;
-    MSG_INFO("List of available command-line options:\n");
-    j=0;
-    while((opts=args->opt_list[j])!=NULL) {
-	i=0;
-	while(opts[i].name) {
-	    if(opts[i].type<=CONF_TYPE_PRINT) {
-		MSG_INFO("  -%-11s %s"
+static void __m_config_show_options(unsigned ntabs,const char *pfx,const config_t *opts) {
+    unsigned i,n;
+    i=0;
+    while(opts[i].name) {
+	if(opts[i].type==CONF_TYPE_SUBCONFIG  && opts[i].p) {
+	    char *newpfx;
+	    unsigned pfxlen;
+	    for(n=0;n<ntabs;n++) MSG_INFO(" ");
+	    MSG_INFO("%s:\n",opts[i].help);
+	    pfxlen=strlen(opts[i].name)+1;
+	    if(pfx) pfxlen+=strlen(pfx);
+	    newpfx=malloc(pfxlen+1);
+	    if(pfx) strcpy(newpfx,pfx);
+	    else    newpfx[0]='\0';
+	    strcat(newpfx,opts[i].name);
+	    strcat(newpfx,".");
+	    __m_config_show_options(ntabs+2,newpfx,(const config_t *)opts[i].p);
+	    free(newpfx);
+	}
+	else
+	if(opts[i].type<=CONF_TYPE_PRINT) {
+	    for(n=0;n<ntabs;n++) MSG_INFO(" ");
+	    if(pfx) MSG_INFO("-%-s",pfx);
+	    else    MSG_INFO("-");
+	    MSG_INFO("%-11s %s"
 		    ,opts[i].name
 		    ,(opts[i].type==CONF_TYPE_PRINT && strcmp(opts[i].help,"show help")!=0)?opts[i].p:opts[i].help);
-		if((opts[i].flags&CONF_NOCFG)==0) {
-		MSG_INFO(" {%s:",
+	    if((opts[i].flags&CONF_NOCFG)==0) {
+	    MSG_INFO(" {%s:",
 		    opts[i].type==CONF_TYPE_FLAG?"flg":
 		    opts[i].type==CONF_TYPE_INT?"int":
 		    opts[i].type==CONF_TYPE_FLOAT?"flt":
 		    opts[i].type==CONF_TYPE_STRING?"str":"");
-		switch(opts[i].type) {
-		case CONF_TYPE_FLAG: {
-		    int defv = *((int*)(opts[i].p));
-		    MSG_INFO("<default=%i>",defv);
-		}
-		break;
-		case CONF_TYPE_STRING: {
-		    const char **defv = (char**)(opts[i].p);
-		    if(defv) MSG_INFO("'%s'",*defv);
-		}
-		break;
-		case CONF_TYPE_INT: {
-		    int defv = *((int*)(opts[i].p));
-		    if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
-			MSG_INFO("[%i...%i]",(int)opts[i].min,(int)opts[i].max);
-		    }
-		    else
-		    if((opts[i].flags&CONF_MIN)==CONF_MIN) {
-			MSG_INFO("<min=%i>",(int)opts[i].min);
-		    }
-		    else
-		    if((opts[i].flags&CONF_MAX)==CONF_MAX) {
-			MSG_INFO("<max=%i>",(int)opts[i].max);
-		    }
-		    MSG_INFO("<default=%i>",defv);
-		}
-		break;
-		case CONF_TYPE_FLOAT: {
-		    float defv = *((float*)(opts[i].p));
-		    if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
-			MSG_INFO("[%f...%f]",(float)opts[i].min,(float)opts[i].max);
-		    }
-		    else
-		    if((opts[i].flags&CONF_MIN)==CONF_MIN) {
-			MSG_INFO("<min=%f>",(float)opts[i].min);
-		    }
-		    else
-		    if((opts[i].flags&CONF_MAX)==CONF_MAX) {
-			MSG_INFO("<float=%f>",(float)opts[i].max);
-		    }
-		    MSG_INFO("<default=%f>",defv);
-		}
-		break;
-		default:
-		break;
-		}
-		MSG_INFO("}");
-		}
-	    MSG_INFO("\n");
+	    switch(opts[i].type) {
+	    case CONF_TYPE_FLAG: {
+		int defv = *((int*)(opts[i].p));
+		MSG_INFO("<default=%i>",defv);
 	    }
-	    i++;
+	    break;
+	    case CONF_TYPE_STRING: {
+		const char **defv = (const char**)(opts[i].p);
+		if(defv) MSG_INFO("'%s'",*defv);
+	    }
+	    break;
+	    case CONF_TYPE_INT: {
+		int defv = *((int*)(opts[i].p));
+		if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
+		    MSG_INFO("[%i...%i]",(int)opts[i].min,(int)opts[i].max);
+		}
+		else
+		if((opts[i].flags&CONF_MIN)==CONF_MIN) {
+		    MSG_INFO("<min=%i>",(int)opts[i].min);
+		}
+		else
+		if((opts[i].flags&CONF_MAX)==CONF_MAX) {
+		    MSG_INFO("<max=%i>",(int)opts[i].max);
+		}
+		MSG_INFO("<default=%i>",defv);
+	    }
+	    break;
+	    case CONF_TYPE_FLOAT: {
+		float defv = *((float*)(opts[i].p));
+		if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
+		    MSG_INFO("[%f...%f]",(float)opts[i].min,(float)opts[i].max);
+		}
+		else
+		if((opts[i].flags&CONF_MIN)==CONF_MIN) {
+		    MSG_INFO("<min=%f>",(float)opts[i].min);
+		}
+		else
+		if((opts[i].flags&CONF_MAX)==CONF_MAX) {
+		    MSG_INFO("<float=%f>",(float)opts[i].max);
+		}
+		MSG_INFO("<default=%f>",defv);
+	    }
+	    break;
+	    default:
+	    break;
+	    }
+	    MSG_INFO("}");
+	    }
+	    MSG_INFO("\n");
 	}
+	i++;
+    };
+}
+
+void m_config_show_options(const m_config_t *args) {
+    unsigned j;
+    const config_t *opts;
+    j=0;
+    MSG_INFO("List of available command-line options:\n");
+    while((opts=args->opt_list[j])!=NULL) {
+	__m_config_show_options(2,NULL,opts);
 	j++;
     };
 }
