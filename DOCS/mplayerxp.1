@@ -39,7 +39,7 @@ fonts.
 .LP
 .SH "XP OPTIONS"
 .TP
-.B \-xp\ <0-4>
+.B \-core.xp\ <0-4>
 start MPlayerXP in XP mode. You should get smoothness (fixed FPS on the screen)
 with UP systems and decoding speedup with SMP.
     0 : XP mode off
@@ -49,7 +49,7 @@ with UP systems and decoding speedup with SMP.
 .B [default]
     4 : Decode video and audio and play audio in three different threads
 .TP
-.B \-da_buffs
+.B \-core.da_buffs
 Allows you specify number of buffers for decoding ahead.
 You can set it from 5 upto 64. 64 is default. (I recommend to use
 10 buffers as minimum to avoid screen juddering and other negative factors).
@@ -69,7 +69,7 @@ To play them synchronously we need to have some control points when both audio
 and video should be presented simultaneously at the same moment of time.
 From historical reasons, mplayerxp had two methods of A-V synchronizations:
 so-called
-.B dapsync
+.B sync.dap
 and so-called
 .B Arpi's
 method. But version
@@ -99,12 +99,12 @@ to detect A-V resync if it happens by some reasons (VBR audio as one of them) or
 when there exists drift between streams (due not a perfect hardware/drivers for
 example).
 .TP
-.B \-pts
+.B \-sync.pts
 use PTS based method of A/V synchronization.
 .I [default]
 in XP mode.
 .TP
-.B \-force_pts_fix
+.B \-sync.force_pts_fix
 force PTS fixing for "bad" (see PTS-based method explanation above) files.
 Useful as "cure" tool during stream remuxing (see 
 .B "MUXING"
@@ -117,65 +117,65 @@ It's useful only with described above cases and is not acceptable in other cases
 .I Note3:
 It may cause problems after seeking in some cases.
 .TP
-.B \-force_pts_fix2
+.B \-sync.force_pts_fix2
 .I [default]
-in XP mode for MPEG with -pts.
+in XP mode for MPEG with -sync.pts.
 Difference from the previous method is that PTS are not changed, instead are the
 frame duration temporarily used until both audio and video PTS has restarted from 0.
 This method does not have the problem after seeking but it can not be used together
-with -nopts and it is default off in that case. If -force_pts_fix is set than that
-method will be used even if -force_pts_fix2 is set to. 
+with -sync.nopts and it is default off in that case. If -sync.force_pts_fix is set than that
+method will be used even if -sync.force_pts_fix2 is set to.
 .TP
-.B \-nopts
+.B \-sync.nopts
 use Arpi's A/V sync method.
 .TP
-.B \-nopts \-dapsync
+.B \-sync.nopts \-sync.dap
 use alternative A/V sync method. Where is it useful?
 (is not available in
 .I XP
 mode)
 .TP
-.B \-frame_reorder
+.B \-sync.frame_reorder
 .I [default]
 in XP mode.
 Useful with -pts in XP mode on some MPEG where the frames are not stored in order.
 The frames pts is reordered as they are add to buffer.
 .TP
-.B \-delay\ <secs>
+.B \-sync.delay\ <secs>
 audio delay in seconds (may be +/- float value)
 .TP
-.B \-fps\ <value>
+.B \-sync.fps\ <value>
 force frame rate (if value is wrong in the header) (float number)
 (works with
-.I \-nopts
+.I \-sync.nopts
 key only)
 .TP
-.B \-mc\ <seconds/5frame>
+.B \-sync.mc\ <seconds/5frame>
 maximum sync correction per 5 frames (in seconds)
 (works with
-.I \-nopts
+.I \-sync.nopts
 key only)
 .TP
-.B \-noframedrop
+.B \-sync.noframedrop
 no frame dropping : every frame is played, audio and video may be out of
 sync
 .I [default]
 .TP
-.B \-framedrop
+.B \-sync.framedrop
 frame dropping : decodes all video frames, but skips displaying some ones
 (useful for slow cpu/systems)
 .TP
-.B \-hardframedrop
+.B \-sync.hardframedrop
 hardframe dropping : skips displaying and decoding of some frames
 .I Note:
 may produce image distortion with some codecs
 (useful for very slow cpu/systems)
 .TP
-.B \-softsleep
+.B \-sync.softsleep
 uses high quality software timers. Efficient as the RTC, doesn't need root,
 but requires more CPU.
 .TP
-.B \-nortc
+.B \-sync.nortc
 Disables using of /dev/rtc (real-time clock - high precision x86 chip)
 to compute PTS.
 .LP
@@ -189,7 +189,7 @@ and acts similar to second CPU on SMP. Performance is differ
 on slow and fast CPUs and on different chips but anyway bus
 mastering should povide speedup on any system.
 .TP
-.B \-enable_bm
+.B \-video.bm
 Enables using of bus mastering if it's available for given OS/videocard.
 .I Note:
 1.
@@ -210,7 +210,7 @@ make all install
 .TP
 modprobe dhahelper
 .TP
-mplayerxp -vo xvidix -xp -enable_bm -fs -zoom videoout.avi
+mplayerxp -vo xvidix -core.xp -video.bm -video.fs -video.zoom videoout.avi
 .SS
 .I Another ways to speedup playback:
 In general, there are two ways to increase performance of playback -
@@ -275,7 +275,7 @@ you can get the list of available drivers executing
 .I mplayerxp -ao help
 
 .TP
-.B \-lircconf\ <config\ file>
+.B \-input.lircconf\ <config\ file>
 specifies a configfile for LIRC (see http://www.lirc.org) if you don't like the default ~/.lircrc
 .TP
 .B \-v
@@ -306,7 +306,7 @@ enable filtering of verbosed messages. The value is combination of these fields:
     MSGT_NLS            0x00100000
 
 .TP
-.B \-benchmark
+.B \-core.benchmark
 Performs benchmarking. Currently it displays 3 characteristics of movie playback:
 MIN benchmark, AVE benchmark and MAX benchmark. You can estimate possibility of
 usage of
@@ -318,27 +318,27 @@ of new core.
 .I Note:
 If MIN BENCH is more than 100% then MPlayerXP will not help you! (Same as MPlayer).
 .TP
-.B \-playlist <file>
+.B \-play.list <file>
 play files according to this filelist (1 file/row or Winamp or ASX format).
 .TP
-.B \-ss\ <time>
+.B \-play.ss\ <time>
 seek to given time position. For example :
 
     -ss 56         seeks to 56 seconds
     -ss 01:10:00   seeks to 1 hour 10 min
     -ss 00:40:20.3 seeks to 40 minutes and 20.3 seconds
 .TP
-.B \-sb\ <byte\ position>
+.B \-play.sb\ <byte\ position>
 seek to byte position
 .TP
-.B \-loop\ <num>
+.B \-play.loop\ <num>
 loops movie playback <num> times. 0 means forever.
 .TP
-.B \-conf\ <path\ to\ input.conf\ file>
+.B \-input.conf\ <path\ to\ input.conf\ file>
 get input bindings from an alternative input.conf file (default :
 ~/.mplayerxp/input.conf).
 .TP
-.B \-speed\ <factor>
+.B \-video.speed\ <factor>
 Sets playback speed factor (default: 1.0)
 
 .TP
@@ -368,43 +368,6 @@ for example :
 See '-ac help' for FULL list !
 
 .TP
-.SH "AUDIO CODEC PARAMETERS"
-Currently only one codec supports parameters:
-.B -ac mp3
-You may pass to it the value which will change mp3 scaling
-.B -ac mp3:scaler=<val>
-here
-.B <val>
-may accept any value in floating=point form.
-Example:
-.I mplayerxp -ac mp3:scaler=0.1
-
-.B Why we need that?
-I've found out that many mp3 streams were badly
-coded (without volume decreasing before coding). During decoding
-of such streams all codecs produce extremely distorted output.
-This parameter helps us to descrease harmonical distortions
-during decoding of such streams.
-I've tested the maximal values of the signal of such stream and they
-were much large than
-.B 32767
-(that is maximal value of 16-bit signed integer type)
-that don't allow us to have the right form of signal since the codec
-cuts out high part of the signal that produces harmonical distortions.
-This coeffecient allows us to decrease the volume before converting
-the signal from floating-point form (this is main form of signal
-within of the codec) into integer form. Thus scaler has the similar
-behaviour as volume control but works within of codec before
-point where distortions may have place.
-.B Important:
-volume control (instead of scaler) won't help with such streams since
-the signal is already distrorted within of the codec.
-Indeed, this parameter can't make absolutedly crystal clear sound
-from badly coded streams and they require more complex mathematical
-convertions but it helps a lot and significandly improves quality
-of such streams.
-
-.TP
 .B \-vfm <video\ codec\ family>
 force usage of a specific codec FAMILY, and FALLBACK to default if failed.
 For example:
@@ -424,7 +387,7 @@ Currently only one family of codecs supports parameters:
 .B -vfm ffmpeg
 List of parameters:
 .TP
-.B ffmpeg_debug=<value>
+.B ffmpeg.debug=<value>
 display debugging information:
       0:  disabled
       1:  picture info
@@ -444,13 +407,13 @@ display debugging information:
           lower QP are tinted greener.
  0x4000:  Visualize block types.
 .TP
-.B ffmpeg_ec=<value>
+.B ffmpeg.ec=<value>
 Set error concealment strategy:
    1: Use strong deblock filter for damaged MBs.
    2: iterative motion vector (MV) search (slow)
    3: all (default)
 .TP
-.B ffmpeg_er=<value>
+.B ffmpeg.er=<value>
 Set error resilience strategy:
    0: disabled
    1: careful (Should work with broken encoders.)
@@ -459,27 +422,27 @@ Set error resilience strategy:
       even for valid bitstreams.)
    4: very aggressive
 .TP
-.B ffmpeg_idct=<0\-99>
+.B ffmpeg.idct=<0\-99>
 For best decoding quality use the same IDCT algorithm for decoding and encoding.
 This may come at a price in accuracy, though.
 .TP
-.B ffmpeg_vstats
+.B ffmpeg.vstats
 Prints some statistics and stores them in ./vstats_*.log.
 .TP
-.B ffmpeg_vismv=<value>
+.B ffmpeg.vismv=<value>
 Visualize motion vectors:
    0: disabled
    1: Visualize forward predicted MVs of P-frames.
    2: Visualize forward predicted MVs of B-frames.
    4: Visualize backward predicted MVs of B-frames.
 .TP
-.B ffmpeg_sb=<number> (MPEG-2 only)
+.B ffmpeg.sb=<number> (MPEG-2 only)
 Skip the given number of macroblock rows at the bottom.
 .TP
-.B ffmpeg_st=<number> (MPEG-2 only)
+.B ffmpeg.st=<number> (MPEG-2 only)
 Skip the given number of macroblock rows at the top.
 .TP
-.B ffmpeg_lowres=<number>[,<w>]
+.B ffmpeg.lowres=<number>[,<w>]
 Decode at lower resolutions. Low resolution decoding is not
 supported by all codecs, and it will often result in ugly artifacts.
 This is not a bug, but a side effect of not decoding at full resolution:
@@ -494,7 +457,7 @@ is specified lowres decoding will be used only if the width of the
 video is major than or equal to
 .I <w>.
 .TP
-.B ffmpeg_skiploopfilter=<skipvalue> (H.264 only)
+.B ffmpeg.skiploopfilter=<skipvalue> (H.264 only)
 Skips the loop filter (AKA deblocking) during H.264 decoding.
 Since the filtered frame is supposed to be used as reference
 for decoding dependent frames this has a worse effect on quality
@@ -513,20 +476,20 @@ can be either one of the following:
     nonkey:   Skip all frames except keyframes.
     all:      Skip all frames.
 .TP
-.B ffmpeg_skipidct=<skipvalue> (MPEG-1/2 only)
+.B ffmpeg.skipidct=<skipvalue> (MPEG-1/2 only)
 Skips the IDCT step.
 This degrades quality a lot of in almost all cases
 (see skiploopfilter for available skip values).
 .TP
-.B ffmpeg_skipframe=<skipvalue>
+.B ffmpeg.skipframe=<skipvalue>
 Skips decoding of frames completely.
 Big speedup, but jerky motion and sometimes bad artifacts
 (see skiploopfilter for available skip values).
 .TP
-.B ffmpeg_threads=<1\-8> (MPEG-1/2 and H.264 only)
+.B ffmpeg.threads=<1\-8> (MPEG-1/2 and H.264 only)
 number of threads to use for decoding (default: 1)
 .TP
-.B ffmpeg_o=<key>=<value>[,<key>=<value>[,...]]
+.B ffmpeg.o=<key>=<value>[,<key>=<value>[,...]]
 Pass AVOptions to libavcodec decoder.
 Note, a patch to make the o= unneeded and pass all unknown options through
 the AVOption system is welcome.
@@ -562,31 +525,25 @@ for the syntax.
 .B \-include configfile
 specify config file to be parsed after the default
 .TP
-.B \-z\ <0-9>
+.B \-video.z\ <0-9>
 specifies compression level for PNG output
           0 : no compression
           9 : max compression
 .TP
-.B \-nodshow
-disables usage of DirectShow video codecs
-.TP
-.B \-noxv (SDL only)
+.B \-video.noxv (SDL only)
 disable XVideo hardware acceleration
 .TP
-.B \-forcexv (SDL only)
+.B \-video.forcexv (SDL only)
 force using XVideo hardware acceleration
 .TP
-.B \-forcegl (SDL only)
+.B \-video.forcegl (SDL only)
 force using OpenGL. (May help with cards which lack overlay/scaler
 but have powerful 3D-engine. Example: some SGI cards)
 .TP
-.B \-config <config\ file>
-specifies where to search for config file
-.TP
-.B \-frames\ number
+.B \-play.frames\ number
 MPlayerXP plays <number> frames, then quits.
 .TP
-.B \-cache\ <kbytes>
+.B \-core.cache\ <kbytes>
 This option specifies how much memory to use when precaching a file/URL.
 Especially useful on slow media with variable speed of data transfer
 (sharped CDROM for example or network). Default is 1MB.
@@ -643,19 +600,19 @@ key to decrypt stream encrypted with CSS. For example : -dvdkey F169072699
 .B \-csslib\ <path to libcss.so>
 This option is useful only if libcss.so can't be autodetected
 .TP
-.B \-alang\ <audio\ stream\ language>
+.B \-audio.lang\ <audio\ stream\ language>
 Used when playing DVD disks. Expects a two-letter country code(s) as
 parameter, and always tries to playback audio streams those language
-matches the given code. For example: -alang hu,en will always try to play
+matches the given code. For example: -audio.lang=hu,en will always try to play
 hungarian or if it's non-existant then english audio streams if there are any.
 .TP
-.B \-slang\ <subtitle\ language>
+.B \-sub.lang\ <subtitle\ language>
 See the -sid option, but this one needs a two-letter parameter, a country code.
-Like: -slang hu,en will always select hungarian or if it's non existant then
+Like: -sub.lang=hu,en will always select hungarian or if it's non existant then
 english subtitles, if there are any. For the list of available subtitles, use
 with the -v switch and look at the output.
 .TP
-.B \-spuaa <mode> (OSD only)
+.B \-osd.spuaa <mode> (OSD only)
 Antialiasing/\:scaling mode for DVD/\:VOBsub.
 A value of 16 may be added to <mode> in order to force scaling even
 when original and scaled frame size already match.
@@ -667,19 +624,19 @@ Available modes are:
     3 : bilinear (default, fast and not too bad)
     4 : uses swscaler gaussian blur (looks very good)
 .TP
-.B \-spualign <-1\-2> (OSD only)
+.B \-osd.spualign <-1\-2> (OSD only)
 Specify how SPU (DVD/\:VOBsub) subtitles should be aligned.
     -1 : original position
      0 : Align at top (original behavior, default).
      1 : Align at center.
      2 : Align at bottom.
 .TP
-.B \-spugauss <0.0\-3.0> (OSD only)
-Variance parameter of gaussian used by \-spuaa 4.
+.B \-osd.spugauss <0.0\-3.0> (OSD only)
+Variance parameter of gaussian used by \-osd.spuaa=4.
 Higher means more blur (default: 1.0).
 
 .TP
-.B \-subcc
+.B \-sub.cc
 Display DVD Closed Caption (CC) subtitles.
 These are
 .B not
@@ -690,90 +647,90 @@ CC subtitles have not been spotted on DVDs from other regions so far.
 
 .LP
 .SH "FRAME'S GEOMETRY CONTROL"
-.B \-flip
+.B \-video.flip
 flip image (useful for example for old Indeo codecs). Supported only(?)
 by the 'sdl' and 'x11' outputs.
 .TP
-.B \-aspect <ratio>
+.B \-video.aspect <ratio>
 set aspect ratio of movies. It's autodetected on MPEG files, and can't be
 autodetected on AVI files. Examples:
 
-    -aspect 4:3  or -aspect 1.3333
-    -aspect 16:9 or -aspect 1.7777
+    -video.aspect=4:3  or -video.aspect=1.3333
+    -video.aspect=16:9 or -video.aspect=1.7777
 
 .TP
-.B \-monitorpixelaspect <ratio>
+.B \-video.monitorpixelaspect <ratio>
 Set the aspect of a single pixel of your monitor or TV screen (default: 1).
 A value of 1 means square pixels (correct for almost all LCDs).
 Examples:
 
-    -monitorpixelaspect 4:3  or 1.3333
+    -video.monitorpixelaspect=4:3  or 1.3333
 .TP
-.B \-x\ <x>
+.B \-video.x\ <x>
 scale image to x width (if driver supports)
 .TP
-.B \-y\ <y>
+.B \-video.y\ <y>
 scale image to y height (if driver supports)
 .TP
-.B \-xy\ <factor>
+.B \-video.xy\ <factor>
 scale image by <factor>
 .TP
 
 .LP
 .SH "SCREEN CONTROL"
 .TP
-.B \-display <name>
+.B \-x.display <name>
 specify the hostname and display number of the X server you want
-to display on. For example : -display xtest.localdomain:0
+to display on. For example : -x.display=xtest.localdomain:0
 .TP
-.B \-xineramascreen <screen number>
+.B \-x.xinerama <screen number>
 in Xinerama configurations (i.e. a single desktop that spans across multiple
 displays) this option tells MPlayerXP which screen to display movie on. Range
 0 - ...
 .TP
-.B \-wid\ <window\ id>
+.B \-x.wid\ <window\ id>
 This tells MPlayerXP to use a X11 window, which is useful to embed MPlayerXP in a
 browser (with the plugger extension for instance)
 .TP
-.B \-fsmode\ mode
+.B \-x.rootwin
+play movie in the root window (desktop background) instead of opening
+a new one. Works only with the xv and xmga drivers.
+.TP
+.B \-video.fsmode\ mode
 This option workarounds some problems when using specific windowmanagers and
 fullscreen mode. If you experience fullscreen problems, try changing this
 value between 0 and 7.
 
-        -fsmode 0      new method
-        -fsmode 1      ICCCWM patch
-                       (for KDE2/icewm)
-        -fsmode 2      old method
-        -fsmode 3      ICCCWM patch
-                       plus Motif method
+        -video.fsmode=0 new method
+        -video.fsmode=1 ICCCWM patch
+                        (for KDE2/icewm)
+        -video.fsmode=2 old method
+        -video.fsmode=3 ICCCWM patch
+                        plus Motif method
 .TP
-.B \-fs
+.B \-video.fs
 fullscreen playing (centers movie, makes black bands around it and uses SW
 scaler if there is no HW one available). Toggle it with the 'f' key (not
 all video outputs support it).
 .TP
-.B \-vm
+.B \-video.vm
 try to change to a different video mode. dga2, x11 (XF86VidMode) and sdl
 output drivers support it.
 .TP
-.B \-zoom
+.B \-video.zoom
 Keeps aspect ratio on the screen
 .I [default]
 .TP
-.B \-bpp\ <depth>
+.B \-video.bpp\ <depth>
 use different color depth than autodetect. Not all -vo drivers support
 it (fbdev, dga2, svga, vesa).
 .TP
-.B \-rootwin
-play movie in the root window (desktop background) instead of opening
-a new one. Works only with the xv and xmga drivers.
-.TP
-.B \-screenw\ <pixels>
+.B \-video.screenw\ <pixels>
 If you use an output driver which can't know the resolution of the screen
 (fbdev/x11 and/or TVout) this is where you can specify the horizontal
 resolution.
 .TP
-.B \-screenh\ <pixels>
+.B \-video.screenh\ <pixels>
 If you use an output driver which can't know the resolution of the screen
 (fbdev/x11 and/or TVout) this is where you can specify the vertical
 resolution.
@@ -837,7 +794,7 @@ implementation in videocard.
 Listed below options are implemented on software level and don't required
 special hardware.
 .TP
-.B \-autoq\ <quality>
+.B \-core.autoq\ <quality>
 dynamically changes the level of postprocess, depending on spare CPU time
 available. The number you specify will be the maximum level used. Usually you
 can use some big number. You may not use together with -vf pp but it's ok with
@@ -845,12 +802,12 @@ it!
 .I Note:
 In XP mode it depends on tile of free buffers for decoding ahead.
 .I Example:
--autoq 100 -vf pp=de
+-core.autoq 100 -vf pp=de
 .I Note:
 If you have not enough power CPU then it would be reasonable to limit
--autoq with 1 or 2 only.
+-core.autoq with 1 or 2 only.
 .TP
-.B \-sws\ <software\ scaler\ type>
+.B \-video.sws\ <software\ scaler\ type>
 this option sets the quality (and speed, respectively) of the software scaler,
 with the -zoom option. For example with x11 or other outputs which lack
 hardware scaler. Possible settings are:
@@ -874,27 +831,27 @@ of software code.
 .I Note:
 Currently only dshow and divx4linux codecs support this feature.
 .TP
-.B \-brightness
+.B \-video.eq.brightness
 Corrects brightness of video image (from black screen).
 .TP
-.B \-saturation
+.B \-video.eq.saturation
 Corrects satuartion of video image (from grayscaled image).
 .TP
-.B \-contrast
+.B \-video.eq.contrast
 Corrects contrast of video image (from black screen).
 .TP
-.B \-hue
+.B \-video.eq.hue
 Corrects hues of video image.
 .TP
-.B \-red_intensity
+.B \-video.eq.red
 .TP
-.B \-green_intensity
+.B \-video.eq.green
 .TP
-.B \-blue_intensity
+.B \-video.eq.blue
 Correct RGB intensity of video image.
 
-.B Example: 
-mplayerxp -brightness 300 -contrast -237 -red_intensity 57 filename
+.B Example:
+mplayerxp -video.eq.brightness=300 -video.eq.contrast=-237 -video.eq.red=57 filename
 
 .SS VIDEO POSTPROCESSING
 .I Note:
@@ -1548,27 +1505,20 @@ buffers. Currently, only
 .B VIDIX
 provides real direct rendering into video memory.
 .TP
-.B \-vaa_dr
-Enables direct rendering (by default)
-.TP
-.B \-vaa_nodr
-Disables direct rendering. It's useful if MPlayerXP has
-some not fixed bugs only.
-.TP
-.B \-nodouble
+.B \-video.nodouble
 disables doublebuffering.
 With the DGA driver this also disables OSD support but yields some speed gain.
 .TP
-.B \-double
+.B \-video.double
 enables doublebuffering.
 Double buffering is technology when video output is performed into separate
 video buffers. It supresses OSD flickering. When you specify
-.I -xp
+.I -core.xp
 key it forces multibuffering mode and uses all available (video) memory
 to enable
 .I decoding ahead
 .TP
-.B \-vsync
+.B \-video.vsync
 forces video hardware to wait VSYNC signal before buffer switching
 in doublebuffered mode. This key is useful only to supressing screen
 juddering during buffer switching.
@@ -1576,13 +1526,13 @@ juddering during buffer switching.
 .LP
 .SH "OSD CONTROL"
 .TP
-.B \-font\ <path\ to\ font.desc\ file>
+.B \-osd.font\ <path\ to\ font.desc\ file>
 search for the OSD/SUB fonts in an alternative directory (default :
 ~/.mplayerxp/font/font.desc). For example:
 
-    -font ~/.mplayerxp/arial-14/font.desc
+    -osd.font ~/.mplayerxp/arial-14/font.desc
 .TP
-.B \-ffactor\ <number>
+.B \-osd.ffactor\ <number>
 resample alphamap of the font. Can be:
 
         0    plain white fonts
@@ -1590,67 +1540,64 @@ resample alphamap of the font. Can be:
         1    narrow black outline
         10   bold black outline
 .TP
-.B \-sub\ <subtitle\ file>
+.B \-sub.file\ <subtitle\ file>
 use/display this subtitle file
 .TP
-.B \-subfps\ <rate>
+.B \-sub.fps\ <rate>
 specify frame/sec rate of subtitle file (float number)
 (ONLY for frame-based SUB files, i.e. NOT MicroDVD format!)
 (default: the same fps as the movie)
 .TP
-.B \-subdelay\ <sec>
+.B \-sub.delay\ <sec>
 delays subtitles by <sec> seconds. Can be negative.
 .TP
-.B \-vobsub\ <vobsub\ file\ without\ extention>
+.B \-sub.vob\ <vobsub\ file\ without\ extention>
 specify the VobSub files that are to be used for subtitle.  This is
 the full pathname without extensions, i.e. without the ".idx", ".ifo"
 or ".sub".
 .TP
-.B \-vobsubid\ <vobsub\ subtitle\ id>
+.B \-sub.vobid\ <vobsub\ subtitle\ id>
 specify the VobSub subtitle id.  Valid values range from 0 to 31.
 .TP
-.B \-osdlevel\ <level>
+.B \-osd.level\ <level>
 specifies which mode the OSD should start in (0 : none, 1 : seek, 2: seek+timer)
 (default = 2)
 .TP
-.B \-subcp\ codepage
+.B \-sub.cp\ codepage
 If your system supports iconv(3), you can use this option to
 specify codepage of the subtitle. Examples:
 
-        -subcp latin2
-        -subcp cp1250
+        -sub.cp=latin2
+        -sub.cp=cp1250
 .TP
-.B \-unicode
+.B \-sub.unicode
 tells MPlayerXP to handle the subtitle file as UNICODE.
-Contrary: -nounicode
+Contrary: -sub.nounicode
 .TP
-.B \-utf8
+.B \-sub.utf8
 tells MPlayerXP to handle the subtitle file as UTF8.
 
 .IP
 .SH SOUND CONTROL
 .TP
-.B \-mixer\ <device>
+.B \-audio.mixer\ <device>
 this option will tell MPlayerXP to use a different device for mixing than
 /dev/mixer.
 .TP
-.B \-master
-obsoleted option, use Software audio mixer plugin instead (see DOCS).
-.TP
-.B \-nosound
+.B \-audio.off
 don't play sound
 .TP
-.B \-abs\ <bytes>
+.B \-audio.bs\ <bytes>
 sound card audio buffer size (in bytes, default: measuring)
 .TP
-.B \-stereo mode
+.B \-audio.stereo mode
 select type of MP2/MP3 stereo output.
 
         Stereo         0
         Left channel   1
         Right channel  2
 .TP
-.B \-channels n
+.B \-audio.channels n
 select number of audio output channels to be used
 
         Stereo         2
@@ -1659,7 +1606,7 @@ select number of audio output channels to be used
 
 Currently this option is only honoured for AC3 audio.
 .TP
-.B \-srate <Hz>
+.B \-audio.rate <Hz>
 specifies Hz to playback audio on. Has effect on playback speed!
 
 .LP
@@ -1749,38 +1696,38 @@ This code is not tested!!!
 .B oss://<@device>#<channels>,<samplerate>,<sampleformat>
 This option enables the OSS grabbing feature of MPlayerXP.
 .TP
-.B -shuffle
+.B -play.shuffle
 Play files in random order.
 .TP
-.B -ipv4 (network only)
+.B -net.ipv4 (network only)
 will force mplayerxp to use IPv4 protocol over network. That is
 default settings.
 .TP
-.B -ipv6 (network only)
+.B -net.ipv6 (network only)
 will force mplayerxp to use IPv6 protocol over network.
 .TP
-.B -ipv4-only-proxy (network only)
+.B -net.ipv4-only-proxy (network only)
 Skip the proxy for IPv6 addresses.
 It will still be used for IPv4 connections.
 .TP
-.B -cookies (network only)
+.B -net.cookies (network only)
 Send cookies when making HTTP requests.
 .TP
-.B -cookies-file <filename> (network only)
+.B -net.cookies-file <filename> (network only)
 Read HTTP cookies from <filename> (default: ~/.mozilla/ and ~/.netscape/)
 and skip reading from default locations.
 The file is assumed to be in Netscape format.
 .TP
-.B -netpass <password> (network only)
+.B -net.pass <password> (network only)
 Specify password for HTTP authentication.
 .TP
-.B -netuser <username> (network only)
+.B -net.user <username> (network only)
 Specify username for HTTP authentication.
 .TP
-.B -net-user-agent <string>
+.B -net.user-agent <string>
 Use <string> as user agent for HTTP streaming.
 .TP
-.B -netbandwidth <value> (network only)
+.B -net.bandwidth <value> (network only)
 Specify the maximum bandwidth for network streaming (for servers that are
 able to send content in different bitrates).
 Useful if you want to watch live streamed media behind a slow connection.
@@ -1789,33 +1736,33 @@ bandwidth allowing faster cache filling and stream dumping.
 .LP
 .SH "MOVIE PARSER OR DEMUXING"
 .TP
-.B \-aid\ <id>
+.B \-audio.id\ <id>
 select audio channel [MPG: 0-31 AVI: 1-99 ASF: 0-127 VOB: 128-...]
 .TP
-.B \-vid\ <id>
+.B \-video.id\ <id>
 select video channel [MPG: 0-15  AVI:  -- ]
 .TP
-.B \-sid\ <id>
+.B \-sub.id\ <id>
 Turns on DVD subtitle displaying. Also, you MUST specify a number which
 corresponds to a DVD subtitle language (0-31). For the list of available
 subtitles, use with the -v switch and look at the output.
 .TP
-.B \-ni
+.B \-avi.ni
 force usage of non-interleaved AVI parser (fixes playing
 of some bad AVI files)
 .TP
-.B \-idx
+.B \-avi.idx
 rebuilds INDEX of the AVI, thus allowing seeking. Useful with broken/incomplete
 downloads, or badly created AVIs.
 .TP
-.B \-noidx
+.B \-avi.noidx
 disregards INDEX of the AVI. Useful for files with broken index (desyncs, etc).
 Seeking will NOT be possible. You can fix the index permanently
 with
 .I MUXING
 , see below.
 .TP
-.B \-forceidx
+.B \-avi.forceidx
 force rebuilding of INDEX. Useful for files with broken index (desyncs, etc).
 Seeking will be possible. You can fix the index permanently with
 .I MUXING
@@ -1827,16 +1774,16 @@ Seeking will be possible. You can fix the index permanently with
 .I Introduction:
 This method was designed network as sucker and as facility to dump DVD into signle
 files but you may use it as "cure" tool in some cases (see
-.B \-force_pts_fix
+.B \-sync.force_pts_fix
 for detail).
 .I Note:
 Also you may specify
-.B -ss
+.B -play.ss
 and
-.B -frames
+.B -play.frames
 options to proceed only part of source stream.
 .TP
-.B \-dump @<type>:<sname/subtype>
+.B \-core.dump @<type>:<sname/subtype>
 specifies dump type and stream name
 .SS Dumping types
 .TP
@@ -1850,16 +1797,16 @@ Useful for example as network sucker.
 dumps raw stream into file. You may specify which part of movie should be
 dumped. Examples:
 
-.I -dump @raw:audio
+.I -core.dump @raw:audio
  - will dump audio data only in raw format into a_dump.raw
 
-.I -dump @raw:video
+.I -core.dump @raw:video
  - will dump video data only in raw format into v_dump.raw
 
-.I -dump @raw:sub
+.I -core.dump @raw:sub
  - will dump subtitles only in raw format into s_dump.raw
 
-.I -dump @raw:filename.ext
+.I -core.dump @raw:filename.ext
  - will dump all streams in raw format into filename.ext
 
 .TP
@@ -1868,28 +1815,28 @@ remulitplexes any stream which can be recognized by demuxer
 into the stream of MPXPAV64 format. (Most compact A-V container
 today) Examples:
 
-.I -dump @mpxp:filename.ext
+.I -core.dump @mpxp:filename.ext
  - will dump all streams in MPXPAV64 format into filename.ext
 
-.I -dump @mpxp:audio
+.I -core.dump @mpxp:audio
  - will dump audio data only in MPXPAV64 format into a_dump.raw
 
-.I -dump @mpxp:video
+.I -core.dump @mpxp:video
  - will dump video data only in MPXPAV64 format into v_dump.raw
 
-.I -dump @mpxp:sub
+.I -core.dump @mpxp:sub
  - will dump subtitles only in MPXPAV64 format into s_dump.raw
 
 .TP
-.B \-lavf
+.B lavf
 remulitplexes any stream which can be recognized by demuxer
 into any stream which is supported by libavformat library.
  Examples:
 
-.I -dump @lavf:avi
+.I -core.dump @lavf:avi
  - will dump all streams in AVI format into avs_dump.avi
 
-.I -dump @lavf:asf
+.I -core.dump @lavf:asf
  - will dump all streams in ASF format into avs_dump.asf
 
 .I Note:
@@ -2117,12 +2064,6 @@ mplayerxp vcdnav://
 .TP
 .B Quickstart Video CD playing from cd_image
 mplayerxp vcdnav://@/tmp/cd_image.iso
-.TP
-.B Play track 2 of Video CD only from CD image
-mplayerxp vcd://@/tmp/cd_image.iso#2
-.TP
-.B Play track 3 of Video CD only
-mplayerxp vcd:///3
 .TP
 .B Stream from HTTP
 mplayerxp http://mplayerhq.hu/example.avi

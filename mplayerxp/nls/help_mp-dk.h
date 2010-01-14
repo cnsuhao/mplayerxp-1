@@ -15,29 +15,12 @@ static char help_text[]=
 "Muligheder:\n"
 " -vo <drv[:dev]> vælger video driver og enhed (se '-vo help for en komplet liste')\n"
 " -ao <drv[:dev]> vælger lyd driver og enhed (se '-ao help for en komplet liste')\n"
-" vcdnav://<trackno>  afspiller et VCD (video cd) nummer fra et drev i stedet for en fil\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  specificer DVD enhed til autoriseringen (til krypteret dvd)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  afspiller DVD titel/nummer fra et drev i stedet for en fil\n"
-#endif
-" -ss <timepos>   søger til en given (sekunder eller hh:mm:ss) position\n"
-" -nosound        afspiller uden lyd\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  vælger MPEG1 stereo udgang (0:stereo 1:venstre 2:højre)\n"
-#endif
-" -channels <n>   antallet af audio kanaler\n"
-" -fs -vm -zoom   type af afspilning i fuldskærm (fuldskærm, video mode, software skalering)\n"
-" -x <x> -y <y>   skaler billede til <x> * <y> opløsning [hvis -vo driveren understøtter det!]\n"
-" -sub <file>     specificer undertekst-fil (se også -subfps, -subdelay)\n"
-" -playlist <file> specificer afspilningsliste-fil\n"
-" -vid x -aid y   afspil film (x) og lyd (y)\n"
-" -fps x -srate y ændrer filmens (x fps) og lydens (y Hz)\n"
-" -vf pp=de -af crystality   slå postprocessing filter (bedre billedkvalitet) til\n"
-" -nobps          brug en alternativ A-V synk. metode til AVI filer (kan hjælpe hvis lyd og billedet synk. er korrupt!)\n"
-" -framedrop      slår billede-skip til (kan hjælpe langsomme maskiner)\n"
-" -wid <window id> brug et eksisterende vindue som video udgang (brugbar sammen med plugger!)\n"
+" -play.ss <timepos> søger til en given (sekunder eller hh:mm:ss) position\n"
+" -audio.off      afspiller uden lyd\n"
+" -video.fs       type af afspilning i fuldskærm (fuldskærm, video mode, software skalering)\n"
+" -sub.file <file>specificer undertekst-fil\n"
+" -play.list<file>specificer afspilningsliste-fil\n"
+" -sync.framedrop slår billede-skip til (kan hjælpe langsomme maskiner)\n"
 "\n"
 "Keys:\n"
 " <-  or  ->      søger 10 sekunder frem eller tilbage\n"

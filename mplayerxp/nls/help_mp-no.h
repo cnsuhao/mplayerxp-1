@@ -16,28 +16,11 @@ static char help_text[]=
 "Valg:\n"
 " -vo <drv[:dev]> velg video-ut driver og enhet (se '-vo help' for liste)\n"
 " -ao <drv[:dev]> velg lyd-ut driver og enhet (se '-ao help' for liste)\n"
-" vcdnav://<sporno>   spill VCD (video cd) spor fra enhet i stedet for fil\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  spesifiser DVD enhet for autentikasjon (for krypterte disker)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<tittelno> spill DVD tittel/spor fra enhet i stedet for fil\n"
-#endif
-" -ss <timepos>   søk til gitt (sekunder eller hh:mm:ss) posisjon\n"
-" -nosound        ikke spill av lyd\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  velg MPEG1 stereo output (0:stereo 1:venstre 2:høyre)\n"
-#endif
-" -channels <n>   målnummer for lyd output kanaler\n"
-" -fs -vm -zoom   fullskjerm avspillings valg (fullscr,vidmode chg,softw.scale)\n"
-" -x <x> -y <y>   skaler bildet til <x> * <y> oppløsning [hvis -vo driver støtter det!]\n"
-" -sub <fil>      spesifiser hvilken subtitle fil som skal brukes (se også -subfps, -subdelay)\n"
-" -vid x -aid y   spesifiser hvilken video (x) og lyd (y) stream som skal spilles av\n"
-" -fps x -srate y spesifiser video (x fps) og lyd (y Hz) hastiget\n"
-" -vf pp=de -af crystality   slå på etterbehandlingsfilter\n"
-" -nobps          bruk alternativ A-V sync metode for AVI filer (kan være nyttig!)\n"
-" -framedrop      slå på bilde-dropping (for trege maskiner)\n"
-" -wid <window id> bruk eksisterende vindu for video output (nytting med plugger!)\n"
+" -play.ss <timepos>søk til gitt (sekunder eller hh:mm:ss) posisjon\n"
+" -audio.off      ikke spill av lyd\n"
+" -video.fs       fullskjerm avspillings valg (fullscr,vidmode chg,softw.scale)\n"
+" -sub.file <fil> spesifiser hvilken subtitle fil som skal brukes\n"
+" -sync.framedrop slå på bilde-dropping (for trege maskiner)\n"
 "\n"
 "Tastatur:\n"
 " <- eller ->       søk bakover/fremover 10 sekunder\n"

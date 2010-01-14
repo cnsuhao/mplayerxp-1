@@ -15,26 +15,11 @@ static char help_text[]=
 "Opţiuni:\n"
 " -vo <drv[:disp]> Ieşirea video: driver&dispozitiv ('-vo help' pentru o listă)\n"
 " -ao <drv[:disp]> Ieşirea audio: driver&dispozitiv ('-ao help' pentru o listă)\n"
-" vcdnav://<număr pistă>  foloseşte <pista> de pe dispozitivul VCD în loc de fişier\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <disp>  dispozitivul DVD pentru autentificare (la discuri encriptate)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titlu>  foloseşte titlu/pista de pe dispozitivul DVD în loc de fişier\n"
-#endif
-" -ss <poziţia>   sare la poziţia (secunde sau oo:mm:ss)\n"
-" -nosound        fără sunet\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mod>   modul stereo la MPEG (0:stereo 1:canalul stâng 2:canalul drept)\n"
-#endif
-" -fs -vm -zoom   mod tot ecranul (tot ecranul,schimbă modul,scalat prin software)\n"
-" -x <x> -y <y>   scalează imaginea la <x> * <y> [dacă driver-ul -vo suportă!]\n"
-" -sub <fişier>   specifică fişierul cu subtitrări (vezi şi -subfps, -subdelay)\n"
-" -vid x -aid y   opţiuni pentru selectarea pistei video (x) sau audio (y)\n"
-" -fps x -srate y opţiuni pentru schimbarea ratei video (x fps) sau audio (y Hz)\n"
-" -vf pp=de -af crystality  activează filtrul de postprocesare\n"
-" -nobps          foloseşte metoda alternativă de sicronizare A-V (poate ajuta!)\n"
-" -framedrop      activează săritul cadrelor (pentru calculatoare lente)\n"
+" -play.ss <poziţia>sare la poziţia (secunde sau oo:mm:ss)\n"
+" -audio.off       fără sunet\n"
+" -video.fs       mod tot ecranul (tot ecranul,schimbă modul,scalat prin software)\n"
+" -sub.file <fişier>specifică fişierul cu subtitrări\n"
+" -sync.framedrop activează săritul cadrelor (pentru calculatoare lente)\n"
 "\n"
 "Taste:\n"
 " <-  sau  ->      caută faţă/spate cu 10 secunde\n"

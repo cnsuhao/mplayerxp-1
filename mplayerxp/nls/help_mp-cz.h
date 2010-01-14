@@ -18,29 +18,12 @@ static char help_text[]=
 "Přepínače:\n"
 " -vo <drv[:dev]> výběr výstupního video ovladače&zařízení (-vo help pro seznam)\n"
 " -ao <drv[:dev]> výběr výstupního audio ovladače&zařízení (-ao help pro seznam)\n"
-" vcdnav://<trackno>  přehrát VCD (video cd) stopu ze zařízení místo ze souboru\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  určení DVD zařízení pro autentikaci (pro kódované disky)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  přehrát DVD titul/stopu ze zařízení (mechaniky) místo souboru\n"
-#endif
-" -ss <timepos>   posun na pozici (sekundy nebo hh:mm:ss)\n"
-" -nosound        přehrávat beze zvuku\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  výběr audiokanálu pro MPEG1 (0:stereo 1:levý 2:pravý)\n"
-#endif
-" -channels <n>   cílový počet zvukových výstupních kanálů\n"
-" -fs -vm -zoom   volby pro přehrávání přes celou obrazovku (celá obrazovka\n                 měnit videorežim, softwarový zoom)\n"
-" -x <x> -y <y>   zvětšení obrazu na rozměr <x>*<y> (pokud to umí -vo ovladač!)\n"
-" -sub <file>     volba souboru s titulky (viz také -subfps, -subdelay)\n"
-" -playlist <file> určení souboru se seznamem přehrávaných souborů\n"
-" -vid x -aid y   výběr čísla video (x) a audio (y) proudu pro přehrání\n"
-" -fps x -srate y volba pro změnu video (x fps) a audio (y Hz) frekvence\n"
-" -vf pp=de -af crystality   aktivace postprocesing filtru\n"
-" -nobps          použít alternativní A-V synchronizační metodu pro Avi soubory\n"
-" -framedrop      povolit zahazování snímků (pro pomale stroje)\n"
-" -wid <window id> použít existující okno pro výstup videa\n"
+" -play.ss <timepos> posun na pozici (sekundy nebo hh:mm:ss)\n"
+" -audio.off      přehrávat beze zvuku\n"
+" -video.fs       volby pro přehrávání přes celou obrazovku (celá obrazovka\n                 měnit videorežim, softwarový zoom)\n"
+" -sub.file <file> volba souboru s titulky\n"
+" -play.list <file>určení souboru se seznamem přehrávaných souborů\n"
+" -sync.framedrop  povolit zahazování snímků (pro pomale stroje)\n"
 "\n"
 "Klávesy:\n"
 " <-  nebo  ->    posun vzad/vpřed o 10 sekund\n"

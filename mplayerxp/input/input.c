@@ -398,7 +398,7 @@ static unsigned int ar_delay = 100, ar_rate = 8, last_ar = 0;
 static int use_joystick = 1, use_lirc = 1, use_lircc = 1;
 static char* config_file = "input.conf";
 
-static const char* js_dev = NULL;
+static const char* js_dev = "/dev/input/js0";
 
 static const char* in_file = NULL;
 static int in_file_fd = -1;
@@ -406,6 +406,14 @@ static int in_file_fd = -1;
 static int mp_input_print_key_list(config_t* cfg);
 static int mp_input_print_cmd_list(config_t* cfg);
 
+static const config_t joystick_conf[] = {
+  { "on", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of joystick" },
+  { "off", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of joystick" },
+  { "dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies the joystick device" },
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+};
+
+extern char *lirc_configfile;
 // Our command line options
 static const config_t input_conf[] = {
   { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies alternative input.conf" },
@@ -413,19 +421,20 @@ static const config_t input_conf[] = {
   { "ar-rate", &ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "number of key-presses per second generating on autorepeat" },
   { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "prints all keys that can be bound to commands" },
   { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "prints all commands that can be bound to keys" },
-  { "js-dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies the joystick device" },
   { "file", &in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifes file with commands (useful for FIFO)" },
+#ifdef HAVE_LIRC
+  { "lircconf", &lirc_configfile, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies a config.file for LIRC"}, 
+#endif
+  { "lirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc" },
+  { "nolirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc" },
+  { "lircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc daemon" },
+  { "nolircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc daemon" },
+  { "joystick", &joystick_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Joystick related options" },
   { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static const config_t mp_input_opts[] = {
   { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Input specific options"},
-  { "joystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of joystick" },
-  { "nojoystick", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of joystick" },
-  { "lirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc" },
-  { "nolirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc" },
-  { "lircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc daemon" },
-  { "nolircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc daemon" },
   { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
@@ -1490,7 +1499,7 @@ mp_input_init(void) {
   if(use_joystick) {
     int fd = mp_input_joystick_init(js_dev);
     if(fd < 0)
-      MSG_ERR("Can't init input joystick\n");
+      MSG_ERR("Can't init input joystick with using: %s\n",js_dev);
     else
       mp_input_add_key_fd(fd,1,mp_input_joystick_read,(mp_close_func_t)close);
   }

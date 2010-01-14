@@ -532,6 +532,7 @@ else
 fi
 mp_help="nls/help_mp-$linguas.h"
 test -f nls/help_mp-$linguas.h || die "nls/help_mp-$linguas.h not found"
+echo "#define I18N_LANGUAGE \"$linguas\"" >>mp_config.h
 
 enable win32loader
 if win32 || ! x86_32 ; then

@@ -17,29 +17,12 @@ static char help_text[]=
 "Prepínače:\n"
 " -vo <drv[:dev]> výber výstup. video ovládača&zariadenia (-vo help pre zoznam)\n"
 " -ao <drv[:dev]> výber výstup. audio ovládača&zariadenia (-ao help pre zoznam)\n"
-" vcdnav://<trackno>  prehrať VCD (video cd) stopu zo zariadenia namiesto zo súboru\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  určenie DVD zariadenia pre overenie autenticity (pre kódované disky)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  prehrať DVD titul/stopu zo zariadenia (mechaniky) namiesto súboru\n"
-#endif
-" -ss <timepos>   posun na pozíciu (sekundy alebo hh:mm:ss)\n"
-" -nosound        prehrávať bez zvuku\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  výber audiokanálu pre MPEG1 (0:stereo 1:ľavý 2:pravý)\n"
-#endif
-" -channels <n>   počet výstupných zvukových kanálov\n"
-" -fs -vm -zoom   voľby pre prehrávanie na celú obrazovku (celá obrazovka\n                 meniť videorežim, softvérový zoom)\n"
-" -x <x> -y <y>   zvetšenie obrazu na rozmer <x>*<y> (pokiaľ to vie -vo ovládač!)\n"
-" -sub <file>     voľba súboru s titulkami (viď tiež -subfps, -subdelay)\n"
-" -playlist <file> určenie súboru so zoznamom prehrávaných súborov\n"
-" -vid x -aid y   výber čísla video (x) a audio (y) prúdu pre prehrávanie\n"
-" -fps x -srate y voľba pre zmenu video (x fps) a audio (y Hz) frekvencie\n"
-" -vf pp=de -af crystality   aktivácia postprocesing filtra\n"
-" -nobps          použiť alternatívnu A-V synchronizačnú metódu pre Avi súbory\n"
-" -framedrop      povoliť zahadzovanie snímkov (pre pomalé stroje)\n"
-" -wid <window id> použiť existujúce okno pre výstup videa\n"
+" -play.ss <timepos>posun na pozíciu (sekundy alebo hh:mm:ss)\n"
+" -audio.off      prehrávať bez zvuku\n"
+" -video.fs       voľby pre prehrávanie na celú obrazovku (celá obrazovka\n                 meniť videorežim, softvérový zoom)\n"
+" -sub.file <file>voľba súboru s titulkami\n"
+" -play.list<file> určenie súboru so zoznamom prehrávaných súborov\n"
+" -sync.framedrop  povoliť zahadzovanie snímkov (pre pomalé stroje)\n"
 "\n"
 "Klávesy:\n"
 " <-  alebo  ->   posun vzad/vpred o 10 sekund\n"

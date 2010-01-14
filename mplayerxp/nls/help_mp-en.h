@@ -20,29 +20,12 @@ static char help_text[]=
 "Options:\n"
 " -vo <drv[:dev]> select video output driver & device (see '-vo help' for list)\n"
 " -ao <drv[:dev]> select audio output driver & device (see '-ao help' for list)\n"
-" vcdnav://<trackno>  play VCD (video cd) track from device instead of plain file\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  specify DVD device for authentication (for encrypted discs)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  play DVD title/track from device instead of plain file\n"
-#endif
-" -ss <timepos>   seek to given (seconds or hh:mm:ss) position\n"
-" -nosound        don't play sound\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  select MPEG1 stereo output (0:stereo 1:left 2:right)\n"
-#endif
-" -channels <n>   target number of audio output channels\n"
-" -fs -vm -zoom   fullscreen playing options (fullscr,vidmode chg,softw.scale)\n"
-" -x <x> -y <y>   scale image to <x> * <y> resolution [if -vo driver supports!]\n"
-" -sub <file>     specify subtitle file to use (see also -subfps, -subdelay)\n"
-" -playlist <file> specify playlist file\n"
-" -vid x -aid y   options to select video (x) and audio (y) stream to play\n"
-" -fps x -srate y options to change video (x fps) and audio (y Hz) rate\n"
-" -vf pp=de -af crystality   enable postprocessing filter\n"
-" -nobps          use alternative A-V sync method for AVI files (may help!)\n"
-" -framedrop      enable frame-dropping (for slow machines)\n"
-" -wid <window id> use existing window for video output (useful with plugger!)\n"
+" -play.ss <timepos> seek to given (seconds or hh:mm:ss) position\n"
+" -audio.off      don't play sound\n"
+" -video.fs       fullscreen playing options (fullscr,vidmode chg,softw.scale)\n"
+" -sub.file <file> specify subtitle file to use\n"
+" -play.list<file> specify playlist file\n"
+" -sync.framedrop  enable frame-dropping (for slow machines)\n"
 "\n"
 "Keys:\n"
 " <-  or  ->      seek backward/forward 10 seconds\n"
@@ -77,12 +60,12 @@ static char help_text[]=
 "- Broken file. Try various combinations of these: -nobps  -ni  -mc 0  -forceidx\n"\
 "*******************************************************************************\n"\
 " Also try study these keys:\n"\
-" -enable_bm (currently may work with some vidix drivers only) [speedup upto 30%]\n"\
+" -video.bm (currently may work with some vidix drivers only) [speedup upto 30%]\n"\
 " '/bin/sh hdparm -u1 -d1 -a8 /dev/hdX' [25%]\n"\
 " Try disable OSD by pressing 'O' key twice [5-15%]\n"\
-"Also try to decrease the number of buffers for decoding ahead: '-da_buffs'\n"\
+"Also try to decrease the number of buffers for decoding ahead: '-core.da_buffs'\n"\
 "*******************************************************************************\n"\
-"On SMP -noffslices may help too\n"
+"On SMP -ffmpeg.slices=0 may help too\n"
 #endif
 
 #ifndef MSGTR_Exiting

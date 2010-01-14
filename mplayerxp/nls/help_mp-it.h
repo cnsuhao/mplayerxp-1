@@ -18,29 +18,12 @@ static char help_text[]=
 "Opzioni:\n"
 " -vo <drv[:dev]> seleziona il driver ed il dispositivo video di output ('-vo help' per la lista)\n"
 " -ao <drv[:dev]> seleziona il driver ed il dispositivo audio di output ('-ao help' per la lista)\n"
-" vcdnav://<trackno>  riproduce la traccia VCD (video cd) dal dispositivo invece che dal file normale\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  specifica il dispositivo DVD per l\'autenticazione (per dischi criptati)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  riproduce il titolo/traccia del DVD dal dispositivo invece che dal file normale\n"
-#endif
-" -ss <timepos>   cerca una determinata posizione (in secondi o in hh:mm:ss) \n"
-" -nosound        non riproduce l\'audio\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  seleziona l\'uscita stereo MPEG1 (0:stereo 1:sinistra 2:destra)\n"
-#endif
-" -channels <n>   numero desiderato di canali audio di uscita\n"
-" -fs -vm -zoom   opzioni di riproduzione a schermo intero (schermo int,cambia video,scalatura softw)\n"
-" -x <x> -y <y>   scala l\'immagine alla risoluzione <x> * <y> [se -vo driver lo supporta!]\n"
-" -sub <file>     specifica il file dei sottotitoli da usare (vedi anche -subfps, -subdelay)\n"
-" -playlist <file> specifica il file della playlist\n"
-" -vid x -aid y   opzioni per selezionare il flusso video (x) ed audio (y) da riprodurre\n"
-" -fps x -srate y opzioni per cambiare il rate del video (x fps) e dell\'audio (y Hz)\n"
-" -vf pp=de -af crystality   abilita il filtro di postelaborazione\n"
-" -nobps          usa il metodo di sincronizzazione A-V alternativo per i file AVI (può aiutare!)\n"
-" -framedrop      abilita lo scarto dei fotogrammi (per macchine lente)\n"
-" -wid <window id> usa una finestra esistente per l\'uscita video (utile per plugger!)\n"
+" -play.ss <timepos>cerca una determinata posizione (in secondi o in hh:mm:ss) \n"
+" -audio.off      non riproduce l\'audio\n"
+" -video.fs       opzioni di riproduzione a schermo intero (schermo int,cambia video,scalatura softw)\n"
+" -sub.file <file>specifica il file dei sottotitoli da usare\n"
+" -play.list<file> specifica il file della playlist\n"
+" -sync.framedrop abilita lo scarto dei fotogrammi (per macchine lente)\n"
 "\n"
 "Tasti:\n"
 " <-  o  ->       va indietro/avanti di 10 secondi\n"

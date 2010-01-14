@@ -15,29 +15,12 @@ static char help_text[]=
 "Opcje:\n"
 " -vo <drv[:dev]> wybór sterownika[:urządzenia] video (lista po '-vo help')\n"
 " -ao <drv[:dev]> wybór sterownika[:urządzenia] audio (lista po '-ao help')\n"
-" vcdnav://<trackno>  odtwarzanie bezpośrednio ścieżki VCD (video cd)\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  urządzenie DVD do autentykacji (dla zaszyfrowanych dysków)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  odtwarzanie bezpośrednio ścieżki DVD\n"
-#endif
-" -ss <timepos>   skok do podanej pozycji (sekundy albo hh:mm:ss)\n"
-" -nosound        odtwarzanie bez dźwięku\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  wybór trybu stereo dla MPEG1 (0:stereo 1:lewo 2:prawo)\n"
-#endif
-" -channels <n>   docelowa liczba kanałów audio\n"
-" -fs -vm -zoom   opcje pełnoekranowe (pełen ekran,zmiana trybu,skalowanie)\n"
-" -x <x> -y <y>   skalowanie do rozdzielczości <x>*<y> [jeśli -vo pozwala!]\n"
-" -sub <file>     wybór pliku z napisami (zobacz także -subfps, -subdelay)\n"
-" -playlist <file>wybór pliku z playlistą\n"
-" -vid x -aid y   wybór odtwarzanego strumienia video (x) i audio (y)\n"
-" -fps x -srate y wybór prędkości odtwarzania video (x fps) i audio (y Hz)\n"
-" -vf pp=de -af crystality   wybór filtra wygładzającego\n"
-" -nobps          inna metoda synchronizacji A-V dla plików AVI (może pomóc!)\n"
-" -framedrop      gubienie klatek (dla wolnych maszyn)\n"
-" -wid <window id>użyj istniejącgo okna dla wyjścia video (np. dla pluggera!)\n"
+" -play.ss <timepos>skok do podanej pozycji (sekundy albo hh:mm:ss)\n"
+" -audio.off      odtwarzanie bez dźwięku\n"
+" -video.fs       opcje pełnoekranowe (pełen ekran,zmiana trybu,skalowanie)\n"
+" -sub.file <file>wybór pliku z napisami\n"
+" -play.list<file>wybór pliku z playlistą\n"
+" -sync.framedrop gubienie klatek (dla wolnych maszyn)\n"
 "\n"
 "Klawisze:\n"
 " Right,Up,PgUp   skok naprzód o 10 sekund, 1 minutę, 10 minut\n"

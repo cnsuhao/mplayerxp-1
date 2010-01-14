@@ -42,7 +42,10 @@ static char *lavc_param_skip_frame_str = NULL;
 static int lavc_param_threads=-1;
 static char *lavc_avopt = NULL;
 
+static int enable_ffslices=-1;
 static const config_t ff_options[] = {
+        {"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables slice-based method of frame rendering in ffmpeg decoder"},
+        {"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables slice-based method of frame rendering in ffmpeg decoder"},
 	{"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error resilience for ffmpeg decoders"},
 	{"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies idct algorithm for ffmpeg decoders"},
 	{"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error concealment for ffmpeg decoders"},
@@ -70,7 +73,6 @@ LIBVD_EXTERN(ffmpeg)
 #include "libavcodec/avcodec.h"
 #include "libvo/video_out.h"
 
-int enable_ffslices=-1;
 extern int enable_gomp;
 
 extern char *npp_options;

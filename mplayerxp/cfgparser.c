@@ -112,8 +112,7 @@ m_config_save_option(m_config_t* config, config_t* conf,const char* opt,const ch
   config->config_stack[config->cs_level] = save;
 }
 
-static int
-m_config_revert_option(m_config_t* config, config_save_t* save) {
+static int m_config_revert_option(m_config_t* config, config_save_t* save) {
   const char* arg = NULL;
   config_save_t* iter=NULL;
   int i=-1;
@@ -193,8 +192,7 @@ m_config_revert_option(m_config_t* config, config_save_t* save) {
   return 1;
 }
 
-void
-m_config_push(m_config_t* config) {
+void m_config_push(m_config_t* config) {
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -212,8 +210,7 @@ m_config_push(m_config_t* config) {
   MSG_DBG2("Config pushed level=%d\n",config->cs_level);
 }
 
-int
-m_config_pop(m_config_t* config) {
+int m_config_pop(m_config_t* config) {
   int i,ret= 1;
   config_save_t* cs;
 
@@ -241,8 +238,7 @@ m_config_pop(m_config_t* config) {
   return ret;
 }
 
-m_config_t*
-m_config_new(play_tree_t* pt) {
+m_config_t* m_config_new(play_tree_t* pt) {
   m_config_t* config;
 
 #ifdef MP_DEBUG
@@ -265,13 +261,21 @@ m_config_new(play_tree_t* pt) {
   return config;
 }
 
-void
-m_config_free(m_config_t* config) {
+static void m_config_add_dynamic(m_config_t *conf,void *ptr) {
+    if(!conf->dynasize) conf->dynamics = malloc(sizeof(void *));
+    else		conf->dynamics = realloc(conf->dynamics,(conf->dynasize+1)*sizeof(void *));
+    conf->dynamics[conf->dynasize] = ptr;
+    conf->dynasize++;
+}
 
+void m_config_free(m_config_t* config) {
+  unsigned i;
 #ifdef MP_DEBUG
   assert(config != NULL);
 #endif
-
+  for(i=0;i<config->dynasize;i++) free(config->dynamics[i]);
+  free(config->dynamics);
+  config->dynasize=0;
   free(config->opt_list);
   free(config->config_stack);
   free(config);
@@ -291,6 +295,9 @@ static int init_conf(m_config_t *config, int mode)
 	}
 #endif
 	config->parser_mode = mode;
+	config->dynamics=NULL;
+	config->dynasize=0;
+
 	return 1;
 }
 
@@ -497,6 +504,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 					goto out;
 				}
 			*((char **) conf[i].p) = strdup(param);
+			m_config_add_dynamic(config,*((char **) conf[i].p));
 			MSG_DBG3("assigning %s=%s as string value\n",conf[i].name,param);
 			ret = 1;
 			break;
@@ -527,6 +535,8 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 			}
 			ret = 0;
 			break;
+#if 0
+// we have handled it in other function
 		case CONF_TYPE_SUBCONFIG:
 		    {
 			char *subparam;
@@ -585,6 +595,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 			ret = 1;
 			break;
 		    }
+#endif
 		case CONF_TYPE_PRINT:
 			MSG_INFO("%s", (char *) conf[i].p);
 			exit(1);
@@ -648,8 +659,8 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
 	    clist=NULL;
 	    free(s);
 	    MSG_DBG2("returned %p as subconfig name\n",subconf);
-	    if(!subconf) return ERR_NOT_AN_OPTION;
-	    if(subconf->type!=CONF_TYPE_SUBCONFIG) return ERR_NOT_AN_OPTION;
+	    if(!subconf) return ERR_NO_SUBCONF;
+	    if(subconf->type!=CONF_TYPE_SUBCONFIG) return ERR_NO_SUBCONF;
 	    olist[0] = subconf->p;
 	    opt = e+1;
 	    MSG_DBG2("switching next subconf=%s\n",subconf->name);
@@ -862,6 +873,7 @@ int m_config_parse_config_file(m_config_t *config, char *conffile)
 		case ERR_NOT_AN_OPTION:
 		case ERR_MISSING_PARAM:
 		case ERR_OUT_OF_RANGE:
+		case ERR_NO_SUBCONF:
 		case ERR_FUNC_ERR:
 			PRINT_LINENUM;
 			MSG_ERR("%s\n", opt);
@@ -981,11 +993,13 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 		    case ERR_NOT_AN_OPTION:
 		    case ERR_MISSING_PARAM:
 		    case ERR_OUT_OF_RANGE:
+		    case ERR_NO_SUBCONF:
 		    case ERR_FUNC_ERR:
 			MSG_ERR( "Error '%s' while parsing option: '%s'!\n"
 				,tmp==ERR_NOT_AN_OPTION?"no-option":
 				 tmp==ERR_MISSING_PARAM?"missing-param":
 				 tmp==ERR_OUT_OF_RANGE?"out-of-range":
+				 tmp==ERR_NO_SUBCONF?"no-subconfig":
 				 "func-error"
 				,opt);
 			goto err_out;

@@ -13,29 +13,12 @@ static char help_text[]=
 "Opties:\n"
 " -vo <drv[:dev]>  selecteer video uitvoer driver & device (zie '-vo help' voor lijst)\n"
 " -ao <drv[:dev]>  selecteer audio uitvoer driver & device (zie '-ao help' voor lijst)\n"
-" vcdnav://<trackno>   speel VCD (Video CD) track van device in plaats van standaard bestand\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>   specificeer DVD device voor authenticatie (voor geencrypteerde schijven)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titelnr>   speel DVD titel/track van device in plaats van gewoon bestand\n"
-#endif
-" -ss <timepos>    ga naar opgegeven (seconden of hh:mm:ss) positie\n"
-" -nosound         speel het geluid niet af\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>   selecteer MPEG1 stereo uitvoer (0:stereo 1:links 2:rechts)\n"
-#endif
-" -channels <n>    gewenst aantal audio uitvoer kanalen\n"
-" -fs -vm -zoom    volledig scherm afspeel opties (fullscr,vidmode chg,softw.scale)\n"
-" -x <x> -y <y>    herschaal beeld naar <x> * <y> resolutie [als -vo driver het ondersteunt!]\n"
-" -sub <bestand>   specificeer het te gebruiken ondertitel bestand (zie ook -subfps, -subdelay)\n"
-" -playlist <file> specificeer het te gebruiken playlist bestand\n"
-" -vid x -aid y    opties om te spelen video (x) en audio (y) stream te selecteren\n"
-" -fps x -srate y  opties om video (x fps) en audio (y Hz) tempo te veranderen\n"
-" -vf pp=de -af crystality  activeer postprocessing filter\n"
-" -nobps           gebruik alternatieve A-V sync methode voor AVI bestand (kan helpen!)\n"
-" -framedrop       activeer frame-dropping (voor trage machines)\n"
-" -wid <window id> gebruik bestaand venster voor video uitvoer (nuttig in combinatie met plugger!)\n"
+" -play.ss <timepos>ga naar opgegeven (seconden of hh:mm:ss) positie\n"
+" -audio.off       speel het geluid niet af\n"
+" -video.fs        volledig scherm afspeel opties (fullscr,vidmode chg,softw.scale)\n"
+" -sub.file <bestand>specificeer het te gebruiken ondertitel bestand\n"
+" -play.list<file> specificeer het te gebruiken playlist bestand\n"
+" -sync.framedrop  activeer frame-dropping (voor trage machines)\n"
 "\n"
 "Toetsen:\n"
 " <-  of  ->       ga 10 seconden achterwaarts/voorwaarts\n"

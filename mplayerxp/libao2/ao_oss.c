@@ -200,9 +200,6 @@ static int __FASTCALL__ init(int flags){
     if(p) { *p=0; p++;  if(strcmp(p,"-1")==0) { show_caps(); return 0; } }
   }
 
-  if(mixer_device)
-    oss_mixer_device=mixer_device;
-
   MSG_V("audio_setup: using '%s' dsp device\n", dsp);
   MSG_V("audio_setup: using '%s'(%s) mixer device\n", oss_mixer_device,mixer_channels[oss_mixer_channel]);
 

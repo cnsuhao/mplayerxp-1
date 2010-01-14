@@ -228,8 +228,8 @@ int audio_id=-1;
 int video_id=-1;
 int dvdsub_id=-1;
 int vobsub_id=-1;
-char* audio_lang=NULL;
-char* dvdsub_lang=NULL;
+char* audio_lang=I18N_LANGUAGE;
+char* dvdsub_lang=I18N_LANGUAGE;
 static char* spudec_ifo=NULL;
 
 // cache2:
@@ -750,6 +750,7 @@ void exit_player(char* how){
   sws_uninit();
   if(how) MSG_HINT(MSGTR_Exiting,how);
   MSG_DBG2("max framesize was %d bytes\n",max_framesize);
+  if(mconfig) m_config_free(mconfig);
   mp_msg_uninit();
   if(how) exit(0);
   return; /* Still try coredump!!!*/
@@ -780,6 +781,7 @@ static void soft_exit_player(void)
   pinfo[xp_id].current_module="exit_player";
   MSG_HINT(MSGTR_Exiting,MSGTR_Exit_quit);
   MSG_DBG2("max framesize was %d bytes\n",max_framesize);
+  if(mconfig) m_config_free(mconfig);
   mp_msg_uninit();
   exit(0);
 }
@@ -831,8 +833,6 @@ void parse_cfgfiles( m_config_t* conf )
 {
 char *conffile;
 int conffile_fd;
-if (m_config_parse_config_file(conf, "/etc/mplayer.conf") < 0)
-  exit(1);
 if ((conffile = get_path("")) == NULL) {
   MSG_WARN(MSGTR_NoHomeDir);
 } else {
@@ -901,6 +901,13 @@ int x86_3dnow=-1;
 int x86_3dnow2=-1;
 int x86_sse=-1;
 int x86_sse2=-1;
+int x86_sse3=-1;
+int x86_ssse3=-1;
+int x86_sse41=-1;
+int x86_sse42=-1;
+int x86_aes=-1;
+int x86_avx=-1;
+int x86_fma=-1;
 static void get_mmx_optimizations( void )
 {
   GetCpuCaps(&gCpuCaps);
@@ -910,6 +917,13 @@ static void get_mmx_optimizations( void )
   if(x86_3dnow2 != -1) gCpuCaps.has3DNowExt=x86_3dnow2;
   if(x86_sse != -1) gCpuCaps.hasSSE=x86_sse;
   if(x86_sse2 != -1) gCpuCaps.hasSSE2=x86_sse2;
+  if(x86_sse3 != -1) gCpuCaps.hasSSE2=x86_sse3;
+  if(x86_ssse3 != -1) gCpuCaps.hasSSSE3=x86_ssse3;
+  if(x86_sse41 != -1) gCpuCaps.hasSSE2=x86_sse41;
+  if(x86_sse42 != -1) gCpuCaps.hasSSE2=x86_sse42;
+  if(x86_aes != -1) gCpuCaps.hasSSE2=x86_aes;
+  if(x86_avx != -1) gCpuCaps.hasSSE2=x86_avx;
+  if(x86_fma != -1) gCpuCaps.hasSSE2=x86_fma;
   MSG_V("User corrected CPU flags: MMX=%d MMX2=%d 3DNow=%d 3DNow2=%d SSE=%d SSE2=%d SSE3=%d SSSE3=%d SSE41=%d SSE42=%d AES=%d AVX=%d FMA=%d\n",
 	gCpuCaps.hasMMX,
 	gCpuCaps.hasMMX2,

@@ -15,26 +15,11 @@ static char help_text[]=
 "Opciók:\n"
 " -vo <drv[:dev]> videomeghajtó és -alegység kiválasztása (lista: '-vo help')\n"
 " -ao <drv[:dev]> audiomeghajtó és -alegység kiválasztása (lista: '-ao help')\n"
-" vcdnav://<sávszám>  lejátszás VCD (video cd)-sávból, közvetlenül az eszközről\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <megh> DVD-meghajtó elérési útjának megadása (kódolt lemezekhez)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  a megadott DVD sáv lejátszása, file helyett\n"
-#endif
-" -ss <időpoz>    a megadott (másodperc v. óra:perc:mperc) pozícióra tekerés\n"
-" -nosound        hanglejátszás kikapcsolása\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mód>   MPEG1 sztereó szabályozása (0:sztereó, 1:bal, 2:jobb)\n"
-#endif
-" -fs -vm -zoom   teljesképernyős lejátszás opciói (teljkép,módvált,szoft.nagy)\n"
-" -x <x> -y <y>   kép nagyítása <x> * <y> méretűre [ha -vo <meghajtó> támogatja]\n"
-" -sub <file>     felhasználandó felirat-file megadása (lásd -subfps, -subdelay)\n"
-" -vid x -aid y   lejátszandó video- (x) és audio- (y) stream-ek kiválasztása\n"
-" -fps x -srate y video (x képkocka/mp) és audio (y Hz) ráta megadása\n"
-" -vf pp=de -af crystality   utókezelési fokozatok beállítása\n"
-" -nobps          alternatív A/V szinkron módszerének kiválasztása\n"
-" -framedrop      képkockák eldobásának engedélyezése (lassú gépekhez)\n"
+" -play.ss <időpoz>a megadott (másodperc v. óra:perc:mperc) pozícióra tekerés\n"
+" -audio.off      hanglejátszás kikapcsolása\n"
+" -video.fs       teljesképernyős lejátszás opciói (teljkép,módvált,szoft.nagy)\n"
+" -sub.file <file>felhasználandó felirat-file megadása\n"
+" -sync.framedrop képkockák eldobásának engedélyezése (lassú gépekhez)\n"
 "\n"
 "Billentyűk:\n"
 " <-  vagy  ->    10 másodperces hátra/előre ugrás\n"

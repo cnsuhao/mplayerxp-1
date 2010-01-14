@@ -16,29 +16,12 @@ static char help_text[]=
 "Opciones:\n"
 " -vo <drv[:dev]> selecciona el driver de salida de video y el dispositivo ('-vo help' para obtener una lista)\n"
 " -ao <drv[:dev]> selecciona el driver de salida de audio y el dispositivo ('-ao help' para obtener una lista)\n"
-" vcdnav://<trackno>  reproduce pista de VCD (video cd) desde un dispositivo en vez de un archivo regular\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  especifica el dispositivo DVD para autenticación (para discos encriptados)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>  reproduce título/pista de DVD desde un dispositivo en vez de un archivo regular\n"
-#endif
-" -ss <timepos>   busca una determindad posicion (en segundos o hh:mm:ss)\n"
-" -nosound        no reproduce el sonido\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  selecciona la salida estéreo MPEG1 (0:estéreo 1:izquierda 2:derecha)\n"
-#endif
-" -channels <n>   número de canales de salida de audio\n"
-" -fs -vm -zoom   opciones de pantalla completa (pantalla completa,cambio de modo de video,escalado por software)\n"
-" -x <x> -y <y>   escala la imagen a resolución <x> * <y> [si -vo driver lo soporta!]\n"
-" -sub <file>     especifica el archivo de subtitulos a usar (vea también -subfps, -subdelay)\n"
-" -playlist <file> especifica el archivo con la lista de reproducción\n"
-" -vid x -aid y   opciones para especificar el stream de video (x) y el audio (y) a reproducir\n"
-" -fps x -srate y opciones para cambiar la tasa de video (x fps) y de audio (y Hz)\n"
-" -vf pp=de -af crystality   activa filtro de postprocesado\n"
-" -nobps          usa sincronía A-V alternativa para AVIs (puede ayudar!)\n"
-" -framedrop      activa frame-dropping (para máquinas lentas)\n"
-" -wid <window id> usa una ventana activa para dirigir la salida de video (útil conjuntamente con el \"plugger\"\n"
+" -play.ss <timepos>busca una determindad posicion (en segundos o hh:mm:ss)\n"
+" -audio.off      no reproduce el sonido\n"
+" -video.fs       opciones de pantalla completa (pantalla completa,cambio de modo de video,escalado por software)\n"
+" -sub.file <file> especifica el archivo de subtitulos a usar\n"
+" -play.list<file> especifica el archivo con la lista de reproducción\n"
+" -sync.framedrop  activa frame-dropping (para máquinas lentas)\n"
 "\n"
 "Teclas:\n"
 " <-  o  ->      avanza/retrocede 10 segundos\n"

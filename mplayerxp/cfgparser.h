@@ -21,6 +21,7 @@
 #define ERR_MISSING_PARAM	-2
 #define ERR_OUT_OF_RANGE	-3
 #define ERR_FUNC_ERR		-4
+#define ERR_NO_SUBCONF		-5
 
 /* config flags */
 #define CONF_MIN		(1<<0)
@@ -30,7 +31,6 @@
 #define CONF_NOCMD		(1<<3)
 #define CONF_GLOBAL		(1<<4)
 #define CONF_NOSAVE		(1<<5)
-
 
 typedef struct config config_t;
 typedef struct m_config m_config_t;
@@ -55,6 +55,8 @@ struct config {
 struct m_config {
   const config_t** opt_list;
   config_save_t** config_stack;
+  void **dynamics;
+  unsigned dynasize;
   int cs_level;
   int parser_mode;  /* COMMAND_LINE or CONFIG_FILE */
   int flags;

@@ -18,29 +18,12 @@ static char help_text[]=
 "선택사항들:\n"
 " -vo <drv[:dev]>  비디오 출력 드라이버 및 장치 선택 (목록보기는 '-vo help')\n"
 " -ao <drv[:dev]>  오디오 출력 드라이버 및 장치 선택 (목록보기는 '-ao help')\n"
-" vcdnav://<trackno>   파일이 아닌 장치로부터 VCD (비디오 cd) 트랙 재생\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>   인증을 위해 DVD 장치 지정 (암호화된 디스크용)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titleno>   파일이 아닌 장치로부터 DVD 타이틀/트랙 재생\n"
-#endif
-" -ss <timepos>    특정 위치로 찾아가기 (초 또는 시:분:초)\n"
-" -nosound         소리 재생 안함\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>   MPEG1 스테레오 출력 선택 (0:스테레오 1:왼쪽 2:오른쪽)\n"
-#endif
-" -channels <n>    오디오 출력 채널 개수 지정\n"
-" -fs -vm -zoom    화면 크기 지정 (전체화면, 비디오모드, s/w확대)\n"
-" -x <x> -y <y>    화면을 <x>*<y>해상도로 변경 [-vo 드라이버가 지원하는 경우만!]\n"
-" -sub <file>      사용할 자막파일 지정 (-subfps, -subdelay도 참조)\n"
-" -playlist <file> 재생목록파일 지정\n"
-" -vid x -aid y    재생할 비디오(x) 와 오디오(y) 스트림 선택\n"
-" -fps x -srate y  비디오(x fps)와 오디오(y Hz) 비율 변경\n"
-" -vf pp=de -af crystality    우선처리 필터 사용\n"
-" -nobps           AVI 파일을 위해 다른 A-V 동기화 방법 사용\n"
-" -framedrop       프레임 빠뜨리기 사용 (느린 machine용)\n"
-" -wid <window id> 현재 창에서 비디오 출력 (plugger에 효과적!)\n"
+" -play.ss <timepos>특정 위치로 찾아가기 (초 또는 시:분:초)\n"
+" -audio.off       소리 재생 안함\n"
+" -video.fs        화면 크기 지정 (전체화면, 비디오모드, s/w확대)\n"
+" -sub.file <file> 사용할 자막파일 지정\n"
+" -play.list<file> 재생목록파일 지정\n"
+" -sync.framedrop  프레임 빠뜨리기 사용 (느린 machine용)\n"
 "\n"
 "조정키:\n"
 " <-  또는  ->     10초 뒤로/앞으로 이동\n"

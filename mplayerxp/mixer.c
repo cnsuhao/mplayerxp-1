@@ -9,8 +9,6 @@
 #include "mixer.h"
 #include "libao2/audio_out.h"
 
-char * mixer_device=NULL;
-
 void mixer_getvolume( float *l,float *r )
 {
   ao_control_vol_t vol;

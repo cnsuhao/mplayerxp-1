@@ -16,26 +16,11 @@ static char help_text[]=
 "Optionen:\n"
 " -vo <drv[:dev]> Videoausgabetreiber & -Gerät (siehe '-vo help' für eine Liste)\n"
 " -ao <drv[:dev]> Audioausgabetreiber & -Gerät (siehe '-ao help' für eine Liste)\n"
-" vcdnav://<tracknr>  Spiele VCD (Video CD) Titel anstelle eines Dateinames\n"
-#ifdef HAVE_LIBCSS
-" -dvdauth <dev>  Benutze DVD Gerät für die Authentifizierung (für verschl. DVD's)\n"
-#endif
-#ifdef USE_DVDREAD
-" dvdread://<titlenr>  Spiele DVD Titel/Track von Gerät anstelle eines Dateinames\n"
-#endif
-" -ss <timepos>   Starte abspielen ab Position (Sekunden oder hh:mm:ss)\n"
-" -nosound        Spiele keinen Sound\n"
-#ifdef USE_FAKE_MONO
-" -stereo <mode>  Auswahl der MPEG1-Stereoausgabe (0:stereo 1:links 2:rechts)\n"
-#endif
-" -fs -vm -zoom   Vollbild Optionen (Vollbild, Videomode, Softwareskalierung)\n"
-" -x <x> -y <y>   Skaliere Bild auf <x> * <y> [wenn vo-Treiber mitmacht]\n"
-" -sub <file>     Benutze Untertitledatei (siehe auch -subfps, -subdelay)\n"
-" -vid x -aid y   Spiele Videostream (x) und Audiostream (y)\n"
-" -fps x -srate y Benutze Videoframerate (x fps) und Audiosamplingrate (y Hz)\n"
-" -vf pp=de -af crystality   Aktiviere Nachbearbeitungsfilter\n"
-" -nobps          Benutze alternative A-V sync Methode für AVI's (könnte helfen!)\n"
-" -framedrop      Benutze frame-dropping (für langsame Rechner)\n"
+" -play.ss <timepos> Starte abspielen ab Position (Sekunden oder hh:mm:ss)\n"
+" -audio.off      Spiele keinen Sound\n"
+" -video.fs       Vollbild Optionen (Vollbild, Videomode, Softwareskalierung)\n"
+" -sub.file <file>Benutze Untertitledatei\n"
+" -sync.framedrop Benutze frame-dropping (für langsame Rechner)\n"
 "\n"
 "Tasten:\n"
 " <- oder ->      Springe zehn Sekunden vor/zurück\n"
