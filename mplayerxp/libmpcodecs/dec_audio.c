@@ -340,22 +340,21 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,i
   return cp_size;
 }
 
+/* Note: it is called once after seeking, to resync. */
 void resync_audio_stream(sh_audio_t *sh_audio)
 {
-  if(sh_audio)
-  if(sh_audio->inited && mpadec) mpadec->control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
+  if(sh_audio) {
+    sh_audio->a_in_buffer_len=0; /* workaround */
+    if(sh_audio->inited && mpadec) mpadec->control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
+  }
 }
 
+/* Note: it is called to skip (jump over) small amount (1/10 sec or 1 frame)
+   of audio data - used to sync audio to video after seeking */
 void skip_audio_frame(sh_audio_t *sh_audio)
 {
+  int rc=CONTROL_TRUE;
   if(sh_audio)
-  if(sh_audio->inited && mpadec) mpadec->control(sh_audio,ADCTRL_SKIP_FRAME,NULL);
-}
-
-/* MP3 decoder buffer callback:*/
-int mplayer_audio_read(char *buf,int size,float *pts){
-  int len;
-  len=demux_read_data_r(dec_audio_sh->ds,buf,size,pts);
-  MSG_DBG2("%i=mplayer_audio_read(%p,%i,%f)\n",len,buf,size,*pts);
-  return len;
+  if(sh_audio->inited && mpadec) rc=mpadec->control(sh_audio,ADCTRL_SKIP_FRAME,NULL);
+  if(rc!=CONTROL_TRUE) ds_fill_buffer(sh_audio->ds);
 }

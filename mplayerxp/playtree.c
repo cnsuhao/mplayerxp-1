@@ -511,7 +511,7 @@ play_tree_iter_free(play_tree_iter_t* iter) {
 static play_tree_t*
 play_tree_rnd_step(play_tree_t* pt) {
   int count = 0;
-  int r,rnd,j;
+  int r,rnd;
   time_t tim;
   play_tree_t *i,*head;
 

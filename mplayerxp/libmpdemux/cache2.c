@@ -601,8 +601,9 @@ static void __FASTCALL__ c2_stream_set_eof(cache_vars_t*c,int eof)
 /*
     main interface here!
 */
-int __FASTCALL__ stream_read(stream_t *s,char* mem,int total)
+int __FASTCALL__ stream_read(stream_t *s,void* _mem,int total)
 {
+    char *mem = _mem;
     if(s->cache_data)	return c2_stream_read(s->cache_data,mem,total);
     else		return nc_stream_read(s,mem,total);
 }

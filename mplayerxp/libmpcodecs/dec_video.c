@@ -89,7 +89,7 @@ extern int enable_gomp;
 
 extern char *video_codec;
 int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
-    unsigned o_bps,bpp,vf_flags;
+    unsigned o_bps,bpp;
     sh_video->codec=NULL;
     MSG_DBG3("init_video(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->format,
@@ -166,6 +166,7 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	sh_video->inited=1;
 #ifdef _OPENMP
 	if(enable_gomp) {
+	    int vf_flags;
 	    smp_num_cpus=omp_get_num_procs();
 	    vf_flags=vf_query_flags(sh_video->vfilter);
 	    use_vf_threads=0;

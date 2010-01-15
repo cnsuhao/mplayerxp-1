@@ -87,12 +87,12 @@ static config_t vivoopts_conf[]={
 	{"width", &vivo_param_width, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies width of video in VIVO stream" },
 	{"height", &vivo_param_height, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies height of video in VIVO stream"},
 	{"vformat", &vivo_param_vformat, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies video-codec of VIVO stream"},
-	{NULL, NULL, 0, 0, 0, 0, NULL}
+	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static config_t vivo_conf[] = {
   { "vivo", &vivoopts_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Vivo specific options"},
-  { NULL,NULL, 0, 0, 0, 0, NULL}
+  { NULL,NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 /* parse all possible extra headers */

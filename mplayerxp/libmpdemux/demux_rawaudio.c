@@ -22,12 +22,12 @@ static const config_t demux_rawaudio_opts[] = {
   { "rate", &samplerate, CONF_TYPE_INT,CONF_RANGE,1000,8*48000, NULL, "specifies sample-rate of raw-audio steram" },
   { "samplesize", &samplesize, CONF_TYPE_INT,CONF_RANGE,1,8, NULL, "specifies sample-size of raw-audio steram" },
   { "format", &format, CONF_TYPE_INT, CONF_MIN, 0 , 0, NULL, "specifies compression-format of raw-audio stream" },
-  {NULL, NULL, 0, 0, 0, 0, NULL}
+  {NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static const config_t rawaudio_conf[] = {
   { "rawaudio", &demux_rawaudio_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Raw-audio specific commands"},
-  { NULL,NULL, 0, 0, 0, 0, NULL}
+  { NULL,NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static int rawaudio_probe(demuxer_t* demuxer) 

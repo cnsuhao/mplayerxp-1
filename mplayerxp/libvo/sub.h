@@ -65,7 +65,7 @@ static inline void vo_draw_text_osd(int dxs,int dys,void (*draw_alpha)(int x0,in
 
 extern font_desc_t* vo_font;
 
-extern unsigned char* vo_osd_text;
+extern char* vo_osd_text;
 
 extern int vo_osd_progbar_type;
 extern int vo_osd_progbar_value;   // 0..255

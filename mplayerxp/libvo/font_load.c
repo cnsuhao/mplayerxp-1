@@ -41,7 +41,7 @@ raw_file* load_raw(char *name,int verbose){
 }
 
 font_desc_t* read_font_desc(char* fname,float factor,int verbose){
-unsigned char sor[1024];
+char sor[1024];
 unsigned char sor2[1024];
 font_desc_t *desc;
 FILE *f;
@@ -80,14 +80,14 @@ for(i=0;i<512;i++) desc->start[i]=desc->width[i]=desc->font[i]=-1;
 section[0]=0;
 
 while(fgets(sor,1020,f)){
-  unsigned char* p[8];
+  char* p[8];
   int pdb=0;
-  unsigned char *s=sor;
+  unsigned char *s=(unsigned char *)sor;
   unsigned char *d=sor2;
   int ec=' ';
   int id=0;
   sor[1020]=0;
-  p[0]=d;++pdb;
+  p[0]=(char *)d;++pdb;
   while(1){
       int c=*s++;
       if(c==0 || c==13 || c==10) break;
@@ -98,7 +98,7 @@ while(fgets(sor,1020,f)){
         if(c==' '){
           if(ec==' ') continue;
           *d=0; ++d;
-          p[pdb]=d;++pdb;
+          p[pdb]=(char *)d;++pdb;
           if(pdb>=8) break;
           continue;
         }

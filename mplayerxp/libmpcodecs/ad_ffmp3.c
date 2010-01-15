@@ -18,8 +18,6 @@
 #define FF_INPUT_BUFFER_PADDING_SIZE 8
 #endif
 
-static AVCodec *lavc_codec=NULL;
-static AVCodecContext *lavc_context;
 static int acodec_inited;
 
 static const ad_info_t info =
@@ -31,7 +29,7 @@ static const ad_info_t info =
 };
 
 static const config_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 LIBAD_EXTERN(ffmp3)
@@ -46,6 +44,8 @@ int init(sh_audio_t *sh_audio)
 {
    int x;
    float pts;
+   AVCodec *lavc_codec=NULL;
+   AVCodecContext *lavc_context;
    MSG_V("FFmpeg's libavcodec audio codec\n");
     if(!acodec_inited){
 	avcodec_init();
@@ -114,7 +114,8 @@ int init(sh_audio_t *sh_audio)
 
 void uninit(sh_audio_t *sh)
 {
-  avcodec_close(lavc_context);
+  AVCodecContext *lavc_context=sh->context;
+  avcodec_close(sh->context);
   if (lavc_context->extradata) free(lavc_context->extradata);
   free(lavc_context);
   acodec_inited=0;
@@ -122,7 +123,14 @@ void uninit(sh_audio_t *sh)
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
-  return CONTROL_UNKNOWN;
+    AVCodecContext *lavc_context = sh->context;
+    switch(cmd){
+	case ADCTRL_RESYNC_STREAM:
+	    avcodec_flush_buffers(lavc_context);
+	    return CONTROL_TRUE;
+	default: break;
+    }
+    return CONTROL_UNKNOWN;
 }
 
 int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)

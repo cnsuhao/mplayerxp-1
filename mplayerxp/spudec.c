@@ -347,7 +347,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
   unsigned int next_off;
   unsigned int start_pts=0;
   unsigned int end_pts=0;
-  unsigned int current_nibble[2];
+  unsigned int current_nibble[2] = { 0, 0 };
   unsigned int control_start;
   unsigned int display = 0;
   unsigned int start_col = 0;
@@ -479,8 +479,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
 static void __FASTCALL__ spudec_decode(spudec_handle_t *this, unsigned int pts100)
 {
   if(this->hw_spu) {
-    static vo_mpegpes_t packet = { NULL, 0, 0x20, 0 };
-    static vo_mpegpes_t *pkg=&packet;
+    vo_mpegpes_t packet = { NULL, 0, 0x20, 0 };
     packet.data = this->packet;
     packet.size = this->packet_size;
     packet.timestamp = pts100;
@@ -688,8 +687,8 @@ static void  __FASTCALL__ scale_table(unsigned int start_src, unsigned int start
   unsigned int t;
   unsigned int delta_src = end_src - start_src;
   unsigned int delta_tar = end_tar - start_tar;
-  int src = 0;
-  int src_step;
+  unsigned int src = 0;
+  unsigned int src_step;
   if (delta_src == 0 || delta_tar == 0) {
     return;
   }

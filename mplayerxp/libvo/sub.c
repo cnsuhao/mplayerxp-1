@@ -38,7 +38,7 @@ char * __sub_osd_names_short[] ={ "", "|>", "||", "[]", "<<" , ">>", "", "", "",
 //static int vo_font_loaded=-1;
 font_desc_t* vo_font=NULL;
 
-unsigned char* vo_osd_text=NULL;
+char* vo_osd_text=NULL;
 int sub_unicode=0;
 int sub_utf8=0;
 int sub_pos=100;
@@ -116,7 +116,7 @@ int __FASTCALL__ get_osd_height(int c,int h)
 }
 
 inline static void __FASTCALL__ vo_update_text_osd(mp_osd_obj_t* obj,int dxs,int dys){
-	unsigned char *cp=vo_osd_text;
+	unsigned char *cp=(unsigned char *)vo_osd_text;
 	int x=20;
 	int h=0;
 	UNUSED(dxs);
@@ -137,7 +137,7 @@ inline static void __FASTCALL__ vo_update_text_osd(mp_osd_obj_t* obj,int dxs,int
 }
 
 inline static void __FASTCALL__ vo_draw_text_osd(mp_osd_obj_t* obj,draw_osd_f draw_alpha){
-	unsigned char *cp=vo_osd_text;
+	unsigned char *cp=(unsigned char *)vo_osd_text;
    	int font;
         int x=obj->x;
 

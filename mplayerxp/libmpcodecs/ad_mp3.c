@@ -21,7 +21,7 @@ static const ad_info_t info =
 };
 
 static const config_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 LIBAD_EXTERN(mp3)
@@ -331,24 +331,6 @@ void uninit(sh_audio_t *sh)
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
-    float pts;
-    switch(cmd)
-    {
-      case ADCTRL_RESYNC_STREAM:
-#if 0
-          MP3_DecodeFrame(NULL,-2,&pts); // resync
-          MP3_DecodeFrame(NULL,-2,&pts); // resync
-          MP3_DecodeFrame(NULL,-2,&pts); // resync
-#endif
-	  return CONTROL_TRUE;
-      case ADCTRL_SKIP_FRAME:
-#if 0
-	  MP3_DecodeFrame(NULL,-2,&pts); // skip MPEG frame
-#endif
-	  return CONTROL_TRUE;
-      default:
-	  return CONTROL_UNKNOWN;
-    }
   return CONTROL_UNKNOWN;
 }
 
@@ -358,7 +340,7 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
     unsigned char *indata=NULL;
     int err,indata_size;
     size_t len=0,done;
-    while(len<minlen) {
+    while(len<(size_t)minlen) {
 	indata_size=ds_get_packet_r(sh->ds,&indata,len>0?&apts:pts);
 	if(!indata_size) break;
 	err=mpg123_decode(sh->context,indata,indata_size,buf,maxlen,&done);

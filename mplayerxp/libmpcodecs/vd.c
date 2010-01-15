@@ -126,7 +126,7 @@ csp_again:
     for(i=0;i<CODECS_MAX_OUTFMT;i++){
 	int flags;
 	out_fmt=sh->codec->outfmt[i];
-	if(out_fmt==(signed int)0xFFFFFFFF) continue;
+	if(out_fmt==0xFFFFFFFF) continue;
 	flags=vf_query_format(vf,out_fmt,w,h);
 	MSG_DBG2("vo_debug[step i=%d]: query(%s %ix%i) returned 0x%X for:\n",i,vo_format_name(out_fmt),w,h,flags);
 	if(verbose>1) if(verbose) vf_showlist(vf);
@@ -152,7 +152,7 @@ csp_again:
 	    int ind;
 	    MSG_WARN("Can't find colorspace for: ");
 	    for(ind=0;ind<CODECS_MAX_OUTFMT;ind++) {
-		if(sh->codec->outfmt[ind]==(signed int)0xFFFFFFFF) break;
+		if(sh->codec->outfmt[ind]==0xFFFFFFFF) break;
 		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
 	    }
 	    MSG_WARN("Trying -vf fmtcvt\n");

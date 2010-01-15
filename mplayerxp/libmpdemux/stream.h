@@ -71,7 +71,7 @@ extern int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s);
 extern int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos);
 extern void __FASTCALL__ nc_stream_reset(stream_t *s);
 extern int __FASTCALL__ nc_stream_read_char(stream_t *s);
-extern int __FASTCALL__ nc_stream_read(stream_t *s,char* mem,int total);
+extern int __FASTCALL__ nc_stream_read(stream_t *s,void* mem,int total);
 extern off_t __FASTCALL__ nc_stream_tell(stream_t *s);
 extern int __FASTCALL__ nc_stream_seek(stream_t *s,off_t pos);
 extern int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len);
@@ -79,7 +79,7 @@ extern int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len);
 
 /* this block describes interface to cache/non-cache stream functions */
 extern int __FASTCALL__ stream_read_char(stream_t *s);
-extern int __FASTCALL__ stream_read(stream_t *s,char* mem,int total);
+extern int __FASTCALL__ stream_read(stream_t *s,void* mem,int total);
 extern off_t __FASTCALL__ stream_tell(stream_t *s);
 extern int __FASTCALL__ stream_seek(stream_t *s,off_t pos);
 extern int __FASTCALL__ stream_skip(stream_t *s,off_t len);

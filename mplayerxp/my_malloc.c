@@ -33,7 +33,7 @@ void *my_realloc(void *__ptr, size_t __size)
     if(crc != (long)((char *)__ptr-sizeof(long)))
     {
       printf("Internal error: my_realloc found out memory corruption!\n");
-      printf("INFO: ptr=%08X ptr[0]=%08X crc=%08X\n",
+      printf("INFO: ptr=%p ptr[0]=%lX crc=%lX\n",
 		__ptr,
 		osize,
 		crc);
@@ -83,7 +83,7 @@ void  my_free(void *__ptr)
     if(crc != (long)myptr)
     {
 	printf("Internal error: my_free found out memory corruption!\n");
-	printf("INFO: ptr=%08X ptr[0]=%08X crc=%08X\n",
+	printf("INFO: ptr=%p ptr[0]=%lX crc=%lX\n",
 		__ptr,
 		osize,
 		crc);

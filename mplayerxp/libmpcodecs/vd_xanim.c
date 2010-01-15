@@ -36,7 +36,7 @@ static const vd_info_t info = {
 };
 
 static const config_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 LIBVD_EXTERN(xanim)
@@ -246,7 +246,7 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
     char *error;
     XAVID_MOD_HDR *mod_hdr;
     XAVID_FUNC_HDR *func;
-    int i;
+    unsigned int i;
 
     codec_driver->file_handler = dlopen(filename, RTLD_NOW|RTLD_GLOBAL);
     if (!codec_driver->file_handler)
@@ -766,7 +766,7 @@ void XA_YUV1611_Convert(unsigned char *image_p, unsigned int imagex, unsigned in
     unsigned int map_flag, unsigned int *map, XA_CHDR *chdr)
 {
     xacodec_image_t *image=(xacodec_image_t*)image_p;
-    int y;
+    unsigned int y;
     int uvstride;
 
     MSG_DBG3( "YUVTabs:  %d %p %p %p %p %p\n",yuv_tabs->Uskip_mask,
@@ -803,7 +803,7 @@ void XA_YUV1611_Convert(unsigned char *image_p, unsigned int imagex, unsigned in
 	unsigned int stridev=image->stride[2];
 	unsigned char *du=image->planes[1]+2*y*strideu;
 	unsigned char *dv=image->planes[2]+2*y*stridev;
-	int x;
+	unsigned int x;
 	if(yuv_tabs->YUV_Y_tab){     // dirty hack to detect iv32:
 	    for(x=0;x<imagex;x++){
 		du[2*x]=du[2*x+1]=du[2*x+strideu]=du[2*x+strideu+1]=su[x]*2;
@@ -860,7 +860,7 @@ void XA_YUV221111_Convert(unsigned char *image_p, unsigned int imagex, unsigned 
 
 #warning "FIXME! Decoder doesn't supports Vivo/2.00 :("
 
-if(i_x==image->width && i_y==image->height){
+if(i_x==(unsigned)image->width && i_y==(unsigned)image->height){
     image->planes[0]=yuv->Ybuf;
     if(image->out_fmt==IMGFMT_YV12){
 	image->planes[1]=yuv->Ubuf;
@@ -872,7 +872,7 @@ if(i_x==image->width && i_y==image->height){
     image->stride[0]=i_x; // yuv->y_w
     image->stride[1]=image->stride[2]=i_x/2; // yuv->uv_w
 } else {
-    int y;
+    unsigned int y;
     for(y=0;y<i_y;y++)
 	memcpy(image->planes[0]+y*image->stride[0],yuv->Ybuf+y*i_x,i_x);
     i_x>>=1; i_y>>=1;

@@ -35,7 +35,7 @@ typedef struct {
 } priv_t;
 
 static const config_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 LIBVD_EXTERN(xvid)
@@ -199,6 +199,7 @@ static int load_lib( const char *libname )
 
 /* Returns DAR value according to VOL's informations contained in stats
  * param */
+#if 0
 static float stats2aspect(xvid_dec_stats_t *stats)
 {
 	if (stats->type == XVID_TYPE_VOL) {
@@ -254,7 +255,7 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 
 	return(0.0f);
 }
-
+#endif
 // init driver
 static int init(sh_video_t *sh){
 	xvid_gbl_info_t xvid_gbl_info;

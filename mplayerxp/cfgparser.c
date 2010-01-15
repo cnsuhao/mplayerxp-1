@@ -1320,52 +1320,54 @@ static void __m_config_show_options(unsigned ntabs,const char *pfx,const config_
 		    ,opts[i].name
 		    ,(opts[i].type==CONF_TYPE_PRINT && strcmp(opts[i].help,"show help")!=0)?opts[i].p:opts[i].help);
 	    if((opts[i].flags&CONF_NOCFG)==0) {
-	    MSG_INFO(" {%s:",
+	    MSG_INFO(" {%s=",
 		    opts[i].type==CONF_TYPE_FLAG?"flg":
 		    opts[i].type==CONF_TYPE_INT?"int":
 		    opts[i].type==CONF_TYPE_FLOAT?"flt":
 		    opts[i].type==CONF_TYPE_STRING?"str":"");
 	    switch(opts[i].type) {
 	    case CONF_TYPE_FLAG: {
-		int defv = *((int*)(opts[i].p));
-		MSG_INFO("<default=%i>",defv);
+		int defv = (*((int*)(opts[i].p)))?1:0;
+		int max  = opts[i].max ? 1:0;
+		int res = !(defv^max);
+		MSG_INFO("%s",res?"ON":"OFF");
 	    }
 	    break;
 	    case CONF_TYPE_STRING: {
 		const char **defv = (const char**)(opts[i].p);
-		if(defv) MSG_INFO("'%s'",*defv);
+		if(defv) MSG_INFO("\"%s\"",*defv);
 	    }
 	    break;
 	    case CONF_TYPE_INT: {
 		int defv = *((int*)(opts[i].p));
+		MSG_INFO("%i",defv);
 		if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
-		    MSG_INFO("[%i...%i]",(int)opts[i].min,(int)opts[i].max);
+		    MSG_INFO(" [%i...%i]",(int)opts[i].min,(int)opts[i].max);
 		}
 		else
 		if((opts[i].flags&CONF_MIN)==CONF_MIN) {
-		    MSG_INFO("<min=%i>",(int)opts[i].min);
+		    MSG_INFO(" <min=%i>",(int)opts[i].min);
 		}
 		else
 		if((opts[i].flags&CONF_MAX)==CONF_MAX) {
-		    MSG_INFO("<max=%i>",(int)opts[i].max);
+		    MSG_INFO(" <max=%i>",(int)opts[i].max);
 		}
-		MSG_INFO("<default=%i>",defv);
 	    }
 	    break;
 	    case CONF_TYPE_FLOAT: {
 		float defv = *((float*)(opts[i].p));
+		MSG_INFO("%f",defv);
 		if((opts[i].flags&CONF_RANGE)==CONF_RANGE) {
-		    MSG_INFO("[%f...%f]",(float)opts[i].min,(float)opts[i].max);
+		    MSG_INFO(" [%f...%f]",(float)opts[i].min,(float)opts[i].max);
 		}
 		else
 		if((opts[i].flags&CONF_MIN)==CONF_MIN) {
-		    MSG_INFO("<min=%f>",(float)opts[i].min);
+		    MSG_INFO(" <min=%f>",(float)opts[i].min);
 		}
 		else
 		if((opts[i].flags&CONF_MAX)==CONF_MAX) {
-		    MSG_INFO("<float=%f>",(float)opts[i].max);
+		    MSG_INFO(" <max=%f>",(float)opts[i].max);
 		}
-		MSG_INFO("<default=%f>",defv);
 	    }
 	    break;
 	    default:

@@ -16,16 +16,16 @@ static int search_overlap = -1;
 static int no_skip = 0;
 
 static const config_t cdda_opts[] = {
-  { "speed", &speed, CONF_TYPE_INT, CONF_RANGE,1,100, NULL },
-  { "overlap", &search_overlap, CONF_TYPE_INT, CONF_RANGE,0,75, NULL },
-  { "noskip", &no_skip, CONF_TYPE_FLAG, 0 , 0, 1, NULL },
-  { "skip", &no_skip, CONF_TYPE_FLAG, 0 , 1, 0, NULL },
-  {NULL, NULL, 0, 0, 0, 0, NULL}
+  { "speed", &speed, CONF_TYPE_INT, CONF_RANGE,1,100, NULL, "sets driver speed" },
+  { "overlap", &search_overlap, CONF_TYPE_INT, CONF_RANGE,0,75, NULL, "reserved" },
+  { "noskip", &no_skip, CONF_TYPE_FLAG, 0 , 0, 1, NULL, "reserved" },
+  { "skip", &no_skip, CONF_TYPE_FLAG, 0 , 1, 0, NULL, "reserved" },
+  {NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static const config_t cdda_conf[] = {
-  { "cdda", &cdda_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
-  { NULL,NULL, 0, 0, 0, 0, NULL}
+  { "cdda", &cdda_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "CD-DA related options"},
+  { NULL,NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 void cdda_register_options(m_config_t* cfg) {

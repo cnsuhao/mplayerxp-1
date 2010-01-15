@@ -30,7 +30,7 @@ static const vd_info_t info_vfwex = {
 };
 
 static const config_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 #define info info_vfw

@@ -45,13 +45,12 @@ static const config_t demux_rawvideo_opts[] = {
   // misc:
   { "fps", &fps, CONF_TYPE_FLOAT,CONF_RANGE,0.001,1000, NULL, "specifies rate in frames per second of raw-video stream" },
   { "size", &imgsize, CONF_TYPE_INT, CONF_RANGE, 1 , 8192*8192*4, NULL, "specifies frame size in bytes" },
-
-  {NULL, NULL, 0, 0, 0, 0, NULL}
+  {NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static const config_t rawvideo_conf[] = {
   { "rawvideo", &demux_rawvideo_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Raw-video specific options"},
-  { NULL,NULL, 0, 0, 0, 0, NULL}
+  { NULL,NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 static int rawvideo_probe(demuxer_t* demuxer) 

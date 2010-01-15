@@ -396,5 +396,5 @@ static const config_t mplayer_opts[]={
 	{ "net", &net_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Network specific options" },
 #endif
 // ------------------------- codec/pp options --------------------
-	{NULL, NULL, 0, 0, 0, 0, NULL}
+	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
