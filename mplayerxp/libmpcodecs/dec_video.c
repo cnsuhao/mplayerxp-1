@@ -74,7 +74,7 @@ int set_video_colors(sh_video_t *sh_video,char *item,int value)
 
 void uninit_video(sh_video_t *sh_video){
     if(!sh_video->inited) return;
-    MSG_V("uninit video: %d\n",sh_video->codec->driver_name);
+    MSG_V("uninit video: %s\n",sh_video->codec->driver_name);
     if(sh_video->vfilter && sh_video->vfilter_inited==1) vf_uninit_filter_chain(sh_video->vfilter);
     mpvdec->uninit(sh_video);
     sh_video->inited=0;
