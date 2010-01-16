@@ -897,7 +897,7 @@ static void __FASTCALL__ dri_draw_osd(int x0,int y0, int w,int h,const unsigned 
     if(x0+w<=dri_cap.width&&y0+h<=dri_cap.height)
     {
 	if(!draw_alpha) draw_alpha=get_draw_alpha(dri_cap.fourcc);
-	if(draw_alpha) 
+	if(draw_alpha)
 	    (*draw_alpha)(w,h,src,srca,stride,
 			    dri_surf[active_frame].planes[0]+dri_cap.strides[0]*y0+x0*((dri_bpp+7)/8),
 			    dri_cap.strides[0]);

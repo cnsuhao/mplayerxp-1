@@ -17,28 +17,28 @@ typedef struct {
   int inited;
   // output format:
   float timer;		   // value of old a_frame
-  int samplerate;
-  int samplesize;
-  int channels;
-  int o_bps; // == samplerate*samplesize*channels   (uncompr. bytes/sec)
-  int i_bps; // == bitrate  (compressed bytes/sec)
+  unsigned samplerate;
+  unsigned samplesize;
+  unsigned channels;
+  unsigned o_bps; // == samplerate*samplesize*channels   (uncompr. bytes/sec)
+  unsigned i_bps; // == bitrate  (compressed bytes/sec)
   // in buffers:
   char* a_in_buffer;
   int a_in_buffer_len;
-  int a_in_buffer_size;
+  unsigned a_in_buffer_size;
 
   // out buffers:
   char* a_buffer;
   int a_buffer_len;
-  int a_buffer_size;
+  unsigned a_buffer_size;
 
-  /* filter buffer */  
+  /* filter buffer */
   void *   afilter;
   int      afilter_inited;
-  unsigned f_bps; // == samplerate*samplesize*channels   (after filters bytes/sec)
-  char *   f_buffer;
-  unsigned f_buffer_len;
-  float    f_pts;
+  unsigned af_bps; // == samplerate*samplesize*channels   (after filters bytes/sec)
+  char *   af_buffer;
+  unsigned af_buffer_len;
+  float    af_pts;
 
   int sample_format;
   float a_pts;
@@ -48,12 +48,12 @@ typedef struct {
   AVIStreamHeader audio;
   WAVEFORMATEX *wf;
 //  char wf_ext[64];     // in format
-  int audio_in_minsize;
-  int audio_out_minsize;
+  unsigned audio_in_minsize;
+  unsigned audio_out_minsize;
   // other codecs:
   void* context; // codec-specific stuff (usually HANDLE or struct pointer)
   unsigned char *codecdata;
-  int codecdata_len;
+  unsigned codecdata_len;
 } sh_audio_t;
 
 typedef struct {
@@ -68,18 +68,18 @@ typedef struct {
   float fps;
   float frametime;  // 1/fps
   int chapter_change;
-  int i_bps; // == bitrate  (compressed bytes/sec)
-  int disp_w,disp_h;   // display size (filled by fileformat parser)
+  unsigned i_bps; // == bitrate  (compressed bytes/sec)
+  unsigned disp_w,disp_h;// display size (filled by fileformat parser)
 //  int coded_w,coded_h; // coded size (filled by video codec)
   float aspect;
   unsigned int outfmtidx;
-  
+
   void *vfilter;
   int   vfilter_inited;
 //  unsigned int bitrate;
   // buffers:
   float num_frames;       // number of frames played
-  int num_frames_decoded;       // number of frames decoded
+  int num_frames_decoded; // number of frames decoded
   mp_image_t *image;
   // win32 codec stuff:
   AVIStreamHeader video;

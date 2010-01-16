@@ -183,7 +183,7 @@ static void uninit(void)
 
 static uint32_t __FASTCALL__ preinit(const char *arg)
 {
-    if(arg) 
+    if(arg)
     {
 	MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
 	return ENOSYS;
@@ -193,9 +193,9 @@ static uint32_t __FASTCALL__ preinit(const char *arg)
 
 static void __FASTCALL__ null_dri_get_surface_caps(dri_surface_cap_t *caps)
 {
-    caps->caps = DRI_CAP_TEMP_VIDEO;
-    caps->caps |= DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
-    caps->caps |= DRI_CAP_DOWNSCALER | DRI_CAP_UPSCALER;
+    caps->caps =DRI_CAP_TEMP_VIDEO |
+		DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER |
+		DRI_CAP_DOWNSCALER | DRI_CAP_UPSCALER;
     caps->fourcc = null_fourcc;
     caps->width=null_image_width;
     caps->height=null_image_height;
@@ -217,18 +217,63 @@ static void __FASTCALL__ null_dri_get_surface(dri_surface_t *surf)
 	surf->planes[3] = 0;
 }
 
+static int __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
+    /* we must avoid compressed-fourcc here */
+    switch(format->fourcc) {
+    case IMGFMT_444P16_LE:
+    case IMGFMT_444P16_BE:
+    case IMGFMT_422P16_LE:
+    case IMGFMT_422P16_BE:
+    case IMGFMT_420P16_LE:
+    case IMGFMT_420P16_BE:
+    case IMGFMT_420A:
+    case IMGFMT_444P:
+    case IMGFMT_422P:
+    case IMGFMT_YV12:
+    case IMGFMT_I420:
+    case IMGFMT_IYUV:
+    case IMGFMT_YVU9:
+    case IMGFMT_IF09:
+    case IMGFMT_411P:
+    case IMGFMT_YUY2:
+    case IMGFMT_UYVY:
+// RGB and grayscale (Y8 and Y800):
+    case IMGFMT_RGB48LE:
+    case IMGFMT_RGB48BE:
+    case IMGFMT_BGR32:
+    case IMGFMT_RGB32:
+    case IMGFMT_BGR24:
+    case IMGFMT_RGB24:
+    case IMGFMT_BGR16:
+    case IMGFMT_RGB16:
+    case IMGFMT_BGR15:
+    case IMGFMT_RGB15:
+    case IMGFMT_Y800:
+    case IMGFMT_Y8:
+    case IMGFMT_BGR8:
+    case IMGFMT_RGB8:
+    case IMGFMT_BGR4:
+    case IMGFMT_RGB4:
+    case IMGFMT_BG4B:
+    case IMGFMT_RG4B:
+    case IMGFMT_BGR1:
+    case IMGFMT_RGB1: return VO_TRUE;
+    }
+    return VO_FALSE;
+}
+
 static uint32_t __FASTCALL__ control(uint32_t request, void *data)
 {
   switch (request) {
     case VOCTRL_QUERY_FORMAT:
-	return VO_TRUE;
+	return null_query_format(data);
     case VOCTRL_GET_NUM_FRAMES:
 	*(uint32_t *)data = null_num_frames;
 	return VO_TRUE;
     case DRI_GET_SURFACE_CAPS:
 	null_dri_get_surface_caps(data);
 	return VO_TRUE;
-    case DRI_GET_SURFACE: 
+    case DRI_GET_SURFACE:
 	null_dri_get_surface(data);
 	return VO_TRUE;
     case VOCTRL_FLUSH_PAGES:

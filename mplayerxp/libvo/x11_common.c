@@ -375,7 +375,7 @@ int vo_x11_init( void )
 	vo_screenwidth,vo_screenheight,
 	depth, vo_depthonscreen,
 	dispName,mLocalDisplay?"local":"remote");
- 
+
  return 1;
 }
 

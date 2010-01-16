@@ -99,7 +99,7 @@ m_config_t* mconfig;
 #include "dec_ahead.h"
 
 int enable_xp=XP_VAPlay;
-int enable_gomp=1;
+int enable_gomp=0; /* currently it's experimental feature */
 volatile int dec_ahead_active_frame=0;
 volatile unsigned abs_dec_ahead_active_frame=0;
 volatile unsigned loc_dec_ahead_active_frame=0;
@@ -474,7 +474,7 @@ int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, int minlen, int
         if( audio_buffer.indices[audio_buffer.index_tail].index != audio_buffer.tail ) {
             int buff_len = audio_buffer.len;
             MSG_DBG3("audio_ahead: orig idx %3i pts %.3f  pos %i   \n",audio_buffer.index_tail, audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
-            audio_buffer.indices[audio_buffer.index_tail].pts += (float)((audio_buffer.tail - audio_buffer.indices[audio_buffer.index_tail].index + buff_len) % buff_len) / (float)audio_buffer.sh_audio->f_bps;
+            audio_buffer.indices[audio_buffer.index_tail].pts += (float)((audio_buffer.tail - audio_buffer.indices[audio_buffer.index_tail].index + buff_len) % buff_len) / (float)audio_buffer.sh_audio->af_bps;
             audio_buffer.indices[audio_buffer.index_tail].index = audio_buffer.tail;
             MSG_DBG3("audio_ahead: read next_idx %3i next_pts %.3f  pos %i \n", audio_buffer.index_tail,audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
         }
@@ -490,7 +490,7 @@ float get_delay_audio_buffer(void)
     int delay = audio_buffer.head - audio_buffer.tail;
     if( delay < 0 )
         delay += audio_buffer.len;
-    return (float)delay / (float)audio_buffer.sh_audio->f_bps;
+    return (float)delay / (float)audio_buffer.sh_audio->af_bps;
 }
 
 int decode_audio_buffer(int len)
@@ -1102,29 +1102,29 @@ while(sh_audio){
       if(use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
 	      sh_audio->a_pts_pos-=playsize;
-	      if(sh_audio->a_pts_pos > -ao_get_delay()*sh_audio->f_bps) {
-		  sh_audio->timer+=playsize/(float)(sh_audio->f_bps);
+	      if(sh_audio->a_pts_pos > -ao_get_delay()*sh_audio->af_bps) {
+		  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
 	      } else {
-		  sh_audio->timer=sh_audio->a_pts-(float)sh_audio->a_pts_pos/(float)sh_audio->f_bps;
+		  sh_audio->timer=sh_audio->a_pts-(float)sh_audio->a_pts_pos/(float)sh_audio->af_bps;
 		  MSG_V("Audio chapter change detected\n");
 		  sh_audio->chapter_change=1;
 		  sh_audio->a_pts = HUGE;
 	      }
 	  } else if(pts != HUGE) {
 	      if(pts < 1.0 && sh_audio->timer > 2.0) {
-		  sh_audio->timer+=playsize/(float)(sh_audio->f_bps);
+		  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
 		  sh_audio->a_pts=pts;
 		  sh_audio->a_pts_pos=sh_audio->a_buffer_len-ret;
 	      } else {
-		  sh_audio->timer=pts+(ret-sh_audio->a_buffer_len)/(float)(sh_audio->f_bps);
+		  sh_audio->timer=pts+(ret-sh_audio->a_buffer_len)/(float)(sh_audio->af_bps);
 		  sh_audio->a_pts=HUGE;
 	      }
 	  } else
-	      sh_audio->timer+=playsize/(float)(sh_audio->f_bps);
+	      sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
       } else if(av_sync_pts && pts!=HUGE)
-	  sh_audio->timer=pts+(ret-sh_audio->a_buffer_len)/(float)(sh_audio->f_bps);
+	  sh_audio->timer=pts+(ret-sh_audio->a_buffer_len)/(float)(sh_audio->af_bps);
       else
-	  sh_audio->timer+=playsize/(float)(sh_audio->f_bps);
+	  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
       if(!av_sync_pts && enable_xp>=XP_VAPlay)
           pthread_mutex_unlock(&audio_timer_mutex);
   }
@@ -1349,8 +1349,8 @@ int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, fl
 	      /* DaP's AV-sync */
 
     	      float SH_AV_delay;
-	      /* SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay + sh_audio->a_buffer_len) / (float)sh_audio->f_bps); */
-	      SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay) / (float)sh_audio->f_bps);
+	      /* SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay + sh_audio->a_buffer_len) / (float)sh_audio->af_bps); */
+	      SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay) / (float)sh_audio->af_bps);
 	      if(SH_AV_delay<-2*frame_time){
 		  static int drop_message=0;
 	          drop_frame=frame_dropping; // tricky!
@@ -1462,11 +1462,11 @@ if(time_frame>0.001 && !(vo_flags&256)){
     float a_pts=0;
 
     // unplayed bytes in our and soundcard/dma buffer:
-    float delay=ao_get_delay()+(float)sh_audio->a_buffer_len/(float)sh_audio->f_bps;
+    float delay=ao_get_delay()+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
 
     if(pts_from_bps){
 	// PTS = sample_no / samplerate
-        unsigned int samples=(sh_audio->audio.dwSampleSize)?
+	unsigned int samples=(sh_audio->audio.dwSampleSize)?
           ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
           (d_audio->pack_no); // <- used for VBR audio
 	samples+=sh_audio->audio.dwStart; // offset
@@ -1732,7 +1732,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
     float a_pts=0;
 
     // unplayed bytes in our and soundcard/dma buffer:
-    float delay=ao_get_delay()+(float)sh_audio->a_buffer_len/(float)sh_audio->f_bps;
+    float delay=ao_get_delay()+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
     if(enable_xp>=XP_VideoAudio)
         delay += get_delay_audio_buffer();
 
@@ -2614,7 +2614,7 @@ if(sh_audio){
     sh_audio=d_audio->sh=NULL;
   } else {
     MSG_V("AUDIO: srate=%d  chans=%d  bps=%d  sfmt=0x%X  ratio: %d->%d\n",sh_audio->samplerate,sh_audio->channels,sh_audio->samplesize,
-        sh_audio->sample_format,sh_audio->i_bps,sh_audio->f_bps);
+        sh_audio->sample_format,sh_audio->i_bps,sh_audio->af_bps);
   }
 }
 

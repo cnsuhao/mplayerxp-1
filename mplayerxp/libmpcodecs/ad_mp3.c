@@ -179,8 +179,6 @@ enum mpg123_errors
 };
 
 extern int fakemono;
-static sh_audio_t* dec_audio_sh=NULL;
-
 static void (*mpg123_init_ptr)(void);
 #define mpg123_init() (*mpg123_init_ptr)()
 static void (*mpg123_exit_ptr)(void);
@@ -258,7 +256,6 @@ int init(sh_audio_t *sh)
   int err=0,nch,enc;
   unsigned char *indata;
   struct mpg123_frameinfo fi;
-  dec_audio_sh=sh; // save sh_audio for the callback:
   sh->samplesize=4;
   sh->sample_format=AFMT_FLOAT32;
   mpg123_init();

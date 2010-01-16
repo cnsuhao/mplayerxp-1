@@ -138,13 +138,13 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
     title = strdup("MPlayerXP X11 (XImage/Shm) render");
 
  in_format=format;
- 
+
  if( flags&0x03 ) fullscreen = 1;
  if( flags&0x02 ) vm = 1;
  if( flags&0x08 ) Flip_Flag = 1;
  zoomFlag = flags&0x04;
 // if(!fullscreen) zoomFlag=1; //it makes no sense to avoid zooming on windowd mode
- 
+
  XGetWindowAttributes( mDisplay,DefaultRootWindow( mDisplay ),&attribs );
  depth=attribs.depth;
 

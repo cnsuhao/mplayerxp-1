@@ -57,20 +57,27 @@ static inline void RENAME(vo_draw_alpha_yv12)(int w,int h,const unsigned char* s
 #endif
 PROFILE_START();
     for(y=0;y<(unsigned)h;y++){
-        register int x=0;
+	int x;
+	x=0;
 #ifdef HAVE_INT_PVECTOR
 	_ivec_prefetchw(&dstbase[x]);
 	_ivec_prefetch(&src[x]);
 	_ivec_prefetch(&srca[x]);
-	if(w>=__IVEC_SIZE)
+	/* MOVNTDQ: #GP(0) - If memory operand is not aligned on a 16-byte boundary */
+	for(;x<w;x++){
+	    unsigned char *dst=&dstbase[x];
+	    if(srca[x]) *dst=((dstbase[x]*srca[x])>>8)+src[x];
+	    if((((long)dst)&(__IVEC_SIZE-1))==0) break; /* align on sizeof(MMREG) boundary */
+	}
+	if((w-x)>=__IVEC_SIZE)
 	for(;x<w;x+=__IVEC_SIZE){
 	    __ivec vmsk,vdest,vsrc,vsrca,vt[4];
 	    _ivec_prefetchw(&dstbase[x+__IVEC_SIZE*4]);
 	    _ivec_prefetch(&src[x+__IVEC_SIZE*4]);
 	    _ivec_prefetch(&srca[x+__IVEC_SIZE*4]);
-	    vdest = _ivec_loadu(&dstbase[x]);
-	    vsrc  = _ivec_loada(&src[x]);
-	    vsrca = _ivec_loada(&srca[x]);
+	    vdest = _ivec_loada(&dstbase[x]);
+	    vsrc  = _ivec_loadu(&src[x]);
+	    vsrca = _ivec_loadu(&srca[x]);
 	    vmsk  = _ivec_not(_ivec_cmpeq_s8(vsrca,vzero));
 	    vt[0] = _ivec_u16_from_lou8(vdest);
 	    vt[1] = _ivec_u16_from_hiu8(vdest);
@@ -82,12 +89,12 @@ PROFILE_START();
 	    _ivec_stream(&dstbase[x],_ivec_blend_u8(vdest,vt[0],vmsk));
 	}
 #endif
-        for(;x<w;x++){
-            if(srca[x]) dstbase[x]=((dstbase[x]*srca[x])>>8)+src[x];
-        }
-        src+=srcstride;
-        srca+=srcstride;
-        dstbase+=dststride;
+	for(;x<w;x++){
+	    if(srca[x]) dstbase[x]=((dstbase[x]*srca[x])>>8)+src[x];
+	}
+	src+=srcstride;
+	srca+=srcstride;
+	dstbase+=dststride;
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();

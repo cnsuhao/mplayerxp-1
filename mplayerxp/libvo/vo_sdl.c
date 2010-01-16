@@ -26,22 +26,22 @@
  *  at http://slouken.devolution.com/SDL/
  *
  *  This file is part of mpeg2dec, a free MPEG-2 video stream decoder.
- *	
+ *
  *  mpeg2dec is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
- *   
+ *
  *  mpeg2dec is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *   
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with GNU Make; see the file COPYING.  If not, write to
  *  the Free Software Foundation.
  *
- *  -- end old disclaimer -- 
+ *  -- end old disclaimer --
  *
  *  Changes:
  *    Dominik Schnitzer <dominik@schnitzer.at> - November 08, 2000.
@@ -136,7 +136,7 @@ int sdl_noxv;
 int sdl_forcexv;
 int sdl_forcegl;
 
-static vo_info_t vo_info = 
+static vo_info_t vo_info =
 {
 	"SDL YUV/RGB/BGR renderer (SDL v1.1.7+ !)"
 #ifdef CONFIG_VIDIX
@@ -174,7 +174,7 @@ static void setenv(const char *name, const char *val, int _xx)
 #define FS 0x01
 #define VM 0x02
 #define ZOOM 0x04
-#define FLIP 0x08  
+#define FLIP 0x08
 
 #ifdef SDL_ENABLE_LOCKS
 #define	SDL_OVR_LOCK(x)        if (SDL_LockYUVOverlay (priv->overlay[x])) { \
@@ -266,7 +266,7 @@ static struct sdl_priv_s {
 
     /* 1 if the OSD has changed otherwise 0 */
     int osd_has_changed;
-    
+
 	/* source image format (YUV/RGB/...) */
     uint32_t format;
 
@@ -311,10 +311,10 @@ static inline int findArrayEnd (SDL_Rect **array)
  * Open and prepare SDL output.
  *
  *    params : *plugin ==
- *             *name == 
+ *             *name ==
  *   returns : 0 on success, -1 on failure
  **/
-  
+
 static int sdl_open ( void )
 {
 	struct sdl_priv_s *priv = &sdl_priv;
@@ -393,7 +393,7 @@ static int sdl_open ( void )
 
 		/* non hardware accelerated fullscreen modes */
 		priv->sdlfullflags &= ~SDL_HWSURFACE;
- 		priv->fullmodes = SDL_ListModes (vidInfo->vfmt, priv->sdlfullflags);
+		priv->fullmodes = SDL_ListModes (vidInfo->vfmt, priv->sdlfullflags);
 	}
 	
 	/* test for normal resizeable & windowed hardware accellerated surfaces */
@@ -557,14 +557,14 @@ static int __FASTCALL__ set_fullmode (int mode) {
 	/* if creation of new surface was successfull, save it and hide mouse cursor */
 	if(newsurface) {
 		if (priv->surface)
-	    	    SDL_FreeSurface(priv->surface);
+		    SDL_FreeSurface(priv->surface);
 		priv->surface = newsurface;
 		SDL_ShowCursor(0);
         SDL_SRF_LOCK(priv->surface, -1)
         SDL_FillRect(priv->surface, NULL, 0);
         SDL_SRF_UNLOCK(priv->surface)
 	retval = setup_surfaces();
-	}		
+	}
     else
         MSG_ERR("set_fullmode: SDL_SetVideoMode failed: %s\n", SDL_GetError());
     return retval;
@@ -618,7 +618,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 
     MSG_V("SDL: Using 0x%X (%s) image format\n", format,
                        vo_format_name(format));
-    
+
     if(priv->mode != YUV) {
 		priv->sdlflags |= SDL_ANYFORMAT;
 		priv->sdlfullflags |= SDL_ANYFORMAT;
@@ -700,10 +700,10 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	aspect_save_screenres(priv->XWidth,priv->XHeight);
 	aspect(&priv->dstwidth,&priv->dstheight,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
     }
-    
+
 	priv->windowsize.w = priv->dstwidth;
-  	priv->windowsize.h = priv->dstheight;
-        
+	priv->windowsize.h = priv->dstheight;
+
 	/* bit 0 (0x01) means fullscreen (-fs)
 	 * bit 1 (0x02) means mode switching (-vm)
 	 * bit 2 (0x04) enables software scaling (-zoom)
@@ -719,7 +719,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		priv->fulltype = FS;
 		retval = set_fullmode(priv->fullmode);
 		if(retval) return retval;
-	} else	
+	} else
 	if(flags&VM) {
 	 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
 		priv->fulltype = VM;
@@ -730,7 +730,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		priv->fulltype = ZOOM;
 		retval = set_fullmode(priv->fullmode);
 		if(retval) return retval;
-	} 
+	}
         else {
 		if((strcmp(priv->driver, "x11") == 0)
 		||(strcmp(priv->driver, "windib") == 0)
@@ -945,9 +945,9 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 				}
 			break;
 			case SDL_KEYUP:
-#else			
+#else
 			case SDL_KEYDOWN:
-#endif			
+#endif
 				keypressed = event.key.keysym.sym;
 				MSG_V("SDL: Key pressed: '%i'\n", keypressed);
 
@@ -963,9 +963,9 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 				}
 
 				else if ( keypressed == SDLK_n ) {
-#ifdef HAVE_X11					
+#ifdef HAVE_X11
 					aspect(&priv->dstwidth, &priv->dstheight,softzoom?A_ZOOM:A_NOZOOM);
-#endif					
+#endif
 					if (priv->surface->w != priv->dstwidth || priv->surface->h != priv->dstheight) {
 					    if(enable_xp) LOCK_VDECODING();
 					    if(set_video_mode(priv->dstwidth, priv->dstheight, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
@@ -1028,7 +1028,7 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 				default:
 					mplayer_put_key(keypressed);
                                 }
-                                
+
 				break;
 				case SDL_QUIT:
 					SDL_ShowCursor(1);
@@ -1048,12 +1048,12 @@ static void __FASTCALL__ erase_rectangle(unsigned idx,int x, int y, int w, int h
     struct sdl_priv_s *priv = &sdl_priv;
 
     switch(priv->format) {
-        case IMGFMT_YV12:  
+        case IMGFMT_YV12:
         case IMGFMT_I420:
         case IMGFMT_IYUV:
         {
             SDL_OVR_LOCK(idx)
-                        
+
                     /* Erase Y plane */
 		    erase_area_1(x, w, h,
 			    priv->overlay[idx]->pitches[0], 0,
@@ -1064,12 +1064,12 @@ static void __FASTCALL__ erase_rectangle(unsigned idx,int x, int y, int w, int h
                 x /= 2;
                 h /= 2;
                 y /= 2;
-                        
+
 		    erase_area_1(x, w, h,
 				priv->overlay[idx]->pitches[1], 128,
 				priv->overlay[idx]->pixels[1] +
 				priv->overlay[idx]->pitches[1]*y);
-                        
+
 		    erase_area_1(x, w, h,
 				priv->overlay[idx]->pitches[2], 128,
 				priv->overlay[idx]->pixels[2] +
@@ -1096,7 +1096,7 @@ static void __FASTCALL__ erase_rectangle(unsigned idx,int x, int y, int w, int h
             SDL_OVR_UNLOCK(idx)
                 break;
         }
-            
+
         case IMGFMT_RGB15:
         case IMGFMT_BGR15:
         case IMGFMT_RGB16:
@@ -1126,7 +1126,7 @@ static void __FASTCALL__ erase_area_4(int x_start, int width, int height, int pi
     int x_end = x_start/4 + width/4;
     int x, y;
     uint32_t* data = (uint32_t*) pixels;
-    
+
     x_start /= 4;
     pitch /= 4;
 
@@ -1255,11 +1255,11 @@ static void uninit(void)
 static uint32_t __FASTCALL__ preinit(const char *arg)
 {
     struct sdl_priv_s *priv = &sdl_priv;
-#ifdef HAVE_X11	
+#ifdef HAVE_X11
 	static Display *XDisplay;
 	static int XScreen;
 #endif
-
+    memset(priv,0,sizeof(sdl_priv));
     memset(priv->rgbsurface,0,sizeof(priv->rgbsurface));
     memset(priv->overlay,0,sizeof(priv->overlay));
     priv->num_buffs = 1;
@@ -1301,7 +1301,7 @@ static void __FASTCALL__ sdl_dri_get_surface_caps(dri_surface_cap_t *caps)
     caps->w=priv->width;
     caps->h=priv->height;
     if(priv->mode == YUV) {
-    	if(priv->overlay)
+	if(priv->overlay[0])
 	{
 	    int i,n;
 	    caps->width=priv->overlay[0]->w;
@@ -1322,7 +1322,7 @@ static void __FASTCALL__ sdl_dri_get_surface_caps(dri_surface_cap_t *caps)
     }
     else
     {
-	if(priv->rgbsurface)
+	if(priv->rgbsurface[0])
 	{
 	    caps->width=priv->rgbsurface[0]->w;
 	    caps->height=priv->rgbsurface[0]->h;
@@ -1375,7 +1375,7 @@ static uint32_t __FASTCALL__ control(uint32_t request, void *data)
   case DRI_GET_SURFACE_CAPS:
 	sdl_dri_get_surface_caps(data);
 	return VO_TRUE;
-  case DRI_GET_SURFACE: 
+  case DRI_GET_SURFACE:
 	sdl_dri_get_surface(data);
 	return VO_TRUE;
   case VOCTRL_CHECK_EVENTS:

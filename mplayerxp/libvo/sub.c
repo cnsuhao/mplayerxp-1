@@ -138,7 +138,7 @@ inline static void __FASTCALL__ vo_update_text_osd(mp_osd_obj_t* obj,int dxs,int
 
 inline static void __FASTCALL__ vo_draw_text_osd(mp_osd_obj_t* obj,draw_osd_f draw_alpha){
 	unsigned char *cp=(unsigned char *)vo_osd_text;
-   	int font;
+	int font;
         int x=obj->x;
 
         while (*cp){

@@ -622,7 +622,7 @@ int init_dec_ahead(sh_video_t *shv, sh_audio_t *sha)
     int asize;
     unsigned o_bps;
     unsigned min_reserv;
-      o_bps=sh_audio->afilter_inited?sh_audio->f_bps:sh_audio->o_bps;
+      o_bps=sh_audio->afilter_inited?sh_audio->af_bps:sh_audio->o_bps;
       if(has_xp_video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_num_frames/vo_fps))+MIN_BUFFER_RESERV;
       else		asize = o_bps*ao_da_buffs;
       /* FIXME: get better indices from asize/real_audio_packet_size */
@@ -791,7 +791,7 @@ int xp_thread_decode_audio()
     if(has_xp_video) {
 	/* Match video buffer */
 	vbuf_size = abs_dec_ahead_locked_frame - abs_dec_ahead_active_frame;
-	pref_buf = vbuf_size / vo_fps * sh_audio->f_bps;
+	pref_buf = vbuf_size / vo_fps * sh_audio->af_bps;
 	pref_buf -= len;
 	if( pref_buf > 0 ) {
 	    len = min( pref_buf, free_buf );
@@ -817,7 +817,7 @@ void * audio_play_routine( void * arg )
     struct timespec timeout;
     float d;
     int retval;
-    const float MAX_AUDIO_TIME = (float)ao_get_space() / sh_audio->f_bps + ao_get_delay();
+    const float MAX_AUDIO_TIME = (float)ao_get_space() / sh_audio->af_bps + ao_get_delay();
     float min_audio_time = MAX_AUDIO_TIME;
     float min_audio, max_audio;
     int samples, collect_samples;
