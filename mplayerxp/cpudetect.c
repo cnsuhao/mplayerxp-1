@@ -37,33 +37,29 @@ static void check_os_katmai_support( void );
 // return TRUE if cpuid supported
 static int has_cpuid()
 {
-	int a, c;
-
 #ifdef ARCH_X86_64
 	return 1;
 #else
+	int a, c;
 // code from libavcodec:
     __asm__ __volatile__ (
-                          /* See if CPUID instruction is supported ... */
-                          /* ... Get copies of EFLAGS into eax and ecx */
-                          "pushf\n\t"
-                          "pop %0\n\t"
-                          "mov %0, %1\n\t"
-                          
-                          /* ... Toggle the ID bit in one copy and store */
-                          /*     to the EFLAGS reg */
-                          "xor $0x200000, %0\n\t"
-                          "push %0\n\t"
-                          "popf\n\t"
-                          
-                          /* ... Get the (hopefully modified) EFLAGS */
-                          "pushf\n\t"
-                          "pop %0\n\t"
-                          : "=a" (a), "=c" (c)
-                          :
-                          : "cc" 
-                          );
-
+	/* See if CPUID instruction is supported ... */
+	/* ... Get copies of EFLAGS into eax and ecx */
+	"pushf\n\t"
+	"pop %0\n\t"
+	"mov %0, %1\n\t"
+	/* ... Toggle the ID bit in one copy and store */
+	/*     to the EFLAGS reg */
+	"xor $0x200000, %0\n\t"
+	"push %0\n\t"
+	"popf\n\t"
+	/* ... Get the (hopefully modified) EFLAGS */
+	"pushf\n\t"
+	"pop %0\n\t"
+	: "=a" (a), "=c" (c)
+	:
+	: "cc"
+    );
 	return (a!=c);
 #endif
 }
