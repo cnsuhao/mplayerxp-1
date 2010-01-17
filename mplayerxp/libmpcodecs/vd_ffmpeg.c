@@ -42,10 +42,10 @@ static char *lavc_param_skip_frame_str = NULL;
 static int lavc_param_threads=-1;
 static char *lavc_avopt = NULL;
 
-static int enable_ffslices=-1;
+static int enable_ffslices=1;
 static const config_t ff_options[] = {
-        {"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables slice-based method of frame rendering in ffmpeg decoder"},
-        {"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables slice-based method of frame rendering in ffmpeg decoder"},
+	{"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables slice-based method of frame rendering in ffmpeg decoder"},
+	{"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables slice-based method of frame rendering in ffmpeg decoder"},
 	{"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error resilience for ffmpeg decoders"},
 	{"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies idct algorithm for ffmpeg decoders"},
 	{"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error concealment for ffmpeg decoders"},
@@ -237,13 +237,6 @@ static int init(sh_video_t *sh){
         MSG_ERR(MSGTR_OutOfMemory);
         return 0;
     }
-#ifdef HAVE_GOMP
-    /* Note: Slices have effect on UNI-processor machines only */
-    if(enable_ffslices==-1) {
-	if(omp_get_num_procs()>1 && enable_gomp)enable_ffslices=0;
-	else					enable_ffslices=1;
-    }
-#endif
 
 #ifdef CODEC_FLAG_NOT_TRUNCATED
     vdff_ctx->ctx->flags|= CODEC_FLAG_NOT_TRUNCATED;
@@ -360,6 +353,11 @@ static int init(sh_video_t *sh){
 #endif
     if(sh->bih)
 	vdff_ctx->ctx->bits_per_coded_sample= sh->bih->biBitCount;
+
+#ifdef _OPENMP
+    /* Note: Slices have effect on UNI-processor machines only */
+    if(enable_ffslices && omp_get_num_procs()>1 && enable_gomp) enable_ffslices=0;
+#endif
     if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DRAW_HORIZ_BAND && enable_ffslices) vdff_ctx->cap_slices=1;
 /* enable DR1 method */
     if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DR1) vdff_ctx->cap_dr1=1;
@@ -370,6 +368,8 @@ static int init(sh_video_t *sh){
 	avcodec_thread_init(vdff_ctx->ctx, lavc_param_threads);
 	MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
     }
+    if(vdff_ctx->cap_slices)
+	MSG_STATUS("Trying to use slice-based rendering in FFMPEG\n");
     /* open it */
     rc = avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec);
     if (rc < 0) {
@@ -393,13 +393,13 @@ static int init(sh_video_t *sh){
 	{
 	    case IMGFMT_YV12:
 	    case IMGFMT_I420:
-	    case IMGFMT_IYUV: pp_flags = PP_FORMAT_420;
-			      break;
+	    case IMGFMT_IYUV:	pp_flags = PP_FORMAT_420;
+				break;
 	    case IMGFMT_YVYU:
-	    case IMGFMT_YUY2: pp_flags = PP_FORMAT_422;
-			      break;
-	    case IMGFMT_411P: pp_flags = PP_FORMAT_411;
-			      break;
+	    case IMGFMT_YUY2:	pp_flags = PP_FORMAT_422;
+				break;
+	    case IMGFMT_411P:	pp_flags = PP_FORMAT_411;
+				break;
 	    default:
 	    {
 		const char *fmt;
@@ -608,7 +608,13 @@ static void draw_slice(struct AVCodecContext *s,
 	mpi->stride[1]=ls;
     }
     MSG_DBG2("ff_draw_callback %i %i %i %i\n",mpi->x,mpi->y,mpi->w,mpi->h);
+    pthread_mutex_lock(&sh->mutex);
+    sh->active_slices++;
+    pthread_mutex_unlock(&sh->mutex);
     mpcodecs_draw_slice (sh, mpi);
+    pthread_mutex_lock(&sh->mutex);
+    sh->active_slices--;
+    pthread_mutex_unlock(&sh->mutex);
 }
 
 /* copypaste from demux_real.c - it should match to get it working!*/
@@ -633,7 +639,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     if(len<=0) return NULL; // skipped frame
 
     vdff_ctx->ctx->hurry_up=(flags&3)?((flags&2)?2:1):0;
-    if(vdff_ctx->cap_slices)	vdff_ctx->use_slices=(divx_quality&&npp_options)?0:vdff_ctx->ctx->hurry_up?0:1;
+    if(vdff_ctx->cap_slices)	vdff_ctx->use_slices= !(sh->vf_flags&VF_FLAGS_SLICES)?0:vdff_ctx->ctx->hurry_up?0:1;
     else			vdff_ctx->use_slices=0;
 /*
     if codec is capable DR1

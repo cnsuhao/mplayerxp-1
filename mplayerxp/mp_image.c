@@ -211,16 +211,10 @@ void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi) {
   }
 }
 
-void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned height)
+void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned h)
 {
-    unsigned uv_off = (y>>mpi->chroma_y_shift);
     *dmpi = *mpi;
-    dmpi->planes[0] = mpi->planes[0] + (mpi->stride[0]*y);
-    dmpi->planes[1] = mpi->planes[1] + (mpi->stride[1]*uv_off);
-    dmpi->planes[2] = mpi->planes[2] + (mpi->stride[2]*uv_off);
-    dmpi->planes[3] = mpi->planes[3] + (mpi->stride[3]*uv_off);
-    dmpi->qscale    = mpi->qscale    + (mpi->qstride*y);
-    dmpi->y = 0;
-    dmpi->h = height;
-    dmpi->chroma_height = (height >> mpi->chroma_y_shift);
+    dmpi->y = y;
+    dmpi->h = h;
+    dmpi->chroma_height = h >> mpi->chroma_y_shift;
 }

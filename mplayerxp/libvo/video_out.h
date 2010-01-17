@@ -173,9 +173,8 @@ extern uint32_t	 __FASTCALL__ vo_get_frame_num( volatile unsigned * );
 extern uint32_t	 __FASTCALL__ vo_set_frame_num( volatile unsigned * );
 extern uint32_t	 __FASTCALL__ vo_get_active_frame( volatile unsigned * );
 extern uint32_t	 __FASTCALL__ vo_set_active_frame( volatile unsigned * );
-extern uint32_t  __FASTCALL__ vo_draw_frame(const uint8_t *src[]);
-extern uint32_t  __FASTCALL__ vo_draw_slice(const uint8_t *src[], unsigned stride[], 
-				      unsigned w,unsigned h,unsigned x,unsigned y);
+extern uint32_t  __FASTCALL__ vo_draw_frame(const mp_image_t *mpi);
+extern uint32_t  __FASTCALL__ vo_draw_slice(const mp_image_t *mpi);
 extern void		vo_change_frame(void);
 extern void		vo_flush_pages(void);
 extern void		vo_draw_osd(void);

@@ -342,6 +342,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
           stride[2]=mpi->stride[2];
       }
     }
+    MSG_DBG2("vf_scale.put_slice was called\n");
     dmpi=vf_get_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
 	vf->priv->w, vf->priv->h);
@@ -583,12 +584,13 @@ static struct size_preset {
   { NULL, 0, 0}
 };
 #endif
+/* note: sclices give unstable performance */
 const vf_info_t vf_info_scale = {
     "software scaling",
     "scale",
     "A'rpi",
     "",
-    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
+    VF_FLAGS_THREADS,
     vf_open
 };
 
@@ -598,7 +600,7 @@ const vf_info_t vf_info_fmtcvt = {
     "fmtcvt",
     "A'rpi",
     "",
-    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
+    VF_FLAGS_THREADS,
     vf_open
 };
 

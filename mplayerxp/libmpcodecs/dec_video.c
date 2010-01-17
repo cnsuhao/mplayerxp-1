@@ -164,14 +164,13 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	,o_bps);
 	// Yeah! We got it!
 	sh_video->inited=1;
+	sh_video->vf_flags=vf_query_flags(sh_video->vfilter);
 #ifdef _OPENMP
 	if(enable_gomp) {
-	    int vf_flags;
 	    smp_num_cpus=omp_get_num_procs();
-	    vf_flags=vf_query_flags(sh_video->vfilter);
 	    use_vf_threads=0;
-	    MSG_DBG2("[mpdec] vf_flags=%08X num_cpus=%u\n",vf_flags,smp_num_cpus);
-	    if(((vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
+	    MSG_DBG2("[mpdec] vf_flags=%08X num_cpus=%u\n",sh_video->vf_flags,smp_num_cpus);
+	    if(((sh_video->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
 	}
 #else
 	MSG_V("[mpdec] GOMP was not compiled-in! Using single threaded video filtering!\n");
@@ -181,9 +180,61 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
     return 0;
 }
 
+void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
+{
+  vf_instance_t* vf;
+  const unsigned h_step=16;
+  unsigned num_slices = mpi->h/h_step;
+  vf=sh->vfilter;
+  if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
+    if(mpi->h%h_step) num_slices++;
+    if(sh->vf_flags&VF_FLAGS_SLICES)
+    {
+	unsigned j,i,y;
+	mp_image_t ampi[num_slices];
+	static int hello_printed=0;
+	if(!hello_printed) {
+		MSG_OK("[VC] using %u threads for video filters\n",smp_num_cpus);
+		hello_printed=1;
+	}
+	y=0;
+	for(i=0;i<num_slices;i++) {
+	    mpi_fake_slice(&ampi[i],mpi,y,h_step);
+	    y+=h_step;
+	}
+#ifdef _OPENMP
+	if(use_vf_threads && (num_slices>smp_num_cpus)) {
+	    for(j=0;j<num_slices;j+=smp_num_cpus) {
+#pragma omp parallel for shared(vf) private(i)
+		for(i=j;i<smp_num_cpus;i++) {
+		    MSG_DBG2("Put slice[%u %u] in threads\n",ampi[i].y,ampi[i].h);
+		    vf->put_slice(vf,&ampi[i]);
+		}
+	    }
+	    for(;j<num_slices;j++) {
+		MSG_DBG2("Put slice[%u %u] in threads\n",ampi[j].y,h_step);
+		vf->put_slice(vf,&ampi[j]);
+	    }
+	}
+	else
+#endif
+	{
+	    /* execute slices instead of whole frame make faster multiple filters */
+	    for(i=0;i<num_slices;i++) {
+		MSG_DBG2("vf(%s) Put slice[%u %u] in threads\n",vf->info->name,ampi[i].y,ampi[i].h);
+		vf->put_slice(vf,&ampi[i]);
+	    }
+	}
+    } else {
+	MSG_DBG2("Put whole frame\n");
+	vf->put_slice(vf,mpi);
+    }
+  }
+}
+
 extern void update_subtitle(float v_pts);
 int decode_video(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_frame, float pts){
-vf_instance_t* vf;
+  vf_instance_t* vf;
 mp_image_t *mpi=NULL;
 unsigned int t;
 unsigned int t2;
@@ -193,15 +244,17 @@ vf=sh_video->vfilter;
 
 t=GetTimer();
 vf->control(vf,VFCTRL_START_FRAME,NULL);
+
+sh_video->active_slices=0;
 mpi=mpvdec->decode(sh_video, start, in_size, drop_frame);
 MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
+while(sh_video->active_slices!=0) usleep(0);
 /* ------------------------ frame decoded. -------------------- */
-
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
 #endif
-
 if(!mpi) return 0; // error / skipped frame
+mpcodecs_draw_image(sh_video,mpi);
 
 t2=GetTimer();t=t2-t;
 tt = t*0.000001f;
@@ -217,43 +270,6 @@ if(drop_frame) return 0;
 update_subtitle(pts);
 vo_flush_pages();
 
-if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
-    MSG_DBG2("Put whole frame\n");
-#ifdef _OPENMP
-    if(use_vf_threads) {
-	unsigned i,y,h_step,h;
-	mp_image_t ampi[smp_num_cpus];
-	static int hello_printed=0;
-	if(!hello_printed) {
-		MSG_OK("[VC] using %u threads for video filters\n",smp_num_cpus);
-		hello_printed=1;
-	}
-	h_step = mpi->h/smp_num_cpus;
-	h=mpi->height;
-	mpi->height=h_step;
-	y=0;
-	for(i=0;i<smp_num_cpus;i++) {
-	    ampi[i] = *mpi;
-	    ampi[i].y = y;
-	    ampi[i].height = h_step;
-	    ampi[i].chroma_height = h_step >> mpi->chroma_y_shift;
-	    y+=h_step;
-	}
-#pragma omp parallel for shared(vf) private(i)
-	for(i=0;i<smp_num_cpus;i++) {
-	    MSG_DBG2("Put slice[%u %u] in threads\n",ampi[i].y,h_step);
-	    vf->put_slice(vf,&ampi[i]);
-	}
-	if(y<h) {
-	    ampi[0].y = y;
-	    ampi[0].height = h - ampi[0].y;
-	    vf->put_slice(vf,&ampi[0]);
-	}
-    }
-    else
-#endif
-    vf->put_slice(vf,mpi);
-}
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
     vout_time_usage+=tt;

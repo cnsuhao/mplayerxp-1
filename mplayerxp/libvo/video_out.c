@@ -397,7 +397,7 @@ static void __FASTCALL__ dri_reconfig( uint32_t event )
 	video_out->control(DRI_GET_SURFACE_CAPS,&dri_cap);
 	dri_config(dri_cap.fourcc);
 	/* ugly workaround of swapped BGR-fourccs. Should be removed in the future */
-	if(!has_dri) 
+	if(!has_dri)
 	{
 		has_dri=1;
 		dri_cap.fourcc = bswap_32(dri_cap.fourcc);
@@ -555,7 +555,7 @@ uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi )
 	    return VO_FALSE;
 	}
 	/* video surface is bad thing for reading */
-	if(mpi->flags&MP_IMGFLAG_READABLE && (dri_cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED)
+	if(((mpi->flags&MP_IMGFLAG_READABLE)||(mpi->type==MP_IMGTYPE_TEMP)) && (dri_cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED)
 	{
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->flags&MP_IMGFLAG_READABLE && (dri_cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
 	    return VO_FALSE;
@@ -674,32 +674,10 @@ uint32_t __FASTCALL__ vo_set_active_frame( volatile unsigned * fr)
     return VO_TRUE;
 }
 
-uint32_t __FASTCALL__ vo_draw_frame(const uint8_t *src[])
+uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 {
-	unsigned stride[1];
-	MSG_DBG3("dri_vo_dbg: vo_draw_frame\n");
-	if(image_format == IMGFMT_YV12 || image_format == IMGFMT_I420 || image_format == IMGFMT_IYUV ||
-	    image_format == IMGFMT_YVU9 || image_format == IMGFMT_IF09)
-	    MSG_WARN("dri_vo: draw_frame for planar fourcc was called, frame cannot be written\n");
-	else
-	if(image_format == IMGFMT_RGB32 || image_format == IMGFMT_BGR32)
-	    stride[0] = image_width*4;
-	else
-	if(image_format == IMGFMT_RGB24 || image_format == IMGFMT_BGR24)
-	    stride[0] = image_width*3;
-	else
-	if(image_format == IMGFMT_RGB8 || image_format == IMGFMT_BGR8)
-	    stride[0] = image_width;
-	else
-	    stride[0] = image_width*2;
-	return vo_draw_slice(src,stride,image_width,image_height,0,0);
-}
-
-uint32_t __FASTCALL__ vo_draw_slice(const uint8_t *src[], unsigned stride[], 
-		       unsigned w,unsigned h,unsigned x,unsigned y)
-{
-    unsigned i,_w[4],_h[4];
-    MSG_DBG3("dri_vo_dbg: vo_draw_slice xywh=%i %i %i %i\n",x,y,w,h);
+    unsigned i,_w[4],_h[4],x,y;
+    MSG_DBG3("dri_vo_dbg: vo_draw_slice xywh=%i %i %i %i\n",mpi->x,mpi->y,mpi->w,mpi->h);
     if(has_dri)
     {
 	uint8_t *dst[4];
@@ -709,15 +687,17 @@ uint32_t __FASTCALL__ vo_draw_slice(const uint8_t *src[], unsigned stride[],
 	{
 	    dst[i]=dri_surf[xp_frame].planes[i]+dri_off[i];
 	    dstStride[i]=dri_cap.strides[i];
-	    dst[i]+=((y*dstStride[i])*vod.y_mul[i])/vod.y_div[i];
-	    dst[i]+=(x*vod.x_mul[i])/vod.x_div[i];
-	    _w[i]=(w*vod.x_mul[i])/vod.x_div[i];
-	    _h[i]=(h*vod.y_mul[i])/vod.y_div[i];
-	    ps_src[i] = src[i] + ps_off[i];
+	    dst[i]+=((mpi->y*dstStride[i])*vod.y_mul[i])/vod.y_div[i];
+	    dst[i]+=(mpi->x*vod.x_mul[i])/vod.x_div[i];
+	    _w[i]=(mpi->w*vod.x_mul[i])/vod.x_div[i];
+	    _h[i]=(mpi->h*vod.y_mul[i])/vod.y_div[i];
+	    y = i?(mpi->y>>mpi->chroma_y_shift):mpi->y;
+	    x = i?(mpi->x>>mpi->chroma_x_shift):mpi->x;
+	    ps_src[i] = mpi->planes[i]+(y*mpi->stride[i])+x+ps_off[i];
 	}
 	for(i=0;i<4;i++)
-	    if(stride[i])
-		memcpy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],stride[i]);
+	    if(mpi->stride[i])
+		memcpy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
 	return 0;
     }
     return -1;

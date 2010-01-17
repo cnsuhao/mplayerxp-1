@@ -207,7 +207,8 @@ static void draw_frame(mp_image_t *mpi,sh_video_t *sh,unsigned w,const mpeg2_fbu
     mpi->stride[0]=w;
     mpi->stride[1]=
     mpi->stride[2]=w>>1;
-    mpcodecs_draw_slice(sh,mpi);
+    mpi->flags&=~MP_IMGFLAG_DRAW_CALLBACK;
+    mpcodecs_draw_image(sh,mpi);
 }
 
 // decode a frame
@@ -217,7 +218,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     const mpeg2_info_t *info;
     int state,buf;
     if(len<=0) return NULL; // skipped null frame
-    
+
 #if 0
     // append extra 'end of frame' code:
     ((char*)data+len)[0]=0;

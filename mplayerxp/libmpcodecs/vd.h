@@ -40,5 +40,7 @@ extern const vd_functions_t* mpcodecs_vd_drivers[];
 // callbacks:
 int mpcodecs_config_vo(sh_video_t *sh, int w, int h, void *tune);
 mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h);
-void mpcodecs_draw_slice(sh_video_t *sh, mp_image_t*);
+void mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
+void mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);
+
 

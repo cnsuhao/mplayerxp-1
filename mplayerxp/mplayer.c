@@ -1207,8 +1207,9 @@ void update_subtitle(float v_pts)
       pinfo[xp_id].current_module=NULL;
   }
 #endif
-  
+
   // DVD sub:
+#if 0
   if(vo_flags & 0x08){
     static vo_mpegpes_t packet;
     static vo_mpegpes_t *pkg=&packet;
@@ -1218,7 +1219,9 @@ void update_subtitle(float v_pts)
       MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",packet.size,v_pts,d_dvdsub->pts);
       vo_draw_frame(&pkg);
     }
-  }else if(vo_spudec){
+  }else
+#endif
+   if(vo_spudec){
     unsigned char* packet=NULL;
     int len,timestamp;
     pinfo[xp_id].current_module="spudec";

@@ -72,6 +72,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 
 static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* data)
 {
+    MSG_DBG2("vf_control: %u\n",request);
     switch(request){
     case VFCTRL_CHANGE_FRAME:
     {
@@ -118,9 +119,13 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
         mp_image_t *mpi){
     int retval;
     unsigned i;
+    struct vf_priv_s *priv = vf->priv;
     retval=vo_get_surface(mpi);
-    if(retval==VO_TRUE)
+    if(retval==VO_TRUE) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
+	MSG_DBG2("vf_vo_get_image was called successfully\n");
+    }
+    MSG_DBG2("vf_vo_get_image was called failed\n");
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf,
@@ -129,7 +134,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf,
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED)))
   {
     MSG_DBG2("vf_vo_draw_slice was called %u %u %u %u\n",mpi->x,mpi->y,mpi->w,mpi->h);
-    vo_draw_slice(mpi->planes,mpi->stride,mpi->w,mpi->h,mpi->x,mpi->y);
+    vo_draw_slice(mpi);
   }
   return 1;
 }

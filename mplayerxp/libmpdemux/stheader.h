@@ -73,9 +73,12 @@ typedef struct {
 //  int coded_w,coded_h; // coded size (filled by video codec)
   float aspect;
   unsigned int outfmtidx;
-
+  /* vfilter chan */
   void *vfilter;
   int   vfilter_inited;
+  int   vf_flags;
+  pthread_mutex_t mutex;
+  unsigned active_slices;
 //  unsigned int bitrate;
   // buffers:
   float num_frames;       // number of frames played

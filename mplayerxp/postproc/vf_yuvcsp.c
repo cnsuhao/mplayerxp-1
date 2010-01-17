@@ -47,8 +47,8 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     cb_out = vf->dmpi->planes[1];
     cr_out = vf->dmpi->planes[2];
 
-    for (i = 0; i < mpi->height; i++)
-	for (j = mpi->x; j < mpi->width; j++) {
+    for (i = 0; i < mpi->h; i++)
+	for (j = mpi->x; j < mpi->w; j++) {
 	    y = i+mpi->y;
 	    x = j+mpi->x;
 	    y_out[y*vf->dmpi->stride[0]+x] = clamp_y(y_in[y*mpi->stride[0]+x]);
