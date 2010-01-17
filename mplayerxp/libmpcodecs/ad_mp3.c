@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
+#include "libvo/fastmemcpy.h"
 #include "mp_config.h"
 #include "../mplayer.h"
 #include "../cpudetect.h"
@@ -209,6 +210,8 @@ static int (*mpg123_info_ptr)(mpg123_handle *mh, struct mpg123_frameinfo *mi);
 #define mpg123_info(a,b) (*mpg123_info_ptr)(a,b)
 static const char* (*mpg123_current_decoder_ptr)(mpg123_handle *mh);
 #define mpg123_current_decoder(a) (*mpg123_current_decoder_ptr)(a)
+static int (*mpg123_decode_frame_ptr)(mpg123_handle *mh, off_t *num, unsigned char **audio, size_t *bytes);
+#define mpg123_decode_frame(a,b,c,d) (*mpg123_decode_frame_ptr)(a,b,c,d)
 
 
 static void *dll_handle;
@@ -229,11 +232,12 @@ static int load_dll(const char *libname)
   mpg123_decode_ptr = ld_sym(dll_handle,"mpg123_decode");
   mpg123_read_ptr = ld_sym(dll_handle,"mpg123_read");
   mpg123_feed_ptr = ld_sym(dll_handle,"mpg123_feed");
+  mpg123_decode_frame_ptr = ld_sym(dll_handle,"mpg123_decode_frame");
   return mpg123_decode_ptr && mpg123_init_ptr && mpg123_exit_ptr &&
 	 mpg123_new_ptr && mpg123_delete_ptr && mpg123_plain_strerror_ptr &&
 	 mpg123_open_feed_ptr && mpg123_close_ptr && mpg123_getformat_ptr &&
 	 mpg123_param_ptr && mpg123_info_ptr && mpg123_current_decoder_ptr &&
-	 mpg123_read_ptr && mpg123_feed_ptr;
+	 mpg123_read_ptr && mpg123_feed_ptr && mpg123_decode_frame_ptr;
 }
 
 
@@ -333,22 +337,38 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
 
 int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
 {
-    float apts;
-    unsigned char *indata=NULL;
-    int err,indata_size;
-    size_t len=0,done;
-    while(len<(size_t)minlen) {
-	indata_size=ds_get_packet_r(sh->ds,&indata,len>0?&apts:pts);
-	if(indata_size<0) break;
-	err=mpg123_decode(sh->context,indata,indata_size,buf,maxlen,&done);
-	MSG_DBG2("mp3_decode: %i->%i [%i...%i]\n",indata_size,done,minlen,maxlen);
+    unsigned char *indata=NULL,*outdata;
+    int err=MPG123_OK,indata_size=0;
+    off_t offset;
+    size_t done=0;
+    minlen=1;
+    /* decode one frame per call to be compatible with old logic:
+	***************************
+	int retval=-1;
+	while(retval<0) {
+	    retval = MP3_DecodeFrame(buf,-1,pts);
+	    if(retval<0) control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
+	}
+	return retval;
+	***************************
+	this logic violate some rules buf buffer overflow never happens because maxlen in 10 times less
+	than total buffer size!
+	TODO: Try to switch on mpg123_framebyframe_decode() after stabilizing its interface by libmpg123 developers.
+     */
+    MSG_DBG2("mp3_decode start: pts=%f\n",*pts);
+    do {
+	err=mpg123_decode_frame(sh->context,&offset,&outdata,&done);
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
 	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
-	    break;
 	}
-	buf+=done;
-	len+=done;
-	maxlen-=done;
-    }
-    return len;
+	else
+	    memcpy(buf,outdata,done);
+	if(err==MPG123_NEED_MORE) {
+	    indata_size=ds_get_packet_r(sh->ds,&indata,pts);
+	    if(indata_size<0) return 0;
+	    mpg123_feed(sh->context,indata,indata_size);
+	}
+    }while(err==MPG123_NEED_MORE);
+    MSG_DBG2("mp3_decode: %i->%i [%i...%i] pts=%f\n",indata_size,done,minlen,maxlen,*pts);
+    return done;
 }
