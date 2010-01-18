@@ -96,30 +96,45 @@ __asm__ __volatile__(\
 	   perform reading and writing to be multiple to a number of\
 	   processor's decoders, but it's not always possible.\
 	*/\
+	if(((unsigned long)cfrom) & 15)\
+	/* if SRC is misaligned */\
 	for(; i>0; i--)\
 	{\
 	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8]);\
 	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8+32]);\
-	    if(((unsigned long)cfrom) & 15) {\
-		/* if SRC is misaligned */\
-		iarr[0] = _ivec_loadu(&cfrom[__IVEC_SIZE*0]);\
-		iarr[1] = _ivec_loadu(&cfrom[__IVEC_SIZE*1]);\
-		iarr[2] = _ivec_loadu(&cfrom[__IVEC_SIZE*2]);\
-		iarr[3] = _ivec_loadu(&cfrom[__IVEC_SIZE*3]);\
-		iarr[4] = _ivec_loadu(&cfrom[__IVEC_SIZE*4]);\
-		iarr[5] = _ivec_loadu(&cfrom[__IVEC_SIZE*5]);\
-		iarr[6] = _ivec_loadu(&cfrom[__IVEC_SIZE*6]);\
-		iarr[7] = _ivec_loadu(&cfrom[__IVEC_SIZE*7]);\
-	    } else {\
-		iarr[0] = _ivec_loada(&cfrom[__IVEC_SIZE*0]);\
-		iarr[1] = _ivec_loada(&cfrom[__IVEC_SIZE*1]);\
-		iarr[2] = _ivec_loada(&cfrom[__IVEC_SIZE*2]);\
-		iarr[3] = _ivec_loada(&cfrom[__IVEC_SIZE*3]);\
-		iarr[4] = _ivec_loada(&cfrom[__IVEC_SIZE*4]);\
-		iarr[5] = _ivec_loada(&cfrom[__IVEC_SIZE*5]);\
-		iarr[6] = _ivec_loada(&cfrom[__IVEC_SIZE*6]);\
-		iarr[7] = _ivec_loada(&cfrom[__IVEC_SIZE*7]);\
-	    }\
+	    iarr[0] = _ivec_loadu(&cfrom[__IVEC_SIZE*0]);\
+	    iarr[1] = _ivec_loadu(&cfrom[__IVEC_SIZE*1]);\
+	    iarr[2] = _ivec_loadu(&cfrom[__IVEC_SIZE*2]);\
+	    iarr[3] = _ivec_loadu(&cfrom[__IVEC_SIZE*3]);\
+	    iarr[4] = _ivec_loadu(&cfrom[__IVEC_SIZE*4]);\
+	    iarr[5] = _ivec_loadu(&cfrom[__IVEC_SIZE*5]);\
+	    iarr[6] = _ivec_loadu(&cfrom[__IVEC_SIZE*6]);\
+	    iarr[7] = _ivec_loadu(&cfrom[__IVEC_SIZE*7]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*0],iarr[0]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*1],iarr[1]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*2],iarr[2]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*3],iarr[3]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*4],iarr[4]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*5],iarr[5]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*6],iarr[6]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*7],iarr[7]);\
+	    cfrom+=block_size;\
+	    tto+=block_size;\
+	}\
+	else\
+	/* if SRC is aligned */\
+	for(; i>0; i--)\
+	{\
+	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8]);\
+	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8+32]);\
+	    iarr[0] = _ivec_loada(&cfrom[__IVEC_SIZE*0]);\
+	    iarr[1] = _ivec_loada(&cfrom[__IVEC_SIZE*1]);\
+	    iarr[2] = _ivec_loada(&cfrom[__IVEC_SIZE*2]);\
+	    iarr[3] = _ivec_loada(&cfrom[__IVEC_SIZE*3]);\
+	    iarr[4] = _ivec_loada(&cfrom[__IVEC_SIZE*4]);\
+	    iarr[5] = _ivec_loada(&cfrom[__IVEC_SIZE*5]);\
+	    iarr[6] = _ivec_loada(&cfrom[__IVEC_SIZE*6]);\
+	    iarr[7] = _ivec_loada(&cfrom[__IVEC_SIZE*7]);\
 	    MEM_STORE(&tto[__IVEC_SIZE*0],iarr[0]);\
 	    MEM_STORE(&tto[__IVEC_SIZE*1],iarr[1]);\
 	    MEM_STORE(&tto[__IVEC_SIZE*2],iarr[2]);\
