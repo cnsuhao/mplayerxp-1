@@ -59,7 +59,7 @@ __asm__ __volatile__(\
     void *retval;\
     const unsigned char *cfrom=from;\
     unsigned char *tto=to;\
-    const unsigned block_size = MIN_LEN;\
+    const unsigned block_size = __IVEC_SIZE*8;\
     __ivec iarr[8];\
     size_t i;\
     retval = to;\
