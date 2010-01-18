@@ -35,7 +35,7 @@ static const unsigned long long mask24hl  __attribute__((used)) __attribute__((a
 #include "osd_template.c"
 
 #ifndef __x86_64__
-#ifdef __MMX2__
+#ifdef __SSE__
 #define OPTIMIZE_MMX2
 #undef RENAME
 #define RENAME(a) a ## _MMX2
@@ -203,7 +203,7 @@ if(gCpuCaps.hasSSE2)
 else
 #endif
 #ifndef __x86_64__
-#ifdef __MMX2__
+#ifdef __SSE__
 if(gCpuCaps.hasMMX2)
 {
 	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");

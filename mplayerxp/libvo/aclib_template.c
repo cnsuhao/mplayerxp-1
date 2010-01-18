@@ -52,147 +52,111 @@ __asm__ __volatile__(\
 #define MMREG_SIZE 64 //8
 #endif
 #undef MIN_LEN
-#ifndef OPTIMIZE_MMX2
+#if defined( OPTIMIZE_MMX ) && !defined( OPTIMIZE_MMX2 )
 #define MIN_LEN 0x800  /* 2K blocks */
 #else
 #define MIN_LEN 0x40  /* 64-byte blocks */
 #endif
 
-
-static inline void * RENAME(fast_memory_copy)(void * to, const void * from, size_t len,int final)
-{
-	void *retval;
-	const unsigned char *cfrom=from;
-	unsigned char *tto=to;
-	const unsigned ivec_block_size = 8*__IVEC_SIZE;
-	__ivec iarr[8];
-	size_t i;
-	retval = to;
-	if(!len) return retval;
-#ifdef STATISTICS
-	{
-		static int freq[33];
-		static int t=0;
-		int i;
-		for(i=0; len>(1<<i); i++);
-		freq[i]++;
-		t++;
-		if(1024*1024*1024 % t == 0)
-			for(i=0; i<32; i++)
-				MSG_V("freq < %8d %4d\n", 1<<i, freq[i]);
-	}
-#endif
-
-    _ivec_prefetch(cfrom);
-#if CL_SIZE == 32
-    _ivec_prefetch(&cfrom[32]);
-#endif
-#if CL_SIZE < 128
-    _ivec_prefetch(&cfrom[64]);
-#endif
-#if CL_SIZE == 32
-    _ivec_prefetch(&cfrom[96]);
-#endif
-    _ivec_prefetch(&cfrom[128]);
-#if CL_SIZE == 32
-    _ivec_prefetch(&cfrom[160]);
-#endif
-#if CL_SIZE < 128
-    _ivec_prefetch(&cfrom[192]);
-#endif
-#if CL_SIZE == 32
-    _ivec_prefetch(&cfrom[224]);
-#endif
-    _ivec_prefetch(&cfrom[256]);
-
-    if(len >= MIN_LEN)
-    {
-	register unsigned long int delta;
-        /* Align destinition to cache-line size -boundary */
-        delta = ((unsigned long int)tto)&(CL_SIZE-1);
-        if(delta) {
-	    delta=MMREG_SIZE-delta;
-	    len -= delta;
-	    small_memcpy(tto, cfrom, delta);
-	}
-	i = len/ivec_block_size;
-	len&=(ivec_block_size-1);
-        /*
-           This algorithm is top effective when the code consequently
-           reads and writes blocks which have size of cache line.
-           Size of cache line is processor-dependent.
-           It will, however, be a minimum of 32 bytes on any processors.
-           It would be better to have a number of instructions which
-           perform reading and writing to be multiple to a number of
-           processor's decoders, but it's not always possible.
-        */
-	for(; i>0; i--)
-	{
-	    _ivec_prefetch(&cfrom[320]);
-#if CL_SIZE == 32
-	    _ivec_prefetch(&cfrom[352]);
-#endif
-	    if(((unsigned long)cfrom) & 15) {
-		/* if SRC is misaligned */
-		iarr[0] = _ivec_loadu(&cfrom[__IVEC_SIZE*0]);
-		iarr[1] = _ivec_loadu(&cfrom[__IVEC_SIZE*1]);
-		iarr[2] = _ivec_loadu(&cfrom[__IVEC_SIZE*2]);
-		iarr[3] = _ivec_loadu(&cfrom[__IVEC_SIZE*3]);
-		iarr[4] = _ivec_loadu(&cfrom[__IVEC_SIZE*4]);
-		iarr[5] = _ivec_loadu(&cfrom[__IVEC_SIZE*5]);
-		iarr[6] = _ivec_loadu(&cfrom[__IVEC_SIZE*6]);
-		iarr[7] = _ivec_loadu(&cfrom[__IVEC_SIZE*7]);
-	    } else {
-		iarr[0] = _ivec_loada(&cfrom[__IVEC_SIZE*0]);
-		iarr[1] = _ivec_loada(&cfrom[__IVEC_SIZE*1]);
-		iarr[2] = _ivec_loada(&cfrom[__IVEC_SIZE*2]);
-		iarr[3] = _ivec_loada(&cfrom[__IVEC_SIZE*3]);
-		iarr[4] = _ivec_loada(&cfrom[__IVEC_SIZE*4]);
-		iarr[5] = _ivec_loada(&cfrom[__IVEC_SIZE*5]);
-		iarr[6] = _ivec_loada(&cfrom[__IVEC_SIZE*6]);
-		iarr[7] = _ivec_loada(&cfrom[__IVEC_SIZE*7]);
-	    }
-	    if(final) {
-		_ivec_stream(&tto[__IVEC_SIZE*0],iarr[0]);
-		_ivec_stream(&tto[__IVEC_SIZE*1],iarr[1]);
-		_ivec_stream(&tto[__IVEC_SIZE*2],iarr[2]);
-		_ivec_stream(&tto[__IVEC_SIZE*3],iarr[3]);
-		_ivec_stream(&tto[__IVEC_SIZE*4],iarr[4]);
-		_ivec_stream(&tto[__IVEC_SIZE*5],iarr[5]);
-		_ivec_stream(&tto[__IVEC_SIZE*6],iarr[6]);
-		_ivec_stream(&tto[__IVEC_SIZE*7],iarr[7]);
-	    } else {
-		_ivec_storea(&tto[__IVEC_SIZE*0],iarr[0]);
-		_ivec_storea(&tto[__IVEC_SIZE*1],iarr[1]);
-		_ivec_storea(&tto[__IVEC_SIZE*2],iarr[2]);
-		_ivec_storea(&tto[__IVEC_SIZE*3],iarr[3]);
-		_ivec_storea(&tto[__IVEC_SIZE*4],iarr[4]);
-		_ivec_storea(&tto[__IVEC_SIZE*5],iarr[5]);
-		_ivec_storea(&tto[__IVEC_SIZE*6],iarr[6]);
-		_ivec_storea(&tto[__IVEC_SIZE*7],iarr[7]);
-	    }
-	    cfrom+=ivec_block_size;
-	    tto+=ivec_block_size;
-	}
-	_ivec_sfence();
-	_ivec_empty();
-    }
-    /*
-     *	Now do the tail of the block
-     */
-    if(len) small_memcpy(tto, cfrom, len);
-    return retval;
+#undef FAST_MEMORY_COPY
+#define FAST_MEMORY_COPY(to,from, len)\
+{\
+    void *retval;\
+    const unsigned char *cfrom=from;\
+    unsigned char *tto=to;\
+    const unsigned ivec_block_size = 8*__IVEC_SIZE;\
+    __ivec iarr[8];\
+    size_t i;\
+    retval = to;\
+    if(!len) return retval;\
+\
+    _ivec_prefetch(cfrom);\
+    _ivec_prefetch(&cfrom[32]);\
+    _ivec_prefetch(&cfrom[64]);\
+    _ivec_prefetch(&cfrom[96]);\
+    _ivec_prefetch(&cfrom[128]);\
+    _ivec_prefetch(&cfrom[160]);\
+    _ivec_prefetch(&cfrom[192]);\
+    _ivec_prefetch(&cfrom[224]);\
+    _ivec_prefetch(&cfrom[256]);\
+\
+    if(len >= MIN_LEN)\
+    {\
+	register unsigned long int delta;\
+	/* Align destinition to cache-line size -boundary */\
+	delta = ((unsigned long int)tto)&(gCpuCaps.cl_size-1);\
+	if(delta) {\
+	    delta=MMREG_SIZE-delta;\
+	    len -= delta;\
+	    small_memcpy(tto, cfrom, delta);\
+	}\
+	i = len/ivec_block_size;\
+	len&=(ivec_block_size-1);\
+	/*\
+	   This algorithm is top effective when the code consequently\
+	   reads and writes blocks which have size of cache line.\
+	   Size of cache line is processor-dependent.\
+	   It will, however, be a minimum of 32 bytes on any processors.\
+	   It would be better to have a number of instructions which\
+	   perform reading and writing to be multiple to a number of\
+	   processor's decoders, but it's not always possible.\
+	*/\
+	for(; i>0; i--)\
+	{\
+	    _ivec_prefetch(&cfrom[320]);\
+	    _ivec_prefetch(&cfrom[352]);\
+	    if(((unsigned long)cfrom) & 15) {\
+		/* if SRC is misaligned */\
+		iarr[0] = _ivec_loadu(&cfrom[__IVEC_SIZE*0]);\
+		iarr[1] = _ivec_loadu(&cfrom[__IVEC_SIZE*1]);\
+		iarr[2] = _ivec_loadu(&cfrom[__IVEC_SIZE*2]);\
+		iarr[3] = _ivec_loadu(&cfrom[__IVEC_SIZE*3]);\
+		iarr[4] = _ivec_loadu(&cfrom[__IVEC_SIZE*4]);\
+		iarr[5] = _ivec_loadu(&cfrom[__IVEC_SIZE*5]);\
+		iarr[6] = _ivec_loadu(&cfrom[__IVEC_SIZE*6]);\
+		iarr[7] = _ivec_loadu(&cfrom[__IVEC_SIZE*7]);\
+	    } else {\
+		iarr[0] = _ivec_loada(&cfrom[__IVEC_SIZE*0]);\
+		iarr[1] = _ivec_loada(&cfrom[__IVEC_SIZE*1]);\
+		iarr[2] = _ivec_loada(&cfrom[__IVEC_SIZE*2]);\
+		iarr[3] = _ivec_loada(&cfrom[__IVEC_SIZE*3]);\
+		iarr[4] = _ivec_loada(&cfrom[__IVEC_SIZE*4]);\
+		iarr[5] = _ivec_loada(&cfrom[__IVEC_SIZE*5]);\
+		iarr[6] = _ivec_loada(&cfrom[__IVEC_SIZE*6]);\
+		iarr[7] = _ivec_loada(&cfrom[__IVEC_SIZE*7]);\
+	    }\
+	    MEM_STORE(&tto[__IVEC_SIZE*0],iarr[0]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*1],iarr[1]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*2],iarr[2]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*3],iarr[3]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*4],iarr[4]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*5],iarr[5]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*6],iarr[6]);\
+	    MEM_STORE(&tto[__IVEC_SIZE*7],iarr[7]);\
+	    cfrom+=ivec_block_size;\
+	    tto+=ivec_block_size;\
+	}\
+	_ivec_sfence();\
+	_ivec_empty();\
+    }\
+    /*\
+     *	Now do the tail of the block\
+     */\
+    if(len) small_memcpy(tto, cfrom, len);\
+    return retval;\
 }
 
-/**
- * special copy routine for mem -> agp/pci copy (based upon fast_memcpy)
- */
-static inline void * RENAME(fast_memcpy)(void * to, const void * from, size_t len)
-{
-	return RENAME(fast_memory_copy)(to,from,len,0);
-}
-
+#undef MEM_STORE
+#define MEM_STORE _ivec_stream
 static inline void * RENAME(fast_stream_copy)(void * to, const void * from, size_t len)
 {
-	return RENAME(fast_memory_copy)(to,from,len,1);
+    FAST_MEMORY_COPY(to,from,len);
 }
+
+#undef MEM_STORE
+#define MEM_STORE _ivec_storea
+static inline void * RENAME(fast_memcpy)(void * to, const void * from, size_t len)
+{
+    FAST_MEMORY_COPY(to,from,len);
+}
+

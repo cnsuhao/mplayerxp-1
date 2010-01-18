@@ -25,42 +25,20 @@
 #ifndef __x86_64__
 #ifdef __MMX__
 #define OPTIMIZE_MMX
-#undef CL_SIZE
-#define CL_SIZE 32
 #undef RENAME
 #define RENAME(a) a ## _MMX
 #include "aclib_template.c"
 #endif
-#ifdef __MMX2__
+#ifdef __SSE__
 #define OPTIMIZE_MMX2
-#undef CL_SIZE
-#define CL_SIZE 32
 #undef RENAME
-#define RENAME(a) a ## _MMX2_CL32
-#include "aclib_template.c"
-#endif
-#ifdef __MMX2__
-#define OPTIMIZE_MMX2
-#undef CL_SIZE
-#define CL_SIZE 64
-#undef RENAME
-#define RENAME(a) a ## _MMX2_CL64
-#include "aclib_template.c"
-#endif
-#ifdef __MMX2__
-#define OPTIMIZE_MMX2
-#undef CL_SIZE
-#define CL_SIZE 128
-#undef RENAME
-#define RENAME(a) a ## _MMX2_CL128
+#define RENAME(a) a ## _MMX2
 #include "aclib_template.c"
 #endif
 #endif // __x86_64__
 #ifdef __SSE2__
 #define OPTIMIZE_SSE2
 #undef RENAME
-#undef CL_SIZE
-#define CL_SIZE 128
 #define RENAME(a) a ## _SSE2
 #include "aclib_template.c"
 #endif
@@ -82,19 +60,15 @@ static void * init_fast_memcpy(void * to, const void * from, size_t len)
 	else
 #endif
 #ifndef __x86_64__
-#ifdef __MMX2__
+#ifdef __SSE__
 	if(gCpuCaps.hasMMX2)
 	{
 		MSG_V("Using MMX2 optimized memcpy\n");
-		if(gCpuCaps.cl_size >= 128) fast_memcpy_ptr = fast_memcpy_MMX2_CL128;
-		else
-		if(gCpuCaps.cl_size == 64) fast_memcpy_ptr = fast_memcpy_MMX2_CL64;
-		else
-		fast_memcpy_ptr = fast_memcpy_MMX2_CL32;
+		fast_memcpy_ptr = fast_memcpy_MMX2;
 	}
 	else
 #endif
-#ifdef CAN_COMPILE_MMX
+#ifdef __MMX__
 	if(gCpuCaps.hasMMX)
 	{
 		MSG_V("Using MMX optimized memcpy\n");
@@ -120,15 +94,11 @@ static void * init_stream_copy(void * to, const void * from, size_t len)
 	}
 #endif
 #ifndef __x86_64__
-#ifdef __MMX2__
+#ifdef __SSE__
 	if(gCpuCaps.hasMMX2)
 	{
 		MSG_V("Using MMX2 optimized agpcpy\n");
-		if(gCpuCaps.cl_size >= 128) fast_stream_copy_ptr = fast_stream_copy_MMX2_CL128;
-		else
-		if(gCpuCaps.cl_size == 64) fast_stream_copy_ptr = fast_stream_copy_MMX2_CL64;
-		else
-		fast_stream_copy_ptr = fast_stream_copy_MMX2_CL32;
+		fast_stream_copy_ptr = fast_stream_copy_MMX2;
 	}
 	else
 #endif
