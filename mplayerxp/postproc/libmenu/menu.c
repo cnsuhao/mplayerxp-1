@@ -1,4 +1,3 @@
-
 #include "../../mp_config.h"
 #include "help_mp.h"
 
@@ -17,6 +16,7 @@
 #include "nls/nls.h"
 
 #include "libvo/img_format.h"
+#include "libvo/video_out.h"
 #include "mp_image.h"
 #include "m_option.h"
 #include "m_struct.h"
@@ -361,6 +361,7 @@ static char *menu_fribidi(char *txt)
 void menu_draw_text(mp_image_t* mpi,char* txt, int x, int y) {
   draw_alpha_f draw_alpha = get_draw_alpha(mpi->imgfmt);
   int font;
+  int finalize=vo_is_final();
 
   if(!draw_alpha) {
     MSG_WARN("[libmenu] Unsupported output format\n");
@@ -380,7 +381,7 @@ void menu_draw_text(mp_image_t* mpi,char* txt, int x, int y) {
 		 vo_font->pic_a[font]->bmp+vo_font->start[c],
 		 vo_font->pic_a[font]->w,
 		 mpi->planes[0] + y * mpi->stride[0] + x * (mpi->bpp>>3),
-		 mpi->stride[0]);
+		 mpi->stride[0],finalize);
     x+=vo_font->width[c]+vo_font->charspace;
   }
 
@@ -394,6 +395,7 @@ void menu_draw_text_full(mp_image_t* mpi,char* txt,
   int sx, xmin, xmax, xmid, xrmin;
   int ll = 0;
   int font;
+  int finalize=vo_is_final();
   draw_alpha_f draw_alpha = get_draw_alpha(mpi->imgfmt);
 
   if(!draw_alpha) {
@@ -552,7 +554,7 @@ void menu_draw_text_full(mp_image_t* mpi,char* txt,
 		     cs * vo_font->pic_a[font]->w,
 		     vo_font->pic_a[font]->w,
 		     mpi->planes[0] + sy * mpi->stride[0] + sx * (mpi->bpp>>3),
-		     mpi->stride[0]);
+		     mpi->stride[0],finalize);
 	//	else
 	//printf("Can't draw '%c'\n",c);
       }
@@ -649,13 +651,14 @@ void menu_draw_box(mp_image_t* mpi,unsigned char grey,unsigned char alpha, int x
   if(g < 1) g = 1;
     
   {
+    int finalize = vo_is_final();
     int stride = (w+7)&(~7); // round to 8
     char pic[stride*h],pic_alpha[stride*h];
     memset(pic,g,stride*h);
     memset(pic_alpha,alpha,stride*h);
     draw_alpha(w,h,pic,pic_alpha,stride,
                mpi->planes[0] + y * mpi->stride[0] + x * (mpi->bpp>>3),
-               mpi->stride[0]);
+               mpi->stride[0],finalize);
   }
   
 }

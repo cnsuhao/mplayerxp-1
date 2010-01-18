@@ -361,8 +361,10 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
 	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
 	}
-	else
+	else {
+	    MSG_DBG2("ad_mp3.decode: copy %u bytes from %p\n",done,outdata);
 	    memcpy(buf,outdata,done);
+	}
 	if(err==MPG123_NEED_MORE) {
 	    indata_size=ds_get_packet_r(sh->ds,&indata,pts);
 	    if(indata_size<0) return 0;

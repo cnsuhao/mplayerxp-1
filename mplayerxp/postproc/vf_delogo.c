@@ -51,7 +51,7 @@ static struct vf_priv_s {
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
 static void __FASTCALL__ delogo(uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int width, int height,
-		   int logo_x, int logo_y, int logo_w, int logo_h, int band, int show, int direct) {
+		   int logo_x, int logo_y, int logo_w, int logo_h, int band, int show, int direct,int finalize) {
     int y, x;
     int interp, dist;
     uint8_t *xdst, *xsrc;
@@ -74,7 +74,12 @@ static void __FASTCALL__ delogo(uint8_t *dst, uint8_t *src, int dstStride, int s
     topright = src+logo_y1*srcStride+logo_x2-1;
     botleft = src+(logo_y2-1)*srcStride+logo_x1;
 
-    if (!direct) memcpy_pic(dst, src, width, height, dstStride, srcStride);
+    if (!direct) {
+	if(finalize)
+	    stream_copy_pic(dst, src, width, height, dstStride, srcStride);
+	else
+	    memcpy_pic(dst, src, width, height, dstStride, srcStride);
+    }
 
     dst += (logo_y1+1)*dstStride;
     src += (logo_y1+1)*srcStride;
@@ -148,6 +153,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+    int finalize;
     mp_image_t *dmpi;
 
     if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
@@ -157,16 +163,17 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 			      mpi->w,mpi->h);
     }
     dmpi= vf->dmpi;
+    finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
     delogo(dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w, mpi->h,
 	   vf->priv->xoff, vf->priv->yoff, vf->priv->lw, vf->priv->lh, vf->priv->band, vf->priv->show,
-	   mpi->flags&MP_IMGFLAG_DIRECT);
+	   mpi->flags&MP_IMGFLAG_DIRECT,finalize);
     delogo(dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2,
 	   vf->priv->xoff/2, vf->priv->yoff/2, vf->priv->lw/2, vf->priv->lh/2, vf->priv->band/2, vf->priv->show,
-	   mpi->flags&MP_IMGFLAG_DIRECT);
+	   mpi->flags&MP_IMGFLAG_DIRECT,finalize);
     delogo(dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2,
 	   vf->priv->xoff/2, vf->priv->yoff/2, vf->priv->lw/2, vf->priv->lh/2, vf->priv->band/2, vf->priv->show,
-	   mpi->flags&MP_IMGFLAG_DIRECT);
+	   mpi->flags&MP_IMGFLAG_DIRECT,finalize);
 
     vf_clone_mpi_attributes(dmpi, mpi);
 

@@ -573,7 +573,7 @@ int  __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 
 static void __FASTCALL__ vidix_dri_get_surface_caps(dri_surface_cap_t *caps)
 {
-    caps->caps = vo_use_bm ? DRI_CAP_TEMP_VIDEO : DRI_CAP_VIDEO_MMAPED;
+    caps->caps = vo_use_bm ? DRI_CAP_TEMP_VIDEO|DRI_CAP_BUSMASTERING : DRI_CAP_VIDEO_MMAPED;
     caps->caps |= DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
     if((vidix_cap->flags & FLAG_DOWNSCALER) == FLAG_DOWNSCALER)
 	    caps->caps |= DRI_CAP_DOWNSCALER;

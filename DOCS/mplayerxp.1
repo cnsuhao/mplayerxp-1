@@ -210,7 +210,7 @@ make all install
 .TP
 modprobe dhahelper
 .TP
-mplayerxp -vo xvidix -core.xp -video.bm -video.fs -video.zoom videoout.avi
+mplayerxp -vo xvidix -core.xp -video.bm -video.fs -video.aspect-ratio videoout.avi
 .SS
 .I Another ways to speedup playback:
 In general, there are two ways to increase performance of playback -
@@ -666,13 +666,13 @@ Examples:
 
     -video.monitorpixelaspect=4:3  or 1.3333
 .TP
-.B \-video.x\ <x>
-scale image to x width (if driver supports)
+.B \-video.width\ <x>
+scale image to width (if driver supports)
 .TP
-.B \-video.y\ <y>
-scale image to y height (if driver supports)
+.B \-video.height\ <y>
+scale image to height (if driver supports)
 .TP
-.B \-video.xy\ <factor>
+.B \-video.zoom\ <factor>
 scale image by <factor>
 .TP
 
@@ -717,7 +717,7 @@ all video outputs support it).
 try to change to a different video mode. dga2, x11 (XF86VidMode) and sdl
 output drivers support it.
 .TP
-.B \-video.zoom
+.B \-video.aspect-ratio
 Keeps aspect ratio on the screen
 .I [default]
 .TP
@@ -809,7 +809,7 @@ If you have not enough power CPU then it would be reasonable to limit
 .TP
 .B \-video.sws\ <software\ scaler\ type>
 this option sets the quality (and speed, respectively) of the software scaler,
-with the -zoom option. For example with x11 or other outputs which lack
+with the -video.aspect-ratio option. For example with x11 or other outputs which lack
 hardware scaler. Possible settings are:
 
     0 - fast bilinear (default)

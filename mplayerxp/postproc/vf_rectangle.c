@@ -63,21 +63,36 @@ static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void *dat
 }
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t* mpi){
     mp_image_t* dmpi;
+    int finalize;
     unsigned int bpp = mpi->bpp / 8;
     unsigned int x, y, w, h;
     dmpi = vf_get_image(vf->next, mpi->imgfmt, MP_IMGTYPE_TEMP,
 			MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
 			mpi->w, mpi->h);
+    finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
+    if(finalize)
+    stream_copy_pic(dmpi->planes[0],mpi->planes[0],mpi->w*bpp, mpi->h,
+		    dmpi->stride[0],mpi->stride[0]);
+    else
     memcpy_pic(dmpi->planes[0],mpi->planes[0],mpi->w*bpp, mpi->h,
 	       dmpi->stride[0],mpi->stride[0]);
     if(mpi->flags&MP_IMGFLAG_PLANAR && mpi->flags&MP_IMGFLAG_YUV){
+	if(finalize) {
+	stream_copy_pic(dmpi->planes[1],mpi->planes[1],
+		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
+	           dmpi->stride[1],mpi->stride[1]);
+	stream_copy_pic(dmpi->planes[2],mpi->planes[2],
+		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
+	           dmpi->stride[2],mpi->stride[2]);
+	} else {
 	memcpy_pic(dmpi->planes[1],mpi->planes[1],
 		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
 	           dmpi->stride[1],mpi->stride[1]);
 	memcpy_pic(dmpi->planes[2],mpi->planes[2],
 		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
 	           dmpi->stride[2],mpi->stride[2]);
+	}
     }
 
     /* Draw the rectangle */

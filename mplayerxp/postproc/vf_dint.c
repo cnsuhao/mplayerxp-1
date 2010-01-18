@@ -79,6 +79,7 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	int map = vf->priv->map;
 	int sharp = vf->priv->sharp;
 	int twoway = vf->priv->twoway;
+	int finalize;
 
 	mp_image_t *pmpi;
 	mp_image_t *dmpi=vf_get_image(vf->next,mpi->imgfmt,
@@ -86,7 +87,7 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		mpi->w,mpi->h);
 	if(!dmpi) return 0;
 	pmpi=dmpi;
-
+	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -108,16 +109,26 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		dstp = dstp_saved + (1-order) * dst_pitch;
 
 		for (y=0; y<h; y+=2) {
-			memcpy(dstp, srcp, w);
+			if(finalize)
+			    stream_copy(dstp,srcp, w);
+			else
+			    memcpy(dstp, srcp, w);
 			srcp += 2*src_pitch;
 			dstp += 2*dst_pitch;
 		}
 
 		// Copy through the lines that will be missed below.
-		memcpy(dstp_saved + order*dst_pitch, srcp_saved + (1-order)*src_pitch, w);
-		memcpy(dstp_saved + (2+order)*dst_pitch, srcp_saved + (3-order)*src_pitch, w);
-		memcpy(dstp_saved + (h-2+order)*dst_pitch, srcp_saved + (h-1-order)*src_pitch, w);
-		memcpy(dstp_saved + (h-4+order)*dst_pitch, srcp_saved + (h-3-order)*src_pitch, w);
+		if(finalize) {
+		    stream_copy(dstp_saved + order*dst_pitch, srcp_saved + (1-order)*src_pitch, w);
+		    stream_copy(dstp_saved + (2+order)*dst_pitch, srcp_saved + (3-order)*src_pitch, w);
+		    stream_copy(dstp_saved + (h-2+order)*dst_pitch, srcp_saved + (h-1-order)*src_pitch, w);
+		    stream_copy(dstp_saved + (h-4+order)*dst_pitch, srcp_saved + (h-3-order)*src_pitch, w);
+		} else {
+		    memcpy(dstp_saved + order*dst_pitch, srcp_saved + (1-order)*src_pitch, w);
+		    memcpy(dstp_saved + (2+order)*dst_pitch, srcp_saved + (3-order)*src_pitch, w);
+		    memcpy(dstp_saved + (h-2+order)*dst_pitch, srcp_saved + (h-1-order)*src_pitch, w);
+		    memcpy(dstp_saved + (h-4+order)*dst_pitch, srcp_saved + (h-3-order)*src_pitch, w);
+		}
 		/* For the other field choose adaptively between using the previous field
 		   or the interpolant from the current field. */
 
@@ -250,7 +261,10 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		srcp = mpi->planes[z];
 		dstp = pmpi->planes[z];
 		for (y=0; y<h; y++) {
-			memcpy(dstp, srcp, w);
+			if(finalize)
+			    stream_copy(dstp,srcp, w);
+			else
+			    memcpy(dstp, srcp, w);
 			srcp += src_pitch;
 			dstp += psrc_pitch;
 		}

@@ -13,24 +13,27 @@
 #include "../postproc/swscale.h"
 #include "pp_msg.h"
 
-typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt);
+typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize);
 struct vf_priv_s {
     unsigned dw,dh;
     int dir;
     mirror_f method;
 };
 
-static void __FASTCALL__ mirror_y(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt){
+static void __FASTCALL__ mirror_y(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize){
     int y;
     src+=srcstride*(h-1);
     for(y=0;y<h;y++){
-	memcpy(dst,src,w*bpp);
+	if(finalize)
+	    stream_copy(dst,src,w*bpp);
+	else
+	    memcpy(dst,src,w*bpp);
 	src-=srcstride;
 	dst+=dststride;
     }
 }
 
-static void __FASTCALL__ mirror_x(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt){
+static void __FASTCALL__ mirror_x(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize){
     int y;
     for(y=0;y<h;y++){
 	int x;
@@ -93,25 +96,26 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
-
+    int finalize;
     // hope we'll get DR buffer:
     dmpi=vf_get_image(vf->next,mpi->imgfmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	mpi->w, mpi->h);
+    finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
     if(mpi->flags&MP_IMGFLAG_PLANAR){
 	    vf->priv->method(dmpi->planes[0],mpi->planes[0],
 	       dmpi->stride[0],mpi->stride[0],
-	       dmpi->w,dmpi->h,1,mpi->imgfmt);
+	       dmpi->w,dmpi->h,1,mpi->imgfmt,finalize);
 	    vf->priv->method(dmpi->planes[1],mpi->planes[1],
 	       dmpi->stride[1],mpi->stride[1],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,mpi->imgfmt);
+	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,mpi->imgfmt,finalize);
 	    vf->priv->method(dmpi->planes[2],mpi->planes[2],
 	       dmpi->stride[2],mpi->stride[2],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,mpi->imgfmt);
+	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,mpi->imgfmt,finalize);
     } else {
 	    vf->priv->method(dmpi->planes[0],mpi->planes[0],
 	       dmpi->stride[0],mpi->stride[0],
-	       dmpi->w,dmpi->h,dmpi->bpp>>3,mpi->imgfmt);
+	       dmpi->w,dmpi->h,dmpi->bpp>>3,mpi->imgfmt,finalize);
 	    dmpi->planes[1]=mpi->planes[1]; // passthrough rgb8 palette
     }
     return vf_next_put_slice(vf,dmpi);

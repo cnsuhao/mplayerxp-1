@@ -180,6 +180,7 @@ extern void		vo_flush_pages(void);
 extern void		vo_draw_osd(void);
 extern void		vo_uninit( void );
 extern uint32_t __FASTCALL__ vo_control(uint32_t request, void *data);
+extern int __FASTCALL__ vo_is_final(void);
 
 struct vo_rect {
   int left, right, top, bottom, width, height;

@@ -77,7 +77,7 @@ Originally published Boston, Nov 98
 
 */
 
-static void __FASTCALL__ unsharp( uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int width, int height, FilterParam *fp ) {
+static void __FASTCALL__ unsharp( uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int width, int height, FilterParam *fp, int finalize ) {
 
     uint32_t **SC = fp->SC;
     uint32_t SR[MAX_MATRIX_SIZE-1], Tmp1, Tmp2;
@@ -94,11 +94,19 @@ static void __FASTCALL__ unsharp( uint8_t *dst, uint8_t *src, int dstStride, int
     if( !fp->amount ) {
 	if( src == dst )
 	    return;
-	if( dstStride == srcStride ) 
-	    memcpy( dst, src, srcStride*height );
+	if( dstStride == srcStride ) {
+	    if(finalize)
+		stream_copy( dst, src, srcStride*height );
+	    else
+		memcpy( dst, src, srcStride*height );
+	}
 	else
-	    for( y=0; y<height; y++, dst+=dstStride, src+=srcStride )
-		memcpy( dst, src, width );
+	    for( y=0; y<height; y++, dst+=dstStride, src+=srcStride ) {
+		if(finalize)
+		    stream_copy( dst, src, width );
+		else
+		    memcpy( dst, src, width );
+	    }
 	return;
     }
 
@@ -196,27 +204,29 @@ static void __FASTCALL__ get_image( struct vf_instance_s* vf, mp_image_t *mpi ) 
 }
 
 static int __FASTCALL__ put_slice( struct vf_instance_s* vf, mp_image_t *mpi ) {
+    int finalize;
     mp_image_t *dmpi;
 
     if( !(mpi->flags & MP_IMGFLAG_DIRECT) )
 	// no DR, so get a new image! hope we'll get DR buffer:
 	vf->dmpi = vf_get_image( vf->next,vf->priv->outfmt, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, mpi->w, mpi->h);
     dmpi= vf->dmpi;
+    finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 #ifdef _OPENMP
 #pragma omp parallel sections
 {
 #pragma omp section
 #endif
-    unsharp( dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w,   mpi->h,   &vf->priv->lumaParam );
+    unsharp( dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w,   mpi->h,   &vf->priv->lumaParam, finalize );
 #ifdef _OPENMP
 #pragma omp section
 #endif
-    unsharp( dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam );
+    unsharp( dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam, finalize );
 #ifdef _OPENMP
 #pragma omp section
 #endif
-    unsharp( dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam );
+    unsharp( dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam, finalize );
 #ifdef _OPENMP
 }
 #endif

@@ -5,6 +5,7 @@
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "mp_config.h"
+#include "../dec_ahead.h"
 #ifdef HAVE_GOMP
 #include <omp.h>
 #endif
@@ -578,17 +579,18 @@ static void draw_slice(struct AVCodecContext *s,
     priv_t *vdff_ctx=sh->context;
     mp_image_t *mpi;
     if(vdff_ctx->use_dr1) { MSG_DBG2("Ignoring draw_slice due dr1\n"); return; } /* we may call vo_start_slice() here */
-    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,s->width,height);
+    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,s->width,s->height);
 
     mpi->stride[0]=src->linesize[0];
     mpi->stride[1]=src->linesize[1];
     mpi->stride[2]=src->linesize[2];
-    mpi->planes[0] = src->base[0]+offset[0];
-    mpi->planes[1] = src->base[1]+offset[1];
-    mpi->planes[2] = src->base[2]+offset[2];
+    mpi->planes[0] = src->data[0];
+    mpi->planes[1] = src->data[1];
+    mpi->planes[2] = src->data[2];
     mpi->w=s->width;
     mpi->y=y;
     mpi->h=height;
+    mpi->chroma_height = height >> mpi->chroma_y_shift;
     /* provide info for pp */
     mpi->qscale=(QP_STORE_T *)vdff_ctx->lavc_picture->qscale_table;
     mpi->qstride=vdff_ctx->lavc_picture->qstride;
@@ -607,14 +609,10 @@ static void draw_slice(struct AVCodecContext *s,
 	mpi->stride[2]=mpi->stride[1];
 	mpi->stride[1]=ls;
     }
-    MSG_DBG2("ff_draw_callback %i %i %i %i\n",mpi->x,mpi->y,mpi->w,mpi->h);
-    pthread_mutex_lock(&sh->mutex);
-    sh->active_slices++;
-    pthread_mutex_unlock(&sh->mutex);
+    MSG_DBG2("ff_draw_callback[%ux%u] %i %i %i %i\n",mpi->width,mpi->height,mpi->x,mpi->y,mpi->w,mpi->h);
+    __MP_ATOMIC(sh->active_slices++);
     mpcodecs_draw_slice (sh, mpi);
-    pthread_mutex_lock(&sh->mutex);
-    sh->active_slices--;
-    pthread_mutex_unlock(&sh->mutex);
+    __MP_ATOMIC(sh->active_slices--);
 }
 
 /* copypaste from demux_real.c - it should match to get it working!*/

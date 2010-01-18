@@ -80,12 +80,10 @@ void uninit_video(sh_video_t *sh_video){
     sh_video->inited=0;
 }
 
-#ifdef _OPENMP
 #define MPDEC_THREAD_COND (VF_FLAGS_THREADS|VF_FLAGS_SLICES)
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
 extern int enable_gomp;
-#endif
 
 extern char *video_codec;
 int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
@@ -207,12 +205,12 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	    for(j=0;j<num_slices;j+=smp_num_cpus) {
 #pragma omp parallel for shared(vf) private(i)
 		for(i=j;i<smp_num_cpus;i++) {
-		    MSG_DBG2("Put slice[%u %u] in threads\n",ampi[i].y,ampi[i].h);
+		    MSG_DBG2("parallel: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
 		    vf->put_slice(vf,&ampi[i]);
 		}
 	    }
 	    for(;j<num_slices;j++) {
-		MSG_DBG2("Put slice[%u %u] in threads\n",ampi[j].y,h_step);
+		MSG_DBG2("par_tail: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
 		vf->put_slice(vf,&ampi[j]);
 	    }
 	}
@@ -221,12 +219,12 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	{
 	    /* execute slices instead of whole frame make faster multiple filters */
 	    for(i=0;i<num_slices;i++) {
-		MSG_DBG2("vf(%s) Put slice[%u %u] in threads\n",vf->info->name,ampi[i].y,ampi[i].h);
+		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
 		vf->put_slice(vf,&ampi[i]);
 	    }
 	}
     } else {
-	MSG_DBG2("Put whole frame\n");
+	MSG_DBG2("Put whole frame[%ux%u]\n",mpi->width,mpi->height);
 	vf->put_slice(vf,mpi);
     }
   }

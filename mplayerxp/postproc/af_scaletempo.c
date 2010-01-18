@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include "libvo/fastmemcpy.h"
 
 #include "af.h"
 

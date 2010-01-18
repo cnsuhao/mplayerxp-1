@@ -91,6 +91,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     unsigned sx,sy,sw,sh;
     unsigned dx,dy,dw,dh;
     unsigned cw,ch;
+    int finalize;
     dx=mpi->x; dy=mpi->y; dw=mpi->w; dh=mpi->h;
     sx=vf->priv->ps_x; sy=vf->priv->ps_y; sw=vf->priv->ps_w; sh=vf->priv->ps_h;
     MSG_DBG2("[vf_panscan] src: %i %i %i %i dst: %i %i %i %i\n",sx,sy,sw,sh,dx,dy,dw,dh);
@@ -102,18 +103,50 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     dmpi=vf_get_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    cw,ch);
+    finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
     if(sy < dy)		{ ch-=dy-sy; sy=dy; }
     if(sh > dh)		ch=sh-dh;
     if(sx < dx)		{ cw-=dx-sx; sx=dx; }
     if(sw > dw)		cw=sw-dw;
 
     if(mpi->flags&MP_IMGFLAG_PLANAR){
+	if(finalize) {
+	stream_copy_pic(
+		dmpi->planes[0]+dx+dy*dmpi->stride[0],
+		mpi->planes[0]+sx+sy*mpi->stride[0],
+		cw, ch,
+		dmpi->stride[0],mpi->stride[0]);
+	stream_copy_pic(
+		dmpi->planes[1]+(dx>>dmpi->chroma_x_shift)+(dy>>dmpi->chroma_y_shift)*dmpi->stride[1],
+		mpi->planes[1]+(sx>>mpi->chroma_x_shift)+(sy>>mpi->chroma_y_shift)*mpi->stride[1],
+		cw>>mpi->chroma_x_shift,
+		ch>>mpi->chroma_y_shift,
+		dmpi->stride[1],mpi->stride[1]);
+	stream_copy_pic(
+		dmpi->planes[2]+(dx>>dmpi->chroma_x_shift)+(dy>>dmpi->chroma_y_shift)*dmpi->stride[2],
+		mpi->planes[2]+(sx>>mpi->chroma_x_shift)+(sy>>mpi->chroma_y_shift)*mpi->stride[2],
+		cw>>mpi->chroma_x_shift,
+		ch>>mpi->chroma_y_shift,
+		dmpi->stride[2],mpi->stride[2]);
+	} else {
 	memcpy_pic(
 		dmpi->planes[0]+dx+dy*dmpi->stride[0],
 		mpi->planes[0]+sx+sy*mpi->stride[0],
 		cw, ch,
 		dmpi->stride[0],mpi->stride[0]);
-
+	memcpy_pic(
+		dmpi->planes[1]+(dx>>dmpi->chroma_x_shift)+(dy>>dmpi->chroma_y_shift)*dmpi->stride[1],
+		mpi->planes[1]+(sx>>mpi->chroma_x_shift)+(sy>>mpi->chroma_y_shift)*mpi->stride[1],
+		cw>>mpi->chroma_x_shift,
+		ch>>mpi->chroma_y_shift,
+		dmpi->stride[1],mpi->stride[1]);
+	memcpy_pic(
+		dmpi->planes[2]+(dx>>dmpi->chroma_x_shift)+(dy>>dmpi->chroma_y_shift)*dmpi->stride[2],
+		mpi->planes[2]+(sx>>mpi->chroma_x_shift)+(sy>>mpi->chroma_y_shift)*mpi->stride[2],
+		cw>>mpi->chroma_x_shift,
+		ch>>mpi->chroma_y_shift,
+		dmpi->stride[2],mpi->stride[2]);
+	}
 	memcpy_pic(
 		dmpi->planes[1]+(dx>>dmpi->chroma_x_shift)+(dy>>dmpi->chroma_y_shift)*dmpi->stride[1],
 		mpi->planes[1]+(sx>>mpi->chroma_x_shift)+(sy>>mpi->chroma_y_shift)*mpi->stride[1],
@@ -128,6 +161,12 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		dmpi->stride[2],mpi->stride[2]);
 
     } else {
+	if(finalize)
+	stream_copy_pic(dmpi->planes[0]+dx*((dmpi->bpp+7)/8)+dy*dmpi->stride[0],
+		mpi->planes[0]+sx*((mpi->bpp+7)/8)+sy*mpi->stride[0],
+		cw*((mpi->bpp+7)/8), ch,
+		dmpi->stride[0],mpi->stride[0]);
+	else
 	memcpy_pic(dmpi->planes[0]+dx*((dmpi->bpp+7)/8)+dy*dmpi->stride[0],
 		mpi->planes[0]+sx*((mpi->bpp+7)/8)+sy*mpi->stride[0],
 		cw*((mpi->bpp+7)/8), ch,

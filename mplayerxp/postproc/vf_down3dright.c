@@ -22,7 +22,7 @@ struct vf_priv_s {
 
 static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 		    unsigned int dststride[3], unsigned int srcstride[3],
-		    int w, int h, struct vf_priv_s* p)
+		    int w, int h, struct vf_priv_s* p,int finalize)
 {
 	int k;
 
@@ -71,6 +71,9 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 					*t++ = *sR++;
 			}
 			if (p->scaleh == 1) {
+			    if(finalize)
+				stream_copy(to + dst, to, dst);
+			    else
 				memcpy(to + dst, to, dst);
                                 to += dst;
 			}
@@ -85,15 +88,16 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 {
 	mp_image_t *dmpi;
-
+	int finalize;
 	// hope we'll get DR buffer:
 	dmpi=vf_get_image(vf->next, IMGFMT_YV12,
 			  MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 			  mpi->w * vf->priv->scalew,
 			  mpi->h / vf->priv->scaleh - vf->priv->skipline);
+	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 	toright(dmpi->planes, mpi->planes, dmpi->stride,
-		mpi->stride, mpi->w, mpi->h, vf->priv);
+		mpi->stride, mpi->w, mpi->h, vf->priv,finalize);
 
 	return vf_next_put_slice(vf,dmpi);
 }

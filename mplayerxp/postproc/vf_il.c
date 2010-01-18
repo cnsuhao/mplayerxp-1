@@ -49,7 +49,7 @@ struct vf_priv_s {
 
 /***************************************************************************/
 
-static void __FASTCALL__ interleave(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, int interleave, int swap){
+static void __FASTCALL__ interleave(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, int interleave, int swap,int finalize){
 	const int a= swap;
 	const int b= 1-a;
 	const int m= h>>1;
@@ -58,27 +58,43 @@ static void __FASTCALL__ interleave(uint8_t *dst, uint8_t *src, int w, int h, in
 	switch(interleave){
 	case -1:
 		for(y=0; y < m; y++){
+		    if(finalize) {
+			stream_copy(dst + dstStride* y     , src + srcStride*(y*2 + a), w);
+			stream_copy(dst + dstStride*(y + m), src + srcStride*(y*2 + b), w);
+		    }
+		    else {
 			memcpy(dst + dstStride* y     , src + srcStride*(y*2 + a), w);
 			memcpy(dst + dstStride*(y + m), src + srcStride*(y*2 + b), w);
+		    }
 		}
 		break;
 	case 0:
 		for(y=0; y < m; y++){
+		    if(finalize) {
+			stream_copy(dst + dstStride* y*2   , src + srcStride*(y*2 + a), w);
+			stream_copy(dst + dstStride*(y*2+1), src + srcStride*(y*2 + b), w);
+		    } else {
 			memcpy(dst + dstStride* y*2   , src + srcStride*(y*2 + a), w);
 			memcpy(dst + dstStride*(y*2+1), src + srcStride*(y*2 + b), w);
+		    }
 		}
 		break;
 	case 1:
 		for(y=0; y < m; y++){
+		    if(finalize) {
+			stream_copy(dst + dstStride*(y*2+a), src + srcStride* y     , w);
+			stream_copy(dst + dstStride*(y*2+b), src + srcStride*(y + m), w);
+		    } else {
 			memcpy(dst + dstStride*(y*2+a), src + srcStride* y     , w);
 			memcpy(dst + dstStride*(y*2+b), src + srcStride*(y + m), w);
+		    }
 		}
 		break;
 	}
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
-	int w;
+	int w,finalize;
 	FilterParam *luma  = &vf->priv->lumaParam;
 	FilterParam *chroma= &vf->priv->chromaParam;
 
@@ -90,18 +106,19 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		w= mpi->w;
 	else
 		w= mpi->w * mpi->bpp/8;
+	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 	interleave(dmpi->planes[0], mpi->planes[0], 
-		w, mpi->h, dmpi->stride[0], mpi->stride[0], luma->interleave, luma->swap);
+		w, mpi->h, dmpi->stride[0], mpi->stride[0], luma->interleave, luma->swap,finalize);
 
 	if(mpi->flags&MP_IMGFLAG_PLANAR){
 		int cw= mpi->w >> mpi->chroma_x_shift;
 		int ch= mpi->h >> mpi->chroma_y_shift;
 
 		interleave(dmpi->planes[1], mpi->planes[1], cw,ch, 
-			dmpi->stride[1], mpi->stride[1], chroma->interleave, luma->swap);
+			dmpi->stride[1], mpi->stride[1], chroma->interleave, luma->swap,finalize);
 		interleave(dmpi->planes[2], mpi->planes[2], cw,ch, 
-			dmpi->stride[2], mpi->stride[2], chroma->interleave, luma->swap);
+			dmpi->stride[2], mpi->stride[2], chroma->interleave, luma->swap,finalize);
 	}
 
 	return vf_next_put_slice(vf,dmpi);

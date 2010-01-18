@@ -584,7 +584,7 @@ static struct size_preset {
   { NULL, 0, 0}
 };
 #endif
-/* note: sclices give unstable performance */
+/* note: slices give unstable performance downgrading */
 const vf_info_t vf_info_scale = {
     "software scaling",
     "scale",

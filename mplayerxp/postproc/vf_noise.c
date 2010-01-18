@@ -215,7 +215,7 @@ static inline void __FASTCALL__ lineNoise_C(uint8_t *dst, uint8_t *src, int8_t *
 	noise+= shift;
 	for(i=0; i<len; i++)
 	{
-		int v= src[i]+ noise[i];
+		int v= src[i] + noise[i];
 		if(v>255) 	dst[i]=255; //FIXME optimize
 		else if(v<0) 	dst[i]=0;
 		else		dst[i]=v;
@@ -285,7 +285,7 @@ static inline void __FASTCALL__ lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int l
 
 /***************************************************************************/
 
-static void __FASTCALL__ noise(uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int width, int height, FilterParam *fp){
+static void __FASTCALL__ noise(uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int width, int height, FilterParam *fp,int finalize){
 	int8_t *noise= fp->noise;
 	int y;
 	int shift=0;
@@ -293,17 +293,10 @@ static void __FASTCALL__ noise(uint8_t *dst, uint8_t *src, int dstStride, int sr
 	if(!noise)
 	{
 		if(src==dst) return;
-
-		if(dstStride==srcStride) memcpy(dst, src, srcStride*height);
+		if(finalize)
+		    stream_copy_pic(dst,src,width,height,dstStride,srcStride);
 		else
-		{
-			for(y=0; y<height; y++)
-			{
-				memcpy(dst, src, width);
-				dst+= dstStride;
-				src+= srcStride;
-			}
-		}
+		    memcpy_pic(dst,src,width,height,dstStride,srcStride);
 		return;
 	}
 
@@ -352,6 +345,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+	int finalize;
 	mp_image_t *dmpi;
 
 	if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
@@ -363,21 +357,22 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	}
 //else printf("dr\n");
 	dmpi= vf->dmpi;
+	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 #ifdef _OPENMP
 #pragma omp parallel sections
 {
 #pragma omp section
 #endif
-	noise(dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w, mpi->h, &vf->priv->lumaParam);
+	noise(dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w, mpi->h, &vf->priv->lumaParam,finalize);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	noise(dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam);
+	noise(dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam,finalize);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	noise(dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam);
+	noise(dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam,finalize);
 #ifdef _OPENMP
 }
 #endif

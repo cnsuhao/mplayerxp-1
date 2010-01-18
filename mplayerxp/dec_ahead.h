@@ -60,6 +60,8 @@ extern pthread_cond_t audio_decode_cond;
 #define LOCK_VIDEO_DECODE() { MSG_D(DA_PREFIX"LOCK_VIDEO_DECODE\n"); pthread_mutex_lock(&video_decode_mutex); }
 #define UNLOCK_VIDEO_DECODE() { MSG_D(DA_PREFIX"UNLOCK_VIDEO_DECODE\n"); pthread_mutex_unlock(&video_decode_mutex); }
 
+#define __MP_ATOMIC(OP) { pthread_mutex_t loc_mutex; pthread_mutex_lock(&loc_mutex); OP; pthread_mutex_unlock(&loc_mutex); }
+
 typedef struct sh_video_attr
 {
   int eof;			/* indicates last frame in stream */

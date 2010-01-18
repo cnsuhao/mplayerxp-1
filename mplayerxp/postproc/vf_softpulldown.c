@@ -18,13 +18,16 @@ struct vf_priv_s {
 	long long out;
 };
 
-static inline void *my_memcpy_pic(void * dst, void * src, int bytesPerLine, int height, int dstStride, int srcStride)
+static inline void *my_memcpy_pic(void * dst, void * src, int bytesPerLine, int height, int dstStride, int srcStride, int finalize)
 {
 	int i;
 	void *retval=dst;
 
 	for(i=0; i<height; i++)
 	{
+	    if(finalize)
+		stream_copy(dst, src, bytesPerLine);
+	    else
 		memcpy(dst, src, bytesPerLine);
 		src+= srcStride;
 		dst+= dstStride;
@@ -36,7 +39,7 @@ static inline void *my_memcpy_pic(void * dst, void * src, int bytesPerLine, int 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 {
 	mp_image_t *dmpi;
-	int ret = 0;
+	int ret = 0,finalize;
 	int flags = mpi->fields;
 	int state = vf->priv->state;
 
@@ -44,6 +47,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 	                    MP_IMGTYPE_STATIC, MP_IMGFLAG_ACCEPT_STRIDE |
 	                    MP_IMGFLAG_PRESERVE, mpi->w, mpi->h);
 
+	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 	vf->priv->in++;
 
 	if ((state == 0 &&
@@ -64,36 +68,36 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 		if (flags & MP_IMGFIELD_REPEAT_FIRST) {
 			my_memcpy_pic(dmpi->planes[0],
 			           mpi->planes[0], mpi->w, mpi->h/2,
-			           dmpi->stride[0]*2, mpi->stride[0]*2);
+			           dmpi->stride[0]*2, mpi->stride[0]*2,finalize);
 			if (mpi->flags & MP_IMGFLAG_PLANAR) {
 				my_memcpy_pic(dmpi->planes[1],
 				              mpi->planes[1],
 				              mpi->chroma_width,
 				              mpi->chroma_height/2,
 				              dmpi->stride[1]*2,
-				              mpi->stride[1]*2);
+				              mpi->stride[1]*2,finalize);
 				my_memcpy_pic(dmpi->planes[2],
 				              mpi->planes[2],
 				              mpi->chroma_width,
 				              mpi->chroma_height/2,
 				              dmpi->stride[2]*2,
-				              mpi->stride[2]*2);
+				              mpi->stride[2]*2,finalize);
 			}
 			state=1;
 		}
 	} else {
 		my_memcpy_pic(dmpi->planes[0]+dmpi->stride[0],
 		              mpi->planes[0]+mpi->stride[0], mpi->w, mpi->h/2,
-		              dmpi->stride[0]*2, mpi->stride[0]*2);
+		              dmpi->stride[0]*2, mpi->stride[0]*2,finalize);
 		if (mpi->flags & MP_IMGFLAG_PLANAR) {
 			my_memcpy_pic(dmpi->planes[1]+dmpi->stride[1],
 			              mpi->planes[1]+mpi->stride[1],
 			              mpi->chroma_width, mpi->chroma_height/2,
-			              dmpi->stride[1]*2, mpi->stride[1]*2);
+			              dmpi->stride[1]*2, mpi->stride[1]*2,finalize);
 			my_memcpy_pic(dmpi->planes[2]+dmpi->stride[2],
 			              mpi->planes[2]+mpi->stride[2],
 			              mpi->chroma_width, mpi->chroma_height/2,
-			              dmpi->stride[2]*2, mpi->stride[2]*2);
+			              dmpi->stride[2]*2, mpi->stride[2]*2,finalize);
 		}
 		ret = vf_next_put_slice(vf, dmpi);
 		vf->priv->out++;
@@ -104,20 +108,20 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 		} else {
 			my_memcpy_pic(dmpi->planes[0],
 			              mpi->planes[0], mpi->w, mpi->h/2,
-			              dmpi->stride[0]*2, mpi->stride[0]*2);
+			              dmpi->stride[0]*2, mpi->stride[0]*2,finalize);
 			if (mpi->flags & MP_IMGFLAG_PLANAR) {
 				my_memcpy_pic(dmpi->planes[1],
 				              mpi->planes[1],
 				              mpi->chroma_width,
 				              mpi->chroma_height/2,
 				              dmpi->stride[1]*2,
-				              mpi->stride[1]*2);
+				              mpi->stride[1]*2,finalize);
 				my_memcpy_pic(dmpi->planes[2],
 				              mpi->planes[2],
 				              mpi->chroma_width,
 				              mpi->chroma_height/2,
 				              dmpi->stride[2]*2,
-				              mpi->stride[2]*2);
+				              mpi->stride[2]*2,finalize);
 			}
 		}
 	}

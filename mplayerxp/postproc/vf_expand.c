@@ -42,7 +42,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
-
+    int finalize;
     mp_image_t *dmpi;
     if(vf->priv->new_frame)
     {
@@ -56,11 +56,23 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	    vf->priv->w,vf->priv->up_h+vf->priv->h+vf->priv->dn_h);
 	vf_mpi_clear(dmpi,0,0,vf->priv->w,vf->priv->dn_h);
     }
-	dmpi=vf_get_image(vf->next,mpi->imgfmt,
+    dmpi=vf_get_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    mpi->w,mpi->h+vf->priv->up_h);
+    finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
     // copy mpi->dmpi...
     if(mpi->flags&MP_IMGFLAG_PLANAR){
+	if(finalize) {
+	stream_copy_pic(dmpi->planes[0],
+		mpi->planes[0], mpi->w, mpi->h,
+		dmpi->stride[0],mpi->stride[0]);
+	stream_copy_pic(dmpi->planes[1],
+		mpi->planes[1], mpi->chroma_width, mpi->chroma_height,
+		dmpi->stride[1],mpi->stride[1]);
+	stream_copy_pic(dmpi->planes[2],
+		mpi->planes[2], mpi->chroma_width, mpi->chroma_height,
+		dmpi->stride[2],mpi->stride[2]);
+	} else {
 	memcpy_pic(dmpi->planes[0],
 		mpi->planes[0], mpi->w, mpi->h,
 		dmpi->stride[0],mpi->stride[0]);
@@ -70,10 +82,17 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	memcpy_pic(dmpi->planes[2],
 		mpi->planes[2], mpi->chroma_width, mpi->chroma_height,
 		dmpi->stride[2],mpi->stride[2]);
+	}
     } else {
+	if(finalize) {
+	stream_copy_pic(dmpi->planes[0],
+		mpi->planes[0], mpi->w*(dmpi->bpp/8), mpi->h,
+		dmpi->stride[0],mpi->stride[0]);
+	} else {
 	memcpy_pic(dmpi->planes[0],
 		mpi->planes[0], mpi->w*(dmpi->bpp/8), mpi->h,
 		dmpi->stride[0],mpi->stride[0]);
+	}
 	dmpi->planes[1] = mpi->planes[1]; // passthrough rgb8 palette
     }
     return vf_next_put_slice(vf,dmpi);

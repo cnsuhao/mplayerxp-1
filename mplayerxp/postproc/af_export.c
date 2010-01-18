@@ -24,6 +24,7 @@
 #include "af.h"
 #include "../help_mp.h"
 #include "../osdep/get_path.h"
+#include "libvo/fastmemcpy.h"
 
 #define DEF_SZ 512 // default buffer size (in samples)
 #define SHARED_FILE "mplayer-af_export" /* default file name 

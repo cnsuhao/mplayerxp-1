@@ -50,7 +50,7 @@ RENAME(_m_movntq)(void *__P, __m64 src)
 
 #endif
 
-static inline void RENAME(vo_draw_alpha_yv12)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
+static inline void RENAME(vo_draw_alpha_yv12)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     unsigned y;
 #ifdef HAVE_INT_PVECTOR
     __ivec vzero = _ivec_setzero();
@@ -86,7 +86,11 @@ PROFILE_START();
 	    vt[0] = _ivec_srl_s16_imm(_ivec_mullo_s16(vt[0],vt[2]),8);
 	    vt[1] = _ivec_srl_s16_imm(_ivec_mullo_s16(vt[1],vt[3]),8);
 	    vt[0] = _ivec_add_s8(_ivec_u8_from_u16(vt[0],vt[1]),vsrc);
-	    _ivec_stream(&dstbase[x],_ivec_blend_u8(vdest,vt[0],vmsk));
+	    vt[1] = _ivec_blend_u8(vdest,vt[0],vmsk);
+	    if(finalize)
+		_ivec_stream(&dstbase[x],vt[1]);
+	    else
+		_ivec_storea(&dstbase[x],vt[1]);
 	}
 #endif
 	for(;x<w;x++){
@@ -104,7 +108,7 @@ PROFILE_END("vo_draw_alpha_yv12");
     return;
 }
 
-static inline void RENAME(vo_draw_alpha_yuy2)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
+static inline void RENAME(vo_draw_alpha_yuy2)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
 #if defined(FAST_OSD) && !defined(HAVE_MMX)
     w=w>>1;
@@ -140,7 +144,10 @@ PROFILE_START();
 	    mm[2]=_m_punpcklbw(mm[2],mm[7]);
 	    mm[0]=_m_por(mm[0],mm[1]);
 	    mm[0]=_m_paddb(mm[0],mm[2]);
-	    _m_movntq(&(((char *)dstbase)[x*2]),mm[0]);
+	    if(finalize)
+		_m_movntq(&(((char *)dstbase)[x*2]),mm[0]);
+	    else
+		_m_store(&(((char *)dstbase)[x*2]),mm[0]);
 	}
 #endif
         for(;x<w;x++){
@@ -166,7 +173,7 @@ PROFILE_END("vo_draw_alpha_yuy2");
     return;
 }
 
-static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
+static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
         register unsigned char *dst = dstbase;
@@ -207,7 +214,10 @@ static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* 
 	    mm[5]=_m_pand(mm[5],_m_load(&mask24lh));
 	    mm[0]=_m_pand(mm[0],_m_load(&mask24hl));
 	    mm[5]=_m_por(mm[5],mm[0]);
-	    _m_movntq(&dstbase[0],mm[5]);
+	    if(finalize)
+		_m_movntq(&dstbase[0],mm[5]);
+	    else
+		_m_store(&dstbase[0],mm[5]);
 	}
 	dst += 6;
     }
@@ -235,7 +245,7 @@ static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* 
     return;
 }
 
-static inline void RENAME(vo_draw_alpha_rgb32)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
+static inline void RENAME(vo_draw_alpha_rgb32)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
 PROFILE_START();
     for(y=0;y<h;y++){
@@ -272,7 +282,10 @@ PROFILE_START();
 	    mm[2]=_m_punpcklbw(mm[2],mm[2]);
 	    mm[2]=_m_punpcklbw(mm[2],mm[2]);
 	    mm[0]=_m_paddb(mm[0],mm[2]);
-	    _m_movntq(&dstbase[4*x],mm[0]);
+	    if(finalize)
+		_m_movntq(&dstbase[4*x],mm[0]);
+	    else
+		_m_store(&dstbase[4*x],mm[0]);
 	}
     }
 #endif /* arch_x86 */

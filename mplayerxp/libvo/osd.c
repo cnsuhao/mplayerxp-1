@@ -73,7 +73,7 @@ static unsigned short fast_osd_15bpp_table[256];
 static unsigned short fast_osd_16bpp_table[256];
 #endif
 
-static void __FASTCALL__ vo_draw_alpha_rgb15_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
+static void __FASTCALL__ vo_draw_alpha_rgb15_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
         register unsigned short *dst = (unsigned short*) dstbase;
@@ -105,7 +105,7 @@ static void __FASTCALL__ vo_draw_alpha_rgb15_C(int w,int h, const unsigned char*
     return;
 }
 
-static void __FASTCALL__ vo_draw_alpha_rgb16_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
+static void __FASTCALL__ vo_draw_alpha_rgb16_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
         register unsigned short *dst = (unsigned short*) dstbase;
@@ -136,8 +136,8 @@ static void __FASTCALL__ vo_draw_alpha_rgb16_C(int w,int h, const unsigned char*
     return;
 }
 
-static void __FASTCALL__ vo_draw_alpha_uyvy_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
-    (*vo_draw_alpha_yuy2_ptr)(w,h,src,srca,srcstride,dstbase+1,dststride);
+static void __FASTCALL__ vo_draw_alpha_uyvy_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+    (*vo_draw_alpha_yuy2_ptr)(w,h,src,srca,srcstride,dstbase+1,dststride,finalize);
 }
 
 draw_alpha_f vo_draw_alpha_yv12_ptr=NULL;

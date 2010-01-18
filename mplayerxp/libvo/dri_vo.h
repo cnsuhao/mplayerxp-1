@@ -20,6 +20,7 @@
 #define DRI_CAP_HORZSCALER	0x00000040UL	/**< Driver supports horizontal scaling */
 #define DRI_CAP_VERTSCALER	0x00000080UL	/**< Driver supports vertical scaling */
 #define DRI_CAP_HWOSD		0x00000100UL	/**< Driver supports OSD painting */
+#define DRI_CAP_BUSMASTERING	0x80000000UL	/**< Means: final video buffer but allocated in RAM */
 
 typedef struct dri_surface_cap_s
 {

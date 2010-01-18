@@ -119,10 +119,12 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
         mp_image_t *mpi){
     int retval;
     unsigned i;
+    int finalize = vo_is_final();
     struct vf_priv_s *priv = vf->priv;
     retval=vo_get_surface(mpi);
     if(retval==VO_TRUE) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
+	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
 	MSG_DBG2("vf_vo_get_image was called successfully\n");
     }
     MSG_DBG2("vf_vo_get_image was called failed\n");

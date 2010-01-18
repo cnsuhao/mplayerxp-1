@@ -8,110 +8,81 @@
 #if defined(USE_FASTMEMCPY)
 #include "fastmemcpy.h"
 #include "../cpudetect.h"
+
+#define BLOCK_SIZE 4096
+#define CONFUSION_FACTOR 0
+
+/* generic version */
+#undef OPTIMIZE_AVX
+#undef OPTIMIZE_SSE4
+#undef OPTIMIZE_SSSE3
+#undef OPTIMIZE_SSE3
+#undef OPTIMIZE_SSE2
+#undef OPTIMIZE_SSE
+#undef OPTIMIZE_MMX2
+#undef OPTIMIZE_MMX
+
+#ifndef __x86_64__
+#ifdef __MMX__
+#define OPTIMIZE_MMX
+#undef CL_SIZE
+#define CL_SIZE 32
+#undef RENAME
+#define RENAME(a) a ## _MMX
+#include "aclib_template.c"
+#endif
+#ifdef __MMX2__
+#define OPTIMIZE_MMX2
+#undef CL_SIZE
+#define CL_SIZE 32
+#undef RENAME
+#define RENAME(a) a ## _MMX2_CL32
+#include "aclib_template.c"
+#endif
+#ifdef __MMX2__
+#define OPTIMIZE_MMX2
+#undef CL_SIZE
+#define CL_SIZE 64
+#undef RENAME
+#define RENAME(a) a ## _MMX2_CL64
+#include "aclib_template.c"
+#endif
+#ifdef __MMX2__
+#define OPTIMIZE_MMX2
+#undef CL_SIZE
+#define CL_SIZE 128
+#undef RENAME
+#define RENAME(a) a ## _MMX2_CL128
+#include "aclib_template.c"
+#endif
+#endif // __x86_64__
+#ifdef __SSE2__
+#define OPTIMIZE_SSE2
+#undef RENAME
+#undef CL_SIZE
+#define CL_SIZE 128
+#define RENAME(a) a ## _SSE2
+#include "aclib_template.c"
+#endif
 /*
   aclib - advanced C library ;)
   This file contains functions which improve and expand standard C-library
   see aclib_template.c ... this file only contains runtime cpu detection and config options stuff
   runtime cpu detection by michael niedermayer (michaelni@gmx.at) is under GPL
 */
-#if defined( CAN_COMPILE_MMX ) && defined (ARCH_X86)
-
-#define BLOCK_SIZE 4096
-#define CONFUSION_FACTOR 0
-//Feel free to fine-tune the above 2, it might be possible to get some speedup with them :)
-
-//#define STATISTICS
-
-#if defined( ARCH_X86 )
-#define CAN_COMPILE_X86_ASM
-#endif
-
-//Note: we have MMX, MMX2, 3DNOW version there is no 3DNOW+MMX2 one
-//Plain C versions
-//#if !defined (HAVE_MMX) || defined (RUNTIME_CPUDETECT)
-//#define COMPILE_C
-//#endif
-
-#ifdef CAN_COMPILE_X86_ASM
-
-#undef HAVE_MMX
-#undef HAVE_MMX2
-#undef HAVE_3DNOW
-#undef HAVE_SSE
-
-//MMX versions
-#ifdef CAN_COMPILE_MMX
-#undef RENAME
-#undef CL_SIZE
-#define CL_SIZE 32
-#define HAVE_MMX
-#undef HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _MMX
-#include "aclib_template.c"
-#endif
-
-//MMX2 versions 32-byte cache-line size
-#ifdef CAN_COMPILE_MMX2
-#undef RENAME
-#undef CL_SIZE
-#define CL_SIZE 32
-#define HAVE_MMX
-#define HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _MMX2_CL32
-#include "aclib_template.c"
-#endif
-
-//MMX2 versions 64-byte cache-line size
-#ifdef CAN_COMPILE_MMX2
-#undef RENAME
-#undef CL_SIZE
-#define CL_SIZE 64
-#define HAVE_MMX
-#define HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _MMX2_CL64
-#include "aclib_template.c"
-#endif
-
-//MMX2 versions 128-byte cache-line size
-#ifdef CAN_COMPILE_MMX2
-#undef RENAME
-#undef CL_SIZE
-#define CL_SIZE 128
-#define HAVE_MMX
-#define HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _MMX2_CL128
-#include "aclib_template.c"
-#endif
-
-//3DNOW versions all K6 have 32-bit cache-line size
-#ifdef CAN_COMPILE_3DNOW
-#undef RENAME
-#undef CL_SIZE
-#define CL_SIZE 32
-#define HAVE_MMX
-#undef HAVE_MMX2
-#define HAVE_3DNOW
-#define RENAME(a) a ## _3DNow
-#include "aclib_template.c"
-#endif
-#endif // CAN_COMPILE_X86_ASM
-
-#elif defined( ARCH_X86_64 )
-#define RENAME(a) a ## _x86_64
-#include "aclib_x86_64.h"
-#endif
 
 static void * init_fast_memcpy(void * to, const void * from, size_t len)
 {
-#if defined( ARCH_X86_64 ) && defined( USE_FASTMEMCPY )
-	fast_memcpy_ptr = fast_memcpy_x86_64;
-#elif defined( CAN_COMPILE_X86_ASM )
-	// ordered per speed fasterst first
-#ifdef CAN_COMPILE_MMX2
+#ifdef __SSE2__
+	if(gCpuCaps.hasSSE2)
+	{
+		MSG_V("Using SSE2 optimized memcpy\n");
+		fast_memcpy_ptr = fast_memcpy_SSE2;
+	}
+	else
+#endif
+#ifndef __x86_64__
+#ifdef __MMX2__
 	if(gCpuCaps.hasMMX2)
 	{
 		MSG_V("Using MMX2 optimized memcpy\n");
@@ -123,14 +94,6 @@ static void * init_fast_memcpy(void * to, const void * from, size_t len)
 	}
 	else
 #endif
-#ifdef CAN_COMPILE_3DNOW
-	if(gCpuCaps.has3DNow)
-	{
-		MSG_V("Using 3DNow optimized memcpy\n");
-		fast_memcpy_ptr = fast_memcpy_3DNow;
-	}
-	else
-#endif
 #ifdef CAN_COMPILE_MMX
 	if(gCpuCaps.hasMMX)
 	{
@@ -139,60 +102,54 @@ static void * init_fast_memcpy(void * to, const void * from, size_t len)
 	}
 	else
 #endif
-#else
+#endif
 	{
 		MSG_V("Using generic memcpy\n");
 		fast_memcpy_ptr = memcpy; /* prior to mmx we use the standart memcpy */
 	}
-#endif
 	return (*fast_memcpy_ptr)(to,from,len);
 }
 
-static void * init_mem2agpcpy(void * to, const void * from, size_t len)
+static void * init_stream_copy(void * to, const void * from, size_t len)
 {
-#if defined( ARCH_X86_64 ) && defined( USE_FASTMEMCPY )
-	mem2agpcpy_ptr = mem2agpcpy_x86_64;
-#elif defined ( CAN_COMPILE_X86_ASM )
-	// ordered per speed fasterst first
-#ifdef CAN_COMPILE_MMX2
+#ifdef __SSE2__
+	if(gCpuCaps.hasSSE2)
+	{
+		MSG_V("Using SSE2 optimized agpcpy\n");
+		fast_stream_copy_ptr = fast_stream_copy_SSE2;
+	}
+#endif
+#ifndef __x86_64__
+#ifdef __MMX2__
 	if(gCpuCaps.hasMMX2)
 	{
 		MSG_V("Using MMX2 optimized agpcpy\n");
-		if(gCpuCaps.cl_size >= 128) mem2agpcpy_ptr = mem2agpcpy_MMX2_CL128;
+		if(gCpuCaps.cl_size >= 128) fast_stream_copy_ptr = fast_stream_copy_MMX2_CL128;
 		else
-		if(gCpuCaps.cl_size == 64) mem2agpcpy_ptr = mem2agpcpy_MMX2_CL64;
+		if(gCpuCaps.cl_size == 64) fast_stream_copy_ptr = fast_stream_copy_MMX2_CL64;
 		else
-		mem2agpcpy_ptr = mem2agpcpy_MMX2_CL32;
+		fast_stream_copy_ptr = fast_stream_copy_MMX2_CL32;
 	}
 	else
 #endif
-#ifdef CAN_COMPILE_3DNOW
-	if(gCpuCaps.has3DNow)
-	{
-		MSG_V("Using 3DNow optimized agpcpy\n");
-		mem2agpcpy_ptr = mem2agpcpy_3DNow;
-	}
-	else
-#endif
-#ifdef CAN_COMPILE_MMX
+#ifdef __MMX__
 	if(gCpuCaps.hasMMX)
 	{
 		MSG_V("Using MMX optimized agpcpy\n");
-		mem2agpcpy_ptr = mem2agpcpy_MMX;
+		fast_stream_copy_ptr = fast_stream_copy_MMX;
 	}
 	else
 #endif
-#else
+#endif
 	{
 		MSG_V("Using generic optimized agpcpy\n");
-		mem2agpcpy_ptr = memcpy; /* prior to mmx we use the standart memcpy */
+		fast_stream_copy_ptr = memcpy; /* prior to mmx we use the standart memcpy */
 	}
-#endif
-	return (*mem2agpcpy_ptr)(to,from,len);
+	return (*fast_stream_copy_ptr)(to,from,len);
 }
 
 void *(*fast_memcpy_ptr)(void * to, const void * from, size_t len) = init_fast_memcpy;
-void *(*mem2agpcpy_ptr)(void * to, const void * from, size_t len) = init_mem2agpcpy;
+void *(*fast_stream_copy_ptr)(void * to, const void * from, size_t len) = init_stream_copy;
 
 #endif /* use fastmemcpy */
 

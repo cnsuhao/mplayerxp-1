@@ -683,6 +683,7 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 	uint8_t *dst[4];
 	const uint8_t *ps_src[4];
 	int dstStride[4];
+	int finalize=vo_is_final();
 	for(i=0;i<4;i++)
 	{
 	    dst[i]=dri_surf[xp_frame].planes[i]+dri_off[i];
@@ -695,9 +696,14 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 	    x = i?(mpi->x>>mpi->chroma_x_shift):mpi->x;
 	    ps_src[i] = mpi->planes[i]+(y*mpi->stride[i])+x+ps_off[i];
 	}
-	for(i=0;i<4;i++)
-	    if(mpi->stride[i])
-		memcpy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
+	for(i=0;i<4;i++) {
+	    if(mpi->stride[i]) {
+		if(finalize)
+		    stream_copy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
+		else
+		    memcpy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
+	    }
+	}
 	return 0;
     }
     return -1;
@@ -874,13 +880,14 @@ static draw_alpha_f __FASTCALL__ get_draw_alpha(uint32_t fmt) {
 
 static void __FASTCALL__ dri_draw_osd(int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
 {
+    int finalize=vo_is_final();
     if(x0+w<=dri_cap.width&&y0+h<=dri_cap.height)
     {
 	if(!draw_alpha) draw_alpha=get_draw_alpha(dri_cap.fourcc);
 	if(draw_alpha)
 	    (*draw_alpha)(w,h,src,srca,stride,
 			    dri_surf[active_frame].planes[0]+dri_cap.strides[0]*y0+x0*((dri_bpp+7)/8),
-			    dri_cap.strides[0]);
+			    dri_cap.strides[0],finalize);
     }
 }
 
@@ -910,3 +917,10 @@ uint32_t __FASTCALL__ vo_control(uint32_t request, void *data)
     MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
     return rval;
 }
+
+int __FASTCALL__ vo_is_final(void) {
+    int mmaped=dri_cap.caps&DRI_CAP_VIDEO_MMAPED;
+    int busmaster=dri_cap.caps&DRI_CAP_BUSMASTERING;
+    return mmaped||busmaster||(dri_nframes>1);
+}
+

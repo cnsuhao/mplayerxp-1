@@ -29,23 +29,29 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
-    int y,w,h;
+    int y,w,h,finalize;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_image(vf->next,IMGFMT_YV12,
 	MP_IMGTYPE_TEMP, 0/*MP_IMGFLAG_ACCEPT_STRIDE*/,
 	mpi->w, mpi->h);
+    finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 #ifdef _OPENMP
 #pragma omp parallel sections
 {
 #pragma omp section
 #endif
-    for(y=0;y<mpi->h;y++)
+    for(y=0;y<mpi->h;y++) {
+	if(finalize)
+	stream_copy(dmpi->planes[0]+dmpi->stride[0]*y,
+	       mpi->planes[0]+mpi->stride[0]*y,
+	       mpi->w);
+	else
 	memcpy(dmpi->planes[0]+dmpi->stride[0]*y,
 	       mpi->planes[0]+mpi->stride[0]*y,
 	       mpi->w);
-
+    }
 #ifdef _OPENMP
 #pragma omp section
 #endif
