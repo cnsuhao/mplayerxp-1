@@ -5,6 +5,7 @@
 #include "pvector/pvector.h"
 
 /* for small memory blocks (<256 bytes) this version is faster */
+#undef small_memcpy
 #ifdef __x86_64__
 #define small_memcpy(to,from,n)\
 {\
@@ -18,7 +19,7 @@ __asm__ __volatile__(\
 /* It's most portable way to notify compiler */\
 /* that edi, esi and ecx are clobbered in asm block. */\
 /* Thanks to A'rpi for hint!!! */\
-        :"0" (to), "1" (from),"2" (siz)\
+	:"0" (to), "1" (from),"2" (siz)\
 	: "memory","cc");\
     if(n)\
 __asm__ __volatile__(\
@@ -27,7 +28,7 @@ __asm__ __volatile__(\
 /* It's most portable way to notify compiler */\
 /* that edi, esi and ecx are clobbered in asm block. */\
 /* Thanks to A'rpi for hint!!! */\
-        :"0" (to), "1" (from),"2" (n)\
+	:"0" (to), "1" (from),"2" (n)\
 	: "memory","cc");\
 }
 #else
@@ -40,22 +41,16 @@ __asm__ __volatile__(\
 /* It's most portable way to notify compiler */\
 /* that edi, esi and ecx are clobbered in asm block. */\
 /* Thanks to A'rpi for hint!!! */\
-        :"0" (to), "1" (from),"2" (n)\
+	:"0" (to), "1" (from),"2" (n)\
 	: "memory","cc");\
 }
 #endif
 
-#undef MMREG_SIZE
-#ifdef OPTIMIZE_SSE2
-#define MMREG_SIZE 16
-#else
-#define MMREG_SIZE 64 //8
-#endif
 #undef MIN_LEN
 #if defined( OPTIMIZE_MMX ) && !defined( OPTIMIZE_MMX2 )
-#define MIN_LEN 0x800  /* 2K blocks */
+#define MIN_LEN 0x800  /* 2K blocks. Was found experimentally */
 #else
-#define MIN_LEN 0x40  /* 64-byte blocks */
+#define MIN_LEN __IVEC_SIZE*8
 #endif
 
 #undef FAST_MEMORY_COPY
@@ -64,13 +59,13 @@ __asm__ __volatile__(\
     void *retval;\
     const unsigned char *cfrom=from;\
     unsigned char *tto=to;\
-    const unsigned ivec_block_size = 8*__IVEC_SIZE;\
+    const unsigned block_size = MIN_LEN;\
     __ivec iarr[8];\
     size_t i;\
     retval = to;\
     if(!len) return retval;\
 \
-    _ivec_prefetch(cfrom);\
+    _ivec_prefetch(&cfrom[0]);\
     _ivec_prefetch(&cfrom[32]);\
     _ivec_prefetch(&cfrom[64]);\
     _ivec_prefetch(&cfrom[96]);\
@@ -86,12 +81,12 @@ __asm__ __volatile__(\
 	/* Align destinition to cache-line size -boundary */\
 	delta = ((unsigned long int)tto)&(gCpuCaps.cl_size-1);\
 	if(delta) {\
-	    delta=MMREG_SIZE-delta;\
+	    delta=gCpuCaps.cl_size-delta;\
 	    len -= delta;\
 	    small_memcpy(tto, cfrom, delta);\
 	}\
-	i = len/ivec_block_size;\
-	len&=(ivec_block_size-1);\
+	i = len/block_size;\
+	len&=(block_size-1);\
 	/*\
 	   This algorithm is top effective when the code consequently\
 	   reads and writes blocks which have size of cache line.\
@@ -103,8 +98,8 @@ __asm__ __volatile__(\
 	*/\
 	for(; i>0; i--)\
 	{\
-	    _ivec_prefetch(&cfrom[320]);\
-	    _ivec_prefetch(&cfrom[352]);\
+	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8]);\
+	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8+32]);\
 	    if(((unsigned long)cfrom) & 15) {\
 		/* if SRC is misaligned */\
 		iarr[0] = _ivec_loadu(&cfrom[__IVEC_SIZE*0]);\
@@ -133,8 +128,8 @@ __asm__ __volatile__(\
 	    MEM_STORE(&tto[__IVEC_SIZE*5],iarr[5]);\
 	    MEM_STORE(&tto[__IVEC_SIZE*6],iarr[6]);\
 	    MEM_STORE(&tto[__IVEC_SIZE*7],iarr[7]);\
-	    cfrom+=ivec_block_size;\
-	    tto+=ivec_block_size;\
+	    cfrom+=block_size;\
+	    tto+=block_size;\
 	}\
 	_ivec_sfence();\
 	_ivec_empty();\
@@ -150,6 +145,7 @@ __asm__ __volatile__(\
 #define MEM_STORE _ivec_stream
 static inline void * RENAME(fast_stream_copy)(void * to, const void * from, size_t len)
 {
+    MSG_DBG3("fast_stream_copy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
     FAST_MEMORY_COPY(to,from,len);
 }
 
@@ -157,6 +153,7 @@ static inline void * RENAME(fast_stream_copy)(void * to, const void * from, size
 #define MEM_STORE _ivec_storea
 static inline void * RENAME(fast_memcpy)(void * to, const void * from, size_t len)
 {
+    MSG_DBG3("fast_memcpy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
     FAST_MEMORY_COPY(to,from,len);
 }
 
