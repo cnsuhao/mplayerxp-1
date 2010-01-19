@@ -26,7 +26,7 @@
 #include "__mp_msg.h"
 
 
-#ifndef MPDEBUG
+#ifndef MP_DEBUG
   #define NDEBUG
 #endif
 

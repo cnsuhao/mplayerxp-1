@@ -18,7 +18,7 @@
 #define MSG_V(args...) mp_msg(MSGT_VO,MSGL_V,__FILE__,__LINE__, ##args )
 #define MSG_OK(args...) mp_msg(MSGT_VO,MSGL_OK,__FILE__,__LINE__, ##args )
 #define MSG_HINT(args...) mp_msg(MSGT_VO,MSGL_HINT,__FILE__,__LINE__, ##args )
-#ifndef NDEBUG
+#ifdef MP_DEBUG
 #define MSG_DBG2(args...) mp_msg(MSGT_VO,MSGL_DBG2,__FILE__,__LINE__, ##args )
 #define MSG_DBG3(args...) mp_msg(MSGT_VO,MSGL_DBG3,__FILE__,__LINE__, ##args )
 #else

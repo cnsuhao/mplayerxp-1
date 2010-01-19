@@ -9,11 +9,6 @@
  * TODO: implement informat in CODECS2HTML too
  */
 
-#define DEBUG
-
-//disable asserts
-#define NDEBUG 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
