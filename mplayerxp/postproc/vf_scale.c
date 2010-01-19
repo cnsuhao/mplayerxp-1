@@ -118,9 +118,16 @@ static unsigned int __FASTCALL__ find_best_out(vf_instance_t *vf,unsigned w,unsi
 
 static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 {
-    MSG_INFO("[vf_scale]: scaling [%dx%d,%s] -> [%dx%d,%s]\n",
+    MSG_INFO("[vf_scale]: in[%dx%d,%s] -> out[%dx%d,%s]\n",
 	vf->priv->sw,vf->priv->sh,vo_format_name(vf->priv->sfmt),
 	vf->priv->w,vf->priv->h,vo_format_name(vf->priv->ofmt));
+}
+
+static void __FASTCALL__ print_conf_fmtcvt(struct vf_instance_s* vf)
+{
+    MSG_INFO("[vf_fmtcvt]: video[%dx%d] in[%s] -> out[%s]\n",
+	vf->priv->sw,vf->priv->sh,vo_format_name(vf->priv->sfmt),
+	vo_format_name(vf->priv->ofmt));
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
@@ -272,7 +279,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
             vf->priv->palette[4*i+3]=0;
 	}
 	break; }
-    case IMGFMT_RGB4: 
+    case IMGFMT_RGB4:
     case IMGFMT_RG4B: {
 	int i;
 	vf->priv->palette=malloc(4*16);
@@ -321,7 +328,7 @@ static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2,
     }
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;//=mpi->priv;
     uint8_t *planes[3];
     int stride[3];
@@ -342,11 +349,56 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
           stride[2]=mpi->stride[2];
       }
     }
-    MSG_DBG2("vf_scale.put_slice was called\n");
+    MSG_DBG2("vf_scale.put_frame was called\n");
     dmpi=vf_get_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
 	vf->priv->w, vf->priv->h);
     scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, mpi->y, mpi->h, dmpi->planes, dmpi->stride, vf->priv->interlaced);
+    return vf_next_put_slice(vf,dmpi);
+}
+
+static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+    mp_image_t *dmpi;//=mpi->priv;
+    uint8_t *planes[3],*dplanes[3];
+    int stride[3],newy,newh;
+    planes[0]=mpi->planes[0];
+    stride[0]=mpi->stride[0];
+    if(mpi->flags&MP_IMGFLAG_PLANAR){
+      if(mpi->flags&MP_IMGFLAG_SWAPPED){
+          // I420/IYUV  (Y,U,V)
+          planes[1]=mpi->planes[2];
+          planes[2]=mpi->planes[1];
+          stride[1]=mpi->stride[2];
+          stride[2]=mpi->stride[1];
+      } else {
+          // YV12,YVU9,IF09  (Y,V,U)
+          planes[1]=mpi->planes[1];
+          planes[2]=mpi->planes[2];
+          stride[1]=mpi->stride[1];
+          stride[2]=mpi->stride[2];
+      }
+    }
+    MSG_DBG2("vf_scale.put_slice was called[%i %i]\n",mpi->y, mpi->h);
+    dmpi=vf_get_image(vf->next,vf->priv->fmt,
+	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
+	vf->priv->w, vf->priv->h);
+    /* Try to fake first slice*/
+    dplanes[0] = dmpi->planes[0];
+    if(mpi->flags&MP_IMGFLAG_PLANAR) {
+	dplanes[1] = dmpi->planes[1];
+	dplanes[2] = dmpi->planes[2];
+    }
+    planes[0]  += mpi->y*mpi->stride[0];
+    dplanes[0] += mpi->y*dmpi->stride[0];
+    if(mpi->flags&MP_IMGFLAG_PLANAR){
+	planes[1] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[1];
+	planes[2] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[2];
+	dplanes[1]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[0];
+	dplanes[1]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[0];
+    }
+    scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, 0, mpi->h, dplanes, dmpi->stride, vf->priv->interlaced);
+    dmpi->y = mpi->y;
+    dmpi->h = mpi->h;
     return vf_next_put_slice(vf,dmpi);
 }
 
@@ -468,7 +520,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s *vf){
 
 static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
-    vf->put_slice=put_slice;
+    vf->put_slice=put_frame;
     vf->query_format=query_format;
     vf->control= control;
     vf->uninit=uninit;
@@ -497,6 +549,13 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->priv->h);
     if(!verbose) av_log_set_level(AV_LOG_FATAL); /* suppress: slices start in the middle */
     return 1;
+}
+
+static int __FASTCALL__ vf_open_fmtcvt(vf_instance_t *vf,const char* args){
+    int retval = vf_open(vf,args);
+    vf->put_slice=put_slice;
+    vf->print_conf=print_conf_fmtcvt;
+    return retval;
 }
 
 //global sws_flags from the command line
@@ -600,8 +659,8 @@ const vf_info_t vf_info_fmtcvt = {
     "fmtcvt",
     "A'rpi",
     "",
-    VF_FLAGS_THREADS,
-    vf_open
+    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
+    vf_open_fmtcvt
 };
 
 //===========================================================================//

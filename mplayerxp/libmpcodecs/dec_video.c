@@ -167,8 +167,9 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	if(enable_gomp) {
 	    smp_num_cpus=omp_get_num_procs();
 	    use_vf_threads=0;
-	    MSG_DBG2("[mpdec] vf_flags=%08X num_cpus=%u\n",sh_video->vf_flags,smp_num_cpus);
 	    if(((sh_video->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
+	    if(use_vf_threads)
+		MSG_STATUS("[mpdec] will perform parallel video-filter on %u CPUs\n",smp_num_cpus);
 	}
 #else
 	MSG_V("[mpdec] GOMP was not compiled-in! Using single threaded video filtering!\n");

@@ -1,6 +1,6 @@
-include ../mplayerxp/config.mak
+include ../mplayerxp/mp_config.mak
 
-CFLAGS = -I..
+CFLAGS = -g3 -I..
 
 OBJS = bios2dump$(EXESUF) \
        mem2dump$(EXESUF) \
@@ -12,7 +12,7 @@ MP_LIBS += ../mplayerxp/libmpdemux/librtsp/librtsp.a ../mplayerxp/libmpdemux/rea
 ../mplayerxp/libmpdemux/freesdp/libfreesdp.a
 endif
 MP_LIBS += ../mplayerxp/libmpcodecs/libmpcodecs.a ../mplayerxp/libao2/libao2.a ../mplayerxp/postproc/libpostproc.a \
-../mplayerxp/postproc/libmenu/libmenu.a ../mplayerxp/input/libinput.a ../mplayerxp/libvo/libvo.a \
+../mplayerxp/input/libinput.a ../mplayerxp/libvo/libvo.a \
 ../mplayerxp/osdep/libosdep.a ../mplayerxp/mp_msg.o ../mplayerxp/nls/libnls.a ../mplayerxp/cpudetect.o
 
 COMMON_LIBS = $(MP_LIBS) $(EXTRALIBS) -lm

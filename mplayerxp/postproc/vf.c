@@ -618,7 +618,7 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
     {
 	MSG_V("vf_reinit->config %i %i %s=> %i %i %s\n",sw,sh,vo_format_name(sfourcc),w,h,vo_format_name(fmt));
 	_saved=_this->prev;
-	vf_scaler=vf_open_filter(_this,sh_video,"scale",NULL);
+	vf_scaler=vf_open_filter(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL);
 	if(vf_scaler)
 	{
 	    void *sfnc;

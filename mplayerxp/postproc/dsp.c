@@ -20,6 +20,59 @@
 #endif
 #include "dsp.h"
 
+extern uint32_t load24bit(void* data, int pos);
+extern void store24bit(void* data, int pos, uint32_t expanded_value);
+
+/* MMX optimized stugff */
+#include <limits.h>
+#include "../mp_config.h"
+#include "../cpudetect.h"
+
+#undef OPTIMIZE_AVX
+#undef OPTIMIZE_SSE4
+#undef OPTIMIZE_SSSE3
+#undef OPTIMIZE_SSE3
+#undef OPTIMIZE_SSE2
+#undef OPTIMIZE_SSE
+#undef OPTIMIZE_MMX2
+#undef OPTIMIZE_MMX
+#define RENAME(a) a ## _c
+#include "dsp_accel.h"
+#include "dsp_accelf.h"
+
+#ifndef __x86_64__
+#ifdef __MMX__
+#define OPTIMIZE_MMX
+#undef RENAME
+#define RENAME(a) a ## _MMX
+#include "dsp_accel.h"
+#endif
+#ifdef __SSE__
+#define OPTIMIZE_MMX2
+#undef RENAME
+#define RENAME(a) a ## _MMX2
+#include "dsp_accel.h"
+#endif
+#endif //__x86_64__
+#ifdef __SSE2__
+#define OPTIMIZE_SSE2
+#undef RENAME
+#define RENAME(a) a ## _SSE2
+#include "dsp_accel.h"
+#endif
+#ifdef __SSE3__
+#define OPTIMIZE_SSE3
+#undef RENAME
+#define RENAME(a) a ## _SSE3
+#include "dsp_accel.h"
+#endif
+#ifdef __SSE4_1__
+#define OPTIMIZE_SSE4
+#undef RENAME
+#define RENAME(a) a ## _SSE4
+#include "dsp_accel.h"
+#endif
+
 /******************************************************************************
 *  FIR filter implementations
 ******************************************************************************/
@@ -199,7 +252,7 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
 	g += w[end-i-1] * (t3 + t2);   // Total gain in filter
 	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3); 
       }
-    }      
+    }
     else{ // Band stop
       if (!o) // Band stop filters must have odd length
 	return -1;
@@ -219,9 +272,9 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
 
   // Normalize gain
   g=1/g;
-  for (i=0; i<n; i++) 
+  for (i=0; i<n; i++)
     w[i] *= g;
-  
+
   return 0;
 }
 
@@ -244,7 +297,7 @@ int __FASTCALL__ design_pfir(unsigned int n, unsigned int k, _ftype_t* w, _ftype
   int i;     	// Counters
   int j;
   _ftype_t t;	// g * w[i]
-  
+
   // Sanity check
   if(l<1 || k<1 || !w || !pw)
     return -1;
@@ -277,7 +330,7 @@ int __FASTCALL__ design_pfir(unsigned int n, unsigned int k, _ftype_t* w, _ftype
 
 /* Pre-warp the coefficients of a numerator or denominator.
    Note that a0 is assumed to be 1, so there is no wrapping
-   of it.  
+   of it.
 */
 void __FASTCALL__ prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
 {
@@ -560,7 +613,7 @@ void __FASTCALL__ flattop(int n,_ftype_t* w)
     *w++ = 0.2810638602 - 0.5208971735*cos(k1*(_ftype_t)i) + 0.1980389663*cos(k2*(_ftype_t)i);
 }
 
-/* Computes the 0th order modified Bessel function of the first kind.  
+/* Computes the 0th order modified Bessel function of the first kind.
 // (Needed to compute Kaiser window) 
 //   
 // y = sum( (x/(2*n))^2 )
@@ -654,81 +707,30 @@ void __FASTCALL__ bandp_init(bandp_t *bp, unsigned center, unsigned width, unsig
 	bp->prev = bp->pprev = 0.0;
 }
 
-extern uint32_t load24bit(void* data, int pos);
-extern void store24bit(void* data, int pos, uint32_t expanded_value);
-
-
-/* MMX optimized stugff */
-#include <limits.h>
-#include "../mp_config.h"
-#include "../cpudetect.h"
-
-#undef HAVE_MMX
-#undef HAVE_MMX2
-#undef HAVE_3DNOW
-#undef HAVE_3DNOW2
-#undef HAVE_SSE
-#define RENAME(a) a ## _c
-#include "dsp_accel.h"
-
-#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-#define CAN_COMPILE_X86_ASM
-#endif
-#ifdef CAN_COMPILE_X86_ASM
-//MMX versions
-#ifdef CAN_COMPILE_MMX
-#undef RENAME
-#define HAVE_MMX
-#undef HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _MMX
-#include "dsp_accel.h"
-#endif
-
-//3DNow! versions
-#ifdef CAN_COMPILE_3DNOW
-#undef RENAME
-#define HAVE_MMX
-#undef HAVE_MMX2
-#define HAVE_3DNOW
-#define RENAME(a) a ## _3DNow
-#include "dsp_accel.h"
-#endif
-
-//3DNowEx! versions
-#ifdef CAN_COMPILE_3DNOW2
-#undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#define HAVE_3DNOW
-#define HAVE_3DNOW2
-#define RENAME(a) a ## _3DNowEx
-#include "dsp_accel.h"
-#endif
-
-//MMX2 versions
-#ifdef CAN_COMPILE_MMX2
-#undef RENAME
-#define HAVE_MMX
-#define HAVE_MMX2
-#undef HAVE_3DNOW
-#define RENAME(a) a ## _MMX2
-#include "dsp_accel.h"
-#endif
-
-#endif
-
 static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps)
 {
-#ifdef CAN_COMPILE_MMX
-/*	disable these functions for speed reason !
+#ifdef __SSE4_1__
+	if(gCpuCaps.hasSSE41) change_bps = change_bps_SSE4;
+	else
+#endif
+#ifdef __SSE3__
+	if(gCpuCaps.hasSSE3) change_bps = change_bps_SSE3;
+	else
+#endif
+#ifdef __SSE2__
+	if(gCpuCaps.hasSSE2) change_bps = change_bps_SSE2;
+	else
+#endif
+#ifndef __x86_64__
+#ifdef __SSE__
 	if(gCpuCaps.hasMMX2) change_bps = change_bps_MMX2;
 	else
-	if(gCpuCaps.has3DNow) change_bps = change_bps_3DNow;
-	else */
+#endif
+#ifdef __MMX__
 	if(gCpuCaps.hasMMX) change_bps = change_bps_MMX;
 	else
-#endif //CAN_COMPILE_X86_ASM
+#endif
+#endif /* __x86_64__ */
 	change_bps = change_bps_c;
 	(*change_bps)(in,out,len,inbps,outbps);
 }
@@ -736,7 +738,7 @@ void (* __FASTCALL__ change_bps)(const void* in, void* out, unsigned len, unsign
 
 static void __FASTCALL__ init_float2int(void* in, void* out, int len, int bps)
 {
-#ifdef CAN_COMPILE_X86_ASM
+#if 0
 #ifdef CAN_COMPILE_3DNOW2
 	if(gCpuCaps.has3DNowExt) float2int = float2int_3DNowEx;
 	else
@@ -753,7 +755,7 @@ void (* __FASTCALL__ float2int)(void* in, void* out, int len, int bps)=init_floa
 
 static void __FASTCALL__ init_int2float(void* in, void* out, int len, int bps)
 {
-#ifdef CAN_COMPILE_X86_ASM
+#if 0
 #ifdef CAN_COMPILE_3DNOW2
 	if(gCpuCaps.has3DNowExt) int2float = int2float_3DNowEx;
 	else
@@ -771,16 +773,20 @@ void (* __FASTCALL__ int2float)(void* in, void* out, int len, int bps)=init_int2
 
 static int32_t __FASTCALL__ FIR_i16_init(int16_t *x,int16_t *w)
 {
-#ifdef CAN_COMPILE_X86_ASM
-#ifdef CAN_COMPILE_MMX2
+#ifdef __SSE2__
+	if(gCpuCaps.hasSSE2) FIR_i16 = FIR_i16_SSE2;
+	else
+#endif
+#ifndef __x86_64__
+#ifdef __SSE__
 	if(gCpuCaps.hasMMX2) FIR_i16 = FIR_i16_MMX2;
 	else
 #endif
-#ifdef CAN_COMPILE_MMX
+#ifdef __MMX__
 	if(gCpuCaps.hasMMX) FIR_i16 = FIR_i16_MMX;
 	else
 #endif
-#endif /*CAN_COMPILE_X86_ASM*/
+#endif /*__x86_64__*/
 	FIR_i16 = FIR_i16_c;
 	return (*FIR_i16)(x,w);
 }
@@ -788,7 +794,7 @@ int32_t (* __FASTCALL__ FIR_i16)(int16_t *x,int16_t *w)=FIR_i16_init;
 
 static float __FASTCALL__ FIR_f32_init(float *x,float *w)
 {
-#ifdef CAN_COMPILE_X86_ASM
+#if 0
 //	if(gCpuCaps.hasSSE) FIR_f32 = FIR_f32_SSE;
 //	else
 #ifdef CAN_COMPILE_3DNOW
