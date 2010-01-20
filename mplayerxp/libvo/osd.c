@@ -22,58 +22,15 @@ static const unsigned long long mask24lh  __attribute__((used)) __attribute__((a
 static const unsigned long long mask24hl  __attribute__((used)) __attribute__((aligned(8))) = 0x0000FFFFFFFFFFFFULL;
 #endif
 
-/* generic version */
-#undef OPTIMIZE_AVX
-#undef OPTIMIZE_SSE4
-#undef OPTIMIZE_SSSE3
-#undef OPTIMIZE_SSE3
-#undef OPTIMIZE_SSE2
-#undef OPTIMIZE_SSE
-#undef OPTIMIZE_MMX2
-#undef OPTIMIZE_MMX
-#define RENAME(a) a ## _C
-#include "osd_template.c"
-
-#ifndef __x86_64__
-#ifdef __SSE__
-#define OPTIMIZE_MMX2
-#undef RENAME
-#define RENAME(a) a ## _MMX2
-#include "osd_template.c"
-#endif
-#endif // __x86_64__
-#ifdef __SSE2__
-#define OPTIMIZE_SSE2
-#undef RENAME
-#define RENAME(a) a ## _SSE2
-#include "osd_template.c"
-#endif
-#ifdef __SSE3__
-#define OPTIMIZE_SSE3
-#undef RENAME
-#define RENAME(a) a ## _SSE3
-#include "osd_template.c"
-#endif
-#ifdef __SSSE3__
-#define OPTIMIZE_SSSE3
-#undef RENAME
-#define RENAME(a) a ## _SSSE3
-#include "osd_template.c"
-#endif
-#ifdef __SSE4_1__
-#define OPTIMIZE_SSE4
-#undef RENAME
-#define RENAME(a) a ## _SSE4
-#include "osd_template.c"
-#endif
-
+#define PVECTOR_ACCEL_H "osd_template.c"
+#include "pvector/pvector_inc.h"
 
 #ifdef FAST_OSD_TABLE
 static unsigned short fast_osd_15bpp_table[256];
 static unsigned short fast_osd_16bpp_table[256];
 #endif
 
-static void __FASTCALL__ vo_draw_alpha_rgb15_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+static void __FASTCALL__ vo_draw_alpha_rgb15_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
         register unsigned short *dst = (unsigned short*) dstbase;
@@ -105,7 +62,7 @@ static void __FASTCALL__ vo_draw_alpha_rgb15_C(int w,int h, const unsigned char*
     return;
 }
 
-static void __FASTCALL__ vo_draw_alpha_rgb16_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+static void __FASTCALL__ vo_draw_alpha_rgb16_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
         register unsigned short *dst = (unsigned short*) dstbase;
@@ -136,7 +93,7 @@ static void __FASTCALL__ vo_draw_alpha_rgb16_C(int w,int h, const unsigned char*
     return;
 }
 
-static void __FASTCALL__ vo_draw_alpha_uyvy_C(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+static void __FASTCALL__ vo_draw_alpha_uyvy_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     (*vo_draw_alpha_yuy2_ptr)(w,h,src,srca,srcstride,dstbase+1,dststride,finalize);
 }
 
@@ -144,9 +101,9 @@ draw_alpha_f vo_draw_alpha_yv12_ptr=NULL;
 draw_alpha_f vo_draw_alpha_yuy2_ptr=NULL;
 draw_alpha_f vo_draw_alpha_rgb24_ptr=NULL;
 draw_alpha_f vo_draw_alpha_rgb32_ptr=NULL;
-draw_alpha_f vo_draw_alpha_uyvy_ptr=vo_draw_alpha_uyvy_C;
-draw_alpha_f vo_draw_alpha_rgb15_ptr=vo_draw_alpha_rgb15_C;
-draw_alpha_f vo_draw_alpha_rgb16_ptr=vo_draw_alpha_rgb16_C;
+draw_alpha_f vo_draw_alpha_uyvy_ptr=vo_draw_alpha_uyvy_c;
+draw_alpha_f vo_draw_alpha_rgb15_ptr=vo_draw_alpha_rgb15_c;
+draw_alpha_f vo_draw_alpha_rgb16_ptr=vo_draw_alpha_rgb16_c;
 
 void vo_draw_alpha_init( void ){
 #ifdef FAST_OSD_TABLE
@@ -207,19 +164,30 @@ else
 if(gCpuCaps.hasMMX2)
 {
 	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX2;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX2;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX2;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_MMX2;
+	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE;
+	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE;
+	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE;
+	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE;
+}
+else
+#endif
+#ifdef __MMX__
+if(gCpuCaps.hasMMX)
+{
+	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
+	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX;
+	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX;
+	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX;
+	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_MMX;
 }
 else
 #endif
 #endif
 {
 	MSG_V("Using generic OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_C;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_C;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_C;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_C;
+	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_c;
+	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_c;
+	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_c;
+	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_c;
 }
 }

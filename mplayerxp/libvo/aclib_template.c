@@ -4,6 +4,7 @@
 */
 #include "pvector/pvector.h"
 
+#ifdef HAVE_INT_PVECTOR
 /* for small memory blocks (<256 bytes) this version is faster */
 #undef small_memcpy
 #ifdef __x86_64__
@@ -158,7 +159,7 @@ __asm__ __volatile__(\
 
 #undef MEM_STORE
 #define MEM_STORE _ivec_stream
-static inline void * RENAME(fast_stream_copy)(void * to, const void * from, size_t len)
+static inline void * PVECTOR_RENAME(fast_stream_copy)(void * to, const void * from, size_t len)
 {
     MSG_DBG3("fast_stream_copy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
     FAST_MEMORY_COPY(to,from,len);
@@ -166,9 +167,9 @@ static inline void * RENAME(fast_stream_copy)(void * to, const void * from, size
 
 #undef MEM_STORE
 #define MEM_STORE _ivec_storea
-static inline void * RENAME(fast_memcpy)(void * to, const void * from, size_t len)
+static inline void * PVECTOR_RENAME(fast_memcpy)(void * to, const void * from, size_t len)
 {
     MSG_DBG3("fast_memcpy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
     FAST_MEMORY_COPY(to,from,len);
 }
-
+#endif

@@ -28,50 +28,8 @@ extern void store24bit(void* data, int pos, uint32_t expanded_value);
 #include "../mp_config.h"
 #include "../cpudetect.h"
 
-#undef OPTIMIZE_AVX
-#undef OPTIMIZE_SSE4
-#undef OPTIMIZE_SSSE3
-#undef OPTIMIZE_SSE3
-#undef OPTIMIZE_SSE2
-#undef OPTIMIZE_SSE
-#undef OPTIMIZE_MMX2
-#undef OPTIMIZE_MMX
-#define RENAME(a) a ## _c
-#include "dsp_accel.h"
-#include "dsp_accelf.h"
-
-#ifndef __x86_64__
-#ifdef __MMX__
-#define OPTIMIZE_MMX
-#undef RENAME
-#define RENAME(a) a ## _MMX
-#include "dsp_accel.h"
-#endif
-#ifdef __SSE__
-#define OPTIMIZE_MMX2
-#undef RENAME
-#define RENAME(a) a ## _MMX2
-#include "dsp_accel.h"
-#endif
-#endif //__x86_64__
-#ifdef __SSE2__
-#define OPTIMIZE_SSE2
-#undef RENAME
-#define RENAME(a) a ## _SSE2
-#include "dsp_accel.h"
-#endif
-#ifdef __SSE3__
-#define OPTIMIZE_SSE3
-#undef RENAME
-#define RENAME(a) a ## _SSE3
-#include "dsp_accel.h"
-#endif
-#ifdef __SSE4_1__
-#define OPTIMIZE_SSE4
-#undef RENAME
-#define RENAME(a) a ## _SSE4
-#include "dsp_accel.h"
-#endif
+#define PVECTOR_ACCEL_H "dsp_accel.h"
+#include "pvector/pvector_inc.h"
 
 /******************************************************************************
 *  FIR filter implementations
@@ -86,7 +44,7 @@ extern void store24bit(void* data, int pos, uint32_t expanded_value);
 _ftype_t __FASTCALL__ fir(register unsigned int n, _ftype_t* w, _ftype_t* x)
 {
   register _ftype_t y; // Output
-  y = 0.0; 
+  y = 0.0;
   do{
     n--;
     y+=w[n]*x[n];
@@ -127,7 +85,7 @@ int __FASTCALL__ updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftyp
 {
   register _ftype_t* txq = *xq + xi;
   register int nt = n*2;
-  
+
   while(d-- >0){
     *txq= *(txq+n) = *in;
     txq+=nt;
@@ -145,12 +103,12 @@ int __FASTCALL__ updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftyp
    n     filter length must be odd for HP and BS filters
    w     buffer for the filter taps (must be n long)
    fc    cutoff frequencies (1 for LP and HP, 2 for BP and BS) 
-         0 < fc < 1 where 1 <=> Fs/2
+	 0 < fc < 1 where 1 <=> Fs/2
    flags window and filter type as defined in filter.h
-         variables are ored together: i.e. LP|HAMMING will give a 
+	 variables are ored together: i.e. LP|HAMMING will give a 
 	 low pass filter designed using a hamming window  
    opt   beta constant used only when designing using kaiser windows
-   
+
    returns 0 if OK, -1 if fail
 */
 int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _ftype_t opt)
@@ -286,7 +244,7 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
    pw    Parallel FIR filter 
    g     Filter gain
    flags FWD forward indexing
-         REW reverse indexing
+	 REW reverse indexing
 	 ODD multiply every 2nd filter tap by -1 => HP filter
 
    returns 0 if OK, -1 if fail
@@ -342,7 +300,7 @@ void __FASTCALL__ prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
 
 /* Transform the numerator and denominator coefficients of s-domain
    biquad section into corresponding z-domain coefficients.
-   
+
    The transfer function for z-domain is:
 
           1 + alpha1 * z^(-1) + alpha2 * z^(-2)
@@ -353,7 +311,7 @@ void __FASTCALL__ prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
    order:
    beta1, beta2    (denominator)
    alpha1, alpha2  (numerator)
-   
+
    Arguments:
    a       - s-domain numerator coefficients
    b       - s-domain denominator coefficients
@@ -364,7 +322,7 @@ void __FASTCALL__ prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
              specified in initial value of k.  
    fs 	   - sampling rate (Hz)
    coef    - array of z-domain coefficients to be filled in.
- 
+
    Return: On return, set coef z-domain coefficients and k to the gain
    required to maintain overall gain = 1.0;
 */
@@ -394,26 +352,25 @@ void __FASTCALL__ bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _
 /* IIR filter design using bilinear transform and prewarp. Transforms
    2nd order s domain analog filter into a digital IIR biquad link. To
    create a filter fill in a, b, Q and fs and make space for coef and k.
-   
 
-   Example Butterworth design: 
+   Example Butterworth design:
 
    Below are Butterworth polynomials, arranged as a series of 2nd
    order sections:
 
    Note: n is filter order.
-   
+
    n  Polynomials
    -------------------------------------------------------------------
    2  s^2 + 1.4142s + 1
    4  (s^2 + 0.765367s + 1) * (s^2 + 1.847759s + 1)
    6  (s^2 + 0.5176387s + 1) * (s^2 + 1.414214 + 1) * (s^2 + 1.931852s + 1)
-   
+
    For n=4 we have following equation for the filter transfer function:
                        1                              1
    T(s) = --------------------------- * ----------------------------
           s^2 + (1/Q) * 0.765367s + 1   s^2 + (1/Q) * 1.847759s + 1
-   
+
    The filter consists of two 2nd order sections since highest s power
    is 2.  Now we can take the coefficients, or the numbers by which s
    is multiplied and plug them into a standard formula to be used by
@@ -548,7 +505,7 @@ void __FASTCALL__ hanning(int n, _ftype_t* w)
 {
   int	   i;
   _ftype_t k = 2*M_PI/((_ftype_t)(n+1)); // 2*pi/(N+1)
-  
+
   // Calculate window coefficients
   for (i=0; i<n; i++)
     *w++ = 0.5*(1.0 - cos(k*(_ftype_t)(i+1)));
@@ -607,7 +564,7 @@ void __FASTCALL__ flattop(int n,_ftype_t* w)
   int      i;
   _ftype_t k1 = 2*M_PI/((_ftype_t)(n-1)); // 2*pi/(N-1)
   _ftype_t k2 = 2*k1;                   // 4*pi/(N-1)
-  
+
   // Calculate window coefficients
   for (i=0; i<n; i++)
     *w++ = 0.2810638602 - 0.5208971735*cos(k1*(_ftype_t)i) + 0.1980389663*cos(k2*(_ftype_t)i);
@@ -615,14 +572,14 @@ void __FASTCALL__ flattop(int n,_ftype_t* w)
 
 /* Computes the 0th order modified Bessel function of the first kind.
 // (Needed to compute Kaiser window) 
-//   
+//
 // y = sum( (x/(2*n))^2 )
 //      n
 */
 #define BIZ_EPSILON 1E-21 // Max error acceptable 
 
 _ftype_t __FASTCALL__ besselizero(_ftype_t x)
-{ 
+{
   _ftype_t temp;
   _ftype_t sum   = 1.0;
   _ftype_t u     = 1.0;
@@ -651,10 +608,10 @@ _ftype_t __FASTCALL__ besselizero(_ftype_t x)
 // Gold (Theory and Application of DSP) under Kaiser windows for more
 // about Beta.  The following table from Rabiner and Gold gives some
 // feel for the effect of Beta:
-// 
+//
 // All ripples in dB, width of transition band = D*N where N = window
 // length
-// 
+//
 // BETA    D       PB RIP   SB RIP
 // 2.120   1.50  +-0.27      -30
 // 3.384   2.23    0.0864    -40
@@ -671,8 +628,8 @@ void __FASTCALL__ kaiser(int n, _ftype_t* w, _ftype_t b)
   _ftype_t k1  = 1.0/besselizero(b);
   int	   k2  = 1 - (n & 1);
   int      end = (n + 1) >> 1;
-  int      i; 
-  
+  int      i;
+
   // Calculate window coefficients
   for (i=0 ; i<end ; i++){
     tmp = (_ftype_t)(2*i + k2) / ((_ftype_t)n - 1.0);
@@ -723,7 +680,7 @@ static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len
 #endif
 #ifndef __x86_64__
 #ifdef __SSE__
-	if(gCpuCaps.hasMMX2) change_bps = change_bps_MMX2;
+	if(gCpuCaps.hasMMX2) change_bps = change_bps_SSE;
 	else
 #endif
 #ifdef __MMX__
@@ -738,16 +695,36 @@ void (* __FASTCALL__ change_bps)(const void* in, void* out, unsigned len, unsign
 
 static void __FASTCALL__ init_float2int(void* in, void* out, int len, int bps)
 {
-#if 0
-#ifdef CAN_COMPILE_3DNOW2
-	if(gCpuCaps.has3DNowExt) float2int = float2int_3DNowEx;
+#ifdef __AVX__
+	if(gCpuCaps.hasAVX) float2int = float2int_AVX;
 	else
 #endif
-#ifdef CAN_COMPILE_3DNOW
-	if(gCpuCaps.has3DNow) float2int = float2int_3DNow;
+#ifdef __SSE4_1__
+	if(gCpuCaps.hasSSE41) float2int = float2int_SSE4;
 	else
 #endif
-#endif /*CAN_COMPILE_X86_ASM*/
+#ifdef __SSSE3__
+	if(gCpuCaps.hasSSSE3) float2int = float2int_SSSE3;
+	else
+#endif
+#ifdef __SSE3__
+	if(gCpuCaps.hasSSE3) float2int = float2int_SSE3;
+	else
+#endif
+#ifdef __SSE2__
+	if(gCpuCaps.hasSSE2) float2int = float2int_SSE2;
+	else
+#endif
+#ifndef __x86_64__
+#ifdef __SSE__
+	if(gCpuCaps.hasSSE) float2int = float2int_SSE;
+	else
+#endif
+#ifdef __3dNOW__
+	if(gCpuCaps.has3DNow) float2int = float2int_3DNOW;
+	else
+#endif
+#endif /*__x86_64__*/
 	float2int = float2int_c;
 	(*float2int)(in,out,len,bps);
 }
@@ -755,16 +732,36 @@ void (* __FASTCALL__ float2int)(void* in, void* out, int len, int bps)=init_floa
 
 static void __FASTCALL__ init_int2float(void* in, void* out, int len, int bps)
 {
-#if 0
-#ifdef CAN_COMPILE_3DNOW2
-	if(gCpuCaps.has3DNowExt) int2float = int2float_3DNowEx;
+#ifdef __AVX__
+	if(gCpuCaps.hasAVX) int2float = int2float_AVX;
 	else
 #endif
-#ifdef CAN_COMPILE_3DNOW
-	if(gCpuCaps.has3DNow) int2float = int2float_3DNow;
+#ifdef __SSE4_1__
+	if(gCpuCaps.hasSSE41) int2float = int2float_SSE4;
 	else
 #endif
-#endif /*CAN_COMPILE_X86_ASM*/
+#ifdef __SSSE3__
+	if(gCpuCaps.hasSSSE3) int2float = int2float_SSSE3;
+	else
+#endif
+#ifdef __SSE3__
+	if(gCpuCaps.hasSSE3) int2float = int2float_SSE3;
+	else
+#endif
+#ifdef __SSE2__
+	if(gCpuCaps.hasSSE2) int2float = int2float_SSE2;
+	else
+#endif
+#ifndef __x86_64__
+#ifdef __SSE__
+	if(gCpuCaps.hasSSE) int2float = int2float_SSE;
+	else
+#endif
+#ifdef __3dNOW__
+	if(gCpuCaps.has3DNow) int2float = int2float_3DNOW;
+	else
+#endif
+#endif /*__x86_64__*/
 	int2float = int2float_c;
 	(*int2float)(in,out,len,bps);
 }
@@ -779,7 +776,7 @@ static int32_t __FASTCALL__ FIR_i16_init(int16_t *x,int16_t *w)
 #endif
 #ifndef __x86_64__
 #ifdef __SSE__
-	if(gCpuCaps.hasMMX2) FIR_i16 = FIR_i16_MMX2;
+	if(gCpuCaps.hasMMX2) FIR_i16 = FIR_i16_SSE;
 	else
 #endif
 #ifdef __MMX__

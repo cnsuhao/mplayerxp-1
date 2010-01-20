@@ -5,39 +5,39 @@
 
 #ifdef HAVE_INT_PVECTOR
 static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
-RENAME(_m_load)(const void *__P)
+PVECTOR_RENAME(_m_load)(const void *__P)
 {
     return *(const __m64 *)__P;
 }
 #undef _m_load
-#define _m_load RENAME(_m_load)
+#define _m_load PVECTOR_RENAME(_m_load)
 
 static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
-RENAME(_m_load_half)(const void *__P)
+PVECTOR_RENAME(_m_load_half)(const void *__P)
 {
     return _mm_cvtsi32_si64 (*(const int *)__P);
 }
 #undef _m_load_half
-#define _m_load_half RENAME(_m_load_half)
+#define _m_load_half PVECTOR_RENAME(_m_load_half)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-RENAME(_m_store)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_store)(void *__P, __m64 src)
 {
     *(__m64 *)__P = src;
 }
 #undef _m_store
-#define _m_store RENAME(_m_store)
+#define _m_store PVECTOR_RENAME(_m_store)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-RENAME(_m_store_half)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_store_half)(void *__P, __m64 src)
 {
     *(int *)__P = _mm_cvtsi64_si32(src);
 }
 #undef _m_store_half
-#define _m_store_half RENAME(_m_store_half)
+#define _m_store_half PVECTOR_RENAME(_m_store_half)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-RENAME(_m_movntq)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_movntq)(void *__P, __m64 src)
 {
 #ifdef HAVE_MMX2
     _mm_stream_pi(__P,src);
@@ -46,11 +46,11 @@ RENAME(_m_movntq)(void *__P, __m64 src)
 #endif
 }
 #undef _m_movntq
-#define _m_movntq RENAME(_m_movntq)
+#define _m_movntq PVECTOR_RENAME(_m_movntq)
 
 #endif
 
-static inline void RENAME(vo_draw_alpha_yv12)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+static inline void PVECTOR_RENAME(vo_draw_alpha_yv12)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     unsigned y;
 #ifdef HAVE_INT_PVECTOR
     __ivec vzero = _ivec_setzero();
@@ -108,7 +108,7 @@ PROFILE_END("vo_draw_alpha_yv12");
     return;
 }
 
-static inline void RENAME(vo_draw_alpha_yuy2)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+static inline void PVECTOR_RENAME(vo_draw_alpha_yuy2)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
 #if defined(FAST_OSD) && !defined(HAVE_MMX)
     w=w>>1;
@@ -173,7 +173,7 @@ PROFILE_END("vo_draw_alpha_yuy2");
     return;
 }
 
-static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+static inline void PVECTOR_RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
         register unsigned char *dst = dstbase;
@@ -245,7 +245,7 @@ static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* 
     return;
 }
 
-static inline void RENAME(vo_draw_alpha_rgb32)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+static inline void PVECTOR_RENAME(vo_draw_alpha_rgb32)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
 PROFILE_START();
     for(y=0;y<h;y++){

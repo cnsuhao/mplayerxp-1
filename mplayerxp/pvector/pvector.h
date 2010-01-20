@@ -2,6 +2,11 @@
    PVector - Portable vectoring implementation of parallel computing
 */
 #define HAVE_INT_PVECTOR 1
+#define HAVE_F32_PVECTOR 1
+
+#ifndef PVECTOR_RENAME
+#error "Never include this file directly! Include pvector_inc.h instead"
+#endif
 
 #ifdef OPTIMIZE_AVX
 #define OPTIMIZE_AES
@@ -22,7 +27,10 @@
 #define OPTIMIZE_SSE
 #define OPTIMIZE_MMX2
 #endif
-#ifdef OPTIMIZE_MMX2
+#ifdef OPTIMIZE_SSE
+#define OPTIMIZE_3DNOW
+#endif
+#if defined( OPTIMIZE_MMX2 )
 #define OPTIMIZE_MMX
 #endif
 
@@ -31,6 +39,12 @@
 #else
 //#warning "pvector's generic version isn't yet ready"
 #undef HAVE_INT_PVECTOR
+#endif
+#if defined( OPTIMIZE_3DNOW )
+#include "pvector_f32_x86.h"
+#else
+//#warning "pvector's generic version isn't yet ready"
+#undef HAVE_F32_PVECTOR
 #endif
 
 
@@ -145,4 +159,41 @@
 
   __ivec _ivec_mullo_s16(__ivec s1,__ivec s2);     // Multiply low part S16
   __ivec _ivec_mulhi_s16(__ivec s1,__ivec s2);     // Multiply high part S16
+*/
+
+/* ========================= FLOAT32 Support ================================ */
+
+/*
+  ABBREVIATION:
+  f32   - float32_t
+
+  This interface defines:
+  __F32VEC_SIZE       size of vector in bytes
+  __f32vec            type of vector
+
+  functions:
+  ==========
+  LOAD/STORE engine:
+  ------------------
+  __f32vec _f32vec_loadu(float const *__P);          // load unaligned data into vector
+  __f32vec _f32vec_loada(float const *__P);          // load aligned data into vector
+  __f32vec _f32vec_setzero(void);                    // load ZERO into vector
+  __f32vec _f32vec_broadcast(float f32);             // fill vector with f32...f32 values
+  void   _f32vec_storeu(float *__P, __f32vec src); // store vector into unaligned memory
+  void   _f32vec_storea(float *__P, __f32vec src); // store vector into aligned memory
+  void   _f32vec_stream(float *__P, __f32vec src); // store vector into memory across CPU's cache
+
+  CONVERTION engine:
+  ------------------
+  __f32vec _f32vec_from_s32u(void const * src);		// convert s32 to f32 unaligned vector 
+  void     _f32vec_to_s32u(void *dst,__f32vec src);	// convert f32 to s32 unaligned vector
+  __f32vec _f32vec_from_s32a(void const * src);		// convert s32 to f32 aligned vector
+  void     _f32vec_to_s32a(void *dst,__f32vec src);	// convert f32 to s32 aligned vector
+
+  ARITHMETIC engine:
+  ------------------
+  __f32vec _f32vec_add(__f32vec f1, __f32vec f2);	// add: f1+f2
+  __f32vec _f32vec_sub(__f32vec f1, __f32vec f2);	// sub: f1-f2
+  __f32vec _f32vec_mul(__f32vec f1, __f32vec f2);	// mul: f1*f2
+  __f32vec _f32vec_div(__f32vec f1, __f32vec f2);	// div: f1/f2
 */

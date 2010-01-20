@@ -1,30 +1,23 @@
 /*
   pvector_int_x86.h
 */
-#undef _VEC
-#if defined( OPTIMIZE_AVX )
-#define _VEC(a) a ## _AVX
-#include <avxintrin.h>
-#elif defined(OPTIMIZE_AES)
-#define _VEC(a) a ## _AES
+
+//#if defined( OPTIMIZE_AVX )
+//#define _VEC(a) a ## _AVX
+//#include <immintrin.h>
+#if defined(OPTIMIZE_AES)
 #include <wmmintrin.h>
 #elif defined (OPTIMIZE_SSE4)
-#define _VEC(a) a ## _SSE4
 #include <smmintrin.h>
 #elif defined(OPTIMIZE_SSSE3)
-#define _VEC(a) a ## _SSSE3
 #include <tmmintrin.h>
 #elif defined(OPTIMIZE_SSE3)
-#define _VEC(a) a ## _SSE3
 #include <pmmintrin.h>
 #elif defined(OPTIMIZE_SSE2)
-#define _VEC(a) a ## _SSE2
 #include <emmintrin.h>
 #elif defined(OPTIMIZE_MMX2)
-#define _VEC(a) a ## _MMX2
 #include <xmmintrin.h>
 #else
-#define _VEC(a) a ## _MMX
 #include <mmintrin.h>
 #endif
 
@@ -39,7 +32,7 @@
 #endif
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-_VEC(empty)(void)
+PVECTOR_RENAME(empty)(void)
 {
 #ifdef OPTIMIZE_SSE2
 #else
@@ -47,40 +40,40 @@ _VEC(empty)(void)
 #endif
 }
 #undef _ivec_empty
-#define _ivec_empty _VEC(empty)
+#define _ivec_empty PVECTOR_RENAME(empty)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sfence)(void)
+PVECTOR_RENAME(sfence)(void)
 {
 #ifdef OPTIMIZE_MMX2
     _mm_sfence();
 #endif
 }
 #undef _ivec_sfence
-#define _ivec_sfence _VEC(sfence)
+#define _ivec_sfence PVECTOR_RENAME(sfence)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-_VEC(prefetch)(void  const *__P)
+PVECTOR_RENAME(prefetch)(void  const *__P)
 {
 #ifdef OPTIMIZE_MMX2
     _mm_prefetch(__P, _MM_HINT_T0);
 #endif
 }
 #undef _ivec_prefetch
-#define _ivec_prefetch _VEC(prefetch)
+#define _ivec_prefetch PVECTOR_RENAME(prefetch)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-_VEC(prefetchw)(void  const *__P)
+PVECTOR_RENAME(prefetchw)(void  const *__P)
 {
 #ifdef OPTIMIZE_MMX2
     _mm_prefetch(__P, _MM_HINT_NTA);
 #endif
 }
 #undef _ivec_prefetchw
-#define _ivec_prefetchw _VEC(prefetchw)
+#define _ivec_prefetchw PVECTOR_RENAME(prefetchw)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(loadu)(void const *__P)
+PVECTOR_RENAME(loadu)(void const *__P)
 {
 #ifdef OPTIMIZE_SSE3
     return _mm_lddqu_si128(__P);
@@ -91,10 +84,10 @@ _VEC(loadu)(void const *__P)
 #endif
 }
 #undef _ivec_loadu
-#define _ivec_loadu _VEC(loadu)
+#define _ivec_loadu PVECTOR_RENAME(loadu)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(loada)(void const *__P)
+PVECTOR_RENAME(loada)(void const *__P)
 {
 #ifdef OPTIMIZE_SSE2
     return (__ivec)_mm_load_si128(__P);
@@ -103,10 +96,10 @@ _VEC(loada)(void const *__P)
 #endif
 }
 #undef _ivec_loada
-#define _ivec_loada _VEC(loada)
+#define _ivec_loada PVECTOR_RENAME(loada)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-_VEC(storeu)(void *__P, __ivec src)
+PVECTOR_RENAME(storeu)(void *__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
     _mm_storeu_si128(__P,src);
@@ -115,10 +108,10 @@ _VEC(storeu)(void *__P, __ivec src)
 #endif
 }
 #undef _ivec_storeu
-#define _ivec_storeu _VEC(storeu)
+#define _ivec_storeu PVECTOR_RENAME(storeu)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-_VEC(storea)(void *__P, __ivec src)
+PVECTOR_RENAME(storea)(void *__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
     _mm_store_si128(__P,src);
@@ -127,10 +120,10 @@ _VEC(storea)(void *__P, __ivec src)
 #endif
 }
 #undef _ivec_storea
-#define _ivec_storea _VEC(storea)
+#define _ivec_storea PVECTOR_RENAME(storea)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-_VEC(stream)(void *__P, __ivec src)
+PVECTOR_RENAME(stream)(void *__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
     _mm_stream_si128(__P,src);
@@ -141,10 +134,10 @@ _VEC(stream)(void *__P, __ivec src)
 #endif
 }
 #undef _ivec_stream
-#define _ivec_stream _VEC(stream)
+#define _ivec_stream PVECTOR_RENAME(stream)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(setzero)(void)
+PVECTOR_RENAME(setzero)(void)
 {
 #ifdef OPTIMIZE_SSE2
     return (__ivec)_mm_setzero_si128();
@@ -153,10 +146,10 @@ _VEC(setzero)(void)
 #endif
 }
 #undef _ivec_setzero
-#define _ivec_setzero _VEC(setzero)
+#define _ivec_setzero PVECTOR_RENAME(setzero)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(setff)(void)
+PVECTOR_RENAME(setff)(void)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_set1_epi8(0xFF);
@@ -165,10 +158,10 @@ _VEC(setff)(void)
 #endif
 }
 #undef _ivec_setff
-#define _ivec_setff _VEC(setff)
+#define _ivec_setff PVECTOR_RENAME(setff)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(broadcast_u8)(unsigned char u8)
+PVECTOR_RENAME(broadcast_u8)(unsigned char u8)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_set1_epi8(u8);
@@ -177,10 +170,10 @@ _VEC(broadcast_u8)(unsigned char u8)
 #endif
 }
 #undef _ivec_broadcast_u8
-#define _ivec_broadcast_u8 _VEC(broadcast_u8)
+#define _ivec_broadcast_u8 PVECTOR_RENAME(broadcast_u8)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(broadcast_u16)(unsigned short u16)
+PVECTOR_RENAME(broadcast_u16)(unsigned short u16)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_set1_epi16(u16);
@@ -189,22 +182,22 @@ _VEC(broadcast_u16)(unsigned short u16)
 #endif
 }
 #undef _ivec_broadcast_u16
-#define _ivec_broadcast_u16 _VEC(broadcast_u16)
+#define _ivec_broadcast_u16 PVECTOR_RENAME(broadcast_u16)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(broadcast_u32)(unsigned int u32)
+PVECTOR_RENAME(broadcast_u32)(unsigned int u32)
 {
 #ifdef OPTIMIZE_SSE2
-    return _mm_set1_epi16(u32);
+    return _mm_set1_epi32(u32);
 #else
-    return _mm_set1_pi16(u32);
+    return _mm_set1_pi32(u32);
 #endif
 }
 #undef _ivec_broadcast_u32
-#define _ivec_broadcast_u32 _VEC(broadcast_u32)
+#define _ivec_broadcast_u32 PVECTOR_RENAME(broadcast_u32)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(or)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(or)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_or_si128(__m1,__m2);
@@ -213,10 +206,10 @@ _VEC(or)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_or
-#define _ivec_or _VEC(or)
+#define _ivec_or PVECTOR_RENAME(or)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(and)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(and)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_and_si128(__m1,__m2);
@@ -225,10 +218,10 @@ _VEC(and)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_and
-#define _ivec_and _VEC(and)
+#define _ivec_and PVECTOR_RENAME(and)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(andnot)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(andnot)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_andnot_si128(__m1,__m2);
@@ -237,10 +230,10 @@ _VEC(andnot)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_andnot
-#define _ivec_andnot _VEC(andnot)
+#define _ivec_andnot PVECTOR_RENAME(andnot)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(xor)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(xor)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_xor_si128(__m1,__m2);
@@ -249,18 +242,18 @@ _VEC(xor)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_xor
-#define _ivec_xor _VEC(xor)
+#define _ivec_xor PVECTOR_RENAME(xor)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(not)(__ivec __m)
+PVECTOR_RENAME(not)(__ivec __m)
 {
     return _ivec_xor(__m,_ivec_setff());
 }
 #undef _ivec_not
-#define _ivec_not _VEC(not)
+#define _ivec_not PVECTOR_RENAME(not)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(cmpgt_s8)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(cmpgt_s8)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_cmpgt_epi8(__m1,__m2);
@@ -269,10 +262,10 @@ _VEC(cmpgt_s8)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_cmpgt_s8
-#define _ivec_cmpgt_s8 _VEC(cmpgt_s8)
+#define _ivec_cmpgt_s8 PVECTOR_RENAME(cmpgt_s8)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(cmpeq_s8)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(cmpeq_s8)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_cmpeq_epi8(__m1,__m2);
@@ -281,10 +274,10 @@ _VEC(cmpeq_s8)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_cmpeq_s8
-#define _ivec_cmpeq_s8 _VEC(cmpeq_s8)
+#define _ivec_cmpeq_s8 PVECTOR_RENAME(cmpeq_s8)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(cmpgt_s16)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(cmpgt_s16)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_cmpgt_epi16(__m1,__m2);
@@ -293,10 +286,10 @@ _VEC(cmpgt_s16)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_cmpgt_s16
-#define _ivec_cmpgt_s16 _VEC(cmpgt_s16)
+#define _ivec_cmpgt_s16 PVECTOR_RENAME(cmpgt_s16)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(cmpeq_s16)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(cmpeq_s16)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_cmpeq_epi16(__m1,__m2);
@@ -305,10 +298,10 @@ _VEC(cmpeq_s16)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_cmpeq_s16
-#define _ivec_cmpeq_s16 _VEC(cmpeq_s16)
+#define _ivec_cmpeq_s16 PVECTOR_RENAME(cmpeq_s16)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(cmpgt_s32)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(cmpgt_s32)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_cmpgt_epi32(__m1,__m2);
@@ -317,10 +310,10 @@ _VEC(cmpgt_s32)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_cmpgt_s32
-#define _ivec_cmpgt_s32 _VEC(cmpgt_s32)
+#define _ivec_cmpgt_s32 PVECTOR_RENAME(cmpgt_s32)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(cmpeq_s32)(__ivec __m1, __ivec __m2)
+PVECTOR_RENAME(cmpeq_s32)(__ivec __m1, __ivec __m2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_cmpeq_epi32(__m1,__m2);
@@ -329,10 +322,10 @@ _VEC(cmpeq_s32)(__ivec __m1, __ivec __m2)
 #endif
 }
 #undef _ivec_cmpeq_s32
-#define _ivec_cmpeq_s32 _VEC(cmpeq_s32)
+#define _ivec_cmpeq_s32 PVECTOR_RENAME(cmpeq_s32)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(blend_u8)(__ivec src1,__ivec src2,__ivec mask)
+PVECTOR_RENAME(blend_u8)(__ivec src1,__ivec src2,__ivec mask)
 {
 #ifdef OPTIMIZE_SSE4
     return _mm_blendv_epi8(src1,src2,mask);
@@ -351,10 +344,10 @@ _VEC(blend_u8)(__ivec src1,__ivec src2,__ivec mask)
 #endif
 }
 #undef _ivec_blend_u8
-#define _ivec_blend_u8 _VEC(blend_u8)
+#define _ivec_blend_u8 PVECTOR_RENAME(blend_u8)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(interleave_lo_u8)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(interleave_lo_u8)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_unpacklo_epi8(s1,s2);
@@ -363,9 +356,9 @@ _VEC(interleave_lo_u8)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_interleave_lo_u8
-#define _ivec_interleave_lo_u8 _VEC(interleave_lo_u8)
+#define _ivec_interleave_lo_u8 PVECTOR_RENAME(interleave_lo_u8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(interleave_hi_u8)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(interleave_hi_u8)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_unpackhi_epi8(s1,s2);
@@ -374,9 +367,9 @@ _VEC(interleave_hi_u8)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_interleave_hi_u8
-#define _ivec_interleave_hi_u8 _VEC(interleave_hi_u8)
+#define _ivec_interleave_hi_u8 PVECTOR_RENAME(interleave_hi_u8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(interleave_lo_u16)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(interleave_lo_u16)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_unpacklo_epi16(s1,s2);
@@ -385,9 +378,9 @@ _VEC(interleave_lo_u16)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_interleave_lo_u16
-#define _ivec_interleave_lo_u16 _VEC(interleave_lo_u16)
+#define _ivec_interleave_lo_u16 PVECTOR_RENAME(interleave_lo_u16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(interleave_hi_u16)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(interleave_hi_u16)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_unpackhi_epi16(s1,s2);
@@ -396,9 +389,9 @@ _VEC(interleave_hi_u16)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_interleave_hi_u16
-#define _ivec_interleave_hi_u16 _VEC(interleave_hi_u16)
+#define _ivec_interleave_hi_u16 PVECTOR_RENAME(interleave_hi_u16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(interleave_lo_u32)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(interleave_lo_u32)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_unpacklo_epi32(s1,s2);
@@ -407,9 +400,9 @@ _VEC(interleave_lo_u32)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_interleave_lo_u32
-#define _ivec_interleave_lo_u32 _VEC(interleave_lo_u32)
+#define _ivec_interleave_lo_u32 PVECTOR_RENAME(interleave_lo_u32)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(interleave_hi_u32)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(interleave_hi_u32)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_unpackhi_epi32(s1,s2);
@@ -418,38 +411,38 @@ _VEC(interleave_hi_u32)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_interleave_hi_u32
-#define _ivec_interleave_hi_u32 _VEC(interleave_hi_u32)
+#define _ivec_interleave_hi_u32 PVECTOR_RENAME(interleave_hi_u32)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(u16_from_lou8)(__ivec s)
+PVECTOR_RENAME(u16_from_lou8)(__ivec s)
 {
     return _ivec_interleave_lo_u8(s,_ivec_setzero());
 }
 #undef _ivec_u16_from_lou8
-#define _ivec_u16_from_lou8 _VEC(u16_from_lou8)
+#define _ivec_u16_from_lou8 PVECTOR_RENAME(u16_from_lou8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(u16_from_hiu8)(__ivec s)
+PVECTOR_RENAME(u16_from_hiu8)(__ivec s)
 {
     return _ivec_interleave_hi_u8(s,_ivec_setzero());
 }
 #undef _ivec_u16_from_hiu8
-#define _ivec_u16_from_hiu8 _VEC(u16_from_hiu8)
+#define _ivec_u16_from_hiu8 PVECTOR_RENAME(u16_from_hiu8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(u32_from_lou16)(__ivec s)
+PVECTOR_RENAME(u32_from_lou16)(__ivec s)
 {
     return _ivec_interleave_lo_u16(s,_ivec_setzero());
 }
 #undef _ivec_u32_from_lou16
-#define _ivec_u32_from_lou16 _VEC(u32_from_lou16)
+#define _ivec_u32_from_lou16 PVECTOR_RENAME(u32_from_lou16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(u32_from_hiu16)(__ivec s)
+PVECTOR_RENAME(u32_from_hiu16)(__ivec s)
 {
     return _ivec_interleave_hi_u16(s,_ivec_setzero());
 }
 #undef _ivec_u32_from_hiu16
-#define _ivec_u32_from_hiu16 _VEC(u32_from_hiu16)
+#define _ivec_u32_from_hiu16 PVECTOR_RENAME(u32_from_hiu16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(s16_from_s32)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(s16_from_s32)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_packs_epi32(s1,s2);
@@ -458,9 +451,9 @@ _VEC(s16_from_s32)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_s16_from_s32
-#define _ivec_s16_from_s32 _VEC(s16_from_s32)
+#define _ivec_s16_from_s32 PVECTOR_RENAME(s16_from_s32)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(s8_from_s16)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(s8_from_s16)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_packs_epi16(s1,s2);
@@ -469,9 +462,9 @@ _VEC(s8_from_s16)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_s8_from_s16
-#define _ivec_s8_from_s16 _VEC(s8_from_s16)
+#define _ivec_s8_from_s16 PVECTOR_RENAME(s8_from_s16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(u8_from_u16)(__ivec s1, __ivec s2)
+PVECTOR_RENAME(u8_from_u16)(__ivec s1, __ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_packus_epi16(s1,s2);
@@ -480,10 +473,10 @@ _VEC(u8_from_u16)(__ivec s1, __ivec s2)
 #endif
 }
 #undef _ivec_u8_from_u16
-#define _ivec_u8_from_u16 _VEC(u8_from_u16)
+#define _ivec_u8_from_u16 PVECTOR_RENAME(u8_from_u16)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(add_s8)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(add_s8)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_add_epi8(s1,s2);
@@ -492,9 +485,9 @@ _VEC(add_s8)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_add_s8
-#define _ivec_add_s8 _VEC(add_s8)
+#define _ivec_add_s8 PVECTOR_RENAME(add_s8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(add_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(add_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_add_epi16(s1,s2);
@@ -503,9 +496,9 @@ _VEC(add_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_add_s16
-#define _ivec_add_s16 _VEC(add_s16)
+#define _ivec_add_s16 PVECTOR_RENAME(add_s16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(add_s32)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(add_s32)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_add_epi32(s1,s2);
@@ -514,9 +507,9 @@ _VEC(add_s32)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_add_s32
-#define _ivec_add_s32 _VEC(add_s32)
+#define _ivec_add_s32 PVECTOR_RENAME(add_s32)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sadd_s8)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sadd_s8)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_adds_epi8(s1,s2);
@@ -525,9 +518,9 @@ _VEC(sadd_s8)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sadd_s8
-#define _ivec_sadd_s8 _VEC(sadd_s8)
+#define _ivec_sadd_s8 PVECTOR_RENAME(sadd_s8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sadd_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sadd_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_adds_epi16(s1,s2);
@@ -536,9 +529,9 @@ _VEC(sadd_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sadd_s16
-#define _ivec_sadd_s16 _VEC(sadd_s16)
+#define _ivec_sadd_s16 PVECTOR_RENAME(sadd_s16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sadd_u8)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sadd_u8)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_adds_epu8(s1,s2);
@@ -547,9 +540,9 @@ _VEC(sadd_u8)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sadd_u8
-#define _ivec_sadd_u8 _VEC(sadd_u8)
+#define _ivec_sadd_u8 PVECTOR_RENAME(sadd_u8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sadd_u16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sadd_u16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_adds_epu16(s1,s2);
@@ -558,9 +551,9 @@ _VEC(sadd_u16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sadd_u16
-#define _ivec_sadd_u16 _VEC(sadd_u16)
+#define _ivec_sadd_u16 PVECTOR_RENAME(sadd_u16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sub_s8)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sub_s8)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sub_epi8(s1,s2);
@@ -569,9 +562,9 @@ _VEC(sub_s8)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sub_s8
-#define _ivec_sub_s8 _VEC(sub_s8)
+#define _ivec_sub_s8 PVECTOR_RENAME(sub_s8)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sub_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sub_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sub_epi16(s1,s2);
@@ -580,9 +573,9 @@ _VEC(sub_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sub_s16
-#define _ivec_sub_s16 _VEC(sub_s16)
+#define _ivec_sub_s16 PVECTOR_RENAME(sub_s16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sub_s32)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sub_s32)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sub_epi32(s1,s2);
@@ -591,9 +584,10 @@ _VEC(sub_s32)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sub_s32
-#define _ivec_sub_s32 _VEC(sub_s32)
+#define _ivec_sub_s32 PVECTOR_RENAME(sub_s32)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(ssub_s8)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(ssub_s8)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_subs_epi8(s1,s2);
@@ -602,9 +596,10 @@ _VEC(ssub_s8)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_ssub_s8
-#define _ivec_ssub_s8 _VEC(ssub_s8)
+#define _ivec_ssub_s8 PVECTOR_RENAME(ssub_s8)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(ssub_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(ssub_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_subs_epi16(s1,s2);
@@ -613,9 +608,9 @@ _VEC(ssub_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_ssub_s16
-#define _ivec_ssub_s16 _VEC(ssub_s16)
+#define _ivec_ssub_s16 PVECTOR_RENAME(ssub_s16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(ssub_u8)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(ssub_u8)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_subs_epu8(s1,s2);
@@ -624,9 +619,10 @@ _VEC(ssub_u8)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_ssub_u8
-#define _ivec_ssub_u8 _VEC(ssub_u8)
+#define _ivec_ssub_u8 PVECTOR_RENAME(ssub_u8)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(ssub_u16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(ssub_u16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_subs_epu16(s1,s2);
@@ -635,9 +631,9 @@ _VEC(ssub_u16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_ssub_u16
-#define _ivec_ssub_u16 _VEC(ssub_u16)
+#define _ivec_ssub_u16 PVECTOR_RENAME(ssub_u16)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(mullo_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(mullo_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_mullo_epi16(s1,s2);
@@ -646,9 +642,10 @@ _VEC(mullo_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_mullo_s16
-#define _ivec_mullo_s16 _VEC(mullo_s16)
+#define _ivec_mullo_s16 PVECTOR_RENAME(mullo_s16)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(mulhi_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(mulhi_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_mulhi_epi16(s1,s2);
@@ -657,10 +654,10 @@ _VEC(mulhi_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_mulhi_s16
-#define _ivec_mulhi_s16 _VEC(mulhi_s16)
+#define _ivec_mulhi_s16 PVECTOR_RENAME(mulhi_s16)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sll_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sll_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sll_epi16(s1,s2);
@@ -669,9 +666,10 @@ _VEC(sll_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sll_s16
-#define _ivec_sll_s16 _VEC(sll_s16)
+#define _ivec_sll_s16 PVECTOR_RENAME(sll_s16)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sll_s16_imm)(__ivec s1,int c)
+PVECTOR_RENAME(sll_s16_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_slli_epi16(s1,c);
@@ -680,9 +678,9 @@ _VEC(sll_s16_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_sll_s16_imm
-#define _ivec_sll_s16_imm _VEC(sll_s16_imm)
+#define _ivec_sll_s16_imm PVECTOR_RENAME(sll_s16_imm)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sll_s32)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sll_s32)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sll_epi32(s1,s2);
@@ -691,9 +689,10 @@ _VEC(sll_s32)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sll_s32
-#define _ivec_sll_s32 _VEC(sll_s32)
+#define _ivec_sll_s32 PVECTOR_RENAME(sll_s32)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sll_s32_imm)(__ivec s1,int c)
+PVECTOR_RENAME(sll_s32_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_slli_epi32(s1,c);
@@ -702,9 +701,9 @@ _VEC(sll_s32_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_sll_s32_imm
-#define _ivec_sll_s32_imm _VEC(sll_s32_imm)
+#define _ivec_sll_s32_imm PVECTOR_RENAME(sll_s32_imm)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sll_s64)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sll_s64)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sll_epi64(s1,s2);
@@ -713,9 +712,10 @@ _VEC(sll_s64)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sll_s64
-#define _ivec_sll_s64 _VEC(sll_s64)
+#define _ivec_sll_s64 PVECTOR_RENAME(sll_s64)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sll_s64_imm)(__ivec s1,int c)
+PVECTOR_RENAME(sll_s64_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_slli_epi64(s1,c);
@@ -724,9 +724,9 @@ _VEC(sll_s64_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_sll_s64_imm
-#define _ivec_sll_s64_imm _VEC(sll_s64_imm)
+#define _ivec_sll_s64_imm PVECTOR_RENAME(sll_s64_imm)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sra_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sra_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sra_epi16(s1,s2);
@@ -735,9 +735,10 @@ _VEC(sra_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sra_s16
-#define _ivec_sra_s16 _VEC(sra_s16)
+#define _ivec_sra_s16 PVECTOR_RENAME(sra_s16)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sra_s16_imm)(__ivec s1,int c)
+PVECTOR_RENAME(sra_s16_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srai_epi16(s1,c);
@@ -746,9 +747,9 @@ _VEC(sra_s16_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_sra_s16_imm
-#define _ivec_sra_s16_imm _VEC(sra_s16_imm)
+#define _ivec_sra_s16_imm PVECTOR_RENAME(sra_s16_imm)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sra_s32)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(sra_s32)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_sra_epi32(s1,s2);
@@ -757,9 +758,10 @@ _VEC(sra_s32)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_sra_s32
-#define _ivec_sra_s32 _VEC(sra_s32)
+#define _ivec_sra_s32 PVECTOR_RENAME(sra_s32)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(sra_s32_imm)(__ivec s1,int c)
+PVECTOR_RENAME(sra_s32_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srai_epi32(s1,c);
@@ -768,9 +770,9 @@ _VEC(sra_s32_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_sra_s32_imm
-#define _ivec_sra_s32_imm _VEC(sra_s32_imm)
+#define _ivec_sra_s32_imm PVECTOR_RENAME(sra_s32_imm)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(srl_s16)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(srl_s16)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srl_epi16(s1,s2);
@@ -779,9 +781,10 @@ _VEC(srl_s16)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_srl_s16
-#define _ivec_srl_s16 _VEC(srl_s16)
+#define _ivec_srl_s16 PVECTOR_RENAME(srl_s16)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(srl_s16_imm)(__ivec s1,int c)
+PVECTOR_RENAME(srl_s16_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srli_epi16(s1,c);
@@ -790,9 +793,9 @@ _VEC(srl_s16_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_srl_s16_imm
-#define _ivec_srl_s16_imm _VEC(srl_s16_imm)
+#define _ivec_srl_s16_imm PVECTOR_RENAME(srl_s16_imm)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(srl_s32)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(srl_s32)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srl_epi32(s1,s2);
@@ -801,9 +804,10 @@ _VEC(srl_s32)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_srl_s32
-#define _ivec_srl_s32 _VEC(srl_s32)
+#define _ivec_srl_s32 PVECTOR_RENAME(srl_s32)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(srl_s32_imm)(__ivec s1,int c)
+PVECTOR_RENAME(srl_s32_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srli_epi32(s1,c);
@@ -812,9 +816,9 @@ _VEC(srl_s32_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_srl_s32_imm
-#define _ivec_srl_s32_imm _VEC(srl_s32_imm)
+#define _ivec_srl_s32_imm PVECTOR_RENAME(srl_s32_imm)
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(srl_s64)(__ivec s1,__ivec s2)
+PVECTOR_RENAME(srl_s64)(__ivec s1,__ivec s2)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srl_epi64(s1,s2);
@@ -823,9 +827,10 @@ _VEC(srl_s64)(__ivec s1,__ivec s2)
 #endif
 }
 #undef _ivec_srl_s64
-#define _ivec_srl_s64 _VEC(srl_s64)
+#define _ivec_srl_s64 PVECTOR_RENAME(srl_s64)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-_VEC(srl_s64_imm)(__ivec s1,int c)
+PVECTOR_RENAME(srl_s64_imm)(__ivec s1,int c)
 {
 #ifdef OPTIMIZE_SSE2
     return _mm_srli_epi64(s1,c);
@@ -834,4 +839,4 @@ _VEC(srl_s64_imm)(__ivec s1,int c)
 #endif
 }
 #undef _ivec_srl_s64_imm
-#define _ivec_srl_s64_imm _VEC(srl_s64_imm)
+#define _ivec_srl_s64_imm PVECTOR_RENAME(srl_s64_imm)

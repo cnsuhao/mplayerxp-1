@@ -33,7 +33,6 @@
 vf_cfg_t vf_cfg; // Configuration for audio filters
 
 #include "postproc/postprocess.h"
-#include "pvector/pvector.h"
 #include "cpudetect.h"
 #include "vd_msg.h"
 
@@ -249,9 +248,7 @@ mpi=mpvdec->decode(sh_video, start, in_size, drop_frame);
 MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
 while(sh_video->active_slices!=0) usleep(0);
 /* ------------------------ frame decoded. -------------------- */
-#ifdef HAVE_INT_PVECTOR
-    _ivec_empty();
-#endif
+
 if(!mpi) return 0; // error / skipped frame
 mpcodecs_draw_image(sh_video,mpi);
 

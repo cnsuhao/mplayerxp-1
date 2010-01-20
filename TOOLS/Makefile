@@ -27,8 +27,11 @@ fastmemcpybench: fastmemcpybench.c
 	$(CC) $(CFLAGS) $< $(COMMON_LIBS) -o fastmem-sse$(EXESUF)  -DNAME=\"sse\"      -DHAVE_MMX -DHAVE_SSE -DHAVE_MMX2
 
 ASMOPTOBJS = asmopt.o
+ASMOPTFOBJS = asmoptf.o
 #CFLAGS=-E
 asmopt$(EXESUF): $(ASMOPTOBJS)
+	$(CC) $(CFLAGS) $< $(COMMON_LIBS) -o $@
+asmoptf$(EXESUF): $(ASMOPTFOBJS)
 	$(CC) $(CFLAGS) $< $(COMMON_LIBS) -o $@
 
 
