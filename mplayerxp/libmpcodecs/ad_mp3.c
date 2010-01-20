@@ -212,6 +212,8 @@ static const char* (*mpg123_current_decoder_ptr)(mpg123_handle *mh);
 #define mpg123_current_decoder(a) (*mpg123_current_decoder_ptr)(a)
 static int (*mpg123_decode_frame_ptr)(mpg123_handle *mh, off_t *num, unsigned char **audio, size_t *bytes);
 #define mpg123_decode_frame(a,b,c,d) (*mpg123_decode_frame_ptr)(a,b,c,d)
+static off_t (*mpg123_tell_ptr)(mpg123_handle *mh);
+#define mpg123_tell(a) (*mpg123_tell_ptr)(a)
 
 
 static void *dll_handle;
@@ -232,12 +234,13 @@ static int load_dll(const char *libname)
   mpg123_decode_ptr = ld_sym(dll_handle,"mpg123_decode");
   mpg123_read_ptr = ld_sym(dll_handle,"mpg123_read");
   mpg123_feed_ptr = ld_sym(dll_handle,"mpg123_feed");
+  mpg123_tell_ptr = ld_sym(dll_handle,"mpg123_tell");
   mpg123_decode_frame_ptr = ld_sym(dll_handle,"mpg123_decode_frame");
   return mpg123_decode_ptr && mpg123_init_ptr && mpg123_exit_ptr &&
 	 mpg123_new_ptr && mpg123_delete_ptr && mpg123_plain_strerror_ptr &&
 	 mpg123_open_feed_ptr && mpg123_close_ptr && mpg123_getformat_ptr &&
 	 mpg123_param_ptr && mpg123_info_ptr && mpg123_current_decoder_ptr &&
-	 mpg123_read_ptr && mpg123_feed_ptr && mpg123_decode_frame_ptr;
+	 mpg123_read_ptr && mpg123_feed_ptr && mpg123_decode_frame_ptr && mpg123_tell_ptr;
 }
 
 
@@ -250,6 +253,12 @@ int preinit(sh_audio_t *sh)
   return rval;
 }
 
+typedef struct mp3_priv_s{
+    mpg123_handle *mh;
+    off_t pos;
+    float pts;
+}mp3_priv_t;
+
 extern char *audio_codec_param;
 int init(sh_audio_t *sh)
 {
@@ -260,42 +269,47 @@ int init(sh_audio_t *sh)
   int err=0,nch,enc;
   unsigned char *indata;
   struct mpg123_frameinfo fi;
+  mp3_priv_t *priv;
   sh->samplesize=4;
   sh->sample_format=AFMT_FLOAT32;
   mpg123_init();
-  sh->context = mpg123_new(NULL,&err);
+  priv = malloc(sizeof(mp3_priv_t));
+  memset(priv,0,sizeof(mp3_priv_t));
+  sh->context = priv;
+  priv->mh = mpg123_new(NULL,&err);
   if(err) {
     err_exit:
     MSG_ERR("mpg123_init: %s\n",mpg123_plain_strerror(err));
-    if(sh->context) mpg123_delete(sh->context);
+    if(priv->mh) mpg123_delete(priv->mh);
     mpg123_exit();
     return 0;
   }
-  if((err=mpg123_open_feed(sh->context))!=0) goto err_exit;
+  if((err=mpg123_open_feed(priv->mh))!=0) goto err_exit;
   param = MPG123_FORCE_STEREO|MPG123_FORCE_FLOAT;
   if(!verbose) param|=MPG123_QUIET;
-  mpg123_param(sh->context,MPG123_FLAGS,param,0);
+  mpg123_param(priv->mh,MPG123_FLAGS,param,0);
   // Decode first frame (to get header filled)
   err=MPG123_NEED_MORE;
   len=0;
   while(err==MPG123_NEED_MORE) {
     indata_size=ds_get_packet_r(sh->ds,&indata,&pts);
-    mpg123_feed(sh->context,indata,indata_size);
-    err=mpg123_read(sh->context,sh->a_buffer,sh->a_buffer_size,&done);
+    mpg123_feed(priv->mh,indata,indata_size);
+    err=mpg123_read(priv->mh,sh->a_buffer,sh->a_buffer_size,&done);
     len+=done;
   }
   sh->a_buffer_len=len;
   if(err!=MPG123_NEW_FORMAT) {
     MSG_ERR("mpg123_init: within [%d] can't retrieve stream property: %s\n",indata_size,mpg123_plain_strerror(err));
-    mpg123_close(sh->context);
-    mpg123_delete(sh->context);
+    mpg123_close(priv->mh);
+    mpg123_delete(priv->mh);
     mpg123_exit();
+    free(priv);
     return 0;
   }
-  mpg123_getformat(sh->context, &rate, &nch, &enc);
+  mpg123_getformat(priv->mh, &rate, &nch, &enc);
   sh->samplerate = rate;
   sh->channels = nch;
-  mpg123_info(sh->context,&fi);
+  mpg123_info(priv->mh,&fi);
   sh->i_bps=((fi.abr_rate?fi.abr_rate:fi.bitrate)/8)*1000;
   // Prints first frame header in ascii.
   {
@@ -324,9 +338,11 @@ int init(sh_audio_t *sh)
 
 void uninit(sh_audio_t *sh)
 {
-  mpg123_close(sh->context);
-  mpg123_delete(sh->context);
+  mp3_priv_t *priv=sh->context;
+  mpg123_close(priv->mh);
+  mpg123_delete(priv->mh);
   mpg123_exit();
+  free(priv);
   dlclose(dll_handle);
 }
 
@@ -337,10 +353,11 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
 
 int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
 {
+    mp3_priv_t *priv=sh->context;
     unsigned char *indata=NULL,*outdata;
     int err=MPG123_OK,indata_size=0;
-    off_t offset;
-    size_t done=0;
+    off_t offset,cpos;
+    size_t done=0,total=0;
     minlen=1;
     /* decode one frame per call to be compatible with old logic:
 	***************************
@@ -357,7 +374,10 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
      */
     MSG_DBG2("mp3_decode start: pts=%f\n",*pts);
     do {
-	err=mpg123_decode_frame(sh->context,&offset,&outdata,&done);
+	cpos = mpg123_tell(priv->mh);
+	*pts = priv->pts+((float)(cpos-priv->pos)/sh->i_bps);
+	err=mpg123_decode_frame(priv->mh,&offset,&outdata,&done);
+	total+=done;
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
 	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
 	}
@@ -366,9 +386,12 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
 	    memcpy(buf,outdata,done);
 	}
 	if(err==MPG123_NEED_MORE) {
-	    indata_size=ds_get_packet_r(sh->ds,&indata,pts);
+	    float apts=0.;
+	    indata_size=ds_get_packet_r(sh->ds,&indata,&apts);
 	    if(indata_size<0) return 0;
-	    mpg123_feed(sh->context,indata,indata_size);
+	    priv->pos = mpg123_tell(priv->mh);
+	    priv->pts = apts;
+	    mpg123_feed(priv->mh,indata,indata_size);
 	}
     }while(err==MPG123_NEED_MORE);
     MSG_DBG2("mp3_decode: %i->%i [%i...%i] pts=%f\n",indata_size,done,minlen,maxlen,*pts);
