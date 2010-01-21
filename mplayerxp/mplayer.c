@@ -768,9 +768,7 @@ static void soft_exit_player(void)
     volatile int dec_ahead_active_frame;
     for(;;)
     {
-	LOCK_VDEC_ACTIVE();
-	vo_get_active_frame(&dec_ahead_active_frame);
-	UNLOCK_VDEC_ACTIVE();
+	__MP_SYNCHRONIZE(vdec_active_mutex,vo_get_active_frame(&dec_ahead_active_frame));
 	LOCK_VDECA();
 	if(shva[dec_ahead_active_frame].eof) break;
 	usleep(0);
@@ -1524,9 +1522,7 @@ int xp_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, floa
     int delay_corrected=1;
     int final_frame=0;
     int num_frames_decoded = 0;
-    LOCK_VDEC_ACTIVE();
-    vo_get_active_frame(&dec_ahead_active_frame);
-    UNLOCK_VDEC_ACTIVE();
+    __MP_SYNCHRONIZE(vdec_active_mutex,vo_get_active_frame(&dec_ahead_active_frame));
     LOCK_VDECA();
     final_frame = shva[dec_ahead_active_frame].eof;
     sh_video->num_frames = shva[dec_ahead_active_frame].num_frames;
@@ -1722,9 +1718,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 							bench_dropped_frames ++;
 	}
     }
-    LOCK_VDEC_ACTIVE();
-    abs_dec_ahead_active_frame++;
-    UNLOCK_VDEC_ACTIVE();
+    __MP_SYNCHRONIZE(vdec_active_mutex,abs_dec_ahead_active_frame++);
     pinfo[xp_id].current_module=NULL;
 
 /*================ A-V TIMESTAMP CORRECTION: =========================*/
@@ -1763,12 +1757,8 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
         if(x> max_pts_correction) x= max_pts_correction;
         if(default_max_pts_correction>=0)
           max_pts_correction=default_max_pts_correction;
-        else
-	{
-	    LOCK_VDECA();
-	    max_pts_correction=shva[dec_ahead_active_frame].duration*0.10; // +-10% of time
-	    UNLOCK_VDECA();
-	}
+        else // +-10% of time
+	    __MP_SYNCHRONIZE(vdeca_mutex,max_pts_correction=shva[dec_ahead_active_frame].duration*0.10);
         if(enable_xp>=XP_VAPlay)
             pthread_mutex_lock(&audio_timer_mutex);
         sh_audio->timer+=x;
@@ -2869,9 +2859,7 @@ fflush(stderr);
 	volatile unsigned ada_blitted_frame;
 	do {
 	usleep(0);
-	LOCK_VDEC_LOCKED();
-	ada_blitted_frame = abs_dec_ahead_blitted_frame;
-	UNLOCK_VDEC_LOCKED();
+	__MP_SYNCHRONIZE(vdec_locked_mutex,ada_blitted_frame = abs_dec_ahead_blitted_frame);
 	}while(ada_blitted_frame < xp_num_frames/2 && !xp_eof);
     }
     if(run_xp_players()!=0) exit_player("Can't run xp players!\n");
@@ -3018,9 +3006,7 @@ read_input:
         ao_resume();	// resume audio
          if( enable_xp >= XP_VAPlay ) {
              dec_ahead_in_pause=0;
-             LOCK_AUDIO_PLAY();
-             pthread_cond_signal(&audio_play_cond);
-             UNLOCK_AUDIO_PLAY();
+	     __MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
          }
       }
       if (vo_inited && sh_video)

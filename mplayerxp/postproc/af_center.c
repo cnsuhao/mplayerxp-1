@@ -70,7 +70,7 @@ static void uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* play(struct af_instance_s* af, af_data_t* data)
+static af_data_t* play(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_data_t*    c   = data;	 // Current working data
   af_center_t*  s   = af->setup; // Setup for this instance

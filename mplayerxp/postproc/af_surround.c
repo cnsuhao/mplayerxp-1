@@ -168,7 +168,7 @@ static float steering_matrix[][12] = {
 //static int amp_L = 0, amp_R = 0, amp_C = 0, amp_S = 0;
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data){
+static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final){
   af_surround_t* s   = (af_surround_t*)af->setup;
   float*	 m   = steering_matrix[0]; 
   float*     	 in  = data->audio; 	// Input audio data

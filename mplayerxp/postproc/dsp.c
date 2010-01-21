@@ -664,7 +664,7 @@ void __FASTCALL__ bandp_init(bandp_t *bp, unsigned center, unsigned width, unsig
 	bp->prev = bp->pprev = 0.0;
 }
 
-static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps)
+static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps,int final)
 {
 #ifdef __SSE4_1__
 	if(gCpuCaps.hasSSE41) change_bps = change_bps_SSE4;
@@ -689,11 +689,11 @@ static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len
 #endif
 #endif /* __x86_64__ */
 	change_bps = change_bps_c;
-	(*change_bps)(in,out,len,inbps,outbps);
+	(*change_bps)(in,out,len,inbps,outbps,final);
 }
-void (* __FASTCALL__ change_bps)(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps)=init_change_bps;
+void (* __FASTCALL__ change_bps)(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps,int final)=init_change_bps;
 
-static void __FASTCALL__ init_float2int(void* in, void* out, int len, int bps)
+static void __FASTCALL__ init_float2int(void* in, void* out, int len, int bps,int final)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) float2int = float2int_AVX;
@@ -726,11 +726,11 @@ static void __FASTCALL__ init_float2int(void* in, void* out, int len, int bps)
 #endif
 #endif /*__x86_64__*/
 	float2int = float2int_c;
-	(*float2int)(in,out,len,bps);
+	(*float2int)(in,out,len,bps,final);
 }
-void (* __FASTCALL__ float2int)(void* in, void* out, int len, int bps)=init_float2int;
+void (* __FASTCALL__ float2int)(void* in, void* out, int len, int bps,int final)=init_float2int;
 
-static void __FASTCALL__ init_int2float(void* in, void* out, int len, int bps)
+static void __FASTCALL__ init_int2float(void* in, void* out, int len, int bps,int final)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) int2float = int2float_AVX;
@@ -763,9 +763,9 @@ static void __FASTCALL__ init_int2float(void* in, void* out, int len, int bps)
 #endif
 #endif /*__x86_64__*/
 	int2float = int2float_c;
-	(*int2float)(in,out,len,bps);
+	(*int2float)(in,out,len,bps,final);
 }
-void (* __FASTCALL__ int2float)(void* in, void* out, int len, int bps)=init_int2float;
+void (* __FASTCALL__ int2float)(void* in, void* out, int len, int bps,int final)=init_int2float;
 
 
 static int32_t __FASTCALL__ FIR_i16_init(int16_t *x,int16_t *w)

@@ -25,10 +25,10 @@
 #endif
 #ifdef OPTIMIZE_SSE2
 #define OPTIMIZE_SSE
-#define OPTIMIZE_MMX2
 #endif
 #ifdef OPTIMIZE_SSE
 #define OPTIMIZE_3DNOW
+#define OPTIMIZE_MMX2
 #endif
 #if defined( OPTIMIZE_MMX2 )
 #define OPTIMIZE_MMX
@@ -189,6 +189,7 @@
   void     _f32vec_to_s32u(void *dst,__f32vec src);	// convert f32 to s32 unaligned vector
   __f32vec _f32vec_from_s32a(void const * src);		// convert s32 to f32 aligned vector
   void     _f32vec_to_s32a(void *dst,__f32vec src);	// convert f32 to s32 aligned vector
+  void     _f32vec_to_s32_stream(void *dst,__f32vec src);// convert f32 to s32 aligned vector
 
   ARITHMETIC engine:
   ------------------

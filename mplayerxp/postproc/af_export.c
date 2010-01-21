@@ -194,7 +194,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
    af audio filter instance
    data audio data
 */
-static af_data_t* __FASTCALL__ play( struct af_instance_s* af, af_data_t* data )
+static af_data_t* __FASTCALL__ play( struct af_instance_s* af, af_data_t* data,int final)
 {
   af_data_t*   	c   = data;	     // Current working data
   af_export_t* 	s   = af->setup;     // Setup for this instance
@@ -225,10 +225,10 @@ static af_data_t* __FASTCALL__ play( struct af_instance_s* af, af_data_t* data )
   // Export buffer to mmaped area
   if(flag){
     // update buffer in mapped area
-    memcpy(s->mmap_area + SIZE_HEADER, s->buf[0], sz * c->bps * nch);
+	stream_copy(s->mmap_area + SIZE_HEADER, s->buf[0], sz * c->bps * nch);
     s->count++; // increment counter (to sync)
-    memcpy(s->mmap_area + SIZE_HEADER - sizeof(s->count), 
-	   &(s->count), sizeof(s->count));
+	stream_copy(s->mmap_area + SIZE_HEADER - sizeof(s->count), 
+		&(s->count), sizeof(s->count));
   }
 
   // We don't modify data, just export it

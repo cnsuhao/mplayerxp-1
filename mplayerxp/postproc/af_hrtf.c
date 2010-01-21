@@ -383,7 +383,7 @@ frequencies).
 2. A bass compensation is introduced to ensure that 0-200 Hz are not
 damped (without any real 3D acoustical image, however).
 */
-static af_data_t* __FASTCALL__ play(struct af_instance_s *af, af_data_t *data)
+static af_data_t* __FASTCALL__ play(struct af_instance_s *af, af_data_t *data,int final)
 {
     af_hrtf_t *s = af->setup;
     real_t *in = data->audio; // Input audio data

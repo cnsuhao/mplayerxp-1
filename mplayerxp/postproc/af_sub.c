@@ -136,7 +136,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 #endif
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
+static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_data_t*    c   = data;	 // Current working data
   af_sub_t*  	s   = af->setup; // Setup for this instance

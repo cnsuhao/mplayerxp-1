@@ -331,7 +331,7 @@ int init(sh_audio_t *sh)
 	,fi.flags&MPG123_ORIGINAL?"Yes":"No"
 	,fi.flags&MPG123_CRC?"Yes":"No"
 	,fi.flags&MPG123_PRIVATE?"Yes":"No"
-	,fi.emphasis,mpg123_current_decoder(sh->context));
+	,fi.emphasis,mpg123_current_decoder(priv->mh));
   }
   return 1;
 }
@@ -354,10 +354,10 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
 int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
 {
     mp3_priv_t *priv=sh->context;
-    unsigned char *indata=NULL,*outdata;
+    unsigned char *indata=NULL,*outdata=NULL;
     int err=MPG123_OK,indata_size=0;
     off_t offset,cpos;
-    size_t done=0,total=0;
+    size_t done=0;
     minlen=1;
     /* decode one frame per call to be compatible with old logic:
 	***************************
@@ -377,7 +377,6 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
 	cpos = mpg123_tell(priv->mh);
 	*pts = priv->pts+((float)(cpos-priv->pos)/sh->i_bps);
 	err=mpg123_decode_frame(priv->mh,&offset,&outdata,&done);
-	total+=done;
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
 	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
 	}

@@ -154,7 +154,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
+static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
   unsigned tlen,ilen,olen,delta;
   af_ffenc_t *s=af->setup;

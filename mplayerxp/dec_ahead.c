@@ -209,9 +209,7 @@ while(!xp_eof){
 	}
 	if(in_size<0)
 	{
-	    LOCK_VDECA();
-	    shva[dec_ahead_locked_frame].eof=1;
-	    UNLOCK_VDECA();
+	    __MP_SYNCHRONIZE(vdeca_mutex,shva[dec_ahead_locked_frame].eof=1);
 	    xp_eof=1;
 	    if(has_xp_audio && enable_xp<XP_VAFull) {
 		while(!xp_audio_eof && !dec_ahead_in_lseek && !pthread_end_of_work) {
@@ -562,9 +560,7 @@ void uninit_dec_ahead( int force )
   if(pthread_id && pthread_is_living && has_xp_video) 
   {
     pthread_end_of_work=1;
-    LOCK_VIDEO_DECODE();
-    pthread_cond_signal(&video_decode_cond);
-    UNLOCK_VIDEO_DECODE();
+    __MP_SYNCHRONIZE(video_decode_mutex,pthread_cond_signal(&video_decode_cond));
     while(pthread_is_living && !force) usleep(0);
     pthread_is_living=0;
     pthread_attr_destroy(&our_attr);
@@ -577,9 +573,7 @@ void uninit_dec_ahead( int force )
       a_pthread_end_of_work=1;
       xp_audio_eof=1;
       if(a_pthread_is_living) {
-	  LOCK_AUDIO_DECODE();
-	  pthread_cond_signal(&audio_decode_cond);
-	  UNLOCK_AUDIO_DECODE();
+	  __MP_SYNCHRONIZE(audio_decode_mutex,pthread_cond_signal(&audio_decode_cond));
       }
       while(a_pthread_is_living && !force) usleep(0);
       a_pthread_is_living=0;
@@ -711,9 +705,7 @@ void dec_ahead_halt_threads(int is_reset_vcache)
     if (is_reset_vcache)
         UNLOCK_VDECODING(); /* Release lock from vo_x11 */
     if(pthread_is_living) {
-	LOCK_VIDEO_DECODE();
-	pthread_cond_signal(&video_decode_cond);
-	UNLOCK_VIDEO_DECODE();
+	__MP_SYNCHRONIZE(video_decode_mutex,pthread_cond_signal(&video_decode_cond));
 	while(dec_ahead_in_lseek==PreSeek)
 	    usleep(1);
     }
@@ -737,9 +729,7 @@ void dec_ahead_restart_threads(int xp_id)
 	xp_thread_decode_audio();
 
     if(pthread_is_living) {
-	LOCK_VIDEO_DECODE();
-	pthread_cond_signal(&video_decode_cond);
-	UNLOCK_VIDEO_DECODE();
+	__MP_SYNCHRONIZE(video_decode_mutex,pthread_cond_signal(&video_decode_cond));
 	while(dec_ahead_in_lseek==Seek)
 	    usleep(1);
 	while(abs_dec_ahead_locked_frame == abs_dec_ahead_active_frame && !xp_eof)
@@ -748,17 +738,11 @@ void dec_ahead_restart_threads(int xp_id)
 
     dec_ahead_in_lseek = NoSeek;
 
-    if(a_pthread_is_living) {
-	LOCK_AUDIO_DECODE();
-	pthread_cond_signal(&audio_decode_cond);
-	UNLOCK_AUDIO_DECODE();
-    }
+    if(a_pthread_is_living)
+	__MP_SYNCHRONIZE(audio_decode_mutex,pthread_cond_signal(&audio_decode_cond));
 
-    if(pthread_audio_is_living) {
-	LOCK_AUDIO_PLAY();
-	pthread_cond_signal(&audio_play_cond);
-	UNLOCK_AUDIO_PLAY();
-    }
+    if(pthread_audio_is_living)
+	__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
 }
 
 /* Audio stuff */

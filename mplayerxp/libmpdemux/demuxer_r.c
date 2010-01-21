@@ -9,6 +9,7 @@
 #include "demuxer_r.h"
 #include "../osdep/timer.h"
 #include "../mplayer.h"
+#include "../dec_ahead.h"
 
 pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;
 
@@ -170,26 +171,20 @@ int demux_seek_r(demuxer_t *demuxer,float rel_seek_secs,int flags)
 int demuxer_switch_audio_r(demuxer_t *d, int id)
 {
     int retval;
-    LOCK_DEMUXER();
-    retval=demuxer_switch_audio(d,id);
-    UNLOCK_DEMUXER();
+    __MP_SYNCHRONIZE(demuxer_mutex,retval=demuxer_switch_audio(d,id));
     return retval;
 }
 
 int demuxer_switch_video_r(demuxer_t *d, int id)
 {
     int retval;
-    LOCK_DEMUXER();
-    retval=demuxer_switch_video(d,id);
-    UNLOCK_DEMUXER();
+    __MP_SYNCHRONIZE(demuxer_mutex,retval=demuxer_switch_video(d,id));
     return retval;
 }
 
 int demuxer_switch_subtitle_r(demuxer_t *d, int id)
 {
     int retval;
-    LOCK_DEMUXER();
-    retval=demuxer_switch_subtitle(d,id);
-    UNLOCK_DEMUXER();
+    __MP_SYNCHRONIZE(demuxer_mutex,retval=demuxer_switch_subtitle(d,id));
     return retval;
 }

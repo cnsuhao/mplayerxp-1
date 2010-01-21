@@ -16,7 +16,7 @@ MP_LIBS += ../mplayerxp/libmpcodecs/libmpcodecs.a ../mplayerxp/libao2/libao2.a .
 ../mplayerxp/osdep/libosdep.a ../mplayerxp/mp_msg.o ../mplayerxp/nls/libnls.a ../mplayerxp/cpudetect.o
 
 COMMON_LIBS = $(MP_LIBS) $(EXTRALIBS) -lm
-CFLAGS = $(OPTFLAGS) -I ../mplayerxp -I../mplayerxp/libmpdemux -I../mplayerxp/libvo $(EXTRA_INC)
+CFLAGS = $(OPTFLAGS) -I./ -I../mplayerxp -I../mplayerxp/libmpdemux -I../mplayerxp/libvo $(EXTRA_INC)
 
 all: $(OBJS)
 

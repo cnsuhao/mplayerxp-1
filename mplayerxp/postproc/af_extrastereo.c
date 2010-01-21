@@ -75,7 +75,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
+static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_extrastereo_t *s = af->setup;
   register int i = 0;

@@ -31,9 +31,9 @@ typedef struct af_sinesuppress_s
     double pos;
 }af_sinesuppress_t;
 
-static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data);
+static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data,int final);
 #if 0
-static af_data_t* play_float(struct af_instance_s* af, af_data_t* data);
+static af_data_t* play_float(struct af_instance_s* af, af_data_t* data,int final);
 #endif
 
 // Initialization and runtime control
@@ -90,7 +90,7 @@ static void uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data)
+static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_sinesuppress_t *s = af->setup;
   register int i = 0;
@@ -121,7 +121,7 @@ static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data)
 }
 
 #if 0
-static af_data_t* play_float(struct af_instance_s* af, af_data_t* data)
+static af_data_t* play_float(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_sinesuppress_t *s = af->setup;
   register int i = 0;

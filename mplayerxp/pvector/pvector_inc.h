@@ -17,7 +17,7 @@
 #define PVECTOR_RENAME(a) a ## _c
 #include PVECTOR_ACCEL_H
 
-#ifndef __x86_64__
+#if !defined( __x86_64__ ) || defined(PVECTOR_TESTING)
 #ifdef __MMX__
 #define OPTIMIZE_MMX
 #undef PVECTOR_RENAME

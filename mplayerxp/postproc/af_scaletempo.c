@@ -165,7 +165,7 @@ static void output_overlap_float(af_scaletempo_t* s, int8_t* buf_out,
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
+static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_scaletempo_t* s = af->setup;
   int offset_in;
@@ -202,6 +202,11 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
         bytes_off = s->best_overlap_offset(s);
       s->output_overlap(s, pout, bytes_off);
     }
+    if(final)
+    stream_copy(pout + s->bytes_overlap,
+           s->buf_queue + bytes_off + s->bytes_overlap,
+           s->bytes_standing);
+    else
     memcpy(pout + s->bytes_overlap,
            s->buf_queue + bytes_off + s->bytes_overlap,
            s->bytes_standing);

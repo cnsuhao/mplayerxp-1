@@ -116,7 +116,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
     free(af->setup);
 }
 
-static void __FASTCALL__ method1_int16(af_volnorm_t *s, af_data_t *c)
+static void __FASTCALL__ method1_int16(af_volnorm_t *s, af_data_t *c,int final)
 {
   register int i = 0;
   int16_t *data = (int16_t*)c->audio;	// Audio data
@@ -158,7 +158,7 @@ static void __FASTCALL__ method1_int16(af_volnorm_t *s, af_data_t *c)
   s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
 }
 
-static void __FASTCALL__ method1_float(af_volnorm_t *s, af_data_t *c)
+static void __FASTCALL__ method1_float(af_volnorm_t *s, af_data_t *c,int final)
 {
   register int i = 0;
   float *data = (float*)c->audio;	// Audio data
@@ -195,7 +195,7 @@ static void __FASTCALL__ method1_float(af_volnorm_t *s, af_data_t *c)
   s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
 }
 
-static void __FASTCALL__ method2_int16(af_volnorm_t *s, af_data_t *c)
+static void __FASTCALL__ method2_int16(af_volnorm_t *s, af_data_t *c,int final)
 {
   register int i = 0;
   int16_t *data = (int16_t*)c->audio;	// Audio data
@@ -245,7 +245,7 @@ static void __FASTCALL__ method2_int16(af_volnorm_t *s, af_data_t *c)
   s->idx = (s->idx + 1) % NSAMPLES;
 }
 
-static void __FASTCALL__ method2_float(af_volnorm_t *s, af_data_t *c)
+static void __FASTCALL__ method2_float(af_volnorm_t *s, af_data_t *c,int final)
 {
   register int i = 0;
   float *data = (float*)c->audio;	// Audio data
@@ -292,23 +292,23 @@ static void __FASTCALL__ method2_float(af_volnorm_t *s, af_data_t *c)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
+static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_volnorm_t *s = af->setup;
 
   if(af->data->format == (AF_FORMAT_SI | AF_FORMAT_NE))
   {
     if (s->method)
-	method2_int16(s, data);
+	method2_int16(s, data,final);
     else
-	method1_int16(s, data);
+	method1_int16(s, data,final);
   }
   else if(af->data->format == (AF_FORMAT_F | AF_FORMAT_NE))
   { 
     if (s->method)
-	method2_float(s, data);
+	method2_float(s, data,final);
     else
-	method1_float(s, data);
+	method1_float(s, data,final);
   }
   return data;
 }

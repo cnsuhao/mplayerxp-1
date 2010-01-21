@@ -38,11 +38,11 @@ typedef struct af_format_s
 }af_format_t;
 
 // Switch endianess
-static void endian(void* in, void* out, int len, int bps);
+static void endian(void* in, void* out, int len, int bps,int final);
 // From singed to unsigned
-static void si2us(void* in, void* out, int len, int bps);
+static void si2us(void* in, void* out, int len, int bps,int final);
 // From unsinged to signed
-static void us2si(void* in, void* out, int len, int bps);
+static void us2si(void* in, void* out, int len, int bps,int final);
 
 static const struct fmt_alias_s
 {
@@ -378,7 +378,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
+static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_data_t*   l   = af->data;	// Local data
   af_data_t*   c   = data;	// Current working data
@@ -389,7 +389,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
 
   // Change to cpu native endian format
   if((c->format&AF_FORMAT_END_MASK)!=AF_FORMAT_NE)
-    endian(c->audio,c->audio,len,c->bps);
+    endian(c->audio,c->audio,len,c->bps,final);
 
   // Conversion table
   switch(c->format & ~AF_FORMAT_END_MASK){
@@ -398,14 +398,14 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
     if(AF_FORMAT_A_LAW == (l->format&AF_FORMAT_SPECIAL_MASK))
       to_ulaw(l->audio, l->audio, len, 1, AF_FORMAT_SI);
     if((l->format&AF_FORMAT_SIGN_MASK) == AF_FORMAT_US)
-      si2us(l->audio,l->audio,len,l->bps);
+      si2us(l->audio,l->audio,len,l->bps,final);
     break;
   case(AF_FORMAT_A_LAW):
     from_alaw(c->audio, l->audio, len, l->bps, l->format&AF_FORMAT_POINT_MASK);
     if(AF_FORMAT_A_LAW == (l->format&AF_FORMAT_SPECIAL_MASK))
       to_alaw(l->audio, l->audio, len, 1, AF_FORMAT_SI);
     if((l->format&AF_FORMAT_SIGN_MASK) == AF_FORMAT_US)
-      si2us(l->audio,l->audio,len,l->bps);
+      si2us(l->audio,l->audio,len,l->bps,final);
     break;
   case(AF_FORMAT_F):
     switch(l->format&AF_FORMAT_SPECIAL_MASK){
@@ -416,9 +416,12 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
       to_alaw(c->audio, l->audio, len, c->bps, c->format&AF_FORMAT_POINT_MASK);
       break;
     default:
-      float2int(c->audio, l->audio, len, l->bps);
-      if((l->format&AF_FORMAT_SIGN_MASK) == AF_FORMAT_US)
-	si2us(l->audio,l->audio,len,l->bps);
+      if((l->format&AF_FORMAT_SIGN_MASK) == AF_FORMAT_US) {
+	float2int(c->audio, l->audio, len, l->bps,0);
+	si2us(l->audio,l->audio,len,l->bps,final);
+      }
+      else
+	float2int(c->audio, l->audio, len, l->bps,final);
       break;
     }
     break;
@@ -428,9 +431,9 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
     // Change signed/unsigned
     if((c->format&AF_FORMAT_SIGN_MASK) != (l->format&AF_FORMAT_SIGN_MASK)){
       if((c->format&AF_FORMAT_SIGN_MASK) == AF_FORMAT_US)
-	us2si(c->audio,c->audio,len,c->bps);
+	us2si(c->audio,c->audio,len,c->bps,final);
       else
-	si2us(c->audio,c->audio,len,c->bps); 
+	si2us(c->audio,c->audio,len,c->bps,final); 
     }
     // Convert to special formats
     switch(l->format&(AF_FORMAT_SPECIAL_MASK|AF_FORMAT_POINT_MASK)){
@@ -441,12 +444,12 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
       to_alaw(c->audio, l->audio, len, c->bps, c->format&AF_FORMAT_POINT_MASK);
       break;
     case(AF_FORMAT_F):
-      int2float(c->audio, l->audio, len, c->bps);
+      int2float(c->audio, l->audio, len, c->bps,final);
       break;
     default:
       // Change the number of bits
       if(c->bps != l->bps)
-	change_bps(c->audio,l->audio,len,c->bps,l->bps);
+	change_bps(c->audio,l->audio,len,c->bps,l->bps,final);
       else
 	l->audio=c->audio;
       break;
@@ -456,7 +459,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data)
 
   // Switch from cpu native endian to the correct endianess 
   if((l->format&AF_FORMAT_END_MASK)!=AF_FORMAT_NE)
-    endian(l->audio,l->audio,len,l->bps);
+    endian(l->audio,l->audio,len,l->bps,final);
 
   // Set output data
   c->audio  = l->audio;
@@ -515,7 +518,7 @@ void store24bit(void* data, int pos, uint32_t expanded_value) {
 }
 
 // Function implementations used by play
-static void endian(void* in, void* out, int len, int bps)
+static void endian(void* in, void* out, int len, int bps,int final)
 {
   register int i;
   switch(bps){
@@ -545,7 +548,7 @@ static void endian(void* in, void* out, int len, int bps)
   }
 }
 
-static void si2us(void* in, void* out, int len, int bps)
+static void si2us(void* in, void* out, int len, int bps,int final)
 {
   register int i;
   switch(bps){
@@ -568,7 +571,7 @@ static void si2us(void* in, void* out, int len, int bps)
   }
 }
 
-static void us2si(void* in, void* out, int len, int bps)
+static void us2si(void* in, void* out, int len, int bps,int final)
 {
   register int i;
   switch(bps){

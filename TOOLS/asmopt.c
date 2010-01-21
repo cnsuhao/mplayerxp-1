@@ -20,48 +20,9 @@
 #include "../mplayerxp/mp_config.h"
 #include "../mplayerxp/cpudetect.h"
 
-#undef OPTIMIZE_AVX
-#undef OPTIMIZE_SSE4
-#undef OPTIMIZE_SSSE3
-#undef OPTIMIZE_SSE3
-#undef OPTIMIZE_SSE2
-#undef OPTIMIZE_SSE
-#undef OPTIMIZE_MMX2
-#undef OPTIMIZE_MMX
-#define RENAME(a) a ## _C
-#include "asmopt_template.h"
-
-
-#ifdef __MMX__
-#define OPTIMIZE_MMX
-#undef RENAME
-#define RENAME(a) a ## _MMX
-#include "asmopt_template.h"
-#endif
-#ifdef __SSE__
-#define OPTIMIZE_MMX2
-#undef RENAME
-#define RENAME(a) a ## _MMX2
-#include "asmopt_template.h"
-#endif
-#ifdef __SSE2__
-#define OPTIMIZE_SSE2
-#undef RENAME
-#define RENAME(a) a ## _SSE2
-#include "asmopt_template.h"
-#endif
-#ifdef __SSE3__
-#define OPTIMIZE_SSE3
-#undef RENAME
-#define RENAME(a) a ## _SSE3
-#include "asmopt_template.h"
-#endif
-#ifdef __SSE4_1__
-#define OPTIMIZE_SSE4
-#undef RENAME
-#define RENAME(a) a ## _SSE4
-#include "asmopt_template.h"
-#endif
+#define PVECTOR_TESTING
+#define PVECTOR_ACCEL_H "asmopt_template.h"
+#include "../mplayerxp/pvector/pvector_inc.h"
 
 #define ARR_SIZE (1024*64*2)*10
 unsigned verbose=1;
@@ -136,7 +97,7 @@ int main( void )
       gCpuCaps.has3DNow, gCpuCaps.has3DNowExt,
       gCpuCaps.hasSSE, gCpuCaps.hasSSE2);
 
-			 test_simd("asmopt.gen" ,"GENERIC:",convert_C);
+			 test_simd("asmopt.gen" ,"GENERIC:",convert_c);
 // ordered per speed fasterst first
 #ifdef __SSE3__
     if(gCpuCaps.hasSSE3) test_simd("asmopt.sse3","SSE3   :",convert_SSE3);
@@ -144,8 +105,8 @@ int main( void )
 #ifdef __SSE2__
     if(gCpuCaps.hasSSE2) test_simd("asmopt.sse2","SSE2   :",convert_SSE2);
 #endif
-#ifdef __MMX2__
-    if(gCpuCaps.hasMMX2) test_simd("asmopt.mmx2","MMX2   :",convert_MMX2);
+#ifdef __SSE__
+    if(gCpuCaps.hasMMX2) test_simd("asmopt.mmx2","MMX2   :",convert_SSE);
 #endif
 #ifdef __MMX__
     if(gCpuCaps.hasMMX)  test_simd("asmopt.mmx", "MMX    :",convert_MMX);

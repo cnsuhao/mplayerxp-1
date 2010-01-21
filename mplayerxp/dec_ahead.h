@@ -45,22 +45,30 @@ extern pthread_cond_t audio_decode_cond;
 #endif
 #define LOCK_VDEC_ACTIVE() { MSG_D(DA_PREFIX"LOCK_VDEC_ACTIVE\n"); pthread_mutex_lock(&vdec_active_mutex); }
 #define UNLOCK_VDEC_ACTIVE() { MSG_D(DA_PREFIX"UNLOCK_VDEC_ACTIVE\n"); pthread_mutex_unlock(&vdec_active_mutex); }
+
 #define LOCK_VDEC_LOCKED() { MSG_D(DA_PREFIX"LOCK_VDEC_LOCKED\n"); pthread_mutex_lock(&vdec_locked_mutex); }
 #define UNLOCK_VDEC_LOCKED() { MSG_D(DA_PREFIX"UNLOCK_VDEC_LOCKED\n"); pthread_mutex_unlock(&vdec_locked_mutex); }
+
 #define LOCK_VDECODING() { MSG_D(DA_PREFIX"LOCK_VDECODING\n"); pthread_mutex_lock(&vdecoding_mutex); }
 #define UNLOCK_VDECODING() { MSG_D(DA_PREFIX"UNLOCK_VDECODING\n"); pthread_mutex_unlock(&vdecoding_mutex); }
+
 #define LOCK_VREADING() { MSG_D(DA_PREFIX"LOCK_VREADING\n"); pthread_mutex_lock(&vreading_mutex); }
 #define UNLOCK_VREADING() { MSG_D(DA_PREFIX"UNLOCK_VREADING\n"); pthread_mutex_unlock(&vreading_mutex); }
+
 #define LOCK_VDECA() { MSG_D(DA_PREFIX"LOCK_VDECA\n"); pthread_mutex_lock(&vdeca_mutex); }
 #define UNLOCK_VDECA() { MSG_D(DA_PREFIX"UNLOCK_VDECA\n"); pthread_mutex_unlock(&vdeca_mutex); }
+
 #define LOCK_AUDIO_PLAY() { MSG_D(DA_PREFIX"LOCK_AUDIO_PLAY\n"); pthread_mutex_lock(&audio_play_mutex); }
 #define UNLOCK_AUDIO_PLAY() { MSG_D(DA_PREFIX"UNLOCK_AUDIO_PLAY\n"); pthread_mutex_unlock(&audio_play_mutex); }
+
 #define LOCK_AUDIO_DECODE() { MSG_D(DA_PREFIX"LOCK_AUDIO_DECODE\n"); pthread_mutex_lock(&audio_decode_mutex); }
 #define UNLOCK_AUDIO_DECODE() { MSG_D(DA_PREFIX"UNLOCK_AUDIO_DECODE\n"); pthread_mutex_unlock(&audio_decode_mutex); }
+
 #define LOCK_VIDEO_DECODE() { MSG_D(DA_PREFIX"LOCK_VIDEO_DECODE\n"); pthread_mutex_lock(&video_decode_mutex); }
 #define UNLOCK_VIDEO_DECODE() { MSG_D(DA_PREFIX"UNLOCK_VIDEO_DECODE\n"); pthread_mutex_unlock(&video_decode_mutex); }
 
-#define __MP_ATOMIC(OP) { pthread_mutex_t loc_mutex; pthread_mutex_lock(&loc_mutex); OP; pthread_mutex_unlock(&loc_mutex); }
+#define __MP_ATOMIC(OP) { static pthread_mutex_t loc_mutex; pthread_mutex_lock(&loc_mutex); OP; pthread_mutex_unlock(&loc_mutex); }
+#define __MP_SYNCHRONIZE(mtx,OP) { pthread_mutex_lock(&mtx); OP; pthread_mutex_unlock(&mtx); }
 
 typedef struct sh_video_attr
 {

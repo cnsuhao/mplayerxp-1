@@ -523,7 +523,7 @@ af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data)
   // Iterate through all filters 
   do{
     MSG_DBG2("filtering %s\n",af->info->name);
-    data=af->play(af,data);
+    data=af->play(af,data,af->next?0:1);
     af=af->next;
   }while(af && data);
   return data;

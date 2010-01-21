@@ -50,7 +50,7 @@ typedef struct af_instance_s
   const af_info_t* info;
   int (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, void* arg);
   void (* __FASTCALL__ uninit)(struct af_instance_s* af);
-  af_data_t* (* __FASTCALL__ play)(struct af_instance_s* af, af_data_t* data);
+  af_data_t* (* __FASTCALL__ play)(struct af_instance_s* af, af_data_t* data,int final);
   void* setup;	  // setup data for this specific instance and filter
   af_data_t* data; // configuration for outgoing data stream
   struct af_instance_s* next;

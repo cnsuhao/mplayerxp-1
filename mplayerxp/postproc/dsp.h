@@ -143,9 +143,9 @@ static inline float bandpass(bandp_t *_this,float sample)
 }
 
 /* some mmx_optimized stuff */
-extern void (* __FASTCALL__ change_bps)(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps);
-extern void (* __FASTCALL__ float2int)(void* in, void* out, int len, int bps);
-extern void (* __FASTCALL__ int2float)(void* in, void* out, int len, int bps);
+extern void (* __FASTCALL__ change_bps)(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps,int final);
+extern void (* __FASTCALL__ float2int)(void* in, void* out, int len, int bps,int final);
+extern void (* __FASTCALL__ int2float)(void* in, void* out, int len, int bps,int final);
 extern int32_t (* __FASTCALL__ FIR_i16)(int16_t *x,int16_t *w);
 extern float (* __FASTCALL__ FIR_f32)(float *x,float *w);
 

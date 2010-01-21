@@ -14,6 +14,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
+#define __USE_ISOC99
+#include <math.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <limits.h>
@@ -21,53 +23,9 @@
 #include "../mplayerxp/mp_config.h"
 #include "../mplayerxp/cpudetect.h"
 
-#undef F32_OPTIMIZE_AVX
-#undef F32_OPTIMIZE_SSE4
-#undef F32_OPTIMIZE_SSSE3
-#undef F32_OPTIMIZE_SSE3
-#undef F32_OPTIMIZE_SSE2
-#undef F32_OPTIMIZE_SSE
-#undef F32_OPTIMIZE_3DNOW
-#define RENAME(a) a ## _C
-#include "asmoptf_template.h"
-
-
-#ifdef __3dNOW__
-#define F32_OPTIMIZE_3DNOW
-#undef RENAME
-#define RENAME(a) a ## _3DNOW
-#include "asmoptf_template.h"
-#endif
-#ifdef __SSE__
-#define F32_OPTIMIZE_SSE
-#undef RENAME
-#define RENAME(a) a ## _SSE
-#include "asmoptf_template.h"
-#endif
-#ifdef __SSE2__
-#define F32_OPTIMIZE_SSE2
-#undef RENAME
-#define RENAME(a) a ## _SSE2
-#include "asmoptf_template.h"
-#endif
-#ifdef __SSE3__
-#define F32_OPTIMIZE_SSE3
-#undef RENAME
-#define RENAME(a) a ## _SSE3
-#include "asmoptf_template.h"
-#endif
-#ifdef __SSE4_1__
-#define F32_OPTIMIZE_SSE4
-#undef RENAME
-#define RENAME(a) a ## _SSE4
-#include "asmoptf_template.h"
-#endif
-#ifdef __AVX__
-#define F32_OPTIMIZE_AVX
-#undef RENAME
-#define RENAME(a) a ## _AVX
-#include "asmoptf_template.h"
-#endif
+#define PVECTOR_TESTING
+#define PVECTOR_ACCEL_H "asmoptf_template.h"
+#include "../mplayerxp/pvector/pvector_inc.h"
 
 #define ARR_SIZE (1024*64*2)*10
 unsigned verbose=1;
@@ -76,8 +34,8 @@ extern CpuCaps gCpuCaps;
 /* Fixme: put here any complexness of source array filling */
 #define INIT_ARRAYS(x) \
 {\
-	for(i=0; i<x; i++) srca[i] = i; \
-	for(i=0; i<x; i++) src[i] = i+64; \
+	for(i=0; i<x; i++) srca[i] = i*0.0001; \
+	for(i=0; i<x; i++) src[i] = (i+64)*0.0001; \
 	memset(dsta,0,sizeof(ARR_SIZE*sizeof(float))); \
 }
 
@@ -143,7 +101,7 @@ int main( void )
       gCpuCaps.has3DNow, gCpuCaps.has3DNowExt,
       gCpuCaps.hasSSE, gCpuCaps.hasSSE2);
 
-			 test_simd("asmoptf.gen" ,"GENERIC:",convert_C);
+			 test_simd("asmoptf.gen" ,"GENERIC:",convert_c);
 // ordered per speed fasterst first
 #ifdef __AVX__
     if(gCpuCaps.hasAVX) test_simd("asmoptf.avx","AVX    :",convert_AVX);
