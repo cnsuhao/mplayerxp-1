@@ -197,4 +197,9 @@
   __f32vec _f32vec_sub(__f32vec f1, __f32vec f2);	// sub: f1-f2
   __f32vec _f32vec_mul(__f32vec f1, __f32vec f2);	// mul: f1*f2
   __f32vec _f32vec_div(__f32vec f1, __f32vec f2);	// div: f1/f2
+
+  COMPARE engine:
+  ---------------
+  __f32vec _f32vec_min(__f32vec f1, __f32vec f2);	// MIN(f1,f2)
+  __f32vec _f32vec_max(__f32vec f1, __f32vec f2);	// MAX(f1,f2)
 */

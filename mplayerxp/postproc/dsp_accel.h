@@ -9,36 +9,34 @@ static void __FASTCALL__ PVECTOR_RENAME(int8_to_int16)(const int8_t* in_data, in
     unsigned i;
     i = 0;
 #ifdef HAVE_INT_PVECTOR
-	for(;i<len;i++) {
-	  ((uint16_t*)out_data)[i]=((uint16_t)((uint8_t*)in_data)[i])<<8;
-	  if((((long)out_data)&(__IVEC_SIZE-1))==0) break;
-	}
-	if((len-i)>=__IVEC_SIZE)
-	for(;i<len;i+=__IVEC_SIZE){
-	    __ivec ind,itmp[2];
-	    ind   = _ivec_loadu(&((uint8_t *)in_data)[i]);
+    for(;i<len;i++) {
+	((uint16_t*)out_data)[i]=((uint16_t)((const uint8_t*)in_data)[i])<<8;
+	if((((long)out_data)&(__IVEC_SIZE-1))==0) break;
+    }
+    if((len-i)>=__IVEC_SIZE)
+    for(;i<len;i+=__IVEC_SIZE){
+	__ivec ind,itmp[2];
+	ind   = _ivec_loadu(&((const uint8_t *)in_data)[i]);
 #if 0 /* slower but portable on non-x86 CPUs version */
-	    itmp[0]= _ivec_sll_s16_imm(_ivec_u16_from_lou8(ind),8);
-	    itmp[1]= _ivec_sll_s16_imm(_ivec_u16_from_hiu8(ind),8);
+	itmp[0]= _ivec_sll_s16_imm(_ivec_u16_from_lou8(ind),8);
+	itmp[1]= _ivec_sll_s16_imm(_ivec_u16_from_hiu8(ind),8);
 #else
-	    itmp[0]= _ivec_interleave_lo_u8(izero,ind);
-	    itmp[1]= _ivec_interleave_hi_u8(izero,ind);
+	itmp[0]= _ivec_interleave_lo_u8(izero,ind);
+	itmp[1]= _ivec_interleave_hi_u8(izero,ind);
 #endif
-	    if(final) {
-		_ivec_stream(&((uint16_t*)out_data)[i],itmp[0]);
-		_ivec_stream(&((uint16_t*)out_data)[i+__IVEC_SIZE/2],itmp[1]);
-	    } else {
-		_ivec_storea(&((uint16_t*)out_data)[i],itmp[0]);
-		_ivec_storea(&((uint16_t*)out_data)[i+__IVEC_SIZE/2],itmp[1]);
-	    }
+	if(final) {
+	    _ivec_stream(&((uint16_t*)out_data)[i],itmp[0]);
+	    _ivec_stream(&((uint16_t*)out_data)[i+__IVEC_SIZE/2],itmp[1]);
+	} else {
+	    _ivec_storea(&((uint16_t*)out_data)[i],itmp[0]);
+	    _ivec_storea(&((uint16_t*)out_data)[i+__IVEC_SIZE/2],itmp[1]);
 	}
-#endif
-	for(;i<len;i++)
-	  ((uint16_t*)out_data)[i]=((uint16_t)((uint8_t*)in_data)[i])<<8;
-#ifdef HAVE_INT_PVECTOR
+    }
     _ivec_empty();
     _ivec_sfence();
 #endif
+	for(;i<len;i++)
+	  ((uint16_t*)out_data)[i]=((uint16_t)((const uint8_t*)in_data)[i])<<8;
 }
 
 static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, int8_t* out_data, unsigned len, int final)
@@ -47,27 +45,25 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, i
     i = 0;
 #ifdef HAVE_INT_PVECTOR
     for(;i<len;i++) {
-	((uint8_t*)out_data)[i]=(uint8_t)((((uint16_t*)in_data)[i])>>8);
+	((uint8_t*)out_data)[i]=(uint8_t)((((const uint16_t*)in_data)[i])>>8);
 	if((((long)out_data)&(__IVEC_SIZE-1))==0) break;
     }
     if((len-i)>=__IVEC_SIZE)
     for(;i<len;i+=__IVEC_SIZE){
 	__ivec outd,itmp[2];
-	itmp[0]  = _ivec_sra_s16_imm(_ivec_loadu(&((uint16_t*)in_data)[i]),8);
-	itmp[1]  = _ivec_sra_s16_imm(_ivec_loadu(&((uint16_t*)in_data)[i+__IVEC_SIZE/2]),8);
+	itmp[0]  = _ivec_sra_s16_imm(_ivec_loadu(&((const uint16_t*)in_data)[i]),8);
+	itmp[1]  = _ivec_sra_s16_imm(_ivec_loadu(&((const uint16_t*)in_data)[i+__IVEC_SIZE/2]),8);
 	outd     = _ivec_s8_from_s16(itmp[0],itmp[1]);
 	if(final)
 	    _ivec_stream(&((uint8_t*)out_data)[i],outd);
 	else
 	    _ivec_storea(&((uint8_t*)out_data)[i],outd);
     }
-#endif
-    for(;i<len;i++)
-	((uint8_t*)out_data)[i]=(uint8_t)((((uint16_t*)in_data)[i])>>8);
-#ifdef HAVE_INT_PVECTOR
     _ivec_empty();
     _ivec_sfence();
 #endif
+    for(;i<len;i++)
+	((uint8_t*)out_data)[i]=(uint8_t)((((const uint16_t*)in_data)[i])>>8);
 }
 
 static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, int32_t* out_data, unsigned len, int final)
@@ -82,14 +78,14 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, 
     j=0;
     len_mm=len&(~(__IVEC_SIZE-1));
     for(;i<len;i++,j+=2){
-	((uint32_t*)out_data)[i]=((uint32_t)((uint16_t*)in_data)[i])<<16;
+	((uint32_t*)out_data)[i]=((uint32_t)((const uint16_t*)in_data)[i])<<16;
 	if((((long)out_data)&(__IVEC_SIZE-1))==0) break;
     }
     if((len_mm-i)>=__IVEC_SIZE)
     for(;i<len_mm;i+=__IVEC_SIZE/2,j+=__IVEC_SIZE)
     {
 	__ivec ind,tmp[2];
-	ind   = _ivec_loadu(&((uint8_t *)in_data)[j]);
+	ind   = _ivec_loadu(&((const uint8_t *)in_data)[j]);
 #if 0 /* slower but portable on non-x86 CPUs version */
 	tmp[0]= _ivec_sll_s32_imm(_ivec_u32_from_lou16(ind),16);
 	tmp[1]= _ivec_sll_s32_imm(_ivec_u32_from_hiu16(ind),16);
@@ -105,48 +101,43 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, 
 	    _ivec_storea(&((uint8_t *)out_data)[j*2+__IVEC_SIZE],tmp[1]);
 	}
     }
-#endif
-    for(;i<len;i++)
-	((uint32_t*)out_data)[i]=((uint32_t)((uint16_t*)in_data)[i])<<16;
-#ifdef HAVE_INT_PVECTOR
     _ivec_sfence();
     _ivec_empty();
 #endif
+    for(;i<len;i++)
+	((uint32_t*)out_data)[i]=((uint32_t)((const uint16_t*)in_data)[i])<<16;
 }
 
 static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, int16_t* out_data, unsigned len, int final)
 {
 #ifdef HAVE_INT_PVECTOR
-    unsigned len_mm,j;
+    unsigned j;
 #endif
     unsigned i;
     i=0;
 #ifdef HAVE_INT_PVECTOR
     j=0;
-    len_mm=len&(~(__IVEC_SIZE-1));
     for(;i<len;i++,j+=2){
-	((uint16_t*)out_data)[i]=(uint16_t)((((uint32_t*)in_data)[i])>>16);
+	((uint16_t*)out_data)[i]=(uint16_t)((((const uint32_t*)in_data)[i])>>16);
 	if((((long)out_data)&(__IVEC_SIZE-1))==0) break;
     }
     if((len-i)>=__IVEC_SIZE)
-    for(;i<len_mm;i+=__IVEC_SIZE/2,j+=__IVEC_SIZE)
+    for(;i<len;i+=__IVEC_SIZE/2,j+=__IVEC_SIZE)
     {
 	__ivec ind[2],tmp;
-	ind[0]= _ivec_sra_s32_imm(_ivec_loadu(&((uint8_t *)in_data)[j*2]),16);
-	ind[1]= _ivec_sra_s32_imm(_ivec_loadu(&((uint8_t *)in_data)[j*2+__IVEC_SIZE]),16);
+	ind[0]= _ivec_sra_s32_imm(_ivec_loadu(&((const uint8_t *)in_data)[j*2]),16);
+	ind[1]= _ivec_sra_s32_imm(_ivec_loadu(&((const uint8_t *)in_data)[j*2+__IVEC_SIZE]),16);
 	tmp   = _ivec_s16_from_s32(ind[0],ind[1]);
 	if(final)
 	    _ivec_stream(&((uint8_t *)out_data)[j],tmp);
 	else
 	    _ivec_storea(&((uint8_t *)out_data)[j],tmp);
     }
-#endif
-    for(;i<len;i++)
-	((uint16_t*)out_data)[i]=(uint16_t)((((uint32_t*)in_data)[i])>>16);
-#ifdef HAVE_INT_PVECTOR
     _ivec_sfence();
     _ivec_empty();
 #endif
+    for(;i<len;i++)
+	((uint16_t*)out_data)[i]=(uint16_t)((((const uint32_t*)in_data)[i])>>16);
 }
 
 static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const void* in_data, void* out_data, unsigned len, unsigned inbps, unsigned outbps,int final)
@@ -312,27 +303,35 @@ static int32_t __FASTCALL__ PVECTOR_RENAME(FIR_i16)(int16_t *x,int16_t *w)
 #endif
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(float* in, int32_t* out, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t* out, unsigned len, int final)
 {
     register unsigned i;
     float ftmp;
 #ifdef HAVE_F32_PVECTOR
-  __f32vec int_max;
+    unsigned len_mm;
+  __f32vec int_max,plus1,minus1;
 #endif
     i=0;
 #ifdef HAVE_F32_PVECTOR
-    int_max = _f32vec_broadcast(INT_MAX-1);
+    int_max = _f32vec_broadcast(INT32_MAX-1);
+    /* SSE engine sometime has unpredictable behaviour. So downscale volume on 1% here. */
+    plus1 = _f32vec_broadcast(+0.99);
+    minus1= _f32vec_broadcast(-0.99);
     for(;i<len;i++) {
-      ftmp=((float*)in)[i];
+      ftmp=((const float*)in)[i];
       SATURATE(ftmp,-1.0,+1.0);
       ((int32_t*)out)[i]=(int32_t)lrintf((INT_MAX-1)*ftmp);
       if((((long)out)&(__F32VEC_SIZE-1))==0) break;
     }
     _ivec_empty();
-    if((len-i)>=__F32VEC_SIZE)
-    for(;i<len;i+=__F32VEC_SIZE/sizeof(float)) {
+    len_mm=len&(~(__F32VEC_SIZE-1));
+    if((len_mm-i)>=__F32VEC_SIZE/sizeof(float))
+    for(;i<len_mm;i+=__F32VEC_SIZE/sizeof(float)) {
 	__f32vec tmp;
-	tmp = _f32vec_mul(int_max,_f32vec_loadu(&((float*)in)[i]));
+	tmp = _f32vec_loadu(&((const float*)in)[i]);
+	tmp = _f32vec_min(tmp,plus1);
+	tmp = _f32vec_max(tmp,minus1);
+	tmp = _f32vec_mul(int_max,tmp);
 	if(final)
 	    _f32vec_to_s32_stream(&((int32_t*)out)[i],tmp);
 	else
@@ -342,14 +341,10 @@ static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(float* in, int32_t* out,
     _ivec_empty();
 #endif
     for(;i<len;i++) {
-      ftmp=((float*)in)[i];
-      SATURATE(ftmp,-1.0,+1.0);
-      ((int32_t*)out)[i]=(int32_t)lrintf((INT_MAX-1)*ftmp);
+      ftmp=((const float*)in)[i];
+      SATURATE(ftmp,-0.99,+0.99);
+      ((int32_t*)out)[i]=(int32_t)lrintf((INT32_MAX-1)*ftmp);
     }
-#ifdef HAVE_INT_PVECTOR
-    _ivec_sfence();
-    _ivec_empty();
-#endif
 }
 
 static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out, unsigned len, int final)
@@ -360,14 +355,14 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out,
   register unsigned i=0;
 #ifdef HAVE_F32_PVECTOR
     for(;i<len;i++) {
-      ((float*)out)[i]=(1.0/INT_MAX)*((float)((int32_t*)in)[i]);
+      ((float*)out)[i]=(1.0/INT_MAX)*((float)((const int32_t*)in)[i]);
       if((((long)out)&(__F32VEC_SIZE-1))==0) break;
     }
     _ivec_empty();
     if((len-i)>=__F32VEC_SIZE)
     for(;i<len;i+=__F32VEC_SIZE/sizeof(float)) {
 	__f32vec tmp;
-	tmp = _f32vec_mul(rev_imax,_f32vec_from_s32u(&((int32_t*)in)[i]));
+	tmp = _f32vec_mul(rev_imax,_f32vec_from_s32u(&((const int32_t*)in)[i]));
 	if(final)
 	    _f32vec_stream(&((float*)out)[i],tmp);
 	else
@@ -377,11 +372,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out,
     _ivec_empty();
 #endif
     for(;i<len;i++)
-      ((float*)out)[i]=(1.0/INT_MAX)*((float)((int32_t*)in)[i]);
-#ifdef HAVE_INT_PVECTOR
-    _ivec_sfence();
-    _ivec_empty();
-#endif
+      ((float*)out)[i]=(1.0/INT_MAX)*((float)((const int32_t*)in)[i]);
 }
 
 static void __FASTCALL__ PVECTOR_RENAME(float2int)(void* in, void* out, int len, int bps,int final)

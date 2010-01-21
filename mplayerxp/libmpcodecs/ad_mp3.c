@@ -212,8 +212,8 @@ static const char* (*mpg123_current_decoder_ptr)(mpg123_handle *mh);
 #define mpg123_current_decoder(a) (*mpg123_current_decoder_ptr)(a)
 static int (*mpg123_decode_frame_ptr)(mpg123_handle *mh, off_t *num, unsigned char **audio, size_t *bytes);
 #define mpg123_decode_frame(a,b,c,d) (*mpg123_decode_frame_ptr)(a,b,c,d)
-static off_t (*mpg123_tell_ptr)(mpg123_handle *mh);
-#define mpg123_tell(a) (*mpg123_tell_ptr)(a)
+static off_t (*mpg123_tell_stream_ptr)(mpg123_handle *mh);
+#define mpg123_tell_stream(a) (*mpg123_tell_stream_ptr)(a)
 
 
 static void *dll_handle;
@@ -234,13 +234,13 @@ static int load_dll(const char *libname)
   mpg123_decode_ptr = ld_sym(dll_handle,"mpg123_decode");
   mpg123_read_ptr = ld_sym(dll_handle,"mpg123_read");
   mpg123_feed_ptr = ld_sym(dll_handle,"mpg123_feed");
-  mpg123_tell_ptr = ld_sym(dll_handle,"mpg123_tell");
+  mpg123_tell_stream_ptr = ld_sym(dll_handle,"mpg123_tell_stream");
   mpg123_decode_frame_ptr = ld_sym(dll_handle,"mpg123_decode_frame");
   return mpg123_decode_ptr && mpg123_init_ptr && mpg123_exit_ptr &&
 	 mpg123_new_ptr && mpg123_delete_ptr && mpg123_plain_strerror_ptr &&
 	 mpg123_open_feed_ptr && mpg123_close_ptr && mpg123_getformat_ptr &&
 	 mpg123_param_ptr && mpg123_info_ptr && mpg123_current_decoder_ptr &&
-	 mpg123_read_ptr && mpg123_feed_ptr && mpg123_decode_frame_ptr && mpg123_tell_ptr;
+	 mpg123_read_ptr && mpg123_feed_ptr && mpg123_decode_frame_ptr && mpg123_tell_stream_ptr;
 }
 
 
@@ -374,7 +374,7 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
      */
     MSG_DBG2("mp3_decode start: pts=%f\n",*pts);
     do {
-	cpos = mpg123_tell(priv->mh);
+	cpos = mpg123_tell_stream(priv->mh);
 	*pts = priv->pts+((float)(cpos-priv->pos)/sh->i_bps);
 	err=mpg123_decode_frame(priv->mh,&offset,&outdata,&done);
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
@@ -388,7 +388,7 @@ int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *
 	    float apts=0.;
 	    indata_size=ds_get_packet_r(sh->ds,&indata,&apts);
 	    if(indata_size<0) return 0;
-	    priv->pos = mpg123_tell(priv->mh);
+	    priv->pos = mpg123_tell_stream(priv->mh);
 	    priv->pts = apts;
 	    mpg123_feed(priv->mh,indata,indata_size);
 	}

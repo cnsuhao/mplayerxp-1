@@ -289,3 +289,31 @@ PVECTOR_RENAME(f32_div)(__f32vec f1,__f32vec f2)
 }
 #undef _f32vec_div
 #define _f32vec_div PVECTOR_RENAME(f32_div)
+
+extern __inline __f32vec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(f32_max)(__f32vec f1,__f32vec f2)
+{
+#ifdef OPTIMIZE_AVX
+    return _mm256_max_ps(f1,f2);
+#elif defined( OPTIMIZE_SSE )
+    return _mm_max_ps(f1,f2);
+#else
+    return _m_pfmax(f1,f2);
+#endif
+}
+#undef _f32vec_max
+#define _f32vec_max PVECTOR_RENAME(f32_max)
+
+extern __inline __f32vec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(f32_min)(__f32vec f1,__f32vec f2)
+{
+#ifdef OPTIMIZE_AVX
+    return _mm256_min_ps(f1,f2);
+#elif defined( OPTIMIZE_SSE )
+    return _mm_min_ps(f1,f2);
+#else
+    return _m_pfmin(f1,f2);
+#endif
+}
+#undef _f32vec_min
+#define _f32vec_min PVECTOR_RENAME(f32_min)
