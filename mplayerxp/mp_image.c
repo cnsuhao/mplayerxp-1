@@ -1,4 +1,3 @@
-
 #include "mp_config.h"
 
 #include <stdio.h>
@@ -143,10 +142,11 @@ void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
     mpi->bpp=0;
 }
 
-mp_image_t* new_mp_image(int w,int h){
+mp_image_t* new_mp_image(unsigned w,unsigned h,unsigned xp_idx){
     mp_image_t* mpi=(mp_image_t*)malloc(sizeof(mp_image_t));
     if(!mpi) return NULL; // error!
     memset(mpi,0,sizeof(mp_image_t));
+    mpi->xp_idx = xp_idx;
     mpi->width=mpi->w=w;
     mpi->height=mpi->h=h;
     return mpi;
@@ -161,10 +161,15 @@ void free_mp_image(mp_image_t* mpi){
     free(mpi);
 }
 
-mp_image_t* alloc_mpi(int w, int h, unsigned int fmt) {
-  mp_image_t* mpi = new_mp_image(w,h);
+mp_image_t* alloc_mpi(unsigned w, unsigned h, unsigned int fmt,unsigned xp_idx) {
+  mp_image_t* mpi = new_mp_image(w,h,xp_idx);
 
   mp_image_setfmt(mpi,fmt);
+  mpi_alloc_planes(mpi);
+  return mpi;
+}
+
+void mpi_alloc_planes(mp_image_t *mpi) {
   // IF09 - allocate space for 4. plane delta info - unused
   if (mpi->imgfmt == IMGFMT_IF09)
     {
@@ -192,8 +197,6 @@ mp_image_t* alloc_mpi(int w, int h, unsigned int fmt) {
     if(!mpi->stride[0]) mpi->stride[0]=mpi->width*mpi->bpp/8;
   }
   mpi->flags|=MP_IMGFLAG_ALLOCATED;
-
-  return mpi;
 }
 
 void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi) {

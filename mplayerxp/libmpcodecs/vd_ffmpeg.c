@@ -87,6 +87,8 @@ typedef struct priv_s
     AVCodec *lavc_codec;
     AVCodecContext *ctx;
     AVFrame *lavc_picture;
+    mp_image_t* mpi;
+    unsigned long long  frame_number; /* total frame number since begin of movie */
     int b_age;
     int ip_age[2];
     int qp_stat[32];
@@ -225,6 +227,7 @@ static int init(sh_video_t *sh){
     vdff_ctx=malloc(sizeof(priv_t));
     memset(vdff_ctx,0,sizeof(priv_t));
     sh->context = vdff_ctx;
+    vdff_ctx->frame_number=-2;
     vdff_ctx->lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
     if(!vdff_ctx->lavc_codec){
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh->codec->dll_name);
@@ -577,9 +580,14 @@ static void draw_slice(struct AVCodecContext *s,
 {
     sh_video_t *sh=s->opaque;
     priv_t *vdff_ctx=sh->context;
-    mp_image_t *mpi;
+    mp_image_t *mpi=vdff_ctx->mpi;
+    unsigned long long int total_frame;
+    unsigned orig_idx = mpi->xp_idx;
+    /* sync-point*/
+    if(src->pict_type==FF_I_TYPE) vdff_ctx->frame_number = src->coded_picture_number;
+    total_frame = vdff_ctx->frame_number;
     if(vdff_ctx->use_dr1) { MSG_DBG2("Ignoring draw_slice due dr1\n"); return; } /* we may call vo_start_slice() here */
-    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,s->width,s->height);
+//    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,s->width,s->height);
 
     mpi->stride[0]=src->linesize[0];
     mpi->stride[1]=src->linesize[1];
@@ -609,9 +617,33 @@ static void draw_slice(struct AVCodecContext *s,
 	mpi->stride[2]=mpi->stride[1];
 	mpi->stride[1]=ls;
     }
-    MSG_DBG2("ff_draw_callback[%ux%u] %i %i %i %i\n",mpi->width,mpi->height,mpi->x,mpi->y,mpi->w,mpi->h);
+#if 0
+    /* handle IPB-frames here */
+    if(total_frame!=src->coded_picture_number) {
+	unsigned long long int tf = total_frame;
+	/* we can do only 1 step forward */
+	if(total_frame<src->coded_picture_number)
+	    mpi->xp_idx = vo_get_decoding_next_frame(mpi->xp_idx);
+	else
+	while(tf>src->coded_picture_number) {
+	    mpi->xp_idx = vo_get_decoding_prev_frame(mpi->xp_idx);
+	    tf--;
+	}
+    }
+#endif
+    MSG_DBG2("ff_draw_callback<%u->%u:%u:%u-%s>[%ux%u] %i %i %i %i\n",
+    orig_idx,mpi->xp_idx,(unsigned)total_frame,src->coded_picture_number,
+    src->pict_type==FF_BI_TYPE?"bi":
+    src->pict_type==FF_SP_TYPE?"sp":
+    src->pict_type==FF_SI_TYPE?"si":
+    src->pict_type==FF_S_TYPE?"s":
+    src->pict_type==FF_B_TYPE?"b":
+    src->pict_type==FF_P_TYPE?"p":
+    src->pict_type==FF_I_TYPE?"i":"??"
+    ,mpi->width,mpi->height,mpi->x,mpi->y,mpi->w,mpi->h);
     __MP_ATOMIC(sh->active_slices++);
     mpcodecs_draw_slice (sh, mpi);
+    mpi->xp_idx = orig_idx;
     __MP_ATOMIC(sh->active_slices--);
 }
 
@@ -630,8 +662,6 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     int ret,has_b_frames;
     priv_t *vdff_ctx=sh->context;
     mp_image_t* mpi=NULL;
-    void *next_put_slice;
-    vf_instance_t *vf;
 
     vdff_ctx->ctx->opaque=sh;
     if(len<=0) return NULL; // skipped frame
@@ -644,24 +674,17 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     if sh->vfilter==vf_vo (DR1 is meaningless into temp buffer)
     It always happens with (vidix+bus mastering), (if (disp_w%16==0)) with xv
 */
-    vf=sh->vfilter;
-    next_put_slice=NULL;
-    while(vf)
-    {
-	/* exclude vf_aspect and similar */
-	if(vf->put_slice != vf_next_put_slice && vf->next) next_put_slice=vf->put_slice;
-	vf=vf->next;
-    }
     has_b_frames=vdff_ctx->ctx->has_b_frames||
 		 sh->format==0x10000001 || /* mpeg1 may have b frames */
 		 vdff_ctx->lavc_codec->id==CODEC_ID_SVQ3||
 		 1;
     mpi= mpcodecs_get_image(sh,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
 			    16,16);
-    if(vdff_ctx->cap_dr1 &&
+    if(!(vdff_ctx->cap_dr1 &&
        vdff_ctx->lavc_codec->id != CODEC_ID_H264 &&
-       !next_put_slice && mpi->flags&MP_IMGFLAG_DIRECT)
-		vdff_ctx->use_dr1=1;
+       vdff_ctx->use_slices && mpi->flags&MP_IMGFLAG_DIRECT && !has_b_frames))
+		vdff_ctx->use_slices=0;
+    if(vdff_ctx->use_slices) vdff_ctx->use_dr1=0;
     if(   sh->format == mmioFOURCC('R', 'V', '1', '0')
        || sh->format == mmioFOURCC('R', 'V', '1', '3')
        || sh->format == mmioFOURCC('R', 'V', '2', '0')
@@ -694,6 +717,8 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     if(!(flags&3) && vdff_ctx->use_slices)
     {
 	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->disp_w, sh->disp_h);
+	vdff_ctx->mpi = mpi;
+	vdff_ctx->frame_number++;
 	vdff_ctx->ctx->draw_horiz_band=draw_slice;
     }
     else vdff_ctx->ctx->draw_horiz_band=NULL; /* skip draw_slice on framedropping */

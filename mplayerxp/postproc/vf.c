@@ -151,34 +151,36 @@ void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h){
 mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h){
   mp_image_t* mpi=NULL;
   int w2=(mp_imgflag&MP_IMGFLAG_ACCEPT_ALIGNED_STRIDE)?((w+15)&(~15)):w;
+  unsigned xp_idx=XP_IDX_INVALID;
+  MSG_DBG2("vf_get_image(%s,0x%X,0x%X,0x%X,0x%X,0x%X) was called\n",vf->info->name,outfmt,mp_imgtype,mp_imgflag,w,h);
 
   if(vf->put_slice==vf_next_put_slice){
-      // passthru mode, if the plugin uses the fallback/default put_image() code
+      MSG_DBG2("passthru mode to %s\n",vf->next->info->name);
       return vf_get_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h);
   }
   // Note: we should call libvo first to check if it supports direct rendering
   // and if not, then fallback to software buffers:
   switch(mp_imgtype){
   case MP_IMGTYPE_EXPORT:
-    if(!vf->imgctx.export_images[0]) vf->imgctx.export_images[0]=new_mp_image(w2,h);
+    if(!vf->imgctx.export_images[0]) vf->imgctx.export_images[0]=new_mp_image(w2,h,xp_idx);
     mpi=vf->imgctx.export_images[0];
     break;
   case MP_IMGTYPE_STATIC:
-    if(!vf->imgctx.static_images[0]) vf->imgctx.static_images[0]=new_mp_image(w2,h);
+    if(!vf->imgctx.static_images[0]) vf->imgctx.static_images[0]=new_mp_image(w2,h,xp_idx);
     mpi=vf->imgctx.static_images[0];
     break;
   case MP_IMGTYPE_TEMP:
-    if(!vf->imgctx.temp_images[0]) vf->imgctx.temp_images[0]=new_mp_image(w2,h);
+    if(!vf->imgctx.temp_images[0]) vf->imgctx.temp_images[0]=new_mp_image(w2,h,xp_idx);
     mpi=vf->imgctx.temp_images[0];
     break;
   case MP_IMGTYPE_IPB:
     if(!(mp_imgflag&MP_IMGFLAG_READABLE)){ // B frame:
-      if(!vf->imgctx.temp_images[0]) vf->imgctx.temp_images[0]=new_mp_image(w2,h);
+      if(!vf->imgctx.temp_images[0]) vf->imgctx.temp_images[0]=new_mp_image(w2,h,xp_idx);
       mpi=vf->imgctx.temp_images[0];
       break;
     }
   case MP_IMGTYPE_IP:
-    if(!vf->imgctx.static_images[vf->imgctx.static_idx]) vf->imgctx.static_images[vf->imgctx.static_idx]=new_mp_image(w2,h);
+    if(!vf->imgctx.static_images[vf->imgctx.static_idx]) vf->imgctx.static_images[vf->imgctx.static_idx]=new_mp_image(w2,h,xp_idx);
     mpi=vf->imgctx.static_images[vf->imgctx.static_idx];
     vf->imgctx.static_idx^=1;
     break;
@@ -190,23 +192,26 @@ mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, in
     mpi->flags&=MP_IMGFLAG_ALLOCATED|MP_IMGFLAG_TYPE_DISPLAYED|MP_IMGFLAGMASK_COLORS;
     // accept restrictions & draw_slice flags only:
     mpi->flags|=mp_imgflag&(MP_IMGFLAGMASK_RESTRICTIONS|MP_IMGFLAG_DRAW_CALLBACK);
+    MSG_DBG2("vf_get_image fills mpi structure. flags=0x%X\n",mpi->flags);
     if(mpi->width!=w2 || mpi->height!=h){
 	if(mpi->flags&MP_IMGFLAG_ALLOCATED){
 	    if(mpi->width<w2 || mpi->height<h){
 		// need to re-allocate buffer memory:
 		free(mpi->planes[0]);
 		mpi->flags&=~MP_IMGFLAG_ALLOCATED;
-		MSG_V("vf.c: have to REALLOCATE buffer memory :(\n");
+		MSG_DBG2("vf.c: have to REALLOCATE buffer memory :(\n");
 	    }
 	}
 	mpi->width=w2; mpi->chroma_width=(w2 + (1<<mpi->chroma_x_shift) - 1)>>mpi->chroma_x_shift;
 	mpi->height=h; mpi->chroma_height=(h + (1<<mpi->chroma_y_shift) - 1)>>mpi->chroma_y_shift;
     }
     if(!mpi->bpp) mp_image_setfmt(mpi,outfmt);
+    MSG_DBG2("vf_get_image setfmt. flags=0x%X\n",mpi->flags);
     if(!(mpi->flags&MP_IMGFLAG_ALLOCATED) && mpi->type>MP_IMGTYPE_EXPORT){
 
 	// check libvo first!
 	if(vf->get_image) vf->get_image(vf,mpi);
+	MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",mpi->xp_idx);
 	
 	if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
 	  // non-direct and not yet allocated image. allocate it!
@@ -228,34 +233,15 @@ mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, in
 		  }
 	      }
 	  }
-	
-	  // IF09 - allocate space for 4. plane delta info - unused
-	  if (mpi->imgfmt == IMGFMT_IF09)
-	  {
-	     mpi->planes[0]=memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8+
-					mpi->chroma_width*mpi->chroma_height);
-	     /* export delta table */
-	     mpi->planes[3]=mpi->planes[0]+(mpi->width*mpi->height)+2*(mpi->chroma_width*mpi->chroma_height);
-	  }
-	  else
-	     mpi->planes[0]=memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8);
-	  if(mpi->flags&MP_IMGFLAG_PLANAR){
-	      // YV12/I420/YVU9/IF09. feel free to add other planar formats here...
-	      //if(!mpi->stride[0])
-	      mpi->stride[0]=mpi->width;
-	      //if(!mpi->stride[1])
-	      mpi->stride[1]=mpi->stride[2]=mpi->chroma_width;
-	      // YV12,I420/IYUV,YVU9,IF09  (Y,V,U)
-	      mpi->planes[2]=mpi->planes[0]+mpi->width*mpi->height;
-	      mpi->planes[1]=mpi->planes[2]+mpi->chroma_width*mpi->chroma_height;
-	  } else {
-	      //if(!mpi->stride[0]) 
-	      mpi->stride[0]=mpi->width*mpi->bpp/8;
-	  }
+
+	  mpi_alloc_planes(mpi);
 //	  printf("clearing img!\n");
-	  vf_mpi_clear(mpi,0,0,mpi->width,mpi->height);
-	  mpi->flags|=MP_IMGFLAG_ALLOCATED;
+//	  vf_mpi_clear(mpi,0,0,mpi->width,mpi->height);
         }
+    }
+    else {
+	MSG_DBG2("vf_get_image forces xp_idx retrieving\n");
+	vo_get_decoding_frame_num(&mpi->xp_idx);
     }
     if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)
 	if(vf->start_slice) vf->start_slice(vf,mpi);
@@ -277,6 +263,7 @@ mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, in
     }
 
   }
+  MSG_DBG2("vf_get_image returns xp_idx=%i\n",mpi->xp_idx);
   return mpi;
 }
 

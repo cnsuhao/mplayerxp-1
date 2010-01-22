@@ -248,7 +248,7 @@ while(!xp_eof){
 		    MSG_DBG2("Sync mpeg pts %f\n", mpeg_timer);
 	    } else		mpeg_timer+=duration;
 	}
-	vo_set_frame_num(&dec_ahead_locked_frame);
+	vo_set_decoding_frame_num(&dec_ahead_locked_frame);
 	/* ----------- compute frame dropping ------------- */
 	LOCK_VDEC_ACTIVE();
 	ada_active_frame= abs_dec_ahead_active_frame;

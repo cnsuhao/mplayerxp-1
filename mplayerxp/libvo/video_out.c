@@ -527,6 +527,7 @@ uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi )
     int width_less_stride;
     MSG_DBG2("dri_vo_dbg: vo_get_surface type=%X flg=%X\n",mpi->type,mpi->flags);
     width_less_stride = 0;
+    mpi->xp_idx = xp_frame;
     if(mpi->flags & MP_IMGFLAG_PLANAR)
     {
 	width_less_stride = mpi->w <= dri_cap.strides[0] &&
@@ -644,16 +645,30 @@ uint32_t __FASTCALL__ vo_get_num_frames( unsigned *nfr )
     return VO_TRUE;
 }
 
-uint32_t __FASTCALL__ vo_get_frame_num( volatile unsigned * fr )
+uint32_t __FASTCALL__ vo_get_decoding_frame_num( volatile unsigned * fr )
 {
     *fr = has_dri ? xp_frame : 0;
-    MSG_DBG3("dri_vo_dbg: %u=vo_get_frame_num\n",*fr);
+    MSG_DBG3("dri_vo_dbg: %u=vo_get_decoding_frame_num\n",*fr);
     return VO_TRUE;
 }
 
-uint32_t __FASTCALL__ vo_set_frame_num( volatile unsigned * fr )
+unsigned __FASTCALL__ vo_get_decoding_next_frame( unsigned idx )
 {
-    MSG_DBG3("dri_vo_dbg: vo_set_frame_num(%u)\n",*fr);
+    unsigned rval;
+    rval = has_dri ? (idx+1)%dri_nframes : 0;
+    return rval;
+}
+
+unsigned __FASTCALL__ vo_get_decoding_prev_frame( unsigned idx )
+{
+    unsigned rval;
+    rval = has_dri ? (idx-1+dri_nframes)%dri_nframes : 0;
+    return rval;
+}
+
+uint32_t __FASTCALL__ vo_set_decoding_frame_num( volatile unsigned * fr )
+{
+    MSG_DBG2("dri_vo_dbg: vo_set_decoding_frame_num(%u) for decoding to\n",*fr);
     xp_frame = *fr;
     dri_has_thread = 1;
     return VO_TRUE;
@@ -663,14 +678,6 @@ uint32_t __FASTCALL__ vo_get_active_frame( volatile unsigned * fr)
 {
     *fr = has_dri ? active_frame : 0;
     MSG_DBG3("dri_vo_dbg: %u=vo_get_active_frame\n",*fr);
-    return VO_TRUE;
-}
-
-uint32_t __FASTCALL__ vo_set_active_frame( volatile unsigned * fr)
-{
-    MSG_DBG3("dri_vo_dbg: vo_set_active_frame(%u)\n",*fr);
-    active_frame = *fr;
-    vo_change_frame();
     return VO_TRUE;
 }
 
@@ -684,9 +691,10 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 	const uint8_t *ps_src[4];
 	int dstStride[4];
 	int finalize=vo_is_final();
+	unsigned idx = mpi->xp_idx;
 	for(i=0;i<4;i++)
 	{
-	    dst[i]=dri_surf[xp_frame].planes[i]+dri_off[i];
+	    dst[i]=dri_surf[idx].planes[i]+dri_off[i];
 	    dstStride[i]=dri_cap.strides[i];
 	    dst[i]+=((mpi->y*dstStride[i])*vod.y_mul[i])/vod.y_div[i];
 	    dst[i]+=(mpi->x*vod.x_mul[i])/vod.x_div[i];
@@ -711,7 +719,7 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 
 void vo_change_frame(void)
 {
-    MSG_DBG3("dri_vo_dbg: vo_change_frame [active_frame=%u]\n",active_frame);
+    MSG_DBG2("dri_vo_dbg: vo_change_frame [active_frame=%u]\n",active_frame);
     if(vo_doublebuffering || (dri_cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
     {
 	video_out->change_frame(active_frame);

@@ -135,7 +135,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf,
   if(!vo_config_count) return 0; // vo not configured?
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED)))
   {
-    MSG_DBG2("vf_vo_draw_slice was called %u %u %u %u\n",mpi->x,mpi->y,mpi->w,mpi->h);
+    MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
     vo_draw_slice(mpi);
   }
   return 1;

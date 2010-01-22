@@ -270,8 +270,11 @@ csp_again:
 // returns NULL or allocated mp_image_t*
 // Note: buffer allocation may be moved to mpcodecs_config_vo() later...
 mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h){
+  MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
   mp_image_t* mpi=vf_get_image(sh->vfilter,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h);
   mpi->x=mpi->y=0;
+  if(mpi->xp_idx==XP_IDX_INVALID)
+    MSG_WARN("[mpcodecs_get_image] Incorrect mpi->xp_idx. Be ready for segfault!\n");
   return mpi;
 }
 

@@ -172,7 +172,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
       pause_mpi = NULL;
     }
     if(!pause_mpi)
-      pause_mpi = alloc_mpi(mpi->w,mpi->h,mpi->imgfmt);
+      pause_mpi = alloc_mpi(mpi->w,mpi->h,mpi->imgfmt,XP_IDX_INVALID);
     copy_mpi(pause_mpi,mpi);
     mp_input_queue_cmd(mp_input_parse_cmd("pause"));
     go2pause = 2;
