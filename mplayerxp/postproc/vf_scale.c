@@ -330,24 +330,17 @@ static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2,
 
 static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;//=mpi->priv;
-    uint8_t *planes[3];
-    int stride[3];
+    uint8_t *planes[4];
+    int stride[4];
     planes[0]=mpi->planes[0];
     stride[0]=mpi->stride[0];
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-      if(mpi->flags&MP_IMGFLAG_SWAPPED){
-          // I420/IYUV  (Y,U,V)
-          planes[1]=mpi->planes[2];
-          planes[2]=mpi->planes[1];
-          stride[1]=mpi->stride[2];
-          stride[2]=mpi->stride[1];
-      } else {
-          // YV12,YVU9,IF09  (Y,V,U)
           planes[1]=mpi->planes[1];
           planes[2]=mpi->planes[2];
+          planes[3]=mpi->planes[3];
           stride[1]=mpi->stride[1];
           stride[2]=mpi->stride[2];
-      }
+          stride[3]=mpi->stride[3];
     }
     MSG_DBG2("vf_scale.put_frame was called\n");
     dmpi=vf_get_image(vf->next,vf->priv->fmt,
@@ -359,24 +352,17 @@ static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;//=mpi->priv;
-    uint8_t *planes[3],*dplanes[3];
-    int stride[3],newy,newh;
+    uint8_t *planes[4],*dplanes[4];
+    int stride[4],newy,newh;
     planes[0]=mpi->planes[0];
     stride[0]=mpi->stride[0];
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-      if(mpi->flags&MP_IMGFLAG_SWAPPED){
-          // I420/IYUV  (Y,U,V)
-          planes[1]=mpi->planes[2];
-          planes[2]=mpi->planes[1];
-          stride[1]=mpi->stride[2];
-          stride[2]=mpi->stride[1];
-      } else {
-          // YV12,YVU9,IF09  (Y,V,U)
           planes[1]=mpi->planes[1];
           planes[2]=mpi->planes[2];
+          planes[3]=mpi->planes[3];
           stride[1]=mpi->stride[1];
           stride[2]=mpi->stride[2];
-      }
+          stride[3]=mpi->stride[3];
     }
     MSG_DBG2("vf_scale.put_slice was called[%i %i]\n",mpi->y, mpi->h);
     dmpi=vf_get_image(vf->next,vf->priv->fmt,
@@ -387,14 +373,17 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     if(mpi->flags&MP_IMGFLAG_PLANAR) {
 	dplanes[1] = dmpi->planes[1];
 	dplanes[2] = dmpi->planes[2];
+	dplanes[3] = dmpi->planes[3];
     }
     planes[0]  += mpi->y*mpi->stride[0];
     dplanes[0] += mpi->y*dmpi->stride[0];
     if(mpi->flags&MP_IMGFLAG_PLANAR){
 	planes[1] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[1];
 	planes[2] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[2];
+	planes[3] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[3];
 	dplanes[1]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[0];
-	dplanes[1]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[0];
+	dplanes[2]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[1];
+	dplanes[3]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[2];
     }
     scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, 0, mpi->h, dplanes, dmpi->stride, vf->priv->interlaced);
     dmpi->y = mpi->y;

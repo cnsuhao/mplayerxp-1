@@ -97,6 +97,7 @@ typedef struct priv_s
     int ip_count;
     int b_count;
     int vo_inited;
+    int hello_printed;
 }priv_t;
 static pp_context_t* ppContext=NULL;
 static void draw_slice(struct AVCodecContext *s,
@@ -372,8 +373,6 @@ static int init(sh_video_t *sh){
 	avcodec_thread_init(vdff_ctx->ctx, lavc_param_threads);
 	MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
     }
-    if(vdff_ctx->cap_slices)
-	MSG_STATUS("Trying to use slice-based rendering in FFMPEG\n");
     /* open it */
     rc = avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec);
     if (rc < 0) {
@@ -680,10 +679,14 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 		 1;
     mpi= mpcodecs_get_image(sh,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
 			    16,16);
-    if(!(vdff_ctx->cap_dr1 &&
+    if(vdff_ctx->cap_dr1 &&
        vdff_ctx->lavc_codec->id != CODEC_ID_H264 &&
-       vdff_ctx->use_slices && mpi->flags&MP_IMGFLAG_DIRECT && !has_b_frames))
-		vdff_ctx->use_slices=0;
+       vdff_ctx->use_slices && mpi->flags&MP_IMGFLAG_DIRECT)
+		vdff_ctx->use_dr1=1;
+    if(has_b_frames) {
+	MSG_V("Disable slice-based rendering in FFMPEG due possible B-frames in video-stream\n");
+	vdff_ctx->use_slices=0;
+    }
     if(vdff_ctx->use_slices) vdff_ctx->use_dr1=0;
     if(   sh->format == mmioFOURCC('R', 'V', '1', '0')
        || sh->format == mmioFOURCC('R', 'V', '1', '3')
@@ -722,6 +725,14 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 	vdff_ctx->ctx->draw_horiz_band=draw_slice;
     }
     else vdff_ctx->ctx->draw_horiz_band=NULL; /* skip draw_slice on framedropping */
+    if(!vdff_ctx->hello_printed) {
+	if(vdff_ctx->use_slices)
+	    MSG_STATUS("Use slice-based rendering in FFMPEG\n");
+	else if (vdff_ctx->use_dr1)
+	    MSG_STATUS("Use DR1 rendering in FFMPEG\n");
+	else
+	vdff_ctx->hello_printed=1;
+    }
     ret = avcodec_decode_video(vdff_ctx->ctx, vdff_ctx->lavc_picture,
 				&got_picture, data, len);
     if(ret<0) MSG_WARN("Error while decoding frame!\n");
