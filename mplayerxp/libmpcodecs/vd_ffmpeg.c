@@ -755,6 +755,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 	mpi->qstride=vdff_ctx->lavc_picture->qstride;
 	mpi->pict_type=vdff_ctx->lavc_picture->pict_type;
 	mpi->qscale_type=vdff_ctx->lavc_picture->qscale_type;
+	/*
 	if(sh->codec->outfmt[sh->outfmtidx] == IMGFMT_I420 ||
 	   sh->codec->outfmt[sh->outfmtidx] == IMGFMT_IYUV)
 	{
@@ -766,7 +767,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 	    ls=mpi->stride[2];
 	    mpi->stride[2]=mpi->stride[1];
 	    mpi->stride[1]=ls;
-	}
+	}*/
 	if(vdff_ctx->ctx->pix_fmt==PIX_FMT_YUV422P){
 	    mpi->stride[1]*=2;
 	    mpi->stride[2]*=2;

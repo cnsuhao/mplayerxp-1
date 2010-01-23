@@ -207,7 +207,7 @@ const ao_info_t* ao_get_info( void )
     return audio_out->info;
 }
 
-int __FASTCALL__ ao_init(int flags)
+int __FASTCALL__ ao_init(unsigned flags)
 {
     int retval;
     retval = audio_out->init(flags);
@@ -215,7 +215,7 @@ int __FASTCALL__ ao_init(int flags)
     return retval;
 }
 
-int __FASTCALL__ ao_configure(int rate,int channels,int format)
+int __FASTCALL__ ao_configure(unsigned rate,unsigned channels,unsigned format)
 {
     int retval;
     retval=audio_out->configure(rate,channels,format);
@@ -233,7 +233,7 @@ void ao_reset(void)
     if(ao_inited) audio_out->reset();
 }
 
-int ao_get_space(void)
+unsigned ao_get_space(void)
 {
     return ao_inited?audio_out->get_space():0;
 }
@@ -243,7 +243,7 @@ float ao_get_delay(void)
     return ao_inited?audio_out->get_delay():0;
 }
 
-int __FASTCALL__ ao_play(void* data,int len,int flags)
+unsigned __FASTCALL__ ao_play(void* data,unsigned len,unsigned flags)
 {
     return ao_inited?audio_out->play(data,len,flags):0;
 }

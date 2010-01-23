@@ -32,7 +32,7 @@ af_cfg_t af_cfg; // Configuration for audio filters
 
 static const ad_functions_t* mpadec;
 
-extern int force_srate;
+extern unsigned force_srate;
 extern char *audio_codec;
 int init_audio(sh_audio_t *sh_audio)
 {
@@ -270,14 +270,14 @@ int reinit_audio_filters(sh_audio_t *sh_audio,
 				out_minsize,out_maxsize);
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,int buflen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
 {
-  int len;
+  unsigned len;
   unsigned cp_size,cp_tile;
   af_data_t  afd;  // filter input
   af_data_t* pafd; // filter output
 
-  if(!sh_audio->inited) return -1; // no codec
+  if(!sh_audio->inited) return 0; // no codec
   MSG_DBG3("decode_audio(%p,%p,%i,%i,%i,%p)\n",sh_audio,buf,minlen,maxlen,buflen,pts);
 
   if(minlen>maxlen) MSG_WARN(MSGTR_CODEC_XP_INT_ERR,minlen,maxlen);
@@ -302,7 +302,7 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,i
   len=mpadec->decode_audio(sh_audio,buf, minlen, maxlen,pts);
   if(len>buflen) MSG_WARN(MSGTR_CODEC_BUF_OVERFLOW,sh_audio->codec->driver_name,len,buflen);
   MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
-  if(len<=0 || !sh_audio->afilter) return len; // EOF?
+  if(len==0 || !sh_audio->afilter) return 0; // EOF?
   // run the filters:
   afd.audio=buf;
   afd.len=len;
@@ -313,7 +313,7 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,i
 
   if(!pafd) {
       MSG_V("decaudio: filter error\n");
-      return -1; // error
+      return 0; // error
   }
 
   MSG_DBG2("decaudio: %X in=%d out=%d (min %d max %d buf %d)\n",

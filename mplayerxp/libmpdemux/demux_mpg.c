@@ -705,7 +705,7 @@ static int mpgps_probe(demuxer_t*demuxer)
 	    mpg_stat.num_h264_sps=
 	    mpg_stat.num_h264_pps=
 	    mpg_stat.num_mp3audio_packets=0;
-	    
+
 	    rval=mpgps_demux(demuxer,demuxer->video);
 	    MSG_V("MPEG packet stats: p100: %d  p101: %d p1B3: %d p1B6: %d p12x: %d PES: %d\n"
 		"MPEG packet stats: sli: %d dpa: %d dpb: %d dpc: %d idr: %d sps: %d pps: %d\n"
@@ -786,7 +786,7 @@ static int mpgps_probe(demuxer_t*demuxer)
 	}
 	else
 	{
-		/* 
+		/*
 		NK: Main hack is here !!!
 		We have something packetized - means both audio and video should be present!
 		But some streams are "badly" interleaved.

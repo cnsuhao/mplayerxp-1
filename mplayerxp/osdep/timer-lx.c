@@ -33,20 +33,20 @@ unsigned int GetTimer(){
   struct timeval tv;
   struct timezone tz;
 //  float s;
-  gettimeofday(&tv,&tz);
+  gettimeofday(&tv,NULL);
 //  s=tv.tv_usec;s*=0.000001;s+=tv.tv_sec;
-  return (tv.tv_sec*1000000+tv.tv_usec);
-}  
+  return (tv.tv_sec*1000000ULL+tv.tv_usec);
+}
 
 // Returns current time in milliseconds
 unsigned int GetTimerMS(){
   struct timeval tv;
   struct timezone tz;
 //  float s;
-  gettimeofday(&tv,&tz);
+  gettimeofday(&tv,NULL);
 //  s=tv.tv_usec;s*=0.000001;s+=tv.tv_sec;
   return (tv.tv_sec*1000+tv.tv_usec/1000);
-}  
+}
 
 static unsigned int RelativeTime=0;
 
@@ -70,13 +70,13 @@ int InitTimer(void){
 
 	/* if (ioctl(rtc_fd, RTC_IRQP_SET, _) < 0) */
 	if (ioctl(rtc_fd, RTC_IRQP_READ, &irqp) < 0) {
-    		perror ("Linux RTC init: ioctl (rtc_irqp_read)");
-    		close (rtc_fd);
-    		rtc_fd = -1;
+		perror ("Linux RTC init: ioctl (rtc_irqp_read)");
+		close (rtc_fd);
+		rtc_fd = -1;
 	} else if (ioctl(rtc_fd, RTC_PIE_ON, 0) < 0) {
 		/* variable only by the root */
-    		perror ("Linux RTC init: ioctl (rtc_pie_on)");
-    		close (rtc_fd);
+		perror ("Linux RTC init: ioctl (rtc_pie_on)");
+		close (rtc_fd);
 		rtc_fd = -1;
 	} else
 		MSG_V("Using Linux's hardware RTC timing (%ldHz)\n", irqp);
@@ -90,11 +90,11 @@ float SleepTime(int rtc_fd,int softsleep,float time_frame)
 #ifdef HAVE_RTC
     if(rtc_fd>=0){
 	// -------- RTC -----------
-        while (time_frame > 0.000) {
+	while (time_frame > 0.000) {
 	    unsigned long rtc_ts;
 	    if (read (rtc_fd, &rtc_ts, sizeof(rtc_ts)) <= 0)
 		    MSG_ERR( "Linux RTC read error: %s\n", strerror(errno));
-    	    time_frame-=GetRelativeTime();
+	    time_frame-=GetRelativeTime();
 	}
     } else
 #endif

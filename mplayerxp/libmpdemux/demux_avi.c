@@ -694,7 +694,7 @@ if(index_mode>=2 || (priv->idx_size==0 && index_mode==1)){
     idx->dwFlags|=(demuxer->filepos>>16)&0xffff0000U;
     idx->dwChunkOffset=(unsigned long)demuxer->filepos;
     idx->dwChunkLength=len;
-    
+
     c=stream_read_dword(demuxer->stream);
 
     // Fix keyframes for DivX files:

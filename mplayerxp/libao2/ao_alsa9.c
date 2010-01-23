@@ -2,11 +2,11 @@
   ao_alsa9 - ALSA-0.9.x output plugin for MPlayer
 
   (C) Alex Beregszaszi <alex@naxine.org>
-  
+
   modified for real alsa-0.9.0-support by Joy Winter <joy@pingfm.org>
   additional AC3 passthrough support by Andy Lo A Foe <andy@alsaplayer.org>  
   08/22/2002 iec958-init rewritten and merged with common init, joy
-  
+
   Any bugreports regarding to this driver are welcome.
 */
 
@@ -51,8 +51,8 @@ static snd_pcm_sw_params_t *alsa_swparams;
 /* 16 sets buffersize to 16 * chunksize is as default 1024
  * which seems to be good avarge for most situations 
  * so buffersize is 16384 frames by default */
-static int alsa_fragcount = 16;
-static int chunk_size = 1024; //is alsa_fragsize / 4
+static unsigned alsa_fragcount = 16;
+static unsigned chunk_size = 1024; //is alsa_fragsize / 4
 
 #define MIN_CHUNK_SIZE 1024
 
@@ -276,7 +276,7 @@ static int __FASTCALL__ control(int cmd, long arg)
   }
 }
 #endif
-    
+
   } //end witch
   return(CONTROL_UNKNOWN);
 }
@@ -353,17 +353,18 @@ static mrl_config_t alsaconf[]={
     open & setup audio device
     return: 1=success 0=fail
 */
-static int __FASTCALL__ init(int flags)
+static int __FASTCALL__ init(unsigned flags)
 {
     int err;
     int cards = -1;
-    int period_val;
+    unsigned period_val;
     snd_pcm_info_t *alsa_info;
     char *str_block_mode;
     char *alsa_dev=NULL;
     char *alsa_port=NULL;
     char alsa_device[ALSA_DEVICE_SIZE];
 
+    UNUSED(flags);
     alsa_handler = NULL;
     alsa_device[0]='\0';
 
@@ -504,7 +505,7 @@ static int __FASTCALL__ init(int flags)
 	MSG_ERR("alsa-init: error set block-mode %s\n", snd_strerror(err));
       }
       else MSG_V("alsa-init: pcm opend in %s\n", str_block_mode);
-      
+
       snd_pcm_hw_params_malloc(&alsa_hwparams);
       snd_pcm_sw_params_malloc(&alsa_swparams);
 
@@ -558,7 +559,7 @@ static int __FASTCALL__ init(int flags)
 	//set period_count
 	snd_pcm_hw_params_get_periods_max(alsa_hwparams,&period_val, 0);
 	if (period_val < alsa_fragcount) {
-	  alsa_fragcount = period_val;			
+	  alsa_fragcount = period_val;
 	}
 
 	MSG_V("alsa-init: current val=%i, fragcount=%i\n", period_val, alsa_fragcount);
@@ -574,9 +575,10 @@ static int __FASTCALL__ init(int flags)
     return 1;
 } // end init
 
-static int __FASTCALL__ configure(int rate_hz, int channels, int format)
+static int __FASTCALL__ configure(unsigned rate_hz, unsigned channels, unsigned format)
 {
-    int err,i;
+    int err;
+    unsigned i;
     snd_pcm_uframes_t dummy;
 
     MSG_V("alsa-conf: requested format: %d Hz, %d channels, %s\n", rate_hz,
@@ -623,13 +625,13 @@ static int __FASTCALL__ configure(int rate_hz, int channels, int format)
     bytes_per_sample = ao_data.bps / ao_data.samplerate;
 
       if ((err = snd_pcm_hw_params_set_format(alsa_handler, alsa_hwparams,
-					      alsa_format)) < 0)
+						alsa_format)) < 0)
 	{
 	  MSG_ERR("alsa-conf: unable to set format(%s): %s\n",
 		 snd_pcm_format_name(alsa_format),
 		 snd_strerror(err));
 	  MSG_HINT("Please try one of: ");
-	  for(i=0;i<SND_PCM_FORMAT_LAST;i++) 
+	  for(i=0;i<SND_PCM_FORMAT_LAST;i++)
 	    if (!(snd_pcm_hw_params_test_format(alsa_handler, alsa_hwparams, i)))
 		MSG_HINT("%s ",snd_pcm_format_name(i));
 	  MSG_HINT("\n");
@@ -805,9 +807,10 @@ static void reset(void)
     thanxs for marius <marius@rospot.com> for giving us the light ;)
 */
 
-static int __FASTCALL__ play(void* data, int len, int flags)
+static unsigned __FASTCALL__ play(void* data, unsigned len, unsigned flags)
 {
-  int num_frames;
+  unsigned num_frames;
+  UNUSED(flags);
   snd_pcm_sframes_t res = 0;
   len = len / ao_data.outburst * ao_data.outburst;
   num_frames = len / bytes_per_sample;
@@ -844,20 +847,21 @@ static int __FASTCALL__ play(void* data, int len, int flags)
       }
   } while (res == 0);
 
-  return res < 0 ? res : res * bytes_per_sample;
+  return res * bytes_per_sample;
 }
 
 /* how many byes are free in the buffer */
-static int get_space(void)
+static unsigned get_space(void)
 {
     snd_pcm_status_t *status;
-    int ret;
+    unsigned ret;
+    int err;
 
     snd_pcm_status_alloca(&status);
 
-    if ((ret = snd_pcm_status(alsa_handler, status)) < 0)
+    if ((err = snd_pcm_status(alsa_handler, status)) < 0)
     {
-	MSG_ERR("ao_alsa: cannot get PCM status: %s\n", snd_strerror(ret));
+	MSG_ERR("ao_alsa: cannot get PCM status: %s\n", snd_strerror(err));
 	return 0;
     }
 

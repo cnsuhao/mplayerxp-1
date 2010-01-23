@@ -208,7 +208,7 @@ static void mov_build_index(mov_track_t* trak,int timescale){
 	} else MSG_ERR( "*** constant samplesize & variable duration not yet supported! ***\nContact the author if you have such sample file!\n");
 	return;
     }
-    
+
     if (trak->samples_size < s) {
       MSG_WARN("MOV: durmap or chunkmap bigger than sample count (%i vs %i)\n",
              s, trak->samples_size);
@@ -217,7 +217,7 @@ static void mov_build_index(mov_track_t* trak,int timescale){
 	    realloc(trak->samples, sizeof(mov_sample_t) * s):
 	    calloc(s, sizeof(mov_sample_t));
     }
-    
+
     // calc pts:
     s=0;
     for(j=0;j<trak->durmap_size;j++){
@@ -227,7 +227,7 @@ static void mov_build_index(mov_track_t* trak,int timescale){
 	    pts+=trak->durmap[j].dur;
 	}
     }
-    
+
     // calc sample offsets
     s=0;
     for(j=0;j<trak->chunks_size;j++){

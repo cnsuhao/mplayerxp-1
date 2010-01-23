@@ -248,7 +248,7 @@ static int dapsync=0;
 static int softsleep=0;
 
 static float force_fps=0;
-int force_srate=0;
+unsigned force_srate=0;
 int frame_dropping=0; // option  0=no drop  1= drop vo  2= drop decode
 static int play_n_frames=-1;
 static uint32_t our_n_frames=0;
@@ -307,8 +307,8 @@ typedef struct audio_buffer_s {
     unsigned char* buffer;
     int head;
     int tail;
-    int len;
-    int size;
+    unsigned len;
+    unsigned size;
     int min_reserv;
     int min_len;
     int eof;
@@ -404,9 +404,10 @@ void uninit_audio_buffer(void)
     /* audio_buffer.sh_audio = ?; */
 }
 
-int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, int minlen, int maxlen, float *pts ) 
+int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, unsigned minlen, unsigned maxlen, float *pts )
 {
-    int len = 0, l = 0;
+    unsigned len = 0;
+    int l = 0;
     int next_idx;
     int head_idx;
     int head_pos;
@@ -432,7 +433,7 @@ int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, int minlen, int
             continue;
         }
 
-        l = min( maxlen - len, audio_buffer.head - audio_buffer.tail );
+        l = min( (int)(maxlen - len), audio_buffer.head - audio_buffer.tail );
         if(l<0) {
             l = min( maxlen - len, audio_buffer.len - audio_buffer.tail );
             if( l == 0 ) {
@@ -446,7 +447,7 @@ int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, int minlen, int
         len += l;
         audio_buffer.tail += l;
         if( audio_buffer.tail >= audio_buffer.len && audio_buffer.tail != audio_buffer.head )
-            audio_buffer.tail = 0; 
+            audio_buffer.tail = 0;
     }
 
     if( len > 0 ) { /* get pts to return and calculate next pts */
@@ -459,7 +460,7 @@ int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, int minlen, int
             next_idx = (audio_buffer.index_tail+1)%audio_buffer.index_len;
         }
         *pts = audio_buffer.indices[audio_buffer.index_tail].pts;
-        
+
         MSG_DBG3("audio_ahead: len %i, tail %i pts %.3f  tail_idx %3i  head_idx %3i  head_pos %3i\n", len,audio_buffer.tail,*pts, audio_buffer.index_tail, head_idx, head_pos );
         while( next_idx != head_idx &&
                ((audio_buffer.tail <= head &&
@@ -493,7 +494,7 @@ float get_delay_audio_buffer(void)
     return (float)delay / (float)audio_buffer.sh_audio->af_bps;
 }
 
-int decode_audio_buffer(int len)
+int decode_audio_buffer(unsigned len)
 {
     int ret, blen, l, l2;
     int next_idx;
@@ -536,7 +537,7 @@ int decode_audio_buffer(int len)
         }
     }
     MSG_DBG3("decode audio %d   h %d, t %d, l %d \n", len, audio_buffer.head, audio_buffer.tail,  audio_buffer.len);
-        
+
     for( l = 0, l2 = len, ret = 0; l < len && l2 >= audio_buffer.sh_audio->audio_out_minsize; ) {
 	float pts;
         ret = decode_audio( audio_buffer.sh_audio, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
@@ -557,7 +558,7 @@ int decode_audio_buffer(int len)
         blen -= ret;
     }
     MSG_DBG2("decoded audio %d   diff %d\n", l, l - len);
-    
+
     if( ret <= 0 && d_audio->eof) {
         MSG_V("xp_audio_eof\n");
         audio_buffer.eof=1;
@@ -573,7 +574,7 @@ int decode_audio_buffer(int len)
     if( audio_buffer.head >= audio_buffer.size && audio_buffer.tail > 0 )
         audio_buffer.head = 0;
 
-    pthread_cond_signal( &audio_buffer.wait_buffer_cond );    
+    pthread_cond_signal( &audio_buffer.wait_buffer_cond );
 
     t=GetTimer()-t;
     audio_decode_time_usage+=t*0.000001f;
@@ -1059,7 +1060,7 @@ while(sh_audio){
           ret=decode_audio(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
                            playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
-    if(ret>0) sh_audio->a_buffer_len+=ret; 
+    if(ret>0) sh_audio->a_buffer_len+=ret;
     else {
       if(!d_audio->eof)
 	break;
@@ -1170,7 +1171,7 @@ static int osd_last_pts=-303;
 	  osd_show_av_delay--;
       } else
 #ifdef ENABLE_DEC_AHEAD_DEBUG
-          if(verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d abs frame: %u",osd_function,pts/3600,(pts/60)%60,pts%60,abs_dec_ahead_active_frame);
+	  if(verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d abs frame: %u",osd_function,pts/3600,(pts/60)%60,pts%60,abs_dec_ahead_active_frame);
 	  else sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);
 #else
           sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);
@@ -1191,7 +1192,7 @@ static int osd_last_pts=-303;
 //================= Update OSD ====================
 void update_subtitle(float v_pts)
 {
-  
+
 #ifdef USE_SUB
   // find sub
   if(subtitles && v_pts>0){
@@ -1204,7 +1205,7 @@ void update_subtitle(float v_pts)
       }
       pinfo[xp_id].current_module=NULL;
   }
-#endif
+#endif  8
 
   // DVD sub:
 #if 0
@@ -1306,7 +1307,7 @@ int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, fl
   }
 
 // ==========================================================================
-    
+
     pinfo[xp_id].current_module="draw_osd";
     vo_draw_osd();
 
@@ -1326,66 +1327,60 @@ int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, fl
 
       time_frame=0;	// don't sleep!
       blit_frame=0;	// don't display!
-      
+
     } else {
 
       // It's time to sleep...
-      
+
       frame_time_remaining=0;
       time_frame-=GetRelativeTime(); // reset timer
 
       if(sh_audio && !d_audio->eof){
-	  float delay=ao_get_delay();
-	  MSG_DBG2("delay=%f\n",delay);
-
+	float delay=ao_get_delay();
+	MSG_DBG2("delay=%f\n",delay);
 	if(!dapsync){
-
 	      /* Arpi's AV-sync */
-
-          time_frame=sh_video->timer;
-          time_frame-=sh_audio->timer-delay;
-
+	  time_frame=sh_video->timer;
+	  time_frame-=sh_audio->timer-delay;
 	} else {  // if(!dapsync)
-
 	      /* DaP's AV-sync */
-
-    	      float SH_AV_delay;
+	      float SH_AV_delay;
 	      /* SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay + sh_audio->a_buffer_len) / (float)sh_audio->af_bps); */
 	      SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay) / (float)sh_audio->af_bps);
 	      if(SH_AV_delay<-2*frame_time){
 		  static int drop_message=0;
-	          drop_frame=frame_dropping; // tricky!
-	          ++vstat->drop_frame_cnt;
+		  drop_frame=frame_dropping; // tricky!
+		  ++vstat->drop_frame_cnt;
 		  if(vstat->drop_frame_cnt>50 && AV_delay>0.5 && !drop_message){
 		      drop_message=1;
 		      if(mpxp_after_seek) mpxp_after_seek--;
 		      else {
 			MSG_WARN(MSGTR_SystemTooSlow);
 		      }
-	         }
+		 }
 		MSG_INFO("A-V SYNC: FRAMEDROP (SH_AV_delay=%.3f)!\n", SH_AV_delay);
-	        MSG_DBG2("\nframe drop %d, %.2f\n", drop_frame, time_frame);
-	        /* go into unlimited-TF cycle */
-    		time_frame = SH_AV_delay;
+		MSG_DBG2("\nframe drop %d, %.2f\n", drop_frame, time_frame);
+		/* go into unlimited-TF cycle */
+		time_frame = SH_AV_delay;
 	      } else {
 #define	SL_CORR_AVG_LEN	125
-	        /* don't adjust under framedropping */
-	        time_frame_corr_avg = (time_frame_corr_avg * (SL_CORR_AVG_LEN - 1) +
-	    				(SH_AV_delay - time_frame)) / SL_CORR_AVG_LEN;
+		/* don't adjust under framedropping */
+		time_frame_corr_avg = (time_frame_corr_avg * (SL_CORR_AVG_LEN - 1) +
+					(SH_AV_delay - time_frame)) / SL_CORR_AVG_LEN;
 #define	UNEXP_CORR_MAX	0.1	/* limit of unexpected correction between two frames (percentage) */
 #define	UNEXP_CORR_WARN	1.0	/* warn limit of A-V lag (percentage) */
-	        time_frame += time_frame_corr_avg;
-	        if (SH_AV_delay - time_frame < (frame_time + time_frame_corr_avg) * UNEXP_CORR_MAX &&
+		time_frame += time_frame_corr_avg;
+		if (SH_AV_delay - time_frame < (frame_time + time_frame_corr_avg) * UNEXP_CORR_MAX &&
 		    SH_AV_delay - time_frame > (frame_time + time_frame_corr_avg) * -UNEXP_CORR_MAX)
 		    time_frame = SH_AV_delay;
-	        else {
+		else {
 		    if (SH_AV_delay - time_frame > (frame_time + time_frame_corr_avg) * UNEXP_CORR_WARN ||
-		        SH_AV_delay - time_frame < (frame_time + time_frame_corr_avg) * -UNEXP_CORR_WARN)
-		        MSG_WARN( "WARNING: A-V SYNC LAG TOO LARGE: %.3f {%.3f - %.3f} (too little UNEXP_CORR_MAX?)\n",
-		  	    SH_AV_delay - time_frame, SH_AV_delay, time_frame);
-		        time_frame += (frame_time + time_frame_corr_avg) * ((SH_AV_delay > time_frame) ?
-		    		      UNEXP_CORR_MAX : -UNEXP_CORR_MAX);
-	        }
+			SH_AV_delay - time_frame < (frame_time + time_frame_corr_avg) * -UNEXP_CORR_WARN)
+			MSG_WARN( "WARNING: A-V SYNC LAG TOO LARGE: %.3f {%.3f - %.3f} (too little UNEXP_CORR_MAX?)\n",
+			    SH_AV_delay - time_frame, SH_AV_delay, time_frame);
+			time_frame += (frame_time + time_frame_corr_avg) * ((SH_AV_delay > time_frame) ?
+				UNEXP_CORR_MAX : -UNEXP_CORR_MAX);
+		}
 	      }	/* /start dropframe */
 
 	} // if(dapsync)
@@ -1397,19 +1392,14 @@ int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, fl
 	    frame_time_remaining=1;
 	    time_frame=delay*0.5;
 	}
-
       } else {
-
-          // NOSOUND:
-          if( (time_frame<-3*frame_time || time_frame>3*frame_time) || benchmark)
+	  // NOSOUND:
+	  if( (time_frame<-3*frame_time || time_frame>3*frame_time) || benchmark)
 	      time_frame=0;
-	  
       }
-
       (*aq_sleep_time)+=time_frame;
-
     }	// !drop_frame
-    
+
 //============================== SLEEP: ===================================
 
 // flag 256 means: libvo driver does its timing (dvb card)
@@ -1422,10 +1412,10 @@ if(time_frame>0.001 && !(vo_flags&256)){
 
 //====================== FLIP PAGE (VIDEO BLT): =========================
 
-        pinfo[xp_id].current_module="change_frame1";
+	pinfo[xp_id].current_module="change_frame1";
 
 	vo_check_events(); /* check events AST */
-        if(blit_frame && !frame_time_remaining){
+	if(blit_frame && !frame_time_remaining){
 	   unsigned int t2=GetTimer();
 	   double tt;
 	   float j;
@@ -1468,10 +1458,10 @@ if(time_frame>0.001 && !(vo_flags&256)){
     if(pts_from_bps){
 	// PTS = sample_no / samplerate
 	unsigned int samples=(sh_audio->audio.dwSampleSize)?
-          ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
-          (d_audio->pack_no); // <- used for VBR audio
+	  ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
+	  (d_audio->pack_no); // <- used for VBR audio
 	samples+=sh_audio->audio.dwStart; // offset
-        a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
+	a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
 	delay_corrected=1;
     } else {
       // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
@@ -1484,26 +1474,26 @@ if(time_frame>0.001 && !(vo_flags&256)){
       MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-audio_delay-delay,*v_pts,(a_pts-delay-audio_delay)-*v_pts);
 
       if(delay_corrected){
-        float x;
+	float x;
 	AV_delay=(a_pts-delay-audio_delay)-*v_pts;
-        x=AV_delay*0.1f;
-        if(x<-max_pts_correction) x=-max_pts_correction; else
-        if(x> max_pts_correction) x= max_pts_correction;
-        if(default_max_pts_correction>=0)
-          max_pts_correction=default_max_pts_correction;
-        else
-          max_pts_correction=sh_video->frametime*0.10; // +-10% of time
+	x=AV_delay*0.1f;
+	if(x<-max_pts_correction) x=-max_pts_correction; else
+	if(x> max_pts_correction) x= max_pts_correction;
+	if(default_max_pts_correction>=0)
+	  max_pts_correction=default_max_pts_correction;
+	else
+	  max_pts_correction=sh_video->frametime*0.10; // +-10% of time
 	if(!frame_time_remaining){ sh_audio->timer+=x; c_total+=x;} // correction
-        if(benchmark && verbose) MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
+	if(benchmark) MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
 	  a_pts-audio_delay-delay,*v_pts,AV_delay,c_total,
-          (int)sh_video->num_frames,(int)sh_video->num_frames_decoded,
-          (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-          (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-          (sh_video->timer>0.5)?(100.0*audio_time_usage/(double)sh_video->timer):0
-          ,vstat->drop_frame_cnt
+	  (int)sh_video->num_frames,(int)sh_video->num_frames_decoded,
+	  (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
+	  (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
+	  (sh_video->timer>0.5)?(100.0*audio_time_usage/(double)sh_video->timer):0
+	  ,vstat->drop_frame_cnt
 	  ,output_quality
-        );
-        fflush(stdout);
+	);
+	fflush(stdout);
       }
     }
     /* let it paints audio timer instead of video */
@@ -1551,7 +1541,7 @@ int xp_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, floa
 	if(sh_video->chapter_change == -1) { /* First frame after seek */
 	    while(*v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay()==0.0)
 		usleep(0);		 /* Wait for audio to start play */
-	    if(sh_audio->timer > 2.0 && *v_pts < 1.0) { 
+	    if(sh_audio->timer > 2.0 && *v_pts < 1.0) {
 		MSG_V("Video chapter change detected\n");
 		sh_video->chapter_change=1;
 	    } else {
@@ -1592,7 +1582,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	    time_frame=sh_video->timer-(sh_audio->timer-ao_get_delay());
 	else if(use_pts_fix2 && sh_audio->chapter_change)
 	    time_frame=0;
-        else
+	else
 	    goto nosound_model;
     }
     else
@@ -1609,51 +1599,54 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 #define XP_MIN_AUDIOBUFF 0.05
 #define XP_MAX_TIMESLICE 0.1
 
-        if(sh_audio && (!audio_eof || ao_get_delay()) && time_frame>XP_MAX_TIMESLICE) {
-            float t;
-            if(benchmark && verbose) {
-                float a_pts=0;
-                float delay=ao_get_delay();
-                float video_pts = *v_pts;
-                if(av_sync_pts) {
-                    a_pts = sh_audio->timer;
-                } else if(pts_from_bps){
-                    unsigned int samples=(sh_audio->audio.dwSampleSize)?
-                        ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
-                        (d_audio->pack_no); // <- used for VBR audio
-                    samples+=sh_audio->audio.dwStart; // offset
-                    a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
-                } else {
-                    // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
-                    a_pts=d_audio->pts;
-                    a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-                }
-                if( !av_sync_pts && enable_xp>=XP_VideoAudio )
-                    delay += get_delay_audio_buffer();
-                AV_delay = a_pts-audio_delay-delay - video_pts;
-                MSG_V("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
-                           a_pts-audio_delay-delay,video_pts,AV_delay,c_total,
-                           (int)sh_video->num_frames,num_frames_decoded,
-                           (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-                           (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-                           (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-                           ,vstat->drop_frame_cnt
-                           ,output_quality
-                           );
-                fflush(stdout);
-            }
+	if(sh_audio && (!audio_eof || ao_get_delay()) && time_frame>XP_MAX_TIMESLICE) {
+	    float t;
+	    if(benchmark) {
+		float a_pts=0;
+		float delay=ao_get_delay();
+		float video_pts = *v_pts;
+		if(av_sync_pts) {
+		    a_pts = sh_audio->timer;
+		} else if(pts_from_bps){
+		unsigned int samples=(sh_audio->audio.dwSampleSize)?
+			((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
+			(d_audio->pack_no); // <- used for VBR audio
+		    samples+=sh_audio->audio.dwStart; // offset
+		    a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
+		} else {
+		    // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
+		    a_pts=d_audio->pts;
+		    a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+		}
+		if( !av_sync_pts && enable_xp>=XP_VideoAudio )
+		    delay += get_delay_audio_buffer();
+		AV_delay = a_pts-audio_delay-delay - video_pts;
+		MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i] %i of %i]\n",
+			   a_pts-audio_delay-delay,video_pts,AV_delay,c_total,
+			   (int)sh_video->num_frames,num_frames_decoded,
+			   (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
+			   (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
+			   (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+			   ,vstat->drop_frame_cnt
+			   ,output_quality
+			   ,dec_ahead_active_frame
+			   ,da_locked_frame
+			   ,xp_num_frames
+			   );
+		fflush(stdout);
+	    }
 
-            if( enable_xp < XP_VAPlay ) {
-                t=ao_get_delay()-XP_MIN_AUDIOBUFF;
-                if(t>XP_MAX_TIMESLICE)
-                    t=XP_MAX_TIMESLICE;
-            } else
-                t = XP_MAX_TIMESLICE;
+	    if( enable_xp < XP_VAPlay ) {
+		t=ao_get_delay()-XP_MIN_AUDIOBUFF;
+		if(t>XP_MAX_TIMESLICE)
+		    t=XP_MAX_TIMESLICE;
+	    } else
+		t = XP_MAX_TIMESLICE;
 
-            usleep(t*1000000);
-            time_frame-=GetRelativeTime();
-            if(enable_xp >= XP_VAPlay || t<XP_MAX_TIMESLICE || time_frame>XP_MAX_TIMESLICE) {
-                vo_check_events();
+	    usleep(t*1000000);
+	    time_frame-=GetRelativeTime();
+	    if(enable_xp >= XP_VAPlay || t<XP_MAX_TIMESLICE || time_frame>XP_MAX_TIMESLICE) {
+		vo_check_events();
 		return 0;
             }
         }
@@ -1672,8 +1665,8 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
     /* don't flip if there is nothing new to display */
     if(!blit_frame)
     {
-        static int drop_message=0;
-        if(!drop_message &&
+	static int drop_message=0;
+	if(!drop_message &&
 	    abs_dec_ahead_active_frame > 50 &&
 	    ada_locked_frame <= abs_dec_ahead_active_frame - 50)
 	    {
@@ -1731,14 +1724,14 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
     // unplayed bytes in our and soundcard/dma buffer:
     float delay=ao_get_delay()+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
     if(enable_xp>=XP_VideoAudio)
-        delay += get_delay_audio_buffer();
+	delay += get_delay_audio_buffer();
 
     if(pts_from_bps){
-        unsigned int samples=(sh_audio->audio.dwSampleSize)?
-          ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
-          (d_audio->pack_no); // <- used for VBR audio
+	unsigned int samples=(sh_audio->audio.dwSampleSize)?
+	  ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
+	  (d_audio->pack_no); // <- used for VBR audio
 	samples+=sh_audio->audio.dwStart; // offset
-        a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
+	a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
       delay_corrected=1;
     } else {
       // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
@@ -1750,59 +1743,58 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
       MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-audio_delay-delay,*v_pts,(a_pts-delay-audio_delay)-*v_pts);
 
       if(delay_corrected && blit_frame){
-        float x;
+	float x;
 	AV_delay=(a_pts-delay-audio_delay)-*v_pts;
-        x=AV_delay*0.1f;
-        if(x<-max_pts_correction) x=-max_pts_correction; else
-        if(x> max_pts_correction) x= max_pts_correction;
-        if(default_max_pts_correction>=0)
-          max_pts_correction=default_max_pts_correction;
-        else // +-10% of time
+	x=AV_delay*0.1f;
+	if(x<-max_pts_correction) x=-max_pts_correction; else
+	if(x> max_pts_correction) x= max_pts_correction;
+	if(default_max_pts_correction>=0)
+	  max_pts_correction=default_max_pts_correction;
+	else // +-10% of time
 	    __MP_SYNCHRONIZE(vdeca_mutex,max_pts_correction=shva[dec_ahead_active_frame].duration*0.10);
-        if(enable_xp>=XP_VAPlay)
-            pthread_mutex_lock(&audio_timer_mutex);
-        sh_audio->timer+=x;
-        if(enable_xp>=XP_VAPlay)
-            pthread_mutex_unlock(&audio_timer_mutex);
-        c_total+=x;
-        if(benchmark && verbose)
+	if(enable_xp>=XP_VAPlay)
+	    pthread_mutex_lock(&audio_timer_mutex);
+	sh_audio->timer+=x;
+	if(enable_xp>=XP_VAPlay)
+	    pthread_mutex_unlock(&audio_timer_mutex);
+	c_total+=x;
+	if(benchmark && verbose)
 	    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
 	    a_pts-audio_delay-delay,*v_pts,AV_delay,c_total,
-            (int)sh_video->num_frames,num_frames_decoded,
-            (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-            (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-            (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-            ,vstat->drop_frame_cnt
+	    (int)sh_video->num_frames,num_frames_decoded,
+	    (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
+	    (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
+	    (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+	    ,vstat->drop_frame_cnt
 	    ,output_quality
 	    );
-        fflush(stdout);
+	fflush(stdout);
       }
 
   } else {
     // No audio or pts:
 
     if(benchmark && verbose) {
-        if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay())) {
-            float a_pts = sh_audio->timer-ao_get_delay();
+	if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay())) {
+	    float a_pts = sh_audio->timer-ao_get_delay();
 	    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
 	    a_pts,sh_video->timer,a_pts-sh_video->timer,0.0,
-            (int)sh_video->num_frames,num_frames_decoded,
-            (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-            (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-            (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-            ,vstat->drop_frame_cnt
+	    (int)sh_video->num_frames,num_frames_decoded,
+	    (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
+	    (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
+	    (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+	    ,vstat->drop_frame_cnt
 	    ,output_quality
-    	    );
-            ;
-        } else
+	    );
+	} else
 	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d %d\r",*v_pts,
-        (int)sh_video->num_frames,
-        (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-        (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-        (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-          ,vstat->drop_frame_cnt
+	(int)sh_video->num_frames,
+	(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
+	(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
+	(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+	  ,vstat->drop_frame_cnt
 	  ,output_quality
-        );
+	);
 
       fflush(stdout);
     }
@@ -1853,7 +1845,7 @@ void mpxp_seek( int xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,flo
          vo_reset();
          sh_video->chapter_change=-1;
       }
-      
+
       if(sh_audio){
         pinfo[xp_id].current_module="seek_audio_reset";
 	resync_audio_stream(sh_audio);
@@ -2167,7 +2159,7 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
        if(menu_init(NULL, menu_cfg))
 	MSG_INFO("Menu initialized: %s\n", menu_cfg);
        else {
-         MSG_WARN("Menu init failed\n");
+	MSG_WARN("Menu init failed\n");
        }
      }
   }
@@ -2352,7 +2344,7 @@ if(!use_stdin && !slave_mode){
     if (dvd_auth(dvd_auth_device,filename)) {
 	MSG_FATAL("Error in DVD auth...\n");
 	exit_player(MSGTR_Exit_error);
-      } 
+      }
     MSG_INFO(MSGTR_DVDauthOk);
   }
 #endif
@@ -2484,7 +2476,7 @@ if(sh_video)
 	vo_da_buffs=1;
 	enable_xp=XP_None; /* supress video mode for static pictures */
     }
-}else 
+}else
     if(enable_xp < XP_VAPlay) enable_xp=XP_None;
 
 fflush(stdout);
@@ -2534,14 +2526,14 @@ if (vo_spudec!=NULL) {
   } else
   if(sub_auto) { // auto load sub file ...
     subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
-	                              : "default.sub", sh_video->fps );
+				      : "default.sub", sh_video->fps );
   }
   if(subtitles)
   {
     inited_flags|=INITED_SUBTITLE;
     if(stream_dump_type>1) list_sub_file(subtitles);
   }
-#endif	
+#endif
 
 }
 //================== Init AUDIO (codec) ==========================
@@ -2568,10 +2560,10 @@ if(sh_audio){
     sh_audio->codec=find_codec(sh_audio->format,NULL,sh_audio->codec,1);
     if(!sh_audio->codec){
       if(audio_family) {
-        sh_audio->codec=NULL; /* re-search */
-        MSG_ERR(MSGTR_CantFindAfmtFallback);
-        audio_family=NULL;
-        continue;      
+	sh_audio->codec=NULL; /* re-search */
+	MSG_ERR(MSGTR_CantFindAfmtFallback);
+	audio_family=NULL;
+	continue;
       }
 	MSG_ERR(MSGTR_CantFindAudioCodec);
 	fmt = (const char *)&sh_audio->format;
@@ -2729,7 +2721,7 @@ if(sh_audio){
 		ao_data.samplerate, ao_data.channels,
 		ao_format_name(ao_data.format),ao_data.format);
 	}
-#endif  
+#endif
     if(!ao_configure(force_srate?force_srate:ao_data.samplerate,
 		    ao_data.channels,ao_data.format))
 	{
@@ -2882,7 +2874,7 @@ while(!eof){
     }
 
     if( enable_xp < XP_VAPlay )
-        eof |= decore_audio(xp_id);
+	eof |= decore_audio(xp_id);
 /*========================== UPDATE TIMERS ============================*/
     pinfo[xp_id].current_module="Update timers";
 if(!sh_video) {
@@ -3078,7 +3070,7 @@ our_n_frames++;
     case MP_CMD_PLAY_TREE_STEP : {
       int n = cmd->args[0].v.i > 0 ? 1 : -1;
       play_tree_iter_t* i = play_tree_iter_new_copy(playtree_iter);
-      
+
       if(play_tree_iter_step(i,n,0) == PLAY_TREE_ITER_ENTRY)
 	eof = (n > 0) ? PT_NEXT_ENTRY : PT_PREV_ENTRY;
       play_tree_iter_free(i);
@@ -3168,7 +3160,7 @@ our_n_frames++;
 	  vo_osd_changed(OSDTYPE_PROGBAR);
 	}
 #endif
-      }      
+      }
     } break;
     case MP_CMD_HUE :  {
       int v = cmd->args[0].v.i, abs = cmd->args[1].v.i;
@@ -3186,7 +3178,7 @@ our_n_frames++;
 	  vo_osd_changed(OSDTYPE_PROGBAR);
 	}
 #endif
-      }	
+      }
     } break;
     case MP_CMD_SATURATION :  {
       int v = cmd->args[0].v.i, abs = cmd->args[1].v.i;
@@ -3251,7 +3243,7 @@ our_n_frames++;
     {
         int v;
 	v = cmd->args[0].v.i;
-    
+
 	sub_pos+=v;
 	if(sub_pos >100) sub_pos=100;
 	if(sub_pos <0) sub_pos=0;
@@ -3267,7 +3259,7 @@ our_n_frames++;
 
   if (seek_to_sec) {
     int a,b; float d;
-    
+
     if (sscanf(seek_to_sec, "%d:%d:%f", &a,&b,&d)==3)
 	seek_secs += 3600*a +60*b +d ;
     else if (sscanf(seek_to_sec, "%d:%f", &a, &d)==2)
@@ -3313,7 +3305,7 @@ if(seek_secs || (seek_flags&DEMUX_SEEK_SET)){
   seek_secs=0;
   seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 
-  if(enable_xp!=XP_None) 
+  if(enable_xp!=XP_None)
   {
       UNLOCK_VREADING();
       dec_ahead_restart_threads(xp_id);
@@ -3372,7 +3364,7 @@ while(playtree_iter != NULL) {
     };
   } else
     break;
-} 
+}
 
 if( playtree_iter != NULL ){
     int flg;

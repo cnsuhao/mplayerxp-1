@@ -85,18 +85,22 @@ static FILE *fp = NULL;
 
 // to set/get/query special features/parameters
 static int control(int cmd,long arg){
+    UNUSED(cmd);
+    UNUSED(arg);
     return -1;
 }
 
 // open & setup audio device
 // return: 1=success 0=fail
-static int init(int flags) {
+static int init(unsigned flags) {
     // set defaults
+    UNUSED(flags);
     ao_pcm_waveheader = 1;
+    return 1;
 }
 
-static int configure(int rate,int channels,int format){
-    int bits;
+static int configure(unsigned rate,unsigned channels,unsigned format){
+    unsigned bits;
     char str[256];
 
     if(ao_subdevice)	ao_outputfilename = ao_subdevice;
@@ -205,7 +209,7 @@ static void audio_resume(void)
 }
 
 // return: how many bytes can be played without blocking
-static int get_space(void){
+static unsigned get_space(void){
     if(vo_pts)
 	return ao_data.pts < vo_pts + fast * 30000 ? ao_data.outburst : 0;
     return ao_data.outburst;
@@ -214,8 +218,8 @@ static int get_space(void){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static int play(void* data,int len,int flags){
-    //printf("PCM: Writing chunk!\n");
+static unsigned play(void* data,unsigned len,unsigned flags){
+    UNUSED(flags);
     fwrite(data,len,1,fp);
     if(ao_pcm_waveheader)
 	data_length += len;

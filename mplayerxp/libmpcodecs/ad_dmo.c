@@ -35,6 +35,7 @@ typedef struct dmo_priv_s
 
 static int init(sh_audio_t *sh)
 {
+  UNUSED(sh);
   return 1;
 }
 
@@ -73,6 +74,7 @@ static void uninit(sh_audio_t *sh)
 static int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)
 {
   int skip;
+  UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_SKIP_FRAME:
@@ -90,34 +92,37 @@ static int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-static int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+static unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-	dmo_priv_t *priv=sh_audio->context;
-//	int len=-1;
-        int size_in=0;
-        int size_out=0;
-        int srcsize=DMO_AudioDecoder_GetSrcSize(priv->ds_adec, maxlen);
-        MSG_DBG3("DMO says: srcsize=%d  (buffsize=%d)  out_size=%d\n",srcsize,sh_audio->a_in_buffer_size,maxlen);
-        if(srcsize>sh_audio->a_in_buffer_size) srcsize=sh_audio->a_in_buffer_size; // !!!!!!
-        if(sh_audio->a_in_buffer_len<srcsize){
-          int l;
-          l=demux_read_data_r(sh_audio->ds,&sh_audio->a_in_buffer[sh_audio->a_in_buffer_len],
-            srcsize-sh_audio->a_in_buffer_len,pts);
-          *pts=FIX_APTS(sh_audio,*pts,-sh_audio->a_in_buffer_len);
-          sh_audio->a_in_buffer_len+=l;
+  dmo_priv_t* priv = sh_audio->context;
+  unsigned len=0;
+  UNUSED(minlen);
+  {
+	unsigned size_in=0;
+	unsigned size_out=0;
+	unsigned srcsize=DMO_AudioDecoder_GetSrcSize(priv->ds_adec, maxlen);
+	MSG_DBG2("DMO says: srcsize=%d  (buffsize=%d)  out_size=%d\n",srcsize,sh_audio->a_in_buffer_size,maxlen);
+	if(srcsize>sh_audio->a_in_buffer_size) srcsize=sh_audio->a_in_buffer_size; // !!!!!!
+	if((unsigned)sh_audio->a_in_buffer_len<srcsize){
+	  unsigned l;
+	  l=demux_read_data_r(sh_audio->ds,&sh_audio->a_in_buffer[sh_audio->a_in_buffer_len],
+	    srcsize-sh_audio->a_in_buffer_len,pts);
+	    sh_audio->a_in_buffer_len+=l;
 	    priv->pts=*pts;
-        }
+	}
 	else *pts=priv->pts;
-        DMO_AudioDecoder_Convert(priv->ds_adec, sh_audio->a_in_buffer,sh_audio->a_in_buffer_len,
-            buf,maxlen, &size_in,&size_out);
-        MSG_DBG2("DMO: audio %d -> %d converted  (in_buf_len=%d of %d)  %d\n",size_in,size_out,sh_audio->a_in_buffer_len,sh_audio->a_in_buffer_size,ds_tell_pts(sh_audio->ds));
-        if(size_in>=sh_audio->a_in_buffer_len){
-          sh_audio->a_in_buffer_len=0;
-        } else {
-          sh_audio->a_in_buffer_len-=size_in;
-          memmove(sh_audio->a_in_buffer,&sh_audio->a_in_buffer[size_in],sh_audio->a_in_buffer_len);
+	DMO_AudioDecoder_Convert(priv->ds_adec, sh_audio->a_in_buffer,sh_audio->a_in_buffer_len,
+	    buf,maxlen, &size_in,&size_out);
+	MSG_DBG2("DMO: audio %d -> %d converted  (in_buf_len=%d of %d)  %f\n"
+	,size_in,size_out,sh_audio->a_in_buffer_len,sh_audio->a_in_buffer_size,*pts);
+	if(size_in>=(unsigned)sh_audio->a_in_buffer_len){
+	  sh_audio->a_in_buffer_len=0;
+	} else {
+	  sh_audio->a_in_buffer_len-=size_in;
+	  memcpy(sh_audio->a_in_buffer,&sh_audio->a_in_buffer[size_in],sh_audio->a_in_buffer_len);
 	  priv->pts=FIX_APTS(sh_audio,priv->pts,size_in);
-        }
-//        len=size_out;
-  return size_out;
+	}
+	len=size_out;
+  }
+  return len;
 }

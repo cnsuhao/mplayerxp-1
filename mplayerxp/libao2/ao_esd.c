@@ -156,9 +156,10 @@ static int control(int cmd, long arg)
  * open & setup audio device
  * return: 1=success 0=fail
  */
-static int init(int flags)
+static int init(unsigned flags)
 {
     char *server = ao_subdevice;  /* NULL for localhost */
+    UNUSED(flags);
     if (esd_fd < 0) {
 	esd_fd = esd_open_sound(server);
 	if (esd_fd < 0) {
@@ -166,9 +167,10 @@ static int init(int flags)
 	    return 0;
 	}
     }
+    return 1;
 }
 
-static int configure(int rate_hz, int channels, int format)
+static int configure(unsigned rate_hz,unsigned channels,unsigned format)
 {
     char *server = ao_subdevice;  /* NULL for localhost */
     esd_format_t esd_fmt;
@@ -310,17 +312,15 @@ static void uninit(void)
  * it should round it down to outburst*n
  * return: number of bytes played
  */
-static int play(void* data, int len, int flags)
+static unsigned play(void* data, unsigned len, unsigned flags)
 {
-    int offs;
-    int nwritten;
+    unsigned offs;
+    unsigned nwritten;
     int nsamples;
     int n;
-
+    UNUSED(flags);
     /* round down buffersize to a multiple of ESD_BUF_SIZE bytes */
     len = len / ESD_BUF_SIZE * ESD_BUF_SIZE;
-    if (len <= 0)
-	return 0;
 
 #define	SINGLE_WRITE 0
 #if	SINGLE_WRITE
@@ -333,8 +333,9 @@ static int play(void* data, int len, int flags)
 	 */
 	n = write(esd_play_fd, (char*)data + offs, ESD_BUF_SIZE);
 	if ( n < 0 ) {
-	    if ( errno != EAGAIN )
+	    if ( errno != EAGAIN ) {
 		dprintf("esd play: write failed: %s\n", strerror(errno));
+	    }
 	    break;
 	} else if ( n != ESD_BUF_SIZE ) {
 	    nwritten += n;
@@ -404,12 +405,12 @@ static void reset(void)
 /*
  * return: how many bytes can be played without blocking
  */
-static int get_space(void)
+static unsigned get_space(void)
 {
     struct timeval tmout;
     fd_set wfds;
     float current_delay;
-    int space;
+    unsigned space;
 
     /*
      * Don't buffer too much data in the esd daemon.

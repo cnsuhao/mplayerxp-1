@@ -51,7 +51,7 @@ int init_signal_handling( void (*callback)( void ),void (*_unlink)(int))
   pinfo[xp_threads].current_module = NULL;
   pinfo[xp_threads].unlink = _unlink;
   xp_threads++;
-
+#if 0
   /*========= Catch terminate signals: ================*/
   /* terminate requests:*/
   signal(SIGTERM,my_callback); /* kill*/
@@ -65,7 +65,8 @@ int init_signal_handling( void (*callback)( void ),void (*_unlink)(int))
   signal(SIGSEGV,my_callback); /* segfault */
   signal(SIGILL,my_callback);  /* illegal instruction */
   signal(SIGFPE,my_callback);  /* floating point exc. */
-  signal(SIGABRT,my_callback); /* abort() */   
+  signal(SIGABRT,my_callback); /* abort() */
+#endif
 #ifdef RLIMIT_CORE
   {
     /* on many systems default coresize is 0.

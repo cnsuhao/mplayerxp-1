@@ -188,9 +188,8 @@ static int preinit(sh_audio_t *sh){
 
 static int init(sh_audio_t *sh_audio){
   // initialize the decoder, set tables etc...
-
   // set sample format/rate parameters if you didn't do it in preinit() yet.
-
+  UNUSED(sh_audio);
   return 1; // return values: 1=OK 0=ERROR
 }
 
@@ -209,16 +208,17 @@ static const unsigned char sipr_swaps[38][2]={
     {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
     {77,80} };
 
-static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts){
+static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
   real_priv_t *rpriv = sh->context;
   float null_pts;
   int result;
-  int len=-1;
-  int sps=((short*)(sh->wf+1))[0]; /* subpacket size */
-  int w=sh->wf->nBlockAlign; // 5
-  int h=((short*)(sh->wf+1))[1];
-  int cfs=((short*)(sh->wf+1))[3]; /* coded frame size */
-
+  unsigned len=0;
+  unsigned sps=((short*)(sh->wf+1))[0]; /* subpacket size */
+  unsigned w=sh->wf->nBlockAlign; // 5
+  unsigned h=((short*)(sh->wf+1))[1];
+  unsigned cfs=((short*)(sh->wf+1))[3]; /* coded frame size */
+  UNUSED(minlen);
+  UNUSED(maxlen);
   if(sh->a_in_buffer_len<=0){
       // fill the buffer!
     if (sh->format == mmioFOURCC('1','4','_','4')) {
@@ -227,7 +227,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 	sh->a_in_buffer_len=sh->wf->nBlockAlign;
     } else
     if (sh->format == mmioFOURCC('2','8','_','8')) {
-	int i,j;
+	unsigned i,j;
 	for (j = 0; j < h; j++)
 	    for (i = 0; i < h/2; i++)
 		demux_read_data_r(sh->ds, sh->a_in_buffer+i*2*w+j*cfs, cfs,(i==0&&j==0)?pts:&null_pts);
@@ -236,8 +236,8 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
     } else
     if(!sps){
       // 'sipr' way
-      int j,n;
-      int bs=h*w*2/96; // nibbles per subpacket
+      unsigned j,n;
+      unsigned bs=h*w*2/96; // nibbles per subpacket
       unsigned char *p=sh->a_in_buffer;
       demux_read_data_r(sh->ds, p, h*w,pts);
       for(n=0;n<38;n++){
@@ -258,10 +258,10 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
       sh->a_in_buffer_len=w*h;
     } else {
       // 'cook' way
-      int x,y;
+      unsigned x,y;
       w/=sps;
       for(y=0;y<h;y++)
-        for(x=0;x<w;x++){
+	for(x=0;x<w;x++){
 	    demux_read_data_r(sh->ds, sh->a_in_buffer+sps*(h*x+((h+1)/2)*(y&1)+(y>>1)), sps,(x==0&&y==0)?pts:&null_pts);
 	}
       sh->a_in_buffer_size=
@@ -270,17 +270,20 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
     rpriv->pts=*pts;
   }
   else *pts=rpriv->pts;
-  
+
   result=raDecode(rpriv->internal, sh->a_in_buffer+sh->a_in_buffer_size-sh->a_in_buffer_len, sh->wf->nBlockAlign,
        buf, &len, -1);
+  if((int)len<0) len=0;
   sh->a_in_buffer_len-=sh->wf->nBlockAlign;
   rpriv->pts=FIX_APTS(sh,rpriv->pts,sh->wf->nBlockAlign);
-  
+
   return len; // return value: number of _bytes_ written to output buffer,
               // or -1 for EOF (or uncorrectable error)
 }
 
 static int control(sh_audio_t *sh,int cmd,void* arg, ...){
+    UNUSED(sh);
+    UNUSED(arg);
     // various optional functions you MAY implement:
     switch(cmd){
       case ADCTRL_RESYNC_STREAM:

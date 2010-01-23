@@ -348,10 +348,13 @@ void uninit(sh_audio_t *sh)
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
+  UNUSED(sh);
+  UNUSED(cmd);
+  UNUSED(arg);
   return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
     mp3_priv_t *priv=sh->context;
     unsigned char *indata=NULL,*outdata=NULL;

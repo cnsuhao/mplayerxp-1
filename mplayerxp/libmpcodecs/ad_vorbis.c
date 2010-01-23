@@ -123,6 +123,9 @@ static void uninit(sh_audio_t *sh)
 
 static int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
+    UNUSED(sh);
+    UNUSED(cmd);
+    UNUSED(arg);
     switch(cmd)
     {
 #if 0
@@ -133,9 +136,9 @@ static int control(sh_audio_t *sh,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
+static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-        int len = 0;
+        unsigned len = 0;
         int samples;
         float **pcm;
         ogg_packet op;
@@ -149,7 +152,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 	  if(vorbis_synthesis(&ov->vb,&op)==0) /* test for success! */
 	    vorbis_synthesis_blockin(&ov->vd,&ov->vb);
 	  while((samples=vorbis_synthesis_pcmout(&ov->vd,&pcm))>0){
-	    int i,j;
+	    unsigned i,j;
 	    int clipflag=0;
 	    int convsize=(maxlen-len)/(2*ov->vi.channels); // max size!
 	    int bout=(samples<convsize?samples:convsize);
@@ -160,11 +163,11 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 	    {
 	    /* convert floats to 32 bit signed ints (host order) and
 	       interleave */
-	    for(i=0;i<ov->vi.channels;i++){
+	    for(i=0;i<(unsigned)ov->vi.channels;i++){
 	      ogg_int32_t *convbuffer=(ogg_int32_t *)(&buf[len]);
 	      ogg_int32_t *ptr=convbuffer+i;
 	      float  *mono=pcm[i];
-	      for(j=0;j<bout;j++){
+	      for(j=0;j<(unsigned)bout;j++){
 #if 1
 		int val=mono[j]*2147483647.f;
 #else /* optional dither */
@@ -188,11 +191,11 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 	    {
 	    /* convert floats to 16 bit signed ints (host order) and
 	       interleave */
-	    for(i=0;i<ov->vi.channels;i++){
+	    for(i=0;i<(unsigned)ov->vi.channels;i++){
 	      ogg_int16_t *convbuffer=(ogg_int16_t *)(&buf[len]);
 	      ogg_int16_t *ptr=convbuffer+i;
 	      float  *mono=pcm[i];
-	      for(j=0;j<bout;j++){
+	      for(j=0;j<(unsigned)bout;j++){
 #if 1
 		int val=mono[j]*32767.f;
 #else /* optional dither */

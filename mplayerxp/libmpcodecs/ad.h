@@ -32,10 +32,10 @@ typedef struct ad_functions_s
 	const ad_info_t *info;
 	const config_t*  options;/**< Optional: MPlayerXP's option related */
 	int (*preinit)(sh_audio_t *);
-        int (*init)(sh_audio_t *sh);
-        void (*uninit)(sh_audio_t *sh);
-        int (*control)(sh_audio_t *sh,int cmd,void* arg, ...);
-	int (*decode_audio)(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts);
+	int (*init)(sh_audio_t *sh);
+	void (*uninit)(sh_audio_t *sh);
+	int (*control)(sh_audio_t *sh,int cmd,void* arg, ...);
+	unsigned (*decode_audio)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 
 // NULL terminated array of all drivers

@@ -253,9 +253,9 @@ static int init(sh_audio_t *sh)
     if(!sh->i_bps) {
       MSG_WARN("FAAD: compressed input bitrate missing, assuming 128kbit/s!\n");
       sh->i_bps = 128*1000/8; // XXX: HACK!!! ::atmos
-    } else 
+    } else
       MSG_V("FAAD: got %dkbit/s bitrate from MP4 header!\n",sh->i_bps*8/1000);
-  }  
+  }
   return 1;
 }
 
@@ -274,10 +274,11 @@ static int control(sh_audio_t *sh,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts)
+static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
   faad_priv_t *priv=sh->context;
-  int j = 0, len = 0;
+  int j = 0;
+  unsigned len = 0;
   void *NeAAC_sample_buffer;
   UNUSED(maxlen);
   while(len < minlen) {
@@ -294,7 +295,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
     }
     else *pts=priv->pts;
 #ifdef DUMP_AAC_COMPRESSED
-    {int i;
+    {unsigned i;
     for (i = 0; i < 16; i++)
       printf ("%02X ", sh->a_in_buffer[i]);
     printf ("\n");}
@@ -304,9 +305,9 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
    // raw aac stream:
    do {
     NeAAC_sample_buffer = NeAACDecDecode(NeAAC_hdec, &NeAAC_finfo, sh->a_in_buffer+j, sh->a_in_buffer_len);
-	
+
     /* update buffer index after NeAACDecDecode */
-    if(NeAAC_finfo.bytesconsumed >= sh->a_in_buffer_len) {
+    if(NeAAC_finfo.bytesconsumed >= (unsigned)sh->a_in_buffer_len) {
       sh->a_in_buffer_len=0;
     } else {
       sh->a_in_buffer_len-=NeAAC_finfo.bytesconsumed;
@@ -320,7 +321,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
       j++;
     } else
       break;
-   } while(j < FAAD_BUFFLEN);	  
+   } while(j < FAAD_BUFFLEN);
   } else {
    // packetized (.mp4) aac stream:
     unsigned char* bufptr=NULL;
@@ -329,7 +330,7 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
     NeAAC_sample_buffer = NeAACDecDecode(NeAAC_hdec, &NeAAC_finfo, bufptr, buflen);
 //    printf("NeAAC decoded %d of %d  (err: %d)  \n",NeAAC_finfo.bytesconsumed,buflen,NeAAC_finfo.error);
   }
-  
+
     if(NeAAC_finfo.error > 0) {
       MSG_WARN("FAAD: Failed to decode frame: %s \n",
       NeAACDecGetErrorMessage(NeAAC_finfo.error));

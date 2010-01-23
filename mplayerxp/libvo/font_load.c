@@ -64,13 +64,9 @@ if ((dn = malloc(i+1))){
 }
 
 desc->fpath = dn; // search in the same dir as fonts.desc
-	
+
 // desc->fpath=get_path("font/");
 // if (stat(desc->fpath, &fstate)!=0) desc->fpath=DATADIR"/font";
-
-	
-	
-	
 // set up some defaults, and erase table
 desc->charspace=2;
 desc->spacewidth=12;
@@ -104,14 +100,14 @@ while(fgets(sor,1020,f)){
         }
       } else {
         if(id==c){ id=0;continue;} // idezojel
-          
+
       }
       *d=c;d++;
       ec=c;
   }
   if(d==sor2) continue; // skip empty lines
   *d=0;
-  
+
   if(pdb==1 && p[0][0]=='['){
       int len=strlen(p[0]);
       if(len && len<63 && p[0][len-1]==']'){
@@ -124,7 +120,7 @@ while(fgets(sor,1020,f)){
         continue;
       }
   }
-  
+
   if(strcmp(section,"[fpath]")==0){
       if(pdb==1){
 	  if (desc->fpath)
@@ -132,12 +128,12 @@ while(fgets(sor,1020,f)){
           desc->fpath=strdup(p[0]);
           continue;
       }
-  } else    
+  } else
 
   if(strcmp(section,"[files]")==0){
       char *default_dir=DATADIR"/font";
       if(pdb==2 && strcmp(p[0],"alpha")==0){
-    	  char *cp;
+	  char *cp;
 	  if (!(cp=malloc(strlen(desc->fpath)+strlen(p[1])+2))) return NULL;
 
 	  snprintf(cp,strlen(desc->fpath)+strlen(p[1])+2,"%s/%s",
@@ -158,7 +154,7 @@ while(fgets(sor,1020,f)){
           continue;
       }
       if(pdb==2 && strcmp(p[0],"bitmap")==0){
-    	  char *cp;
+	  char *cp;
 	  if (!(cp=malloc(strlen(desc->fpath)+strlen(p[1])+2))) return NULL;
 
 	  snprintf(cp,strlen(desc->fpath)+strlen(p[1])+2,"%s/%s",
@@ -249,7 +245,7 @@ for(i=0;i<=fontdb;i++){
 	    x=255-((x*f)>>8); // scale
 
 	    if(x+y>255) x=255-y; // to avoid overflows
-	    
+
             if(x<1) x=1; else
             if(x>=252) x=0;
 #endif

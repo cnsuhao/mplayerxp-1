@@ -64,11 +64,13 @@ int preinit(sh_audio_t *sh)
 
 void uninit(sh_audio_t *sh)
 {
+    UNUSED(sh);
 }
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
   int skip;
+  UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_SKIP_FRAME:
@@ -85,7 +87,7 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
   unsigned len = sh_audio->channels*sh_audio->samplesize;
   len = (minlen + len - 1) / len * len;

@@ -135,15 +135,17 @@ static int __FASTCALL__ control(int cmd,long arg){
 }
 
 // SDL Callback function
-void outputaudio(void *unused, Uint8 *stream, int len) {
-	read_buffer(stream, len);
+static void outputaudio(void *unused, Uint8 *stream, int len) {
+    UNUSED(unused);
+    read_buffer(stream, len);
 }
 
 // open & setup audio device
 // return: 1=success 0=fail
-static int __FASTCALL__ init(int flags)
+static int __FASTCALL__ init(unsigned flags)
 {
-	int i;
+	unsigned i;
+	UNUSED(flags);
 	/* Allocate ring-buffer memory */
 	for(i=0;i<NUM_BUFS;i++) buffer[i]=(unsigned char *) malloc(BUFFSIZE);
 
@@ -153,11 +155,11 @@ static int __FASTCALL__ init(int flags)
 	return 1;
 }
 
-static int __FASTCALL__ configure(int rate,int channels,int format){
-
+static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned format)
+{
 	/* SDL Audio Specifications */
 	SDL_AudioSpec aspec, obtained;
-	char drv_name[80];	
+	char drv_name[80];
 
 	ao_data.channels=channels;
 	ao_data.samplerate=rate;
@@ -209,16 +211,16 @@ void callback(void *userdata, Uint8 *stream, int len); userdata is the pointer s
 	aspec.userdata = NULL;
 
 	/* initialize the SDL Audio system */
-        if (SDL_Init (SDL_INIT_AUDIO/*|SDL_INIT_NOPARACHUTE*/)) {
-                MSG_ERR("SDL: Initializing of SDL Audio failed: %s.\n", SDL_GetError());
-                return 0;
+	if (SDL_Init (SDL_INIT_AUDIO/*|SDL_INIT_NOPARACHUTE*/)) {
+		MSG_ERR("SDL: Initializing of SDL Audio failed: %s.\n", SDL_GetError());
+		return 0;
         }
 
 	/* Open the audio device and start playing sound! */
 	if(SDL_OpenAudio(&aspec, &obtained) < 0) {
-        	MSG_ERR("SDL: Unable to open audio: %s\n", SDL_GetError());
-        	return(0);
-	} 
+		MSG_ERR("SDL: Unable to open audio: %s\n", SDL_GetError());
+		return(0);
+	}
 	
 	/* did we got what we wanted ? */
 	ao_data.channels=obtained.channels;
@@ -244,8 +246,8 @@ void callback(void *userdata, Uint8 *stream, int len); userdata is the pointer s
 		ao_data.format = AFMT_U16_BE;
 	    break;
 	    default:
-                MSG_WARN("SDL: Unsupported SDL audio format: 0x%x.\n", obtained.format);
-                return 0;
+		MSG_WARN("SDL: Unsupported SDL audio format: 0x%x.\n", obtained.format);
+		return 0;
 	}
 
 	MSG_V("SDL: buf size = %d\n",aspec.size);
@@ -299,16 +301,17 @@ static void audio_resume(void)
 
 
 // return: how many bytes can be played without blocking
-static int get_space(void){
+static unsigned get_space(void){
     return (NUM_BUFS-full_buffers)*BUFFSIZE - buf_write_pos;
 }
 
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static int __FASTCALL__ play(void* data,int len,int flags){
-
-#if 0	
+static unsigned __FASTCALL__ play(void* data,unsigned len,unsigned flags)
+{
+    UNUSED(flags);
+#if 0
 	int ret;
 
 	/* Audio locking prohibits call of outputaudio */
@@ -317,7 +320,7 @@ static int __FASTCALL__ play(void* data,int len,int flags){
 	ret = write_buffer(data, len);
 	SDL_UnlockAudio();
 
-    	return ret;
+	return ret;
 #else
 	return write_buffer(data, len);
 #endif

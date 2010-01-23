@@ -195,6 +195,7 @@ void uninit(sh_audio_t *sh)
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
+    UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_RESYNC_STREAM:
@@ -212,13 +213,16 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
     sample_t level=1, bias=384;
     int flags=mpxp_a52_flags|A52_ADJUST_LEVEL;
-    int i,len=-1;
+    unsigned i;
+    unsigned len=0;
+    UNUSED(minlen);
+    UNUSED(maxlen);
     a52_priv_t *a52_priv=sh_audio->context;
-	if(!sh_audio->a_in_buffer_len) 
+	if(!sh_audio->a_in_buffer_len)
 	{
 	    if(a52_fillbuff(sh_audio,pts)<0) return len; /* EOF */
 	}

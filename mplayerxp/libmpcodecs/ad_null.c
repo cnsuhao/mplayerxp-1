@@ -19,23 +19,35 @@ LIBAD_EXTERN(null)
 
 int init(sh_audio_t *sh)
 {
+  UNUSED(sh);
   return 1;
 }
 
 int preinit(sh_audio_t *sh)
 {
+  UNUSED(sh);
   return 1;
 }
 
-void uninit(sh_audio_t *sh){}
+void uninit(sh_audio_t *sh)
+{
+  UNUSED(sh);
+}
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
+  UNUSED(sh);
+  UNUSED(cmd);
+  UNUSED(arg);
   return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
+  UNUSED(sh_audio);
+  UNUSED(buf);
+  UNUSED(minlen);
+  UNUSED(maxlen);
   *pts=0;
-  return -1;
+  return 0;
 }

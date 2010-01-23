@@ -75,6 +75,7 @@ static int control(int cmd, long arg) {
   return CONTROL_UNKNOWN;
 }
 
+#if 0
 /**
  * \brief print suboption usage help
  */
@@ -85,10 +86,11 @@ static void print_help(void) {
           "\nOptions:\n"
         );
 }
-
+#endif
 static ALCdevice* alc_dev;
-static int init(int flags)
+static int init(unsigned flags)
 {
+  UNUSED(flags);
   alc_dev = alcOpenDevice(NULL);
   if (!alc_dev) {
     MSG_ERR("[OpenAL] could not open device\n");
@@ -97,7 +99,7 @@ static int init(int flags)
   return 1;
 }
 
-static int configure(int rate, int channels, int format)
+static int configure(unsigned rate, unsigned channels, unsigned format)
 {
   ALCcontext *ctx = NULL;
   float position[3] = {0, 0, 0};
@@ -110,7 +112,7 @@ static int configure(int rate, int channels, int format)
   };
   ALCint freq = 0;
   ALCint attribs[] = {ALC_FREQUENCY, rate, 0, 0};
-  int i;
+  unsigned i;
 /*
   const opt_t subopts[] = {
     {NULL}
@@ -120,6 +122,7 @@ static int configure(int rate, int channels, int format)
     return 0;
   }
 */
+  UNUSED(format);
   if (channels > MAX_CHANS) {
     MSG_ERR("[OpenAL] Invalid number of channels: %i\n", channels);
     goto err_out;
@@ -176,7 +179,7 @@ static void uninit(void) {
 
 static void unqueue_buffers(void) {
   ALint p;
-  int s;
+  unsigned s;
   for (s = 0;  s < ao_data.channels; s++) {
     int till_wrap = NUM_BUF - unqueue_buf[s];
     alGetSourcei(sources[s], AL_BUFFERS_PROCESSED, &p);
@@ -214,7 +217,7 @@ static void audio_resume(void) {
   alSourcePlayv(ao_data.channels, sources);
 }
 
-static int get_space(void) {
+static unsigned get_space(void) {
   ALint queued;
   unqueue_buffers();
   alGetSourcei(sources[0], AL_BUFFERS_QUEUED, &queued);
@@ -226,11 +229,12 @@ static int get_space(void) {
 /**
  * \brief write data into buffer and reset underrun flag
  */
-static int play(void *data, int len, int flags) {
+static unsigned play(void *data, unsigned len, unsigned flags) {
   ALint state;
-  int i, j, k;
-  int ch;
+  unsigned i, j, k;
+  unsigned ch;
   int16_t *d = data;
+  UNUSED(flags);
   len /= ao_data.channels * CHUNK_SIZE;
   for (i = 0; i < len; i++) {
     for (ch = 0; ch < ao_data.channels; ch++) {

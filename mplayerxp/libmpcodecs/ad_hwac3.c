@@ -204,10 +204,11 @@ void uninit(sh_audio_t *sh)
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
+    UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_RESYNC_STREAM:
-          sh->a_in_buffer_len=0;   // reset ACM/DShow audio buffer
+	  sh->a_in_buffer_len=0;   // reset ACM/DShow audio buffer
 	  return CONTROL_TRUE;
       case ADCTRL_SKIP_FRAME:
 	{
@@ -221,11 +222,13 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  int len=-1;
+  unsigned len=0;
+  UNUSED(minlen);
+  UNUSED(maxlen);
   if(!sh_audio->a_in_buffer_len)
-    if((len=a52_fillbuff(sh_audio,pts))<0) return len; /*EOF*/
+    if((int)(len=a52_fillbuff(sh_audio,pts))<0) return 0; /*EOF*/
   sh_audio->a_in_buffer_len=0;
   len = ac3_iec958_build_burst(len, 0x01, 1, sh_audio->a_in_buffer, buf);
   return len;

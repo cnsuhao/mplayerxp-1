@@ -25,7 +25,7 @@ static const ad_info_t info =  {
 };
 
 static const config_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
+  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
 LIBAD_EXTERN(qtaudio)
@@ -89,62 +89,62 @@ static int loader_init()
 #ifdef WIN32_LOADER
     Setup_LDT_Keeper();
 #endif
-    qtml_dll = LoadLibraryA("qtmlClient.dll");
+    qtml_dll = LoadLibraryA((LPCSTR)"qtmlClient.dll");
     if( qtml_dll == NULL )
     {
         MSG_ERR("failed loading dll\n" );
 	return 1;
     }
 #if 1
-    InitializeQTML = (LPFUNC1)GetProcAddress(qtml_dll,"InitializeQTML");
+    InitializeQTML = (LPFUNC1)GetProcAddress(qtml_dll,(LPCSTR)"InitializeQTML");
 	if ( InitializeQTML == NULL )
     {
         MSG_ERR("failed geting proc address InitializeQTML\n");
 		return 1;
     }
-    SoundConverterOpen = (LPFUNC2)GetProcAddress(qtml_dll,"SoundConverterOpen");
+    SoundConverterOpen = (LPFUNC2)GetProcAddress(qtml_dll,(LPCSTR)"SoundConverterOpen");
 	if ( SoundConverterOpen == NULL )
     {
         MSG_ERR("failed getting proc address SoundConverterOpen\n");
 		return 1;
     }
-	SoundConverterClose = (LPFUNC3)GetProcAddress(qtml_dll,"SoundConverterClose");
+	SoundConverterClose = (LPFUNC3)GetProcAddress(qtml_dll,(LPCSTR)"SoundConverterClose");
 	if ( SoundConverterClose == NULL )
     {
         MSG_ERR("failed getting proc address SoundConverterClose\n");
 		return 1;
     }
-	TerminateQTML = (LPFUNC4)GetProcAddress(qtml_dll,"TerminateQTML");
+	TerminateQTML = (LPFUNC4)GetProcAddress(qtml_dll,(LPCSTR)"TerminateQTML");
 	if ( TerminateQTML == NULL )
     {
         MSG_ERR("failed getting proc address TerminateQTML\n");
 		return 1;
     }
-	SoundConverterSetInfo = (LPFUNC5)GetProcAddress(qtml_dll,"SoundConverterSetInfo");
+	SoundConverterSetInfo = (LPFUNC5)GetProcAddress(qtml_dll,(LPCSTR)"SoundConverterSetInfo");
 	if ( SoundConverterSetInfo == NULL )
     {
         MSG_ERR("failed getting proc address SoundConverterSetInfo\n");
 		return 1;
     }
-	SoundConverterGetBufferSizes = (LPFUNC6)GetProcAddress(qtml_dll,"SoundConverterGetBufferSizes");
+	SoundConverterGetBufferSizes = (LPFUNC6)GetProcAddress(qtml_dll,(LPCSTR)"SoundConverterGetBufferSizes");
 	if ( SoundConverterGetBufferSizes == NULL )
     {
         MSG_ERR("failed getting proc address SoundConverterGetBufferSizes\n");
 		return 1;
     }
-	SoundConverterConvertBuffer = (LPFUNC7)GetProcAddress(qtml_dll,"SoundConverterConvertBuffer");
+	SoundConverterConvertBuffer = (LPFUNC7)GetProcAddress(qtml_dll,(LPCSTR)"SoundConverterConvertBuffer");
 	if ( SoundConverterConvertBuffer == NULL )
     {
         MSG_ERR("failed getting proc address SoundConverterConvertBuffer1\n");
 		return 1;
     }
-	SoundConverterEndConversion = (LPFUNC8)GetProcAddress(qtml_dll,"SoundConverterEndConversion");
+	SoundConverterEndConversion = (LPFUNC8)GetProcAddress(qtml_dll,(LPCSTR)"SoundConverterEndConversion");
 	if ( SoundConverterEndConversion == NULL )
     {
         MSG_ERR("failed getting proc address SoundConverterEndConversion\n");
 		return 1;
     }
-	SoundConverterBeginConversion = (LPFUNC9)GetProcAddress(qtml_dll,"SoundConverterBeginConversion");
+	SoundConverterBeginConversion = (LPFUNC9)GetProcAddress(qtml_dll,(LPCSTR)"SoundConverterBeginConversion");
 	if ( SoundConverterBeginConversion == NULL )
     {
         MSG_ERR("failed getting proc address SoundConverterBeginConversion\n");
@@ -230,7 +230,7 @@ static int preinit(sh_audio_t *sh){
 
     sh->audio_out_minsize=OutputBufferSize;
     sh->audio_in_minsize=InputBufferSize;
- 
+
     sh->channels=sh->wf->nChannels;
     sh->samplerate=sh->wf->nSamplesPerSec;
     sh->samplesize=2; //(sh->wf->wBitsPerSample+7)/8;
@@ -254,8 +254,9 @@ static int preinit(sh_audio_t *sh){
   return 1; // return values: 1=OK 0=ERROR
 }
 
-static int init(sh_audio_t *sh_audio){
-
+static int init(sh_audio_t *sh_audio)
+{
+    UNUSED(sh_audio);
     return 1; // return values: 1=OK 0=ERROR
 }
 
@@ -263,6 +264,7 @@ static void uninit(sh_audio_t *sh){
     int error;
     unsigned long ConvertedFrames=0;
     unsigned long ConvertedBytes=0;
+    UNUSED(sh);
     error=SoundConverterEndConversion(myConverter,NULL,&ConvertedFrames,&ConvertedBytes);
     MSG_V("SoundConverterEndConversion:%i\n",error);
     error = SoundConverterClose(myConverter);
@@ -277,7 +279,7 @@ static void uninit(sh_audio_t *sh){
 #endif
 }
 
-static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,float *pts){
+static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
     int error;
     unsigned long FramesToGet=0; //how many frames the demuxer has to get
     unsigned long InputBufferSize=0; //size of the input buffer
@@ -295,11 +297,11 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 //    printf("FramesToGet = %li  (%li -> %li bytes)\n",FramesToGet,
 //	InputBufferSize, FramesToGet*OutFrameSize);
 
-    if(InputBufferSize>sh->a_in_buffer_len){
+    if(InputBufferSize>(unsigned)sh->a_in_buffer_len){
 	int x=demux_read_data_r(sh->ds,&sh->a_in_buffer[sh->a_in_buffer_len],
 	    InputBufferSize-sh->a_in_buffer_len,pts);
 	if(x>0) sh->a_in_buffer_len+=x;
-	if(InputBufferSize>sh->a_in_buffer_len)
+	if(InputBufferSize>(unsigned)sh->a_in_buffer_len)
 	    FramesToGet=sh->a_in_buffer_len/InFrameSize; // not enough data!
     }
 
@@ -324,5 +326,8 @@ static int decode_audio(sh_audio_t *sh,unsigned char *buf,int minlen,int maxlen,
 
 static int control(sh_audio_t *sh,int cmd,void* arg, ...){
     // various optional functions you MAY implement:
+  UNUSED(sh);
+  UNUSED(cmd);
+  UNUSED(arg);
   return CONTROL_UNKNOWN;
 }

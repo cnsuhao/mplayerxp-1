@@ -51,7 +51,7 @@ LIBAO_EXTERN(jack)
 //! maximum number of channels supported, avoids lots of mallocs
 #define MAX_CHANS 6
 static jack_port_t *ports[MAX_CHANS];
-static int num_ports; ///< Number of used ports == number of channels
+static unsigned num_ports; ///< Number of used ports == number of channels
 static jack_client_t *client;
 static float jack_latency;
 static int estimate;
@@ -121,9 +121,9 @@ static void deinterleave(void *info, void *src, int len) {
  * If there is not enough data in the buffer remaining parts will be filled
  * with silence.
  */
-static int read_buffer(float **bufs, int cnt, int num_bufs) {
+static unsigned read_buffer(float **bufs, unsigned cnt, unsigned num_bufs) {
   struct deinterleave di = {bufs, num_bufs, 0, 0};
-  int buffered = cb_fifo_size(buffer);
+  unsigned buffered = cb_fifo_size(buffer);
   if (cnt * sizeof(float) * num_bufs > buffered) {
     silence(bufs, cnt, num_bufs);
     cnt = buffered / sizeof(float) / num_bufs;
@@ -135,6 +135,8 @@ static int read_buffer(float **bufs, int cnt, int num_bufs) {
 // end ring buffer stuff
 
 static int control(int cmd, long arg) {
+  UNUSED(cmd);
+  UNUSED(arg);
   return CONTROL_UNKNOWN;
 }
 
@@ -160,7 +162,8 @@ static void silence(float **bufs, int cnt, int num_bufs) {
  */
 static int outputaudio(jack_nframes_t nframes, void *arg) {
   float *bufs[MAX_CHANS];
-  int i;
+  unsigned i;
+  UNUSED(arg);
   for (i = 0; i < num_ports; i++)
     bufs[i] = jack_port_get_buffer(ports[i], nframes);
   if (paused || underrun)
@@ -180,6 +183,7 @@ static int outputaudio(jack_nframes_t nframes, void *arg) {
   return 0;
 }
 
+#if 0
 /**
  * \brief print suboption usage help
  */
@@ -200,10 +204,10 @@ static void print_help (void)
            "    Automatically start JACK server if necessary\n"
          );
 }
+#endif
+static int init(unsigned flags) { UNUSED(flags); return 1; }
 
-static int init(int flags) { return 1; }
-
-static int configure(int rate, int channels, int format) {
+static int configure(unsigned rate,unsigned channels,unsigned format) {
   const char **matching_ports = NULL;
   char *port_name = NULL;
   char *client_name = NULL;
@@ -219,8 +223,9 @@ static int configure(int rate, int channels, int format) {
 */
   jack_options_t open_options = JackUseExactName;
   int port_flags = JackPortIsInput;
-  int i;
+  unsigned i;
   estimate = 1;
+  UNUSED(format);
 /*
   if (subopt_parse(ao_subdevice, subopts) != 0) {
     print_help();
@@ -338,15 +343,16 @@ static void audio_resume(void) {
   paused = 0;
 }
 
-static int get_space(void) {
+static unsigned get_space(void) {
   return cb_fifo_space(buffer);
 }
 
 /**
  * \brief write data into buffer and reset underrun flag
  */
-static int play(void *data, int len, int flags) {
+static unsigned play(void *data, unsigned len, unsigned flags) {
   underrun = 0;
+  UNUSED(flags);
   return write_buffer(data, len);
 }
 

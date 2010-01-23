@@ -20,31 +20,31 @@ typedef struct ao_functions_s
 	 * @param arg	argument associated with command
 	 * @return	CONTROL_OK if success CONTROL_FALSE CONTROL_ERROR CONTROL_NA otherwise
 	 **/
-        int (* __FASTCALL__ control)(int cmd,long arg);
+	int (* __FASTCALL__ control)(int cmd,long arg);
 
 	/** Preinitializes driver
 	 * @param flag	currently unused
 	 * @return	1 on successful initialization, 0 on error.
 	**/
-        int (* __FASTCALL__ init)(int flags);
+	int (* __FASTCALL__ init)(unsigned flags);
 
         /** Configures the audio driver.
 	 * @param rate		specifies samplerate in Hz
-         * @param channels	specifies number of channels (1 - mono, 2 - stereo, 6 - surround)
+	 * @param channels	specifies number of channels (1 - mono, 2 - stereo, 6 - surround)
 	 * @param format	specifies format of audio samples (see AFMT_* for detail)
 	 * @return		1 on successful configuration, 0 on error.
-         **/
-        int (* __FASTCALL__ configure)(int rate,int channels,int format);
+	 **/
+	int (* __FASTCALL__ configure)(unsigned rate,unsigned channels,unsigned format);
 
-        /** Closes driver. Should restore the original state of the system.
-         **/
-        void (*uninit)(void);
+	/** Closes driver. Should restore the original state of the system.
+	 **/
+	void (*uninit)(void);
 
 	/** Stops playing and empties buffers (for seeking/pause) **/
 	void (*reset)(void);
 
 	/** Returns how many bytes can be played without blocking **/
-        int (*get_space)(void);
+	unsigned (*get_space)(void);
 
 	/** Plays decoded (PCM) audio buffer
 	  * @param data		buffer with PCM data
@@ -52,28 +52,28 @@ typedef struct ao_functions_s
 	  * @param flags	currently unused
 	  * return		number of bytes which were copied into audio card
 	**/
-        int (* __FASTCALL__ play)(void* data,int len,int flags);
+	unsigned (* __FASTCALL__ play)(void* data,unsigned len,unsigned flags);
 
 	/** Returns delay in seconds between first and last sample in buffer **/
-        float (*get_delay)(void);
-	
+	float (*get_delay)(void);
+
 	/** Stops playing, keep buffers (for pause) */
-        void (*pause)(void);
+	void (*pause)(void);
 
 	/** Resumes playing, after audio_pause() */
-        void (*resume)(void);
+	void (*resume)(void);
 } ao_functions_t;
 
 /** Global data used by mplayerxp and plugins */
 typedef struct ao_data_s
 {
-  int samplerate;	/**< rate of samples in Hz */
-  int channels;		/**< number of audio channels */
-  int format;		/**< format of audio samples */
-  int bps;		/**< bytes per second */
-  int outburst;		/**< outburst */
-  int buffersize;	/**< suize of audio buffer */
-  int pts;		/**< PTS of audio buffer  */
+  unsigned samplerate;	/**< rate of samples in Hz */
+  unsigned channels;	/**< number of audio channels */
+  unsigned format;	/**< format of audio samples */
+  unsigned bps;		/**< bytes per second */
+  unsigned outburst;	/**< outburst */
+  unsigned buffersize;	/**< suize of audio buffer */
+  float pts;		/**< PTS of audio buffer  */
 } ao_data_t;
 
 extern char *ao_subdevice;
@@ -108,12 +108,12 @@ extern int		 __FASTCALL__ ao_format_bits(int format);
 extern void		ao_print_help( void );
 extern const ao_functions_t* __FASTCALL__ ao_register(const char *driver_name);
 extern const ao_info_t*	ao_get_info( void );
-extern int		 __FASTCALL__ ao_init(int flags);
-extern int		 __FASTCALL__ ao_configure(int rate,int channels,int format);
+extern int		 __FASTCALL__ ao_init(unsigned flags);
+extern int		 __FASTCALL__ ao_configure(unsigned rate,unsigned channels,unsigned format);
 extern void		ao_uninit(void);
 extern void		ao_reset(void);
-extern int		ao_get_space(void);
-extern int		 __FASTCALL__ ao_play(void* data,int len,int flags);
+extern unsigned		ao_get_space(void);
+extern unsigned		 __FASTCALL__ ao_play(void* data,unsigned len,unsigned flags);
 extern float		ao_get_delay(void);
 extern void		ao_pause(void);
 extern void		ao_resume(void);

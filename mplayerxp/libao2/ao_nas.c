@@ -413,20 +413,21 @@ static int control(int cmd, long arg)
 }
 
 
-static int init(int flags)
+static int init(unsigned flags)
 {
+  UNUSED(flags);
   return 1;
 }
 // open & setup audio device
 // return: 1=success 0=fail
-static int configure(int rate,int channels,int format)
+static int configure(unsigned rate,unsigned channels,unsigned format)
 {
 	AuElement elms[3];
 	AuStatus as;
 	char str[256];
 	unsigned char auformat = nas_aformat_to_auformat(&format);
-	int bytes_per_sample = channels * AuSizeofFormat(auformat);
-	int buffer_size;
+	unsigned bytes_per_sample = channels * AuSizeofFormat(auformat);
+	unsigned buffer_size;
 	char *server;
 
 	nas_data=malloc(sizeof(struct ao_nas_data));
@@ -574,9 +575,9 @@ static void audio_resume(void)
 
 
 // return: how many bytes can be played without blocking
-static int get_space(void)
+static unsigned get_space(void)
 {
-	int result;
+	unsigned result;
 
 	MSG_DBG3("ao_nas: get_space()\n");
 
@@ -590,11 +591,11 @@ static int get_space(void)
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static int play(void* data,int len,int flags)
+static unsigned play(void* data,unsigned len,unsigned flags)
 {
-	int written, maxbursts = 0, playbursts = 0;
+	unsigned written, maxbursts = 0, playbursts = 0;
 	AuStatus as;
-
+	UNUSED(flags);
 	MSG_DBG3(
 	       "ao_nas: play(%p, %d, %d)\n",
 	       data, len, flags);

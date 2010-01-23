@@ -69,11 +69,13 @@ int preinit(sh_audio_t *sh)
 
 void uninit(sh_audio_t *sh)
 {
+    UNUSED(sh);
 }
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
   int skip;
+  UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_SKIP_FRAME:
@@ -90,10 +92,12 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  int j,len;
+  int j;
+  unsigned len;
   float null_pts;
+  UNUSED(maxlen);
   if (sh_audio->samplesize == 3) {
     if (((sh_audio->codecdata[1] >> 6) & 3) == 1) {
       // 20 bit
@@ -146,7 +150,7 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,f
       }
       len = j;
     }
-  } else 
+  } else
   len=demux_read_data_r(sh_audio->ds,buf,(minlen+3)&(~3),pts);
   return len;
 }

@@ -185,27 +185,27 @@ extern HMODULE   WINAPI LoadLibraryA(LPCSTR);
 extern FARPROC   WINAPI GetProcAddress(HMODULE,LPCSTR);
 extern int       WINAPI FreeLibrary(HMODULE);
 
-static int (*TvqInitialize_ptr)( headerInfo *setupInfo, INDEX *index, int dispErrorMessageBox );
+static int (__cdecl* TvqInitialize_ptr)( headerInfo *setupInfo, INDEX *index, int dispErrorMessageBox );
 #define TvqInitialize(a,b,c) (*TvqInitialize_ptr)(a,b,c)
-static void (*TvqTerminate_ptr)( INDEX *index );
+static void (__cdecl* TvqTerminate_ptr)( INDEX *index );
 #define TvqTerminate(a) (*TvqTerminate_ptr)(a)
-static void (*TvqGetVectorInfo_ptr)(int *bits0[], int *bits1[]);
+static void (__cdecl* TvqGetVectorInfo_ptr)(int *bits0[], int *bits1[]);
 #define TvqGetVectorInfo(a,b) (*TvqGetVectorInfo_ptr)(a,b)
 
-static void (*TvqDecodeFrame_ptr)(INDEX  *indexp, float out[]);
+static void (__cdecl* TvqDecodeFrame_ptr)(INDEX  *indexp, float out[]);
 #define TvqDecodeFrame(a,b) (*TvqDecodeFrame_ptr)(a,b)
-static int  (*TvqWtypeToBtype_ptr)( int w_type, int *btype );
+static int  (__cdecl* TvqWtypeToBtype_ptr)( int w_type, int *btype );
 #define TvqWtypeToBtype(a,b) (*TvqWtypeToBtype_ptr)(a,b)
-static void (*TvqUpdateVectorInfo_ptr)(int varbits, int *ndiv, int bits0[], int bits1[]);
+static void (__cdecl* TvqUpdateVectorInfo_ptr)(int varbits, int *ndiv, int bits0[], int bits1[]);
 #define TvqUpdateVectorInfo(a,b,c,d) (*TvqUpdateVectorInfo_ptr)(a,b,c,d)
 
-static int   (*TvqCheckVersion_ptr)(char *versionID);
+static int   (__cdecl* TvqCheckVersion_ptr)(char *versionID);
 #define TvqCheckVersion(a) (*TvqCheckVersion_ptr)(a)
-static void  (*TvqGetConfInfo_ptr)(tvqConfInfo *cf);
+static void  (__cdecl* TvqGetConfInfo_ptr)(tvqConfInfo *cf);
 #define TvqGetConfInfo(a) (*TvqGetConfInfo_ptr)(a)
-static int   (*TvqGetFrameSize_ptr)();
+static int   (__cdecl* TvqGetFrameSize_ptr)();
 #define TvqGetFrameSize() (*TvqGetFrameSize_ptr)()
-static int   (*TvqGetNumFixedBitsPerFrame_ptr)();
+static int   (__cdecl* TvqGetNumFixedBitsPerFrame_ptr)();
 #define TvqGetNumFixedBitsPerFrame() (*TvqGetNumFixedBitsPerFrame_ptr)()
 
 #define	BYTE_BIT	8
@@ -234,22 +234,22 @@ static int load_dll( const char *libname )
 #ifdef WIN32_LOADER
     Setup_LDT_Keeper_ptr();
 #endif
-    vqf_dll = LoadLibraryA(libname);
+    vqf_dll = LoadLibraryA((LPCSTR)libname);
     if( vqf_dll == NULL )
     {
         MSG_ERR("failed loading dll\n" );
 	return 0;
     }
-  TvqInitialize_ptr = GetProcAddress(vqf_dll,"TvqInitialize");
-  TvqTerminate_ptr = GetProcAddress(vqf_dll,"TvqTerminate");
-  TvqGetVectorInfo_ptr = GetProcAddress(vqf_dll,"TvqGetVectorInfo");
-  TvqDecodeFrame_ptr = GetProcAddress(vqf_dll,"TvqDecodeFrame");
-  TvqWtypeToBtype_ptr = GetProcAddress(vqf_dll,"TvqWtypeToBtype");
-  TvqUpdateVectorInfo_ptr = GetProcAddress(vqf_dll,"TvqUpdateVectorInfo");
-  TvqCheckVersion_ptr = GetProcAddress(vqf_dll,"TvqCheckVersion");
-  TvqGetConfInfo_ptr = GetProcAddress(vqf_dll,"TvqGetConfInfo");
-  TvqGetFrameSize_ptr = GetProcAddress(vqf_dll,"TvqGetFrameSize");
-  TvqGetNumFixedBitsPerFrame_ptr = GetProcAddress(vqf_dll,"TvqGetNumFixedBitsPerFrame");
+  TvqInitialize_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqInitialize");
+  TvqTerminate_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqTerminate");
+  TvqGetVectorInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetVectorInfo");
+  TvqDecodeFrame_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqDecodeFrame");
+  TvqWtypeToBtype_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqWtypeToBtype");
+  TvqUpdateVectorInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqUpdateVectorInfo");
+  TvqCheckVersion_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqCheckVersion");
+  TvqGetConfInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetConfInfo");
+  TvqGetFrameSize_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetFrameSize");
+  TvqGetNumFixedBitsPerFrame_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetNumFixedBitsPerFrame");
   return TvqInitialize_ptr && TvqTerminate_ptr && TvqGetVectorInfo_ptr &&
 	 TvqDecodeFrame_ptr && TvqWtypeToBtype_ptr && TvqUpdateVectorInfo_ptr &&
 	 TvqCheckVersion_ptr && TvqGetConfInfo_ptr && TvqGetFrameSize_ptr &&
@@ -320,6 +320,7 @@ static int close_vqf_audio_codec(sh_audio_t *sh_audio)
 
 int init(sh_audio_t *sh_audio)
 {
+    UNUSED(sh_audio);
     return 1;
 }
 
@@ -352,6 +353,7 @@ void uninit(sh_audio_t *sh)
 int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)
 {
   int skip;
+  UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_SKIP_FRAME:
@@ -630,11 +632,12 @@ static void frtobuf(float out[],       /* Input  --- input data frame */
 	}
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
 	unsigned l,len=0;
 	float null_pts;
 	vqf_priv_t *priv=sh_audio->context;
+	UNUSED(maxlen);
 	while(len<minlen)
 	{
 	    float out[priv->framesize*sh_audio->channels];

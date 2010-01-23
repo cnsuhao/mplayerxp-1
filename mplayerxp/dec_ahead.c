@@ -110,9 +110,9 @@ int audio_play_in_sleep=0;
 
 extern int init_audio_buffer(int size, int min_reserv, int indices, sh_audio_t *sh_audio);
 extern void uninit_audio_buffer(void);
-extern int read_audio_buffer(sh_audio_t *audio, unsigned char *buffer, int minlen, int maxlen );
+extern int read_audio_buffer(sh_audio_t *audio, unsigned char *buffer, unsigned minlen, unsigned maxlen );
 extern float get_delay_audio_buffer(void);
-extern int decode_audio_buffer(int len);
+extern int decode_audio_buffer(unsigned len);
 extern void reset_audio_buffer(void);
 extern int get_len_audio_buffer(void);
 extern int get_free_audio_buffer(void);
@@ -203,7 +203,7 @@ while(!xp_eof){
 	    UNLOCK_VDEC_LOCKED();
 	    UNLOCK_VDEC_ACTIVE();
 	    if(xp_is_bad_pts) mpeg_timer=HUGE;
-            dec_ahead_in_lseek=NoSeek;
+	    dec_ahead_in_lseek=NoSeek;
 	    MSG_T("\nDEC_AHEAD: reset counters to (%u %u) due lseek\n",dec_ahead_locked_frame,abs_dec_ahead_locked_frame);
 	    pinfo[xp_id].current_module = "dec_ahead 3";
 	}
@@ -233,14 +233,14 @@ while(!xp_eof){
 		xp_eof=0;
 		continue;
 	    }
-	    break; 
+	    break;
 	}
 	/* in_size==0: it's or broken stream or demuxer's bug */
 	if(in_size==0 && !pthread_end_of_work) {
 	    dec_ahead_in_lseek=NoSeek;
 	    continue;
 	}
-	if(xp_is_bad_pts) 
+	if(xp_is_bad_pts)
 	{
 	    if(mpeg_timer==HUGE)mpeg_timer=v_pts;
 		else if( mpeg_timer-duration<v_pts ) {
@@ -348,11 +348,11 @@ while(!xp_eof){
 	if(dec_ahead_in_lseek!=NoSeek) continue;
 	LOCK_VDECODING();
 	if(dec_ahead_in_lseek!=NoSeek) {
-            UNLOCK_VDECODING();
-            continue;
-        }
+	    UNLOCK_VDECODING();
+	    continue;
+	}
 #if 0
-/* 
+/*
     We can't seriously examine question of too slow machines
     by motivation reasons
 */
@@ -636,11 +636,11 @@ int run_dec_ahead( void )
 {
   int retval;
   retval = pthread_attr_setdetachstate(&our_attr,PTHREAD_CREATE_DETACHED);
-  if(retval) 
+  if(retval)
   {
     if(verbose) printf("running thread: attr_setdetachstate fault!!!\n");
     return retval;
-  }    
+  }
   pthread_attr_setscope(&our_attr,PTHREAD_SCOPE_SYSTEM);
 
   if( has_xp_audio && enable_xp >= XP_VAPlay ) {
@@ -648,7 +648,7 @@ int run_dec_ahead( void )
       if(retval) {
 	  if(verbose) printf("running audio thread: attr_setdetachstate fault!!!\n");
 	  return retval;
-      }	   
+      }
       pthread_attr_setscope(&audio_attr,PTHREAD_SCOPE_SYSTEM);
   }
 
@@ -749,26 +749,27 @@ void dec_ahead_restart_threads(int xp_id)
 volatile float dec_ahead_audio_delay;
 int xp_thread_decode_audio()
 {
-    int free_buf, len=0, vbuf_size, pref_buf;
+    int free_buf, vbuf_size, pref_buf;
+    unsigned len=0;
 
     if(dec_ahead_in_lseek) {
 	xp_audio_eof = 0;
 	reset_audio_buffer();
 	decode_audio_buffer(MAX_OUTBURST);
 	return 1;
-    } 
+    }
 
     free_buf = get_free_audio_buffer();
- 
+
     if( free_buf == -1 ) { /* End of file */
 	xp_audio_eof = 1;
 	return 0;
     }
-    if( free_buf < sh_audio->audio_out_minsize ) /* full */
+    if( free_buf < (int)sh_audio->audio_out_minsize ) /* full */
 	return 0;
 
     len = get_len_audio_buffer();
- 
+
     if( len < MAX_OUTBURST ) /* Buffer underrun */
 	return decode_audio_buffer(MAX_OUTBURST);
 

@@ -94,13 +94,16 @@ static void drain(void){
 
 // to set/get/query special features/parameters
 static int __FASTCALL__ control(int cmd,long arg){
+    UNUSED(cmd);
+    UNUSED(arg);
     return CONTROL_TRUE;
 }
 
 // open & setup audio device
 // return: 1=success 0=fail
-static int __FASTCALL__ init(int flags){
+static int __FASTCALL__ init(unsigned flags){
     char *null_dev=NULL,*mode=NULL;
+    UNUSED(flags);
     if (ao_subdevice) {
 	mrl_parse_line(ao_subdevice,NULL,NULL,&null_dev,&mode);
 	fd=NULL;
@@ -111,8 +114,8 @@ static int __FASTCALL__ init(int flags){
     return 1;
 }
 
-static int __FASTCALL__ configure(int rate,int channels,int format){
-    int bits;
+static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned format){
+    unsigned bits;
     ao_data.buffersize= 0xFFFFF;
     ao_data.outburst=0xFFFF;//4096;
     ao_data.channels=channels;
@@ -145,7 +148,7 @@ static int __FASTCALL__ configure(int rate,int channels,int format){
 	ao_data.bps *= 3;
 	break;
       default:
-	break;	    
+	break;
       }
     buffer=0;
     gettimeofday(&last_tv, 0);
@@ -194,7 +197,7 @@ static void audio_resume(void)
 }
 
 // return: how many bytes can be played without blocking
-static int get_space(void){
+static unsigned get_space(void){
 
     drain();
     return fast_mode?INT_MAX:ao_data.outburst - buffer;
@@ -203,12 +206,11 @@ static int get_space(void){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static int __FASTCALL__ play(void* data,int len,int flags){
-
-
-    int maxbursts = (ao_data.buffersize - buffer) / ao_data.outburst;
-    int playbursts = len / ao_data.outburst;
-    int bursts = playbursts > maxbursts ? maxbursts : playbursts;
+static unsigned __FASTCALL__ play(void* data,unsigned len,unsigned flags)
+{
+    unsigned maxbursts = (ao_data.buffersize - buffer) / ao_data.outburst;
+    unsigned playbursts = len / ao_data.outburst;
+    unsigned bursts = playbursts > maxbursts ? maxbursts : playbursts;
     buffer += bursts * ao_data.outburst;
 
     if(fd && len)

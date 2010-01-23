@@ -123,6 +123,7 @@ void uninit(sh_audio_t *sh)
 
 int control(sh_audio_t *sh,int cmd,void* arg, ...)
 {
+    UNUSED(arg);
     AVCodecContext *lavc_context = sh->context;
     switch(cmd){
 	case ADCTRL_RESYNC_STREAM:
@@ -133,10 +134,11 @@ int control(sh_audio_t *sh,int cmd,void* arg, ...)
     return CONTROL_UNKNOWN;
 }
 
-int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,float *pts)
+unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
     unsigned char *start=NULL;
-    int y,len=-1;
+    int y;
+    unsigned len=0;
     float apts=0.,null_pts;
     while(len<minlen){
 	int len2=maxlen;
@@ -153,7 +155,7 @@ int decode_audio(sh_audio_t *sh_audio,unsigned char *buf,int minlen,int maxlen,f
 	}
 	if(len2>0){
 	  //len=len2;break;
-	  if(len<0) len=len2; else len+=len2;
+	  if(len==0) len=len2; else len+=len2;
 	  buf+=len2;
 	}
         MSG_DBG2("Decoded %d -> %d  \n",y,len2);

@@ -48,13 +48,15 @@ LIBAO_EXTERN(arts)
 
 static int control(int cmd, long arg)
 {
+    UNUSED(cmd);
+    UNUSED(arg);
 	return CONTROL_UNKNOWN;
 }
 
-static int init(int flags)
+static int init(unsigned flags)
 {
 	int err;
-	int frag_spec;
+	UNUSED(flags);
 
 	if( (err=arts_init()) ) {
 		MSG_ERR("[aRts] init failed: %s\n", arts_error_text(err));
@@ -65,9 +67,9 @@ static int init(int flags)
 	return 1;
 }
 
-static int __FASTCALL__ configure(int rate,int channels,int format)
+static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned format)
 {
-	int frag_spec,samplesize;
+	unsigned frag_spec,samplesize;
 	/*
 	 * arts supports 8bit unsigned and 16bit signed sample formats
 	 * (16bit apparently in little endian format, even in the case
@@ -137,9 +139,10 @@ static void uninit(void)
 	arts_free();
 }
 
-static int play(void* data,int len,int flags)
+static unsigned play(void* data,unsigned len,unsigned flags)
 {
-	return arts_write(stream, data, len);
+    UNUSED(flags);
+    return arts_write(stream, data, len);
 }
 
 static void audio_pause(void)
@@ -154,7 +157,7 @@ static void reset(void)
 {
 }
 
-static int get_space(void)
+static unsigned get_space(void)
 {
 	return arts_stream_get(stream, ARTS_P_BUFFER_SPACE);
 }

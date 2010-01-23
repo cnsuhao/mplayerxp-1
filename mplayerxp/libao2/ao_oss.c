@@ -189,9 +189,9 @@ static void show_caps( void )
 }
 // open & setup audio device
 // return: 1=success 0=fail
-static int __FASTCALL__ init(int flags){
+static int __FASTCALL__ init(unsigned flags){
   char *mixer_channels [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
-
+  UNUSED(flags);
   if (ao_subdevice)
   {
     char *p;
@@ -228,8 +228,8 @@ static int __FASTCALL__ init(int flags){
     return 1;
 }
 
-static int __FASTCALL__ configure(int rate,int channels,int format){
-
+static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned format)
+{
   MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
     ao_format_name(format));
 
@@ -238,10 +238,10 @@ static int __FASTCALL__ configure(int rate,int channels,int format){
     ioctl (audio_fd, SNDCTL_DSP_SPEED, &ao_data.samplerate);
   }
 
-ac3_retry:  
+ac3_retry:
   ao_data.format=format;
   if( ioctl(audio_fd, SNDCTL_DSP_SETFMT, &ao_data.format)<0 ||
-      ao_data.format != format) 
+      ao_data.format != format)
   {
    if(format == AFMT_AC3){
     MSG_WARN("OSS-CONF: Can't set audio device %s to AC3 output, trying S16...\n", dsp);
@@ -297,11 +297,11 @@ ac3_retry:
   } else {
       MSG_V("OSS-CONF: frags: %3d/%d  (%d bytes/frag)  free: %6d\n",
           zz.fragments, zz.fragstotal, zz.fragsize, zz.bytes);
-      if(ao_data.buffersize==-1) ao_data.buffersize=zz.bytes;
+      if(ao_data.buffersize==0) ao_data.buffersize=zz.bytes;
       ao_data.outburst=zz.fragsize;
   }
 
-  if(ao_data.buffersize==-1){
+  if(ao_data.buffersize==0){
     // Measuring buffer size:
     void* data;
     ao_data.buffersize=0;
@@ -332,7 +332,7 @@ ac3_retry:
   ao_data.outburst-=ao_data.outburst % ao_data.bps; // round down
   ao_data.bps*=ao_data.samplerate;
 
-    return 1;
+  return 1;
 }
 
 // close audio device
@@ -384,8 +384,8 @@ static void audio_resume(void)
 
 
 // return: how many bytes can be played without blocking
-static int get_space(void){
-  int playsize=ao_data.outburst;
+static unsigned get_space(void){
+  unsigned playsize=ao_data.outburst;
 
 #ifdef SNDCTL_DSP_GETOSPACE
   if(ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &zz)!=-1){
@@ -415,7 +415,8 @@ static int get_space(void){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static int __FASTCALL__ play(void* data,int len,int flags){
+static unsigned __FASTCALL__ play(void* data,unsigned len,unsigned flags){
+    UNUSED(flags);
     len/=ao_data.outburst;
     len=write(audio_fd,data,len*ao_data.outburst);
     return len;
