@@ -174,9 +174,9 @@ extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(f32_to_s32u)(void *dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
-    return _mm256_storeu_si256(dst,_mm256_cvtps_epi32(src));
+    _mm256_storeu_si256(dst,_mm256_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE2 )
-    return _mm_storeu_si128(dst,_mm_cvtps_epi32(src));
+    _mm_storeu_si128(dst,_mm_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE )
     __m128 tmp;
     *(__m64 *)dst = _mm_cvtps_pi32(src);
@@ -194,7 +194,7 @@ extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(f32_to_s32a)(void *dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
-    return _mm256_store_si256(dst,_mm256_cvtps_epi32(src));
+    _mm256_store_si256(dst,_mm256_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE2 )
     _mm_store_si128(dst,_mm_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE )
@@ -213,7 +213,7 @@ extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(f32_to_s32_stream)(void *dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
-    return _mm256_stream_si256(dst,_mm256_cvtps_epi32(src));
+    _mm256_stream_si256(dst,_mm256_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE2 )
     _mm_stream_si128(dst,_mm_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE )

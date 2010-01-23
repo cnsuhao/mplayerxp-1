@@ -358,7 +358,7 @@ print_config HAVE_ mp_config.h mp_config.mak ffmpeg
 ffmpeg_args="--enable-static --disable-shared --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --enable-postproc --enable-gpl --enable-pthreads"
 if test -n $host ; then
 _arch=$host_arch
-x86_32 && _arch="x86_32"
+x86_32 && _arch="i686"
 x86_64 && _arch="x86_64"
 ffmpeg_args="--arch=$_arch $ffmpeg_args"
 fi

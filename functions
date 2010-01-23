@@ -1149,45 +1149,26 @@ check_cflags "-mtune=generic"
 #check_cflags "-fno-tree-vectorize"
 
 disable mmx_test
-x86_32 && enable mmx_test
-def_mmx=
-def_mmx2=
-def_3dnow=
-def_3dnow2=
-def_sse=
-def_sse2=
-def_sse3=
-def_ssse3=
-def_sse3=
-def_avx=
+x86 && enable mmx_test
+
 if enabled mmx_test ; then
-check_cflags -mmmx	&& def_mmx='#define CAN_COMPILE_MMX 1'
-check_cflags -m3dnow	&& def_3dnow='#define CAN_COMPILE_3DNOW 1'
-check_cflags -msse	&& def_sse='#define CAN_COMPILE_SSE 1'
-check_cflags -msse2	&& def_sse2='#define CAN_COMPILE_SSE2 1'
-check_cflags -msse3	&& def_sse3='#define CAN_COMPILE_SSE3 1'
-check_cflags -mssse3	&& def_ssse3='#define CAN_COMPILE_SSSE3 1'
-check_cflags -msse4	&& def_sse4='#define CAN_COMPILE_SSE4 1'
-check_cflags -mavx	&& def_avx='#define CAN_COMPILE_AVX 1'
+check_cflags -mmmx
+check_cflags -m3dnow
+check_cflags -msse
+check_cflags -msse2
+check_cflags -msse3
+check_cflags -mssse3
+check_cflags -msse4
+check_cflags -mpclmul
+check_cflags -maes
+check_cflags -mavx
 fpu_clob='#define FPU_CLOBBERED "st","st(1)","st(2)","st(3)","st(4)","st(5)","st(6)","st(7)"'
 mmx_clob='#define MMX_CLOBBERED "mm0","mm1","mm2","mm3","mm4","mm5","mm6","mm7"'
 sse_clob='#define SSE_CLOBBERED "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5","xmm6","xmm7"'
 fi
-if test -n "$def_3dnow" || test -n "$def_sse" ; then
-def_mmx2='#define CAN_COMPILE_MMX2 1'
-fi
 
 cat >> $config_h << EOF
 /* Extension defines */
-$def_mmx
-$def_mmx2
-$def_3dnow
-$def_sse
-$def_sse2
-$def_sse3
-$def_ssse3
-$def_sse4
-$def_avx
 $fpu_clob
 $mmx_clob
 $sse_clob

@@ -2,8 +2,9 @@ MplayerXP NEWS -- history of user-visible changes.
 
 Version 0.8
 
-* significand acceleration of playback. Now it can scale 640x480->2000x1500 at 25 FPS in real-time without
-  framedropping with using of non-accelerated '-vo x11' driver on Quad-Core AMD Phenom-9550 running at 2.2GHz
+* significand acceleration of playback. Now 64-bit version can scale 640x480 up to 2000x1500+ at 25 FPS
+  in real-time without framedropping with using of non-accelerated '-vo x11' driver
+  on Quad-Core AMD Phenom-9550 running at 2.2GHz
 * project migrated from CVS on SVN
 * Redesigned internal architecture of the player (now it being building statically with all internal libs)
 * new configure script
