@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <stdarg.h>
 #include "codecs_ld.h"
 #include "../mp_config.h"
 #include "../help_mp.h"
@@ -40,6 +41,24 @@ void * ld_sym(void *handle,const char *sym_name)
   void *rval;
   if(!(rval=dlsym(handle,sym_name))) {
     MSG_ERR(MSGTR_CODEC_DLL_SYM_ERR,sym_name);
+  }
+  return rval;
+}
+
+void * ld_aliased_sym(void *handle,const char *sym_name,...)
+{
+  void *rval=ld_sym(handle,sym_name);
+  if(!rval) {
+    const char *alias;
+    va_list list;
+
+    va_start( list, sym_name );
+    do {
+      alias = va_arg(list, const char *);
+      if(alias) rval = ld_sym(handle,alias);
+      if(rval) break;
+   }while(alias);
+   va_end( list );
   }
   return rval;
 }

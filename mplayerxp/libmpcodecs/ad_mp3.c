@@ -220,22 +220,22 @@ static void *dll_handle;
 static int load_dll(const char *libname)
 {
   if(!(dll_handle=ld_codec(libname,mpcodecs_ad_mp3.info->url))) return 0;
-  mpg123_init_ptr = ld_sym(dll_handle,"mpg123_init");
-  mpg123_exit_ptr = ld_sym(dll_handle,"mpg123_exit");
-  mpg123_new_ptr = ld_sym(dll_handle,"mpg123_new");
-  mpg123_delete_ptr = ld_sym(dll_handle,"mpg123_delete");
-  mpg123_plain_strerror_ptr = ld_sym(dll_handle,"mpg123_plain_strerror");
-  mpg123_open_feed_ptr = ld_sym(dll_handle,"mpg123_open_feed");
-  mpg123_close_ptr = ld_sym(dll_handle,"mpg123_close");
-  mpg123_getformat_ptr = ld_sym(dll_handle,"mpg123_getformat");
-  mpg123_param_ptr = ld_sym(dll_handle,"mpg123_param");
-  mpg123_info_ptr = ld_sym(dll_handle,"mpg123_info");
-  mpg123_current_decoder_ptr = ld_sym(dll_handle,"mpg123_current_decoder");
-  mpg123_decode_ptr = ld_sym(dll_handle,"mpg123_decode");
-  mpg123_read_ptr = ld_sym(dll_handle,"mpg123_read");
-  mpg123_feed_ptr = ld_sym(dll_handle,"mpg123_feed");
-  mpg123_tell_stream_ptr = ld_sym(dll_handle,"mpg123_tell_stream");
-  mpg123_decode_frame_ptr = ld_sym(dll_handle,"mpg123_decode_frame");
+  mpg123_init_ptr = ld_aliased_sym(dll_handle,"mpg123_init","mpg123_init_64","mpg123_init_32");
+  mpg123_exit_ptr = ld_aliased_sym(dll_handle,"mpg123_exit","mpg123_exit_64","mpg123_exit_32");
+  mpg123_new_ptr = ld_aliased_sym(dll_handle,"mpg123_new","mpg123_new_64","mpg123_new_32");
+  mpg123_delete_ptr = ld_aliased_sym(dll_handle,"mpg123_delete","mpg123_delete_64","mpg123_delete_32");
+  mpg123_plain_strerror_ptr = ld_aliased_sym(dll_handle,"mpg123_plain_strerror","mpg123_plain_strerror_64","mpg123_plain_strerror_32");
+  mpg123_open_feed_ptr = ld_aliased_sym(dll_handle,"mpg123_open_feed","mpg123_open_feed_64","mpg123_open_feed_32");
+  mpg123_close_ptr = ld_aliased_sym(dll_handle,"mpg123_close","mpg123_close_64","mpg123_close_32");
+  mpg123_getformat_ptr = ld_aliased_sym(dll_handle,"mpg123_getformat","mpg123_getformat_64","mpg123_getformat_32");
+  mpg123_param_ptr = ld_aliased_sym(dll_handle,"mpg123_param","mpg123_param_64","mpg123_param_32");
+  mpg123_info_ptr = ld_aliased_sym(dll_handle,"mpg123_info","mpg123_info_64","mpg123_info_32");
+  mpg123_current_decoder_ptr = ld_aliased_sym(dll_handle,"mpg123_current_decoder","mpg123_current_decoder_64","mpg123_current_decoder_32");
+  mpg123_decode_ptr = ld_aliased_sym(dll_handle,"mpg123_decode","mpg123_decode_64","mpg123_decode_32");
+  mpg123_read_ptr = ld_aliased_sym(dll_handle,"mpg123_read","mpg123_read_64","mpg123_read_32");
+  mpg123_feed_ptr = ld_aliased_sym(dll_handle,"mpg123_feed","mpg123_feed_64","mpg123_feed_32");
+  mpg123_tell_stream_ptr = ld_aliased_sym(dll_handle,"mpg123_tell_stream","mpg123_tell_stream_64","mpg123_tell_stream_32");
+  mpg123_decode_frame_ptr = ld_aliased_sym(dll_handle,"mpg123_decode_frame","mpg123_decode_frame_64","mpg123_decode_frame_32");
   return mpg123_decode_ptr && mpg123_init_ptr && mpg123_exit_ptr &&
 	 mpg123_new_ptr && mpg123_delete_ptr && mpg123_plain_strerror_ptr &&
 	 mpg123_open_feed_ptr && mpg123_close_ptr && mpg123_getformat_ptr &&
