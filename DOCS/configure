@@ -48,7 +48,6 @@ DEFAULT_LIST=(
     "PROGNAME_LIST|Program names|--"
 )
 
-make_defaults "DEFAULT_LIST"
 make_environment "ENVIRONMENT_LIST"
 
 for ac_option do
@@ -87,6 +86,7 @@ for ac_option do
     ;;
   esac
 done
+make_defaults "DEFAULT_LIST"
 
 mktmps
 

@@ -13,6 +13,8 @@ DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 # Generated automatically from Makefile.in by configure.
 DEFINES=$(WIN32_PATH) -DMPLAYER -D__WINE__
 
+ASRCS=wrapper.S
+
 SRCS= driver.c \
       afl.c \
       vfl.c
@@ -25,11 +27,11 @@ SRCS+= ldt_keeper.c \
        pe_resource.c \
        resource.c \
        registry.c \
-       elfdll.c \
-       wrapper.c
+       elfdll.c
 endif
 
 OBJS=$(SRCS:.c=.o)
+AOBJS=$(ASRCS:.S=.o)
 
 # gcc-3.0 produces buggy code for acmStreamOpen() with
 # "-O3 -fomit-frame-pointer" or "-O2 -fomit-frame-pointer
@@ -66,8 +68,8 @@ ifeq ($(TARGET_OS),OpenBSD)
 	./loader_objfix.sh
 endif
 
-$(LIBNAME): $(SUBDIRS) $(OBJS)
-	$(AR) r $(LIBNAME) $(OBJS) \
+$(LIBNAME): $(SUBDIRS) $(OBJS) $(AOBJS)
+	$(AR) r $(LIBNAME) $(OBJS) $(AOBJS) \
 	$(wildcard dshow/*.o) \
 	$(wildcard dmo/*.o)
 

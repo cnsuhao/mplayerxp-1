@@ -1018,7 +1018,7 @@ FARPROC MODULE_GetProcAddress(
 //	TRACE_(win32)("(%08lx,%p)\n",(DWORD)hModule,function);
 
     if (!wm) {
-    	SetLastError(ERROR_INVALID_HANDLE);
+	SetLastError(ERROR_INVALID_HANDLE);
         return (FARPROC)0;
     }
     switch (wm->type)
@@ -1034,9 +1034,9 @@ FARPROC MODULE_GetProcAddress(
 	return retproc;
 #endif
     default:
-    	ERR("wine_modref type %d not handled.\n",wm->type);
-    	SetLastError(ERROR_INVALID_HANDLE);
-    	return (FARPROC)0;
+	ERR("wine_modref type %d not handled.\n",wm->type);
+	SetLastError(ERROR_INVALID_HANDLE);
+	return (FARPROC)0;
     }
 
 #ifdef EMU_QTX_API
