@@ -47,18 +47,18 @@ void * ld_sym(void *handle,const char *sym_name)
 
 void * ld_aliased_sym(void *handle,const char *sym_name,...)
 {
-  void *rval=ld_sym(handle,sym_name);
+  void *rval=dlsym(handle,sym_name);
   if(!rval) {
     const char *alias;
     va_list list;
-
     va_start( list, sym_name );
     do {
       alias = va_arg(list, const char *);
-      if(alias) rval = ld_sym(handle,alias);
+      if(alias) rval = dlsym(handle,alias);
       if(rval) break;
-   }while(alias);
-   va_end( list );
+    }while(alias);
+    va_end( list );
   }
+  if(!rval) MSG_ERR(MSGTR_CODEC_DLL_SYM_ERR,sym_name);
   return rval;
 }
