@@ -171,11 +171,7 @@ DEFAULT_LIST=(
 
 enable_list "ENABLED_LIST"
 disable_list "DISABLED_LIST"
-make_defaults "DEFAULT_LIST"
 make_environment "ENVIRONMENT_LIST"
-
-gas=`$cc -print-prog-name=as`
-test -n $gas && as=$gas
 
 for ac_option do
   optval="${ac_option#*=}"
@@ -216,6 +212,9 @@ for ac_option do
     ;;
   esac
 done
+make_defaults "DEFAULT_LIST"
+gas=`$cc -print-prog-name=as`
+test -n $gas && as=$gas
 
 mktmps
 guess_target mp_config.mak mp_config.h
@@ -562,20 +561,24 @@ enabled x11 && require2 x11 "X11/Xlib.h X11/Xutil.h" XCreateWindow -lXext
 print_config HAVE_ mp_config.h mp_config.mak x11
 enabled x11 && vomodules="x11 $vomodules" || novomodules="x11 $novomodules"
 
+disabled x11	&& disable xdpms
 enabled xdpms	&& require2 xdpms "X11/Xlib.h X11/extensions/dpms.h" DPMSQueryExtension
 disabled xdpms	&& require2 xdpms "X11/Xlib.h X11/extensions/dpms.h" DPMSQueryExtension -lXdpms
 print_config HAVE_ mp_config.h mp_config.mak xdpms
 
+disabled x11	&& disable xv
 enabled xv	&& require2 xv "X11/Xlib.h X11/extensions/Xvlib.h" XvGetPortAttribute -lXv
 print_config HAVE_ mp_config.h mp_config.mak xv
 enabled xv	&& vomodules="xv $vomodules" || novomodules="xv $novomodules"
 
+disabled x11	&& disable xinerama
 enabled xinerama	&& require2 xinerama "X11/Xlib.h X11/extensions/Xinerama.h" XineramaIsActive -lXinerama
-print_config HAVE_ mp_config.h mp_config.mak xv
+print_config HAVE_ mp_config.h mp_config.mak xinerama
 
 if win32 ; then
 enabled opengl	&& require2 opengl "windows.h GL/gl.h" wglCreateContext -lopengl32 -lgdi32
 else
+disabled x11	&& disable opengl
 enabled opengl  && require2 opengl "GL/gl.h GL/glx.h GL/glut.h" glutInitWindowSize -lglut -lGL 
 fi
 print_config HAVE_ mp_config.h mp_config.mak opengl
@@ -586,9 +589,11 @@ enabled opengl	&& vomodules="opengl $vomodules" || novomodules="opengl $novomodu
 # named 'X extensions' or something similar.
 # This check may be useful for future mplayerxp versions (to change resolution)
 # If you run into problems, remove '-lXxf86vm'.
+disabled x11	&& disable xf86vm
 enabled xf86vm	&& require2 xf86vm "X11/Xlib.h X11/extensions/xf86vmode.h" XF86VidModeQueryExtension -lXxf86vm
 print_config HAVE_ mp_config.h mp_config.mak xf86vm
 
+disabled x11	&& disable dga
 if enabled dga ; then
 require2 dga2 "X11/Xlib.h X11/extensions/xf86dga.h" XDGASetViewport -lXxf86dga
 print_config HAVE_ mp_config.h mp_config.mak dga2
@@ -665,7 +670,7 @@ if test "$linux_devfs" = yes; then
 else
     def_ossaudio_devdsp='#define PATH_DEV_DSP "/dev/dsp"'
     def_ossaudio_devmixer='#define PATH_DEV_MIXER "/dev/mixer"'
-fi  
+fi
 
 enabled alsa && require2 alsa alsa/asoundlib.h SND_LIB_MAJOR -lasound
 print_config HAVE_ mp_config.h mp_config.mak alsa

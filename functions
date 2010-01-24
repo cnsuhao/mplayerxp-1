@@ -1277,7 +1277,10 @@ do
 	test -z $oval && break
 	local oopt=$(trim `echo $oval | cut -d '|' -f 1`)
 	local odef=$(trim `echo $oval | cut -s -d '|' -f 3`)
-	test -z $odef || eval "$oopt=\"$odef\""
+	eval "assigned_val=\$$oopt"
+	if test -z $assigned_val ; then
+	    test -z $odef || eval "$oopt=\"$odef\""
+	fi
 	(( i++ ))
     done
     (( index++ ))
