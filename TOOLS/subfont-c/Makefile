@@ -1,7 +1,5 @@
-include ../../mplayerxp/config.mak
-
 LDLIBS=-lm $(shell freetype-config --libs)
-CFLAGS=$(OPTFLAGS) $(shell freetype-config --cflags)
+CFLAGS=-O2 $(shell freetype-config --cflags)
 
 #CFLAGS+=-O0			# for RedHat's gcc-2.96-95
 #CFLAGS+=-DOLD_FREETYPE2	# for FreeType 2.0.1
@@ -11,6 +9,7 @@ CFLAGS=$(OPTFLAGS) $(shell freetype-config --cflags)
 
 
 subfont:	subfont.o
+	$(CC) $(CFLAGS) $< $(LDLIBS) -o $@
 
 subfont.o:	subfont.c Makefile ../../mplayerxp/bswap.h
 

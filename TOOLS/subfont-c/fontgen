@@ -24,9 +24,9 @@ if [ ! -z $2 ]; then
     mkdir $2
 fi
 #font=verdana.ttf
-encoding=iso-8859-2
-fontsize=12
-symbolssize=10
+encoding=koi8-r
+fontsize=24
+symbolssize=35
 blur=2
 outline=1.5
 

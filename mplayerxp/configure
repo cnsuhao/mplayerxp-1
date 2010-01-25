@@ -626,12 +626,11 @@ enabled jpeg	&& vomodules="jpeg $vomodules" || novomodules="jpeg $novomodules"
 x86_32 || disable vesa
 _vesa=$vesa
 enabled vesa	&& require3 vesa "asm/vm86.h string.h" VIF_MASK memset
-print_config HAVE_ mp_config.h mp_config.mak vesa
-
-disabled vesa	&& vesa=$_vesa
+if disabled vesa ; then
+vesa=$_vesa
 enabled vesa	&& require3 vesa "asm/vm86.h string.h" X86_EFLAGS_VIF memset
+fi
 print_config HAVE_ mp_config.h mp_config.mak vesa
-
 enabled vesa	&& vomodules="vesa $vomodules" || novomodules="vesa $novomodules"
 
 #################

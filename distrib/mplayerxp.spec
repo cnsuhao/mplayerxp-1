@@ -1,8 +1,18 @@
 ########################################################################################################
 # This is a .spec file for building mplayerxp.rpm packages.
-# Usage: rpm -bb mplayerxp.spec
+#
+# Usage:
+# rpmbuild -bb --target i686-linux mplayerxp.spec
+# or:
+# rpmbuild -bb --target x86_64-linux mplayerxp.spec
+#
+# For fast linkage:
+# rpmbuild -bb --target CPU-linux --short-circuit mplayerxp.spec
+#
+# For testing package.rpm:
+# rpm -qp --queryformat "%{arch}\n" mplayerxp-*.rpm
+# rpm -qp --queryformat "%{os}\n" mplayerxp-*.rpm
 ########################################################################################################
-%define         x86_64  0
 %define         name    mplayerxp
 %define         version 0.7.95
 %define         release 1
@@ -13,9 +23,9 @@
 
 Name:           %{name}
 Version:        %{version}
-Release:        %{release}
+Release:        %{release}_%_target_os
 Prefix:         %{prefix}
-Summary:        Media Player for *nix systems with eXtra Performance.
+Summary:        Media Player for *nix systems with eXtra Performance
 License:        GPL
 Group:          Applications/Multimedia
 Packager:       Nickols_K <nickols_k@mail.ru>
@@ -30,20 +40,23 @@ MPlayerXP is a branch of the well known mplayer (http://mplayerhq.hu) which is b
 core. The new core provides better CPU utilization and excellently improves performance of video decoding.
 Main goal of this project is to achieve smoothness of video playback due monotonous CPU loading.
 
-%if %{x86_64}
+%if %_target_cpu==x86_64
 %define         bitness 64
 %define         lib     lib64
 %define         gcc     "gcc -m64"
-%define         host    x86_64-unknown-linux-gnu
+%define         host    "x86_64-unknown-linux-gnu"
 %define         ld_library_path "$LD_LIBRARY_PATH:usr/%{lib}:/usr/%{lib}/xorg"
 %define         pkg_config_path "$PKG_CONFIG_PATH:$PKG64_CONFIG_PATH:/usr/local/%{lib}"
-%else
+%elseif %_target_cpu==i686
 %define         bitness 32
 %define         lib     lib
 %define         gcc     "gcc -m32"
-%define         host    i686-unknown-linux-gnu
+%define         host    "i686-unknown-linux-gnu"
 %define         ld_library_path "$LD_LIBRARY_PATH:usr/%{lib}:/usr/%{lib}/xorg"
 %define         pkg_config_path "$PKG_CONFIG_PATH:$PKG32_CONFIG_PATH:/usr/local/%{lib}"
+%else
+# generic or unknown arch-os
+%define         gcc     "gcc"
 %endif
 
 %prep

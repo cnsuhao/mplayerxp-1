@@ -36,7 +36,7 @@
 
 //// default values
 char		*encoding = "iso-8859-1";	/* target encoding */
-char		*charmap = "ucs-4";		/* font charmap encoding, I hope ucs-4 is always big endian */
+char		*charmap = "utf-32"/*"ucs-4"*/;		/* font charmap encoding, I hope ucs-4 is always big endian */
 						/* gcc 2.1.3 doesn't support ucs-4le, but supports ucs-4 (==ucs-4be) */
 float		ppem = 22;			/* font size in pixels */
 
@@ -68,8 +68,8 @@ int		unicode_desc = 0;
 unsigned char	*bbuffer, *abuffer;
 int		width, height;
 int		padding;
-static FT_ULong	charset[max_charset_size];		/* characters we want to render; Unicode */
-static FT_ULong	charcodes[max_charset_size];	/* character codes in 'encoding' */
+static uint32_t	charset[max_charset_size];		/* characters we want to render; Unicode */
+static uint32_t	charcodes[max_charset_size];	/* character codes in 'encoding' */
 iconv_t cd;					// iconv conversion descriptor
 
 
@@ -143,7 +143,7 @@ void render() {
     int	const	load_flags = FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING;
     int		pen_x = 0, pen_xa;
     int		ymin = INT_MAX, ymax = INT_MIN;
-    int		i, uni_charmap = 1;
+    int		i, uni_charmap = 0;
     int		baseline, space_advance = 20;
     int		glyphs_count = 0;
 
@@ -282,7 +282,7 @@ void render() {
     glyphs = (FT_Glyph*)malloc(charset_size*sizeof(FT_Glyph*));
     for (i= 0; i<charset_size; ++i) {
 	FT_GlyphSlot	slot;
-	FT_ULong	character, code;
+	uint32_t	character, code;
 	FT_UInt		glyph_index;
 	FT_BBox		bbox;
 
@@ -293,7 +293,7 @@ void render() {
 	if (character==0)
 	    glyph_index = 0;
 	else {
-	    glyph_index = FT_Get_Char_Index(face, uni_charmap ? character:code);
+	    glyph_index = FT_Get_Char_Index(face, uni_charmap ? character: code);
 	    if (glyph_index==0) {
 		WARNING("Glyph for char 0x%02x|U+%04X|%c not found.", code, character,
 			 code<' '||code>255 ? '.':code);
@@ -418,13 +418,15 @@ void render() {
 
 
 /* decode from 'encoding' to unicode */
-FT_ULong decode_char(char c) {
-    FT_ULong o;
+uint32_t decode_char(char c) {
+    uint32_t o;
     char *inbuf = &c;
     char *outbuf = (char*)&o;
-    int inbytesleft = 1;
-    int outbytesleft = sizeof(FT_ULong);
+    size_t inbytesleft = 1;
+    size_t outbytesleft = sizeof(uint32_t);
+    inbuf[1]=0;
 
+    printf("converting %c character\n",c);
     size_t count = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
 
     /* convert unicode BigEndian -> MachineEndian */
@@ -441,7 +443,7 @@ FT_ULong decode_char(char c) {
 
 void prepare_charset() {
     FILE *f;
-    FT_ULong i;
+    unsigned i;
 
     f = fopen(encoding, "r");		// try to read custom encoding
     if (f==NULL) {
@@ -453,6 +455,7 @@ void prepare_charset() {
 
 	cd = iconv_open(charmap, encoding);
 	if (cd==(iconv_t)-1) ERROR("Unsupported encoding `%s', use iconv --list to list character sets known on your system.", encoding);
+	else printf("Successfully open iconv from %s to %s\n",encoding,charmap);
 
 	charset_size = 256 - first_char;
 	for (i = 0; i<charset_size; ++i) {

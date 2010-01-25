@@ -1,9 +1,10 @@
 #!/bin/bash
 
-#unicode="--unicode"
-font=arial.ttf
+unicode="--unicode"
+font=./EuroStyle.ttf
+#font=/usr/share/fonts/TTF/FreeMono.ttf
 #font=verdana.ttf
-encoding=iso-8859-2
+encoding=koi8-r
 fontsize=24
 symbolssize=35
 blur=2
