@@ -102,7 +102,7 @@ PROFILE_START();
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
-    _ivec_sfence();
+    if(finalize) _ivec_sfence();
 #endif
 PROFILE_END("vo_draw_alpha_yv12");
     return;
@@ -167,7 +167,7 @@ PROFILE_START();
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
-    _ivec_sfence();
+    if(finalize) _ivec_sfence();
 #endif
 PROFILE_END("vo_draw_alpha_yuy2");
     return;
@@ -240,7 +240,7 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigne
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
-    _ivec_sfence();
+    if(finalize) _ivec_sfence();
 #endif
     return;
 }
@@ -306,7 +306,7 @@ PROFILE_START();
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
-    _ivec_sfence();
+    if(finalize) _ivec_sfence();
 #endif
 PROFILE_END("vo_draw_alpha_rgb32");
     return;

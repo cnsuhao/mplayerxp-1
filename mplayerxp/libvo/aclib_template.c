@@ -147,7 +147,7 @@ __asm__ __volatile__(\
 	    cfrom+=block_size;\
 	    tto+=block_size;\
 	}\
-	_ivec_sfence();\
+	MEM_SFENCE\
 	_ivec_empty();\
     }\
     /*\
@@ -158,7 +158,8 @@ __asm__ __volatile__(\
 }
 
 #undef MEM_STORE
-#define MEM_STORE _ivec_stream
+#define MEM_STORE  _ivec_stream
+#define MEM_SFENCE _ivec_sfence();
 static inline void * PVECTOR_RENAME(fast_stream_copy)(void * to, const void * from, size_t len)
 {
     MSG_DBG3("fast_stream_copy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
@@ -167,6 +168,7 @@ static inline void * PVECTOR_RENAME(fast_stream_copy)(void * to, const void * fr
 
 #undef MEM_STORE
 #define MEM_STORE _ivec_storea
+#define MEM_SFENCE
 static inline void * PVECTOR_RENAME(fast_memcpy)(void * to, const void * from, size_t len)
 {
     MSG_DBG3("fast_memcpy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);

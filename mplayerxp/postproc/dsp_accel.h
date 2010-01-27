@@ -33,7 +33,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int8_to_int16)(const int8_t* in_data, in
 	}
     }
     _ivec_empty();
-    _ivec_sfence();
+    if(final) _ivec_sfence();
 #endif
 	for(;i<len;i++)
 	  ((uint16_t*)out_data)[i]=((uint16_t)((const uint8_t*)in_data)[i])<<8;
@@ -60,7 +60,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, i
 	    _ivec_storea(&((uint8_t*)out_data)[i],outd);
     }
     _ivec_empty();
-    _ivec_sfence();
+    if(final) _ivec_sfence();
 #endif
     for(;i<len;i++)
 	((uint8_t*)out_data)[i]=(uint8_t)((((const uint16_t*)in_data)[i])>>8);
@@ -101,7 +101,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, 
 	    _ivec_storea(&((uint8_t *)out_data)[j*2+__IVEC_SIZE],tmp[1]);
 	}
     }
-    _ivec_sfence();
+    if(final) _ivec_sfence();
     _ivec_empty();
 #endif
     for(;i<len;i++)
@@ -133,7 +133,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, 
 	else
 	    _ivec_storea(&((uint8_t *)out_data)[j],tmp);
     }
-    _ivec_sfence();
+    if(final) _ivec_sfence();
     _ivec_empty();
 #endif
     for(;i<len;i++)
@@ -337,7 +337,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t
 	else
 	    _f32vec_to_s32a(&((int32_t*)out)[i],tmp);
     }
-    _ivec_sfence();
+    if(final) _ivec_sfence();
     _ivec_empty();
 #endif
     for(;i<len;i++) {
@@ -368,7 +368,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out,
 	else
 	    _f32vec_storea(&((float*)out)[i],tmp);
     }
-    _ivec_sfence();
+    if(final) _ivec_sfence();
     _ivec_empty();
 #endif
     for(;i<len;i++)
