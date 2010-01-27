@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+# query full-featured shell here
+#
 # The simplest configure for mplayerxp
 for parm in "$@" ; do
   if test "$parm" = "--help" || test "$parm" = "-help" || test "$parm" = "-h" ; then

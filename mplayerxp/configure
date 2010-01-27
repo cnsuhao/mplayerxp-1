@@ -1,4 +1,5 @@
-#! /bin/sh
+#!/bin/bash
+# query full-featured shell here
 #
 # Original version (C) 2000 Pontscho/fresh!mindworkz
 #                      pontscho@makacs.poliod.hu
@@ -254,7 +255,7 @@ fi
       cc_version="$cc_version, bad"
       cc_verc_fail=yes
       ;;
-    3.[2-9]|3.[2-9].[0-9]|4.[0-9].[0-9])
+    3.[2-9]|3.[2-9].[0-9]|4.[0-9]|4.[0-9].[0-9])
       cc_version="$cc_version, ok"
       cc_verc_fail=no
       ;;
