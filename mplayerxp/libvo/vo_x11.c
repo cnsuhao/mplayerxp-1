@@ -150,11 +150,6 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
  if ( depth != 15 && depth != 16 && depth != 24 && depth != 32 ) depth=24;
  XMatchVisualInfo( mDisplay,mScreen,depth,TrueColor,&vinfo );
 
- /* set image size (which is indeed neither the input nor output size), 
-    if zoom is on it will be changed during draw_slice anyway so we dont dupplicate the aspect code here 
- */
- image_width=(d_width + 7) & (~7);
- image_height=d_height;
 
  baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
 
@@ -172,7 +167,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
       * but I leave the old -fs behaviour so users don't get
       * irritated for now (and send lots o' mails ;) ::atmos
       */
-     if( vo_fs ) aspect(&d_width,&d_height,A_ZOOM);
+     if( fullscreen ) aspect(&d_width,&d_height,A_ZOOM);
 #endif
     vo_x11_calcpos(&hint,d_width,d_height,flags);
     hint.flags=PPosition | PSize;
@@ -181,6 +176,9 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
     fg=BlackPixel( mDisplay,mScreen );
     vo_dwidth=hint.width;
     vo_dheight=hint.height;
+
+    image_width=d_width;
+    image_height=d_height;
 
     theCmap  =XCreateColormap( mDisplay,RootWindow( mDisplay,mScreen ),
     vinfo.visual,AllocNone );
@@ -198,6 +196,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
      }
 #endif
 
+    fprintf(stderr,"**** WinID=%i xywh=%ix%ixx%ix%i\n",WinID,hint.x,hint.y,hint.width,hint.height);
     if ( WinID>=0 ){
       vo_window = WinID ? ((Window)WinID) : RootWindow( mDisplay,mScreen );
       XUnmapWindow( mDisplay,vo_window );
@@ -209,15 +208,20 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
                          hint.width,hint.height,
                          xswa.border_pixel,depth,CopyFromParent,vinfo.visual,xswamask,&xswa );
 
-    vo_x11_classhint( mDisplay,vo_window,"x11" );
+    vo_x11_classhint( mDisplay,vo_window,"vo_x11" );
     vo_x11_hidecursor(mDisplay,vo_window);
     if ( fullscreen ) vo_x11_decoration( mDisplay,vo_window,0 );
     XSelectInput( mDisplay,vo_window,StructureNotifyMask );
     XSetStandardProperties( mDisplay,vo_window,title,title,None,NULL,0,&hint );
     XMapWindow( mDisplay,vo_window );
 #ifdef HAVE_XINERAMA
-   vo_x11_xinerama_move(mDisplay,vo_window);
+    vo_x11_xinerama_move(mDisplay,vo_window,&hint);
 #endif
+    {
+      XWindowAttributes xwa;
+      XGetWindowAttributes( mDisplay,vo_window,&xwa);
+      fprintf(stderr,"**** WinAttr: xywh=%ix%ixx%ix%i\n",xwa.x,xwa.y,xwa.width,xwa.height);
+    }
     if(WinID!=0)
     do { XNextEvent( mDisplay,&xev ); } while ( xev.type != MapNotify || xev.xmap.event != vo_window );
     XSelectInput( mDisplay,vo_window,NoEventMask );

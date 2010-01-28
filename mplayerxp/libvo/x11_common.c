@@ -876,10 +876,10 @@ void __FASTCALL__ saver_off(Display *mDisplay) {
 
 
 #ifdef HAVE_XINERAMA
-void __FASTCALL__ vo_x11_xinerama_move(Display *dsp, Window w)
+void __FASTCALL__ vo_x11_xinerama_move(Display *dsp, Window w,const XSizeHints*hint)
 {
 	if(XineramaIsActive(dsp))
-		XMoveWindow(dsp,w,xinerama_x,xinerama_y);
+		XMoveWindow(dsp,w,xinerama_x+hint->x,xinerama_y+hint->y);
 }
 #endif
 

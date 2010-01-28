@@ -42,7 +42,7 @@ void __FASTCALL__ saver_off( Display * );
 void __FASTCALL__ saver_on( Display * );
 
 #ifdef HAVE_XINERAMA
-void __FASTCALL__ vo_x11_xinerama_move(Display *dsp, Window w);
+void __FASTCALL__ vo_x11_xinerama_move(Display *dsp, Window w,const XSizeHints*hint);
 #endif
 
 #ifdef HAVE_XF86VM

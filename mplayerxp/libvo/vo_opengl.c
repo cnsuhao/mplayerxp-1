@@ -226,7 +226,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
    if ( vo_fs ) vo_x11_decoration( mDisplay,vo_window,0 );
    XMapWindow(mDisplay, vo_window);
 #ifdef HAVE_XINERAMA
-   vo_x11_xinerama_move(mDisplay,vo_window);
+   vo_x11_xinerama_move(mDisplay,vo_window,&hint);
 #endif
    vo_gc = XCreateGC(mDisplay, vo_window, 0L, &xgcv);
    XFlush(mDisplay);
