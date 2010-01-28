@@ -346,6 +346,16 @@ int x;
 EOF
 }
 
+is_in_cflags(){
+    value=$1
+    shift
+    for var in $CFLAGS; do
+        tmp=$(trim `echo $var | cut -d '=' -f 1`)
+        [ $tmp = $value ] && return 0
+    done
+    return 1
+}
+
 check_ldflags(){
     log check_ldflags "$@"
     check_ld "$@" <<EOF && add_ldflags "$@"
@@ -1117,9 +1127,9 @@ add_ldflags -m32
 add_asflags --32
 fi
 
-if test -z $CFLAGS ; then
-add_cflags $locarch
-fi
+# agree with user-defined architecture/tuning here
+is_in_cflags "-march" || check_cflags $locarch
+is_in_cflags "-mtune" || check_cflags "-mtune=generic"
 if enabled profile || test "$debug" != "0" || enabled gcov; then
     add_cflags "-O2 -fno-builtin"
 if enabled profile ; then
@@ -1136,16 +1146,15 @@ add_extralibs "-lgcov"
 fi
 else
   add_cflags "-O3"
-# -ffast-math produces incorrect output in 64-bit mode on x86_64 cpus. Tested with many gcc-4.x series
   mips   || check_cflags "-pipe"
   x86_32 && check_cflags "-fomit-frame-pointer"
 # -fomit-frame-pointer is not needed for x86_64
 fi
-check_cflags "-fno-fast-math"
-check_cflags "-mfancy-math-387"
-check_cflags "-fno-math-errno"
-check_cflags "-fno-signed-zeros"
-check_cflags "-mtune=generic"
+# -ffast-math produces incorrect output in 64-bit mode on x86_64 cpus. Tested with many gcc-4.x series
+is_in_cflags "-fno-fast-math" || check_cflags "-fno-fast-math"
+is_in_cflags "-mfancy-math-387" || check_cflags "-mfancy-math-387"
+is_in_cflags "-fno-math-errno" || check_cflags "-fno-math-errno"
+is_in_cflags "-fno-signed-zeros" || check_cflags "-fno-signed-zeros"
 # depend on compiler version
 #check_cflags "-fno-tree-vectorize"
 
@@ -1163,16 +1172,13 @@ check_cflags -msse4
 check_cflags -mpclmul
 check_cflags -maes
 check_cflags -mavx
-fpu_clob='#define FPU_CLOBBERED "st","st(1)","st(2)","st(3)","st(4)","st(5)","st(6)","st(7)"'
-mmx_clob='#define MMX_CLOBBERED "mm0","mm1","mm2","mm3","mm4","mm5","mm6","mm7"'
-sse_clob='#define SSE_CLOBBERED "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5","xmm6","xmm7"'
 fi
-
+# TODO: remove this block
 cat >> $config_h << EOF
 /* Extension defines */
-$fpu_clob
-$mmx_clob
-$sse_clob
+#define FPU_CLOBBERED "st","st(1)","st(2)","st(3)","st(4)","st(5)","st(6)","st(7)"
+#define MMX_CLOBBERED "mm0","mm1","mm2","mm3","mm4","mm5","mm6","mm7"
+#define SSE_CLOBBERED "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5","xmm6","xmm7"
 EOF
 
 if (alpha) ; then
