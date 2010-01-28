@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # define here official release digits. Example: "1.0"
-version="0.7.95 "
+version="0.7.96 "
 
 svn_exec=$(LC_ALL=C which svn)
 svn_revision=

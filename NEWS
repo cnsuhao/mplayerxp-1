@@ -1,5 +1,11 @@
 MplayerXP NEWS -- history of user-visible changes.
 
+Version 0.7.96
+
+* enable software scaler in x11 fullscreen mode. Fixed xinerama moving position
+* minor speedup and fixes
+* fixed some configure-related problems
+
 Version 0.7.95
 
 * significand acceleration of playback. Now 64-bit version can scale 640x480 up to 2000x1500+ at 25 FPS
