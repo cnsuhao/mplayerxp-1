@@ -1130,7 +1130,7 @@ fi
 # agree with user-defined architecture/tuning here
 is_in_cflags "-march" || check_cflags $locarch
 is_in_cflags "-mtune" || check_cflags "-mtune=generic"
-if enabled profile || test "$debug" != "0" || enabled gcov; then
+if enabled profile || test $debug -gt 2 || enabled gcov; then
     add_cflags "-O2 -fno-builtin"
 if enabled profile ; then
     add_cflags  "-pg"
