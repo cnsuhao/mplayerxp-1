@@ -196,7 +196,6 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
      }
 #endif
 
-    fprintf(stderr,"**** WinID=%i xywh=%ix%ixx%ix%i\n",WinID,hint.x,hint.y,hint.width,hint.height);
     if ( WinID>=0 ){
       vo_window = WinID ? ((Window)WinID) : RootWindow( mDisplay,mScreen );
       XUnmapWindow( mDisplay,vo_window );
@@ -217,11 +216,6 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
 #ifdef HAVE_XINERAMA
     vo_x11_xinerama_move(mDisplay,vo_window,&hint);
 #endif
-    {
-      XWindowAttributes xwa;
-      XGetWindowAttributes( mDisplay,vo_window,&xwa);
-      fprintf(stderr,"**** WinAttr: xywh=%ix%ixx%ix%i\n",xwa.x,xwa.y,xwa.width,xwa.height);
-    }
     if(WinID!=0)
     do { XNextEvent( mDisplay,&xev ); } while ( xev.type != MapNotify || xev.xmap.event != vo_window );
     XSelectInput( mDisplay,vo_window,NoEventMask );
