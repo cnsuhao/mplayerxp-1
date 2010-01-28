@@ -158,6 +158,7 @@ __asm__ __volatile__(\
 }
 
 #undef MEM_STORE
+#undef MEM_SFENCE
 #define MEM_STORE  _ivec_stream
 #define MEM_SFENCE _ivec_sfence();
 static inline void * PVECTOR_RENAME(fast_stream_copy)(void * to, const void * from, size_t len)
@@ -167,6 +168,7 @@ static inline void * PVECTOR_RENAME(fast_stream_copy)(void * to, const void * fr
 }
 
 #undef MEM_STORE
+#undef MEM_SFENCE
 #define MEM_STORE _ivec_storea
 #define MEM_SFENCE
 static inline void * PVECTOR_RENAME(fast_memcpy)(void * to, const void * from, size_t len)

@@ -317,3 +317,12 @@ PVECTOR_RENAME(f32_min)(__f32vec f1,__f32vec f2)
 }
 #undef _f32vec_min
 #define _f32vec_min PVECTOR_RENAME(f32_min)
+
+extern __inline __f32vec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(f32_clamp)(__f32vec f1,__f32vec minval,__f32vec maxval)
+{
+    return _f32vec_max(_f32vec_min(f1,maxval),minval);
+}
+#undef _f32vec_clamp
+#define _f32vec_clamp PVECTOR_RENAME(f32_clamp)
+

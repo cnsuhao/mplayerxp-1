@@ -414,33 +414,50 @@ PVECTOR_RENAME(interleave_hi_u32)(__ivec s1, __ivec s2)
 #define _ivec_interleave_hi_u32 PVECTOR_RENAME(interleave_hi_u32)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(u16_from_lou8)(__ivec s)
+PVECTOR_RENAME(u16_from_u8)(__ivec s,__ivec *hipart)
 {
-    return _ivec_interleave_lo_u8(s,_ivec_setzero());
+    __ivec filler = _ivec_setzero();
+    *hipart = _ivec_interleave_hi_u8(s,filler);
+    return    _ivec_interleave_lo_u8(s,filler);
 }
-#undef _ivec_u16_from_lou8
-#define _ivec_u16_from_lou8 PVECTOR_RENAME(u16_from_lou8)
+#undef _ivec_u16_from_u8
+#define _ivec_u16_from_u8 PVECTOR_RENAME(u16_from_u8)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(u16_from_hiu8)(__ivec s)
+PVECTOR_RENAME(u32_from_u16)(__ivec s,__ivec *hipart)
 {
-    return _ivec_interleave_hi_u8(s,_ivec_setzero());
+    __ivec filler = _ivec_setzero();
+    *hipart = _ivec_interleave_hi_u16(s,filler);
+    return    _ivec_interleave_lo_u16(s,filler);
 }
-#undef _ivec_u16_from_hiu8
-#define _ivec_u16_from_hiu8 PVECTOR_RENAME(u16_from_hiu8)
+#undef _ivec_u32_from_u16
+#define _ivec_u32_from_u16 PVECTOR_RENAME(u32_from_u16)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(u32_from_lou16)(__ivec s)
+PVECTOR_RENAME(s16_from_s8)(__ivec s,__ivec* hipart)
 {
-    return _ivec_interleave_lo_u16(s,_ivec_setzero());
+    const __ivec izero = _ivec_setzero();
+    __ivec filler;
+    filler = _ivec_cmpgt_s8(izero,s);
+    *hipart = _ivec_interleave_hi_u8(s,filler);
+    return _ivec_interleave_lo_u8(s,filler);
 }
-#undef _ivec_u32_from_lou16
-#define _ivec_u32_from_lou16 PVECTOR_RENAME(u32_from_lou16)
+#undef _ivec_s16_from_s8
+#define _ivec_s16_from_s8 PVECTOR_RENAME(s16_from_s8)
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(u32_from_hiu16)(__ivec s)
+PVECTOR_RENAME(s32_from_s16)(__ivec s,__ivec* hipart)
 {
-    return _ivec_interleave_hi_u16(s,_ivec_setzero());
+    const __ivec izero = _ivec_setzero();
+    __ivec filler;
+    filler = _ivec_cmpgt_s16(izero,s);
+    *hipart = _ivec_interleave_hi_u16(s,filler);
+    return _ivec_interleave_lo_u16(s,filler);
 }
-#undef _ivec_u32_from_hiu16
-#define _ivec_u32_from_hiu16 PVECTOR_RENAME(u32_from_hiu16)
+#undef _ivec_s32_from_s16
+#define _ivec_s32_from_s16 PVECTOR_RENAME(s32_from_s16)
+
+
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(s16_from_s32)(__ivec s1, __ivec s2)
 {
@@ -840,3 +857,61 @@ PVECTOR_RENAME(srl_s64_imm)(__ivec s1,int c)
 }
 #undef _ivec_srl_s64_imm
 #define _ivec_srl_s64_imm PVECTOR_RENAME(srl_s64_imm)
+
+extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(scale_u16_from_u8)(__ivec s,__ivec *hipart)
+{
+#if 0 /* slower but portable on non-x86 CPUs version */
+    __ivec tmp[2];
+    tmp[0]  = _ivec_u16_from_u8(s,&tmp[1]);
+    *hipart = _ivec_sll_s16_imm(tmp[1],8);
+    return    _ivec_sll_s16_imm(tmp[0],8);
+#else
+    __ivec filler = _ivec_setzero();
+    *hipart = _ivec_interleave_hi_u8(filler,s);
+    return    _ivec_interleave_lo_u8(filler,s);
+#endif
+}
+#undef _ivec_scale_u16_from_u8
+#define _ivec_scale_u16_from_u8 PVECTOR_RENAME(scale_u16_from_u8)
+
+extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(scale_u32_from_u16)(__ivec s,__ivec *hipart)
+{
+#if 0 /* slower but portable on non-x86 CPUs version */
+    __ivec tmp[2];
+    tmp[0]  = _ivec_u32_from_u16(s,&tmp[1]);
+    *hipart = _ivec_sll_s32_imm(tmp[1],16);
+    return    _ivec_sll_s32_imm(tmp[0],16);
+#else
+    __ivec filler = _ivec_setzero();
+    *hipart = _ivec_interleave_hi_u16(filler,s);
+    return    _ivec_interleave_lo_u16(filler,s);
+#endif
+}
+#undef _ivec_scale_u32_from_u16
+#define _ivec_scale_u32_from_u16 PVECTOR_RENAME(scale_u32_from_u16)
+
+extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(scale_s16_from_s32)(__ivec s1, __ivec s2)
+{
+    return _ivec_s16_from_s32(_ivec_sra_s32_imm(s1,16),_ivec_sra_s32_imm(s2,16));
+}
+#undef _ivec_scale_s16_from_s32
+#define _ivec_scale_s16_from_s32 PVECTOR_RENAME(scale_s16_from_s32)
+
+extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(scale_s8_from_s16)(__ivec s1, __ivec s2)
+{
+    return _ivec_s8_from_s16(_ivec_sra_s16_imm(s1,8),_ivec_sra_s16_imm(s2,8));
+}
+#undef _ivec_scale_s8_from_s16
+#define _ivec_scale_s8_from_s16 PVECTOR_RENAME(scale_s8_from_s16)
+extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(scale_u8_from_u16)(__ivec s1, __ivec s2)
+{
+    return _ivec_u8_from_u16(_ivec_sra_s16_imm(s1,8),_ivec_sra_s16_imm(s2,8));
+}
+#undef _ivec_scale_u8_from_u16
+#define _ivec_scale_u8_from_u16 PVECTOR_RENAME(scale_u8_from_u16)
+

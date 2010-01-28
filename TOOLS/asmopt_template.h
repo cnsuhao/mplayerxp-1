@@ -17,7 +17,7 @@ void PVECTOR_RENAME(convert)(unsigned char *dstbase,unsigned char *src,unsigned 
 #endif
     uint8_t *out_data = dstbase;
     uint8_t *in_data = src;
-    
+
     unsigned i,len;
     i = 0;
     len = asize;
@@ -30,19 +30,13 @@ void PVECTOR_RENAME(convert)(unsigned char *dstbase,unsigned char *src,unsigned 
     for(;i<len;i+=__IVEC_SIZE){
 	    __ivec ind,itmp[2];
 	    ind   = _ivec_loadu(&((uint8_t *)in_data)[i]);
-#if 0 /* slower but portable on non-x86 CPUs version */
-	    itmp[0]= _ivec_sll_s16_imm(_ivec_u16_from_lou8(ind),8);
-	    itmp[1]= _ivec_sll_s16_imm(_ivec_u16_from_hiu8(ind),8);
-#else
-	    itmp[0]= _ivec_interleave_lo_u8(izero,ind);
-	    itmp[1]= _ivec_interleave_hi_u8(izero,ind);
-#endif
+	    itmp[0]= _ivec_s16_from_s8(ind,&itmp[1]);
 	    _ivec_storea(&((uint16_t*)out_data)[i],itmp[0]);
 	    _ivec_storea(&((uint16_t*)out_data)[i+__IVEC_SIZE/2],itmp[1]);
     }
 #endif
     for(;i<len;i++)
-	((uint16_t*)out_data)[i]=((uint16_t)((uint8_t*)in_data)[i])<<8;
+	((int16_t*)out_data)[i]=((int16_t)((int8_t*)in_data)[i]);
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
     _ivec_sfence();

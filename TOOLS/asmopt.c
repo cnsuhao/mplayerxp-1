@@ -32,7 +32,7 @@ extern CpuCaps gCpuCaps;
 #define INIT_ARRAYS(x) \
 {\
 	for(i=0; i<x; i++) srca[i] = i; \
-	for(i=0; i<x; i++) src[i] = i+64; \
+	for(i=0; i<x; i++) src[i] = i-61; \
 	for(i=0; i<x; i++) dsta[i] = i+128; \
 }
 
@@ -44,7 +44,7 @@ unsigned int GetTimer(){
   gettimeofday(&tv,&tz);
 //  s=tv.tv_usec;s*=0.000001;s+=tv.tv_sec;
   return (tv.tv_sec*1000000+tv.tv_usec);
-}  
+}
 
 static inline unsigned long long int read_tsc( void )
 {

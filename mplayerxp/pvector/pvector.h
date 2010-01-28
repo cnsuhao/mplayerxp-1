@@ -47,6 +47,10 @@
 #undef HAVE_F32_PVECTOR
 #endif
 
+#undef IVEC_ALIGNED
+#define IVEC_ALIGNED(p) ((((long)((void *)(p)))&(__IVEC_SIZE-1))==0)
+#undef F32VEC_ALIGNED
+#define F32VEC_ALIGNED(p) ((((long)((void *)(p)))&(__F32VEC_SIZE-1))==0)
 
 /*
   ABBREVIATION:
@@ -130,14 +134,21 @@
   __ivec _ivec_interleave_lo_u32(__ivec s1, _ivec_ s2);
   __ivec _ivec_interleave_hi_u32(__ivec s1, _ivec_ s2);
 
-  __ivec _ivec_u16_from_lou8(__ivec s); // Convert lo part of mvec from U8 to U16
-  __ivec _ivec_u16_from_hiu8(__ivec s); // Convert hi part of mvec from U8 to U16
-  __ivec _ivec_u32_from_lou16(__ivec s);// Convert lo part of mvec from U16 to U32
-  __ivec _ivec_u32_from_hiu16(__ivec s); // Convert hi part of mvec from U16 to U32
+  __ivec _ivec_u16_from_u8(__ivec s,__ivec *hipart); // Convert ivec from U8 to U16
+  __ivec _ivec_u32_from_u16(__ivec s,__ivec *hipart);// Convert ivec from U16 to U32
+  __ivec _ivec_s16_from_s8(__ivec s,__ivec *hipart); // Convert ivec from S8 to S16
+  __ivec _ivec_s32_from_s16(__ivec s,__ivec *hipart);// Convert ivec from S16 to S32
+
+  __ivec _ivec_scale_u16_from_u8(__ivec s,__ivec *hipart); // Convert ivec from U8 to U16 and shift left on 8-bit
+  __ivec _ivec_scale_u32_from_u16(__ivec s,__ivec *hipart);// Convert ivec from U16 to U32 and shift left on 16-bit
 
   __ivec _ivec_s16_from_s32(__ivec s1,__ivec s2);   // Convert from S32 to S16
   __ivec _ivec_s8_from_s16(__ivec s1,__ivec s2);    // Convert from S16 to S8
   __ivec _ivec_u8_from_u16(__ivec s1,__ivec s2);    // Convert from U16 to U8
+
+  __ivec _ivec_scale_s16_from_s32(__ivec s1,__ivec s2);   // Convert from S32 to S16 and shift right on 16-bit
+  __ivec _ivec_scale_s8_from_s16(__ivec s1,__ivec s2);    // Convert from S16 to S8 and shift right on 8-bit
+  __ivec _ivec_scale_u8_from_u16(__ivec s1,__ivec s2);    // Convert from U16 to U8 and shift right on 8-bit
 
   ARITHMETIC engine:
   ------------------
@@ -202,4 +213,5 @@
   ---------------
   __f32vec _f32vec_min(__f32vec f1, __f32vec f2);	// MIN(f1,f2)
   __f32vec _f32vec_max(__f32vec f1, __f32vec f2);	// MAX(f1,f2)
+  __f32vec _f32vec_clamp(__f32vec f1, __f32vec minval,__f32vec maxval); // CLAMP(f1,minval,maxval);
 */
