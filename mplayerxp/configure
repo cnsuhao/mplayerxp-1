@@ -870,18 +870,8 @@ $def_ossaudio_devmixer
 **
 *---------------------------------------------------------------------------*/
 
-#ifdef CAN_COMPILE_MMX
-#define USE_MMX_IDCT 1
-#endif
-
 /* libvo options */
-#define SCREEN_SIZE_X 1
-#define SCREEN_SIZE_Y 1
 $def_fbdev_nocopy
-
-#if defined(HAVE_X11) || defined(HAVE_XV)
-#define X11_FULLSCREEN 1
-#endif
 
 /* Defined to some form of __attribute__ ((...)) if the compiler supports
    a different, more efficient calling convention.  */

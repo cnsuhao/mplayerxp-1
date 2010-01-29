@@ -87,7 +87,6 @@ static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *i
 	    drwcX, drwcY, drwX, drwY, drwWidth, drwHeight);
 
     /* following stuff copied from vo_xmga.c */
-#if X11_FULLSCREEN
     if (vo_fs)
     {
 	drwX = (vo_screenwidth - (dwidth > vo_screenwidth ? vo_screenwidth : dwidth)) / 2;
@@ -99,7 +98,6 @@ static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *i
 	MSG_V( "[xvidix-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",
 	    drwcX, drwcY, drwX, drwY, drwWidth, drwHeight);
     }
-#endif
 
 #ifdef HAVE_XINERAMA
     if (XineramaIsActive(mDisplay))
@@ -254,22 +252,21 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 
     aspect(&d_width, &d_height,flags & VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
 
-#ifdef X11_FULLSCREEN
     if (vo_fs) /* fullscreen */
     {
-        if (flags & VOFLAG_SWSCALE)
-        {
-    	    aspect(&d_width, &d_height, A_ZOOM);
-        }
-    	else
-    	{
+	if (flags & VOFLAG_SWSCALE)
+	{
+	    aspect(&d_width, &d_height, A_ZOOM);
+	}
+	else
+	{
 	    d_width = vo_screenwidth;
 	    d_height = vo_screenheight;
-    	}
+	}
 	window_width = vo_screenwidth;
 	window_height = vo_screenheight;
     }
-#endif
+
     dwidth = d_width;
     dheight = d_height;
     /* Make the window */
@@ -303,10 +300,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     vo_x11_classhint(mDisplay, vo_window, "xvidix");
     vo_x11_hidecursor(mDisplay, vo_window);
 
-#ifdef X11_FULLSCREEN
-    if (vo_fs) /* fullscreen */
-	vo_x11_decoration(mDisplay, vo_window, 0);
-#endif
+    if (vo_fs) vo_x11_decoration(mDisplay, vo_window, 0);
 
     XGetNormalHints(mDisplay, vo_window, &hint);
     hint.x = window_x;

@@ -2,7 +2,7 @@
 #ifndef X11_COMMON_H
 #define X11_COMMON_H
 
-#ifdef X11_FULLSCREEN
+#ifdef HAVE_X11
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

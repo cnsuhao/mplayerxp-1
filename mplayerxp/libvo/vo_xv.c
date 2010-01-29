@@ -334,17 +334,9 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 
  aspect_save_screenres(vo_screenwidth,vo_screenheight);
 
-   aspect(&d_width,&d_height,softzoom?A_ZOOM:A_NOZOOM);
-#ifdef X11_FULLSCREEN
-     /* this code replaces X11_FULLSCREEN hack in mplayer.c
-      * aspect() is available through aspect.h for all vos.
-      * besides zooming should only be done with -zoom,
-      * but I leave the old -fs behaviour so users don't get
-      * irritated for now (and send lots o' mails ;) ::atmos
-      */
+ aspect(&d_width,&d_height,softzoom?A_ZOOM:A_NOZOOM);
+ if( vo_fs ) aspect(&d_width,&d_height,A_ZOOM);
 
-     if( vo_fs ) aspect(&d_width,&d_height,A_ZOOM);
-#endif
    vo_x11_calcpos(&hint,d_width,d_height,flags);
    hint.flags = PPosition | PSize;
 

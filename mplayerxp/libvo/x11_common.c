@@ -4,7 +4,7 @@
 
 #include "../mp_config.h"
 #include "../mplayer.h"
-#ifdef X11_FULLSCREEN
+#ifdef HAVE_X11
 
 #include <string.h>
 #include <unistd.h>

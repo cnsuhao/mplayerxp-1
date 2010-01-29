@@ -18,17 +18,18 @@
 #include PVECTOR_ACCEL_H
 
 #if !defined( __x86_64__ ) || defined(PVECTOR_TESTING)
-#if !defined( __i686__ ) || defined(PVECTOR_TESTING)
+#if defined(COMPILE_FOR_OLD_PC) || defined(PVECTOR_TESTING)
 #ifdef __MMX__
 #define OPTIMIZE_MMX
 #undef PVECTOR_RENAME
 #define PVECTOR_RENAME(a) a ## _MMX
 #include PVECTOR_ACCEL_H
 #endif
-#endif // __i686__
+#endif // PVECTOR_TESTING
 
 #ifdef __3dNOW__
 #define OPTIMIZE_3DNOW
+#define OPTIMIZE_MMX2
 #undef PVECTOR_RENAME
 #define PVECTOR_RENAME(a) a ## _3DNOW
 #include PVECTOR_ACCEL_H

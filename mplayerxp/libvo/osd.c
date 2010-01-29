@@ -182,17 +182,17 @@ if(gCpuCaps.hasMMX2)
 }
 else
 #endif
-#ifdef __MMX__
-if(gCpuCaps.hasMMX)
-{
-	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_MMX;
-}
-else
-#endif
+//#ifdef __MMX__
+//if(gCpuCaps.hasMMX)
+//{
+//	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
+//	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX;
+//	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX;
+//	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX;
+//	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_MMX;
+//}
+//else
+//#endif
 #endif
 {
 	MSG_V("Using generic OnScreenDisplay\n");
