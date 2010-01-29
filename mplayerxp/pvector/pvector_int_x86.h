@@ -2,10 +2,10 @@
   pvector_int_x86.h
 */
 
-//#if defined( OPTIMIZE_AVX )
-//#define _VEC(a) a ## _AVX
-//#include <immintrin.h>
-#if defined(OPTIMIZE_AES)
+#if defined( OPTIMIZE_AVX )
+#define _VEC(a) a ## _AVX
+#include <immintrin.h>
+#elif defined(OPTIMIZE_AES)
 #include <wmmintrin.h>
 #elif defined (OPTIMIZE_SSE4)
 #include <smmintrin.h>

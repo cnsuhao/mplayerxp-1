@@ -115,6 +115,17 @@ void vo_draw_alpha_init( void ){
 #endif
 /*FIXME the optimized stuff is a lie for 15/16bpp as they arent optimized yet*/
 // ordered per speed fasterst first
+#ifdef __AVX__
+if(gCpuCaps.hasSSE41)
+{
+	MSG_V("Using SSE4 Optimized OnScreenDisplay\n");
+	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_AVX;
+	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_AVX;
+	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_AVX;
+	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_AVX;
+}
+else
+#endif
 #ifdef __SSE4_1__
 if(gCpuCaps.hasSSE41)
 {

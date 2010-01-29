@@ -276,7 +276,7 @@ PVECTOR_RENAME(_m_movntq)(void *__P, __m64 src)
 #endif
 static int32_t __FASTCALL__ PVECTOR_RENAME(FIR_i16)(int16_t *x,int16_t *w)
 {
-#ifdef OPTIMIZE_MMX
+#ifdef OPTIMIZE_SSE
     __m64 mm[8];
     mm[0] = _m_load(&w[0]);
     mm[1] = _m_load(&w[4]);
@@ -291,12 +291,8 @@ static int32_t __FASTCALL__ PVECTOR_RENAME(FIR_i16)(int16_t *x,int16_t *w)
     mm[0] = _m_paddd(mm[4],mm[5]);
     mm[1] = _m_paddd(mm[6],mm[7]);
     mm[2] = _m_paddd(mm[0],mm[1]);
-#ifdef OPTIMIZE_SSE
     mm[0] = _m_pshufw(mm[2],0xFE);
-#else
-    mm[0] = mm[2];
-    mm[0] = _m_psrlqi(mm[0],32);
-#endif
+
     mm[0] = _m_paddd(mm[0],mm[2]);
     mm[0] = _m_psrldi(mm[0],16);
     return _mm_cvtsi64_si32(mm[0]);

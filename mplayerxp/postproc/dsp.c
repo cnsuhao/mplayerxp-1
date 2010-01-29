@@ -666,6 +666,10 @@ void __FASTCALL__ bandp_init(bandp_t *bp, unsigned center, unsigned width, unsig
 
 static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps,int final)
 {
+#ifdef __AVX__
+	if(gCpuCaps.hasAVX) change_bps = change_bps_AVX;
+	else
+#endif
 #ifdef __SSE4_1__
 	if(gCpuCaps.hasSSE41) change_bps = change_bps_SSE4;
 	else
@@ -681,10 +685,6 @@ static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len
 #ifndef __x86_64__
 #ifdef __SSE__
 	if(gCpuCaps.hasMMX2) change_bps = change_bps_SSE;
-	else
-#endif
-#ifdef __MMX__
-	if(gCpuCaps.hasMMX) change_bps = change_bps_MMX;
 	else
 #endif
 #endif /* __x86_64__ */
@@ -777,10 +777,6 @@ static int32_t __FASTCALL__ FIR_i16_init(int16_t *x,int16_t *w)
 #ifndef __x86_64__
 #ifdef __SSE__
 	if(gCpuCaps.hasMMX2) FIR_i16 = FIR_i16_SSE;
-	else
-#endif
-#ifdef __MMX__
-	if(gCpuCaps.hasMMX) FIR_i16 = FIR_i16_MMX;
 	else
 #endif
 #endif /*__x86_64__*/

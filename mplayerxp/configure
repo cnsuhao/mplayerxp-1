@@ -238,6 +238,7 @@ if cygwin ; then
   add_ldflags "-L/usr/bin"
 fi
 
+disable gcc44_workaround
 # Checking CC version...
 # gcc-3.0 merges optimizations coming from egcs, pgcc, agcc, ...
   echocheck "$cc version"
@@ -247,51 +248,16 @@ fi
   cc_version=`$cc -dumpversion`
   cc_v=$cc_version
   case $cc_version in
-    '')
-      cc_version="v. ?.??, bad"
-      cc_verc_fail=yes
+    4.[4-9]|4.[4-9].[0-9])
+      enable gcc44_workaround
       ;;
-    3.2|3.2.[0-2])
-      cc_version="$cc_version, bad"
-      cc_verc_fail=yes
-      ;;
-    3.[2-9]|3.[2-9].[0-9]|4.[0-9]|4.[0-9].[0-9])
-      cc_version="$cc_version, ok"
-      cc_verc_fail=no
+    3.[3-9]|3.[2-9].[3-9]|4.[0-3]|4.[0-3].[0-9])
       ;;
     *)
-      cc_version="$cc_version, bad"
-      cc_verc_fail=yes
+      die "*** Bad gcc-$cc_version: Please upgrade C compiler at least to gcc-3.2.3+! ***"
       ;;
   esac
   echores "$cc_version"
-  test "$cc_verc_fail" = yes && disable fastcall
-  if enabled fastcall ; then
-  echocheck "__fastcall optimization abilities"
-  case $cc_v in
-    '')
-      fastcall=no
-      ;;
-    # avoid fastcall usage on gcc-2.95.2 and older
-    3.[2-9]|3.[2-9].[0-9]|4.[0-9].[0-9])
-      fastcall=yes
-      ;;
-    *)
-      fastcall=no
-      ;;
-  esac
-  echores "$fastcall"
-  fi
-
-  if test "$cc_verc_fail" = yes ; then
-    cat <<EOF
-
-*** Please upgrade C compiler to gcc-3.2.3+ version! ***
-EOF
-    die "Bad gcc version"
-  fi
-# ---
-
 # now that we know what compiler should be used for compilation, try to find
 # out which assembler is used by the $cc compiler
 if cygwin ; then
@@ -1010,6 +976,13 @@ You've disabled VIDIX. Although it provides maximal speedup of playback.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Please visit http://vidix.sf.net to obtain the most recent copy of VIDIX.
 EOF
+fi
+
+if enabled gcc44_workaround ; then
+warning "*** gcc-4.4.x sometime generates AVX opcodes for -mavx key ignoring -fno-tree-vectorize option.
+That breaks current logic of mplayerxp configuring.
+It is stronly recommended to use this version of gcc for home purposes only!
+Please don't use this compiler to produce redistributable executables of mplayerxp!!! ***"
 fi
 
 # Last move:

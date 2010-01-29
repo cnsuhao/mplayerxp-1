@@ -321,16 +321,21 @@ check_cpp(){
     check_cmd $cc $CFLAGS "$@" -E -o $TMPO $TMPC
 }
 
-check_asm(){
+test_asm(){
     log check_asm "$@"
     name="$1"
     asm="$2"
     shift 2
-    check_cc "$@" <<EOF && enable $name || disable $name
+    check_cc "$@" <<EOF && return 0 || return 1
 int foo(void){
     asm volatile($asm);
 }
 EOF
+}
+
+check_asm(){
+    name="$1"
+    test_asm "$@" && enable $name || disable $name
 }
 
 check_ld(){
@@ -339,11 +344,15 @@ check_ld(){
     check_cmd $cc $LDFLAGS "$@" -o $TMPE $TMPO $extralibs
 }
 
-check_cflags(){
+test_cflags(){
     log check_cflags "$@"
-    check_cc "$@" <<EOF && add_cflags "$@"
+    check_cc "$@" <<EOF && return 0 || return 1
 int x;
 EOF
+}
+
+check_cflags(){
+    test_cflags "$@" && add_cflags "$@"
 }
 
 is_in_cflags(){
@@ -356,13 +365,17 @@ is_in_cflags(){
     return 1
 }
 
-check_ldflags(){
+test_ldflags(){
     log check_ldflags "$@"
-    check_ld "$@" <<EOF && add_ldflags "$@"
+    check_ld "$@" <<EOF && return 0 || return 1
 int main(void){
     return 0;
 }
 EOF
+}
+
+check_ldflags(){
+    test_ldflags "$@" && add_ldflags "$@"
 }
 
 check_header(){
@@ -877,6 +890,13 @@ cc_check() {
 }
 
 # Display error message, flushes tempfile, exit
+warning() {
+  log "Warning: $@"
+  echo
+  echo "Warning: $@" >&2
+  echo >&2
+}
+
 die() {
   log "Error: $@"
   echo
@@ -1128,8 +1148,13 @@ add_asflags --32
 fi
 
 # agree with user-defined architecture/tuning here
+if enabled gcc44_workaround ; then
+is_in_cflags "-march" || check_cflags "-march=native"
+is_in_cflags "-mtune" || check_cflags "-mtune=native"
+else
 is_in_cflags "-march" || check_cflags $locarch
 is_in_cflags "-mtune" || check_cflags "-mtune=generic"
+fi
 if enabled profile || test $debug -gt 2 || enabled gcov; then
     add_cflags "-O2 -fno-builtin"
 if enabled profile ; then
@@ -1145,7 +1170,7 @@ add_cflags "-fprofile-arcs -ftest-coverage"
 add_extralibs "-lgcov"
 fi
 else
-  add_cflags "-O3"
+  is_in_cflags "-O3" || add_cflags "-O3"
   mips   || check_cflags "-pipe"
   x86_32 && check_cflags "-fomit-frame-pointer"
 # -fomit-frame-pointer is not needed for x86_64
@@ -1155,12 +1180,14 @@ is_in_cflags "-fno-fast-math" || check_cflags "-fno-fast-math"
 is_in_cflags "-mfancy-math-387" || check_cflags "-mfancy-math-387"
 is_in_cflags "-fno-math-errno" || check_cflags "-fno-math-errno"
 is_in_cflags "-fno-signed-zeros" || check_cflags "-fno-signed-zeros"
-# depend on compiler version
-#check_cflags "-fno-tree-vectorize"
+# it seems that -mtune=generic doesn't prevent generation of SSE4 opcodes for i686 arch
+check_cflags "-fno-tree-vectorize"
+check_cflags "-fno-tree-vect-loop-version"
+check_cflags "-fno-vect-cost-model"
 
 disable mmx_test
 x86 && enable mmx_test
-
+enabled gcc44_workaround && disable mmx_test
 if enabled mmx_test ; then
 check_cflags -mmmx
 check_cflags -m3dnow

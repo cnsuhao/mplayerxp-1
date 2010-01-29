@@ -155,44 +155,6 @@ void GetCpuCaps( CpuCaps *caps)
 		gCpuCaps.hasAVX,
 		gCpuCaps.hasFMA
 );
-
-		/* FIXME: Does SSE2 need more OS support, too? */
-#if defined(__linux__) || defined(__FreeBSD__)
-		if (caps->hasSSE)
-			check_os_katmai_support();
-		if (!caps->hasSSE)
-			caps->hasSSE2 = 0;
-#else
-		caps->hasSSE=0;
-		caps->hasSSE2 = 0;
-#endif
-
-#ifndef ARCH_X86_64
-#ifndef CAN_COMPILE_MMX
-	if(caps->hasMMX) MSG_WARN("MMX supported but disabled\n");
-	caps->hasMMX=0;
-#endif
-#ifndef CAN_COMPILE_MMX2
-	if(caps->hasMMX2) MSG_WARN("MMX2 supported but disabled\n");
-	caps->hasMMX2=0;
-#endif
-#ifndef CAN_COMPILE_SSE
-	if(caps->hasSSE) MSG_WARN("SSE supported but disabled\n");
-	caps->hasSSE=0;
-#endif
-#ifndef CAN_COMPILE_SSE2
-	if(caps->hasSSE2) MSG_WARN("SSE2 supported but disabled\n");
-	caps->hasSSE2=0;
-#endif
-#ifndef CAN_COMPILE_3DNOW
-	if(caps->has3DNow) MSG_WARN("3DNow supported but disabled\n");
-	caps->has3DNow=0;
-#endif
-#ifndef CAN_COMPILE_3DNOW2
-	if(caps->has3DNowExt) MSG_WARN("3DNowExt supported but disabled\n");
-	caps->has3DNowExt=0;
-#endif
-#endif
 }
 
 
