@@ -969,10 +969,10 @@ EOF
 fi
 
 if enabled gcc44_workaround ; then
-warning "*** gcc-4.4.x sometime generates AVX opcodes for -mavx key ignoring -fno-tree-vectorize option.
+warning "*** gcc-4.4.0-4.4.3 sometime generates AVX opcodes for -mavx key ignoring -fno-tree-vectorize option.
 That breaks current logic of mplayerxp configuring.
 It is stronly recommended to use this version of gcc for home purposes only!
-Please don't use this compiler to produce redistributable executables of mplayerxp!!! ***"
+Please don't use this compiler to produce distributions of mplayerxp!!! ***"
 fi
 
 # Last move:

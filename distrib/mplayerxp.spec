@@ -2,9 +2,9 @@
 # This is a .spec file for building mplayerxp.rpm packages.
 #
 # Usage:
-# rpmbuild -bb --target i686-linux mplayerxp.spec
+# rpmbuild -bb --define "version $VERSION" --target i686-linux mplayerxp.spec
 # or:
-# rpmbuild -bb --target x86_64-linux mplayerxp.spec
+# rpmbuild -ba --define "version $VERSION" --target x86_64-linux mplayerxp.spec
 #
 # For fast linkage:
 # rpmbuild -bb --target CPU-linux --short-circuit mplayerxp.spec
@@ -14,7 +14,6 @@
 # rpm -qp --queryformat "%{os}\n" mplayerxp-*.rpm
 ########################################################################################################
 %define         name    mplayerxp
-%define         version 0.7.95
 %define         release 1
 %define         prefix  /usr
 %define         bindir  %{prefix}/bin

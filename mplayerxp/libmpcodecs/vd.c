@@ -205,8 +205,8 @@ csp_again:
     screen_size_x = opt_screen_size_x;
     screen_size_y = opt_screen_size_y;
     if(!vidmode){
-     if(!screen_size_x) screen_size_x=SCREEN_SIZE_X;
-     if(!screen_size_y) screen_size_y=SCREEN_SIZE_Y;
+     if(!screen_size_x) screen_size_x=1;
+     if(!screen_size_y) screen_size_y=1;
      if(screen_size_x<=8) screen_size_x*=sh->disp_w;
      if(screen_size_y<=8) screen_size_y*=sh->disp_h;
     }
