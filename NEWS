@@ -4,12 +4,12 @@ Version 0.7.96
 
 * enable software scaler in x11 fullscreen mode. Fixed xinerama moving position
 * minor speedup and fixes
-* fixed some configure-related problems
+* fixed some configure-related problems and compilation with latest gcc-4.4.x
 
 Version 0.7.95
 
-* significand acceleration of playback. Now 64-bit version can scale 640x480 up to 2000x1500+ at 25 FPS
-  in real-time without framedropping with using of non-accelerated '-vo x11' driver
+* significant acceleration of playback. Now 64-bit version can scale 640x480 up to 2000x1500+ at 25 FPS
+  in real-time without frame-dropping with using of non-accelerated '-vo x11' driver
   on Quad-Core AMD Phenom-9550 running at 2.2GHz
 * project migrated from CVS on SVN
 * Renamed command-line arguments to be more object-oriented
