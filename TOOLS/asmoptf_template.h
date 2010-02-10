@@ -14,82 +14,175 @@ MMX    : cpu clocks=6092012 = 2757us...[OK]
 #define SATURATE(x,_min,_max) {if((x)<(_min)) (x)=(_min); else if((x)>(_max)) (x)=(_max);}
 #endif
 
-static void __FASTCALL__ PVECTOR_RENAME(float2int32)(float* in, int32_t* out, unsigned len, int final)
+#ifdef HAVE_INT_PVECTOR
+static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(_m_load)(const void *__P)
+{
+    return *(const __m64 *)__P;
+}
+#undef _m_load
+#define _m_load PVECTOR_RENAME(_m_load)
+
+static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(_m_load_half)(const void *__P)
+{
+    return _mm_cvtsi32_si64 (*(const int *)__P);
+}
+#undef _m_load_half
+#define _m_load_half PVECTOR_RENAME(_m_load_half)
+
+static __inline void __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(_m_store)(void *__P, __m64 src)
+{
+    *(__m64 *)__P = src;
+}
+#undef _m_store
+#define _m_store PVECTOR_RENAME(_m_store)
+
+static __inline void __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(_m_store_half)(void *__P, __m64 src)
+{
+    *(int *)__P = _mm_cvtsi64_si32(src);
+}
+#undef _m_store_half
+#define _m_store_half PVECTOR_RENAME(_m_store_half)
+
+static __inline void __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(_m_movntq)(void *__P, __m64 src)
+{
+#ifdef HAVE_MMX2
+    _mm_stream_pi(__P,src);
+#else
+    _m_store(__P,src);
+#endif
+}
+#undef _m_movntq
+#define _m_movntq PVECTOR_RENAME(_m_movntq)
+#endif
+
+
+
+static float __FASTCALL__ PVECTOR_RENAME(pack)(const float* w, const float* x, unsigned len)
+{
+#if defined ( OPTIMIZE_SSE )
+/* GCC supports nested functions */
+inline __m128 _my_hadd_ps( __m128 a, __m128 b) {
+    __m128 tempA = _mm_shuffle_ps(a,b, _MM_SHUFFLE(2,0,2,0));
+    __m128 tempB = _mm_shuffle_ps(a,b, _MM_SHUFFLE(3,1,3,1));
+    return _mm_add_ps( tempB, tempA);
+}
+    __m128 xmm[4];
+    float rval;
+    xmm[0] = _mm_loadu_ps(&w[0]);
+    xmm[1] = _mm_loadu_ps(&w[4]);
+    xmm[2] = _mm_loadu_ps(&w[8]);
+    xmm[3] = _mm_loadu_ps(&w[12]);
+    xmm[0] = _mm_mul_ps(xmm[0],_mm_loadu_ps(&x[0]));
+    xmm[1] = _mm_mul_ps(xmm[1],_mm_loadu_ps(&x[4]));
+    xmm[2] = _mm_mul_ps(xmm[2],_mm_loadu_ps(&x[8]));
+    xmm[3] = _mm_mul_ps(xmm[3],_mm_loadu_ps(&x[12]));
+
+    xmm[0] = _mm_add_ps(xmm[0],xmm[1]);
+    xmm[2] = _mm_add_ps(xmm[2],xmm[3]);
+    xmm[0] = _mm_add_ps(xmm[0],xmm[2]);
+
+#ifdef OPTIMIZE_SSE3
+    xmm[0] = _mm_hadd_ps(xmm[0],xmm[0]);
+    xmm[0] = _mm_hadd_ps(xmm[0],xmm[0]);
+#else
+    xmm[0] = _my_hadd_ps(xmm[0],xmm[0]);
+    xmm[0] = _my_hadd_ps(xmm[0],xmm[0]);
+#endif
+    _mm_store_ss(&rval,xmm[0]);
+    return rval;
+#elif defined ( OPTIMIZE_3DNOW ) && !defined(OPTIMIZE_SSE)
+    __m64 mm[8];
+    union {
+	unsigned ipart;
+	float    fpart;
+    }rval;
+    mm[0] = _m_load(&w[0]);
+    mm[1] = _m_load(&w[2]);
+    mm[2] = _m_load(&w[4]);
+    mm[3] = _m_load(&w[6]);
+    mm[4] = _m_load(&w[8]);
+    mm[5] = _m_load(&w[10]);
+    mm[6] = _m_load(&w[12]);
+    mm[7] = _m_load(&w[14]);
+    mm[0] = _m_pfmul(mm[0],_m_load(&x[0]));
+    mm[1] = _m_pfmul(mm[1],_m_load(&x[2]));
+    mm[2] = _m_pfmul(mm[2],_m_load(&x[4]));
+    mm[3] = _m_pfmul(mm[3],_m_load(&x[6]));
+    mm[4] = _m_pfmul(mm[4],_m_load(&x[8]));
+    mm[5] = _m_pfmul(mm[5],_m_load(&x[10]));
+    mm[6] = _m_pfmul(mm[6],_m_load(&x[12]));
+    mm[7] = _m_pfmul(mm[7],_m_load(&x[14]));
+    mm[0] = _m_pfadd(mm[0],mm[1]);
+    mm[2] = _m_pfadd(mm[2],mm[3]);
+    mm[4] = _m_pfadd(mm[4],mm[5]);
+    mm[6] = _m_pfadd(mm[6],mm[7]);
+    mm[0] = _m_pfadd(mm[0],mm[2]);
+    mm[4] = _m_pfadd(mm[4],mm[6]);
+    mm[0] = _m_pfadd(mm[0],mm[4]);
+    mm[0] = _m_pfacc(mm[0],mm[0]);
+    _m_store_half(&rval.ipart,mm[0]);
+    _ivec_empty();
+    return rval.fpart;
+#else
+  return ( w[0] *x[0] +w[1] *x[1] +w[2] *x[2] +w[3] *x[3]
+         + w[4] *x[4] +w[5] *x[5] +w[6] *x[6] +w[7] *x[7]
+         + w[8] *x[8] +w[9] *x[9] +w[10]*x[10]+w[11]*x[11]
+         + w[12]*x[12]+w[13]*x[13]+w[14]*x[14]+w[15]*x[15] );
+#endif
+}
+
+void PVECTOR_RENAME(convert)(uint8_t *dstbase,const uint8_t *src,const uint8_t *srca,unsigned int len)
 {
     register unsigned i;
     float ftmp;
+    const float* in = src;
+    const uint32_t* out = dstbase;
+    int final=1;
 #ifdef HAVE_F32_PVECTOR
-  __f32vec int_max;
+    unsigned len_mm;
+  __f32vec int_max,plus1,minus1;
 #endif
     i=0;
 #ifdef HAVE_F32_PVECTOR
-    int_max = _f32vec_broadcast(INT_MAX-1);
+    int_max = _f32vec_broadcast(INT32_MAX-1);
+    /* SSE float2int engine doesn't have SATURATION functionality.
+       So CLAMP volume on 0.0002% here. */
+    plus1 = _f32vec_broadcast(+0.999998);
+    minus1= _f32vec_broadcast(-0.999998);
+    if(!F32VEC_ALIGNED(out))
     for(;i<len;i++) {
-      ftmp=((float*)in)[i];
+      ftmp=((const float*)in)[i];
       SATURATE(ftmp,-1.0,+1.0);
       ((int32_t*)out)[i]=(int32_t)lrintf((INT_MAX-1)*ftmp);
-      if((((long)out)&(__F32VEC_SIZE-1))==0) break;
+      if(F32VEC_ALIGNED(out)) break;
     }
     _ivec_empty();
-    if((len-i)>=__F32VEC_SIZE)
-    for(;i<len;i+=__F32VEC_SIZE/sizeof(float)) {
+    len_mm=len&(~(__F32VEC_SIZE-1));
+    if((len_mm-i)>=__F32VEC_SIZE/sizeof(float))
+    for(;i<len_mm;i+=__F32VEC_SIZE/sizeof(float)) {
 	__f32vec tmp;
-	tmp = _f32vec_mul(int_max,_f32vec_loadu(&((float*)in)[i]));
+	if(F32VEC_ALIGNED(in))
+	    tmp = _f32vec_loada(&((const float*)in)[i]);
+	else
+	    tmp = _f32vec_loadu(&((const float*)in)[i]);
+	tmp = _f32vec_clamp(tmp,minus1,plus1);
+	tmp = _f32vec_mul(int_max,tmp);
 	if(final)
 	    _f32vec_to_s32_stream(&((int32_t*)out)[i],tmp);
 	else
 	    _f32vec_to_s32a(&((int32_t*)out)[i],tmp);
     }
-    _ivec_sfence();
+    if(final) _ivec_sfence();
     _ivec_empty();
 #endif
     for(;i<len;i++) {
-      ftmp=((float*)in)[i];
-      SATURATE(ftmp,-1.0,+1.0);
-      ((int32_t*)out)[i]=(int32_t)lrintf((INT_MAX-1)*ftmp);
-    }
-}
-
-void PVECTOR_RENAME(convert)(uint8_t *dstbase,const uint8_t *src,const uint8_t *srca,unsigned int asize)
-{
-    unsigned i,len;
-    const uint8_t *in;
-    float ftmp;
-    int32_t __attribute__((aligned(__IVEC_SIZE))) i32_tmp[asize];
-#ifdef HAVE_F32_PVECTOR
-    __f32vec int_max = _f32vec_broadcast(SHRT_MAX);
-#endif
-    uint8_t *out;
-    in = srca;
-    out = dstbase;
-    i=0;
-    len=asize;
-#ifdef HAVE_F32_PVECTOR
-    for(;i<len;i++) {
-      ftmp=((float*)in)[i];
-      SATURATE(ftmp,-1.0,+1.0);
-      ((int16_t*)out)[i]=(int16_t)lrintf(SHRT_MAX*ftmp);
-      if((((long)out)&(__F32VEC_SIZE-1))==0) break;
-    }
-    _ivec_empty();
-    if((len-i)>=__F32VEC_SIZE) {
-    PVECTOR_RENAME(float2int32)(in,i32_tmp,len-i,0);
-    for(;i<len;i+=__IVEC_SIZE*2/sizeof(int32_t)) {
-	__ivec tmp[2];
-	tmp[0] = _ivec_loada(&((int32_t*)i32_tmp)[i]));
-	tmp[1] = _ivec_loada(&((int32_t*)i32_tmp)[i+__F32VEC_SIZE]));
-	_f32vec_to_s32a(itmp[0],ftmp[0]);
-	_f32vec_to_s32a(itmp[1],ftmp[1]);
-	tmp=_ivec_s16_from_s32(_ivec_loada(itmp[1]),_ivec_loada(itmp[0]));
-	_ivec_storea(&((int16_t*)out)[i],tmp);
-    }
-    }
-    _ivec_sfence();
-    _ivec_empty();
-#endif
-    for(;i<len;i++) {
-      ftmp=((float*)in)[i];
-      SATURATE(ftmp,-1.0,+1.0);
-      ((int16_t*)out)[i]=(int16_t)lrintf(SHRT_MAX*ftmp);
+      ftmp=((const float*)in)[i];
+      SATURATE(ftmp,-0.99,+0.99);
+      ((int32_t*)out)[i]=(int32_t)lrintf((INT32_MAX-1)*ftmp);
     }
 }

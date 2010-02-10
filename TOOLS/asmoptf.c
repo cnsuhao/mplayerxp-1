@@ -73,6 +73,7 @@ int cmp_result(const char *name)
 }
 
 typedef void (*mmx_test_f)(uint8_t *d,const uint8_t *s1,const uint8_t *s2,unsigned n);
+typedef float (*pack_test_f)(const float *s1,const float *s2,unsigned n);
 
 void test_simd(const char *fname,const char *pfx,mmx_test_f func)
 {
@@ -93,6 +94,25 @@ void test_simd(const char *fname,const char *pfx,mmx_test_f func)
 	fprintf(stderr,"[%s]\n",cmp_result(fname)?"OK":"FAIL");
 }
 
+void test_simd_pack(const char *pfx,pack_test_f func)
+{
+	unsigned long long int v1,v2;
+	unsigned int t;
+	unsigned i;
+	float result;
+	fprintf(stderr,"%s ",pfx);
+	INIT_ARRAYS(ARR_SIZE);
+	t=GetTimer();
+	v1 = read_tsc();
+	result=(*func)((const float *)src,(const float *)srca,ARR_SIZE);
+	v2 = read_tsc();
+	t=GetTimer()-t;
+	fprintf(stderr,"cpu clocks=%llu = %dus...",v2-v1,t);
+	fprintf(stderr,"[%f]\n",result);
+}
+
+#define TEST_PACKED 1
+
 int main( void )
 {
   GetCpuCaps(&gCpuCaps);
@@ -101,6 +121,7 @@ int main( void )
       gCpuCaps.has3DNow, gCpuCaps.has3DNowExt,
       gCpuCaps.hasSSE, gCpuCaps.hasSSE2);
 
+#ifndef TEST_PACKED
 			 test_simd("asmoptf.gen" ,"GENERIC:",convert_c);
 // ordered per speed fasterst first
 #ifdef __AVX__
@@ -121,5 +142,27 @@ int main( void )
 #ifdef __3dNOW__
     if(gCpuCaps.has3DNow)  test_simd("asmoptf.3dnow", "3DNOW  :",convert_3DNOW);
 #endif
+#else /* TEST_PACKED*/
+			 test_simd_pack("GENERIC:",pack_c);
+// ordered per speed fasterst first
+#ifdef __AVX__
+    if(gCpuCaps.hasAVX) test_simd_pack("AVX    :",pack_AVX);
+#endif
+#ifdef __SSE4_1__
+    if(gCpuCaps.hasSSE41) test_simd_pack("SSE4   :",pack_SSE4);
+#endif
+#ifdef __SSE3__
+    if(gCpuCaps.hasSSE3) test_simd_pack("SSE3   :",pack_SSE3);
+#endif
+#ifdef __SSE2__
+    if(gCpuCaps.hasSSE2) test_simd_pack("SSE2   :",pack_SSE2);
+#endif
+#ifdef __SSE__
+    if(gCpuCaps.hasSSE) test_simd_pack("SSE   :",pack_SSE);
+#endif
+#ifdef __3dNOW__
+    if(gCpuCaps.has3DNow)  test_simd_pack("3DNOW  :",pack_3DNOW);
+#endif
+#endif /* TEST_PACKED*/
   return 0;
 }

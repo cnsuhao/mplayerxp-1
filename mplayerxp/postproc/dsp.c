@@ -787,14 +787,24 @@ int32_t (* __FASTCALL__ FIR_i16)(int16_t *x,int16_t *w)=FIR_i16_init;
 
 static float __FASTCALL__ FIR_f32_init(float *x,float *w)
 {
-#if 0
-//	if(gCpuCaps.hasSSE) FIR_f32 = FIR_f32_SSE;
-//	else
-#ifdef CAN_COMPILE_3DNOW
+#ifdef __SSE3__
+	if(gCpuCaps.hasSSE3) FIR_f32 = FIR_f32_SSE3;
+	else
+#endif
+#ifdef __SSE2__
+	if(gCpuCaps.hasSSE2) FIR_f32 = FIR_f32_SSE2;
+	else
+#endif
+#ifndef __x86_64__
+#ifdef __SSE__
+	if(gCpuCaps.hasSSE) FIR_f32 = FIR_f32_SSE;
+	else
+#endif
+#ifdef __3dNOW__
 	if(gCpuCaps.has3DNow) FIR_f32 = FIR_f32_3DNow;
 	else
 #endif
-#endif /*CAN_COMPILE_X86_ASM*/
+#endif /*__x86_64__*/
 	FIR_f32 = FIR_f32_c;
 	return (*FIR_f32)(x,w);
 }
