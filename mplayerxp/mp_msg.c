@@ -73,7 +73,6 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
     static int was_eol=1;
     if(level>verbose+MSGL_V-1) return; /* do not display */
     if((mod&mp_msg_filter)==0) return; /* do not display */
-    va_start(va, format);
     pthread_mutex_lock(&mp_msg_mutex);
     if(isatty(fileno(stderr)))
 	fprintf(stderr,scol[level<9?level:8]);
@@ -87,7 +86,9 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
 		smod = msg_prefix[mod_name];
 	fprintf(stderr,"%s.%s(%u): ",smod?smod:"UNKNOWN",srcfile,linenum);
     }
+    va_start(va, format);
     ssize=vsprintf(sbuf,format, va);
+    va_end(va);
     if(strcmp(nls_get_screen_cp(),"UTF-8")!=0) {
 	char *obuf;
 	obuf=nls_recode2screen_cp("UTF-8",sbuf,ssize);
@@ -99,7 +100,6 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
     else was_eol=0;
     fflush(stderr);
     pthread_mutex_unlock(&mp_msg_mutex);
-    va_end(va);
 }
 
 void mp_msg_flush(void) { fflush(stderr); }

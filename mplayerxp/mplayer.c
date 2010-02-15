@@ -894,6 +894,7 @@ static unsigned get_number_cpu(void) {
 
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+int x86_simd=-1;
 int x86_mmx=-1;
 int x86_mmx2=-1;
 int x86_3dnow=-1;
@@ -910,19 +911,36 @@ int x86_fma=-1;
 static void get_mmx_optimizations( void )
 {
   GetCpuCaps(&gCpuCaps);
-  if(x86_mmx != -1) gCpuCaps.hasMMX=x86_mmx;
-  if(x86_mmx2 != -1) gCpuCaps.hasMMX2=x86_mmx2;
-  if(x86_3dnow != -1) gCpuCaps.has3DNow=x86_3dnow;
-  if(x86_3dnow2 != -1) gCpuCaps.has3DNowExt=x86_3dnow2;
-  if(x86_sse != -1) gCpuCaps.hasSSE=x86_sse;
-  if(x86_sse2 != -1) gCpuCaps.hasSSE2=x86_sse2;
-  if(x86_sse3 != -1) gCpuCaps.hasSSE2=x86_sse3;
-  if(x86_ssse3 != -1) gCpuCaps.hasSSSE3=x86_ssse3;
-  if(x86_sse41 != -1) gCpuCaps.hasSSE2=x86_sse41;
-  if(x86_sse42 != -1) gCpuCaps.hasSSE2=x86_sse42;
-  if(x86_aes != -1) gCpuCaps.hasSSE2=x86_aes;
-  if(x86_avx != -1) gCpuCaps.hasSSE2=x86_avx;
-  if(x86_fma != -1) gCpuCaps.hasSSE2=x86_fma;
+
+  if(x86_simd) {
+    if(x86_mmx != -1) gCpuCaps.hasMMX=x86_mmx;
+    if(x86_mmx2 != -1) gCpuCaps.hasMMX2=x86_mmx2;
+    if(x86_3dnow != -1) gCpuCaps.has3DNow=x86_3dnow;
+    if(x86_3dnow2 != -1) gCpuCaps.has3DNowExt=x86_3dnow2;
+    if(x86_sse != -1) gCpuCaps.hasSSE=x86_sse;
+    if(x86_sse2 != -1) gCpuCaps.hasSSE2=x86_sse2;
+    if(x86_sse3 != -1) gCpuCaps.hasSSE2=x86_sse3;
+    if(x86_ssse3 != -1) gCpuCaps.hasSSSE3=x86_ssse3;
+    if(x86_sse41 != -1) gCpuCaps.hasSSE41=x86_sse41;
+    if(x86_sse42 != -1) gCpuCaps.hasSSE42=x86_sse42;
+    if(x86_aes != -1) gCpuCaps.hasAES=x86_aes;
+    if(x86_avx != -1) gCpuCaps.hasAVX=x86_avx;
+    if(x86_fma != -1) gCpuCaps.hasFMA=x86_fma;
+  } else {
+    gCpuCaps.hasMMX=
+    gCpuCaps.hasMMX2=
+    gCpuCaps.has3DNow=
+    gCpuCaps.has3DNowExt=
+    gCpuCaps.hasSSE=
+    gCpuCaps.hasSSE2=
+    gCpuCaps.hasSSE2=
+    gCpuCaps.hasSSSE3=
+    gCpuCaps.hasSSE41=
+    gCpuCaps.hasSSE42=
+    gCpuCaps.hasAES=
+    gCpuCaps.hasAVX=
+    gCpuCaps.hasFMA=0;
+  }
   MSG_V("User corrected CPU flags: MMX=%d MMX2=%d 3DNow=%d 3DNow2=%d SSE=%d SSE2=%d SSE3=%d SSSE3=%d SSE41=%d SSE42=%d AES=%d AVX=%d FMA=%d\n",
 	gCpuCaps.hasMMX,
 	gCpuCaps.hasMMX2,

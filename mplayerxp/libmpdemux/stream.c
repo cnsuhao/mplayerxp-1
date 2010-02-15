@@ -14,6 +14,8 @@
 #include "../mplayer.h"
 #include "help_mp.h"
 
+#include "../libvo/fastmemcpy.h"
+
 #include "stream.h"
 #include "demuxer.h"
 #include "demux_msg.h"
@@ -81,7 +83,7 @@ static const stream_driver_t *sdrivers[] =
     &file_stream,
 };
 
-static unsigned int nsdrivers=sizeof(sdrivers)/sizeof(stream_driver_t*);
+static const unsigned int nsdrivers=sizeof(sdrivers)/sizeof(stream_driver_t*);
 
 stream_t* __FASTCALL__ open_stream(const char* filename,int* file_format,stream_callback event_handler)
 {
@@ -135,26 +137,23 @@ void print_stream_drivers( void )
 int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
   int len,legacy_eof;
   stream_packet_t sp;
-  sp.len=0;
-  sp.buf=s->buffer;
-  sp.type=0;
   if(s->eof){ s->buf_pos=s->buf_len=0; return 0; }
   while(1)
   {
     sp.type=0;
     sp.len=s->sector_size;
-    sp.buf=s->buffer;
+    sp.buf=(char *)s->buffer;
     if(s->type==STREAMTYPE_DS) len = demux_read_data((demux_stream_t*)s->priv,s->buffer,s->sector_size);
     else { if(!s->driver) { s->eof=1; return 0; } len = s->driver->read(s,&sp); }
     if(sp.type)
-    { 
+    {
 	if(s->event_handler) s->event_handler(s,&sp);
 	continue;
     }
     if(s->driver->control(s,SCTRL_EOF,NULL)==SCTRL_OK)	legacy_eof=1;
     else						legacy_eof=0;
     if(sp.len<=0 || legacy_eof)
-    { 
+    {
 	MSG_DBG3("nc_stream_read_cbuffer: Guess EOF\n");
 	s->eof=1;
 	s->buf_pos=s->buf_len=0;
@@ -166,7 +165,7 @@ int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
   s->buf_pos=0;
   s->buf_len=sp.len;
   s->pos += sp.len;
-  MSG_DBG3("nc_stream_read_cbuffer done: pos=%llu buf_pos=%lu buf_len=%lu\n",s->pos,s->buf_pos,s->buf_len);
+  MSG_DBG3("nc_stream_read_cbuffer(%s) done[sector_size=%i len=%i]: buf_pos=%u buf_len=%u pos=%llu\n",s->driver->mrl,s->sector_size,len,s->buf_pos,s->buf_len,s->pos);
   return s->buf_len;
 }
 
@@ -307,7 +306,7 @@ int __FASTCALL__ nc_stream_read(stream_t *s,void* _mem,int total){
     got_len=0;
     while(rlen)
     {
-	s->buffer=mem;
+	s->buffer=(unsigned char *)mem;
 	s->buf_len=rlen;
 	nc_stream_read_cbuffer(s);
 	mem += min(rlen,(int)s->buf_len);

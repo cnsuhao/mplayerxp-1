@@ -78,6 +78,7 @@ extern unsigned vo_da_buffs;
 extern unsigned vo_use_bm;
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+extern int x86_simd;
 extern int x86_mmx;
 extern int x86_mmx2;
 extern int x86_3dnow;
@@ -168,6 +169,8 @@ static const config_t net_config[]={
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 static const config_t cpu_config[]={
+	{"simd", &x86_simd, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SIMD extensions of CPU"},
+	{"nosimd", &x86_simd, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SIMD extensions of CPU"},
 	{"mmx", &x86_mmx, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of MMX extensions of CPU"},
 	{"nommx", &x86_mmx, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of MMX extensions of CPU"},
 	{"mmx2", &x86_mmx2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of MMX2 extensions of CPU"},

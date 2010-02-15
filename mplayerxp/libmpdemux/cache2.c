@@ -18,6 +18,7 @@
 #include "../osdep/timer.h"
 #include "../cpudetect.h"
 #include "bswap.h"
+#include "../libvo/fastmemcpy.h"
 #include "../help_mp.h"
 #include "mpdemux.h"
 #include "../mplayer.h"
@@ -213,7 +214,7 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
     free(c);
     return 0;
   }
-  memset(c->packets,0,i);  
+  memset(c->packets,0,i);
   pmem = c->mem;
   MSG_DBG2("For cache navigation was allocated %u bytes as %u packets (%u/%u)\n",i,num,size,sector);
   c->first=c->last=0;

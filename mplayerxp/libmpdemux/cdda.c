@@ -178,7 +178,10 @@ int __FASTCALL__ read_cdda(stream_t* s,char *buf,track_t *tr) {
     return -1; /* EOF */
   }
   p->sector++;
-  if(p->sector == p->end_sector) return -1; /* EOF */
+  if(p->sector == p->end_sector) {
+    MSG_DBG2("EOF was reached\n");
+    return -1; /* EOF */
+  }
 
   p->sector=map_sector(p,p->sector,&i);
   if(!p->sector) return -1;
