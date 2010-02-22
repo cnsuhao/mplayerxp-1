@@ -351,6 +351,9 @@ print_config HAVE_ mp_config.h mp_config.mak posix4
 check_func2 time.h nanosleep
 print_config HAVE_ mp_config.h mp_config.mak nanosleep
 
+check_func2 execinfo.h backtrace
+print_config HAVE_ mp_config.h mp_config.mak backtrace
+
 disable inet_pton
 if enabled streaming ; then
 disable socklib

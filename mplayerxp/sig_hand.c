@@ -1,6 +1,7 @@
 /*
   MplayerXP's Signal handling
 */
+#include "mp_config.h"
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE   /* to get definition of strsignal */
 #endif
@@ -22,7 +23,33 @@ extern pid_t mplayer_pid;
 extern pthread_t mplayer_pth_id;
 extern pid_t dec_ahead_pid;
 
+#ifdef HAVE_BACKTRACE
+#include <execinfo.h>
+/* Obtain a backtrace and print it to stdout. */
+static void print_trace (void)
+{
+  void *array[10];
+  size_t size;
+  char **strings;
+  size_t i;
 
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+
+  MSG_ERR ("Obtained %zd stack frames.\n", size);
+
+  for (i = 0; i < size; i++)
+     MSG_ERR ("%s\n", strings[i]);
+
+  free (strings);
+}
+
+/* A dummy function to make the backtrace more interesting. */
+static void dump_trace (void)
+{
+  print_trace ();
+}
+#endif
 static void my_callback(int signo)
 {
     int i;
@@ -32,8 +59,9 @@ static void my_callback(int signo)
     }
 
    mp_msg(MSGT_CPLAYER,MSGL_FATAL,__FILE__,__LINE__,"catching signal: %s in thread: %s (%i) in module: %s\n",strsignal(signo),pinfo[i].thread_name,i,pinfo[i].current_module);
-
-
+#ifdef HAVE_BACKTRACE
+   dump_trace();
+#endif
    pinfo[i].sig_handler();
 
    signal(signo,SIG_DFL);
@@ -51,7 +79,7 @@ int init_signal_handling( void (*callback)( void ),void (*_unlink)(int))
   pinfo[xp_threads].current_module = NULL;
   pinfo[xp_threads].unlink = _unlink;
   xp_threads++;
-#if 0
+#if 1
   /*========= Catch terminate signals: ================*/
   /* terminate requests:*/
   signal(SIGTERM,my_callback); /* kill*/
