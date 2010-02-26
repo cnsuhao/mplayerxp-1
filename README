@@ -99,6 +99,15 @@ mplayerxp have almost the same number of dropped frames
 per 1000 frames with the same movie. So I prone to decide
 that there are no visible difference in the speed on UP systems.
 
+Hardware Requirements:
+~~~~~~~~~~~~~~~~~~~~~
+minimal CPU:........1GHz Athlon or Pentium-3 (any 64-bit 2GHz Multi-Core processor is recommended)
+RAM:................800MB (1GB is recommended) in normal (default) mode
+                    12GB  (16GB is recommended) for some experimantal modes
+Video:..............any modern card with working drivers for your OS.
+Audio:..............any modern sound-card with working drivers for your OS.
+Free HDD space:.....20-50MB
+
 Usage:
 ~~~~~~
 All VIDEO drivers of mplayerxp support new technology:
