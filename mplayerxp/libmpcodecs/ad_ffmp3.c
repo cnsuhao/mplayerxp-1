@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
+#include "libao2/afmt.h"
 #include "ad_internal.h"
 
 #include "mp_config.h"
@@ -79,7 +80,7 @@ int init(sh_audio_t *sh_audio)
     {
         lavc_context->extradata = malloc(sh_audio->codecdata_len);
         lavc_context->extradata_size = sh_audio->codecdata_len;
-        memcpy(lavc_context->extradata, (char *)sh_audio->codecdata, 
+        memcpy(lavc_context->extradata, (char *)sh_audio->codecdata,
                lavc_context->extradata_size);
     }
     lavc_context->codec_tag = sh_audio->format;
@@ -108,6 +109,29 @@ int init(sh_audio_t *sh_audio)
 
   sh_audio->channels=lavc_context->channels;
   sh_audio->samplerate=lavc_context->sample_rate;
+  switch(lavc_context->sample_fmt) {
+    case SAMPLE_FMT_U8:  ///< unsigned 8 bits
+	sh_audio->samplesize=1;
+	sh_audio->sample_format=AFMT_U8;
+	break;
+    default:
+    case SAMPLE_FMT_S16:             ///< signed 16 bits
+	sh_audio->samplesize=2;
+	sh_audio->sample_format=AFMT_S16_LE;
+	break;
+    case SAMPLE_FMT_S32:             ///< signed 32 bits
+	sh_audio->samplesize=4;
+	sh_audio->sample_format=AFMT_S32_LE;
+	break;
+    case SAMPLE_FMT_FLT:             ///< float
+	sh_audio->samplesize=4;
+	sh_audio->sample_format=AFMT_FLOAT32;
+	break;
+    case SAMPLE_FMT_DBL:             ///< double
+	sh_audio->samplesize=8;
+	sh_audio->sample_format=AFMT_FLOAT32;
+	break;
+  }
   sh_audio->i_bps=lavc_context->bit_rate/8;
   return 1;
 }
