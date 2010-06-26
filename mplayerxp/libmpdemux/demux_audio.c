@@ -1036,7 +1036,9 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 		    w->wBitsPerSample = 8*sh_audio->samplesize;
 		    w->cbSize = 0;
 		    total_samples = be2me_64(*(uint64_t *)&sinfo[10]) & 0x0FFFFFFFFFLL;  /* 36 bits */
-		    demuxer->movi_end=total_samples*sh_audio->samplesize;
+		    MSG_V("Total fLaC samples: %llu (%llu secs)\n",total_samples,total_samples/sh_audio->samplerate);
+		    /*many streams have incorrectly computed this field. So ignore it for now! */
+		    demuxer->movi_end=0;//total_samples*sh_audio->samplesize;
 		    break;
 		}
 		/* VORBIS_COMMENT */
@@ -1383,7 +1385,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
   demuxer_t* demux;
   da_priv_t* priv;
   stream_t* s;
-  int frmt;
+  int frmt,seof;
 #ifdef MP_DEBUG
   assert(ds != NULL);
   assert(ds->sh != NULL);
@@ -1394,8 +1396,17 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
   priv = demux->priv;
   s = demux->stream;
 
-  if(stream_eof(s) || (demux->movi_end && stream_tell(s) >= demux->movi_end) )
+  seof=stream_eof(s);
+  if(seof || (demux->movi_end && stream_tell(s) >= demux->movi_end)) {
+    MSG_DBG2("audio_demux: EOF due: %s\n",
+	    seof?"stream_eof(s)":"stream_tell(s) >= demux->movi_end");
+    if(!seof) {
+	MSG_DBG2("audio_demux: stream_pos=%llu movi_end=%llu\n",
+		stream_tell(s),
+		demux->movi_end);
+    }
     return 0;
+  }
   frmt=priv->frmt;
   if(frmt==RAW_WAV)
   {
