@@ -801,7 +801,7 @@ static float __FASTCALL__ FIR_f32_init(float *x,float *w)
 	else
 #endif
 #ifdef __3dNOW__
-	if(gCpuCaps.has3DNow) FIR_f32 = FIR_f32_3DNow;
+	if(gCpuCaps.has3DNow) FIR_f32 = FIR_f32_3DNOW;
 	else
 #endif
 #endif /*__x86_64__*/

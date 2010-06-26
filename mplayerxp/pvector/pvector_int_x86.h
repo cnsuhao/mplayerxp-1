@@ -17,6 +17,9 @@
 #include <emmintrin.h>
 #elif defined(OPTIMIZE_MMX2)
 #include <xmmintrin.h>
+#ifdef OPTIMIZE_3DNOW
+#include <mm3dnow.h>
+#endif
 #else
 #include <mmintrin.h>
 #endif
@@ -34,7 +37,9 @@
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(empty)(void)
 {
-#ifdef OPTIMIZE_SSE2
+#if defined( OPTIMIZE_SSE2 ) || defined( OPTIMIZE_SSE )
+#elif defined( OPTIMIZE_3DNOW )
+    _m_femms();
 #else
     _mm_empty();
 #endif
