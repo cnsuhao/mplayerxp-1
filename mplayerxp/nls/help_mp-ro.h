@@ -131,7 +131,7 @@ static char help_text[]=
 #define MSGTR_NI_Message "%s fişier AVI NE-ÎNTREŢESUT!\n"
 
 #define MSGTR_UsingNINI "Folosesc fişier AVI NE-ÎNTREŢESUT eronat!\n"
-#define MSGTR_CouldntDetFNo "Nu pot determina numărul de cadre (pentru căutare absolută)\n"
+#define MSGTR_CouldntDetFNo "Nu pot determina numărul de cadre (pentru căutare SOFă)\n"
 #define MSGTR_CantSeekRawAVI "Nu pot căuta în fişiere .AVI neindexate! (am nevoie de index, încercaţi cu -idx!)  \n"
 #define MSGTR_CantSeekFile "Nu pot căuta în fişier!  \n"
 

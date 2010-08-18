@@ -134,7 +134,7 @@ static char help_text[]=
 #define MSGTR_NI_Message "%s formato de AVI 'NON-INTERLEAVED'!\n"
 
 #define MSGTR_UsingNINI "Usando formato de AVI roto 'NON-INTERLEAVED'!\n"
-#define MSGTR_CouldntDetFNo "No se puede determinar el número de cuadros (para una búsqueda absoluta)\n"
+#define MSGTR_CouldntDetFNo "No se puede determinar el número de cuadros (para una búsqueda SOF)\n"
 #define MSGTR_CantSeekRawAVI "No se puede avanzar/retroceder en un stream crudo .AVI! (se requiere índice, pruebe con -idx!)  \n"
 #define MSGTR_CantSeekFile "No se puede avanzar/retroceder en este archivo!  \n"
 

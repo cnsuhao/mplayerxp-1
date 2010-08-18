@@ -136,7 +136,7 @@ static char help_text[]=
 #define MSGTR_NI_Message "%s NEPROKLÁDANÝ formát souboru AVI!\n"
 
 #define MSGTR_UsingNINI "Používám NEPROKLÁDANÝ poškozený formát souboru AVI!\n" //tohle taky nějak opravit
-#define MSGTR_CouldntDetFNo "Nemohu určit počet snímků (pro absolutní posun)  \n"
+#define MSGTR_CouldntDetFNo "Nemohu určit počet snímků (pro SOFní posun)  \n"
 #define MSGTR_CantSeekRawAVI "Nelze se posouvat v surových (raw) .AVI proudech! (Potřebuji index, zkuste použít volbu -idx !)  \n"
 #define MSGTR_CantSeekFile "Nemohu posouvat v tomto souboru!  \n"
 

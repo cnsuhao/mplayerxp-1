@@ -1524,7 +1524,7 @@ static void real_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
 	return;
 
     if (flags & DEMUX_SEEK_SET)
-	/* seek absolute */
+	/* seek SOF */
 	priv->current_apacket = priv->current_vpacket = 0;
 
     if ((streams & 1) && priv->current_vpacket >= priv->index_table_size[vid])

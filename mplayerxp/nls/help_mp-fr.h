@@ -138,7 +138,7 @@ static char help_text[]=
 #define MSGTR_NI_Message "%s format de fichier AVI NON-ENTRELACÉ!\n"
 
 #define MSGTR_UsingNINI "Utilise fichier de format AVI NON-ENTRELACÉ défectueux!\n"
-#define MSGTR_CouldntDetFNo "Ne peut déterminer le nombre de frames (pour recherche absolue)  \n"
+#define MSGTR_CouldntDetFNo "Ne peut déterminer le nombre de frames (pour recherche SOF)  \n"
 #define MSGTR_CantSeekRawAVI "Ne peut chercher dans un flux .AVI brut! (index requis, essayez l'option -idx!)\n"
 #define MSGTR_CantSeekFile "Ne peut chercher dans ce fichier!  \n"
 

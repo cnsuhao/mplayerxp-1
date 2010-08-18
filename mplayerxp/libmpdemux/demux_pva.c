@@ -480,11 +480,11 @@ static void pva_seek(demuxer_t * demuxer,float rel_seek_secs,int flags)
 	total_bitrate=((sh_audio_t *)demuxer->audio->sh)->i_bps + ((sh_video_t *)demuxer->video->sh)->i_bps;
 
 	/*
-	 * Compute absolute offset inside the stream. Approximate total bitrate with sum of bitrates
+	 * Compute SOF offset inside the stream. Approximate total bitrate with sum of bitrates
 	 * reported by the audio and video codecs. The seek is not accurate because, just like
 	 * with MPEG streams, the bitrate is not constant. Moreover, we do not take into account
 	 * the overhead caused by PVA and PES headers.
-	 * If the calculated absolute offset is negative, seek to the beginning of the file.
+	 * If the calculated SOF offset is negative, seek to the beginning of the file.
 	 */
 	
 	dest_offset=(flags&DEMUX_SEEK_SET?demuxer->movi_start:stream_tell(demuxer->stream))+rel_seek_secs*total_bitrate;

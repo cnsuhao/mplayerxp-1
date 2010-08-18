@@ -133,7 +133,7 @@ static char help_text[]=
 #define MSGTR_NI_Message "%s IKKE-INTERLEAVED AVI filformat!\n"
 
 #define MSGTR_UsingNINI "Bruker NON-INTERLEAVED Ødelagt AVI filformat!\n"
-#define MSGTR_CouldntDetFNo "Kan ikke bestemme antall frames (for absolutt søk)  \n"
+#define MSGTR_CouldntDetFNo "Kan ikke bestemme antall frames (for SOF søk)  \n"
 #define MSGTR_CantSeekRawAVI "Kan ikke søke i rå .AVI streams! (index behøves, prøv med -idx valget!)  \n"
 #define MSGTR_CantSeekFile "Kan ikke søke i denne filen!  \n"
 

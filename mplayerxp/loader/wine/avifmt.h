@@ -240,14 +240,14 @@ typedef struct __attribute__((packed))
 
 typedef struct __attribute__((packed)) _avisuperindex_entry 
 {
-    QWORD	qwOffset;           // absolute file offset
+    QWORD	qwOffset;           // full file offset
     DWORD	dwSize;             // size of index chunk at this offset
     DWORD	dwDuration;         // time span in stream ticks
 } avisuperindex_entry;
 
 typedef struct __attribute__((packed)) _avistdindex_entry
 {
-    DWORD	dwOffset;           // qwBaseOffset + this is absolute file offset
+    DWORD	dwOffset;           // qwBaseOffset + this is full file offset
     DWORD	dwSize;             // bit 31 is set if this is NOT a keyframe
 } avistdindex_entry;
 

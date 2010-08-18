@@ -40,7 +40,7 @@ typedef void (* __FASTCALL__ stream_callback)(struct stream_s *s,const stream_pa
 /** Stream description */
 typedef struct stream_s{
   int fd;		/**< file handler */
-  off_t pos;		/**< absolute offset from begin of stream */
+  off_t pos;		/**< SOF offset from begin of stream */
   int eof;		/**< indicates EOF */
   int type;		/**< properties of the stream (see STREAMTYPE_ for detail) */
   int file_format;	/**< detected file format (by http:// protocol for example) */
@@ -179,7 +179,7 @@ typedef struct stream_driver_s
 
 		/** Seeks on new stream position
 		  * @param _this	points structure which identifies stream
-		  * @param off		absolute offset from begin of stream
+		  * @param off		SOF offset from begin of stream
 		  * @return		real offset after seeking
 		**/
     off_t	(* __FASTCALL__ seek)(stream_t *_this,off_t off);

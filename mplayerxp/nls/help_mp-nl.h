@@ -132,7 +132,7 @@ static char help_text[]=
 #define MSGTR_NI_Message "%s NON-INTERLEAVED AVI bestandsformaat!\n"
 
 #define MSGTR_UsingNINI "NON-INTERLEAVED Broken AVI bestandsformaat wordt gebruikt!\n"
-#define MSGTR_CouldntDetFNo "Kon het aantal frames niet bepalen (voor absolute verplaatsing)  \n"
+#define MSGTR_CouldntDetFNo "Kon het aantal frames niet bepalen (voor SOF verplaatsing)  \n"
 #define MSGTR_CantSeekRawAVI "Kan niet in raw .AVI streams verplaatsen! (index nodig, probeer met de -idx optie!)  \n"
 #define MSGTR_CantSeekFile "Kan niet verplaatsen in dit bestand!  \n"
 

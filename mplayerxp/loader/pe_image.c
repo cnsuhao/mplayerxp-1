@@ -392,7 +392,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
 //			TRACE_(fixup)("patching %x type %x\n", offset, type);
 			switch(type)
 			{
-			case IMAGE_REL_BASED_ABSOLUTE: break;
+			case IMAGE_REL_BASED_FULL: break;
 			case IMAGE_REL_BASED_HIGH:
 				*(short*)(page+offset) += hdelta;
 				break;

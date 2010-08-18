@@ -377,7 +377,7 @@ static char help_text[]=
 #define MSGTR_UsingNINI "Using NON-INTERLEAVED Broken AVI file-format!\n"
 #endif
 #ifndef MSGTR_CouldntDetFNo
-#define MSGTR_CouldntDetFNo "Couldn't determine number of frames (for absolute seek)  \n"
+#define MSGTR_CouldntDetFNo "Couldn't determine number of frames (for SOF seek)  \n"
 #endif
 #ifndef MSGTR_CantSeekRawAVI
 #define MSGTR_CantSeekRawAVI "Can't seek in raw .AVI streams! (index required, try with the -idx switch!)  \n"

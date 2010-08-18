@@ -1,6 +1,6 @@
 /*
     bios2dump.c - Was designed to dump memory block to file.
-    Usage: as argument requires absolute address of memory dump and its lenght
+    Usage: as argument requires a full address of memory dump and its lenght
     (int hexadecimal form).
     as output - will write file which will named: memADDR_LEN.dump
     where: ADDR - given address of memory

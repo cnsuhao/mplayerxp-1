@@ -134,7 +134,7 @@ static char help_text[]=
 #define MSGTR_NI_Message "%s NON-INTERLEAVED AVI fil-format!\n"
 
 #define MSGTR_UsingNINI "Bruger NON-INTERLEAVED ødelagt AVI fil-format!\n"
-#define MSGTR_CouldntDetFNo "Kunne ikke finde antallet af billeder (for en absolute søgning)  \n"
+#define MSGTR_CouldntDetFNo "Kunne ikke finde antallet af billeder (for en SOF søgning)  \n"
 #define MSGTR_CantSeekRawAVI "Kan ikke søge i rå .AVI streams! (manglende index, prøv med -idx!)  \n"
 #define MSGTR_CantSeekFile "Kan ikke søge i denne fil!  \n"
 #define MSGTR_EncryptedVOB "Krypteret VOB fil (ikke kompileret med libcss support)! Læs filen DOCS/cd-dvd.html\n"

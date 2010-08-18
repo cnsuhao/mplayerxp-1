@@ -87,7 +87,7 @@ extern demux_stream_t *d_video;
 extern int loop_times; /* it's const for xp mode */
 
 extern float rel_seek_secs;	/* FIXME: in hope that user will not rewind */
-extern int abs_seek_pos;	/* the movie at end of file :( */
+extern int sof_seek_pos;	/* the movie at end of file :( */
 
 extern int decore_audio( int xp_id );
 extern int mpxp_seek_time;

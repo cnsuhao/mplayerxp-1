@@ -1982,7 +1982,7 @@ typedef struct
 #define MOUSEEVENTF_MIDDLEDOWN  0x0020
 #define MOUSEEVENTF_MIDDLEUP    0x0040
 #define MOUSEEVENTF_WHEEL       0x0800
-#define MOUSEEVENTF_ABSOLUTE    0x8000
+#define MOUSEEVENTF_ABS         0x8000
 
 /* ExitWindows() flags */
 #define EW_RESTARTWINDOWS   0x0042

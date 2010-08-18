@@ -1284,7 +1284,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
       // bad video header, try to get number of frames from audio
       if(sh_audio && sh_audio->wf->nAvgBytesPerSec) priv->numberofframes=sh_video->fps*sh_audio->audio.dwLength/sh_audio->audio.dwRate*sh_audio->audio.dwScale;
     if(priv->numberofframes<=1){
-      MSG_WARN("Could not determine number of frames (for absolute seek)\n");
+      MSG_WARN("Could not determine number of frames (for SOF seek)\n");
       priv->numberofframes=0;
     }          
 
@@ -1351,7 +1351,7 @@ static void avi_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
     int i;
 
       if(flags&DEMUX_SEEK_SET){
-	// seek absolute
+	// seek SOF
 	video_chunk_pos=0;
       }
 

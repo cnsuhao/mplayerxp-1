@@ -613,7 +613,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   rtsp_schedule_field (rtsp_session, temp_buf);
 
   /* 10. check for the media control URL type and initiate RTSP SETUP */
-  if (!strncmp (rtp_session->control_url, "rtsp://", 7)) /* absolute URL */
+  if (!strncmp (rtp_session->control_url, "rtsp://", 7)) /* full URL */
     statut = rtsp_request_setup (rtsp_session,
                                  rtp_session->control_url, NULL);
   else /* relative URL */

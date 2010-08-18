@@ -3862,7 +3862,7 @@ static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags)
                        (int64_t) mkv_d->indexes[i].timecode * mkv_d->tc_scale / 1000000.0;
 
                 if ((flags & 1 || target_timecode <= mkv_d->last_pts*1000)) {
-                    // Absolute seek or seek backward: find the last index
+                    // SOF seek or seek backward: find the last index
                     // position before target time
                     if (diff < 0 || diff >= min_diff)
                         continue;
