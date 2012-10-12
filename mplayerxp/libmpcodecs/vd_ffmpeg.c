@@ -368,33 +368,16 @@ static int init(sh_video_t *sh){
     if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DR1) vdff_ctx->cap_dr1=1;
     vdff_ctx->ctx->flags|= CODEC_FLAG_EMU_EDGE;
 
-#if 0
     if(lavc_param_threads < 0) lavc_param_threads = xp_num_cpu;
     if(lavc_param_threads > 1) {
-	avcodec_thread_init(vdff_ctx->ctx, lavc_param_threads);
+	vdff_ctx->ctx->thread_count = lavc_param_threads;
 	MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
     }
-#endif
     /* open it */
     if (avcodec_open2(vdff_ctx->ctx, vdff_ctx->lavc_codec, NULL) < 0) {
         MSG_ERR(MSGTR_CantOpenCodec);
         return 0;
     }
-#if 0
-    /* open it */
-    rc = avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec);
-    if (rc < 0) {
-	if(lavc_param_threads > 1) {
-	    avcodec_thread_init(vdff_ctx->ctx, 1);
-	    MSG_STATUS("Reopen ffmpeg-codec using single-thread mode\n");
-	    rc = avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec);
-	}
-    }
-    if(rc<0) {
-	MSG_ERR(MSGTR_CantOpenCodec);
-	return 0;
-    }
-#endif
     MSG_V("INFO: libavcodec.so (%06X) video codec[%c%c%c%c] init OK!\n"
     ,avc_version
     ,((char *)&sh->format)[0],((char *)&sh->format)[1],((char *)&sh->format)[2],((char *)&sh->format)[3]);
