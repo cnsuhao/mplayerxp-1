@@ -317,14 +317,14 @@ static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2,
         int src_stride2[3]={2*src_stride[0], 2*src_stride[1], 2*src_stride[2]};
         int dst_stride2[3]={2*dst_stride[0], 2*dst_stride[1], 2*dst_stride[2]};
 
-        sws_scale_ordered(sws1, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
+        sws_scale(sws1, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
         for(i=0; i<3; i++){
             src2[i] += src_stride[i];
             dst2[i] += dst_stride[i];
         }
-        sws_scale_ordered(sws2, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
+        sws_scale(sws2, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
     }else{
-        sws_scale_ordered(sws1, src, src_stride, y, h, dst, dst_stride);
+        sws_scale(sws1, src, src_stride, y, h, dst, dst_stride);
     }
 }
 

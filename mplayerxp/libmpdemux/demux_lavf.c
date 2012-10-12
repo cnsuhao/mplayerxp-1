@@ -26,6 +26,7 @@
 #include "help_mp.h"
 
 #include "libavformat/avformat.h"
+#include "libavformat/url.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
 
@@ -34,7 +35,8 @@
 typedef struct lavf_priv_t{
     AVInputFormat *avif;
     AVFormatContext *avfc;
-    ByteIOContext *pb;
+    AVIOContext *pb;
+    URLContext *urlc;
     int audio_streams;
     int video_streams;
     int64_t last_pts;
@@ -126,7 +128,7 @@ static int mpxp_read(URLContext *h, unsigned char *buf, int size){
     return ret;
 }
 
-static int mpxp_write(URLContext *h, unsigned char *buf, int size){
+static int mpxp_write(URLContext *h,const unsigned char *buf, int size){
     return -1;
 }
 
@@ -156,6 +158,7 @@ static int mpxp_close(URLContext *h){
 static URLProtocol mp_protocol = {
     "mpxp",
     mpxp_open,
+    NULL,      /* open2() */
     mpxp_read,
     mpxp_write,
     mpxp_seek,
@@ -163,7 +166,13 @@ static URLProtocol mp_protocol = {
     NULL,
     NULL, /*int (*url_read_pause)(URLContext *h);*/
     NULL, /*int (*url_read_seek)(URLContext *h,*/
-    NULL  /*int (*url_get_file_handle)(URLContext *h);*/
+    NULL, /*int (*url_get_file_handle)(URLContext *h);*/
+    NULL, /*int url_get_multi_file_handle(URLContext *h, int **handles, int *numhandles) */
+    NULL, /*int (*url_shutdown)(URLContext *h, int flags);*/
+    0,
+    NULL, /* priv_data */
+    0,    /* flags */
+    NULL  /* (*url_check() */
 };
 
 static void list_formats(void) {
@@ -238,6 +247,9 @@ extern const unsigned char ff_codec_bmp_tags[];
 extern const unsigned char ff_codec_wav_tags[];
 extern unsigned int ff_codec_get_tag(const void *tags, int id);
 
+static int ffmpeg_int_cb(void *op) { return 0; } /* non interrupt blicking */
+static AVIOInterruptCB int_cb = { ffmpeg_int_cb, NULL };
+
 static demuxer_t* lavf_open(demuxer_t *demuxer){
     AVFormatContext *avfc;
     AVFormatParameters ap;
@@ -250,14 +262,14 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 
     stream_seek(demuxer->stream, 0);
 
-    register_protocol(&mp_protocol);
+    ffurl_register_protocol(&mp_protocol,sizeof(URLProtocol));
 
     strncpy(mp_filename + 5, "foobar.dummy", sizeof(mp_filename)-5);
 
     if (opt_cryptokey)
         parse_cryptokey(avfc, opt_cryptokey);
 
-    url_fopen(&priv->pb, mp_filename, URL_RDONLY);
+    ffurl_open((URLContext**)&priv->pb->opaque, mp_filename, 0, &int_cb, NULL);
 
     ((URLContext*)(priv->pb->opaque))->priv_data= demuxer->stream;
 
@@ -268,11 +280,11 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 
     priv->avfc= avfc;
 
+#if 0 /* TODO: switch to METADATA AVDictionary*/
     if(av_find_stream_info(avfc) < 0){
         MSG_ERR("LAVF_header: av_find_stream_info() failed\n");
         return NULL;
     }
-
     if(avfc->title    [0]) demux_info_add(demuxer, INFOT_NAME     , avfc->title    );
     if(avfc->author   [0]) demux_info_add(demuxer, INFOT_AUTHOR   , avfc->author   );
     if(avfc->copyright[0]) demux_info_add(demuxer, INFOT_COPYRIGHT, avfc->copyright);
@@ -289,7 +301,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 			demux_info_add(demuxer, INFOT_TRACK    , mp_filename);
     }
     if(avfc->genre    [0]) demux_info_add(demuxer, INFOT_GENRE    , avfc->genre    );
-
+#endif
     for(i=0; i<avfc->nb_streams; i++){
         AVStream *st= avfc->streams[i];
 #if LIBAVFORMAT_BUILD >= 4629
@@ -299,7 +311,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 #endif
 
         switch(codec->codec_type){
-        case CODEC_TYPE_AUDIO:{
+        case AVMEDIA_TYPE_AUDIO:{
             WAVEFORMATEX *wf= calloc(sizeof(WAVEFORMATEX) + codec->extradata_size, 1);
             sh_audio_t* sh_audio=new_sh_audio(demuxer, i);
             priv->audio_streams++;
@@ -366,7 +378,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
                 demuxer->audio->sh= demuxer->a_streams[i];
             }
             break;}
-        case CODEC_TYPE_VIDEO:{
+        case AVMEDIA_TYPE_VIDEO:{
             BITMAPINFOHEADER *bih=calloc(sizeof(BITMAPINFOHEADER) + codec->extradata_size,1);
             sh_video_t* sh_video=new_sh_video(demuxer, i);
 
@@ -426,7 +438,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
             st->discard= AVDISCARD_ALL;
         }
     }
-    
+
     MSG_V("LAVF: %d audio and %d video streams found\n",priv->audio_streams,priv->video_streams);
     MSG_V("LAVF: build %d\n", LIBAVFORMAT_BUILD);
     if(!priv->audio_streams) demuxer->audio->id=-2;  // nosound
@@ -434,7 +446,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
     if(!priv->video_streams){
         if(!priv->audio_streams){
 	    MSG_ERR("LAVF: no audio or video headers found - broken file?\n");
-            return NULL; 
+            return NULL;
         }
         demuxer->video->id=-2; // audio-only
     } //else if (best_video > 0 && demuxer->video->id == -1) demuxer->video->id = best_video;
@@ -506,7 +518,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 #endif
     }
     dp->pos=demux->filepos;
-    dp->flags= (pkt.flags&PKT_FLAG_KEY)?DP_KEYFRAME:DP_NONKEYFRAME;
+    dp->flags= (pkt.flags&AV_PKT_FLAG_KEY)?DP_KEYFRAME:DP_NONKEYFRAME;
     // append packet to DS stream:
     ds_add_packet(ds,dp);
     return 1;

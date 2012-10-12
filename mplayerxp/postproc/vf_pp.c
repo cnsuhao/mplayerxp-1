@@ -20,7 +20,7 @@
 
 struct vf_priv_s {
     int pp;
-    pp_mode_t *ppMode[PP_QUALITY_MAX+1];
+    pp_mode *ppMode[PP_QUALITY_MAX+1];
     void *context;
     unsigned int outfmt;
 };
@@ -41,8 +41,8 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     case IMGFMT_411P: flags|= PP_FORMAT_411; break;
     default:          flags|= PP_FORMAT_420; break;
     }
-        
-    if(vf->priv->context) pp2_free_context(vf->priv->context);
+
+    if(vf->priv->context) pp_free_context(vf->priv->context);
     vf->priv->context= pp2_get_context(width, height, flags);
 
     return vf_next_config(vf,width,height,d_width,d_height,voflags,outfmt,tune);
@@ -52,9 +52,9 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
     int i;
     for(i=0; i<=PP_QUALITY_MAX; i++){
         if(vf->priv->ppMode[i])
-	    pp2_free_mode(vf->priv->ppMode[i]);
+	    pp_free_mode(vf->priv->ppMode[i]);
     }
-    if(vf->priv->context) pp2_free_context(vf->priv->context);
+    if(vf->priv->context) pp_free_context(vf->priv->context);
 }
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
@@ -112,7 +112,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
     if(vf->priv->pp || !(mpi->flags&MP_IMGFLAG_DIRECT)){
 	// do the postprocessing! (or copy if no DR)
-	pp2_postprocess(mpi->planes           ,mpi->stride,
+	pp_postprocess(mpi->planes           ,mpi->stride,
 		    vf->dmpi->planes,vf->dmpi->stride,
 		    (mpi->w+7)&(~7),mpi->h,
 		    mpi->qscale, mpi->qstride,
@@ -171,7 +171,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     }
 
     for(i=0; i<=PP_QUALITY_MAX; i++){
-        vf->priv->ppMode[i]= pp2_get_mode_by_name_and_quality(name, i);
+        vf->priv->ppMode[i]= pp_get_mode_by_name_and_quality(name, i);
         if(vf->priv->ppMode[i]==NULL) return -1;
     }
     

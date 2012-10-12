@@ -12,6 +12,7 @@
 #include "help_mp.h"
 #include "bswap.h"
 
+#define FF_API_OLD_DECODE_AUDIO 1
 #include "libavcodec/avcodec.h"
 #include "codecs_ld.h"
 
@@ -49,7 +50,7 @@ int init(sh_audio_t *sh_audio)
    AVCodecContext *lavc_context;
    MSG_V("FFmpeg's libavcodec audio codec\n");
     if(!acodec_inited){
-	avcodec_init();
+//	avcodec_init();
 	avcodec_register_all();
 	acodec_inited=1;
     }
@@ -58,7 +59,7 @@ int init(sh_audio_t *sh_audio)
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh_audio->codec->dll_name);
 	return 0;
     }
-    lavc_context = avcodec_alloc_context();
+    lavc_context = avcodec_alloc_context3(lavc_codec);
     sh_audio->context = lavc_context;
     if(sh_audio->wf)
     {
@@ -87,7 +88,7 @@ int init(sh_audio_t *sh_audio)
     lavc_context->codec_type = lavc_codec->type;
     lavc_context->codec_id = lavc_codec->id;
     /* open it */
-    if (avcodec_open(lavc_context, lavc_codec) < 0) {
+    if (avcodec_open2(lavc_context, lavc_codec, NULL) < 0) {
         MSG_ERR( MSGTR_CantOpenCodec);
         return 0;
     }
@@ -110,24 +111,24 @@ int init(sh_audio_t *sh_audio)
   sh_audio->channels=lavc_context->channels;
   sh_audio->samplerate=lavc_context->sample_rate;
   switch(lavc_context->sample_fmt) {
-    case SAMPLE_FMT_U8:  ///< unsigned 8 bits
+    case AV_SAMPLE_FMT_U8:  ///< unsigned 8 bits
 	sh_audio->samplesize=1;
 	sh_audio->sample_format=AFMT_U8;
 	break;
     default:
-    case SAMPLE_FMT_S16:             ///< signed 16 bits
+    case AV_SAMPLE_FMT_S16:             ///< signed 16 bits
 	sh_audio->samplesize=2;
 	sh_audio->sample_format=AFMT_S16_LE;
 	break;
-    case SAMPLE_FMT_S32:             ///< signed 32 bits
+    case AV_SAMPLE_FMT_S32:             ///< signed 32 bits
 	sh_audio->samplesize=4;
 	sh_audio->sample_format=AFMT_S32_LE;
 	break;
-    case SAMPLE_FMT_FLT:             ///< float
+    case AV_SAMPLE_FMT_FLT:             ///< float
 	sh_audio->samplesize=4;
 	sh_audio->sample_format=AFMT_FLOAT32;
 	break;
-    case SAMPLE_FMT_DBL:             ///< double
+    case AV_SAMPLE_FMT_DBL:             ///< double
 	sh_audio->samplesize=8;
 	sh_audio->sample_format=AFMT_FLOAT32;
 	break;
@@ -165,11 +166,15 @@ unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,un
     unsigned len=0;
     float apts=0.,null_pts;
     while(len<minlen){
+	AVPacket pkt;
 	int len2=maxlen;
 	int x=ds_get_packet_r(sh_audio->ds,&start,apts?&null_pts:&apts);
 	if(x<=0) break; // error
 	if(sh_audio->format==mmioFOURCC('d','n','e','t')) swab(start,start,x&(~1));
-	y=avcodec_decode_audio2(sh_audio->context,(INT16*)buf,&len2,start,x);
+	av_init_packet(&pkt);
+	pkt.data = start;
+	pkt.size = x;
+	y=avcodec_decode_audio3(sh_audio->context,(int16_t*)buf,&len2,&pkt);
 	if(y<0){ MSG_V("lavc_audio: error\n");break; }
 	if(y<x)
 	{

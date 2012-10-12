@@ -18,8 +18,8 @@ muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f){
     muxer_t* muxer=malloc(sizeof(muxer_t));
     memset(muxer,0,sizeof(muxer_t));
     muxer->file = f;
-    if(!strcmp(type,"lavf")) { if(!muxer_init_muxer_lavf(muxer,subtype)) { free(muxer); muxer=NULL; }}
-    else
+//    if(!strcmp(type,"lavf")) { if(!muxer_init_muxer_lavf(muxer,subtype)) { free(muxer); muxer=NULL; }}
+//    else
     if(!strcmp(type,"mpxp")) muxer_init_muxer_mpxp64(muxer);
     else
     if(!strcmp(type,"raw")) muxer_init_muxer_raw(muxer);

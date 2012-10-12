@@ -10,7 +10,7 @@
 #include "vf.h"
 
 #include "../libvo/fastmemcpy.h"
-#include "../postproc/swscale.h"
+#include "libswscale/rgb2rgb.h"
 #include "pp_msg.h"
 
 //===========================================================================//
@@ -43,6 +43,8 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     vf->priv->fmt=getfmt(outfmt,vf->priv->forced);
     return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt,tune);
 }
+
+#define rgb32tobgr32(a,b,c) shuffle_bytes_3210(a,b,c)
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;

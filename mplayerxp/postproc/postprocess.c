@@ -16,7 +16,7 @@
 char * npp_options=NULL;
 
 extern void exit_player(char *);
-pp_context_t *pp2_get_context(int width, int height, int flags)
+pp_context *pp2_get_context(int width, int height, int flags)
 {
   flags &= 0x00FFFFFFUL; /* kill cpu related flags */
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)

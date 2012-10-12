@@ -10,7 +10,7 @@
 #include "vf.h"
 
 #include "../libvo/fastmemcpy.h"
-#include "../postproc/swscale.h"
+#include "libswscale/rgb2rgb.h"
 #include "pp_msg.h"
 
 //===========================================================================//

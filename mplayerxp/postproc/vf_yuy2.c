@@ -10,7 +10,7 @@
 #include "vf.h"
 
 #include "../libvo/fastmemcpy.h"
-#include "../postproc/swscale.h"
+#include "libswscale/rgb2rgb.h"
 #include "vf_scale.h"
 #include "pp_msg.h"
 
@@ -20,7 +20,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt,void *tune){
 
-    sws_rgb2rgb_init(get_sws_cpuflags());
+    sws_rgb2rgb_init();
 
     if(vf_next_query_format(vf,IMGFMT_YUY2,d_width,d_height)<=0){
 	MSG_ERR("yuy2 isn't supported by next filter/vo :(\n");

@@ -83,7 +83,6 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
   switch(cmd){
   case AF_CONTROL_REINIT:
     if(!s->acodec_inited){
-      avcodec_init();
       avcodec_register_all();
       s->acodec_inited=1;
     }
@@ -96,12 +95,12 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
 	MSG_ERR("Can't find encoder %s in libavcodec\n",s->cname);
 	return AF_ERROR;
     }
-    s->lavc_context=avcodec_alloc_context();
+    s->lavc_context=avcodec_alloc_context3(s->lavc_codec);
     /* put sample parameters */
     s->lavc_context->bit_rate = s->brate;
     s->lavc_context->sample_rate = ((af_data_t*)arg)->rate;
     s->lavc_context->channels = ((af_data_t*)arg)->nch;
-    s->lavc_context->sample_fmt = SAMPLE_FMT_S16;
+    s->lavc_context->sample_fmt = AV_SAMPLE_FMT_S16;
     /* open it */
     if (avcodec_open(s->lavc_context, s->lavc_codec) < 0) {
         MSG_ERR("could not open codec %s with libavcodec\n",s->cname);

@@ -99,7 +99,7 @@ typedef struct priv_s
     int vo_inited;
     int hello_printed;
 }priv_t;
-static pp_context_t* ppContext=NULL;
+static pp_context* ppContext=NULL;
 static void draw_slice(struct AVCodecContext *s,
                         const AVFrame *src, int offset[4],
                         int y, int type, int height);
@@ -221,7 +221,7 @@ static int init(sh_video_t *sh){
     int pp_flags,rc;
     if(npp_options) pp2_init();
     if(!vcodec_inited){
-	avcodec_init();
+//	avcodec_init();
 	avcodec_register_all();
 	vcodec_inited=1;
     }
@@ -235,7 +235,7 @@ static int init(sh_video_t *sh){
 	return 0;
     }
 
-    vdff_ctx->ctx = avcodec_alloc_context();
+    vdff_ctx->ctx = avcodec_alloc_context3(vdff_ctx->lavc_codec);
     vdff_ctx->lavc_picture = avcodec_alloc_frame();
     if(!(vdff_ctx->ctx && vdff_ctx->lavc_picture))
     {
@@ -248,7 +248,7 @@ static int init(sh_video_t *sh){
 #endif
     vdff_ctx->ctx->width = sh->disp_w;
     vdff_ctx->ctx->height= sh->disp_h;
-    vdff_ctx->ctx->error_recognition= lavc_param_error_resilience;
+  //  vdff_ctx->ctx->error_recognition= lavc_param_error_resilience;
     vdff_ctx->ctx->error_concealment= lavc_param_error_concealment;
     vdff_ctx->ctx->debug= lavc_param_debug;
     vdff_ctx->ctx->codec_tag= sh->format;
@@ -282,7 +282,7 @@ static int init(sh_video_t *sh){
 	(sh->format == mmioFOURCC('A','V','R','n') ||
 	sh->format == mmioFOURCC('M','J','P','G')))
     {
-	vdff_ctx->ctx->flags |= CODEC_FLAG_EXTERN_HUFF;
+//	vdff_ctx->ctx->flags |= CODEC_FLAG_EXTERN_HUFF;
 	vdff_ctx->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
 	vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
 	memcpy(vdff_ctx->ctx->extradata, sh->bih+sizeof(BITMAPINFOHEADER),
@@ -299,14 +299,12 @@ static int init(sh_video_t *sh){
         if(sh->bih->biSize!=sizeof(*sh->bih)+8){
             /* only 1 packet per frame & sub_id from fourcc */
 	    ((uint32_t*)vdff_ctx->ctx->extradata)[0] = 0;
-	    vdff_ctx->ctx->sub_id=
 	    ((uint32_t*)vdff_ctx->ctx->extradata)[1] =
         	(sh->format == mmioFOURCC('R', 'V', '1', '3')) ? 0x10003001 : 0x10000000;
         } else {
 	    /* has extra slice header (demux_rm or rm->avi streamcopy) */
 	    unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
 	    ((uint32_t*)vdff_ctx->ctx->extradata)[0] = extrahdr[0];
-	    vdff_ctx->ctx->sub_id=
 	    ((uint32_t*)vdff_ctx->ctx->extradata)[1] = extrahdr[1];
 	}
     }
@@ -342,6 +340,7 @@ static int init(sh_video_t *sh){
     }
 
     /* Pass palette to codec */
+#if 0
 #if LIBAVCODEC_BUILD >= 4689
     if (sh->bih && (sh->bih->biBitCount <= 8)) {
         vdff_ctx->ctx->palctrl = (AVPaletteControl*)calloc(1,sizeof(AVPaletteControl));
@@ -356,6 +355,7 @@ static int init(sh_video_t *sh){
                    min(sh->bih->biClrUsed * 4, AVPALETTE_SIZE));
 	}
 #endif
+#endif
     if(sh->bih)
 	vdff_ctx->ctx->bits_per_coded_sample= sh->bih->biBitCount;
 
@@ -368,11 +368,19 @@ static int init(sh_video_t *sh){
     if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DR1) vdff_ctx->cap_dr1=1;
     vdff_ctx->ctx->flags|= CODEC_FLAG_EMU_EDGE;
 
+#if 0
     if(lavc_param_threads < 0) lavc_param_threads = xp_num_cpu;
     if(lavc_param_threads > 1) {
 	avcodec_thread_init(vdff_ctx->ctx, lavc_param_threads);
 	MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
     }
+#endif
+    /* open it */
+    if (avcodec_open2(vdff_ctx->ctx, vdff_ctx->lavc_codec, NULL) < 0) {
+        MSG_ERR(MSGTR_CantOpenCodec);
+        return 0;
+    }
+#if 0
     /* open it */
     rc = avcodec_open(vdff_ctx->ctx, vdff_ctx->lavc_codec);
     if (rc < 0) {
@@ -383,9 +391,10 @@ static int init(sh_video_t *sh){
 	}
     }
     if(rc<0) {
-	MSG_ERR( MSGTR_CantOpenCodec);
+	MSG_ERR(MSGTR_CantOpenCodec);
 	return 0;
     }
+#endif
     MSG_V("INFO: libavcodec.so (%06X) video codec[%c%c%c%c] init OK!\n"
     ,avc_version
     ,((char *)&sh->format)[0],((char *)&sh->format)[1],((char *)&sh->format)[2],((char *)&sh->format)[3]);
@@ -432,7 +441,7 @@ static void uninit(sh_video_t *sh){
     free(vdff_ctx->ctx);
     free(vdff_ctx->lavc_picture);
     free(vdff_ctx);
-    if(ppContext) pp2_free_context(ppContext);
+    if(ppContext) pp_free_context(ppContext);
     ppContext=NULL;
     pp2_uninit();
     vcodec_inited=0;
@@ -465,14 +474,14 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
         type = MP_IMGTYPE_STATIC;
         flags |= MP_IMGFLAG_PRESERVE;
     }
-    flags|=(!avctx->hurry_up && vdff_ctx->use_slices) ?
+    flags|=((avctx->skip_frame==AVDISCARD_NONE) && vdff_ctx->use_slices) ?
             MP_IMGFLAG_DRAW_CALLBACK:0;
     MSG_DBG2( type == MP_IMGTYPE_STATIC ? "using STATIC\n" : "using TEMP\n");
   } else {
 #endif
     if(!pic->reference){
         vdff_ctx->b_count++;
-        flags|=(!avctx->hurry_up && vdff_ctx->use_slices) ?
+        flags|=((avctx->skip_frame==AVDISCARD_NONE) && vdff_ctx->use_slices) ?
                 MP_IMGFLAG_DRAW_CALLBACK:0;
     }else{
         vdff_ctx->ip_count++;
@@ -524,13 +533,13 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
     pic->opaque = mpi;
 
     if(pic->reference){
-        pic->age= vdff_ctx->ip_age[0];
+//        pic->age= vdff_ctx->ip_age[0];
 
         vdff_ctx->ip_age[0]= vdff_ctx->ip_age[1]+1;
         vdff_ctx->ip_age[1]= 1;
         vdff_ctx->b_age++;
     }else{
-        pic->age= vdff_ctx->b_age;
+  //      pic->age= vdff_ctx->b_age;
 
         vdff_ctx->ip_age[0]++;
 	vdff_ctx->ip_age[1]++;
@@ -583,7 +592,7 @@ static void draw_slice(struct AVCodecContext *s,
     unsigned long long int total_frame;
     unsigned orig_idx = mpi->xp_idx;
     /* sync-point*/
-    if(src->pict_type==FF_I_TYPE) vdff_ctx->frame_number = src->coded_picture_number;
+    if(src->pict_type==AV_PICTURE_TYPE_I) vdff_ctx->frame_number = src->coded_picture_number;
     total_frame = vdff_ctx->frame_number;
     if(vdff_ctx->use_dr1) { MSG_DBG2("Ignoring draw_slice due dr1\n"); return; } /* we may call vo_start_slice() here */
 //    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,s->width,s->height);
@@ -632,13 +641,13 @@ static void draw_slice(struct AVCodecContext *s,
 #endif
     MSG_DBG2("ff_draw_callback<%u->%u:%u:%u-%s>[%ux%u] %i %i %i %i\n",
     orig_idx,mpi->xp_idx,(unsigned)total_frame,src->coded_picture_number,
-    src->pict_type==FF_BI_TYPE?"bi":
-    src->pict_type==FF_SP_TYPE?"sp":
-    src->pict_type==FF_SI_TYPE?"si":
-    src->pict_type==FF_S_TYPE?"s":
-    src->pict_type==FF_B_TYPE?"b":
-    src->pict_type==FF_P_TYPE?"p":
-    src->pict_type==FF_I_TYPE?"i":"??"
+    src->pict_type==AV_PICTURE_TYPE_BI?"bi":
+    src->pict_type==AV_PICTURE_TYPE_SP?"sp":
+    src->pict_type==AV_PICTURE_TYPE_SI?"si":
+    src->pict_type==AV_PICTURE_TYPE_S?"s":
+    src->pict_type==AV_PICTURE_TYPE_B?"b":
+    src->pict_type==AV_PICTURE_TYPE_P?"p":
+    src->pict_type==AV_PICTURE_TYPE_I?"i":"??"
     ,mpi->width,mpi->height,mpi->x,mpi->y,mpi->w,mpi->h);
     __MP_ATOMIC(sh->active_slices++);
     mpcodecs_draw_slice (sh, mpi);
@@ -665,8 +674,8 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
     vdff_ctx->ctx->opaque=sh;
     if(len<=0) return NULL; // skipped frame
 
-    vdff_ctx->ctx->hurry_up=(flags&3)?((flags&2)?2:1):0;
-    if(vdff_ctx->cap_slices)	vdff_ctx->use_slices= !(sh->vf_flags&VF_FLAGS_SLICES)?0:vdff_ctx->ctx->hurry_up?0:1;
+    vdff_ctx->ctx->skip_frame=(flags&3)?((flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
+    if(vdff_ctx->cap_slices)	vdff_ctx->use_slices= !(sh->vf_flags&VF_FLAGS_SLICES)?0:(vdff_ctx->ctx->skip_frame!=AVDISCARD_NONE)?0:1;
     else			vdff_ctx->use_slices=0;
 /*
     if codec is capable DR1
@@ -733,8 +742,12 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 	else
 	vdff_ctx->hello_printed=1;
     }
-    ret = avcodec_decode_video(vdff_ctx->ctx, vdff_ctx->lavc_picture,
-				&got_picture, data, len);
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    pkt.data=data;
+    pkt.size=len;
+    ret = avcodec_decode_video2(vdff_ctx->ctx, vdff_ctx->lavc_picture,
+				&got_picture, &pkt);
     if(ret<0) MSG_WARN("Error while decoding frame!\n");
     if(!got_picture) return NULL;	// skipped image
     if(!vdff_ctx->ctx->draw_horiz_band)

@@ -38,12 +38,14 @@ SRCS += parse_es.c demux_fli.c demux_ra.c demux_real.c demux_y4m.c yuv4mpeg.c yu
 SRCS += demux_nuv.c demux_film.c demux_roq.c demux_audio.c demux_demuxers.c
 SRCS += mpdemux.c demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
 SRCS += demux_pva.c demux_rawvideo.c demux_smjpeg.c demux_ts.c demux_ty.c demux_nsv.c
-SRCS += demux_mkv.c demux_mpxp64.c demux_lavf.c sub_cc.c sub_ty.c
+SRCS += demux_mkv.c demux_mpxp64.c sub_cc.c sub_ty.c
+#SRCS += demux_lavf.c
 ifeq ($(HAVE_LIBVORBIS),yes)
 SRCS += demux_ogg.c
 endif
 
-SRCS += muxer.c mux_mpxp64.c mux_lavf.c mux_raw.c
+SRCS += muxer.c mux_mpxp64.c mux_raw.c
+#SRCS+= mux_lavf.c
 ifeq ($(HAVE_STREAMING),yes)
 SUBDIRS = freesdp librtsp realrtsp
 SRCS += asf_streaming.c asf_mmst_streaming.c cookies.c http.c network.c rtp.c pnm.c s_ftp.c s_udp.c s_rtsp.c s_network.c tcp.c udp.c

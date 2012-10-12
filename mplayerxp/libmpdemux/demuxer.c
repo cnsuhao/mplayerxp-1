@@ -80,8 +80,8 @@ static demuxer_driver_t *ddrivers[] =
     &demux_aiff,
     &demux_audio,
     &demux_mpgts,
-    &demux_ty,
-    &demux_lavf
+    &demux_ty//,
+//    &demux_lavf
 };
 static unsigned int nddrivers=sizeof(ddrivers)/sizeof(demuxer_driver_t*);
 

@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include "libavformat/avformat.h"
 #include "libavformat/avio.h"
+#include "libavformat/url.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "stream.h"
 #include "demux_msg.h"
@@ -13,10 +14,13 @@ typedef struct ffmpeg_priv_s
     off_t spos;
 }ffmpeg_priv_t;
 
+static int ffmpeg_int_cb(void *op) { return 0; } /* non interrupt blicking */
+static AVIOInterruptCB int_cb = { ffmpeg_int_cb, NULL };
+
 static int __FASTCALL__ ffmpeg_read(stream_t *s, stream_packet_t*sp)
 {
     ffmpeg_priv_t*p=s->priv;
-    sp->len = url_read_complete(p->ctx, sp->buf, sp->len);
+    sp->len = ffurl_read_complete(p->ctx, sp->buf, sp->len);
     if(sp->len>0) p->spos += sp->len;
     else	  s->_Errno=errno;
     return sp->len;
@@ -26,7 +30,7 @@ static off_t __FASTCALL__ ffmpeg_seek(stream_t *s, off_t newpos)
 {
     ffmpeg_priv_t*p=s->priv;
     p->spos = newpos;
-    if ((p->spos = url_seek(p->ctx, newpos, SEEK_SET)) < 0) {
+    if ((p->spos = ffurl_seek(p->ctx, newpos, SEEK_SET)) < 0) {
 	s->_Errno=errno;
     }
     return p->spos;
@@ -49,7 +53,7 @@ static int __FASTCALL__ ffmpeg_ctrl(stream_t *s, unsigned cmd, void *arg)
 static void __FASTCALL__ ffmpeg_close(stream_t *stream)
 {
     ffmpeg_priv_t*p=stream->priv;
-    url_close(p->ctx);
+    ffurl_close(p->ctx);
     free(p);
 }
 
@@ -65,11 +69,11 @@ static int __FASTCALL__ ffmpeg_open(stream_t *stream,const char *filename,unsign
     av_register_all();
     MSG_V("[ffmpeg] Opening %s\n", filename);
 
-    if (url_open(&ctx, filename, URL_RDONLY) < 0) return 0;
+    if (ffurl_open(&ctx, filename, 0, &int_cb, NULL) < 0) return 0;
     p = malloc(sizeof(ffmpeg_priv_t));
     p->ctx = ctx;
     p->spos = 0;
-    size = url_filesize(ctx);
+    size = ffurl_size(ctx);
     if (size >= 0)
         stream->end_pos = size;
     stream->type = STREAMTYPE_SEEKABLE;
