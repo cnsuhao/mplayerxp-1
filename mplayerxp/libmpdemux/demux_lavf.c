@@ -26,17 +26,18 @@
 #include "help_mp.h"
 
 #include "libavformat/avformat.h"
-#include "libavformat/url.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
 
 #define PROBE_BUF_SIZE 2048
 
+#define BIO_BUFFER_SIZE 32768
+
 typedef struct lavf_priv_t{
     AVInputFormat *avif;
     AVFormatContext *avfc;
     AVIOContext *pb;
-    URLContext *urlc;
+    uint8_t buffer[BIO_BUFFER_SIZE];
     int audio_streams;
     int video_streams;
     int64_t last_pts;
@@ -112,30 +113,21 @@ static unsigned int mpxp_codec_get_tag(const mpxpCodecTag *tags, uint32_t id)
     return 0;
 }
 
-static int mpxp_open(URLContext *h, const char *filename, int flags){
-    return 0;
-}
-
-static int mpxp_read(URLContext *h, unsigned char *buf, int size){
-    stream_t *stream = (stream_t*)h->priv_data;
+static int mpxp_read(void *opaque, unsigned char *buf, int size){
+    stream_t* stream=opaque;
     int ret;
 
     if(stream_eof(stream)) //needed?
         return -1;
     ret=stream_read(stream, buf, size);
 
-    MSG_DBG2("%d=mp_read(%p, %p, %d), eof:%d\n", ret, h, buf, size, stream->eof);
+    MSG_DBG2("%d=mp_read(%p, %p, %d), eof:%d\n", ret, stream, buf, size, stream->eof);
     return ret;
 }
 
-static int mpxp_write(URLContext *h,const unsigned char *buf, int size){
-    return -1;
-}
-
-static int64_t mpxp_seek(URLContext *h, int64_t pos, int whence){
-    stream_t *stream = (stream_t*)h->priv_data;
-
-    MSG_DBG2("mpxp_seek(%p, %d, %d)\n", h, (int)pos, whence);
+static int64_t mpxp_seek(void *opaque, int64_t pos, int whence){
+    stream_t* stream=opaque;
+    MSG_DBG2("mpxp_seek(%p, %d, %d)\n", stream, (int)pos, whence);
     if(whence == SEEK_CUR)
         pos +=stream_tell(stream);
     else if(whence == SEEK_END)
@@ -150,30 +142,6 @@ static int64_t mpxp_seek(URLContext *h, int64_t pos, int whence){
 
     return pos;
 }
-
-static int mpxp_close(URLContext *h){
-    return 0;
-}
-
-static URLProtocol mp_protocol = {
-    "mpxp",
-    mpxp_open,
-    NULL,      /* open2() */
-    mpxp_read,
-    mpxp_write,
-    mpxp_seek,
-    mpxp_close,
-    NULL,
-    NULL, /*int (*url_read_pause)(URLContext *h);*/
-    NULL, /*int (*url_read_seek)(URLContext *h,*/
-    NULL, /*int (*url_get_file_handle)(URLContext *h);*/
-    NULL, /*int url_get_multi_file_handle(URLContext *h, int **handles, int *numhandles) */
-    NULL, /*int (*url_shutdown)(URLContext *h, int flags);*/
-    0,
-    NULL, /* priv_data */
-    0,    /* flags */
-    NULL  /* (*url_check() */
-};
 
 static void list_formats(void) {
     AVInputFormat *fmt=NULL;
@@ -247,35 +215,30 @@ extern const unsigned char ff_codec_bmp_tags[];
 extern const unsigned char ff_codec_wav_tags[];
 extern unsigned int ff_codec_get_tag(const void *tags, int id);
 
-static int ffmpeg_int_cb(void *op) { return 0; } /* non interrupt blicking */
-static AVIOInterruptCB int_cb = { ffmpeg_int_cb, NULL };
-
 static demuxer_t* lavf_open(demuxer_t *demuxer){
     AVFormatContext *avfc;
-    AVFormatParameters ap;
-    const void *opt;
     lavf_priv_t *priv= demuxer->priv;
-    int i,g;
+    unsigned j;
+    int err,i,g;
     char mp_filename[256]="mpxp:";
-
-    memset(&ap, 0, sizeof(AVFormatParameters));
-
+    char err_buff[256];
     stream_seek(demuxer->stream, 0);
-
-    ffurl_register_protocol(&mp_protocol,sizeof(URLProtocol));
 
     strncpy(mp_filename + 5, "foobar.dummy", sizeof(mp_filename)-5);
 
+    avfc = avformat_alloc_context();
+
     if (opt_cryptokey)
-        parse_cryptokey(avfc, opt_cryptokey);
+	parse_cryptokey(avfc, opt_cryptokey);
 
-    ffurl_open((URLContext**)&priv->pb->opaque, mp_filename, 0, &int_cb, NULL);
+    priv->pb = avio_alloc_context(priv->buffer, BIO_BUFFER_SIZE, 0,
+				demuxer->stream, mpxp_read, NULL, mpxp_seek);
+    avfc->pb = priv->pb;
 
-    ((URLContext*)(priv->pb->opaque))->priv_data= demuxer->stream;
-
-    if(av_open_input_stream(&avfc, priv->pb, mp_filename, priv->avif, &ap)<0){
-        MSG_ERR("LAVF_header: av_open_input_stream() failed\n");
-        return NULL;
+    if((err=avformat_open_input(&avfc, mp_filename, priv->avif, NULL))<0){
+	av_strerror(err,err_buff,sizeof(err_buff));
+	MSG_ERR("LAVF_header: avformat_open_input() failed: %s\n",err_buff);
+	return NULL;
     }
 
     priv->avfc= avfc;
@@ -302,14 +265,10 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
     }
     if(avfc->genre    [0]) demux_info_add(demuxer, INFOT_GENRE    , avfc->genre    );
 #endif
-    for(i=0; i<avfc->nb_streams; i++){
-        AVStream *st= avfc->streams[i];
-#if LIBAVFORMAT_BUILD >= 4629
-        AVCodecContext *codec= st->codec;
-#else
-        AVCodecContext *codec= &st->codec;
-#endif
-
+    for(j=0; j<avfc->nb_streams; j++){
+	AVStream *st= avfc->streams[j];
+	AVCodecContext *codec= st->codec;
+	i=j;
         switch(codec->codec_type){
         case AVMEDIA_TYPE_AUDIO:{
             WAVEFORMATEX *wf= calloc(sizeof(WAVEFORMATEX) + codec->extradata_size, 1);
@@ -400,13 +359,8 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
                 sh_video->video.dwRate= st->time_base.den;
                 sh_video->video.dwScale= st->time_base.num;
             } else {
-#if LIBAVFORMAT_BUILD >= 4624
-            sh_video->video.dwRate= codec->time_base.den;
-            sh_video->video.dwScale= codec->time_base.num;
-#else
-            sh_video->video.dwRate= codec->frame_rate;
-            sh_video->video.dwScale= codec->frame_rate_base;
-#endif
+		sh_video->video.dwRate= codec->time_base.den;
+		sh_video->video.dwScale= codec->time_base.num;
             }
             sh_video->fps=av_q2d(st->r_frame_rate);
             sh_video->frametime=1/av_q2d(st->r_frame_rate);
@@ -509,13 +463,8 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
     }
 
     if(pkt.pts != AV_NOPTS_VALUE){
-#if LIBAVFORMAT_BUILD >= 4624
         dp->pts=pkt.pts * av_q2d(priv->avfc->streams[id]->time_base);
         priv->last_pts= dp->pts * AV_TIME_BASE;
-#else
-        priv->last_pts= pkt.pts;
-        dp->pts=pkt.pts / (float)AV_TIME_BASE;
-#endif
     }
     dp->pos=demux->filepos;
     dp->flags= (pkt.flags&AV_PKT_FLAG_KEY)?DP_KEYFRAME:DP_NONKEYFRAME;
@@ -528,11 +477,7 @@ static void lavf_seek(demuxer_t *demuxer, float rel_seek_secs, int flags){
     lavf_priv_t *priv = demuxer->priv;
     MSG_DBG2("lavf_demux(%p, %f, %d)\n", demuxer, rel_seek_secs, flags);
 
-#if LIBAVFORMAT_BUILD < 4619
-    av_seek_frame(priv->avfc, -1, priv->last_pts + rel_seek_secs*AV_TIME_BASE);
-#else
     av_seek_frame(priv->avfc, -1, priv->last_pts + rel_seek_secs*AV_TIME_BASE, rel_seek_secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
-#endif
 }
 
 static int lavf_control(demuxer_t *demuxer, int cmd, void *arg)
@@ -544,10 +489,11 @@ static void lavf_close(demuxer_t *demuxer)
 {
     lavf_priv_t* priv = demuxer->priv;
     if (priv){
-        if(priv->avfc)
-	{
-	    av_close_input_file(priv->avfc); priv->avfc= NULL;
+	if(priv->avfc) {
+	    av_freep(&priv->avfc->key);
+	    avformat_close_input(&priv->avfc);
 	}
+	av_freep(&priv->pb);
 	free(priv); demuxer->priv= NULL;
     }
 }
