@@ -317,11 +317,11 @@ add_cflags "-I$srcdir"
 disable ffmpeg
 # Checking for FFMPEG
 test -f "../ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
-disabled ffmpeg && die "**FATAL**: local copy of libavcodec doesn't exist! Please use latest svn to checkout external repository in mplayerxp source tree."
+disabled ffmpeg && die "**FATAL**: local copy of ffmpeg doesn't exist!"
 add_cflags "-I$srcdir/../ffmpeg"
 print_config HAVE_ mp_config.h mp_config.mak ffmpeg
 # Configuring external ffmpeg stuff
-ffmpeg_args="--enable-static --disable-shared --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --enable-postproc --enable-gpl --enable-pthreads"
+ffmpeg_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample --disable-swresample"
 if test -n $host ; then
 _arch=$host_arch
 x86_32 && _arch="i686"
