@@ -13,7 +13,7 @@ typedef struct ao_info_s
 /** AO-driver interface */
 typedef struct ao_functions_s
 {
-	ao_info_t *info;	/**< text-info about this driver */
+	const ao_info_t *info;	/**< text-info about this driver */
 
 	/** Control interface
 	 * @param cmd	command. See AOCONTROL_** for detail

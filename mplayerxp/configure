@@ -295,7 +295,7 @@ print_config HAVE_ mp_config.h mp_config.mak gomp
 #enabled gomp && check_cflags -ftree-parallelize-loops=4
 #####################################################
 add_cflags "-Werror-implicit-function-declaration"
-check_cflags "-Wextra"
+check_cflags "-W -Wall -Wextra"
 
 echocheck CFLAGS
 echores   $CFLAGS
