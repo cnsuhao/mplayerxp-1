@@ -527,7 +527,7 @@ inline __m128 _my_hadd_ps( __m128 a, __m128 b) {
     mm[0] = _m_pfadd(mm[0],mm[4]);
     mm[0] = _m_pfacc(mm[0],mm[0]);
     _m_store_half(&rval.ipart,mm[0]);
-    __ivec_empty();
+    _ivec_empty();
     return rval.fpart;
 #else
   return ( w[0] *x[0] +w[1] *x[1] +w[2] *x[2] +w[3] *x[3]
