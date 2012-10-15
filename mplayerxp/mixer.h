@@ -2,7 +2,7 @@
 #ifndef __MPLAYER_MIXER
 #define __MPLAYER_MIXER
 
-extern char *oss_mixer_device;
+extern const char *oss_mixer_device;
 extern void mixer_getvolume( float *l,float *r );
 extern void mixer_setvolume( float l,float r );
 extern void mixer_incvolume( void );
