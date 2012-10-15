@@ -68,8 +68,8 @@ subdirs: $(MP_LIBS)
 
 $(PRG):	$(OBJS_MPLAYER) $(MP_LIBS)
 	$(DO_MAKE_ALL)
-	$(CC) -o $(PRG) $(OBJS_MPLAYER) $(COMMON_LIBS) -Xlinker --export-dynamic --gc-sections --sort-common $(LDFLAGS) $(LIBS)
-
+	$(CC) -o $(PRG) $(OBJS_MPLAYER) $(COMMON_LIBS) $(LDFLAGS) $(LIBS)
+#-Xlinker --export-dynamic -Xlinker --gc-sections -Xlinker --sort-common
 $(SRCS_MPLAYER): version.h
 #$(OBJS_MPLAYER): $(SRCS_MPLAYER)
 
