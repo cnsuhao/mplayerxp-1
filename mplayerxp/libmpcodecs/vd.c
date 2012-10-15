@@ -137,10 +137,10 @@ csp_again:
 		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",mpvdec->info->driver_name,vo_format_name(out_fmt));
 		continue;
 	    }
-	    j=i; vo_flags=flags;
+	    j=i; vo.flags=flags;
 	    if(flags&VFCAP_CSP_SUPPORTED_BY_HW) break;
 	} else
-	if(!palette && !(vo_flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
+	if(!palette && !(vo.flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
 	    if(mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)!=CONTROL_FALSE)
 		palette=1;
@@ -186,25 +186,25 @@ csp_again:
     sh->vfilter=vf;
 
     // autodetect flipping
-    if(flip==-1){
-	flip=0;
+    if(vo.flip==-1){
+	vo.flip=0;
 	if(sh->codec->outflags[j]&CODECS_FLAG_FLIP)
 	    if(!(sh->codec->outflags[j]&CODECS_FLAG_NOFLIP))
-		flip=1;
+		vo.flip=1;
     }
-    if(vo_flags&VFCAP_FLIPPED) flip^=1;
-    if(flip && !(vo_flags&VFCAP_FLIP)){
+    if(vo.flags&VFCAP_FLIPPED) vo.flip^=1;
+    if(vo.flip && !(vo.flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
 	sh->vfilter=vf=vf_open_filter(vf,sh,"mirror","x");
     }
 
     // time to do aspect ratio corrections...
 
-  if(movie_aspect>-1.0) sh->aspect = movie_aspect; // cmdline overrides autodetect
-  if(opt_screen_size_x||opt_screen_size_y){
-    screen_size_x = opt_screen_size_x;
-    screen_size_y = opt_screen_size_y;
-    if(!vidmode){
+  if(vo.movie_aspect>-1.0) sh->aspect = vo.movie_aspect; // cmdline overrides autodetect
+  if(vo.opt_screen_size_x||vo.opt_screen_size_y){
+    screen_size_x = vo.opt_screen_size_x;
+    screen_size_y = vo.opt_screen_size_y;
+    if(!vo.vidmode){
      if(!screen_size_x) screen_size_x=1;
      if(!screen_size_y) screen_size_y=1;
      if(screen_size_x<=8) screen_size_x*=sh->disp_w;
@@ -214,15 +214,15 @@ csp_again:
     // check source format aspect, calculate prescale ::atmos
     screen_size_x=sh->disp_w;
     screen_size_y=sh->disp_h;
-    if(screen_size_xy>=0.001){
-     if(screen_size_xy<=8){
+    if(vo.screen_size_xy>=0.001){
+     if(vo.screen_size_xy<=8){
        // -xy means x+y scale
-       screen_size_x*=screen_size_xy;
-       screen_size_y*=screen_size_xy;
+       screen_size_x*=vo.screen_size_xy;
+       screen_size_y*=vo.screen_size_xy;
      } else {
        // -xy means forced width while keeping correct aspect
-       screen_size_x=screen_size_xy;
-       screen_size_y=screen_size_xy*sh->disp_h/sh->disp_w;
+       screen_size_x=vo.screen_size_xy;
+       screen_size_y=vo.screen_size_xy*sh->disp_h/sh->disp_w;
      }
     }
     if(sh->aspect>0.01){
@@ -231,7 +231,7 @@ csp_again:
              sh->aspect);
       w=(int)((float)screen_size_y*sh->aspect); w+=w%2; // round
       // we don't like horizontal downscale || user forced width:
-      if(w<screen_size_x || screen_size_xy>8){
+      if(w<screen_size_x || vo.screen_size_xy>8){
         screen_size_y=(int)((float)screen_size_x*(1.0/sh->aspect));
         screen_size_y+=screen_size_y%2; // round
         if(screen_size_y<sh->disp_h) // Do not downscale verticaly
@@ -245,13 +245,13 @@ csp_again:
     MSG_V("video_out->init(%dx%d->%dx%d,flags=%d,'%s',%s)\n",
                       sh->disp_w,sh->disp_h,
                       screen_size_x,screen_size_y,
-                      fullscreen|(vidmode<<1)|(softzoom<<2)|(flip<<3),
+                      vo.fullscreen|(vo.vidmode<<1)|(vo.softzoom<<2)|(vo.flip<<3),
                       "MPlayerXP",vo_format_name(out_fmt));
 
     MSG_DBG2("vf configuring: %s\n",vf->info->name);
     if(vf->config(vf,sh->disp_w,sh->disp_h,
                       screen_size_x,screen_size_y,
-                      fullscreen|(vidmode<<1)|(softzoom<<2)|(flip<<3),
+                      vo.fullscreen|(vo.vidmode<<1)|(vo.softzoom<<2)|(vo.flip<<3),
                       out_fmt,tune)==0){
 	MSG_WARN(MSGTR_CannotInitVO);
 	sh->vfilter_inited=-1;

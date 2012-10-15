@@ -772,7 +772,7 @@ static int fb_preinit(void)
 
 	fb_bpp = fb_vinfo.bits_per_pixel;
 
-	if (fb_bpp == 8 && !vo_dbpp) {
+	if (fb_bpp == 8 && !vo.dbpp) {
 		MSG_ERR(FBDEV "8 bpp output is not supported.\n");
 		goto err_out_tty_fd;
 	}
@@ -782,21 +782,21 @@ static int fb_preinit(void)
 		fb_bpp = fb_vinfo.red.length + fb_vinfo.green.length +
 			fb_vinfo.blue.length;
 
-	if (vo_dbpp) {
-		if (vo_dbpp != 15 && vo_dbpp != 16 && vo_dbpp != 24 &&
-				vo_dbpp != 32) {
-			MSG_ERR(FBDEV "can't switch to %d bpp\n", vo_dbpp);
+	if (vo.dbpp) {
+		if (vo.dbpp != 15 && vo.dbpp != 16 && vo.dbpp != 24 &&
+				vo.dbpp != 32) {
+			MSG_ERR(FBDEV "can't switch to %d bpp\n", vo.dbpp);
 			goto err_out_fd;
 		}
-		fb_bpp = vo_dbpp;		
+		fb_bpp = vo.dbpp;
 	}
 
 	fb_preinit_done = 1;
 	fb_works = 1;
 	return 1;
 err_out_tty_fd:
-        close(fb_tty_fd);
-        fb_tty_fd = -1;
+	close(fb_tty_fd);
+	fb_tty_fd = -1;
 err_out_fd:
 	close(fb_dev_fd);
 	fb_dev_fd = -1;
@@ -896,8 +896,8 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	int zoom = fullscreen & 0x04?1:0;
 	unsigned x_offset,y_offset,i;
 	UNUSED(title);
-	fs = fullscreen & 0x01;
-	flip = fullscreen & 0x08;
+	vo.fs = fullscreen & 0x01;
+	vo.flip = fullscreen & 0x08;
 	if(fs) zoom++;
 	srcFourcc = format;
 	if((int)pre_init_err == -2)
@@ -993,7 +993,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		break;
 	}
 
-	if (flip & ((((pixel_format & 0xff) + 7) / 8) != fb_pixel_size)) {
+	if (vo.flip & ((((pixel_format & 0xff) + 7) / 8) != fb_pixel_size)) {
 		MSG_ERR(FBDEV "Flipped output with depth conversion is not "
 				"supported\n");
 		return 1;
@@ -1108,7 +1108,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    MSG_DBG2(FBDEV "L123123875 @ %p\n", L123123875);
 	    MSG_V(FBDEV "pixel per line: %d\n", fb_line_len / fb_pixel_size);
 
-	    total_fr=vo_doublebuffering?vo_da_buffs:1;
+	    total_fr=vo.doublebuffering?vo.da_buffs:1;
 	    for(i=0;i<total_fr;i++)
 	    if (!(next_frame[i] = (uint8_t *) malloc(out_width * out_height * fb_pixel_size))) {
 		MSG_ERR(FBDEV "Can't malloc next_frame: %s\n", strerror(errno));

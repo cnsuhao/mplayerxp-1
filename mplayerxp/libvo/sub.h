@@ -93,10 +93,6 @@ extern void* vo_vobsub;
 #define OSD_PB_END	0x12
 #define OSD_PB_1	0x13
 
-/* now in textform */
-extern char * __sub_osd_names[];
-extern char * __sub_osd_names_short[];
-
 extern int sub_unicode;
 extern int sub_utf8;
 

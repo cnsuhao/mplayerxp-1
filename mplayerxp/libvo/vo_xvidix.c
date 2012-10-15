@@ -82,19 +82,19 @@ static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *i
     XTranslateCoordinates(mDisplay, vo_window, mRoot, 0, 0,
 	&drwcX, &drwcY, &mRoot);
 
-    if (!vo_fs)
+    if (!vo.fs)
 	MSG_V( "[xvidix] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",
 	    drwcX, drwcY, drwX, drwY, drwWidth, drwHeight);
 
     /* following stuff copied from vo_xmga.c */
-    if (vo_fs)
+    if (vo.fs)
     {
-	drwX = (vo_screenwidth - (dwidth > vo_screenwidth ? vo_screenwidth : dwidth)) / 2;
+	drwX = (vo.screenwidth - (dwidth > vo.screenwidth ? vo.screenwidth : dwidth)) / 2;
 	drwcX += drwX;
-	drwY = (vo_screenheight - (dheight > vo_screenheight ? vo_screenheight : dheight)) / 2;
+	drwY = (vo.screenheight - (dheight > vo.screenheight ? vo.screenheight : dheight)) / 2;
 	drwcY += drwY;
-	drwWidth = (dwidth > vo_screenwidth ? vo_screenwidth : dwidth);
-	drwHeight = (dheight > vo_screenheight ? vo_screenheight : dheight);
+	drwWidth = (dwidth > vo.screenwidth ? vo.screenwidth : dwidth);
+	drwHeight = (dheight > vo.screenheight ? vo.screenheight : dheight);
 	MSG_V( "[xvidix-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",
 	    drwcX, drwcY, drwX, drwY, drwWidth, drwHeight);
     }
@@ -135,8 +135,8 @@ static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *i
 	/* FIXME: implement runtime resize/move if possible, this way is very ugly! */
 	vidix_stop();
 	if (vidix_init(image_width, image_height, window_x, window_y,
-	    window_width, window_height, image_format, vo_depthonscreen,
-	    vo_screenwidth, vo_screenheight,info) != 0)
+	    window_width, window_height, image_format, vo.depthonscreen,
+	    vo.screenwidth, vo.screenheight,info) != 0)
         {
 	    MSG_FATAL( "Can't initialize VIDIX driver: %s: %s\n",
 		vidix_name, strerror(errno));
@@ -157,7 +157,7 @@ static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *i
     XClearWindow( mDisplay,vo_window );
     XSetForeground(mDisplay, vo_gc, fgColor);
     XFillRectangle(mDisplay, vo_window, vo_gc, drwX, drwY, drwWidth,
-	(vo_fs ? drwHeight - 1 : drwHeight));
+	(vo.fs ? drwHeight - 1 : drwHeight));
     /* flush, update drawable */
     XFlush(mDisplay);
 
@@ -219,21 +219,21 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     }
     aspect_save_orig(width, height);
     aspect_save_prescale(d_width, d_height);
-    aspect_save_screenres(vo_screenwidth, vo_screenheight);
+    aspect_save_screenres(vo.screenwidth, vo.screenheight);
 
     window_x = 0;
     window_y = 0;
     window_width = d_width;
     window_height = d_height;
 
-    vo_fs = flags&0x01;
-    if (vo_fs)
-     { vo_old_width=d_width; vo_old_height=d_height; }
+    vo.fs = flags&0x01;
+    if (vo.fs)
+     { vo.old_width=d_width; vo.old_height=d_height; }
 
     X_already_started++;
-    
+
     /* from xmga.c */
-    switch(vo_depthonscreen)
+    switch(vo.depthonscreen)
     {
 	case 32:
 	case 24:
@@ -247,12 +247,12 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    break;
 	default:
 	    MSG_ERR( "Sorry, this (%d) color depth is not supported\n",
-		vo_depthonscreen);
+		vo.depthonscreen);
     }
 
     aspect(&d_width, &d_height,flags & VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
 
-    if (vo_fs) /* fullscreen */
+    if (vo.fs) /* fullscreen */
     {
 	if (flags & VOFLAG_SWSCALE)
 	{
@@ -260,11 +260,11 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	}
 	else
 	{
-	    d_width = vo_screenwidth;
-	    d_height = vo_screenheight;
+	    d_width = vo.screenwidth;
+	    d_height = vo.screenheight;
 	}
-	window_width = vo_screenwidth;
-	window_height = vo_screenheight;
+	window_width = vo.screenwidth;
+	window_height = vo.screenheight;
     }
 
     dwidth = d_width;
@@ -279,7 +279,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
         window_depth = 24;
     XMatchVisualInfo(mDisplay, mScreen, window_depth, TrueColor, &vinfo);
 
-    xswa.background_pixel = vo_fs ? BlackPixel(mDisplay, mScreen) : fgColor;
+    xswa.background_pixel = vo.fs ? BlackPixel(mDisplay, mScreen) : fgColor;
     xswa.border_pixel     = 0;
     xswa.colormap         = XCreateColormap(mDisplay, RootWindow(mDisplay, mScreen),
 					    vinfo.visual, AllocNone);
@@ -300,7 +300,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     vo_x11_classhint(mDisplay, vo_window, "xvidix");
     vo_x11_hidecursor(mDisplay, vo_window);
 
-    if (vo_fs) vo_x11_decoration(mDisplay, vo_window, 0);
+    if (vo.fs) vo_x11_decoration(mDisplay, vo_window, 0);
 
     XGetNormalHints(mDisplay, vo_window, &hint);
     hint.x = window_x;

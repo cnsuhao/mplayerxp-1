@@ -29,6 +29,7 @@
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
+#include "../libvo/video_out.h"
 #include "help_mp.h"
 #include "ao_msg.h"
 
@@ -46,8 +47,6 @@ static const ao_info_t info =
 };
 
 LIBAO_EXTERN(wav)
-
-extern int vo_pts;
 
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */
 #define WAV_ID_WAVE 0x45564157 /* "WAVE" */
@@ -213,8 +212,8 @@ static void audio_resume(void)
 
 // return: how many bytes can be played without blocking
 static unsigned get_space(void){
-    if(vo_pts)
-	return ao_data.pts < vo_pts + wav.fast * 30000 ? ao_data.outburst : 0;
+    if(vo.pts)
+	return ao_data.pts < vo.pts + wav.fast * 30000 ? ao_data.outburst : 0;
     return ao_data.outburst;
 }
 

@@ -264,25 +264,25 @@ static void set_gamma_correction( void )
   /* try all */
   xv_reset_video_eq();
   info.name=VO_EC_BRIGHTNESS;
-  info.value=vo_gamma_brightness;
+  info.value=vo.gamma.brightness;
   xv_set_video_eq(&info);
   info.name=VO_EC_CONTRAST;
-  info.value=vo_gamma_contrast;
+  info.value=vo.gamma.contrast;
   xv_set_video_eq(&info);
   info.name=VO_EC_SATURATION;
-  info.value=vo_gamma_saturation;
+  info.value=vo.gamma.saturation;
   xv_set_video_eq(&info);
   info.name=VO_EC_HUE;
-  info.value=vo_gamma_hue;
+  info.value=vo.gamma.hue;
   xv_set_video_eq(&info);
   info.name=VO_EC_RED_INTENSITY;
-  info.value=vo_gamma_red_intensity;
+  info.value=vo.gamma.red_intensity;
   xv_set_video_eq(&info);
   info.name=VO_EC_GREEN_INTENSITY;
-  info.value=vo_gamma_green_intensity;
+  info.value=vo.gamma.green_intensity;
   xv_set_video_eq(&info);
   info.name=VO_EC_BLUE_INTENSITY;
-  info.value=vo_gamma_blue_intensity;
+  info.value=vo.gamma.blue_intensity;
   xv_set_video_eq(&info);
 }
 
@@ -320,22 +320,22 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
  image_width = width;
  image_format=format;
 
- vo_fs=flags&VOFLAG_FULLSCREEN;
- softzoom=flags&VOFLAG_SWSCALE;
- if ( vo_fs )
-  { vo_old_width=d_width; vo_old_height=d_height; }
+ vo.fs=flags&VOFLAG_FULLSCREEN;
+ vo.softzoom=flags&VOFLAG_SWSCALE;
+ if ( vo.fs )
+  { vo.old_width=d_width; vo.old_height=d_height; }
 
 #ifdef HAVE_XF86VM
  if( flags&0x02 ) vm = 1;
 #endif
  flip_flag=flags&VOFLAG_FLIPPING;
- num_buffers=vo_doublebuffering?vo_da_buffs:1;
+ num_buffers=vo.doublebuffering?vo.da_buffs:1;
 
 
- aspect_save_screenres(vo_screenwidth,vo_screenheight);
+ aspect_save_screenres(vo.screenwidth,vo.screenheight);
 
- aspect(&d_width,&d_height,softzoom?A_ZOOM:A_NOZOOM);
- if( vo_fs ) aspect(&d_width,&d_height,A_ZOOM);
+ aspect(&d_width,&d_height,vo.softzoom?A_ZOOM:A_NOZOOM);
+ if( vo.fs ) aspect(&d_width,&d_height,A_ZOOM);
 
    vo_x11_calcpos(&hint,d_width,d_height,flags);
    hint.flags = PPosition | PSize;
@@ -368,7 +368,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		| ButtonPressMask | ButtonReleaseMask
    )));
    XSetStandardProperties(mDisplay, vo_window, hello, hello, None, NULL, 0, &hint);
-   if ( vo_fs ) vo_x11_decoration( mDisplay,vo_window,0 );
+   if ( vo.fs ) vo_x11_decoration( mDisplay,vo_window,0 );
    XMapWindow(mDisplay, vo_window);
 #ifdef HAVE_XINERAMA
    vo_x11_xinerama_move(mDisplay,vo_window,&hint);
@@ -464,16 +464,16 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
      XTranslateCoordinates( mDisplay,vo_window,mRoot,0,0,&drwcX,&drwcY,&mRoot );
      MSG_V( "[xv] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",drwcX,drwcY,drwX,drwY,drwWidth,drwHeight );
 
-     aspect(&dwidth,&dheight,softzoom?A_ZOOM:A_NOZOOM);
-     if ( vo_fs )
+     aspect(&dwidth,&dheight,vo.softzoom?A_ZOOM:A_NOZOOM);
+     if ( vo.fs )
       {
        aspect(&dwidth,&dheight,A_ZOOM);
-       drwX=( vo_screenwidth - (dwidth > vo_screenwidth?vo_screenwidth:dwidth) ) / 2;
+       drwX=( vo.screenwidth - (dwidth > vo.screenwidth?vo.screenwidth:dwidth) ) / 2;
        drwcX+=drwX;
-       drwY=( vo_screenheight - (dheight > vo_screenheight?vo_screenheight:dheight) ) / 2;
+       drwY=( vo.screenheight - (dheight > vo.screenheight?vo.screenheight:dheight) ) / 2;
        drwcY+=drwY;
-       drwWidth=(dwidth > vo_screenwidth?vo_screenwidth:dwidth);
-       drwHeight=(dheight > vo_screenheight?vo_screenheight:dheight);
+       drwWidth=(dwidth > vo.screenwidth?vo.screenwidth:dwidth);
+       drwHeight=(dheight > vo.screenheight?vo.screenheight:dheight);
        MSG_V( "[xv-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",drwcX,drwcY,drwX,drwY,drwWidth,drwHeight );
       }
      saver_off(mDisplay);  // turning off screen saver
@@ -528,23 +528,23 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
    XTranslateCoordinates( mDisplay,vo_window,mRoot,0,0,&drwcX,&drwcY,&mRoot );
    MSG_V( "[xv-resize] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",drwcX,drwcY,drwX,drwY,drwWidth,drwHeight );
 
-   aspect(&dwidth,&dheight,softzoom?A_ZOOM:A_NOZOOM);
-   if ( vo_fs )
+   aspect(&dwidth,&dheight,vo.softzoom?A_ZOOM:A_NOZOOM);
+   if ( vo.fs )
     {
      aspect(&dwidth,&dheight,A_ZOOM);
-     drwX=( vo_screenwidth - (dwidth > vo_screenwidth?vo_screenwidth:dwidth) ) / 2;
+     drwX=( vo.screenwidth - (dwidth > vo.screenwidth?vo.screenwidth:dwidth) ) / 2;
      drwcX+=drwX;
-     drwY=( vo_screenheight - (dheight > vo_screenheight?vo_screenheight:dheight) ) / 2;
+     drwY=( vo.screenheight - (dheight > vo.screenheight?vo.screenheight:dheight) ) / 2;
      drwcY+=drwY;
-     drwWidth=(dwidth > vo_screenwidth?vo_screenwidth:dwidth);
-     drwHeight=(dheight > vo_screenheight?vo_screenheight:dheight);
+     drwWidth=(dwidth > vo.screenwidth?vo.screenwidth:dwidth);
+     drwHeight=(dheight > vo.screenheight?vo.screenheight:dheight);
      MSG_V( "[xv-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",drwcX,drwcY,drwX,drwY,drwWidth,drwHeight );
     }
   }
  if ( e & VO_EVENT_EXPOSE )
   {
    XvShmPutImage(mDisplay, xv_port, vo_window, vo_gc, xvimage[expose_idx], 0, 0,  image_width, image_height, drwX, drwY, 1, 1, False);
-   XvShmPutImage(mDisplay, xv_port, vo_window, vo_gc, xvimage[expose_idx], 0, 0,  image_width, image_height, drwX,drwY,drwWidth,(vo_fs?drwHeight - 1:drwHeight), False);
+   XvShmPutImage(mDisplay, xv_port, vo_window, vo_gc, xvimage[expose_idx], 0, 0,  image_width, image_height, drwX,drwY,drwWidth,(vo.fs?drwHeight - 1:drwHeight), False);
   }
   return e|VO_EVENT_FORCE_UPDATE;
 }
@@ -554,7 +554,7 @@ static void __FASTCALL__ change_frame(unsigned idx)
  expose_idx=idx;
  XvShmPutImage(mDisplay, xv_port, vo_window, vo_gc, xvimage[idx],
          0, 0,  image_width, image_height,
-         drwX,drwY,drwWidth,(vo_fs?drwHeight - 1:drwHeight),
+         drwX,drwY,drwWidth,(vo.fs?drwHeight - 1:drwHeight),
          False);
  if (num_buffers>1) XFlush(mDisplay);
  else XSync(mDisplay, False);

@@ -93,23 +93,23 @@ int vidix_start(void)
 	      "vo_gamma_red_intensity=%i\n"
 	      "vo_gamma_green_intensity=%i\n"
 	      "vo_gamma_blue_intensity=%i\n"
-	       ,vo_gamma_brightness
-	       ,vo_gamma_saturation
-	       ,vo_gamma_contrast
-	       ,vo_gamma_hue
-	       ,vo_gamma_red_intensity
-	       ,vo_gamma_green_intensity
-	       ,vo_gamma_blue_intensity);
+	       ,vo.gamma.brightness
+	       ,vo.gamma.saturation
+	       ,vo.gamma.contrast
+	       ,vo.gamma.hue
+	       ,vo.gamma.red_intensity
+	       ,vo.gamma.green_intensity
+	       ,vo.gamma.blue_intensity);
         /* To use full set of vid_eq.cap */
 	if(vdlPlaybackGetEq(vidix_handler,&vid_eq) == 0)
 	{
-		vid_eq.brightness = vo_gamma_brightness;
-		vid_eq.saturation = vo_gamma_saturation;
-		vid_eq.contrast = vo_gamma_contrast;
-		vid_eq.hue = vo_gamma_hue;
-		vid_eq.red_intensity = vo_gamma_red_intensity;
-		vid_eq.green_intensity = vo_gamma_green_intensity;
-		vid_eq.blue_intensity = vo_gamma_blue_intensity;
+		vid_eq.brightness = vo.gamma.brightness;
+		vid_eq.saturation = vo.gamma.saturation;
+		vid_eq.contrast = vo.gamma.contrast;
+		vid_eq.hue = vo.gamma.hue;
+		vid_eq.red_intensity = vo.gamma.red_intensity;
+		vid_eq.green_intensity = vo.gamma.green_intensity;
+		vid_eq.blue_intensity = vo.gamma.blue_intensity;
 		vid_eq.flags = VEQ_FLG_ITU_R_BT_601;
 		vdlPlaybackSetEq(vidix_handler,&vid_eq);
 	}
@@ -136,9 +136,9 @@ void vidix_term( void )
     MSG_DBG2("vidix_term() was called\n");
     vidix_stop();
     vdlClose(vidix_handler);
-    if(vo_use_bm)
+    if(vo.use_bm)
     {
-	for(i=0;i<vo_da_buffs;i++)
+	for(i=0;i<vo.da_buffs;i++)
 	{
 	    if(dma_mem_locked) munlock(bm_buffs[i],vidix_play->frame_size);
 	    free(bm_buffs[i]);
@@ -202,7 +202,7 @@ printf("frame is DMA copied\n");
 void __FASTCALL__ vidix_change_frame(unsigned idx)
 {
     MSG_DBG2("vidix_change_frame() was called\n");
-    if(vo_use_bm == 1) vidix_copy_dma(idx,0);
+    if(vo.use_bm == 1) vidix_copy_dma(idx,0);
     else vdlPlaybackFrameSelect(vidix_handler,idx);
 }
 
@@ -417,8 +417,8 @@ int  __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 	vidix_play->dest.y = y_org;
 	vidix_play->dest.w = dst_width;
 	vidix_play->dest.h = dst_height;
-	vidix_play->num_frames=(vo_doublebuffering && vo_use_bm != 1)?NUM_FRAMES-1:1;
-	if(vidix_play->num_frames > vo_da_buffs) vidix_play->num_frames = vo_da_buffs;
+	vidix_play->num_frames=(vo.doublebuffering && vo.use_bm != 1)?NUM_FRAMES-1:1;
+	if(vidix_play->num_frames > vo.da_buffs) vidix_play->num_frames = vo.da_buffs;
 	vidix_play->src.pitch.y = vidix_play->src.pitch.u = vidix_play->src.pitch.v = 0;
 	if(info)
 	{
@@ -469,14 +469,14 @@ int  __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 	}
 	MSG_V("using %d buffers\n", vidix_play->num_frames);
 	/* configure busmastering */
-	if(vo_use_bm)
+	if(vo.use_bm)
 	{
 #ifdef HAVE_MEMALIGN
 	    if(vidix_cap->flags & FLAG_DMA)
 	    {
 		int psize = getpagesize();
 		dma_mem_locked=1;
-		for(i=0;i<vo_da_buffs;i++)
+		for(i=0;i<vo.da_buffs;i++)
 		{
 		    if(!bm_buffs[i]) bm_buffs[i] = memalign(psize, vidix_play->frame_size);
 		    if(!(bm_buffs[i]))
@@ -501,10 +501,10 @@ int  __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 #endif
 	    {
 		MSG_ERR("Can not configure bus mastering: your driver is not DMA capable\n");
-		vo_use_bm = 0;
+		vo.use_bm = 0;
 	    }
 	}
-	if(vo_use_bm) MSG_OK("using BUSMASTERING\n");
+	if(vo.use_bm) MSG_OK("using BUSMASTERING\n");
 	vidix_mem = vidix_play->dga_addr;
 
 	if(!video_clean)
@@ -573,7 +573,7 @@ int  __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 
 static void __FASTCALL__ vidix_dri_get_surface_caps(dri_surface_cap_t *caps)
 {
-    caps->caps = vo_use_bm ? DRI_CAP_TEMP_VIDEO|DRI_CAP_BUSMASTERING : DRI_CAP_VIDEO_MMAPED;
+    caps->caps = vo.use_bm ? DRI_CAP_TEMP_VIDEO|DRI_CAP_BUSMASTERING : DRI_CAP_VIDEO_MMAPED;
     caps->caps |= DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
     if((vidix_cap->flags & FLAG_DOWNSCALER) == FLAG_DOWNSCALER)
 	    caps->caps |= DRI_CAP_DOWNSCALER;
@@ -597,7 +597,7 @@ static void __FASTCALL__ vidix_dri_get_surface_caps(dri_surface_cap_t *caps)
 
 static void __FASTCALL__ vidix_dri_get_surface(dri_surface_t *surf)
 {
-    if(vo_use_bm)
+    if(vo.use_bm)
     {
 	surf->planes[0] = bm_buffs[surf->idx] + vidix_play->offset.y;
 	surf->planes[1] = bm_buffs[surf->idx] + vidix_play->offset.v;
@@ -622,7 +622,7 @@ uint32_t __FASTCALL__ vidix_control(uint32_t request, void *data)
     if(plugin_inited) return (*server_control)(request,data);
     break;
   case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = (vo_use_bm == 1) ? vo_da_buffs : vidix_play->num_frames;
+	*(uint32_t *)data = (vo.use_bm == 1) ? vo.da_buffs : vidix_play->num_frames;
 	return VO_TRUE;
   case DRI_GET_SURFACE_CAPS:
 	vidix_dri_get_surface_caps(data);
@@ -631,7 +631,7 @@ uint32_t __FASTCALL__ vidix_control(uint32_t request, void *data)
 	vidix_dri_get_surface(data);
 	return VO_TRUE;
   case VOCTRL_FLUSH_PAGES:
-	if(vo_use_bm > 1) vidix_copy_dma(*(uint32_t *)data,1);
+	if(vo.use_bm > 1) vidix_copy_dma(*(uint32_t *)data,1);
 	return VO_TRUE;
   case VOCTRL_GET_EQUALIZER:
 	if(!vidix_get_video_eq(data)) return VO_TRUE;

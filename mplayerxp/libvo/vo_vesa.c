@@ -252,7 +252,7 @@ static void __FASTCALL__ change_frame(unsigned idx)
   else
   {
     int err;
-    if((err=vbeSetDisplayStart(multi_buff[idx],vo_vsync)) != VBE_OK)
+    if((err=vbeSetDisplayStart(multi_buff[idx],vo.vsync)) != VBE_OK)
     {
       vesa_term();
       PRINT_VBE_ERR("vbeSetDisplayStart",err);
@@ -482,25 +482,25 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	}
 	srcBpp = bpp;
 	srcFourcc = format;
-	if(vo_dbpp) bpp = vo_dbpp;
+	if(vo.dbpp) bpp = vo.dbpp;
 	switch(bpp)
 	{
-	  case 8: 
+	  case 8:
 		   dstFourcc = IMGFMT_BGR8;
 		   break;
-	  case 15: 
+	  case 15:
 		   dstFourcc = IMGFMT_BGR15;
 		   break;
-	  case 16: 
+	  case 16:
 		   dstFourcc = IMGFMT_BGR16;
 		   break;
-	  case 24: 
+	  case 24:
 		   dstFourcc = IMGFMT_BGR24;
 		   break;
-	  case 32: 
+	  case 32:
 		   dstFourcc = IMGFMT_BGR32;
 		   break;
-	  default: 
+	  default:
 		   dstFourcc = IMGFMT_BGR16;
 		   break;
 	}
@@ -522,9 +522,9 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    dstW = d_width;
 	    dstH = d_height;
 	}
-	if(vo_screenwidth) w = vo_screenwidth;
+	if(vo.screenwidth) w = vo.screenwidth;
 	else w = max(dstW,width);
-	if(vo_screenheight) h = vo_screenheight;
+	if(vo.screenheight) h = vo.screenheight;
 	else h = max(dstH,height);
         for(i=0;i < num_modes;i++)
 	{
@@ -628,8 +628,8 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 			     ,vsize);
 		      MSG_V(" at %08lXh",(unsigned long)lfb);
 		      MSG_V("\n");
-		      if(!(multi_size = fillMultiBuffer(vsize,vo_da_buffs))) return -1;
-		      if(vo_doublebuffering && multi_size < 2)
+		      if(!(multi_size = fillMultiBuffer(vsize,vo.da_buffs))) return -1;
+		      if(vo.doublebuffering && multi_size < 2)
 			MSG_ERR("vo_vesa: Can't use double buffering: not enough video memory\n");
 		      else
 		        MSG_V("vo_vesa: using %u buffers for multi buffering\n",multi_size);
@@ -728,7 +728,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	  return -1;
 	}
 	MSG_V("vo_vesa: VESA initialization complete\n");
-	if(HAS_DGA() && vo_doublebuffering)
+	if(HAS_DGA() && vo.doublebuffering)
 	{
 	    for(i=0;i<multi_size;i++)
 	    {

@@ -1281,8 +1281,8 @@ int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, fl
   float time_frame_corr_avg=0;
   int blit_frame=0;
   int delay_corrected=1;
-  vo_pts=sh_video->timer*90000.0;
-  vo_fps=sh_video->fps;
+  vo.pts=sh_video->timer*90000.0;
+  vo.fps=sh_video->fps;
 
   if(!frame_time_remaining){
     //--------------------  Decode a frame: -----------------------
@@ -1421,7 +1421,7 @@ int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, fl
 //============================== SLEEP: ===================================
 
 // flag 256 means: libvo driver does its timing (dvb card)
-if(time_frame>0.001 && !(vo_flags&256)){
+if(time_frame>0.001 && !(vo.flags&256)){
     pinfo[xp_id].current_module="sleep_usleep";
     time_frame=SleepTime(rtc_fd,softsleep,time_frame);
 }
@@ -1458,7 +1458,7 @@ if(time_frame>0.001 && !(vo_flags&256)){
 		cur_vout_time_usage+=tt;
 		if(cur_vout_time_usage > max_vout_time_usage) max_vout_time_usage = cur_vout_time_usage;
 		if(cur_vout_time_usage < min_vout_time_usage) min_vout_time_usage = cur_vout_time_usage;
-		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo_fps > 1)
+		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo.fps > 1)
 							bench_dropped_frames ++;
 	   }
 	}
@@ -1612,7 +1612,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
     if(benchmark)
 	if(time_frame < 0)
 	    if(time_frame < max_av_resync) max_av_resync=time_frame;
-    if(!(vo_flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
+    if(!(vo.flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
 #define XP_MIN_AUDIOBUFF 0.05
 #define XP_MAX_TIMESLICE 0.1
@@ -1725,7 +1725,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	{
 		/* we need compute draw_slice+change_frame here */
 		cur_vout_time_usage+=tt;
-		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo_fps > 1)
+		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo.fps > 1)
 							bench_dropped_frames ++;
 	}
     }
@@ -2131,9 +2131,9 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
       }
     }
 
-    ao_da_buffs = vo_da_buffs;
-    if(enable_xp!=XP_None) vo_doublebuffering=1;
-    else	  vo_use_bm = 0;
+    ao_da_buffs = vo.da_buffs;
+    if(enable_xp!=XP_None) vo.doublebuffering=1;
+    else	  vo.use_bm = 0;
 
     init_player();
 
@@ -2472,12 +2472,12 @@ if(sh_video){
 	   sh_video->fps,sh_video->frametime
 	   );
 
-    vo_fps = sh_video->fps;
+    vo.fps = sh_video->fps;
     /* need to set fps here for output encoders to pick it up in their init */
     if(force_fps){
       sh_video->fps=force_fps;
       sh_video->frametime=1.0f/sh_video->fps;
-      vo_fps = force_fps;
+      vo.fps = force_fps;
     }
 
     if(!sh_video->fps && !force_fps){
@@ -2491,7 +2491,7 @@ if(sh_video)
 {
     if(sh_video->is_static || (stream->type&STREAMTYPE_MENU)==STREAMTYPE_MENU)
     {
-	vo_da_buffs=1;
+	vo.da_buffs=1;
 	enable_xp=XP_None; /* supress video mode for static pictures */
     }
 }else
@@ -2804,7 +2804,7 @@ if(!sh_audio && !sh_video) exit_player("Nothing to do");
 
 if(demuxer->file_format!=DEMUXER_TYPE_AVI) pts_from_bps=0; // it must be 0 for mpeg/asf!
 if(force_fps && sh_video){
-  vo_fps = sh_video->fps=force_fps;
+  vo.fps = sh_video->fps=force_fps;
   sh_video->frametime=1.0f/sh_video->fps;
   MSG_INFO(MSGTR_FPSforced,sh_video->fps,sh_video->frametime);
 }
@@ -2930,8 +2930,8 @@ if(!sh_video) {
 
 /*========================== PLAY VIDEO ============================*/
 
-vo_pts=sh_video->timer*90000.0;
-vo_fps=sh_video->fps;
+vo.pts=sh_video->timer*90000.0;
+vo.fps=sh_video->fps;
 
     if(need_repaint) goto repaint;
     if((sh_video->is_static ||(stream->type&STREAMTYPE_MENU)==STREAMTYPE_MENU) && our_n_frames)

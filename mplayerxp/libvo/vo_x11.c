@@ -95,8 +95,8 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
   if (ret & VO_EVENT_RESIZE)
   {
 	unsigned idx;
-	unsigned newW= vo_dwidth;
-	unsigned newH= vo_dheight;
+	unsigned newW= vo.dwidth;
+	unsigned newH= vo.dheight;
 	int newAspect= (newW*(1<<16) + (newH>>1))/newH;
 	if(newAspect>baseAspect) newW= (newH*baseAspect + (1<<15))>>16;
 	else                 newH= ((newW<<16) + (baseAspect>>1)) /baseAspect;
@@ -131,7 +131,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
 
  UNUSED(info);
 
- num_buffers=vo_doublebuffering?vo_da_buffs:1;
+ num_buffers=vo.doublebuffering?vo.da_buffs:1;
 
  if (!title)
     title = strdup("MPlayerXP X11 (XImage/Shm) render");
@@ -155,9 +155,9 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
 
  aspect_save_orig(width,height);
  aspect_save_prescale(d_width,d_height);
- aspect_save_screenres(vo_screenwidth,vo_screenheight);
+ aspect_save_screenres(vo.screenwidth,vo.screenheight);
 
- softzoom=flags&VOFLAG_SWSCALE;
+ vo.softzoom=flags&VOFLAG_SWSCALE;
 
  aspect(&d_width,&d_height,A_NOZOOM);
  if( fullscreen ) aspect(&d_width,&d_height,A_ZOOM);
@@ -167,8 +167,8 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
 
     bg=WhitePixel( mDisplay,mScreen );
     fg=BlackPixel( mDisplay,mScreen );
-    vo_dwidth=hint.width;
-    vo_dheight=hint.height;
+    vo.dwidth=hint.width;
+    vo.dheight=hint.height;
 
     image_width=d_width;
     image_height=d_height;
@@ -282,7 +282,7 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
   {
    XShmPutImage( mDisplay,vo_window,vo_gc,myximage,
                  0,0,
-                 ( vo_dwidth - myximage->width ) / 2,( vo_dheight - myximage->height ) / 2,
+                 ( vo.dwidth - myximage->width ) / 2,( vo.dheight - myximage->height ) / 2,
                  myximage->width,myximage->height,True );
   }
   else
@@ -290,7 +290,7 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
    {
     XPutImage( mDisplay,vo_window,vo_gc,myximage,
                0,0,
-               ( vo_dwidth - myximage->width ) / 2,( vo_dheight - myximage->height ) / 2,
+               ( vo.dwidth - myximage->width ) / 2,( vo.dheight - myximage->height ) / 2,
                myximage->width,myximage->height);
   }
 #endif
@@ -312,7 +312,7 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
     if (IMGFMT_IS_RGB(format->fourcc) && rgbfmt_depth(format->fourcc)<48)
 #endif
     {
-	if (rgbfmt_depth(format->fourcc) == (unsigned)vo_depthonscreen)
+	if (rgbfmt_depth(format->fourcc) == (unsigned)vo.depthonscreen)
 	    return 0x1|0x2|0x4;
 	else
 	    return 0x1|0x4;

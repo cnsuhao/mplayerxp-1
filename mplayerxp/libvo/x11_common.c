@@ -267,7 +267,7 @@ int vo_x11_init( void )
  XWindowAttributes attribs;
  char* dispName;
 
- if(vo_depthonscreen) return 1; // already called
+ if(vo.depthonscreen) return 1; // already called
 
  XSetErrorHandler(x11_errorhandler);
 
@@ -298,10 +298,10 @@ int vo_x11_init( void )
 
   screens = XineramaQueryScreens(mDisplay, &num_screens);
   if(xinerama_screen >= num_screens) xinerama_screen = 0;
-  if (! vo_screenwidth)
-    vo_screenwidth=screens[xinerama_screen].width;
-  if (! vo_screenheight)
-    vo_screenheight=screens[xinerama_screen].height;
+  if (! vo.screenwidth)
+    vo.screenwidth=screens[xinerama_screen].width;
+  if (! vo.screenheight)
+    vo.screenheight=screens[xinerama_screen].height;
   xinerama_x = screens[xinerama_screen].x_org;
   xinerama_y = screens[xinerama_screen].y_org;
 
@@ -313,15 +313,15 @@ int vo_x11_init( void )
  {
   int clock;
   XF86VidModeGetModeLine( mDisplay,mScreen,&clock ,&modeline );
-  if ( !vo_screenwidth )  vo_screenwidth=modeline.hdisplay;
-  if ( !vo_screenheight ) vo_screenheight=modeline.vdisplay;
+  if ( !vo.screenwidth )  vo.screenwidth=modeline.hdisplay;
+  if ( !vo.screenheight ) vo.screenheight=modeline.vdisplay;
  }
 #endif
  {
- if (! vo_screenwidth)
-   vo_screenwidth=DisplayWidth( mDisplay,mScreen );
- if (! vo_screenheight)
-   vo_screenheight=DisplayHeight( mDisplay,mScreen );
+ if (! vo.screenwidth)
+   vo.screenwidth=DisplayWidth( mDisplay,mScreen );
+ if (! vo.screenheight)
+   vo.screenheight=DisplayHeight( mDisplay,mScreen );
  }
  // get color depth (from root window, or the best visual):
  XGetWindowAttributes(mDisplay, mRootWin, &attribs);
@@ -339,7 +339,7 @@ int vo_x11_init( void )
 #endif
  mXImage=XGetImage( mDisplay,mRootWin,0,0,1,1,AllPlanes,ZPixmap );
 
- vo_depthonscreen = depth;	// display depth on screen
+ vo.depthonscreen = depth;	// display depth on screen
 
  // get bits/pixel from XImage structure:
  if (mXImage == NULL) {
@@ -354,15 +354,15 @@ int vo_x11_init( void )
     * Maybe we should rename vo_depthonscreen to (or add) vo_bpp?
     */
    bpp=mXImage->bits_per_pixel;
-   if((vo_depthonscreen+7)/8 != (bpp+7)/8) vo_depthonscreen=bpp; // by A'rpi
+   if((vo.depthonscreen+7)/8 != (bpp+7)/8) vo.depthonscreen=bpp; // by A'rpi
    mask=mXImage->red_mask|mXImage->green_mask|mXImage->blue_mask;
    MSG_V("vo: X11 color mask:  %X  (R:%lX G:%lX B:%lX)\n",
 	    mask,mXImage->red_mask,mXImage->green_mask,mXImage->blue_mask);
    XDestroyImage( mXImage );
  }
- if(((vo_depthonscreen+7)/8)==2){
-   if(mask==0x7FFF) vo_depthonscreen=15; else
-   if(mask==0xFFFF) vo_depthonscreen=16;
+ if(((vo.depthonscreen+7)/8)==2){
+   if(mask==0x7FFF) vo.depthonscreen=15; else
+   if(mask==0xFFFF) vo.depthonscreen=16;
  }
 // XCloseDisplay( mDisplay );
 /* slightly improved local display detection AST */
@@ -372,8 +372,8 @@ int vo_x11_init( void )
 		dispName += 9;
  if (*dispName==':') mLocalDisplay=1; else mLocalDisplay=0;
  MSG_V("vo: X11 running at %dx%d with depth %d and %d bits/pixel (\"%s\" => %s display)\n",
-	vo_screenwidth,vo_screenheight,
-	depth, vo_depthonscreen,
+	vo.screenwidth,vo.screenheight,
+	depth, vo.depthonscreen,
 	dispName,mLocalDisplay?"local":"remote");
 
  return 1;
@@ -573,14 +573,14 @@ static Atom           vo_MotifHints  = None;
 void __FASTCALL__ vo_x11_decoration( Display * vo_Display,Window w,int d )
 {
 
-  if(vo_fsmode&1){
+  if(vo.fsmode&1){
     XSetWindowAttributes attr;
     attr.override_redirect = True;
     XChangeWindowAttributes(vo_Display, w, CWOverrideRedirect, &attr);
 //    XMapWindow(vo_Display, w);
   }
 
-  if(vo_fsmode&8){
+  if(vo.fsmode&8){
     XSetTransientForHint (vo_Display, w, RootWindow(vo_Display,mScreen));
   }
 
@@ -595,12 +595,12 @@ void __FASTCALL__ vo_x11_decoration( Display * vo_Display,Window w,int d )
      d=MWM_DECOR_ALL;
     }
 #if 0
-   vo_MotifWmHints.decorations=d|((vo_fsmode&2)?0:MWM_DECOR_MENU);
+   vo_MotifWmHints.decorations=d|((vo.fsmode&2)?0:MWM_DECOR_MENU);
 #else
-   vo_MotifWmHints.decorations=d|((vo_fsmode&2)?MWM_DECOR_MENU:0);
+   vo_MotifWmHints.decorations=d|((vo.fsmode&2)?MWM_DECOR_MENU:0);
 #endif
    XChangeProperty( vo_Display,w,vo_MotifHints,vo_MotifHints,32,
-                    PropModeReplace,(unsigned char *)&vo_MotifWmHints,(vo_fsmode&4)?4:5 );
+                    PropModeReplace,(unsigned char *)&vo_MotifWmHints,(vo.fsmode&4)?4:5 );
   }
 }
 
@@ -624,7 +624,7 @@ int __FASTCALL__ vo_x11_uninit(Display *display, Window window)
 	if (!(WinID > 0))
 	    XDestroyWindow(display, window);
 	XCloseDisplay(display);
-	vo_depthonscreen = 0;
+	vo.depthonscreen = 0;
     }
     return(1);
 }
@@ -695,11 +695,11 @@ uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__
       case ConfigureNotify:
 	   nw = Event.xconfigure.width;
 	   nh = Event.xconfigure.height;
-	   if(adjust_size) adj_ret = (*adjust_size)(vo_dwidth,vo_dheight,&nw,&nh);
-	   ow = vo_dwidth;
-	   oh = vo_dheight;
-           vo_dwidth=nw;
-           vo_dheight=nh;
+	   if(adjust_size) adj_ret = (*adjust_size)(vo.dwidth,vo.dheight,&nw,&nh);
+	   ow = vo.dwidth;
+	   oh = vo.dheight;
+           vo.dwidth=nw;
+           vo.dheight=nh;
 	   {
 	    Window root;
 	    unsigned foo;
@@ -707,14 +707,14 @@ uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__
 	    XGetGeometry(mydisplay, vo_window, &root, &foo, &foo,
 		&foo/*width*/, &foo/*height*/, &foo, &foo);
 	    XTranslateCoordinates(mydisplay, vo_window, root, 0, 0,
-		&vo_dx, &vo_dy, &win);
+		&vo.dx, &vo.dy, &win);
 	    }
-	   if(adjust_size && ow != vo_dwidth && oh != vo_dheight && adj_ret)
+	   if(adjust_size && ow != vo.dwidth && oh != vo.dheight && adj_ret)
 	   {
-		XResizeWindow( mDisplay,vo_window,vo_dwidth,vo_dheight );
+		XResizeWindow( mDisplay,vo_window,vo.dwidth,vo.dheight );
 		XSync( mDisplay,True);
 	   }
-	   MSG_V("X11 Window %dx%d-%dx%d\n", vo_dx, vo_dy, vo_dwidth, vo_dheight);
+	   MSG_V("X11 Window %dx%d-%dx%d\n", vo.dx, vo.dy, vo.dwidth, vo.dheight);
            ret|=VO_EVENT_RESIZE;
            break;
       case KeyPress:
@@ -762,10 +762,10 @@ void __FASTCALL__ vo_x11_calcpos( XSizeHints* hint, unsigned d_width, unsigned d
  static uint32_t vm_height;
 #endif
  int vm=0;
-    if( flags&0x03 ) fullscreen = 1;
+    if( flags&0x03 ) vo.fullscreen = 1;
     if( flags&0x02 ) vm = 1;
-    hint->x=(vo_screenwidth-d_width)/2;
-    hint->y=(vo_screenheight-d_height)/2;
+    hint->x=(vo.screenwidth-d_width)/2;
+    hint->y=(vo.screenheight-d_height)/2;
     hint->width=d_width;
     hint->height=d_height;
 #ifdef HAVE_XF86VM
@@ -773,8 +773,8 @@ void __FASTCALL__ vo_x11_calcpos( XSizeHints* hint, unsigned d_width, unsigned d
     {
 	vm_width=d_width; vm_height=d_height;
 	vo_vm_switch(vm_width, vm_height,&modeline_width, &modeline_height);
-	hint->x=(vo_screenwidth-modeline_width)/2;
-	hint->y=(vo_screenheight-modeline_height)/2;
+	hint->x=(vo.screenwidth-modeline_width)/2;
+	hint->y=(vo.screenheight-modeline_height)/2;
 	hint->width=modeline_width;
 	hint->height=modeline_height;
     }
@@ -782,8 +782,8 @@ void __FASTCALL__ vo_x11_calcpos( XSizeHints* hint, unsigned d_width, unsigned d
 #endif
     if ( fullscreen )
     {
-      hint->width=vo_screenwidth;
-      hint->height=vo_screenheight;
+      hint->width=vo.screenwidth;
+      hint->height=vo.screenheight;
       hint->x=0;
       hint->y=0;
     }
@@ -792,21 +792,21 @@ void __FASTCALL__ vo_x11_calcpos( XSizeHints* hint, unsigned d_width, unsigned d
 void vo_x11_fullscreen( void )
 {
  XUnmapWindow( mDisplay,vo_window );
- if ( !vo_fs )
+ if ( !vo.fs )
   {
-   vo_fs=VO_TRUE;
-   vo_old_x=vo_dx; vo_old_y=vo_dy; vo_old_width=vo_dwidth;   vo_old_height=vo_dheight;
-   vo_dx=0;        vo_dy=0;        vo_dwidth=vo_screenwidth; vo_dheight=vo_screenheight;
+   vo.fs=VO_TRUE;
+   vo.old_x=vo.dx; vo.old_y=vo.dy; vo.old_width=vo.dwidth;   vo.old_height=vo.dheight;
+   vo.dx=0;        vo.dy=0;        vo.dwidth=vo.screenwidth; vo.dheight=vo.screenheight;
    vo_x11_decoration( mDisplay,vo_window,0 );
   }
   else
    {
-    vo_fs=VO_FALSE;
-    vo_dx=vo_old_x; vo_dy=vo_old_y; vo_dwidth=vo_old_width; vo_dheight=vo_old_height;
+    vo.fs=VO_FALSE;
+    vo.dx=vo.old_x; vo.dy=vo.old_y; vo.dwidth=vo.old_width; vo.dheight=vo.old_height;
     vo_x11_decoration( mDisplay,vo_window,1 );
    }
- vo_x11_sizehint( vo_dx,vo_dy,vo_dwidth,vo_dheight );
- XMoveResizeWindow( mDisplay,vo_window,vo_dx,vo_dy,vo_dwidth,vo_dheight );
+ vo_x11_sizehint( vo.dx,vo.dy,vo.dwidth,vo.dheight );
+ XMoveResizeWindow( mDisplay,vo_window,vo.dx,vo.dy,vo.dwidth,vo.dheight );
  XMapWindow( mDisplay,vo_window );
  XSync( mDisplay,False );
 }
@@ -919,8 +919,8 @@ void __FASTCALL__ vo_vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int*
       XF86VidModeLockModeSwitch(mDisplay,mScreen,0);
       XF86VidModeSwitchToMode(mDisplay,mScreen,vidmodes[j]);
       XF86VidModeSwitchToMode(mDisplay,mScreen,vidmodes[j]);
-      X=(vo_screenwidth-*modeline_width)/2;
-      Y=(vo_screenheight-*modeline_height)/2;
+      X=(vo.screenwidth-*modeline_width)/2;
+      Y=(vo.screenheight-*modeline_height)/2;
       XF86VidModeSetViewPort(mDisplay,mScreen,X,Y);
     }
 }
@@ -935,9 +935,9 @@ void __FASTCALL__ vo_vm_close(Display *dpy)
            free(vidmodes); vidmodes=NULL;
            XF86VidModeGetAllModeLines(mDisplay,mScreen,&modecount,&vidmodes);
            for (i=0; i<modecount; i++)
-             if ((vidmodes[i]->hdisplay == vo_screenwidth) && (vidmodes[i]->vdisplay == vo_screenheight)) 
-               { 
-                 MSG_V("\nReturning to original mode %dx%d\n", vo_screenwidth, vo_screenheight);
+             if ((vidmodes[i]->hdisplay == vo.screenwidth) && (vidmodes[i]->vdisplay == vo.screenheight))
+               {
+                 MSG_V("\nReturning to original mode %dx%d\n", vo.screenwidth, vo.screenheight);
                  break;
                }
 

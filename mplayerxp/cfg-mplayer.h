@@ -22,18 +22,6 @@ extern int sdl_forcegl;
 extern int fakemono; // defined in dec_audio.c
 #endif
 
-extern int vo_doublebuffering;
-extern int vo_vsync;
-extern int vo_fsmode;
-/* gamma correction */
-extern int vo_gamma_brightness;
-extern int vo_gamma_saturation;
-extern int vo_gamma_contrast;
-extern int vo_gamma_hue;
-extern int vo_gamma_red_intensity;
-extern int vo_gamma_green_intensity;
-extern int vo_gamma_blue_intensity;
-
 #ifdef USE_SUB
 extern int sub_unicode;
 extern int sub_utf8;
@@ -74,8 +62,6 @@ extern int nortc;
 extern int enable_xp;
 extern int enable_gomp;
 extern int enable_xp_audio;
-extern unsigned vo_da_buffs;
-extern unsigned vo_use_bm;
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 extern int x86_simd;
@@ -138,9 +124,9 @@ static const config_t xpcore_config[]={
 	{"dump", &stream_dump, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies dump type and name for the dump of stream"},
 	{"gomp", &enable_gomp, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables usage of OpenMP extensions"},
 	{"nogomp", &enable_gomp, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables usage of OpenMP extensions"},
-	{"da_buffs", &vo_da_buffs, CONF_TYPE_INT, CONF_RANGE, 4, 1024, NULL, "specifies number of buffers for decoding-ahead in XP mode"},
-	{"double", &vo_doublebuffering, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables double-buffering for single-thread decoding"},
-	{"nodouble", &vo_doublebuffering, CONF_TYPE_FLAG, 0, 1, 0, NULL, "enables single-buffer for single-thread decoding"},
+	{"da_buffs", &vo.da_buffs, CONF_TYPE_INT, CONF_RANGE, 4, 1024, NULL, "specifies number of buffers for decoding-ahead in XP mode"},
+	{"double", &vo.doublebuffering, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables double-buffering for single-thread decoding"},
+	{"nodouble", &vo.doublebuffering, CONF_TYPE_FLAG, 0, 1, 0, NULL, "enables single-buffer for single-thread decoding"},
 	{"cache", &stream_cache_size, CONF_TYPE_INT, CONF_RANGE, 4, 65536, NULL,"specifies amount of memory for precaching a file/URL"},
 	{"nocache", &stream_cache_size, CONF_TYPE_FLAG, 0, 1, 0, NULL,"disables precaching a file/URL"},
 	{"autoq", &auto_quality, CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL, "dynamically changes the level of postprocessing depending on spare CPU time available"},
@@ -214,13 +200,13 @@ static const config_t osd_config[]={
 };
 
 static const config_t veq_config[]={
-	{"brightness",&vo_gamma_brightness, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies brightness-level for output image"},
-	{"saturation",&vo_gamma_saturation, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies saturation-level for output image"},
-	{"contrast",&vo_gamma_contrast, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies contrast-level for output image"},
-	{"hue",&vo_gamma_hue, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies hue of gamma-correction for output image"},
-	{"red",&vo_gamma_red_intensity, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies intensity of red component for output image"},
-	{"green",&vo_gamma_green_intensity, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies intensity of green component for output image"},
-	{"blue",&vo_gamma_blue_intensity, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies intensity of blue component for output image"},
+	{"brightness",&vo.gamma.brightness, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies brightness-level for output image"},
+	{"saturation",&vo.gamma.saturation, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies saturation-level for output image"},
+	{"contrast",&vo.gamma.contrast, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies contrast-level for output image"},
+	{"hue",&vo.gamma.hue, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies hue of gamma-correction for output image"},
+	{"red",&vo.gamma.red_intensity, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies intensity of red component for output image"},
+	{"green",&vo.gamma.green_intensity, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies intensity of green component for output image"},
+	{"blue",&vo.gamma.blue_intensity, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, NULL, "specifies intensity of blue component for output image"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
 
@@ -247,8 +233,8 @@ static const config_t avsync_config[]={
 #endif
 	{"mc", &default_max_pts_correction, CONF_TYPE_FLOAT, CONF_RANGE, 0, 10, NULL, "maximum sync correction per 5 frames (in seconds)"},
 	{"fps", &force_fps, CONF_TYPE_FLOAT, CONF_MIN, 0, 0, NULL, "forces frame rate (if value is wrong in the header)"},
-	{"vsync", &vo_vsync, CONF_TYPE_FLAG, 0, 0, 1, NULL, "forces video hardware to wait VSYNC signal before frame switching"},
-	{"novsync", &vo_vsync, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video hardware to wait VSYNC signal before frame switching"},
+	{"vsync", &vo.vsync, CONF_TYPE_FLAG, 0, 0, 1, NULL, "forces video hardware to wait VSYNC signal before frame switching"},
+	{"novsync", &vo.vsync, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video hardware to wait VSYNC signal before frame switching"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
 
@@ -306,28 +292,28 @@ static const config_t audio_config[]={
 };
 
 static const config_t video_config[]={
-	{"width", &opt_screen_size_x, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to width (if driver supports)"},
-	{"height", &opt_screen_size_y, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to height (if driver supports)"},
-	{"zoom", &screen_size_xy, CONF_TYPE_FLOAT, CONF_RANGE, 0, 4096, NULL, "scale output image by given factor"},
-	{"screenw", &vo_screenwidth, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "specifies the horizontal resolution of the screen (if supported)"},
-	{"screenh", &vo_screenheight, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "specifies the vertical resolution of the screen (if supported)"},
+	{"width", &vo.opt_screen_size_x, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to width (if driver supports)"},
+	{"height", &vo.opt_screen_size_y, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to height (if driver supports)"},
+	{"zoom", &vo.screen_size_xy, CONF_TYPE_FLOAT, CONF_RANGE, 0, 4096, NULL, "scale output image by given factor"},
+	{"screenw", &vo.screenwidth, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "specifies the horizontal resolution of the screen (if supported)"},
+	{"screenh", &vo.screenheight, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "specifies the vertical resolution of the screen (if supported)"},
 	{"speed", &playbackspeed_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.01, 100.0, NULL, "sets playback speed factor"},
-	{"aspect", &movie_aspect, CONF_TYPE_FLOAT, CONF_RANGE, 0.2, 3.0, NULL, "sets aspect-ratio of movies (autodetect)"},
-	{"noaspect", &movie_aspect, CONF_TYPE_FLAG, 0, 0, 0, NULL, "unsets aspect-ratio of movies"},
-	{"aspect-ratio", &softzoom, CONF_TYPE_FLAG, 0, 0, 1, NULL, "keeps aspect-ratio of the movie during window resize"},
-	{"noaspect-ratio", &softzoom, CONF_TYPE_FLAG, 0, 1, 0, NULL, "render movie to the user-defined window's geometry"},
+	{"aspect", &vo.movie_aspect, CONF_TYPE_FLOAT, CONF_RANGE, 0.2, 3.0, NULL, "sets aspect-ratio of movies (autodetect)"},
+	{"noaspect", &vo.movie_aspect, CONF_TYPE_FLAG, 0, 0, 0, NULL, "unsets aspect-ratio of movies"},
+	{"aspect-ratio", &vo.softzoom, CONF_TYPE_FLAG, 0, 0, 1, NULL, "keeps aspect-ratio of the movie during window resize"},
+	{"noaspect-ratio", &vo.softzoom, CONF_TYPE_FLAG, 0, 1, 0, NULL, "render movie to the user-defined window's geometry"},
 	{"monitorpixelaspect", &monitor_pixel_aspect, CONF_TYPE_FLOAT, CONF_RANGE, 0.2, 9.0, NULL, "sets the aspect-ratio of a single pixel of TV screen"},
-	{"vm", &vidmode, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables video-mode changing during playback"},
-	{"novm", &vidmode, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video-mode changing during playback"},
-	{"fs", &fullscreen, CONF_TYPE_FLAG, 0, 0, 1, NULL, "fullscreen playback"},
-	{"nofs", &fullscreen, CONF_TYPE_FLAG, 0, 1, 0, NULL, "windowed playback"},
-	{"fsmode", &vo_fsmode, CONF_TYPE_INT, CONF_RANGE, 0, 15, NULL, "enables workaround for some fullscreen related problems"},
-	{"flip", &flip, CONF_TYPE_FLAG, 0, -1, 1, NULL, "flip output image upside-down"},
-	{"noflip", &flip, CONF_TYPE_FLAG, 0, -1, 0, NULL, "render output image as is"},
-	{"bpp", &vo_dbpp, CONF_TYPE_INT, CONF_RANGE, 0, 32, NULL, "use different color depth than autodetect"},
-	{"bm", &vo_use_bm, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of bus-mastering (if it available for given OS/videocard)"},
-	{"bm2", &vo_use_bm, CONF_TYPE_FLAG, 0, 0, 2, NULL, "enables using of bus-mastering to store all decoded-ahead frames in video-memory"},
-	{"nobm", &vo_use_bm, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of bus-mastering"},
+	{"vm", &vo.vidmode, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables video-mode changing during playback"},
+	{"novm", &vo.vidmode, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video-mode changing during playback"},
+	{"fs", &vo.fullscreen, CONF_TYPE_FLAG, 0, 0, 1, NULL, "fullscreen playback"},
+	{"nofs", &vo.fullscreen, CONF_TYPE_FLAG, 0, 1, 0, NULL, "windowed playback"},
+	{"fsmode", &vo.fsmode, CONF_TYPE_INT, CONF_RANGE, 0, 15, NULL, "enables workaround for some fullscreen related problems"},
+	{"flip", &vo.flip, CONF_TYPE_FLAG, 0, -1, 1, NULL, "flip output image upside-down"},
+	{"noflip", &vo.flip, CONF_TYPE_FLAG, 0, -1, 0, NULL, "render output image as is"},
+	{"bpp", &vo.dbpp, CONF_TYPE_INT, CONF_RANGE, 0, 32, NULL, "use different color depth than autodetect"},
+	{"bm", &vo.use_bm, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of bus-mastering (if it available for given OS/videocard)"},
+	{"bm2", &vo.use_bm, CONF_TYPE_FLAG, 0, 0, 2, NULL, "enables using of bus-mastering to store all decoded-ahead frames in video-memory"},
+	{"nobm", &vo.use_bm, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of bus-mastering"},
 	{"id", &video_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, NULL, "selects video channel"},
 	{"pp", &npp_options, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies options of post-processing"},
 	{"sws", &sws_flags, CONF_TYPE_INT, 0, 0, 2, NULL, "specifies the quality of the software scaler"},

@@ -8,8 +8,6 @@
 #include <X11/Xutil.h>
 #include "dri_vo.h"
 
-extern int vo_fs;
-
 extern char *mDisplayName;
 extern Display *mDisplay;
 extern Window mRootWin;

@@ -45,58 +45,10 @@
 
 //int vo_flags=0;
 
-// currect resolution/bpp on screen:  (should be autodetected by vo_x11_init())
-unsigned vo_depthonscreen=0;
-unsigned vo_screenwidth=0;
-unsigned vo_screenheight=0;
-
-// requested resolution/bpp:  (-x -y -bpp options)
-unsigned vo_dx=0;
-unsigned vo_dy=0;
-unsigned vo_dwidth=0;
-unsigned vo_dheight=0;
-unsigned vo_dbpp=0;
-
-unsigned vo_old_x = 0;
-unsigned vo_old_y = 0;
-unsigned vo_old_width = 0;
-unsigned vo_old_height = 0;
-
-int vo_doublebuffering = 0;
-int vo_vsync = 0;
-int vo_fs = 0;
-int vo_fsmode = 0;
-
-int vo_pts=0; // for hw decoding
-float vo_fps=0; // for mp1e rte
-
+vo_priv_t vo = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0,
+		{ 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, -1, 0, 0, 0.0, -1.0, };
 char *vo_subdevice = NULL;
-unsigned vo_da_buffs=64; /* keep old value here */
-unsigned vo_use_bm=0; /* indicates user's agreement for using busmastering */
-
 static vo_format_desc vod;
-
-/****************************************
-*	GAMMA CORRECTION		*
-****************************************/
-int vo_gamma_brightness=0;
-int vo_gamma_saturation=0;
-int vo_gamma_contrast=0;
-int vo_gamma_hue=0;
-int vo_gamma_red_intensity=0;
-int vo_gamma_green_intensity=0;
-int vo_gamma_blue_intensity=0;
-
-// libvo opts:
-int fullscreen=0;
-int vidmode=0;
-int softzoom=0;
-int flip=-1;
-int opt_screen_size_x=0;
-int opt_screen_size_y=0;
-float screen_size_xy=0;
-float movie_aspect=-1.0;
-int vo_flags=0;
 
 //
 // Externally visible list of all vo drivers
@@ -720,7 +672,7 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 void vo_change_frame(void)
 {
     MSG_DBG2("dri_vo_dbg: vo_change_frame [active_frame=%u]\n",active_frame);
-    if(vo_doublebuffering || (dri_cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
+    if(vo.doublebuffering || (dri_cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
     {
 	video_out->change_frame(active_frame);
 	active_frame = (active_frame+1)%dri_nframes;

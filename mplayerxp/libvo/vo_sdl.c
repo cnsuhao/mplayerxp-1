@@ -634,7 +634,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	aspect_save_prescale(d_width ? d_width : width, d_height ? d_height : height);
 
 	/* Save the original Image size */
-    softzoom=flags&VOFLAG_SWSCALE;
+    vo.softzoom=flags&VOFLAG_SWSCALE;
     priv->X = 0;
     priv->width  = width;
     priv->height = height;
@@ -760,7 +760,7 @@ static int setup_surfaces( void )
 {
     struct sdl_priv_s *priv = &sdl_priv;
     unsigned i,retval;
-    priv->num_buffs=vo_doublebuffering?vo_da_buffs:1;
+    priv->num_buffs=vo.doublebuffering?vo.da_buffs:1;
 #ifdef CONFIG_VIDIX
     if(!vidix_name)
     {
@@ -964,7 +964,7 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 
 				else if ( keypressed == SDLK_n ) {
 #ifdef HAVE_X11
-					aspect(&priv->dstwidth, &priv->dstheight,softzoom?A_ZOOM:A_NOZOOM);
+					aspect(&priv->dstwidth, &priv->dstheight,vo.softzoom?A_ZOOM:A_NOZOOM);
 #endif
 					if (priv->surface->w != priv->dstwidth || priv->surface->h != priv->dstheight) {
 					    if(enable_xp) LOCK_VDECODING();

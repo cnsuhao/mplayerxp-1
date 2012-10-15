@@ -78,7 +78,6 @@ volatile int dec_ahead_num_frames_decoded=0;	  /* frames decoded by thread */
 static pthread_t pthread_id=0;
 static pthread_attr_t our_attr;
 static pthread_attr_t audio_attr;
-extern float vo_fps;
 static sh_video_t *sh_video;
 static sh_audio_t *sh_audio;
 extern demux_stream_t *d_video;
@@ -151,7 +150,7 @@ void * Va_dec_ahead_routine( void * arg )
     pinfo[xp_id].pth_id = pthread_self();
     pinfo[xp_id].thread_name = (has_xp_audio && enable_xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
     prev_delta=xp_num_frames;
-    drop_barrier=(float)(xp_num_frames/2)*(1/vo_fps);
+    drop_barrier=(float)(xp_num_frames/2)*(1/vo.fps);
     if(av_sync_pts == -1 && !use_pts_fix2)
 	xp_is_bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
@@ -188,7 +187,7 @@ while(!xp_eof){
 	    while(2==xp_thread_decode_audio()) ;
 	    pinfo[xp_id].current_module = "dec_ahead 2";
 	}
-	in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,vo_fps);
+	in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,vo.fps);
 	UNLOCK_VREADING();
 	if(dec_ahead_in_lseek==Seek)
 	{
@@ -261,7 +260,7 @@ while(!xp_eof){
 	    int cur_time;
 	    cur_time = GetTimerMS();
 	    /* Ugly solution: disable frame dropping right after seeking! */
-	    if(cur_time - mpxp_seek_time > (xp_num_frames/vo_fps)*100 &&
+	    if(cur_time - mpxp_seek_time > (xp_num_frames/vo.fps)*100 &&
 	       ada_active_frame>=xp_num_frames)
 	    {
 		float delta,max_frame_delay;/* delay for decoding of top slow frame */
@@ -285,7 +284,7 @@ while(!xp_eof){
 		delta=v_pts-xp_screen_pts;
 		if(max_frame_delay*3 > drop_barrier)
 		{
-		    if(drop_barrier < (float)(xp_num_frames-2)/vo_fps) drop_barrier += 1/vo_fps;
+		    if(drop_barrier < (float)(xp_num_frames-2)/vo.fps) drop_barrier += 1/vo.fps;
 		    else
 		    if(verbose)
 		    {
@@ -299,7 +298,7 @@ while(!xp_eof){
 				     "*********************************************\n"
 				     "Try increase number of buffer for decoding ahead\n"
 				     "Exist: %u, need: %u\n"
-				     ,xp_num_frames,(unsigned)(max_frame_delay*3*vo_fps)+3);
+				     ,xp_num_frames,(unsigned)(max_frame_delay*3*vo.fps)+3);
 			    prev_warn_delay=max_frame_delay;
 			}
 		    }
@@ -617,7 +616,7 @@ int init_dec_ahead(sh_video_t *shv, sh_audio_t *sha)
     unsigned o_bps;
     unsigned min_reserv;
       o_bps=sh_audio->afilter_inited?sh_audio->af_bps:sh_audio->o_bps;
-      if(has_xp_video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_num_frames/vo_fps))+MIN_BUFFER_RESERV;
+      if(has_xp_video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_num_frames/vo.fps))+MIN_BUFFER_RESERV;
       else		asize = o_bps*ao_da_buffs;
       /* FIXME: get better indices from asize/real_audio_packet_size */
       min_reserv = sha->audio_out_minsize;
@@ -776,7 +775,7 @@ int xp_thread_decode_audio()
     if(has_xp_video) {
 	/* Match video buffer */
 	vbuf_size = abs_dec_ahead_locked_frame - abs_dec_ahead_active_frame;
-	pref_buf = vbuf_size / vo_fps * sh_audio->af_bps;
+	pref_buf = vbuf_size / vo.fps * sh_audio->af_bps;
 	pref_buf -= len;
 	if( pref_buf > 0 ) {
 	    len = min( pref_buf, free_buf );

@@ -19,7 +19,7 @@
 #include "../__mp_msg.h"
 #define UNUSED(x) ((void)(x)) /* Removes warning about unused arguments */
 
-char * __sub_osd_names[]={
+static const char * __sub_osd_names[]={
     "Seekbar",
     "Play",
     "Pause",
@@ -33,7 +33,7 @@ char * __sub_osd_names[]={
     "Brightness",
     "Hue"
 };
-char * __sub_osd_names_short[] ={ "", "|>", "||", "[]", "<<" , ">>", "", "", "", "", "", ""};
+static const char * __sub_osd_names_short[] ={ "", "|>", "||", "[]", "<<" , ">>", "", "", "", "", "", ""};
 
 //static int vo_font_loaded=-1;
 font_desc_t* vo_font=NULL;

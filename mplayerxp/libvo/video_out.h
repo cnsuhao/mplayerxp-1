@@ -202,54 +202,59 @@ int vo_x11_init(void);
 // NULL terminated array of all drivers
 extern const vo_functions_t* video_out_drivers[];
 
-extern int vo_flags;
+typedef struct vo_gamma_s{
+    int			brightness;
+    int			saturation;
+    int			contrast;
+    int			hue;
+    int			red_intensity;
+    int			green_intensity;
+    int			blue_intensity;
+}vo_gamma_t;
 
+typedef struct vo_priv_s {
+    int			flags;
 // correct resolution/bpp on screen:  (should be autodetected by vo_x11_init())
-extern unsigned vo_depthonscreen;
-extern unsigned vo_screenwidth;
-extern unsigned vo_screenheight;
+    unsigned		depthonscreen;
+    unsigned		screenwidth;
+    unsigned		screenheight;
 
 // requested resolution/bpp:  (-x -y -bpp options)
-extern unsigned vo_dx;
-extern unsigned vo_dy;
-extern unsigned vo_dwidth;
-extern unsigned vo_dheight;
-extern unsigned vo_dbpp;
+    unsigned		dx;
+    unsigned		dy;
+    unsigned		dwidth;
+    unsigned		dheight;
+    unsigned		dbpp;
 
-extern unsigned vo_old_x;
-extern unsigned vo_old_y; 
-extern unsigned vo_old_width;
-extern unsigned vo_old_height;
+    unsigned		old_x;
+    unsigned		old_y;
+    unsigned		old_width;
+    unsigned		old_height;
 
-extern int vo_doublebuffering;
-extern int vo_vsync;
-extern int vo_fs;
-extern int vo_fsmode;
+    int			doublebuffering;
+    int			vsync;
+    int			fs;
+    int			fsmode;
 
-extern int vo_pts;
-extern float vo_fps;
+    int			pts;
+    float		fps;
 
-extern char *vo_subdevice;
+    unsigned		da_buffs; /**< contains number of buffers for decoding ahead */
+    unsigned		use_bm; /**< indicates user's agreement for using busmastering */
 
-extern int vo_gamma_brightness;
-extern int vo_gamma_saturation;
-extern int vo_gamma_contrast;
-extern int vo_gamma_hue;
-extern int vo_gamma_red_intensity;
-extern int vo_gamma_green_intensity;
-extern int vo_gamma_blue_intensity;
+    vo_gamma_t		gamma;
 
-extern unsigned vo_da_buffs; /**< contains number of buffers for decoding ahead */
-extern unsigned vo_use_bm; /**< indicates user's agreement for using busmastering */
+    int			fullscreen;
+    int			vidmode;
+    int			softzoom;
+    int			flip;
+    int			opt_screen_size_x;
+    int			opt_screen_size_y;
+    float		screen_size_xy;
+    float		movie_aspect;
+}vo_priv_t;
 
-extern int fullscreen;
-extern int vidmode;
-extern int softzoom;
-extern int flip;
-extern int opt_screen_size_x;
-extern int opt_screen_size_y;
-extern float screen_size_xy;
-extern float movie_aspect;
-extern int vo_flags;
+extern vo_priv_t	vo;
+extern char *		vo_subdevice;
 
 #endif

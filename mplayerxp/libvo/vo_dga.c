@@ -276,21 +276,21 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t *fourcc )
      MSG_ERR( "vo_dga: Can't open display!\n");
      return 0;
    }
-   udf_screenw = vo_screenwidth;
-   udf_screenh = vo_screenheight;
+   udf_screenw = vo.screenwidth;
+   udf_screenh = vo.screenheight;
    if( !vo_x11_init() ){
     MSG_ERR( "vo_dga: vo_x11_init() failed!\n");
-    return 1; 
+    return 1;
    }
-   vo_dga_XServer_mode = vd_ValidateMode(vo_depthonscreen);
- 
+   vo_dga_XServer_mode = vd_ValidateMode(vo.depthonscreen);
+
    if(vo_dga_XServer_mode ==0){
 #ifndef HAVE_DGA2
      MSG_ERR( "vo_dga: Your X-Server is not running in a ");
      MSG_ERR( "resolution supported by DGA driver!\n");
-#endif     
+#endif
    }
- 
+
 #ifdef HAVE_DGA2
    modelines=XDGAQueryModes(qdisp, XDefaultScreen(qdisp),&modecount);
    if(modelines){
@@ -303,7 +303,7 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t *fourcc )
 		modelines[i].greenMask,
 	        modelines[i].blueMask,
 	 	modelines[i].viewportWidth,
-		modelines[i].viewportHeight);			  
+		modelines[i].viewportHeight);
         vd_EnableMode(
 		modelines[i].depth,
 		modelines[i].bitsPerPixel,
@@ -328,9 +328,9 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t *fourcc )
 
    for(i=1; i<vo_dga_mode_num; i++){
      MSG_V( "vo_dga: Mode: %s", vd_GetModeString(i));
-     if(vo_dbpp && vo_dbpp != vo_dga_modes[i].vdm_mplayer_depth){
+     if(vo.dbpp && vo.dbpp != vo_dga_modes[i].vdm_mplayer_depth){
        vo_dga_modes[i].vdm_supported = 0;
-       MSG_V( " ...disabled by -bpp %d", vo_dbpp );
+       MSG_V( " ...disabled by -bpp %d", vo.dbpp );
      }
      MSG_V( "\n");
    }
@@ -605,17 +605,17 @@ static uint32_t __FASTCALL__ config( uint32_t width,  uint32_t height,
 
   if(!wanted_height) wanted_height = height;
   if(!wanted_width)  wanted_width = width;
-  
+
   if(udf_screenw) wanted_width = udf_screenw;
   if(udf_screenh) wanted_height = udf_screenh;
 
   if( !vo_x11_init() ){
     MSG_ERR( "vo_dga: vo_x11_init() failed!\n");
-    return 1; 
+    return 1;
   }
 
-  if( !vo_dbpp ) vo_dga_src_mode = vo_dga_XServer_mode;
-  else		 vo_dga_src_mode = vd_ModeValid(vo_dbpp);
+  if( !vo.dbpp ) vo_dga_src_mode = vo_dga_XServer_mode;
+  else		 vo_dga_src_mode = vd_ModeValid(vo.dbpp);
   vo_dga_hw_mode = SRC_MODE.vdm_hw_mode;
 
   if(vo_dga_src_mode != vo_dga_hw_mode ){
@@ -740,7 +740,6 @@ static uint32_t __FASTCALL__ config( uint32_t width,  uint32_t height,
 
   MSG_DBG2( "vo_dga: vp_off=%d\n", vo_dga_vp_offset);
 
-  
   XGrabKeyboard (mDisplay, DefaultRootWindow(mDisplay), True, 
                  GrabModeAsync,GrabModeAsync, CurrentTime);
   XGrabPointer (mDisplay, DefaultRootWindow(mDisplay), True, 
@@ -753,12 +752,12 @@ static uint32_t __FASTCALL__ config( uint32_t width,  uint32_t height,
   vo_dga_dbf_mem_offset[0] = 0;
   dest_frame_size = vo_dga_width*HW_MODE.vdm_bytespp*vo_dga_vp_height;
 
-  if(vo_doublebuffering)
+  if(vo.doublebuffering)
   {
    num_buffers = (ram_size*1024)/dest_frame_size;
-   if(num_buffers > vo_da_buffs) num_buffers = vo_da_buffs;
+   if(num_buffers > vo.da_buffs) num_buffers = vo.da_buffs;
    if(num_buffers > MAX_DRI_BUFFERS) num_buffers = MAX_DRI_BUFFERS;
-   
+
    for(freq=1;freq<num_buffers;freq++)
    {
 	vo_dga_dbf_y_offset[freq] = vo_dga_dbf_y_offset[freq-1] + vo_dga_vp_height;

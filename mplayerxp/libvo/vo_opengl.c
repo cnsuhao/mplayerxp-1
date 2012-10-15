@@ -67,7 +67,6 @@ const LIBVO_EXTERN(opengl)
 static uint32_t image_width;
 static uint32_t image_height;
 static uint32_t image_format;
-static int vo_flipped;
 static uint32_t dwidth,dheight;
 
 static const vo_info_t *get_info(void)
@@ -126,7 +125,7 @@ static void gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height)
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     glRasterPos2i(x, y);
-    glPixelZoom(sx,vo_flipped?sy:-sy);
+    glPixelZoom(sx,vo.flip?sy:-sy);
 }
 
 static void resize(int x,int y){
@@ -134,10 +133,10 @@ static void resize(int x,int y){
   if (WinID >= 0) {
     unsigned top = 0, left = 0, w = x, h = y;
     aspect(&w,&h,A_ZOOM);
-    left=( vo_screenwidth - (dwidth > vo_screenwidth?vo_screenwidth:dwidth) ) / 2;
-    top=( vo_screenheight - (dheight > vo_screenheight?vo_screenheight:dheight) ) / 2;
-    w=(dwidth > vo_screenwidth?vo_screenwidth:dwidth);
-    h=(dheight > vo_screenheight?vo_screenheight:dheight);
+    left=( vo.screenwidth - (dwidth > vo.screenwidth?vo.screenwidth:dwidth) ) / 2;
+    top=( vo.screenheight - (dheight > vo.screenheight?vo.screenheight:dheight) ) / 2;
+    w=(dwidth > vo.screenwidth?vo.screenwidth:dwidth);
+    h=(dheight > vo.screenheight?vo.screenheight:dheight);
     gl_init_fb(left,top,w,h);
   } else
   gl_init_fb( 0, 0, x, y );
@@ -168,21 +167,21 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
  image_width = width;
  image_format=format;
 
- vo_fs=flags&VOFLAG_FULLSCREEN;
- softzoom=flags&VOFLAG_SWSCALE;
- if ( vo_fs )
-  { vo_old_width=d_width; vo_old_height=d_height; }
+ vo.fs=flags&VOFLAG_FULLSCREEN;
+ vo.softzoom=flags&VOFLAG_SWSCALE;
+ if ( vo.fs )
+  { vo.old_width=d_width; vo.old_height=d_height; }
 
 #ifdef HAVE_XF86VM
  if( flags&0x02 ) vm = 1;
 #endif
- vo_flipped=flags&VOFLAG_FLIPPING;
- num_buffers=vo_doublebuffering?vo_da_buffs:1;
+ vo.flip=flags&VOFLAG_FLIPPING;
+ num_buffers=vo.doublebuffering?vo.da_buffs:1;
 
 
- aspect_save_screenres(vo_screenwidth,vo_screenheight);
- aspect(&d_width,&d_height,softzoom?A_ZOOM:A_NOZOOM);
-  if( vo_fs ) aspect(&d_width,&d_height,A_ZOOM);
+ aspect_save_screenres(vo.screenwidth,vo.screenheight);
+ aspect(&d_width,&d_height,vo.softzoom?A_ZOOM:A_NOZOOM);
+  if( vo.fs ) aspect(&d_width,&d_height,A_ZOOM);
    vo_x11_calcpos(&hint,d_width,d_height,flags);
    hint.flags = PPosition | PSize;
 
@@ -214,7 +213,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	((WinID==0) ? 0 : (PointerMotionMask
 		| ButtonPressMask | ButtonReleaseMask )));
    XSetStandardProperties(mDisplay, vo_window, hello, hello, None, NULL, 0, &hint);
-   if ( vo_fs ) vo_x11_decoration( mDisplay,vo_window,0 );
+   if ( vo.fs ) vo_x11_decoration( mDisplay,vo_window,0 );
    XMapWindow(mDisplay, vo_window);
 #ifdef HAVE_XINERAMA
    vo_x11_xinerama_move(mDisplay,vo_window,&hint);
@@ -285,7 +284,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
     int e=vo_x11_check_events(mDisplay,adjust_size);
-    if(e&VO_EVENT_RESIZE) resize(vo_dwidth,vo_dheight);
+    if(e&VO_EVENT_RESIZE) resize(vo.dwidth,vo.dheight);
     return e|VO_EVENT_FORCE_UPDATE;
 }
 
@@ -375,7 +374,7 @@ static uint32_t control(uint32_t request, void *data)
     return query_format((vo_query_fourcc_t*)data);
   case VOCTRL_FULLSCREEN:
     vo_fullscreen();
-    resize(vo_dwidth, vo_dheight);
+    resize(vo.dwidth, vo.dheight);
     return VO_TRUE;
   case VOCTRL_GET_NUM_FRAMES:
 	*(uint32_t *)data = num_buffers;

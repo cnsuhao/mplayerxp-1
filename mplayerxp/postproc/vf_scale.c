@@ -10,6 +10,7 @@
 #include "mp_image.h"
 #include "vf.h"
 
+#include "../libvo/video_out.h"
 #include "../libvo/fastmemcpy.h"
 #include "swscale.h"
 #include "libavutil/log.h"
@@ -40,10 +41,6 @@ struct vf_priv_s {
   0
 };
 #endif
-extern int opt_screen_size_x;
-extern int opt_screen_size_y;
-extern float screen_size_xy;
-
 static int firstTime=1;
 //===========================================================================//
 
@@ -292,7 +289,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	break; }
     }
 
-    if(!opt_screen_size_x && !opt_screen_size_y && !(screen_size_xy >= 0.001)){
+    if(!vo.opt_screen_size_x && !vo.opt_screen_size_y && !(vo.screen_size_xy >= 0.001)){
 	// Compute new d_width and d_height, preserving aspect
 	// while ensuring that both are >= output size in pixels.
 	if (vf->priv->h * d_width > vf->priv->w * d_height) {
