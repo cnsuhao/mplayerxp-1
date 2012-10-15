@@ -49,10 +49,6 @@ LIBAO_EXTERN(wav)
 
 extern int vo_pts;
 
-static char *ao_outputfilename = NULL;
-static int ao_pcm_waveheader = 1;
-static int fast = 0;
-
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */
 #define WAV_ID_WAVE 0x45564157 /* "WAVE" */
 #define WAV_ID_FMT  0x20746d66 /* "fmt " */
@@ -77,11 +73,18 @@ struct WaveHeader
     uint32_t data_length;
 };
 
+typedef struct wav_priv_s {
+    char *		out_filename;
+    int			pcm_waveheader;
+    int			fast;
+
+    uint64_t		data_length;
+    FILE *		fp;
+}wav_priv_t;
+static wav_priv_t wav = { NULL, 1, 0, 0, NULL  };
+
 /* init with default values */
 static struct WaveHeader wavhdr;
-static uint64_t data_length;
-
-static FILE *fp = NULL;
 
 // to set/get/query special features/parameters
 static int control(int cmd,long arg){
@@ -95,7 +98,7 @@ static int control(int cmd,long arg){
 static int init(unsigned flags) {
     // set defaults
     UNUSED(flags);
-    ao_pcm_waveheader = 1;
+    wav.pcm_waveheader = 1;
     return 1;
 }
 
@@ -103,8 +106,8 @@ static int configure(unsigned rate,unsigned channels,unsigned format){
     unsigned bits;
     char str[256];
 
-    if(ao_subdevice)	ao_outputfilename = ao_subdevice;
-    else		ao_outputfilename = strdup("mpxp_adump.wav");
+    if(ao_subdevice)	wav.out_filename = ao_subdevice;
+    else		wav.out_filename = strdup("mpxp_adump.wav");
 
     bits=8;
     switch(format){
@@ -152,44 +155,44 @@ static int configure(unsigned rate,unsigned channels,unsigned format){
     wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
 
     MSG_INFO("ao_wav: %s %d-%s %s\n"
-		,ao_outputfilename
+		,wav.out_filename
 		,rate, (channels > 1) ? "Stereo" : "Mono", fmt2str(format,ao_data.bps,str,sizeof(str)));
 
-    fp = fopen(ao_outputfilename, "wb");
-    if(fp) {
-	if(ao_pcm_waveheader){ /* Reserve space for wave header */
-	    fwrite(&wavhdr,sizeof(wavhdr),1,fp);
+    wav.fp = fopen(wav.out_filename, "wb");
+    if(wav.fp) {
+	if(wav.pcm_waveheader){ /* Reserve space for wave header */
+	    fwrite(&wavhdr,sizeof(wavhdr),1,wav.fp);
 	}
 	return 1;
     }
-    MSG_ERR("ao_wav: can't open output file: %s\n", ao_outputfilename);
+    MSG_ERR("ao_wav: can't open output file: %s\n", wav.out_filename);
     return 0;
 }
 
 // close audio device
 static void uninit(void){
-    if(ao_pcm_waveheader){ /* Rewrite wave header */
+    if(wav.pcm_waveheader){ /* Rewrite wave header */
 	int broken_seek = 0;
 #ifdef __MINGW32__
 	// Windows, in its usual idiocy "emulates" seeks on pipes so it always looks
 	// like they work. So we have to detect them brute-force.
-	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(fp))) != FILE_TYPE_DISK;
+	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(wav.fp))) != FILE_TYPE_DISK;
 #endif
-	if (broken_seek || fseek(fp, 0, SEEK_SET) != 0)
+	if (broken_seek || fseek(wav.fp, 0, SEEK_SET) != 0)
 	    MSG_ERR("Could not seek to start, WAV size headers not updated!\n");
-	else if (data_length > 0x7ffff000)
+	else if (wav.data_length > 0x7ffff000)
 	    MSG_ERR("File larger than allowed for WAV files, may play truncated!\n");
 	else {
-	    wavhdr.file_length = data_length + sizeof(wavhdr) - 8;
+	    wavhdr.file_length = wav.data_length + sizeof(wavhdr) - 8;
 	    wavhdr.file_length = le2me_32(wavhdr.file_length);
-	    wavhdr.data_length = le2me_32(data_length);
-	    fwrite(&wavhdr,sizeof(wavhdr),1,fp);
+	    wavhdr.data_length = le2me_32(wav.data_length);
+	    fwrite(&wavhdr,sizeof(wavhdr),1,wav.fp);
 	}
     }
-    fclose(fp);
-    if (ao_outputfilename)
-	free(ao_outputfilename);
-    ao_outputfilename = NULL;
+    fclose(wav.fp);
+    if (wav.out_filename)
+	free(wav.out_filename);
+    wav.out_filename = NULL;
 }
 
 // stop playing and empty buffers (for seeking/pause)
@@ -211,7 +214,7 @@ static void audio_resume(void)
 // return: how many bytes can be played without blocking
 static unsigned get_space(void){
     if(vo_pts)
-	return ao_data.pts < vo_pts + fast * 30000 ? ao_data.outburst : 0;
+	return ao_data.pts < vo_pts + wav.fast * 30000 ? ao_data.outburst : 0;
     return ao_data.outburst;
 }
 
@@ -220,9 +223,9 @@ static unsigned get_space(void){
 // return: number of bytes played
 static unsigned play(void* data,unsigned len,unsigned flags){
     UNUSED(flags);
-    fwrite(data,len,1,fp);
-    if(ao_pcm_waveheader)
-	data_length += len;
+    fwrite(data,len,1,wav.fp);
+    if(wav.pcm_waveheader)
+	wav.data_length += len;
 
     return len;
 }

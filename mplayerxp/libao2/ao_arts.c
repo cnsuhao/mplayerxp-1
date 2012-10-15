@@ -149,13 +149,9 @@ static void audio_pause(void)
 {
 }
 
-static void audio_resume(void)
-{
-}
+static void audio_resume(void) { }
 
-static void reset(void)
-{
-}
+static void reset(void) { }
 
 static unsigned get_space(void)
 {

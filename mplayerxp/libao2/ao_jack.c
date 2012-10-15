@@ -50,11 +50,16 @@ LIBAO_EXTERN(jack)
 
 //! maximum number of channels supported, avoids lots of mallocs
 #define MAX_CHANS 6
-static jack_port_t *ports[MAX_CHANS];
-static unsigned num_ports; ///< Number of used ports == number of channels
-static jack_client_t *client;
-static float jack_latency;
-static int estimate;
+typedef struct jack_priv_s {
+    jack_port_t *	ports[MAX_CHANS];
+    unsigned		num_ports; ///< Number of used ports == number of channels
+    jack_client_t *	client;
+    float		latency;
+    int			estimate;
+}jack_priv_t;
+
+static jack_priv_t jack;
+
 static volatile int paused = 0; ///< set if paused
 static volatile int underrun = 0; ///< signals if an underrun occured
 
@@ -164,14 +169,14 @@ static int outputaudio(jack_nframes_t nframes, void *arg) {
   float *bufs[MAX_CHANS];
   unsigned i;
   UNUSED(arg);
-  for (i = 0; i < num_ports; i++)
-    bufs[i] = jack_port_get_buffer(ports[i], nframes);
+  for (i = 0; i < jack.num_ports; i++)
+    bufs[i] = jack_port_get_buffer(jack.ports[i], nframes);
   if (paused || underrun)
-    silence(bufs, nframes, num_ports);
+    silence(bufs, nframes, jack.num_ports);
   else
-    if (read_buffer(bufs, nframes, num_ports) < nframes)
+    if (read_buffer(bufs, nframes, jack.num_ports) < nframes)
       underrun = 1;
-  if (estimate) {
+  if (jack.estimate) {
     float now = (float)GetTimer() / 1000000.0;
     float diff = callback_time + callback_interval - now;
     if ((diff > -0.002) && (diff < 0.002))
@@ -192,14 +197,14 @@ static void print_help (void)
   MSG_FATAL(
            "\n-ao jack commandline help:\n"
            "Example: mplayer -ao jack:port=myout\n"
-           "  connects MPlayer to the jack ports named myout\n"
+           "  connects MPlayer to the jack jack.ports named myout\n"
            "\nOptions:\n"
            "  port=<port name>\n"
-           "    Connects to the given ports instead of the default physical ones\n"
+           "    Connects to the given jack.ports instead of the default physical ones\n"
            "  name=<client name>\n"
-           "    Client name to pass to JACK\n"
-           "  estimate\n"
-           "    Estimates the amount of data in buffers (experimental)\n"
+           "    jack.client name to pass to JACK\n"
+           "  jack.estimate\n"
+           "    jack.estimates the amount of data in buffers (experimental)\n"
            "  autostart\n"
            "    Automatically start JACK server if necessary\n"
          );
@@ -216,7 +221,7 @@ static int configure(unsigned rate,unsigned channels,unsigned format) {
   const opt_t subopts[] = {
     {"port", OPT_ARG_MSTRZ, &port_name, NULL},
     {"name", OPT_ARG_MSTRZ, &client_name, NULL},
-    {"estimate", OPT_ARG_BOOL, &estimate, NULL},
+    {"jack.estimate", OPT_ARG_BOOL, &jack.estimate, NULL},
     {"autostart", OPT_ARG_BOOL, &autostart, NULL},
     {NULL}
   };
@@ -224,7 +229,7 @@ static int configure(unsigned rate,unsigned channels,unsigned format) {
   jack_options_t open_options = JackUseExactName;
   int port_flags = JackPortIsInput;
   unsigned i;
-  estimate = 1;
+  jack.estimate = 1;
   UNUSED(format);
 /*
   if (subopt_parse(ao_subdevice, subopts) != 0) {
@@ -242,50 +247,50 @@ static int configure(unsigned rate,unsigned channels,unsigned format) {
   }
   if (!autostart)
     open_options |= JackNoStartServer;
-  client = jack_client_open(client_name, open_options, NULL);
-  if (!client) {
+  jack.client = jack_client_open(client_name, open_options, NULL);
+  if (!jack.client) {
     MSG_FATAL("[JACK] cannot open server\n");
     goto err_out;
   }
   buffer = cb_fifo_alloc(BUFFSIZE);
-  jack_set_process_callback(client, outputaudio, 0);
+  jack_set_process_callback(jack.client, outputaudio, 0);
 
-  // list matching ports
+  // list matching jack.ports
   if (!port_name)
     port_flags |= JackPortIsPhysical;
-  matching_ports = jack_get_ports(client, ao_subdevice, NULL, port_flags);
+  matching_ports = jack_get_ports(jack.client, ao_subdevice, NULL, port_flags);
   if (!matching_ports || !matching_ports[0]) {
-    MSG_FATAL("[JACK] no physical ports available\n");
+    MSG_FATAL("[JACK] no physical jack.ports available\n");
     goto err_out;
   }
   i = 1;
   while (matching_ports[i]) i++;
   if (channels > i) channels = i;
-  num_ports = channels;
+  jack.num_ports = channels;
 
-  // create out output ports
-  for (i = 0; i < num_ports; i++) {
+  // create out output jack.ports
+  for (i = 0; i < jack.num_ports; i++) {
     char pname[30];
     snprintf(pname, 30, "out_%d", i);
-    ports[i] = jack_port_register(client, pname, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-    if (!ports[i]) {
-      MSG_FATAL("[JACK] not enough ports available\n");
+    jack.ports[i] = jack_port_register(jack.client, pname, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+    if (!jack.ports[i]) {
+      MSG_FATAL("[JACK] not enough jack.ports available\n");
       goto err_out;
     }
   }
-  if (jack_activate(client)) {
+  if (jack_activate(jack.client)) {
     MSG_FATAL("[JACK] activate failed\n");
     goto err_out;
   }
-  for (i = 0; i < num_ports; i++) {
-    if (jack_connect(client, jack_port_name(ports[i]), matching_ports[i])) {
+  for (i = 0; i < jack.num_ports; i++) {
+    if (jack_connect(jack.client, jack_port_name(jack.ports[i]), matching_ports[i])) {
       MSG_FATAL( "[JACK] connecting failed\n");
       goto err_out;
     }
   }
-  rate = jack_get_sample_rate(client);
-  jack_latency = (float)(jack_port_get_total_latency(client, ports[0]) +
-                         jack_get_buffer_size(client)) / (float)rate;
+  rate = jack_get_sample_rate(jack.client);
+  jack.latency = (float)(jack_port_get_total_latency(jack.client, jack.ports[0]) +
+                         jack_get_buffer_size(jack.client)) / (float)rate;
   callback_interval = 0;
 
   ao_data.channels = channels;
@@ -303,8 +308,8 @@ err_out:
   free(matching_ports);
   free(port_name);
   free(client_name);
-  if (client)
-    jack_client_close(client);
+  if (jack.client)
+    jack_client_close(jack.client);
   cb_fifo_free(buffer);
   buffer = NULL;
   return 0;
@@ -315,7 +320,7 @@ static void uninit(void) {
   // HACK, make sure jack doesn't loop-output dirty buffers
   reset();
   usec_sleep(100 * 1000);
-  jack_client_close(client);
+  jack_client_close(jack.client);
   cb_fifo_free(buffer);
   buffer = NULL;
 }
@@ -358,8 +363,8 @@ static unsigned play(void *data, unsigned len, unsigned flags) {
 
 static float get_delay(void) {
   int buffered = cb_fifo_size(buffer); // could be less
-  float in_jack = jack_latency;
-  if (estimate && callback_interval > 0) {
+  float in_jack = jack.latency;
+  if (jack.estimate && callback_interval > 0) {
     float elapsed = (float)GetTimer() / 1000000.0 - callback_time;
     in_jack += callback_interval - elapsed;
     if (in_jack < 0) in_jack = 0;
