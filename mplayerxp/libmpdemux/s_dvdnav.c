@@ -509,12 +509,12 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
 		stream_change->physical_letterbox,
 		stream_change->physical_pan_scan,
 		stream_change->logical);
-		if (vo_spudec && dvdsub_id!=stream_change->physical_wide) {
+		if (vo.spudec && dvdsub_id!=stream_change->physical_wide) {
 		    MSG_DBG2("d_dvdsub->id change: was %d is now %d\n",
 			    d_dvdsub->id,stream_change->physical_wide);
 		    // FIXME: need a better way to change SPU id
 		    d_dvdsub->id=dvdsub_id=stream_change->physical_wide;
-		    if (vo_spudec) spudec_reset(vo_spudec);
+		    if (vo.spudec) spudec_reset(vo.spudec);
 		}
 		break;
 		}
@@ -560,7 +560,7 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
 		MSG_DBG2("DVDNAV Event: Nav SPU CLUT Change\n");
 		if(sp->len!=64) MSG_WARN("DVDNAV Event: Nav SPU CLUT Change: %i bytes <> 64\n",sp->len);
 		// send new palette to SPU decoder
-		if (vo_spudec) spudec_update_palette(vo_spudec,(const unsigned int *)(sp->buf));
+		if (vo.spudec) spudec_update_palette(vo.spudec,(const unsigned int *)(sp->buf));
 		break;
 	}
 }

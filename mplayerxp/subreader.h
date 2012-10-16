@@ -18,10 +18,6 @@ extern int sub_num;         // number of subtitle structs
 #define SUB_MPSUB     8
 #define SUB_AQTITLE   9
 
-// One of the SUB_* constant above
-extern int sub_format;
-extern char *sub_cp;
-
 #define SUB_MAX_TEXT 5
 
 typedef struct {

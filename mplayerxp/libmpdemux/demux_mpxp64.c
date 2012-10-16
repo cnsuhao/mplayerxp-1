@@ -22,6 +22,7 @@
 #include "bswap.h"
 #include "aviheader.h"
 #include "../libmpcodecs/dec_audio.h"
+#include "../libvo/sub.h"
 #include "aviprint.h"
 #include "mpxpav64.h"
 #include "demux_msg.h"
@@ -428,7 +429,7 @@ static void mpxpav64_read_fcnt(demuxer_t* demuxer,unsigned fsize)
 	{
 	    str=malloc(len);
 	    stream_read(s,str,len);
-	    sub_cp=nls_get_screen_cp();
+	    sub_data.cp=nls_get_screen_cp();
 	    demux_info_add(demuxer,infot,nls_recode2screen_cp(codepage,str,len));
 	    free(str);
 	}

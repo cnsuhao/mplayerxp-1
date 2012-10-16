@@ -17,7 +17,7 @@
 #include "help_mp.h"
 
 #include "sub_cc.h"
-#include "../libvo/sub.h"
+#include "../libvo/video_out.h"
 #include "demux_msg.h"
 
 extern int sub_justify;
@@ -894,7 +894,7 @@ void ty_processuserdata(const unsigned char* buf, int len )
 			// {
          //    printf( "OSD:%d:%s\n", index, ty_OSD1.text[ index ] );
          // }
-		   vo_sub = &ty_OSD1;
+		   vo.sub = &ty_OSD1;
 		vo_osd_changed( OSDTYPE_SUBTITLE );
 			tyOSDUpdate = 0;
 		}

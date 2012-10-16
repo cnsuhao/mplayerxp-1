@@ -8,12 +8,6 @@
 #include <X11/Xutil.h>
 #include "dri_vo.h"
 
-extern char *mDisplayName;
-extern Display *mDisplay;
-extern Window mRootWin;
-extern int mScreen;
-extern int mLocalDisplay;
-extern int WinID;
 extern XImage *vo_x11_myximage[MAX_DRI_BUFFERS];
 extern int vo_x11_Shmem_Flag;
 
@@ -31,10 +25,6 @@ void __FASTCALL__ vo_x11_calcpos( XSizeHints* hint, unsigned d_width, unsigned d
 uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh));
 void vo_x11_fullscreen( void );
 #endif
-
-extern Window     vo_window;
-extern GC         vo_gc;
-extern XSizeHints vo_hint;
 
 void __FASTCALL__ saver_off( Display * );
 void __FASTCALL__ saver_on( Display * );

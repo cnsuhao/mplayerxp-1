@@ -37,7 +37,7 @@
 
 LIBVO_EXTERN(xvidix)
 
-static vo_info_t vo_info = 
+static vo_info_t vo_info =
 {
     "X11 (VIDIX)",
     "xvidix",
@@ -47,99 +47,95 @@ static vo_info_t vo_info =
 
 #define UNUSED(x) ((void)(x)) /* Removes warning about unused arguments */
 
-/* X11 related variables */
-static int X_already_started = 0;
-
-/* Colorkey handling */
-static XGCValues mGCV;
-static uint32_t	fgColor;
-
-/* VIDIX related */
-static char *vidix_name;
-static vo_tune_info_t vtune;
-
+typedef struct xvidix_priv_s {
 /* Image parameters */
-static uint32_t image_width;
-static uint32_t image_height;
-static uint32_t image_format;
-static uint32_t image_depth;
-
+    uint32_t		image_width;
+    uint32_t		image_height;
+    uint32_t		image_format;
+    uint32_t		image_depth;
 /* Window parameters */
-static uint32_t window_x, window_y;
-static uint32_t window_width, window_height;
-
-/* used by XGetGeometry & XTranslateCoordinates for moving/resizing window */
-static Window mRoot;
-static uint32_t drwX, drwY, drwWidth, drwHeight, drwBorderWidth,
-    drwDepth, drwcX, drwcY, dwidth, dheight;
+    uint32_t		win_x, win_y, win_w, win_h;
+/* X11 related variables */
+    int			X_already_started;
+    Window		mRoot;
+    uint32_t		drwX, drwY, drwWidth, drwHeight, drwBorderWidth;
+    uint32_t		drwDepth, drwcX, drwcY, dwidth, dheight;
+/* Colorkey handling */
+    XGCValues		mGCV;
+    uint32_t		fgColor;
+/* VIDIX related */
+    char *		name;
+    vo_tune_info_t	vtune;
+}xvidix_priv_t;
+static xvidix_priv_t xvidix;
 
 static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *info)
 {
     uint32_t retval=0;
-    XGetGeometry(mDisplay, vo_window, &mRoot, &drwX, &drwY, &drwWidth,
-	&drwHeight, &drwBorderWidth, &drwDepth);
-    drwX = drwY = 0;
-    XTranslateCoordinates(mDisplay, vo_window, mRoot, 0, 0,
-	&drwcX, &drwcY, &mRoot);
+    XGetGeometry(vo.mDisplay, vo.window, &xvidix.mRoot, &xvidix.drwX, &xvidix.drwY, &xvidix.drwWidth,
+	&xvidix.drwHeight, &xvidix.drwBorderWidth, &xvidix.drwDepth);
+    xvidix.drwX = xvidix.drwY = 0;
+    XTranslateCoordinates(vo.mDisplay, vo.window, xvidix.mRoot, 0, 0,
+	&xvidix.drwcX, &xvidix.drwcY, &xvidix.mRoot);
 
     if (!vo.fs)
 	MSG_V( "[xvidix] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",
-	    drwcX, drwcY, drwX, drwY, drwWidth, drwHeight);
+	    xvidix.drwcX, xvidix.drwcY, xvidix.drwX, xvidix.drwY, xvidix.drwWidth, xvidix.drwHeight);
 
     /* following stuff copied from vo_xmga.c */
     if (vo.fs)
     {
-	drwX = (vo.screenwidth - (dwidth > vo.screenwidth ? vo.screenwidth : dwidth)) / 2;
-	drwcX += drwX;
-	drwY = (vo.screenheight - (dheight > vo.screenheight ? vo.screenheight : dheight)) / 2;
-	drwcY += drwY;
-	drwWidth = (dwidth > vo.screenwidth ? vo.screenwidth : dwidth);
-	drwHeight = (dheight > vo.screenheight ? vo.screenheight : dheight);
+	xvidix.drwX = (vo.screenwidth - (xvidix.dwidth > vo.screenwidth ? vo.screenwidth : xvidix.dwidth)) / 2;
+	xvidix.drwcX += xvidix.drwX;
+	xvidix.drwY = (vo.screenheight - (xvidix.dheight > vo.screenheight ? vo.screenheight : xvidix.dheight)) / 2;
+	xvidix.drwcY += xvidix.drwY;
+	xvidix.drwWidth = (xvidix.dwidth > vo.screenwidth ? vo.screenwidth : xvidix.dwidth);
+	xvidix.drwHeight = (xvidix.dheight > vo.screenheight ? vo.screenheight : xvidix.dheight);
 	MSG_V( "[xvidix-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",
-	    drwcX, drwcY, drwX, drwY, drwWidth, drwHeight);
+	    xvidix.drwcX, xvidix.drwcY, xvidix.drwX, xvidix.drwY, xvidix.drwWidth, xvidix.drwHeight);
     }
 
 #ifdef HAVE_XINERAMA
-    if (XineramaIsActive(mDisplay))
+    if (XineramaIsActive(vo.mDisplay))
     {
 	XineramaScreenInfo *screens;
 	int num_screens;
 	int i = 0;
 	
-	screens = XineramaQueryScreens(mDisplay, &num_screens);
+	screens = XineramaQueryScreens(vo.mDisplay, &num_screens);
 	
 	/* find the screen we are on */
-	while (((unsigned)screens[i].x_org <= drwcX) || ((unsigned)screens[i].y_org <= drwcY) ||
-		((unsigned)screens[i].x_org + (unsigned)screens[i].width >= drwcX) ||
-		((unsigned)screens[i].y_org + (unsigned)screens[i].height >= drwcY))
+	while (((unsigned)screens[i].x_org <= xvidix.drwcX) || ((unsigned)screens[i].y_org <= xvidix.drwcY) ||
+		((unsigned)screens[i].x_org + (unsigned)screens[i].width >= xvidix.drwcX) ||
+		((unsigned)screens[i].y_org + (unsigned)screens[i].height >= xvidix.drwcY))
 	    i++;
 
-	/* set drwcX and drwcY to the right values */
-	drwcX = drwcX - screens[i].x_org;
-	drwcY = drwcY - screens[i].y_org;
+	/* set xvidix.drwcX and xvidix.drwcY to the right values */
+	xvidix.drwcX = xvidix.drwcX - screens[i].x_org;
+	xvidix.drwcY = xvidix.drwcY - screens[i].y_org;
 	XFree(screens);
     }
 #endif
 
     /* set new values in VIDIX */
-    if (force_update || (window_x != drwcX) || (window_y != drwcY) ||
-	(window_width != drwWidth) || (window_height != drwHeight))
+    if (force_update || (xvidix.win_x != xvidix.drwcX) || (xvidix.win_y != xvidix.drwcY) ||
+	(xvidix.win_w != xvidix.drwWidth) || (xvidix.win_h != xvidix.drwHeight))
     {
 	retval = VO_EVENT_RESIZE;
 	if(enable_xp && !force_update) LOCK_VDECODING();
-	window_x = drwcX;
-	window_y = drwcY;
-	window_width = drwWidth;
-	window_height = drwHeight;
+	xvidix.win_x = xvidix.drwcX;
+	xvidix.win_y = xvidix.drwcY;
+	xvidix.win_w = xvidix.drwWidth;
+	xvidix.win_h = xvidix.drwHeight;
 
 	/* FIXME: implement runtime resize/move if possible, this way is very ugly! */
 	vidix_stop();
-	if (vidix_init(image_width, image_height, window_x, window_y,
-	    window_width, window_height, image_format, vo.depthonscreen,
+	if (vidix_init(xvidix.image_width, xvidix.image_height, xvidix.win_x, xvidix.win_y,
+	    xvidix.win_w, xvidix.win_h, xvidix.image_format, vo.depthonscreen,
 	    vo.screenwidth, vo.screenheight,info) != 0)
         {
 	    MSG_FATAL( "Can't initialize VIDIX driver: %s: %s\n",
-		vidix_name, strerror(errno));
+		xvidix.name, strerror(errno));
 	    vidix_term();
 	    uninit();
     	    exit(1); /* !!! */
@@ -148,18 +144,18 @@ static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *i
     }
     
     MSG_V( "[xvidix] window properties: pos: %dx%d, size: %dx%d\n",
-	window_x, window_y, window_width, window_height);
+	xvidix.win_x, xvidix.win_y, xvidix.win_w, xvidix.win_h);
 
     /* mDrawColorKey: */
 
     /* fill drawable with specified color */
-    XSetBackground( mDisplay,vo_gc,0 );
-    XClearWindow( mDisplay,vo_window );
-    XSetForeground(mDisplay, vo_gc, fgColor);
-    XFillRectangle(mDisplay, vo_window, vo_gc, drwX, drwY, drwWidth,
-	(vo.fs ? drwHeight - 1 : drwHeight));
+    XSetBackground( vo.mDisplay,vo.gc,0 );
+    XClearWindow( vo.mDisplay,vo.window );
+    XSetForeground(vo.mDisplay, vo.gc, xvidix.fgColor);
+    XFillRectangle(vo.mDisplay, vo.window, vo.gc, xvidix.drwX, xvidix.drwY, xvidix.drwWidth,
+	(vo.fs ? xvidix.drwHeight - 1 : xvidix.drwHeight));
     /* flush, update drawable */
-    XFlush(mDisplay);
+    XFlush(vo.mDisplay);
 
     return retval;
 }
@@ -181,32 +177,32 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 //	free(title);
     title = strdup("MPlayerXP VIDIX X11 Overlay");
 
-    image_height = height;
-    image_width = width;
-    image_format = format;
+    xvidix.image_height = height;
+    xvidix.image_width = width;
+    xvidix.image_format = format;
 
     if ((IMGFMT_IS_RGB(format) || IMGFMT_IS_BGR(format)) && rgbfmt_depth(format)<48)
     {
-	image_depth = rgbfmt_depth(format);
+	xvidix.image_depth = rgbfmt_depth(format);
     }
     else
     switch(format)
     {
 	case IMGFMT_YVU9:
 	case IMGFMT_IF09:
-	    image_depth = 9;
+	    xvidix.image_depth = 9;
 	    break;
 	case IMGFMT_IYUV:
 	case IMGFMT_I420:
 	case IMGFMT_YV12:
-	    image_depth = 12;
+	    xvidix.image_depth = 12;
 	    break;
 	case IMGFMT_UYVY:
 	case IMGFMT_YUY2:
-	    image_depth = 16;
+	    xvidix.image_depth = 16;
 	    break;
 	default:
-	    image_depth = 16;
+	    xvidix.image_depth = 16;
 	    MSG_FATAL( "Unknown image format: %s\n",
 		vo_format_name(format));
 	    break;
@@ -221,29 +217,29 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     aspect_save_prescale(d_width, d_height);
     aspect_save_screenres(vo.screenwidth, vo.screenheight);
 
-    window_x = 0;
-    window_y = 0;
-    window_width = d_width;
-    window_height = d_height;
+    xvidix.win_x = 0;
+    xvidix.win_y = 0;
+    xvidix.win_w = d_width;
+    xvidix.win_h = d_height;
 
     vo.fs = flags&0x01;
     if (vo.fs)
      { vo.old_width=d_width; vo.old_height=d_height; }
 
-    X_already_started++;
+    xvidix.X_already_started++;
 
     /* from xmga.c */
     switch(vo.depthonscreen)
     {
 	case 32:
 	case 24:
-	    fgColor = 0x00ff00ffL;
+	    xvidix.fgColor = 0x00ff00ffL;
 	    break;
 	case 16:
-	    fgColor = 0xf81fL;
+	    xvidix.fgColor = 0xf81fL;
 	    break;
 	case 15:
-	    fgColor = 0x7c1fL;
+	    xvidix.fgColor = 0x7c1fL;
 	    break;
 	default:
 	    MSG_ERR( "Sorry, this (%d) color depth is not supported\n",
@@ -263,67 +259,67 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    d_width = vo.screenwidth;
 	    d_height = vo.screenheight;
 	}
-	window_width = vo.screenwidth;
-	window_height = vo.screenheight;
+	xvidix.win_w = vo.screenwidth;
+	xvidix.win_h = vo.screenheight;
     }
 
-    dwidth = d_width;
-    dheight = d_height;
+    xvidix.dwidth = d_width;
+    xvidix.dheight = d_height;
     /* Make the window */
-    XGetWindowAttributes(mDisplay, DefaultRootWindow(mDisplay), &attribs);
+    XGetWindowAttributes(vo.mDisplay, DefaultRootWindow(vo.mDisplay), &attribs);
 
     /* from vo_x11 */
     window_depth = attribs.depth;
     if ((window_depth != 15) && (window_depth != 16) && (window_depth != 24)
 	&& (window_depth != 32))
         window_depth = 24;
-    XMatchVisualInfo(mDisplay, mScreen, window_depth, TrueColor, &vinfo);
+    XMatchVisualInfo(vo.mDisplay, vo.mScreen, window_depth, TrueColor, &vinfo);
 
-    xswa.background_pixel = vo.fs ? BlackPixel(mDisplay, mScreen) : fgColor;
+    xswa.background_pixel = vo.fs ? BlackPixel(vo.mDisplay, vo.mScreen) : xvidix.fgColor;
     xswa.border_pixel     = 0;
-    xswa.colormap         = XCreateColormap(mDisplay, RootWindow(mDisplay, mScreen),
+    xswa.colormap         = XCreateColormap(vo.mDisplay, RootWindow(vo.mDisplay, vo.mScreen),
 					    vinfo.visual, AllocNone);
     xswa.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask | ButtonPressMask | ButtonReleaseMask;
     xswamask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
-    if (WinID >= 0)
+    if (vo.WinID >= 0)
     {
-	vo_window = WinID ? ((Window)WinID) : RootWindow(mDisplay, mScreen);
-	XUnmapWindow(mDisplay, vo_window);
-	XChangeWindowAttributes(mDisplay, vo_window, xswamask, &xswa);
+	vo.window = vo.WinID ? ((Window)vo.WinID) : RootWindow(vo.mDisplay, vo.mScreen);
+	XUnmapWindow(vo.mDisplay, vo.window);
+	XChangeWindowAttributes(vo.mDisplay, vo.window, xswamask, &xswa);
     }
     else
-	vo_window = XCreateWindow(mDisplay, RootWindow(mDisplay, mScreen),
-	    window_x, window_y, window_width, window_height, xswa.border_pixel,
+	vo.window = XCreateWindow(vo.mDisplay, RootWindow(vo.mDisplay, vo.mScreen),
+	    xvidix.win_x, xvidix.win_y, xvidix.win_w, xvidix.win_h, xswa.border_pixel,
 	    vinfo.depth, InputOutput, vinfo.visual, xswamask, &xswa);
 
-    vo_x11_classhint(mDisplay, vo_window, "xvidix");
-    vo_x11_hidecursor(mDisplay, vo_window);
+    vo_x11_classhint(vo.mDisplay, vo.window, "xvidix");
+    vo_x11_hidecursor(vo.mDisplay, vo.window);
 
-    if (vo.fs) vo_x11_decoration(mDisplay, vo_window, 0);
+    if (vo.fs) vo_x11_decoration(vo.mDisplay, vo.window, 0);
 
-    XGetNormalHints(mDisplay, vo_window, &hint);
-    hint.x = window_x;
-    hint.y = window_y;
-    hint.base_width = hint.width = window_width;
-    hint.base_height = hint.height = window_height;
+    XGetNormalHints(vo.mDisplay, vo.window, &hint);
+    hint.x = xvidix.win_x;
+    hint.y = xvidix.win_y;
+    hint.base_width = hint.width = xvidix.win_w;
+    hint.base_height = hint.height = xvidix.win_h;
     hint.flags = USPosition | USSize;
-    XSetNormalHints(mDisplay, vo_window, &hint);
+    XSetNormalHints(vo.mDisplay, vo.window, &hint);
 
-    XStoreName(mDisplay, vo_window, title);
+    XStoreName(vo.mDisplay, vo.window, title);
     /* Map window. */
 
-    XMapWindow(mDisplay, vo_window);
+    XMapWindow(vo.mDisplay, vo.window);
 #ifdef HAVE_XINERAMA
-    vo_x11_xinerama_move(mDisplay, vo_window,&hint);
+    vo_x11_xinerama_move(vo.mDisplay, vo.window,&hint);
 #endif
 
-    vo_gc = XCreateGC(mDisplay, vo_window, GCForeground, &mGCV);
+    vo.gc = XCreateGC(vo.mDisplay, vo.window, GCForeground, &xvidix.mGCV);
 
-    XSelectInput( mDisplay,vo_window,StructureNotifyMask | KeyPressMask | ButtonPressMask | ButtonReleaseMask );
+    XSelectInput( vo.mDisplay,vo.window,StructureNotifyMask | KeyPressMask | ButtonPressMask | ButtonReleaseMask );
 
     MSG_V( "[xvidix] image properties: %dx%d depth: %d\n",
-	image_width, image_height, image_depth);
+	xvidix.image_width, xvidix.image_height, xvidix.image_depth);
     /* stupid call which requires to correct color key support */
     qfourcc.fourcc=format;
     qfourcc.w=width;
@@ -353,12 +349,12 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
     }
 
     set_window(1,info);
-    if(info) memcpy(&vtune,info,sizeof(vo_tune_info_t));
-    else     memset(&vtune,0,sizeof(vo_tune_info_t));
-    XFlush(mDisplay);
-    XSync(mDisplay, False);
+    if(info) memcpy(&xvidix.vtune,info,sizeof(vo_tune_info_t));
+    else     memset(&xvidix.vtune,0,sizeof(vo_tune_info_t));
+    XFlush(vo.mDisplay);
+    XSync(vo.mDisplay, False);
 
-    saver_off(mDisplay); /* turning off screen saver */
+    saver_off(vo.mDisplay); /* turning off screen saver */
 
     return(0);
 }
@@ -370,9 +366,9 @@ static const vo_info_t *get_info(void)
 
 static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
-    uint32_t event = vo_x11_check_events(mDisplay,adjust_size);
+    uint32_t event = vo_x11_check_events(vo.mDisplay,adjust_size);
     if((event & VO_EVENT_RESIZE))
-	event = set_window(0,&vtune);
+	event = set_window(0,&xvidix.vtune);
     return event;
 }
 
@@ -394,23 +390,24 @@ static void uninit(void)
 {
     vidix_term();
 
-    saver_on(mDisplay); /* screen saver back on */
-    vo_x11_uninit(mDisplay, vo_window);
-    if(vidix_name) { free(vidix_name); vidix_name = NULL; }
-    X_already_started --;
+    saver_on(vo.mDisplay); /* screen saver back on */
+    vo_x11_uninit(vo.mDisplay, vo.window);
+    if(xvidix.name) { free(xvidix.name); xvidix.name = NULL; }
+    xvidix.X_already_started --;
 }
 
 static uint32_t __FASTCALL__ preinit(const char *arg)
 {
+    memset(&xvidix,0,sizeof(xvidix_priv_t));
     if (arg)
-        vidix_name = strdup(arg);
+        xvidix.name = strdup(arg);
     else
     {
 	MSG_V( "No vidix driver name provided, probing available ones!\n");
-	vidix_name = NULL;
+	xvidix.name = NULL;
     }
 
-    if (vidix_preinit(vidix_name, &video_out_xvidix) != 0)
+    if (vidix_preinit(xvidix.name, &video_out_xvidix) != 0)
 	return(1);
 
     return(0);

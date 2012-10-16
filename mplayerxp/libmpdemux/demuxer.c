@@ -21,6 +21,7 @@
 #include "stheader.h"
 
 #include "../libvo/fastmemcpy.h"
+#include "../libvo/sub.h"
 #include "demux_msg.h"
 
 extern demuxer_driver_t demux_aiff;
@@ -712,7 +713,7 @@ int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param)
 	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],((demuxer_info_t *)demuxer->info)->id[opt]);
 	free(((demuxer_info_t *)demuxer->info)->id[opt]);
     }
-    ((demuxer_info_t *)demuxer->info)->id[opt]=nls_recode2screen_cp(sub_cp,param,strlen(param));
+    ((demuxer_info_t *)demuxer->info)->id[opt]=nls_recode2screen_cp(sub_data.cp,param,strlen(param));
     return 1;
 }
 

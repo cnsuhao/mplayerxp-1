@@ -3156,7 +3156,7 @@ handle_subtitles(demuxer_t *demuxer, mkv_track_t *track, char *block,
         return;
     }
 
-  sub_utf8 = 1;
+  sub_data.utf8 = 1;
   size -= ptr1 - block;
   dp = new_demux_packet(size);
   memcpy(dp->buffer, ptr1, size);

@@ -151,7 +151,7 @@ static void swap_buffers(void)
 
 static void display_buffer(const subtitle * buf)
 {
-	vo_sub=buf;
+	vo.sub=buf;
 	vo_osd_changed(OSDTYPE_SUBTITLE);
 }
 

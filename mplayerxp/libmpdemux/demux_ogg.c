@@ -21,7 +21,7 @@
 #include "aviprint.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "../libmpcodecs/dec_audio.h"
-#include "../libvo/sub.h"
+#include "../libvo/video_out.h"
 #include "demux_msg.h"
 
 #define BLOCK_SIZE 4096
@@ -291,7 +291,7 @@ static void demux_ogg_add_sub (ogg_stream_t* os,ogg_packet* pack) {
 #ifdef USE_ICONV
   subcp_recode1(&ogg_sub);
 #endif
-  vo_sub = &ogg_sub;
+  vo.sub = &ogg_sub;
   vo_osd_changed(OSDTYPE_SUBTITLE);
 }
 
@@ -554,7 +554,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
   /// Clear subtitles if necessary (for broken files)
   if ((clear_sub > 0) && (pts >= clear_sub)) {
     ogg_sub.lines = 0;
-    vo_sub = &ogg_sub;
+    vo.sub = &ogg_sub;
     vo_osd_changed(OSDTYPE_SUBTITLE);
     clear_sub = -1;
   }
@@ -1412,7 +1412,7 @@ static void ogg_seek(demuxer_t *demuxer,float rel_seek_secs,int flags) {
       }
       if(!precision && (is_keyframe || os->vorbis) ) {
         ogg_sub.lines = 0;
-        vo_sub = &ogg_sub;
+        vo.sub = &ogg_sub;
         vo_osd_changed(OSDTYPE_SUBTITLE);
         clear_sub = -1;
 	demux_ogg_add_packet(ds,os,ds->id,&op);

@@ -60,21 +60,6 @@ static inline void vo_draw_text_osd(int dxs,int dys,void (*draw_alpha)(int x0,in
 
 #else
 
-#include "../subreader.h"
-#include "font_load.h"
-
-extern font_desc_t* vo_font;
-
-extern char* vo_osd_text;
-
-extern int vo_osd_progbar_type;
-extern int vo_osd_progbar_value;   // 0..255
-
-extern const subtitle* vo_sub;
-
-extern void* vo_spudec;
-extern void* vo_vobsub;
-
 #define OSD_PLAY	0x01
 #define OSD_PAUSE	0x02
 #define OSD_STOP	0x03
@@ -93,16 +78,15 @@ extern void* vo_vobsub;
 #define OSD_PB_END	0x12
 #define OSD_PB_1	0x13
 
-extern int sub_unicode;
-extern int sub_utf8;
-
-#ifdef USE_ICONV
-extern char *sub_cp;
-#endif
-extern int sub_pos;
-extern int spu_alignment;
-extern int spu_aamode;
-extern float spu_gaussvar;
+typedef struct sub_data_s {
+    char *	cp;
+    int		unicode;
+    int		utf8;
+    int		pos;
+    int		bg_color; /* subtitles background color */
+    int		bg_alpha;
+}sub_data_t;
+extern sub_data_t sub_data;
 
 typedef void (* __FASTCALL__ draw_osd_f)(int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride);
 typedef void (* __FASTCALL__ clear_osd_f)(int x0,int y0, int w,int h);
@@ -115,7 +99,6 @@ int __FASTCALL__ vo_update_osd(int dxs,int dys);
 int __FASTCALL__ vo_osd_changed(int new_value);
 int __FASTCALL__ get_osd_height(int c,int h);
 void __FASTCALL__ osd_set_nav_box (uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey);
-extern int vo_osd_changed_flag;
 
 #endif
 #endif

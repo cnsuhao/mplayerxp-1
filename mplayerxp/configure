@@ -699,10 +699,6 @@ print_config USE_ mp_config.h mp_config.mak fastmemcpy
 enabled tv && print_config USE_ mp_config.h mp_config.mak tv
 enabled tv	&& inputmodules="tv $inputmodules" || noinputmodules="tv $noinputmodules"
 
-enabled tv_v4l && require2 tv_v4l "stdlib.h linux/videodev.h" video_devdata
-print_config HAVE_ mp_config.h mp_config.mak tv_v4l
-enabled tv_v4l	&& vomodules="tv-v4l $vomodules" || novomodules="tv-v4l $novomodules"
-
 print_config HAVE_ mp_config.h mp_config.mak audio_select
 
 enabled libvorbis && check_pkg libvorbis vorbis

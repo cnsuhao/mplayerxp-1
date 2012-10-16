@@ -661,15 +661,15 @@ void uninit_player(unsigned int mask){
   if (mask&INITED_SPUDEC){
     inited_flags&=~INITED_SPUDEC;
     pinfo[xp_id].current_module="uninit_spudec";
-    spudec_free(vo_spudec);
-    vo_spudec=NULL;
+    spudec_free(vo.spudec);
+    vo.spudec=NULL;
   }
 
   if (mask&INITED_VOBSUB){
     inited_flags&=~INITED_VOBSUB;
     pinfo[xp_id].current_module="uninit_vobsub";
-    vobsub_close(vo_vobsub);
-    vo_vobsub=NULL;
+    vobsub_close(vo.vobsub);
+    vo.vobsub=NULL;
   }
 
   if(mask&INITED_VCODEC){
@@ -731,7 +731,7 @@ void uninit_player(unsigned int mask){
     mp_input_uninit();
     sub_free( subtitles );
     sub_name=NULL;
-    vo_sub=NULL;
+    vo.sub=NULL;
     subtitles=NULL;
   }
 #endif
@@ -1175,7 +1175,7 @@ static int osd_last_pts=-303;
 	else --pts;
       }
       else osd_last_pts=pts;
-      vo_osd_text=osd_text_buffer;
+      vo.osd_text=osd_text_buffer;
       if (osd_show_sub_delay) {
 	  sprintf(osd_text_tmp, "Sub delay: %d ms",(int)(sub_delay*1000));
 	  osd_show_sub_delay--;
@@ -1194,13 +1194,13 @@ static int osd_last_pts=-303;
 #else
           sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);
 #endif
-      if(strcmp(vo_osd_text, osd_text_tmp)) {
-	      strcpy(vo_osd_text, osd_text_tmp);
+      if(strcmp(vo.osd_text, osd_text_tmp)) {
+	      strcpy(vo.osd_text, osd_text_tmp);
 	      vo_osd_changed(OSDTYPE_OSD);
       }
   } else {
-      if(vo_osd_text) {
-      vo_osd_text=NULL;
+      if(vo.osd_text) {
+      vo.osd_text=NULL;
 	  vo_osd_changed(OSDTYPE_OSD);
       }
   }
@@ -1238,28 +1238,28 @@ void update_subtitle(float v_pts)
     }
   }else
 #endif
-   if(vo_spudec){
+   if(vo.spudec){
     unsigned char* packet=NULL;
     int len,timestamp;
     pinfo[xp_id].current_module="spudec";
-    spudec_heartbeat(vo_spudec,90000*v_pts);
-    if (vo_vobsub) {
+    spudec_heartbeat(vo.spudec,90000*v_pts);
+    if (vo.vobsub) {
       if (v_pts+sub_delay >= 0) {
-	while((len=vobsub_get_packet(vo_vobsub, v_pts+sub_delay,(void**)&packet, &timestamp))>0){
+	while((len=vobsub_get_packet(vo.vobsub, v_pts+sub_delay,(void**)&packet, &timestamp))>0){
 		timestamp -= (v_pts + sub_delay - sh_video->timer)*90000;
 		MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
-		spudec_assemble(vo_spudec,packet,len,90000*d_dvdsub->pts);
+		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
 
 	}
       }
     } else {
 	while((len=ds_get_packet_sub(d_dvdsub,&packet))>0){
 		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
-		spudec_assemble(vo_spudec,packet,len,90000*d_dvdsub->pts);
+		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
 	}
     }
     /* detect wether the sub has changed or not */
-    if(spudec_changed(vo_spudec))
+    if(spudec_changed(vo.spudec))
       vo_osd_changed(OSDTYPE_SPU);
     pinfo[xp_id].current_module=NULL;
   }
@@ -1838,10 +1838,10 @@ void mpxp_seek( int xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,flo
 
       // success:
       /* FIXME there should be real seeking for vobsub */
-      if (vo_vobsub)
-	vobsub_reset(vo_vobsub);
-      if (vo_spudec)
-	spudec_reset(vo_spudec);
+      if (vo.vobsub)
+	vobsub_reset(vo.vobsub);
+      if (vo.spudec)
+	spudec_reset(vo.spudec);
 
       if(sh_audio){
 	if(verbose){
@@ -1870,9 +1870,9 @@ void mpxp_seek( int xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,flo
         ao_reset(); // stop audio, throwing away buffered data
       }
 
-      if (vo_vobsub) {
+      if (vo.vobsub) {
 	pinfo[xp_id].current_module = "seek_vobsub_reset";
-	vobsub_seek(vo_vobsub, v_pts);
+	vobsub_seek(vo.vobsub, v_pts);
       }
 
 #ifdef USE_OSD
@@ -1881,8 +1881,8 @@ void mpxp_seek( int xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,flo
         int len=((demuxer->movi_end-demuxer->movi_start)>>8);
         if (len>0){
 	   if(osd_visible) *osd_visible=sh_video->fps<=60?sh_video->fps:25;
-	   vo_osd_progbar_type=0;
-	   vo_osd_progbar_value=(demuxer->filepos-demuxer->movi_start)/len;
+	   vo.osd_progbar_type=0;
+	   vo.osd_progbar_value=(demuxer->filepos-demuxer->movi_start)/len;
 	   vo_osd_changed(OSDTYPE_PROGBAR);
 	}
       }
@@ -1898,11 +1898,11 @@ void mpxp_seek( int xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,flo
 	    vstat->too_slow_frame_cnt=0;
 	    vstat->too_fast_frame_cnt=0;
 	}
-        if(vo_spudec) {
+        if(vo.spudec) {
           unsigned char* packet=NULL;
           while(ds_get_packet_sub(d_dvdsub,&packet)>0)
               ; // Empty stream
-          spudec_reset(vo_spudec);
+          spudec_reset(vo.spudec);
         }
       }
   }
@@ -2086,6 +2086,7 @@ int forced_subs_only=0;
 float seek_secs=0;
 int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 
+    vo_preinit_structs();
 
     mplayer_pid=
     pinfo[xp_id].pid=getpid();
@@ -2157,13 +2158,13 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 // check font
 #ifdef USE_OSD
   if(font_name){
-       vo_font=read_font_desc(font_name,font_factor,verbose>1);
-       if(!vo_font) MSG_ERR(MSGTR_CantLoadFont,font_name);
+       vo.font=read_font_desc(font_name,font_factor,verbose>1);
+       if(!vo.font) MSG_ERR(MSGTR_CantLoadFont,font_name);
   } else {
       // try default:
-       vo_font=read_font_desc(get_path("font/font.desc"),font_factor,verbose>1);
-       if(!vo_font)
-       vo_font=read_font_desc(DATADIR"/font/font.desc",font_factor,verbose>1);
+       vo.font=read_font_desc(get_path("font/font.desc"),font_factor,verbose>1);
+       if(!vo.font)
+       vo.font=read_font_desc(DATADIR"/font/font.desc",font_factor,verbose>1);
   }
 #endif
   /* Configure menu here */
@@ -2220,9 +2221,9 @@ if(!use_stdin && !slave_mode){
 	if ((i = strcspn(video_driver, ":")) > 0) {
 	    size_t i2 = strlen(video_driver);
 	    if (video_driver[i] == ':') {
-		vo_subdevice = malloc(i2-i);
-		if (vo_subdevice != NULL)
-		    strncpy(vo_subdevice, (char *)(video_driver+i+1), i2-i);
+		vo.subdevice = malloc(i2-i);
+		if (vo.subdevice != NULL)
+		    strncpy(vo.subdevice, (char *)(video_driver+i+1), i2-i);
 		video_driver[i] = '\0';
 	    }
 	}
@@ -2234,7 +2235,7 @@ if(!use_stdin && !slave_mode){
 	exit_player(MSGTR_Exit_error);
     }
     pinfo[xp_id].current_module="vo_init";
-    if((i=vo_init(vo_subdevice))!=0)
+    if((i=vo_init(vo.subdevice))!=0)
     {
 	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
 	exit_player(MSGTR_Exit_error);
@@ -2265,24 +2266,24 @@ if(!use_stdin && !slave_mode){
 
     pinfo[xp_id].current_module="vobsub";
     if (vobsub_name){
-      vo_vobsub=vobsub_open(vobsub_name,spudec_ifo,1,&vo_spudec);
-      if(vo_vobsub==NULL)
+      vo.vobsub=vobsub_open(vobsub_name,spudec_ifo,1,&vo.spudec);
+      if(vo.vobsub==NULL)
         MSG_ERR(MSGTR_CantLoadSub,vobsub_name);
       else {
 	inited_flags|=INITED_VOBSUB;
-	vobsub_set_from_lang(vo_vobsub, dvdsub_lang);
+	vobsub_set_from_lang(vo.vobsub, dvdsub_lang);
 	// check if vobsub requested only to display forced subtitles
-	forced_subs_only=vobsub_get_forced_subs_flag(vo_vobsub);
+	forced_subs_only=vobsub_get_forced_subs_flag(vo.vobsub);
       }
     }else if(sub_auto && filename && (strlen(filename)>=5)){
       /* try to autodetect vobsub from movie filename ::atmos */
       char *buf = malloc((strlen(filename)-3) * sizeof(char));
       memset(buf,0,strlen(filename)-3); // make sure string is terminated
       strncpy(buf, filename, strlen(filename)-4); 
-      vo_vobsub=vobsub_open(buf,spudec_ifo,0,&vo_spudec);
+      vo.vobsub=vobsub_open(buf,spudec_ifo,0,&vo.spudec);
       free(buf);
     }
-    if(vo_vobsub)
+    if(vo.vobsub)
     {
       sub_auto=0; // don't do autosub for textsubs if vobsub found
       inited_flags|=INITED_VOBSUB;
@@ -2511,26 +2512,26 @@ if (spudec_ifo) {
   unsigned int palette[16], width, height;
   pinfo[xp_id].current_module="spudec_init_vobsub";
   if (vobsub_parse_ifo(NULL,spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
-    vo_spudec=spudec_new_scaled(palette, sh_video->disp_w, sh_video->disp_h);
+    vo.spudec=spudec_new_scaled(palette, sh_video->disp_w, sh_video->disp_h);
 }
 
-if (vo_spudec==NULL) {
+if (vo.spudec==NULL) {
   unsigned *pal;
   pinfo[xp_id].current_module="spudec_init";
   if(stream->driver->control(stream,SCTRL_VID_GET_PALETTE,&pal)==SCTRL_OK)
-	vo_spudec=spudec_new_scaled(pal,sh_video->disp_w, sh_video->disp_h);
+	vo.spudec=spudec_new_scaled(pal,sh_video->disp_w, sh_video->disp_h);
 }
 
-if (vo_spudec==NULL) {
+if (vo.spudec==NULL) {
   pinfo[xp_id].current_module="spudec_init_normal";
-  vo_spudec=spudec_new_scaled(NULL, sh_video->disp_w, sh_video->disp_h);
-  spudec_set_font_factor(vo_spudec,font_factor);
+  vo.spudec=spudec_new_scaled(NULL, sh_video->disp_w, sh_video->disp_h);
+  spudec_set_font_factor(vo.spudec,font_factor);
 }
 
-if (vo_spudec!=NULL) {
+if (vo.spudec!=NULL) {
   inited_flags|=INITED_SPUDEC;
   // Apply current settings for forced subs
-  spudec_set_forced_subs_only(vo_spudec,forced_subs_only);
+  spudec_set_forced_subs_only(vo.spudec,forced_subs_only);
 }
 
 #ifdef USE_SUB
@@ -2965,7 +2966,7 @@ read_input:
 #ifdef USE_OSD
   if(osd_visible){
     if (!--osd_visible){
-       vo_osd_progbar_type=-1; // disable
+       vo.osd_progbar_type=-1; // disable
        vo_osd_changed(OSDTYPE_PROGBAR);
        if (!((osd_function == OSD_PAUSE)||(osd_function==OSD_DVDMENU)))
 	   osd_function = OSD_PLAY;
@@ -3138,8 +3139,8 @@ our_n_frames++;
 #ifdef USE_OSD
       if(osd_level){
 	osd_visible=sh_video->fps; // 1 sec
-	vo_osd_progbar_type=OSD_VOLUME;
-	vo_osd_progbar_value=(mixer_getbothvolume()*256.0)/100.0;
+	vo.osd_progbar_type=OSD_VOLUME;
+	vo.osd_progbar_value=(mixer_getbothvolume()*256.0)/100.0;
 	vo_osd_changed(OSDTYPE_PROGBAR);
       }
 #endif
@@ -3154,9 +3155,9 @@ our_n_frames++;
 #ifdef USE_OSD
 	if(osd_level){
 	  osd_visible=sh_video->fps; // 1 sec
-	  vo_osd_progbar_type=OSD_CONTRAST;
-	  vo_osd_progbar_value=((v_cont)<<8)/100;
-	  vo_osd_progbar_value = ((v_cont+100)<<8)/200;
+	  vo.osd_progbar_type=OSD_CONTRAST;
+	  vo.osd_progbar_value=((v_cont)<<8)/100;
+	  vo.osd_progbar_value = ((v_cont+100)<<8)/200;
 	  vo_osd_changed(OSDTYPE_PROGBAR);
 	}
 #endif
@@ -3172,9 +3173,9 @@ our_n_frames++;
 #ifdef USE_OSD
 	if(osd_level){
 	  osd_visible=sh_video->fps; // 1 sec
-	  vo_osd_progbar_type=OSD_BRIGHTNESS;
-	  vo_osd_progbar_value=((v_bright)<<8)/100;
-	  vo_osd_progbar_value = ((v_bright+100)<<8)/200;
+	  vo.osd_progbar_type=OSD_BRIGHTNESS;
+	  vo.osd_progbar_value=((v_bright)<<8)/100;
+	  vo.osd_progbar_value = ((v_bright+100)<<8)/200;
 	  vo_osd_changed(OSDTYPE_PROGBAR);
 	}
 #endif
@@ -3190,9 +3191,9 @@ our_n_frames++;
 #ifdef USE_OSD
 	if(osd_level){
 	  osd_visible=sh_video->fps; // 1 sec
-	  vo_osd_progbar_type=OSD_HUE;
-	  vo_osd_progbar_value=((v_hue)<<8)/100;
-	  vo_osd_progbar_value = ((v_hue+100)<<8)/200;
+	  vo.osd_progbar_type=OSD_HUE;
+	  vo.osd_progbar_value=((v_hue)<<8)/100;
+	  vo.osd_progbar_value = ((v_hue+100)<<8)/200;
 	  vo_osd_changed(OSDTYPE_PROGBAR);
 	}
 #endif
@@ -3208,9 +3209,9 @@ our_n_frames++;
 #ifdef USE_OSD
 	if(osd_level){
 	  osd_visible=sh_video->fps; // 1 sec
-	  vo_osd_progbar_type=OSD_SATURATION;
-	  vo_osd_progbar_value=((v_saturation)<<8)/100;
-	  vo_osd_progbar_value = ((v_saturation+100)<<8)/200;
+	  vo.osd_progbar_type=OSD_SATURATION;
+	  vo.osd_progbar_value=((v_saturation)<<8)/100;
+	  vo.osd_progbar_value = ((v_saturation+100)<<8)/200;
 	  vo_osd_changed(OSDTYPE_PROGBAR);
 	}
 #endif
@@ -3262,9 +3263,9 @@ our_n_frames++;
         int v;
 	v = cmd->args[0].v.i;
 
-	sub_pos+=v;
-	if(sub_pos >100) sub_pos=100;
-	if(sub_pos <0) sub_pos=0;
+	sub_data.pos+=v;
+	if(sub_data.pos >100) sub_data.pos=100;
+	if(sub_data.pos <0) sub_data.pos=0;
 	vo_osd_changed(OSDTYPE_SUBTITLE);
     }	break;
     default : {

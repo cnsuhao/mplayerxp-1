@@ -20,7 +20,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-#include "libvo/video_out.h"
 #include "spudec.h"
 #include "postproc/swscale.h"
 #define MSGT_CLASS MSGT_SPUDEC
@@ -41,7 +40,6 @@
 int spu_aamode = 3;
 int spu_alignment = -1;
 float spu_gaussvar = 1.0;
-extern int sub_pos;
 
 typedef struct packet_t packet_t;
 struct packet_t {
@@ -641,23 +639,23 @@ void __FASTCALL__ spudec_calc_bbox(void *me, unsigned int dxs, unsigned int dys,
     bbox[1] = spu->start_col * scalex / 0x100 + spu->width * scalex / 0x100;
     switch (spu_alignment) {
     case 0:
-      bbox[3] = dys*sub_pos/100 + spu->height * scaley / 0x100;
+      bbox[3] = dys*sub_data.pos/100 + spu->height * scaley / 0x100;
       if (bbox[3] > dys) bbox[3] = dys;
       bbox[2] = bbox[3] - spu->height * scaley / 0x100;
       break;
     case 1:
-      if (sub_pos < 50) {
-        bbox[2] = dys*sub_pos/100 - spu->height * scaley / 0x200;
+      if (sub_data.pos < 50) {
+        bbox[2] = dys*sub_data.pos/100 - spu->height * scaley / 0x200;
         if ((int)(bbox[2]) < 0) bbox[2] = 0;
         bbox[3] = bbox[2] + spu->height;
       } else {
-        bbox[3] = dys*sub_pos/100 + spu->height * scaley / 0x200;
+        bbox[3] = dys*sub_data.pos/100 + spu->height * scaley / 0x200;
         if (bbox[3] > dys) bbox[3] = dys;
         bbox[2] = bbox[3] - spu->height * scaley / 0x100;
       }
       break;
     case 2:
-      bbox[2] = dys*sub_pos/100 - spu->height * scaley / 0x100;
+      bbox[2] = dys*sub_data.pos/100 - spu->height * scaley / 0x100;
       if ((int)(bbox[2]) < 0) bbox[2] = 0;
       bbox[3] = bbox[2] + spu->height;
       break;
@@ -1060,13 +1058,13 @@ nothing_to_do:
       if (spu->scaled_image){
         switch (spu_alignment) {
         case 0:
-          spu->scaled_start_row = dys*sub_pos/100;
+          spu->scaled_start_row = dys*sub_data.pos/100;
 	  if (spu->scaled_start_row + spu->scaled_height > dys)
 	    spu->scaled_start_row = dys - spu->scaled_height;
 	  break;
 	case 1:
-          spu->scaled_start_row = dys*sub_pos/100 - spu->scaled_height/2;
-          if (sub_pos < 50) {
+          spu->scaled_start_row = dys*sub_data.pos/100 - spu->scaled_height/2;
+          if (sub_data.pos < 50) {
 	    if ((int)(spu->scaled_start_row) < 0) spu->scaled_start_row = 0;
 	  } else {
 	    if (spu->scaled_start_row + spu->scaled_height > dys)
@@ -1074,7 +1072,7 @@ nothing_to_do:
 	  }
 	  break;
         case 2:
-          spu->scaled_start_row = dys*sub_pos/100 - spu->scaled_height;
+          spu->scaled_start_row = dys*sub_data.pos/100 - spu->scaled_height;
 	  if ((int)(spu->scaled_start_row) < 0) spu->scaled_start_row = 0;
 	  break;
 	}

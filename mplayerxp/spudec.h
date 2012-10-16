@@ -4,6 +4,10 @@
 #include "libvo/video_out.h"
 #include "libvo/sub.h"
 
+extern int spu_alignment;
+extern int spu_aamode;
+extern float spu_gaussvar;
+
 void __FASTCALL__ spudec_heartbeat(void *_this, unsigned int pts100);
 void __FASTCALL__ spudec_assemble(void *_this, unsigned char *packet, unsigned int len, unsigned int pts100);
 void __FASTCALL__ spudec_draw(void *this, draw_osd_f draw_alpha);

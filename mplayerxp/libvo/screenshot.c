@@ -31,9 +31,11 @@
 
 #define RGB 0
 #define BGR 1
-static int cspace = RGB;
-static unsigned image_width,image_height;
-
+typedef struct sshot_priv_s {
+    int cspace;
+    unsigned image_width,image_height;
+}sshot_priv_t;
+static sshot_priv_t sshot = { RGB, 0, 0 };
 #ifdef HAVE_PNG
 int z_compression = Z_NO_COMPRESSION;
 
@@ -88,14 +90,14 @@ static struct pngdata create_png (char * fname)
     /* set the zlib compression level */
     png_set_compression_level(png.png_ptr, z_compression);
 
-    png_set_IHDR(png.png_ptr, png.info_ptr, image_width, image_height,
+    png_set_IHDR(png.png_ptr, png.info_ptr, sshot.image_width, sshot.image_height,
        8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
        PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
     
     MSG_V("PNG Write Info\n");
     png_write_info(png.png_ptr, png.info_ptr);
     
-    if(cspace) {
+    if(sshot.cspace) {
     	MSG_V("PNG Set BGR Conversion\n");
     	png_set_bgr(png.png_ptr);
     }	
@@ -200,9 +202,9 @@ int gr_screenshot(const char *fname,uint8_t *planes[],int *strides,uint32_t four
 	MSG_ERR("vo_png: Can't initialize SwScaler\n");
 	return -1;
     }
-    image_width = w;
-    image_height = h;
-    if(!(image_data = malloc(image_width*image_height*3)))
+    sshot.image_width = w;
+    sshot.image_height = h;
+    if(!(image_data = malloc(sshot.image_width*sshot.image_height*3)))
     {
 	MSG_ERR("vo_png: Can't allocate temporary buffer\n");
 	return -1;
@@ -223,7 +225,7 @@ int gr_screenshot(const char *fname,uint8_t *planes[],int *strides,uint32_t four
     }
     MSG_V("PNG Compression level %i\n", z_compression);
 #endif
-    dstStride[0]=image_width*3;
+    dstStride[0]=sshot.image_width*3;
     dstStride[1]=
     dstStride[2]=0;
     dst[0]=image_data;
@@ -244,9 +246,9 @@ int gr_screenshot(const char *fname,uint8_t *planes[],int *strides,uint32_t four
     }	     
 
     {
-	png_byte *row_pointers[image_height];
+	png_byte *row_pointers[sshot.image_height];
 	unsigned bppmul = (bpp+7)/8;
-	for ( k = 0; k < image_height; k++ ) row_pointers[k] = &image_data[image_width*k*bppmul];
+	for ( k = 0; k < sshot.image_height; k++ ) row_pointers[k] = &image_data[sshot.image_width*k*bppmul];
 	png_write_image(png.png_ptr, row_pointers);
     }
     

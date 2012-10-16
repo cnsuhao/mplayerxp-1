@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include "mp_config.h"
 #include "subreader.h"
+#include "libvo/sub.h"
 
 #define ERR ((void *) -1)
 
@@ -25,7 +26,6 @@
 #endif
 #define MSGT_CLASS MSGT_SUBREADER
 #include "__mp_msg.h"
-char *sub_cp=NULL;
 
 /* Maximal length of line of a subtitle */
 #define LINE_LEN 1000
@@ -509,12 +509,6 @@ static int sub_autodetect (FILE *fd) {
     return SUB_INVALID;  // too many bad lines
 }
 
-#ifdef DUMPSUBS
-int sub_utf8=0;
-#else
-extern int sub_utf8;
-#endif
-
 extern float sub_delay;
 extern float sub_fps;
 
@@ -525,10 +519,10 @@ void	subcp_open (void)
 {
 	char *tocp = "UTF-8";
 	icdsc = (iconv_t)(-1);
-	if (sub_cp){
-		if ((icdsc = iconv_open (tocp, sub_cp)) != (iconv_t)(-1)){
+	if (sub_data.cp){
+		if ((icdsc = iconv_open (tocp, sub_data.cp)) != (iconv_t)(-1)){
 			MSG_DBG2 ("SUB: opened iconv descriptor.\n");
-			sub_utf8 = 2;
+			sub_data.utf8 = 2;
 		} else
 			MSG_DBG2 ("SUB: error opening iconv descriptor.\n");
 	}
@@ -538,7 +532,7 @@ void	subcp_close (void)
 {
 	if (icdsc != (iconv_t)(-1)){
 		(void) iconv_close (icdsc);
-	   	MSG_DBG2 ("SUB: closed iconv descriptor.\n");
+		MSG_DBG2 ("SUB: closed iconv descriptor.\n");
 	}
 }
 
@@ -585,7 +579,7 @@ subtitle* subcp_recode1 (subtitle *sub)
 {
   int l=sub->lines;
   size_t ileft, oleft;
-  
+
   if(icdsc == (iconv_t)(-1)) return sub;
 
   while (l){
@@ -683,7 +677,7 @@ subtitle* sub_read_file (const char *filename, float fps) {
         sub=func[sub_format](fd,sub);
         if(!sub) break;   // EOF
 #ifdef USE_ICONV
-	if ((sub!=ERR) && (sub_utf8 & 2)) sub=subcp_recode(sub);
+	if ((sub!=ERR) && (sub_data.utf8 & 2)) sub=subcp_recode(sub);
 #endif
         if(sub==ERR) ++sub_errs; else ++sub_num; // Error vs. Valid
     }
@@ -769,7 +763,7 @@ char * sub_filename(const char* path,const char * fname )
  for(j=0;j<=1;j++){
   char* sub_name=j?sub_name1:sub_name2;
 #ifdef USE_ICONV
-  for ( i=(sub_cp?2:0);i<(sizeof(sub_exts)/sizeof(char*));i++ ) {
+  for ( i=(sub_data.cp?2:0);i<(sizeof(sub_exts)/sizeof(char*));i++ ) {
 #else
   for ( i=0;i<(sizeof(sub_exts)/sizeof(char*));i++ ) {
 #endif
@@ -777,7 +771,7 @@ char * sub_filename(const char* path,const char * fname )
    if((f=fopen( sub_name,"rt" ))) {
      fclose( f );
      MSG_INFO( "SUB: Detected sub file: %s\n",sub_name );
-     if (i<2) sub_utf8=1;
+     if (i<2) sub_data.utf8=1;
      return sub_name;
    }
   }

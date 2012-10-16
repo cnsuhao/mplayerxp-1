@@ -22,23 +22,10 @@ extern int sdl_forcegl;
 extern int fakemono; // defined in dec_audio.c
 #endif
 
-#ifdef USE_SUB
-extern int sub_unicode;
-extern int sub_utf8;
-#ifdef USE_ICONV
-extern char *sub_cp;
-#endif
-extern int sub_pos;
-#endif
 extern int subcc_enabled;
 
 #ifdef USE_OSD
 extern int osd_level;
-#endif
-
-#ifdef HAVE_X11
-extern char *mDisplayName;
-extern int WinID;
 #endif
 
 #ifdef HAVE_AA
@@ -245,16 +232,16 @@ static const config_t subtitle_config[]={
 #ifdef USE_SUB
 	{"file", &sub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the subtitle file"},
 #ifdef USE_ICONV
-	{"cp", &sub_cp, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies codepage of subtitles"},
+	{"cp", &sub_data.cp, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies codepage of subtitles"},
 #endif	
 	{"delay", &sub_delay, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL, "delays subtitles by given number of seconds"},
 	{"fps", &sub_fps, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL, "specifies frame/sec rate of subtitle file"},
         {"noauto", &sub_auto, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable autodetection of vobsub for textsubs if vobsub found"},
-	{"unicode", &sub_unicode, CONF_TYPE_FLAG, 0, 0, 1, NULL, "tells MPlayerXP to handle the subtitle file as UNICODE"},
-	{"nounicode", &sub_unicode, CONF_TYPE_FLAG, 0, 1, 0, NULL, "tells MPlayerXP to handle the subtitle file as non-UNICODE"},
-	{"utf8", &sub_utf8, CONF_TYPE_FLAG, 0, 0, 1, NULL, "tells MPlayerXP to handle the subtitle file as UTF8"},
-	{"noutf8", &sub_utf8, CONF_TYPE_FLAG, 0, 1, 0, NULL, "tells MPlayerXP to handle the subtitle file as non-UTF8"},
-	{"pos",&sub_pos,  CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL, "specifies vertical shift of subtitles"},
+	{"unicode", &sub_data.unicode, CONF_TYPE_FLAG, 0, 0, 1, NULL, "tells MPlayerXP to handle the subtitle file as UNICODE"},
+	{"nounicode", &sub_data.unicode, CONF_TYPE_FLAG, 0, 1, 0, NULL, "tells MPlayerXP to handle the subtitle file as non-UNICODE"},
+	{"utf8", &sub_data.utf8, CONF_TYPE_FLAG, 0, 0, 1, NULL, "tells MPlayerXP to handle the subtitle file as UTF8"},
+	{"noutf8", &sub_data.utf8, CONF_TYPE_FLAG, 0, 1, 0, NULL, "tells MPlayerXP to handle the subtitle file as non-UTF8"},
+	{"pos",&sub_data.pos,  CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL, "specifies vertical shift of subtitles"},
 #endif
 	{"cc", &subcc_enabled, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enable DVD Closed Caption (CC) subtitles"},
 	{"nocc", &subcc_enabled, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable DVD Closed Caption (CC) subtitles"},
@@ -266,9 +253,9 @@ static const config_t subtitle_config[]={
 
 #ifdef HAVE_X11
 static const config_t x11_config[]={
-	{"display", &mDisplayName, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the hostname and display number of the X server"},
-	{"wid", &WinID, CONF_TYPE_INT, 0, 0, 0, NULL, "tells MPlayerXP to use existing X11 window (for using MPlayerXP as plugin)"},
-	{"rootwin", &WinID, CONF_TYPE_FLAG, 0, -1, 0, NULL, "render movie in the root window (desktop background)"},
+	{"display", &vo.mDisplayName, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the hostname and display number of the X server"},
+	{"wid", &vo.WinID, CONF_TYPE_INT, 0, 0, 0, NULL, "tells MPlayerXP to use existing X11 window (for using MPlayerXP as plugin)"},
+	{"rootwin", &vo.WinID, CONF_TYPE_FLAG, 0, -1, 0, NULL, "render movie in the root window (desktop background)"},
 #ifdef HAVE_XINERAMA
 	{"xinerama", &xinerama_screen, CONF_TYPE_INT, CONF_RANGE, 0, 32, NULL, "tells MPlayerXP the display for movie playback"},
 #endif

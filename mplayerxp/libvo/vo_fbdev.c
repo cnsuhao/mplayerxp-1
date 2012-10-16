@@ -88,11 +88,67 @@ static int __FASTCALL__ validate_mode(fb_mode_t *m)
 	return 1;
 }
 
-static FILE *fp;
-static int line_num = 0;
-static char *line;
-static char *token[MAX_NR_TOKEN];
-static uint32_t srcFourcc,dstFourcc;
+/******************************
+*	    vo_fbdev	      *
+******************************/
+typedef struct {
+	float min;
+	float max;
+} range_t;
+
+typedef struct fb_priv_s {
+    FILE *		fp;
+    int			line_num;
+    char *		line;
+    char *		token[MAX_NR_TOKEN];
+    uint32_t		srcFourcc,dstFourcc;
+/* command line/config file options */
+    char *		dev_name;
+    char *		mode_cfgfile;
+    char *		mode_name;
+    char *		monitor_hfreq_str;
+    char *		monitor_vfreq_str;
+    char *		monitor_dotclock_str;
+/* fb.modes related variables */
+    range_t *		monitor_hfreq;
+    range_t *		monitor_vfreq;
+    range_t *		monitor_dotclock;
+    fb_mode_t *		mode;
+/* vt related variables */
+    int			vt_fd;
+    FILE *		vt_fp;
+    int			vt_doit;
+/* vo_fbdev related variables */
+    int			dev_fd;
+    int			tty_fd;
+    size_t		size;
+    uint8_t *		frame_buffer;
+    uint8_t *		L123123875;	/* thx .so :) */
+    struct fb_fix_screeninfo	finfo;
+    struct fb_var_screeninfo	orig_vinfo;
+    struct fb_var_screeninfo	vinfo;
+    struct fb_cmap		oldcmap;
+    int			cmap_changed;
+    unsigned		pixel_size;	// 32:  4  24:  3  16:  2  15:  2
+    uint32_t		pixel_format;
+    unsigned		real_bpp;	// 32: 24  24: 24  16: 16  15: 15
+    unsigned		bpp;		// 32: 32  24: 24  16: 16  15: 15
+    unsigned		bpp_we_want;	// 32: 32  24: 24  16: 16  15: 15
+    unsigned		line_len;
+    unsigned		xres;
+    unsigned		yres;
+
+    uint8_t *		next_frame[MAX_DRI_BUFFERS];
+    unsigned		total_fr;
+    int			in_width;
+    int			in_height;
+    unsigned		out_width;
+    unsigned		out_height;
+    int			last_row;
+    int			fs;
+}fb_priv_t;
+static fb_priv_t fb;
+
 
 static int __FASTCALL__ get_token(int num)
 {
@@ -107,40 +163,40 @@ static int __FASTCALL__ get_token(int num)
 	}
 
 	if (read_nextline) {
-		if (!fgets(line, MAX_LINE_LEN, fp))
+		if (!fgets(fb.line, MAX_LINE_LEN, fb.fp))
 			goto out_eof;
 		line_pos = 0;
-		++line_num;
+		++fb.line_num;
 		read_nextline = 0;
 	}
 	for (i = 0; i < num; i++) {
-		while (isspace(line[line_pos]))
+		while (isspace(fb.line[line_pos]))
 			++line_pos;
-		if (line[line_pos] == '\0' || line[line_pos] == '#') {
+		if (fb.line[line_pos] == '\0' || fb.line[line_pos] == '#') {
 			read_nextline = 1;
 			goto out_eol;
 		}
-		token[i] = line + line_pos;
-		c = line[line_pos];
+		fb.token[i] = fb.line + line_pos;
+		c = fb.line[line_pos];
 		if (c == '"' || c == '\'') {
-			token[i]++;
-			while (line[++line_pos] != c && line[line_pos])
+			fb.token[i]++;
+			while (fb.line[++line_pos] != c && fb.line[line_pos])
 				/* NOTHING */;
-			if (!line[line_pos])
+			if (!fb.line[line_pos])
 				goto out_eol;
-			line[line_pos] = ' ';
+			fb.line[line_pos] = ' ';
 		} else {
-			for (/* NOTHING */; !isspace(line[line_pos]) &&
-					line[line_pos]; line_pos++)
+			for (/* NOTHING */; !isspace(fb.line[line_pos]) &&
+					fb.line[line_pos]; line_pos++)
 				/* NOTHING */;
 		}
-		if (!line[line_pos]) {
+		if (!fb.line[line_pos]) {
 			read_nextline = 1;
 			if (i == num - 1)
 				goto out_ok;
 			goto out_eol;
 		}
-		line[line_pos++] = '\0';
+		fb.line[line_pos++] = '\0';
 	}
 out_ok:
 	return i;
@@ -170,13 +226,13 @@ static int __FASTCALL__ parse_fbmode_cfg(char *cfgfile)
 
 	MSG_DBG2("Reading %s: ", cfgfile);
 
-	if ((fp = fopen(cfgfile, "r")) == NULL) {
+	if ((fb.fp = fopen(cfgfile, "r")) == NULL) {
 		MSG_ERR("can't open '%s': %s\n", cfgfile, strerror(errno));
 		return -1;
 	}
 
-	if ((line = (char *) malloc(MAX_LINE_LEN + 1)) == NULL) {
-		MSG_ERR("can't get memory for 'line': %s\n", strerror(errno));
+	if ((fb.line = (char *) malloc(MAX_LINE_LEN + 1)) == NULL) {
+		MSG_ERR("can't get memory for 'fb.line': %s\n", strerror(errno));
 		return -2;
 	}
 
@@ -187,14 +243,14 @@ static int __FASTCALL__ parse_fbmode_cfg(char *cfgfile)
 		/* NOTHING */;
 	if (tmp == RET_EOF)
 		goto out;
-	if (!strcmp(token[0], "mode"))
+	if (!strcmp(fb.token[0], "mode"))
 		goto loop_enter;
 	goto err_out_parse_error;
 
 	while ((tmp = get_token(1)) != RET_EOF) {
 		if (tmp == RET_EOL)
 			continue;
-		if (!strcmp(token[0], "mode")) {
+		if (!strcmp(fb.token[0], "mode")) {
 			if (in_mode_def) {
 				MSG_ERR("'endmode' required");
 				goto err_out_print_linenum;
@@ -215,64 +271,64 @@ static int __FASTCALL__ parse_fbmode_cfg(char *cfgfile)
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
 			for (i = 0; i < nr_modes - 1; i++) {
-				if (!strcmp(token[0], fb_modes[i].name)) {
-					MSG_ERR("mode name '%s' isn't unique", token[0]);
+				if (!strcmp(fb.token[0], fb_modes[i].name)) {
+					MSG_ERR("mode name '%s' isn't unique", fb.token[0]);
 					goto err_out_print_linenum;
 				}
 			}
-			if (!(mode->name = strdup(token[0]))) {
+			if (!(mode->name = strdup(fb.token[0]))) {
 				MSG_ERR("can't strdup -> 'name': %s\n", strerror(errno));
 				goto err_out;
 			}
 			in_mode_def = 1;
-		} else if (!strcmp(token[0], "geometry")) {
+		} else if (!strcmp(fb.token[0], "geometry")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(5) < 0)
 				goto err_out_parse_error;
-			mode->xres = strtoul(token[0], &endptr, 0);
+			mode->xres = strtoul(fb.token[0], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->yres = strtoul(token[1], &endptr, 0);
+			mode->yres = strtoul(fb.token[1], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->vxres = strtoul(token[2], &endptr, 0);
+			mode->vxres = strtoul(fb.token[2], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->vyres = strtoul(token[3], &endptr, 0);
+			mode->vyres = strtoul(fb.token[3], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->depth = strtoul(token[4], &endptr, 0);
+			mode->depth = strtoul(fb.token[4], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-		} else if (!strcmp(token[0], "timings")) {
+		} else if (!strcmp(fb.token[0], "timings")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(7) < 0)
 				goto err_out_parse_error;
-			mode->pixclock = strtoul(token[0], &endptr, 0);
+			mode->pixclock = strtoul(fb.token[0], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->left = strtoul(token[1], &endptr, 0);
+			mode->left = strtoul(fb.token[1], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->right = strtoul(token[2], &endptr, 0);
+			mode->right = strtoul(fb.token[2], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->upper = strtoul(token[3], &endptr, 0);
+			mode->upper = strtoul(fb.token[3], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->lower = strtoul(token[4], &endptr, 0);
+			mode->lower = strtoul(fb.token[4], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->hslen = strtoul(token[5], &endptr, 0);
+			mode->hslen = strtoul(fb.token[5], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-			mode->vslen = strtoul(token[6], &endptr, 0);
+			mode->vslen = strtoul(fb.token[6], &endptr, 0);
 			if (*endptr)
 				goto err_out_parse_error;
-		} else if (!strcmp(token[0], "endmode")) {
+		} else if (!strcmp(fb.token[0], "endmode")) {
 			CHECK_IN_MODE_DEF;
 			in_mode_def = 0;
-		} else if (!strcmp(token[0], "accel")) {
+		} else if (!strcmp(fb.token[0], "accel")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
@@ -280,63 +336,63 @@ static int __FASTCALL__ parse_fbmode_cfg(char *cfgfile)
 			 * it's only used for text acceleration
 			 * so we just ignore it.
 			 */
-		} else if (!strcmp(token[0], "hsync")) {
+		} else if (!strcmp(fb.token[0], "hsync")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
-			if (!strcmp(token[0], "low"))
+			if (!strcmp(fb.token[0], "low"))
 				mode->sync &= ~FB_SYNC_HOR_HIGH_ACT;
-			else if(!strcmp(token[0], "high"))
+			else if(!strcmp(fb.token[0], "high"))
 				mode->sync |= FB_SYNC_HOR_HIGH_ACT;
 			else
 				goto err_out_parse_error;
-		} else if (!strcmp(token[0], "vsync")) {
+		} else if (!strcmp(fb.token[0], "vsync")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
-			if (!strcmp(token[0], "low"))
+			if (!strcmp(fb.token[0], "low"))
 				mode->sync &= ~FB_SYNC_VERT_HIGH_ACT;
-			else if(!strcmp(token[0], "high"))
+			else if(!strcmp(fb.token[0], "high"))
 				mode->sync |= FB_SYNC_VERT_HIGH_ACT;
 			else
 				goto err_out_parse_error;
-		} else if (!strcmp(token[0], "csync")) {
+		} else if (!strcmp(fb.token[0], "csync")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
-			if (!strcmp(token[0], "low"))
+			if (!strcmp(fb.token[0], "low"))
 				mode->sync &= ~FB_SYNC_COMP_HIGH_ACT;
-			else if(!strcmp(token[0], "high"))
+			else if(!strcmp(fb.token[0], "high"))
 				mode->sync |= FB_SYNC_COMP_HIGH_ACT;
 			else
 				goto err_out_parse_error;
-		} else if (!strcmp(token[0], "extsync")) {
+		} else if (!strcmp(fb.token[0], "extsync")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
-			if (!strcmp(token[0], "false"))
+			if (!strcmp(fb.token[0], "false"))
 				mode->sync &= ~FB_SYNC_EXT;
-			else if(!strcmp(token[0], "true"))
+			else if(!strcmp(fb.token[0], "true"))
 				mode->sync |= FB_SYNC_EXT;
 			else
 				goto err_out_parse_error;
-		} else if (!strcmp(token[0], "laced")) {
+		} else if (!strcmp(fb.token[0], "laced")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
-			if (!strcmp(token[0], "false"))
+			if (!strcmp(fb.token[0], "false"))
 				mode->vmode = FB_VMODE_NONINTERLACED;
-			else if (!strcmp(token[0], "true"))
+			else if (!strcmp(fb.token[0], "true"))
 				mode->vmode = FB_VMODE_INTERLACED;
 			else
 				goto err_out_parse_error;
-		} else if (!strcmp(token[0], "double")) {
+		} else if (!strcmp(fb.token[0], "double")) {
 			CHECK_IN_MODE_DEF;
 			if (get_token(1) < 0)
 				goto err_out_parse_error;
-			if (!strcmp(token[0], "false"))
+			if (!strcmp(fb.token[0], "false"))
 				;
-			else if (!strcmp(token[0], "true"))
+			else if (!strcmp(fb.token[0], "true"))
 				mode->vmode = FB_VMODE_DOUBLE;
 			else
 				goto err_out_parse_error;
@@ -347,8 +403,8 @@ static int __FASTCALL__ parse_fbmode_cfg(char *cfgfile)
 		goto err_out_not_valid;
 out:
 	MSG_DBG2("%d modes\n", nr_modes);
-	free(line);
-	fclose(fp);
+	free(fb.line);
+	fclose(fb.fp);
 	return nr_modes;
 err_out_parse_error:
 	MSG_ERR("parse error");
@@ -360,8 +416,8 @@ err_out:
 		fb_modes = NULL;
 	}
 	nr_modes = 0;
-	free(line);
-	free(fp);
+	free(fb.line);
+	free(fb.fp);
 	return -2;
 err_out_not_valid:
 	MSG_ERR("previous mode is not correct");
@@ -394,11 +450,6 @@ static float __FASTCALL__ vsf(fb_mode_t *m)	//vertical scan frequency
 	int vtotal = m->upper + m->yres + m->lower + m->vslen;
 	return hsf(m) / vtotal;
 }
-
-typedef struct {
-	float min;
-	float max;
-} range_t;
 
 static int __FASTCALL__ in_range(range_t *r, float f)
 {
@@ -598,58 +649,6 @@ out_err:
 	return NULL;
 }
 
-/******************************
-*	    vo_fbdev	      *
-******************************/
-
-/* command line/config file options */
-static char *fb_dev_name = NULL;
-static char *fb_mode_cfgfile = "/etc/fb.modes";
-static char *fb_mode_name = NULL;
-static char *monitor_hfreq_str = NULL;
-static char *monitor_vfreq_str = NULL;
-static char *monitor_dotclock_str = NULL;
-
-/* fb.modes related variables */
-static range_t *monitor_hfreq = NULL;
-static range_t *monitor_vfreq = NULL;
-static range_t *monitor_dotclock = NULL;
-static fb_mode_t *fb_mode = NULL;
-
-/* vt related variables */
-static int vt_fd;
-static FILE *vt_fp;
-static int vt_doit = 1;
-
-/* vo_fbdev related variables */
-static int fb_dev_fd;
-static int fb_tty_fd;
-static size_t fb_size;
-static uint8_t *frame_buffer;
-static uint8_t *L123123875;	/* thx .so :) */
-static struct fb_fix_screeninfo fb_finfo;
-static struct fb_var_screeninfo fb_orig_vinfo;
-static struct fb_var_screeninfo fb_vinfo;
-static struct fb_cmap fb_oldcmap;
-static int fb_cmap_changed = 0;
-static unsigned fb_pixel_size;	// 32:  4  24:  3  16:  2  15:  2
-static unsigned fb_real_bpp;	// 32: 24  24: 24  16: 16  15: 15
-static unsigned fb_bpp;		// 32: 32  24: 24  16: 16  15: 15
-static unsigned fb_bpp_we_want;	// 32: 32  24: 24  16: 16  15: 15
-static unsigned fb_line_len;
-static unsigned fb_xres;
-static unsigned fb_yres;
-
-static uint8_t *next_frame[MAX_DRI_BUFFERS];
-static unsigned total_fr;
-static int in_width;
-static int in_height;
-static unsigned out_width;
-static unsigned out_height;
-static int last_row;
-static uint32_t pixel_format;
-static int fs;
-
 /*
  * Note: this function is completely cut'n'pasted from
  * Chris Lawrence's code.
@@ -723,10 +722,10 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
 
 static mrl_config_t fbconf[]=
 {
-	{ "modeconfig", &fb_mode_cfgfile, MRL_TYPE_STRING, 0, 0 },
-	{ "hfreq", &monitor_hfreq_str, MRL_TYPE_STRING, 0, 0 },
-	{ "vfreq", &monitor_vfreq_str, MRL_TYPE_STRING, 0, 0 },
-	{ "dotclock", &monitor_dotclock_str, MRL_TYPE_STRING, 0, 0 },
+	{ "modeconfig", &fb.mode_cfgfile, MRL_TYPE_STRING, 0, 0 },
+	{ "hfreq", &fb.monitor_hfreq_str, MRL_TYPE_STRING, 0, 0 },
+	{ "vfreq", &fb.monitor_vfreq_str, MRL_TYPE_STRING, 0, 0 },
+	{ "dotclock", &fb.monitor_dotclock_str, MRL_TYPE_STRING, 0, 0 },
 	{ NULL, NULL, 0, 0, 0 },
 };
 
@@ -738,7 +737,7 @@ static uint32_t __FASTCALL__ parseSubDevice(const char *sd)
    else
 #endif
     {
-	param=mrl_parse_line(sd,NULL,NULL,&fb_dev_name,&fb_mode_name);
+	param=mrl_parse_line(sd,NULL,NULL,&fb.dev_name,&fb.mode_name);
 	mrl_parse_params(param,fbconf);
     }
     return 0;
@@ -752,35 +751,35 @@ static int fb_preinit(void)
 	if (fb_preinit_done)
 		return fb_works;
 
-	if (!fb_dev_name && !(fb_dev_name = getenv("FRAMEBUFFER")))
-		fb_dev_name = "/dev/fb0";
-	MSG_DBG2(FBDEV "using %s\n", fb_dev_name);
+	if (!fb.dev_name && !(fb.dev_name = getenv("FRAMEBUFFER")))
+		fb.dev_name = "/dev/fb0";
+	MSG_DBG2(FBDEV "using %s\n", fb.dev_name);
 
-	if ((fb_dev_fd = open(fb_dev_name, O_RDWR)) == -1) {
-		MSG_ERR(FBDEV "Can't open %s: %s\n", fb_dev_name, strerror(errno));
+	if ((fb.dev_fd = open(fb.dev_name, O_RDWR)) == -1) {
+		MSG_ERR(FBDEV "Can't open %s: %s\n", fb.dev_name, strerror(errno));
 		goto err_out;
 	}
-	if (ioctl(fb_dev_fd, FBIOGET_VSCREENINFO, &fb_vinfo)) {
+	if (ioctl(fb.dev_fd, FBIOGET_VSCREENINFO, &fb.vinfo)) {
 		MSG_ERR(FBDEV "Can't get VSCREENINFO: %s\n", strerror(errno));
 		goto err_out_fd;
 	}
-	fb_orig_vinfo = fb_vinfo;
+	fb.orig_vinfo = fb.vinfo;
 
-        if ((fb_tty_fd = open("/dev/tty", O_RDWR)) < 0) {
+        if ((fb.tty_fd = open("/dev/tty", O_RDWR)) < 0) {
 		MSG_DBG2(FBDEV "notice: Can't open /dev/tty: %s\n", strerror(errno));
         }
 
-	fb_bpp = fb_vinfo.bits_per_pixel;
+	fb.bpp = fb.vinfo.bits_per_pixel;
 
-	if (fb_bpp == 8 && !vo.dbpp) {
+	if (fb.bpp == 8 && !vo.dbpp) {
 		MSG_ERR(FBDEV "8 bpp output is not supported.\n");
 		goto err_out_tty_fd;
 	}
 
 	/* 16 and 15 bpp is reported as 16 bpp */
-	if (fb_bpp == 16)
-		fb_bpp = fb_vinfo.red.length + fb_vinfo.green.length +
-			fb_vinfo.blue.length;
+	if (fb.bpp == 16)
+		fb.bpp = fb.vinfo.red.length + fb.vinfo.green.length +
+			fb.vinfo.blue.length;
 
 	if (vo.dbpp) {
 		if (vo.dbpp != 15 && vo.dbpp != 16 && vo.dbpp != 24 &&
@@ -788,18 +787,18 @@ static int fb_preinit(void)
 			MSG_ERR(FBDEV "can't switch to %d bpp\n", vo.dbpp);
 			goto err_out_fd;
 		}
-		fb_bpp = vo.dbpp;
+		fb.bpp = vo.dbpp;
 	}
 
 	fb_preinit_done = 1;
 	fb_works = 1;
 	return 1;
 err_out_tty_fd:
-	close(fb_tty_fd);
-	fb_tty_fd = -1;
+	close(fb.tty_fd);
+	fb.tty_fd = -1;
 err_out_fd:
-	close(fb_dev_fd);
-	fb_dev_fd = -1;
+	close(fb.dev_fd);
+	fb.dev_fd = -1;
 err_out:
 	fb_preinit_done = 1;
 	fb_works = 0;
@@ -809,68 +808,68 @@ err_out:
 static void lots_of_printf(void)
 {
 	MSG_V(FBDEV "var info:\n");
-	MSG_V(FBDEV "xres: %u\n", fb_vinfo.xres);
-	MSG_V(FBDEV "yres: %u\n", fb_vinfo.yres);
-	MSG_V(FBDEV "xres_virtual: %u\n", fb_vinfo.xres_virtual);
-	MSG_V(FBDEV "yres_virtual: %u\n", fb_vinfo.yres_virtual);
-	MSG_V(FBDEV "xoffset: %u\n", fb_vinfo.xoffset);
-	MSG_V(FBDEV "yoffset: %u\n", fb_vinfo.yoffset);
-	MSG_V(FBDEV "bits_per_pixel: %u\n", fb_vinfo.bits_per_pixel);
-	MSG_V(FBDEV "grayscale: %u\n", fb_vinfo.grayscale);
+	MSG_V(FBDEV "xres: %u\n", fb.vinfo.xres);
+	MSG_V(FBDEV "yres: %u\n", fb.vinfo.yres);
+	MSG_V(FBDEV "xres_virtual: %u\n", fb.vinfo.xres_virtual);
+	MSG_V(FBDEV "yres_virtual: %u\n", fb.vinfo.yres_virtual);
+	MSG_V(FBDEV "xoffset: %u\n", fb.vinfo.xoffset);
+	MSG_V(FBDEV "yoffset: %u\n", fb.vinfo.yoffset);
+	MSG_V(FBDEV "bits_per_pixel: %u\n", fb.vinfo.bits_per_pixel);
+	MSG_V(FBDEV "grayscale: %u\n", fb.vinfo.grayscale);
 	MSG_V(FBDEV "red: %lu %lu %lu\n",
-			(unsigned long) fb_vinfo.red.offset,
-			(unsigned long) fb_vinfo.red.length,
-			(unsigned long) fb_vinfo.red.msb_right);
+			(unsigned long) fb.vinfo.red.offset,
+			(unsigned long) fb.vinfo.red.length,
+			(unsigned long) fb.vinfo.red.msb_right);
 	MSG_V(FBDEV "green: %lu %lu %lu\n",
-			(unsigned long) fb_vinfo.green.offset,
-			(unsigned long) fb_vinfo.green.length,
-			(unsigned long) fb_vinfo.green.msb_right);
+			(unsigned long) fb.vinfo.green.offset,
+			(unsigned long) fb.vinfo.green.length,
+			(unsigned long) fb.vinfo.green.msb_right);
 	MSG_V(FBDEV "blue: %lu %lu %lu\n",
-			(unsigned long) fb_vinfo.blue.offset,
-			(unsigned long) fb_vinfo.blue.length,
-			(unsigned long) fb_vinfo.blue.msb_right);
+			(unsigned long) fb.vinfo.blue.offset,
+			(unsigned long) fb.vinfo.blue.length,
+			(unsigned long) fb.vinfo.blue.msb_right);
 	MSG_V(FBDEV "transp: %lu %lu %lu\n",
-			(unsigned long) fb_vinfo.transp.offset,
-			(unsigned long) fb_vinfo.transp.length,
-			(unsigned long) fb_vinfo.transp.msb_right);
-	MSG_V(FBDEV "nonstd: %u\n", fb_vinfo.nonstd);
-	MSG_DBG2(FBDEV "activate: %u\n", fb_vinfo.activate);
-	MSG_DBG2(FBDEV "height: %u\n", fb_vinfo.height);
-	MSG_DBG2(FBDEV "width: %u\n", fb_vinfo.width);
-	MSG_DBG2(FBDEV "accel_flags: %u\n", fb_vinfo.accel_flags);
+			(unsigned long) fb.vinfo.transp.offset,
+			(unsigned long) fb.vinfo.transp.length,
+			(unsigned long) fb.vinfo.transp.msb_right);
+	MSG_V(FBDEV "nonstd: %u\n", fb.vinfo.nonstd);
+	MSG_DBG2(FBDEV "activate: %u\n", fb.vinfo.activate);
+	MSG_DBG2(FBDEV "height: %u\n", fb.vinfo.height);
+	MSG_DBG2(FBDEV "width: %u\n", fb.vinfo.width);
+	MSG_DBG2(FBDEV "accel_flags: %u\n", fb.vinfo.accel_flags);
 	MSG_DBG2(FBDEV "timing:\n");
-	MSG_DBG2(FBDEV "pixclock: %u\n", fb_vinfo.pixclock);
-	MSG_DBG2(FBDEV "left_margin: %u\n", fb_vinfo.left_margin);
-	MSG_DBG2(FBDEV "right_margin: %u\n", fb_vinfo.right_margin);
-	MSG_DBG2(FBDEV "upper_margin: %u\n", fb_vinfo.upper_margin);
-	MSG_DBG2(FBDEV "lower_margin: %u\n", fb_vinfo.lower_margin);
-	MSG_DBG2(FBDEV "hsync_len: %u\n", fb_vinfo.hsync_len);
-	MSG_DBG2(FBDEV "vsync_len: %u\n", fb_vinfo.vsync_len);
-	MSG_DBG2(FBDEV "sync: %u\n", fb_vinfo.sync);
-	MSG_DBG2(FBDEV "vmode: %u\n", fb_vinfo.vmode);
+	MSG_DBG2(FBDEV "pixclock: %u\n", fb.vinfo.pixclock);
+	MSG_DBG2(FBDEV "left_margin: %u\n", fb.vinfo.left_margin);
+	MSG_DBG2(FBDEV "right_margin: %u\n", fb.vinfo.right_margin);
+	MSG_DBG2(FBDEV "upper_margin: %u\n", fb.vinfo.upper_margin);
+	MSG_DBG2(FBDEV "lower_margin: %u\n", fb.vinfo.lower_margin);
+	MSG_DBG2(FBDEV "hsync_len: %u\n", fb.vinfo.hsync_len);
+	MSG_DBG2(FBDEV "vsync_len: %u\n", fb.vinfo.vsync_len);
+	MSG_DBG2(FBDEV "sync: %u\n", fb.vinfo.sync);
+	MSG_DBG2(FBDEV "vmode: %u\n", fb.vinfo.vmode);
 	MSG_V(FBDEV "fix info:\n");
-	MSG_V(FBDEV "framebuffer size: %d bytes\n", fb_finfo.smem_len);
-	MSG_V(FBDEV "type: %lu\n", (unsigned long) fb_finfo.type);
-	MSG_V(FBDEV "type_aux: %lu\n", (unsigned long) fb_finfo.type_aux);
-	MSG_V(FBDEV "visual: %lu\n", (unsigned long) fb_finfo.visual);
-	MSG_V(FBDEV "line_length: %lu bytes\n", (unsigned long) fb_finfo.line_length);
-	MSG_DBG2(FBDEV "id: %.16s\n", fb_finfo.id);
-	MSG_DBG2(FBDEV "smem_start: %p\n", (void *) fb_finfo.smem_start);
-	MSG_DBG2(FBDEV "xpanstep: %u\n", fb_finfo.xpanstep);
-	MSG_DBG2(FBDEV "ypanstep: %u\n", fb_finfo.ypanstep);
-	MSG_DBG2(FBDEV "ywrapstep: %u\n", fb_finfo.ywrapstep);
-	MSG_DBG2(FBDEV "mmio_start: %p\n", (void *) fb_finfo.mmio_start);
-	MSG_DBG2(FBDEV "mmio_len: %u bytes\n", fb_finfo.mmio_len);
-	MSG_DBG2(FBDEV "accel: %u\n", fb_finfo.accel);
-	MSG_V(FBDEV "fb_bpp: %d\n", fb_bpp);
-	MSG_V(FBDEV "fb_real_bpp: %d\n", fb_real_bpp);
-	MSG_V(FBDEV "fb_pixel_size: %d bytes\n", fb_pixel_size);
+	MSG_V(FBDEV "framebuffer size: %d bytes\n", fb.finfo.smem_len);
+	MSG_V(FBDEV "type: %lu\n", (unsigned long) fb.finfo.type);
+	MSG_V(FBDEV "type_aux: %lu\n", (unsigned long) fb.finfo.type_aux);
+	MSG_V(FBDEV "visual: %lu\n", (unsigned long) fb.finfo.visual);
+	MSG_V(FBDEV "line_length: %lu bytes\n", (unsigned long) fb.finfo.line_length);
+	MSG_DBG2(FBDEV "id: %.16s\n", fb.finfo.id);
+	MSG_DBG2(FBDEV "smem_start: %p\n", (void *) fb.finfo.smem_start);
+	MSG_DBG2(FBDEV "xpanstep: %u\n", fb.finfo.xpanstep);
+	MSG_DBG2(FBDEV "ypanstep: %u\n", fb.finfo.ypanstep);
+	MSG_DBG2(FBDEV "ywrapstep: %u\n", fb.finfo.ywrapstep);
+	MSG_DBG2(FBDEV "mmio_start: %p\n", (void *) fb.finfo.mmio_start);
+	MSG_DBG2(FBDEV "mmio_len: %u bytes\n", fb.finfo.mmio_len);
+	MSG_DBG2(FBDEV "accel: %u\n", fb.finfo.accel);
+	MSG_V(FBDEV "fb.bpp: %d\n", fb.bpp);
+	MSG_V(FBDEV "fb.real_bpp: %d\n", fb.real_bpp);
+	MSG_V(FBDEV "fb.pixel_size: %d bytes\n", fb.pixel_size);
 	MSG_V(FBDEV "other:\n");
-	MSG_V(FBDEV "in_width: %d\n", in_width);
-	MSG_V(FBDEV "in_height: %d\n", in_height);
-	MSG_V(FBDEV "out_width: %d\n", out_width);
-	MSG_V(FBDEV "out_height: %d\n", out_height);
-	MSG_V(FBDEV "last_row: %d\n", last_row);
+	MSG_V(FBDEV "fb.in_width: %d\n", fb.in_width);
+	MSG_V(FBDEV "fb.in_height: %d\n", fb.in_height);
+	MSG_V(FBDEV "fb.out_width: %d\n", fb.out_width);
+	MSG_V(FBDEV "fb.out_height: %d\n", fb.out_height);
+	MSG_V(FBDEV "fb.last_row: %d\n", fb.last_row);
 }
 
 static void __FASTCALL__ vt_set_textarea(int u, int l)
@@ -883,8 +882,8 @@ static void __FASTCALL__ vt_set_textarea(int u, int l)
 
 	if (verbose > 1)
 		MSG_DBG2(FBDEV "vt_set_textarea(%d,%d): %d,%d\n", u, l, urow, lrow);
-	fprintf(vt_fp, "\33[%d;%dr\33[%d;%dH", urow, lrow, lrow, 0);
-	fflush(vt_fp);
+	fprintf(fb.vt_fp, "\33[%d;%dr\33[%d;%dH", urow, lrow, lrow, 0);
+	fflush(fb.vt_fp);
 }
 
 static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_width,
@@ -898,8 +897,8 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	UNUSED(title);
 	vo.fs = fullscreen & 0x01;
 	vo.flip = fullscreen & 0x08;
-	if(fs) zoom++;
-	srcFourcc = format;
+	if(fb.fs) zoom++;
+	fb.srcFourcc = format;
 	if((int)pre_init_err == -2)
 	{
 	    MSG_ERR(FBDEV "Internal fatal error: init() was called before preinit()\n");
@@ -908,131 +907,131 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 
 	if (pre_init_err) return 1;
 
-	if (fb_mode_name && !vm) {
+	if (fb.mode_name && !vm) {
 		MSG_ERR(FBDEV "-fbmode can only be used with -vm\n");
 		return 1;
 	}
-	if (vm && (parse_fbmode_cfg(fb_mode_cfgfile) < 0))
+	if (vm && (parse_fbmode_cfg(fb.mode_cfgfile) < 0))
 			return 1;
 	if (d_width && (zoom || vm)) {
-		out_width = d_width;
-		out_height = d_height;
+		fb.out_width = d_width;
+		fb.out_height = d_height;
 	} else {
-		out_width = width;
-		out_height = height;
+		fb.out_width = width;
+		fb.out_height = height;
 	}
-	in_width = width;
-	in_height = height;
-	pixel_format = format;
+	fb.in_width = width;
+	fb.in_height = height;
+	fb.pixel_format = format;
 
-	if (fb_mode_name) {
-		if (!(fb_mode = find_mode_by_name(fb_mode_name))) {
+	if (fb.mode_name) {
+		if (!(fb.mode = find_mode_by_name(fb.mode_name))) {
 			MSG_ERR(FBDEV "can't find requested video mode\n");
 			return 1;
 		}
-		fb_mode2fb_vinfo(fb_mode, &fb_vinfo);
+		fb_mode2fb_vinfo(fb.mode, &fb.vinfo);
 	} else if (vm) {
-		monitor_hfreq = str2range(monitor_hfreq_str);
-		monitor_vfreq = str2range(monitor_vfreq_str);
-		monitor_dotclock = str2range(monitor_dotclock_str);
-		if (!monitor_hfreq || !monitor_vfreq || !monitor_dotclock) {
+		fb.monitor_hfreq = str2range(fb.monitor_hfreq_str);
+		fb.monitor_vfreq = str2range(fb.monitor_vfreq_str);
+		fb.monitor_dotclock = str2range(fb.monitor_dotclock_str);
+		if (!fb.monitor_hfreq || !fb.monitor_vfreq || !fb.monitor_dotclock) {
 			MSG_ERR(FBDEV "you have to specify the capabilities of"
 					" the monitor.\n");
 			return 1;
 		}
-		if (!(fb_mode = find_best_mode(out_width, out_height,
-					monitor_hfreq, monitor_vfreq,
-					monitor_dotclock))) {
+		if (!(fb.mode = find_best_mode(fb.out_width, fb.out_height,
+					fb.monitor_hfreq, fb.monitor_vfreq,
+					fb.monitor_dotclock))) {
 			MSG_ERR(FBDEV "can't find best video mode\n");
 			return 1;
 		}
-		MSG_ERR(FBDEV "using mode %dx%d @ %.1fHz\n", fb_mode->xres,
-				fb_mode->yres, vsf(fb_mode));
-		fb_mode2fb_vinfo(fb_mode, &fb_vinfo);
+		MSG_ERR(FBDEV "using mode %dx%d @ %.1fHz\n", fb.mode->xres,
+				fb.mode->yres, vsf(fb.mode));
+		fb_mode2fb_vinfo(fb.mode, &fb.vinfo);
 	}
-	fb_bpp_we_want = fb_bpp;
-	set_bpp(&fb_vinfo, fb_bpp);
-	fb_vinfo.xres_virtual = fb_vinfo.xres;
-	fb_vinfo.yres_virtual = fb_vinfo.yres;
+	fb.bpp_we_want = fb.bpp;
+	set_bpp(&fb.vinfo, fb.bpp);
+	fb.vinfo.xres_virtual = fb.vinfo.xres;
+	fb.vinfo.yres_virtual = fb.vinfo.yres;
 
-        if (fb_tty_fd >= 0 && ioctl(fb_tty_fd, KDSETMODE, KD_GRAPHICS) < 0) {
+        if (fb.tty_fd >= 0 && ioctl(fb.tty_fd, KDSETMODE, KD_GRAPHICS) < 0) {
                     MSG_DBG2(FBDEV "Can't set graphics mode: %s\n", strerror(errno));
-                close(fb_tty_fd);
-                fb_tty_fd = -1;
+                close(fb.tty_fd);
+                fb.tty_fd = -1;
         }
 
-	if (ioctl(fb_dev_fd, FBIOPUT_VSCREENINFO, &fb_vinfo)) {
+	if (ioctl(fb.dev_fd, FBIOPUT_VSCREENINFO, &fb.vinfo)) {
 		MSG_ERR(FBDEV "Can't put VSCREENINFO: %s\n", strerror(errno));
-                if (fb_tty_fd >= 0 && ioctl(fb_tty_fd, KDSETMODE, KD_TEXT) < 0) {
+                if (fb.tty_fd >= 0 && ioctl(fb.tty_fd, KDSETMODE, KD_TEXT) < 0) {
                         MSG_ERR(FBDEV "Can't restore text mode: %s\n", strerror(errno));
                 }
 		return 1;
 	}
 
-	fb_pixel_size = (fb_vinfo.bits_per_pixel+7) / 8;
-	fb_real_bpp = fb_vinfo.red.length + fb_vinfo.green.length +
-		fb_vinfo.blue.length;
-	fb_bpp = (fb_pixel_size == 4) ? 32 : fb_real_bpp;
-	if (fb_bpp_we_want != fb_bpp)
+	fb.pixel_size = (fb.vinfo.bits_per_pixel+7) / 8;
+	fb.real_bpp = fb.vinfo.red.length + fb.vinfo.green.length +
+		fb.vinfo.blue.length;
+	fb.bpp = (fb.pixel_size == 4) ? 32 : fb.real_bpp;
+	if (fb.bpp_we_want != fb.bpp)
 		MSG_ERR(FBDEV "requested %d bpp, got %d bpp!!!\n",
-				fb_bpp_we_want, fb_bpp);
+				fb.bpp_we_want, fb.bpp);
 
-	switch (fb_bpp) {
+	switch (fb.bpp) {
 	case 32:
-		dstFourcc = IMGFMT_BGR32;
+		fb.dstFourcc = IMGFMT_BGR32;
 		break;
 	case 24:
-		dstFourcc = IMGFMT_BGR24;
+		fb.dstFourcc = IMGFMT_BGR24;
 		break;
 	default:
 	case 16:
-		dstFourcc = IMGFMT_BGR16;
+		fb.dstFourcc = IMGFMT_BGR16;
 		break;
 	case 15:
-		dstFourcc = IMGFMT_BGR15;
+		fb.dstFourcc = IMGFMT_BGR15;
 		break;
 	}
 
-	if (vo.flip & ((((pixel_format & 0xff) + 7) / 8) != fb_pixel_size)) {
+	if (vo.flip & ((((fb.pixel_format & 0xff) + 7) / 8) != fb.pixel_size)) {
 		MSG_ERR(FBDEV "Flipped output with depth conversion is not "
 				"supported\n");
 		return 1;
 	}
 
-	fb_xres = fb_vinfo.xres;
-	fb_yres = fb_vinfo.yres;
-	last_row = (fb_xres-out_height) / 2;
+	fb.xres = fb.vinfo.xres;
+	fb.yres = fb.vinfo.yres;
+	fb.last_row = (fb.xres-fb.out_height) / 2;
 
-	if (ioctl(fb_dev_fd, FBIOGET_FSCREENINFO, &fb_finfo)) {
+	if (ioctl(fb.dev_fd, FBIOGET_FSCREENINFO, &fb.finfo)) {
 		MSG_ERR(FBDEV "Can't get FSCREENINFO: %s\n", strerror(errno));
 		return 1;
 	}
 
 	lots_of_printf();
 
-	if (fb_finfo.type != FB_TYPE_PACKED_PIXELS) {
-		MSG_ERR(FBDEV "type %d not supported\n", fb_finfo.type);
+	if (fb.finfo.type != FB_TYPE_PACKED_PIXELS) {
+		MSG_ERR(FBDEV "type %d not supported\n", fb.finfo.type);
 		return 1;
 	}
 
-	switch (fb_finfo.visual) {
+	switch (fb.finfo.visual) {
 		case FB_VISUAL_TRUECOLOR:
 			break;
 		case FB_VISUAL_DIRECTCOLOR:
 			MSG_DBG2(FBDEV "creating cmap for directcolor\n");
-			if (ioctl(fb_dev_fd, FBIOGETCMAP, &fb_oldcmap)) {
+			if (ioctl(fb.dev_fd, FBIOGETCMAP, &fb.oldcmap)) {
 				MSG_ERR(FBDEV "can't get cmap: %s\n",
 						strerror(errno));
 				return 1;
 			}
-			if (!(cmap = make_directcolor_cmap(&fb_vinfo)))
+			if (!(cmap = make_directcolor_cmap(&fb.vinfo)))
 				return 1;
-			if (ioctl(fb_dev_fd, FBIOPUTCMAP, cmap)) {
+			if (ioctl(fb.dev_fd, FBIOPUTCMAP, cmap)) {
 				MSG_ERR(FBDEV "can't put cmap: %s\n",
 						strerror(errno));
 				return 1;
 			}
-			fb_cmap_changed = 1;
+			fb.cmap_changed = 1;
 			free(cmap->red);
 			free(cmap->green);
 			free(cmap->blue);
@@ -1040,43 +1039,43 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 			break;
 		default:
 			MSG_ERR(FBDEV "visual: %d not yet supported\n",
-					fb_finfo.visual);
+					fb.finfo.visual);
 			return 1;
 	}
 
-	fb_line_len = fb_finfo.line_length;
-	fb_size = fb_finfo.smem_len;
-	frame_buffer = NULL;
-	memset(next_frame,0,sizeof(next_frame));
-	out_width=width;
-	out_height=height;
+	fb.line_len = fb.finfo.line_length;
+	fb.size = fb.finfo.smem_len;
+	fb.frame_buffer = NULL;
+	memset(fb.next_frame,0,sizeof(fb.next_frame));
+	fb.out_width=width;
+	fb.out_height=height;
 	if(zoom > 1)
 	{
 	        aspect_save_orig(width,height);
 		aspect_save_prescale(d_width,d_height);
-		aspect_save_screenres(fb_xres,fb_yres);
-		aspect(&out_width,&out_height,A_ZOOM);
+		aspect_save_screenres(fb.xres,fb.yres);
+		aspect(&fb.out_width,&fb.out_height,A_ZOOM);
 	}
 	else
-	if(fs)
+	if(fb.fs)
 	{
-		out_width = fb_xres;
-		out_height = fb_yres;
+		fb.out_width = fb.xres;
+		fb.out_height = fb.yres;
 	}
-	if(fb_xres > out_width)
-	    x_offset = (fb_xres - out_width) / 2;
+	if(fb.xres > fb.out_width)
+	    x_offset = (fb.xres - fb.out_width) / 2;
 	else x_offset = 0;
-	if(fb_yres > out_height)
-	    y_offset = (fb_yres - out_height) / 2;
+	if(fb.yres > fb.out_height)
+	    y_offset = (fb.yres - fb.out_height) / 2;
 	else y_offset = 0;
 
 	
 #ifdef CONFIG_VIDIX
 	if(vidix_name)
 	{
-		if(vidix_init(width,height,x_offset,y_offset,out_width,
-			    out_height,format,fb_bpp,
-			    fb_xres,fb_yres,info) != 0)
+		if(vidix_init(width,height,x_offset,y_offset,fb.out_width,
+			    fb.out_height,format,fb.bpp,
+			    fb.xres,fb.yres,info) != 0)
 		{
 		    MSG_ERR(FBDEV "Can't initialize VIDIX driver\n");
 		    vidix_name = NULL;
@@ -1084,48 +1083,48 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		    return -1;
 		}
 		else MSG_V(FBDEV "Using VIDIX\n");
-		if ((frame_buffer = (uint8_t *) mmap(0, fb_size, PROT_READ | PROT_WRITE,
-						     MAP_SHARED, fb_dev_fd, 0)) == (uint8_t *) -1) {
-		    MSG_ERR(FBDEV "Can't mmap %s: %s\n", fb_dev_name, strerror(errno));
+		if ((fb.frame_buffer = (uint8_t *) mmap(0, fb.size, PROT_READ | PROT_WRITE,
+						     MAP_SHARED, fb.dev_fd, 0)) == (uint8_t *) -1) {
+		    MSG_ERR(FBDEV "Can't mmap %s: %s\n", fb.dev_name, strerror(errno));
 		    return -1;
 		}
-		memset(frame_buffer, 0, fb_line_len * fb_yres);
+		memset(fb.frame_buffer, 0, fb.line_len * fb.yres);
 		if(vidix_start()!=0) { vidix_term(); return -1; }
 	}
 	else
 #endif
 	{
-	    if ((frame_buffer = (uint8_t *) mmap(0, fb_size, PROT_READ | PROT_WRITE,
-				    MAP_SHARED, fb_dev_fd, 0)) == (uint8_t *) -1) {
-		MSG_ERR(FBDEV "Can't mmap %s: %s\n", fb_dev_name, strerror(errno));
+	    if ((fb.frame_buffer = (uint8_t *) mmap(0, fb.size, PROT_READ | PROT_WRITE,
+				    MAP_SHARED, fb.dev_fd, 0)) == (uint8_t *) -1) {
+		MSG_ERR(FBDEV "Can't mmap %s: %s\n", fb.dev_name, strerror(errno));
 		return 1;
 	    }
-	    if(out_width > fb_xres) out_width=fb_xres;
-	    if(out_height > fb_yres) out_width=fb_yres;
-	    L123123875 = frame_buffer + x_offset * fb_pixel_size
-			+ y_offset * fb_line_len;
-	    MSG_DBG2(FBDEV "frame_buffer @ %p\n", frame_buffer);
-	    MSG_DBG2(FBDEV "L123123875 @ %p\n", L123123875);
-	    MSG_V(FBDEV "pixel per line: %d\n", fb_line_len / fb_pixel_size);
+	    if(fb.out_width > fb.xres) fb.out_width=fb.xres;
+	    if(fb.out_height > fb.yres) fb.out_width=fb.yres;
+	    fb.L123123875 = fb.frame_buffer + x_offset * fb.pixel_size
+			+ y_offset * fb.line_len;
+	    MSG_DBG2(FBDEV "fb.frame_buffer @ %p\n", fb.frame_buffer);
+	    MSG_DBG2(FBDEV "fb.L123123875 @ %p\n", fb.L123123875);
+	    MSG_V(FBDEV "pixel per fb.line: %d\n", fb.line_len / fb.pixel_size);
 
-	    total_fr=vo.doublebuffering?vo.da_buffs:1;
-	    for(i=0;i<total_fr;i++)
-	    if (!(next_frame[i] = (uint8_t *) malloc(out_width * out_height * fb_pixel_size))) {
-		MSG_ERR(FBDEV "Can't malloc next_frame: %s\n", strerror(errno));
+	    fb.total_fr=vo.doublebuffering?vo.da_buffs:1;
+	    for(i=0;i<fb.total_fr;i++)
+	    if (!(fb.next_frame[i] = (uint8_t *) malloc(fb.out_width * fb.out_height * fb.pixel_size))) {
+		MSG_ERR(FBDEV "Can't malloc fb.next_frame: %s\n", strerror(errno));
 		return 1;
 	    }
 	}
-	if (vt_doit && (vt_fd = open("/dev/tty", O_WRONLY)) == -1) {
+	if (fb.vt_doit && (fb.vt_fd = open("/dev/tty", O_WRONLY)) == -1) {
 		MSG_ERR(FBDEV "can't open /dev/tty: %s\n", strerror(errno));
-		vt_doit = 0;
+		fb.vt_doit = 0;
 	}
-	if (vt_doit && !(vt_fp = fdopen(vt_fd, "w"))) {
+	if (fb.vt_doit && !(fb.vt_fp = fdopen(fb.vt_fd, "w"))) {
 		MSG_ERR(FBDEV "can't fdopen /dev/tty: %s\n", strerror(errno));
-		vt_doit = 0;
+		fb.vt_doit = 0;
 	}
 
-	if (vt_doit)
-		vt_set_textarea(last_row, fb_yres);
+	if (fb.vt_doit)
+		vt_set_textarea(fb.last_row, fb.yres);
 
 	return 0;
 }
@@ -1134,10 +1133,10 @@ static uint32_t __FASTCALL__ query_format(vo_query_fourcc_t * format)
 {
     switch(format->fourcc)
     {
-	case IMGFMT_BGR15: return fb_bpp == 15;
-	case IMGFMT_BGR16: return fb_bpp == 16;
-	case IMGFMT_BGR24: return fb_bpp == 24;
-	case IMGFMT_BGR32: return fb_bpp == 32;
+	case IMGFMT_BGR15: return fb.bpp == 15;
+	case IMGFMT_BGR16: return fb.bpp == 16;
+	case IMGFMT_BGR24: return fb.bpp == 24;
+	case IMGFMT_BGR32: return fb.bpp == 32;
 	default: break;
     }
     return 0;
@@ -1152,11 +1151,11 @@ static void __FASTCALL__ change_frame(unsigned idx)
 {
 	unsigned i, out_offset = 0, in_offset = 0;
 
-	for (i = 0; i < out_height; i++) {
-		memcpy(L123123875 + out_offset, next_frame[idx] + in_offset,
-				out_width * fb_pixel_size);
-		out_offset += fb_line_len;
-		in_offset += out_width * fb_pixel_size;
+	for (i = 0; i < fb.out_height; i++) {
+		memcpy(fb.L123123875 + out_offset, fb.next_frame[idx] + in_offset,
+				fb.out_width * fb.pixel_size);
+		out_offset += fb.line_len;
+		in_offset += fb.out_width * fb.pixel_size;
 	}
 }
 
@@ -1164,27 +1163,27 @@ static void uninit(void)
 {
 	unsigned i;
 	MSG_V(FBDEV "uninit\n");
-	if (fb_cmap_changed) {
-		if (ioctl(fb_dev_fd, FBIOPUTCMAP, &fb_oldcmap))
+	if (fb.cmap_changed) {
+		if (ioctl(fb.dev_fd, FBIOPUTCMAP, &fb.oldcmap))
 			MSG_ERR(FBDEV "Can't restore original cmap\n");
-		fb_cmap_changed = 0;
+		fb.cmap_changed = 0;
 	}
-	for(i=0;i<total_fr;i++) free(next_frame[i]);
-	if (ioctl(fb_dev_fd, FBIOGET_VSCREENINFO, &fb_vinfo))
+	for(i=0;i<fb.total_fr;i++) free(fb.next_frame[i]);
+	if (ioctl(fb.dev_fd, FBIOGET_VSCREENINFO, &fb.vinfo))
 		MSG_ERR(FBDEV "ioctl FBIOGET_VSCREENINFO: %s\n", strerror(errno));
-	fb_orig_vinfo.xoffset = fb_vinfo.xoffset;
-	fb_orig_vinfo.yoffset = fb_vinfo.yoffset;
-	if (ioctl(fb_dev_fd, FBIOPUT_VSCREENINFO, &fb_orig_vinfo))
+	fb.orig_vinfo.xoffset = fb.vinfo.xoffset;
+	fb.orig_vinfo.yoffset = fb.vinfo.yoffset;
+	if (ioctl(fb.dev_fd, FBIOPUT_VSCREENINFO, &fb.orig_vinfo))
 		MSG_ERR(FBDEV "Can't reset original fb_var_screeninfo: %s\n", strerror(errno));
-        if (fb_tty_fd >= 0) {
-                if (ioctl(fb_tty_fd, KDSETMODE, KD_TEXT) < 0)
+        if (fb.tty_fd >= 0) {
+                if (ioctl(fb.tty_fd, KDSETMODE, KD_TEXT) < 0)
                         MSG_ERR(FBDEV "Can't restore text mode: %s\n", strerror(errno));
         }
-	if (vt_doit)
-		vt_set_textarea(0, fb_orig_vinfo.yres);
-        close(fb_tty_fd);
-	close(fb_dev_fd);
-	if(frame_buffer) munmap(frame_buffer, fb_size);
+	if (fb.vt_doit)
+		vt_set_textarea(0, fb.orig_vinfo.yres);
+        close(fb.tty_fd);
+	close(fb.dev_fd);
+	if(fb.frame_buffer) munmap(fb.frame_buffer, fb.size);
 #ifdef CONFIG_VIDIX
 	if(vidix_name) vidix_term();
 #endif
@@ -1192,6 +1191,9 @@ static void uninit(void)
 
 static uint32_t __FASTCALL__ preinit(const char *arg)
 {
+    memset(&fb,0,sizeof(fb_priv_t));
+    fb.mode_cfgfile = "/etc/fb.modes";
+    fb.vt_doit = 1;
     pre_init_err = 0;
     if(arg) parseSubDevice(arg);
 #ifdef CONFIG_VIDIX
@@ -1205,14 +1207,14 @@ static uint32_t __FASTCALL__ preinit(const char *arg)
 static void __FASTCALL__ fbdev_dri_get_surface_caps(dri_surface_cap_t *caps)
 {
     caps->caps = DRI_CAP_TEMP_VIDEO;
-    caps->fourcc = dstFourcc;
-    caps->width=out_width;
-    caps->height=out_height;
+    caps->fourcc = fb.dstFourcc;
+    caps->width=fb.out_width;
+    caps->height=fb.out_height;
     caps->x=0;
     caps->y=0;
-    caps->w=out_width;
-    caps->h=out_height;
-    caps->strides[0] = (out_width)*((fb_bpp+7)/8);
+    caps->w=fb.out_width;
+    caps->h=fb.out_height;
+    caps->strides[0] = (fb.out_width)*((fb.bpp+7)/8);
     caps->strides[1] = 0;
     caps->strides[2] = 0;
     caps->strides[3] = 0;
@@ -1220,7 +1222,7 @@ static void __FASTCALL__ fbdev_dri_get_surface_caps(dri_surface_cap_t *caps)
 
 static void __FASTCALL__ fbdev_dri_get_surface(dri_surface_t *surf)
 {
-    surf->planes[0] = next_frame[surf->idx];
+    surf->planes[0] = fb.next_frame[surf->idx];
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
@@ -1232,7 +1234,7 @@ static uint32_t __FASTCALL__ control(uint32_t request, void *data)
   case VOCTRL_QUERY_FORMAT:
     return query_format((vo_query_fourcc_t*)data);
   case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = total_fr;
+	*(uint32_t *)data = fb.total_fr;
 	return VO_TRUE;
   case DRI_GET_SURFACE_CAPS:
 	fbdev_dri_get_surface_caps(data);

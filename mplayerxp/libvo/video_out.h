@@ -13,7 +13,12 @@
 #include <inttypes.h>
 #include <stdarg.h>
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
 #include "font_load.h"
+#include "sub.h"
+#include "../subreader.h"
 #include "img_format.h"
 #include "vo_msg.h"
 #include "../mp_image.h"
@@ -153,6 +158,7 @@ typedef struct vo_functions_s
 * High level VO functions to provide some abstraction *
 * level for video out library                         *
 \*****************************************************/
+extern void	 __FASTCALL__ vo_preinit_structs( void );
 extern void		vo_print_help( void );
 extern const vo_functions_t * vo_register(const char *driver_name);
 extern const vo_info_t*	vo_get_info( void );
@@ -213,6 +219,15 @@ typedef struct vo_gamma_s{
 }vo_gamma_t;
 
 typedef struct vo_priv_s {
+    char *		subdevice; // currently unused
+
+    char*		mDisplayName;
+    Display*		mDisplay;
+    int			mScreen;
+    int			WinID; /* output window id */
+    Window		window;
+    GC			gc;
+
     int			flags;
 // correct resolution/bpp on screen:  (should be autodetected by vo_x11_init())
     unsigned		depthonscreen;
@@ -252,9 +267,18 @@ typedef struct vo_priv_s {
     int			opt_screen_size_y;
     float		screen_size_xy;
     float		movie_aspect;
+
+    /* subtitle support */
+    char*		osd_text;
+    void*		spudec;
+    void*		vobsub;
+    font_desc_t*	font;
+    int			osd_progbar_type;
+    int			osd_progbar_value;   // 0..255
+    const subtitle*	sub;
+    int			osd_changed_flag;
 }vo_priv_t;
 
 extern vo_priv_t	vo;
-extern char *		vo_subdevice;
 
 #endif

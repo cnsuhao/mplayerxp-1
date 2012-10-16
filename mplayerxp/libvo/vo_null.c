@@ -41,7 +41,7 @@
 
 LIBVO_EXTERN(null)
 
-static vo_info_t vo_info = 
+static vo_info_t vo_info =
 {
 	"Null video output",
 	"null",
@@ -49,12 +49,14 @@ static vo_info_t vo_info =
 	""
 };
 
-static uint32_t null_image_width, null_image_height,null_frame_size,null_fourcc;
-static uint8_t *bm_buffs[MAX_DRI_BUFFERS];
-static uint32_t null_num_frames;
-static uint32_t pitch_y,pitch_u,pitch_v;
-static uint32_t offset_y,offset_u,offset_v;
-
+typedef struct null_priv_s {
+    uint32_t	image_width, image_height,frame_size,fourcc;
+    uint8_t *	bm_buffs[MAX_DRI_BUFFERS];
+    uint32_t	num_frames;
+    uint32_t	pitch_y,pitch_u,pitch_v;
+    uint32_t	offset_y,offset_u,offset_v;
+}null_priv_t;
+static null_priv_t null;
 
 static void __FASTCALL__ change_frame(unsigned idx)
 {
@@ -65,15 +67,15 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 {
     unsigned awidth;
     size_t i;
-    null_image_width = width;
-    null_image_height = height;
-    null_num_frames = vo.da_buffs;
-    null_fourcc=format;
+    null.image_width = width;
+    null.image_height = height;
+    null.num_frames = vo.da_buffs;
+    null.fourcc=format;
     UNUSED(d_width);
     UNUSED(d_height);
     UNUSED(fullscreen);
     UNUSED(title);
-    pitch_y=pitch_u=pitch_v=1;
+    null.pitch_y=null.pitch_u=null.pitch_v=1;
     if(info)
     {
 	switch(((const vo_tune_info_t *)info)->pitch[0])
@@ -85,7 +87,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    case 32:
 	    case 64:
 	    case 128:
-	    case 256: pitch_y = ((const vo_tune_info_t *)info)->pitch[0];
+	    case 256: null.pitch_y = ((const vo_tune_info_t *)info)->pitch[0];
 		      break;
 	    default: break;
 	}
@@ -98,7 +100,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    case 32:
 	    case 64:
 	    case 128:
-	    case 256: pitch_u = ((const vo_tune_info_t *)info)->pitch[1];
+	    case 256: null.pitch_u = ((const vo_tune_info_t *)info)->pitch[1];
 		      break;
 	    default: break;
 	}
@@ -111,53 +113,53 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    case 32:
 	    case 64:
 	    case 128:
-	    case 256: pitch_v = ((const vo_tune_info_t *)info)->pitch[2];
+	    case 256: null.pitch_v = ((const vo_tune_info_t *)info)->pitch[2];
 		      break;
 	    default: break;
 	}
     }
-    offset_y=offset_u=offset_v=0;
+    null.offset_y=null.offset_u=null.offset_v=0;
     switch(format)
     {
     case IMGFMT_Y800:
-		awidth = (width + (pitch_y-1)) & ~(pitch_y-1);
-		null_frame_size = awidth*height;
+		awidth = (width + (null.pitch_y-1)) & ~(null.pitch_y-1);
+		null.frame_size = awidth*height;
 		break;
     case IMGFMT_YVU9:
     case IMGFMT_IF09:
-		awidth = (width + (pitch_y-1)) & ~(pitch_y-1);
-		null_frame_size = awidth*(height+height/8);
-		offset_u=awidth*height;
-		offset_v=awidth*height/16;
+		awidth = (width + (null.pitch_y-1)) & ~(null.pitch_y-1);
+		null.frame_size = awidth*(height+height/8);
+		null.offset_u=awidth*height;
+		null.offset_v=awidth*height/16;
 		break;
     case IMGFMT_I420:
     case IMGFMT_YV12:
     case IMGFMT_IYUV:
-		awidth = (width + (pitch_y-1)) & ~(pitch_y-1);
-		null_frame_size = awidth*(height+height/2);
-		offset_u=awidth*height;
-		offset_v=awidth*height/4;
+		awidth = (width + (null.pitch_y-1)) & ~(null.pitch_y-1);
+		null.frame_size = awidth*(height+height/2);
+		null.offset_u=awidth*height;
+		null.offset_v=awidth*height/4;
 		break;
     case IMGFMT_RGB32:
     case IMGFMT_BGR32:
-		awidth = (width*4 + (pitch_y-1)) & ~(pitch_y-1);
-		null_frame_size = awidth*height;
+		awidth = (width*4 + (null.pitch_y-1)) & ~(null.pitch_y-1);
+		null.frame_size = awidth*height;
 		break;
     /* YUY2 YVYU, RGB15, RGB16 */
     default:	
-		awidth = (width*2 + (pitch_y-1)) & ~(pitch_y-1);
-		null_frame_size = awidth*height;
+		awidth = (width*2 + (null.pitch_y-1)) & ~(null.pitch_y-1);
+		null.frame_size = awidth*height;
 		break;
     }
-    for(i=0;i<null_num_frames;i++)
+    for(i=0;i<null.num_frames;i++)
     {
-	if(!bm_buffs[i])
+	if(!null.bm_buffs[i])
 #ifdef HAVE_MEMALIGN
-	    bm_buffs[i] = memalign(getpagesize(),null_frame_size);
+	    null.bm_buffs[i] = memalign(getpagesize(),null.frame_size);
 #else
-	    bm_buffs[i] = malloc(null_frame_size);
+	    null.bm_buffs[i] = malloc(null.frame_size);
 #endif
-	if(!(bm_buffs[i]))
+	if(!(null.bm_buffs[i]))
 	{
 		MSG_ERR("Can't allocate memory for busmastering\n");
 		return -1;
@@ -174,10 +176,10 @@ static const vo_info_t* get_info(void)
 static void uninit(void)
 {
     size_t i;
-    for(i=0;i<null_num_frames;i++)
+    for(i=0;i<null.num_frames;i++)
     {
-	free(bm_buffs[i]);
-	bm_buffs[i]=NULL;
+	free(null.bm_buffs[i]);
+	null.bm_buffs[i]=NULL;
     }
 }
 
@@ -196,24 +198,24 @@ static void __FASTCALL__ null_dri_get_surface_caps(dri_surface_cap_t *caps)
     caps->caps =DRI_CAP_TEMP_VIDEO |
 		DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER |
 		DRI_CAP_DOWNSCALER | DRI_CAP_UPSCALER;
-    caps->fourcc = null_fourcc;
-    caps->width=null_image_width;
-    caps->height=null_image_height;
+    caps->fourcc = null.fourcc;
+    caps->width=null.image_width;
+    caps->height=null.image_height;
     /* in case of vidix movie fit surface */
     caps->x = caps->y=0;
     caps->w=caps->width;
     caps->h=caps->height;
-    caps->strides[0] = pitch_y;
-    caps->strides[1] = pitch_v;
-    caps->strides[2] = pitch_u;
+    caps->strides[0] = null.pitch_y;
+    caps->strides[1] = null.pitch_v;
+    caps->strides[2] = null.pitch_u;
     caps->strides[3] = 0;
 }
 
 static void __FASTCALL__ null_dri_get_surface(dri_surface_t *surf)
 {
-	surf->planes[0] = bm_buffs[surf->idx] + offset_y;
-	surf->planes[1] = bm_buffs[surf->idx] + offset_v;
-	surf->planes[2] = bm_buffs[surf->idx] + offset_u;
+	surf->planes[0] = null.bm_buffs[surf->idx] + null.offset_y;
+	surf->planes[1] = null.bm_buffs[surf->idx] + null.offset_v;
+	surf->planes[2] = null.bm_buffs[surf->idx] + null.offset_u;
 	surf->planes[3] = 0;
 }
 
@@ -268,7 +270,7 @@ static uint32_t __FASTCALL__ control(uint32_t request, void *data)
     case VOCTRL_QUERY_FORMAT:
 	return null_query_format(data);
     case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = null_num_frames;
+	*(uint32_t *)data = null.num_frames;
 	return VO_TRUE;
     case DRI_GET_SURFACE_CAPS:
 	null_dri_get_surface_caps(data);

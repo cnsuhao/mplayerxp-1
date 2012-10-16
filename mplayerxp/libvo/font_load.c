@@ -204,7 +204,7 @@ while(fgets(sor,1020,f)){
           int chr=p[0][0];
           int start=atoi(p[1]);
           int end=atoi(p[2]);
-          if(sub_unicode && (chr>=0x80)) chr=(chr<<8)+p[0][1];
+          if(sub_data.unicode && (chr>=0x80)) chr=(chr<<8)+p[0][1];
           else if(strlen(p[0])!=1) chr=strtol(p[0],NULL,0);
           if(end<start) {
               MSG_ERR("error in font desc: end<start for char '%c'\n",chr);
