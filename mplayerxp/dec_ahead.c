@@ -135,20 +135,20 @@ void * Va_dec_ahead_routine( void * arg )
     int drop_param=0;
     volatile unsigned da_active_frame,lda_active_frame,ada_active_frame;
     unsigned xp_n_frame_to_drop;
-    int xp_id;
+    int _xp_id;
     static float prev_delta=0;
     float v_pts,mpeg_timer=HUGE;
     pthread_is_living=1;
     xp_eof = 0;
     xp_audio_eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
-    xp_id=init_signal_handling(sig_dec_ahead_video,uninit_dec_ahead);
-    pinfo[xp_id].current_module = "dec_ahead";
+    _xp_id=init_signal_handling(sig_dec_ahead_video,uninit_dec_ahead);
+    pinfo[_xp_id].current_module = "dec_ahead";
     dec_ahead_pid =
-    pinfo[xp_id].pid = getpid(); /* Only for testing */
+    pinfo[_xp_id].pid = getpid(); /* Only for testing */
     dec_ahead_pth_id =
-    pinfo[xp_id].pth_id = pthread_self();
-    pinfo[xp_id].thread_name = (has_xp_audio && enable_xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
+    pinfo[_xp_id].pth_id = pthread_self();
+    pinfo[_xp_id].thread_name = (has_xp_audio && enable_xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
     prev_delta=xp_num_frames;
     drop_barrier=(float)(xp_num_frames/2)*(1/vo.fps);
     if(av_sync_pts == -1 && !use_pts_fix2)
@@ -165,13 +165,13 @@ while(!xp_eof){
     {	unsigned char* start=NULL;
 	int in_size;
 	if(dec_ahead_in_lseek==PreSeek) {
-	    pinfo[xp_id].current_module = "Pre seek";
+	    pinfo[_xp_id].current_module = "Pre seek";
 	    LOCK_VIDEO_DECODE();
 	    dec_ahead_in_lseek=Seek;
 	    pthread_cond_wait( &video_decode_cond, &video_decode_mutex );
 	    UNLOCK_VIDEO_DECODE();
 	}
-	pinfo[xp_id].current_module = "dec_ahead 1";
+	pinfo[_xp_id].current_module = "dec_ahead 1";
 	/* get it! */
 	LOCK_VREADING();
 	if(dec_ahead_in_lseek==Seek)
@@ -183,15 +183,15 @@ while(!xp_eof){
 	/* prevent reent access to non-reent demuxer */
 	//if(sh_video->num_frames>200)  *((char*)0x100) = 1; // Testing crash
 	if(has_xp_audio && enable_xp<XP_VAFull) {
-	    pinfo[xp_id].current_module = "decode audio";
+	    pinfo[_xp_id].current_module = "decode audio";
 	    while(2==xp_thread_decode_audio()) ;
-	    pinfo[xp_id].current_module = "dec_ahead 2";
+	    pinfo[_xp_id].current_module = "dec_ahead 2";
 	}
 	in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,vo.fps);
 	UNLOCK_VREADING();
 	if(dec_ahead_in_lseek==Seek)
 	{
-	    pinfo[xp_id].current_module = "Post seek";
+	    pinfo[_xp_id].current_module = "Post seek";
 	    /* reset counters */
 	    vo_get_active_frame(&dec_ahead_locked_frame);
 	    LOCK_VDEC_ACTIVE();
@@ -204,7 +204,7 @@ while(!xp_eof){
 	    if(xp_is_bad_pts) mpeg_timer=HUGE;
 	    dec_ahead_in_lseek=NoSeek;
 	    MSG_T("\nDEC_AHEAD: reset counters to (%u %u) due lseek\n",dec_ahead_locked_frame,abs_dec_ahead_locked_frame);
-	    pinfo[xp_id].current_module = "dec_ahead 3";
+	    pinfo[_xp_id].current_module = "dec_ahead 3";
 	}
 	if(in_size<0)
 	{
@@ -212,10 +212,10 @@ while(!xp_eof){
 	    xp_eof=1;
 	    if(has_xp_audio && enable_xp<XP_VAFull) {
 		while(!xp_audio_eof && !dec_ahead_in_lseek && !pthread_end_of_work) {
-		    pinfo[xp_id].current_module = "decode audio";
+		    pinfo[_xp_id].current_module = "decode audio";
 		    if(!xp_thread_decode_audio())
 			usleep(1);
-		    pinfo[xp_id].current_module = NULL;
+		    pinfo[_xp_id].current_module = NULL;
 		}
 		if(dec_ahead_in_lseek) {
 		    xp_eof=0;
@@ -224,7 +224,7 @@ while(!xp_eof){
 	    }
 	    LOCK_VIDEO_DECODE();
 	    if(!pthread_end_of_work) {
-		pinfo[xp_id].current_module = "wait for end of work";
+		pinfo[_xp_id].current_module = "wait for end of work";
 		pthread_cond_wait(&video_decode_cond,&video_decode_mutex);
 	    }
 	    UNLOCK_VIDEO_DECODE();
@@ -334,9 +334,9 @@ while(!xp_eof){
 	    if(pthread_end_of_work) goto pt_exit;
 	    if(dec_ahead_in_lseek!=NoSeek) break;
 	    if(has_xp_audio && enable_xp<XP_VAFull) {
-		pinfo[xp_id].current_module = "decode audio";
+		pinfo[_xp_id].current_module = "decode audio";
 		xp_thread_decode_audio();
-		pinfo[xp_id].current_module = "dec_ahead 5";
+		pinfo[_xp_id].current_module = "dec_ahead 5";
 	    }
 	    usleep(1);
 	    LOCK_VDEC_ACTIVE();
@@ -465,7 +465,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
   MSG_T("\nDEC_AHEAD: leaving...\n");
   pthread_is_living=0;
   pthread_end_of_work=0;
-  uninit_signal_handling(xp_id);
+  uninit_signal_handling(_xp_id);
   return arg; /* terminate thread here !!! */
 }
 

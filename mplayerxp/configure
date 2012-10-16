@@ -712,7 +712,7 @@ enabled libtheora && inputmodules="libtheora $inputmodules" || noinputmodules="l
 enabled libbz2 && require2 libbz2 bzlib.h BZ2_bzlibVersion -lbz2 || disable libbz2
 print_config HAVE_ mp_config.h mp_config.mak libbz2
 
-CFLAGS="$CFLAGS -W -Wall"
+CFLAGS="$CFLAGS -W -Wall -Wextra -Wshadow"
 # Thread support
 if linux ; then
   CFLAGS="$CFLAGS -D_REENTRANT"

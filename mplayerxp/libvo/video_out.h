@@ -188,7 +188,11 @@ extern void		vo_uninit( void );
 extern uint32_t __FASTCALL__ vo_control(uint32_t request, void *data);
 extern int __FASTCALL__ vo_is_final(void);
 
-struct vo_rect {
+typedef struct vo_rect_s {
+    unsigned x,y,w,h;
+}vo_rect_t;
+
+struct vo_rect2 {
   int left, right, top, bottom, width, height;
 };
 
@@ -235,16 +239,10 @@ typedef struct vo_priv_s {
     unsigned		screenheight;
 
 // requested resolution/bpp:  (-x -y -bpp options)
-    unsigned		dx;
-    unsigned		dy;
-    unsigned		dwidth;
-    unsigned		dheight;
+    vo_rect_t		dest;
     unsigned		dbpp;
 
-    unsigned		old_x;
-    unsigned		old_y;
-    unsigned		old_width;
-    unsigned		old_height;
+    vo_rect_t		prev;
 
     int			doublebuffering;
     int			vsync;

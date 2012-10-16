@@ -224,7 +224,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 
     vo.fs = flags&0x01;
     if (vo.fs)
-     { vo.old_width=d_width; vo.old_height=d_height; }
+     { vo.prev.w=d_width; vo.prev.h=d_height; }
 
     xvidix.X_already_started++;
 

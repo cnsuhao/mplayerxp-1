@@ -2,7 +2,21 @@
  * @file libavutil/fifo.h
  * a very simple circular buffer FIFO implementation
  */
+#include "mp_config.h"
+#define MSGT_CLASS MSGT_GLOBAL
+#include "__mp_msg.h"
+
 #include <stdint.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+// keyboard:
+extern int keyb_fifo_put;
+extern int keyb_fifo_get;
+
+extern void __FASTCALL__ fifo_make_pipe(int* pr,int* pw);
 
 typedef struct CBFifoBuffer {
     uint8_t *buffer;

@@ -329,7 +329,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
  vo.fs=flags&VOFLAG_FULLSCREEN;
  vo.softzoom=flags&VOFLAG_SWSCALE;
  if ( vo.fs )
-  { vo.old_width=d_width; vo.old_height=d_height; }
+  { vo.prev.w=d_width; vo.prev.h=d_height; }
 
 #ifdef HAVE_XF86VM
  if( flags&0x02 ) vm = 1;

@@ -97,8 +97,8 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
   if (ret & VO_EVENT_RESIZE)
   {
 	unsigned idx;
-	unsigned newW= vo.dwidth;
-	unsigned newH= vo.dheight;
+	unsigned newW= vo.dest.w;
+	unsigned newH= vo.dest.h;
 	int newAspect= (newW*(1<<16) + (newH>>1))/newH;
 	if(newAspect>vox11.baseAspect) newW= (newH*vox11.baseAspect + (1<<15))>>16;
 	else                 newH= ((newW<<16) + (vox11.baseAspect>>1)) /vox11.baseAspect;
@@ -169,8 +169,8 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
 
     bg=WhitePixel( vo.mDisplay,vo.mScreen );
     fg=BlackPixel( vo.mDisplay,vo.mScreen );
-    vo.dwidth=hint.width;
-    vo.dheight=hint.height;
+    vo.dest.w=hint.width;
+    vo.dest.h=hint.height;
 
     vox11.image_width=d_width;
     vox11.image_height=d_height;
@@ -284,7 +284,7 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
   {
    XShmPutImage( vo.mDisplay,vo.window,vo.gc,myximage,
                  0,0,
-                 ( vo.dwidth - myximage->width ) / 2,( vo.dheight - myximage->height ) / 2,
+                 ( vo.dest.w - myximage->width ) / 2,( vo.dest.h - myximage->height ) / 2,
                  myximage->width,myximage->height,True );
   }
   else
@@ -292,7 +292,7 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
    {
     XPutImage( vo.mDisplay,vo.window,vo.gc,myximage,
                0,0,
-               ( vo.dwidth - myximage->width ) / 2,( vo.dheight - myximage->height ) / 2,
+               ( vo.dest.w - myximage->width ) / 2,( vo.dest.h - myximage->height ) / 2,
                myximage->width,myximage->height);
   }
 #endif

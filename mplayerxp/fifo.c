@@ -1,10 +1,14 @@
 #include "fifo.h"
 
-// keyboard:
-static int keyb_fifo_put=-1;
-static int keyb_fifo_get=-1;
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
 
-static void __FASTCALL__ make_pipe(int* pr,int* pw){
+// keyboard:
+int keyb_fifo_put=-1;
+int keyb_fifo_get=-1;
+
+void __FASTCALL__ fifo_make_pipe(int* pr,int* pw){
   int temp[2];
   if(pipe(temp)!=0) MSG_ERR("Cannot make PIPE!\n");
   *pr=temp[0];
@@ -128,7 +132,6 @@ int cb_fifo_generic_write(CBFifoBuffer *f, void *src, int size, int (*func)(void
     } while (size > 0);
     return total - size;
 }
-
 
 int cb_fifo_generic_read(CBFifoBuffer *f, void *dest, int buf_size, void (*func)(void*, void*, int))
 {

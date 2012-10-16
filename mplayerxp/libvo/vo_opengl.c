@@ -175,7 +175,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
  vo.fs=flags&VOFLAG_FULLSCREEN;
  vo.softzoom=flags&VOFLAG_SWSCALE;
  if ( vo.fs )
-  { vo.old_width=d_width; vo.old_height=d_height; }
+  { vo.prev.w=d_width; vo.prev.h=d_height; }
 
 #ifdef HAVE_XF86VM
  if( flags&0x02 ) vm = 1;
@@ -289,7 +289,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
     int e=vo_x11_check_events(vo.mDisplay,adjust_size);
-    if(e&VO_EVENT_RESIZE) resize(vo.dwidth,vo.dheight);
+    if(e&VO_EVENT_RESIZE) resize(vo.dest.w,vo.dest.h);
     return e|VO_EVENT_FORCE_UPDATE;
 }
 
@@ -381,7 +381,7 @@ static uint32_t control(uint32_t request, void *data)
     return query_format((vo_query_fourcc_t*)data);
   case VOCTRL_FULLSCREEN:
     vo_fullscreen();
-    resize(vo.dwidth, vo.dheight);
+    resize(vo.dest.w, vo.dest.h);
     return VO_TRUE;
   case VOCTRL_GET_NUM_FRAMES:
 	*(uint32_t *)data = vogl.num_buffers;

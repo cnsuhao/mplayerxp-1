@@ -692,11 +692,11 @@ uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__
       case ConfigureNotify:
 	   nw = Event.xconfigure.width;
 	   nh = Event.xconfigure.height;
-	   if(adjust_size) adj_ret = (*adjust_size)(vo.dwidth,vo.dheight,&nw,&nh);
-	   ow = vo.dwidth;
-	   oh = vo.dheight;
-           vo.dwidth=nw;
-           vo.dheight=nh;
+	   if(adjust_size) adj_ret = (*adjust_size)(vo.dest.w,vo.dest.h,&nw,&nh);
+	   ow = vo.dest.w;
+	   oh = vo.dest.h;
+           vo.dest.w=nw;
+           vo.dest.h=nh;
 	   {
 	    Window root;
 	    unsigned foo;
@@ -704,14 +704,14 @@ uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__
 	    XGetGeometry(mydisplay, vo.window, &root, &foo, &foo,
 		&foo/*width*/, &foo/*height*/, &foo, &foo);
 	    XTranslateCoordinates(mydisplay, vo.window, root, 0, 0,
-		&vo.dx, &vo.dy, &win);
+		&vo.dest.x, &vo.dest.y, &win);
 	    }
-	   if(adjust_size && ow != vo.dwidth && oh != vo.dheight && adj_ret)
+	   if(adjust_size && ow != vo.dest.w && oh != vo.dest.h && adj_ret)
 	   {
-		XResizeWindow( vo.mDisplay,vo.window,vo.dwidth,vo.dheight );
+		XResizeWindow( vo.mDisplay,vo.window,vo.dest.w,vo.dest.h );
 		XSync( vo.mDisplay,True);
 	   }
-	   MSG_V("X11 Window %dx%d-%dx%d\n", vo.dx, vo.dy, vo.dwidth, vo.dheight);
+	   MSG_V("X11 Window %dx%d-%dx%d\n", vo.dest.x, vo.dest.y, vo.dest.w, vo.dest.h);
            ret|=VO_EVENT_RESIZE;
            break;
       case KeyPress:
@@ -793,18 +793,18 @@ void vo_x11_fullscreen( void )
  if ( !vo.fs )
   {
    vo.fs=VO_TRUE;
-   vo.old_x=vo.dx; vo.old_y=vo.dy; vo.old_width=vo.dwidth;   vo.old_height=vo.dheight;
-   vo.dx=0;        vo.dy=0;        vo.dwidth=vo.screenwidth; vo.dheight=vo.screenheight;
+   vo.prev=vo.dest;
+   vo.dest.x=0;  vo.dest.y=0; vo.dest.w=vo.screenwidth; vo.dest.h=vo.screenheight;
    vo_x11_decoration( vo.mDisplay,vo.window,0 );
   }
   else
    {
     vo.fs=VO_FALSE;
-    vo.dx=vo.old_x; vo.dy=vo.old_y; vo.dwidth=vo.old_width; vo.dheight=vo.old_height;
+    vo.dest=vo.prev;
     vo_x11_decoration( vo.mDisplay,vo.window,1 );
    }
- vo_x11_sizehint( vo.dx,vo.dy,vo.dwidth,vo.dheight );
- XMoveResizeWindow( vo.mDisplay,vo.window,vo.dx,vo.dy,vo.dwidth,vo.dheight );
+ vo_x11_sizehint( vo.dest.x,vo.dest.y,vo.dest.w,vo.dest.h );
+ XMoveResizeWindow( vo.mDisplay,vo.window,vo.dest.x,vo.dest.y,vo.dest.w,vo.dest.h );
  XMapWindow( vo.mDisplay,vo.window );
  XSync( vo.mDisplay,False );
 }

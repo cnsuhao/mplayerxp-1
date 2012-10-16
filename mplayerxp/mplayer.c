@@ -168,7 +168,7 @@ static int max_framesize=0;
 #include "libmpcodecs/dec_audio.h"
 
 /* Common FIFO functions, and keyboard/event FIFO code */
-#include "fifo.c"
+#include "fifo.h"
 int use_stdin=0;
 /**************************************************************************/
 
@@ -327,7 +327,7 @@ typedef struct audio_buffer_s {
 
 audio_buffer_t audio_buffer;
 
-int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sh_audio )
+int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sha )
 {
     MSG_V("Using audio buffer %i bytes (min reserve = %i, indices %i)\n",size,min_reserv, indices);
     if( !(audio_buffer.buffer = malloc(size)) )
@@ -352,7 +352,7 @@ int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sh_aud
     pthread_mutex_init( &audio_buffer.head_mutex, NULL);
     pthread_mutex_init( &audio_buffer.tail_mutex, NULL);
     pthread_cond_init( &audio_buffer.wait_buffer_cond, NULL);
-    audio_buffer.sh_audio = sh_audio;
+    audio_buffer.sh_audio = sha;
     return 0;
 }
 
@@ -766,7 +766,6 @@ static void soft_exit_player(void)
   if(sh_audio) while(get_len_audio_buffer()) usleep(0);
   if(sh_video && shva)
   {
-    volatile int dec_ahead_active_frame;
     for(;;)
     {
 	__MP_SYNCHRONIZE(vdec_active_mutex,vo_get_active_frame(&dec_ahead_active_frame));
@@ -1042,7 +1041,7 @@ void show_long_help(void) {
     list_codecs(1);
 }
 
-int decore_audio( int xp_id )
+int decore_audio( int _xp_id )
 {
   int eof = 0;
 /*========================== PLAY AUDIO ============================*/
@@ -1067,7 +1066,7 @@ while(sh_audio){
   //if(playsize>outburst) playsize=outburst;
 
   // Update buffer if needed
-  pinfo[xp_id].current_module="decode_audio";   // Enter AUDIO decoder module
+  pinfo[_xp_id].current_module="decode_audio";   // Enter AUDIO decoder module
   t=GetTimer();
   while(sh_audio->a_buffer_len<playsize && !audio_eof){
       if(enable_xp>=XP_VideoAudio) {
@@ -1088,14 +1087,14 @@ while(sh_audio){
       {
         MSG_V("audio_stream_eof\n");
 	inited_flags&=~INITED_AO;
-	pinfo[xp_id].current_module="uninit_ao";
+	pinfo[_xp_id].current_module="uninit_ao";
 	ao_uninit();
       }
       audio_eof=1;
       break;
     }
   }
-  pinfo[xp_id].current_module="play_audio";   // Leave AUDIO decoder module
+  pinfo[_xp_id].current_module="play_audio";   // Leave AUDIO decoder module
   t=GetTimer()-t;
   tt = t*0.000001f;
   audio_time_usage+=tt;
@@ -1820,7 +1819,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
   return 0;
 }
 
-void mpxp_seek( int xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,float pos,int flags)
+void mpxp_seek( int _xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,float pos,int flags)
 {
   int seek_rval=1;
   audio_eof=0;
@@ -1858,20 +1857,20 @@ void mpxp_seek( int xp_id, video_stat_t *vstat, int *osd_visible,float v_pts,flo
       fflush(stdout);
 
       if(sh_video){
-	 pinfo[xp_id].current_module="seek_video_reset";
+	 pinfo[_xp_id].current_module="seek_video_reset";
 	 resync_video_stream(sh_video);
          vo_reset();
          sh_video->chapter_change=-1;
       }
 
       if(sh_audio){
-        pinfo[xp_id].current_module="seek_audio_reset";
+        pinfo[_xp_id].current_module="seek_audio_reset";
 	resync_audio_stream(sh_audio);
         ao_reset(); // stop audio, throwing away buffered data
       }
 
       if (vo.vobsub) {
-	pinfo[xp_id].current_module = "seek_vobsub_reset";
+	pinfo[_xp_id].current_module = "seek_vobsub_reset";
 	vobsub_seek(vo.vobsub, v_pts);
       }
 
@@ -2190,7 +2189,7 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 #endif
 
 // ========== Init keyboard FIFO (connection to libvo) ============
-make_pipe(&keyb_fifo_get,&keyb_fifo_put);
+fifo_make_pipe(&keyb_fifo_get,&keyb_fifo_put);
 
 /* Init input system */
 pinfo[xp_id].current_module = "init_input";
