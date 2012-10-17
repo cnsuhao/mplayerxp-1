@@ -1518,6 +1518,69 @@ if(time_frame>0.001 && !(vo.flags&256)){
     return 0;
 }
 
+static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay,video_stat_t *vstat) {
+    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i]]\n",
+		a_pts-audio_delay-delay,video_pts,AV_delay,c_total,
+		(int)sh_video->num_frames,sh_video->num_frames_decoded,
+		(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
+		(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
+		(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+		,vstat->drop_frame_cnt
+		,output_quality
+		,dec_ahead_active_frame
+		);
+    fflush(stdout);
+}
+
+static void show_status_line(float v_pts,float AV_delay,video_stat_t *vstat) {
+    float a_pts=0;
+    float delay=ao_get_delay();
+    float video_pts = v_pts;
+    if(av_sync_pts) {
+	a_pts = sh_audio->timer;
+    } else if(pts_from_bps){
+	unsigned int samples=(sh_audio->audio.dwSampleSize)?
+		((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
+		(d_audio->pack_no); // <- used for VBR audio
+	samples+=sh_audio->audio.dwStart; // offset
+	a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
+    } else {
+	// PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
+	a_pts=d_audio->pts;
+	a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+    }
+    if( !av_sync_pts && enable_xp>=XP_VideoAudio ) delay += get_delay_audio_buffer();
+    AV_delay = a_pts-audio_delay-delay - video_pts;
+    __show_status_line(a_pts,video_pts,delay,AV_delay,vstat);
+}
+
+static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
+    if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay())) {
+	float a_pts = sh_audio->timer-ao_get_delay();
+	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r"
+	,a_pts
+	,sh_video->timer
+	,a_pts-sh_video->timer,0.0
+	,(int)sh_video->num_frames,sh_video->num_frames_decoded
+	,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+	,vstat->drop_frame_cnt
+	,output_quality
+	);
+    } else
+	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d %d\r"
+	,v_pts
+	,(int)sh_video->num_frames
+	,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+	,vstat->drop_frame_cnt
+	,output_quality
+	);
+    fflush(stdout);
+}
+
 int xp_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, float *v_pts )
 {
     float time_frame=0;
@@ -1618,40 +1681,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 
 	if(sh_audio && (!audio_eof || ao_get_delay()) && time_frame>XP_MAX_TIMESLICE) {
 	    float t;
-	    if(benchmark) {
-		float a_pts=0;
-		float delay=ao_get_delay();
-		float video_pts = *v_pts;
-		if(av_sync_pts) {
-		    a_pts = sh_audio->timer;
-		} else if(pts_from_bps){
-		unsigned int samples=(sh_audio->audio.dwSampleSize)?
-			((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
-			(d_audio->pack_no); // <- used for VBR audio
-		    samples+=sh_audio->audio.dwStart; // offset
-		    a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
-		} else {
-		    // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
-		    a_pts=d_audio->pts;
-		    a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-		}
-		if( !av_sync_pts && enable_xp>=XP_VideoAudio )
-		    delay += get_delay_audio_buffer();
-		AV_delay = a_pts-audio_delay-delay - video_pts;
-		MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i] %i of %i]\n",
-			   a_pts-audio_delay-delay,video_pts,AV_delay,c_total,
-			   (int)sh_video->num_frames,num_frames_decoded,
-			   (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-			   (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-			   (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-			   ,vstat->drop_frame_cnt
-			   ,output_quality
-			   ,dec_ahead_active_frame
-			   ,da_locked_frame
-			   ,xp_num_frames
-			   );
-		fflush(stdout);
-	    }
+	    if(benchmark) show_status_line(*v_pts,AV_delay,vstat);
 
 	    if( enable_xp < XP_VAPlay ) {
 		t=ao_get_delay()-XP_MIN_AUDIOBUFF;
@@ -1775,46 +1805,12 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	if(enable_xp>=XP_VAPlay)
 	    pthread_mutex_unlock(&audio_timer_mutex);
 	c_total+=x;
-	if(benchmark && verbose)
-	    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
-	    a_pts-audio_delay-delay,*v_pts,AV_delay,c_total,
-	    (int)sh_video->num_frames,num_frames_decoded,
-	    (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-	    (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-	    (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-	    ,vstat->drop_frame_cnt
-	    ,output_quality
-	    );
-	fflush(stdout);
+	if(benchmark && verbose) __show_status_line(a_pts,*v_pts,delay,AV_delay,vstat);
       }
-
   } else {
     // No audio or pts:
 
-    if(benchmark && verbose) {
-	if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay())) {
-	    float a_pts = sh_audio->timer-ao_get_delay();
-	    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
-	    a_pts,sh_video->timer,a_pts-sh_video->timer,0.0,
-	    (int)sh_video->num_frames,num_frames_decoded,
-	    (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-	    (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-	    (sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-	    ,vstat->drop_frame_cnt
-	    ,output_quality
-	    );
-	} else
-	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d %d\r",*v_pts,
-	(int)sh_video->num_frames,
-	(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-	(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-	(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
-	  ,vstat->drop_frame_cnt
-	  ,output_quality
-	);
-
-      fflush(stdout);
-    }
+    if(benchmark && verbose) show_status_line_no_apts(*v_pts,vstat);
   }
   return 0;
 }
@@ -2061,6 +2057,175 @@ int v_blue_intensity=0;
 // for multifile support:
 play_tree_iter_t* playtree_iter = NULL;
 
+static void init_keyboard_fifo(void)
+{
+#ifdef HAVE_TERMCAP
+    load_termcap(NULL); // load key-codes
+#endif
+    fifo_make_pipe(&keyb_fifo_get,&keyb_fifo_put);
+    /* Init input system */
+    pinfo[xp_id].current_module = "init_input";
+    mp_input_init();
+    if(keyb_fifo_get > 0)
+	mp_input_add_key_fd(keyb_fifo_get,1,NULL,NULL);
+    if(slave_mode)
+	mp_input_add_cmd_fd(0,1,NULL,NULL);
+    else if(!use_stdin)
+	mp_input_add_key_fd(0,1,NULL,NULL);
+    inited_flags|=INITED_INPUT;
+}
+
+static void init_fond_menu_osd(void) {
+// check font
+#ifdef USE_OSD
+    if(font_name){
+	vo.font=read_font_desc(font_name,font_factor,verbose>1);
+	if(!vo.font) MSG_ERR(MSGTR_CantLoadFont,font_name);
+    } else {
+	// try default:
+	vo.font=read_font_desc(get_path("font/font.desc"),font_factor,verbose>1);
+	if(!vo.font)
+	    vo.font=read_font_desc(DATADIR"/font/font.desc",font_factor,verbose>1);
+    }
+#endif
+    /* Configure menu here */
+    {
+	char *menu_cfg;
+	menu_cfg = get_path("menu.conf");
+	if(menu_init(NULL, menu_cfg))
+	    MSG_INFO("Menu initialized: %s\n", menu_cfg);
+	else {
+	    menu_cfg="/etc/menu.conf";
+	    if(menu_init(NULL, menu_cfg))
+		MSG_INFO("Menu initialized: %s\n", menu_cfg);
+	    else
+		MSG_WARN("Menu init failed\n");
+	}
+    }
+    pinfo[xp_id].current_module="init_osd";
+    vo_init_osd();
+}
+
+static void init_output_sub_systems(void) {
+    unsigned i;
+    // check video_out driver name:
+    if (video_driver)
+	if ((i=strcspn(video_driver, ":")) > 0) {
+	    size_t i2 = strlen(video_driver);
+	    if (video_driver[i] == ':') {
+		vo.subdevice = malloc(i2-i);
+		if (vo.subdevice != NULL)
+		    strncpy(vo.subdevice, (char *)(video_driver+i+1), i2-i);
+		video_driver[i] = '\0';
+	    }
+	}
+    pinfo[xp_id].current_module="vo_register";
+    vo_inited = (vo_register(video_driver)!=NULL)?1:0;
+
+    if(!vo_inited){
+	MSG_FATAL(MSGTR_InvalidVOdriver,video_driver?video_driver:"?");
+	exit_player(MSGTR_Exit_error);
+    }
+    pinfo[xp_id].current_module="vo_init";
+    if((i=vo_init(vo.subdevice))!=0)
+    {
+	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
+	exit_player(MSGTR_Exit_error);
+    }
+
+// check audio_out driver name:
+    pinfo[xp_id].current_module="ao_init";
+    if (audio_driver)
+	if ((i=strcspn(audio_driver, ":")) > 0)
+	{
+	    size_t i2 = strlen(audio_driver);
+
+	    if (audio_driver[i] == ':')
+	    {
+		ao_subdevice = malloc(i2-i);
+		if (ao_subdevice != NULL)
+		    strncpy(ao_subdevice, (char *)(audio_driver+i+1), i2-i);
+		audio_driver[i] = '\0';
+	    }
+	}
+    ao_inited=(ao_register(audio_driver)!=NULL)?1:0;
+    if (!ao_inited){
+	MSG_FATAL(MSGTR_InvalidAOdriver,audio_driver);
+	exit_player(MSGTR_Exit_error);
+    }
+}
+
+static int init_vobsub(const char *filename) {
+    int forced_subs_only=0;
+    pinfo[xp_id].current_module="vobsub";
+    if (vobsub_name){
+      vo.vobsub=vobsub_open(vobsub_name,spudec_ifo,1,&vo.spudec);
+      if(vo.vobsub==NULL)
+        MSG_ERR(MSGTR_CantLoadSub,vobsub_name);
+      else {
+	inited_flags|=INITED_VOBSUB;
+	vobsub_set_from_lang(vo.vobsub, dvdsub_lang);
+	// check if vobsub requested only to display forced subtitles
+	forced_subs_only=vobsub_get_forced_subs_flag(vo.vobsub);
+      }
+    }else if(sub_auto && filename && (strlen(filename)>=5)){
+      /* try to autodetect vobsub from movie filename ::atmos */
+      char *buf = malloc((strlen(filename)-3) * sizeof(char));
+      memset(buf,0,strlen(filename)-3); // make sure string is terminated
+      strncpy(buf, filename, strlen(filename)-4); 
+      vo.vobsub=vobsub_open(buf,spudec_ifo,0,&vo.spudec);
+      free(buf);
+    }
+    if(vo.vobsub)
+    {
+      sub_auto=0; // don't do autosub for textsubs if vobsub found
+      inited_flags|=INITED_VOBSUB;
+    }
+}
+
+static void init_nls(void) {
+/* Add NLS support here */
+    char *lang;
+    if(!audio_lang) audio_lang=nls_get_screen_cp();
+    pinfo[xp_id].current_module="dvd lang->id";
+    if(audio_lang) {
+	lang=malloc(max(strlen(audio_lang)+1,4));
+	strcpy(lang,audio_lang);
+	if(audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang) == SCTRL_OK) {
+	    audio_id=*(int *)lang;
+	}
+	free(lang);
+    }
+    if(dvdsub_lang) {
+	lang=malloc(max(strlen(dvdsub_lang)+1,4));
+	strcpy(lang,dvdsub_lang);
+	if(dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang) == SCTRL_OK) {
+	    dvdsub_id=*(int *)lang;
+	}
+	free(lang);
+    }
+}
+
+#ifdef HAVE_LIBCSS
+static void init_dvd_key(void) {
+  pinfo[xp_id].current_module="libcss";
+  if (dvdimportkey) {
+    if (dvd_import_key(dvdimportkey)) {
+	MSG_FATAL(MSGTR_ErrorDVDkey);
+	exit_player(MSGTR_Exit_error);
+    }
+    MSG_INFO(MSGTR_CmdlineDVDkey);
+  }
+  if (dvd_auth_device) {
+    if (dvd_auth(dvd_auth_device,filename)) {
+	MSG_FATAL("Error in DVD auth...\n");
+	exit_player(MSGTR_Exit_error);
+      }
+    MSG_INFO(MSGTR_DVDauthOk);
+  }
+}
+#endif
+
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
@@ -2152,141 +2317,28 @@ int seek_flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
     mp_msg_init(verbose+MSGL_STATUS);
 
 //------ load global data first ------
-
-
-// check font
-#ifdef USE_OSD
-  if(font_name){
-       vo.font=read_font_desc(font_name,font_factor,verbose>1);
-       if(!vo.font) MSG_ERR(MSGTR_CantLoadFont,font_name);
-  } else {
-      // try default:
-       vo.font=read_font_desc(get_path("font/font.desc"),font_factor,verbose>1);
-       if(!vo.font)
-       vo.font=read_font_desc(DATADIR"/font/font.desc",font_factor,verbose>1);
-  }
-#endif
-  /* Configure menu here */
-  {
-     char *menu_cfg;
-     menu_cfg = get_path("menu.conf");
-     if(menu_init(NULL, menu_cfg))
-       MSG_INFO("Menu initialized: %s\n", menu_cfg);
-     else {
-       menu_cfg="/etc/menu.conf";
-       if(menu_init(NULL, menu_cfg))
-	MSG_INFO("Menu initialized: %s\n", menu_cfg);
-       else {
-	MSG_WARN("Menu init failed\n");
-       }
-     }
-  }
-  pinfo[xp_id].current_module="init_osd";
-  vo_init_osd();
-
-#ifdef HAVE_TERMCAP
-  load_termcap(NULL); // load key-codes
-#endif
-
+    init_fond_menu_osd();
 // ========== Init keyboard FIFO (connection to libvo) ============
-fifo_make_pipe(&keyb_fifo_get,&keyb_fifo_put);
+    init_keyboard_fifo();
 
-/* Init input system */
-pinfo[xp_id].current_module = "init_input";
-mp_input_init();
-if(keyb_fifo_get > 0)
-  mp_input_add_key_fd(keyb_fifo_get,1,NULL,NULL);
-if(slave_mode)
-   mp_input_add_cmd_fd(0,1,NULL,NULL);
-else if(!use_stdin)
-  mp_input_add_key_fd(0,1,NULL,NULL);
-inited_flags|=INITED_INPUT;
-pinfo[xp_id].current_module = NULL;
+    pinfo[xp_id].current_module = NULL;
 
-xp_id = init_signal_handling(exit_sighandler,NULL);
+    xp_id = init_signal_handling(exit_sighandler,NULL);
 
 // ******************* Now, let's see the per-file stuff ********************
 play_next_file:
 
-// We must enable getch2 here to be able to interrupt network connection
-// or cache filling
-if(!use_stdin && !slave_mode){
-  getch2_enable();  // prepare stdin for hotkeys...
-  inited_flags|=INITED_GETCH2;
-}
-
-    // check video_out driver name:
-    if (video_driver)
-	if ((i = strcspn(video_driver, ":")) > 0) {
-	    size_t i2 = strlen(video_driver);
-	    if (video_driver[i] == ':') {
-		vo.subdevice = malloc(i2-i);
-		if (vo.subdevice != NULL)
-		    strncpy(vo.subdevice, (char *)(video_driver+i+1), i2-i);
-		video_driver[i] = '\0';
-	    }
-	}
-    pinfo[xp_id].current_module="vo_register";
-    vo_inited = (vo_register(video_driver)!=NULL)?1:0;
-
-    if(!vo_inited){
-	MSG_FATAL(MSGTR_InvalidVOdriver,video_driver?video_driver:"?");
-	exit_player(MSGTR_Exit_error);
-    }
-    pinfo[xp_id].current_module="vo_init";
-    if((i=vo_init(vo.subdevice))!=0)
-    {
-	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
-	exit_player(MSGTR_Exit_error);
+    // We must enable getch2 here to be able to interrupt network connection
+    // or cache filling
+    if(!use_stdin && !slave_mode){
+	getch2_enable();  // prepare stdin for hotkeys...
+	inited_flags|=INITED_GETCH2;
     }
 
-// check audio_out driver name:
-    pinfo[xp_id].current_module="ao_init";
-    if (audio_driver)
-	if ((i = strcspn(audio_driver, ":")) > 0)
-	{
-	    size_t i2 = strlen(audio_driver);
-
-	    if (audio_driver[i] == ':')
-	    {
-		ao_subdevice = malloc(i2-i);
-		if (ao_subdevice != NULL)
-		    strncpy(ao_subdevice, (char *)(audio_driver+i+1), i2-i);
-		audio_driver[i] = '\0';
-	    }
-	}
-  ao_inited=(ao_register(audio_driver)!=NULL)?1:0;
-  if (!ao_inited){
-    MSG_FATAL(MSGTR_InvalidAOdriver,audio_driver);
-    exit_player(MSGTR_Exit_error);
-  }
-
+    init_output_sub_systems();
     if(filename) MSG_OK(MSGTR_Playing, filename);
 
-    pinfo[xp_id].current_module="vobsub";
-    if (vobsub_name){
-      vo.vobsub=vobsub_open(vobsub_name,spudec_ifo,1,&vo.spudec);
-      if(vo.vobsub==NULL)
-        MSG_ERR(MSGTR_CantLoadSub,vobsub_name);
-      else {
-	inited_flags|=INITED_VOBSUB;
-	vobsub_set_from_lang(vo.vobsub, dvdsub_lang);
-	// check if vobsub requested only to display forced subtitles
-	forced_subs_only=vobsub_get_forced_subs_flag(vo.vobsub);
-      }
-    }else if(sub_auto && filename && (strlen(filename)>=5)){
-      /* try to autodetect vobsub from movie filename ::atmos */
-      char *buf = malloc((strlen(filename)-3) * sizeof(char));
-      memset(buf,0,strlen(filename)-3); // make sure string is terminated
-      strncpy(buf, filename, strlen(filename)-4); 
-      vo.vobsub=vobsub_open(buf,spudec_ifo,0,&vo.spudec);
-      free(buf);
-    }
-    if(vo.vobsub)
-    {
-      sub_auto=0; // don't do autosub for textsubs if vobsub found
-      inited_flags|=INITED_VOBSUB;
-    }
+    forced_subs_only=init_vobsub(filename);
 
     pinfo[xp_id].current_module="mplayer";
     if(!after_dvdmenu) {
@@ -2301,8 +2353,7 @@ if(!use_stdin && !slave_mode){
 //============ Open & Sync STREAM --- fork cache2 ====================
     stream_dump_type=0;
     if(stream_dump)
-	if((stream_dump_type=dump_parse(stream_dump))==0)
-	{
+	if((stream_dump_type=dump_parse(stream_dump))==0) {
 	    MSG_ERR("Wrong dump parameters! Unable to continue\n");
 	    exit_player(MSGTR_Exit_error);
 	}
@@ -2322,7 +2373,7 @@ if(!use_stdin && !slave_mode){
     pinfo[xp_id].current_module="handle_playlist";
     MSG_V("Parsing playlist %s...\n",filename);
     entry = parse_playtree(stream);
-    if(!entry) {      
+    if(!entry) {
       entry = playtree_iter->tree;
       if(play_tree_iter_step(playtree_iter,1,0) != PLAY_TREE_ITER_ENTRY) {
 	eof = PT_NEXT_ENTRY;
@@ -2343,57 +2394,20 @@ if(!use_stdin && !slave_mode){
     if(play_tree_iter_step(playtree_iter,1,0) != PLAY_TREE_ITER_ENTRY) {
       eof = PT_NEXT_ENTRY;
       goto goto_next_file;
-    }      
+    }
     play_tree_remove(entry,1,1);
     eof = PT_NEXT_SRC;
     goto goto_next_file;
   }
 
 #ifdef HAVE_LIBCSS
-  pinfo[xp_id].current_module="libcss";
-  if (dvdimportkey) {
-    if (dvd_import_key(dvdimportkey)) {
-	MSG_FATAL(MSGTR_ErrorDVDkey);
-	exit_player(MSGTR_Exit_error);
-    }
-    MSG_INFO(MSGTR_CmdlineDVDkey);
-  }
-  if (dvd_auth_device) {
-    if (dvd_auth(dvd_auth_device,filename)) {
-	MSG_FATAL("Error in DVD auth...\n");
-	exit_player(MSGTR_Exit_error);
-      }
-    MSG_INFO(MSGTR_DVDauthOk);
-  }
+    init_dvd_key();
 #endif
 
 /* Add NLS support here */
-if(!audio_lang) audio_lang=nls_get_screen_cp();
-{
-  char *lang;
-  pinfo[xp_id].current_module="dvd lang->id";
-  if(audio_lang)
-  {
-    lang=malloc(max(strlen(audio_lang)+1,4));
-    strcpy(lang,audio_lang);
-    if(audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang) == SCTRL_OK)
-    {
-	audio_id=*(int *)lang;
-    }
-    free(lang);
-  }
-  if(dvdsub_lang)
-  {
-    lang=malloc(max(strlen(dvdsub_lang)+1,4));
-    strcpy(lang,dvdsub_lang);
-    if(dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang) == SCTRL_OK)
-    {
-	dvdsub_id=*(int *)lang;
-    }
-    free(lang);
-  }
-  pinfo[xp_id].current_module=NULL;
-}
+    init_nls();
+
+    pinfo[xp_id].current_module=NULL;
 
 // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
 if(stream_cache_size && !stream_dump_type){
