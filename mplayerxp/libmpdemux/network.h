@@ -41,7 +41,7 @@ typedef struct streaming_control {
 	unsigned int bandwidth;	// The downstream available
 	int (*streaming_read)( int fd, char *buffer, int buffer_size, struct streaming_control *stream_ctrl );
 	int (*streaming_seek)( int fd, off_t pos, struct streaming_control *stream_ctrl );
-	void *data;
+	any_t*data;
 } streaming_ctrl_t;
 
 struct stream_s;

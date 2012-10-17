@@ -271,7 +271,7 @@ void Super2xSaI_ex(uint8_t *src, uint32_t src_pitch,
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt, void *tune){
+	unsigned int flags, unsigned int outfmt, any_t*tune){
 
     Init_2xSaI(outfmt&255);
 

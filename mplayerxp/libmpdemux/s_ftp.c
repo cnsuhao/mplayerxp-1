@@ -475,7 +475,7 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
   return 1;
 }
 
-static int __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,void *args) {
+static int __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

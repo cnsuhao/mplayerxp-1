@@ -1,6 +1,8 @@
 #ifndef __MP_IMAGE_H
 #define __MP_IMAGE_H 1
 
+#include "mp_config.h"
+
 //--------- codec's requirements (filled by the codec/vf) ---------
 
 //--- buffer content restrictions:
@@ -80,7 +82,7 @@ typedef struct mp_image_s {
     int			chroma_height;
     int			chroma_x_shift; // horizontal
     int			chroma_y_shift; // vertical
-    void*		priv; /* for private use by filter or vo driver (to store buffer id or dmpi) */
+    any_t*		priv; /* for private use by filter or vo driver (to store buffer id or dmpi) */
 } mp_image_t;
 
 extern void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt);

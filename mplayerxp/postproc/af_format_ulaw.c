@@ -726,7 +726,7 @@ static unsigned char ulaw_encode[8193] =
 
 
 /* Convert from ulaw to signd int8 to signed int32 or float */
-static int from_ulaw(void* in, void* out, int len, int bps, int format)
+static int from_ulaw(any_t* in, any_t* out, int len, int bps, int format)
 {
   register int i;
   // Make sure the input parametrs are OK
@@ -776,7 +776,7 @@ static int from_ulaw(void* in, void* out, int len, int bps, int format)
 }
 
 /* Convert from singed int8 to singned int32 or float to ulaw */
-static int to_ulaw(void* in, void* out, int len, int bps, int format)
+static int to_ulaw(any_t* in, any_t* out, int len, int bps, int format)
 {
   register int i;
   // Make sure the input parametrs are OK

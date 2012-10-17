@@ -761,7 +761,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,  uint32_t height,
   /* clear screen */
   for(freq=0;freq<vo_dga.num_buffers;freq++)
   {
-	void *d;
+	any_t*d;
 	d=(&((char*)vo_dga.base)[vo_dga.dbf_mem_offset[freq]]);
 	memset(d,0,dest_frame_size);
   }
@@ -806,7 +806,7 @@ static void __FASTCALL__ dga_dri_get_surface(dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static uint32_t __FASTCALL__ control(uint32_t request, void *data)
+static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:

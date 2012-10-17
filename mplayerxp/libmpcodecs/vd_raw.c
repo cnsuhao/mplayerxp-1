@@ -19,7 +19,7 @@ static const config_t options[] = {
 LIBVD_EXTERN(raw)
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd) {
       case VDCTRL_QUERY_FORMAT:
 	    return CONTROL_TRUE;
@@ -50,7 +50,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     mp_image_t* mpi;
     if(len<=0) return NULL; // skipped frame
     

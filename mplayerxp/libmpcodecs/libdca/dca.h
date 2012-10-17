@@ -23,6 +23,8 @@
 #ifndef DCA_H
 #define DCA_H
 
+#include "mp_config.h"
+
 /* x86 accelerations */
 #define MM_ACCEL_X86_MMX	0x80000000
 #define MM_ACCEL_X86_3DNOW	0x40000000
@@ -70,13 +72,13 @@ extern int dca_syncinfo (dca_state_t *state, uint8_t * buf, int * flags,
 extern int dca_frame (dca_state_t * state, uint8_t * buf, int * flags,
                level_t * level, sample_t bias);
 extern void dca_dynrng (dca_state_t * state,
-                 level_t (* call) (level_t, void *), void * data);
+                 level_t (* call) (level_t, any_t*), any_t* data);
 extern int dca_blocks_num (dca_state_t * state);
 extern int dca_block (dca_state_t * state);
 extern sample_t * dca_samples (dca_state_t * state);
 extern void dca_free (dca_state_t * state);
-extern void* dca_resample_init(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
-extern void* dca_resample_init_float(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern any_t* dca_resample_init(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern any_t* dca_resample_init_float(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
 extern int (*dca_resample) (float * _f, int16_t * s16);
 extern int (*dca_resample32) (float * _f, float * s16);
 

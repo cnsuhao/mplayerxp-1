@@ -73,7 +73,7 @@ unsigned char key_title[5];
 unsigned char *dvdimportkey=NULL;
 int descrambling=0;
 
-static void *dlid;
+static any_t*dlid;
 static int (*dl_CSSisEncrypted)(int);
 static int (*dl_CSSAuthDisc)(int,char *);
 static int (*dl_CSSAuthTitle)(int, char *,int);

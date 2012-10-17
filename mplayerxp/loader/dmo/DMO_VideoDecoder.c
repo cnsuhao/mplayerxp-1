@@ -306,7 +306,7 @@ void DMO_VideoDecoder_StopInternal(DMO_VideoDecoder *this)
     //??? why was this here ??? m_pOurOutput->SetFramePointer(0);
 }
 
-int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const void* src, int size, int is_keyframe, char* imdata)
+int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const any_t* src, int size, int is_keyframe, char* imdata)
 {
 //    IMediaSample* sample = 0;
     char* ptr;
@@ -328,7 +328,7 @@ int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const void* src, int
 #ifdef HAVE_WIN32LOADER
     Setup_FS_Segment();
 #endif
-    bufferin = CMediaBufferCreate(size, (void*)src, size, 0);
+    bufferin = CMediaBufferCreate(size, (any_t*)src, size, 0);
     result = this->m_pDMO_Filter->m_pMedia->vt->ProcessInput(this->m_pDMO_Filter->m_pMedia, 0,
 						      (IMediaBuffer*)bufferin,
 						      (is_keyframe) ? DMO_INPUT_DATA_BUFFERF_SYNCPOINT : 0,

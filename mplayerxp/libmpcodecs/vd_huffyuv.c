@@ -162,7 +162,7 @@ unsigned char huff_decompress(unsigned int* in, unsigned int *pos,
 
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...)
+static int control(sh_video_t *sh,int cmd,any_t* arg,...)
 {
 	switch(cmd) {
 		case VDCTRL_QUERY_FORMAT:
@@ -199,7 +199,7 @@ static int init(sh_video_t *sh)
 		return 0;
 	}
 
-	sh->context = (void *)hc;
+	sh->context = (any_t*)hc;
 
 	MSG_V( "[HuffYUV] Allocating above line buffer\n");
 	if ((hc->abovebuf1 = malloc(sizeof(char) * 4 * bih->biWidth)) == NULL) {
@@ -502,7 +502,7 @@ static void uninit(sh_video_t *sh)
  * Decode a HuffYUV frame
  *
  */
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags)
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
 {
 	mp_image_t* mpi;
 	int pixel_ptr;

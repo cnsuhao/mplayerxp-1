@@ -751,7 +751,7 @@ static void vivo_close(demuxer_t *demuxer)
     return;
 }
 
-static int vivo_control(demuxer_t *demuxer,int cmd,void *args)
+static int vivo_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

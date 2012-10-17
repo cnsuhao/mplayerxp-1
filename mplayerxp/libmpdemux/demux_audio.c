@@ -1369,7 +1369,7 @@ static uint32_t mpc_get_bits(da_priv_t* priv, stream_t* s, int bits) {
     out >>= (32 - priv->pos);
   }
   else {
-    stream_read(s, (void *)&priv->dword, 4);
+    stream_read(s, (any_t*)&priv->dword, 4);
     priv->dword = le2me_32(priv->dword);
     priv->pos -= 32;
     if (priv->pos) {
@@ -1768,7 +1768,7 @@ static void audio_close(demuxer_t* demuxer) {
   free(priv);
 }
 
-static int audio_control(demuxer_t *demuxer,int cmd,void *args)
+static int audio_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

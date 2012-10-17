@@ -889,7 +889,7 @@ void vo_uninit( void )
     video_out->uninit();
 }
 
-uint32_t __FASTCALL__ vo_control(uint32_t request, void *data)
+uint32_t __FASTCALL__ vo_control(uint32_t request, any_t*data)
 {
     uint32_t rval;
     rval=video_out->control(request,data);

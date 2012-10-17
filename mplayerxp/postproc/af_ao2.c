@@ -113,7 +113,7 @@ typedef struct af_ao2_s{
 }af_ao2_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_ao2_t* s = af->setup;
   switch(cmd){

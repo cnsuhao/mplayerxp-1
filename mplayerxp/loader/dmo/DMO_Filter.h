@@ -38,7 +38,7 @@ void DMO_Filter_Destroy(DMO_Filter* This);
  * len - initial size of used portion of the buffer
  * copy - make a local copy of data
  */
-CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, void* mem, unsigned long len, int copy);
+CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, any_t* mem, unsigned long len, int copy);
 
 #if defined(__cplusplus)
 }

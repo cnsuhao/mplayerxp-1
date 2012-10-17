@@ -16,7 +16,7 @@
 // Data for specific instances of this filter
 
 // Initialization and runtime control
-static int control(struct af_instance_s* af, int cmd, void* arg)
+static int control(struct af_instance_s* af, int cmd, any_t* arg)
 {
 	switch(cmd){
 		case AF_CONTROL_REINIT:

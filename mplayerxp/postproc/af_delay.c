@@ -17,14 +17,14 @@
 // Data for specific instances of this filter
 typedef struct af_delay_s
 {
-  void* q[AF_NCH];   	// Circular queues used for delaying audio signal
+  any_t* q[AF_NCH];   	// Circular queues used for delaying audio signal
   int 	wi[AF_NCH];  	// Write index
   int 	ri;		// Read index
   float	d[AF_NCH];   	// Delay [ms] 	
 }af_delay_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_delay_t* s = af->setup;
 

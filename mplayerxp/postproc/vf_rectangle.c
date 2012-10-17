@@ -13,7 +13,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
        int width, int height, int d_width, int d_height,
-       unsigned int flags, unsigned int outfmt,void *tune)
+       unsigned int flags, unsigned int outfmt,any_t*tune)
 {
     if (vf->priv->w < 0 || width < vf->priv->w)
 	vf->priv->w = width;
@@ -31,7 +31,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt,tune);
 }
 
-static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void *data)
+static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t*data)
 {
     const int *const tmp = data;
     switch(request){

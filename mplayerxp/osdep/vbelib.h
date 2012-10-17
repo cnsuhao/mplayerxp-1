@@ -7,6 +7,8 @@
 #ifndef __VESA_VBELIB_INCLUDED__
 #define __VESA_VBELIB_INCLUDED__ 1
 
+#include "mp_config.h"
+
 /* Note: every pointer within structures is 32-bit protected mode pointer.
    So you don't need to convert it from real mode. */
 
@@ -38,7 +40,7 @@ struct VbeInfoBlock {
   char          OemData[256];     /* Pad to 512 byte block size */
 }__attribute__ ((packed));
 
-static inline FarPtr VirtToPhys(void *ptr)
+static inline FarPtr VirtToPhys(any_t*ptr)
 {
   FarPtr retval;
   retval.seg = ((unsigned long)ptr) >> 4;
@@ -46,24 +48,24 @@ static inline FarPtr VirtToPhys(void *ptr)
   return retval;
 }
 
-static inline unsigned short VirtToPhysSeg(void *ptr)
+static inline unsigned short VirtToPhysSeg(any_t*ptr)
 {
   return ((unsigned long)ptr) >> 4;
 }
 
-static inline unsigned short VirtToPhysOff(void *ptr)
+static inline unsigned short VirtToPhysOff(any_t*ptr)
 {
   return ((unsigned long)ptr) & 0x0f;
 }
 
-static inline void * PhysToVirt(FarPtr ptr)
+static inline any_t* PhysToVirt(FarPtr ptr)
 {
-  return (void *)((ptr.seg << 4) | ptr.off);
+  return (any_t*)((ptr.seg << 4) | ptr.off);
 }
 
-static inline void * PhysToVirtSO(unsigned short seg,unsigned short off)
+static inline any_t* PhysToVirtSO(unsigned short seg,unsigned short off)
 {
-  return (void *)((seg << 4) | off);
+  return (any_t*)((seg << 4) | off);
 }
 
 #define MODE_ATTR_MODE_SUPPORTED (1 << 0)
@@ -199,8 +201,8 @@ extern int vbeGetControllerInfo(struct VbeInfoBlock *);
 extern int vbeGetModeInfo(unsigned mode,struct VesaModeInfoBlock *);
 extern int vbeSetMode(unsigned mode,struct VesaCRTCInfoBlock *);
 extern int vbeGetMode(unsigned *mode);
-extern int vbeSaveState(void **data); /* note never copy this data */
-extern int vbeRestoreState(void *data);
+extern int vbeSaveState(any_t**data); /* note never copy this data */
+extern int vbeRestoreState(any_t*data);
 extern int vbeGetWindow(unsigned *win_num); /* win_A=0 or win_B=1 */
 extern int vbeSetWindow(unsigned win_num,unsigned win_gran);
 extern int vbeGetScanLineLength(unsigned *num_pixels,unsigned *num_bytes);
@@ -220,7 +222,7 @@ extern int vbeGetProtModeInfo(struct VesaProtModeInterface *);
 int vbeWriteString(int x, int y, int attr, char *str);
 
 /* Misc stuff (For portability only) */
-void * vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size);
+any_t* vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size);
 void vbeUnmapVideoBuffer(unsigned long linear_addr,unsigned long size);
 
 #endif

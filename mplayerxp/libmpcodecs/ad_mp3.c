@@ -216,7 +216,7 @@ static off_t (*mpg123_tell_stream_ptr)(mpg123_handle *mh);
 #define mpg123_tell_stream(a) (*mpg123_tell_stream_ptr)(a)
 
 
-static void *dll_handle;
+static any_t*dll_handle;
 static int load_dll(const char *libname)
 {
   if(!(dll_handle=ld_codec(libname,mpcodecs_ad_mp3.info->url))) return 0;
@@ -346,7 +346,7 @@ void uninit(sh_audio_t *sh)
   dlclose(dll_handle);
 }
 
-int control(sh_audio_t *sh,int cmd,void* arg, ...)
+int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
   UNUSED(sh);
   UNUSED(cmd);

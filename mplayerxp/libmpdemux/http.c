@@ -411,7 +411,7 @@ http_debug_hdr( HTTP_header_t *http_hdr ) {
 }
 
 int 
-base64_encode(const void *enc, int encLen, char *out, int outMax) {
+base64_encode(const any_t*enc, int encLen, char *out, int outMax) {
 	static const char	b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 	unsigned char		*encBuf;

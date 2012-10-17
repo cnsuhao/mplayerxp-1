@@ -15,13 +15,13 @@
 
 typedef struct muxer_packet_s{
     float pts;
-    void *data;
+    any_t*data;
     unsigned length;
     unsigned flags;
     struct muxer_packet_s *next;
 }muxer_packet_t;
 
-static inline muxer_packet_t* new_muxer_packet(float pts,void *data,unsigned length,unsigned flags)
+static inline muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags)
 {
     muxer_packet_t* retval;
     retval = malloc(sizeof(muxer_packet_t));
@@ -53,20 +53,20 @@ typedef struct {
   unsigned int buffer_len;
 
   // source stream:
-  void* source; // sh_audio or sh_video
+  any_t* source; // sh_audio or sh_video
   int codec; // codec used for encoding. 0 means copy
   // avi stream header:
   AVIStreamHeader h;  // Rate/Scale and SampleSize must be filled by caller!
   // stream specific:
   WAVEFORMATEX *wf;
   BITMAPINFOHEADER *bih;   // in format
-  void* ImageDesc; // for quicktime codecs
+  any_t* ImageDesc; // for quicktime codecs
   float aspect;
   // muxer of that stream
   struct muxer_t *muxer;
   muxer_packet_t *first;
   muxer_packet_t *last;
-  void *priv;
+  any_t*priv;
 } muxer_stream_t;
 
 typedef struct {
@@ -85,7 +85,7 @@ typedef struct muxer_t{
   void (*cont_write_index)(struct muxer_t *);
   muxer_stream_t* (*cont_new_stream)(struct muxer_t *,int);
   FILE* file;
-  void *priv;
+  any_t*priv;
 } muxer_t;
 
 muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f);

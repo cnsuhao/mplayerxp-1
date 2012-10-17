@@ -261,7 +261,7 @@ static void __FASTCALL__ _vcdnav_close(stream_t*stream)
     if(priv->segment) free(priv->segment);
     free(stream->priv);
 }
-static int __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,void *args) {
+static int __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

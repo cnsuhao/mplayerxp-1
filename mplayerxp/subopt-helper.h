@@ -1,6 +1,8 @@
 #ifndef MPLAYER_SUBOPT_HELPER_H
 #define MPLAYER_SUBOPT_HELPER_H
 
+#include "mp_config.h"
+
 /**
  * \file subopt-helper.h
  *
@@ -15,14 +17,14 @@
 #define OPT_ARG_MSTRZ 3 ///< A malloced, zero terminated string, use free()!
 #define OPT_ARG_FLOAT 4
 
-typedef int (*opt_test_f)(void *);
+typedef int (*opt_test_f)(any_t*);
 
 /** simple structure for defining the option name, type and storage location */
 typedef struct opt_s
 {
   const char * name; ///< string that identifies the option
   int type;    ///< option type as defined in subopt-helper.h
-  void * valp; ///< pointer to the mem where the value should be stored
+  any_t* valp; ///< pointer to the mem where the value should be stored
   opt_test_f test; ///< argument test func ( optional )
 } opt_t;
 

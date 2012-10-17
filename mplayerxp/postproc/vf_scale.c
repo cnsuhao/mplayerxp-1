@@ -129,7 +129,7 @@ static void __FASTCALL__ print_conf_fmtcvt(struct vf_instance_s* vf)
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
     unsigned int best=find_best_out(vf,d_width,d_height);
     int vo_flags;
     int int_sws_flags=0;
@@ -388,7 +388,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,dmpi);
 }
 
-static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* data){
+static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     int *table;
     int *inv_table;
     int r;

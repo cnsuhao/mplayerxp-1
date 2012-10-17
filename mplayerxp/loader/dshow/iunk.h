@@ -4,7 +4,7 @@
 #include "guids.h"
 
 #define INHERIT_IUNKNOWN() \
-    long STDCALL ( *QueryInterface )(IUnknown * This, const GUID* riid, void **ppvObject); \
+    long STDCALL ( *QueryInterface )(IUnknown * This, const GUID* riid, any_t**ppvObject); \
     long STDCALL ( *AddRef )(IUnknown * This); \
     long STDCALL ( *Release )(IUnknown * This);
 
@@ -13,7 +13,7 @@
 
 #define IMPLEMENT_IUNKNOWN(CLASSNAME) 		\
 static long STDCALL CLASSNAME ## _QueryInterface(IUnknown * This, \
-					  const GUID* riid, void **ppvObject) \
+					  const GUID* riid, any_t**ppvObject) \
 { \
     CLASSNAME * me = (CLASSNAME *)This;		\
     GUID* r; unsigned int i = 0;		\

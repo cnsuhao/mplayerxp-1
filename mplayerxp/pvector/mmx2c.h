@@ -24,13 +24,13 @@ _m_load_half(void const *__P)
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-_m_store(void *__P, __m64 src)
+_m_store(any_t*__P, __m64 src)
 {
     *(__m64 *)__P = src;
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-_m_store_half(void *__P, __m64 src)
+_m_store_half(any_t*__P, __m64 src)
 {
     asm ("movd %1, %0":"=m"(*(char *)__P):"y"(src));
 }

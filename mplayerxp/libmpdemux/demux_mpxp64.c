@@ -40,7 +40,7 @@ typedef struct {
   uint64_t prev_size[MAX_AV_STREAMS];
   uint32_t prev_id;
   // index stuff:
-  void* idx[MAX_AV_STREAMS];
+  any_t* idx[MAX_AV_STREAMS];
   unsigned idx_size[MAX_AV_STREAMS];
 } mpxpav64_priv_t;
 
@@ -470,7 +470,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
     // priv struct:
     priv=malloc(sizeof(mpxpav64_priv_t));
     memset(priv,0,sizeof(mpxpav64_priv_t));
-    demuxer->priv=(void*)priv;
+    demuxer->priv=(any_t*)priv;
     demuxer->video->id=-1;
     demuxer->audio->id=-1;
     mpxpav64_reset_prevs(demuxer);
@@ -891,7 +891,7 @@ static void mpxpav64_close(demuxer_t *demuxer)
   free(priv);
 }
 
-static int mpxpav64_control(demuxer_t *demuxer,int cmd,void *args)
+static int mpxpav64_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

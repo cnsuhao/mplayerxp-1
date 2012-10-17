@@ -343,7 +343,7 @@ static void nsv_close(demuxer_t* demuxer) {
 
 }
 
-static int nsv_control(demuxer_t *demuxer,int cmd,void *args)
+static int nsv_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

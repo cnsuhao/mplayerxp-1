@@ -14,7 +14,7 @@ typedef struct ffmpeg_priv_s
     off_t spos;
 }ffmpeg_priv_t;
 
-static int ffmpeg_int_cb(void *op) { return 0; } /* non interrupt blicking */
+static int ffmpeg_int_cb(any_t*op) { return 0; } /* non interrupt blicking */
 static AVIOInterruptCB int_cb = { ffmpeg_int_cb, NULL };
 
 static int __FASTCALL__ ffmpeg_read(stream_t *s, stream_packet_t*sp)
@@ -42,7 +42,7 @@ static off_t ffmpeg_tell(stream_t *s)
     return p->spos;
 }
 
-static int __FASTCALL__ ffmpeg_ctrl(stream_t *s, unsigned cmd, void *arg)
+static int __FASTCALL__ ffmpeg_ctrl(stream_t *s, unsigned cmd, any_t*arg)
 {
     UNUSED(s);
     UNUSED(cmd);

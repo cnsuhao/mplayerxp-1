@@ -57,7 +57,7 @@ __asm__ __volatile__(\
 #undef FAST_MEMORY_COPY
 #define FAST_MEMORY_COPY(to,from, len)\
 {\
-    void *retval;\
+    any_t*retval;\
     const unsigned char *cfrom=from;\
     unsigned char *tto=to;\
     const unsigned block_size = __IVEC_SIZE*8;\
@@ -161,7 +161,7 @@ __asm__ __volatile__(\
 #undef MEM_SFENCE
 #define MEM_STORE  _ivec_stream
 #define MEM_SFENCE _ivec_sfence();
-static inline void * PVECTOR_RENAME(fast_stream_copy)(void * to, const void * from, size_t len)
+static inline any_t* PVECTOR_RENAME(fast_stream_copy)(any_t* to, const any_t* from, size_t len)
 {
     MSG_DBG3("fast_stream_copy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
     FAST_MEMORY_COPY(to,from,len);
@@ -171,7 +171,7 @@ static inline void * PVECTOR_RENAME(fast_stream_copy)(void * to, const void * fr
 #undef MEM_SFENCE
 #define MEM_STORE _ivec_storea
 #define MEM_SFENCE
-static inline void * PVECTOR_RENAME(fast_memcpy)(void * to, const void * from, size_t len)
+static inline any_t* PVECTOR_RENAME(fast_memcpy)(any_t* to, const any_t* from, size_t len)
 {
     MSG_DBG3("fast_memcpy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
     FAST_MEMORY_COPY(to,from,len);

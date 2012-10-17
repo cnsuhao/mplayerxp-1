@@ -20,7 +20,7 @@
 
 typedef struct {
   // index stuff:
-  void* idx;
+  any_t* idx;
   int idx_size;
   off_t idx_pos;
   off_t idx_pos_a;
@@ -65,7 +65,7 @@ static int odml_get_vstream_id(int id, unsigned char res[])
     return 0;
 }
 
-static int avi_idx_cmp(const void *elem1,const void *elem2) {
+static int avi_idx_cmp(const any_t*elem1,const any_t*elem2) {
   register off_t a = AVI_IDX_OFFSET((AVIINDEXENTRY *)elem1);
   register off_t b = AVI_IDX_OFFSET((AVIINDEXENTRY *)elem2);
   return (a > b) - (b > a);
@@ -381,7 +381,7 @@ while(1){
     case mmioFOURCC('v', 'p', 'r', 'p'): {
 	VideoPropHeader *vprp = malloc(chunksize);
 	unsigned int i;
-	stream_read(demuxer->stream, (void*)vprp, chunksize);
+	stream_read(demuxer->stream, (any_t*)vprp, chunksize);
 	le2me_VideoPropHeader(vprp);
 	chunksize -= sizeof(*vprp)-sizeof(vprp->FieldInfo);
 	chunksize /= sizeof(VIDEO_FIELD_DESC);
@@ -1147,7 +1147,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
 
   // priv struct:
   memset(priv,0,sizeof(avi_priv_t));
-  demuxer->priv=(void*)priv;
+  demuxer->priv=(any_t*)priv;
 
   //---- AVI header:
   read_avi_header(demuxer,(demuxer->stream->type&STREAMTYPE_SEEKABLE)?index_mode:-2);
@@ -1552,7 +1552,7 @@ static void avi_close(demuxer_t *demuxer)
   free(priv);
 }
 
-static int avi_control(demuxer_t *demuxer,int cmd,void *args)
+static int avi_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

@@ -125,7 +125,7 @@ const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
 };
 
 /* to set/get/query special features/parameters */
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *ctx = sh->context;
     uint32_t out_fourcc;
     AVCodecContext *avctx = ctx->ctx;
@@ -648,7 +648,7 @@ typedef struct __attribute__((__packed__)) dp_hdr_s {
 } dp_hdr_t;
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     int got_picture=0;
     int ret,has_b_frames;
     priv_t *vdff_ctx=sh->context;

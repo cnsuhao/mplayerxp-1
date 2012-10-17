@@ -171,7 +171,7 @@ PVECTOR_RENAME(f32_from_s32a)(void const * src)
 #define _f32vec_from_s32a PVECTOR_RENAME(f32_from_s32a)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_to_s32u)(void *dst,__f32vec src)
+PVECTOR_RENAME(f32_to_s32u)(any_t*dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
     _mm256_storeu_si256(dst,_mm256_cvtps_epi32(src));
@@ -191,7 +191,7 @@ PVECTOR_RENAME(f32_to_s32u)(void *dst,__f32vec src)
 
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_to_s32a)(void *dst,__f32vec src)
+PVECTOR_RENAME(f32_to_s32a)(any_t*dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
     _mm256_store_si256(dst,_mm256_cvtps_epi32(src));
@@ -210,7 +210,7 @@ PVECTOR_RENAME(f32_to_s32a)(void *dst,__f32vec src)
 #define _f32vec_to_s32a PVECTOR_RENAME(f32_to_s32a)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_to_s32_stream)(void *dst,__f32vec src)
+PVECTOR_RENAME(f32_to_s32_stream)(any_t*dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
     _mm256_stream_si256(dst,_mm256_cvtps_epi32(src));

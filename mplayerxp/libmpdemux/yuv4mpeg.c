@@ -34,8 +34,8 @@
 
 static int _y4mparam_allow_unknown_tags = 1;  /* default is forgiveness */
 
-static void *(*_y4m_alloc)(size_t bytes) = malloc;
-static void (*_y4m_free)(void *ptr) = free;
+static any_t*(*_y4m_alloc)(size_t bytes) = malloc;
+static void (*_y4m_free)(any_t*ptr) = free;
 
 int y4m_allow_unknown_tags(int yn) {
 	int old = _y4mparam_allow_unknown_tags;

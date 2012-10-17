@@ -49,7 +49,7 @@
 
 #if defined(HAVE_MEMALIGN) && !defined(__cplusplus)
 /* some systems have memalign() but no declaration for it */
-void * memalign (size_t align, size_t size);
+any_t* memalign (size_t align, size_t size);
 #else
 /* assume malloc alignment is sufficient */
 #define memalign(align,size) malloc (size)
@@ -1281,7 +1281,7 @@ static void lfe_interpolation_fir (int nDecimationSelect, int nNumDeciSample,
 }
 
 void dca_dynrng (dca_state_t * state,
-                 level_t (* call) (level_t, void *), void * data)
+                 level_t (* call) (level_t, any_t*), any_t* data)
 {
     state->dynrange = 0;
     if (call) {

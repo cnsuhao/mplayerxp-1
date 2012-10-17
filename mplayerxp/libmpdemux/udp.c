@@ -78,8 +78,8 @@ udp_open_socket (URL_t *url)
       closesocket (socket_server_fd);
       return -1;
     }
-    memcpy ((void *) &server_address.sin_addr.s_addr,
-            (void *) hp->h_addr_list[0], hp->h_length);
+    memcpy ((any_t*) &server_address.sin_addr.s_addr,
+            (any_t*) hp->h_addr_list[0], hp->h_length);
 #else
     server_address.sin_addr.s_addr = htonl (INADDR_ANY);
 #endif /* HAVE_WINSOCK2 */
@@ -127,13 +127,13 @@ udp_open_socket (URL_t *url)
       closesocket (socket_server_fd);
       return -1;
     }
-    memcpy ((void *) &server_address.sin_addr.s_addr,
-            (void *) hp->h_addr, hp->h_length);
+    memcpy ((any_t*) &server_address.sin_addr.s_addr,
+            (any_t*) hp->h_addr, hp->h_length);
   }
   else
   {
     unsigned int addr = inet_addr (url->hostname);
-    memcpy ((void *) &server_address.sin_addr, (void *) &addr, sizeof (addr));
+    memcpy ((any_t*) &server_address.sin_addr, (any_t*) &addr, sizeof (addr));
   }
 #endif /* HAVE_WINSOCK2 */
 

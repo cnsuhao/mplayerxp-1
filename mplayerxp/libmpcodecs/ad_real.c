@@ -24,30 +24,30 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(real)
 
-static void *handle=NULL;
+static any_t*handle=NULL;
 
-void *__builtin_new(unsigned long size) {
+any_t*__builtin_new(unsigned long size) {
 	return malloc(size);
 }
 
 /* required for cook's uninit: */
-void __builtin_delete(void* ize) {
+void __builtin_delete(any_t* ize) {
 	free(ize);
 }
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
-void* __ctype_b=NULL;
+any_t* __ctype_b=NULL;
 #endif
 
 static uint32_t (*raCloseCodec)(uint32_t);
-static uint32_t (*raDecode)(void*,void*,uint32_t,void*,void*,uint32_t);
+static uint32_t (*raDecode)(any_t*,any_t*,uint32_t,any_t*,any_t*,uint32_t);
 static uint32_t (*raFreeDecoder)(uint32_t);
-static void* (*raGetFlavorProperty)(void*,uint32_t,uint32_t,void*);
+static any_t* (*raGetFlavorProperty)(any_t*,uint32_t,uint32_t,any_t*);
 //static uint32_t (*raGetNumberOfFlavors2)(void);
-static uint32_t (*raInitDecoder)(void*,void*);
-static uint32_t (*raOpenCodec2)(void*,void*);
-static uint32_t (*raOpenCodec)(void*);
-static uint32_t (*raSetFlavor)(void*,uint32_t);
+static uint32_t (*raInitDecoder)(any_t*,any_t*);
+static uint32_t (*raOpenCodec2)(any_t*,any_t*);
+static uint32_t (*raOpenCodec)(any_t*);
+static uint32_t (*raSetFlavor)(any_t*,uint32_t);
 static void  (*raSetDLLAccessPath)(uint32_t);
 static void  (*raSetPwd)(char*,char*);
 
@@ -60,11 +60,11 @@ typedef struct {
     int bits_per_frame;
     int packetsize;
     int extradata_len;
-    void* extradata;
+    any_t* extradata;
 } ra_init_t;
 
 typedef struct {
-    void *internal;
+    any_t*internal;
     float pts;
 } real_priv_t;
 
@@ -73,7 +73,7 @@ static int preinit(sh_audio_t *sh){
   // (you should do that if you use external lib(s) which is optional)
   unsigned int result;
   int len=0;
-  void* prop;
+  any_t* prop;
   char path[4096];
   char cpath[4096];
   real_priv_t *rpriv;
@@ -281,7 +281,7 @@ static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,u
               // or -1 for EOF (or uncorrectable error)
 }
 
-static int control(sh_audio_t *sh,int cmd,void* arg, ...){
+static int control(sh_audio_t *sh,int cmd,any_t* arg, ...){
     UNUSED(sh);
     UNUSED(arg);
     // various optional functions you MAY implement:

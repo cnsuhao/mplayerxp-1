@@ -77,7 +77,7 @@ static uint32_t find_atag(const char *codec)
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_ffenc_t *s=af->setup;
   switch(cmd){

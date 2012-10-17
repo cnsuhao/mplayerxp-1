@@ -151,7 +151,7 @@
 #define IMGFMT_VDPAU_MPEG4         (IMGFMT_VDPAU|0x06)
 
 typedef struct {
-    void* data;
+    any_t* data;
     int size;
     int id;        // stream id. usually 0x1E0
     int timestamp; // pts, 90000 Hz counter based

@@ -74,7 +74,7 @@ typedef struct vidix_priv_s {
 }vidix_priv_t;
 static vidix_priv_t priv;
 
-static uint32_t (* __FASTCALL__ server_control)(uint32_t request, void *data);
+static uint32_t (* __FASTCALL__ server_control)(uint32_t request, any_t*data);
 
 
 static int __FASTCALL__ vidix_get_video_eq(vo_videq_t *info);
@@ -332,8 +332,8 @@ static int __FASTCALL__ vidix_set_deint(const vidix_deinterlace_t *info)
 
 #ifndef HAVE_MLOCK
 /* stubs */
-int mlock(const void *addr,size_t len) { return ENOSYS; }
-int munlock(const void *addr,size_t len) { return ENOSYS; }
+int mlock(const any_t*addr,size_t len) { return ENOSYS; }
+int munlock(const any_t*addr,size_t len) { return ENOSYS; }
 #endif
 
 #define ALLOC_VIDIX_STRUCTS()\
@@ -352,7 +352,7 @@ int munlock(const void *addr,size_t len) { return ENOSYS; }
 int  __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 		   unsigned x_org,unsigned y_org,unsigned dst_width,
 		   unsigned dst_height,unsigned format,unsigned dest_bpp,
-		   unsigned vid_w,unsigned vid_h,const void *info)
+		   unsigned vid_w,unsigned vid_h,const any_t*info)
 {
   size_t i;
   int err;
@@ -620,7 +620,7 @@ static void __FASTCALL__ vidix_dri_get_surface(dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-uint32_t __FASTCALL__ vidix_control(uint32_t request, void *data)
+uint32_t __FASTCALL__ vidix_control(uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:
@@ -651,7 +651,7 @@ uint32_t __FASTCALL__ vidix_control(uint32_t request, void *data)
   return VO_NOTIMPL;
 }
 
-int __FASTCALL__ vidix_preinit(const char *drvname,const void *server)
+int __FASTCALL__ vidix_preinit(const char *drvname,const any_t*server)
 {
   int err;
   static int reent=0;

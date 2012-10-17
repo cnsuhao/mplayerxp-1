@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static inline int unimplemented(const char* s, void* p)
+static inline int unimplemented(const char* s, any_t* p)
 {
     Debug printf("%s(%p) called (UNIMPLEMENTED)", s, p);
     return E_NOTIMPL;
@@ -666,7 +666,7 @@ static long STDCALL CBaseFilter_Run(IBaseFilter* This, REFERENCE_TIME tStart)
 static long STDCALL CBaseFilter_GetState(IBaseFilter* This,
 					 /* [in] */ unsigned long dwMilliSecsTimeout,
 					 // /* [out] */ FILTER_STATE *State)
-					 void* State)
+					 any_t* State)
 {
     Debug unimplemented("CBaseFilter_GetState", This);
     return E_NOTIMPL;
@@ -764,7 +764,7 @@ static long STDCALL CBaseFilter_FindPin(IBaseFilter* This,
  */
 static long STDCALL CBaseFilter_QueryFilterInfo(IBaseFilter* This,
 						// /* [out] */ FILTER_INFO *pInfo)
-						void* pInfo)
+						any_t* pInfo)
 {
     Debug unimplemented("CBaseFilter_QueryFilterInfo", This);
     return E_NOTIMPL;
@@ -1006,7 +1006,7 @@ static long STDCALL CBaseFilter2_Run(IBaseFilter* This, REFERENCE_TIME tStart)
 static long STDCALL CBaseFilter2_GetState(IBaseFilter* This,
 					  /* [in] */ unsigned long dwMilliSecsTimeout,
 					  // /* [out] */ FILTER_STATE *State)
-					  void* State)
+					  any_t* State)
 {
     Debug unimplemented("CBaseFilter2_GetState", This);
     return E_NOTIMPL;
@@ -1104,7 +1104,7 @@ static long STDCALL CBaseFilter2_FindPin(IBaseFilter* This,
  */
 static long STDCALL CBaseFilter2_QueryFilterInfo(IBaseFilter* This,
 						 // /* [out] */ FILTER_INFO *pInfo)
-						 void* pInfo)
+						 any_t* pInfo)
 {
     Debug unimplemented("CBaseFilter2_QueryFilterInfo", This);
     return E_NOTIMPL;

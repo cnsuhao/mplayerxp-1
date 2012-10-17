@@ -42,8 +42,8 @@ extern int __FASTCALL__ asx_attrib_to_enum(const char* val,char** valid_vals);
 
 ////// List utils
 
-typedef void (* __FASTCALL__ ASX_FreeFunc)(void* arg);
+typedef void (* __FASTCALL__ ASX_FreeFunc)(any_t* arg);
 
-extern void __FASTCALL__ asx_list_free(void* list_ptr,ASX_FreeFunc free_func);
+extern void __FASTCALL__ asx_list_free(any_t* list_ptr,ASX_FreeFunc free_func);
 
 #endif

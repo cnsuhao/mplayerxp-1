@@ -1593,7 +1593,7 @@ static void real_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
     return;
 }
 
-static int real_control(demuxer_t *demuxer,int cmd,void *args)
+static int real_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

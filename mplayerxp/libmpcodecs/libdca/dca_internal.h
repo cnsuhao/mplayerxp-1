@@ -129,8 +129,8 @@ struct dca_state_s {
 
     int dynrnge;             /* apply dynamic range */
     level_t dynrng;          /* dynamic range */
-    void * dynrngdata;       /* dynamic range callback funtion and data */
-    level_t (* dynrngcall) (level_t range, void * dynrngdata);
+    any_t* dynrngdata;       /* dynamic range callback funtion and data */
+    level_t (* dynrngcall) (level_t range, any_t* dynrngdata);
 
     /* Bitstream handling */
     uint32_t * buffer_start;

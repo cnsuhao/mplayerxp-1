@@ -55,7 +55,7 @@ int get_video_quality_max(sh_video_t *sh_video){
 
 void set_video_quality(sh_video_t *sh_video,int quality){
   if(mpvdec)
-    mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (void*)(&quality));
+    mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
 }
 
 int set_video_colors(sh_video_t *sh_video,char *item,int value)

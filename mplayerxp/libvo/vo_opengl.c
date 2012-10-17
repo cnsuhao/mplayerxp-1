@@ -75,7 +75,7 @@ typedef struct vogl_priv_s {
     unsigned		depth,bpp,out_mode;
 
     unsigned		num_buffers; // 1 - default
-    void*		glx_context;
+    any_t*		glx_context;
     uint32_t		gl_out_format,out_format;
 }vogl_priv_t;
 static vogl_priv_t vogl;
@@ -374,7 +374,7 @@ static void __FASTCALL__ gl_dri_get_surface(dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static uint32_t control(uint32_t request, void *data)
+static uint32_t control(uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:

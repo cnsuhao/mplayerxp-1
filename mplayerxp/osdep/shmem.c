@@ -38,8 +38,8 @@
 
 static int shmem_type=0;
 
-void* shmem_alloc(int size){
-void* p;
+any_t* shmem_alloc(int size){
+any_t* p;
 static int devzero = -1;
 while(1){
   switch(shmem_type){
@@ -65,7 +65,7 @@ while(1){
     struct shmid_ds shmemds;
     int shmemid;
     if ((shmemid = shmget(IPC_PRIVATE, size, IPC_CREAT | 0600)) == -1) break;
-    if ((p = shmat(shmemid, 0, 0)) == (void *)-1){
+    if ((p = shmat(shmemid, 0, 0)) == (any_t*)-1){
       MSG_ERR( "shmem: shmat() failed: %s\n", strerror(errno));
       shmctl (shmemid, IPC_RMID, &shmemds);
       break;
@@ -90,7 +90,7 @@ while(1){
 }
 }
 
-void shmem_free(void* p){
+void shmem_free(any_t* p){
   switch(shmem_type){
     case 2:
 #ifdef HAVE_SHM

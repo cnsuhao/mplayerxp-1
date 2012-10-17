@@ -246,28 +246,28 @@ while(!stream_eof(demuxer->stream)){
         }
         // extract the author 
         if( apriv->contenth.author_size!=0 ) {
-          string=(char*)realloc((void*)string, apriv->contenth.author_size);
+          string=(char*)realloc((any_t*)string, apriv->contenth.author_size);
           stream_read(demuxer->stream, string, apriv->contenth.author_size);
 	  pack_asf_string(string, apriv->contenth.author_size);
 	  demux_info_add(demuxer, INFOT_AUTHOR, string);
         }
         // extract the copyright
         if( apriv->contenth.copyright_size!=0 ) {
-          string=(char*)realloc((void*)string, apriv->contenth.copyright_size);
+          string=(char*)realloc((any_t*)string, apriv->contenth.copyright_size);
           stream_read(demuxer->stream, string, apriv->contenth.copyright_size);
 	  pack_asf_string(string, apriv->contenth.copyright_size);
 	  demux_info_add(demuxer, INFOT_COPYRIGHT, string);
         }
         // extract the comment
         if( apriv->contenth.comment_size!=0 ) {
-          string=(char*)realloc((void*)string, apriv->contenth.comment_size);
+          string=(char*)realloc((any_t*)string, apriv->contenth.comment_size);
           stream_read(demuxer->stream, string, apriv->contenth.comment_size);
 	  pack_asf_string(string, apriv->contenth.comment_size);
 	  demux_info_add(demuxer, INFOT_COMMENTS, string);
         }
         // extract the rating
         if( apriv->contenth.rating_size!=0 ) {
-          string=(char*)realloc((void*)string, apriv->contenth.rating_size);
+          string=(char*)realloc((any_t*)string, apriv->contenth.rating_size);
           stream_read(demuxer->stream, string, apriv->contenth.rating_size);
 	  pack_asf_string(string, apriv->contenth.comment_size);
 	  demux_info_add(demuxer, INFOT_RATING, string);
@@ -711,7 +711,7 @@ static void asf_close(demuxer_t *demuxer)
     free(demuxer->priv);
 }
 
-static int asf_control(demuxer_t *demuxer,int cmd,void *args)
+static int asf_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

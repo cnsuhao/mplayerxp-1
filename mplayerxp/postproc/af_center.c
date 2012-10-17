@@ -23,7 +23,7 @@ typedef struct af_center_s
 }af_center_t;
 
 // Initialization and runtime control
-static int control(struct af_instance_s* af, int cmd, void* arg)
+static int control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_center_t* s   = af->setup; 
 

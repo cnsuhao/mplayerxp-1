@@ -12,9 +12,9 @@
 #define MSGT_CLASS MSGT_GLOBAL
 #include "../__mp_msg.h"
 
-void * ld_codec(const char *name,const char *url_hint)
+any_t* ld_codec(const char *name,const char *url_hint)
 {
-  void *dll_handle;
+  any_t*dll_handle;
   if(!(dll_handle=dlopen(name,RTLD_LAZY|RTLD_GLOBAL)))
   {
     MSG_FATAL(MSGTR_CODEC_CANT_LOAD_DLL,name,dlerror());
@@ -36,18 +36,18 @@ char * codec_name( const char *name )
 }
 #endif
 
-void * ld_sym(void *handle,const char *sym_name)
+any_t* ld_sym(any_t*handle,const char *sym_name)
 {
-  void *rval;
+  any_t*rval;
   if(!(rval=dlsym(handle,sym_name))) {
     MSG_ERR(MSGTR_CODEC_DLL_SYM_ERR,sym_name);
   }
   return rval;
 }
 
-void * ld_aliased_sym(void *handle,const char *sym_name,...)
+any_t* ld_aliased_sym(any_t*handle,const char *sym_name,...)
 {
-  void *rval=dlsym(handle,sym_name);
+  any_t*rval=dlsym(handle,sym_name);
   if(!rval) {
     const char *alias;
     va_list list;

@@ -35,7 +35,7 @@
 
 #ifdef HAVE_MEMALIGN
 /* some systems have memalign() but no declaration for it */
-void * memalign (size_t align, size_t size);
+any_t* memalign (size_t align, size_t size);
 #else
 /* assume malloc alignment is sufficient */
 #define memalign(align,size) malloc (size)
@@ -207,7 +207,7 @@ int a52_frame (a52_state_t * state, uint8_t * buf, int * flags,
 }
 
 void a52_dynrng (a52_state_t * state,
-		 sample_t (* call) (sample_t, void *), void * data)
+		 sample_t (* call) (sample_t, any_t*), any_t* data)
 {
     state->dynrnge = 0;
     if (call) {

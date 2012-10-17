@@ -77,7 +77,7 @@ static void uninit(sh_audio_t *sh_audio)
     free(priv->audioBuffers[i]);
 }
 
-static int control(sh_audio_t *sh,int cmd,void* arg, ...)
+static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     // TODO!!!
   UNUSED(sh);

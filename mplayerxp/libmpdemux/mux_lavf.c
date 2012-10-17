@@ -36,7 +36,7 @@ typedef struct {
 	AVStream *avstream;
 } muxer_stream_priv_t;
 
-static void mpxp_free(void *ptr)
+static void mpxp_free(any_t*ptr)
 {
     /* XXX: this test should not be needed on most libcs */
     if (ptr)
@@ -47,9 +47,9 @@ static void mpxp_free(void *ptr)
 #endif
 }
 
-static void mpxp_freep(void *arg)
+static void mpxp_freep(any_t*arg)
 {
-    void **ptr= (void**)arg;
+    any_t**ptr= (any_t**)arg;
     mpxp_free(*ptr);
     *ptr = NULL;
 }
@@ -401,7 +401,7 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	
 	((URLContext*)(priv->oc->pb->opaque))->priv_data= muxer;
 	
-	muxer->priv = (void *) priv;
+	muxer->priv = (any_t*) priv;
 	muxer->cont_new_stream = &lavf_new_stream;
 	muxer->cont_write_chunk = &write_chunk;
 	muxer->cont_write_header = &write_header;

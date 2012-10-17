@@ -135,7 +135,7 @@ static int __FASTCALL__ control(int cmd,long arg){
 }
 
 // SDL Callback function
-static void outputaudio(void *unused, Uint8 *stream, int len) {
+static void outputaudio(any_t*unused, Uint8 *stream, int len) {
     UNUSED(unused);
     read_buffer(stream, len);
 }
@@ -204,7 +204,7 @@ static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned forma
 	aspec.samples  = SAMPLESIZE;
 
 	/* This should be set to a function that will be called when the audio device is ready for more data. It is passed a pointer to the audio sdl.buffer, and the length in bytes of the audio sdl.buffer. This function usually runs in a separate thread, and so you should protect data structures that it accesses by calling SDL_LockAudio and SDL_UnlockAudio in your code. The callback prototype is:
-void callback(void *userdata, Uint8 *stream, int len); userdata is the pointer stored in userdata field of the SDL_AudioSpec. stream is a pointer to the audio sdl.buffer you want to fill with information and len is the length of the audio sdl.buffer in bytes. */
+void callback(any_t*userdata, Uint8 *stream, int len); userdata is the pointer stored in userdata field of the SDL_AudioSpec. stream is a pointer to the audio sdl.buffer you want to fill with information and len is the length of the audio sdl.buffer in bytes. */
 	aspec.callback = outputaudio;
 
 	/* This pointer is passed as the first parameter to the callback function. */
@@ -308,7 +308,7 @@ static unsigned get_space(void){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned __FASTCALL__ play(void* data,unsigned len,unsigned flags)
+static unsigned __FASTCALL__ play(any_t* data,unsigned len,unsigned flags)
 {
     UNUSED(flags);
 #if 0

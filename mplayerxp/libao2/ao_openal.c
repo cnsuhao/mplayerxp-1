@@ -231,7 +231,7 @@ static unsigned get_space(void) {
 /**
  * \brief write data into buffer and reset underrun flag
  */
-static unsigned play(void *data, unsigned len, unsigned flags) {
+static unsigned play(any_t*data, unsigned len, unsigned flags) {
   ALint state;
   unsigned i, j, k;
   unsigned ch;

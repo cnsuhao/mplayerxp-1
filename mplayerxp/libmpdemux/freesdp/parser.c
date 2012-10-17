@@ -65,7 +65,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 {
   fsdp_error_t result;
   const char *p = text_description, *p2;
-  unsigned int index, j;
+  unsigned int _index, j;
   /* temps for sscanf */
   const unsigned int TEMPCHARS = 6;
   char fsdp_buf[TEMPCHARS][MAXSHORTFIELDLEN];
@@ -252,7 +252,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     return FSDPE_MISSING_TIME;
   dsc->time_periods = calloc (dsc->time_periods_count,
 			      sizeof (fsdp_time_period_t *));
-  index = 0;
+  _index = 0;
   for (j = 0; j < dsc->time_periods_count; j++)
   {
     unsigned int h = 0;
@@ -285,13 +285,13 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     dsc->time_periods[j]->repeats_count = h;
     if (h > 0)
     {
-      unsigned int index2 = 0;
+      unsigned int _index2 = 0;
       dsc->time_periods[j]->repeats =
         calloc (h, sizeof (fsdp_repeat_t *));
       for (h = 0; h < dsc->time_periods[j]->repeats_count; h++)
       {
         /*
-          get_repeat_values(p,&(dsc->time_periods[index].repeats[index2]));
+          get_repeat_values(p,&(dsc->time_periods[_index].repeats[_index2]));
           fsdp_error_t get_repeat_values (const char *r, fsdp_repeat_t
           *repeat);
           */
@@ -358,7 +358,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
           dsc->time_periods[j]->repeats_count = h;
           return FSDPE_INVALID_REPEAT;
         }
-        index2++;
+        _index2++;
       }
     }
   }
@@ -997,27 +997,27 @@ fsdp_parse_b (const char **p, fsdp_bw_modifier_t ** bw_modifiers,
 
   while (i > 0)
   {
-    unsigned int index = *bw_modifiers_count - i;
+    unsigned int _index = *bw_modifiers_count - i;
     if (2 == sscanf (*p, "b=%20[^:\r\n]:%lu", fsdp_buf, &wuint))
     {
       if (!strncmp (fsdp_buf, "CT", 2))
-        (*bw_modifiers)[index].b_mod_type =
+        (*bw_modifiers)[_index].b_mod_type =
           FSDP_BW_MOD_TYPE_CONFERENCE_TOTAL;
       else if (!strncmp (fsdp_buf, "AS", 2))
-        (*bw_modifiers)[index].b_mod_type =
+        (*bw_modifiers)[_index].b_mod_type =
           FSDP_BW_MOD_TYPE_APPLICATION_SPECIFIC;
       else if (!strncmp (fsdp_buf, "RS", 2))
-        (*bw_modifiers)[index].b_mod_type = FSDP_BW_MOD_TYPE_RTCP_SENDERS;
+        (*bw_modifiers)[_index].b_mod_type = FSDP_BW_MOD_TYPE_RTCP_SENDERS;
       else if (!strncmp (fsdp_buf, "RR", 2))
-        (*bw_modifiers)[index].b_mod_type =
+        (*bw_modifiers)[_index].b_mod_type =
           FSDP_BW_MOD_TYPE_RTCP_RECEIVERS;
       else
       {
-        (*bw_modifiers)[index].b_mod_type = FSDP_BW_MOD_TYPE_UNKNOWN;
-        (*bw_modifiers)[index].b_unknown_bw_modt =
+        (*bw_modifiers)[_index].b_mod_type = FSDP_BW_MOD_TYPE_UNKNOWN;
+        (*bw_modifiers)[_index].b_unknown_bw_modt =
           (char *) strdup (fsdp_buf);
       }
-      (*bw_modifiers)[index].b_value = wuint;
+      (*bw_modifiers)[_index].b_value = wuint;
       NEXT_LINE (*p);
     }
     else
@@ -1119,7 +1119,7 @@ fsdp_parse_rtpmap (fsdp_rtpmap_t *** rtpmap, unsigned int *counter,
 }
 
 static fsdp_error_t
-fsdp_repeat_time_to_uint (const char *time, unsigned long int *seconds)
+fsdp_repeat_time_to_uint (const char *_time, unsigned long int *seconds)
 {
   const unsigned long SECONDS_PER_DAY = 86400;
   const unsigned long SECONDS_PER_HOUR = 3600;
@@ -1127,7 +1127,7 @@ fsdp_repeat_time_to_uint (const char *time, unsigned long int *seconds)
   char c;
   unsigned long int wuint;
 
-  if (sscanf (time, "%lu%c", &wuint, &c) == 2)
+  if (sscanf (_time, "%lu%c", &wuint, &c) == 2)
   {
     /* time with unit specification character */
     switch (c)
@@ -1149,7 +1149,7 @@ fsdp_repeat_time_to_uint (const char *time, unsigned long int *seconds)
       break;
     }
   }
-  else if (sscanf (time, "%lu", &wuint) == 1)
+  else if (sscanf (_time, "%lu", &wuint) == 1)
   {
     /* time without unit specification character */
     *seconds = wuint;
@@ -1250,11 +1250,11 @@ fsdp_get_emails_count (const fsdp_description_t * dsc)
 }
 
 const char *
-fsdp_get_email (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_email (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->emails_count))
+  if ((!dsc) || (_index >= dsc->emails_count))
     return NULL;
-  return dsc->emails[index];
+  return dsc->emails[_index];
 }
 
 unsigned int
@@ -1266,11 +1266,11 @@ fsdp_get_phones_count (const fsdp_description_t * dsc)
 }
 
 const char *
-fsdp_get_phone (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_phone (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->phones_count))
+  if ((!dsc) || (_index >= dsc->phones_count))
     return NULL;
-  return dsc->phones[index];
+  return dsc->phones[_index];
 }
 
 fsdp_network_type_t
@@ -1322,81 +1322,81 @@ fsdp_get_bw_modifier_count (const fsdp_description_t * dsc)
 }
 
 fsdp_bw_modifier_type_t
-fsdp_get_bw_modifier_type (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_bw_modifier_type (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->bw_modifiers_count))
+  if ((!dsc) || (_index >= dsc->bw_modifiers_count))
     return FSDP_BW_MOD_TYPE_UNDEFINED;
-  return dsc->bw_modifiers[index].b_mod_type;
+  return dsc->bw_modifiers[_index].b_mod_type;
 }
 
 const char *
 fsdp_get_bw_modifier_type_unknown (const fsdp_description_t * dsc,
-				   unsigned int index)
+				   unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->bw_modifiers_count) ||
-      (dsc->bw_modifiers[index].b_mod_type != FSDP_BW_MOD_TYPE_UNKNOWN))
+  if ((!dsc) || (_index >= dsc->bw_modifiers_count) ||
+      (dsc->bw_modifiers[_index].b_mod_type != FSDP_BW_MOD_TYPE_UNKNOWN))
     return NULL;
-  return dsc->bw_modifiers[index].b_unknown_bw_modt;
+  return dsc->bw_modifiers[_index].b_unknown_bw_modt;
 }
 
 unsigned long int
-fsdp_get_bw_value (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_bw_value (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->bw_modifiers_count))
+  if ((!dsc) || (_index >= dsc->bw_modifiers_count))
     return 0;
-  return dsc->bw_modifiers[index].b_value;
+  return dsc->bw_modifiers[_index].b_value;
 }
 
 time_t
-fsdp_get_period_start (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_period_start (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->time_periods_count))
+  if ((!dsc) || (_index >= dsc->time_periods_count))
     return 0;
-  return dsc->time_periods[index]->start;
+  return dsc->time_periods[_index]->start;
 }
 
 time_t
-fsdp_get_period_stop (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_period_stop (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->time_periods_count))
+  if ((!dsc) || (_index >= dsc->time_periods_count))
     return 0;
-  return dsc->time_periods[index]->stop;
+  return dsc->time_periods[_index]->stop;
 }
 
 unsigned int
 fsdp_get_period_repeats_count (const fsdp_description_t * dsc,
-			       unsigned int index)
+			       unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->time_periods_count))
+  if ((!dsc) || (_index >= dsc->time_periods_count))
     return 0;
-  return dsc->time_periods[index]->repeats_count;
+  return dsc->time_periods[_index]->repeats_count;
 }
 
 unsigned long int
 fsdp_get_period_repeat_interval (const fsdp_description_t * dsc,
-				 unsigned int index, unsigned int rindex)
+				 unsigned int _index, unsigned int r_index)
 {
-  if ((!dsc) || (index >= dsc->time_periods_count))
+  if ((!dsc) || (_index >= dsc->time_periods_count))
     return 0;
-  return dsc->time_periods[index]->repeats[rindex]->interval;
+  return dsc->time_periods[_index]->repeats[r_index]->interval;
 }
 
 unsigned long int
 fsdp_get_period_repeat_duration (const fsdp_description_t * dsc,
-				 unsigned int index, unsigned int rindex)
+				 unsigned int _index, unsigned int r_index)
 {
-  if ((!dsc) || (index >= dsc->time_periods_count))
+  if ((!dsc) || (_index >= dsc->time_periods_count))
     return 0;
-  return dsc->time_periods[index]->repeats[rindex]->duration;
+  return dsc->time_periods[_index]->repeats[r_index]->duration;
 }
 
 const unsigned long int *
 fsdp_get_period_repeat_offsets (const fsdp_description_t * dsc,
-				unsigned int index, unsigned int rindex)
+				unsigned int _index, unsigned int r_index)
 {
-  if ((!dsc) || (index >= dsc->time_periods_count))
+  if ((!dsc) || (_index >= dsc->time_periods_count))
     return NULL;
-  return dsc->time_periods[index]->repeats[rindex]->offsets;
+  return dsc->time_periods[_index]->repeats[r_index]->offsets;
 }
 
 const char *
@@ -1417,11 +1417,11 @@ fsdp_get_unidentified_attribute_count (const fsdp_description_t * dsc)
 
 const char *
 fsdp_get_unidentified_attribute (const fsdp_description_t * dsc,
-				 unsigned int index)
+				 unsigned int _index)
 {
-  if (!dsc || (index < dsc->unidentified_attributes_count))
+  if (!dsc || (_index < dsc->unidentified_attributes_count))
     return NULL;
-  return dsc->unidentified_attributes[index];
+  return dsc->unidentified_attributes[_index];
 }
 
 fsdp_encryption_method_t
@@ -1450,38 +1450,38 @@ fsdp_get_rtpmap_count (const fsdp_description_t * dsc)
 
 const char *
 fsdp_get_rtpmap_payload_type (const fsdp_description_t * dsc,
-			      unsigned int index)
+			      unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->a_rtpmaps_count))
+  if ((!dsc) || (_index >= dsc->a_rtpmaps_count))
     return NULL;
-  return dsc->a_rtpmaps[index]->pt;
+  return dsc->a_rtpmaps[_index]->pt;
 }
 
 const char *
 fsdp_get_rtpmap_encoding_name (const fsdp_description_t * dsc,
-			       unsigned int index)
+			       unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->a_rtpmaps_count))
+  if ((!dsc) || (_index >= dsc->a_rtpmaps_count))
     return NULL;
-  return dsc->a_rtpmaps[index]->encoding_name;
+  return dsc->a_rtpmaps[_index]->encoding_name;
 }
 
 unsigned int
 fsdp_get_rtpmap_clock_rate (const fsdp_description_t * dsc,
-			    unsigned int index)
+			    unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->a_rtpmaps_count))
+  if ((!dsc) || (_index >= dsc->a_rtpmaps_count))
     return 0;
-  return dsc->a_rtpmaps[index]->clock_rate;
+  return dsc->a_rtpmaps[_index]->clock_rate;
 }
 
 const char *
 fsdp_get_rtpmap_encoding_parameters (const fsdp_description_t * dsc,
-				     unsigned int index)
+				     unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->a_rtpmaps_count))
+  if ((!dsc) || (_index >= dsc->a_rtpmaps_count))
     return NULL;
-  return dsc->a_rtpmaps[index]->parameters;
+  return dsc->a_rtpmaps[_index]->parameters;
 }
 
 const char *
@@ -1523,11 +1523,11 @@ fsdp_get_sdplang_count (const fsdp_description_t * dsc)
 }
 
 const char *
-fsdp_get_sdplang (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_sdplang (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->a_sdplangs_count))
+  if ((!dsc) || (_index >= dsc->a_sdplangs_count))
     return NULL;
-  return dsc->a_sdplangs[index];
+  return dsc->a_sdplangs[_index];
 }
 
 unsigned int
@@ -1539,11 +1539,11 @@ fsdp_get_lang_count (const fsdp_description_t * dsc)
 }
 
 const char *
-fsdp_get_lang (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_lang (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->a_langs_count))
+  if ((!dsc) || (_index >= dsc->a_langs_count))
     return NULL;
-  return dsc->a_langs[index];
+  return dsc->a_langs[_index];
 }
 
 unsigned int
@@ -1555,11 +1555,11 @@ fsdp_get_control_count (const fsdp_description_t * dsc)
 }
 
 const char *
-fsdp_get_control (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_control (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((!dsc) || (index >= dsc->a_controls_count))
+  if ((!dsc) || (_index >= dsc->a_controls_count))
     return NULL;
-  return dsc->a_controls[index];
+  return dsc->a_controls[_index];
 }
 
 const char *
@@ -1593,11 +1593,11 @@ fsdp_get_media_count (const fsdp_description_t * dsc)
 }
 
 const fsdp_media_description_t *
-fsdp_get_media (const fsdp_description_t * dsc, unsigned int index)
+fsdp_get_media (const fsdp_description_t * dsc, unsigned int _index)
 {
-  if ((index >= dsc->media_announcements_count))
+  if ((_index >= dsc->media_announcements_count))
     return NULL;
-  return dsc->media_announcements[index];
+  return dsc->media_announcements[_index];
 }
 
 fsdp_media_t
@@ -1642,11 +1642,11 @@ fsdp_get_media_formats_count (const fsdp_media_description_t * dsc)
 
 const char *
 fsdp_get_media_format (const fsdp_media_description_t * dsc,
-		       unsigned int index)
+		       unsigned int _index)
 {
-  if (!dsc && (index < dsc->formats_count))
+  if (!dsc && (_index < dsc->formats_count))
     return NULL;
-  return dsc->formats[index];
+  return dsc->formats[_index];
 }
 
 const char *
@@ -1699,30 +1699,30 @@ fsdp_get_media_address_count (const fsdp_media_description_t * mdsc)
 
 fsdp_bw_modifier_type_t
 fsdp_get_media_bw_modifier_type (const fsdp_media_description_t * dsc,
-				 unsigned int index)
+				 unsigned int _index)
 {
-  if (!dsc || (index >= dsc->bw_modifiers_count))
+  if (!dsc || (_index >= dsc->bw_modifiers_count))
     return FSDP_BW_MOD_TYPE_UNDEFINED;
-  return dsc->bw_modifiers[index].b_mod_type;
+  return dsc->bw_modifiers[_index].b_mod_type;
 }
 
 const char *
 fsdp_get_media_bw_modifier_type_unknown (const fsdp_media_description_t * dsc,
-					 unsigned int index)
+					 unsigned int _index)
 {
-  if (!dsc || (index >= dsc->bw_modifiers_count) ||
-      (FSDP_BW_MOD_TYPE_UNKNOWN != dsc->bw_modifiers[index].b_mod_type))
+  if (!dsc || (_index >= dsc->bw_modifiers_count) ||
+      (FSDP_BW_MOD_TYPE_UNKNOWN != dsc->bw_modifiers[_index].b_mod_type))
     return NULL;
-  return dsc->bw_modifiers[index].b_unknown_bw_modt;
+  return dsc->bw_modifiers[_index].b_unknown_bw_modt;
 }
 
 unsigned long int
 fsdp_get_media_bw_value (const fsdp_media_description_t * dsc,
-			 unsigned int index)
+			 unsigned int _index)
 {
-  if (!dsc || (index >= dsc->bw_modifiers_count))
+  if (!dsc || (_index >= dsc->bw_modifiers_count))
     return 0;
-  return dsc->bw_modifiers[index].b_value;
+  return dsc->bw_modifiers[_index].b_value;
 }
 
 fsdp_encryption_method_t
@@ -1767,38 +1767,38 @@ fsdp_get_media_rtpmap_count (const fsdp_media_description_t * mdsc)
 
 const char *
 fsdp_get_media_rtpmap_payload_type (const fsdp_media_description_t * mdsc,
-				    unsigned int index)
+				    unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_rtpmaps_count))
+  if (!mdsc || (_index >= mdsc->a_rtpmaps_count))
     return NULL;
-  return mdsc->a_rtpmaps[index]->pt;
+  return mdsc->a_rtpmaps[_index]->pt;
 }
 
 const char *
 fsdp_get_media_rtpmap_encoding_name (const fsdp_media_description_t * mdsc,
-				     unsigned int index)
+				     unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_rtpmaps_count))
+  if (!mdsc || (_index >= mdsc->a_rtpmaps_count))
     return NULL;
-  return mdsc->a_rtpmaps[index]->encoding_name;
+  return mdsc->a_rtpmaps[_index]->encoding_name;
 }
 
 unsigned int
 fsdp_get_media_rtpmap_clock_rate (const fsdp_media_description_t * mdsc,
-				  unsigned int index)
+				  unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_rtpmaps_count))
+  if (!mdsc || (_index >= mdsc->a_rtpmaps_count))
     return 0;
-  return mdsc->a_rtpmaps[index]->clock_rate;
+  return mdsc->a_rtpmaps[_index]->clock_rate;
 }
 
 const char *
 fsdp_get_media_rtpmap_encoding_parameters (const fsdp_description_t * mdsc,
-					   unsigned int index)
+					   unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_rtpmaps_count))
+  if (!mdsc || (_index >= mdsc->a_rtpmaps_count))
     return NULL;
-  return mdsc->a_rtpmaps[index]->parameters;
+  return mdsc->a_rtpmaps[_index]->parameters;
 }
 
 unsigned int
@@ -1811,11 +1811,11 @@ fsdp_get_media_sdplang_count (const fsdp_media_description_t * mdsc)
 
 const char *
 fsdp_get_media_sdplang (const fsdp_media_description_t * mdsc,
-			unsigned int index)
+			unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_sdplangs_count))
+  if (!mdsc || (_index >= mdsc->a_sdplangs_count))
     return NULL;
-  return mdsc->a_sdplangs[index];
+  return mdsc->a_sdplangs[_index];
 }
 
 unsigned int
@@ -1828,11 +1828,11 @@ fsdp_get_media_lang_count (const fsdp_media_description_t * mdsc)
 
 const char *
 fsdp_get_media_lang (const fsdp_media_description_t * mdsc,
-		     unsigned int index)
+		     unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_langs_count))
+  if (!mdsc || (_index >= mdsc->a_langs_count))
     return NULL;
-  return mdsc->a_langs[index];
+  return mdsc->a_langs[_index];
 }
 
 unsigned int
@@ -1845,11 +1845,11 @@ fsdp_get_media_control_count (const fsdp_media_description_t * mdsc)
 
 char *
 fsdp_get_media_control (const fsdp_media_description_t * mdsc,
-			unsigned int index)
+			unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_controls_count))
+  if (!mdsc || (_index >= mdsc->a_controls_count))
     return NULL;
-  return mdsc->a_controls[index];
+  return mdsc->a_controls[_index];
 }
 
 char *
@@ -1868,11 +1868,11 @@ fsdp_get_media_fmtp_count (const fsdp_media_description_t * mdsc)
 
 const char *
 fsdp_get_media_fmtp (const fsdp_media_description_t * mdsc,
-		     unsigned int index)
+		     unsigned int _index)
 {
-  if (!mdsc || (index >= mdsc->a_fmtps_count))
+  if (!mdsc || (_index >= mdsc->a_fmtps_count))
     return NULL;
-  return mdsc->a_fmtps[index];
+  return mdsc->a_fmtps[_index];
 }
 
 fsdp_orient_t
@@ -1950,9 +1950,9 @@ fsdp_get_media_unidentified_attribute_count (const fsdp_media_description_t
 
 const char *
 fsdp_get_media_unidentified_attribute (const fsdp_media_description_t * mdsc,
-				       unsigned int index)
+				       unsigned int _index)
 {
-  if (!mdsc || (index < mdsc->unidentified_attributes_count))
+  if (!mdsc || (_index < mdsc->unidentified_attributes_count))
     return NULL;
-  return mdsc->unidentified_attributes[index];
+  return mdsc->unidentified_attributes[_index];
 }

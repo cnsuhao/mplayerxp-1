@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 
-static inline int output_unimplemented(const char* s, void* p)
+static inline int output_unimplemented(const char* s, any_t* p)
 {
     Debug printf("%s(%p) called (UNIMPLEMENTED)", s, p);
     return E_NOTIMPL;
@@ -209,7 +209,7 @@ static CEnumMediaTypes* CEnumMediaTypesCreate(const AM_MEDIA_TYPE* amt)
  * Make sure to call Release on received interface when you are done
  *
  */
-static HRESULT STDCALL COutputPin_QueryInterface(IUnknown* This, const GUID* iid, void** ppv)
+static HRESULT STDCALL COutputPin_QueryInterface(IUnknown* This, const GUID* iid, any_t** ppv)
 {
     COutputPin* p = (COutputPin*) This;
 
@@ -572,7 +572,7 @@ static HRESULT STDCALL COutputPin_NewSegment(IPin * This,
  * Make sure to call Release on received interface when you are done
  *
  */
-static HRESULT STDCALL COutputMemPin_QueryInterface(IUnknown* This, const GUID* iid, void** ppv)
+static HRESULT STDCALL COutputMemPin_QueryInterface(IUnknown* This, const GUID* iid, any_t** ppv)
 {
     COutputMemPin* p = (COutputMemPin*)This;
 
@@ -589,7 +589,7 @@ static HRESULT STDCALL COutputMemPin_QueryInterface(IUnknown* This, const GUID* 
     /*if(!memcmp(iid, &IID_IPin, 16))
     {
 	COutputPin* ptr=(COutputPin*)(This-1);
-	*ppv=(void*)ptr;
+	*ppv=(any_t*)ptr;
 	AddRef((IUnknown*)ptr);
 	return 0;
     }*/
@@ -887,7 +887,7 @@ static HRESULT STDCALL COutputMemPin_Release(IUnknown* This)
  * \return NULL if error occured
  *
  */
-COutputPin* COutputPinCreate(const AM_MEDIA_TYPE* amt,SAMPLEPROC SampleProc,void* pUserData)
+COutputPin* COutputPinCreate(const AM_MEDIA_TYPE* amt,SAMPLEPROC SampleProc,any_t* pUserData)
 {
     COutputPin* This = (COutputPin*) malloc(sizeof(COutputPin));
     IMemInputPin_vt* ivt;

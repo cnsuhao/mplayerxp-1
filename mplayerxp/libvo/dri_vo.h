@@ -10,7 +10,7 @@
 /*---------- LIB_DRI ----------------*/
 /* 
   Note: Each dri voctl call has following format: 
-    voctl(call_num,void *);
+    voctl(call_num,any_t*);
 */
 
 #define DRI_CAP_TEMP_VIDEO	0x00000000UL	/**< Means: video buffer was allocated in RAM */

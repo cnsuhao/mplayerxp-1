@@ -111,7 +111,7 @@ int cb_fifo_realloc2(CBFifoBuffer *f, unsigned int new_size) {
     return 0;
 }
 
-int cb_fifo_generic_write(CBFifoBuffer *f, void *src, int size, int (*func)(void*, void*, int))
+int cb_fifo_generic_write(CBFifoBuffer *f, any_t*src, int size, int (*func)(any_t*, any_t*, int))
 {
     int total = size;
     do {
@@ -133,7 +133,7 @@ int cb_fifo_generic_write(CBFifoBuffer *f, void *src, int size, int (*func)(void
     return total - size;
 }
 
-int cb_fifo_generic_read(CBFifoBuffer *f, void *dest, int buf_size, void (*func)(void*, void*, int))
+int cb_fifo_generic_read(CBFifoBuffer *f, any_t*dest, int buf_size, void (*func)(any_t*, any_t*, int))
 {
 // Read memory barrier needed for SMP here in theory
     do {

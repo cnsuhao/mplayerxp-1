@@ -143,7 +143,7 @@ static int dca_resample_3F_2R_LFE_to_6_C(float * _f, int16_t * s16){
 }
 
 
-static void* dca_resample_C(dca_state_t * state,int flags, int ch){
+static any_t* dca_resample_C(dca_state_t * state,int flags, int ch){
     bias=state->bias;
     level=state->level;
     switch (flags) {
@@ -312,7 +312,7 @@ static int dca_resample_3F_2R_LFE_to_6_f32(float * f, real_t * s32){
     return 6*256;
 }
 
-static void* dca_resample_f32(dca_state_t * state,int flags, int ch){
+static any_t* dca_resample_f32(dca_state_t * state,int flags, int ch){
     bias=state->bias;
     level=state->level;
     switch (flags) {

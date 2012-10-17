@@ -25,7 +25,7 @@ typedef struct af_dyn_s
 }af_dyn_t;
 // Data for specific instances of this filter
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_dyn_t* s   = (af_dyn_t*)af->setup; 
   switch(cmd){

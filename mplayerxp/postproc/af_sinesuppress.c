@@ -37,7 +37,7 @@ static af_data_t* play_float(struct af_instance_s* af, af_data_t* data,int final
 #endif
 
 // Initialization and runtime control
-static int control(struct af_instance_s* af, int cmd, void* arg)
+static int control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup; 
 

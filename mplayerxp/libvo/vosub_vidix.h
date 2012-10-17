@@ -13,11 +13,11 @@
 #define __VOSUB_VIDIX_INCLUDED
 
 		    /* drvname can be NULL */
-int	 __FASTCALL__ vidix_preinit(const char *drvname,const void *server);
+int	 __FASTCALL__ vidix_preinit(const char *drvname,const any_t*server);
 int      __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 		    unsigned dest_x,unsigned dest_y,unsigned dst_width,
 		    unsigned dst_height,unsigned format,unsigned dest_bpp,
-		    unsigned vid_w,unsigned vid_h,const void *info);
+		    unsigned vid_w,unsigned vid_h,const any_t*info);
 int	 vidix_start(void);
 int	 vidix_stop(void);
 void     vidix_term( void );

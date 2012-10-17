@@ -16,6 +16,6 @@
 
 /* Decodes the format from mplayer format to libaf format */
 extern int __FASTCALL__ af_format_decode(int format,unsigned *bps);
-extern int __FASTCALL__ af_format_encode(void* fmt);
+extern int __FASTCALL__ af_format_encode(any_t* fmt);
 
 #endif /* __af_mp_h__ */

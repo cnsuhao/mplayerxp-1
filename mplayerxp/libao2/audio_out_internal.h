@@ -7,7 +7,7 @@ static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned forma
 static void uninit(void);
 static void reset(void);
 static unsigned get_space(void);
-static unsigned __FASTCALL__ play(void* data,unsigned len,unsigned flags);
+static unsigned __FASTCALL__ play(any_t* data,unsigned len,unsigned flags);
 static float get_delay(void);
 static void audio_pause(void);
 static void audio_resume(void);

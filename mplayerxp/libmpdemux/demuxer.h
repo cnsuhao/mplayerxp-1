@@ -87,7 +87,7 @@ typedef struct {
   unsigned int ss_mul;	/**< compression ratio for packet descriptor */
   unsigned int ss_div;	/**< compression ratio for packet descriptor */
 /*---------------*/
-  void* sh;		/**< Stream header associated with this stream (@see st_header.h for detail) */
+  any_t* sh;		/**< Stream header associated with this stream (@see st_header.h for detail) */
 /*---------------*/
   float prev_pts;	/**< PTS of previous packet (DVD's PTS correction) */
   float pts_corr;	/**< PTS correction (DVD's PTS correction) */
@@ -109,8 +109,8 @@ typedef struct demuxer_st {
   demux_stream_t *audio;/**< audio buffer/demuxer */
   demux_stream_t *video;/**< video buffer/demuxer */
   demux_stream_t *sub;	/**< DVD's subtitle buffer/demuxer */
-  void* a_streams[MAX_A_STREAMS]; /**< audio streams (sh_audio_t) for multilanguage movies */
-  void* v_streams[MAX_V_STREAMS]; /**< video streams (sh_video_t) for multipicture movies  */
+  any_t* a_streams[MAX_A_STREAMS]; /**< audio streams (sh_audio_t) for multilanguage movies */
+  any_t* v_streams[MAX_V_STREAMS]; /**< video streams (sh_video_t) for multipicture movies  */
   char  s_streams[MAX_S_STREAMS]; /**< DVD's subtitles (flag) streams for multilanguage movies */
   off_t filepos;	/**< current pos. of input stream */
   off_t movi_start;	/**< real start of movie within of stream */
@@ -120,8 +120,8 @@ typedef struct demuxer_st {
   unsigned file_format; /**< file format: DEMUXER_TYPE_*(mpeg/avi/asf). Will be replaced with properties in the further versions */
   int synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
 
-  void* priv;		/**< private data of demuxer's driver.*/
-  void* info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
+  any_t* priv;		/**< private data of demuxer's driver.*/
+  any_t* info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
   struct demuxer_driver_s* driver; /**< driver associated with this demuxer */
 } demuxer_t;
 
@@ -172,7 +172,7 @@ typedef struct demuxer_driver_s
 			  * @param arg	optional arguments for thsis command
 			  * @return	one of DEMUX_* states
 			 **/
-    int			(*control)(demuxer_t *d,int cmd,void *arg);
+    int			(*control)(demuxer_t *d,int cmd,any_t*arg);
 }demuxer_driver_t;
 
 inline static demux_packet_t* new_demux_packet(int len){

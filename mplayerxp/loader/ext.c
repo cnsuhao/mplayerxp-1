@@ -34,7 +34,7 @@
 
 #if 0
 //REMOVE SIMPLIFY
-static void* mymalloc(unsigned int size)
+static any_t* mymalloc(unsigned int size)
 {
     printf("malloc %d\n", size);
     return malloc(size);
@@ -83,7 +83,7 @@ HANDLE WINAPI GetProcessHeap(void)
 LPVOID WINAPI HeapAlloc(HANDLE heap, DWORD flags, DWORD size)
 {
     static int i = 5;
-    void* m = (flags & 0x8) ? calloc(size, 1) : malloc(size);
+    any_t* m = (flags & 0x8) ? calloc(size, 1) : malloc(size);
     //printf("HeapAlloc %p  %d  (%d)\n", m, size, flags);
     //if (--i == 0)
     //    abort();
@@ -434,7 +434,7 @@ WIN_BOOL WINAPI UnmapViewOfFile(LPVOID handle)
     {
 	if(p->handle==handle)
 	{
-	    result=munmap((void*)handle, p->mapping_size);
+	    result=munmap((any_t*)handle, p->mapping_size);
 	    if(p->next)p->next->prev=p->prev;
 	    if(p->prev)p->prev->next=p->next;
 	    if(p->name)
@@ -463,7 +463,7 @@ static virt_alloc* vm=0;
 
 LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protection)
 {
-    void* answer;
+    any_t* answer;
     int fd;
     long pgsz;
 
@@ -530,16 +530,16 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
 //    answer=FILE_dommap(-1, address, 0, size, 0, 0,
 //	PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE);
     close(fd);
-    if (answer != (void *)-1 && address && answer != address) {
+    if (answer != (any_t*)-1 && address && answer != address) {
 	/* It is dangerous to try mmap() with MAP_FIXED since it does not
 	   always detect conflicts or non-allocation and chaos ensues after
 	   a successful call but an overlapping or non-allocated region.  */
 	munmap(answer, size);
-	answer = (void *) -1;
+	answer = (any_t*) -1;
 	errno = EINVAL;
 	//printf(" VirtualAlloc(...) cannot satisfy requested address but address=NULL would work.\n");
     }
-    if(answer==(void*)-1)
+    if(answer==(any_t*)-1)
     {
 	/*printf(" VirtualAlloc(...) mmap(0x%08X, %u, ...) failed with errno=%d (\"%s\")\n",
 	       (unsigned)address, size, errno, strerror(errno));*/

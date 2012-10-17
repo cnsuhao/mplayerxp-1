@@ -11,7 +11,7 @@ struct _avm_list_t
 {
     struct _avm_list_t* next;
     struct _avm_list_t* prev;
-    void* member;
+    any_t* member;
 };
 
 static inline int avm_list_size(avm_list_t* head)
@@ -51,7 +51,7 @@ static inline int avm_list_print(avm_list_t* head)
     return i;
 }
 
-static inline avm_list_t* avm_list_add_head(avm_list_t* head, void* member)
+static inline avm_list_t* avm_list_add_head(avm_list_t* head, any_t* member)
 {
     avm_list_t* n = (avm_list_t*) malloc(sizeof(avm_list_t));
     n->member = member;
@@ -69,7 +69,7 @@ static inline avm_list_t* avm_list_add_head(avm_list_t* head, void* member)
     return n;
 }
 
-static inline avm_list_t* avm_list_add_tail(avm_list_t* head, void* member)
+static inline avm_list_t* avm_list_add_tail(avm_list_t* head, any_t* member)
 {
     avm_list_t* n = avm_list_add_head(head, member);
     return (!head) ? n : head;
@@ -92,7 +92,7 @@ static inline avm_list_t* avm_list_del_head(avm_list_t* head)
     return n;
 }
 
-static inline avm_list_t* avm_list_find(avm_list_t* head, void* member)
+static inline avm_list_t* avm_list_find(avm_list_t* head, any_t* member)
 {
     avm_list_t* it = head;
     if (it)
@@ -109,7 +109,7 @@ static inline avm_list_t* avm_list_find(avm_list_t* head, void* member)
     return NULL;
 }
 
-static long MemAllocator_CreateAllocator(GUID* clsid, const GUID* iid, void** ppv)
+static long MemAllocator_CreateAllocator(GUID* clsid, const GUID* iid, any_t** ppv)
 {
     IMemAllocator* p;
     int result;

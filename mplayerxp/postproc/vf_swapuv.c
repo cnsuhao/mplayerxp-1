@@ -51,7 +51,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
 #if 0
     mpi->flags|=MP_IMGFLAG_DIRECT;
 #endif
-    mpi->priv=(void*)dmpi;
+    mpi->priv=(any_t*)dmpi;
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){

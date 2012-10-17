@@ -26,6 +26,8 @@
 #ifndef FSDP_COMMON_H
 #define FSDP_COMMON_H
 
+#include "mp_config.h"
+
 /* Macros to avoid name mangling when compiling with a C++ compiler */
 #ifdef __cplusplus
 #  define BEGIN_C_DECLS extern "C" {

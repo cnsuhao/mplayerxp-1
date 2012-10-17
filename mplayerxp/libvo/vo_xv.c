@@ -677,14 +677,14 @@ static void __FASTCALL__ xv_dri_get_surface(dri_surface_t *surf)
     for(;i<4;i++)
 	surf->planes[i] = 0;
     {
-	void * tp;
+	any_t* tp;
 	tp = surf->planes[2];
 	surf->planes[2] = surf->planes[1];
 	surf->planes[1] = tp;
     }
 }
 
-static uint32_t __FASTCALL__ control(uint32_t request, void *data)
+static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:

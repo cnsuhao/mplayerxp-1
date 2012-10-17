@@ -7,7 +7,7 @@
 #ifndef AVIFILE_COM_H
 #define AVIFILE_COM_H
 
-#include "config.h"
+#include "mp_config.h"
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -39,7 +39,7 @@ typedef struct
 extern const GUID IID_IUnknown;
 extern const GUID IID_IClassFactory;
 
-typedef long (*GETCLASSOBJECT) (GUID* clsid, const GUID* iid, void** ppv);
+typedef long (*GETCLASSOBJECT) (GUID* clsid, const GUID* iid, any_t** ppv);
 int RegisterComClass(const GUID* clsid, GETCLASSOBJECT gcs);
 int UnregisterComClass(const GUID* clsid, GETCLASSOBJECT gcs);
 
@@ -51,7 +51,7 @@ struct IUnknown;
 struct IClassFactory;
 struct IUnknown_vt
 {
-    long STDCALL (*QueryInterface)(struct IUnknown* _this, const GUID* iid, void** ppv);
+    long STDCALL (*QueryInterface)(struct IUnknown* _this, const GUID* iid, any_t** ppv);
     long STDCALL (*AddRef)(struct IUnknown* _this) ;
     long STDCALL (*Release)(struct IUnknown* _this) ;
 } ;
@@ -63,10 +63,10 @@ typedef struct IUnknown
 
 struct IClassFactory_vt
 {
-    long STDCALL (*QueryInterface)(struct IUnknown* _this, const GUID* iid, void** ppv);
+    long STDCALL (*QueryInterface)(struct IUnknown* _this, const GUID* iid, any_t** ppv);
     long STDCALL (*AddRef)(struct IUnknown* _this) ;
     long STDCALL (*Release)(struct IUnknown* _this) ;
-    long STDCALL (*CreateInstance)(struct IClassFactory* _this, struct IUnknown* pUnkOuter, const GUID* riid, void** ppvObject);
+    long STDCALL (*CreateInstance)(struct IClassFactory* _this, struct IUnknown* pUnkOuter, const GUID* riid, any_t** ppvObject);
 };
 
 struct IClassFactory
@@ -76,14 +76,14 @@ struct IClassFactory
 
 #ifdef HAVE_WIN32LOADER
 long CoCreateInstance(GUID* rclsid, struct IUnknown* pUnkOuter,
- 		      long dwClsContext, const GUID* riid, void** ppv);
-void* CoTaskMemAlloc(unsigned long cb);
-void CoTaskMemFree(void* cb);
+ 		      long dwClsContext, const GUID* riid, any_t** ppv);
+any_t* CoTaskMemAlloc(unsigned long cb);
+void CoTaskMemFree(any_t* cb);
 #else
 long STDCALL CoCreateInstance(GUID* rclsid, struct IUnknown* pUnkOuter,
-		      long dwClsContext, const GUID* riid, void** ppv);
-void* STDCALL  CoTaskMemAlloc(unsigned long);
-void  STDCALL  CoTaskMemFree(void*);
+		      long dwClsContext, const GUID* riid, any_t** ppv);
+any_t* STDCALL  CoTaskMemAlloc(unsigned long);
+void  STDCALL  CoTaskMemFree(any_t*);
 #endif
 
 #ifdef __cplusplus

@@ -26,20 +26,20 @@ static const int SAFETY_ACEL = 1024;
  */
 static long STDCALL CMediaSample_QueryInterface(IUnknown* This,
 						/* [in] */ const GUID* iid,
-						/* [iid_is][out] */ void **ppv)
+						/* [iid_is][out] */ any_t**ppv)
 {
     Debug printf("CMediaSample_QueryInterface(%p) called\n", This);
     if (!ppv)
 	return E_INVALIDARG;
     if (memcmp(iid, &IID_IUnknown, sizeof(*iid)) == 0)
     {
-	*ppv = (void*)This;
+	*ppv = (any_t*)This;
 	((IMediaSample*) This)->vt->AddRef(This);
 	return 0;
     }
     if (memcmp(iid, &IID_IMediaSample, sizeof(*iid)) == 0)
     {
-	*ppv = (void*)This;
+	*ppv = (any_t*)This;
 	((IMediaSample*) This)->vt->AddRef(This);
 	return 0;
     }

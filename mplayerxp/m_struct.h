@@ -17,7 +17,7 @@ typedef struct m_struct_st {
   /// size of the whole struct
   unsigned int size;
   /// Pointer to a struct filled with the default settings
-  const void* defaults;
+  const any_t* defaults;
   /// Field list.
   /** The p field of the \ref m_option struct must contain the offset
    *  of the member in the struct (use M_ST_OFF macro for this).
@@ -34,7 +34,7 @@ typedef struct m_struct_st {
  *  \return The offset of the field in bytes.
  */
 #define M_ST_OFF(struct_type, member)    \
-    ((void*) &((struct_type*) 0)->member)
+    ((any_t*) &((struct_type*) 0)->member)
 
 /// Get a pointer to a struct field.
 /** \param struct_p Pointer to the struct.
@@ -42,7 +42,7 @@ typedef struct m_struct_st {
  *  \return Pointer to the struct field.
  */
 #define M_ST_MB_P(struct_p, struct_offset)   \
-    ((void *)((char *)(struct_p) + (unsigned long)(struct_offset)))
+    ((any_t*)((char *)(struct_p) + (unsigned long)(struct_offset)))
 
 /// Access a struct field at a given offset.
 /** \param member_type Type of the field.
@@ -59,7 +59,7 @@ typedef struct m_struct_st {
 /** \param st Struct definition.
  *  \return The newly allocated object set to default.
  */
-void*
+any_t*
 m_struct_alloc(const m_struct_t* st);
 
 /// Set a field of the struct.
@@ -70,7 +70,7 @@ m_struct_alloc(const m_struct_t* st);
  *  \return 0 on error, 1 on success.
  */
 int
-m_struct_set(const m_struct_t* st, void* obj, char* field, char* param);
+m_struct_set(const m_struct_t* st, any_t* obj, char* field, char* param);
 
 /// Reset a field (or all if field == NULL) to defaults.
 /** \param st Struct definition.
@@ -78,22 +78,22 @@ m_struct_set(const m_struct_t* st, void* obj, char* field, char* param);
  *  \param field Name of the field to reset, if NULL all fields are reseted.
  */
 void
-m_struct_reset(const m_struct_t* st, void* obj, const char* field);
+m_struct_reset(const m_struct_t* st, any_t* obj, const char* field);
 
 /// Create a copy of an existing struct.
 /** \param st Struct definition.
  *  \param obj Pointer to the struct to copy.
  *  \return Newly allocated copy of obj.
  */
-void*
-m_struct_copy(const m_struct_t* st, void* obj);
+any_t*
+m_struct_copy(const m_struct_t* st, any_t* obj);
 
 /// Free an allocated struct.
 /** \param st Struct definition.
  *  \param obj Pointer to the struct to copy.
  */
 void
-m_struct_free(const m_struct_t* st, void* obj);
+m_struct_free(const m_struct_t* st, any_t* obj);
 
 /// Get a field description.
 /** \param st Struct definition.

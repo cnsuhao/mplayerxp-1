@@ -36,7 +36,7 @@ typedef struct mp_osd_obj_s {
     int cleared_frames; // The number of frames that has been cleared from old OSD, -1 = don't clear
     union {
 	struct {
-	    const void* sub;		// value of vo_sub at last update
+	    const any_t* sub;		// value of vo_sub at last update
 	    int utbl[MAX_UCS+1];	// subtitle text
 	    int xtbl[MAX_UCSLINES];	// x positions
 	    int lines;			// no. of lines

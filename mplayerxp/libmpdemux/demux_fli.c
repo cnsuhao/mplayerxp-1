@@ -191,7 +191,7 @@ static void fli_close(demuxer_t* demuxer) {
   free(frames);
 }
 
-static int fli_control(demuxer_t *demuxer,int cmd,void *args)
+static int fli_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

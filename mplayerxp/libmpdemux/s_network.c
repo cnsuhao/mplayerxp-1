@@ -91,7 +91,7 @@ static void __FASTCALL__ network_close(stream_t *stream)
     if(stream->fd>0) close(stream->fd);
 }
 
-static int __FASTCALL__ network_ctrl(stream_t *s,unsigned cmd,void *args) {
+static int __FASTCALL__ network_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

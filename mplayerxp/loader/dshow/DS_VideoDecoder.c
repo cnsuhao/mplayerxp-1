@@ -296,7 +296,7 @@ void DS_VideoDecoder_StopInternal(DS_VideoDecoder *this)
     //??? why was this here ??? m_pOurOutput->SetFramePointer(0);
 }
 
-int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const void* src, int size, int is_keyframe, char* pImage)
+int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const any_t* src, int size, int is_keyframe, char* pImage)
 {
     IMediaSample* sample = 0;
     char* ptr;
@@ -312,7 +312,7 @@ int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const void* src, int s
 	return -1;
     }
     
-    //cout << "DECODE " << (void*) pImage << "   d: " << (void*) pImage->Data() << endl;
+    //cout << "DECODE " << (any_t*) pImage << "   d: " << (any_t*) pImage->Data() << endl;
 
     sample->vt->SetActualDataLength(sample, size);
     sample->vt->GetPointer(sample, (BYTE **)&ptr);
@@ -666,7 +666,7 @@ int DS_VideoDecoder_GetValue(DS_VideoDecoder *this, const char* name, int* value
     if (m_bIsDivX4)
     {
 	IDivxFilterInterface* pIDivx;
-	if (m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)m_pDS_Filter->m_pFilter, &IID_IDivxFilterInterface, (void**)&pIDivx))
+	if (m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)m_pDS_Filter->m_pFilter, &IID_IDivxFilterInterface, (any_t**)&pIDivx))
 	{
 	    Debug printf("No such interface\n");
 	    return -1;
@@ -728,7 +728,7 @@ int DS_VideoDecoder_GetValue(DS_VideoDecoder *this, const char* name, int* value
     else if (strcmp((const char*)record.dll, "ir50_32.dll") == 0)
     {
 	IHidden2* hidden = 0;
-	if (m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)m_pDS_Filter->m_pFilter, &IID_Iv50Hidden, (void**)&hidden))
+	if (m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)m_pDS_Filter->m_pFilter, &IID_Iv50Hidden, (any_t**)&hidden))
 	{
 	    Debug printf("No such interface\n");
 	    return -1;
@@ -774,7 +774,7 @@ int DS_VideoDecoder_SetValue(DS_VideoDecoder *this, const char* name, int value)
     if (this->m_bIsDivX4) {
 	IDivxFilterInterface* pIDivx=NULL;
 //	printf("DS_SetValue for DIVX4, name=%s  value=%d\n",name,value);
-	if (this->m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)this->m_pDS_Filter->m_pFilter, &IID_IDivxFilterInterface, (void**)&pIDivx))
+	if (this->m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)this->m_pDS_Filter->m_pFilter, &IID_IDivxFilterInterface, (any_t**)&pIDivx))
 	{
 	    printf("No such interface\n");
 	    return -1;
@@ -836,7 +836,7 @@ int DS_VideoDecoder_SetValue(DS_VideoDecoder *this, const char* name, int value)
     if (strcmp((const char*)record.dll, "ir50_32.dll") == 0)
     {
 	IHidden2* hidden = 0;
-	if (m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)m_pDS_Filter->m_pFilter, &IID_Iv50Hidden, (void**)&hidden))
+	if (m_pDS_Filter->m_pFilter->vt->QueryInterface((IUnknown*)m_pDS_Filter->m_pFilter, &IID_Iv50Hidden, (any_t**)&hidden))
 	{
 	    Debug printf("No such interface\n");
 	    return -1;

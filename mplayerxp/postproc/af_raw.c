@@ -56,7 +56,7 @@ typedef struct af_raw_s
    cmd control command
    arg argument
 */
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_raw_t* s = af->setup;
 

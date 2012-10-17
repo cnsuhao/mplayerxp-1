@@ -21,7 +21,7 @@
 struct vf_priv_s {
     int pp;
     pp_mode *ppMode[PP_QUALITY_MAX+1];
-    void *context;
+    any_t*context;
     unsigned int outfmt;
 };
 
@@ -29,7 +29,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt,void *tune){
+	unsigned int voflags, unsigned int outfmt,any_t*tune){
     int flags=
           (gCpuCaps.hasMMX   ? PP_CPU_CAPS_MMX   : 0)
 	| (gCpuCaps.hasMMX2  ? PP_CPU_CAPS_MMX2  : 0)
@@ -70,7 +70,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* data){
+static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_QUERY_MAX_PP_LEVEL:
 	return PP_QUALITY_MAX;

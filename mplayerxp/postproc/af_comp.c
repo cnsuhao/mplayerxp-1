@@ -32,7 +32,7 @@ typedef struct af_comp_s
 }af_comp_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_comp_t* s   = (af_comp_t*)af->setup; 
   int i;

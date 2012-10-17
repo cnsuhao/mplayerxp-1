@@ -33,7 +33,7 @@ typedef struct {
   unsigned a_buffer_size;
 
   /* filter buffer */
-  void *   afilter;
+  any_t*   afilter;
   int      afilter_inited;
   unsigned af_bps; // == samplerate*samplesize*channels   (after filters bytes/sec)
   char *   af_buffer;
@@ -51,7 +51,7 @@ typedef struct {
   unsigned audio_in_minsize;
   unsigned audio_out_minsize;
   // other codecs:
-  void* context; // codec-specific stuff (usually HANDLE or struct pointer)
+  any_t* context; // codec-specific stuff (usually HANDLE or struct pointer)
   unsigned char *codecdata;
   unsigned codecdata_len;
 } sh_audio_t;
@@ -74,7 +74,7 @@ typedef struct {
   float aspect;
   unsigned int outfmtidx;
   /* vfilter chan */
-  void *vfilter;
+  any_t*vfilter;
   int   vfilter_inited;
   int   vf_flags;
   pthread_mutex_t mutex;
@@ -87,8 +87,8 @@ typedef struct {
   // win32 codec stuff:
   AVIStreamHeader video;
   BITMAPINFOHEADER *bih;   // in format
-  void* context; // codec-specific stuff (usually HANDLE or struct pointer)
-  void* ImageDesc; // for quicktime codecs
+  any_t* context; // codec-specific stuff (usually HANDLE or struct pointer)
+  any_t* ImageDesc; // for quicktime codecs
 } sh_video_t;
 
 sh_audio_t* get_sh_audio(demuxer_t *demuxer,int id);

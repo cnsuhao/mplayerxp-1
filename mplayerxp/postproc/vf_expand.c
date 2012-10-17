@@ -30,7 +30,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
     unsigned h,dh;
     vf->priv->w=width;
     vf->priv->h=height;
@@ -100,7 +100,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* data){
+static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_START_FRAME:
 	vf->priv->new_frame=1;

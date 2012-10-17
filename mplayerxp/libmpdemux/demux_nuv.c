@@ -323,7 +323,7 @@ static void nuv_close(demuxer_t* demuxer) {
   free(priv);
 }
 
-static int nuv_control(demuxer_t *demuxer,int cmd,void *args)
+static int nuv_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

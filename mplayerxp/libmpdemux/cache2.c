@@ -252,7 +252,7 @@ static void stream_unlink_cache(int force)
   if(force) was_killed=1;
 }
 
-static void *cache2_routine(void *arg)
+static any_t*cache2_routine(any_t*arg)
 {
   double tt;
   unsigned int t=0;
@@ -602,7 +602,7 @@ static void __FASTCALL__ c2_stream_set_eof(cache_vars_t*c,int eof)
 /*
     main interface here!
 */
-int __FASTCALL__ stream_read(stream_t *s,void* _mem,int total)
+int __FASTCALL__ stream_read(stream_t *s,any_t* _mem,int total)
 {
     char *mem = _mem;
     if(s->cache_data)	return c2_stream_read(s->cache_data,mem,total);

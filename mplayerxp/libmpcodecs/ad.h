@@ -34,7 +34,7 @@ typedef struct ad_functions_s
 	int (*preinit)(sh_audio_t *);
 	int (*init)(sh_audio_t *sh);
 	void (*uninit)(sh_audio_t *sh);
-	int (*control)(sh_audio_t *sh,int cmd,void* arg, ...);
+	int (*control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
 	unsigned (*decode_audio)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 

@@ -50,8 +50,8 @@
 // local data
 typedef struct af_resample_s
 {
-  void*  	w;	// Current filter weights
-  void** 	xq; 	// Circular buffers
+  any_t*  	w;	// Current filter weights
+  any_t** 	xq; 	// Circular buffers
   uint32_t	xi; 	// Index for circular buffers
   uint32_t	wi;	// Index for w
   uint32_t	i; 	// Number of new samples to put in x queue 
@@ -191,7 +191,7 @@ static int __FASTCALL__ set_types(struct af_instance_s* af, af_data_t* data)
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_resample_t* s   = (af_resample_t*)af->setup; 
   switch(cmd){
@@ -240,7 +240,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
     }
 
     // Create space for circular bufers
-    s->xq = malloc(n->nch*sizeof(void*));
+    s->xq = malloc(n->nch*sizeof(any_t*));
     for(i=0;i<n->nch;i++)
       s->xq[i] = malloc(2*L*af->data->bps);
     s->xi = 0;

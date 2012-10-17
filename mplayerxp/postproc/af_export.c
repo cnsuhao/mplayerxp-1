@@ -36,12 +36,12 @@
 typedef struct af_export_s
 {
   unsigned long long  count; // Used for sync
-  void* buf[AF_NCH]; 	// Buffers for storing the data before it is exported
+  any_t* buf[AF_NCH]; 	// Buffers for storing the data before it is exported
   int 	sz;	      	// Size of buffer in samples
   int 	wi;  		// Write index
   int	fd;           	// File descriptor to shared memory area
   char* filename;      	// File to export data
-  void* mmap_area;     	// MMap shared area
+  any_t* mmap_area;     	// MMap shared area
 } af_export_t;
 
 
@@ -50,7 +50,7 @@ typedef struct af_export_s
    cmd control command
    arg argument
 */
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_export_t* s = af->setup;
 
@@ -100,7 +100,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
     // grow file to needed size
     for(i = 0; i < mapsize; i++){
       char null = 0;
-      write(s->fd, (void*) &null, 1);
+      write(s->fd, (any_t*) &null, 1);
     }
 	
     // mmap size

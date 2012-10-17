@@ -44,7 +44,7 @@ menu_info_t* menu_info_list[] = {
 typedef struct menu_def_st {
   char* name;
   menu_info_t* type;
-  void* cfg;
+  any_t* cfg;
   char* args;
 } menu_def_t;
 

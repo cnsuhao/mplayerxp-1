@@ -116,7 +116,7 @@ extern void reset_audio_buffer(void);
 extern int get_len_audio_buffer(void);
 extern int get_free_audio_buffer(void);
 
-void * audio_play_routine( void * arg );
+any_t* audio_play_routine( any_t* arg );
 
 static volatile int pthread_is_living=0;
 static volatile int a_pthread_is_living=0;
@@ -127,7 +127,7 @@ static volatile int pthread_audio_end_of_work=0;
 
 int xp_is_bad_pts=0;
 /* this routine decodes video+audio but intends to be video only  */
-void * Va_dec_ahead_routine( void * arg )
+any_t* Va_dec_ahead_routine( any_t* arg )
 {
     float duration=0;
     float drop_barrier;
@@ -470,7 +470,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 }
 
 /* this routine decodes audio only */
-void * a_dec_ahead_routine( void * arg )
+any_t* a_dec_ahead_routine( any_t* arg )
 {
     int xp_id;
     int ret, retval;
@@ -793,7 +793,7 @@ int xp_thread_decode_audio()
 #define NOTHING_PLAYED (-1.0)
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
 
-void * audio_play_routine( void * arg )
+any_t* audio_play_routine( any_t* arg )
 {
     int xp_id;
     int eof = 0;

@@ -74,7 +74,7 @@ ICOpen(long filename,long fccHandler,unsigned int wMode) {
 	icopen.fccHandler	= fccHandler;
 	icopen.dwSize		= sizeof(ICOPEN);
 	icopen.dwFlags		= wMode;
-	icopen.pV1Reserved	= (void*)filename;
+	icopen.pV1Reserved	= (any_t*)filename;
 	/* FIXME: do we need to fill out the rest too? */
 	hdrv=OpenDriverA((long)&icopen);
 	if (!hdrv) return 0;
@@ -103,10 +103,10 @@ ICGetInfo(HIC hic,ICINFO *picinfo,long cb) {
  */
 long VFWAPIV
 ICCompress(
-	HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiOutput,void* lpData,
-	LPBITMAPINFOHEADER lpbiInput,void* lpBits,long* lpckid,
+	HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiOutput,any_t* lpData,
+	LPBITMAPINFOHEADER lpbiInput,any_t* lpBits,long* lpckid,
 	long* lpdwFlags,long lFrameNum,long dwFrameSize,long dwQuality,
-	LPBITMAPINFOHEADER lpbiPrev,void* lpPrev
+	LPBITMAPINFOHEADER lpbiPrev,any_t* lpPrev
 ) {
 	ICCOMPRESS	iccmp;
 
@@ -131,7 +131,7 @@ ICCompress(
  *		ICDecompress			[MSVFW.26]
  */
 long VFWAPIV 
-ICDecompress(HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiFormat,void* lpData,LPBITMAPINFOHEADER  lpbi,void* lpBits) {
+ICDecompress(HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiFormat,any_t* lpData,LPBITMAPINFOHEADER  lpbi,any_t* lpBits) {
 	ICDECOMPRESS	icd;
 	int result;
 	icd.dwFlags	= dwFlags;
@@ -149,7 +149,7 @@ ICDecompress(HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiFormat,void* lpData,LPB
  *		ICDecompressEx			[MSVFW.26]
  */
 long VFWAPIV 
-ICDecompressEx(HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiFormat,void* lpData,LPBITMAPINFOHEADER  lpbi,void* lpBits) {
+ICDecompressEx(HIC hic,long dwFlags,LPBITMAPINFOHEADER lpbiFormat,any_t* lpData,LPBITMAPINFOHEADER  lpbi,any_t* lpBits) {
 	ICDECOMPRESSEX	icd;
 	int result;
 	

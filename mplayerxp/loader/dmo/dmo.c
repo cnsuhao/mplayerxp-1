@@ -8,7 +8,7 @@
 #include "win32.h" // printf macro
 
 void trapbug();
-typedef long STDCALL (*GETCLASS) (const GUID*, const GUID*, void**);
+typedef long STDCALL (*GETCLASS) (const GUID*, const GUID*, any_t**);
 
 void DMO_Filter_Destroy(DMO_Filter* This)
 {
@@ -63,27 +63,27 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 	    break;
 	}
 //trapbug();
-	hr = func(id, &IID_IClassFactory, (void**)&factory);
+	hr = func(id, &IID_IClassFactory, (any_t**)&factory);
 	if (hr || !factory)
 	{
 	    em = "no such class object";
 	    break;
 	}
-	hr = factory->vt->CreateInstance(factory, 0, &IID_IUnknown, (void**)&object);
+	hr = factory->vt->CreateInstance(factory, 0, &IID_IUnknown, (any_t**)&object);
 	factory->vt->Release((IUnknown*)factory);
 	if (hr || !object)
 	{
 	    em = "class factory failure";
 	    break;
 	}
-	hr = object->vt->QueryInterface(object, &IID_IMediaObject, (void**)&This->m_pMedia);
+	hr = object->vt->QueryInterface(object, &IID_IMediaObject, (any_t**)&This->m_pMedia);
 	if (hr == 0)
 	{
             /* query for some extra available interface */
-	    HRESULT r = object->vt->QueryInterface(object, &IID_IMediaObjectInPlace, (void**)&This->m_pInPlace);
+	    HRESULT r = object->vt->QueryInterface(object, &IID_IMediaObjectInPlace, (any_t**)&This->m_pInPlace);
             if (r == 0 && This->m_pInPlace)
 		printf("DMO dll supports InPlace - PLEASE REPORT to developer\n");
-	    r = object->vt->QueryInterface(object, &IID_IDMOVideoOutputOptimizations, (void**)&This->m_pOptim);
+	    r = object->vt->QueryInterface(object, &IID_IDMOVideoOutputOptimizations, (any_t**)&This->m_pOptim);
 	    if (r == 0 && This->m_pOptim)
 	    {
                 unsigned long flags;

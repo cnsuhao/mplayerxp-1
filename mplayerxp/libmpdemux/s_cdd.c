@@ -73,7 +73,7 @@ static void __FASTCALL__ cdd_close(stream_t*stream)
     close_cdda(stream);
 }
 
-static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,void *args)
+static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     cdda_priv *p=s->priv;
     switch(cmd)

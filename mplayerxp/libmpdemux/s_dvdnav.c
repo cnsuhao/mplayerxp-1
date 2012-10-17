@@ -46,7 +46,7 @@ typedef struct {
 
 typedef struct {
   int event;             /* event number fromd dvdnav_events.h */
-  void * details;        /* event details */
+  any_t* details;        /* event details */
   int len;               /* bytes in details */
 } dvdnav_event_t;
 
@@ -607,7 +607,7 @@ static void __FASTCALL__ dvdnav_cmd_handler(stream_t* s,unsigned cmd)
     dvdnav_button_select(dvdnav_priv->dvdnav,pci,button);
 }
 
-static int __FASTCALL__ __dvdnav_ctrl(stream_t *s,unsigned cmd,void *args)
+static int __FASTCALL__ __dvdnav_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     dvdnav_priv_t *dvdnav_priv=s->priv;
     switch(cmd)

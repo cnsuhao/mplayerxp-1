@@ -88,7 +88,7 @@ typedef struct vesa_priv_s {
 
     uint32_t		x_offset,y_offset; /* to center image on screen */
     unsigned		init_mode; /* mode before run of mplayer */
-    void *		init_state; /* state before run of mplayer */
+    any_t*		init_state; /* state before run of mplayer */
     struct win_frame	win; /* real-mode window to video memory */
     uint8_t *		dga_buffer; /* for yuv2rgb and sw_scaling */
     unsigned		video_mode; /* selected video mode for playback */
@@ -612,7 +612,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		/* Try use DGA instead */
 		if(priv.vmode_info.PhysBasePtr && vib.TotalMemory && (priv.vmode_info.ModeAttributes & MODE_ATTR_LINEAR))
 		{
-		    void *lfb;
+		    any_t*lfb;
 		    unsigned long vsize;
 		    vsize = vib.TotalMemory*64*1024;
 		    lfb = vbeMapVideoBuffer(priv.vmode_info.PhysBasePtr,vsize);
@@ -806,7 +806,7 @@ static void __FASTCALL__ vesa_dri_get_surface(dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static uint32_t __FASTCALL__ control(uint32_t request, void *data)
+static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:

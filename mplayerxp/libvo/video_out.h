@@ -136,7 +136,7 @@ typedef struct vo_functions_s
 	 * @param data		data associated with command
 	 * @return		VO_TRUE if success VO_FALSE VO_ERROR VO_NOTIMPL otherwise
 	 **/
-	uint32_t (* __FASTCALL__ control)(uint32_t request, void *data);
+	uint32_t (* __FASTCALL__ control)(uint32_t request, any_t*data);
 
         /** Returns driver information.
          * @return	read-only pointer to a vo_info_t structure.
@@ -185,7 +185,7 @@ extern void		vo_change_frame(void);
 extern void		vo_flush_pages(void);
 extern void		vo_draw_osd(void);
 extern void		vo_uninit( void );
-extern uint32_t __FASTCALL__ vo_control(uint32_t request, void *data);
+extern uint32_t __FASTCALL__ vo_control(uint32_t request, any_t*data);
 extern int __FASTCALL__ vo_is_final(void);
 
 typedef struct vo_rect_s {
@@ -268,8 +268,8 @@ typedef struct vo_priv_s {
 
     /* subtitle support */
     char*		osd_text;
-    void*		spudec;
-    void*		vobsub;
+    any_t*		spudec;
+    any_t*		vobsub;
     font_desc_t*	font;
     int			osd_progbar_type;
     int			osd_progbar_value;   // 0..255

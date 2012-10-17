@@ -243,7 +243,7 @@ float ao_get_delay(void)
     return ao_inited?audio_out->get_delay():0;
 }
 
-unsigned __FASTCALL__ ao_play(void* data,unsigned len,unsigned flags)
+unsigned __FASTCALL__ ao_play(any_t* data,unsigned len,unsigned flags)
 {
     return ao_inited?audio_out->play(data,len,flags):0;
 }

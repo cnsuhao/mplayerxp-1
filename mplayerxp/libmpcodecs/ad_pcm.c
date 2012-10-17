@@ -67,7 +67,7 @@ void uninit(sh_audio_t *sh)
     UNUSED(sh);
 }
 
-int control(sh_audio_t *sh,int cmd,void* arg, ...)
+int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
   int skip;
   UNUSED(arg);

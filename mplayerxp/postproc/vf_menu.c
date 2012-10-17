@@ -132,7 +132,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     memcpy(mpi->planes,dmpi->planes,MP_MAX_PLANES*sizeof(unsigned char*));
     memcpy(mpi->stride,dmpi->stride,MP_MAX_PLANES*sizeof(unsigned int));
     mpi->flags|=MP_IMGFLAG_DIRECT;
-    mpi->priv=(void*)dmpi;
+    mpi->priv=(any_t*)dmpi;
     return;
   }
 }
@@ -227,7 +227,7 @@ static void __FASTCALL__ uninit(vf_instance_t *vf) {
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height,
-		  unsigned int flags, unsigned int outfmt,void *tune) { 
+		  unsigned int flags, unsigned int outfmt,any_t*tune) { 
 #ifdef HAVE_FREETYPE    
   // here is the right place to get screen dimensions
   if (force_load_font) {

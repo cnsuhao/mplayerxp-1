@@ -653,7 +653,7 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data)
 
 // send control to all filters, starting with the last until
 // one responds with AF_OK
-int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, void* arg) {
+int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
   int res = AF_UNKNOWN;
   af_instance_t* filt = s->last;
   while (filt && res != AF_OK) {
@@ -714,7 +714,7 @@ void af_help (void) {
   MSG_INFO("\n");
 }
 
-af_stream_t *af_new(void *_parent)
+af_stream_t *af_new(any_t*_parent)
 {
     af_stream_t *rval;
     rval = malloc(sizeof(af_stream_t));

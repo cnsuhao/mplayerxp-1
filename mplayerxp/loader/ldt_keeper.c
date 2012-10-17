@@ -42,9 +42,9 @@ extern "C" {
 #endif
 /// declare modify_ldt with the _syscall3 macro for older glibcs
 #if defined(__GLIBC__) &&  (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ == 0))
-_syscall3( int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount );
+_syscall3( int, modify_ldt, int, func, any_t*, ptr, unsigned long, bytecount );
 #else
-int modify_ldt(int func, void *ptr, unsigned long bytecount);
+int modify_ldt(int func, any_t*ptr, unsigned long bytecount);
 #endif
 #ifdef  __cplusplus
 }
@@ -64,7 +64,7 @@ int modify_ldt(int func, void *ptr, unsigned long bytecount);
 #ifdef  __cplusplus
 extern "C" {
 #endif
-int sysi86(int, void*);
+int sysi86(int, any_t*);
 #ifdef  __cplusplus
 }
 #endif
@@ -183,7 +183,7 @@ static void LDT_EntryToBytes( unsigned long *buffer, const struct modify_ldt_ldt
 }
 #endif
 
-void* fs_seg=0;
+any_t* fs_seg=0;
 
 ldt_fs_t* Setup_LDT_Keeper(void)
 {
@@ -203,14 +203,14 @@ ldt_fs_t* Setup_LDT_Keeper(void)
     fs_seg=
     ldt_fs->fs_seg = mmap(NULL, getpagesize(), PROT_READ | PROT_WRITE, MAP_PRIVATE,
 			  ldt_fs->fd, 0);
-    if (ldt_fs->fs_seg == (void*)-1)
+    if (ldt_fs->fs_seg == (any_t*)-1)
     {
 	perror("ERROR: Couldn't allocate memory for fs segment");
         close(ldt_fs->fd);
         free(ldt_fs);
 	return NULL;
     }
-    *(void**)((char*)ldt_fs->fs_seg+0x18) = ldt_fs->fs_seg;
+    *(any_t**)((char*)ldt_fs->fs_seg+0x18) = ldt_fs->fs_seg;
     memset(&array, 0, sizeof(array));
     array.base_addr=(int)ldt_fs->fs_seg;
     array.entry_number=TEB_SEL_IDX;
@@ -274,7 +274,7 @@ ldt_fs_t* Setup_LDT_Keeper(void)
     Setup_FS_Segment();
 
     ldt_fs->prev_struct = malloc(8);
-    *(void**)array.base_addr = ldt_fs->prev_struct;
+    *(any_t**)array.base_addr = ldt_fs->prev_struct;
 
     return ldt_fs;
 }

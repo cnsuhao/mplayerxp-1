@@ -836,7 +836,7 @@ static void mpgps_close(demuxer_t*demuxer)
   if (mpg_d) free(mpg_d);
 }
 
-static int mpgps_control(demuxer_t *demuxer,int cmd,void *arg)
+static int mpgps_control(demuxer_t *demuxer,int cmd,any_t*arg)
 {
     mpg_demuxer_t *mpg_d=(mpg_demuxer_t*)demuxer->priv;
     switch(cmd)

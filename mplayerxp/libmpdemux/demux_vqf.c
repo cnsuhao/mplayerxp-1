@@ -217,7 +217,7 @@ static void vqf_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
 
 static void vqf_close(demuxer_t* demuxer) {}
 
-static int vqf_control(demuxer_t *demuxer,int cmd,void *args)
+static int vqf_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

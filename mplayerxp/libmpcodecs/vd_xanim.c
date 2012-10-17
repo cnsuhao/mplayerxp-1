@@ -72,11 +72,11 @@ typedef struct
 /* XA CODEC .. */
 typedef struct
 {
-  void			*anim_hdr;
+  any_t*anim_hdr;
   unsigned long		compression;
   unsigned long		x, y;
   unsigned long		depth;
-  void			*extra;
+  any_t*extra;
   unsigned long		xapi_rev;
   unsigned long		(*decoder)();
   char			*description;
@@ -133,7 +133,7 @@ typedef struct
   unsigned int		xs, ys;
   unsigned int		xe, ye;
   unsigned int		special;
-  void			*extra;
+  any_t*extra;
 } XA_DEC_INFO;
 
 typedef struct
@@ -191,11 +191,11 @@ int xa_close_func = 0;
 typedef struct xacodec_driver
 {
     XA_DEC_INFO *decinfo;
-    void *file_handler;
+    any_t*file_handler;
     long (*iq_func)(XA_CODEC_HDR *codec_hdr);
     unsigned int (*dec_func)(unsigned char *image, unsigned char *delta,
 	unsigned int dsize, XA_DEC_INFO *dec_info);
-    void *close_func[XA_CLOSE_FUNCS];
+    any_t*close_func[XA_CLOSE_FUNCS];
     xacodec_image_t image;
 } xacodec_driver_t;
 
@@ -242,7 +242,7 @@ void XA_Add_Func_To_Free_Chain(XA_ANIM_HDR *anim_hdr, void (*function)())
 /* load, init and query */
 int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
 {
-    void *(*what_the)();
+    any_t*(*what_the)();
     char *error;
     XAVID_MOD_HDR *mod_hdr;
     XAVID_FUNC_HDR *func;
@@ -311,19 +311,19 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
 	{
 	    MSG_DBG2( " 0x%08x: avi init/query func (id: %d)\n",
 		func[i].iq_func, func[i].id);
-	    codec_driver->iq_func = (void *)func[i].iq_func;
+	    codec_driver->iq_func = (any_t*)func[i].iq_func;
 	}
 	if (func[i].what & XAVID_QT_QUERY)
 	{
 	    MSG_DBG2( " 0x%08x: qt init/query func (id: %d)\n",
 		func[i].iq_func, func[i].id);
-	    codec_driver->iq_func = (void *)func[i].iq_func;
+	    codec_driver->iq_func = (any_t*)func[i].iq_func;
 	}
 	if (func[i].what & XAVID_DEC_FUNC)
 	{
 	    MSG_DBG2( " 0x%08x: decoder func (init/query: 0x%08x) (id: %d)\n",
 		func[i].dec_func, func[i].iq_func, func[i].id);
-	    codec_driver->dec_func = (void *)func[i].dec_func;
+	    codec_driver->dec_func = (any_t*)func[i].dec_func;
 	}
     }
     return(1);
@@ -346,7 +346,7 @@ int xacodec_query(xacodec_driver_t *codec_driver, XA_CODEC_HDR *codec_hdr)
     switch(codec_ret)
     {
 	case CODEC_SUPPORTED:
-	    codec_driver->dec_func = (void *)codec_hdr->decoder;
+	    codec_driver->dec_func = (any_t*)codec_hdr->decoder;
 	    MSG_DBG2( "Codec is supported: found decoder for %s at 0x%08x\n",
 		codec_hdr->description, codec_hdr->decoder);
 	    return(1);
@@ -692,19 +692,19 @@ void XA_2x2_OUT_4BLKS_Convert(unsigned char *image_p, unsigned int x, unsigned i
     return;
 }
 
-void *YUV2x2_Blk_Func(unsigned int image_type, int blks, unsigned int dith_flag)
+any_t*YUV2x2_Blk_Func(unsigned int image_type, int blks, unsigned int dith_flag)
 {
     MSG_DBG3( "YUV2x2_Blk_Func(image_type=%d, blks=%d, dith_flag=%d)\n",
 	image_type, blks, dith_flag);
     switch(blks){
     case 1:
-	return (void*) XA_2x2_OUT_1BLK_Convert;
+	return (any_t*) XA_2x2_OUT_1BLK_Convert;
     case 4:
-	return (void*) XA_2x2_OUT_4BLKS_Convert;
+	return (any_t*) XA_2x2_OUT_4BLKS_Convert;
     }
 
     MSG_WARN("Unimplemented: YUV2x2_Blk_Func(image_type=%d  blks=%d  dith=%d)\n",image_type,blks,dith_flag);
-    return (void*) XA_dummy;
+    return (any_t*) XA_dummy;
 }
 
 //  Take Four Y's and UV and put them into a 2x2 Color structure.
@@ -726,11 +726,11 @@ void XA_YUV_2x2_clr(XA_2x2_Color *cmap2x2, unsigned int Y0, unsigned int Y1,
   return;
 }
 
-void *YUV2x2_Map_Func(unsigned int image_type, unsigned int dith_type)
+any_t*YUV2x2_Map_Func(unsigned int image_type, unsigned int dith_type)
 {
     MSG_DBG3( "YUV2x2_Map_Func('image_type: %d', 'dith_type: %d')",
 	    image_type, dith_type);
-    return((void*)XA_YUV_2x2_clr);
+    return((any_t*)XA_YUV_2x2_clr);
 }
 
 /* -------------------- whole YUV frame converters ------------------------- */
@@ -819,10 +819,10 @@ void XA_YUV1611_Convert(unsigned char *image_p, unsigned int imagex, unsigned in
     return;
 }
 
-void *XA_YUV1611_Func(unsigned int image_type)
+any_t*XA_YUV1611_Func(unsigned int image_type)
 {
     MSG_DBG3( "XA_YUV1611_Func('image_type: %d')", image_type);
-    return((void *)XA_YUV1611_Convert);
+    return((any_t*)XA_YUV1611_Convert);
 }
 
 /* -------------- YUV 4x1 1x1 1x1 (4:1:1 ?) [CYUV] ------------------ */
@@ -836,10 +836,10 @@ void XA_YUV411111_Convert(unsigned char *image, unsigned int imagex, unsigned in
     return;
 }
 
-void *XA_YUV411111_Func(unsigned int image_type)
+any_t*XA_YUV411111_Func(unsigned int image_type)
 {
     MSG_DBG3( "XA_YUV411111_Func('image_type: %d')", image_type);
-    return((void*)XA_YUV411111_Convert);
+    return((any_t*)XA_YUV411111_Convert);
 }
 
 /* --------------- YUV 2x2 1x1 1x1 (4:2:0 aka YV12) [3ivX,H263] ------------ */
@@ -884,10 +884,10 @@ if(i_x==(unsigned)image->width && i_y==(unsigned)image->height){
     return;
 }
 
-void *XA_YUV221111_Func(unsigned int image_type)
+any_t*XA_YUV221111_Func(unsigned int image_type)
 {
     MSG_DBG3( "XA_YUV221111_Func('image_type: %d')\n",image_type);
-    return((void *)XA_YUV221111_Convert);
+    return((any_t*)XA_YUV221111_Convert);
 }
 
 /* *** EOF XANIM *** */
@@ -895,7 +895,7 @@ void *XA_YUV221111_Func(unsigned int image_type)
 /*************************** END OF XA CODEC BINARY INTERFACE ******************/
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd) {
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -921,7 +921,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     mp_image_t* mpi;
     xacodec_image_t* image;
 

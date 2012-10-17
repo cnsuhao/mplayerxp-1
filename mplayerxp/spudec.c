@@ -486,13 +486,13 @@ static void __FASTCALL__ spudec_decode(spudec_handle_t *this, unsigned int pts10
     spudec_process_control(this, pts100);
 }
 
-int __FASTCALL__ spudec_changed(void * this)
+int __FASTCALL__ spudec_changed(any_t* this)
 {
     spudec_handle_t * spu = (spudec_handle_t*)this;
     return (spu->spu_changed || spu->now_pts > spu->end_pts);
 }
 
-void __FASTCALL__ spudec_assemble(void *this, unsigned char *packet, unsigned int len, unsigned int pts100)
+void __FASTCALL__ spudec_assemble(any_t*this, unsigned char *packet, unsigned int len, unsigned int pts100)
 {
   spudec_handle_t *spu = (spudec_handle_t*)this;
 //  spudec_heartbeat(this, pts100);
@@ -566,7 +566,7 @@ void __FASTCALL__ spudec_assemble(void *this, unsigned char *packet, unsigned in
 #endif
 }
 
-void __FASTCALL__ spudec_reset(void *this)	// called after seek
+void __FASTCALL__ spudec_reset(any_t*this)	// called after seek
 {
   spudec_handle_t *spu = (spudec_handle_t*)this;
   while (spu->queue_head)
@@ -576,7 +576,7 @@ void __FASTCALL__ spudec_reset(void *this)	// called after seek
   spu->packet_size = spu->packet_offset = 0;
 }
 
-void __FASTCALL__ spudec_heartbeat(void *this, unsigned int pts100)
+void __FASTCALL__ spudec_heartbeat(any_t*this, unsigned int pts100)
 {
   spudec_handle_t *spu = (spudec_handle_t*) this;
   spu->now_pts = pts100;
@@ -593,7 +593,7 @@ void __FASTCALL__ spudec_heartbeat(void *this, unsigned int pts100)
   }
 }
 
-int __FASTCALL__ spudec_visible(void *this){
+int __FASTCALL__ spudec_visible(any_t*this){
     spudec_handle_t *spu = (spudec_handle_t *)this;
     int ret=(spu->start_pts <= spu->now_pts &&
 	     spu->now_pts < spu->end_pts &&
@@ -601,7 +601,7 @@ int __FASTCALL__ spudec_visible(void *this){
     return ret;
 }
 
-void __FASTCALL__ spudec_set_forced_subs_only(void * const this, const unsigned int flag)
+void __FASTCALL__ spudec_set_forced_subs_only(any_t* const this, const unsigned int flag)
 {
   if(this){
       ((spudec_handle_t *)this)->forced_subs_only=flag;
@@ -609,7 +609,7 @@ void __FASTCALL__ spudec_set_forced_subs_only(void * const this, const unsigned 
   }
 }
 
-void __FASTCALL__ spudec_draw(void *this, draw_osd_f draw_alpha)
+void __FASTCALL__ spudec_draw(any_t*this, draw_osd_f draw_alpha)
 {
     spudec_handle_t *spu = (spudec_handle_t *)this;
     if (spu->start_pts <= spu->now_pts && spu->now_pts < spu->end_pts && spu->image)
@@ -621,7 +621,7 @@ void __FASTCALL__ spudec_draw(void *this, draw_osd_f draw_alpha)
 }
 
 /* calc the bbox for spudec subs */
-void __FASTCALL__ spudec_calc_bbox(void *me, unsigned int dxs, unsigned int dys, unsigned int* bbox)
+void __FASTCALL__ spudec_calc_bbox(any_t*me, unsigned int dxs, unsigned int dys, unsigned int* bbox)
 {
   spudec_handle_t *spu;
   spu = (spudec_handle_t *)me;
@@ -753,7 +753,7 @@ void  __FASTCALL__ sws_spu_image(unsigned char *d1, unsigned char *d2, int dw, i
 	sws_freeContext(ctx);
 }
 
-void __FASTCALL__ spudec_draw_scaled(void *me, unsigned int dxs, unsigned int dys, draw_osd_f draw_alpha)
+void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dys, draw_osd_f draw_alpha)
 {
   spudec_handle_t *spu = (spudec_handle_t *)me;
   scale_pixel *table_x;
@@ -1089,7 +1089,7 @@ nothing_to_do:
   }
 }
 
-void __FASTCALL__ spudec_update_palette(void * this,const unsigned int *palette)
+void __FASTCALL__ spudec_update_palette(any_t* this,const unsigned int *palette)
 {
   spudec_handle_t *spu = (spudec_handle_t *) this;
   if (spu && palette) {
@@ -1099,19 +1099,19 @@ void __FASTCALL__ spudec_update_palette(void * this,const unsigned int *palette)
   }
 }
 
-void __FASTCALL__ spudec_set_font_factor(void *this, double factor)
+void __FASTCALL__ spudec_set_font_factor(any_t*this, double factor)
 {
   spudec_handle_t *spu = (spudec_handle_t *) this;
   spu->font_start_level = (int)(0xF0-(0xE0*factor));
 }
 
-void* __FASTCALL__ spudec_new_scaled(unsigned int *palette, unsigned int frame_width, unsigned int frame_height)
+any_t* __FASTCALL__ spudec_new_scaled(unsigned int *palette, unsigned int frame_width, unsigned int frame_height)
 {
   return spudec_new_scaled_vobsub(palette, NULL, 0, frame_width, frame_height);
 }
 
 /* get palette custom color, width, height from .idx file */
-void * __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int *cuspal, unsigned int custom, unsigned int frame_width, unsigned int frame_height)
+any_t* __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int *cuspal, unsigned int custom, unsigned int frame_width, unsigned int frame_height)
 {
   spudec_handle_t *this = calloc(1, sizeof(spudec_handle_t));
   if (this){
@@ -1144,12 +1144,12 @@ void * __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int
   return this;
 }
 
-void* __FASTCALL__ spudec_new(unsigned int *palette)
+any_t* __FASTCALL__ spudec_new(unsigned int *palette)
 {
     return spudec_new_scaled(palette, 0, 0);
 }
 
-void __FASTCALL__ spudec_free(void *this)
+void __FASTCALL__ spudec_free(any_t*this)
 {
   spudec_handle_t *spu = (spudec_handle_t*)this;
   if (spu) {
@@ -1165,7 +1165,7 @@ void __FASTCALL__ spudec_free(void *this)
   }
 }
 
-void __FASTCALL__ spudec_set_hw_spu(void *this, vo_functions_t *hw_spu)
+void __FASTCALL__ spudec_set_hw_spu(any_t*this, vo_functions_t *hw_spu)
 {
   spudec_handle_t *spu = (spudec_handle_t*)this;
   if (!spu)

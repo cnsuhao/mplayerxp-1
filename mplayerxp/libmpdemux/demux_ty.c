@@ -821,7 +821,7 @@ static void ty_seek( demuxer_t *demuxer, float rel_seek_secs, int flags )
       ty_ClearOSD( 0 );
 }
 
-static int ty_control( demuxer_t *demuxer,int cmd, void *arg )
+static int ty_control( demuxer_t *demuxer,int cmd, any_t*arg )
 {
 #if 0
    demux_stream_t *d_video = demuxer->video;

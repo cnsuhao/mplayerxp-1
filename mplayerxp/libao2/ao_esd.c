@@ -317,7 +317,7 @@ static void uninit(void)
  * it should round it down to outburst*n
  * return: number of bytes played
  */
-static unsigned play(void* data, unsigned len, unsigned flags)
+static unsigned play(any_t* data, unsigned len, unsigned flags)
 {
     unsigned offs;
     unsigned nwritten;

@@ -99,7 +99,7 @@ struct deinterleave {
   int pos;
 };
 
-static void deinterleave(void *info, void *src, int len) {
+static void deinterleave(any_t*info, any_t*src, int len) {
   struct deinterleave *di = info;
   float *s = src;
   int i;
@@ -165,7 +165,7 @@ static void silence(float **bufs, int cnt, int num_bufs) {
  *
  * Write silence into buffers if paused or an underrun occured
  */
-static int outputaudio(jack_nframes_t nframes, void *arg) {
+static int outputaudio(jack_nframes_t nframes, any_t*arg) {
   float *bufs[MAX_CHANS];
   unsigned i;
   UNUSED(arg);
@@ -355,7 +355,7 @@ static unsigned get_space(void) {
 /**
  * \brief write data into buffer and reset underrun flag
  */
-static unsigned play(void *data, unsigned len, unsigned flags) {
+static unsigned play(any_t*data, unsigned len, unsigned flags) {
   underrun = 0;
   UNUSED(flags);
   return write_buffer(data, len);

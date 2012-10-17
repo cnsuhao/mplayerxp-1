@@ -3,7 +3,7 @@
 
 static int init(priv_t *priv);
 static int uninit(priv_t *priv);
-static int control(priv_t *priv, int cmd, void *arg);
+static int control(priv_t *priv, int cmd, any_t*arg);
 static int start(priv_t *priv);
 static double grab_video_frame(priv_t *priv, char *buffer, int len);
 #ifdef HAVE_TV_BSDBT848

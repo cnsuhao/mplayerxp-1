@@ -20,7 +20,7 @@ static const config_t options[] = {
 LIBVD_EXTERN(mpegpes)
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     return CONTROL_UNKNOWN;
 }
 
@@ -34,7 +34,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     mp_image_t* mpi;
     static vo_mpegpes_t packet;
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->disp_w, sh->disp_h);

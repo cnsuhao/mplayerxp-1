@@ -22,8 +22,8 @@ int (* dca_resample32) (float * _f, float * s16)=NULL;
 #include "resample_mmx.c"
 #endif
 
-void* dca_resample_init(dca_state_t * state,uint32_t mm_accel,int flags,int chans){
-void* tmp;
+any_t* dca_resample_init(dca_state_t * state,uint32_t mm_accel,int flags,int chans){
+any_t* tmp;
 
 #ifdef CAN_COMPILE_MMX
     if(mm_accel&MM_ACCEL_X86_MMX){
@@ -47,8 +47,8 @@ void* tmp;
     return NULL;
 }
 
-void* dca_resample_init_float(dca_state_t * state,uint32_t mm_accel,int flags,int chans){
-void* tmp;
+any_t* dca_resample_init_float(dca_state_t * state,uint32_t mm_accel,int flags,int chans){
+any_t* tmp;
 
 #if 0 //#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     if(mm_accel&MM_ACCEL_X86_MMX){

@@ -67,7 +67,7 @@ LIBVD_EXTERN(divx4)
 #define DEC_INVALID_ARGUMENT 3 ///< One of the arguments passed to the decoder is invalid. 
 #define DEC_NOT_IMPLEMENTED 4 ///< The stream requires tools that have not been implemented. 
 
-typedef int (LibQDecoreFunction)(void* pHandle, int decOpt, void* pParam1, void* pParam2);
+typedef int (LibQDecoreFunction)(any_t* pHandle, int decOpt, any_t* pParam1, any_t* pParam2);
 
 /// Four Character Code used to decribe the media type of both compressed
 /// and uncompressed video.
@@ -91,7 +91,7 @@ typedef struct FormatInfo
 /// Structure containing compressed video bitstream.
 typedef struct DecBitstream
 {
-    void* pBuff; ///< Bitstream buffer.  Allocated by caller.  May be modified by decoder.
+    any_t* pBuff; ///< Bitstream buffer.  Allocated by caller.  May be modified by decoder.
     int iLength;  ///< Length of bitstream buffer in bytes.
 }DecBitstream;
 
@@ -107,7 +107,7 @@ typedef struct DecInfo
 typedef struct DecFrame
 {
     DecBitstream bitstream; ///< Input bitstream to be decoded.
-    void* pBmp; ///< Decoded bitmap buffer.  Allocated by caller. If the buffer pointer is 0 the bitmap will not be rendered (fast decode).
+    any_t* pBmp; ///< Decoded bitmap buffer.  Allocated by caller. If the buffer pointer is 0 the bitmap will not be rendered (fast decode).
     int bmpStride; ///< Bitmap stride in pixels.  Set by caller.  Currently ignored by decoder.
     int bConstBitstream; ///< Set zero if it is OK for decoder to trash the input bitstream when it is decoded.  This gives a small performance boost.
     int bBitstreamUpdated;    ///< Notify API that the bitstream is updated [Used by the reference decoder to dump the bitstream to a disk file so that it can be read in].
@@ -128,16 +128,16 @@ typedef struct DecInit
 
 typedef struct
 {
-    void *pHandle;
+    any_t*pHandle;
     LibQDecoreFunction* decoder;
     int resync;
 }priv_t;
 
 static LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
-static void *dll_handle;
+static any_t*dll_handle;
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t*p=sh->context;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL: return 100; // for divx4linux
@@ -216,7 +216,7 @@ static int init(sh_video_t *sh){
     dinit.formatOut.sizeMax=sh->disp_w*sh->disp_h*bits;
     dinit.formatIn.fourCC=sh->format;
     dinit.formatIn.framePeriod=sh->fps;
-    if(p->decoder(NULL, DEC_OPT_INIT, (void*) &p->pHandle, &dinit)!=DEC_OK) {
+    if(p->decoder(NULL, DEC_OPT_INIT, (any_t*) &p->pHandle, &dinit)!=DEC_OK) {
 	char *p=(char *)&(dinit.formatOut);
 	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",p[0],p[1],p[2],p[3]);
     }
@@ -234,7 +234,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     priv_t*p=sh->context;
     mp_image_t* mpi;
     DecFrame decFrame;

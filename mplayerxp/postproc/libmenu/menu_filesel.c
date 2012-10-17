@@ -115,7 +115,7 @@ static char* replace_path(char* title , char* dir) {
     return title;
 }
 
-typedef int (*kill_warn)(const void*, const void*);
+typedef int (*kill_warn)(const any_t*, const any_t*);
 
 static int mylstat(char *dir, char *file,struct stat* st) {
   int l = strlen(dir) + strlen(file);

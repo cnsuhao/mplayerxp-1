@@ -104,7 +104,7 @@ int __FASTCALL__ af_format_decode(int ifmt,unsigned *bps)
 }
 
 /* Encodes the format from libaf format to mplayer (OSS) format */
-int __FASTCALL__ af_format_encode(void* fmtp)
+int __FASTCALL__ af_format_encode(any_t* fmtp)
 {
   af_data_t* fmt=(af_data_t*) fmtp;
   switch(fmt->format&AF_FORMAT_SPECIAL_MASK){

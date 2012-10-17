@@ -214,7 +214,7 @@ static void aiff_close(demuxer_t* demuxer)
     free(demuxer->priv);
 }
 
-static int aiff_control(demuxer_t *demuxer,int cmd,void *args)
+static int aiff_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

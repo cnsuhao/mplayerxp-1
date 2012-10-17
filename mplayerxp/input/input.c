@@ -356,7 +356,7 @@ static const mp_cmd_bind_t def_cmd_binds[] = {
 
 typedef struct mp_input_fd {
   int fd;
-  void* read_func;
+  any_t* read_func;
   mp_close_func_t close_func;
   int flags;
   // This fields are for the cmd fds
@@ -368,7 +368,7 @@ typedef struct mp_cmd_filter_st mp_cmd_filter_t;
 
 struct mp_cmd_filter_st {
   mp_input_cmd_filter filter;
-  void* ctx;
+  any_t* ctx;
   mp_cmd_filter_t* next;
 };
 
@@ -762,7 +762,7 @@ mp_input_default_cmd_func(int fd,char* buf, int l) {
 
 
 void
-mp_input_add_cmd_filter(mp_input_cmd_filter func, void* ctx) {
+mp_input_add_cmd_filter(mp_input_cmd_filter func, any_t* ctx) {
   mp_cmd_filter_t* filter = malloc(sizeof(mp_cmd_filter_t))/*, *prev*/;
 
   filter->filter = func;

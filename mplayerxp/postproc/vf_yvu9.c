@@ -17,7 +17,7 @@
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
 
     if(vf_next_query_format(vf,IMGFMT_YV12,d_width,d_height)<=0){
 	MSG_ERR("yv12 isn't supported by next filter/vo :(\n");

@@ -463,7 +463,7 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_crystality_t* s   = (af_crystality_t*)af->setup; 
 

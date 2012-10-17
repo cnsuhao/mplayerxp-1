@@ -20,8 +20,8 @@
 #endif
 #include "dsp.h"
 
-extern uint32_t load24bit(void* data, int pos);
-extern void store24bit(void* data, int pos, uint32_t expanded_value);
+extern uint32_t load24bit(any_t* data, int pos);
+extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
 
 /* MMX optimized stugff */
 #include <limits.h>
@@ -664,7 +664,7 @@ void __FASTCALL__ bandp_init(bandp_t *bp, unsigned center, unsigned width, unsig
 	bp->prev = bp->pprev = 0.0;
 }
 
-static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps,int final)
+static void __FASTCALL__ init_change_bps(const any_t* in, any_t* out, unsigned len, unsigned inbps, unsigned outbps,int final)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) change_bps = change_bps_AVX;
@@ -691,9 +691,9 @@ static void __FASTCALL__ init_change_bps(const void* in, void* out, unsigned len
 	change_bps = change_bps_c;
 	(*change_bps)(in,out,len,inbps,outbps,final);
 }
-void (* __FASTCALL__ change_bps)(const void* in, void* out, unsigned len, unsigned inbps, unsigned outbps,int final)=init_change_bps;
+void (* __FASTCALL__ change_bps)(const any_t* in, any_t* out, unsigned len, unsigned inbps, unsigned outbps,int final)=init_change_bps;
 
-static void __FASTCALL__ init_float2int(void* in, void* out, int len, int bps,int final)
+static void __FASTCALL__ init_float2int(any_t* in, any_t* out, int len, int bps,int final)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) float2int = float2int_AVX;
@@ -728,9 +728,9 @@ static void __FASTCALL__ init_float2int(void* in, void* out, int len, int bps,in
 	float2int = float2int_c;
 	(*float2int)(in,out,len,bps,final);
 }
-void (* __FASTCALL__ float2int)(void* in, void* out, int len, int bps,int final)=init_float2int;
+void (* __FASTCALL__ float2int)(any_t* in, any_t* out, int len, int bps,int final)=init_float2int;
 
-static void __FASTCALL__ init_int2float(void* in, void* out, int len, int bps,int final)
+static void __FASTCALL__ init_int2float(any_t* in, any_t* out, int len, int bps,int final)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) int2float = int2float_AVX;
@@ -765,7 +765,7 @@ static void __FASTCALL__ init_int2float(void* in, void* out, int len, int bps,in
 	int2float = int2float_c;
 	(*int2float)(in,out,len,bps,final);
 }
-void (* __FASTCALL__ int2float)(void* in, void* out, int len, int bps,int final)=init_int2float;
+void (* __FASTCALL__ int2float)(any_t* in, any_t* out, int len, int bps,int final)=init_int2float;
 
 
 static int32_t __FASTCALL__ FIR_i16_init(int16_t *x,int16_t *w)

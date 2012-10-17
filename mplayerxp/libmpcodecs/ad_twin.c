@@ -105,7 +105,7 @@ typedef struct {
 	/* EBC info */
     int  *bc[ N_CH_MAX ];
 
-    void *manager;
+    any_t*manager;
 } INDEX;
 
 /***********************************************/
@@ -350,7 +350,7 @@ void uninit(sh_audio_t *sh)
   FreeLibrary(vqf_dll);
 }
 
-int control(sh_audio_t *sh_audio,int cmd,void* arg, ...)
+int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
   int skip;
   UNUSED(arg);

@@ -57,7 +57,7 @@
 #include "ext.h"
 #include "win32.h"
 
-#define RVA(x) ((void *)((char *)load_addr+(unsigned int)(x)))
+#define RVA(x) ((any_t*)((char *)load_addr+(unsigned int)(x)))
 
 #define AdjustPtr(ptr,delta) ((char *)(ptr) + (delta))
 
@@ -65,8 +65,8 @@
 #define TRACE(...)
 #endif
 
-extern void* LookupExternal(const char* library, int ordinal);
-extern void* LookupExternalByName(const char* library, const char* name);
+extern any_t* LookupExternal(const char* library, int ordinal);
+extern any_t* LookupExternalByName(const char* library, const char* name);
 
 static void dump_exports( HMODULE hModule )
 { 
@@ -568,7 +568,7 @@ HMODULE PE_LoadImage( int handle, LPCSTR filename, WORD *version )
     load_addr = nt->OptionalHeader.ImageBase;
     vma_size = calc_vma_size( hModule );
 
-    load_addr = (DWORD)VirtualAlloc( (void*)load_addr, vma_size,
+    load_addr = (DWORD)VirtualAlloc( (any_t*)load_addr, vma_size,
                                      MEM_RESERVE | MEM_COMMIT,
                                      PAGE_EXECUTE_READWRITE );
     if (load_addr == 0) 
@@ -620,9 +620,9 @@ HMODULE PE_LoadImage( int handle, LPCSTR filename, WORD *version )
     memcpy( load_addr, hModule, lowest_fa );
 #endif
 
-    if ((void*)FILE_dommap( handle, (void *)load_addr, 0, nt->OptionalHeader.SizeOfHeaders,
+    if ((any_t*)FILE_dommap( handle, (any_t*)load_addr, 0, nt->OptionalHeader.SizeOfHeaders,
                      0, 0, PROT_EXEC | PROT_WRITE | PROT_READ,
-                     MAP_PRIVATE | MAP_FIXED ) != (void*)load_addr)
+                     MAP_PRIVATE | MAP_FIXED ) != (any_t*)load_addr)
     {
         ERR_(win32)( "Critical Error: failed to map PE header to necessary address.\n");	
         goto error;
@@ -634,12 +634,12 @@ HMODULE PE_LoadImage( int handle, LPCSTR filename, WORD *version )
     {
         if (!pe_sec->SizeOfRawData || !pe_sec->PointerToRawData) continue;
         TRACE("%s: mmaping section %s at %p off %lx size %lx/%lx\n",
-              filename, pe_sec->Name, (void*)RVA(pe_sec->VirtualAddress),
+              filename, pe_sec->Name, (any_t*)RVA(pe_sec->VirtualAddress),
               pe_sec->PointerToRawData, pe_sec->SizeOfRawData, pe_sec->Misc.VirtualSize );
-        if ((void*)FILE_dommap( unix_handle, (void*)RVA(pe_sec->VirtualAddress),
+        if ((any_t*)FILE_dommap( unix_handle, (any_t*)RVA(pe_sec->VirtualAddress),
                          0, pe_sec->SizeOfRawData, 0, pe_sec->PointerToRawData,
                          PROT_EXEC | PROT_WRITE | PROT_READ,
-                         MAP_PRIVATE | MAP_FIXED ) != (void*)RVA(pe_sec->VirtualAddress))
+                         MAP_PRIVATE | MAP_FIXED ) != (any_t*)RVA(pe_sec->VirtualAddress))
         {
             
             ERR_(win32)( "Critical Error: failed to map PE section to necessary address.\n");
@@ -926,9 +926,9 @@ WIN_BOOL PE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
         (PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint)
     ) {
 	DLLENTRYPROC entry ;
-	entry = (void*)PE_FindExportedFunction(wm, "DllMain", 0);
+	entry = (any_t*)PE_FindExportedFunction(wm, "DllMain", 0);
 	if(entry==NULL)
-	    entry = (void*)RVA_PTR( wm->module,OptionalHeader.AddressOfEntryPoint );
+	    entry = (any_t*)RVA_PTR( wm->module,OptionalHeader.AddressOfEntryPoint );
         
 	TRACE_(relay)("CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, wm->module, type, lpReserved );

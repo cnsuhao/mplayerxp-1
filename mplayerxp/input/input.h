@@ -105,7 +105,7 @@ typedef union mp_cmd_arg_value {
   int i;
   float f;
   char* s;
-  void* v;
+  any_t* v;
 } mp_cmd_arg_value_t;
 
 typedef struct mp_cmd_arg {
@@ -144,7 +144,7 @@ typedef void (*mp_close_func_t)(int fd);
 // Set this to grab all incoming key code 
 extern void (*mp_input_key_cb)(int code);
 // Should return 1 if the command was processed
-typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, void* ctx);
+typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, any_t* ctx);
 
 // This function add a new key driver.
 // The first arg is a file descriptor (use a negative value if you don't use any fd)
@@ -186,7 +186,7 @@ mp_input_parse_cmd(char* str);
 /// These filter allow you to process the command before mplayer
 /// If a filter return a true value mp_input_get_cmd will return NULL
 void
-mp_input_add_cmd_filter(mp_input_cmd_filter, void* ctx);
+mp_input_add_cmd_filter(mp_input_cmd_filter, any_t* ctx);
 
 // After getting a command from mp_input_get_cmd you need to free it using this
 // function

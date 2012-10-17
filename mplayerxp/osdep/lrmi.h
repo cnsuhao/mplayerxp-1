@@ -14,6 +14,8 @@ Original location: http://cvs.debian.org/lrmi/
 #ifndef LRMI_H
 #define LRMI_H
 
+#include "mp_config.h"
+
 struct LRMI_regs
 	{
 	unsigned int edi;
@@ -73,7 +75,7 @@ LRMI_int(int interrupt, struct LRMI_regs *r);
  The returned block is paragraph (16 byte) aligned
 */
 #define LRMI_alloc_real LRMI_MAKENAME(alloc_real)
-void *
+any_t*
 LRMI_alloc_real(int size);
 
 /*
@@ -81,6 +83,6 @@ LRMI_alloc_real(int size);
 */
 #define LRMI_free_real LRMI_MAKENAME(free_real)
 void
-LRMI_free_real(void *m);
+LRMI_free_real(any_t*m);
 
 #endif

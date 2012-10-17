@@ -17,8 +17,8 @@ typedef struct vd_functions_s
 	const config_t*  options;/**< Optional: MPlayerXP's option related */
         int (*init)(sh_video_t *sh);
         void (*uninit)(sh_video_t *sh);
-        int (*control)(sh_video_t *sh,int cmd,void* arg, ...);
-        mp_image_t* (*decode)(sh_video_t *sh,void* data,int len,int flags);
+        int (*control)(sh_video_t *sh,int cmd,any_t* arg, ...);
+        mp_image_t* (*decode)(sh_video_t *sh,any_t* data,int len,int flags);
 } vd_functions_t;
 
 // NULL terminated array of all drivers
@@ -38,7 +38,7 @@ extern const vd_functions_t* mpcodecs_vd_drivers[];
 #define VDCTRL_RESYNC_STREAM 7 /* resync video stream if needed */
 
 // callbacks:
-int mpcodecs_config_vo(sh_video_t *sh, int w, int h, void *tune);
+int mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune);
 mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h);
 void mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
 void mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);

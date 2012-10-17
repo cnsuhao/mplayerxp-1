@@ -22,7 +22,7 @@
   runtime cpu detection by michael niedermayer (michaelni@gmx.at) is under GPL
 */
 
-static void * init_fast_memcpy(void * to, const void * from, size_t len)
+static any_t* init_fast_memcpy(any_t* to, const any_t* from, size_t len)
 {
 #ifdef __SSE2__
 	if(gCpuCaps.hasSSE2)
@@ -57,7 +57,7 @@ static void * init_fast_memcpy(void * to, const void * from, size_t len)
 	return (*fast_memcpy_ptr)(to,from,len);
 }
 
-static void * init_stream_copy(void * to, const void * from, size_t len)
+static any_t* init_stream_copy(any_t* to, const any_t* from, size_t len)
 {
 #ifdef __SSE2__
 	if(gCpuCaps.hasSSE2)
@@ -91,8 +91,8 @@ static void * init_stream_copy(void * to, const void * from, size_t len)
 	return (*fast_stream_copy_ptr)(to,from,len);
 }
 
-void *(*fast_memcpy_ptr)(void * to, const void * from, size_t len) = init_fast_memcpy;
-void *(*fast_stream_copy_ptr)(void * to, const void * from, size_t len) = init_stream_copy;
+any_t*(*fast_memcpy_ptr)(any_t* to, const any_t* from, size_t len) = init_fast_memcpy;
+any_t*(*fast_stream_copy_ptr)(any_t* to, const any_t* from, size_t len) = init_stream_copy;
 
 #endif /* use fastmemcpy */
 

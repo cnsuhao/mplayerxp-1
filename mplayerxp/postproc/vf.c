@@ -361,7 +361,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src){
 
 int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt, void *tune){
+	unsigned int voflags, unsigned int outfmt, any_t*tune){
     int miss;
     int flags=vf_next_query_format(vf,outfmt,d_width,d_height);
     vf->dw=width;
@@ -394,7 +394,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
     return vf->next->config(vf->next,width,height,d_width,d_height,voflags,outfmt,tune);
 }
 
-int __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, void* data){
+int __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data){
     return vf->next->control(vf->next,request,data);
 }
 
@@ -528,7 +528,7 @@ unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
 
 static int __FASTCALL__ dummy_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt,void *tune){
+	unsigned int voflags, unsigned int outfmt,any_t*tune){
     return 1;
 }
 
@@ -608,7 +608,7 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
 	vf_scaler=vf_open_filter(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL);
 	if(vf_scaler)
 	{
-	    void *sfnc;
+	    any_t*sfnc;
 	    sfnc=vf_scaler->next->config;
 	    vf_scaler->next->config=dummy_config;
 	    if(vf_scaler->config(vf_scaler,sw,sh,

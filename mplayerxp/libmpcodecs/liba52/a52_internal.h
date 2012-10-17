@@ -46,8 +46,8 @@ struct a52_state_s {
 
     int dynrnge;		/* apply dynamic range */
     sample_t dynrng;		/* dynamic range */
-    void * dynrngdata;		/* dynamic range callback funtion and data */
-    sample_t (* dynrngcall) (sample_t range, void * dynrngdata);
+    any_t* dynrngdata;		/* dynamic range callback funtion and data */
+    sample_t (* dynrngcall) (sample_t range, any_t* dynrngdata);
 
     uint8_t chincpl;		/* channel coupled */
     uint8_t phsflginu;		/* phase flags in use (stereo only) */

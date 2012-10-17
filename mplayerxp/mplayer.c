@@ -41,7 +41,7 @@
 #endif
 
 #include "libvo/video_out.h"
-extern void* mDisplay; // Display* mDisplay;
+extern any_t* mDisplay; // Display* mDisplay;
 
 #include "libvo/sub.h"
 #include "libao2/audio_out.h"
@@ -1244,7 +1244,7 @@ void update_subtitle(float v_pts)
     spudec_heartbeat(vo.spudec,90000*v_pts);
     if (vo.vobsub) {
       if (v_pts+sub_delay >= 0) {
-	while((len=vobsub_get_packet(vo.vobsub, v_pts+sub_delay,(void**)&packet, &timestamp))>0){
+	while((len=vobsub_get_packet(vo.vobsub, v_pts+sub_delay,(any_t**)&packet, &timestamp))>0){
 		timestamp -= (v_pts + sub_delay - sh_video->timer)*90000;
 		MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
 		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
@@ -1922,7 +1922,7 @@ void mpxp_resync_audio_stream(void)
 
 static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stream_packet_t *sp)
 {
-    s->driver->control(s,SCRTL_EVT_HANDLE,(void *)sp);
+    s->driver->control(s,SCRTL_EVT_HANDLE,(any_t*)sp);
 }
 
 static void init_benchmark(void)

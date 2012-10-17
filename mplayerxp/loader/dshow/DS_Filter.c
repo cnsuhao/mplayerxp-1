@@ -22,7 +22,7 @@ HRESULT STDCALL CoInitialize(LPVOID pvReserved);
 void STDCALL CoUninitialize(void);
 //#endif
 
-typedef long STDCALL (*GETCLASS) (const GUID*, const GUID*, void**);
+typedef long STDCALL (*GETCLASS) (const GUID*, const GUID*, any_t**);
 
 //void trapbug();
 
@@ -88,7 +88,7 @@ void DS_Filter_Destroy(DS_Filter* This)
 #endif
 }
 
-static HRESULT STDCALL DS_Filter_CopySample(void* pUserData,IMediaSample* pSample){
+static HRESULT STDCALL DS_Filter_CopySample(any_t* pUserData,IMediaSample* pSample){
     char* pointer;
     int len;
     SampleProcUserData* pData=(SampleProcUserData*)pUserData;
@@ -175,20 +175,20 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 	    em = "illegal or corrupt DirectShow DLL";
 	    break;
 	}
-	result = func(id, &IID_IClassFactory, (void**)&factory);
+	result = func(id, &IID_IClassFactory, (any_t**)&factory);
 	if (result || !factory)
 	{
 	    em = "no such class object";
 	    break;
 	}
-	result = factory->vt->CreateInstance(factory, 0, &IID_IUnknown, (void**)&object);
+	result = factory->vt->CreateInstance(factory, 0, &IID_IUnknown, (any_t**)&object);
 	factory->vt->Release((IUnknown*)factory);
 	if (result || !object)
 	{
 	    em = "class factory failure";
 	    break;
 	}
-	result = object->vt->QueryInterface(object, &IID_IBaseFilter, (void**)&This->m_pFilter);
+	result = object->vt->QueryInterface(object, &IID_IBaseFilter, (any_t**)&This->m_pFilter);
 	object->vt->Release((IUnknown*)object);
 	if (result || !This->m_pFilter)
 	{
@@ -235,7 +235,7 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 	}
 	result = This->m_pInputPin->vt->QueryInterface((IUnknown*)This->m_pInputPin,
 						       &IID_IMemInputPin,
-						       (void**)&This->m_pImp);
+						       (any_t**)&This->m_pImp);
 	if (result)
 	{
 	    em = "could not get IMemInputPin interface";

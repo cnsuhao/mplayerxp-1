@@ -42,7 +42,7 @@ typedef void (*cfg_default_func_t)(config_t *,const char*);
 
 struct config {
 	const char *name;
-	void * const p;
+	any_t* const p;
 	unsigned int type;
 	unsigned int flags;
 	float min,max;
@@ -55,7 +55,7 @@ struct config {
 struct m_config {
   const config_t** opt_list;
   config_save_t** config_stack;
-  void **dynamics;
+  any_t**dynamics;
   unsigned dynasize;
   int cs_level;
   int parser_mode;  /* COMMAND_LINE or CONFIG_FILE */
@@ -72,7 +72,7 @@ struct config_save {
   union {
     int as_int;
     float as_float;
-    void* as_pointer;
+    any_t* as_pointer;
   } param;
   char* opt_name;
 };
@@ -128,7 +128,7 @@ config_t* m_config_get_option(m_config_t const *config,const char* arg);
 /** Get the p field of the struct defining an option
   * @return NULL on error
 **/
-void* m_config_get_option_ptr(m_config_t const *config,const char* arg);
+any_t* m_config_get_option_ptr(m_config_t const *config,const char* arg);
 
 /** Tell is an option is alredy set or not
   * @return -1 one error (requested option arg exist) otherwise 0 or 1

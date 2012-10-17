@@ -13,7 +13,7 @@ typedef struct _COutputPin COutputPin;
  \param pUserData pointer to user's data
  \param sample IMediaSample
 */
-typedef  HRESULT STDCALL (*SAMPLEPROC)(void* pUserData,IMediaSample*sample);
+typedef  HRESULT STDCALL (*SAMPLEPROC)(any_t* pUserData,IMediaSample*sample);
 
 struct _COutputPin
 {
@@ -23,10 +23,10 @@ struct _COutputPin
     AM_MEDIA_TYPE type;
     IPin* remote;
     SAMPLEPROC SampleProc;
-    void* pUserData;
+    any_t* pUserData;
     void ( *SetNewFormat )(COutputPin*, const AM_MEDIA_TYPE* a);
 };
 
-COutputPin* COutputPinCreate(const AM_MEDIA_TYPE* amt,SAMPLEPROC SampleProc,void* pUserData);
+COutputPin* COutputPinCreate(const AM_MEDIA_TYPE* amt,SAMPLEPROC SampleProc,any_t* pUserData);
 
 #endif /* DS_OUTPUTPIN_H */

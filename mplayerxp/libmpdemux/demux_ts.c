@@ -105,7 +105,7 @@ typedef struct {
 } ES_stream_t;
 
 typedef struct {
-	void *sh;
+	any_t*sh;
 	int id;
 	int type;
 } sh_av_t;
@@ -1710,7 +1710,7 @@ static uint16_t get_mp4_desc_len(uint8_t *buf, int *len)
 }
 
 
-static uint16_t parse_mp4_slconfig_descriptor(uint8_t *buf, int len, void *elem)
+static uint16_t parse_mp4_slconfig_descriptor(uint8_t *buf, int len, any_t*elem)
 {
 	int i = 0;
 	mp4_es_descr_t *es;
@@ -1797,9 +1797,9 @@ static uint16_t parse_mp4_slconfig_descriptor(uint8_t *buf, int len, void *elem)
 	return len;
 }
 
-static int parse_mp4_descriptors(pmt_t *pmt, uint8_t *buf, int len, void *elem);
+static int parse_mp4_descriptors(pmt_t *pmt, uint8_t *buf, int len, any_t*elem);
 
-static uint16_t parse_mp4_decoder_config_descriptor(pmt_t *pmt, uint8_t *buf, int len, void *elem)
+static uint16_t parse_mp4_decoder_config_descriptor(pmt_t *pmt, uint8_t *buf, int len, any_t*elem)
 {
 	int i = 0, j;
 	mp4_es_descr_t *es;
@@ -1870,7 +1870,7 @@ static uint16_t parse_mp4_decoder_config_descriptor(pmt_t *pmt, uint8_t *buf, in
 	return len;
 }
 
-static uint16_t parse_mp4_decoder_specific_descriptor(uint8_t *buf, int len, void *elem)
+static uint16_t parse_mp4_decoder_specific_descriptor(uint8_t *buf, int len, any_t*elem)
 {
 	int i;
 	mp4_decoder_config_t *dec;
@@ -1958,7 +1958,7 @@ static uint16_t parse_mp4_es_descriptor(pmt_t *pmt, uint8_t *buf, int len)
 	return len;
 }
 
-static void parse_mp4_object_descriptor(pmt_t *pmt, uint8_t *buf, int len, void *elem)
+static void parse_mp4_object_descriptor(pmt_t *pmt, uint8_t *buf, int len, any_t*elem)
 {
 	int i, j = 0, id;
 	
@@ -1984,7 +1984,7 @@ static void parse_mp4_object_descriptor(pmt_t *pmt, uint8_t *buf, int len, void 
 }
 
 
-static void parse_mp4_iod(pmt_t *pmt, uint8_t *buf, int len, void *elem)
+static void parse_mp4_iod(pmt_t *pmt, uint8_t *buf, int len, any_t*elem)
 {
 	int i, j = 0;
 	mp4_od_t *iod = &(pmt->iod);
@@ -2009,7 +2009,7 @@ static void parse_mp4_iod(pmt_t *pmt, uint8_t *buf, int len, void *elem)
 	}
 }
 
-static int parse_mp4_descriptors(pmt_t *pmt, uint8_t *buf, int len, void *elem)
+static int parse_mp4_descriptors(pmt_t *pmt, uint8_t *buf, int len, any_t*elem)
 {
 	int tag, descr_len, i = 0, j = 0;
 	
@@ -3194,7 +3194,7 @@ static int is_usable_program(ts_priv_t *priv, pmt_t *pmt)
 	return 0;
 }
 #endif
-static int ts_control(demuxer_t *demuxer,int cmd,void *args)
+static int ts_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
 	ts_priv_t* priv = (ts_priv_t *)demuxer->priv;
 
@@ -3203,7 +3203,7 @@ static int ts_control(demuxer_t *demuxer,int cmd,void *args)
 		case DEMUX_CMD_SWITCH_AUDIO:
 		case DEMUX_CMD_SWITCH_VIDEO:
 		{
-			void *sh = NULL;
+			any_t*sh = NULL;
 			int i, n;
 			int reftype, areset = 0, vreset = 0;
 			demux_stream_t *ds;

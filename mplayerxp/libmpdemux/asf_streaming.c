@@ -766,7 +766,7 @@ asf_http_streaming_start( stream_t *stream, int *demuxer_type ) {
 	asf_http_ctrl->request = 1;
 	asf_http_ctrl->audio_streams = asf_http_ctrl->video_streams = NULL;
 	asf_http_ctrl->n_audio = asf_http_ctrl->n_video = 0;
-	stream->streaming_ctrl->data = (void*)asf_http_ctrl;
+	stream->streaming_ctrl->data = (any_t*)asf_http_ctrl;
 
 	do {
 		done = 1;

@@ -43,7 +43,7 @@ static int demux_rw_seek(struct SDL_RWops *context, int offset, int whence)
     return newpos;
 }
 
-static int demux_rw_read(struct SDL_RWops *context, void *ptr, int size, int maxnum)
+static int demux_rw_read(struct SDL_RWops *context, any_t*ptr, int size, int maxnum)
 {
     int retval;
     demuxer_t *demux = context->hidden.unknown.data1;
@@ -51,7 +51,7 @@ static int demux_rw_read(struct SDL_RWops *context, void *ptr, int size, int max
     return retval;
 }
 
-static int demux_rw_write(struct SDL_RWops *context, const void *ptr, int size, int num)
+static int demux_rw_write(struct SDL_RWops *context, const any_t*ptr, int size, int num)
 {
     return 0;
 }
@@ -298,7 +298,7 @@ static void bmp_close(demuxer_t* demuxer) {
 }
 #endif
 
-static int bmp_control(demuxer_t *demuxer,int cmd,void *args)
+static int bmp_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

@@ -98,7 +98,7 @@ void vfm_help(void) {
 
 extern const vd_functions_t* mpvdec; // FIXME!
 
-int mpcodecs_config_vo(sh_video_t *sh, int w, int h, void *tune){
+int mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune){
     int i,j;
     unsigned int out_fmt=0;
     int screen_size_x=0;//SCREEN_SIZE_X;

@@ -40,7 +40,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
 
     if ((width <= 0) || (height <= 0) || (d_width <= 0) || (d_height <= 0))
     {
@@ -70,7 +70,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     return 1;
 }
 
-static int __FASTCALL__ control(struct vf_instance_s* vf, int request, void* data)
+static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data)
 {
     MSG_DBG2("vf_control: %u\n",request);
     switch(request){

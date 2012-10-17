@@ -436,7 +436,7 @@ static void film_close(demuxer_t* demuxer) {
   
 }
 
-static int film_control(demuxer_t *demuxer,int cmd,void *args)
+static int film_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

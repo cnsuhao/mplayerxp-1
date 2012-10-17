@@ -1,8 +1,9 @@
-#include <stdlib.h>
+#include "my_malloc.h"
+
 #include <string.h>
 #include <stdio.h>
 
-void *my_malloc(size_t __size)
+any_t*my_malloc(size_t __size)
 {
   char *retval;
   long msize,mval;
@@ -19,7 +20,7 @@ void *my_malloc(size_t __size)
   return retval;
 }
 
-void *my_realloc(void *__ptr, size_t __size)
+any_t*my_realloc(any_t*__ptr, size_t __size)
 {
   char *retval,*myptr;
   long crc,osize;
@@ -53,7 +54,7 @@ void *my_realloc(void *__ptr, size_t __size)
   return retval;
 }
 
-void *my_calloc (size_t __nelem, size_t __size)
+any_t*my_calloc (size_t __nelem, size_t __size)
 {
   char *retval;
   long my_size;
@@ -71,9 +72,9 @@ void *my_calloc (size_t __nelem, size_t __size)
   return retval;
 }
 
-void  my_free(void *__ptr)
+void  my_free(any_t*__ptr)
 {
-  void *myptr;
+  any_t*myptr;
   long crc,osize;
   if(__ptr)
   {
@@ -97,7 +98,7 @@ void  my_free(void *__ptr)
 
 char * my_strdup(const char *s)
 {
-  void *a;
+  any_t*a;
   a = my_malloc(strlen(s)+1);
   strcpy(a,s); 
   return a;

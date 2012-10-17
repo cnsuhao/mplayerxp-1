@@ -362,7 +362,7 @@ static void __FASTCALL__ set_saturation (vf_eq2_t *eq2, double s)
   print_values (eq2);
 }
 
-static int __FASTCALL__ control (vf_instance_t *vf, int request, void *data)
+static int __FASTCALL__ control (vf_instance_t *vf, int request, any_t*data)
 {
   vf_equalizer_t *eq;
 

@@ -624,7 +624,7 @@ static void __FASTCALL__ _tv_cmd_handler(stream_t *s,unsigned cmd)
     }
 }
 
-static int __FASTCALL__ _tv_ctrl(stream_t *s,unsigned cmd,void *args)
+static int __FASTCALL__ _tv_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     switch(cmd)
     {

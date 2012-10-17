@@ -21,8 +21,8 @@ typedef int32_t                         SInt32;
 #define FOUR_CHAR_CODE(a,b,c,d)       (((a)<<24)|((b)<<16)|((c)<<8)|(d))
 
 // codec private shit:
-typedef void *GlobalsPtr;
-typedef void **Globals;
+typedef any_t*GlobalsPtr;
+typedef any_t**Globals;
 
 //==================== COMPONENTS ===========================
 
@@ -175,7 +175,7 @@ enum {
 struct __attribute__((__packed__)) PixMapExtension {
     int32_t                         extSize;                    /*size of struct, duh!*/
     uint32_t                        pmBits;                     /*pixmap attributes bitfield*/
-    void *                          pmGD;                       /*this is a GDHandle*/
+    any_t*                          pmGD;                       /*this is a GDHandle*/
     int32_t                         pmSeed;
     Fixed                           gammaLevel;                 /*pixmap gammalevel*/
     Fixed                           requestedGammaLevel;
@@ -259,7 +259,7 @@ struct __attribute__((__packed__)) GrafPort {
     Handle                          picSave;
     Handle                          rgnSave;
     Handle                          polySave;
-    /*QDProcsPtr*/void*                      grafProcs;
+    /*QDProcsPtr*/any_t*                      grafProcs;
 };
 typedef struct GrafPort                 GrafPort;
 typedef GrafPort *GWorldPtr;
@@ -320,14 +320,14 @@ enum {
 
 
 // callbacks:
-typedef void* ImageCodecDrawBandCompleteUPP;
+typedef any_t* ImageCodecDrawBandCompleteUPP;
 typedef int64_t ICMProgressProcRecord;
 typedef int64_t ICMCompletionProcRecord;
 typedef ICMCompletionProcRecord* ICMCompletionProcRecordPtr;
 typedef int64_t ICMDataProcRecord;
-typedef void* ICMFrameTimePtr;
-typedef void* CDSequenceDataSourcePtr;
-typedef void* ICMFrameTimeInfoPtr;
+typedef any_t* ICMFrameTimePtr;
+typedef any_t* CDSequenceDataSourcePtr;
+typedef any_t* ICMFrameTimeInfoPtr;
 
 // graphics port
 typedef struct OpaqueGrafPtr*           GrafPtr;
@@ -521,7 +521,7 @@ struct __attribute__((__packed__)) ImageSubCodecDecompressRecord {
     Ptr                             codecData;
     ICMProgressProcRecord           progressProcRecord;
     ICMDataProcRecord               dataProcRecord;
-    void *                          userDecompressRecord;       /* pointer to codec-specific per-band data*/
+    any_t*                          userDecompressRecord;       /* pointer to codec-specific per-band data*/
     UInt8                           frameType;
     Boolean                         inhibitMP;                  /* set this in BeginBand to tell the base decompressor not to call DrawBand from an MP task for this frame.  (Only has any effect for MP-capable subcodecs.  New in QuickTime 5.0.)*/
     UInt8                           pad[2];
@@ -529,7 +529,7 @@ struct __attribute__((__packed__)) ImageSubCodecDecompressRecord {
 
                                                                 /* The following fields only exist for QuickTime 5.0 and greater */
     ImageCodecDrawBandCompleteUPP   drawBandCompleteUPP;        /* only used if subcodec set subCodecCallsDrawBandComplete; if drawBandCompleteUPP is non-nil, codec must call it when a frame is finished, but may return from DrawBand before the frame is finished. */
-    void *                          drawBandCompleteRefCon;     /* Note: do not call drawBandCompleteUPP directly from a hardware interrupt; instead, use DTInstall to run a function at deferred task time, and call drawBandCompleteUPP from that. */
+    any_t*                          drawBandCompleteRefCon;     /* Note: do not call drawBandCompleteUPP directly from a hardware interrupt; instead, use DTInstall to run a function at deferred task time, and call drawBandCompleteUPP from that. */
 };
 typedef struct ImageSubCodecDecompressRecord ImageSubCodecDecompressRecord;
 
@@ -621,7 +621,7 @@ enum {
     codecFlagReenable           = (1L << 14)                    /* decompress*/
 };
 
-static inline void dump_ImageDescription(void* xxx){
+static inline void dump_ImageDescription(any_t* xxx){
     ImageDescription* id=(ImageDescription*)xxx;
     unsigned char* x;
     int i;
@@ -663,7 +663,7 @@ static inline void dump_MatrixRecord(char* title, MatrixRecord *m){
 	m->matrix[2][0],m->matrix[2][1],m->matrix[2][2]);
 }
 
-static inline void dump_PixMap(void* xxx){
+static inline void dump_PixMap(any_t* xxx){
     PixMap *p=xxx;
     printf("=============== PixMap at %p ==================\n",xxx);
     printf("base=%p  stride=%d\n",p->baseAddr, p->rowBytes);
@@ -678,7 +678,7 @@ static inline void dump_PixMap(void* xxx){
     printf("=========================================================\n");
 }
 
-static inline void dump_CodecCapabilities(void* xxx){
+static inline void dump_CodecCapabilities(any_t* xxx){
     CodecCapabilities* cc=xxx;
     if(!xxx) return;
     printf("=============== CodecCapabilities at %p =================\n",xxx);
@@ -690,7 +690,7 @@ static inline void dump_CodecCapabilities(void* xxx){
     printf("=========================================================\n");
 }
 
-static inline void dump_CodecDecompressParams(void* xxx){
+static inline void dump_CodecDecompressParams(any_t* xxx){
     CodecDecompressParams* cd=xxx;
     ImageDescription **idh;
     int i;

@@ -555,7 +555,7 @@ static int dca_resample_3F_2R_LFE_to_6_MMX(float * _f, int16_t * s16){
 }
 
 
-static void* dca_resample_MMX(dca_state_t * state,int flags, int ch){
+static any_t* dca_resample_MMX(dca_state_t * state,int flags, int ch){
     switch (flags) {
     case DCA_MONO:
 	if(ch==5) return dca_resample_MONO_to_5_MMX;

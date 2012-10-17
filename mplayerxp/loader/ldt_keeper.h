@@ -1,13 +1,15 @@
 #ifndef LDT_KEEPER_H
 #define LDT_KEEPER_H
 
+#include "mp_config.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 typedef struct {
-  void* fs_seg;
+  any_t* fs_seg;
   char* prev_struct;
   int fd;
 } ldt_fs_t;

@@ -15,7 +15,7 @@
 #include "subreader.h"
 #include "libvo/sub.h"
 
-#define ERR ((void *) -1)
+#define ERR ((any_t*) -1)
 
 #ifdef USE_ICONV
 #ifdef HAVE_GICONV

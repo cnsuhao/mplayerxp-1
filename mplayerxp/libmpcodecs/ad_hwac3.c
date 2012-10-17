@@ -202,7 +202,7 @@ void uninit(sh_audio_t *sh)
   mpcodecs_ad_a52.uninit(sh);
 }
 
-int control(sh_audio_t *sh,int cmd,void* arg, ...)
+int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
     switch(cmd)

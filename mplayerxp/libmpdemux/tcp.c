@@ -73,7 +73,7 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 #endif
 	} server_address;
 	size_t server_address_size;
-	void *our_s_addr;	// Pointer to sin_addr or sin6_addr
+	any_t*our_s_addr;	// Pointer to sin_addr or sin6_addr
 	struct hostent *hp=NULL;
 	char buf[255];
 	
@@ -105,9 +105,9 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 #endif
 
 	switch (af) {
-		case AF_INET:  our_s_addr = (void *) &server_address.four.sin_addr; break;
+		case AF_INET:  our_s_addr = (any_t*) &server_address.four.sin_addr; break;
 #ifdef HAVE_AF_INET6
-		case AF_INET6: our_s_addr = (void *) &server_address.six.sin6_addr; break;
+		case AF_INET6: our_s_addr = (any_t*) &server_address.six.sin6_addr; break;
 #endif
 		default:
 			MSG_ERR("[tcp%s] UnknownAF: %i\n", IP_NAME, af);
@@ -140,12 +140,12 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 			return TCP_ERROR_FATAL;
 		}
 		
-		memcpy( our_s_addr, (void*)hp->h_addr_list[0], hp->h_length );
+		memcpy( our_s_addr, (any_t*)hp->h_addr_list[0], hp->h_length );
 	}
 #ifdef HAVE_WINSOCK2
 	else {
 		unsigned long addr = inet_addr(host);
-		memcpy( our_s_addr, (void*)&addr, sizeof(addr) );
+		memcpy( our_s_addr, (any_t*)&addr, sizeof(addr) );
 	}
 #endif
 	

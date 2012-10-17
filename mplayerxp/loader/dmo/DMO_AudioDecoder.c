@@ -35,7 +35,7 @@ struct _DMO_AudioDecoder
 
 #define __MODULE__ "DirectShow audio decoder"
 
-typedef long STDCALL (*GETCLASS) (GUID*, GUID*, void**);
+typedef long STDCALL (*GETCLASS) (GUID*, GUID*, any_t**);
 extern void print_wave_header(WAVEFORMATEX *h);
 
 DMO_AudioDecoder * DMO_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX* wf,int out_channels)
@@ -110,8 +110,8 @@ void DMO_AudioDecoder_Destroy(DMO_AudioDecoder *this)
     free(this);
 }
 
-int DMO_AudioDecoder_Convert(DMO_AudioDecoder *this, const void* in_data, unsigned int in_size,
-			     void* out_data, unsigned int out_size,
+int DMO_AudioDecoder_Convert(DMO_AudioDecoder *this, const any_t* in_data, unsigned int in_size,
+			     any_t* out_data, unsigned int out_size,
 			     unsigned int* size_read, unsigned int* size_written)
 {
     DMO_OUTPUT_DATA_BUFFER db;
@@ -127,7 +127,7 @@ int DMO_AudioDecoder_Convert(DMO_AudioDecoder *this, const void* in_data, unsign
     Setup_FS_Segment();
 #endif    
     //m_pDMO_Filter->m_pMedia->vt->Lock(m_pDMO_Filter->m_pMedia, 1);
-    bufferin = CMediaBufferCreate(in_size, (void*)in_data, in_size, 1);
+    bufferin = CMediaBufferCreate(in_size, (any_t*)in_data, in_size, 1);
     r = this->m_pDMO_Filter->m_pMedia->vt->ProcessInput(this->m_pDMO_Filter->m_pMedia, 0,
 						  (IMediaBuffer*)bufferin,
 						  (this->m_iFlushed) ? DMO_INPUT_DATA_BUFFERF_SYNCPOINT : 0,

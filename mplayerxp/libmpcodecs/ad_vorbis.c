@@ -121,7 +121,7 @@ static void uninit(sh_audio_t *sh)
   free(sh->context);
 }
 
-static int control(sh_audio_t *sh,int cmd,void* arg, ...)
+static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(sh);
     UNUSED(cmd);

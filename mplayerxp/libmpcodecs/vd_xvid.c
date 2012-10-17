@@ -26,7 +26,7 @@ static const vd_info_t info = {
 typedef struct {
 	int cs;
 	unsigned char img_type;
-	void* hdl;
+	any_t* hdl;
 	mp_image_t* mpi;
 	int vo_initialized;
 	int pp_level;
@@ -81,7 +81,7 @@ typedef struct {
 	int version;
 	int width;     /* [in:opt] image width */
 	int height;    /* [in:opt] image width */
-	void * handle; /* [out]	   decore context handle */
+	any_t* handle; /* [out]	   decore context handle */
 } xvid_dec_create_t;
 
 /* colorspace values */
@@ -108,14 +108,14 @@ typedef struct {
 	four plane reserved for alpha*/
 typedef struct {
 	int csp;				/* [in] colorspace; or with XVID_CSP_VFLIP to perform vertical flip */
-	void * plane[4];		/* [in] image plane ptrs */
+	any_t* plane[4];		/* [in] image plane ptrs */
 	int stride[4];			/* [in] image stride; "bytes per row"*/
 } xvid_image_t;
 
 typedef struct {
 	int version;
 	int general;         /* [in:opt] general flags */
-	void *bitstream;     /* [in]     bitstream (read from)*/
+	any_t*bitstream;     /* [in]     bitstream (read from)*/
 	int length;          /* [in]     bitstream length */
 	xvid_image_t output; /* [in]     output image (written to) */
 /* ------- v1.1.x ------- */
@@ -181,12 +181,12 @@ typedef struct
 #define XVID_DEC_DROP      (1<<30) /* drop bframes to decrease cpu usage *todo* */
 #define XVID_DEC_PREROLL   (1<<31) /* decode as fast as you can, don't even show output *todo* */
 
-static int (*xvid_decore_ptr)(void* handle,
+static int (*xvid_decore_ptr)(any_t* handle,
 			int dec_opt,
-			void *param1,
-			void *param2);
-static int (*xvid_global_ptr)(void *handle, int opt, void *param1, void *param2);
-static void *dll_handle;
+			any_t*param1,
+			any_t*param2);
+static int (*xvid_global_ptr)(any_t*handle, int opt, any_t*param1, any_t*param2);
+static any_t*dll_handle;
 
 
 static int load_lib( const char *libname )
@@ -388,7 +388,7 @@ static void uninit(sh_video_t *sh){
 
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	xvid_dec_frame_t dec;
 	xvid_dec_stats_t stats;
 	mp_image_t* mpi = NULL;
@@ -453,7 +453,7 @@ static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
 }
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t* p = sh->context;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:

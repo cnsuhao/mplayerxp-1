@@ -23,10 +23,10 @@ m_struct_get_field(const m_struct_t* st,const char* f) {
   return NULL;
 }
 
-void*
+any_t*
 m_struct_alloc(const m_struct_t* st) {
   int i;
-  void* r;
+  any_t* r;
 
   if(!st->defaults) {
     MSG_ERR("Struct %s needs defaults\n",st->name);
@@ -52,7 +52,7 @@ m_struct_alloc(const m_struct_t* st) {
 }
 
 int
-m_struct_set(const m_struct_t* st, void* obj, char* field, char* param) {
+m_struct_set(const m_struct_t* st, any_t* obj, char* field, char* param) {
   const m_option_t* f = m_struct_get_field(st,field);
 
   if(!f) {
@@ -71,7 +71,7 @@ m_struct_set(const m_struct_t* st, void* obj, char* field, char* param) {
 }
 
 void
-m_struct_reset(const m_struct_t* st, void* obj, const char* field) {
+m_struct_reset(const m_struct_t* st, any_t* obj, const char* field) {
   const m_option_t* f;
 
   if(!field) { // Reset all options
@@ -93,7 +93,7 @@ m_struct_reset(const m_struct_t* st, void* obj, const char* field) {
 
 /// Free an allocated struct
 void
-m_struct_free(const m_struct_t* st, void* obj) {
+m_struct_free(const m_struct_t* st, any_t* obj) {
   int i;
 
   for(i = 0 ; st->fields[i].name ; i++)
@@ -101,9 +101,9 @@ m_struct_free(const m_struct_t* st, void* obj) {
   free(obj);
 }
 
-void*
-m_struct_copy(const m_struct_t* st, void* obj) {
-  void* r = malloc(st->size);
+any_t*
+m_struct_copy(const m_struct_t* st, any_t* obj) {
+  any_t* r = malloc(st->size);
   int i;
   
   memcpy(r,obj,st->size);

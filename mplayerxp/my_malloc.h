@@ -8,15 +8,16 @@
 */
 #ifndef __MY_MALLOC_H
 #define __MY_MALLOC_H 1
+#include "mp_config.h"
 
 #include <stdlib.h>
 
 //#define __ENABLE_MALLOC_DEBUG 1
 #ifdef __ENABLE_MALLOC_DEBUG
-extern void *my_malloc(size_t __size);
-extern void *my_realloc(void *__ptr, size_t __size);
-extern void *my_calloc (size_t __nelem, size_t __size);
-extern void  my_free(void *__ptr);
+extern any_t*my_malloc(size_t __size);
+extern any_t*my_realloc(any_t*__ptr, size_t __size);
+extern any_t*my_calloc (size_t __nelem, size_t __size);
+extern void  my_free(any_t*__ptr);
 extern char *my_strdup(const char *src);
 #define strdup(a) my_strdup(a)
 #define malloc(a) my_malloc(a)

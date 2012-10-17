@@ -7,6 +7,8 @@
 #ifndef __HTTP_H
 #define __HTTP_H
 
+#include "mp_config.h"
+
 typedef struct HTTP_field_type {
 	char *field_name;
 	struct HTTP_field_type *next;
@@ -48,5 +50,5 @@ int		http_add_basic_authentication( HTTP_header_t *http_hdr, const char *usernam
 
 void		http_debug_hdr( HTTP_header_t *http_hdr );
 
-int 		base64_encode(const void *enc, int encLen, char *out, int outMax);
+int 		base64_encode(const any_t*enc, int encLen, char *out, int outMax);
 #endif // __HTTP_H

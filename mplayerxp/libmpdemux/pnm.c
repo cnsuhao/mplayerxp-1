@@ -226,7 +226,7 @@ static int rm_write(int s, const char *buf, int len) {
   return total;
 }
 
-static ssize_t rm_read(int fd, void *buf, size_t count) {
+static ssize_t rm_read(int fd, any_t*buf, size_t count) {
   
   ssize_t ret, total;
 

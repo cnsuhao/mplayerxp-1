@@ -132,7 +132,7 @@ typedef struct {
     mov_editlist_t* editlist;
     int editlist_pos;
     //
-    void* desc; // image/sound/etc description (pointer to ImageDescription etc)
+    any_t* desc; // image/sound/etc description (pointer to ImageDescription etc)
 } mov_track_t;
 
 static void mov_build_index(mov_track_t* trak,int timescale){
@@ -2093,7 +2093,7 @@ static void mov_close(demuxer_t *demuxer)
   free(priv);
 }
 
-static int mov_control(demuxer_t *demuxer,int cmd,void *args)
+static int mov_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

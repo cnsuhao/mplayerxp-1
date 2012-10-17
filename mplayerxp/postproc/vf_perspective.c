@@ -103,11 +103,11 @@ static double __FASTCALL__ getCoeff(double d){
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
 	int i, j;
 
 	vf->priv->pvStride= width;
-	vf->priv->pv= (void*)memalign(8, width*height*2*sizeof(int32_t));
+	vf->priv->pv= (any_t*)memalign(8, width*height*2*sizeof(int32_t));
 	initPv(vf->priv, width, height);
 	
 	for(i=0; i<SUB_PIXELS; i++){

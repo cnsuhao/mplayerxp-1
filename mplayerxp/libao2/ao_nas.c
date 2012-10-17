@@ -208,7 +208,7 @@ static int nas_readBuffer(struct ao_nas_data *nas_data, unsigned int num)
 	return num;
 }
 
-static int nas_writeBuffer(struct ao_nas_data *nas_data, void *data, unsigned int len)
+static int nas_writeBuffer(struct ao_nas_data *nas_data, any_t*data, unsigned int len)
 {
 	pthread_mutex_lock(&nas_data->buffer_mutex);
 	MSG_DBG2("ao_nas: nas_writeBuffer(): len=%d client=%d/%d server=%d/%d\n",
@@ -239,7 +239,7 @@ static int nas_empty_event_queue(struct ao_nas_data *nas_data)
 	return result;
 }
 
-static void *nas_event_thread_start(void *data)
+static any_t*nas_event_thread_start(any_t*data)
 {
 	struct ao_nas_data *nas_data = data;
 
@@ -591,7 +591,7 @@ static unsigned get_space(void)
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned play(void* data,unsigned len,unsigned flags)
+static unsigned play(any_t* data,unsigned len,unsigned flags)
 {
 	unsigned written, maxbursts = 0, playbursts = 0;
 	AuStatus as;

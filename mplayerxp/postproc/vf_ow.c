@@ -208,7 +208,7 @@ static void __FASTCALL__ filter(struct vf_priv_s *p, uint8_t *dst, uint8_t *src,
 //    printf("%f\n", sum/height/width);
 }
 
-static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height, unsigned int flags, unsigned int outfmt, void *tune){
+static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height, unsigned int flags, unsigned int outfmt, any_t*tune){
     int h= (height+15)&(~15);
     int i,j;
 

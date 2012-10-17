@@ -8,8 +8,8 @@ DS_AudioDecoder * DS_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX* 
 
 void DS_AudioDecoder_Destroy(DS_AudioDecoder *this);
 
-int DS_AudioDecoder_Convert(DS_AudioDecoder *this, const void* in_data, unsigned int in_size,
-			     void* out_data, unsigned int out_size,
+int DS_AudioDecoder_Convert(DS_AudioDecoder *this, const any_t* in_data, unsigned int in_size,
+			     any_t* out_data, unsigned int out_size,
 			     unsigned int* size_read, unsigned int* size_written);
 
 int DS_AudioDecoder_GetSrcSize(DS_AudioDecoder *this, int dest_size);

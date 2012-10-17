@@ -6,18 +6,18 @@
 #ifdef USE_FASTMEMCPY
 #include <stddef.h>
 #include <string.h> /* memcpy prototypes */
-extern void * (*fast_memcpy_ptr)(void * to, const void * from, size_t len);
-extern void * (*fast_stream_copy_ptr)(void * to, const void * from, size_t len);
+extern any_t* (*fast_memcpy_ptr)(any_t* to, const any_t* from, size_t len);
+extern any_t* (*fast_stream_copy_ptr)(any_t* to, const any_t* from, size_t len);
 #define memcpy(a,b,c) (*fast_memcpy_ptr)(a,b,c)
 #define stream_copy(a,b,c) (*fast_stream_copy_ptr)(a,b,c)
 #else
 #define stream_copy(a,b,c) memcpy(a,b,c)
 #endif
 
-static inline void * stream_copy_pic(void * dst, const void * src, int bytesPerLine, int height, int dstStride, int srcStride)
+static inline any_t* stream_copy_pic(any_t* dst, const any_t* src, int bytesPerLine, int height, int dstStride, int srcStride)
 {
 	int i;
-	void *retval=dst;
+	any_t*retval=dst;
 
 	if(dstStride == srcStride) stream_copy(dst, src, srcStride*height);
 	else
@@ -33,10 +33,10 @@ static inline void * stream_copy_pic(void * dst, const void * src, int bytesPerL
 	return retval;
 }
 
-static inline void * memcpy_pic(void * dst, const void * src, int bytesPerLine, int height, int dstStride, int srcStride)
+static inline any_t* memcpy_pic(any_t* dst, const any_t* src, int bytesPerLine, int height, int dstStride, int srcStride)
 {
 	int i;
-	void *retval=dst;
+	any_t*retval=dst;
 
 	if(dstStride == srcStride) memcpy(dst, src, srcStride*height);
 	else

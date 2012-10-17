@@ -3,6 +3,7 @@
  * (c)2002 by Felix Buenemann <atmosfear at users.sourceforge.net>
  * File licensed under the GPL, see http://www.fsf.org/ for more info.
  */
+#include "mp_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +41,7 @@ typedef struct faad_priv_s
   float pts;
 }faad_priv_t;
 
-typedef void *NeAACDecHandle;
+typedef any_t*NeAACDecHandle;
 typedef struct NeAACDecConfiguration
 {
     unsigned char defObjectType;
@@ -122,7 +123,7 @@ static char (*NEAACDECAPI NeAACDecInit2_ptr)(NeAACDecHandle hDecoder, unsigned c
 
 static void (*NEAACDECAPI NeAACDecClose_ptr)(NeAACDecHandle hDecoder);
 #define NeAACDecClose(a) (*NeAACDecClose_ptr)(a)
-static void* (*NEAACDECAPI NeAACDecDecode_ptr)(NeAACDecHandle hDecoder,
+static any_t* (*NEAACDECAPI NeAACDecDecode_ptr)(NeAACDecHandle hDecoder,
                             NeAACDecFrameInfo *hInfo,
                             unsigned char *buffer,
                             unsigned long buffer_size);
@@ -135,7 +136,7 @@ static char* (*NEAACDECAPI NeAACDecGetErrorMessage_ptr)(unsigned char errcode);
 static NeAACDecHandle NeAAC_hdec;
 static NeAACDecFrameInfo NeAAC_finfo;
 
-static void *dll_handle;
+static any_t*dll_handle;
 static int load_dll(const char *libname)
 {
   if(!(dll_handle=ld_codec(libname,mpcodecs_ad_faad.info->url))) return 0;
@@ -266,7 +267,7 @@ static void uninit(sh_audio_t *sh)
   free(sh->context);
 }
 
-static int control(sh_audio_t *sh,int cmd,void* arg, ...)
+static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
   UNUSED(sh);
   UNUSED(cmd);
@@ -279,7 +280,7 @@ static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,u
   faad_priv_t *priv=sh->context;
   int j = 0;
   unsigned len = 0;
-  void *NeAAC_sample_buffer;
+  any_t*NeAAC_sample_buffer;
   UNUSED(maxlen);
   while(len < minlen) {
 

@@ -206,7 +206,7 @@ static unsigned get_space(void){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned __FASTCALL__ play(void* data,unsigned len,unsigned flags)
+static unsigned __FASTCALL__ play(any_t* data,unsigned len,unsigned flags)
 {
     unsigned maxbursts = (ao_data.buffersize - null.buffer) / ao_data.outburst;
     unsigned playbursts = len / ao_data.outburst;

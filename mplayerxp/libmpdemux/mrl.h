@@ -2,6 +2,8 @@
 #ifndef __MPXP_MRL_H
 #define __MPXP_MRL_H 1
 
+#include "mp_config.h"
+
 /** Parses line which contains MRL and splits it on components.
   * @param line		source line to be parsed
   * @param user		buffer which will contain username if present (maybe NULL)
@@ -34,7 +36,7 @@ extern const char *mrl_parse_line(const char *line,char **user,char **pass,char 
 typedef struct mrl_config
 {
     const char*	arg;		/**< Name of argument */
-    void* const value;		/**< Pointer to buffer where value will be saved */
+    any_t* const value;		/**< Pointer to buffer where value will be saved */
     unsigned	type;		/**< Type of value */
     float	min;		/**< Minimal value of argument */
     float	max;		/**< Maximal value of argument */

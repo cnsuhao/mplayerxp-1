@@ -61,7 +61,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
     if (!vf->priv->fmt)
 	vf->priv->fmt=find_best(vf,outfmt,d_width,d_height);
     if(!vf->priv->fmt){

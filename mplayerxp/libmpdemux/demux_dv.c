@@ -223,7 +223,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 	sh_audio->wf->nAvgBytesPerSec = sh_video->fps*dv_decoder->frame_size;
 	sh_audio->wf->nBlockAlign = dv_decoder->frame_size;
 
-//       sh_audio->context=(void*)dv_decoder;
+//       sh_audio->context=(any_t*)dv_decoder;
     }
    stream_reset(demuxer->stream);
    stream_seek(demuxer->stream, 0);
@@ -241,7 +241,7 @@ static void dv_close(demuxer_t* demuxer)
   free(frames);
 }
 
-static int dv_control(demuxer_t *demuxer,int cmd, void *arg) {
+static int dv_control(demuxer_t *demuxer,int cmd, any_t*arg) {
     return DEMUX_UNKNOWN;
 }
 

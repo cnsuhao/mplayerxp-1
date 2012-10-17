@@ -24,6 +24,8 @@
 #ifndef A52_H
 #define A52_H
 
+#include "mp_config.h"
+
 #ifndef LIBA52_DOUBLE
 typedef float sample_t;
 #else
@@ -55,12 +57,12 @@ extern int a52_syncinfo (uint8_t * buf, int * flags,
 extern int a52_frame (a52_state_t * state, uint8_t * buf, int * flags,
 			sample_t * level, sample_t bias);
 extern void a52_dynrng (a52_state_t * state,
-			sample_t (* call) (sample_t, void *), void * data);
+			sample_t (* call) (sample_t, any_t*), any_t* data);
 extern int a52_block (a52_state_t * state);
 extern void a52_free (a52_state_t * state);
 extern uint16_t crc16_block(uint8_t *data,uint32_t num_bytes);
-extern void* a52_resample_init_float(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
-extern void* a52_resample_init(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern any_t* a52_resample_init_float(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern any_t* a52_resample_init(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
 extern int (* a52_resample) (float * _f, int16_t * s16);
 extern int (* a52_resample32) (float * _f, float * s16);
 

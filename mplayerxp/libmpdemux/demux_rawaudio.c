@@ -106,7 +106,7 @@ static void rawaudio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
 
 static void rawaudio_close(demuxer_t* demuxer) {}
 
-static int rawaudio_control(demuxer_t *demuxer,int cmd,void *args)
+static int rawaudio_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

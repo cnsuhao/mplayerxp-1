@@ -235,7 +235,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_scaletempo_t* s = af->setup;
   switch(cmd){

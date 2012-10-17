@@ -150,7 +150,7 @@ static void __FASTCALL__ echo3d(af_crystality_t *s,float *data, unsigned datasiz
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_crystality_t* s   = (af_crystality_t*)af->setup; 
 

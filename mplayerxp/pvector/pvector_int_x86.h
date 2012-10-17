@@ -104,7 +104,7 @@ PVECTOR_RENAME(loada)(void const *__P)
 #define _ivec_loada PVECTOR_RENAME(loada)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(storeu)(void *__P, __ivec src)
+PVECTOR_RENAME(storeu)(any_t*__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
     _mm_storeu_si128(__P,src);
@@ -116,7 +116,7 @@ PVECTOR_RENAME(storeu)(void *__P, __ivec src)
 #define _ivec_storeu PVECTOR_RENAME(storeu)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(storea)(void *__P, __ivec src)
+PVECTOR_RENAME(storea)(any_t*__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
     _mm_store_si128(__P,src);
@@ -128,7 +128,7 @@ PVECTOR_RENAME(storea)(void *__P, __ivec src)
 #define _ivec_storea PVECTOR_RENAME(storea)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(stream)(void *__P, __ivec src)
+PVECTOR_RENAME(stream)(any_t*__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
     _mm_stream_si128(__P,src);

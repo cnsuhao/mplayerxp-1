@@ -31,7 +31,7 @@
 #include "common.h"
 
 static void
-safe_free (void *ptr)
+safe_free (any_t*ptr)
 {
   if (ptr)
     free (ptr);

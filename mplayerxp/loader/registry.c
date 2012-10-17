@@ -258,7 +258,7 @@ static char* build_keyname(long key, const char* subkey)
 	strcat(full_name, subkey);
 	return full_name;
 }
-static struct reg_value* insert_reg_value(int handle, const char* name, int type, const void* value, int len)
+static struct reg_value* insert_reg_value(int handle, const char* name, int type, const any_t* value, int len)
 {
 	reg_handle_t* t;
 	struct reg_value* v;
@@ -438,8 +438,8 @@ long __stdcall RegQueryValueExA(long key, const char* value, int* reserved, int*
     return 0;
 }
 long __stdcall RegCreateKeyExA(long key, const char* name, long reserved,
-		     void* classs, long options, long security,
-		     void* sec_attr, int* newkey, int* status)
+		     any_t* classs, long options, long security,
+		     any_t* sec_attr, int* newkey, int* status)
 {
     reg_handle_t* t;
     char* fullname;
@@ -504,7 +504,7 @@ long __stdcall RegEnumValueA(HKEY hkey, DWORD index, LPSTR value, LPDWORD val_co
     return ERROR_NO_MORE_ITEMS;
 }
 
-long __stdcall RegSetValueExA(long key, const char* name, long v1, long v2, const void* data, long size)
+long __stdcall RegSetValueExA(long key, const char* name, long v1, long v2, const any_t* data, long size)
 {
     struct reg_value* t;
     char* c;

@@ -13,7 +13,7 @@ struct af_instance_s;
 // Audio data chunk
 typedef struct af_data_s
 {
-  void* audio;  // data buffer
+  any_t* audio;  // data buffer
   int len;      // buffer length
   int rate;	// sample rate
   int nch;	// number of channels
@@ -48,14 +48,14 @@ typedef struct af_info_s
 typedef struct af_instance_s
 {
   const af_info_t* info;
-  int (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, void* arg);
+  int (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
   void (* __FASTCALL__ uninit)(struct af_instance_s* af);
   af_data_t* (* __FASTCALL__ play)(struct af_instance_s* af, af_data_t* data,int final);
-  void* setup;	  // setup data for this specific instance and filter
+  any_t* setup;	  // setup data for this specific instance and filter
   af_data_t* data; // configuration for outgoing data stream
   struct af_instance_s* next;
   struct af_instance_s* prev;  
-  void *parent;
+  any_t*parent;
   double delay; // Delay caused by the filter [ms]
   frac_t mul; /* length multiplier: how much does this instance change
 		 the length of the buffer. */
@@ -101,7 +101,7 @@ typedef struct af_stream_s
   af_data_t output;
   // Configuration for this stream
   af_cfg_t cfg;
-  void *parent;
+  any_t*parent;
 }af_stream_t;
 
 /*********************************************
@@ -122,7 +122,7 @@ typedef struct af_stream_s
 // Export functions
 */
 
-af_stream_t *af_new(void *_parent);
+af_stream_t *af_new(any_t*_parent);
 
 /* Initialize the stream "s". This function creates a new filter list
    if necessary according to the values set in input and output. Input
@@ -163,7 +163,7 @@ af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data);
 // send control to all filters, starting with the last until
 // one accepts the command with AF_OK.
 // Returns true if accepting filter was found.
-int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, void* arg);
+int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg);
 
 /* Calculate how long the output from the filters will be given the
    input length "len". The calculated length is >= the actual

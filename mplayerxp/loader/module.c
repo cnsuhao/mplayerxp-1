@@ -15,7 +15,7 @@
 // define for quicktime debugging (verbose logging):
 //#define DEBUG_QTX_API
 
-#include "config.h"
+#include "mp_config.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -34,19 +34,20 @@
 #include "wine/pe_image.h"
 #include "wine/debugtools.h"
 
-#undef HAVE_LIBDL
-
-#ifdef HAVE_LIBDL
-#include <dlfcn.h>
-#include "wine/elfdll.h"
-#endif
 #include "win32.h"
 #include "driver.h"
 
 #ifdef EMU_QTX_API
 #include "wrapper.h"
-static int report_func(void *stack_base, int stack_size, reg386_t *reg, uint32_t *flags);
-static int report_func_ret(void *stack_base, int stack_size, reg386_t *reg, uint32_t *flags);
+static int report_func(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t *flags);
+static int report_func_ret(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t *flags);
+#endif
+
+#undef HAVE_LIBDL
+
+#ifdef HAVE_LIBDL
+#include <dlfcn.h>
+#include "wine/elfdll.h"
 #endif
 
 //#undef TRACE
@@ -500,8 +501,8 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 
 	if (strstr(libname,"QuickTime.qts") && wm)
 	{
-	    void** ptr;
-	    void *dispatch_addr;
+	    any_t** ptr;
+	    any_t*dispatch_addr;
 	    int i;
 
 //	    dispatch_addr = GetProcAddress(wm->module, "theQuickTimeDispatcher", TRUE);
@@ -509,7 +510,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 	    if (dispatch_addr == RVA(0x124c30))
 	    {
 	        fprintf(stderr, "QuickTime5 DLLs found\n");
-		ptr = (void **)RVA(0x375ca4); // dispatch_ptr
+		ptr = (any_t**)RVA(0x375ca4); // dispatch_ptr
 	        for (i=0;i<5;i++)  RVA(0x19e842)[i]=0x90; // make_new_region ?
 	        for (i=0;i<28;i++) RVA(0x19e86d)[i]=0x90; // call__call_CreateCompatibleDC ?
 		for (i=0;i<5;i++)  RVA(0x19e898)[i]=0x90; // jmp_to_call_loadbitmap ?
@@ -537,7 +538,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 	    } else if (dispatch_addr == RVA(0x13b330))
 	    {
     		fprintf(stderr, "QuickTime6 DLLs found\n");
-		ptr = (void **)RVA(0x3b9524); // dispatcher_ptr
+		ptr = (any_t**)RVA(0x3b9524); // dispatcher_ptr
 		for (i=0;i<5;i++)  RVA(0x2730cc)[i]=0x90; // make_new_region
 		for (i=0;i<28;i++) RVA(0x2730f7)[i]=0x90; // call__call_CreateCompatibleDC
 		for (i=0;i<5;i++)  RVA(0x273122)[i]=0x90; // jmp_to_call_loadbitmap
@@ -546,7 +547,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 	    } else if (dispatch_addr == RVA(0x13c3e0))
 	    {
     		fprintf(stderr, "QuickTime6.3 DLLs found\n");
-		ptr = (void **)RVA(0x3ca01c); // dispatcher_ptr
+		ptr = (any_t**)RVA(0x3ca01c); // dispatcher_ptr
 		for (i=0;i<5;i++)  RVA(0x268f6c)[i]=0x90; // make_new_region
 		for (i=0;i<28;i++) RVA(0x268f97)[i]=0x90; // call__call_CreateCompatibleDC
 		for (i=0;i<5;i++)  RVA(0x268fc2)[i]=0x90; // jmp_to_call_loadbitmap
@@ -706,8 +707,8 @@ return "???";
 
 static int c_level=0;
 
-static int dump_component(char* name,int type,void* _orig, ComponentParameters *params,void** glob){
-    int ( *orig)(ComponentParameters *params, void** glob) = _orig;
+static int dump_component(char* name,int type,any_t* _orig, ComponentParameters *params,any_t** glob){
+    int ( *orig)(ComponentParameters *params, any_t** glob) = _orig;
     int ret,i;
 
     fprintf(stderr,"%*sComponentCall: %s  flags=0x%X  size=%d  what=0x%X %s\n",3*c_level,"",name,params->flags, params->paramSize, params->what, component_func(params->what));
@@ -727,8 +728,8 @@ static int dump_component(char* name,int type,void* _orig, ComponentParameters *
 }
 
 #define DECL_COMPONENT(sname,name,type) \
-    static void* real_ ## sname = NULL; \
-    static int fake_ ## sname(ComponentParameters *params,void** glob){ \
+    static any_t* real_ ## sname = NULL; \
+    static int fake_ ## sname(ComponentParameters *params,any_t** glob){ \
 	return dump_component(name,type,real_ ## sname, params, glob); \
     }
 
@@ -745,13 +746,13 @@ static int dump_component(char* name,int type,void* _orig, ComponentParameters *
 static uint32_t ret_array[4096];
 static int ret_i=0;
 
-static int report_func(void *stack_base, int stack_size, reg386_t *reg, uint32_t *flags)
+static int report_func(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t *flags)
 {
 #ifdef DEBUG_QTX_API
   int i;
   int* dptr;
-  void* pwrapper=NULL;
-  void* pptr=NULL;
+  any_t* pwrapper=NULL;
+  any_t* pptr=NULL;
   char* pname=NULL;
   int plen=-1;
   // find the code:
@@ -829,7 +830,7 @@ static int report_func(void *stack_base, int stack_size, reg386_t *reg, uint32_t
   case 0x150011: //NewPtrClear
   case 0x150012: //NewPtrSysClear
       reg->eax=(uint32_t)malloc(((uint32_t *)stack_base)[1]);
-      memset((void *)reg->eax,0,((uint32_t *)stack_base)[1]);
+      memset((any_t*)reg->eax,0,((uint32_t *)stack_base)[1]);
 #ifdef DEBUG_QTX_API
       printf("%*sLEAVE(%d): EMULATED! 0x%X\n",ret_i*2,"",ret_i, reg->eax);
 #endif
@@ -845,7 +846,7 @@ static int report_func(void *stack_base, int stack_size, reg386_t *reg, uint32_t
       if(((uint32_t *)stack_base)[1]>=0x60000000)
           printf("WARNING! Invalid Ptr handle!\n");
       else
-          free((void *)((uint32_t *)stack_base)[1]);
+          free((any_t*)((uint32_t *)stack_base)[1]);
       reg->eax=0;
 #ifdef DEBUG_QTX_API
       printf("%*sLEAVE(%d): EMULATED! 0x%X\n",ret_i*2,"",ret_i, reg->eax);
@@ -944,7 +945,7 @@ static int report_func(void *stack_base, int stack_size, reg386_t *reg, uint32_t
     return 0;
 }
 
-static int report_func_ret(void *stack_base, int stack_size, reg386_t *reg, uint32_t *flags)
+static int report_func_ret(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t *flags)
 {
   int i;
   short err;
@@ -1029,7 +1030,7 @@ FARPROC MODULE_GetProcAddress(
 	break;
 #ifdef HAVE_LIBDL
     case MODULE32_ELF:
-	retproc = (FARPROC) dlsym( (void*) wm->module, function);
+	retproc = (FARPROC) dlsym( (any_t*) wm->module, function);
 	if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
 	return retproc;
 #endif

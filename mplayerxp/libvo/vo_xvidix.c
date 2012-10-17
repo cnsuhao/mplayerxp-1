@@ -413,7 +413,7 @@ static uint32_t __FASTCALL__ preinit(const char *arg)
     return(0);
 }
 
-static uint32_t __FASTCALL__ control(uint32_t request, void *data)
+static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:

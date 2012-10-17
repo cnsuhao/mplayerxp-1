@@ -191,7 +191,7 @@ int preinit_audio_filters(sh_audio_t *sh_audio,
 
   *out_samplerate=afs->output.rate;
   *out_channels=afs->output.nch;
-  *out_format=af_format_encode((void*)(&afs->output));
+  *out_format=af_format_encode((any_t*)(&afs->output));
 
   sh_audio->af_bps = afs->output.rate*afs->output.nch*afs->output.bps;
 
@@ -199,7 +199,7 @@ int preinit_audio_filters(sh_audio_t *sh_audio,
       afs->output.bps, afs->output.nch, afs->output.rate,
       fmt2str(afs->output.format,afs->output.bps,strbuf,200));
 
-  sh_audio->afilter=(void*)afs;
+  sh_audio->afilter=(any_t*)afs;
   return 1;
 }
 
@@ -247,7 +247,7 @@ int init_audio_filters(sh_audio_t *sh_audio,
   sh_audio->a_buffer_len=0;
 
   af_showconf(afs->first);
-  sh_audio->afilter=(void*)afs;
+  sh_audio->afilter=(any_t*)afs;
   sh_audio->afilter_inited=1;
   return 1;
 }

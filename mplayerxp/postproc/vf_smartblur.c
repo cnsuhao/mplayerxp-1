@@ -357,7 +357,7 @@ static int __FASTCALL__ allocStuff(FilterParam *f, int width, int height){
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
 	
 	int sw, sh;
 

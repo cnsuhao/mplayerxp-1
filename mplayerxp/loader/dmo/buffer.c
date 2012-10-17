@@ -12,7 +12,7 @@ struct _CMediaBuffer
     IMediaBuffer_vt* vt;
     DECLARE_IUNKNOWN();
     GUID interfaces[2];
-    void* mem;
+    any_t* mem;
     unsigned long len;
     unsigned long maxlen;
     int freemem;
@@ -66,7 +66,7 @@ static void CMediaBuffer_Destroy(CMediaBuffer* This)
 
 IMPLEMENT_IUNKNOWN(CMediaBuffer)
 
-CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, void* mem,
+CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, any_t* mem,
 				 unsigned long len, int copy)
 {
     CMediaBuffer* This = (CMediaBuffer*) malloc(sizeof(CMediaBuffer));

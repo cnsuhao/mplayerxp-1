@@ -15,24 +15,24 @@
 
 ////// List utils
 
-static void __FASTCALL__ asx_list_add(void* list_ptr,void* entry){
-  void** list = *(void***)list_ptr;
+static void __FASTCALL__ asx_list_add(any_t* list_ptr,any_t* entry){
+  any_t** list = *(any_t***)list_ptr;
   int c = 0;
 
   if(list != NULL)
     for( ; list[c] != NULL; c++) ;
 
-  list = (void*)realloc(list,sizeof(void*)*(c+2));
+  list = (any_t*)realloc(list,sizeof(any_t*)*(c+2));
 
   list[c] = entry;
   list[c+1] = NULL;
 
-  *(void***)list_ptr = list;
+  *(any_t***)list_ptr = list;
 }
 
 
-static void __FASTCALL__ asx_list_remove(void* list_ptr,void* entry,ASX_FreeFunc free_func) {
-  void** list = *(void***)list_ptr;
+static void __FASTCALL__ asx_list_remove(any_t* list_ptr,any_t* entry,ASX_FreeFunc free_func) {
+  any_t** list = *(any_t***)list_ptr;
   int c,e = -1;
 
   if(list == NULL) return;
@@ -47,28 +47,28 @@ static void __FASTCALL__ asx_list_remove(void* list_ptr,void* entry,ASX_FreeFunc
   
   if(c == 1) { // Only one entry, we drop all
     free(list);
-    *(void**)list_ptr = NULL;
+    *(any_t**)list_ptr = NULL;
     return;
   }
 
   if(c > e) // If c==e the memmove is not needed
-    memmove(list+e,list+e+1,(c-e)*sizeof(void*));
+    memmove(list+e,list+e+1,(c-e)*sizeof(any_t*));
 
-  list = (void*)realloc(list,(c-1)*sizeof(void*));
+  list = (any_t*)realloc(list,(c-1)*sizeof(any_t*));
   list[c-1] = NULL;
   
-  *(void***)list_ptr = list;
+  *(any_t***)list_ptr = list;
 }
 
-void __FASTCALL__ asx_list_free(void* list_ptr,ASX_FreeFunc free_func) {
-  void** ptr = *(void***)list_ptr;
+void __FASTCALL__ asx_list_free(any_t* list_ptr,ASX_FreeFunc free_func) {
+  any_t** ptr = *(any_t***)list_ptr;
   if(ptr == NULL) return;
   if(free_func != NULL) {
     for( ; *ptr != NULL ; ptr++)
       free_func(*ptr);
   }
-  free(*(void**)list_ptr);
-  *(void**)list_ptr = NULL;
+  free(*(any_t**)list_ptr);
+  *(any_t**)list_ptr = NULL;
 }
 
 /////// Attribs utils

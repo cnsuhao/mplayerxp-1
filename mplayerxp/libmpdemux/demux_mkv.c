@@ -445,7 +445,7 @@ typedef struct mkv_track
 
   int default_track;
 
-  void *private_data;
+  any_t*private_data;
   unsigned int private_size;
 
   /* stuff for realmedia */
@@ -497,7 +497,7 @@ typedef struct mkv_attachment
   char* name;
   char* mime;
   uint64_t uid;
-  void* data;
+  any_t* data;
   unsigned int data_size;
 } mkv_attachment_t;
 
@@ -585,7 +585,7 @@ extern int dvdsub_id;
  * \param nelem current number of elements in array
  * \param elsize size of one array element
  */
-static void grow_array(void **array, int nelem, size_t elsize) {
+static void grow_array(any_t**array, int nelem, size_t elsize) {
   if (!(nelem & 31))
     *array = realloc(*array, (nelem + 32) * elsize);
 }
@@ -2120,7 +2120,7 @@ static int
 demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
 {
   BITMAPINFOHEADER *bih;
-  void *ImageDesc = NULL;
+  any_t*ImageDesc = NULL;
   sh_video_t *sh_v;
 
   if (track->ms_compat)  /* MS compatibility mode */
@@ -3938,7 +3938,7 @@ static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags)
     }
 }
 
-static int mkv_control (demuxer_t *demuxer, int cmd, void *arg)
+static int mkv_control (demuxer_t *demuxer, int cmd, any_t*arg)
 {
   mkv_demuxer_t *mkv_d = (mkv_demuxer_t *) demuxer->priv;
   

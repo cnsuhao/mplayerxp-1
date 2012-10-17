@@ -1347,7 +1347,7 @@ static void __FASTCALL__ sdl_dri_get_surface(dri_surface_t *surf)
 		surf->planes[i] = 0;
 	if(priv->format == IMGFMT_YV12)
 	{
-	    void * tp;
+	    any_t* tp;
 	    tp = surf->planes[2];
 	    surf->planes[2] = surf->planes[1];
 	    surf->planes[1] = tp;
@@ -1363,7 +1363,7 @@ static void __FASTCALL__ sdl_dri_get_surface(dri_surface_t *surf)
 }
 
 static int was_fs=0;
-static uint32_t __FASTCALL__ control(uint32_t request, void *data)
+static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 {
   struct sdl_priv_s *priv = &sdl_priv;
   switch (request) {

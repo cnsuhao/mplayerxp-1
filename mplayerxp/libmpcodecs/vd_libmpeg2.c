@@ -97,7 +97,7 @@ typedef struct mpeg2_picture_s {
 
 typedef struct mpeg2_fbuf_s {
     uint8_t * buf[3];
-    void * id;
+    any_t* id;
 } mpeg2_fbuf_t;
 
 typedef struct mpeg2_info_s {
@@ -140,14 +140,14 @@ static int (*mpeg2_parse_ptr) (mpeg2dec_t * mpeg2dec);
 #define mpeg2_parse(a) (*mpeg2_parse_ptr)(a)
 static void (*mpeg2_buffer_ptr) (mpeg2dec_t * mpeg2dec, uint8_t * start, uint8_t * end);
 #define mpeg2_buffer(a,b,c) (*mpeg2_buffer_ptr)(a,b,c)
-static void (*mpeg2_set_buf_ptr) (mpeg2dec_t * mpeg2dec, uint8_t * buf[3], void * id);
+static void (*mpeg2_set_buf_ptr) (mpeg2dec_t * mpeg2dec, uint8_t * buf[3], any_t* id);
 #define mpeg2_set_buf(a,b,c) (*mpeg2_set_buf_ptr)(a,b,c)
 static int (*mpeg2_stride_ptr) (mpeg2dec_t * mpeg2dec, int stride);
 #define mpeg2_stride(a,b) (*mpeg2_stride_ptr)(a,b)
 static void (*mpeg2_reset_ptr) (mpeg2dec_t * mpeg2dec, int full_reset);
 #define mpeg2_reset(a,b) (*mpeg2_reset_ptr)(a,b)
 
-static void *dll_handle;
+static any_t*dll_handle;
 static int load_lib( const char *libname )
 {
   if(!(dll_handle=ld_codec(libname,mpcodecs_vd_libmpeg2.info->url))) return 0;
@@ -165,7 +165,7 @@ static int load_lib( const char *libname )
 }
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *priv;
     priv=sh->context;
     switch(cmd)
@@ -212,7 +212,7 @@ static void draw_frame(mp_image_t *mpi,sh_video_t *sh,unsigned w,const mpeg2_fbu
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     priv_t *priv=sh->context;
     mp_image_t *mpi;
     const mpeg2_info_t *info;

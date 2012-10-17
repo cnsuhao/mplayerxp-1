@@ -1106,10 +1106,10 @@ _lzo_config_check(void)
     } u;
 
 #if 0
-    r &= __lzo_assert((const void *)&u == (const void *)&u.a);
-    r &= __lzo_assert((const void *)&u == (const void *)&u.b);
-    r &= __lzo_assert((const void *)&u == (const void *)&u.x[0]);
-    r &= __lzo_assert((const void *)&u == (const void *)&u.aa[0]);
+    r &= __lzo_assert((const any_t*)&u == (const any_t*)&u.a);
+    r &= __lzo_assert((const any_t*)&u == (const any_t*)&u.b);
+    r &= __lzo_assert((const any_t*)&u == (const any_t*)&u.x[0]);
+    r &= __lzo_assert((const any_t*)&u == (const any_t*)&u.aa[0]);
 #endif
 
     r &= basic_integral_check();

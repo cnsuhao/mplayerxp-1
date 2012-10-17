@@ -744,10 +744,10 @@ static int __FASTCALL__ xrun(const char *str_mode)
     return 1; /* ok, data should be accepted again */
 }
 
-static unsigned __FASTCALL__ play_normal(void* data, unsigned len);
-static unsigned __FASTCALL__ play_mmap(void* data, unsigned len);
+static unsigned __FASTCALL__ play_normal(any_t* data, unsigned len);
+static unsigned __FASTCALL__ play_mmap(any_t* data, unsigned len);
 
-static unsigned __FASTCALL__ play(void* data, unsigned len, unsigned flags)
+static unsigned __FASTCALL__ play(any_t* data, unsigned len, unsigned flags)
 {
     unsigned result;
     UNUSED(flags);
@@ -764,7 +764,7 @@ static unsigned __FASTCALL__ play(void* data, unsigned len, unsigned flags)
     thanxs for marius <marius@rospot.com> for giving us the light ;)
 */
 
-static unsigned __FASTCALL__ play_normal(void* data, unsigned len)
+static unsigned __FASTCALL__ play_normal(any_t* data, unsigned len)
 {
     //alsa.bytes_per_sample is always 4 for 2 chn S16_LE
     unsigned num_frames = len / alsa.bytes_per_sample;
@@ -779,7 +779,7 @@ static unsigned __FASTCALL__ play_normal(void* data, unsigned len)
     }
 
     while (num_frames > 0) {
-	res = snd_pcm_writei(alsa.handler, (void *)output_samples, num_frames);
+	res = snd_pcm_writei(alsa.handler, (any_t*)output_samples, num_frames);
 	if (res == -EAGAIN) {
 	    snd_pcm_wait(alsa.handler, 1000);
 	} else if (res == -EPIPE) { /* underrun */
@@ -817,12 +817,12 @@ static unsigned __FASTCALL__ play_normal(void* data, unsigned len)
  * 'An overview of the ALSA API' http://people.debian.org/~joshua/x66.html
  * and some help by Paul Davis <pbd@op.net> */
 
-static unsigned __FASTCALL__ play_mmap(void* data, unsigned len)
+static unsigned __FASTCALL__ play_mmap(any_t* data, unsigned len)
 {
     snd_pcm_sframes_t commitres, frames_available;
     snd_pcm_uframes_t frames_transmit, size, offset;
     const snd_pcm_channel_area_t *area;
-    void *outbuffer;
+    any_t*outbuffer;
     unsigned result;
 
 #ifdef USE_POLL //seems not really be needed

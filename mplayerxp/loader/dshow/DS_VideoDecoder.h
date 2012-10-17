@@ -13,7 +13,7 @@ void DS_VideoDecoder_StartInternal(DS_VideoDecoder *this);
 
 void DS_VideoDecoder_StopInternal(DS_VideoDecoder *this);
 
-int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const void* src, int size, int is_keyframe, char* pImage);
+int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const any_t* src, int size, int is_keyframe, char* pImage);
 
 /*
  * bits == 0   - leave unchanged

@@ -172,7 +172,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 
 static void smjpeg_close(demuxer_t *demuxer) {}
 
-static int smjpeg_control(demuxer_t *demuxer,int cmd,void *args)
+static int smjpeg_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

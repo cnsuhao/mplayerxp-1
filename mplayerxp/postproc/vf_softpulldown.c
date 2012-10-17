@@ -18,10 +18,10 @@ struct vf_priv_s {
 	long long out;
 };
 
-static inline void *my_memcpy_pic(void * dst, void * src, int bytesPerLine, int height, int dstStride, int srcStride, int finalize)
+static inline any_t*my_memcpy_pic(any_t* dst, any_t* src, int bytesPerLine, int height, int dstStride, int srcStride, int finalize)
 {
 	int i;
-	void *retval=dst;
+	any_t*retval=dst;
 
 	for(i=0; i<height; i++)
 	{
@@ -133,7 +133,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune)
+	unsigned int flags, unsigned int outfmt,any_t*tune)
 {
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
 }

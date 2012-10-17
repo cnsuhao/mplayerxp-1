@@ -775,7 +775,7 @@ static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, FILE *fd)
     return res;
 }
 
-int __FASTCALL__ vobsub_parse_ifo(void* _vob, const char *const name, unsigned int *palette, unsigned int *width, unsigned int *height, int force, int sid, char *langid)
+int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const char *const name, unsigned int *palette, unsigned int *width, unsigned int *height, int force, int sid, char *langid)
 {
     vobsub_t *vob = (vobsub_t*)_vob;
     int res = -1;
@@ -843,7 +843,7 @@ int __FASTCALL__ vobsub_parse_ifo(void* _vob, const char *const name, unsigned i
     return res;
 }
 
-void * __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,const int force,void** spu)
+any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,const int force,any_t** spu)
 {
     vobsub_t *vob = malloc(sizeof(vobsub_t));
     if(spu)
@@ -965,7 +965,7 @@ void * __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
     return vob;
 }
 
-void __FASTCALL__ vobsub_close(void *this)
+void __FASTCALL__ vobsub_close(any_t*this)
 {
     vobsub_t *vob = (vobsub_t *)this;
     if (vob->spu_streams) {
@@ -976,7 +976,7 @@ void __FASTCALL__ vobsub_close(void *this)
     free(vob);
 }
 
-void __FASTCALL__ vobsub_reset(void *vobhandle)
+void __FASTCALL__ vobsub_reset(any_t*vobhandle)
 {
     vobsub_t *vob = (vobsub_t *)vobhandle;
     if (vob->spu_streams) {
@@ -986,7 +986,7 @@ void __FASTCALL__ vobsub_reset(void *vobhandle)
     }
 }
 
-char * __FASTCALL__ vobsub_get_id(void *vobhandle, unsigned int index)
+char * __FASTCALL__ vobsub_get_id(any_t*vobhandle, unsigned int index)
 {
     vobsub_t *vob = (vobsub_t *) vobhandle;
     return (index < vob->spu_streams_size) ? vob->spu_streams[index].id : NULL;
@@ -1000,7 +1000,7 @@ unsigned int __FASTCALL__ vobsub_get_forced_subs_flag(void const * const vobhand
     return 0;
 }
 
-int __FASTCALL__ vobsub_set_from_lang(void *vobhandle, unsigned char * lang)
+int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle, unsigned char * lang)
 {
     int i;
     vobsub_t *vob= (vobsub_t *) vobhandle;
@@ -1018,7 +1018,7 @@ int __FASTCALL__ vobsub_set_from_lang(void *vobhandle, unsigned char * lang)
     return -1;
 }
 
-void __FASTCALL__ vobsub_seek(void * vobhandle, float pts)
+void __FASTCALL__ vobsub_seek(any_t* vobhandle, float pts)
 {
   vobsub_t * vob = (vobsub_t *)vobhandle;
   packet_queue_t * queue;
@@ -1038,7 +1038,7 @@ void __FASTCALL__ vobsub_seek(void * vobhandle, float pts)
   }
 }
 
-int __FASTCALL__ vobsub_get_packet(void *vobhandle, float pts,void** data, int* timestamp) {
+int __FASTCALL__ vobsub_get_packet(any_t*vobhandle, float pts,any_t** data, int* timestamp) {
   vobsub_t *vob = (vobsub_t *)vobhandle;
   unsigned int pts100 = 90000 * pts;
   if (vob->spu_streams && 0 <= vobsub_id && (unsigned) vobsub_id < vob->spu_streams_size) {

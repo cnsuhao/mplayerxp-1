@@ -33,7 +33,7 @@ static const config_t options[] = {
 LIBVD_EXTERN(libdv)
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     return CONTROL_UNKNOWN;
 }
 
@@ -52,7 +52,7 @@ dv_decoder_t* init_global_rawdv_decoder(void)
 // init driver
 static int init(sh_video_t *sh)
 {
-   sh->context = (void *)init_global_rawdv_decoder();
+   sh->context = (any_t*)init_global_rawdv_decoder();
    return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
 }
 
@@ -61,7 +61,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags)
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
 {
    mp_image_t* mpi;
    dv_decoder_t *decoder=sh->context;

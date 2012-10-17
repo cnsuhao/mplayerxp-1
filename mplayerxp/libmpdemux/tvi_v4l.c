@@ -511,7 +511,7 @@ static int start(priv_t *priv)
     return(1);
 }
 
-static int control(priv_t *priv, int cmd, void *arg)
+static int control(priv_t *priv, int cmd, any_t*arg)
 {
     MSG_DBG2( "debug: control(priv=%p, cmd=%d, arg=%p)\n",
 	priv, cmd, arg);
@@ -549,7 +549,7 @@ static int control(priv_t *priv, int cmd, void *arg)
 	    return(TVI_CONTROL_TRUE);
 	}
 	case TVI_CONTROL_VID_SET_FORMAT:
-	    priv->format = (int)*(void **)arg;
+	    priv->format = (int)*(any_t**)arg;
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_GET_PLANES:
 	    *(int *)arg = 1; /* FIXME, also not needed at this time */
@@ -643,7 +643,7 @@ static int control(priv_t *priv, int cmd, void *arg)
 	case TVI_CONTROL_TUN_SET_FREQ:
 	{
 	    /* argument is in MHz ! */
-	    unsigned long freq = (unsigned long)*(void **)arg;
+	    unsigned long freq = (unsigned long)*(any_t**)arg;
 	    
 	    MSG_V( "requested frequency: %.3f\n", (float)freq/16);
 	    

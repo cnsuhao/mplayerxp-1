@@ -48,9 +48,9 @@
 #endif
 
 #undef IVEC_ALIGNED
-#define IVEC_ALIGNED(p) ((((long)((void *)(p)))&(__IVEC_SIZE-1))==0)
+#define IVEC_ALIGNED(p) ((((long)((any_t*)(p)))&(__IVEC_SIZE-1))==0)
 #undef F32VEC_ALIGNED
-#define F32VEC_ALIGNED(p) ((((long)((void *)(p)))&(__F32VEC_SIZE-1))==0)
+#define F32VEC_ALIGNED(p) ((((long)((any_t*)(p)))&(__F32VEC_SIZE-1))==0)
 
 /*
   ABBREVIATION:
@@ -81,9 +81,9 @@
   __ivec _ivec_broadcast_u8(unsigned char u8);   // fill vector with u8...u8 values
   __ivec _ivec_broadcast_u16(unsigned short u16);// fill vector with u16...u16 values
   __ivec _ivec_broadcast_u32(unsigned int u32);// fill vector with u16...u16 values
-  void   _ivec_storeu(void *__P, __ivec src); // store vector into unaligned memory
-  void   _ivec_storea(void *__P, __ivec src); // store vector into aligned memory
-  void   _ivec_stream(void *__P, __ivec src); // store vector into memory across CPU's cache
+  void   _ivec_storeu(any_t*__P, __ivec src); // store vector into unaligned memory
+  void   _ivec_storea(any_t*__P, __ivec src); // store vector into aligned memory
+  void   _ivec_stream(any_t*__P, __ivec src); // store vector into memory across CPU's cache
 
   LOGICAL engine:
   ---------------
@@ -197,10 +197,10 @@
   CONVERTION engine:
   ------------------
   __f32vec _f32vec_from_s32u(void const * src);		// convert s32 to f32 unaligned vector 
-  void     _f32vec_to_s32u(void *dst,__f32vec src);	// convert f32 to s32 unaligned vector
+  void     _f32vec_to_s32u(any_t*dst,__f32vec src);	// convert f32 to s32 unaligned vector
   __f32vec _f32vec_from_s32a(void const * src);		// convert s32 to f32 aligned vector
-  void     _f32vec_to_s32a(void *dst,__f32vec src);	// convert f32 to s32 aligned vector
-  void     _f32vec_to_s32_stream(void *dst,__f32vec src);// convert f32 to s32 aligned vector
+  void     _f32vec_to_s32a(any_t*dst,__f32vec src);	// convert f32 to s32 aligned vector
+  void     _f32vec_to_s32_stream(any_t*dst,__f32vec src);// convert f32 to s32 aligned vector
 
   ARITHMETIC engine:
   ------------------

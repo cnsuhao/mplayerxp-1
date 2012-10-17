@@ -31,7 +31,7 @@ static int __FASTCALL__ query_noformat(struct vf_instance_s* vf, unsigned int fm
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
 }
 

@@ -5,7 +5,7 @@
 
 #ifdef HAVE_INT_PVECTOR
 static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_load)(const void *__P)
+PVECTOR_RENAME(_m_load)(const any_t*__P)
 {
     return *(const __m64 *)__P;
 }
@@ -13,7 +13,7 @@ PVECTOR_RENAME(_m_load)(const void *__P)
 #define _m_load PVECTOR_RENAME(_m_load)
 
 static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_load_half)(const void *__P)
+PVECTOR_RENAME(_m_load_half)(const any_t*__P)
 {
     return _mm_cvtsi32_si64 (*(const int *)__P);
 }
@@ -21,7 +21,7 @@ PVECTOR_RENAME(_m_load_half)(const void *__P)
 #define _m_load_half PVECTOR_RENAME(_m_load_half)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_store)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_store)(any_t*__P, __m64 src)
 {
     *(__m64 *)__P = src;
 }
@@ -29,7 +29,7 @@ PVECTOR_RENAME(_m_store)(void *__P, __m64 src)
 #define _m_store PVECTOR_RENAME(_m_store)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_store_half)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_store_half)(any_t*__P, __m64 src)
 {
     *(int *)__P = _mm_cvtsi64_si32(src);
 }
@@ -37,7 +37,7 @@ PVECTOR_RENAME(_m_store_half)(void *__P, __m64 src)
 #define _m_store_half PVECTOR_RENAME(_m_store_half)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_movntq)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_movntq)(any_t*__P, __m64 src)
 {
 #ifdef HAVE_MMX2
     _mm_stream_pi(__P,src);

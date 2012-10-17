@@ -257,7 +257,7 @@ static void roq_close(demuxer_t* demuxer) {
   free(roq_data);
 }
 
-static int roq_control(demuxer_t *demuxer,int cmd,void *args)
+static int roq_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

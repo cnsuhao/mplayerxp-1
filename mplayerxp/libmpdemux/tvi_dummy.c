@@ -51,7 +51,7 @@ static int uninit(priv_t *priv)
     return(1);
 }
 
-static int control(priv_t *priv, int cmd, void *arg)
+static int control(priv_t *priv, int cmd, any_t*arg)
 {
     switch(cmd)
     {
@@ -62,19 +62,19 @@ static int control(priv_t *priv, int cmd, void *arg)
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_SET_FORMAT:
 	{
-	    int req_fmt = (int)*(void **)arg;
+	    int req_fmt = (int)*(any_t**)arg;
 	    if (req_fmt != IMGFMT_YV12)
 		return(TVI_CONTROL_FALSE);
 	    return(TVI_CONTROL_TRUE);
 	}
 	case TVI_CONTROL_VID_SET_WIDTH:
-	    priv->width = (int)*(void **)arg;
+	    priv->width = (int)*(any_t**)arg;
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_GET_WIDTH:
 	    *(int *)arg = priv->width;
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_SET_HEIGHT:
-	    priv->height = (int)*(void **)arg;
+	    priv->height = (int)*(any_t**)arg;
 	    return(TVI_CONTROL_TRUE);	    
 	case TVI_CONTROL_VID_GET_HEIGHT:
 	    *(int *)arg = priv->height;

@@ -75,7 +75,7 @@ extern float monitor_pixel_aspect;
 extern int audio_output_channels;
 
 extern int sws_flags;
-extern int readPPOpt(void *conf, char *arg);
+extern int readPPOpt(any_t*conf, char *arg);
 extern char *npp_options;
 
 extern int shuffle_playback;

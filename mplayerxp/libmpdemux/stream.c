@@ -270,7 +270,7 @@ int __FASTCALL__ nc_stream_read_char(stream_t *s)
     return stream_eof(s)?-256:retval;
 }
 
-int __FASTCALL__ nc_stream_read(stream_t *s,void* _mem,int total){
+int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
   int i,x,ilen,_total=total,got_len;
   char *mem=_mem;
   MSG_DBG3( "nc_stream_read  %u bytes from %llu\n",total,FILE_POS(s)+s->buf_pos);
@@ -297,7 +297,7 @@ int __FASTCALL__ nc_stream_read(stream_t *s,void* _mem,int total){
   if(ilen)
   {
     int rlen,stat,tile,eof;
-    void *smem;
+    any_t*smem;
     smem=s->buffer;
     rlen=ilen;
     stat=0;

@@ -82,7 +82,7 @@ static inline int cb_fifo_space(CBFifoBuffer *f)
  * @param *func generic read function
  * @param *dest data destination
  */
-int cb_fifo_generic_read(CBFifoBuffer *f, void *dest, int buf_size, void (*func)(void*, void*, int));
+int cb_fifo_generic_read(CBFifoBuffer *f, any_t*dest, int buf_size, void (*func)(any_t*, any_t*, int));
 
 /**
  * Feeds data from a user-supplied callback to an CBFifoBuffer.
@@ -96,7 +96,7 @@ int cb_fifo_generic_read(CBFifoBuffer *f, void *dest, int buf_size, void (*func)
  * If func is NULL, src is interpreted as a simple byte array for source data.
  * @return the number of bytes written to the FIFO
  */
-int cb_fifo_generic_write(CBFifoBuffer *f, void *src, int size, int (*func)(void*, void*, int));
+int cb_fifo_generic_write(CBFifoBuffer *f, any_t*src, int size, int (*func)(any_t*, any_t*, int));
 
 /**
  * Resizes an CBFifoBuffer.

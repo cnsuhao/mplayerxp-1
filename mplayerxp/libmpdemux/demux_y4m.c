@@ -266,7 +266,7 @@ static void y4m_close(demuxer_t *demuxer)
     return;
 }
 
-static int y4m_control(demuxer_t *demuxer,int cmd,void *args)
+static int y4m_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

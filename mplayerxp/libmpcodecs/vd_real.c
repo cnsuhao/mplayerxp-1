@@ -54,19 +54,19 @@ typedef struct transform_in_s {
 } transform_in_t;
 
 
-uint32_t (*rvyuv_custom_message)(cmsg_data_t*,void*);
-uint32_t (*rvyuv_free)(void*);
+uint32_t (*rvyuv_custom_message)(cmsg_data_t*,any_t*);
+uint32_t (*rvyuv_free)(any_t*);
 uint32_t (*rvyuv_hive_message)(uint32_t,uint32_t);
-uint32_t (*rvyuv_init)(void*,void*);
-uint32_t (*rvyuv_transform)(char*, char*,transform_in_t*,unsigned int*,void*);
+uint32_t (*rvyuv_init)(any_t*,any_t*);
+uint32_t (*rvyuv_transform)(char*, char*,transform_in_t*,unsigned int*,any_t*);
 
-void *rv_handle=NULL;
+any_t*rv_handle=NULL;
 
-void *__builtin_vec_new(unsigned long size) {
+any_t*__builtin_vec_new(unsigned long size) {
 	return malloc(size);
 }
 
-void __builtin_vec_delete(void *mem) {
+void __builtin_vec_delete(any_t*mem) {
 	free(mem);
 }
 
@@ -78,7 +78,7 @@ void __pure_virtual(void)
 
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd){
 //    case VDCTRL_QUERY_MAX_PP_LEVEL:
 //	return 9;
@@ -96,7 +96,7 @@ static int control(sh_video_t *sh,int cmd,void* arg,...){
 
 /* exits program when failure */
 static int load_syms(char *path) {
-		void *handle;
+		any_t*handle;
 		char *error;
 
 		rv_handle = handle = dlopen (path, RTLD_LAZY);
@@ -189,7 +189,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	mp_image_t* mpi;
 	unsigned long result;
 	dp_hdr_t* dp_hdr=(dp_hdr_t*)data;

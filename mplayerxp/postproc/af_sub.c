@@ -51,7 +51,7 @@ typedef struct af_sub_s
 }af_sub_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_sub_t* s   = af->setup; 
 

@@ -264,7 +264,7 @@ static int __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
     return VO_FALSE;
 }
 
-static uint32_t __FASTCALL__ control(uint32_t request, void *data)
+static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 {
   switch (request) {
     case VOCTRL_QUERY_FORMAT:

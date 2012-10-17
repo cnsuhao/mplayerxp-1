@@ -171,7 +171,7 @@ static int ogg_probe(demuxer_t *demuxer)
 #define get_uint64(val) (uint64_t)(le2me_16(*((uint64_t *)val)))
 #if 0
 static
-uint16_t get_uint16 (const void *buf)
+uint16_t get_uint16 (const any_t*buf)
 {
   uint16_t      ret;
   unsigned char *tmp;
@@ -185,7 +185,7 @@ uint16_t get_uint16 (const void *buf)
 }
 
 static
-uint32_t get_uint32 (const void *buf)
+uint32_t get_uint32 (const any_t*buf)
 {
   uint32_t      ret;
   unsigned char *tmp;
@@ -201,7 +201,7 @@ uint32_t get_uint32 (const void *buf)
 }
 
 static
-uint64_t get_uint64 (const void *buf)
+uint64_t get_uint64 (const any_t*buf)
 {
   uint64_t      ret;
   unsigned char *tmp;
@@ -329,7 +329,7 @@ static  int demux_ogg_get_page_stream(ogg_demuxer_t* ogg_d,ogg_stream_state** os
 
 }
 
-static unsigned char* demux_ogg_read_packet(ogg_stream_t* os,ogg_packet* pack,void *context,float* pts,int* flags, int samplesize) {
+static unsigned char* demux_ogg_read_packet(ogg_stream_t* os,ogg_packet* pack,any_t*context,float* pts,int* flags, int samplesize) {
   unsigned char* data=NULL;
 
   *pts = 0;
@@ -507,7 +507,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
   unsigned char* data;
   float pts = 0;
   int flags = 0;
-  void *context = NULL;
+  any_t*context = NULL;
   int samplesize = 1;
 
   // If packet is an comment header then we try to get comments at first
@@ -580,7 +580,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
   ogg_stream_t* os;
   ogg_packet op;
   int np,sid,p,samplesize=1;
-  void *context = NULL;
+  any_t*context = NULL;
   off_t pos, last_pos;
   pos = last_pos = demuxer->movi_start;
 
@@ -1263,7 +1263,7 @@ static void ogg_seek(demuxer_t *demuxer,float rel_seek_secs,int flags) {
   int i,sp,first=0,precision=1,do_seek=1;
   vorbis_info* vi = NULL;
   int64_t gp = 0, old_gp;
-  void *context = NULL;
+  any_t*context = NULL;
   off_t pos, old_pos;
   int np;
   int is_gp_valid;
@@ -1457,7 +1457,7 @@ static void ogg_close(demuxer_t* demuxer) {
   free(ogg_d);
 }
 
-static int ogg_control(demuxer_t *demuxer,int cmd,void *args)
+static int ogg_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

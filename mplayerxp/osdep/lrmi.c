@@ -29,7 +29,7 @@ Original location: http://cvs.debian.org/lrmi/
 #include "../cpudetect.h"
 #include "osdep_msg.h"
 
-#define REAL_MEM_BASE 	((void *)0x10000)
+#define REAL_MEM_BASE 	((any_t*)0x10000)
 #define REAL_MEM_SIZE 	0x10000
 #define REAL_MEM_BLOCKS 	0x100
 
@@ -66,7 +66,7 @@ static struct
 static int
 real_mem_init(void)
 	{
-	void *m;
+	any_t*m;
 	int fd_zero;
 
 	if (mem_info.ready)
@@ -79,11 +79,11 @@ real_mem_init(void)
 		return 0;
 		}
 
-	m = mmap((void *)REAL_MEM_BASE, REAL_MEM_SIZE,
+	m = mmap((any_t*)REAL_MEM_BASE, REAL_MEM_SIZE,
 	 PROT_READ | PROT_WRITE | PROT_EXEC,
 	 MAP_FIXED | MAP_PRIVATE, fd_zero, 0);
 
-	if (m == (void *)-1)
+	if (m == (any_t*)-1)
 		{
 		perror("mmap /dev/zero");
 		close(fd_zero);
@@ -121,7 +121,7 @@ delete_block(int i)
 	 (mem_info.count - i) * sizeof(struct mem_block));
 	}
 
-void *
+any_t*
 LRMI_alloc_real(int size)
 	{
 	int i;
@@ -145,7 +145,7 @@ LRMI_alloc_real(int size)
 			mem_info.blocks[i].free = 0;
 			mem_info.blocks[i + 1].size -= size;
 
-			return (void *)r;
+			return (any_t*)r;
 			}
 
 		r += mem_info.blocks[i].size;
@@ -156,7 +156,7 @@ LRMI_alloc_real(int size)
 
 
 void
-LRMI_free_real(void *m)
+LRMI_free_real(any_t*m)
 	{
 	int i;
 	char *r = (char *)REAL_MEM_BASE;
@@ -165,7 +165,7 @@ LRMI_free_real(void *m)
 		return;
 
 	i = 0;
-	while (m != (void *)r)
+	while (m != (any_t*)r)
 		{
 		r += mem_info.blocks[i].size;
 		i++;
@@ -202,7 +202,7 @@ static struct
 	} context;
 
 static inline void
-set_bit(unsigned int bit, void *array)
+set_bit(unsigned int bit, any_t*array)
 	{
 	unsigned char *a = array;
 
@@ -236,7 +236,7 @@ pushw(unsigned short i)
 int
 LRMI_init(void)
 	{
-	void *m;
+	any_t*m;
 	int fd_mem;
 
 	if (context.ready)
@@ -257,21 +257,21 @@ LRMI_init(void)
 		return 0;
 		}
 
-	m = mmap((void *)0, 0x502,
+	m = mmap((any_t*)0, 0x502,
 	 PROT_READ | PROT_WRITE | PROT_EXEC,
 	 MAP_FIXED | MAP_PRIVATE, fd_mem, 0);
 
-	if (m == (void *)-1)
+	if (m == (any_t*)-1)
 		{
 		perror("mmap /dev/mem");
 		return 0;
 		}
 
-	m = mmap((void *)0xa0000, 0x100000 - 0xa0000,
+	m = mmap((any_t*)0xa0000, 0x100000 - 0xa0000,
 	 PROT_READ | PROT_WRITE,
 	 MAP_FIXED | MAP_SHARED, fd_mem, 0xa0000);
 
-	if (m == (void *)-1)
+	if (m == (any_t*)-1)
 		{
 		perror("mmap /dev/mem");
 		return 0;

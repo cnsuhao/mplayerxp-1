@@ -143,7 +143,7 @@ static int a52_resample_3F_2R_LFE_to_6_C(float * _f, int16_t * s16){
 }
 
 
-static void* a52_resample_C(a52_state_t * state,int flags, int ch){
+static any_t* a52_resample_C(a52_state_t * state,int flags, int ch){
     bias=state->bias;
     level=state->level;
     switch (flags) {
@@ -312,7 +312,7 @@ static int a52_resample_3F_2R_LFE_to_6_f32(float * f, real_t * s32){
     return 6*256;
 }
 
-static void* a52_resample_f32(a52_state_t * state,int flags, int ch){
+static any_t* a52_resample_f32(a52_state_t * state,int flags, int ch){
     bias=state->bias;
     level=state->level;
     switch (flags) {

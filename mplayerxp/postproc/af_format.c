@@ -38,11 +38,11 @@ typedef struct af_format_s
 }af_format_t;
 
 // Switch endianess
-static void endian(void* in, void* out, int len, int bps,int final);
+static void endian(any_t* in, any_t* out, int len, int bps,int final);
 // From singed to unsigned
-static void si2us(void* in, void* out, int len, int bps,int final);
+static void si2us(any_t* in, any_t* out, int len, int bps,int final);
 // From unsinged to signed
-static void us2si(void* in, void* out, int len, int bps,int final);
+static void us2si(any_t* in, any_t* out, int len, int bps,int final);
 
 static const struct fmt_alias_s
 {
@@ -303,7 +303,7 @@ static int __FASTCALL__ check_format(int format)
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_format_t* s = af->setup;
   char buf1[256],buf2[256];
@@ -493,7 +493,7 @@ af_info_t af_info_format = {
   open
 };
 
-uint32_t load24bit(void* data, int pos) {
+uint32_t load24bit(any_t* data, int pos) {
 #if WORDS_BIGENDIAN
   return (((uint32_t)((uint8_t*)data)[3*pos])<<24) |
 	 (((uint32_t)((uint8_t*)data)[3*pos+1])<<16) |
@@ -505,7 +505,7 @@ uint32_t load24bit(void* data, int pos) {
 #endif
 }
 
-void store24bit(void* data, int pos, uint32_t expanded_value) {
+void store24bit(any_t* data, int pos, uint32_t expanded_value) {
 #if WORDS_BIGENDIAN
       ((uint8_t*)data)[3*pos]=expanded_value>>24;
       ((uint8_t*)data)[3*pos+1]=expanded_value>>16;
@@ -518,7 +518,7 @@ void store24bit(void* data, int pos, uint32_t expanded_value) {
 }
 
 // Function implementations used by play
-static void endian(void* in, void* out, int len, int bps,int final)
+static void endian(any_t* in, any_t* out, int len, int bps,int final)
 {
   register int i;
   switch(bps){
@@ -548,7 +548,7 @@ static void endian(void* in, void* out, int len, int bps,int final)
   }
 }
 
-static void si2us(void* in, void* out, int len, int bps,int final)
+static void si2us(any_t* in, any_t* out, int len, int bps,int final)
 {
   register int i;
   switch(bps){
@@ -571,7 +571,7 @@ static void si2us(void* in, void* out, int len, int bps,int final)
   }
 }
 
-static void us2si(void* in, void* out, int len, int bps,int final)
+static void us2si(any_t* in, any_t* out, int len, int bps,int final)
 {
   register int i;
   switch(bps){

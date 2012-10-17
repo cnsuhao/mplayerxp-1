@@ -301,7 +301,7 @@ int demux_seek_ra(demuxer_t *demuxer, float rel_seek_secs, int flags)
 }
 #endif
 
-static int ra_control(demuxer_t *demuxer,int cmd,void *args)
+static int ra_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
     return DEMUX_UNKNOWN;
 }

@@ -167,7 +167,7 @@ HDRVR DrvOpen(LPARAM lParam2)
     hDriver = (NPDRVR) malloc(sizeof(DRVR));
     if (!hDriver)
 	return ((HDRVR) 0);
-    memset((void*)hDriver, 0, sizeof(DRVR));
+    memset((any_t*)hDriver, 0, sizeof(DRVR));
 
 #ifdef HAVE_WIN32LOADER
     CodecAlloc();

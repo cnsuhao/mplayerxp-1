@@ -21,7 +21,7 @@ typedef struct af_channels_s{
 }af_channels_t;
 
 // Local function for copying data
-static void __FASTCALL__ copy(void* in, void* out, int ins, int inos,int outs, int outos, int len, int bps)
+static void __FASTCALL__ copy(any_t* in, any_t* out, int ins, int inos,int outs, int outos, int len, int bps)
 {
   switch(bps){
   case 1:{
@@ -117,7 +117,7 @@ static int __FASTCALL__ check_routes(af_channels_t* s, int nin, int nout)
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_channels_t* s = af->setup;
   switch(cmd){

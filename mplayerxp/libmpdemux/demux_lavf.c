@@ -113,7 +113,7 @@ static unsigned int mpxp_codec_get_tag(const mpxpCodecTag *tags, uint32_t id)
     return 0;
 }
 
-static int mpxp_read(void *opaque, unsigned char *buf, int size){
+static int mpxp_read(any_t*opaque, unsigned char *buf, int size){
     stream_t* stream=opaque;
     int ret;
 
@@ -125,7 +125,7 @@ static int mpxp_read(void *opaque, unsigned char *buf, int size){
     return ret;
 }
 
-static int64_t mpxp_seek(void *opaque, int64_t pos, int whence){
+static int64_t mpxp_seek(any_t*opaque, int64_t pos, int whence){
     stream_t* stream=opaque;
     MSG_DBG2("mpxp_seek(%p, %d, %d)\n", stream, (int)pos, whence);
     if(whence == SEEK_CUR)
@@ -213,7 +213,7 @@ static int lavf_probe(demuxer_t *demuxer){
 
 extern const unsigned char ff_codec_bmp_tags[];
 extern const unsigned char ff_codec_wav_tags[];
-extern unsigned int ff_codec_get_tag(const void *tags, int id);
+extern unsigned int ff_codec_get_tag(const any_t*tags, int id);
 
 static demuxer_t* lavf_open(demuxer_t *demuxer){
     AVFormatContext *avfc;
@@ -480,7 +480,7 @@ static void lavf_seek(demuxer_t *demuxer, float rel_seek_secs, int flags){
     av_seek_frame(priv->avfc, -1, priv->last_pts + rel_seek_secs*AV_TIME_BASE, rel_seek_secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
 }
 
-static int lavf_control(demuxer_t *demuxer, int cmd, void *arg)
+static int lavf_control(demuxer_t *demuxer, int cmd, any_t*arg)
 {
     return DEMUX_UNKNOWN;
 }

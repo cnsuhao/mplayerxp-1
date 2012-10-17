@@ -446,7 +446,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 				http_debug_hdr( http_hdr );
 			}
 			
-			streaming_ctrl->data = (void*)http_hdr;
+			streaming_ctrl->data = (any_t*)http_hdr;
 			
 			// Check if we can make partial content requests and thus seek in http-streams
 		        if( http_hdr!=NULL && http_hdr->status_code==200 ) {

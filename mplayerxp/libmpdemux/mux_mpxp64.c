@@ -43,7 +43,7 @@ typedef struct priv_mpxpav64_stream_s
     // offsets
     uint64_t	data_off,idx_off;
     // indexes
-    void *	idx;
+    any_t*	idx;
     unsigned	idx_size;
     unsigned int prev_len;
     float	prev_xpts;

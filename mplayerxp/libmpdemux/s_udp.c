@@ -38,7 +38,7 @@ static off_t __FASTCALL__ udp_tell(stream_t *stream)
     return 0;
 }
 
-static int __FASTCALL__ udp_ctrl(stream_t *s,unsigned cmd,void *args)
+static int __FASTCALL__ udp_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     UNUSED(s);
     UNUSED(cmd);

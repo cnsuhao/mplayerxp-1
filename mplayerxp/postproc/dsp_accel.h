@@ -152,7 +152,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, 
 	((uint16_t*)out_data)[i]=(uint16_t)((((const uint32_t*)in_data)[i])>>16);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const void* in_data, void* out_data, unsigned len, unsigned inbps, unsigned outbps,int final)
+static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const any_t* in_data, any_t* out_data, unsigned len, unsigned inbps, unsigned outbps,int final)
 {
   unsigned i;
   // Change the number of bits
@@ -238,7 +238,7 @@ static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const void* in_data, void* o
 
 #ifdef HAVE_INT_PVECTOR
 static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_load)(const void *__P)
+PVECTOR_RENAME(_m_load)(const any_t*__P)
 {
     return *(const __m64 *)__P;
 }
@@ -246,7 +246,7 @@ PVECTOR_RENAME(_m_load)(const void *__P)
 #define _m_load PVECTOR_RENAME(_m_load)
 
 static __inline __m64 __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_load_half)(const void *__P)
+PVECTOR_RENAME(_m_load_half)(const any_t*__P)
 {
     return _mm_cvtsi32_si64 (*(const int *)__P);
 }
@@ -254,7 +254,7 @@ PVECTOR_RENAME(_m_load_half)(const void *__P)
 #define _m_load_half PVECTOR_RENAME(_m_load_half)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_store)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_store)(any_t*__P, __m64 src)
 {
     *(__m64 *)__P = src;
 }
@@ -262,7 +262,7 @@ PVECTOR_RENAME(_m_store)(void *__P, __m64 src)
 #define _m_store PVECTOR_RENAME(_m_store)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_store_half)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_store_half)(any_t*__P, __m64 src)
 {
     *(int *)__P = _mm_cvtsi64_si32(src);
 }
@@ -270,7 +270,7 @@ PVECTOR_RENAME(_m_store_half)(void *__P, __m64 src)
 #define _m_store_half PVECTOR_RENAME(_m_store_half)
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(_m_movntq)(void *__P, __m64 src)
+PVECTOR_RENAME(_m_movntq)(any_t*__P, __m64 src)
 {
 #ifdef HAVE_MMX2
     _mm_stream_pi(__P,src);
@@ -392,7 +392,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out,
       ((float*)out)[i]=(1.0/INT_MAX)*((float)((const int32_t*)in)[i]);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(float2int)(void* in, void* out, int len, int bps,int final)
+static void __FASTCALL__ PVECTOR_RENAME(float2int)(any_t* in, any_t* out, int len, int bps,int final)
 {
   float ftmp;
   register int i;
@@ -433,7 +433,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float2int)(void* in, void* out, int len,
   }
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int2float)(void* in, void* out, int len, int bps, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int2float)(any_t* in, any_t* out, int len, int bps, int final)
 {
   register int i;
   switch(bps){

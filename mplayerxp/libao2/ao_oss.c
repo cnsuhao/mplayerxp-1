@@ -306,7 +306,7 @@ ac3_retry:
 
   if(ao_data.buffersize==0){
     // Measuring buffer size:
-    void* data;
+    any_t* data;
     ao_data.buffersize=0;
 #ifdef HAVE_AUDIO_SELECT
     data=malloc(ao_data.outburst); memset(data,0,ao_data.outburst);
@@ -418,7 +418,7 @@ static unsigned get_space(void){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned __FASTCALL__ play(void* data,unsigned len,unsigned flags){
+static unsigned __FASTCALL__ play(any_t* data,unsigned len,unsigned flags){
     UNUSED(flags);
     len/=ao_data.outburst;
     len=write(oss.fd,data,len*ao_data.outburst);

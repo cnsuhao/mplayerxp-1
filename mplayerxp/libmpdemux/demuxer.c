@@ -764,7 +764,7 @@ void demuxer_register_options(m_config_t* cfg) {
   m_config_register_options(cfg,demuxer_opts);
 }
 
-static int demux_control(demuxer_t *demuxer, int cmd, void *arg) {
+static int demux_control(demuxer_t *demuxer, int cmd, any_t*arg) {
 
     if(demuxer->driver)
 	return demuxer->driver->control(demuxer,cmd,arg);

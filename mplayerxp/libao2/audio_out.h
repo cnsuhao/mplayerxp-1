@@ -52,7 +52,7 @@ typedef struct ao_functions_s
 	  * @param flags	currently unused
 	  * return		number of bytes which were copied into audio card
 	**/
-	unsigned (* __FASTCALL__ play)(void* data,unsigned len,unsigned flags);
+	unsigned (* __FASTCALL__ play)(any_t* data,unsigned len,unsigned flags);
 
 	/** Returns delay in seconds between first and last sample in buffer **/
 	float (*get_delay)(void);
@@ -113,7 +113,7 @@ extern int		 __FASTCALL__ ao_configure(unsigned rate,unsigned channels,unsigned 
 extern void		ao_uninit(void);
 extern void		ao_reset(void);
 extern unsigned		ao_get_space(void);
-extern unsigned		 __FASTCALL__ ao_play(void* data,unsigned len,unsigned flags);
+extern unsigned		 __FASTCALL__ ao_play(any_t* data,unsigned len,unsigned flags);
 extern float		ao_get_delay(void);
 extern void		ao_pause(void);
 extern void		ao_resume(void);

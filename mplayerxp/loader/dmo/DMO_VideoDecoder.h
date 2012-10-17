@@ -13,7 +13,7 @@ void DMO_VideoDecoder_StartInternal(DMO_VideoDecoder *this);
 
 void DMO_VideoDecoder_StopInternal(DMO_VideoDecoder *this);
 
-int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const void* src, int size, int is_keyframe, char* pImage);
+int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const any_t* src, int size, int is_keyframe, char* pImage);
 
 /*
  * bits == 0   - leave unchanged

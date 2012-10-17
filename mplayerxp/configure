@@ -897,8 +897,10 @@ $def_fbdev_nocopy
 #endif
 #endif
 
+typedef void any_t;
+
 /* Removes warning about unused arguments */
-# define UNUSED(x) ((void)(x))
+# define UNUSED(x) ((any_t)(x))
 
 #endif /* MPXP_CONFIG_H */
 EOF

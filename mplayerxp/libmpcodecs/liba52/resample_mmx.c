@@ -555,7 +555,7 @@ static int a52_resample_3F_2R_LFE_to_6_MMX(float * _f, int16_t * s16){
 }
 
 
-static void* a52_resample_MMX(a52_state_t * state,int flags, int ch){
+static any_t* a52_resample_MMX(a52_state_t * state,int flags, int ch){
     switch (flags) {
     case A52_MONO:
 	if(ch==5) return a52_resample_MONO_to_5_MMX;

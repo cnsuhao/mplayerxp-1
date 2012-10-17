@@ -854,11 +854,11 @@ static void lots_of_printf(void)
 	MSG_V(FBDEV "visual: %lu\n", (unsigned long) fb.finfo.visual);
 	MSG_V(FBDEV "line_length: %lu bytes\n", (unsigned long) fb.finfo.line_length);
 	MSG_DBG2(FBDEV "id: %.16s\n", fb.finfo.id);
-	MSG_DBG2(FBDEV "smem_start: %p\n", (void *) fb.finfo.smem_start);
+	MSG_DBG2(FBDEV "smem_start: %p\n", (any_t*) fb.finfo.smem_start);
 	MSG_DBG2(FBDEV "xpanstep: %u\n", fb.finfo.xpanstep);
 	MSG_DBG2(FBDEV "ypanstep: %u\n", fb.finfo.ypanstep);
 	MSG_DBG2(FBDEV "ywrapstep: %u\n", fb.finfo.ywrapstep);
-	MSG_DBG2(FBDEV "mmio_start: %p\n", (void *) fb.finfo.mmio_start);
+	MSG_DBG2(FBDEV "mmio_start: %p\n", (any_t*) fb.finfo.mmio_start);
 	MSG_DBG2(FBDEV "mmio_len: %u bytes\n", fb.finfo.mmio_len);
 	MSG_DBG2(FBDEV "accel: %u\n", fb.finfo.accel);
 	MSG_V(FBDEV "fb.bpp: %d\n", fb.bpp);
@@ -1228,7 +1228,7 @@ static void __FASTCALL__ fbdev_dri_get_surface(dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static uint32_t __FASTCALL__ control(uint32_t request, void *data)
+static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:

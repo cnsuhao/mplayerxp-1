@@ -114,7 +114,7 @@ static void __FASTCALL__ rotate(unsigned char* dst,unsigned char* src,int dststr
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,void *tune){
+	unsigned int flags, unsigned int outfmt,any_t*tune){
     vf->priv->dw=width;
     vf->priv->dh=height;
     if(vf->priv->direction==180)

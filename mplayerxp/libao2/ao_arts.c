@@ -139,7 +139,7 @@ static void uninit(void)
 	arts_free();
 }
 
-static unsigned play(void* data,unsigned len,unsigned flags)
+static unsigned play(any_t* data,unsigned len,unsigned flags)
 {
     UNUSED(flags);
     return arts_write(stream, data, len);

@@ -261,9 +261,9 @@ m_config_t* m_config_new(play_tree_t* pt) {
   return config;
 }
 
-static void m_config_add_dynamic(m_config_t *conf,void *ptr) {
-    if(!conf->dynasize) conf->dynamics = malloc(sizeof(void *));
-    else		conf->dynamics = realloc(conf->dynamics,(conf->dynasize+1)*sizeof(void *));
+static void m_config_add_dynamic(m_config_t *conf,any_t*ptr) {
+    if(!conf->dynasize) conf->dynamics = malloc(sizeof(any_t*));
+    else		conf->dynamics = realloc(conf->dynamics,(conf->dynasize+1)*sizeof(any_t*));
     conf->dynamics[conf->dynasize] = ptr;
     conf->dynasize++;
 }
@@ -1111,7 +1111,7 @@ config_t* m_config_get_option(m_config_t const*config,const char* arg) {
   return m_config_find_option(conf_list,arg);
 }
 
-void* m_config_get_option_ptr(m_config_t const*config,const char* arg) {
+any_t* m_config_get_option_ptr(m_config_t const*config,const char* arg) {
   config_t* conf;
 
 #ifdef MP_DEBUG

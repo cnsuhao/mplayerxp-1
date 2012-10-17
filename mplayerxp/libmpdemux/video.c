@@ -426,7 +426,7 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
         //videobuf_len=0;
         while(videobuf_len<VIDEOBUFFER_SIZE-MAX_VIDEO_PACKET_SIZE){
           int i=sync_video_packet(d_video);
-	  //void* buffer=&videobuffer[videobuf_len+4];
+	  //any_t* buffer=&videobuffer[videobuf_len+4];
 	  int start=videobuf_len+4;
           if(in_frame){
             if(i<0x101 || i>=0x1B0){  // not slice code -> end of frame

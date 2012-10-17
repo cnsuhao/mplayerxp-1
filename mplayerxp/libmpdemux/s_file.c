@@ -91,7 +91,7 @@ static void __FASTCALL__ file_close(stream_t *stream)
     free(stream->priv);
 }
 
-static int __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,void *args) {
+static int __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

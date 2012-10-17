@@ -20,10 +20,10 @@ long __stdcall RegCloseKey(long key);
 long __stdcall RegQueryValueExA(long key, const char* value, int* reserved,
 		      int* type, int* data, int* count);
 long __stdcall RegCreateKeyExA(long key, const char* name, long reserved,
-		     void* classs, long options, long security,
-		     void* sec_attr, int* newkey, int* status);
+		     any_t* classs, long options, long security,
+		     any_t* sec_attr, int* newkey, int* status);
 long __stdcall RegSetValueExA(long key, const char* name, long v1, long v2,
-		    const void* data, long size);
+		    const any_t* data, long size);
 
 #ifdef __WINE_WINERROR_H
 

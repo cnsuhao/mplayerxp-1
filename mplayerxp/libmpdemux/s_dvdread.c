@@ -735,7 +735,7 @@ static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,uns
     stream->end_pos=(off_t)(d->cur_pgc->cell_playback[d->last_cell-1].last_sector)*2048;
   MSG_V("DVD start=%d end=%d  \n",d->cur_pack,d->cur_pgc->cell_playback[d->last_cell-1].last_sector);
   dvd_next_title(d,dvd_title);
-  stream->priv=(void*)d;
+  stream->priv=(any_t*)d;
   stream->type = STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM;
   stream->sector_size=2048;
   d->spos=0;
@@ -784,7 +784,7 @@ static unsigned int * __FASTCALL__ dvdread_stream_get_palette(stream_t *stream)
   return 0;
 }
 
-static int __FASTCALL__ __dvdread_ctrl(stream_t *s,unsigned cmd,void *args)
+static int __FASTCALL__ __dvdread_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     dvd_priv_t *dvd_priv=s->priv;
     switch(cmd)

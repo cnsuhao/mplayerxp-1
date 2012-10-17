@@ -27,7 +27,7 @@
 static struct VesaProtModeInterface vbe_pm_info;
 static struct VesaModeInfoBlock curr_mode_info;
 
-static inline int VERR(const void *p)
+static inline int VERR(const any_t*p)
 {
   register int retval;
   __asm __volatile(
@@ -41,7 +41,7 @@ static inline int VERR(const void *p)
 }
 
 #if 0
-static inline int VERW(const void *p)
+static inline int VERW(const any_t*p)
 {
   register int retval;
   __asm __volatile(
@@ -130,7 +130,7 @@ the SuperVGA information record by some implementations, and it may
 thus be necessary to either copy the mode list or use a different
 buffer for all subsequent VESA calls
 */
-static void *controller_info;
+static any_t*controller_info;
 int vbeInit( void )
 {
    unsigned short iopl_port;
@@ -170,11 +170,11 @@ int vbeDestroy( void )
 }
 
 /* Fixme!!! This code is compatible only with mplayer's version of lrmi*/
-static inline int is_addr_valid(const void *p)
+static inline int is_addr_valid(const any_t*p)
 {
-  return (p < (const void *)0x502) || 
-	 (p >= (const void *)0x10000 && p < (const void *)0x20000) ||
-	 (p >= (const void *)0xa0000 && p < (const void *)0x100000);
+  return (p < (const any_t*)0x502) || 
+	 (p >= (const any_t*)0x10000 && p < (const any_t*)0x20000) ||
+	 (p >= (const any_t*)0xa0000 && p < (const any_t*)0x100000);
 }
 
 static int check_str(const unsigned char *str)
@@ -322,7 +322,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
 int vbeGetModeInfo(unsigned mode,struct VesaModeInfoBlock *data)
 {
   struct LRMI_regs r;
-  void *rm_space;
+  any_t*rm_space;
   int retval;
   if(!(rm_space = LRMI_alloc_real(sizeof(struct VesaModeInfoBlock)))) return VBE_OUT_OF_DOS_MEM;
   memset(&r,0,sizeof(struct LRMI_regs));
@@ -348,7 +348,7 @@ int vbeGetModeInfo(unsigned mode,struct VesaModeInfoBlock *data)
 int vbeSetMode(unsigned mode,struct VesaCRTCInfoBlock *data)
 {
   struct LRMI_regs r;
-  void *rm_space = NULL;
+  any_t*rm_space = NULL;
   int retval;
   memset(&r,0,sizeof(struct LRMI_regs));
   if(data)
@@ -389,11 +389,11 @@ int vbeGetMode(unsigned *mode)
   return retval;
 }
 
-int vbeSaveState(void **data)
+int vbeSaveState(any_t**data)
 {
   struct LRMI_regs r;
   int retval;
-  void *rm_space;
+  any_t*rm_space;
   memset(&r,0,sizeof(struct LRMI_regs));
   r.eax = 0x4f04;
   r.edx = 0x00;
@@ -422,7 +422,7 @@ int vbeSaveState(void **data)
   return VBE_OK;
 }
 
-int vbeRestoreState(void *data)
+int vbeRestoreState(any_t*data)
 {
   struct LRMI_regs r;
   int retval;
@@ -687,7 +687,7 @@ int vbeGetProtModeInfo(struct VesaProtModeInterface *pm_info)
 int vbeWriteString(int x, int y, int attr, char *str)
 {
   struct LRMI_regs r;
-  void *rm_space = NULL;
+  any_t*rm_space = NULL;
   int retval;
   memset(&r,0,sizeof(struct LRMI_regs));
   r.ecx = strlen(str);
@@ -706,18 +706,18 @@ int vbeWriteString(int x, int y, int attr, char *str)
   return retval;
 }
 
-void * vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size)
+any_t* vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size)
 {
-  void *lfb;
+  any_t*lfb;
   if(fd_mem == -1) return NULL;
   MSG_DBG2("vbelib: vbeMapVideoBuffer(%08lX,%08lX)\n",phys_addr,size);
   /* Here we don't need with MAP_FIXED and prefered address (first argument) */
-  lfb = mmap((void *)0,size,PROT_READ | PROT_WRITE,MAP_SHARED,fd_mem,phys_addr);
-  return lfb == (void *)-1 ? 0 : lfb;
+  lfb = mmap((any_t*)0,size,PROT_READ | PROT_WRITE,MAP_SHARED,fd_mem,phys_addr);
+  return lfb == (any_t*)-1 ? 0 : lfb;
 }
 
 void vbeUnmapVideoBuffer(unsigned long linear_addr,unsigned long size)
 {
   MSG_DBG2("vbelib: vbeUnmapVideoBuffer(%08lX,%08lX)\n",linear_addr,size);
-  munmap((void *)linear_addr,size);
+  munmap((any_t*)linear_addr,size);
 }

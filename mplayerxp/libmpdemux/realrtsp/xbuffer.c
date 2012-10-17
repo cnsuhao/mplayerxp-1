@@ -28,7 +28,7 @@ typedef struct {
 
 
 
-void *xbuffer_init(int chunk_size) {  
+any_t*xbuffer_init(int chunk_size) {  
   uint8_t *data=calloc(1,chunk_size+XBUFFER_HEADER_SIZE);
 
   xbuffer_header_t *header=(xbuffer_header_t*)data;
@@ -41,7 +41,7 @@ void *xbuffer_init(int chunk_size) {
 
 
 
-void *xbuffer_free(void *buf) {
+any_t*xbuffer_free(any_t*buf) {
   if (!buf) {
     return NULL;
   }
@@ -53,7 +53,7 @@ void *xbuffer_free(void *buf) {
 
 
 
-void *xbuffer_copyin(void *buf, int index, const void *data, int len) {
+any_t*xbuffer_copyin(any_t*buf, int index, const any_t*data, int len) {
     if (!buf || !data) {
     return NULL;
   }
@@ -66,7 +66,7 @@ void *xbuffer_copyin(void *buf, int index, const void *data, int len) {
 
 
 
-void *xbuffer_ensure_size(void *buf, int size) {
+any_t*xbuffer_ensure_size(any_t*buf, int size) {
   xbuffer_header_t *xbuf;
   int new_size;
 
@@ -88,7 +88,7 @@ void *xbuffer_ensure_size(void *buf, int size) {
 
 
 
-void *xbuffer_strcat(void *buf, char *data) {
+any_t*xbuffer_strcat(any_t*buf, char *data) {
 
   if (!buf || !data) {
     return NULL;

@@ -28,7 +28,7 @@ extern pid_t dec_ahead_pid;
 /* Obtain a backtrace and print it to stdout. */
 static void print_trace (void)
 {
-  void *array[10];
+  any_t*array[10];
   size_t size;
   char **strings;
   size_t i;

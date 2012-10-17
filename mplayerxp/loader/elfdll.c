@@ -49,11 +49,11 @@ struct elfdll_image
  * manually because libdl.so caches the environment and does not accept our
  * changes.
  */
-void *ELFDLL_dlopen(const char *libname, int flags)
+any_t*ELFDLL_dlopen(const char *libname, int flags)
 {
 	char buffer[256];
 	int namelen;
-	void *handle;
+	any_t*handle;
 	char *ldpath;
 
 	/* First try the default path search of dlopen() */

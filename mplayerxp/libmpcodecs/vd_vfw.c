@@ -222,7 +222,7 @@ static int vfw_close_video_codec(sh_video_t *sh_video)
 }
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,void* arg,...){
+static int control(sh_video_t *sh,int cmd,any_t* arg,...){
     vfw_priv_t *priv = sh->context;
     switch(cmd){
     case VDCTRL_QUERY_MAX_PP_LEVEL:
@@ -281,7 +281,7 @@ static void uninit(sh_video_t *sh)
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,void* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     vfw_priv_t *priv = sh->context;
     mp_image_t* mpi;
     HRESULT ret;

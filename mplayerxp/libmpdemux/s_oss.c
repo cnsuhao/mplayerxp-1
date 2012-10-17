@@ -169,7 +169,7 @@ static void __FASTCALL__ oss_close(stream_t *stream)
     free(stream->priv);
 }
 
-static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,void *args)
+static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     int rval;
     oss_priv_t *oss_priv = s->priv;

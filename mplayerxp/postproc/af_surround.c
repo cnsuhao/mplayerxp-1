@@ -79,7 +79,7 @@ typedef struct af_surround_s
 }af_surround_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, void* arg)
+static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_surround_t *s = af->setup;
   switch(cmd){

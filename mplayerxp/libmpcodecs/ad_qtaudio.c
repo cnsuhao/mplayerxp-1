@@ -49,20 +49,20 @@ typedef int (__cdecl* LPFUNC1)(long flag);
 typedef int (__cdecl* LPFUNC2)(const SoundComponentData *, const SoundComponentData *,SoundConverter *);
 typedef int (__cdecl* LPFUNC3)(SoundConverter sc);
 typedef int (__cdecl* LPFUNC4)(void);
-typedef int (__cdecl* LPFUNC5)(SoundConverter sc, OSType selector,void * infoPtr);
+typedef int (__cdecl* LPFUNC5)(SoundConverter sc, OSType selector,any_t* infoPtr);
 typedef int (__cdecl* LPFUNC6)(SoundConverter sc,
 				unsigned long inputBytesTarget,
 				unsigned long *inputFrames,
 				unsigned long *inputBytes,
 				unsigned long *outputBytes );
 typedef int (__cdecl* LPFUNC7)(SoundConverter sc,
-				const void    *inputPtr,
+				const any_t*inputPtr,
 				unsigned long inputFrames,
-				void          *outputPtr,
+				any_t*outputPtr,
 				unsigned long *outputFrames,
 				unsigned long *outputBytes );
 typedef int (__cdecl* LPFUNC8)(SoundConverter sc,
-				void      *outputPtr,
+				any_t*outputPtr,
                                 unsigned long *outputFrames,
                                 unsigned long *outputBytes);
 typedef int (__cdecl* LPFUNC9)(SoundConverter         sc);
@@ -324,7 +324,7 @@ static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,u
     return ConvertedBytes;
 }
 
-static int control(sh_audio_t *sh,int cmd,void* arg, ...){
+static int control(sh_audio_t *sh,int cmd,any_t* arg, ...){
     // various optional functions you MAY implement:
   UNUSED(sh);
   UNUSED(cmd);

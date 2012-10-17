@@ -14,7 +14,7 @@ typedef struct {
 	char category[100];
 	char *xmcd_file;
 	size_t xmcd_file_size;
-	void *user_data;
+	any_t*user_data;
 } cddb_data_t;
 
 typedef struct {

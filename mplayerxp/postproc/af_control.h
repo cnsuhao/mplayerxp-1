@@ -39,7 +39,7 @@ typedef struct af_control_info_s{
   int	 ydim;	// 2nd dimension (=0 for everything except matrix)
   size_t sz;	// Size of argument in bytes
   int	 ch;	// Channel number (for future use)
-  void*  arg;	// Data (for future use)
+  any_t*  arg;	// Data (for future use)
 }af_control_info_t;
 
 
@@ -48,7 +48,7 @@ typedef struct af_control_info_s{
 // channel at the time
 */
 typedef struct af_control_ext_s{
-  void* arg;	// Argument
+  any_t* arg;	// Argument
   int	ch;	// Chanel number
 }af_control_ext_t;
 

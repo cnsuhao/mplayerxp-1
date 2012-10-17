@@ -51,8 +51,8 @@ typedef struct stream_s{
   off_t start_pos;	/**< real start of stream (without internet's headers) */
   off_t end_pos;	/**< real end of stream (media may be not fully filled) */
   unsigned sector_size; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
-  void* cache_data;	/**< large cache */
-  void* priv;		/**< private data used by stream driver */
+  any_t* cache_data;	/**< large cache */
+  any_t* priv;		/**< private data used by stream driver */
   float stream_pts;	/**< PTS correction for idiotics DVD's discontinuities */
 #ifdef HAVE_STREAMING
   streaming_ctrl_t *streaming_ctrl; /**< callback for internet streaming control */
@@ -71,7 +71,7 @@ extern int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s);
 extern int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos);
 extern void __FASTCALL__ nc_stream_reset(stream_t *s);
 extern int __FASTCALL__ nc_stream_read_char(stream_t *s);
-extern int __FASTCALL__ nc_stream_read(stream_t *s,void* mem,int total);
+extern int __FASTCALL__ nc_stream_read(stream_t *s,any_t* mem,int total);
 extern off_t __FASTCALL__ nc_stream_tell(stream_t *s);
 extern int __FASTCALL__ nc_stream_seek(stream_t *s,off_t pos);
 extern int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len);
@@ -79,7 +79,7 @@ extern int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len);
 
 /* this block describes interface to cache/non-cache stream functions */
 extern int __FASTCALL__ stream_read_char(stream_t *s);
-extern int __FASTCALL__ stream_read(stream_t *s,void* mem,int total);
+extern int __FASTCALL__ stream_read(stream_t *s,any_t* mem,int total);
 extern off_t __FASTCALL__ stream_tell(stream_t *s);
 extern int __FASTCALL__ stream_seek(stream_t *s,off_t pos);
 extern int __FASTCALL__ stream_skip(stream_t *s,off_t len);
@@ -200,7 +200,7 @@ typedef struct stream_driver_s
 		  * @param cmd		contains the command (for detail see SCTRL_* definitions)
 		  * @return		result of command processing (SCTRL_OK, SCTRL_FALSE, ...)
 		**/
-    int		(* __FASTCALL__ control)(stream_t *_this,unsigned cmd,void *param);
+    int		(* __FASTCALL__ control)(stream_t *_this,unsigned cmd,any_t*param);
 }stream_driver_t;
 
 void print_stream_drivers(void);
@@ -214,9 +214,9 @@ typedef struct stream_info_st {
   /// mode isn't used atm (ie always READ) but it shouldn't be ignored
   /// opts is at least in it's defaults settings and may have been
   /// altered by url parsing if enabled and the options string parsing.
-  int (*open)(struct stream_s* st, int mode, void* opts, int* file_format);
+  int (*open)(struct stream_s* st, int mode, any_t* opts, int* file_format);
   char* protocols[MAX_STREAM_PROTOCOLS];
-  void* opts;
+  any_t* opts;
   int opts_url; /* If this is 1 we will parse the url as an option string
 		 * too. Otherwise options are only parsed from the
 		 * options string given to open_stream_plugin */

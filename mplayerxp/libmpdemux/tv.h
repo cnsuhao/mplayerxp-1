@@ -30,7 +30,7 @@ typedef struct tvi_functions_s
 typedef struct tvi_handle_s {
     tvi_info_t		*info;
     tvi_functions_t	*functions;
-    void		*priv;
+    any_t*priv;
     int 		seq;
 
     /* specific */

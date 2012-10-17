@@ -192,7 +192,7 @@ typedef struct IBaseFilter_vt
     HRESULT STDCALL ( *GetState )(IBaseFilter * This,
 				  /* [in] */ unsigned long dwMilliSecsTimeout,
 				  ///* [out] */ FILTER_STATE *State);
-				  void* State);
+				  any_t* State);
     HRESULT STDCALL ( *SetSyncSource )(IBaseFilter* This,
 				       /* [in] */ IReferenceClock *pClock);
     HRESULT STDCALL ( *GetSyncSource )(IBaseFilter* This,
@@ -204,7 +204,7 @@ typedef struct IBaseFilter_vt
 				 /* [out] */ IPin** ppPin);
     HRESULT STDCALL ( *QueryFilterInfo )(IBaseFilter* This,
 					 // /* [out] */ FILTER_INFO *pInfo);
-					 void* pInfo);
+					 any_t* pInfo);
     HRESULT STDCALL ( *JoinFilterGraph )(IBaseFilter* This,
 					 /* [in] */ IFilterGraph* pGraph,
 					 /* [string][in] */ const unsigned short* pName);
