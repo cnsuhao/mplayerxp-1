@@ -1,8 +1,8 @@
 /*
    ad.h - audio decoders interface
 */
-#ifndef __AD_H
-#define __AD_H
+#ifndef AD_H_INCLUDED
+#define AD_H_INCLUDED 1
 
 typedef struct ad_info_s
 {
@@ -40,7 +40,6 @@ typedef struct ad_functions_s
 
 // NULL terminated array of all drivers
 extern const ad_functions_t* mpcodecs_ad_drivers[];
-
 #define FIX_APTS(sh_audio,pts,in_size) (sh_audio->i_bps?((float)(pts)+(float)(in_size)/(float)sh_audio->i_bps):((float)(pts)))
 
 #endif

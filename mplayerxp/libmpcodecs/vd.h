@@ -1,3 +1,6 @@
+#ifndef VD_H_INCLUDED
+#define VD_H_INCLUDED 1
+
 typedef struct vd_info_s
 {
         /* driver description ("Autodesk FLI/FLC Animation decoder" */
@@ -43,4 +46,4 @@ mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,in
 void mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
 void mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);
 
-
+#endif

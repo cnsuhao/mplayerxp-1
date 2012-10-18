@@ -232,39 +232,38 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 
 extern void update_subtitle(float v_pts);
 int decode_video(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_frame, float pts){
-  vf_instance_t* vf;
-mp_image_t *mpi=NULL;
-unsigned int t;
-unsigned int t2;
-double tt;
+    vf_instance_t* vf;
+    mp_image_t *mpi=NULL;
+    unsigned int t;
+    unsigned int t2;
+    double tt;
 
-vf=sh_video->vfilter;
+    vf=sh_video->vfilter;
 
-t=GetTimer();
-vf->control(vf,VFCTRL_START_FRAME,NULL);
+    t=GetTimer();
+    vf->control(vf,VFCTRL_START_FRAME,NULL);
 
-sh_video->active_slices=0;
-mpi=mpvdec->decode(sh_video, start, in_size, drop_frame);
-MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
-while(sh_video->active_slices!=0) usleep(0);
+    sh_video->active_slices=0;
+    mpi=mpvdec->decode(sh_video, start, in_size, drop_frame);
+    MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
+    while(sh_video->active_slices!=0) usleep(0);
 /* ------------------------ frame decoded. -------------------- */
 
-if(!mpi) return 0; // error / skipped frame
-mpcodecs_draw_image(sh_video,mpi);
+    if(!mpi) return 0; // error / skipped frame
+    mpcodecs_draw_image(sh_video,mpi);
 
-t2=GetTimer();t=t2-t;
-tt = t*0.000001f;
-video_time_usage+=tt;
-if(benchmark || frame_dropping)
-{
-    if(tt > max_video_time_usage) max_video_time_usage=tt;
-    if(tt < min_video_time_usage) min_video_time_usage=tt;
-    cur_video_time_usage=tt;
-}
+    t2=GetTimer();t=t2-t;
+    tt = t*0.000001f;
+    video_time_usage+=tt;
+    if(benchmark || frame_dropping) {
+	if(tt > max_video_time_usage) max_video_time_usage=tt;
+	if(tt < min_video_time_usage) min_video_time_usage=tt;
+	cur_video_time_usage=tt;
+    }
 
-if(drop_frame) return 0;
-update_subtitle(pts);
-vo_flush_pages();
+    if(drop_frame) return 0;
+    update_subtitle(pts);
+    vo_flush_pages();
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
@@ -276,7 +275,7 @@ vo_flush_pages();
 	cur_vout_time_usage=tt;
     }
 
-  return 1;
+    return 1;
 }
 
 void resync_video_stream(sh_video_t *sh_video)

@@ -276,6 +276,8 @@ static const config_t audio_config[]={
 };
 
 static const config_t video_config[]={
+	{"on", &has_video, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables video-steam playback"},
+	{"off", &has_video, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video-stream playback"},
 	{"width", &vo.opt_screen_size_x, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to width (if driver supports)"},
 	{"height", &vo.opt_screen_size_y, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to height (if driver supports)"},
 	{"zoom", &vo.screen_size_xy, CONF_TYPE_FLOAT, CONF_RANGE, 0, 4096, NULL, "scale output image by given factor"},

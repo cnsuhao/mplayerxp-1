@@ -3,7 +3,9 @@
  * a very simple circular buffer FIFO implementation
  */
 #include "mp_config.h"
+#ifndef MSGT_CLASS
 #define MSGT_CLASS MSGT_GLOBAL
+#endif
 #include "__mp_msg.h"
 
 #include <stdint.h>

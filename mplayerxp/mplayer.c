@@ -2703,6 +2703,7 @@ play_next_file:
 //============ Open DEMUXERS --- DETECT file type =======================
     initial_audio_pts=HUGE;
     if(!has_audio) audio_id=-2; // do NOT read audio packets...
+    if(!has_video) video_id=-2; // do NOT read video packets...
 
     pinfo[xp_id].current_module="demux_open";
 
