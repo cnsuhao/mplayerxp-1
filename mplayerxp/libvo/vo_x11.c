@@ -133,7 +133,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
 
  UNUSED(info);
 
- vox11.num_buffers=vo.doublebuffering?vo.da_buffs:1;
+ vox11.num_buffers=vo.da_buffs;
 
  if (!title)
     title = strdup("MPlayerXP X11 (XImage/Shm) render");

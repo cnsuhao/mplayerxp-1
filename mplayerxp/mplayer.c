@@ -648,96 +648,91 @@ int get_free_audio_buffer(void)
 
 
 void uninit_player(unsigned int mask){
-  fflush(stdout);
-  fflush(stderr);
-  mask=inited_flags&mask;
+    fflush(stdout);
+    fflush(stderr);
+    mask=inited_flags&mask;
 
-  if(enable_xp!=XP_None) 
-  {
     pinfo[xp_id].current_module="uninit_xp";
     uninit_dec_ahead(0);
-  }
 
-  if (mask&INITED_SPUDEC){
-    inited_flags&=~INITED_SPUDEC;
-    pinfo[xp_id].current_module="uninit_spudec";
-    spudec_free(vo.spudec);
-    vo.spudec=NULL;
-  }
+    if (mask&INITED_SPUDEC){
+	inited_flags&=~INITED_SPUDEC;
+	pinfo[xp_id].current_module="uninit_spudec";
+	spudec_free(vo.spudec);
+	vo.spudec=NULL;
+    }
 
-  if (mask&INITED_VOBSUB){
-    inited_flags&=~INITED_VOBSUB;
-    pinfo[xp_id].current_module="uninit_vobsub";
-    vobsub_close(vo.vobsub);
-    vo.vobsub=NULL;
-  }
+    if (mask&INITED_VOBSUB){
+	inited_flags&=~INITED_VOBSUB;
+	pinfo[xp_id].current_module="uninit_vobsub";
+	vobsub_close(vo.vobsub);
+	vo.vobsub=NULL;
+    }
 
-  if(mask&INITED_VCODEC){
-    inited_flags&=~INITED_VCODEC;
-    pinfo[xp_id].current_module="uninit_vcodec";
-    uninit_video(sh_video);
-    sh_video=NULL;
-  }
+    if(mask&INITED_VCODEC){
+	inited_flags&=~INITED_VCODEC;
+	pinfo[xp_id].current_module="uninit_vcodec";
+	uninit_video(sh_video);
+	sh_video=NULL;
+    }
 
-  if(mask&INITED_VO){
-    inited_flags&=~INITED_VO;
-    pinfo[xp_id].current_module="uninit_vo";
-    vo_uninit();
-  }
+    if(mask&INITED_VO){
+	inited_flags&=~INITED_VO;
+	pinfo[xp_id].current_module="uninit_vo";
+	vo_uninit();
+    }
 
-  if(mask&INITED_ACODEC){
-    inited_flags&=~INITED_ACODEC;
-    pinfo[xp_id].current_module="uninit_acodec";
-    uninit_audio(sh_audio);
-    sh_audio=NULL;
-  }
+    if(mask&INITED_ACODEC){
+	inited_flags&=~INITED_ACODEC;
+	pinfo[xp_id].current_module="uninit_acodec";
+	uninit_audio(sh_audio);
+	sh_audio=NULL;
+    }
 
-  if(mask&INITED_AO){
-    inited_flags&=~INITED_AO;
-    pinfo[xp_id].current_module="uninit_ao";
-    ao_uninit();
-  }
+    if(mask&INITED_AO){
+	inited_flags&=~INITED_AO;
+	pinfo[xp_id].current_module="uninit_ao";
+	ao_uninit();
+    }
 
-  if(mask&INITED_GETCH2){
-    inited_flags&=~INITED_GETCH2;
-    pinfo[xp_id].current_module="uninit_getch2";
-  // restore terminal:
-    getch2_disable();
-  }
+    if(mask&INITED_GETCH2){
+	inited_flags&=~INITED_GETCH2;
+	pinfo[xp_id].current_module="uninit_getch2";
+    // restore terminal:
+	getch2_disable();
+    }
 
-  if(mask&INITED_DEMUXER){
-    inited_flags&=~INITED_DEMUXER;
-    pinfo[xp_id].current_module="free_demuxer";
-    FREE_DEMUXER(demuxer);
-  }
+    if(mask&INITED_DEMUXER){
+	inited_flags&=~INITED_DEMUXER;
+	pinfo[xp_id].current_module="free_demuxer";
+	FREE_DEMUXER(demuxer);
+    }
 
-  if(mask&INITED_STREAM){
-    inited_flags&=~INITED_STREAM;
-    pinfo[xp_id].current_module="uninit_stream";
-    if(stream) free_stream(stream);
-    stream=NULL;
-  }
+    if(mask&INITED_STREAM){
+	inited_flags&=~INITED_STREAM;
+	pinfo[xp_id].current_module="uninit_stream";
+	if(stream) free_stream(stream);
+	stream=NULL;
+    }
 
-  if(mask&INITED_INPUT){
-    inited_flags&=~INITED_INPUT;
-    pinfo[xp_id].current_module="uninit_input";
-    mp_input_uninit();
-  }
+    if(mask&INITED_INPUT){
+	inited_flags&=~INITED_INPUT;
+	pinfo[xp_id].current_module="uninit_input";
+	mp_input_uninit();
+    }
 
 #ifdef USE_SUB
-  if(mask&INITED_SUBTITLE){
-    inited_flags&=~INITED_SUBTITLE;
-    pinfo[xp_id].current_module="sub_free";
-    mp_input_uninit();
-    sub_free( subtitles );
-    sub_name=NULL;
-    vo.sub=NULL;
-    subtitles=NULL;
-  }
+    if(mask&INITED_SUBTITLE){
+	inited_flags&=~INITED_SUBTITLE;
+	pinfo[xp_id].current_module="sub_free";
+	mp_input_uninit();
+	sub_free( subtitles );
+	sub_name=NULL;
+	vo.sub=NULL;
+	subtitles=NULL;
+    }
 #endif
-
-  pinfo[xp_id].current_module=NULL;
-
+    pinfo[xp_id].current_module=NULL;
 }
 
 void exit_player(char* how){
@@ -786,19 +781,13 @@ static void soft_exit_player(void)
 
 void killall_threads(pthread_t pth_id)
 {
-  if(enable_xp > XP_None)
-  {
-	unsigned i;
-	for(i=0;i < MAX_XPTHREADS;i++)
-	{
-	    if(pth_id && pinfo[i].pth_id && pinfo[i].pth_id != mplayer_pth_id)
-	    {
-		pthread_kill(pinfo[i].pth_id,SIGKILL);
-		if(pinfo[i].unlink) pinfo[i].unlink(pth_id);
-	    }
+    unsigned i;
+    for(i=0;i < MAX_XPTHREADS;i++) {
+	if(pth_id && pinfo[i].pth_id && pinfo[i].pth_id != mplayer_pth_id) {
+	    pthread_kill(pinfo[i].pth_id,SIGKILL);
+	    if(pinfo[i].unlink) pinfo[i].unlink(pth_id);
 	}
-	enable_xp=XP_None;
-  }
+    }
 }
 
 void __exit_sighandler(void)
@@ -1264,260 +1253,6 @@ void update_subtitle(float v_pts)
   }
 }
 
-int mp09_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, float *v_pts )
-{
-/*========================== PLAY VIDEO ============================*/
-
-  static float next_frame_time=0;
-  static int frame_time_remaining=0; // flag
-  static int dropped_frames=0; // how many frames dropped since last non-dropped frame
-  static int drop_frame=0;     // current dropping status
-  static int total_frame_cnt=0;
-  static unsigned int lastframeout_ts=0;
-  float frame_time=next_frame_time;
-  float time_frame=0;
-  float AV_delay=0; // average of A-V timestamp differences
-  float time_frame_corr_avg=0;
-  int blit_frame=0;
-  int delay_corrected=1;
-  vo.pts=sh_video->timer*90000.0;
-  vo.fps=sh_video->fps;
-
-  if(!frame_time_remaining){
-    //--------------------  Decode a frame: -----------------------
-    while(1)
-    {   unsigned char* start=NULL;
-	int in_size;
-	float v_pts;
-	// get it!
-	pinfo[xp_id].current_module="video_read_frame";
-        in_size=video_read_frame(sh_video,&next_frame_time,&v_pts,&start,force_fps);
-	if(in_size<0) return 1;
-	if(in_size>max_framesize) max_framesize=in_size; // stats
-	sh_video->timer+=frame_time;
-	time_frame+=frame_time;  // for nosound
-	// check for frame-drop:
-	pinfo[xp_id].current_module="check_framedrop";
-	if(sh_audio && !d_audio->eof){
-	    float delay=ao_get_delay();
-	    float d=(sh_video->timer)-(sh_audio->timer-delay);
-	    // we should avoid dropping to many frames in sequence unless we
-	    // are too late. and we allow 100ms A-V delay here:
-	    if(d<-dropped_frames*frame_time-0.100){
-		drop_frame=frame_dropping;
-		++vstat->drop_frame_cnt;
-		++dropped_frames;
-	    } else {
-		drop_frame=dropped_frames=0;
-	    }
-	    ++total_frame_cnt;
-	}
-	// decode:
-	pinfo[xp_id].current_module="decode_video";
-	blit_frame=decode_video(sh_video,start,in_size,drop_frame,v_pts);
-	break;
-    }
-    //------------------------ frame decoded. --------------------
-
-    MSG_DBG2("*** ftime=%5.3f ***\n",frame_time);
-
-  }
-
-// ==========================================================================
-
-    pinfo[xp_id].current_module="draw_osd";
-    vo_draw_osd();
-
-    pinfo[xp_id].current_module="calc_sleep_time";
-
-#if 0
-{	// debug frame dropping code
-	  float delay=ao_get_delay();
-	  MSG_V("\r[V] %5.3f [A] %5.3f => {%5.3f}  (%5.3f) [%d]   \n",
-	      sh_video->timer,sh_audio->timer-delay,
-	      sh_video->timer-(sh_audio->timer-delay),
-	      delay,drop_frame);
-}
-#endif
-
-    if(drop_frame && !frame_time_remaining){
-
-      time_frame=0;	// don't sleep!
-      blit_frame=0;	// don't display!
-
-    } else {
-
-      // It's time to sleep...
-
-      frame_time_remaining=0;
-      time_frame-=GetRelativeTime(); // reset timer
-
-      if(sh_audio && !d_audio->eof){
-	float delay=ao_get_delay();
-	MSG_DBG2("delay=%f\n",delay);
-	if(!dapsync){
-	      /* Arpi's AV-sync */
-	  time_frame=sh_video->timer;
-	  time_frame-=sh_audio->timer-delay;
-	} else {  // if(!dapsync)
-	      /* DaP's AV-sync */
-	      float SH_AV_delay;
-	      /* SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay + sh_audio->a_buffer_len) / (float)sh_audio->af_bps); */
-	      SH_AV_delay = sh_video->timer - (sh_audio->timer - (float)((float)delay) / (float)sh_audio->af_bps);
-	      if(SH_AV_delay<-2*frame_time){
-		  static int drop_message=0;
-		  drop_frame=frame_dropping; // tricky!
-		  ++vstat->drop_frame_cnt;
-		  if(vstat->drop_frame_cnt>50 && AV_delay>0.5 && !drop_message){
-		      drop_message=1;
-		      if(mpxp_after_seek) mpxp_after_seek--;
-		      else {
-			MSG_WARN(MSGTR_SystemTooSlow);
-		      }
-		 }
-		MSG_INFO("A-V SYNC: FRAMEDROP (SH_AV_delay=%.3f)!\n", SH_AV_delay);
-		MSG_DBG2("\nframe drop %d, %.2f\n", drop_frame, time_frame);
-		/* go into unlimited-TF cycle */
-		time_frame = SH_AV_delay;
-	      } else {
-#define	SL_CORR_AVG_LEN	125
-		/* don't adjust under framedropping */
-		time_frame_corr_avg = (time_frame_corr_avg * (SL_CORR_AVG_LEN - 1) +
-					(SH_AV_delay - time_frame)) / SL_CORR_AVG_LEN;
-#define	UNEXP_CORR_MAX	0.1	/* limit of unexpected correction between two frames (percentage) */
-#define	UNEXP_CORR_WARN	1.0	/* warn limit of A-V lag (percentage) */
-		time_frame += time_frame_corr_avg;
-		if (SH_AV_delay - time_frame < (frame_time + time_frame_corr_avg) * UNEXP_CORR_MAX &&
-		    SH_AV_delay - time_frame > (frame_time + time_frame_corr_avg) * -UNEXP_CORR_MAX)
-		    time_frame = SH_AV_delay;
-		else {
-		    if (SH_AV_delay - time_frame > (frame_time + time_frame_corr_avg) * UNEXP_CORR_WARN ||
-			SH_AV_delay - time_frame < (frame_time + time_frame_corr_avg) * -UNEXP_CORR_WARN)
-			MSG_WARN( "WARNING: A-V SYNC LAG TOO LARGE: %.3f {%.3f - %.3f} (too little UNEXP_CORR_MAX?)\n",
-			    SH_AV_delay - time_frame, SH_AV_delay, time_frame);
-			time_frame += (frame_time + time_frame_corr_avg) * ((SH_AV_delay > time_frame) ?
-				UNEXP_CORR_MAX : -UNEXP_CORR_MAX);
-		}
-	      }	/* /start dropframe */
-
-	} // if(dapsync)
-
-	if(delay>0.25) delay=0.25; else
-	if(delay<0.10) delay=0.10;
-	if(time_frame>delay*0.6){
-	    // sleep time too big - may cause audio drops (buffer underrun)
-	    frame_time_remaining=1;
-	    time_frame=delay*0.5;
-	}
-      } else {
-	  // NOSOUND:
-	  if( (time_frame<-3*frame_time || time_frame>3*frame_time) || benchmark)
-	      time_frame=0;
-      }
-      (*aq_sleep_time)+=time_frame;
-    }	// !drop_frame
-
-//============================== SLEEP: ===================================
-
-// flag 256 means: libvo driver does its timing (dvb card)
-if(time_frame>0.001 && !(vo.flags&256)){
-    pinfo[xp_id].current_module="sleep_usleep";
-    time_frame=SleepTime(rtc_fd,softsleep,time_frame);
-}
-
-//if(!frame_time_remaining){	// should we display the frame now?
-
-//====================== FLIP PAGE (VIDEO BLT): =========================
-
-	pinfo[xp_id].current_module="change_frame1";
-
-	vo_check_events(); /* check events AST */
-	if(blit_frame && !frame_time_remaining){
-	   unsigned int t2=GetTimer();
-	   double tt;
-	   float j;
-#define	FRAME_LAG_WARN	0.2
-	   j = ((float)t2 - lastframeout_ts) / 1000000;
-	   lastframeout_ts = GetTimer();
-	   if (j < frame_time + frame_time * -FRAME_LAG_WARN)
-		vstat->too_fast_frame_cnt++;
-		/* printf ("PANIC: too fast frame (%.3f)!\n", j); */
-	   else if (j > frame_time + frame_time * FRAME_LAG_WARN)
-		vstat->too_slow_frame_cnt++;
-		/* printf ("PANIC: too slow frame (%.3f)!\n", j); */
-
-	   vo_change_frame();
-//        usec_sleep(50000); // test only!
-	   t2=GetTimer()-t2;
-	   tt = t2*0.000001f;
-	   vout_time_usage+=tt;
-	   if(benchmark)
-	   {
-		/* we need compute draw_slice+change_frame here */
-		cur_vout_time_usage+=tt;
-		if(cur_vout_time_usage > max_vout_time_usage) max_vout_time_usage = cur_vout_time_usage;
-		if(cur_vout_time_usage < min_vout_time_usage) min_vout_time_usage = cur_vout_time_usage;
-		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo.fps > 1)
-							bench_dropped_frames ++;
-	   }
-	}
-
-//====================== A-V TIMESTAMP CORRECTION: =========================
-
-  pinfo[xp_id].current_module="av_sync";
-
-  if(sh_audio){
-    float a_pts=0;
-
-    // unplayed bytes in our and soundcard/dma buffer:
-    float delay=ao_get_delay()+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
-
-    if(pts_from_bps){
-	// PTS = sample_no / samplerate
-	unsigned int samples=(sh_audio->audio.dwSampleSize)?
-	  ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
-	  (d_audio->pack_no); // <- used for VBR audio
-	samples+=sh_audio->audio.dwStart; // offset
-	a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
-	delay_corrected=1;
-    } else {
-      // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
-      a_pts=d_audio->pts;
-      if(!delay_corrected) if(a_pts) delay_corrected=1;
-      a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-    }
-    *v_pts=d_video->pts;
-
-      MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-audio_delay-delay,*v_pts,(a_pts-delay-audio_delay)-*v_pts);
-
-      if(delay_corrected){
-	float x;
-	AV_delay=(a_pts-delay-audio_delay)-*v_pts;
-	x=AV_delay*0.1f;
-	if(x<-max_pts_correction) x=-max_pts_correction; else
-	if(x> max_pts_correction) x= max_pts_correction;
-	if(default_max_pts_correction>=0)
-	  max_pts_correction=default_max_pts_correction;
-	else
-	  max_pts_correction=sh_video->frametime*0.10; // +-10% of time
-	if(!frame_time_remaining){ sh_audio->timer+=x; c_total+=x;} // correction
-	if(benchmark) MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r",
-	  a_pts-audio_delay-delay,*v_pts,AV_delay,c_total,
-	  (int)sh_video->num_frames,(int)sh_video->num_frames_decoded,
-	  (sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-	  (sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-	  (sh_video->timer>0.5)?(100.0*audio_time_usage/(double)sh_video->timer):0
-	  ,vstat->drop_frame_cnt
-	  ,output_quality
-	);
-	fflush(stdout);
-      }
-    }
-    /* let it paints audio timer instead of video */
-    if(sh_audio) *v_pts = sh_audio->timer-ao_get_delay();
-    return 0;
-}
-
 static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay,video_stat_t *vstat) {
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i]]\n",
 		a_pts-audio_delay-delay,video_pts,AV_delay,c_total,
@@ -1586,7 +1321,7 @@ typedef struct osd_args_s {
     int		info_factor;
 }osd_args_t;
 
-int xp_decore_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, float *v_pts )
+int mpxp_play_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, float *v_pts )
 {
     float time_frame=0;
     float AV_delay=0; /* average of A-V timestamp differences */
@@ -1822,104 +1557,100 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 
 void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,const seek_args_t* seek)
 {
-  int seek_rval=1;
-  audio_eof=0;
-  if(seek->secs || seek->flags&DEMUX_SEEK_SET) {
-    seek_rval=demux_seek_r(demuxer,seek);
-    mpxp_after_seek=25; /* 1 sec delay */
-  }
-  if(seek_rval){
-      mpxp_seek_time = GetTimerMS();
-      if(enable_xp!=XP_None && sh_video)
-      { // Send back frame info to decoding thread
-          dec_ahead_seek_num_frames = sh_video->num_frames;
-          dec_ahead_seek_num_frames_decoded = sh_video->num_frames_decoded;
-      }
-
-      // success:
-      /* FIXME there should be real seeking for vobsub */
-      if (vo.vobsub)
-	vobsub_reset(vo.vobsub);
-      if (vo.spudec)
-	spudec_reset(vo.spudec);
-
-      if(sh_audio){
-	if(verbose){
-	    float a_pts=d_audio->pts;
-            a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-	    MSG_V("SEEK: A: %5.3f  V: %5.3f  A-V: %5.3f   \n",a_pts,v_pts,a_pts-v_pts);
+    int seek_rval=1;
+    audio_eof=0;
+    if(seek->secs || seek->flags&DEMUX_SEEK_SET) {
+	seek_rval=demux_seek_r(demuxer,seek);
+	mpxp_after_seek=25; /* 1 sec delay */
+    }
+    if(seek_rval){
+	mpxp_seek_time = GetTimerMS();
+	if(sh_video) {
+	// Send back frame info to decoding thread
+	    dec_ahead_seek_num_frames = sh_video->num_frames;
+	    dec_ahead_seek_num_frames_decoded = sh_video->num_frames_decoded;
 	}
-        MSG_V("A:%6.1f  V:%6.1f  A-V:%7.3f  ct: ?   \r",d_audio->pts,v_pts,0.0f);
-	sh_audio->chapter_change=0;
-	sh_audio->a_pts=HUGE;
-      } else {
-        MSG_V("A: ---   V:%6.1f   \r",v_pts);
-      }
-      fflush(stdout);
 
-      if(sh_video){
-	 pinfo[_xp_id].current_module="seek_video_reset";
-	 resync_video_stream(sh_video);
-         vo_reset();
-         sh_video->chapter_change=-1;
-      }
+	// success:
+	/* FIXME there should be real seeking for vobsub */
+	if (vo.vobsub) vobsub_reset(vo.vobsub);
+	if (vo.spudec) spudec_reset(vo.spudec);
 
-      if(sh_audio){
-        pinfo[_xp_id].current_module="seek_audio_reset";
-	resync_audio_stream(sh_audio);
-        ao_reset(); // stop audio, throwing away buffered data
-      }
+	if(sh_audio){
+	    if(verbose){
+		float a_pts=d_audio->pts;
+		a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+		MSG_V("SEEK: A: %5.3f  V: %5.3f  A-V: %5.3f   \n",a_pts,v_pts,a_pts-v_pts);
+	    }
+	    MSG_V("A:%6.1f  V:%6.1f  A-V:%7.3f  ct: ?   \r",d_audio->pts,v_pts,0.0f);
+	    sh_audio->chapter_change=0;
+	    sh_audio->a_pts=HUGE;
+	} else {
+	    MSG_V("A: ---   V:%6.1f   \r",v_pts);
+	}
+	fflush(stdout);
 
-      if (vo.vobsub) {
-	pinfo[_xp_id].current_module = "seek_vobsub_reset";
-	vobsub_seek(vo.vobsub, v_pts);
-      }
+	if(sh_video){
+	    pinfo[_xp_id].current_module="seek_video_reset";
+	    resync_video_stream(sh_video);
+	    vo_reset();
+	    sh_video->chapter_change=-1;
+	}
+
+	if(sh_audio){
+	    pinfo[_xp_id].current_module="seek_audio_reset";
+	    resync_audio_stream(sh_audio);
+	    ao_reset(); // stop audio, throwing away buffered data
+	}
+
+	if (vo.vobsub) {
+	    pinfo[_xp_id].current_module = "seek_vobsub_reset";
+	    vobsub_seek(vo.vobsub, v_pts);
+	}
 
 #ifdef USE_OSD
-        // Set OSD:
-      if(osd_level){
-        int len=((demuxer->movi_end-demuxer->movi_start)>>8);
-        if (len>0){
-	   if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25;
-	   vo.osd_progbar_type=0;
-	   vo.osd_progbar_value=(demuxer->filepos-demuxer->movi_start)/len;
-	   vo_osd_changed(OSDTYPE_PROGBAR);
+	// Set OSD:
+	if(osd_level){
+	    int len=((demuxer->movi_end-demuxer->movi_start)>>8);
+	    if (len>0){
+		if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25;
+		vo.osd_progbar_type=0;
+		vo.osd_progbar_value=(demuxer->filepos-demuxer->movi_start)/len;
+		vo_osd_changed(OSDTYPE_PROGBAR);
+	    }
 	}
-      }
 #endif
-      if(sh_video) {
-	c_total=0;
-	max_pts_correction=0.1;
-	if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25; // to rewert to PLAY pointer after 1 sec
-	audio_time_usage=0; audio_decode_time_usage=0; video_time_usage=0; vout_time_usage=0;
-	if(vstat)
-	{
-	    vstat->drop_frame_cnt=0;
-	    vstat->too_slow_frame_cnt=0;
-	    vstat->too_fast_frame_cnt=0;
+	if(sh_video) {
+	    c_total=0;
+	    max_pts_correction=0.1;
+	    if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25; // to rewert to PLAY pointer after 1 sec
+	    audio_time_usage=0; audio_decode_time_usage=0; video_time_usage=0; vout_time_usage=0;
+	    if(vstat) {
+		vstat->drop_frame_cnt=0;
+		vstat->too_slow_frame_cnt=0;
+		vstat->too_fast_frame_cnt=0;
+	    }
+	    if(vo.spudec) {
+		unsigned char* packet=NULL;
+		while(ds_get_packet_sub(d_dvdsub,&packet)>0) ; // Empty stream
+		spudec_reset(vo.spudec);
+	    }
 	}
-        if(vo.spudec) {
-          unsigned char* packet=NULL;
-          while(ds_get_packet_sub(d_dvdsub,&packet)>0)
-              ; // Empty stream
-          spudec_reset(vo.spudec);
-        }
-      }
-  }
+    }
 }
 
 void mpxp_reset_vcache(void)
 {
- unsigned i;
- seek_args_t seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
- for(i=0;i<xp_threads;i++) if(strcmp(pinfo[i].thread_name,"main")==0) break;
- if(shva) mpxp_seek(i,NULL,NULL,shva[dec_ahead_active_frame].v_pts,&seek);
- return;
+    unsigned i;
+    seek_args_t seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
+    for(i=0;i<xp_threads;i++) if(strcmp(pinfo[i].thread_name,"main")==0) break;
+    if(shva) mpxp_seek(i,NULL,NULL,shva[dec_ahead_active_frame].v_pts,&seek);
+    return;
 }
 
 void mpxp_resync_audio_stream(void)
 {
-  resync_audio_stream(sh_audio);
+    resync_audio_stream(sh_audio);
 }
 
 static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stream_packet_t *sp)
@@ -1947,92 +1678,28 @@ static void init_benchmark(void)
 	max_av_resync=0;
 }
 
-static void show_benchmark(video_stat_t *vstat)
+static void show_benchmark(void)
 {
-  double tot=(video_time_usage+vout_time_usage+audio_time_usage+audio_decode_time_usage+demux_time_usage+c2_time_usage);
-  double min_tot=(min_video_time_usage+min_vout_time_usage+min_audio_time_usage+min_audio_decode_time_usage+min_demux_time_usage+min_c2_time_usage)*our_n_frames;
-  double max_tot=(max_video_time_usage+max_vout_time_usage+max_audio_time_usage+max_audio_decode_time_usage+max_demux_time_usage+max_c2_time_usage)*our_n_frames;
-  double total_time_usage;
-  if(enable_xp==XP_None)
-  {
-	max_video_time_usage *= our_n_frames;
-	max_vout_time_usage *= our_n_frames;
-	max_audio_time_usage *= our_n_frames;
-	max_demux_time_usage *= our_n_frames;
-	max_c2_time_usage *= our_n_frames;
-	min_video_time_usage *= our_n_frames;
-	min_vout_time_usage *= our_n_frames;
-	min_audio_time_usage *= our_n_frames;
-	min_demux_time_usage *= our_n_frames;
-	min_c2_time_usage *= our_n_frames;
-  }
-  total_time_usage_start=GetTimer()-total_time_usage_start;
-  total_time_usage = (float)total_time_usage_start*0.000001;
-  if(enable_xp!=XP_None)
-  {
-    MSG_INFO("\nMIN BENCHMARKs: *** MEANINGLESS IN XP MODE *** \n");
-    MSG_INFO("MIN BENCHMARK%%: *** MEANINGLESS IN XP MODE *** \n");
-  }
-  else
-  {
-  MSG_INFO("\nMIN BENCHMARKs: VC:%8.3fs VO:%8.3fs A:%8.3fs D:%8.3fs C:%8.3fs\n",
-	 min_video_time_usage,min_vout_time_usage,
-	 min_audio_time_usage+min_audio_decode_time_usage,
-	 min_demux_time_usage,min_c2_time_usage);
-  if(total_time_usage>0.0)
-    MSG_INFO("MIN BENCHMARK%%: VC:%8.4f%% VO:%8.4f%% A:%8.4f%% D:%8.4f%% C:%8.4f%%= %8.4f%%\n",
-	   100.0*min_video_time_usage/total_time_usage,
-	   100.0*min_vout_time_usage/total_time_usage,
-	   100.0*(min_audio_time_usage+min_audio_decode_time_usage)/total_time_usage,
-	   100.0*min_demux_time_usage/total_time_usage,
-	   100.0*min_c2_time_usage/total_time_usage,
-	   100.0*min_tot/total_time_usage
-	   );
-  }
-  MSG_INFO("\nAVE BENCHMARKs: VC:%8.3fs VO:%8.3fs A:%8.3fs D:%8.3fs = %8.4fs C:%8.3fs\n",
+    double tot=(video_time_usage+vout_time_usage+audio_time_usage+audio_decode_time_usage+demux_time_usage+c2_time_usage);
+    double total_time_usage;
+
+    total_time_usage_start=GetTimer()-total_time_usage_start;
+    total_time_usage = (float)total_time_usage_start*0.000001;
+
+    MSG_INFO("\nAVE BENCHMARKs: VC:%8.3fs VO:%8.3fs A:%8.3fs D:%8.3fs = %8.4fs C:%8.3fs\n",
 	 video_time_usage,vout_time_usage,audio_time_usage+audio_decode_time_usage,
 	 demux_time_usage,c2_time_usage,tot);
-  if(total_time_usage>0.0)
-    MSG_INFO("AVE BENCHMARK%%: VC:%8.4f%% VO:%8.4f%% A:%8.4f%% D:%8.4f%% C:%8.4f%% = %8.4f%%\n",
+    if(total_time_usage>0.0)
+	MSG_INFO("AVE BENCHMARK%%: VC:%8.4f%% VO:%8.4f%% A:%8.4f%% D:%8.4f%% C:%8.4f%% = %8.4f%%\n",
 	   100.0*video_time_usage/total_time_usage,
 	   100.0*vout_time_usage/total_time_usage,
 	   100.0*(audio_time_usage+audio_decode_time_usage)/total_time_usage,
 	   100.0*demux_time_usage/total_time_usage,
 	   100.0*c2_time_usage/total_time_usage,
 	   100.0*tot/total_time_usage);
-  if(enable_xp!=XP_None)
-  {
-    MSG_INFO("\nMAX BENCHMARKs: *** MEANINGLESS IN XP MODE *** \n");
-    MSG_INFO("MAX BENCHMARK%%: *** MEANINGLESS IN XP MODE *** \n");
-  }
-  else
-  {
-  MSG_INFO("\nMAX BENCHMARKs: VC:%8.3fs VO:%8.3fs A:%8.3fs D:%8.3fs C:%8.3fs\n",
-	 max_video_time_usage,max_vout_time_usage,
-	 max_audio_time_usage+max_audio_decode_time_usage,max_demux_time_usage,
-	 max_c2_time_usage);
-  if(total_time_usage>0.0)
-    MSG_INFO("MAX BENCHMARK%%: VC:%8.4f%% VO:%8.4f%% A:%8.4f%% D:%8.4f%% C:%8.4f%% = %8.4f%%\n",
-	   100.0*max_video_time_usage/total_time_usage,
-	   100.0*max_vout_time_usage/total_time_usage,
-	   100.0*(max_audio_time_usage+max_audio_decode_time_usage)/total_time_usage,
-	   100.0*max_demux_time_usage/total_time_usage,
-	   100.0*max_c2_time_usage/total_time_usage,
-	   100.0*max_tot/total_time_usage
-	   );
-/* This code computes number of frame which should be dropped
-   in ideal case (without SYSTIME); i.e. when file is located
-   in RAM and kernel+other_tasks eat 0% of CPU. */
-    MSG_INFO("TOTAL BENCHMARK: from %u frames should be dropped: %u (at least)\n"
-	    ,our_n_frames,bench_dropped_frames);
-  }
-  if(enable_xp!=XP_None)
-  MSG_INFO("\nREAL RESULTS: from %u was dropped=%u\n"
+    MSG_INFO("\nREAL RESULTS: from %u was dropped=%u\n"
 	,our_n_frames,xp_drop_frame_cnt);
-  else
-  MSG_INFO("\nREAL RESULTS: dropped=%u too slow=%u too fast=%u\n"
-	,vstat->drop_frame_cnt,vstat->too_slow_frame_cnt,vstat->too_fast_frame_cnt);
-  MSG_INFO("\nMax. A-V resync is: %f\n",fabs(max_av_resync));
+    MSG_INFO("\nMax. A-V resync is: %f\n",fabs(max_av_resync));
 }
 
 static void show_benchmark_status(void)
@@ -2511,14 +2178,10 @@ static void mpxp_run_ahead_engine(void) {
 	MSG_FATAL("Not enough buffers for DECODING AHEAD!\nNeed %u buffers but exist only %u\n",5,xp_num_frames);
 	exit_player("Try other '-vo' driver.\n");
     }
-    if(init_dec_ahead(sh_video,sh_audio)!=0) {
-	enable_xp = XP_None;
+    if(init_dec_ahead(sh_video,sh_audio)!=0)
 	exit_player("Can't initialize decoding ahead!\n");
-    }
-    if(run_dec_ahead()!=0) {
-	enable_xp = XP_None;
+    if(run_dec_ahead()!=0)
 	exit_player("Can't run decoding ahead!\n");
-    }
     if(sh_video)	MSG_OK("Using DECODING AHEAD mplayer's core with %u video buffers\n",xp_num_frames);
     else 		MSG_OK("Using DECODING AHEAD mplayer's core with %u audio buffers\n",ao_da_buffs);
 /* reset counters */
@@ -2882,8 +2545,6 @@ int main(int argc,char* argv[], char *envp[]){
     input_state_t input_state = { 0, 0, 0 };
     char* filename=NULL; //"MI2-Trailer.avi";
     int file_format=DEMUXER_TYPE_UNKNOWN;
-    int (*decore_video_ptr)( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, float *v_pts )
-			 = mp09_decore_video;
 
 // movie info:
     int eof=0;
@@ -2918,6 +2579,12 @@ int main(int argc,char* argv[], char *envp[]){
 
     if(m_config_parse_command_line(mconfig, argc, argv, envp) < 0) exit(1); // error parsing cmdline
 
+    if(!enable_xp) {
+	MSG_ERR("Error: detected option: -core.xp=0\n"
+		"Note!  Single-thread mode is not longer supported by MPlayerXP\n");
+	return 0;
+    }
+
     xp_num_cpu=get_number_cpu();
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     get_mmx_optimizations();
@@ -2941,8 +2608,6 @@ int main(int argc,char* argv[], char *envp[]){
     }
 
     ao_da_buffs = vo.da_buffs;
-    if(enable_xp!=XP_None) vo.doublebuffering=1;
-    else	  vo.use_bm = 0;
 
     init_player();
 
@@ -3058,13 +2723,6 @@ play_next_file:
     mpxp_print_stream_formats();
 
     if(sh_video) mpxp_read_video_properties();
-
-    if(sh_video) {
-	if(sh_video->is_static || (stream->type&STREAMTYPE_MENU)==STREAMTYPE_MENU) {
-	    vo.da_buffs=1;
-	    enable_xp=XP_None; /* supress video mode for static pictures */
-	}
-    } else if(enable_xp < XP_VAPlay) enable_xp=XP_None;
 
     fflush(stdout);
 
@@ -3196,11 +2854,7 @@ main:
 	MSG_INFO(MSGTR_FPSforced,sh_video->fps,sh_video->frametime);
     }
 
-    if(vo_get_num_frames(&xp_num_frames)!=VO_TRUE) {
-	if(enable_xp!=XP_None)
-	    exit_player("Selected -vo driver doesn't support DECODING AHEAD! Try other.");
-	xp_num_frames=0;
-    }
+    vo_get_num_frames(&xp_num_frames);
 
     /* Init timers and benchmarking */
     rtc_fd=InitTimer();
@@ -3215,10 +2869,8 @@ main:
 
     /* display clip info */
     demux_info_print(demuxer,filename);
-    if(enable_xp!=XP_None) {
-	mpxp_run_ahead_engine();
-	decore_video_ptr = xp_decore_video;
-    }
+
+    mpxp_run_ahead_engine();
 
     fflush(stdout);
     fflush(stderr);
@@ -3227,8 +2879,7 @@ main:
    We may print something in block window ;)
  */
     mpxp_seek_time = GetTimerMS();
-    if(enable_xp!=XP_None && sh_video)
-    {
+    if(sh_video) {
 	volatile unsigned ada_blitted_frame;
 	do {
 	    usleep(0);
@@ -3279,7 +2930,7 @@ main:
 		if(vo_check_events()) goto repaint;
 	    } else {
 repaint:
-		l_eof = (*decore_video_ptr)(rtc_fd,&vstat,&aq_sleep_time,&v_pts);
+		l_eof = mpxp_play_video(rtc_fd,&vstat,&aq_sleep_time,&v_pts);
 		eof |= l_eof;
 		if(eof) goto do_loop;
 	    }
@@ -3334,15 +2985,11 @@ do_loop:
 	if(seek_args.secs || (seek_args.flags&DEMUX_SEEK_SET)) {
 	    pinfo[xp_id].current_module="seek";
 
-	    if(enable_xp!=XP_None) {
-		dec_ahead_halt_threads(0);
-		LOCK_VREADING();
-	    }
+	    dec_ahead_halt_threads(0);
+	    LOCK_VREADING();
 
-	    if(seek_args.secs) {
-		if(enable_xp>XP_None && sh_video)
-		    seek_args.secs -= (xp_is_bad_pts?shva[dec_ahead_locked_frame>0?dec_ahead_locked_frame-1:xp_num_frames-1].v_pts:d_video->pts)-shva[dec_ahead_active_frame].v_pts;
-	    }
+	    if(seek_args.secs && sh_video)
+		seek_args.secs -= (xp_is_bad_pts?shva[dec_ahead_locked_frame>0?dec_ahead_locked_frame-1:xp_num_frames-1].v_pts:d_video->pts)-shva[dec_ahead_active_frame].v_pts;
 
 	    mpxp_seek(xp_id,&vstat,&osd,v_pts,&seek_args);
 
@@ -3350,15 +2997,13 @@ do_loop:
 	    seek_args.secs=0;
 	    seek_args.flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 
-	    if(enable_xp!=XP_None) {
-		UNLOCK_VREADING();
-		dec_ahead_restart_threads(xp_id);
-	    }
+	    UNLOCK_VREADING();
+	    dec_ahead_restart_threads(xp_id);
 /* Disable threads for DVD menus */
 	    pinfo[xp_id].current_module=NULL;
 	}
 #ifdef USE_OSD
-	if(!enable_xp!=XP_None) update_osd(d_video->pts);
+	update_osd(d_video->pts);
 #endif
     } // while(!eof)
 
@@ -3366,7 +3011,7 @@ do_loop:
 
 goto_next_file:  // don't jump here after ao/vo/getch initialization!
 
-    if(benchmark) show_benchmark(&vstat);
+    if(benchmark) show_benchmark();
 
 if(playtree_iter != NULL && !input_state.after_dvdmenu) {
 if(eof == PT_NEXT_ENTRY || eof == PT_PREV_ENTRY) {

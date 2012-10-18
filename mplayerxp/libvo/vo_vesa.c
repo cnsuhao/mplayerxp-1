@@ -324,19 +324,14 @@ static void paintBkGnd( void )
     int y_res = priv.vmode_info.YResolution;
     int x, y;
 
-    for (y = 0; y < y_res; ++y)
-    {
-	for (x = 0; x < x_res; ++x)
-	{
+    for (y = 0; y < y_res; ++y) {
+	for (x = 0; x < x_res; ++x) {
 	    int r, g, b;
-	    if ((x & 16) ^ (y & 16))
-	    {
+	    if ((x & 16) ^ (y & 16)) {
 		r = x * 255 / x_res;
 		g = y * 255 / y_res;
 		b = 255 - x * 255 / x_res;
-	    }
-	    else
-	    {
+	    } else {
 		r = 255 - x * 255 / x_res;
 		g = y * 255 / y_res;
 		b = 255 - y * 255 / y_res;
@@ -420,25 +415,21 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	priv.srcW = priv.dstW = width;
 	priv.srcH = priv.dstH = height;
 	fs_mode = 0;
-        if(priv.subdev_flags == 0xFFFFFFFEUL)
-	{
-	  MSG_ERR("vo_vesa: detected internal fatal error: init is called before preinit\n");
-	  return -1;
+	if(priv.subdev_flags == 0xFFFFFFFEUL) {
+	    MSG_ERR("vo_vesa: detected internal fatal error: init is called before preinit\n");
+	    return -1;
 	}
 	if(priv.subdev_flags == 0xFFFFFFFFUL) return -1;
-	if(flags & 0x8)
-	{
-	  MSG_WARN("vo_vesa: switch -flip is not supported\n");
+	if(flags & 0x8) {
+	    MSG_WARN("vo_vesa: switch -flip is not supported\n");
 	}
 	if(flags & 0x04) use_scaler = 1;
-	if(flags & 0x01)
-	{
-	  if(use_scaler) use_scaler = 2;
-	  else          fs_mode = 1;
-	} 
+	if(flags & 0x01) {
+	    if(use_scaler) use_scaler = 2;
+	    else          fs_mode = 1;
+	}
 	memcpy(vib.VESASignature,"VBE2",4);
-	if((err=vbeGetControllerInfo(&vib)) != VBE_OK)
-	{
+	if((err=vbeGetControllerInfo(&vib)) != VBE_OK) {
 	  PRINT_VBE_ERR("vbeGetControllerInfo",err);
 	  MSG_FATAL("vo_vesa: possible reason: No VBE2 BIOS found\n");
 	  return -1;
@@ -468,8 +459,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	num_modes = 0;
 	mode_ptr = vib.VideoModePtr;
 	while(*mode_ptr++ != 0xffff) num_modes++;
-	switch(format)
-	{
+	switch(format) {
 		case IMGFMT_BGR8:
 		case IMGFMT_RGB8:  bpp = 8; break;
 		case IMGFMT_BGR15:
@@ -485,8 +475,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	priv.srcBpp = bpp;
 	priv.srcFourcc = format;
 	if(vo.dbpp) bpp = vo.dbpp;
-	switch(bpp)
-	{
+	switch(bpp) {
 	  case 8:
 		   priv.dstFourcc = IMGFMT_BGR8;
 		   break;
@@ -506,21 +495,18 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		   priv.dstFourcc = IMGFMT_BGR16;
 		   break;
 	}
-	if(verbose)
-	{
+	if(verbose) {
 	  MSG_V("vo_vesa: Requested mode: %ux%u@%u (%s)\n",width,height,bpp,vo_format_name(format));
 	  MSG_V("vo_vesa: Total modes found: %u\n",num_modes);
 	  mode_ptr = vib.VideoModePtr;
 	  MSG_V("vo_vesa: Mode list:");
-	  for(i = 0;i < num_modes;i++)
-	  {
-	    MSG_V(" %04X",mode_ptr[i]);
+	  for(i = 0;i < num_modes;i++) {
+		MSG_V(" %04X",mode_ptr[i]);
 	  }
 	  MSG_V("\nvo_vesa: Modes in detail:\n");
 	}
 	mode_ptr = vib.VideoModePtr;
-	if(use_scaler)
-	{
+	if(use_scaler) {
 	    priv.dstW = d_width;
 	    priv.dstH = d_height;
 	}
@@ -528,29 +514,24 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	else w = max(priv.dstW,width);
 	if(vo.screenheight) h = vo.screenheight;
 	else h = max(priv.dstH,height);
-        for(i=0;i < num_modes;i++)
-	{
-		if((err=vbeGetModeInfo(mode_ptr[i],&vmib)) != VBE_OK)
-		{
+        for(i=0;i < num_modes;i++) {
+		if((err=vbeGetModeInfo(mode_ptr[i],&vmib)) != VBE_OK) {
 			PRINT_VBE_ERR("vbeGetModeInfo",err);
 			return -1;
 		}
 		if(vmib.XResolution >= w &&
 		   vmib.YResolution >= h &&
 		   (vmib.ModeAttributes & MOVIE_MODE) == MOVIE_MODE &&
-		   vmib.BitsPerPixel == bpp)
-		   {
+		   vmib.BitsPerPixel == bpp) {
 			if((bpp > 8 && vmib.MemoryModel == memRGB) || bpp < 15)
 			if(vmib.XResolution <= best_x &&
-			   vmib.YResolution <= best_y)
-			   {
+			   vmib.YResolution <= best_y) {
 				best_x = vmib.XResolution;
 				best_y = vmib.YResolution;
 				best_mode_idx = i;
 			   }
 		   }
-		if(verbose)
-		{
+		if(verbose) {
 		  MSG_V("vo_vesa: Mode (%03u): mode=%04X %ux%u@%u attr=%04X\n"
 			 "vo_vesa:             #planes=%u model=%u(%s) #pages=%u\n"
 			 "vo_vesa:             winA=%X(attr=%u) winB=%X(attr=%u) winSize=%u winGran=%u\n"
@@ -565,18 +546,15 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		  fflush(stdout);
 		}
 	}
-	if(best_mode_idx != UINT_MAX)
-	{
+	if(best_mode_idx != UINT_MAX) {
 		priv.video_mode = vib.VideoModePtr[best_mode_idx];
 		fflush(stdout);
-		if((err=vbeGetMode(&priv.init_mode)) != VBE_OK)
-		{
+		if((err=vbeGetMode(&priv.init_mode)) != VBE_OK) {
 			PRINT_VBE_ERR("vbeGetMode",err);
 			return -1;
 		}
 		MSG_V("vo_vesa: Initial video mode: %x\n",priv.init_mode);
-		if((err=vbeGetModeInfo(priv.video_mode,&priv.vmode_info)) != VBE_OK)
-		{
+		if((err=vbeGetModeInfo(priv.video_mode,&priv.vmode_info)) != VBE_OK) {
 			PRINT_VBE_ERR("vbeGetModeInfo",err);
 			return -1;
 		}
@@ -585,19 +563,14 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 			,best_mode_idx,priv.video_mode,priv.vmode_info.XResolution
 			,priv.vmode_info.YResolution,priv.dstBpp);
 		if(priv.subdev_flags & SUBDEV_NODGA) priv.vmode_info.PhysBasePtr = 0;
-		if(use_scaler || fs_mode)
-		{
+		if(use_scaler || fs_mode) {
 		      /* software scale */
-		      if(use_scaler > 1)
-		      {
+		      if(use_scaler > 1) {
 		        aspect_save_orig(width,height);
 			aspect_save_prescale(d_width,d_height);
 			aspect_save_screenres(priv.vmode_info.XResolution,priv.vmode_info.YResolution);
 			aspect(&priv.dstW,&priv.dstH,A_ZOOM);
-		      }
-		      else
-		      if(fs_mode)
-		      {
+		      } else if(fs_mode) {
 			priv.dstW = priv.vmode_info.XResolution;
 			priv.dstH = priv.vmode_info.YResolution;
 		      }
@@ -610,16 +583,14 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		   priv.win.idx = 1; /* frame B */
 		else priv.win.idx = -2;
 		/* Try use DGA instead */
-		if(priv.vmode_info.PhysBasePtr && vib.TotalMemory && (priv.vmode_info.ModeAttributes & MODE_ATTR_LINEAR))
-		{
+		if(priv.vmode_info.PhysBasePtr && vib.TotalMemory && (priv.vmode_info.ModeAttributes & MODE_ATTR_LINEAR)) {
 		    any_t*lfb;
 		    unsigned long vsize;
 		    vsize = vib.TotalMemory*64*1024;
 		    lfb = vbeMapVideoBuffer(priv.vmode_info.PhysBasePtr,vsize);
 		    if(lfb == NULL)
 		      MSG_WARN("vo_vesa: Can't use DGA. Force bank switching mode. :(\n");
-		    else
-		    {
+		    else {
 		      priv.video_base = priv.win.ptr = lfb;
 		      priv.win.low = 0UL;
 		      priv.win.high = vsize;
@@ -631,26 +602,22 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		      MSG_V(" at %08lXh",(unsigned long)lfb);
 		      MSG_V("\n");
 		      if(!(priv.multi_size = fillMultiBuffer(vsize,vo.da_buffs))) return -1;
-		      if(vo.doublebuffering && priv.multi_size < 2)
+		      if(priv.multi_size < 2)
 			MSG_ERR("vo_vesa: Can't use double buffering: not enough video memory\n");
 		      else
-		        MSG_V("vo_vesa: using %u buffers for multi buffering\n",priv.multi_size);
+			MSG_V("vo_vesa: using %u buffers for multi buffering\n",priv.multi_size);
 		    }
 		}
-		if(priv.win.idx == -2)
-		{
+		if(priv.win.idx == -2) {
 		   MSG_ERR("vo_vesa: Can't find neither DGA nor relocatable window's frame.\n");
 		   return -1;
 		}
-		if(!HAS_DGA())
-		{
-		  if(priv.subdev_flags & SUBDEV_FORCEDGA)
-		  {
+		if(!HAS_DGA()) {
+		  if(priv.subdev_flags & SUBDEV_FORCEDGA) {
 			MSG_ERR("vo_vesa: you've forced DGA. Exiting\n");
 			return -1;
 		  }
-		  if(!(win_seg = priv.win.idx == 0 ? priv.vmode_info.WinASegment:priv.vmode_info.WinBSegment))
-		  {
+		  if(!(win_seg = priv.win.idx == 0 ? priv.vmode_info.WinASegment:priv.vmode_info.WinBSegment)) {
 		    MSG_ERR("vo_vesa: Can't find valid window address\n");
 		    return -1;
 		  }
@@ -670,33 +637,28 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 			,priv.dstW,priv.dstH
 			,priv.vmode_info.XResolution,priv.vmode_info.YResolution
 			,priv.x_offset,priv.y_offset);
-		if(HAS_DGA())
-		{
+		if(HAS_DGA()) {
 		  priv.dga_buffer = priv.win.ptr; /* Trickly ;) */
 		  cpy_blk_fnc = __vbeCopyBlockFast;
 		}
-		else
-		{
+		else {
 		  cpy_blk_fnc = __vbeCopyBlock;
 #ifdef CONFIG_VIDIX
 		  if(!priv.vidix_name)
 #endif
 		  {
-		    if(!(priv.dga_buffer = memalign(64,priv.vmode_info.XResolution*priv.vmode_info.YResolution*priv.dstBpp)))
-		    {
+		    if(!(priv.dga_buffer = memalign(64,priv.vmode_info.XResolution*priv.vmode_info.YResolution*priv.dstBpp))) {
 		      MSG_ERR("vo_vesa: Can't allocate temporary buffer\n");
 		      return -1;
 		    }
 		    MSG_V("vo_vesa: dga emulator was allocated = %p\n",priv.dga_buffer);
 		  }
 		}
-		if((err=vbeSaveState(&priv.init_state)) != VBE_OK)
-		{
+		if((err=vbeSaveState(&priv.init_state)) != VBE_OK) {
 			PRINT_VBE_ERR("vbeSaveState",err);
 			return -1;
 		}
-		if((err=vbeSetMode(priv.video_mode,NULL)) != VBE_OK)
-		{
+		if((err=vbeSetMode(priv.video_mode,NULL)) != VBE_OK) {
 			PRINT_VBE_ERR("vbeSetMode",err);
 			return -1;
 		}
@@ -704,51 +666,41 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 		/* Below 'return -1' is impossible */
 		MSG_V("vo_vesa: Graphics mode was activated\n");
 #ifdef CONFIG_VIDIX
-		if(priv.vidix_name)
-		{
+		if(priv.vidix_name) {
 		  if(vidix_init(width,height,priv.x_offset,priv.y_offset,priv.dstW,
 				priv.dstH,format,priv.dstBpp,
-				priv.vmode_info.XResolution,priv.vmode_info.YResolution,info) != 0)
-		  {
+				priv.vmode_info.XResolution,priv.vmode_info.YResolution,info) != 0) {
 		    MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
 		    priv.vidix_name = NULL;
 		    vesa_term();
 		    return -1;
 		  }
 		  else MSG_V("vo_vesa: Using VIDIX\n");
-		  if(vidix_start()!=0)
-		  {
+		  if(vidix_start()!=0) {
 		    vesa_term();
 		    return -1;
 		  }
 		}
 #endif
 	}
-	else
-	{
+	else {
 	  MSG_ERR("vo_vesa: Can't find mode for: %ux%u@%u\n",width,height,bpp);
 	  return -1;
 	}
 	MSG_V("vo_vesa: VESA initialization complete\n");
-	if(HAS_DGA() && vo.doublebuffering)
-	{
-	    for(i=0;i<priv.multi_size;i++)
-	    {
+	if(HAS_DGA()) {
+	    for(i=0;i<priv.multi_size;i++) {
 		priv.win.ptr = priv.dga_buffer = priv.video_base + priv.multi_buff[i];
 		if(verbose>1) paintBkGnd();
 		else	      clear_screen_fast();
 	    }
-	}
-	else
-	{
+	} else {
+	    int x;
 	    if(verbose>1) paintBkGnd();
 	    else clear_screen();
-	    {
-	        int x;
-	        x = (priv.vmode_info.XResolution/priv.vmode_info.XCharSize)/2-strlen(title)/2;
-	        if(x < 0) x = 0;
-	        vbeWriteString(x,0,7,title);
-	    }
+	    x = (priv.vmode_info.XResolution/priv.vmode_info.XCharSize)/2-strlen(title)/2;
+	    if(x < 0) x = 0;
+	    vbeWriteString(x,0,7,title);
 	}
 	return 0;
 }

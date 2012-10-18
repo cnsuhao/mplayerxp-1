@@ -176,7 +176,6 @@ void __FASTCALL__ vo_preinit_structs( void )
     memset(&dri,0,sizeof(dri_priv_t));
     dri.nframes=1;
     memset(&vo,0,sizeof(vo_priv_t));
-    vo.doublebuffering=1;
     vo.movie_aspect=-1.0;
     vo.flip=-1;
     vo.da_buffs=64;
@@ -691,12 +690,10 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 void vo_change_frame(void)
 {
     MSG_DBG2("dri_vo_dbg: vo_change_frame [dri.active_frame=%u]\n",dri.active_frame);
-    if(vo.doublebuffering || (dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
-    {
-	video_out->change_frame(dri.active_frame);
-	dri.active_frame = (dri.active_frame+1)%dri.nframes;
-	if(!dri.has_thread) dri.xp_frame = (dri.xp_frame+1)%dri.nframes;
-    }
+
+    video_out->change_frame(dri.active_frame);
+    dri.active_frame = (dri.active_frame+1)%dri.nframes;
+    if(!dri.has_thread) dri.xp_frame = (dri.xp_frame+1)%dri.nframes;
 }
 
 void vo_flush_pages(void)
@@ -709,56 +706,56 @@ void vo_flush_pages(void)
 
 /* DRAW OSD */
 
-static void __FASTCALL__ clear_rect(unsigned y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
+static void __FASTCALL__ clear_rect(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
 {
   unsigned i;
   for(i=0;i<h;i++)
   {
-      if(y0+i<dri.cap.y||y0+i>=dri.cap.y+dri.cap.h) memset(dest,filler,stride);
+      if(_y0+i<dri.cap.y||_y0+i>=dri.cap.y+dri.cap.h) memset(dest,filler,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect2(unsigned y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
+static void __FASTCALL__ clear_rect2(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
 {
   unsigned i;
   unsigned y1 = dri.cap.y/2;
   unsigned y2 = (dri.cap.y+dri.cap.h)/2;
   for(i=0;i<h;i++)
   {
-      if(y0+i<y1||y0+i>=y2) memset(dest,filler,stride);
+      if(_y0+i<y1||_y0+i>=y2) memset(dest,filler,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect4(unsigned y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
+static void __FASTCALL__ clear_rect4(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
 {
   unsigned i;
   unsigned y1 = dri.cap.y/4;
   unsigned y2 = (dri.cap.y+dri.cap.h)/4;
   for(i=0;i<h;i++)
   {
-      if(y0+i<y1||y0+i>=y2) memset(dest,filler,stride);
+      if(_y0+i<y1||_y0+i>=y2) memset(dest,filler,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect_rgb(unsigned y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
+static void __FASTCALL__ clear_rect_rgb(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
 {
   unsigned i;
   for(i=0;i<h;i++)
   {
-      if(y0+i<dri.cap.y||y0+i>=dri.cap.y+dri.cap.h) memset(dest,0,stride);
+      if(_y0+i<dri.cap.y||_y0+i>=dri.cap.y+dri.cap.h) memset(dest,0,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect_yuy2(unsigned y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
+static void __FASTCALL__ clear_rect_yuy2(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
 {
   unsigned i;
   for(i=0;i<h;i++)
   {
-	if(y0+i<dri.cap.y||y0+i>=dri.cap.y+dri.cap.h) 
+	if(_y0+i<dri.cap.y||_y0+i>=dri.cap.y+dri.cap.h) 
 	{
 	    uint32_t *dst32;
 	    unsigned j,size32;
@@ -773,9 +770,9 @@ static void __FASTCALL__ clear_rect_yuy2(unsigned y0,unsigned h,uint8_t *dest,un
   }
 }
 
-static void __FASTCALL__ dri_remove_osd(int x0,int y0, int w,int h)
+static void __FASTCALL__ dri_remove_osd(int x0,int _y0, int w,int h)
 {
-    if(x0+w<=dri.cap.width&&y0+h<=dri.cap.height)
+    if(x0+w<=dri.cap.width&&_y0+h<=dri.cap.height)
     switch(dri.cap.fourcc)
     {
 	case IMGFMT_RGB15:
@@ -786,39 +783,39 @@ static void __FASTCALL__ dri_remove_osd(int x0,int y0, int w,int h)
 	case IMGFMT_BGR24:
 	case IMGFMT_RGB32:
 	case IMGFMT_BGR32:
-		clear_rect_rgb( y0,h,dri.surf[dri.active_frame].planes[0]+y0*dri.cap.strides[0]+x0*((dri.bpp+7)/8),
+		clear_rect_rgb( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0*((dri.bpp+7)/8),
 			    w*(dri.bpp+7)/8,dri.cap.strides[0]);
 		break;
 	case IMGFMT_YVYU:
 	case IMGFMT_YUY2:
-		clear_rect_yuy2( y0,h,dri.surf[dri.active_frame].planes[0]+y0*dri.cap.strides[0]+x0*2,
+		clear_rect_yuy2( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0*2,
 			    w*2,dri.cap.strides[0]);
 		break;
 	case IMGFMT_UYVY:
-		clear_rect_yuy2( y0,h,dri.surf[dri.active_frame].planes[0]+y0*dri.cap.strides[0]+x0*2+1,
+		clear_rect_yuy2( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0*2+1,
 			    w*2,dri.cap.strides[0]);
 		break;
 	case IMGFMT_Y800:
-		clear_rect( y0,h,dri.surf[dri.active_frame].planes[0]+y0*dri.cap.strides[0]+x0,
+		clear_rect( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0,
 			    w,dri.cap.strides[0],0x10);
 		break;
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
 	case IMGFMT_IYUV:
-		clear_rect( y0,h,dri.surf[dri.active_frame].planes[0]+y0*dri.cap.strides[0]+x0,
+		clear_rect( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0,
 			    w,dri.cap.strides[0],0x10);
-		clear_rect2( y0/2,h/2,dri.surf[dri.active_frame].planes[1]+y0/2*dri.cap.strides[1]+x0/2,
+		clear_rect2( _y0/2,h/2,dri.surf[dri.active_frame].planes[1]+_y0/2*dri.cap.strides[1]+x0/2,
 			    w/2,dri.cap.strides[1],0x80);
-		clear_rect2( y0/2,h/2,dri.surf[dri.active_frame].planes[2]+y0/2*dri.cap.strides[2]+x0/2,
+		clear_rect2( _y0/2,h/2,dri.surf[dri.active_frame].planes[2]+_y0/2*dri.cap.strides[2]+x0/2,
 			    w/2,dri.cap.strides[2],0x80);
 		break;
 	case IMGFMT_YVU9:
 	case IMGFMT_IF09:
-		clear_rect( y0,h,dri.surf[dri.active_frame].planes[0]+y0*dri.cap.strides[0]+x0,
+		clear_rect( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0,
 			    w,dri.cap.strides[0],0x10);
-		clear_rect4( y0/4,h/4,dri.surf[dri.active_frame].planes[1]+y0/4*dri.cap.strides[1]+x0/4,
+		clear_rect4( _y0/4,h/4,dri.surf[dri.active_frame].planes[1]+_y0/4*dri.cap.strides[1]+x0/4,
 			    w/4,dri.cap.strides[1],0x80);
-		clear_rect4( y0/4,h/4,dri.surf[dri.active_frame].planes[2]+y0/4*dri.cap.strides[2]+x0/4,
+		clear_rect4( _y0/4,h/4,dri.surf[dri.active_frame].planes[2]+_y0/4*dri.cap.strides[2]+x0/4,
 			    w/4,dri.cap.strides[2],0x80);
 		break;
     }
@@ -857,15 +854,15 @@ static draw_alpha_f __FASTCALL__ get_draw_alpha(uint32_t fmt) {
   return NULL;
 }
 
-static void __FASTCALL__ dri_draw_osd(int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
+static void __FASTCALL__ dri_draw_osd(int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
 {
     int finalize=vo_is_final();
-    if(x0+w<=dri.cap.width&&y0+h<=dri.cap.height)
+    if(x0+w<=dri.cap.width&&_y0+h<=dri.cap.height)
     {
 	if(!draw_alpha) draw_alpha=get_draw_alpha(dri.cap.fourcc);
 	if(draw_alpha)
 	    (*draw_alpha)(w,h,src,srca,stride,
-			    dri.surf[dri.active_frame].planes[0]+dri.cap.strides[0]*y0+x0*((dri.bpp+7)/8),
+			    dri.surf[dri.active_frame].planes[0]+dri.cap.strides[0]*_y0+x0*((dri.bpp+7)/8),
 			    dri.cap.strides[0],finalize);
     }
 }

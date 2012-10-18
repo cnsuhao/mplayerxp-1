@@ -1107,7 +1107,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
 	    MSG_DBG2(FBDEV "fb.L123123875 @ %p\n", fb.L123123875);
 	    MSG_V(FBDEV "pixel per fb.line: %d\n", fb.line_len / fb.pixel_size);
 
-	    fb.total_fr=vo.doublebuffering?vo.da_buffs:1;
+	    fb.total_fr=vo.da_buffs;
 	    for(i=0;i<fb.total_fr;i++)
 	    if (!(fb.next_frame[i] = (uint8_t *) malloc(fb.out_width * fb.out_height * fb.pixel_size))) {
 		MSG_ERR(FBDEV "Can't malloc fb.next_frame: %s\n", strerror(errno));

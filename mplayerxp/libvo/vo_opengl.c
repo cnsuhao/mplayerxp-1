@@ -181,7 +181,7 @@ static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_
  if( flags&0x02 ) vm = 1;
 #endif
  vo.flip=flags&VOFLAG_FLIPPING;
- vogl.num_buffers=vo.doublebuffering?vo.da_buffs:1;
+ vogl.num_buffers=vo.da_buffs;
 
 
  aspect_save_screenres(vo.screenwidth,vo.screenheight);

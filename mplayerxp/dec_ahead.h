@@ -20,7 +20,7 @@
 
 enum seek_states { NoSeek=0, PreSeek, Seek };
 
-enum xp_modes { XP_None=0, XP_Video, XP_VideoAudio, XP_VAPlay, XP_VAFull };
+enum xp_modes { XP_Old=0, XP_Video, XP_VideoAudio, XP_VAPlay, XP_VAFull };
 
 extern pthread_mutex_t vdec_active_mutex; /* it's related with video decoding (main process) */
 extern pthread_mutex_t vdec_locked_mutex; /* it's related with video decoding (thread) */

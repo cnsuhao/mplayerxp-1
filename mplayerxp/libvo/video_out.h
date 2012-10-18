@@ -244,7 +244,6 @@ typedef struct vo_priv_s {
 
     vo_rect_t		prev;
 
-    int			doublebuffering;
     int			vsync;
     int			fs;
     int			fsmode;

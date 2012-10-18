@@ -760,7 +760,7 @@ static int setup_surfaces( void )
 {
     struct sdl_priv_s *priv = &sdl_priv;
     unsigned i,retval;
-    priv->num_buffs=vo.doublebuffering?vo.da_buffs:1;
+    priv->num_buffs=vo.da_buffs;
 #ifdef CONFIG_VIDIX
     if(!vidix_name)
     {

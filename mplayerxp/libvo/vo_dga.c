@@ -746,8 +746,6 @@ static uint32_t __FASTCALL__ config( uint32_t width,  uint32_t height,
   vo_dga.dbf_mem_offset[0] = 0;
   dest_frame_size = vo_dga.width*HW_MODE.vdm_bytespp*vo_dga.vp_height;
 
-  if(vo.doublebuffering)
-  {
    vo_dga.num_buffers = (ram_size*1024)/dest_frame_size;
    if(vo_dga.num_buffers > vo.da_buffs) vo_dga.num_buffers = vo.da_buffs;
    if(vo_dga.num_buffers > MAX_DRI_BUFFERS) vo_dga.num_buffers = MAX_DRI_BUFFERS;
@@ -757,7 +755,7 @@ static uint32_t __FASTCALL__ config( uint32_t width,  uint32_t height,
 	vo_dga.dbf_y_offset[freq] = vo_dga.dbf_y_offset[freq-1] + vo_dga.vp_height;
 	vo_dga.dbf_mem_offset[freq] = vo_dga.dbf_mem_offset[freq-1] + dest_frame_size;
    }
-  }
+
   /* clear screen */
   for(freq=0;freq<vo_dga.num_buffers;freq++)
   {

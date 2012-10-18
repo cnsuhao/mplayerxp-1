@@ -107,13 +107,10 @@ extern vf_cfg_t vf_cfg; // Configuration for audio filters
 
 static const config_t xpcore_config[]={
 	{"xp", &enable_xp, CONF_TYPE_INT, CONF_RANGE, 0, 4, NULL, "starts MPlayerXP in multi-thread and multi-buffer XP mode"},
-	{"noxp", &enable_xp, CONF_TYPE_FLAG, 0, 1, 0, NULL, "starts MPlayerXP in single-thread mode"},
 	{"dump", &stream_dump, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies dump type and name for the dump of stream"},
 	{"gomp", &enable_gomp, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables usage of OpenMP extensions"},
 	{"nogomp", &enable_gomp, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables usage of OpenMP extensions"},
 	{"da_buffs", &vo.da_buffs, CONF_TYPE_INT, CONF_RANGE, 4, 1024, NULL, "specifies number of buffers for decoding-ahead in XP mode"},
-	{"double", &vo.doublebuffering, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables double-buffering for single-thread decoding"},
-	{"nodouble", &vo.doublebuffering, CONF_TYPE_FLAG, 0, 1, 0, NULL, "enables single-buffer for single-thread decoding"},
 	{"cache", &stream_cache_size, CONF_TYPE_INT, CONF_RANGE, 4, 65536, NULL,"specifies amount of memory for precaching a file/URL"},
 	{"nocache", &stream_cache_size, CONF_TYPE_FLAG, 0, 1, 0, NULL,"disables precaching a file/URL"},
 	{"autoq", &auto_quality, CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL, "dynamically changes the level of postprocessing depending on spare CPU time available"},

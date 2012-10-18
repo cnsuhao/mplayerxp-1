@@ -425,7 +425,7 @@ int  __FASTCALL__ vidix_init(unsigned src_width,unsigned src_height,
 	priv.play->dest.y = y_org;
 	priv.play->dest.w = dst_width;
 	priv.play->dest.h = dst_height;
-	priv.play->num_frames=(vo.doublebuffering && vo.use_bm != 1)?NUM_FRAMES-1:1;
+	priv.play->num_frames=(vo.use_bm!=1)?NUM_FRAMES-1:1;
 	if(priv.play->num_frames > vo.da_buffs) priv.play->num_frames = vo.da_buffs;
 	priv.play->src.pitch.y = priv.play->src.pitch.u = priv.play->src.pitch.v = 0;
 	if(info)
