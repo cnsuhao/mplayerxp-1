@@ -3059,7 +3059,7 @@ extern int videobuf_code_len;
 extern int sync_video_packet(demux_stream_t *);
 extern int skip_video_packet(demux_stream_t *);
 
-static void ts_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
+static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 {
 	demux_stream_t *d_audio=demuxer->audio;
 	demux_stream_t *d_video=demuxer->video;
@@ -3094,16 +3094,16 @@ static void ts_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
 			video_stats = sh_video->i_bps;
 	}
 
-	newpos = (flags & DEMUX_SEEK_SET) ? demuxer->movi_start : demuxer->filepos;
-	if(flags & DEMUX_SEEK_PERCENTS) // float seek 0..1
-		newpos+=(demuxer->movi_end-demuxer->movi_start)*rel_seek_secs;
+	newpos = (seeka->flags & DEMUX_SEEK_SET) ? demuxer->movi_start : demuxer->filepos;
+	if(seeka->flags & DEMUX_SEEK_PERCENTS) // float seek 0..1
+		newpos+=(demuxer->movi_end-demuxer->movi_start)*seeka->secs;
 	else
 	{
 		// time seek (secs)
 		if(! video_stats) // unspecified or VBR
-			newpos += 2324*75*rel_seek_secs; // 174.3 kbyte/sec
+			newpos += 2324*75*seeka->secs; // 174.3 kbyte/sec
 		else
-			newpos += video_stats*rel_seek_secs;
+			newpos += video_stats*seeka->secs;
 	}
 
 

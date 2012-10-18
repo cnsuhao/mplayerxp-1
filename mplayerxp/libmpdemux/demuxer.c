@@ -642,7 +642,7 @@ demuxer_t* demux_open(stream_t *vs,int file_format,int audio_id,int video_id,int
   return vd;
 }
 
-int demux_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
     sh_audio_t *sh_audio=d_audio->sh;
@@ -662,7 +662,7 @@ int demux_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
     // clear demux buffers:
     if(sh_audio){ ds_free_packs(d_audio);sh_audio->a_buffer_len=0;}
     ds_free_packs(d_video);
-    
+
     stream_set_eof(demuxer->stream,0); // clear eof flag
     demuxer->video->eof=0;
     demuxer->audio->eof=0;
@@ -675,7 +675,7 @@ int demux_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
     if(sh_audio) sh_audio->timer=0;
     if(sh_video) sh_video->timer=0; // !!!!!!
 #endif
-    if(demuxer->driver->seek) demuxer->driver->seek(demuxer,rel_seek_secs,flags);
+    if(demuxer->driver->seek) demuxer->driver->seek(demuxer,seeka);
     else MSG_WARN("Demuxer seek error\n");
     return 1;
 }

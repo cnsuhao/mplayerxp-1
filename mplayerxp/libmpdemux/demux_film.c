@@ -49,16 +49,16 @@ typedef struct _film_data_t
   unsigned int film_version;
 } film_data_t;
 
-static void film_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
+static void film_seek(demuxer_t *demuxer, const seek_args_t* seeka)
 {
   film_data_t *film_data = (film_data_t *)demuxer->priv;
-  int new_current_chunk=(flags&DEMUX_SEEK_SET)?0:film_data->current_chunk;
+  int new_current_chunk=(seeka->flags&DEMUX_SEEK_SET)?0:film_data->current_chunk;
 
-  new_current_chunk += rel_seek_secs *(flags&DEMUX_SEEK_PERCENTS?film_data->total_chunks:film_data->chunks_per_second);
+  new_current_chunk += seeka->secs *(seeka->flags&DEMUX_SEEK_PERCENTS?film_data->total_chunks:film_data->chunks_per_second);
 
 MSG_V("current, total chunks = %d, %d; seek %5.3f sec, new chunk guess = %d\n",
   film_data->current_chunk, film_data->total_chunks,
-  rel_seek_secs, new_current_chunk);
+  seeka->secs, new_current_chunk);
 
   // check if the new chunk number is valid
   if (new_current_chunk < 0)
@@ -74,9 +74,9 @@ MSG_V("current, total chunks = %d, %d; seek %5.3f sec, new chunk guess = %d\n",
   film_data->current_chunk = new_current_chunk;
 
 MSG_V("  (flags = %X)  actual new chunk = %d (syncinfo1 = %08X)\n",
-  flags, film_data->current_chunk, film_data->chunks[film_data->current_chunk].syncinfo1);
+  seeka->flags, film_data->current_chunk, film_data->chunks[film_data->current_chunk].syncinfo1);
   demuxer->video->pts=film_data->chunks[film_data->current_chunk].pts;
-  
+
 }
 
 // return value:

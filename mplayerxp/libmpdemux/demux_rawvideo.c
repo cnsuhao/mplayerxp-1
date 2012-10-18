@@ -128,13 +128,13 @@ static int rawvideo_demux(demuxer_t* demuxer, demux_stream_t *ds) {
   return 1;
 }
 
-static void rawvideo_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void rawvideo_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   stream_t* s = demuxer->stream;
   sh_video_t* sh_video = demuxer->video->sh;
   off_t pos;
 
-  pos =(flags & DEMUX_SEEK_SET)?demuxer->movi_start:stream_tell(s);
-  pos+=(flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_video->i_bps)*rel_seek_secs;
+  pos =(seeka->flags & DEMUX_SEEK_SET)?demuxer->movi_start:stream_tell(s);
+  pos+=(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_video->i_bps)*seeka->secs;
   pos/=imgsize;
   stream_seek(s,pos*imgsize);
   sh_video->timer=pos * sh_video->frametime;

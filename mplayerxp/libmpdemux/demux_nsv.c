@@ -33,7 +33,7 @@ typedef struct {
 /**
  * Seeking still to be implemented
  */
-static void nsv_seek ( demuxer_t *demuxer, float rel_seek_secs, int flags )
+static void nsv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 {
 // seeking is not yet implemented
 }

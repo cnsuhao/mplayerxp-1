@@ -19,7 +19,7 @@ demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd) {
   dd_priv_t* priv;
 
   ret = (demuxer_t*)calloc(1,sizeof(demuxer_t));
-  
+
   priv = (dd_priv_t*)malloc(sizeof(dd_priv_t));
   priv->vd = vd;
   priv->ad = ad;
@@ -30,15 +30,15 @@ demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd) {
   // Video is the most important :-)
   ret->stream = vd->stream;
   ret->flags = (vd->flags&DEMUXF_SEEKABLE) && (ad->flags&DEMUXF_SEEKABLE) && (sd->flags&DEMUXF_SEEKABLE);
- 
+
   ret->video = vd->video;
   ret->audio = ad->audio;
   ret->sub = sd->sub;
-  
+
   return ret;
 }
 
-int demux_demuxers_fill_buffer(demuxer_t *demux,demux_stream_t *ds) {
+static int demux_demuxers_fill_buffer(demuxer_t *demux,demux_stream_t *ds) {
   dd_priv_t* priv;
 
   priv=demux->priv;
@@ -49,27 +49,28 @@ int demux_demuxers_fill_buffer(demuxer_t *demux,demux_stream_t *ds) {
     return demux_fill_buffer(priv->ad,ds);
   else if(ds->demuxer == priv->sd)
     return demux_fill_buffer(priv->sd,ds);
- 
+
   MSG_ERR("Demux demuxers fill_buffer error : bad demuxer : not vd, ad nor sd\n");
   return 0;
 }
 
-void demux_demuxers_seek(demuxer_t *demuxer,float rel_seek_secs,int flags) {
+static void demux_demuxers_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
   dd_priv_t* priv;
   float pos;
   priv=demuxer->priv;
+  seek_args_t seek_p = { seeka->secs, 1 };
 
   stream_set_eof(priv->ad->stream,0);
   stream_set_eof(priv->sd->stream,0);
 
   // Seek video
-  demux_seek(priv->vd,rel_seek_secs,flags);
+  demux_seek(priv->vd,seeka);
   // Get the new pos
   pos = demuxer->video->pts;
 
   if(priv->ad != priv->vd) {
     sh_audio_t* sh = (sh_audio_t*)demuxer->audio->sh;
-    demux_seek(priv->ad,pos,1);
+    demux_seek(priv->ad,&seek_p);
     // In case the demuxer don't set pts
     if(!demuxer->audio->pts)
       demuxer->audio->pts = pos-((ds_tell_pts(demuxer->audio)-sh->a_in_buffer_len)/(float)sh->i_bps);
@@ -78,11 +79,11 @@ void demux_demuxers_seek(demuxer_t *demuxer,float rel_seek_secs,int flags) {
   }
 
   if(priv->sd != priv->vd)
-      demux_seek(priv->sd,pos,1);
+      demux_seek(priv->sd,&seek_p);
 
 }
 
-void demux_close_demuxers(demuxer_t* demuxer) {
+static void demux_close_demuxers(demuxer_t* demuxer) {
   dd_priv_t* priv = demuxer->priv;
 
   if(priv->vd)
@@ -96,4 +97,3 @@ void demux_close_demuxers(demuxer_t* demuxer) {
   demux_info_free(demuxer);
   free(demuxer);
 }
-  

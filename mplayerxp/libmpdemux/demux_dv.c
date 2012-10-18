@@ -46,20 +46,17 @@ typedef struct
    dv_decoder_t *decoder;
 } rawdv_frames_t;
 
-static void dv_seek(demuxer_t *demuxer,float rel_seek_secs,float audio_delay,int flags)
+static void dv_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 {
    rawdv_frames_t *frames = (rawdv_frames_t *)demuxer->priv;
    sh_video_t *sh_video = demuxer->video->sh;
-   off_t newpos=(flags&DEMUX_SEEK_SET)?0:frames->current_frame;
-   if(flags&DEMUX_SEEK_PERCENTS)
-   {
+   off_t newpos=(seeka->flags&DEMUX_SEEK_SET)?0:frames->current_frame;
+   if(seeka->flags&DEMUX_SEEK_PERCENTS) {
       // float 0..1
-      newpos+=rel_seek_secs*frames->frame_number;
-   }
-   else
-   {
+      newpos+=seeka->secs*frames->frame_number;
+   } else {
       // secs
-      newpos+=rel_seek_secs*sh_video->fps;
+      newpos+=seeka->secs*sh_video->fps;
    }
    if(newpos<0)
       newpos=0;

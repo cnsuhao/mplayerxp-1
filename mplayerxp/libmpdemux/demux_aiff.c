@@ -197,13 +197,13 @@ static int aiff_demux(demuxer_t* demuxer, demux_stream_t *ds) {
   return 1;
 }
 
-static void aiff_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void aiff_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   stream_t* s = demuxer->stream;
   sh_audio_t* sh_audio = demuxer->audio->sh;
   off_t base,pos;
 
-  base = (flags&DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
-  pos=base+(flags&DEMUX_SEEK_PERCENTS?(demuxer->movi_end - demuxer->movi_start):sh_audio->i_bps)*rel_seek_secs;
+  base = (seeka->flags&DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
+  pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?(demuxer->movi_end - demuxer->movi_start):sh_audio->i_bps)*seeka->secs;
   pos -= (pos % (sh_audio->channels * sh_audio->samplesize) );
   stream_seek(s,pos);
   resync_audio_stream(sh_audio);

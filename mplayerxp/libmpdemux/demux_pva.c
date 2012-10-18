@@ -471,7 +471,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 	return 1;
 }
 
-static void pva_seek(demuxer_t * demuxer,float rel_seek_secs,int flags)
+static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
 {
 	int total_bitrate=0;
 	off_t dest_offset;
@@ -487,7 +487,7 @@ static void pva_seek(demuxer_t * demuxer,float rel_seek_secs,int flags)
 	 * If the calculated SOF offset is negative, seek to the beginning of the file.
 	 */
 	
-	dest_offset=(flags&DEMUX_SEEK_SET?demuxer->movi_start:stream_tell(demuxer->stream))+rel_seek_secs*total_bitrate;
+	dest_offset=(seeka->flags&DEMUX_SEEK_SET?demuxer->movi_start:stream_tell(demuxer->stream))+seeka->secs*total_bitrate;
 	if(dest_offset<0) dest_offset=0;
 	
 	stream_seek(demuxer->stream,dest_offset);

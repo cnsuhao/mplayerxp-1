@@ -228,10 +228,10 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
     return demuxer;
 }
 
-static void y4m_seek(demuxer_t *demuxer, float rel_seek_secs, int flags) {
+static void y4m_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
     sh_video_t* sh = demuxer->video->sh;
     y4m_priv_t* priv = demuxer->priv;
-    int rel_seek_frames = sh->fps*rel_seek_secs;
+    int rel_seek_frames = sh->fps*seeka->secs;
     int size = 3*sh->disp_w*sh->disp_h/2;
     off_t curr_pos = stream_tell(demuxer->stream);
 

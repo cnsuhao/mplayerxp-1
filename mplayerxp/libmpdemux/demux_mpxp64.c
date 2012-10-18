@@ -794,16 +794,16 @@ static int mpxpav64_sync(demuxer_t *demuxer)
 }
 
 #define USE_INDEXES 1
-static void mpxpav64_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     mpxpav64_priv_t *priv=demuxer->priv;
     float brate=priv->fprop.AveBitrate;
-    off_t rel_seek_bytes=(flags&DEMUX_SEEK_PERCENTS)?
-	(rel_seek_secs*(demuxer->movi_end-demuxer->movi_start)):
-	(rel_seek_secs*brate);
+    off_t rel_seek_bytes=(seeka->flags&DEMUX_SEEK_PERCENTS)?
+	(seeka->secs*(demuxer->movi_end-demuxer->movi_start)):
+	(seeka->secs*brate);
     uint64_t newpos,cpos;
     int has_idx;
     cpos=stream_tell(demuxer->stream);
-    newpos=((flags&DEMUX_SEEK_SET)?demuxer->movi_start:demuxer->filepos)+rel_seek_bytes;
+    newpos=((seeka->flags&DEMUX_SEEK_SET)?demuxer->movi_start:demuxer->filepos)+rel_seek_bytes;
     MSG_V("MPXPAV64_SEEK: We want %016llX newpos\n",newpos);
     /* have indexes */
     has_idx=0;

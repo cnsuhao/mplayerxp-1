@@ -546,24 +546,24 @@ do{
   return 1;
 }
 
-static void mpgps_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
     sh_audio_t *sh_audio=d_audio->sh;
     sh_video_t *sh_video=d_video->sh;
 
   //================= seek in MPEG ==========================
-    off_t newpos=(flags&DEMUX_SEEK_SET)?demuxer->movi_start:demuxer->filepos;
+    off_t newpos=(seeka->flags&DEMUX_SEEK_SET)?demuxer->movi_start:demuxer->filepos;
 	
-    if(flags&DEMUX_SEEK_PERCENTS){
+    if(seeka->flags&DEMUX_SEEK_PERCENTS){
 	// float seek 0..1
-	newpos+=(demuxer->movi_end-demuxer->movi_start)*rel_seek_secs;
+	newpos+=(demuxer->movi_end-demuxer->movi_start)*seeka->secs;
     } else {
 	// time seek (secs)
         if(!sh_video->i_bps) // unspecified or VBR
-          newpos+=2324*75*rel_seek_secs; // 174.3 kbyte/sec
+          newpos+=2324*75*seeka->secs; // 174.3 kbyte/sec
         else
-          newpos+=sh_video->i_bps*rel_seek_secs;
+          newpos+=sh_video->i_bps*seeka->secs;
     }
 
         if(newpos<demuxer->movi_start){
@@ -591,7 +591,7 @@ static void mpgps_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
 	  int i;
           if(sh_audio && !d_audio->eof && d_video->pts && d_audio->pts){
 	    float a_pts=d_audio->pts;
-            a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+	    a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    if(d_video->pts>a_pts){
 	      skip_audio_frame(sh_audio);  // sync audio
 	      continue;

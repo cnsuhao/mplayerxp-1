@@ -1250,7 +1250,7 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
 
 }
 
-static void ogg_seek(demuxer_t *demuxer,float rel_seek_secs,int flags) {
+static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
   ogg_demuxer_t* ogg_d = demuxer->priv;
   ogg_sync_state* sync = &ogg_d->sync;
   ogg_page* page= &ogg_d->page;
@@ -1294,14 +1294,14 @@ static void ogg_seek(demuxer_t *demuxer,float rel_seek_secs,int flags) {
   old_pos = ogg_d->pos;
 
   //calculate the granulepos to seek to
-    gp = flags & DEMUX_SEEK_SET ? 0 : os->lastpos;
-  if(flags & DEMUX_SEEK_PERCENTS) {
+    gp = seeka->flags & DEMUX_SEEK_SET ? 0 : os->lastpos;
+  if(seeka->flags & DEMUX_SEEK_PERCENTS) {
     if (ogg_d->final_granulepos > 0)
-      gp += ogg_d->final_granulepos * rel_seek_secs;
+      gp += ogg_d->final_granulepos * seeka->secs;
       else
-      gp += rel_seek_secs * (demuxer->movi_end - demuxer->movi_start) * os->lastpos / ogg_d->pos;
+      gp += seeka->secs * (demuxer->movi_end - demuxer->movi_start) * os->lastpos / ogg_d->pos;
   } else
-      gp += rel_seek_secs * rate;
+      gp += seeka->secs * rate;
   if (gp < 0) gp = 0;
 
   //calculate the filepos to seek to
@@ -1320,14 +1320,14 @@ static void ogg_seek(demuxer_t *demuxer,float rel_seek_secs,int flags) {
     pos = ogg_d->syncpoints[sp].page_pos;
     precision = 0;
   } else {
-    pos = flags & DEMUX_SEEK_SET ? 0 : ogg_d->pos;
-    if(flags & DEMUX_SEEK_PERCENTS)
-      pos += (demuxer->movi_end - demuxer->movi_start) * rel_seek_secs;
+    pos = seeka->flags & DEMUX_SEEK_SET ? 0 : ogg_d->pos;
+    if(seeka->flags & DEMUX_SEEK_PERCENTS)
+      pos += (demuxer->movi_end - demuxer->movi_start) * seeka->secs;
     else {
       if (ogg_d->final_granulepos > 0) {
-        pos += rel_seek_secs * (demuxer->movi_end - demuxer->movi_start) / (ogg_d->final_granulepos / rate);
+        pos += seeka->secs * (demuxer->movi_end - demuxer->movi_start) / (ogg_d->final_granulepos / rate);
       } else if (os->lastpos > 0) {
-      pos += rel_seek_secs * ogg_d->pos / (os->lastpos / rate);
+      pos += seeka->secs * ogg_d->pos / (os->lastpos / rate);
     }
   }
     if (pos < 0) pos = 0;

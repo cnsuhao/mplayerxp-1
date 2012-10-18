@@ -1336,7 +1336,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
   return demuxer;
 }
 
-static void avi_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     avi_priv_t *priv=demuxer->priv;
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
@@ -1346,17 +1346,17 @@ static void avi_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
 
   //FIXME: OFF_T - Didn't check AVI case yet (avi files can't be >2G anyway?)
   //================= seek in AVI ==========================
-    int rel_seek_frames=rel_seek_secs*sh_video->fps;
+    int rel_seek_frames=seeka->secs*sh_video->fps;
     int video_chunk_pos=d_video->pos;
     int i;
 
-      if(flags&DEMUX_SEEK_SET){
+      if(seeka->flags&DEMUX_SEEK_SET){
 	// seek SOF
 	video_chunk_pos=0;
       }
 
-      if(flags&DEMUX_SEEK_PERCENTS){
-	rel_seek_frames=rel_seek_secs*priv->numberofframes;
+      if(seeka->flags&DEMUX_SEEK_PERCENTS){
+	rel_seek_frames=seeka->secs*priv->numberofframes;
       }
 
       priv->skip_video_frames=0;
@@ -1396,7 +1396,7 @@ static void avi_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
       sh_video->num_frames=sh_video->num_frames_decoded=d_video->pack_no;
       priv->avi_video_pts=d_video->pack_no*(float)sh_video->video.dwScale/(float)sh_video->video.dwRate;
       d_video->pos=video_chunk_pos;
-      
+
       MSG_DBG2("V_SEEK:  pack=%d  pts=%5.3f  chunk=%d  \n",d_video->pack_no,priv->avi_video_pts,video_chunk_pos);
 
 // ------------ STEP 2: seek audio, find the right chunk & pos ------------
@@ -1448,12 +1448,12 @@ static void avi_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
 
           MSG_V("SEEK: i=%d (max:%d) dpos=%d (wanted:%d)  \n",
 	      i,chunk_max,(int)d_audio->dpos,curr_audio_pos);
-	      
+
 	} else {
 	    // VBR audio
 	    int chunks=(priv->avi_video_pts)*(float)sh_audio->audio.dwRate/(float)sh_audio->audio.dwScale;
 	    audio_chunk_pos=0;
-	    
+
         // find audio chunk pos:
           for(i=0;i<priv->idx_size && chunks>0;i++){
             int id=((AVIINDEXENTRY *)priv->idx)[i].ckid;
@@ -1474,9 +1474,9 @@ static void avi_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
             }
           }
 	  //if(audio_chunk_pos>chunk_max) audio_chunk_pos=chunk_max;
-	  
+
 	}
-	
+
 	// Now we have:
 	//      audio_chunk_pos = chunk no in index table (it's <=chunk_max)
 	//      skip_audio_bytes = bytes to be skipped after chunk seek

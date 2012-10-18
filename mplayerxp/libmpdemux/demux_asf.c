@@ -678,7 +678,7 @@ return 0;
 }
 
 
-static void asf_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
     asf_priv_t *apriv=demuxer->priv;
@@ -686,12 +686,12 @@ static void asf_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
 
   /*================= seek in ASF ==========================*/
     float p_rate=apriv->asf_packetrate; // packets / sec
-    off_t rel_seek_packs=(flags&DEMUX_SEEK_PERCENTS)?	 // FIXME: int may be enough?
-	(rel_seek_secs*(demuxer->movi_end-demuxer->movi_start)/apriv->asf_packetsize):
-	(rel_seek_secs*p_rate);
+    off_t rel_seek_packs=(seeka->flags&DEMUX_SEEK_PERCENTS)?	 // FIXME: int may be enough?
+	(seeka->secs*(demuxer->movi_end-demuxer->movi_start)/apriv->asf_packetsize):
+	(seeka->secs*p_rate);
     off_t rel_seek_bytes=rel_seek_packs*apriv->asf_packetsize;
     off_t newpos;
-    newpos=((flags&DEMUX_SEEK_SET)?demuxer->movi_start:demuxer->filepos)+rel_seek_bytes;
+    newpos=((seeka->flags&DEMUX_SEEK_SET)?demuxer->movi_start:demuxer->filepos)+rel_seek_bytes;
     if(newpos<0 || newpos<demuxer->movi_start) newpos=demuxer->movi_start;
     stream_seek(demuxer->stream,newpos);
 

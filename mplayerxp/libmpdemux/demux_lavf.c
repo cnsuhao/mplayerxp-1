@@ -473,11 +473,11 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
     return 1;
 }
 
-static void lavf_seek(demuxer_t *demuxer, float rel_seek_secs, int flags){
+static void lavf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     lavf_priv_t *priv = demuxer->priv;
-    MSG_DBG2("lavf_demux(%p, %f, %d)\n", demuxer, rel_seek_secs, flags);
+    MSG_DBG2("lavf_demux(%p, %f, %d)\n", demuxer, seeka->secs, seeka->flags);
 
-    av_seek_frame(priv->avfc, -1, priv->last_pts + rel_seek_secs*AV_TIME_BASE, rel_seek_secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
+    av_seek_frame(priv->avfc, -1, priv->last_pts + seeka->secs*AV_TIME_BASE, seeka->secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
 }
 
 static int lavf_control(demuxer_t *demuxer, int cmd, any_t*arg)

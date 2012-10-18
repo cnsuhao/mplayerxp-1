@@ -639,9 +639,9 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		   // ---
 		   // optional additional atom-based fields
 		   // ([int32_t size,int32_t type,some data ],repeat)
-		} my_stdata;		  
+		} my_stdata;
 #endif		
-		int version, adjust;
+		int version=0, adjust;
 		int is_vorbis = 0;
 		sh_audio_t* sh=new_sh_audio(demuxer,priv->track_db);
 		sh->format=trak->fourcc;
@@ -1070,7 +1070,7 @@ quit_vorbis_block:
 		      // AVC decoder configuration record
 		      MSG_V("MOV: AVC decoder configuration record atom (%d)!\n", atom_len);
 		      if(atom_len > 8) {
-		        int i, poffs, cnt;
+		        int i, poffs, cnt=0;
 		        // Parse some parts of avcC, just for fun :)
 		        // real parsing is done by avc1 decoder
 		        MSG_V("MOV: avcC version: %d\n", *(trak->stdata+pos+8));
@@ -1999,26 +1999,26 @@ if(trak->pos==0 && trak->stream_header_len>0){
     ds_add_packet(ds,dp);
 } else
     ds_read_packet(ds,demuxer->stream,x,pts,pos,DP_NONKEYFRAME);
-    
+
     ++trak->pos;
     return 1;
-    
+
 }
 
-static float mov_seek_track(mov_track_t* trak,float pts,int flags){
-
-    pts*=(flags&DEMUX_SEEK_PERCENTS?trak->length:(float)trak->timescale);
+static float mov_seek_track(mov_track_t* trak,const seek_args_t* seeka){
+    float pts=seeka->secs;
+    pts*=(seeka->flags&DEMUX_SEEK_PERCENTS?trak->length:(float)trak->timescale);
 
 if(trak->samplesize){
     int sample=pts/trak->duration;
-    if(!(flags&DEMUX_SEEK_SET)) sample+=trak->chunks[trak->pos].sample; // relative
+    if(!(seeka->flags&DEMUX_SEEK_SET)) sample+=trak->chunks[trak->pos].sample; // relative
     trak->pos=0;
     while(trak->pos<trak->chunks_size && trak->chunks[trak->pos].sample<sample) ++trak->pos;
     if (trak->pos == trak->chunks_size) return -1;
     pts=(float)(trak->chunks[trak->pos].sample*trak->duration)/(float)trak->timescale;
 } else {
     unsigned int ipts;
-    if(!(flags&DEMUX_SEEK_SET)) pts+=trak->samples[trak->pos].pts;
+    if(!(seeka->flags&DEMUX_SEEK_SET)) pts+=trak->samples[trak->pos].pts;
     if(pts<0) pts=0;
     ipts=pts;
     for(trak->pos=0;trak->pos<trak->samples_size;++trak->pos){
@@ -2042,7 +2042,7 @@ if(trak->samplesize){
 return pts;
 }
 
-static void mov_seek(demuxer_t *demuxer,float pts,int flags){
+static void mov_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     mov_priv_t* priv=demuxer->priv;
     demux_stream_t* ds;
     mov_track_t* trak;
@@ -2052,10 +2052,10 @@ static void mov_seek(demuxer_t *demuxer,float pts,int flags){
     if (trak) {
 	//if(flags&2) pts*=(float)trak->length/(float)trak->timescale;
 	//if(!(flags&1)) pts+=ds->pts;
-	ds->pts=mov_seek_track(trak,pts,flags);
+	ds->pts=mov_seek_track(trak,seeka);
 	if (ds->pts < 0) ds->eof = 1;
-	else pts = ds->pts;
-	flags=DEMUX_SEEK_SET|DEMUX_SEEK_SECONDS;
+//	else pts = ds->pts;
+//	flags=DEMUX_SEEK_SET|DEMUX_SEEK_SECONDS;
     }
 
     ds=demuxer->audio;
@@ -2063,7 +2063,7 @@ static void mov_seek(demuxer_t *demuxer,float pts,int flags){
     if (trak) {
 	//if(flags&2) pts*=(float)trak->length/(float)trak->timescale;
 	//if(!(flags&1)) pts+=ds->pts;
-	ds->pts=mov_seek_track(trak,pts,flags);
+	ds->pts=mov_seek_track(trak,seeka);
 	if (ds->pts < 0) ds->eof = 1;
     }
 }

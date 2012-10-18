@@ -166,7 +166,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
     }
 
     demuxer->flags &= ~DEMUXF_SEEKABLE;
-    
+
     return demuxer;
 }
 

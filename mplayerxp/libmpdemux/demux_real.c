@@ -1499,7 +1499,7 @@ static void real_close(demuxer_t *demuxer)
 }
 
 /* please upload RV10 samples WITH INDEX CHUNK */
-static void real_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
+static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 {
     real_priv_t *priv = demuxer->priv;
     demux_stream_t *d_audio = demuxer->audio;
@@ -1523,7 +1523,7 @@ static void real_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
     if (!streams)
 	return;
 
-    if (flags & DEMUX_SEEK_SET)
+    if (seeka->flags & DEMUX_SEEK_SET)
 	/* seek SOF */
 	priv->current_apacket = priv->current_vpacket = 0;
 
@@ -1533,52 +1533,52 @@ static void real_seek(demuxer_t *demuxer, float rel_seek_secs, int flags)
 	priv->current_apacket = priv->index_table_size[aid] - 1;
 
 //    if (index_mode == 1 || index_mode == 2) {
-    	if (streams & 1) {// use the video index if we have one
+	if (streams & 1) {// use the video index if we have one
             cur_timestamp = priv->index_table[vid][priv->current_vpacket].timestamp;
-	    if (rel_seek_secs > 0)
-	    	while ((priv->index_table[vid][priv->current_vpacket].timestamp - cur_timestamp) < rel_seek_secs * 1000){
-	    		priv->current_vpacket += 1;
-	    		if (priv->current_vpacket >= priv->index_table_size[vid]) {
-	    			priv->current_vpacket = priv->index_table_size[vid] - 1;
+	    if (seeka->secs > 0)
+		while ((priv->index_table[vid][priv->current_vpacket].timestamp - cur_timestamp) < seeka->secs * 1000){
+			priv->current_vpacket += 1;
+			if (priv->current_vpacket >= priv->index_table_size[vid]) {
+				priv->current_vpacket = priv->index_table_size[vid] - 1;
 				if (!retried) {
 					stream_seek(demuxer->stream, priv->index_table[vid][priv->current_vpacket].offset);
-					add_index_segment(demuxer, vid, cur_timestamp + rel_seek_secs * 1000);
+					add_index_segment(demuxer, vid, cur_timestamp + seeka->secs * 1000);
 					retried = 1;
 				}
 				else
-	    				break;
-	    		}
-	    	} 
-	    else if (rel_seek_secs < 0)
-	    	while ((cur_timestamp - priv->index_table[vid][priv->current_vpacket].timestamp) < - rel_seek_secs * 1000){
-	    		priv->current_vpacket -= 1;
-	    		if (priv->current_vpacket < 0) {
-	    			priv->current_vpacket = 0;
-	    			break;
-	    		}
-	    	}
+					break;
+			}
+		}
+	    else if (seeka->secs < 0)
+		while ((cur_timestamp - priv->index_table[vid][priv->current_vpacket].timestamp) < - seeka->secs * 1000){
+			priv->current_vpacket -= 1;
+			if (priv->current_vpacket < 0) {
+				priv->current_vpacket = 0;
+				break;
+			}
+		}
 	    next_offset = priv->index_table[vid][priv->current_vpacket].offset;
 	    priv->audio_need_keyframe = 1;
 	    priv->video_after_seek = 1;
-        }
-    	else if (streams & 2) {
-            cur_timestamp = priv->index_table[aid][priv->current_apacket].timestamp;
-	    if (rel_seek_secs > 0)
-	    	while ((priv->index_table[aid][priv->current_apacket].timestamp - cur_timestamp) < rel_seek_secs * 1000){
-	    		priv->current_apacket += 1;
-	    		if (priv->current_apacket >= priv->index_table_size[aid]) {
-	    			priv->current_apacket = priv->index_table_size[aid] - 1;
-	    			break;
-	    		}
-	    	}
-	    else if (rel_seek_secs < 0)
-	    	while ((cur_timestamp - priv->index_table[aid][priv->current_apacket].timestamp) < - rel_seek_secs * 1000){
-	    		priv->current_apacket -= 1;
-	    		if (priv->current_apacket < 0) {
-	    			priv->current_apacket = 0;
-	    			break;
-	    		}
-	    	}
+	}
+	else if (streams & 2) {
+	    cur_timestamp = priv->index_table[aid][priv->current_apacket].timestamp;
+	    if (seeka->secs > 0)
+		while ((priv->index_table[aid][priv->current_apacket].timestamp - cur_timestamp) < seeka->secs * 1000){
+			priv->current_apacket += 1;
+			if (priv->current_apacket >= priv->index_table_size[aid]) {
+				priv->current_apacket = priv->index_table_size[aid] - 1;
+				break;
+			}
+		}
+	    else if (seeka->secs < 0)
+		while ((cur_timestamp - priv->index_table[aid][priv->current_apacket].timestamp) < - seeka->secs * 1000){
+			priv->current_apacket -= 1;
+			if (priv->current_apacket < 0) {
+				priv->current_apacket = 0;
+				break;
+			}
+		}
 	    next_offset = priv->index_table[aid][priv->current_apacket].offset;
         }
 //    }

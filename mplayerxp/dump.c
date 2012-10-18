@@ -332,6 +332,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
   if (seek_to_sec) {
     float d;
     float rel_seek_secs=0;
+    seek_args_t seek_p = { 0, 1};
     int a,b;
     if (sscanf(seek_to_sec, "%d:%d:%f", &a,&b,&d)==3)
 	rel_seek_secs += 3600*a +60*b +d ;
@@ -342,7 +343,8 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
 
     seek_to_sec = NULL;
     MSG_INFO("seeking to %u seconds\n");
-    demux_seek_r(demuxer,rel_seek_secs,1);
+    seek_p.secs=rel_seek_secs;
+    demux_seek_r(demuxer,&seek_p);
   }
   aeof=sh_audio?0:1;
   veof=sh_video?0:1;

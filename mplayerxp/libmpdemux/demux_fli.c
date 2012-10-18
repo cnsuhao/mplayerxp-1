@@ -25,11 +25,11 @@ typedef struct _fli_frames_t {
   unsigned int *frame_size;
 } fli_frames_t;
 
-static void fli_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void fli_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   fli_frames_t *frames = (fli_frames_t *)demuxer->priv;
   sh_video_t *sh_video = demuxer->video->sh;
-  int newpos=(flags&DEMUX_SEEK_SET)?0:frames->current_frame;
-  newpos+=rel_seek_secs*(flags&DEMUX_SEEK_PERCENTS?frames->num_frames:sh_video->fps);
+  int newpos=(seeka->flags&DEMUX_SEEK_SET)?0:frames->current_frame;
+  newpos+=seeka->secs*(seeka->flags&DEMUX_SEEK_PERCENTS?frames->num_frames:sh_video->fps);
   if(newpos<0) newpos=0; else
   if(newpos>frames->num_frames) newpos=frames->num_frames;
   frames->current_frame=newpos;

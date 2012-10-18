@@ -22,7 +22,7 @@ extern int video_read_frame_r(sh_video_t* sh_video,float* frame_time_ptr,float *
 extern int demux_read_data_r(demux_stream_t *ds,unsigned char* mem,int len,float *pts);
 extern int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts);
 
-extern int demux_seek_r(demuxer_t *demuxer,float rel_seek_secs,int flags);
+extern int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka);
 
 extern int demuxer_switch_audio_r(demuxer_t *, int id);
 extern int demuxer_switch_video_r(demuxer_t *, int id);

@@ -51,7 +51,7 @@ typedef struct _nuv_info_t
 /**
  * Seek to a position relative to the current position, indicated in time.
  */
-static void nuv_seek ( demuxer_t *demuxer, float rel_seek_secs, int flags )
+static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 {
 #define MAX_TIME 1000000
 	nuv_priv_t* priv = demuxer->priv;
@@ -60,11 +60,11 @@ static void nuv_seek ( demuxer_t *demuxer, float rel_seek_secs, int flags )
 	off_t curr_pos;
 	float current_time = 0;
 	float start_time = MAX_TIME;
-	float target_time = start_time + rel_seek_secs * 1000; /* target_time, start_time are ms, rel_seek_secs s */
+	float target_time = start_time + seeka->secs * 1000; /* target_time, start_time are ms, rel_seek_secs s */
 
 	orig_pos = stream_tell ( demuxer->stream );
 
-	if ( rel_seek_secs > 0 )
+	if ( seeka->secs > 0 )
 	{
 		/* Seeking forward */
 
@@ -88,7 +88,7 @@ static void nuv_seek ( demuxer_t *demuxer, float rel_seek_secs, int flags )
 				{
 					start_time = rtjpeg_frameheader.timecode;
 					/* Recalculate target time with real start time */
-					target_time = start_time + rel_seek_secs*1000;
+					target_time = start_time + seeka->secs*1000;
 				}
 
 				current_time = rtjpeg_frameheader.timecode;
@@ -104,7 +104,7 @@ static void nuv_seek ( demuxer_t *demuxer, float rel_seek_secs, int flags )
 				{
 					start_time = rtjpeg_frameheader.timecode;
 					/* Recalculate target time with real start time */
-					target_time = start_time + rel_seek_secs * 1000;
+					target_time = start_time + seeka->secs * 1000;
 				}
 				current_time = rtjpeg_frameheader.timecode;
 
@@ -121,7 +121,7 @@ static void nuv_seek ( demuxer_t *demuxer, float rel_seek_secs, int flags )
 		start_time = priv->current_position->time;
 
 		/* Recalculate target time with real start time */
-		target_time = start_time + rel_seek_secs * 1000;
+		target_time = start_time + seeka->secs * 1000;
 
 
 		if(target_time < 0)

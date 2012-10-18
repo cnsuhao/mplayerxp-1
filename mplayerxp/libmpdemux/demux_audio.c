@@ -1150,7 +1150,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
       sh_audio->wf->nAvgBytesPerSec = 32 * 1024; // dummy to make mplayerxp not hang
     sh_audio->wf->cbSize = 24;
     break;
-  }    
+  }
   case RAW_VOC:
   {
     char chunk[4];
@@ -1186,7 +1186,6 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     unsigned int chunk_type;
     unsigned int chunk_size;
     WAVEFORMATEX* w;
-    unsigned char *pfcc;
     int l;
     sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
     do
@@ -1538,8 +1537,8 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     int bit_len;
     demux_packet_t* dp;
     sh_audio_t* sh_audio = ds->sh;
-    da_priv_t* priv = demux->priv;
-    stream_t* s = demux->stream;
+    priv = demux->priv;
+    s = demux->stream;
     sh_audio = ds->sh;
 
     if (s->eof) return 0;
@@ -1630,7 +1629,7 @@ static void high_res_ddca_seek(demuxer_t *demuxer,float time) {
   }
 }
 
-static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
+static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   sh_audio_t* sh_audio;
   stream_t* s;
   int base,pos,frmt;
@@ -1642,11 +1641,11 @@ static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
   priv = demuxer->priv;
   if(priv->frmt==RAW_MUSEPACK)
   {
-    da_priv_t* priv = demuxer->priv;
-    stream_t* s = demuxer->stream;
-    float target = rel_seek_secs;
-    if (flags & DEMUX_SEEK_PERCENTS) target *= priv->length;
-    if (!(flags & DEMUX_SEEK_SET)) target += priv->last_pts;
+    priv = demuxer->priv;
+    s = demuxer->stream;
+    float target = seeka->secs;
+    if (seeka->flags & DEMUX_SEEK_PERCENTS) target *= priv->length;
+    if (!(seeka->flags & DEMUX_SEEK_SET)) target += priv->last_pts;
     if (target < priv->last_pts) {
 	stream_seek(s, demuxer->movi_start);
 	priv->pos = 32; // empty bit buffer
@@ -1670,10 +1669,10 @@ static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
   {
     unsigned percents,cpercents,npercents;
     off_t newpos,spos;
-    percents = (unsigned)(rel_seek_secs*100.)/(float)demuxer->movi_length;
+    percents = (unsigned)(seeka->secs*100.)/(float)demuxer->movi_length;
     spos=stream_tell(demuxer->stream);
     cpercents=(unsigned)((float)spos*100./(float)priv->nbytes);
-    npercents=(flags&DEMUX_SEEK_SET)?percents:cpercents+percents;
+    npercents=(seeka->flags&DEMUX_SEEK_SET)?percents:cpercents+percents;
     if(npercents>100) npercents=100;
     newpos=demuxer->movi_start+(off_t)(((float)priv->toc[npercents]/256.0)*priv->nbytes);
     MSG_DBG2("xing seeking: secs=%f prcnts=%u cprcnts=%u spos=%llu newpos=%llu\n",rel_seek_secs,npercents,cpercents,spos,newpos);
@@ -1681,8 +1680,8 @@ static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
     priv->last_pts=(((float)demuxer->movi_length*npercents)/100.)*1000.;
     return;
   }
-  if((priv->frmt == RAW_MP3 || priv->frmt == RAW_MP2 || priv->frmt == RAW_MP1) && hr_mp3_seek && !(flags & DEMUX_SEEK_PERCENTS)) {
-    len = (flags & DEMUX_SEEK_SET) ? rel_seek_secs - priv->last_pts : rel_seek_secs;
+  if((priv->frmt == RAW_MP3 || priv->frmt == RAW_MP2 || priv->frmt == RAW_MP1) && hr_mp3_seek && !(seeka->flags & DEMUX_SEEK_PERCENTS)) {
+    len = (seeka->flags & DEMUX_SEEK_SET) ? seeka->secs - priv->last_pts : seeka->secs;
     if(len < 0) {
       stream_seek(s,demuxer->movi_start);
       len = priv->last_pts + len;
@@ -1695,8 +1694,8 @@ static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
     return;
   }
 
-  base = flags&DEMUX_SEEK_SET ? demuxer->movi_start : stream_tell(s);
-  pos=base+(flags&DEMUX_SEEK_PERCENTS?(demuxer->movi_end - demuxer->movi_start):sh_audio->i_bps)*rel_seek_secs;
+  base = seeka->flags&DEMUX_SEEK_SET ? demuxer->movi_start : stream_tell(s);
+  pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?(demuxer->movi_end - demuxer->movi_start):sh_audio->i_bps)*seeka->secs;
 
   if(demuxer->movi_end && pos >= demuxer->movi_end) {
     sh_audio->timer = (stream_tell(s) - demuxer->movi_start)/(float)sh_audio->i_bps;
@@ -1706,7 +1705,7 @@ static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
 
   priv->last_pts = (pos-demuxer->movi_start)/(float)sh_audio->i_bps;
   sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-  
+
   frmt=priv->frmt;
   if(frmt==RAW_WAV)
   {
@@ -1719,7 +1718,7 @@ static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
   }
   switch(frmt) {
   case RAW_AC3: {
-    len = (flags & DEMUX_SEEK_SET) ? rel_seek_secs - priv->last_pts : rel_seek_secs;
+    len = (seeka->flags & DEMUX_SEEK_SET) ? seeka->secs - priv->last_pts : seeka->secs;
     if(len < 0) {
       stream_seek(s,demuxer->movi_start);
       len = priv->last_pts + len;
@@ -1732,7 +1731,7 @@ static void audio_seek(demuxer_t *demuxer,float rel_seek_secs,int flags){
     return;
   }
   case RAW_DCA: {
-    len = (flags & DEMUX_SEEK_SET) ? rel_seek_secs - priv->last_pts : rel_seek_secs;
+    len = (seeka->flags & DEMUX_SEEK_SET) ? seeka->secs - priv->last_pts : seeka->secs;
     if(len < 0) {
       stream_seek(s,demuxer->movi_start);
       len = priv->last_pts + len;

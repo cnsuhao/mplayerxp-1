@@ -2698,7 +2698,7 @@ demux_mkv_open_sub (demuxer_t *demuxer, mkv_track_t *track, int sid)
   return 0;
 }
 
-static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags);
+static void mkv_seek (demuxer_t *demuxer,const seek_args_t* seeka);
 
 /** \brief Given a matroska track number and type, find the id that mplayer would ask for.
  *  \param d The demuxer for which the subtitle id should be returned.
@@ -2989,12 +2989,15 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
       demuxer->flags |= DEMUXF_SEEKABLE;
       if (mkv_d->chapters && dvd_chapter>1 && dvd_chapter<=mkv_d->num_chapters)
         {
+          seek_args_t seeka;
           if (!mkv_d->has_first_tc)
             {
               mkv_d->first_tc = 0;
               mkv_d->has_first_tc = 1;
             }
-          mkv_seek (demuxer, mkv_d->chapters[dvd_chapter-1].start/1000.0, 1);
+          seeka.secs=mkv_d->chapters[dvd_chapter-1].start/1000.0;
+          seeka.flags=1;
+          mkv_seek (demuxer, &seeka);
         }
     }
 
@@ -3473,7 +3476,7 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
   uint64_t old_length;
   int64_t tc;
   uint32_t *lace_size;
-  uint8_t laces, flags;
+  uint8_t laces=0, flags;
   int i, num, tmp, use_this_block = 1;
   float current_pts;
   int16_t time;
@@ -3776,19 +3779,19 @@ static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
   return 0;
 }
 
-static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags)
+static void mkv_seek (demuxer_t *demuxer,const seek_args_t* seeka)
 {
   free_cached_dps (demuxer);
-  if (!(flags & 2))  /* time in secs */
+  if (!(seeka->flags & 2))  /* time in secs */
     {
       mkv_demuxer_t *mkv_d = (mkv_demuxer_t *) demuxer->priv;
       stream_t *s = demuxer->stream;
       int64_t target_timecode = 0, diff, min_diff=0xFFFFFFFFFFFFFFFLL;
       int i;
 
-      if (!(flags & 1))  /* relative seek */
+      if (!(seeka->flags & 1))  /* relative seek */
         target_timecode = (int64_t) (mkv_d->last_pts * 1000.0);
-      target_timecode += (int64_t)(rel_seek_secs * 1000.0);
+      target_timecode += (int64_t)(seeka->secs * 1000.0);
       if (target_timecode < 0)
         target_timecode = 0;
 
@@ -3832,12 +3835,12 @@ static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags)
               for (i=0; i < mkv_d->num_cluster_pos; i++)
                 {
                   diff = mkv_d->cluster_positions[i] - target_filepos;
-                  if (rel_seek_secs < 0 && diff < 0 && -diff < min_diff)
+                  if (seeka->secs < 0 && diff < 0 && -diff < min_diff)
                     {
                       cluster_pos = mkv_d->cluster_positions[i];
                       min_diff = -diff;
                     }
-                  else if (rel_seek_secs > 0
+                  else if (seeka->secs > 0
                            && (diff < 0 ? -1 * diff : diff) < min_diff)
                     {
                       cluster_pos = mkv_d->cluster_positions[i];
@@ -3850,10 +3853,10 @@ static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags)
         }
       else
         {
-          mkv_index_t *index = NULL;
-          int seek_id = (demuxer->video->id < 0) ? demuxer->audio->id : demuxer->video->id;  
+          mkv_index_t *_index = NULL;
+          int seek_id = (demuxer->video->id < 0) ? demuxer->audio->id : demuxer->video->id;
 
-          /* let's find the entry in the indexes with the smallest */
+          /* let's find the entry in the _indexes with the smallest */
           /* difference to the wanted timecode. */
           for (i=0; i < mkv_d->num_indexes; i++)
             if (mkv_d->indexes[i].tnum == seek_id)
@@ -3861,15 +3864,15 @@ static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags)
                 diff = target_timecode + mkv_d->first_tc -
                        (int64_t) mkv_d->indexes[i].timecode * mkv_d->tc_scale / 1000000.0;
 
-                if ((flags & 1 || target_timecode <= mkv_d->last_pts*1000)) {
-                    // SOF seek or seek backward: find the last index
+                if ((seeka->flags & 1 || target_timecode <= mkv_d->last_pts*1000)) {
+                    // SOF seek or seek backward: find the last _index
                     // position before target time
                     if (diff < 0 || diff >= min_diff)
                         continue;
                 }
                 else {
-                    // Relative seek forward: find the first index position
-                    // after target time. If no such index exists, find last
+                    // Relative seek forward: find the first _index position
+                    // after target time. If no such _index exists, find last
                     // position between current position and target time.
                     if (diff <= 0) {
                         if (min_diff <= 0 && diff <= min_diff)
@@ -3880,58 +3883,58 @@ static void mkv_seek (demuxer_t *demuxer, float rel_seek_secs, int flags)
                         continue;
                 }
                 min_diff = diff;
-                index = mkv_d->indexes + i;
+                _index = mkv_d->indexes + i;
               }
 
-          if (index)  /* We've found an entry. */
+          if (_index)  /* We've found an entry. */
             {
               mkv_d->cluster_size = mkv_d->blockgroup_size = 0;
-              stream_seek (s, index->filepos);
+              stream_seek (s, _index->filepos);
             }
         }
 
       if (demuxer->video->id >= 0)
         mkv_d->v_skip_to_keyframe = 1;
-      if (rel_seek_secs > 0.0)
+      if (seeka->secs > 0.0)
         mkv_d->skip_to_timecode = target_timecode;
       mkv_d->a_skip_to_keyframe = 1;
 
       mkv_demux(demuxer, NULL);
     }
-  else if ((demuxer->movi_end <= 0) || !(flags & 1))
+  else if ((demuxer->movi_end <= 0) || !(seeka->flags & 1))
     MSG_V( "[mkv] seek unsupported flags\n");
   else
     {
       mkv_demuxer_t *mkv_d = (mkv_demuxer_t *) demuxer->priv;
       stream_t *s = demuxer->stream;
       uint64_t target_filepos;
-      mkv_index_t *index = NULL;
+      mkv_index_t *_index = NULL;
       int i;
 
-      if (mkv_d->indexes == NULL)  /* no index was found */
+      if (mkv_d->indexes == NULL)  /* no _index was found */
         {                       /* I'm lazy... */
           MSG_V( "[mkv] seek unsupported flags\n");
           return;
         }
 
-      target_filepos = (uint64_t)(demuxer->movi_end * rel_seek_secs);
+      target_filepos = (uint64_t)(demuxer->movi_end * seeka->secs);
       for (i=0; i < mkv_d->num_indexes; i++)
         if (mkv_d->indexes[i].tnum == demuxer->video->id)
-          if ((index == NULL) ||
+          if ((_index == NULL) ||
               ((mkv_d->indexes[i].filepos >= target_filepos) &&
-               ((index->filepos < target_filepos) ||
-                (mkv_d->indexes[i].filepos < index->filepos))))
-            index = &mkv_d->indexes[i];
+               ((_index->filepos < target_filepos) ||
+                (mkv_d->indexes[i].filepos < _index->filepos))))
+            _index = &mkv_d->indexes[i];
 
-      if (!index)
+      if (!_index)
         return;
 
       mkv_d->cluster_size = mkv_d->blockgroup_size = 0;
-      stream_seek (s, index->filepos);
+      stream_seek (s, _index->filepos);
 
       if (demuxer->video->id >= 0)
         mkv_d->v_skip_to_keyframe = 1;
-      mkv_d->skip_to_timecode = index->timecode;
+      mkv_d->skip_to_timecode = _index->timecode;
       mkv_d->a_skip_to_keyframe = 1;
 
       mkv_demux(demuxer, NULL);

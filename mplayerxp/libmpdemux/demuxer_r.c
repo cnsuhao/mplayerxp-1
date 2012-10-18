@@ -147,7 +147,7 @@ int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts)
 
 
 /* TODO : FIXME we need to redesign blocking of mutexes before enabling this function*/
-int demux_seek_r(demuxer_t *demuxer,float rel_seek_secs,int flags)
+int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
 {
     int retval;
     unsigned int t=0;
@@ -155,7 +155,7 @@ int demux_seek_r(demuxer_t *demuxer,float rel_seek_secs,int flags)
     double tt;
 //    LOCK_DEMUXER();
     if(benchmark) t=GetTimer();
-    retval = demux_seek(demuxer,rel_seek_secs,flags);
+    retval = demux_seek(demuxer,seeka);
     if(benchmark)
     {
 	t2=GetTimer();t=t2-t;

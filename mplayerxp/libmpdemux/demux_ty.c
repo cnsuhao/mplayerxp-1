@@ -744,7 +744,7 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
    return 1;
 }
 
-static void ty_seek( demuxer_t *demuxer, float rel_seek_secs, int flags )
+static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
 {
    demux_stream_t *d_audio = demuxer->audio;
    demux_stream_t *d_video = demuxer->video;
@@ -763,24 +763,24 @@ static void ty_seek( demuxer_t *demuxer, float rel_seek_secs, int flags )
    //================= seek in MPEG ==========================
    demuxer->filepos = stream_tell( demuxer->stream );
 
-   newpos = ( flags & 1 ) ? demuxer->movi_start : demuxer->filepos;
+   newpos = ( seeka->flags & 1 ) ? demuxer->movi_start : demuxer->filepos;
 
-   if( flags & 2 )
+   if( seeka->flags & 2 )
       // float seek 0..1
-      newpos += ( demuxer->movi_end - demuxer->movi_start ) * rel_seek_secs;
+      newpos += ( demuxer->movi_end - demuxer->movi_start ) * seeka->secs;
    else
    {
       // time seek (secs)
       if( ! sh_video->i_bps ) // unspecified or VBR
-         newpos += 2324 * 75 * rel_seek_secs; // 174.3 kbyte/sec
+         newpos += 2324 * 75 * seeka->secs; // 174.3 kbyte/sec
       else
-         newpos += sh_video->i_bps * rel_seek_secs;
+         newpos += sh_video->i_bps * seeka->secs;
    }
 
    if ( newpos < demuxer->movi_start ) newpos = demuxer->movi_start;
 
    res = newpos / CHUNKSIZE;
-   if ( rel_seek_secs >= 0 )
+   if ( seeka->secs >= 0 )
       newpos = ( res + 1 ) * CHUNKSIZE;
    else
       newpos = res * CHUNKSIZE;

@@ -130,6 +130,15 @@ typedef struct demuxer_st {
 #define DEMUX_FALSE		0
 #define DEMUX_OK		1
 
+#define DEMUX_SEEK_CUR		0x00
+#define DEMUX_SEEK_SET		0x01
+#define DEMUX_SEEK_SECONDS	0x00
+#define DEMUX_SEEK_PERCENTS	0x02
+typedef struct seek_args_s {
+    float	secs;
+    unsigned	flags;
+}seek_args_t;
+
 /* Commands for control interface */
 #define DEMUX_CMD_SWITCH_AUDIO		1
 #define DEMUX_CMD_SWITCH_VIDEO		2
@@ -161,7 +170,7 @@ typedef struct demuxer_driver_s
 			 * @param flags		0x01 - seek from start else seek_cur, 0x02 - rel_seek_secs indicates pos in percents/100 else in seconds
 			 * @note		this function is optional and maybe NULL
 			**/
-    void		(*seek)(demuxer_t *d,float rel_seek_secs,int flags);
+    void		(*seek)(demuxer_t *d,const seek_args_t* seeka);
 			/** Closes driver
 			  * @param d	_this demuxer
 			 **/
@@ -258,11 +267,7 @@ inline static void resize_demux_packet(demux_packet_t* dp, int len)
 }
 
 demuxer_t* demux_open(stream_t *stream,int file_format,int aid,int vid,int sid);
-#define DEMUX_SEEK_CUR		0x00
-#define DEMUX_SEEK_SET		0x01
-#define DEMUX_SEEK_SECONDS	0x00
-#define DEMUX_SEEK_PERCENTS	0x02
-int demux_seek(demuxer_t *demuxer,float rel_seek_secs,int flags);
+int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka);
 demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd);
 
 /* AVI demuxer params: */
