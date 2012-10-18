@@ -217,6 +217,7 @@ int loop_times=-1;
 /* codecs: */
 int has_audio=1;
 int has_video=1;
+int has_dvdsub=1;
 char *audio_codec=NULL;  /* override audio codec */
 char *audio_codec_param=NULL;
 char *video_codec=NULL;  /* override video codec */
@@ -2702,8 +2703,9 @@ play_next_file:
 
 //============ Open DEMUXERS --- DETECT file type =======================
     initial_audio_pts=HUGE;
-    if(!has_audio) audio_id=-2; // do NOT read audio packets...
-    if(!has_video) video_id=-2; // do NOT read video packets...
+    if(!has_audio) audio_id=-2;  // do NOT read audio packets...
+    if(!has_video) video_id=-2;  // do NOT read video packets...
+    if(!has_dvdsub) dvdsub_id=-2;// do NOT read subtitle packets...
 
     pinfo[xp_id].current_module="demux_open";
 

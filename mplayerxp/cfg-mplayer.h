@@ -224,6 +224,8 @@ static const config_t avsync_config[]={
 
 
 static const config_t subtitle_config[]={
+	{"on", &has_dvdsub, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables subtitle-steam playback"},
+	{"off", &has_dvdsub, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables subtitle-stream playback"},
 	{"vob", &vobsub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the VobSub files that are to be used for subtitle"},
 	{"vobid", &vobsub_id, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL, "specifies the VobSub subtitle id"},
 #ifdef USE_SUB
