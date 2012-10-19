@@ -234,7 +234,7 @@ static uint32_t check_events(void)
 
 #include "sub.h"
 
-static void __FASTCALL__ change_frame( unsigned idx )
+static void __FASTCALL__ select_frame( unsigned idx )
 {
 #ifdef HAVE_DGA2
     XDGASetViewport (vo.mDisplay, XDefaultScreen(vo.mDisplay), 

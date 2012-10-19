@@ -904,7 +904,6 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 
 			/* capture window resize events */
 			case SDL_VIDEORESIZE:
-				if(enable_xp) LOCK_VDECODING();
 				(*adjust_size)(priv->windowsize.w,priv->windowsize.h,&event.resize.w, &event.resize.h);
 				if(set_video_mode(event.resize.w, event.resize.h,
 						  priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
@@ -956,7 +955,6 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 					/* select next fullscreen mode */
 					priv->fullmode++;
 					if (priv->fullmode > (findArrayEnd(priv->fullmodes) - 1)) priv->fullmode = 0;
-					if(enable_xp) LOCK_VDECODING();
 					if(set_fullmode(priv->fullmode)!=0) exit(EXIT_FAILURE);
 					MSG_V("SDL: Set next available fullscreen mode.\n");
 					retval = VO_EVENT_RESIZE;
@@ -967,7 +965,6 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 					aspect(&priv->dstwidth, &priv->dstheight,vo.softzoom?A_ZOOM:A_NOZOOM);
 #endif
 					if (priv->surface->w != priv->dstwidth || priv->surface->h != priv->dstheight) {
-					    if(enable_xp) LOCK_VDECODING();
 					    if(set_video_mode(priv->dstwidth, priv->dstheight, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
 					    priv->windowsize.w = priv->surface->w;
 					    priv->windowsize.h = priv->surface->h;
@@ -975,7 +972,6 @@ static uint32_t __FASTCALL__ check_events (int (* __FASTCALL__ adjust_size)(unsi
 					    retval |= VO_EVENT_RESIZE;
 					} else
 					if (priv->surface->w != priv->dstwidth * 2 || priv->surface->h != priv->dstheight * 2) {
-					    if(enable_xp) LOCK_VDECODING();
 					    if(set_video_mode(priv->dstwidth * 2, priv->dstheight * 2, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
 					    priv->windowsize.w = priv->surface->w;
 					    priv->windowsize.h = priv->surface->h;
@@ -1155,7 +1151,7 @@ static void __FASTCALL__ erase_area_1(int x_start, int width, int height, int pi
  *  returns : doesn't return
  **/
 
-static void __FASTCALL__ change_frame(unsigned idx)
+static void __FASTCALL__ select_frame(unsigned idx)
 {
 	struct sdl_priv_s *priv = &sdl_priv;
 
@@ -1385,7 +1381,6 @@ static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
 	return VO_TRUE;
     }
   case VOCTRL_FULLSCREEN:
-    if(enable_xp) LOCK_VDECODING();
     if (priv->surface->flags & SDL_FULLSCREEN) {
 	if(set_video_mode(priv->windowsize.w, priv->windowsize.h, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
 	SDL_ShowCursor(1);

@@ -555,7 +555,7 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
   return e|VO_EVENT_FORCE_UPDATE;
 }
 
-static void __FASTCALL__ change_frame(unsigned idx)
+static void __FASTCALL__ select_frame(unsigned idx)
 {
  voxv.expose_idx=idx;
  XvShmPutImage(vo.mDisplay, voxv.port, vo.window, vo.gc, voxv.image[idx],
@@ -696,8 +696,6 @@ static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
     {
      vo_resize_t * vrest = (vo_resize_t *)data;
      vrest->event_type = check_events(vrest->adjust_size);
-     if(enable_xp && (vrest->event_type & VO_EVENT_RESIZE)==VO_EVENT_RESIZE)
-		    LOCK_VDECODING(); /* just for compatibility with other vo */
      return VO_TRUE;
     }
   case VOCTRL_GET_NUM_FRAMES:

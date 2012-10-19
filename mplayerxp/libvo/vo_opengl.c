@@ -302,7 +302,7 @@ static void __FASTCALL__ gl_display_Image( XImage *myximage )
 		myximage->data);
 }
 
-static void change_frame(unsigned idx) {
+static void select_frame(unsigned idx) {
  gl_display_Image( vo_x11_myximage[idx] );
  if (vogl.num_buffers>1) glXSwapBuffers(vo.mDisplay, vo.window);
  glFlush();
@@ -396,8 +396,6 @@ static uint32_t control(uint32_t request, any_t*data)
     {
      vo_resize_t * vrest = (vo_resize_t *)data;
      vrest->event_type = check_events(vrest->adjust_size);
-     if(enable_xp && (vrest->event_type & VO_EVENT_RESIZE)==VO_EVENT_RESIZE)
-		    LOCK_VDECODING(); /* just for compatibility with other vo */
      return VO_TRUE;
     }
   }

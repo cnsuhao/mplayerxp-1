@@ -6,6 +6,7 @@
 #ifdef HAVE_MALLOC
 #include <malloc.h>
 #endif
+#include "../dec_ahead.h"
 #include "../mplayer.h"
 #include "../help_mp.h"
 
@@ -148,15 +149,15 @@ void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h){
     }
 }
 
-mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h){
+mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx){
   mp_image_t* mpi=NULL;
   int w2=(mp_imgflag&MP_IMGFLAG_ACCEPT_ALIGNED_STRIDE)?((w+15)&(~15)):w;
-  unsigned xp_idx=XP_IDX_INVALID;
+  unsigned xp_idx=idx;
   MSG_DBG2("vf_get_image(%s,0x%X,0x%X,0x%X,0x%X,0x%X) was called\n",vf->info->name,outfmt,mp_imgtype,mp_imgflag,w,h);
 
   if(vf->put_slice==vf_next_put_slice){
       MSG_DBG2("passthru mode to %s\n",vf->next->info->name);
-      return vf_get_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h);
+      return vf_get_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h,xp_idx);
   }
   // Note: we should call libvo first to check if it supports direct rendering
   // and if not, then fallback to software buffers:
@@ -241,7 +242,7 @@ mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, in
     }
     else {
 	MSG_DBG2("vf_get_image forces xp_idx retrieving\n");
-	vo_get_decoding_frame_num(&mpi->xp_idx);
+	mpi->xp_idx=dae_curr_vdecoded();
     }
     if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)
 	if(vf->start_slice) vf->start_slice(vf,mpi);

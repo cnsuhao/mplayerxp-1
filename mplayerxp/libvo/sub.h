@@ -88,11 +88,11 @@ typedef struct sub_data_s {
 }sub_data_t;
 extern sub_data_t sub_data;
 
-typedef void (* __FASTCALL__ draw_osd_f)(int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride);
-typedef void (* __FASTCALL__ clear_osd_f)(int x0,int y0, int w,int h);
+typedef void (* __FASTCALL__ draw_osd_f)(unsigned idx,int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride);
+typedef void (* __FASTCALL__ clear_osd_f)(unsigned idx,int x0,int y0, int w,int h);
 
-extern void __FASTCALL__ vo_draw_text(int dxs,int dys, draw_osd_f draw_alpha);
-extern void __FASTCALL__ vo_remove_text(int dxs,int dys,clear_osd_f remove);
+extern void __FASTCALL__ vo_draw_text(unsigned idx,int dxs,int dys, draw_osd_f draw_alpha);
+extern void __FASTCALL__ vo_remove_text(unsigned idx,int dxs,int dys,clear_osd_f remove);
 
 void vo_init_osd(void);
 int __FASTCALL__ vo_update_osd(int dxs,int dys);

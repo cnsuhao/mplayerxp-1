@@ -11,10 +11,6 @@
 extern "C" {
 #endif
 
-extern pthread_mutex_t demuxer_mutex;
-#define LOCK_DEMUXER() { pthread_mutex_lock(&demuxer_mutex); }
-#define UNLOCK_DEMUXER() { pthread_mutex_unlock(&demuxer_mutex); }
-
 #define ds_tell_pts_r(ds) ds_tell_pts(ds)
 
 extern int demux_getc_r(demux_stream_t *ds,float *pts);

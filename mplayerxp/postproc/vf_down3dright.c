@@ -93,7 +93,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 	dmpi=vf_get_image(vf->next, IMGFMT_YV12,
 			  MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 			  mpi->w * vf->priv->scalew,
-			  mpi->h / vf->priv->scaleh - vf->priv->skipline);
+			  mpi->h / vf->priv->scaleh - vf->priv->skipline,mpi->xp_idx);
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 	toright(dmpi->planes, mpi->planes, dmpi->stride,

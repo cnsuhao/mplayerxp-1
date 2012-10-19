@@ -284,7 +284,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     // hope we'll get DR buffer:
     dmpi=vf_get_image(vf->next,mpi->imgfmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	2*mpi->w, 2*mpi->h);
+	2*mpi->w, 2*mpi->h,mpi->xp_idx);
 
     Super2xSaI_ex(mpi->planes[0], mpi->stride[0],
 		  dmpi->planes[0], dmpi->stride[0],

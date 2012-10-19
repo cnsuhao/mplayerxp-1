@@ -110,7 +110,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 	/* Get image, export type (we don't modify tghe image) */
 	dmpi=vf_get_image(vf->next, mpi->imgfmt,
                       MP_IMGTYPE_EXPORT, 0,
-	              mpi->w, mpi->h);
+	              mpi->w, mpi->h,mpi->xp_idx);
         /* Copy only the pointer ( MP_IMGTYPE_EXPORT ! ) */
         dmpi->planes[0] = mpi->planes[0];
         dmpi->planes[1] = mpi->planes[1];

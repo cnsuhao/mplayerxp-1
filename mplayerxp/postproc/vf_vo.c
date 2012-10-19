@@ -74,10 +74,10 @@ static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* da
 {
     MSG_DBG2("vf_control: %u\n",request);
     switch(request){
-    case VFCTRL_CHANGE_FRAME:
+    case VFCTRL_SELECT_FRAME:
     {
 	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
-	vo_change_frame();
+	vo_select_frame((unsigned)data);
 	return CONTROL_TRUE;
     }
     case VFCTRL_SET_EQUALIZER:
@@ -121,7 +121,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
     unsigned i;
     int finalize = vo_is_final();
     struct vf_priv_s *priv = vf->priv;
-    retval=vo_get_surface(mpi);
+    retval=vo_get_surface(mpi,mpi->xp_idx);
     if(retval==VO_TRUE) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
 	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;

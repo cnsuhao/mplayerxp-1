@@ -754,7 +754,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
    off_t          res;
    TiVoInfo       *tivo = demuxer->priv;
 
-   MSG_DBG3( "ty:Seeking to %7.1f\n", rel_seek_secs );
+   MSG_DBG3( "ty:Seeking to %7.1f\n", seeka->secs );
 
       tivo->lastAudioEnd = 0;
       tivo->lastAudioPTS = -1;

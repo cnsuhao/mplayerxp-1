@@ -37,7 +37,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
     vf->dmpi=vf_get_image(vf->next,mpi->imgfmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h);
+	mpi->w, mpi->h,mpi->xp_idx);
 
     y_in = mpi->planes[0];
     cb_in = mpi->planes[1];

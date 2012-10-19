@@ -128,7 +128,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
   mp_image_t *dmpi;
 
   if(mpi->type == MP_IMGTYPE_TEMP && (!(mpi->flags&MP_IMGFLAG_PRESERVE)) ) {
-    dmpi = vf_get_image(vf->next,mpi->imgfmt,mpi->type, mpi->flags,mpi->w, mpi->h);
+    dmpi = vf_get_image(vf->next,mpi->imgfmt,mpi->type, mpi->flags,mpi->w, mpi->h,mpi->xp_idx);
     memcpy(mpi->planes,dmpi->planes,MP_MAX_PLANES*sizeof(unsigned char*));
     memcpy(mpi->stride,dmpi->stride,MP_MAX_PLANES*sizeof(unsigned int));
     mpi->flags|=MP_IMGFLAG_DIRECT;
@@ -146,7 +146,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
   if (vf->priv->passthrough) {
     dmpi=vf_get_image(vf->next, IMGFMT_MPEGPES, MP_IMGTYPE_EXPORT,
-                      0, mpi->w, mpi->h);
+                      0, mpi->w, mpi->h,mpi->xp_idx);
     dmpi->planes[0]=mpi->planes[0];
     return vf_next_put_slice(vf,dmpi);
   }
@@ -190,7 +190,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
   else {
     dmpi = vf_get_image(vf->next,mpi->imgfmt,
 			MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-			mpi->w,mpi->h);
+			mpi->w,mpi->h,mpi->xp_idx);
     copy_mpi(dmpi,mpi);
   }
   menu_draw(vf->priv->current,dmpi);
@@ -204,7 +204,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     else {
       dmpi = vf_get_image(vf->next,mpi->imgfmt,
                           MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,
-                          mpi->w,mpi->h);
+                          mpi->w,mpi->h,mpi->xp_idx);
 
       dmpi->stride[0] = mpi->stride[0];
       dmpi->stride[1] = mpi->stride[1];

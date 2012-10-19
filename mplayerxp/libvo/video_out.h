@@ -146,7 +146,7 @@ typedef struct vo_functions_s
         /** Blit/Flip buffer to the screen. Must be called after each frame!
 	 * @param idex	index of frame to be selected as active frame
          **/
-        void (* __FASTCALL__ change_frame)(unsigned idx);
+        void (* __FASTCALL__ select_frame)(unsigned idx);
 
         /** Closes driver. Should restore the original state of the system.
          **/
@@ -169,21 +169,16 @@ extern uint32_t  __FASTCALL__ vo_config(uint32_t width, uint32_t height, uint32_
 extern uint32_t	 __FASTCALL__ vo_query_format( uint32_t* fourcc,unsigned src_w,unsigned src_h);
 extern uint32_t		vo_reset( void );
 extern uint32_t		vo_fullscreen( void );
-extern uint32_t		vo_screenshot( void );
+extern uint32_t		vo_screenshot( unsigned idx );
 extern uint32_t		vo_pause( void );
 extern uint32_t		vo_resume( void );
-extern uint32_t	 __FASTCALL__ vo_get_surface( mp_image_t* mpi );
+extern uint32_t	 __FASTCALL__ vo_get_surface( mp_image_t* mpi,unsigned decoder_idx);
 extern int		vo_check_events( void );
-extern uint32_t	 __FASTCALL__ vo_get_num_frames( unsigned * );
-extern uint32_t	 __FASTCALL__ vo_get_decoding_frame_num( volatile unsigned * );
-extern uint32_t	 __FASTCALL__ vo_set_decoding_frame_num( volatile unsigned * );
-extern unsigned  __FASTCALL__ vo_get_decoding_next_frame( unsigned idx );
-extern unsigned  __FASTCALL__ vo_get_decoding_prev_frame( unsigned idx );
-extern uint32_t	 __FASTCALL__ vo_get_active_frame( volatile unsigned * );
+extern unsigned	 __FASTCALL__ vo_get_num_frames( void );
 extern uint32_t  __FASTCALL__ vo_draw_slice(const mp_image_t *mpi);
-extern void		vo_change_frame(void);
-extern void		vo_flush_pages(void);
-extern void		vo_draw_osd(void);
+extern void		vo_select_frame(unsigned idx);
+extern void		vo_flush_page(unsigned decoder_idx);
+extern void		vo_draw_osd(unsigned idx);
 extern void		vo_uninit( void );
 extern uint32_t __FASTCALL__ vo_control(uint32_t request, any_t*data);
 extern int __FASTCALL__ vo_is_final(void);

@@ -45,7 +45,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 
 	dmpi = vf_get_image(vf->next, mpi->imgfmt,
 	                    MP_IMGTYPE_STATIC, MP_IMGFLAG_ACCEPT_STRIDE |
-	                    MP_IMGFLAG_PRESERVE, mpi->w, mpi->h);
+	                    MP_IMGFLAG_PRESERVE, mpi->w, mpi->h,mpi->xp_idx);
 
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 	vf->priv->in++;

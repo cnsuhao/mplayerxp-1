@@ -28,6 +28,7 @@
 #include "stheader.h"
 #include "vd.h"
 
+#include "dec_ahead.h"
 #include "dec_video.h"
 // ===================================================================
 vf_cfg_t vf_cfg; // Configuration for audio filters
@@ -115,10 +116,8 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	for (i=0; mpcodecs_vd_drivers[i] != NULL; i++)
 	    if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,sh_video->codec->driver_name)==0) break;
 	mpvdec=mpcodecs_vd_drivers[i];
-	if(!mpvdec) {
-	    MSG_DBG3("init_video: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
-	    continue;
-	}
+	if(!mpvdec) continue;
+	else    MSG_DBG3("init_video: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
 	// it's available, let's try to init!
 	if(!mpvdec->init(sh_video)){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
@@ -184,6 +183,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
   const unsigned h_step=16;
   unsigned num_slices = mpi->h/h_step;
   vf=sh->vfilter;
+
   if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
     if(mpi->h%h_step) num_slices++;
     if(sh->vf_flags&VF_FLAGS_SLICES)
@@ -219,7 +219,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	{
 	    /* execute slices instead of whole frame make faster multiple filters */
 	    for(i=0;i<num_slices;i++) {
-		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
+		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i -> [%i]\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h,ampi[i].xp_idx);
 		vf->put_slice(vf,&ampi[i]);
 	    }
 	}
@@ -263,7 +263,7 @@ int decode_video(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_
 
     if(drop_frame) return 0;
     update_subtitle(pts);
-    vo_flush_pages();
+    vo_flush_page(dae_curr_vdecoded());
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;

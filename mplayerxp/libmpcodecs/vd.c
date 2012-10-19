@@ -9,6 +9,7 @@
 #include <malloc.h>
 #endif
 
+#include "dec_ahead.h"
 #include "codec-cfg.h"
 
 #include "../libvo/img_format.h"
@@ -166,7 +167,7 @@ csp_again:
 	    goto csp_again;
 	} else 
 	{ // sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
-	     vf_instance_t* vo, *vp = NULL, *ve;
+	     vf_instance_t* voi, *vp = NULL, *ve;
 	     // Remove the scale filter if we added it ourself
 	     if(vf == sc) {
 	       ve = vf;
@@ -174,8 +175,8 @@ csp_again:
 	       vf_uninit_filter(ve);
 	     }
 	     // Find the last filter (vf_vo)
-	     for(vo = vf ; vo->next ; vo = vo->next)
-	       vp = vo;
+	     for(voi = vf ; voi->next ; voi = voi->next)
+	       vp = voi;
 	}
 	MSG_WARN(MSGTR_VOincompCodec);
 	sh->vfilter_inited=-1;
@@ -226,17 +227,17 @@ csp_again:
      }
     }
     if(sh->aspect>0.01){
-      int w;
+      int _w;
       MSG_V("Movie-Aspect is %.2f:1 - prescaling to correct movie aspect.\n",
              sh->aspect);
-      w=(int)((float)screen_size_y*sh->aspect); w+=w%2; // round
+      _w=(int)((float)screen_size_y*sh->aspect); _w+=_w%2; // round
       // we don't like horizontal downscale || user forced width:
-      if(w<screen_size_x || vo.screen_size_xy>8){
+      if(_w<screen_size_x || vo.screen_size_xy>8){
         screen_size_y=(int)((float)screen_size_x*(1.0/sh->aspect));
         screen_size_y+=screen_size_y%2; // round
         if(screen_size_y<sh->disp_h) // Do not downscale verticaly
             screen_size_y=sh->disp_h;
-      } else screen_size_x=w; // keep new width
+      } else screen_size_x=_w; // keep new width
     } else {
       MSG_V("Movie-Aspect is undefined - no prescaling applied.\n");
     }
@@ -260,7 +261,7 @@ csp_again:
     MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s',%p)\n",
                       sh->disp_w,sh->disp_h,
                       screen_size_x,screen_size_y,
-                      fullscreen|(vidmode<<1)|(softzoom<<2)|(flip<<3),
+                      vo.fullscreen|(vo.vidmode<<1)|(vo.softzoom<<2)|(vo.flip<<3),
                       vo_format_name(out_fmt),tune);
     return 1;
 }
@@ -271,7 +272,7 @@ csp_again:
 // Note: buffer allocation may be moved to mpcodecs_config_vo() later...
 mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h){
   MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
-  mp_image_t* mpi=vf_get_image(sh->vfilter,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h);
+  mp_image_t* mpi=vf_get_image(sh->vfilter,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h,dae_curr_vdecoded());
   mpi->x=mpi->y=0;
   if(mpi->xp_idx==XP_IDX_INVALID)
     MSG_V("[mpcodecs_get_image] Incorrect mpi->xp_idx. Be ready for segfault!\n");

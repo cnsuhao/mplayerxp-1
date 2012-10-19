@@ -102,7 +102,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     ch=MIN(sh,dh);
     dmpi=vf_get_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	    cw,ch);
+	    cw,ch,mpi->xp_idx);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
     if(sy < dy)		{ ch-=dy-sy; sy=dy; }
     if(sh > dh)		ch=sh-dh;

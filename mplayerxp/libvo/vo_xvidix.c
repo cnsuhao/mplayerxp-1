@@ -122,7 +122,6 @@ static uint32_t __FASTCALL__ set_window(int force_update,const vo_tune_info_t *i
 	(xvidix.win_w != xvidix.drwWidth) || (xvidix.win_h != xvidix.drwHeight))
     {
 	retval = VO_EVENT_RESIZE;
-	if(enable_xp && !force_update) LOCK_VDECODING();
 	xvidix.win_x = xvidix.drwcX;
 	xvidix.win_y = xvidix.drwcY;
 	xvidix.win_w = xvidix.drwWidth;
@@ -372,12 +371,12 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
     return event;
 }
 
-/* change_frame should be overwritten with vidix functions (vosub_vidix.c) */
+/* select_frame should be overwritten with vidix functions (vosub_vidix.c) */
 
-static void __FASTCALL__ change_frame(unsigned idx)
+static void __FASTCALL__ select_frame(unsigned idx)
 {
     UNUSED(idx);
-    MSG_FATAL( "[xvidix] error: didn't used vidix change_frame!\n");
+    MSG_FATAL( "[xvidix] error: didn't used vidix select_frame!\n");
     return;
 }
 

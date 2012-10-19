@@ -342,7 +342,7 @@ static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
     MSG_DBG2("vf_scale.put_frame was called\n");
     dmpi=vf_get_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	vf->priv->w, vf->priv->h);
+	vf->priv->w, vf->priv->h,mpi->xp_idx);
     scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, mpi->y, mpi->h, dmpi->planes, dmpi->stride, vf->priv->interlaced);
     return vf_next_put_slice(vf,dmpi);
 }
@@ -364,7 +364,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     MSG_DBG2("vf_scale.put_slice was called[%i %i]\n",mpi->y, mpi->h);
     dmpi=vf_get_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	vf->priv->w, vf->priv->h);
+	vf->priv->w, vf->priv->h,mpi->xp_idx);
     /* Try to fake first slice*/
     dplanes[0] = dmpi->planes[0];
     if(mpi->flags&MP_IMGFLAG_PLANAR) {

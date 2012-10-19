@@ -100,15 +100,12 @@ m_config_t* mconfig;
 
 int enable_xp=XP_VAPlay;
 int enable_gomp=0; /* currently it's experimental feature */
-volatile int dec_ahead_active_frame=0;
-volatile unsigned abs_dec_ahead_active_frame=0;
-volatile unsigned loc_dec_ahead_active_frame=0;
 volatile unsigned xp_drop_frame_cnt=0;
 unsigned xp_num_frames=0;
 float xp_screen_pts;
 float playbackspeed_factor=1.0;
 int mpxp_seek_time=-1;
-unsigned mpxp_after_seek=0;
+static unsigned mpxp_after_seek=0;
 int audio_eof=0;
 demux_stream_t *d_video=NULL;
 static int osd_show_framedrop = 0;
@@ -760,13 +757,9 @@ static void soft_exit_player(void)
   fflush(stderr);
   uninit_player(INITED_DEMUXER|INITED_STREAM);
   if(sh_audio) while(get_len_audio_buffer()) usleep(0);
-  if(sh_video && shva)
-  {
-    for(;;)
-    {
-	__MP_SYNCHRONIZE(vdec_active_mutex,vo_get_active_frame(&dec_ahead_active_frame));
-	LOCK_VDECA();
-	if(shva[dec_ahead_active_frame].eof) break;
+  if(sh_video) {
+    for(;;) {
+	if(dae_played_fra(xp_core.video).eof) break;
 	usleep(0);
     }
   }
@@ -1263,7 +1256,7 @@ static void __show_status_line(float a_pts,float video_pts,float delay,float AV_
 		(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
 		,vstat->drop_frame_cnt
 		,output_quality
-		,dec_ahead_active_frame
+		,dae_curr_vplayed()
 		);
     fflush(stdout);
 }
@@ -1326,37 +1319,26 @@ int mpxp_play_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, floa
 {
     float time_frame=0;
     float AV_delay=0; /* average of A-V timestamp differences */
-    volatile int da_locked_frame;
-    volatile unsigned ada_locked_frame;
-    volatile unsigned ada_blitted_frame;
     int blit_frame=0;
     int delay_corrected=1;
     int final_frame=0;
-    int num_frames_decoded = 0;
-    __MP_SYNCHRONIZE(vdec_active_mutex,vo_get_active_frame(&dec_ahead_active_frame));
-    LOCK_VDECA();
-    final_frame = shva[dec_ahead_active_frame].eof;
-    sh_video->num_frames = shva[dec_ahead_active_frame].num_frames;
-    sh_video->num_frames_decoded = shva[dec_ahead_active_frame].num_frames_decoded;
-    *v_pts = shva[dec_ahead_active_frame].v_pts;
-    num_frames_decoded = dec_ahead_num_frames_decoded;
-    UNLOCK_VDECA();
+    frame_attr_t shva_prev,shva;
+
+    shva_prev=dae_played_fra(xp_core.video);
+    final_frame = shva_prev.eof;
     if(xp_eof && final_frame) return 1;
+
+    blit_frame=dae_inc_played(xp_core.video); /* <-- SWITCH TO NEXT FRAME */
+
+    shva=dae_played_fra(xp_core.video);
+
+    sh_video->num_frames = shva.num_frames;
+    sh_video->num_frames_decoded = shva.frame_no;
+    *v_pts = shva.v_pts;
+
     /*------------------------ frame decoded. --------------------*/
 /* blit frame */
-    LOCK_VDEC_LOCKED();
-    da_locked_frame = dec_ahead_locked_frame;
-    ada_locked_frame = abs_dec_ahead_locked_frame;
-    ada_blitted_frame = abs_dec_ahead_blitted_frame;
-    UNLOCK_VDEC_LOCKED();
-    blit_frame=!(
-    dec_ahead_active_frame == da_locked_frame || /* like: we are in lseek */
-     /* don't flip if frame which is being decoded is equal to frame
-	which is being displayed or will be displayed.
-	Many card can perform page flipping only during VSYNC
-	so we can't flip to locked frame too */
-    (dec_ahead_active_frame+1)%xp_num_frames == da_locked_frame ||
-    (dec_ahead_active_frame-1+xp_num_frames)%xp_num_frames == da_locked_frame);
+
     if(xp_eof) blit_frame=1; /* force blitting until end of stream will be reached */
     if(use_pts_fix2 && sh_audio) {
 	if(sh_video->chapter_change == -1) { /* First frame after seek */
@@ -1378,7 +1360,6 @@ int mpxp_play_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, floa
 	    sh_audio->chapter_change=0;
 	}
     }
-    if(blit_frame) xp_screen_pts=sh_video->timer=*v_pts-(av_sync_pts?0:initial_audio_pts);
 #if 0
 MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->timer=%f v_pts=%f stream_pts=%f duration=%f\n"
 ,initial_audio_pts
@@ -1390,11 +1371,20 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 ,shva[dec_ahead_active_frame].stream_pts
 ,shva[dec_ahead_active_frame].duration);
 #endif
+    if(blit_frame) {
+	xp_screen_pts=sh_video->timer=*v_pts-(av_sync_pts?0:initial_audio_pts);
+#ifdef USE_OSD
+	/*--------- add OSD to the next frame contents ---------*/
+	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
+	pinfo[xp_id].current_module="draw_osd";
+	update_osd(shva.stream_pts);
+	vo_draw_osd(dae_curr_vplayed());
+#endif
+    }
     /* It's time to sleep ;)...*/
     pinfo[xp_id].current_module="sleep";
     GetRelativeTime(); /* reset timer */
-    if(sh_audio)
-    {
+    if(sh_audio) {
 	/* FIXME!!! need the same technique to detect audio_eof as for video_eof!
 	   often ao_get_delay() never returns 0 :( */
 	if(audio_eof && !get_delay_audio_buffer()) goto nosound_model;
@@ -1405,16 +1395,12 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	    time_frame=0;
 	else
 	    goto nosound_model;
-    }
-    else
-    {
+    } else {
 	nosound_model:
-	time_frame=shva[dec_ahead_active_frame].duration;
+	time_frame=shva_prev.duration;
     }
     (*aq_sleep_time)=0; /* we have other way to control that */
-    if(benchmark)
-	if(time_frame < 0)
-	    if(time_frame < max_av_resync) max_av_resync=time_frame;
+    if(benchmark && time_frame < 0 && time_frame < max_av_resync) max_av_resync=time_frame;
     if(!(vo.flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
 #define XP_MIN_AUDIOBUFF 0.05
@@ -1436,77 +1422,56 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	    if(enable_xp >= XP_VAPlay || t<XP_MAX_TIMESLICE || time_frame>XP_MAX_TIMESLICE) {
 		vo_check_events();
 		return 0;
-            }
-        }
+	    }
+	}
 
-    while(time_frame>XP_MIN_TIMESLICE)
-    {
-	/* free cpu for threads */
-	usleep(1);
-	time_frame-=GetRelativeTime();
-    }
-    pinfo[xp_id].current_module="sleep_usleep";
-    time_frame=SleepTime(rtc_fd,softsleep,time_frame);
+	while(time_frame>XP_MIN_TIMESLICE) {
+	    /* free cpu for threads */
+	    usleep(1);
+	    time_frame-=GetRelativeTime();
+	}
+	pinfo[xp_id].current_module="sleep_usleep";
+	time_frame=SleepTime(rtc_fd,softsleep,time_frame);
     }
     pinfo[xp_id].current_module="change_frame2";
     vo_check_events();
     /* don't flip if there is nothing new to display */
-    if(!blit_frame)
-    {
+    if(!blit_frame) {
 	static int drop_message=0;
-	if(!drop_message &&
-	    abs_dec_ahead_active_frame > 50 &&
-	    ada_locked_frame <= abs_dec_ahead_active_frame - 50)
-	    {
+	if(!drop_message && xp_core.video->num_slow_frames > 50) {
 		drop_message=1;
-		if(mpxp_after_seek) mpxp_after_seek--;
-		else
-		MSG_WARN(MSGTR_SystemTooSlow);
-		MSG_D("\ndec_ahead_main: TOO SLOW (locked=%u active=%u)\n"
-		,ada_locked_frame,abs_dec_ahead_active_frame);
-	    }
-	    MSG_D("\ndec_ahead_main: stalling %u (locked: %u blitted: %u local: %u)\n",dec_ahead_active_frame,da_locked_frame,ada_blitted_frame,loc_dec_ahead_active_frame);
+		if(mpxp_after_seek)	mpxp_after_seek--;
+		else			MSG_WARN(MSGTR_SystemTooSlow);
+	}
+	MSG_D("\ndec_ahead_main: stalling: %i %i\n",dae_cuurr_vplayed(),dae_curr_decoded());
 	/* Don't burn CPU here! With using of v_pts for A-V sync we will enter
 	   xp_decore_video without any delay (like while(1);)
 	   Sleeping for 10 ms doesn't matter with frame dropping */
 	usleep(0);
-    }
-    else
-    {
+    } else {
 	unsigned int t2=GetTimer();
 	double tt;
-	vo_change_frame();
-	MSG_D("\ndec_ahead_main: schedule %u on screen (abs_active: %u loc_active: %u abs_blitted %u)\n",dec_ahead_active_frame,abs_dec_ahead_active_frame,loc_dec_ahead_active_frame,ada_blitted_frame);
-	LOCK_VDEC_ACTIVE();
-	dec_ahead_active_frame=(dec_ahead_active_frame+1)%xp_num_frames;
-	loc_dec_ahead_active_frame++;
-	UNLOCK_VDEC_ACTIVE();
-#ifdef USE_OSD
-	/*--------- add OSD to the next frame contents ---------*/
-	MSG_D("dec_ahead_main: draw_osd to %u\n",dec_ahead_active_frame);
-	pinfo[xp_id].current_module="draw_osd";
-	update_osd(shva[dec_ahead_active_frame].stream_pts);
-	vo_draw_osd();
-#endif
+	unsigned player_idx;
+	player_idx=dae_curr_vplayed();
+	vo_select_frame(player_idx);
+	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
 	t2=GetTimer()-t2;
 	tt = t2*0.000001f;
 	vout_time_usage+=tt;
-	if(benchmark)
-	{
+	if(benchmark) {
 		/* we need compute draw_slice+change_frame here */
 		cur_vout_time_usage+=tt;
 		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo.fps > 1)
 							bench_dropped_frames ++;
 	}
     }
-    __MP_SYNCHRONIZE(vdec_active_mutex,abs_dec_ahead_active_frame++);
     pinfo[xp_id].current_module=NULL;
 
 /*================ A-V TIMESTAMP CORRECTION: =========================*/
   /* FIXME: this block was added to fix A-V resync caused by some strange things
      like playing 48KHz audio on 44.1KHz soundcard and other.
      Now we know PTS of every audio frame so don't need to have it */
-  if(sh_audio && (!audio_eof || ao_get_delay()) && !av_sync_pts){
+  if(sh_audio && (!audio_eof || ao_get_delay()) && !av_sync_pts) {
     float a_pts=0;
 
     // unplayed bytes in our and soundcard/dma buffer:
@@ -1522,24 +1487,24 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
       delay_corrected=1;
     } else {
-      // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
-      a_pts=d_audio->pts;
-      if(!delay_corrected) if(a_pts) delay_corrected=1;
-      a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+	// PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
+	a_pts=d_audio->pts;
+	if(!delay_corrected) if(a_pts) delay_corrected=1;
+	a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     }
 
-      MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-audio_delay-delay,*v_pts,(a_pts-delay-audio_delay)-*v_pts);
+    MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-audio_delay-delay,*v_pts,(a_pts-delay-audio_delay)-*v_pts);
 
-      if(delay_corrected && blit_frame){
+    if(delay_corrected && blit_frame){
 	float x;
 	AV_delay=(a_pts-delay-audio_delay)-*v_pts;
 	x=AV_delay*0.1f;
 	if(x<-max_pts_correction) x=-max_pts_correction; else
 	if(x> max_pts_correction) x= max_pts_correction;
 	if(default_max_pts_correction>=0)
-	  max_pts_correction=default_max_pts_correction;
+	    max_pts_correction=default_max_pts_correction;
 	else // +-10% of time
-	    __MP_SYNCHRONIZE(vdeca_mutex,max_pts_correction=shva[dec_ahead_active_frame].duration*0.10);
+	    max_pts_correction=shva.duration*0.10;
 	if(enable_xp>=XP_VAPlay)
 	    pthread_mutex_lock(&audio_timer_mutex);
 	sh_audio->timer+=x;
@@ -1547,10 +1512,9 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	    pthread_mutex_unlock(&audio_timer_mutex);
 	c_total+=x;
 	if(benchmark && verbose) __show_status_line(a_pts,*v_pts,delay,AV_delay,vstat);
-      }
+    }
   } else {
     // No audio or pts:
-
     if(benchmark && verbose) show_status_line_no_apts(*v_pts,vstat);
   }
   return 0;
@@ -1559,6 +1523,8 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,const seek_args_t* seek)
 {
     int seek_rval=1;
+    xp_core_lock_seeking();
+    xp_core.in_lseek=Seek;
     audio_eof=0;
     if(seek->secs || seek->flags&DEMUX_SEEK_SET) {
 	seek_rval=demux_seek_r(demuxer,seek);
@@ -1638,6 +1604,7 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 	    }
 	}
     }
+    xp_core_unlock_seeking();
 }
 
 void mpxp_reset_vcache(void)
@@ -1645,7 +1612,7 @@ void mpxp_reset_vcache(void)
     unsigned i;
     seek_args_t seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
     for(i=0;i<xp_threads;i++) if(strcmp(pinfo[i].thread_name,"main")==0) break;
-    if(shva) mpxp_seek(i,NULL,NULL,shva[dec_ahead_active_frame].v_pts,&seek);
+    if(sh_video) mpxp_seek(i,NULL,NULL,dae_played_fra(xp_core.video).v_pts,&seek);
     return;
 }
 
@@ -2186,9 +2153,6 @@ static void mpxp_run_ahead_engine(void) {
     if(sh_video)	MSG_OK("Using DECODING AHEAD mplayer's core with %u video buffers\n",xp_num_frames);
     else 		MSG_OK("Using DECODING AHEAD mplayer's core with %u audio buffers\n",ao_da_buffs);
 /* reset counters */
-    dec_ahead_active_frame=0;
-    abs_dec_ahead_active_frame=0;
-    loc_dec_ahead_active_frame=0;
     xp_drop_frame_cnt=0;
 }
 
@@ -2216,10 +2180,10 @@ static void mpxp_print_audio_status(void) {
 }
 
 #ifdef USE_OSD
-static int mpxp_paint_osd(int osd_visible,int* in_pause) {
+static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
     int rc=0;
-    if(osd_visible) {
-	if (!--osd_visible) {
+    if(*osd_visible) {
+	if (!--(*osd_visible)) {
 	    vo.osd_progbar_type=-1; // disable
 	    vo_osd_changed(OSDTYPE_PROGBAR);
 	    if (!((osd_function == OSD_PAUSE)||(osd_function==OSD_DVDMENU)))
@@ -2250,7 +2214,7 @@ static int mpxp_paint_osd(int osd_visible,int* in_pause) {
 
 	if (ao_inited && sh_audio) {
 	    if( enable_xp >= XP_VAPlay ) {
-		dec_ahead_in_pause=1;
+		xp_core.in_pause=1;
 		while( !dec_ahead_can_aseek ) usleep(0);
 	    }
 	    ao_pause();	// pause audio, keep data if possible
@@ -2270,7 +2234,7 @@ static int mpxp_paint_osd(int osd_visible,int* in_pause) {
 	if (ao_inited && sh_audio) {
 	    ao_resume();	// resume audio
 	    if( enable_xp >= XP_VAPlay ) {
-		dec_ahead_in_pause=0;
+		xp_core.in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
 	    }
 	}
@@ -2490,10 +2454,10 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
 	else	  cmd->id=MP_CMD_TV_STEP_CHANNEL_DOWN;
     case MP_CMD_TV_STEP_NORM:
     case MP_CMD_TV_STEP_CHANNEL_LIST:
-	stream->driver->control(stream,SCRTL_MPXP_CMD,cmd->id);
+	stream->driver->control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->id);
 	break;
     case MP_CMD_DVDNAV:
-      if(stream->driver->control(stream,SCRTL_MPXP_CMD,cmd->args[0].v.i)==SCTRL_OK)
+      if(stream->driver->control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==SCTRL_OK)
       {
 	if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT)
 	{
@@ -2518,7 +2482,7 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
 	vo_fullscreen();
 	break;
     case MP_CMD_VO_SCREENSHOT:
-	vo_screenshot();
+	vo_screenshot(dae_curr_vplayed());
 	break;
     case MP_CMD_SUB_POS:
     {
@@ -2783,6 +2747,8 @@ play_next_file:
 	goto main;
     }
 
+    xp_num_frames=vo_get_num_frames(); /* that really known after init_vcodecs */
+
     if(auto_quality>0){
 	/* Auto quality option enabled*/
 	output_quality=get_video_quality_max(sh_video);
@@ -2857,8 +2823,6 @@ main:
 	MSG_INFO(MSGTR_FPSforced,sh_video->fps,sh_video->frametime);
     }
 
-    vo_get_num_frames(&xp_num_frames);
-
     /* Init timers and benchmarking */
     rtc_fd=InitTimer();
     if(!nortc && rtc_fd>0) { close(rtc_fd); rtc_fd=-1; }
@@ -2883,11 +2847,9 @@ main:
  */
     mpxp_seek_time = GetTimerMS();
     if(sh_video) {
-	volatile unsigned ada_blitted_frame;
 	do {
 	    usleep(0);
-	    __MP_SYNCHRONIZE(vdec_locked_mutex,ada_blitted_frame = abs_dec_ahead_blitted_frame);
-	}while(ada_blitted_frame < xp_num_frames/2 && !xp_eof);
+	}while(dae_curr_vdecoded() < xp_num_frames/2 && !xp_eof);
     }
     if(run_xp_players()!=0) exit_player("Can't run xp players!\n");
     MSG_OK("Using the next %i threads:\n",xp_threads);
@@ -2949,7 +2911,7 @@ repaint:
 	    }
 read_input:
 #ifdef USE_OSD
-	    if((mpxp_paint_osd(osd.visible,&in_pause))!=0) goto repaint;
+	    if((mpxp_paint_osd(&osd.visible,&in_pause))!=0) goto repaint;
 #endif
 	} /* else if(!sh_video) */
 	our_n_frames++;
@@ -2989,10 +2951,12 @@ do_loop:
 	    pinfo[xp_id].current_module="seek";
 
 	    dec_ahead_halt_threads(0);
-	    LOCK_VREADING();
 
-	    if(seek_args.secs && sh_video)
-		seek_args.secs -= (xp_is_bad_pts?shva[dec_ahead_locked_frame>0?dec_ahead_locked_frame-1:xp_num_frames-1].v_pts:d_video->pts)-shva[dec_ahead_active_frame].v_pts;
+	    if(seek_args.secs && sh_video) {
+	    frame_attr_t shvap = dae_played_fra(xp_core.video);
+	    frame_attr_t shvad = xp_core.video->fra[dae_prev_decoded(xp_core.video)];
+		seek_args.secs -= (xp_is_bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
+	    }
 
 	    mpxp_seek(xp_id,&vstat,&osd,v_pts,&seek_args);
 
@@ -3000,7 +2964,6 @@ do_loop:
 	    seek_args.secs=0;
 	    seek_args.flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 
-	    UNLOCK_VREADING();
 	    dec_ahead_restart_threads(xp_id);
 /* Disable threads for DVD menus */
 	    pinfo[xp_id].current_module=NULL;

@@ -22,7 +22,7 @@ int	 vidix_start(void);
 int	 vidix_stop(void);
 void     vidix_term( void );
 uint32_t __FASTCALL__ vidix_query_fourcc(vo_query_fourcc_t* fourcc);
-void     __FASTCALL__ vidix_change_frame(unsigned idx);
+void     __FASTCALL__ vidix_select_frame(unsigned idx);
 
 #include <vidix/vidix.h>
 /* graphic keys */

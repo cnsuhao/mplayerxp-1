@@ -83,7 +83,7 @@ typedef struct vf_seteq_s
 #define VFCTRL_GET_EQUALIZER		8 /* gset color options (brightness,contrast etc) */
 #define VFCTRL_START_FRAME		7
 #define VFCTRL_CHANGE_RECTANGLE		9 /* Change the rectangle boundaries */
-#define VFCTRL_CHANGE_FRAME		10 /* Tell the vo to flip pages */
+#define VFCTRL_SELECT_FRAME		10 /* Tell the vo to flip pages */
 #define VFCTRL_DUPLICATE_FRAME		11 /* For encoding - encode zero-change frame */
 #define VFCTRL_SKIP_NEXT_FRAME		12 /* For encoding - drop the next frame that passes thru */
 #define VFCTRL_FLUSH_PAGES		13 /* For encoding - flush delayed frames */
@@ -96,7 +96,7 @@ vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh);
 void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cache);
 
 void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h);
-mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h);
+mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx);
 int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned width,unsigned height);
 
 vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** filter_list, vf_instance_t* next,sh_video_t *sh, char *name, char *args);

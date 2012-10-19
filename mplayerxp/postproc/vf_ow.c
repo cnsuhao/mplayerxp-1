@@ -225,7 +225,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     if(mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
     // ok, we can do pp in-place (or pp disabled):
     vf->dmpi=vf_get_image(vf->next,mpi->imgfmt,
-        mpi->type, mpi->flags | MP_IMGFLAG_READABLE, mpi->width, mpi->height);
+        mpi->type, mpi->flags | MP_IMGFLAG_READABLE, mpi->width, mpi->height,mpi->xp_idx);
     mpi->planes[0]=vf->dmpi->planes[0];
     mpi->stride[0]=vf->dmpi->stride[0];
     mpi->width=vf->dmpi->width;
@@ -246,7 +246,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
         dmpi=vf_get_image(vf->next,mpi->imgfmt,
             MP_IMGTYPE_TEMP,
             MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-            mpi->width,mpi->height);
+            mpi->width,mpi->height,mpi->xp_idx);
         vf_clone_mpi_attributes(dmpi, mpi);
     }else{
         dmpi=vf->dmpi;

@@ -248,9 +248,9 @@ static void __FASTCALL__ __vbeCopyData(uint8_t *image)
    }
 }
 
-static void __FASTCALL__ change_frame(unsigned idx)
+static void __FASTCALL__ select_frame(unsigned idx)
 {
-  MSG_DBG3("vo_vesa: change_frame was called\n");
+  MSG_DBG3("vo_vesa: select_frame was called\n");
   if(!HAS_DGA()) __vbeCopyData(priv.dga_buffer);
   else
   {

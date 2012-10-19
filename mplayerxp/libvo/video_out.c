@@ -121,9 +121,7 @@ typedef struct dri_priv_s {
     unsigned		bpp;
     dri_surface_cap_t	cap;
     dri_surface_t	surf[MAX_DRI_BUFFERS];
-    unsigned		active_frame,xp_frame;
-    unsigned		nframes;
-    int			has_thread;
+    unsigned		num_xp_frames;
     int			dr,planes_eq,is_planar,accel;
     unsigned		sstride;
     uint32_t		d_width,d_height;
@@ -174,7 +172,7 @@ const vo_info_t* vo_get_info( void )
 void __FASTCALL__ vo_preinit_structs( void )
 {
     memset(&dri,0,sizeof(dri_priv_t));
-    dri.nframes=1;
+    dri.num_xp_frames=1;
     memset(&vo,0,sizeof(vo_priv_t));
     vo.movie_aspect=-1.0;
     vo.flip=-1;
@@ -265,9 +263,9 @@ static void __FASTCALL__ dri_config(uint32_t fourcc)
     if(!dri.bpp) dri.has_dri=0; /*unknown fourcc*/
     if(dri.has_dri)
     {
-	video_out->control(VOCTRL_GET_NUM_FRAMES,&dri.nframes);
-	dri.nframes=min(dri.nframes,MAX_DRI_BUFFERS);
-	for(i=0;i<dri.nframes;i++)
+	video_out->control(VOCTRL_GET_NUM_FRAMES,&dri.num_xp_frames);
+	dri.num_xp_frames=min(dri.num_xp_frames,MAX_DRI_BUFFERS);
+	for(i=0;i<dri.num_xp_frames;i++)
 	{
 	    dri.surf[i].idx=i;
 	    video_out->control(DRI_GET_SURFACE,&dri.surf[i]);
@@ -377,13 +375,8 @@ static void __FASTCALL__ dri_reconfig( uint32_t event )
 	/* TODO: smart analizer of scaling possibilities of vo_driver */
 	if((event & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	{
+	    xp_core.in_resize=1;
 	    vf_reinit_vo(dri.cap.w,dri.cap.h,dri.cap.fourcc,1);
-	    if(enable_xp)
-	    {
-		UNLOCK_VDECODING();
-		dec_ahead_in_resize=1;
-		MSG_V("dri_vo: vo_event_resize: UNLOCK_VDECODING was called\n");
-	    }
 	}
 	vf_reinit_vo(dri.cap.w,dri.cap.h,dri.cap.fourcc,0);
 }
@@ -420,7 +413,6 @@ uint32_t __FASTCALL__ vo_config(uint32_t width, uint32_t height, uint32_t d_widt
     if(retval == 0)
     {
 	int dri_retv;
-	dri.active_frame=dri.xp_frame=0;
 	dri_retv = video_out->control(DRI_GET_SURFACE_CAPS,&dri.cap);
 	vo_data.image_format = format;
 	vo_data.image_width = w;
@@ -472,12 +464,12 @@ uint32_t vo_reset( void )
     return video_out->control(VOCTRL_RESET,NULL);
 }
 
-uint32_t vo_screenshot( void )
+uint32_t vo_screenshot( unsigned idx )
 {
     char buf[256];
     MSG_DBG3("dri_vo_dbg: vo_screenshot\n");
     sprintf(buf,"%llu",vo_data.frame_counter);
-    return gr_screenshot(buf,dri.surf[dri.active_frame].planes,dri.cap.strides,dri.cap.fourcc,dri.cap.width,dri.cap.height);
+    return gr_screenshot(buf,dri.surf[idx].planes,dri.cap.strides,dri.cap.fourcc,dri.cap.width,dri.cap.height);
 }
 
 uint32_t vo_pause( void )
@@ -492,12 +484,12 @@ uint32_t vo_resume( void )
     return video_out->control(VOCTRL_RESUME,0);
 }
 
-uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi )
+uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi, unsigned decoder_idx)
 {
     int width_less_stride;
     MSG_DBG2("dri_vo_dbg: vo_get_surface type=%X flg=%X\n",mpi->type,mpi->flags);
     width_less_stride = 0;
-    mpi->xp_idx = dri.xp_frame;
+    mpi->xp_idx = decoder_idx;
     if(mpi->flags & MP_IMGFLAG_PLANAR)
     {
 	width_less_stride = mpi->w <= dri.cap.strides[0] &&
@@ -508,21 +500,21 @@ uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi )
     if(dri.has_dri)
     {
 	/* static is singlebuffered decoding */
-	if(mpi->type==MP_IMGTYPE_STATIC && dri.nframes>1)
+	if(mpi->type==MP_IMGTYPE_STATIC && dri.num_xp_frames>1)
 	{
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->type==MP_IMGTYPE_STATIC && dri.nframes>1\n");
+	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->type==MP_IMGTYPE_STATIC && dri.num_xp_frames>1\n");
 	    return VO_FALSE;
 	}
 	/*I+P requires 2+ static buffers for R/W */
-	if(mpi->type==MP_IMGTYPE_IP && (dri.nframes < 2 || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
+	if(mpi->type==MP_IMGTYPE_IP && (dri.num_xp_frames < 2 || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
 	{
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IP && dri.nframes < 2) || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IP && dri.num_xp_frames < 2) || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
 	    return VO_FALSE;
 	}
 	/*I+P+B requires 3+ static buffers for R/W */
-	if(mpi->type==MP_IMGTYPE_IPB && (dri.nframes != 3 || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
+	if(mpi->type==MP_IMGTYPE_IPB && (dri.num_xp_frames != 3 || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
 	{
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IPB && dri.nframes != 3) || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IPB && dri.num_xp_frames != 3) || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
 	    return VO_FALSE;
 	}
 	/* video surface is bad thing for reading */
@@ -534,9 +526,9 @@ uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi )
 	/* it seems that surfaces are equal */
 	if((((mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && width_less_stride) || dri.planes_eq) && dri.dr)
 	{
-	    mpi->planes[0]=dri.surf[dri.xp_frame].planes[0]+dri.off[0];
-	    mpi->planes[1]=dri.surf[dri.xp_frame].planes[1]+dri.off[1];
-	    mpi->planes[2]=dri.surf[dri.xp_frame].planes[2]+dri.off[2];
+	    mpi->planes[0]=dri.surf[decoder_idx].planes[0]+dri.off[0];
+	    mpi->planes[1]=dri.surf[decoder_idx].planes[1]+dri.off[1];
+	    mpi->planes[2]=dri.surf[decoder_idx].planes[2]+dri.off[2];
 	    mpi->stride[0]=dri.cap.strides[0];
 	    mpi->stride[1]=dri.cap.strides[1];
 	    mpi->stride[2]=dri.cap.strides[2];
@@ -608,48 +600,7 @@ uint32_t vo_fullscreen( void )
     return retval;
 }
 
-uint32_t __FASTCALL__ vo_get_num_frames( unsigned *nfr )
-{
-    *nfr = dri.has_dri ? dri.nframes : 1;
-    MSG_DBG3("dri_vo_dbg: %u=vo_get_num_frames\n",*nfr);
-    return VO_TRUE;
-}
-
-uint32_t __FASTCALL__ vo_get_decoding_frame_num( volatile unsigned * fr )
-{
-    *fr = dri.has_dri ? dri.xp_frame : 0;
-    MSG_DBG3("dri_vo_dbg: %u=vo_get_decoding_frame_num\n",*fr);
-    return VO_TRUE;
-}
-
-unsigned __FASTCALL__ vo_get_decoding_next_frame( unsigned idx )
-{
-    unsigned rval;
-    rval = dri.has_dri ? (idx+1)%dri.nframes : 0;
-    return rval;
-}
-
-unsigned __FASTCALL__ vo_get_decoding_prev_frame( unsigned idx )
-{
-    unsigned rval;
-    rval = dri.has_dri ? (idx-1+dri.nframes)%dri.nframes : 0;
-    return rval;
-}
-
-uint32_t __FASTCALL__ vo_set_decoding_frame_num( volatile unsigned * fr )
-{
-    MSG_DBG2("dri_vo_dbg: vo_set_decoding_frame_num(%u) for decoding to\n",*fr);
-    dri.xp_frame = *fr;
-    dri.has_thread = 1;
-    return VO_TRUE;
-}
-
-uint32_t __FASTCALL__ vo_get_active_frame( volatile unsigned * fr)
-{
-    *fr = dri.has_dri ? dri.active_frame : 0;
-    MSG_DBG3("dri_vo_dbg: %u=vo_get_active_frame\n",*fr);
-    return VO_TRUE;
-}
+unsigned __FASTCALL__ vo_get_num_frames( void ) { return dri.num_xp_frames; }
 
 uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 {
@@ -687,21 +638,19 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
     return -1;
 }
 
-void vo_change_frame(void)
+void vo_select_frame(unsigned play_idx)
 {
-    MSG_DBG2("dri_vo_dbg: vo_change_frame [dri.active_frame=%u]\n",dri.active_frame);
+    MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
 
-    video_out->change_frame(dri.active_frame);
-    dri.active_frame = (dri.active_frame+1)%dri.nframes;
-    if(!dri.has_thread) dri.xp_frame = (dri.xp_frame+1)%dri.nframes;
+    video_out->select_frame(play_idx);
 }
 
-void vo_flush_pages(void)
+void vo_flush_page(unsigned decoder_idx)
 {
-    MSG_DBG3("dri_vo_dbg: vo_flush_pages [dri.active_frame=%u]\n",dri.active_frame);
+    MSG_DBG3("dri_vo_dbg: vo_flush_pages [idx=%u]\n",decoder_idx);
     vo_data.frame_counter++;
     if((dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
-					video_out->control(VOCTRL_FLUSH_PAGES,&dri.xp_frame);
+					video_out->control(VOCTRL_FLUSH_PAGES,&decoder_idx);
 }
 
 /* DRAW OSD */
@@ -770,7 +719,7 @@ static void __FASTCALL__ clear_rect_yuy2(unsigned _y0,unsigned h,uint8_t *dest,u
   }
 }
 
-static void __FASTCALL__ dri_remove_osd(int x0,int _y0, int w,int h)
+static void __FASTCALL__ dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h)
 {
     if(x0+w<=dri.cap.width&&_y0+h<=dri.cap.height)
     switch(dri.cap.fourcc)
@@ -783,39 +732,39 @@ static void __FASTCALL__ dri_remove_osd(int x0,int _y0, int w,int h)
 	case IMGFMT_BGR24:
 	case IMGFMT_RGB32:
 	case IMGFMT_BGR32:
-		clear_rect_rgb( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0*((dri.bpp+7)/8),
+		clear_rect_rgb( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0*((dri.bpp+7)/8),
 			    w*(dri.bpp+7)/8,dri.cap.strides[0]);
 		break;
 	case IMGFMT_YVYU:
 	case IMGFMT_YUY2:
-		clear_rect_yuy2( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0*2,
+		clear_rect_yuy2( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0*2,
 			    w*2,dri.cap.strides[0]);
 		break;
 	case IMGFMT_UYVY:
-		clear_rect_yuy2( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0*2+1,
+		clear_rect_yuy2( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0*2+1,
 			    w*2,dri.cap.strides[0]);
 		break;
 	case IMGFMT_Y800:
-		clear_rect( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0,
+		clear_rect( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0,
 			    w,dri.cap.strides[0],0x10);
 		break;
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
 	case IMGFMT_IYUV:
-		clear_rect( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0,
+		clear_rect( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0,
 			    w,dri.cap.strides[0],0x10);
-		clear_rect2( _y0/2,h/2,dri.surf[dri.active_frame].planes[1]+_y0/2*dri.cap.strides[1]+x0/2,
+		clear_rect2( _y0/2,h/2,dri.surf[idx].planes[1]+_y0/2*dri.cap.strides[1]+x0/2,
 			    w/2,dri.cap.strides[1],0x80);
-		clear_rect2( _y0/2,h/2,dri.surf[dri.active_frame].planes[2]+_y0/2*dri.cap.strides[2]+x0/2,
+		clear_rect2( _y0/2,h/2,dri.surf[idx].planes[2]+_y0/2*dri.cap.strides[2]+x0/2,
 			    w/2,dri.cap.strides[2],0x80);
 		break;
 	case IMGFMT_YVU9:
 	case IMGFMT_IF09:
-		clear_rect( _y0,h,dri.surf[dri.active_frame].planes[0]+_y0*dri.cap.strides[0]+x0,
+		clear_rect( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0,
 			    w,dri.cap.strides[0],0x10);
-		clear_rect4( _y0/4,h/4,dri.surf[dri.active_frame].planes[1]+_y0/4*dri.cap.strides[1]+x0/4,
+		clear_rect4( _y0/4,h/4,dri.surf[idx].planes[1]+_y0/4*dri.cap.strides[1]+x0/4,
 			    w/4,dri.cap.strides[1],0x80);
-		clear_rect4( _y0/4,h/4,dri.surf[dri.active_frame].planes[2]+_y0/4*dri.cap.strides[2]+x0/4,
+		clear_rect4( _y0/4,h/4,dri.surf[idx].planes[2]+_y0/4*dri.cap.strides[2]+x0/4,
 			    w/4,dri.cap.strides[2],0x80);
 		break;
     }
@@ -854,7 +803,7 @@ static draw_alpha_f __FASTCALL__ get_draw_alpha(uint32_t fmt) {
   return NULL;
 }
 
-static void __FASTCALL__ dri_draw_osd(int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
+static void __FASTCALL__ dri_draw_osd(unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
 {
     int finalize=vo_is_final();
     if(x0+w<=dri.cap.width&&_y0+h<=dri.cap.height)
@@ -862,20 +811,20 @@ static void __FASTCALL__ dri_draw_osd(int x0,int _y0, int w,int h,const unsigned
 	if(!draw_alpha) draw_alpha=get_draw_alpha(dri.cap.fourcc);
 	if(draw_alpha)
 	    (*draw_alpha)(w,h,src,srca,stride,
-			    dri.surf[dri.active_frame].planes[0]+dri.cap.strides[0]*_y0+x0*((dri.bpp+7)/8),
+			    dri.surf[idx].planes[0]+dri.cap.strides[0]*_y0+x0*((dri.bpp+7)/8),
 			    dri.cap.strides[0],finalize);
     }
 }
 
-void vo_draw_osd(void)
+void vo_draw_osd(unsigned idx)
 {
     MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
     if(dri.has_dri && !(dri.cap.caps & DRI_CAP_HWOSD))
     {
-	if( dri.cap.x || dri.cap.y || 
+	if( dri.cap.x || dri.cap.y ||
 	    dri.cap.w != dri.cap.width || dri.cap.h != dri.cap.height)
-		    vo_remove_text(dri.cap.width,dri.cap.height,dri_remove_osd);
-	vo_draw_text(dri.cap.width,dri.cap.height,dri_draw_osd);
+		    vo_remove_text(idx,dri.cap.width,dri.cap.height,dri_remove_osd);
+	vo_draw_text(idx,dri.cap.width,dri.cap.height,dri_draw_osd);
     }
 }
 
@@ -897,6 +846,6 @@ uint32_t __FASTCALL__ vo_control(uint32_t request, any_t*data)
 int __FASTCALL__ vo_is_final(void) {
     int mmaped=dri.cap.caps&DRI_CAP_VIDEO_MMAPED;
     int busmaster=dri.cap.caps&DRI_CAP_BUSMASTERING;
-    return mmaped||busmaster||(dri.nframes>1);
+    return mmaped||busmaster||(dri.num_xp_frames>1);
 }
 

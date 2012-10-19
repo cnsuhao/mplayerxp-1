@@ -220,4 +220,5 @@ void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned h
     dmpi->y = y;
     dmpi->h = h;
     dmpi->chroma_height = h >> mpi->chroma_y_shift;
+    dmpi->xp_idx = mpi->xp_idx;
 }

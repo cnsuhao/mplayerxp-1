@@ -84,7 +84,7 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	mp_image_t *pmpi;
 	mp_image_t *dmpi=vf_get_image(vf->next,mpi->imgfmt,
 		MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-		mpi->w,mpi->h);
+		mpi->w,mpi->h,mpi->xp_idx);
 	if(!dmpi) return 0;
 	pmpi=dmpi;
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
@@ -301,7 +301,7 @@ static int __FASTCALL__ config (struct vf_instance_s* vf,
     int rowsize;
 
     vf->priv->pmpi = vf_get_image (vf->next, outfmt, MP_IMGTYPE_TEMP,
-				   0,width, height);
+				   0,width, height, XP_IDX_INVALID);
     if (!(vf->priv->pmpi->flags & MP_IMGFLAG_PLANAR) &&
 	outfmt != IMGFMT_RGB32 && outfmt != IMGFMT_BGR32 &&
 	outfmt != IMGFMT_RGB24 && outfmt != IMGFMT_BGR24 &&

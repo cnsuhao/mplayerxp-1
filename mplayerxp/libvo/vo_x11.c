@@ -41,12 +41,6 @@
 #include "fastmemcpy.h"
 #include "sub.h"
 
-
-/* special case for vo_x11 driver. We need mutexes */
-//#include "../dec_ahead.h"
-#define MSG_D(args...)
-#define LOCK_VDECODING() { MSG_D(DA_PREFIX"LOCK_VDECODING\n"); pthread_mutex_lock(&vdecoding_mutex); }
-
 #include "../postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
 #include "video_out_internal.h"
 #include "dri_vo.h"
@@ -106,7 +100,6 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
 	XClearWindow(vo.mDisplay, vo.window);
 	vox11.image_width= (newW+7)&(~7);
 	vox11.image_height= newH;
-	if(enable_xp) LOCK_VDECODING();
 	for(idx=0;idx<vox11.num_buffers;idx++)
 	{
 	    vo_x11_freeMyXImage(idx);
@@ -298,7 +291,7 @@ static void __FASTCALL__ Display_Image( XImage *myximage )
 #endif
 }
 
-static void __FASTCALL__ change_frame( unsigned idx ){
+static void __FASTCALL__ select_frame( unsigned idx ){
  Display_Image( vo_x11_myximage[idx] );
  if (vox11.num_buffers>1) XFlush(vo.mDisplay);
  else XSync(vo.mDisplay, False);

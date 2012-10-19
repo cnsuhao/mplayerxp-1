@@ -262,7 +262,7 @@ static int __FASTCALL__ put_slice (vf_instance_t *vf, mp_image_t *src)
       eq2->buf[0] = (unsigned char *) realloc (eq2->buf[0], img_n);
   }
 
-  dst = vf_get_image (vf->next, src->imgfmt, MP_IMGTYPE_EXPORT, 0,src->w, src->h);
+  dst = vf_get_image (vf->next, src->imgfmt, MP_IMGTYPE_EXPORT, 0,src->w, src->h,src->xp_idx);
 
 #ifdef _OPENMP
 #pragma omp parallel for

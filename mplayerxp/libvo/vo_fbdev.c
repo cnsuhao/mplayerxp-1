@@ -66,7 +66,7 @@ typedef struct {
 	uint32_t vmode;
 } fb_mode_t;
 
-#define PRINT_LINENUM MSG_DBG2(" at line %d\n", line_num)
+#define PRINT_LINENUM //MSG_DBG2(" at line %d\n", line_num)
 
 #define MAX_NR_TOKEN	16
 
@@ -1147,7 +1147,7 @@ static const vo_info_t *get_info(void)
 	return &vo_info;
 }
 
-static void __FASTCALL__ change_frame(unsigned idx)
+static void __FASTCALL__ select_frame(unsigned idx)
 {
 	unsigned i, out_offset = 0, in_offset = 0;
 

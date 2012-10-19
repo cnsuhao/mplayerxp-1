@@ -12,6 +12,8 @@
 #include "../dec_ahead.h"
 
 pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;
+#define LOCK_DEMUXER() { pthread_mutex_lock(&demuxer_mutex); }
+#define UNLOCK_DEMUXER() { pthread_mutex_unlock(&demuxer_mutex); }
 
 static float get_ds_stream_pts(demux_stream_t *ds,int nbytes)
 {

@@ -58,7 +58,7 @@ typedef struct null_priv_s {
 }null_priv_t;
 static null_priv_t null;
 
-static void __FASTCALL__ change_frame(unsigned idx)
+static void __FASTCALL__ select_frame(unsigned idx)
 {
     UNUSED(idx);
 }

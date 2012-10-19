@@ -1675,7 +1675,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     npercents=(seeka->flags&DEMUX_SEEK_SET)?percents:cpercents+percents;
     if(npercents>100) npercents=100;
     newpos=demuxer->movi_start+(off_t)(((float)priv->toc[npercents]/256.0)*priv->nbytes);
-    MSG_DBG2("xing seeking: secs=%f prcnts=%u cprcnts=%u spos=%llu newpos=%llu\n",rel_seek_secs,npercents,cpercents,spos,newpos);
+    MSG_DBG2("xing seeking: secs=%f prcnts=%u cprcnts=%u spos=%llu newpos=%llu\n",seeka->secs,npercents,cpercents,spos,newpos);
     stream_seek(demuxer->stream,newpos);
     priv->last_pts=(((float)demuxer->movi_length*npercents)/100.)*1000.;
     return;

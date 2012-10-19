@@ -207,9 +207,9 @@ printf("frame is DMA copied\n");
 	}
 }
 
-void __FASTCALL__ vidix_change_frame(unsigned idx)
+void __FASTCALL__ vidix_select_frame(unsigned idx)
 {
-    MSG_DBG2("vidix_change_frame() was called\n");
+    MSG_DBG2("vidix_select_frame() was called\n");
     if(vo.use_bm == 1) vidix_copy_dma(idx,0);
     else vdlPlaybackFrameSelect(priv.handler,idx);
 }
@@ -681,7 +681,7 @@ int __FASTCALL__ vidix_preinit(const char *drvname,const any_t*server)
 	else MSG_V("Driver capability: %X\n",priv.cap->flags);
 	MSG_V("Using: %s by %s\n",priv.cap->name,priv.cap->author);
 	/* we are able to tune up this stuff depend on fourcc format */
-	((vo_functions_t *)server)->change_frame=vidix_change_frame;
+	((vo_functions_t *)server)->select_frame=vidix_select_frame;
 	if(!reent) 
 	{
 	  server_control = ((vo_functions_t *)server)->control;
