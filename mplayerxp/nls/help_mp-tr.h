@@ -31,7 +31,6 @@ static char help_text[]=
 " < veya >           çalma listesinde önceki/sonraki \n"
 " p veya BOŞLUK      duraklat (devam etmek için herhangi bir tuşa basınız)\n"
 " q veya ESC         durdur ve uygulamadan çık\n"
-" + veya -           ses gecikmesini +/- 0.1 saniye olarak ayarla\n"
 " o                  OSD modunu değiştir:  yok / oynatma imi / oynatma imi + zamanlayıcı\n"
 " * veya /           sesi yükselt veya alçalt\n"
 " z veya x           altyazı gecikmesini +/- 0.1 saniye olarak ayarla\n"

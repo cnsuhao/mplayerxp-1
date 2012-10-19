@@ -28,7 +28,6 @@ static char help_text[]=
 " < or >          søger frem og tilbage i en afspilningsliste\n"
 " p or SPACE      pause filmen (starter igen ved en vilkårlig tast)\n"
 " q or ESC        stop afspilning og afslut program\n"
-" + or -          juster lyd forsinkelse med +/- 0.1 sekund\n"
 " o               vælger OSD typer:  ingen / søgebar / søgebar+tid\n"
 " * or /          forøjer eller formindsker volumen (tryk 'm' for at vælge master/pcm)\n"
 " z or x          justerer undertekst forsinkelse med +/- 0.1 sekund\n"

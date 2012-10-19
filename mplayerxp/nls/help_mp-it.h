@@ -31,7 +31,6 @@ static char help_text[]=
 " < o >           va indietro/avanti nella playlist\n"
 " p o SPAZIO      mette in pausa il filmato (premere un qualunque tasto per continuare)\n"
 " q o ESC         ferma la riproduzione ed esce dal programma\n"
-" + o -           regola il ritardo audio di +/- 0.1 secondi\n"
 " o               cambia tra le modalità OSD: niente / barra di ricerca / barra di ricerca + tempo\n"
 " * o /           incrementa o decrementa il volume (premere 'm' per selezionare master/pcm)\n"
 " z o x           regola il ritardo dei sottotitoli di +/- 0.1 secondi\n"

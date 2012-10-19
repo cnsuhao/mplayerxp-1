@@ -109,7 +109,6 @@ static unsigned mpxp_after_seek=0;
 int audio_eof=0;
 demux_stream_t *d_video=NULL;
 static int osd_show_framedrop = 0;
-static int osd_show_av_delay = 0;
 static int osd_show_sub_delay = 0;
 static int osd_function=OSD_PLAY;
 int output_quality=0;
@@ -240,7 +239,6 @@ static char *stream_dump=NULL;
 static float default_max_pts_correction=-1;//0.01f;
 static float max_pts_correction=0;//default_max_pts_correction;
 static float c_total=0;
-static float audio_delay=0;
 
 static int dapsync=0;
 static int softsleep=0;
@@ -1161,14 +1159,9 @@ static int osd_last_pts=-303;
       if (osd_show_sub_delay) {
 	  sprintf(osd_text_tmp, "Sub delay: %d ms",(int)(sub_delay*1000));
 	  osd_show_sub_delay--;
-      } else
-      if (osd_show_framedrop) {
+      } else if (osd_show_framedrop) {
 	  sprintf(osd_text_tmp, "Framedrop: %s",frame_dropping>1?"hard":frame_dropping?"vo":"none");
 	  osd_show_framedrop--;
-      } else
-      if (osd_show_av_delay) {
-	  sprintf(osd_text_tmp, "A-V delay: %d ms",(int)(audio_delay*1000));
-	  osd_show_av_delay--;
       } else
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 	  if(verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d abs frame: %u",osd_function,pts/3600,(pts/60)%60,pts%60,abs_dec_ahead_active_frame);
@@ -1249,7 +1242,7 @@ void update_subtitle(float v_pts)
 
 static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay,video_stat_t *vstat) {
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i]]\n",
-		a_pts-audio_delay-delay,video_pts,AV_delay,c_total,
+		a_pts-delay,video_pts,AV_delay,c_total,
 		(int)sh_video->num_frames,sh_video->num_frames_decoded,
 		(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
 		(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
@@ -1279,7 +1272,7 @@ static void show_status_line(float v_pts,float AV_delay,video_stat_t *vstat) {
 	a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     }
     if( !av_sync_pts && enable_xp>=XP_VideoAudio ) delay += get_delay_audio_buffer();
-    AV_delay = a_pts-audio_delay-delay - video_pts;
+    AV_delay = a_pts-delay-video_pts;
     __show_status_line(a_pts,video_pts,delay,AV_delay,vstat);
 }
 
@@ -1497,7 +1490,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 
     if(delay_corrected && blit_frame){
 	float x;
-	AV_delay=(a_pts-delay-audio_delay)-*v_pts;
+	AV_delay=(a_pts-delay)-*v_pts;
 	x=AV_delay*0.1f;
 	if(x<-max_pts_correction) x=-max_pts_correction; else
 	if(x> max_pts_correction) x= max_pts_correction;
@@ -2273,18 +2266,6 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
 	seek->secs+= v;
       }
     } break;
-    case MP_CMD_AUDIO_DELAY : {
-      float v = cmd->args[0].v.f;
-      audio_delay += v;
-      osd_show_av_delay = osd->info_factor;
-      if(sh_audio) {
-          if(enable_xp>=XP_VAPlay)
-              pthread_mutex_lock(&audio_timer_mutex);
-          sh_audio->timer+= v;
-          if(enable_xp>=XP_VAPlay)
-              pthread_mutex_unlock(&audio_timer_mutex);
-      }
-    } break;
     case MP_CMD_SPEED_INCR :
     case MP_CMD_SPEED_MULT :
     case MP_CMD_SPEED_SET :
@@ -2794,7 +2775,6 @@ main:
     }
 
     if(sh_audio) { // <- ??? always true
-	sh_audio->timer=-audio_delay;
 	sh_audio->chapter_change=0;
 	sh_audio->a_pts=HUGE;
     } else {

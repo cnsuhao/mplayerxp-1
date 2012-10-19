@@ -26,7 +26,6 @@ static char help_text[]=
 " < or >            søk bakover/fremover i playlisten\n"
 " p eller MELLOMROM pause filmen (trykk en tast for å fortsette)\n"
 " q eller ESC       stopp avspilling og avslutt programmet\n"
-" + eller -         juster lyd-forsinkelse med +/- 0.1 sekund\n"
 " o                 gå gjennom OSD modi:  ingen / søkelinje / søkelinje+tidsvisning\n"
 " * eller /         øk eller mink volumet (trykk 'm' for å velge master/pcm)\n"
 " z or x            juster undertittelens forsinkelse med +/- 0.1 sekund\n"

@@ -27,7 +27,6 @@ static char help_text[]=
 " < or >           ga naar vorige/volgende item in playlist\n"
 " p of SPACE       pauzeer film (druk eender welke toets om verder te gaan)\n"
 " q of ESC         stop afspelen en sluit programma af\n"
-" + of -           pas audio vertraging aan met +/- 0.1 seconde\n"
 " o                cycle OSD mode:  geen / zoekbalk / zoekbalk+tijd\n"
 " * of /           verhoog of verlaag volume (druk 'm' om master/pcm te selecteren)\n"
 " z of x           pas ondertiteling vertraging aan met +/- 0.1 seconde\n"

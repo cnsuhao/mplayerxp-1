@@ -49,7 +49,6 @@
 
 static const mp_cmd_t mp_cmds[] = {
   { MP_CMD_SEEK, "seek", 1, { {MP_CMD_ARG_INT,{0}}, {MP_CMD_ARG_INT,{0}}, {-1,{0}} } },
-  { MP_CMD_AUDIO_DELAY, "audio_delay", 1, { {MP_CMD_ARG_FLOAT,{0}}, {-1,{0}} } },
   { MP_CMD_SPEED_INCR, "speed_incr", 1, { {MP_CMD_ARG_FLOAT,{0}}, {-1,{0}} } },
   { MP_CMD_SPEED_MULT, "speed_mult", 1, { {MP_CMD_ARG_FLOAT,{0}}, {-1,{0}} } },
   { MP_CMD_SPEED_SET, "speed_set", 1, { {MP_CMD_ARG_FLOAT,{0}}, {-1,{0}} } },
@@ -252,8 +251,6 @@ static const mp_cmd_bind_t def_cmd_binds[] = {
   { {  KEY_DOWN, 0 }, "seek -60" },
   { {  KEY_PAGE_UP, 0 }, "seek 600" },
   { { KEY_PAGE_DOWN, 0 }, "seek -600" },
-  { { '-', 0 }, "audio_delay 0.100" },
-  { { '+', 0 }, "audio_delay -0.100" },
   { { '[', 0 }, "speed_mult 0.9091" },
   { { ']', 0 }, "speed_mult 1.1" },
   { { '{', 0 }, "speed_mult 0.5" },

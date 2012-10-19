@@ -28,7 +28,6 @@ static char help_text[]=
 " < eller >           stega bakåt/framåt i spellistan\n"
 " p eller SPACE       pausa filmen (tryck på valfri tagent för att fortsätta)\n"
 " q eller ESC         stanna spelningen och avsluta programmet\n"
-" + eller -           ställ in audiofördröjning med ± 0.1 sekund\n"
 " o                   växla OSD läge:  ingen / lägesindikator / lägesindikator + tidtagare\n"
 " * eller /           öka eller sänk PCM-volym\n"
 " z eller x           ställ in textningsfördröjning med ± 0.1 sekund\n"

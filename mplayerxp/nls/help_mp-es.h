@@ -29,7 +29,6 @@ static char help_text[]=
 " < o >          avanza/retrocede en la lista de reproducción\n"
 " p o ESPACIO    pausa el video (presione cualquier tecla para continuar)\n"
 " q o ESC        detiene la reproducción y sale del programa\n"
-" + o -          ajusta el retardo de audio en +/- 0.1 segundos\n"
 " o              cambia el modo OSD:  nada / búsqueda / búsqueda+tiempo\n"
 " * o /          aumenta o disminuye el volumen (presione 'm' para elegir entre master/pcm)\n"
 " z o x          ajusta el retardo del subtítulo en +/- 0.1 segundos\n"

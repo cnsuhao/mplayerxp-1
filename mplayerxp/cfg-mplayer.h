@@ -196,7 +196,6 @@ static const config_t veq_config[]={
 
 
 static const config_t avsync_config[]={
-	{"delay", &audio_delay, CONF_TYPE_FLOAT, CONF_RANGE, -10.0, 10.0, NULL, "specifies delay in seconds audio stream relatively video"},
 	{"framedrop", &frame_dropping, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables frame-dropping on slow systems: decodes all video frames, but skips displaying some ones"},
 /*UD*/	{"hardframedrop", &frame_dropping, CONF_TYPE_FLAG, 0, 0, 2, NULL, "enables hard frame-dropping on slow systems: skips displaying and decoding of some frames"},
 	{"noframedrop", &frame_dropping, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables frame dropping"},

@@ -27,7 +27,6 @@ static char help_text[]=
 " rauf / runter   Springe eine Minute vor/zurück\n"
 " p oder LEER     PAUSE (beliebige Taste zum Fortsetzen)\n"
 " q oder ESC      Abspielen stoppen und Programm beenden\n"
-" + oder -        Audioverzögerung um +/- 0.1 Sekunde verändern\n"
 " o               OSD Mode:  Aus / Suchleiste / Suchleiste + Zeit\n"
 " * oder /        Lautstärke verstellen ('m' für Auswahl Master/Wave)\n"
 " z oder x        Untertitelverzögerung um +/- 0.1 Sekunde verändern\n"

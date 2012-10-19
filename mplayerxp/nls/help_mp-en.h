@@ -33,7 +33,6 @@ static char help_text[]=
 " < or >          seek backward/forward in playlist\n"
 " p or SPACE      pause movie (press any key to continue)\n"
 " q or ESC        stop playing and quit program\n"
-" + or -          adjust audio delay by +/- 0.1 second\n"
 " o               cycle OSD mode:  none / seekbar / seekbar+timer\n"
 " * or /          increase or decrease volume (press 'm' to select master/pcm)\n"
 " z or x          adjust subtitle delay by +/- 0.1 second\n"

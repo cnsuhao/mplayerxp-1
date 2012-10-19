@@ -32,7 +32,6 @@ static char help_text[]=
 " < ou >           Saute en avant/arrière dans la playlist\n"
 " p ou ESPACE      Pause (presser n'importe quelle touche pour continuer)\n"
 " q ou ESC         Arrête la lecture et quitter le programme\n"
-" + ou -           Ajuste le délai audio de +/- 0.1 seconde\n"
 " o                Mode OSD:  aucun / cherchable / cherchable+temps\n"
 " * ou /           Augmente/diminue volume ('m' pour sélectionner maître/pcm)\n"
 " z ou x           Ajuste le délai des sous-titres de +/- 0.1 seconde\n"

@@ -28,7 +28,6 @@ static char help_text[]=
 " < lub >         przeskok o jedną pozycję w playliście\n"
 " p lub SPACE     zatrzymanie filmu (kontynuacja - dowolny klawisz)\n"
 " q lub ESC       zatrzymanie odtwarzania i wyjście z programu\n"
-" + lub -         regulacja opóźnienia dźwięku o +/- 0.1 sekundy\n"
 " o               przełączanie trybów OSD: pusty / belka / belka i zegar\n"
 " * lub /         zwiększenie lub zmniejszenie natężenia dźwięku\n"
 "                 (naciśnij 'm' żeby wybrać master/pcm)\n"

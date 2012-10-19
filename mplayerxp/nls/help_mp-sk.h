@@ -30,7 +30,6 @@ static char help_text[]=
 " < alebo >       posun vzad/vpred v zozname prehrávaných súborov\n"
 " p al. medzerník pauza pri prehrávaní (pokračovaní stlačením niektorej klávesy)\n"
 " q alebo ESC     koniec prehrávania a ukončenie programu\n"
-" + alebo -       upraviť spozdenie zvuku v krokoch +/- 0.1 sekundy\n"
 " o               cyklická zmena režimu OSD:  nič / pozícia / pozícia+čas\n"
 " * alebo /       pridať alebo ubrať hlasitosť (stlačením 'm' výber master/pcm)\n"
 " z alebo x       upraviť spozdenie titulkov v krokoch +/- 0.1 sekundy\n"

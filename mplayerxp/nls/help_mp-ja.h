@@ -28,7 +28,6 @@ static char help_text[]=
 " < or >           プレイリストを元に前後のファイルに遷移します\n"
 " p or SPACE       再生を静止します(何かボタンを押下すると再生を開始します)\n"
 " q or ESC         再生を静止し、プログラムを停止します\n"
-" + or -           音声を 0.1 秒単位で早めたり遅れさせたり調整する\n"
 " o                cycle OSD mode:  none / seekbar / seekbar + timer\n"
 " * or /           PCM 音量を上げたり下げたりする\n"
 " z or x           subtitleを 0.1 秒単位で早めたり遅れさせたり調整する\n"

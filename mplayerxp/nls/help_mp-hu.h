@@ -27,7 +27,6 @@ static char help_text[]=
 " pgup v. pgdown  10 percnyi hátra/előre ugrás\n"
 " p vagy SPACE    pillanatállj (bármely billentyűre továbbmegy)\n"
 " q vagy ESC      kilépés\n"
-" + vagy -        audio késleltetése +/- 0.1 másodperccel\n"
 " o               OSD-mód váltása:  nincs / keresősáv / keresősáv+idő\n"
 " * vagy /        hangerő fel/le ('m' billentyű master/pcm között vált)\n"
 " z vagy x        felirat késleltetése +/- 0.1 másodperccel\n"

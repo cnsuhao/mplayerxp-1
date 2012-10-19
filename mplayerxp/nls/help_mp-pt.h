@@ -31,7 +31,6 @@ static char help_text[]=
 " < ou >          retorna/avança na lista de reprodução\n"
 " p ou ESPAÇO     pausa o filme (pressione qualquer tecla para continuar)\n"
 " q ou ESC        para a reprodução e sai do programa\n"
-" + ou -          ajusta o atraso do audio de +/- 0.1 segundo\n"
 " o               alterna modo OSD: nenhum / busca / busca+cronômetro\n"
 " * ou /          aumenta ou diminui o volume pcm\n"
 " z ou x          ajusta o atraso da legenda de +/- 0.1 segundo\n"

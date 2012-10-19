@@ -26,7 +26,6 @@ static char help_text[]=
 " sus sau jos      caută faţă/spate cu 1 minut\n"
 " p sau SPACE      pune filmul pe pauză (orice tastă pentru a continua)\n"
 " q sau ESC        opreşte filmul şi iese din program\n"
-" + sau -          ajustează decalajul audio cu +/- 0.1 secunde\n"
 " o                roteşte modurile OSD: nimic / bară progres / bară progres+ceas\n"
 " * sau /          creşte sau scade volumul (apăsaţi 'm' pentru principal/wav)\n"
 " z sau x          ajustează decalajul subtitrării cu +/- 0.1 secunde\n"
