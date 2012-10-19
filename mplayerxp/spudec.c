@@ -578,6 +578,12 @@ void __FASTCALL__ spudec_reset(any_t*this)	// called after seek
   spu->packet_size = spu->packet_offset = 0;
 }
 
+void __FASTCALL__ spudec_now_pts(any_t*this, unsigned int pts100)
+{
+  spudec_handle_t *spu = (spudec_handle_t*) this;
+  spu->now_pts = pts100;
+}
+
 void __FASTCALL__ spudec_heartbeat(any_t*this, unsigned int pts100)
 {
   spudec_handle_t *spu = (spudec_handle_t*) this;

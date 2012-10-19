@@ -531,6 +531,10 @@ void __FASTCALL__ vo_remove_text(unsigned idx,int dxs,int dys,clear_osd_f f_remo
     }
 }
 
+void __FASTCALL__ vo_draw_spudec(unsigned idx,int dxs,int dys,draw_osd_f draw_alpha){ 
+    spudec_draw_scaled(vo.spudec, dxs, dys, draw_alpha); // FIXME
+}
+
 void __FASTCALL__ vo_draw_text(unsigned idx,int dxs,int dys,draw_osd_f draw_alpha){
     mp_osd_obj_t* obj=vo_osd_list;
     vo_update_osd(dxs,dys);

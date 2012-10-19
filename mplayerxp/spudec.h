@@ -9,6 +9,7 @@ extern int spu_aamode;
 extern float spu_gaussvar;
 
 void __FASTCALL__ spudec_heartbeat(any_t*_this, unsigned int pts100);
+void __FASTCALL__ spudec_now_pts(any_t*_this, unsigned int pts100);
 void __FASTCALL__ spudec_assemble(any_t*_this, unsigned char *packet, unsigned int len, unsigned int pts100);
 void __FASTCALL__ spudec_draw(any_t*this, draw_osd_f draw_alpha);
 void __FASTCALL__ spudec_draw_scaled(any_t*_this, unsigned int dxs, unsigned int dys,draw_osd_f draw_alpha);

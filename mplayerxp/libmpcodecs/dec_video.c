@@ -19,6 +19,7 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "parse_es.h"
+#include "sig_hand.h"
 
 #include "codec-cfg.h"
 
@@ -30,6 +31,9 @@
 
 #include "dec_ahead.h"
 #include "dec_video.h"
+#include "spudec.h"
+#include "vobsub.h"
+
 // ===================================================================
 vf_cfg_t vf_cfg; // Configuration for audio filters
 
@@ -230,7 +234,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
   }
 }
 
-extern void update_subtitle(float v_pts);
+static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
 int decode_video(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_frame, float pts){
     vf_instance_t* vf;
     mp_image_t *mpi=NULL;
@@ -262,7 +266,7 @@ int decode_video(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_
     }
 
     if(drop_frame) return 0;
-    update_subtitle(pts);
+    update_subtitle(sh_video,pts,mpi->xp_idx);
     vo_flush_page(dae_curr_vdecoded());
 
     t2=GetTimer()-t2;
@@ -284,3 +288,66 @@ void resync_video_stream(sh_video_t *sh_video)
   if(sh_video->inited && mpvdec) mpvdec->control(sh_video,VDCTRL_RESYNC_STREAM,NULL);
 }
 
+extern float sub_fps;
+#ifdef USE_SUB
+extern subtitle* mp_subtitles;
+static float sub_last_pts = -303;
+#endif
+static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
+{
+#ifdef USE_SUB
+  // find sub
+  if(mp_subtitles && v_pts>0){
+      float pts=v_pts;
+      if(sub_fps==0) sub_fps=sh_video->fps;
+      pinfo[xp_id].current_module="find_sub";
+      if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
+         find_sub(mp_subtitles,sub_uses_time?(100*pts):(pts*sub_fps)); // FIXME! frame counter...
+         sub_last_pts = pts;
+      }
+      pinfo[xp_id].current_module=NULL;
+  }
+#endif
+
+  // DVD sub:
+#if 0
+  if(vo_flags & 0x08){
+    static vo_mpegpes_t packet;
+    static vo_mpegpes_t *pkg=&packet;
+    packet.timestamp=sh_video->timer*90000.0;
+    packet.id=0x20; /* Subpic */
+    while((packet.size=ds_get_packet_sub(d_dvdsub,&packet.data))>0){
+      MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",packet.size,v_pts,d_dvdsub->pts);
+      vo_draw_frame(&pkg);
+    }
+  }else
+#endif
+   if(vo.spudec){
+    unsigned char* packet=NULL;
+    int len,timestamp;
+    pinfo[xp_id].current_module="spudec";
+    spudec_now_pts(vo.spudec,90000*v_pts);
+    if(spudec_visible(vo.spudec)) {
+	vo_draw_spudec_direct(xp_idx);
+    } else {
+	spudec_heartbeat(vo.spudec,90000*v_pts);
+	if (vo.vobsub) {
+	    if (v_pts >= 0) {
+	    while((len=vobsub_get_packet(vo.vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
+		timestamp -= (v_pts - sh_video->timer)*90000;
+		MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
+		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
+		}
+	    }
+	} else {
+	    while((len=ds_get_packet_sub(d_dvdsub,&packet))>0){
+		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
+		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
+	    }
+	}
+	/* detect wether the sub has changed or not */
+	if(spudec_changed(vo.spudec)) vo_draw_spudec_direct(xp_idx);
+	pinfo[xp_id].current_module=NULL;
+    }
+  }
+}

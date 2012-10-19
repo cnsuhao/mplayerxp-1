@@ -91,6 +91,9 @@ extern sub_data_t sub_data;
 typedef void (* __FASTCALL__ draw_osd_f)(unsigned idx,int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride);
 typedef void (* __FASTCALL__ clear_osd_f)(unsigned idx,int x0,int y0, int w,int h);
 
+/* for direct calll from XP-thread*/
+extern void __FASTCALL__ vo_draw_spudec(unsigned idx,int dxs,int dys,draw_osd_f draw_alpha);
+
 extern void __FASTCALL__ vo_draw_text(unsigned idx,int dxs,int dys, draw_osd_f draw_alpha);
 extern void __FASTCALL__ vo_remove_text(unsigned idx,int dxs,int dys,clear_osd_f remove);
 

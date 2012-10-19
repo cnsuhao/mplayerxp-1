@@ -110,6 +110,9 @@ demux_stream_t *d_video=NULL;
 static int osd_show_framedrop = 0;
 static int osd_function=OSD_PLAY;
 int output_quality=0;
+#ifdef USE_SUB
+subtitle* mp_subtitles=NULL;
+#endif
 
 int xp_id=0;
 pid_t mplayer_pid;
@@ -286,10 +289,6 @@ static sh_audio_t *sh_audio=NULL;
 static sh_video_t *sh_video=NULL;
 static demuxer_t *demuxer=NULL;
 pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
-#ifdef USE_SUB
-static subtitle* subtitles=NULL;
-static float sub_last_pts = -303;
-#endif
 /* XP audio buffer */
 typedef struct audio_buffer_index_s {
     float pts;
@@ -719,10 +718,10 @@ void uninit_player(unsigned int mask){
 	inited_flags&=~INITED_SUBTITLE;
 	pinfo[xp_id].current_module="sub_free";
 	mp_input_uninit();
-	sub_free( subtitles );
+	sub_free( mp_subtitles );
 	sub_name=NULL;
 	vo.sub=NULL;
-	subtitles=NULL;
+	mp_subtitles=NULL;
     }
 #endif
     pinfo[xp_id].current_module=NULL;
@@ -1177,63 +1176,6 @@ static int osd_last_pts=-303;
 #endif
 
 //================= Update OSD ====================
-void update_subtitle(float v_pts)
-{
-
-#ifdef USE_SUB
-  // find sub
-  if(subtitles && v_pts>0){
-      float pts=v_pts;
-      if(sub_fps==0) sub_fps=sh_video->fps;
-      pinfo[xp_id].current_module="find_sub";
-      if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-         find_sub(subtitles,sub_uses_time?(100*pts):(pts*sub_fps)); // FIXME! frame counter...
-         sub_last_pts = pts;
-      }
-      pinfo[xp_id].current_module=NULL;
-  }
-#endif  8
-
-  // DVD sub:
-#if 0
-  if(vo_flags & 0x08){
-    static vo_mpegpes_t packet;
-    static vo_mpegpes_t *pkg=&packet;
-    packet.timestamp=sh_video->timer*90000.0;
-    packet.id=0x20; /* Subpic */
-    while((packet.size=ds_get_packet_sub(d_dvdsub,&packet.data))>0){
-      MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",packet.size,v_pts,d_dvdsub->pts);
-      vo_draw_frame(&pkg);
-    }
-  }else
-#endif
-   if(vo.spudec){
-    unsigned char* packet=NULL;
-    int len,timestamp;
-    pinfo[xp_id].current_module="spudec";
-    spudec_heartbeat(vo.spudec,90000*v_pts);
-    if (vo.vobsub) {
-      if (v_pts >= 0) {
-	while((len=vobsub_get_packet(vo.vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
-		timestamp -= (v_pts - sh_video->timer)*90000;
-		MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
-		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
-
-	}
-      }
-    } else {
-	while((len=ds_get_packet_sub(d_dvdsub,&packet))>0){
-		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
-		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
-	}
-    }
-    /* detect wether the sub has changed or not */
-    if(spudec_changed(vo.spudec))
-      vo_osd_changed(OSDTYPE_SPU);
-    pinfo[xp_id].current_module=NULL;
-  }
-}
-
 static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay,video_stat_t *vstat) {
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i]]\n",
 		a_pts-delay,video_pts,AV_delay,c_total,
@@ -1953,17 +1895,17 @@ if (vo.spudec!=NULL) {
 // check .sub
   pinfo[xp_id].current_module="read_subtitles_file";
   if(sub_name){
-    subtitles=sub_read_file(sub_name, sh_video->fps);
-    if(!subtitles) MSG_ERR(MSGTR_CantLoadSub,sub_name);
+    mp_subtitles=sub_read_file(sub_name, sh_video->fps);
+    if(!mp_subtitles) MSG_ERR(MSGTR_CantLoadSub,sub_name);
   } else
   if(sub_auto) { // auto load sub file ...
-    subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
+    mp_subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
 				      : "default.sub", sh_video->fps );
   }
-  if(subtitles)
+  if(mp_subtitles)
   {
     inited_flags|=INITED_SUBTITLE;
-    if(stream_dump_type>1) list_sub_file(subtitles);
+    if(stream_dump_type>1) list_sub_file(mp_subtitles);
   }
 #endif
 }

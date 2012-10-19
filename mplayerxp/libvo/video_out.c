@@ -828,6 +828,18 @@ void vo_draw_osd(unsigned idx)
     }
 }
 
+void vo_draw_spudec_direct(unsigned idx)
+{
+    MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
+    if(dri.has_dri && !(dri.cap.caps & DRI_CAP_HWOSD))
+    {
+//	if( dri.cap.x || dri.cap.y ||
+//	    dri.cap.w != dri.cap.width || dri.cap.h != dri.cap.height)
+//		    vo_remove_text(idx,dri.cap.width,dri.cap.height,dri_remove_osd);
+	vo_draw_spudec(idx,dri.cap.width,dri.cap.height,dri_draw_osd);
+    }
+}
+
 void vo_uninit( void )
 {
     MSG_DBG3("dri_vo_dbg: vo_uninit\n");

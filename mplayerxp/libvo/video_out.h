@@ -179,6 +179,7 @@ extern uint32_t  __FASTCALL__ vo_draw_slice(const mp_image_t *mpi);
 extern void		vo_select_frame(unsigned idx);
 extern void		vo_flush_page(unsigned decoder_idx);
 extern void		vo_draw_osd(unsigned idx);
+extern void		vo_draw_spudec_direct(unsigned idx);
 extern void		vo_uninit( void );
 extern uint32_t __FASTCALL__ vo_control(uint32_t request, any_t*data);
 extern int __FASTCALL__ vo_is_final(void);
