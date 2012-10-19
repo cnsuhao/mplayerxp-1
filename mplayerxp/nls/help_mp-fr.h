@@ -34,7 +34,6 @@ static char help_text[]=
 " q ou ESC         Arrête la lecture et quitter le programme\n"
 " o                Mode OSD:  aucun / cherchable / cherchable+temps\n"
 " * ou /           Augmente/diminue volume ('m' pour sélectionner maître/pcm)\n"
-" z ou x           Ajuste le délai des sous-titres de +/- 0.1 seconde\n"
 "\n"
 " * * * IL Y A D'AUTRES TOUCHES ET OPTIONS DANS LA PAGE MAN ! * * *\n"
 "\n";

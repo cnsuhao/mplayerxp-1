@@ -33,8 +33,6 @@ static char help_text[]=
 " q ou ESC        para a reprodução e sai do programa\n"
 " o               alterna modo OSD: nenhum / busca / busca+cronômetro\n"
 " * ou /          aumenta ou diminui o volume pcm\n"
-" z ou x          ajusta o atraso da legenda de +/- 0.1 segundo\n"
-" r ou t          posição da legenda para cima/baixo, veja também -vf expand\n"
 "\n"
 "* VEJA A PÁGINA DO MANUAL PARA DETALHES, FUTURAS (AVANÇADAS) OPÇÕES E TECLAS *\n"
 "\n";

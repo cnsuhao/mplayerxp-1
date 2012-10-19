@@ -33,7 +33,6 @@ static char help_text[]=
 " q nebo ESC      konec přehrávání a ukončení programu\n"
 " o               cyklická změna režimu OSD:  nic / pozice / pozice+čas\n"
 " * nebo /        přidat nebo ubrat hlasitost (stiskem 'm' výběr master/pcm)\n"
-" z nebo x        upravit zpoždění titulků v krocích +/- 0.1 sekundy\n"
 "\n"
 " * * * * PŘEČTĚTE SI MAN STRÁNKU PRO DETAILY (DALŠÍ VOLBY A KLÁVESY)! * * * *\n"
 "\n";

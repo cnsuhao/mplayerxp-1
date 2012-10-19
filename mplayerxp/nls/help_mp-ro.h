@@ -28,7 +28,6 @@ static char help_text[]=
 " q sau ESC        opreşte filmul şi iese din program\n"
 " o                roteşte modurile OSD: nimic / bară progres / bară progres+ceas\n"
 " * sau /          creşte sau scade volumul (apăsaţi 'm' pentru principal/wav)\n"
-" z sau x          ajustează decalajul subtitrării cu +/- 0.1 secunde\n"
 "\n"
 " * * * VEDEŢI MANUALUL PENTRU DETALII,(ALTE) OPŢIUNI AVANSATE ŞI TASTE ! * * *\n"
 "\n";

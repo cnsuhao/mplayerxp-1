@@ -29,7 +29,6 @@ static char help_text[]=
 " q of ESC         stop afspelen en sluit programma af\n"
 " o                cycle OSD mode:  geen / zoekbalk / zoekbalk+tijd\n"
 " * of /           verhoog of verlaag volume (druk 'm' om master/pcm te selecteren)\n"
-" z of x           pas ondertiteling vertraging aan met +/- 0.1 seconde\n"
 "\n"
 " * * * ZIE MANPAGE VOOR DETAILS, OVERIGE (GEAVANCEERDE) OPTIES EN TOETSEN ! * * *\n"
 "\n";

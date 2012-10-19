@@ -35,7 +35,6 @@ static char help_text[]=
 " q or ESC        stop playing and quit program\n"
 " o               cycle OSD mode:  none / seekbar / seekbar+timer\n"
 " * or /          increase or decrease volume (press 'm' to select master/pcm)\n"
-" z or x          adjust subtitle delay by +/- 0.1 second\n"
 "\n"
 " * * * SEE MANPAGE FOR DETAILS, FURTHER (ADVANCED) OPTIONS AND KEYS ! * * *\n"
 "\n";

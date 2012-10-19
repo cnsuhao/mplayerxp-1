@@ -31,7 +31,6 @@ static char help_text[]=
 " q o ESC        detiene la reproducción y sale del programa\n"
 " o              cambia el modo OSD:  nada / búsqueda / búsqueda+tiempo\n"
 " * o /          aumenta o disminuye el volumen (presione 'm' para elegir entre master/pcm)\n"
-" z o x          ajusta el retardo del subtítulo en +/- 0.1 segundos\n"
 "\n"
 " * * * VEA LA PÁGINA DE MANUAL PARA MÁS DETALLES, OPCIONES AVANZADAS Y TECLAS ! * * *\n"
 "\n";

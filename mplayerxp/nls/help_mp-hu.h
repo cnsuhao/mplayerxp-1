@@ -29,7 +29,6 @@ static char help_text[]=
 " q vagy ESC      kilépés\n"
 " o               OSD-mód váltása:  nincs / keresősáv / keresősáv+idő\n"
 " * vagy /        hangerő fel/le ('m' billentyű master/pcm között vált)\n"
-" z vagy x        felirat késleltetése +/- 0.1 másodperccel\n"
 "\n"
 " * * * A MANPAGE TOVÁBBI RÉSZLETEKET, OPCIÓKAT, BILLENTYŰKET TARTALMAZ ! * * *\n"
 "\n";

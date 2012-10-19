@@ -30,8 +30,6 @@ static char help_text[]=
 " q or ESC         再生を静止し、プログラムを停止します\n"
 " o                cycle OSD mode:  none / seekbar / seekbar + timer\n"
 " * or /           PCM 音量を上げたり下げたりする\n"
-" z or x           subtitleを 0.1 秒単位で早めたり遅れさせたり調整する\n"
-" r or t           subtitleの位置を上げたり下げたり調整する, -vfオプションも確認して下さい\n"
 "\n"
 " * * * man pageに詳細がありますので、確認して下さい。さらに高度で進んだオプションやキーも記載してます * * *\n"
 "\n";

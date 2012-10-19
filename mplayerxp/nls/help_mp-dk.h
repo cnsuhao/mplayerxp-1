@@ -30,7 +30,6 @@ static char help_text[]=
 " q or ESC        stop afspilning og afslut program\n"
 " o               vælger OSD typer:  ingen / søgebar / søgebar+tid\n"
 " * or /          forøjer eller formindsker volumen (tryk 'm' for at vælge master/pcm)\n"
-" z or x          justerer undertekst forsinkelse med +/- 0.1 sekund\n"
 "\n"
 " * * * SE MANPAGE FOR FLERE DETALJER, YDERLIGERE (AVANCEREDE) MULIGHEDER OG TASTER ! * * *\n"
 "\n";

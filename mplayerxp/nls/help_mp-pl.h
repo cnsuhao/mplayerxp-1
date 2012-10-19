@@ -31,7 +31,6 @@ static char help_text[]=
 " o               przełączanie trybów OSD: pusty / belka / belka i zegar\n"
 " * lub /         zwiększenie lub zmniejszenie natężenia dźwięku\n"
 "                 (naciśnij 'm' żeby wybrać master/pcm)\n"
-" z lub x         regulacja opóźnienia napisów o +/- 0.1 sekundy\n"
 "\n"
 " **** DOKŁADNY SPIS WSZYSTKICH DOSTĘPNYCH OPCJI ZNAJDUJE SIĘ W MANUALU! ****\n"
 "\n";

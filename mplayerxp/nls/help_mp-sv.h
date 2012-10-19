@@ -30,8 +30,6 @@ static char help_text[]=
 " q eller ESC         stanna spelningen och avsluta programmet\n"
 " o                   växla OSD läge:  ingen / lägesindikator / lägesindikator + tidtagare\n"
 " * eller /           öka eller sänk PCM-volym\n"
-" z eller x           ställ in textningsfördröjning med ± 0.1 sekund\n"
-" r or t              ställ in textningsposition upp/ner, se också '-vf expand'\n"
 "\n"
 " * * * LÄS MANUALEN FÖR FLER DETALJER, MER AVANCERADE ARGUMENT OCH KOMMANDON * * *\n"
 "\n";

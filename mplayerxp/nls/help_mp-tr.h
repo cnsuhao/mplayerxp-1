@@ -33,8 +33,6 @@ static char help_text[]=
 " q veya ESC         durdur ve uygulamadan çık\n"
 " o                  OSD modunu değiştir:  yok / oynatma imi / oynatma imi + zamanlayıcı\n"
 " * veya /           sesi yükselt veya alçalt\n"
-" z veya x           altyazı gecikmesini +/- 0.1 saniye olarak ayarla\n"
-" r veya t           altyazı konumunu yukarı/aşağı ayarla, -vf seçeneğine de bakınız\n"
 "\n"
 " * * AYRINTILAR, DAHA FAZLA (GELİŞMİŞ) SEÇENEKLER VE TUŞLAR İÇİN MAN SAYFALARINA BAKINIZ * *\n"
 "\n";

@@ -29,7 +29,6 @@ static char help_text[]=
 " q oder ESC      Abspielen stoppen und Programm beenden\n"
 " o               OSD Mode:  Aus / Suchleiste / Suchleiste + Zeit\n"
 " * oder /        Lautstärke verstellen ('m' für Auswahl Master/Wave)\n"
-" z oder x        Untertitelverzögerung um +/- 0.1 Sekunde verändern\n"
 "\n"
 " * * * IN DER MANPAGE STEHEN WEITERE KEYS UND OPTIONEN ! * * *\n"
 "\n";
