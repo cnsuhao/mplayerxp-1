@@ -347,11 +347,6 @@ static const config_t mplayer_opts[]={
 	{"slave", &slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, NULL, "turns MPlayerXP into slave mode as a backend for other programs"},
 	{"use-stdin", &use_stdin, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "forces reading of keyboard codes from STDIN instead of terminal's console"},
 	{"msgfilter", &mp_msg_filter, CONF_TYPE_INT, CONF_RANGE, 0, 0xFFFFFFFF, NULL, "specifies filter for verbosed messages"},
-#ifdef HAVE_LIBCSS
-	{"dvdauth", &dvd_auth_device, CONF_TYPE_STRING, 0, 0, 0, NULL,"provides authentification of encrypted DVD disk"},
-	{"dvdkey", &dvdimportkey, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies key to decrypt stream encrypted with CSS"},
-	{"csslib", &css_so, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies path to libcss.so"},
-#endif
 
 	{"core", &xpcore_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "XP-core related options" },
 	{"play", &playback_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Playback specific options" },

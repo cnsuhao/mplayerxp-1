@@ -46,7 +46,6 @@ extern any_t* mDisplay; // Display* mDisplay;
 #include "libvo/sub.h"
 #include "libao2/audio_out.h"
 #include "codec-cfg.h"
-#include "dvdauth.h"
 #include "spudec.h"
 #include "vobsub.h"
 
@@ -1875,26 +1874,6 @@ static void mpxp_init_dvd_nls(void) {
     }
 }
 
-#ifdef HAVE_LIBCSS
-static void mpxp_init_dvdkey(void) {
-  pinfo[xp_id].current_module="libcss";
-  if (dvdimportkey) {
-    if (dvd_import_key(dvdimportkey)) {
-	MSG_FATAL(MSGTR_ErrorDVDkey);
-	exit_player(MSGTR_Exit_error);
-    }
-    MSG_INFO(MSGTR_CmdlineDVDkey);
-  }
-  if (dvd_auth_device) {
-    if (dvd_auth(dvd_auth_device,filename)) {
-	MSG_FATAL("Error in DVD auth...\n");
-	exit_player(MSGTR_Exit_error);
-      }
-    MSG_INFO(MSGTR_DVDauthOk);
-  }
-}
-#endif
-
 static void mpxp_print_stream_formats(void) {
     int fmt;
     char *c;
@@ -2626,10 +2605,6 @@ play_next_file:
 	eof=mpxp_handle_playlist(filename);
 	goto goto_next_file;
     }
-
-#ifdef HAVE_LIBCSS
-    mpxp_init_dvdkey();
-#endif
 
 /* Add NLS support here */
     mpxp_init_dvd_nls();

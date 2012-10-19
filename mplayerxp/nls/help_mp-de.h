@@ -136,9 +136,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Kann keine RAW .AVI-Streams durchsuchen! (Index erforderlich, versuche es mit der -idx Option!)  \n"
 #define MSGTR_CantSeekFile "Kann diese Datei nicht durchsuchen!  \n"
 
-#define MSGTR_EncryptedVOB "Verschlüsselte VOB-Datei (wurde ohne libcss Unterstützung kompiliert)! Lese DOCS\n"
-#define MSGTR_EncryptedVOBauth "Verschlüsselter Stream, jedoch wurde die Authentifizierung nicht von dir gefordert!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Komprimierte Header werden (zur Zeit) nicht unterstützt!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Warnung! Variable FOURCC erkannt!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Warnung! Zu viele Tracks!"

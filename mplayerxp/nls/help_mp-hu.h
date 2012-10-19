@@ -135,9 +135,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Nem tudok nyers .AVI-kban tekerni! (index kell, próbáld az -idx kapcsolóval!)\n"
 #define MSGTR_CantSeekFile "Nem tudok ebben a fileban tekerni!  \n"
 
-#define MSGTR_EncryptedVOB "Kódolt VOB file (libcss támogatás nincs befordítva!) Olvasd el a doksit\n"
-#define MSGTR_EncryptedVOBauth "Kódolt folyam, de nem kértél autentikálást!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Tömörített fejlécek (még) nincsenek támogatva!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Vigyázat! változó FOURCC detektálva!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Vigyázat! túl sok sáv!"

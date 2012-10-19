@@ -77,7 +77,6 @@ ENABLED_LIST=(
     "lirc|build with LIRC (remote control) support|http://www.lirc.org",
     "lircc|build with LIRCC (remote daemon control) support|http://www.lirc.org",
     "joystick|build with joystick support",
-    "libcss|build with libcss support|http://download.videolan.org/pub/videolan/libdvdcss",
     "libdvdread|build with libdvdread support|http://www.dtek.chalmers.se/groups/dvd/downloads.shtml",
     "libdvdnav|build with libdvdnav support|http://dvd.sourceforge.net",
     "libdv|build with libdv support|http://libdv.sourceforge.net/",
@@ -669,10 +668,6 @@ check_pkg jack jack
 enabled jack && require2 jack jack/jack.h jack_client_open
 print_config HAVE_ mp_config.h mp_config.mak jack
 enabled jack && aomodules="jack $aomodules" || noaomodules="jack $noaomodules"
-
-enabled libcss	&& require2 libcss css.h CSSisEncrypted -lcss
-print_config HAVE_ mp_config.h mp_config.mak libcss
-enabled libcss	&& inputmodules="libcss $inputmodules" || noinputmodules="libcss $noinputmodules"
 
 enabled libdvdread	&& require2 libdvdread "stdint.h dvdread/dvd_reader.h dvdread/ifo_types.h dvdread/ifo_read.h dvdread/nav_read.h" DVDOpenFile -ldvdread
 dvdread=$libdvdread

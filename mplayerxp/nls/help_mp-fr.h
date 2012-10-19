@@ -141,9 +141,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Ne peut chercher dans un flux .AVI brut! (index requis, essayez l'option -idx!)\n"
 #define MSGTR_CantSeekFile "Ne peut chercher dans ce fichier!  \n"
 
-#define MSGTR_EncryptedVOB "Fichier VOB encrypté (support libcss NON compilé!) Lire DOCS/cd-dvd.html\n"
-#define MSGTR_EncryptedVOBauth "Flux encrypté mais l'authentification n'a pas été demandée par vous!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Les entêtes compressées ne sont pas (encore) supportés!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Attention! Variable FOURCC détectée!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Attention! Trop de pistes!"

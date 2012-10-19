@@ -137,9 +137,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "No se puede avanzar/retroceder en un stream crudo .AVI! (se requiere índice, pruebe con -idx!)  \n"
 #define MSGTR_CantSeekFile "No se puede avanzar/retroceder en este archivo!  \n"
 
-#define MSGTR_EncryptedVOB "Archivos VOB encriptados (no se compiló con soporte de libcss)! Lea DOCS/cd-dvd.html\n"
-#define MSGTR_EncryptedVOBauth "Stream encriptado pero usted no pidió autenticación!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Cabecera comprimida no suportada (por ahora)!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Advertencia! FOURCC variable detectada!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Advertencia! demasiadas pistas!"

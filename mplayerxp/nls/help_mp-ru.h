@@ -175,9 +175,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Не могу переместиться в сыром потоке .AVI! (требуется индекс, попробуйте с ключом -idx!)\n"
 #define MSGTR_CantSeekFile "Не могу перемещаться в этом файле!\n"
 
-#define MSGTR_EncryptedVOB "Шифрованный VOB файл (не компилили с поддержкой libcss)! См. DOCS/cd-dvd.html\n"
-#define MSGTR_EncryptedVOBauth "Шифрованный поток, но авторизация Вами не была затребована!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Сжатые заголовки (пока) не поддерживаются!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Предупреждение! Обнаружен переменный FOURCC!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Предупреждение! слишком много треков!"

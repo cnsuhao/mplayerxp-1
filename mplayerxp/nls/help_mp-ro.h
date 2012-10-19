@@ -134,9 +134,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Nu pot căuta în fişiere .AVI neindexate! (am nevoie de index, încercaţi cu -idx!)  \n"
 #define MSGTR_CantSeekFile "Nu pot căuta în fişier!  \n"
 
-#define MSGTR_EncryptedVOB "Fişier VOB encriptat (necompilat cu suport libcss)! Citiţi fişierul DOCS/DVD\n"
-#define MSGTR_EncryptedVOBauth "Fişier encriptat dar autentificarea nu a fost cerută de dumneavoastră.!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Antetele compresate nu sunt (încă) suportate!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Atenţie! variabilă FOURCC detectată!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Atenţie! prea multe piste!"

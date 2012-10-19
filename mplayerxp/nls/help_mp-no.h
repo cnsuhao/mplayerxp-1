@@ -136,9 +136,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Kan ikke søke i rå .AVI streams! (index behøves, prøv med -idx valget!)  \n"
 #define MSGTR_CantSeekFile "Kan ikke søke i denne filen!  \n"
 
-#define MSGTR_EncryptedVOB "Kryptert VOB fil (ikke kompilert med libcss støtte)! Les filen DOCS/DVD\n"
-#define MSGTR_EncryptedVOBauth "Kryptert stream men autentikasjon var ikke forespurt av deg!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Komprimerte headere ikke støttet (enda)!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Advarsel! variabel FOURCC detektert!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Advarsel! for mange sport!"

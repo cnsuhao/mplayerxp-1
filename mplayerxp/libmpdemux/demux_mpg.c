@@ -20,7 +20,6 @@
 #include "stheader.h"
 #include "mp3_hdr.h"
 
-#include "dvdauth.h"
 #include "../libmpcodecs/dec_audio.h"
 #include "demux_msg.h"
 //#define MAX_PS_PACKETSIZE 2048
@@ -184,15 +183,12 @@ static int is_mpg_keyframe(uint32_t fourcc, int i,uint8_t* buf)
 static int demux_mpg_read_packet(demuxer_t *demux,int id){
   int d;
   int len;
-#ifdef HAVE_LIBCSS
-  int css=0;
-#endif
   unsigned char c=0;
   int pts=MPGPES_BAD_PTS;
   unsigned int dts=0;
   demux_stream_t *ds=NULL;
   mpg_demuxer_t *priv = (mpg_demuxer_t *) demux->priv;
-  
+
   MSG_DBG3("demux_read_packet: %X\n",id);
 
 //  if(id==0x1F0){
@@ -246,13 +242,8 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     int pts_flags;
     int hdrlen;
     // System-2 (.VOB) stream:
-    if((c>>4)&3) {
-#ifdef HAVE_LIBCSS
-        css=1;
-#else
-        MSG_WARN(MSGTR_EncryptedVOB);
-#endif
-    }
+    if((c>>4)&3) MSG_WARN("Encrypted VOB found! That should never happens");
+
     c=stream_read_char(demux->stream); pts_flags=c>>6;
     c=stream_read_char(demux->stream); hdrlen=c;
     len-=2;
@@ -389,12 +380,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 
   if(ds){
     MSG_DBG2("DEMUX_MPG: Read %d data bytes from packet %04X\n",len,id);
-#ifdef HAVE_LIBCSS
-    if (css) {
-	    if (descrambling)	dvd_css_descramble(demux->stream->buffer,key_title);
-	    else		MSG_WARN(MSGTR_EncryptedVOBauth);
-    }
-#endif
+
     if(ds==ds->demuxer->sub) {
         if (pts == MPGPES_BAD_PTS) {
             pts = priv->last_sub_pts;

@@ -139,9 +139,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Impossibile spostarsi nei flussi .AVI grezzi! (richiesto un indice, prova con l\'opzione -idx !)  \n"
 #define MSGTR_CantSeekFile "Impossibile spostarsi in questo file!  \n"
 
-#define MSGTR_EncryptedVOB "File VOB criptato (non compilato con il supporto delle libcss)! Leggi il file DOCS/cd-dvd.html\n"
-#define MSGTR_EncryptedVOBauth "Flusso criptato di cui non è stata chiesta l\'autenticazione!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Intestazioni compresse non (ancora) supportate!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Avvertimento! Rilevata variabile FOURCC !?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Avvertimento! troppe tracce!"

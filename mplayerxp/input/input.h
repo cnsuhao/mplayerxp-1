@@ -1,6 +1,6 @@
 // All commands id
 #define MP_CMD_SEEK			0
-#define MP_CMD_RESERVED			1
+#define MP_CMD_RESERVED_0		1
 #define MP_CMD_QUIT			2
 #define MP_CMD_PAUSE			3
 #define MP_CMD_SOFT_QUIT		4

@@ -137,9 +137,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Nie mogę przeszukiwać nieindeksowanych strumieni .AVI! (sprawdź opcję -idx !)\n"
 #define MSGTR_CantSeekFile "Nie mogę przeszukiwać tego pliku!  \n"
 
-#define MSGTR_EncryptedVOB "Zaszyfrowany plik VOB (nie wkompilowano obsługi libcss)! Przeczytaj plik DOCS/cd-dvd.html\n"
-#define MSGTR_EncryptedVOBauth "Zaszyfrowany strumień, nie zażyczyłeś sobie autentykacji!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Spakowane nagłówki nie są obsługiwane (na razie)!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Uwaga! wykryto zmienną FOURCC!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Uwaga! zbyt dużo scieżek!"

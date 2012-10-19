@@ -136,8 +136,6 @@ static char help_text[]=
 #define MSGTR_CouldntDetFNo "Kunne ikke finde antallet af billeder (for en SOF søgning)  \n"
 #define MSGTR_CantSeekRawAVI "Kan ikke søge i rå .AVI streams! (manglende index, prøv med -idx!)  \n"
 #define MSGTR_CantSeekFile "Kan ikke søge i denne fil!  \n"
-#define MSGTR_EncryptedVOB "Krypteret VOB fil (ikke kompileret med libcss support)! Læs filen DOCS/cd-dvd.html\n"
-#define MSGTR_EncryptedVOBauth "Krypteret stream men autoriseringen blev ikke påbegyndt af dig!!\n"
 
 #define MSGTR_MOVcomprhdr "MOV: Komprimeret header (endnu) ikke supported!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Advarsel! variablen FOURCC detecteret!?\n"

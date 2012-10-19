@@ -385,13 +385,6 @@ static char help_text[]=
 #define MSGTR_CantSeekFile "Can't seek in this file!  \n"
 #endif
 
-#ifndef MSGTR_EncryptedVOB
-#define MSGTR_EncryptedVOB "Encrypted VOB file (not compiled with libcss support)! Read file DOCS/cd-dvd.html\n"
-#endif
-#ifndef MSGTR_EncryptedVOBauth
-#define MSGTR_EncryptedVOBauth "Encrypted stream but authentication was not requested by you!!\n"
-#endif
-
 #ifndef MSGTR_MOVcomprhdr
 #define MSGTR_MOVcomprhdr "MOV: Compressed headers not (yet) supported!\n"
 #endif

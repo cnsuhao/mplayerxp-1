@@ -29,7 +29,7 @@ endif
 ifeq ($(HAVE_LIBDV),yes)
 SRCS += demux_dv.c
 endif
-SRCS += cache2.c dvdauth.c stream.c tvi_dummy.c tvi_v4l.c
+SRCS += cache2.c stream.c tvi_dummy.c tvi_v4l.c
 SRCS += tvi_bsdbt848.c frequencies.c mrl.c
 
 SRCS += demuxer_r.c mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c

@@ -139,9 +139,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "raw .AVI 스트림에서는 탐색할 수 없습니다! (인덱스가 필요합니다, -idx 스위치로 시도해보세요!)  \n"
 #define MSGTR_CantSeekFile "이 파일에서는 탐색할 수 없습니다!  \n"
 
-#define MSGTR_EncryptedVOB "암호화된 VOB 파일입니다(libcss 지원없이 컴파일되었음)! DOCS/cd-dvd.html을 참조하세요\n"
-#define MSGTR_EncryptedVOBauth "암호화된 스트림인데, 인증 신청을 하지않았습니다!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: 압축된 헤더는 (아직) 지원되지않습니다!\n"
 #define MSGTR_MOVvariableFourCC "MOV: 경고! FOURCC 변수 발견!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: 경고! 트랙이 너무 많습니다!"

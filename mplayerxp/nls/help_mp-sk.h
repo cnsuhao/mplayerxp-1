@@ -137,9 +137,6 @@ static char help_text[]=
 #define MSGTR_CantSeekRawAVI "Nemôžem sa posúvať v surových (raw) .AVI prúdoch! (Potrebujem index, zkuste použíť voľbu -idx !)  \n"
 #define MSGTR_CantSeekFile "Nemôžem sa posúvať v tomto súbore!  \n"
 
-#define MSGTR_EncryptedVOB "Kódovaný VOB súbor (preložené bez podpory libcss)! Prečítajte si DOCS/DVD\n"
-#define MSGTR_EncryptedVOBauth "Zakódovaný prúd, ale overenie autenticity ste nepožadovali!!\n"
-
 #define MSGTR_MOVcomprhdr "MOV: Komprimované hlavičky nie sú (ešte) podporované!\n"
 #define MSGTR_MOVvariableFourCC "MOV: Upozornenie! premenná FOURCC detekovaná!?\n"
 #define MSGTR_MOVtooManyTrk "MOV: Upozornenie! Príliš veľa stôp!"
