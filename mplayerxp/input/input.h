@@ -7,10 +7,10 @@
 #define MP_CMD_PLAY_TREE_STEP		5
 #define MP_CMD_PLAY_TREE_UP_STEP	6
 #define MP_CMD_PLAY_ALT_SRC_STEP	7
-#define MP_CMD_SUB_DELAY		8
+#define MP_CMD_RESERVED_1		8
 #define MP_CMD_OSD			9
 #define MP_CMD_VOLUME			10
-#define MP_CMD_RESERVED			11
+#define MP_CMD_RESERVED_2		11
 #define MP_CMD_CONTRAST			12
 #define MP_CMD_BRIGHTNESS		13
 #define MP_CMD_HUE			14

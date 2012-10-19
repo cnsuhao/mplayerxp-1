@@ -509,7 +509,6 @@ static int sub_autodetect (FILE *fd) {
     return SUB_INVALID;  // too many bad lines
 }
 
-extern float sub_delay;
 extern float sub_fps;
 
 #ifdef USE_ICONV
@@ -807,7 +806,7 @@ void dump_mpsub(subtitle* subs, float fps){
 	FILE *fd;
 	float a,b;
 
-	mpsub_position=sub_uses_time?(sub_delay*100):(sub_delay*fps);
+	mpsub_position=0;
 	if (sub_fps==0) sub_fps=fps;
 
 	fd=fopen ("dump.mpsub", "w");

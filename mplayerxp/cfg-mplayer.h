@@ -232,7 +232,6 @@ static const config_t subtitle_config[]={
 #ifdef USE_ICONV
 	{"cp", &sub_data.cp, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies codepage of subtitles"},
 #endif	
-	{"delay", &sub_delay, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL, "delays subtitles by given number of seconds"},
 	{"fps", &sub_fps, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL, "specifies frame/sec rate of subtitle file"},
         {"noauto", &sub_auto, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable autodetection of vobsub for textsubs if vobsub found"},
 	{"unicode", &sub_data.unicode, CONF_TYPE_FLAG, 0, 0, 1, NULL, "tells MPlayerXP to handle the subtitle file as UNICODE"},

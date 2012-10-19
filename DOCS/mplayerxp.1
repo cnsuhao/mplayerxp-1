@@ -1535,9 +1535,6 @@ specify frame/sec rate of subtitle file (float number)
 (ONLY for frame-based SUB files, i.e. NOT MicroDVD format!)
 (default: the same fps as the movie)
 .TP
-.B \-sub.delay\ <sec>
-delays subtitles by <sec> seconds. Can be negative.
-.TP
 .B \-sub.vob\ <vobsub\ file\ without\ extention>
 specify the VobSub files that are to be used for subtitle.  This is
 the full pathname without extensions, i.e. without the ".idx", ".ifo"
@@ -1871,9 +1868,6 @@ Next/prevous playtree entry in parent list
 
 .SS manual A-V synchronization keys
 .TP
-.B z/x
-adjust subtitle delay by +/- 0.1 second
-.TP
 .B d
 Toggle frame droping states: noframedrop/framedrop/hardframedrop
 .SS general purposes keys
@@ -1961,7 +1955,7 @@ Select DVD's menu
 .B Keypad-Ins
 Activate (press) selected button
 .TP
-.B b g i j l y
+.B b g i j l y z x + -
 Reserved keys 
 .IP
 .SH SLAVE MODE PROTOCOL

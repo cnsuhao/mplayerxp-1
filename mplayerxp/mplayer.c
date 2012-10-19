@@ -108,7 +108,6 @@ static unsigned mpxp_after_seek=0;
 int audio_eof=0;
 demux_stream_t *d_video=NULL;
 static int osd_show_framedrop = 0;
-static int osd_show_sub_delay = 0;
 static int osd_function=OSD_PLAY;
 int output_quality=0;
 
@@ -256,7 +255,6 @@ char* audio_driver=NULL;
 char *font_name=NULL;
 float font_factor=0.75;
 char *sub_name=NULL;
-float sub_delay=0;
 float sub_fps=0;
 int   sub_auto = 1;
 char *vobsub_name=NULL;
@@ -1155,10 +1153,7 @@ static int osd_last_pts=-303;
       }
       else osd_last_pts=pts;
       vo.osd_text=osd_text_buffer;
-      if (osd_show_sub_delay) {
-	  sprintf(osd_text_tmp, "Sub delay: %d ms",(int)(sub_delay*1000));
-	  osd_show_sub_delay--;
-      } else if (osd_show_framedrop) {
+      if (osd_show_framedrop) {
 	  sprintf(osd_text_tmp, "Framedrop: %s",frame_dropping>1?"hard":frame_dropping?"vo":"none");
 	  osd_show_framedrop--;
       } else
@@ -1192,7 +1187,7 @@ void update_subtitle(float v_pts)
       if(sub_fps==0) sub_fps=sh_video->fps;
       pinfo[xp_id].current_module="find_sub";
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-         find_sub(subtitles,sub_uses_time?(100*(pts+sub_delay)):((pts+sub_delay)*sub_fps)); // FIXME! frame counter...
+         find_sub(subtitles,sub_uses_time?(100*pts):(pts*sub_fps)); // FIXME! frame counter...
          sub_last_pts = pts;
       }
       pinfo[xp_id].current_module=NULL;
@@ -1218,9 +1213,9 @@ void update_subtitle(float v_pts)
     pinfo[xp_id].current_module="spudec";
     spudec_heartbeat(vo.spudec,90000*v_pts);
     if (vo.vobsub) {
-      if (v_pts+sub_delay >= 0) {
-	while((len=vobsub_get_packet(vo.vobsub, v_pts+sub_delay,(any_t**)&packet, &timestamp))>0){
-		timestamp -= (v_pts + sub_delay - sh_video->timer)*90000;
+      if (v_pts >= 0) {
+	while((len=vobsub_get_packet(vo.vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
+		timestamp -= (v_pts - sh_video->timer)*90000;
 		MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
 		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
 
@@ -2293,15 +2288,6 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
 	else if(v < 0 && playtree_iter->file > 1)
 	  eof = PT_PREV_SRC;
       }
-    } break;
-    case MP_CMD_SUB_DELAY : {
-      int i_abs= cmd->args[1].v.i;
-      float v = cmd->args[0].v.f;
-      if(i_abs)
-	sub_delay = v;
-      else
-	sub_delay += v;
-      osd_show_sub_delay = osd->info_factor; // show the subdelay in OSD
     } break;
     case MP_CMD_OSD :
       if(sh_video) {
