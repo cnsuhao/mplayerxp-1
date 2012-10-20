@@ -19,11 +19,11 @@
 #define MSG_OK(args...) mp_msg(MSGT_CLASS,MSGL_OK,__FILE__,__LINE__,##args )
 #define MSG_HINT(args...) mp_msg(MSGT_CLASS,MSGL_HINT,__FILE__,__LINE__,##args )
 #define MSG_STATUS(args...) mp_msg(MSGT_CLASS,MSGL_STATUS,__FILE__,__LINE__,##args )
-//#ifdef MP_DEBUG
+#ifdef MP_DEBUG
 #define MSG_DBG2(args...) mp_msg(MSGT_CLASS,MSGL_DBG2,__FILE__,__LINE__,##args )
 #define MSG_DBG3(args...) mp_msg(MSGT_CLASS,MSGL_DBG3,__FILE__,__LINE__,##args )
-//#else
-//#define MSG_DBG2(args...)
-//#define MSG_DBG3(args...)
-//#endif
+#else
+#define MSG_DBG2(args...)
+#define MSG_DBG3(args...)
+#endif
 #endif
