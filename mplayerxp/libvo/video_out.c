@@ -651,9 +651,7 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 void vo_select_frame(unsigned play_idx)
 {
     MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
-    vo_lock_surfaces();
     video_out->select_frame(play_idx);
-    vo_unlock_surfaces();
 }
 
 void vo_flush_page(unsigned decoder_idx)
