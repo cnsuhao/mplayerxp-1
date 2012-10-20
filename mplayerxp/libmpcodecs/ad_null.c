@@ -42,7 +42,7 @@ int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
   UNUSED(sh_audio);
   UNUSED(buf);

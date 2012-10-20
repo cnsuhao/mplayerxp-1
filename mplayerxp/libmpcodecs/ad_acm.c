@@ -129,7 +129,7 @@ static int close_acm_audio_codec(sh_audio_t *sh_audio)
 int init(sh_audio_t *sh_audio)
 {
     float pts;
-    int ret=mpca_decode(sh_audio,sh_audio->a_buffer,4096,sh_audio->a_buffer_size,&pts);
+    int ret=decode(sh_audio,sh_audio->a_buffer,4096,sh_audio->a_buffer_size,&pts);
     if(ret<0){
         MSG_INFO("ACM decoding error: %d\n",ret);
         return 0;
@@ -183,7 +183,7 @@ int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
 	ACMSTREAMHEADER ash;
 	HRESULT hr;

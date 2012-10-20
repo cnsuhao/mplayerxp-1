@@ -632,7 +632,7 @@ static void frtobuf(float out[],       /* Input  --- input data frame */
 	}
 }
 
-unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
 	unsigned l,len=0;
 	float null_pts;

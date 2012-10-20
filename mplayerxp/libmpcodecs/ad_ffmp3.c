@@ -105,7 +105,7 @@ int init(sh_audio_t *sh_audio)
    }
 
    // Decode at least 1 byte:  (to get header filled)
-   x=mpca_decode(sh_audio,sh_audio->a_buffer,1,sh_audio->a_buffer_size,&pts);
+   x=decode(sh_audio,sh_audio->a_buffer,1,sh_audio->a_buffer_size,&pts);
    if(x>0) sh_audio->a_buffer_len=x;
 
   sh_audio->channels=lavc_context->channels;
@@ -159,7 +159,7 @@ int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
     return CONTROL_UNKNOWN;
 }
 
-unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
     unsigned char *start=NULL;
     int y;

@@ -17,7 +17,7 @@ static int init(sh_audio_t *sh);
 static int preinit(sh_audio_t *sh);
 static void uninit(sh_audio_t *sh);
 static int control(sh_audio_t *sh,int cmd,any_t* arg, ...);
-static unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
+static unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 
 #define LIBAD_EXTERN(x) const ad_functions_t mpcodecs_ad_##x = {\
 	&info,\
@@ -26,6 +26,6 @@ static unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned min
 	init,\
         uninit,\
 	control,\
-	mpca_decode\
+	decode\
 };
 

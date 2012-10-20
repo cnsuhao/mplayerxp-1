@@ -86,7 +86,7 @@ static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-static unsigned mpca_decode(sh_audio_t *sh, unsigned char *buf, unsigned minlen, unsigned maxlen,float *pts)
+static unsigned decode(sh_audio_t *sh, unsigned char *buf, unsigned minlen, unsigned maxlen,float *pts)
 {
    libdv_priv_t *priv = sh->context;
    dv_decoder_t* decoder=priv->decoder;  //global_rawdv_decoder;

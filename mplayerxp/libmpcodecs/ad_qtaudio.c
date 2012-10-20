@@ -279,7 +279,7 @@ static void uninit(sh_audio_t *sh){
 #endif
 }
 
-static unsigned mpca_decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
+static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
     int error;
     unsigned long FramesToGet=0; //how many frames the demuxer has to get
     unsigned long InputBufferSize=0; //size of the input buffer
