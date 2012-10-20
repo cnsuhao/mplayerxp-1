@@ -936,7 +936,7 @@ void sig_dec_ahead_video( void )
     xp_eof = 1;
     xp_core.video->fra[dae_curr_vdecoded()].eof=1;
     /*
-	Unlock all mutex 
+	Unlock all mutex
 	( man page says it may deadlock, but what is worse deadlock here or later? )
     */
     pthread_is_living=0;

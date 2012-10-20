@@ -489,24 +489,26 @@ static int sdl_close (void)
 static int __FASTCALL__ set_video_mode(int width, int height, int bpp, uint32_t sdlflags)
 {
     struct sdl_priv_s *priv = &sdl_priv;
-    SDL_Surface* newsurface;    
+    SDL_Surface* newsurface;
     int retval=-1;
     newsurface = SDL_SetVideoMode(width, height, bpp, sdlflags);
 
     if(newsurface) {
 
-        /* priv->surface will be NULL the first time this function is called. */
-        if(priv->surface)
-            SDL_FreeSurface(priv->surface);
+	vo_lock_surfaces();
+	/* priv->surface will be NULL the first time this function is called. */
+	if(priv->surface)
+	    SDL_FreeSurface(priv->surface);
 
-        priv->surface = newsurface;
-        priv->dstwidth = width;
-        priv->dstheight = height;
+	priv->surface = newsurface;
+	priv->dstwidth = width;
+	priv->dstheight = height;
 
-        retval = setup_surfaces();
+	retval = setup_surfaces();
+	vo_unlock_surfaces();
     }
     else
-        MSG_ERR("set_video_mode: SDL_SetVideoMode failed: %s\n", SDL_GetError());
+	MSG_ERR("set_video_mode: SDL_SetVideoMode failed: %s\n", SDL_GetError());
     return retval;
 }
 
@@ -556,14 +558,16 @@ static int __FASTCALL__ set_fullmode (int mode) {
 	
 	/* if creation of new surface was successfull, save it and hide mouse cursor */
 	if(newsurface) {
-		if (priv->surface)
-		    SDL_FreeSurface(priv->surface);
-		priv->surface = newsurface;
-		SDL_ShowCursor(0);
-        SDL_SRF_LOCK(priv->surface, -1)
-        SDL_FillRect(priv->surface, NULL, 0);
-        SDL_SRF_UNLOCK(priv->surface)
-	retval = setup_surfaces();
+	    vo_lock_surfaces();
+	    if (priv->surface)
+		SDL_FreeSurface(priv->surface);
+	    priv->surface = newsurface;
+	    SDL_ShowCursor(0);
+	    SDL_SRF_LOCK(priv->surface, -1)
+	    SDL_FillRect(priv->surface, NULL, 0);
+	    SDL_SRF_UNLOCK(priv->surface)
+	    retval = setup_surfaces();
+	    vo_unlock_surfaces();
 	}
     else
         MSG_ERR("set_fullmode: SDL_SetVideoMode failed: %s\n", SDL_GetError());

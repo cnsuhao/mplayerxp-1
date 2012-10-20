@@ -172,7 +172,11 @@ extern uint32_t		vo_fullscreen( void );
 extern uint32_t		vo_screenshot( unsigned idx );
 extern uint32_t		vo_pause( void );
 extern uint32_t		vo_resume( void );
+
+extern void		vo_lock_surfaces(void);
+extern void		vo_unlock_surfaces(void);
 extern uint32_t	 __FASTCALL__ vo_get_surface( mp_image_t* mpi,unsigned decoder_idx);
+
 extern int		vo_check_events( void );
 extern unsigned	 __FASTCALL__ vo_get_num_frames( void );
 extern uint32_t  __FASTCALL__ vo_draw_slice(const mp_image_t *mpi);

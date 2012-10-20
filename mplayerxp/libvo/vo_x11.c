@@ -100,11 +100,13 @@ static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsig
 	XClearWindow(vo.mDisplay, vo.window);
 	vox11.image_width= (newW+7)&(~7);
 	vox11.image_height= newH;
+	vo_lock_surfaces();
 	for(idx=0;idx<vox11.num_buffers;idx++)
 	{
 	    vo_x11_freeMyXImage(idx);
 	    vo_x11_getMyXImage(idx,vox11.vinfo.visual,vox11.depth,vox11.image_width,vox11.image_height);
 	}
+	vo_unlock_surfaces();
    }
    return ret;
 }

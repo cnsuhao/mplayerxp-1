@@ -134,6 +134,7 @@ typedef struct vo_priv_data_s {
     uint32_t			org_width,org_height;
     unsigned			ps_off[4]; /* offsets for y,u,v in panscan mode */
     unsigned long long int	frame_counter;
+    pthread_mutex_t		surfaces_mutex;
 }vo_priv_data_t;
 static vo_priv_data_t vo_data;
 
@@ -171,6 +172,7 @@ const vo_info_t* vo_get_info( void )
 
 void __FASTCALL__ vo_preinit_structs( void )
 {
+    pthread_mutexattr_t attr;
     memset(&dri,0,sizeof(dri_priv_t));
     dri.num_xp_frames=1;
     memset(&vo,0,sizeof(vo_priv_t));
@@ -181,6 +183,9 @@ void __FASTCALL__ vo_preinit_structs( void )
     vo.WinID=-1;
     vo.osd_progbar_type=-1;
     vo.osd_progbar_value=100;   // 0..256
+    memset(&vo_data,0,sizeof(vo_priv_data_t));
+    pthread_mutexattr_init(&attr);
+    pthread_mutex_init(&vo_data.surfaces_mutex,&attr);
 }
 
 int __FASTCALL__ vo_init(const char *subdevice)
@@ -484,6 +489,9 @@ uint32_t vo_resume( void )
     return video_out->control(VOCTRL_RESUME,0);
 }
 
+void vo_lock_surfaces(void) { pthread_mutex_lock(&vo_data.surfaces_mutex); }
+void vo_unlock_surfaces(void) { pthread_mutex_unlock(&vo_data.surfaces_mutex); }
+
 uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi, unsigned decoder_idx)
 {
     int width_less_stride;
@@ -526,6 +534,7 @@ uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi, unsigned decoder_idx)
 	/* it seems that surfaces are equal */
 	if((((mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && width_less_stride) || dri.planes_eq) && dri.dr)
 	{
+	    vo_lock_surfaces();
 	    mpi->planes[0]=dri.surf[decoder_idx].planes[0]+dri.off[0];
 	    mpi->planes[1]=dri.surf[decoder_idx].planes[1]+dri.off[1];
 	    mpi->planes[2]=dri.surf[decoder_idx].planes[2]+dri.off[2];
@@ -533,6 +542,7 @@ uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi, unsigned decoder_idx)
 	    mpi->stride[1]=dri.cap.strides[1];
 	    mpi->stride[2]=dri.cap.strides[2];
 	    mpi->flags|=MP_IMGFLAG_DIRECT;
+	    vo_unlock_surfaces();
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface OK\n");
 	    return VO_TRUE;
 	}
@@ -641,8 +651,9 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
 void vo_select_frame(unsigned play_idx)
 {
     MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
-
+    vo_lock_surfaces();
     video_out->select_frame(play_idx);
+    vo_unlock_surfaces();
 }
 
 void vo_flush_page(unsigned decoder_idx)
