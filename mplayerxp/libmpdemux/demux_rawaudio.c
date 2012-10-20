@@ -101,7 +101,7 @@ static void rawaudio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_audio->i_bps)*seeka->secs;
   pos -= (pos % (sh_audio->channels * sh_audio->samplesize) );
   stream_seek(s,pos);
-  resync_audio_stream(sh_audio);
+  mpca_resync_stream(sh_audio);
 }
 
 static void rawaudio_close(demuxer_t* demuxer) {}

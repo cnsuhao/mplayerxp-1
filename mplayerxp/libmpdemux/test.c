@@ -14,9 +14,9 @@
 
 // audio stream skip/resync functions requires only for seeking.
 // (they should be implemented in the audio codec layer)
-void skip_audio_frame(sh_audio_t *sh_audio){
+void mpca_skip_frame(sh_audio_t *sh_audio){
 }
-void resync_audio_stream(sh_audio_t *sh_audio){
+void mpca_resync_stream(sh_audio_t *sh_audio){
 }
 
 int verbose=5; // must be global!

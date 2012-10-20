@@ -136,7 +136,7 @@ static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+static unsigned mpca_decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
         unsigned len = 0;
         int samples;

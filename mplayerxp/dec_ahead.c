@@ -386,13 +386,13 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	unsigned distance = dae_get_decoder_outrun(xp_core.video);
 	int our_quality;
 	our_quality = output_quality*distance/total;
-	if(drop_param) set_video_quality(sh_video,0);
+	if(drop_param) mpcv_set_quality(sh_video,0);
 	else
-	if(auto_quality) set_video_quality(sh_video,our_quality>0?our_quality:0);
+	if(auto_quality) mpcv_set_quality(sh_video,our_quality>0?our_quality:0);
     }
-    blit_frame=decode_video(sh_video,start,in_size,drop_param,v_pts);
+    blit_frame=mpcv_decode(sh_video,start,in_size,drop_param,v_pts);
     if(output_quality) {
-	if(drop_param) set_video_quality(sh_video,output_quality);
+	if(drop_param) mpcv_set_quality(sh_video,output_quality);
     }
     if(!blit_frame && drop_param) xp_drop_frame_cnt++;
 #ifdef ENABLE_DEC_AHEAD_DEBUG
@@ -651,7 +651,7 @@ int run_dec_ahead( void )
   return 0;
 }
 
-int run_xp_players(void)
+int run_xp_aplayers(void)
 {
   int retval;
   if( xp_core.has_audio && enable_xp >= XP_VAPlay )

@@ -3021,7 +3021,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	return 0;
 }
 
-extern void skip_audio_frame(sh_audio_t *sh_audio);
+extern void mpca_skip_frame(sh_audio_t *sh_audio);
 
 static void reset_fifos(ts_priv_t* priv, int a, int v, int s)
 {
@@ -3139,7 +3139,7 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 			a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 			if(d_video->pts > a_pts)
 			{
-				skip_audio_frame(sh_audio);  // sync audio
+				mpca_skip_frame(sh_audio);  // sync audio
 				continue;
 			}
 		}

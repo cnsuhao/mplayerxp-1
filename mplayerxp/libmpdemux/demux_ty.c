@@ -51,7 +51,7 @@
                      (((uint8_t*)(x))[1] <<  8) | \
                       ((uint8_t*)(x))[2])
 
-extern void skip_audio_frame( sh_audio_t *sh_audio );
+extern void mpca_skip_frame( sh_audio_t *sh_audio );
 int sub_justify;
 
 // 2/c0: audio data
@@ -809,7 +809,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
            (float)sh_audio->i_bps;
         if( d_video->pts > a_pts )
         {
-           skip_audio_frame( sh_audio );  // sync audio
+           mpca_skip_frame( sh_audio );  // sync audio
            continue;
         }
      }

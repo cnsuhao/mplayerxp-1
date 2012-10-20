@@ -850,7 +850,7 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	{
 		if(verbose) MSG_V("MPXPAV64_SEEK: newpos after sync %016llX\n",stream_tell(demuxer->stream));
 		mpxpav64_reset_prevs(demuxer);
-		resync_audio_stream(demuxer->audio->sh);
+		mpca_resync_stream(demuxer->audio->sh);
 	}
 	else
 	{

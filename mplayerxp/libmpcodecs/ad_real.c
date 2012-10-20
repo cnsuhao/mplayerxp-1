@@ -208,7 +208,7 @@ static const unsigned char sipr_swaps[38][2]={
     {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
     {77,80} };
 
-static unsigned decode_audio(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
+static unsigned mpca_decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
   real_priv_t *rpriv = sh->context;
   float null_pts;
   int result;

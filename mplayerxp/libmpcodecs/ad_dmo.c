@@ -92,7 +92,7 @@ static int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-static unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+static unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
   dmo_priv_t* priv = sh_audio->context;
   unsigned len=0;

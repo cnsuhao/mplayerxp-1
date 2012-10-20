@@ -1518,7 +1518,7 @@ static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
             demux_read_data(d_audio,NULL,skip_audio_bytes);
             //d_audio->pts=0; // PTS is outdated because of the raw data skipping
           }
-	  resync_audio_stream(sh_audio);
+	  mpca_resync_stream(sh_audio);
 
 //          sh_audio->timer=-skip_audio_secs;
 

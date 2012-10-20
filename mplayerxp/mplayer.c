@@ -532,7 +532,7 @@ int decode_audio_buffer(unsigned len)
 
     for( l = 0, l2 = len, ret = 0; l < len && l2 >= audio_buffer.sh_audio->audio_out_minsize; ) {
 	float pts;
-        ret = decode_audio( audio_buffer.sh_audio, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
+        ret = mpca_decode( audio_buffer.sh_audio, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
         if( ret <= 0 )
             break;
 
@@ -664,7 +664,7 @@ void uninit_player(unsigned int mask){
     if(mask&INITED_VCODEC){
 	inited_flags&=~INITED_VCODEC;
 	pinfo[xp_id].current_module="uninit_vcodec";
-	uninit_video(sh_video);
+	mpcv_uninit(sh_video);
 	sh_video=NULL;
     }
 
@@ -677,7 +677,7 @@ void uninit_player(unsigned int mask){
     if(mask&INITED_ACODEC){
 	inited_flags&=~INITED_ACODEC;
 	pinfo[xp_id].current_module="uninit_acodec";
-	uninit_audio(sh_audio);
+	mpca_uninit(sh_audio);
 	sh_audio=NULL;
     }
 
@@ -1043,7 +1043,7 @@ while(sh_audio){
   //if(playsize>outburst) playsize=outburst;
 
   // Update buffer if needed
-  pinfo[_xp_id].current_module="decode_audio";   // Enter AUDIO decoder module
+  pinfo[_xp_id].current_module="mpca_decode";   // Enter AUDIO decoder module
   t=GetTimer();
   while(sh_audio->a_buffer_len<playsize && !audio_eof){
       if(enable_xp>=XP_VideoAudio) {
@@ -1051,7 +1051,7 @@ while(sh_audio){
                               playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       } else
       {
-          ret=decode_audio(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
+          ret=mpca_decode(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
                            playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
     if(ret>0) sh_audio->a_buffer_len+=ret;
@@ -1487,14 +1487,14 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 
 	if(sh_video){
 	    pinfo[_xp_id].current_module="seek_video_reset";
-	    resync_video_stream(sh_video);
+	    mpcv_resync_stream(sh_video);
 	    vo_reset();
 	    sh_video->chapter_change=-1;
 	}
 
 	if(sh_audio){
 	    pinfo[_xp_id].current_module="seek_audio_reset";
-	    resync_audio_stream(sh_audio);
+	    mpca_resync_stream(sh_audio);
 	    ao_reset(); // stop audio, throwing away buffered data
 	}
 
@@ -1545,7 +1545,7 @@ void mpxp_reset_vcache(void)
 
 void mpxp_resync_audio_stream(void)
 {
-    resync_audio_stream(sh_audio);
+    mpca_resync_stream(sh_audio);
 }
 
 static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stream_packet_t *sp)
@@ -1958,15 +1958,15 @@ static int mpxp_find_vcodec(void) {
     if(video_codec) {
     /* forced codec by name: */
 	MSG_INFO("Forced video codec: %s\n",video_codec);
-	init_video(sh_video,video_codec,NULL,-1);
+	mpcv_init(sh_video,video_codec,NULL,-1);
     } else {
 	int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
 	if(video_family) MSG_INFO(MSGTR_TryForceVideoFmt,video_family);
 	for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 	    if(video_family) /* try first the preferred codec family:*/
-		if(init_video(sh_video,NULL,video_family,status)) break;
-	    if(init_video(sh_video,NULL,NULL,status)) break;
+		if(mpcv_init(sh_video,NULL,video_family,status)) break;
+	    if(mpcv_init(sh_video,NULL,NULL,status)) break;
 	}
     }
     if(!sh_video->inited) {
@@ -2013,7 +2013,7 @@ static int mpxp_configure_audio(void) {
     ao_data.channels=audio_output_channels?audio_output_channels:sh_audio->channels;
     ao_data.format=sh_audio->sample_format;
 #if 1
-    if(!preinit_audio_filters(sh_audio,
+    if(!mpca_preinit_filters(sh_audio,
 	    // input:
 	    (int)(sh_audio->samplerate),
 	    sh_audio->channels, sh_audio->sample_format, sh_audio->samplesize,
@@ -2035,7 +2035,7 @@ static int mpxp_configure_audio(void) {
     } else {
 	inited_flags|=INITED_AO;
 	pinfo[xp_id].current_module="af_init";
-	if(!init_audio_filters(sh_audio,
+	if(!mpca_init_filters(sh_audio,
 	    (int)(sh_audio->samplerate),
 	    sh_audio->channels, sh_audio->sample_format, sh_audio->samplesize,
 	    ao_data.samplerate, ao_data.channels, ao_data.format,
@@ -2261,7 +2261,7 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
       else      v_cont+=v;
       if(v_cont > 100) v_cont=100;
       if(v_cont < -100) v_cont = -100;
-      if(set_video_colors(sh_video,VO_EC_CONTRAST,v_cont)){
+      if(mpcv_set_colors(sh_video,VO_EC_CONTRAST,v_cont)){
 #ifdef USE_OSD
 	if(osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -2279,7 +2279,7 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
       else     v_bright+=v;
       if(v_bright > 100) v_bright = 100;
       if(v_bright < -100) v_bright = -100;
-      if(set_video_colors(sh_video,VO_EC_BRIGHTNESS,v_bright)){
+      if(mpcv_set_colors(sh_video,VO_EC_BRIGHTNESS,v_bright)){
 #ifdef USE_OSD
 	if(osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -2297,7 +2297,7 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
       else      v_hue+=v;
       if(v_hue > 100) v_hue = 100;
       if(v_hue < -100) v_hue = -100;
-      if(set_video_colors(sh_video,VO_EC_HUE,v_hue)){
+      if(mpcv_set_colors(sh_video,VO_EC_HUE,v_hue)){
 #ifdef USE_OSD
 	if(osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -2315,7 +2315,7 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
       else      v_saturation+=v;
       if(v_saturation > 100) v_saturation = 100;
       if(v_saturation < -100) v_saturation = -100;
-      if(set_video_colors(sh_video,VO_EC_SATURATION,v_saturation)){
+      if(mpcv_set_colors(sh_video,VO_EC_SATURATION,v_saturation)){
 #ifdef USE_OSD
 	if(osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -2600,7 +2600,7 @@ play_next_file:
 
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");
-	if(!init_audio(sh_audio)){
+	if(!mpca_init(sh_audio)){
 	    MSG_ERR(MSGTR_CouldntInitAudioCodec);
 	    sh_audio=d_audio->sh=NULL;
 	} else {
@@ -2633,11 +2633,11 @@ play_next_file:
 
     if(auto_quality>0){
 	/* Auto quality option enabled*/
-	output_quality=get_video_quality_max(sh_video);
+	output_quality=mpcv_get_quality_max(sh_video);
 	if(auto_quality>output_quality) auto_quality=output_quality;
 	else output_quality=auto_quality;
 	MSG_V("AutoQ: setting quality to %d\n",output_quality);
-	set_video_quality(sh_video,output_quality);
+	mpcv_set_quality(sh_video,output_quality);
     }
 
     vf_showlist(sh_video->vfilter);
@@ -2732,7 +2732,7 @@ main:
 	    usleep(0);
 	}while(dae_get_decoder_outrun(xp_core.video) < xp_num_frames/2 && !xp_eof);
     }
-    if(run_xp_players()!=0) exit_player("Can't run xp players!\n");
+    if(run_xp_aplayers()!=0) exit_player("Can't run xp players!\n");
     MSG_OK("Using the next %i threads:\n",xp_threads);
     for(i=0;i<xp_threads;i++) MSG_OK("[%i] %s (id=%u, pth_id=%lu)\n",i,pinfo[i].thread_name,pinfo[i].pid,pinfo[i].pth_id);
 //==================== START PLAYING =======================
@@ -2788,7 +2788,7 @@ repaint:
 		    --output_quality;
 		else if(output_quality>0 && aq_sleep_time<-0.050f) // 50ms
 		    output_quality=0;
-		set_video_quality(sh_video,output_quality);
+		mpcv_set_quality(sh_video,output_quality);
 	    }
 read_input:
 #ifdef USE_OSD

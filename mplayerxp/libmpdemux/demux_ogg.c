@@ -1417,7 +1417,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
         clear_sub = -1;
 	demux_ogg_add_packet(ds,os,ds->id,&op);
 	if(sh_audio)
-	  resync_audio_stream(sh_audio); 
+	  mpca_resync_stream(sh_audio); 
 	return;
       }
      }

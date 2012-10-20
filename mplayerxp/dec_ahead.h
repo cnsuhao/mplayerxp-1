@@ -127,7 +127,7 @@ extern pthread_t dec_ahead_pth_id;
 extern int init_dec_ahead(sh_video_t*stream, sh_audio_t *astream);
 extern void uninit_dec_ahead( int force );
 extern int run_dec_ahead( void );
-extern int run_xp_players( void );
+extern int run_xp_aplayers( void );
 extern void dec_ahead_reset_sh_video(sh_video_t* shv);
 
 extern void sig_dec_ahead_video( void );

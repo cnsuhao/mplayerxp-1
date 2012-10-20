@@ -50,7 +50,7 @@ int divx_quality=PP_QUALITY_MAX;
 
 const vd_functions_t* mpvdec=NULL;
 
-int get_video_quality_max(sh_video_t *sh_video){
+int mpcv_get_quality_max(sh_video_t *sh_video){
   if(mpvdec){
     int ret=mpvdec->control(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,NULL);
     if(ret>=0) return ret;
@@ -58,12 +58,12 @@ int get_video_quality_max(sh_video_t *sh_video){
  return 0;
 }
 
-void set_video_quality(sh_video_t *sh_video,int quality){
+void mpcv_set_quality(sh_video_t *sh_video,int quality){
   if(mpvdec)
     mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
 }
 
-int set_video_colors(sh_video_t *sh_video,char *item,int value)
+int mpcv_set_colors(sh_video_t *sh_video,char *item,int value)
 {
     vf_instance_t* vf=sh_video->vfilter;
     vf_equalizer_t eq;
@@ -76,7 +76,7 @@ int set_video_colors(sh_video_t *sh_video,char *item,int value)
     return 1;
 }
 
-void uninit_video(sh_video_t *sh_video){
+void mpcv_uninit(sh_video_t *sh_video){
     if(!sh_video->inited) return;
     MSG_V("uninit video: %s\n",sh_video->codec->driver_name);
     if(sh_video->vfilter && sh_video->vfilter_inited==1) vf_uninit_filter_chain(sh_video->vfilter);
@@ -90,29 +90,29 @@ static unsigned use_vf_threads=0;
 extern int enable_gomp;
 
 extern char *video_codec;
-int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
+int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
     unsigned o_bps,bpp;
     sh_video->codec=NULL;
-    MSG_DBG3("init_video(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
+    MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->format,
       sh_video->bih?((unsigned int*) &sh_video->bih->biCompression):NULL,
       sh_video->codec,0) )){
 	// ok we found one codec
 	int i;
 	if(sh_video->codec->flags&CODECS_FLAG_SELECTED) {
-	    MSG_DBG3("init_video: %s already tried and failed\n",sh_video->codec->codec_name);
+	    MSG_DBG3("mpcv_init: %s already tried and failed\n",sh_video->codec->codec_name);
 	    continue;
 	}
 	if(codecname && strcmp(sh_video->codec->codec_name,codecname)) {
-	    MSG_DBG3("init_video: %s != %s [-vc]\n",sh_video->codec->codec_name,codecname);
+	    MSG_DBG3("mpcv_init: %s != %s [-vc]\n",sh_video->codec->codec_name,codecname);
 	    continue;
 	}
 	if(vfm && strcmp(sh_video->codec->driver_name,vfm)!=0) {
-	    MSG_DBG3("init_video: vfm doesn't match %s != %s\n",vfm,sh_video->codec->driver_name);
+	    MSG_DBG3("mpcv_init: vfm doesn't match %s != %s\n",vfm,sh_video->codec->driver_name);
 	    continue; // vfm doesn't match
 	}
 	if(sh_video->codec->status<status) {
-	    MSG_DBG3("init_video: %s too unstable\n",sh_video->codec->codec_name);
+	    MSG_DBG3("mpcv_init: %s too unstable\n",sh_video->codec->codec_name);
 	    continue;
 	}
 	sh_video->codec->flags|=CODECS_FLAG_SELECTED; // tagging it
@@ -121,7 +121,7 @@ int init_video(sh_video_t *sh_video,const char* codecname,const char * vfm,int s
 	    if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,sh_video->codec->driver_name)==0) break;
 	mpvdec=mpcodecs_vd_drivers[i];
 	if(!mpvdec) continue;
-	else    MSG_DBG3("init_video: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
+	else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
 	// it's available, let's try to init!
 	if(!mpvdec->init(sh_video)){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
@@ -235,7 +235,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 }
 
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
-int decode_video(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_frame, float pts){
+int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_frame, float pts){
     vf_instance_t* vf;
     mp_image_t *mpi=NULL;
     unsigned int t;
@@ -282,7 +282,7 @@ int decode_video(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_
     return 1;
 }
 
-void resync_video_stream(sh_video_t *sh_video)
+void mpcv_resync_stream(sh_video_t *sh_video)
 {
   if(sh_video)
   if(sh_video->inited && mpvdec) mpvdec->control(sh_video,VDCTRL_RESYNC_STREAM,NULL);

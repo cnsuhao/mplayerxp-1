@@ -702,7 +702,7 @@ static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     if(sh_audio && !d_audio->eof){
       ds_free_packs_until_pts(d_audio,d_video->pts);
       ds_fill_buffer(d_audio);
-      resync_audio_stream(sh_audio);
+      mpca_resync_stream(sh_audio);
     }
 }
 

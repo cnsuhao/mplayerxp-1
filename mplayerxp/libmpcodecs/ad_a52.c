@@ -213,7 +213,7 @@ int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
   return CONTROL_UNKNOWN;
 }
 
-unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
     sample_t level=1, bias=384;
     int flags=mpxp_a52_flags|A52_ADJUST_LEVEL;

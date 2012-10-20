@@ -34,7 +34,7 @@ static const ad_functions_t* mpadec;
 
 extern unsigned force_srate;
 extern char *audio_codec;
-int init_audio(sh_audio_t *sh_audio)
+int mpca_init(sh_audio_t *sh_audio)
 {
   unsigned i;
   for (i=0; mpcodecs_ad_drivers[i] != NULL; i++)
@@ -99,7 +99,7 @@ int init_audio(sh_audio_t *sh_audio)
 
   if(!mpadec->init(sh_audio)){
       MSG_WARN(MSGTR_CODEC_CANT_INITA);
-      uninit_audio(sh_audio); /* free buffers */
+      mpca_uninit(sh_audio); /* free buffers */
       return 0;
   }
 
@@ -107,7 +107,7 @@ int init_audio(sh_audio_t *sh_audio)
 
   if(!sh_audio->channels || !sh_audio->samplerate){
     MSG_WARN(MSGTR_UnknownAudio);
-    uninit_audio(sh_audio); /* free buffers */
+    mpca_uninit(sh_audio); /* free buffers */
     return 0;
   }
 
@@ -136,7 +136,7 @@ int init_audio(sh_audio_t *sh_audio)
   return 1;
 }
 
-void uninit_audio(sh_audio_t *sh_audio)
+void mpca_uninit(sh_audio_t *sh_audio)
 {
     if(sh_audio->afilter){
 	MSG_V("Uninit audio filters...\n");
@@ -157,7 +157,7 @@ void uninit_audio(sh_audio_t *sh_audio)
 }
 
  /* Init audio filters */
-int preinit_audio_filters(sh_audio_t *sh_audio,
+int mpca_preinit_filters(sh_audio_t *sh_audio,
 	int in_samplerate, int in_channels, int in_format, int in_bps,
 	int* out_samplerate, int* out_channels, int* out_format, int out_bps){
   char strbuf[200];
@@ -204,7 +204,7 @@ int preinit_audio_filters(sh_audio_t *sh_audio,
 }
 
  /* Init audio filters */
-int init_audio_filters(sh_audio_t *sh_audio, 
+int mpca_init_filters(sh_audio_t *sh_audio, 
 	int in_samplerate, int in_channels, int in_format, int in_bps,
 	int out_samplerate, int out_channels, int out_format, int out_bps,
 	int out_minsize, int out_maxsize){
@@ -253,7 +253,7 @@ int init_audio_filters(sh_audio_t *sh_audio,
 }
 
  /* Init audio filters */
-int reinit_audio_filters(sh_audio_t *sh_audio, 
+int mpca_reinit_filters(sh_audio_t *sh_audio, 
 	int in_samplerate, int in_channels, int in_format, int in_bps,
 	int out_samplerate, int out_channels, int out_format, int out_bps,
 	int out_minsize, int out_maxsize)
@@ -264,13 +264,13 @@ int reinit_audio_filters(sh_audio_t *sh_audio,
 	free(sh_audio->afilter);
 	sh_audio->afilter=NULL;
     }
-    return init_audio_filters(sh_audio,in_samplerate,in_channels,
+    return mpca_init_filters(sh_audio,in_samplerate,in_channels,
 				in_format,in_bps,out_samplerate,
 				out_channels,out_format,out_bps,
 				out_minsize,out_maxsize);
 }
 
-unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
+unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
 {
   unsigned len;
   unsigned cp_size,cp_tile;
@@ -278,7 +278,7 @@ unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,un
   af_data_t* pafd; // filter output
 
   if(!sh_audio->inited) return 0; // no codec
-  MSG_DBG3("decode_audio(%p,%p,%i,%i,%i,%p)\n",sh_audio,buf,minlen,maxlen,buflen,pts);
+  MSG_DBG3("mpca_decode(%p,%p,%i,%i,%i,%p)\n",sh_audio,buf,minlen,maxlen,buflen,pts);
 
   if(minlen>maxlen) MSG_WARN(MSGTR_CODEC_XP_INT_ERR,minlen,maxlen);
   if(sh_audio->af_buffer_len)
@@ -299,7 +299,7 @@ unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,un
   }
   if(sh_audio->af_bps>sh_audio->o_bps)
       maxlen=min(maxlen,(long long int)buflen*sh_audio->o_bps/sh_audio->af_bps);
-  len=mpadec->decode_audio(sh_audio,buf, minlen, maxlen,pts);
+  len=mpadec->mpca_decode(sh_audio,buf, minlen, maxlen,pts);
   if(len>buflen) MSG_WARN(MSGTR_CODEC_BUF_OVERFLOW,sh_audio->codec->driver_name,len,buflen);
   MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
   if(len==0 || !sh_audio->afilter) return 0; // EOF?
@@ -338,7 +338,7 @@ unsigned decode_audio(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,un
 }
 
 /* Note: it is called once after seeking, to resync. */
-void resync_audio_stream(sh_audio_t *sh_audio)
+void mpca_resync_stream(sh_audio_t *sh_audio)
 {
   if(sh_audio) {
     sh_audio->a_in_buffer_len=0; /* workaround */
@@ -348,7 +348,7 @@ void resync_audio_stream(sh_audio_t *sh_audio)
 
 /* Note: it is called to skip (jump over) small amount (1/10 sec or 1 frame)
    of audio data - used to sync audio to video after seeking */
-void skip_audio_frame(sh_audio_t *sh_audio)
+void mpca_skip_frame(sh_audio_t *sh_audio)
 {
   int rc=CONTROL_TRUE;
   if(sh_audio)
