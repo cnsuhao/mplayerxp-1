@@ -1527,7 +1527,7 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 	    }
 	    if(vo.spudec) {
 		unsigned char* packet=NULL;
-		while(ds_get_packet_sub(d_dvdsub,&packet)>0) ; // Empty stream
+		while(ds_get_packet_sub_r(d_dvdsub,&packet)>0) ; // Empty stream
 		spudec_reset(vo.spudec);
 	    }
 	}

@@ -316,7 +316,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
     static vo_mpegpes_t *pkg=&packet;
     packet.timestamp=sh_video->timer*90000.0;
     packet.id=0x20; /* Subpic */
-    while((packet.size=ds_get_packet_sub(d_dvdsub,&packet.data))>0){
+    while((packet.size=ds_get_packet_sub_r(d_dvdsub,&packet.data))>0){
       MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",packet.size,v_pts,d_dvdsub->pts);
       vo_draw_frame(&pkg);
     }
@@ -340,7 +340,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 		}
 	    }
 	} else {
-	    while((len=ds_get_packet_sub(d_dvdsub,&packet))>0){
+	    while((len=ds_get_packet_sub_r(d_dvdsub,&packet))>0){
 		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
 		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
 	    }

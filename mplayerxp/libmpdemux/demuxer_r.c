@@ -148,6 +148,13 @@ int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts)
     return retval;
 }
 
+int ds_get_packet_sub_r(demux_stream_t *ds,unsigned char **start) {
+    int rc;
+    LOCK_DEMUXER();
+    rc=ds_get_packet_sub(ds,start);
+    UNLOCK_DEMUXER();
+    return rc;
+}
 
 /* TODO : FIXME we need to redesign blocking of mutexes before enabling this function*/
 int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
