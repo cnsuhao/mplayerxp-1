@@ -299,7 +299,7 @@ unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,uns
   }
   if(sh_audio->af_bps>sh_audio->o_bps)
       maxlen=min(maxlen,(long long int)buflen*sh_audio->o_bps/sh_audio->af_bps);
-  len=mpadec->mpca_decode(sh_audio,buf, minlen, maxlen,pts);
+  len=mpadec->decode(sh_audio,buf, minlen, maxlen,pts);
   if(len>buflen) MSG_WARN(MSGTR_CODEC_BUF_OVERFLOW,sh_audio->codec->driver_name,len,buflen);
   MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
   if(len==0 || !sh_audio->afilter) return 0; // EOF?

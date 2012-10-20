@@ -35,7 +35,7 @@ typedef struct ad_functions_s
 	int (*init)(sh_audio_t *sh);
 	void (*uninit)(sh_audio_t *sh);
 	int (*control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
-	unsigned (*mpca_decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
+	unsigned (*decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 
 // NULL terminated array of all drivers
