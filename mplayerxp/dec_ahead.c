@@ -94,6 +94,12 @@ unsigned dae_prev_decoded(const dec_ahead_engine_t* it) { return (it->decoder_id
 unsigned dae_next_played(const dec_ahead_engine_t* it) { return (it->player_idx+1)%it->nframes; }
 unsigned dae_next_decoded(const dec_ahead_engine_t* it) { return (it->decoder_idx+1)%it->nframes; }
 
+unsigned dae_get_decoder_outrun(const dec_ahead_engine_t* it) {
+    unsigned decoder_idx=it->decoder_idx;
+    if(decoder_idx<it->player_idx) decoder_idx+=it->nframes;
+    return decoder_idx-it->player_idx;
+}
+
 frame_attr_t dae_played_fra(const dec_ahead_engine_t* it) {
     unsigned idx=it->player_idx;
     return it->fra[idx];
@@ -385,7 +391,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 		,abs_dec_ahead_blitted_frame,abs_dec_ahead_locked_frame,lda_active_frame+xp_num_frames-2);
     if(output_quality) {
 	unsigned total = xp_num_frames/2;
-	unsigned distance = dae_curr_vdecoded()-dae_curr_vplayed();
+	unsigned distance = dae_get_decoder_outrun(xp_core.video);
 	int our_quality;
 	our_quality = output_quality*distance/total;
 	if(drop_param) set_video_quality(sh_video,0);
@@ -753,7 +759,7 @@ int xp_thread_decode_audio()
 
     if(xp_core.has_video) {
 	/* Match video buffer */
-	vbuf_size = dae_curr_vdecoded() - dae_curr_vplayed();
+	vbuf_size = dae_get_decoder_outrun(xp_core.video);
 	pref_buf = vbuf_size / vo.fps * sh_audio->af_bps;
 	pref_buf -= len;
 	if( pref_buf > 0 ) {

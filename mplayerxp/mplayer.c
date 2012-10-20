@@ -2732,7 +2732,7 @@ main:
     if(sh_video) {
 	do {
 	    usleep(0);
-	}while(dae_curr_vdecoded() < xp_num_frames/2 && !xp_eof);
+	}while(dae_get_decoder_outrun(xp_core.video) < xp_num_frames/2 && !xp_eof);
     }
     if(run_xp_players()!=0) exit_player("Can't run xp players!\n");
     MSG_OK("Using the next %i threads:\n",xp_threads);

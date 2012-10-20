@@ -43,6 +43,7 @@ typedef struct dec_ahead_engine_s {
     long long int	num_decoded_frames; /* for frame dropping */
 }dec_ahead_engine_t;
 
+
 typedef struct xp_core_s {
     int				has_video;
     int				has_audio;
@@ -72,6 +73,8 @@ extern unsigned dae_prev_played(const dec_ahead_engine_t* it);
 extern unsigned dae_prev_decoded(const dec_ahead_engine_t* it);
 extern unsigned dae_next_played(const dec_ahead_engine_t* it);
 extern unsigned dae_next_decoded(const dec_ahead_engine_t* it);
+/* returns normalized decoder_idx-player_idx */
+extern unsigned dae_get_decoder_outrun(const dec_ahead_engine_t* it);
 
 static inline unsigned dae_curr_vplayed() { return xp_core.video->player_idx; }
 static inline unsigned dae_curr_vdecoded() { return xp_core.video->decoder_idx; }
