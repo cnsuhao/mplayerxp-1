@@ -1452,7 +1452,6 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,const seek_args_t* seek)
 {
     int seek_rval=1;
-    xp_core_lock_seeking();
     xp_core.in_lseek=Seek;
     audio_eof=0;
     if(seek->secs || seek->flags&DEMUX_SEEK_SET) {
@@ -1501,7 +1500,7 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 
 	if (vo.vobsub) {
 	    pinfo[_xp_id].current_module = "seek_vobsub_reset";
-	    vobsub_seek(vo.vobsub, v_pts);
+	    vobsub_seek_r(vo.vobsub, v_pts);
 	}
 
 #ifdef USE_OSD
@@ -1533,7 +1532,6 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 	    }
 	}
     }
-    xp_core_unlock_seeking();
 }
 
 void mpxp_reset_vcache(void)

@@ -7,6 +7,7 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "demuxer_r.h"
+#include "vobsub.h"
 #include "../osdep/timer.h"
 #include "../mplayer.h"
 #include "../dec_ahead.h"
@@ -155,7 +156,7 @@ int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
     unsigned int t=0;
     unsigned int t2=0;
     double tt;
-//    LOCK_DEMUXER();
+    LOCK_DEMUXER();
     if(benchmark) t=GetTimer();
     retval = demux_seek(demuxer,seeka);
     if(benchmark)
@@ -166,8 +167,14 @@ int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
 	if(tt > max_demux_time_usage) max_demux_time_usage=tt;
 	if(tt < min_demux_time_usage) min_demux_time_usage=tt;
     }
-//    UNLOCK_DEMUXER();
+    UNLOCK_DEMUXER();
     return retval;
+}
+
+void vobsub_seek_r(any_t* vobhandle, float pts) {
+    LOCK_DEMUXER();
+    vobsub_seek(vobhandle,pts);
+    UNLOCK_DEMUXER();
 }
 
 int demuxer_switch_audio_r(demuxer_t *d, int id)

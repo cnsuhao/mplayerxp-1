@@ -48,7 +48,6 @@ typedef struct xp_core_s {
     int				has_video;
     int				has_audio;
     dec_ahead_engine_t*		video;
-    pthread_mutex_t		seek_mutex;
     volatile enum seek_states	in_lseek;
     volatile int		in_pause;
     volatile int		in_resize;
@@ -57,9 +56,6 @@ extern xp_core_t xp_core;
 
 extern void xp_core_init(void);
 extern void xp_core_uninit(void);
-
-extern void xp_core_lock_seeking(void);
-extern void xp_core_unlock_seeking(void);
 
 extern void dae_init(dec_ahead_engine_t* it,unsigned nframes);
 extern void dae_uninit(dec_ahead_engine_t* it);

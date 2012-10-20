@@ -37,17 +37,11 @@
 xp_core_t xp_core;
 
 void xp_core_init(void) {
-    pthread_mutexattr_t attr;
     memset(&xp_core,0,sizeof(xp_core_t));
     xp_core.in_lseek=NoSeek;
-    pthread_mutexattr_init(&attr);
-    pthread_mutex_init(&xp_core.seek_mutex, &attr);
 }
 
 void xp_core_uninit(void) {}
-
-void xp_core_lock_seeking(void) { pthread_mutex_lock(&xp_core.seek_mutex); }
-void xp_core_unlock_seeking(void) { pthread_mutex_unlock(&xp_core.seek_mutex); }
 
 void dae_reset(dec_ahead_engine_t* it) {
     it->player_idx=0;
@@ -318,7 +312,6 @@ while(!xp_eof){
 	sh_video->num_frames_decoded = dec_ahead_seek_num_frames_decoded;
     }
 /* get it! */
-    xp_core_lock_seeking();
 #if 0
     /* prevent reent access to non-reent demuxer */
     //if(sh_video->num_frames>200)  *((char*)0x100) = 1; // Testing crash
@@ -330,7 +323,6 @@ while(!xp_eof){
 #endif
 /*--------------------  Decode a frame: -----------------------*/
     in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,vo.fps);
-    xp_core_unlock_seeking();
     if(xp_core.in_lseek==Seek) {
 	pinfo[_xp_id].current_module = "Post seek";
 	/* reset counters */
@@ -947,8 +939,6 @@ void sig_dec_ahead_video( void )
 	Unlock all mutex 
 	( man page says it may deadlock, but what is worse deadlock here or later? )
     */
-    xp_core_unlock_seeking();
-
     pthread_is_living=0;
     xp_core.in_lseek=NoSeek;
     killall_threads(pthread_self());
