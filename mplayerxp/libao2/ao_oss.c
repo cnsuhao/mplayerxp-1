@@ -199,6 +199,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
   UNUSED(flags);
   ao->priv=malloc(sizeof(priv_t));
   priv_t*priv=ao->priv;
+  memset(priv,0,sizeof(priv_t));
   priv->dsp=PATH_DEV_DSP;
   priv->mixer_channel=SOUND_MIXER_PCM;
   priv->fd=-1;

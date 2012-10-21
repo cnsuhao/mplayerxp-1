@@ -99,6 +99,7 @@ static int init(ao_data_t* ao,unsigned flags) {
     UNUSED(flags);
     ao->priv=malloc(sizeof(priv_t));
     priv_t* priv=ao->priv;
+    memset(priv,0,sizeof(priv_t));
     priv->pcm_waveheader=1;
     return 1;
 }

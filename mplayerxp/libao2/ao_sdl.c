@@ -156,6 +156,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 		setenv("SDL_AUDIODRIVER", ao_subdevice, 1);
 	}
 	ao->priv=malloc(sizeof(priv_t));
+	memset(ao->priv,0,sizeof(priv_t));
 	return 1;
 }
 

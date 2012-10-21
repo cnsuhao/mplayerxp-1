@@ -164,6 +164,7 @@ static int init(ao_data_t* ao,unsigned flags)
 {
     ao->priv=malloc(sizeof(priv_t));
     priv_t*priv=ao->priv;
+    memset(priv,0,sizeof(priv_t));
     priv->fd=priv->play_fd=-1;
     char *server = ao_subdevice;  /* NULL for localhost */
     UNUSED(flags);

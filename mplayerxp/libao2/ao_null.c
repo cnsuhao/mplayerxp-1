@@ -108,6 +108,7 @@ static int __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
     ao->priv=malloc(sizeof(priv_t));
     priv_t*priv = (priv_t*)ao->priv;
+    memset(priv,0,sizeof(priv_t));
     char *null_dev=NULL,*mode=NULL;
     UNUSED(flags);
     if (ao_subdevice) {

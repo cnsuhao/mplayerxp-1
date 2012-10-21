@@ -317,6 +317,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
     UNUSED(flags);
     ao->priv=malloc(sizeof(priv_t));
     priv_t*priv=ao->priv;
+    memset(priv,0,sizeof(priv_t));
     priv->first=1;
 
     priv->handler = NULL;
