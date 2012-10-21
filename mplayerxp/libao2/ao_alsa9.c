@@ -48,6 +48,17 @@ typedef struct priv_s {
     int			first;
 }priv_t;
 
+typedef struct priv_conf_s {
+    int mmap;
+    int noblock;
+}priv_conf_t;
+static priv_conf_t priv_conf;
+static mrl_config_t alsaconf[]={
+    { "mmap", &priv_conf.mmap, MRL_TYPE_BOOL, 0, 1 },
+    { "noblock", &priv_conf.noblock, MRL_TYPE_BOOL, 0, 1 },
+    { NULL, NULL, 0, 0, 0 }
+};
+
 #define ALSA_DEVICE_SIZE	48
 
 #define BUFFERTIME // else SET_CHUNK_SIZE
@@ -294,13 +305,6 @@ static void __FASTCALL__ show_caps(unsigned device)
     snd_pcm_info_free(alsa_info);
 }
 
-static int ao_mmap;
-static int ao_noblock;
-static mrl_config_t alsaconf[]={
-    { "mmap", &ao_mmap, MRL_TYPE_BOOL, 0, 1 },
-    { "noblock", &ao_noblock, MRL_TYPE_BOOL, 0, 1 },
-    { NULL, NULL, 0, 0, 0 }
-};
 /*
     open & setup audio device
     return: 1=success 0=fail
@@ -379,7 +383,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
     MSG_WARN("alsa-init: Testing & bugs are welcome. Found %d cards, use: %s\n",cards+1,alsa_device);
     //setting modes for block or nonblock-mode
     int open_mode,block_mode;
-    if (ao_noblock) {
+    if (priv_conf.noblock) {
 	open_mode = SND_PCM_NONBLOCK;
 	block_mode = 1;
 	str_block_mode = "nonblock-mode";
@@ -392,7 +396,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
     if (!priv->handler) {
 	//modes = 0, SND_PCM_NONBLOCK, SND_PCM_ASYNC
 	if ((err = snd_pcm_open(&priv->handler, alsa_device, SND_PCM_STREAM_PLAYBACK, open_mode)) < 0) {
-	    if (ao_noblock) {
+	    if (priv_conf.noblock) {
 		MSG_ERR("alsa-init: open in nonblock-mode failed, trying to open in block-mode\n");
 		if ((err = snd_pcm_open(&priv->handler, alsa_device, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
 		    MSG_ERR("alsa-init: playback open error: %s\n", snd_strerror(err));
@@ -425,7 +429,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 	  return 0;
 	}
     MSG_DBG2("snd_pcm_hw_params_any()\n");
-      if (ao_mmap) {
+      if (priv_conf.mmap) {
 	snd_pcm_access_mask_t *mask = alloca(snd_pcm_access_mask_sizeof());
 	snd_pcm_access_mask_none(mask);
 	snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_INTERLEAVED);
@@ -590,7 +594,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
     }
     MSG_DBG2("snd_pcm_hw_params()\n");
     // setting sw-params (only avail-min) if noblocking mode was choosed
-    if (ao_noblock) {
+    if (priv_conf.noblock) {
 	if ((err = snd_pcm_sw_params_current(priv->handler, priv->swparams)) < 0) {
 	    MSG_ERR("alsa-conf: unable to get parameters: %s\n",snd_strerror(err));
 	    return 0;
@@ -632,7 +636,7 @@ static void uninit(ao_data_t* ao)
 	return;
     }
 
-    if (!ao_noblock) {
+    if (!priv_conf.noblock) {
 	if ((err = snd_pcm_drain(priv->handler)) < 0) {
 	    MSG_ERR("alsa-uninit: pcm drain error: %s\n", snd_strerror(err));
 	    free(priv);
@@ -658,7 +662,7 @@ static void audio_pause(ao_data_t* ao)
     priv_t*priv=ao->priv;
     int err;
 
-    if (!ao_noblock) {
+    if (!priv_conf.noblock) {
 	//drain causes error in nonblock-mode!
 	if ((err = snd_pcm_drain(priv->handler)) < 0) {
 	    MSG_ERR("alsa-pause: pcm drain error: %s\n", snd_strerror(err));
@@ -764,7 +768,7 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data, unsigned len, unsig
     unsigned result;
     UNUSED(flags);
     MSG_DBG2("[ao_alsa] %s playing %i bytes\n",priv->ao_mmap?"mmap":"normal",len);
-    if (ao_mmap)	result = play_mmap(ao,data, len);
+    if (priv_conf.mmap)	result = play_mmap(ao,data, len);
     else		result = play_normal(ao,data, len);
     return result;
 }
