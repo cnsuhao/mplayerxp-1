@@ -9,11 +9,13 @@
 #include "mixer.h"
 #include "libao2/audio_out.h"
 
+extern ao_data_t* ao_data;
+
 void mixer_getvolume( float *l,float *r )
 {
   ao_control_vol_t vol;
   *l=0; *r=0;
-  if(CONTROL_OK != ao_control(AOCONTROL_GET_VOLUME,(long)&vol)) return;
+  if(CONTROL_OK != ao_control(ao_data,AOCONTROL_GET_VOLUME,(long)&vol)) return;
   *r=vol.right;
   *l=vol.left;
 }
@@ -22,7 +24,7 @@ void mixer_setvolume( float l,float r )
 {
   ao_control_vol_t vol;
   vol.right=r; vol.left=l;
-  ao_control(AOCONTROL_SET_VOLUME,(long)&vol);
+  ao_control(ao_data,AOCONTROL_SET_VOLUME,(long)&vol);
 }
 
 #define MIXER_CHANGE 3
@@ -62,7 +64,7 @@ void mixer_mute( void )
 {
  if ( muted ) { mixer_setvolume( mute_l,mute_r ); muted=0; }
   else
-   { 
+   {
     mixer_getvolume( &mute_l,&mute_r );
     mixer_setvolume( 0,0 );
     muted=1;

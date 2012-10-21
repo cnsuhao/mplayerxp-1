@@ -288,6 +288,7 @@ demux_stream_t *d_dvdsub=NULL;
 static sh_audio_t *sh_audio=NULL;
 static sh_video_t *sh_video=NULL;
 static demuxer_t *demuxer=NULL;
+ao_data_t* ao_data=NULL;
 pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
 /* XP audio buffer */
 typedef struct audio_buffer_index_s {
@@ -684,7 +685,7 @@ void uninit_player(unsigned int mask){
     if(mask&INITED_AO){
 	inited_flags&=~INITED_AO;
 	pinfo[xp_id].current_module="uninit_ao";
-	ao_uninit();
+	ao_uninit(ao_data);
     }
 
     if(mask&INITED_GETCH2){
@@ -1029,8 +1030,8 @@ while(sh_audio){
   float pts=HUGE;
   int ret=0;
 
-  ao_data.pts=sh_audio->timer*90000.0;
-  playsize=ao_get_space();
+  ao_data->pts=sh_audio->timer*90000.0;
+  playsize=ao_get_space(ao_data);
 
   if(!playsize) {
     if(sh_video)
@@ -1065,7 +1066,7 @@ while(sh_audio){
         MSG_V("audio_stream_eof\n");
 	inited_flags&=~INITED_AO;
 	pinfo[_xp_id].current_module="uninit_ao";
-	ao_uninit();
+	ao_uninit(ao_data);
       }
       audio_eof=1;
       break;
@@ -1083,9 +1084,9 @@ while(sh_audio){
   }
   if(playsize>sh_audio->a_buffer_len) playsize=sh_audio->a_buffer_len;
 
-  if(enable_xp>=XP_VAPlay) dec_ahead_audio_delay=ao_get_delay();
+  if(enable_xp>=XP_VAPlay) dec_ahead_audio_delay=ao_get_delay(ao_data);
 
-  playsize=ao_play(sh_audio->a_buffer,playsize,0);
+  playsize=ao_play(ao_data,sh_audio->a_buffer,playsize,0);
 
   if(playsize>0){
       sh_audio->a_buffer_len-=playsize;
@@ -1095,7 +1096,7 @@ while(sh_audio){
       if(use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
 	      sh_audio->a_pts_pos-=playsize;
-	      if(sh_audio->a_pts_pos > -ao_get_delay()*sh_audio->af_bps) {
+	      if(sh_audio->a_pts_pos > -ao_get_delay(ao_data)*sh_audio->af_bps) {
 		  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
 	      } else {
 		  sh_audio->timer=sh_audio->a_pts-(float)sh_audio->a_pts_pos/(float)sh_audio->af_bps;
@@ -1192,7 +1193,7 @@ static void __show_status_line(float a_pts,float video_pts,float delay,float AV_
 
 static void show_status_line(float v_pts,float AV_delay,video_stat_t *vstat) {
     float a_pts=0;
-    float delay=ao_get_delay();
+    float delay=ao_get_delay(ao_data);
     float video_pts = v_pts;
     if(av_sync_pts) {
 	a_pts = sh_audio->timer;
@@ -1213,8 +1214,8 @@ static void show_status_line(float v_pts,float AV_delay,video_stat_t *vstat) {
 }
 
 static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
-    if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay())) {
-	float a_pts = sh_audio->timer-ao_get_delay();
+    if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay(ao_data))) {
+	float a_pts = sh_audio->timer-ao_get_delay(ao_data);
 	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r"
 	,a_pts
 	,sh_video->timer
@@ -1271,7 +1272,7 @@ int mpxp_play_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, floa
     if(xp_eof) blit_frame=1; /* force blitting until end of stream will be reached */
     if(use_pts_fix2 && sh_audio) {
 	if(sh_video->chapter_change == -1) { /* First frame after seek */
-	    while(*v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay()==0.0)
+	    while(*v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay(ao_data)==0.0)
 		usleep(0);		 /* Wait for audio to start play */
 	    if(sh_audio->timer > 2.0 && *v_pts < 1.0) {
 		MSG_V("Video chapter change detected\n");
@@ -1317,9 +1318,9 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	/* FIXME!!! need the same technique to detect audio_eof as for video_eof!
 	   often ao_get_delay() never returns 0 :( */
 	if(audio_eof && !get_delay_audio_buffer()) goto nosound_model;
-	if((!audio_eof || ao_get_delay()) &&
+	if((!audio_eof || ao_get_delay(ao_data)) &&
 	(!use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
-	    time_frame=sh_video->timer-(sh_audio->timer-ao_get_delay());
+	    time_frame=sh_video->timer-(sh_audio->timer-ao_get_delay(ao_data));
 	else if(use_pts_fix2 && sh_audio->chapter_change)
 	    time_frame=0;
 	else
@@ -1335,12 +1336,12 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 #define XP_MIN_AUDIOBUFF 0.05
 #define XP_MAX_TIMESLICE 0.1
 
-	if(sh_audio && (!audio_eof || ao_get_delay()) && time_frame>XP_MAX_TIMESLICE) {
+	if(sh_audio && (!audio_eof || ao_get_delay(ao_data)) && time_frame>XP_MAX_TIMESLICE) {
 	    float t;
 	    if(benchmark) show_status_line(*v_pts,AV_delay,vstat);
 
 	    if( enable_xp < XP_VAPlay ) {
-		t=ao_get_delay()-XP_MIN_AUDIOBUFF;
+		t=ao_get_delay(ao_data)-XP_MIN_AUDIOBUFF;
 		if(t>XP_MAX_TIMESLICE)
 		    t=XP_MAX_TIMESLICE;
 	    } else
@@ -1400,11 +1401,11 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
   /* FIXME: this block was added to fix A-V resync caused by some strange things
      like playing 48KHz audio on 44.1KHz soundcard and other.
      Now we know PTS of every audio frame so don't need to have it */
-  if(sh_audio && (!audio_eof || ao_get_delay()) && !av_sync_pts) {
+  if(sh_audio && (!audio_eof || ao_get_delay(ao_data)) && !av_sync_pts) {
     float a_pts=0;
 
     // unplayed bytes in our and soundcard/dma buffer:
-    float delay=ao_get_delay()+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
+    float delay=ao_get_delay(ao_data)+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
     if(enable_xp>=XP_VideoAudio)
 	delay += get_delay_audio_buffer();
 
@@ -1495,7 +1496,7 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 	if(sh_audio){
 	    pinfo[_xp_id].current_module="seek_audio_reset";
 	    mpca_resync_stream(sh_audio);
-	    ao_reset(); // stop audio, throwing away buffered data
+	    ao_reset(ao_data); // stop audio, throwing away buffered data
 	}
 
 	if (vo.vobsub) {
@@ -1601,12 +1602,12 @@ static void show_benchmark_status(void)
 {
     if( enable_xp <= XP_Video )
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
-			,sh_audio->timer-ao_get_delay()
+			,sh_audio->timer-ao_get_delay(ao_data)
 			,(sh_audio->timer>0.5)?100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_audio->timer:0
 			);
     else
 	MSG_STATUS("A:%6.1f %4.1f%%  B:%4.1f\r"
-		,sh_audio->timer-ao_get_delay()
+		,sh_audio->timer-ao_get_delay(ao_data)
 		,(sh_audio->timer>0.5)?100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_audio->timer:0
 		,get_delay_audio_buffer()
 		);
@@ -2009,26 +2010,26 @@ static int mpxp_configure_audio(void) {
 	MSG_V("AO: Comment: %s\n", info->comment);
 
     pinfo[xp_id].current_module="af_preinit";
-    ao_data.samplerate=force_srate?force_srate:sh_audio->samplerate;
-    ao_data.channels=audio_output_channels?audio_output_channels:sh_audio->channels;
-    ao_data.format=sh_audio->sample_format;
+    ao_data->samplerate=force_srate?force_srate:sh_audio->samplerate;
+    ao_data->channels=audio_output_channels?audio_output_channels:sh_audio->channels;
+    ao_data->format=sh_audio->sample_format;
 #if 1
     if(!mpca_preinit_filters(sh_audio,
 	    // input:
 	    (int)(sh_audio->samplerate),
 	    sh_audio->channels, sh_audio->sample_format, sh_audio->samplesize,
 	    // output:
-	    &ao_data.samplerate, &ao_data.channels, &ao_data.format,
-	    ao_format_bits(ao_data.format)/8)){
+	    &ao_data->samplerate, &ao_data->channels, &ao_data->format,
+	    ao_format_bits(ao_data->format)/8)){
 	    MSG_ERR("Audio filter chain preinit failed\n");
     } else {
 	MSG_V("AF_pre: %dHz %dch (%s)%08X\n",
-		ao_data.samplerate, ao_data.channels,
-		ao_format_name(ao_data.format),ao_data.format);
+		ao_data->samplerate, ao_data->channels,
+		ao_format_name(ao_data->format),ao_data->format);
     }
 #endif
-    if(!ao_configure(force_srate?force_srate:ao_data.samplerate,
-		    ao_data.channels,ao_data.format)) {
+    if(!ao_configure(ao_data,force_srate?force_srate:ao_data->samplerate,
+		    ao_data->channels,ao_data->format)) {
 	MSG_ERR("Can't configure audio device\n");
 	sh_audio=d_audio->sh=NULL;
 	if(sh_video == NULL) rc=-1;
@@ -2038,9 +2039,9 @@ static int mpxp_configure_audio(void) {
 	if(!mpca_init_filters(sh_audio,
 	    (int)(sh_audio->samplerate),
 	    sh_audio->channels, sh_audio->sample_format, sh_audio->samplesize,
-	    ao_data.samplerate, ao_data.channels, ao_data.format,
-	    ao_format_bits(ao_data.format)/8, /* ao_data.bps, */
-	    ao_data.outburst*4, ao_data.buffersize)) {
+	    ao_data->samplerate, ao_data->channels, ao_data->format,
+	    ao_format_bits(ao_data->format)/8, /* ao_data->bps, */
+	    ao_data->outburst*4, ao_data->buffersize)) {
 		MSG_ERR("No matching audio filter found!\n");
 	    }
     }
@@ -2068,7 +2069,7 @@ static void mpxp_print_audio_status(void) {
     unsigned ipts,rpts;
     unsigned char h,m,s,rh,rm,rs;
     static char ph=0,pm=0,ps=0;
-    ipts=(unsigned)(sh_audio->timer-ao_get_delay());
+    ipts=(unsigned)(sh_audio->timer-ao_get_delay(ao_data));
     rpts=demuxer->movi_length-ipts;
     h = ipts/3600;
     m = (ipts/60)%60;
@@ -2124,7 +2125,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 		xp_core.in_pause=1;
 		while( !dec_ahead_can_aseek ) usleep(0);
 	    }
-	    ao_pause();	// pause audio, keep data if possible
+	    ao_pause(ao_data);	// pause audio, keep data if possible
 	}
 
 	while( (cmd = mp_input_get_cmd(20,1,1)) == NULL) {
@@ -2139,7 +2140,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 
 	if(osd_function==OSD_PAUSE) osd_function=OSD_PLAY;
 	if (ao_inited && sh_audio) {
-	    ao_resume();	// resume audio
+	    ao_resume(ao_data);	// resume audio
 	    if( enable_xp >= XP_VAPlay ) {
 		xp_core.in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
@@ -2593,7 +2594,7 @@ play_next_file:
 	goto dump_file;
     }
 
-    if(!ao_init(0)) {
+    if(!(ao_data=ao_init(0))) {
 	MSG_ERR(MSGTR_CannotInitAO);
 	sh_audio=d_audio->sh=NULL;
     }

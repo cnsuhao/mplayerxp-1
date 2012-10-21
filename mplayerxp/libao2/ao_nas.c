@@ -97,7 +97,7 @@ static const char * const nas_reasons[] = {
 	"Hardware",
 	"Any"
 };
-
+#if 0
 static const char* nas_reason(unsigned int reason)
 {
 	if (reason > 6) reason = 6;
@@ -119,7 +119,7 @@ static const char* nas_state(unsigned int state) {
 	if (state>3) state = 3;
 	return nas_states[state];
 }
-
+#endif
 static const ao_info_t info =
 {
 	"NAS audio output",
@@ -128,7 +128,7 @@ static const ao_info_t info =
 	""
 };
 
-struct ao_nas_data {
+typedef struct priv_s {
 	AuServer	*aud;
 	AuFlowID	flow;
 	AuDeviceID	dev;
@@ -147,9 +147,7 @@ struct ao_nas_data {
 
 	pthread_t event_thread;
 	int stop_thread;
-};
-
-static struct ao_nas_data *nas_data;
+}priv_t;
 
 LIBAO_EXTERN(nas)
 
@@ -160,23 +158,23 @@ static void nas_print_error(AuServer *aud, const char *prefix, AuStatus as)
 	MSG_ERR("ao_nas: %s: returned status %d (%s)\n", prefix, as, s);
 }
 
-static int nas_readBuffer(struct ao_nas_data *nas_data, unsigned int num)
+static int nas_readBuffer(priv_t *priv, unsigned int num)
 {
 	AuStatus as;
 
-	pthread_mutex_lock(&nas_data->buffer_mutex);
+	pthread_mutex_lock(&priv->buffer_mutex);
 	MSG_DBG2("ao_nas: nas_readBuffer(): num=%d client=%d/%d server=%d/%d\n",
 			num,
-			nas_data->client_buffer_used, nas_data->client_buffer_size,
-			nas_data->server_buffer_used, nas_data->server_buffer_size);
+			priv->client_buffer_used, priv->client_buffer_size,
+			priv->server_buffer_used, priv->server_buffer_size);
 
-	if (nas_data->client_buffer_used == 0) {
+	if (priv->client_buffer_used == 0) {
 		MSG_DBG2("ao_nas: buffer is empty, nothing read.\n");
-		pthread_mutex_unlock(&nas_data->buffer_mutex);
+		pthread_mutex_unlock(&priv->buffer_mutex);
 		return 0;
 	}
-	if (num > nas_data->client_buffer_used)
-		num = nas_data->client_buffer_used;
+	if (num > priv->client_buffer_used)
+		num = priv->client_buffer_used;
 
 	/*
 	 * It is not appropriate to call AuWriteElement() here because the
@@ -189,51 +187,51 @@ static int nas_readBuffer(struct ao_nas_data *nas_data, unsigned int num)
 	 *  could eliminate the memcpy/memmove steps.)
 	 */
 	/* make sure we don't overflow the buffer */
-	if (num > nas_data->server_buffer_size)
-		num = nas_data->server_buffer_size;
-	memcpy(nas_data->server_buffer, nas_data->client_buffer, num);
+	if (num > priv->server_buffer_size)
+		num = priv->server_buffer_size;
+	memcpy(priv->server_buffer, priv->client_buffer, num);
 
-	nas_data->client_buffer_used -= num;
-	nas_data->server_buffer_used += num;
-	memmove(nas_data->client_buffer, nas_data->client_buffer + num, nas_data->client_buffer_used);
-	pthread_mutex_unlock(&nas_data->buffer_mutex);
+	priv->client_buffer_used -= num;
+	priv->server_buffer_used += num;
+	memmove(priv->client_buffer, priv->client_buffer + num, priv->client_buffer_used);
+	pthread_mutex_unlock(&priv->buffer_mutex);
 
 	/*
 	 * Now write the new buffer to the network.
 	 */
-	AuWriteElement(nas_data->aud, nas_data->flow, 0, num, nas_data->server_buffer, AuFalse, &as);
+	AuWriteElement(priv->aud, priv->flow, 0, num, priv->server_buffer, AuFalse, &as);
 	if (as != AuSuccess)
-		nas_print_error(nas_data->aud, "nas_readBuffer(): AuWriteElement", as);
+		nas_print_error(priv->aud, "nas_readBuffer(): AuWriteElement", as);
 
 	return num;
 }
 
-static int nas_writeBuffer(struct ao_nas_data *nas_data, any_t*data, unsigned int len)
+static int nas_writeBuffer(priv_t *priv, any_t*data, unsigned int len)
 {
-	pthread_mutex_lock(&nas_data->buffer_mutex);
+	pthread_mutex_lock(&priv->buffer_mutex);
 	MSG_DBG2("ao_nas: nas_writeBuffer(): len=%d client=%d/%d server=%d/%d\n",
-			len, nas_data->client_buffer_used, nas_data->client_buffer_size,
-			nas_data->server_buffer_used, nas_data->server_buffer_size);
+			len, priv->client_buffer_used, priv->client_buffer_size,
+			priv->server_buffer_used, priv->server_buffer_size);
 
 	/* make sure we don't overflow the buffer */
-	if (len > nas_data->client_buffer_size - nas_data->client_buffer_used)
-		len = nas_data->client_buffer_size - nas_data->client_buffer_used;
-	memcpy(nas_data->client_buffer + nas_data->client_buffer_used, data, len);
-	nas_data->client_buffer_used += len;
+	if (len > priv->client_buffer_size - priv->client_buffer_used)
+		len = priv->client_buffer_size - priv->client_buffer_used;
+	memcpy(priv->client_buffer + priv->client_buffer_used, data, len);
+	priv->client_buffer_used += len;
 
-	pthread_mutex_unlock(&nas_data->buffer_mutex);
+	pthread_mutex_unlock(&priv->buffer_mutex);
 
 	return len;
 }
 
-static int nas_empty_event_queue(struct ao_nas_data *nas_data)
+static int nas_empty_event_queue(priv_t *priv)
 {
 	AuEvent ev;
 	int result = 0;
 
-	while (AuScanForTypedEvent(nas_data->aud, AuEventsQueuedAfterFlush,
+	while (AuScanForTypedEvent(priv->aud, AuEventsQueuedAfterFlush,
 				   AuTrue, AuEventTypeElementNotify, &ev)) {
-		AuDispatchEvent(nas_data->aud, &ev);
+		AuDispatchEvent(priv->aud, &ev);
 		result = 1;
 	}
 	return result;
@@ -241,15 +239,15 @@ static int nas_empty_event_queue(struct ao_nas_data *nas_data)
 
 static any_t*nas_event_thread_start(any_t*data)
 {
-	struct ao_nas_data *nas_data = data;
+	priv_t *priv = data;
 
 	do {
 		MSG_DBG2(
 		       "ao_nas: event thread heartbeat (state=%s)\n",
-		       nas_state(nas_data->state));
-		nas_empty_event_queue(nas_data);
+		       nas_state(priv->state));
+		nas_empty_event_queue(priv);
 		usleep(1000);
-	} while (!nas_data->stop_thread);
+	} while (!priv->stop_thread);
 
 	return NULL;
 }
@@ -273,7 +271,7 @@ static AuBool nas_error_handler(AuServer* aud, AuErrorEvent* ev)
 static AuBool nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHandlerRec *hnd)
 {
 	AuElementNotifyEvent *event = (AuElementNotifyEvent *) ev;
-	struct ao_nas_data *nas_data = hnd->data;
+	priv_t *priv = hnd->data;
 
 	MSG_DBG2("ao_nas: event_handler(): type %s kind %s state %s->%s reason %s numbytes %d expect_underrun %d\n",
 		nas_event_type(event->type),
@@ -282,25 +280,25 @@ static AuBool nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHandlerRec *h
 		nas_state(event->cur_state),
 		nas_reason(event->reason),
 		(int)event->num_bytes,
-		nas_data->expect_underrun);
+		priv->expect_underrun);
 
 	if (event->num_bytes > INT_MAX) {
 		MSG_ERR( "ao_nas: num_bytes > 2GB, server buggy?\n");
 	}
 
-	if (event->num_bytes > nas_data->server_buffer_used)
-		event->num_bytes = nas_data->server_buffer_used;
-	nas_data->server_buffer_used -= event->num_bytes;
+	if (event->num_bytes > priv->server_buffer_used)
+		event->num_bytes = priv->server_buffer_used;
+	priv->server_buffer_used -= event->num_bytes;
 
 	switch (event->reason) {
 	case AuReasonWatermark:
-		nas_readBuffer(nas_data, event->num_bytes);
+		nas_readBuffer(priv, event->num_bytes);
 		break;
 	case AuReasonUnderrun:
 		// buffer underrun -> refill buffer
-		nas_data->server_buffer_used = 0;
-		if (nas_data->expect_underrun) {
-			nas_data->expect_underrun = 0;
+		priv->server_buffer_used = 0;
+		if (priv->expect_underrun) {
+			priv->expect_underrun = 0;
 		} else {
 			static int hint = 1;
 			MSG_WARN(
@@ -314,20 +312,20 @@ static AuBool nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHandlerRec *h
 				       "Try renicing your nasd to e.g. -15.\n");
 			}
 		}
-		if (nas_readBuffer(nas_data,
-		                   nas_data->server_buffer_size -
-		                   nas_data->server_buffer_used) != 0) {
+		if (nas_readBuffer(priv,
+		                   priv->server_buffer_size -
+		                   priv->server_buffer_used) != 0) {
 			event->cur_state = AuStateStart;
 			break;
 		}
 		MSG_DBG2(
 			"ao_nas: Can't refill buffer, stopping flow.\n");
-		AuStopFlow(aud, nas_data->flow, NULL);
+		AuStopFlow(aud, priv->flow, NULL);
 		break;
 	default:
 		break;
 	}
-	nas_data->state=event->cur_state;
+	priv->state=event->cur_state;
 	return AuTrue;
 }
 
@@ -368,8 +366,9 @@ static unsigned int nas_aformat_to_auformat(unsigned int *format)
 }
 
 // to set/get/query special features/parameters
-static int control(int cmd, long arg)
+static int control(ao_data_t* ao,int cmd, long arg)
 {
+    priv_t*priv=ao->priv;
 	AuElementParameters aep;
 	AuStatus as;
 	int retval = CONTROL_UNKNOWN;
@@ -379,7 +378,7 @@ static int control(int cmd, long arg)
 	switch (cmd) {
 	case AOCONTROL_GET_VOLUME:
 
-		vol->right = (float)nas_data->gain/AU_FIXED_POINT_SCALE*50;
+		vol->right = (float)priv->gain/AU_FIXED_POINT_SCALE*50;
 		vol->left = vol->right;
 
 		MSG_DBG2( "ao_nas: AOCONTROL_GET_VOLUME: %.2f\n", vol->right);
@@ -392,17 +391,17 @@ static int control(int cmd, long arg)
 		 * know if something can change it outside of ao_nas
 		 * so i take the mean of both values.
 		 */
-		nas_data->gain = AU_FIXED_POINT_SCALE*((vol->left+vol->right)/2)/50;
+		priv->gain = AU_FIXED_POINT_SCALE*((vol->left+vol->right)/2)/50;
 		MSG_DBG2( "ao_nas: AOCONTROL_SET_VOLUME: %.2f\n", (vol->left+vol->right)/2);
 
-		aep.parameters[AuParmsMultiplyConstantConstant]=nas_data->gain;
-		aep.flow = nas_data->flow;
+		aep.parameters[AuParmsMultiplyConstantConstant]=priv->gain;
+		aep.flow = priv->flow;
 		aep.element_num = 1;
 		aep.num_parameters = AuParmsMultiplyConstant;
 
-		AuSetElementParameters(nas_data->aud, 1, &aep, &as);
+		AuSetElementParameters(priv->aud, 1, &aep, &as);
 		if (as != AuSuccess) {
-			nas_print_error(nas_data->aud,
+			nas_print_error(priv->aud,
 			                "control(): AuSetElementParameters", as);
 			retval = CONTROL_ERROR;
 		} else retval = CONTROL_OK;
@@ -413,15 +412,19 @@ static int control(int cmd, long arg)
 }
 
 
-static int init(unsigned flags)
+static int init(ao_data_t* ao,unsigned flags)
 {
-  UNUSED(flags);
-  return 1;
+    ao->priv=malloc(sizeof(priv_t));
+    priv_t* priv=ao->priv;
+    memset(priv, 0, sizeof(priv_t));
+    UNUSED(flags);
+    return 1;
 }
 // open & setup audio device
 // return: 1=success 0=fail
-static int configure(unsigned rate,unsigned channels,unsigned format)
+static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
+    priv_t* priv=ao->priv;
 	AuElement elms[3];
 	AuStatus as;
 	char str[256];
@@ -430,31 +433,27 @@ static int configure(unsigned rate,unsigned channels,unsigned format)
 	unsigned buffer_size;
 	char *server;
 
-	nas_data=malloc(sizeof(struct ao_nas_data));
-	memset(nas_data, 0, sizeof(struct ao_nas_data));
-
-
-	ao_data.format = format;
-	ao_data.samplerate = rate;
-	ao_data.channels = channels;
-	ao_data.outburst = NAS_FRAG_SIZE;
-	ao_data.bps = rate * bytes_per_sample;
-	buffer_size = ao_data.bps; /* buffer 1 second */
+	ao->format = format;
+	ao->samplerate = rate;
+	ao->channels = channels;
+	ao->outburst = NAS_FRAG_SIZE;
+	ao->bps = rate * bytes_per_sample;
+	buffer_size = ao->bps; /* buffer 1 second */
 
 	MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
-		fmt2str(format,ao_data.bps,str,256));
+		fmt2str(format,ao->bps,str,256));
 
 	/*
 	 * round up to multiple of NAS_FRAG_SIZE
 	 * divide by 3 first because of 2:1 split
 	 */
 	buffer_size = (buffer_size/3 + NAS_FRAG_SIZE-1) & ~(NAS_FRAG_SIZE-1);
-	ao_data.buffersize = buffer_size*3;
+	ao->buffersize = buffer_size*3;
 
-	nas_data->client_buffer_size = buffer_size*2;
-	nas_data->client_buffer = malloc(nas_data->client_buffer_size);
-	nas_data->server_buffer_size = buffer_size;
-	nas_data->server_buffer = malloc(nas_data->server_buffer_size);
+	priv->client_buffer_size = buffer_size*2;
+	priv->client_buffer = malloc(priv->client_buffer_size);
+	priv->server_buffer_size = buffer_size;
+	priv->server_buffer = malloc(priv->server_buffer_size);
 
 	if (!bytes_per_sample) {
 		MSG_ERR("ao_nas: init(): Zero bytes per sample -> nosound\n");
@@ -469,24 +468,24 @@ static int configure(unsigned rate,unsigned channels,unsigned format)
 
 	MSG_V("ao_nas: init(): Using audioserver %s\n", server);
 
-	nas_data->aud = AuOpenServer(server, 0, NULL, 0, NULL, NULL);
-	if (!nas_data->aud) {
+	priv->aud = AuOpenServer(server, 0, NULL, 0, NULL, NULL);
+	if (!priv->aud) {
 		MSG_ERR("ao_nas: init(): Can't open nas audio server -> nosound\n");
 		return 0;
 	}
 
 	while (channels>0) {
-		nas_data->dev = nas_find_device(nas_data->aud, channels);
-		if (nas_data->dev != AuNone &&
-		    ((nas_data->flow = AuCreateFlow(nas_data->aud, NULL)) != 0))
+		priv->dev = nas_find_device(priv->aud, channels);
+		if (priv->dev != AuNone &&
+		    ((priv->flow = AuCreateFlow(priv->aud, NULL)) != 0))
 			break;
 		channels--;
 	}
 
-	if (nas_data->flow == 0) {
+	if (priv->flow == 0) {
 		MSG_ERR("ao_nas: init(): Can't find a suitable output device -> nosound\n");
-		AuCloseServer(nas_data->aud);
-		nas_data->aud = 0;
+		AuCloseServer(priv->aud);
+		priv->aud = 0;
 		return 0;
 	}
 
@@ -494,96 +493,102 @@ static int configure(unsigned rate,unsigned channels,unsigned format)
 				buffer_size / bytes_per_sample,
 				(buffer_size - NAS_FRAG_SIZE) /
 				bytes_per_sample, 0, NULL);
-	nas_data->gain = AuFixedPointFromFraction(1, 1);
-	AuMakeElementMultiplyConstant(elms+1, 0, nas_data->gain);
-	AuMakeElementExportDevice(elms+2, 1, nas_data->dev, rate,
+	priv->gain = AuFixedPointFromFraction(1, 1);
+	AuMakeElementMultiplyConstant(elms+1, 0, priv->gain);
+	AuMakeElementExportDevice(elms+2, 1, priv->dev, rate,
 				AuUnlimitedSamples, 0, NULL);
-	AuSetElements(nas_data->aud, nas_data->flow, AuTrue, sizeof(elms)/sizeof(*elms), elms, &as);
+	AuSetElements(priv->aud, priv->flow, AuTrue, sizeof(elms)/sizeof(*elms), elms, &as);
 	if (as != AuSuccess) {
-		nas_print_error(nas_data->aud, "init(): AuSetElements", as);
-		AuCloseServer(nas_data->aud);
-		nas_data->aud = 0;
+		nas_print_error(priv->aud, "init(): AuSetElements", as);
+		AuCloseServer(priv->aud);
+		priv->aud = 0;
 		return 0;
 	}
-	AuRegisterEventHandler(nas_data->aud, AuEventHandlerIDMask |
+	AuRegisterEventHandler(priv->aud, AuEventHandlerIDMask |
 				AuEventHandlerTypeMask,
-				AuEventTypeElementNotify, nas_data->flow,
-				nas_event_handler, (AuPointer) nas_data);
-	AuSetErrorHandler(nas_data->aud, nas_error_handler);
-	nas_data->state=AuStateStop;
-	nas_data->expect_underrun=0;
+				AuEventTypeElementNotify, priv->flow,
+				nas_event_handler, (AuPointer) priv);
+	AuSetErrorHandler(priv->aud, nas_error_handler);
+	priv->state=AuStateStop;
+	priv->expect_underrun=0;
 
-	pthread_mutex_init(&nas_data->buffer_mutex, NULL);
-	pthread_create(&nas_data->event_thread, NULL, &nas_event_thread_start, nas_data);
+	pthread_mutex_init(&priv->buffer_mutex, NULL);
+	pthread_create(&priv->event_thread, NULL, &nas_event_thread_start, priv);
 
 	return 1;
 }
 
 // close audio device
-static void uninit(void){
+static void uninit(ao_data_t* ao){
 
+    priv_t* priv=ao->priv;
 	MSG_DBG3("ao_nas: uninit()\n");
 
-	nas_data->expect_underrun = 1;
-	while (nas_data->state != AuStateStop) usleep(1000);
-	nas_data->stop_thread = 1;
-	pthread_join(nas_data->event_thread, NULL);
-	AuCloseServer(nas_data->aud);
-	nas_data->aud = 0;
-	free(nas_data->client_buffer);
-	free(nas_data->server_buffer);
+	priv->expect_underrun = 1;
+	while (priv->state != AuStateStop) usleep(1000);
+	priv->stop_thread = 1;
+	pthread_join(priv->event_thread, NULL);
+	AuCloseServer(priv->aud);
+	priv->aud = 0;
+	free(priv->client_buffer);
+	free(priv->server_buffer);
+    free(priv);
 }
 
 // stop playing and empty buffers (for seeking/pause)
-static void reset(void){
+static void reset(ao_data_t* ao){
+    priv_t* priv=ao->priv;
 	AuStatus as;
 
 	MSG_DBG3("ao_nas: reset()\n");
 
-	pthread_mutex_lock(&nas_data->buffer_mutex);
-	nas_data->client_buffer_used = 0;
-	pthread_mutex_unlock(&nas_data->buffer_mutex);
-	while (nas_data->state != AuStateStop) {
-		AuStopFlow(nas_data->aud, nas_data->flow, &as);
+	pthread_mutex_lock(&priv->buffer_mutex);
+	priv->client_buffer_used = 0;
+	pthread_mutex_unlock(&priv->buffer_mutex);
+	while (priv->state != AuStateStop) {
+		AuStopFlow(priv->aud, priv->flow, &as);
 		if (as != AuSuccess)
-			nas_print_error(nas_data->aud, "reset(): AuStopFlow", as);
+			nas_print_error(priv->aud, "reset(): AuStopFlow", as);
 		usleep(1000);
 	}
 }
 
 // stop playing, keep buffers (for pause)
-static void audio_pause(void)
+static void audio_pause(ao_data_t* ao)
 {
+    priv_t* priv=ao->priv;
 	AuStatus as;
 	MSG_DBG3("ao_nas: audio_pause()\n");
 
-	AuStopFlow(nas_data->aud, nas_data->flow, &as);
+	AuStopFlow(priv->aud, priv->flow, &as);
 }
 
 // resume playing, after audio_pause()
-static void audio_resume(void)
+static void audio_resume(ao_data_t* ao)
 {
+    priv_t* priv=ao->priv;
 	AuStatus as;
 
 	MSG_DBG3("ao_nas: audio_resume()\n");
 
-	AuStartFlow(nas_data->aud, nas_data->flow, &as);
+	AuStartFlow(priv->aud, priv->flow, &as);
 	if (as != AuSuccess)
-		nas_print_error(nas_data->aud,
+		nas_print_error(priv->aud,
 		                "play(): AuStartFlow", as);
 }
 
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(void)
+static unsigned get_space(ao_data_t* ao)
 {
+    priv_t* priv=ao->priv;
 	unsigned result;
 
 	MSG_DBG3("ao_nas: get_space()\n");
 
-	pthread_mutex_lock(&nas_data->buffer_mutex);
-	result = nas_data->client_buffer_size - nas_data->client_buffer_used;
-	pthread_mutex_unlock(&nas_data->buffer_mutex);
+	pthread_mutex_lock(&priv->buffer_mutex);
+	result = priv->client_buffer_size - priv->client_buffer_used;
+	pthread_mutex_unlock(&priv->buffer_mutex);
 
 	return result;
 }
@@ -591,8 +596,9 @@ static unsigned get_space(void)
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned play(any_t* data,unsigned len,unsigned flags)
+static unsigned play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags)
 {
+    priv_t* priv=ao->priv;
 	unsigned written, maxbursts = 0, playbursts = 0;
 	AuStatus as;
 	UNUSED(flags);
@@ -604,13 +610,13 @@ static unsigned play(any_t* data,unsigned len,unsigned flags)
 		return 0;
 #if 0
 	if (!(flags & AOPLAY_FINAL_CHUNK)) {
-		pthread_mutex_lock(&nas_data->buffer_mutex);
-		maxbursts = (nas_data->client_buffer_size -
-			     nas_data->client_buffer_used) / ao_data.outburst;
-		playbursts = len / ao_data.outburst;
+		pthread_mutex_lock(&priv->buffer_mutex);
+		maxbursts = (priv->client_buffer_size -
+			     priv->client_buffer_used) / ao->outburst;
+		playbursts = len / ao->outburst;
 		len = (playbursts > maxbursts ? maxbursts : playbursts) *
-			   ao_data.outburst;
-		pthread_mutex_unlock(&nas_data->buffer_mutex);
+			   ao->outburst;
+		pthread_mutex_unlock(&priv->buffer_mutex);
 	}
 #endif
 	/*
@@ -619,32 +625,33 @@ static unsigned play(any_t* data,unsigned len,unsigned flags)
 	 * more to play than we report to it by get_space(), so this should be
 	 * fine.
 	 */
-	written = nas_writeBuffer(nas_data, data, len);
+	written = nas_writeBuffer(priv, data, len);
 
-	if (nas_data->state != AuStateStart &&
+	if (priv->state != AuStateStart &&
 	    (maxbursts == playbursts /*|| flags & AOPLAY_FINAL_CHUNK*/)) {
 		MSG_DBG2("ao_nas: play(): Starting flow.\n");
-		nas_data->expect_underrun = 1;
-		AuStartFlow(nas_data->aud, nas_data->flow, &as);
+		priv->expect_underrun = 1;
+		AuStartFlow(priv->aud, priv->flow, &as);
 		if (as != AuSuccess)
-			nas_print_error(nas_data->aud, "play(): AuStartFlow", as);
+			nas_print_error(priv->aud, "play(): AuStartFlow", as);
 	}
 
 	return written;
 }
 
 // return: delay in seconds between first and last sample in buffer
-static float get_delay(void)
+static float get_delay(ao_data_t* ao)
 {
+    priv_t* priv=ao->priv;
 	float result;
 
 	MSG_DBG3( "ao_nas: get_delay()\n");
 
-	pthread_mutex_lock(&nas_data->buffer_mutex);
-	result = ((float)(nas_data->client_buffer_used +
-			  nas_data->server_buffer_used)) /
-		 (float)ao_data.bps;
-	pthread_mutex_unlock(&nas_data->buffer_mutex);
+	pthread_mutex_lock(&priv->buffer_mutex);
+	result = ((float)(priv->client_buffer_used +
+			  priv->server_buffer_used)) /
+		 (float)ao->bps;
+	pthread_mutex_unlock(&priv->buffer_mutex);
 
 	return result;
 }

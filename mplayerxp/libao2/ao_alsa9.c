@@ -39,18 +39,14 @@ static ao_info_t info =
 
 LIBAO_EXTERN(alsa)
 
-typedef struct alsa_pric_s {
+typedef struct priv_s {
     snd_pcm_t*		handler;
     snd_pcm_format_t	format;
     snd_pcm_hw_params_t*hwparams;
     snd_pcm_sw_params_t*swparams;
     size_t		bytes_per_sample;
-    int			ao_mmap;
-    int			ao_noblock;
     int			first;
-}alsa_priv_t;
-
-static alsa_priv_t alsa = { NULL, 0, NULL, NULL, 0, 0, 0, 1 };
+}priv_t;
 
 #define ALSA_DEVICE_SIZE	48
 
@@ -123,21 +119,22 @@ static int __FASTCALL__ fmt2alsa(int format)
 }
 
 /* to set/get/query special features/parameters */
-static int __FASTCALL__ control(int cmd, long arg)
+static int __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 {
+    priv_t*priv=ao->priv;
     int rval;
     switch(cmd) {
 	case AOCONTROL_QUERY_FORMAT:
 	    rval=fmt2alsa(arg);
-	    return snd_pcm_hw_params_test_format(alsa.handler, alsa.hwparams,rval)==0?
+	    return snd_pcm_hw_params_test_format(priv->handler, priv->hwparams,rval)==0?
 		    CONTROL_TRUE:CONTROL_FALSE;
 	case AOCONTROL_QUERY_CHANNELS:
 	    rval=arg;
-	    return snd_pcm_hw_params_test_channels(alsa.handler, alsa.hwparams,rval)==0?
+	    return snd_pcm_hw_params_test_channels(priv->handler, priv->hwparams,rval)==0?
 		    CONTROL_TRUE:CONTROL_FALSE;
 	case AOCONTROL_QUERY_RATE:
 	    rval=arg;
-	    return snd_pcm_hw_params_test_rate(alsa.handler, alsa.hwparams,rval,0)==0?
+	    return snd_pcm_hw_params_test_rate(priv->handler, priv->hwparams,rval,0)==0?
 		    CONTROL_TRUE:CONTROL_FALSE;
 	case AOCONTROL_GET_VOLUME:
 	case AOCONTROL_SET_VOLUME:
@@ -157,7 +154,7 @@ static int __FASTCALL__ control(int cmd, long arg)
 	    long get_vol, set_vol;
 	    float calc_vol, diff, f_multi;
 
-	    if(ao_data.format == AFMT_AC3) return CONTROL_TRUE;
+	    if(ao->format == AFMT_AC3) return CONTROL_TRUE;
 
 	    //allocate simple id
 	    snd_mixer_selem_id_alloca(&sid);
@@ -297,17 +294,18 @@ static void __FASTCALL__ show_caps(unsigned device)
     snd_pcm_info_free(alsa_info);
 }
 
-
+static int ao_mmap;
+static int ao_noblock;
 static mrl_config_t alsaconf[]={
-    { "mmap", &alsa.ao_mmap, MRL_TYPE_BOOL, 0, 1 },
-    { "noblock", &alsa.ao_noblock, MRL_TYPE_BOOL, 0, 1 },
+    { "mmap", &ao_mmap, MRL_TYPE_BOOL, 0, 1 },
+    { "noblock", &ao_noblock, MRL_TYPE_BOOL, 0, 1 },
     { NULL, NULL, 0, 0, 0 }
 };
 /*
     open & setup audio device
     return: 1=success 0=fail
 */
-static int __FASTCALL__ init(unsigned flags)
+static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 {
     int err;
     int cards = -1;
@@ -317,8 +315,11 @@ static int __FASTCALL__ init(unsigned flags)
     char *alsa_port=NULL;
     char alsa_device[ALSA_DEVICE_SIZE];
     UNUSED(flags);
+    ao->priv=malloc(sizeof(priv_t));
+    priv_t*priv=ao->priv;
+    priv->first=1;
 
-    alsa.handler = NULL;
+    priv->handler = NULL;
     alsa_device[0]='\0';
 
     MSG_V("alsa-init: compiled for ALSA-%s\n", SND_LIB_VERSION_STR);
@@ -350,7 +351,7 @@ static int __FASTCALL__ init(unsigned flags)
     }
 
     if (alsa_device[0] == '\0') {
-	int tmp_device, tmp_subdevice, err;
+	int tmp_device, tmp_subdevice;
 
 	if ((err = snd_pcm_info_malloc(&alsa_info)) < 0) {
 	    MSG_ERR("alsa-init: memory allocation error: %s\n", snd_strerror(err));
@@ -377,7 +378,7 @@ static int __FASTCALL__ init(unsigned flags)
     MSG_WARN("alsa-init: Testing & bugs are welcome. Found %d cards, use: %s\n",cards+1,alsa_device);
     //setting modes for block or nonblock-mode
     int open_mode,block_mode;
-    if (alsa.ao_noblock) {
+    if (ao_noblock) {
 	open_mode = SND_PCM_NONBLOCK;
 	block_mode = 1;
 	str_block_mode = "nonblock-mode";
@@ -387,12 +388,12 @@ static int __FASTCALL__ init(unsigned flags)
 	str_block_mode = "block-mode";
     }
 
-    if (!alsa.handler) {
+    if (!priv->handler) {
 	//modes = 0, SND_PCM_NONBLOCK, SND_PCM_ASYNC
-	if ((err = snd_pcm_open(&alsa.handler, alsa_device, SND_PCM_STREAM_PLAYBACK, open_mode)) < 0) {
-	    if (alsa.ao_noblock) {
+	if ((err = snd_pcm_open(&priv->handler, alsa_device, SND_PCM_STREAM_PLAYBACK, open_mode)) < 0) {
+	    if (ao_noblock) {
 		MSG_ERR("alsa-init: open in nonblock-mode failed, trying to open in block-mode\n");
-		if ((err = snd_pcm_open(&alsa.handler, alsa_device, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+		if ((err = snd_pcm_open(&priv->handler, alsa_device, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
 		    MSG_ERR("alsa-init: playback open error: %s\n", snd_strerror(err));
 		    alsa_device[0]='\0';
 		    return 0;
@@ -407,44 +408,45 @@ static int __FASTCALL__ init(unsigned flags)
 	    }
 	}
       alsa_device[0]='\0';
-      if ((err = snd_pcm_nonblock(alsa.handler, block_mode)) < 0) {
+      if ((err = snd_pcm_nonblock(priv->handler, block_mode)) < 0) {
 	MSG_ERR("alsa-init: error set block-mode %s\n", snd_strerror(err));
       }
       else MSG_V("alsa-init: pcm opend in %s\n", str_block_mode);
 
-      snd_pcm_hw_params_malloc(&alsa.hwparams);
-      snd_pcm_sw_params_malloc(&alsa.swparams);
+      snd_pcm_hw_params_malloc(&priv->hwparams);
+      snd_pcm_sw_params_malloc(&priv->swparams);
 
       // setting hw-parameters
-      if ((err = snd_pcm_hw_params_any(alsa.handler, alsa.hwparams)) < 0)
+      if ((err = snd_pcm_hw_params_any(priv->handler, priv->hwparams)) < 0)
 	{
 	  MSG_ERR("alsa-init: unable to get initial parameters: %s\n",
 		 snd_strerror(err));
 	  return 0;
 	}
     MSG_DBG2("snd_pcm_hw_params_any()\n");
-      if (alsa.ao_mmap) {
+      if (ao_mmap) {
 	snd_pcm_access_mask_t *mask = alloca(snd_pcm_access_mask_sizeof());
 	snd_pcm_access_mask_none(mask);
 	snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_INTERLEAVED);
 	snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_NONINTERLEAVED);
 	snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_COMPLEX);
-	err = snd_pcm_hw_params_set_access_mask(alsa.handler, alsa.hwparams, mask);
+	err = snd_pcm_hw_params_set_access_mask(priv->handler, priv->hwparams, mask);
 	MSG_ERR("alsa-init: mmap set\n");
       } else {
-	err = snd_pcm_hw_params_set_access(alsa.handler, alsa.hwparams,SND_PCM_ACCESS_RW_INTERLEAVED);
+	err = snd_pcm_hw_params_set_access(priv->handler, priv->hwparams,SND_PCM_ACCESS_RW_INTERLEAVED);
 	MSG_DBG2("snd_pcm_hw_params_set_access(SND_PCM_ACCESS_RW_INTERLEAVED)\n");
       }
       if (err < 0) {
 	MSG_ERR("alsa-init: unable to set access type: %s\n", snd_strerror(err));
 	return 0;
       }
-    } // end switch alsa.handler (spdif)
+    } // end switch priv->handler (spdif)
     return 1;
 } // end init
 
-static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned format)
+static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
 {
+    priv_t*priv=ao->priv;
     int err,i;
     size_t chunk_size=0,chunk_bytes,bits_per_sample,bits_per_frame;
     snd_pcm_uframes_t dummy;
@@ -452,21 +454,21 @@ static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned fo
     MSG_V("alsa-conf: requested format: %d Hz, %d channels, %s\n", rate_hz,
 	channels, ao_format_name(format));
 
-    ao_data.samplerate = rate_hz;
-    ao_data.bps = channels * rate_hz;
-    ao_data.format = format;
-    ao_data.channels = channels;
-    ao_data.outburst = OUTBURST;
-    //ao_data.buffersize = MAX_OUTBURST; // was 16384
+    ao->samplerate = rate_hz;
+    ao->bps = channels * rate_hz;
+    ao->format = format;
+    ao->channels = channels;
+    ao->outburst = OUTBURST;
+    //ao->buffersize = MAX_OUTBURST; // was 16384
 
-    alsa.format=fmt2alsa(format);
+    priv->format=fmt2alsa(format);
 
-    switch(alsa.format) {
+    switch(priv->format) {
       case SND_PCM_FORMAT_S16_LE:
       case SND_PCM_FORMAT_U16_LE:
       case SND_PCM_FORMAT_S16_BE:
       case SND_PCM_FORMAT_U16_BE:
-	ao_data.bps *= 2;
+	ao->bps *= 2;
 	break;
       case SND_PCM_FORMAT_S32_LE:
       case SND_PCM_FORMAT_S32_BE:
@@ -474,13 +476,13 @@ static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned fo
       case SND_PCM_FORMAT_U32_BE:
       case SND_PCM_FORMAT_FLOAT_BE:
       case SND_PCM_FORMAT_FLOAT_LE:
-	ao_data.bps *= 4;
+	ao->bps *= 4;
 	break;
       case SND_PCM_FORMAT_S24_LE:
       case SND_PCM_FORMAT_S24_BE:
       case SND_PCM_FORMAT_U24_LE:
       case SND_PCM_FORMAT_U24_BE:
-	ao_data.bps *= 3;
+	ao->bps *= 3;
 	break;
       case -1:
 	MSG_ERR("alsa-conf: invalid format (%s) requested - output disabled\n",
@@ -489,44 +491,44 @@ static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned fo
       default:
 	break;
     }
-    alsa.bytes_per_sample = ao_data.bps / ao_data.samplerate;
+    priv->bytes_per_sample = ao->bps / ao->samplerate;
 
-    if ((err = snd_pcm_hw_params_set_format(alsa.handler, alsa.hwparams,
-					      alsa.format)) < 0) {
+    if ((err = snd_pcm_hw_params_set_format(priv->handler, priv->hwparams,
+					      priv->format)) < 0) {
 	MSG_ERR("alsa-conf: unable to set format(%s): %s\n",
-		 snd_pcm_format_name(alsa.format),
+		 snd_pcm_format_name(priv->format),
 		 snd_strerror(err));
 	MSG_HINT("Please try one of: ");
 	for(i=0;i<SND_PCM_FORMAT_LAST;i++)
-	    if (!(snd_pcm_hw_params_test_format(alsa.handler, alsa.hwparams, i)))
+	    if (!(snd_pcm_hw_params_test_format(priv->handler, priv->hwparams, i)))
 		MSG_HINT("%s ",snd_pcm_format_name(i));
 	MSG_HINT("\n");
 	return 0;
     }
-    MSG_DBG2("snd_pcm_hw_params_set_format(%i)\n",alsa.format);
+    MSG_DBG2("snd_pcm_hw_params_set_format(%i)\n",priv->format);
 
-    if ((err = snd_pcm_hw_params_set_rate_near(alsa.handler, alsa.hwparams, &ao_data.samplerate, 0)) < 0) {
+    if ((err = snd_pcm_hw_params_set_rate_near(priv->handler, priv->hwparams, &ao->samplerate, 0)) < 0) {
 	MSG_ERR("alsa-conf: unable to set samplerate %u: %s\n",
-		ao_data.samplerate,
+		ao->samplerate,
 		snd_strerror(err));
 	return 0;
     }
-    MSG_DBG2("snd_pcm_hw_params_set_rate_near(%i)\n",ao_data.samplerate);
+    MSG_DBG2("snd_pcm_hw_params_set_rate_near(%i)\n",ao->samplerate);
 
-    if ((err = snd_pcm_hw_params_set_channels(alsa.handler, alsa.hwparams,
-						ao_data.channels)) < 0) {
+    if ((err = snd_pcm_hw_params_set_channels(priv->handler, priv->hwparams,
+						ao->channels)) < 0) {
 	MSG_ERR("alsa-conf: unable to set %u channels: %s\n",
-		ao_data.channels,
+		ao->channels,
 		snd_strerror(err));
 	return 0;
     }
-    MSG_DBG2("snd_pcm_hw_params_set_channels(%i)\n",ao_data.channels);
+    MSG_DBG2("snd_pcm_hw_params_set_channels(%i)\n",ao->channels);
 #ifdef BUFFERTIME
     {
 	int dir;
 	unsigned period_time,alsa_buffer_time = 500000; /* buffer time in us */
 
-	if ((err = snd_pcm_hw_params_set_buffer_time_near(alsa.handler, alsa.hwparams, &alsa_buffer_time, &dir)) < 0) {
+	if ((err = snd_pcm_hw_params_set_buffer_time_near(priv->handler, priv->hwparams, &alsa_buffer_time, &dir)) < 0) {
 	    MSG_ERR("alsa-init: unable to set buffer time near: %s\n",
 		snd_strerror(err));
 	    return 0;
@@ -534,8 +536,8 @@ static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned fo
 	MSG_DBG2("snd_pcm_hw_set_buffer_time_near(%i)\n",alsa_buffer_time);
 
 	period_time = alsa_buffer_time/4;
-	if ((err = snd_pcm_hw_params_set_period_time_near(alsa.handler, alsa.hwparams, &period_time, &dir)) < 0) {
-	  /* original: alsa_buffer_time/ao_data.bps */
+	if ((err = snd_pcm_hw_params_set_period_time_near(priv->handler, priv->hwparams, &period_time, &dir)) < 0) {
+	  /* original: alsa_buffer_time/ao->bps */
 	    MSG_ERR("alsa-init: unable to set period time: %s\n",
 		snd_strerror(err));
 	    return 0;
@@ -548,14 +550,14 @@ static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned fo
         int dir=0;
 	unsigned period_time=100000; /* period time in us */
 	snd_pcm_uframes_t size;
-	if ((err = snd_pcm_hw_params_set_period_time_near(alsa.handler, alsa.hwparams, &period_time, &dir)) < 0) {
+	if ((err = snd_pcm_hw_params_set_period_time_near(priv->handler, priv->hwparams, &period_time, &dir)) < 0) {
 	    MSG_ERR("alsa-init: unable to set period_time: %s\n", snd_strerror(err));
 	    return 0;
 	}
 	MSG_DBG2("snd_pcm_hw_set_period_time(%i)\n",period_time);
 
 	//get chunksize
-	if ((err = snd_pcm_hw_params_get_period_size(alsa.hwparams, &size, &dir)) < 0) {
+	if ((err = snd_pcm_hw_params_get_period_size(priv->hwparams, &size, &dir)) < 0) {
 	    MSG_ERR("alsa-init: unable to get period_size: %s\n", snd_strerror(err));
 	    return 0;
 	}
@@ -564,15 +566,15 @@ static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned fo
     }
 #endif
         // gets buffersize for control
-    if ((err = snd_pcm_hw_params_get_buffer_size(alsa.hwparams,&dummy)) < 0) {
+    if ((err = snd_pcm_hw_params_get_buffer_size(priv->hwparams,&dummy)) < 0) {
 	MSG_ERR("alsa-conf: unable to get buffersize: %s\n", snd_strerror(err));
 	return 0;
     } else {
-	ao_data.buffersize = dummy * alsa.bytes_per_sample;
-	MSG_V("alsa-conf: got buffersize=%i\n", ao_data.buffersize);
+	ao->buffersize = dummy * priv->bytes_per_sample;
+	MSG_V("alsa-conf: got buffersize=%i\n", ao->buffersize);
     }
     MSG_DBG2("snd_pcm_hw_params_get_buffer_size(%i)\n",dummy);
-    bits_per_sample = snd_pcm_format_physical_width(alsa.format);
+    bits_per_sample = snd_pcm_format_physical_width(priv->format);
     MSG_DBG2("%i=snd_pcm_hw_format_pohysical_width()\n",bits_per_sample);
     bits_per_frame = bits_per_sample * channels;
     chunk_bytes = chunk_size * bits_per_frame / 8;
@@ -580,78 +582,84 @@ static int __FASTCALL__ configure(unsigned rate_hz,unsigned channels,unsigned fo
     MSG_V("alsa-conf: bits per sample (bps)=%i, bits per frame (bpf)=%i, chunk_bytes=%i\n",bits_per_sample,bits_per_frame,chunk_bytes);
 
     /* finally install hardware parameters */
-    if ((err = snd_pcm_hw_params(alsa.handler, alsa.hwparams)) < 0) {
+    if ((err = snd_pcm_hw_params(priv->handler, priv->hwparams)) < 0) {
 	MSG_ERR("alsa-conf: unable to set hw-parameters: %s\n",
 		 snd_strerror(err));
 	return 0;
     }
     MSG_DBG2("snd_pcm_hw_params()\n");
     // setting sw-params (only avail-min) if noblocking mode was choosed
-    if (alsa.ao_noblock) {
-	if ((err = snd_pcm_sw_params_current(alsa.handler, alsa.swparams)) < 0) {
+    if (ao_noblock) {
+	if ((err = snd_pcm_sw_params_current(priv->handler, priv->swparams)) < 0) {
 	    MSG_ERR("alsa-conf: unable to get parameters: %s\n",snd_strerror(err));
 	    return 0;
 	}
 
 	//set min available frames to consider pcm ready (4)
 	//increased for nonblock-mode should be set dynamically later
-	if ((err = snd_pcm_sw_params_set_avail_min(alsa.handler, alsa.swparams, 4)) < 0) {
+	if ((err = snd_pcm_sw_params_set_avail_min(priv->handler, priv->swparams, 4)) < 0) {
 	    MSG_ERR("alsa-conf: unable to set avail_min %s\n",snd_strerror(err));
 	    return 0;
 	}
 
-	if ((err = snd_pcm_sw_params(alsa.handler, alsa.swparams)) < 0) {
+	if ((err = snd_pcm_sw_params(priv->handler, priv->swparams)) < 0) {
 	      MSG_ERR("alsa-conf: unable to install sw-params\n");
 	      return 0;
 	}
 
     }//end swparams
 
-    if ((err = snd_pcm_prepare(alsa.handler)) < 0) {
+    if ((err = snd_pcm_prepare(priv->handler)) < 0) {
 	MSG_ERR("alsa-conf: pcm prepare error: %s\n", snd_strerror(err));
 	return 0;
     }
     // end setting hw-params
     MSG_V("alsa-conf: %d Hz/%d channels/%d bpf/%d bytes buffer/%s\n",
-	ao_data.samplerate, ao_data.channels, alsa.bytes_per_sample, ao_data.buffersize,
-	snd_pcm_format_description(alsa.format));
+	ao->samplerate, ao->channels, priv->bytes_per_sample, ao->buffersize,
+	snd_pcm_format_description(priv->format));
     return 1;
 } // end configure
 
 /* close audio device */
-static void uninit(void)
+static void uninit(ao_data_t* ao)
 {
     int err;
-    if(!alsa.handler) {
+    priv_t*priv=ao->priv;
+    if(!priv->handler) {
 	MSG_ERR("alsa-uninit: no handler defined!\n");
+	free(priv);
 	return;
     }
 
-    if (!alsa.ao_noblock) {
-	if ((err = snd_pcm_drain(alsa.handler)) < 0) {
+    if (!ao_noblock) {
+	if ((err = snd_pcm_drain(priv->handler)) < 0) {
 	    MSG_ERR("alsa-uninit: pcm drain error: %s\n", snd_strerror(err));
+	    free(priv);
 	    return;
 	}
     }
 
-    if ((err = snd_pcm_close(alsa.handler)) < 0) {
+    if ((err = snd_pcm_close(priv->handler)) < 0) {
 	MSG_ERR("alsa-uninit: pcm close error: %s\n", snd_strerror(err));
+	free(priv);
 	return;
     } else {
-	alsa.handler = NULL;
+	priv->handler = NULL;
 	MSG_V("alsa-uninit: pcm closed\n");
     }
-    snd_pcm_hw_params_free(alsa.hwparams);
-    snd_pcm_sw_params_free(alsa.swparams);
+    snd_pcm_hw_params_free(priv->hwparams);
+    snd_pcm_sw_params_free(priv->swparams);
+    free(priv);
 }
 
-static void audio_pause(void)
+static void audio_pause(ao_data_t* ao)
 {
+    priv_t*priv=ao->priv;
     int err;
 
-    if (!alsa.ao_noblock) {
+    if (!ao_noblock) {
 	//drain causes error in nonblock-mode!
-	if ((err = snd_pcm_drain(alsa.handler)) < 0) {
+	if ((err = snd_pcm_drain(priv->handler)) < 0) {
 	    MSG_ERR("alsa-pause: pcm drain error: %s\n", snd_strerror(err));
 	    return;
 	}
@@ -661,26 +669,28 @@ static void audio_pause(void)
     }
 }
 
-static void audio_resume(void)
+static void audio_resume(ao_data_t* ao)
 {
+    priv_t*priv=ao->priv;
     int err;
 
-    if ((err = snd_pcm_prepare(alsa.handler)) < 0) {
+    if ((err = snd_pcm_prepare(priv->handler)) < 0) {
 	MSG_ERR("alsa-resume: pcm prepare error: %s\n", snd_strerror(err));
 	return;
     }
 }
 
 /* stop playing and empty buffers (for seeking/pause) */
-static void reset(void)
+static void reset(ao_data_t* ao)
 {
+    priv_t*priv=ao->priv;
     int err;
 
-    if ((err = snd_pcm_drop(alsa.handler)) < 0) {
+    if ((err = snd_pcm_drop(priv->handler)) < 0) {
 	MSG_ERR("alsa-reset: pcm drop error: %s\n", snd_strerror(err));
 	return;
     }
-    if ((err = snd_pcm_prepare(alsa.handler)) < 0) {
+    if ((err = snd_pcm_prepare(priv->handler)) < 0) {
 	MSG_ERR("alsa-reset: pcm prepare error: %s\n", snd_strerror(err));
 	return;
     }
@@ -714,14 +724,15 @@ do { \
 #endif
 
 /* I/O error handler */
-static int __FASTCALL__ xrun(const char *str_mode)
+static int __FASTCALL__ xrun(ao_data_t* ao,const char *str_mode)
 {
+    priv_t*priv=ao->priv;
     int err;
     snd_pcm_status_t *status;
 
     snd_pcm_status_alloca(&status);
 
-    if ((err = snd_pcm_status(alsa.handler, status))<0) {
+    if ((err = snd_pcm_status(priv->handler, status))<0) {
 	MSG_ERR("status error: %s", snd_strerror(err));
 	return 0;
     }
@@ -736,7 +747,7 @@ static int __FASTCALL__ xrun(const char *str_mode)
 	   diff.tv_sec * 1000 + diff.tv_usec / 1000.0);
     }
 
-    if ((err = snd_pcm_prepare(alsa.handler))<0) {
+    if ((err = snd_pcm_prepare(priv->handler))<0) {
 	MSG_ERR("xrun: prepare error: %s", snd_strerror(err));
 	return 0;
     }
@@ -744,16 +755,16 @@ static int __FASTCALL__ xrun(const char *str_mode)
     return 1; /* ok, data should be accepted again */
 }
 
-static unsigned __FASTCALL__ play_normal(any_t* data, unsigned len);
-static unsigned __FASTCALL__ play_mmap(any_t* data, unsigned len);
+static unsigned __FASTCALL__ play_normal(ao_data_t* ao,any_t* data, unsigned len);
+static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,any_t* data, unsigned len);
 
-static unsigned __FASTCALL__ play(any_t* data, unsigned len, unsigned flags)
+static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data, unsigned len, unsigned flags)
 {
     unsigned result;
     UNUSED(flags);
-    MSG_DBG2("[ao_alsa] %s playing %i bytes\n",alsa.ao_mmap?"mmap":"normal",len);
-    if (alsa.ao_mmap)	result = play_mmap(data, len);
-    else		result = play_normal(data, len);
+    MSG_DBG2("[ao_alsa] %s playing %i bytes\n",priv->ao_mmap?"mmap":"normal",len);
+    if (ao_mmap)	result = play_mmap(ao,data, len);
+    else		result = play_normal(ao,data, len);
     return result;
 }
 
@@ -764,35 +775,36 @@ static unsigned __FASTCALL__ play(any_t* data, unsigned len, unsigned flags)
     thanxs for marius <marius@rospot.com> for giving us the light ;)
 */
 
-static unsigned __FASTCALL__ play_normal(any_t* data, unsigned len)
+static unsigned __FASTCALL__ play_normal(ao_data_t* ao,any_t* data, unsigned len)
 {
-    //alsa.bytes_per_sample is always 4 for 2 chn S16_LE
-    unsigned num_frames = len / alsa.bytes_per_sample;
+    priv_t*priv=ao->priv;
+    //priv->bytes_per_sample is always 4 for 2 chn S16_LE
+    unsigned num_frames = len / priv->bytes_per_sample;
     char *output_samples = (char *)data;
     snd_pcm_sframes_t res = 0;
 
     //fprintf(stderr,"alsa-play: frames=%i, len=%i\n",num_frames,len);
 
-    if (!alsa.handler) {
+    if (!priv->handler) {
 	MSG_ERR("alsa-play: device configuration error");
 	return 0;
     }
 
     while (num_frames > 0) {
-	res = snd_pcm_writei(alsa.handler, (any_t*)output_samples, num_frames);
+	res = snd_pcm_writei(priv->handler, (any_t*)output_samples, num_frames);
 	if (res == -EAGAIN) {
-	    snd_pcm_wait(alsa.handler, 1000);
+	    snd_pcm_wait(priv->handler, 1000);
 	} else if (res == -EPIPE) { /* underrun */
-	    if (xrun("play") <= 0) {
+	    if (xrun(ao,"play") <= 0) {
 		MSG_ERR("alsa-play: xrun reset error");
 		return 0;
 	    }
         } else if (res == -ESTRPIPE) { /* suspend */
 	    MSG_WARN("alsa-play: pcm in suspend mode. trying to resume\n");
-	    while ((res = snd_pcm_resume(alsa.handler)) == -EAGAIN) sleep(1);
+	    while ((res = snd_pcm_resume(priv->handler)) == -EAGAIN) sleep(1);
         } else if (res < 0) {
 	    MSG_ERR("alsa-play: unknown status, trying to reset soundcard\n");
-	    if ((res = snd_pcm_prepare(alsa.handler)) < 0) {
+	    if ((res = snd_pcm_prepare(priv->handler)) < 0) {
 		MSG_ERR("alsa-play: snd prepare error");
 		return 0;
 		break;
@@ -800,8 +812,8 @@ static unsigned __FASTCALL__ play_normal(any_t* data, unsigned len)
 	}
 
 	if (res > 0) {
-	    /* output_samples += ao_data.channels * res; */
-	    output_samples += res * alsa.bytes_per_sample;
+	    /* output_samples += ao->channels * res; */
+	    output_samples += res * priv->bytes_per_sample;
 	    num_frames -= res;
 	}
     } //end while
@@ -817,8 +829,9 @@ static unsigned __FASTCALL__ play_normal(any_t* data, unsigned len)
  * 'An overview of the ALSA API' http://people.debian.org/~joshua/x66.html
  * and some help by Paul Davis <pbd@op.net> */
 
-static unsigned __FASTCALL__ play_mmap(any_t* data, unsigned len)
+static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,any_t* data, unsigned len)
 {
+    priv_t*priv=ao->priv;
     snd_pcm_sframes_t commitres, frames_available;
     snd_pcm_uframes_t frames_transmit, size, offset;
     const snd_pcm_channel_area_t *area;
@@ -829,75 +842,75 @@ static unsigned __FASTCALL__ play_mmap(any_t* data, unsigned len)
     struct pollfd *ufds;
     int count;
 
-    count = snd_pcm_poll_descriptors_count (alsa.handler);
+    count = snd_pcm_poll_descriptors_count (priv->handler);
     ufds = malloc(sizeof(struct pollfd) * count);
-    snd_pcm_poll_descriptors(alsa.handler, ufds, count);
+    snd_pcm_poll_descriptors(priv->handler, ufds, count);
 
     //first wait_for_poll
-    if (err = (wait_for_poll(alsa.handler, ufds, count) < 0)) {
-	if (snd_pcm_state(alsa.handler) == SND_PCM_STATE_XRUN ||
-	    snd_pcm_state(alsa.handler) == SND_PCM_STATE_SUSPENDED) {
+    if (err = (wait_for_poll(priv->handler, ufds, count) < 0)) {
+	if (snd_pcm_state(priv->handler) == SND_PCM_STATE_XRUN ||
+	    snd_pcm_state(priv->handler) == SND_PCM_STATE_SUSPENDED) {
 		xrun("play");
 	}
     }
 #endif
 
-    outbuffer = alloca(ao_data.buffersize);
+    outbuffer = alloca(ao->buffersize);
 
     //don't trust get_space() ;)
-    frames_available = snd_pcm_avail_update(alsa.handler) * alsa.bytes_per_sample;
-    if (frames_available < 0) xrun("play");
+    frames_available = snd_pcm_avail_update(priv->handler) * priv->bytes_per_sample;
+    if (frames_available < 0) xrun(ao,"play");
 
     if (frames_available < 4) {
-	if (alsa.first) {
-	    alsa.first = 0;
-	    snd_pcm_start(alsa.handler);
+	if (priv->first) {
+	    priv->first = 0;
+	    snd_pcm_start(priv->handler);
 	} else { //FIXME should break and return 0?
-	    snd_pcm_wait(alsa.handler, -1);
-	    alsa.first = 1;
+	    snd_pcm_wait(priv->handler, -1);
+	    priv->first = 1;
 	}
     }
 
     /* len is simply the available bufferspace got by get_space()
-     * but real avail_buffer in frames is ab/alsa.bytes_per_sample */
-    size = len / alsa.bytes_per_sample;
+     * but real avail_buffer in frames is ab/priv->bytes_per_sample */
+    size = len / priv->bytes_per_sample;
 
     //if (verbose)
-    //printf("len: %i size %i, f_avail %i, bps %i ...\n", len, size, frames_available, alsa.bytes_per_sample);
+    //printf("len: %i size %i, f_avail %i, bps %i ...\n", len, size, frames_available, priv->bytes_per_sample);
 
     frames_transmit = size;
 
   /* prepare areas and set sw-pointers
    * frames_transmit returns the real available buffer-size
    * sometimes != frames_available cause of ringbuffer 'emulation' */
-    snd_pcm_mmap_begin(alsa.handler, &area, &offset, &frames_transmit);
+    snd_pcm_mmap_begin(priv->handler, &area, &offset, &frames_transmit);
 
   /* this is specific to interleaved streams (or non-interleaved
    * streams with only one channel) */
     outbuffer = ((char *) area->addr + (area->first + area->step * offset) / 8); //8
 
     //write data
-    memcpy(outbuffer, data, (frames_transmit * alsa.bytes_per_sample));
-    commitres = snd_pcm_mmap_commit(alsa.handler, offset, frames_transmit);
+    memcpy(outbuffer, data, (frames_transmit * priv->bytes_per_sample));
+    commitres = snd_pcm_mmap_commit(priv->handler, offset, frames_transmit);
 
     if (commitres < 0 || (snd_pcm_uframes_t)commitres != frames_transmit) {
-	if (snd_pcm_state(alsa.handler) == SND_PCM_STATE_XRUN ||
-	snd_pcm_state(alsa.handler) == SND_PCM_STATE_SUSPENDED) {
-	    xrun("play");
+	if (snd_pcm_state(priv->handler) == SND_PCM_STATE_XRUN ||
+	snd_pcm_state(priv->handler) == SND_PCM_STATE_SUSPENDED) {
+	    xrun(ao,"play");
 	}
     }
 
     //if (verbose)
     //printf("mmap ft: %i, cres: %i\n", frames_transmit, commitres);
 
-    /* 	err = snd_pcm_area_copy(&area, offset, &data, offset, len, alsa.format); */
+    /* 	err = snd_pcm_area_copy(&area, offset, &data, offset, len, priv->format); */
     /* 	if (err < 0) { */
     /* 	  printf("area-copy-error\n"); */
     /* 	  return 0; */
     /* 	} */
 
     //calculate written frames!
-    result = commitres * alsa.bytes_per_sample;
+    result = commitres * priv->bytes_per_sample;
 
 
     /* if (verbose) { */
@@ -926,8 +939,9 @@ typedef enum space_status_e {
     GET_SPACE_UNDEFINED
 }space_status;
 /* how many byes are free in the buffer */
-static unsigned get_space(void)
+static unsigned get_space(ao_data_t* ao)
 {
+    priv_t*priv=ao->priv;
     snd_pcm_status_t *status;
     int ret,st;
     space_status e_status=GET_SPACE_UNDEFINED;
@@ -939,7 +953,7 @@ static unsigned get_space(void)
 	return 0;
     }
 
-    if ((ret = snd_pcm_status(alsa.handler, status)) < 0) {
+    if ((ret = snd_pcm_status(priv->handler, status)) < 0) {
 	MSG_ERR("alsa-space: cannot get pcm status: %s\n", snd_strerror(ret));
 	return 0;
     }
@@ -950,15 +964,15 @@ static unsigned get_space(void)
 	case SND_PCM_STATE_PREPARED:
 	    if (e_status!=GET_SPACE_OPEN) {
 		e_status = GET_SPACE_PREPARED;
-		alsa.first = 1;
-		ret = snd_pcm_status_get_avail(status) * alsa.bytes_per_sample;
+		priv->first = 1;
+		ret = snd_pcm_status_get_avail(status) * priv->bytes_per_sample;
 		if (ret == 0) //ugly workaround for hang in mmap-mode
 		    ret = 10;
 		break;
 	    }
 	case SND_PCM_STATE_RUNNING:
-	    ret = snd_pcm_status_get_avail(status) * alsa.bytes_per_sample;
-	    //avail_frames = snd_pcm_avail_update(alsa.handler) * alsa.bytes_per_sample;
+	    ret = snd_pcm_status_get_avail(status) * priv->bytes_per_sample;
+	    //avail_frames = snd_pcm_avail_update(priv->handler) * priv->bytes_per_sample;
 	    if (e_status!=GET_SPACE_OPEN && e_status!=GET_SPACE_PREPARED)
 		e_status = GET_SPACE_RUNNING;
 	    break;
@@ -968,16 +982,16 @@ static unsigned get_space(void)
 	    ret = 0;
 	    break;
 	case SND_PCM_STATE_XRUN:
-	    xrun("space");
+	    xrun(ao,"space");
 	    e_status = GET_SPACE_XRUN;
-	    alsa.first = 1;
+	    priv->first = 1;
 	    ret = 0;
 	    break;
 	default:
 	    e_status = GET_SPACE_UNDEFINED;
-	    ret = snd_pcm_status_get_avail(status) * alsa.bytes_per_sample;
+	    ret = snd_pcm_status_get_avail(status) * priv->bytes_per_sample;
 	    if (ret <= 0) {
-		xrun("space");
+		xrun(ao,"space");
 	    }
     }
 
@@ -994,9 +1008,10 @@ static unsigned get_space(void)
 }
 
 /* delay in seconds between first and last sample in buffer */
-static float get_delay(void)
+static float get_delay(ao_data_t* ao)
 {
-    if (alsa.handler) {
+    priv_t*priv=ao->priv;
+    if (priv->handler) {
 	snd_pcm_status_t *status;
 	int r;
 	float ret;
@@ -1006,7 +1021,7 @@ static float get_delay(void)
 	    return 0;
 	}
 
-	if ((ret = snd_pcm_status(alsa.handler, status)) < 0) {
+	if ((ret = snd_pcm_status(priv->handler, status)) < 0) {
 	    MSG_ERR("alsa-delay: cannot get pcm status: %s\n", snd_strerror(ret));
 	    return 0;
 	}
@@ -1016,7 +1031,7 @@ static float get_delay(void)
 	    case SND_PCM_STATE_PREPARED:
 	    case SND_PCM_STATE_RUNNING:
 		r=snd_pcm_status_get_delay(status);
-		ret = (float)r/(float)ao_data.samplerate;
+		ret = (float)r/(float)ao->samplerate;
 		break;
 	    default:
 		ret = 0;

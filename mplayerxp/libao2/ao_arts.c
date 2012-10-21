@@ -34,7 +34,6 @@
 #define ARTS_PACKETS 10 /* Number of audio packets */
 #define ARTS_PACKET_SIZE_LOG2 11 /* Log2 of audio packet size */
 
-static arts_stream_t stream;
 
 static const ao_info_t info =
 {
@@ -46,16 +45,18 @@ static const ao_info_t info =
 
 LIBAO_EXTERN(arts)
 
-static int control(int cmd, long arg)
+static int control(ao_data_t* ao,int cmd, long arg)
 {
+    UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
 	return CONTROL_UNKNOWN;
 }
 
-static int init(unsigned flags)
+static int init(ao_data_t* ao,unsigned flags)
 {
 	int err;
+	UNUSED(ao);
 	UNUSED(flags);
 
 	if( (err=arts_init()) ) {
@@ -67,8 +68,9 @@ static int init(unsigned flags)
 	return 1;
 }
 
-static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned format)
+static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
+    arts_stream_t stream;
 	unsigned frag_spec,samplesize;
 	/*
 	 * arts supports 8bit unsigned and 16bit signed sample formats
@@ -106,12 +108,13 @@ static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned forma
 	    break;
 	}
 
-	ao_data.format = format;
-	ao_data.channels = channels;
-	ao_data.samplerate = rate;
-	ao_data.bps = rate*channels*samplesize;
+	ao->format = format;
+	ao->channels = channels;
+	ao->samplerate = rate;
+	ao->bps = rate*channels*samplesize;
 
 	stream=arts_play_stream(rate, samplesize*8, channels, "MPlayerXP");
+	ao->priv=stream;
 
 	if(stream == NULL) {
 		MSG_ERR("[aRts] Can't open stream\n");
@@ -124,43 +127,47 @@ static int __FASTCALL__ configure(unsigned rate,unsigned channels,unsigned forma
 	arts_stream_set(stream, ARTS_P_BLOCKING, 1);
 	frag_spec = ARTS_PACKET_SIZE_LOG2 | ARTS_PACKETS << 16;
 	arts_stream_set(stream, ARTS_P_PACKET_SETTINGS, frag_spec);
-	ao_data.buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
+	ao->buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
 	MSG_INFO("[aRts] Stream opened\n");
 
-	MSG_V("[aRts] buffersize=%u\n",ao_data.buffersize);
+	MSG_V("[aRts] buffersize=%u\n",ao->buffersize);
 	MSG_V("[aRts] buffersize=%u\n", arts_stream_get(stream, ARTS_P_PACKET_SIZE));
 
 	return 1;
 }
 
-static void uninit(void)
+static void uninit(ao_data_t* ao)
 {
-	arts_close_stream(stream);
-	arts_free();
+    arts_stream_t stream=ao->priv;
+    arts_close_stream(stream);
+    arts_free();
 }
 
-static unsigned play(any_t* data,unsigned len,unsigned flags)
+static unsigned play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags)
 {
+    arts_stream_t stream=ao->priv;
     UNUSED(flags);
     return arts_write(stream, data, len);
 }
 
-static void audio_pause(void)
+static void audio_pause(ao_data_t* ao)
 {
+    UNUSED(ao);
 }
 
-static void audio_resume(void) { }
+static void audio_resume(ao_data_t* ao) { UNUSED(ao); }
+static void reset(ao_data_t* ao) { UNUSED(ao); }
 
-static void reset(void) { }
-
-static unsigned get_space(void)
+static unsigned get_space(ao_data_t* ao)
 {
-	return arts_stream_get(stream, ARTS_P_BUFFER_SPACE);
+    arts_stream_t stream=ao->priv;
+    return arts_stream_get(stream, ARTS_P_BUFFER_SPACE);
 }
 
-static float get_delay(void)
+static float get_delay(ao_data_t* ao)
 {
-	return ((float) (ao_data.buffersize - arts_stream_get(stream,
-		ARTS_P_BUFFER_SPACE))) / ((float) ao_data.bps);
+    arts_stream_t stream=ao->priv;
+    return ((float) (ao->buffersize - arts_stream_get(stream,
+		ARTS_P_BUFFER_SPACE))) / ((float) ao->bps);
 }
 

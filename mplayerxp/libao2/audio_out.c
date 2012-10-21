@@ -8,7 +8,6 @@
 #include "ao_msg.h"
 
 // there are some globals:
-ao_data_t ao_data={0,0,0,0,OUTBURST,-1,0};
 char *ao_subdevice = NULL;
 
 extern const ao_functions_t audio_out_wav;
@@ -70,7 +69,6 @@ const ao_functions_t* audio_out_drivers[] =
 };
 
 static const ao_functions_t *audio_out=NULL;
-static int ao_inited=0;
 
 char * __FASTCALL__ ao_format_name(int format)
 {
@@ -154,7 +152,7 @@ int __FASTCALL__ ao_format_bits(int format){
 #endif
 
 	case AFMT_U16_LE:
-	case AFMT_U16_BE: 
+	case AFMT_U16_BE:
 	case AFMT_S16_LE:
 	case AFMT_S16_BE:
 	return 16;//16 bits
@@ -207,58 +205,65 @@ const ao_info_t* ao_get_info( void )
     return audio_out->info;
 }
 
-int __FASTCALL__ ao_init(unsigned flags)
+ao_data_t* __FASTCALL__ ao_init(unsigned flags)
+{
+    ao_data_t* ao;
+    int retval;
+    ao=malloc(sizeof(ao_data_t));
+    memset(ao,0,sizeof(ao_data_t));
+    ao->outburst=OUTBURST;
+    ao->buffersize=-1;
+    retval = audio_out->init(ao,flags);
+    if(retval) return ao;
+    free(ao);
+    return NULL;
+}
+
+int __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
 {
     int retval;
-    retval = audio_out->init(flags);
-    if(retval) ao_inited=1;
+    retval=audio_out->configure(ao,rate,channels,format);
     return retval;
 }
 
-int __FASTCALL__ ao_configure(unsigned rate,unsigned channels,unsigned format)
+void ao_uninit(ao_data_t*ao)
 {
-    int retval;
-    retval=audio_out->configure(rate,channels,format);
-    return retval;
+    audio_out->uninit(ao);
+    free(ao);
+    ao=NULL;
 }
 
-void ao_uninit(void)
+void ao_reset(ao_data_t*ao)
 {
-    audio_out->uninit();
-    ao_inited=0;
+    if(ao) audio_out->reset(ao);
 }
 
-void ao_reset(void)
+unsigned ao_get_space(ao_data_t*ao)
 {
-    if(ao_inited) audio_out->reset();
+    return ao?audio_out->get_space(ao):0;
 }
 
-unsigned ao_get_space(void)
+float ao_get_delay(ao_data_t*ao)
 {
-    return ao_inited?audio_out->get_space():0;
+    return ao?audio_out->get_delay(ao):0;
 }
 
-float ao_get_delay(void)
+unsigned __FASTCALL__ ao_play(ao_data_t*ao,any_t* data,unsigned len,unsigned flags)
 {
-    return ao_inited?audio_out->get_delay():0;
+    return ao?audio_out->play(ao,data,len,flags):0;
 }
 
-unsigned __FASTCALL__ ao_play(any_t* data,unsigned len,unsigned flags)
+void ao_pause(ao_data_t*ao)
 {
-    return ao_inited?audio_out->play(data,len,flags):0;
+    if(ao) audio_out->pause(ao);
 }
 
-void ao_pause(void)
+void ao_resume(ao_data_t*ao)
 {
-    if(ao_inited) audio_out->pause();
+    if(ao) audio_out->resume(ao);
 }
 
-void ao_resume(void)
+int __FASTCALL__ ao_control(ao_data_t*ao,int cmd,long arg)
 {
-    if(ao_inited) audio_out->resume();
-}
-
-int __FASTCALL__ ao_control(int cmd,long arg)
-{
-    return ao_inited?audio_out->control(cmd,arg):CONTROL_ERROR;
+    return ao?audio_out->control(ao,cmd,arg):CONTROL_ERROR;
 }

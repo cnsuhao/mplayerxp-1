@@ -271,7 +271,6 @@ static const config_t audio_config[]={
 #ifdef USE_FAKE_MONO
 	{"stereo", &fakemono, CONF_TYPE_INT, CONF_RANGE, 0, 2, NULL, "selects type of MP2/MP3 stereo output"},
 #endif
-	{"bs", &ao_data.buffersize, CONF_TYPE_INT, CONF_MIN, 0, 0, NULL, "specifies sound card audio buffer size in bytes. Default: measuring"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
 

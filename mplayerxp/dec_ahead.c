@@ -770,6 +770,7 @@ int xp_thread_decode_audio()
 #define NOTHING_PLAYED (-1.0)
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
 
+extern ao_data_t* ao_data;
 any_t* audio_play_routine( any_t* arg )
 {
     int xp_id;
@@ -778,7 +779,7 @@ any_t* audio_play_routine( any_t* arg )
     struct timespec timeout;
     float d;
     int retval;
-    const float MAX_AUDIO_TIME = (float)ao_get_space() / sh_audio->af_bps + ao_get_delay();
+    const float MAX_AUDIO_TIME = (float)ao_get_space(ao_data) / sh_audio->af_bps + ao_get_delay(ao_data);
     float min_audio_time = MAX_AUDIO_TIME;
     float min_audio, max_audio;
     int samples, collect_samples;
@@ -861,7 +862,7 @@ any_t* audio_play_routine( any_t* arg )
 	}
 
 	LOCK_AUDIO_PLAY();
-	d = ao_get_delay() - min_audio_time;
+	d = ao_get_delay(ao_data) - min_audio_time;
 	if( !xp_core.in_lseek && d > 0 ) {
 	    gettimeofday(&now,NULL);
 	    audio_play_timeout.tv_nsec = now.tv_usec * 1000 + d*1000000000l;

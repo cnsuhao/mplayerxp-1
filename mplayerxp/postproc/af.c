@@ -11,6 +11,8 @@
 #include "../help_mp.h"
 #include "../libao2/audio_out.h"
 
+extern ao_data_t* ao_data;
+
 // Static list of filters
 extern const af_info_t af_info_ao;
 extern const af_info_t af_info_center;
@@ -667,7 +669,7 @@ int __FASTCALL__ af_query_fmt (af_stream_t* s,int fmt)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
-  if(strcmp(filt_name,"ao2")==0) return ao_control(AOCONTROL_QUERY_FORMAT,fmt);
+  if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_FORMAT,fmt);
   else
   {
     int bps;
@@ -681,7 +683,7 @@ int __FASTCALL__ af_query_rate (af_stream_t* s,int rate)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
-  if(strcmp(filt_name,"ao2")==0) return ao_control(AOCONTROL_QUERY_RATE,rate);
+  if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_RATE,rate);
   else
   {
     if(rate==filt->data->rate) return CONTROL_TRUE;
@@ -693,7 +695,7 @@ int __FASTCALL__ af_query_channels (af_stream_t* s,int nch)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
-  if(strcmp(filt_name,"ao2")==0) return ao_control(AOCONTROL_QUERY_CHANNELS,nch);
+  if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,nch);
   else
   {
     if(nch==filt->data->nch) return CONTROL_TRUE;

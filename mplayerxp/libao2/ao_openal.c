@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <inttypes.h>
 #include <AL/alc.h>
 #include <AL/al.h>
@@ -49,7 +50,7 @@ LIBAO_EXTERN(openal)
 #define MAX_CHANS 8
 #define NUM_BUF 128
 #define CHUNK_SIZE 512
-typedef struct openal_priv_s {
+typedef struct priv_s {
     ALCdevice*	alc_dev;
     ALuint	buffers[MAX_CHANS][NUM_BUF];
     ALuint	sources[MAX_CHANS];
@@ -57,10 +58,10 @@ typedef struct openal_priv_s {
     int		cur_buf[MAX_CHANS];
     int		unqueue_buf[MAX_CHANS];
     int16_t*	tmpbuf;
-}openal_priv_t;
-static openal_priv_t openal;
+}priv_t;
 
-static int control(int cmd, long arg) {
+static int control(ao_data_t* ao,int cmd, long arg) {
+    UNUSED(ao);
   switch (cmd) {
     case AOCONTROL_GET_VOLUME:
     case AOCONTROL_SET_VOLUME: {
@@ -90,19 +91,23 @@ static void print_help(void) {
         );
 }
 #endif
-static int init(unsigned flags)
+static int init(ao_data_t* ao,unsigned flags)
 {
+    ao->priv=malloc(sizeof(priv_t));
+    priv_t*priv=ao->priv;
+    memset(priv,0,sizeof(priv_t));
   UNUSED(flags);
-  openal.alc_dev = alcOpenDevice(NULL);
-  if (!openal.alc_dev) {
+  priv->alc_dev = alcOpenDevice(NULL);
+  if (!priv->alc_dev) {
     MSG_ERR("[OpenAL] could not open device\n");
     return 0;
   }
   return 1;
 }
 
-static int configure(unsigned rate, unsigned channels, unsigned format)
+static int configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned format)
 {
+    priv_t*priv=ao->priv;
   ALCcontext *ctx = NULL;
   float position[3] = {0, 0, 0};
   float direction[6] = {0, 0, 1, 0, -1, 0};
@@ -129,30 +134,30 @@ static int configure(unsigned rate, unsigned channels, unsigned format)
     MSG_ERR("[OpenAL] Invalid number of channels: %i\n", channels);
     goto err_out;
   }
-  ctx = alcCreateContext(openal.alc_dev, attribs);
+  ctx = alcCreateContext(priv->alc_dev, attribs);
   alcMakeContextCurrent(ctx);
   alListenerfv(AL_POSITION, position);
   alListenerfv(AL_ORIENTATION, direction);
-  alGenSources(channels, openal.sources);
+  alGenSources(channels, priv->sources);
   for (i = 0; i < channels; i++) {
-    openal.cur_buf[i] = 0;
-    openal.unqueue_buf[i] = 0;
-    alGenBuffers(NUM_BUF, openal.buffers[i]);
-    alSourcefv(openal.sources[i], AL_POSITION, sppos[i]);
-    alSource3f(openal.sources[i], AL_VELOCITY, 0, 0, 0);
+    priv->cur_buf[i] = 0;
+    priv->unqueue_buf[i] = 0;
+    alGenBuffers(NUM_BUF, priv->buffers[i]);
+    alSourcefv(priv->sources[i], AL_POSITION, sppos[i]);
+    alSource3f(priv->sources[i], AL_VELOCITY, 0, 0, 0);
   }
   if (channels == 1)
-    alSource3f(openal.sources[0], AL_POSITION, 0, 0, 1);
-  ao_data.channels = channels;
-  alcGetIntegerv(openal.alc_dev, ALC_FREQUENCY, 1, &freq);
-  if (alcGetError(openal.alc_dev) == ALC_NO_ERROR && freq)
+    alSource3f(priv->sources[0], AL_POSITION, 0, 0, 1);
+  ao->channels = channels;
+  alcGetIntegerv(priv->alc_dev, ALC_FREQUENCY, 1, &freq);
+  if (alcGetError(priv->alc_dev) == ALC_NO_ERROR && freq)
     rate = freq;
-  ao_data.samplerate = rate;
-  ao_data.format = AFMT_S16_NE;
-  ao_data.bps = channels * rate * 2;
-  ao_data.buffersize = CHUNK_SIZE * NUM_BUF;
-  ao_data.outburst = channels * CHUNK_SIZE;
-  openal.tmpbuf = malloc(CHUNK_SIZE);
+  ao->samplerate = rate;
+  ao->format = AFMT_S16_NE;
+  ao->bps = channels * rate * 2;
+  ao->buffersize = CHUNK_SIZE * NUM_BUF;
+  ao->outburst = channels * CHUNK_SIZE;
+  priv->tmpbuf = malloc(CHUNK_SIZE);
   return 1;
 
 err_out:
@@ -160,105 +165,114 @@ err_out:
 }
 
 // close audio device
-static void uninit(void) {
+static void uninit(ao_data_t* ao) {
   int immed=0;
   ALCcontext *ctx = alcGetCurrentContext();
   ALCdevice *dev = alcGetContextsDevice(ctx);
-  free(openal.tmpbuf);
+  priv_t*priv=ao->priv;
+  free(priv->tmpbuf);
   if (!immed) {
     ALint state;
-    alGetSourcei(openal.sources[0], AL_SOURCE_STATE, &state);
+    alGetSourcei(priv->sources[0], AL_SOURCE_STATE, &state);
     while (state == AL_PLAYING) {
       usec_sleep(10000);
-      alGetSourcei(openal.sources[0], AL_SOURCE_STATE, &state);
+      alGetSourcei(priv->sources[0], AL_SOURCE_STATE, &state);
     }
   }
-  reset();
+  reset(ao);
   alcMakeContextCurrent(NULL);
   alcDestroyContext(ctx);
   alcCloseDevice(dev);
+  free(ao->priv);
 }
 
-static void unqueue_buffers(void) {
+static void unqueue_buffers(ao_data_t* ao) {
+    priv_t*priv=ao->priv;
   ALint p;
   unsigned s;
-  for (s = 0;  s < ao_data.channels; s++) {
-    int till_wrap = NUM_BUF - openal.unqueue_buf[s];
-    alGetSourcei(openal.sources[s], AL_BUFFERS_PROCESSED, &p);
+  for (s = 0;  s < ao->channels; s++) {
+    int till_wrap = NUM_BUF - priv->unqueue_buf[s];
+    alGetSourcei(priv->sources[s], AL_BUFFERS_PROCESSED, &p);
     if (p >= till_wrap) {
-      alSourceUnqueueBuffers(openal.sources[s], till_wrap, &openal.buffers[s][openal.unqueue_buf[s]]);
-      openal.unqueue_buf[s] = 0;
+      alSourceUnqueueBuffers(priv->sources[s], till_wrap, &priv->buffers[s][priv->unqueue_buf[s]]);
+      priv->unqueue_buf[s] = 0;
       p -= till_wrap;
     }
     if (p) {
-      alSourceUnqueueBuffers(openal.sources[s], p, &openal.buffers[s][openal.unqueue_buf[s]]);
-      openal.unqueue_buf[s] += p;
+      alSourceUnqueueBuffers(priv->sources[s], p, &priv->buffers[s][priv->unqueue_buf[s]]);
+      priv->unqueue_buf[s] += p;
     }
   }
 }
 
 /**
- * \brief stop playing and empty openal.buffers (for seeking/pause)
+ * \brief stop playing and empty priv->buffers (for seeking/pause)
  */
-static void reset(void) {
-  alSourceStopv(ao_data.channels, openal.sources);
-  unqueue_buffers();
+static void reset(ao_data_t* ao) {
+    priv_t*priv=ao->priv;
+  alSourceStopv(ao->channels, priv->sources);
+  unqueue_buffers(ao);
 }
 
 /**
- * \brief stop playing, keep openal.buffers (for pause)
+ * \brief stop playing, keep priv->buffers (for pause)
  */
-static void audio_pause(void) {
-  alSourcePausev(ao_data.channels, openal.sources);
+static void audio_pause(ao_data_t* ao) {
+    priv_t*priv=ao->priv;
+  alSourcePausev(ao->channels, priv->sources);
 }
 
 /**
  * \brief resume playing, after audio_pause()
  */
-static void audio_resume(void) {
-  alSourcePlayv(ao_data.channels, openal.sources);
+static void audio_resume(ao_data_t* ao) {
+    priv_t*priv=ao->priv;
+  alSourcePlayv(ao->channels, priv->sources);
 }
 
-static unsigned get_space(void) {
+static unsigned get_space(ao_data_t* ao) {
+    priv_t*priv=ao->priv;
   ALint queued;
-  unqueue_buffers();
-  alGetSourcei(openal.sources[0], AL_BUFFERS_QUEUED, &queued);
+  unqueue_buffers(ao);
+  alGetSourcei(priv->sources[0], AL_BUFFERS_QUEUED, &queued);
   queued = NUM_BUF - queued - 3;
   if (queued < 0) return 0;
-  return queued * CHUNK_SIZE * ao_data.channels;
+  return queued * CHUNK_SIZE * ao->channels;
 }
 
 /**
  * \brief write data into buffer and reset underrun flag
  */
-static unsigned play(any_t*data, unsigned len, unsigned flags) {
+static unsigned play(ao_data_t* ao,any_t*data, unsigned len, unsigned flags) {
+    priv_t*priv=ao->priv;
   ALint state;
   unsigned i, j, k;
   unsigned ch;
   int16_t *d = data;
   UNUSED(flags);
-  len /= ao_data.channels * CHUNK_SIZE;
+  len /= ao->channels * CHUNK_SIZE;
   for (i = 0; i < len; i++) {
-    for (ch = 0; ch < ao_data.channels; ch++) {
-      for (j = 0, k = ch; j < CHUNK_SIZE / 2; j++, k += ao_data.channels)
-        openal.tmpbuf[j] = d[k];
-      alBufferData(openal.buffers[ch][openal.cur_buf[ch]], AL_FORMAT_MONO16, openal.tmpbuf,
-                     CHUNK_SIZE, ao_data.samplerate);
-      alSourceQueueBuffers(openal.sources[ch], 1, &openal.buffers[ch][openal.cur_buf[ch]]);
-      openal.cur_buf[ch] = (openal.cur_buf[ch] + 1) % NUM_BUF;
+    for (ch = 0; ch < ao->channels; ch++) {
+      for (j = 0, k = ch; j < CHUNK_SIZE / 2; j++, k += ao->channels)
+        priv->tmpbuf[j] = d[k];
+      alBufferData(priv->buffers[ch][priv->cur_buf[ch]], AL_FORMAT_MONO16, priv->tmpbuf,
+                     CHUNK_SIZE, ao->samplerate);
+      alSourceQueueBuffers(priv->sources[ch], 1, &priv->buffers[ch][priv->cur_buf[ch]]);
+      priv->cur_buf[ch] = (priv->cur_buf[ch] + 1) % NUM_BUF;
     }
-    d += ao_data.channels * CHUNK_SIZE / 2;
+    d += ao->channels * CHUNK_SIZE / 2;
   }
-  alGetSourcei(openal.sources[0], AL_SOURCE_STATE, &state);
+  alGetSourcei(priv->sources[0], AL_SOURCE_STATE, &state);
   if (state != AL_PLAYING) // checked here in case of an underrun
-    alSourcePlayv(ao_data.channels, openal.sources);
-  return len * ao_data.channels * CHUNK_SIZE;
+    alSourcePlayv(ao->channels, priv->sources);
+  return len * ao->channels * CHUNK_SIZE;
 }
 
-static float get_delay(void) {
+static float get_delay(ao_data_t* ao) {
+    priv_t*priv=ao->priv;
   ALint queued;
-  unqueue_buffers();
-  alGetSourcei(openal.sources[0], AL_BUFFERS_QUEUED, &queued);
-  return queued * CHUNK_SIZE / 2 / (float)ao_data.samplerate;
+  unqueue_buffers(ao);
+  alGetSourcei(priv->sources[0], AL_BUFFERS_QUEUED, &queued);
+  return queued * CHUNK_SIZE / 2 / (float)ao->samplerate;
 }
 

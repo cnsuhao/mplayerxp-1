@@ -72,21 +72,21 @@ struct WaveHeader
     uint32_t data_length;
 };
 
-typedef struct wav_priv_s {
+typedef struct priv_s {
     char *		out_filename;
     int			pcm_waveheader;
     int			fast;
 
     uint64_t		data_length;
     FILE *		fp;
-}wav_priv_t;
-static wav_priv_t wav = { NULL, 1, 0, 0, NULL  };
+    struct WaveHeader	wavhdr;
+}priv_t;
 
 /* init with default values */
-static struct WaveHeader wavhdr;
 
 // to set/get/query special features/parameters
-static int control(int cmd,long arg){
+static int control(ao_data_t* ao,int cmd,long arg){
+    UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
     return -1;
@@ -94,19 +94,22 @@ static int control(int cmd,long arg){
 
 // open & setup audio device
 // return: 1=success 0=fail
-static int init(unsigned flags) {
+static int init(ao_data_t* ao,unsigned flags) {
     // set defaults
     UNUSED(flags);
-    wav.pcm_waveheader = 1;
+    ao->priv=malloc(sizeof(priv_t));
+    priv_t* priv=ao->priv;
+    priv->pcm_waveheader=1;
     return 1;
 }
 
-static int configure(unsigned rate,unsigned channels,unsigned format){
+static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
+    priv_t* priv=ao->priv;
     unsigned bits;
     char str[256];
 
-    if(ao_subdevice)	wav.out_filename = ao_subdevice;
-    else		wav.out_filename = strdup("mpxp_adump.wav");
+    if(ao_subdevice)	priv->out_filename = ao_subdevice;
+    else		priv->out_filename = strdup("mpxp_adump.wav");
 
     bits=8;
     switch(format){
@@ -131,105 +134,111 @@ static int configure(unsigned rate,unsigned channels,unsigned format){
 	break;
     }
 
-    ao_data.outburst = 65536;
-    ao_data.buffersize= 2*65536;
-    ao_data.channels=channels;
-    ao_data.samplerate=rate;
-    ao_data.format=format;
-    ao_data.bps=channels*rate*(bits/8);
+    ao->outburst = 65536;
+    ao->buffersize= 2*65536;
+    ao->channels=channels;
+    ao->samplerate=rate;
+    ao->format=format;
+    ao->bps=channels*rate*(bits/8);
 
-    wavhdr.riff = le2me_32(WAV_ID_RIFF);
-    wavhdr.wave = le2me_32(WAV_ID_WAVE);
-    wavhdr.fmt = le2me_32(WAV_ID_FMT);
-    wavhdr.fmt_length = le2me_32(16);
-    wavhdr.fmt_tag = le2me_16(format == AFMT_FLOAT32 ? WAV_ID_FLOAT_PCM : WAV_ID_PCM);
-    wavhdr.channels = le2me_16(ao_data.channels);
-    wavhdr.sample_rate = le2me_32(ao_data.samplerate);
-    wavhdr.bytes_per_second = le2me_32(ao_data.bps);
-    wavhdr.bits = le2me_16(bits);
-    wavhdr.block_align = le2me_16(ao_data.channels * (bits / 8));
+    priv->wavhdr.riff = le2me_32(WAV_ID_RIFF);
+    priv->wavhdr.wave = le2me_32(WAV_ID_WAVE);
+    priv->wavhdr.fmt = le2me_32(WAV_ID_FMT);
+    priv->wavhdr.fmt_length = le2me_32(16);
+    priv->wavhdr.fmt_tag = le2me_16(format == AFMT_FLOAT32 ? WAV_ID_FLOAT_PCM : WAV_ID_PCM);
+    priv->wavhdr.channels = le2me_16(ao->channels);
+    priv->wavhdr.sample_rate = le2me_32(ao->samplerate);
+    priv->wavhdr.bytes_per_second = le2me_32(ao->bps);
+    priv->wavhdr.bits = le2me_16(bits);
+    priv->wavhdr.block_align = le2me_16(ao->channels * (bits / 8));
 
-    wavhdr.data = le2me_32(WAV_ID_DATA);
-    wavhdr.data_length=le2me_32(0x7ffff000);
-    wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
+    priv->wavhdr.data = le2me_32(WAV_ID_DATA);
+    priv->wavhdr.data_length=le2me_32(0x7ffff000);
+    priv->wavhdr.file_length = priv->wavhdr.data_length + sizeof(priv->wavhdr) - 8;
 
     MSG_INFO("ao_wav: %s %d-%s %s\n"
-		,wav.out_filename
-		,rate, (channels > 1) ? "Stereo" : "Mono", fmt2str(format,ao_data.bps,str,sizeof(str)));
+		,priv->out_filename
+		,rate, (channels > 1) ? "Stereo" : "Mono", fmt2str(format,ao->bps,str,sizeof(str)));
 
-    wav.fp = fopen(wav.out_filename, "wb");
-    if(wav.fp) {
-	if(wav.pcm_waveheader){ /* Reserve space for wave header */
-	    fwrite(&wavhdr,sizeof(wavhdr),1,wav.fp);
+    priv->fp = fopen(priv->out_filename, "wb");
+    if(priv->fp) {
+	if(priv->pcm_waveheader){ /* Reserve space for wave header */
+	    fwrite(&priv->wavhdr,sizeof(priv->wavhdr),1,priv->fp);
 	}
 	return 1;
     }
-    MSG_ERR("ao_wav: can't open output file: %s\n", wav.out_filename);
+    MSG_ERR("ao_wav: can't open output file: %s\n", priv->out_filename);
     return 0;
 }
 
 // close audio device
-static void uninit(void){
-    if(wav.pcm_waveheader){ /* Rewrite wave header */
+static void uninit(ao_data_t* ao){
+    priv_t* priv=ao->priv;
+    if(priv->pcm_waveheader){ /* Rewrite wave header */
 	int broken_seek = 0;
 #ifdef __MINGW32__
 	// Windows, in its usual idiocy "emulates" seeks on pipes so it always looks
 	// like they work. So we have to detect them brute-force.
-	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(wav.fp))) != FILE_TYPE_DISK;
+	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(priv->fp))) != FILE_TYPE_DISK;
 #endif
-	if (broken_seek || fseek(wav.fp, 0, SEEK_SET) != 0)
+	if (broken_seek || fseek(priv->fp, 0, SEEK_SET) != 0)
 	    MSG_ERR("Could not seek to start, WAV size headers not updated!\n");
-	else if (wav.data_length > 0x7ffff000)
+	else if (priv->data_length > 0x7ffff000)
 	    MSG_ERR("File larger than allowed for WAV files, may play truncated!\n");
 	else {
-	    wavhdr.file_length = wav.data_length + sizeof(wavhdr) - 8;
-	    wavhdr.file_length = le2me_32(wavhdr.file_length);
-	    wavhdr.data_length = le2me_32(wav.data_length);
-	    fwrite(&wavhdr,sizeof(wavhdr),1,wav.fp);
+	    priv->wavhdr.file_length = priv->data_length + sizeof(priv->wavhdr) - 8;
+	    priv->wavhdr.file_length = le2me_32(priv->wavhdr.file_length);
+	    priv->wavhdr.data_length = le2me_32(priv->data_length);
+	    fwrite(&priv->wavhdr,sizeof(priv->wavhdr),1,priv->fp);
 	}
     }
-    fclose(wav.fp);
-    if (wav.out_filename)
-	free(wav.out_filename);
-    wav.out_filename = NULL;
+    fclose(priv->fp);
+    if (priv->out_filename)
+	free(priv->out_filename);
+    free(priv);
 }
 
 // stop playing and empty buffers (for seeking/pause)
-static void reset(void){
+static void reset(ao_data_t* ao){
+    UNUSED(ao);
 }
 
 // stop playing, keep buffers (for pause)
-static void audio_pause(void)
+static void audio_pause(ao_data_t* ao)
 {
     // for now, just call reset();
-    reset();
+    reset(ao);
 }
 
 // resume playing, after audio_pause()
-static void audio_resume(void)
+static void audio_resume(ao_data_t* ao)
 {
+    UNUSED(ao);
 }
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(void){
+static unsigned get_space(ao_data_t* ao){
+    priv_t* priv=ao->priv;
     if(vo.pts)
-	return ao_data.pts < vo.pts + wav.fast * 30000 ? ao_data.outburst : 0;
-    return ao_data.outburst;
+	return ao->pts < vo.pts + priv->fast * 30000 ? ao->outburst : 0;
+    return ao->outburst;
 }
 
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned play(any_t* data,unsigned len,unsigned flags){
+static unsigned play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags){
+    priv_t* priv=ao->priv;
     UNUSED(flags);
-    fwrite(data,len,1,wav.fp);
-    if(wav.pcm_waveheader)
-	wav.data_length += len;
+    fwrite(data,len,1,priv->fp);
+    if(priv->pcm_waveheader)
+	priv->data_length += len;
 
     return len;
 }
 
 // return: delay in seconds between first and last sample in buffer
-static float get_delay(void){
+static float get_delay(ao_data_t* ao){
+    UNUSED(ao);
     return 0.0;
 }

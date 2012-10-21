@@ -7,13 +7,15 @@
 
 #include "af.h"
 
+extern ao_data_t* ao_data;
+
 static unsigned rates[] =
 { 4000, 5512, 8000, 9600, 11025, 16000, 19200, 22050, 24000, 32000, 38400, 44100, 48000, 64000, 76800, 88200, 96000, 128000, 153600, 176400, 192000 };
 static unsigned __FASTCALL__ find_best_rate(unsigned irate)
 {
     unsigned i,ii;
     int rval;
-    rval=ao_control(AOCONTROL_QUERY_RATE,irate);
+    rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,irate);
     if(rval == CONTROL_TRUE) return irate;
     for(i=0;i<sizeof(rates)/sizeof(unsigned)-1;i++)
     {
@@ -22,18 +24,18 @@ static unsigned __FASTCALL__ find_best_rate(unsigned irate)
     ii=i;
     for(;i<sizeof(rates)/sizeof(unsigned);i++)
     {
-	rval=ao_control(AOCONTROL_QUERY_RATE,rates[i]);
+	rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,rates[i]);
 	if(rval == CONTROL_TRUE) return rates[i];
     }
     i=ii;
     for(;i<sizeof(rates)/sizeof(unsigned);i--)
     {
-	rval=ao_control(AOCONTROL_QUERY_RATE,rates[i]);
+	rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,rates[i]);
 	if(rval == CONTROL_TRUE) return rates[i];
     }
     for(i=0;i<sizeof(rates)/sizeof(unsigned);i++)
     {
-	rval=ao_control(AOCONTROL_QUERY_RATE,rates[i]);
+	rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,rates[i]);
 	if(rval == CONTROL_TRUE) return rates[i];
     }
     return 44100;
@@ -43,16 +45,16 @@ static unsigned __FASTCALL__ find_best_ch(unsigned ich)
 {
     unsigned i;
     int rval;
-    rval=ao_control(AOCONTROL_QUERY_CHANNELS,ich);
+    rval=ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,ich);
     if(rval == CONTROL_TRUE) return ich;
     for(i=ich>1?ich:1;i<AF_NCH;i++)
     {
-	rval=ao_control(AOCONTROL_QUERY_CHANNELS,i);
+	rval=ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,i);
 	if(rval == CONTROL_TRUE) return i;
     }
     for(i=1;i<AF_NCH;i++)
     {
-	rval=ao_control(AOCONTROL_QUERY_CHANNELS,i);
+	rval=ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,i);
 	if(rval == CONTROL_TRUE) return i;
     }
     return 2;
@@ -87,7 +89,7 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
 {
     unsigned i,j;
     int rval;
-    rval=ao_control(AOCONTROL_QUERY_FORMAT,ifmt);
+    rval=ao_control(ao_data,AOCONTROL_QUERY_FORMAT,ifmt);
     if(rval == CONTROL_TRUE) return ifmt;
     rval=-1;
     for(i=0;i<sizeof(cvt_list)/sizeof(fmt_cvt_t);i++)
@@ -99,7 +101,7 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
     for(j=0;j<20;j++)
     {
 	if(cvt_list[i].cvt_fourcc[j]==0) break;
-	rval=ao_control(AOCONTROL_QUERY_FORMAT,cvt_list[i].cvt_fourcc[j]);
+	rval=ao_control(ao_data,AOCONTROL_QUERY_FORMAT,cvt_list[i].cvt_fourcc[j]);
 	if(rval == CONTROL_TRUE) return cvt_list[i].cvt_fourcc[j];
     }
     return AFMT_S16_LE;
