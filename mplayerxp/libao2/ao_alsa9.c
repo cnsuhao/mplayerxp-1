@@ -329,11 +329,11 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 
     MSG_V("alsa-init: compiled for ALSA-%s\n", SND_LIB_VERSION_STR);
 
-    if (ao_subdevice) {
+    if (ao->subdevice) {
 	const char *param;
 	char *p;
 	// example: -ao alsa:hw:0#mmap=1
-	param=mrl_parse_line(ao_subdevice,NULL,NULL,&alsa_dev,&alsa_port);
+	param=mrl_parse_line(ao->subdevice,NULL,NULL,&alsa_dev,&alsa_port);
 	mrl_parse_params(param,alsaconf);
 	if(alsa_port) {
 	    p=strchr(alsa_port,',');
@@ -347,7 +347,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 	    if(alsa_port) snprintf(alsa_device,sizeof(alsa_device),"%s:%s",alsa_dev,alsa_port);
 	    else	  strncpy(alsa_device,alsa_dev,sizeof(alsa_device));
 	    MSG_V("alsa-init: soundcard set to %s\n", alsa_device);
-	} //end parsing ao_subdevice
+	} //end parsing ao->subdevice
     }
 
     if ((err = snd_card_next(&cards)) < 0 || cards < 0) {

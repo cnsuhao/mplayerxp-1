@@ -124,7 +124,7 @@ static int configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned fo
   const opt_t subopts[] = {
     {NULL}
   };
-  if (subopt_parse(ao_subdevice, subopts) != 0) {
+  if (subopt_parse(ao->subdevice, subopts) != 0) {
     print_help();
     return 0;
   }

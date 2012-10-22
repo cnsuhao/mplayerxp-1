@@ -7,9 +7,6 @@
 #include "afmt.h"
 #include "ao_msg.h"
 
-// there are some globals:
-char *ao_subdevice = NULL;
-
 extern const ao_functions_t audio_out_wav;
 extern const ao_functions_t audio_out_null;
 #ifdef USE_OSS_AUDIO

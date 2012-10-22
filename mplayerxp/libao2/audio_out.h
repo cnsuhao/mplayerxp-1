@@ -13,6 +13,7 @@ typedef struct ao_info_s
 /** Global data used by mplayerxp and plugins */
 typedef struct ao_data_s
 {
+  char*		subdevice;
   unsigned	samplerate;	/**< rate of samples in Hz */
   unsigned	channels;	/**< number of audio channels */
   unsigned	format;		/**< format of audio samples */
@@ -77,8 +78,6 @@ typedef struct ao_functions_s
 	void (*resume)(ao_data_t*);
 } ao_functions_t;
 
-
-extern char *ao_subdevice;
 extern const ao_functions_t* audio_out_drivers[]; /**< NULL terminated array of all drivers */
 
 #define CONTROL_OK 1

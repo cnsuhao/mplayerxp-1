@@ -166,7 +166,7 @@ static int init(ao_data_t* ao,unsigned flags)
     priv_t*priv=ao->priv;
     memset(priv,0,sizeof(priv_t));
     priv->fd=priv->play_fd=-1;
-    char *server = ao_subdevice;  /* NULL for localhost */
+    char *server = ao->subdevice;  /* NULL for localhost */
     UNUSED(flags);
     if (priv->fd < 0) {
 	priv->fd = esd_open_sound(server);
@@ -181,7 +181,7 @@ static int init(ao_data_t* ao,unsigned flags)
 static int configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
 {
     priv_t*priv=ao->priv;
-    char *server = ao_subdevice;  /* NULL for localhost */
+    char *server = ao->subdevice;  /* NULL for localhost */
     esd_format_t esd_fmt;
     int bytes_per_sample;
     int fl;

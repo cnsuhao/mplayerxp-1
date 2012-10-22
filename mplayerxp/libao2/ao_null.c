@@ -111,13 +111,13 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
     memset(priv,0,sizeof(priv_t));
     char *null_dev=NULL,*mode=NULL;
     UNUSED(flags);
-    if (ao_subdevice) {
-	mrl_parse_line(ao_subdevice,NULL,NULL,&null_dev,&mode);
+    if (ao->subdevice) {
+	mrl_parse_line(ao->subdevice,NULL,NULL,&null_dev,&mode);
 	priv->fd=NULL;
 	if(null_dev) priv->fd = fopen(null_dev, "wb");
 	//if(priv->fd) priv->fast_mode=1;
 	if(strcmp(mode,"wav")==0) priv->wav_mode=1;
-    } //end parsing ao_subdevice
+    } //end parsing ao->subdevice
     return 1;
 }
 

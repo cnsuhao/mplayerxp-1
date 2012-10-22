@@ -152,8 +152,8 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 	/* Allocate ring-priv->buffer memory */
 	for(i=0;i<NUM_BUFS;i++) priv->buffer[i]=(unsigned char *) malloc(BUFFSIZE);
 
-	if(ao_subdevice) {
-		setenv("SDL_AUDIODRIVER", ao_subdevice, 1);
+	if(ao->subdevice) {
+		setenv("SDL_AUDIODRIVER", ao->subdevice, 1);
 	}
 	ao->priv=malloc(sizeof(priv_t));
 	memset(ao->priv,0,sizeof(priv_t));

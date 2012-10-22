@@ -1711,9 +1711,9 @@ static void mpxp_init_output_subsystems(void) {
 
 	    if (audio_driver[i] == ':')
 	    {
-		ao_subdevice = malloc(i2-i);
-		if (ao_subdevice != NULL)
-		    strncpy(ao_subdevice, (char *)(audio_driver+i+1), i2-i);
+		ao_data->subdevice = malloc(i2-i);
+		if (ao_data->subdevice != NULL)
+		    strncpy(ao_data->subdevice, (char *)(audio_driver+i+1), i2-i);
 		audio_driver[i] = '\0';
 	    }
 	}

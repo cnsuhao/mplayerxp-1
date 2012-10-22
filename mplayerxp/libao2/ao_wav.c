@@ -109,7 +109,7 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
     unsigned bits;
     char str[256];
 
-    if(ao_subdevice)	priv->out_filename = ao_subdevice;
+    if(ao->subdevice)	priv->out_filename = ao->subdevice;
     else		priv->out_filename = strdup("mpxp_adump.wav");
 
     bits=8;

@@ -240,7 +240,7 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
   priv->estimate = 1;
   UNUSED(format);
 /*
-  if (subopt_parse(ao_subdevice, subopts) != 0) {
+  if (subopt_parse(ao->subdevice, subopts) != 0) {
     print_help();
     return 0;
   }
@@ -266,7 +266,7 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
   // list matching priv->ports
   if (!port_name)
     port_flags |= JackPortIsPhysical;
-  matching_ports = jack_get_ports(priv->client, ao_subdevice, NULL, port_flags);
+  matching_ports = jack_get_ports(priv->client, ao->subdevice, NULL, port_flags);
   if (!matching_ports || !matching_ports[0]) {
     MSG_FATAL("[JACK] no physical priv->ports available\n");
     goto err_out;

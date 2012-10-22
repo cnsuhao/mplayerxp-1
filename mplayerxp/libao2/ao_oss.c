@@ -35,6 +35,7 @@ typedef struct priv_s {
     int			mixer_channel;
     int			fd;
     audio_buf_info	zz;
+    int			delay_method;
 }priv_t;
 
 const char *oss_mixer_device = PATH_DEV_MIXER;
@@ -97,7 +98,7 @@ static int __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 
 	    if(ao->format == AFMT_AC3)
 		return CONTROL_TRUE;
-    
+
 	    if ((fd = open(oss_mixer_device, O_RDONLY)) > 0)
 	    {
 		ioctl(fd, SOUND_MIXER_READ_DEVMASK, &devs);
@@ -188,7 +189,7 @@ static void show_caps(ao_data_t* ao)
 	if(rval & DSP_CAP_MMAP) MSG_INFO("mmap ");
 	if(rval & DSP_CAP_MULTI) MSG_INFO("multiopen ");
 	if(rval & DSP_CAP_BIND) MSG_INFO("bind ");
-	MSG_INFO("\n");	
+	MSG_INFO("\n");
   }
   close(priv->fd);
 }
@@ -203,11 +204,12 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
   priv->dsp=PATH_DEV_DSP;
   priv->mixer_channel=SOUND_MIXER_PCM;
   priv->fd=-1;
-  if (ao_subdevice)
+  priv->delay_method=2;
+  if (ao->subdevice)
   {
     char *p;
-    p=strrchr(ao_subdevice,':');
-    priv->dsp = ao_subdevice;
+    p=strrchr(ao->subdevice,':');
+    priv->dsp = ao->subdevice;
     if(p) { *p=0; p++;  if(strcmp(p,"-1")==0) { show_caps(ao); return 0; } }
   }
 
@@ -439,14 +441,12 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data,unsigned len,unsigne
     return len;
 }
 
-static int audio_delay_method=2;
-
 // return: delay in seconds between first and last sample in buffer
 static float get_delay(ao_data_t* ao){
     priv_t*priv=ao->priv;
   int ierr;
   /* Calculate how many bytes/second is sent out */
-  if(audio_delay_method==2){
+  if(priv->delay_method==2){
 #ifdef SNDCTL_DSP_GETODELAY
       int r=0;
       ierr=ioctl(priv->fd, SNDCTL_DSP_GETODELAY, &r);
@@ -455,16 +455,16 @@ static float get_delay(ao_data_t* ao){
          return ((float)r)/(float)ao->bps;
       }
 #endif
-      audio_delay_method=1; // fallback if not supported
+      priv->delay_method=1; // fallback if not supported
   }
-  if(audio_delay_method==1){
+  if(priv->delay_method==1){
       // SNDCTL_DSP_GETOSPACE
       ierr=ioctl(priv->fd, SNDCTL_DSP_GETOSPACE, &priv->zz);
       if(ierr!=-1)
       {
          return ((float)(ao->buffersize-priv->zz.bytes))/(float)ao->bps;
       }
-      audio_delay_method=0; // fallback if not supported
+      priv->delay_method=0; // fallback if not supported
   }
   return ((float)ao->buffersize)/(float)ao->bps;
 }
