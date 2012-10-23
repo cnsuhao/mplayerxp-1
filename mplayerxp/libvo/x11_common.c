@@ -59,6 +59,8 @@ typedef struct x11_priv_s {
 
     int			dpms_disabled;
     int			timeout_save;
+
+    vo_rect_t		prev;
 #ifdef HAVE_XINERAMA
     int			xinerama_x;
     int			xinerama_y;
@@ -793,14 +795,14 @@ void vo_x11_fullscreen( void )
  if ( !vo.fs )
   {
    vo.fs=VO_TRUE;
-   vo.prev=vo.dest;
+   priv.prev=vo.dest;
    vo.dest.x=0;  vo.dest.y=0; vo.dest.w=vo.screenwidth; vo.dest.h=vo.screenheight;
    vo_x11_decoration( vo.mDisplay,vo.window,0 );
   }
   else
    {
     vo.fs=VO_FALSE;
-    vo.dest=vo.prev;
+    vo.dest=priv.prev;
     vo_x11_decoration( vo.mDisplay,vo.window,1 );
    }
  vo_x11_sizehint( vo.dest.x,vo.dest.y,vo.dest.w,vo.dest.h );

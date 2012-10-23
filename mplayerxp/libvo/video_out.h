@@ -242,8 +242,6 @@ typedef struct vo_priv_s {
     vo_rect_t		dest;
     unsigned		dbpp;
 
-    vo_rect_t		prev;
-
     int			vsync;
     int			fs;
     int			fsmode;
