@@ -2603,6 +2603,7 @@ play_next_file:
 	MSG_ERR(MSGTR_CannotInitAO);
 	sh_audio=d_audio->sh=NULL;
     }
+    if(ao_subdevice) free(ao_subdevice);
 
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");

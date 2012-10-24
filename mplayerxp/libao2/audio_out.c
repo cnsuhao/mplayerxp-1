@@ -208,7 +208,7 @@ ao_data_t* __FASTCALL__ ao_init(unsigned flags,const char *subdevice)
     int retval;
     ao=malloc(sizeof(ao_data_t));
     memset(ao,0,sizeof(ao_data_t));
-    ao->subdevice=subdevice;
+    if(subdevice) ao->subdevice=strdup(subdevice);
     ao->outburst=OUTBURST;
     ao->buffersize=-1;
     retval = audio_out->init(ao,flags);
@@ -227,6 +227,7 @@ int __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsig
 void ao_uninit(ao_data_t*ao)
 {
     audio_out->uninit(ao);
+    if(ao->subdevice) free(ao->subdevice);
     free(ao);
     ao=NULL;
 }
