@@ -33,6 +33,7 @@
 #include "../postproc/swscale.h"
 #include "../postproc/vf.h"
 #include "../dec_ahead.h"
+#include "../my_malloc.h"
 #include "../mplayer.h"
 #include "fastmemcpy.h"
 #include "img_format.h"
@@ -180,7 +181,7 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     vo_conf.da_buffs=64;
     vo_conf.WinID=-1;
 
-    vo=malloc(sizeof(vo_data_t));
+    vo=random_malloc(sizeof(vo_data_t),1000);
     memset(vo,0,sizeof(vo_data_t));
     vo->window = None;
     vo->osd_progbar_type=-1;

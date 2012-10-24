@@ -1673,7 +1673,8 @@ static void mpxp_init_osd(void) {
     vo_init_osd();
 }
 
-static void mpxp_init_output_subsystems(void) {
+static char * mpxp_init_output_subsystems(void) {
+    char* rs=NULL;
     unsigned i;
     // check video_out driver name:
     if (video_driver)
@@ -1709,9 +1710,8 @@ static void mpxp_init_output_subsystems(void) {
 
 	    if (audio_driver[i] == ':')
 	    {
-		ao_data->subdevice = malloc(i2-i);
-		if (ao_data->subdevice != NULL)
-		    strncpy(ao_data->subdevice, (char *)(audio_driver+i+1), i2-i);
+		rs = malloc(i2-i);
+		if (rs != NULL)  strncpy(rs, (char *)(audio_driver+i+1), i2-i);
 		audio_driver[i] = '\0';
 	    }
 	}
@@ -1720,6 +1720,7 @@ static void mpxp_init_output_subsystems(void) {
 	MSG_FATAL(MSGTR_InvalidAOdriver,audio_driver);
 	exit_player(MSGTR_Exit_error);
     }
+    return rs;
 }
 
 static int mpxp_init_vobsub(const char *filename) {
@@ -2398,6 +2399,7 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
 int main(int argc,char* argv[], char *envp[]){
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
+    char *ao_subdevice;
     char* filename=NULL; //"MI2-Trailer.avi";
     int file_format=DEMUXER_TYPE_UNKNOWN;
 
@@ -2499,7 +2501,7 @@ play_next_file:
 	inited_flags|=INITED_GETCH2;
     }
 
-    mpxp_init_output_subsystems();
+    ao_subdevice=mpxp_init_output_subsystems();
     if(filename) MSG_OK(MSGTR_Playing, filename);
 
     forced_subs_only=mpxp_init_vobsub(filename);
@@ -2597,7 +2599,7 @@ play_next_file:
 	goto dump_file;
     }
 
-    if(!(ao_data=ao_init(0))) {
+    if(!(ao_data=ao_init(0,ao_subdevice))) {
 	MSG_ERR(MSGTR_CannotInitAO);
 	sh_audio=d_audio->sh=NULL;
     }

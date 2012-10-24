@@ -27,4 +27,7 @@ extern char *my_strdup(const char *src);
 #define free(a) my_free(a)
 #endif
 
+/* Randomizing memory objects makes memory exploits harder */
+extern any_t*	random_malloc(size_t __size,unsigned upper_rnd_limit);
+
 #endif

@@ -202,12 +202,13 @@ const ao_info_t* ao_get_info( void )
     return audio_out->info;
 }
 
-ao_data_t* __FASTCALL__ ao_init(unsigned flags)
+ao_data_t* __FASTCALL__ ao_init(unsigned flags,const char *subdevice)
 {
     ao_data_t* ao;
     int retval;
     ao=malloc(sizeof(ao_data_t));
     memset(ao,0,sizeof(ao_data_t));
+    ao->subdevice=subdevice;
     ao->outburst=OUTBURST;
     ao->buffersize=-1;
     retval = audio_out->init(ao,flags);

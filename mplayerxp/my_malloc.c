@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 any_t*my_malloc(size_t __size)
 {
@@ -100,6 +101,20 @@ char * my_strdup(const char *s)
 {
   any_t*a;
   a = my_malloc(strlen(s)+1);
-  strcpy(a,s); 
+  strcpy(a,s);
   return a;
+}
+
+any_t* random_malloc(size_t __size,unsigned rnd_limit)
+{
+    any_t* rb,*rnd_buff;
+    static int inited=0;
+    if(!inited) {
+	srand(time(NULL));
+	inited=1;
+    }
+    rnd_buff=malloc(rand()%rnd_limit);
+    rb = malloc(__size);
+    free(rnd_buff);
+    return rb;
 }

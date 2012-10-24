@@ -107,7 +107,7 @@ extern int		 __FASTCALL__ ao_format_bits(int format);
 extern void		ao_print_help( void );
 extern const ao_functions_t* __FASTCALL__ ao_register(const char *driver_name);
 extern const ao_info_t*	ao_get_info( void );
-extern ao_data_t*	 __FASTCALL__ ao_init(unsigned flags);
+extern ao_data_t*	 __FASTCALL__ ao_init(unsigned flags,const char *subdevice);
 extern int		 __FASTCALL__ ao_configure(ao_data_t* priv,unsigned rate,unsigned channels,unsigned format);
 extern void		ao_uninit(ao_data_t* priv);
 extern void		ao_reset(ao_data_t* priv);
