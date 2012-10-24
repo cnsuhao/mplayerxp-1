@@ -82,6 +82,9 @@ typedef struct {
 	int width;     /* [in:opt] image width */
 	int height;    /* [in:opt] image width */
 	any_t* handle; /* [out]	   decore context handle */
+/* ------- v1.3.x ------- */
+	int fourcc;     /* [in:opt] fourcc of the input video */
+	int num_threads;/* [in:opt] number of threads to use in decoder */
 } xvid_dec_create_t;
 
 /* colorspace values */
@@ -314,16 +317,16 @@ static int init(sh_video_t *sh){
 
 	/* Gather some information about the host library */
 	if((*xvid_global_ptr)(NULL, XVID_GBL_INFO, &xvid_gbl_info, NULL) < 0) {
-		MSG_INFO("xvid: could not get information about the library\n");
+		MSG_INFO("[XVID] could not get information about the library\n");
 	} else {
-		MSG_INFO("xvid: using library version %d.%d.%d (build %s)\n",
+		MSG_INFO("[XVID] using library version %d.%d.%d (build %s)\n",
 		       XVID_VERSION_MAJOR(xvid_gbl_info.actual_version),
 		       XVID_VERSION_MINOR(xvid_gbl_info.actual_version),
 		       XVID_VERSION_PATCH(xvid_gbl_info.actual_version),
 		       xvid_gbl_info.build);
 	}
 	if(xvid_gbl_info.actual_version < XVID_VERSION) {
-		MSG_ERR("xvid: please upgrade xvid library from %d.%d.%d to %d.%d.%d\n",
+		MSG_ERR("[XVID] please upgrade xvid library from %d.%d.%d to %d.%d.%d\n",
 		       XVID_VERSION_MAJOR(xvid_gbl_info.actual_version),
 		       XVID_VERSION_MINOR(xvid_gbl_info.actual_version),
 		       XVID_VERSION_PATCH(xvid_gbl_info.actual_version),
@@ -343,21 +346,24 @@ static int init(sh_video_t *sh){
 	 * if required. That allows this vd plugin to do resize on first
 	 * VOL encountered (don't trust containers' width and height) */
 	dec_p.width =
-	dec_p.height = 0;
+	dec_p.height= 0;
+	dec_p.fourcc= sh->format;
+	dec_p.num_threads=xvid_gbl_info.num_threads;
 
 	/* Get a decoder instance */
 	if((*xvid_decore_ptr)(0, XVID_DEC_CREATE, &dec_p, NULL)<0) {
-		MSG_ERR("XviD init failed\n");
+		MSG_ERR("[XVID] init failed\n");
 		return 0;
 	}
 
 	if((*xvid_global_ptr)(NULL, XVID_GBL_INFO, &xvid_gbl_info, NULL))
 		return(0);
-	MSG_INFO("xvid: using %u cpus/threads. Flags: %08X\n"
+	MSG_INFO("[XVID] using %u cpus/threads. Flags: %08X\n"
 		,xvid_gbl_info.num_threads
 		,xvid_gbl_info.cpu_flags);
 
 	p = malloc(sizeof(priv_t));
+	memset(p,0,sizeof(priv_t));
 	p->cs = cs;
 	p->hdl = dec_p.handle;
 	p->vo_initialized = 0;
