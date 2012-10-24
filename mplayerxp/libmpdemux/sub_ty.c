@@ -20,6 +20,8 @@
 #include "../libvo/video_out.h"
 #include "demux_msg.h"
 
+extern vo_data_t* vo_data;
+
 extern int sub_justify;
 
 #define TY_TEXT_MODE        ( 1 << 0 )
@@ -894,7 +896,7 @@ void ty_processuserdata(const unsigned char* buf, int len )
 			// {
          //    printf( "OSD:%d:%s\n", index, ty_OSD1.text[ index ] );
          // }
-		   vo.sub = &ty_OSD1;
+		   vo_data->sub = &ty_OSD1;
 		vo_osd_changed( OSDTYPE_SUBTITLE );
 			tyOSDUpdate = 0;
 		}

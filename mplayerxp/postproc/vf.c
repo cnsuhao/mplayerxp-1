@@ -19,6 +19,8 @@
 #include "codec-cfg.h"
 #include "pp_msg.h"
 
+extern vo_data_t* vo_data;
+
 extern const vf_info_t vf_info_1bpp;
 extern const vf_info_t vf_info_2xsai;
 extern const vf_info_t vf_info_aspect;
@@ -631,7 +633,7 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
 	    _this->dh=h;
 	    _this->dfourcc=fmt;
 	    if(reset_cache) mpxp_reset_vcache();
-	    vo_reset();
+	    vo_reset(vo_data);
 	}
     }
     _this=sh_video->vfilter;

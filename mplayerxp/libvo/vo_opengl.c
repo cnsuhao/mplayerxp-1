@@ -64,7 +64,7 @@ static const vo_info_t vo_info =
 
 const LIBVO_EXTERN(opengl)
 
-typedef struct vogl_priv_s {
+typedef struct priv_s {
     uint32_t		image_width;
     uint32_t		image_height;
     uint32_t		image_format;
@@ -77,12 +77,11 @@ typedef struct vogl_priv_s {
     unsigned		num_buffers; // 1 - default
     any_t*		glx_context;
     uint32_t		gl_out_format,out_format;
-}vogl_priv_t;
-static vogl_priv_t vogl;
+}priv_t;
 
-
-static const vo_info_t *get_info(void)
+static const vo_info_t *get_info(vo_data_t*vo)
 {
+    UNUSED(vo);
     return(&vo_info);
 }
 
@@ -97,10 +96,11 @@ static XVisualInfo *get_visual_info(Display *dpy, Window win)
     return XGetVisualInfo(dpy, VisualIDMask, &vi_template, &dummy);
 }
 
-static void gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height)
+static void gl_init_fb(vo_data_t*vo,unsigned x,unsigned y,unsigned d_width,unsigned d_height)
 {
-    float sx = (GLfloat) (d_width-x) / (GLfloat)vogl.image_width;
-    float sy = (GLfloat) (d_height-y) / (GLfloat)vogl.image_height;
+    priv_t*priv=(priv_t*)vo->priv;
+    float sx = (GLfloat) (d_width-x) / (GLfloat)priv->image_width;
+    float sy = (GLfloat) (d_height-y) / (GLfloat)priv->image_height;
 
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
@@ -130,190 +130,178 @@ static void gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height)
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     glRasterPos2i(x, y);
-    glPixelZoom(sx,vo.flip?sy:-sy);
+    glPixelZoom(sx,VO_FLIP(vo)?sy:-sy);
 }
 
-static void resize(int x,int y){
-  MSG_V("[gl] Resize: %dx%d\n",x,y);
-  if (vo.WinID >= 0) {
-    unsigned top = 0, left = 0, w = x, h = y;
-    aspect(&w,&h,A_ZOOM);
-    left=( vo.screenwidth - (vogl.dwidth > vo.screenwidth?vo.screenwidth:vogl.dwidth) ) / 2;
-    top=( vo.screenheight - (vogl.dheight > vo.screenheight?vo.screenheight:vogl.dheight) ) / 2;
-    w=(vogl.dwidth > vo.screenwidth?vo.screenwidth:vogl.dwidth);
-    h=(vogl.dheight > vo.screenheight?vo.screenheight:vogl.dheight);
-    gl_init_fb(left,top,w,h);
-  } else
-  gl_init_fb( 0, 0, x, y );
-  glClear(GL_COLOR_BUFFER_BIT);
+static void resize(vo_data_t*vo,int x,int y){
+    priv_t*priv=(priv_t*)vo->priv;
+    MSG_V("[gl] Resize: %dx%d\n",x,y);
+    if (vo_conf.WinID >= 0) {
+	unsigned top = 0, left = 0, w = x, h = y;
+	aspect(&w,&h,A_ZOOM);
+	left=( vo_conf.screenwidth - (priv->dwidth > vo_conf.screenwidth?vo_conf.screenwidth:priv->dwidth) ) / 2;
+	top=( vo_conf.screenheight - (priv->dheight > vo_conf.screenheight?vo_conf.screenheight:priv->dheight) ) / 2;
+	w=(priv->dwidth > vo_conf.screenwidth?vo_conf.screenwidth:priv->dwidth);
+	h=(priv->dheight > vo_conf.screenheight?vo_conf.screenheight:priv->dheight);
+	gl_init_fb(vo,left,top,w,h);
+    } else gl_init_fb(vo, 0, 0, x, y );
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 /* connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
 {
- int is_bgr;
- char *hello = (title == NULL) ? "Glx render" : title;
- XSizeHints hint;
+    priv_t*priv=(priv_t*)vo->priv;
+    int is_bgr;
+    char *hello = (title == NULL) ? "Glx render" : title;
+    XSizeHints hint;
 
- XGCValues xgcv;
- XSetWindowAttributes xswa;
- unsigned long xswamask,i;
-#ifdef HAVE_XF86VM
- int vm=0;
-#endif
+    XGCValues xgcv;
+    XSetWindowAttributes xswa;
+    unsigned long xswamask,i;
 
- UNUSED(info);
- aspect_save_orig(width,height);
- aspect_save_prescale(d_width,d_height);
+    UNUSED(info);
+    aspect_save_orig(width,height);
+    aspect_save_prescale(d_width,d_height);
 
- vogl.image_height = height;
- vogl.image_width = width;
- vogl.image_format=format;
+    priv->image_height = height;
+    priv->image_width = width;
+    priv->image_format=format;
 
- vo.fs=flags&VOFLAG_FULLSCREEN;
- vo.softzoom=flags&VOFLAG_SWSCALE;
- if ( vo.fs )
-  { vo.dest.w=d_width; vo.dest.h=d_height; }
+    if ( VO_FS(vo) ) { vo->dest.w=d_width; vo->dest.h=d_height; }
 
-#ifdef HAVE_XF86VM
- if( flags&0x02 ) vm = 1;
-#endif
- vo.flip=flags&VOFLAG_FLIPPING;
- vogl.num_buffers=vo.da_buffs;
+    priv->num_buffers=vo_conf.da_buffs;
 
+    aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
+    aspect(&d_width,&d_height,VO_ZOOM(vo)?A_ZOOM:A_NOZOOM);
+    vo_x11_calcpos(vo,&hint,d_width,d_height,flags);
+    hint.flags = PPosition | PSize;
 
- aspect_save_screenres(vo.screenwidth,vo.screenheight);
- aspect(&d_width,&d_height,vo.softzoom?A_ZOOM:A_NOZOOM);
-  if( vo.fs ) aspect(&d_width,&d_height,A_ZOOM);
-   vo_x11_calcpos(&hint,d_width,d_height,flags);
-   hint.flags = PPosition | PSize;
+    priv->dwidth=d_width; priv->dheight=d_height; //XXX: what are the copy vars used for?
 
-   vogl.dwidth=d_width; vogl.dheight=d_height; //XXX: what are the copy vars used for?
+    XGetWindowAttributes(vo->mDisplay, DefaultRootWindow(vo->mDisplay), &priv->attribs);
+    priv->depth=priv->attribs.depth;
+    if (priv->depth != 15 && priv->depth != 16 && priv->depth != 24 && priv->depth != 32) priv->depth = 24;
+    XMatchVisualInfo(vo->mDisplay, vo->mScreen, priv->depth, TrueColor, &priv->vinfo);
 
-   XGetWindowAttributes(vo.mDisplay, DefaultRootWindow(vo.mDisplay), &vogl.attribs);
-   vogl.depth=vogl.attribs.depth;
-   if (vogl.depth != 15 && vogl.depth != 16 && vogl.depth != 24 && vogl.depth != 32) vogl.depth = 24;
-   XMatchVisualInfo(vo.mDisplay, vo.mScreen, vogl.depth, TrueColor, &vogl.vinfo);
+    xswa.background_pixel = 0;
+    xswa.border_pixel     = 0;
+    xswamask = CWBackPixel | CWBorderPixel;
 
-   xswa.background_pixel = 0;
-   xswa.border_pixel     = 0;
-   xswamask = CWBackPixel | CWBorderPixel;
-
-    if ( vo.WinID>=0 ){
-      vo.window = vo.WinID ? ((Window)vo.WinID) : RootWindow(vo.mDisplay,vo.mScreen);
-      XUnmapWindow( vo.mDisplay,vo.window );
-      XChangeWindowAttributes( vo.mDisplay,vo.window,xswamask,&xswa );
+    if ( vo_conf.WinID>=0 ) {
+	vo->window = vo_conf.WinID ? ((Window)vo_conf.WinID) : RootWindow(vo->mDisplay,vo->mScreen);
+	XUnmapWindow( vo->mDisplay,vo->window );
+	XChangeWindowAttributes( vo->mDisplay,vo->window,xswamask,&xswa );
     } else
+	vo->window = XCreateWindow( vo->mDisplay, RootWindow(vo->mDisplay,vo->mScreen),
+				    hint.x, hint.y, hint.width, hint.height,
+				    0, priv->depth,CopyFromParent,priv->vinfo.visual,xswamask,&xswa);
 
-   vo.window = XCreateWindow(vo.mDisplay, RootWindow(vo.mDisplay,vo.mScreen),
-       hint.x, hint.y, hint.width, hint.height,
-       0, vogl.depth,CopyFromParent,vogl.vinfo.visual,xswamask,&xswa);
+    vo_x11_classhint( vo->mDisplay,vo->window,"opengl" );
+    vo_x11_hidecursor(vo->mDisplay,vo->window);
 
-   vo_x11_classhint( vo.mDisplay,vo.window,"opengl" );
-   vo_x11_hidecursor(vo.mDisplay,vo.window);
-
-   XSelectInput(vo.mDisplay, vo.window, StructureNotifyMask | KeyPressMask |
-	((vo.WinID==0) ? 0 : (PointerMotionMask
+    XSelectInput(vo->mDisplay, vo->window, StructureNotifyMask | KeyPressMask |
+		((vo_conf.WinID==0) ? 0 : (PointerMotionMask
 		| ButtonPressMask | ButtonReleaseMask )));
-   XSetStandardProperties(vo.mDisplay, vo.window, hello, hello, None, NULL, 0, &hint);
-   if ( vo.fs ) vo_x11_decoration( vo.mDisplay,vo.window,0 );
-   XMapWindow(vo.mDisplay, vo.window);
+    XSetStandardProperties(vo->mDisplay, vo->window, hello, hello, None, NULL, 0, &hint);
+    if ( VO_FS(vo) ) vo_x11_decoration(vo, vo->mDisplay,vo->window,0 );
+    XMapWindow(vo->mDisplay, vo->window);
 #ifdef HAVE_XINERAMA
-   vo_x11_xinerama_move(vo.mDisplay,vo.window,&hint);
+    vo_x11_xinerama_move(vo,vo->mDisplay,vo->window,&hint);
 #endif
-   vo.gc = XCreateGC(vo.mDisplay, vo.window, 0L, &xgcv);
-   XFlush(vo.mDisplay);
-   XSync(vo.mDisplay, False);
+    vo->gc = XCreateGC(vo->mDisplay, vo->window, 0L, &xgcv);
+    XFlush(vo->mDisplay);
+    XSync(vo->mDisplay, False);
 #ifdef HAVE_XF86VM
-    if ( vm )
-     {
-      /* Grab the mouse pointer in our window */
-      XGrabPointer(vo.mDisplay, vo.window, True, 0,
-                   GrabModeAsync, GrabModeAsync,
-                   vo.window, None, CurrentTime);
-      XSetInputFocus(vo.mDisplay, vo.window, RevertToNone, CurrentTime);
-     }
+    if ( VO_VM(vo) ) {
+	/* Grab the mouse pointer in our window */
+	XGrabPointer(   vo->mDisplay, vo->window, True, 0,
+			GrabModeAsync, GrabModeAsync,
+			vo->window, None, CurrentTime);
+	XSetInputFocus(vo->mDisplay, vo->window, RevertToNone, CurrentTime);
+    }
 #endif
-
 #ifdef GL_WIN32
-  if (!vo_w32_config(d_width, d_height, flags))
-    return -1;
+    if (!vo_w32_config(d_width, d_height, flags)) return -1;
 #else
-  {
-    XVisualInfo *vi;
-    vi = get_visual_info(vo.mDisplay, vo.window);
-    if (vi == NULL) {
-	MSG_ERR("[vo_oengl]: Can't get XVisualInfo\n");
-	return -1;
+    {
+	XVisualInfo *vi;
+	vi = get_visual_info(vo->mDisplay, vo->window);
+	if (vi == NULL) {
+	    MSG_ERR("[vo_oengl]: Can't get XVisualInfo\n");
+	    return -1;
+	}
+	priv->glx_context = glXCreateContext(vo->mDisplay, vi, NULL, True);
+	XFree(vi);
+	if (priv->glx_context == NULL) {
+	    MSG_ERR("[vo_oengl]: Can't create GLX context\n");
+	    return -1;
+	}
+	if (!glXMakeCurrent(vo->mDisplay, vo->window, priv->glx_context)) {
+	    MSG_ERR("[vo_oengl]: Can't make GLX context current\n");
+	    return -1;
+	}
     }
-    vogl.glx_context = glXCreateContext(vo.mDisplay, vi, NULL, True);
-    XFree(vi);
-    if (vogl.glx_context == NULL) {
-	MSG_ERR("[vo_oengl]: Can't create GLX context\n");
-	return -1;
-    }
-    if (!glXMakeCurrent(vo.mDisplay, vo.window, vogl.glx_context)) {
-	MSG_ERR("[vo_oengl]: Can't make GLX context current\n");
-	return -1;
-    }
-  }
 #endif
-    gl_init_fb(0,0,d_width,d_height);
+    gl_init_fb(vo,0,0,d_width,d_height);
     /* allocate multibuffers */
-    for(i=0;i<vogl.num_buffers;i++) vo_x11_getMyXImage(i,vogl.vinfo.visual,vogl.depth,vogl.image_width,vogl.image_height);
+    for(i=0;i<priv->num_buffers;i++) vo_x11_getMyXImage(vo,i,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
 
-    vogl.out_mode=GL_RGB;
-    is_bgr=(vo_x11_myximage[0]->blue_mask&0x01)!=0;
-    switch ((vogl.bpp=vo_x11_myximage[0]->bits_per_pixel)){
-	case 32:vogl.out_mode=GL_RGBA;
-		vogl.gl_out_format=is_bgr?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_INT_8_8_8_8;
-		vogl.out_format = IMGFMT_RGB32;
+    priv->out_mode=GL_RGB;
+    XImage *ximg=vo_x11_Image(vo,0);
+    is_bgr=(ximg->blue_mask&0x01)!=0;
+    switch ((priv->bpp=ximg->bits_per_pixel)){
+	case 32:priv->out_mode=GL_RGBA;
+		priv->gl_out_format=is_bgr?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_INT_8_8_8_8;
+		priv->out_format = IMGFMT_RGB32;
 		break;
-	case 24:vogl.gl_out_format=is_bgr?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_INT_8_8_8_8;
-		vogl.out_format = IMGFMT_RGB24;
+	case 24:priv->gl_out_format=is_bgr?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_INT_8_8_8_8;
+		priv->out_format = IMGFMT_RGB24;
 		break;
-	case 15:vogl.gl_out_format=is_bgr?GL_UNSIGNED_SHORT_1_5_5_5_REV:GL_UNSIGNED_SHORT_5_5_5_1;
-		vogl.out_format = IMGFMT_RGB15;
+	case 15:priv->gl_out_format=is_bgr?GL_UNSIGNED_SHORT_1_5_5_5_REV:GL_UNSIGNED_SHORT_5_5_5_1;
+		priv->out_format = IMGFMT_RGB15;
 		break;
-	case 16:vogl.gl_out_format=is_bgr?GL_UNSIGNED_SHORT_5_6_5_REV:GL_UNSIGNED_SHORT_5_6_5;
-		vogl.out_format = IMGFMT_RGB16;
+	case 16:priv->gl_out_format=is_bgr?GL_UNSIGNED_SHORT_5_6_5_REV:GL_UNSIGNED_SHORT_5_6_5;
+		priv->out_format = IMGFMT_RGB16;
 		break;
 	default: break;
     }
-    saver_off(vo.mDisplay);
-  return 0;
+    saver_off(vo,vo->mDisplay);
+    return 0;
 }
 
-static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
+static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
-    int e=vo_x11_check_events(vo.mDisplay,adjust_size);
-    if(e&VO_EVENT_RESIZE) resize(vo.dest.w,vo.dest.h);
+    int e=vo_x11_check_events(vo,vo->mDisplay,adjust_size);
+    if(e&VO_EVENT_RESIZE) resize(vo,vo->dest.w,vo->dest.h);
     return e|VO_EVENT_FORCE_UPDATE;
 }
 
-static void __FASTCALL__ gl_display_Image( XImage *myximage )
+static void __FASTCALL__ gl_display_Image(vo_data_t*vo,XImage *myximage )
 {
-    glDrawPixels(vogl.image_width,
-		vogl.image_height,
-		vogl.out_mode,
-		vogl.gl_out_format,
+    priv_t*priv=(priv_t*)vo->priv;
+    glDrawPixels(priv->image_width,
+		priv->image_height,
+		priv->out_mode,
+		priv->gl_out_format,
 		myximage->data);
 }
 
-static void select_frame(unsigned idx) {
- gl_display_Image( vo_x11_myximage[idx] );
- if (vogl.num_buffers>1) glXSwapBuffers(vo.mDisplay, vo.window);
- glFlush();
- return;
+static void select_frame(vo_data_t*vo,unsigned idx) {
+    priv_t*priv=(priv_t*)vo->priv;
+
+    gl_display_Image(vo,vo_x11_Image(vo,idx));
+    if (priv->num_buffers>1) glXSwapBuffers(vo->mDisplay, vo->window);
+    glFlush();
+    return;
 }
 
 static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
 {
     MSG_DBG2("vo_opengl: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
-    if((IMGFMT_IS_BGR(format->fourcc)||IMGFMT_IS_RGB(format->fourcc))&&rgbfmt_depth(format->fourcc)<48)
-    {
+    if((IMGFMT_IS_BGR(format->fourcc)||IMGFMT_IS_RGB(format->fourcc))&&rgbfmt_depth(format->fourcc)<48) {
 	MSG_DBG2("vo_opengl: OK\n");
 	return  VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP |
 		VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN;
@@ -323,81 +311,87 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
 }
 
 
-static void
-uninit(void)
+static void uninit(vo_data_t*vo)
 {
-  unsigned i;
+    priv_t*priv=(priv_t*)vo->priv;
+    unsigned i;
 //  if (!vo_config_count) return;
-  glFinish();
-  glXMakeCurrent(vo.mDisplay, None, NULL);
-  glXDestroyContext(vo.mDisplay, vogl.glx_context);
-  for(i=0;i<vogl.num_buffers;i++)  vo_x11_freeMyXImage(i);
-  saver_on(vo.mDisplay); // screen saver back on
+    glFinish();
+    glXMakeCurrent(vo->mDisplay, None, NULL);
+    glXDestroyContext(vo->mDisplay, priv->glx_context);
+    for(i=0;i<priv->num_buffers;i++)  vo_x11_freeMyXImage(vo,i);
+    saver_on(vo,vo->mDisplay); // screen saver back on
 #ifdef HAVE_XF86VM
-  vo_vm_close(vo.mDisplay);
+    vo_vm_close(vo,vo->mDisplay);
 #endif
-  vo_x11_uninit(vo.mDisplay, vo.window);
+    vo_x11_uninit(vo,vo->mDisplay, vo->window);
+    free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(const char *arg)
+static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    memset(&vogl,0,sizeof(vogl_priv_t));
-    vogl.num_buffers=1;
+    vo->priv=malloc(sizeof(priv_t));
+    priv_t*priv=(priv_t*)vo->priv;
+    memset(priv,0,sizeof(priv_t));
+    priv->num_buffers=1;
     UNUSED(arg);
-    if (!vo_x11_init()) return -1;
+    if (!vo_x11_init(vo)) return -1;
     return 0;
 }
 
-static void __FASTCALL__ gl_dri_get_surface_caps(dri_surface_cap_t *caps)
+static void __FASTCALL__ gl_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
 {
+    priv_t*priv=(priv_t*)vo->priv;
     caps->caps =DRI_CAP_TEMP_VIDEO|
 		DRI_CAP_HORZSCALER|DRI_CAP_VERTSCALER|
 		DRI_CAP_DOWNSCALER|DRI_CAP_UPSCALER;
-    caps->fourcc = vogl.out_format;
-    caps->width=vogl.image_width;
-    caps->height=vogl.image_height;
+    caps->fourcc = priv->out_format;
+    caps->width=priv->image_width;
+    caps->height=priv->image_height;
     caps->x=0;
     caps->y=0;
-    caps->w=vogl.image_width;
-    caps->h=vogl.image_height;
-    caps->strides[0] = vogl.image_width*((vogl.bpp+7)/8);
+    caps->w=priv->image_width;
+    caps->h=priv->image_height;
+    caps->strides[0] = priv->image_width*((priv->bpp+7)/8);
     caps->strides[1] = 0;
     caps->strides[2] = 0;
     caps->strides[3] = 0;
 }
 
-static void __FASTCALL__ gl_dri_get_surface(dri_surface_t *surf)
+static void __FASTCALL__ gl_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 {
-    surf->planes[0] = vo_x11_ImageData(surf->idx);
+    priv_t*priv=(priv_t*)vo->priv;
+    UNUSED(priv);
+    surf->planes[0] = vo_x11_ImageData(vo,surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
 }
 
-static uint32_t control(uint32_t request, any_t*data)
+static uint32_t control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-  switch (request) {
-  case VOCTRL_QUERY_FORMAT:
-    return query_format((vo_query_fourcc_t*)data);
-  case VOCTRL_FULLSCREEN:
-    vo_fullscreen();
-    resize(vo.dest.w, vo.dest.h);
-    return VO_TRUE;
-  case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = vogl.num_buffers;
-	return VO_TRUE;
-  case DRI_GET_SURFACE_CAPS:
-	gl_dri_get_surface_caps(data);
-	return VO_TRUE;
-  case DRI_GET_SURFACE:
-	gl_dri_get_surface(data);
-	return VO_TRUE;
-  case VOCTRL_CHECK_EVENTS:
-    {
-     vo_resize_t * vrest = (vo_resize_t *)data;
-     vrest->event_type = check_events(vrest->adjust_size);
-     return VO_TRUE;
+    priv_t*priv=(priv_t*)vo->priv;
+    switch (request) {
+	case VOCTRL_QUERY_FORMAT:
+	    return query_format((vo_query_fourcc_t*)data);
+	case VOCTRL_FULLSCREEN:
+	    vo_fullscreen(vo);
+	    resize(vo,vo->dest.w, vo->dest.h);
+	    return VO_TRUE;
+	case VOCTRL_GET_NUM_FRAMES:
+	    *(uint32_t *)data = priv->num_buffers;
+	    return VO_TRUE;
+	case DRI_GET_SURFACE_CAPS:
+	    gl_dri_get_surface_caps(vo,data);
+	    return VO_TRUE;
+	case DRI_GET_SURFACE:
+	    gl_dri_get_surface(vo,data);
+	    return VO_TRUE;
+	case VOCTRL_CHECK_EVENTS: {
+	    vo_resize_t * vrest = (vo_resize_t *)data;
+	    vrest->event_type = check_events(vo,vrest->adjust_size);
+	    return VO_TRUE;
+	}
     }
-  }
-  return VO_NOTIMPL;
+    return VO_NOTIMPL;
 }

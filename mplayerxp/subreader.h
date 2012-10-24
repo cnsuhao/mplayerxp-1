@@ -35,7 +35,7 @@ extern char * sub_filename(const char *path,const char *fname);
 extern void list_sub_file(subtitle* subs);
 extern void dump_mpsub(subtitle* subs, float fps);
 extern void sub_free(subtitle* subs );
-extern void find_sub(subtitle* subtitles,unsigned long key);
+extern void find_sub(subtitle* subtitles,unsigned long key,any_t*vo_data);
 
 extern void subcp_open (void);
 extern void subcp_close (void);

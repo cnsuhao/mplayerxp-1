@@ -170,6 +170,8 @@ static volatile int a_pthread_end_of_work=0;
 static volatile int pthread_audio_end_of_work=0;
 
 int xp_is_bad_pts=0;
+
+extern vo_data_t* vo_data;
 /* this routine decodes video+audio but intends to be video only  */
 
 static void show_warn_cant_sync(float max_frame_delay) {
@@ -182,7 +184,7 @@ static void show_warn_cant_sync(float max_frame_delay) {
 		     "*********************************************\n"
 		     "Try increase number of buffer for decoding ahead\n"
 		     "Exist: %u, need: %u\n"
-		     ,xp_num_frames,(unsigned)(max_frame_delay*3*vo.fps)+3);
+		     ,xp_num_frames,(unsigned)(max_frame_delay*3*vo_data->fps)+3);
 	prev_warn_delay=max_frame_delay;
     }
 }
@@ -210,7 +212,7 @@ static unsigned compute_frame_dropping(float v_pts,float drop_barrier) {
     */
     delta=v_pts-xp_screen_pts;
     if(max_frame_delay*3 > drop_barrier) {
-	if(drop_barrier < (float)(xp_num_frames-2)/vo.fps) drop_barrier += 1/vo.fps;
+	if(drop_barrier < (float)(xp_num_frames-2)/vo_data->fps) drop_barrier += 1/vo_data->fps;
 	else
 	if(verbose) show_warn_cant_sync(max_frame_delay);
     }
@@ -287,7 +289,7 @@ any_t* Va_dec_ahead_routine( any_t* arg )
     dec_ahead_pth_id =
     pinfo[_xp_id].pth_id = pthread_self();
     pinfo[_xp_id].thread_name = (xp_core.has_audio && enable_xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
-    drop_barrier=(float)(xp_num_frames/2)*(1/vo.fps);
+    drop_barrier=(float)(xp_num_frames/2)*(1/vo_data->fps);
     if(av_sync_pts == -1 && !use_pts_fix2)
 	xp_is_bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
@@ -322,11 +324,9 @@ while(!xp_eof){
     }
 #endif
 /*--------------------  Decode a frame: -----------------------*/
-    in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,vo.fps);
+    in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,vo_data->fps);
     if(xp_core.in_lseek==Seek) {
 	pinfo[_xp_id].current_module = "Post seek";
-	/* reset counters */
-	dae_reset(xp_core.video);
 	if(xp_is_bad_pts) mpeg_timer=HUGE;
 	xp_core.in_lseek=NoSeek;
 	MSG_T("\nDEC_AHEAD: reset counters to (%u %u) due lseek\n",dec_ahead_locked_frame,abs_dec_ahead_locked_frame);
@@ -361,7 +361,7 @@ while(!xp_eof){
 	int cur_time;
 	cur_time = GetTimerMS();
 	/* Ugly solution: disable frame dropping right after seeking! */
-	if(cur_time - mpxp_seek_time > (xp_num_frames/vo.fps)*100) xp_n_frame_to_drop=compute_frame_dropping(v_pts,drop_barrier);
+	if(cur_time - mpxp_seek_time > (xp_num_frames/vo_data->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(v_pts,drop_barrier);
     } /* if( frame_dropping ) */
     if(xp_core.in_lseek!=NoSeek) continue;
 #if 0
@@ -598,7 +598,7 @@ int init_dec_ahead(sh_video_t *shv, sh_audio_t *sha)
     unsigned o_bps;
     unsigned min_reserv;
       o_bps=sh_audio->afilter_inited?sh_audio->af_bps:sh_audio->o_bps;
-      if(xp_core.has_video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_num_frames/vo.fps))+MIN_BUFFER_RESERV;
+      if(xp_core.has_video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_num_frames/vo_data->fps))+MIN_BUFFER_RESERV;
       else		asize = o_bps*ao_da_buffs;
       /* FIXME: get better indices from asize/real_audio_packet_size */
       min_reserv = sha->audio_out_minsize;
@@ -693,6 +693,10 @@ void dec_ahead_halt_threads(int is_reset_vcache)
 /* Restart threads after seek */
 void dec_ahead_restart_threads(int xp_id)
 {
+    /* reset counters */
+    dae_reset(xp_core.video);
+    /* tempoarry solution */
+    reset_audio_buffer();
     /* Ugly hack: but we should read audio packet before video after seeking.
        Else we'll get picture destortion on the screen */
     initial_audio_pts=HUGE;
@@ -752,7 +756,7 @@ int xp_thread_decode_audio()
     if(xp_core.has_video) {
 	/* Match video buffer */
 	vbuf_size = dae_get_decoder_outrun(xp_core.video);
-	pref_buf = vbuf_size / vo.fps * sh_audio->af_bps;
+	pref_buf = vbuf_size / vo_data->fps * sh_audio->af_bps;
 	pref_buf -= len;
 	if( pref_buf > 0 ) {
 	    len = min( pref_buf, free_buf );

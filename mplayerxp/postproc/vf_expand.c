@@ -13,12 +13,15 @@
 #include "../libvo/fastmemcpy.h"
 
 #ifdef OSD_SUPPORT
+#include "../libvo/video_out.h"
 #include "../libvo/sub.h"
 #include "../libvo/osd.h"
 #endif
 #include "pp_msg.h"
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
+
+extern vo_data_t* vo_data;
 
 struct vf_priv_s {
     int up_h,dn_h;
@@ -35,7 +38,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     vf->priv->w=width;
     vf->priv->h=height;
     if(vf->priv->dn_h==-1 || vf->priv->up_h==-1)
-	vf->priv->dn_h=vf->priv->up_h=(get_osd_height(OSD_PB_START,0)*4)/3;
+	vf->priv->dn_h=vf->priv->up_h=(get_osd_height(vo_data,OSD_PB_START,0)*4)/3;
     h=height+vf->priv->up_h+vf->priv->dn_h;
     dh=d_height+vf->priv->up_h+vf->priv->dn_h;
     return vf_next_config(vf,width,h,d_width,dh,flags,outfmt,tune);

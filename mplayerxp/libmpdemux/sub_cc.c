@@ -149,17 +149,18 @@ static void swap_buffers(void)
 	bb=foo;
 }
 
+extern vo_data_t* vo_data;
 static void display_buffer(const subtitle * buf)
 {
-	vo.sub=buf;
+	vo_data->sub=buf;
 	vo_osd_changed(OSDTYPE_SUBTITLE);
 }
 
 
 static void cc_decode_EIA608(unsigned short int data)
 {
-  
-  static unsigned short int lastcode=0x0000;	
+
+  static unsigned short int lastcode=0x0000;
   unsigned char c1 = data & 0x7f;
   unsigned char c2 = (data >> 8) & 0x7f;
 

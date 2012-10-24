@@ -767,7 +767,7 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data, unsigned len, unsig
 {
     unsigned result;
     UNUSED(flags);
-    MSG_DBG2("[ao_alsa] %s playing %i bytes\n",priv->ao_mmap?"mmap":"normal",len);
+    MSG_DBG2("[ao_alsa] %s playing %i bytes\n",priv_conf.mmap?"mmap":"normal",len);
     if (priv_conf.mmap)	result = play_mmap(ao,data, len);
     else		result = play_normal(ao,data, len);
     return result;

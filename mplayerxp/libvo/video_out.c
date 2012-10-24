@@ -43,8 +43,7 @@
 #include "sub.h"
 #include "vo_msg.h"
 
-vo_priv_t vo;
-static vo_format_desc vod;
+vo_conf_t vo_conf;
 
 //
 // Externally visible list of all vo drivers
@@ -127,37 +126,37 @@ typedef struct dri_priv_s {
     uint32_t		d_width,d_height;
     unsigned		off[4]; /* offsets for y,u,v if DR on non fully fitted surface */
 }dri_priv_t;
-static dri_priv_t dri;
 
-typedef struct vo_priv_data_s {
+typedef struct vo_priv_s {
     uint32_t			srcFourcc,image_format,image_width,image_height;
     uint32_t			org_width,org_height;
     unsigned			ps_off[4]; /* offsets for y,u,v in panscan mode */
     unsigned long long int	frame_counter;
     pthread_mutex_t		surfaces_mutex;
-}vo_priv_data_t;
-static vo_priv_data_t vo_data;
+    vo_format_desc		vod;
+    dri_priv_t			dri;
+}vo_priv_t;
 
-void vo_print_help( void )
+void vo_print_help(vo_data_t*vo)
 {
     unsigned i;
     MSG_INFO("Available video output drivers:\n");
     i=0;
     while (video_out_drivers[i]) {
-	const vo_info_t *info = video_out_drivers[i++]->get_info ();
+	const vo_info_t *info = video_out_drivers[i++]->get_info (vo);
 	MSG_INFO("\t%s\t%s\n", info->short_name, info->name);
     }
     MSG_INFO("\n");
 }
 
-const vo_functions_t *vo_register(const char *driver_name)
+const vo_functions_t *vo_register(vo_data_t*vo,const char *driver_name)
 {
   unsigned i;
   if(!driver_name)
     video_out=video_out_drivers[0];
   else
   for (i=0; video_out_drivers[i] != NULL; i++){
-    const vo_info_t *info = video_out_drivers[i]->get_info ();
+    const vo_info_t *info = video_out_drivers[i]->get_info (vo);
     if(strcmp(info->short_name,driver_name) == 0){
       video_out = video_out_drivers[i];break;
     }
@@ -165,34 +164,43 @@ const vo_functions_t *vo_register(const char *driver_name)
   return video_out;
 }
 
-const vo_info_t* vo_get_info( void )
+const vo_info_t* vo_get_info(vo_data_t*vo)
 {
-    return video_out->get_info();
+    return video_out->get_info(vo);
 }
 
-void __FASTCALL__ vo_preinit_structs( void )
+vo_data_t* __FASTCALL__ vo_preinit_structs( void )
 {
+    vo_data_t* vo;
     pthread_mutexattr_t attr;
-    memset(&dri,0,sizeof(dri_priv_t));
-    dri.num_xp_frames=1;
-    memset(&vo,0,sizeof(vo_priv_t));
-    vo.movie_aspect=-1.0;
-    vo.flip=-1;
-    vo.da_buffs=64;
-    vo.window = None;
-    vo.WinID=-1;
-    vo.osd_progbar_type=-1;
-    vo.osd_progbar_value=100;   // 0..256
-    memset(&vo_data,0,sizeof(vo_priv_data_t));
+
+    memset(&vo_conf,0,sizeof(vo_conf_t));
+    vo_conf.movie_aspect=-1.0;
+    vo_conf.flip=-1;
+    vo_conf.da_buffs=64;
+    vo_conf.WinID=-1;
+
+    vo=malloc(sizeof(vo_data_t));
+    memset(vo,0,sizeof(vo_data_t));
+    vo->window = None;
+    vo->osd_progbar_type=-1;
+    vo->osd_progbar_value=100;   // 0..256
+
+    vo->vo_priv=malloc(sizeof(vo_priv_t));
+    memset(vo->vo_priv,0,sizeof(vo_priv_t));
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     pthread_mutexattr_init(&attr);
-    pthread_mutex_init(&vo_data.surfaces_mutex,&attr);
+    pthread_mutex_init(&priv->surfaces_mutex,&attr);
+    priv->dri.num_xp_frames=1;
+    return vo;
 }
 
-int __FASTCALL__ vo_init(const char *subdevice)
+int __FASTCALL__ vo_init(vo_data_t*vo,const char *subdevice)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_init(%s)\n",subdevice);
-    vo_data.frame_counter=0;
-    return video_out->preinit(subdevice);
+    priv->frame_counter=0;
+    return video_out->preinit(vo,subdevice);
 }
 
 int __FASTCALL__ vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd)
@@ -260,137 +268,142 @@ int __FASTCALL__ vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd)
     return is_planar;
 }
 
-static void __FASTCALL__ dri_config(uint32_t fourcc)
+static void __FASTCALL__ dri_config(vo_data_t*vo,uint32_t fourcc)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     unsigned i;
-    dri.is_planar = vo_describe_fourcc(fourcc,&vod);
-    dri.bpp=vod.bpp;
-    if(!dri.bpp) dri.has_dri=0; /*unknown fourcc*/
-    if(dri.has_dri)
+    priv->dri.is_planar = vo_describe_fourcc(fourcc,&priv->vod);
+    priv->dri.bpp=priv->vod.bpp;
+    if(!priv->dri.bpp) priv->dri.has_dri=0; /*unknown fourcc*/
+    if(priv->dri.has_dri)
     {
-	video_out->control(VOCTRL_GET_NUM_FRAMES,&dri.num_xp_frames);
-	dri.num_xp_frames=min(dri.num_xp_frames,MAX_DRI_BUFFERS);
-	for(i=0;i<dri.num_xp_frames;i++)
+	video_out->control(vo,VOCTRL_GET_NUM_FRAMES,&priv->dri.num_xp_frames);
+	priv->dri.num_xp_frames=min(priv->dri.num_xp_frames,MAX_DRI_BUFFERS);
+	for(i=0;i<priv->dri.num_xp_frames;i++)
 	{
-	    dri.surf[i].idx=i;
-	    video_out->control(DRI_GET_SURFACE,&dri.surf[i]);
+	    priv->dri.surf[i].idx=i;
+	    video_out->control(vo,DRI_GET_SURFACE,&priv->dri.surf[i]);
 	}
     }
 }
 
-static void __FASTCALL__ ps_tune(unsigned width,unsigned height)
+static void __FASTCALL__ ps_tune(vo_data_t*vo,unsigned width,unsigned height)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     int src_is_planar;
     unsigned src_stride,ps_x,ps_y;
     vo_format_desc vd;
-    ps_x = (vo_data.org_width - width)/2;
-    ps_y = (vo_data.org_height - height)/2;
-    src_is_planar = vo_describe_fourcc(vo_data.srcFourcc,&vd);
-    src_stride=src_is_planar?vo_data.org_width:vo_data.org_width*((vd.bpp+7)/8);
-    vo_data.ps_off[0] = vo_data.ps_off[1] = vo_data.ps_off[2] = vo_data.ps_off[3] = 0;
+    ps_x = (priv->org_width - width)/2;
+    ps_y = (priv->org_height - height)/2;
+    src_is_planar = vo_describe_fourcc(priv->srcFourcc,&vd);
+    src_stride=src_is_planar?priv->org_width:priv->org_width*((vd.bpp+7)/8);
+    priv->ps_off[0] = priv->ps_off[1] = priv->ps_off[2] = priv->ps_off[3] = 0;
     if(!src_is_planar)
-	vo_data.ps_off[0] = ps_y*src_stride+ps_x*((vd.bpp+7)/8);
+	priv->ps_off[0] = ps_y*src_stride+ps_x*((vd.bpp+7)/8);
     else
     {
-	vo_data.ps_off[0] = ps_y*src_stride+ps_x;
+	priv->ps_off[0] = ps_y*src_stride+ps_x;
 	if(vd.bpp==12) /*YV12 series*/
 	{
-		vo_data.ps_off[1] = (ps_y/2)*(src_stride/2)+ps_x/2;
-		vo_data.ps_off[2] = (ps_y/2)*(src_stride/2)+ps_x/2;
+		priv->ps_off[1] = (ps_y/2)*(src_stride/2)+ps_x/2;
+		priv->ps_off[2] = (ps_y/2)*(src_stride/2)+ps_x/2;
 	}
 	else
 	if(vd.bpp==9) /*YVU9 series*/
 	{
-		vo_data.ps_off[1] = (ps_y/4)*(src_stride/4)+ps_x/4;
-		vo_data.ps_off[2] = (ps_y/4)*(src_stride/4)+ps_x/4;
+		priv->ps_off[1] = (ps_y/4)*(src_stride/4)+ps_x/4;
+		priv->ps_off[2] = (ps_y/4)*(src_stride/4)+ps_x/4;
 	}
     }
 }
 
-static void __FASTCALL__ dri_tune(unsigned width,unsigned height)
+static void __FASTCALL__ dri_tune(vo_data_t*vo,unsigned width,unsigned height)
 {
-    dri.sstride=dri.is_planar?width:width*((dri.bpp+7)/8);
-    dri.off[0] = dri.off[1] = dri.off[2] = dri.off[3] = 0;
-    if(!dri.is_planar)
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    priv->dri.sstride=priv->dri.is_planar?width:width*((priv->dri.bpp+7)/8);
+    priv->dri.off[0] = priv->dri.off[1] = priv->dri.off[2] = priv->dri.off[3] = 0;
+    if(!priv->dri.is_planar)
     {
-	dri.planes_eq = dri.sstride == dri.cap.strides[0];
-	dri.off[0] = dri.cap.y*dri.cap.strides[0]+dri.cap.x*((dri.bpp+7)/8);
+	priv->dri.planes_eq = priv->dri.sstride == priv->dri.cap.strides[0];
+	priv->dri.off[0] = priv->dri.cap.y*priv->dri.cap.strides[0]+priv->dri.cap.x*((priv->dri.bpp+7)/8);
     }
     else
     {
 	unsigned long y_off,u_off,v_off;
-	y_off = (unsigned long)dri.surf[0].planes[0];
-	u_off = (unsigned long)min(dri.surf[0].planes[1],dri.surf[0].planes[2]);
-	v_off = (unsigned long)max(dri.surf[0].planes[1],dri.surf[0].planes[2]);
-	dri.off[0] = dri.cap.y*dri.cap.strides[0]+dri.cap.x;
-	if(dri.bpp==12) /*YV12 series*/
+	y_off = (unsigned long)priv->dri.surf[0].planes[0];
+	u_off = (unsigned long)min(priv->dri.surf[0].planes[1],priv->dri.surf[0].planes[2]);
+	v_off = (unsigned long)max(priv->dri.surf[0].planes[1],priv->dri.surf[0].planes[2]);
+	priv->dri.off[0] = priv->dri.cap.y*priv->dri.cap.strides[0]+priv->dri.cap.x;
+	if(priv->dri.bpp==12) /*YV12 series*/
 	{
-		dri.planes_eq = width == dri.cap.strides[0] &&
+		priv->dri.planes_eq = width == priv->dri.cap.strides[0] &&
 			width*height == u_off - y_off &&
 			width*height*5/4 == v_off - y_off &&
-			dri.cap.strides[0]/2 == dri.cap.strides[1] &&
-			dri.cap.strides[0]/2 == dri.cap.strides[2];
-		dri.off[1] = (dri.cap.y/2)*dri.cap.strides[1]+dri.cap.x/2;
-		dri.off[2] = (dri.cap.y/2)*dri.cap.strides[2]+dri.cap.x/2;
+			priv->dri.cap.strides[0]/2 == priv->dri.cap.strides[1] &&
+			priv->dri.cap.strides[0]/2 == priv->dri.cap.strides[2];
+		priv->dri.off[1] = (priv->dri.cap.y/2)*priv->dri.cap.strides[1]+priv->dri.cap.x/2;
+		priv->dri.off[2] = (priv->dri.cap.y/2)*priv->dri.cap.strides[2]+priv->dri.cap.x/2;
 	}
 	else
-	if(dri.bpp==9) /*YVU9 series*/
+	if(priv->dri.bpp==9) /*YVU9 series*/
 	{
-		dri.planes_eq = width == dri.cap.strides[0] &&
+		priv->dri.planes_eq = width == priv->dri.cap.strides[0] &&
 			width*height == u_off - y_off &&
 			width*height*17/16 == v_off - y_off &&
-			dri.cap.strides[0]/4 == dri.cap.strides[1] &&
-			dri.cap.strides[0]/4 == dri.cap.strides[2];
-		dri.off[1] = (dri.cap.y/4)*dri.cap.strides[1]+dri.cap.x/4;
-		dri.off[2] = (dri.cap.y/4)*dri.cap.strides[2]+dri.cap.x/4;
+			priv->dri.cap.strides[0]/4 == priv->dri.cap.strides[1] &&
+			priv->dri.cap.strides[0]/4 == priv->dri.cap.strides[2];
+		priv->dri.off[1] = (priv->dri.cap.y/4)*priv->dri.cap.strides[1]+priv->dri.cap.x/4;
+		priv->dri.off[2] = (priv->dri.cap.y/4)*priv->dri.cap.strides[2]+priv->dri.cap.x/4;
 	}
 	else
-	if(dri.bpp==8) /*Y800 series*/
-		dri.planes_eq = width == dri.cap.strides[0];
+	if(priv->dri.bpp==8) /*Y800 series*/
+		priv->dri.planes_eq = width == priv->dri.cap.strides[0];
     }
-    dri.accel=(dri.cap.caps&(DRI_CAP_DOWNSCALER|DRI_CAP_HORZSCALER|
+    priv->dri.accel=(priv->dri.cap.caps&(DRI_CAP_DOWNSCALER|DRI_CAP_HORZSCALER|
 			    DRI_CAP_UPSCALER|DRI_CAP_VERTSCALER))==
 			    (DRI_CAP_DOWNSCALER|DRI_CAP_HORZSCALER|
 			    DRI_CAP_UPSCALER|DRI_CAP_VERTSCALER);
-    dri.dr = vo_data.srcFourcc == dri.cap.fourcc && !(dri.flags & VOFLG_FLIP) &&
-			    !vo_data.ps_off[0] && !vo_data.ps_off[1] && !vo_data.ps_off[2] && !vo_data.ps_off[3];
-    if(dri.dr && dri.cap.w < width)
-	dri.dr = dri.cap.caps&(DRI_CAP_DOWNSCALER|DRI_CAP_HORZSCALER)?1:0;
-    if(dri.dr && dri.cap.w > width)
-	dri.dr = dri.cap.caps&(DRI_CAP_UPSCALER|DRI_CAP_HORZSCALER)?1:0;
-    if(dri.dr && dri.cap.h < height)
-	dri.dr = dri.cap.caps&(DRI_CAP_DOWNSCALER|DRI_CAP_VERTSCALER)?1:0;
-    if(dri.dr && dri.cap.h > height)
-	dri.dr = dri.cap.caps&(DRI_CAP_UPSCALER|DRI_CAP_VERTSCALER)?1:0;
+    priv->dri.dr = priv->srcFourcc == priv->dri.cap.fourcc && !(priv->dri.flags & VOFLG_FLIP) &&
+			    !priv->ps_off[0] && !priv->ps_off[1] && !priv->ps_off[2] && !priv->ps_off[3];
+    if(priv->dri.dr && priv->dri.cap.w < width)
+	priv->dri.dr = priv->dri.cap.caps&(DRI_CAP_DOWNSCALER|DRI_CAP_HORZSCALER)?1:0;
+    if(priv->dri.dr && priv->dri.cap.w > width)
+	priv->dri.dr = priv->dri.cap.caps&(DRI_CAP_UPSCALER|DRI_CAP_HORZSCALER)?1:0;
+    if(priv->dri.dr && priv->dri.cap.h < height)
+	priv->dri.dr = priv->dri.cap.caps&(DRI_CAP_DOWNSCALER|DRI_CAP_VERTSCALER)?1:0;
+    if(priv->dri.dr && priv->dri.cap.h > height)
+	priv->dri.dr = priv->dri.cap.caps&(DRI_CAP_UPSCALER|DRI_CAP_VERTSCALER)?1:0;
 }
 
-static void __FASTCALL__ dri_reconfig( uint32_t event )
+static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 {
-	dri.has_dri = 1;
-	video_out->control(DRI_GET_SURFACE_CAPS,&dri.cap);
-	dri_config(dri.cap.fourcc);
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+	priv->dri.has_dri = 1;
+	video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv->dri.cap);
+	dri_config(vo,priv->dri.cap.fourcc);
 	/* ugly workaround of swapped BGR-fourccs. Should be removed in the future */
-	if(!dri.has_dri)
+	if(!priv->dri.has_dri)
 	{
-		dri.has_dri=1;
-		dri.cap.fourcc = bswap_32(dri.cap.fourcc);
-		dri_config(dri.cap.fourcc);
+		priv->dri.has_dri=1;
+		priv->dri.cap.fourcc = bswap_32(priv->dri.cap.fourcc);
+		dri_config(vo,priv->dri.cap.fourcc);
 	}
-	dri_tune(vo_data.image_width,vo_data.image_height);
+	dri_tune(vo,priv->image_width,priv->image_height);
 	/* TODO: smart analizer of scaling possibilities of vo_driver */
 	if((event & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	{
 	    xp_core.in_resize=1;
-	    vf_reinit_vo(dri.cap.w,dri.cap.h,dri.cap.fourcc,1);
+	    vf_reinit_vo(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,1);
 	}
-	vf_reinit_vo(dri.cap.w,dri.cap.h,dri.cap.fourcc,0);
+	vf_reinit_vo(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,0);
 }
 
 static int vo_inited=0;
-uint32_t __FASTCALL__ vo_config(uint32_t width, uint32_t height, uint32_t d_width,
+uint32_t __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		   uint32_t d_height, uint32_t fullscreen, char *title,
 		   uint32_t format,const vo_tune_info_t *vti)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     uint32_t retval;
     unsigned dest_fourcc,w,d_w,h,d_h;
     MSG_DBG3("dri_vo_dbg: vo_config\n");
@@ -401,40 +414,40 @@ uint32_t __FASTCALL__ vo_config(uint32_t width, uint32_t height, uint32_t d_widt
     }
     vo_inited++;
     dest_fourcc = format;
-    vo_data.org_width = width;
-    vo_data.org_height = height;
+    priv->org_width = width;
+    priv->org_height = height;
 
     w = width;
     d_w = d_width;
     h = height;
     d_h = d_height;
 
-    dri.d_width = d_w;
-    dri.d_height = d_h;
-    MSG_V("video_out->config(%u,%u,%u,%u,%u,'%s',%s)\n"
+    priv->dri.d_width = d_w;
+    priv->dri.d_height = d_h;
+    MSG_V("video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
 	,w,h,d_w,d_h,fullscreen,title,vo_format_name(dest_fourcc));
-    retval = video_out->config(w,h,d_w,d_h,fullscreen,title,dest_fourcc,vti);
-    vo_data.srcFourcc=format;
+    retval = video_out->config(vo,w,h,d_w,d_h,fullscreen,title,dest_fourcc,vti);
+    priv->srcFourcc=format;
     if(retval == 0)
     {
 	int dri_retv;
-	dri_retv = video_out->control(DRI_GET_SURFACE_CAPS,&dri.cap);
-	vo_data.image_format = format;
-	vo_data.image_width = w;
-	vo_data.image_height = h;
-	ps_tune(vo_data.image_width,vo_data.org_height);
-	if(dri_retv == VO_TRUE) dri_reconfig(0);
-	MSG_V("dri_vo_caps: driver does %s support DRI\n",dri.has_dri?"":"not");
+	dri_retv = video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv->dri.cap);
+	priv->image_format = format;
+	priv->image_width = w;
+	priv->image_height = h;
+	ps_tune(vo,priv->image_width,priv->org_height);
+	if(dri_retv == VO_TRUE) dri_reconfig(vo,0);
+	MSG_V("dri_vo_caps: driver does %s support DRI\n",priv->dri.has_dri?"":"not");
 	MSG_V("dri_vo_caps: caps=%08X fourcc=%08X(%s) x,y,w,h(%u %u %u %u)\n"
-	      "dri_vo_caps: width_height(%u %u) strides(%u %u %u %u) dri.bpp=%u\n"
-		,dri.cap.caps
-		,dri.cap.fourcc
-		,vo_format_name(dri.cap.fourcc)
-		,dri.cap.x,dri.cap.y,dri.cap.w,dri.cap.h
-		,dri.cap.width,dri.cap.height
-		,dri.cap.strides[0],dri.cap.strides[1]
-		,dri.cap.strides[2],dri.cap.strides[3]
-		,dri.bpp);
+	      "dri_vo_caps: width_height(%u %u) strides(%u %u %u %u) priv->dri.bpp=%u\n"
+		,priv->dri.cap.caps
+		,priv->dri.cap.fourcc
+		,vo_format_name(priv->dri.cap.fourcc)
+		,priv->dri.cap.x,priv->dri.cap.y,priv->dri.cap.w,priv->dri.cap.h
+		,priv->dri.cap.width,priv->dri.cap.height
+		,priv->dri.cap.strides[0],priv->dri.cap.strides[1]
+		,priv->dri.cap.strides[2],priv->dri.cap.strides[3]
+		,priv->dri.bpp);
 	MSG_V("dri_vo_src: w,h(%u %u) d_w,d_h(%u %u)\n"
 	      "dri_vo_src: flags=%08X fourcc=%08X(%s)\n"
 		,width,height
@@ -442,13 +455,13 @@ uint32_t __FASTCALL__ vo_config(uint32_t width, uint32_t height, uint32_t d_widt
 		,fullscreen
 		,format
 		,vo_format_name(format));
-	dri.flags = fullscreen;
+	priv->dri.flags = fullscreen;
     }
     return retval;
 }
 
 /* if vo_driver doesn't support dri then it won't work with this logic */
-uint32_t __FASTCALL__ vo_query_format( uint32_t* fourcc, unsigned src_w, unsigned src_h)
+uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned src_w, unsigned src_h)
 {
     uint32_t retval,dri_forced_fourcc;
     vo_query_fourcc_t qfourcc;
@@ -456,109 +469,118 @@ uint32_t __FASTCALL__ vo_query_format( uint32_t* fourcc, unsigned src_w, unsigne
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
-    retval = video_out->control(VOCTRL_QUERY_FORMAT,&qfourcc);
+    retval = video_out->control(vo,VOCTRL_QUERY_FORMAT,&qfourcc);
     MSG_V("dri_vo: request for %s fourcc: %s\n",vo_format_name(*fourcc),retval?"OK":"False");
     dri_forced_fourcc = *fourcc;
     if(retval) retval = 0x3; /* supported without convertion */
     return retval;
 }
 
-uint32_t vo_reset( void )
+uint32_t vo_reset(vo_data_t*vo)
 {
     MSG_DBG3("dri_vo_dbg: vo_reset\n");
-    return video_out->control(VOCTRL_RESET,NULL);
+    return video_out->control(vo,VOCTRL_RESET,NULL);
 }
 
-uint32_t vo_screenshot( unsigned idx )
+uint32_t vo_screenshot(vo_data_t*vo,unsigned idx )
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     char buf[256];
     MSG_DBG3("dri_vo_dbg: vo_screenshot\n");
-    sprintf(buf,"%llu",vo_data.frame_counter);
-    return gr_screenshot(buf,dri.surf[idx].planes,dri.cap.strides,dri.cap.fourcc,dri.cap.width,dri.cap.height);
+    sprintf(buf,"%llu",priv->frame_counter);
+    return gr_screenshot(buf,priv->dri.surf[idx].planes,priv->dri.cap.strides,priv->dri.cap.fourcc,priv->dri.cap.width,priv->dri.cap.height);
 }
 
-uint32_t vo_pause( void )
+uint32_t vo_pause(vo_data_t*vo)
 {
     MSG_DBG3("dri_vo_dbg: vo_pause\n");
-    return video_out->control(VOCTRL_PAUSE,0);
+    return video_out->control(vo,VOCTRL_PAUSE,0);
 }
 
-uint32_t vo_resume( void )
+uint32_t vo_resume(vo_data_t*vo)
 {
     MSG_DBG3("dri_vo_dbg: vo_resume\n");
-    return video_out->control(VOCTRL_RESUME,0);
+    return video_out->control(vo,VOCTRL_RESUME,0);
 }
 
-void vo_lock_surfaces(void) { pthread_mutex_lock(&vo_data.surfaces_mutex); }
-void vo_unlock_surfaces(void) { pthread_mutex_unlock(&vo_data.surfaces_mutex); }
+void vo_lock_surfaces(vo_data_t*vo) {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    pthread_mutex_lock(&priv->surfaces_mutex);
+}
+void vo_unlock_surfaces(vo_data_t*vo) {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    pthread_mutex_unlock(&priv->surfaces_mutex);
+}
 
-uint32_t __FASTCALL__ vo_get_surface( mp_image_t* mpi, unsigned decoder_idx)
+uint32_t __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi, unsigned decoder_idx)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     int width_less_stride;
     MSG_DBG2("dri_vo_dbg: vo_get_surface type=%X flg=%X\n",mpi->type,mpi->flags);
     width_less_stride = 0;
     mpi->xp_idx = decoder_idx;
     if(mpi->flags & MP_IMGFLAG_PLANAR)
     {
-	width_less_stride = mpi->w <= dri.cap.strides[0] &&
-			    (mpi->w>>mpi->chroma_x_shift) <= dri.cap.strides[1] &&
-			    (mpi->w>>mpi->chroma_x_shift) <= dri.cap.strides[2];
+	width_less_stride = mpi->w <= priv->dri.cap.strides[0] &&
+			    (mpi->w>>mpi->chroma_x_shift) <= priv->dri.cap.strides[1] &&
+			    (mpi->w>>mpi->chroma_x_shift) <= priv->dri.cap.strides[2];
     }
-    else width_less_stride = mpi->w*mpi->bpp <= dri.cap.strides[0];
-    if(dri.has_dri)
+    else width_less_stride = mpi->w*mpi->bpp <= priv->dri.cap.strides[0];
+    if(priv->dri.has_dri)
     {
 	/* static is singlebuffered decoding */
-	if(mpi->type==MP_IMGTYPE_STATIC && dri.num_xp_frames>1)
+	if(mpi->type==MP_IMGTYPE_STATIC && priv->dri.num_xp_frames>1)
 	{
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->type==MP_IMGTYPE_STATIC && dri.num_xp_frames>1\n");
+	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->type==MP_IMGTYPE_STATIC && priv->dri.num_xp_frames>1\n");
 	    return VO_FALSE;
 	}
 	/*I+P requires 2+ static buffers for R/W */
-	if(mpi->type==MP_IMGTYPE_IP && (dri.num_xp_frames < 2 || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
+	if(mpi->type==MP_IMGTYPE_IP && (priv->dri.num_xp_frames < 2 || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
 	{
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IP && dri.num_xp_frames < 2) || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IP && priv->dri.num_xp_frames < 2) || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
 	    return VO_FALSE;
 	}
 	/*I+P+B requires 3+ static buffers for R/W */
-	if(mpi->type==MP_IMGTYPE_IPB && (dri.num_xp_frames != 3 || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
+	if(mpi->type==MP_IMGTYPE_IPB && (priv->dri.num_xp_frames != 3 || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
 	{
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IPB && dri.num_xp_frames != 3) || (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IPB && priv->dri.num_xp_frames != 3) || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
 	    return VO_FALSE;
 	}
 	/* video surface is bad thing for reading */
-	if(((mpi->flags&MP_IMGFLAG_READABLE)||(mpi->type==MP_IMGTYPE_TEMP)) && (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED)
+	if(((mpi->flags&MP_IMGFLAG_READABLE)||(mpi->type==MP_IMGTYPE_TEMP)) && (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED)
 	{
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->flags&MP_IMGFLAG_READABLE && (dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->flags&MP_IMGFLAG_READABLE && (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
 	    return VO_FALSE;
 	}
 	/* it seems that surfaces are equal */
-	if((((mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && width_less_stride) || dri.planes_eq) && dri.dr)
+	if((((mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && width_less_stride) || priv->dri.planes_eq) && priv->dri.dr)
 	{
-	    vo_lock_surfaces();
-	    mpi->planes[0]=dri.surf[decoder_idx].planes[0]+dri.off[0];
-	    mpi->planes[1]=dri.surf[decoder_idx].planes[1]+dri.off[1];
-	    mpi->planes[2]=dri.surf[decoder_idx].planes[2]+dri.off[2];
-	    mpi->stride[0]=dri.cap.strides[0];
-	    mpi->stride[1]=dri.cap.strides[1];
-	    mpi->stride[2]=dri.cap.strides[2];
+	    vo_lock_surfaces(vo);
+	    mpi->planes[0]=priv->dri.surf[decoder_idx].planes[0]+priv->dri.off[0];
+	    mpi->planes[1]=priv->dri.surf[decoder_idx].planes[1]+priv->dri.off[1];
+	    mpi->planes[2]=priv->dri.surf[decoder_idx].planes[2]+priv->dri.off[2];
+	    mpi->stride[0]=priv->dri.cap.strides[0];
+	    mpi->stride[1]=priv->dri.cap.strides[1];
+	    mpi->stride[2]=priv->dri.cap.strides[2];
 	    mpi->flags|=MP_IMGFLAG_DIRECT;
-	    vo_unlock_surfaces();
+	    vo_unlock_surfaces(vo);
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface OK\n");
 	    return VO_TRUE;
 	}
-	MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE && width_less_stride) || dri.planes_eq) && dri.dr\n");
+	MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE && width_less_stride) || priv->dri.planes_eq) && priv->dri.dr\n");
 	return VO_FALSE;
     }
     else return VO_FALSE;
 }
 
-static int __FASTCALL__ adjust_size(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh)
+static int __FASTCALL__ adjust_size(any_t*vo,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh)
 {
+    vo_priv_t* priv=(vo_priv_t*)((vo_data_t*)vo)->vo_priv;
     MSG_DBG3("dri_vo_dbg: adjust_size was called %u %u %u %u\n",cw,ch,*nw,*nh);
-    if((dri.flags & VOFLG_ZOOM) && (cw != *nw || ch != *nh) && !(dri.flags & VOFLG_FS))
+    if((priv->dri.flags & VOFLG_ZOOM) && (cw != *nw || ch != *nh) && !(priv->dri.flags & VOFLG_FS))
     {
 	float aspect,newv;
-	aspect = (float)dri.d_width / (float)dri.d_height;
+	aspect = (float)priv->dri.d_width / (float)priv->dri.d_height;
 	if(abs(cw-*nw) > abs(ch-*nh))
 	{
 	    newv = ((float)(*nw))/aspect;
@@ -577,63 +599,69 @@ static int __FASTCALL__ adjust_size(unsigned cw,unsigned ch,unsigned *nw,unsigne
     return 0;
 }
 
-int vo_check_events( void )
+int vo_check_events(vo_data_t*vo)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     uint32_t retval;
     int need_repaint;
     vo_resize_t vrest;
     MSG_DBG3("dri_vo_dbg: vo_check_events\n");
     vrest.event_type = 0;
     vrest.adjust_size = adjust_size;
-    retval = video_out->control(VOCTRL_CHECK_EVENTS,&vrest);
+    retval = video_out->control(vo,VOCTRL_CHECK_EVENTS,&vrest);
     /* it's ok since accelerated drivers doesn't touch surfaces
        but there is only one driver (vo_x11) which changes surfaces
        on 'fullscreen' key */
     need_repaint=0;
-    if(dri.has_dri && retval == VO_TRUE && (vrest.event_type & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
+    if(priv->dri.has_dri && retval == VO_TRUE && (vrest.event_type & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
     {
 	need_repaint=1;
-	dri_reconfig(vrest.event_type);
+	dri_reconfig(vo,vrest.event_type);
     }
-    return (need_repaint && !dri.accel) || (vrest.event_type&VO_EVENT_FORCE_UPDATE);
+    return (need_repaint && !priv->dri.accel) || (vrest.event_type&VO_EVENT_FORCE_UPDATE);
 }
 
-uint32_t vo_fullscreen( void )
+uint32_t vo_fullscreen(vo_data_t*vo)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     uint32_t retval,etype;
     MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
     etype = 0;
-    retval = video_out->control(VOCTRL_FULLSCREEN,&etype);
-    if(dri.has_dri && retval == VO_TRUE && (etype & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
-	dri_reconfig(etype);
-    if(retval == VO_TRUE) dri.flags ^= VOFLG_FS;
+    retval = video_out->control(vo,VOCTRL_FULLSCREEN,&etype);
+    if(priv->dri.has_dri && retval == VO_TRUE && (etype & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
+	dri_reconfig(vo,etype);
+    if(retval == VO_TRUE) priv->dri.flags ^= VOFLG_FS;
     return retval;
 }
 
-unsigned __FASTCALL__ vo_get_num_frames( void ) { return dri.num_xp_frames; }
+unsigned __FASTCALL__ vo_get_num_frames(vo_data_t*vo) {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    return priv->dri.num_xp_frames;
+}
 
-uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
+uint32_t __FASTCALL__ vo_draw_slice(vo_data_t*vo,const mp_image_t *mpi)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     unsigned i,_w[4],_h[4],x,y;
     MSG_DBG3("dri_vo_dbg: vo_draw_slice xywh=%i %i %i %i\n",mpi->x,mpi->y,mpi->w,mpi->h);
-    if(dri.has_dri)
+    if(priv->dri.has_dri)
     {
 	uint8_t *dst[4];
 	const uint8_t *ps_src[4];
 	int dstStride[4];
-	int finalize=vo_is_final();
+	int finalize=vo_is_final(vo);
 	unsigned idx = mpi->xp_idx;
 	for(i=0;i<4;i++)
 	{
-	    dst[i]=dri.surf[idx].planes[i]+dri.off[i];
-	    dstStride[i]=dri.cap.strides[i];
-	    dst[i]+=((mpi->y*dstStride[i])*vod.y_mul[i])/vod.y_div[i];
-	    dst[i]+=(mpi->x*vod.x_mul[i])/vod.x_div[i];
-	    _w[i]=(mpi->w*vod.x_mul[i])/vod.x_div[i];
-	    _h[i]=(mpi->h*vod.y_mul[i])/vod.y_div[i];
+	    dst[i]=priv->dri.surf[idx].planes[i]+priv->dri.off[i];
+	    dstStride[i]=priv->dri.cap.strides[i];
+	    dst[i]+=((mpi->y*dstStride[i])*priv->vod.y_mul[i])/priv->vod.y_div[i];
+	    dst[i]+=(mpi->x*priv->vod.x_mul[i])/priv->vod.x_div[i];
+	    _w[i]=(mpi->w*priv->vod.x_mul[i])/priv->vod.x_div[i];
+	    _h[i]=(mpi->h*priv->vod.y_mul[i])/priv->vod.y_div[i];
 	    y = i?(mpi->y>>mpi->chroma_y_shift):mpi->y;
 	    x = i?(mpi->x>>mpi->chroma_x_shift):mpi->x;
-	    ps_src[i] = mpi->planes[i]+(y*mpi->stride[i])+x+vo_data.ps_off[i];
+	    ps_src[i] = mpi->planes[i]+(y*mpi->stride[i])+x+priv->ps_off[i];
 	}
 	for(i=0;i<4;i++) {
 	    if(mpi->stride[i]) {
@@ -648,90 +676,96 @@ uint32_t __FASTCALL__ vo_draw_slice(const mp_image_t *mpi)
     return -1;
 }
 
-void vo_select_frame(unsigned play_idx)
+void vo_select_frame(vo_data_t*vo,unsigned play_idx)
 {
     MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
-    video_out->select_frame(play_idx);
+    video_out->select_frame(vo,play_idx);
 }
 
-void vo_flush_page(unsigned decoder_idx)
+void vo_flush_page(vo_data_t*vo,unsigned decoder_idx)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_flush_pages [idx=%u]\n",decoder_idx);
-    vo_data.frame_counter++;
-    if((dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
-					video_out->control(VOCTRL_FLUSH_PAGES,&decoder_idx);
+    priv->frame_counter++;
+    if((priv->dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
+					video_out->control(vo,VOCTRL_FLUSH_PAGES,&decoder_idx);
 }
 
 /* DRAW OSD */
-
-static void __FASTCALL__ clear_rect(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
+static void __FASTCALL__ clear_rect(vo_data_t*vo,unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
 {
+  vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
   unsigned i;
   for(i=0;i<h;i++)
   {
-      if(_y0+i<dri.cap.y||_y0+i>=dri.cap.y+dri.cap.h) memset(dest,filler,stride);
+      if(_y0+i<priv->dri.cap.y||_y0+i>=priv->dri.cap.y+priv->dri.cap.h) memset(dest,filler,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect2(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
+static void __FASTCALL__ clear_rect2(vo_data_t*vo,unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
 {
+  vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
   unsigned i;
-  unsigned y1 = dri.cap.y/2;
-  unsigned y2 = (dri.cap.y+dri.cap.h)/2;
+  unsigned _y1 = priv->dri.cap.y/2;
+  unsigned _y2 = (priv->dri.cap.y+priv->dri.cap.h)/2;
   for(i=0;i<h;i++)
   {
-      if(_y0+i<y1||_y0+i>=y2) memset(dest,filler,stride);
+      if(_y0+i<_y1||_y0+i>=_y2) memset(dest,filler,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect4(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
+static void __FASTCALL__ clear_rect4(vo_data_t*vo,unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler)
 {
+  vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
   unsigned i;
-  unsigned y1 = dri.cap.y/4;
-  unsigned y2 = (dri.cap.y+dri.cap.h)/4;
+  unsigned _y1 = priv->dri.cap.y/4;
+  unsigned _y2 = (priv->dri.cap.y+priv->dri.cap.h)/4;
   for(i=0;i<h;i++)
   {
-      if(_y0+i<y1||_y0+i>=y2) memset(dest,filler,stride);
+      if(_y0+i<_y1||_y0+i>=_y2) memset(dest,filler,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect_rgb(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
+static void __FASTCALL__ clear_rect_rgb(vo_data_t*vo,unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
 {
+  vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
   unsigned i;
   for(i=0;i<h;i++)
   {
-      if(_y0+i<dri.cap.y||_y0+i>=dri.cap.y+dri.cap.h) memset(dest,0,stride);
+      if(_y0+i<priv->dri.cap.y||_y0+i>=priv->dri.cap.y+priv->dri.cap.h) memset(dest,0,stride);
       dest += dstride;
   }
 }
 
-static void __FASTCALL__ clear_rect_yuy2(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
+static void __FASTCALL__ clear_rect_yuy2(vo_data_t*vo,unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride)
 {
+  vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
   unsigned i;
   for(i=0;i<h;i++)
   {
-	if(_y0+i<dri.cap.y||_y0+i>=dri.cap.y+dri.cap.h) 
+	if(_y0+i<priv->dri.cap.y||_y0+i>=priv->dri.cap.y+priv->dri.cap.h) 
 	{
 	    uint32_t *dst32;
 	    unsigned j,size32;
 	    size32=stride/4;
 	    dst32=(uint32_t*)dest;
-	    for(j=0;j<size32;j+=4) 
+	    for(j=0;j<size32;j+=4)
 		dst32[j]=dst32[j+1]=dst32[j+2]=dst32[j+3]=0x80108010;
-	    for(;j<size32;j+=4) 
+	    for(;j<size32;j+=4)
 		dst32[j]=0x80108010;
 	}
 	dest += dstride;
   }
 }
 
-static void __FASTCALL__ dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h)
+static void __FASTCALL__ dri_remove_osd(any_t*vo,unsigned idx,int x0,int _y0, int w,int h)
 {
-    if(x0+w<=dri.cap.width&&_y0+h<=dri.cap.height)
-    switch(dri.cap.fourcc)
+    vo_priv_t* priv=(vo_priv_t*)((vo_data_t*)vo)->vo_priv;
+    if(x0+w<=priv->dri.cap.width&&_y0+h<=priv->dri.cap.height)
+    switch(priv->dri.cap.fourcc)
     {
 	case IMGFMT_RGB15:
 	case IMGFMT_BGR15:
@@ -741,40 +775,40 @@ static void __FASTCALL__ dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h
 	case IMGFMT_BGR24:
 	case IMGFMT_RGB32:
 	case IMGFMT_BGR32:
-		clear_rect_rgb( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0*((dri.bpp+7)/8),
-			    w*(dri.bpp+7)/8,dri.cap.strides[0]);
+		clear_rect_rgb(vo,_y0,h,priv->dri.surf[idx].planes[0]+_y0*priv->dri.cap.strides[0]+x0*((priv->dri.bpp+7)/8),
+			    w*(priv->dri.bpp+7)/8,priv->dri.cap.strides[0]);
 		break;
 	case IMGFMT_YVYU:
 	case IMGFMT_YUY2:
-		clear_rect_yuy2( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0*2,
-			    w*2,dri.cap.strides[0]);
+		clear_rect_yuy2(vo,_y0,h,priv->dri.surf[idx].planes[0]+_y0*priv->dri.cap.strides[0]+x0*2,
+			    w*2,priv->dri.cap.strides[0]);
 		break;
 	case IMGFMT_UYVY:
-		clear_rect_yuy2( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0*2+1,
-			    w*2,dri.cap.strides[0]);
+		clear_rect_yuy2(vo,_y0,h,priv->dri.surf[idx].planes[0]+_y0*priv->dri.cap.strides[0]+x0*2+1,
+			    w*2,priv->dri.cap.strides[0]);
 		break;
 	case IMGFMT_Y800:
-		clear_rect( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0,
-			    w,dri.cap.strides[0],0x10);
+		clear_rect(vo,_y0,h,priv->dri.surf[idx].planes[0]+_y0*priv->dri.cap.strides[0]+x0,
+			    w,priv->dri.cap.strides[0],0x10);
 		break;
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
 	case IMGFMT_IYUV:
-		clear_rect( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0,
-			    w,dri.cap.strides[0],0x10);
-		clear_rect2( _y0/2,h/2,dri.surf[idx].planes[1]+_y0/2*dri.cap.strides[1]+x0/2,
-			    w/2,dri.cap.strides[1],0x80);
-		clear_rect2( _y0/2,h/2,dri.surf[idx].planes[2]+_y0/2*dri.cap.strides[2]+x0/2,
-			    w/2,dri.cap.strides[2],0x80);
+		clear_rect(vo,_y0,h,priv->dri.surf[idx].planes[0]+_y0*priv->dri.cap.strides[0]+x0,
+			    w,priv->dri.cap.strides[0],0x10);
+		clear_rect2(vo,_y0/2,h/2,priv->dri.surf[idx].planes[1]+_y0/2*priv->dri.cap.strides[1]+x0/2,
+			    w/2,priv->dri.cap.strides[1],0x80);
+		clear_rect2(vo,_y0/2,h/2,priv->dri.surf[idx].planes[2]+_y0/2*priv->dri.cap.strides[2]+x0/2,
+			    w/2,priv->dri.cap.strides[2],0x80);
 		break;
 	case IMGFMT_YVU9:
 	case IMGFMT_IF09:
-		clear_rect( _y0,h,dri.surf[idx].planes[0]+_y0*dri.cap.strides[0]+x0,
-			    w,dri.cap.strides[0],0x10);
-		clear_rect4( _y0/4,h/4,dri.surf[idx].planes[1]+_y0/4*dri.cap.strides[1]+x0/4,
-			    w/4,dri.cap.strides[1],0x80);
-		clear_rect4( _y0/4,h/4,dri.surf[idx].planes[2]+_y0/4*dri.cap.strides[2]+x0/4,
-			    w/4,dri.cap.strides[2],0x80);
+		clear_rect(vo,_y0,h,priv->dri.surf[idx].planes[0]+_y0*priv->dri.cap.strides[0]+x0,
+			    w,priv->dri.cap.strides[0],0x10);
+		clear_rect4(vo,_y0/4,h/4,priv->dri.surf[idx].planes[1]+_y0/4*priv->dri.cap.strides[1]+x0/4,
+			    w/4,priv->dri.cap.strides[1],0x80);
+		clear_rect4(vo,_y0/4,h/4,priv->dri.surf[idx].planes[2]+_y0/4*priv->dri.cap.strides[2]+x0/4,
+			    w/4,priv->dri.cap.strides[2],0x80);
 		break;
     }
 }
@@ -812,61 +846,68 @@ static draw_alpha_f __FASTCALL__ get_draw_alpha(uint32_t fmt) {
   return NULL;
 }
 
-static void __FASTCALL__ dri_draw_osd(unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
+static void __FASTCALL__ dri_draw_osd(any_t*vo,unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
 {
-    int finalize=vo_is_final();
-    if(x0+w<=dri.cap.width&&_y0+h<=dri.cap.height)
+    vo_priv_t* priv=(vo_priv_t*)((vo_data_t*)vo)->vo_priv;
+    int finalize=vo_is_final(vo);
+    if(x0+w<=priv->dri.cap.width&&_y0+h<=priv->dri.cap.height)
     {
-	if(!draw_alpha) draw_alpha=get_draw_alpha(dri.cap.fourcc);
+	if(!draw_alpha) draw_alpha=get_draw_alpha(priv->dri.cap.fourcc);
 	if(draw_alpha)
 	    (*draw_alpha)(w,h,src,srca,stride,
-			    dri.surf[idx].planes[0]+dri.cap.strides[0]*_y0+x0*((dri.bpp+7)/8),
-			    dri.cap.strides[0],finalize);
+			    priv->dri.surf[idx].planes[0]+priv->dri.cap.strides[0]*_y0+x0*((priv->dri.bpp+7)/8),
+			    priv->dri.cap.strides[0],finalize);
     }
 }
 
-void vo_draw_osd(unsigned idx)
+void vo_draw_osd(vo_data_t*vo,unsigned idx)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
-    if(dri.has_dri && !(dri.cap.caps & DRI_CAP_HWOSD))
+    if(priv->dri.has_dri && !(priv->dri.cap.caps & DRI_CAP_HWOSD))
     {
-	if( dri.cap.x || dri.cap.y ||
-	    dri.cap.w != dri.cap.width || dri.cap.h != dri.cap.height)
-		    vo_remove_text(idx,dri.cap.width,dri.cap.height,dri_remove_osd);
-	vo_draw_text(idx,dri.cap.width,dri.cap.height,dri_draw_osd);
+	if( priv->dri.cap.x || priv->dri.cap.y ||
+	    priv->dri.cap.w != priv->dri.cap.width || priv->dri.cap.h != priv->dri.cap.height)
+		    vo_remove_text(vo,idx,priv->dri.cap.width,priv->dri.cap.height,dri_remove_osd);
+	vo_draw_text(vo,idx,priv->dri.cap.width,priv->dri.cap.height,dri_draw_osd);
     }
 }
 
-void vo_draw_spudec_direct(unsigned idx)
+void vo_draw_spudec_direct(vo_data_t*vo,unsigned idx)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
-    if(dri.has_dri && !(dri.cap.caps & DRI_CAP_HWOSD))
+    if(priv->dri.has_dri && !(priv->dri.cap.caps & DRI_CAP_HWOSD))
     {
-//	if( dri.cap.x || dri.cap.y ||
-//	    dri.cap.w != dri.cap.width || dri.cap.h != dri.cap.height)
-//		    vo_remove_text(idx,dri.cap.width,dri.cap.height,dri_remove_osd);
-	vo_draw_spudec(idx,dri.cap.width,dri.cap.height,dri_draw_osd);
+//	if( priv->dri.cap.x || priv->dri.cap.y ||
+//	    priv->dri.cap.w != priv->dri.cap.width || priv->dri.cap.h != priv->dri.cap.height)
+//		    vo_remove_text(idx,priv->dri.cap.width,priv->dri.cap.height,dri_remove_osd);
+	vo_draw_spudec(vo,idx,priv->dri.cap.width,priv->dri.cap.height,dri_draw_osd);
     }
 }
 
-void vo_uninit( void )
+void vo_uninit(vo_data_t*vo)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_uninit\n");
     vo_inited--;
-    video_out->uninit();
+    video_out->uninit(vo);
+    pthread_mutex_destroy(&priv->surfaces_mutex);
+    free(vo->vo_priv);
 }
 
-uint32_t __FASTCALL__ vo_control(uint32_t request, any_t*data)
+uint32_t __FASTCALL__ vo_control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     uint32_t rval;
-    rval=video_out->control(request,data);
+    rval=video_out->control(vo,request,data);
     MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
     return rval;
 }
 
-int __FASTCALL__ vo_is_final(void) {
-    int mmaped=dri.cap.caps&DRI_CAP_VIDEO_MMAPED;
-    int busmaster=dri.cap.caps&DRI_CAP_BUSMASTERING;
-    return mmaped||busmaster||(dri.num_xp_frames>1);
+int __FASTCALL__ vo_is_final(vo_data_t*vo) {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    int mmaped=priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED;
+    int busmaster=priv->dri.cap.caps&DRI_CAP_BUSMASTERING;
+    return mmaped||busmaster||(priv->dri.num_xp_frames>1);
 }
 

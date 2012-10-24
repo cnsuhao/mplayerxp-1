@@ -11,6 +11,8 @@
 #include "../libvo/dri_vo.h"
 #include "pp_msg.h"
 
+extern vo_data_t* vo_data;
+
 //===========================================================================//
 struct vf_priv_s {
     int is_planar;
@@ -23,7 +25,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 
 static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 {
-    const vo_info_t *info = vo_get_info();
+    const vo_info_t *info = vo_get_info(vo_data);
     MSG_INFO("VO-CONF: [%s] %dx%d => %dx%d %s %s%s%s%s\n",info->short_name,
          vf->priv->sw, vf->priv->sh,
          vf->priv->dw, vf->priv->dh,
@@ -60,7 +62,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps=query_format(vf,outfmt,d_width,d_height);// & VFCAP_ACCEPT_STRIDE;
 
-    if(vo_config(width,height,d_width,d_height,flags,"MPlayerXP",outfmt,tune))
+    if(vo_config(vo_data,width,height,d_width,d_height,flags,"MPlayerXP",outfmt,tune))
 	return 0;
     vf->priv->is_planar=vo_describe_fourcc(outfmt,&vf->priv->vd);
     vf->dw=d_width;
@@ -77,20 +79,20 @@ static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* da
     case VFCTRL_SELECT_FRAME:
     {
 	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
-	vo_select_frame((unsigned)data);
+	vo_select_frame(vo_data,(unsigned)data);
 	return CONTROL_TRUE;
     }
     case VFCTRL_SET_EQUALIZER:
     {
 	vf_equalizer_t *eq=data;
 	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
-	return((vo_control(VOCTRL_SET_EQUALIZER, eq) == VO_TRUE) ? CONTROL_TRUE : CONTROL_FALSE);
+	return((vo_control(vo_data,VOCTRL_SET_EQUALIZER, eq) == VO_TRUE) ? CONTROL_TRUE : CONTROL_FALSE);
     }
     case VFCTRL_GET_EQUALIZER:
     {
 	vf_equalizer_t *eq=data;
 	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
-	return((vo_control(VOCTRL_GET_EQUALIZER, eq) == VO_TRUE) ? CONTROL_TRUE : CONTROL_FALSE);
+	return((vo_control(vo_data,VOCTRL_GET_EQUALIZER, eq) == VO_TRUE) ? CONTROL_TRUE : CONTROL_FALSE);
     }
     }
     // return video_out->control(request,data);
@@ -99,12 +101,12 @@ static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* da
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
     dri_surface_cap_t dcaps;
-    int rflags,flags=vo_query_format(&fmt,w,h);
+    int rflags,flags=vo_query_format(vo_data,&fmt,w,h);
     MSG_DBG2("[vf_vo] %i=query_format(%s)\n",flags,vo_format_name(fmt));
     rflags=0;
     if(flags)
     {
-	vo_control(DRI_GET_SURFACE_CAPS,&dcaps);
+	vo_control(vo_data,DRI_GET_SURFACE_CAPS,&dcaps);
 	if(dcaps.caps&DRI_CAP_UPSCALER) rflags |=VFCAP_HWSCALE_UP;
 	if(dcaps.caps&DRI_CAP_DOWNSCALER) rflags |=VFCAP_HWSCALE_DOWN;
 	if(rflags&(VFCAP_HWSCALE_UP|VFCAP_HWSCALE_DOWN)) rflags |= VFCAP_SWSCALE;
@@ -119,9 +121,9 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
         mp_image_t *mpi){
     int retval;
     unsigned i;
-    int finalize = vo_is_final();
+    int finalize = vo_is_final(vo_data);
     struct vf_priv_s *priv = vf->priv;
-    retval=vo_get_surface(mpi,mpi->xp_idx);
+    retval=vo_get_surface(vo_data,mpi,mpi->xp_idx);
     if(retval==VO_TRUE) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
 	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
@@ -136,7 +138,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf,
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED)))
   {
     MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
-    vo_draw_slice(mpi);
+    vo_draw_slice(vo_data,mpi);
   }
   return 1;
 }

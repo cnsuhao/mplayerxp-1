@@ -97,7 +97,7 @@ static const char * const nas_reasons[] = {
 	"Hardware",
 	"Any"
 };
-#if 0
+#ifdef MP_DEBUG
 static const char* nas_reason(unsigned int reason)
 {
 	if (reason > 6) reason = 6;
@@ -120,6 +120,7 @@ static const char* nas_state(unsigned int state) {
 	return nas_states[state];
 }
 #endif
+
 static const ao_info_t info =
 {
 	"NAS audio output",

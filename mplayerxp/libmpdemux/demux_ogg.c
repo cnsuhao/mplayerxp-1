@@ -28,6 +28,8 @@
 #define FOURCC_VORBIS mmioFOURCC('v', 'r', 'b', 's')
 #define FOURCC_THEORA mmioFOURCC('t', 'h', 'e', 'o')
 
+extern vo_data_t* vo_data;
+
 /// Vorbis decoder context : we need the vorbis_info for vorbis timestamping
 /// Shall we put this struct def in a common header ?
 typedef struct ov_struct_st {
@@ -291,7 +293,7 @@ static void demux_ogg_add_sub (ogg_stream_t* os,ogg_packet* pack) {
 #ifdef USE_ICONV
   subcp_recode1(&ogg_sub);
 #endif
-  vo.sub = &ogg_sub;
+  vo_data->sub = &ogg_sub;
   vo_osd_changed(OSDTYPE_SUBTITLE);
 }
 
@@ -554,7 +556,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
   /// Clear subtitles if necessary (for broken files)
   if ((clear_sub > 0) && (pts >= clear_sub)) {
     ogg_sub.lines = 0;
-    vo.sub = &ogg_sub;
+    vo_data->sub = &ogg_sub;
     vo_osd_changed(OSDTYPE_SUBTITLE);
     clear_sub = -1;
   }
@@ -1412,7 +1414,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
       }
       if(!precision && (is_keyframe || os->vorbis) ) {
         ogg_sub.lines = 0;
-        vo.sub = &ogg_sub;
+        vo_data->sub = &ogg_sub;
         vo_osd_changed(OSDTYPE_SUBTITLE);
         clear_sub = -1;
 	demux_ogg_add_packet(ds,os,ds->id,&op);

@@ -8,7 +8,9 @@
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 
-static const ad_info_t info = 
+extern ao_data_t* ao_data;
+
+static const ad_info_t info =
 {
 	"Ogg/Vorbis audio decoder",
 	"libvorbis",
@@ -86,7 +88,7 @@ static int init(sh_audio_t *sh)
   }
 
   // Setup the decoder
-  sh->channels=ov->vi.channels; 
+  sh->channels=ov->vi.channels;
   sh->samplerate=ov->vi.rate;
 #ifdef WORDS_BIGENDIAN
 #define OGG_FMT32 AFMT_S32_BE
@@ -99,7 +101,7 @@ static int init(sh_audio_t *sh)
 #endif
   sh->samplesize=2;
   sh->sample_format=OGG_FMT16;
-  if(ao_control(AOCONTROL_QUERY_FORMAT,OGG_FMT32) == CONTROL_OK)
+  if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == CONTROL_OK)
   {
     sh->samplesize=4;
     sh->sample_format=OGG_FMT32;

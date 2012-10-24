@@ -97,6 +97,7 @@ void vfm_help(void) {
 
 #include "libvo/video_out.h"
 
+extern vo_data_t* vo_data;
 extern const vd_functions_t* mpvdec; // FIXME!
 
 int mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune){
@@ -138,10 +139,11 @@ csp_again:
 		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",mpvdec->info->driver_name,vo_format_name(out_fmt));
 		continue;
 	    }
-	    j=i; vo.flags=flags;
+	    j=i;
+	    /*vo_data->flags=flags;*/
 	    if(flags&VFCAP_CSP_SUPPORTED_BY_HW) break;
 	} else
-	if(!palette && !(vo.flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
+	if(!palette && !(vo_data->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
 	    if(mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)!=CONTROL_FALSE)
 		palette=1;
@@ -165,8 +167,8 @@ csp_again:
 	    palette=-1;
 	    vf=vf_open_filter(vf,sh,"palette",NULL);
 	    goto csp_again;
-	} else 
-	{ // sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
+	} else {
+	// sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
 	     vf_instance_t* voi, *vp = NULL, *ve;
 	     // Remove the scale filter if we added it ourself
 	     if(vf == sc) {
@@ -182,30 +184,31 @@ csp_again:
 	sh->vfilter_inited=-1;
 	return 0;	// failed
     }
+
     out_fmt=sh->codec->outfmt[j];
     sh->outfmtidx=j;
     sh->vfilter=vf;
 
     // autodetect flipping
-    if(vo.flip==-1){
-	vo.flip=0;
+    if(vo_conf.flip==0){
+	VO_FLIP_UNSET(vo_data);
 	if(sh->codec->outflags[j]&CODECS_FLAG_FLIP)
 	    if(!(sh->codec->outflags[j]&CODECS_FLAG_NOFLIP))
-		vo.flip=1;
+		VO_FLIP_SET(vo_data);
     }
-    if(vo.flags&VFCAP_FLIPPED) vo.flip^=1;
-    if(vo.flip && !(vo.flags&VFCAP_FLIP)){
+    if(vo_data->flags&VFCAP_FLIPPED) VO_FLIP_REVERT(vo_data);
+    if(VO_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
 	sh->vfilter=vf=vf_open_filter(vf,sh,"mirror","x");
     }
 
     // time to do aspect ratio corrections...
 
-  if(vo.movie_aspect>-1.0) sh->aspect = vo.movie_aspect; // cmdline overrides autodetect
-  if(vo.opt_screen_size_x||vo.opt_screen_size_y){
-    screen_size_x = vo.opt_screen_size_x;
-    screen_size_y = vo.opt_screen_size_y;
-    if(!vo.vidmode){
+  if(vo_conf.movie_aspect>-1.0) sh->aspect = vo_conf.movie_aspect; // cmdline overrides autodetect
+  if(vo_conf.opt_screen_size_x||vo_conf.opt_screen_size_y){
+    screen_size_x = vo_conf.opt_screen_size_x;
+    screen_size_y = vo_conf.opt_screen_size_y;
+    if(!vo_conf.vidmode){
      if(!screen_size_x) screen_size_x=1;
      if(!screen_size_y) screen_size_y=1;
      if(screen_size_x<=8) screen_size_x*=sh->disp_w;
@@ -215,15 +218,15 @@ csp_again:
     // check source format aspect, calculate prescale ::atmos
     screen_size_x=sh->disp_w;
     screen_size_y=sh->disp_h;
-    if(vo.screen_size_xy>=0.001){
-     if(vo.screen_size_xy<=8){
+    if(vo_conf.screen_size_xy>=0.001){
+     if(vo_conf.screen_size_xy<=8){
        // -xy means x+y scale
-       screen_size_x*=vo.screen_size_xy;
-       screen_size_y*=vo.screen_size_xy;
+       screen_size_x*=vo_conf.screen_size_xy;
+       screen_size_y*=vo_conf.screen_size_xy;
      } else {
        // -xy means forced width while keeping correct aspect
-       screen_size_x=vo.screen_size_xy;
-       screen_size_y=vo.screen_size_xy*sh->disp_h/sh->disp_w;
+       screen_size_x=vo_conf.screen_size_xy;
+       screen_size_y=vo_conf.screen_size_xy*sh->disp_h/sh->disp_w;
      }
     }
     if(sh->aspect>0.01){
@@ -232,7 +235,7 @@ csp_again:
              sh->aspect);
       _w=(int)((float)screen_size_y*sh->aspect); _w+=_w%2; // round
       // we don't like horizontal downscale || user forced width:
-      if(_w<screen_size_x || vo.screen_size_xy>8){
+      if(_w<screen_size_x || vo_conf.screen_size_xy>8){
         screen_size_y=(int)((float)screen_size_x*(1.0/sh->aspect));
         screen_size_y+=screen_size_y%2; // round
         if(screen_size_y<sh->disp_h) // Do not downscale verticaly
@@ -243,16 +246,16 @@ csp_again:
     }
   }
 
-    MSG_V("video_out->init(%dx%d->%dx%d,flags=%d,'%s',%s)\n",
+    MSG_V("vf->config(%dx%d->%dx%d,flags=0x%x,'%s',%s)\n",
                       sh->disp_w,sh->disp_h,
                       screen_size_x,screen_size_y,
-                      vo.fullscreen|(vo.vidmode<<1)|(vo.softzoom<<2)|(vo.flip<<3),
+                      vo_data->flags,
                       "MPlayerXP",vo_format_name(out_fmt));
 
     MSG_DBG2("vf configuring: %s\n",vf->info->name);
     if(vf->config(vf,sh->disp_w,sh->disp_h,
                       screen_size_x,screen_size_y,
-                      vo.fullscreen|(vo.vidmode<<1)|(vo.softzoom<<2)|(vo.flip<<3),
+                      vo_data->flags,
                       out_fmt,tune)==0){
 	MSG_WARN(MSGTR_CannotInitVO);
 	sh->vfilter_inited=-1;
@@ -261,7 +264,7 @@ csp_again:
     MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s',%p)\n",
                       sh->disp_w,sh->disp_h,
                       screen_size_x,screen_size_y,
-                      vo.fullscreen|(vo.vidmode<<1)|(vo.softzoom<<2)|(vo.flip<<3),
+                      vo_data->flags,
                       vo_format_name(out_fmt),tune);
     return 1;
 }

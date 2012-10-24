@@ -61,10 +61,10 @@ static vo_info_t vo_info =
 #include <X11/extensions/XShm.h>
 #endif
 /* private prototypes */
-static void __FASTCALL__ Display_Image ( XImage * myximage );
+static void __FASTCALL__ Display_Image (vo_data_t*vo, XImage * myximage );
 
 /*** X11 related variables ***/
-typedef struct vox11_priv_s {
+typedef struct priv_s {
     uint32_t		image_width;
     uint32_t		image_height;
     uint32_t		in_format;
@@ -76,102 +76,88 @@ typedef struct vox11_priv_s {
     XVisualInfo		vinfo;
 
     int			baseAspect; // 1<<16 based fixed point aspect, so that the aspect stays correct during resizing
-    int			Flip_Flag;
-    int			zoomFlag;
 /* xp related variables */
     unsigned		num_buffers; // 1 - default
-}vox11_priv_t;
-static vox11_priv_t vox11;
+}priv_t;
 
-static uint32_t __FASTCALL__ check_events(int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
+static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
-  uint32_t ret = vo_x11_check_events(vo.mDisplay,adjust_size);
+    priv_t* priv=(priv_t*)vo->priv;
+    uint32_t ret = vo_x11_check_events(vo,vo->mDisplay,adjust_size);
 
    /* clear the old window */
   if (ret & VO_EVENT_RESIZE)
   {
 	unsigned idx;
-	unsigned newW= vo.dest.w;
-	unsigned newH= vo.dest.h;
+	unsigned newW= vo->dest.w;
+	unsigned newH= vo->dest.h;
 	int newAspect= (newW*(1<<16) + (newH>>1))/newH;
-	if(newAspect>vox11.baseAspect) newW= (newH*vox11.baseAspect + (1<<15))>>16;
-	else                 newH= ((newW<<16) + (vox11.baseAspect>>1)) /vox11.baseAspect;
-	XSetBackground(vo.mDisplay, vo.gc, 0);
-	XClearWindow(vo.mDisplay, vo.window);
-	vox11.image_width= (newW+7)&(~7);
-	vox11.image_height= newH;
-	vo_lock_surfaces();
-	for(idx=0;idx<vox11.num_buffers;idx++)
+	if(newAspect>priv->baseAspect) newW= (newH*priv->baseAspect + (1<<15))>>16;
+	else                 newH= ((newW<<16) + (priv->baseAspect>>1)) /priv->baseAspect;
+	XSetBackground(vo->mDisplay, vo->gc, 0);
+	XClearWindow(vo->mDisplay, vo->window);
+	priv->image_width= (newW+7)&(~7);
+	priv->image_height= newH;
+	vo_lock_surfaces(vo);
+	for(idx=0;idx<priv->num_buffers;idx++)
 	{
-	    vo_x11_freeMyXImage(idx);
-	    vo_x11_getMyXImage(idx,vox11.vinfo.visual,vox11.depth,vox11.image_width,vox11.image_height);
+	    vo_x11_freeMyXImage(vo,idx);
+	    vo_x11_getMyXImage(vo,idx,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
 	}
-	vo_unlock_surfaces();
+	vo_unlock_surfaces(vo);
    }
    return ret;
 }
 
-static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format,const vo_tune_info_t *info)
+static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format,const vo_tune_info_t *info)
 {
-// int screen;
- int fullscreen=0;
- int vm=0;
-// int interval, prefer_blank, allow_exp, nothing;
- unsigned int fg,bg;
- XSizeHints hint;
- XEvent xev;
- XGCValues xgcv;
- Colormap theCmap;
- XSetWindowAttributes xswa;
- unsigned long xswamask;
- unsigned i;
+    priv_t* priv=(priv_t*)vo->priv;
+    // int interval, prefer_blank, allow_exp, nothing;
+    unsigned int fg,bg;
+    XSizeHints hint;
+    XEvent xev;
+    XGCValues xgcv;
+    Colormap theCmap;
+    XSetWindowAttributes xswa;
+    unsigned long xswamask;
+    unsigned i;
 
- UNUSED(info);
+    UNUSED(info);
 
- vox11.num_buffers=vo.da_buffs;
+    priv->num_buffers=vo_conf.da_buffs;
 
- if (!title)
-    title = strdup("MPlayerXP X11 (XImage/Shm) render");
+    if (!title)
+	title = strdup("MPlayerXP X11 (XImage/Shm) render");
 
- vox11.in_format=format;
+    priv->in_format=format;
 
- if( flags&0x03 ) fullscreen = 1;
- if( flags&0x02 ) vm = 1;
- if( flags&0x08 ) vox11.Flip_Flag = 1;
- vox11.zoomFlag = flags&0x04;
-// if(!fullscreen) vox11.zoomFlag=1; //it makes no sense to avoid zooming on windowd vox11.mode
+    XGetWindowAttributes( vo->mDisplay,DefaultRootWindow( vo->mDisplay ),&priv->attribs );
+    priv->depth=priv->attribs.depth;
 
- XGetWindowAttributes( vo.mDisplay,DefaultRootWindow( vo.mDisplay ),&vox11.attribs );
- vox11.depth=vox11.attribs.depth;
+    if ( priv->depth != 15 && priv->depth != 16 && priv->depth != 24 && priv->depth != 32 ) priv->depth=24;
+    XMatchVisualInfo( vo->mDisplay,vo->mScreen,priv->depth,TrueColor,&priv->vinfo );
 
- if ( vox11.depth != 15 && vox11.depth != 16 && vox11.depth != 24 && vox11.depth != 32 ) vox11.depth=24;
- XMatchVisualInfo( vo.mDisplay,vo.mScreen,vox11.depth,TrueColor,&vox11.vinfo );
+    priv->baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
 
+    aspect_save_orig(width,height);
+    aspect_save_prescale(d_width,d_height);
+    aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
 
- vox11.baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
+    aspect(&d_width,&d_height,VO_FS(vo)?A_ZOOM:A_NOZOOM);
 
- aspect_save_orig(width,height);
- aspect_save_prescale(d_width,d_height);
- aspect_save_screenres(vo.screenwidth,vo.screenheight);
-
- vo.softzoom=flags&VOFLAG_SWSCALE;
-
- aspect(&d_width,&d_height,A_NOZOOM);
- if( fullscreen ) aspect(&d_width,&d_height,A_ZOOM);
-
-    vo_x11_calcpos(&hint,d_width,d_height,flags);
+    vo_x11_calcpos(vo,&hint,d_width,d_height,flags);
     hint.flags=PPosition | PSize;
 
-    bg=WhitePixel( vo.mDisplay,vo.mScreen );
-    fg=BlackPixel( vo.mDisplay,vo.mScreen );
-    vo.dest.w=hint.width;
-    vo.dest.h=hint.height;
+    bg=WhitePixel( vo->mDisplay,vo->mScreen );
+    fg=BlackPixel( vo->mDisplay,vo->mScreen );
+    vo->dest.w=hint.width;
+    vo->dest.h=hint.height;
 
-    vox11.image_width=d_width;
-    vox11.image_height=d_height;
+    priv->image_width=d_width;
+    priv->image_height=d_height;
 
-    theCmap  =XCreateColormap( vo.mDisplay,RootWindow( vo.mDisplay,vo.mScreen ),
-    vox11.vinfo.visual,AllocNone );
+    theCmap  =XCreateColormap( vo->mDisplay,RootWindow( vo->mDisplay,vo->mScreen ),
+    priv->vinfo.visual,AllocNone );
 
     xswa.background_pixel=0;
     xswa.border_pixel=0;
@@ -179,128 +165,129 @@ static uint32_t __FASTCALL__ config( uint32_t width,uint32_t height,uint32_t d_w
     xswamask=CWBackPixel | CWBorderPixel | CWColormap;
 
 #ifdef HAVE_XF86VM
-    if ( vm )
-     {
-      xswa.override_redirect=True;
-      xswamask|=CWOverrideRedirect;
-     }
+    if ( VO_VM(vo) ) {
+	xswa.override_redirect=True;
+	xswamask|=CWOverrideRedirect;
+    }
 #endif
 
-    if ( vo.WinID>=0 ){
-      vo.window = vo.WinID ? ((Window)vo.WinID) : RootWindow( vo.mDisplay,vo.mScreen );
-      XUnmapWindow( vo.mDisplay,vo.window );
-      XChangeWindowAttributes( vo.mDisplay,vo.window,xswamask,&xswa );
+    if ( vo_conf.WinID>=0 ){
+	vo->window = vo_conf.WinID ? ((Window)vo_conf.WinID) : RootWindow( vo->mDisplay,vo->mScreen );
+	XUnmapWindow( vo->mDisplay,vo->window );
+	XChangeWindowAttributes( vo->mDisplay,vo->window,xswamask,&xswa );
+    } else {
+	vo->window=XCreateWindow( vo->mDisplay,RootWindow( vo->mDisplay,vo->mScreen ),
+				hint.x,hint.y,
+				hint.width,hint.height,
+				xswa.border_pixel,priv->depth,CopyFromParent,priv->vinfo.visual,xswamask,&xswa );
     }
-    else {
-      vo.window=XCreateWindow( vo.mDisplay,RootWindow( vo.mDisplay,vo.mScreen ),
-                         hint.x,hint.y,
-                         hint.width,hint.height,
-                         xswa.border_pixel,vox11.depth,CopyFromParent,vox11.vinfo.visual,xswamask,&xswa );
-    }
-    vo_x11_classhint( vo.mDisplay,vo.window,"vo_x11" );
-    vo_x11_hidecursor(vo.mDisplay,vo.window);
-    if ( fullscreen ) vo_x11_decoration( vo.mDisplay,vo.window,0 );
-    XSelectInput( vo.mDisplay,vo.window,StructureNotifyMask );
-    XSetStandardProperties( vo.mDisplay,vo.window,title,title,None,NULL,0,&hint );
-    XMapWindow( vo.mDisplay,vo.window );
+    vo_x11_classhint( vo->mDisplay,vo->window,"vo_x11" );
+    vo_x11_hidecursor(vo->mDisplay,vo->window);
+    if ( VO_FS(vo) ) vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
+    XSelectInput( vo->mDisplay,vo->window,StructureNotifyMask );
+    XSetStandardProperties( vo->mDisplay,vo->window,title,title,None,NULL,0,&hint );
+    XMapWindow( vo->mDisplay,vo->window );
 #ifdef HAVE_XINERAMA
-    vo_x11_xinerama_move(vo.mDisplay,vo.window,&hint);
+    vo_x11_xinerama_move(vo,vo->mDisplay,vo->window,&hint);
 #endif
-    if(vo.WinID!=0)
-    do { XNextEvent( vo.mDisplay,&xev ); } while ( xev.type != MapNotify || xev.xmap.event != vo.window );
-    XSelectInput( vo.mDisplay,vo.window,NoEventMask );
+    if(vo_conf.WinID!=0)
+    do { XNextEvent( vo->mDisplay,&xev ); } while ( xev.type != MapNotify || xev.xmap.event != vo->window );
+    XSelectInput( vo->mDisplay,vo->window,NoEventMask );
 
-    XFlush( vo.mDisplay );
-    XSync( vo.mDisplay,False );
-    vo.gc=XCreateGC( vo.mDisplay,vo.window,0L,&xgcv );
+    XFlush( vo->mDisplay );
+    XSync( vo->mDisplay,False );
+    vo->gc=XCreateGC( vo->mDisplay,vo->window,0L,&xgcv );
 
     /* we cannot grab mouse events on root window :( */
-    XSelectInput( vo.mDisplay,vo.window,StructureNotifyMask | KeyPressMask | 
-	((vo.WinID==0)?0:(ButtonPressMask | ButtonReleaseMask | PointerMotionMask)) );
+    XSelectInput( vo->mDisplay,vo->window,StructureNotifyMask | KeyPressMask | 
+	((vo_conf.WinID==0)?0:(ButtonPressMask | ButtonReleaseMask | PointerMotionMask)) );
 
 #ifdef HAVE_XF86VM
-    if ( vm )
-     {
-      /* Grab the mouse pointer in our window */
-      XGrabPointer(vo.mDisplay, vo.window, True, 0,
-                   GrabModeAsync, GrabModeAsync,
-                   vo.window, None, CurrentTime);
-      XSetInputFocus(vo.mDisplay, vo.window, RevertToNone, CurrentTime);
-     }
+    if ( VO_VM(vo) ) {
+	/* Grab the mouse pointer in our window */
+	XGrabPointer(vo->mDisplay, vo->window, True, 0,
+		   GrabModeAsync, GrabModeAsync,
+		   vo->window, None, CurrentTime);
+	XSetInputFocus(vo->mDisplay, vo->window, RevertToNone, CurrentTime);
+    }
 #endif
-  for(i=0;i<vox11.num_buffers;i++) vo_x11_getMyXImage(i,vox11.vinfo.visual,vox11.depth,vox11.image_width,vox11.image_height);
+    for(i=0;i<priv->num_buffers;i++) vo_x11_getMyXImage(vo,i,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
 
-  switch ((vox11.bpp=vo_x11_myximage[0]->bits_per_pixel)){
-	case 24: vox11.out_format= IMGFMT_BGR24; break;
-	case 32: vox11.out_format= IMGFMT_BGR32; break;
-	case 15: vox11.out_format= IMGFMT_BGR15; break;
-	case 16: vox11.out_format= IMGFMT_BGR16; break;
+    XImage* ximg=vo_x11_Image(vo,0);
+    switch ((priv->bpp=ximg->bits_per_pixel)){
+	case 24: priv->out_format= IMGFMT_BGR24; break;
+	case 32: priv->out_format= IMGFMT_BGR32; break;
+	case 15: priv->out_format= IMGFMT_BGR15; break;
+	case 16: priv->out_format= IMGFMT_BGR16; break;
 	default: break;
-  }
+    }
 
-  /* If we have blue in the lowest bit then obviously RGB */
-  vox11.mode=( ( vo_x11_myximage[0]->blue_mask & 0x01 ) != 0 ) ? MODE_RGB : MODE_BGR;
+    /* If we have blue in the lowest bit then obviously RGB */
+    priv->mode=( ( ximg->blue_mask & 0x01 ) != 0 ) ? MODE_RGB : MODE_BGR;
 #ifdef WORDS_BIGENDIAN
-  if ( vo_x11_myximage[0]->byte_order != MSBFirst )
+    if ( ximg->byte_order != MSBFirst )
 #else
-  if ( vo_x11_myximage[0]->byte_order != LSBFirst )
+    if ( ximg->byte_order != LSBFirst )
 #endif
-  {
-    vox11.mode=( ( vo_x11_myximage[0]->blue_mask & 0x01 ) != 0 ) ? MODE_BGR : MODE_RGB;
-  }
+    {
+	priv->mode=( ( ximg->blue_mask & 0x01 ) != 0 ) ? MODE_BGR : MODE_RGB;
+    }
 
 #ifdef WORDS_BIGENDIAN
-  if(vox11.mode==MODE_BGR && vox11.bpp!=32){
-    MSG_ERR("BGR%d not supported, please contact the developers\n", vox11.bpp);
-    return -1;
-  }
-  if(vox11.mode==MODE_RGB && vox11.bpp==32){
-    MSG_ERR("RGB32 not supported on big-endian systems, please contact the developers\n");
-    return -1;
-  }
+    if(priv->mode==MODE_BGR && priv->bpp!=32) {
+	MSG_ERR("BGR%d not supported, please contact the developers\n", priv->bpp);
+	return -1;
+    }
+    if(priv->mode==MODE_RGB && priv->bpp==32) {
+	MSG_ERR("RGB32 not supported on big-endian systems, please contact the developers\n");
+	return -1;
+    }
 #else
-  if(vox11.mode==MODE_BGR){
-    MSG_ERR("BGR not supported, please contact the developers\n");
-    return -1;
-  }
+    if(priv->mode==MODE_BGR) {
+	MSG_ERR("BGR not supported, please contact the developers\n");
+	return -1;
+    }
 #endif
- saver_off(vo.mDisplay);
- return 0;
+    saver_off(vo,vo->mDisplay);
+    return 0;
 }
 
-static const vo_info_t* get_info( void )
-{ return &vo_info; }
+static const vo_info_t* get_info( vo_data_t*vo )
+{
+    UNUSED(vo);
+    return &vo_info;
+}
 
-static void __FASTCALL__ Display_Image( XImage *myximage )
+static void __FASTCALL__ Display_Image(vo_data_t*vo,XImage *myximage )
 {
 #ifdef DISP
 #ifdef HAVE_SHM
- if ( vo_x11_Shmem_Flag )
-  {
-   XShmPutImage( vo.mDisplay,vo.window,vo.gc,myximage,
-                 0,0,
-                 ( vo.dest.w - myximage->width ) / 2,( vo.dest.h - myximage->height ) / 2,
-                 myximage->width,myximage->height,True );
-  }
-  else
+    if( vo_x11_Shmem_Flag(vo)) {
+	XShmPutImage(	vo->mDisplay,vo->window,vo->gc,myximage,
+			0,0,
+			( vo->dest.w - myximage->width ) / 2,( vo->dest.h - myximage->height ) / 2,
+			myximage->width,myximage->height,True );
+    }
+    else
 #endif
-   {
-    XPutImage( vo.mDisplay,vo.window,vo.gc,myximage,
-               0,0,
-               ( vo.dest.w - myximage->width ) / 2,( vo.dest.h - myximage->height ) / 2,
-               myximage->width,myximage->height);
-  }
+    {
+	XPutImage(	vo->mDisplay,vo->window,vo->gc,myximage,
+			0,0,
+			( vo->dest.w - myximage->width ) / 2,( vo->dest.h - myximage->height ) / 2,
+			myximage->width,myximage->height);
+    }
 #endif
 }
 
-static void __FASTCALL__ select_frame( unsigned idx ){
- Display_Image( vo_x11_myximage[idx] );
- if (vox11.num_buffers>1) XFlush(vo.mDisplay);
- else XSync(vo.mDisplay, False);
- return;
+static void __FASTCALL__ select_frame(vo_data_t*vo, unsigned idx ){
+    priv_t* priv=(priv_t*)vo->priv;
+    Display_Image(vo,vo_x11_Image(vo,idx));
+    if (priv->num_buffers>1) XFlush(vo->mDisplay);
+    else XSync(vo->mDisplay, False);
+    return;
 }
 
-static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
+static uint32_t __FASTCALL__ query_format(vo_data_t*vo, vo_query_fourcc_t* format )
 {
     MSG_DBG2("vo_x11: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
 #ifdef WORDS_BIGENDIAN
@@ -309,7 +296,7 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
     if (IMGFMT_IS_RGB(format->fourcc) && rgbfmt_depth(format->fourcc)<48)
 #endif
     {
-	if (rgbfmt_depth(format->fourcc) == (unsigned)vo.depthonscreen)
+	if (rgbfmt_depth(format->fourcc) == (unsigned)vo->depthonscreen)
 	    return 0x1|0x2|0x4;
 	else
 	    return 0x1|0x4;
@@ -318,80 +305,86 @@ static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
 }
 
 
-static void uninit(void)
+static void uninit(vo_data_t*vo)
 {
- unsigned i;
- for(i=0;i<vox11.num_buffers;i++)  vo_x11_freeMyXImage(i);
- saver_on(vo.mDisplay); // screen saver back on
+    unsigned i;
+    priv_t* priv=(priv_t*)vo->priv;
+    for(i=0;i<priv->num_buffers;i++)  vo_x11_freeMyXImage(vo,i);
+    saver_on(vo,vo->mDisplay); // screen saver back on
 
 #ifdef HAVE_XF86VM
- vo_vm_close(vo.mDisplay);
+    vo_vm_close(vo,vo->mDisplay);
 #endif
-
- vo_x11_uninit(vo.mDisplay, vo.window);
+    vo_x11_uninit(vo,vo->mDisplay, vo->window);
+    free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(const char *arg)
+static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    memset(&vox11,0,sizeof(vox11_priv_t));
-    vox11.num_buffers=1;
+    vo->priv=malloc(sizeof(priv_t));
+    priv_t* priv=(priv_t*)vo->priv;
+    memset(priv,0,sizeof(priv_t));
+    priv->num_buffers=1;
     if(arg)
     {
 	MSG_ERR("vo_x11: Unknown subdevice: %s\n",arg);
 	return ENOSYS;
     }
 
-    if( !vo_x11_init() ) return -1; // Can't open X11
+    if( !vo_x11_init(vo) ) return -1; // Can't open X11
 
     return 0;
 }
 
-static void __FASTCALL__ x11_dri_get_surface_caps(dri_surface_cap_t *caps)
+static void __FASTCALL__ x11_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
 {
+    priv_t* priv=(priv_t*)vo->priv;
     caps->caps = DRI_CAP_TEMP_VIDEO;
-    caps->fourcc = vox11.out_format;
-    caps->width=vox11.image_width;
-    caps->height=vox11.image_height;
+    caps->fourcc = priv->out_format;
+    caps->width=priv->image_width;
+    caps->height=priv->image_height;
     caps->x=0;
     caps->y=0;
-    caps->w=vox11.image_width;
-    caps->h=vox11.image_height;
-    caps->strides[0] = vox11.image_width*((vox11.bpp+7)/8);
+    caps->w=priv->image_width;
+    caps->h=priv->image_height;
+    caps->strides[0] = priv->image_width*((priv->bpp+7)/8);
     caps->strides[1] = 0;
     caps->strides[2] = 0;
     caps->strides[3] = 0;
 }
 
-static void __FASTCALL__ x11_dri_get_surface(dri_surface_t *surf)
+static void __FASTCALL__ x11_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 {
-    surf->planes[0] = vo_x11_ImageData(surf->idx);
+    UNUSED(vo);
+    surf->planes[0] = vo_x11_ImageData(vo,surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
 }
 
-static uint32_t __FASTCALL__ control(uint32_t request, any_t*data)
+static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
+    priv_t* priv=(priv_t*)vo->priv;
   switch (request) {
   case VOCTRL_QUERY_FORMAT:
-    return query_format((vo_query_fourcc_t*)data);
+    return query_format(vo,(vo_query_fourcc_t*)data);
   case VOCTRL_CHECK_EVENTS:
     {
      vo_resize_t * vrest = (vo_resize_t *)data;
-     vrest->event_type = check_events(vrest->adjust_size);
+     vrest->event_type = check_events(vo,vrest->adjust_size);
      return VO_TRUE;
     }
   case VOCTRL_FULLSCREEN:
-    vo_x11_fullscreen();
+    vo_x11_fullscreen(vo);
     return VO_TRUE;
   case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = vox11.num_buffers;
+	*(uint32_t *)data = priv->num_buffers;
 	return VO_TRUE;
   case DRI_GET_SURFACE_CAPS:
-	x11_dri_get_surface_caps(data);
+	x11_dri_get_surface_caps(vo,data);
 	return VO_TRUE;
   case DRI_GET_SURFACE:
-	x11_dri_get_surface(data);
+	x11_dri_get_surface(vo,data);
 	return VO_TRUE;
   }
   return VO_NOTIMPL;

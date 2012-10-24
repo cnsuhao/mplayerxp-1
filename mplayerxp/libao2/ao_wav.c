@@ -218,10 +218,11 @@ static void audio_resume(ao_data_t* ao)
 }
 
 // return: how many bytes can be played without blocking
+extern vo_data_t* vo_data;
 static unsigned get_space(ao_data_t* ao){
     priv_t* priv=ao->priv;
-    if(vo.pts)
-	return ao->pts < vo.pts + priv->fast * 30000 ? ao->outburst : 0;
+    if(vo_data->pts)
+	return ao->pts < vo_data->pts + priv->fast * 30000 ? ao->outburst : 0;
     return ao->outburst;
 }
 

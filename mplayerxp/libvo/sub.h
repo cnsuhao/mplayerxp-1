@@ -88,19 +88,19 @@ typedef struct sub_data_s {
 }sub_data_t;
 extern sub_data_t sub_data;
 
-typedef void (* __FASTCALL__ draw_osd_f)(unsigned idx,int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride);
-typedef void (* __FASTCALL__ clear_osd_f)(unsigned idx,int x0,int y0, int w,int h);
+typedef void (* __FASTCALL__ draw_osd_f)(any_t*vo,unsigned idx,int x0,int y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride);
+typedef void (* __FASTCALL__ clear_osd_f)(any_t*vo,unsigned idx,int x0,int y0, int w,int h);
 
 /* for direct calll from XP-thread*/
-extern void __FASTCALL__ vo_draw_spudec(unsigned idx,int dxs,int dys,draw_osd_f draw_alpha);
+extern void __FASTCALL__ vo_draw_spudec(any_t*vo,unsigned idx,int dxs,int dys,draw_osd_f draw_alpha);
 
-extern void __FASTCALL__ vo_draw_text(unsigned idx,int dxs,int dys, draw_osd_f draw_alpha);
-extern void __FASTCALL__ vo_remove_text(unsigned idx,int dxs,int dys,clear_osd_f remove);
+extern void __FASTCALL__ vo_draw_text(any_t*vo,unsigned idx,int dxs,int dys, draw_osd_f draw_alpha);
+extern void __FASTCALL__ vo_remove_text(any_t*vo,unsigned idx,int dxs,int dys,clear_osd_f remove);
 
 void vo_init_osd(void);
-int __FASTCALL__ vo_update_osd(int dxs,int dys);
+int __FASTCALL__ vo_update_osd(any_t*vo,int dxs,int dys);
 int __FASTCALL__ vo_osd_changed(int new_value);
-int __FASTCALL__ get_osd_height(int c,int h);
+int __FASTCALL__ get_osd_height(any_t* vo,int c,int h);
 void __FASTCALL__ osd_set_nav_box (uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey);
 
 #endif

@@ -90,7 +90,7 @@ typedef struct vo_resize_s
 	 * @param nh	storage for new height to be stored current window width
 	 * @return	0 if fail  !0 if success
 	**/
-	int		(*__FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
+	int		(*__FASTCALL__ adjust_size)(any_t*,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
 }vo_resize_t;
 
 /** Named video equalizer */
@@ -108,6 +108,98 @@ typedef struct vo_videq_s
 	int	    value;	/**< value of equalizer control in range -1000 +1000 */
 }vo_videq_t;
 
+typedef struct vo_gamma_s{
+    int			brightness;
+    int			saturation;
+    int			contrast;
+    int			hue;
+    int			red_intensity;
+    int			green_intensity;
+    int			blue_intensity;
+}vo_gamma_t;
+
+typedef struct vo_rect_s {
+    unsigned x,y,w,h;
+}vo_rect_t;
+
+struct vo_rect2 {
+  int left, right, top, bottom, width, height;
+};
+
+typedef struct vo_conf_s {
+    char *		subdevice; // currently unused
+    char*		mDisplayName;
+
+    int			WinID; /* output window id */
+    int			vsync;
+
+    unsigned		da_buffs; /**< contains number of buffers for decoding ahead */
+    unsigned		use_bm; /**< indicates user's agreement for using busmastering */
+
+    vo_gamma_t		gamma;
+
+    unsigned		screenwidth;
+    unsigned		screenheight;
+
+    int			opt_screen_size_x;
+    int			opt_screen_size_y;
+
+    float		screen_size_xy;
+    float		movie_aspect;
+    int			fsmode;
+    int			vidmode;
+    int			fullscreen;
+    int			softzoom;
+    int			flip;
+    unsigned		dbpp;
+}vo_conf_t;
+extern vo_conf_t vo_conf;
+
+typedef struct vo_data_s {
+    Display*		mDisplay;
+    int			mScreen;
+    Window		window;
+    GC			gc;
+
+    int			flags;
+// correct resolution/bpp on screen:  (should be autodetected by vo_x11_init())
+    unsigned		depthonscreen;
+
+// requested resolution/bpp:  (-x -y -bpp options)
+    vo_rect_t		dest;
+
+    int			pts;
+    float		fps;
+
+    any_t*		vo_priv;/* private data of vo structure */
+    any_t*		priv;	/* private data of video driver */
+    any_t*		priv2;	/* private data of X11 commons */
+    any_t*		priv3;	/* private data of vidix commons */
+
+    /* subtitle support */
+    char*		osd_text;
+    any_t*		spudec;
+    any_t*		vobsub;
+    font_desc_t*	font;
+    int			osd_progbar_type;
+    int			osd_progbar_value;   // 0..255
+    const subtitle*	sub;
+    int			osd_changed_flag;
+}vo_data_t;
+#define VO_ZOOM(vo)	((vo)->flags&VOFLAG_SWSCALE)
+#define VO_ZOOM_SET(vo)	((vo)->flags|=VOFLAG_SWSCALE)
+#define VO_ZOOM_UNSET(vo) ((vo)->flags&=~VOFLAG_SWSCALE)
+#define VO_FS(vo)	((vo)->flags&VOFLAG_FULLSCREEN)
+#define VO_FS_SET(vo)	((vo)->flags|=VOFLAG_FULLSCREEN)
+#define VO_FS_UNSET(vo)	((vo)->flags&=~VOFLAG_FULLSCREEN)
+#define VO_VM(vo)	((vo)->flags&VOFLAG_MODESWITCHING)
+#define VO_VM_SET(vo)	((vo)->flags|=VOFLAG_MODESWITCHING)
+#define VO_VM_UNSET(vo)	((vo)->flags&=~VOFLAG_MODESWITCHING)
+#define VO_FLIP(vo)	((vo)->flags&VOFLAG_FLIPPING)
+#define VO_FLIP_SET(vo)	((vo)->flags|=VOFLAG_FLIPPING)
+#define VO_FLIP_UNSET(vo) ((vo)->flags&=~VOFLAG_FLIPPING)
+#define VO_FLIP_REVERT(vo) ((vo)->flags^=VOFLAG_FLIPPING)
+
 /** VO-driver interface */
 typedef struct vo_functions_s
 {
@@ -115,7 +207,7 @@ typedef struct vo_functions_s
 	 * @param arg	currently it's vo_subdevice
 	 * @return	zero on successful initialization, non-zero on error.
 	**/
-	uint32_t (* __FASTCALL__ preinit)(const char *arg);
+	uint32_t (* __FASTCALL__ preinit)(vo_data_t* vo,const char *arg);
 
         /** Initializes (means CONFIGURE) the display driver.
 	 * @param width		width of source image
@@ -127,7 +219,7 @@ typedef struct vo_functions_s
 	 * @param format	fourcc of source image
          * @return		zero on successful initialization, non-zero on error.
          **/
-        uint32_t (* __FASTCALL__ config)(uint32_t width, uint32_t height, uint32_t d_width,
+        uint32_t (* __FASTCALL__ config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 			 uint32_t d_height, uint32_t fullscreen, char *title,
 			 uint32_t format,const vo_tune_info_t *);
 
@@ -136,21 +228,21 @@ typedef struct vo_functions_s
 	 * @param data		data associated with command
 	 * @return		VO_TRUE if success VO_FALSE VO_ERROR VO_NOTIMPL otherwise
 	 **/
-	uint32_t (* __FASTCALL__ control)(uint32_t request, any_t*data);
+	uint32_t (* __FASTCALL__ control)(vo_data_t* vo,uint32_t request, any_t*data);
 
         /** Returns driver information.
          * @return	read-only pointer to a vo_info_t structure.
          **/
-        const vo_info_t* (*get_info)(void);
+        const vo_info_t* (*get_info)(vo_data_t* vo);
 
         /** Blit/Flip buffer to the screen. Must be called after each frame!
 	 * @param idex	index of frame to be selected as active frame
          **/
-        void (* __FASTCALL__ select_frame)(unsigned idx);
+        void (* __FASTCALL__ select_frame)(vo_data_t* vo,unsigned idx);
 
         /** Closes driver. Should restore the original state of the system.
          **/
-        void (*uninit)(void);
+        void (*uninit)(vo_data_t* vo);
 
 } vo_functions_t;
 
@@ -158,43 +250,35 @@ typedef struct vo_functions_s
 * High level VO functions to provide some abstraction *
 * level for video out library                         *
 \*****************************************************/
-extern void	 __FASTCALL__ vo_preinit_structs( void );
-extern void		vo_print_help( void );
-extern const vo_functions_t * vo_register(const char *driver_name);
-extern const vo_info_t*	vo_get_info( void );
-extern int	 __FASTCALL__ vo_init( const char *subdevice_name);
-extern uint32_t  __FASTCALL__ vo_config(uint32_t width, uint32_t height, uint32_t d_width,
+extern vo_data_t*	 __FASTCALL__ vo_preinit_structs( void );
+extern void		vo_print_help(vo_data_t*);
+extern const vo_functions_t * vo_register(vo_data_t* vo,const char *driver_name);
+extern const vo_info_t*	vo_get_info(vo_data_t* vo);
+extern int	 __FASTCALL__ vo_init(vo_data_t* vo,const char *subdevice_name);
+extern uint32_t  __FASTCALL__ vo_config(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 				  uint32_t d_height, uint32_t fullscreen, char *title,
 				  uint32_t format,const vo_tune_info_t *);
-extern uint32_t	 __FASTCALL__ vo_query_format( uint32_t* fourcc,unsigned src_w,unsigned src_h);
-extern uint32_t		vo_reset( void );
-extern uint32_t		vo_fullscreen( void );
-extern uint32_t		vo_screenshot( unsigned idx );
-extern uint32_t		vo_pause( void );
-extern uint32_t		vo_resume( void );
+extern uint32_t	 __FASTCALL__ vo_query_format(vo_data_t* vo,uint32_t* fourcc,unsigned src_w,unsigned src_h);
+extern uint32_t		vo_reset(vo_data_t* vo);
+extern uint32_t		vo_fullscreen(vo_data_t* vo);
+extern uint32_t		vo_screenshot(vo_data_t* vo,unsigned idx );
+extern uint32_t		vo_pause(vo_data_t* vo);
+extern uint32_t		vo_resume(vo_data_t* vo);
 
-extern void		vo_lock_surfaces(void);
-extern void		vo_unlock_surfaces(void);
-extern uint32_t	 __FASTCALL__ vo_get_surface( mp_image_t* mpi,unsigned decoder_idx);
+extern void		vo_lock_surfaces(vo_data_t* vo);
+extern void		vo_unlock_surfaces(vo_data_t* vo);
+extern uint32_t	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi,unsigned decoder_idx);
 
-extern int		vo_check_events( void );
-extern unsigned	 __FASTCALL__ vo_get_num_frames( void );
-extern uint32_t  __FASTCALL__ vo_draw_slice(const mp_image_t *mpi);
-extern void		vo_select_frame(unsigned idx);
-extern void		vo_flush_page(unsigned decoder_idx);
-extern void		vo_draw_osd(unsigned idx);
-extern void		vo_draw_spudec_direct(unsigned idx);
-extern void		vo_uninit( void );
-extern uint32_t __FASTCALL__ vo_control(uint32_t request, any_t*data);
-extern int __FASTCALL__ vo_is_final(void);
-
-typedef struct vo_rect_s {
-    unsigned x,y,w,h;
-}vo_rect_t;
-
-struct vo_rect2 {
-  int left, right, top, bottom, width, height;
-};
+extern int		vo_check_events(vo_data_t* vo);
+extern unsigned	 __FASTCALL__ vo_get_num_frames(vo_data_t* vo);
+extern uint32_t  __FASTCALL__ vo_draw_slice(vo_data_t* vo,const mp_image_t *mpi);
+extern void		vo_select_frame(vo_data_t* vo,unsigned idx);
+extern void		vo_flush_page(vo_data_t* vo,unsigned decoder_idx);
+extern void		vo_draw_osd(vo_data_t* vo,unsigned idx);
+extern void		vo_draw_spudec_direct(vo_data_t* vo,unsigned idx);
+extern void		vo_uninit(vo_data_t* vo);
+extern uint32_t __FASTCALL__ vo_control(vo_data_t* vo,uint32_t request, any_t*data);
+extern int __FASTCALL__ vo_is_final(vo_data_t* vo);
 
 /** Contains geometry of fourcc */
 typedef struct s_vo_format_desc
@@ -206,74 +290,7 @@ typedef struct s_vo_format_desc
 }vo_format_desc;
 extern int	__FASTCALL__	vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd);
 
-
-int vo_x11_init(void);
-
 // NULL terminated array of all drivers
 extern const vo_functions_t* video_out_drivers[];
-
-typedef struct vo_gamma_s{
-    int			brightness;
-    int			saturation;
-    int			contrast;
-    int			hue;
-    int			red_intensity;
-    int			green_intensity;
-    int			blue_intensity;
-}vo_gamma_t;
-
-typedef struct vo_priv_s {
-    char *		subdevice; // currently unused
-
-    char*		mDisplayName;
-    Display*		mDisplay;
-    int			mScreen;
-    int			WinID; /* output window id */
-    Window		window;
-    GC			gc;
-
-    int			flags;
-// correct resolution/bpp on screen:  (should be autodetected by vo_x11_init())
-    unsigned		depthonscreen;
-    unsigned		screenwidth;
-    unsigned		screenheight;
-
-// requested resolution/bpp:  (-x -y -bpp options)
-    vo_rect_t		dest;
-    unsigned		dbpp;
-
-    int			vsync;
-    int			fs;
-    int			fsmode;
-
-    int			pts;
-    float		fps;
-
-    unsigned		da_buffs; /**< contains number of buffers for decoding ahead */
-    unsigned		use_bm; /**< indicates user's agreement for using busmastering */
-
-    vo_gamma_t		gamma;
-
-    int			fullscreen;
-    int			vidmode;
-    int			softzoom;
-    int			flip;
-    int			opt_screen_size_x;
-    int			opt_screen_size_y;
-    float		screen_size_xy;
-    float		movie_aspect;
-
-    /* subtitle support */
-    char*		osd_text;
-    any_t*		spudec;
-    any_t*		vobsub;
-    font_desc_t*	font;
-    int			osd_progbar_type;
-    int			osd_progbar_value;   // 0..255
-    const subtitle*	sub;
-    int			osd_changed_flag;
-}vo_priv_t;
-
-extern vo_priv_t	vo;
 
 #endif

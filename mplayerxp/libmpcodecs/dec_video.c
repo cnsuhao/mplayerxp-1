@@ -84,6 +84,8 @@ void mpcv_uninit(sh_video_t *sh_video){
     sh_video->inited=0;
 }
 
+#include "libvo/video_out.h"
+extern vo_data_t*vo_data;
 #define MPDEC_THREAD_COND (VF_FLAGS_THREADS|VF_FLAGS_SLICES)
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
@@ -234,6 +236,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
   }
 }
 
+extern vo_data_t* vo_data;
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
 int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_frame, float pts){
     vf_instance_t* vf;
@@ -267,7 +270,7 @@ int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_f
 
     if(drop_frame) return 0;
     update_subtitle(sh_video,pts,mpi->xp_idx);
-    vo_flush_page(dae_curr_vdecoded());
+    vo_flush_page(vo_data,dae_curr_vdecoded());
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
@@ -302,7 +305,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
       if(sub_fps==0) sub_fps=sh_video->fps;
       pinfo[xp_id].current_module="find_sub";
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-         find_sub(mp_subtitles,sub_uses_time?(100*pts):(pts*sub_fps)); // FIXME! frame counter...
+         find_sub(mp_subtitles,sub_uses_time?(100*pts):(pts*sub_fps),vo_data); // FIXME! frame counter...
          sub_last_pts = pts;
       }
       pinfo[xp_id].current_module=NULL;
@@ -322,31 +325,31 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
     }
   }else
 #endif
-   if(vo.spudec){
+   if(vo_data->spudec){
     unsigned char* packet=NULL;
     int len,timestamp;
     pinfo[xp_id].current_module="spudec";
-    spudec_now_pts(vo.spudec,90000*v_pts);
-    if(spudec_visible(vo.spudec)) {
-	vo_draw_spudec_direct(xp_idx);
+    spudec_now_pts(vo_data->spudec,90000*v_pts);
+    if(spudec_visible(vo_data->spudec)) {
+	vo_draw_spudec_direct(vo_data,xp_idx);
     } else {
-	spudec_heartbeat(vo.spudec,90000*v_pts);
-	if (vo.vobsub) {
+	spudec_heartbeat(vo_data->spudec,90000*v_pts);
+	if (vo_data->vobsub) {
 	    if (v_pts >= 0) {
-	    while((len=vobsub_get_packet(vo.vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
+	    while((len=vobsub_get_packet(vo_data->vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
 		timestamp -= (v_pts - sh_video->timer)*90000;
 		MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
-		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
+		spudec_assemble(vo_data->spudec,packet,len,90000*d_dvdsub->pts);
 		}
 	    }
 	} else {
 	    while((len=ds_get_packet_sub_r(d_dvdsub,&packet))>0){
 		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
-		spudec_assemble(vo.spudec,packet,len,90000*d_dvdsub->pts);
+		spudec_assemble(vo_data->spudec,packet,len,90000*d_dvdsub->pts);
 	    }
 	}
 	/* detect wether the sub has changed or not */
-	if(spudec_changed(vo.spudec)) vo_draw_spudec_direct(xp_idx);
+	if(spudec_changed(vo_data->spudec)) vo_draw_spudec_direct(vo_data,xp_idx);
 	pinfo[xp_id].current_module=NULL;
     }
   }

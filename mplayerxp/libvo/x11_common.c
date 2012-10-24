@@ -39,8 +39,6 @@
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
 
-int vo_x11_Shmem_Flag=0;
-
 /* since it doesn't seem to be defined on some platforms */
 extern int XShmGetEventBase( Display* );
 #endif
@@ -53,7 +51,7 @@ extern int XShmGetEventBase( Display* );
  */
 #define	SCAN_VISUALS
 
-typedef struct x11_priv_s {
+typedef struct priv_s {
     int			mLocalDisplay;
     Window		mRootWin;
 
@@ -61,6 +59,9 @@ typedef struct x11_priv_s {
     int			timeout_save;
 
     vo_rect_t		prev;
+
+    XImage *		myximage[MAX_DRI_BUFFERS];
+    int			Shmem_Flag;
 #ifdef HAVE_XINERAMA
     int			xinerama_x;
     int			xinerama_y;
@@ -74,105 +75,109 @@ typedef struct x11_priv_s {
     XF86VidModeModeInfo **vidmodes;
     XF86VidModeModeLine	modeline;
 #endif
-}x11_priv_t;
-static x11_priv_t priv;
+}priv_t;
 
 #ifdef HAVE_XINERAMA
 int xinerama_screen;
 #endif
 
-XImage *vo_x11_myximage[MAX_DRI_BUFFERS];
-
-void __FASTCALL__ vo_x11_getMyXImage(unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h)
+int __FASTCALL__ vo_x11_Shmem_Flag(vo_data_t*vo)
 {
+    priv_t*priv=(priv_t*)vo->priv2;
+    return priv->Shmem_Flag;
+}
+
+XImage* __FASTCALL__ vo_x11_Image(vo_data_t*vo,unsigned idx)
+{
+    priv_t*priv=(priv_t*)vo->priv2;
+    return priv->myximage[idx];
+}
+
+uint8_t* __FASTCALL__ vo_x11_ImageData(vo_data_t*vo,unsigned idx)
+{
+    return vo_x11_Image(vo,idx)->data;
+}
+
+void __FASTCALL__ vo_x11_getMyXImage(vo_data_t*vo,unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h)
+{
+    priv_t*priv=(priv_t*)vo->priv2;
 #ifdef HAVE_SHM
- if ( priv.mLocalDisplay && XShmQueryExtension( vo.mDisplay )) vo_x11_Shmem_Flag=1;
- else {
-    vo_x11_Shmem_Flag=0;
-    MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
- }
- if ( vo_x11_Shmem_Flag ) priv.CompletionType=XShmGetEventBase( vo.mDisplay ) + ShmCompletion;
- if ( vo_x11_Shmem_Flag ) {
-   vo_x11_myximage[idx]=XShmCreateImage( vo.mDisplay,visual,depth,ZPixmap,NULL,&priv.Shminfo[idx],w,h);
-   if ( vo_x11_myximage[idx] == NULL ) {
-     if ( vo_x11_myximage[idx] != NULL ) XDestroyImage( vo_x11_myximage[idx] );
-     MSG_V( "Shared memory error,disabling ( Ximage error )\n" );
-     goto shmemerror;
-   }
-   priv.Shminfo[idx].shmid=shmget( IPC_PRIVATE,
-   vo_x11_myximage[idx]->bytes_per_line * vo_x11_myximage[idx]->height ,
-   IPC_CREAT | 0777 );
-   if ( priv.Shminfo[idx].shmid < 0 ) {
-    XDestroyImage( vo_x11_myximage[idx] );
-    MSG_V( "%s\n",strerror( errno ) );
-    MSG_V( "Shared memory error,disabling ( seg id error )\n" );
-    goto shmemerror;
-   }
-   priv.Shminfo[idx].shmaddr=( char * ) shmat( priv.Shminfo[idx].shmid,0,0 );
+    if ( priv->mLocalDisplay && XShmQueryExtension( vo->mDisplay )) priv->Shmem_Flag=1;
+    else {
+	priv->Shmem_Flag=0;
+	MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
+    }
+    if ( priv->Shmem_Flag ) {
+	priv->CompletionType=XShmGetEventBase( vo->mDisplay ) + ShmCompletion;
+	priv->myximage[idx]=XShmCreateImage( vo->mDisplay,visual,depth,ZPixmap,NULL,&priv->Shminfo[idx],w,h);
+	if ( priv->myximage[idx] == NULL ) {
+	    if ( priv->myximage[idx] != NULL ) XDestroyImage( priv->myximage[idx] );
+	    MSG_V( "Shared memory error,disabling ( Ximage error )\n" );
+	    goto shmemerror;
+	}
+	priv->Shminfo[idx].shmid=shmget( IPC_PRIVATE,
+		priv->myximage[idx]->bytes_per_line * priv->myximage[idx]->height,IPC_CREAT|0777);
+	if ( priv->Shminfo[idx].shmid < 0 ) {
+	    XDestroyImage( priv->myximage[idx] );
+	    MSG_V( "%s\n",strerror( errno ) );
+	    MSG_V( "Shared memory error,disabling ( seg id error )\n" );
+	    goto shmemerror;
+	}
+	priv->Shminfo[idx].shmaddr=( char * ) shmat( priv->Shminfo[idx].shmid,0,0 );
 
-   if ( priv.Shminfo[idx].shmaddr == ( ( char * ) -1 ) )
-   {
-    XDestroyImage( vo_x11_myximage[idx] );
-    if ( priv.Shminfo[idx].shmaddr != ( ( char * ) -1 ) ) shmdt( priv.Shminfo[idx].shmaddr );
-    MSG_V( "Shared memory error,disabling ( address error )\n" );
-    goto shmemerror;
-   }
-   vo_x11_myximage[idx]->data=priv.Shminfo[idx].shmaddr;
-   priv.Shminfo[idx].readOnly=False;
-   XShmAttach( vo.mDisplay,&priv.Shminfo[idx] );
+	if ( priv->Shminfo[idx].shmaddr == ( ( char * ) -1 ) ) {
+	    XDestroyImage( priv->myximage[idx] );
+	    if ( priv->Shminfo[idx].shmaddr != ( ( char * ) -1 ) ) shmdt( priv->Shminfo[idx].shmaddr );
+	    MSG_V( "Shared memory error,disabling ( address error )\n" );
+	    goto shmemerror;
+	}
+	priv->myximage[idx]->data=priv->Shminfo[idx].shmaddr;
+	priv->Shminfo[idx].readOnly=False;
+	XShmAttach( vo->mDisplay,&priv->Shminfo[idx] );
 
-   XSync( vo.mDisplay,False );
+	XSync( vo->mDisplay,False );
 
-   if ( priv.gXErrorFlag )
-   {
-    XDestroyImage( vo_x11_myximage[idx] );
-    shmdt( priv.Shminfo[idx].shmaddr );
-    MSG_V( "Shared memory error,disabling.\n" );
-    priv.gXErrorFlag=0;
-    goto shmemerror;
-   }
-   else
-    shmctl( priv.Shminfo[idx].shmid,IPC_RMID,0 );
-
-   {
-     static int firstTime=1;
-     if (firstTime){
-       MSG_V( "Sharing memory.\n" );
-       firstTime=0;
-     }
-   }
- }
- else
-  {
-   shmemerror:
-   vo_x11_Shmem_Flag=0;
+	if ( priv->gXErrorFlag ) {
+	    XDestroyImage( priv->myximage[idx] );
+	    shmdt( priv->Shminfo[idx].shmaddr );
+	    MSG_V( "Shared memory error,disabling.\n" );
+	    priv->gXErrorFlag=0;
+	    goto shmemerror;
+	} else shmctl( priv->Shminfo[idx].shmid,IPC_RMID,0 );
+	static int firstTime=1;
+	if (firstTime) {
+	    MSG_V( "Sharing memory.\n" );
+	    firstTime=0;
+	}
+    } else {
+	shmemerror:
+	priv->Shmem_Flag=0;
 #endif
-   vo_x11_myximage[idx]=XGetImage( vo.mDisplay,vo.window,0,0,
+	priv->myximage[idx]=XGetImage( vo->mDisplay,vo->window,0,0,
 				w,h,AllPlanes,ZPixmap );
 #ifdef HAVE_SHM
-  }
+    }
 #endif
 }
 
-void __FASTCALL__ vo_x11_freeMyXImage(unsigned idx)
+void __FASTCALL__ vo_x11_freeMyXImage(vo_data_t*vo,unsigned idx)
 {
+    priv_t*priv=(priv_t*)vo->priv2;
 #ifdef HAVE_SHM
- if ( vo_x11_Shmem_Flag )
-  {
-   XShmDetach( vo.mDisplay,&priv.Shminfo[idx] );
-   XDestroyImage( vo_x11_myximage[idx] );
-   shmdt( priv.Shminfo[idx].shmaddr );
-  }
-  else
+    if ( priv->Shmem_Flag ) {
+	XShmDetach( vo->mDisplay,&priv->Shminfo[idx] );
+	XDestroyImage( priv->myximage[idx] );
+	shmdt( priv->Shminfo[idx].shmaddr );
+    } else
 #endif
-  {
-   XDestroyImage( vo_x11_myximage[idx] );
-  }
-  vo_x11_myximage[idx]=NULL;
+    {
+	XDestroyImage( priv->myximage[idx] );
+    }
+    priv->myximage[idx]=NULL;
 }
 
 
-void __FASTCALL__ vo_x11_hidecursor ( Display *disp , Window win )
+void __FASTCALL__ vo_x11_hidecursor ( Display *disp, Window win )
 {
 	Cursor no_ptr;
 	Pixmap bm_no;
@@ -180,7 +185,7 @@ void __FASTCALL__ vo_x11_hidecursor ( Display *disp , Window win )
 	Colormap colormap;
 	static char bm_no_data[] = { 0,0,0,0, 0,0,0,0  };
 
-	if(vo.WinID==0) return;	// do not hide, if we're playing at rootwin
+	if(vo_conf.WinID==0) return;	// do not hide, if we're playing at rootwin
 	
 	colormap = DefaultColormap(disp,DefaultScreen(disp));
 	XAllocNamedColor(disp,colormap,"black",&black,&dummy);
@@ -258,96 +263,92 @@ static int x11_errorhandler(Display *display, XErrorEvent *event)
     return 0;
 }
 
-int vo_x11_init( void )
+int vo_x11_init(vo_data_t*vo)
 {
- unsigned depth, bpp;
- unsigned int mask;
+    unsigned depth, bpp;
+    unsigned int mask;
 // char    * DisplayName = ":0.0";
- XImage  * mXImage = NULL;
- XWindowAttributes attribs;
- char* dispName;
+    XImage  * mXImage = NULL;
+    XWindowAttributes attribs;
+    char* dispName;
 
- if(vo.depthonscreen) return 1; // already called
+    if(vo->depthonscreen) return 1; // already called
 
- memset(&priv,0,sizeof(x11_priv_t));
- priv.CompletionType=-1;
+    vo->priv2=malloc(sizeof(priv_t));
+    priv_t*priv=(priv_t*)vo->priv2;
+    memset(priv,0,sizeof(priv_t));
+    priv->CompletionType=-1;
 
- XSetErrorHandler(x11_errorhandler);
+    XSetErrorHandler(x11_errorhandler);
 
 #if 0
- if (!vo.mDisplayName)
-   if (!(vo.mDisplayName=getenv("DISPLAY")))
-     vo.mDisplayName=strdup(":0.0");
+    if (!vo->mDisplayName)
+	if (!(vo->mDisplayName=getenv("DISPLAY")))
+	    vo->mDisplayName=strdup(":0.0");
 #else
-  dispName = XDisplayName(vo.mDisplayName);
+    dispName = XDisplayName(vo_conf.mDisplayName);
 #endif
 
- MSG_V("X11 opening display: %s\n", dispName);
+    MSG_V("X11 opening display: %s\n", dispName);
 
- vo.mDisplay=XOpenDisplay(dispName);
- if ( !vo.mDisplay )
-  {
-   MSG_ERR( "vo: couldn't open the X11 display (%s)!\n",dispName );
-   return 0;
-  }
- vo.mScreen=DefaultScreen( vo.mDisplay );     // Screen ID.
- priv.mRootWin=RootWindow( vo.mDisplay,vo.mScreen );// Root window ID.
+    vo->mDisplay=XOpenDisplay(dispName);
+    if ( !vo->mDisplay ) {
+	MSG_ERR( "vo: couldn't open the X11 display (%s)!\n",dispName );
+	return 0;
+    }
+    vo->mScreen=DefaultScreen( vo->mDisplay );     // Screen ID.
+    priv->mRootWin=RootWindow( vo->mDisplay,vo->mScreen );// Root window ID.
 
 #ifdef HAVE_XINERAMA
- if(XineramaIsActive(vo.mDisplay))
-  {
-  XineramaScreenInfo *screens;
-  int num_screens;
+    if(XineramaIsActive(vo->mDisplay)) {
+	XineramaScreenInfo *screens;
+	int num_screens;
 
-  screens = XineramaQueryScreens(vo.mDisplay, &num_screens);
-  if(xinerama_screen >= num_screens) xinerama_screen = 0;
-  if (! vo.screenwidth)
-    vo.screenwidth=screens[xinerama_screen].width;
-  if (! vo.screenheight)
-    vo.screenheight=screens[xinerama_screen].height;
-  priv.xinerama_x = screens[xinerama_screen].x_org;
-  priv.xinerama_y = screens[xinerama_screen].y_org;
+	screens = XineramaQueryScreens(vo->mDisplay, &num_screens);
+	if(xinerama_screen >= num_screens) xinerama_screen = 0;
+	if (! vo_conf.screenwidth)
+	    vo_conf.screenwidth=screens[xinerama_screen].width;
+	if (! vo_conf.screenheight)
+	    vo_conf.screenheight=screens[xinerama_screen].height;
+	priv->xinerama_x = screens[xinerama_screen].x_org;
+	priv->xinerama_y = screens[xinerama_screen].y_org;
 
-  XFree(screens);
-  }
- else
+	XFree(screens);
+    } else
 #endif
 #ifdef HAVE_XF86VM
- {
-  int clock;
-  XF86VidModeGetModeLine( vo.mDisplay,vo.mScreen,&clock ,&priv.modeline );
-  if ( !vo.screenwidth )  vo.screenwidth=priv.modeline.hdisplay;
-  if ( !vo.screenheight ) vo.screenheight=priv.modeline.vdisplay;
- }
+    {
+	int clock;
+	XF86VidModeGetModeLine( vo->mDisplay,vo->mScreen,&clock ,&priv->modeline );
+	if ( !vo_conf.screenwidth )  vo_conf.screenwidth=priv->modeline.hdisplay;
+	if ( !vo_conf.screenheight ) vo_conf.screenheight=priv->modeline.vdisplay;
+    }
 #endif
- {
- if (! vo.screenwidth)
-   vo.screenwidth=DisplayWidth( vo.mDisplay,vo.mScreen );
- if (! vo.screenheight)
-   vo.screenheight=DisplayHeight( vo.mDisplay,vo.mScreen );
- }
- // get color depth (from root window, or the best visual):
- XGetWindowAttributes(vo.mDisplay, priv.mRootWin, &attribs);
- depth=attribs.depth;
+    if (! vo_conf.screenwidth)
+	vo_conf.screenwidth=DisplayWidth( vo->mDisplay,vo->mScreen );
+    if (! vo_conf.screenheight)
+	vo_conf.screenheight=DisplayHeight( vo->mDisplay,vo->mScreen );
+    // get color depth (from root window, or the best visual):
+    XGetWindowAttributes(vo->mDisplay, priv->mRootWin, &attribs);
+    depth=attribs.depth;
 
 #ifdef	SCAN_VISUALS
- if (depth != 15 && depth != 16 && depth != 24 && depth != 32) {
-   Visual *visual;
+    if (depth != 15 && depth != 16 && depth != 24 && depth != 32) {
+	Visual *visual;
 
-   depth = vo_find_depth_from_visuals(vo.mDisplay, vo.mScreen, &visual);
-   if ((int)depth != -1)
-     mXImage=XCreateImage(vo.mDisplay, visual, depth, ZPixmap,
+	depth = vo_find_depth_from_visuals(vo->mDisplay, vo->mScreen, &visual);
+	if ((int)depth != -1)
+	    mXImage=XCreateImage(vo->mDisplay, visual, depth, ZPixmap,
 			  0, NULL, 1, 1, 8, 1);
- } else
+    } else
 #endif
- mXImage=XGetImage( vo.mDisplay,priv.mRootWin,0,0,1,1,AllPlanes,ZPixmap );
+	mXImage=XGetImage( vo->mDisplay,priv->mRootWin,0,0,1,1,AllPlanes,ZPixmap );
 
- vo.depthonscreen = depth;	// display depth on screen
+    vo->depthonscreen = depth;	// display depth on screen
 
- // get bits/pixel from XImage structure:
- if (mXImage == NULL) {
-   mask = 0;
- } else {
+    // get bits/pixel from XImage structure:
+    if (mXImage == NULL) mask = 0;
+    else {
    /*
     * for the depth==24 case, the XImage structures might use
     * 24 or 32 bits of data per pixel.  The global variable
@@ -356,30 +357,30 @@ int vo_x11_init( void )
     *
     * Maybe we should rename vo_depthonscreen to (or add) vo_bpp?
     */
-   bpp=mXImage->bits_per_pixel;
-   if((vo.depthonscreen+7)/8 != (bpp+7)/8) vo.depthonscreen=bpp; // by A'rpi
-   mask=mXImage->red_mask|mXImage->green_mask|mXImage->blue_mask;
-   MSG_V("vo: X11 color mask:  %X  (R:%lX G:%lX B:%lX)\n",
+	bpp=mXImage->bits_per_pixel;
+	if((vo->depthonscreen+7)/8 != (bpp+7)/8) vo->depthonscreen=bpp; // by A'rpi
+	mask=mXImage->red_mask|mXImage->green_mask|mXImage->blue_mask;
+	MSG_V("vo: X11 color mask:  %X  (R:%lX G:%lX B:%lX)\n",
 	    mask,mXImage->red_mask,mXImage->green_mask,mXImage->blue_mask);
-   XDestroyImage( mXImage );
- }
- if(((vo.depthonscreen+7)/8)==2){
-   if(mask==0x7FFF) vo.depthonscreen=15; else
-   if(mask==0xFFFF) vo.depthonscreen=16;
- }
-// XCloseDisplay( vo.mDisplay );
+	XDestroyImage( mXImage );
+    }
+    if(((vo->depthonscreen+7)/8)==2){
+	if(mask==0x7FFF) vo->depthonscreen=15; else
+	if(mask==0xFFFF) vo->depthonscreen=16;
+    }
+// XCloseDisplay( vo->mDisplay );
 /* slightly improved local display detection AST */
- if ( strncmp(dispName, "unix:", 5) == 0)
+    if ( strncmp(dispName, "unix:", 5) == 0)
 		dispName += 4;
- else if ( strncmp(dispName, "localhost:", 10) == 0)
+    else if ( strncmp(dispName, "localhost:", 10) == 0)
 		dispName += 9;
- if (*dispName==':') priv.mLocalDisplay=1; else priv.mLocalDisplay=0;
- MSG_V("vo: X11 running at %dx%d with depth %d and %d bits/pixel (\"%s\" => %s display)\n",
-	vo.screenwidth,vo.screenheight,
-	depth, vo.depthonscreen,
-	dispName,priv.mLocalDisplay?"local":"remote");
+    if (*dispName==':') priv->mLocalDisplay=1; else priv->mLocalDisplay=0;
+    MSG_V("vo: X11 running at %dx%d with depth %d and %d bits/pixel (\"%s\" => %s display)\n",
+	vo_conf.screenwidth,vo_conf.screenheight,
+	depth, vo->depthonscreen,
+	dispName,priv->mLocalDisplay?"local":"remote");
 
- return 1;
+    return 1;
 }
 
 
@@ -573,38 +574,35 @@ static MotifWmHints   vo_MotifWmHints;
 static Atom           vo_MotifHints  = None;
 
 // Note: always d==0 !
-void __FASTCALL__ vo_x11_decoration( Display * vo_Display,Window w,int d )
+void __FASTCALL__ vo_x11_decoration(vo_data_t*vo,Display * vo_Display,Window w,int d )
 {
-
-  if(vo.fsmode&1){
-    XSetWindowAttributes attr;
-    attr.override_redirect = True;
-    XChangeWindowAttributes(vo_Display, w, CWOverrideRedirect, &attr);
+    if(vo_conf.fsmode&1){
+	XSetWindowAttributes attr;
+	attr.override_redirect = True;
+	XChangeWindowAttributes(vo_Display, w, CWOverrideRedirect, &attr);
 //    XMapWindow(vo_Display, w);
-  }
-
-  if(vo.fsmode&8){
-    XSetTransientForHint (vo_Display, w, RootWindow(vo_Display,vo.mScreen));
-  }
-
- vo_MotifHints=XInternAtom( vo_Display,"_MOTIF_WM_HINTS",0 );
- if ( vo_MotifHints != None )
-  {
-   memset( &vo_MotifWmHints,0,sizeof( MotifWmHints ) );
-   vo_MotifWmHints.flags=MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
-   if ( d )
-    {
-     vo_MotifWmHints.functions=MWM_FUNC_MOVE | MWM_FUNC_CLOSE | MWM_FUNC_MINIMIZE | MWM_FUNC_MAXIMIZE;
-     d=MWM_DECOR_ALL;
     }
+
+    if(vo_conf.fsmode&8){
+	XSetTransientForHint (vo_Display, w, RootWindow(vo_Display,vo->mScreen));
+    }
+
+    vo_MotifHints=XInternAtom( vo_Display,"_MOTIF_WM_HINTS",0 );
+    if ( vo_MotifHints != None ) {
+	memset( &vo_MotifWmHints,0,sizeof( MotifWmHints ) );
+	vo_MotifWmHints.flags=MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
+	if ( d ) {
+	    vo_MotifWmHints.functions=MWM_FUNC_MOVE | MWM_FUNC_CLOSE | MWM_FUNC_MINIMIZE | MWM_FUNC_MAXIMIZE;
+	    d=MWM_DECOR_ALL;
+	}
 #if 0
-   vo_MotifWmHints.decorations=d|((vo.fsmode&2)?0:MWM_DECOR_MENU);
+	vo_MotifWmHints.decorations=d|((vo_conf.fsmode&2)?0:MWM_DECOR_MENU);
 #else
-   vo_MotifWmHints.decorations=d|((vo.fsmode&2)?MWM_DECOR_MENU:0);
+	vo_MotifWmHints.decorations=d|((vo_conf.fsmode&2)?MWM_DECOR_MENU:0);
 #endif
-   XChangeProperty( vo_Display,w,vo_MotifHints,vo_MotifHints,32,
-                    PropModeReplace,(unsigned char *)&vo_MotifWmHints,(vo.fsmode&4)?4:5 );
-  }
+	XChangeProperty( vo_Display,w,vo_MotifHints,vo_MotifHints,32,
+			PropModeReplace,(unsigned char *)&vo_MotifWmHints,(vo_conf.fsmode&4)?4:5 );
+    }
 }
 
 void __FASTCALL__ vo_x11_classhint( Display * display,Window window,char *name ){
@@ -614,18 +612,16 @@ void __FASTCALL__ vo_x11_classhint( Display * display,Window window,char *name )
 	    XSetClassHint(display,window,&wmClass);
 }
 
-int __FASTCALL__ vo_x11_uninit(Display *display, Window window)
+int __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window)
 {
     XSetErrorHandler(NULL);
-
-    {
-	/* and -wid is set */
-	if (!(vo.WinID > 0))
-	    XDestroyWindow(display, window);
-	XCloseDisplay(display);
-	vo.depthonscreen = 0;
-    }
-    return(1);
+    /* and -wid is set */
+    if (!(vo_conf.WinID > 0))
+	XDestroyWindow(display, window);
+    XCloseDisplay(display);
+    vo->depthonscreen = 0;
+    free(vo->priv2);
+    return 1;
 }
 
 
@@ -673,278 +669,258 @@ static const char * __FASTCALL__ evt_name(unsigned num)
     else			return "Unknown";
 }
 
-uint32_t __FASTCALL__ vo_x11_check_events(Display *mydisplay,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh))
+uint32_t __FASTCALL__ vo_x11_check_events(vo_data_t*vo,Display *mydisplay,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh))
 {
- uint32_t ret=0;
- XEvent         Event;
- char           buf[100];
- KeySym         keySym;
- static XComposeStatus stat;
- int adj_ret=0;
- unsigned ow,oh,nw,nh;
- while ( XPending( mydisplay ) )
-  {
-   XNextEvent( mydisplay,&Event );
-    MSG_V("X11_common: event_type = %lX (%s)\n",Event.type,evt_name(Event.type));
-    switch( Event.type )
-     {
-      case Expose:
-           ret|=VO_EVENT_EXPOSE;
-           break;
-      case ConfigureNotify:
-	   nw = Event.xconfigure.width;
-	   nh = Event.xconfigure.height;
-	   if(adjust_size) adj_ret = (*adjust_size)(vo.dest.w,vo.dest.h,&nw,&nh);
-	   ow = vo.dest.w;
-	   oh = vo.dest.h;
-           vo.dest.w=nw;
-           vo.dest.h=nh;
-	   {
-	    Window root;
-	    unsigned foo;
-	    Window win;
-	    XGetGeometry(mydisplay, vo.window, &root, &foo, &foo,
-		&foo/*width*/, &foo/*height*/, &foo, &foo);
-	    XTranslateCoordinates(mydisplay, vo.window, root, 0, 0,
-		&vo.dest.x, &vo.dest.y, &win);
-	    }
-	   if(adjust_size && ow != vo.dest.w && oh != vo.dest.h && adj_ret)
-	   {
-		XResizeWindow( vo.mDisplay,vo.window,vo.dest.w,vo.dest.h );
-		XSync( vo.mDisplay,True);
-	   }
-	   MSG_V("X11 Window %dx%d-%dx%d\n", vo.dest.x, vo.dest.y, vo.dest.w, vo.dest.h);
-           ret|=VO_EVENT_RESIZE;
-           break;
-      case KeyPress:
-           {
-	    int key;
-            XLookupString( &Event.xkey,buf,sizeof(buf),&keySym,&stat );
+    uint32_t ret=0;
+    XEvent         Event;
+    char           buf[100];
+    KeySym         keySym;
+    static XComposeStatus stat;
+    int adj_ret=0;
+    unsigned ow,oh,nw,nh;
+    while ( XPending( mydisplay ) ) {
+	XNextEvent( mydisplay,&Event );
+	MSG_V("X11_common: event_type = %lX (%s)\n",Event.type,evt_name(Event.type));
+	switch( Event.type ) {
+	    case Expose:
+		ret|=VO_EVENT_EXPOSE;
+		break;
+	    case ConfigureNotify:
+		nw = Event.xconfigure.width;
+		nh = Event.xconfigure.height;
+		if(adjust_size) adj_ret = (*adjust_size)(vo->dest.w,vo->dest.h,&nw,&nh);
+		ow = vo->dest.w;
+		oh = vo->dest.h;
+		vo->dest.w=nw;
+		vo->dest.h=nh;
+		Window root;
+		unsigned foo;
+		Window win;
+		XGetGeometry(mydisplay, vo->window, &root, &foo, &foo,
+			&foo/*width*/, &foo/*height*/, &foo, &foo);
+		XTranslateCoordinates(mydisplay, vo->window, root, 0, 0,
+			&vo->dest.x, &vo->dest.y, &win);
+		if(adjust_size && ow != vo->dest.w && oh != vo->dest.h && adj_ret) {
+		    XResizeWindow( vo->mDisplay,vo->window,vo->dest.w,vo->dest.h );
+		    XSync( vo->mDisplay,True);
+		}
+		MSG_V("X11 Window %dx%d-%dx%d\n", vo->dest.x, vo->dest.y, vo->dest.w, vo->dest.h);
+		ret|=VO_EVENT_RESIZE;
+		break;
+	    case KeyPress: {
+		int key;
+		XLookupString( &Event.xkey,buf,sizeof(buf),&keySym,&stat );
 #ifdef XF86XK_AudioPause
-             vo_x11_putkey_ext( keySym );
+		vo_x11_putkey_ext( keySym );
 #endif
-	    key=( (keySym&0xff00) != 0?( (keySym&0x00ff) + 256 ):( keySym ) );
-            vo_x11_putkey( key );
-            ret|=VO_EVENT_KEYPRESS;
-	   }
-           break;
-      case ButtonPress:
-           // Ignore mouse whell press event
-           if(Event.xbutton.button > 3) {
-	   mplayer_put_key(MOUSE_BTN0+Event.xbutton.button-1);
-	   break;
-	   }
-      case ButtonRelease:
-           mplayer_put_key(MOUSE_BTN0+Event.xbutton.button-1);
-      default:
-           break;
-     }
-  }
-
-  return ret;
+		key=( (keySym&0xff00) != 0?( (keySym&0x00ff) + 256 ):( keySym ) );
+		vo_x11_putkey( key );
+		ret|=VO_EVENT_KEYPRESS;
+		break;
+		}
+	    case ButtonPress:
+		// Ignore mouse whell press event
+		if(Event.xbutton.button > 3) {
+		    mplayer_put_key(MOUSE_BTN0+Event.xbutton.button-1);
+		    break;
+		}
+	    case ButtonRelease:
+		mplayer_put_key(MOUSE_BTN0+Event.xbutton.button-1);
+	    default:
+		break;
+	}
+    }
+    return ret;
 }
 
-void __FASTCALL__ vo_x11_sizehint( int x, int y, int width, int height )
+void __FASTCALL__ vo_x11_sizehint(vo_data_t*vo, int x, int y, int width, int height )
 {
- XSizeHints hint;
- hint.flags=PPosition | PSize | PWinGravity;
- hint.x=x; hint.y=y; hint.width=width; hint.height=height;
- hint.win_gravity=StaticGravity;
- XSetWMNormalHints( vo.mDisplay,vo.window,&hint );
+    XSizeHints hint;
+    hint.flags=PPosition | PSize | PWinGravity;
+    hint.x=x; hint.y=y; hint.width=width; hint.height=height;
+    hint.win_gravity=StaticGravity;
+    XSetWMNormalHints( vo->mDisplay,vo->window,&hint );
 }
 
-void __FASTCALL__ vo_x11_calcpos( XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags )
+void __FASTCALL__ vo_x11_calcpos(vo_data_t*vo,XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags )
 {
- int fullscreen=0;
 #ifdef HAVE_XF86VM
- unsigned int modeline_width, modeline_height;
- static uint32_t vm_width;
- static uint32_t vm_height;
+    unsigned int modeline_width, modeline_height;
+    static uint32_t vm_width;
+    static uint32_t vm_height;
 #endif
- int vm=0;
-    if( flags&0x03 ) vo.fullscreen = 1;
-    if( flags&0x02 ) vm = 1;
-    hint->x=(vo.screenwidth-d_width)/2;
-    hint->y=(vo.screenheight-d_height)/2;
+    hint->x=(vo_conf.screenwidth-d_width)/2;
+    hint->y=(vo_conf.screenheight-d_height)/2;
     hint->width=d_width;
     hint->height=d_height;
 #ifdef HAVE_XF86VM
-    if ( vm )
-    {
+    if ( VO_VM(vo) ) {
 	vm_width=d_width; vm_height=d_height;
-	vo_vm_switch(vm_width, vm_height,&modeline_width, &modeline_height);
-	hint->x=(vo.screenwidth-modeline_width)/2;
-	hint->y=(vo.screenheight-modeline_height)/2;
+	vo_vm_switch(vo,vm_width, vm_height,&modeline_width, &modeline_height);
+	hint->x=(vo_conf.screenwidth-modeline_width)/2;
+	hint->y=(vo_conf.screenheight-modeline_height)/2;
 	hint->width=modeline_width;
 	hint->height=modeline_height;
     }
     else
 #endif
-    if ( fullscreen )
-    {
-      hint->width=vo.screenwidth;
-      hint->height=vo.screenheight;
+    if ( VO_FS(vo) ) {
+      hint->width=vo_conf.screenwidth;
+      hint->height=vo_conf.screenheight;
       hint->x=0;
       hint->y=0;
     }
 }
 
-void vo_x11_fullscreen( void )
+void vo_x11_fullscreen(vo_data_t*vo )
 {
- XUnmapWindow( vo.mDisplay,vo.window );
- if ( !vo.fs )
-  {
-   vo.fs=VO_TRUE;
-   priv.prev=vo.dest;
-   vo.dest.x=0;  vo.dest.y=0; vo.dest.w=vo.screenwidth; vo.dest.h=vo.screenheight;
-   vo_x11_decoration( vo.mDisplay,vo.window,0 );
-  }
-  else
-   {
-    vo.fs=VO_FALSE;
-    vo.dest=priv.prev;
-    vo_x11_decoration( vo.mDisplay,vo.window,1 );
-   }
- vo_x11_sizehint( vo.dest.x,vo.dest.y,vo.dest.w,vo.dest.h );
- XMoveResizeWindow( vo.mDisplay,vo.window,vo.dest.x,vo.dest.y,vo.dest.w,vo.dest.h );
- XMapWindow( vo.mDisplay,vo.window );
- XSync( vo.mDisplay,False );
+    priv_t*priv=(priv_t*)vo->priv2;
+    XUnmapWindow( vo->mDisplay,vo->window );
+    if ( !VO_FS(vo) ) {
+	VO_FS_SET(vo);
+	priv->prev=vo->dest;
+	vo->dest.x=0;  vo->dest.y=0; vo->dest.w=vo_conf.screenwidth; vo->dest.h=vo_conf.screenheight;
+	vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
+    } else {
+	VO_FS_UNSET(vo);
+	vo->dest=priv->prev;
+	vo_x11_decoration(vo,vo->mDisplay,vo->window,1 );
+    }
+    vo_x11_sizehint(vo,vo->dest.x,vo->dest.y,vo->dest.w,vo->dest.h );
+    XMoveResizeWindow( vo->mDisplay,vo->window,vo->dest.x,vo->dest.y,vo->dest.w,vo->dest.h );
+    XMapWindow( vo->mDisplay,vo->window );
+    XSync( vo->mDisplay,False );
 }
 
-void __FASTCALL__ saver_on(Display *mDisplay) {
+void __FASTCALL__ saver_on(vo_data_t*vo,Display *mDisplay) {
 
+    priv_t*priv=(priv_t*)vo->priv2;
 #ifdef HAVE_XDPMS
     int nothing;
-    if (priv.dpms_disabled)
-    {
-	if (DPMSQueryExtension(mDisplay, &nothing, &nothing))
-	{
+    if (priv->dpms_disabled) {
+	if (DPMSQueryExtension(mDisplay, &nothing, &nothing)) {
 	    if (!DPMSEnable(mDisplay)) {  // restoring power saving settings
-                MSG_WARN("DPMS not available?\n");
-            } else {
-                // DPMS does not seem to be enabled unless we call DPMSInfo
-	        BOOL onoff;
-        	CARD16 state;
-        	DPMSInfo(mDisplay, &state, &onoff);
-                if (onoff) {
-	            MSG_V ("Successfully enabled DPMS\n");
-                } else {
-	            MSG_ERR ("Could not enable DPMS\n");
-                }
-            }
+		MSG_WARN("DPMS not available?\n");
+	    } else {
+		// DPMS does not seem to be enabled unless we call DPMSInfo
+		BOOL onoff;
+		CARD16 state;
+		DPMSInfo(mDisplay, &state, &onoff);
+		if (onoff) {
+		    MSG_V ("Successfully enabled DPMS\n");
+		} else {
+		    MSG_ERR ("Could not enable DPMS\n");
+		}
+	    }
 	}
     }
 #endif
 
-    if (priv.timeout_save)
-    {
+    if (priv->timeout_save) {
 	int dummy, interval, prefer_blank, allow_exp;
 	XGetScreenSaver(mDisplay, &dummy, &interval, &prefer_blank, &allow_exp);
-	XSetScreenSaver(mDisplay, priv.timeout_save, interval, prefer_blank, allow_exp);
-	XGetScreenSaver(mDisplay, &priv.timeout_save, &interval, &prefer_blank, &allow_exp);
+	XSetScreenSaver(mDisplay, priv->timeout_save, interval, prefer_blank, allow_exp);
+	XGetScreenSaver(mDisplay, &priv->timeout_save, &interval, &prefer_blank, &allow_exp);
     }
-
 }
 
-void __FASTCALL__ saver_off(Display *mDisplay) {
+void __FASTCALL__ saver_off(vo_data_t*vo,Display *mDisplay) {
 
+    priv_t*priv=(priv_t*)vo->priv2;
     int interval, prefer_blank, allow_exp;
 #ifdef HAVE_XDPMS
     int nothing;
 
-    if (DPMSQueryExtension(mDisplay, &nothing, &nothing))
-    {
+    if (DPMSQueryExtension(mDisplay, &nothing, &nothing)) {
 	BOOL onoff;
 	CARD16 state;
 	DPMSInfo(mDisplay, &state, &onoff);
-	if (onoff)
-	{
-           Status stat;
+	if (onoff) {
+	    Status stat;
 	    MSG_V ("Disabling DPMS\n");
-	    priv.dpms_disabled=1;
+	    priv->dpms_disabled=1;
 	    stat = DPMSDisable(mDisplay);  // monitor powersave off
-            MSG_V ("stat: %d\n", stat);
+	    MSG_V ("stat: %d\n", stat);
 	}
     }
 #endif
-    XGetScreenSaver(mDisplay, &priv.timeout_save, &interval, &prefer_blank, &allow_exp);
-    if (priv.timeout_save)
+    XGetScreenSaver(mDisplay, &priv->timeout_save, &interval, &prefer_blank, &allow_exp);
+    if (priv->timeout_save) // turning off screensaver
 	XSetScreenSaver(mDisplay, 0, interval, prefer_blank, allow_exp);
-		    // turning off screensaver
 }
 
 
 
 #ifdef HAVE_XINERAMA
-void __FASTCALL__ vo_x11_xinerama_move(Display *dsp, Window w,const XSizeHints*hint)
+void __FASTCALL__ vo_x11_xinerama_move(vo_data_t*vo,Display *dsp, Window w,const XSizeHints*hint)
 {
-	if(XineramaIsActive(dsp))
-		XMoveWindow(dsp,w,priv.xinerama_x+hint->x,priv.xinerama_y+hint->y);
+    priv_t*priv=(priv_t*)vo->priv2;
+    if(XineramaIsActive(dsp))
+	XMoveWindow(dsp,w,priv->xinerama_x+hint->x,priv->xinerama_y+hint->y);
 }
 #endif
 
 #ifdef HAVE_XF86VM
-void __FASTCALL__ vo_vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int* modeline_height)
+void __FASTCALL__ vo_vm_switch(vo_data_t*vo,uint32_t X, uint32_t Y, int* modeline_width, int* modeline_height)
 {
+    priv_t*priv=(priv_t*)vo->priv2;
     int vm_event, vm_error;
     int vm_ver, vm_rev;
     int i,j,have_vm=0;
 
     int modecount;
 
-    if (XF86VidModeQueryExtension(vo.mDisplay, &vm_event, &vm_error)) {
-      XF86VidModeQueryVersion(vo.mDisplay, &vm_ver, &vm_rev);
+    if (XF86VidModeQueryExtension(vo->mDisplay, &vm_event, &vm_error)) {
+      XF86VidModeQueryVersion(vo->mDisplay, &vm_ver, &vm_rev);
       MSG_V("XF86VidMode Extension v%i.%i\n", vm_ver, vm_rev);
       have_vm=1;
     } else
       MSG_WARN("XF86VidMode Extenstion not available.\n");
 
     if (have_vm) {
-      if (priv.vidmodes==NULL)
-        XF86VidModeGetAllModeLines(vo.mDisplay,vo.mScreen,&modecount,&priv.vidmodes);
+      if (priv->vidmodes==NULL)
+        XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
       j=0;
-      *modeline_width=priv.vidmodes[0]->hdisplay;
-      *modeline_height=priv.vidmodes[0]->vdisplay;
+      *modeline_width=priv->vidmodes[0]->hdisplay;
+      *modeline_height=priv->vidmodes[0]->vdisplay;
 
       for (i=1; i<modecount; i++)
-        if ((priv.vidmodes[i]->hdisplay >= X) && (priv.vidmodes[i]->vdisplay >= Y))
-          if ( (priv.vidmodes[i]->hdisplay <= *modeline_width ) && (priv.vidmodes[i]->vdisplay <= *modeline_height) )
+        if ((priv->vidmodes[i]->hdisplay >= X) && (priv->vidmodes[i]->vdisplay >= Y))
+          if ( (priv->vidmodes[i]->hdisplay <= *modeline_width ) && (priv->vidmodes[i]->vdisplay <= *modeline_height) )
 	    {
-	      *modeline_width=priv.vidmodes[i]->hdisplay;
-	      *modeline_height=priv.vidmodes[i]->vdisplay;
+	      *modeline_width=priv->vidmodes[i]->hdisplay;
+	      *modeline_height=priv->vidmodes[i]->vdisplay;
 	      j=i;
 	    }
 
       MSG_V("XF86VM: Selected video mode %dx%d for image size %dx%d.\n",*modeline_width, *modeline_height, X, Y);
-      XF86VidModeLockModeSwitch(vo.mDisplay,vo.mScreen,0);
-      XF86VidModeSwitchToMode(vo.mDisplay,vo.mScreen,priv.vidmodes[j]);
-      XF86VidModeSwitchToMode(vo.mDisplay,vo.mScreen,priv.vidmodes[j]);
-      X=(vo.screenwidth-*modeline_width)/2;
-      Y=(vo.screenheight-*modeline_height)/2;
-      XF86VidModeSetViewPort(vo.mDisplay,vo.mScreen,X,Y);
+      XF86VidModeLockModeSwitch(vo->mDisplay,vo->mScreen,0);
+      XF86VidModeSwitchToMode(vo->mDisplay,vo->mScreen,priv->vidmodes[j]);
+      XF86VidModeSwitchToMode(vo->mDisplay,vo->mScreen,priv->vidmodes[j]);
+      X=(vo_conf.screenwidth-*modeline_width)/2;
+      Y=(vo_conf.screenheight-*modeline_height)/2;
+      XF86VidModeSetViewPort(vo->mDisplay,vo->mScreen,X,Y);
     }
 }
 
-void __FASTCALL__ vo_vm_close(Display *dpy)
+void __FASTCALL__ vo_vm_close(vo_data_t*vo,Display *dpy)
 {
-        if (priv.vidmodes!=NULL)
-         {
-           int i, modecount;
-           int screen; screen=DefaultScreen( dpy );
+    priv_t*priv=(priv_t*)vo->priv2;
+    if (priv->vidmodes!=NULL) {
+	int i, modecount;
+	int screen; screen=DefaultScreen( dpy );
 
-           free(priv.vidmodes); priv.vidmodes=NULL;
-           XF86VidModeGetAllModeLines(vo.mDisplay,vo.mScreen,&modecount,&priv.vidmodes);
-           for (i=0; i<modecount; i++)
-             if ((priv.vidmodes[i]->hdisplay == vo.screenwidth) && (priv.vidmodes[i]->vdisplay == vo.screenheight))
-               {
-                 MSG_V("\nReturning to original mode %dx%d\n", vo.screenwidth, vo.screenheight);
-                 break;
-               }
-
-           XF86VidModeSwitchToMode(dpy,screen,priv.vidmodes[i]);
-           XF86VidModeSwitchToMode(dpy,screen,priv.vidmodes[i]);
-           free(priv.vidmodes);
-         }
+	free(priv->vidmodes); priv->vidmodes=NULL;
+	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
+	for (i=0; i<modecount; i++)
+	    if ((priv->vidmodes[i]->hdisplay == vo_conf.screenwidth) && (priv->vidmodes[i]->vdisplay == vo_conf.screenheight)) {
+		MSG_V("\nReturning to original mode %dx%d\n", vo_conf.screenwidth, vo_conf.screenheight);
+		break;
+            }
+	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
+	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
+	free(priv->vidmodes);
+    }
 }
 #endif
 

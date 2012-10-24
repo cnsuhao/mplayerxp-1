@@ -22,14 +22,14 @@
  */
 #ifndef __VIDEO_OUT_INTERNAL_H
 #define __VIDEO_OUT_INTERNAL_H 1
-static uint32_t __FASTCALL__ control(uint32_t request, any_t*data);
-static uint32_t __FASTCALL__ config(uint32_t width, uint32_t height, uint32_t d_width,
+static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data);
+static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		     uint32_t d_height, uint32_t fullscreen, char *title,
 		     uint32_t format,const vo_tune_info_t *);
-static const vo_info_t* get_info(void);
-static void __FASTCALL__ select_frame(unsigned idx);
-static void uninit(void);
-static uint32_t __FASTCALL__ preinit(const char *);
+static const vo_info_t* get_info(vo_data_t*vo);
+static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx);
+static void uninit(vo_data_t*vo);
+static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *);
 
 #define LIBVO_EXTERN(x) vo_functions_t video_out_##x =\
 {\

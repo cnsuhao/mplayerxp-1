@@ -617,12 +617,12 @@ void __FASTCALL__ spudec_set_forced_subs_only(any_t* const this, const unsigned 
   }
 }
 
-void __FASTCALL__ spudec_draw(any_t*this, draw_osd_f draw_alpha)
+void __FASTCALL__ spudec_draw(any_t*this, draw_osd_f draw_alpha,any_t*vo)
 {
     spudec_handle_t *spu = (spudec_handle_t *)this;
     if (spu->start_pts <= spu->now_pts && spu->now_pts < spu->end_pts && spu->image)
     {
-	draw_alpha(dae_curr_vdecoded(),spu->start_col, spu->start_row, spu->width, spu->height,
+	draw_alpha(vo,dae_curr_vdecoded(),spu->start_col, spu->start_row, spu->width, spu->height,
 		   spu->image, spu->aimage, spu->stride);
 	spu->spu_changed = 0;
     }
@@ -761,7 +761,7 @@ void  __FASTCALL__ sws_spu_image(unsigned char *d1, unsigned char *d2, int dw, i
 	sws_freeContext(ctx);
 }
 
-void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dys, draw_osd_f draw_alpha)
+void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dys, draw_osd_f draw_alpha,any_t*vo)
 {
   spudec_handle_t *spu = (spudec_handle_t *)me;
   scale_pixel *table_x;
@@ -778,7 +778,7 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 	|| (spu->orig_frame_width == dxs && spu->orig_frame_height == dys))) {
       if (spu->image)
       {
-	draw_alpha(dae_curr_vdecoded(),spu->start_col, spu->start_row, spu->width, spu->height,
+	draw_alpha(vo,dae_curr_vdecoded(),spu->start_col, spu->start_row, spu->width, spu->height,
 		   spu->image, spu->aimage, spu->stride);
 	spu->spu_changed = 0;
       }
@@ -1084,7 +1084,7 @@ nothing_to_do:
 	  if ((int)(spu->scaled_start_row) < 0) spu->scaled_start_row = 0;
 	  break;
 	}
-	draw_alpha(dae_curr_vdecoded(),spu->scaled_start_col, spu->scaled_start_row, spu->scaled_width, spu->scaled_height,
+	draw_alpha(vo,dae_curr_vdecoded(),spu->scaled_start_col, spu->scaled_start_row, spu->scaled_width, spu->scaled_height,
 		   spu->scaled_image, spu->scaled_aimage, spu->scaled_stride);
 	spu->spu_changed = 0;
       }
