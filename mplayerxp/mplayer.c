@@ -1304,7 +1304,6 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	    usleep(t*1000000);
 	    time_frame-=GetRelativeTime();
 	    if(mp_conf.xp >= XP_VAPlay || t<XP_MAX_TIMESLICE || time_frame>XP_MAX_TIMESLICE) {
-		vo_check_events(vo_data);
 		return 0;
 	    }
 	}
@@ -1318,7 +1317,6 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	time_frame=SleepTime(rtc_fd,softsleep,time_frame);
     }
     pinfo[xp_id].current_module="change_frame2";
-    vo_check_events(vo_data);
     /* don't flip if there is nothing new to display */
     if(!blit_frame) {
 	static int drop_message=0;
@@ -2724,13 +2722,13 @@ main:
 	    if((sh_video->is_static ||(stream->type&STREAMTYPE_MENU)==STREAMTYPE_MENU) && our_n_frames) {
 	/* don't decode if it's picture */
 		usleep(0);
-		if(vo_check_events(vo_data)) goto repaint;
 	    } else {
 repaint:
 		l_eof = mpxp_play_video(rtc_fd,&v_pts);
 		eof |= l_eof;
 		if(eof) goto do_loop;
 	    }
+	    vo_check_events(vo_data);
 read_input:
 #ifdef USE_OSD
 	    if((mpxp_paint_osd(&osd.visible,&in_pause))!=0) goto repaint;
