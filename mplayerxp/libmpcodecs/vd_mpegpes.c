@@ -41,7 +41,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
     packet.data=data;
     packet.size=len-4;
-    packet.timestamp=sh->timer*90000.0;
+    packet.timestamp=sh->ds->pts;
     packet.id=0x1E0; //+sh_video->ds->id;
     mpi->planes[0]=(uint8_t*)(&packet);
     return mpi;
