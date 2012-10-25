@@ -255,7 +255,6 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 
 	/* Get the FPS */
 	sh_video->fps = rtjpeg_fileheader.fps;
-	sh_video->frametime = 1 / sh_video->fps;
 
 	if (rtjpeg_fileheader.audioblocks != 0)
 	{

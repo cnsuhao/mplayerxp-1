@@ -1100,7 +1100,7 @@ quit_vorbis_block:
 		        trak->stream_header_len = atom_len-8;
 		        trak->stream_header = (unsigned char *)malloc(trak->stream_header_len);
 		        memcpy(trak->stream_header, trak->stdata+pos+8, trak->stream_header_len);
-		      }	      
+		      }
 		      break;
                     case MOV_FOURCC('d','2','6','3'):
                       MSG_V("MOV: Found H.263 decoder atom %c%c%c%c (%d)!\n", trak->stdata[pos+4],trak->stdata[pos+5],trak->stdata[pos+6],trak->stdata[pos+7],atom_len);
@@ -1120,7 +1120,6 @@ quit_vorbis_block:
 		}
 		sh->fps=trak->timescale/
 		    ((trak->durmap_size>=1)?(float)trak->durmap[0].dur:1);
-		sh->frametime=1.0f/sh->fps;
 
 		sh->disp_w=trak->stdata[25]|(trak->stdata[24]<<8);
 		sh->disp_h=trak->stdata[27]|(trak->stdata[26]<<8);

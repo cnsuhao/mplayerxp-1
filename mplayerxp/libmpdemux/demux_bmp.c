@@ -182,7 +182,6 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   sh_video->is_static = 1;
   // get the speed
   sh_video->fps = 2;
-  sh_video->frametime = 2 / sh_video->fps;
 
 //  demuxer->priv = bmp_image;
 
@@ -282,7 +281,6 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   // get the speed
   sh_video->is_static = 1;
   sh_video->fps = 1;
-  sh_video->frametime = 1 / sh_video->fps;
 
   demuxer->priv = bmp_image;
 

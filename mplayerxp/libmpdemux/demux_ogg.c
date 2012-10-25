@@ -837,8 +837,6 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	    sh_v->bih->biCompression= sh_v->format = FOURCC_THEORA;
 	    sh_v->fps = ((double)inf.fps_numerator)/
 		(double)inf.fps_denominator;
-	    sh_v->frametime = ((double)inf.fps_denominator)/
-		(double)inf.fps_numerator;
 	    sh_v->disp_w = sh_v->bih->biWidth = inf.frame_width;
 	    sh_v->disp_h = sh_v->bih->biHeight = inf.frame_height;
 	    sh_v->bih->biBitCount = 24;
@@ -882,8 +880,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	sh_v->bih->biCompression=
 	sh_v->format = mmioFOURCC(pack.packet[68],pack.packet[69],
 				pack.packet[70],pack.packet[71]);
-	sh_v->frametime = get_uint64(pack.packet+164)*0.0000001;
-	sh_v->fps = 1/sh_v->frametime;
+	sh_v->fps = 1/(get_uint64(pack.packet+164)*0.0000001);
 	sh_v->disp_w = sh_v->bih->biWidth = get_uint32(pack.packet+176);
 	sh_v->disp_h = sh_v->bih->biHeight = get_uint32(pack.packet+180);
 	sh_v->bih->biBitCount = get_uint16(pack.packet+182);
@@ -933,8 +930,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	sh_v->bih->biCompression=
 	sh_v->format = mmioFOURCC(st->subtype[0],st->subtype[1],
 				  st->subtype[2],st->subtype[3]);
-	sh_v->frametime = get_uint64(&st->time_unit)*0.0000001;
-	sh_v->fps = 1.0/sh_v->frametime;
+	sh_v->fps = 1.0/(get_uint64(&st->time_unit)*0.0000001);
 	sh_v->bih->biBitCount = get_uint16(&st->bits_per_sample);
 	sh_v->disp_w = sh_v->bih->biWidth = get_uint32(&st->sh.video.width);
 	sh_v->disp_h = sh_v->bih->biHeight = get_uint32(&st->sh.video.height);

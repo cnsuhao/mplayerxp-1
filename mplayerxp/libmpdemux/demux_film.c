@@ -354,7 +354,6 @@ static demuxer_t* film_open(demuxer_t* demuxer)
       if (sh_video)
       {
         sh_video->fps = stream_read_dword(demuxer->stream);
-        sh_video->frametime = 1.0 / sh_video->fps;
       }
 
       // fetch the number of chunks

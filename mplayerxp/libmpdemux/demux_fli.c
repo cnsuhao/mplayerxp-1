@@ -147,9 +147,8 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   if (speed == 0)
     speed = 1;
   if (magic_number == 0xAF11)
-    speed *= 1000/70;
-  sh_video->fps = 1000 / speed;
-  sh_video->frametime = 1/sh_video->fps;
+    speed *= 1000.0f/70.0f;
+  sh_video->fps = 1000.0f / speed;
 
   // build the frame index
   stream_seek(demuxer->stream, demuxer->movi_start);

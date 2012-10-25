@@ -179,7 +179,6 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 		    sh->fps = 25.0f;
 	    }
 	}
-	sh->frametime = 1.0f/sh->fps;
     }
     else
     {
@@ -188,14 +187,13 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 	    MSG_FATAL( "error parsing YUV4MPEG header: %s\n", y4m_strerr(err));
 	
 	if(!sh->fps) {
-    	    ratio = y4m_si_get_framerate(priv->si);
-    	    if (ratio.d != 0)
-        	sh->fps=(float)ratio.n/(float)ratio.d;
-    	    else
-        	sh->fps=15.0f;
+	    ratio = y4m_si_get_framerate(priv->si);
+	    if (ratio.d != 0)
+		sh->fps=(float)ratio.n/(float)ratio.d;
+	    else
+		sh->fps=15.0f;
 	}
-	sh->frametime=1.0f/sh->fps;
-	
+
 	ratio = y4m_si_get_sampleaspect(priv->si);
 	if (ratio.d != 0 && ratio.n != 0)
 	    sh->aspect = (float)ratio.n/(float)ratio.d;

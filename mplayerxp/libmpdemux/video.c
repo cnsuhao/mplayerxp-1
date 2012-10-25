@@ -215,7 +215,6 @@ switch(video_codec){
    }
    if(picture.fps) {
     sh_video->fps=picture.fps*0.0001f;
-    sh_video->frametime=10000.0f/(float)picture.fps;
     MSG_INFO("FPS seems to be: %d/10000\n", picture.fps);
    }
    MSG_V("OK!\n");
@@ -269,7 +268,6 @@ switch(video_codec){
    sh_video->format=0x10000005;
    if(picture.fps) {
      sh_video->fps=picture.fps*0.0001f;
-     sh_video->frametime=10000.0f/(float)picture.fps;
      MSG_INFO("FPS seems to be: %d/10000\n", picture.fps);
    }
    break;
@@ -359,11 +357,6 @@ switch(video_codec){
 #if 0
    sh_video->fps=mpeg_framerates[picture.frame_rate_code & 0x0F];
 #endif
-   if(!sh_video->fps){
-     sh_video->frametime=0;
-   } else {
-     sh_video->frametime=1.0/sh_video->fps;
-   }
    sh_video->disp_w=picture.display_picture_width;
    sh_video->disp_h=picture.display_picture_height;
    // bitrate:
@@ -464,7 +457,6 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
     if((int)(sh_video->fps*10000+0.5)!=picture.fps) if(!force_fps && !telecine){
             MSG_WARN("Warning! FPS changed %5.3f -> %5.3f  (%f) [%d]  \n",sh_video->fps,picture.fps*0.0001,sh_video->fps-picture.fps*0.0001,picture.frame_rate_code);
             sh_video->fps=picture.fps*0.0001;
-            sh_video->frametime=10000.0f/(float)picture.fps;
     }
 #endif
 
@@ -486,7 +478,6 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
     } else
 	if(telecine_cnt>-0.5 && telecine_cnt<0.5 && !force_fps){
 	    sh_video->fps=sh_video->fps*4/5;
-	    sh_video->frametime=sh_video->frametime*5/4;
 	    MSG_INFO("Enter telecine mode\n");
 	    telecine=1;
 	}
@@ -517,7 +508,6 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
             h264_parse_sps(&picture, &(videobuffer[pos]), videobuf_len - pos);
             if(picture.fps > 0) {
               sh_video->fps=picture.fps*0.0001f;
-              sh_video->frametime=10000.0f/(float)picture.fps;
             }
             i=sync_video_packet(d_video);
             if(!i) return -1;
@@ -534,7 +524,7 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
   }
 
     // Increase video timers:
-    frame_time*=sh_video->frametime;
+    frame_time*=1.0f/sh_video->fps;
 
     /* override frame_time for variable/unknown FPS formats: */
     if(!force_fps)
@@ -559,7 +549,6 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
           if(d>0)
             if((int)sh_video->fps==1000)
               MSG_STATUS("\rASF framerate: %d fps             \n",(int)(1.0f/d));
-          sh_video->frametime=d; // 1ms
           sh_video->fps=1.0f/d;
           frame_time = d;
         } else {

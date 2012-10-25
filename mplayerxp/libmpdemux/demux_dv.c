@@ -182,7 +182,6 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
    mp_msg(MSGT_DEMUXER,MSGL_V,"demux_open_rawdv() frame_size: %d w: %d h: %d dif_seq: %d system: %d\n",dv_decoder->frame_size,dv_decoder->width, dv_decoder->height,dv_decoder->num_dif_seqs,dv_decoder->system);
 
    sh_video->fps= (dv_decoder->system==e_dv_system_525_60?29.97:25);
-   sh_video->frametime = 1.0/sh_video->fps;
 
   // emulate BITMAPINFOHEADER for win32 decoders:
   sh_video->bih=calloc(1, sizeof(BITMAPINFOHEADER));

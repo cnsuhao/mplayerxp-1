@@ -125,7 +125,6 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 
 	    stream_skip(demuxer->stream, 4); /* number of frames */
 //	    sh_video->fps = 24;
-//	    sh_video->frametime = 1.0f/sh_video->fps;
 	    sh_video->disp_w = stream_read_word(demuxer->stream);
 	    sh_video->disp_h = stream_read_word(demuxer->stream);
 	    sh_video->format = stream_read_dword_le(demuxer->stream);

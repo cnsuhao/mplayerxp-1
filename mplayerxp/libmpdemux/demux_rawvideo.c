@@ -103,7 +103,6 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
   sh_video = new_sh_video(demuxer,0);
   sh_video->format=format;
   sh_video->fps=fps;
-  sh_video->frametime=1.0/fps;
   sh_video->disp_w=width;
   sh_video->disp_h=height;
   sh_video->i_bps=fps*imgsize;
@@ -137,7 +136,7 @@ static void rawvideo_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   pos+=(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_video->i_bps)*seeka->secs;
   pos/=imgsize;
   stream_seek(s,pos*imgsize);
-  sh_video->timer=pos * sh_video->frametime;
+  sh_video->timer=pos / sh_video->fps;
 //  printf("demux_rawvideo: streamtell=%d\n",(int)stream_tell(demuxer->stream));
 }
 

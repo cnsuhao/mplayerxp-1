@@ -364,7 +364,6 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 		sh_video->video.dwScale= codec->time_base.num;
             }
             sh_video->fps=av_q2d(st->r_frame_rate);
-            sh_video->frametime=1/av_q2d(st->r_frame_rate);
             sh_video->format = bih->biCompression;
             sh_video->aspect=   codec->width * codec->sample_aspect_ratio.num 
                               / (float)(codec->height * codec->sample_aspect_ratio.den);

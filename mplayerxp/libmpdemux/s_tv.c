@@ -269,7 +269,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 //    if (IMGFMT_IS_RGB(sh_video->format) || IMGFMT_IS_BGR(sh_video->format))
 //	sh_video->format = 0x0;
 
-    /* set FPS and FRAMETIME */
+    /* set FPS  */
 
     if(!sh_video->fps)
     {
@@ -282,9 +282,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
     if (tv_param_fps != -1.0f)
         sh_video->fps = tv_param_fps;
 
-    sh_video->frametime = 1.0f/sh_video->fps;
-
-    MSG_V("fps: %f, frametime: %f\n", sh_video->fps, sh_video->frametime);
+    MSG_V("fps: %f, frametime: %f\n", sh_video->fps, 1.0f/sh_video->fps);
 
 #ifdef HAVE_TV_BSDBT848
     /* If playback only mode, go to immediate mode, fail silently */

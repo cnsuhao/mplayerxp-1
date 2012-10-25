@@ -151,7 +151,6 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
 
         // constant frame rate
         sh_video->fps = fps;
-        sh_video->frametime = 1 / sh_video->fps;
       }
     }
     else if ((chunk_id == RoQ_SOUND_MONO) ||

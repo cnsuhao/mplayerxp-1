@@ -81,8 +81,8 @@ static int nsv_demux ( demuxer_t *demuxer,demux_stream_t* __ds )
     }
 
     if (sh_video)
-	priv->v_pts =demuxer->video->pts=  priv->video_pack_no *
-         (float)sh_video->frametime;
+	priv->v_pts =demuxer->video->pts=  priv->video_pack_no /
+         (float)sh_video->fps;
     else
         priv->v_pts = priv->video_pack_no;
 
@@ -302,14 +302,13 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
             break;
         default:
             sh_video->fps = (float)priv->fps;
-        }       
-        sh_video->frametime = (float)1.0 / (float)sh_video->fps;
+        }
        }
-    }   
+    }
 
     // seek to start of NSV header
     stream_seek(demuxer->stream,stream_tell(demuxer->stream)-17);
-    
+
     return demuxer;
 }
 

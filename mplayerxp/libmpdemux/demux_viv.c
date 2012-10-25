@@ -578,7 +578,6 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		    else
 			sh->fps=15.0f;
 		}
-		sh->frametime=1.0f/sh->fps;
 
 		/* XXX: FIXME: can't scale image. */
 		/* hotfix to disable: */

@@ -225,7 +225,6 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		demuxer->video->sh=sh;
 		sh->ds=demuxer->video;
 		sh->fps=(float)(priv->sprop[id].num_packets*1000.)/(priv->sprop[id].PlayDuration-priv->sprop[id].Preroll);
-		sh->frametime=1/sh->fps;
 		sh->format=sh->bih->biCompression;
 		sh->disp_w=sh->bih->biWidth;
 		sh->disp_h=sh->bih->biHeight;

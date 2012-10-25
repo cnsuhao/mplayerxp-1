@@ -367,7 +367,7 @@ if(!video_streams){
     } else {
 	sh_video_t *sh_video=demuxer->video->sh;
 	sh_video=d_video->sh;sh_video->ds=d_video;
-	sh_video->fps=1000.0f; sh_video->frametime=0.001f; // 1ms
+	sh_video->fps=1000.0f; // 1ms
 	MSG_V("VIDEO:  [%.4s]  %ldx%ld  %dbpp\n",
 	(char *)&sh_video->bih->biCompression,
 	sh_video->bih->biWidth,

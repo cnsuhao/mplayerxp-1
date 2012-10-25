@@ -1787,13 +1787,12 @@ static void mpxp_read_video_properties(void) {
     } else {
 	MSG_V("[V] filefmt:%d  fourcc:0x%X  size:%dx%d  fps:%5.2f  ftime:=%6.4f\n",
 	    demuxer->file_format,sh_video->format, sh_video->disp_w,sh_video->disp_h,
-	    sh_video->fps,sh_video->frametime
+	    sh_video->fps,1/sh_video->fps
 	    );
 	vo_data->fps = sh_video->fps;
     /* need to set fps here for output encoders to pick it up in their init */
 	if(force_fps){
 	    sh_video->fps=force_fps;
-	    sh_video->frametime=1.0f/sh_video->fps;
 	    vo_data->fps = force_fps;
 	}
 
@@ -2651,8 +2650,7 @@ main:
 
     if(force_fps && sh_video) {
 	vo_data->fps = sh_video->fps=force_fps;
-	sh_video->frametime=1.0f/sh_video->fps;
-	MSG_INFO(MSGTR_FPSforced,sh_video->fps,sh_video->frametime);
+	MSG_INFO(MSGTR_FPSforced,sh_video->fps,1.0f/sh_video->fps);
     }
 
     /* Init timers and benchmarking */

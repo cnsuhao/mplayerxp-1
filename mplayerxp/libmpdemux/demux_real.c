@@ -333,7 +333,7 @@ void hexdump(char *, unsigned long);
 
 #define SKIP_BITS(n) buffer<<=n
 #define SHOW_BITS(n) ((buffer)>>(32-(n)))
-static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timestamp, float frametime, unsigned int format)
+static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timestamp, unsigned int format)
 {
   float v_pts;
   uint32_t buffer= (s[0]<<24) + (s[1]<<16) + (s[2]<<8) + s[3];
@@ -378,7 +378,6 @@ static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timesta
   }
 #endif
     v_pts=kf*0.001f;
-//    if(v_pts<priv->v_pts || !kf) v_pts=priv->v_pts+frametime;
     priv->v_pts=v_pts;
     return v_pts;
 }
@@ -643,7 +642,7 @@ got_video:
 				priv->video_after_seek = 0;
 			} else 
 			dp->pts=(dp_hdr->len<3)?0:
-			    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->frametime,sh_video->format);
+			    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->format);
 			ds_add_packet(ds,dp);
 			ds->asf_packet=NULL;
 		    } else {
@@ -679,7 +678,7 @@ got_video:
 				    priv->video_after_seek = 0;
 			    } else 
 			    dp->pts=(dp_hdr->len<3)?0:
-				real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->frametime,sh_video->format);
+				real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->format);
 			    ds_add_packet(ds,dp);
 			    ds->asf_packet=NULL;
 			    // continue parsing
@@ -736,7 +735,7 @@ got_video:
 			priv->video_after_seek = 0;
 		} else 
 		dp->pts=(dp_hdr->len<3)?0:
-		    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->frametime,sh_video->format);
+		    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->format);
 		ds_add_packet(ds,dp);
 
 	    } // while(len>0)
@@ -1231,15 +1230,14 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 
 		    sh->fps = (float) stream_read_word(demuxer->stream);
 		    if (sh->fps<=0) sh->fps=24; // we probably won't even care about fps
-		    sh->frametime = 1.0f/sh->fps;
-		    
+
 		    stream_skip(demuxer->stream, 4);
 //		    if(sh->format==0x30335652 || sh->format==0x30325652 )
 		    if(1)
 		    {
 			int tmp=stream_read_word(demuxer->stream);
 			if(tmp>0){
-			    sh->fps=tmp; sh->frametime = 1.0f/sh->fps;
+			    sh->fps=tmp;
 			}
 		    } else {
 	    		int fps=stream_read_word(demuxer->stream);
