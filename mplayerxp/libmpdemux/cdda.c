@@ -1,4 +1,5 @@
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
 
 #ifdef HAVE_LIBCDIO
 
@@ -81,7 +82,7 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
   priv = (cdda_priv*)malloc(sizeof(cdda_priv));
   memset(priv, 0, sizeof(cdda_priv));
 
-  priv->cd = cdio_cddap_identify(dev,verbose?1:0,NULL);
+  priv->cd = cdio_cddap_identify(dev,mp_conf.verbose?1:0,NULL);
 
   if(!priv->cd) {
     MSG_ERR("Can't open cdda device: %s\n",dev);
@@ -89,7 +90,7 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
     return 0;
   }
 
-  cdio_cddap_verbose_set(priv->cd, verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT, verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT);
+  cdio_cddap_verbose_set(priv->cd, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT);
 
   if(cdio_cddap_open(priv->cd) != 0) {
     MSG_ERR("Can't open disc\n");

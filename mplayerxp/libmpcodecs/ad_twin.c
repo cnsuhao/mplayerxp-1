@@ -274,7 +274,7 @@ static int init_vqf_audio_codec(sh_audio_t *sh_audio){
     sh_audio->samplesize=4;
     sh_audio->sample_format=AFMT_FLOAT32;
 
-    if(verbose)
+    if(mp_conf.verbose)
     {
 	MSG_V("Input format:\n");
 	print_wave_header(in_fmt,sizeof(WAVEFORMATEX));

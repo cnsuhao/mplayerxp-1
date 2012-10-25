@@ -241,7 +241,7 @@ while(1){
       le2me_MainAVIHeader(&avih); // swap to machine endian
       chunksize-=MIN(size2,sizeof(avih));
       demuxer->movi_length=avih.dwTotalFrames;
-      if(verbose) print_avih(&avih); else print_avih_flags(&avih);
+      if(mp_conf.verbose) print_avih(&avih); else print_avih_flags(&avih);
       break;
     case ckidSTREAMHEADER: {      // read 'strh'
       AVIStreamHeader h;
@@ -264,7 +264,7 @@ while(1){
 //	demuxer->audio->sh=sh_audio;
       }
       last_fccType=h.fccType;
-      if(verbose>=1) print_strh(&h);
+      if(mp_conf.verbose>=1) print_strh(&h);
       break; }
     case mmioFOURCC('i', 'n', 'd', 'x'): {
       uint32_t i;
@@ -316,7 +316,7 @@ while(1){
 	// fixup MS-RLE header (seems to be broken for <256 color files)
 	if(sh_video->bih->biCompression<=1 && sh_video->bih->biSize==40)
 	    sh_video->bih->biSize=chunksize;
-        if(verbose>=1) print_video_header(sh_video->bih,chunksize);
+        if(mp_conf.verbose>=1) print_video_header(sh_video->bih,chunksize);
 	if(chunksize>0x28 && strncmp((char *)&sh_video->bih->biCompression,"MPGI",4) == 0)
 		sh_video->aspect=get_avi_aspect(*(((char *)sh_video->bih)+0x28));
         chunksize=0;
@@ -373,7 +373,7 @@ while(1){
 	    sh_audio->wf=realloc(sh_audio->wf, sizeof(WAVEFORMATEX)+sh_audio->wf->cbSize);
 	}
         chunksize=0;
-        if(verbose>=1) print_wave_header(sh_audio->wf,wf_size);
+        if(mp_conf.verbose>=1) print_wave_header(sh_audio->wf,wf_size);
 	++priv->audio_streams;
 //        if(demuxer->audio->id==-1) demuxer->audio->id=stream_id;
       }
@@ -396,7 +396,7 @@ while(1){
 	if (sh_video) {
 		sh_video->aspect = GET_AVI_ASPECT(vprp->dwFrameAspectRatio);
 	}
-	if(verbose>=1) print_vprp(vprp);
+	if(mp_conf.verbose>=1) print_vprp(vprp);
 	free(vprp);
 	break;
     }
@@ -429,7 +429,7 @@ while(1){
 	entry->dwFlags&=0xffff;
       }
       chunksize-=priv->idx_size<<4;
-      if(verbose>=2) print_index(priv->idx,priv->idx_size);
+      if(mp_conf.verbose>=2) print_index(priv->idx,priv->idx_size);
     }
     break;
     /* added May 2002 */
@@ -600,7 +600,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 	}
     }
 
-    if (verbose>=2) print_index(priv->idx, priv->idx_size);
+    if (mp_conf.verbose>=2) print_index(priv->idx, priv->idx_size);
 
     demuxer->movi_end=demuxer->stream->end_pos;
 
@@ -729,7 +729,7 @@ skip_chunk:
   }
   priv->idx_size=priv->idx_pos;
   MSG_INFO("Indexed are generated for %ul chunks\n",priv->idx_size);
-  if(verbose>=2) print_index(priv->idx,priv->idx_size);
+  if(mp_conf.verbose>=2) print_index(priv->idx,priv->idx_size);
 
 #if 0
   /* Write generated index to a file */

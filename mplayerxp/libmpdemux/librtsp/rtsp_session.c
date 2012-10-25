@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include "mp_config.h"
+#include "mplayer.h"
 #ifndef HAVE_WINSOCK2
 #include <sys/socket.h>
 #include <netinet/in.h>

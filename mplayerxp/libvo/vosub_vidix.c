@@ -633,7 +633,7 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     priv->handler = vdlOpen(VIDIX_PATH,
 			drvname ? drvname[0] == ':' ? &drvname[1] : drvname[0] ? drvname : NULL : NULL,
 			TYPE_OUTPUT,
-			verbose);
+			mp_conf.verbose);
     if(priv->handler == NULL) {
 	MSG_FATAL("Couldn't find working VIDIX driver\n");
 	free(priv);

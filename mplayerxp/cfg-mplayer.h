@@ -46,8 +46,6 @@ extern int xinerama_screen;
 extern int nortc;
 #endif
 
-extern int enable_xp;
-extern int enable_gomp;
 extern int enable_xp_audio;
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
@@ -106,15 +104,15 @@ extern vf_cfg_t vf_cfg; // Configuration for audio filters
  */
 
 static const config_t xpcore_config[]={
-	{"xp", &enable_xp, CONF_TYPE_INT, CONF_RANGE, 0, 4, NULL, "starts MPlayerXP in multi-thread and multi-buffer XP mode"},
-	{"dump", &stream_dump, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies dump type and name for the dump of stream"},
-	{"gomp", &enable_gomp, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables usage of OpenMP extensions"},
-	{"nogomp", &enable_gomp, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables usage of OpenMP extensions"},
+	{"xp", &mp_conf.xp, CONF_TYPE_INT, CONF_RANGE, 0, 4, NULL, "starts MPlayerXP in multi-thread and multi-buffer XP mode"},
+	{"dump", &mp_conf.stream_dump, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies dump type and name for the dump of stream"},
+	{"gomp", &mp_conf.gomp, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables usage of OpenMP extensions"},
+	{"nogomp", &mp_conf.gomp, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables usage of OpenMP extensions"},
 	{"da_buffs", &vo_conf.da_buffs, CONF_TYPE_INT, CONF_RANGE, 4, 1024, NULL, "specifies number of buffers for decoding-ahead in XP mode"},
-	{"cache", &stream_cache_size, CONF_TYPE_INT, CONF_RANGE, 4, 65536, NULL,"specifies amount of memory for precaching a file/URL"},
-	{"nocache", &stream_cache_size, CONF_TYPE_FLAG, 0, 1, 0, NULL,"disables precaching a file/URL"},
-	{"autoq", &auto_quality, CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL, "dynamically changes the level of postprocessing depending on spare CPU time available"},
-	{"benchmark", &benchmark, CONF_TYPE_FLAG, 0, 0, 1, NULL, "performs benchmarking to estimate performance of MPlayerXP"},
+	{"cache", &mp_conf.s_cache_size, CONF_TYPE_INT, CONF_RANGE, 4, 65536, NULL,"specifies amount of memory for precaching a file/URL"},
+	{"nocache", &mp_conf.s_cache_size, CONF_TYPE_FLAG, 0, 1, 0, NULL,"disables precaching a file/URL"},
+	{"autoq", &mp_conf.autoq, CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL, "dynamically changes the level of postprocessing depending on spare CPU time available"},
+	{"benchmark", &mp_conf.benchmark, CONF_TYPE_FLAG, 0, 0, 1, NULL, "performs benchmarking to estimate performance of MPlayerXP"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
 
@@ -226,7 +224,7 @@ static const config_t subtitle_config[]={
 	{"on", &has_dvdsub, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables subtitle-steam playback"},
 	{"off", &has_dvdsub, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables subtitle-stream playback"},
 	{"vob", &vobsub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the VobSub files that are to be used for subtitle"},
-	{"vobid", &vobsub_id, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL, "specifies the VobSub subtitle id"},
+	{"vobid", &mp_conf.vobsub_id, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL, "specifies the VobSub subtitle id"},
 #ifdef USE_SUB
 	{"file", &sub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the subtitle file"},
 #ifdef USE_ICONV
@@ -242,9 +240,9 @@ static const config_t subtitle_config[]={
 #endif
 	{"cc", &subcc_enabled, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enable DVD Closed Caption (CC) subtitles"},
 	{"nocc", &subcc_enabled, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable DVD Closed Caption (CC) subtitles"},
-	{"id", &dvdsub_id, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL, "selects subtitle channel"},
-	{"lang", &dvdsub_lang, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies language of DVD-subtitle stream as two-letter country code(s)"},
-	{"ifo", &spudec_ifo, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies .ifo file for DVD subtitles"},
+	{"id", &mp_conf.dvdsub_id, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL, "selects subtitle channel"},
+	{"lang", &mp_conf.dvdsub_lang, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies language of DVD-subtitle stream as two-letter country code(s)"},
+	{"ifo", &mp_conf.spudec_ifo, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies .ifo file for DVD subtitles"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
 
@@ -266,8 +264,8 @@ static const config_t audio_config[]={
 	{"mixer", &oss_mixer_device, CONF_TYPE_STRING, 0, 0, 0, NULL, "select audio-mixer device"},
 	{"channels", &audio_output_channels, CONF_TYPE_INT, CONF_RANGE, 2, 8, NULL, "select number of audio output channels to be used"},
 	{"rate", &force_srate, CONF_TYPE_INT, CONF_RANGE, 1000, 8*48000, NULL, "specifies Hz for audio playback"},
-	{"lang", &audio_lang, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies language of DVD-audio stream as two-letter country code(s)"},
-	{"id", &audio_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, NULL, "selects audio channel"},
+	{"lang", &mp_conf.audio_lang, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies language of DVD-audio stream as two-letter country code(s)"},
+	{"id", &mp_conf.audio_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, NULL, "selects audio channel"},
 #ifdef USE_FAKE_MONO
 	{"stereo", &fakemono, CONF_TYPE_INT, CONF_RANGE, 0, 2, NULL, "selects type of MP2/MP3 stereo output"},
 #endif
@@ -299,7 +297,7 @@ static const config_t video_config[]={
 	{"bm", &vo_conf.use_bm, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of bus-mastering (if it available for given OS/videocard)"},
 	{"bm2", &vo_conf.use_bm, CONF_TYPE_FLAG, 0, 0, 2, NULL, "enables using of bus-mastering to store all decoded-ahead frames in video-memory"},
 	{"nobm", &vo_conf.use_bm, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of bus-mastering"},
-	{"id", &video_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, NULL, "selects video channel"},
+	{"id", &mp_conf.video_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, NULL, "selects video channel"},
 	{"pp", &npp_options, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies options of post-processing"},
 	{"sws", &sws_flags, CONF_TYPE_INT, 0, 0, 2, NULL, "specifies the quality of the software scaler"},
 #ifdef HAVE_PNG
@@ -340,7 +338,7 @@ static const config_t mplayer_opts[]={
 	{"vfm", &video_family, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified video-decoders family"},
 	{"ac", &audio_codec, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified audio-decoder"},
 	{"vc", &video_codec, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified video-decoder"},
-/*UD*/	{"verbose", &verbose, CONF_TYPE_INT, CONF_RANGE|CONF_GLOBAL, 0, 100, NULL, "verbose output"},
+/*UD*/	{"verbose", &mp_conf.verbose, CONF_TYPE_INT, CONF_RANGE|CONF_GLOBAL, 0, 100, NULL, "verbose output"},
 	{"v", cfg_inc_verbose, CONF_TYPE_FUNC, CONF_GLOBAL|CONF_NOSAVE, 0, 0, NULL, "verbose output (more -v means more verbosity)"},
 	{"slave", &slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, NULL, "turns MPlayerXP into slave mode as a backend for other programs"},
 	{"use-stdin", &use_stdin, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "forces reading of keyboard codes from STDIN instead of terminal's console"},

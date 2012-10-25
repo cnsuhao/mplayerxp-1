@@ -12,7 +12,8 @@
  *
  */
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
 
 #if defined(HAVE_LIBCDIO) && defined(HAVE_STREAMING)
 

@@ -970,17 +970,17 @@ static demuxer_t *ts_open(demuxer_t * demuxer)
 	params.prog = ts_prog;
 	params.probe = _ts_probe;
 
-	if(dvdsub_lang != NULL)
+	if(mp_conf.dvdsub_lang != NULL)
 	{
-		strncpy(params.slang, dvdsub_lang, 3);
+		strncpy(params.slang, mp_conf.dvdsub_lang, 3);
 		params.slang[3] = 0;
 	}
 	else
 		memset(params.slang, 0, 4);
 
-	if(audio_lang != NULL)
+	if(mp_conf.audio_lang != NULL)
 	{
-		strncpy(params.alang, audio_lang, 3);
+		strncpy(params.alang, mp_conf.audio_lang, 3);
 		params.alang[3] = 0;
 	}
 	else
@@ -2786,10 +2786,10 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 						int asgn = 0;
 						uint8_t *lang;
 
-						if(dvdsub_lang)
+						if(mp_conf.dvdsub_lang)
 						{
 							if ((lang = pid_lang_from_pmt(priv, pid)))
-								asgn = (strncmp(lang, dvdsub_lang, 3) == 0);
+								asgn = (strncmp(lang, mp_conf.dvdsub_lang, 3) == 0);
 						}
 						else		//no language specified with -slang
 							asgn = 1;

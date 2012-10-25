@@ -89,7 +89,6 @@ extern vo_data_t*vo_data;
 #define MPDEC_THREAD_COND (VF_FLAGS_THREADS|VF_FLAGS_SLICES)
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
-extern int enable_gomp;
 
 extern char *video_codec;
 int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
@@ -168,7 +167,7 @@ int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int st
 	sh_video->inited=1;
 	sh_video->vf_flags=vf_query_flags(sh_video->vfilter);
 #ifdef _OPENMP
-	if(enable_gomp) {
+	if(mp_conf.gomp) {
 	    smp_num_cpus=omp_get_num_procs();
 	    use_vf_threads=0;
 	    if(((sh_video->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
@@ -261,11 +260,11 @@ int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_f
 
     t2=GetTimer();t=t2-t;
     tt = t*0.000001f;
-    video_time_usage+=tt;
-    if(benchmark || frame_dropping) {
-	if(tt > max_video_time_usage) max_video_time_usage=tt;
-	if(tt < min_video_time_usage) min_video_time_usage=tt;
-	cur_video_time_usage=tt;
+    time_usage.video+=tt;
+    if(mp_conf.benchmark || frame_dropping) {
+	if(tt > time_usage.max_video) time_usage.max_video=tt;
+	if(tt < time_usage.min_video) time_usage.min_video=tt;
+	time_usage.cur_video=tt;
     }
 
     if(drop_frame) return 0;
@@ -274,12 +273,12 @@ int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_f
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
-    vout_time_usage+=tt;
-    if(benchmark || frame_dropping)
+    time_usage.vout+=tt;
+    if(mp_conf.benchmark || frame_dropping)
     {
-	if(tt > max_vout_time_usage) max_vout_time_usage = tt;
-	if(tt < min_vout_time_usage) min_vout_time_usage = tt;
-	cur_vout_time_usage=tt;
+	if(tt > time_usage.max_vout) time_usage.max_vout = tt;
+	if(tt < time_usage.min_vout) time_usage.min_vout = tt;
+	time_usage.cur_vout=tt;
     }
 
     return 1;

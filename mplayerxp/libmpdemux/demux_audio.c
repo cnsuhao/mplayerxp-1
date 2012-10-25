@@ -1354,7 +1354,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   MSG_V("demux_audio: audio data 0x%llX - 0x%llX  \n",demuxer->movi_start,demuxer->movi_end);
   if(stream_tell(s) != demuxer->movi_start)
     stream_seek(s,demuxer->movi_start);
-  if(verbose && sh_audio->wf) print_wave_header(sh_audio->wf,sizeof(WAVEFORMATEX));
+  if(mp_conf.verbose && sh_audio->wf) print_wave_header(sh_audio->wf,sizeof(WAVEFORMATEX));
   if(demuxer->movi_length==UINT_MAX && sh_audio->i_bps)
     demuxer->movi_length=(unsigned)(((float)demuxer->movi_end-(float)demuxer->movi_start)/(float)sh_audio->i_bps);
   return demuxer;

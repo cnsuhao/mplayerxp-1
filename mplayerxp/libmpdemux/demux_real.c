@@ -120,7 +120,7 @@ static void dump_index(demuxer_t *demuxer, int stream_id)
     real_index_table_t *index;
     int i, entries;
 
-    if (verbose<=1)
+    if (mp_conf.verbose<=1)
 	return;
     
     if (stream_id > MAX_STREAMS)
@@ -358,7 +358,7 @@ static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timesta
     if(pict_type<=1){
       // I frame, sync timestamps:
       priv->kf_base=timestamp-kf;
-      if(verbose>1) MSG_DBG2("\nTS: base=%08X\n",priv->kf_base);
+      if(mp_conf.verbose>1) MSG_DBG2("\nTS: base=%08X\n",priv->kf_base);
       kf=timestamp;
     } else {
       // P/B frame, merge timestamps:
@@ -1152,7 +1152,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 
 		    sh->wf->wFormatTag = sh->format;
 		    
-		    if (verbose > 0)
+		    if (mp_conf.verbose > 0)
 		    print_wave_header(sh->wf,sizeof(WAVEFORMATEX));
 
 		    /* Select audio stream with highest bitrate if multirate file*/

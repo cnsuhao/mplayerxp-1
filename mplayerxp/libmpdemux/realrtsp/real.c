@@ -30,8 +30,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../mp_config.h"
-#include "../../bswap.h"
+#include "mp_config.h"
+#include "mplayer.h"
+#include "bswap.h"
 //#include "libavutil/common.h"
 #include "real.h"
 #include "asmrp.h"

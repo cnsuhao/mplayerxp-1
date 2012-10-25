@@ -1,6 +1,8 @@
 #ifndef __MPLAYERXP_MAIN
 #define __MPLAYERXP_MAIN 1
 
+#include "pthread.h"
+
 typedef struct initial_audio_pts_correction_s
 {
     int need_correction;
@@ -10,28 +12,36 @@ typedef struct initial_audio_pts_correction_s
 
 extern initial_audio_pts_correction_t initial_audio_pts_corr;
 extern float initial_audio_pts;
-extern int enable_xp;
-extern unsigned verbose;
+
+typedef struct mp_conf_s {
+    int		xp;   /* XP-mode */
+    int		gomp; /* currently it's experimental feature */
+    char*	stream_dump; // dump name
+    int		s_cache_size; /* cache2: was 1024 let it be 0 by default */
+    int		autoq; /* quality's options: */
+    unsigned	verbose;
+    int		benchmark;
+// streaming:
+    int audio_id;
+    int video_id;
+    int dvdsub_id;
+    int vobsub_id;
+    char* audio_lang;
+    char* dvdsub_lang;
+    char* spudec_ifo;
+}mp_conf_t;
+extern mp_conf_t mp_conf;
+
 extern unsigned xp_num_frames;
 extern int xp_id;
 extern unsigned mplayer_accel;
 extern int frame_dropping;
-
-extern int audio_id;
-extern int video_id;
-extern int dvdsub_id;
-extern int vobsub_id;
-extern char* audio_lang;
-extern char* dvdsub_lang;
-
-extern int stream_cache_size;
 
 extern int av_sync_pts;
 extern int av_force_pts_fix;
 extern int frame_reorder;
 extern int use_pts_fix2;
 extern int av_force_pts_fix2;
-
 
 extern void exit_player(char* how);
 extern void mpxp_resync_audio_stream(void);
@@ -43,25 +53,27 @@ extern void mplayer_put_key(int code);
 extern int mplayer_get_key(void);
 
 /* Benchmarking */
-
-extern int benchmark;
-extern double video_time_usage;
-extern double vout_time_usage;
-extern double audio_decode_time_usage_correction;
-extern double audio_decode_time_usage;  /**< time for decoding in thread */
-extern double min_audio_decode_time_usage;
-extern double max_audio_decode_time_usage;
-extern double max_demux_time_usage;
-extern double demux_time_usage;
-extern double min_demux_time_usage;
-extern double max_c2_time_usage;
-extern double c2_time_usage;
-extern double min_c2_time_usage;
-extern double max_video_time_usage;
-extern double cur_video_time_usage;
-extern double min_video_time_usage;
-extern double max_vout_time_usage;
-extern double cur_vout_time_usage;
-extern double min_vout_time_usage;
-
+typedef struct time_usage_s {
+    double video;
+    double vout;
+    double audio_decode_correction;
+    double audio_decode;  /**< time for decoding in thread */
+    double audio,max_audio,min_audio,cur_audio;
+    double min_audio_decode;
+    double max_audio_decode;
+    double max_demux;
+    double demux;
+    double min_demux;
+    double max_c2;
+    double c2;
+    double min_c2;
+    double max_video;
+    double cur_video;
+    double min_video;
+    double max_vout;
+    double cur_vout;
+    double min_vout;
+    double total_start;
+}time_usage_t;
+extern time_usage_t time_usage;
 #endif

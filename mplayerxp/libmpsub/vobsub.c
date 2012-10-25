@@ -453,7 +453,7 @@ static int __FASTCALL__ vobsub_add_id(vobsub_t *vob, const char *id, size_t idle
 	memcpy(vob->spu_streams[index].id, id, idlen);
     }
     vob->spu_streams_current = index;
-    if (verbose)
+    if (mp_conf.verbose)
 	MSG_ERR( "[vobsub] subtitle (vobsubid): %d language %s\n",
 		index, vob->spu_streams[index].id);
     return 0;
@@ -726,8 +726,8 @@ static int __FASTCALL__ vobsub_parse_delay(vobsub_t *vob, const char *line)
 
 static int __FASTCALL__ vobsub_set_lang(vobsub_t *vob, const char *line)
 {
-    if (vobsub_id == -1)
-        vobsub_id = atoi(line + 8);
+    if (mp_conf.vobsub_id == -1)
+        mp_conf.vobsub_id = atoi(line + 8);
     return 0;
 }
 
@@ -764,7 +764,7 @@ static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, FILE *fd)
 	    //custom colors: ON/OFF, tridx: XXXX, colors: XXXXXX, XXXXXX, XXXXXX,XXXXXX
 	    res = vobsub_parse_cuspal(vob, line) + vobsub_parse_tridx(vob, line) + vobsub_parse_custom(vob, line);
 	else {
-	    if (verbose)
+	    if (mp_conf.verbose)
 		MSG_ERR( "vobsub: ignoring %s", line);
 	    continue;
 	}
@@ -1008,7 +1008,7 @@ int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle, unsigned char * lang)
       for(i=0; i < vob->spu_streams_size; i++)
         if (vob->spu_streams[i].id)
           if ((strncmp(vob->spu_streams[i].id, lang, 2)==0)){
-	    vobsub_id=i;
+	    mp_conf.vobsub_id=i;
 	    MSG_INFO("Selected VOBSUB language: %d language: %s\n", i, vob->spu_streams[i].id);
 	    return 0;
 	  }
@@ -1024,11 +1024,11 @@ void __FASTCALL__ vobsub_seek(any_t* vobhandle, float pts)
   packet_queue_t * queue;
   int seek_pts100 = (int)pts * 90000;
 
-  if (vob->spu_streams && 0 <= vobsub_id && (unsigned) vobsub_id < vob->spu_streams_size) {
+  if (vob->spu_streams && 0 <= mp_conf.vobsub_id && (unsigned) mp_conf.vobsub_id < vob->spu_streams_size) {
     /* do not seek if we don't know the id */
-    if (vobsub_get_id(vob, vobsub_id) == NULL)
+    if (vobsub_get_id(vob, mp_conf.vobsub_id) == NULL)
 	    return;
-    queue = vob->spu_streams + vobsub_id;
+    queue = vob->spu_streams + mp_conf.vobsub_id;
     queue->current_index = 0;
     while (queue->current_index < queue->packets_size
             && (queue->packets + queue->current_index)->pts100 < seek_pts100)
@@ -1041,8 +1041,8 @@ void __FASTCALL__ vobsub_seek(any_t* vobhandle, float pts)
 int __FASTCALL__ vobsub_get_packet(any_t*vobhandle, float pts,any_t** data, int* timestamp) {
   vobsub_t *vob = (vobsub_t *)vobhandle;
   unsigned int pts100 = 90000 * pts;
-  if (vob->spu_streams && 0 <= vobsub_id && (unsigned) vobsub_id < vob->spu_streams_size) {
-    packet_queue_t *queue = vob->spu_streams + vobsub_id;
+  if (vob->spu_streams && 0 <= mp_conf.vobsub_id && (unsigned) mp_conf.vobsub_id < vob->spu_streams_size) {
+    packet_queue_t *queue = vob->spu_streams + mp_conf.vobsub_id;
     while (queue->current_index < queue->packets_size) {
       packet_t *pkt = queue->packets + queue->current_index;
       if (pkt->pts100 != UINT_MAX)

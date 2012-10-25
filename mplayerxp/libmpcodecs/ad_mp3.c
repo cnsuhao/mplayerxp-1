@@ -286,7 +286,7 @@ int init(sh_audio_t *sh)
   }
   if((err=mpg123_open_feed(priv->mh))!=0) goto err_exit;
   param = MPG123_FORCE_STEREO|MPG123_FORCE_FLOAT;
-  if(!verbose) param|=MPG123_QUIET;
+  if(!mp_conf.verbose) param|=MPG123_QUIET;
   mpg123_param(priv->mh,MPG123_FLAGS,param,0);
   // Decode first frame (to get header filled)
   err=MPG123_NEED_MORE;

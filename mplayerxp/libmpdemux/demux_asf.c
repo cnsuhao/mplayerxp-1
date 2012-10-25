@@ -185,7 +185,7 @@ while(!stream_eof(demuxer->stream)){
         sh_audio->wf=calloc((apriv->streamh.type_size<sizeof(WAVEFORMATEX))?sizeof(WAVEFORMATEX):apriv->streamh.type_size,1);
         memcpy(sh_audio->wf,buffer,apriv->streamh.type_size);
 	le2me_WAVEFORMATEX(sh_audio->wf);
-        if(verbose>=1) print_wave_header(sh_audio->wf,apriv->streamh.type_size);
+        if(mp_conf.verbose>=1) print_wave_header(sh_audio->wf,apriv->streamh.type_size);
 	if(ASF_LOAD_GUID_PREFIX(apriv->streamh.concealment)==ASF_GUID_PREFIX_audio_conceal_interleave){
           stream_read(demuxer->stream,(char*) buffer,apriv->streamh.stream_size);
 	  apriv->asf_scrambling_h=buffer[0];
@@ -205,7 +205,7 @@ while(!stream_eof(demuxer->stream)){
         sh_video->bih=calloc((len<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):len,1);
         memcpy(sh_video->bih,&buffer[4+4+1+2],len);
 	le2me_BITMAPINFOHEADER(sh_video->bih);
-        if(verbose>=1) print_video_header(sh_video->bih,len);
+        if(mp_conf.verbose>=1) print_video_header(sh_video->bih,len);
         break;
         }
       }

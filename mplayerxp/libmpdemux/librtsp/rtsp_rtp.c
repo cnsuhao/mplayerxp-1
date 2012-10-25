@@ -27,6 +27,7 @@
 #include <inttypes.h>
 
 #include "mp_config.h"
+#include "mplayer.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>

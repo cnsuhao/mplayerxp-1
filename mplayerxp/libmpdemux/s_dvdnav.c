@@ -100,7 +100,7 @@ static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * fi
   }
 
   /* turn on/off dvdnav caching */
-  dvdnav_set_readahead_flag(dvdnav_priv->dvdnav,stream_cache_size?0:1);
+  dvdnav_set_readahead_flag(dvdnav_priv->dvdnav,mp_conf.s_cache_size?0:1);
 
   /* report the title?! */
   if (dvdnav_get_title_string(dvdnav_priv->dvdnav,&title_str)==DVDNAV_STATUS_OK) {
@@ -220,7 +220,7 @@ static int __FASTCALL__ __dvdnav_open(stream_t *stream,const char *filename,unsi
     dvd_ok:
     if(dvd_device) free(dvd_device);
     ((dvdnav_priv_t *)stream->priv)->started=1;
-    if(stream_cache_size)
+    if(mp_conf.s_cache_size)
     {
 	tevent = malloc(sizeof(dvdnav_event_t));
 	if(tevent) 
@@ -511,11 +511,11 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
 		stream_change->physical_letterbox,
 		stream_change->physical_pan_scan,
 		stream_change->logical);
-		if (vo_data->spudec && dvdsub_id!=stream_change->physical_wide) {
+		if (vo_data->spudec && mp_conf.dvdsub_id!=stream_change->physical_wide) {
 		    MSG_DBG2("d_dvdsub->id change: was %d is now %d\n",
 			    d_dvdsub->id,stream_change->physical_wide);
 		    // FIXME: need a better way to change SPU id
-		    d_dvdsub->id=dvdsub_id=stream_change->physical_wide;
+		    d_dvdsub->id=mp_conf.dvdsub_id=stream_change->physical_wide;
 		    if (vo_data->spudec) spudec_reset(vo_data->spudec);
 		}
 		break;
@@ -529,11 +529,11 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
 		    stream_change->logical);
 		aid_temp=stream_change->physical;
 		if (aid_temp>=0) aid_temp+=128; // FIXME: is this sane?
-		if (d_audio && audio_id!=aid_temp) {
+		if (d_audio && mp_conf.audio_id!=aid_temp) {
 		    MSG_DBG2("d_audio->id change: was %d is now %d\n",
 			d_audio->id,aid_temp);
 		    // FIXME: need a bettery way to change audio stream id
-		    d_audio->id=dvdsub_id=aid_temp;
+		    d_audio->id=mp_conf.dvdsub_id=aid_temp;
 		    mpxp_resync_audio_stream();
 		}
 		break;

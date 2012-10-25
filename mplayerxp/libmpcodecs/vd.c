@@ -131,7 +131,7 @@ csp_again:
 	if(out_fmt==0xFFFFFFFF) continue;
 	flags=vf_query_format(vf,out_fmt,w,h);
 	MSG_DBG2("vo_debug[step i=%d]: query(%s %ix%i) returned 0x%X for:\n",i,vo_format_name(out_fmt),w,h,flags);
-	if(verbose>1) if(verbose) vf_showlist(vf);
+	if(mp_conf.verbose>1) if(mp_conf.verbose) vf_showlist(vf);
 	if((flags&VFCAP_CSP_SUPPORTED_BY_HW) || ((flags&VFCAP_CSP_SUPPORTED) && j<0)){
 	    // check (query) if codec really support this outfmt...
 	    sh->outfmtidx=j; // pass index to the control() function this way

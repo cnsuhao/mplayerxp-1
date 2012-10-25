@@ -1,6 +1,8 @@
 #ifndef CPUDETECT_H
 #define CPUDETECT_H
 
+#include "mplayer.h"
+
 #ifdef ARCH_X86_64
 #  define REGa    rax
 #  define REGb    rbx

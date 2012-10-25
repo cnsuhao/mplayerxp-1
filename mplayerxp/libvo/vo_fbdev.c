@@ -817,7 +817,7 @@ static void __FASTCALL__ vt_set_textarea(vo_data_t*vo,int u, int l)
     int urow = ((u + 15) / 16) + 1;
     int lrow = l / 16;
 
-    if (verbose > 1)
+    if (mp_conf.verbose > 1)
 	MSG_DBG2(FBDEV "vt_set_textarea(%d,%d): %d,%d\n", u, l, urow, lrow);
     fprintf(priv->vt_fp, "\33[%d;%dr\33[%d;%dH", urow, lrow, lrow, 0);
     fflush(priv->vt_fp);

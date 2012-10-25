@@ -6,7 +6,8 @@
  * Licence: GPL
  */
 #define USE_QTX_CODECS 1
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -573,11 +574,6 @@ static int dvd_chapter;
 #define RVPROPERTIES_SIZE  34
 #define RAPROPERTIES4_SIZE 56
 #define RAPROPERTIES5_SIZE 70
-
-/* for e.g. "-slang ger" */
-extern char *dvdsub_lang;
-extern char *audio_lang;
-extern int dvdsub_id;
 
 /**
  * \brief ensures there is space for at least one additional element
@@ -2885,8 +2881,8 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
   if (demuxer->audio->id == -1)  /* automatically select an audio track */
     {
       /* check if the user specified an audio language */
-      if (audio_lang != NULL)
-        track = demux_mkv_find_track_by_language(mkv_d, audio_lang,
+      if (mp_conf.audio_lang != NULL)
+        track = demux_mkv_find_track_by_language(mkv_d, mp_conf.audio_lang,
                                                  MATROSKA_TRACK_AUDIO);
       if (track == NULL)
         /* no audio language specified, or language not found */
@@ -2948,14 +2944,14 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
   if (demuxer->sub->id >= 0)
     track = demux_mkv_find_track_by_num (mkv_d, demuxer->sub->id,
                                          MATROSKA_TRACK_SUBTITLE);
-  else if (dvdsub_lang != NULL)
-    track = demux_mkv_find_track_by_language (mkv_d, dvdsub_lang,
+  else if (mp_conf.dvdsub_lang != NULL)
+    track = demux_mkv_find_track_by_language (mkv_d, mp_conf.dvdsub_lang,
                                               MATROSKA_TRACK_SUBTITLE);
 
   if (track)
           {
             MSG_V("[mkv] Will display subtitle track %u.\n", track->tnum);
-	    dvdsub_id = demux_mkv_reverse_id(mkv_d, track->tnum, MATROSKA_TRACK_SUBTITLE);
+	    mp_conf.dvdsub_id = demux_mkv_reverse_id(mkv_d, track->tnum, MATROSKA_TRACK_SUBTITLE);
 #if 0
             mkv_d->sh_sub->id = track->tnum;
             mkv_d->sh_sub->sh = demuxer->s_streams[track->tnum];

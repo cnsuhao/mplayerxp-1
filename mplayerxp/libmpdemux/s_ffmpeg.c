@@ -1,4 +1,5 @@
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
 
 #include <dlfcn.h>
 #include "libavformat/avformat.h"

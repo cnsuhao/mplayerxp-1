@@ -71,12 +71,12 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
     unsigned level=(x>>28)&0xF;
     unsigned mod=x&0x0FFFFFFF;
     static int was_eol=1;
-    if(level>verbose+MSGL_V-1) return; /* do not display */
+    if(level>mp_conf.verbose+MSGL_V-1) return; /* do not display */
     if((mod&mp_msg_filter)==0) return; /* do not display */
     pthread_mutex_lock(&mp_msg_mutex);
     if(isatty(fileno(stderr)))
 	fprintf(stderr,scol[level<9?level:8]);
-    if(verbose>1 && was_eol)
+    if(mp_conf.verbose>1 && was_eol)
     {
 	unsigned mod_name;
 	const char *smod=NULL;

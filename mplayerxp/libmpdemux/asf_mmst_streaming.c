@@ -14,7 +14,8 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
 
 #include "tcp.h"
 #include "url.h"
@@ -43,9 +44,6 @@
 #endif
 #endif
 #include "demux_msg.h"
-
-extern int audio_id;
-extern int video_id;
 
 #define BUF_SIZE 102400
 #define HDR_BUF_SIZE 8192
@@ -615,11 +613,11 @@ int asf_mmst_streaming_start(stream_t *stream)
 
   memset (data, 0, 40);
 
-  if (audio_id > 0) {
+  if (mp_conf.audio_id > 0) {
     data[2] = 0xFF;
     data[3] = 0xFF;
-    data[4] = audio_id;
-    send_command(s, 0x33, num_stream_ids, 0xFFFF | audio_id << 16, 8, data);
+    data[4] = mp_conf.audio_id;
+    send_command(s, 0x33, num_stream_ids, 0xFFFF | mp_conf.audio_id << 16, 8, data);
   } else {
   for (i=1; i<num_stream_ids; i++) {
     data [ (i-1) * 6 + 2 ] = 0xFF;

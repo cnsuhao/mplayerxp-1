@@ -5,7 +5,8 @@
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "mp_config.h"
-#include "../dec_ahead.h"
+#include "mplayer.h"
+#include "dec_ahead.h"
 #ifdef HAVE_GOMP
 #include <omp.h>
 #endif
@@ -74,7 +75,6 @@ LIBVD_EXTERN(ffmpeg)
 #include "libavcodec/avcodec.h"
 #include "libvo/video_out.h"
 
-extern int enable_gomp;
 
 extern char *npp_options;
 static int vcodec_inited=0;
@@ -361,7 +361,7 @@ static int init(sh_video_t *sh){
 
 #ifdef _OPENMP
     /* Note: Slices have effect on UNI-processor machines only */
-    if(enable_ffslices && omp_get_num_procs()>1 && enable_gomp) enable_ffslices=0;
+    if(enable_ffslices && omp_get_num_procs()>1 && mp_conf.gomp) enable_ffslices=0;
 #endif
     if(vdff_ctx->lavc_codec->capabilities&CODEC_CAP_DRAW_HORIZ_BAND && enable_ffslices) vdff_ctx->cap_slices=1;
 /* enable DR1 method */

@@ -62,7 +62,6 @@
 #include "postproc/libmenu/menu.h"
 
 int slave_mode=0;
-unsigned verbose=0;
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
@@ -95,8 +94,6 @@ m_config_t* mconfig;
 **************************************************************************/
 #include "dec_ahead.h"
 
-int enable_xp=XP_VAPlay;
-int enable_gomp=0; /* currently it's experimental feature */
 volatile unsigned xp_drop_frame_cnt=0;
 unsigned xp_num_frames=0;
 float xp_screen_pts;
@@ -139,7 +136,7 @@ unsigned mplayer_accel=0;
 /**************************************************************************
              Config file
 **************************************************************************/
-static int cfg_inc_verbose(struct config *conf){ UNUSED(conf); ++verbose; return 0;}
+static int cfg_inc_verbose(struct config *conf){ UNUSED(conf); ++mp_conf.verbose; return 0;}
 
 static int cfg_include(struct config *conf, char *filename){
 	UNUSED(conf);
@@ -171,36 +168,10 @@ static int vo_inited=0;
 static int ao_inited=0;
 //ao_functions_t *audio_out=NULL;
 
-/* benchmark: */
-double video_time_usage=0;
-double vout_time_usage=0;
-static double audio_time_usage=0;
-double audio_decode_time_usage_correction=0;
-double audio_decode_time_usage=0;  /* time for decoding in thread */
-double min_audio_decode_time_usage=0;
-double max_audio_decode_time_usage=0;
-static int total_time_usage_start=0;
-int benchmark=0;
+/* mp_conf.benchmark: */
+time_usage_t time_usage;
 static unsigned bench_dropped_frames=0;
-double max_demux_time_usage=0;
-double demux_time_usage=0;
-double min_demux_time_usage=0;
-double max_c2_time_usage=0;
-double c2_time_usage=0;
-double min_c2_time_usage=0;
-double max_video_time_usage=0;
-double cur_video_time_usage=0;
-double min_video_time_usage=0;
-double max_vout_time_usage=0;
-double cur_vout_time_usage=0;
-double min_vout_time_usage=0;
-static double max_audio_time_usage=0;
-static double cur_audio_time_usage=0;
-static double min_audio_time_usage=0;
 static float max_av_resync=0;
-
-/* quality's options: */
-int auto_quality=0;
 
 int osd_level=2;
 
@@ -218,21 +189,6 @@ char *audio_codec_param=NULL;
 char *video_codec=NULL;  /* override video codec */
 char *audio_family=NULL; /* override audio codec family */
 char *video_family=NULL; /* override video codec family */
-
-// streaming:
-int audio_id=-1;
-int video_id=-1;
-int dvdsub_id=-1;
-int vobsub_id=-1;
-char* audio_lang=I18N_LANGUAGE;
-char* dvdsub_lang=I18N_LANGUAGE;
-static char* spudec_ifo=NULL;
-
-// cache2:
-int stream_cache_size=0; /*was 1024 let it be 1MB by default */
-
-// dump:
-static char *stream_dump=NULL;
 
 // A-V sync:
 static float default_max_pts_correction=-1;//0.01f;
@@ -261,6 +217,20 @@ int   sub_auto = 1;
 char *vobsub_name=NULL;
 
 static stream_t* stream=NULL;
+
+mp_conf_t mp_conf;
+
+static void mpxp_init_structs(void) {
+    memset(&time_usage,0,sizeof(time_usage_t));
+    memset(&mp_conf,0,sizeof(mp_conf_t));
+    mp_conf.xp=XP_VAPlay;
+    mp_conf.audio_id=-1;
+    mp_conf.video_id=-1;
+    mp_conf.dvdsub_id=-1;
+    mp_conf.vobsub_id=-1;
+    mp_conf.audio_lang=I18N_LANGUAGE;
+    mp_conf.dvdsub_lang=I18N_LANGUAGE;
+}
 
 //char* current_module=NULL; // for debugging
 int nortc;
@@ -569,12 +539,12 @@ int decode_audio_buffer(unsigned len)
     pthread_cond_signal( &audio_buffer.wait_buffer_cond );
 
     t=GetTimer()-t;
-    audio_decode_time_usage+=t*0.000001f;
-    audio_decode_time_usage-=audio_decode_time_usage_correction;
-    if(benchmark)
+    time_usage.audio_decode+=t*0.000001f;
+    time_usage.audio_decode-=time_usage.audio_decode_correction;
+    if(mp_conf.benchmark)
     {
-	if(t > max_audio_decode_time_usage) max_audio_decode_time_usage = t;
-	if(t < min_audio_decode_time_usage) min_audio_decode_time_usage = t;
+	if(t > time_usage.max_audio_decode) time_usage.max_audio_decode = t;
+	if(t < time_usage.min_audio_decode) time_usage.min_audio_decode = t;
     }
 
     pthread_mutex_unlock( &audio_buffer.head_mutex );
@@ -1044,7 +1014,7 @@ while(sh_audio){
   pinfo[_xp_id].current_module="mpca_decode";   // Enter AUDIO decoder module
   t=GetTimer();
   while(sh_audio->a_buffer_len<playsize && !audio_eof){
-      if(enable_xp>=XP_VideoAudio) {
+      if(mp_conf.xp>=XP_VideoAudio) {
           ret=read_audio_buffer(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
                               playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       } else
@@ -1072,23 +1042,23 @@ while(sh_audio){
   pinfo[_xp_id].current_module="play_audio";   // Leave AUDIO decoder module
   t=GetTimer()-t;
   tt = t*0.000001f;
-  audio_time_usage+=tt;
-  if(benchmark)
+  time_usage.audio+=tt;
+  if(mp_conf.benchmark)
   {
-    if(tt > max_audio_time_usage) max_audio_time_usage = tt;
-    if(tt < min_audio_time_usage) min_audio_time_usage = tt;
-    cur_audio_time_usage=tt;
+    if(tt > time_usage.max_audio) time_usage.max_audio = tt;
+    if(tt < time_usage.min_audio) time_usage.min_audio = tt;
+    time_usage.cur_audio=tt;
   }
   if(playsize>sh_audio->a_buffer_len) playsize=sh_audio->a_buffer_len;
 
-  if(enable_xp>=XP_VAPlay) dec_ahead_audio_delay=ao_get_delay(ao_data);
+  if(mp_conf.xp>=XP_VAPlay) dec_ahead_audio_delay=ao_get_delay(ao_data);
 
   playsize=ao_play(ao_data,sh_audio->a_buffer,playsize,0);
 
   if(playsize>0){
       sh_audio->a_buffer_len-=playsize;
       memcpy(sh_audio->a_buffer,&sh_audio->a_buffer[playsize],sh_audio->a_buffer_len);
-      if(!av_sync_pts && enable_xp>=XP_VAPlay)
+      if(!av_sync_pts && mp_conf.xp>=XP_VAPlay)
           pthread_mutex_lock(&audio_timer_mutex);
       if(use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
@@ -1116,7 +1086,7 @@ while(sh_audio){
 	  sh_audio->timer=pts+(ret-sh_audio->a_buffer_len)/(float)(sh_audio->af_bps);
       else
 	  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
-      if(!av_sync_pts && enable_xp>=XP_VAPlay)
+      if(!av_sync_pts && mp_conf.xp>=XP_VAPlay)
           pthread_mutex_unlock(&audio_timer_mutex);
   }
 
@@ -1155,7 +1125,7 @@ static int osd_last_pts=-303;
 	  osd_show_framedrop--;
       } else
 #ifdef ENABLE_DEC_AHEAD_DEBUG
-	  if(verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d abs frame: %u",osd_function,pts/3600,(pts/60)%60,pts%60,abs_dec_ahead_active_frame);
+	  if(mp_conf.verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d abs frame: %u",osd_function,pts/3600,(pts/60)%60,pts%60,abs_dec_ahead_active_frame);
 	  else sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);
 #else
           sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);
@@ -1178,9 +1148,9 @@ static void __show_status_line(float a_pts,float video_pts,float delay,float AV_
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i]]\n",
 		a_pts-delay,video_pts,AV_delay,c_total
 		,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
-		,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
-		,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
-		,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+		,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
+		,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
+		,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
 		,vstat->drop_frame_cnt
 		,output_quality
 		,dae_curr_vplayed()
@@ -1205,7 +1175,7 @@ static void show_status_line(float v_pts,float AV_delay,video_stat_t *vstat) {
 	a_pts=d_audio->pts;
 	a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     }
-    if( !av_sync_pts && enable_xp>=XP_VideoAudio ) delay += get_delay_audio_buffer();
+    if( !av_sync_pts && mp_conf.xp>=XP_VideoAudio ) delay += get_delay_audio_buffer();
     AV_delay = a_pts-delay-video_pts;
     __show_status_line(a_pts,video_pts,delay,AV_delay,vstat);
 }
@@ -1218,9 +1188,9 @@ static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
 	,sh_video->timer
 	,a_pts-sh_video->timer,0.0
 	,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
-	,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
 	,vstat->drop_frame_cnt
 	,output_quality
 	);
@@ -1228,9 +1198,9 @@ static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
 	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d %d\r"
 	,v_pts
 	,xp_core.video->num_played_frames
-	,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
+	,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
 	,vstat->drop_frame_cnt
 	,output_quality
 	);
@@ -1325,7 +1295,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	time_frame=shva_prev.duration;
     }
     (*aq_sleep_time)=0; /* we have other way to control that */
-    if(benchmark && time_frame < 0 && time_frame < max_av_resync) max_av_resync=time_frame;
+    if(mp_conf.benchmark && time_frame < 0 && time_frame < max_av_resync) max_av_resync=time_frame;
     if(!(vo_data->flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
 #define XP_MIN_AUDIOBUFF 0.05
@@ -1333,9 +1303,9 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 
 	if(sh_audio && (!audio_eof || ao_get_delay(ao_data)) && time_frame>XP_MAX_TIMESLICE) {
 	    float t;
-	    if(benchmark) show_status_line(*v_pts,AV_delay,vstat);
+	    if(mp_conf.benchmark) show_status_line(*v_pts,AV_delay,vstat);
 
-	    if( enable_xp < XP_VAPlay ) {
+	    if( mp_conf.xp < XP_VAPlay ) {
 		t=ao_get_delay(ao_data)-XP_MIN_AUDIOBUFF;
 		if(t>XP_MAX_TIMESLICE)
 		    t=XP_MAX_TIMESLICE;
@@ -1344,7 +1314,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 
 	    usleep(t*1000000);
 	    time_frame-=GetRelativeTime();
-	    if(enable_xp >= XP_VAPlay || t<XP_MAX_TIMESLICE || time_frame>XP_MAX_TIMESLICE) {
+	    if(mp_conf.xp >= XP_VAPlay || t<XP_MAX_TIMESLICE || time_frame>XP_MAX_TIMESLICE) {
 		vo_check_events(vo_data);
 		return 0;
 	    }
@@ -1382,11 +1352,11 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
 	t2=GetTimer()-t2;
 	tt = t2*0.000001f;
-	vout_time_usage+=tt;
-	if(benchmark) {
+	time_usage.vout+=tt;
+	if(mp_conf.benchmark) {
 		/* we need compute draw_slice+change_frame here */
-		cur_vout_time_usage+=tt;
-		if((cur_video_time_usage + cur_vout_time_usage + cur_audio_time_usage)*vo_data->fps > 1)
+		time_usage.cur_vout+=tt;
+		if((time_usage.cur_video + time_usage.cur_vout + time_usage.cur_audio)*vo_data->fps > 1)
 							bench_dropped_frames ++;
 	}
     }
@@ -1401,7 +1371,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 
     // unplayed bytes in our and soundcard/dma buffer:
     float delay=ao_get_delay(ao_data)+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
-    if(enable_xp>=XP_VideoAudio)
+    if(mp_conf.xp>=XP_VideoAudio)
 	delay += get_delay_audio_buffer();
 
     if(pts_from_bps){
@@ -1430,17 +1400,17 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	    max_pts_correction=default_max_pts_correction;
 	else // +-10% of time
 	    max_pts_correction=shva.duration*0.10;
-	if(enable_xp>=XP_VAPlay)
+	if(mp_conf.xp>=XP_VAPlay)
 	    pthread_mutex_lock(&audio_timer_mutex);
 	sh_audio->timer+=x;
-	if(enable_xp>=XP_VAPlay)
+	if(mp_conf.xp>=XP_VAPlay)
 	    pthread_mutex_unlock(&audio_timer_mutex);
 	c_total+=x;
-	if(benchmark && verbose) __show_status_line(a_pts,*v_pts,delay,AV_delay,vstat);
+	if(mp_conf.benchmark && mp_conf.verbose) __show_status_line(a_pts,*v_pts,delay,AV_delay,vstat);
     }
   } else {
     // No audio or pts:
-    if(benchmark && verbose) show_status_line_no_apts(*v_pts,vstat);
+    if(mp_conf.benchmark && mp_conf.verbose) show_status_line_no_apts(*v_pts,vstat);
   }
   return 0;
 }
@@ -1463,7 +1433,7 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 	if (vo_data->spudec) spudec_reset(vo_data->spudec);
 
 	if(sh_audio){
-	    if(verbose){
+	    if(mp_conf.verbose){
 		float a_pts=d_audio->pts;
 		a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 		MSG_V("SEEK: A: %5.3f  V: %5.3f  A-V: %5.3f   \n",a_pts,v_pts,a_pts-v_pts);
@@ -1510,7 +1480,7 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 	    c_total=0;
 	    max_pts_correction=0.1;
 	    if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25; // to rewert to PLAY pointer after 1 sec
-	    audio_time_usage=0; audio_decode_time_usage=0; video_time_usage=0; vout_time_usage=0;
+	    time_usage.audio=0; time_usage.audio_decode=0; time_usage.video=0; time_usage.vout=0;
 	    if(vstat) {
 		vstat->drop_frame_cnt=0;
 		vstat->too_slow_frame_cnt=0;
@@ -1546,42 +1516,42 @@ static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stre
 
 static void init_benchmark(void)
 {
-	max_audio_time_usage=0; max_video_time_usage=0; max_vout_time_usage=0;
-	min_audio_time_usage=HUGE; min_video_time_usage=HUGE; min_vout_time_usage=HUGE;
+	time_usage.max_audio=0; time_usage.max_video=0; time_usage.max_vout=0;
+	time_usage.min_audio=HUGE; time_usage.min_video=HUGE; time_usage.min_vout=HUGE;
 
-	min_audio_decode_time_usage=HUGE;
-	max_audio_decode_time_usage=0;
+	time_usage.min_audio_decode=HUGE;
+	time_usage.max_audio_decode=0;
 	bench_dropped_frames=0;
 
-	max_demux_time_usage=0;
-	demux_time_usage=0;
-	min_demux_time_usage=HUGE;
+	time_usage.max_demux=0;
+	time_usage.demux=0;
+	time_usage.min_demux=HUGE;
 
-	cur_video_time_usage=0;
-	cur_vout_time_usage=0;
-	cur_audio_time_usage=0;
+	time_usage.cur_video=0;
+	time_usage.cur_vout=0;
+	time_usage.cur_audio=0;
 
 	max_av_resync=0;
 }
 
 static void show_benchmark(void)
 {
-    double tot=(video_time_usage+vout_time_usage+audio_time_usage+audio_decode_time_usage+demux_time_usage+c2_time_usage);
+    double tot=(time_usage.video+time_usage.vout+time_usage.audio+time_usage.audio_decode+time_usage.demux+time_usage.c2);
     double total_time_usage;
 
-    total_time_usage_start=GetTimer()-total_time_usage_start;
-    total_time_usage = (float)total_time_usage_start*0.000001;
+    time_usage.total_start=GetTimer()-time_usage.total_start;
+    total_time_usage = (float)time_usage.total_start*0.000001;
 
     MSG_INFO("\nAVE BENCHMARKs: VC:%8.3fs VO:%8.3fs A:%8.3fs D:%8.3fs = %8.4fs C:%8.3fs\n",
-	 video_time_usage,vout_time_usage,audio_time_usage+audio_decode_time_usage,
-	 demux_time_usage,c2_time_usage,tot);
+	 time_usage.video,time_usage.vout,time_usage.audio+time_usage.audio_decode,
+	 time_usage.demux,time_usage.c2,tot);
     if(total_time_usage>0.0)
 	MSG_INFO("AVE BENCHMARK%%: VC:%8.4f%% VO:%8.4f%% A:%8.4f%% D:%8.4f%% C:%8.4f%% = %8.4f%%\n",
-	   100.0*video_time_usage/total_time_usage,
-	   100.0*vout_time_usage/total_time_usage,
-	   100.0*(audio_time_usage+audio_decode_time_usage)/total_time_usage,
-	   100.0*demux_time_usage/total_time_usage,
-	   100.0*c2_time_usage/total_time_usage,
+	   100.0*time_usage.video/total_time_usage,
+	   100.0*time_usage.vout/total_time_usage,
+	   100.0*(time_usage.audio+time_usage.audio_decode)/total_time_usage,
+	   100.0*time_usage.demux/total_time_usage,
+	   100.0*time_usage.c2/total_time_usage,
 	   100.0*tot/total_time_usage);
     MSG_INFO("\nREAL RESULTS: from %u was dropped=%u\n"
 	,our_n_frames,xp_drop_frame_cnt);
@@ -1590,15 +1560,15 @@ static void show_benchmark(void)
 
 static void show_benchmark_status(void)
 {
-    if( enable_xp <= XP_Video )
+    if( mp_conf.xp <= XP_Video )
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
 			,sh_audio->timer-ao_get_delay(ao_data)
-			,(sh_audio->timer>0.5)?100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_audio->timer:0
+			,(sh_audio->timer>0.5)?100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_audio->timer:0
 			);
     else
 	MSG_STATUS("A:%6.1f %4.1f%%  B:%4.1f\r"
 		,sh_audio->timer-ao_get_delay(ao_data)
-		,(sh_audio->timer>0.5)?100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_audio->timer:0
+		,(sh_audio->timer>0.5)?100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_audio->timer:0
 		,get_delay_audio_buffer()
 		);
 }
@@ -1638,13 +1608,13 @@ static void mpxp_init_osd(void) {
 // check font
 #ifdef USE_OSD
     if(font_name){
-	vo_data->font=read_font_desc(font_name,font_factor,verbose>1);
+	vo_data->font=read_font_desc(font_name,font_factor,mp_conf.verbose>1);
 	if(!vo_data->font) MSG_ERR(MSGTR_CantLoadFont,font_name);
     } else {
 	// try default:
-	vo_data->font=read_font_desc(get_path("font/font.desc"),font_factor,verbose>1);
+	vo_data->font=read_font_desc(get_path("font/font.desc"),font_factor,mp_conf.verbose>1);
 	if(!vo_data->font)
-	    vo_data->font=read_font_desc(DATADIR"/font/font.desc",font_factor,verbose>1);
+	    vo_data->font=read_font_desc(DATADIR"/font/font.desc",font_factor,mp_conf.verbose>1);
     }
 #endif
     /* Configure menu here */
@@ -1719,12 +1689,12 @@ static int mpxp_init_vobsub(const char *filename) {
     int forced_subs_only=0;
     pinfo[xp_id].current_module="vobsub";
     if (vobsub_name){
-      vo_data->vobsub=vobsub_open(vobsub_name,spudec_ifo,1,&vo_data->spudec);
+      vo_data->vobsub=vobsub_open(vobsub_name,mp_conf.spudec_ifo,1,&vo_data->spudec);
       if(vo_data->vobsub==NULL)
         MSG_ERR(MSGTR_CantLoadSub,vobsub_name);
       else {
 	inited_flags|=INITED_VOBSUB;
-	vobsub_set_from_lang(vo_data->vobsub, dvdsub_lang);
+	vobsub_set_from_lang(vo_data->vobsub, mp_conf.dvdsub_lang);
 	// check if vobsub requested only to display forced subtitles
 	forced_subs_only=vobsub_get_forced_subs_flag(vo_data->vobsub);
       }
@@ -1733,7 +1703,7 @@ static int mpxp_init_vobsub(const char *filename) {
       char *buf = malloc((strlen(filename)-3) * sizeof(char));
       memset(buf,0,strlen(filename)-3); // make sure string is terminated
       strncpy(buf, filename, strlen(filename)-4); 
-      vo_data->vobsub=vobsub_open(buf,spudec_ifo,0,&vo_data->spudec);
+      vo_data->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&vo_data->spudec);
       free(buf);
     }
     if(vo_data->vobsub)
@@ -1781,21 +1751,21 @@ static int mpxp_handle_playlist(const char *filename) {
 static void mpxp_init_dvd_nls(void) {
 /* Add NLS support here */
     char *lang;
-    if(!audio_lang) audio_lang=nls_get_screen_cp();
+    if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
     pinfo[xp_id].current_module="dvd lang->id";
-    if(audio_lang) {
-	lang=malloc(max(strlen(audio_lang)+1,4));
-	strcpy(lang,audio_lang);
-	if(audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang) == SCTRL_OK) {
-	    audio_id=*(int *)lang;
+    if(mp_conf.audio_lang) {
+	lang=malloc(max(strlen(mp_conf.audio_lang)+1,4));
+	strcpy(lang,mp_conf.audio_lang);
+	if(mp_conf.audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang) == SCTRL_OK) {
+	    mp_conf.audio_id=*(int *)lang;
 	}
 	free(lang);
     }
-    if(dvdsub_lang) {
-	lang=malloc(max(strlen(dvdsub_lang)+1,4));
-	strcpy(lang,dvdsub_lang);
-	if(dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang) == SCTRL_OK) {
-	    dvdsub_id=*(int *)lang;
+    if(mp_conf.dvdsub_lang) {
+	lang=malloc(max(strlen(mp_conf.dvdsub_lang)+1,4));
+	strcpy(lang,mp_conf.dvdsub_lang);
+	if(mp_conf.dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang) == SCTRL_OK) {
+	    mp_conf.dvdsub_id=*(int *)lang;
 	}
 	free(lang);
     }
@@ -1853,10 +1823,10 @@ static void mpxp_read_video_properties(void) {
 }
 
 static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
-if (spudec_ifo) {
+if (mp_conf.spudec_ifo) {
   unsigned int palette[16], width, height;
   pinfo[xp_id].current_module="spudec_init_vobsub";
-  if (vobsub_parse_ifo(NULL,spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
+  if (vobsub_parse_ifo(NULL,mp_conf.spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
     vo_data->spudec=spudec_new_scaled(palette, sh_video->disp_w, sh_video->disp_h);
 }
 
@@ -2111,13 +2081,13 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	    }
 	    vo_pause(vo_data);
 	}
-	if(verbose) {
+	if(mp_conf.verbose) {
 	    MSG_STATUS("\n------ PAUSED -------\r");
 	    fflush(stdout);
 	}
 
 	if (ao_inited && sh_audio) {
-	    if( enable_xp >= XP_VAPlay ) {
+	    if( mp_conf.xp >= XP_VAPlay ) {
 		xp_core.in_pause=1;
 		while( !dec_ahead_can_aseek ) usleep(0);
 	    }
@@ -2137,7 +2107,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	if(osd_function==OSD_PAUSE) osd_function=OSD_PLAY;
 	if (ao_inited && sh_audio) {
 	    ao_resume(ao_data);	// resume audio
-	    if( enable_xp >= XP_VAPlay ) {
+	    if( mp_conf.xp >= XP_VAPlay ) {
 		xp_core.in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
 	    }
@@ -2404,6 +2374,8 @@ int main(int argc,char* argv[], char *envp[]){
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 
+    mpxp_init_structs();
+
     vo_data=vo_preinit_structs();
 
     mplayer_pid=
@@ -2428,7 +2400,7 @@ int main(int argc,char* argv[], char *envp[]){
 
     if(m_config_parse_command_line(mconfig, argc, argv, envp) < 0) exit(1); // error parsing cmdline
 
-    if(!enable_xp) {
+    if(!mp_conf.xp) {
 	MSG_ERR("Error: detected option: -core.xp=0\n"
 		"Note!  Single-thread mode is not longer supported by MPlayerXP\n");
 	return 0;
@@ -2466,13 +2438,13 @@ int main(int argc,char* argv[], char *envp[]){
     }
 
     // Many users forget to include command line in bugreports...
-    if(verbose){
+    if(mp_conf.verbose){
 	MSG_INFO("CommandLine:");
 	for(i=1;i<argc;i++) MSG_INFO(" '%s'",argv[i]);
 	MSG_INFO("\n");
     }
 
-    mp_msg_init(verbose+MSGL_STATUS);
+    mp_msg_init(mp_conf.verbose+MSGL_STATUS);
 
 //------ load global data first ------
     mpxp_init_osd();
@@ -2510,13 +2482,13 @@ play_next_file:
 
 //============ Open & Sync STREAM --- fork cache2 ====================
     stream_dump_type=0;
-    if(stream_dump)
-	if((stream_dump_type=dump_parse(stream_dump))==0) {
+    if(mp_conf.stream_dump)
+	if((stream_dump_type=dump_parse(mp_conf.stream_dump))==0) {
 	    MSG_ERR("Wrong dump parameters! Unable to continue\n");
 	    exit_player(MSGTR_Exit_error);
 	}
 
-    if(stream_dump_type) stream_cache_size=0;
+    if(stream_dump_type) mp_conf.s_cache_size=0;
     pinfo[xp_id].current_module="open_stream";
     if(!input_state.after_dvdmenu) stream=open_stream(filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
     if(!stream) { // error...
@@ -2536,9 +2508,9 @@ play_next_file:
     pinfo[xp_id].current_module=NULL;
 
     // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
-    if(stream_cache_size && !stream_dump_type){
+    if(mp_conf.s_cache_size && !stream_dump_type){
 	pinfo[xp_id].current_module="enable_cache";
-	if(!stream_enable_cache(stream,stream_cache_size*1024,stream_cache_size*1024/5,stream_cache_size*1024/20))
+	if(!stream_enable_cache(stream,mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
 	    if((eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY))) goto goto_next_file;
     }
 
@@ -2547,13 +2519,13 @@ play_next_file:
 
 //============ Open DEMUXERS --- DETECT file type =======================
     initial_audio_pts=HUGE;
-    if(!has_audio) audio_id=-2;  // do NOT read audio packets...
-    if(!has_video) video_id=-2;  // do NOT read video packets...
-    if(!has_dvdsub) dvdsub_id=-2;// do NOT read subtitle packets...
+    if(!has_audio) mp_conf.audio_id=-2;  // do NOT read audio packets...
+    if(!has_video) mp_conf.video_id=-2;  // do NOT read video packets...
+    if(!has_dvdsub) mp_conf.dvdsub_id=-2;// do NOT read subtitle packets...
 
     pinfo[xp_id].current_module="demux_open";
 
-    if(!input_state.after_dvdmenu) demuxer=demux_open(stream,file_format,audio_id,video_id,dvdsub_id);
+    if(!input_state.after_dvdmenu) demuxer=demux_open(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id);
     if(!demuxer) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     inited_flags|=INITED_DEMUXER;
     input_state.after_dvdmenu=0;
@@ -2630,11 +2602,11 @@ play_next_file:
 
     xp_num_frames=vo_get_num_frames(vo_data); /* that really known after init_vcodecs */
 
-    if(auto_quality>0){
+    if(mp_conf.autoq>0){
 	/* Auto quality option enabled*/
 	output_quality=mpcv_get_quality_max(sh_video);
-	if(auto_quality>output_quality) auto_quality=output_quality;
-	else output_quality=auto_quality;
+	if(mp_conf.autoq>output_quality) mp_conf.autoq=output_quality;
+	else output_quality=mp_conf.autoq;
 	MSG_V("AutoQ: setting quality to %d\n",output_quality);
 	mpcv_set_quality(sh_video,output_quality);
     }
@@ -2679,7 +2651,7 @@ main:
 	sh_audio->a_pts=HUGE;
     } else {
 	MSG_INFO(MSGTR_NoSound);
-	if(verbose) MSG_V("Freeing %d unused audio chunks\n",d_audio->packs);
+	if(mp_conf.verbose) MSG_V("Freeing %d unused audio chunks\n",d_audio->packs);
 	ds_free_packs(d_audio); // free buffered chunks
 	d_audio->id=-2;         // do not read audio chunks
 	if(ao_inited) uninit_player(INITED_AO); // close device
@@ -2687,7 +2659,7 @@ main:
 
     if(!sh_video){
 	MSG_INFO("Video: no video!!!\n");
-	if(verbose) MSG_V("Freeing %d unused video chunks\n",d_video->packs);
+	if(mp_conf.verbose) MSG_V("Freeing %d unused video chunks\n",d_video->packs);
 	ds_free_packs(d_video);
 	d_video->id=-2;
 	if(vo_inited) uninit_player(INITED_VO);
@@ -2708,11 +2680,11 @@ main:
     if(!nortc && rtc_fd>0) { close(rtc_fd); rtc_fd=-1; }
     MSG_V("Using %s timing\n",rtc_fd>0?"rtc":softsleep?"software":"usleep()");
 
-    total_time_usage_start=GetTimer();
-    audio_time_usage=0; audio_decode_time_usage=0; video_time_usage=0;
-    audio_decode_time_usage_correction=0;
+    time_usage.total_start=GetTimer();
+    time_usage.audio=0; time_usage.audio_decode=0; time_usage.video=0;
+    time_usage.audio_decode_correction=0;
 
-    if(benchmark) init_benchmark();
+    if(mp_conf.benchmark) init_benchmark();
 
     /* display clip info */
     demux_info_print(demuxer,filename);
@@ -2750,15 +2722,15 @@ main:
 	    if(play_n_frames<0) eof = PT_NEXT_ENTRY;
 	}
 
-	if( enable_xp < XP_VAPlay )
+	if( mp_conf.xp < XP_VAPlay )
 	    eof |= decore_audio(xp_id);
 /*========================== UPDATE TIMERS ============================*/
 	pinfo[xp_id].current_module="Update timers";
 	if(!sh_video) {
-	    if(benchmark && verbose) show_benchmark_status();
+	    if(mp_conf.benchmark && mp_conf.verbose) show_benchmark_status();
 	    else mpxp_print_audio_status();
 
-	    if(enable_xp >= XP_VAPlay) { usleep(100000); eof = audio_eof; }
+	    if(mp_conf.xp >= XP_VAPlay) { usleep(100000); eof = audio_eof; }
 	    goto read_input;
 	} else {
 	    int l_eof;
@@ -2780,8 +2752,8 @@ repaint:
 		if(eof) goto do_loop;
 	    }
 /*Output quality adjustments:*/
-	    if(auto_quality>0) {
-		if(output_quality<auto_quality && aq_sleep_time>0)
+	    if(mp_conf.autoq>0) {
+		if(output_quality<mp_conf.autoq && aq_sleep_time>0)
 		    ++output_quality;
 		else if(output_quality>1 && aq_sleep_time<0)
 		    --output_quality;
@@ -2857,7 +2829,7 @@ do_loop:
 
 goto_next_file:  // don't jump here after ao/vo/getch initialization!
 
-    if(benchmark) show_benchmark();
+    if(mp_conf.benchmark) show_benchmark();
 
 if(playtree_iter != NULL && !input_state.after_dvdmenu) {
 if(eof == PT_NEXT_ENTRY || eof == PT_PREV_ENTRY) {

@@ -36,7 +36,7 @@ static int __FASTCALL__ file_open(stream_t *stream,const char *filename,unsigned
     /* decreasing number of packet from 256 to 10 speedups cache2 from 3.27% to 1.26%
        with full speed 1.04% for -nocache */
     /* Note: Please locate sector_size changinf after all read/write operations of open() function */
-    stream->sector_size=stream_cache_size?stream_cache_size*1024/10:STREAM_BUFFER_SIZE;
+    stream->sector_size=mp_conf.s_cache_size?mp_conf.s_cache_size*1024/10:STREAM_BUFFER_SIZE;
     ((file_priv_t*)stream->priv)->spos = 0;
     return 1;
 }

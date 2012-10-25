@@ -309,7 +309,7 @@ int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds){
 int ds_fill_buffer(demux_stream_t *ds){
   demuxer_t *demux=ds->demuxer;
   if(ds->buffer) free(ds->buffer);
-  if(verbose>2){
+  if(mp_conf.verbose>2){
     if(ds==demux->audio)
 	MSG_DBG3("ds_fill_buffer(d_audio) called\n");
     else

@@ -442,7 +442,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 			}
 
 			*fd_out=fd;
-			if( verbose ) {
+			if( mp_conf.verbose ) {
 				http_debug_hdr( http_hdr );
 			}
 			
@@ -696,13 +696,13 @@ nop_streaming_start( stream_t *stream ) {
 
 void fixup_network_stream_cache(stream_t *stream) {
   if(stream->streaming_ctrl->buffering) {
-    if(stream_cache_size<0) {
+    if(mp_conf.s_cache_size<0) {
       // cache option not set, will use our computed value.
       // buffer in KBytes, *5 because the prefill is 20% of the buffer.
-      stream_cache_size = (stream->streaming_ctrl->prebuffer_size/1024)*5;
-      if( stream_cache_size<64 ) stream_cache_size = 64;	// 16KBytes min buffer
+      mp_conf.s_cache_size = (stream->streaming_ctrl->prebuffer_size/1024)*5;
+      if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
     }
-    MSG_INFO("[network] cache size set to: %i\n", stream_cache_size);
+    MSG_INFO("[network] cache size set to: %i\n", mp_conf.s_cache_size);
   }
 }
 
@@ -976,13 +976,13 @@ stream_switch:
 		streaming_ctrl_free( stream->streaming_ctrl );
 		stream->streaming_ctrl = NULL;
 	} else if( stream->streaming_ctrl->buffering ) {
-		if(stream_cache_size<0) {
+		if(mp_conf.s_cache_size<0) {
 			// cache option not set, will use our computed value.
 			// buffer in KBytes, *5 because the prefill is 20% of the buffer.
-			stream_cache_size = (stream->streaming_ctrl->prebuffer_size/1024)*5;
-			if( stream_cache_size<64 ) stream_cache_size = 64;	// 16KBytes min buffer
+			mp_conf.s_cache_size = (stream->streaming_ctrl->prebuffer_size/1024)*5;
+			if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
 		}
-		MSG_INFO("Cache size set to %d KBytes\n", stream_cache_size);
+		MSG_INFO("Cache size set to %d KBytes\n", mp_conf.s_cache_size);
 	}
 
 	return ret;

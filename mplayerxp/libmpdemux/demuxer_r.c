@@ -62,18 +62,18 @@ int demux_getc_r(demux_stream_t *ds,float *pts)
     unsigned int t2=0;
     double tt;
     LOCK_DEMUXER();
-    if(benchmark) t=GetTimer();
+    if(mp_conf.benchmark) t=GetTimer();
     retval = demux_getc(ds);
     *pts=get_ds_stream_pts(ds,1);
     if(initial_audio_pts == HUGE) initial_audio_pts=*pts;
-    if(benchmark)
+    if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	demux_time_usage+=tt;
-	audio_decode_time_usage_correction=tt;
-	if(tt > max_demux_time_usage) max_demux_time_usage=tt;
-	if(tt < min_demux_time_usage) min_demux_time_usage=tt;
+	time_usage.demux+=tt;
+	time_usage.audio_decode_correction=tt;
+	if(tt > time_usage.max_demux) time_usage.max_demux=tt;
+	if(tt < time_usage.min_demux) time_usage.min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;
@@ -86,15 +86,15 @@ int video_read_frame_r(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,u
     unsigned int t2=0;
     double tt;
     LOCK_DEMUXER();
-    if(benchmark) t=GetTimer();
+    if(mp_conf.benchmark) t=GetTimer();
     retval = video_read_frame(sh_video,frame_time_ptr,v_pts,start,force_fps);
-    if(benchmark)
+    if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	demux_time_usage+=tt;
-	if(tt > max_demux_time_usage) max_demux_time_usage=tt;
-	if(tt < min_demux_time_usage) min_demux_time_usage=tt;
+	time_usage.demux+=tt;
+	if(tt > time_usage.max_demux) time_usage.max_demux=tt;
+	if(tt < time_usage.min_demux) time_usage.min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;
@@ -107,18 +107,18 @@ int demux_read_data_r(demux_stream_t *ds,unsigned char* mem,int len,float *pts)
     unsigned int t2=0;
     double tt;
     LOCK_DEMUXER();
-    if(benchmark) t=GetTimer();
+    if(mp_conf.benchmark) t=GetTimer();
     retval = demux_read_data(ds,mem,len);
     *pts=get_ds_stream_pts(ds,retval);
     if(initial_audio_pts == HUGE) initial_audio_pts=*pts;
-    if(benchmark)
+    if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	demux_time_usage+=tt;
-	audio_decode_time_usage_correction=tt;
-	if(tt > max_demux_time_usage) max_demux_time_usage=tt;
-	if(tt < min_demux_time_usage) min_demux_time_usage=tt;
+	time_usage.demux+=tt;
+	time_usage.audio_decode_correction=tt;
+	if(tt > time_usage.max_demux) time_usage.max_demux=tt;
+	if(tt < time_usage.min_demux) time_usage.min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;
@@ -131,18 +131,18 @@ int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts)
     unsigned int t2=0;
     double tt;
     LOCK_DEMUXER();
-    if(benchmark) t=GetTimer();
+    if(mp_conf.benchmark) t=GetTimer();
     retval = ds_get_packet(ds,start);
     *pts=get_ds_stream_pts(ds,retval);
     if(initial_audio_pts == HUGE) initial_audio_pts=*pts;
-    if(benchmark)
+    if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	demux_time_usage+=tt;
-	audio_decode_time_usage_correction=tt;
-	if(tt > max_demux_time_usage) max_demux_time_usage=tt;
-	if(tt < min_demux_time_usage) min_demux_time_usage=tt;
+	time_usage.demux+=tt;
+	time_usage.audio_decode_correction=tt;
+	if(tt > time_usage.max_demux) time_usage.max_demux=tt;
+	if(tt < time_usage.min_demux) time_usage.min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;
@@ -164,15 +164,15 @@ int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
     unsigned int t2=0;
     double tt;
     LOCK_DEMUXER();
-    if(benchmark) t=GetTimer();
+    if(mp_conf.benchmark) t=GetTimer();
     retval = demux_seek(demuxer,seeka);
-    if(benchmark)
+    if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	demux_time_usage+=tt;
-	if(tt > max_demux_time_usage) max_demux_time_usage=tt;
-	if(tt < min_demux_time_usage) min_demux_time_usage=tt;
+	time_usage.demux+=tt;
+	if(tt > time_usage.max_demux) time_usage.max_demux=tt;
+	if(tt < time_usage.min_demux) time_usage.min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;

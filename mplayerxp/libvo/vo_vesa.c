@@ -500,7 +500,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    priv->dstFourcc = IMGFMT_BGR16;
 	    break;
     }
-    if(verbose) {
+    if(mp_conf.verbose) {
 	MSG_V("vo_vesa: Requested mode: %ux%u@%u (%s)\n",width,height,bpp,vo_format_name(format));
 	MSG_V("vo_vesa: Total modes found: %u\n",num_modes);
 	mode_ptr = vib.VideoModePtr;
@@ -536,7 +536,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 		    best_mode_idx = i;
 	    }
 	}
-	if(verbose) {
+	if(mp_conf.verbose) {
 	    MSG_V("vo_vesa: Mode (%03u): mode=%04X %ux%u@%u attr=%04X\n"
 		  "vo_vesa:             #planes=%u model=%u(%s) #pages=%u\n"
 		  "vo_vesa:             winA=%X(attr=%u) winB=%X(attr=%u) winSize=%u winGran=%u\n"
@@ -688,12 +688,12 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     if(HAS_DGA()) {
 	for(i=0;i<priv->multi_size;i++) {
 	    priv->win.ptr = priv->dga_buffer = priv->video_base + priv->multi_buff[i];
-	    if(verbose>1) paintBkGnd(vo);
+	    if(mp_conf.verbose>1) paintBkGnd(vo);
 	    else	  clear_screen_fast(vo);
 	}
     } else {
 	int x;
-	if(verbose>1) paintBkGnd(vo);
+	if(mp_conf.verbose>1) paintBkGnd(vo);
 	else clear_screen(vo);
 	x = (priv->vmode_info.XResolution/priv->vmode_info.XCharSize)/2-strlen(title)/2;
 	if(x < 0) x = 0;

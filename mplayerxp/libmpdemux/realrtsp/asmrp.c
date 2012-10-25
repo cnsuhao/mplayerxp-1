@@ -42,6 +42,7 @@
 #include <string.h>
 #include "asmrp.h"
 #include "../demux_msg.h"
+#include "mplayer.h"
 
 /*
 #define LOG

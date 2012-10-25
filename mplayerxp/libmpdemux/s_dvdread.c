@@ -2,7 +2,8 @@
     s_dvdread - DVDREAD stream interface
 */
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #ifdef USE_DVDREAD
 #include <stdlib.h>
 #include <string.h>

@@ -1,7 +1,9 @@
 /*
     s_cdd - cdda & cddb streams interface
 */
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -112,7 +112,6 @@ pthread_cond_t audio_decode_cond=PTHREAD_COND_INITIALIZER;
 extern volatile int xp_drop_frame;
 extern volatile unsigned xp_drop_frame_cnt;
 extern int output_quality;
-extern int auto_quality;
 
 int ao_da_buffs;
 
@@ -195,7 +194,7 @@ static unsigned compute_frame_dropping(float v_pts,float drop_barrier) {
     ada_active_frame	   - abs frame num. which is being displayed
     abs_dec_ahead_locked_frame - abs frame num. which is being decoded
     */
-    max_frame_delay = max_video_time_usage+max_vout_time_usage;
+    max_frame_delay = time_usage.max_video+time_usage.max_vout;
 
     /*
 	TODO:
@@ -212,7 +211,7 @@ static unsigned compute_frame_dropping(float v_pts,float drop_barrier) {
     if(max_frame_delay*3 > drop_barrier) {
 	if(drop_barrier < (float)(xp_num_frames-2)/vo_data->fps) drop_barrier += 1/vo_data->fps;
 	else
-	if(verbose) show_warn_cant_sync(max_frame_delay);
+	if(mp_conf.verbose) show_warn_cant_sync(max_frame_delay);
     }
     if(delta > drop_barrier) rc=0;
     else if(delta < max_frame_delay*3) rc=1;
@@ -286,7 +285,7 @@ any_t* Va_dec_ahead_routine( any_t* arg )
     pinfo[_xp_id].pid = getpid(); /* Only for testing */
     dec_ahead_pth_id =
     pinfo[_xp_id].pth_id = pthread_self();
-    pinfo[_xp_id].thread_name = (xp_core.has_audio && enable_xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
+    pinfo[_xp_id].thread_name = (xp_core.has_audio && mp_conf.xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
     drop_barrier=(float)(xp_num_frames/2)*(1/vo_data->fps);
     if(av_sync_pts == -1 && !use_pts_fix2)
 	xp_is_bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
@@ -310,7 +309,7 @@ while(!xp_eof){
 #if 0
     /* prevent reent access to non-reent demuxer */
     //if(sh_video->num_frames>200)  *((char*)0x100) = 1; // Testing crash
-    if(xp_core.has_audio && enable_xp<XP_VAFull) {
+    if(xp_core.has_audio && mp_conf.xp<XP_VAFull) {
 	pinfo[_xp_id].current_module = "decode audio";
 	while(2==xp_thread_decode_audio()) ;
 	pinfo[_xp_id].current_module = "dec_ahead 2";
@@ -381,7 +380,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	our_quality = output_quality*distance/total;
 	if(drop_param) mpcv_set_quality(sh_video,0);
 	else
-	if(auto_quality) mpcv_set_quality(sh_video,our_quality>0?our_quality:0);
+	if(mp_conf.autoq) mpcv_set_quality(sh_video,our_quality>0?our_quality:0);
     }
     blit_frame=mpcv_decode(sh_video,start,in_size,drop_param,v_pts);
     if(output_quality) {
@@ -418,7 +417,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	    ,dae_curr_vplayed(),dae_curr_vdecoded());
 	if(pthread_end_of_work) goto pt_exit;
 	if(xp_core.in_lseek!=NoSeek) break;
-	if(xp_core.has_audio && enable_xp<XP_VAFull) {
+	if(xp_core.has_audio && mp_conf.xp<XP_VAFull) {
 	    pinfo[_xp_id].current_module = "decode audio";
 	    xp_thread_decode_audio();
 	    pinfo[_xp_id].current_module = "dec_ahead 5";
@@ -428,7 +427,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 /*------------------------ frame decoded. --------------------*/
 } /* while(!xp_eof)*/
 
-if(xp_core.has_audio && enable_xp<XP_VAFull) {
+if(xp_core.has_audio && mp_conf.xp<XP_VAFull) {
     while(!xp_audio_eof && !xp_core.in_lseek && !pthread_end_of_work) {
 	pinfo[_xp_id].current_module = "decode audio";
 	if(!xp_thread_decode_audio()) usleep(1);
@@ -581,10 +580,10 @@ int init_dec_ahead(sh_video_t *shv, sh_audio_t *sha)
     xp_core.video=malloc(sizeof(dec_ahead_engine_t));
     dae_init(xp_core.video,xp_num_frames);
   }
-  else {/* if (enable_xp >= XP_VAFull) enable_xp = XP_VAPlay;*/ }
+  else {/* if (mp_conf.xp >= XP_VAFull) mp_conf.xp = XP_VAPlay;*/ }
   if(sha) sh_audio = sha; /* currently is unused */
 
-  if(enable_xp>=XP_VideoAudio && sha) {
+  if(mp_conf.xp>=XP_VideoAudio && sha) {
     int asize;
     unsigned o_bps;
     unsigned min_reserv;
@@ -597,7 +596,7 @@ int init_dec_ahead(sh_video_t *shv, sh_audio_t *sha)
           min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
       init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
       xp_core.has_audio=1;
-      if( enable_xp >= XP_VAPlay )
+      if( mp_conf.xp >= XP_VAPlay )
 	  pthread_attr_init(&audio_attr);
   }
 
@@ -610,15 +609,15 @@ int run_dec_ahead( void )
   retval = pthread_attr_setdetachstate(&our_attr,PTHREAD_CREATE_DETACHED);
   if(retval)
   {
-    if(verbose) printf("running thread: attr_setdetachstate fault!!!\n");
+    if(mp_conf.verbose) printf("running thread: attr_setdetachstate fault!!!\n");
     return retval;
   }
   pthread_attr_setscope(&our_attr,PTHREAD_SCOPE_SYSTEM);
 
-  if( xp_core.has_audio && enable_xp >= XP_VAPlay ) {
+  if( xp_core.has_audio && mp_conf.xp >= XP_VAPlay ) {
       retval = pthread_attr_setdetachstate(&audio_attr,PTHREAD_CREATE_DETACHED);
       if(retval) {
-	  if(verbose) printf("running audio thread: attr_setdetachstate fault!!!\n");
+	  if(mp_conf.verbose) printf("running audio thread: attr_setdetachstate fault!!!\n");
 	  return retval;
       }
       pthread_attr_setscope(&audio_attr,PTHREAD_SCOPE_SYSTEM);
@@ -628,7 +627,7 @@ int run_dec_ahead( void )
   /* requires root privelegies */
   pthread_attr_setschedpolicy(&our_attr,SCHED_FIFO);
 #endif
-  if( (xp_core.has_audio && enable_xp >= XP_VAFull) || !xp_core.has_video )
+  if( (xp_core.has_audio && mp_conf.xp >= XP_VAFull) || !xp_core.has_video )
   {
 	retval =	pthread_create(&pthread_id,&audio_attr,a_dec_ahead_routine,NULL);
 	if( retval ) return retval;
@@ -645,7 +644,7 @@ int run_dec_ahead( void )
 int run_xp_aplayers(void)
 {
   int retval;
-  if( xp_core.has_audio && enable_xp >= XP_VAPlay )
+  if( xp_core.has_audio && mp_conf.xp >= XP_VAPlay )
   {
 	retval =	pthread_create(&pthread_id,&audio_attr,audio_play_routine,NULL);
 	if( retval ) return retval;
@@ -692,7 +691,7 @@ void dec_ahead_restart_threads(int xp_id)
        Else we'll get picture destortion on the screen */
     initial_audio_pts=HUGE;
 
-    if(enable_xp && !pthread_is_living && !a_pthread_is_living) {
+    if(mp_conf.xp && !pthread_is_living && !a_pthread_is_living) {
         xp_core.in_lseek = NoSeek; /* Threads not started, do nothing */
         return;
     }

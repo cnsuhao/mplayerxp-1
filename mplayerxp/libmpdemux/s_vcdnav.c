@@ -74,8 +74,8 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     if(param) vcd_track=atoi(param);
     priv=stream->priv=calloc(1,sizeof(vcd_priv_t));
 //    vcdinfo_init(priv->fd);
-    if(verbose>1) vcd_loglevel_default=VCD_LOG_DEBUG;
-    else if(verbose) vcd_loglevel_default=VCD_LOG_INFO;
+    if(mp_conf.verbose>1) vcd_loglevel_default=VCD_LOG_DEBUG;
+    else if(mp_conf.verbose) vcd_loglevel_default=VCD_LOG_INFO;
     open_rc=vcdinfo_open(&priv->fd,&device,DRIVER_UNKNOWN,NULL);
     if(!priv->fd)
     {

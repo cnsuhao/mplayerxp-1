@@ -55,7 +55,7 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
 	in_fmt->wFormatTag=sh_audio->format;
     }
 
-    if(verbose)
+    if(mp_conf.verbose)
     {
 	MSG_V("Output fmt:\n");
 	print_wave_header(&priv->o_wf,sizeof(WAVEFORMATEX));

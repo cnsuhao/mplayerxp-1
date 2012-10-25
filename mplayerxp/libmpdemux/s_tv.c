@@ -11,7 +11,8 @@
 				to add support for audio, and bktr *BSD support.
 */
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #ifdef USE_TV
 #include <stdlib.h>
 #include <string.h>

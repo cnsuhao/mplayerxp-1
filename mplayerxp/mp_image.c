@@ -1,4 +1,5 @@
 #include "mp_config.h"
+#include "mplayer.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -533,7 +533,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     MSG_V("SwScale params: %d x %d (-1=no scaling)\n",
     vf->priv->w,
     vf->priv->h);
-    if(!verbose) av_log_set_level(AV_LOG_FATAL); /* suppress: slices start in the middle */
+    if(!mp_conf.verbose) av_log_set_level(AV_LOG_FATAL); /* suppress: slices start in the middle */
     return 1;
 }
 
@@ -574,14 +574,14 @@ void sws_getFlagsAndFilterFromCmdLine(int *flags, SwsFilter **srcFilterParam, Sw
 		firstTime=0;
 		*flags= SWS_PRINT_INFO;
 	}
-	else if(verbose>1) *flags= SWS_PRINT_INFO;
+	else if(mp_conf.verbose>1) *flags= SWS_PRINT_INFO;
 
 	if(src_filter) sws_freeFilter(src_filter);
 
 	src_filter= sws_getDefaultFilter(
 		sws_lum_gblur, sws_chr_gblur,
 		sws_lum_sharpen, sws_chr_sharpen,
-		sws_chr_hshift, sws_chr_vshift, verbose>1);
+		sws_chr_hshift, sws_chr_vshift, mp_conf.verbose>1);
 
 	switch(sws_flags)
 	{

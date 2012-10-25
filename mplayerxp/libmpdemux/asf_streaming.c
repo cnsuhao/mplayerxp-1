@@ -408,26 +408,26 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
     return -1;
   }
 
-  if (audio_id > 0)
+  if (mp_conf.audio_id > 0)
     // a audio stream was forced
-    asf_ctrl->audio_id = audio_id;
+    asf_ctrl->audio_id = mp_conf.audio_id;
   else if (a_idx >= 0)
     asf_ctrl->audio_id = asf_ctrl->audio_streams[a_idx];
   else if (asf_ctrl->n_audio) {
     MSG_WARN( "bandwidth too small, "
             "deselected audio stream\n");
-    audio_id = -2;
+    mp_conf.audio_id = -2;
   }
 
-  if (video_id > 0)
+  if (mp_conf.video_id > 0)
     // a video stream was forced
-    asf_ctrl->video_id = video_id;
+    asf_ctrl->video_id = mp_conf.video_id;
   else if (v_idx >= 0)
     asf_ctrl->video_id = asf_ctrl->video_streams[v_idx];
   else if (asf_ctrl->n_video) {
     MSG_WARN( "bandwidth too small, "
             "deselected video stream\n");
-    video_id = -2;
+    mp_conf.video_id = -2;
   }
 
   return 1;
@@ -801,7 +801,7 @@ asf_http_streaming_start( stream_t *stream, int *demuxer_type ) {
 			}
 			http_response_append( http_hdr, buffer, i );
 		} while( !http_is_header_entire( http_hdr ) );
-		if( verbose>0 ) {
+		if( mp_conf.verbose>0 ) {
 			http_hdr->buffer[http_hdr->buffer_size]='\0';
 			MSG_DBG2("Response [%s]\n", http_hdr->buffer );
 		}

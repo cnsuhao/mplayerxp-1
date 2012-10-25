@@ -155,7 +155,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
     c->packets[cidx].filepos = c->stream->driver->tell(c->stream);
     c->stream->driver->read(c->stream,&c->packets[cidx].sp);
     MSG_DBG2("CACHE2: read_packet at %lli (wanted %u got %u type %i)",c->packets[cidx].filepos,c->sector_size,c->packets[cidx].sp.len,c->packets[cidx].sp.type);
-    if(verbose>1)
+    if(mp_conf.verbose>1)
 	if(c->packets[cidx].sp.len>8) 
 	{ 
 	    int i;
@@ -225,7 +225,7 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
     memcpy(&c->packets[i].cp_mutex,&tmpl,sizeof(tmpl));
     pmem += sector;
   }
-  if(verbose>1)
+  if(mp_conf.verbose>1)
   for(i=0;i<num;i++)
   {
     MSG_DBG2("sizeof(c)=%u c=%i c->sp.buf=%p\n",sizeof(cache_packet_t),i,c->packets[i].sp.buf);
@@ -267,15 +267,15 @@ static any_t*cache2_routine(any_t*arg)
   pinfo[xp_id].thread_name = "cache2";
   while(1)
   {
-    if(benchmark) t=GetTimer();
+    if(mp_conf.benchmark) t=GetTimer();
     cfill=c2_cache_fill(c);
-    if(benchmark)
+    if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	c2_time_usage+=tt;
-	if(tt > max_c2_time_usage) max_c2_time_usage=tt;
-	if(tt < min_c2_time_usage) min_c2_time_usage=tt;
+	time_usage.c2+=tt;
+	if(tt > time_usage.max_c2) time_usage.max_c2=tt;
+	if(tt < time_usage.min_c2) time_usage.min_c2=tt;
     }
     if(!cfill)
 	 usleep(FILL_USLEEP_TIME); // idle
@@ -310,7 +310,7 @@ int stream_enable_cache(stream_t *stream,int size,int _min,int prefill){
   retval = pthread_attr_setdetachstate(&c->cache2_attr,PTHREAD_CREATE_DETACHED);
   if(retval) 
   {
-    if(verbose) printf("running thread: attr_setdetachstate fault!!!\n");
+    if(mp_conf.verbose) printf("running thread: attr_setdetachstate fault!!!\n");
     return retval;
   }    
   pthread_attr_setscope(&c->cache2_attr,PTHREAD_SCOPE_SYSTEM);
@@ -543,7 +543,7 @@ static int __FASTCALL__ c2_stream_read(cache_vars_t* c,char* _mem,int total){
     c->read_filepos+=x;
   }
   CACHE2_PACKET_UNLOCK(cur);
-  if(verbose>2)
+  if(mp_conf.verbose>2)
   {
     int i;
     MSG_DBG2( "c2_stream_read  got %u bytes ",total);

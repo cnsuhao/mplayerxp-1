@@ -150,7 +150,7 @@ static int init_vfw_video_codec(sh_video_t *sh_video){
   if(sh_video->codec->outflags[sh_video->outfmtidx] & CODECS_FLAG_YUVHACK)
 	priv->o_bih->biCompression = 0;
 
-    if(verbose)
+    if(mp_conf.verbose)
     {
 	MSG_V("Starting decompression, format:\n");
 	print_video_header(sh_video->bih,sizeof(BITMAPINFOHEADER));

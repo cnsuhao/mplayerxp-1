@@ -123,7 +123,7 @@ static int init(sh_video_t *sh){
     Component prev=NULL;
     CodecInfo cinfo;	// for ImageCodecGetCodecInfo()
     ImageSubCodecDecompressCapabilities icap; // for ImageCodecInitialize()
-    if(stream_cache_size)
+    if(mp_conf.s_cache_size)
     {
 	MSG_FATAL("Disabling video:\nwin32 quicktime DLLs must be initialized in single-threaded mode! Try -nocache\n");
 	return 0;

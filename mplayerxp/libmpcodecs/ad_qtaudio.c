@@ -169,7 +169,7 @@ static int preinit(sh_audio_t *sh){
     unsigned long OutputBufferSize=0; //size of the output buffer
     unsigned long WantedBufferSize=0; //the size you want your buffers to be
 
-    if(stream_cache_size)
+    if(mp_conf.s_cache_size)
     {
 	MSG_FATAL("Disabling sound:\nwin32 quicktime DLLs must be initialized in single-threaded mode! Try -nocache\n");
 	return 0;
@@ -239,17 +239,6 @@ static int preinit(sh_audio_t *sh){
 //InputBufferSize*WantedBufferSize/OutputBufferSize;
 
 #endif
-
-   if(sh->format==0x3343414D){
-       // MACE 3:1
-       sh->ds->ss_div = 2*3; // 1 samples/packet
-       sh->ds->ss_mul = sh->channels*2*1; // 1 bytes/packet
-   } else
-   if(sh->format==0x3643414D){
-       // MACE 6:1
-       sh->ds->ss_div = 2*6; // 1 samples/packet
-       sh->ds->ss_mul = sh->channels*2*1; // 1 bytes/packet
-   }
 
   return 1; // return values: 1=OK 0=ERROR
 }

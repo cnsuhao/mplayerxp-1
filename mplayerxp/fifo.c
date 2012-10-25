@@ -1,3 +1,4 @@
+#include "mplayer.h"
 #include "fifo.h"
 
 #ifndef min

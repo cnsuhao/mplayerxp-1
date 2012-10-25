@@ -219,7 +219,7 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		sh->bih=malloc(fsize<sizeof(BITMAPINFOHEADER)?sizeof(BITMAPINFOHEADER):fsize);
 		stream_read(s,(char *)sh->bih,fsize);
 		le2me_BITMAPINFOHEADER(sh->bih);
-		if(verbose>=1) print_video_header(sh->bih,fsize);
+		if(mp_conf.verbose>=1) print_video_header(sh->bih,fsize);
 		have_bih=1;
 		if(demuxer->video->id==-1) demuxer->video->id=id; /* TODO: select best */
 		demuxer->video->sh=sh;
@@ -245,7 +245,7 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		    le2me_VideoPropHeader(&vprp);
 		    le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[0]);
 		    le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[1]);
-		    if(verbose) print_vprp(&vprp);
+		    if(mp_conf.verbose) print_vprp(&vprp);
 		    if(fsize>sizeof(VideoPropHeader)) stream_skip(s,fsize-sizeof(VideoPropHeader));
 		    sh->aspect=GET_AVI_ASPECT(vprp.dwFrameAspectRatio);
 		}
@@ -295,7 +295,7 @@ static int mpxpav64_read_st64a(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		sh->wf=malloc(fsize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):fsize);
 		stream_read(s,(char *)sh->wf,fsize);
 		le2me_WAVEFORMATEX(sh->wf);
-		if(verbose>=1) print_wave_header(sh->wf,fsize);
+		if(mp_conf.verbose>=1) print_wave_header(sh->wf,fsize);
 		have_wf=1;
 		if(demuxer->audio->id==-1) demuxer->audio->id=id; /* TODO: select best */
 		demuxer->audio->sh=sh;
@@ -338,7 +338,7 @@ static int mpxpav64_read_st64(demuxer_t *demuxer,unsigned hsize,unsigned id){
     /* Read stream properties */
     stream_read(s,(char *)&priv->sprop[id],sizeof(mpxpav64StreamProperties_t));
     le2me_mpxpav64StreamProperties(&priv->sprop[id]);
-    if(verbose)
+    if(mp_conf.verbose)
     {
 	char mime[priv->sprop[id].mimetype_len+1];
 	stream_read(s,mime,priv->sprop[id].mimetype_len);
@@ -498,7 +498,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
 		    MSG_ERR("Too many (%i) streams. Max available=%i\n",priv->nstreams,MAX_AV_STREAMS);
 		    goto open_failed;
 		}
-		if(verbose) print_FileProp(&priv->fprop);
+		if(mp_conf.verbose) print_FileProp(&priv->fprop);
 		stream_skip(s,fsize-sizeof(mpxpav64FileProperties_t));
 		if((priv->fprop.flags&(~MPXPAV64_FP_FCNT_UTF32))!=0ULL)
 		{
@@ -578,7 +578,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 	off_t pos=0LL;
 	demux_packet_t* dp;
 	dp=new_demux_packet(len);
-	if(verbose>1) pos=stream_tell(s);
+	if(mp_conf.verbose>1) pos=stream_tell(s);
 	len=stream_read(s,dp->buffer,len);
 	resize_demux_packet(dp,len);
 	dp->pts=pts;
@@ -848,7 +848,7 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     {
 	if(mpxpav64_sync(demuxer))
 	{
-		if(verbose) MSG_V("MPXPAV64_SEEK: newpos after sync %016llX\n",stream_tell(demuxer->stream));
+		if(mp_conf.verbose) MSG_V("MPXPAV64_SEEK: newpos after sync %016llX\n",stream_tell(demuxer->stream));
 		mpxpav64_reset_prevs(demuxer);
 		mpca_resync_stream(demuxer->audio->sh);
 	}
