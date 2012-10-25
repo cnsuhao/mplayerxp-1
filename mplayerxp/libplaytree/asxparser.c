@@ -1,4 +1,4 @@
-
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -154,9 +154,6 @@ void __FASTCALL__ asx_parser_free(ASX_Parser_t* parser) {
 
 }
 
-#define LETTER "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define SPACE " \n\t\r"
-
 int __FASTCALL__ asx_parse_attribs(ASX_Parser_t* parser,char* buffer,char*** _attribs) {
   char *ptr1, *ptr2, *ptr3;
   int n_attrib = 0;
@@ -165,13 +162,13 @@ int __FASTCALL__ asx_parse_attribs(ASX_Parser_t* parser,char* buffer,char*** _at
 
   ptr1 = buffer;
   while(1) {
-    for( ; strchr(SPACE,*ptr1) != NULL; ptr1++) { // Skip space
+    for( ; isspace(*ptr1); ptr1++) { // Skip space
       if(*ptr1 == '\0') break;
     }
     ptr3 = strchr(ptr1,'=');
     if(ptr3 == NULL) break;
-    for(ptr2 = ptr3-1; strchr(SPACE,*ptr2) != NULL; ptr2--) {
-      if (ptr2 == ptr1) {
+    for(ptr2 = ptr3-1; isspace(*ptr2); ptr2--) {
+      if (ptr2 <= ptr1) {
 	MSG_ERR("At line %d : this should never append, back to attribute begin while skipping end space",parser->line);
 	break;
       }
@@ -290,7 +287,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
   }
   
   // Is this space skip very useful ??
-  for(ptr1++; strchr(SPACE,ptr1[0]) != NULL; ptr1++) { // Skip space
+  for(ptr1++; isspace(ptr1[0]); ptr1++) { // Skip space
     if(ptr1[0] == '\0') {
       MSG_ERR("At line %d : EOB reached while parsing element start",parser->line);
       return -1;
@@ -298,7 +295,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
     if(ptr1[0] == '\n') parser->line++;
   } 
 
-  for(ptr2 = ptr1; strchr(LETTER,*ptr2) != NULL;ptr2++) { // Go to end of name
+  for(ptr2 = ptr1; isalpha(*ptr2); ptr2++) { // Go to end of name
     if(*ptr2 == '\0'){
       MSG_ERR("At line %d : EOB reached while parsing element start",parser->line);
       return -1;
@@ -310,7 +307,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
   strncpy(element,ptr1,ptr2-ptr1);
   element[ptr2-ptr1] = '\0';
 
-  for( ; strchr(SPACE,*ptr2) != NULL; ptr2++) { // Skip space
+  for( ; isspace(*ptr2); ptr2++) { // Skip space
     if(ptr2[0] == '\0') {
       MSG_ERR("At line %d : EOB reached while parsing element start",parser->line);
       free(element);
@@ -342,7 +339,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
   //bs_line = parser->line;
   if(ptr3[0] != '/') { // Not Self closed element
     ptr3++;
-    for( ; strchr(SPACE,*ptr3) != NULL; ptr3++) { // Skip space on body begin
+    for( ; isspace(*ptr3); ptr3++) { // Skip space on body begin
       if(*ptr3 == '\0') {
 	MSG_ERR("At line %d : EOB reached while parsing %s element body",parser->line,element);
 	free(element);
@@ -390,7 +387,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
 	ret = ptr4+strlen(element)+3;
 	if(ptr4 != ptr3) {
 	  ptr4--;
-	  for( ; ptr4 != ptr3 && strchr(SPACE,*ptr4) != NULL; ptr4--) ;// Skip space on body end
+	  for( ; ptr4 != ptr3 && isspace(*ptr4); ptr4--) ;// Skip space on body end
 	  //	    if(ptr4[0] == '\0') parser->line--;
 	  //}
 	  ptr4++;
@@ -407,7 +404,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
     ret = ptr3 + 2; // 2 is for />
   }
 
-  for( ; ret[0] != '\0' && strchr(SPACE,ret[0]) != NULL; ret++) { // Skip space
+  for( ; ret[0] != '\0' && isspace(ret[0]); ret++) { // Skip space
     if(ret[0] == '\n') parser->line++;
   }
 
