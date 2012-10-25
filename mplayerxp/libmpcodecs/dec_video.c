@@ -335,10 +335,10 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 	spudec_heartbeat(vo_data->spudec,90000*v_pts);
 	if (vo_data->vobsub) {
 	    if (v_pts >= 0) {
-	    while((len=vobsub_get_packet(vo_data->vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
-		timestamp -= (v_pts - sh_video->timer)*90000;
-		MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
-		spudec_assemble(vo_data->spudec,packet,len,90000*d_dvdsub->pts);
+		while((len=vobsub_get_packet(vo_data->vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
+		    timestamp -= (v_pts - sh_video->timer)*90000;
+		    MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
+		    spudec_assemble(vo_data->spudec,packet,len,90000*d_dvdsub->pts);
 		}
 	    }
 	} else {

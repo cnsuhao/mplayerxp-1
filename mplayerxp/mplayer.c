@@ -1095,13 +1095,6 @@ while(sh_audio){
  return eof;
 }
 
-typedef struct
-{
-    int drop_frame_cnt;
-    int too_slow_frame_cnt;
-    int too_fast_frame_cnt;
-}video_stat_t;
-
 #ifdef USE_OSD
 
 void update_osd( float v_pts )
@@ -1144,21 +1137,20 @@ static int osd_last_pts=-303;
 #endif
 
 //================= Update OSD ====================
-static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay,video_stat_t *vstat) {
-    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i]]\n",
+static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay) {
+    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d [frms: [%i]]\n",
 		a_pts-delay,video_pts,AV_delay,c_total
 		,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
 		,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
 		,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
 		,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
-		,vstat->drop_frame_cnt
 		,output_quality
 		,dae_curr_vplayed()
 		);
     fflush(stdout);
 }
 
-static void show_status_line(float v_pts,float AV_delay,video_stat_t *vstat) {
+static void show_status_line(float v_pts,float AV_delay) {
     float a_pts=0;
     float delay=ao_get_delay(ao_data);
     float video_pts = v_pts;
@@ -1177,13 +1169,13 @@ static void show_status_line(float v_pts,float AV_delay,video_stat_t *vstat) {
     }
     if( !av_sync_pts && mp_conf.xp>=XP_VideoAudio ) delay += get_delay_audio_buffer();
     AV_delay = a_pts-delay-video_pts;
-    __show_status_line(a_pts,video_pts,delay,AV_delay,vstat);
+    __show_status_line(a_pts,video_pts,delay,AV_delay);
 }
 
-static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
+static void show_status_line_no_apts(float v_pts) {
     if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay(ao_data))) {
 	float a_pts = sh_audio->timer-ao_get_delay(ao_data);
-	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d\r"
+	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d\r"
 	,a_pts
 	,sh_video->timer
 	,a_pts-sh_video->timer,0.0
@@ -1191,17 +1183,15 @@ static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
 	,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
-	,vstat->drop_frame_cnt
 	,output_quality
 	);
     } else
-	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d %d\r"
+	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d\r"
 	,v_pts
 	,xp_core.video->num_played_frames
 	,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
-	,vstat->drop_frame_cnt
 	,output_quality
 	);
     fflush(stdout);
@@ -1212,7 +1202,7 @@ typedef struct osd_args_s {
     int		info_factor;
 }osd_args_t;
 
-int mpxp_play_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, float *v_pts )
+int mpxp_play_video( int rtc_fd, float *v_pts )
 {
     float time_frame=0;
     float AV_delay=0; /* average of A-V timestamp differences */
@@ -1294,7 +1284,6 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	nosound_model:
 	time_frame=shva_prev.duration;
     }
-    (*aq_sleep_time)=0; /* we have other way to control that */
     if(mp_conf.benchmark && time_frame < 0 && time_frame < max_av_resync) max_av_resync=time_frame;
     if(!(vo_data->flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
@@ -1303,7 +1292,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 
 	if(sh_audio && (!audio_eof || ao_get_delay(ao_data)) && time_frame>XP_MAX_TIMESLICE) {
 	    float t;
-	    if(mp_conf.benchmark) show_status_line(*v_pts,AV_delay,vstat);
+	    if(mp_conf.benchmark) show_status_line(*v_pts,AV_delay);
 
 	    if( mp_conf.xp < XP_VAPlay ) {
 		t=ao_get_delay(ao_data)-XP_MIN_AUDIOBUFF;
@@ -1406,16 +1395,16 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	if(mp_conf.xp>=XP_VAPlay)
 	    pthread_mutex_unlock(&audio_timer_mutex);
 	c_total+=x;
-	if(mp_conf.benchmark && mp_conf.verbose) __show_status_line(a_pts,*v_pts,delay,AV_delay,vstat);
+	if(mp_conf.benchmark && mp_conf.verbose) __show_status_line(a_pts,*v_pts,delay,AV_delay);
     }
   } else {
     // No audio or pts:
-    if(mp_conf.benchmark && mp_conf.verbose) show_status_line_no_apts(*v_pts,vstat);
+    if(mp_conf.benchmark && mp_conf.verbose) show_status_line_no_apts(*v_pts);
   }
   return 0;
 }
 
-void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,const seek_args_t* seek)
+void mpxp_seek( int _xp_id, osd_args_t *osd,float v_pts,const seek_args_t* seek)
 {
     int seek_rval=1;
     xp_core.in_lseek=Seek;
@@ -1481,11 +1470,6 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
 	    max_pts_correction=0.1;
 	    if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25; // to rewert to PLAY pointer after 1 sec
 	    time_usage.audio=0; time_usage.audio_decode=0; time_usage.video=0; time_usage.vout=0;
-	    if(vstat) {
-		vstat->drop_frame_cnt=0;
-		vstat->too_slow_frame_cnt=0;
-		vstat->too_fast_frame_cnt=0;
-	    }
 	    if(vo_data->spudec) {
 		unsigned char* packet=NULL;
 		while(ds_get_packet_sub_r(d_dvdsub,&packet)>0) ; // Empty stream
@@ -1500,7 +1484,7 @@ void mpxp_reset_vcache(void)
     unsigned i;
     seek_args_t seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
     for(i=0;i<xp_threads;i++) if(strcmp(pinfo[i].thread_name,"main")==0) break;
-    if(sh_video) mpxp_seek(i,NULL,NULL,dae_played_fra(xp_core.video).v_pts,&seek);
+    if(sh_video) mpxp_seek(i,NULL,dae_played_fra(xp_core.video).v_pts,&seek);
     return;
 }
 
@@ -2368,7 +2352,6 @@ int main(int argc,char* argv[], char *envp[]){
 // movie info:
     int eof=0;
     osd_args_t osd = { 100, 9 };
-    video_stat_t vstat;
     int rtc_fd=-1;
     int i;
     int forced_subs_only=0;
@@ -2383,7 +2366,6 @@ int main(int argc,char* argv[], char *envp[]){
     mplayer_pth_id=
     pinfo[xp_id].pth_id=pthread_self();
     pinfo[xp_id].thread_name = "main";
-    memset(&vstat,0,sizeof(video_stat_t));
 
     mp_msg_init(MSGL_STATUS);
     MSG_INFO("%s",banner_text);
@@ -2714,8 +2696,6 @@ main:
     while(!eof){
 	int in_pause=0;
 	float v_pts=0;
-//    unsigned int aq_total_time=GetTimer();
-	float aq_sleep_time=0;
 
 	if(play_n_frames>=0){
 	    --play_n_frames;
@@ -2747,19 +2727,9 @@ main:
 		if(vo_check_events(vo_data)) goto repaint;
 	    } else {
 repaint:
-		l_eof = mpxp_play_video(rtc_fd,&vstat,&aq_sleep_time,&v_pts);
+		l_eof = mpxp_play_video(rtc_fd,&v_pts);
 		eof |= l_eof;
 		if(eof) goto do_loop;
-	    }
-/*Output quality adjustments:*/
-	    if(mp_conf.autoq>0) {
-		if(output_quality<mp_conf.autoq && aq_sleep_time>0)
-		    ++output_quality;
-		else if(output_quality>1 && aq_sleep_time<0)
-		    --output_quality;
-		else if(output_quality>0 && aq_sleep_time<-0.050f) // 50ms
-		    output_quality=0;
-		mpcv_set_quality(sh_video,output_quality);
 	    }
 read_input:
 #ifdef USE_OSD
@@ -2810,7 +2780,7 @@ do_loop:
 		seek_args.secs -= (xp_is_bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
 	    }
 
-	    mpxp_seek(xp_id,&vstat,&osd,v_pts,&seek_args);
+	    mpxp_seek(xp_id,&osd,v_pts,&seek_args);
 
 	    audio_eof=0;
 	    seek_args.secs=0;

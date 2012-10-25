@@ -80,7 +80,7 @@ int init_signal_handling( void (*callback)( void ),void (*_unlink)(int))
   pinfo[xp_threads].current_module = NULL;
   pinfo[xp_threads].unlink = _unlink;
   xp_threads++;
-#if 1
+#ifndef MP_DEBUG
   /*========= Catch terminate signals: ================*/
   /* terminate requests:*/
   signal(SIGTERM,my_callback); /* kill*/
