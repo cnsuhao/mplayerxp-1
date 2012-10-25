@@ -16,23 +16,23 @@
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
 
-#include "stream.h"
-#include "demuxer.h"
-#include "parse_es.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/parse_es.h"
+#include "libmpdemux/stheader.h"
 #include "sig_hand.h"
 
-#include "codec-cfg.h"
+#include "libmpconf/codec-cfg.h"
 
 #include "libvo/video_out.h"
 #include "postproc/vf.h"
 
-#include "stheader.h"
 #include "vd.h"
 
 #include "dec_ahead.h"
 #include "dec_video.h"
-#include "spudec.h"
-#include "vobsub.h"
+#include "libmpsub/spudec.h"
+#include "libmpsub/vobsub.h"
 
 // ===================================================================
 vf_cfg_t vf_cfg; // Configuration for audio filters

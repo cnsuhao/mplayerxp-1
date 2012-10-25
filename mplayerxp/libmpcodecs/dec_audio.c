@@ -7,20 +7,19 @@
 
 #include "../mplayer.h"
 
-#include "stream.h"
-#include "demuxer.h"
-
-#include "codec-cfg.h"
-#include "stheader.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/stheader.h"
+#include "libmpconf/codec-cfg.h"
 
 #include "dec_audio.h"
 #include "ad.h"
-#include "../libao2/afmt.h"
-#include "../libao2/audio_out.h"
+#include "libao2/afmt.h"
+#include "libao2/audio_out.h"
 #include "../mplayer.h"
-#include "../libmpdemux/demuxer_r.h"
-#include "../postproc/af.h"
-#include "../libvo/fastmemcpy.h"
+#include "libmpdemux/demuxer_r.h"
+#include "postproc/af.h"
+#include "libvo/fastmemcpy.h"
 #include "ad_msg.h"
 
 #ifdef USE_FAKE_MONO

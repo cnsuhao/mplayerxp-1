@@ -7,8 +7,8 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "../cfgparser.h"
-#include "../libmpcodecs/dec_audio.h"
+#include "libmpconf/cfgparser.h"
+#include "libmpcodecs/dec_audio.h"
 
 static unsigned long cvt_extended(const char * buf)
 {

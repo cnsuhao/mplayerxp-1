@@ -4,6 +4,8 @@
 #ifndef AD_H_INCLUDED
 #define AD_H_INCLUDED 1
 
+#include "libmpconf/cfgparser.h"
+
 typedef struct ad_info_s
 {
         /* driver description ("Autodesk FLI/FLC Animation decoder" */

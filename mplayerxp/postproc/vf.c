@@ -16,7 +16,7 @@
 #include "vf.h"
 
 #include "../libvo/fastmemcpy.h"
-#include "codec-cfg.h"
+#include "libmpconf/codec-cfg.h"
 #include "pp_msg.h"
 
 extern vo_data_t* vo_data;

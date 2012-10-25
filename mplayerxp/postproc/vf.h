@@ -1,9 +1,9 @@
 #ifndef __VF_H
 #define __VF_H 1
 
-#include "../libmpdemux/stream.h"
-#include "../libmpdemux/demuxer.h"
-#include "../libmpdemux/stheader.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/stheader.h"
 
 struct vf_instance_s;
 struct vf_priv_s;

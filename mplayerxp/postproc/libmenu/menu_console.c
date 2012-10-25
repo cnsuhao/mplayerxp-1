@@ -18,9 +18,9 @@
 #include "mp_image.h"
 
 #include "libmpdemux/stream.h"
-#include "cfgparser.h"
-#include "m_struct.h"
-#include "m_option.h"
+#include "libmpconf/cfgparser.h"
+#include "libmpconf/m_struct.h"
+#include "libmpconf/m_option.h"
 #include "menu.h"
 
 #include "libvo/font_load.h"

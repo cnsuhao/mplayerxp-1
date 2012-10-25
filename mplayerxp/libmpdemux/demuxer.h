@@ -148,7 +148,7 @@ typedef struct demuxer_driver_s
 {
     const char *	name;	/**< Name of driver ("Matroska MKV parser") */
     const char *	defext; /**< Default file extension for this movie type */
-    const config_t*	options;/**< Optional: MPlayerXP's option related */
+    const any_t*	options;/**< Optional: MPlayerXP's option related */
 			/** Probing stream.
 			  * @param d	_this demuxer
 			  * @return	0 - fail; 1 if driver may handle this stream

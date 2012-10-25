@@ -26,7 +26,8 @@
 #include "help_mp.h"
 
 #include "libavformat/avformat.h"
-#include "../libmpcodecs/codecs_ld.h"
+#include "libmpcodecs/codecs_ld.h"
+#include "libmpconf/cfgparser.h"
 #include "demux_msg.h"
 
 #define PROBE_BUF_SIZE 2048

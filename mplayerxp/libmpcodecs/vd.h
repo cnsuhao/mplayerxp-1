@@ -1,6 +1,8 @@
 #ifndef VD_H_INCLUDED
 #define VD_H_INCLUDED 1
 
+#include "libmpconf/cfgparser.h"
+
 typedef struct vd_info_s
 {
         /* driver description ("Autodesk FLI/FLC Animation decoder" */

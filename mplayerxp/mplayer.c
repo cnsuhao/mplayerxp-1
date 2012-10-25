@@ -32,20 +32,21 @@
 #include "help_mp.h"
 
 #include "libmpdemux/stream.h"
-#include "cfgparser.h"
+#include "libmpconf/cfgparser.h"
+#include "libmpconf/codec-cfg.h"
+#include "libmpconf/m_struct.h"
 #include "cfg-mplayer-def.h"
 
 #ifdef USE_SUB
-#include "subreader.h"
+#include "libmpsub/subreader.h"
 #endif
+#include "libmpsub/spudec.h"
+#include "libmpsub/vobsub.h"
 
 #include "libvo/video_out.h"
 
 #include "libvo/sub.h"
 #include "libao2/audio_out.h"
-#include "codec-cfg.h"
-#include "spudec.h"
-#include "vobsub.h"
 
 #include "osdep/getch2.h"
 #include "osdep/keycodes.h"
@@ -58,7 +59,6 @@
 #include "input/input.h"
 #include "dump.h"
 #include "nls/nls.h"
-#include "m_struct.h"
 #include "postproc/libmenu/menu.h"
 
 int slave_mode=0;
@@ -154,10 +154,10 @@ static int cfg_include(struct config *conf, char *filename){
 
 static int max_framesize=0;
 
-#include "stream.h"
-#include "demuxer.h"
-#include "stheader.h"
-#include "parse_es.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/stheader.h"
+#include "libmpdemux/parse_es.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"

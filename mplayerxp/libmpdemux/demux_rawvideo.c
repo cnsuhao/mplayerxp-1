@@ -9,9 +9,9 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "../cfgparser.h"
+#include "libmpconf/cfgparser.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "demux_msg.h"
 
 int use_rawvideo = 0;

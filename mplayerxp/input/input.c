@@ -17,12 +17,12 @@
 #ifdef MP_DEBUG
 #include <assert.h>
 #endif
-#include "../libmpdemux/stream.h"
-#include "../osdep/getch2.h"
-#include "../osdep/keycodes.h"
-#include "../osdep/get_path.h"
-#include "../osdep/timer.h"
-#include "../cfgparser.h"
+#include "libmpdemux/stream.h"
+#include "osdep/getch2.h"
+#include "osdep/keycodes.h"
+#include "osdep/get_path.h"
+#include "osdep/timer.h"
+#include "libmpconf/cfgparser.h"
 
 #include "joystick.h"
 

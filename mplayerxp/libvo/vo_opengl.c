@@ -31,8 +31,8 @@
 #include "video_out_internal.h"
 #include "font_load.h"
 #include "sub.h"
-#include "subopt-helper.h"
-#include "../postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
+#include "libmpconf/subopt-helper.h"
+#include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
 
 #ifdef GL_WIN32
 #include <windows.h>
@@ -51,7 +51,7 @@
 #include "gui/interface.h"
 #endif
 #include "fastmemcpy.h"
-#include "../postproc/vfcap.h"
+#include "postproc/vfcap.h"
 #include "vo_msg.h"
 
 static const vo_info_t vo_info =

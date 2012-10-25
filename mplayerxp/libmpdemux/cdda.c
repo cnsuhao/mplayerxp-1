@@ -3,7 +3,7 @@
 #ifdef HAVE_LIBCDIO
 
 #include "stream.h"
-#include "../cfgparser.h"
+#include "libmpconf/cfgparser.h"
 
 #include <stdio.h>
 #include <stdlib.h>

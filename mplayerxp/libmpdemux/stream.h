@@ -101,8 +101,6 @@ extern uint64_t     __FASTCALL__ stream_read_qword(stream_t *s);
 extern uint64_t     __FASTCALL__ stream_read_qword_le(stream_t *s);
 extern unsigned int __FASTCALL__ stream_read_int24(stream_t *s);
 
-#include "../cfgparser.h"
-
 /*
     Stream control definitions
 */

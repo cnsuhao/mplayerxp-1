@@ -10,15 +10,15 @@
 #endif
 
 #include "dec_ahead.h"
-#include "codec-cfg.h"
+#include "libmpconf/codec-cfg.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 
-#include "stream.h"
-#include "demuxer.h"
-#include "stheader.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/stheader.h"
 #include "vd.h"
-#include "../postproc/vf.h"
+#include "postproc/vf.h"
 #include "vd_msg.h"
 
 extern const vd_functions_t mpcodecs_vd_null;

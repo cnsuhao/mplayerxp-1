@@ -10,7 +10,7 @@
 #include "libvo/sub.h"
 #include "mp_image.h"
 
-#include "m_struct.h"
+#include "libmpconf/m_struct.h"
 #include "menu.h"
 
 #include "libvo/video_out.h"

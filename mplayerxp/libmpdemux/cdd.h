@@ -2,6 +2,7 @@
 #define __CDD_H__
 
 #include <cdio/cdda.h>
+#include "libmpconf/cfgparser.h"
 
 typedef struct {
 	char cddb_hello[1024];

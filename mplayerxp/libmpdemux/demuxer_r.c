@@ -7,8 +7,8 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "demuxer_r.h"
-#include "vobsub.h"
-#include "../osdep/timer.h"
+#include "libmpsub/vobsub.h"
+#include "osdep/timer.h"
 #include "../mplayer.h"
 #include "../dec_ahead.h"
 

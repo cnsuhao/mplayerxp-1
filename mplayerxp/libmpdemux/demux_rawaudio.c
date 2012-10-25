@@ -6,8 +6,8 @@
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "../cfgparser.h"
-#include "../libmpcodecs/dec_audio.h"
+#include "libmpconf/cfgparser.h"
+#include "libmpcodecs/dec_audio.h"
 #include "aviprint.h"
 
 int use_rawaudio = 0;

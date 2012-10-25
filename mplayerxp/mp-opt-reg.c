@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "libmpdemux/stream.h"
-#include "cfgparser.h"
+#include "libmpconf/cfgparser.h"
 
 extern void mp_input_register_options(m_config_t* cfg);
 extern void libmpdemux_register_options(m_config_t* cfg);

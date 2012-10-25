@@ -10,7 +10,7 @@ SRCS = menu.c \
        menu_param.c 
 OBJS=$(SRCS:.c=.o)
 
-CFLAGS  = $(OPTFLAGS) -I. -I../.. -I../../libplaytree $(EXTRA_INC) -Wall
+CFLAGS  = $(OPTFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
 
 .SUFFIXES: .c .o
 

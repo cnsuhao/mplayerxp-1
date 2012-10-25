@@ -8,7 +8,7 @@
 #include "libmpdemux/stream.h"
 #include "playtreeparser.h"
 #include "asxparser.h"
-#include "cfgparser.h"
+#include "libmpconf/cfgparser.h"
 #include "../mplayer.h"
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "__mp_msg.h"

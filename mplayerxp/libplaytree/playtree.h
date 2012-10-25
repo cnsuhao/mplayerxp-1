@@ -36,7 +36,7 @@ typedef struct play_tree play_tree_t;
 typedef struct play_tree_iter play_tree_iter_t;
 typedef struct play_tree_param play_tree_param_t;
 
-#include "cfgparser.h"
+#include "libmpconf/cfgparser.h"
 
 #if 0
 typedef struct play_tree_info play_tree_info_t;

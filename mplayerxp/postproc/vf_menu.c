@@ -20,7 +20,7 @@
 #include "libvo/video_out.h"
 #include "libvo/font_load.h"
 #include "input/input.h"
-#include "m_struct.h"
+#include "libmpconf/m_struct.h"
 #include "libmenu/menu.h"
 //#include "access_mpcontext.h"
 #include "pp_msg.h"

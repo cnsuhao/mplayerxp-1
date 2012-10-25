@@ -1,11 +1,11 @@
 
-#include "codec-cfg.h"
-#include "../libvo/img_format.h"
+#include "libmpconf/codec-cfg.h"
+#include "libvo/img_format.h"
 
-#include "stream.h"
-#include "demuxer.h"
-#include "demuxer_r.h"
-#include "stheader.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/demuxer_r.h"
+#include "libmpdemux/stheader.h"
 
 #include "vd.h"
 #include "vd_msg.h"

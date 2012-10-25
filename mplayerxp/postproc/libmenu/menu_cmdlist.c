@@ -10,8 +10,8 @@
 #include "libvo/img_format.h"
 #include "mp_image.h"
 
-#include "m_option.h"
-#include "m_struct.h"
+#include "libmpconf/m_option.h"
+#include "libmpconf/m_struct.h"
 #include "libmpdemux/stream.h"
 #include "libplaytree/asxparser.h"
 #include "menu.h"

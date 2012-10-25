@@ -13,7 +13,8 @@
 
 #include "bswap.h"
 #include "aviheader.h"
-#include "../libmpcodecs/dec_audio.h"
+#include "libmpcodecs/dec_audio.h"
+#include "libmpconf/cfgparser.h"
 #include "aviprint.h"
 #include "demux_msg.h"
 

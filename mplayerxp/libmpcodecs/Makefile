@@ -55,7 +55,7 @@ endif
 
 OBJS=$(SRCS:.c=.o)
 
-CFLAGS = $(OPTFLAGS) -I. -I.. -I../libmpdemux -I../libmpsub -I../loader -Wall
+CFLAGS = $(OPTFLAGS) -I. -I.. -Wall
 
 .SUFFIXES: .c .o
 

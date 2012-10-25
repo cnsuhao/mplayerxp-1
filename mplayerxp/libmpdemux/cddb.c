@@ -39,7 +39,7 @@
 #endif
 
 #include "stream.h"
-#include "../cfgparser.h"
+#include "libmpconf/cfgparser.h"
 
 
 #include "cdd.h"

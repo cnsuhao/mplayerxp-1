@@ -18,6 +18,7 @@
 #include "stheader.h"
 #include "bswap.h"
 #include "demux_msg.h"
+#include "libmpconf/cfgparser.h"
 
 /* parameters ! */
 static int vivo_param_version = -1;

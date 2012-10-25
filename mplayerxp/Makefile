@@ -13,7 +13,7 @@ PRG = $(PROGNAME)
 PRG_FIBMAP = fibmap_mplayerxp
 PRG_CFG = codec-cfg-xp
 # these subdirectories required installation due binaries within them
-SUBDIRS = libmpdemux libmpsub libplaytree libmpcodecs libao2 osdep postproc input nls libvo
+SUBDIRS = libmpdemux libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input nls libvo
 ifeq ($(TARGET_ARCH_X86),yes)
 SUBDIRS+=loader
 endif
@@ -23,8 +23,8 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
-SRCS_COMMON = cpudetect.c mp_msg.c codec-cfg.c cfgparser.c my_profile.c my_malloc.c mp_image.c subopt-helper.c
-SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c sig_hand.c dump.c dec_ahead.c m_option.c m_property.c m_struct.c
+SRCS_COMMON = cpudetect.c mp_msg.c my_profile.c my_malloc.c mp_image.c
+SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c sig_hand.c dump.c dec_ahead.c
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 
@@ -43,13 +43,14 @@ MP_LIBS = libmpdemux/libmpdemux.a \
 	  input/libinput.a \
 	  libvo/libvo.a \
 	  osdep/libosdep.a \
-	  nls/libnls.a
+	  nls/libnls.a \
+	  libmpconf/libmpconf.a
 ifeq ($(TARGET_ARCH_X86),yes)
 	  MP_LIBS += loader/libloader.a
 endif
 
 COMMON_LIBS = $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
-CFLAGS = $(OPTFLAGS) -Ilibmpsub -Ilibmpdemux -Ilibvo $(EXTRA_INC)
+CFLAGS = $(OPTFLAGS) $(EXTRA_INC)
 
 ALL_PRG = $(PRG)
 ifeq ($(HAVE_CSS),yes)

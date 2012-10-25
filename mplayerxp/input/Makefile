@@ -3,7 +3,7 @@ include ../mp_config.mak
 
 LIBNAME = libinput.a
 
-SRCS=input.c joystick.c lirc.c 
+SRCS=input.c joystick.c lirc.c
 OBJS=$(SRCS:.c=.o)
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall

@@ -26,7 +26,7 @@
 
 #include "stream.h"
 #include "demuxer.h"
-#include "../cfgparser.h"
+#include "libmpconf/cfgparser.h"
 #include "mpdemux.h"
 #include "../help_mp.h"
 

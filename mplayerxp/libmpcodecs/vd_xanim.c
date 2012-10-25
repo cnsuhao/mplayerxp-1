@@ -16,10 +16,7 @@
 
 #include "bswap.h"
 
-#include "stream.h"
-#include "demuxer.h"
-#include "codec-cfg.h"
-#include "stheader.h"
+#include "libmpconf/codec-cfg.h"
 
 #include "libvo/img_format.h"
 #include "osdep/timer.h"

@@ -18,8 +18,8 @@
 #include "libvo/img_format.h"
 #include "libvo/video_out.h"
 #include "mp_image.h"
-#include "m_option.h"
-#include "m_struct.h"
+#include "libmpconf/m_option.h"
+#include "libmpconf/m_struct.h"
 #include "menu.h"
 #include "../pp_msg.h"
 

@@ -1774,7 +1774,7 @@ static int audio_control(demuxer_t *demuxer,int cmd,any_t*args)
 
 /****************** Options stuff ******************/
 
-#include "../cfgparser.h"
+#include "libmpconf/cfgparser.h"
 
 static const config_t mp3_opts[] = {
   { "hr-seek", &hr_mp3_seek, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables hight-resolution mp3 seeking" },
