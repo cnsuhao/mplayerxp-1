@@ -22,8 +22,8 @@
 
 #include <dlfcn.h>
 #include "../bswap.h"
-#include "../vobsub.h"
-#include "../subreader.h"
+#include "vobsub.h"
+#include "subreader.h"
 #include "../libvo/sub.h"
 #include "../libmpcodecs/codecs_ld.h"
 #include "../libmpcodecs/libnuppelvideo/minilzo.h"

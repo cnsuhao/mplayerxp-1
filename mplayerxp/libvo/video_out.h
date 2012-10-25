@@ -18,7 +18,7 @@
 
 #include "font_load.h"
 #include "sub.h"
-#include "../subreader.h"
+#include "libmpsub/subreader.h"
 #include "img_format.h"
 #include "vo_msg.h"
 #include "../mp_image.h"

@@ -9,7 +9,7 @@
 #include "stream.h"
 #include "help_mp.h"
 #include "demuxer.h"
-#include "../spudec.h"
+#include "spudec.h"
 #include "../libvo/sub.h"
 #include "../input/input.h"
 #include "../mplayer.h"

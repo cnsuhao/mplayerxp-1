@@ -54,7 +54,7 @@ SUBDIRS =
 endif
 
 OBJS	= $(SRCS:.c=.o)
-INCLUDE = -I../loader
+INCLUDE = -I../libmpsub -I../loader
 CFLAGS  = $(OPTFLAGS) $(INCLUDE) -W -Wall
 
 .SUFFIXES: .c .o

@@ -13,7 +13,7 @@
 #include "../mp_config.h"
 #include "help_mp.h"
 #include "../mplayer.h"
-#include "../subreader.h"
+#include "subreader.h"
 #include "../cfgparser.h"
 #include "../nls/nls.h"
 

@@ -16,7 +16,7 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
-#include "stream.h"
+#include "../libmpdemux/stream.h"
 #include "vobsub.h"
 #include "spudec.h"
 #define MSGT_CLASS MSGT_VOBSUB

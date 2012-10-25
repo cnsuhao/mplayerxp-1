@@ -12,8 +12,8 @@
 #include "font_load.h"
 #include "sub.h"
 #include "osd.h"
-#include "../spudec.h"
-#include "../vobsub.h"
+#include "libmpsub/spudec.h"
+#include "libmpsub/vobsub.h"
 #include "../libmpdemux/stream.h"
 #define MSGT_CLASS MSGT_OSD
 #include "../__mp_msg.h"

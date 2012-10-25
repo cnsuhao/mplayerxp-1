@@ -17,7 +17,7 @@
 #include "stheader.h"
 #include "loader/qtx/qtxsdk/components.h"
 #include "../nls/nls.h"
-#include "../subreader.h"
+#include "subreader.h"
 
 #include "bswap.h"
 #include "aviheader.h"
