@@ -534,12 +534,10 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
   }
 
     // Increase video timers:
-    sh_video->num_frames+=frame_time;
-    ++sh_video->num_frames_decoded;
-
     frame_time*=sh_video->frametime;
+
     /* override frame_time for variable/unknown FPS formats: */
-    if(!force_fps) 
+    if(!force_fps)
       switch(demuxer->file_format)
       {
 	case DEMUXER_TYPE_REAL:

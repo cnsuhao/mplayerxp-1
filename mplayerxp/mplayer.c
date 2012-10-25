@@ -1176,11 +1176,11 @@ static int osd_last_pts=-303;
 //================= Update OSD ====================
 static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay,video_stat_t *vstat) {
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d %d [frms: [%i]]\n",
-		a_pts-delay,video_pts,AV_delay,c_total,
-		(int)sh_video->num_frames,sh_video->num_frames_decoded,
-		(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0,
-		(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0,
-		(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
+		a_pts-delay,video_pts,AV_delay,c_total
+		,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
+		,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
+		,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
+		,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
 		,vstat->drop_frame_cnt
 		,output_quality
 		,dae_curr_vplayed()
@@ -1217,7 +1217,7 @@ static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
 	,a_pts
 	,sh_video->timer
 	,a_pts-sh_video->timer,0.0
-	,(int)sh_video->num_frames,sh_video->num_frames_decoded
+	,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
 	,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
@@ -1227,7 +1227,7 @@ static void show_status_line_no_apts(float v_pts,video_stat_t *vstat) {
     } else
 	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d %d\r"
 	,v_pts
-	,(int)sh_video->num_frames
+	,xp_core.video->num_played_frames
 	,(sh_video->timer>0.5)?(int)(100.0*video_time_usage/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(int)(100.0*vout_time_usage/(double)sh_video->timer):0
 	,(sh_video->timer>0.5)?(100.0*(audio_time_usage+audio_decode_time_usage)/(double)sh_video->timer):0
@@ -1259,8 +1259,6 @@ int mpxp_play_video( int rtc_fd, video_stat_t *vstat, float *aq_sleep_time, floa
 
     shva=dae_played_fra(xp_core.video);
 
-    sh_video->num_frames = shva.num_frames;
-    sh_video->num_frames_decoded = shva.frame_no;
     *v_pts = shva.v_pts;
 
     /*------------------------ frame decoded. --------------------*/
@@ -1458,11 +1456,6 @@ void mpxp_seek( int _xp_id, video_stat_t *vstat, osd_args_t *osd,float v_pts,con
     }
     if(seek_rval){
 	mpxp_seek_time = GetTimerMS();
-	if(sh_video) {
-	// Send back frame info to decoding thread
-	    dec_ahead_seek_num_frames = sh_video->num_frames;
-	    dec_ahead_seek_num_frames_decoded = sh_video->num_frames_decoded;
-	}
 
 	// success:
 	/* FIXME there should be real seeking for vobsub */

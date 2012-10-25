@@ -93,16 +93,6 @@ int init(sh_audio_t *sh_audio)
         return 0;
     }
    MSG_V("INFO: libavcodec init OK!\n");
-   if(sh_audio->format==0x3343414D){
-       // MACE 3:1
-       sh_audio->ds->ss_div = 2*3; // 1 samples/packet
-       sh_audio->ds->ss_mul = 2*sh_audio->wf->nChannels; // 1 byte*ch/packet
-   } else
-   if(sh_audio->format==0x3643414D){
-       // MACE 6:1
-       sh_audio->ds->ss_div = 2*6; // 1 samples/packet
-       sh_audio->ds->ss_mul = 2*sh_audio->wf->nChannels; // 1 byte*ch/packet
-   }
 
    // Decode at least 1 byte:  (to get header filled)
    x=decode(sh_audio,sh_audio->a_buffer,1,sh_audio->a_buffer_size,&pts);

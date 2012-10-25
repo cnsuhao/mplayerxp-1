@@ -28,8 +28,6 @@ typedef struct frame_attr_s
     float		duration;	/* frame duration */
     float		v_pts;		/* presentation time-stamp from input stream */
     float		stream_pts;	/* real stream's PTS mainly for OSD */
-    float		num_frames; /* ??? is it really needed */
-    long long int	frame_no;	/* total number of frame */
 }frame_attr_t;
 
 typedef struct dec_ahead_engine_s {
@@ -112,8 +110,6 @@ extern volatile int xp_eof;
 extern int xp_audio_eof;
 extern int xp_is_bad_pts;
 
-extern volatile float dec_ahead_seek_num_frames;       // frames played after seek
-extern volatile int dec_ahead_seek_num_frames_decoded; // frames decoded after seek
 extern volatile int dec_ahead_can_aseek;
 extern int ao_da_buffs;
 			/*

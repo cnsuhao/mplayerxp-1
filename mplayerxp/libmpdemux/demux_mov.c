@@ -290,6 +290,9 @@ typedef struct {
     mov_track_t* tracks[MOV_MAX_TRACKS];
     int timescale; // movie timescale
     int duration;  // movie duration (in movie timescale units)
+/* ---- mov (!!! ALWAYS 0 !!!) ----- */
+    unsigned int	ss_mul;	/**< compression ratio for packet descriptor */
+    unsigned int	ss_div;	/**< compression ratio for packet descriptor */
 } mov_priv_t;
 
 #define MOV_FOURCC(a,b,c,d) ((a<<24)|(b<<16)|(c<<8)|(d))
@@ -299,11 +302,11 @@ static int mov_probe(demuxer_t* demuxer){
     int no=0;
     unsigned ver;
     mov_priv_t* priv=malloc(sizeof(mov_priv_t));
-    
+
     MSG_V("Checking for MOV\n");
-    
+
     memset(priv,0,sizeof(mov_priv_t));
-    
+
     while(1){
 	int i;
 	int skipped=8;
@@ -1945,10 +1948,10 @@ if(trak->samplesize){
 //	x*=char2int(trak->stdata,32); // bytes/packet
 	x*=char2int(trak->stdata,36); // bytes/frame
       } else {
-	if(ds->ss_div && ds->ss_mul){
+	if(priv->ss_div && priv->ss_mul){
 	    // workaround for buggy files like 7up-high-traffic-areas.mov,
 	    // with missing stsd v1 header containing compression rate
-	    x/=ds->ss_div; x*=ds->ss_mul; // compression ratio fix  ! HACK !
+	    x/=priv->ss_div; x*=priv->ss_mul; // compression ratio fix  ! HACK !
 	} else {
 	    x*=trak->nchannels;
 	    x*=trak->samplebytes;

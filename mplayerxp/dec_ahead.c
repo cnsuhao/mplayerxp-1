@@ -119,8 +119,6 @@ int ao_da_buffs;
 extern volatile float xp_screen_pts;
 volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
 volatile int dec_ahead_can_adseek=1;  /* It is safe to seek audio buffer thread */
-volatile float dec_ahead_seek_num_frames=0;	  /* frames played after seek */
-volatile int dec_ahead_seek_num_frames_decoded=0; /* frames decoded after seek */
 
 static pthread_t pthread_id=0;
 static pthread_attr_t our_attr;
@@ -307,12 +305,7 @@ while(!xp_eof){
 	xp_core.in_lseek=Seek;
     }
     pinfo[_xp_id].current_module = "dec_ahead 1";
-    if(xp_core.in_lseek==Seek) {
-    /* Get info from player after a seek */
-	//*((char*)0x100) = 1; // Testing crash
-	sh_video->num_frames = dec_ahead_seek_num_frames;
-	sh_video->num_frames_decoded = dec_ahead_seek_num_frames_decoded;
-    }
+
 /* get it! */
 #if 0
     /* prevent reent access to non-reent demuxer */
@@ -410,8 +403,6 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	xp_core.video->fra[idx].stream_pts = v_pts;
 	xp_core.video->fra[idx].duration=duration;
 	xp_core.video->fra[idx].eof=0;
-	xp_core.video->fra[idx].num_frames = sh_video->num_frames;
-	xp_core.video->fra[idx].frame_no = sh_video->num_frames_decoded;
 	if(!xp_is_bad_pts) {
 	    int _idx = dae_prev_vdecoded();
 	    xp_core.video->fra[_idx].duration=v_pts-xp_core.video->fra[_idx].v_pts;

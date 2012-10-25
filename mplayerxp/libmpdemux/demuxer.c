@@ -110,7 +110,7 @@ void free_demuxer_stream(demux_stream_t *ds){
 
 int demux_aid_vid_mismatch = 0;
 
-demux_stream_t* new_demuxer_stream(struct demuxer_st *demuxer,int id){
+demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
   demux_stream_t* ds=malloc(sizeof(demux_stream_t));
   ds->buffer_pos=ds->buffer_size=0;
   ds->buffer=NULL;
@@ -129,8 +129,6 @@ demux_stream_t* new_demuxer_stream(struct demuxer_st *demuxer,int id){
 //----------------
   ds->asf_seq=-1;
   ds->asf_packet=NULL;
-//----------------
-  ds->ss_mul=ds->ss_div=0;
 //----------------
   ds->sh=NULL;
   ds->pts_flags=0;

@@ -52,46 +52,43 @@
 
 /** Describes demuxer's packet */
 typedef struct demux_packet_st {
-  int len;	/**< length of packet's data */
-  float pts;	/**< Presentation Time-Stamp (PTS) of data */
-  off_t pos;	/**< Position in index (AVI) or file (MPG) */
-  unsigned char* buffer; /**< buffer of packet's data */
-  int flags;	/**< 1 - indicates keyframe, 0 - regular frame */
-  struct demux_packet_st* next; /**< pointer to the next packet in chain */
+    int			len;	/**< length of packet's data */
+    float		pts;	/**< Presentation Time-Stamp (PTS) of data */
+    off_t		pos;	/**< Position in index (AVI) or file (MPG) */
+    unsigned char*	buffer; /**< buffer of packet's data */
+    int			flags;	/**< 1 - indicates keyframe, 0 - regular frame */
+    struct demux_packet_st* next; /**< pointer to the next packet in chain */
 } demux_packet_t;
 
 /** Describes interface to stream associated with this demuxer */
-typedef struct {
-  int buffer_pos;          /**< current buffer position */
-  int buffer_size;         /**< current buffer size */
-  unsigned char* buffer;   /**< current buffer */
-  float pts;               /**< current buffer's PTS */
-  int pts_bytes;           /**< number of bytes read after last pts stamp */
-  int eof;                 /**< end of demuxed stream? (true if all buffer empty) */
-  off_t pos;               /**< position in the input stream (file) */
-  off_t dpos;              /**< position in the demuxed stream */
-  int pack_no;		   /**< serial number of packet */
-  int flags;               /**< flags of current packet (keyframe etc) */
+typedef struct demux_stream_s {
+    int			id;		/**< stream ID  (for multiple audio/video streams) */
+    int			buffer_pos;	/**< current buffer position */
+    int			buffer_size;	/**< current buffer size */
+    unsigned char*	buffer;		/**< current buffer */
+    float		pts;		/**< current buffer's PTS */
+    int			pts_bytes;	/**< number of bytes read after last pts stamp */
+    int			eof;		/**< end of demuxed stream? (true if all buffer empty) */
+    off_t		pos;		/**< position in the input stream (file) */
+    off_t		dpos;		/**< position in the demuxed stream */
+    int			pack_no;	/**< serial number of packet */
+    int			flags;		/**< flags of current packet (keyframe etc) */
 /*---------------*/
-  int packs;               /**< number of packets in buffer */
-  int bytes;               /**< total bytes of packets in buffer */
-  demux_packet_t *first;   /**< read to current buffer from here */
-  demux_packet_t *last;    /**< append new packets from input stream to here */
-  demux_packet_t *current; /**< needed for refcounting of the buffer */
-  int id;                  /**< stream ID  (for multiple audio/video streams) */
-  struct demuxer_st *demuxer; /**< parent demuxer structure (stream handler) */
+    int			packs;		/**< number of packets in buffer */
+    int			bytes;		/**< total bytes of packets in buffer */
+    demux_packet_t*	first;		/**< read to current buffer from here */
+    demux_packet_t*	last;		/**< append new packets from input stream to here */
+    demux_packet_t*	current;	/**< needed for refcounting of the buffer */
+    struct demuxer_s*	demuxer;	/**< parent demuxer structure (stream handler) */
 /* ---- asf ----- */
-  demux_packet_t *asf_packet;	/**< read asf fragments here */
-  int asf_seq;			/**< sequence id associated with asf_packet */
-/* ---- mov ----- */
-  unsigned int ss_mul;	/**< compression ratio for packet descriptor */
-  unsigned int ss_div;	/**< compression ratio for packet descriptor */
+    demux_packet_t*	asf_packet;	/**< read asf fragments here */
+    int			asf_seq;	/**< sequence id associated with asf_packet */
 /*---------------*/
-  any_t* sh;		/**< Stream header associated with this stream (@see st_header.h for detail) */
+    any_t*		sh;		/**< Stream header associated with this stream (@see st_header.h for detail) */
 /*---------------*/
-  float prev_pts;	/**< PTS of previous packet (DVD's PTS correction) */
-  float pts_corr;	/**< PTS correction (DVD's PTS correction) */
-  int   pts_flags;	/**< PTS flags like trigger for correction applying (DVD's PTS correction) */
+    float		prev_pts;	/**< PTS of previous packet (DVD's PTS correction) */
+    float		pts_corr;	/**< PTS correction (DVD's PTS correction) */
+    int			pts_flags;	/**< PTS flags like trigger for correction applying (DVD's PTS correction) */
 } demux_stream_t;
 
 extern demux_stream_t *d_audio;
@@ -104,25 +101,25 @@ extern demux_stream_t *d_dvdsub;
 
 #define DEMUXF_SEEKABLE 0x00000001UL
 /** Describes demuxer (demultiplexer) of movie */
-typedef struct demuxer_st {
-  stream_t *stream;	/**< stream for movie reading */
-  demux_stream_t *audio;/**< audio buffer/demuxer */
-  demux_stream_t *video;/**< video buffer/demuxer */
-  demux_stream_t *sub;	/**< DVD's subtitle buffer/demuxer */
-  any_t* a_streams[MAX_A_STREAMS]; /**< audio streams (sh_audio_t) for multilanguage movies */
-  any_t* v_streams[MAX_V_STREAMS]; /**< video streams (sh_video_t) for multipicture movies  */
-  char  s_streams[MAX_S_STREAMS]; /**< DVD's subtitles (flag) streams for multilanguage movies */
-  off_t filepos;	/**< current pos. of input stream */
-  off_t movi_start;	/**< real start of movie within of stream */
-  off_t movi_end;	/**< real end of movie within of stream */
-  unsigned movi_length;	/**< length of movie in secs. Optional!*/
-  unsigned flags;	/**< set of DEMUXF_* bits */
-  unsigned file_format; /**< file format: DEMUXER_TYPE_*(mpeg/avi/asf). Will be replaced with properties in the further versions */
-  int synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
+typedef struct demuxer_s {
+    stream_t*		stream;		/**< stream for movie reading */
+    demux_stream_t*	audio;		/**< audio buffer/demuxer */
+    demux_stream_t*	video;		/**< video buffer/demuxer */
+    demux_stream_t*	sub;		/**< DVD's subtitle buffer/demuxer */
+    any_t*		a_streams[MAX_A_STREAMS]; /**< audio streams (sh_audio_t) for multilanguage movies */
+    any_t*		v_streams[MAX_V_STREAMS]; /**< video streams (sh_video_t) for multipicture movies  */
+    char		s_streams[MAX_S_STREAMS]; /**< DVD's subtitles (flag) streams for multilanguage movies */
+    off_t		filepos;	/**< current pos. of input stream */
+    off_t		movi_start;	/**< real start of movie within of stream */
+    off_t		movi_end;	/**< real end of movie within of stream */
+    unsigned		movi_length;	/**< length of movie in secs. Optional!*/
+    unsigned		flags;		/**< set of DEMUXF_* bits */
+    unsigned		file_format;	/**< file format: DEMUXER_TYPE_*(mpeg/avi/asf). Will be replaced with properties in the further versions */
+    int			synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
 
-  any_t* priv;		/**< private data of demuxer's driver.*/
-  any_t* info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
-  struct demuxer_driver_s* driver; /**< driver associated with this demuxer */
+    any_t*		priv;		/**< private data of demuxer's driver.*/
+    any_t*		info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
+    struct demuxer_driver_s* driver;	/**< driver associated with this demuxer */
 } demuxer_t;
 
 /* Return values for control interface */
@@ -201,7 +198,7 @@ inline static void free_demux_packet(demux_packet_t* dp){
 }
 
 demux_packet_t* clone_demux_packet(demux_packet_t* pack);
-demux_stream_t* new_demuxer_stream(struct demuxer_st *demuxer,int id);
+demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id);
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id);
 void free_demuxer_stream(demux_stream_t *ds);
 #define FREE_DEMUXER_STREAM(d) { free_demuxer_stream(d); d=NULL; }

@@ -1393,8 +1393,7 @@ static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
           int id=((AVIINDEXENTRY *)priv->idx)[i].ckid;
           if(avi_stream_id(id)==d_video->id) ++d_video->pack_no;
       }
-      priv->video_pack_no=
-      sh_video->num_frames=sh_video->num_frames_decoded=d_video->pack_no;
+      priv->video_pack_no=d_video->pack_no;
       priv->avi_video_pts=d_video->pack_no*(float)sh_video->video.dwScale/(float)sh_video->video.dwRate;
       d_video->pos=video_chunk_pos;
 
