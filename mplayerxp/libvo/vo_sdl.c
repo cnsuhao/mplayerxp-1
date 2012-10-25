@@ -1184,14 +1184,8 @@ static const vo_info_t* get_info(vo_data_t*vo)
 static void uninit(vo_data_t*vo)
 {
 #ifdef HAVE_X11
-    static Display *XDisplay;
-    XDisplay = XOpenDisplay(NULL);
-    if(XDisplay) {
-	MSG_V("SDL: activating XScreensaver/DPMS\n");
-
-	saver_on(vo,XDisplay);
-	XCloseDisplay(XDisplay);
-    }
+    saver_on(vo,vo->mDisplay);
+    vo_x11_uninit(vo,vo->mDisplay, vo->window);
 #endif
     sdl_close(vo);
 #ifdef CONFIG_VIDIX
@@ -1204,10 +1198,6 @@ static void uninit(vo_data_t*vo)
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     priv_t *priv = malloc(sizeof(priv_t));
-#ifdef HAVE_X11
-	static Display *XDisplay;
-	static int XScreen;
-#endif
     vo->priv=priv;
     memset(priv,0,sizeof(priv_t));
     memset(priv->rgbsurface,0,sizeof(priv->rgbsurface));
@@ -1216,17 +1206,8 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     priv->surface = NULL;
     if(arg) strcpy(sdl_subdevice,arg);
 #ifdef HAVE_X11
-    XDisplay = XOpenDisplay(NULL);
-    if(XDisplay) {
-		MSG_V("SDL: deactivating XScreensaver/DPMS\n");
-		XScreen = DefaultScreen(XDisplay);
-		priv->XWidth = DisplayWidth(XDisplay, XScreen);
-		priv->XHeight = DisplayHeight(XDisplay, XScreen);
-		priv->X = 1;
-		MSG_V("SDL: X11 Resolution %ix%i\n", priv->XWidth, priv->XHeight);
-		saver_off(vo,XDisplay);
-		XCloseDisplay(XDisplay);
-	}
+    if( !vo_x11_init(vo) ) return -1; // Can't open X11
+    saver_off(vo,vo->mDisplay);
 #endif
     if (sdl_open(vo) != 0)
 	return -1;
