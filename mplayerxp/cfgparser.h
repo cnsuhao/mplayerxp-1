@@ -36,7 +36,7 @@ typedef struct config config_t;
 typedef struct m_config m_config_t;
 typedef struct config_save config_save_t;
 
-#include "playtree.h"
+#include "libplaytree/playtree.h"
 
 typedef void (*cfg_default_func_t)(config_t *,const char*);
 

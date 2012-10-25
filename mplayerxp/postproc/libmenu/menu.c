@@ -12,7 +12,7 @@
 #include "libvo/sub.h"
 #include "osdep/keycodes.h"
 #include "libmpdemux/stream.h"
-#include "asxparser.h"
+#include "libplaytree/asxparser.h"
 #include "nls/nls.h"
 
 #include "libvo/img_format.h"

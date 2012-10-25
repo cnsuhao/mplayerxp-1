@@ -13,7 +13,7 @@
 #include "m_option.h"
 #include "m_struct.h"
 #include "libmpdemux/stream.h"
-#include "asxparser.h"
+#include "libplaytree/asxparser.h"
 #include "menu.h"
 #include "menu_list.h"
 

@@ -32,7 +32,6 @@
 #include "help_mp.h"
 
 #include "libmpdemux/stream.h"
-#include "playtree.h"
 #include "cfgparser.h"
 #include "cfg-mplayer-def.h"
 

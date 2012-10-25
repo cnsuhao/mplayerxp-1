@@ -17,7 +17,7 @@
 #include "m_struct.h"
 #include "m_option.h"
 #include "m_property.h"
-#include "asxparser.h"
+#include "libplaytree/asxparser.h"
 
 #include "libvo/img_format.h"
 #include "mp_image.h"

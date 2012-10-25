@@ -15,7 +15,7 @@
 #include "menu_list.h"
 
 #include "libmpdemux/stream.h"
-#include "playtree.h"
+#include "libplaytree/playtree.h"
 #include "input/input.h"
 #include "../pp_msg.h"
 
