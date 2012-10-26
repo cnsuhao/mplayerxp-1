@@ -117,9 +117,6 @@ extern int ao_da_buffs;
 			   astream - pointer to audio stream
 			 */
 
-extern int dec_ahead_pid; /* Only for testing */
-extern pthread_t dec_ahead_pth_id;
-
 extern int init_dec_ahead(sh_video_t*stream, sh_audio_t *astream);
 extern void uninit_dec_ahead( int force );
 extern int run_dec_ahead( void );

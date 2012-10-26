@@ -20,10 +20,6 @@
 pth_info_t pinfo[MAX_XPTHREADS];
 int xp_threads = 0;
 
-extern pid_t mplayer_pid;
-extern pthread_t mplayer_pth_id;
-extern pid_t dec_ahead_pid;
-
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
 /* Obtain a backtrace and print it to stdout. */

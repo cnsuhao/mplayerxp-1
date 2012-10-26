@@ -135,9 +135,6 @@ extern int sof_seek_pos;	/* the movie at end of file :( */
 extern int decore_audio( int xp_id );
 extern int mpxp_seek_time;
 
-pid_t dec_ahead_pid; /* Only for testing */
-pthread_t dec_ahead_pth_id;
-
 extern void update_osd( float v_pts );
 volatile int xp_eof=0;
 int xp_audio_eof=0;
@@ -275,9 +272,7 @@ any_t* Va_dec_ahead_routine( any_t* arg )
     MSG_T("\nDEC_AHEAD: entering...\n");
     _xp_id=init_signal_handling(sig_dec_ahead_video,uninit_dec_ahead);
     pinfo[_xp_id].current_module = "dec_ahead";
-    dec_ahead_pid =
     pinfo[_xp_id].pid = getpid(); /* Only for testing */
-    dec_ahead_pth_id =
     pinfo[_xp_id].pth_id = pthread_self();
     pinfo[_xp_id].thread_name = (xp_core.has_audio && mp_conf.xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
     drop_barrier=(float)(xp_num_frames/2)*(1/sh_video->fps);

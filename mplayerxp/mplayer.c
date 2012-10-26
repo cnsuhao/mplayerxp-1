@@ -109,7 +109,6 @@ subtitle* mp_subtitles=NULL;
 #endif
 
 int xp_id=0;
-pid_t mplayer_pid;
 pthread_t mplayer_pth_id;
 
 int use_pts_fix2=-1;
@@ -2344,7 +2343,6 @@ int main(int argc,char* argv[], char *envp[]){
 
     vo_data=vo_preinit_structs();
 
-    mplayer_pid=
     pinfo[xp_id].pid=getpid();
     mplayer_pth_id=
     pinfo[xp_id].pth_id=pthread_self();
