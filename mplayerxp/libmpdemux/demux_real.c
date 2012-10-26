@@ -1240,11 +1240,11 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 			    sh->fps=tmp;
 			}
 		    } else {
-	    		int fps=stream_read_word(demuxer->stream);
+			int fps=stream_read_word(demuxer->stream);
 			MSG_WARN("realvid: ignoring FPS = %d\n",fps);
 		    }
 		    stream_skip(demuxer->stream, 2);
-		    
+
 		    // read codec sub-format (to make difference between low and high rate codec)
 		    ((unsigned int*)(sh->bih+1))[0]=stream_read_dword(demuxer->stream);
 

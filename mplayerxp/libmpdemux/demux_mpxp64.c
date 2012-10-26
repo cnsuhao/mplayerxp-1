@@ -228,7 +228,6 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		sh->format=sh->bih->biCompression;
 		sh->disp_w=sh->bih->biWidth;
 		sh->disp_h=sh->bih->biHeight;
-		sh->i_bps=priv->sprop[id].AveBitrate;
 		MSG_V("FPS: %f\n",sh->fps);
 		break;
 	    case mmioFOURCC('v','p','r','p'):

@@ -67,7 +67,6 @@ typedef struct sh_video_s {
     float		timer;     // value of old v_frame
     float		fps;
     int			chapter_change;
-    unsigned		i_bps; // == bitrate  (compressed bytes/sec)
     unsigned		disp_w,disp_h;// display size (filled by fileformat parser)
 //  int coded_w,coded_h; // coded size (filled by video codec)
     float		aspect;

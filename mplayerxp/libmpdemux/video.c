@@ -359,9 +359,6 @@ switch(video_codec){
 #endif
    sh_video->disp_w=picture.display_picture_width;
    sh_video->disp_h=picture.display_picture_height;
-   // bitrate:
-   if(picture.bitrate!=0x3FFFF) // unspecified/VBR ?
-       sh_video->i_bps=1000*picture.bitrate/16;
    // info:
    MSG_DBG2("mpeg bitrate: %d (%X)\n",picture.bitrate,picture.bitrate);
    MSG_V("VIDEO:  %s  %dx%d  (aspect %d)  %4.2f fps  %5.1f kbps (%4.1f kbyte/s)\n",

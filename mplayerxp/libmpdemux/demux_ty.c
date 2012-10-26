@@ -768,13 +768,9 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
    if( seeka->flags & 2 )
       // float seek 0..1
       newpos += ( demuxer->movi_end - demuxer->movi_start ) * seeka->secs;
-   else
-   {
-      // time seek (secs)
-      if( ! sh_video->i_bps ) // unspecified or VBR
-         newpos += 2324 * 75 * seeka->secs; // 174.3 kbyte/sec
-      else
-         newpos += sh_video->i_bps * seeka->secs;
+   else {
+	// time seek (secs)
+	newpos += 2324 * 75 * seeka->secs; // 174.3 kbyte/sec
    }
 
    if ( newpos < demuxer->movi_start ) newpos = demuxer->movi_start;
@@ -829,12 +825,7 @@ static int ty_control( demuxer_t *demuxer,int cmd, any_t*arg )
    switch(cmd)
    {
       case DEMUX_CMD_GET_TIME_LENGTH:
-         if(!sh_video->i_bps)  // unspecified or VBR
              return DEMUXER_CTRL_DONTKNOW;
-         *(double *)arg=
-            (double)demuxer->movi_end-demuxer->movi_start/sh_video->i_bps;
-         return DEMUX_OK;
-
       case DEMUX_CMD_GET_PERCENT_POS:
           return DEMUX_UNKNOWN;
        default:

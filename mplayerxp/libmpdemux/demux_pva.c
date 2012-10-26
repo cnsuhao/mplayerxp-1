@@ -476,8 +476,8 @@ static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
 	int total_bitrate=0;
 	off_t dest_offset;
 	pva_priv_t * priv=demuxer->priv;
-	
-	total_bitrate=((sh_audio_t *)demuxer->audio->sh)->i_bps + ((sh_video_t *)demuxer->video->sh)->i_bps;
+
+	total_bitrate=((sh_audio_t *)demuxer->audio->sh)->i_bps;// + ((sh_video_t *)demuxer->video->sh)->i_bps;
 
 	/*
 	 * Compute SOF offset inside the stream. Approximate total bitrate with sum of bitrates

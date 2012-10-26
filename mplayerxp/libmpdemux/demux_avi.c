@@ -1271,7 +1271,6 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
     }
     if(!priv->numberofframes) priv->numberofframes=vsamples;
     MSG_V("AVI video size=%lu (%lu) audio size=%lu (%lu)\n",vsize,priv->numberofframes,asize,asamples);
-    sh_video->i_bps=((float)vsize/(float)vsamples)*(float)sh_video->video.dwRate/(float)sh_video->video.dwScale;
     if(sh_audio) sh_audio->i_bps=((float)asize/(float)asamples)*(float)sh_audio->audio.dwRate/(float)sh_audio->audio.dwScale;
   } else {
     // guessing, results may be inaccurate:
@@ -1298,16 +1297,13 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
     }
     vsize=demuxer->movi_end-demuxer->movi_start-asize-8*priv->numberofframes;
     MSG_V("AVI video size=%lu (%lu)  audio size=%lu\n",vsize,priv->numberofframes,asize);
-    sh_video->i_bps=(float)vsize*sh_video->fps/priv->numberofframes;
   }
-  MSG_V("VIDEO:  [%.4s]  %ldx%ld  %dbpp  %4.2f fps  %5.1f kbps (%4.1f kbyte/s)\n",
+  MSG_V("VIDEO:  [%.4s]  %ldx%ld  %dbpp  %4.2f fps\n",
   (char *)&sh_video->bih->biCompression,
   sh_video->bih->biWidth,
   sh_video->bih->biHeight,
   sh_video->bih->biBitCount,
-  sh_video->fps,
-  sh_video->i_bps*0.008f,
-  sh_video->i_bps/1024.0f );
+  sh_video->fps);
   {
    sh_audio_t* sh_a;
    sh_a = (sh_audio_t*)demuxer->audio->sh;

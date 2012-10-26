@@ -367,8 +367,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
             sh_video->format = bih->biCompression;
             sh_video->aspect=   codec->width * codec->sample_aspect_ratio.num 
                               / (float)(codec->height * codec->sample_aspect_ratio.den);
-            sh_video->i_bps= codec->bit_rate/8;
-            MSG_DBG2("aspect= %d*%d/(%d*%d)\n", 
+            MSG_DBG2("aspect= %d*%d/(%d*%d)\n",
                 codec->width, codec->sample_aspect_ratio.num,
                 codec->height, codec->sample_aspect_ratio.den);
 

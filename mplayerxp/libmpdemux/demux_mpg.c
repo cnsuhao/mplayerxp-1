@@ -546,13 +546,10 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	newpos+=(demuxer->movi_end-demuxer->movi_start)*seeka->secs;
     } else {
 	// time seek (secs)
-        if(!sh_video->i_bps) // unspecified or VBR
-          newpos+=2324*75*seeka->secs; // 174.3 kbyte/sec
-        else
-          newpos+=sh_video->i_bps*seeka->secs;
+	newpos+=2324*75*seeka->secs; // 174.3 kbyte/sec
     }
 
-        if(newpos<demuxer->movi_start){
+	if(newpos<demuxer->movi_start){
 	    if(!(demuxer->stream->type&STREAMTYPE_PROGRAM)) demuxer->movi_start=0; // for VCD
 	    if(newpos<demuxer->movi_start) newpos=demuxer->movi_start;
 	}

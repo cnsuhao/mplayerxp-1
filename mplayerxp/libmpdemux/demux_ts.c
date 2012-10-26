@@ -3085,20 +3085,15 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 
 
 	video_stats = (sh_video != NULL);
-	if(video_stats)
-	{
-		MSG_V("IBPS: %d, vb: %d\r\n", sh_video->i_bps, priv->vbitrate);
-		if(priv->vbitrate)
-			video_stats = priv->vbitrate;
-		else
-			video_stats = sh_video->i_bps;
+	if(video_stats) {
+		if(priv->vbitrate) video_stats = priv->vbitrate;
+		else		   video_stats = 2324*75;
 	}
 
 	newpos = (seeka->flags & DEMUX_SEEK_SET) ? demuxer->movi_start : demuxer->filepos;
 	if(seeka->flags & DEMUX_SEEK_PERCENTS) // float seek 0..1
 		newpos+=(demuxer->movi_end-demuxer->movi_start)*seeka->secs;
-	else
-	{
+	else {
 		// time seek (secs)
 		if(! video_stats) // unspecified or VBR
 			newpos += 2324*75*seeka->secs; // 174.3 kbyte/sec
