@@ -1760,7 +1760,7 @@ static void mpxp_print_stream_formats(void) {
     if(sh_video) {
 	MSG_INFO("Video=");
 	if(sh_video->bih)fmt=sh_video->bih->biCompression;
-	else		 fmt=sh_video->format;
+	else		 fmt=sh_video->fourcc;
 	c=(char *)&fmt;
 	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
 	    MSG_INFO("%.4s",c);
@@ -1786,7 +1786,7 @@ static void mpxp_read_video_properties(void) {
 	sh_video=d_video->sh=NULL;
     } else {
 	MSG_V("[V] filefmt:%d  fourcc:0x%X  size:%dx%d  fps:%5.2f  ftime:=%6.4f\n",
-	    demuxer->file_format,sh_video->format, sh_video->disp_w,sh_video->disp_h,
+	    demuxer->file_format,sh_video->fourcc, sh_video->src_w,sh_video->src_h,
 	    sh_video->fps,1/sh_video->fps
 	    );
     /* need to set fps here for output encoders to pick it up in their init */
@@ -1806,19 +1806,19 @@ if (mp_conf.spudec_ifo) {
   unsigned int palette[16], width, height;
   pinfo[xp_id].current_module="spudec_init_vobsub";
   if (vobsub_parse_ifo(NULL,mp_conf.spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
-    vo_data->spudec=spudec_new_scaled(palette, sh_video->disp_w, sh_video->disp_h);
+    vo_data->spudec=spudec_new_scaled(palette, sh_video->src_w, sh_video->src_h);
 }
 
 if (vo_data->spudec==NULL) {
   unsigned *pal;
   pinfo[xp_id].current_module="spudec_init";
   if(stream->driver->control(stream,SCTRL_VID_GET_PALETTE,&pal)==SCTRL_OK)
-	vo_data->spudec=spudec_new_scaled(pal,sh_video->disp_w, sh_video->disp_h);
+	vo_data->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
 }
 
 if (vo_data->spudec==NULL) {
   pinfo[xp_id].current_module="spudec_init_normal";
-  vo_data->spudec=spudec_new_scaled(NULL, sh_video->disp_w, sh_video->disp_h);
+  vo_data->spudec=spudec_new_scaled(NULL, sh_video->src_w, sh_video->src_h);
   spudec_set_font_factor(vo_data->spudec,font_factor);
 }
 
@@ -1918,11 +1918,11 @@ static int mpxp_find_vcodec(void) {
     if(!sh_video->inited) {
 	const char *fmt;
 	MSG_ERR(MSGTR_CantFindVideoCodec);
-	fmt = (const char *)&sh_video->format;
+	fmt = (const char *)&sh_video->fourcc;
 	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
 	    MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
 	else
-	    MSG_ERR(" 0x%08X!\n",sh_video->format);
+	    MSG_ERR(" 0x%08X!\n",sh_video->fourcc);
 	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("codecs.conf"));
 	sh_video = d_video->sh = NULL;
 	rc=-1;
@@ -2589,7 +2589,7 @@ play_next_file:
     }
 
     vf_showlist(sh_video->vfilter);
-// ========== Init display (sh_video->disp_w*sh_video->disp_h/out_fmt) ============
+// ========== Init display (sh_video->src_w*sh_video->src_h/out_fmt) ============
 
     inited_flags|=INITED_VO;
     MSG_V("INFO: Video OUT driver init OK!\n");

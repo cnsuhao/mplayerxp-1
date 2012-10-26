@@ -354,8 +354,8 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
             bih->biSizeImage = bih->biWidth * bih->biHeight * bih->biBitCount/8;
             bih->biCompression= codec->codec_tag;
             sh_video->bih= bih;
-            sh_video->disp_w= codec->width;
-            sh_video->disp_h= codec->height;
+            sh_video->src_w= codec->width;
+            sh_video->src_h= codec->height;
             if (st->time_base.den) { /* if container has time_base, use that */
                 sh_video->video.dwRate= st->time_base.den;
                 sh_video->video.dwScale= st->time_base.num;
@@ -364,7 +364,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 		sh_video->video.dwScale= codec->time_base.num;
             }
             sh_video->fps=av_q2d(st->r_frame_rate);
-            sh_video->format = bih->biCompression;
+            sh_video->fourcc= bih->biCompression;
             sh_video->aspect=   codec->width * codec->sample_aspect_ratio.num 
                               / (float)(codec->height * codec->sample_aspect_ratio.den);
             MSG_DBG2("aspect= %d*%d/(%d*%d)\n",

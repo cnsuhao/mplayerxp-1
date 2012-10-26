@@ -642,7 +642,7 @@ got_video:
 				priv->video_after_seek = 0;
 			} else 
 			dp->pts=(dp_hdr->len<3)?0:
-			    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->format);
+			    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->fourcc);
 			ds_add_packet(ds,dp);
 			ds->asf_packet=NULL;
 		    } else {
@@ -666,7 +666,7 @@ got_video:
 			    if(dp_hdr->len!=vpkg_length-vpkg_offset)
 				MSG_V("warning! assembled.len=%d  frag.len=%d  total.len=%d  \n",dp->len,vpkg_offset,vpkg_length-vpkg_offset);
             		    stream_read(demuxer->stream, dp_data+dp_hdr->len, vpkg_offset);
-			    if((dp_data[dp_hdr->len]&0x20) && (sh_video->format==0x30335652)) --dp_hdr->chunks; else
+			    if((dp_data[dp_hdr->len]&0x20) && (sh_video->fourcc==0x30335652)) --dp_hdr->chunks; else
 			    dp_hdr->len+=vpkg_offset;
 			    len-=vpkg_offset;
  			    MSG_DBG2("fragment (%d bytes) appended, %d bytes left\n",vpkg_offset,len);
@@ -678,7 +678,7 @@ got_video:
 				    priv->video_after_seek = 0;
 			    } else 
 			    dp->pts=(dp_hdr->len<3)?0:
-				real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->format);
+				real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->fourcc);
 			    ds_add_packet(ds,dp);
 			    ds->asf_packet=NULL;
 			    // continue parsing
@@ -687,8 +687,8 @@ got_video:
 			// non-last fragment:
 			if(dp_hdr->len!=vpkg_offset)
 			    MSG_V("warning! assembled.len=%d  offset=%d  frag.len=%d  total.len=%d  \n",dp->len,vpkg_offset,len,vpkg_length);
-            		stream_read(demuxer->stream, dp_data+dp_hdr->len, len);
-			if((dp_data[dp_hdr->len]&0x20) && (sh_video->format==0x30335652)) --dp_hdr->chunks; else
+			    stream_read(demuxer->stream, dp_data+dp_hdr->len, len);
+			if((dp_data[dp_hdr->len]&0x20) && (sh_video->fourcc==0x30335652)) --dp_hdr->chunks; else
 			dp_hdr->len+=len;
 			len=0;
 			break; // no more fragments in this chunk!
@@ -735,7 +735,7 @@ got_video:
 			priv->video_after_seek = 0;
 		} else 
 		dp->pts=(dp_hdr->len<3)?0:
-		    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->format);
+		    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->fourcc);
 		ds_add_packet(ds,dp);
 
 	    } // while(len>0)
@@ -1214,18 +1214,18 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    /* video header */
 		    sh_video_t *sh = new_sh_video(demuxer, stream_id);
 
-		    sh->format = stream_read_dword_le(demuxer->stream); /* fourcc */
-		    MSG_V("video fourcc: %.4s (%x)\n", (char *)&sh->format, sh->format);
+		    sh->fourcc = stream_read_dword_le(demuxer->stream); /* fourcc */
+		    MSG_V("video fourcc: %.4s (%x)\n", (char *)&sh->fourcc, sh->fourcc);
 
 		    /* emulate BITMAPINFOHEADER */
 		    sh->bih = malloc(sizeof(BITMAPINFOHEADER)+16);
 		    memset(sh->bih, 0, sizeof(BITMAPINFOHEADER)+16);
 	    	    sh->bih->biSize = 48;
-		    sh->disp_w = sh->bih->biWidth = stream_read_word(demuxer->stream);
-		    sh->disp_h = sh->bih->biHeight = stream_read_word(demuxer->stream);
+		    sh->src_w = sh->bih->biWidth = stream_read_word(demuxer->stream);
+		    sh->src_h = sh->bih->biHeight = stream_read_word(demuxer->stream);
 		    sh->bih->biPlanes = 1;
 		    sh->bih->biBitCount = 24;
-		    sh->bih->biCompression = sh->format;
+		    sh->bih->biCompression = sh->fourcc;
 		    sh->bih->biSizeImage= sh->bih->biWidth*sh->bih->biHeight*3;
 
 		    sh->fps = (float) stream_read_word(demuxer->stream);
@@ -1262,7 +1262,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 			case 0x10003001:
 			    /* sub id: 3 */
 			    /* codec id: rv10 */
-			    sh->bih->biCompression = sh->format = mmioFOURCC('R', 'V', '1', '3');
+			    sh->bih->biCompression = sh->fourcc = mmioFOURCC('R', 'V', '1', '3');
 			    break;
 			case 0x20001000:
 			case 0x20100001:
@@ -1280,7 +1280,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 			    MSG_V("unknown id: %x\n", tmp);
 		    }
 
-		    if((sh->format<=0x30335652) && (tmp>=0x20200002)){
+		    if((sh->fourcc<=0x30335652) && (tmp>=0x20200002)){
 			    // read data for the cmsg24[] (see vd_realvid.c)
 			    unsigned int cnt = codec_data_size - (stream_tell(demuxer->stream) - codec_pos);
 			    if (cnt < 2) {
@@ -1475,8 +1475,8 @@ header_end:
     if(demuxer->video->sh){
 	sh_video_t *sh=demuxer->video->sh;
 	MSG_V("VIDEO:  %.4s [%08X,%08X]  %dx%d  (aspect %4.2f)  %4.2f fps\n",
-	    &sh->format,((unsigned int*)(sh->bih+1))[1],((unsigned int*)(sh->bih+1))[0],
-	    sh->disp_w,sh->disp_h,sh->aspect,sh->fps);
+	    &sh->fourcc,((unsigned int*)(sh->bih+1))[1],((unsigned int*)(sh->bih+1))[0],
+	    sh->src_w,sh->src_h,sh->aspect,sh->fps);
     }
     return demuxer;
 }

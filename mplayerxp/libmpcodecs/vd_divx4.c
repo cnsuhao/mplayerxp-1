@@ -190,7 +190,7 @@ static int init(sh_video_t *sh){
     priv_t*p;
     int bits=12;
     if(!load_lib("libdivx"SLIBSUFFIX)) return 0;
-    if(!(mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL))) return 0;
+    if(!(mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL))) return 0;
     switch(sh->codec->outfmt[sh->outfmtidx]){
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
@@ -202,19 +202,19 @@ static int init(sh_video_t *sh){
     if(!(p=malloc(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return 0; }
     sh->context=p;
     memset(p,0,sizeof(priv_t));
-    if(!(p->decoder=getDecore_ptr(sh->format))) {
-	char *p=(char *)&(sh->format);
+    if(!(p->decoder=getDecore_ptr(sh->fourcc))) {
+	char *p=(char *)&(sh->fourcc);
 	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",p[0],p[1],p[2],p[3]);
 	return 0;
     }
     dinit.formatOut.fourCC=sh->codec->outfmt[sh->outfmtidx];
     dinit.formatOut.bpp=bits;
-    dinit.formatOut.width=sh->disp_w;
-    dinit.formatOut.height=sh->disp_h;
+    dinit.formatOut.width=sh->src_w;
+    dinit.formatOut.height=sh->src_h;
     dinit.formatOut.pixelAspectX=1;
     dinit.formatOut.pixelAspectY=1;
-    dinit.formatOut.sizeMax=sh->disp_w*sh->disp_h*bits;
-    dinit.formatIn.fourCC=sh->format;
+    dinit.formatOut.sizeMax=sh->src_w*sh->src_h*bits;
+    dinit.formatIn.fourCC=sh->fourcc;
     dinit.formatIn.framePeriod=sh->fps;
     if(p->decoder(NULL, DEC_OPT_INIT, (any_t*) &p->pHandle, &dinit)!=DEC_OK) {
 	char *p=(char *)&(dinit.formatOut);
@@ -243,7 +243,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     if(len<=0) return NULL; // skipped frame
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,
-	sh->disp_w, sh->disp_h);
+	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     decFrame.bitstream.pBuff = data;

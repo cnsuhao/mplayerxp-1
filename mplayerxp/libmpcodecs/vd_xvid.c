@@ -347,7 +347,7 @@ static int init(sh_video_t *sh){
 	 * VOL encountered (don't trust containers' width and height) */
 	dec_p.width =
 	dec_p.height= 0;
-	dec_p.fourcc= sh->format;
+	dec_p.fourcc= sh->fourcc;
 	dec_p.num_threads=xvid_gbl_info.num_threads;
 
 	/* Get a decoder instance */
@@ -380,7 +380,7 @@ static int init(sh_video_t *sh){
 		p->img_type = MP_IMGTYPE_TEMP;
 		break;
 	}
-	return mpcodecs_config_vo(sh, sh->disp_w, sh->disp_h, NULL);
+	return mpcodecs_config_vo(sh, sh->src_w, sh->src_h, NULL);
 }
 
 // uninit driver
@@ -424,7 +424,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	if(flags&3) dec.general |= XVID_DEC_DROP;
 	dec.output.csp = p->cs;
 	mpi = mpcodecs_get_image(sh, p->img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
-				 sh->disp_w, sh->disp_h);
+				 sh->src_w, sh->src_h);
 	if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 	if(p->cs != XVID_CSP_INTERNAL) {
 	    dec.output.plane[0] = mpi->planes[0];

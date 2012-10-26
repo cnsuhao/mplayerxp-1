@@ -206,10 +206,10 @@ static int ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)
 	    vfi.pitch[1]=
 	    vfi.pitch[2]=16;
 	}
-	sh->disp_w=w;//(w+valign)&(~valign);
-	sh->disp_h=(h+halign)&(~halign);
+	sh->src_w=w;//(w+valign)&(~valign);
+	sh->src_h=(h+halign)&(~halign);
 	vdff_ctx->vo_inited=1;
-	return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,&vfi);
+	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,&vfi);
     }
     return 1;
 }
@@ -246,12 +246,12 @@ static int init(sh_video_t *sh){
 #ifdef CODEC_FLAG_NOT_TRUNCATED
     vdff_ctx->ctx->flags|= CODEC_FLAG_NOT_TRUNCATED;
 #endif
-    vdff_ctx->ctx->width = sh->disp_w;
-    vdff_ctx->ctx->height= sh->disp_h;
+    vdff_ctx->ctx->width = sh->src_w;
+    vdff_ctx->ctx->height= sh->src_h;
   //  vdff_ctx->ctx->error_recognition= lavc_param_error_resilience;
     vdff_ctx->ctx->error_concealment= lavc_param_error_concealment;
     vdff_ctx->ctx->debug= lavc_param_debug;
-    vdff_ctx->ctx->codec_tag= sh->format;
+    vdff_ctx->ctx->codec_tag= sh->fourcc;
     vdff_ctx->ctx->stream_codec_tag=sh->video.fccHandler;
     vdff_ctx->ctx->idct_algo=0; /*auto*/
 #if 0
@@ -279,8 +279,8 @@ static int init(sh_video_t *sh){
     /* Pegasus MJPEG stores it also in AVI header, but it uses the common
        MJPG fourcc :( */
     if (sh->bih && (sh->bih->biSize != sizeof(BITMAPINFOHEADER)) &&
-	(sh->format == mmioFOURCC('A','V','R','n') ||
-	sh->format == mmioFOURCC('M','J','P','G')))
+	(sh->fourcc == mmioFOURCC('A','V','R','n') ||
+	sh->fourcc == mmioFOURCC('M','J','P','G')))
     {
 //	vdff_ctx->ctx->flags |= CODEC_FLAG_EXTERN_HUFF;
 	vdff_ctx->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
@@ -288,11 +288,11 @@ static int init(sh_video_t *sh){
 	memcpy(vdff_ctx->ctx->extradata, sh->bih+sizeof(BITMAPINFOHEADER),
 	    vdff_ctx->ctx->extradata_size);
     }
-    if(   sh->format == mmioFOURCC('R', 'V', '1', '0')
-       || sh->format == mmioFOURCC('R', 'V', '1', '3')
-       || sh->format == mmioFOURCC('R', 'V', '2', '0')
-       || sh->format == mmioFOURCC('R', 'V', '3', '0')
-       || sh->format == mmioFOURCC('R', 'V', '4', '0'))
+    if(   sh->fourcc == mmioFOURCC('R', 'V', '1', '0')
+       || sh->fourcc == mmioFOURCC('R', 'V', '1', '3')
+       || sh->fourcc == mmioFOURCC('R', 'V', '2', '0')
+       || sh->fourcc == mmioFOURCC('R', 'V', '3', '0')
+       || sh->fourcc == mmioFOURCC('R', 'V', '4', '0'))
        {
         vdff_ctx->ctx->extradata_size= 8;
         vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
@@ -300,7 +300,7 @@ static int init(sh_video_t *sh){
             /* only 1 packet per frame & sub_id from fourcc */
 	    ((uint32_t*)vdff_ctx->ctx->extradata)[0] = 0;
 	    ((uint32_t*)vdff_ctx->ctx->extradata)[1] =
-        	(sh->format == mmioFOURCC('R', 'V', '1', '3')) ? 0x10003001 : 0x10000000;
+        	(sh->fourcc == mmioFOURCC('R', 'V', '1', '3')) ? 0x10003001 : 0x10000000;
         } else {
 	    /* has extra slice header (demux_rm or rm->avi streamcopy) */
 	    unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
@@ -309,23 +309,23 @@ static int init(sh_video_t *sh){
 	}
     }
     if (sh->bih && (sh->bih->biSize != sizeof(BITMAPINFOHEADER)) &&
-	(sh->format == mmioFOURCC('M','4','S','2') ||
-	 sh->format == mmioFOURCC('M','P','4','S') ||
-	 sh->format == mmioFOURCC('H','F','Y','U') ||
-	 sh->format == mmioFOURCC('F','F','V','H') ||
-	 sh->format == mmioFOURCC('W','M','V','2') ||
-	 sh->format == mmioFOURCC('W','M','V','3') ||
-	 sh->format == mmioFOURCC('A','S','V','1') ||
-	 sh->format == mmioFOURCC('A','S','V','2') ||
-	 sh->format == mmioFOURCC('V','S','S','H') ||
-	 sh->format == mmioFOURCC('M','S','Z','H') ||
-	 sh->format == mmioFOURCC('Z','L','I','B') ||
-	 sh->format == mmioFOURCC('M','P','4','V') ||
-	 sh->format == mmioFOURCC('F','L','I','C') ||
-	 sh->format == mmioFOURCC('S','N','O','W') ||
-	 sh->format == mmioFOURCC('a','v','c','1') ||
-	 sh->format == mmioFOURCC('L','O','C','O') ||
-	 sh->format == mmioFOURCC('t','h','e','o')
+	(sh->fourcc == mmioFOURCC('M','4','S','2') ||
+	 sh->fourcc == mmioFOURCC('M','P','4','S') ||
+	 sh->fourcc == mmioFOURCC('H','F','Y','U') ||
+	 sh->fourcc == mmioFOURCC('F','F','V','H') ||
+	 sh->fourcc == mmioFOURCC('W','M','V','2') ||
+	 sh->fourcc == mmioFOURCC('W','M','V','3') ||
+	 sh->fourcc == mmioFOURCC('A','S','V','1') ||
+	 sh->fourcc == mmioFOURCC('A','S','V','2') ||
+	 sh->fourcc == mmioFOURCC('V','S','S','H') ||
+	 sh->fourcc == mmioFOURCC('M','S','Z','H') ||
+	 sh->fourcc == mmioFOURCC('Z','L','I','B') ||
+	 sh->fourcc == mmioFOURCC('M','P','4','V') ||
+	 sh->fourcc == mmioFOURCC('F','L','I','C') ||
+	 sh->fourcc == mmioFOURCC('S','N','O','W') ||
+	 sh->fourcc == mmioFOURCC('a','v','c','1') ||
+	 sh->fourcc == mmioFOURCC('L','O','C','O') ||
+	 sh->fourcc == mmioFOURCC('t','h','e','o')
          ))
     {
 	vdff_ctx->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
@@ -333,7 +333,7 @@ static int init(sh_video_t *sh){
 	memcpy(vdff_ctx->ctx->extradata, sh->bih+1, vdff_ctx->ctx->extradata_size);
     }
     if (sh->ImageDesc &&
-	 sh->format == mmioFOURCC('S','V','Q','3')){
+	 sh->fourcc == mmioFOURCC('S','V','Q','3')){
 	vdff_ctx->ctx->extradata_size = *(int*)sh->ImageDesc;
 	vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
 	memcpy(vdff_ctx->ctx->extradata, ((int*)sh->ImageDesc)+1, vdff_ctx->ctx->extradata_size);
@@ -380,7 +380,7 @@ static int init(sh_video_t *sh){
     }
     MSG_V("INFO: libavcodec.so (%06X) video codec[%c%c%c%c] init OK!\n"
     ,avc_version
-    ,((char *)&sh->format)[0],((char *)&sh->format)[1],((char *)&sh->format)[2],((char *)&sh->format)[3]);
+    ,((char *)&sh->fourcc)[0],((char *)&sh->fourcc)[1],((char *)&sh->fourcc)[2],((char *)&sh->fourcc)[3]);
     if(npp_options)
     {
 	pp_flags=0;
@@ -408,10 +408,10 @@ static int init(sh_video_t *sh){
 	}
 	if(pp_flags)
 	{
-	    ppContext=pp2_get_context(sh->disp_w,sh->disp_h,pp_flags);
+	    ppContext=pp2_get_context(sh->src_w,sh->src_h,pp_flags);
 	}
     }
-    return ff_config_vo(sh,sh->disp_w,sh->disp_h);
+    return ff_config_vo(sh,sh->src_w,sh->src_h);
 }
 
 // uninit driver
@@ -663,10 +663,10 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 /*
     if codec is capable DR1
     if sh->vfilter==vf_vo (DR1 is meaningless into temp buffer)
-    It always happens with (vidix+bus mastering), (if (disp_w%16==0)) with xv
+    It always happens with (vidix+bus mastering), (if (src_w%16==0)) with xv
 */
     has_b_frames=vdff_ctx->ctx->has_b_frames||
-		 sh->format==0x10000001 || /* mpeg1 may have b frames */
+		 sh->fourcc==0x10000001 || /* mpeg1 may have b frames */
 		 vdff_ctx->lavc_codec->id==CODEC_ID_SVQ3||
 		 1;
     mpi= mpcodecs_get_image(sh,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
@@ -680,11 +680,11 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	vdff_ctx->use_slices=0;
     }
     if(vdff_ctx->use_slices) vdff_ctx->use_dr1=0;
-    if(   sh->format == mmioFOURCC('R', 'V', '1', '0')
-       || sh->format == mmioFOURCC('R', 'V', '1', '3')
-       || sh->format == mmioFOURCC('R', 'V', '2', '0')
-       || sh->format == mmioFOURCC('R', 'V', '3', '0')
-       || sh->format == mmioFOURCC('R', 'V', '4', '0'))
+    if(   sh->fourcc == mmioFOURCC('R', 'V', '1', '0')
+       || sh->fourcc == mmioFOURCC('R', 'V', '1', '3')
+       || sh->fourcc == mmioFOURCC('R', 'V', '2', '0')
+       || sh->fourcc == mmioFOURCC('R', 'V', '3', '0')
+       || sh->fourcc == mmioFOURCC('R', 'V', '4', '0'))
     if(sh->bih->biSize==sizeof(*sh->bih)+8){
         int i;
         dp_hdr_t *hdr= (dp_hdr_t*)data;
@@ -711,7 +711,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     }
     if(!(flags&3) && vdff_ctx->use_slices)
     {
-	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->disp_w, sh->disp_h);
+	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->src_w, sh->src_h);
 	vdff_ctx->mpi = mpi;
 	vdff_ctx->frame_number++;
 	vdff_ctx->ctx->draw_horiz_band=draw_slice;
@@ -735,7 +735,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     if(!got_picture) return NULL;	// skipped image
     if(!vdff_ctx->ctx->draw_horiz_band)
     {
-	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->disp_w,sh->disp_h);
+	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w,sh->src_h);
 	if(!mpi){	// temporary!
 	    MSG_ERR("couldn't allocate image for ffmpeg codec\n");
 	    return NULL;

@@ -537,7 +537,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
   // handled differently for each and every stream type. The joy! The joy!
   if(!os->flac && ((*pack->packet & PACKET_TYPE_HEADER) && 
      (ds != d->audio || ( ((sh_audio_t*)ds->sh)->format != FOURCC_VORBIS || os->hdr_packets >= NUM_VORBIS_HDR_PACKETS ) ) &&
-     (ds != d->video || (((sh_video_t*)ds->sh)->format != FOURCC_THEORA))))
+     (ds != d->video || (((sh_video_t*)ds->sh)->fourcc != FOURCC_THEORA))))
     return 0;
 
   // For vorbis packet the packet is the data, for other codec we must jump
@@ -599,7 +599,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
   if(demuxer->video->id >= 0) {
     sid = demuxer->video->id;
     /* demux_ogg_read_packet needs decoder context for Theora streams */
-    if (((sh_video_t*)demuxer->video->sh)->format == FOURCC_THEORA)
+    if (((sh_video_t*)demuxer->video->sh)->fourcc == FOURCC_THEORA)
       context = ((sh_video_t*)demuxer->video->sh)->context;
   }
   else {
@@ -768,7 +768,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
     if(np == 0) {
       int len;
       buf = ogg_sync_buffer(sync,BLOCK_SIZE);
-      len = stream_read(s,buf,BLOCK_SIZE);      
+      len = stream_read(s,buf,BLOCK_SIZE);
       if(len == 0 && s->eof) {
 	goto err_out;
       }
@@ -834,11 +834,11 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	    sh_v->context = NULL;
 	    sh_v->bih = (BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
 	    sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
-	    sh_v->bih->biCompression= sh_v->format = FOURCC_THEORA;
+	    sh_v->bih->biCompression= sh_v->fourcc = FOURCC_THEORA;
 	    sh_v->fps = ((double)inf.fps_numerator)/
 		(double)inf.fps_denominator;
-	    sh_v->disp_w = sh_v->bih->biWidth = inf.frame_width;
-	    sh_v->disp_h = sh_v->bih->biHeight = inf.frame_height;
+	    sh_v->src_w = sh_v->bih->biWidth = inf.frame_width;
+	    sh_v->src_h = sh_v->bih->biHeight = inf.frame_height;
 	    sh_v->bih->biBitCount = 24;
 	    sh_v->bih->biPlanes = 3;
 	    sh_v->bih->biSizeImage = ((sh_v->bih->biBitCount/8) * 
@@ -878,11 +878,11 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	sh_v->bih = (BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
 	sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	sh_v->bih->biCompression=
-	sh_v->format = mmioFOURCC(pack.packet[68],pack.packet[69],
+	sh_v->fourcc = mmioFOURCC(pack.packet[68],pack.packet[69],
 				pack.packet[70],pack.packet[71]);
 	sh_v->fps = 1/(get_uint64(pack.packet+164)*0.0000001);
-	sh_v->disp_w = sh_v->bih->biWidth = get_uint32(pack.packet+176);
-	sh_v->disp_h = sh_v->bih->biHeight = get_uint32(pack.packet+180);
+	sh_v->src_w = sh_v->bih->biWidth = get_uint32(pack.packet+176);
+	sh_v->src_h = sh_v->bih->biHeight = get_uint32(pack.packet+180);
 	sh_v->bih->biBitCount = get_uint16(pack.packet+182);
 	if(!sh_v->bih->biBitCount) sh_v->bih->biBitCount=24; // hack, FIXME
 	sh_v->bih->biPlanes=1;
@@ -928,12 +928,12 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	sh_v->bih = (BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
 	sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	sh_v->bih->biCompression=
-	sh_v->format = mmioFOURCC(st->subtype[0],st->subtype[1],
+	sh_v->fourcc = mmioFOURCC(st->subtype[0],st->subtype[1],
 				  st->subtype[2],st->subtype[3]);
 	sh_v->fps = 1.0/(get_uint64(&st->time_unit)*0.0000001);
 	sh_v->bih->biBitCount = get_uint16(&st->bits_per_sample);
-	sh_v->disp_w = sh_v->bih->biWidth = get_uint32(&st->sh.video.width);
-	sh_v->disp_h = sh_v->bih->biHeight = get_uint32(&st->sh.video.height);
+	sh_v->src_w = sh_v->bih->biWidth = get_uint32(&st->sh.video.width);
+	sh_v->src_h = sh_v->bih->biHeight = get_uint32(&st->sh.video.height);
 	if(!sh_v->bih->biBitCount) sh_v->bih->biBitCount=24; // hack, FIXME
 	sh_v->bih->biPlanes=1;
 	sh_v->bih->biSizeImage=(sh_v->bih->biBitCount>>3)*sh_v->bih->biWidth*sh_v->bih->biHeight;
@@ -1272,7 +1272,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
   if(demuxer->video->id >= 0) {
     ds = demuxer->video;
     /* demux_ogg_read_packet needs decoder context for Theora streams */
-    if (((sh_video_t*)demuxer->video->sh)->format == FOURCC_THEORA)
+    if (((sh_video_t*)demuxer->video->sh)->fourcc == FOURCC_THEORA)
       context = ((sh_video_t*)demuxer->video->sh)->context;
     rate = ogg_d->subs[ds->id].samplerate;
   } else {

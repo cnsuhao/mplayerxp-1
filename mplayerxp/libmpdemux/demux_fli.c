@@ -125,19 +125,19 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   sh_video->ds = demuxer->video;
 
   // custom fourcc for internal MPlayer use
-  sh_video->format = mmioFOURCC('F', 'L', 'I', 'C');
+  sh_video->fourcc = mmioFOURCC('F', 'L', 'I', 'C');
 
-  sh_video->disp_w = stream_read_word_le(demuxer->stream);
-  sh_video->disp_h = stream_read_word_le(demuxer->stream);
+  sh_video->src_w = stream_read_word_le(demuxer->stream);
+  sh_video->src_h = stream_read_word_le(demuxer->stream);
 
   // pass extradata to codec
   sh_video->bih = (BITMAPINFOHEADER*)header;
   sh_video->bih->biSize = sizeof(BITMAPINFOHEADER) + 128;
-  sh_video->bih->biCompression=sh_video->format;
-  sh_video->bih->biWidth=sh_video->disp_w;
+  sh_video->bih->biCompression=sh_video->fourcc;
+  sh_video->bih->biWidth=sh_video->src_w;
   sh_video->bih->biPlanes=0;
   sh_video->bih->biBitCount=0; /* depth */
-  sh_video->bih->biHeight=sh_video->disp_h;
+  sh_video->bih->biHeight=sh_video->src_h;
   sh_video->bih->biSizeImage=sh_video->bih->biWidth*sh_video->bih->biHeight;
   // skip the video depth and flags
   stream_skip(demuxer->stream, 4);

@@ -196,7 +196,7 @@ static int init(sh_video_t *sh){
 			(((unsigned char)'Q')<<8)|
 			(((unsigned char)'3'));
 #else
-    desc.componentSubType = bswap_32(sh->format);
+    desc.componentSubType = bswap_32(sh->fourcc);
 #endif
     desc.componentManufacturer=0;
     desc.componentFlags=0;
@@ -227,8 +227,8 @@ static int init(sh_video_t *sh){
     //make a yuy2 gworld
     OutBufferRect.top=0;
     OutBufferRect.left=0;
-    OutBufferRect.right=sh->disp_w;
-    OutBufferRect.bottom=sh->disp_h;
+    OutBufferRect.right=sh->src_w;
+    OutBufferRect.bottom=sh->src_h;
 
     //Fill the imagedescription for our SVQ3 frame
     //we can probably get this from Demuxer
@@ -292,10 +292,10 @@ static int init(sh_video_t *sh){
     }
     MSG_V("imgfmt: %s qt_imgfmt: %.4s\n", vo_format_name(imgfmt), &qt_imgfmt);
     sh->context = qt_imgfmt;
-    if(!mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL)) return 0;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
     }
 #else
-    if(!mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL)) return 0;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
 #endif
 
     return 1;
@@ -318,7 +318,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     if(len<=0) return NULL; // skipped frame
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_STATIC, MP_IMGFLAG_PRESERVE, 
-	sh->disp_w, sh->disp_h);
+	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     decpar.data = (char*)data;

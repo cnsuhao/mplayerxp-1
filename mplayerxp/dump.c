@@ -204,9 +204,9 @@ void dump_mux_init(demuxer_t *demuxer)
     {
 	shv->bih=malloc(sizeof(BITMAPINFOHEADER));
 	shv->bih->biSize=sizeof(BITMAPINFOHEADER);
-	shv->bih->biWidth=shv->disp_w;
-	shv->bih->biHeight=shv->disp_h;
-	shv->bih->biCompression=shv->format;
+	shv->bih->biWidth=shv->src_w;
+	shv->bih->biHeight=shv->src_h;
+	shv->bih->biCompression=shv->fourcc;
 	shv->bih->biPlanes=1;
 	shv->bih->biBitCount=24; // FIXME!!!
 	shv->bih->biSizeImage=shv->bih->biWidth*shv->bih->biHeight*(shv->bih->biBitCount/8);

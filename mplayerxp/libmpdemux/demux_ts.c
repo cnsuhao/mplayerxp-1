@@ -317,22 +317,22 @@ static void ts_add_stream(demuxer_t * demuxer, ES_stream_t *es)
 		sh_video_t *sh = new_sh_video_vid(demuxer, priv->last_vid, es->pid);
 		if(sh)
 		{
-			sh->format = IS_VIDEO(es->type) ? es->type : es->subtype;;
+			sh->fourcc = IS_VIDEO(es->type) ? es->type : es->subtype;;
 			sh->ds = demuxer->video;
 
 			priv->ts.streams[es->pid].id = priv->last_vid;
 			priv->ts.streams[es->pid].sh = sh;
 			priv->ts.streams[es->pid].type = TYPE_VIDEO;
-			MSG_V("\r\nADDED VIDEO PID %d, type: %x stream n. %d\r\n", es->pid, sh->format, priv->last_vid);
+			MSG_V("\r\nADDED VIDEO PID %d, type: %x stream n. %d\r\n", es->pid, sh->fourcc, priv->last_vid);
 			priv->last_vid++;
 
 
-			if(sh->format == VIDEO_AVC && es->extradata && es->extradata_len)
+			if(sh->fourcc == VIDEO_AVC && es->extradata && es->extradata_len)
 			{
 				int w = 0, h = 0;
 				sh->bih = (BITMAPINFOHEADER *) calloc(1, sizeof(BITMAPINFOHEADER) + es->extradata_len);
 				sh->bih->biSize= sizeof(BITMAPINFOHEADER) + es->extradata_len;
-				sh->bih->biCompression = sh->format;
+				sh->bih->biCompression = sh->fourcc;
 				memcpy(sh->bih + 1, es->extradata, es->extradata_len);
 				MSG_DBG2("EXTRADATA(%d BYTES): \n", es->extradata_len);
 				for(i = 0;i < es->extradata_len; i++)
@@ -997,7 +997,7 @@ static demuxer_t *ts_open(demuxer_t * demuxer)
 		sh_video = priv->ts.streams[params.vpid].sh;
 		demuxer->video->id = priv->ts.streams[params.vpid].id;
 		sh_video->ds = demuxer->video;
-		sh_video->format = params.vtype;
+		sh_video->fourcc = params.vtype;
 		demuxer->video->sh = sh_video;
 	}
 
@@ -2784,7 +2784,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 					if(p == priv->prog)
 					{
 						int asgn = 0;
-						uint8_t *lang;
+						char *lang;
 
 						if(mp_conf.dvdsub_lang)
 						{
@@ -3141,13 +3141,13 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 
 
 		i = sync_video_packet(d_video);
-		if((sh_video->format == VIDEO_MPEG1) || (sh_video->format == VIDEO_MPEG2))
+		if((sh_video->fourcc == VIDEO_MPEG1) || (sh_video->fourcc == VIDEO_MPEG2))
 		{
 			if(i==0x1B3 || i==0x1B8) break; // found it!
 		}
-		else if((sh_video->format == VIDEO_MPEG4) && (i==0x1B6))
+		else if((sh_video->fourcc == VIDEO_MPEG4) && (i==0x1B6))
 			break; // found it!
-		else if(sh_video->format == VIDEO_VC1 && (i==0x10E || i==0x10F))
+		else if(sh_video->fourcc == VIDEO_VC1 && (i==0x10E || i==0x10F))
 			break;
 		else	//H264
 		{

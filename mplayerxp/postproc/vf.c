@@ -300,9 +300,9 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** filter_list,vf_inst
     vf->default_caps=VFCAP_ACCEPT_STRIDE;
     vf->default_reqs=0;
     vf->sh=sh;
-    vf->dw=sh->disp_w;
-    vf->dh=sh->disp_h;
-    vf->dfourcc=sh->format;
+    vf->dw=sh->src_w;
+    vf->dh=sh->src_h;
+    vf->dfourcc=sh->fourcc;
     if(next) next->prev=vf;
     if(vf->info->open(vf,(char*)args)>0) return vf; // Success!
     free(vf);
@@ -538,7 +538,7 @@ static int __FASTCALL__ dummy_config(struct vf_instance_s* vf,
 static void vf_report_chain(void)
 {
     vf_instance_t *_this=sh_video->vfilter;
-    MSG_V("sh_video: %ix%i@%s\n",sh_video->disp_w,sh_video->disp_h,vo_format_name(sh_video->codec->outfmt[sh_video->outfmtidx]));
+    MSG_V("sh_video: %ix%i@%s\n",sh_video->src_w,sh_video->src_h,vo_format_name(sh_video->codec->outfmt[sh_video->outfmtidx]));
     while(1)
     {
 	if(!_this) break;
@@ -598,8 +598,8 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
     }
     else
     {
-	sw=sh_video->disp_w;
-	sh=sh_video->disp_h;
+	sw=sh_video->src_w;
+	sh=sh_video->src_h;
 	sfourcc=sh_video->codec->outfmt[sh_video->outfmtidx];
 	MSG_V("Using(sh_video) %ix%i@%s\n",sw,sh,vo_format_name(sfourcc));
     }

@@ -2241,27 +2241,27 @@ demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
 
   sh_v = new_sh_video_vid (demuxer, track->tnum, vid);
   sh_v->bih = bih;
-  sh_v->format = sh_v->bih->biCompression;
+  sh_v->fourcc = sh_v->bih->biCompression;
   if (track->v_frate == 0.0)
     track->v_frate = 25.0;
   sh_v->fps = track->v_frate;
   sh_v->aspect = 0;
   if (!track->realmedia)
     {
-      sh_v->disp_w = track->v_width;
-      sh_v->disp_h = track->v_height;
+      sh_v->src_w = track->v_width;
+      sh_v->src_h = track->v_height;
       if (track->v_dheight)
       sh_v->aspect = (float)track->v_dwidth / (float)track->v_dheight;
     }
   else
     {
-      // vd_realvid.c will set aspect to disp_w/disp_h and rederive
-      // disp_w and disp_h from the RealVideo stream contents returned
+      // vd_realvid.c will set aspect to src_w/src_h and rederive
+      // src_w and src_h from the RealVideo stream contents returned
       // by the Real DLLs. If DisplayWidth/DisplayHeight was not set in
       // the Matroska file then it has already been set to PixelWidth/Height
       // by check_track_information.
-	sh_v->disp_w=bih->biWidth;
-	sh_v->disp_h=bih->biHeight;
+	sh_v->src_w=bih->biWidth;
+	sh_v->src_h=bih->biHeight;
     }
   sh_v->ImageDesc = ImageDesc;
   MSG_V( "[mkv] Aspect: %f\n", sh_v->aspect);

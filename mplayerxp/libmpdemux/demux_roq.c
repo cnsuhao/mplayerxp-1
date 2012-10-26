@@ -142,12 +142,12 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
         // parent video demuxer stream
         sh_video->ds = demuxer->video;
 
-        sh_video->disp_w = stream_read_word_le(demuxer->stream);
-        sh_video->disp_h = stream_read_word_le(demuxer->stream);
+        sh_video->src_w = stream_read_word_le(demuxer->stream);
+        sh_video->src_h = stream_read_word_le(demuxer->stream);
         stream_skip(demuxer->stream, 4);
 
         // custom fourcc for internal MPlayer use
-        sh_video->format = mmioFOURCC('R', 'o', 'Q', 'V');
+        sh_video->fourcc = mmioFOURCC('R', 'o', 'Q', 'V');
 
         // constant frame rate
         sh_video->fps = fps;

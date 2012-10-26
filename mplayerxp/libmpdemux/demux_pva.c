@@ -164,7 +164,7 @@ static demuxer_t* pva_open (demuxer_t * demuxer)
 	 * the used codecs.
 	 */
 	
-	sh_video->format=0x10000002;
+	sh_video->fourcc=0x10000002;
 	sh_video->ds=demuxer->video;
 		
 	/*

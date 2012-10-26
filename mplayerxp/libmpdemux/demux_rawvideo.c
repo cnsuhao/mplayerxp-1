@@ -104,10 +104,10 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
   }
 
   sh_video = new_sh_video(demuxer,0);
-  sh_video->format=priv.format;
+  sh_video->fourcc=priv.format;
   sh_video->fps=priv.fps;
-  sh_video->disp_w=priv.width;
-  sh_video->disp_h=priv.height;
+  sh_video->src_w=priv.width;
+  sh_video->src_h=priv.height;
 
   demuxer->movi_start = demuxer->stream->start_pos;
   demuxer->movi_end = demuxer->stream->end_pos;

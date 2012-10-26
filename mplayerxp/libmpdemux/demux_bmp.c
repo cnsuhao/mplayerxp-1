@@ -154,12 +154,12 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
     switch(img->format->BitsPerPixel)
     {
 	default: 
-	case 8:  sh_video->format = npal_colors > 0 ? IMGFMT_BGR24 : 
+	case 8:  sh_video->fourcc = npal_colors > 0 ? IMGFMT_BGR24 : 
 				    img->format->Bshift < img->format->Rshift ? IMGFMT_BGR8 : IMGFMT_RGB8; break;
-	case 15: sh_video->format = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR15 : IMGFMT_RGB15; break;
-	case 16: sh_video->format = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR16 : IMGFMT_RGB16; break;
-	case 24: sh_video->format = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR24 : IMGFMT_RGB24; break;
-	case 32: sh_video->format = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR32 : IMGFMT_RGB32; break;
+	case 15: sh_video->fourcc = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR15 : IMGFMT_RGB15; break;
+	case 16: sh_video->fourcc = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR16 : IMGFMT_RGB16; break;
+	case 24: sh_video->fourcc = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR24 : IMGFMT_RGB24; break;
+	case 32: sh_video->fourcc = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR32 : IMGFMT_RGB32; break;
     }
   // custom fourcc for internal MPlayer use
   MSG_V("demux_bmp: bpp=%u w=%u h=%u RGB_fmt(loss: %u %u %u %u shift: %u %u %u %u mask %u %u %u %u) palette=%u\n"
@@ -177,8 +177,8 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   ,img->format->Gmask
   ,img->format->Rmask
   ,npal_colors);
-  sh_video->disp_w = img->w;
-  sh_video->disp_h = img->h;
+  sh_video->src_w = img->w;
+  sh_video->src_h = img->h;
   sh_video->is_static = 1;
   // get the speed
   sh_video->fps = 2;
@@ -273,10 +273,10 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   bmp_image->image_offset = data_offset;
 
   // custom fourcc for internal MPlayer use
-  sh_video->format = sh_video->bih->biCompression;
+  sh_video->fourcc = sh_video->bih->biCompression;
 
-  sh_video->disp_w = sh_video->bih->biWidth;
-  sh_video->disp_h = sh_video->bih->biHeight;
+  sh_video->src_w = sh_video->bih->biWidth;
+  sh_video->src_h = sh_video->bih->biHeight;
 
   // get the speed
   sh_video->is_static = 1;

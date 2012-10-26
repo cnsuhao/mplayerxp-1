@@ -116,7 +116,7 @@ static int init_vfw_video_codec(sh_video_t *sh_video){
 
   ex = priv->ex;
   MSG_V("======= Win32 (VFW) VIDEO Codec init =======\n");
-  priv->hic = ICOpen(IC_FCCTYPE, sh_video->format, ICMODE_DECOMPRESS);
+  priv->hic = ICOpen(IC_FCCTYPE, sh_video->fourcc, ICMODE_DECOMPRESS);
   if(!priv->hic){
     MSG_ERR("ICOpen failed! unknown codec / wrong parameters?\n");
     return 0;
@@ -268,7 +268,7 @@ static int init(sh_video_t *sh){
     priv->ex = vfw_ex;
     if(!init_vfw_video_codec(sh)) return 0;
     MSG_V("INFO: Win32/VFW init OK!\n");
-    return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 
 // uninit driver
@@ -290,7 +290,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 
     mpi=mpcodecs_get_image(sh, 
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_WIDTH, 
-	sh->disp_w, sh->disp_h);
+	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     // set stride:  (trick discovered by Andreas Ackermann - thanx!)

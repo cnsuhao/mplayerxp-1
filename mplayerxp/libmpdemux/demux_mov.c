@@ -956,7 +956,7 @@ quit_vorbis_block:
 		unsigned char *palette_map;
 		sh_video_t* sh=new_sh_video(demuxer,priv->track_db);
 		int depth;
-		sh->format=trak->fourcc;
+		sh->fourcc=trak->fourcc;
 
 		/* crude video delay from editlist0 hack ::atm */
 		if(trak->editlist_size>=1) {
@@ -1057,9 +1057,9 @@ quit_vorbis_block:
 			  if(esds.objectTypeId==MP4OTI_MPEG2VisualSimple || esds.objectTypeId==MP4OTI_MPEG2VisualMain ||
 			     esds.objectTypeId==MP4OTI_MPEG2VisualSNR || esds.objectTypeId==MP4OTI_MPEG2VisualSpatial ||
 			     esds.objectTypeId==MP4OTI_MPEG2VisualHigh || esds.objectTypeId==MP4OTI_MPEG2Visual422)
-			    sh->format=mmioFOURCC('m', 'p', 'g', '2');
+			    sh->fourcc=mmioFOURCC('m', 'p', 'g', '2');
 			  else if(esds.objectTypeId==MP4OTI_MPEG1Visual)
-			    sh->format=mmioFOURCC('m', 'p', 'g', '1');
+			    sh->fourcc=mmioFOURCC('m', 'p', 'g', '1');
 
 			  // dump away the codec specific configuration for the AAC decoder
 			  trak->stream_header_len = esds.decoderConfigLen;
@@ -1121,13 +1121,13 @@ quit_vorbis_block:
 		sh->fps=trak->timescale/
 		    ((trak->durmap_size>=1)?(float)trak->durmap[0].dur:1);
 
-		sh->disp_w=trak->stdata[25]|(trak->stdata[24]<<8);
-		sh->disp_h=trak->stdata[27]|(trak->stdata[26]<<8);
+		sh->src_w=trak->stdata[25]|(trak->stdata[24]<<8);
+		sh->src_h=trak->stdata[27]|(trak->stdata[26]<<8);
 		// if image size is zero, fallback to display size
-		if(!sh->disp_w && !sh->disp_h) {
-		  sh->disp_w=trak->tkdata[77]|(trak->tkdata[76]<<8);
-		  sh->disp_h=trak->tkdata[81]|(trak->tkdata[80]<<8);
-		} else if(sh->disp_w!=(trak->tkdata[77]|(trak->tkdata[76]<<8))){
+		if(!sh->src_w && !sh->src_h) {
+		  sh->src_w=trak->tkdata[77]|(trak->tkdata[76]<<8);
+		  sh->src_h=trak->tkdata[81]|(trak->tkdata[80]<<8);
+		} else if(sh->src_w!=(trak->tkdata[77]|(trak->tkdata[76]<<8))){
 		  // codec and display width differ... use display one for aspect
 		  sh->aspect=trak->tkdata[77]|(trak->tkdata[76]<<8);
 		  sh->aspect/=trak->tkdata[81]|(trak->tkdata[80]<<8);
@@ -1247,14 +1247,14 @@ quit_vorbis_block:
 		  sh->bih->biSize=40;
 		 }
 		}
-		sh->bih->biWidth=sh->disp_w;
-		sh->bih->biHeight=sh->disp_h;
+		sh->bih->biWidth=sh->src_w;
+		sh->bih->biHeight=sh->src_h;
 		sh->bih->biPlanes=0;
 		sh->bih->biBitCount=depth;
 		sh->bih->biCompression=trak->fourcc;
 		sh->bih->biSizeImage=sh->bih->biWidth*sh->bih->biHeight;
 
-		MSG_V( "Image size: %d x %d (%d bpp)\n",sh->disp_w,sh->disp_h,sh->bih->biBitCount);
+		MSG_V( "Image size: %d x %d (%d bpp)\n",sh->src_w,sh->src_h,sh->bih->biBitCount);
 		if(trak->tkdata_len>81)
 		MSG_V( "Display size: %d x %d\n",
 		    trak->tkdata[77]|(trak->tkdata[76]<<8),

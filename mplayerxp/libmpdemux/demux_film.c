@@ -137,7 +137,7 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   else
   {
     // if the demuxer is dealing with CVID data, deal with it a special way
-    if (sh_video->format == mmioFOURCC('c', 'v', 'i', 'd'))
+    if (sh_video->fourcc == mmioFOURCC('c', 'v', 'i', 'd'))
     {
       if (film_data->film_version)
         length_fix_bytes = 2;
@@ -265,12 +265,12 @@ static demuxer_t* film_open(demuxer_t* demuxer)
         demuxer->video->sh = sh_video;
         sh_video->ds = demuxer->video;
 
-        sh_video->format = video_format;
-        sh_video->disp_h = stream_read_dword(demuxer->stream);
-        sh_video->disp_w = stream_read_dword(demuxer->stream);
+        sh_video->fourcc= video_format;
+        sh_video->src_h = stream_read_dword(demuxer->stream);
+        sh_video->src_w = stream_read_dword(demuxer->stream);
         MSG_V(
-          "  FILM video: %d x %d\n", sh_video->disp_w,
-          sh_video->disp_h);
+          "  FILM video: %d x %d\n", sh_video->src_w,
+          sh_video->src_h);
       }
       else
         // skip height and width if no video

@@ -125,18 +125,18 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 
 	    stream_skip(demuxer->stream, 4); /* number of frames */
 //	    sh_video->fps = 24;
-	    sh_video->disp_w = stream_read_word(demuxer->stream);
-	    sh_video->disp_h = stream_read_word(demuxer->stream);
-	    sh_video->format = stream_read_dword_le(demuxer->stream);
+	    sh_video->src_w = stream_read_word(demuxer->stream);
+	    sh_video->src_h = stream_read_word(demuxer->stream);
+	    sh_video->fourcc = stream_read_dword_le(demuxer->stream);
 
 	    /* these are false values */
 	    sh_video->bih->biSize = 40;
-	    sh_video->bih->biWidth = sh_video->disp_w;
-	    sh_video->bih->biHeight = sh_video->disp_h;
+	    sh_video->bih->biWidth = sh_video->src_w;
+	    sh_video->bih->biHeight = sh_video->src_h;
 	    sh_video->bih->biPlanes = 3;
 	    sh_video->bih->biBitCount = 12;
-	    sh_video->bih->biCompression = sh_video->format;
-	    sh_video->bih->biSizeImage = sh_video->disp_w*sh_video->disp_h;
+	    sh_video->bih->biCompression = sh_video->fourcc;
+	    sh_video->bih->biSizeImage = sh_video->src_w*sh_video->src_h;
 	    break;
 	case mmioFOURCC('_','S','N','D'):
 	    sh_audio = new_sh_audio(demuxer, 0);

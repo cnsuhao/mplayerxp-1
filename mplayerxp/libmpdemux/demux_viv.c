@@ -250,12 +250,12 @@ static int vivo_probe(demuxer_t* demuxer){
     int i=0;
     int len;
     int c;
-    unsigned char buf[2048+256];
+    char buf[2048+256];
     vivo_priv_t* priv;
     int orig_pos = stream_tell(demuxer->stream);
-    
+
     MSG_V("Checking for VIVO\n");
-    
+
     c=stream_read_char(demuxer->stream);
     if(c==-256) return 0;
     len=0;
@@ -561,16 +561,16 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
   }
 
     audio_pos=0;
-  
+
   h263_decode_picture_header(demuxer->video->buffer);
-  
+
   if (vivo_param_version != -1)
     priv->version = '0' + vivo_param_version;
 
 {		sh_video_t* sh=new_sh_video(demuxer,0);
 
 		/* viv1, viv2 (for better codecs.conf) */    
-		sh->format = mmioFOURCC('v', 'i', 'v', priv->version);
+		sh->fourcc = mmioFOURCC('v', 'i', 'v', priv->version);
 		if(!sh->fps)
 		{
 		    if (priv->fps)
@@ -597,13 +597,13 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		}
 
 		if (priv->disp_width)
-		    sh->disp_w = priv->disp_width;
+		    sh->src_w = priv->disp_width;
 		else
-		    sh->disp_w = width;
+		    sh->src_w = width;
 		if (priv->disp_height)
-		    sh->disp_h = priv->disp_height;
+		    sh->src_h = priv->disp_height;
 		else
-		    sh->disp_h = height;
+		    sh->src_h = height;
 
 		// emulate BITMAPINFOHEADER:
 		sh->bih=malloc(sizeof(BITMAPINFOHEADER));
@@ -619,7 +619,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		    sh->bih->biHeight = height;
 		sh->bih->biPlanes=1;
 		sh->bih->biBitCount=24;
-		sh->bih->biCompression=sh->format;
+		sh->bih->biCompression=sh->fourcc;
 		sh->bih->biSizeImage=sh->bih->biWidth*sh->bih->biHeight*3;
 
 		/* insert as stream */
@@ -631,7 +631,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		demuxer->flags &= ~DEMUXF_SEEKABLE;
 
 		MSG_V("VIVO Video stream %d size: display: %dx%d, codec: %ux%u\n",
-		    demuxer->video->id, sh->disp_w, sh->disp_h, sh->bih->biWidth,
+		    demuxer->video->id, sh->src_w, sh->src_h, sh->bih->biWidth,
 		    sh->bih->biHeight);
 }
 

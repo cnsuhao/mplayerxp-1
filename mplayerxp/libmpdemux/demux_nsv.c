@@ -130,7 +130,6 @@ static int nsv_demux ( demuxer_t *demuxer,demux_stream_t* __ds )
     ++priv->video_pack_no;
 
     return 1;
-    
 }
 
 
@@ -142,51 +141,50 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
     unsigned char buf[10];
     sh_video_t *sh_video = NULL;
     sh_audio_t *sh_audio = NULL;
-    
-    
+
     nsv_priv_t * priv = malloc(sizeof(nsv_priv_t));
     demuxer->priv=priv;
     priv->video_pack_no=0;
 
       /* disable seeking yet to be fixed*/
     demuxer->flags &= ~(DEMUXF_SEEKABLE);
-        
+
     stream_read(demuxer->stream,hdr,4);
     if(stream_eof(demuxer->stream)) return 0;
-    
+
     /*** if we detected the file to be nsv and there was neither eof nor a header
     **** that means that its most likely a shoutcast stream so we will need to seek
     **** to the first occurance of the NSVs header                      ****/
     if(!(hdr[0]==0x4E && hdr[1]==0x53 && hdr[2]==0x56)){
-        // todo: replace this with a decent string search algo 
+        // todo: replace this with a decent string search algo
         while(1){
             stream_read(demuxer->stream,hdr,1);
             if(stream_eof(demuxer->stream)) 
                 return 0;
             if(hdr[0]!=0x4E)
                 continue;
-                
+
             stream_read(demuxer->stream,hdr+1,1);
-            
+
             if(stream_eof(demuxer->stream)) 
                 return 0;
             if(hdr[1]!=0x53)
                 continue;
-                
+
             stream_read(demuxer->stream,hdr+2,1);
-            
+
             if(stream_eof(demuxer->stream)) 
                 return 0;
             if(hdr[2]!=0x56)
                 continue;
-                
+
             stream_read(demuxer->stream,hdr+3,1);
-            
+
             if(stream_eof(demuxer->stream)) 
                 return 0;
             if(hdr[3]!=0x73)
                 continue;
-            
+
             break;
         }
     }
@@ -194,7 +192,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
         // NSV header!
         if(hdr[3]==0x73){
             // NSVs
-            stream_read(demuxer->stream,hdr+4,17-4);            
+            stream_read(demuxer->stream,hdr+4,17-4);
         }
 
         if(hdr[3]==0x66){
@@ -237,13 +235,13 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
              * video_read_properties() will choke
              */
             sh_video->ds = demuxer->video;
-        
+
             //   bytes 4-7  video codec fourcc
-            priv->v_format = sh_video->format=mmioFOURCC(hdr[4],hdr[5],hdr[6],hdr[7]);
-        
+            priv->v_format = sh_video->fourcc=mmioFOURCC(hdr[4],hdr[5],hdr[6],hdr[7]);
+
             // new video stream! parse header
-            sh_video->disp_w=hdr[12]|(hdr[13]<<8);
-            sh_video->disp_h=hdr[14]|(hdr[15]<<8);
+            sh_video->src_w=hdr[12]|(hdr[13]<<8);
+            sh_video->src_h=hdr[14]|(hdr[15]<<8);
             sh_video->bih=(BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
             sh_video->bih->biSize=sizeof(BITMAPINFOHEADER);
             sh_video->bih->biPlanes=1; 

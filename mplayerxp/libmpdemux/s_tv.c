@@ -265,7 +265,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
     sh_video = new_sh_video(demuxer, 0);
 
     /* get IMAGE FORMAT */
-    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_FORMAT, &sh_video->format);
+    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_FORMAT, &sh_video->fourcc);
 //    if (IMGFMT_IS_RGB(sh_video->format) || IMGFMT_IS_BGR(sh_video->format))
 //	sh_video->format = 0x0;
 
@@ -294,12 +294,12 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 #endif
 
     /* set width */
-    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_WIDTH, &sh_video->disp_w);
+    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_WIDTH, &sh_video->src_w);
 
     /* set height */
-    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_HEIGHT, &sh_video->disp_h);
+    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_HEIGHT, &sh_video->src_h);
 
-    MSG_V( "Output size: %dx%d\n", sh_video->disp_w, sh_video->disp_h);
+    MSG_V( "Output size: %dx%d\n", sh_video->src_w, sh_video->src_h);
     
     demuxer->video->sh = sh_video;
     sh_video->ds = demuxer->video;

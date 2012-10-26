@@ -95,7 +95,7 @@ int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int st
     unsigned o_bps,bpp;
     sh_video->codec=NULL;
     MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
-    while((sh_video->codec=find_codec(sh_video->format,
+    while((sh_video->codec=find_codec(sh_video->fourcc,
       sh_video->bih?((unsigned int*) &sh_video->bih->biCompression):NULL,
       sh_video->codec,0) )){
 	// ok we found one codec
@@ -151,14 +151,14 @@ int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int st
 		case IMGFMT_RGB32:
 		case IMGFMT_BGR32: bpp = 32; break;
 	}
-	o_bps=sh_video->fps*sh_video->disp_w*sh_video->disp_h*bpp/8;
+	o_bps=sh_video->fps*sh_video->src_w*sh_video->src_h*bpp/8;
 	MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
 	,video_codec?"Forcing":"Selected"
 	,sh_video->codec->codec_name
 	,mpvdec->info->driver_name
 	,sh_video->codec->dll_name
-	,sh_video->disp_w
-	,sh_video->disp_h
+	,sh_video->src_w
+	,sh_video->src_h
 	,sh_video->aspect
 	,sh_video->fps);
 	// Yeah! We got it!

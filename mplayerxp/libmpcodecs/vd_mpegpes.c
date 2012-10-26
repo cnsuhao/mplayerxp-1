@@ -26,7 +26,7 @@ static int control(sh_video_t *sh,int cmd,any_t* arg,...){
 
 // init driver
 static int init(sh_video_t *sh){
-    return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 
 // uninit driver
@@ -37,7 +37,7 @@ static void uninit(sh_video_t *sh){
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     mp_image_t* mpi;
     static vo_mpegpes_t packet;
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->disp_w, sh->disp_h);
+    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
     packet.data=data;
     packet.size=len-4;

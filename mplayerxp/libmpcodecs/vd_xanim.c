@@ -393,8 +393,8 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     codec_hdr.description = vidinfo->codec->s_info;
     codec_hdr.compression = bswap_32(vidinfo->bih->biCompression);
     codec_hdr.decoder = NULL;
-    codec_hdr.x = vidinfo->bih->biWidth; /* ->disp_w */
-    codec_hdr.y = vidinfo->bih->biHeight; /* ->disp_h */
+    codec_hdr.x = vidinfo->bih->biWidth; /* ->src_w */
+    codec_hdr.y = vidinfo->bih->biHeight; /* ->src_h */
     /* extra fields to store palette */
     codec_hdr.avi_ctab_flag = 0;
     codec_hdr.avi_read_ext = NULL;
@@ -908,7 +908,7 @@ static int control(sh_video_t *sh,int cmd,any_t* arg,...){
 // init driver
 static int init(sh_video_t *sh){
     if(xacodec_init_video(sh,sh->codec->outfmt[sh->outfmtidx]))
-	return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
+	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
     return 0;
 }
 
@@ -928,7 +928,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     if(!image) return NULL;
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE, 
-	sh->disp_w, sh->disp_h);
+	sh->src_w, sh->src_h);
     if(!mpi) return NULL;
 
     mpi->planes[0]=image->planes[0];

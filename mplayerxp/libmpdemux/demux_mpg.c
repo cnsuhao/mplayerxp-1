@@ -371,7 +371,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
       if(priv && ds->sh) {
 	sh_video_t *sh = (sh_video_t *)ds->sh;
 	if(priv->es_map[id - 0x1B0]) {
-	  sh->format = priv->es_map[id - 0x1B0];
+	  sh->fourcc = priv->es_map[id - 0x1B0];
           MSG_DBG2("ASSIGNED TO STREAM %d CODEC %x\n", id, priv->es_map[id - 0x1B0]);
 	}
       }
@@ -405,7 +405,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 	dp->pts=pts/90000.0f;
 	if(ds==demux->video)	sh=(sh_video_t *)ds->sh;
 	else			sh=NULL;
-	dp->flags=sh?is_mpg_keyframe(sh->format,id,dp->buffer):DP_NONKEYFRAME;
+	dp->flags=sh?is_mpg_keyframe(sh->fourcc,id,dp->buffer):DP_NONKEYFRAME;
 	dp->pos=demux->filepos;
 	ds->asf_packet=dp;
         if (ds==ds->demuxer->sub) {
@@ -581,13 +581,13 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	    }
           }
           i=sync_video_packet(d_video);
-          if(sh_video->format == VIDEO_MPEG4) {
+          if(sh_video->fourcc == VIDEO_MPEG4) {
             if(i==0x1B6) {			//vop (frame) startcode
 	      int pos = videobuf_len;
 	      if(!read_video_packet(d_video)) break; // EOF
 	      if((videobuffer[pos+4] & 0x3F) == 0) break;//I-frame
 	    }
-          } else if(sh_video->format == VIDEO_H264){
+          } else if(sh_video->fourcc == VIDEO_H264){
             if((i & ~0x60) == 0x101 || (i & ~0x60) == 0x102 || (i & ~0x60) == 0x105) break;
           } else { //default VIDEO_MPEG1/VIDEO_MPEG2
 	    if(i==0x1B3 || i==0x1B8) break; // found it!

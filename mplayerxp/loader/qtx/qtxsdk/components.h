@@ -623,7 +623,7 @@ enum {
 
 static inline void dump_ImageDescription(any_t* xxx){
     ImageDescription* id=(ImageDescription*)xxx;
-    unsigned char* x;
+    char* x;
     int i;
 
     for(i=0;i<id->idSize;i++){
@@ -644,7 +644,7 @@ static inline void dump_ImageDescription(any_t* xxx){
     printf("dataSize=%d frameCount=%d clutID=%d\n",id->dataSize, id->frameCount, id->clutID);
     printf("name='%.*s'\n",((char*)(&id->name))[0],((char*)(&id->name))+1);
     x=((char*)(&id->clutID))+2;
-    if(id->idSize>sizeof(ImageDescription)){
+    if((unsigned)id->idSize>sizeof(ImageDescription)){
 	printf("%02X %02X %02X %02X | %02X %02X %02X %02X | %02X %02X %02X %02X | %02X %02X %02X %02X\n",
 	x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9],x[10],x[11],x[12],x[13],x[14],x[15]);
     }
@@ -693,7 +693,7 @@ static inline void dump_CodecCapabilities(any_t* xxx){
 static inline void dump_CodecDecompressParams(any_t* xxx){
     CodecDecompressParams* cd=xxx;
     ImageDescription **idh;
-    int i;
+    unsigned i;
     if(!xxx) return;
     printf("=============== CodecDecompressParams at %p ==================\n",xxx);
     printf("sequenceID=%d\n",cd->sequenceID);
@@ -729,7 +729,7 @@ static inline void dump_CodecDecompressParams(any_t* xxx){
     }
     printf("screenFloodMethod=%d value=%d  preferredOffscreenPixelSize=%d\n",
 	cd->screenFloodMethod, cd->screenFloodValue, cd->preferredOffscreenPixelSize);
-    printf("callbacks: progress=0x%08llX compl=0x%08llX data=0x%08llX ftime=%p srcdata=%p sync=%p\n",
+    printf("callbacks: progress=0x%16"PRIx64" compl=0x%16"PRIx64" data=0x%16"PRIx64" ftime=%p srcdata=%p sync=%p\n",
      cd->progressProcRecord, cd->completionProcRecord,
      cd->dataProcRecord, cd->frameTime, cd->sourceData, cd->syncFrameTime);
 //    printf("\n");

@@ -152,7 +152,7 @@ static int init(sh_video_t *sh){
 	// we export codec id and sub-id from demuxer in bitmapinfohdr:
 	unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
 	struct rv_init_t init_data={
-		11, sh->disp_w, sh->disp_h,0,0,extrahdr[0],
+		11, sh->src_w, sh->src_h,0,0,extrahdr[0],
 		1,extrahdr[1]}; // rv30
 
 	MSG_V("realvideo codec id: 0x%08X  sub-id: 0x%08X\n",extrahdr[1],extrahdr[0]);
@@ -161,7 +161,7 @@ static int init(sh_video_t *sh){
 		return 0;
 	}
 	// only I420 supported
-	if(!mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL)) return 0;
+	if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
 	// init codec:
 	sh->context=NULL;
 	result=(*rvyuv_init)(&init_data, &sh->context);
@@ -171,7 +171,7 @@ static int init(sh_video_t *sh){
 	}
 	// setup rv30 codec (codec sub-type and image dimensions):
 	if(extrahdr[1]>=0x20200002){
-	    uint32_t cmsg24[4]={sh->disp_w,sh->disp_h,sh->disp_w,sh->disp_h};
+	    uint32_t cmsg24[4]={sh->src_w,sh->src_h,sh->src_w,sh->src_h};
 	    /* FIXME: Broken for 64-bit pointers */
 	    cmsg_data_t cmsg_data={0x24,1+(extrahdr[1]&7), &cmsg24[0]};
 	    (*rvyuv_custom_message)(&cmsg_data,sh->context);
@@ -209,7 +209,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	if(len<=0 || flags&2) return NULL; // skipped frame || hardframedrop
 
 	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
-		sh->disp_w, sh->disp_h);
+		sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 	
 	result=(*rvyuv_transform)(dp_data, mpi->planes[0], &transform_in,

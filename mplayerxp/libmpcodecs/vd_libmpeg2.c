@@ -188,7 +188,7 @@ static int init(sh_video_t *sh){
     if(!load_lib("libmpeg2"SLIBSUFFIX)) return 0;
     priv=sh->context=malloc(sizeof(priv_t));
     if(!(priv->mpeg2dec=mpeg2_init(mplayer_accel))) return 0;
-    return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 
 // uninit driver

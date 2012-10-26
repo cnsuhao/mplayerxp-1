@@ -63,21 +63,21 @@ enum {
 
 if((d_video->demuxer->file_format == DEMUXER_TYPE_PVA) ||
    (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES) ||
-   (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS && ((! sh_video->format) || (sh_video->format==0x10000001) || (sh_video->format==0x10000002))) ||
-   (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS && ((sh_video->format==0x10000001) || (sh_video->format==0x10000002)))
+   (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS && ((! sh_video->fourcc) || (sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))) ||
+   (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002)))
 #ifdef STREAMING_LIVE_DOT_COM
   || ((d_video->demuxer->file_format == DEMUXER_TYPE_RTP) && demux_is_mpeg_rtp_stream(d_video->demuxer))
 #endif
   )
     video_codec = VIDEO_MPEG12;
   else if((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS) && (sh_video->format==0x10000004)) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS) && (sh_video->format==0x10000004))
+    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000004)) ||
+    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000004))
   )
     video_codec = VIDEO_MPEG4;
   else if((d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS) && (sh_video->format==0x10000005)) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS) && (sh_video->format==0x10000005))
+    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000005)) ||
+    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000005))
   )
     video_codec = VIDEO_H264;
   else
@@ -94,25 +94,25 @@ switch(video_codec){
         sh_video->video.fccHandler == mmioFOURCC('R', 'G', 'B', ' ') ||
         sh_video->video.fccHandler == mmioFOURCC('R', 'A', 'W', ' ') ||
         sh_video->video.fccHandler == 0)) {
-                sh_video->format = mmioFOURCC(0, 'R', 'G', 'B') | sh_video->bih->biBitCount;
+                sh_video->fourcc = mmioFOURCC(0, 'R', 'G', 'B') | sh_video->bih->biBitCount;
     }
     else 					    
 #endif
-        sh_video->format=sh_video->bih->biCompression;
+        sh_video->fourcc=sh_video->bih->biCompression;
 
-    sh_video->disp_w=sh_video->bih->biWidth;
-    sh_video->disp_h=abs(sh_video->bih->biHeight);
+    sh_video->src_w=sh_video->bih->biWidth;
+    sh_video->src_h=abs(sh_video->bih->biHeight);
 
 #if 1
     /* hack to support decoding of mpeg1 chunks in AVI's with libmpeg2 -- 2002 alex */
-    if ((sh_video->format == 0x10000001) ||
-	(sh_video->format == 0x10000002) ||
-	(sh_video->format == mmioFOURCC('m','p','g','1')) ||
-	(sh_video->format == mmioFOURCC('M','P','G','1')) ||
-	(sh_video->format == mmioFOURCC('m','p','g','2')) ||
-	(sh_video->format == mmioFOURCC('M','P','G','2')) ||
-	(sh_video->format == mmioFOURCC('m','p','e','g')) ||
-	(sh_video->format == mmioFOURCC('M','P','E','G')))
+    if ((sh_video->fourcc == 0x10000001) ||
+	(sh_video->fourcc == 0x10000002) ||
+	(sh_video->fourcc == mmioFOURCC('m','p','g','1')) ||
+	(sh_video->fourcc == mmioFOURCC('M','P','G','1')) ||
+	(sh_video->fourcc == mmioFOURCC('m','p','g','2')) ||
+	(sh_video->fourcc == mmioFOURCC('M','P','G','2')) ||
+	(sh_video->fourcc == mmioFOURCC('m','p','e','g')) ||
+	(sh_video->fourcc == mmioFOURCC('M','P','E','G')))
     {
 	int saved_pos, saved_type;
 
@@ -218,7 +218,7 @@ switch(video_codec){
     MSG_INFO("FPS seems to be: %d/10000\n", picture.fps);
    }
    MSG_V("OK!\n");
-   sh_video->format=0x10000004;
+   sh_video->fourcc=0x10000004;
    break;
  }
  case VIDEO_H264: {
@@ -265,7 +265,7 @@ switch(video_codec){
       }
    }
    MSG_V("OK!\n");
-   sh_video->format=0x10000005;
+   sh_video->fourcc=0x10000005;
    if(picture.fps) {
      sh_video->fps=picture.fps*0.0001f;
      MSG_INFO("FPS seems to be: %d/10000\n", picture.fps);
@@ -345,7 +345,7 @@ switch(video_codec){
      break;
    }
    // fill aspect info:
-   sh_video->format=picture.mpeg1?0x10000001:0x10000002; // mpeg video
+   sh_video->fourcc=picture.mpeg1?0x10000001:0x10000002; // mpeg video
 #if 0
    if(picture.mpeg1)
 	sh_video->aspect=mpeg1_aspects[picture.aspect_ratio_information & 0x0F];
@@ -357,13 +357,13 @@ switch(video_codec){
 #if 0
    sh_video->fps=mpeg_framerates[picture.frame_rate_code & 0x0F];
 #endif
-   sh_video->disp_w=picture.display_picture_width;
-   sh_video->disp_h=picture.display_picture_height;
+   sh_video->src_w=picture.display_picture_width;
+   sh_video->src_h=picture.display_picture_height;
    // info:
    MSG_DBG2("mpeg bitrate: %d (%X)\n",picture.bitrate,picture.bitrate);
    MSG_V("VIDEO:  %s  %dx%d  (aspect %d)  %4.2f fps  %5.1f kbps (%4.1f kbyte/s)\n",
     picture.mpeg1?"MPEG1":"MPEG2",
-    sh_video->disp_w,sh_video->disp_h,
+    sh_video->src_w,sh_video->src_h,
     picture.aspect_ratio_information,
     sh_video->fps,
     picture.bitrate*0.5f,
@@ -407,9 +407,9 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
     *start=NULL;
 
   if(demuxer->file_format==DEMUXER_TYPE_MPEG_ES || 
-  	(demuxer->file_format==DEMUXER_TYPE_MPEG_PS && ((! sh_video->format) || (sh_video->format==0x10000001) || (sh_video->format==0x10000002)))
+  	(demuxer->file_format==DEMUXER_TYPE_MPEG_PS && ((! sh_video->fourcc) || (sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002)))
 		  || demuxer->file_format==DEMUXER_TYPE_PVA || 
-		  ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && ((sh_video->format==0x10000001) || (sh_video->format==0x10000002))))
+		  ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))))
   {
         int in_frame=0;
         //float newfps;
@@ -479,8 +479,8 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	    telecine=1;
 	}
 
-  } else if((demuxer->file_format==DEMUXER_TYPE_MPEG4_ES) || ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && (sh_video->format==0x10000004)) ||
-            ((demuxer->file_format==DEMUXER_TYPE_MPEG_PS) && (sh_video->format==0x10000004))
+  } else if((demuxer->file_format==DEMUXER_TYPE_MPEG4_ES) || ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000004)) ||
+            ((demuxer->file_format==DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000004))
 	    ){
       //
         while(videobuf_len<VIDEOBUFFER_SIZE-MAX_VIDEO_PACKET_SIZE){
@@ -492,8 +492,8 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	*start=videobuffer; in_size=videobuf_len;
 	videobuf_len=0;
 
-  } else if(demuxer->file_format==DEMUXER_TYPE_H264_ES || ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && (sh_video->format==0x10000005)) ||
-            ((demuxer->file_format==DEMUXER_TYPE_MPEG_PS) && (sh_video->format==0x10000005))
+  } else if(demuxer->file_format==DEMUXER_TYPE_H264_ES || ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000005)) ||
+            ((demuxer->file_format==DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000005))
 	    ){
       //
         while(videobuf_len<VIDEOBUFFER_SIZE-MAX_VIDEO_PACKET_SIZE){
@@ -562,7 +562,7 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
 	demuxer->file_format == DEMUXER_TYPE_H264_ES ||
 	demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
-	((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && ((sh_video->format==0x10000001) || (sh_video->format==0x10000002))) ||
+	((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))) ||
 	av_force_pts_fix) && av_sync_pts && av_force_pts_fix2!=1)
     {
 	if(d_video->pts_flags && d_video->pts < 1.0 && d_video->prev_pts > 2.0)

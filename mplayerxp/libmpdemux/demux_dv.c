@@ -175,10 +175,10 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 
    // custom fourcc for internal MPlayer use
 //   sh_video->format = mmioFOURCC('R', 'A', 'D', 'V');
-   sh_video->format = mmioFOURCC('D', 'V', 'S', 'D');
+   sh_video->fourcc = mmioFOURCC('D', 'V', 'S', 'D');
 
-   sh_video->disp_w = dv_decoder->width;
-   sh_video->disp_h = dv_decoder->height;
+   sh_video->src_w = dv_decoder->width;
+   sh_video->src_h = dv_decoder->height;
    mp_msg(MSGT_DEMUXER,MSGL_V,"demux_open_rawdv() frame_size: %d w: %d h: %d dif_seq: %d system: %d\n",dv_decoder->frame_size,dv_decoder->width, dv_decoder->height,dv_decoder->num_dif_seqs,dv_decoder->system);
 
    sh_video->fps= (dv_decoder->system==e_dv_system_525_60?29.97:25);
@@ -190,7 +190,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
   sh_video->bih->biHeight = dv_decoder->height;
   sh_video->bih->biPlanes=1;
   sh_video->bih->biBitCount=24;
-  sh_video->bih->biCompression=sh_video->format; // "DVSD"
+  sh_video->bih->biCompression=sh_video->fourcc; // "DVSD"
   sh_video->bih->biSizeImage=sh_video->bih->biWidth*sh_video->bih->biHeight*3;
 
 

@@ -108,16 +108,16 @@ int mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune){
     vf_instance_t* vf=sh->vfilter,*sc=NULL;
     int palette=0;
 
-    if(!(sh->disp_w && sh->disp_h))
+    if(!(sh->src_w && sh->src_h))
         MSG_WARN(
-            "VDec: driver %s didn't set sh->disp_w and sh->disp_h, trying to workaround!\n"
+            "VDec: driver %s didn't set sh->src_w and sh->src_h, trying to workaround!\n"
 	    ,sh->codec->codec_name);
     /* XXX: HACK, if sh->disp_* aren't set,
      * but we have w and h, set them :: atmos */
-    if(!sh->disp_w && w)
-        sh->disp_w=w;
-    if(!sh->disp_h && h)
-        sh->disp_h=h;
+    if(!sh->src_w && w)
+        sh->src_w=w;
+    if(!sh->src_h && h)
+        sh->src_h=h;
 
     MSG_V("VDec: vo config request - %d x %d\n",
 	w,h);
@@ -211,13 +211,13 @@ csp_again:
     if(!vo_conf.vidmode){
      if(!screen_size_x) screen_size_x=1;
      if(!screen_size_y) screen_size_y=1;
-     if(screen_size_x<=8) screen_size_x*=sh->disp_w;
-     if(screen_size_y<=8) screen_size_y*=sh->disp_h;
+     if(screen_size_x<=8) screen_size_x*=sh->src_w;
+     if(screen_size_y<=8) screen_size_y*=sh->src_h;
     }
   } else {
     // check source format aspect, calculate prescale ::atmos
-    screen_size_x=sh->disp_w;
-    screen_size_y=sh->disp_h;
+    screen_size_x=sh->src_w;
+    screen_size_y=sh->src_h;
     if(vo_conf.screen_size_xy>=0.001){
      if(vo_conf.screen_size_xy<=8){
        // -xy means x+y scale
@@ -226,7 +226,7 @@ csp_again:
      } else {
        // -xy means forced width while keeping correct aspect
        screen_size_x=vo_conf.screen_size_xy;
-       screen_size_y=vo_conf.screen_size_xy*sh->disp_h/sh->disp_w;
+       screen_size_y=vo_conf.screen_size_xy*sh->src_h/sh->src_w;
      }
     }
     if(sh->aspect>0.01){
@@ -238,8 +238,8 @@ csp_again:
       if(_w<screen_size_x || vo_conf.screen_size_xy>8){
         screen_size_y=(int)((float)screen_size_x*(1.0/sh->aspect));
         screen_size_y+=screen_size_y%2; // round
-        if(screen_size_y<sh->disp_h) // Do not downscale verticaly
-            screen_size_y=sh->disp_h;
+        if(screen_size_y<sh->src_h) // Do not downscale verticaly
+            screen_size_y=sh->src_h;
       } else screen_size_x=_w; // keep new width
     } else {
       MSG_V("Movie-Aspect is undefined - no prescaling applied.\n");
@@ -247,13 +247,13 @@ csp_again:
   }
 
     MSG_V("vf->config(%dx%d->%dx%d,flags=0x%x,'%s',%s)\n",
-                      sh->disp_w,sh->disp_h,
+                      sh->src_w,sh->src_h,
                       screen_size_x,screen_size_y,
                       vo_data->flags,
                       "MPlayerXP",vo_format_name(out_fmt));
 
     MSG_DBG2("vf configuring: %s\n",vf->info->name);
-    if(vf->config(vf,sh->disp_w,sh->disp_h,
+    if(vf->config(vf,sh->src_w,sh->src_h,
                       screen_size_x,screen_size_y,
                       vo_data->flags,
                       out_fmt,tune)==0){
@@ -262,7 +262,7 @@ csp_again:
 	return 0;
     }
     MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s',%p)\n",
-                      sh->disp_w,sh->disp_h,
+                      sh->src_w,sh->src_h,
                       screen_size_x,screen_size_y,
                       vo_data->flags,
                       vo_format_name(out_fmt),tune);

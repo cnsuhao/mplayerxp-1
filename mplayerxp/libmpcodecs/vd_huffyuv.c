@@ -317,7 +317,7 @@ static int init(sh_video_t *sh)
 	switch (hc->bitmaptype) {
 		case BMPTYPE_RGB:
 		case BMPTYPE_YUV:
-			vo_ret = mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
+			vo_ret = mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 			break;
 		case BMPTYPE_RGBA:
 			MSG_ERR( "[HuffYUV] RGBA not supported yet.\n");
@@ -517,8 +517,8 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
 	unsigned char *abovebuf = hc->abovebuf1;
 	unsigned char *curbuf = hc->abovebuf2;
 	unsigned char *outptr;
-	int width = sh->disp_w; // Real image width
-	int height = sh->disp_h; // Real image height
+	int width = sh->src_w; // Real image width
+	int height = sh->src_h; // Real image height
 	int bgr32;
 
 	// skipped frame
@@ -527,9 +527,9 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
 
 	/* Do not accept stride for rgb, it gives me wrong output :-( */
 	if (hc->bitmaptype == BMPTYPE_YUV)
-		mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh->disp_w, sh->disp_h);
+		mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w, sh->src_h);
 	else
-		mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0,sh->disp_w, sh->disp_h);
+		mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0,sh->src_w, sh->src_h);
 	if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
 	outptr = mpi->planes[0]; // Output image pointer

@@ -73,7 +73,7 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
 
   demux->filepos=stream_tell(demux->stream);
 
-  size = ((sh_video_t*)ds->sh)->disp_w*((sh_video_t*)ds->sh)->disp_h;
+  size = ((sh_video_t*)ds->sh)->src_w*((sh_video_t*)ds->sh)->src_h;
 
   dp = new_demux_packet(3*size/2);
 
@@ -135,11 +135,11 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 	stream_skip(demuxer->stream, 1); /* space */
 	stream_read(demuxer->stream, (char *)&buf[0], 3);
 	buf[3] = 0;
-	sh->disp_w = atoi(buf);
+	sh->src_w = atoi(buf);
 	stream_skip(demuxer->stream, 1); /* space */
 	stream_read(demuxer->stream, (char *)&buf[0], 3);
 	buf[3] = 0;
-	sh->disp_h = atoi(buf);
+	sh->src_h = atoi(buf);
 	stream_skip(demuxer->stream, 1); /* space */
 	stream_read(demuxer->stream, (char *)&buf[0], 1);
 	buf[1] = 0;
@@ -198,21 +198,21 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 	if (ratio.d != 0 && ratio.n != 0)
 	    sh->aspect = (float)ratio.n/(float)ratio.d;
 
-	sh->disp_w = y4m_si_get_width(priv->si);
-	sh->disp_h = y4m_si_get_height(priv->si);
+	sh->src_w = y4m_si_get_width(priv->si);
+	sh->src_h = y4m_si_get_height(priv->si);
     	demuxer->flags &= ~DEMUXF_SEEKABLE;
     }
 
-    sh->format = mmioFOURCC('Y', 'V', '1', '2');
+    sh->fourcc = mmioFOURCC('Y', 'V', '1', '2');
 
     sh->bih=malloc(sizeof(BITMAPINFOHEADER));
     memset(sh->bih,0,sizeof(BITMAPINFOHEADER));
     sh->bih->biSize=40;
-    sh->bih->biWidth = sh->disp_w;
-    sh->bih->biHeight = sh->disp_h;
+    sh->bih->biWidth = sh->src_w;
+    sh->bih->biHeight = sh->src_h;
     sh->bih->biPlanes=3;
     sh->bih->biBitCount=12;
-    sh->bih->biCompression=sh->format;
+    sh->bih->biCompression=sh->fourcc;
     sh->bih->biSizeImage=sh->bih->biWidth*sh->bih->biHeight*3/2; /* YV12 */
 
     demuxer->video->sh=sh;
@@ -221,7 +221,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 		
 
     MSG_V( "YUV4MPEG2 Video stream %d size: display: %dx%d, codec: %ux%u\n",
-            demuxer->video->id, sh->disp_w, sh->disp_h, sh->bih->biWidth,
+            demuxer->video->id, sh->src_w, sh->src_h, sh->bih->biWidth,
             sh->bih->biHeight);
     return demuxer;
 }
@@ -230,7 +230,7 @@ static void y4m_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
     sh_video_t* sh = demuxer->video->sh;
     y4m_priv_t* priv = demuxer->priv;
     int rel_seek_frames = sh->fps*seeka->secs;
-    int size = 3*sh->disp_w*sh->disp_h/2;
+    int size = 3*sh->src_w*sh->src_h/2;
     off_t curr_pos = stream_tell(demuxer->stream);
 
     if (priv->framenum + rel_seek_frames < 0) rel_seek_frames = -priv->framenum;

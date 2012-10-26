@@ -53,7 +53,7 @@ dv_decoder_t* init_global_rawdv_decoder(void)
 static int init(sh_video_t *sh)
 {
    sh->context = (any_t*)init_global_rawdv_decoder();
-   return mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL);
+   return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 
 // uninit driver
@@ -73,7 +73,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
 
    dv_parse_header(decoder, data);
 
-   mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, sh->disp_w, sh->disp_h);
+   mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, sh->src_w, sh->src_h);
 
    if(!mpi){	// temporary!
       MSG_ERR("couldn't allocate image for stderr codec\n");

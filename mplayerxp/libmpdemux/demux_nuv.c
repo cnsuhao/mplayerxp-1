@@ -240,10 +240,10 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	sh_video->ds = demuxer->video;
 
 	/* Custom fourcc for internal MPlayer use */
-	sh_video->format = mmioFOURCC('N', 'U', 'V', '1');
+	sh_video->fourcc = mmioFOURCC('N', 'U', 'V', '1');
 
-	sh_video->disp_w = rtjpeg_fileheader.width;
-	sh_video->disp_h = rtjpeg_fileheader.height;
+	sh_video->src_w = rtjpeg_fileheader.width;
+	sh_video->src_h = rtjpeg_fileheader.height;
 
 	/* NuppelVideo uses pixel aspect ratio
            here display aspect ratio is used.

@@ -63,12 +63,12 @@ typedef struct sh_video_s {
     struct codecs_st*	codec;
     int			inited;
 // input format
-    unsigned int	format;
+    uint32_t		fourcc;
     int			is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
 // output format:
     float		fps;
     int			chapter_change;
-    unsigned		disp_w,disp_h;// display size (filled by fileformat parser)
+    unsigned		src_w,src_h;// source picture size (filled by fileformat parser)
 //  int coded_w,coded_h; // coded size (filled by video codec)
     float		aspect;
     unsigned int	outfmtidx;

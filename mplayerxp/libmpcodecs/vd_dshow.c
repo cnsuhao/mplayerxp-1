@@ -68,7 +68,7 @@ static int init(sh_video_t *sh){
         MSG_HINT("package from:  ftp://mplayerhq.hu/MPlayer/releases/w32codec.zip  !\n");
 	return 0;
     }
-    if(!mpcodecs_config_vo(sh,sh->disp_w,sh->disp_h,NULL)) return 0;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
     out_fmt=sh->codec->outfmt[sh->outfmtidx];
     switch(out_fmt){
     case IMGFMT_YUY2:
@@ -106,7 +106,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     }
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/, 
-	sh->disp_w, sh->disp_h);
+	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     DS_VideoDecoder_DecodeInternal(sh->context, data, len, sh->ds->flags&1, mpi->planes[0]);
