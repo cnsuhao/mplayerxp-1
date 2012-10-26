@@ -22,6 +22,7 @@ typedef struct pth_info
 
 extern pth_info_t pinfo[MAX_XPTHREADS];
 extern int xp_threads;
+#define MP_UNIT(id,name) (pinfo[id].current_module=name)
 
 int init_signal_handling( void (*callback)( void ),void (*unlink)(int));
 void uninit_signal_handling( int xp_id );

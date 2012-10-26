@@ -271,10 +271,12 @@ any_t* Va_dec_ahead_routine( any_t* arg )
     xp_audio_eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
     _xp_id=init_signal_handling(sig_dec_ahead_video,uninit_dec_ahead);
-    pinfo[_xp_id].current_module = "dec_ahead";
+    MP_UNIT(_xp_id,"dec_ahead");
     pinfo[_xp_id].pid = getpid(); /* Only for testing */
     pinfo[_xp_id].pth_id = pthread_self();
-    pinfo[_xp_id].thread_name = (xp_core.has_audio && mp_conf.xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
+    pinfo[_xp_id].thread_name = (xp_core.has_audio && mp_conf.xp < XP_VAFull) ?
+				"video+audio decoding+filtering ahead" :
+				"video decoding+vf ahead";
     drop_barrier=(float)(xp_num_frames/2)*(1/sh_video->fps);
     if(mp_conf.av_sync_pts == -1 && !use_pts_fix2)
 	xp_is_bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
@@ -289,28 +291,28 @@ while(!xp_eof){
     int in_size;
     if(pthread_end_of_work) break;
     if(xp_core.in_lseek==PreSeek) {
-	pinfo[_xp_id].current_module = "Pre seek";
+	MP_UNIT(_xp_id,"Pre seek");
 	xp_core.in_lseek=Seek;
     }
-    pinfo[_xp_id].current_module = "dec_ahead 1";
+    MP_UNIT(_xp_id,"dec_ahead 1");
 
 /* get it! */
 #if 0
     /* prevent reent access to non-reent demuxer */
     //if(sh_video->num_frames>200)  *((char*)0x100) = 1; // Testing crash
     if(xp_core.has_audio && mp_conf.xp<XP_VAFull) {
-	pinfo[_xp_id].current_module = "decode audio";
+	MP_UNIT(_xp_id,"decode audio");
 	while(2==xp_thread_decode_audio()) ;
-	pinfo[_xp_id].current_module = "dec_ahead 2";
+	MP_UNIT(_xp_id,"dec_ahead 2");
     }
 #endif
 /*--------------------  Decode a frame: -----------------------*/
     in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,sh_video->fps);
     if(xp_core.in_lseek==Seek) {
-	pinfo[_xp_id].current_module = "Post seek";
+	MP_UNIT(_xp_id,"Post seek");
 	if(xp_is_bad_pts) mpeg_timer=HUGE;
 	xp_core.in_lseek=NoSeek;
-	pinfo[_xp_id].current_module = "dec_ahead 3";
+	MP_UNIT(_xp_id,"dec_ahead 3");
     }
     if(in_size<0) {
 	xp_core.video->fra[xp_core.video->decoder_idx].eof=1;
@@ -398,9 +400,9 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	if(pthread_end_of_work) goto pt_exit;
 	if(xp_core.in_lseek!=NoSeek) break;
 	if(xp_core.has_audio && mp_conf.xp<XP_VAFull) {
-	    pinfo[_xp_id].current_module = "decode audio";
+	    MP_UNIT(_xp_id,"decode audio");
 	    xp_thread_decode_audio();
-	    pinfo[_xp_id].current_module = "dec_ahead 5";
+	    MP_UNIT(_xp_id,"dec_ahead 5");
 	}
 	usleep(1);
     }
@@ -409,9 +411,9 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 
 if(xp_core.has_audio && mp_conf.xp<XP_VAFull) {
     while(!xp_audio_eof && !xp_core.in_lseek && !pthread_end_of_work) {
-	pinfo[_xp_id].current_module = "decode audio";
+	MP_UNIT(_xp_id,"decode audio");
 	if(!xp_thread_decode_audio()) usleep(1);
-	pinfo[_xp_id].current_module = NULL;
+	MP_UNIT(_xp_id,NULL);
     }
 }
   pt_exit:
@@ -436,12 +438,12 @@ any_t* a_dec_ahead_routine( any_t* arg )
     xp_audio_eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
     xp_id=init_signal_handling(sig_audio_decode,uninit_dec_ahead);
-    pinfo[xp_id].current_module = "dec_ahead";
+    MP_UNIT(xp_id,"dec_ahead");
     pinfo[xp_id].thread_name = "audio decoding+af ahead";
 
     dec_ahead_can_adseek=0;
     while(!a_pthread_end_of_work) {
-	pinfo[xp_id].current_module = "decode audio";
+	MP_UNIT(xp_id,"decode audio");
 	while((ret = xp_thread_decode_audio()) == 2) /* Almost empty buffer */
 	    if(xp_audio_eof) break;
 	
@@ -450,11 +452,11 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	if(a_pthread_end_of_work)
 	    break;
 	
-	pinfo[xp_id].current_module = "sleep";
+	MP_UNIT(xp_id,"sleep");
 	LOCK_AUDIO_DECODE();
 	if( !xp_core.in_lseek && !a_pthread_end_of_work) {
 	    if(xp_audio_eof) {
-		pinfo[xp_id].current_module = "wait end of work";
+		MP_UNIT(xp_id,"wait end of work");
 		pthread_cond_wait( &audio_decode_cond, &audio_decode_mutex );
 	    } else if(ret==0) { /* Full buffer or end of file */
 		if(audio_play_in_sleep) { /* Sleep a little longer than player thread */
@@ -486,7 +488,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	if(a_pthread_end_of_work)
 	    break;
 	
-	pinfo[xp_id].current_module = "seek";
+	MP_UNIT(xp_id,"seek");
 	LOCK_AUDIO_DECODE();
 	while( xp_core.in_lseek!=NoSeek && !a_pthread_end_of_work) {
 	    gettimeofday(&now,NULL);
@@ -499,7 +501,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	dec_ahead_can_adseek = 0; /* Not safe to seek */
 	UNLOCK_AUDIO_DECODE();
     }
-    pinfo[xp_id].current_module = "exit";
+    MP_UNIT(xp_id,"exit");
     dec_ahead_can_adseek = 1;
     a_pthread_is_living=0;
     a_pthread_end_of_work=0;
@@ -772,20 +774,20 @@ any_t* audio_play_routine( any_t* arg )
     max_audio = 0;
 
     xp_id=init_signal_handling(sig_audio_play,uninit_dec_ahead);
-    pinfo[xp_id].current_module = "audio_play_routine";
+    MP_UNIT(xp_id,"audio_play_routine");
     pinfo[xp_id].thread_name = "audio play thread";
     pthread_audio_is_living=1;
     dec_ahead_can_aseek=0;
 
     while(!pthread_audio_end_of_work) {
-	pinfo[xp_id].current_module = "audio decore_audio";
+	MP_UNIT(xp_id,"audio decore_audio");
 	dec_ahead_audio_delay = NOTHING_PLAYED;
 	eof = decore_audio(xp_id);
 
 	if(pthread_audio_end_of_work)
 	    break;
 
-	pinfo[xp_id].current_module = "audio sleep";
+	MP_UNIT(xp_id,"audio sleep");
 
 	dec_ahead_can_aseek = 1;  /* Safe for other threads to seek */
 
@@ -856,7 +858,7 @@ any_t* audio_play_routine( any_t* arg )
 
 	LOCK_AUDIO_PLAY();
 	if(eof && !pthread_audio_end_of_work) {
-	    pinfo[xp_id].current_module = "wait end of work";
+	    MP_UNIT(xp_id,"wait end of work");
 	    pthread_cond_wait( &audio_play_cond, &audio_play_mutex );
 	}
 	UNLOCK_AUDIO_PLAY();
@@ -864,7 +866,7 @@ any_t* audio_play_routine( any_t* arg )
 	if(pthread_audio_end_of_work)
 	    break;
 
-	pinfo[xp_id].current_module = "audio pause";
+	MP_UNIT(xp_id,"audio pause");
 	LOCK_AUDIO_PLAY();
 	while( xp_core.in_pause && !pthread_audio_end_of_work ) {
 	    pthread_cond_wait( &audio_play_cond, &audio_play_mutex );
@@ -873,8 +875,8 @@ any_t* audio_play_routine( any_t* arg )
 
 	if(pthread_audio_end_of_work)
 	    break;
-	    
-	pinfo[xp_id].current_module = "audio seek";
+
+	MP_UNIT(xp_id,"audio seek");
 	LOCK_AUDIO_PLAY();
 	while( xp_core.in_lseek!=NoSeek && !pthread_audio_end_of_work) {
 	    gettimeofday(&now,NULL);
@@ -888,7 +890,7 @@ any_t* audio_play_routine( any_t* arg )
 	UNLOCK_AUDIO_PLAY();
     }
     fflush(stdout);
-    pinfo[xp_id].current_module = "audio exit";
+    MP_UNIT(xp_id,"audio exit");
     dec_ahead_can_aseek=1;
     pthread_audio_is_living=0;
     pthread_audio_end_of_work=0;

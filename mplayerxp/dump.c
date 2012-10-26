@@ -39,7 +39,7 @@ void dump_stream(stream_t *stream)
   int len;
   FILE *f;
   const char *ext,*name;
-  pinfo[xp_id].current_module="dumpstream";
+  MP_UNIT(xp_id,"dumpstream");
   stream_reset(stream);
   stream_seek(stream,stream->start_pos);
   ext=".ext";
@@ -306,7 +306,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
   int in_size,aeof,veof,seof,cmd;
 
   if(!priv) return;
-  pinfo[xp_id].current_module="dump";
+  MP_UNIT(xp_id,"dump");
   priv->my_use_pts=use_pts;
   /* test stream property */
   MSG_INFO("%s using PTS method\n",use_pts?"":"not");

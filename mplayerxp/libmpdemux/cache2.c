@@ -261,7 +261,7 @@ static any_t*cache2_routine(any_t*arg)
   cache_vars_t* c=(cache_vars_t*)arg;
   c->cache2_is_living=1;
   xp_id=init_signal_handling(sig_cache2,stream_unlink_cache);
-  pinfo[xp_id].current_module = "cache2_routine";
+  MP_UNIT(xp_id,"cache2_routine");
   c->cache2_pid = pinfo[xp_id].pid = getpid(); /* Only for testing */
   c->cache2_pth_id = pinfo[xp_id].pth_id = pthread_self();
   pinfo[xp_id].thread_name = "cache2";
