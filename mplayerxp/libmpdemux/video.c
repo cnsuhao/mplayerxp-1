@@ -563,7 +563,7 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	demuxer->file_format == DEMUXER_TYPE_H264_ES ||
 	demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
 	((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))) ||
-	av_force_pts_fix) && av_sync_pts && av_force_pts_fix2!=1)
+	mp_conf.av_force_pts_fix) && mp_conf.av_sync_pts && mp_conf.av_force_pts_fix2!=1)
     {
 	if(d_video->pts_flags && d_video->pts < 1.0 && d_video->prev_pts > 2.0)
 	{ 

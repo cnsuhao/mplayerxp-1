@@ -2,10 +2,6 @@
  * config for cfgparser
  */
 
-extern int av_sync_pts;
-extern int av_force_pts_fix;
-extern int av_force_pts_fix2;
-extern int frame_reorder;
 extern int use_stdin;
 extern uint32_t mp_msg_filter;
 #ifdef HAVE_PNG
@@ -42,28 +38,7 @@ extern void vo_zr_revertoption(config_t* opt,char* pram);
 extern int xinerama_screen;
 #endif
 
-#ifdef HAVE_RTC
-extern int nortc;
-#endif
-
 extern int enable_xp_audio;
-
-#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-extern int x86_simd;
-extern int x86_mmx;
-extern int x86_mmx2;
-extern int x86_3dnow;
-extern int x86_3dnow2;
-extern int x86_sse;
-extern int x86_sse2;
-extern int x86_sse3;
-extern int x86_ssse3;
-extern int x86_sse41;
-extern int x86_sse42;
-extern int x86_aes;
-extern int x86_avx;
-extern int x86_fma;
-#endif
 
 extern float playbackspeed_factor;
 /* from libvo/aspect.c */
@@ -137,34 +112,34 @@ static const config_t net_config[]={
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 static const config_t cpu_config[]={
-	{"simd", &x86_simd, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SIMD extensions of CPU"},
-	{"nosimd", &x86_simd, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SIMD extensions of CPU"},
-	{"mmx", &x86_mmx, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of MMX extensions of CPU"},
-	{"nommx", &x86_mmx, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of MMX extensions of CPU"},
-	{"mmx2", &x86_mmx2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of MMX2 extensions of CPU"},
-	{"nommx2", &x86_mmx2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of MMX2 extensions of CPU"},
-	{"3dnow", &x86_3dnow, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of 3DNow! extensions of CPU"},
-	{"no3dnow", &x86_3dnow, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of 3DNow! extensions of CPU"},
-	{"3dnow2", &x86_3dnow2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of 3DNow-2! extensions of CPU"},
-	{"no3dnow2", &x86_3dnow2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of 3DNow-2! extensions of CPU"},
-	{"sse", &x86_sse, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE extensions of CPU"},
-	{"nosse", &x86_sse, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE extensions of CPU"},
-	{"sse2", &x86_sse2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE2 extensions of CPU"},
-	{"nosse2", &x86_sse2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE2 extensions of CPU"},
-	{"sse3", &x86_sse3, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE3 extensions of CPU"},
-	{"nosse3", &x86_sse3, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE3 extensions of CPU"},
-	{"ssse3", &x86_ssse3, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSSE3 extensions of CPU"},
-	{"nossse3", &x86_ssse3, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSSE3 extensions of CPU"},
-	{"sse41", &x86_sse41, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE41 extensions of CPU"},
-	{"nosse41", &x86_sse41, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE41 extensions of CPU"},
-	{"sse42", &x86_sse42, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE42 extensions of CPU"},
-	{"nosse42", &x86_sse42, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE42 extensions of CPU"},
-	{"aes", &x86_aes, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of AES extensions of CPU"},
-	{"noaes", &x86_aes, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of AES extensions of CPU"},
-	{"avx", &x86_avx, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of AVX extensions of CPU"},
-	{"noavx", &x86_avx, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of AVX extensions of CPU"},
-	{"fma", &x86_fma, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of FMA extensions of CPU"},
-	{"nofma", &x86_fma, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of FMA extensions of CPU"},
+	{"simd", &x86.simd, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SIMD extensions of CPU"},
+	{"nosimd", &x86.simd, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SIMD extensions of CPU"},
+	{"mmx", &x86.mmx, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of MMX extensions of CPU"},
+	{"nommx", &x86.mmx, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of MMX extensions of CPU"},
+	{"mmx2", &x86.mmx2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of MMX2 extensions of CPU"},
+	{"nommx2", &x86.mmx2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of MMX2 extensions of CPU"},
+	{"3dnow", &x86._3dnow, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of 3DNow! extensions of CPU"},
+	{"no3dnow", &x86._3dnow, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of 3DNow! extensions of CPU"},
+	{"3dnow2", &x86._3dnow2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of 3DNow-2! extensions of CPU"},
+	{"no3dnow2", &x86._3dnow2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of 3DNow-2! extensions of CPU"},
+	{"sse", &x86.sse, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE extensions of CPU"},
+	{"nosse", &x86.sse, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE extensions of CPU"},
+	{"sse2", &x86.sse2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE2 extensions of CPU"},
+	{"nosse2", &x86.sse2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE2 extensions of CPU"},
+	{"sse3", &x86.sse3, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE3 extensions of CPU"},
+	{"nosse3", &x86.sse3, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE3 extensions of CPU"},
+	{"ssse3", &x86.ssse3, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSSE3 extensions of CPU"},
+	{"nossse3", &x86.ssse3, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSSE3 extensions of CPU"},
+	{"sse41", &x86.sse41, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE41 extensions of CPU"},
+	{"nosse41", &x86.sse41, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE41 extensions of CPU"},
+	{"sse42", &x86.sse42, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of SSE42 extensions of CPU"},
+	{"nosse42", &x86.sse42, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of SSE42 extensions of CPU"},
+	{"aes", &x86.aes, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of AES extensions of CPU"},
+	{"noaes", &x86.aes, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of AES extensions of CPU"},
+	{"avx", &x86.avx, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of AVX extensions of CPU"},
+	{"noavx", &x86.avx, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of AVX extensions of CPU"},
+	{"fma", &x86.fma, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables using of FMA extensions of CPU"},
+	{"nofma", &x86.fma, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables using of FMA extensions of CPU"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
 #endif
@@ -194,26 +169,23 @@ static const config_t veq_config[]={
 
 
 static const config_t avsync_config[]={
-	{"framedrop", &frame_dropping, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables frame-dropping on slow systems: decodes all video frames, but skips displaying some ones"},
-/*UD*/	{"hardframedrop", &frame_dropping, CONF_TYPE_FLAG, 0, 0, 2, NULL, "enables hard frame-dropping on slow systems: skips displaying and decoding of some frames"},
-	{"noframedrop", &frame_dropping, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables frame dropping"},
-	{"pts", &av_sync_pts, CONF_TYPE_FLAG, 0, 0, 1, NULL, "use PTS-based method of A/V synchronization"},
-	{"nopts", &av_sync_pts, CONF_TYPE_FLAG, 0, 1, 0, NULL, "use BPS-based method of A/V synchronization"},
-	{"dap", &dapsync, CONF_TYPE_FLAG, 0, 0, 1, NULL, "use alternative method of A/V synchronization"},
-	{"nodap", &dapsync, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable alternative method of A/V synchronization"},
-	{"force_pts_fix", &av_force_pts_fix, CONF_TYPE_FLAG, 0, 0, 1, NULL, "force PTS fixing for \"bad\" files"},
-	{"noforce_pts_fix", &av_force_pts_fix, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable PTS fixing for \"bad\" files"},
-	{"force_pts_fix2", &av_force_pts_fix2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "force PTS fixing for \"bad\" files without PTS changing"},
-	{"noforce_pts_fix2", &av_force_pts_fix2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable PTS fixing for \"bad\" files without PTS changing"},
-	{"frame_reorder", &frame_reorder, CONF_TYPE_FLAG, 0, 0, 1, NULL, "recalc PTS of frames as they were added to the buffer"},
-	{"noframe_reorder", &frame_reorder, CONF_TYPE_FLAG, 0, 1, 0, NULL, "keep original PTS of each frame"},
-	{"softsleep", &softsleep, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables high quality software timers for A/V synchronization"},
+	{"framedrop", &mp_conf.frame_dropping, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables frame-dropping on slow systems: decodes all video frames, but skips displaying some ones"},
+/*UD*/	{"hardframedrop", &mp_conf.frame_dropping, CONF_TYPE_FLAG, 0, 0, 2, NULL, "enables hard frame-dropping on slow systems: skips displaying and decoding of some frames"},
+	{"noframedrop", &mp_conf.frame_dropping, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables frame dropping"},
+	{"pts", &mp_conf.av_sync_pts, CONF_TYPE_FLAG, 0, 0, 1, NULL, "use PTS-based method of A/V synchronization"},
+	{"nopts", &mp_conf.av_sync_pts, CONF_TYPE_FLAG, 0, 1, 0, NULL, "use BPS-based method of A/V synchronization"},
+	{"force_pts_fix", &mp_conf.av_force_pts_fix, CONF_TYPE_FLAG, 0, 0, 1, NULL, "force PTS fixing for \"bad\" files"},
+	{"noforce_pts_fix", &mp_conf.av_force_pts_fix, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable PTS fixing for \"bad\" files"},
+	{"force_pts_fix2", &mp_conf.av_force_pts_fix2, CONF_TYPE_FLAG, 0, 0, 1, NULL, "force PTS fixing for \"bad\" files without PTS changing"},
+	{"noforce_pts_fix2", &mp_conf.av_force_pts_fix2, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable PTS fixing for \"bad\" files without PTS changing"},
+	{"frame_reorder", &mp_conf.frame_reorder, CONF_TYPE_FLAG, 0, 0, 1, NULL, "recalc PTS of frames as they were added to the buffer"},
+	{"noframe_reorder", &mp_conf.frame_reorder, CONF_TYPE_FLAG, 0, 1, 0, NULL, "keep original PTS of each frame"},
+	{"softsleep", &mp_conf.softsleep, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables high quality software timers for A/V synchronization"},
 #ifdef HAVE_RTC
-	{"rtc", &nortc, CONF_TYPE_FLAG, 0, 1, 0, NULL, "enables using of /dev/rtc (real-time clock chip) to compute PTS"},
-	{"nortc", &nortc, CONF_TYPE_FLAG, 0, 0, 1, NULL, "disables using of /dev/rtc (real-time clock chip) to compute PTS"},
+	{"rtc", &mp_conf.nortc, CONF_TYPE_FLAG, 0, 1, 0, NULL, "enables using of /dev/rtc (real-time clock chip) to compute PTS"},
+	{"nortc", &mp_conf.nortc, CONF_TYPE_FLAG, 0, 0, 1, NULL, "disables using of /dev/rtc (real-time clock chip) to compute PTS"},
 #endif
-	{"mc", &default_max_pts_correction, CONF_TYPE_FLOAT, CONF_RANGE, 0, 10, NULL, "maximum sync correction per 5 frames (in seconds)"},
-	{"fps", &force_fps, CONF_TYPE_FLOAT, CONF_MIN, 0, 0, NULL, "forces frame rate (if value is wrong in the header)"},
+	{"fps", &mp_conf.force_fps, CONF_TYPE_FLOAT, CONF_MIN, 0, 0, NULL, "forces frame rate (if value is wrong in the header)"},
 	{"vsync", &vo_conf.vsync, CONF_TYPE_FLAG, 0, 0, 1, NULL, "forces video hardware to wait VSYNC signal before frame switching"},
 	{"novsync", &vo_conf.vsync, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video hardware to wait VSYNC signal before frame switching"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
@@ -313,14 +285,14 @@ static const config_t video_config[]={
 };
 
 static const config_t playback_config[]={
-	{"sb", &seek_to_byte, CONF_TYPE_INT, CONF_MIN, 0, 0, NULL, "seek to given byte position before playback"},
-	{"ss", &seek_to_sec, CONF_TYPE_STRING, CONF_MIN, 0, 0, NULL, "seek to given time position before playback"},
-	{"loop", &loop_times, CONF_TYPE_INT, CONF_RANGE, -1, 10000, NULL, "loops movie playback given number of times. 0 means forever"},
-	{"noloop", &loop_times, CONF_TYPE_FLAG, 0, 0, -1, NULL, "disable loop of playback"},
-	{"shuffle",&shuffle_playback, CONF_TYPE_FLAG, 0, 0, 1, NULL, "play files in random order"},
-	{"noshuffle",&shuffle_playback, CONF_TYPE_FLAG, 0, 1, 0, NULL, "play files in regular order"},
+	{"sb", &mp_conf.seek_to_byte, CONF_TYPE_INT, CONF_MIN, 0, 0, NULL, "seek to given byte position before playback"},
+	{"ss", &mp_conf.seek_to_sec, CONF_TYPE_STRING, CONF_MIN, 0, 0, NULL, "seek to given time position before playback"},
+	{"loop", &mp_conf.loop_times, CONF_TYPE_INT, CONF_RANGE, -1, 10000, NULL, "loops movie playback given number of times. 0 means forever"},
+	{"noloop", &mp_conf.loop_times, CONF_TYPE_FLAG, 0, 0, -1, NULL, "disable loop of playback"},
+	{"shuffle",&mp_conf.shuffle_playback, CONF_TYPE_FLAG, 0, 0, 1, NULL, "play files in random order"},
+	{"noshuffle",&mp_conf.shuffle_playback, CONF_TYPE_FLAG, 0, 1, 0, NULL, "play files in regular order"},
 	{"list", NULL, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies playlist (1 file/row or Winamp or ASX format)"},
-	{"frames", &play_n_frames, CONF_TYPE_INT, CONF_MIN, 0, 0, NULL, "play given number of frames and exit"},
+	{"frames", &mp_conf.play_n_frames, CONF_TYPE_INT, CONF_MIN, 0, 0, NULL, "play given number of frames and exit"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
 

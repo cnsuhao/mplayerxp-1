@@ -29,7 +29,7 @@ static float get_ds_stream_pts(demux_stream_t *ds,int nbytes)
 	demuxer->file_format == DEMUXER_TYPE_H264_ES ||
 	demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
 	demuxer->file_format == DEMUXER_TYPE_MPEG_TS ||
-	av_force_pts_fix) && av_sync_pts && av_force_pts_fix2!=1)
+	mp_conf.av_force_pts_fix) && mp_conf.av_sync_pts && mp_conf.av_force_pts_fix2!=1)
     {
 	if(ds->pts_flags && ds->pts < 1.0 && ds->prev_pts > 2.0)
 	{

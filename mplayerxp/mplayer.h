@@ -21,6 +21,15 @@ typedef struct mp_conf_s {
     int		autoq; /* quality's options: */
     unsigned	verbose;
     int		benchmark;
+// sync
+    int		frame_dropping; // option  0=no drop  1= drop vo  2= drop decode
+    int		av_sync_pts;
+    int		av_force_pts_fix;
+    int		av_force_pts_fix2;
+    int		frame_reorder;
+    float	force_fps;
+    int		softsleep;
+    int		nortc;
 // streaming:
     int audio_id;
     int video_id;
@@ -29,19 +38,19 @@ typedef struct mp_conf_s {
     char* audio_lang;
     char* dvdsub_lang;
     char* spudec_ifo;
+// seek:
+    char*	seek_to_sec;
+    long long int seek_to_byte;
+    int		loop_times;
+    int		shuffle_playback;
+    int		play_n_frames;
 }mp_conf_t;
 extern mp_conf_t mp_conf;
 
 extern unsigned xp_num_frames;
 extern int xp_id;
 extern unsigned mplayer_accel;
-extern int frame_dropping;
-
-extern int av_sync_pts;
-extern int av_force_pts_fix;
-extern int frame_reorder;
 extern int use_pts_fix2;
-extern int av_force_pts_fix2;
 
 extern void exit_player(char* how);
 extern void mpxp_resync_audio_stream(void);

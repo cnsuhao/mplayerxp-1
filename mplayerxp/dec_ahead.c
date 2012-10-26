@@ -134,7 +134,6 @@ extern int sof_seek_pos;	/* the movie at end of file :( */
 
 extern int decore_audio( int xp_id );
 extern int mpxp_seek_time;
-extern int frame_dropping;
 
 pid_t dec_ahead_pid; /* Only for testing */
 pthread_t dec_ahead_pth_id;
@@ -282,14 +281,14 @@ any_t* Va_dec_ahead_routine( any_t* arg )
     pinfo[_xp_id].pth_id = pthread_self();
     pinfo[_xp_id].thread_name = (xp_core.has_audio && mp_conf.xp < XP_VAFull) ? "video+audio decoding+filtering ahead" : "video decoding+vf ahead";
     drop_barrier=(float)(xp_num_frames/2)*(1/sh_video->fps);
-    if(av_sync_pts == -1 && !use_pts_fix2)
+    if(mp_conf.av_sync_pts == -1 && !use_pts_fix2)
 	xp_is_bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS;
     else
-	xp_is_bad_pts = av_sync_pts?0:1;
+	xp_is_bad_pts = mp_conf.av_sync_pts?0:1;
 while(!xp_eof){
     unsigned char* start=NULL;
     int in_size;
@@ -343,12 +342,12 @@ while(!xp_eof){
     }
     /* compute frame dropping */
     xp_n_frame_to_drop=0;
-    if(frame_dropping) {
+    if(mp_conf.frame_dropping) {
 	int cur_time;
 	cur_time = GetTimerMS();
 	/* Ugly solution: disable frame dropping right after seeking! */
 	if(cur_time - mpxp_seek_time > (xp_num_frames/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(v_pts,drop_barrier);
-    } /* if( frame_dropping ) */
+    } /* if( mp_conf.frame_dropping ) */
     if(xp_core.in_lseek!=NoSeek) continue;
 #if 0
 /*
@@ -362,7 +361,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     for(i=0;i<delay;i++) usleep(0);
 }
 #endif
-    if(xp_n_frame_to_drop)	drop_param=frame_dropping;
+    if(xp_n_frame_to_drop)	drop_param=mp_conf.frame_dropping;
     else			drop_param=0;
     /* decode: */
     if(output_quality) {
@@ -392,7 +391,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	    int _idx = dae_prev_vdecoded();
 	    xp_core.video->fra[_idx].duration=v_pts-xp_core.video->fra[_idx].v_pts;
 	}
-	if(frame_reorder) reorder_pts_in_mpeg();
+	if(mp_conf.frame_reorder) reorder_pts_in_mpeg();
     } /* if (blit_frame) */
 
     /* ------------ sleep --------------- */

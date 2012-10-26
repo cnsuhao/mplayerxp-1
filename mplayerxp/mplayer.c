@@ -74,7 +74,6 @@ int slave_mode=0;
 **************************************************************************/
 
 play_tree_t* playtree;
-int shuffle_playback=0;
 
 #define PT_NEXT_ENTRY 1
 #define PT_PREV_ENTRY -1
@@ -113,12 +112,7 @@ int xp_id=0;
 pid_t mplayer_pid;
 pthread_t mplayer_pth_id;
 
-int av_sync_pts=-1;
-int av_force_pts_fix=0;
-int frame_reorder=1;
-
 int use_pts_fix2=-1;
-int av_force_pts_fix2=-1;
 
 /************************************************************************
     Special case: inital audio PTS:
@@ -149,8 +143,6 @@ static int cfg_include(struct config *conf, char *filename){
              Input media streaming & demultiplexer:
 **************************************************************************/
 
-static int max_framesize=0;
-
 #include "libmpdemux/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
@@ -175,11 +167,6 @@ static float max_av_resync=0;
 
 int osd_level=2;
 
-// seek:
-char *seek_to_sec=NULL;
-off_t seek_to_byte=0;
-int loop_times=-1;
-
 /* codecs: */
 int has_audio=1;
 int has_video=1;
@@ -191,17 +178,9 @@ char *audio_family=NULL; /* override audio codec family */
 char *video_family=NULL; /* override video codec family */
 
 // A-V sync:
-static float default_max_pts_correction=-1;//0.01f;
-static float max_pts_correction=0;//default_max_pts_correction;
 static float c_total=0;
 
-static int dapsync=0;
-static int softsleep=0;
-
-static float force_fps=0;
 unsigned force_srate=0;
-int frame_dropping=0; // option  0=no drop  1= drop vo  2= drop decode
-static int play_n_frames=-1;
 static uint32_t our_n_frames=0;
 
 // screen info:
@@ -220,7 +199,30 @@ static stream_t* stream=NULL;
 
 mp_conf_t mp_conf;
 
+#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+typedef struct x86_features_s {
+    int simd;
+    int mmx;
+    int mmx2;
+    int _3dnow;
+    int _3dnow2;
+    int sse;
+    int sse2;
+    int sse3;
+    int ssse3;
+    int sse41;
+    int sse42;
+    int aes;
+    int avx;
+    int fma;
+}x86_features_t;
+static x86_features_t x86;
+#endif
+
 static void mpxp_init_structs(void) {
+#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+    memset(&x86,-1,sizeof(x86_features_t));
+#endif
     memset(&time_usage,0,sizeof(time_usage_t));
     memset(&mp_conf,0,sizeof(mp_conf_t));
     mp_conf.xp=XP_VAPlay;
@@ -230,10 +232,12 @@ static void mpxp_init_structs(void) {
     mp_conf.vobsub_id=-1;
     mp_conf.audio_lang=I18N_LANGUAGE;
     mp_conf.dvdsub_lang=I18N_LANGUAGE;
+    mp_conf.av_sync_pts=-1;
+    mp_conf.frame_reorder=1;
+    mp_conf.av_force_pts_fix2=-1;
+    mp_conf.loop_times=-1;
+    mp_conf.play_n_frames=-1;
 }
-
-//char* current_module=NULL; // for debugging
-int nortc;
 
 static unsigned int inited_flags=0;
 #define INITED_VO	0x00000001
@@ -838,38 +842,24 @@ static unsigned get_number_cpu(void) {
 
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-int x86_simd=-1;
-int x86_mmx=-1;
-int x86_mmx2=-1;
-int x86_3dnow=-1;
-int x86_3dnow2=-1;
-int x86_sse=-1;
-int x86_sse2=-1;
-int x86_sse3=-1;
-int x86_ssse3=-1;
-int x86_sse41=-1;
-int x86_sse42=-1;
-int x86_aes=-1;
-int x86_avx=-1;
-int x86_fma=-1;
 static void get_mmx_optimizations( void )
 {
   GetCpuCaps(&gCpuCaps);
 
-  if(x86_simd) {
-    if(x86_mmx != -1) gCpuCaps.hasMMX=x86_mmx;
-    if(x86_mmx2 != -1) gCpuCaps.hasMMX2=x86_mmx2;
-    if(x86_3dnow != -1) gCpuCaps.has3DNow=x86_3dnow;
-    if(x86_3dnow2 != -1) gCpuCaps.has3DNowExt=x86_3dnow2;
-    if(x86_sse != -1) gCpuCaps.hasSSE=x86_sse;
-    if(x86_sse2 != -1) gCpuCaps.hasSSE2=x86_sse2;
-    if(x86_sse3 != -1) gCpuCaps.hasSSE2=x86_sse3;
-    if(x86_ssse3 != -1) gCpuCaps.hasSSSE3=x86_ssse3;
-    if(x86_sse41 != -1) gCpuCaps.hasSSE41=x86_sse41;
-    if(x86_sse42 != -1) gCpuCaps.hasSSE42=x86_sse42;
-    if(x86_aes != -1) gCpuCaps.hasAES=x86_aes;
-    if(x86_avx != -1) gCpuCaps.hasAVX=x86_avx;
-    if(x86_fma != -1) gCpuCaps.hasFMA=x86_fma;
+  if(x86.simd) {
+    if(x86.mmx != -1) gCpuCaps.hasMMX=x86.mmx;
+    if(x86.mmx2 != -1) gCpuCaps.hasMMX2=x86.mmx2;
+    if(x86._3dnow != -1) gCpuCaps.has3DNow=x86._3dnow;
+    if(x86._3dnow2 != -1) gCpuCaps.has3DNowExt=x86._3dnow2;
+    if(x86.sse != -1) gCpuCaps.hasSSE=x86.sse;
+    if(x86.sse2 != -1) gCpuCaps.hasSSE2=x86.sse2;
+    if(x86.sse3 != -1) gCpuCaps.hasSSE2=x86.sse3;
+    if(x86.ssse3 != -1) gCpuCaps.hasSSSE3=x86.ssse3;
+    if(x86.sse41 != -1) gCpuCaps.hasSSE41=x86.sse41;
+    if(x86.sse42 != -1) gCpuCaps.hasSSE42=x86.sse42;
+    if(x86.aes != -1) gCpuCaps.hasAES=x86.aes;
+    if(x86.avx != -1) gCpuCaps.hasAVX=x86.avx;
+    if(x86.fma != -1) gCpuCaps.hasFMA=x86.fma;
   } else {
     gCpuCaps.hasMMX=
     gCpuCaps.hasMMX2=
@@ -1058,7 +1048,7 @@ while(sh_audio){
   if(playsize>0){
       sh_audio->a_buffer_len-=playsize;
       memcpy(sh_audio->a_buffer,&sh_audio->a_buffer[playsize],sh_audio->a_buffer_len);
-      if(!av_sync_pts && mp_conf.xp>=XP_VAPlay)
+      if(!mp_conf.av_sync_pts && mp_conf.xp>=XP_VAPlay)
           pthread_mutex_lock(&audio_timer_mutex);
       if(use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
@@ -1082,11 +1072,11 @@ while(sh_audio){
 	      }
 	  } else
 	      sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
-      } else if(av_sync_pts && pts!=HUGE)
+      } else if(mp_conf.av_sync_pts && pts!=HUGE)
 	  sh_audio->timer=pts+(ret-sh_audio->a_buffer_len)/(float)(sh_audio->af_bps);
       else
 	  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
-      if(!av_sync_pts && mp_conf.xp>=XP_VAPlay)
+      if(!mp_conf.av_sync_pts && mp_conf.xp>=XP_VAPlay)
           pthread_mutex_unlock(&audio_timer_mutex);
   }
 
@@ -1114,7 +1104,7 @@ static int osd_last_pts=-303;
       else osd_last_pts=pts;
       vo_data->osd_text=osd_text_buffer;
       if (osd_show_framedrop) {
-	  sprintf(osd_text_tmp, "Framedrop: %s",frame_dropping>1?"hard":frame_dropping?"vo":"none");
+	  sprintf(osd_text_tmp, "Framedrop: %s",mp_conf.frame_dropping>1?"hard":mp_conf.frame_dropping?"vo":"none");
 	  osd_show_framedrop--;
       } else
 #ifdef ENABLE_DEC_AHEAD_DEBUG
@@ -1154,7 +1144,7 @@ static void show_status_line(float v_pts,float AV_delay) {
     float a_pts=0;
     float delay=ao_get_delay(ao_data);
     float video_pts = v_pts;
-    if(av_sync_pts) {
+    if(mp_conf.av_sync_pts) {
 	a_pts = sh_audio->timer;
     } else if(pts_from_bps){
 	unsigned int samples=(sh_audio->audio.dwSampleSize)?
@@ -1167,13 +1157,13 @@ static void show_status_line(float v_pts,float AV_delay) {
 	a_pts=d_audio->pts;
 	a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     }
-    if( !av_sync_pts && mp_conf.xp>=XP_VideoAudio ) delay += get_delay_audio_buffer();
+    if( !mp_conf.av_sync_pts && mp_conf.xp>=XP_VideoAudio ) delay += get_delay_audio_buffer();
     AV_delay = a_pts-delay-video_pts;
     __show_status_line(a_pts,video_pts,delay,AV_delay);
 }
 
 static void show_status_line_no_apts(float v_pts) {
-    if(av_sync_pts && sh_audio && (!audio_eof || ao_get_delay(ao_data))) {
+    if(mp_conf.av_sync_pts && sh_audio && (!audio_eof || ao_get_delay(ao_data))) {
 	float a_pts = sh_audio->timer-ao_get_delay(ao_data);
 	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d\r"
 	,a_pts
@@ -1203,6 +1193,7 @@ typedef struct osd_args_s {
     int		info_factor;
 }osd_args_t;
 
+static float max_pts_correction=0;
 int mpxp_play_video( int rtc_fd, float *v_pts )
 {
     float time_frame=0;
@@ -1257,7 +1248,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
 ,shva[dec_ahead_active_frame].duration);
 #endif
     if(blit_frame) {
-	xp_screen_pts=*v_pts-(av_sync_pts?0:initial_audio_pts);
+	xp_screen_pts=*v_pts-(mp_conf.av_sync_pts?0:initial_audio_pts);
 #ifdef USE_OSD
 	/*--------- add OSD to the next frame contents ---------*/
 	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
@@ -1314,7 +1305,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
 	    time_frame-=GetRelativeTime();
 	}
 	pinfo[xp_id].current_module="sleep_usleep";
-	time_frame=SleepTime(rtc_fd,softsleep,time_frame);
+	time_frame=SleepTime(rtc_fd,mp_conf.softsleep,time_frame);
     }
     pinfo[xp_id].current_module="change_frame2";
     /* don't flip if there is nothing new to display */
@@ -1353,7 +1344,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
   /* FIXME: this block was added to fix A-V resync caused by some strange things
      like playing 48KHz audio on 44.1KHz soundcard and other.
      Now we know PTS of every audio frame so don't need to have it */
-  if(sh_audio && (!audio_eof || ao_get_delay(ao_data)) && !av_sync_pts) {
+  if(sh_audio && (!audio_eof || ao_get_delay(ao_data)) && !mp_conf.av_sync_pts) {
     float a_pts=0;
 
     // unplayed bytes in our and soundcard/dma buffer:
@@ -1381,12 +1372,9 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
 	float x;
 	AV_delay=(a_pts-delay)-*v_pts;
 	x=AV_delay*0.1f;
-	if(x<-max_pts_correction) x=-max_pts_correction; else
-	if(x> max_pts_correction) x= max_pts_correction;
-	if(default_max_pts_correction>=0)
-	    max_pts_correction=default_max_pts_correction;
-	else // +-10% of time
-	    max_pts_correction=shva.duration*0.10;
+	if(x<-max_pts_correction) x=-max_pts_correction;
+	else if(x> max_pts_correction) x= max_pts_correction;
+	max_pts_correction=shva.duration*0.10; // +-10% of time
 	if(mp_conf.xp>=XP_VAPlay)
 	    pthread_mutex_lock(&audio_timer_mutex);
 	sh_audio->timer+=x;
@@ -1555,16 +1543,6 @@ static void show_benchmark_status(void)
 		);
 }
 
-int v_bright=0;
-int v_cont=0;
-int v_hue=0;
-int v_saturation=0;
-/*
-For future:
-int v_red_intensity=0;
-int v_green_intensity=0;
-int v_blue_intensity=0;
-*/
 // for multifile support:
 play_tree_iter_t* playtree_iter = NULL;
 
@@ -1790,11 +1768,11 @@ static void mpxp_read_video_properties(void) {
 	    sh_video->fps,1/sh_video->fps
 	    );
     /* need to set fps here for output encoders to pick it up in their init */
-	if(force_fps){
-	    sh_video->fps=force_fps;
+	if(mp_conf.force_fps){
+	    sh_video->fps=mp_conf.force_fps;
 	}
 
-	if(!sh_video->fps && !force_fps){
+	if(!sh_video->fps && !mp_conf.force_fps){
 	    MSG_ERR(MSGTR_FPSnotspecified);
 	    sh_video=d_video->sh=NULL;
 	}
@@ -2107,6 +2085,16 @@ typedef struct input_state_s {
 }input_state_t;
 
 static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* state) {
+  int v_bright=0;
+  int v_cont=0;
+  int v_hue=0;
+  int v_saturation=0;
+/*
+For future:
+  int v_red_intensity=0;
+  int v_green_intensity=0;
+  int v_blue_intensity=0;
+*/
   int eof=0;
   mp_cmd_t* cmd;
   while( (cmd = mp_input_get_cmd(0,0,0)) != NULL) {
@@ -2276,9 +2264,9 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
     case MP_CMD_FRAMEDROPPING :  {
       int v = cmd->args[0].v.i;
       if(v < 0)
-	frame_dropping = (frame_dropping+1)%3;
+	mp_conf.frame_dropping = (mp_conf.frame_dropping+1)%3;
       else
-	frame_dropping = v > 2 ? 2 : v;
+	mp_conf.frame_dropping = v > 2 ? 2 : v;
       osd_show_framedrop = osd->info_factor;
     } break;
     case MP_CMD_TV_STEP_CHANNEL:
@@ -2391,8 +2379,8 @@ int main(int argc,char* argv[], char *envp[]){
 	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
 	return 0;
     }
-    if(shuffle_playback) playtree->flags|=PLAY_TREE_RND;
-    else		 playtree->flags&=~PLAY_TREE_RND;
+    if(mp_conf.shuffle_playback) playtree->flags|=PLAY_TREE_RND;
+    else			 playtree->flags&=~PLAY_TREE_RND;
     playtree = play_tree_cleanup(playtree);
     if(playtree) {
       playtree_iter = play_tree_iter_new(playtree,mconfig);
@@ -2511,7 +2499,7 @@ play_next_file:
     d_video=demuxer->video;
     d_dvdsub=demuxer->sub;
 
-    if(seek_to_byte) stream_skip(stream,seek_to_byte);
+    if(mp_conf.seek_to_byte) stream_skip(stream,mp_conf.seek_to_byte);
 
     sh_audio=d_audio->sh;
     sh_video=d_video->sh;
@@ -2561,7 +2549,7 @@ play_next_file:
 
     if(stream_dump_type>1) {
 	dump_file:
-	dump_mux(demuxer,av_sync_pts,seek_to_sec,play_n_frames);
+	dump_mux(demuxer,mp_conf.av_sync_pts,mp_conf.seek_to_sec,mp_conf.play_n_frames);
 	goto goto_next_file;
     }
 /*================== Init VIDEO (codec & libvo) ==========================*/
@@ -2607,8 +2595,8 @@ main:
 
     pinfo[xp_id].current_module="av_init";
 
-    if(av_force_pts_fix2==1 ||
-	(av_force_pts_fix2==-1 && av_sync_pts &&
+    if(mp_conf.av_force_pts_fix2==1 ||
+	(mp_conf.av_force_pts_fix2==-1 && mp_conf.av_sync_pts &&
 	(d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 	d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
 	d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
@@ -2643,15 +2631,15 @@ main:
 
     if(demuxer->file_format!=DEMUXER_TYPE_AVI) pts_from_bps=0; // it must be 0 for mpeg/asf!
 
-    if(force_fps && sh_video) {
-	sh_video->fps=force_fps;
+    if(mp_conf.force_fps && sh_video) {
+	sh_video->fps=mp_conf.force_fps;
 	MSG_INFO(MSGTR_FPSforced,sh_video->fps,1.0f/sh_video->fps);
     }
 
     /* Init timers and benchmarking */
     rtc_fd=InitTimer();
-    if(!nortc && rtc_fd>0) { close(rtc_fd); rtc_fd=-1; }
-    MSG_V("Using %s timing\n",rtc_fd>0?"rtc":softsleep?"software":"usleep()");
+    if(!mp_conf.nortc && rtc_fd>0) { close(rtc_fd); rtc_fd=-1; }
+    MSG_V("Using %s timing\n",rtc_fd>0?"rtc":mp_conf.softsleep?"software":"usleep()");
 
     time_usage.total_start=GetTimer();
     time_usage.audio=0; time_usage.audio_decode=0; time_usage.video=0;
@@ -2688,9 +2676,9 @@ main:
 	int in_pause=0;
 	float v_pts=0;
 
-	if(play_n_frames>=0){
-	    --play_n_frames;
-	    if(play_n_frames<0) eof = PT_NEXT_ENTRY;
+	if(mp_conf.play_n_frames>=0){
+	    --mp_conf.play_n_frames;
+	    if(mp_conf.play_n_frames<0) eof = PT_NEXT_ENTRY;
 	}
 
 	if( mp_conf.xp < XP_VAPlay )
@@ -2731,24 +2719,24 @@ read_input:
 	eof=mpxp_handle_input(&seek_args,&osd,&input_state);
 	if(input_state.next_file) goto goto_next_file;
 
-	if (seek_to_sec) {
+	if (mp_conf.seek_to_sec) {
 	    int a,b; float d;
 
-	    if (sscanf(seek_to_sec, "%d:%d:%f", &a,&b,&d)==3)
+	    if (sscanf(mp_conf.seek_to_sec, "%d:%d:%f", &a,&b,&d)==3)
 		seek_args.secs += 3600*a +60*b +d ;
-	    else if (sscanf(seek_to_sec, "%d:%f", &a, &d)==2)
+	    else if (sscanf(mp_conf.seek_to_sec, "%d:%f", &a, &d)==2)
 		seek_args.secs += 60*a +d;
-	    else if (sscanf(seek_to_sec, "%f", &d)==1)
+	    else if (sscanf(mp_conf.seek_to_sec, "%f", &d)==1)
 		seek_args.secs += d;
-	    seek_to_sec = NULL;
+	    mp_conf.seek_to_sec = NULL;
 	}
 do_loop:
   /* Looping. */
-	if(eof && loop_times>=0) {
-	    MSG_V("loop_times = %d, eof = %d\n", loop_times,eof);
+	if(eof && mp_conf.loop_times>=0) {
+	    MSG_V("loop_times = %d, eof = %d\n", mp_conf.loop_times,eof);
 
-	    if(loop_times>1) loop_times--; else
-	    if(loop_times==1) loop_times=-1;
+	    if(mp_conf.loop_times>1) mp_conf.loop_times--; else
+	    if(mp_conf.loop_times==1) mp_conf.loop_times=-1;
 
 	    eof=0;
 	    audio_eof=0;
