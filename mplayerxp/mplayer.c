@@ -1448,7 +1448,7 @@ void mpxp_seek( int _xp_id, osd_args_t *osd,float v_pts,const seek_args_t* seek)
 
 	if (vo_data->vobsub) {
 	    pinfo[_xp_id].current_module = "seek_vobsub_reset";
-	    vobsub_seek_r(vo_data->vobsub, seek->secs); // <-- TODO: replace with full pts
+	    vobsub_seek_r(vo_data->vobsub, seek);
 	}
 
 #ifdef USE_OSD

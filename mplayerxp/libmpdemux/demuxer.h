@@ -1,6 +1,8 @@
 #ifndef __DEMUXER_H
 #define __DEMUXER_H 1
 
+#include "stream.h"
+
 #define MAX_PACK_BYTES (0x1024*0x1024*4)
 
 #define DEMUXER_TYPE_UNKNOWN	0

@@ -410,12 +410,12 @@ typedef struct {
 } vobsub_t;
 
 /* Make sure that the spu stream idx exists. */
-static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int index)
+static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int _index)
 {
-    if (index >= vob->spu_streams_size) {
+    if (_index >= vob->spu_streams_size) {
 	/* This is a new stream */
 	if (vob->spu_streams) {
-	    packet_queue_t *tmp = realloc(vob->spu_streams, (index + 1) * sizeof(packet_queue_t));
+	    packet_queue_t *tmp = realloc(vob->spu_streams, (_index + 1) * sizeof(packet_queue_t));
 	    if (tmp == NULL) {
 		MSG_ERR("vobsub_ensure_spu_stream: realloc failure");
 		return -1;
@@ -423,13 +423,13 @@ static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int ind
 	    vob->spu_streams = tmp;
 	}
 	else {
-	    vob->spu_streams = malloc((index + 1) * sizeof(packet_queue_t));
+	    vob->spu_streams = malloc((_index + 1) * sizeof(packet_queue_t));
 	    if (vob->spu_streams == NULL) {
 		MSG_ERR("vobsub_ensure_spu_stream: malloc failure");
 		return -1;
 	    }
 	}
-	while (vob->spu_streams_size <= index) {
+	while (vob->spu_streams_size <= _index) {
 	    packet_queue_construct(vob->spu_streams + vob->spu_streams_size);
 	    ++vob->spu_streams_size;
 	}
@@ -437,25 +437,25 @@ static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int ind
     return 0;
 }
 
-static int __FASTCALL__ vobsub_add_id(vobsub_t *vob, const char *id, size_t idlen, const unsigned int index)
+static int __FASTCALL__ vobsub_add_id(vobsub_t *vob, const char *id, size_t idlen, const unsigned int _index)
 {
-    if (vobsub_ensure_spu_stream(vob, index) < 0)
+    if (vobsub_ensure_spu_stream(vob, _index) < 0)
 	return -1;
     if (id && idlen) {
-	if (vob->spu_streams[index].id)
-	    free(vob->spu_streams[index].id);
-	vob->spu_streams[index].id = malloc(idlen + 1);
-	if (vob->spu_streams[index].id == NULL) {
+	if (vob->spu_streams[_index].id)
+	    free(vob->spu_streams[_index].id);
+	vob->spu_streams[_index].id = malloc(idlen + 1);
+	if (vob->spu_streams[_index].id == NULL) {
 	    MSG_ERR("vobsub_add_id: malloc failure");
 	    return -1;
 	}
-	vob->spu_streams[index].id[idlen] = 0;
-	memcpy(vob->spu_streams[index].id, id, idlen);
+	vob->spu_streams[_index].id[idlen] = 0;
+	memcpy(vob->spu_streams[_index].id, id, idlen);
     }
-    vob->spu_streams_current = index;
+    vob->spu_streams_current = _index;
     if (mp_conf.verbose)
 	MSG_ERR( "[vobsub] subtitle (vobsubid): %d language %s\n",
-		index, vob->spu_streams[index].id);
+		_index, vob->spu_streams[_index].id);
     return 0;
 }
 
@@ -986,10 +986,10 @@ void __FASTCALL__ vobsub_reset(any_t*vobhandle)
     }
 }
 
-char * __FASTCALL__ vobsub_get_id(any_t*vobhandle, unsigned int index)
+char * __FASTCALL__ vobsub_get_id(any_t*vobhandle, unsigned int _index)
 {
     vobsub_t *vob = (vobsub_t *) vobhandle;
-    return (index < vob->spu_streams_size) ? vob->spu_streams[index].id : NULL;
+    return (_index < vob->spu_streams_size) ? vob->spu_streams[_index].id : NULL;
 }
 
 unsigned int __FASTCALL__ vobsub_get_forced_subs_flag(void const * const vobhandle)
@@ -1000,9 +1000,9 @@ unsigned int __FASTCALL__ vobsub_get_forced_subs_flag(void const * const vobhand
     return 0;
 }
 
-int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle, unsigned char * lang)
+int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle,const char * lang)
 {
-    int i;
+    unsigned i;
     vobsub_t *vob= (vobsub_t *) vobhandle;
     while(lang && strlen(lang) >= 2){
       for(i=0; i < vob->spu_streams_size; i++)
@@ -1018,24 +1018,29 @@ int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle, unsigned char * lang)
     return -1;
 }
 
-void __FASTCALL__ vobsub_seek(any_t* vobhandle, float pts)
+void __FASTCALL__ vobsub_seek(any_t* vobhandle,const seek_args_t* seeka)
 {
-  vobsub_t * vob = (vobsub_t *)vobhandle;
-  packet_queue_t * queue;
-  int seek_pts100 = (int)pts * 90000;
-
-  if (vob->spu_streams && 0 <= mp_conf.vobsub_id && (unsigned) mp_conf.vobsub_id < vob->spu_streams_size) {
-    /* do not seek if we don't know the id */
-    if (vobsub_get_id(vob, mp_conf.vobsub_id) == NULL)
-	    return;
-    queue = vob->spu_streams + mp_conf.vobsub_id;
-    queue->current_index = 0;
-    while (queue->current_index < queue->packets_size
-            && (queue->packets + queue->current_index)->pts100 < seek_pts100)
-      ++queue->current_index;
-    if (queue->current_index > 0)
-      --queue->current_index;
-  }
+    vobsub_t * vob = (vobsub_t *)vobhandle;
+    packet_queue_t * queue;
+    unsigned seek_pts100;
+    if(seeka->flags&DEMUX_SEEK_SET) seek_pts100 = (unsigned)seeka->secs * 90000;
+    else {
+	int cur_pts;
+	queue = vob->spu_streams + mp_conf.vobsub_id;
+	cur_pts=(queue->packets + queue->current_index)->pts100;
+	seek_pts100 = cur_pts+(unsigned)seeka->secs*90000;
+    }
+    if (vob->spu_streams && 0 <= mp_conf.vobsub_id && (unsigned) mp_conf.vobsub_id < vob->spu_streams_size) {
+	/* do not seek if we don't know the id */
+	if (vobsub_get_id(vob, mp_conf.vobsub_id) == NULL) return;
+	queue = vob->spu_streams + mp_conf.vobsub_id;
+	queue->current_index = 0;
+	while (queue->current_index < queue->packets_size
+	    && (queue->packets + queue->current_index)->pts100 < seek_pts100)
+	    ++queue->current_index;
+	if (queue->current_index > 0)
+	    --queue->current_index;
+    }
 }
 
 int __FASTCALL__ vobsub_get_packet(any_t*vobhandle, float pts,any_t** data, int* timestamp) {
@@ -1053,7 +1058,7 @@ int __FASTCALL__ vobsub_get_packet(any_t*vobhandle, float pts,any_t** data, int*
 	return pkt->size;
       } else break;
       else
-	  ++queue->current_index;
+	++queue->current_index;
     }
   }
   return -1;

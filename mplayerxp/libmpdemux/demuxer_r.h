@@ -20,7 +20,7 @@ extern int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts);
 extern int ds_get_packet_sub_r(demux_stream_t *ds,unsigned char **start);
 
 extern int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka);
-extern void vobsub_seek_r(any_t* vobhandle, float pts);
+extern void vobsub_seek_r(any_t* vobhandle,const seek_args_t* seeka);
 
 extern int demuxer_switch_audio_r(demuxer_t *, int id);
 extern int demuxer_switch_video_r(demuxer_t *, int id);

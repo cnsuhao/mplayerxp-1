@@ -178,9 +178,9 @@ int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
     return retval;
 }
 
-void vobsub_seek_r(any_t* vobhandle, float pts) {
+void vobsub_seek_r(any_t* vobhandle,const seek_args_t* seeka) {
     LOCK_DEMUXER();
-    vobsub_seek(vobhandle,pts);
+    vobsub_seek(vobhandle,seeka);
     UNLOCK_DEMUXER();
 }
 
