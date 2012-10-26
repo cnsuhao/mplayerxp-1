@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "dec_ahead.h"
+#include "xmp_core.h"
 #include "spudec.h"
 #include "postproc/swscale.h"
 #define MSGT_CLASS MSGT_SPUDEC

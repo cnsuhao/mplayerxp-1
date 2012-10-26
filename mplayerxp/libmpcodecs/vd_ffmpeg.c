@@ -6,7 +6,7 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
-#include "dec_ahead.h"
+#include "xmp_core.h"
 #ifdef HAVE_GOMP
 #include <omp.h>
 #endif

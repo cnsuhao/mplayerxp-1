@@ -107,8 +107,10 @@
 #include <inttypes.h>
 #include <errno.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
+#include "xmp_core.h"
+
 #include "video_out.h"
 
 #include "fastmemcpy.h"
@@ -120,13 +122,12 @@
 #include "x11_common.h"
 #endif
 
-#include "../input/input.h"
-#include "../input/mouse.h"
-#include "../dec_ahead.h"
-#include "../osdep/keycodes.h"
+#include "input/input.h"
+#include "input/mouse.h"
+#include "osdep/keycodes.h"
 #include "dri_vo.h"
 #include "video_out_internal.h"
-#include "../mp_image.h"
+#include "mp_image.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
 #endif

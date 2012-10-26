@@ -29,7 +29,7 @@
 
 #include "vd.h"
 
-#include "dec_ahead.h"
+#include "xmp_core.h"
 #include "dec_video.h"
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"

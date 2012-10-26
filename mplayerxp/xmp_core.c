@@ -18,7 +18,7 @@
 #include <malloc.h>
 #endif
 #define DA_PREFIX "DEC_AHEAD:"
-#include "dec_ahead.h"
+#include "xmp_core.h"
 #include "mplayer.h"
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"

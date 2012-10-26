@@ -27,8 +27,8 @@
 #include <errno.h>
 
 #include "mp_config.h"
-#include "../mplayer.h"
-#include "../dec_ahead.h"
+#include "mplayer.h"
+#include "xmp_core.h"
 #include "aspect.h"
 #include "video_out.h"
 
@@ -41,10 +41,10 @@
 #include "fastmemcpy.h"
 #include "sub.h"
 
-#include "../postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
+#include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
 #include "video_out_internal.h"
 #include "dri_vo.h"
-#include "../mp_image.h"
+#include "mp_image.h"
 LIBVO_EXTERN( x11 )
 
 static vo_info_t vo_info =

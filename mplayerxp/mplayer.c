@@ -91,7 +91,7 @@ m_config_t* mconfig;
 /**************************************************************************
              Decoding ahead
 **************************************************************************/
-#include "dec_ahead.h"
+#include "xmp_core.h"
 
 volatile unsigned xp_drop_frame_cnt=0;
 unsigned xp_num_frames=0;

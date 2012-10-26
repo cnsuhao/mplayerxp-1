@@ -9,7 +9,7 @@
 #include <malloc.h>
 #endif
 
-#include "dec_ahead.h"
+#include "xmp_core.h"
 #include "libmpconf/codec-cfg.h"
 
 #include "libvo/img_format.h"

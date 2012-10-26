@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "dec_ahead.h"
+#include "xmp_core.h"
 
 #include "../bswap.h"
 #include "postproc/af_format.h"

@@ -23,9 +23,10 @@
 #include <dlfcn.h>
 
 
-#include "../mp_config.h"
-#include "../mplayer.h"
-#include "../dec_ahead.h"
+#include "mp_config.h"
+#include "mplayer.h"
+#include "xmp_core.h"
+
 #include "dri_vo.h"
 #include "video_out.h"
 #include "video_out_internal.h"

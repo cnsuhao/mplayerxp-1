@@ -1,12 +1,11 @@
 /*
-   Decoding ahead
+   eXtra performance MPlayer's CORE
    Licence: GPL v2
-   Author: Nickols_K
    Note: Threaded engine to decode frames ahead
 */
 
-#ifndef __DEC_AHEAD_H
-#define __DEC_AHEAD_H
+#ifndef __XMP_CORE_H
+#define __XMP_CORE_H 1
 
 #include <inttypes.h>
 #include <pthread.h>

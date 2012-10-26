@@ -9,8 +9,9 @@
 #include "demuxer_r.h"
 #include "libmpsub/vobsub.h"
 #include "osdep/timer.h"
-#include "../mplayer.h"
-#include "../dec_ahead.h"
+
+#include "mplayer.h"
+#include "xmp_core.h"
 
 pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;
 #define LOCK_DEMUXER() { pthread_mutex_lock(&demuxer_mutex); }

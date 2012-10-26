@@ -6,16 +6,16 @@
 #ifdef HAVE_MALLOC
 #include <malloc.h>
 #endif
-#include "../dec_ahead.h"
-#include "../mplayer.h"
-#include "../help_mp.h"
+#include "xmp_core.h"
+#include "mplayer.h"
+#include "help_mp.h"
 
-#include "../libvo/img_format.h"
-#include "../libvo/video_out.h"
+#include "libvo/img_format.h"
+#include "libvo/video_out.h"
 #include "mp_image.h"
 #include "vf.h"
 
-#include "../libvo/fastmemcpy.h"
+#include "libvo/fastmemcpy.h"
 #include "libmpconf/codec-cfg.h"
 #include "pp_msg.h"
 
