@@ -28,11 +28,11 @@ SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c sig_hand.c d
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 
-FF_LIBS = ../ffmpeg/libavcodec/libavcodec.a \
-	  ../ffmpeg/libswscale/libswscale.a \
-	  ../ffmpeg/libpostproc/libpostproc.a \
-	  ../ffmpeg/libavformat/libavformat.a \
-	  ../ffmpeg/libavutil/libavutil.a
+FF_LIBS = ../ffmpeg/libavcodec/libavcodec$(FF_SUFFIX).a \
+	  ../ffmpeg/libswscale/libswscale$(FF_SUFFIX).a \
+	  ../ffmpeg/libpostproc/libpostproc$(FF_SUFFIX).a \
+	  ../ffmpeg/libavformat/libavformat$(FF_SUFFIX).a \
+	  ../ffmpeg/libavutil/libavutil$(FF_SUFFIX).a
 
 MP_LIBS = libmpdemux/libmpdemux.a \
 	  libmpcodecs/libmpcodecs.a \

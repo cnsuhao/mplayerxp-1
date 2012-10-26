@@ -325,14 +325,20 @@ if test -n $host ; then
 _arch=$host_arch
 x86_32 && _arch="i686"
 x86_64 && _arch="x86_64"
-ffmpeg_args="--arch=$_arch $ffmpeg_args"
+x86_32 && ff_libsuffix="32"
+x86_64 && ff_libsuffix="64"
+ffmpeg_args="--arch=$_arch --build-suffix=$ff_libsuffix $ffmpeg_args"
 fi
 test "$debug" != "0" && ffmpeg_args="$ffmpeg_args --enable-debug=$debug"
 enabled $profile  && ffmpeg_args="$ffmpeg_args --enable-profile"
+if test -f "../ffmpeg/libavcodec/libavcodec$ff_libsuffix.a"; then
+echocheck "ffmpeg was already configured for $ff_libsuffix"
+else
 echocheck "configuring ffmpeg stuff: --cc=\"$cc\" $ffmpeg_args"
 cd ../ffmpeg
 $(LC_ALL=C ./configure --cc="$cc" $ffmpeg_args)
 cd $srcdir
+fi
 echores "done"
 ###################################
 
@@ -748,6 +754,7 @@ CONFDIR = $confdir
 LIBDIR = $libdir
 DESTDIR = $DESTDIR
 PROGNAME = $prog_alias
+FF_SUFFIX=$ff_libsuffix
 AR = ar
 CC = $cc
 LDCONFIG=$ldconfig
