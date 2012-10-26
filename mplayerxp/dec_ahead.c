@@ -189,10 +189,6 @@ static unsigned compute_frame_dropping(float v_pts,float drop_barrier) {
     unsigned rc=0;
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
-    /*
-    ada_active_frame	   - abs frame num. which is being displayed
-    abs_dec_ahead_locked_frame - abs frame num. which is being decoded
-    */
     max_frame_delay = time_usage.max_video+time_usage.max_vout;
 
     /*
@@ -320,7 +316,6 @@ while(!xp_eof){
 	pinfo[_xp_id].current_module = "Post seek";
 	if(xp_is_bad_pts) mpeg_timer=HUGE;
 	xp_core.in_lseek=NoSeek;
-	MSG_T("\nDEC_AHEAD: reset counters to (%u %u) due lseek\n",dec_ahead_locked_frame,abs_dec_ahead_locked_frame);
 	pinfo[_xp_id].current_module = "dec_ahead 3";
     }
     if(in_size<0) {
@@ -370,8 +365,6 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     if(xp_n_frame_to_drop)	drop_param=frame_dropping;
     else			drop_param=0;
     /* decode: */
-    MSG_T("\nDEC_AHEAD: decode to %u (abs (blitted(%u)>=active+xp-2(%u)))\n"
-		,abs_dec_ahead_blitted_frame,abs_dec_ahead_locked_frame,lda_active_frame+xp_num_frames-2);
     if(output_quality) {
 	unsigned total = xp_num_frames/2;
 	unsigned distance = dae_get_decoder_outrun(xp_core.video);
@@ -386,12 +379,6 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	if(drop_param) mpcv_set_quality(sh_video,output_quality);
     }
     if(!blit_frame && drop_param) xp_drop_frame_cnt++;
-#ifdef ENABLE_DEC_AHEAD_DEBUG
-    if(verbose) {
-	MSG_T("\nDEC_AHEAD: frame %u decoded (blit=%u blit_param=%u size=%i)\n"
-	,abs_dec_ahead_locked_frame,blit_frame,drop_param,in_size);
-    }
-#endif
     if(blit_frame) {
 	unsigned idx=dae_curr_vdecoded();
 	if(xp_is_bad_pts)

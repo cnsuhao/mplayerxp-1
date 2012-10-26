@@ -1118,7 +1118,7 @@ static int osd_last_pts=-303;
 	  osd_show_framedrop--;
       } else
 #ifdef ENABLE_DEC_AHEAD_DEBUG
-	  if(mp_conf.verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d abs frame: %u",osd_function,pts/3600,(pts/60)%60,pts%60,abs_dec_ahead_active_frame);
+	  if(mp_conf.verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);
 	  else sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);
 #else
           sprintf(osd_text_tmp,"%c %02d:%02d:%02d",osd_function,pts/3600,(pts/60)%60,pts%60);

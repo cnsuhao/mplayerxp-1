@@ -242,9 +242,14 @@ void dump_mux_close(demuxer_t *demuxer)
     if(priv) {
 	MSG_DBG2("Closing dump: %X %f secs\n"
 	     "As video %X-%ix%i audio %X-%ix%ix%i\n"
-	,demuxer,shv?shv->timer:sha->timer
-	,m_video?m_video->bih->biCompression:-1,m_video?m_video->bih->biWidth:-1,m_video?m_video->bih->biHeight:-1
-	,m_audio?m_audio->wf->wFormatTag:-1,m_audio?m_audio->wf->nSamplesPerSec:-1,m_audio?m_audio->wf->wBitsPerSample:-1,m_audio?m_audio->wf->nChannels:-1);
+	,demuxer,shv?priv->vtimer:sha->timer
+	,priv->m_video?priv->m_video->bih->biCompression:-1
+	,priv->m_video?priv->m_video->bih->biWidth:-1
+	,priv->m_video?priv->m_video->bih->biHeight:-1
+	,priv->m_audio?priv->m_audio->wf->wFormatTag:-1
+	,priv->m_audio?priv->m_audio->wf->nSamplesPerSec:-1
+	,priv->m_audio?priv->m_audio->wf->wBitsPerSample:-1
+	,priv->m_audio?priv->m_audio->wf->nChannels:-1);
 	if(shv && (priv->mux_type&MUX_HAVE_VIDEO)) priv->m_video->source=shv;
 	if(sha && (priv->mux_type&MUX_HAVE_AUDIO)) priv->m_audio->source=sha;
 	muxer_write_index(priv->muxer);

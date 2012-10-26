@@ -12,16 +12,17 @@
 typedef struct sh_audio_s {
     int			aid;
     demux_stream_t*	ds;
-    unsigned int	format;
     struct codecs_st*	codec;
     int			inited;
+// input format
+    unsigned int	format;
+    unsigned		i_bps; // == bitrate  (compressed bytes/sec)
 // output format:
     float		timer;  // value of old a_frame
     unsigned		samplerate;
     unsigned		samplesize;
     unsigned		channels;
     unsigned		o_bps; // == samplerate*samplesize*channels   (uncompr. bytes/sec)
-    unsigned		i_bps; // == bitrate  (compressed bytes/sec)
 // in buffers:
     char*		a_in_buffer;
     int			a_in_buffer_len;
@@ -59,9 +60,10 @@ typedef struct sh_audio_s {
 typedef struct sh_video_s {
     int			vid;
     demux_stream_t*	ds;
-    unsigned int	format;
     struct codecs_st*	codec;
     int			inited;
+// input format
+    unsigned int	format;
     int			is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
 // output format:
     float		fps;
