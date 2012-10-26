@@ -1,6 +1,5 @@
 /*
-  MPlayerXP's design. MPXPAV64 wtag.
-  Implements of ASF v1, AVI stream parsers.
+  MPlayerXP's design. MPXPAV64 format.
 */
 
 #include <stdio.h>

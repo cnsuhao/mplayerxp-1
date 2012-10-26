@@ -1,5 +1,5 @@
-/* parse_mp4.h - Headerfile for MP4 file wtag parser code
- * This file is part of MPlayer, see http://mplayerhq.hu/ for info.  
+/* parse_mp4.h - Headerfile for MP4 file format parser code
+ * This file is part of MPlayer, see http://mplayerhq.hu/ for info.
  * (c)2002 by Felix Buenemann <atmosfear at users.sourceforge.net>
  * File licensed under the GPL, see http://www.fsf.org/ for more info.
  */

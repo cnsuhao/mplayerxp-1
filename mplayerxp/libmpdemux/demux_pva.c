@@ -160,7 +160,7 @@ static demuxer_t* pva_open (demuxer_t * demuxer)
 	/*
 	 * Audio and Video codecs:
 	 * the PVA spec only allows MPEG2 video and MPEG layer II audio. No need to check the formats then.
-	 * Moreover, there would be no way to do that since the PVA stream wtag has no fields to describe
+	 * Moreover, there would be no way to do that since the PVA stream format has no fields to describe
 	 * the used codecs.
 	 */
 	

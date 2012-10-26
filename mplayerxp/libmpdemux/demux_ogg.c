@@ -55,7 +55,7 @@ typedef struct theora_struct_st {
 } theora_struct_t;
 
 //// OggDS headers
-// Header for the new header wtag
+// Header for the new header format
 typedef struct stream_header_video
 {
 	ogg_int32_t	width;

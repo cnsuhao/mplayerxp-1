@@ -52,7 +52,7 @@ static char *opt_cryptokey;
 extern int ts_prog;
 
 const config_t lavf_opts[] = {
-	{"wtag",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL, "forces wtag of lavf demuxer"},
+	{"format",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL, "forces format of lavf demuxer"},
 	{"cryptokey", &(opt_cryptokey), CONF_TYPE_STRING,       0,  0,       0, NULL, "specifies cryptokey for lavf demuxer"},
 	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
@@ -194,7 +194,7 @@ static int lavf_probe(demuxer_t *demuxer){
         }
         priv->avif= av_find_input_format(opt_format);
         if (!priv->avif) {
-            MSG_FATAL("Unknown lavf wtag %s\n", opt_format);
+            MSG_FATAL("Unknown lavf format %s\n", opt_format);
             return 0;
         }
         MSG_INFO("Forced lavf %s demuxer\n", priv->avif->long_name);

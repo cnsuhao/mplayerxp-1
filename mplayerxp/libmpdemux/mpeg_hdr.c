@@ -54,8 +54,8 @@ int mp_header_process_sequence_header (mp_mpeg_header_t * picture, unsigned char
 static int header_process_sequence_extension (mp_mpeg_header_t * picture,
 					      unsigned char * buffer)
 {
-    /* check chroma wtag, size extensions, marker bit */
-	    
+    /* check chroma format, size extensions, marker bit */
+
     if ( ((buffer[1] & 0x06) == 0x00) ||
          ((buffer[1] & 0x01) != 0x00) || (buffer[2] & 0xe0) ||
          ((buffer[3] & 0x01) != 0x01) )

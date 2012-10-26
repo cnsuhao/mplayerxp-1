@@ -6,7 +6,7 @@
     Sega Saturn CD-ROM games. FILM files have also been found on 3DO
     games.
 
-    Details of the FILM file wtag can be found at:
+    Details of the FILM file format can be found at:
       http://www.pcisys.net/~melanson/codecs/
       
     TODO: demuxer->movi_length
@@ -300,7 +300,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
 
           sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
 
-          // uncompressed PCM wtag
+          // uncompressed PCM format
           sh_audio->wf->wFormatTag = 1;
           sh_audio->wtag = 1;
           sh_audio->wf->nChannels = audio_channels;
@@ -331,7 +331,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
 
         sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
 
-        // uncompressed PCM wtag
+        // uncompressed PCM format
         sh_audio->wf->wFormatTag = 1;
         sh_audio->wtag = 1;
         sh_audio->wf->nChannels = 1;

@@ -137,7 +137,7 @@ typedef struct {
 
 /*
  * Some macros to swap little endian structures read from an ASF file
- * into machine endian wtag
+ * into machine endian format
  */
 #ifdef WORDS_BIGENDIAN
 #define	le2me_ASF_obj_header_t(h) {					\

@@ -333,7 +333,7 @@ void hexdump(char *, unsigned long);
 
 #define SKIP_BITS(n) buffer<<=n
 #define SHOW_BITS(n) ((buffer)>>(32-(n)))
-static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timestamp, unsigned int wtag)
+static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timestamp, unsigned int format)
 {
   float v_pts;
   uint32_t buffer= (s[0]<<24) + (s[1]<<16) + (s[2]<<8) + s[3];
@@ -342,8 +342,8 @@ static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timesta
   int orig_kf;
 
 #if 1
-  if(wtag==mmioFOURCC('R','V','3','0') || wtag==mmioFOURCC('R','V','4','0')){
-    if(wtag==mmioFOURCC('R','V','3','0')){
+  if(format==mmioFOURCC('R','V','3','0') || format==mmioFOURCC('R','V','4','0')){
+    if(format==mmioFOURCC('R','V','3','0')){
       SKIP_BITS(3);
       pict_type= SHOW_BITS(2);
       SKIP_BITS(2 + 7);
@@ -1197,7 +1197,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 	  } else if (strstr(tmps,"x-ralf-mpeg4")) {
 		 MSG_ERR("Real lossless audio not supported yet\n");
 	  } else {
-		 MSG_V("Unknown audio stream wtag\n");
+		 MSG_V("Unknown audio stream format\n");
 		}
 	} else if (!strncmp(tmps,"video/",6)) {
 	  if (strstr(tmps,"x-pn-realvideo") || strstr(tmps,"x-pn-multirate-realvideo")) {
@@ -1314,7 +1314,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 
 		}
 	  } else {
-		 MSG_V("Unknown video stream wtag\n");
+		 MSG_V("Unknown video stream format\n");
 	  }
 	} else if (strstr(tmps,"logical-")) {
 		 if (strstr(tmps,"fileinfo")) {

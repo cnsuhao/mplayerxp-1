@@ -145,7 +145,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 	picture_format = IMGFMT_RGB15;
     else
     {
-	MSG_ERR( "Unknown wtag given: %s\n", tv_param_outfmt);
+	MSG_ERR( "Unknown format given: %s\n", tv_param_outfmt);
 	MSG_V( "Using default: Planar YV12\n");
 	picture_format = IMGFMT_YV12;
     }

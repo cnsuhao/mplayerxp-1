@@ -750,7 +750,7 @@ static int mpgps_probe(demuxer_t*demuxer)
 			    MSG_ERR("MPEG: " MSGTR_MissingVideoStreamBug);
 			else
 			{
-			    MSG_V("Not MPEG System Stream wtag...\n");
+			    MSG_V("Not MPEG System Stream format...\n");
 			    return 0;
 			}
 		    }

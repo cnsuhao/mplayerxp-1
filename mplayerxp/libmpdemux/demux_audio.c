@@ -988,14 +988,14 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 	    break;
 	}
     }
-    /* Add here some other audio wtag detection */
+    /* Add here some other audio format detection */
     if(step < HDR_SIZE) memmove(hdr,&hdr[step],HDR_SIZE-step);
     pos -= step;
   }
 
   if(!frmt)
   {
-    MSG_ERR("Can't detect audio wtag\n");
+    MSG_ERR("Can't detect audio format\n");
     return NULL;
   }
   sh_audio = new_sh_audio(demuxer,0);
@@ -1561,7 +1561,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     return 1;
   }
   default:
-    MSG_ERR("Audio demuxer : unknown wtag %d\n",priv->frmt);
+    MSG_ERR("Audio demuxer : unknown format %d\n",priv->frmt);
   }
   return 0;
 }

@@ -439,7 +439,7 @@ static unsigned char* buffer;
 static int bufptr=0;
 static int bitcnt=0;
 static unsigned char buf=0;
-static int wtag, width, height;
+static int format, width, height;
 
 static unsigned int x_get_bits(int n){
     unsigned int x=0;
@@ -488,13 +488,13 @@ static int h263_decode_picture_header(unsigned char *b_ptr)
     skip_bits1(&s->gb);	/* camera  off */
     skip_bits1(&s->gb);	/* freeze picture release off */
 
-    wtag = get_bits(&s->gb, 3);
+    format = get_bits(&s->gb, 3);
 
-    if (wtag != 7) {
-        MSG_ERR("h263_plus = 0  wtag = %d\n",wtag);
+    if (format != 7) {
+        MSG_ERR("h263_plus = 0  format = %d\n",format);
         /* H.263v1 */
-        width = h263_format[wtag][0];
-        height = h263_format[wtag][1];
+        width = h263_format[format][0];
+        height = h263_format[format][1];
 	MSG_ERR("%d x %d\n",width,height);
 //        if (!width) return -1;
 
@@ -521,8 +521,8 @@ static int h263_decode_picture_header(unsigned char *b_ptr)
 	    MSG_ERR("H.263v2 A error\n");
             return -1;
 	}
-        if (get_bits(&s->gb, 3) != 6){ /* custom source wtag */
-	    MSG_ERR("custom source wtag\n");
+        if (get_bits(&s->gb, 3) != 6){ /* custom source format */
+	    MSG_ERR("custom source format\n");
             return -1;
 	}
         skip_bits(&s->gb, 12);

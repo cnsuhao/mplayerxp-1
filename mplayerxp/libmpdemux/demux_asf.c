@@ -718,7 +718,7 @@ static int asf_control(demuxer_t *demuxer,int cmd,any_t*args)
 
 demuxer_driver_t demux_asf =
 {
-    "ASF - Advanced stream wtag v1 parser",
+    "ASF - Advanced stream format v1 parser",
     ".asf",
     NULL,
     asf_probe,

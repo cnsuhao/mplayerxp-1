@@ -233,7 +233,7 @@ static void subcc_decode(const unsigned char *inputbuffer, unsigned int inputlen
 {
   /* The first number may denote a channel number. I don't have the
    * EIA-708 standard, so it is hard to say.
-   * From what I could figure out so far, the general wtag seems to be:
+   * From what I could figure out so far, the general format seems to be:
    *
    * repeat
    *

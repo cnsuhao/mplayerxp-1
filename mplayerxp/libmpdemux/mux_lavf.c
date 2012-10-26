@@ -367,9 +367,9 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	av_register_all();
 	
 	priv->oc = av_alloc_format_context();
-	if(!priv->oc) 
+	if(!priv->oc)
 	{
-		MSG_FATAL("Couldn't get wtag context\n");
+		MSG_FATAL("Couldn't get format context\n");
 		goto fail;
 	}
 
@@ -383,7 +383,7 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	
 	if(av_set_parameters(priv->oc, NULL) < 0) 
 	{
-		MSG_FATAL("Invalid output wtag parameters\n");
+		MSG_FATAL("Invalid output format parameters\n");
 		goto fail;
 	}
 	priv->oc->packet_size= mux_packet_size;

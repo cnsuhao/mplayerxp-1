@@ -240,7 +240,7 @@ char* fmt2str(int format, unsigned bps, char* str, size_t size)
 {
   int i=0;
   // Print endinaness
- 
+
   if(format & AF_FORMAT_SPECIAL_MASK){
     unsigned short wtag;
     unsigned j;

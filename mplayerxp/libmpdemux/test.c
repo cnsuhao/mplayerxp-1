@@ -44,7 +44,7 @@ int file_format=DEMUXER_TYPE_UNKNOWN;
 	exit(1);
   }
 
-  printf("success: wtag: %d  data: 0x%X - 0x%X\n",file_format, (int)(stream->start_pos),(int)(stream->end_pos));
+  printf("success: format: %d  data: 0x%X - 0x%X\n",file_format, (int)(stream->start_pos),(int)(stream->end_pos));
 
   stream_enable_cache(stream,2048*1024,0,0);
 

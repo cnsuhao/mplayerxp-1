@@ -55,7 +55,7 @@ typedef struct {
 
     /* video */
     struct video_picture	picture;
-    int				wtag;		/* output wtag */
+    int				format;		/* output format */
     int				width;
     int				height;
     int				bytesperline;
@@ -133,9 +133,9 @@ static int palette2depth(int palette)
     return(-1);
 }
 
-static int format2palette(int wtag)
+static int format2palette(int format)
 {
-    switch(wtag)
+    switch(format)
     {
 	case IMGFMT_RGB15:
 	    return(VIDEO_PALETTE_RGB555);
@@ -300,7 +300,7 @@ static int init(priv_t *priv)
 	    MSG_V( "volume=%d bass=%d treble=%d balance=%d mode=%s\n",
 		priv->audio[i].volume, priv->audio[i].bass, priv->audio[i].treble,
 		priv->audio[i].balance, audio_mode2name[priv->audio[i].mode]);
-	    MSG_V( " channels: %d, samplerate: %d, samplesize: %d, wtag: %s\n",
+	    MSG_V( " channels: %d, samplerate: %d, samplesize: %d, format: %s\n",
 		priv->audio_channels[i], priv->audio_samplerate[i], priv->audio_samplesize[i],
 		ao_format_name(priv->audio_format[i]));
 	}
@@ -359,7 +359,7 @@ static int init(priv_t *priv)
 	
 	MSG_V("Supported formats: %x\n", ioctl_param);
 	if (!(ioctl_param & priv->audio_format[priv->audio_id]))
-	    MSG_WARN("notsupported wtag\n");
+	    MSG_WARN("notsupported format\n");
 
 	ioctl_param = priv->audio_format[priv->audio_id];
 	MSG_V("ioctl dsp setfmt: %d\n",
@@ -545,7 +545,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 
 	    output_fmt = priv->wtag;
 	    *(int *)arg = output_fmt;
-	    MSG_V( "Output wtag: %s\n", vo_format_name(output_fmt));
+	    MSG_V( "Output format: %s\n", vo_format_name(output_fmt));
 	    return(TVI_CONTROL_TRUE);
 	}
 	case TVI_CONTROL_VID_SET_FORMAT:

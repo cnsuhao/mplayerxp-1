@@ -6,7 +6,7 @@
  * The license covers the portions of this file regarding TiVo additions.
  *
  * Olaf Beck and Tridge (indirectly) were essential at providing
- * information regarding the wtag of the TiVo streams.
+ * information regarding the format of the TiVo streams.
  *
  * However, no code in the following subsection is directly copied from
  * either author.

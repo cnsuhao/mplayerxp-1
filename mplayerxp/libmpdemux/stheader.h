@@ -14,10 +14,10 @@ typedef struct sh_audio_s {
     demux_stream_t*	ds;
     struct codecs_st*	codec;
     int			inited;
-// input wtag
+// input format
     uint32_t		wtag;  // analogue of fourcc for sound
     unsigned		i_bps; // == bitrate  (compressed bytes/sec)
-// output wtag:
+// output format:
     float		timer;  // value of old a_frame
     unsigned		samplerate;
     unsigned		samplesize;
@@ -48,7 +48,7 @@ typedef struct sh_audio_s {
 // win32 codec stuff:
     AVIStreamHeader	audio;
     WAVEFORMATEX*	wf;
-//  char wf_ext[64];     // in wtag
+//  char wf_ext[64];     // in format
     unsigned		audio_in_minsize;
     unsigned		audio_out_minsize;
 // other codecs:
@@ -62,10 +62,10 @@ typedef struct sh_video_s {
     demux_stream_t*	ds;
     struct codecs_st*	codec;
     int			inited;
-// input wtag
+// input format
     uint32_t		fourcc;
     int			is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
-// output wtag:
+// output format:
     float		fps;
     int			chapter_change;
     unsigned		src_w,src_h;// source picture size (filled by fileformat parser)
@@ -81,7 +81,7 @@ typedef struct sh_video_s {
     mp_image_t*		image;
 // win32 codec stuff:
     AVIStreamHeader	video;
-    BITMAPINFOHEADER*	bih;   // in wtag
+    BITMAPINFOHEADER*	bih;   // in format
     any_t* context;	// codec-specific stuff (usually HANDLE or struct pointer)
     any_t* ImageDesc;	// for quicktime codecs
 } sh_video_t;

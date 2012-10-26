@@ -59,7 +59,7 @@ typedef struct {
   AVIStreamHeader h;  // Rate/Scale and SampleSize must be filled by caller!
   // stream specific:
   WAVEFORMATEX *wf;
-  BITMAPINFOHEADER *bih;   // in wtag
+  BITMAPINFOHEADER *bih;   // in format
   any_t* ImageDesc; // for quicktime codecs
   float aspect;
   // muxer of that stream

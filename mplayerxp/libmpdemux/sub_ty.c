@@ -471,7 +471,7 @@ static int ty_XDSAddLine = -1;
 static int ty_XDSDisplayCount = -1;
 
 
-static void ty_AddXDSToDisplay( const char *wtag, ... )
+static void ty_AddXDSToDisplay( const char *format, ... )
 {
    char line[ 80 ];
    int  index;
@@ -486,8 +486,8 @@ static void ty_AddXDSToDisplay( const char *wtag, ... )
       ty_XDSAddLine = 0;
    }
 
-   va_start( ap, wtag );
-   vsnprintf( line, 80, wtag, ap );
+   va_start( ap, format );
+   vsnprintf( line, 80, format, ap );
    va_end( ap );
    MSG_V( "XDS: %s\n", line );
 
