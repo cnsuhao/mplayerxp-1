@@ -314,7 +314,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
   if(vo_flags & 0x08){
     static vo_mpegpes_t packet;
     static vo_mpegpes_t *pkg=&packet;
-    packet.timestamp=sh_video->timer*90000.0;
+    packet.timestamp=v_pts*90000.0;
     packet.id=0x20; /* Subpic */
     while((packet.size=ds_get_packet_sub_r(d_dvdsub,&packet.data))>0){
       MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",packet.size,v_pts,d_dvdsub->pts);
@@ -334,8 +334,8 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 	if (vo_data->vobsub) {
 	    if (v_pts >= 0) {
 		while((len=vobsub_get_packet(vo_data->vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
-		    timestamp -= (v_pts - sh_video->timer)*90000;
-		    MSG_V("\rVOB sub: len=%d v_pts=%5.3f v_timer=%5.3f sub=%5.3f ts=%d \n",len,v_pts,sh_video->timer,timestamp / 90000.0,timestamp);
+		    timestamp -= v_pts*90000;
+		    MSG_V("\rVOB sub: len=%d v_pts=%5.3f sub=%5.3f ts=%d \n",len,v_pts,timestamp / 90000.0,timestamp);
 		    spudec_assemble(vo_data->spudec,packet,len,90000*d_dvdsub->pts);
 		}
 	    }

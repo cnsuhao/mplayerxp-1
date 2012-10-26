@@ -138,7 +138,6 @@ static void rawvideo_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   pos+=(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:(priv.fps*priv.imgsize))*seeka->secs;
   pos/=priv.imgsize;
   stream_seek(s,pos*priv.imgsize);
-  sh_video->timer=pos / sh_video->fps;
 //  printf("demux_rawvideo: streamtell=%d\n",(int)stream_tell(demuxer->stream));
 }
 

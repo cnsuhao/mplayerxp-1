@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "dec_ahead.h"
 
 #include "../bswap.h"
 #include "postproc/af_format.h"
@@ -221,8 +222,9 @@ static void audio_resume(ao_data_t* ao)
 extern vo_data_t* vo_data;
 static unsigned get_space(ao_data_t* ao){
     priv_t* priv=ao->priv;
-    if(vo_data->pts)
-	return ao->pts < vo_data->pts + priv->fast * 30000 ? ao->outburst : 0;
+    float pts=dae_played_fra(xp_core.video).v_pts;
+    if(pts)
+	return ao->pts < pts + priv->fast * 30000 ? ao->outburst : 0;
     return ao->outburst;
 }
 

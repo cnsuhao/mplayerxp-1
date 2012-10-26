@@ -667,12 +667,7 @@ int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     demuxer->video->prev_pts=0;
     demuxer->audio->prev_pts=0;
 
-#if 0
-    if(sh_audio) sh_audio->timer=sh_video->timer;
-#else
     if(sh_audio) sh_audio->timer=0;
-    if(sh_video) sh_video->timer=0; // !!!!!!
-#endif
     if(demuxer->driver->seek) demuxer->driver->seek(demuxer,seeka);
     else MSG_WARN("Demuxer seek error\n");
     return 1;

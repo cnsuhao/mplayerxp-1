@@ -168,9 +168,6 @@ typedef struct vo_data_s {
 // requested resolution/bpp:  (-x -y -bpp options)
     vo_rect_t		dest;
 
-    int			pts;
-    float		fps;
-
     any_t*		vo_priv;/* private data of vo structure */
     any_t*		priv;	/* private data of video driver */
     any_t*		priv2;	/* private data of X11 commons */

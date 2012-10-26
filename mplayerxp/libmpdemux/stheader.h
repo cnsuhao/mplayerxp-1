@@ -64,7 +64,6 @@ typedef struct sh_video_s {
     int			inited;
     int			is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
 // output format:
-    float		timer;     // value of old v_frame
     float		fps;
     int			chapter_change;
     unsigned		disp_w,disp_h;// display size (filled by fileformat parser)

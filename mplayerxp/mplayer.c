@@ -1137,13 +1137,13 @@ static int osd_last_pts=-303;
 #endif
 
 //================= Update OSD ====================
-static void __show_status_line(float a_pts,float video_pts,float delay,float AV_delay) {
+static void __show_status_line(float a_pts,float v_pts,float delay,float AV_delay) {
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d [frms: [%i]]\n",
-		a_pts-delay,video_pts,AV_delay,c_total
+		a_pts-delay,v_pts,AV_delay,c_total
 		,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
-		,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
-		,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
-		,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
+		,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
+		,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
+		,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
 		,output_quality
 		,dae_curr_vplayed()
 		);
@@ -1177,21 +1177,22 @@ static void show_status_line_no_apts(float v_pts) {
 	float a_pts = sh_audio->timer-ao_get_delay(ao_data);
 	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d\r"
 	,a_pts
-	,sh_video->timer
-	,a_pts-sh_video->timer,0.0
+	,v_pts
+	,a_pts-v_pts
+	,0.0
 	,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
-	,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
+	,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
+	,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
 	,output_quality
 	);
     } else
 	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d\r"
 	,v_pts
 	,xp_core.video->num_played_frames
-	,(sh_video->timer>0.5)?(int)(100.0*time_usage.video/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(int)(100.0*time_usage.vout/(double)sh_video->timer):0
-	,(sh_video->timer>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_video->timer):0
+	,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
+	,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
 	,output_quality
 	);
     fflush(stdout);
@@ -1235,7 +1236,7 @@ int mpxp_play_video( int rtc_fd, float *v_pts )
 	    } else {
 		sh_video->chapter_change=0;
 	    }
-	} else if(*v_pts < 1.0 && sh_video->timer > 2.0) {
+	} else if(*v_pts < 1.0 && shva_prev.v_pts > 2.0) {
 	    MSG_V("Video chapter change detected\n");
 	    sh_video->chapter_change=1;
 	}
@@ -1246,18 +1247,17 @@ int mpxp_play_video( int rtc_fd, float *v_pts )
 	}
     }
 #if 0
-MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->timer=%f v_pts=%f stream_pts=%f duration=%f\n"
+MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f stream_pts=%f duration=%f\n"
 ,initial_audio_pts
 ,audio_eof
 ,sh_audio && !audio_eof?d_audio->pts+(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps:0
 ,sh_audio && !audio_eof?sh_audio->timer-ao_get_delay():0
-,sh_video->timer
 ,shva[dec_ahead_active_frame].v_pts
 ,shva[dec_ahead_active_frame].stream_pts
 ,shva[dec_ahead_active_frame].duration);
 #endif
     if(blit_frame) {
-	xp_screen_pts=sh_video->timer=*v_pts-(av_sync_pts?0:initial_audio_pts);
+	xp_screen_pts=*v_pts-(av_sync_pts?0:initial_audio_pts);
 #ifdef USE_OSD
 	/*--------- add OSD to the next frame contents ---------*/
 	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
@@ -1275,7 +1275,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	if(audio_eof && !get_delay_audio_buffer()) goto nosound_model;
 	if((!audio_eof || ao_get_delay(ao_data)) &&
 	(!use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
-	    time_frame=sh_video->timer-(sh_audio->timer-ao_get_delay(ao_data));
+	    time_frame=xp_screen_pts-(sh_audio->timer-ao_get_delay(ao_data));
 	else if(use_pts_fix2 && sh_audio->chapter_change)
 	    time_frame=0;
 	else
@@ -1343,7 +1343,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f sh_video->ti
 	if(mp_conf.benchmark) {
 		/* we need compute draw_slice+change_frame here */
 		time_usage.cur_vout+=tt;
-		if((time_usage.cur_video + time_usage.cur_vout + time_usage.cur_audio)*vo_data->fps > 1)
+		if((time_usage.cur_video+time_usage.cur_vout+time_usage.cur_audio)*sh_video->fps > 1)
 							bench_dropped_frames ++;
 	}
     }
@@ -1789,11 +1789,9 @@ static void mpxp_read_video_properties(void) {
 	    demuxer->file_format,sh_video->format, sh_video->disp_w,sh_video->disp_h,
 	    sh_video->fps,1/sh_video->fps
 	    );
-	vo_data->fps = sh_video->fps;
     /* need to set fps here for output encoders to pick it up in their init */
 	if(force_fps){
 	    sh_video->fps=force_fps;
-	    vo_data->fps = force_fps;
 	}
 
 	if(!sh_video->fps && !force_fps){
@@ -2119,7 +2117,7 @@ static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* st
       i_abs = (cmd->nargs > 1) ? cmd->args[1].v.i : 0;
       if(i_abs) {
 	seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
-	if(sh_video) osd_function= (v > sh_video->timer) ? OSD_FFW : OSD_REW;
+	if(sh_video) osd_function= (v > dae_played_fra(xp_core.video).v_pts) ? OSD_FFW : OSD_REW;
 	seek->secs = v/100.;
       }
       else {
@@ -2620,10 +2618,7 @@ main:
     else
 	    use_pts_fix2=0;
 
-    if(sh_video) {
-	sh_video->timer=0;
-	sh_video->chapter_change=0;
-    }
+    if(sh_video) sh_video->chapter_change=0;
 
     if(sh_audio) { // <- ??? always true
 	sh_audio->chapter_change=0;
@@ -2649,7 +2644,7 @@ main:
     if(demuxer->file_format!=DEMUXER_TYPE_AVI) pts_from_bps=0; // it must be 0 for mpeg/asf!
 
     if(force_fps && sh_video) {
-	vo_data->fps = sh_video->fps=force_fps;
+	sh_video->fps=force_fps;
 	MSG_INFO(MSGTR_FPSforced,sh_video->fps,1.0f/sh_video->fps);
     }
 
@@ -2712,10 +2707,6 @@ main:
 	    int l_eof;
 
 /*========================== PLAY VIDEO ============================*/
-
-	    vo_data->pts=sh_video->timer*90000.0;
-	    vo_data->fps=sh_video->fps;
-
 	    if(input_state.need_repaint) goto repaint;
 	    if((sh_video->is_static ||(stream->type&STREAMTYPE_MENU)==STREAMTYPE_MENU) && our_n_frames) {
 	/* don't decode if it's picture */
