@@ -52,7 +52,7 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     {
 	in_fmt=sh_audio->wf=malloc(sizeof(WAVEFORMATEX));
 	memcpy(in_fmt,&priv->o_wf,sizeof(WAVEFORMATEX));
-	in_fmt->wFormatTag=sh_audio->format;
+	in_fmt->wFormatTag=sh_audio->wtag;
     }
 
     if(mp_conf.verbose)
@@ -60,7 +60,7 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
 	MSG_V("Output fmt:\n");
 	print_wave_header(&priv->o_wf,sizeof(WAVEFORMATEX));
     }
-    MSACM_RegisterDriver((const char *)sh_audio->codec->dll_name, sh_audio->format, 0);
+    MSACM_RegisterDriver((const char *)sh_audio->codec->dll_name, sh_audio->wtag, 0);
     ret=acmStreamOpen(&priv->srcstream,(HACMDRIVER)NULL,in_fmt,&priv->o_wf,NULL,0,0,0);
     if(ret){
         if(ret==ACMERR_NOTPOSSIBLE)

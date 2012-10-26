@@ -84,7 +84,7 @@ int init(sh_audio_t *sh_audio)
         memcpy(lavc_context->extradata, (char *)sh_audio->codecdata,
                lavc_context->extradata_size);
     }
-    lavc_context->codec_tag = sh_audio->format;
+    lavc_context->codec_tag = sh_audio->wtag;
     lavc_context->codec_type = lavc_codec->type;
     lavc_context->codec_id = lavc_codec->id;
     /* open it */
@@ -160,7 +160,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	int len2=maxlen;
 	int x=ds_get_packet_r(sh_audio->ds,&start,apts?&null_pts:&apts);
 	if(x<=0) break; // error
-	if(sh_audio->format==mmioFOURCC('d','n','e','t')) swab(start,start,x&(~1));
+	if(sh_audio->wtag==mmioFOURCC('d','n','e','t')) swab(start,start,x&(~1));
 	av_init_packet(&pkt);
 	pkt.data = start;
 	pkt.size = x;
@@ -169,7 +169,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	if(y<x)
 	{
 	    sh_audio->ds->buffer_pos+=y-x;  // put back data (HACK!)
-	    if(sh_audio->format==mmioFOURCC('d','n','e','t'))
+	    if(sh_audio->wtag==mmioFOURCC('d','n','e','t'))
 		swab(start+y,start+y,(x-y)&~(1));
 	}
 	if(len2>0){

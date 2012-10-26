@@ -333,7 +333,7 @@ static unsigned int pnm_get_chunk(pnm_t *p,
       max -= 1;
 
       while(1) {
-	/* expecting following chunk format: 0x4f <chunk size> <data...> */
+	/* expecting following chunk wtag: 0x4f <chunk size> <data...> */
 
         if (max < 2)
           return -1;

@@ -333,7 +333,7 @@ void hexdump(char *, unsigned long);
 
 #define SKIP_BITS(n) buffer<<=n
 #define SHOW_BITS(n) ((buffer)>>(32-(n)))
-static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timestamp, unsigned int format)
+static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timestamp, unsigned int wtag)
 {
   float v_pts;
   uint32_t buffer= (s[0]<<24) + (s[1]<<16) + (s[2]<<8) + s[3];
@@ -342,8 +342,8 @@ static float real_fix_timestamp(real_priv_t* priv, unsigned char* s, int timesta
   int orig_kf;
 
 #if 1
-  if(format==mmioFOURCC('R','V','3','0') || format==mmioFOURCC('R','V','4','0')){
-    if(format==mmioFOURCC('R','V','3','0')){
+  if(wtag==mmioFOURCC('R','V','3','0') || wtag==mmioFOURCC('R','V','4','0')){
+    if(wtag==mmioFOURCC('R','V','3','0')){
       SKIP_BITS(3);
       pict_type= SHOW_BITS(2);
       SKIP_BITS(2 + 7);
@@ -491,7 +491,7 @@ got_audio:
 	{
 	    unsigned plen;
 	    plen=0;
-	    if (((sh_audio_t *)ds->sh)->format == mmioFOURCC('M', 'P', '4', 'A')) {
+	    if (((sh_audio_t *)ds->sh)->wtag == mmioFOURCC('M', 'P', '4', 'A')) {
 		uint16_t *sub_packet_lengths, sub_packets, i;
 		/* AAC in Real: several AAC frames in one Real packet. */
 		/* Second byte, upper four bits: number of AAC frames */
@@ -1011,15 +1011,15 @@ static demuxer_t* real_open(demuxer_t* demuxer)
                       MSG_WARN("Last header byte is not zero!\n");
                     stream_skip(demuxer->stream, 1);
                     i = stream_read_char(demuxer->stream);
-                    sh->format = stream_read_dword_le(demuxer->stream);
+                    sh->wtag = stream_read_dword_le(demuxer->stream);
                     if (i != 4) {
                       MSG_WARN("Audio FourCC size is not 4 (%d), please report to "
                              "MPlayer developers\n", i);
                       stream_skip(demuxer->stream, i - 4);
                     }
-                    if (sh->format != mmioFOURCC('l','p','c','J')) {
+                    if (sh->wtag != mmioFOURCC('l','p','c','J')) {
                       MSG_WARN("Version 3 audio with FourCC %8x, please report to "
-                             "MPlayer developers\n", sh->format);
+                             "MPlayer developers\n", sh->wtag);
                     }
                     sh->channels = 1;
                     sh->samplesize = 16;
@@ -1083,9 +1083,9 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    sh->wf->nAvgBytesPerSec = bitrate;
 		    sh->wf->nBlockAlign = frame_size;
 		    sh->wf->cbSize = 0;
-		    sh->format = MKTAG(buf[0], buf[1], buf[2], buf[3]);
+		    sh->wtag = MKTAG(buf[0], buf[1], buf[2], buf[3]);
 
-		    switch (sh->format)
+		    switch (sh->wtag)
 		    {
 			case MKTAG('d', 'n', 'e', 't'): /* direct support */
 			    break;
@@ -1143,13 +1143,13 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 				stream_skip(demuxer->stream, 1);
 				stream_read(demuxer->stream, sh->codecdata, sh->codecdata_len);
 			    }
-			    sh->format = mmioFOURCC('M', 'P', '4', 'A');
+			    sh->wtag = mmioFOURCC('M', 'P', '4', 'A');
 			    break;
 			default:
 			    MSG_V("Audio: Unknown (%s)\n", buf);
 		    }
 
-		    sh->wf->wFormatTag = sh->format;
+		    sh->wf->wFormatTag = sh->wtag;
 		    
 		    if (mp_conf.verbose > 0)
 		    print_wave_header(sh->wf,sizeof(WAVEFORMATEX));
@@ -1186,7 +1186,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    sh->wf->nAvgBytesPerSec = 0;//bitrate;
 		    sh->wf->nBlockAlign = 0;//frame_size;
 		    sh->wf->cbSize = 0;
-		    sh->wf->wFormatTag = sh->format = mmioFOURCC('a','d','u',0x55);
+		    sh->wf->wFormatTag = sh->wtag = mmioFOURCC('a','d','u',0x55);
 		    
 		    if(demuxer->audio->id==stream_id){
 			    sh->ds=demuxer->audio;
@@ -1197,7 +1197,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 	  } else if (strstr(tmps,"x-ralf-mpeg4")) {
 		 MSG_ERR("Real lossless audio not supported yet\n");
 	  } else {
-		 MSG_V("Unknown audio stream format\n");
+		 MSG_V("Unknown audio stream wtag\n");
 		}
 	} else if (!strncmp(tmps,"video/",6)) {
 	  if (strstr(tmps,"x-pn-realvideo") || strstr(tmps,"x-pn-multirate-realvideo")) {
@@ -1232,7 +1232,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    if (sh->fps<=0) sh->fps=24; // we probably won't even care about fps
 
 		    stream_skip(demuxer->stream, 4);
-//		    if(sh->format==0x30335652 || sh->format==0x30325652 )
+//		    if(sh->wtag==0x30335652 || sh->wtag==0x30325652 )
 		    if(1)
 		    {
 			int tmp=stream_read_word(demuxer->stream);
@@ -1245,7 +1245,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    }
 		    stream_skip(demuxer->stream, 2);
 
-		    // read codec sub-format (to make difference between low and high rate codec)
+		    // read codec sub-wtag (to make difference between low and high rate codec)
 		    ((unsigned int*)(sh->bih+1))[0]=stream_read_dword(demuxer->stream);
 
 		    /* h263 hack */
@@ -1314,7 +1314,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 
 		}
 	  } else {
-		 MSG_V("Unknown video stream format\n");
+		 MSG_V("Unknown video stream wtag\n");
 	  }
 	} else if (strstr(tmps,"logical-")) {
 		 if (strstr(tmps,"fileinfo")) {

@@ -40,7 +40,7 @@ static int init(priv_t *priv)
     return(1);
 }
 
-/* that's the real start, we'got the format parameters (checked with control) */
+/* that's the real start, we'got the wtag parameters (checked with control) */
 static int start(priv_t *priv)
 {
     return(1);

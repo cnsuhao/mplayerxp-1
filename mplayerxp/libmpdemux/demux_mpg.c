@@ -151,10 +151,10 @@ static void new_audio_stream(demuxer_t *demux, int aid){
     new_sh_audio(demux,aid);
     sh_a = (sh_audio_t*)demux->a_streams[aid];
     switch(aid & 0xE0){  // 1110 0000 b  (high 3 bit: type  low 5: id)
-      case 0x00: sh_a->format=AUDIO_MP2;break;
-      case 0xA0: sh_a->format=AUDIO_LPCM_BE;break;
-      case 0x80: if((aid & 0xF8) == 0x88) sh_a->format=AUDIO_DTS;
-                 else sh_a->format=AUDIO_A52;
+      case 0x00: sh_a->wtag=AUDIO_MP2;break;
+      case 0xA0: sh_a->wtag=AUDIO_LPCM_BE;break;
+      case 0x80: if((aid & 0xF8) == 0x88) sh_a->wtag=AUDIO_DTS;
+                 else sh_a->wtag=AUDIO_A52;
 		 break;
     }
     if (mpg_d) mpg_d->a_stream_ids[mpg_d->num_a_streams++] = aid;
@@ -354,7 +354,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
       if(priv && ds->sh) {
 	sh_audio_t *sh = (sh_audio_t *)ds->sh;
 	if(priv->es_map[id - 0x1B0]) {
-	  sh->format = priv->es_map[id - 0x1B0];
+	  sh->wtag = priv->es_map[id - 0x1B0];
 	  MSG_DBG2("ASSIGNED TO STREAM %d CODEC %x\n", id, priv->es_map[id - 0x1B0]);
 	}
       }
@@ -750,7 +750,7 @@ static int mpgps_probe(demuxer_t*demuxer)
 			    MSG_ERR("MPEG: " MSGTR_MissingVideoStreamBug);
 			else
 			{
-			    MSG_V("Not MPEG System Stream format...\n");
+			    MSG_V("Not MPEG System Stream wtag...\n");
 			    return 0;
 			}
 		    }
@@ -838,14 +838,14 @@ static int mpgps_control(demuxer_t *demuxer,int cmd,any_t*arg)
               do {
                 i = (i+1) % mpg_d->num_a_streams;
                 sh_a = (sh_audio_t*)demuxer->a_streams[mpg_d->a_stream_ids[i]];
-              } while (sh_a->format != sh_audio->format);
+              } while (sh_a->wtag != sh_audio->wtag);
               }
               else {
                 for (i = 0; i < mpg_d->num_a_streams; i++)
                   if (*((int*)arg) == mpg_d->a_stream_ids[i]) break;
                 if (i < mpg_d->num_a_streams)
                   sh_a = (sh_audio_t*)demuxer->a_streams[*((int*)arg)];
-                if (sh_a->format != sh_audio->format)
+                if (sh_a->wtag != sh_audio->wtag)
                   i = mpg_d->num_a_streams;
               }
               if (i < mpg_d->num_a_streams && d_audio->id != mpg_d->a_stream_ids[i]) {

@@ -197,7 +197,7 @@ static int preinit(sh_audio_t *sh){
 	InputFormatInfo.sampleSize = sh->wf->wBitsPerSample;
 	OutputFormatInfo.sampleSize = 16;
 	OutputFormatInfo.sampleRate = InputFormatInfo.sampleRate = sh->wf->nSamplesPerSec;
-	InputFormatInfo.format =  bswap_32(sh->format); //1363430706;///*1768775988;//*/1902406962;//qdm2//1768775988;//FOUR_CHAR_CODE('ima4');
+	InputFormatInfo.format =  bswap_32(sh->wtag); //1363430706;///*1768775988;//*/1902406962;//qdm2//1768775988;//FOUR_CHAR_CODE('ima4');
 	OutputFormatInfo.format = 1313820229;// FOUR_CHAR_CODE('NONE');
 
     error = SoundConverterOpen(&InputFormatInfo, &OutputFormatInfo, &myConverter);

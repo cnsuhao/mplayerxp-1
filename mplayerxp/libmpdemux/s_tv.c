@@ -145,7 +145,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 	picture_format = IMGFMT_RGB15;
     else
     {
-	MSG_ERR( "Unknown format given: %s\n", tv_param_outfmt);
+	MSG_ERR( "Unknown wtag given: %s\n", tv_param_outfmt);
 	MSG_V( "Using default: Planar YV12\n");
 	picture_format = IMGFMT_YV12;
     }
@@ -266,8 +266,8 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 
     /* get IMAGE FORMAT */
     funcs->control(tvh->priv, TVI_CONTROL_VID_GET_FORMAT, &sh_video->fourcc);
-//    if (IMGFMT_IS_RGB(sh_video->format) || IMGFMT_IS_BGR(sh_video->format))
-//	sh_video->format = 0x0;
+//    if (IMGFMT_IS_RGB(sh_video->wtag) || IMGFMT_IS_BGR(sh_video->wtag))
+//	sh_video->wtag = 0x0;
 
     /* set FPS  */
 
@@ -354,7 +354,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_CHANNELS, 
                    &sh_audio->channels);
 
-	sh_audio->format = sh_audio_format;
+	sh_audio->wtag = sh_audio_format;
 	sh_audio->sample_format = audio_format;
 
 	sh_audio->i_bps = sh_audio->o_bps =
@@ -363,7 +363,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 
 	// emulate WF for win32 codecs:
 	sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
-	sh_audio->wf->wFormatTag = sh_audio->format;
+	sh_audio->wf->wFormatTag = sh_audio->wtag;
 	sh_audio->wf->nChannels = sh_audio->channels;
 	sh_audio->wf->wBitsPerSample = sh_audio->samplesize * 8;
 	sh_audio->wf->nSamplesPerSec = sh_audio->samplerate;

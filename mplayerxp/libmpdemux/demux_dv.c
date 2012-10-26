@@ -174,7 +174,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
    sh_video->ds = demuxer->video;
 
    // custom fourcc for internal MPlayer use
-//   sh_video->format = mmioFOURCC('R', 'A', 'D', 'V');
+//   sh_video->wtag = mmioFOURCC('R', 'A', 'D', 'V');
    sh_video->fourcc = mmioFOURCC('D', 'V', 'S', 'D');
 
    sh_video->src_w = dv_decoder->width;
@@ -207,11 +207,11 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 	    sh_audio->ds = demuxer->audio;
 	MSG_V("demux_open_rawdv() chan: %d samplerate: %d\n",dv_decoder->audio->num_channels,dv_decoder->audio->frequency );
 	// custom fourcc for internal MPlayer use
-	sh_audio->format = mmioFOURCC('R', 'A', 'D', 'V');
+	sh_audio->wtag = mmioFOURCC('R', 'A', 'D', 'V');
 
 	sh_audio->wf = malloc(sizeof(WAVEFORMATEX));
 	memset(sh_audio->wf, 0, sizeof(WAVEFORMATEX));
-	sh_audio->wf->wFormatTag = sh_audio->format;
+	sh_audio->wf->wFormatTag = sh_audio->wtag;
 	sh_audio->wf->nChannels = dv_decoder->audio->num_channels;
 	sh_audio->wf->wBitsPerSample = 16;
 	sh_audio->wf->nSamplesPerSec = dv_decoder->audio->frequency;

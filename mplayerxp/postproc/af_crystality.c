@@ -480,7 +480,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     af->data->bps    = 4;
     init_crystality(s,af->data->rate);
     i_bps=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->i_bps*8;
-    fmt=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->format;
+    fmt=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->wtag;
     if(fmt==0x55 || fmt==0x50) /* MP3 */
     {
 	((af_crystality_t *)af->setup)->hf_div=i_bps/6000;

@@ -199,7 +199,7 @@ while(1){
     // for example, "Seattle, aerial view; scenery."
     case mmioFOURCC('I','K','E','Y'): hdr="Keywords";break;
     // ILGT - Describes the changes in the lightness settings on the digitizer
-    // required to produce the file. Note that the format of this information
+    // required to produce the file. Note that the wtag of this information
     // depends on the hardware used.
     case mmioFOURCC('I','L','G','T'): hdr="Lightness";break;
     // IMED - Decribes the original subject of the file, such as
@@ -221,7 +221,7 @@ while(1){
     // file, such as "Microsoft WaveEdit"
     case mmioFOURCC('I','S','F','T'): infot=INFOT_ENCODER; hdr="Software";break;
     // ISHP - Identifies the change in sharpness for the digitizer
-    // required to produce the file (the format depends on the hardware used).
+    // required to produce the file (the wtag depends on the hardware used).
     case mmioFOURCC('I','S','H','P'): hdr="Sharpness";break;
     // ISRC - Identifies the name of the person or organization who
     // suplied the original subject of the file; for example, "Try Research."
@@ -779,7 +779,7 @@ static demux_stream_t* demux_avi_select_stream(demuxer_t *demux,unsigned int id)
 	  priv->audio_block_size=sh->wf->nBlockAlign;
 	  if(!priv->audio_block_size){
 	    // for PCM audio we can calculate the blocksize:
-	    if(sh->format==1)
+	    if(sh->wtag==1)
 		priv->audio_block_size=sh->wf->nChannels*(sh->wf->wBitsPerSample/8);
 	    else
 		priv->audio_block_size=1; // hope the best...
@@ -1167,7 +1167,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
   priv->idx_pos_a=0;
   priv->idx_pos_v=0;
   if(priv->idx_size>1){
-    // decide index format:
+    // decide index wtag:
 #if 1
     if((unsigned long)((AVIINDEXENTRY *)priv->idx)[0].dwChunkOffset<demuxer->movi_start ||
        (unsigned long)((AVIINDEXENTRY *)priv->idx)[1].dwChunkOffset<demuxer->movi_start)
@@ -1243,7 +1243,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
       sh_audio=NULL;
     } else {
       sh_audio=d_audio->sh;sh_audio->ds=d_audio;
-      sh_audio->format=sh_audio->wf->wFormatTag;
+      sh_audio->wtag=sh_audio->wf->wFormatTag;
     }
   }
   // calc. FPS:
@@ -1310,9 +1310,9 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
 #ifdef HAVE_LIBVORBIS
    if(demuxer->audio->id != -2 && sh_a) {
     /* support for Ogg-in-AVI: */
-     if(sh_a->format == mmioFOURCC('v','r','b','s'))
+     if(sh_a->wtag == mmioFOURCC('v','r','b','s'))
        demuxer = init_avi_with_ogg(demuxer);
-     else if(sh_a->format == 0x674F) {
+     else if(sh_a->wtag == 0x674F) {
        stream_t* s;
        demuxer_t  *od;
        s = new_ds_stream(demuxer->audio);

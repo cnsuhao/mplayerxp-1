@@ -1769,7 +1769,7 @@ static void mpxp_print_stream_formats(void) {
     }
     if(sh_audio) {
 	MSG_INFO(" Audio=");
-	fmt=sh_audio->format;
+	fmt=sh_audio->wtag;
 	c=(char *)&fmt;
 	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
 	    MSG_INFO("%.4s",c);
@@ -1865,7 +1865,7 @@ static void mpxp_find_acodec(void) {
     if(audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,audio_family);
     while(1) {
 	const char *fmt;
-	sh_audio->codec=find_codec(sh_audio->format,NULL,sh_audio->codec,1);
+	sh_audio->codec=find_codec(sh_audio->wtag,NULL,sh_audio->codec,1);
 	if(!sh_audio->codec) {
 	    if(audio_family) {
 		sh_audio->codec=NULL; /* re-search */
@@ -1874,11 +1874,11 @@ static void mpxp_find_acodec(void) {
 		continue;
 	    }
 	    MSG_ERR(MSGTR_CantFindAudioCodec);
-	    fmt = (const char *)&sh_audio->format;
+	    fmt = (const char *)&sh_audio->wtag;
 	    if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
 		MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
 	    else
-		MSG_ERR(" 0x%08X!\n",sh_audio->format);
+		MSG_ERR(" 0x%08X!\n",sh_audio->wtag);
 	    MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("codecs.conf"));
 	    sh_audio=d_audio->sh=NULL;
 	    break;

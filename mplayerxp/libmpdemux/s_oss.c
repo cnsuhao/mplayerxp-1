@@ -105,9 +105,9 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
 	oss_fmt=af_format_encode(&afd);
 	tmp=oss_fmt;
 	if(ioctl(stream->fd, SNDCTL_DSP_SETFMT, &oss_fmt)<0)
-	    MSG_ERR("[s_oss] Can't set format %s (will use %s)\n",ao_format_name(tmp),ao_format_name(oss_fmt));
+	    MSG_ERR("[s_oss] Can't set wtag %s (will use %s)\n",ao_format_name(tmp),ao_format_name(oss_fmt));
 	else
-	    MSG_DBG2("[o_oss] Did set format to %s\n",ao_format_name(oss_fmt));
+	    MSG_DBG2("[o_oss] Did set wtag to %s\n",ao_format_name(oss_fmt));
     }
     tmp = PCM_ENABLE_INPUT;
     if(ioctl(stream->fd, SNDCTL_DSP_SETTRIGGER, &tmp)<0)

@@ -43,7 +43,7 @@ typedef struct stream_s{
   off_t pos;		/**< SOF offset from begin of stream */
   int eof;		/**< indicates EOF */
   int type;		/**< properties of the stream (see STREAMTYPE_ for detail) */
-  int file_format;	/**< detected file format (by http:// protocol for example) */
+  int file_format;	/**< detected file wtag (by http:// protocol for example) */
   int _Errno;		/**< keeps value of errno from low-level operations */
   unsigned int buf_pos; /**< position whitin of small cache */
   unsigned int buf_len; /**< length of small cache */
@@ -142,7 +142,7 @@ typedef struct {
 #define SCTRL_AUD_GET_CHANNELS		2000 /**< Returns number of channels. Accepts unsigned* as pointer to channels storage */
 #define SCTRL_AUD_GET_SAMPLERATE	2001 /**< Returns rate of samples in Hz. Accepts unsigned* as pointer to storage area */
 #define SCTRL_AUD_GET_SAMPLESIZE	2002 /**< Returns size fo samples in bits. Accepts unsigned* as pointer to storage area */
-#define SCTRL_AUD_GET_FORMAT		2003 /**< Returns format of samples. Accepts unsigned* as pointer to storage area */
+#define SCTRL_AUD_GET_FORMAT		2003 /**< Returns wtag of samples. Accepts unsigned* as pointer to storage area */
 
 /* These controls extracts language specific info from stream */
 #define SCTRL_LNG_GET_AID		3000 /**< Returns audio id from language. Accepts char* as input language name. Stores int* id into this pointer as output. */

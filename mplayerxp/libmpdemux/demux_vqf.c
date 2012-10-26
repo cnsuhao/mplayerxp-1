@@ -55,7 +55,7 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
   sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX)+sizeof(headerInfo));
   hi = (headerInfo *)&w[1];
   memset(hi,0,sizeof(headerInfo));
-  w->wFormatTag = 0x1; sh_audio->format = mmioFOURCC('T','W','I','N'); /* TWinVQ */
+  w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('T','W','I','N'); /* TWinVQ */
   w->nChannels = sh_audio->channels = 2;
   w->nSamplesPerSec = sh_audio->samplerate = 44100;
   w->nAvgBytesPerSec = w->nSamplesPerSec*sh_audio->channels*2;

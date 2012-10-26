@@ -2370,7 +2370,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
         }
     }
 
-  sh_a->format = track->a_formattag;
+  sh_a->wtag = track->a_formattag;
   sh_a->wf->wFormatTag = track->a_formattag;
   sh_a->channels = track->a_channels;
   sh_a->wf->nChannels = track->a_channels;
@@ -2402,7 +2402,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
       sh_a->wf->nAvgBytesPerSec = sh_a->channels * sh_a->samplerate*2;
       sh_a->wf->nBlockAlign = sh_a->wf->nAvgBytesPerSec;
       if (!strcmp(track->codec_id, MKV_A_PCM_BE))
-        sh_a->format = mmioFOURCC('t', 'w', 'o', 's');
+        sh_a->wtag = mmioFOURCC('t', 'w', 'o', 's');
     }
   else if (!strcmp(track->codec_id, MKV_A_QDMC) ||
            !strcmp(track->codec_id, MKV_A_QDMC2))
@@ -2557,7 +2557,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
         }
       else
         {
-          sh_a->format = mmioFOURCC('f', 'L', 'a', 'C');
+          sh_a->wtag = mmioFOURCC('f', 'L', 'a', 'C');
           ptr = (unsigned char *) track->private_data
             + sizeof (WAVEFORMATEX);
           size = track->private_size - sizeof (WAVEFORMATEX);

@@ -383,14 +383,14 @@ if(!video_streams){
     } else {
 	sh_audio_t *sh_audio = demuxer->audio->sh;
 	sh_audio=d_audio->sh;sh_audio->ds=d_audio;
-	sh_audio->format=sh_audio->wf->wFormatTag;
+	sh_audio->wtag=sh_audio->wf->wFormatTag;
     }
   }
 }
 return demuxer;
 }
 
-// based on asf file-format doc by Eugene [http://divx.euro.ru]
+// based on asf file-wtag doc by Eugene [http://divx.euro.ru]
 
 static void asf_descrambling(asf_priv_t *apriv, unsigned char *src,int len){
   unsigned char *dst=malloc(len);
@@ -718,7 +718,7 @@ static int asf_control(demuxer_t *demuxer,int cmd,any_t*args)
 
 demuxer_driver_t demux_asf =
 {
-    "ASF - Advanced stream format v1 parser",
+    "ASF - Advanced stream wtag v1 parser",
     ".asf",
     NULL,
     asf_probe,

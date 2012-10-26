@@ -264,7 +264,7 @@ static int __FASTCALL__ dvd_next_title(dvd_priv_t *d,int dvd_title)
 	  //  1 - stereo
 	  //  5 - 5.1
 	  d->audio_streams[d->nr_of_channels].channels=audio->channels;
-          MSG_V("[open] audio stream: %d audio format: %s (%s) language: %s aid: %d\n",
+          MSG_V("[open] audio stream: %d audio wtag: %s (%s) language: %s aid: %d\n",
 	    d->nr_of_channels,
             dvd_audio_stream_types[ audio->audio_format ],
 	    dvd_audio_stream_channels[ audio->channels ],

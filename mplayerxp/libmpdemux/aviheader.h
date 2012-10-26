@@ -6,7 +6,7 @@
 
 /*
  * Some macros to swap little endian structures read from an AVI file
- * into machine endian format
+ * into machine endian wtag
  */
 #ifdef WORDS_BIGENDIAN
 #define	le2me_MainAVIHeader(h) {					\

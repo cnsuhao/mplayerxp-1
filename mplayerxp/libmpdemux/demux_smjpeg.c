@@ -4,7 +4,7 @@
  Only for testing some files.
  Commited only for Nexus' request.
  
- Based on text by Arpi (SMJPEG-format.txt) and later on
+ Based on text by Arpi (SMJPEG-wtag.txt) and later on
  http://www.lokigames.com/development/download/smjpeg/SMJPEG.txt
 
  TODO: demuxer->movi_length
@@ -149,8 +149,8 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	    sh_audio->samplerate = stream_read_word(demuxer->stream);
 	    sh_audio->wf->wBitsPerSample = stream_read_char(demuxer->stream);
 	    sh_audio->channels = stream_read_char(demuxer->stream);
-	    sh_audio->format = stream_read_dword_le(demuxer->stream);
-	    sh_audio->wf->wFormatTag = sh_audio->format;
+	    sh_audio->wtag = stream_read_dword_le(demuxer->stream);
+	    sh_audio->wf->wFormatTag = sh_audio->wtag;
 	    sh_audio->wf->nChannels = sh_audio->channels;
 	    sh_audio->wf->nSamplesPerSec = sh_audio->samplerate;
 	    sh_audio->wf->nAvgBytesPerSec = sh_audio->wf->nChannels*

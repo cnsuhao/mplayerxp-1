@@ -6,7 +6,7 @@
  * The license covers the portions of this file regarding TiVo additions.
  *
  * Olaf Beck and Tridge (indirectly) were essential at providing
- * information regarding the format of the TiVo streams.
+ * information regarding the wtag of the TiVo streams.
  *
  * However, no code in the following subsection is directly copied from
  * either author.
@@ -584,10 +584,10 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
                     ds->sh = demux->a_streams[ aid ];
                     sh_a = (sh_audio_t*)ds->sh;
                     switch(aid & 0xE0){  // 1110 0000 b  (high 3 bit: type  low 5: id)
-                      case 0x00: sh_a->format=0x50;break; // mpeg
-                      case 0xA0: sh_a->format=0x10001;break;  // dvd pcm
-                      case 0x80: if((aid & 0xF8) == 0x88) sh_a->format=0x2001;//dts
-                                  else sh_a->format=0x2000;break; // ac3
+                      case 0x00: sh_a->wtag=0x50;break; // mpeg
+                      case 0xA0: sh_a->wtag=0x10001;break;  // dvd pcm
+                      case 0x80: if((aid & 0xF8) == 0x88) sh_a->wtag=0x2001;//dts
+                                  else sh_a->wtag=0x2000;break; // ac3
                     }
                  }
                }

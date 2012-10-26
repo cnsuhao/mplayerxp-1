@@ -151,7 +151,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 			stream_skip(demuxer->stream, i - 4);
 		}
 		i = stream_read_char(demuxer->stream);
-		sh->format = stream_read_dword_le(demuxer->stream);
+		sh->wtag = stream_read_dword_le(demuxer->stream);
 		if (i != 4) {
 			MSG_WARN("[RealAudio] FourCC size is not 4 (%d), please report to "
 				"MPlayer developers\n", i);
@@ -193,7 +193,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	    if(ra_priv->hdr_size + 8 > stream_tell(demuxer->stream)) {
 		stream_skip(demuxer->stream, 1);
 		i = stream_read_char(demuxer->stream);
-		sh->format = stream_read_dword_le(demuxer->stream);
+		sh->wtag = stream_read_dword_le(demuxer->stream);
 		if (i != 4) {
 			MSG_WARN("[RealAudio] FourCC size is not 4 (%d), please report to "
 				"MPlayer developers\n", i);
@@ -201,25 +201,25 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		}
 //		stream_skip(demuxer->stream, 3);
 
-		if (sh->format != FOURCC_LPCJ) {
+		if (sh->wtag != FOURCC_LPCJ) {
 			MSG_WARN("[RealAudio] Version 3 with FourCC %8x, please report to "
-				"MPlayer developers\n", sh->format);
+				"MPlayer developers\n", sh->wtag);
 		}
 
 		sh->channels = 1;
 		sh->samplesize = 16;
 		sh->samplerate = 8000;
 		ra_priv->frame_size = 240;
-		sh->format = FOURCC_144;
+		sh->wtag = FOURCC_144;
 	    } else {
 		// If a stream does not have fourcc, let's assume it's 14.4
-		sh->format = FOURCC_LPCJ;
+		sh->wtag = FOURCC_LPCJ;
 
 		sh->channels = 1;
 		sh->samplesize = 16;
 		sh->samplerate = 8000;
 		ra_priv->frame_size = 240;
-		sh->format = FOURCC_144;
+		sh->wtag = FOURCC_144;
 	    }
 	}
 
@@ -232,9 +232,9 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	sh->wf->nAvgBytesPerSec = sh->samplerate*sh->samplesize/8;
 	sh->wf->nBlockAlign = ra_priv->frame_size;
 	sh->wf->cbSize = 0;
-	sh->wf->wFormatTag = sh->format;
+	sh->wf->wFormatTag = sh->wtag;
 
-	switch (sh->format) {
+	switch (sh->wtag) {
 		case FOURCC_144:
 			MSG_V("Audio: 14_4\n");
 			    sh->wf->cbSize = 10/*+codecdata_length*/;
@@ -258,7 +258,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		case FOURCC_DNET: /* direct support */
 			break;
 		default:
-			MSG_V("Audio: Unknown (%d)\n", sh->format);
+			MSG_V("Audio: Unknown (%d)\n", sh->wtag);
 	}
 
 	print_wave_header(sh->wf,sizeof(WAVEFORMATEX));

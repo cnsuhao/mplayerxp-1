@@ -647,7 +647,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		int version=0, adjust;
 		int is_vorbis = 0;
 		sh_audio_t* sh=new_sh_audio(demuxer,priv->track_db);
-		sh->format=trak->fourcc;
+		sh->wtag=trak->fourcc;
 
 		/* crude audio delay from editlist0 hack ::atm */
 		if(trak->editlist_size>=1) {
@@ -657,7 +657,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		    }
 		}
 
-		switch( sh->format ) {
+		switch( sh->wtag ) {
 		    case 0x726D6173: /* samr */
 			/* amr narrowband */
 			trak->samplebytes=sh->samplesize=1;
@@ -777,8 +777,8 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 			  if ((len >= 22) &&
 			      (char2int(trak->stdata,52+16)==MOV_FOURCC('e','n','d','a')) &&
 			      (char2short(trak->stdata,52+20))) {
-				sh->format=char2int(trak->stdata,52+8);
-				MSG_V( "MOV: Found little endian PCM data, reversed fourcc:%04x\n", sh->format);
+				sh->wtag=char2int(trak->stdata,52+8);
+				MSG_V( "MOV: Found little endian PCM data, reversed fourcc:%04x\n", sh->wtag);
 			  }
 		          break;
 		         default:
@@ -817,7 +817,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 			  if(!mp4_parse_esds(&trak->stdata[36+adjust], atom_len-8, &esds)) {
 			    /* 0xdd is a "user private" id, not an official allocated id (see http://www.mp4ra.org/object.html),
 			       so perform some extra checks to be sure that this is really vorbis audio */
-			    if(esds.objectTypeId==0xdd && esds.streamType==0x15 && sh->format==0x6134706D && esds.decoderConfigLen > 8)
+			    if(esds.objectTypeId==0xdd && esds.streamType==0x15 && sh->wtag==0x6134706D && esds.decoderConfigLen > 8)
 				{
 					//vorbis audio
 					unsigned char *buf[3];
@@ -863,15 +863,15 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 					MSG_V( "demux_mov, vorbis extradata size: %d\n", offset);
 					is_vorbis = 1;
 quit_vorbis_block:
-					sh->format = mmioFOURCC('v', 'r', 'b', 's');
+					sh->wtag = mmioFOURCC('v', 'r', 'b', 's');
 				}
 			    sh->i_bps = esds.avgBitrate/8; 
 
 			    if(esds.objectTypeId==MP4OTI_MPEG1Audio || esds.objectTypeId==MP4OTI_MPEG2AudioPart3)
-				sh->format=0x55; // .mp3
+				sh->wtag=0x55; // .mp3
 
 			    if(esds.objectTypeId==MP4OTI_13kVoice) { // 13K Voice, defined by 3GPP2
-				sh->format=mmioFOURCC('Q', 'c', 'l', 'p');
+				sh->wtag=mmioFOURCC('Q', 'c', 'l', 'p');
 				trak->nchannels=sh->channels=1;
 				trak->samplebytes=sh->samplesize=1;
 			    }
@@ -879,7 +879,7 @@ quit_vorbis_block:
 			    // dump away the codec specific configuration for the AAC decoder
 			    if(esds.decoderConfigLen){
 			    if( (esds.decoderConfig[0]>>3) == 29 )
-			    	sh->format = 0x1d61346d; // request multi-channel mp3 decoder
+			    	sh->wtag = 0x1d61346d; // request multi-channel mp3 decoder
 			    if(!is_vorbis)
 			    {
 				sh->codecdata_len = esds.decoderConfigLen;
@@ -918,7 +918,7 @@ quit_vorbis_block:
 		// Emulate WAVEFORMATEX struct:
 		sh->wf=malloc(sizeof(WAVEFORMATEX));
 		memset(sh->wf,0,sizeof(WAVEFORMATEX));
-		sh->wf->wFormatTag=afourcc2wtag(sh->format);
+		sh->wf->wFormatTag=afourcc2wtag(sh->wtag);
 		sh->wf->nChannels=sh->channels;
 		sh->wf->wBitsPerSample=(trak->stdata[18]<<8)+trak->stdata[19];
 		// sh->wf->nSamplesPerSec=trak->timescale;
@@ -932,7 +932,7 @@ quit_vorbis_block:
 		} else {
 		  sh->wf->nAvgBytesPerSec=sh->wf->nChannels*sh->wf->wBitsPerSample*sh->wf->nSamplesPerSec/8;
 		  // workaround for ms11 ima4
-		  if (sh->format == 0x1100736d && trak->stdata_len >= 36)
+		  if (sh->wtag == 0x1100736d && trak->stdata_len >= 36)
 		      sh->wf->nBlockAlign=char2int(trak->stdata,36);
 		}
 

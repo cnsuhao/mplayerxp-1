@@ -1,5 +1,5 @@
 /*
-  MPlayerXP's design. MPXPAV64 format.
+  MPlayerXP's design. MPXPAV64 wtag.
   Implements of ASF v1, AVI stream parsers.
 */
 
@@ -298,7 +298,7 @@ static int mpxpav64_read_st64a(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		if(demuxer->audio->id==-1) demuxer->audio->id=id; /* TODO: select best */
 		demuxer->audio->sh=sh;
 		sh->ds=demuxer->audio;
-		sh->format=sh->wf->wFormatTag;
+		sh->wtag=sh->wf->wFormatTag;
 		break;
 	    case mmioFOURCC('F','R','C','C'):
 		if(fsize!=4)
@@ -306,7 +306,7 @@ static int mpxpav64_read_st64a(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		    MSG_ERR("Broken chunk FRCC with size=%i found\n",fsize);
 		    goto do_def;
 		}
-		sh->format=stream_read_dword_le(s);
+		sh->wtag=stream_read_dword_le(s);
 		if(sh->wf) sh->wf->wFormatTag=0;
 		break;
 	    do_def:

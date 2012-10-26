@@ -294,13 +294,13 @@ static void ts_add_stream(demuxer_t * demuxer, ES_stream_t *es)
 		sh_audio_t *sh = new_sh_audio_aid(demuxer, priv->last_aid, es->pid);
 		if(sh)
 		{
-			sh->format = IS_AUDIO(es->type) ? es->type : es->subtype;
+			sh->wtag = IS_AUDIO(es->type) ? es->type : es->subtype;
 			sh->ds = demuxer->audio;
 
 			priv->ts.streams[es->pid].id = priv->last_aid;
 			priv->ts.streams[es->pid].sh = sh;
 			priv->ts.streams[es->pid].type = TYPE_AUDIO;
-			MSG_V("\r\nADDED AUDIO PID %d, type: %x stream n. %d\r\n", es->pid, sh->format, priv->last_aid);
+			MSG_V("\r\nADDED AUDIO PID %d, type: %x stream n. %d\r\n", es->pid, sh->wtag, priv->last_aid);
 			priv->last_aid++;
 		}
 
@@ -1010,7 +1010,7 @@ static demuxer_t *ts_open(demuxer_t * demuxer)
 		sh_audio = priv->ts.streams[params.apid].sh;
 		demuxer->audio->id = priv->ts.streams[params.apid].id;
 		sh_audio->ds = demuxer->audio;
-		sh_audio->format = params.atype;
+		sh_audio->wtag = params.atype;
 		demuxer->audio->sh = sh_audio;
 	}
 

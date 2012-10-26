@@ -14,14 +14,14 @@ int use_rawaudio = 0;
 static int channels = 2;
 static int samplerate = 44100;
 static int samplesize = 2;
-static int format = 0x1; // Raw PCM
+static int wtag = 0x1; // Raw PCM
 
 static const config_t demux_rawaudio_opts[] = {
   { "on", &use_rawaudio, CONF_TYPE_FLAG, 0,0, 1, NULL, "forces treating stream as raw-audio" },
   { "channels", &channels, CONF_TYPE_INT,CONF_RANGE,1,8, NULL, "specifies number of channels in raw-audio steram" },
   { "rate", &samplerate, CONF_TYPE_INT,CONF_RANGE,1000,8*48000, NULL, "specifies sample-rate of raw-audio steram" },
   { "samplesize", &samplesize, CONF_TYPE_INT,CONF_RANGE,1,8, NULL, "specifies sample-size of raw-audio steram" },
-  { "format", &format, CONF_TYPE_INT, CONF_MIN, 0 , 0, NULL, "specifies compression-format of raw-audio stream" },
+  { "wtag", &wtag, CONF_TYPE_INT, CONF_MIN, 0 , 0, NULL, "specifies compression-wtag of raw-audio stream" },
   {NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
 
@@ -47,10 +47,10 @@ static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
   demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_CHANNELS,&channels);
   demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_SAMPLERATE,&samplerate);
   demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_SAMPLESIZE,&samplesize);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_FORMAT,&format);
+  demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_FORMAT,&wtag);
   sh_audio = new_sh_audio(demuxer,0);
   sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
-  w->wFormatTag = sh_audio->format = format;
+  w->wFormatTag = sh_audio->wtag = wtag;
   w->nChannels = sh_audio->channels = channels;
   sh_audio->samplerate = samplerate;
   w->nSamplesPerSec = samplerate;

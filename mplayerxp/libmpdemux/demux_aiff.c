@@ -54,7 +54,7 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
   priv=demuxer->priv=malloc(sizeof(priv_t));
   memset(priv,0,sizeof(priv_t));
   sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
-  w->wFormatTag = 0x1; sh_audio->format = mmioFOURCC('r','a','w',' '); /* S16BE */
+  w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('r','a','w',' '); /* S16BE */
   w->nChannels = sh_audio->channels =
   w->nSamplesPerSec = sh_audio->samplerate =
   w->nAvgBytesPerSec =
@@ -109,9 +109,9 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
 	w->nBlockAlign = sh_audio->channels*sh_audio->samplesize;
 	if(priv->verc)
 	{
-	    sh_audio->format = *((uint32_t *)&buf[18]);
-	    if(sh_audio->format == mmioFOURCC('N','O','N','E')) sh_audio->format=mmioFOURCC('r','a','w',' ');
-	    MSG_V("AIFC: fourcc %08X ch %u frames %u bps %u rate %u\n",sh_audio->format,sh_audio->channels,frames,w->wBitsPerSample,sh_audio->samplerate);
+	    sh_audio->wtag = *((uint32_t *)&buf[18]);
+	    if(sh_audio->wtag == mmioFOURCC('N','O','N','E')) sh_audio->wtag=mmioFOURCC('r','a','w',' ');
+	    MSG_V("AIFC: fourcc %08X ch %u frames %u bps %u rate %u\n",sh_audio->wtag,sh_audio->channels,frames,w->wBitsPerSample,sh_audio->samplerate);
 	}
 	else
 	    MSG_V("AIFF: ch %u frames %u bps %u rate %u\n",sh_audio->channels,frames,w->wBitsPerSample,sh_audio->samplerate);

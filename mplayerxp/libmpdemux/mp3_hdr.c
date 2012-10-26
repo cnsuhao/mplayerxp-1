@@ -85,7 +85,7 @@ int mp_decode_mp3_header(unsigned char* hbuf,int *fmt,int *brate,int *samplerate
     if(channels) *channels=nch;
 
     if(!bitrate_index){
-      MSG_DBG2("mp3_hdr: Free format not supported.\n");
+      MSG_DBG2("mp3_hdr: Free wtag not supported.\n");
       return -1;
     }
 

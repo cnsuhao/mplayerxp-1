@@ -55,7 +55,7 @@ typedef struct {
 
     /* video */
     struct video_picture	picture;
-    int				format;		/* output format */
+    int				wtag;		/* output wtag */
     int				width;
     int				height;
     int				bytesperline;
@@ -133,9 +133,9 @@ static int palette2depth(int palette)
     return(-1);
 }
 
-static int format2palette(int format)
+static int format2palette(int wtag)
 {
-    switch(format)
+    switch(wtag)
     {
 	case IMGFMT_RGB15:
 	    return(VIDEO_PALETTE_RGB555);
@@ -300,7 +300,7 @@ static int init(priv_t *priv)
 	    MSG_V( "volume=%d bass=%d treble=%d balance=%d mode=%s\n",
 		priv->audio[i].volume, priv->audio[i].bass, priv->audio[i].treble,
 		priv->audio[i].balance, audio_mode2name[priv->audio[i].mode]);
-	    MSG_V( " channels: %d, samplerate: %d, samplesize: %d, format: %s\n",
+	    MSG_V( " channels: %d, samplerate: %d, samplesize: %d, wtag: %s\n",
 		priv->audio_channels[i], priv->audio_samplerate[i], priv->audio_samplesize[i],
 		ao_format_name(priv->audio_format[i]));
 	}
@@ -359,7 +359,7 @@ static int init(priv_t *priv)
 	
 	MSG_V("Supported formats: %x\n", ioctl_param);
 	if (!(ioctl_param & priv->audio_format[priv->audio_id]))
-	    MSG_WARN("notsupported format\n");
+	    MSG_WARN("notsupported wtag\n");
 
 	ioctl_param = priv->audio_format[priv->audio_id];
 	MSG_V("ioctl dsp setfmt: %d\n",
@@ -433,7 +433,7 @@ static int start(priv_t *priv)
 	return(0);
     }
 
-    priv->picture.palette = format2palette(priv->format);
+    priv->picture.palette = format2palette(priv->wtag);
     priv->picture.depth = palette2depth(priv->picture.palette);
     priv->bytesperline = priv->width * priv->picture.depth / 8;
 
@@ -442,7 +442,7 @@ static int start(priv_t *priv)
 
     MSG_V( "Picture values:\n");
     MSG_V( " Depth: %d, Palette: %d (Format: %s)\n", priv->picture.depth,
-	priv->picture.palette, vo_format_name(priv->format));
+	priv->picture.palette, vo_format_name(priv->wtag));
     MSG_V( " Brightness: %d, Hue: %d, Colour: %d, Contrast: %d\n",
 	priv->picture.brightness, priv->picture.hue,
 	priv->picture.colour, priv->picture.contrast);
@@ -457,7 +457,7 @@ static int start(priv_t *priv)
     priv->nbuf = priv->mbuf.frames;
     for (i=0; i < priv->nbuf; i++)
     {
-	priv->buf[i].format = priv->picture.palette;
+	priv->buf[i].wtag = priv->picture.palette;
 	priv->buf[i].frame = i;
 	priv->buf[i].width = priv->width;
 	priv->buf[i].height = priv->height;
@@ -543,19 +543,19 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	{
 	    int output_fmt = -1;
 
-	    output_fmt = priv->format;
+	    output_fmt = priv->wtag;
 	    *(int *)arg = output_fmt;
-	    MSG_V( "Output format: %s\n", vo_format_name(output_fmt));
+	    MSG_V( "Output wtag: %s\n", vo_format_name(output_fmt));
 	    return(TVI_CONTROL_TRUE);
 	}
 	case TVI_CONTROL_VID_SET_FORMAT:
-	    priv->format = (int)*(any_t**)arg;
+	    priv->wtag = (int)*(any_t**)arg;
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_GET_PLANES:
 	    *(int *)arg = 1; /* FIXME, also not needed at this time */
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_GET_BITS:
-	    *(int *)arg = palette2depth(format2palette(priv->format));
+	    *(int *)arg = palette2depth(format2palette(priv->wtag));
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_GET_WIDTH:
 	    *(int *)arg = priv->width;

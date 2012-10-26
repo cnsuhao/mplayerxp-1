@@ -343,7 +343,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 
         if(ioctl(priv->btfd, METEORSFMT, &priv->iformat) < 0) 
             {
-            MSG_ERR("format:ioctl");
+            MSG_ERR("wtag:ioctl");
             return(TVI_CONTROL_FALSE);
             }
     
@@ -593,7 +593,7 @@ if((priv->dspready == TRUE) &&
 return(1);
 }
 
-/* that's the real start, we'got the format parameters (checked with control) */
+/* that's the real start, we'got the wtag parameters (checked with control) */
 static int start(priv_t *priv)
 {
 int tmp;

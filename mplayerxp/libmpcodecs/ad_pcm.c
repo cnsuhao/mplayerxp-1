@@ -25,7 +25,7 @@ int init(sh_audio_t *sh_audio)
   sh_audio->channels=h->nChannels;
   sh_audio->samplerate=h->nSamplesPerSec;
   sh_audio->samplesize=(h->wBitsPerSample+7)/8;
-  switch(sh_audio->format){ /* hardware formats: */
+  switch(sh_audio->wtag){ /* hardware formats: */
     case 0x3: sh_audio->sample_format=AFMT_FLOAT32; break;
     case 0x6:  sh_audio->sample_format=AFMT_A_LAW;break;
     case 0x7:  sh_audio->sample_format=AFMT_MU_LAW;break;

@@ -1,4 +1,4 @@
-/* MPLayerXP's AudioVideo64 file format */
+/* MPLayerXP's AudioVideo64 file wtag */
 #ifndef MPXPAV64_INCLUDED
 #define MPXPAV64_INCLUDED 1
 

@@ -48,7 +48,7 @@ static int y4m_probe(demuxer_t* demuxer){
 
     if (!strncmp("YUV4MPEG ", buf, 9))
     {
-	MSG_V( "Found older YUV4MPEG format (used by xawtv)\n");
+	MSG_V( "Found older YUV4MPEG wtag (used by xawtv)\n");
 	priv->is_older = 1;
     }
 

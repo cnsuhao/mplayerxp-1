@@ -1,7 +1,7 @@
 /*
  *  yuv4mpeg.h:  Functions for reading and writing "new" YUV4MPEG2 streams.
  *
- *               Stream format is described at the end of this file.
+ *               Stream wtag is described at the end of this file.
  *
  *
  *  Copyright (C) 2001 Matthew J. Marjanovic <maddog@mir.com>
@@ -392,7 +392,7 @@ int y4m_allow_unknown_tags(int yn);
 /************************************************************************
  ************************************************************************
 
-  Description of the (new!, forever?) YUV4MPEG2 stream format:
+  Description of the (new!, forever?) YUV4MPEG2 stream wtag:
 
   STREAM consists of
     o one '\n' terminated STREAM-HEADER

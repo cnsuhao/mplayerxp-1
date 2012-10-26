@@ -116,7 +116,7 @@ typedef struct demuxer_s {
     off_t		movi_end;	/**< real end of movie within of stream */
     unsigned		movi_length;	/**< length of movie in secs. Optional!*/
     unsigned		flags;		/**< set of DEMUXF_* bits */
-    unsigned		file_format;	/**< file format: DEMUXER_TYPE_*(mpeg/avi/asf). Will be replaced with properties in the further versions */
+    unsigned		file_format;	/**< file wtag: DEMUXER_TYPE_*(mpeg/avi/asf). Will be replaced with properties in the further versions */
     int			synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
 
     any_t*		priv;		/**< private data of demuxer's driver.*/

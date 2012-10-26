@@ -213,7 +213,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
         if((demuxer->audio->id != -2) && strncmp(hdr+8,"NONE", 4)){//&&strncmp(hdr+8,"VLB ", 4)){
             sh_audio = new_sh_audio ( demuxer, 0 );
             demuxer->audio->sh = sh_audio;
-            sh_audio->format=mmioFOURCC(hdr[8],hdr[9],hdr[10],hdr[11]);
+            sh_audio->wtag=mmioFOURCC(hdr[8],hdr[9],hdr[10],hdr[11]);
             sh_audio->ds = demuxer->audio;
             priv->a_format=mmioFOURCC(hdr[8],hdr[9],hdr[10],hdr[11]);
         }

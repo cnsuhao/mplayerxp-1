@@ -221,12 +221,12 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
   UNUSED(maxlen);
   if(sh->a_in_buffer_len<=0){
       // fill the buffer!
-    if (sh->format == mmioFOURCC('1','4','_','4')) {
+    if (sh->wtag == mmioFOURCC('1','4','_','4')) {
 	demux_read_data_r(sh->ds, sh->a_in_buffer, sh->wf->nBlockAlign,pts);
 	sh->a_in_buffer_size=
 	sh->a_in_buffer_len=sh->wf->nBlockAlign;
     } else
-    if (sh->format == mmioFOURCC('2','8','_','8')) {
+    if (sh->wtag == mmioFOURCC('2','8','_','8')) {
 	unsigned i,j;
 	for (j = 0; j < h; j++)
 	    for (i = 0; i < h/2; i++)

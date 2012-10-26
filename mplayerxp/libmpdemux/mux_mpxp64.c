@@ -1,5 +1,5 @@
 /*
-  MPlayerXP's design. MPXPAV64 format.
+  MPlayerXP's design. MPXPAV64 wtag.
   Implements of ASF v1, AVI stream writer.
 */
 #include <ctype.h>
@@ -388,11 +388,11 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 	    fwrite(s->wf,WFSIZE(s->wf),1,f);
 	    le2me_WAVEFORMATEX(s->wf);
 	    mpxpav64_close_header32(f,spos);
-	    frcc=(uint8_t *)(&((sh_audio_t *)(s->source))->format);
+	    frcc=(uint8_t *)(&((sh_audio_t *)(s->source))->wtag);
 	    if(isprint(frcc[0]) && isprint(frcc[1]) && isprint(frcc[2]) && isprint(frcc[3]))
 	    {
 		spos=mpxpav64_open_header32(f,"FRCC");
-		mpxpav64_put32(f,((sh_audio_t *)(s->source))->format);
+		mpxpav64_put32(f,((sh_audio_t *)(s->source))->wtag);
 		mpxpav64_close_header32(f,spos);
 	    }
 	    break;

@@ -16,7 +16,7 @@
 
 typedef struct priv_s {
     int		use_rawvideo;
-    int		format;
+    int		wtag;
     int		size_id;
     int		width;
     int		height;
@@ -38,13 +38,13 @@ static const config_t demux_rawvideo_opts[] = {
   { "ntsc", &priv.size_id, CONF_TYPE_FLAG,0,0,6, NULL, "sets image size to NTSC standard" },
   { "16cif", &priv.size_id, CONF_TYPE_FLAG,0,0,7, NULL, "sets image size to 16CIF standard" },
   { "sif", &priv.size_id, CONF_TYPE_FLAG,0,0,8, NULL, "sets image size to SIF standard" },
-  // format:
-  { "format", &priv.format, CONF_TYPE_INT, 0, 0 , 0, NULL, "specifies colorspace (fourcc) in hex or string constant" },
-  { "i420", &priv.format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_I420, NULL, "treats raw-video as I420 fourcc" },
-  { "yv12", &priv.format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YV12, NULL, "treats raw-video as YV12 fourcc" },
-  { "yuy2", &priv.format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YUY2, NULL, "treats raw-video as YUY2 fourcc" },
-  { "uyvy", &priv.format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_UYVY, NULL, "treats raw-video as UYVY fourcc" },
-  { "y8", &priv.format, CONF_TYPE_FLAG, 0, 0 , IMGFMT_Y8, NULL, "treats raw-video as Y8 fourcc" },
+  // wtag:
+  { "wtag", &priv.wtag, CONF_TYPE_INT, 0, 0 , 0, NULL, "specifies colorspace (fourcc) in hex or string constant" },
+  { "i420", &priv.wtag, CONF_TYPE_FLAG, 0, 0 , IMGFMT_I420, NULL, "treats raw-video as I420 fourcc" },
+  { "yv12", &priv.wtag, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YV12, NULL, "treats raw-video as YV12 fourcc" },
+  { "yuy2", &priv.wtag, CONF_TYPE_FLAG, 0, 0 , IMGFMT_YUY2, NULL, "treats raw-video as YUY2 fourcc" },
+  { "uyvy", &priv.wtag, CONF_TYPE_FLAG, 0, 0 , IMGFMT_UYVY, NULL, "treats raw-video as UYVY fourcc" },
+  { "y8", &priv.wtag, CONF_TYPE_FLAG, 0, 0 , IMGFMT_Y8, NULL, "treats raw-video as Y8 fourcc" },
   // misc:
   { "fps", &priv.fps, CONF_TYPE_FLOAT,CONF_RANGE,0.001,1000, NULL, "specifies rate in frames per second of raw-video stream" },
   { "size", &priv.imgsize, CONF_TYPE_INT, CONF_RANGE, 1 , 8192*8192*4, NULL, "specifies frame size in bytes" },
@@ -82,7 +82,7 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
   }
   demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_WIDTH,&priv.width);
   demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_HEIGHT,&priv.height);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_FORMAT,&priv.format);
+  demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_FORMAT,&priv.wtag);
   demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_FPS,&priv.fps);
 
   if(!priv.width || !priv.height){
@@ -91,7 +91,7 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
   }
 
   if(!priv.imgsize)
-  switch(priv.format){
+  switch(priv.wtag){
     case IMGFMT_I420:
     case IMGFMT_IYUV:
     case IMGFMT_YV12: priv.imgsize=priv.width*priv.height+2*(priv.width>>1)*(priv.height>>1);break;
@@ -99,12 +99,12 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
     case IMGFMT_UYVY: priv.imgsize=priv.width*priv.height*2;break;
     case IMGFMT_Y8: priv.imgsize=priv.width*priv.height;break;
     default:
-      MSG_ERR("rawvideo: img size not specified and unknown format!\n");
+      MSG_ERR("rawvideo: img size not specified and unknown wtag!\n");
       return NULL;
   }
 
   sh_video = new_sh_video(demuxer,0);
-  sh_video->fourcc=priv.format;
+  sh_video->fourcc=priv.wtag;
   sh_video->fps=priv.fps;
   sh_video->src_w=priv.width;
   sh_video->src_h=priv.height;

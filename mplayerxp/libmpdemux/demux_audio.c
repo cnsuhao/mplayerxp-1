@@ -988,14 +988,14 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 	    break;
 	}
     }
-    /* Add here some other audio format detection */
+    /* Add here some other audio wtag detection */
     if(step < HDR_SIZE) memmove(hdr,&hdr[step],HDR_SIZE-step);
     pos -= step;
   }
 
   if(!frmt)
   {
-    MSG_ERR("Can't detect audio format\n");
+    MSG_ERR("Can't detect audio wtag\n");
     return NULL;
   }
   sh_audio = new_sh_audio(demuxer,0);
@@ -1005,7 +1005,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   {
     uint8_t chunk[4];
     uint32_t block_size;
-  	sh_audio->format = mmioFOURCC('f', 'L', 'a', 'C');
+  	sh_audio->wtag = mmioFOURCC('f', 'L', 'a', 'C');
 	/* loop through the metadata blocks; use a do-while construct since there
 	* will always be 1 metadata block */
 	do {
@@ -1078,9 +1078,9 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 	if(id == 27) id=WAVE_FORMAT_ALAW;
 	else
 	if(id == 3) id=0x1;
-	w->wFormatTag = sh_audio->format = id;
+	w->wFormatTag = sh_audio->wtag = id;
 	/* Trickly mplayerxp will threat 'raw ' as big-endian */
-	if(id == 0x1) sh_audio->format=mmioFOURCC('r','a','w',' ');
+	if(id == 0x1) sh_audio->wtag=mmioFOURCC('r','a','w',' ');
 	w->nSamplesPerSec = sh_audio->samplerate = stream_read_dword(s);
 	w->nChannels = sh_audio->channels = stream_read_dword(s);
 	w->nAvgBytesPerSec = sh_audio->samplerate*sh_audio->samplesize*sh_audio->channels;
@@ -1095,25 +1095,25 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 	break;
   case RAW_MP1:
   case RAW_MP2:
-    sh_audio->format = 0x50;
+    sh_audio->wtag = 0x50;
     sh_audio->i_bps=mp3_brate;
     sh_audio->samplerate=mp3_samplerate;
     sh_audio->channels=mp3_channels;
     if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
     break;
   case RAW_MP3:
-    sh_audio->format = 0x55;
+    sh_audio->wtag = 0x55;
     sh_audio->i_bps=mp3_brate;
     sh_audio->samplerate=mp3_samplerate;
     sh_audio->channels=mp3_channels;
     if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
     break;
   case RAW_AC3:
-    sh_audio->format = 0x2000;
+    sh_audio->wtag = 0x2000;
     if(!read_ac3_tags(demuxer,hdr,pos,&sh_audio->i_bps,&sh_audio->samplerate,&sh_audio->channels)) return 0;
     break;
   case RAW_DCA:
-    sh_audio->format = 0x2001;
+    sh_audio->wtag = 0x2001;
     if(!read_ddca_tags(demuxer,hdr,pos,&sh_audio->i_bps,&sh_audio->samplerate,&sh_audio->channels)) return 0;
     sh_audio->i_bps/=8;
     break;
@@ -1122,13 +1122,13 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     const unsigned freqs[4]={ 44100, 48000, 37800, 32000 };
     uint32_t frames,ms,profile,encv,sver;
     unsigned char bt;
-    sh_audio->format = mmioFOURCC('M','P','C',' ');
+    sh_audio->wtag = mmioFOURCC('M','P','C',' ');
     stream_seek(s,4);
     frames = stream_read_dword(s);
     stream_skip(s,2);
     bt=stream_read_char(s);
     sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
-    sh_audio->wf->wFormatTag = sh_audio->format;
+    sh_audio->wf->wFormatTag = sh_audio->wtag;
     sh_audio->wf->nChannels = 2;
     sh_audio->wf->nSamplesPerSec = freqs[bt & 3];
     sh_audio->wf->nBlockAlign = 32 * 36;
@@ -1163,7 +1163,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     stream_read(s,chunk,4);
     if(chunk[0]!=0x01) { MSG_V("VOC unknown block type %02X\n",chunk[0]); return NULL; }
     size=chunk[1]|(chunk[2]<<8)|(chunk[3]<<16);
-    sh_audio->format = 0x01; /* PCM */
+    sh_audio->wtag = 0x01; /* PCM */
     stream_read(s,chunk,2);
     if(chunk[1]!=0) { MSG_V("VOC unknown compression type %02X\n",chunk[1]); return NULL; }
     demuxer->movi_start=stream_tell(s);
@@ -1172,7 +1172,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     sh_audio->channels=1;
     sh_audio->samplesize=1;
     sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
-    w->wFormatTag = sh_audio->format;
+    w->wFormatTag = sh_audio->wtag;
     w->nChannels = sh_audio->channels;
     w->nSamplesPerSec = sh_audio->samplerate;
     w->nAvgBytesPerSec = sh_audio->samplerate*sh_audio->samplesize*sh_audio->channels;
@@ -1204,7 +1204,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 			free_sh_audio(sh_audio);
 			return NULL;
 		    }
-		    w->wFormatTag = sh_audio->format = stream_read_word_le(s);
+		    w->wFormatTag = sh_audio->wtag = stream_read_word_le(s);
 		    w->nChannels = sh_audio->channels = stream_read_word_le(s);
 		    w->nSamplesPerSec = sh_audio->samplerate = stream_read_dword_le(s);
 		    w->nAvgBytesPerSec = stream_read_dword_le(s);
@@ -1286,9 +1286,9 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 	switch(raw_id)
 	{
 	    case RAW_MP1:
-	    case RAW_MP2: sh_audio->format=w->wFormatTag=0x50; break;
-	    case RAW_MP3: sh_audio->format=w->wFormatTag=0x55; break;
-	    case RAW_FLAC:sh_audio->format = mmioFOURCC('f', 'L', 'a', 'C'); break;
+	    case RAW_MP2: sh_audio->wtag=w->wFormatTag=0x50; break;
+	    case RAW_MP3: sh_audio->wtag=w->wFormatTag=0x55; break;
+	    case RAW_FLAC:sh_audio->wtag = mmioFOURCC('f', 'L', 'a', 'C'); break;
 	    case RAW_SND_AU: {
 		unsigned hsize,dsize;
 		uint32_t id;
@@ -1300,18 +1300,18 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 		if(id == 27) id=WAVE_FORMAT_ALAW;
 		else
 		if(id == 3) id=0x1;
-		w->wFormatTag = sh_audio->format = id;
+		w->wFormatTag = sh_audio->wtag = id;
 		/* Trickly mplayerxp will threat 'raw ' as big-endian */
-		if(id == 0x1) sh_audio->format=mmioFOURCC('r','a','w',' ');
+		if(id == 0x1) sh_audio->wtag=mmioFOURCC('r','a','w',' ');
 		break;
 	    }
-	    case RAW_AC3:   sh_audio->format=w->wFormatTag=0x2000; break;
-	    case RAW_DCA:   sh_audio->format=w->wFormatTag=0x2001;
+	    case RAW_AC3:   sh_audio->wtag=w->wFormatTag=0x2000; break;
+	    case RAW_DCA:   sh_audio->wtag=w->wFormatTag=0x2001;
 			    if(brate) brate/=8;
 			    break;
 	    default:
 	    case RAW_VOC: break;
-	    case RAW_MUSEPACK: sh_audio->format = mmioFOURCC('M','P','+',' '); break;
+	    case RAW_MUSEPACK: sh_audio->wtag = mmioFOURCC('M','P','+',' '); break;
 	}
 	if(brate)	sh_audio->i_bps=brate;
 	if(channels)	w->nChannels = sh_audio->channels = channels;
@@ -1320,7 +1320,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     }
     stream_seek(s,data_off);
     /* id3v1 tags may exist within WAV */
-    if(sh_audio->format==0x50 || sh_audio->format==0x55)
+    if(sh_audio->wtag==0x50 || sh_audio->wtag==0x55)
     {
 	stream_seek(s,data_off);
 	stream_read(s,hdr,4);
@@ -1409,7 +1409,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
   frmt=priv->frmt;
   if(frmt==RAW_WAV)
   {
-    switch(sh_audio->format)
+    switch(sh_audio->wtag)
     {
 	case 0x50:
 	case 0x55: frmt=RAW_MP3; break;
@@ -1561,7 +1561,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     return 1;
   }
   default:
-    MSG_ERR("Audio demuxer : unknown format %d\n",priv->frmt);
+    MSG_ERR("Audio demuxer : unknown wtag %d\n",priv->frmt);
   }
   return 0;
 }
@@ -1709,7 +1709,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   frmt=priv->frmt;
   if(frmt==RAW_WAV)
   {
-    switch(sh_audio->format)
+    switch(sh_audio->wtag)
     {
 	case 0x2000: frmt=RAW_AC3; break;
 	case 0x2001: frmt=RAW_DCA; break;

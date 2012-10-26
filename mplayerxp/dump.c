@@ -164,7 +164,7 @@ void dump_mux_init(demuxer_t *demuxer)
     {
 	sha->wf=malloc(sizeof(WAVEFORMATEX));
 	sha->wf->nBlockAlign = 1; //mux_a->h.dwSampleSize;
-	sha->wf->wFormatTag = sha->format;
+	sha->wf->wFormatTag = sha->wtag;
 	sha->wf->nChannels = sha->channels;
 	sha->wf->nSamplesPerSec = sha->samplerate;
 	sha->wf->nAvgBytesPerSec=sha->i_bps; //mux_a->h.dwSampleSize*mux_a->wf->nSamplesPerSec;

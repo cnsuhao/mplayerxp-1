@@ -622,7 +622,7 @@ demuxer_t* demux_open(stream_t *vs,int file_format,int audio_id,int video_id,int
     ad = demux_open_stream(as,audio_demuxer_type ? audio_demuxer_type : afmt,audio_id,-2,-2);
     if(!ad)
       MSG_WARN("Failed to open audio demuxer: %s\n",audio_stream);
-    else if(ad->audio->sh && ((sh_audio_t*)ad->audio->sh)->format == 0x55) // MP3
+    else if(ad->audio->sh && ((sh_audio_t*)ad->audio->sh)->wtag == 0x55) // MP3
       m_config_set_flag(mconfig,"mp3.hr-seek",1); // Enable high res seeking
   }
   if(ss) {

@@ -171,7 +171,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
         sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
 
         // custom fourcc for internal MPlayer use
-        sh_audio->format = mmioFOURCC('R', 'o', 'Q', 'A');
+        sh_audio->wtag = mmioFOURCC('R', 'o', 'Q', 'A');
         if (chunk_id == RoQ_SOUND_STEREO)
           sh_audio->wf->nChannels = 2;
         else

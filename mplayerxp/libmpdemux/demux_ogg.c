@@ -55,7 +55,7 @@ typedef struct theora_struct_st {
 } theora_struct_t;
 
 //// OggDS headers
-// Header for the new header format
+// Header for the new header wtag
 typedef struct stream_header_video
 {
 	ogg_int32_t	width;
@@ -536,17 +536,17 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
   // We jump nothing for FLAC. Ain't this great? Packet contents have to be
   // handled differently for each and every stream type. The joy! The joy!
   if(!os->flac && ((*pack->packet & PACKET_TYPE_HEADER) && 
-     (ds != d->audio || ( ((sh_audio_t*)ds->sh)->format != FOURCC_VORBIS || os->hdr_packets >= NUM_VORBIS_HDR_PACKETS ) ) &&
+     (ds != d->audio || ( ((sh_audio_t*)ds->sh)->wtag != FOURCC_VORBIS || os->hdr_packets >= NUM_VORBIS_HDR_PACKETS ) ) &&
      (ds != d->video || (((sh_video_t*)ds->sh)->fourcc != FOURCC_THEORA))))
     return 0;
 
   // For vorbis packet the packet is the data, for other codec we must jump
   // the header
-  if(ds == d->audio && ((sh_audio_t*)ds->sh)->format == FOURCC_VORBIS) {
+  if(ds == d->audio && ((sh_audio_t*)ds->sh)->wtag == FOURCC_VORBIS) {
      context = ((sh_audio_t *)ds->sh)->context;
      samplesize = ((sh_audio_t *)ds->sh)->samplesize;
   }
-  if (ds == d->video && ((sh_audio_t*)ds->sh)->format == FOURCC_THEORA)
+  if (ds == d->video && ((sh_audio_t*)ds->sh)->wtag == FOURCC_THEORA)
      context = ((sh_video_t *)ds->sh)->context;
   data = demux_ogg_read_packet(os,pack,context,&pts,&flags,samplesize);
 
@@ -605,7 +605,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
   else {
     sid = demuxer->audio->id;
     /* demux_ogg_read_packet needs decoder context for Vorbis streams */
-    if(((sh_audio_t*)demuxer->audio->sh)->format == FOURCC_VORBIS) {
+    if(((sh_audio_t*)demuxer->audio->sh)->wtag == FOURCC_VORBIS) {
       context = ((sh_audio_t*)demuxer->audio->sh)->context;
       samplesize = ((sh_audio_t*)demuxer->audio->sh)->samplesize;
     }
@@ -807,7 +807,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
     // Check for Vorbis
     if(pack.bytes >= 7 && ! strncmp(&pack.packet[1],"vorbis", 6) ) {
       sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
-      sh_a->format = FOURCC_VORBIS;
+      sh_a->wtag = FOURCC_VORBIS;
       ogg_d->subs[ogg_d->num_sub].vorbis = 1;
       ogg_d->subs[ogg_d->num_sub].id = n_audio;
       n_audio++;
@@ -862,7 +862,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 #endif
     else if (pack.bytes >= 4 && !strncmp (&pack.packet[0], "fLaC", 4)) {
 	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
-	sh_a->format =  mmioFOURCC('f', 'L', 'a', 'C');
+	sh_a->wtag =  mmioFOURCC('f', 'L', 'a', 'C');
 	ogg_d->subs[ogg_d->num_sub].id = n_audio;
 	n_audio++;
 	ogg_d->subs[ogg_d->num_sub].flac = 1;
@@ -899,7 +899,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
 	extra_size = get_uint16(pack.packet+140);
 	sh_a->wf = (WAVEFORMATEX*)calloc(1,sizeof(WAVEFORMATEX)+extra_size);
-	sh_a->format = sh_a->wf->wFormatTag = get_uint16(pack.packet+124);
+	sh_a->wtag = sh_a->wf->wFormatTag = get_uint16(pack.packet+124);
 	sh_a->channels = sh_a->wf->nChannels = get_uint16(pack.packet+126);
 	sh_a->samplerate = sh_a->wf->nSamplesPerSec = get_uint32(pack.packet+128);
 	sh_a->wf->nAvgBytesPerSec = get_uint32(pack.packet+132);
@@ -951,7 +951,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	buffer[4] = '\0';
 	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
 	sh_a->wf = (WAVEFORMATEX*)calloc(1,sizeof(WAVEFORMATEX)+extra_size);
-	sh_a->format =  sh_a->wf->wFormatTag = strtol(buffer, NULL, 16);
+	sh_a->wtag =  sh_a->wf->wFormatTag = strtol(buffer, NULL, 16);
 	sh_a->channels = sh_a->wf->nChannels = get_uint16(&st->sh.audio.channels);
 	sh_a->samplerate = sh_a->wf->nSamplesPerSec = get_uint64(&st->samples_per_unit);
 	sh_a->wf->nAvgBytesPerSec = get_uint32(&st->sh.audio.avgbytespersec);
@@ -1237,7 +1237,7 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
   od->video->id = -2;
   od->audio->sh = sh_audio;
   sh_audio->ds = od->audio;
-  sh_audio->format = FOURCC_VORBIS;
+  sh_audio->wtag = FOURCC_VORBIS;
 
   /// Return the joined demuxers
   return new_demuxers_demuxer(demuxer,od,demuxer);
@@ -1278,7 +1278,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
   } else {
     ds = demuxer->audio;
     /* demux_ogg_read_packet needs decoder context for Vorbis streams */
-    if(((sh_audio_t*)demuxer->audio->sh)->format == FOURCC_VORBIS)
+    if(((sh_audio_t*)demuxer->audio->sh)->wtag == FOURCC_VORBIS)
       context = ((sh_audio_t*)demuxer->audio->sh)->context;
     vi = &((ov_struct_t*)((sh_audio_t*)ds->sh)->context)->vi;
     rate = (float)vi->rate;

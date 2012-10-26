@@ -52,7 +52,7 @@ static char *opt_cryptokey;
 extern int ts_prog;
 
 const config_t lavf_opts[] = {
-	{"format",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL, "forces format of lavf demuxer"},
+	{"wtag",    &(opt_format),    CONF_TYPE_STRING,       0,  0,       0, NULL, "forces wtag of lavf demuxer"},
 	{"cryptokey", &(opt_cryptokey), CONF_TYPE_STRING,       0,  0,       0, NULL, "specifies cryptokey for lavf demuxer"},
 	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
 };
@@ -194,7 +194,7 @@ static int lavf_probe(demuxer_t *demuxer){
         }
         priv->avif= av_find_input_format(opt_format);
         if (!priv->avif) {
-            MSG_FATAL("Unknown lavf format %s\n", opt_format);
+            MSG_FATAL("Unknown lavf wtag %s\n", opt_format);
             return 0;
         }
         MSG_INFO("Forced lavf %s demuxer\n", priv->avif->long_name);
@@ -306,7 +306,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
             sh_audio->audio.dwRate  /= g;
 //            printf("sca:%d rat:%d fs:%d sr:%d ba:%d\n", sh_audio->audio.dwScale, sh_audio->audio.dwRate, codec->frame_size, codec->sample_rate, codec->block_align);
             sh_audio->ds= demuxer->audio;
-            sh_audio->format= codec->codec_tag;
+            sh_audio->wtag= codec->codec_tag;
             sh_audio->channels= codec->channels;
             sh_audio->samplerate= codec->sample_rate;
             sh_audio->i_bps= codec->bit_rate/8;
@@ -322,10 +322,10 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
                 sh_audio->samplesize = 2;
                 break;
               case CODEC_ID_PCM_ALAW:
-                sh_audio->format = 0x6;
+                sh_audio->wtag = 0x6;
                 break;
               case CODEC_ID_PCM_MULAW:
-                sh_audio->format = 0x7;
+                sh_audio->wtag = 0x7;
                 break;
 	      default:
                 break;
