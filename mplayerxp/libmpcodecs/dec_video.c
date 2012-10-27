@@ -90,7 +90,6 @@ extern vo_data_t*vo_data;
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
 
-extern char *video_codec;
 int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
     unsigned o_bps,bpp;
     sh_video->codec=NULL;
@@ -153,7 +152,7 @@ int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int st
 	}
 	o_bps=sh_video->fps*sh_video->src_w*sh_video->src_h*bpp/8;
 	MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
-	,video_codec?"Forcing":"Selected"
+	,mp_conf.video_codec?"Forcing":"Selected"
 	,sh_video->codec->codec_name
 	,mpvdec->info->driver_name
 	,sh_video->codec->dll_name
@@ -288,7 +287,6 @@ void mpcv_resync_stream(sh_video_t *sh_video)
   if(sh_video->inited && mpvdec) mpvdec->control(sh_video,VDCTRL_RESYNC_STREAM,NULL);
 }
 
-extern float sub_fps;
 #ifdef USE_SUB
 extern subtitle* mp_subtitles;
 static float sub_last_pts = -303;
@@ -299,10 +297,10 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
   // find sub
   if(mp_subtitles && v_pts>0){
       float pts=v_pts;
-      if(sub_fps==0) sub_fps=sh_video->fps;
+      if(mp_conf.sub_fps==0) mp_conf.sub_fps=sh_video->fps;
       MP_UNIT("find_sub");
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-         find_sub(mp_subtitles,sub_uses_time?(100*pts):(pts*sub_fps),vo_data); // FIXME! frame counter...
+         find_sub(mp_subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
          sub_last_pts = pts;
       }
       MP_UNIT(NULL);

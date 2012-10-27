@@ -176,7 +176,6 @@ pthread_cond_t audio_decode_cond=PTHREAD_COND_INITIALIZER;
 
 extern volatile int xp_drop_frame;
 extern volatile unsigned xp_drop_frame_cnt;
-extern int output_quality;
 
 extern volatile float xp_screen_pts;
 volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
@@ -193,7 +192,6 @@ extern float rel_seek_secs;	/* FIXME: in hope that user will not rewind */
 extern int sof_seek_pos;	/* the movie at end of file :( */
 
 extern int decore_audio( int xp_id );
-extern int mpxp_seek_time;
 
 extern void update_osd( float v_pts );
 
@@ -381,7 +379,7 @@ pt_sleep:
 	int cur_time;
 	cur_time = GetTimerMS();
 	/* Ugly solution: disable frame dropping right after seeking! */
-	if(cur_time - mpxp_seek_time > (xp_core.num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(v_pts,drop_barrier);
+	if(cur_time - mp_data->seek_time > (xp_core.num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(v_pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
     if(!finite(v_pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",v_pts);
 #if 0
@@ -399,18 +397,18 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     if(xp_n_frame_to_drop)	drop_param=mp_conf.frame_dropping;
     else			drop_param=0;
     /* decode: */
-    if(output_quality) {
+    if(mp_data->output_quality) {
 	unsigned total = xp_core.num_v_buffs/2;
 	unsigned distance = dae_get_decoder_outrun(xp_core.video);
 	int our_quality;
-	our_quality = output_quality*distance/total;
+	our_quality = mp_data->output_quality*distance/total;
 	if(drop_param) mpcv_set_quality(sh_video,0);
 	else
 	if(mp_conf.autoq) mpcv_set_quality(sh_video,our_quality>0?our_quality:0);
     }
     blit_frame=mpcv_decode(sh_video,start,in_size,drop_param,v_pts);
-    if(output_quality) {
-	if(drop_param) mpcv_set_quality(sh_video,output_quality);
+    if(mp_data->output_quality) {
+	if(drop_param) mpcv_set_quality(sh_video,mp_data->output_quality);
     }
     if(!blit_frame && drop_param) xp_drop_frame_cnt++;
     if(blit_frame) {

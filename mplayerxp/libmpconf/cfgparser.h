@@ -77,8 +77,6 @@ struct config_save {
   char* opt_name;
 };
 
-extern m_config_t* mconfig;
-
 /* parse_config_file returns:
  * 	-1 on error (can't malloc, invalid option...)
  * 	 0 if can't open configfile

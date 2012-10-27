@@ -442,14 +442,14 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
 
 static void __FASTCALL__ asx_parse_param(ASX_Parser_t* parser, char** attribs, play_tree_t* pt) {
   char *name,*val;
-  
+
   name = asx_get_attrib("NAME",attribs);
   if(!name) {
     asx_warning_attrib_required(parser,"PARAM" ,"NAME" );
     return;
   }
   val = asx_get_attrib("VALUE",attribs);
-  if(m_config_get_option(mconfig,name) == NULL) {
+  if(m_config_get_option(mp_data->mconfig,name) == NULL) {
     MSG_WARN("Found unknow param in asx: %s",name);
     if(val)
       MSG_WARN("=%s\n",val);

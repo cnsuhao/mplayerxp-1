@@ -509,8 +509,6 @@ static int sub_autodetect (FILE *fd) {
     return SUB_INVALID;  // too many bad lines
 }
 
-extern float sub_fps;
-
 #ifdef USE_ICONV
 static iconv_t icdsc;
 
@@ -807,7 +805,7 @@ void dump_mpsub(subtitle* subs, float fps){
 	float a,b;
 
 	mpsub_position=0;
-	if (sub_fps==0) sub_fps=fps;
+	if (mp_conf.sub_fps==0) mp_conf.sub_fps=fps;
 
 	fd=fopen ("dump.mpsub", "w");
 	if (!fd) {
@@ -834,8 +832,8 @@ void dump_mpsub(subtitle* subs, float fps){
 			else
 			fprintf (fd, " %.2f\n",b);
 		} else {
-			fprintf (fd, "%ld %ld\n", (long)((egysub->start*(fps/sub_fps))-((mpsub_position*(fps/sub_fps)))),
-					(long)(((egysub->end)-(egysub->start))*(fps/sub_fps)));
+			fprintf (fd, "%ld %ld\n", (long)((egysub->start*(fps/mp_conf.sub_fps))-((mpsub_position*(fps/mp_conf.sub_fps)))),
+					(long)(((egysub->end)-(egysub->start))*(fps/mp_conf.sub_fps)));
 		}
 
 		mpsub_position = egysub->end;

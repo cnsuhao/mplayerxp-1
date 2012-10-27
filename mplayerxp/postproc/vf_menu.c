@@ -228,11 +228,11 @@ static void __FASTCALL__ uninit(vf_instance_t *vf) {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height,
 		  unsigned int flags, unsigned int outfmt,any_t*tune) { 
-#ifdef HAVE_FREETYPE    
+#ifdef HAVE_FREETYPE
   // here is the right place to get screen dimensions
   if (force_load_font) {
     force_load_font = 0;
-    load_font_ft(width,height,&vo_font,font_name);
+    load_font_ft(width,height,&vo_font,mp_conf.font_name);
   }
 #endif
   if(outfmt == IMGFMT_MPEGPES) vf->priv->passthrough = 1;

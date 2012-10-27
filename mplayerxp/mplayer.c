@@ -25,6 +25,7 @@
 #include "mp_config.h"
 #include "sig_hand.h"
 #include "mplayer.h"
+#include "my_malloc.h"
 #include "postproc/swscale.h"
 #include "postproc/af.h"
 #include "postproc/vf.h"
@@ -61,8 +62,6 @@
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
 
-int slave_mode=0;
-
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
 #define MSGT_CLASS MSGT_CPLAYER
@@ -73,7 +72,7 @@ int slave_mode=0;
              Playtree
 **************************************************************************/
 
-play_tree_t* playtree;
+static play_tree_t* playtree;
 
 #define PT_NEXT_ENTRY 1
 #define PT_PREV_ENTRY -1
@@ -86,7 +85,7 @@ play_tree_t* playtree;
              Config
 **************************************************************************/
 
-m_config_t* mconfig;
+//m_config_t* mconfig;
 
 /**************************************************************************
              Decoding ahead
@@ -96,13 +95,11 @@ m_config_t* mconfig;
 volatile unsigned xp_drop_frame_cnt=0;
 float xp_screen_pts;
 float playbackspeed_factor=1.0;
-int mpxp_seek_time=-1;
 static unsigned mpxp_after_seek=0;
 int audio_eof=0;
 demux_stream_t *d_video=NULL;
 static int osd_show_framedrop = 0;
 static int osd_function=OSD_PLAY;
-int output_quality=0;
 #ifdef USE_SUB
 subtitle* mp_subtitles=NULL;
 #endif
@@ -129,7 +126,7 @@ static int cfg_inc_verbose(struct config *conf){ UNUSED(conf); ++mp_conf.verbose
 
 static int cfg_include(struct config *conf, char *filename){
 	UNUSED(conf);
-	return m_config_parse_config_file(mconfig, filename);
+	return m_config_parse_config_file(mp_data->mconfig, filename);
 }
 
 #include "osdep/get_path.h"
@@ -148,7 +145,6 @@ static int cfg_include(struct config *conf, char *filename){
 
 /* Common FIFO functions, and keyboard/event FIFO code */
 #include "fifo.h"
-int use_stdin=0;
 /**************************************************************************/
 
 static int vo_inited=0;
@@ -162,37 +158,16 @@ static float max_av_resync=0;
 
 int osd_level=2;
 
-/* codecs: */
-int has_audio=1;
-int has_video=1;
-int has_dvdsub=1;
-char *audio_codec=NULL;  /* override audio codec */
-char *audio_codec_param=NULL;
-char *video_codec=NULL;  /* override video codec */
-char *audio_family=NULL; /* override audio codec family */
-char *video_family=NULL; /* override video codec family */
-
 // A-V sync:
 static float c_total=0;
 
-unsigned force_srate=0;
 static uint32_t our_n_frames=0;
 
-// screen info:
-char* video_driver=NULL; //"mga"; // default
-char* audio_driver=NULL;
-
-// sub:
-char *font_name=NULL;
-float font_factor=0.75;
-char *sub_name=NULL;
-float sub_fps=0;
-int   sub_auto = 1;
-char *vobsub_name=NULL;
 
 static stream_t* stream=NULL;
 
 mp_conf_t mp_conf;
+mp_data_t*mp_data=NULL;
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 typedef struct x86_features_s {
@@ -232,6 +207,14 @@ static void mpxp_init_structs(void) {
     mp_conf.av_force_pts_fix2=-1;
     mp_conf.loop_times=-1;
     mp_conf.play_n_frames=-1;
+    mp_conf.font_factor=0.75;
+    mp_conf.sub_auto=1;
+    mp_conf.has_audio=1;
+    mp_conf.has_video=1;
+    mp_conf.has_dvdsub=1;
+    mp_data=random_malloc(sizeof(mp_data_t),1000);
+    memset(mp_data,0,sizeof(mp_data_t));
+    mp_data->seek_time=-1;
 }
 
 static unsigned int inited_flags=0;
@@ -688,7 +671,7 @@ void uninit_player(unsigned int mask){
 	MP_UNIT("sub_free");
 	mp_input_uninit();
 	sub_free( mp_subtitles );
-	sub_name=NULL;
+	mp_conf.sub_name=NULL;
 	vo_data->sub=NULL;
 	mp_subtitles=NULL;
     }
@@ -707,7 +690,7 @@ void exit_player(char* how){
   sws_uninit();
   if(how) MSG_HINT(MSGTR_Exiting,how);
   MSG_DBG2("max framesize was %d bytes\n",max_framesize);
-  if(mconfig) m_config_free(mconfig);
+  if(mp_data->mconfig) m_config_free(mp_data->mconfig);
   mp_msg_uninit();
   if(how) exit(0);
   return; /* Still try coredump!!!*/
@@ -731,7 +714,7 @@ static void soft_exit_player(void)
   MP_UNIT("exit_player");
   MSG_HINT(MSGTR_Exiting,MSGTR_Exit_quit);
   MSG_DBG2("max framesize was %d bytes\n",max_framesize);
-  if(mconfig) m_config_free(mconfig);
+  if(mp_data->mconfig) m_config_free(mp_data->mconfig);
   mp_msg_uninit();
   exit(0);
 }
@@ -885,21 +868,21 @@ static void get_mmx_optimizations( void )
 
 static void init_player( void )
 {
-    if(video_driver && strcmp(video_driver,"help")==0)
+    if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0)
     {
 	vo_print_help(vo_data);
 	exit(0);
     }
-    if(audio_driver && strcmp(audio_driver,"help")==0)
+    if(mp_conf.audio_driver && strcmp(mp_conf.audio_driver,"help")==0)
     {
 	ao_print_help();
 	exit(0);
     }
-    if(video_family && strcmp(video_family,"help")==0){
+    if(mp_conf.video_family && strcmp(mp_conf.video_family,"help")==0){
       vfm_help();
       exit(0);
     }
-    if(audio_family && strcmp(audio_family,"help")==0){
+    if(mp_conf.audio_family && strcmp(mp_conf.audio_family,"help")==0){
       afm_help();
       exit(0);
     }
@@ -922,11 +905,11 @@ static void init_player( void )
       }
     }
 
-    if(audio_codec && strcmp(audio_codec,"help")==0){
+    if(mp_conf.audio_codec && strcmp(mp_conf.audio_codec,"help")==0){
       list_codecs(1);
       exit(0);
     }
-    if(video_codec && strcmp(video_codec,"help")==0){
+    if(mp_conf.video_codec && strcmp(mp_conf.video_codec,"help")==0){
       list_codecs(0);
       exit(0);
     }
@@ -940,7 +923,7 @@ void show_help(void) {
 }
 
 void show_long_help(void) {
-    m_config_show_options(mconfig);
+    m_config_show_options(mp_data->mconfig);
     mp_input_print_binds();
     print_stream_drivers();
     vo_print_help(vo_data);
@@ -1118,7 +1101,7 @@ static void __show_status_line(float a_pts,float v_pts,float delay,float AV_dela
 		,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
 		,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
 		,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
-		,output_quality
+		,mp_data->output_quality
 		,dae_curr_vplayed()
 		);
     fflush(stdout);
@@ -1136,7 +1119,7 @@ static void show_status_line_no_apts(float v_pts) {
 	,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
 	,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
 	,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
-	,output_quality
+	,mp_data->output_quality
 	);
     } else
 	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d\r"
@@ -1145,7 +1128,7 @@ static void show_status_line_no_apts(float v_pts) {
 	,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
 	,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
 	,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
-	,output_quality
+	,mp_data->output_quality
 	);
     fflush(stdout);
 }
@@ -1250,6 +1233,7 @@ int mpxp_play_video( int rtc_fd )
     can_blit=dae_try_inc_played(xp_core.video); /* <-- TRY SWITCH TO NEXT FRAME */
     shva=dae_next_played_fra(xp_core.video);
     v_pts = shva.v_pts;
+
     /*------------------------ frame decoded. --------------------*/
 /* blit frame */
 
@@ -1379,7 +1363,7 @@ void mpxp_seek( int _xp_id, osd_args_t *osd,const seek_args_t* seek)
 	mpxp_after_seek=25; /* 1 sec delay */
     }
     if(seek_rval){
-	mpxp_seek_time = GetTimerMS();
+	mp_data->seek_time = GetTimerMS();
 
 	// success:
 	/* FIXME there should be real seeking for vobsub */
@@ -1529,9 +1513,9 @@ static void mpxp_init_keyboard_fifo(void)
     mp_input_init();
     if(keyb_fifo_get > 0)
 	mp_input_add_key_fd(keyb_fifo_get,1,NULL,NULL);
-    if(slave_mode)
+    if(mp_conf.slave_mode)
 	mp_input_add_cmd_fd(0,1,NULL,NULL);
-    else if(!use_stdin)
+    else if(!mp_conf.use_stdin)
 	mp_input_add_key_fd(0,1,NULL,NULL);
     inited_flags|=INITED_INPUT;
 }
@@ -1539,14 +1523,14 @@ static void mpxp_init_keyboard_fifo(void)
 static void mpxp_init_osd(void) {
 // check font
 #ifdef USE_OSD
-    if(font_name){
-	vo_data->font=read_font_desc(font_name,font_factor,mp_conf.verbose>1);
-	if(!vo_data->font) MSG_ERR(MSGTR_CantLoadFont,font_name);
+    if(mp_conf.font_name){
+	vo_data->font=read_font_desc(mp_conf.font_name,mp_conf.font_factor,mp_conf.verbose>1);
+	if(!vo_data->font) MSG_ERR(MSGTR_CantLoadFont,mp_conf.font_name);
     } else {
 	// try default:
-	vo_data->font=read_font_desc(get_path("font/font.desc"),font_factor,mp_conf.verbose>1);
+	vo_data->font=read_font_desc(get_path("font/font.desc"),mp_conf.font_factor,mp_conf.verbose>1);
 	if(!vo_data->font)
-	    vo_data->font=read_font_desc(DATADIR"/font/font.desc",font_factor,mp_conf.verbose>1);
+	    vo_data->font=read_font_desc(DATADIR"/font/font.desc",mp_conf.font_factor,mp_conf.verbose>1);
     }
 #endif
     /* Configure menu here */
@@ -1571,21 +1555,21 @@ static char * mpxp_init_output_subsystems(void) {
     char* rs=NULL;
     unsigned i;
     // check video_out driver name:
-    if (video_driver)
-	if ((i=strcspn(video_driver, ":")) > 0) {
-	    size_t i2 = strlen(video_driver);
-	    if (video_driver[i] == ':') {
+    if (mp_conf.video_driver)
+	if ((i=strcspn(mp_conf.video_driver, ":")) > 0) {
+	    size_t i2 = strlen(mp_conf.video_driver);
+	    if (mp_conf.video_driver[i] == ':') {
 		vo_conf.subdevice = malloc(i2-i);
 		if (vo_conf.subdevice != NULL)
-		    strncpy(vo_conf.subdevice, (char *)(video_driver+i+1), i2-i);
-		video_driver[i] = '\0';
+		    strncpy(vo_conf.subdevice, (char *)(mp_conf.video_driver+i+1), i2-i);
+		mp_conf.video_driver[i] = '\0';
 	    }
 	}
     MP_UNIT("vo_register");
-    vo_inited = (vo_register(vo_data,video_driver)!=NULL)?1:0;
+    vo_inited = (vo_register(vo_data,mp_conf.video_driver)!=NULL)?1:0;
 
     if(!vo_inited){
-	MSG_FATAL(MSGTR_InvalidVOdriver,video_driver?video_driver:"?");
+	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
 	exit_player(MSGTR_Exit_error);
     }
     MP_UNIT("vo_init");
@@ -1597,21 +1581,21 @@ static char * mpxp_init_output_subsystems(void) {
 
 // check audio_out driver name:
     MP_UNIT("ao_init");
-    if (audio_driver)
-	if ((i=strcspn(audio_driver, ":")) > 0)
+    if (mp_conf.audio_driver)
+	if ((i=strcspn(mp_conf.audio_driver, ":")) > 0)
 	{
-	    size_t i2 = strlen(audio_driver);
+	    size_t i2 = strlen(mp_conf.audio_driver);
 
-	    if (audio_driver[i] == ':')
+	    if (mp_conf.audio_driver[i] == ':')
 	    {
 		rs = malloc(i2-i);
-		if (rs != NULL)  strncpy(rs, (char *)(audio_driver+i+1), i2-i);
-		audio_driver[i] = '\0';
+		if (rs != NULL)  strncpy(rs, (char *)(mp_conf.audio_driver+i+1), i2-i);
+		mp_conf.audio_driver[i] = '\0';
 	    }
 	}
-    ao_inited=(ao_register(audio_driver)!=NULL)?1:0;
+    ao_inited=(ao_register(mp_conf.audio_driver)!=NULL)?1:0;
     if (!ao_inited){
-	MSG_FATAL(MSGTR_InvalidAOdriver,audio_driver);
+	MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
 	exit_player(MSGTR_Exit_error);
     }
     return rs;
@@ -1620,17 +1604,17 @@ static char * mpxp_init_output_subsystems(void) {
 static int mpxp_init_vobsub(const char *filename) {
     int forced_subs_only=0;
     MP_UNIT("vobsub");
-    if (vobsub_name){
-      vo_data->vobsub=vobsub_open(vobsub_name,mp_conf.spudec_ifo,1,&vo_data->spudec);
+    if (mp_conf.vobsub_name){
+      vo_data->vobsub=vobsub_open(mp_conf.vobsub_name,mp_conf.spudec_ifo,1,&vo_data->spudec);
       if(vo_data->vobsub==NULL)
-        MSG_ERR(MSGTR_CantLoadSub,vobsub_name);
+        MSG_ERR(MSGTR_CantLoadSub,mp_conf.vobsub_name);
       else {
 	inited_flags|=INITED_VOBSUB;
 	vobsub_set_from_lang(vo_data->vobsub, mp_conf.dvdsub_lang);
 	// check if vobsub requested only to display forced subtitles
 	forced_subs_only=vobsub_get_forced_subs_flag(vo_data->vobsub);
       }
-    }else if(sub_auto && filename && (strlen(filename)>=5)){
+    }else if(mp_conf.sub_auto && filename && (strlen(filename)>=5)){
       /* try to autodetect vobsub from movie filename ::atmos */
       char *buf = malloc((strlen(filename)-3) * sizeof(char));
       memset(buf,0,strlen(filename)-3); // make sure string is terminated
@@ -1640,7 +1624,7 @@ static int mpxp_init_vobsub(const char *filename) {
     }
     if(vo_data->vobsub)
     {
-      sub_auto=0; // don't do autosub for textsubs if vobsub found
+      mp_conf.sub_auto=0; // don't do autosub for textsubs if vobsub found
       inited_flags|=INITED_VOBSUB;
     }
     return forced_subs_only;
@@ -1769,7 +1753,7 @@ if (vo_data->spudec==NULL) {
 if (vo_data->spudec==NULL) {
   MP_UNIT("spudec_init_normal");
   vo_data->spudec=spudec_new_scaled(NULL, sh_video->src_w, sh_video->src_h);
-  spudec_set_font_factor(vo_data->spudec,font_factor);
+  spudec_set_font_factor(vo_data->spudec,mp_conf.font_factor);
 }
 
 if (vo_data->spudec!=NULL) {
@@ -1783,11 +1767,11 @@ if (vo_data->spudec!=NULL) {
 // we know fps so now we can adjust subtitles time to ~6 seconds AST
 // check .sub
   MP_UNIT("read_subtitles_file");
-  if(sub_name){
-    mp_subtitles=sub_read_file(sub_name, sh_video->fps);
-    if(!mp_subtitles) MSG_ERR(MSGTR_CantLoadSub,sub_name);
+  if(mp_conf.sub_name){
+    mp_subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
+    if(!mp_subtitles) MSG_ERR(MSGTR_CantLoadSub,mp_conf.sub_name);
   } else
-  if(sub_auto) { // auto load sub file ...
+  if(mp_conf.sub_auto) { // auto load sub file ...
     mp_subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
 				      : "default.sub", sh_video->fps );
   }
@@ -1800,27 +1784,17 @@ if (vo_data->spudec!=NULL) {
 }
 
 static void mpxp_find_acodec(void) {
-/* accept parameters*/
-    if(audio_codec) {
-	char *prm;
-	prm = strchr(audio_codec,':');
-	if(prm) {
-	    audio_codec_param=prm+1;
-	*prm=0;
-	}
-    }
-
 // Go through the codec.conf and find the best codec...
     sh_audio->codec=NULL;
-    if(audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,audio_family);
+    if(mp_conf.audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,mp_conf.audio_family);
     while(1) {
 	const char *fmt;
 	sh_audio->codec=find_codec(sh_audio->wtag,NULL,sh_audio->codec,1);
 	if(!sh_audio->codec) {
-	    if(audio_family) {
+	    if(mp_conf.audio_family) {
 		sh_audio->codec=NULL; /* re-search */
 		MSG_ERR(MSGTR_CantFindAfmtFallback);
-		audio_family=NULL;
+		mp_conf.audio_family=NULL;
 		continue;
 	    }
 	    MSG_ERR(MSGTR_CantFindAudioCodec);
@@ -1833,9 +1807,9 @@ static void mpxp_find_acodec(void) {
 	    sh_audio=d_audio->sh=NULL;
 	    break;
 	}
-	if(audio_codec && strcmp(sh_audio->codec->codec_name,audio_codec)) continue;
-	else if(audio_family && strcmp(sh_audio->codec->driver_name,audio_family)) continue;
-	MSG_V("%s audio codec: [%s] drv:%s (%s)\n",audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
+	if(mp_conf.audio_codec && strcmp(sh_audio->codec->codec_name,mp_conf.audio_codec)) continue;
+	else if(mp_conf.audio_family && strcmp(sh_audio->codec->driver_name,mp_conf.audio_family)) continue;
+	MSG_V("%s audio codec: [%s] drv:%s (%s)\n",mp_conf.audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
 	break;
     }
 }
@@ -1851,17 +1825,17 @@ static int mpxp_find_vcodec(void) {
     if(vo_conf.flip>0)		VO_FLIP_SET(vo_data);
     if(vo_conf.vidmode)		VO_VM_SET(vo_data);
     codecs_reset_selection(0);
-    if(video_codec) {
+    if(mp_conf.video_codec) {
     /* forced codec by name: */
-	MSG_INFO("Forced video codec: %s\n",video_codec);
-	mpcv_init(sh_video,video_codec,NULL,-1);
+	MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
+	mpcv_init(sh_video,mp_conf.video_codec,NULL,-1);
     } else {
 	int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
-	if(video_family) MSG_INFO(MSGTR_TryForceVideoFmt,video_family);
+	if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
 	for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
-	    if(video_family) /* try first the preferred codec family:*/
-		if(mpcv_init(sh_video,NULL,video_family,status)) break;
+	    if(mp_conf.video_family) /* try first the preferred codec family:*/
+		if(mpcv_init(sh_video,NULL,mp_conf.video_family,status)) break;
 	    if(mpcv_init(sh_video,NULL,NULL,status)) break;
 	}
     }
@@ -1879,7 +1853,7 @@ static int mpxp_find_vcodec(void) {
     } else  inited_flags|=INITED_VCODEC;
 
     MSG_V("%s video codec: [%s] vfm:%s (%s)\n",
-	video_codec?"Forcing":"Detected",sh_video->codec->codec_name,sh_video->codec->driver_name,sh_video->codec->s_info);
+	mp_conf.video_codec?"Forcing":"Detected",sh_video->codec->codec_name,sh_video->codec->driver_name,sh_video->codec->s_info);
     return rc;
 }
 
@@ -1889,7 +1863,7 @@ static int mpxp_configure_audio(void) {
     MP_UNIT("setup_audio");
     MSG_V("AO: [%s] %iHz %s %s\n",
 	info->short_name,
-	force_srate?force_srate:sh_audio->samplerate,
+	mp_conf.force_srate?mp_conf.force_srate:sh_audio->samplerate,
 	sh_audio->channels>7?"surround71":
 	sh_audio->channels>6?"surround61":
 	sh_audio->channels>5?"surround51":
@@ -1905,7 +1879,7 @@ static int mpxp_configure_audio(void) {
 	MSG_V("AO: Comment: %s\n", info->comment);
 
     MP_UNIT("af_preinit");
-    ao_data->samplerate=force_srate?force_srate:sh_audio->samplerate;
+    ao_data->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->samplerate;
     ao_data->channels=audio_output_channels?audio_output_channels:sh_audio->channels;
     ao_data->format=sh_audio->sample_format;
 #if 1
@@ -1923,7 +1897,7 @@ static int mpxp_configure_audio(void) {
 		ao_format_name(ao_data->format),ao_data->format);
     }
 #endif
-    if(!ao_configure(ao_data,force_srate?force_srate:ao_data->samplerate,
+    if(!ao_configure(ao_data,mp_conf.force_srate?mp_conf.force_srate:ao_data->samplerate,
 		    ao_data->channels,ao_data->format)) {
 	MSG_ERR("Can't configure audio device\n");
 	sh_audio=d_audio->sh=NULL;
@@ -2326,13 +2300,13 @@ int main(int argc,char* argv[], char *envp[]){
 
     playtree = play_tree_new();
 
-    mconfig = m_config_new(playtree);
-    m_config_register_options(mconfig,mplayer_opts);
+    mp_data->mconfig = m_config_new(playtree);
+    m_config_register_options(mp_data->mconfig,mplayer_opts);
     // TODO : add something to let modules register their options
-    mp_register_options(mconfig);
-    parse_cfgfiles(mconfig);
+    mp_register_options(mp_data->mconfig);
+    parse_cfgfiles(mp_data->mconfig);
 
-    if(m_config_parse_command_line(mconfig, argc, argv, envp) < 0) exit(1); // error parsing cmdline
+    if(m_config_parse_command_line(mp_data->mconfig, argc, argv, envp) < 0) exit(1); // error parsing cmdline
 
     if(!mp_conf.xp) {
 	MSG_ERR("Error: detected option: -core.xp=0\n"
@@ -2352,7 +2326,7 @@ int main(int argc,char* argv[], char *envp[]){
     else			 playtree->flags&=~PLAY_TREE_RND;
     playtree = play_tree_cleanup(playtree);
     if(playtree) {
-      playtree_iter = play_tree_iter_new(playtree,mconfig);
+      playtree_iter = play_tree_iter_new(playtree,mp_data->mconfig);
       if(playtree_iter) {
 	if(play_tree_iter_step(playtree_iter,0,0) != PLAY_TREE_ITER_ENTRY) {
 	  play_tree_iter_free(playtree_iter);
@@ -2393,7 +2367,7 @@ play_next_file:
 
     // We must enable getch2 here to be able to interrupt network connection
     // or cache filling
-    if(!use_stdin && !slave_mode){
+    if(!mp_conf.use_stdin && !mp_conf.slave_mode){
 	getch2_enable();  // prepare stdin for hotkeys...
 	inited_flags|=INITED_GETCH2;
     }
@@ -2452,9 +2426,9 @@ play_next_file:
 
 //============ Open DEMUXERS --- DETECT file type =======================
     initial_audio_pts=HUGE;
-    if(!has_audio) mp_conf.audio_id=-2;  // do NOT read audio packets...
-    if(!has_video) mp_conf.video_id=-2;  // do NOT read video packets...
-    if(!has_dvdsub) mp_conf.dvdsub_id=-2;// do NOT read subtitle packets...
+    if(!mp_conf.has_audio) mp_conf.audio_id=-2;  // do NOT read audio packets...
+    if(!mp_conf.has_video) mp_conf.video_id=-2;  // do NOT read video packets...
+    if(!mp_conf.has_dvdsub) mp_conf.dvdsub_id=-2;// do NOT read subtitle packets...
 
     MP_UNIT("demux_open");
 
@@ -2537,11 +2511,11 @@ play_next_file:
 
     if(mp_conf.autoq>0){
 	/* Auto quality option enabled*/
-	output_quality=mpcv_get_quality_max(sh_video);
-	if(mp_conf.autoq>output_quality) mp_conf.autoq=output_quality;
-	else output_quality=mp_conf.autoq;
-	MSG_V("AutoQ: setting quality to %d\n",output_quality);
-	mpcv_set_quality(sh_video,output_quality);
+	mp_data->output_quality=mpcv_get_quality_max(sh_video);
+	if(mp_conf.autoq>mp_data->output_quality) mp_conf.autoq=mp_data->output_quality;
+	else mp_data->output_quality=mp_conf.autoq;
+	MSG_V("AutoQ: setting quality to %d\n",mp_data->output_quality);
+	mpcv_set_quality(sh_video,mp_data->output_quality);
     }
 
     vf_showlist(sh_video->vfilter);
@@ -2626,7 +2600,7 @@ main:
    let thread will decode ahead!
    We may print something in block window ;)
  */
-    mpxp_seek_time = GetTimerMS();
+    mp_data->seek_time = GetTimerMS();
 
     if(sh_video) dae_wait_decoder_outrun(xp_core.video);
 

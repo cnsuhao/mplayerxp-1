@@ -5,7 +5,7 @@
 #include "mp_config.h"
 #include "help_mp.h"
 
-#include "../mplayer.h"
+#include "mplayer.h"
 
 #include "libmpdemux/stream.h"
 #include "libmpdemux/demuxer.h"
@@ -31,8 +31,6 @@ af_cfg_t af_cfg; // Configuration for audio filters
 
 static const ad_functions_t* mpadec;
 
-extern unsigned force_srate;
-extern char *audio_codec;
 int mpca_init(sh_audio_t *sh_audio)
 {
   unsigned i;
@@ -127,7 +125,7 @@ int mpca_init(sh_audio_t *sh_audio)
     initial_audio_pts += ((float)(initial_audio_pts_corr.pts_bytes-initial_audio_pts_corr.nbytes))/(float)sh_audio->i_bps;
     initial_audio_pts_corr.need_correction=0;
   }
-  MSG_OK("[AC] %s decoder: [%s] drv:%s.%s ratio %i->%i\n",audio_codec?"Forcing":"Selecting"
+  MSG_OK("[AC] %s decoder: [%s] drv:%s.%s ratio %i->%i\n",mp_conf.audio_codec?"Forcing":"Selecting"
   ,sh_audio->codec->codec_name
   ,mpadec->info->driver_name
   ,sh_audio->codec->dll_name

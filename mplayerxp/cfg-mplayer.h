@@ -2,7 +2,6 @@
  * config for cfgparser
  */
 
-extern int use_stdin;
 extern uint32_t mp_msg_filter;
 #ifdef HAVE_PNG
 extern int z_compression;
@@ -147,8 +146,8 @@ static const config_t cpu_config[]={
 static const config_t osd_config[]={
 	{"level", &osd_level, CONF_TYPE_INT, CONF_RANGE, 0, 2 , NULL, "specifies initial mode of the OSD"},
 #ifdef USE_OSD
-	{"font", &font_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies an alternative directory of font.desc location"},
-	{"ffactor", &font_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.0, 10.0, NULL, "specifies resampling of alphamap of the font"},
+	{"font", &mp_conf.font_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies an alternative directory of font.desc location"},
+	{"ffactor", &mp_conf.font_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.0, 10.0, NULL, "specifies resampling of alphamap of the font"},
 	{"spualign", &spu_alignment, CONF_TYPE_INT, CONF_RANGE, -1, 2, NULL, "specifies align position of SPU (DVD-VOBsub) subtitles"},
 	{"spuaa", &spu_aamode, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL, "specifies antialiasing/scaling mode for SPU"},
 	{"spugauss", &spu_gaussvar, CONF_TYPE_FLOAT, CONF_RANGE, 0.0, 3.0, NULL, "specifies variance parameter of gaussian for -spuaa"},
@@ -193,17 +192,17 @@ static const config_t avsync_config[]={
 
 
 static const config_t subtitle_config[]={
-	{"on", &has_dvdsub, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables subtitle-steam playback"},
-	{"off", &has_dvdsub, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables subtitle-stream playback"},
-	{"vob", &vobsub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the VobSub files that are to be used for subtitle"},
+	{"on", &mp_conf.has_dvdsub, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables subtitle-steam playback"},
+	{"off", &mp_conf.has_dvdsub, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables subtitle-stream playback"},
+	{"vob", &mp_conf.vobsub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the VobSub files that are to be used for subtitle"},
 	{"vobid", &mp_conf.vobsub_id, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL, "specifies the VobSub subtitle id"},
 #ifdef USE_SUB
-	{"file", &sub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the subtitle file"},
+	{"file", &mp_conf.sub_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies the subtitle file"},
 #ifdef USE_ICONV
 	{"cp", &sub_data.cp, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies codepage of subtitles"},
 #endif	
-	{"fps", &sub_fps, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL, "specifies frame/sec rate of subtitle file"},
-        {"noauto", &sub_auto, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable autodetection of vobsub for textsubs if vobsub found"},
+	{"fps", &mp_conf.sub_fps, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL, "specifies frame/sec rate of subtitle file"},
+        {"noauto", &mp_conf.sub_auto, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disable autodetection of vobsub for textsubs if vobsub found"},
 	{"unicode", &sub_data.unicode, CONF_TYPE_FLAG, 0, 0, 1, NULL, "tells MPlayerXP to handle the subtitle file as UNICODE"},
 	{"nounicode", &sub_data.unicode, CONF_TYPE_FLAG, 0, 1, 0, NULL, "tells MPlayerXP to handle the subtitle file as non-UNICODE"},
 	{"utf8", &sub_data.utf8, CONF_TYPE_FLAG, 0, 0, 1, NULL, "tells MPlayerXP to handle the subtitle file as UTF8"},
@@ -231,11 +230,11 @@ static const config_t x11_config[]={
 #endif
 
 static const config_t audio_config[]={
-	{"on", &has_audio, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables audio-steam playback"},
-	{"off", &has_audio, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables audio-stream playback"},
+	{"on", &mp_conf.has_audio, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables audio-steam playback"},
+	{"off", &mp_conf.has_audio, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables audio-stream playback"},
 	{"mixer", &oss_mixer_device, CONF_TYPE_STRING, 0, 0, 0, NULL, "select audio-mixer device"},
 	{"channels", &audio_output_channels, CONF_TYPE_INT, CONF_RANGE, 2, 8, NULL, "select number of audio output channels to be used"},
-	{"rate", &force_srate, CONF_TYPE_INT, CONF_RANGE, 1000, 8*48000, NULL, "specifies Hz for audio playback"},
+	{"rate", &mp_conf.force_srate, CONF_TYPE_INT, CONF_RANGE, 1000, 8*48000, NULL, "specifies Hz for audio playback"},
 	{"lang", &mp_conf.audio_lang, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies language of DVD-audio stream as two-letter country code(s)"},
 	{"id", &mp_conf.audio_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, NULL, "selects audio channel"},
 #ifdef USE_FAKE_MONO
@@ -245,8 +244,8 @@ static const config_t audio_config[]={
 };
 
 static const config_t video_config[]={
-	{"on", &has_video, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables video-steam playback"},
-	{"off", &has_video, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video-stream playback"},
+	{"on", &mp_conf.has_video, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables video-steam playback"},
+	{"off", &mp_conf.has_video, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables video-stream playback"},
 	{"width", &vo_conf.opt_screen_size_x, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to width (if driver supports)"},
 	{"height", &vo_conf.opt_screen_size_y, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "scale output image to height (if driver supports)"},
 	{"zoom", &vo_conf.screen_size_xy, CONF_TYPE_FLOAT, CONF_RANGE, 0, 4096, NULL, "scale output image by given factor"},
@@ -302,18 +301,18 @@ static const config_t mplayer_opts[]={
 	{"include", cfg_include, CONF_TYPE_FUNC_PARAM, CONF_NOSAVE, 0, 0, NULL, ""}, /* this don't need anymore to be the first!!! */
 
 //---------------------- libao/libvo/mplayer options ------------------------
-	{"vo", &video_driver, CONF_TYPE_STRING, 0, 0, 0, NULL, "select video output driver and optinaly device"},
-	{"ao", &audio_driver, CONF_TYPE_STRING, 0, 0, 0, NULL, "select audio output driver and optinaly device"},
+	{"vo", &mp_conf.video_driver, CONF_TYPE_STRING, 0, 0, 0, NULL, "select video output driver and optinaly device"},
+	{"ao", &mp_conf.audio_driver, CONF_TYPE_STRING, 0, 0, 0, NULL, "select audio output driver and optinaly device"},
 	{"af", &af_cfg.list, CONF_TYPE_STRING, 0, 0, 0, NULL, "selects audio filter"},
 	{"vf", &vf_cfg.list, CONF_TYPE_STRING, 0, 0, 0, NULL, "selects video filter"},
-	{"afm", &audio_family, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified audio-decoders family"},
-	{"vfm", &video_family, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified video-decoders family"},
-	{"ac", &audio_codec, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified audio-decoder"},
-	{"vc", &video_codec, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified video-decoder"},
+	{"afm", &mp_conf.audio_family, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified audio-decoders family"},
+	{"vfm", &mp_conf.video_family, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified video-decoders family"},
+	{"ac", &mp_conf.audio_codec, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified audio-decoder"},
+	{"vc", &mp_conf.video_codec, CONF_TYPE_STRING, 0, 0, 0, NULL, "forces usage of specified video-decoder"},
 /*UD*/	{"verbose", &mp_conf.verbose, CONF_TYPE_INT, CONF_RANGE|CONF_GLOBAL, 0, 100, NULL, "verbose output"},
 	{"v", cfg_inc_verbose, CONF_TYPE_FUNC, CONF_GLOBAL|CONF_NOSAVE, 0, 0, NULL, "verbose output (more -v means more verbosity)"},
-	{"slave", &slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, NULL, "turns MPlayerXP into slave mode as a backend for other programs"},
-	{"use-stdin", &use_stdin, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "forces reading of keyboard codes from STDIN instead of terminal's console"},
+	{"slave", &mp_conf.slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, NULL, "turns MPlayerXP into slave mode as a backend for other programs"},
+	{"use-stdin", &mp_conf.use_stdin, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "forces reading of keyboard codes from STDIN instead of terminal's console"},
 	{"msgfilter", &mp_msg_filter, CONF_TYPE_INT, CONF_RANGE, 0, 0xFFFFFFFF, NULL, "specifies filter for verbosed messages"},
 
 	{"core", &xpcore_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "XP-core related options" },

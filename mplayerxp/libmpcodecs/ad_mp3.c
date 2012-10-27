@@ -259,7 +259,6 @@ typedef struct mp3_priv_s{
     float pts;
 }mp3_priv_t;
 
-extern char *audio_codec_param;
 int init(sh_audio_t *sh)
 {
   // MPEG Audio:

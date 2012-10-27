@@ -1,7 +1,8 @@
 #ifndef __MPLAYERXP_MAIN
 #define __MPLAYERXP_MAIN 1
 
-#include "pthread.h"
+#include <pthread.h>
+#include "mp_config.h"
 
 typedef struct initial_audio_pts_correction_s
 {
@@ -14,6 +15,12 @@ extern initial_audio_pts_correction_t initial_audio_pts_corr;
 extern float initial_audio_pts;
 
 typedef struct mp_conf_s {
+    int		has_video;
+    int		has_audio;
+    int		has_dvdsub;
+    int		use_stdin;
+    int		slave_mode;
+// XP-core
     int		xp;   /* XP-mode */
     int		gomp; /* currently it's experimental feature */
     char*	stream_dump; // dump name
@@ -31,21 +38,45 @@ typedef struct mp_conf_s {
     int		softsleep;
     int		nortc;
 // streaming:
-    int audio_id;
-    int video_id;
-    int dvdsub_id;
-    int vobsub_id;
-    char* audio_lang;
-    char* dvdsub_lang;
-    char* spudec_ifo;
+    int		audio_id;
+    int		video_id;
+    int		dvdsub_id;
+    int		vobsub_id;
+    char*	audio_lang;
+    char*	dvdsub_lang;
+    char*	spudec_ifo;
+    unsigned	force_srate;
 // seek:
     char*	seek_to_sec;
     long long int seek_to_byte;
     int		loop_times;
     int		shuffle_playback;
     int		play_n_frames;
+/* codecs: */
+    char*	audio_codec;  /* override audio codec */
+    char*	video_codec;  /* override video codec */
+    char*	audio_family; /* override audio codec family */
+    char*	video_family; /* override video codec family */
+// drivers:
+    char*	video_driver; //"mga"; // default
+    char*	audio_driver;
+// sub:
+    char*	font_name;
+    float	font_factor;
+    char*	sub_name;
+    float	sub_fps;
+    int		sub_auto;
+    char*	vobsub_name;
 }mp_conf_t;
 extern mp_conf_t mp_conf;
+
+/* non-configurable through command line stuff */
+typedef struct mp_data_s {
+    int		seek_time;
+    int		output_quality;
+    any_t*	mconfig;
+}mp_data_t;
+extern mp_data_t* mp_data;
 
 extern unsigned mplayer_accel;
 extern int use_pts_fix2;
