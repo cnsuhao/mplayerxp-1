@@ -1435,11 +1435,7 @@ void mpxp_seek( int _xp_id, osd_args_t *osd,const seek_args_t* seek)
 	}
     }
 
-    if(sh_video) {
-	do {
-	    usleep(0);
-	}while(dae_get_decoder_outrun(xp_core.video) < xp_core.num_v_buffs/2 && !xp_core.eof);
-    }
+    if(sh_video) dae_wait_decoder_outrun(xp_core.video);
 }
 
 void mpxp_reset_vcache(void)
@@ -2631,11 +2627,9 @@ main:
    We may print something in block window ;)
  */
     mpxp_seek_time = GetTimerMS();
-    if(sh_video) {
-	do {
-	    usleep(0);
-	}while(dae_get_decoder_outrun(xp_core.video) < xp_core.num_v_buffs/2 && !xp_core.eof);
-    }
+
+    if(sh_video) dae_wait_decoder_outrun(xp_core.video);
+
     if(xmp_run_players()!=0) exit_player("Can't run xp players!\n");
     MSG_OK("Using the next %i threads:\n",xp_core.num_threads);
     unsigned idx;

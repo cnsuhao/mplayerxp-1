@@ -94,14 +94,14 @@ extern int		xmp_run_decoders( void );
 extern int		xmp_run_players( void );
 extern void		xmp_reset_sh_video(sh_video_t* shv);
 
-extern void dae_init(dec_ahead_engine_t* it,unsigned nframes);
-extern void dae_uninit(dec_ahead_engine_t* it);
-extern void dae_reset(dec_ahead_engine_t* it); /* after mpxp_seek */
+extern void	dae_init(dec_ahead_engine_t* it,unsigned nframes);
+extern void	dae_uninit(dec_ahead_engine_t* it);
+extern void	dae_reset(dec_ahead_engine_t* it); /* after mpxp_seek */
 
 /* returns 1 - on success 0 - if busy */
-extern int  dae_try_inc_played(dec_ahead_engine_t* it);
-extern int  dae_inc_played(dec_ahead_engine_t* it);
-extern int  dae_inc_decoded(dec_ahead_engine_t* it);
+extern int	dae_try_inc_played(dec_ahead_engine_t* it);
+extern int	dae_inc_played(dec_ahead_engine_t* it);
+extern int	dae_inc_decoded(dec_ahead_engine_t* it);
 
 extern unsigned dae_prev_played(const dec_ahead_engine_t* it);
 extern unsigned dae_prev_decoded(const dec_ahead_engine_t* it);
@@ -109,6 +109,7 @@ extern unsigned dae_next_played(const dec_ahead_engine_t* it);
 extern unsigned dae_next_decoded(const dec_ahead_engine_t* it);
 /* returns normalized decoder_idx-player_idx */
 extern unsigned dae_get_decoder_outrun(const dec_ahead_engine_t* it);
+extern void	dae_wait_decoder_outrun(const dec_ahead_engine_t* it);
 
 static inline unsigned dae_curr_vplayed() { return xp_core.video->player_idx; }
 static inline unsigned dae_curr_vdecoded() { return xp_core.video->decoder_idx; }

@@ -135,6 +135,14 @@ unsigned dae_get_decoder_outrun(const dec_ahead_engine_t* it) {
     return decoder_idx-it->player_idx;
 }
 
+void dae_wait_decoder_outrun(const dec_ahead_engine_t* it) {
+    if(it) {
+	do {
+	    usleep(0);
+	}while(dae_get_decoder_outrun(it) < xp_core.num_v_buffs/2);
+    }
+}
+
 frame_attr_t dae_played_fra(const dec_ahead_engine_t* it) {
     unsigned idx=it->player_idx;
     return it->fra[idx];
