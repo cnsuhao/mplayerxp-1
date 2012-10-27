@@ -233,7 +233,7 @@ static unsigned compute_frame_dropping(float v_pts,float drop_barrier) {
     unsigned rc=0;
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
-    max_frame_delay = time_usage.max_video+time_usage.max_vout;
+    max_frame_delay = mp_data->bench->max_video+mp_data->bench->max_vout;
 
     /*
 	TODO:

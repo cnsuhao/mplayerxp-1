@@ -257,11 +257,11 @@ int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_f
 
     t2=GetTimer();t=t2-t;
     tt = t*0.000001f;
-    time_usage.video+=tt;
+    mp_data->bench->video+=tt;
     if(mp_conf.benchmark || mp_conf.frame_dropping) {
-	if(tt > time_usage.max_video) time_usage.max_video=tt;
-	if(tt < time_usage.min_video) time_usage.min_video=tt;
-	time_usage.cur_video=tt;
+	if(tt > mp_data->bench->max_video) mp_data->bench->max_video=tt;
+	if(tt < mp_data->bench->min_video) mp_data->bench->min_video=tt;
+	mp_data->bench->cur_video=tt;
     }
 
     if(drop_frame) return 0;
@@ -270,12 +270,12 @@ int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_f
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
-    time_usage.vout+=tt;
+    mp_data->bench->vout+=tt;
     if(mp_conf.benchmark || mp_conf.frame_dropping)
     {
-	if(tt > time_usage.max_vout) time_usage.max_vout = tt;
-	if(tt < time_usage.min_vout) time_usage.min_vout = tt;
-	time_usage.cur_vout=tt;
+	if(tt > mp_data->bench->max_vout) mp_data->bench->max_vout = tt;
+	if(tt < mp_data->bench->min_vout) mp_data->bench->min_vout = tt;
+	mp_data->bench->cur_vout=tt;
     }
 
     return 1;

@@ -19,10 +19,6 @@ extern int fakemono; // defined in dec_audio.c
 
 extern int subcc_enabled;
 
-#ifdef USE_OSD
-extern int osd_level;
-#endif
-
 #ifdef HAVE_AA
 extern int vo_aa_parseoption(struct config * conf, char *opt, char * param);
 extern void vo_aa_revertoption(config_t* opt,char* param);
@@ -144,7 +140,7 @@ static const config_t cpu_config[]={
 #endif
 
 static const config_t osd_config[]={
-	{"level", &osd_level, CONF_TYPE_INT, CONF_RANGE, 0, 2 , NULL, "specifies initial mode of the OSD"},
+	{"level", &mp_conf.osd_level, CONF_TYPE_INT, CONF_RANGE, 0, 2 , NULL, "specifies initial mode of the OSD"},
 #ifdef USE_OSD
 	{"font", &mp_conf.font_name, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies an alternative directory of font.desc location"},
 	{"ffactor", &mp_conf.font_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.0, 10.0, NULL, "specifies resampling of alphamap of the font"},

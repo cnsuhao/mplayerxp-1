@@ -61,6 +61,7 @@ typedef struct mp_conf_s {
     char*	video_driver; //"mga"; // default
     char*	audio_driver;
 // sub:
+    int		osd_level;
     char*	font_name;
     float	font_factor;
     char*	sub_name;
@@ -69,25 +70,6 @@ typedef struct mp_conf_s {
     char*	vobsub_name;
 }mp_conf_t;
 extern mp_conf_t mp_conf;
-
-/* non-configurable through command line stuff */
-typedef struct mp_data_s {
-    int		seek_time;
-    int		output_quality;
-    any_t*	mconfig;
-}mp_data_t;
-extern mp_data_t* mp_data;
-
-extern unsigned mplayer_accel;
-extern int use_pts_fix2;
-
-extern void exit_player(char* how);
-extern void mpxp_resync_audio_stream(void);
-extern void mpxp_reset_vcache(void);
-extern void __exit_sighandler(void);
-
-extern void mplayer_put_key(int code);
-extern int mplayer_get_key(void);
 
 /* Benchmarking */
 typedef struct time_usage_s {
@@ -112,5 +94,24 @@ typedef struct time_usage_s {
     double min_vout;
     double total_start;
 }time_usage_t;
-extern time_usage_t time_usage;
+
+/* non-configurable through command line stuff */
+typedef struct mp_data_s {
+    int		seek_time;
+    int		output_quality;
+    any_t*	mconfig;
+    time_usage_t*bench;
+}mp_data_t;
+extern mp_data_t* mp_data;
+
+extern unsigned mplayer_accel;
+extern int use_pts_fix2;
+
+extern void exit_player(char* how);
+extern void mpxp_resync_audio_stream(void);
+extern void mpxp_reset_vcache(void);
+extern void __exit_sighandler(void);
+
+extern void mplayer_put_key(int code);
+extern int mplayer_get_key(void);
 #endif

@@ -82,12 +82,6 @@ static play_tree_t* playtree;
 #define PT_UP_PREV -3
 
 /**************************************************************************
-             Config
-**************************************************************************/
-
-//m_config_t* mconfig;
-
-/**************************************************************************
              Decoding ahead
 **************************************************************************/
 #include "xmp_core.h"
@@ -152,11 +146,8 @@ static int ao_inited=0;
 //ao_functions_t *audio_out=NULL;
 
 /* mp_conf.benchmark: */
-time_usage_t time_usage;
 static unsigned bench_dropped_frames=0;
 static float max_av_resync=0;
-
-int osd_level=2;
 
 // A-V sync:
 static float c_total=0;
@@ -193,7 +184,6 @@ static void mpxp_init_structs(void) {
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     memset(&x86,-1,sizeof(x86_features_t));
 #endif
-    memset(&time_usage,0,sizeof(time_usage_t));
     memset(&mp_conf,0,sizeof(mp_conf_t));
     mp_conf.xp=XP_VAPlay;
     mp_conf.audio_id=-1;
@@ -212,9 +202,12 @@ static void mpxp_init_structs(void) {
     mp_conf.has_audio=1;
     mp_conf.has_video=1;
     mp_conf.has_dvdsub=1;
+    mp_conf.osd_level=2;
     mp_data=random_malloc(sizeof(mp_data_t),1000);
     memset(mp_data,0,sizeof(mp_data_t));
     mp_data->seek_time=-1;
+    mp_data->bench=malloc(sizeof(time_usage_t));
+    memset(mp_data->bench,0,sizeof(time_usage_t));
 }
 
 static unsigned int inited_flags=0;
@@ -521,12 +514,12 @@ int decode_audio_buffer(unsigned len)
     pthread_cond_signal( &audio_buffer.wait_buffer_cond );
 
     t=GetTimer()-t;
-    time_usage.audio_decode+=t*0.000001f;
-    time_usage.audio_decode-=time_usage.audio_decode_correction;
+    mp_data->bench->audio_decode+=t*0.000001f;
+    mp_data->bench->audio_decode-=mp_data->bench->audio_decode_correction;
     if(mp_conf.benchmark)
     {
-	if(t > time_usage.max_audio_decode) time_usage.max_audio_decode = t;
-	if(t < time_usage.min_audio_decode) time_usage.min_audio_decode = t;
+	if(t > mp_data->bench->max_audio_decode) mp_data->bench->max_audio_decode = t;
+	if(t < mp_data->bench->min_audio_decode) mp_data->bench->min_audio_decode = t;
     }
 
     pthread_mutex_unlock( &audio_buffer.head_mutex );
@@ -692,6 +685,8 @@ void exit_player(char* how){
   MSG_DBG2("max framesize was %d bytes\n",max_framesize);
   if(mp_data->mconfig) m_config_free(mp_data->mconfig);
   mp_msg_uninit();
+  free(mp_data->bench);
+  free(mp_data);
   if(how) exit(0);
   return; /* Still try coredump!!!*/
 }
@@ -716,6 +711,8 @@ static void soft_exit_player(void)
   MSG_DBG2("max framesize was %d bytes\n",max_framesize);
   if(mp_data->mconfig) m_config_free(mp_data->mconfig);
   mp_msg_uninit();
+  free(mp_data->bench);
+  free(mp_data);
   exit(0);
 }
 
@@ -999,12 +996,12 @@ while(sh_audio){
   MP_UNIT("play_audio");   // Leave AUDIO decoder module
   t=GetTimer()-t;
   tt = t*0.000001f;
-  time_usage.audio+=tt;
+  mp_data->bench->audio+=tt;
   if(mp_conf.benchmark)
   {
-    if(tt > time_usage.max_audio) time_usage.max_audio = tt;
-    if(tt < time_usage.min_audio) time_usage.min_audio = tt;
-    time_usage.cur_audio=tt;
+    if(tt > mp_data->bench->max_audio) mp_data->bench->max_audio = tt;
+    if(tt < mp_data->bench->min_audio) mp_data->bench->min_audio = tt;
+    mp_data->bench->cur_audio=tt;
   }
   if(playsize>sh_audio->a_buffer_len) playsize=sh_audio->a_buffer_len;
 
@@ -1059,13 +1056,13 @@ void update_osd( float v_pts )
 static char osd_text_buffer[64];
 static int osd_last_pts=-303;
 //================= Update OSD ====================
-  if(osd_level>=2){
-      int pts=(osd_level==3&&demuxer->movi_length!=UINT_MAX)?demuxer->movi_length-v_pts:v_pts;
-      int addon=(osd_level==3&&demuxer->movi_length!=UINT_MAX)?-1:1;
+  if(mp_conf.osd_level>=2){
+      int pts=(mp_conf.osd_level==3&&demuxer->movi_length!=UINT_MAX)?demuxer->movi_length-v_pts:v_pts;
+      int addon=(mp_conf.osd_level==3&&demuxer->movi_length!=UINT_MAX)?-1:1;
       char osd_text_tmp[64];
       if(pts==osd_last_pts-addon) 
       {
-        if(osd_level==3&&demuxer->movi_length!=UINT_MAX) ++pts;
+        if(mp_conf.osd_level==3&&demuxer->movi_length!=UINT_MAX) ++pts;
 	else --pts;
       }
       else osd_last_pts=pts;
@@ -1098,9 +1095,9 @@ static void __show_status_line(float a_pts,float v_pts,float delay,float AV_dela
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d [frms: [%i]]\n",
 		a_pts-delay,v_pts,AV_delay,c_total
 		,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
-		,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
-		,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
-		,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
+		,(v_pts>0.5)?(int)(100.0*mp_data->bench->video/(double)v_pts):0
+		,(v_pts>0.5)?(int)(100.0*mp_data->bench->vout/(double)v_pts):0
+		,(v_pts>0.5)?(100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)v_pts):0
 		,mp_data->output_quality
 		,dae_curr_vplayed()
 		);
@@ -1116,18 +1113,18 @@ static void show_status_line_no_apts(float v_pts) {
 	,a_pts-v_pts
 	,0.0
 	,xp_core.video->num_played_frames,xp_core.video->num_decoded_frames
-	,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
-	,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
-	,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*mp_data->bench->video/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*mp_data->bench->vout/(double)v_pts):0
+	,(v_pts>0.5)?(100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)v_pts):0
 	,mp_data->output_quality
 	);
     } else
 	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d\r"
 	,v_pts
 	,xp_core.video->num_played_frames
-	,(v_pts>0.5)?(int)(100.0*time_usage.video/(double)v_pts):0
-	,(v_pts>0.5)?(int)(100.0*time_usage.vout/(double)v_pts):0
-	,(v_pts>0.5)?(100.0*(time_usage.audio+time_usage.audio_decode)/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*mp_data->bench->video/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*mp_data->bench->vout/(double)v_pts):0
+	,(v_pts>0.5)?(100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)v_pts):0
 	,mp_data->output_quality
 	);
     fflush(stdout);
@@ -1293,11 +1290,11 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
 	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
 	t2=GetTimer()-t2;
 	tt = t2*0.000001f;
-	time_usage.vout+=tt;
+	mp_data->bench->vout+=tt;
 	if(mp_conf.benchmark) {
 		/* we need compute draw_slice+change_frame here */
-		time_usage.cur_vout+=tt;
-		if((time_usage.cur_video+time_usage.cur_vout+time_usage.cur_audio)*sh_video->fps > 1)
+		mp_data->bench->cur_vout+=tt;
+		if((mp_data->bench->cur_video+mp_data->bench->cur_vout+mp_data->bench->cur_audio)*sh_video->fps > 1)
 							bench_dropped_frames ++;
 	}
     }
@@ -1396,7 +1393,7 @@ void mpxp_seek( int _xp_id, osd_args_t *osd,const seek_args_t* seek)
 
 #ifdef USE_OSD
 	// Set OSD:
-	if(osd_level){
+	if(mp_conf.osd_level){
 	    int len=((demuxer->movi_end-demuxer->movi_start)>>8);
 	    if (len>0){
 		if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25;
@@ -1410,7 +1407,7 @@ void mpxp_seek( int _xp_id, osd_args_t *osd,const seek_args_t* seek)
 	    c_total=0;
 	    max_pts_correction=0.1;
 	    if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25; // to rewert to PLAY pointer after 1 sec
-	    time_usage.audio=0; time_usage.audio_decode=0; time_usage.video=0; time_usage.vout=0;
+	    mp_data->bench->audio=0; mp_data->bench->audio_decode=0; mp_data->bench->video=0; mp_data->bench->vout=0;
 	    if(vo_data->spudec) {
 		unsigned char* packet=NULL;
 		while(ds_get_packet_sub_r(d_dvdsub,&packet)>0) ; // Empty stream
@@ -1442,42 +1439,42 @@ static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stre
 
 static void init_benchmark(void)
 {
-	time_usage.max_audio=0; time_usage.max_video=0; time_usage.max_vout=0;
-	time_usage.min_audio=HUGE; time_usage.min_video=HUGE; time_usage.min_vout=HUGE;
+	mp_data->bench->max_audio=0; mp_data->bench->max_video=0; mp_data->bench->max_vout=0;
+	mp_data->bench->min_audio=HUGE; mp_data->bench->min_video=HUGE; mp_data->bench->min_vout=HUGE;
 
-	time_usage.min_audio_decode=HUGE;
-	time_usage.max_audio_decode=0;
+	mp_data->bench->min_audio_decode=HUGE;
+	mp_data->bench->max_audio_decode=0;
 	bench_dropped_frames=0;
 
-	time_usage.max_demux=0;
-	time_usage.demux=0;
-	time_usage.min_demux=HUGE;
+	mp_data->bench->max_demux=0;
+	mp_data->bench->demux=0;
+	mp_data->bench->min_demux=HUGE;
 
-	time_usage.cur_video=0;
-	time_usage.cur_vout=0;
-	time_usage.cur_audio=0;
+	mp_data->bench->cur_video=0;
+	mp_data->bench->cur_vout=0;
+	mp_data->bench->cur_audio=0;
 
 	max_av_resync=0;
 }
 
 static void show_benchmark(void)
 {
-    double tot=(time_usage.video+time_usage.vout+time_usage.audio+time_usage.audio_decode+time_usage.demux+time_usage.c2);
+    double tot=(mp_data->bench->video+mp_data->bench->vout+mp_data->bench->audio+mp_data->bench->audio_decode+mp_data->bench->demux+mp_data->bench->c2);
     double total_time_usage;
 
-    time_usage.total_start=GetTimer()-time_usage.total_start;
-    total_time_usage = (float)time_usage.total_start*0.000001;
+    mp_data->bench->total_start=GetTimer()-mp_data->bench->total_start;
+    total_time_usage = (float)mp_data->bench->total_start*0.000001;
 
     MSG_INFO("\nAVE BENCHMARKs: VC:%8.3fs VO:%8.3fs A:%8.3fs D:%8.3fs = %8.4fs C:%8.3fs\n",
-	 time_usage.video,time_usage.vout,time_usage.audio+time_usage.audio_decode,
-	 time_usage.demux,time_usage.c2,tot);
+	 mp_data->bench->video,mp_data->bench->vout,mp_data->bench->audio+mp_data->bench->audio_decode,
+	 mp_data->bench->demux,mp_data->bench->c2,tot);
     if(total_time_usage>0.0)
 	MSG_INFO("AVE BENCHMARK%%: VC:%8.4f%% VO:%8.4f%% A:%8.4f%% D:%8.4f%% C:%8.4f%% = %8.4f%%\n",
-	   100.0*time_usage.video/total_time_usage,
-	   100.0*time_usage.vout/total_time_usage,
-	   100.0*(time_usage.audio+time_usage.audio_decode)/total_time_usage,
-	   100.0*time_usage.demux/total_time_usage,
-	   100.0*time_usage.c2/total_time_usage,
+	   100.0*mp_data->bench->video/total_time_usage,
+	   100.0*mp_data->bench->vout/total_time_usage,
+	   100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/total_time_usage,
+	   100.0*mp_data->bench->demux/total_time_usage,
+	   100.0*mp_data->bench->c2/total_time_usage,
 	   100.0*tot/total_time_usage);
     MSG_INFO("\nREAL RESULTS: from %u was dropped=%u\n"
 	,our_n_frames,xp_drop_frame_cnt);
@@ -1489,12 +1486,12 @@ static void show_benchmark_status(void)
     if( mp_conf.xp <= XP_Video )
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
 			,sh_audio->timer-ao_get_delay(ao_data)
-			,(sh_audio->timer>0.5)?100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_audio->timer:0
+			,(sh_audio->timer>0.5)?100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)sh_audio->timer:0
 			);
     else
 	MSG_STATUS("A:%6.1f %4.1f%%  B:%4.1f\r"
 		,sh_audio->timer-ao_get_delay(ao_data)
-		,(sh_audio->timer>0.5)?100.0*(time_usage.audio+time_usage.audio_decode)/(double)sh_audio->timer:0
+		,(sh_audio->timer>0.5)?100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)sh_audio->timer:0
 		,get_delay_audio_buffer()
 		);
 }
@@ -1978,7 +1975,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
     if(osd_function==OSD_PAUSE||osd_function==OSD_DVDMENU) {
 	mp_cmd_t* cmd;
 	if (vo_inited && sh_video) {
-	    if(osd_level>1 && !*in_pause) {
+	    if(mp_conf.osd_level>1 && !*in_pause) {
 		*in_pause = 1;
 		return -1;
 	    }
@@ -2113,9 +2110,9 @@ For future:
       if(sh_video) {
 	int v = cmd->args[0].v.i;
 	if(v < 0)
-	  osd_level=(osd_level+1)%4;
+	  mp_conf.osd_level=(mp_conf.osd_level+1)%4;
 	else
-	  osd_level= v > 3 ? 3 : v;
+	  mp_conf.osd_level= v > 3 ? 3 : v;
       } break;
     case MP_CMD_MUTE:
       mixer_mute();
@@ -2127,7 +2124,7 @@ For future:
       else
 	mixer_decvolume();
 #ifdef USE_OSD
-      if(osd_level){
+      if(mp_conf.osd_level){
 	osd->visible=sh_video->fps; // 1 sec
 	vo_data->osd_progbar_type=OSD_VOLUME;
 	vo_data->osd_progbar_value=(mixer_getbothvolume()*256.0)/100.0;
@@ -2143,7 +2140,7 @@ For future:
       if(v_cont < -100) v_cont = -100;
       if(mpcv_set_colors(sh_video,VO_EC_CONTRAST,v_cont)){
 #ifdef USE_OSD
-	if(osd_level){
+	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
 	  vo_data->osd_progbar_type=OSD_CONTRAST;
 	  vo_data->osd_progbar_value=((v_cont)<<8)/100;
@@ -2161,7 +2158,7 @@ For future:
       if(v_bright < -100) v_bright = -100;
       if(mpcv_set_colors(sh_video,VO_EC_BRIGHTNESS,v_bright)){
 #ifdef USE_OSD
-	if(osd_level){
+	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
 	  vo_data->osd_progbar_type=OSD_BRIGHTNESS;
 	  vo_data->osd_progbar_value=((v_bright)<<8)/100;
@@ -2179,7 +2176,7 @@ For future:
       if(v_hue < -100) v_hue = -100;
       if(mpcv_set_colors(sh_video,VO_EC_HUE,v_hue)){
 #ifdef USE_OSD
-	if(osd_level){
+	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
 	  vo_data->osd_progbar_type=OSD_HUE;
 	  vo_data->osd_progbar_value=((v_hue)<<8)/100;
@@ -2197,7 +2194,7 @@ For future:
       if(v_saturation < -100) v_saturation = -100;
       if(mpcv_set_colors(sh_video,VO_EC_SATURATION,v_saturation)){
 #ifdef USE_OSD
-	if(osd_level){
+	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
 	  vo_data->osd_progbar_type=OSD_SATURATION;
 	  vo_data->osd_progbar_value=((v_saturation)<<8)/100;
@@ -2528,7 +2525,7 @@ play_next_file:
 
 //================== MAIN: ==========================
 main:
-    if(!sh_video) osd_level = 0;
+    if(!sh_video) mp_conf.osd_level = 0;
     else if(sh_video->fps<60) osd.info_factor=sh_video->fps/2; /* 0.5 sec */
 
 //================ SETUP AUDIO ==========================
@@ -2583,9 +2580,9 @@ main:
     if(!mp_conf.nortc && rtc_fd>0) { close(rtc_fd); rtc_fd=-1; }
     MSG_V("Using %s timing\n",rtc_fd>0?"rtc":mp_conf.softsleep?"software":"usleep()");
 
-    time_usage.total_start=GetTimer();
-    time_usage.audio=0; time_usage.audio_decode=0; time_usage.video=0;
-    time_usage.audio_decode_correction=0;
+    mp_data->bench->total_start=GetTimer();
+    mp_data->bench->audio=0; mp_data->bench->audio_decode=0; mp_data->bench->video=0;
+    mp_data->bench->audio_decode_correction=0;
 
     if(mp_conf.benchmark) init_benchmark();
 
