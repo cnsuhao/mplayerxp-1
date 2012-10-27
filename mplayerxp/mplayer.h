@@ -47,15 +47,12 @@ typedef struct mp_conf_s {
 }mp_conf_t;
 extern mp_conf_t mp_conf;
 
-extern unsigned xp_num_frames;
-extern int xp_id;
 extern unsigned mplayer_accel;
 extern int use_pts_fix2;
 
 extern void exit_player(char* how);
 extern void mpxp_resync_audio_stream(void);
 extern void mpxp_reset_vcache(void);
-extern void killall_threads(pthread_t pth_id);
 extern void __exit_sighandler(void);
 
 extern void mplayer_put_key(int code);

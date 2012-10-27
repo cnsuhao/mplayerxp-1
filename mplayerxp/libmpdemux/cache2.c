@@ -54,12 +54,7 @@ typedef struct {
   /* thread related stuff */
   int in_fill;
   pthread_mutex_t mutex;
-  pthread_attr_t cache2_attr;
-  pthread_t cache2_thread_id;
-  pid_t cache2_pid; /* Only for testing */
-  pthread_t cache2_pth_id;
-  volatile int cache2_is_living;
-  volatile int cache2_end_of_work;
+  mpxp_thread_t*  pth;
   /* for optimization: */
   cache_packet_t *packets;
   char * mem;
@@ -242,7 +237,7 @@ static void sig_cache2( void )
 {
     MSG_V("cache2 segfault\n");
     mp_msg_flush();
-    killall_threads(pthread_self());
+    xmp_killall_threads(pthread_self());
     __exit_sighandler();
 }
 
@@ -254,42 +249,37 @@ static void stream_unlink_cache(int force)
 
 static any_t*cache2_routine(any_t*arg)
 {
-  double tt;
-  unsigned int t=0;
-  unsigned int t2;
-  int xp_id,cfill;
-  cache_vars_t* c=(cache_vars_t*)arg;
-  c->cache2_is_living=1;
-  xp_id=init_signal_handling(sig_cache2,stream_unlink_cache);
-  MP_UNIT(xp_id,"cache2_routine");
-  c->cache2_pid = pinfo[xp_id].pid = getpid(); /* Only for testing */
-  c->cache2_pth_id = pinfo[xp_id].pth_id = pthread_self();
-  pinfo[xp_id].thread_name = "cache2";
-  while(1)
-  {
-    if(mp_conf.benchmark) t=GetTimer();
-    cfill=c2_cache_fill(c);
-    if(mp_conf.benchmark)
-    {
-	t2=GetTimer();t=t2-t;
-	tt = t*0.000001f;
-	time_usage.c2+=tt;
-	if(tt > time_usage.max_c2) time_usage.max_c2=tt;
-	if(tt < time_usage.min_c2) time_usage.min_c2=tt;
+    mpxp_thread_t* priv=arg;
+
+    double tt;
+    unsigned int t=0;
+    unsigned int t2;
+    int cfill;
+    cache_vars_t* c=(cache_vars_t*)arg;
+
+    priv->state=Pth_Run;
+    priv->pid = getpid();
+
+    while(1) {
+	if(mp_conf.benchmark) t=GetTimer();
+	cfill=c2_cache_fill(c);
+	if(mp_conf.benchmark) {
+	    t2=GetTimer();t=t2-t;
+	    tt = t*0.000001f;
+	    time_usage.c2+=tt;
+	    if(tt > time_usage.max_c2) time_usage.max_c2=tt;
+	    if(tt < time_usage.min_c2) time_usage.min_c2=tt;
+	}
+	if(!cfill) usleep(FILL_USLEEP_TIME); // idle
+	if(priv->state==Pth_Canceling) break;
     }
-    if(!cfill)
-	 usleep(FILL_USLEEP_TIME); // idle
-    if(c->cache2_end_of_work) break;
-  }
-  c->cache2_is_living=0;
-  uninit_signal_handling(xp_id);
-  return arg;
+    priv->state=Pth_Stand;
+    return arg;
 }
 
 int stream_enable_cache(stream_t *stream,int size,int _min,int prefill){
   int ss=stream->sector_size>1?stream->sector_size:STREAM_BUFFER_SIZE;
   cache_vars_t* c;
-  int retval;
 
   if (!(stream->type&STREAMTYPE_SEEKABLE) && stream->fd < 0) {
     // The stream has no 'fd' behind it, so is non-cacheable
@@ -304,20 +294,10 @@ int stream_enable_cache(stream_t *stream,int size,int _min,int prefill){
   c->stream=stream;
   c->prefill=size*prefill;
   c->read_filepos=stream->start_pos;
-  
-  pthread_attr_init(&c->cache2_attr);
 
-  retval = pthread_attr_setdetachstate(&c->cache2_attr,PTHREAD_CREATE_DETACHED);
-  if(retval) 
-  {
-    if(mp_conf.verbose) printf("running thread: attr_setdetachstate fault!!!\n");
-    return retval;
-  }    
-  pthread_attr_setscope(&c->cache2_attr,PTHREAD_SCOPE_SYSTEM);
-  c->cache2_end_of_work=0;
-  retval = pthread_create(&c->cache2_thread_id,&c->cache2_attr,cache2_routine,c);
-  if(retval) return 0;
-
+  unsigned rc;
+  if((rc=xmp_register_thread(sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return 0;
+  c->pth=&xp_core.mpxp_threads[rc];
   // wait until cache is filled at least prefill_init %
   MSG_V("CACHE_PRE_INIT: %lld [%lld] %lld  pre:%d  eof:%d SS=%u \n",
 	START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),_min,c->eof,ss);
@@ -343,15 +323,11 @@ void stream_disable_cache(stream_t *st)
 {
   cache_vars_t* c;
   c=st->cache_data;
-  if(c)
-  {
-    if(c->cache2_thread_id && c->cache2_is_living) 
-    {
-	c->cache2_end_of_work=1;
-	while(c->cache2_is_living && !was_killed) usleep(0);
-	c->cache2_is_living=0;
+  if(c) {
+    if(c->pth && c->pth->state==Pth_Run) {
+	c->pth->state=Pth_Canceling;
+	while(c->pth->state==Pth_Canceling && !was_killed) usleep(0);
     }
-    pthread_attr_destroy(&c->cache2_attr);
     free(c->packets);
     free(c->mem);
     free(c);

@@ -300,12 +300,12 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
   if(mp_subtitles && v_pts>0){
       float pts=v_pts;
       if(sub_fps==0) sub_fps=sh_video->fps;
-      MP_UNIT(xp_id,"find_sub");
+      MP_UNIT("find_sub");
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
          find_sub(mp_subtitles,sub_uses_time?(100*pts):(pts*sub_fps),vo_data); // FIXME! frame counter...
          sub_last_pts = pts;
       }
-      MP_UNIT(xp_id,NULL);
+      MP_UNIT(NULL);
   }
 #endif
 
@@ -325,7 +325,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
    if(vo_data->spudec){
     unsigned char* packet=NULL;
     int len,timestamp;
-    MP_UNIT(xp_id,"spudec");
+    MP_UNIT("spudec");
     spudec_now_pts(vo_data->spudec,90000*v_pts);
     if(spudec_visible(vo_data->spudec)) {
 	vo_draw_spudec_direct(vo_data,xp_idx);
@@ -347,7 +347,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 	}
 	/* detect wether the sub has changed or not */
 	if(spudec_changed(vo_data->spudec)) vo_draw_spudec_direct(vo_data,xp_idx);
-	MP_UNIT(xp_id,NULL);
+	MP_UNIT(NULL);
     }
   }
 }

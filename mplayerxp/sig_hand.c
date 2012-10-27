@@ -8,6 +8,7 @@
 #endif
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/resource.h>
 #include "sig_hand.h"
@@ -16,9 +17,6 @@
 #include <stdlib.h>
 #include "xmp_core.h"
 #include "mp_msg.h"
-
-pth_info_t pinfo[MAX_XPTHREADS];
-int xp_threads = 0;
 
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
@@ -50,32 +48,28 @@ static void dump_trace (void)
 static void my_callback(int signo)
 {
     int i;
-    for(i=0; i < MAX_XPTHREADS && !pthread_equal(pinfo[i].pth_id, pthread_self()); i++);
-    if(i >= MAX_XPTHREADS || i >= xp_threads || !pthread_equal(pinfo[i].pth_id, pthread_self())) {
-	i = 0; /* Use 0 as default handler */
-    }
+    pthread_t _self = pthread_self();
+    for(i=0; i < xp_core.num_threads && !pthread_equal(xp_core.mpxp_threads[i]->pth_id, _self); i++);
+    if(i >= xp_core.num_threads ||
+	!pthread_equal(xp_core.mpxp_threads[i]->pth_id, _self)) i = 0; /* Use 0 as default handler */
 
-   mp_msg(MSGT_CPLAYER,MSGL_FATAL,__FILE__,__LINE__,"catching signal: %s in thread: %s (%i) in module: %s\n",strsignal(signo),pinfo[i].thread_name,i,pinfo[i].current_module);
+    mp_msg(MSGT_CPLAYER,MSGL_FATAL,__FILE__,__LINE__,"catching signal: %s in thread: %s (%i) in module: %s\n"
+	,strsignal(signo)
+	,xp_core.mpxp_threads[i]->name
+	,i
+	,xp_core.mpxp_threads[i]->unit);
 #ifdef HAVE_BACKTRACE
-   dump_trace();
+    dump_trace();
 #endif
-   pinfo[i].sig_handler();
+    xp_core.mpxp_threads[i]->sigfunc();
 
-   signal(signo,SIG_DFL);
-   /* try coredump*/
-   return;
+    signal(signo,SIG_DFL); /* try coredump*/
+
+    return;
 }
 
-int init_signal_handling( void (*callback)( void ),void (*_unlink)(int))
+void init_signal_handling( void )
 {
-  if(xp_threads >= MAX_XPTHREADS)
-    return MAX_XPTHREADS-1;
-  pinfo[xp_threads].sig_handler = callback;
-  pinfo[xp_threads].pid = getpid();
-  pinfo[xp_threads].pth_id = pthread_self();
-  pinfo[xp_threads].current_module = NULL;
-  pinfo[xp_threads].unlink = _unlink;
-  xp_threads++;
 #ifndef MP_DEBUG
   /*========= Catch terminate signals: ================*/
   /* terminate requests:*/
@@ -102,18 +96,4 @@ int init_signal_handling( void (*callback)( void ),void (*_unlink)(int))
     setrlimit(RLIMIT_CORE,&rl);
   }
 #endif
-  return xp_threads-1;
-}
-
-void uninit_signal_handling(int xp_id)
-{
-    pinfo[xp_id].pid = 0;
-    pinfo[xp_id].pth_id = 0;
-    pinfo[xp_id].current_module = NULL;
-    pinfo[xp_id].sig_handler = NULL;
-
-    if(xp_threads == xp_id+1) {
-	while( xp_threads > 0 && pinfo[xp_threads-1].pid == 0 )
-	    xp_threads--;
-    }
 }

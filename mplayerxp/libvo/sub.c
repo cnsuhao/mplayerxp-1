@@ -7,16 +7,17 @@
 #include <malloc.h>
 #endif
 
-#include "../mplayer.h"
+#include "mplayer.h"
+#include "xmp_core.h"
 #include "video_out.h"
 #include "font_load.h"
 #include "sub.h"
 #include "osd.h"
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
-#include "../libmpdemux/stream.h"
+#include "libmpdemux/stream.h"
 #define MSGT_CLASS MSGT_OSD
-#include "../__mp_msg.h"
+#include "__mp_msg.h"
 
 static const char * __sub_osd_names[]={
     "Seekbar",
@@ -534,7 +535,7 @@ void __FASTCALL__ vo_remove_text(any_t*v,unsigned idx,int dxs,int dys,clear_osd_
 //	  obj->flags&=~OSDFLAG_OLD_BBOX;
           if(obj->cleared_frames>=0) {
               obj->cleared_frames++;
-              if(obj->cleared_frames>=xp_num_frames)
+              if(obj->cleared_frames>=xp_core.num_v_buffs)
                   obj->cleared_frames=-1;  // All cleared stop
           }
       }
