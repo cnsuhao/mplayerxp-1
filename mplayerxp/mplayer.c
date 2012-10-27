@@ -1248,9 +1248,8 @@ int mpxp_play_video( int rtc_fd )
     if(xp_core.eof && final_frame) return 1;
 
     can_blit=dae_try_inc_played(xp_core.video); /* <-- TRY SWITCH TO NEXT FRAME */
-    shva=dae_played_fra(xp_core.video);
+    shva=dae_next_played_fra(xp_core.video);
     v_pts = shva.v_pts;
-
     /*------------------------ frame decoded. --------------------*/
 /* blit frame */
 
@@ -1434,6 +1433,12 @@ void mpxp_seek( int _xp_id, osd_args_t *osd,const seek_args_t* seek)
 		spudec_reset(vo_data->spudec);
 	    }
 	}
+    }
+
+    if(sh_video) {
+	do {
+	    usleep(0);
+	}while(dae_get_decoder_outrun(xp_core.video) < xp_core.num_v_buffs/2 && !xp_core.eof);
     }
 }
 

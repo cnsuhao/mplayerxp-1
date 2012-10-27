@@ -18,6 +18,7 @@
 #include <malloc.h>
 #endif
 #define DA_PREFIX "DEC_AHEAD:"
+
 #include "xmp_core.h"
 #include "mplayer.h"
 #include "libao2/audio_out.h"
@@ -100,7 +101,6 @@ int dae_try_inc_played(dec_ahead_engine_t* it) {
 	it->num_slow_frames++;
 	return 0;
     }
-    it->player_idx=new_idx;
     it->num_slow_frames=0;
     it->num_played_frames++;
     return 1;
@@ -141,6 +141,22 @@ frame_attr_t dae_played_fra(const dec_ahead_engine_t* it) {
 }
 frame_attr_t dae_decoded_fra(const dec_ahead_engine_t* it) {
     unsigned idx=it->decoder_idx;
+    return it->fra[idx];
+}
+frame_attr_t dae_next_played_fra(const dec_ahead_engine_t* it) {
+    unsigned idx=dae_next_played(it);
+    return it->fra[idx];
+}
+frame_attr_t dae_next_decoded_fra(const dec_ahead_engine_t* it) {
+    unsigned idx=dae_next_decoded(it);
+    return it->fra[idx];
+}
+frame_attr_t dae_prev_played_fra(const dec_ahead_engine_t* it) {
+    unsigned idx=dae_prev_played(it);
+    return it->fra[idx];
+}
+frame_attr_t dae_prev_decoded_fra(const dec_ahead_engine_t* it) {
+    unsigned idx=dae_prev_decoded(it);
     return it->fra[idx];
 }
 
@@ -359,6 +375,7 @@ pt_sleep:
 	/* Ugly solution: disable frame dropping right after seeking! */
 	if(cur_time - mpxp_seek_time > (xp_core.num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(v_pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
+    if(!finite(v_pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",v_pts);
 #if 0
 /*
     We can't seriously examine question of too slow machines

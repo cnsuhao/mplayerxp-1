@@ -119,7 +119,10 @@ static inline unsigned dae_next_vdecoded() { return dae_next_decoded(xp_core.vid
 
 extern frame_attr_t dae_played_fra(const dec_ahead_engine_t* it);
 extern frame_attr_t dae_decoded_fra(const dec_ahead_engine_t* it);
-
+extern frame_attr_t dae_next_played_fra(const dec_ahead_engine_t* it);
+extern frame_attr_t dae_next_decoded_fra(const dec_ahead_engine_t* it);
+extern frame_attr_t dae_prev_played_fra(const dec_ahead_engine_t* it);
+extern frame_attr_t dae_prev_decoded_fra(const dec_ahead_engine_t* it);
 
 extern pthread_mutex_t audio_play_mutex;
 extern pthread_cond_t audio_play_cond;
