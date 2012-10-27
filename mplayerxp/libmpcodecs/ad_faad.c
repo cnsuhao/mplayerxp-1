@@ -170,7 +170,7 @@ static int init(sh_audio_t *sh)
   float pts;
   int NeAAC_init;
   NeAACDecConfigurationPtr NeAAC_conf;
-  if(!(NeAAC_hdec = NeAACDecOpen(mplayer_accel)))
+  if(!(NeAAC_hdec = NeAACDecOpen(mp_data->mplayer_accel)))
   {
     MSG_WARN("FAAD: Failed to open the decoder!\n"); // XXX: deal with cleanup!
     return 0;

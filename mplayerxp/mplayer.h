@@ -28,6 +28,7 @@ typedef struct mp_conf_s {
     int		autoq; /* quality's options: */
     unsigned	verbose;
     int		benchmark;
+    float	playbackspeed_factor;
 // sync
     int		frame_dropping; // option  0=no drop  1= drop vo  2= drop decode
     int		av_sync_pts;
@@ -99,13 +100,14 @@ typedef struct time_usage_s {
 typedef struct mp_data_s {
     int		seek_time;
     int		output_quality;
+    int		use_pts_fix2;
+    unsigned	mplayer_accel;
+    any_t* 	subtitles;
     any_t*	mconfig;
     time_usage_t*bench;
 }mp_data_t;
 extern mp_data_t* mp_data;
 
-extern unsigned mplayer_accel;
-extern int use_pts_fix2;
 
 extern void exit_player(char* how);
 extern void mpxp_resync_audio_stream(void);

@@ -288,19 +288,18 @@ void mpcv_resync_stream(sh_video_t *sh_video)
 }
 
 #ifdef USE_SUB
-extern subtitle* mp_subtitles;
 static float sub_last_pts = -303;
 #endif
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 {
 #ifdef USE_SUB
   // find sub
-  if(mp_subtitles && v_pts>0){
+  if(mp_data->subtitles && v_pts>0){
       float pts=v_pts;
       if(mp_conf.sub_fps==0) mp_conf.sub_fps=sh_video->fps;
       MP_UNIT("find_sub");
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-         find_sub(mp_subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
+         find_sub(mp_data->subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
          sub_last_pts = pts;
       }
       MP_UNIT(NULL);

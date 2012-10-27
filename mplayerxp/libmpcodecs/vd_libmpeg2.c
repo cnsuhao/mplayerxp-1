@@ -187,7 +187,7 @@ static int init(sh_video_t *sh){
     priv_t *priv;
     if(!load_lib("libmpeg2"SLIBSUFFIX)) return 0;
     priv=sh->context=malloc(sizeof(priv_t));
-    if(!(priv->mpeg2dec=mpeg2_init(mplayer_accel))) return 0;
+    if(!(priv->mpeg2dec=mpeg2_init(mp_data->mplayer_accel))) return 0;
     return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 

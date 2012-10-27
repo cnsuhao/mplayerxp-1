@@ -88,17 +88,11 @@ static play_tree_t* playtree;
 
 volatile unsigned xp_drop_frame_cnt=0;
 float xp_screen_pts;
-float playbackspeed_factor=1.0;
 static unsigned mpxp_after_seek=0;
 int audio_eof=0;
 demux_stream_t *d_video=NULL;
 static int osd_show_framedrop = 0;
 static int osd_function=OSD_PLAY;
-#ifdef USE_SUB
-subtitle* mp_subtitles=NULL;
-#endif
-
-int use_pts_fix2=-1;
 
 /************************************************************************
     Special case: inital audio PTS:
@@ -107,11 +101,6 @@ int use_pts_fix2=-1;
 ************************************************************************/
 float initial_audio_pts=HUGE;
 initial_audio_pts_correction_t initial_audio_pts_corr;
-
-/*
-   Acceleration for codecs
-*/
-unsigned mplayer_accel=0;
 
 /**************************************************************************
              Config file
@@ -203,10 +192,12 @@ static void mpxp_init_structs(void) {
     mp_conf.has_video=1;
     mp_conf.has_dvdsub=1;
     mp_conf.osd_level=2;
+    mp_conf.playbackspeed_factor=1.0;
     mp_data=random_malloc(sizeof(mp_data_t),1000);
     memset(mp_data,0,sizeof(mp_data_t));
     mp_data->seek_time=-1;
     mp_data->bench=malloc(sizeof(time_usage_t));
+    mp_data->use_pts_fix2=-1;
     memset(mp_data->bench,0,sizeof(time_usage_t));
 }
 
@@ -663,10 +654,10 @@ void uninit_player(unsigned int mask){
 	inited_flags&=~INITED_SUBTITLE;
 	MP_UNIT("sub_free");
 	mp_input_uninit();
-	sub_free( mp_subtitles );
+	sub_free( mp_data->subtitles );
 	mp_conf.sub_name=NULL;
 	vo_data->sub=NULL;
-	mp_subtitles=NULL;
+	mp_data->subtitles=NULL;
     }
 #endif
     MP_UNIT(NULL);
@@ -853,12 +844,12 @@ static void get_mmx_optimizations( void )
 	gCpuCaps.hasAES,
 	gCpuCaps.hasAVX,
 	gCpuCaps.hasFMA);
-  if(gCpuCaps.hasMMX) 		mplayer_accel |= MM_ACCEL_X86_MMX;
-  if(gCpuCaps.hasMMX2) 		mplayer_accel |= MM_ACCEL_X86_MMXEXT;
-  if(gCpuCaps.hasSSE) 		mplayer_accel |= MM_ACCEL_X86_SSE;
-  if(gCpuCaps.has3DNow) 	mplayer_accel |= MM_ACCEL_X86_3DNOW;
-  if(gCpuCaps.has3DNowExt) 	mplayer_accel |= MM_ACCEL_X86_3DNOWEXT;
-  MSG_V("mplayer_accel=%i\n",mplayer_accel);
+  if(gCpuCaps.hasMMX) 		mp_data->mplayer_accel |= MM_ACCEL_X86_MMX;
+  if(gCpuCaps.hasMMX2) 		mp_data->mplayer_accel |= MM_ACCEL_X86_MMXEXT;
+  if(gCpuCaps.hasSSE) 		mp_data->mplayer_accel |= MM_ACCEL_X86_SSE;
+  if(gCpuCaps.has3DNow) 	mp_data->mplayer_accel |= MM_ACCEL_X86_3DNOW;
+  if(gCpuCaps.has3DNowExt) 	mp_data->mplayer_accel |= MM_ACCEL_X86_3DNOWEXT;
+  MSG_V("mp_data->mplayer_accel=%i\n",mp_data->mplayer_accel);
 }
 #endif
 
@@ -1014,7 +1005,7 @@ while(sh_audio){
       memcpy(sh_audio->a_buffer,&sh_audio->a_buffer[playsize],sh_audio->a_buffer_len);
       if(!mp_conf.av_sync_pts && mp_conf.xp>=XP_VAPlay)
           pthread_mutex_lock(&audio_timer_mutex);
-      if(use_pts_fix2) {
+      if(mp_data->use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
 	      sh_audio->a_pts_pos-=playsize;
 	      if(sh_audio->a_pts_pos > -ao_get_delay(ao_data)*sh_audio->af_bps) {
@@ -1132,7 +1123,7 @@ static void show_status_line_no_apts(float v_pts) {
 
 static void vplayer_check_chapter_change(frame_attr_t* shva_prev,float v_pts)
 {
-    if(use_pts_fix2 && sh_audio) {
+    if(mp_data->use_pts_fix2 && sh_audio) {
 	if(sh_video->chapter_change == -1) { /* First frame after seek */
 	    while(v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay(ao_data)==0.0)
 		usleep(0);		 /* Wait for audio to start play */
@@ -1162,9 +1153,9 @@ static float vplayer_compute_sleep_time(frame_attr_t* shva_prev)
 	   often ao_get_delay() never returns 0 :( */
 	if(audio_eof && !get_delay_audio_buffer()) goto nosound_model;
 	if((!audio_eof || ao_get_delay(ao_data)) &&
-	(!use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
+	(!mp_data->use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
 	    sleep_time=xp_screen_pts-(sh_audio->timer-ao_get_delay(ao_data));
-	else if(use_pts_fix2 && sh_audio->chapter_change)
+	else if(mp_data->use_pts_fix2 && sh_audio->chapter_change)
 	    sleep_time=0;
 	else
 	    goto nosound_model;
@@ -1765,17 +1756,17 @@ if (vo_data->spudec!=NULL) {
 // check .sub
   MP_UNIT("read_subtitles_file");
   if(mp_conf.sub_name){
-    mp_subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
-    if(!mp_subtitles) MSG_ERR(MSGTR_CantLoadSub,mp_conf.sub_name);
+    mp_data->subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
+    if(!mp_data->subtitles) MSG_ERR(MSGTR_CantLoadSub,mp_conf.sub_name);
   } else
   if(mp_conf.sub_auto) { // auto load sub file ...
-    mp_subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
+    mp_data->subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
 				      : "default.sub", sh_video->fps );
   }
-  if(mp_subtitles)
+  if(mp_data->subtitles)
   {
     inited_flags|=INITED_SUBTITLE;
-    if(stream_dump_type>1) list_sub_file(mp_subtitles);
+    if(stream_dump_type>1) list_sub_file(mp_data->subtitles);
   }
 #endif
 }
@@ -2541,9 +2532,9 @@ main:
 	d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
 	d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
 	d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS)))
-	    use_pts_fix2=1;
+	    mp_data->use_pts_fix2=1;
     else
-	    use_pts_fix2=0;
+	    mp_data->use_pts_fix2=0;
 
     if(sh_video) sh_video->chapter_change=0;
 

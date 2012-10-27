@@ -324,7 +324,7 @@ any_t* Va_dec_ahead_routine( any_t* arg )
     if(!(xp_core.has_audio && mp_conf.xp < XP_VAFull))
 	priv->name = "video decoder+vf";
     drop_barrier=(float)(xp_core.num_v_buffs/2)*(1/sh_video->fps);
-    if(mp_conf.av_sync_pts == -1 && !use_pts_fix2)
+    if(mp_conf.av_sync_pts == -1 && !mp_data->use_pts_fix2)
 	xp_is_bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
