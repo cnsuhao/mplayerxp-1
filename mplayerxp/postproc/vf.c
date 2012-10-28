@@ -31,6 +31,7 @@ extern const vf_info_t vf_info_dint;
 extern const vf_info_t vf_info_down3dright;
 extern const vf_info_t vf_info_eq;
 extern const vf_info_t vf_info_expand;
+extern const vf_info_t vf_info_flip;
 extern const vf_info_t vf_info_fmtcvt;
 extern const vf_info_t vf_info_framestep;
 extern const vf_info_t vf_info_format;
@@ -71,6 +72,7 @@ static const vf_info_t* filter_list[]={
     &vf_info_down3dright,
     &vf_info_eq,
     &vf_info_expand,
+    &vf_info_flip,
     &vf_info_fmtcvt,
     &vf_info_format,
     &vf_info_framestep,

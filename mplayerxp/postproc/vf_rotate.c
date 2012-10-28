@@ -201,7 +201,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->query_format=vf_next_query_format;
 	vf->config=vf_next_config;
 	MSG_INFO("[vf_rotate] passthrough mode\n");
-    }    
+    }
     return 1;
 }
 
