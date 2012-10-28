@@ -81,6 +81,7 @@ static const config_t xpcore_config[]={
 	{"cache", &mp_conf.s_cache_size, CONF_TYPE_INT, CONF_RANGE, 4, 65536, NULL,"specifies amount of memory for precaching a file/URL"},
 	{"nocache", &mp_conf.s_cache_size, CONF_TYPE_FLAG, 0, 1, 0, NULL,"disables precaching a file/URL"},
 	{"autoq", &mp_conf.autoq, CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL, "dynamically changes the level of postprocessing depending on spare CPU time available"},
+	{"speed", &mp_conf.playbackspeed_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.01, 100.0, NULL, "sets playback speed factor"},
 	{"benchmark", &mp_conf.benchmark, CONF_TYPE_FLAG, 0, 0, 1, NULL, "performs benchmarking to estimate performance of MPlayerXP"},
 	{NULL, NULL, 0, 0, 0, 0, NULL,NULL},
 };
@@ -246,7 +247,6 @@ static const config_t video_config[]={
 	{"zoom", &vo_conf.screen_size_xy, CONF_TYPE_FLOAT, CONF_RANGE, 0, 4096, NULL, "scale output image by given factor"},
 	{"screenw", &vo_conf.screenwidth, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "specifies the horizontal resolution of the screen (if supported)"},
 	{"screenh", &vo_conf.screenheight, CONF_TYPE_INT, CONF_RANGE, 0, 4096, NULL, "specifies the vertical resolution of the screen (if supported)"},
-	{"speed", &mp_conf.playbackspeed_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.01, 100.0, NULL, "sets playback speed factor"},
 	{"aspect", &vo_conf.movie_aspect, CONF_TYPE_FLOAT, CONF_RANGE, 0.2, 3.0, NULL, "sets aspect-ratio of movies (autodetect)"},
 	{"noaspect", &vo_conf.movie_aspect, CONF_TYPE_FLAG, 0, 0, 0, NULL, "unsets aspect-ratio of movies"},
 	{"aspect-ratio", &vo_conf.softzoom, CONF_TYPE_FLAG, 0, 0, 1, NULL, "keeps aspect-ratio of the movie during window resize"},

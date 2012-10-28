@@ -1161,7 +1161,7 @@ static float vplayer_compute_sleep_time(frame_attr_t* shva_prev)
 	    goto nosound_model;
     } else {
 	nosound_model:
-	sleep_time=shva_prev->duration;
+	sleep_time=shva_prev->duration/mp_conf.playbackspeed_factor;
     }
     return sleep_time;
 }
@@ -2413,6 +2413,7 @@ play_next_file:
     if(stream_dump_type==1) dump_stream(stream);
 
 //============ Open DEMUXERS --- DETECT file type =======================
+    if(mp_conf.playbackspeed_factor) mp_conf.has_audio=0;
     initial_audio_pts=HUGE;
     if(!mp_conf.has_audio) mp_conf.audio_id=-2;  // do NOT read audio packets...
     if(!mp_conf.has_video) mp_conf.video_id=-2;  // do NOT read video packets...
