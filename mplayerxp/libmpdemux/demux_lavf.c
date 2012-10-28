@@ -203,7 +203,7 @@ static int lavf_probe(demuxer_t *demuxer){
     }
     priv->avif= av_probe_input_format(&avpd, 1);
     if(!priv->avif){
-	MSG_V("LAVF_check: no clue about this gibberish!\n");
+	MSG_V("LAVF_check: file format not recognized!\n");
 	free(demuxer->priv);
 	return 0;
     }else
