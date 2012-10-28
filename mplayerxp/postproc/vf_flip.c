@@ -86,7 +86,7 @@ const vf_info_t vf_info_flip = {
     "flip",
     "A'rpi",
     "",
-    VF_FLAGS_THREADS|VF_FLAGS_SLICES,
+    VF_FLAGS_THREADS,
     vf_open,
     NULL
 };
