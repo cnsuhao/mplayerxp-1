@@ -172,41 +172,42 @@ static int lavf_probe(demuxer_t *demuxer){
     AVProbeData avpd;
     uint8_t buf[PROBE_BUF_SIZE];
     lavf_priv_t *priv;
-    if(!demuxer->priv)
-        demuxer->priv=calloc(sizeof(lavf_priv_t),1);
+    if(!demuxer->priv) demuxer->priv=calloc(sizeof(lavf_priv_t),1);
     priv= demuxer->priv;
 
     av_register_all();
+    if(mp_conf.verbose>1) av_log_set_level(AV_LOG_DEBUG);
+    else if(mp_conf.verbose) av_log_set_level(AV_LOG_VERBOSE);
+    else av_log_set_level(AV_LOG_INFO);
 
-    if(stream_read(demuxer->stream, buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE)
-    {
+    if(stream_read(demuxer->stream, buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE) {
 	free(demuxer->priv);
-        return 0;
+	return 0;
     }
     avpd.filename= "xxx";
     avpd.buf= buf;
     avpd.buf_size= PROBE_BUF_SIZE;
 
     if (opt_format) {
-        if (strcmp(opt_format, "help") == 0) {
-           list_formats();
-           return 0;
-        }
-        priv->avif= av_find_input_format(opt_format);
-        if (!priv->avif) {
-            MSG_FATAL("Unknown lavf format %s\n", opt_format);
-            return 0;
-        }
-        MSG_INFO("Forced lavf %s demuxer\n", priv->avif->long_name);
-        return 1;
+	if (strcmp(opt_format, "help") == 0) {
+	   list_formats();
+	   return 0;
+	}
+	priv->avif= av_find_input_format(opt_format);
+	if (!priv->avif) {
+	    MSG_FATAL("Unknown lavf format %s\n", opt_format);
+	    return 0;
+	}
+	MSG_INFO("Forced lavf %s demuxer\n", priv->avif->long_name);
+	return 1;
     }
     priv->avif= av_probe_input_format(&avpd, 1);
     if(!priv->avif){
-        MSG_V("LAVF_check: no clue about this gibberish!\n");
+	MSG_V("LAVF_check: no clue about this gibberish!\n");
 	free(demuxer->priv);
-        return 0;
+	return 0;
     }else
-        MSG_V("LAVF_check: %s\n", priv->avif->long_name);
+	MSG_V("LAVF_check: %s\n", priv->avif->long_name);
     demuxer->file_format=DEMUXER_TYPE_ASF;
 
     return 1;
@@ -244,28 +245,23 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 
     priv->avfc= avfc;
 
-#if 0 /* TODO: switch to METADATA AVDictionary*/
     if(av_find_stream_info(avfc) < 0){
         MSG_ERR("LAVF_header: av_find_stream_info() failed\n");
         return NULL;
     }
-    if(avfc->title    [0]) demux_info_add(demuxer, INFOT_NAME     , avfc->title    );
-    if(avfc->author   [0]) demux_info_add(demuxer, INFOT_AUTHOR   , avfc->author   );
-    if(avfc->copyright[0]) demux_info_add(demuxer, INFOT_COPYRIGHT, avfc->copyright);
-    if(avfc->comment  [0]) demux_info_add(demuxer, INFOT_COMMENTS , avfc->comment  );
-    if(avfc->album    [0]) demux_info_add(demuxer, INFOT_ALBUM    , avfc->album    );
-    if(avfc->year        )
-    {
-			sprintf(mp_filename,"%u",avfc->year);
-			demux_info_add(demuxer, INFOT_DATE    , mp_filename);
+
+    AVDictionaryEntry *tag = NULL;
+    while((tag = av_dict_get(avfc->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+	if(strcmp(tag->key,"title")==0)    demux_info_add(demuxer,INFOT_NAME,tag->value);
+	else if(strcmp(tag->key,"author")==0)demux_info_add(demuxer,INFOT_AUTHOR,tag->value);
+	else if(strcmp(tag->key,"copyright")==0)demux_info_add(demuxer,INFOT_COPYRIGHT,tag->value);
+	else if(strcmp(tag->key,"comment")==0) demux_info_add(demuxer,INFOT_COMMENTS,tag->value);
+	else if(strcmp(tag->key,"album")==0) demux_info_add(demuxer,INFOT_ALBUM,tag->value);
+	else if(strcmp(tag->key,"genre")==0) demux_info_add(demuxer,INFOT_GENRE,tag->value);
+	else if(strcmp(tag->key,"track")==0) demux_info_add(demuxer,INFOT_TRACK,tag->value);
+	else if(strcmp(tag->key,"date")==0) demux_info_add(demuxer,INFOT_DATE,tag->value);
     }
-    if(avfc->track       )
-    {
-			sprintf(mp_filename,"%u",avfc->track);
-			demux_info_add(demuxer, INFOT_TRACK    , mp_filename);
-    }
-    if(avfc->genre    [0]) demux_info_add(demuxer, INFOT_GENRE    , avfc->genre    );
-#endif
+
     for(j=0; j<avfc->nb_streams; j++){
 	AVStream *st= avfc->streams[j];
 	AVCodecContext *codec= st->codec;
