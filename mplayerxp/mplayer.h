@@ -105,6 +105,7 @@ typedef struct mp_data_s {
     any_t* 	subtitles;
     any_t*	mconfig;
     time_usage_t*bench;
+    any_t*	priv;
 }mp_data_t;
 extern mp_data_t* mp_data;
 
