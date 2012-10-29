@@ -25,7 +25,7 @@
 #include "mp_config.h"
 #include "sig_hand.h"
 #include "mplayer.h"
-#include "my_malloc.h"
+#include "osdep/my_malloc.h"
 #include "postproc/swscale.h"
 #include "postproc/af.h"
 #include "postproc/vf.h"

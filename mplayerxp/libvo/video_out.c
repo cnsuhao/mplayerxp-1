@@ -33,7 +33,7 @@
 #include "postproc/swscale.h"
 #include "postproc/vf.h"
 #include "xmp_core.h"
-#include "my_malloc.h"
+#include "osdep/my_malloc.h"
 #include "mplayer.h"
 #include "fastmemcpy.h"
 #include "img_format.h"

@@ -3,7 +3,7 @@ include ../mp_config.mak
 
 LIBNAME = libosdep.a
 
-SRCS=getch2.c timer-lx.c timer.c shmem.c get_path.c
+SRCS=getch2.c timer-lx.c timer.c shmem.c get_path.c my_malloc.c my_profile.c
 OBJS=$(SRCS:.c=.o)
 
 ifeq ($(TARGET_OS),LINUX_GNU)

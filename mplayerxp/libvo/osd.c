@@ -6,13 +6,14 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include "../mp_config.h"
+
+#include "mp_config.h"
 //#define ENABLE_PROFILE
-#include "../my_profile.h"
+#include "osdep/my_profile.h"
 #include <inttypes.h>
-#include "../cpudetect.h"
-#include "../mangle.h"
-#include "../mplayer.h"
+#include "cpudetect.h"
+#include "mangle.h"
+#include "mplayer.h"
 #include "osd.h"
 #include "vo_msg.h"
 
