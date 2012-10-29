@@ -67,10 +67,29 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #include "__mp_msg.h"
 
-
 /**************************************************************************
              Private data
 **************************************************************************/
+#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+typedef struct x86_features_s {
+    int simd;
+    int mmx;
+    int mmx2;
+    int _3dnow;
+    int _3dnow2;
+    int sse;
+    int sse2;
+    int sse3;
+    int ssse3;
+    int sse41;
+    int sse42;
+    int aes;
+    int avx;
+    int fma;
+}x86_features_t;
+static x86_features_t x86;
+#endif
+
 #define INITED_VO	0x00000001
 #define INITED_AO	0x00000002
 #define INITED_GETCH2	0x00000004
@@ -109,6 +128,9 @@ typedef struct priv_s {
     play_tree_t*playtree;
 }priv_t;
 
+mp_conf_t mp_conf;
+mp_data_t*mp_data=NULL;
+
 /**************************************************************************
              Decoding ahead
 **************************************************************************/
@@ -116,13 +138,13 @@ typedef struct priv_s {
 
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
-pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
 
 /************************************************************************
     Special case: inital audio PTS:
     example: some movies has a_pts = v_pts = XX sec
     but mplayerxp always starts audio playback at 0 sec
 ************************************************************************/
+static pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
 float initial_audio_pts=HUGE;
 initial_audio_pts_correction_t initial_audio_pts_corr;
 
@@ -153,28 +175,7 @@ static int cfg_include(struct config *conf, char *filename){
 /* Common FIFO functions, and keyboard/event FIFO code */
 #include "fifo.h"
 /**************************************************************************/
-mp_conf_t mp_conf;
-mp_data_t*mp_data=NULL;
 
-#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-typedef struct x86_features_s {
-    int simd;
-    int mmx;
-    int mmx2;
-    int _3dnow;
-    int _3dnow2;
-    int sse;
-    int sse2;
-    int sse3;
-    int ssse3;
-    int sse41;
-    int sse42;
-    int aes;
-    int avx;
-    int fma;
-}x86_features_t;
-static x86_features_t x86;
-#endif
 
 static void mpxp_init_structs(void) {
     mp_data=random_malloc(sizeof(mp_data_t),1000);
