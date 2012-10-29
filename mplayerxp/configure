@@ -281,7 +281,7 @@ srcdir=`pwd`
 test $($pkg_config --version 2>/dev/null) || die "no pkg-config found"
 
 #############################################################################
-test -n "$profile"	&& disable fastcall
+enabled profile && disable fastcall
 print_config __USE mp_config.h mp_config.mak fastcall
 
 test_optimizations mp_config.mak mp_config.h
@@ -876,9 +876,15 @@ $def_fbdev_nocopy
 
 /* Defined to some form of __attribute__ ((...)) if the compiler supports
    a different, more efficient calling convention.  */
-#if defined ( __USE_FASTCALL ) && defined ( ARCH_X86 )
-/*# define internal_function __attribute__ ((regparm (3), stdcall))*/
-# define __FASTCALL__ __attribute__ ((regparm (3)))
+#if defined ( __USE_FASTCALL )
+ #if defined ( ARCH_X86 )
+ /*# define internal_function __attribute__ ((regparm (3), stdcall))*/
+ # define __FASTCALL__ __attribute__ ((regparm (3)))
+ #elif defined (ARCH_X86_64)
+ # define __FASTCALL__ __attribute__ ((regparm (6)))
+ #else
+ # define __FASTCALL__
+ #endif
 #else
 # define __FASTCALL__
 #endif
