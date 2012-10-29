@@ -115,9 +115,13 @@ char * my_strdup(const char *s)
 typedef struct priv_s {
     unsigned			rnd_limit;
     unsigned			every_nth_call;
-    unsigned long long int	total_calls;
     // statistics
+    unsigned long long int	total_calls;
     unsigned long long int	num_allocs;
+    // local statistics
+    int				enable_stat;
+    unsigned long long int	stat_total_calls;
+    unsigned long long int	stat_num_allocs;
 }priv_t;
 static priv_t* priv;
 
@@ -132,7 +136,7 @@ void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call)
 void	mp_uninit_malloc(int verbose)
 {
     if(priv->num_allocs && verbose)
-	MSG_WARN("Warning: from %lli total calls of alloc() were not freed %lli buffers\n",priv->total_calls,priv->num_allocs);
+	MSG_WARN("Warning! From %lli total calls of alloc() were not freed %lli buffers\n",priv->total_calls,priv->num_allocs);
     free(priv);
     priv=NULL;
 }
@@ -141,12 +145,19 @@ any_t* mp_malloc(size_t __size)
 {
     any_t* rb,*rnd_buff=NULL;
     if(!priv) mp_init_malloc(1000,10);
-    if(priv->total_calls%priv->every_nth_call==0)
-	rnd_buff=malloc(rand()%priv->rnd_limit);
+    if(priv->every_nth_call && priv->rnd_limit) {
+	if(priv->total_calls%priv->every_nth_call==0) {
+	    rnd_buff=malloc(rand()%priv->rnd_limit);
+	}
+    }
     rb = malloc(__size);
     if(rnd_buff) free(rnd_buff);
     priv->total_calls++;
     priv->num_allocs++;
+    if(priv->enable_stat) {
+	priv->stat_total_calls++;
+	priv->stat_num_allocs++;
+    }
     return rb;
 }
 
@@ -164,6 +175,7 @@ any_t*	mp_memalign (size_t boundary, size_t __size)
 {
     if(!priv) mp_init_malloc(1000,10);
     priv->num_allocs++;
+    if(priv->enable_stat) priv->stat_num_allocs++;
     return memalign(boundary,__size);
 }
 
@@ -172,11 +184,31 @@ void	mp_free(any_t*__ptr)
     if(!priv) mp_init_malloc(1000,10);
     free(__ptr);
     priv->num_allocs--;
+    if(priv->enable_stat) priv->stat_num_allocs--;
 }
+
 char *	mp_strdup(const char *src) {
-    char *rs;
-    unsigned len=strlen(src);
-    rs=mp_malloc(len+1);
-    strcpy(rs,src);
+    char *rs=NULL;
+    if(src) {
+	unsigned len=strlen(src);
+	rs=mp_malloc(len+1);
+	strcpy(rs,src);
+    }
     return rs;
+}
+
+void	__FASTCALL__ mp_open_malloc_stat(void) {
+    if(!priv) mp_init_malloc(1000,10);
+    priv->enable_stat=1;
+    priv->stat_total_calls=priv->stat_num_allocs=0ULL;
+}
+
+unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose) {
+    if(!priv) mp_init_malloc(1000,10);
+    priv->enable_stat=0;
+    if(verbose)
+	MSG_INFO("mp_malloc stat: from %lli total calls of alloc() were not freed %lli buffers\n"
+	,priv->stat_total_calls
+	,priv->stat_num_allocs);
+    return priv->stat_num_allocs;
 }

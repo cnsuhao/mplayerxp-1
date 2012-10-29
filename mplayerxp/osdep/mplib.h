@@ -38,6 +38,9 @@ static inline unsigned long long int read_tsc( void )
 extern void	__FASTCALL__ mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call);
 extern void	__FASTCALL__ mp_uninit_malloc(int verbose);
 
+extern void	__FASTCALL__ mp_open_malloc_stat(void);
+extern unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose);
+
 extern any_t*	__FASTCALL__ mp_malloc(size_t __size);
 extern any_t*	__FASTCALL__ mp_mallocz(size_t __size);
 extern any_t*	__FASTCALL__ mp_realloc(any_t*__ptr, size_t __size);

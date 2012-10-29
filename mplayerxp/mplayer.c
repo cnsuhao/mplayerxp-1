@@ -575,9 +575,14 @@ int get_free_audio_buffer(void)
 
 void uninit_player(unsigned int mask){
     priv_t*priv=mp_data->priv;
-    stream_t* stream=priv->demuxer->stream;
-    sh_audio_t* sh_audio=priv->demuxer->audio->sh;
-    sh_video_t* sh_video=priv->demuxer->video->sh;
+    stream_t* stream=NULL;
+    sh_audio_t* sh_audio=NULL;
+    sh_video_t* sh_video=NULL;
+    if(priv->demuxer) {
+	stream=priv->demuxer->stream;
+	sh_audio=priv->demuxer->audio->sh;
+	sh_video=priv->demuxer->video->sh;
+    }
     fflush(stdout);
     fflush(stderr);
     mask=priv->inited_flags&mask;
@@ -2378,13 +2383,13 @@ int main(int argc,char* argv[], char *envp[]){
     mp_register_options(mp_data->mconfig);
     parse_cfgfiles(mp_data->mconfig);
 
-    if(m_config_parse_command_line(mp_data->mconfig, argc, argv, envp) < 0) exit(1); // error parsing cmdline
+    if(m_config_parse_command_line(mp_data->mconfig, argc, argv, envp) < 0)
+	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
 	MSG_ERR("Error: detected option: -core.xp=0\n"
 		"Note!  Single-thread mode is not longer supported by MPlayerXP\n");
-	mpxp_uninit_structs();
-	return 0;
+	exit_player(MSGTR_Exit_quit);
     }
 
     xp_num_cpu=get_number_cpu();
@@ -2393,11 +2398,11 @@ int main(int argc,char* argv[], char *envp[]){
 #endif
     if(!sws_init()) {
 	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
-	mpxp_uninit_structs();
-	return 0;
+	exit_player(MSGTR_Exit_quit);
     }
     if(mp_conf.shuffle_playback) priv->playtree->flags|=PLAY_TREE_RND;
     else			 priv->playtree->flags&=~PLAY_TREE_RND;
+
     priv->playtree = play_tree_cleanup(priv->playtree);
     if(priv->playtree) {
       playtree_iter = play_tree_iter_new(priv->playtree,mp_data->mconfig);
@@ -2416,8 +2421,7 @@ int main(int argc,char* argv[], char *envp[]){
 
     if(!filename){
 	show_help();
-	mpxp_uninit_structs();
-	return 0;
+	exit_player(MSGTR_Exit_quit);
     }
 
     // Many users forget to include command line in bugreports...
