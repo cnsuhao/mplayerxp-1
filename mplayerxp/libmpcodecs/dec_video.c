@@ -292,6 +292,7 @@ static float sub_last_pts = -303;
 #endif
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 {
+    demux_stream_t *d_dvdsub=sh_video->ds->demuxer->sub;
 #ifdef USE_SUB
   // find sub
   if(mp_data->subtitles && v_pts>0){

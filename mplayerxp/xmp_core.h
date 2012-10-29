@@ -32,6 +32,7 @@ typedef struct dec_ahead_engine_s {
     volatile unsigned	decoder_idx;	/* index of frame which is currently decoded */
     unsigned		nframes;	/* number of frames in buffer */
     frame_attr_t*	fra;		/* frame related attributes */
+    any_t*		sh;		/* corresponded sh_audio_t or sh_video_t */
     /* for statistics */
     unsigned		num_slow_frames;/* number of frames which were delayed due slow computer */
     long long int	num_played_frames;
@@ -52,6 +53,7 @@ typedef struct mpxp_thread_s {
     pid_t		pid;
     mpxp_routine_t	routine;
     sig_handler_t	sigfunc;
+    dec_ahead_engine_t* dae;
     volatile enum mpxp_thread_state state;
 }mpxp_thread_t;
 
@@ -60,6 +62,7 @@ typedef struct xp_core_s {
     int				has_video;
     int				has_audio;
     dec_ahead_engine_t*		video;
+    dec_ahead_engine_t*		audio;
     volatile int		in_pause;
     volatile int		in_resize;
     volatile int		eof;
@@ -80,7 +83,7 @@ extern void		xmp_uninit(void);
 /* returns idx of main thread */
 extern unsigned		xmp_register_main(sig_handler_t sigfunc);
 /* returns idx of the thread or UINT_MAX on fault */
-extern unsigned		xmp_register_thread(sig_handler_t sigfunc,mpxp_routine_t routine,const char *name);
+extern unsigned		xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_routine_t routine,const char *name);
 extern void		xmp_stop_threads(int force);
 
 extern void		xmp_halt_threads(int is_reset_vcache);
@@ -94,7 +97,7 @@ extern int		xmp_run_decoders( void );
 extern int		xmp_run_players( void );
 extern void		xmp_reset_sh_video(sh_video_t* shv);
 
-extern void	dae_init(dec_ahead_engine_t* it,unsigned nframes);
+extern void	dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh);
 extern void	dae_uninit(dec_ahead_engine_t* it);
 extern void	dae_reset(dec_ahead_engine_t* it); /* after mpxp_seek */
 
@@ -164,5 +167,4 @@ extern void sig_audio_decode( void );
 
 /* Audio stuff */
 extern volatile float dec_ahead_audio_delay;
-int xp_thread_decode_audio();
 #endif

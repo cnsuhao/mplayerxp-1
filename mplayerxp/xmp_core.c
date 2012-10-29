@@ -52,6 +52,7 @@ unsigned xmp_register_main(sig_handler_t sigfunc) {
     xp_core.main_pth_id=xp_core.mpxp_threads[idx]->pth_id=pthread_self();
     xp_core.mpxp_threads[idx]->name = "main";
     xp_core.mpxp_threads[idx]->sigfunc = sigfunc;
+    xp_core.mpxp_threads[idx]->dae = NULL;
     xp_core.num_threads++;
 
     return idx;
@@ -84,10 +85,11 @@ void dae_reset(dec_ahead_engine_t* it) {
     it->num_decoded_frames=0;
 }
 
-void dae_init(dec_ahead_engine_t* it,unsigned nframes)
+void dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh)
 {
     it->nframes=nframes;
     it->fra = malloc(sizeof(frame_attr_t)*nframes);
+    it->sh=sh;
     dae_reset(it);
 }
 
@@ -181,10 +183,6 @@ extern volatile float xp_screen_pts;
 volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
 volatile int dec_ahead_can_adseek=1;  /* It is safe to seek audio buffer thread */
 
-static sh_video_t *sh_video;
-static sh_audio_t *sh_audio;
-extern demux_stream_t *d_video;
-
 /* Support for '-loop' option */
 extern int loop_times; /* it's const for xp mode */
 
@@ -212,9 +210,50 @@ any_t* audio_play_routine( any_t* arg );
 
 int xp_is_bad_pts=0;
 
+/* Audio stuff */
+volatile float dec_ahead_audio_delay;
+static int xp_thread_decode_audio(void)
+{
+    sh_audio_t* sh_audio=xp_core.audio->sh;
+    sh_video_t* sh_video=xp_core.video->sh;
+    int free_buf, vbuf_size, pref_buf;
+    unsigned len=0;
+
+    free_buf = get_free_audio_buffer();
+
+    if( free_buf == -1 ) { /* End of file */
+	xp_core.a_eof = 1;
+	return 0;
+    }
+    if( free_buf < (int)sh_audio->audio_out_minsize ) /* full */
+	return 0;
+
+    len = get_len_audio_buffer();
+
+    if( len < MAX_OUTBURST ) /* Buffer underrun */
+	return decode_audio_buffer(MAX_OUTBURST);
+
+    if(xp_core.has_video) {
+	/* Match video buffer */
+	vbuf_size = dae_get_decoder_outrun(xp_core.video);
+	pref_buf = vbuf_size / sh_video->fps * sh_audio->af_bps;
+	pref_buf -= len;
+	if( pref_buf > 0 ) {
+	    len = min( pref_buf, free_buf );
+	    if( len > sh_audio->audio_out_minsize ) {
+		return decode_audio_buffer(len);
+	    }
+	}
+    } else
+	return decode_audio_buffer(min(free_buf,MAX_OUTBURST));
+
+    return 0;
+}
+
+
 /* this routine decodes video+audio but intends to be video only  */
 
-static void show_warn_cant_sync(float max_frame_delay) {
+static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
     static int warned=0;
     static float prev_warn_delay=0;
     if(!warned || max_frame_delay > prev_warn_delay) {
@@ -229,7 +268,7 @@ static void show_warn_cant_sync(float max_frame_delay) {
     }
 }
 
-static unsigned compute_frame_dropping(float v_pts,float drop_barrier) {
+static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float drop_barrier) {
     unsigned rc=0;
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
@@ -250,7 +289,7 @@ static unsigned compute_frame_dropping(float v_pts,float drop_barrier) {
     if(max_frame_delay*3 > drop_barrier) {
 	if(drop_barrier < (float)(xp_core.num_v_buffs-2)/sh_video->fps) drop_barrier += 1/sh_video->fps;
 	else
-	if(mp_conf.verbose) show_warn_cant_sync(max_frame_delay);
+	if(mp_conf.verbose) show_warn_cant_sync(sh_video,max_frame_delay);
     }
     if(delta > drop_barrier) rc=0;
     else if(delta < max_frame_delay*3) rc=1;
@@ -307,6 +346,8 @@ static void reorder_pts_in_mpeg(void) {
 any_t* Va_dec_ahead_routine( any_t* arg )
 {
     mpxp_thread_t* priv=arg;
+    sh_video_t* sh_video=priv->dae->sh;
+    demux_stream_t *d_video=sh_video->ds;
 
     float duration=0;
     float drop_barrier;
@@ -379,7 +420,7 @@ pt_sleep:
 	int cur_time;
 	cur_time = GetTimerMS();
 	/* Ugly solution: disable frame dropping right after seeking! */
-	if(cur_time - mp_data->seek_time > (xp_core.num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(v_pts,drop_barrier);
+	if(cur_time - mp_data->seek_time > (xp_core.num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,v_pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
     if(!finite(v_pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",v_pts);
 #if 0
@@ -567,33 +608,33 @@ void xmp_uninit_engine( int force )
 
 int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 {
-  if(shv) {
-    sh_video = shv;
-    xp_core.has_video=1;
-    xp_core.video=malloc(sizeof(dec_ahead_engine_t));
-    dae_init(xp_core.video,xp_core.num_v_buffs);
-  }
-  else {/* if (mp_conf.xp >= XP_VAFull) mp_conf.xp = XP_VAPlay;*/ }
-  if(sha) sh_audio = sha; /* currently is unused */
+    if(shv) {
+	xp_core.has_video=1;
+	xp_core.video=malloc(sizeof(dec_ahead_engine_t));
+	dae_init(xp_core.video,xp_core.num_v_buffs,shv);
+    } else {/* if (mp_conf.xp >= XP_VAFull) mp_conf.xp = XP_VAPlay;*/ 
+    }
 
-  if(mp_conf.xp>=XP_VideoAudio && sha) {
-    int asize;
-    unsigned o_bps;
-    unsigned min_reserv;
-      o_bps=sh_audio->afilter_inited?sh_audio->af_bps:sh_audio->o_bps;
-      if(xp_core.has_video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_core.num_v_buffs/sh_video->fps))+MIN_BUFFER_RESERV;
-      else		asize = o_bps*xp_core.num_a_buffs;
-      /* FIXME: get better indices from asize/real_audio_packet_size */
-      min_reserv = sha->audio_out_minsize;
-      if (o_bps > sha->o_bps)
-          min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
-      init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
-      xp_core.has_audio=1;
-  }
-  return 0;
+    if(mp_conf.xp>=XP_VideoAudio && sha) {
+	int asize;
+	unsigned o_bps;
+	unsigned min_reserv;
+	o_bps=sha->afilter_inited?sha->af_bps:sha->o_bps;
+	if(xp_core.has_video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_core.num_v_buffs/shv->fps))+MIN_BUFFER_RESERV;
+	else			asize = o_bps*xp_core.num_a_buffs;
+	/* FIXME: get better indices from asize/real_audio_packet_size */
+	min_reserv = sha->audio_out_minsize;
+	if (o_bps > sha->o_bps)
+	    min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
+	init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
+	xp_core.has_audio=1;
+	xp_core.audio=malloc(sizeof(dec_ahead_engine_t));
+	dae_init(xp_core.audio,xp_core.num_a_buffs,sha);
+    }
+    return 0;
 }
 
-unsigned xmp_register_thread(sig_handler_t sigfunc,mpxp_routine_t routine,const char *name) {
+unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_routine_t routine,const char *name) {
     unsigned idx=xp_core.num_threads;
     int rc;
     if(idx>=MAX_MPXP_THREADS) return UINT_MAX;
@@ -618,6 +659,7 @@ unsigned xmp_register_thread(sig_handler_t sigfunc,mpxp_routine_t routine,const 
     xp_core.mpxp_threads[idx]->routine=routine;
     xp_core.mpxp_threads[idx]->sigfunc=sigfunc;
     xp_core.mpxp_threads[idx]->state=Pth_Stand;
+    xp_core.mpxp_threads[idx]->dae=dae;
 
     rc=pthread_create(&xp_core.mpxp_threads[idx]->pth_id,&attr,routine,xp_core.mpxp_threads[idx]);
     pthread_attr_destroy(&attr);
@@ -630,11 +672,11 @@ int xmp_run_decoders( void )
 {
     unsigned rc;
     if((xp_core.has_audio && mp_conf.xp >= XP_VAFull) || !xp_core.has_video) {
-	if((rc=xmp_register_thread(sig_audio_decode,a_dec_ahead_routine,"audio decoder+af"))==UINT_MAX) return rc;
+	if((rc=xmp_register_thread(xp_core.audio,sig_audio_decode,a_dec_ahead_routine,"audio decoder+af"))==UINT_MAX) return rc;
 	while(xp_core.mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }
     if(xp_core.has_video) {
-	if((rc=xmp_register_thread(sig_dec_ahead_video,Va_dec_ahead_routine,"video+audio decoders & af+vf"))==UINT_MAX) return rc;
+	if((rc=xmp_register_thread(xp_core.video,sig_dec_ahead_video,Va_dec_ahead_routine,"video+audio decoders & af+vf"))==UINT_MAX) return rc;
 	while(xp_core.mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }
     return 0;
@@ -644,7 +686,7 @@ int xmp_run_players(void)
 {
     unsigned rc;
     if( xp_core.has_audio && mp_conf.xp >= XP_VAPlay ) {
-	if((rc=xmp_register_thread(sig_audio_play,audio_play_routine,"audio player"))==UINT_MAX) return rc;
+	if((rc=xmp_register_thread(xp_core.audio,sig_audio_play,audio_play_routine,"audio player"))==UINT_MAX) return rc;
 	while(xp_core.mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }
     return 0;
@@ -714,44 +756,6 @@ void xmp_restart_threads(int xp_id)
 #endif
 }
 
-/* Audio stuff */
-volatile float dec_ahead_audio_delay;
-int xp_thread_decode_audio()
-{
-    int free_buf, vbuf_size, pref_buf;
-    unsigned len=0;
-
-    free_buf = get_free_audio_buffer();
-
-    if( free_buf == -1 ) { /* End of file */
-	xp_core.a_eof = 1;
-	return 0;
-    }
-    if( free_buf < (int)sh_audio->audio_out_minsize ) /* full */
-	return 0;
-
-    len = get_len_audio_buffer();
-
-    if( len < MAX_OUTBURST ) /* Buffer underrun */
-	return decode_audio_buffer(MAX_OUTBURST);
-
-    if(xp_core.has_video) {
-	/* Match video buffer */
-	vbuf_size = dae_get_decoder_outrun(xp_core.video);
-	pref_buf = vbuf_size / sh_video->fps * sh_audio->af_bps;
-	pref_buf -= len;
-	if( pref_buf > 0 ) {
-	    len = min( pref_buf, free_buf );
-	    if( len > sh_audio->audio_out_minsize ) {
-		return decode_audio_buffer(len);
-	    }
-	}
-    } else
-	return decode_audio_buffer(min(free_buf,MAX_OUTBURST));
-
-    return 0;
-}
-
 #define MIN_AUDIO_TIME 0.05
 #define NOTHING_PLAYED (-1.0)
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
@@ -760,6 +764,7 @@ extern ao_data_t* ao_data;
 any_t* audio_play_routine( any_t* arg )
 {
     mpxp_thread_t* priv=arg;
+    sh_audio_t* sh_audio=priv->dae->sh;
 
     int eof = 0;
     struct timeval now;
@@ -911,6 +916,7 @@ any_t* audio_play_routine( any_t* arg )
 
 void dec_ahead_reset_sh_video(sh_video_t *shv)
 {
+    sh_video_t* sh_video=xp_core.video->sh;
     sh_video->vfilter = shv->vfilter;
 }
 

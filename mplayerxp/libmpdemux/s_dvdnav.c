@@ -447,9 +447,9 @@ static void mp_dvdnav_get_highlight (stream_t *stream, rect_highlight_t *hl) {
 
 static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*sp)
 {
-	dvdnav_priv_t *priv=s->priv;
-	switch(sp->type)
-	{
+    demux_stream_t *d_audio=s->demuxer->audio;
+    dvdnav_priv_t *priv=s->priv;
+    switch(sp->type) {
 	    case DVDNAV_BLOCK_OK: /* be silent about this one */
             			break;
 	    case DVDNAV_HIGHLIGHT: {
@@ -564,7 +564,7 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
 		// send new palette to SPU decoder
 		if (vo_data->spudec) spudec_update_palette(vo_data->spudec,(const unsigned int *)(sp->buf));
 		break;
-	}
+    }
 }
 
 static void __FASTCALL__ dvdnav_cmd_handler(stream_t* s,unsigned cmd)

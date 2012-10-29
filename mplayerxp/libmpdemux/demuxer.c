@@ -588,6 +588,7 @@ static demuxer_t* demux_open_stream(stream_t *stream,int file_format,int audio_i
 	    }
 	}
     }
+    stream->demuxer=demuxer;
     return demuxer;
 }
 

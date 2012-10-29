@@ -296,7 +296,7 @@ int stream_enable_cache(stream_t *stream,int size,int _min,int prefill){
   c->read_filepos=stream->start_pos;
 
   unsigned rc;
-  if((rc=xmp_register_thread(sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return 0;
+  if((rc=xmp_register_thread(NULL,sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return 0;
   c->pth=&xp_core.mpxp_threads[rc];
   // wait until cache is filled at least prefill_init %
   MSG_V("CACHE_PRE_INIT: %lld [%lld] %lld  pre:%d  eof:%d SS=%u \n",

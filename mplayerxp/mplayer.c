@@ -118,10 +118,6 @@ volatile unsigned xp_drop_frame_cnt=0;
 float xp_screen_pts;
 int audio_eof=0;
 
-demux_stream_t *d_video=NULL;
-demux_stream_t *d_audio=NULL;
-demux_stream_t *d_dvdsub=NULL;
-
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
 pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
@@ -426,6 +422,8 @@ float get_delay_audio_buffer(void)
 
 int decode_audio_buffer(unsigned len)
 {
+    priv_t*priv=mp_data->priv;
+    demux_stream_t *d_audio=priv->demuxer->audio;
     int ret, blen, l, l2;
     int next_idx;
     unsigned int t;
@@ -943,6 +941,7 @@ int decore_audio( unsigned _xp_id )
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     sh_video_t* sh_video=priv->demuxer->video->sh;
+    demux_stream_t *d_audio=priv->demuxer->audio;
     int eof = 0;
 /*========================== PLAY AUDIO ============================*/
 while(sh_audio){
@@ -1232,6 +1231,7 @@ int mpxp_play_video( int rtc_fd )
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     sh_video_t* sh_video=priv->demuxer->video->sh;
+    demux_stream_t *d_audio=priv->demuxer->audio;
     float v_pts=0;
     float sleep_time=0;
     int can_blit=0;
@@ -1372,6 +1372,7 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     sh_video_t* sh_video=priv->demuxer->video->sh;
+    demux_stream_t *d_dvdsub=priv->demuxer->sub;
     int seek_rval=1;
     audio_eof=0;
     if(seek->secs || seek->flags&DEMUX_SEEK_SET) {
@@ -1750,6 +1751,7 @@ static void mpxp_print_stream_formats(void) {
 static void mpxp_read_video_properties(void) {
     priv_t*priv=mp_data->priv;
     sh_video_t* sh_video=priv->demuxer->video->sh;
+    demux_stream_t *d_video=priv->demuxer->video;
     MP_UNIT("video_read_properties");
     if(!video_read_properties(sh_video)) {
 	MSG_ERR("Video: can't read properties\n");
@@ -1823,6 +1825,7 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
 static void mpxp_find_acodec(void) {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
+    demux_stream_t *d_audio=priv->demuxer->audio;
 // Go through the codec.conf and find the best codec...
     sh_audio->codec=NULL;
     if(mp_conf.audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,mp_conf.audio_family);
@@ -1855,6 +1858,7 @@ static void mpxp_find_acodec(void) {
 
 static int mpxp_find_vcodec(void) {
     priv_t*priv=mp_data->priv;
+    demux_stream_t *d_video=priv->demuxer->video;
     sh_video_t* sh_video=priv->demuxer->video->sh;
     int rc=0;
     MP_UNIT("init_video_codec");
@@ -1902,6 +1906,7 @@ static int mpxp_configure_audio(void) {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     sh_video_t* sh_video=priv->demuxer->video->sh;
+    demux_stream_t *d_audio=priv->demuxer->audio;
     int rc=0;
     const ao_info_t *info=ao_get_info();
     MP_UNIT("setup_audio");
@@ -2444,9 +2449,10 @@ play_next_file:
 	priv->demuxer=NULL;
 	priv->inited_flags&=~INITED_DEMUXER;
     }
-    d_audio=NULL;
-    d_video=NULL;
     if(priv->demuxer) {
+	priv->demuxer->audio=NULL;
+	priv->demuxer->video=NULL;
+	priv->demuxer->sub=NULL;
 	priv->demuxer->audio->sh=NULL;
 	priv->demuxer->video->sh=NULL;
     }
@@ -2498,6 +2504,9 @@ play_next_file:
     priv->inited_flags|=INITED_DEMUXER;
     input_state.after_dvdmenu=0;
 
+    demux_stream_t *d_video;
+    demux_stream_t *d_audio;
+    demux_stream_t *d_dvdsub;
     d_audio=priv->demuxer->audio;
     d_video=priv->demuxer->video;
     d_dvdsub=priv->demuxer->sub;

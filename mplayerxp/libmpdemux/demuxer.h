@@ -93,9 +93,6 @@ typedef struct demux_stream_s {
     int			pts_flags;	/**< PTS flags like trigger for correction applying (DVD's PTS correction) */
 } demux_stream_t;
 
-extern demux_stream_t *d_audio;
-extern demux_stream_t *d_dvdsub;
-
 #define MAX_A_STREAMS 256
 #define MAX_V_STREAMS 256
 #define MAX_S_STREAMS 256
