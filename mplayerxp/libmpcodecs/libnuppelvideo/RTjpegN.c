@@ -29,10 +29,6 @@
 #include "config.h"
 #include "RTjpegN.h"
 
-#ifdef CAN_COMPILE_MMX
-#include "mmx.h"
-#endif
-
 //#define SHOWBLOCK 1
 #define BETTERCOMPRESSION 1
 
