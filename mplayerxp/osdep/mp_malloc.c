@@ -132,7 +132,7 @@ void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call)
 void	mp_uninit_malloc(int verbose)
 {
     if(priv->num_allocs && verbose)
-	MSG_WARN("Warning: number of calls alloc()>free() in %lli times\n",priv->num_allocs);
+	MSG_WARN("Warning: from %lli total calls of alloc() were not freed %lli buffers\n",priv->total_calls,priv->num_allocs);
     free(priv);
     priv=NULL;
 }
