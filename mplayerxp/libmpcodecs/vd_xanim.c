@@ -14,7 +14,7 @@
 #include <stdarg.h> /* va_alist, va_start, va_end */
 #include <errno.h> /* strerror, errno */
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 #include "libmpconf/codec-cfg.h"
 

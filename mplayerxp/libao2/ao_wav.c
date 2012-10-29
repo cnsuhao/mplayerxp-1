@@ -25,12 +25,12 @@
 #include <string.h>
 #include "xmp_core.h"
 
-#include "../bswap.h"
+#include "osdep/bswap.h"
 #include "postproc/af_format.h"
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
-#include "../libvo/video_out.h"
+#include "libvo/video_out.h"
 #include "help_mp.h"
 #include "ao_msg.h"
 

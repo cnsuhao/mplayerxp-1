@@ -10,9 +10,9 @@
 #include "mp_config.h"
 #include "help_mp.h"
 #include "codecs_ld.h"
-#include "cpudetect.h"
+#include "osdep/cpudetect.h"
 
-#include "../libao2/afmt.h"
+#include "libao2/afmt.h"
 #include "ad_a52.h"
 
 #define IEC61937_DATA_TYPE_AC3 1

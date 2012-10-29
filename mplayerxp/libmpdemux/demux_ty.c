@@ -35,8 +35,8 @@
 #include <time.h>
 #include <stdarg.h>
 
-#include "../mp_config.h"
-#include "bswap.h"
+#include "mp_config.h"
+#include "osdep/bswap.h"
 #include "help_mp.h"
 
 #include "stream.h"

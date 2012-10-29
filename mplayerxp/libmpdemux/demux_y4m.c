@@ -10,14 +10,14 @@
 #include <unistd.h>
 #include <string.h> /* strtok */
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 #include "yuv4mpeg.h"
 
 //#include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "demux_msg.h"
 
 typedef struct {

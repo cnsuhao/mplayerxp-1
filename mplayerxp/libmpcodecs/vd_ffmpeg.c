@@ -13,13 +13,13 @@
 
 #include "help_mp.h"
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
-#include "../postproc/postprocess.h"
-#include "../postproc/vf.h"
-#include "../libvo/video_out.h"
+#include "postproc/postprocess.h"
+#include "postproc/vf.h"
+#include "libvo/video_out.h"
 
 static const vd_info_t info = {
 	"FFmpeg's libavcodec codec family",

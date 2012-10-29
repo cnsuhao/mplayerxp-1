@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "mp_config.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
@@ -28,7 +28,7 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(qtvideo)
 
-#include "../bswap.h"
+#include "osdep/bswap.h"
 
 #ifdef MACOSX
 #include <QuickTime/ImageCodec.h>

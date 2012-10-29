@@ -56,7 +56,7 @@
 #endif
 #include <stdio.h>
 
-#include "cpudetect.h"
+#include "osdep/cpudetect.h"
 
 #ifndef __LZO_CONF_H
 #define __LZO_CONF_H

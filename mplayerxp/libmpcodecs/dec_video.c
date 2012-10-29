@@ -10,7 +10,7 @@
 #endif
 #include <stdlib.h>
 #include <unistd.h>
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "help_mp.h"
 
 #include "osdep/timer.h"
@@ -38,7 +38,7 @@
 vf_cfg_t vf_cfg; // Configuration for audio filters
 
 #include "postproc/postprocess.h"
-#include "cpudetect.h"
+#include "osdep/cpudetect.h"
 #include "vd_msg.h"
 
 extern int v_bright;

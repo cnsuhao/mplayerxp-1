@@ -1,5 +1,5 @@
 #include "af.h"
-#include "../libao2/afmt.h"
+#include "libao2/afmt.h"
 
 #define AFMT_AF_FLAGS             0x70000000
 

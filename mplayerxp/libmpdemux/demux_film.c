@@ -16,10 +16,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"

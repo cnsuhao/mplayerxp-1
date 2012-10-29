@@ -11,7 +11,7 @@
 #include <limits.h>
 
 #include "af.h"
-#include "../bswap.h"
+#include "osdep/bswap.h"
 #include "dsp.h"
 #include "loader/wine/mmreg.h"
 

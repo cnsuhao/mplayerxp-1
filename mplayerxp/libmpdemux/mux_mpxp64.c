@@ -10,15 +10,15 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "../mp_config.h"
-#include "../version.h"
-#include "../nls/nls.h"
+#include "mp_config.h"
+#include "version.h"
+#include "nls/nls.h"
 
 #include "loader/wine/mmreg.h"
 #include "loader/wine/avifmt.h"
 #include "loader/wine/vfw.h"
 #include "loader/qtx/qtxsdk/components.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 #include "stream.h"
 #include "demuxer.h"

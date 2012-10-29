@@ -1,8 +1,8 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 #include "stream.h"
 #include "demuxer.h"

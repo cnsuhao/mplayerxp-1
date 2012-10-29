@@ -6,12 +6,12 @@
 #include <inttypes.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "postprocess.h"
-#include "../libmpcodecs/codecs_ld.h"
-#include "../cpudetect.h"
+#include "libmpcodecs/codecs_ld.h"
+#include "osdep/cpudetect.h"
 #define MSGT_CLASS MSGT_PP
-#include "../__mp_msg.h"
+#include "__mp_msg.h"
 
 char * npp_options=NULL;
 

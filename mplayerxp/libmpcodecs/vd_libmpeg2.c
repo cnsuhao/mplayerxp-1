@@ -11,11 +11,11 @@
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "mp_config.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "vd_internal.h"
-#include "../cpudetect.h"
-#include "../mm_accel.h"
-#include "../postproc/postprocess.h"
+#include "osdep/cpudetect.h"
+#include "osdep/mm_accel.h"
+#include "postproc/postprocess.h"
 #include "codecs_ld.h"
 
 static const vd_info_t info =

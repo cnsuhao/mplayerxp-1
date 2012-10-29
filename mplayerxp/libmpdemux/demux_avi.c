@@ -4,14 +4,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "aviheader.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libmpconf/cfgparser.h"

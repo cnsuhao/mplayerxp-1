@@ -1,4 +1,4 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,9 +7,9 @@
 #include "stheader.h"
 #include "genres.h"
 #include <limits.h>
-#include "../libmpcodecs/dec_audio.h"
+#include "libmpcodecs/dec_audio.h"
 #include "aviprint.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "mp3_hdr.h"
 #include <string.h>
 #ifdef MP_DEBUG

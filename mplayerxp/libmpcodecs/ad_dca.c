@@ -9,15 +9,15 @@
 
 #include "mp_config.h"
 #include "help_mp.h"
-#include "cpudetect.h"
+#include "osdep/cpudetect.h"
 
 #include "libdca/dca.h"
-#include "../mm_accel.h"
-#include "../mplayer.h"
-#include "../bswap.h"
+#include "osdep/mm_accel.h"
+#include "mplayer.h"
+#include "osdep/bswap.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "../postproc/af.h"
+#include "postproc/af.h"
 
 #define MAX_AC5_FRAME 4096
 
@@ -30,8 +30,6 @@ typedef struct dca_priv_s
     float last_pts;
 }dca_priv_t;
 
-
-#include "bswap.h"
 
 static const ad_info_t info =
 {

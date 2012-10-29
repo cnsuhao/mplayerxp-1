@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "../mplayer.h"
-#include "../cpudetect.h"
+#include "cpudetect.h"
 #include "osdep_msg.h"
 
 

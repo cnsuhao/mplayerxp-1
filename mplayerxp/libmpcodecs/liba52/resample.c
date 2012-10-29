@@ -4,14 +4,14 @@
 
 // a52_resample() should do the conversion.
 
-#include "../../mp_config.h"
+#include "mp_config.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include "a52.h"
 #include "a52_internal.h"
-#include "../../mm_accel.h"
-#include "../../mangle.h"
-#include "../../cpudetect.h"
+#include "osdep/mm_accel.h"
+#include "osdep/mangle.h"
+#include "osdep/cpudetect.h"
 
 int (* a52_resample) (float * _f, int16_t * s16)=NULL;
 int (* a52_resample32) (float * _f, float * s16)=NULL;

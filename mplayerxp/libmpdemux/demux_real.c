@@ -23,15 +23,15 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "aviprint.h"
-#include "../libmpcodecs/dec_audio.h"
+#include "libmpcodecs/dec_audio.h"
 #include "demux_msg.h"
 
 #define MKTAG(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))

@@ -23,8 +23,8 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "../mp_config.h"
-#include "../cpudetect.h"
+#include "mp_config.h"
+#include "osdep/cpudetect.h"
 
 #ifdef USE_SETLOCALE
 #include <locale.h>

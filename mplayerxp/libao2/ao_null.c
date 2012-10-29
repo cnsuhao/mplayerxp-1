@@ -6,9 +6,9 @@
 #include <sys/time.h>
 
 #include "mp_config.h"
-#include "../bswap.h"
+#include "osdep/bswap.h"
 
-#include "../libmpdemux/mrl.h"
+#include "libmpdemux/mrl.h"
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"

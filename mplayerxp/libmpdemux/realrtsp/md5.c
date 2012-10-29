@@ -30,7 +30,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "../../bswap.h"
+#include "osdep/bswap.h"
 #include <string.h>
 #include "md5.h"
 

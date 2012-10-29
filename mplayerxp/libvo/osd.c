@@ -11,8 +11,8 @@
 //#define ENABLE_PROFILE
 #include "osdep/my_profile.h"
 #include <inttypes.h>
-#include "cpudetect.h"
-#include "mangle.h"
+#include "osdep/cpudetect.h"
+#include "osdep/mangle.h"
 #include "mplayer.h"
 #include "osd.h"
 #include "vo_msg.h"

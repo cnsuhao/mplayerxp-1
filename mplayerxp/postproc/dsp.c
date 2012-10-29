@@ -25,8 +25,8 @@ extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
 
 /* MMX optimized stugff */
 #include <limits.h>
-#include "../mp_config.h"
-#include "../cpudetect.h"
+#include "mp_config.h"
+#include "osdep/cpudetect.h"
 
 #define PVECTOR_ACCEL_H "dsp_accel.h"
 #include "pvector/pvector_inc.h"

@@ -8,7 +8,7 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"
@@ -18,7 +18,7 @@
 #include "nls/nls.h"
 #include "libmpsub/subreader.h"
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "aviheader.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libvo/sub.h"

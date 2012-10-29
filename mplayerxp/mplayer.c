@@ -54,8 +54,8 @@
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
 
-#include "cpudetect.h"
-#include "mm_accel.h"
+#include "osdep/cpudetect.h"
+#include "osdep/mm_accel.h"
 
 #include "input/input.h"
 #include "dump.h"

@@ -11,16 +11,16 @@
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "help_mp.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "mp_config.h"
 #include "ad_internal.h"
-#include "../mplayer.h"
-#include "../cpudetect.h"
-#include "../mm_accel.h"
+#include "mplayer.h"
+#include "osdep/cpudetect.h"
+#include "osdep/mm_accel.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "../postproc/af.h"
+#include "postproc/af.h"
 
 static const ad_info_t info =
 {

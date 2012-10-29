@@ -22,7 +22,7 @@
 #include "help_mp.h"
 
 #include <dlfcn.h>
-#include "../bswap.h"
+#include "osdep/bswap.h"
 #include "libmpsub/vobsub.h"
 #include "libmpsub/subreader.h"
 #include "libvo/sub.h"

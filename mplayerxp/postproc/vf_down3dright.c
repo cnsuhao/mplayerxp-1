@@ -3,15 +3,15 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
-#include "../cpudetect.h"
+#include "mp_config.h"
+#include "osdep/cpudetect.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 
-#include "../libvo/fastmemcpy.h"
-#include "../postproc/swscale.h"
+#include "libvo/fastmemcpy.h"
+#include "postproc/swscale.h"
 #include "pp_msg.h"
 
 struct vf_priv_s {

@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <pthread.h>
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #define MSGT_CLASS MSGT_GLOBAL
-#include "../__mp_msg.h"
+#include "__mp_msg.h"
 
 #if defined(USE_FASTMEMCPY)
 #include "fastmemcpy.h"
-#include "../cpudetect.h"
+#include "osdep/cpudetect.h"
 
 #define BLOCK_SIZE 4096
 #define CONFUSION_FACTOR 0

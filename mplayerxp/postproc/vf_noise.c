@@ -22,17 +22,17 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "../mp_config.h"
-#include "../cpudetect.h"
+#include "mp_config.h"
+#include "osdep/cpudetect.h"
 
 #ifdef HAVE_MALLOC
 #include <malloc.h>
 #endif
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
-#include "../libvo/fastmemcpy.h"
+#include "libvo/fastmemcpy.h"
 #include "pp_msg.h"
 
 #define MAX_NOISE 4096
@@ -86,21 +86,21 @@ static int8_t * __FASTCALL__ initNoise(FilterParam *fp){
 	{
 		if(uniform) {
 			if (averaged) {
-		    		if (pattern) {
+				if (pattern) {
 					noise[i]= (RAND_N(strength) - strength/2)/6
 						+patt[j%4]*strength*0.25/3;
 				} else {
 					noise[i]= (RAND_N(strength) - strength/2)/3;
-		    		}
+				}
 			} else {
-		    		if (pattern) {
+				if (pattern) {
 				    noise[i]= (RAND_N(strength) - strength/2)/2
 					    + patt[j%4]*strength*0.25;
 				} else {
 					noise[i]= RAND_N(strength) - strength/2;
-		    		}
+				}
 			}
-	    	} else {
+		} else {
 			double x1, x2, w, y1;
 			do {
 				x1 = 2.0 * rand()/(float)RAND_MAX - 1.0;

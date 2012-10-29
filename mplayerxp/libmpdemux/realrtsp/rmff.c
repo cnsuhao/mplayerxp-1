@@ -28,7 +28,7 @@
 
 #include "rmff.h"
 #include "xbuffer.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "mplayer.h"
 #include "md5.h"
 #include "../demux_msg.h"

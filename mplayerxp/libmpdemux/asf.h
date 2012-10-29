@@ -3,7 +3,7 @@
 
 //#include "cp_config.h"	/* for WORDS_BIGENDIAN */
 #include <inttypes.h>
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 #ifndef MIN
 #define MIN(a,b) ((a<b)?a:b)

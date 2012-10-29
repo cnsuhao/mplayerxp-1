@@ -38,7 +38,7 @@
 #include "fastmemcpy.h"
 #include "img_format.h"
 #include "screenshot.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "dri_vo.h"
 #include "osd.h"
 #include "sub.h"

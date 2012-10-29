@@ -8,16 +8,16 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include "../mp_config.h"
+#include "mp_config.h"
 
-#include "../bswap.h"
+#include "osdep/bswap.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 #include "af.h"
-#include "../help_mp.h"
-#include "../osdep/get_path.h"
+#include "help_mp.h"
+#include "osdep/get_path.h"
 
 
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */

@@ -21,15 +21,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../../mp_config.h"
+#include "mp_config.h"
 
 #include <string.h>
 #include <inttypes.h>
 
 #include "a52.h"
 #include "a52_internal.h"
-#include "../../mm_accel.h"
-#include "../../cpudetect.h"
+#include "osdep/mm_accel.h"
+#include "osdep/cpudetect.h"
 
 #define CONVERT(acmod,output) (((output) << 3) + (acmod))
 

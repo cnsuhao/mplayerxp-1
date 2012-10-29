@@ -5,10 +5,10 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <limits.h>
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "aviheader.h"
 
 #include "muxer.h"
@@ -17,7 +17,7 @@
 #include "stheader.h"
 #include "libavformat/avformat.h"
 #include "libavformat/riff.h"
-#include "../libmpcodecs/codecs_ld.h"
+#include "libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
 
 extern unsigned int codec_get_wav_tag(int id);

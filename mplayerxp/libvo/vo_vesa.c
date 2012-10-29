@@ -30,20 +30,20 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 
 #include "fastmemcpy.h"
 #include "sub.h"
 #include "osdep/vbelib.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "aspect.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
 #endif
 #include "dri_vo.h"
-#include "../help_mp.h"
+#include "help_mp.h"
 
 LIBVO_EXTERN(vesa)
 

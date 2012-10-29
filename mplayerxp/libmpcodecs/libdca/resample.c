@@ -8,10 +8,10 @@
 #include <stdio.h>
 #include "dca.h"
 #include "dca_internal.h"
-#include "../../mp_config.h"
-#include "../../mm_accel.h"
-#include "../../mangle.h"
-#include "../../cpudetect.h"
+#include "mp_config.h"
+#include "osdep/mm_accel.h"
+#include "osdep/mangle.h"
+#include "osdep/cpudetect.h"
 
 int (* dca_resample) (float * _f, int16_t * s16)=NULL;
 int (* dca_resample32) (float * _f, float * s16)=NULL;

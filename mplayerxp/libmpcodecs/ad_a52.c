@@ -9,15 +9,15 @@
 
 #include "mp_config.h"
 #include "help_mp.h"
-#include "cpudetect.h"
+#include "osdep/cpudetect.h"
 
-#include "../mm_accel.h"
-#include "../mplayer.h"
+#include "osdep/mm_accel.h"
+#include "mplayer.h"
 #include "liba52/a52.h"
 #include "ad_a52.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "../postproc/af.h"
+#include "postproc/af.h"
 
 #define MAX_AC3_FRAME 3840
 
@@ -25,7 +25,7 @@ a52_state_t* mpxp_a52_state;
 uint32_t mpxp_a52_accel=0;
 uint32_t mpxp_a52_flags=0;
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 static const ad_info_t info = 
 {

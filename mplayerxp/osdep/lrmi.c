@@ -26,7 +26,7 @@ Original location: http://cvs.debian.org/lrmi/
 #include <unistd.h>
 #include <fcntl.h>
 #include "lrmi.h"
-#include "../cpudetect.h"
+#include "cpudetect.h"
 #include "osdep_msg.h"
 
 #define REAL_MEM_BASE 	((any_t*)0x10000)

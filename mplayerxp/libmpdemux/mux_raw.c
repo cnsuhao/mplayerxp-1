@@ -5,8 +5,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
-#include "../version.h"
+#include "mp_config.h"
+#include "version.h"
 
 //#include "stream.h"
 //#include "demuxer.h"
@@ -15,7 +15,7 @@
 #include "loader/wine/mmreg.h"
 #include "loader/wine/avifmt.h"
 #include "loader/wine/vfw.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 #include "muxer.h"
 #include "aviheader.h"

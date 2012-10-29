@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "ad_internal.h"
-#include "bswap.h"
-#include "../libao2/afmt.h"
+#include "osdep/bswap.h"
+#include "libao2/afmt.h"
 
 static const ad_info_t info =
 {

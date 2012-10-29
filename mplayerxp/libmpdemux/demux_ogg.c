@@ -12,16 +12,16 @@
 #include <theora/theora.h>
 #endif
 
-#include "../mplayer.h"
-#include "bswap.h"
+#include "mplayer.h"
+#include "osdep/bswap.h"
 #include "help_mp.h"
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "aviprint.h"
-#include "../libmpcodecs/codecs_ld.h"
-#include "../libmpcodecs/dec_audio.h"
-#include "../libvo/video_out.h"
+#include "libmpcodecs/codecs_ld.h"
+#include "libmpcodecs/dec_audio.h"
+#include "libvo/video_out.h"
 #include "demux_msg.h"
 
 #define BLOCK_SIZE 4096

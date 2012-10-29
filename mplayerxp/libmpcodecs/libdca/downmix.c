@@ -22,12 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../../mp_config.h"
+#include "mp_config.h"
 
 #include <string.h>
 #include <inttypes.h>
 
-#include "../../cpudetect.h"
+#include "osdep/cpudetect.h"
 #include "dca.h"
 #include "dca_internal.h"
 
@@ -344,7 +344,7 @@ int dca_downmix_coeff (level_t * coeff, int acmod, int output, level_t level,
     return -1;	/* NOTREACHED */
 }
 
-#include "../../mm_accel.h"
+#include "osdep/mm_accel.h"
 
 #undef HAVE_MMX
 #undef HAVE_MMX2

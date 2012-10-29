@@ -1,4 +1,4 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #define READ_USLEEP_TIME 10000
 #define FILL_USLEEP_TIME 50000
@@ -14,14 +14,14 @@
 #include <pthread.h>
 
 #include "stream.h"
-#include "../sig_hand.h"
-#include "../osdep/timer.h"
-#include "../cpudetect.h"
-#include "bswap.h"
-#include "../libvo/fastmemcpy.h"
-#include "../help_mp.h"
+#include "sig_hand.h"
+#include "osdep/timer.h"
+#include "osdep/cpudetect.h"
+#include "osdep/bswap.h"
+#include "libvo/fastmemcpy.h"
+#include "help_mp.h"
 #include "mpdemux.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "demux_msg.h"
 
 #ifndef min

@@ -2,10 +2,10 @@
 #ifndef __af_mp_h__
 #define __af_mp_h__
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "pp_msg.h"
-#include "../cpudetect.h"
-#include "../libao2/afmt.h"
+#include "libao2/afmt.h"
+#include "osdep/cpudetect.h"
 
 /* Set the initialization type from mplayers cpudetect */
 #ifdef AF_INIT_TYPE

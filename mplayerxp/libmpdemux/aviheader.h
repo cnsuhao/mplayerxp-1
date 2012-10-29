@@ -2,7 +2,7 @@
 #define	_aviheader_h
 
 //#include "mp_config.h"	/* get correct definition WORDS_BIGENDIAN */
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 /*
  * Some macros to swap little endian structures read from an AVI file

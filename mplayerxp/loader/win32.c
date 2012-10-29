@@ -942,7 +942,7 @@ static void WINAPI expGetSystemInfo(SYSTEM_INFO* si)
 
     /* mplayer's way to detect PF's */
     {
-#include "cpudetect.h"
+#include "osdep/cpudetect.h"
 	extern CpuCaps gCpuCaps;
 
 	if (gCpuCaps.hasMMX)

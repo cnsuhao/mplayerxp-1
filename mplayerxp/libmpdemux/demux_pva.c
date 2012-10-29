@@ -26,14 +26,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "demux_msg.h"
 
 /*
@@ -42,7 +42,7 @@
 
 #define PVA_MAX_VIDEO_PACK_LEN 6*1024
 
-#define VIDEOSTREAM 0x01	
+#define VIDEOSTREAM 0x01
 #define MAINAUDIOSTREAM 0x02
 
 typedef struct {

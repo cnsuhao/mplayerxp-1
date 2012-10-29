@@ -24,17 +24,17 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "../mp_config.h"
-#include "../cpudetect.h"
+#include "mp_config.h"
+#include "osdep/cpudetect.h"
 
 #ifdef HAVE_MALLOC
 #include <malloc.h>
 #endif
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
-#include "../libvo/fastmemcpy.h"
+#include "libvo/fastmemcpy.h"
 #include "pp_msg.h"
 
 //===========================================================================//

@@ -6,11 +6,11 @@
 #include "mp_config.h"
 
 #include "ad_internal.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 #include "codecs_ld.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 #ifdef WIN32_LOADER
-#include "../../loader/ldt_keeper.h"
+#include "loader/ldt_keeper.h"
 #endif
 
 #ifdef MACOSX

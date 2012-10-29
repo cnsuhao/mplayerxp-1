@@ -3,15 +3,15 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
-#include "../cpudetect.h"
+#include "mp_config.h"
+#include "osdep/cpudetect.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 
-#include "../libvo/video_out.h"
-#include "../libvo/fastmemcpy.h"
+#include "libvo/video_out.h"
+#include "libvo/fastmemcpy.h"
 #include "swscale.h"
 #include "libavutil/log.h"
 #include "vf_scale.h"

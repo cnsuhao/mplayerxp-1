@@ -10,7 +10,7 @@
 
 #include "mp_config.h"
 #include "help_mp.h"
-#include "bswap.h"
+#include "osdep/bswap.h"
 
 #define FF_API_OLD_DECODE_AUDIO 1
 #include "libavcodec/avcodec.h"
