@@ -222,7 +222,7 @@ static int xp_thread_decode_audio(void)
     free_buf = get_free_audio_buffer();
 
     if( free_buf == -1 ) { /* End of file */
-	xp_core.a_eof = 1;
+	xp_core.audio->eof = 1;
 	return 0;
     }
     if( free_buf < (int)sh_audio->audio_out_minsize ) /* full */
@@ -357,8 +357,8 @@ any_t* Va_dec_ahead_routine( any_t* arg )
     float v_pts,mpeg_timer=HUGE;
 
     priv->state=Pth_Run;
-    xp_core.eof = 0;
-    xp_core.a_eof=0;
+    priv->dae->eof = 0;
+    xp_core.audio->eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
     __MP_UNIT(priv->p_idx,"dec_ahead");
     priv->pid = getpid();
@@ -373,7 +373,7 @@ any_t* Va_dec_ahead_routine( any_t* arg )
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS;
     else
 	xp_is_bad_pts = mp_conf.av_sync_pts?0:1;
-while(!xp_core.eof){
+while(!priv->dae->eof){
     unsigned char* start=NULL;
     int in_size;
     if(priv->state==Pth_Canceling) break;
@@ -400,7 +400,7 @@ pt_sleep:
     in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,sh_video->fps);
     if(in_size<0) {
 	xp_core.video->fra[xp_core.video->decoder_idx].eof=1;
-	xp_core.eof=1;
+	priv->dae->eof=1;
 	break;
     }
     /* in_size==0: it's or broken stream or demuxer's bug */
@@ -484,10 +484,10 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	usleep(1);
     }
 /*------------------------ frame decoded. --------------------*/
-} /* while(!xp_core.eof)*/
+} /* while(!priv->dae->eof)*/
 
 if(xp_core.has_audio && mp_conf.xp<XP_VAFull) {
-    while(!xp_core.a_eof && priv->state!=Pth_Canceling && priv->state!=Pth_Sleep) {
+    while(!xp_core.audio->eof && priv->state!=Pth_Canceling && priv->state!=Pth_Sleep) {
 	__MP_UNIT(priv->p_idx,"decode audio");
 	if(!xp_thread_decode_audio()) usleep(1);
 	__MP_UNIT(priv->p_idx,NULL);
@@ -510,8 +510,8 @@ any_t* a_dec_ahead_routine( any_t* arg )
     float d;
 
     priv->state=Pth_Run;
-    xp_core.eof = 0;
-    xp_core.a_eof=0;
+    xp_core.video->eof=0;
+    xp_core.audio->eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
     priv->pid = getpid();
     __MP_UNIT(priv->p_idx,"dec_ahead");
@@ -525,7 +525,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	}
 	__MP_UNIT(priv->p_idx,"decode audio");
 	while((ret = xp_thread_decode_audio()) == 2) {/* Almost empty buffer */
-	    if(xp_core.a_eof) break;
+	    if(xp_core.audio->eof) break;
 	}
 	dec_ahead_can_adseek=1;
 
@@ -534,7 +534,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	__MP_UNIT(priv->p_idx,"sleep");
 	LOCK_AUDIO_DECODE();
 	if(priv->state!=Pth_Canceling) {
-	    if(xp_core.a_eof) {
+	    if(xp_core.audio->eof) {
 		__MP_UNIT(priv->p_idx,"wait end of work");
 		pthread_cond_wait( &audio_decode_cond, &audio_decode_mutex );
 	    } else if(ret==0) { /* Full buffer or end of file */
@@ -734,26 +734,6 @@ void xmp_restart_threads(int xp_id)
 	xp_core.mpxp_threads[i]->state=Pth_Run;
 	while(xp_core.mpxp_threads[i]->state==Pth_ASleep) usleep(0);
     }
-#if 0
-    if(mp_conf.xp && !pthread_is_living && !a_pthread_is_living) {
-        return;
-    }
-    if(!xp_core.has_audio)
-	decore_audio(xp_id);
-    else
-	xp_thread_decode_audio();
-
-    if(xp_core.has_video) {
-	while(dae_curr_vdecoded() == dae_curr_vplayed() && !xp_core.eof)
-	    usleep(1); /* Wait for thread to decode first frame */
-    }
-
-    if(a_pthread_is_living)
-	__MP_SYNCHRONIZE(audio_decode_mutex,pthread_cond_signal(&audio_decode_cond));
-
-    if(pthread_audio_is_living)
-	__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
-#endif
 }
 
 #define MIN_AUDIO_TIME 0.05
@@ -828,7 +808,7 @@ any_t* audio_play_routine( any_t* arg )
 	    samples = 10;
 	    min_audio = MAX_AUDIO_TIME;
 	    max_audio = 0;
-	} else if( !xp_core.a_eof && collect_samples) {
+	} else if( !xp_core.audio->eof && collect_samples) {
 	    if( dec_ahead_audio_delay < min_audio )
 		min_audio = dec_ahead_audio_delay;
 	    if( dec_ahead_audio_delay > max_audio )
@@ -925,7 +905,7 @@ void sig_dec_ahead_video( void )
     MSG_T("sig_dec_ahead_video\n");
     mp_msg_flush();
 
-    xp_core.eof = 1;
+    xp_core.video->eof = 1;
     xp_core.video->fra[dae_curr_vdecoded()].eof=1;
     /*
 	Unlock all mutex

@@ -33,6 +33,7 @@ typedef struct dec_ahead_engine_s {
     unsigned		nframes;	/* number of frames in buffer */
     frame_attr_t*	fra;		/* frame related attributes */
     any_t*		sh;		/* corresponded sh_audio_t or sh_video_t */
+    int			eof;		/* EOF for stream */
     /* for statistics */
     unsigned		num_slow_frames;/* number of frames which were delayed due slow computer */
     long long int	num_played_frames;
@@ -65,13 +66,11 @@ typedef struct xp_core_s {
     dec_ahead_engine_t*		audio;
     volatile int		in_pause;
     volatile int		in_resize;
-    volatile int		eof;
     /* XMP engine */
     mpxp_thread_t*		mpxp_threads[MAX_MPXP_THREADS];
     unsigned			num_threads;
     pthread_t			main_pth_id;
     /* doubtful stuff */
-    int				a_eof; // audio eof
     unsigned			num_a_buffs; // number of audio buffers
     unsigned			num_v_buffs; // number of video buffers
 }xp_core_t;
