@@ -94,6 +94,29 @@ demux_stream_t *d_video=NULL;
 static int osd_show_framedrop = 0;
 static int osd_function=OSD_PLAY;
 
+demux_stream_t *d_audio=NULL;
+demux_stream_t *d_dvdsub=NULL;
+
+static sh_audio_t *sh_audio=NULL;
+static sh_video_t *sh_video=NULL;
+static demuxer_t *demuxer=NULL;
+ao_data_t* ao_data=NULL;
+vo_data_t* vo_data=NULL;
+pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
+
+static int vo_inited=0;
+static int ao_inited=0;
+//ao_functions_t *audio_out=NULL;
+
+/* mp_conf.benchmark: */
+static unsigned bench_dropped_frames=0;
+static float max_av_resync=0;
+
+// A-V sync:
+static float c_total=0;
+
+static uint32_t our_n_frames=0;
+
 /************************************************************************
     Special case: inital audio PTS:
     example: some movies has a_pts = v_pts = XX sec
@@ -129,23 +152,6 @@ static int cfg_include(struct config *conf, char *filename){
 /* Common FIFO functions, and keyboard/event FIFO code */
 #include "fifo.h"
 /**************************************************************************/
-
-static int vo_inited=0;
-static int ao_inited=0;
-//ao_functions_t *audio_out=NULL;
-
-/* mp_conf.benchmark: */
-static unsigned bench_dropped_frames=0;
-static float max_av_resync=0;
-
-// A-V sync:
-static float c_total=0;
-
-static uint32_t our_n_frames=0;
-
-
-static stream_t* stream=NULL;
-
 mp_conf_t mp_conf;
 mp_data_t*mp_data=NULL;
 
@@ -216,15 +222,6 @@ static unsigned int inited_flags=0;
 #define INITED_SUBTITLE 0x10000000
 #define INITED_ALL	0xFFFFFFFF
 
-demux_stream_t *d_audio=NULL;
-demux_stream_t *d_dvdsub=NULL;
-
-static sh_audio_t *sh_audio=NULL;
-static sh_video_t *sh_video=NULL;
-static demuxer_t *demuxer=NULL;
-ao_data_t* ao_data=NULL;
-vo_data_t* vo_data=NULL;
-pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
 /* XP audio buffer */
 typedef struct audio_buffer_index_s {
     float pts;
@@ -576,6 +573,7 @@ int get_free_audio_buffer(void)
 
 
 void uninit_player(unsigned int mask){
+    stream_t* stream=demuxer->stream;
     fflush(stdout);
     fflush(stderr);
     mask=inited_flags&mask;
@@ -1619,6 +1617,7 @@ static int mpxp_init_vobsub(const char *filename) {
 }
 
 static int mpxp_handle_playlist(const char *filename) {
+    stream_t* stream=demuxer->stream;
     int eof=0;
     play_tree_t* entry;
     // Handle playlist
@@ -1654,6 +1653,7 @@ static int mpxp_handle_playlist(const char *filename) {
 
 static void mpxp_init_dvd_nls(void) {
 /* Add NLS support here */
+    stream_t* stream=demuxer->stream;
     char *lang;
     if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
     MP_UNIT("dvd lang->id");
@@ -1724,50 +1724,49 @@ static void mpxp_read_video_properties(void) {
 }
 
 static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
-if (mp_conf.spudec_ifo) {
-  unsigned int palette[16], width, height;
-  MP_UNIT("spudec_init_vobsub");
-  if (vobsub_parse_ifo(NULL,mp_conf.spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
-    vo_data->spudec=spudec_new_scaled(palette, sh_video->src_w, sh_video->src_h);
-}
+    stream_t* stream=demuxer->stream;
+    if (mp_conf.spudec_ifo) {
+	unsigned int palette[16], width, height;
+	MP_UNIT("spudec_init_vobsub");
+	if (vobsub_parse_ifo(NULL,mp_conf.spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
+	    vo_data->spudec=spudec_new_scaled(palette, sh_video->src_w, sh_video->src_h);
+    }
 
-if (vo_data->spudec==NULL) {
-  unsigned *pal;
-  MP_UNIT("spudec_init");
-  if(stream->driver->control(stream,SCTRL_VID_GET_PALETTE,&pal)==SCTRL_OK)
-	vo_data->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
-}
+    if (vo_data->spudec==NULL) {
+	unsigned *pal;
+	MP_UNIT("spudec_init");
+	if(stream->driver->control(stream,SCTRL_VID_GET_PALETTE,&pal)==SCTRL_OK)
+	    vo_data->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
+    }
 
-if (vo_data->spudec==NULL) {
-  MP_UNIT("spudec_init_normal");
-  vo_data->spudec=spudec_new_scaled(NULL, sh_video->src_w, sh_video->src_h);
-  spudec_set_font_factor(vo_data->spudec,mp_conf.font_factor);
-}
+    if (vo_data->spudec==NULL) {
+	MP_UNIT("spudec_init_normal");
+	vo_data->spudec=spudec_new_scaled(NULL, sh_video->src_w, sh_video->src_h);
+	spudec_set_font_factor(vo_data->spudec,mp_conf.font_factor);
+    }
 
-if (vo_data->spudec!=NULL) {
-  inited_flags|=INITED_SPUDEC;
-  // Apply current settings for forced subs
-  spudec_set_forced_subs_only(vo_data->spudec,forced_subs_only);
-}
+    if (vo_data->spudec!=NULL) {
+	inited_flags|=INITED_SPUDEC;
+	// Apply current settings for forced subs
+	spudec_set_forced_subs_only(vo_data->spudec,forced_subs_only);
+    }
 
 #ifdef USE_SUB
 // after reading video params we should load subtitles because
 // we know fps so now we can adjust subtitles time to ~6 seconds AST
 // check .sub
-  MP_UNIT("read_subtitles_file");
-  if(mp_conf.sub_name){
-    mp_data->subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
-    if(!mp_data->subtitles) MSG_ERR(MSGTR_CantLoadSub,mp_conf.sub_name);
-  } else
-  if(mp_conf.sub_auto) { // auto load sub file ...
-    mp_data->subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
+    MP_UNIT("read_subtitles_file");
+    if(mp_conf.sub_name){
+	mp_data->subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
+	if(!mp_data->subtitles) MSG_ERR(MSGTR_CantLoadSub,mp_conf.sub_name);
+    } else if(mp_conf.sub_auto) { // auto load sub file ...
+	mp_data->subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
 				      : "default.sub", sh_video->fps );
-  }
-  if(mp_data->subtitles)
-  {
-    inited_flags|=INITED_SUBTITLE;
-    if(stream_dump_type>1) list_sub_file(mp_data->subtitles);
-  }
+    }
+    if(mp_data->subtitles) {
+	inited_flags|=INITED_SUBTITLE;
+	if(stream_dump_type>1) list_sub_file(mp_data->subtitles);
+    }
 #endif
 }
 
@@ -1946,6 +1945,7 @@ static void mpxp_print_audio_status(void) {
 
 #ifdef USE_OSD
 static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
+    stream_t* stream=demuxer->stream;
     int rc=0;
     if(*osd_visible) {
 	if (!--(*osd_visible)) {
@@ -2019,6 +2019,7 @@ typedef struct input_state_s {
 }input_state_t;
 
 static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* state) {
+    stream_t* stream=demuxer->stream;
   int v_bright=0;
   int v_cont=0;
   int v_hue=0;
@@ -2260,6 +2261,7 @@ For future:
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
 int main(int argc,char* argv[], char *envp[]){
+    stream_t* stream=NULL;
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
     char *ao_subdevice;
@@ -2366,8 +2368,8 @@ play_next_file:
     forced_subs_only=mpxp_init_vobsub(filename);
 
     MP_UNIT("mplayer");
-    if(!input_state.after_dvdmenu) {
-	stream=NULL;
+    if(!input_state.after_dvdmenu && demuxer) {
+	demuxer->stream=NULL;
 	demuxer=NULL;
     }
     d_audio=NULL;
@@ -2397,15 +2399,12 @@ play_next_file:
 	goto goto_next_file;
     }
 
-/* Add NLS support here */
-    mpxp_init_dvd_nls();
-
     MP_UNIT(NULL);
 
     // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
     if(mp_conf.s_cache_size && !stream_dump_type){
 	MP_UNIT("enable_cache");
-	if(!stream_enable_cache(stream,mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
+	if(!stream_enable_cache(demuxer->stream,mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
 	    if((eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY))) goto goto_next_file;
     }
 
@@ -2429,6 +2428,9 @@ play_next_file:
     d_audio=demuxer->audio;
     d_video=demuxer->video;
     d_dvdsub=demuxer->sub;
+
+/* Add NLS support here */
+    mpxp_init_dvd_nls();
 
     if(mp_conf.seek_to_byte) stream_skip(stream,mp_conf.seek_to_byte);
 
