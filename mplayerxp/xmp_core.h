@@ -38,6 +38,7 @@ typedef struct dec_ahead_engine_s {
     unsigned		num_slow_frames;/* number of frames which were delayed due slow computer */
     long long int	num_played_frames;
     long long int	num_decoded_frames; /* for frame dropping */
+    long long int	num_dropped_frames;
 }dec_ahead_engine_t;
 
 #define MAX_MPXP_THREADS 16

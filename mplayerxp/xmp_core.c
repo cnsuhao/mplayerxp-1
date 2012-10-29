@@ -176,26 +176,16 @@ pthread_cond_t audio_play_cond=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t audio_decode_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t audio_decode_cond=PTHREAD_COND_INITIALIZER;
 
-extern volatile int xp_drop_frame;
-extern volatile unsigned xp_drop_frame_cnt;
-
 extern volatile float xp_screen_pts;
 volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
 volatile int dec_ahead_can_adseek=1;  /* It is safe to seek audio buffer thread */
 
-/* Support for '-loop' option */
-extern int loop_times; /* it's const for xp mode */
-
-extern float rel_seek_secs;	/* FIXME: in hope that user will not rewind */
-extern int sof_seek_pos;	/* the movie at end of file :( */
-
 extern int decore_audio( int xp_id );
-
 extern void update_osd( float v_pts );
 
 /* To let audio decoder thread sleep as long as player */
-struct timespec audio_play_timeout;
-int audio_play_in_sleep=0;
+static struct timespec audio_play_timeout;
+static int audio_play_in_sleep=0;
 
 extern int init_audio_buffer(int size, int min_reserv, int indices, sh_audio_t *sh_audio);
 extern void uninit_audio_buffer(void);
@@ -451,7 +441,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     if(mp_data->output_quality) {
 	if(drop_param) mpcv_set_quality(sh_video,mp_data->output_quality);
     }
-    if(!blit_frame && drop_param) xp_drop_frame_cnt++;
+    if(!blit_frame && drop_param) priv->dae->num_dropped_frames++;
     if(blit_frame) {
 	unsigned idx=dae_curr_vdecoded();
 	if(xp_is_bad_pts)

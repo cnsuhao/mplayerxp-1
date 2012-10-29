@@ -114,7 +114,6 @@ typedef struct priv_s {
 **************************************************************************/
 #include "xmp_core.h"
 
-volatile unsigned xp_drop_frame_cnt=0;
 float xp_screen_pts;
 
 ao_data_t* ao_data=NULL;
@@ -1502,7 +1501,7 @@ static void show_benchmark(void)
 	   100.0*tot/total_time_usage);
     unsigned nframes=xp_core.video->num_played_frames;
     MSG_INFO("\nREAL RESULTS: from %u was dropped=%u\n"
-	,nframes,xp_drop_frame_cnt);
+	,nframes,xp_core.video->num_dropped_frames);
     MSG_INFO("\nMax. A-V resync is: %f\n",fabs(priv->max_av_resync));
 }
 
@@ -1981,7 +1980,7 @@ static void mpxp_run_ahead_engine(void) {
     if(sh_video)	MSG_OK("Using DECODING AHEAD mplayer's core with %u video buffers\n",xp_core.num_v_buffs);
     else 		MSG_OK("Using DECODING AHEAD mplayer's core with %u audio buffers\n",xp_core.num_a_buffs);
 /* reset counters */
-    xp_drop_frame_cnt=0;
+    xp_core.video->num_dropped_frames=0;
 }
 
 static void mpxp_print_audio_status(void) {
