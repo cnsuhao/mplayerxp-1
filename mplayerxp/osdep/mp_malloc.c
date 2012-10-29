@@ -167,7 +167,7 @@ any_t*	mp_calloc (size_t __nelem, size_t __size) { return mp_mallocz(__nelem*__s
 any_t*	mp_mallocz (size_t __size) {
     any_t* rp;
     rp=mp_malloc(__size);
-    memset(rp,0,__size);
+    if(rp) memset(rp,0,__size);
     return rp;
 }
 /* randomizing of memalign is useless feature */
