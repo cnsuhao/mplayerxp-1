@@ -114,8 +114,6 @@ typedef struct priv_s {
 **************************************************************************/
 #include "xmp_core.h"
 
-float xp_screen_pts;
-
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
 pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
@@ -1159,7 +1157,7 @@ static void vplayer_check_chapter_change(frame_attr_t* shva_prev,float v_pts)
     }
 }
 
-static float vplayer_compute_sleep_time(frame_attr_t* shva_prev)
+static float vplayer_compute_sleep_time(frame_attr_t* shva_prev,float screen_pts)
 {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
@@ -1171,7 +1169,7 @@ static float vplayer_compute_sleep_time(frame_attr_t* shva_prev)
 	if(xp_core.audio->eof && !get_delay_audio_buffer()) goto nosound_model;
 	if((!xp_core.audio->eof || ao_get_delay(ao_data)) &&
 	(!mp_data->use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
-	    sleep_time=xp_screen_pts-(sh_audio->timer-ao_get_delay(ao_data));
+	    sleep_time=screen_pts-(sh_audio->timer-ao_get_delay(ao_data));
 	else if(mp_data->use_pts_fix2 && sh_audio->chapter_change)
 	    sleep_time=0;
 	else
@@ -1230,6 +1228,7 @@ int mpxp_play_video( int rtc_fd )
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     sh_video_t* sh_video=priv->demuxer->video->sh;
     demux_stream_t *d_audio=priv->demuxer->audio;
+    float screen_pts=0;
     float v_pts=0;
     float sleep_time=0;
     int can_blit=0;
@@ -1262,7 +1261,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
 #endif
     /*--------- add OSD to the next frame contents ---------*/
     if(can_blit) {
-	xp_screen_pts=v_pts-(mp_conf.av_sync_pts?0:initial_audio_pts);
+	screen_pts=v_pts-(mp_conf.av_sync_pts?0:initial_audio_pts);
 #ifdef USE_OSD
 	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
 	MP_UNIT("draw_osd");
@@ -1292,7 +1291,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
 	/* It's time to sleep ;)...*/
 	MP_UNIT("sleep");
 	GetRelativeTime(); /* reset timer */
-	sleep_time=vplayer_compute_sleep_time(&shva_prev);
+	sleep_time=vplayer_compute_sleep_time(&shva_prev,screen_pts);
 	if(mp_conf.benchmark && sleep_time < 0 && sleep_time < priv->max_av_resync) priv->max_av_resync=sleep_time;
 	if(!(vo_data->flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
 	    if(!vplayer_do_sleep(rtc_fd,sleep_time)) return 0;

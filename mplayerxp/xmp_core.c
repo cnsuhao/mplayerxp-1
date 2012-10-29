@@ -176,7 +176,6 @@ pthread_cond_t audio_play_cond=PTHREAD_COND_INITIALIZER;
 pthread_mutex_t audio_decode_mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t audio_decode_cond=PTHREAD_COND_INITIALIZER;
 
-extern volatile float xp_screen_pts;
 volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
 volatile int dec_ahead_can_adseek=1;  /* It is safe to seek audio buffer thread */
 
@@ -260,6 +259,7 @@ static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
 
 static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float drop_barrier) {
     unsigned rc=0;
+    float screen_pts=dae_played_fra(xp_core.video).v_pts-(mp_conf.av_sync_pts?0:initial_audio_pts);
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
     max_frame_delay = mp_data->bench->max_video+mp_data->bench->max_vout;
@@ -275,7 +275,7 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
 	    - while(video.pts < audio.pts)
 		video.seek_to_key_frame(video.get_next_key_frame(video.get_cur_pos()))
     */
-    delta=v_pts-xp_screen_pts;
+    delta=v_pts-screen_pts;
     if(max_frame_delay*3 > drop_barrier) {
 	if(drop_barrier < (float)(xp_core.num_v_buffs-2)/sh_video->fps) drop_barrier += 1/sh_video->fps;
 	else
