@@ -1,7 +1,7 @@
 /* This audio filter exports the incomming signal to other processes
    using memory mapping. Memory mapped area contains a header: 
-      int nch, 
-      int size, 
+      int nch,
+      int size,
       unsigned long long counter (updated every time the  contents of
                                   the area changes),
    the rest is payload (non-interleaved).
@@ -12,7 +12,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/types.h>
@@ -22,9 +22,9 @@
 #include <fcntl.h>
 
 #include "af.h"
-#include "../help_mp.h"
-#include "../osdep/get_path.h"
-#include "libvo/fastmemcpy.h"
+#include "help_mp.h"
+#include "osdep/get_path.h"
+#include "osdep/fastmemcpy.h"
 
 #define DEF_SZ 512 // default buffer size (in samples)
 #define SHARED_FILE "mplayer-af_export" /* default file name 

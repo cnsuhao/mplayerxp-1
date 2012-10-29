@@ -34,7 +34,7 @@
 #include "video_out.h"
 #include "video_out_internal.h"
 
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "sub.h"
 #include "osdep/vbelib.h"
 #include "osdep/bswap.h"

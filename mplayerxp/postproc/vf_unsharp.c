@@ -34,10 +34,10 @@
 #include <malloc.h>
 #endif
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
-#include "../libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "pp_msg.h"
 
 #ifndef MIN

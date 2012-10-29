@@ -3,11 +3,11 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
-#include "../libvo/fastmemcpy.h"
+#include "mp_config.h"
+#include "osdep/fastmemcpy.h"
 
 #include "mp_image.h"
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "vf.h"
 #include "pp_msg.h"
 

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #ifdef HAVE_MALLOC
 #include <malloc.h>
 #endif
@@ -15,7 +15,7 @@
 #include "mp_image.h"
 #include "vf.h"
 
-#include "libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "libmpconf/codec-cfg.h"
 #include "pp_msg.h"
 

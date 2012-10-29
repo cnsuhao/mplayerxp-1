@@ -17,7 +17,7 @@
 #include "audio_out_internal.h"
 #include "afmt.h"
 #include <SDL/SDL.h>
-#include "../libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "ao_msg.h"
 
 static ao_info_t info = 

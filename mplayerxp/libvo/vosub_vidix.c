@@ -20,8 +20,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #ifdef HAVE_MEMALIGN
 #include <malloc.h>
 #endif
@@ -30,12 +30,12 @@
 
 #include "video_out.h"
 #include "vosub_vidix.h"
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "osd.h"
 #include "sub.h"
 #include "video_out.h"
 #include "dri_vo.h"
-#include "../mp_image.h"
+#include "mp_image.h"
 #include "vo_msg.h"
 
 #ifndef min

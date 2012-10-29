@@ -8,15 +8,15 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 
-#include "../libvo/img_format.h"
-#include "../libvo/fastmemcpy.h"
+#include "libvo/img_format.h"
+#include "osdep/fastmemcpy.h"
 
 #ifdef HAVE_SDL_IMAGE
 #include <SDL/SDL_image.h>

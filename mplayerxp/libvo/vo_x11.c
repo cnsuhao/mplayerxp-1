@@ -38,7 +38,7 @@
 
 #include "x11_common.h"
 
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "sub.h"
 
 #include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */

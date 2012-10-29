@@ -113,7 +113,7 @@
 
 #include "video_out.h"
 
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "sub.h"
 #include "aspect.h"
 

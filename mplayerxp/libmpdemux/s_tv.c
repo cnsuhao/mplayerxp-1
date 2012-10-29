@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
-#include "../input/input.h"
+#include "input/input.h"
 #include "mrl.h"
 
 /* some default values */
@@ -61,10 +61,10 @@ static mrl_config_t tvopts_conf[]={
 #include "demuxer.h"
 #include "stheader.h"
 
-#include "../libao2/afmt.h"
-#include "../libvo/img_format.h"
-#include "../libvo/fastmemcpy.h"
-#include "../libao2/audio_out.h"
+#include "libao2/afmt.h"
+#include "libvo/img_format.h"
+#include "osdep/fastmemcpy.h"
+#include "libao2/audio_out.h"
 
 #include "tv.h"
 

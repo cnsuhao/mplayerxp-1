@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 
-#include "../libvo/fastmemcpy.h"
-#include "../libvo/sub.h"
+#include "osdep/fastmemcpy.h"
+#include "libvo/sub.h"
 #include "pp_msg.h"
 
 struct vf_priv_s {

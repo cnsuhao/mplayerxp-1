@@ -10,9 +10,9 @@
 #include <sys/stat.h>
 
 #include "stream.h"
-#include "../mp_config.h"
-#include "../help_mp.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "help_mp.h"
+#include "mplayer.h"
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
 #include "nls/nls.h"
@@ -20,7 +20,7 @@
 #include "demuxer.h"
 #include "stheader.h"
 
-#include "libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "libvo/sub.h"
 #include "demux_msg.h"
 

@@ -20,8 +20,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "aspect.h"
@@ -37,7 +37,7 @@ LIBVO_EXTERN( dga )
 
 
 #include "x11_common.h"
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "dri_vo.h"
 //#define VO_DGA_DBG 1
 //#undef HAVE_DGA2

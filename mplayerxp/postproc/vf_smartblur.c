@@ -22,7 +22,7 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #ifdef USE_SETLOCALE
 #include <locale.h>
@@ -32,11 +32,11 @@
 #include <malloc.h>
 #endif
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
-#include "../libvo/fastmemcpy.h"
-#include "../postproc/swscale.h"
+#include "osdep/fastmemcpy.h"
+#include "postproc/swscale.h"
 #include "vf_scale.h"
 #include "pp_msg.h"
 

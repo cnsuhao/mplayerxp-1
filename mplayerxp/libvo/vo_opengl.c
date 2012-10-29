@@ -51,7 +51,7 @@
 #ifdef CONFIG_GUI
 #include "gui/interface.h"
 #endif
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "postproc/vfcap.h"
 #include "vo_msg.h"
 

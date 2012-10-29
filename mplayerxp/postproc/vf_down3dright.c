@@ -10,7 +10,7 @@
 #include "mp_image.h"
 #include "vf.h"
 
-#include "libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "postproc/swscale.h"
 #include "pp_msg.h"
 

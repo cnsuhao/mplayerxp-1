@@ -4,8 +4,8 @@
 #include <dlfcn.h>
 #include "mp_config.h"
 #include "libavcodec/avcodec.h"
-#include "../libmpcodecs/codecs_ld.h"
-#include "../libvo/fastmemcpy.h"
+#include "libmpcodecs/codecs_ld.h"
+#include "osdep/fastmemcpy.h"
 #include "af.h"
 
 #define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)

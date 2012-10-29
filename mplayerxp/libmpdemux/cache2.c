@@ -18,7 +18,7 @@
 #include "osdep/timer.h"
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"
-#include "libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "help_mp.h"
 #include "mpdemux.h"
 #include "mplayer.h"

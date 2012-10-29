@@ -11,7 +11,7 @@
 #include "vf.h"
 
 #include "libvo/video_out.h"
-#include "libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "swscale.h"
 #include "libavutil/log.h"
 #include "vf_scale.h"

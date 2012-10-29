@@ -31,7 +31,7 @@ LIBVO_EXTERN(xv)
 
 #include "x11_common.h"
 
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "sub.h"
 #include "aspect.h"
 #include "dri_vo.h"

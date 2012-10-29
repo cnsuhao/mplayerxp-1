@@ -35,7 +35,7 @@
 #include "xmp_core.h"
 #include "osdep/my_malloc.h"
 #include "mplayer.h"
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "img_format.h"
 #include "screenshot.h"
 #include "osdep/bswap.h"

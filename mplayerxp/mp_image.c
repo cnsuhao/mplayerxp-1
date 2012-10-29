@@ -11,7 +11,7 @@
 
 #include "libvo/img_format.h"
 #include "mp_image.h"
-#include "libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "__mp_msg.h"
 

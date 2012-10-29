@@ -23,10 +23,10 @@
 #include <linux/fb.h>
 
 #include "mp_config.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "video_out.h"
 #include "video_out_internal.h"
-#include "fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "sub.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
@@ -34,7 +34,7 @@
 #include "aspect.h"
 #include "osd.h"
 #include "dri_vo.h"
-#include "../libmpdemux/mrl.h"
+#include "libmpdemux/mrl.h"
 
 LIBVO_EXTERN(fbdev)
 

@@ -10,11 +10,11 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #include "help_mp.h"
 
-#include "../libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 
 #include "stream.h"
 #include "demuxer.h"

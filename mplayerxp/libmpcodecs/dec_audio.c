@@ -16,10 +16,10 @@
 #include "ad.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "libmpdemux/demuxer_r.h"
 #include "postproc/af.h"
-#include "libvo/fastmemcpy.h"
+#include "osdep/fastmemcpy.h"
 #include "ad_msg.h"
 
 #ifdef USE_FAKE_MONO

@@ -3,11 +3,11 @@
 #include <unistd.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
-#include "libvo/fastmemcpy.h"
 #include "mp_config.h"
 #include "mplayer.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
+#include "osdep/fastmemcpy.h"
 #include "codecs_ld.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
