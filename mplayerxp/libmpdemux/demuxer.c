@@ -314,7 +314,7 @@ int ds_fill_buffer(demux_stream_t *ds){
     if(ds==demux->audio)
 	MSG_DBG3("ds_fill_buffer(d_audio) called\n");
     else
-    if(ds==demux->video) 
+    if(ds==demux->video)
 	MSG_DBG3("ds_fill_buffer(d_video) called\n");
     else
     if(ds==demux->sub)
