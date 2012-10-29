@@ -2400,7 +2400,9 @@ play_next_file:
 
     MP_UNIT("mplayer");
     if(!input_state.after_dvdmenu && demuxer) {
+	free_stream(demuxer->stream);
 	demuxer->stream=NULL;
+	free_demuxer(demuxer);
 	demuxer=NULL;
     }
     d_audio=NULL;
@@ -2436,7 +2438,7 @@ play_next_file:
     // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
     if(mp_conf.s_cache_size && !stream_dump_type){
 	MP_UNIT("enable_cache");
-	if(!stream_enable_cache(demuxer->stream,mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
+	if(!stream_enable_cache(stream,mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
 	    if((eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY))) goto goto_next_file;
     }
 
