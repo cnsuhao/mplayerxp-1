@@ -7,6 +7,7 @@
 #include "ad_internal.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
+#include "osdep/mplib.h"
 
 extern ao_data_t* ao_data;
 
@@ -38,7 +39,7 @@ typedef struct ov_struct_st {
 
 static int preinit(sh_audio_t *sh)
 {
-  if(!(sh->context=malloc(sizeof(ov_struct_t)))) return 0;
+  if(!(sh->context=mp_malloc(sizeof(ov_struct_t)))) return 0;
   sh->audio_out_minsize=1024*4; // 1024 samples/frame
   return 1;
 }
@@ -59,7 +60,7 @@ static int init(sh_audio_t *sh)
   /// Header
   if(vorbis_synthesis_headerin(&ov->vi,&vc,&op) <0) {
     MSG_ERR("OggVorbis: initial (identification) header broken!\n");
-    free(ov);
+    mp_free(ov);
     return 0;
   }
   op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
@@ -67,14 +68,14 @@ static int init(sh_audio_t *sh)
   /// Comments
   if(vorbis_synthesis_headerin(&ov->vi,&vc,&op) <0) {
     MSG_ERR("OggVorbis: comment header broken!\n");
-    free(ov);
+    mp_free(ov);
     return 0;
   }
   op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
   //// Codebook
   if(vorbis_synthesis_headerin(&ov->vi,&vc,&op)<0) {
     MSG_WARN("OggVorbis: codebook header broken!\n");
-    free(ov);
+    mp_free(ov);
     return 0;
   } else { /// Print the infos
     char **ptr=vc.user_comments;
@@ -120,7 +121,7 @@ static int init(sh_audio_t *sh)
 
 static void uninit(sh_audio_t *sh)
 {
-  free(sh->context);
+  mp_free(sh->context);
 }
 
 static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)

@@ -9,6 +9,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "libvo/sub.h"
 #include "pp_msg.h"
 
@@ -141,7 +142,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
 	MSG_INFO( "softpulldown: %lld frames in, %lld frames out\n", vf->priv->in, vf->priv->out);
-	free(vf->priv);
+	mp_free(vf->priv);
 }
 
 static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
@@ -151,7 +152,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 	vf->put_slice = put_slice;
 	vf->uninit = uninit;
 	vf->default_reqs = VFCAP_ACCEPT_STRIDE;
-	vf->priv = p = calloc(1, sizeof(struct vf_priv_s));
+	vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
 	vf->priv->state = 0;
 	return 1;
 }

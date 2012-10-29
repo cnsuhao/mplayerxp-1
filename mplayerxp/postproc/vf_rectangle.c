@@ -5,6 +5,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 struct vf_priv_s {
@@ -163,7 +164,7 @@ static int __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {
     vf->config = config;
     vf->control = control;
     vf->put_slice = put_slice;
-    vf->priv = malloc(sizeof(struct vf_priv_s));
+    vf->priv = mp_malloc(sizeof(struct vf_priv_s));
     vf->priv->x = -1;
     vf->priv->y = -1;
     vf->priv->w = -1;

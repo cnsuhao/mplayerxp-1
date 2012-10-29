@@ -35,15 +35,9 @@ CBFifoBuffer *cb_fifo_alloc(unsigned int size);
 
 /**
  * Frees an CBFifoBuffer.
- * @param *f CBFifoBuffer to free
+ * @param *f CBFifoBuffer to mp_free
  */
-static inline void cb_fifo_free(CBFifoBuffer *f)
-{
-    if(f){
-        free(f->buffer);
-        free(f);
-    }
-}
+void cb_fifo_free(CBFifoBuffer *f);
 
 /**
  * Resets the CBFifoBuffer to the state right after cb_fifo_alloc, in particular it is emptied.

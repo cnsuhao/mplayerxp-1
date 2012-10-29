@@ -21,6 +21,7 @@
 #include "aviheader.h"
 
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 typedef struct priv_raw_stream_s
 {
@@ -34,7 +35,7 @@ static muxer_stream_t* rawfile_new_stream(muxer_t *muxer,int type){
 	MSG_ERR("Too many streams! increase MUXER_MAX_STREAMS !\n");
 	return NULL;
     }
-    s=malloc(sizeof(muxer_stream_t));
+    s=mp_malloc(sizeof(muxer_stream_t));
     memset(s,0,sizeof(muxer_stream_t));
     if(!s) return NULL; // no mem!?
     muxer->streams[muxer->avih.dwStreams]=s;
@@ -42,7 +43,7 @@ static muxer_stream_t* rawfile_new_stream(muxer_t *muxer,int type){
     s->id=muxer->avih.dwStreams;
     s->timer=0.0;
     s->muxer=muxer;
-    s->priv=malloc(sizeof(priv_raw_stream_t));
+    s->priv=mp_malloc(sizeof(priv_raw_stream_t));
     memset(s->priv,0,sizeof(priv_raw_stream_t));
     s->size=0;
     switch(type){

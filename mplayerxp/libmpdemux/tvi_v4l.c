@@ -169,9 +169,9 @@ tvi_handle_t *tvi_init_v4l(char *device)
 
     /* set video device name */
     if (!device)
-	priv->video_device = strdup("/dev/video");
+	priv->video_device = mp_strdup("/dev/video");
     else
-	priv->video_device = strdup(device);
+	priv->video_device = mp_strdup(device);
 
     /* allocation failed */
     if (!priv->video_device) {
@@ -180,7 +180,7 @@ tvi_handle_t *tvi_init_v4l(char *device)
     }
 
     /* set audio device name */
-    priv->audio_device = strdup("/dev/dsp");
+    priv->audio_device = mp_strdup("/dev/dsp");
 
     return(h);
 }
@@ -224,7 +224,7 @@ static int init(priv_t *priv)
     priv->height = priv->capability.minheight;
     MSG_V( " Inputs: %d\n", priv->capability.channels);
 
-    priv->channels = (struct video_channel *)malloc(sizeof(struct video_channel)*priv->capability.channels);
+    priv->channels = (struct video_channel *)mp_malloc(sizeof(struct video_channel)*priv->capability.channels);
     if (!priv->channels)
 	goto malloc_failed;
     memset(priv->channels, 0, sizeof(struct video_channel)*priv->capability.channels);
@@ -334,7 +334,7 @@ static int init(priv_t *priv)
     priv->nbuf = priv->mbuf.frames;
     
     /* video buffers */
-    priv->buf = (struct video_mmap *)malloc(priv->nbuf * sizeof(struct video_mmap));
+    priv->buf = (struct video_mmap *)mp_malloc(priv->nbuf * sizeof(struct video_mmap));
     if (!priv->buf)
 	goto malloc_failed;
     memset(priv->buf, 0, priv->nbuf * sizeof(struct video_mmap));
@@ -401,9 +401,9 @@ static int init(priv_t *priv)
 
 malloc_failed:
     if (priv->channels)
-	free(priv->channels);
+	mp_free(priv->channels);
     if (priv->buf)
-	free(priv->buf);
+	mp_free(priv->buf);
 err:
     if (priv->video_fd != -1)
 	close(priv->video_fd);

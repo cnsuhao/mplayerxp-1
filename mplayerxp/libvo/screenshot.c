@@ -1,4 +1,4 @@
-/* 
+/*
  * screenshot.c, Portable Network Graphics Renderer for Mplayer
  *
  * Based on vo_png.c (Copyright 2001 by Felix Buenemann <atmosfear@users.sourceforge.net>)
@@ -13,8 +13,8 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #ifdef HAVE_PNG
 #ifdef HAVE_LIBPNG_PNG
 #include <libpng/png.h>
@@ -25,8 +25,9 @@
 
 #include "screenshot.h"
 #include "img_format.h"
-#include "../postproc/swscale.h"
-#include "../postproc/vf_scale.h"
+#include "postproc/swscale.h"
+#include "postproc/vf_scale.h"
+#include "osdep/mplib.h"
 #include "vo_msg.h"
 
 #define RGB 0
@@ -204,7 +205,7 @@ int gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t
     }
     sshot.image_width = w;
     sshot.image_height = h;
-    if(!(image_data = malloc(sshot.image_width*sshot.image_height*3)))
+    if(!(image_data = mp_malloc(sshot.image_width*sshot.image_height*3)))
     {
 	MSG_ERR("vo_png: Can't allocate temporary buffer\n");
 	return -1;
@@ -256,7 +257,7 @@ int gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t
 #else
     write_bmp(buf,w,h,image_data);
 #endif
-    if(image_data){ free(image_data);image_data=NULL;}
+    if(image_data){ mp_free(image_data);image_data=NULL;}
     if(sws) sws_freeContext(sws);
     return 0;
 }

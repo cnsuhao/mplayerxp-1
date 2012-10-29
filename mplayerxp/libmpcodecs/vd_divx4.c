@@ -20,6 +20,7 @@
 #include "vd_internal.h"
 #include "codecs_ld.h"
 #include "libvo/video_out.h"
+#include "osdep/mplib.h"
 
 static const vd_info_t info = {
 	"DivX4Linux lib (divx4/5 mode)",
@@ -199,7 +200,7 @@ static int init(sh_video_t *sh){
 	  MSG_ERR("Unsupported out_fmt: 0x%X\n",sh->codec->outfmt[sh->outfmtidx]);
 	  return 0;
     }
-    if(!(p=malloc(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return 0; }
+    if(!(p=mp_malloc(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return 0; }
     sh->context=p;
     memset(p,0,sizeof(priv_t));
     if(!(p->decoder=getDecore_ptr(sh->fourcc))) {
@@ -230,7 +231,7 @@ static void uninit(sh_video_t *sh){
     priv_t*p=sh->context;
     p->decoder(p->pHandle, DEC_OPT_RELEASE, 0, 0);
     dlclose(dll_handle);
-    free(p);
+    mp_free(p);
 }
 
 // decode a frame

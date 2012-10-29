@@ -1,7 +1,7 @@
 /*
  * This file is part of MPlayerXP.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -52,6 +52,7 @@
 #include "gui/interface.h"
 #endif
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "postproc/vfcap.h"
 #include "vo_msg.h"
 
@@ -326,12 +327,12 @@ static void uninit(vo_data_t*vo)
     vo_vm_close(vo,vo->mDisplay);
 #endif
     vo_x11_uninit(vo,vo->mDisplay, vo->window);
-    free(vo->priv);
+    mp_free(vo->priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=malloc(sizeof(priv_t));
+    vo->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     memset(priv,0,sizeof(priv_t));
     priv->num_buffers=1;

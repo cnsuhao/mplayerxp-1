@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
+#include "osdep/mplib.h"
 
 #ifdef HAVE_LIBCDIO
 #include "cdd.h"
@@ -29,7 +30,7 @@ static int __FASTCALL__ _cdda_open(stream_t *stream,const char *filename,unsigne
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     retval = open_cdda(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
-    if(device) free(device);
+    if(device) mp_free(device);
     return retval;
 }
 
@@ -48,7 +49,7 @@ static int __FASTCALL__ _cddb_open(stream_t *stream,const char *filename,unsigne
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     retval = open_cddb(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
-    if(device) free(device);
+    if(device) mp_free(device);
     return retval;
 }
 

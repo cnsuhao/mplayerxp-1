@@ -3,9 +3,9 @@
  *
  *	Copyright (C) Aaron Holtzman - May 1999
  *
- *  This file is part of ac3dec, a free Dolby AC-3 stream decoder.
+ *  This file is part of ac3dec, a mp_free Dolby AC-3 stream decoder.
  *	
- *  ac3dec is free software; you can redistribute it and/or modify
+ *  ac3dec is mp_free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.

@@ -5,9 +5,9 @@
 /*
  * Copyright (C) 2002 the xine project
  *
- * This file is part of xine, a free video player.
+ * This file is part of xine, a mp_free video player.
  * 
- * xine is free software; you can redistribute it and/or modify
+ * xine is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -41,8 +41,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "asmrp.h"
-#include "../demux_msg.h"
+#include "demux_msg.h"
 #include "mplayer.h"
+#include "osdep/mplib.h"
 
 /*
 #define LOG
@@ -102,7 +103,7 @@ static asmrp_t *asmrp_new (void) {
 
   asmrp_t *p;
 
-  p = malloc (sizeof (asmrp_t));
+  p = mp_malloc (sizeof (asmrp_t));
 
   p->sym_tab_num = 0;
   p->sym         = ASMRP_SYM_NONE;
@@ -115,9 +116,9 @@ static void asmrp_dispose (asmrp_t *p) {
   int i;
 
   for (i=0; i<p->sym_tab_num; i++) 
-    free (p->sym_tab[i].id);
+    mp_free (p->sym_tab[i].id);
 
-  free (p);
+  mp_free (p);
 }
 
 static void asmrp_getch (asmrp_t *p) {
@@ -132,7 +133,7 @@ static void asmrp_getch (asmrp_t *p) {
 
 static void asmrp_init (asmrp_t *p, const char *str) {
 
-  p->buf = strdup (str);
+  p->buf = mp_strdup (str);
   p->pos = 0;
   
   asmrp_getch (p);
@@ -392,7 +393,7 @@ static int asmrp_set_id (asmrp_t *p, char *s, int v) {
     }
     i = p->sym_tab_num;
     p->sym_tab_num++;
-    p->sym_tab[i].id = strdup (s);
+    p->sym_tab[i].id = mp_strdup (s);
 
 #ifdef LOG
     printf ("new symbol '%s'\n", s);

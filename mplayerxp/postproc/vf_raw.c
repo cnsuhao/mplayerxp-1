@@ -14,6 +14,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "postproc/swscale.h"
 #include "pp_msg.h"
 
@@ -53,14 +54,14 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
     fclose(vf->priv->out);
-    free(vf->priv);
+    mp_free(vf->priv);
 }
 static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->uninit=uninit;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
-    if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { free(vf->priv); return 0; }
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
+    if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { mp_free(vf->priv); return 0; }
     return 1;
 }
 

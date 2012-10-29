@@ -16,6 +16,7 @@
 #include <assert.h>
 #endif
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define RAW_MP1 1
 #define RAW_MP2 2
@@ -865,7 +866,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   assert(demuxer->stream != NULL);
 #endif
   
-  priv = (da_priv_t*)malloc(sizeof(da_priv_t));
+  priv = (da_priv_t*)mp_malloc(sizeof(da_priv_t));
   memset(priv,0,sizeof(da_priv_t));
   s = demuxer->stream;
   stream_reset(s);
@@ -1018,7 +1019,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 		    char sinfo[block_size];
 		    WAVEFORMATEX* w;
 		    unsigned long long int total_samples;
-		    sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
+		    sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
 		    MSG_V("STREAMINFO metadata\n");
 		    if (block_size != 34) {
 			MSG_V("expected STREAMINFO chunk of %d bytes\n",block_size);
@@ -1068,7 +1069,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 	unsigned hsize,dsize;
 	uint32_t id;
 	WAVEFORMATEX* w;
-	sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
 	hsize=stream_read_dword(s);
 	dsize=stream_read_dword(s);
 	id = stream_read_dword(s);
@@ -1127,7 +1128,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     frames = stream_read_dword(s);
     stream_skip(s,2);
     bt=stream_read_char(s);
-    sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
+    sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
     sh_audio->wf->wFormatTag = sh_audio->wtag;
     sh_audio->wf->nChannels = 2;
     sh_audio->wf->nSamplesPerSec = freqs[bt & 3];
@@ -1171,7 +1172,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     sh_audio->samplerate=256-(1000000/chunk[0]);
     sh_audio->channels=1;
     sh_audio->samplesize=1;
-    sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
+    sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
     w->wFormatTag = sh_audio->wtag;
     w->nChannels = sh_audio->channels;
     w->nSamplesPerSec = sh_audio->samplerate;
@@ -1187,7 +1188,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     unsigned int chunk_size;
     WAVEFORMATEX* w;
     int l;
-    sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
+    sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
     do
     {
       chunk_type = stream_read_fourcc(s);
@@ -1764,7 +1765,7 @@ static void audio_close(demuxer_t* demuxer) {
 
   if(!priv)
     return;
-  free(priv);
+  mp_free(priv);
 }
 
 static int audio_control(demuxer_t *demuxer,int cmd,any_t*args)

@@ -1,23 +1,22 @@
 /* parse_mp4.c - MP4 file format parser code
- * This file is part of MPlayer, see http://mplayerhq.hu/ for info.  
+ * This file is part of MPlayer, see http://mplayerhq.hu/ for info.
  * (c)2002 by Felix Buenemann <atmosfear at users.sourceforge.net>
  * File licensed under the GPL, see http://www.fsf.org/ for more info.
  * Code inspired by libmp4 from http://mpeg4ip.sourceforge.net/.
  */
-   
+
 #include <stdio.h>
 #include <inttypes.h>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
+
 #include <stdlib.h>
 #include "parse_mp4.h"
 #include "stream.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 //#define MP4_DUMPATOM
 
-#define freereturn(a,b) free(a); return b
+#define freereturn(a,b) mp_free(a); return b
 
 int mp4_read_descr_len(stream_t *s) {
   uint8_t b;
@@ -113,7 +112,7 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   /* read length */
   esds->decoderConfigLen = len = mp4_read_descr_len(s); 
 
-  esds->decoderConfig = malloc(esds->decoderConfigLen);
+  esds->decoderConfig = mp_malloc(esds->decoderConfigLen);
   if (esds->decoderConfig) {
     stream_read(s, esds->decoderConfig, esds->decoderConfigLen);
   } else {
@@ -128,7 +127,7 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
 
   /* Note: SLConfig is usually constant value 2, size 1Byte */
   esds->SLConfigLen = len = mp4_read_descr_len(s);
-  esds->SLConfig = malloc(esds->SLConfigLen);
+  esds->SLConfig = mp_malloc(esds->SLConfigLen);
   if (esds->SLConfig) {
     stream_read(s, esds->SLConfig, esds->SLConfigLen);
   } else {
@@ -145,9 +144,9 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
 /* cleanup all mem occupied by mp4_parse_esds */
 void mp4_free_esds(esds_t *esds) {
   if(esds->decoderConfigLen)
-    free(esds->decoderConfig);
+    mp_free(esds->decoderConfig);
   if(esds->SLConfigLen)
-    free(esds->SLConfig);
+    mp_free(esds->SLConfig);
 }
 
 #undef freereturn

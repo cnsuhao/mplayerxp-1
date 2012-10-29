@@ -13,11 +13,12 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "sub_cc.h"
-#include "../libvo/video_out.h"
+#include "libvo/video_out.h"
+#include "osdep/mplib.h"
 #include "demux_msg.h"
 
 extern vo_data_t* vo_data;
@@ -498,11 +499,11 @@ static void ty_AddXDSToDisplay( const char *format, ... )
 
    if ( ty_XDS_Display[ ty_XDSAddLine ] != 0 )
    {
-      free( ty_XDS_Display[ ty_XDSAddLine ] );
+      mp_free( ty_XDS_Display[ ty_XDSAddLine ] );
       ty_XDS_Display[ ty_XDSAddLine ] = 0;
    }
 
-   ty_XDS_Display[ ty_XDSAddLine ] = malloc( strlen( line ) + 1 );
+   ty_XDS_Display[ ty_XDSAddLine ] = mp_malloc( strlen( line ) + 1 );
    strcpy( ty_XDS_Display[ ty_XDSAddLine ], line );
    ty_XDSAddLine++;
 }
@@ -529,7 +530,7 @@ static void ty_DisplayXDSInfo(void)
          // Right Justify the XDS Stuff
          memcpy( &( ty_OSD1.text[ 0 ][ TY_CC_MAX_X - size - 1 ] ), 
             ty_XDS_Display[ index ], size );
-         free( ty_XDS_Display[ index ] );
+         mp_free( ty_XDS_Display[ index ] );
          ty_XDS_Display[ index ] = 0;
          ty_XDSDisplayCount = 0;
          tyOSDUpdate = 1;
@@ -867,8 +868,8 @@ void ty_processuserdata(const unsigned char* buf, int len )
 		{
 			for ( index = 0; index < SUB_MAX_TEXT ; index++ )
 			{
-				ty_OSD1.text[ index ] = malloc( TY_CC_MAX_X );
-				ty_OSD2.text[ index ] = malloc( TY_CC_MAX_X );
+				ty_OSD1.text[ index ] = mp_malloc( TY_CC_MAX_X );
+				ty_OSD2.text[ index ] = mp_malloc( TY_CC_MAX_X );
 			}
 			ty_ClearOSD( 0 );
 			ty_OSD1.lines = SUB_MAX_TEXT;

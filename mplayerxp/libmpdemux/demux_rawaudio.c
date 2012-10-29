@@ -1,4 +1,4 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,6 +8,7 @@
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
+#include "osdep/mplib.h"
 #include "aviprint.h"
 
 int use_rawaudio = 0;
@@ -49,7 +50,7 @@ static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
   demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_SAMPLESIZE,&samplesize);
   demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_FORMAT,&wtag);
   sh_audio = new_sh_audio(demuxer,0);
-  sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
+  sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = sh_audio->wtag = wtag;
   w->nChannels = sh_audio->channels = channels;
   sh_audio->samplerate = samplerate;

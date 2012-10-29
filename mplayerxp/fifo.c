@@ -1,5 +1,6 @@
 #include "mplayer.h"
 #include "fifo.h"
+#include "osdep/mplib.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -81,15 +82,15 @@ int mplayer_get_key(void){
 
 CBFifoBuffer *cb_fifo_alloc(unsigned int size)
 {
-    CBFifoBuffer *f= malloc(sizeof(CBFifoBuffer));
+    CBFifoBuffer *f= mp_malloc(sizeof(CBFifoBuffer));
     if(!f)
         return NULL;
     memset(f,0,sizeof(CBFifoBuffer));
-    f->buffer = malloc(size);
+    f->buffer = mp_malloc(size);
     f->end = f->buffer + size;
     cb_fifo_reset(f);
     if (!f->buffer)
-        free(f);
+        mp_free(f);
     return f;
 }
 
@@ -105,11 +106,19 @@ int cb_fifo_realloc2(CBFifoBuffer *f, unsigned int new_size) {
         cb_fifo_generic_read(f, f2->buffer, len, NULL);
         f2->wptr += len;
         f2->wndx += len;
-        free(f->buffer);
+        mp_free(f->buffer);
         *f= *f2;
-        free(f2);
+        mp_free(f2);
     }
     return 0;
+}
+
+void cb_fifo_free(CBFifoBuffer *f)
+{
+    if(f){
+        mp_free(f->buffer);
+        mp_free(f);
+    }
 }
 
 int cb_fifo_generic_write(CBFifoBuffer *f, any_t*src, int size, int (*func)(any_t*, any_t*, int))

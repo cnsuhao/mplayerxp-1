@@ -7,6 +7,7 @@
 
 #include "mp_config.h"
 #include "help_mp.h"
+#include "osdep/mplib.h"
 #include "ad_internal.h"
 #include "ad_msg.h"
 
@@ -46,12 +47,12 @@ static int preinit(sh_audio_t *sh_audio)
   dmo_priv_t*priv;
   int chans=(audio_output_channels==sh_audio->wf->nChannels) ?
       audio_output_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
-  if(!(sh_audio->context=malloc(sizeof(dmo_priv_t)))) return 0;
+  if(!(sh_audio->context=mp_malloc(sizeof(dmo_priv_t)))) return 0;
   priv=sh_audio->context;
   if(!(priv->ds_adec=DMO_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf,chans)))
   {
     MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
-    free(sh_audio->context);
+    mp_free(sh_audio->context);
     return 0;
   }
     sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
@@ -68,7 +69,7 @@ static void uninit(sh_audio_t *sh)
 {
     dmo_priv_t*priv = sh->context;
     DMO_AudioDecoder_Destroy(priv->ds_adec);
-    free(priv);
+    mp_free(priv);
 }
 
 static int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)

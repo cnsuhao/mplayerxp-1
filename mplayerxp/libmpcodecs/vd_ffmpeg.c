@@ -14,6 +14,7 @@
 #include "help_mp.h"
 
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
@@ -225,7 +226,7 @@ static int init(sh_video_t *sh){
 	avcodec_register_all();
 	vcodec_inited=1;
     }
-    vdff_ctx=malloc(sizeof(priv_t));
+    vdff_ctx=mp_malloc(sizeof(priv_t));
     memset(vdff_ctx,0,sizeof(priv_t));
     sh->context = vdff_ctx;
     vdff_ctx->frame_number=-2;
@@ -284,7 +285,7 @@ static int init(sh_video_t *sh){
     {
 //	vdff_ctx->ctx->flags |= CODEC_FLAG_EXTERN_HUFF;
 	vdff_ctx->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
-	vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
+	vdff_ctx->ctx->extradata = mp_malloc(vdff_ctx->ctx->extradata_size);
 	memcpy(vdff_ctx->ctx->extradata, sh->bih+sizeof(BITMAPINFOHEADER),
 	    vdff_ctx->ctx->extradata_size);
     }
@@ -295,7 +296,7 @@ static int init(sh_video_t *sh){
        || sh->fourcc == mmioFOURCC('R', 'V', '4', '0'))
        {
         vdff_ctx->ctx->extradata_size= 8;
-        vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
+        vdff_ctx->ctx->extradata = mp_malloc(vdff_ctx->ctx->extradata_size);
         if(sh->bih->biSize!=sizeof(*sh->bih)+8){
             /* only 1 packet per frame & sub_id from fourcc */
 	    ((uint32_t*)vdff_ctx->ctx->extradata)[0] = 0;
@@ -329,13 +330,13 @@ static int init(sh_video_t *sh){
          ))
     {
 	vdff_ctx->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
-	vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
+	vdff_ctx->ctx->extradata = mp_malloc(vdff_ctx->ctx->extradata_size);
 	memcpy(vdff_ctx->ctx->extradata, sh->bih+1, vdff_ctx->ctx->extradata_size);
     }
     if (sh->ImageDesc &&
 	 sh->fourcc == mmioFOURCC('S','V','Q','3')){
 	vdff_ctx->ctx->extradata_size = *(int*)sh->ImageDesc;
-	vdff_ctx->ctx->extradata = malloc(vdff_ctx->ctx->extradata_size);
+	vdff_ctx->ctx->extradata = mp_malloc(vdff_ctx->ctx->extradata_size);
 	memcpy(vdff_ctx->ctx->extradata, ((int*)sh->ImageDesc)+1, vdff_ctx->ctx->extradata_size);
     }
 
@@ -343,7 +344,7 @@ static int init(sh_video_t *sh){
 #if 0
 #if LIBAVCODEC_BUILD >= 4689
     if (sh->bih && (sh->bih->biBitCount <= 8)) {
-        vdff_ctx->ctx->palctrl = (AVPaletteControl*)calloc(1,sizeof(AVPaletteControl));
+        vdff_ctx->ctx->palctrl = (AVPaletteControl*)mp_calloc(1,sizeof(AVPaletteControl));
         vdff_ctx->ctx->palctrl->palette_changed = 1;
         if (sh->bih->biSize-sizeof(BITMAPINFOHEADER))
             /* Palette size in biSize */
@@ -420,10 +421,10 @@ static void uninit(sh_video_t *sh){
     if (avcodec_close(vdff_ctx->ctx) < 0)
 	MSG_ERR( MSGTR_CantCloseCodec);
     if (vdff_ctx->ctx->extradata_size)
-	free(vdff_ctx->ctx->extradata);
-    free(vdff_ctx->ctx);
-    free(vdff_ctx->lavc_picture);
-    free(vdff_ctx);
+	mp_free(vdff_ctx->ctx->extradata);
+    mp_free(vdff_ctx->ctx);
+    mp_free(vdff_ctx->lavc_picture);
+    mp_free(vdff_ctx);
     if(ppContext) pp_free_context(ppContext);
     ppContext=NULL;
     pp2_uninit();
@@ -499,7 +500,7 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
 #if LIBAVCODEC_BUILD >= 4689
 	// Palette support: libavcodec copies palette to *data[1]
 	if (mpi->bpp == 8)
-		mpi->planes[1] = malloc(AVPALETTE_SIZE);
+		mpi->planes[1] = mp_malloc(AVPALETTE_SIZE);
 #endif
 
     pic->data[0]= mpi->planes[0];
@@ -547,9 +548,9 @@ static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
         vdff_ctx->b_count--;
   }
 
-	// Palette support: free palette buffer allocated in get_buffer
+	// Palette support: mp_free palette buffer allocated in get_buffer
 	if ( mpi && (mpi->bpp == 8) && (mpi->planes[1] != NULL))
-		free(mpi->planes[1]);
+		mp_free(mpi->planes[1]);
 
 #if LIBAVCODEC_BUILD >= 4644
     if(pic->type!=FF_BUFFER_TYPE_USER){
@@ -690,7 +691,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
         dp_hdr_t *hdr= (dp_hdr_t*)data;
 
         if(vdff_ctx->ctx->slice_offset==NULL) 
-            vdff_ctx->ctx->slice_offset= malloc(sizeof(int)*1000);
+            vdff_ctx->ctx->slice_offset= mp_malloc(sizeof(int)*1000);
 
 //        for(i=0; i<25; i++) printf("%02X ", ((uint8_t*)data)[i]);
 

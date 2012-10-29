@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
+#include "osdep/mplib.h"
 #ifdef HAVE_X11
 
 #include <string.h>
@@ -274,7 +275,7 @@ int vo_x11_init(vo_data_t*vo)
 
     if(vo->depthonscreen) return 1; // already called
 
-    vo->priv2=malloc(sizeof(priv_t));
+    vo->priv2=mp_malloc(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv2;
     memset(priv,0,sizeof(priv_t));
     priv->CompletionType=-1;
@@ -284,7 +285,7 @@ int vo_x11_init(vo_data_t*vo)
 #if 0
     if (!vo->mDisplayName)
 	if (!(vo->mDisplayName=getenv("DISPLAY")))
-	    vo->mDisplayName=strdup(":0.0");
+	    vo->mDisplayName=mp_strdup(":0.0");
 #else
     dispName = XDisplayName(vo_conf.mDisplayName);
 #endif
@@ -620,7 +621,7 @@ int __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window)
 	XDestroyWindow(display, window);
     XCloseDisplay(display);
     vo->depthonscreen = 0;
-    free(vo->priv2);
+    mp_free(vo->priv2);
     return 1;
 }
 
@@ -910,7 +911,7 @@ void __FASTCALL__ vo_vm_close(vo_data_t*vo,Display *dpy)
 	int i, modecount;
 	int screen; screen=DefaultScreen( dpy );
 
-	free(priv->vidmodes); priv->vidmodes=NULL;
+	mp_free(priv->vidmodes); priv->vidmodes=NULL;
 	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
 	for (i=0; i<modecount; i++)
 	    if ((priv->vidmodes[i]->hdisplay == vo_conf.screenwidth) && (priv->vidmodes[i]->vdisplay == vo_conf.screenheight)) {
@@ -919,7 +920,7 @@ void __FASTCALL__ vo_vm_close(vo_data_t*vo,Display *dpy)
             }
 	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
 	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
-	free(priv->vidmodes);
+	mp_free(priv->vidmodes);
     }
 }
 #endif

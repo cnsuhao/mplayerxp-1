@@ -44,7 +44,8 @@
 
 
 #include "cdd.h"
-#include "../version.h"
+#include "osdep/mplib.h"
+#include "version.h"
 #include "network.h"
 #include "demux_msg.h"
 #define DEFAULT_FREEDB_SERVER	"freedb.freedb.org"
@@ -212,7 +213,7 @@ int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
 		file_size = stats.st_size;
 	}
 	
-	cddb_data->xmcd_file = (char*)malloc(file_size);
+	cddb_data->xmcd_file = (char*)mp_malloc(file_size);
 	if( cddb_data->xmcd_file==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		close(file_fd);
@@ -309,7 +310,7 @@ static int cddb_read_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 			cddb_data->xmcd_file = ptr;
 			cddb_data->xmcd_file_size = ptr2-ptr+2;
 			cddb_data->xmcd_file[cddb_data->xmcd_file_size] = '\0';
-			// Avoid the http_free function to free the xmcd file...save a mempcy...
+			// Avoid the http_free function to mp_free the xmcd file...save a mempcy...
 			http_hdr->body = NULL;
 			http_hdr->body_size = 0;
 			return cddb_write_cache(cddb_data);
@@ -521,7 +522,7 @@ int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	if( i<0 ) return -1;
 
 	if( cddb_data->cache_dir!=NULL ) {
-		free(cddb_data->cache_dir);
+		mp_free(cddb_data->cache_dir);
 	}
 	return 0;
 }
@@ -539,7 +540,7 @@ int __FASTCALL__ cddb_resolve(char **xmcd_file) {
 	if( home_dir==NULL ) {
 		cddb_data.cache_dir = NULL;
 	} else {
-		cddb_data.cache_dir = (char*)malloc(strlen(home_dir)+strlen(cddb_cache_dir)+1);
+		cddb_data.cache_dir = (char*)mp_malloc(strlen(home_dir)+strlen(cddb_cache_dir)+1);
 		if( cddb_data.cache_dir==NULL ) {
 			MSG_FATAL("Memory allocation failed\n");
 			return -1;
@@ -573,7 +574,7 @@ int __FASTCALL__ cddb_resolve(char **xmcd_file) {
 cd_info_t* __FASTCALL__ cd_info_new() {
 	cd_info_t *cd_info = NULL;
 	
-	cd_info = (cd_info_t*)malloc(sizeof(cd_info_t));
+	cd_info = (cd_info_t*)mp_malloc(sizeof(cd_info_t));
 	if( cd_info==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return NULL;
@@ -587,16 +588,16 @@ cd_info_t* __FASTCALL__ cd_info_new() {
 void __FASTCALL__ cd_info_free(cd_info_t *cd_info) {
 	cd_track_t *cd_track, *cd_track_next;
 	if( cd_info==NULL ) return;
-	if( cd_info->artist!=NULL ) free(cd_info->artist);
-	if( cd_info->album!=NULL ) free(cd_info->album);
-	if( cd_info->genre!=NULL ) free(cd_info->genre);
+	if( cd_info->artist!=NULL ) mp_free(cd_info->artist);
+	if( cd_info->album!=NULL ) mp_free(cd_info->album);
+	if( cd_info->genre!=NULL ) mp_free(cd_info->genre);
 
 	cd_track_next = cd_info->first;
 	while( cd_track_next!=NULL ) {
 		cd_track = cd_track_next;
 		cd_track_next = cd_track->next;
-		if( cd_track->name!=NULL ) free(cd_track->name);
-		free(cd_track);
+		if( cd_track->name!=NULL ) mp_free(cd_track->name);
+		mp_free(cd_track);
 	}
 }
 
@@ -605,17 +606,17 @@ cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name,
 	
 	if( cd_info==NULL || track_name==NULL ) return NULL;
 	
-	cd_track = (cd_track_t*)malloc(sizeof(cd_track_t));
+	cd_track = (cd_track_t*)mp_malloc(sizeof(cd_track_t));
 	if( cd_track==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return NULL;
 	}
 	memset(cd_track, 0, sizeof(cd_track_t));
 	
-	cd_track->name = (char*)malloc(strlen(track_name)+1);
+	cd_track->name = (char*)mp_malloc(strlen(track_name)+1);
 	if( cd_track->name==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
-		free(cd_track);
+		mp_free(cd_track);
 		return NULL;
 	}
 	strcpy(cd_track->name, track_name);
@@ -690,14 +691,14 @@ char* __FASTCALL__ xmcd_parse_dtitle(cd_info_t *cd_info, char *line) {
 		ptr += 7;
 		album = strstr(ptr, "/");
 		if( album==NULL ) return NULL;
-		cd_info->album = (char*)malloc(strlen(album+2)+1);
+		cd_info->album = (char*)mp_malloc(strlen(album+2)+1);
 		if( cd_info->album==NULL ) {
 			return NULL;
 		}
 		strcpy( cd_info->album, album+2 );
 		album--;
 		album[0] = '\0';
-		cd_info->artist = (char*)malloc(strlen(ptr)+1);
+		cd_info->artist = (char*)mp_malloc(strlen(ptr)+1);
 		if( cd_info->artist==NULL ) {
 			return NULL;
 		}
@@ -711,7 +712,7 @@ char* __FASTCALL__ xmcd_parse_dgenre(cd_info_t *cd_info, char *line) {
 	ptr = strstr(line, "DGENRE=");
 	if( ptr!=NULL ) {
 		ptr += 7;
-		cd_info->genre = (char*)malloc(strlen(ptr)+1);
+		cd_info->genre = (char*)mp_malloc(strlen(ptr)+1);
 		if( cd_info->genre==NULL ) {
 			return NULL;
 		}
@@ -793,7 +794,7 @@ int __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *track) 
 	ret = cddb_resolve(&xmcd_file);
 	if( ret==0 ) {
 		cd_info = cddb_parse_xmcd(xmcd_file);
-		free(xmcd_file);
+		mp_free(xmcd_file);
 		cd_info_debug( cd_info );
 	}
 	ret = open_cdda(stream, dev, track);

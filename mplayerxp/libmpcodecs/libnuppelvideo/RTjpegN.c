@@ -1,12 +1,12 @@
-/* 
+/*
    RTjpeg (C) Justin Schoeman 1998 (justin@suntiger.ee.up.ac.za)
-   
+
    With modifications by:
    (c) 1998, 1999 by Joerg Walter <trouble@moes.pmnet.uni-oldenburg.de>
    and
    (c) 1999 by Wim Taymans <wim.taymans@tvd.be>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -19,7 +19,6 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-    
 */
 
 #include <stdio.h>
@@ -28,6 +27,8 @@
 
 #include "config.h"
 #include "RTjpegN.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 
 //#define SHOWBLOCK 1
 #define BETTERCOMPRESSION 1
@@ -3123,7 +3124,7 @@ void RTjpeg_init_mcompress(void)
 
  if(!RTjpeg_old)
  {
-  RTjpeg_old=malloc((4*RTjpeg_width*RTjpeg_height)+32);
+  RTjpeg_old=mp_malloc((4*RTjpeg_width*RTjpeg_height)+32);
   tmp=(unsigned long)RTjpeg_old;
   tmp+=32;
   tmp=tmp>>5;

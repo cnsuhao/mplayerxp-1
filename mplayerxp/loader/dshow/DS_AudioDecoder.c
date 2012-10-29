@@ -4,7 +4,8 @@
 	 Copyright 2001 Eugene Kuznetsov  (divx@euro.ru)
 
 *********************************************************/
-#include "../../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 
 #ifndef NOAVIFILE_HEADERS
 #include "audiodecoder.h"
@@ -50,12 +51,12 @@ DS_AudioDecoder * DS_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX* 
     Setup_LDT_Keeper();
     Setup_FS_Segment();
 #endif
-    this = malloc(sizeof(DS_AudioDecoder));
+    this = mp_malloc(sizeof(DS_AudioDecoder));
 
     sz = 18 + wf->cbSize;
-    this->m_sVhdr = malloc(sz);
+    this->m_sVhdr = mp_malloc(sz);
     memcpy(this->m_sVhdr, wf, sz);
-    this->m_sVhdr2 = malloc(18);
+    this->m_sVhdr2 = mp_malloc(18);
     memcpy(this->m_sVhdr2, this->m_sVhdr, 18);
 
     pWF = (WAVEFORMATEX*)this->m_sVhdr2;
@@ -103,9 +104,9 @@ DS_AudioDecoder * DS_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX* 
         ALLOCATOR_PROPERTIES props, props1;
         this->m_pDS_Filter = DS_FilterCreate(dllname, guid, &this->m_sOurType, &this->m_sDestType,&sampleProcData);
 	if( !this->m_pDS_Filter ) {
-	    free(this->m_sVhdr);
-	    free(this->m_sVhdr2);
-	    free(this);
+	    mp_free(this->m_sVhdr);
+	    mp_free(this->m_sVhdr2);
+	    mp_free(this);
 	    return NULL;
         }
 
@@ -129,10 +130,10 @@ DS_AudioDecoder * DS_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX* 
 
 void DS_AudioDecoder_Destroy(DS_AudioDecoder *this)
 {
-    free(this->m_sVhdr);
-    free(this->m_sVhdr2);
+    mp_free(this->m_sVhdr);
+    mp_free(this->m_sVhdr2);
     DS_Filter_Destroy(this->m_pDS_Filter);
-    free(this);
+    mp_free(this);
 }
 
 int DS_AudioDecoder_Convert(DS_AudioDecoder *this, const any_t* in_data, unsigned int in_size,

@@ -22,6 +22,7 @@
 #include <assert.h>
 
 #include "subopt-helper.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "__mp_msg.h"
 
@@ -148,10 +149,10 @@ int subopt_parse( char const * const str, const opt_t * opts )
                   tmp.len = 0;
                   last = parse_str( &str[parse_pos], &tmp );
                   if (*valp)
-                    free(*valp);
+                    mp_free(*valp);
                   *valp = NULL;
                   if (tmp.str && tmp.len > 0) {
-                    *valp = malloc(tmp.len + 1);
+                    *valp = mp_malloc(tmp.len + 1);
                     memcpy(*valp, tmp.str, tmp.len);
                     (*valp)[tmp.len] = 0;
                   }

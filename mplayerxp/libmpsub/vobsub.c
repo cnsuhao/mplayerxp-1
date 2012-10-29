@@ -16,7 +16,8 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
-#include "../libmpdemux/stream.h"
+#include "libmpdemux/stream.h"
+#include "osdep/mplib.h"
 #include "vobsub.h"
 #include "spudec.h"
 #define MSGT_CLASS MSGT_VOBSUB
@@ -32,12 +33,12 @@ static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, FILE *stream)
     size_t res = 0;
     int c;
     if (*lineptr == NULL) {
-	*lineptr = malloc(4096);
+	*lineptr = mp_malloc(4096);
 	if (*lineptr)
 	    *n = 4096;
     }
     else if (*n == 0) {
-	char *tmp = realloc(*lineptr, 4096);
+	char *tmp = mp_realloc(*lineptr, 4096);
 	if (tmp) {
 	    *lineptr = tmp;
 	    *n = 4096;
@@ -48,7 +49,7 @@ static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, FILE *stream)
 
     for (c = fgetc(stream); c != EOF; c = fgetc(stream)) {
 	if (res + 1 >= *n) {
-	    char *tmp = realloc(*lineptr, *n * 2);
+	    char *tmp = mp_realloc(*lineptr, *n * 2);
 	    if (tmp == NULL)
 		return -1;
 	    *lineptr = tmp;
@@ -82,7 +83,7 @@ typedef struct {
 
 static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 {
-    mpeg_t *res = malloc(sizeof(mpeg_t));
+    mpeg_t *res = mp_malloc(sizeof(mpeg_t));
     int err = res == NULL;
     if (!err) {
 	int fd;
@@ -101,7 +102,7 @@ static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 		close(fd);
 	}
 	else {
-	    free(res);
+	    mp_free(res);
 	    close(fd);
 	}
     }
@@ -112,11 +113,11 @@ static void __FASTCALL__ mpeg_free(mpeg_t *mpeg)
 {
     int fd;
     if (mpeg->packet)
-	free(mpeg->packet);
+	mp_free(mpeg->packet);
     fd = mpeg->stream->fd;
     free_stream(mpeg->stream);
     close(fd);
-    free(mpeg);
+    mp_free(mpeg);
 }
 
 static int __FASTCALL__ mpeg_eof(mpeg_t *mpeg)
@@ -238,13 +239,13 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	    mpeg->packet_size = len - ((unsigned int) mpeg_tell(mpeg) - idx);
 	    if (mpeg->packet_reserve < mpeg->packet_size) {
 		if (mpeg->packet)
-		    free(mpeg->packet);
-		mpeg->packet = malloc(mpeg->packet_size);
+		    mp_free(mpeg->packet);
+		mpeg->packet = mp_malloc(mpeg->packet_size);
 		if (mpeg->packet)
 		    mpeg->packet_reserve = mpeg->packet_size;
 	    }
 	    if (mpeg->packet == NULL) {
-		MSG_ERR("malloc failure");
+		MSG_ERR("mp_malloc failure");
 		mpeg->packet_reserve = 0;
 		mpeg->packet_size = 0;
 		return -1;
@@ -313,7 +314,7 @@ static void __FASTCALL__ packet_construct(packet_t *pkt)
 static void __FASTCALL__ packet_destroy(packet_t *pkt)
 {
     if (pkt->data)
-	free(pkt->data);
+	mp_free(pkt->data);
 }
 
 static void __FASTCALL__ packet_queue_construct(packet_queue_t *queue)
@@ -330,7 +331,7 @@ static void __FASTCALL__ packet_queue_destroy(packet_queue_t *queue)
     if (queue->packets) {
 	while (queue->packets_size--)
 	    packet_destroy(queue->packets + queue->packets_size);
-	free(queue->packets);
+	mp_free(queue->packets);
     }
     return;
 }
@@ -341,18 +342,18 @@ static int __FASTCALL__ packet_queue_ensure(packet_queue_t *queue, unsigned int 
 {
     if (queue->packets_reserve < needed_size) {
 	if (queue->packets) {
-	    packet_t *tmp = realloc(queue->packets, 2 * queue->packets_reserve * sizeof(packet_t));
+	    packet_t *tmp = mp_realloc(queue->packets, 2 * queue->packets_reserve * sizeof(packet_t));
 	    if (tmp == NULL) {
-		MSG_ERR("realloc failure");
+		MSG_ERR("mp_realloc failure");
 		return -1;
 	    }
 	    queue->packets = tmp;
 	    queue->packets_reserve *= 2;
 	}
 	else {
-	    queue->packets = malloc(sizeof(packet_t));
+	    queue->packets = mp_malloc(sizeof(packet_t));
 	    if (queue->packets == NULL) {
-		MSG_ERR("malloc failure");
+		MSG_ERR("mp_malloc failure");
 		return -1;
 	    }
 	    queue->packets_reserve = 1;
@@ -415,17 +416,17 @@ static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int _in
     if (_index >= vob->spu_streams_size) {
 	/* This is a new stream */
 	if (vob->spu_streams) {
-	    packet_queue_t *tmp = realloc(vob->spu_streams, (_index + 1) * sizeof(packet_queue_t));
+	    packet_queue_t *tmp = mp_realloc(vob->spu_streams, (_index + 1) * sizeof(packet_queue_t));
 	    if (tmp == NULL) {
-		MSG_ERR("vobsub_ensure_spu_stream: realloc failure");
+		MSG_ERR("vobsub_ensure_spu_stream: mp_realloc failure");
 		return -1;
 	    }
 	    vob->spu_streams = tmp;
 	}
 	else {
-	    vob->spu_streams = malloc((_index + 1) * sizeof(packet_queue_t));
+	    vob->spu_streams = mp_malloc((_index + 1) * sizeof(packet_queue_t));
 	    if (vob->spu_streams == NULL) {
-		MSG_ERR("vobsub_ensure_spu_stream: malloc failure");
+		MSG_ERR("vobsub_ensure_spu_stream: mp_malloc failure");
 		return -1;
 	    }
 	}
@@ -443,10 +444,10 @@ static int __FASTCALL__ vobsub_add_id(vobsub_t *vob, const char *id, size_t idle
 	return -1;
     if (id && idlen) {
 	if (vob->spu_streams[_index].id)
-	    free(vob->spu_streams[_index].id);
-	vob->spu_streams[_index].id = malloc(idlen + 1);
+	    mp_free(vob->spu_streams[_index].id);
+	vob->spu_streams[_index].id = mp_malloc(idlen + 1);
 	if (vob->spu_streams[_index].id == NULL) {
-	    MSG_ERR("vobsub_add_id: malloc failure");
+	    MSG_ERR("vobsub_add_id: mp_malloc failure");
 	    return -1;
 	}
 	vob->spu_streams[_index].id[idlen] = 0;
@@ -741,7 +742,7 @@ static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, FILE *fd)
 	line_size = __getline(&line, &line_reserve, fd);
 	if (line_size < 0) {
 	    if (line)
-		free(line);
+		mp_free(line);
 	    break;
 	}
 	if (*line == 0 || *line == '\r' || *line == '\n' || *line == '#')
@@ -845,7 +846,7 @@ int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const char *const name, unsigned 
 
 any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,const int force,any_t** spu)
 {
-    vobsub_t *vob = malloc(sizeof(vobsub_t));
+    vobsub_t *vob = mp_malloc(sizeof(vobsub_t));
     if(spu)
       *spu = NULL;
     if (vob) {
@@ -859,7 +860,7 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 	vob->spu_streams_current = 0;
 	vob->delay = 0;
 	vob->forced_subs=0;
-	buf = malloc(strlen(name) + 5);
+	buf = mp_malloc(strlen(name) + 5);
 	if (buf) {
 	    FILE *fd;
 	    mpeg_t *mpg;
@@ -878,8 +879,8 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 		if(force)
 		  MSG_ERR("VobSub: Can't open IDX file\n");
 		else {
-		  free(buf);
-		  free(vob);
+		  mp_free(buf);
+		  mp_free(vob);
 		  return NULL;
 		}
 	    } else {
@@ -902,8 +903,8 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 		MSG_ERR("VobSub: Can't open SUB file\n");
 	      else {
 		
-		free(buf);
-		free(vob);
+		mp_free(buf);
+		mp_free(vob);
 		return NULL;
 	      }
 	    } else {
@@ -959,7 +960,7 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 		    vob->spu_streams[vob->spu_streams_current].current_index = 0;
 		mpeg_free(mpg);
 	    }
-	    free(buf);
+	    mp_free(buf);
 	}
     }
     return vob;
@@ -971,9 +972,9 @@ void __FASTCALL__ vobsub_close(any_t*this)
     if (vob->spu_streams) {
 	while (vob->spu_streams_size--)
 	    packet_queue_destroy(vob->spu_streams + vob->spu_streams_size);
-	free(vob->spu_streams);
+	mp_free(vob->spu_streams);
     }
-    free(vob);
+    mp_free(vob);
 }
 
 void __FASTCALL__ vobsub_reset(any_t*vobhandle)

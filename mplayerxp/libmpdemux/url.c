@@ -15,6 +15,7 @@
 #include "help_mp.h"
 #include "demux_msg.h"
 #include "mplayer.h"
+#include "osdep/mplib.h"
 
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
@@ -25,7 +26,7 @@ URL_t *url_redirect(URL_t **url, const char *redir) {
   URL_t *res;
   if (!strchr(redir, '/') || *redir == '/') {
     char *tmp;
-    char *newurl = malloc(strlen(u->url) + strlen(redir) + 1);
+    char *newurl = mp_malloc(strlen(u->url) + strlen(redir) + 1);
     strcpy(newurl, u->url);
     if (*redir == '/') {
       redir++;
@@ -36,7 +37,7 @@ URL_t *url_redirect(URL_t **url, const char *redir) {
     if (tmp) tmp[1] = 0;
     strcat(newurl, redir);
     res = url_new(newurl);
-    free(newurl);
+    mp_free(newurl);
   } else
     res = url_new(redir);
   url_free(u);
@@ -58,14 +59,14 @@ url_new(const char* url) {
                 MSG_FATAL("MemAllocFailed\n");
                 goto err_out;
         }
-        escfilename=malloc(strlen(url)*3+1);
+        escfilename=mp_malloc(strlen(url)*3+1);
         if (!escfilename ) {
                 MSG_FATAL("MemAllocFailed\n");
                 goto err_out;
         }
 
 	// Create the URL container
-	Curl = malloc(sizeof(URL_t));
+	Curl = mp_malloc(sizeof(URL_t));
 	if( Curl==NULL ) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
@@ -77,7 +78,7 @@ url_new(const char* url) {
 	url_escape_string(escfilename,url);
 
 	// Copy the url in the URL container
-	Curl->url = strdup(escfilename);
+	Curl->url = mp_strdup(escfilename);
 	if( Curl->url==NULL ) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
@@ -97,7 +98,7 @@ url_new(const char* url) {
 		}
 	}
 	pos1 = ptr1-escfilename;
-	Curl->protocol = malloc(pos1+1);
+	Curl->protocol = mp_malloc(pos1+1);
 	if( Curl->protocol==NULL ) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
@@ -119,7 +120,7 @@ url_new(const char* url) {
 	if( ptr2!=NULL ) {
 		// We got something, at least a username...
 		int len = ptr2-ptr1;
-		Curl->username = malloc(len+1);
+		Curl->username = mp_malloc(len+1);
 		if( Curl->username==NULL ) {
 			MSG_FATAL("MemAllocFailed\n");
 			goto err_out;
@@ -132,7 +133,7 @@ url_new(const char* url) {
 			// We also have a password
 			int len2 = ptr2-ptr3-1;
 			Curl->username[ptr3-ptr1]='\0';
-			Curl->password = malloc(len2+1);
+			Curl->password = mp_malloc(len2+1);
 			if( Curl->password==NULL ) {
 				MSG_FATAL("MemAllocFailed\n");
 				goto err_out;
@@ -184,7 +185,7 @@ url_new(const char* url) {
 	}
 	if( v6addr ) pos2--;
 	// copy the hostname in the URL container
-	Curl->hostname = malloc(pos2-pos1+1);
+	Curl->hostname = mp_malloc(pos2-pos1+1);
 	if( Curl->hostname==NULL ) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
@@ -199,7 +200,7 @@ url_new(const char* url) {
 		// check if it's not a trailing '/'
 		if( strlen(ptr2)>1 ) {
 			// copy the path/filename in the URL container
-			Curl->file = strdup(ptr2);
+			Curl->file = mp_strdup(ptr2);
 			if( Curl->file==NULL ) {
 				MSG_FATAL("MemAllocFailed\n");
 				goto err_out;
@@ -208,7 +209,7 @@ url_new(const char* url) {
 	} 
 	// Check if a filename was given or set, else set it with '/'
 	if( Curl->file==NULL ) {
-		Curl->file = malloc(2);
+		Curl->file = mp_malloc(2);
 		if( Curl->file==NULL ) {
 			MSG_FATAL("MemAllocFailed\n");
 			goto err_out;
@@ -216,10 +217,10 @@ url_new(const char* url) {
 		strcpy(Curl->file, "/");
 	}
 	
-        free(escfilename);
+        mp_free(escfilename);
 	return Curl;
 err_out:
-	if (escfilename) free(escfilename);
+	if (escfilename) mp_free(escfilename);
 	if (Curl) url_free(Curl);
 	return NULL;
 }
@@ -227,13 +228,13 @@ err_out:
 void
 url_free(URL_t* url) {
 	if(!url) return;
-	if(url->url) free(url->url);
-	if(url->protocol) free(url->protocol);
-	if(url->hostname) free(url->hostname);
-	if(url->file) free(url->file);
-	if(url->username) free(url->username);
-	if(url->password) free(url->password);
-	free(url);
+	if(url->url) mp_free(url->url);
+	if(url->protocol) mp_free(url->protocol);
+	if(url->hostname) mp_free(url->hostname);
+	if(url->file) mp_free(url->file);
+	if(url->username) mp_free(url->username);
+	if(url->password) mp_free(url->password);
+	mp_free(url);
 }
 
 
@@ -347,14 +348,14 @@ url_escape_string(char *outbuf, const char *inbuf) {
 		}
 		// we found one, take that part of the string
 		if(j < len) {
-			if(!tmp) tmp = malloc(len+1);
+			if(!tmp) tmp = mp_malloc(len+1);
 			strncpy(tmp,inbuf+i,j-i);
 			tmp[j-i] = '\0';
 			in = tmp;
 		} else // take the rest of the string
 			in = (char*)inbuf+i;
 		
-		if(!unesc) unesc = malloc(len+1);
+		if(!unesc) unesc = mp_malloc(len+1);
 		// unescape first to avoid escaping escape
 		url_unescape_string(unesc,in);
 		// then escape, including mark and other reserved chars
@@ -364,8 +365,8 @@ url_escape_string(char *outbuf, const char *inbuf) {
 		i += strlen(in);
 	}
 	*outbuf = '\0';
-	if(tmp) free(tmp);
-	if(unesc) free(unesc);
+	if(tmp) mp_free(tmp);
+	if(unesc) mp_free(unesc);
 }
 
 #ifdef __URL_DEBUG

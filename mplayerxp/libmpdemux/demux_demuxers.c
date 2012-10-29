@@ -1,5 +1,4 @@
-
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,6 +6,7 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 typedef struct dd_priv {
   demuxer_t* vd;
   demuxer_t* ad;
@@ -18,9 +18,9 @@ demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd) {
   demuxer_t* ret;
   dd_priv_t* priv;
 
-  ret = (demuxer_t*)calloc(1,sizeof(demuxer_t));
+  ret = (demuxer_t*)mp_calloc(1,sizeof(demuxer_t));
 
-  priv = (dd_priv_t*)malloc(sizeof(dd_priv_t));
+  priv = (dd_priv_t*)mp_malloc(sizeof(dd_priv_t));
   priv->vd = vd;
   priv->ad = ad;
   priv->sd = sd;
@@ -93,7 +93,7 @@ static void demux_close_demuxers(demuxer_t* demuxer) {
   if(priv->sd && priv->sd != priv->vd && priv->sd != priv->ad)
     FREE_DEMUXER(priv->sd);
 
-  free(priv);
+  mp_free(priv);
   demux_info_free(demuxer);
-  free(demuxer);
+  mp_free(demuxer);
 }

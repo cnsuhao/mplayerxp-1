@@ -5,6 +5,7 @@
 #include "ad_internal.h"
 #include "mp_config.h"
 #include "help_mp.h"
+#include "osdep/mplib.h"
 #include "loader/dshow/DS_AudioDecoder.h"
 #include "codecs_ld.h"
 
@@ -37,12 +38,12 @@ int init(sh_audio_t *sh)
 int preinit(sh_audio_t *sh_audio)
 {
   dshow_priv_t *priv;
-  if(!(sh_audio->context=malloc(sizeof(dshow_priv_t)))) return 0;
+  if(!(sh_audio->context=mp_malloc(sizeof(dshow_priv_t)))) return 0;
   priv=sh_audio->context;
   if(!(priv->ds_adec=DS_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf)))
   {
     MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
-    free(sh_audio->context);
+    mp_free(sh_audio->context);
     return 0;
   }
   sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
@@ -59,7 +60,7 @@ void uninit(sh_audio_t *sh)
 {
   dshow_priv_t* priv = sh->context;
   DS_AudioDecoder_Destroy(priv->ds_adec);
-  free(priv);
+  mp_free(priv);
 }
 
 int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)

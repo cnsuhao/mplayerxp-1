@@ -18,9 +18,6 @@
 #include "mp_config.h"
 
 #include <stdio.h>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -38,6 +35,7 @@
 #include "sub.h"
 #include "osdep/vbelib.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "aspect.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
@@ -140,7 +138,7 @@ static void vesa_term( vo_data_t*vo )
     if((err=vbeRestoreState(priv->init_state)) != VBE_OK) PRINT_VBE_ERR("vbeRestoreState",err);
     if((err=vbeSetMode(priv->init_mode,NULL)) != VBE_OK) PRINT_VBE_ERR("vbeSetMode",err);
     if(HAS_DGA()) vbeUnmapVideoBuffer((unsigned long)priv->win.ptr,priv->win.high);
-    if(priv->dga_buffer && !HAS_DGA()) free(priv->dga_buffer);
+    if(priv->dga_buffer && !HAS_DGA()) mp_free(priv->dga_buffer);
     vbeDestroy();
 }
 
@@ -646,7 +644,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    if(!priv->vidix_name)
 #endif
 	    {
-		if(!(priv->dga_buffer = memalign(64,priv->vmode_info.XResolution*priv->vmode_info.YResolution*priv->dstBpp))) {
+		if(!(priv->dga_buffer = mp_memalign(64,priv->vmode_info.XResolution*priv->vmode_info.YResolution*priv->dstBpp))) {
 		    MSG_ERR("vo_vesa: Can't allocate temporary buffer\n");
 		    return -1;
 		}
@@ -713,7 +711,7 @@ static void uninit(vo_data_t*vo)
 {
     vesa_term(vo);
     MSG_DBG3("vo_vesa: uninit was called\n");
-    free(vo->priv);
+    mp_free(vo->priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
@@ -721,7 +719,7 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     int pre_init_err = 0;
     MSG_DBG2("vo_vesa: preinit(%s) was called\n",arg);
     MSG_DBG3("vo_vesa: subdevice %s is being initialized\n",arg);
-    vo->priv=malloc(sizeof(priv_t));
+    vo->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     memset(priv,0,sizeof(priv_t));
     priv->subdev_flags = 0xFFFFFFFEUL;

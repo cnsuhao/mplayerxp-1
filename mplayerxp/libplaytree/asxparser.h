@@ -38,7 +38,7 @@ extern char* __FASTCALL__ asx_get_attrib(const char* attrib,char** attribs);
 
 extern int __FASTCALL__ asx_attrib_to_enum(const char* val,char** valid_vals);
 
-#define asx_free_attribs(a) asx_list_free(&a,free)
+#define asx_free_attribs(a) asx_list_free(&a,mp_free)
 
 ////// List utils
 

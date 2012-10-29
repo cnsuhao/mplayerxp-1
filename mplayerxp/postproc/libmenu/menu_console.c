@@ -1,4 +1,3 @@
-
 #include "mp_config.h"
 #include "help_mp.h"
 
@@ -27,7 +26,8 @@
 #include "osdep/keycodes.h"
 #include "input/input.h"
 #include "osdep/timer.h"
-#include "../pp_msg.h"
+#include "pp_msg.h"
+#include "osdep/mplib.h"
 
 typedef struct history_st history_t;
 
@@ -128,11 +128,11 @@ static void add_line(struct menu_priv_s* priv, char* l) {
   }
 
   if(priv->num_lines >= priv->buf_lines && priv->lines[priv->last_line])
-    free(priv->lines[priv->last_line]);
+    mp_free(priv->lines[priv->last_line]);
   else
     priv->num_lines++;
 
-  priv->lines[priv->last_line] = strdup(l);
+  priv->lines[priv->last_line] = mp_strdup(l);
   priv->last_line = (priv->last_line + 1) % priv->buf_lines;
   priv->add_line = 1;
 }
@@ -157,7 +157,7 @@ static void add_string(struct menu_priv_s* priv, char* l) {
       priv->add_line = 1;
     return;
   }
-  priv->lines[ll] = realloc(priv->lines[ll],strlen(priv->lines[ll]) + strlen(l) + 1);
+  priv->lines[ll] = mp_realloc(priv->lines[ll],strlen(priv->lines[ll]) + strlen(l) + 1);
   if ( priv->lines[ll] != NULL )
   {
     strcat(priv->lines[ll],l);
@@ -347,13 +347,13 @@ static void enter_cmd(menu_t* menu) {
       for(i = mpriv->history ; i->prev ; i = i->prev)
 	/**/;
       i->next->prev = NULL;
-      free(i->buffer);
-      free(i);
+      mp_free(i->buffer);
+      mp_free(i);
     } else
       mpriv->history_size++;
-    h = calloc(1,sizeof(history_t));
+    h = mp_calloc(1,sizeof(history_t));
     h->size = 255;
-    h->buffer = calloc(h->size,1);
+    h->buffer = mp_calloc(h->size,1);
     h->prev = mpriv->history;
     mpriv->history->next = h;
     mpriv->history = h;
@@ -452,7 +452,7 @@ static void read_key(menu_t* menu,int c) {
     int l = strlen(mpriv->cur_history->buffer);
     if(l >= mpriv->cur_history->size) {
       mpriv->cur_history->size += 255;
-      mpriv->cur_history->buffer = realloc(mpriv->cur_history,mpriv->cur_history->size);
+      mpriv->cur_history->buffer = mp_realloc(mpriv->cur_history,mpriv->cur_history->size);
     }
     mpriv->cur_history->buffer[l] = (char)c;
     mpriv->cur_history->buffer[l+1] = '\0';
@@ -468,10 +468,10 @@ static int openMenu(menu_t* menu,const char* args) {
   menu->read_cmd = read_cmd;
   menu->read_key = read_key;
 
-  mpriv->lines = calloc(mpriv->buf_lines,sizeof(char*));
+  mpriv->lines = mp_calloc(mpriv->buf_lines,sizeof(char*));
   mpriv->prompt = mpriv->mp_prompt;
-  mpriv->cur_history = mpriv->history = calloc(1,sizeof(history_t));
-  mpriv->cur_history->buffer = calloc(255,1);
+  mpriv->cur_history = mpriv->history = mp_calloc(1,sizeof(history_t));
+  mpriv->cur_history->buffer = mp_calloc(255,1);
   mpriv->cur_history->size = 255;
   
   if(args)

@@ -17,13 +17,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "sub_cc.h"
 
 #include "libmpsub/subreader.h"
 
 #include "libvo/video_out.h"
 #include "libvo/sub.h"
+#include "osdep/mplib.h"
 
 
 #define CC_MAX_LINE_LENGTH 64
@@ -69,7 +70,7 @@ static void clear_buffer(subtitle *buf)
 {
 	int i;
 	buf->lines=0;
-	for(i=0;i<SUB_MAX_TEXT;i++) if(buf->text[i]) {free(buf->text[i]);buf->text[i]=NULL;}
+	for(i=0;i<SUB_MAX_TEXT;i++) if(buf->text[i]) {mp_free(buf->text[i]);buf->text[i]=NULL;}
 }
 
 
@@ -83,7 +84,7 @@ static void scroll_buffer(subtitle* buf)
 
 	while(buf->lines > cc_lines)
 	{
-		if(buf->text[0]) free(buf->text[0]);
+		if(buf->text[0]) mp_free(buf->text[0]);
 
 		for(i = 0; i < (buf->lines - 1); i++) buf->text[i] = buf->text[i+1];
 
@@ -111,7 +112,7 @@ static void append_char(char c)
 	if(!bb->lines) {bb->lines++; cursor_pos=0;}
 	if(bb->text[bb->lines - 1]==NULL) 
 	{
-		bb->text[bb->lines - 1]=malloc(CC_MAX_LINE_LENGTH);
+		bb->text[bb->lines - 1]=mp_malloc(CC_MAX_LINE_LENGTH);
 		memset(bb->text[bb->lines - 1],0,CC_MAX_LINE_LENGTH);
 		cursor_pos=0;
 	}
@@ -122,7 +123,7 @@ static void append_char(char c)
 		{
 			bb->lines++;cursor_pos=0;
 			if(cc_mode==CC_ROLLUP){ //Carriage return - scroll buffer one line up
-				bb->text[bb->lines - 1]=calloc(1, CC_MAX_LINE_LENGTH);
+				bb->text[bb->lines - 1]=mp_calloc(1, CC_MAX_LINE_LENGTH);
 				scroll_buffer(bb);
 			}
 		}
@@ -225,8 +226,8 @@ static void cc_decode_EIA608(unsigned short int data)
 					}
 			}
 	  }
-  } 
-  lastcode=data;  
+  }
+  lastcode=data;
 }
 
 static void subcc_decode(const unsigned char *inputbuffer, unsigned int inputlength)

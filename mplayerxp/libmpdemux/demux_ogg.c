@@ -23,6 +23,7 @@
 #include "libmpcodecs/dec_audio.h"
 #include "libvo/video_out.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define BLOCK_SIZE 4096
 #define FOURCC_VORBIS mmioFOURCC('v', 'r', 'b', 's')
@@ -227,7 +228,7 @@ static void demux_ogg_init_sub () {
   int lcv;
   if(!ogg_sub.text[0]) // not yet allocated
   for (lcv = 0; lcv < SUB_MAX_TEXT; lcv++) {
-    ogg_sub.text[lcv] = (char*)malloc(OGG_SUB_MAX_LINE);
+    ogg_sub.text[lcv] = (char*)mp_malloc(OGG_SUB_MAX_LINE);
   }
 }
 
@@ -470,8 +471,8 @@ static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vor
       index = demux_ogg_sub_reverse_id(d, id);
       if (index >= 0) {
 	// in case of malicious files with more than one lang per track:
-	if (ogg_d->text_langs[index]) free(ogg_d->text_langs[index]);
-	ogg_d->text_langs[index] = strdup(val);
+	if (ogg_d->text_langs[index]) mp_free(ogg_d->text_langs[index]);
+	ogg_d->text_langs[index] = mp_strdup(val);
       }
       // check for -slang if subs are uninitialized yet
       if (os->text && d->sub->id == -1 && demux_ogg_check_lang(val, mp_conf.dvdsub_lang))
@@ -646,7 +647,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
       demux_ogg_read_packet(os,&op,context,&pts,&flags,samplesize);
       if(op.granulepos >= 0) ogg_d->final_granulepos = op.granulepos;
       if(index_mode == 2 && (flags || (os->vorbis && op.granulepos >= 0))) {
-	ogg_d->syncpoints = (ogg_syncpoint_t*)realloc(ogg_d->syncpoints,(ogg_d->num_syncpoint+1)*sizeof(ogg_syncpoint_t));
+	ogg_d->syncpoints = (ogg_syncpoint_t*)mp_realloc(ogg_d->syncpoints,(ogg_d->num_syncpoint+1)*sizeof(ogg_syncpoint_t));
 	ogg_d->syncpoints[ogg_d->num_syncpoint].granulepos = op.granulepos;
 	ogg_d->syncpoints[ogg_d->num_syncpoint].page_pos = (ogg_page_continued(page) && p == 0) ? last_pos : pos;
 	ogg_d->num_syncpoint++;
@@ -748,7 +749,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
   clear_sub = -1;
   s = demuxer->stream;
 
-  ogg_d = (ogg_demuxer_t*)calloc(1,sizeof(ogg_demuxer_t));
+  ogg_d = (ogg_demuxer_t*)mp_calloc(1,sizeof(ogg_demuxer_t));
   sync = &ogg_d->sync;
   page = &ogg_d->page;
 
@@ -789,7 +790,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
     }
 
     /// Init  the data structure needed for a logical stream
-    ogg_d->subs = (ogg_stream_t*)realloc(ogg_d->subs,(ogg_d->num_sub+1)*sizeof(ogg_stream_t));
+    ogg_d->subs = (ogg_stream_t*)mp_realloc(ogg_d->subs,(ogg_d->num_sub+1)*sizeof(ogg_stream_t));
     memset(&ogg_d->subs[ogg_d->num_sub],0,sizeof(ogg_stream_t));
     /// Get the stream serial number
     s_no = ogg_page_serialno(page);
@@ -832,7 +833,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	    sh_v = new_sh_video(demuxer,ogg_d->num_sub);
 
 	    sh_v->context = NULL;
-	    sh_v->bih = (BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
+	    sh_v->bih = (BITMAPINFOHEADER*)mp_calloc(1,sizeof(BITMAPINFOHEADER));
 	    sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	    sh_v->bih->biCompression= sh_v->fourcc = FOURCC_THEORA;
 	    sh_v->fps = ((double)inf.fps_numerator)/
@@ -875,7 +876,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
        // Old video header
       if(get_uint32 (pack.packet+96) == 0x05589f80 && pack.bytes >= 184) {
 	sh_v = new_sh_video(demuxer,ogg_d->num_sub);
-	sh_v->bih = (BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
+	sh_v->bih = (BITMAPINFOHEADER*)mp_calloc(1,sizeof(BITMAPINFOHEADER));
 	sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	sh_v->bih->biCompression=
 	sh_v->fourcc = mmioFOURCC(pack.packet[68],pack.packet[69],
@@ -898,7 +899,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	unsigned int extra_size;
 	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
 	extra_size = get_uint16(pack.packet+140);
-	sh_a->wf = (WAVEFORMATEX*)calloc(1,sizeof(WAVEFORMATEX)+extra_size);
+	sh_a->wf = (WAVEFORMATEX*)mp_calloc(1,sizeof(WAVEFORMATEX)+extra_size);
 	sh_a->wtag = sh_a->wf->wFormatTag = get_uint16(pack.packet+124);
 	sh_a->channels = sh_a->wf->nChannels = get_uint16(pack.packet+126);
 	sh_a->samplerate = sh_a->wf->nSamplesPerSec = get_uint32(pack.packet+128);
@@ -925,7 +926,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
       /// New video header
       if(strncmp(st->streamtype,"video",5) == 0) {
 	sh_v = new_sh_video(demuxer,ogg_d->num_sub);
-	sh_v->bih = (BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
+	sh_v->bih = (BITMAPINFOHEADER*)mp_calloc(1,sizeof(BITMAPINFOHEADER));
 	sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	sh_v->bih->biCompression=
 	sh_v->fourcc = mmioFOURCC(st->subtype[0],st->subtype[1],
@@ -950,7 +951,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	memcpy(buffer,st->subtype,4);
 	buffer[4] = '\0';
 	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
-	sh_a->wf = (WAVEFORMATEX*)calloc(1,sizeof(WAVEFORMATEX)+extra_size);
+	sh_a->wf = (WAVEFORMATEX*)mp_calloc(1,sizeof(WAVEFORMATEX)+extra_size);
 	sh_a->wtag =  sh_a->wf->wFormatTag = strtol(buffer, NULL, 16);
 	sh_a->channels = sh_a->wf->nChannels = get_uint16(&st->sh.audio.channels);
 	sh_a->samplerate = sh_a->wf->nSamplesPerSec = get_uint64(&st->samples_per_unit);
@@ -977,9 +978,9 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
           if (demuxer->sub->id == ogg_d->n_text)
             text_id = ogg_d->num_sub;
           ogg_d->n_text++;
-          ogg_d->text_ids = (int *)realloc(ogg_d->text_ids, sizeof(int) * ogg_d->n_text);
+          ogg_d->text_ids = (int *)mp_realloc(ogg_d->text_ids, sizeof(int) * ogg_d->n_text);
           ogg_d->text_ids[ogg_d->n_text - 1] = ogg_d->num_sub;
-          ogg_d->text_langs = (char **)realloc(ogg_d->text_langs, sizeof(char *) * ogg_d->n_text);
+          ogg_d->text_langs = (char **)mp_realloc(ogg_d->text_langs, sizeof(char *) * ogg_d->n_text);
           ogg_d->text_langs[ogg_d->n_text - 1] = NULL;
           demux_ogg_init_sub();
 	//// Unknown header type
@@ -1185,9 +1186,9 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
   }
 
   // Build the ogg demuxer private datas
-  ogg_d = (ogg_demuxer_t*)calloc(1,sizeof(ogg_demuxer_t));
+  ogg_d = (ogg_demuxer_t*)mp_calloc(1,sizeof(ogg_demuxer_t));
   ogg_d->num_sub = 1;
-  ogg_d->subs = (ogg_stream_t*)malloc(sizeof(ogg_stream_t));
+  ogg_d->subs = (ogg_stream_t*)mp_malloc(sizeof(ogg_stream_t));
   ogg_d->subs[0].vorbis = 1;
 
    // Init the ogg physical stream
@@ -1197,7 +1198,7 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
   while((np = ogg_sync_pageout(&ogg_d->sync,&ogg_d->page)) <= 0 ) {
     if(np < 0) {
       MSG_ERR("AVI Ogg error : Can't init using first stream packets\n");
-      free(ogg_d);
+      mp_free(ogg_d);
       goto fallback;
     }
     // Add some data
@@ -1441,18 +1442,18 @@ static void ogg_close(demuxer_t* demuxer) {
   {
     for (i = 0; i < ogg_d->num_sub; i++)
       ogg_stream_clear(&ogg_d->subs[i].stream);
-    free(ogg_d->subs);
+    mp_free(ogg_d->subs);
   }
   if(ogg_d->syncpoints)
-    free(ogg_d->syncpoints);
+    mp_free(ogg_d->syncpoints);
   if (ogg_d->text_ids)
-    free(ogg_d->text_ids);
+    mp_free(ogg_d->text_ids);
   if (ogg_d->text_langs) {
     for (i = 0; i < ogg_d->n_text; i++)
-      if (ogg_d->text_langs[i]) free(ogg_d->text_langs[i]);
-    free(ogg_d->text_langs);
+      if (ogg_d->text_langs[i]) mp_free(ogg_d->text_langs[i]);
+    mp_free(ogg_d->text_langs);
   }
-  free(ogg_d);
+  mp_free(ogg_d);
 }
 
 static int ogg_control(demuxer_t *demuxer,int cmd,any_t*args)

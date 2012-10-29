@@ -1,6 +1,7 @@
 #include "inputpin.h"
 #include "mediatype.h"
 #include "wine/winerror.h"
+#include "osdep/mplib.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,8 +146,8 @@ static long STDCALL CEnumPins_Clone(IEnumPins* This,
  */
 static void CEnumPins_Destroy(CEnumPins* This)
 {
-    free(This->vt);
-    free(This);
+    mp_free(This->vt);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(CEnumPins)
@@ -162,7 +163,7 @@ IMPLEMENT_IUNKNOWN(CEnumPins)
  */
 static CEnumPins* CEnumPinsCreate(IPin* p, IPin* pp)
 {
-    CEnumPins* This = (CEnumPins*) malloc(sizeof(CEnumPins));
+    CEnumPins* This = (CEnumPins*) mp_malloc(sizeof(CEnumPins));
 
     if (!This)
         return NULL;
@@ -172,10 +173,10 @@ static CEnumPins* CEnumPinsCreate(IPin* p, IPin* pp)
     This->pin2 = pp;
     This->counter = 0;
 
-    This->vt = (IEnumPins_vt*) malloc(sizeof(IEnumPins_vt));
+    This->vt = (IEnumPins_vt*) mp_malloc(sizeof(IEnumPins_vt));
     if (!This->vt)
     {
-	free(This);
+	mp_free(This);
         return NULL;
     }
     This->vt->QueryInterface = CEnumPins_QueryInterface;
@@ -514,9 +515,9 @@ static long STDCALL CInputPin_NewSegment(IPin* This,
  */
 static void CInputPin_Destroy(CInputPin* This)
 {
-    free(This->vt);
+    mp_free(This->vt);
     FreeMediaType(&(This->type));
-    free(This);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(CInputPin)
@@ -532,7 +533,7 @@ IMPLEMENT_IUNKNOWN(CInputPin)
  */
 CInputPin* CInputPinCreate(CBaseFilter* p, const AM_MEDIA_TYPE* amt)
 {
-    CInputPin* This = (CInputPin*) malloc(sizeof(CInputPin));
+    CInputPin* This = (CInputPin*) mp_malloc(sizeof(CInputPin));
 
     if (!This)
         return NULL;
@@ -541,11 +542,11 @@ CInputPin* CInputPinCreate(CBaseFilter* p, const AM_MEDIA_TYPE* amt)
     This->parent = p;
     CopyMediaType(&(This->type),amt);
 
-    This->vt= (IPin_vt*) malloc(sizeof(IPin_vt));
+    This->vt= (IPin_vt*) mp_malloc(sizeof(IPin_vt));
 
     if (!This->vt)
     {
-	free(This);
+	mp_free(This);
 	return NULL;
     }
 
@@ -805,7 +806,7 @@ static long STDCALL CBaseFilter_JoinFilterGraph(IBaseFilter* This,
  * \return E_NOTIMPL Not implemented
  *
  * \remarks
- * Call to CoTaskMemFree to free memory allocated for string
+ * Call to CoTaskMemFree to mp_free memory allocated for string
  *
  */
 static long STDCALL CBaseFilter_QueryVendorInfo(IBaseFilter* This,
@@ -850,12 +851,12 @@ static IPin* CBaseFilter_GetUnusedPin(CBaseFilter* This)
 static void CBaseFilter_Destroy(CBaseFilter* This)
 {
     if (This->vt)
-	free(This->vt);
+	mp_free(This->vt);
     if (This->pin)
 	This->pin->vt->Release((IUnknown*)This->pin);
     if (This->unused_pin)
 	This->unused_pin->vt->Release((IUnknown*)This->unused_pin);
-    free(This);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(CBaseFilter)
@@ -871,7 +872,7 @@ IMPLEMENT_IUNKNOWN(CBaseFilter)
  */
 CBaseFilter* CBaseFilterCreate(const AM_MEDIA_TYPE* type, CBaseFilter2* parent)
 {
-    CBaseFilter* This = (CBaseFilter*) malloc(sizeof(CBaseFilter));
+    CBaseFilter* This = (CBaseFilter*) mp_malloc(sizeof(CBaseFilter));
     if (!This)
 	return NULL;
 
@@ -880,7 +881,7 @@ CBaseFilter* CBaseFilterCreate(const AM_MEDIA_TYPE* type, CBaseFilter2* parent)
     This->pin = (IPin*) CInputPinCreate(This, type);
     This->unused_pin = (IPin*) CRemotePinCreate(This, parent->GetPin(parent));
 
-    This->vt = (IBaseFilter_vt*) malloc(sizeof(IBaseFilter_vt));
+    This->vt = (IBaseFilter_vt*) mp_malloc(sizeof(IBaseFilter_vt));
     if (!This->vt || !This->pin || !This->unused_pin)
     {
         CBaseFilter_Destroy(This);
@@ -1146,7 +1147,7 @@ static long STDCALL CBaseFilter2_JoinFilterGraph(IBaseFilter* This,
  * \return E_NOTIMPL Not implemented
  *
  * \remarks
- * Call to CoTaskMemFree to free memory allocated for string
+ * Call to CoTaskMemFree to mp_free memory allocated for string
  *
  */
 static long STDCALL CBaseFilter2_QueryVendorInfo(IBaseFilter* This,
@@ -1182,8 +1183,8 @@ static void CBaseFilter2_Destroy(CBaseFilter2* This)
     if (This->pin)
 	This->pin->vt->Release((IUnknown*) This->pin);
     if (This->vt)
-	free(This->vt);
-    free(This);
+	mp_free(This->vt);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(CBaseFilter2)
@@ -1205,7 +1206,7 @@ static GUID CBaseFilter2_interf3 =
  */
 CBaseFilter2* CBaseFilter2Create()
 {
-    CBaseFilter2* This = (CBaseFilter2*) malloc(sizeof(CBaseFilter2));
+    CBaseFilter2* This = (CBaseFilter2*) mp_malloc(sizeof(CBaseFilter2));
 
     if (!This)
 	return NULL;
@@ -1213,7 +1214,7 @@ CBaseFilter2* CBaseFilter2Create()
     This->refcount = 1;
     This->pin = (IPin*) CRemotePin2Create(This);
 
-    This->vt = (IBaseFilter_vt*) malloc(sizeof(IBaseFilter_vt));
+    This->vt = (IBaseFilter_vt*) mp_malloc(sizeof(IBaseFilter_vt));
 
     if (!This->pin || !This->vt)
     {
@@ -1348,8 +1349,8 @@ static long STDCALL CRemotePin_QueryPinInfo(IPin* This, /* [out] */ PIN_INFO* pI
 static void CRemotePin_Destroy(CRemotePin* This)
 {
     Debug printf("CRemotePin_Destroy(%p) called\n", This);
-    free(This->vt);
-    free(This);
+    mp_free(This->vt);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(CRemotePin)
@@ -1365,7 +1366,7 @@ IMPLEMENT_IUNKNOWN(CRemotePin)
  */
 CRemotePin* CRemotePinCreate(CBaseFilter* pt, IPin* rpin)
 {
-    CRemotePin* This = (CRemotePin*) malloc(sizeof(CRemotePin));
+    CRemotePin* This = (CRemotePin*) mp_malloc(sizeof(CRemotePin));
 
     if (!This)
         return NULL;
@@ -1376,11 +1377,11 @@ CRemotePin* CRemotePinCreate(CBaseFilter* pt, IPin* rpin)
     This->remote_pin = rpin;
     This->refcount = 1;
 
-    This->vt = (IPin_vt*) malloc(sizeof(IPin_vt));
+    This->vt = (IPin_vt*) mp_malloc(sizeof(IPin_vt));
 
     if (!This->vt)
     {
-	free(This);
+	mp_free(This);
 	return NULL;
     }
 
@@ -1439,8 +1440,8 @@ static long STDCALL CRemotePin2_QueryPinInfo(IPin* This,
 static void CRemotePin2_Destroy(CRemotePin2* This)
 {
     Debug printf("CRemotePin2_Destroy(%p) called\n", This);
-    free(This->vt);
-    free(This);
+    mp_free(This->vt);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(CRemotePin2)
@@ -1455,7 +1456,7 @@ IMPLEMENT_IUNKNOWN(CRemotePin2)
  */
 CRemotePin2* CRemotePin2Create(CBaseFilter2* p)
 {
-    CRemotePin2* This = (CRemotePin2*) malloc(sizeof(CRemotePin2));
+    CRemotePin2* This = (CRemotePin2*) mp_malloc(sizeof(CRemotePin2));
 
     if (!This)
         return NULL;
@@ -1465,11 +1466,11 @@ CRemotePin2* CRemotePin2Create(CBaseFilter2* p)
     This->parent = p;
     This->refcount = 1;
 
-    This->vt = (IPin_vt*) malloc(sizeof(IPin_vt));
+    This->vt = (IPin_vt*) mp_malloc(sizeof(IPin_vt));
 
     if (!This->vt)
     {
-	free(This);
+	mp_free(This);
         return NULL;
     }
 

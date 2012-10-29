@@ -22,6 +22,7 @@
 #include "loader/wine/avifmt.h"
 #include "libvo/img_format.h"
 #include "codec-cfg.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CODECCFG
 #include "__mp_msg.h"
 
@@ -270,14 +271,14 @@ err_out_parse_error:
 static int validate_codec(codecs_t *c, int type)
 {
 	unsigned i;
-	char *tmp_name = strdup(c->codec_name);
+	char *tmp_name = mp_strdup(c->codec_name);
 
 	for (i = 0; i < strlen(tmp_name) && isalnum(tmp_name[i]); i++)
 		/* NOTHING */;
 
 	if (i < strlen(tmp_name)) {
 		MSG_ERR("\ncodec(%s) name is not valid!\n", c->codec_name);
-		free(tmp_name);
+		mp_free(tmp_name);
 		return 0;
 	}
 
@@ -286,7 +287,7 @@ static int validate_codec(codecs_t *c, int type)
 	    strncpy(c->s_info,c->codec_name,sizeof(c->s_info));
 	    c->s_info[sizeof(c->s_info)-1]=0;
 	}
-	free(tmp_name);
+	mp_free(tmp_name);
 	return 1;
 }
 
@@ -400,10 +401,10 @@ int parse_codec_cfg(const char *cfgfile)
 	int tmp, i;
 	
 	// in case we call it secont time
-	if(video_codecs!=NULL)free(video_codecs);
+	if(video_codecs!=NULL)mp_free(video_codecs);
 	else video_codecs=NULL;
 
-	if(audio_codecs!=NULL)free(audio_codecs);
+	if(audio_codecs!=NULL)mp_free(audio_codecs);
 	else audio_codecs=NULL;
 	
 	nr_vcodecs = 0;
@@ -416,7 +417,7 @@ int parse_codec_cfg(const char *cfgfile)
 		return 0;
 	}
 
-	if ((line = (char *) malloc(MAX_LINE_LEN + 1)) == NULL) {
+	if ((line = (char *) mp_malloc(MAX_LINE_LEN + 1)) == NULL) {
 		MSG_FATAL("can't get memory for 'line': %s\n", strerror(errno));
 		return 0;
 	}
@@ -456,9 +457,9 @@ int parse_codec_cfg(const char *cfgfile)
 				goto err_out;
 #endif
 			}
-		        if (!(*codecsp = (codecs_t *) realloc(*codecsp,
+		        if (!(*codecsp = (codecs_t *) mp_realloc(*codecsp,
 				sizeof(codecs_t) * (*nr_codecsp + 2)))) {
-			    MSG_FATAL(" can't realloc '*codecsp': %s\n", strerror(errno));
+			    MSG_FATAL(" can't mp_realloc '*codecsp': %s\n", strerror(errno));
 			    goto err_out;
 		        }
 			codec=*codecsp + *nr_codecsp;
@@ -614,7 +615,7 @@ int parse_codec_cfg(const char *cfgfile)
     if(video_codecs) video_codecs[nr_vcodecs].codec_name[0] = '\0';
     if(audio_codecs) audio_codecs[nr_acodecs].codec_name[0] = '\0';
 out:
-    free(line);
+    mp_free(line);
     line=NULL;
     fclose(fp);
     return 1;
@@ -626,13 +627,13 @@ err_out_print_linenum:
 	PRINT_LINENUM;
 err_out:
 	if (audio_codecs)
-		free(audio_codecs);
+		mp_free(audio_codecs);
 	if (video_codecs)
-		free(video_codecs);
+		mp_free(video_codecs);
 	video_codecs=NULL;
 	audio_codecs=NULL;
 
-	free(line);
+	mp_free(line);
 	line=NULL;
 	fclose(fp);
 	return 0;

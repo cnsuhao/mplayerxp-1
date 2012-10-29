@@ -20,8 +20,9 @@
 #include "stheader.h"
 #include "mp3_hdr.h"
 
-#include "../libmpcodecs/dec_audio.h"
+#include "libmpcodecs/dec_audio.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 //#define MAX_PS_PACKETSIZE 2048
 #define MAX_PS_PACKETSIZE (224*1024)
 
@@ -307,7 +308,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 	  unsigned char* hdr;
 	  // save audio header as codecdata!
 	  if(!((sh_audio_t*)(ds->sh))->codecdata_len){
-	      ((sh_audio_t*)(ds->sh))->codecdata=malloc(3);
+	      ((sh_audio_t*)(ds->sh))->codecdata=mp_malloc(3);
 	      ((sh_audio_t*)(ds->sh))->codecdata_len=3;
 	  }
 	  hdr=((sh_audio_t*)(ds->sh))->codecdata;
@@ -390,7 +391,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     if(pts==MPGPES_BAD_PTS && ds->asf_packet)
     {
 	demux_packet_t* dp=ds->asf_packet;
-	dp->buffer=realloc(dp->buffer,dp->len+len);
+	dp->buffer=mp_realloc(dp->buffer,dp->len+len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
         dp->len+=len;
     }
@@ -796,7 +797,7 @@ static demuxer_t* mpgps_open(demuxer_t*demuxer)
   if(!sh_video)	MSG_WARN("MPEG: " MSGTR_MissingVideoStream);
   else		sh_video->ds=demuxer->video;
 
-  mpg_d = (mpg_demuxer_t*)calloc(1,sizeof(mpg_demuxer_t));
+  mpg_d = (mpg_demuxer_t*)mp_calloc(1,sizeof(mpg_demuxer_t));
   demuxer->priv = mpg_d;
   mpg_d->has_valid_timestamps = 1;
   mpg_d->num_a_streams = 0;
@@ -816,7 +817,7 @@ static demuxer_t* mpgps_open(demuxer_t*demuxer)
 static void mpgps_close(demuxer_t*demuxer)
 {
   mpg_demuxer_t* mpg_d = demuxer->priv;
-  if (mpg_d) free(mpg_d);
+  if (mpg_d) mp_free(mpg_d);
 }
 
 static int mpgps_control(demuxer_t *demuxer,int cmd,any_t*arg)

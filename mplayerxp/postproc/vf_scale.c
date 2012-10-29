@@ -12,6 +12,7 @@
 
 #include "libvo/video_out.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "swscale.h"
 #include "libavutil/log.h"
 #include "vf_scale.h"
@@ -202,7 +203,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     if(vf->priv->h<0) vf->priv->h=height; else
     if(vf->priv->h==0) vf->priv->h=d_height;
 
-    // free old ctx:
+    // mp_free old ctx:
     if(vf->priv->ctx) sws_freeContext(vf->priv->ctx);
     if(vf->priv->ctx2)sws_freeContext(vf->priv->ctx2);
 
@@ -239,14 +240,14 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     vf->priv->fmt=best;
 
     if(vf->priv->palette){
-	free(vf->priv->palette);
+	mp_free(vf->priv->palette);
 	vf->priv->palette=NULL;
     }
     switch(best) {
     case IMGFMT_RGB8: {
       /* set 332 palette for 8 bpp */
 	int i;
-	vf->priv->palette=malloc(4*256);
+	vf->priv->palette=mp_malloc(4*256);
 	for(i=0; i<256; i++){
 	    vf->priv->palette[4*i+0]=4*(i>>6)*21;
 	    vf->priv->palette[4*i+1]=4*((i>>3)&7)*9;
@@ -257,7 +258,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     case IMGFMT_BGR8: {
       /* set 332 palette for 8 bpp */
 	int i;
-	vf->priv->palette=malloc(4*256);
+	vf->priv->palette=mp_malloc(4*256);
 	for(i=0; i<256; i++){
 	    vf->priv->palette[4*i+0]=4*(i&3)*21;
 	    vf->priv->palette[4*i+1]=4*((i>>2)&7)*9;
@@ -268,7 +269,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     case IMGFMT_BGR4: 
     case IMGFMT_BG4B: {
 	int i;
-	vf->priv->palette=malloc(4*16);
+	vf->priv->palette=mp_malloc(4*16);
 	for(i=0; i<16; i++){
 	    vf->priv->palette[4*i+0]=4*(i&1)*63;
 	    vf->priv->palette[4*i+1]=4*((i>>1)&3)*21;
@@ -279,7 +280,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     case IMGFMT_RGB4:
     case IMGFMT_RG4B: {
 	int i;
-	vf->priv->palette=malloc(4*16);
+	vf->priv->palette=mp_malloc(4*16);
 	for(i=0; i<16; i++){
 	    vf->priv->palette[4*i+0]=4*(i>>3)*63;
 	    vf->priv->palette[4*i+1]=4*((i>>1)&3)*21;
@@ -499,8 +500,8 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 static void __FASTCALL__ uninit(struct vf_instance_s *vf){
     if(vf->priv->ctx) sws_freeContext(vf->priv->ctx);
     if(vf->priv->ctx2) sws_freeContext(vf->priv->ctx2);
-    if(vf->priv->palette) free(vf->priv->palette);
-    free(vf->priv);
+    if(vf->priv->palette) mp_free(vf->priv->palette);
+    mp_free(vf->priv);
     firstTime=1;
 }
 
@@ -512,7 +513,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->uninit=uninit;
     vf->print_conf=print_conf;
     if(!vf->priv) {
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv,0,sizeof(struct vf_priv_s));
     // TODO: parse args ->
     vf->priv->ctx=NULL;

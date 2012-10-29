@@ -5,7 +5,7 @@
  * Kind feedback is appreciated; 'sucks' and alike is not.
  * Originally based on demux_pva.c written by Matteo Giani and FFmpeg (libavformat) sources
  *
- * This file is free software; you can redistribute it and/or
+ * This file is mp_free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
@@ -35,6 +35,7 @@
 #include "parse_es.h"
 #include "stheader.h"
 #include "libmpcodecs/dec_audio.h"
+#include "osdep/mplib.h"
 
 #include "osdep/bswap.h"
 #include "mpeg_hdr.h"
@@ -306,7 +307,7 @@ static void ts_add_stream(demuxer_t * demuxer, ES_stream_t *es)
 
 		if(es->extradata && es->extradata_len)
 		{
-			sh->wf = (WAVEFORMATEX *) malloc(sizeof (WAVEFORMATEX) + es->extradata_len);
+			sh->wf = (WAVEFORMATEX *) mp_malloc(sizeof (WAVEFORMATEX) + es->extradata_len);
 			sh->wf->cbSize = es->extradata_len;
 			memcpy(sh->wf + 1, es->extradata, es->extradata_len);
 		}
@@ -330,7 +331,7 @@ static void ts_add_stream(demuxer_t * demuxer, ES_stream_t *es)
 			if(sh->fourcc == VIDEO_AVC && es->extradata && es->extradata_len)
 			{
 				int w = 0, h = 0;
-				sh->bih = (BITMAPINFOHEADER *) calloc(1, sizeof(BITMAPINFOHEADER) + es->extradata_len);
+				sh->bih = (BITMAPINFOHEADER *) mp_calloc(1, sizeof(BITMAPINFOHEADER) + es->extradata_len);
 				sh->bih->biSize= sizeof(BITMAPINFOHEADER) + es->extradata_len;
 				sh->bih->biCompression = sh->fourcc;
 				memcpy(sh->bih + 1, es->extradata, es->extradata_len);
@@ -652,7 +653,7 @@ static off_t ts_detect_streams(demuxer_t *demuxer, tsdemux_init_t *param)
 				pptr = &pes_priv1[es.pid];
 				if(pptr->pos < 64*1024)
 				{
-				tmpbuf = (char*) realloc(pptr->buf, pptr->pos + es.size);
+				tmpbuf = (char*) mp_realloc(pptr->buf, pptr->pos + es.size);
 				if(tmpbuf != NULL)
 				{
 					pptr->buf = tmpbuf;
@@ -815,7 +816,7 @@ static off_t ts_detect_streams(demuxer_t *demuxer, tsdemux_init_t *param)
 	{
 		if(pes_priv1[i].buf != NULL)
 		{
-			free(pes_priv1[i].buf);
+			mp_free(pes_priv1[i].buf);
 			pes_priv1[i].buf = NULL;
 			pes_priv1[i].pos = 0;
 		}
@@ -936,7 +937,7 @@ static demuxer_t *ts_open(demuxer_t * demuxer)
 	if(!packet_size)
 	    return NULL;
 
-	priv = calloc(1,sizeof(ts_priv_t));
+	priv = mp_calloc(1,sizeof(ts_priv_t));
 	if(priv == NULL)
 	{
 		MSG_FATAL(MSGTR_OutOfMemory);
@@ -1055,22 +1056,22 @@ static void ts_close(demuxer_t * demuxer)
 	if(priv)
 	{
 		if(priv->pat.section.buffer)
-			free(priv->pat.section.buffer);
+			mp_free(priv->pat.section.buffer);
 		if(priv->pat.progs)
-			free(priv->pat.progs);
+			mp_free(priv->pat.progs);
 	
 		if(priv->pmt)
 		{	
 			for(i = 0; i < priv->pmt_cnt; i++)
 			{
 				if(priv->pmt[i].section.buffer)
-					free(priv->pmt[i].section.buffer);
+					mp_free(priv->pmt[i].section.buffer);
 				if(priv->pmt[i].es)
-					free(priv->pmt[i].es);
+					mp_free(priv->pmt[i].es);
 			}
-			free(priv->pmt);
+			mp_free(priv->pmt);
 		}
-		free(priv);
+		mp_free(priv);
 	}
 	demuxer->priv=NULL;
 }
@@ -1570,7 +1571,7 @@ static int collect_section(ts_section_t *section, int is_start, unsigned char *b
 	{
 		if(! section->buffer)
 		{
-			section->buffer = (uint8_t*) malloc(4096+256);
+			section->buffer = (uint8_t*) mp_malloc(4096+256);
 			if(section->buffer == NULL)
 				return 0;
 		}
@@ -1648,7 +1649,7 @@ static int parse_pat(ts_priv_t * priv, int is_start, unsigned char *buff, int si
 		if((idx = prog_idx_in_pat(priv, progid)) == -1)
 		{
 			int sz = sizeof(struct pat_progs_t) * (priv->pat.progs_cnt+1);
-			tmp = (struct pat_progs_t*) realloc(priv->pat.progs, sz);
+			tmp = (struct pat_progs_t*) mp_realloc(priv->pat.progs, sz);
 			if(tmp == NULL)
 			{
 				MSG_ERR("PARSE_PAT: COULDN'T REALLOC %d bytes, NEXT\n", sz);
@@ -1938,7 +1939,7 @@ static uint16_t parse_mp4_es_descriptor(pmt_t *pmt, uint8_t *buf, int len)
 			
 			if(! found)
 			{
-				tmp = (mp4_es_descr_t *) realloc(pmt->mp4es, sizeof(mp4_es_descr_t)*(pmt->mp4es_cnt+1));
+				tmp = (mp4_es_descr_t *) mp_realloc(pmt->mp4es, sizeof(mp4_es_descr_t)*(pmt->mp4es_cnt+1));
 				if(tmp == NULL)
 				{
 					MSG_ERR("CAN'T REALLOC MP4_ES_DESCR\n");
@@ -2063,7 +2064,7 @@ static ES_stream_t *new_pid(ts_priv_t *priv, int pid)
 {
 	ES_stream_t *tss;
 	
-	tss = malloc(sizeof(ES_stream_t));
+	tss = mp_malloc(sizeof(ES_stream_t));
 	if(! tss)
 		return NULL;
 	memset(tss, 0, sizeof(ES_stream_t));
@@ -2273,7 +2274,7 @@ static int parse_pmt(ts_priv_t * priv, uint16_t progid, uint16_t pid, int is_sta
 	if(idx == -1)
 	{
 		int sz = (priv->pmt_cnt + 1) * sizeof(pmt_t);
-		tmp = (pmt_t *) realloc(priv->pmt, sz);
+		tmp = (pmt_t *) mp_realloc(priv->pmt, sz);
 		if(tmp == NULL)
 		{
 			MSG_ERR("PARSE_PMT: COULDN'T REALLOC %d bytes, NEXT\n", sz);
@@ -2334,7 +2335,7 @@ static int parse_pmt(ts_priv_t * priv, uint16_t progid, uint16_t pid, int is_sta
 		if(idx == -1)
 		{
 			int sz = sizeof(struct pmt_es_t) * (pmt->es_cnt + 1);
-			tmp_es = (struct pmt_es_t *) realloc(pmt->es, sz);
+			tmp_es = (struct pmt_es_t *) mp_realloc(pmt->es, sz);
 			if(tmp_es == NULL)
 			{
 				MSG_ERR("PARSE_PMT, COULDN'T ALLOCATE %d bytes for PMT_ES\n", sz);
@@ -2574,7 +2575,7 @@ static int fill_extradata(mp4_decoder_config_t * mp4_dec, ES_stream_t *tss)
 		
 	if(mp4_dec->buf_size > tss->extradata_alloc)
 	{
-		tmp = (uint8_t *) realloc(tss->extradata, mp4_dec->buf_size);
+		tmp = (uint8_t *) mp_realloc(tss->extradata, mp4_dec->buf_size);
 		if(!tmp)
 			return 0;
 		tss->extradata = tmp;

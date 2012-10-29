@@ -1,7 +1,7 @@
 /*
     Copyright (C) 2002 Rémi Guyomarch <rguyom@pobox.com>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -30,14 +30,11 @@
 #include <locale.h>
 #endif
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 #ifndef MIN
@@ -170,14 +167,14 @@ static int __FASTCALL__ config( struct vf_instance_s* vf,
     stepsX = fp->msizeX/2;
     stepsY = fp->msizeY/2;
     for( z=0; z<2*stepsY; z++ )
-	fp->SC[z] = memalign( 16, sizeof(*(fp->SC[z])) * (width+2*stepsX) );
+	fp->SC[z] = mp_memalign( 16, sizeof(*(fp->SC[z])) * (width+2*stepsX) );
 
     fp = &vf->priv->chromaParam;
     memset( fp->SC, 0, sizeof( fp->SC ) );
     stepsX = fp->msizeX/2;
     stepsY = fp->msizeY/2;
     for( z=0; z<2*stepsY; z++ )
-	fp->SC[z] = memalign( 16, sizeof(*(fp->SC[z])) * (width+2*stepsX) );
+	fp->SC[z] = mp_memalign( 16, sizeof(*(fp->SC[z])) * (width+2*stepsX) );
 
     return vf_next_config( vf, width, height, d_width, d_height, flags, outfmt, tune);
 }
@@ -259,16 +256,16 @@ static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
 
     fp = &vf->priv->lumaParam;
     for( z=0; z<sizeof(fp->SC)/sizeof(fp->SC[0]); z++ ) {
-	if( fp->SC[z] ) free( fp->SC[z] );
+	if( fp->SC[z] ) mp_free( fp->SC[z] );
 	fp->SC[z] = NULL;
     }
     fp = &vf->priv->chromaParam;
     for( z=0; z<sizeof(fp->SC)/sizeof(fp->SC[0]); z++ ) {
-	if( fp->SC[z] ) free( fp->SC[z] );
+	if( fp->SC[z] ) mp_free( fp->SC[z] );
 	fp->SC[z] = NULL;
     }
 
-    free( vf->priv );
+    mp_free( vf->priv );
     vf->priv = NULL;
 }
 
@@ -330,7 +327,7 @@ static int __FASTCALL__ vf_open( vf_instance_t *vf,const char* args ) {
     vf->query_format = query_format;
     vf->uninit       = uninit;
     vf->print_conf   = print_conf;
-    vf->priv         = malloc( sizeof(struct vf_priv_s) );
+    vf->priv         = mp_malloc( sizeof(struct vf_priv_s) );
     memset( vf->priv, 0, sizeof(struct vf_priv_s) );
 
     if( args ) {

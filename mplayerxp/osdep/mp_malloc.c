@@ -1,15 +1,21 @@
-#include "my_malloc.h"
+#include "mp_config.h"
+#include "mplib.h"
+#define MSGT_CLASS MSGT_OSDEP
+#include "__mp_msg.h"
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <malloc.h>
 #include <time.h>
 
+#ifdef ENABLE_DEBUG_MALLOC
 any_t*my_malloc(size_t __size)
 {
   char *retval;
   long msize,mval;
   msize = __size;
-  retval = malloc(msize+2*sizeof(long));
+  retval = mp_malloc(msize+2*sizeof(long));
   if(retval) 
   {
     mval = (long)retval;
@@ -17,7 +23,7 @@ any_t*my_malloc(size_t __size)
     memcpy(retval+msize+sizeof(long),&mval,sizeof(long));
     retval += sizeof(long);
   }
-//  printf("malloc returns: %08X for size: %08X\n",retval,__size);
+//  printf("mp_malloc returns: %08X for size: %08X\n",retval,__size);
   return retval;
 }
 
@@ -45,7 +51,7 @@ any_t*my_realloc(any_t*__ptr, size_t __size)
     }
     myptr -= sizeof(long);
   }
-  retval = realloc(myptr,__size+2*sizeof(long));
+  retval = mp_realloc(myptr,__size+2*sizeof(long));
   {
     mval = (long)retval;
     memcpy(retval,&msize,sizeof(long));
@@ -61,7 +67,7 @@ any_t*my_calloc (size_t __nelem, size_t __size)
   long my_size;
   long msize,mval;
   msize = __nelem*__size;
-  retval = malloc(msize+2*sizeof(long));
+  retval = mp_malloc(msize+2*sizeof(long));
   if(retval) 
   {
     mval = (long)retval;
@@ -93,7 +99,7 @@ void  my_free(any_t*__ptr)
 	__asm __volatile(".short 0xffff":::"memory");
 #endif
     }
-    free((char *)__ptr-sizeof(long));
+    mp_free((char *)__ptr-sizeof(long));
   }
 }
 
@@ -104,17 +110,73 @@ char * my_strdup(const char *s)
   strcpy(a,s);
   return a;
 }
+#endif
 
-any_t* random_malloc(size_t __size,unsigned rnd_limit)
+typedef struct priv_s {
+    unsigned			rnd_limit;
+    unsigned			every_nth_call;
+    unsigned long long int	total_calls;
+    // statistics
+    unsigned long long int	num_allocs;
+}priv_t;
+static priv_t* priv;
+
+void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call)
 {
-    any_t* rb,*rnd_buff;
-    static int inited=0;
-    if(!inited) {
-	srand(time(NULL));
-	inited=1;
-    }
-    rnd_buff=malloc(rand()%rnd_limit);
+    if(!priv) priv=malloc(sizeof(priv_t));
+    memset(priv,0,sizeof(priv_t));
+    priv->rnd_limit=rnd_limit;
+    priv->every_nth_call=every_nth_call;
+}
+
+void	mp_uninit_malloc(int verbose)
+{
+    if(priv->num_allocs && verbose)
+	MSG_WARN("Warning: number of calls alloc()>free() in %lli times\n",priv->num_allocs);
+    free(priv);
+    priv=NULL;
+}
+
+any_t* mp_malloc(size_t __size)
+{
+    any_t* rb,*rnd_buff=NULL;
+    if(!priv) mp_init_malloc(1000,10);
+    if(priv->total_calls%priv->every_nth_call==0)
+	rnd_buff=malloc(rand()%priv->rnd_limit);
     rb = malloc(__size);
-    free(rnd_buff);
+    if(rnd_buff) free(rnd_buff);
+    priv->total_calls++;
+    priv->num_allocs++;
     return rb;
+}
+
+any_t*	mp_realloc(any_t*__ptr, size_t __size) { return realloc(__ptr,__size); }
+any_t*	mp_calloc (size_t __nelem, size_t __size) { return mp_mallocz(__nelem*__size); }
+
+any_t*	mp_mallocz (size_t __size) {
+    any_t* rp;
+    rp=mp_malloc(__size);
+    memset(rp,0,__size);
+    return rp;
+}
+/* randomizing of memalign is useless feature */
+any_t*	mp_memalign (size_t boundary, size_t __size)
+{
+    if(!priv) mp_init_malloc(1000,10);
+    priv->num_allocs++;
+    return memalign(boundary,__size);
+}
+
+void	mp_free(any_t*__ptr)
+{
+    if(!priv) mp_init_malloc(1000,10);
+    free(__ptr);
+    priv->num_allocs--;
+}
+char *	mp_strdup(const char *src) {
+    char *rs;
+    unsigned len=strlen(src);
+    rs=mp_malloc(len+1);
+    strcpy(rs,src);
+    return rs;
 }

@@ -1,4 +1,5 @@
 #include "config.h"
+#include "osdep/mplib.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,11 +65,11 @@ static void create_registry(void){
 	save_registry();
 	return;
     }
-    regs=(struct reg_value*)malloc(3*sizeof(struct reg_value));
+    regs=(struct reg_value*)mp_malloc(3*sizeof(struct reg_value));
     regs[0].type=regs[1].type=DIR;
-    regs[0].name=(char*)malloc(5);
+    regs[0].name=(char*)mp_malloc(5);
     strcpy(regs[0].name, "HKLM");
-    regs[1].name=(char*)malloc(5);
+    regs[1].name=(char*)mp_malloc(5);
     strcpy(regs[1].name, "HKCU");
     regs[0].value=regs[1].value=NULL;
     regs[0].len=regs[1].len=0;
@@ -95,13 +96,13 @@ static void open_registry(void)
 	    return;
 	}
 	read(fd, &reg_size, 4);
-	regs=(struct reg_value*)malloc(reg_size*sizeof(struct reg_value));
+	regs=(struct reg_value*)mp_malloc(reg_size*sizeof(struct reg_value));
 	head = 0;
 	for(i=0; i<reg_size; i++)
 	{
 		read(fd,&regs[i].type,4);
 		read(fd,&len,4);
-		regs[i].name=(char*)malloc(len+1);
+		regs[i].name=(char*)mp_malloc(len+1);
 		if(regs[i].name==0)
 		{
 			reg_size=i+1;
@@ -110,10 +111,10 @@ static void open_registry(void)
 		read(fd, regs[i].name, len);
 		regs[i].name[len]=0;
 		read(fd,&regs[i].len,4);
-		regs[i].value=(char*)malloc(regs[i].len+1);
+		regs[i].value=(char*)mp_malloc(regs[i].len+1);
 		if(regs[i].value==0)
 		{
-		        free(regs[i].name);
+		        mp_free(regs[i].name);
 			reg_size=i+1;
 			goto error;
 		}
@@ -157,9 +158,9 @@ void free_registry(void)
     {
 	reg_handle_t* f = t;
         if (t->name)
-	    free(t->name);
+	    mp_free(t->name);
 	t=t->prev;
-        free(f);
+        mp_free(f);
     }
     head = 0;
     if (regs)
@@ -167,15 +168,15 @@ void free_registry(void)
         int i;
 	for(i=0; i<reg_size; i++)
 	{
-	    free(regs[i].name);
-	    free(regs[i].value);
+	    mp_free(regs[i].name);
+	    mp_free(regs[i].value);
 	}
-	free(regs);
+	mp_free(regs);
 	regs = 0;
     }
 
     if (localregpathname && localregpathname != regpathname)
-	free(localregpathname);
+	mp_free(localregpathname);
     localregpathname = 0;
 }
 
@@ -224,7 +225,7 @@ static int generate_handle()
 static reg_handle_t* insert_handle(long handle, const char* name)
 {
 	reg_handle_t* t;
-	t=(reg_handle_t*)malloc(sizeof(reg_handle_t));
+	t=(reg_handle_t*)mp_malloc(sizeof(reg_handle_t));
 	if(head==0)
 	{
 		t->prev=0;
@@ -235,7 +236,7 @@ static reg_handle_t* insert_handle(long handle, const char* name)
 		t->prev=head;
 	}
 	t->next=0;
-	t->name=(char*)malloc(strlen(name)+1);
+	t->name=(char*)mp_malloc(strlen(name)+1);
 	strcpy(t->name, name);
 	t->handle=handle;
 	head=t;
@@ -252,7 +253,7 @@ static char* build_keyname(long key, const char* subkey)
 	}
 	if(subkey==NULL)
 		subkey="<default>";
-	full_name=(char*)malloc(strlen(t->name)+strlen(subkey)+10);
+	full_name=(char*)mp_malloc(strlen(t->name)+strlen(subkey)+10);
 	strcpy(full_name, t->name);
 	strcat(full_name, "\\");
 	strcat(full_name, subkey);
@@ -274,7 +275,7 @@ static struct reg_value* insert_reg_value(int handle, const char* name, int type
 	{
 		if(regs==0)
 		    create_registry();
-		regs=(struct reg_value*)realloc(regs, sizeof(struct reg_value)*(reg_size+1));
+		regs=(struct reg_value*)mp_realloc(regs, sizeof(struct reg_value)*(reg_size+1));
 		//regs=(struct reg_value*)my_realloc(regs, sizeof(struct reg_value)*(reg_size+1));
 		v=regs+reg_size;
 		reg_size++;
@@ -282,17 +283,17 @@ static struct reg_value* insert_reg_value(int handle, const char* name, int type
 	else
 	//replacing old one
 	{
-	    free(v->value);
-	    free(v->name);
+	    mp_free(v->value);
+	    mp_free(v->name);
 	}
 	TRACE("RegInsert '%s'  %p  v:%d  len:%d\n", name, value, *(int*)value, len);
 	v->type=type;
 	v->len=len;
-	v->value=(char*)malloc(len);
+	v->value=(char*)mp_malloc(len);
 	memcpy(v->value, value, len);
-	v->name=(char*)malloc(strlen(fullname)+1);
+	v->name=(char*)mp_malloc(strlen(fullname)+1);
 	strcpy(v->name, fullname);
-        free(fullname);
+        mp_free(fullname);
 	save_registry();
 	return v;
 }
@@ -300,7 +301,7 @@ static struct reg_value* insert_reg_value(int handle, const char* name, int type
 static void init_registry(void)
 {
 	TRACE("Initializing registry\n");
-	// can't be free-ed - it's static and probably thread
+	// can't be mp_free-ed - it's static and probably thread
 	// unsafe structure which is stored in glibc
 
 	regpathname = get_path("registry");
@@ -322,7 +323,7 @@ static void init_registry(void)
                 pthn = pwent->pw_dir;
 	    }
 
-	    localregpathname = (char*)malloc(strlen(pthn)+20);
+	    localregpathname = (char*)mp_malloc(strlen(pthn)+20);
 	    strcpy(localregpathname, pthn);
 	    strcat(localregpathname, "/.registry");
 	}
@@ -343,12 +344,12 @@ static reg_handle_t* find_handle_2(long key, const char* subkey)
 	}
 	if(subkey==NULL)
 		return t;
-	full_name=(char*)malloc(strlen(t->name)+strlen(subkey)+10);
+	full_name=(char*)mp_malloc(strlen(t->name)+strlen(subkey)+10);
 	strcpy(full_name, t->name);
 	strcat(full_name, "\\");
 	strcat(full_name, subkey);
 	t=find_handle_by_name(full_name);
-	free(full_name);
+	mp_free(full_name);
 	return t;
 }
 
@@ -378,7 +379,7 @@ long __stdcall RegOpenKeyExA(long key, const char* subkey, long reserved, long a
 
     t=insert_handle(generate_handle(), full_name);
     *newkey=t->handle;
-    free(full_name);
+    mp_free(full_name);
 
     return 0;
 }
@@ -397,10 +398,10 @@ long __stdcall RegCloseKey(long key)
     if(handle->next)
 	handle->next->prev=handle->prev;
     if(handle->name)
-	free(handle->name);
+	mp_free(handle->name);
     if(handle==head)
 	head=head->prev;
-    free(handle);
+    mp_free(handle);
     return 1;
 }
 
@@ -416,7 +417,7 @@ long __stdcall RegQueryValueExA(long key, const char* value, int* reserved, int*
     if (!c)
 	return 1;
     t=find_value_by_name(c);
-    free(c);
+    mp_free(c);
     if (t==0)
 	return 2;
     if (type)
@@ -463,7 +464,7 @@ long __stdcall RegCreateKeyExA(long key, const char* name, long reserved,
 
     t=insert_handle(generate_handle(), fullname);
     *newkey=t->handle;
-    free(fullname);
+    mp_free(fullname);
     return 0;
 }
 
@@ -516,7 +517,7 @@ long __stdcall RegSetValueExA(long key, const char* name, long v1, long v2, cons
     if(c==NULL)
 	return 1;
     insert_reg_value(key, name, v2, data, size);
-    free(c);
+    mp_free(c);
     return 0;
 }
 

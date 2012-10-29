@@ -1,7 +1,7 @@
 /*
     s_network - network stream inetrface
 */
-#include "../mp_config.h"
+#include "mp_config.h"
 #ifdef HAVE_STREAMING
 
 #include <errno.h>
@@ -13,7 +13,7 @@
 #include "stream.h"
 #include "help_mp.h"
 #include "demux_msg.h"
-
+#include "osdep/mplib.h"
 
 #include "url.h"
 #include "network.h"
@@ -39,7 +39,7 @@ static int __FASTCALL__ network_open(stream_t *stream,const char *filename,unsig
 	  return 0;
 	}
         MSG_INFO(MSGTR_ConnToServer, url->hostname);
-	stream->priv=malloc(sizeof(network_priv_t));
+	stream->priv=mp_malloc(sizeof(network_priv_t));
 	((network_priv_t*)stream->priv)->url = url;
 	((network_priv_t*)stream->priv)->spos = 0;
 	stream->type = STREAMTYPE_STREAM;
@@ -86,8 +86,8 @@ static off_t __FASTCALL__ network_tell(stream_t *stream)
 
 static void __FASTCALL__ network_close(stream_t *stream)
 {
-    free(((network_priv_t *)stream->priv)->url);
-    free(stream->priv);
+    mp_free(((network_priv_t *)stream->priv)->url);
+    mp_free(stream->priv);
     if(stream->fd>0) close(stream->fd);
 }
 

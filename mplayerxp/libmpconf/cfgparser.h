@@ -78,7 +78,7 @@ struct config_save {
 };
 
 /* parse_config_file returns:
- * 	-1 on error (can't malloc, invalid option...)
+ * 	-1 on error (can't mp_malloc, invalid option...)
  * 	 0 if can't open configfile
  * 	 1 on success
  */

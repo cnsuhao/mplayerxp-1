@@ -14,13 +14,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
-#include "nuppelvideo.h" 
+#include "nuppelvideo.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 
 struct nuv_signature
@@ -77,7 +78,7 @@ static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 
 			if ( rtjpeg_frameheader.frametype == 'V' ) 
 			{
-				priv->current_position->next = (nuv_position_t*) malloc ( sizeof ( nuv_position_t ) );
+				priv->current_position->next = (nuv_position_t*) mp_malloc ( sizeof ( nuv_position_t ) );
 				priv->current_position = priv->current_position->next;
 				priv->current_position->frame = priv->current_video_frame++;
 				priv->current_position->time = rtjpeg_frameheader.timecode;
@@ -165,7 +166,7 @@ static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
 	    if ( rtjpeg_frameheader.frametype == 'V' )
 	    {
 		priv->current_video_frame++;
-		priv->current_position->next = (nuv_position_t*) malloc(sizeof(nuv_position_t));
+		priv->current_position->next = (nuv_position_t*) mp_malloc(sizeof(nuv_position_t));
 		priv->current_position = priv->current_position->next;
 		priv->current_position->frame = priv->current_video_frame;
 		priv->current_position->time = rtjpeg_frameheader.timecode;
@@ -205,7 +206,7 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	sh_video_t *sh_video = NULL;
 	sh_audio_t *sh_audio = NULL;
 	struct rtfileheader rtjpeg_fileheader;
-	nuv_priv_t* priv = (nuv_priv_t*) malloc ( sizeof ( nuv_priv_t) );
+	nuv_priv_t* priv = (nuv_priv_t*) mp_malloc ( sizeof ( nuv_priv_t) );
 	demuxer->priv = priv;
 	priv->current_audio_frame = 0;
 	priv->current_video_frame = 0;
@@ -265,7 +266,7 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	    sh_audio->channels = 2;
 	    sh_audio->samplerate = 44100;
 	    
-	    sh_audio->wf = malloc(sizeof(WAVEFORMATEX));
+	    sh_audio->wf = mp_malloc(sizeof(WAVEFORMATEX));
 	    memset(sh_audio->wf, 0, sizeof(WAVEFORMATEX));
 	    sh_audio->wf->wFormatTag = sh_audio->wtag;
 	    sh_audio->wf->nChannels = sh_audio->channels;
@@ -277,7 +278,7 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	    sh_audio->wf->cbSize = 0;
 	}
 
-	priv->index_list = (nuv_position_t*) malloc(sizeof(nuv_position_t));
+	priv->index_list = (nuv_position_t*) mp_malloc(sizeof(nuv_position_t));
 	priv->index_list->frame = 0;
 	priv->index_list->time = 0;
 	priv->index_list->offset = stream_tell ( demuxer->stream );
@@ -317,9 +318,9 @@ static void nuv_close(demuxer_t* demuxer) {
   for(pos = priv->index_list ; pos != NULL ; ) {
     nuv_position_t* p = pos;
     pos = pos->next;
-    free(p);
+    mp_free(p);
   }
-  free(priv);
+  mp_free(priv);
 }
 
 static int nuv_control(demuxer_t *demuxer,int cmd,any_t*args)

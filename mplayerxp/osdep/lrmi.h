@@ -3,7 +3,7 @@ Linux Real Mode Interface - A library of DPMI-like functions for Linux.
 
 Copyright (C) 1998 by Josh Vanderhoof
 
-You are free to distribute and modify this file, as long as you
+You are mp_free to distribute and modify this file, as long as you
 do not remove this copyright notice and clearly label modified
 versions as being modified.
 

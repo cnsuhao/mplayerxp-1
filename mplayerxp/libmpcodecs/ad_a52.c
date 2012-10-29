@@ -26,6 +26,7 @@ uint32_t mpxp_a52_accel=0;
 uint32_t mpxp_a52_flags=0;
 
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 
 static const ad_info_t info = 
 {
@@ -128,7 +129,7 @@ int preinit(sh_audio_t *sh)
   }
   sh->audio_out_minsize=audio_output_channels*sh->samplesize*256*6;
   sh->audio_in_minsize=MAX_AC3_FRAME;
-  sh->context=malloc(sizeof(a52_priv_t));
+  sh->context=mp_malloc(sizeof(a52_priv_t));
   return 1;
 }
 
@@ -190,7 +191,7 @@ while(sh_audio->channels>0){
 
 void uninit(sh_audio_t *sh)
 {
-  free(sh->context);
+  mp_free(sh->context);
 }
 
 int control(sh_audio_t *sh,int cmd,any_t* arg, ...)

@@ -6,7 +6,8 @@
 #include <math.h>
 
 #include "mp_config.h"
-#include "../help_mp.h"
+#include "help_mp.h"
+#include "osdep/mplib.h"
 
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
@@ -58,12 +59,12 @@ static int init(sh_audio_t *sh)
   sh->channels=h->nChannels;
   sh->samplerate=h->nSamplesPerSec;
   sh->samplesize=(h->wBitsPerSample+7)/8;
-  priv = malloc(sizeof(libdv_priv_t));
+  priv = mp_malloc(sizeof(libdv_priv_t));
   memset(priv,0,sizeof(libdv_priv_t));
   priv->decoder=init_global_rawdv_decoder();
   sh->context = priv;
   for (i=0; i < 4; i++)
-    priv->audioBuffers[i] = malloc(2*DV_AUDIO_MAX_SAMPLES);
+    priv->audioBuffers[i] = mp_malloc(2*DV_AUDIO_MAX_SAMPLES);
 
   return 1;
 }
@@ -74,7 +75,7 @@ static void uninit(sh_audio_t *sh_audio)
   unsigned i;
   UNUSED(sh_audio);
   for (i=0; i < 4; i++)
-    free(priv->audioBuffers[i]);
+    mp_free(priv->audioBuffers[i]);
 }
 
 static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)

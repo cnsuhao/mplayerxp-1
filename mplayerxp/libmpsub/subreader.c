@@ -2,7 +2,7 @@
  * Subtitle reader with format autodetection
  *
  * Written by laaz
- * Some code cleanup & realloc() by A'rpi/ESP-team
+ * Some code cleanup & mp_realloc() by A'rpi/ESP-team
  * dunnowhat sub format by szabi
  */
 
@@ -14,6 +14,7 @@
 #include "mp_config.h"
 #include "subreader.h"
 #include "libvo/sub.h"
+#include "osdep/mplib.h"
 
 #define ERR ((any_t*) -1)
 
@@ -94,7 +95,7 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 	    else if (!strncasecmp (s, "<br>", 4)) {
 		*p = '\0'; p = text; trail_space (text);
 		if (text[0] != '\0')
-		    current->text[current->lines++] = strdup (text);
+		    current->text[current->lines++] = mp_strdup (text);
 		s += 4;
 	    }
 	    else if (*s == '<') { state = 4; }
@@ -114,7 +115,7 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 		current->end = strtol (q + 6, &q, 0) / 10 - 1;
 		*p = '\0'; trail_space (text);
 		if (text[0] != '\0')
-		    current->text[current->lines++] = strdup (text);
+		    current->text[current->lines++] = mp_strdup (text);
 		if (current->lines > 0) { state = 99; break; }
 		state = 0; continue;
 	    }
@@ -139,7 +140,7 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
         current->end = current->start + sub_slacktime;
 	*p = '\0'; trail_space (text);
 	if (text[0] != '\0')
-	    current->text[current->lines++] = strdup (text);
+	    current->text[current->lines++] = mp_strdup (text);
     }
     
     return current;
@@ -154,7 +155,7 @@ static const char * __FASTCALL__ sub_readtext(const char *source, char **dest) {
 	p++,len++;
     }
     
-    *dest= (char *)malloc (len+1);
+    *dest= (char *)mp_malloc (len+1);
     if (!dest) {return ERR;}
     
     strncpy(*dest, source, len);
@@ -212,7 +213,7 @@ static subtitle * __FASTCALL__ sub_read_line_subrip(FILE *fd, subtitle *current)
 	p=q=line;
 	for (current->lines=1; current->lines < SUB_MAX_TEXT; current->lines++) {
 	    for (q=p,len=0; *p && *p!='\r' && *p!='\n' && strncmp(p,"[br]",4); p++,len++);
-	    current->text[current->lines-1]=(char *)malloc (len+1);
+	    current->text[current->lines-1]=(char *)mp_malloc (len+1);
 	    if (!current->text[current->lines-1]) return ERR;
 	    strncpy (current->text[current->lines-1], q, len);
 	    current->text[current->lines-1][len]='\0';
@@ -241,7 +242,7 @@ static subtitle * __FASTCALL__ sub_read_line_subviewer(FILE *fd,subtitle *curren
 	    len=0;
 	    for (p=line; *p!='\n' && *p!='\r' && *p; p++,len++);
 	    if (len) {
-		current->text[i]=(char *)malloc (len+1);
+		current->text[i]=(char *)mp_malloc (len+1);
 		if (!current->text[i]) return ERR;
 		strncpy (current->text[i], line, len); current->text[i][len]='\0';
 		i++;
@@ -354,7 +355,7 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
 	current->end   = 360000*hour2 + 6000*min2 + 100*sec2 + hunsec2;
 	
 	while ((tmp=strstr(line2, "\\n")) != NULL) {
-		current->text[num]=(char *)malloc(tmp-line2+1);
+		current->text[num]=(char *)mp_malloc(tmp-line2+1);
 		strncpy (current->text[num], line2, tmp-line2);
 		current->text[num][tmp-line2]='\0';
 		line2=tmp+2;
@@ -364,7 +365,7 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
 	}
 
 
-	current->text[num]=strdup(line2);
+	current->text[num]=mp_strdup(line2);
 
 	return current;
 }
@@ -378,7 +379,7 @@ static subtitle * __FASTCALL__ sub_read_line_dunnowhat(FILE *fd,subtitle *curren
     if (sscanf (line, "%ld,%ld,\"%[^\"]", &(current->start),
 		&(current->end), text) <3)
 	return ERR;
-    current->text[0] = strdup(text);
+    current->text[0] = mp_strdup(text);
     current->lines = 1;
 
     return current;
@@ -413,7 +414,7 @@ static subtitle * __FASTCALL__ sub_read_line_mpsub(FILE *fd, subtitle *current) 
 		for (q=p; !eol(*q); q++);
 		*q='\0';
 		if (strlen(p)) {
-			current->text[num]=strdup(p);
+			current->text[num]=mp_strdup(p);
 			current->lines = ++num;
 		} else {
 			if (num) return current;
@@ -554,19 +555,19 @@ subtitle* subcp_recode (subtitle *sub)
 			l++;
 			break;
 		}
-		if (!(ot = (char *)malloc(op - icbuffer + 1))){
+		if (!(ot = (char *)mp_malloc(op - icbuffer + 1))){
 			MSG_FATAL ("SUB: error allocating mem.\n");
 			l++;
 		   	break;
 		}
 		*op='\0' ;
 		strcpy (ot, icbuffer);
-		free (sub->text[l]);
+		mp_free (sub->text[l]);
 		sub->text[l] = ot;
 	}
 	if (l){
 		for (l = sub->lines; l;)
-			free (sub->text[--l]);
+			mp_free (sub->text[--l]);
 		return ERR;
 	}
 	return sub;
@@ -660,14 +661,14 @@ subtitle* sub_read_file (const char *filename, float fps) {
 #endif
 
     sub_num=0;n_max=32;
-    first=(subtitle *)malloc(n_max*sizeof(subtitle));
+    first=(subtitle *)mp_malloc(n_max*sizeof(subtitle));
     if(!first) { fclose(fd); return NULL; }
 
     while(1){
         subtitle *sub;
         if(sub_num>=n_max){
             n_max+=16;
-            first=realloc(first,n_max*sizeof(subtitle));
+            first=mp_realloc(first,n_max*sizeof(subtitle));
         }
 	sub = &first[sub_num];
 	memset(sub, '\0', sizeof(subtitle));
@@ -690,7 +691,7 @@ subtitle* sub_read_file (const char *filename, float fps) {
     else 	  MSG_DBG2 (".\n");
 
     if(sub_num<=0){
-	free(first);
+	mp_free(first);
 	return NULL;
     }
 
@@ -745,10 +746,10 @@ char * sub_filename(const char* path,const char * fname )
  if (!sub_name1) return NULL;
  pos=sub_name1-fname;
 
- sub_name1=malloc(strlen(fname)+8);
+ sub_name1=mp_malloc(strlen(fname)+8);
  strcpy(sub_name1,fname);
 
- sub_name2=malloc (strlen(path) + strlen(fname) + 8);
+ sub_name2=mp_malloc (strlen(path) + strlen(fname) + 8);
  if ((tmp=strrchr(fname,'/')))
 	 sprintf (sub_name2, "%s%s", path, tmp+1);
  else
@@ -773,8 +774,8 @@ char * sub_filename(const char* path,const char * fname )
    }
   }
  }
- free(sub_name1);
- free(sub_name2);
+ mp_free(sub_name1);
+ mp_free(sub_name2);
  return NULL;
 }
 
@@ -854,8 +855,8 @@ void sub_free( subtitle * subs )
  
  sub_num=0;
  sub_errs=0;
- for ( i=0;i<subs->lines;i++ ) free( subs->text[i] );
- free( subs );
+ for ( i=0;i<subs->lines;i++ ) mp_free( subs->text[i] );
+ mp_free( subs );
  subs=NULL;
 }
 

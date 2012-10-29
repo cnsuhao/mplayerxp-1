@@ -7,6 +7,7 @@
 
 #include "mp_config.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 
 #include "libmpdemux/mrl.h"
 #include "afmt.h"
@@ -106,7 +107,7 @@ static int __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 // open & setup audio device
 // return: 1=success 0=fail
 static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
-    ao->priv=malloc(sizeof(priv_t));
+    ao->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv = (priv_t*)ao->priv;
     memset(priv,0,sizeof(priv_t));
     char *null_dev=NULL,*mode=NULL;
@@ -186,7 +187,7 @@ static void uninit(ao_data_t* ao){
 	fwrite(&wavhdr,sizeof(wavhdr),1,priv->fd);
     }
     if(priv->fd) fclose(priv->fd);
-    free(priv);
+    mp_free(priv);
 }
 
 // stop playing and empty priv->buffers (for seeking/pause)

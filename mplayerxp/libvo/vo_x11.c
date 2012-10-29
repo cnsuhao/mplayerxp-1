@@ -39,6 +39,7 @@
 #include "x11_common.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "sub.h"
 
 #include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
@@ -127,7 +128,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,
     priv->num_buffers=vo_conf.da_buffs;
 
     if (!title)
-	title = strdup("MPlayerXP X11 (XImage/Shm) render");
+	title = mp_strdup("MPlayerXP X11 (XImage/Shm) render");
 
     priv->in_format=format;
 
@@ -316,12 +317,12 @@ static void uninit(vo_data_t*vo)
     vo_vm_close(vo,vo->mDisplay);
 #endif
     vo_x11_uninit(vo,vo->mDisplay, vo->window);
-    free(vo->priv);
+    mp_free(vo->priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=malloc(sizeof(priv_t));
+    vo->priv=mp_malloc(sizeof(priv_t));
     priv_t* priv=(priv_t*)vo->priv;
     memset(priv,0,sizeof(priv_t));
     priv->num_buffers=1;

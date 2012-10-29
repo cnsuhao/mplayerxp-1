@@ -5,9 +5,9 @@
 /*
  * Copyright (C) 2002 the xine project
  *
- * This file is part of xine, a free video player.
+ * This file is part of xine, a mp_free video player.
  *
- * xine is free software; you can redistribute it and/or modify
+ * xine is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -33,7 +33,7 @@
 #include "mp_config.h"
 #include "mplayer.h"
 #include "osdep/bswap.h"
-//#include "libavutil/common.h"
+#include "osdep/mplib.h"
 #include "real.h"
 #include "asmrp.h"
 #include "sdpplin.h"
@@ -227,7 +227,7 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
   if (!desc) return NULL;
   
   buf = xbuffer_init(2048);
-  header=calloc(1,sizeof(rmff_header_t));
+  header=mp_calloc(1,sizeof(rmff_header_t));
 
   header->fileheader=rmff_new_fileheader(4+desc->stream_count);
   header->cont=rmff_new_cont(
@@ -236,7 +236,7 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
       desc->copyright,
       desc->abstract);
   header->data=rmff_new_dataheader(0,0);
-  header->streams=calloc(1,sizeof(rmff_mdpr_t*)*(desc->stream_count+1));
+  header->streams=mp_calloc(1,sizeof(rmff_mdpr_t*)*(desc->stream_count+1));
 #ifdef LOG
     printf("number of streams: %u\n", desc->stream_count);
 #endif
@@ -450,7 +450,7 @@ rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidt
   int i;
   
   /* get challenge */
-  challenge1=strdup(rtsp_search_answers(rtsp_session,"RealChallenge1"));
+  challenge1=mp_strdup(rtsp_search_answers(rtsp_session,"RealChallenge1"));
 #ifdef LOG
   printf("real: Challenge1: %s\n", challenge1);
 #endif
@@ -496,12 +496,12 @@ rtsp_send_describe:
       goto autherr;
     }
     authlen = strlen(username) + (password ? strlen(password) : 0) + 2;
-    authstr = malloc(authlen);
+    authstr = mp_malloc(authlen);
     sprintf(authstr, "%s:%s", username, password ? password : "");
-    authfield = malloc(authlen*2+22);
+    authfield = mp_malloc(authlen*2+22);
     strcpy(authfield, "Authorization: Basic ");
     b64_authlen = base64_encode(authstr, authlen, authfield+21, authlen*2);
-    free(authstr);
+    mp_free(authstr);
     if (b64_authlen < 0) {
       MSG_ERR("realrtsp: base64 output overflow, this should never happen\n");
       goto autherr;
@@ -512,7 +512,7 @@ rtsp_send_describe:
 autherr:
 
   if (authfield)
-     free(authfield);
+     mp_free(authfield);
 
   if ( status<200 || status>299 )
   {
@@ -544,13 +544,13 @@ autherr:
   if (!rtsp_search_answers(rtsp_session,"ETag"))
     MSG_WARN("realrtsp: got no ETag!\n");
   else
-    session_id=strdup(rtsp_search_answers(rtsp_session,"ETag"));
+    session_id=mp_strdup(rtsp_search_answers(rtsp_session,"ETag"));
     
 #ifdef LOG
   printf("real: Stream description size: %u\n", size);
 #endif
 
-  description=malloc(size+1);
+  description=mp_malloc(size+1);
 
   if( rtsp_read_data(rtsp_session, description, size) <= 0) {
     buf = xbuffer_free(buf);
@@ -614,11 +614,11 @@ autherr:
     char *str;
     if ((str = rtsp_get_param(rtsp_session, "start"))) {
       convert_timestamp(str, &s_ss, &s_ms);
-      free(str);
+      mp_free(str);
     }
     if ((str = rtsp_get_param(rtsp_session, "end"))) {
       convert_timestamp(str, &e_ss, &e_ms);
-      free(str);
+      mp_free(str);
     }
     str = buf + sprintf(buf, s_ms ? "%s%d.%d-" : "%s%d-", "Range: npt=", s_ss, s_ms);
     if (e_ss || e_ms)
@@ -638,7 +638,7 @@ init_real_rtsp_session (void)
 {
   struct real_rtsp_session_t *real_rtsp_session = NULL;
 
-  real_rtsp_session = malloc (sizeof (struct real_rtsp_session_t));
+  real_rtsp_session = mp_malloc (sizeof (struct real_rtsp_session_t));
   real_rtsp_session->recv = xbuffer_init (BUF_SIZE);
   real_rtsp_session->rdteof = 0;
   real_rtsp_session->rdt_rawdata = 0;
@@ -653,5 +653,5 @@ free_real_rtsp_session (struct real_rtsp_session_t* real_session)
     return;
   
   xbuffer_free (real_session->recv);
-  free (real_session);
+  mp_free (real_session);
 }

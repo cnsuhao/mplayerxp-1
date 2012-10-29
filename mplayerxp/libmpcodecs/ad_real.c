@@ -11,6 +11,7 @@
 #include "ad_internal.h"
 #include "codecs_ld.h"
 #include "ad_msg.h"
+#include "osdep/mplib.h"
 static const ad_info_t info =  {
 	"RealAudio decoder",
 	"realaud",
@@ -27,12 +28,12 @@ LIBAD_EXTERN(real)
 static any_t*handle=NULL;
 
 any_t*__builtin_new(unsigned long size) {
-	return malloc(size);
+	return mp_malloc(size);
 }
 
 /* required for cook's uninit: */
 void __builtin_delete(any_t* ize) {
-	free(ize);
+	mp_free(ize);
 }
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
@@ -77,10 +78,10 @@ static int preinit(sh_audio_t *sh){
   char path[4096];
   char cpath[4096];
   real_priv_t *rpriv;
-  rpriv=sh->context=malloc(sizeof(real_priv_t));
+  rpriv=sh->context=mp_malloc(sizeof(real_priv_t));
   if(!(handle = dlopen (sh->codec->dll_name, RTLD_LAZY)))
   {
-      free(sh->context);
+      mp_free(sh->context);
       return 0;
   }
 
@@ -98,7 +99,7 @@ static int preinit(sh_audio_t *sh){
   if(!raCloseCodec || !raDecode || !raFreeDecoder ||
      !raGetFlavorProperty || !(raOpenCodec2||raOpenCodec) || !raSetFlavor ||
      !raInitDecoder){
-      free(sh->context);
+      mp_free(sh->context);
       return 0;
   }
 
@@ -128,7 +129,7 @@ static int preinit(sh_audio_t *sh){
 	result=raOpenCodec(&rpriv->internal);
     if(result){
       MSG_WARN("Decoder open failed, error code: 0x%X\n",result);
-      free(sh->context);
+      mp_free(sh->context);
       return 0;
     }
 
@@ -150,7 +151,7 @@ static int preinit(sh_audio_t *sh){
     result=raInitDecoder(rpriv->internal,&init_data);
     if(result){
       MSG_WARN("Decoder init failed, error code: 0x%X\n",result);
-      free(sh->context);
+      mp_free(sh->context);
       return 0;
     }
   }
@@ -163,7 +164,7 @@ static int preinit(sh_audio_t *sh){
     result=raSetFlavor(rpriv->internal,((short*)(sh->wf+1))[2]);
     if(result){
       MSG_WARN("Decoder flavor setup failed, error code: 0x%X\n",result);
-      free(sh->context);
+      mp_free(sh->context);
       return 0;
     }
 
@@ -198,7 +199,7 @@ static void uninit(sh_audio_t *sh){
   real_priv_t *rpriv = sh->context;
   if (raFreeDecoder) raFreeDecoder(rpriv->internal);
   if (raCloseCodec) raCloseCodec(rpriv->internal);
-  free(sh->context);
+  mp_free(sh->context);
 }
 
 static const unsigned char sipr_swaps[38][2]={

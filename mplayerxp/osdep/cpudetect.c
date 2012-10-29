@@ -1,13 +1,11 @@
 #include "mp_config.h"
 #include "cpudetect.h"
 #include "help_mp.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPUDETECT
 #include "__mp_msg.h"
 CpuCaps gCpuCaps;
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -98,7 +96,7 @@ void GetCpuCaps( CpuCaps *caps)
 
 		tmpstr=GetCpuFriendlyName(regs, regs2);
 		MSG_V("CPU: %s ",tmpstr);
-		free(tmpstr);
+		mp_free(tmpstr);
 
 		caps->cpuType=(regs2[0] >> 8)&0xf;
 		if(caps->cpuType==0xf){
@@ -171,7 +169,7 @@ char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
 	char *retname;
 	int i;
 
-	if (NULL==(retname=(char*)malloc(256))) {
+	if (NULL==(retname=(char*)mp_malloc(256))) {
 		MSG_ERR(MSGTR_OutOfMemory);
 		exit(1);
 	}

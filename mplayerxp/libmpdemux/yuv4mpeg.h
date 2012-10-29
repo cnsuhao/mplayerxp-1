@@ -9,7 +9,7 @@
  *  This file is ripped from the lavtools package (mjpeg.sourceforge.net)
  *  Ported to mplayer by Rik Snel <snel@phys.uu.nl>
  *
- *  This program is free software; you can redistribute it and/or
+ *  This program is mp_free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
@@ -177,7 +177,7 @@ int y4m_parse_ratio(y4m_ratio_t *r, const char *s);
  * o Before using an xtag_list (but after the structure/memory has been
  *    allocated), you must initialize it via y4m_init_xtag_list().
  * o After using an xtag_list (but before the structure is released),
- *    call y4m_fini_xtag_list() to free internal memory.
+ *    call y4m_fini_xtag_list() to mp_free internal memory.
  *
  ************************************************************************/
 
@@ -223,7 +223,7 @@ int y4m_xtag_addlist(y4m_xtag_list_t *dest, const y4m_xtag_list_t *src);
  * o Before using a *_info structure (but after the structure/memory has
  *    been allocated), you must initialize it via y4m_init_*_info().
  * o After using a *_info structure (but before the structure is released),
- *    call y4m_fini_*_info() to free internal memory.
+ *    call y4m_fini_*_info() to mp_free internal memory.
  * o Use the 'set' and 'get' accessors to modify or access the fields in
  *    the structures; don't touch the structure directly.  (Ok, so there
  *    is no really convenient C syntax to prevent you from doing this,

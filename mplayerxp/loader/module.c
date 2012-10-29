@@ -16,6 +16,7 @@
 //#define DEBUG_QTX_API
 
 #include "mp_config.h"
+#include "osdep/mplib.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -89,7 +90,7 @@ static void MODULE_RemoveFromList(WINE_MODREF *mod)
 	return;
     if((list->prev==NULL)&&(list->next==NULL))
     {
-	free(list);
+	mp_free(list);
 	local_wm=NULL;
 //	uninstall_fs();
 	return;
@@ -104,7 +105,7 @@ static void MODULE_RemoveFromList(WINE_MODREF *mod)
 		list->next->prev=list->prev;
 	    if(list==local_wm)
 		local_wm=list->prev;
-	    free(list);
+	    mp_free(list);
 	    return;
 	}
     }
@@ -239,7 +240,7 @@ static WIN_BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     //local_wm=wm;
     if(local_wm)
     {
-	local_wm->next = (modref_list*) malloc(sizeof(modref_list));
+	local_wm->next = (modref_list*) mp_malloc(sizeof(modref_list));
         local_wm->next->prev=local_wm;
         local_wm->next->next=NULL;
         local_wm->next->wm=wm;
@@ -247,7 +248,7 @@ static WIN_BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     }
     else
     {
-	local_wm = malloc(sizeof(modref_list));
+	local_wm = mp_malloc(sizeof(modref_list));
 	local_wm->next=local_wm->prev=NULL;
 	local_wm->wm=wm;
     }
@@ -284,7 +285,7 @@ static void MODULE_DllProcessDetach( WINE_MODREF* wm, WIN_BOOL bForceDetach, LPV
     {
 	modref_list* f = l;
 	l = l->next;
-	free(f);
+	mp_free(f);
     }
     local_wm = 0;*/
 }
@@ -829,7 +830,7 @@ static int report_func(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t
   // memory management:
   case 0x150011: //NewPtrClear
   case 0x150012: //NewPtrSysClear
-      reg->eax=(uint32_t)malloc(((uint32_t *)stack_base)[1]);
+      reg->eax=(uint32_t)mp_malloc(((uint32_t *)stack_base)[1]);
       memset((any_t*)reg->eax,0,((uint32_t *)stack_base)[1]);
 #ifdef DEBUG_QTX_API
       printf("%*sLEAVE(%d): EMULATED! 0x%X\n",ret_i*2,"",ret_i, reg->eax);
@@ -837,7 +838,7 @@ static int report_func(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t
       return 1;
   case 0x15000F: //NewPtr
   case 0x150010: //NewPtrSys
-      reg->eax=(uint32_t)malloc(((uint32_t *)stack_base)[1]);
+      reg->eax=(uint32_t)mp_malloc(((uint32_t *)stack_base)[1]);
 #ifdef DEBUG_QTX_API
       printf("%*sLEAVE(%d): EMULATED! 0x%X\n",ret_i*2,"",ret_i, reg->eax);
 #endif
@@ -846,7 +847,7 @@ static int report_func(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t
       if(((uint32_t *)stack_base)[1]>=0x60000000)
           printf("WARNING! Invalid Ptr handle!\n");
       else
-          free((any_t*)((uint32_t *)stack_base)[1]);
+          mp_free((any_t*)((uint32_t *)stack_base)[1]);
       reg->eax=0;
 #ifdef DEBUG_QTX_API
       printf("%*sLEAVE(%d): EMULATED! 0x%X\n",ret_i*2,"",ret_i, reg->eax);

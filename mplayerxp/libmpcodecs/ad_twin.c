@@ -7,8 +7,9 @@
 #include "codecs_ld.h"
 #include "loader/ldt_keeper.h"
 #include "loader/wine/windef.h"
-#include "../libao2/afmt.h"
-#include "../libmpdemux/aviprint.h"
+#include "libao2/afmt.h"
+#include "libmpdemux/aviprint.h"
+#include "osdep/mplib.h"
 
 #include "help_mp.h"
 
@@ -304,7 +305,7 @@ static int init_vqf_audio_codec(sh_audio_t *sh_audio){
     priv->framesize=TvqGetFrameSize();
     sh_audio->audio_in_minsize=priv->framesize*in_fmt->nChannels;
     sh_audio->a_in_buffer_size=4*sh_audio->audio_in_minsize;
-    sh_audio->a_in_buffer=malloc(sh_audio->a_in_buffer_size);
+    sh_audio->a_in_buffer=mp_malloc(sh_audio->a_in_buffer_size);
     sh_audio->a_in_buffer_len=0;
 
 
@@ -328,7 +329,7 @@ int preinit(sh_audio_t *sh_audio)
 {
   /* Win32 VQF audio codec: */
   vqf_priv_t *priv;
-  if(!(sh_audio->context=malloc(sizeof(vqf_priv_t)))) return 0;
+  if(!(sh_audio->context=mp_malloc(sizeof(vqf_priv_t)))) return 0;
   priv=sh_audio->context;
   if(!load_dll((const char *)sh_audio->codec->dll_name))
   {
@@ -346,7 +347,7 @@ int preinit(sh_audio_t *sh_audio)
 void uninit(sh_audio_t *sh)
 {
   close_vqf_audio_codec(sh);
-  free(sh->context);
+  mp_free(sh->context);
   FreeLibrary(vqf_dll);
 }
 

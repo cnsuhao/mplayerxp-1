@@ -24,6 +24,7 @@
 #include "xmp_core.h"
 #include "spudec.h"
 #include "postproc/swscale.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_SPUDEC
 #include "__mp_msg.h"
 
@@ -119,8 +120,8 @@ static packet_t __FASTCALL__ *spudec_dequeue_packet(spudec_handle_t *this)
 static void __FASTCALL__ spudec_free_packet(packet_t *packet)
 {
   if (packet->packet != NULL)
-    free(packet->packet);
-  free(packet);
+    mp_free(packet->packet);
+  mp_free(packet);
 }
 
 static inline unsigned int __FASTCALL__ get_be16(const unsigned char *p)
@@ -201,17 +202,17 @@ static inline void __FASTCALL__ spudec_cut_image(spudec_handle_t *this)
   
 //  printf("new h %d new start %d (sz %d st %d)---\n\n", this->height, this->start_row, this->image_size, this->stride);
 
-  image = malloc(2 * this->stride * this->height);
+  image = mp_malloc(2 * this->stride * this->height);
   if(image){
     this->image_size = this->stride * this->height;
     aimage = image + this->image_size;
     memcpy(image, this->image + this->stride * first_y, this->image_size);
     memcpy(aimage, this->aimage + this->stride * first_y, this->image_size);
-    free(this->image);
+    mp_free(this->image);
     this->image = image;
     this->aimage = aimage;
   } else {
-    MSG_FATAL("Fatal: update_spu: malloc requested %d bytes\n", 2 * this->stride * this->height);
+    MSG_FATAL("Fatal: update_spu: mp_malloc requested %d bytes\n", 2 * this->stride * this->height);
   }
 }
 
@@ -247,10 +248,10 @@ static void __FASTCALL__ spudec_process_data(spudec_handle_t *this, packet_t *pa
 
   if (this->image_size < this->stride * this->height) {
     if (this->image != NULL) {
-      free(this->image);
+      mp_free(this->image);
       this->image_size = 0;
     }
-    this->image = malloc(2 * this->stride * this->height);
+    this->image = mp_malloc(2 * this->stride * this->height);
     if (this->image) {
       this->image_size = this->stride * this->height;
       this->aimage = this->image + this->image_size;
@@ -448,7 +449,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
     }
   next_control:
     if (display) {
-      packet_t *packet = calloc(1, sizeof(packet_t));
+      packet_t *packet = mp_calloc(1, sizeof(packet_t));
       int i;
       packet->start_pts = start_pts;
       if (end_pts == UINT_MAX && start_off != next_off) {
@@ -469,7 +470,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
 	packet->alpha[i] = this->alpha[i];
 	packet->palette[i] = this->palette[i];
       }
-      packet->packet = malloc(this->packet_size);
+      packet->packet = mp_malloc(this->packet_size);
       memcpy(packet->packet, this->packet, this->packet_size);
       spudec_queue_packet(this, packet);
     }
@@ -508,8 +509,8 @@ void __FASTCALL__ spudec_assemble(any_t*this, unsigned char *packet, unsigned in
     // Start new fragment
     if (spu->packet_reserve < len2) {
       if (spu->packet != NULL)
-	free(spu->packet);
-      spu->packet = malloc(len2);
+	mp_free(spu->packet);
+      spu->packet = mp_malloc(len2);
       spu->packet_reserve = spu->packet != NULL ? len2 : 0;
     }
     if (spu->packet != NULL) {
@@ -798,10 +799,10 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 	spu->scaled_stride = (spu->scaled_width + 7) & ~7;
 	if (spu->scaled_image_size < spu->scaled_stride * spu->scaled_height) {
 	  if (spu->scaled_image) {
-	    free(spu->scaled_image);
+	    mp_free(spu->scaled_image);
 	    spu->scaled_image_size = 0;
 	  }
-	  spu->scaled_image = malloc(2 * spu->scaled_stride * spu->scaled_height);
+	  spu->scaled_image = mp_malloc(2 * spu->scaled_stride * spu->scaled_height);
 	  if (spu->scaled_image) {
 	    spu->scaled_image_size = spu->scaled_stride * spu->scaled_height;
 	    spu->scaled_aimage = spu->scaled_image + spu->scaled_image_size;
@@ -819,18 +820,18 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 		  spu->image, spu->aimage, spu->width, spu->height, spu->stride);
 	  break;
 	  case 3:
-	  table_x = calloc(spu->scaled_width, sizeof(scale_pixel));
-	  table_y = calloc(spu->scaled_height, sizeof(scale_pixel));
+	  table_x = mp_calloc(spu->scaled_width, sizeof(scale_pixel));
+	  table_y = mp_calloc(spu->scaled_height, sizeof(scale_pixel));
 	  if (!table_x || !table_y) {
-	    MSG_FATAL("Fatal: spudec_draw_scaled: calloc failed\n");
+	    MSG_FATAL("Fatal: spudec_draw_scaled: mp_calloc failed\n");
 	  }
 	  scale_table(0, 0, spu->width - 1, spu->scaled_width - 1, table_x);
 	  scale_table(0, 0, spu->height - 1, spu->scaled_height - 1, table_y);
 	  for (y = 0; y < spu->scaled_height; y++)
 	    for (x = 0; x < spu->scaled_width; x++)
 	      scale_image(x, y, table_x, table_y, spu);
-	  free(table_x);
-	  free(table_y);
+	  mp_free(table_x);
+	  mp_free(table_y);
 	  break;
 	  case 0:
 	  /* no antialiasing */
@@ -1121,7 +1122,7 @@ any_t* __FASTCALL__ spudec_new_scaled(unsigned int *palette, unsigned int frame_
 /* get palette custom color, width, height from .idx file */
 any_t* __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int *cuspal, unsigned int custom, unsigned int frame_width, unsigned int frame_height)
 {
-  spudec_handle_t *this = calloc(1, sizeof(spudec_handle_t));
+  spudec_handle_t *this = mp_calloc(1, sizeof(spudec_handle_t));
   if (this){
     //(fprintf(stderr,"VobSub Custom Palette: %d,%d,%d,%d", this->cuspal[0], this->cuspal[1], this->cuspal[2],this->cuspal[3]);
     this->packet = NULL;
@@ -1148,7 +1149,7 @@ any_t* __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int
     this->is_forced_sub=0;
   }
   else
-    MSG_FATAL("FATAL: spudec_init: calloc");
+    MSG_FATAL("FATAL: spudec_init: mp_calloc");
   return this;
 }
 
@@ -1164,12 +1165,12 @@ void __FASTCALL__ spudec_free(any_t*this)
     while (spu->queue_head)
       spudec_free_packet(spudec_dequeue_packet(spu));
     if (spu->packet)
-      free(spu->packet);
+      mp_free(spu->packet);
     if (spu->scaled_image)
-	free(spu->scaled_image);
+	mp_free(spu->scaled_image);
     if (spu->image)
-      free(spu->image);
-    free(spu);
+      mp_free(spu->image);
+    mp_free(spu);
   }
 }
 

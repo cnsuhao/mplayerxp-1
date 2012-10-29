@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2002 Jindrich Makovicka <makovick@kmlinux.fjfi.cvut.cz>
 
-  This program is free software; you can redistribute it and/or modify
+  This program is mp_free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
@@ -27,14 +27,11 @@
 #include "mp_config.h"
 #include "osdep/cpudetect.h"
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 //===========================================================================//
@@ -183,7 +180,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){
     if(!vf->priv) return;
 
-    free(vf->priv);
+    mp_free(vf->priv);
     vf->priv=NULL;
 }
 
@@ -217,7 +214,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->uninit=uninit;
     if (!vf->priv)
     {
-        vf->priv=malloc(sizeof(struct vf_priv_s));
+        vf->priv=mp_malloc(sizeof(struct vf_priv_s));
 	memset(vf->priv, 0, sizeof(struct vf_priv_s));
     }
 

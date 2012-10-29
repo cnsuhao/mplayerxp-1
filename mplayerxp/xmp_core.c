@@ -14,9 +14,7 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 #include <sys/time.h>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
+#include "osdep/mplib.h"
 #define DA_PREFIX "DEC_AHEAD:"
 
 #include "xmp_core.h"
@@ -45,7 +43,7 @@ void xmp_uninit(void) {}
 
 unsigned xmp_register_main(sig_handler_t sigfunc) {
     unsigned idx=0;
-    xp_core.mpxp_threads[idx]=malloc(sizeof(mpxp_thread_t));
+    xp_core.mpxp_threads[idx]=mp_malloc(sizeof(mpxp_thread_t));
     memset(xp_core.mpxp_threads[idx],0,sizeof(mpxp_thread_t));
     xp_core.mpxp_threads[idx]->p_idx=idx;
     xp_core.mpxp_threads[idx]->pid=getpid();
@@ -71,7 +69,7 @@ void xmp_killall_threads(pthread_t _self)
 	    xp_core.mpxp_threads[i]->pth_id != xp_core.main_pth_id) {
 		pthread_kill(xp_core.mpxp_threads[i]->pth_id,SIGKILL);
 	    print_stopped_thread(i);
-	    free(xp_core.mpxp_threads[i]);
+	    mp_free(xp_core.mpxp_threads[i]);
 	    xp_core.mpxp_threads[i]=NULL;
 	}
     }
@@ -88,12 +86,12 @@ void dae_reset(dec_ahead_engine_t* it) {
 void dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh)
 {
     it->nframes=nframes;
-    it->fra = malloc(sizeof(frame_attr_t)*nframes);
+    it->fra = mp_malloc(sizeof(frame_attr_t)*nframes);
     it->sh=sh;
     dae_reset(it);
 }
 
-void dae_uninit(dec_ahead_engine_t* it) { free(it->fra); it->fra=0; }
+void dae_uninit(dec_ahead_engine_t* it) { mp_free(it->fra); it->fra=0; }
 
 /* returns 1 - on success 0 - if busy */
 int dae_try_inc_played(dec_ahead_engine_t* it) {
@@ -593,14 +591,14 @@ void xmp_uninit_engine( int force )
     xmp_uninit();
 }
 
-/* Min audio buffer to keep free, used to tell differ between full and empty buffer */
+/* Min audio buffer to keep mp_free, used to tell differ between full and empty buffer */
 #define MIN_BUFFER_RESERV 8
 
 int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 {
     if(shv) {
 	xp_core.has_video=1;
-	xp_core.video=malloc(sizeof(dec_ahead_engine_t));
+	xp_core.video=mp_malloc(sizeof(dec_ahead_engine_t));
 	dae_init(xp_core.video,xp_core.num_v_buffs,shv);
     } else {/* if (mp_conf.xp >= XP_VAFull) mp_conf.xp = XP_VAPlay;*/ 
     }
@@ -618,7 +616,7 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 	    min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
 	init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
 	xp_core.has_audio=1;
-	xp_core.audio=malloc(sizeof(dec_ahead_engine_t));
+	xp_core.audio=mp_malloc(sizeof(dec_ahead_engine_t));
 	dae_init(xp_core.audio,xp_core.num_a_buffs,sha);
     }
     return 0;
@@ -641,7 +639,7 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
     /* requires root privelegies */
     pthread_attr_setschedpolicy(&attr,SCHED_FIFO);
 #endif
-    xp_core.mpxp_threads[idx]=malloc(sizeof(mpxp_thread_t));
+    xp_core.mpxp_threads[idx]=mp_malloc(sizeof(mpxp_thread_t));
     memset(xp_core.mpxp_threads[idx],0,sizeof(mpxp_thread_t));
 
     xp_core.mpxp_threads[idx]->p_idx=idx;
@@ -693,7 +691,7 @@ void xmp_stop_threads(int force)
 	    while(xp_core.mpxp_threads[i]->state==Pth_Canceling) usleep(0);
 	}
 	print_stopped_thread(i);
-	free(xp_core.mpxp_threads[i]);
+	mp_free(xp_core.mpxp_threads[i]);
 	xp_core.mpxp_threads[i]=NULL;
     }
 }

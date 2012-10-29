@@ -29,6 +29,7 @@
 
 #include "af.h"
 #include "dsp.h"
+#include "osdep/mplib.h"
 
 #define DELAY1 35000
 #define DELAY2 21000
@@ -79,7 +80,7 @@ static void __FASTCALL__ init_echo3d(af_crystality_t *s,unsigned rate)
     if(s->echos>0) s->buf_size+= DELAY1;
     if(s->echos>1) s->buf_size+= DELAY2;
     if(s->echos>2) s->buf_size+= DELAY3;
-    s->buf=malloc(s->buf_size*sizeof(float));
+    s->buf=mp_malloc(s->buf_size*sizeof(float));
 }
 
 /*
@@ -185,10 +186,10 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
-    free(af->data);
-  if(((af_crystality_t *)af->setup)->buf) free(((af_crystality_t *)af->setup)->buf);
+    mp_free(af->data);
+  if(((af_crystality_t *)af->setup)->buf) mp_free(((af_crystality_t *)af->setup)->buf);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // Filter data through filter
@@ -207,8 +208,8 @@ static int __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=calloc(1,sizeof(af_crystality_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=mp_calloc(1,sizeof(af_crystality_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
   set_defaults(af->setup);

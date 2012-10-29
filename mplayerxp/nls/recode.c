@@ -1,4 +1,4 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,8 +10,9 @@
 #include <iconv.h>
 #endif
 #endif
-#include "./nls.h"
+#include "nls.h"
 #include "nls_msg.h"
+#include "osdep/mplib.h"
 
 /*
  *We have to proceed with the POSIX methods of looking to `LANG'.
@@ -68,7 +69,7 @@ char *nls_recode2screen_cp(const char *src_cp,const char *param,unsigned len)
 	if(errno) goto do_def;
 	inb=len;
 	outb=(len+1)*4;
-	obuff=malloc(outb);
+	obuff=mp_malloc(outb);
 	ibuff=param;
 	ob=obuff;
 	ib=ibuff;
@@ -79,7 +80,7 @@ char *nls_recode2screen_cp(const char *src_cp,const char *param,unsigned len)
 	}
 	else
 	{
-	    free(obuff);
+	    mp_free(obuff);
 	    fprintf(stderr,"ICONV: Can't recode from %s to %s (%s)\n",src_cp,to_cp,strerror(errno));
 	    iconv_close(ic);
 	    goto do_def;
@@ -88,10 +89,10 @@ char *nls_recode2screen_cp(const char *src_cp,const char *param,unsigned len)
     else
     {
 	do_def:
-	obuff=strdup(param);
+	obuff=mp_strdup(param);
     }
 #else
-    obuff=strdup(param);
+    obuff=mp_strdup(param);
 #endif
     return obuff;
 }
@@ -116,7 +117,7 @@ unsigned utf8_get_char(const char **str) {
   obuff=nls_recode2screen_cp("UTF8",strp,siz);
   *str = (const char *)strp+siz;
   c=*obuff;
-  free(obuff);
+  mp_free(obuff);
   return c;
 }
 
@@ -143,7 +144,7 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
 	if(errno) goto do_def;
 	inb=strlen(param)+1;
 	*outb=(strlen(param)+1)*4;
-	obuff=malloc(*outb);
+	obuff=mp_malloc(*outb);
 	ibuff=param;
 	ob=obuff;
 	ib=ibuff;
@@ -154,7 +155,7 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
 	}
 	else
 	{
-	    free(obuff);
+	    mp_free(obuff);
 	    fprintf(stderr,"ICONV: Can't recode from %s to %s (%s)\n",src_cp,to_cp,strerror(errno));
 	    iconv_close(ic);
 	    goto do_def;
@@ -163,11 +164,11 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
     else
     {
 	do_def:
-	obuff=strdup(param);
+	obuff=mp_strdup(param);
 	*outb=strlen(param);
     }
 #else
-    obuff=strdup(param);
+    obuff=mp_strdup(param);
     *outb=strlen(param);
 #endif
     return obuff;

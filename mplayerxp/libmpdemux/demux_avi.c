@@ -12,6 +12,7 @@
 #include "stheader.h"
 
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "aviheader.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libmpconf/cfgparser.h"
@@ -271,7 +272,7 @@ while(1){
       unsigned msize = 0;
       avisuperindex_chunk *s;
       priv->suidx_size++;
-      priv->suidx = realloc(priv->suidx, priv->suidx_size * sizeof (avisuperindex_chunk));
+      priv->suidx = mp_realloc(priv->suidx, priv->suidx_size * sizeof (avisuperindex_chunk));
       s = &priv->suidx[priv->suidx_size-1];
 
       chunksize-=24;
@@ -288,9 +289,9 @@ while(1){
       print_avisuperindex_chunk(s);
 
       msize = sizeof (uint32_t) * s->wLongsPerEntry * s->nEntriesInUse;
-      s->aIndex = malloc(msize);
+      s->aIndex = mp_malloc(msize);
       memset (s->aIndex, 0, msize);
-      s->stdidx = malloc (s->nEntriesInUse * sizeof (avistdindex_chunk));
+      s->stdidx = mp_malloc (s->nEntriesInUse * sizeof (avistdindex_chunk));
       memset (s->stdidx, 0, s->nEntriesInUse * sizeof (avistdindex_chunk));
 
       // now the real index of indices
@@ -308,8 +309,8 @@ while(1){
       break; }
     case ckidSTREAMFORMAT: {      // read 'strf'
       if(last_fccType==streamtypeVIDEO){
-        sh_video->bih=calloc((chunksize<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):chunksize,1);
-//        sh_video->bih=malloc(chunksize); memset(sh_video->bih,0,chunksize);
+        sh_video->bih=mp_calloc((chunksize<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):chunksize,1);
+//        sh_video->bih=mp_malloc(chunksize); memset(sh_video->bih,0,chunksize);
         MSG_V("found 'bih', %u bytes of %d\n",chunksize,sizeof(BITMAPINFOHEADER));
         stream_read(demuxer->stream,(char*) sh_video->bih,chunksize);
 	le2me_BITMAPINFOHEADER(sh_video->bih);  // swap to machine endian
@@ -362,14 +363,14 @@ while(1){
       } else
       if(last_fccType==streamtypeAUDIO){
 	unsigned wf_size = chunksize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):chunksize;
-        sh_audio->wf=calloc(wf_size,1);
-//        sh_audio->wf=malloc(chunksize); memset(sh_audio->wf,0,chunksize);
+        sh_audio->wf=mp_calloc(wf_size,1);
+//        sh_audio->wf=mp_malloc(chunksize); memset(sh_audio->wf,0,chunksize);
         MSG_V("found 'wf', %d bytes of %d\n",chunksize,sizeof(WAVEFORMATEX));
         stream_read(demuxer->stream,(char*) sh_audio->wf,chunksize);
 	le2me_WAVEFORMATEX(sh_audio->wf);
 	if (sh_audio->wf->cbSize != 0 &&
 	    wf_size < sizeof(WAVEFORMATEX)+sh_audio->wf->cbSize) {
-	    sh_audio->wf=realloc(sh_audio->wf, sizeof(WAVEFORMATEX)+sh_audio->wf->cbSize);
+	    sh_audio->wf=mp_realloc(sh_audio->wf, sizeof(WAVEFORMATEX)+sh_audio->wf->cbSize);
 	}
         chunksize=0;
         if(mp_conf.verbose>=1) print_wave_header(sh_audio->wf,wf_size);
@@ -379,7 +380,7 @@ while(1){
       break;
     }
     case mmioFOURCC('v', 'p', 'r', 'p'): {
-	VideoPropHeader *vprp = malloc(chunksize);
+	VideoPropHeader *vprp = mp_malloc(chunksize);
 	unsigned int i;
 	stream_read(demuxer->stream, (any_t*)vprp, chunksize);
 	le2me_VideoPropHeader(vprp);
@@ -396,7 +397,7 @@ while(1){
 		sh_video->aspect = GET_AVI_ASPECT(vprp->dwFrameAspectRatio);
 	}
 	if(mp_conf.verbose>=1) print_vprp(vprp);
-	free(vprp);
+	mp_free(vprp);
 	break;
     }
     case mmioFOURCC('d', 'm', 'l', 'h'): {
@@ -415,7 +416,7 @@ while(1){
       priv->idx_size=size2>>4;
       MSG_V("Reading INDEX block, %d chunks for %ld frames\n",
         priv->idx_size,avih.dwTotalFrames);
-      priv->idx=malloc(priv->idx_size<<4);
+      priv->idx=mp_malloc(priv->idx_size<<4);
       stream_read(demuxer->stream,(char*)priv->idx,priv->idx_size<<4);
       for (i = 0; i < priv->idx_size; i++) {	// swap index to machine endian
 	AVIINDEXENTRY *entry=(AVIINDEXENTRY*)priv->idx + i;
@@ -500,7 +501,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
     AVIINDEXENTRY *idx;
 
 
-    if (priv->idx_size) free(priv->idx);
+    if (priv->idx_size) mp_free(priv->idx);
     priv->idx_size = 0;
     priv->idx_offset = 0;
     priv->idx = NULL;
@@ -527,7 +528,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 	    le2me_AVISTDIDXCHUNK(&cx->stdidx[j]);
 	    print_avistdindex_chunk(&cx->stdidx[j]);
 	    priv->idx_size += cx->stdidx[j].nEntriesInUse;
-	    cx->stdidx[j].aIndex = malloc(cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
+	    cx->stdidx[j].aIndex = mp_malloc(cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
 	    stream_read(demuxer->stream, (char *)cx->stdidx[j].aIndex, 
 		    cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
 	    for (k=0;k<cx->stdidx[j].nEntriesInUse; k++)
@@ -544,7 +545,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
      * we would get with -forceidx.
      */
 
-    idx = priv->idx = malloc(priv->idx_size * sizeof (AVIINDEXENTRY));
+    idx = priv->idx = mp_malloc(priv->idx_size * sizeof (AVIINDEXENTRY));
 
     for (cx = priv->suidx; cx != &priv->suidx[priv->suidx_size]; cx++) {
 	avistdindex_chunk *sic;
@@ -605,15 +606,15 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 
 freeout:
 
-    // free unneeded stuff
+    // mp_free unneeded stuff
     cx = &priv->suidx[0];
     do {
 	for (j=0;j<cx->nEntriesInUse;j++)
-	    if (cx->stdidx[j].nEntriesInUse) free(cx->stdidx[j].aIndex);
-	free(cx->stdidx);
+	    if (cx->stdidx[j].nEntriesInUse) mp_free(cx->stdidx[j].aIndex);
+	mp_free(cx->stdidx);
 
     } while (cx++ != &priv->suidx[priv->suidx_size-1]);
-    free(priv->suidx);
+    mp_free(priv->suidx);
 
 }
 /* Read a saved index file */
@@ -633,7 +634,7 @@ if (index_file_load) {
     goto gen_index;
   }
   fread(&priv->idx_size, sizeof(priv->idx_size), 1, fp);
-  priv->idx=malloc(priv->idx_size*sizeof(AVIINDEXENTRY));
+  priv->idx=mp_malloc(priv->idx_size*sizeof(AVIINDEXENTRY));
   if (!priv->idx) {
     MSG_ERR(MSGTR_MPDEMUX_AVIHDR_FailedMallocForIdxFile, index_file_load);
     priv->idx_size = 0;
@@ -646,7 +647,7 @@ if (index_file_load) {
     fread(idx, sizeof(AVIINDEXENTRY), 1, fp);
     if (feof(fp)) {
       MSG_ERR(MSGTR_MPDEMUX_AVIHDR_PrematureEOF, index_file_load);
-      free(priv->idx);
+      mp_free(priv->idx);
       priv->idx_size = 0;
       goto gen_index;
     }
@@ -685,7 +686,7 @@ if(index_mode>=2 || (priv->idx_size==0 && index_mode==1)){
     if(priv->idx_pos>=priv->idx_size){
 //      priv->idx_size+=32;
       priv->idx_size+=1024; // +16kB
-      priv->idx=realloc(priv->idx,priv->idx_size*sizeof(AVIINDEXENTRY));
+      priv->idx=mp_realloc(priv->idx,priv->idx_size*sizeof(AVIINDEXENTRY));
       if(!priv->idx){priv->idx_pos=0; break;} // error!
     }
     idx=&((AVIINDEXENTRY *)priv->idx)[priv->idx_pos++];
@@ -1143,7 +1144,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
     demux_stream_t *d_video=demuxer->video;
     sh_audio_t *sh_audio=NULL;
     sh_video_t *sh_video=NULL;
-    avi_priv_t* priv=malloc(sizeof(avi_priv_t));
+    avi_priv_t* priv=mp_malloc(sizeof(avi_priv_t));
 
   // priv struct:
   memset(priv,0,sizeof(avi_priv_t));
@@ -1542,8 +1543,8 @@ static void avi_close(demuxer_t *demuxer)
     return;
 
   if(priv->idx_size > 0)
-    free(priv->idx);
-  free(priv);
+    mp_free(priv->idx);
+  mp_free(priv);
 }
 
 static int avi_control(demuxer_t *demuxer,int cmd,any_t*args)

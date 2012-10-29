@@ -56,7 +56,7 @@ int mp_input_lirc_read(int fd,char* dest, int s) {
     if(l > 0)
       memmove(cmd_buf,&cmd_buf[w],l+1);
     else {
-      free(cmd_buf);
+      mp_free(cmd_buf);
       cmd_buf = NULL;
     }
     return w;
@@ -89,14 +89,14 @@ int mp_input_lirc_read(int fd,char* dest, int s) {
     int l = strlen(c);
     if(l <= 0)
       continue;
-    cmd_buf = realloc(cmd_buf,cl+l+2);
+    cmd_buf = mp_realloc(cmd_buf,cl+l+2);
     memcpy(&cmd_buf[cl],c,l);
     cl += l+1;
     cmd_buf[cl-1] = '\n';
     cmd_buf[cl] = '\0';
   }
 
-  free(code);
+  mp_free(code);
 
   if(r < 0)
     return MP_INPUT_DEAD;
@@ -110,7 +110,7 @@ int mp_input_lirc_read(int fd,char* dest, int s) {
 void
 mp_input_lirc_close(int fd) {
   if(cmd_buf) {
-    free(cmd_buf);
+    mp_free(cmd_buf);
     cmd_buf = NULL;
   }
   lirc_freeconfig(lirc_config);

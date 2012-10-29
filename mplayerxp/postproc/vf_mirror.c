@@ -12,6 +12,7 @@
 #include "osdep/fastmemcpy.h"
 #include "postproc/swscale.h"
 #include "pp_msg.h"
+#include "osdep/mplib.h"
 
 typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize);
 struct vf_priv_s {
@@ -127,7 +128,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     int dir;
     vf->config=config;
     vf->put_slice=put_slice;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     dir=1;
     if(args)  dir=args[0]=='x'?1:args[0]=='y'?0:-1;
     if(dir==-1)

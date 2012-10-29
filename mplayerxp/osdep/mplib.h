@@ -1,13 +1,15 @@
 /*
- *  my_profile.h
+ *  mplib.h
  *
  *	Copyright (C) Nickols_K <nickols_k@mail.ru> - Oct 2001
  *
  *  You can redistribute this file under terms and conditions
  *  of GNU General Public licence v2.
  */
-#ifndef MY_PROFILE_INC
-#define MY_PROFILE_INC
+#ifndef __MPLIB_H_INCLUDED__
+#define __MPLIB_H_INCLUDED__ 1
+#include <stddef.h>
+#include "mp_config.h"
 
 extern volatile unsigned long long int my_profile_start,my_profile_end,my_profile_total;
 
@@ -27,5 +29,21 @@ static inline unsigned long long int read_tsc( void )
 #define PROFILE_START()
 #define PROFILE_END(your_message)
 #endif
+/** Initializes randomizer for malloc.
+  * @param rnd_limit       upper limit of random generator (recommened: 1000)
+  * @param every_nth_call  how often call randimzer (recommened: 10)
+  * @note                  Pseudo-randomizing memory objects makes memory
+  *                        exploits harder
+*/
+extern void	__FASTCALL__ mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call);
+extern void	__FASTCALL__ mp_uninit_malloc(int verbose);
+
+extern any_t*	__FASTCALL__ mp_malloc(size_t __size);
+extern any_t*	__FASTCALL__ mp_mallocz(size_t __size);
+extern any_t*	__FASTCALL__ mp_realloc(any_t*__ptr, size_t __size);
+extern any_t*	__FASTCALL__ mp_calloc (size_t __nelem, size_t __size);
+extern any_t*	__FASTCALL__ mp_memalign (size_t boundary, size_t __size);
+extern void  	__FASTCALL__ mp_free(any_t*__ptr);
+extern char *	__FASTCALL__ mp_strdup(const char *src);
 
 #endif

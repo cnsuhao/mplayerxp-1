@@ -12,6 +12,7 @@
 
 #include "af.h"
 #include "dsp.h"
+#include "osdep/mplib.h"
 
 /* HRTF filter coefficients and adjustable parameters */
 #include "af_hrtf.h"
@@ -353,23 +354,23 @@ static void __FASTCALL__ uninit(struct af_instance_s *af)
     if(af->setup) {
 	af_hrtf_t *s = af->setup;
 
-	if(s->lf) free(s->lf);
-	if(s->rf) free(s->rf);
-	if(s->lr) free(s->lr);
-	if(s->rr) free(s->rr);
-	if(s->cf) free(s->cf);
-	if(s->cr) free(s->cr);
-	if(s->ba_l) free(s->ba_l);
-	if(s->ba_r) free(s->ba_r);
-	if(s->ba_ir) free(s->ba_ir);
-	if(s->fwrbuf_l) free(s->fwrbuf_l);
-	if(s->fwrbuf_r) free(s->fwrbuf_r);
-	if(s->fwrbuf_lr) free(s->fwrbuf_lr);
-	if(s->fwrbuf_rr) free(s->fwrbuf_rr);
-	free(af->setup);
+	if(s->lf) mp_free(s->lf);
+	if(s->rf) mp_free(s->rf);
+	if(s->lr) mp_free(s->lr);
+	if(s->rr) mp_free(s->rr);
+	if(s->cf) mp_free(s->cf);
+	if(s->cr) mp_free(s->cr);
+	if(s->ba_l) mp_free(s->ba_l);
+	if(s->ba_r) mp_free(s->ba_r);
+	if(s->ba_ir) mp_free(s->ba_ir);
+	if(s->fwrbuf_l) mp_free(s->fwrbuf_l);
+	if(s->fwrbuf_r) mp_free(s->fwrbuf_r);
+	if(s->fwrbuf_lr) mp_free(s->fwrbuf_lr);
+	if(s->fwrbuf_rr) mp_free(s->fwrbuf_rr);
+	mp_free(af->setup);
     }
     if(af->data)
-	free(af->data);
+	mp_free(af->data);
 }
 
 /* Filter data through filter
@@ -544,22 +545,22 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s *af, af_data_t *data,in
 
 static int __FASTCALL__ allocate(af_hrtf_t *s)
 {
-    if ((s->lf = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
-    if ((s->rf = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
-    if ((s->lr = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
-    if ((s->rr = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
-    if ((s->cf = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
-    if ((s->cr = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
-    if ((s->ba_l = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
-    if ((s->ba_r = malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->lf = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->rf = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->lr = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->rr = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->cf = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->cr = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->ba_l = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+    if ((s->ba_r = mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
     if ((s->fwrbuf_l =
-	 malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+	 mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
     if ((s->fwrbuf_r =
-	 malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+	 mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
     if ((s->fwrbuf_lr =
-	 malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+	 mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
     if ((s->fwrbuf_rr =
-	 malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
+	 mp_malloc(s->dlbuflen * sizeof(float))) == NULL) return -1;
     return 0;
 }
 
@@ -575,8 +576,8 @@ static int __FASTCALL__ open(af_instance_t* af)
     af->play = play;
     af->mul.n = 1;
     af->mul.d = 1;
-    af->data = calloc(1, sizeof(af_data_t));
-    af->setup = calloc(1, sizeof(af_hrtf_t));
+    af->data = mp_calloc(1, sizeof(af_data_t));
+    af->setup = mp_calloc(1, sizeof(af_hrtf_t));
     if((af->data == NULL) || (af->setup == NULL))
 	return AF_ERROR;
 
@@ -612,7 +613,7 @@ static int __FASTCALL__ open(af_instance_t* af)
     s->or_ir = or_filt + (s->or_o = pulse_detect(or_filt));
     s->cr_ir = cr_filt + (s->cr_o = pulse_detect(cr_filt));
 
-    if((s->ba_ir = malloc(s->basslen * sizeof(float))) == NULL) {
+    if((s->ba_ir = mp_malloc(s->basslen * sizeof(float))) == NULL) {
  	MSG_ERR("[hrtf] Memory allocation error.\n");
 	return AF_ERROR;
     }

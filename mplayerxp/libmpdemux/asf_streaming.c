@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close
 #else
@@ -22,6 +22,7 @@
 
 #include "network.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 #define	ASF_LOAD_GUID_PREFIX(guid)	(*(uint32_t *)(guid))
@@ -228,14 +229,14 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
 	  
 	  // audit: do not overflow buffer_size
 	  if (size > SIZE_MAX - buffer_size) return -1;
-	  buffer = (char*) malloc(size+buffer_size);
+	  buffer = (char*) mp_malloc(size+buffer_size);
 	  if(buffer == NULL) {
 	    MSG_FATAL("Error can't allocate %d bytes buffer\n",size+buffer_size);
 	    return -1;
 	  }
 	  if( chunk_buffer!=NULL ) {
 	  	memcpy( buffer, chunk_buffer, buffer_size );
-		free( chunk_buffer );
+		mp_free( chunk_buffer );
 	  }
 	  chunk_buffer = buffer;
 	  buffer += buffer_size;
@@ -299,22 +300,22 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
       switch(ASF_LOAD_GUID_PREFIX(streamh->type)) {
       case 0xF8699E40 : // audio stream
 	if(asf_ctrl->audio_streams == NULL){
-	  asf_ctrl->audio_streams = (int*)malloc(sizeof(int));
+	  asf_ctrl->audio_streams = (int*)mp_malloc(sizeof(int));
 	  asf_ctrl->n_audio = 1;
 	} else {
 	  asf_ctrl->n_audio++;
-	  asf_ctrl->audio_streams = (int*)realloc(asf_ctrl->audio_streams,
+	  asf_ctrl->audio_streams = (int*)mp_realloc(asf_ctrl->audio_streams,
 						     asf_ctrl->n_audio*sizeof(int));
 	}
 	asf_ctrl->audio_streams[asf_ctrl->n_audio-1] = streamh->stream_no;
 	break;
       case 0xBC19EFC0 : // video stream
 	if(asf_ctrl->video_streams == NULL){
-	  asf_ctrl->video_streams = (int*)malloc(sizeof(int));
+	  asf_ctrl->video_streams = (int*)mp_malloc(sizeof(int));
 	  asf_ctrl->n_video = 1;
 	} else {
 	  asf_ctrl->n_video++;
-	  asf_ctrl->video_streams = (int*)realloc(asf_ctrl->video_streams,
+	  asf_ctrl->video_streams = (int*)mp_realloc(asf_ctrl->video_streams,
 						     asf_ctrl->n_video*sizeof(int));
 	}
 	asf_ctrl->video_streams[asf_ctrl->n_video-1] = streamh->stream_no;
@@ -323,8 +324,8 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
   }
 
   // always allocate to avoid lots of ifs later
-  v_rates = calloc(asf_ctrl->n_video, sizeof(int));
-  a_rates = calloc(asf_ctrl->n_audio, sizeof(int));
+  v_rates = mp_calloc(asf_ctrl->n_video, sizeof(int));
+  a_rates = mp_calloc(asf_ctrl->n_audio, sizeof(int));
 
   pos = find_asf_guid(buffer, asf_stream_group_guid, start, size);
   if (pos >= 0) {
@@ -369,7 +370,7 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
 			}
 		}
   }
-  free(buffer);
+  mp_free(buffer);
 
   // automatic stream selection based on bandwidth
   if (bw == 0) bw = INT_MAX;
@@ -399,8 +400,8 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
   // find best audio stream
   a_idx = max_idx(asf_ctrl->n_audio, a_rates, bw - v_rate);
     
-  free(v_rates);
-  free(a_rates);
+  mp_free(v_rates);
+  mp_free(a_rates);
 
   if (a_idx < 0 && v_idx < 0) {
     MSG_FATAL( "bandwidth too small, "
@@ -434,9 +435,9 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
 
 len_err_out:
   MSG_FATAL( "Invalid length in ASF header!\n");
-  if (buffer) free(buffer);
-  if (v_rates) free(v_rates);
-  if (a_rates) free(a_rates);
+  if (buffer) mp_free(buffer);
+  if (v_rates) mp_free(v_rates);
+  if (a_rates) mp_free(a_rates);
   return -1;
 }
 
@@ -757,7 +758,7 @@ asf_http_streaming_start( stream_t *stream, int *demuxer_type ) {
 	int done;
 	int auth_retry = 0;
 
-	asf_http_ctrl = (asf_http_streaming_ctrl_t*)malloc(sizeof(asf_http_streaming_ctrl_t));
+	asf_http_ctrl = (asf_http_streaming_ctrl_t*)mp_malloc(sizeof(asf_http_streaming_ctrl_t));
 	if( asf_http_ctrl==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return -1;

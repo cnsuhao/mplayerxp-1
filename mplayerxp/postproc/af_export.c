@@ -25,6 +25,7 @@
 #include "help_mp.h"
 #include "osdep/get_path.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 
 #define DEF_SZ 512 // default buffer size (in samples)
 #define SHARED_FILE "mplayer-af_export" /* default file name 
@@ -61,7 +62,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 
     // Free previous buffers
     if (s->buf && s->buf[0])
-      free(s->buf[0]);
+      mp_free(s->buf[0]);
 
     // unmap previous area
     if(s->mmap_area)
@@ -81,7 +82,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       s->sz = DEF_SZ;
 	
     // Allocate new buffers (as one continuous block)
-    s->buf[0] = calloc(s->sz*af->data->nch, af->data->bps);
+    s->buf[0] = mp_calloc(s->sz*af->data->nch, af->data->bps);
     if(NULL == s->buf[0])
       MSG_FATAL(MSGTR_OutOfMemory);
     for(i = 1; i < af->data->nch; i++)
@@ -124,7 +125,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     
     if (!str){
       if(s->filename) 
-	free(s->filename);
+	mp_free(s->filename);
 
       s->filename = get_path(SHARED_FILE);
       return AF_OK;
@@ -134,9 +135,9 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       i++;
 
     if(s->filename)
-      free(s->filename);
+      mp_free(s->filename);
 
-    s->filename = calloc(i + 1, sizeof(char));
+    s->filename = mp_calloc(i + 1, sizeof(char));
     memcpy(s->filename, str, i);
     s->filename[i] = 0;
 	
@@ -166,14 +167,14 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
 {
   int i;
   if (af->data){
-    free(af->data);
+    mp_free(af->data);
     af->data = NULL;
   }
 
   if(af->setup){
     af_export_t* s = af->setup;
     if (s->buf && s->buf[0])
-      free(s->buf[0]);
+      mp_free(s->buf[0]);
     
     // Free mmaped area
     if(s->mmap_area)
@@ -183,9 +184,9 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
       close(s->fd);
 
     if(s->filename)
-	free(s->filename);
+	mp_free(s->filename);
 
-    free(af->setup);
+    mp_free(af->setup);
     af->setup = NULL;
   }
 }
@@ -246,8 +247,8 @@ static int __FASTCALL__ af_open( af_instance_t* af )
   af->play    = play;
   af->mul.n   = 1;
   af->mul.d   = 1;
-  af->data    = calloc(1, sizeof(af_data_t));
-  af->setup   = calloc(1, sizeof(af_export_t));
+  af->data    = mp_calloc(1, sizeof(af_data_t));
+  af->setup   = mp_calloc(1, sizeof(af_export_t));
   if((af->data == NULL) || (af->setup == NULL))
     return AF_ERROR;
 

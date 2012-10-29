@@ -1,4 +1,5 @@
-#include "../../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 #include "DMO_Filter.h"
 #include "driver.h"
 #include "com.h"
@@ -19,7 +20,7 @@ void DMO_Filter_Destroy(DMO_Filter* This)
     if (This->m_pMedia)
 	This->m_pMedia->vt->Release((IUnknown*)This->m_pMedia);
 
-    free(This);
+    mp_free(This);
 #ifdef HAVE_WIN32LOADER
     CodecRelease();
 #endif
@@ -31,7 +32,7 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 {
     HRESULT hr = 0;
     const char* em = NULL;
-    DMO_Filter* This = (DMO_Filter*) malloc(sizeof(DMO_Filter));
+    DMO_Filter* This = (DMO_Filter*) mp_malloc(sizeof(DMO_Filter));
     if (!This)
 	return NULL;
 

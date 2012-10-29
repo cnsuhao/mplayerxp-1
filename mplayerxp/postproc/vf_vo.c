@@ -2,14 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include "mp_image.h"
 #include "vf.h"
 #include "vfcap.h"
-#include "../libvo/video_out.h"
-#include "../libvo/dri_vo.h"
+#include "libvo/video_out.h"
+#include "libvo/dri_vo.h"
 #include "pp_msg.h"
+#include "osdep/mplib.h"
 
 extern vo_data_t* vo_data;
 
@@ -144,14 +145,14 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf,
 }
 
 static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
-    free( vf->priv );
+    mp_free( vf->priv );
     vf->priv = NULL;
 }
 
 //===========================================================================//
 
 static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
-    vf->priv = malloc(sizeof(struct vf_priv_s));
+    vf->priv = mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv, 0, sizeof(struct vf_priv_s));
     vf->config=config;
     vf->control=control;

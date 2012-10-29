@@ -2,15 +2,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "help_mp.h"
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
+#include "osdep/mplib.h"
 #include "loader/wine/vfw.h"
 #include "loader/wine/driver.h"
 #include "libmpdemux/aviprint.h"
@@ -130,7 +128,7 @@ static int init_vfw_video_codec(sh_video_t *sh_video){
     return 0;
   }
 
-  priv->o_bih=malloc(temp_len);
+  priv->o_bih=mp_malloc(temp_len);
   memset(priv->o_bih, 0, temp_len);
   priv->o_bih->biSize = temp_len;
 
@@ -174,7 +172,7 @@ static int init_vfw_video_codec(sh_video_t *sh_video){
 //    return 0;
   }
 
-//  avi_header.our_in_buffer=malloc(avi_header.video.dwSuggestedBufferSize); // FIXME!!!!
+//  avi_header.our_in_buffer=mp_malloc(avi_header.video.dwSuggestedBufferSize); // FIXME!!!!
 
   ICSendMessage(priv->hic, ICM_USER+80, (long)(&divx_quality) ,NULL);
 
@@ -259,7 +257,7 @@ static int init(sh_video_t *sh){
     int vfw_ex;
     if(strcmp(sh->codec->driver_name,"vfwex") == 0) vfw_ex=1;
     else					    vfw_ex=0;
-    if(!(priv = malloc(sizeof(vfw_priv_t)))) 
+    if(!(priv = mp_malloc(sizeof(vfw_priv_t)))) 
     { 
 	MSG_ERR(MSGTR_OutOfMemory);
 	return 0;
@@ -276,8 +274,8 @@ static void uninit(sh_video_t *sh)
 {
   vfw_priv_t *priv=sh->context;
   vfw_close_video_codec(sh);
-  free(priv->o_bih);
-  free(sh->context);
+  mp_free(priv->o_bih);
+  mp_free(sh->context);
 }
 
 // decode a frame

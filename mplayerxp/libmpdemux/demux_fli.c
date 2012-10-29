@@ -10,13 +10,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 typedef struct _fli_frames_t {
   int num_frames;
@@ -75,7 +76,7 @@ static int fli_probe(demuxer_t* demuxer){
 
 static demuxer_t* fli_open(demuxer_t* demuxer){
   sh_video_t *sh_video = NULL;
-  fli_frames_t *frames = (fli_frames_t *)malloc(sizeof(fli_frames_t));
+  fli_frames_t *frames = (fli_frames_t *)mp_malloc(sizeof(fli_frames_t));
   int frame_number;
   int speed;
   unsigned int frame_size;
@@ -86,7 +87,7 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   stream_reset(demuxer->stream);
   stream_seek(demuxer->stream, 0);
 
-  header = malloc(sizeof(BITMAPINFOHEADER) + 128);
+  header = mp_malloc(sizeof(BITMAPINFOHEADER) + 128);
   stream_read(demuxer->stream, header + sizeof(BITMAPINFOHEADER), 128);
   stream_seek(demuxer->stream, 0);
 
@@ -99,8 +100,8 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   {
     MSG_ERR("Bad/unknown magic number (%04x)\n",
 	magic_number);
-    free(header);
-    free(frames);
+    mp_free(header);
+    mp_free(frames);
     return(NULL);
   }
 
@@ -109,8 +110,8 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   frames->current_frame = 0;
 
   // allocate enough entries for the indices
-  frames->filepos = (off_t *)malloc(frames->num_frames * sizeof(off_t));
-  frames->frame_size = (int *)malloc(frames->num_frames * sizeof(int));
+  frames->filepos = (off_t *)mp_malloc(frames->num_frames * sizeof(off_t));
+  frames->frame_size = (int *)mp_malloc(frames->num_frames * sizeof(int));
 
   // create a new video stream header
   sh_video = new_sh_video(demuxer, 0);
@@ -183,11 +184,11 @@ static void fli_close(demuxer_t* demuxer) {
     return;
 
   if(frames->filepos)
-    free(frames->filepos);
+    mp_free(frames->filepos);
   if(frames->frame_size)
-    free(frames->frame_size);
+    mp_free(frames->frame_size);
 
-  free(frames);
+  mp_free(frames);
 }
 
 static int fli_control(demuxer_t *demuxer,int cmd,any_t*args)

@@ -37,6 +37,7 @@
 
 #include "libmpdemux/stream.h"
 #include "cfgparser.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CFGPARSER
 #include "__mp_msg.h"
 
@@ -79,7 +80,7 @@ m_config_save_option(m_config_t* config, config_t* conf,const char* opt,const ch
       return;
   }
 
-  save = (config_save_t*)realloc(save,(sl+2)*sizeof(config_save_t));
+  save = (config_save_t*)mp_realloc(save,(sl+2)*sizeof(config_save_t));
   if(save == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",(sl+2)*sizeof(config_save_t),strerror(errno));
     return;
@@ -99,10 +100,10 @@ m_config_save_option(m_config_t* config, config_t* conf,const char* opt,const ch
     save[sl].param.as_pointer = *((char**)conf->p);
     break;
   case CONF_TYPE_FUNC_FULL :
-    if(strcasecmp(conf->name,opt) != 0) save->opt_name = strdup(opt);
+    if(strcasecmp(conf->name,opt) != 0) save->opt_name = mp_strdup(opt);
   case CONF_TYPE_FUNC_PARAM :
     if(param)
-      save->param.as_pointer = strdup(param);
+      save->param.as_pointer = mp_strdup(param);
   case CONF_TYPE_FUNC :
     break;
   default :
@@ -155,8 +156,8 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
 	}
       }
     }
-    free(save->param.as_pointer);
-    if(save->opt_name) free(save->opt_name);
+    mp_free(save->param.as_pointer);
+    if(save->opt_name) mp_free(save->opt_name);
     save->opt_name = save->param.as_pointer = NULL;
     if(i < 0) break;
     arg = iter->opt_name ? iter->opt_name : iter->opt->name;
@@ -200,7 +201,7 @@ void m_config_push(m_config_t* config) {
 #endif
 
   config->cs_level++;
-  config->config_stack = (config_save_t**)realloc(config->config_stack ,sizeof(config_save_t*)*(config->cs_level+1));
+  config->config_stack = (config_save_t**)mp_realloc(config->config_stack ,sizeof(config_save_t*)*(config->cs_level+1));
   if(config->config_stack == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(config_save_t*)*(config->cs_level+1),strerror(errno));
     config->cs_level = -1;
@@ -225,9 +226,9 @@ int m_config_pop(m_config_t* config) {
       if (m_config_revert_option(config,&cs[i]) < 0)
 	ret = -1;
     }
-    free(config->config_stack[config->cs_level]);
+    mp_free(config->config_stack[config->cs_level]);
   }
-  config->config_stack = (config_save_t**)realloc(config->config_stack ,sizeof(config_save_t*)*config->cs_level);
+  config->config_stack = (config_save_t**)mp_realloc(config->config_stack ,sizeof(config_save_t*)*config->cs_level);
   config->cs_level--;
   if(config->cs_level > 0 && config->config_stack == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(config_save_t*)*config->cs_level,strerror(errno));
@@ -245,15 +246,15 @@ m_config_t* m_config_new(play_tree_t* pt) {
   assert(pt != NULL);
 #endif
 
-  config = (m_config_t*)calloc(1,sizeof(m_config_t));
+  config = (m_config_t*)mp_calloc(1,sizeof(m_config_t));
   if(config == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(m_config_t),strerror(errno));
     return NULL;
   }
-  config->config_stack = (config_save_t**)calloc(1,sizeof(config_save_t*));
+  config->config_stack = (config_save_t**)mp_calloc(1,sizeof(config_save_t*));
   if(config->config_stack == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(config_save_t*),strerror(errno));
-    free(config);
+    mp_free(config);
     return NULL;
   }
   SET_GLOBAL(config); // We always start with global options
@@ -262,8 +263,8 @@ m_config_t* m_config_new(play_tree_t* pt) {
 }
 
 static void m_config_add_dynamic(m_config_t *conf,any_t*ptr) {
-    if(!conf->dynasize) conf->dynamics = malloc(sizeof(any_t*));
-    else		conf->dynamics = realloc(conf->dynamics,(conf->dynasize+1)*sizeof(any_t*));
+    if(!conf->dynasize) conf->dynamics = mp_malloc(sizeof(any_t*));
+    else		conf->dynamics = mp_realloc(conf->dynamics,(conf->dynasize+1)*sizeof(any_t*));
     conf->dynamics[conf->dynasize] = ptr;
     conf->dynasize++;
 }
@@ -273,12 +274,12 @@ void m_config_free(m_config_t* config) {
 #ifdef MP_DEBUG
   assert(config != NULL);
 #endif
-  for(i=0;i<config->dynasize;i++) free(config->dynamics[i]);
-  free(config->dynamics);
+  for(i=0;i<config->dynasize;i++) mp_free(config->dynamics[i]);
+  mp_free(config->dynamics);
   config->dynasize=0;
-  free(config->opt_list);
-  free(config->config_stack);
-  free(config);
+  mp_free(config->opt_list);
+  mp_free(config->config_stack);
+  mp_free(config);
 }
 
 
@@ -503,7 +504,7 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
-			*((char **) conf[i].p) = strdup(param);
+			*((char **) conf[i].p) = mp_strdup(param);
 			m_config_add_dynamic(config,*((char **) conf[i].p));
 			MSG_DBG3("assigning %s=%s as string value\n",conf[i].name,param);
 			ret = 1;
@@ -550,9 +551,9 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 			if (param == NULL)
 				goto err_missing_param;
 
-			subparam = malloc(strlen(param)+1);
-			subopt = malloc(strlen(param)+1);
-			p = strdup(param); // In case that param is a static string (cf man strtok)
+			subparam = mp_malloc(strlen(param)+1);
+			subopt = mp_malloc(strlen(param)+1);
+			p = mp_strdup(param); // In case that param is a static string (cf man strtok)
 
 			subconf = conf[i].p;
 			sublist[0] = subconf;
@@ -589,9 +590,9 @@ static int config_read_option(m_config_t *config,config_t** conf_list,const char
 			    token = strtok(NULL, (char *)&(":"));
 			}
 			config->sub_conf = NULL;
-			free(subparam);
-			free(subopt);
-			free(p);
+			mp_free(subparam);
+			mp_free(subopt);
+			mp_free(p);
 			ret = 1;
 			break;
 		    }
@@ -611,16 +612,16 @@ out:
 	  assert(dest != NULL);
 #endif
 	  if(config->sub_conf) {
-	    o = (char*)malloc((strlen(config->sub_conf) + 1 + strlen(opt) + 1)*sizeof(char));
+	    o = (char*)mp_malloc((strlen(config->sub_conf) + 1 + strlen(opt) + 1)*sizeof(char));
 	    sprintf(o,"%s:%s",config->sub_conf,opt);
 	  } else
-	    o =strdup(opt);
+	    o =mp_strdup(opt);
 
 	  if(ret == 0)
 	    play_tree_set_param(dest,o,NULL);
 	  else if(ret > 0)
 	    play_tree_set_param(dest,o,param);
-	  free(o);
+	  mp_free(o);
 	  m_config_pop(config);
 	}
 	return ret;
@@ -651,13 +652,13 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
     do {
 	if(!(e = strchr(opt,'.'))) break;
 	if((e-opt)>0) {
-	    char* s = (char*)malloc((e-opt+1)*sizeof(char));
+	    char* s = (char*)mp_malloc((e-opt+1)*sizeof(char));
 	    strncpy(s,opt,e-opt);
 	    s[e-opt] = '\0';
 	    MSG_DBG2("Treat %s as subconfig name\n",s);
 	    subconf = m_config_find_option(clist?clist:olist,s);
 	    clist=NULL;
-	    free(s);
+	    mp_free(s);
 	    MSG_DBG2("returned %p as subconfig name\n",subconf);
 	    if(!subconf) return ERR_NO_SUBCONF;
 	    if(subconf->type!=CONF_TYPE_SUBCONFIG) return ERR_NO_SUBCONF;
@@ -677,20 +678,20 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
   if(e && e[1] != '\0') {
     int ret;
     config_t* opt_list[] = { NULL, NULL };
-    char* s = (char*)malloc((e-opt+1)*sizeof(char));
+    char* s = (char*)mp_malloc((e-opt+1)*sizeof(char));
     strncpy(s,opt,e-opt);
     s[e-opt] = '\0';
     opt_list[0] = m_config_get_option_ptr(config,s);
     if(!opt_list[0]) {
       MSG_ERR("m_config_set_option %s=%s : no %s subconfig\n",opt,param,s);
-      free(s);
+      mp_free(s);
       return ERR_NOT_AN_OPTION;
     }
     e++;
-    s = (char*)realloc(s,strlen(e) + 1);
+    s = (char*)mp_realloc(s,strlen(e) + 1);
     strcpy(s,e);
     ret = config_read_option(config,opt_list,s,param);
-    free(s);
+    mp_free(s);
     return ret;
   }
 
@@ -734,7 +735,7 @@ int m_config_parse_config_file(m_config_t *config, char *conffile)
 		goto out;
 	}
 
-	if ((line = (char *) malloc(MAX_LINE_LEN + 1)) == NULL) {
+	if ((line = (char *) mp_malloc(MAX_LINE_LEN + 1)) == NULL) {
 		MSG_FATAL("\ncan't get memory for 'line': %s", strerror(errno));
 		ret = -1;
 		goto out;
@@ -743,7 +744,7 @@ int m_config_parse_config_file(m_config_t *config, char *conffile)
 	if ((fp = fopen(conffile, "r")) == NULL) {
 		if (config->recursion_depth > 1)
 			MSG_ERR(": %s\n", strerror(errno));
-		free(line);
+		mp_free(line);
 		ret = 0;
 		goto out;
 	}
@@ -886,7 +887,7 @@ nextline:
 		;
 	}
 
-	free(line);
+	mp_free(line);
 	fclose(fp);
 out:
 	--config->recursion_depth;
@@ -975,17 +976,17 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 		    item=opt;
 		    assign = strchr(opt,'=');
 		    if(assign) {
-			item = malloc(assign-opt);
+			item = mp_malloc(assign-opt);
 			memcpy(item,opt,assign-opt);
 			item[assign-opt]='\0';
-			parm = strdup(assign+1);
+			parm = mp_strdup(assign+1);
 		    }
 		    tmp = m_config_set_option(config, item, parm);
 		    if(!tmp && assign) 
 			MSG_ERR("Option '%s' doesn't require arguments\n",item);
 		    if(assign) {
-			free(item);
-			free(parm);
+			mp_free(item);
+			mp_free(parm);
 		    }
 		    if(!tmp && assign) goto err_out;
 
@@ -1058,7 +1059,7 @@ int m_config_register_options(m_config_t *config,const config_t *args) {
       /* NOTHING */;
   }
 
-  conf_list = (config_t**)realloc(conf_list,sizeof(struct conf*)*(list_len+2));
+  conf_list = (config_t**)mp_realloc(conf_list,sizeof(struct conf*)*(list_len+2));
   if(conf_list == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(struct conf*)*(list_len+2),strerror(errno));
     return 0;
@@ -1100,12 +1101,12 @@ config_t* m_config_get_option(m_config_t const*config,const char* arg) {
 
   if(e) {
     char *s;
-    s = (char*)malloc((e-arg+1)*sizeof(char));
+    s = (char*)mp_malloc((e-arg+1)*sizeof(char));
     strncpy(s,arg,e-arg);
     s[e-arg] = '\0';
     cl[0] = m_config_get_option(config,s);
     conf_list = cl;
-    free(s);
+    mp_free(s);
   } else
     conf_list = config->opt_list;
   return m_config_find_option(conf_list,arg);
@@ -1303,13 +1304,13 @@ static void __m_config_show_options(unsigned ntabs,const char *pfx,const config_
 	    MSG_INFO("%s:\n",opts[i].help);
 	    pfxlen=strlen(opts[i].name)+1;
 	    if(pfx) pfxlen+=strlen(pfx);
-	    newpfx=malloc(pfxlen+1);
+	    newpfx=mp_malloc(pfxlen+1);
 	    if(pfx) strcpy(newpfx,pfx);
 	    else    newpfx[0]='\0';
 	    strcat(newpfx,opts[i].name);
 	    strcat(newpfx,".");
 	    __m_config_show_options(ntabs+2,newpfx,(const config_t *)opts[i].p);
-	    free(newpfx);
+	    mp_free(newpfx);
 	}
 	else
 	if(opts[i].type<=CONF_TYPE_PRINT) {

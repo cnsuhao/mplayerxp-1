@@ -22,7 +22,8 @@
 #include "mp_config.h"
 
 #include "vd_internal.h"
-#include "../help_mp.h"
+#include "help_mp.h"
+#include "osdep/mplib.h"
 
 static const vd_info_t info = {
 	"HuffYUV Video decoder",
@@ -194,7 +195,7 @@ static int init(sh_video_t *sh)
 	unsigned char *hufftable; // Compressed huffman tables
 	BITMAPINFOHEADER *bih = sh->bih;
 	
-	if ((hc = malloc(sizeof(huffyuv_context_t))) == NULL) {
+	if ((hc = mp_malloc(sizeof(huffyuv_context_t))) == NULL) {
 		MSG_ERR(MSGTR_OutOfMemory);
 		return 0;
 	}
@@ -202,12 +203,12 @@ static int init(sh_video_t *sh)
 	sh->context = (any_t*)hc;
 
 	MSG_V( "[HuffYUV] Allocating above line buffer\n");
-	if ((hc->abovebuf1 = malloc(sizeof(char) * 4 * bih->biWidth)) == NULL) {
+	if ((hc->abovebuf1 = mp_malloc(sizeof(char) * 4 * bih->biWidth)) == NULL) {
 		MSG_ERR(MSGTR_OutOfMemory);
 		return 0;
 	}
 
-	if ((hc->abovebuf2 = malloc(sizeof(char) * 4 * bih->biWidth)) == NULL) {
+	if ((hc->abovebuf2 = mp_malloc(sizeof(char) * 4 * bih->biWidth)) == NULL) {
 		MSG_ERR(MSGTR_OutOfMemory);
 		return 0;
 	}
@@ -342,10 +343,10 @@ static void uninit(sh_video_t *sh)
 {
 	if (sh->context) {
 		if (((huffyuv_context_t*)&sh->context)->abovebuf1)
-			free(((huffyuv_context_t*)sh->context)->abovebuf1);
+			mp_free(((huffyuv_context_t*)sh->context)->abovebuf1);
 		if (((huffyuv_context_t*)&sh->context)->abovebuf2)
-			free(((huffyuv_context_t*)sh->context)->abovebuf2);
-		free(sh->context);
+			mp_free(((huffyuv_context_t*)sh->context)->abovebuf2);
+		mp_free(sh->context);
 	}
 }
 

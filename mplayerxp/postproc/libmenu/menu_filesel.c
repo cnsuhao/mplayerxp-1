@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -10,7 +9,6 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <limits.h>
-
 
 #include "mp_config.h"
 #include "help_mp.h"
@@ -27,7 +25,8 @@
 #include "menu_list.h"
 #include "input/input.h"
 #include "osdep/keycodes.h"
-#include "../pp_msg.h"
+#include "pp_msg.h"
+#include "osdep/mplib.h"
 
 #define MENU_KEEP_PATH "/tmp/mp_current_path"
 
@@ -83,8 +82,8 @@ static m_option_t cfg_fields[] = {
 #define mpriv (menu->priv)
 
 static void free_entry(list_entry_t* entry) {
-  free(entry->p.txt);
-  free(entry);
+  mp_free(entry->p.txt);
+  mp_free(entry);
 }
 
 static char* replace_path(char* title , char* dir) {
@@ -101,7 +100,7 @@ static char* replace_path(char* title , char* dir) {
       if (*d == '\\' || *d == term)
         l++;
     } while (*d++);
-    r = malloc(l + 1);
+    r = mp_malloc(l + 1);
     n = r + t1l;
     memcpy(r,title,t1l);
     do {
@@ -150,7 +149,7 @@ static char **get_extensions(menu_t *menu){
   if(!fp)
     return NULL;
 
-  extensions = (char **) malloc(sizeof(*extensions));
+  extensions = (char **) mp_malloc(sizeof(*extensions));
   *extensions = NULL;
 
   while(fgets(ext,sizeof(ext),fp)) {
@@ -161,9 +160,9 @@ static char **get_extensions(menu_t *menu){
       ext[s-1] = '\0';
       s--;
     }
-    e = (char *) malloc(s+1);
-    extensions = (char **) realloc(extensions, ++n * sizeof(*extensions));
-    extensions = (char **) realloc(extensions, ++n * sizeof(*extensions));
+    e = (char *) mp_malloc(s+1);
+    extensions = (char **) mp_realloc(extensions, ++n * sizeof(*extensions));
+    extensions = (char **) mp_realloc(extensions, ++n * sizeof(*extensions));
     strcpy (e, ext);
     for (l=extensions; *l; l++);
     *l++ = e;
@@ -178,8 +177,8 @@ static void free_extensions(char **extensions){
   if (extensions) {
     char **l = extensions;
     while (*l)
-      free (*l++);
-    free (extensions);
+      mp_free (*l++);
+    mp_free (extensions);
   }
 }
 
@@ -198,10 +197,10 @@ static int open_dir(menu_t* menu,char* args) {
   menu_list_init(menu);
 
   if(mpriv->dir)
-    free(mpriv->dir);
-  mpriv->dir = strdup(args);
+    mp_free(mpriv->dir);
+  mpriv->dir = mp_strdup(args);
   if(mpriv->p.title && mpriv->p.title != mpriv->title && mpriv->p.title != cfg_dflt.p.title)
-    free(mpriv->p.title);
+    mp_free(mpriv->p.title);
   p = strstr(mpriv->title,"%p");
 
   mpriv->p.title = replace_path(mpriv->title,mpriv->dir);
@@ -219,7 +218,7 @@ static int open_dir(menu_t* menu,char* args) {
     }
   }
 
-  namelist = (char **) malloc(sizeof(char *));
+  namelist = (char **) mp_malloc(sizeof(char *));
   extensions = get_extensions(menu);
 
   n=0;
@@ -246,7 +245,7 @@ static int open_dir(menu_t* menu,char* args) {
         continue;
     }
     if(n%20 == 0){ // Get some more mem
-      if((tp = (char **) realloc(namelist, (n+20) * sizeof (char *)))
+      if((tp = (char **) mp_realloc(namelist, (n+20) * sizeof (char *)))
          == NULL) {
         MSG_ERR("[libmenu] Realloc error: %s\n", strerror(errno));
 	n--;
@@ -255,7 +254,7 @@ static int open_dir(menu_t* menu,char* args) {
       namelist=tp;
     }
 
-    namelist[n] = (char *) malloc(strlen(dp->d_name) + 2);
+    namelist[n] = (char *) mp_malloc(strlen(dp->d_name) + 2);
     if(namelist[n] == NULL){
       MSG_ERR("[libmenu] Malloc error: %s\n", strerror(errno));
       n--;
@@ -279,18 +278,18 @@ bailout:
     return 0;
   }
   while(n--) {
-    if((e = calloc(1,sizeof(list_entry_t))) != NULL){
+    if((e = mp_calloc(1,sizeof(list_entry_t))) != NULL){
     e->p.next = NULL;
-    e->p.txt = strdup(namelist[n]);
+    e->p.txt = mp_strdup(namelist[n]);
     if(strchr(namelist[n], '/') != NULL)
       e->d = 1;
     menu_list_add_entry(menu,e);
     }else{
       MSG_ERR("[libmenu] Malloc error: %s\n", strerror(errno));
     }
-    free(namelist[n]);
+    mp_free(namelist[n]);
   }
-  free(namelist);
+  mp_free(namelist);
 
   return 1;
 }
@@ -315,7 +314,7 @@ static void read_cmd(menu_t* menu,int cmd) {
 	str = replace_path(mpriv->dir_action,filename);
 	c = mp_input_parse_cmd(str);
 	if(str != mpriv->dir_action)
-	  free(str);
+	  mp_free(str);
       } else { // Default action : open this dirctory ourself
 	int l = strlen(mpriv->dir);
 	char *slash =  NULL, *p = NULL;
@@ -329,9 +328,9 @@ static void read_cmd(menu_t* menu,int cmd) {
 #endif
 	  if(!slash) break;
 	  slash[1] = '\0';
-	  p = strdup(mpriv->dir);
+	  p = mp_strdup(mpriv->dir);
 	} else {
-	  p = malloc(l + strlen(mpriv->p.current->p.txt) + 1);
+	  p = mp_malloc(l + strlen(mpriv->p.current->p.txt) + 1);
 	  sprintf(p,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
 	}
 	menu_list_uninit(menu,free_entry);
@@ -339,7 +338,7 @@ static void read_cmd(menu_t* menu,int cmd) {
 	  MSG_ERR("[libmenu] Can't open directory: %s\n",p);
 	  menu->cl = 1;
 	}
-	free(p);
+	mp_free(p);
       }
     } else { // Files
       int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
@@ -349,7 +348,7 @@ static void read_cmd(menu_t* menu,int cmd) {
       str = replace_path(mpriv->file_action,filename);
       c = mp_input_parse_cmd(str);
       if(str != mpriv->file_action)
-	free(str);
+	mp_free(str);
     }	  
     if(c) {
       mp_input_queue_cmd(c);
@@ -365,7 +364,7 @@ static void read_cmd(menu_t* menu,int cmd) {
     str = replace_path(action, filename);
     mp_input_queue_cmd(mp_input_parse_cmd(str));
     if(str != action)
-      free(str);
+      mp_free(str);
   } break;
   default:
     menu_list_read_cmd(menu,cmd);
@@ -390,7 +389,7 @@ static void read_key(menu_t* menu,int c){
 
 static void clos(menu_t* menu) {
   menu_list_uninit(menu,free_entry);
-  free(mpriv->dir);
+  mp_free(mpriv->dir);
 }
 
 static int open_fs(menu_t* menu,const char* args) {
@@ -412,13 +411,13 @@ static int open_fs(menu_t* menu,const char* args) {
       path_fp = open (MENU_KEEP_PATH, O_RDONLY);
       if (path_fp >= 0) {
         if (!fstat (path_fp, &st) && (st.st_size > 0)) {
-          path = malloc(st.st_size+1);
+          path = mp_malloc(st.st_size+1);
           if ((read(path_fp, path, st.st_size) == st.st_size) && path[0] != '\0'){
             freepath = path;
             path[st.st_size] = '\0';
           }
           else {
-            free(path);
+            mp_free(path);
             path = NULL;
           }
         }
@@ -446,7 +445,7 @@ static int open_fs(menu_t* menu,const char* args) {
     r = open_dir(menu,path);
 
   if (freepath)
-    free(freepath);
+    mp_free(freepath);
   
   return r;
 }

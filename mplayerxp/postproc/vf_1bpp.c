@@ -3,13 +3,14 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 
-#include "../postproc/swscale.h"
+#include "postproc/swscale.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 //===========================================================================//
@@ -107,7 +108,7 @@ static void __FASTCALL__ convert(mp_image_t *mpi, mp_image_t *dmpi, int value0, 
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
-    
+
     // hope we'll get DR buffer:
     dmpi=vf_get_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
@@ -168,7 +169,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv, 0, sizeof(struct vf_priv_s));
     return 1;
 }

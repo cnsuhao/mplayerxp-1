@@ -9,6 +9,7 @@
 
 #include "m_option.h"
 #include "m_struct.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "__mp_msg.h"
 
@@ -40,7 +41,7 @@ m_struct_alloc(const m_struct_t* st) {
     }
   }
 
-  r = calloc(1,st->size);
+  r = mp_calloc(1,st->size);
   memcpy(r,st->defaults,st->size);
  
   for(i = 0 ; st->fields[i].name ; i++) {
@@ -98,12 +99,12 @@ m_struct_free(const m_struct_t* st, any_t* obj) {
 
   for(i = 0 ; st->fields[i].name ; i++)
     m_option_free(&st->fields[i],M_ST_MB_P(obj,st->fields[i].p));
-  free(obj);
+  mp_free(obj);
 }
 
 any_t*
 m_struct_copy(const m_struct_t* st, any_t* obj) {
-  any_t* r = malloc(st->size);
+  any_t* r = mp_malloc(st->size);
   int i;
   
   memcpy(r,obj,st->size);

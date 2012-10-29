@@ -28,6 +28,7 @@
 #include "libvo/sub.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/libnuppelvideo/minilzo.h"
+#include "osdep/mplib.h"
 
 #ifdef USE_QTX_CODECS
 #include "loader/qtx/qtxsdk/components.h"
@@ -259,10 +260,10 @@ ebml_read_ascii (stream_t *s, uint64_t *length)
   if (length)
     *length = len + l;
 
-  str = (char *) malloc (len+1);
+  str = (char *) mp_malloc (len+1);
   if (stream_read(s, str, len) != (int) len)
     {
-      free (str);
+      mp_free (str);
       return NULL;
     }
   str[len] = '\0';
@@ -555,13 +556,13 @@ typedef struct mkv_demuxer
 
 static int mkv_add_chapter(mkv_demuxer_t* demuxer, const char* name, uint64_t start, uint64_t end){
     if (demuxer->chapters == NULL)
-        demuxer->chapters = malloc (32*sizeof(*demuxer->chapters));
+        demuxer->chapters = mp_malloc (32*sizeof(*demuxer->chapters));
     else if (!(demuxer->num_chapters % 32))
-        demuxer->chapters = realloc (demuxer->chapters, (demuxer->num_chapters + 32) * sizeof(*demuxer->chapters));
+        demuxer->chapters = mp_realloc (demuxer->chapters, (demuxer->num_chapters + 32) * sizeof(*demuxer->chapters));
 
     demuxer->chapters[demuxer->num_chapters].start = start;
     demuxer->chapters[demuxer->num_chapters].end = end;
-    demuxer->chapters[demuxer->num_chapters].name = strdup(name);
+    demuxer->chapters[demuxer->num_chapters].name = mp_strdup(name);
 
     return demuxer->num_chapters ++;
 }
@@ -583,7 +584,7 @@ static int dvd_chapter;
  */
 static void grow_array(any_t**array, int nelem, size_t elsize) {
   if (!(nelem & 31))
-    *array = realloc(*array, (nelem + 32) * elsize);
+    *array = mp_realloc(*array, (nelem + 32) * elsize);
 }
 
 static mkv_track_t *
@@ -794,7 +795,7 @@ free_cached_dps (demuxer_t *demuxer)
       track = mkv_d->tracks[k];
       for (i = 0; i < track->num_cached_dps; i++)
         free_demux_packet (track->cached_dps[i]);
-      free(track->cached_dps);
+      mp_free(track->cached_dps);
       track->cached_dps = NULL;
       track->num_cached_dps = 0;
       track->num_allocated_dps = 0;
@@ -812,7 +813,7 @@ demux_mkv_parse_idx (mkv_track_t *t)
     return 0;
 
   things_found = 0;
-  buf = malloc(t->private_size + 1);
+  buf = mp_malloc(t->private_size + 1);
   if (buf == NULL)
     return 0;
   memcpy(buf, t->private_data, t->private_size);
@@ -853,7 +854,7 @@ demux_mkv_parse_idx (mkv_track_t *t)
     }
   while (!last && (*start != 0));
 
-  free(buf);
+  mp_free(buf);
 
   return (things_found & 3) == 3;
 }
@@ -897,13 +898,13 @@ demux_mkv_decode (mkv_track_t *track, uint8_t *src, uint8_t **dest,
           zstream.avail_out = *size;
           do {
             *size += 4000;
-            *dest = realloc (*dest, *size);
+            *dest = mp_realloc (*dest, *size);
             zstream.next_out = (Bytef *) (*dest + zstream.total_out);
             result = inflate (&zstream, Z_NO_FLUSH);
             if (result != Z_OK && result != Z_STREAM_END)
               {
                 MSG_WARN("[mkv] zlib decompression failed.\n");
-                free(*dest);
+                mp_free(*dest);
                 *dest = NULL;
                 inflateEnd (&zstream);
                 return modified;
@@ -926,7 +927,7 @@ demux_mkv_decode (mkv_track_t *track, uint8_t *src, uint8_t **dest,
             {
               int srclen = *size;
               if (dstlen > SIZE_MAX - LZO_OUTPUT_PADDING) goto lzo_fail;
-              *dest = realloc (*dest, dstlen + LZO_OUTPUT_PADDING);
+              *dest = mp_realloc (*dest, dstlen + LZO_OUTPUT_PADDING);
               result = lzo1x_decode ( src, srclen, *dest, &dstlen);
               if (result == 0)
                 break;
@@ -934,7 +935,7 @@ demux_mkv_decode (mkv_track_t *track, uint8_t *src, uint8_t **dest,
                 {
 lzo_fail:
                   MSG_WARN("[mkv] zlib decompression failed.\n");
-                  free(*dest);
+                  mp_free(*dest);
                   *dest = NULL;
                   return modified;
                 }
@@ -998,7 +999,7 @@ demux_mkv_read_info (demuxer_t *demuxer)
 }
 
 /**
- * \brief free array of kv_content_encoding_t
+ * \brief mp_free array of kv_content_encoding_t
  * \param encodings pointer to array
  * \param numencodings number of encodings in array
  */
@@ -1006,8 +1007,8 @@ static void
 demux_mkv_free_encodings(mkv_content_encoding_t *encodings, int numencodings)
 {
   while (numencodings-- > 0)
-    free(encodings[numencodings].comp_settings);
-  free(encodings);
+    mp_free(encodings[numencodings].comp_settings);
+  mp_free(encodings);
 }
 
 static int
@@ -1018,7 +1019,7 @@ demux_mkv_read_trackencodings (demuxer_t *demuxer, mkv_track_t *track)
   uint64_t len, length, l;
   int il, n;
 
-  ce = malloc (sizeof (*ce));
+  ce = mp_malloc (sizeof (*ce));
   n = 0;
 
   len = length = ebml_read_length (s, &il);
@@ -1089,7 +1090,7 @@ demux_mkv_read_trackencodings (demuxer_t *demuxer, mkv_track_t *track)
 
                             case MATROSKA_ID_CONTENTCOMPSETTINGS:
                               l = ebml_read_length (s, &i);
-                              e.comp_settings = malloc (l);
+                              e.comp_settings = mp_malloc (l);
                               stream_read (s, e.comp_settings, l);
                               e.comp_settings_len = l;
                               l += i;
@@ -1138,7 +1139,7 @@ demux_mkv_read_trackencodings (demuxer_t *demuxer, mkv_track_t *track)
             for (i=0; i<n; i++)
               if (e.order <= ce[i].order)
                 break;
-            ce = realloc (ce, (n+1) *sizeof (*ce));
+            ce = mp_realloc (ce, (n+1) *sizeof (*ce));
             memmove (ce+i+1, ce+i, (n-i) * sizeof (*ce));
             memcpy (ce+i, &e, sizeof (e));
             n++;
@@ -1300,29 +1301,29 @@ demux_mkv_read_trackvideo (demuxer_t *demuxer, mkv_track_t *track)
 }
 
 /**
- * \brief free any data associated with given track
- * \param track track of which to free data
+ * \brief mp_free any data associated with given track
+ * \param track track of which to mp_free data
  */
 static void
 demux_mkv_free_trackentry(mkv_track_t *track) {
   if (track->name)
-    free (track->name);
+    mp_free (track->name);
   if (track->codec_id)
-    free (track->codec_id);
+    mp_free (track->codec_id);
   if (track->language)
-    free (track->language);
+    mp_free (track->language);
   if (track->private_data)
-    free (track->private_data);
+    mp_free (track->private_data);
   if (track->audio_buf)
-    free (track->audio_buf);
+    mp_free (track->audio_buf);
   if (track->audio_timestamp)
-    free (track->audio_timestamp);
+    mp_free (track->audio_timestamp);
 #ifdef USE_ASS
   if (track->sh_sub && track->sh_sub->ass_track)
     ass_free_track (track->sh_sub->ass_track);
 #endif
   demux_mkv_free_encodings(track->encodings, track->num_encodings);
-  free(track);
+  mp_free(track);
 }
 
 static int
@@ -1334,11 +1335,11 @@ demux_mkv_read_trackentry (demuxer_t *demuxer)
   uint64_t len, length, l;
   int il;
 
-  track = calloc (1, sizeof (*track));
+  track = mp_calloc (1, sizeof (*track));
   /* set default values */
   track->default_track = 1;
   track->name = 0;
-  track->language = strdup("eng");
+  track->language = mp_strdup("eng");
 
   len = length = ebml_read_length (s, &il);
   len += il;
@@ -1439,7 +1440,7 @@ demux_mkv_read_trackentry (demuxer_t *demuxer)
 	    // audit: cheap guard against overflows later..
 	    if (num > SIZE_MAX - 1000) return 0;
             l = x + num;
-            track->private_data = malloc (num + LZO_INPUT_PADDING);
+            track->private_data = mp_malloc (num + LZO_INPUT_PADDING);
             if (stream_read(s, track->private_data, num) != (int) num)
               goto err_out;
             track->private_size = num;
@@ -1449,7 +1450,7 @@ demux_mkv_read_trackentry (demuxer_t *demuxer)
           }
 
         case MATROSKA_ID_TRACKLANGUAGE:
-          free(track->language);
+          mp_free(track->language);
           track->language = ebml_read_utf8 (s, &l);
           if (track->language == NULL)
             goto err_out;
@@ -1514,7 +1515,7 @@ demux_mkv_read_tracks (demuxer_t *demuxer)
   uint64_t length, l;
   int il;
 
-  mkv_d->tracks = malloc (sizeof (*mkv_d->tracks));
+  mkv_d->tracks = mp_malloc (sizeof (*mkv_d->tracks));
   mkv_d->num_tracks = 0;
 
   length = ebml_read_length (s, NULL);
@@ -1524,7 +1525,7 @@ demux_mkv_read_tracks (demuxer_t *demuxer)
         {
         case MATROSKA_ID_TRACKENTRY:
           MSG_V( "[mkv] | + a track...\n");
-          mkv_d->tracks = realloc (mkv_d->tracks,
+          mkv_d->tracks = mp_realloc (mkv_d->tracks,
                                    (mkv_d->num_tracks+1)
                                    *sizeof (*mkv_d->tracks));
           l = demux_mkv_read_trackentry (demuxer);
@@ -1561,7 +1562,7 @@ demux_mkv_read_cues (demuxer_t *demuxer)
         ebml_read_skip (s, NULL);
         return 0;
       }
-  mkv_d->parsed_cues = realloc (mkv_d->parsed_cues, 
+  mkv_d->parsed_cues = mp_realloc (mkv_d->parsed_cues, 
                                 (mkv_d->parsed_cues_num+1)
                                 * sizeof (off_t));
   mkv_d->parsed_cues[mkv_d->parsed_cues_num++] = off;
@@ -1753,7 +1754,7 @@ demux_mkv_read_chapters (demuxer_t *demuxer)
                         }
 
                       if (!name)
-                        name = strdup("(unnamed)");
+                        name = mp_strdup("(unnamed)");
                       
                       cid = mkv_add_chapter(demuxer->priv, name, start, end);
                       
@@ -1770,7 +1771,7 @@ demux_mkv_read_chapters (demuxer_t *demuxer)
                              (int) ((end / 1000) % 60),
                              (int) (end % 1000), name);
 
-                      free(name);
+                      mp_free(name);
                       break;
                     }
 
@@ -1867,11 +1868,11 @@ demux_mkv_read_attachments (demuxer_t *demuxer)
                         int x;
                         uint64_t num = ebml_read_length (s, &x);
                         l = x + num;
-                        free(data);
-                        data = malloc (num);
+                        mp_free(data);
+                        data = mp_malloc (num);
                         if (stream_read(s, data, num) != (int) num)
                         {
-                          free(data);
+                          mp_free(data);
                           return 0;
                         }
                         data_size = num;
@@ -1934,7 +1935,7 @@ demux_mkv_read_seekhead (demuxer_t *demuxer)
         ebml_read_skip (s, NULL);
         return 0;
       }
-  mkv_d->parsed_seekhead = realloc (mkv_d->parsed_seekhead, 
+  mkv_d->parsed_seekhead = mp_realloc (mkv_d->parsed_seekhead, 
                                     (mkv_d->parsed_seekhead_num+1)
                                     * sizeof (off_t));
   mkv_d->parsed_seekhead[mkv_d->parsed_seekhead_num++] = off;
@@ -2128,7 +2129,7 @@ demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
         return 1;
 
       src = (BITMAPINFOHEADER *) track->private_data;
-      bih = calloc (1, track->private_size);
+      bih = mp_calloc (1, track->private_size);
       bih->biSize = le2me_32 (src->biSize);
       bih->biWidth = le2me_32 (src->biWidth);
       bih->biHeight = le2me_32 (src->biHeight);
@@ -2151,7 +2152,7 @@ demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
     }
   else
     {
-      bih = calloc (1, sizeof (BITMAPINFOHEADER));
+      bih = mp_calloc (1, sizeof (BITMAPINFOHEADER));
       bih->biSize = sizeof (BITMAPINFOHEADER);
       bih->biWidth = track->v_width;
       bih->biHeight = track->v_height;
@@ -2171,7 +2172,7 @@ demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
           src = track->private_data + RVPROPERTIES_SIZE;
 
           cnt = track->private_size - RVPROPERTIES_SIZE;
-          bih = realloc(bih, sizeof (BITMAPINFOHEADER)+8+cnt);
+          bih = mp_realloc(bih, sizeof (BITMAPINFOHEADER)+8+cnt);
           bih->biSize = 48+cnt;
           bih->biPlanes = 1;
           type1 = be2me_32(*((uint32_t*)(src - 8)));
@@ -2224,7 +2225,7 @@ demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
           if (vi->extradata && track->private_data && (track->private_size > 0))
             {
               bih->biSize += track->private_size;
-              bih = realloc (bih, bih->biSize);
+              bih = mp_realloc (bih, bih->biSize);
               memcpy (bih + 1, track->private_data, track->private_size);
             }
 #if 0
@@ -2233,7 +2234,7 @@ demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
           if (!vi->id) {
               MSG_WARN( "[mkv] Unknown/unsupported CodecID (%s) or missing/bad CodecPrivate\n[mkv] data (track %u).\n",
                       track->codec_id, track->tnum);
-              free(bih);
+              mp_free(bih);
               return 1;
           }
         }
@@ -2280,11 +2281,11 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
   mkv_d->audio_tracks[mkv_d->last_aid] = track->tnum;
 
   sh_a->ds = demuxer->audio;
-  sh_a->wf = malloc (sizeof (WAVEFORMATEX));
+  sh_a->wf = mp_malloc (sizeof (WAVEFORMATEX));
   if (track->ms_compat && (track->private_size >= sizeof(WAVEFORMATEX)))
     {
       WAVEFORMATEX *wf = (WAVEFORMATEX *)track->private_data;
-      sh_a->wf = realloc(sh_a->wf, track->private_size);
+      sh_a->wf = mp_realloc(sh_a->wf, track->private_size);
       sh_a->wf->wFormatTag = le2me_16 (wf->wFormatTag);
       sh_a->wf->nChannels = le2me_16 (wf->nChannels);
       sh_a->wf->nSamplesPerSec = le2me_32 (wf->nSamplesPerSec);
@@ -2394,7 +2395,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
   else if ((track->a_formattag == 0x2000) || /* AC3 */
            (track->a_formattag == 0x2001)) /* DTS */
     {
-      free(sh_a->wf);
+      mp_free(sh_a->wf);
       sh_a->wf = NULL;
     }
   else if (track->a_formattag == 0x0001)  /* PCM || PCM_BE */
@@ -2413,7 +2414,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
       track->qt_last_a_pts = 0.0;
       if (track->private_data != NULL)
         {
-          sh_a->codecdata=malloc(track->private_size);
+          sh_a->codecdata=mp_malloc(track->private_size);
           memcpy (sh_a->codecdata, track->private_data,
                   track->private_size);
           sh_a->codecdata_len = track->private_size;
@@ -2429,7 +2430,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
       if (!strcmp (track->codec_id, MKV_A_AAC) &&
           (NULL != track->private_data))
         {
-          sh_a->codecdata=malloc(track->private_size);
+          sh_a->codecdata=mp_malloc(track->private_size);
           memcpy (sh_a->codecdata, track->private_data,
                   track->private_size);
           sh_a->codecdata_len = track->private_size;
@@ -2447,7 +2448,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
         profile = 2;
       else
         profile = 3;
-      sh_a->codecdata = malloc (5);
+      sh_a->codecdata = mp_malloc (5);
       sh_a->codecdata[0] = ((profile+1) << 3) | ((srate_idx&0xE) >> 1);
       sh_a->codecdata[1] = ((srate_idx&0x1)<<7)|(track->a_channels<<3);
 
@@ -2473,7 +2474,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
   else if (track->a_formattag == mmioFOURCC('v', 'r', 'b', 's'))  /* VORBIS */
     {
       sh_a->wf->cbSize = track->private_size;
-      sh_a->wf = realloc(sh_a->wf, sizeof(WAVEFORMATEX) + sh_a->wf->cbSize);
+      sh_a->wf = mp_realloc(sh_a->wf, sizeof(WAVEFORMATEX) + sh_a->wf->cbSize);
       memcpy((unsigned char *) (sh_a->wf+1), track->private_data, sh_a->wf->cbSize);
     }
   else if (track->private_size >= RAPROPERTIES4_SIZE
@@ -2508,7 +2509,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
       codecdata_length = be2me_32(*((uint32_t *)src));
       src += 4;
       sh_a->wf->cbSize = codecdata_length;
-      sh_a->wf = realloc (sh_a->wf,
+      sh_a->wf = mp_realloc (sh_a->wf,
                           sizeof (WAVEFORMATEX) +
                           sh_a->wf->cbSize);
       memcpy(((char *)(sh_a->wf + 1)), src, codecdata_length);
@@ -2517,26 +2518,26 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
         case mmioFOURCC('a', 't', 'r', 'c'):
           sh_a->wf->nAvgBytesPerSec = atrc_fl2bps[flavor];
           sh_a->wf->nBlockAlign = track->sub_packet_size;
-          track->audio_buf = malloc(track->sub_packet_h * track->audiopk_size);
-          track->audio_timestamp = malloc(track->sub_packet_h * sizeof(float));
+          track->audio_buf = mp_malloc(track->sub_packet_h * track->audiopk_size);
+          track->audio_timestamp = mp_malloc(track->sub_packet_h * sizeof(float));
           break;
         case mmioFOURCC('c', 'o', 'o', 'k'):
           sh_a->wf->nAvgBytesPerSec = cook_fl2bps[flavor];
           sh_a->wf->nBlockAlign = track->sub_packet_size;
-          track->audio_buf = malloc(track->sub_packet_h * track->audiopk_size);
-          track->audio_timestamp = malloc(track->sub_packet_h * sizeof(float));
+          track->audio_buf = mp_malloc(track->sub_packet_h * track->audiopk_size);
+          track->audio_timestamp = mp_malloc(track->sub_packet_h * sizeof(float));
           break;
         case mmioFOURCC('s', 'i', 'p', 'r'):
           sh_a->wf->nAvgBytesPerSec = sipr_fl2bps[flavor];
           sh_a->wf->nBlockAlign = track->coded_framesize;
-          track->audio_buf = malloc(track->sub_packet_h * track->audiopk_size);
-          track->audio_timestamp = malloc(track->sub_packet_h * sizeof(float));
+          track->audio_buf = mp_malloc(track->sub_packet_h * track->audiopk_size);
+          track->audio_timestamp = mp_malloc(track->sub_packet_h * sizeof(float));
           break;
         case mmioFOURCC('2', '8', '_', '8'):
           sh_a->wf->nAvgBytesPerSec = 3600;
           sh_a->wf->nBlockAlign = track->coded_framesize;
-          track->audio_buf = malloc(track->sub_packet_h * track->audiopk_size);
-          track->audio_timestamp = malloc(track->sub_packet_h * sizeof(float));
+          track->audio_buf = mp_malloc(track->sub_packet_h * track->audiopk_size);
+          track->audio_timestamp = mp_malloc(track->sub_packet_h * sizeof(float));
           break;
       }
 
@@ -2547,7 +2548,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
     {
       unsigned char *ptr;
       int size;
-      free(sh_a->wf);
+      mp_free(sh_a->wf);
       sh_a->wf = NULL;
 
       if (track->a_formattag == mmioFOURCC('f', 'L', 'a', 'C'))
@@ -2617,13 +2618,13 @@ demux_mkv_parse_vobsub_data (demuxer_t *demuxer)
       m = demux_mkv_decode (track,track->private_data,&buffer,&size,2);
       if (buffer && m)
         {
-          free (track->private_data);
+          mp_free (track->private_data);
           track->private_data = buffer;
           track->private_size = size;
         }
       if (!demux_mkv_parse_idx (track))
         {
-          free (track->private_data);
+          mp_free (track->private_data);
           track->private_data = NULL;
           track->private_size = 0;
         }
@@ -2661,7 +2662,7 @@ demux_mkv_parse_ass_data (demuxer_t *demuxer)
           m = demux_mkv_decode (track,track->private_data,&buffer,&size,2);
           if (buffer && m)
             {
-              free (track->private_data);
+              mp_free (track->private_data);
               track->private_data = buffer;
               track->private_size = size;
             }
@@ -2676,7 +2677,7 @@ demux_mkv_open_sub (demuxer_t *demuxer, mkv_track_t *track, int sid)
 {
   if (track->subtitle_type != MATROSKA_SUBTYPE_UNKNOWN)
     {
-      mkv_sh_sub_t *sh = calloc(1,sizeof(mkv_sh_sub_t));
+      mkv_sh_sub_t *sh = mp_calloc(1,sizeof(mkv_sh_sub_t));
       track->sh_sub = sh;
       sh->type = 't';
       if (track->subtitle_type == MATROSKA_SUBTYPE_VOBSUB)
@@ -2726,7 +2727,7 @@ static int mkv_probe(demuxer_t *demuxer)
       MSG_DBG2( "[mkv] no head found\n");
       return 0;
     }
-  free (str);
+  mp_free (str);
   return 1;
 }
 
@@ -2745,7 +2746,7 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
       MSG_DBG2( "[mkv] no head found\n");
       return 0;
     }
-  free (str);
+  mp_free (str);
 
   MSG_V( "[mkv] Found the head...\n");
 
@@ -2758,12 +2759,12 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
 
   MSG_V( "[mkv] + a segment...\n");
 
-  mkv_d = calloc (1, sizeof (mkv_demuxer_t));
+  mkv_d = mp_calloc (1, sizeof (mkv_demuxer_t));
   demuxer->priv = mkv_d;
   mkv_d->tc_scale = 1000000;
   mkv_d->segment_start = stream_tell (s);
-  mkv_d->parsed_cues = malloc (sizeof (off_t));
-  mkv_d->parsed_seekhead = malloc (sizeof (off_t));
+  mkv_d->parsed_cues = mp_malloc (sizeof (off_t));
+  mkv_d->parsed_seekhead = mp_malloc (sizeof (off_t));
 
   while (!cont)
     {
@@ -3011,28 +3012,28 @@ static void mkv_close (demuxer_t *demuxer)
         {
           for (i=0; i<mkv_d->num_tracks; i++)
             demux_mkv_free_trackentry(mkv_d->tracks[i]);
-          free (mkv_d->tracks);
+          mp_free (mkv_d->tracks);
         }
       if (mkv_d->indexes)
-        free (mkv_d->indexes);
+        mp_free (mkv_d->indexes);
       if (mkv_d->cluster_positions)
-        free (mkv_d->cluster_positions);
+        mp_free (mkv_d->cluster_positions);
       if (mkv_d->parsed_cues)
-        free (mkv_d->parsed_cues);
+        mp_free (mkv_d->parsed_cues);
       if (mkv_d->parsed_seekhead)
-        free (mkv_d->parsed_seekhead);
+        mp_free (mkv_d->parsed_seekhead);
       if (mkv_d->attachments) {
         for (i = 0; i < mkv_d->num_attachments; ++i) {
           if (mkv_d->attachments[i].name)
-            free (mkv_d->attachments[i].name);
+            mp_free (mkv_d->attachments[i].name);
           if (mkv_d->attachments[i].mime)
-            free (mkv_d->attachments[i].mime);
+            mp_free (mkv_d->attachments[i].mime);
           if (mkv_d->attachments[i].data)
-            free (mkv_d->attachments[i].data);
+            mp_free (mkv_d->attachments[i].data);
         }
-        free (mkv_d->attachments);
+        mp_free (mkv_d->attachments);
       }
-      free (mkv_d);
+      mp_free (mkv_d);
     }
 }
 
@@ -3054,7 +3055,7 @@ demux_mkv_read_block_lacing (uint8_t *buffer, uint64_t *size,
     {
     case 0:  /* no lacing */
       *laces = 1;
-      lace_size = calloc(*laces, sizeof(uint32_t));
+      lace_size = mp_calloc(*laces, sizeof(uint32_t));
       lace_size[0] = *size;
       break;
 
@@ -3064,7 +3065,7 @@ demux_mkv_read_block_lacing (uint8_t *buffer, uint64_t *size,
       *laces = *buffer++;
       (*size)--;
       (*laces)++;
-      lace_size = calloc(*laces, sizeof(uint32_t));
+      lace_size = mp_calloc(*laces, sizeof(uint32_t));
 
       switch ((flags & 0x06) >> 1)
         {
@@ -3092,7 +3093,7 @@ demux_mkv_read_block_lacing (uint8_t *buffer, uint64_t *size,
             int l;
             uint64_t num = ebml_read_vlen_uint (buffer, &l);
             if (num == EBML_UINT_INVALID) {
-              free(lace_size);
+              mp_free(lace_size);
               return 1;
             }
             buffer += l;
@@ -3104,7 +3105,7 @@ demux_mkv_read_block_lacing (uint8_t *buffer, uint64_t *size,
                 int64_t snum;
                 snum = ebml_read_vlen_int (buffer, &l);
                 if (snum == EBML_INT_INVALID) {
-                  free(lace_size);
+                  mp_free(lace_size);
                   return 1;
                 }
                 buffer += l;
@@ -3451,7 +3452,7 @@ handle_video_bframes (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
   if ((track->num_cached_dps + 1) > track->num_allocated_dps)
     {
       track->cached_dps = (demux_packet_t **)
-        realloc(track->cached_dps, (track->num_cached_dps + 10) *
+        mp_realloc(track->cached_dps, (track->num_cached_dps + 10) *
                 sizeof(demux_packet_t *));
       track->num_allocated_dps += 10;
     }
@@ -3493,7 +3494,7 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
   if (tc < 0)
     tc = 0;
   if (mkv_d->stop_timecode > 0 && tc > mkv_d->stop_timecode) {
-    free(lace_size);
+    mp_free(lace_size);
     return -1;
   }
   current_pts = tc / 1000.0;
@@ -3505,7 +3506,7 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
     }
   if (track == NULL)
     {
-      free(lace_size);
+      mp_free(lace_size);
       return 1;
     }
   if (num == demuxer->audio->id)
@@ -3598,7 +3599,7 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
                   dp = new_demux_packet (size);
                   memcpy (dp->buffer, buffer, size);
                   if (modified)
-                    free (buffer);
+                    mp_free (buffer);
                   dp->flags = (block_bref == 0 && block_fref == 0) ? 0x10 : 0;
                   /* If default_duration is 0, assume no pts value is known
                    * for packets after the first one (rather than all pts
@@ -3619,11 +3620,11 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
       else if (ds == demuxer->audio)
         mkv_d->a_skip_to_keyframe = 0;
 
-      free(lace_size);
+      mp_free(lace_size);
       return 1;
     }
 
-  free(lace_size);
+  mp_free(lace_size);
   return 0;
 }
 
@@ -3650,7 +3651,7 @@ static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
                   {
                     block_duration = ebml_read_uint (s, &l);
                     if (block_duration == EBML_UINT_INVALID) {
-                      free(block);
+                      mp_free(block);
                       return 0;
                     }
                     block_duration *= mkv_d->tc_scale / 1000000.0;
@@ -3659,13 +3660,13 @@ static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
 
                 case MATROSKA_ID_BLOCK:
                   block_length = ebml_read_length (s, &tmp);
-                  free(block);
+                  mp_free(block);
                   if (block_length > SIZE_MAX - LZO_INPUT_PADDING) return 0;
-                  block = malloc (block_length + LZO_INPUT_PADDING);
+                  block = mp_malloc (block_length + LZO_INPUT_PADDING);
                   demuxer->filepos = stream_tell (s);
                   if (stream_read (s,block,block_length) != (int) block_length)
                   {
-                    free(block);
+                    mp_free(block);
                     return 0;
                   }
                   l = tmp + block_length;
@@ -3675,7 +3676,7 @@ static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
                   {
                     int64_t num = ebml_read_int (s, &l);
                     if (num == EBML_INT_INVALID) {
-                      free(block);
+                      mp_free(block);
                       return 0;
                     }
                     if (num <= 0)
@@ -3686,7 +3687,7 @@ static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
                   }
 
                 case EBML_ID_INVALID:
-                  free(block);
+                  mp_free(block);
                   return 0;
 
                 default:
@@ -3701,7 +3702,7 @@ static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
             {
               int res = handle_block (demuxer, block, block_length,
                                       block_duration, block_bref, block_fref, 0);
-              free (block);
+              mp_free (block);
               if (res < 0)
                 return 0;
               if (res)
@@ -3735,17 +3736,17 @@ static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
                   {
                     int res;
                     block_length = ebml_read_length (s, &tmp);
-                    block = malloc (block_length);
+                    block = mp_malloc (block_length);
                     demuxer->filepos = stream_tell (s);
                     if (stream_read (s,block,block_length) != (int) block_length)
                     {
-                      free(block);
+                      mp_free(block);
                       return 0;
                     }
                     l = tmp + block_length;
                     res = handle_block (demuxer, block, block_length,
                                         block_duration, block_bref, block_fref, 1);
-                    free (block);
+                    mp_free (block);
                     mkv_d->cluster_size -= l + il;
                     if (res < 0)
                       return 0;

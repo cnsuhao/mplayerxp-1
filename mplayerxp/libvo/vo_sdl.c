@@ -25,9 +25,9 @@
  *  and BeOS support, too. Yay. SDL info, source, and binaries can be found
  *  at http://slouken.devolution.com/SDL/
  *
- *  This file is part of mpeg2dec, a free MPEG-2 video stream decoder.
+ *  This file is part of mpeg2dec, a mp_free MPEG-2 video stream decoder.
  *
- *  mpeg2dec is free software; you can redistribute it and/or modify
+ *  mpeg2dec is mp_free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
@@ -114,6 +114,7 @@
 #include "video_out.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "sub.h"
 #include "aspect.h"
 
@@ -160,7 +161,7 @@ static const char *vidix_name = NULL;
 static void setenv(const char *name, const char *val, int _xx)
 {
     int len  = strlen(name) + strlen(val) + 2;
-    char *env = malloc(len);
+    char *env = mp_malloc(len);
 
     if (env != NULL) {
 	strcpy(env, name);
@@ -459,7 +460,7 @@ static int sdl_close (vo_data_t*vo)
     /* Free our blitting surface */
     if (priv->surface) SDL_FreeSurface(priv->surface);
 
-    /* DONT attempt to free the fullscreen modes array. SDL_Quit* does this for us */
+    /* DONT attempt to mp_free the fullscreen modes array. SDL_Quit* does this for us */
     /* Cleanup SDL */
     if(SDL_WasInit(SDL_INIT_VIDEO))
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
@@ -1193,12 +1194,12 @@ static void uninit(vo_data_t*vo)
     priv_t *priv = vo->priv;
     vidix_term(vo);
 #endif
-    free(vo->priv);
+    mp_free(vo->priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    priv_t *priv = malloc(sizeof(priv_t));
+    priv_t *priv = mp_malloc(sizeof(priv_t));
     vo->priv=priv;
     memset(priv,0,sizeof(priv_t));
     memset(priv->rgbsurface,0,sizeof(priv->rgbsurface));

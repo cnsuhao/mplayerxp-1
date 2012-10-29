@@ -19,6 +19,7 @@
 #include "osdep/bswap.h"
 #include "demux_msg.h"
 #include "libmpconf/cfgparser.h"
+#include "osdep/mplib.h"
 
 /* parameters ! */
 static int vivo_param_version = -1;
@@ -111,15 +112,15 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 
     if (!demux->priv)
     {
-	priv = malloc(sizeof(vivo_priv_t));
+	priv = mp_malloc(sizeof(vivo_priv_t));
 	memset(priv, 0, sizeof(vivo_priv_t));
 	demux->priv = priv;
 	priv->supported = 0;
     }
 
-    buf = malloc(header_len);
-    opt = malloc(header_len);
-    param = malloc(header_len);
+    buf = mp_malloc(header_len);
+    opt = mp_malloc(header_len);
+    param = mp_malloc(header_len);
     stream_read(demux->stream, buf, header_len);
     i=0;
     while(i<header_len && buf[i]==0x0D && buf[i+1]==0x0A) i+=2; // skip empty lines
@@ -216,22 +217,22 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 	if (!strcmp(opt, "Title"))
 	{
 	    demux_info_add(demux, INFOT_NAME, param);
-	    priv->title = strdup(param);
+	    priv->title = mp_strdup(param);
 	}
 	if (!strcmp(opt, "Author"))
 	{
 	    demux_info_add(demux, INFOT_AUTHOR, param);
-	    priv->author = strdup(param);
+	    priv->author = mp_strdup(param);
 	}
 	if (!strcmp(opt, "Copyright"))
 	{
 	    demux_info_add(demux, INFOT_COPYRIGHT, param);
-	    priv->copyright = strdup(param);
+	    priv->copyright = mp_strdup(param);
 	}
 	if (!strcmp(opt, "Producer"))
 	{
 	    demux_info_add(demux, INFOT_ENCODER, param);
-	    priv->producer = strdup(param);
+	    priv->producer = mp_strdup(param);
 	}
 
 	/* get next token */
@@ -239,11 +240,11 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
     }
     
     if (buf)
-	free(buf);
+	mp_free(buf);
     if (opt)
-	free(opt);
+	mp_free(opt);
     if (param)
-	free(param);
+	mp_free(param);
 }
 
 static int vivo_probe(demuxer_t* demuxer){
@@ -267,7 +268,7 @@ static int vivo_probe(demuxer_t* demuxer){
     MSG_DBG2("header block 1 size: %d\n",len);
     //stream_skip(demuxer->stream,len);
 
-    priv=malloc(sizeof(vivo_priv_t));
+    priv=mp_malloc(sizeof(vivo_priv_t));
     memset(priv,0,sizeof(vivo_priv_t));
     demuxer->priv=priv;
 
@@ -398,7 +399,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       } else {
         // append data to it!
         demux_packet_t* dp=ds->asf_packet;
-        dp->buffer=realloc(dp->buffer,dp->len+len);
+        dp->buffer=mp_realloc(dp->buffer,dp->len+len);
         //memcpy(dp->buffer+dp->len,data,len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
         MSG_DBG3("data appended! %d+%d\n",dp->len,len);
@@ -606,7 +607,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		    sh->src_h = height;
 
 		// emulate BITMAPINFOHEADER:
-		sh->bih=malloc(sizeof(BITMAPINFOHEADER));
+		sh->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
 		memset(sh->bih,0,sizeof(BITMAPINFOHEADER));
 		sh->bih->biSize=40;
 		if (priv->width)
@@ -671,7 +672,7 @@ if (demuxer->audio->id >= -1){
 		}
 
 		// Emulate WAVEFORMATEX struct:
-		sh->wf=malloc(sizeof(WAVEFORMATEX));
+		sh->wf=mp_malloc(sizeof(WAVEFORMATEX));
 		memset(sh->wf,0,sizeof(WAVEFORMATEX));
 		sh->wf->wFormatTag=sh->wtag;
 		sh->wf->nChannels=1; /* 1 channels for both Siren and G.723 */
@@ -739,14 +740,14 @@ static void vivo_close(demuxer_t *demuxer)
  
     if (priv) {
 	if (priv->title)
-	    free(priv->title);
+	    mp_free(priv->title);
         if (priv->author)
-	    free(priv->author);
+	    mp_free(priv->author);
 	if (priv->copyright)
-	    free(priv->copyright);
+	    mp_free(priv->copyright);
 	if (priv->producer)
-	   free(priv->producer);
-	free(priv);
+	   mp_free(priv->producer);
+	mp_free(priv);
     }
     return;
 }

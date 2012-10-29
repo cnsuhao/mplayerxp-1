@@ -16,10 +16,11 @@
 #include "cfgparser.h"
 #include "m_option.h"
 #include "libmpdemux/url.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "__mp_msg.h"
 
-// Don't free for 'production' atm
+// Don't mp_free for 'production' atm
 #ifndef MP_DEBUG
 //#define NO_FREE
 #endif
@@ -52,7 +53,7 @@ static char* dup_printf(const char *fmt, ...) {
   int n, size = 50;
   char *p;
   va_list ap;
-  if ((p = malloc (size)) == NULL)
+  if ((p = mp_malloc (size)) == NULL)
     return NULL;
   while (1) {
     /* Try to print in the allocated space. */
@@ -67,7 +68,7 @@ static char* dup_printf(const char *fmt, ...) {
       size = n+1; /* precisely what is needed */
     else           /* glibc 2.0 */
       size *= 2;  /* twice the old size */
-    if ((p = realloc (p, size)) == NULL)
+    if ((p = mp_realloc (p, size)) == NULL)
       return NULL;
   }
 }
@@ -117,9 +118,9 @@ static int parse_flag(const m_option_t* opt,const char *name, char *param, any_t
 
 static char* print_flag(const m_option_t* opt,  any_t* val) {
   if(VAL(val) == opt->min)
-    return strdup("no");
+    return mp_strdup("no");
   else
-    return strdup("yes");
+    return mp_strdup("yes");
 }
 
 const m_option_type_t m_option_type_flag = {
@@ -366,8 +367,8 @@ static int parse_str(const m_option_t* opt,const char *name, char *param, any_t*
 
   if(dst) {
     if(VAL(dst))
-      free(VAL(dst));
-    VAL(dst) = strdup(param);
+      mp_free(VAL(dst));
+    VAL(dst) = mp_strdup(param);
   }
 
   return 1;
@@ -375,22 +376,22 @@ static int parse_str(const m_option_t* opt,const char *name, char *param, any_t*
 }
 
 static char* print_str(const m_option_t* opt,  any_t* val) {
-  return (val && VAL(val) && strlen(VAL(val)) > 0) ? strdup(VAL(val)) : NULL;
+  return (val && VAL(val) && strlen(VAL(val)) > 0) ? mp_strdup(VAL(val)) : NULL;
 }
 
 static void copy_str(const m_option_t* opt,any_t* dst, any_t* src) {
   if(dst && src) {
 #ifndef NO_FREE
-    if(VAL(dst)) free(VAL(dst)); //FIXME!!!
+    if(VAL(dst)) mp_free(VAL(dst)); //FIXME!!!
 #endif
-    VAL(dst) = VAL(src) ? strdup(VAL(src)) : NULL;
+    VAL(dst) = VAL(src) ? mp_strdup(VAL(src)) : NULL;
   }
 }
   
 static void free_str(any_t* src) {
   if(src && VAL(src)){
 #ifndef NO_FREE
-    free(VAL(src)); //FIXME!!!
+    mp_free(VAL(src)); //FIXME!!!
 #endif
     VAL(src) = NULL;
   }
@@ -431,8 +432,8 @@ static void free_str_list(any_t* dst) {
 // FIXME!!!
 #ifndef NO_FREE
   for(i = 0 ; d[i] != NULL ; i++)
-    free(d[i]);
-  free(d);
+    mp_free(d[i]);
+  mp_free(d);
 #endif
   VAL(dst) = NULL;
 }
@@ -447,7 +448,7 @@ static int str_list_add(char** add, int n,any_t* dst,int pre) {
   for(ln = 0 ; lst && lst[ln] ; ln++)
     /**/;
 
-  lst = realloc(lst,(n+ln+1)*sizeof(char*));
+  lst = mp_realloc(lst,(n+ln+1)*sizeof(char*));
   
   if(pre) {
     memmove(&lst[n],lst,(ln+1)*sizeof(char*));
@@ -455,7 +456,7 @@ static int str_list_add(char** add, int n,any_t* dst,int pre) {
   } else 
     memcpy(&lst[ln],add,(n+1)*sizeof(char*));
 
-  free(add);
+  mp_free(add);
 
   VAL(dst) = lst;
   
@@ -478,28 +479,28 @@ static int str_list_del(char** del, int n,any_t* dst) {
     idx = strtol(del[i], &ep, 0);
     if(*ep) {
       MSG_ERR("Invalid index: %s\n",del[i]);
-      free(del[i]);
+      mp_free(del[i]);
       continue;
     }
-    free(del[i]);
+    mp_free(del[i]);
     if(idx < 0 || idx >= ln) {
       MSG_ERR("Index %ld is out of range.\n",idx);
       continue;
     } else if(!lst[idx])
       continue;
-    free(lst[idx]);
+    mp_free(lst[idx]);
     lst[idx] = NULL;
     s--;
   }
-  free(del);
+  mp_free(del);
 
   if(s == 0) {
-    if(lst) free(lst);
+    if(lst) mp_free(lst);
     VAL(dst) = NULL;
     return 1;
   }
 
-  d = calloc(s+1,sizeof(char*));
+  d = mp_calloc(s+1,sizeof(char*));
   for(i = 0, n = 0 ; i < ln ; i++) {
     if(!lst[i]) continue;
     d[n] = lst[i];
@@ -507,7 +508,7 @@ static int str_list_del(char** del, int n,any_t* dst) {
   }
   d[s] = NULL;
 
-  if(lst) free(lst);
+  if(lst) mp_free(lst);
   VAL(dst) = d;
 
   return 1;
@@ -575,27 +576,27 @@ static int parse_str_list(const m_option_t* opt,const char *name, char *param, a
 
   if(!dst) return 1;
 
-  res = malloc((n+2)*sizeof(char*));
-  ptr = str = strdup(param);
+  res = mp_malloc((n+2)*sizeof(char*));
+  ptr = str = mp_strdup(param);
   n = 0;
 
   while(1) {
     last_ptr = ptr;
     ptr = get_nextsep(ptr, LIST_SEPARATOR, 1);
     if(!ptr) {
-      res[n] = strdup(last_ptr);
+      res[n] = mp_strdup(last_ptr);
       n++;
       break;
     }
     len = ptr - last_ptr;
-    res[n] = malloc(len + 1);
+    res[n] = mp_malloc(len + 1);
     if(len) strncpy(res[n],last_ptr,len);
     res[n][len] = '\0';
     ptr++;
     n++;
   }
   res[n] = NULL;
-  free(str);
+  mp_free(str);
 
   switch(op) {
   case OP_ADD:
@@ -630,9 +631,9 @@ static void copy_str_list(const m_option_t* opt,any_t* dst, any_t* src) {
 
   for(n = 0 ; s[n] != NULL ; n++)
     /* NOTHING */;
-  d = malloc((n+1)*sizeof(char*));
+  d = mp_malloc((n+1)*sizeof(char*));
   for( ; n >= 0 ; n--)
-    d[n] = s[n] ? strdup(s[n]) : NULL;
+    d[n] = s[n] ? mp_strdup(s[n]) : NULL;
 
   VAL(dst) = d;
 }
@@ -648,12 +649,12 @@ static char* print_str_list(const m_option_t* opt, any_t* src) {
   for(i = 0 ; lst[i] ; i++) {
     if(last) {
       ret = dup_printf("%s,%s",last,lst[i]);
-      free(last);
+      mp_free(last);
     } else
-      ret = strdup(lst[i]);
+      ret = mp_strdup(lst[i]);
     last = ret;
   }
-  if(last && last != ret) free(last);
+  if(last && last != ret) mp_free(last);
   return ret;
 }
 
@@ -699,9 +700,9 @@ static void free_func_pf(any_t* src) {
   
   while(s) {
     n = s->next;
-    free(s->name);
-    if(s->param) free(s->param);
-    free(s);
+    mp_free(s->name);
+    if(s->param) mp_free(s->param);
+    mp_free(s);
     s = n;
   }
   VAL(src) = NULL;
@@ -714,9 +715,9 @@ static int parse_func_pf(const m_option_t* opt,const char *name, char *param, an
   if(!dst)
     return 1;
 
-  s = calloc(1,sizeof(m_func_save_t));
-  s->name = strdup(name);
-  s->param = param ? strdup(param) : NULL;
+  s = mp_calloc(1,sizeof(m_func_save_t));
+  s->name = mp_strdup(name);
+  s->param = param ? mp_strdup(param) : NULL;
 
   p = VAL(dst);
   if(p) {
@@ -739,9 +740,9 @@ static void copy_func_pf(const m_option_t* opt,any_t* dst, any_t* src) {
     free_func_pf(dst);
 
   while(s) {
-    d = calloc(1,sizeof(m_func_save_t));
-    d->name = strdup(s->name);
-    d->param = s->param ? strdup(s->param) : NULL;
+    d = mp_calloc(1,sizeof(m_func_save_t));
+    d->name = mp_strdup(s->name);
+    d->param = s->param ? mp_strdup(s->param) : NULL;
     if(last)
       last->next = d;
     else
@@ -910,8 +911,8 @@ static int parse_subconf(const m_option_t* opt,const char *name, char *param, an
   if (param == NULL || strlen(param) == 0)
     return M_OPT_MISSING_PARAM;
 
-  subparam = malloc(strlen(param)+1);
-  subopt = malloc(strlen(param)+1);
+  subparam = mp_malloc(strlen(param)+1);
+  subopt = mp_malloc(strlen(param)+1);
   p = param;
 
   subopts = opt->p;
@@ -976,9 +977,9 @@ static int parse_subconf(const m_option_t* opt,const char *name, char *param, an
 			     subparam[0] == 0 ? NULL : subparam,NULL,src);
 	  if(r < 0) return r;
 	  if(dst) {
-	    lst = (char**)realloc(lst,2 * (nr+2) * sizeof(char*));
-	    lst[2*nr] = strdup(subopt);
-	    lst[2*nr+1] = subparam[0] == 0 ? NULL : strdup(subparam);
+	    lst = (char**)mp_realloc(lst,2 * (nr+2) * sizeof(char*));
+	    lst[2*nr] = mp_strdup(subopt);
+	    lst[2*nr+1] = subparam[0] == 0 ? NULL : mp_strdup(subparam);
 	    memset(&lst[2*(nr+1)],0,2*sizeof(char*));
 	    nr++;
 	  }
@@ -986,8 +987,8 @@ static int parse_subconf(const m_option_t* opt,const char *name, char *param, an
 	}
     }
 
-  free(subparam);
-  free(subopt);
+  mp_free(subparam);
+  mp_free(subopt);
   if(dst)
     VAL(dst) = lst;
 
@@ -1354,8 +1355,8 @@ static int get_obj_param(const char* opt_name,const char* obj_name, const m_stru
       return r;
     }
     if(dst) {
-      dst[0] = strdup(str);
-      dst[1] = p ? strdup(p) : NULL;
+      dst[0] = mp_strdup(str);
+      dst[1] = p ? mp_strdup(p) : NULL;
     }
     eq[0] = '=';
   } else {
@@ -1372,8 +1373,8 @@ static int get_obj_param(const char* opt_name,const char* obj_name, const m_stru
       return r;
     }
     if(dst) {
-      dst[0] = strdup(opt->name);
-      dst[1] = strdup(str);
+      dst[0] = mp_strdup(opt->name);
+      dst[1] = mp_strdup(str);
     }
     (*nold)++;
   }
@@ -1450,7 +1451,7 @@ static int get_obj_params(const char* opt_name, const char* name,char* params,
   if (n == 0) // No options or only empty options
     return 1;
 
-  ret = malloc((n+2)*2*sizeof(char*));
+  ret = mp_malloc((n+2)*2*sizeof(char*));
   n = nold = 0;
   last_ptr = params;
 
@@ -1483,16 +1484,16 @@ static int parse_obj_params(const m_option_t* opt,const char *name,
   int r;
   m_obj_params_t* p = opt->priv;
   const m_struct_t* desc;
-  char* cpy = strdup(param);
+  char* cpy = mp_strdup(param);
 
   // We need the object desc
   if(!p) {
-    free(cpy);
+    mp_free(cpy);
     return M_OPT_INVALID;
   }
   desc = p->desc;
   r = get_obj_params(name,desc->name,cpy,desc,p->separator,dst ? &opts : NULL);
-  free(cpy);
+  mp_free(cpy);
   if(r < 0)
     return r;
   if(!dst)
@@ -1568,9 +1569,9 @@ static int parse_obj_settings(const char* opt,char* str,const m_obj_list_t* list
         MSG_INFO("Option %s: %s have no option description.\n",opt,str);
         return M_OPT_EXIT - 1;
       }
-      plist = calloc(4,sizeof(char*));
-      plist[0] = strdup("_oldargs_");
-      plist[1] = strdup(param);
+      plist = mp_calloc(4,sizeof(char*));
+      plist[0] = mp_strdup("_oldargs_");
+      plist[1] = mp_strdup(param);
     } else if(desc) {
       r = get_obj_params(opt,str,param,desc,':',_ret ? &plist : NULL);
       if(r < 0)
@@ -1580,9 +1581,9 @@ static int parse_obj_settings(const char* opt,char* str,const m_obj_list_t* list
   if(!_ret)
     return 1;
 
-  ret = realloc(ret,(ret_n+2)*sizeof(m_obj_settings_t));
+  ret = mp_realloc(ret,(ret_n+2)*sizeof(m_obj_settings_t));
   memset(&ret[ret_n],0,2*sizeof(m_obj_settings_t));
-  ret[ret_n].name = strdup(str);
+  ret[ret_n].name = mp_strdup(str);
   ret[ret_n].attribs = plist;
 
   *_ret = ret;
@@ -1627,7 +1628,7 @@ static int obj_settings_list_del(const char *opt_name,char *param,any_t* dst, in
     }
     if(id < 0)
       id = idx_max + id;
-    free(obj_list[id].name);
+    mp_free(obj_list[id].name);
     free_str_list(&(obj_list[id].attribs));
     obj_list[id].name = rem_id;
   }
@@ -1643,7 +1644,7 @@ static int obj_settings_list_del(const char *opt_name,char *param,any_t* dst, in
       idx_max--;
     }
   }
-  obj_list = realloc(obj_list,sizeof(m_obj_settings_t)*(idx_max+1));
+  obj_list = mp_realloc(obj_list,sizeof(m_obj_settings_t)*(idx_max+1));
   VAL(dst) = obj_list;
 
   return 1;
@@ -1730,7 +1731,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
     MSG_INFO("\n");
     return M_OPT_EXIT - 1;
   }
-  ptr = str = strdup(param);
+  ptr = str = mp_strdup(param);
 
   while(ptr[0] != '\0') {
     last_ptr = ptr;
@@ -1739,7 +1740,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
     if(!ptr) {
       r = parse_obj_settings(name,last_ptr,opt->priv,dst ? &res : NULL,n);
       if(r < 0) {
-	free(str);
+	mp_free(str);
 	return r;
       }
       n++;
@@ -1748,13 +1749,13 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
     ptr[0] = '\0';
     r = parse_obj_settings(name,last_ptr,opt->priv,dst ? &res : NULL,n);
     if(r < 0) {
-      free(str);
+      mp_free(str);
       return r;
     }
     ptr++;
     n++;
   }
-  free(str);
+  mp_free(str);
   if(n == 0)
     return M_OPT_INVALID;
 
@@ -1767,18 +1768,18 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
       int qsize;
       for(qsize = 0 ; queue[qsize].name ; qsize++)
 	/* NOP */;
-      res = realloc(res,(qsize+n+1)*sizeof(m_obj_settings_t));
+      res = mp_realloc(res,(qsize+n+1)*sizeof(m_obj_settings_t));
       memcpy(&res[n],queue,(qsize+1)*sizeof(m_obj_settings_t));
       n += qsize;
-      free(queue);
+      mp_free(queue);
     }
     if(head) {
       int hsize;
       for(hsize = 0 ; head[hsize].name ; hsize++)
 	/* NOP */;
-      head = realloc(head,(hsize+n+1)*sizeof(m_obj_settings_t));
+      head = mp_realloc(head,(hsize+n+1)*sizeof(m_obj_settings_t));
       memcpy(&head[hsize],res,(n+1)*sizeof(m_obj_settings_t));
-      free(res);
+      mp_free(res);
       res = head;
     }
     VAL(dst) = res;
@@ -1795,10 +1796,10 @@ static void free_obj_settings_list(any_t* dst) {
   d = VAL(dst);
 #ifndef NO_FREE
   for(n = 0 ; d[n].name ; n++) {
-    free(d[n].name);
+    mp_free(d[n].name);
     free_str_list(&(d[n].attribs));
   }
-  free(d);
+  mp_free(d);
 #endif
   VAL(dst) = NULL;
 }
@@ -1818,9 +1819,9 @@ static void copy_obj_settings_list(const m_option_t* opt,any_t* dst, any_t* src)
 
   for(n = 0 ; s[n].name ; n++)
     /* NOP */;
-  d = malloc((n+1)*sizeof(m_obj_settings_t));
+  d = mp_malloc((n+1)*sizeof(m_obj_settings_t));
   for(n = 0 ; s[n].name ; n++) {
-    d[n].name = strdup(s[n].name);
+    d[n].name = mp_strdup(s[n].name);
     d[n].attribs = NULL;
     copy_str_list(NULL,&(d[n].attribs),&(s[n].attribs));
   }
@@ -2093,12 +2094,12 @@ static int parse_custom_url(const m_option_t* opt,const char *name,
 	  int l = strlen(ptr2+1) + 1;
 	  char* fname = ptr2+1;
 	  if(l > 1) {
-	    fname = malloc(l);
+	    fname = mp_malloc(l);
 	    url_unescape_string(fname,ptr2+1);
 	  }
 	  r = m_struct_set(desc,dst,"filename",fname);
 	  if(fname != ptr2+1)
-	    free(fname);
+	    mp_free(fname);
 	  if(r < 0) {
 	    MSG_ERR("Option %s: Error while setting filename.\n",name);
 	    return r;

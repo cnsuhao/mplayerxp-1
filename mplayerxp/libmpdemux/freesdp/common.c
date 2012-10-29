@@ -2,7 +2,7 @@
   This file is part of FreeSDP
   Copyright (C) 2001,2002,2003 Federico Montesino Pouzols <fedemp@suidzer0.org>
 
-  FreeSDP is free software; you can redistribute it and/or modify it
+  FreeSDP is mp_free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
@@ -29,18 +29,19 @@
 
 #include "priv.h"
 #include "common.h"
+#include "osdep/mplib.h"
 
 static void
 safe_free (any_t*ptr)
 {
   if (ptr)
-    free (ptr);
+    mp_free (ptr);
 }
 
 fsdp_description_t *
 fsdp_description_new (void)
 {
-  fsdp_description_t *result = malloc (sizeof (fsdp_description_t));
+  fsdp_description_t *result = mp_malloc (sizeof (fsdp_description_t));
 
   result->version = 0;
   result->o_username = result->o_session_id =
@@ -99,7 +100,7 @@ fsdp_description_delete (fsdp_description_t * dsc)
 void
 fsdp_description_recycle (fsdp_description_t * dsc)
 {
-  /* Recursively free all strings and arrays */
+  /* Recursively mp_free all strings and arrays */
   unsigned int i, j;
 
   if (!dsc)

@@ -30,6 +30,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include "demuxer.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "aviprint.h"
 #include "libmpcodecs/dec_audio.h"
 #include "demux_msg.h"
@@ -183,7 +184,7 @@ read_index:
     }
 
     priv->index_table_size[stream_id] = entries;
-    priv->index_table[stream_id] = malloc(priv->index_table_size[stream_id] * sizeof(real_index_table_t));
+    priv->index_table[stream_id] = mp_malloc(priv->index_table_size[stream_id] * sizeof(real_index_table_t));
     
     for (i = 0; i < entries; i++)
     {
@@ -221,7 +222,7 @@ static void add_index_item(demuxer_t *demuxer, int stream_id, int timestamp, int
 	priv->index_malloc_size[stream_id] = 2048;
       else
 	priv->index_malloc_size[stream_id] += priv->index_malloc_size[stream_id] / 2;
-      priv->index_table[stream_id] = realloc(priv->index_table[stream_id], priv->index_malloc_size[stream_id]*sizeof(priv->index_table[0][0]));
+      priv->index_table[stream_id] = mp_realloc(priv->index_table[stream_id], priv->index_malloc_size[stream_id]*sizeof(priv->index_table[0][0]));
     }
     if (priv->index_table_size[stream_id] > 0)
     {
@@ -322,7 +323,7 @@ static int real_probe(demuxer_t* demuxer)
     if (c != MKTAG('.', 'R', 'M', 'F'))
 	return 0; /* bad magic */
 
-    priv = malloc(sizeof(real_priv_t));
+    priv = mp_malloc(sizeof(real_priv_t));
     memset(priv, 0, sizeof(real_priv_t));
     demuxer->priv = priv;
     demuxer->file_format=DEMUXER_TYPE_REAL;
@@ -497,7 +498,7 @@ got_audio:
 		/* Second byte, upper four bits: number of AAC frames */
 		/* next n * 2 bytes: length of the AAC frames in bytes, BE */
 		sub_packets = (stream_read_word(demuxer->stream) & 0xf0) >> 4;
-		sub_packet_lengths = calloc(sub_packets, sizeof(uint16_t));
+		sub_packet_lengths = mp_calloc(sub_packets, sizeof(uint16_t));
 		for (i = 0; i < sub_packets; i++)
 		    sub_packet_lengths[i] = stream_read_word(demuxer->stream);
 		for (i = 0; i < sub_packets; i++) {
@@ -511,7 +512,7 @@ got_audio:
 		    dp->flags=DP_NONKEYFRAME;
 		    ds_add_packet(ds, dp);
 		}
-		free(sub_packet_lengths);
+		mp_free(sub_packet_lengths);
 		return 1;
 	    }
 	    dp = new_demux_packet(len);
@@ -653,7 +654,7 @@ got_video:
 			    // increase buffer size, this should not happen!
 			    MSG_WARN("chunktab buffer too small!!!!!\n");
 			    dp->len=dp_hdr->chunktab+8*(4+dp_hdr->chunks);
-			    dp->buffer=realloc(dp->buffer,dp->len);
+			    dp->buffer=mp_realloc(dp->buffer,dp->len);
 			    // re-calc pointers:
 			    dp_hdr=(dp_hdr_t*)dp->buffer;
 			    dp_data=dp->buffer+sizeof(dp_hdr_t);
@@ -870,41 +871,41 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		len = stream_read_word(demuxer->stream);
 		if (len > 0)
 		{
-		    buf = malloc(len+1);
+		    buf = mp_malloc(len+1);
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_NAME, buf);
-		    free(buf);
+		    mp_free(buf);
 		}
 
 		len = stream_read_word(demuxer->stream);
 		if (len > 0)
 		{
-		    buf = malloc(len+1);
+		    buf = mp_malloc(len+1);
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_AUTHOR, buf);
-		    free(buf);
+		    mp_free(buf);
 		}
 
 		len = stream_read_word(demuxer->stream);
 		if (len > 0)
 		{
-		    buf = malloc(len+1);
+		    buf = mp_malloc(len+1);
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_COPYRIGHT, buf);
-		    free(buf);
+		    mp_free(buf);
 		}
 
 		len = stream_read_word(demuxer->stream);
 		if (len > 0)
 		{
-		    buf = malloc(len+1);
+		    buf = mp_malloc(len+1);
 	    	    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_COMMENTS, buf);
-		    free(buf);
+		    mp_free(buf);
 		}
 		break;
 	    }
@@ -987,25 +988,25 @@ static demuxer_t* real_open(demuxer_t* demuxer)
                     stream_skip(demuxer->stream, 4);
                     // Name, author, (c) are also in CONT tag
                     if ((i = stream_read_char(demuxer->stream)) != 0) {
-                      buft = malloc(i+1);
+                      buft = mp_malloc(i+1);
                       stream_read(demuxer->stream, buft, i);
                       buft[i] = 0;
                       demux_info_add(demuxer, INFOT_NAME, buft);
-                      free(buft);
+                      mp_free(buft);
                     }
                     if ((i = stream_read_char(demuxer->stream)) != 0) {
-                      buft = malloc(i+1);
+                      buft = mp_malloc(i+1);
                       stream_read(demuxer->stream, buft, i);
                       buft[i] = 0;
                       demux_info_add(demuxer, INFOT_AUTHOR, buft);
-                      free(buft);
+                      mp_free(buft);
                     }
                     if ((i = stream_read_char(demuxer->stream)) != 0) {
-                      buft = malloc(i+1);
+                      buft = mp_malloc(i+1);
                       stream_read(demuxer->stream, buft, i);
                       buft[i] = 0;
                       demux_info_add(demuxer, INFOT_COPYRIGHT, buft);
-                      free(buft);
+                      mp_free(buft);
                     }
                     if ((i = stream_read_char(demuxer->stream)) != 0)
                       MSG_WARN("Last header byte is not zero!\n");
@@ -1075,7 +1076,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
                    }
 
 		    /* Emulate WAVEFORMATEX struct: */
-		    sh->wf = malloc(sizeof(WAVEFORMATEX));
+		    sh->wf = mp_malloc(sizeof(WAVEFORMATEX));
 		    memset(sh->wf, 0, sizeof(WAVEFORMATEX));
 		    sh->wf->nChannels = sh->channels;
 		    sh->wf->wBitsPerSample = sh->samplesize*8;
@@ -1091,7 +1092,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 			    break;
 			case MKTAG('1', '4', '_', '4'):
                             sh->wf->cbSize = 10;
-                            sh->wf = realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
+                            sh->wf = mp_realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
                             ((short*)(sh->wf+1))[0]=0;
                             ((short*)(sh->wf+1))[1]=240;
                             ((short*)(sh->wf+1))[2]=0;
@@ -1101,7 +1102,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 
 			case MKTAG('2', '8', '_', '8'):
 			    sh->wf->cbSize = 10;
-			    sh->wf = realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
+			    sh->wf = mp_realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
 			    ((short*)(sh->wf+1))[0]=sub_packet_size;
 			    ((short*)(sh->wf+1))[1]=sub_packet_h;
 			    ((short*)(sh->wf+1))[2]=flavor;
@@ -1119,7 +1120,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 			      stream_skip(demuxer->stream,1);  // Skip 1 additional unknown byte 
 			    codecdata_length=stream_read_dword(demuxer->stream);
 			    sh->wf->cbSize = 10+codecdata_length;
-			    sh->wf = realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
+			    sh->wf = mp_realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
 			    ((short*)(sh->wf+1))[0]=sub_packet_size;
 			    ((short*)(sh->wf+1))[1]=sub_packet_h;
 			    ((short*)(sh->wf+1))[2]=flavor;
@@ -1139,7 +1140,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 			    codecdata_length=stream_read_dword(demuxer->stream);
 			    if (codecdata_length>=1) {
 				sh->codecdata_len = codecdata_length - 1;
-				sh->codecdata = calloc(sh->codecdata_len, 1);
+				sh->codecdata = mp_calloc(sh->codecdata_len, 1);
 				stream_skip(demuxer->stream, 1);
 				stream_read(demuxer->stream, sh->codecdata, sh->codecdata_len);
 			    }
@@ -1178,7 +1179,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    sh_audio_t *sh = new_sh_audio(demuxer, stream_id);
 
 		    /* Emulate WAVEFORMATEX struct: */
-		    sh->wf = malloc(sizeof(WAVEFORMATEX));
+		    sh->wf = mp_malloc(sizeof(WAVEFORMATEX));
 		    memset(sh->wf, 0, sizeof(WAVEFORMATEX));
 		    sh->wf->nChannels = 0;//sh->channels;
 		    sh->wf->wBitsPerSample = 16;
@@ -1218,7 +1219,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    MSG_V("video fourcc: %.4s (%x)\n", (char *)&sh->fourcc, sh->fourcc);
 
 		    /* emulate BITMAPINFOHEADER */
-		    sh->bih = malloc(sizeof(BITMAPINFOHEADER)+16);
+		    sh->bih = mp_malloc(sizeof(BITMAPINFOHEADER)+16);
 		    memset(sh->bih, 0, sizeof(BITMAPINFOHEADER)+16);
 	    	    sh->bih->biSize = 48;
 		    sh->src_w = sh->bih->biWidth = stream_read_word(demuxer->stream);
@@ -1489,8 +1490,8 @@ static void real_close(demuxer_t *demuxer)
     if (priv){
     	for(i=0; i<MAX_STREAMS; i++)
 	    if(priv->index_table[i])
-	        free(priv->index_table[i]);
-	free(priv);
+	        mp_free(priv->index_table[i]);
+	mp_free(priv);
     }
 
     return;

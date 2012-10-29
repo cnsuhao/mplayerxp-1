@@ -6,10 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include "mplayer.h"
 
 #include "libvo/img_format.h"
@@ -22,7 +18,7 @@
 #include "input/input.h"
 #include "libmpconf/m_struct.h"
 #include "libmenu/menu.h"
-//#include "access_mpcontext.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 
@@ -245,10 +241,10 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 
 static int __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
   if(!st_priv) {
-    st_priv = calloc(1,sizeof(struct vf_priv_s));
+    st_priv = mp_calloc(1,sizeof(struct vf_priv_s));
     st_priv->root = st_priv->current = menu_open(args);
     if(!st_priv->current) {
-      free(st_priv);
+      mp_free(st_priv);
       st_priv = NULL;
       return 0;
     }

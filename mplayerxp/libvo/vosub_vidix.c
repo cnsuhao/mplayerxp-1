@@ -22,9 +22,7 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
-#ifdef HAVE_MEMALIGN
-#include <malloc.h>
-#endif
+#include "osdep/mplib.h"
 
 #include <vidix/vidixlib.h>
 
@@ -144,7 +142,7 @@ void vidix_term(vo_data_t* vo)
     if(vo_conf.use_bm) {
 	for(i=0;i<vo_conf.da_buffs;i++) {
 	    if(priv->bm_locked) munlock(priv->bm_buffs[i],priv->play->frame_size);
-	    free(priv->bm_buffs[i]);
+	    mp_free(priv->bm_buffs[i]);
 	    priv->bm_buffs[i]=NULL;
 	}
 	if(priv->bm_slow_frames)
@@ -459,7 +457,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
 	    int psize = getpagesize();
 	    priv->bm_locked=1;
 	    for(i=0;i<vo_conf.da_buffs;i++) {
-		if(!priv->bm_buffs[i]) priv->bm_buffs[i] = memalign(psize, priv->play->frame_size);
+		if(!priv->bm_buffs[i]) priv->bm_buffs[i] = mp_memalign(psize, priv->play->frame_size);
 		if(!(priv->bm_buffs[i])) {
 		    MSG_ERR("Can't allocate memory for busmastering\n");
 		    return -1;
@@ -476,7 +474,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
 	}
 	else
 #else
-	    MSG_ERR("Won't configure bus mastering: your system doesn't support memalign()\n");
+	    MSG_ERR("Won't configure bus mastering: your system doesn't support mp_memalign()\n");
 #endif
 	MSG_ERR("Can not configure bus mastering: your driver is not DMA capable\n");
 	vo_conf.use_bm = 0;
@@ -620,14 +618,14 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     int err;
     static int reent=0;
     MSG_DBG2("vidix_preinit(%s) was called\n",drvname);
-    priv_t* priv=malloc(sizeof(priv_t));
+    priv_t* priv=mp_malloc(sizeof(priv_t));
     vo->priv3=priv;
     memset(priv,0,sizeof(priv_t));
     memset(priv->bm_buffs,0,sizeof(priv->bm_buffs));
     ALLOC_VIDIX_STRUCTS()
     if(vdlGetVersion() != VIDIX_VERSION) {
 	MSG_FATAL("You have wrong version of VIDIX library\n");
-	free(priv);
+	mp_free(priv);
 	return NULL;
     }
     priv->handler = vdlOpen(VIDIX_PATH,
@@ -636,12 +634,12 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
 			mp_conf.verbose);
     if(priv->handler == NULL) {
 	MSG_FATAL("Couldn't find working VIDIX driver\n");
-	free(priv);
+	mp_free(priv);
 	return NULL;
     }
     if((err=vdlGetCapability(priv->handler,priv->cap)) != 0) {
 	MSG_FATAL("Couldn't get capability: %s\n",strerror(err));
-	free(priv);
+	mp_free(priv);
 	return NULL;
     }
     else MSG_V("Driver capability: %X\n",priv->cap->flags);

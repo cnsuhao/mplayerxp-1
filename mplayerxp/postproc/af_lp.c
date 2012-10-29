@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "af.h"
+#include "osdep/mplib.h"
 
 typedef struct s_lp
 {
@@ -52,9 +53,9 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // Filter data through filter
@@ -73,8 +74,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->data=malloc(sizeof(af_data_t));
-  af->setup=malloc(sizeof(af_lp_t));
+  af->data=mp_malloc(sizeof(af_data_t));
+  af->setup=mp_malloc(sizeof(af_lp_t));
   if(af->data == NULL)
     return AF_ERROR;
   return AF_OK;

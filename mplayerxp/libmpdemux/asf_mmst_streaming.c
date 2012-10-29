@@ -44,6 +44,7 @@
 #endif
 #endif
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define BUF_SIZE 102400
 #define HDR_BUF_SIZE 8192
@@ -472,7 +473,7 @@ static int asf_mmst_streaming_read( int fd, char *buffer, int size, streaming_ct
 	  memcpy( buffer, (stream_ctrl->buffer)+(stream_ctrl->buffer_pos), len );
 	  stream_ctrl->buffer_pos += len;
 	  if( stream_ctrl->buffer_pos>=stream_ctrl->buffer_size ) {
-		  free( stream_ctrl->buffer );
+		  mp_free( stream_ctrl->buffer );
 		  stream_ctrl->buffer = NULL;
 		  stream_ctrl->buffer_size = 0;
 		  stream_ctrl->buffer_pos = 0;
@@ -512,7 +513,7 @@ int asf_mmst_streaming_start(stream_t *stream)
   /* mmst filename are not url_escaped by MS MediaPlayer and are expected as
    * "plain text" by the server, so need to decode it here
    */
-  unescpath=malloc(strlen(path)+1);
+  unescpath=mp_malloc(strlen(path)+1);
   if (!unescpath) {
 	MSG_FATAL("Memory allocation failed!\n");
 	return -1; 
@@ -526,7 +527,7 @@ int asf_mmst_streaming_start(stream_t *stream)
   }
   s = tcp_connect2Server( url1->hostname, url1->port, 0);
   if( s<0 ) {
-	  free(path);
+	  mp_free(path);
 	  return s;
   }
   MSG_INFO ("connected\n");
@@ -575,7 +576,7 @@ int asf_mmst_streaming_start(stream_t *stream)
   string_utf16 (&data[8], path, strlen(path));
   memset (data, 0, 8);
   send_command (s, 5, 0, 0, strlen(path)*2+10, data);
-  free(path);
+  mp_free(path);
 
   get_answer (s);
 

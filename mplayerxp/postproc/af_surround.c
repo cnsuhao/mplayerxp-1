@@ -3,7 +3,7 @@
    sound.  This will provide a (basic) surround-sound effect from
    audio encoded for Dolby Surround, Pro Logic etc.
 
- * This program is free software; you can redistribute it and/or modify
+ * This program is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -41,7 +41,8 @@
 
 #include "af.h"
 #include "dsp.h"
-#include "../help_mp.h"
+#include "help_mp.h"
+#include "osdep/mplib.h"
 
 #define L  32    // Length of fir filter
 #define LD 65536 // Length of delay buffer
@@ -103,12 +104,12 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 
     // Free previous delay queues
     if(s->dl)
-      free(s->dl);
+      mp_free(s->dl);
     if(s->dr)
-      free(s->dr);
+      mp_free(s->dr);
     // Allocate new delay queues
-    s->dl = calloc(LD,af->data->bps);
-    s->dr = calloc(LD,af->data->bps);
+    s->dl = mp_calloc(LD,af->data->bps);
+    s->dr = mp_calloc(LD,af->data->bps);
     if((NULL == s->dl) || (NULL == s->dr))
       MSG_FATAL(MSGTR_OutOfMemory);
     
@@ -149,11 +150,11 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data->audio)
-    free(af->data->audio);
+    mp_free(af->data->audio);
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // The beginnings of an active matrix...
@@ -256,8 +257,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=2;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=calloc(1,sizeof(af_surround_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=mp_calloc(1,sizeof(af_surround_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
   ((af_surround_t*)af->setup)->d = 20;

@@ -3,9 +3,6 @@
 #include <string.h>
 
 #include "mp_config.h"
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 #include "xmp_core.h"
 #include "mplayer.h"
 #include "help_mp.h"
@@ -16,6 +13,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "libmpconf/codec-cfg.h"
 #include "pp_msg.h"
 
@@ -202,7 +200,7 @@ mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, in
 	if(mpi->flags&MP_IMGFLAG_ALLOCATED){
 	    if(mpi->width<w2 || mpi->height<h){
 		// need to re-allocate buffer memory:
-		free(mpi->planes[0]);
+		mp_free(mpi->planes[0]);
 		mpi->flags&=~MP_IMGFLAG_ALLOCATED;
 		MSG_DBG2("vf.c: have to REALLOCATE buffer memory :(\n");
 	    }
@@ -290,7 +288,7 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** filter_list,vf_inst
 	}
 	if(!strcmp(filter_list[i]->name,name)) break;
     }
-    vf=malloc(sizeof(vf_instance_t));
+    vf=mp_malloc(sizeof(vf_instance_t));
     memset(vf,0,sizeof(vf_instance_t));
     vf->info=filter_list[i];
     vf->next=next;
@@ -307,7 +305,7 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** filter_list,vf_inst
     vf->dfourcc=sh->fourcc;
     if(next) next->prev=vf;
     if(vf->info->open(vf,(char*)args)>0) return vf; // Success!
-    free(vf);
+    mp_free(vf);
     MSG_ERR("Can't open video filter: %s\n",name);
     return NULL;
 }
@@ -438,7 +436,7 @@ void __FASTCALL__ vf_uninit_filter(vf_instance_t* vf){
     free_mp_image(vf->imgctx.static_images[1]);
     free_mp_image(vf->imgctx.temp_images[0]);
     free_mp_image(vf->imgctx.export_images[0]);
-    free(vf);
+    mp_free(vf);
 }
 
 void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf){

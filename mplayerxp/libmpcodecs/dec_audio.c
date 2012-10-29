@@ -20,6 +20,7 @@
 #include "libmpdemux/demuxer_r.h"
 #include "postproc/af.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "ad_msg.h"
 
 #ifdef USE_FAKE_MONO
@@ -75,7 +76,7 @@ int mpca_init(sh_audio_t *sh_audio)
       sh_audio->a_in_buffer_size=sh_audio->audio_in_minsize;
       MSG_V("dec_audio: Allocating %d bytes for input buffer\n",
           sh_audio->a_in_buffer_size);
-      sh_audio->a_in_buffer=malloc(sh_audio->a_in_buffer_size);
+      sh_audio->a_in_buffer=mp_malloc(sh_audio->a_in_buffer_size);
       memset(sh_audio->a_in_buffer,0,sh_audio->a_in_buffer_size);
       sh_audio->a_in_buffer_len=0;
   }
@@ -86,7 +87,7 @@ int mpca_init(sh_audio_t *sh_audio)
   MSG_V("dec_audio: Allocating %d + %d = %d bytes for output buffer\n",
       sh_audio->audio_out_minsize,MAX_OUTBURST,sh_audio->a_buffer_size);
 
-  sh_audio->a_buffer=malloc(sh_audio->a_buffer_size);
+  sh_audio->a_buffer=mp_malloc(sh_audio->a_buffer_size);
   if(!sh_audio->a_buffer){
       MSG_ERR(MSGTR_CantAllocAudioBuf);
       return 0;
@@ -96,7 +97,7 @@ int mpca_init(sh_audio_t *sh_audio)
 
   if(!mpadec->init(sh_audio)){
       MSG_WARN(MSGTR_CODEC_CANT_INITA);
-      mpca_uninit(sh_audio); /* free buffers */
+      mpca_uninit(sh_audio); /* mp_free buffers */
       return 0;
   }
 
@@ -104,7 +105,7 @@ int mpca_init(sh_audio_t *sh_audio)
 
   if(!sh_audio->channels || !sh_audio->samplerate){
     MSG_WARN(MSGTR_UnknownAudio);
-    mpca_uninit(sh_audio); /* free buffers */
+    mpca_uninit(sh_audio); /* mp_free buffers */
     return 0;
   }
 
@@ -138,17 +139,17 @@ void mpca_uninit(sh_audio_t *sh_audio)
     if(sh_audio->afilter){
 	MSG_V("Uninit audio filters...\n");
 	af_uninit(sh_audio->afilter);
-	free(sh_audio->afilter);
+	mp_free(sh_audio->afilter);
 	sh_audio->afilter=NULL;
     }
-    if(sh_audio->a_buffer) free(sh_audio->a_buffer);
+    if(sh_audio->a_buffer) mp_free(sh_audio->a_buffer);
     sh_audio->a_buffer=NULL;
-    if(sh_audio->a_in_buffer) free(sh_audio->a_in_buffer);
+    if(sh_audio->a_in_buffer) mp_free(sh_audio->a_in_buffer);
     sh_audio->a_in_buffer=NULL;
     if(!sh_audio->inited) return;
     MSG_V("uninit audio: %s\n",sh_audio->codec->driver_name);
     mpadec->uninit(sh_audio);
-    if(sh_audio->a_buffer) free(sh_audio->a_buffer);
+    if(sh_audio->a_buffer) mp_free(sh_audio->a_buffer);
     sh_audio->a_buffer=NULL;
     sh_audio->inited=0;
 }
@@ -182,7 +183,7 @@ int mpca_preinit_filters(sh_audio_t *sh_audio,
 
   // let's autoprobe it!
   if(0 != af_init(afs,0)){
-    free(afs);
+    mp_free(afs);
     return 0; // failed :(
   }
 
@@ -228,7 +229,7 @@ int mpca_init_filters(sh_audio_t *sh_audio,
   // let's autoprobe it!
   if(0 != af_init(afs,1)){
     sh_audio->afilter=NULL;
-    free(afs);
+    mp_free(afs);
     return 0; // failed :(
   }
 
@@ -239,7 +240,7 @@ int mpca_init_filters(sh_audio_t *sh_audio,
   sh_audio->af_bps = afs->output.rate*afs->output.nch*afs->output.bps;
 
   sh_audio->a_buffer_size=out_maxsize;
-  sh_audio->a_buffer=malloc(sh_audio->a_buffer_size);
+  sh_audio->a_buffer=mp_malloc(sh_audio->a_buffer_size);
   memset(sh_audio->a_buffer,0,sh_audio->a_buffer_size);
   sh_audio->a_buffer_len=0;
 
@@ -258,7 +259,7 @@ int mpca_reinit_filters(sh_audio_t *sh_audio,
     if(sh_audio->afilter){
 	MSG_V("Uninit audio filters...\n");
 	af_uninit(sh_audio->afilter);
-	free(sh_audio->afilter);
+	mp_free(sh_audio->afilter);
 	sh_audio->afilter=NULL;
     }
     return mpca_init_filters(sh_audio,in_samplerate,in_channels,

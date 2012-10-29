@@ -87,7 +87,7 @@ struct play_tree_iter {
 play_tree_t* 
 play_tree_new(void);
 
-// If childs is true free also the childs
+// If childs is true mp_free also the childs
 void
 play_tree_free(play_tree_t* pt, int childs);
 

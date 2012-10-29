@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,7 +16,8 @@
 #include "libmpdemux/stream.h"
 #include "libplaytree/playtree.h"
 #include "input/input.h"
-#include "../pp_msg.h"
+#include "pp_msg.h"
+#include "osdep/mplib.h"
 
 #define mp_basename(s) (strrchr((s),'/')==NULL?(char*)(s):(strrchr((s),'/')+1))
 
@@ -120,7 +120,7 @@ static int op(menu_t* menu,const char* args) {
   mpriv->p.title = mpriv->title;
 
   if(_playtree_iter->tree->parent != _playtree_iter->root) {
-    e = calloc(1,sizeof(list_entry_t));
+    e = mp_calloc(1,sizeof(list_entry_t));
     e->p.txt = "..";
     e->pt = _playtree_iter->tree->parent;
     menu_list_add_entry(menu,e);
@@ -129,7 +129,7 @@ static int op(menu_t* menu,const char* args) {
   for(i = _playtree_iter->tree ; i->prev != NULL ; i = i->prev)
     /* NOP */;
   for( ; i != NULL ; i = i->next ) {
-    e = calloc(1,sizeof(list_entry_t));
+    e = mp_calloc(1,sizeof(list_entry_t));
     if(i->files)
       e->p.txt = mp_basename(i->files[0]);
     else

@@ -1,6 +1,7 @@
 #include "cmediasample.h"
 #include "mediatype.h"
 #include "wine/winerror.h"
+#include "osdep/mplib.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -74,11 +75,11 @@ void CMediaSample_Destroy(CMediaSample* This)
 {
 
     Debug printf("CMediaSample_Destroy(%p) called (ref:%d)\n", This, This->refcount);
-    free(This->vt);
-    free(This->own_block);
+    mp_free(This->vt);
+    mp_free(This->own_block);
     if(((CMediaSample*)This)->type_valid)
 	FreeMediaType(&(This->media_type));
-    free(This);
+    mp_free(This);
 }
 
 /**
@@ -116,7 +117,7 @@ static long STDCALL CMediaSample_Release(IUnknown* This)
  * \return S_OK success
  * \return apropriate error otherwise 
  *
- * \note The calles should not free or reallocate buffer
+ * \note The calles should not mp_free or reallocate buffer
  *
  */
 static HRESULT STDCALL CMediaSample_GetPointer(IMediaSample* This,
@@ -308,7 +309,7 @@ static HRESULT STDCALL CMediaSample_SetActualDataLength(IMediaSample* This,
         char* c = cms->own_block;
 	Debug printf("CMediaSample - buffer overflow   %ld %d   %p %p\n",
 		     __MIDL_0010, ((CMediaSample*)This)->size, cms->own_block, cms->block);
-	cms->own_block = (char*) realloc(cms->own_block, (size_t) __MIDL_0010 + SAFETY_ACEL);
+	cms->own_block = (char*) mp_realloc(cms->own_block, (size_t) __MIDL_0010 + SAFETY_ACEL);
 	if (c == cms->block)
 	    cms->block = cms->own_block;
         cms->size = __MIDL_0010;
@@ -329,7 +330,7 @@ static HRESULT STDCALL CMediaSample_SetActualDataLength(IMediaSample* This,
  *
  * \remarks
  * If media type is not changed from previous sample, ppMediaType is null
- * If method returns S_OK caller should free memory allocated for structure 
+ * If method returns S_OK caller should mp_free memory allocated for structure 
  * including pbFormat block
  */
 static HRESULT STDCALL CMediaSample_GetMediaType(IMediaSample* This,
@@ -346,7 +347,7 @@ static HRESULT STDCALL CMediaSample_GetMediaType(IMediaSample* This,
     }
 
     t = &((CMediaSample*)This)->media_type;
-    //    if(t.pbFormat)free(t.pbFormat);
+    //    if(t.pbFormat)mp_free(t.pbFormat);
     *ppMediaType=CreateMediaType(t);
     //    *ppMediaType=0; //media type was not changed
     return 0;
@@ -505,7 +506,7 @@ static void CMediaSample_ResetPointer(CMediaSample* This)
  */
 CMediaSample* CMediaSampleCreate(IMemAllocator* allocator, int _size)
 {
-    CMediaSample* This = (CMediaSample*) malloc(sizeof(CMediaSample));
+    CMediaSample* This = (CMediaSample*) mp_malloc(sizeof(CMediaSample));
     if (!This)
 	return NULL;
 
@@ -519,8 +520,8 @@ CMediaSample* CMediaSampleCreate(IMemAllocator* allocator, int _size)
     //if (_size < 0x1000)
     //    _size = (_size + 0xfff) & ~0xfff;
 
-    This->vt = (IMediaSample_vt*) malloc(sizeof(IMediaSample_vt));
-    This->own_block = (char*) malloc((size_t)_size + SAFETY_ACEL);
+    This->vt = (IMediaSample_vt*) mp_malloc(sizeof(IMediaSample_vt));
+    This->own_block = (char*) mp_malloc((size_t)_size + SAFETY_ACEL);
     This->media_type.pbFormat = 0;
     This->media_type.pUnk = 0;
 

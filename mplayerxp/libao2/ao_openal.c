@@ -5,7 +5,7 @@
  *
  * This file is part of MPlayer.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -34,7 +34,7 @@
 #include "postproc/af_format.h"
 #include "afmt.h"
 #include "osdep/timer.h"
-//#include "subopt-helper.h"
+#include "osdep/mplib.h"
 #include "ao_msg.h"
 
 static const ao_info_t info =
@@ -93,7 +93,7 @@ static void print_help(void) {
 #endif
 static int init(ao_data_t* ao,unsigned flags)
 {
-    ao->priv=malloc(sizeof(priv_t));
+    ao->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=ao->priv;
     memset(priv,0,sizeof(priv_t));
   UNUSED(flags);
@@ -157,7 +157,7 @@ static int configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned fo
   ao->bps = channels * rate * 2;
   ao->buffersize = CHUNK_SIZE * NUM_BUF;
   ao->outburst = channels * CHUNK_SIZE;
-  priv->tmpbuf = malloc(CHUNK_SIZE);
+  priv->tmpbuf = mp_malloc(CHUNK_SIZE);
   return 1;
 
 err_out:
@@ -170,7 +170,7 @@ static void uninit(ao_data_t* ao) {
   ALCcontext *ctx = alcGetCurrentContext();
   ALCdevice *dev = alcGetContextsDevice(ctx);
   priv_t*priv=ao->priv;
-  free(priv->tmpbuf);
+  mp_free(priv->tmpbuf);
   if (!immed) {
     ALint state;
     alGetSourcei(priv->sources[0], AL_SOURCE_STATE, &state);
@@ -183,7 +183,7 @@ static void uninit(ao_data_t* ao) {
   alcMakeContextCurrent(NULL);
   alcDestroyContext(ctx);
   alcCloseDevice(dev);
-  free(ao->priv);
+  mp_free(ao->priv);
 }
 
 static void unqueue_buffers(ao_data_t* ao) {

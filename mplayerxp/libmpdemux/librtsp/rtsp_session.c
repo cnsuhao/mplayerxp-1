@@ -5,9 +5,9 @@
 /*
  * Copyright (C) 2000-2002 the xine project
  *
- * This file is part of xine, a free video player.
+ * This file is part of xine, a mp_free video player.
  *
- * xine is free software; you can redistribute it and/or modify
+ * xine is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -45,16 +45,17 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../url.h"
-#include "../rtp.h"
+#include "url.h"
+#include "rtp.h"
 #include "rtsp.h"
 #include "rtsp_rtp.h"
 #include "rtsp_session.h"
-#include "../realrtsp/real.h"
-#include "../realrtsp/rmff.h"
-#include "../realrtsp/asmrp.h"
-#include "../realrtsp/xbuffer.h"
-#include "../demux_msg.h"
+#include "realrtsp/real.h"
+#include "realrtsp/rmff.h"
+#include "realrtsp/asmrp.h"
+#include "realrtsp/xbuffer.h"
+#include "demux_msg.h"
+#include "osdep/mplib.h"
 
 /*
 #define LOG
@@ -83,7 +84,7 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
   char *mrl_line = NULL;
   rmff_header_t *h;
 
-  rtsp_session = malloc (sizeof (rtsp_session_t));
+  rtsp_session = mp_malloc (sizeof (rtsp_session_t));
   rtsp_session->s = NULL;
   rtsp_session->real_session = NULL;
   rtsp_session->rtp_session = NULL;
@@ -96,18 +97,18 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
   if (!rtsp_session->s)
   {
     MSG_ERR("rtsp_session: failed to connect to server %s\n", path);
-    free(rtsp_session);
+    mp_free(rtsp_session);
     return NULL;
   }
 
   /* looking for server type */
   if (rtsp_search_answers(rtsp_session->s,RTSP_OPTIONS_SERVER))
-    server=strdup(rtsp_search_answers(rtsp_session->s,RTSP_OPTIONS_SERVER));
+    server=mp_strdup(rtsp_search_answers(rtsp_session->s,RTSP_OPTIONS_SERVER));
   else {
     if (rtsp_search_answers(rtsp_session->s,RTSP_OPTIONS_REAL))
-      server=strdup(RTSP_SERVER_TYPE_REAL);
+      server=mp_strdup(RTSP_SERVER_TYPE_REAL);
     else
-      server=strdup(RTSP_SERVER_TYPE_UNKNOWN);
+      server=mp_strdup(RTSP_SERVER_TYPE_UNKNOWN);
   }
   if (strstr(server,RTSP_SERVER_TYPE_REAL) || strstr(server,RTSP_SERVER_TYPE_HELIX))
   {
@@ -118,13 +119,13 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
       /* got an redirect? */
       if (rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION))
       {
-        free(mrl_line);
-	mrl_line=strdup(rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION));
+        mp_free(mrl_line);
+	mrl_line=mp_strdup(rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION));
         MSG_INFO("rtsp_session: redirected to %s\n", mrl_line);
 	rtsp_close(rtsp_session->s);
-	free(server);
-        free(*mrl);
-        free(rtsp_session);
+	mp_free(server);
+        mp_free(*mrl);
+        mp_free(rtsp_session);
         /* tell the caller to redirect, return url to redirect to in mrl */
         *mrl = mrl_line;
         *redir = 1;
@@ -134,8 +135,8 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
       {
         MSG_ERR("rtsp_session: session can not be established.\n");
         rtsp_close(rtsp_session->s);
-        free (server);
-        free(rtsp_session);
+        mp_free (server);
+        mp_free(rtsp_session);
         return NULL;
       }
     }
@@ -155,9 +156,9 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
         MSG_ERR("rtsp_session: error while dumping RMFF headers, session can not be established.\n");
         free_real_rtsp_session(rtsp_session->real_session);
         rtsp_close(rtsp_session->s);
-        free (server);
-        free (mrl_line);
-        free(rtsp_session);
+        mp_free (server);
+        mp_free (mrl_line);
+        mp_free(rtsp_session);
         return NULL;
       }
 
@@ -178,9 +179,9 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
     if (!(public = rtsp_search_answers (rtsp_session->s, RTSP_OPTIONS_PUBLIC)))
     {
       rtsp_close (rtsp_session->s);
-      free (server);
-      free (mrl_line);
-      free (rtsp_session);
+      mp_free (server);
+      mp_free (mrl_line);
+      mp_free (rtsp_session);
       return NULL;
     }
 
@@ -192,9 +193,9 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
     {
       MSG_ERR("Remote server does not meet minimal RTSP 1.0 compliance.\n");
       rtsp_close (rtsp_session->s);
-      free (server);
-      free (mrl_line);
-      free (rtsp_session);
+      mp_free (server);
+      mp_free (mrl_line);
+      mp_free (rtsp_session);
       return NULL;
     }
 
@@ -205,13 +206,13 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
     {
       MSG_ERR("rtsp_session: unsupported RTSP server. Server type is '%s'.\n", server);
       rtsp_close (rtsp_session->s);
-      free (server);
-      free (mrl_line);
-      free (rtsp_session);
+      mp_free (server);
+      mp_free (mrl_line);
+      mp_free (rtsp_session);
       return NULL;
     }
   }
-  free(server);
+  mp_free(server);
   
   return rtsp_session;
 }
@@ -285,5 +286,5 @@ void rtsp_session_end(rtsp_session_t *session) {
     free_real_rtsp_session (session->real_session);
   if (session->rtp_session)
     rtp_session_free (session->rtp_session);
-  free(session);
+  mp_free(session);
 }

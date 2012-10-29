@@ -1,7 +1,7 @@
 /*
     Copyright (C) 2003 Daniel Moreno <comac@comac.darktech.org>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -24,14 +24,11 @@
 
 #include "mp_config.h"
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 #define PARAM1_DEFAULT 4.0
@@ -52,10 +49,10 @@ struct vf_priv_s {
 /***************************************************************************/
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
-	if(vf->priv->Line){free(vf->priv->Line);vf->priv->Line=NULL;}
-	if(vf->priv->Frame[0]){free(vf->priv->Frame[0]);vf->priv->Frame[0]=NULL;}
-	if(vf->priv->Frame[1]){free(vf->priv->Frame[1]);vf->priv->Frame[1]=NULL;}
-	if(vf->priv->Frame[2]){free(vf->priv->Frame[2]);vf->priv->Frame[2]=NULL;}
+	if(vf->priv->Line){mp_free(vf->priv->Line);vf->priv->Line=NULL;}
+	if(vf->priv->Frame[0]){mp_free(vf->priv->Frame[0]);vf->priv->Frame[0]=NULL;}
+	if(vf->priv->Frame[1]){mp_free(vf->priv->Frame[1]);vf->priv->Frame[1]=NULL;}
+	if(vf->priv->Frame[2]){mp_free(vf->priv->Frame[2]);vf->priv->Frame[2]=NULL;}
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
@@ -63,7 +60,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	unsigned int flags, unsigned int outfmt,any_t*tune){
 
 	uninit(vf);
-        vf->priv->Line = malloc(width*sizeof(int));
+        vf->priv->Line = mp_malloc(width*sizeof(int));
 	vf->priv->pmpi=NULL;
 //        vf->default_caps &= !VFCAP_ACCEPT_STRIDE;
 
@@ -135,7 +132,7 @@ static void __FASTCALL__ hqDeNoise(unsigned char *Frame,        // mpi->planes[x
     unsigned short* FrameAnt=(*FrameAntPtr);
     
     if(!FrameAnt){
-	(*FrameAntPtr)=FrameAnt=malloc(W*H*sizeof(unsigned short));
+	(*FrameAntPtr)=FrameAnt=mp_malloc(W*H*sizeof(unsigned short));
 	for (Y = 0; Y < H; Y++){
 	    unsigned short* dst=&FrameAnt[Y*W];
 	    unsigned char* src=Frame+Y*sStride;
@@ -333,7 +330,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->put_slice=put_slice;
         vf->query_format=query_format;
         vf->uninit=uninit;
-	vf->priv=malloc(sizeof(struct vf_priv_s));
+	vf->priv=mp_malloc(sizeof(struct vf_priv_s));
         memset(vf->priv, 0, sizeof(struct vf_priv_s));
 
 	e=0;

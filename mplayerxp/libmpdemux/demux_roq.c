@@ -12,13 +12,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define RoQ_INFO           0x1001
 #define RoQ_QUAD_CODEBOOK  0x1002
@@ -101,7 +102,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
   sh_video_t *sh_video = NULL;
   sh_audio_t *sh_audio = NULL;
 
-  roq_data_t *roq_data = (roq_data_t *)malloc(sizeof(roq_data_t));
+  roq_data_t *roq_data = (roq_data_t *)mp_malloc(sizeof(roq_data_t));
   int chunk_id;
   int chunk_size;
   int chunk_arg;
@@ -168,7 +169,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
         sh_audio->ds = demuxer->audio;
 
         // go through the bother of making a WAVEFORMATEX structure
-        sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
+        sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 
         // custom fourcc for internal MPlayer use
         sh_audio->wtag = mmioFOURCC('R', 'o', 'Q', 'A');
@@ -182,7 +183,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
       }
 
       // index the chunk
-      roq_data->chunks = (roq_chunk_t *)realloc(roq_data->chunks,
+      roq_data->chunks = (roq_chunk_t *)mp_realloc(roq_data->chunks,
         (roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
       roq_data->chunks[roq_data->total_chunks].chunk_type = CHUNK_TYPE_AUDIO;
       roq_data->chunks[roq_data->total_chunks].chunk_offset = 
@@ -205,7 +206,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
     {
       // index a new chunk if it's a codebook or quad VQ not following a
       // codebook
-      roq_data->chunks = (roq_chunk_t *)realloc(roq_data->chunks,
+      roq_data->chunks = (roq_chunk_t *)mp_realloc(roq_data->chunks,
         (roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
       roq_data->chunks[roq_data->total_chunks].chunk_type = CHUNK_TYPE_VIDEO;
       roq_data->chunks[roq_data->total_chunks].chunk_offset = 
@@ -253,7 +254,7 @@ static void roq_close(demuxer_t* demuxer) {
 
   if(!roq_data)
     return;
-  free(roq_data);
+  mp_free(roq_data);
 }
 
 static int roq_control(demuxer_t *demuxer,int cmd,any_t*args)

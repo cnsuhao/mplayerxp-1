@@ -9,6 +9,7 @@
 #include "codecs_ld.h"
 #include "vd_internal.h"
 #include "vd_msg.h"
+#include "osdep/mplib.h"
 
 static const vd_info_t info = {
 	"RealPlayer video codecs",
@@ -63,11 +64,11 @@ uint32_t (*rvyuv_transform)(char*, char*,transform_in_t*,unsigned int*,any_t*);
 any_t*rv_handle=NULL;
 
 any_t*__builtin_vec_new(unsigned long size) {
-	return malloc(size);
+	return mp_malloc(size);
 }
 
 void __builtin_vec_delete(any_t*mem) {
-	free(mem);
+	mp_free(mem);
 }
 
 void __pure_virtual(void)

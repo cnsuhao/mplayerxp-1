@@ -18,6 +18,7 @@
 #include "mplayer.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
+#include "osdep/mplib.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
@@ -159,7 +160,7 @@ static int preinit(sh_audio_t *sh)
 {
   sh->audio_out_minsize=8192*FAAD_MAX_CHANNELS;
   sh->audio_in_minsize=FAAD_BUFFLEN;
-  if(!(sh->context=malloc(sizeof(faad_priv_t)))) return 0;
+  if(!(sh->context=mp_malloc(sizeof(faad_priv_t)))) return 0;
   return load_dll("libfaad"SLIBSUFFIX);
 }
 
@@ -234,7 +235,7 @@ static int init(sh_audio_t *sh)
   if(NeAAC_init < 0) {
     MSG_WARN("FAAD: Failed to initialize the decoder!\n"); // XXX: deal with cleanup!
     NeAACDecClose(NeAAC_hdec);
-    // XXX: free a_in_buffer here or in uninit?
+    // XXX: mp_free a_in_buffer here or in uninit?
     return 0;
   } else {
     NeAAC_conf = NeAACDecGetCurrentConfiguration(NeAAC_hdec);
@@ -264,7 +265,7 @@ static void uninit(sh_audio_t *sh)
 {
   MSG_V("FAAD: Closing decoder!\n");
   NeAACDecClose(NeAAC_hdec);
-  free(sh->context);
+  mp_free(sh->context);
 }
 
 static int control(sh_audio_t *sh,int cmd,any_t* arg, ...)

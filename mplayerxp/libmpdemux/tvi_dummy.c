@@ -2,12 +2,13 @@
     Only a sample!
 */
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 
 #ifdef USE_TV
 
 #include <stdio.h>
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "tv.h"
 
 /* information about this file */
@@ -118,3 +119,35 @@ static int get_audio_framesize(priv_t *priv)
 }
 
 #endif /* USE_TV */
+
+tvi_handle_t *new_handle()
+{
+    tvi_handle_t *h = (tvi_handle_t *)mp_malloc(sizeof(tvi_handle_t));
+
+    if (!h)
+	return(NULL);
+    h->priv = (priv_t *)mp_malloc(sizeof(priv_t));
+    if (!h->priv)
+    {
+	mp_free(h);
+	return(NULL);
+    }
+    memset(h->priv, 0, sizeof(priv_t));
+    h->info = &info;
+    h->functions = &functions;
+    h->seq = 0;
+    h->chanlist = -1;
+    h->chanlist_s = NULL;
+    h->norm = -1;
+    h->channel = -1;
+    return(h);
+}
+
+void free_handle(tvi_handle_t *h)
+{
+    if (h) {
+	if (h->priv)
+	    mp_free(h->priv);
+	mp_free(h);
+    }
+}

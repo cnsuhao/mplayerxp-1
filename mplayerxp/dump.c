@@ -16,6 +16,7 @@
 #include "mplayer.h"
 #include "libmpdemux/muxer.h"
 #include "libmpdemux/mrl.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "__mp_msg.h"
 
@@ -118,7 +119,7 @@ void dump_mux_init(demuxer_t *demuxer)
   char stream_dump_name[1024];
   /* TODO copy it from demuxer */
   if(demuxer->priv) return;
-  demuxer->priv=malloc(sizeof(priv_t));
+  demuxer->priv=mp_malloc(sizeof(priv_t));
   priv_t*priv=demuxer->priv;
   memset(priv,0,sizeof(priv_t));
   /* describe other useless dumps */
@@ -162,7 +163,7 @@ void dump_mux_init(demuxer_t *demuxer)
     priv->m_audio->codec=0;
     if(!sha->wf)
     {
-	sha->wf=malloc(sizeof(WAVEFORMATEX));
+	sha->wf=mp_malloc(sizeof(WAVEFORMATEX));
 	sha->wf->nBlockAlign = 1; //mux_a->h.dwSampleSize;
 	sha->wf->wFormatTag = sha->wtag;
 	sha->wf->nChannels = sha->channels;
@@ -171,12 +172,12 @@ void dump_mux_init(demuxer_t *demuxer)
 	sha->wf->wBitsPerSample = 16; // FIXME
 	sha->wf->cbSize=0; // FIXME for l3codeca.acm
     }
-    priv->m_audio->wf=malloc(sha->wf->cbSize+sizeof(WAVEFORMATEX));
+    priv->m_audio->wf=mp_malloc(sha->wf->cbSize+sizeof(WAVEFORMATEX));
     memcpy(priv->m_audio->wf,sha->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
     if(!sha->wf->cbSize && sha->codecdata_len)
     {
 	priv->m_audio->wf->cbSize=sha->wf->cbSize=sha->codecdata_len;
-	priv->m_audio->wf=realloc(priv->m_audio->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
+	priv->m_audio->wf=mp_realloc(priv->m_audio->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
 	memcpy((char *)(priv->m_audio->wf+1),sha->codecdata,sha->codecdata_len);
     }
     if(!sha->i_bps) sha->i_bps=priv->m_audio->wf->nAvgBytesPerSec;
@@ -202,7 +203,7 @@ void dump_mux_init(demuxer_t *demuxer)
     priv->m_video->h.dwSuggestedBufferSize=shv->video.dwSuggestedBufferSize;
     if(!shv->bih)
     {
-	shv->bih=malloc(sizeof(BITMAPINFOHEADER));
+	shv->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
 	shv->bih->biSize=sizeof(BITMAPINFOHEADER);
 	shv->bih->biWidth=shv->src_w;
 	shv->bih->biHeight=shv->src_h;
@@ -211,7 +212,7 @@ void dump_mux_init(demuxer_t *demuxer)
 	shv->bih->biBitCount=24; // FIXME!!!
 	shv->bih->biSizeImage=shv->bih->biWidth*shv->bih->biHeight*(shv->bih->biBitCount/8);
     }
-    priv->m_video->bih=malloc(shv->bih->biSize);
+    priv->m_video->bih=mp_malloc(shv->bih->biSize);
     memcpy(priv->m_video->bih,shv->bih,shv->bih->biSize);
     priv->m_video->ImageDesc=shv->ImageDesc;
     priv->m_video->aspect=shv->aspect;
@@ -285,7 +286,7 @@ void dump_mux_close(demuxer_t *demuxer)
 	fseeko(priv->mux_file,0,SEEK_SET);
 	muxer_write_header(priv->muxer,demuxer);
 	fclose(priv->mux_file);
-	free(demuxer->priv);
+	mp_free(demuxer->priv);
 	demuxer->priv=NULL;
     }
     MSG_INFO(MSGTR_CoreDumped);

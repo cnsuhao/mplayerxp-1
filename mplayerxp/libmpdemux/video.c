@@ -2,22 +2,20 @@
 
 #include "../mp_config.h"
 #include <stdio.h>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "help_mp.h"
 #include "sub_cc.h"
+#include "osdep/mplib.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "parse_es.h"
 #include "mpeg_hdr.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "demux_msg.h"
 
 /* biCompression constant */
@@ -145,7 +143,7 @@ switch(video_codec){
       }
    }
    MSG_V("OK!\n");
-   if(!videobuffer) videobuffer=(char*)memalign(8,VIDEOBUFFER_SIZE);
+   if(!videobuffer) videobuffer=(char*)mp_memalign(8,VIDEOBUFFER_SIZE);
    if(!videobuffer){ 
      MSG_ERR(MSGTR_ShMemAllocFail);
      return 0;
@@ -234,7 +232,7 @@ switch(video_codec){
       }
    }
    MSG_V("OK!\n");
-   if(!videobuffer) videobuffer=(char*)memalign(8,VIDEOBUFFER_SIZE);
+   if(!videobuffer) videobuffer=(char*)mp_memalign(8,VIDEOBUFFER_SIZE);
    if(!videobuffer){ 
      MSG_ERR(MSGTR_ShMemAllocFail);
      return 0;
@@ -291,7 +289,7 @@ switch(video_codec){
 //   sh_video=d_video->sh;sh_video->ds=d_video;
 //   mpeg2_init();
    // ========= Read & process sequence header & extension ============
-   if(!videobuffer) videobuffer=(char*)memalign(8,VIDEOBUFFER_SIZE);
+   if(!videobuffer) videobuffer=(char*)mp_memalign(8,VIDEOBUFFER_SIZE);
    if(!videobuffer){ 
      MSG_ERR(MSGTR_ShMemAllocFail);
      return 0;

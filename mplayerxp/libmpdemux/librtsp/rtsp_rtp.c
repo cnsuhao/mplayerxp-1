@@ -3,7 +3,7 @@
  *   based on the Freebox patch for xine by Vincent Mussard
  *   but with many enhancements for better RTSP RFC compliance.
  *
- *   This program is free software; you can redistribute it and/or modify
+ *   This program is mp_free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -28,6 +28,7 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
+#include "osdep/mplib.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>
@@ -42,9 +43,9 @@
 #include "rtsp.h"
 #include "rtsp_rtp.h"
 #include "rtsp_session.h"
-#include "../freesdp/common.h"
-#include "../freesdp/parser.h"
-#include "../demux_msg.h"
+#include "freesdp/common.h"
+#include "freesdp/parser.h"
+#include "demux_msg.h"
 
 #define RTSP_DEFAULT_PORT 31336
 #define MAX_LENGTH 256
@@ -109,7 +110,7 @@ rtp_session_new (void)
 {
   struct rtp_rtsp_session_t *st = NULL;
   
-  st = malloc (sizeof (struct rtp_rtsp_session_t));
+  st = mp_malloc (sizeof (struct rtp_rtsp_session_t));
   
   st->rtp_socket = -1;
   st->rtcp_socket = -1;
@@ -131,8 +132,8 @@ rtp_session_free (struct rtp_rtsp_session_t *st)
     close (st->rtcp_socket);
 
   if (st->control_url)
-    free (st->control_url);
-  free (st);
+    mp_free (st->control_url);
+  mp_free (st);
 }
 
 static void
@@ -154,7 +155,7 @@ parse_port (const char *line, const char *param,
   char *parse2;
   char *parse3;
   
-  char *line_copy = strdup (line);
+  char *line_copy = mp_strdup (line);
 
   parse1 = strstr (line_copy, param);
 
@@ -173,20 +174,20 @@ parse_port (const char *line, const char *param,
     }
     else
     {
-      free (line_copy);
+      mp_free (line_copy);
       return 0;
     }
   }
   else
   {
-    free (line_copy);
+    mp_free (line_copy);
     return 0;
   }
   
   *rtp_port = atoi (parse1 + strlen (param));
   *rtcp_port = atoi (parse2 + 1);
 
-  free (line_copy);
+  mp_free (line_copy);
   
   return 1;
 }
@@ -198,28 +199,28 @@ parse_destination (const char *line)
   char *parse2;
 
   char *dest = NULL;
-  char *line_copy = strdup (line);
+  char *line_copy = mp_strdup (line);
   int len;
   
   parse1 = strstr (line_copy, RTSP_SETUP_DESTINATION);
   if (!parse1)
   {
-    free (line_copy);
+    mp_free (line_copy);
     return NULL;
   }
   
   parse2 = strstr (parse1, ";");
   if (!parse2)
   {
-    free (line_copy);
+    mp_free (line_copy);
     return NULL;
   }
  
   len = strlen (parse1) - strlen (parse2)
     - strlen (RTSP_SETUP_DESTINATION) + 1;
-  dest = (char *) malloc (len + 1);
+  dest = (char *) mp_malloc (len + 1);
   snprintf (dest, len, parse1 + strlen (RTSP_SETUP_DESTINATION));
-  free (line_copy);
+  mp_free (line_copy);
 
   return dest;
 }
@@ -446,10 +447,10 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
     return NULL;
 
   /* 2. read SDP message from server */
-  sdp = (char *) malloc (content_length + 1);
+  sdp = (char *) mp_malloc (content_length + 1);
   if (rtsp_read_data (rtsp_session, sdp, content_length) <= 0)
   {
-    free (sdp);
+    mp_free (sdp);
     return NULL;
   }
   sdp[content_length] = 0;
@@ -459,12 +460,12 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   result = fsdp_parse (sdp, dsc);
   if (result != FSDPE_OK)
   {
-    free (sdp);
+    mp_free (sdp);
     fsdp_description_delete (dsc);
     return NULL;
   }
   MSG_V("SDP:\n%s\n", sdp);
-  free (sdp);
+  mp_free (sdp);
 
   /* 4. check for number of media streams: only one is supported */
   if (fsdp_get_media_count (dsc) != 1)
@@ -565,11 +566,11 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
 
   /* get the media server address to connect to */
   if (fsdp_get_media_address (med_dsc))
-    server_addr = strdup (fsdp_get_media_address (med_dsc));
+    server_addr = mp_strdup (fsdp_get_media_address (med_dsc));
   else if (fsdp_get_global_conn_address (dsc))
   {
     /* no control for media: try global one instead */
-    server_addr = strdup (fsdp_get_global_conn_address (dsc));
+    server_addr = mp_strdup (fsdp_get_global_conn_address (dsc));
   }
     
   if (!server_addr)
@@ -585,18 +586,18 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   rtp_session = rtp_session_new ();
   if (!rtp_session)
   {
-    free (server_addr);
+    mp_free (server_addr);
     fsdp_description_delete (dsc);
     return NULL;
   }
 
   /* get the media control URL */
   if (fsdp_get_media_control (med_dsc, 0))
-    rtp_session->control_url = strdup (fsdp_get_media_control (med_dsc, 0));
+    rtp_session->control_url = mp_strdup (fsdp_get_media_control (med_dsc, 0));
   fsdp_description_delete (dsc);
   if (!rtp_session->control_url)
   {
-    free (server_addr);
+    mp_free (server_addr);
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -623,7 +624,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
     
   if (statut < 200 || statut > 299)
   {
-    free (server_addr);
+    mp_free (server_addr);
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -633,7 +634,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   answer = rtsp_search_answers (rtsp_session, RTSP_TRANSPORT);
   if (!answer)
   {
-    free (server_addr);
+    mp_free (server_addr);
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -656,12 +657,12 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
 
   /* now check network settings as determined by server */
   if (rtsp_destination)
-    destination = strdup (rtsp_destination);
+    destination = mp_strdup (rtsp_destination);
   else
     destination = parse_destination (answer);
   if (!destination)
-    destination = strdup (server_addr);
-  free (server_addr);
+    destination = mp_strdup (server_addr);
+  mp_free (server_addr);
 
   MSG_V("RTSP Destination: %s\n"
 	"Client RTP port : %d\n"
@@ -679,7 +680,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   statut = rtsp_request_play (rtsp_session, NULL);
   if (statut < 200 || statut > 299)
   {
-    free (destination);
+    mp_free (destination);
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -688,7 +689,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   rtp_sock = rtp_connect (destination, client_rtp_port);
   rtcp_sock = rtcp_connect (client_rtcp_port, server_rtcp_port, destination);
   rtp_session_set_fd (rtp_session, rtp_sock, rtcp_sock);
-  free (destination);
+  mp_free (destination);
 
   MSG_V("RTP Sock : %d\nRTCP Sock : %d\n",rtp_session->rtp_socket, rtp_session->rtcp_socket);
 

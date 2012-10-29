@@ -13,7 +13,7 @@
  *
  * This file is part of MPlayer.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -58,6 +58,7 @@
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "postproc/af_format.h"
+#include "osdep/mplib.h"
 #include "afmt.h"
 #include "ao_msg.h"
 
@@ -415,7 +416,7 @@ static int control(ao_data_t* ao,int cmd, long arg)
 
 static int init(ao_data_t* ao,unsigned flags)
 {
-    ao->priv=malloc(sizeof(priv_t));
+    ao->priv=mp_malloc(sizeof(priv_t));
     priv_t* priv=ao->priv;
     memset(priv, 0, sizeof(priv_t));
     UNUSED(flags);
@@ -452,9 +453,9 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
 	ao->buffersize = buffer_size*3;
 
 	priv->client_buffer_size = buffer_size*2;
-	priv->client_buffer = malloc(priv->client_buffer_size);
+	priv->client_buffer = mp_malloc(priv->client_buffer_size);
 	priv->server_buffer_size = buffer_size;
-	priv->server_buffer = malloc(priv->server_buffer_size);
+	priv->server_buffer = mp_malloc(priv->server_buffer_size);
 
 	if (!bytes_per_sample) {
 		MSG_ERR("ao_nas: init(): Zero bytes per sample -> nosound\n");
@@ -531,9 +532,9 @@ static void uninit(ao_data_t* ao){
 	pthread_join(priv->event_thread, NULL);
 	AuCloseServer(priv->aud);
 	priv->aud = 0;
-	free(priv->client_buffer);
-	free(priv->server_buffer);
-    free(priv);
+	mp_free(priv->client_buffer);
+	mp_free(priv->server_buffer);
+    mp_free(priv);
 }
 
 // stop playing and empty buffers (for seeking/pause)

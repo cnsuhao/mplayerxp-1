@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2000-2002 the xine project
  *
- * This file is part of xine, a free video player.
+ * This file is part of xine, a mp_free video player.
  *
- * xine is free software; you can redistribute it and/or modify
+ * xine is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -46,7 +46,7 @@
 #endif
 
 #include "pnm.h"
-//#include "libreal/rmff.h"
+#include "osdep/mplib.h"
 
 #define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
         (((long)(unsigned char)(ch3)       ) | \
@@ -773,17 +773,17 @@ static int pnm_get_stream_chunk(pnm_t *p) {
 // pnm_t *pnm_connect(const char *mrl) {
 pnm_t *pnm_connect(int fd,const char *path) {
   
-  pnm_t *p=malloc(sizeof(pnm_t));
+  pnm_t *p=mp_malloc(sizeof(pnm_t));
   int need_response=0;
   
-  p->path=strdup(path);
+  p->path=mp_strdup(path);
   p->s=fd;
 
   pnm_send_request(p,pnm_available_bandwidths[10]);
   if (!pnm_get_headers(p, &need_response)) {
     printf ("input_pnm: failed to set up stream\n");
-    free(p->path);
-    free(p);
+    mp_free(p->path);
+    mp_free(p);
     return NULL;
   }
   if (need_response)
@@ -844,7 +844,7 @@ int pnm_peek_header (pnm_t *this, char *data) {
 void pnm_close(pnm_t *p) {
 
   if (p->s >= 0) closesocket(p->s);
-  free(p->path);
-  free(p);
+  mp_free(p->path);
+  mp_free(p);
 }
 

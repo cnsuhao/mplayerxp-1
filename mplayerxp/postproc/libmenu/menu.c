@@ -1,4 +1,4 @@
-#include "../../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -21,7 +21,8 @@
 #include "libmpconf/m_option.h"
 #include "libmpconf/m_struct.h"
 #include "menu.h"
-#include "../pp_msg.h"
+#include "pp_msg.h"
+#include "osdep/mplib.h"
 
 extern vo_data_t* vo_data;
 
@@ -75,8 +76,8 @@ static int menu_parse_config(char* buffer) {
     name = asx_get_attrib("name",attribs);
     if(!name) {
       MSG_WARN("[libmenu] Menu definitions need a name attrib: %i\n",parser->line);
-      free(element);
-      if(body) free(body);
+      mp_free(element);
+      if(body) mp_free(body);
       asx_free_attribs(attribs);
       continue;
     }
@@ -90,7 +91,7 @@ static int menu_parse_config(char* buffer) {
     }
     // Got it : add this to our list
     if(minfo) {
-      menu_list = realloc(menu_list,(menu_count+2)*sizeof(menu_def_t));
+      menu_list = mp_realloc(menu_list,(menu_count+2)*sizeof(menu_def_t));
       menu_list[menu_count].name = name;
       menu_list[menu_count].type = minfo;
       menu_list[menu_count].cfg = m_struct_alloc(&minfo->priv_st);
@@ -106,11 +107,11 @@ static int menu_parse_config(char* buffer) {
       memset(&menu_list[menu_count],0,sizeof(menu_def_t));
     } else {
       MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element,parser->line);
-      free(name);
-      if(body) free(body);
+      mp_free(name);
+      if(body) mp_free(body);
     }
 
-    free(element);
+    mp_free(element);
     asx_free_attribs(attribs);
   }
 
@@ -133,18 +134,18 @@ int menu_init(struct MPContext *mpctx, char* cfg_file) {
     MSG_WARN("[libmenu] Can't open ConfigFile: %s\n",cfg_file);
     return 0;
   }
-  buffer = malloc(bl);
+  buffer = mp_malloc(bl);
   while(1) {
     int r;
     if(bl - br < BUF_MIN) {
       if(bl >= BUF_MAX) {
 	MSG_WARN("[libmenu] ConfigFile is too big: %u\n",BUF_MAX/1024);
 	close(fd);
-	free(buffer);
+	mp_free(buffer);
 	return 0;
       }
       bl += BUF_STEP;
-      buffer = realloc(buffer,bl);
+      buffer = mp_realloc(buffer,bl);
     }
     r = read(fd,buffer+br,bl-br);
     if(r == 0) break;
@@ -160,7 +161,7 @@ int menu_init(struct MPContext *mpctx, char* cfg_file) {
 
   menu_ctx = mpctx;
   f = menu_parse_config(buffer);
-  free(buffer);
+  mp_free(buffer);
   return f;
 }
 
@@ -168,11 +169,11 @@ int menu_init(struct MPContext *mpctx, char* cfg_file) {
 void menu_unint(void) {
   int i;
   for(i = 0 ; menu_list && menu_list[i].name ; i++) {
-    free(menu_list[i].name);
+    mp_free(menu_list[i].name);
     m_struct_free(&menu_list[i].type->priv_st,menu_list[i].cfg);
-    if(menu_list[i].args) free(menu_list[i].args);
+    if(menu_list[i].args) mp_free(menu_list[i].args);
   }
-  free(menu_list);
+  mp_free(menu_list);
   menu_count = 0;
 }
 
@@ -222,7 +223,7 @@ menu_t* menu_open(const char *name) {
     MSG_WARN("[libmenu] Menu not found: %s\n",name);
     return NULL;
   }
-  m = calloc(1,sizeof(menu_t));
+  m = mp_calloc(1,sizeof(menu_t));
   m->priv_st = &(menu_list[i].type->priv_st);
   m->priv = m_struct_copy(m->priv_st,menu_list[i].cfg);
   m->ctx = menu_ctx;
@@ -230,7 +231,7 @@ menu_t* menu_open(const char *name) {
     return m;
   if(m->priv)
     m_struct_free(m->priv_st,m->priv);
-  free(m);
+  mp_free(m);
   MSG_WARN("[libmenu] Menu init failed: %s\n",name);
   return NULL;
 }
@@ -250,7 +251,7 @@ void menu_close(menu_t* menu) {
     menu->close(menu);
   if(menu->priv)
     m_struct_free(menu->priv_st,menu->priv);
-  free(menu);
+  mp_free(menu);
 }
 
 void menu_read_key(menu_t* menu,int cmd) {
@@ -337,14 +338,14 @@ static char *menu_fribidi(char *txt)
       fribidi_set_reorder_nsm (0);
       char_set_num = fribidi_parse_charset("UTF-8");
       buffer_size = FFMAX(1024,len+1);
-      logical = malloc(buffer_size);
-      visual = malloc(buffer_size);
-      outputstr = malloc(buffer_size);
+      logical = mp_malloc(buffer_size);
+      visual = mp_malloc(buffer_size);
+      outputstr = mp_malloc(buffer_size);
     } else if (len+1 > buffer_size) {
       buffer_size = len+1;
-      logical = realloc(logical, buffer_size);
-      visual = realloc(visual, buffer_size);
-      outputstr = realloc(outputstr, buffer_size);
+      logical = mp_realloc(logical, buffer_size);
+      visual = mp_realloc(visual, buffer_size);
+      outputstr = mp_realloc(outputstr, buffer_size);
     }
     len = fribidi_charset_to_unicode (char_set_num, txt, len, logical);
     base = menu_fribidi_flip_commas?FRIBIDI_TYPE_ON:FRIBIDI_TYPE_L;

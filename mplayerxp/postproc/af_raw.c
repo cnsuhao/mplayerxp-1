@@ -18,7 +18,7 @@
 #include "af.h"
 #include "help_mp.h"
 #include "osdep/get_path.h"
-
+#include "osdep/mplib.h"
 
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */
 #define WAV_ID_WAVE 0x45564157 /* "WAVE" */
@@ -100,7 +100,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     MSG_INFO("[af_raw] in use %s\n",s->filename);
     return AF_OK;
   case AF_CONTROL_COMMAND_LINE:
-    s->filename=strdup(arg);
+    s->filename=mp_strdup(arg);
     return AF_OK;
   }
   return AF_UNKNOWN;
@@ -113,7 +113,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
 {
   af_raw_t* s = af->setup;
   if (af->data){
-    free(af->data);
+    mp_free(af->data);
     af->data = NULL;
   }
 
@@ -132,8 +132,8 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
 	fclose(s->fd);
 	s->fd=NULL;
     }
-    if(s->filename) free(s->filename);
-    free(af->setup);
+    if(s->filename) mp_free(s->filename);
+    mp_free(af->setup);
     af->setup = NULL;
   }
 }
@@ -162,8 +162,8 @@ static int __FASTCALL__ af_open( af_instance_t* af )
   af->play    = play;
   af->mul.n   = 1;
   af->mul.d   = 1;
-  af->data    = calloc(1, sizeof(af_data_t));
-  af->setup   = calloc(1, sizeof(af_raw_t));
+  af->data    = mp_calloc(1, sizeof(af_data_t));
+  af->setup   = mp_calloc(1, sizeof(af_raw_t));
   if((af->data == NULL) || (af->setup == NULL))
     return AF_ERROR;
 

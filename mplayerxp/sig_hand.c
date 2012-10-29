@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include "xmp_core.h"
 #include "mp_msg.h"
+#include "osdep/mplib.h"
 
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
@@ -36,7 +37,7 @@ static void print_trace (void)
   for (i = 0; i < size; i++)
      MSG_ERR ("%s\n", strings[i]);
 
-  free (strings);
+  mp_free (strings);
 }
 
 /* A dummy function to make the backtrace more interesting. */

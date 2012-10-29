@@ -4,7 +4,7 @@
  * Copyright (c) 2002, Rik Snel
  * Parts from ffmpeg Copyright (c) 2000, 2001 Gerard Lantau
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -256,12 +256,12 @@ jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize,
 		w, h, y_psize, y_rsize, u_psize, 
 		u_rsize, v_psize, v_rsize);
 
-	j = malloc(sizeof(jpeg_enc_t));
+	j = mp_malloc(sizeof(jpeg_enc_t));
 	if (j == NULL) return NULL;
 
-	j->s = malloc(sizeof(MpegEncContext));
+	j->s = mp_malloc(sizeof(MpegEncContext));
 	if (j->s == NULL) {
-		free(j);
+		mp_free(j);
 		return NULL;
 	}
 
@@ -309,14 +309,14 @@ jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize,
 	}
 
 	if (mjpeg_init(j->s) < 0) {
-		free(j->s);
-		free(j);
+		mp_free(j->s);
+		mp_free(j);
 		return NULL;
 	}
 
 	if (MPV_common_init(j->s) < 0) {
-		free(j->s);
-		free(j);
+		mp_free(j->s);
+		mp_free(j);
 		return NULL;
 	}
 
@@ -448,8 +448,8 @@ int jpeg_enc_frame(jpeg_enc_t *j, unsigned char *y_data,
 
 void jpeg_enc_uninit(jpeg_enc_t *j) {
 	mjpeg_close(j->s);
-	free(j->s);
-	free(j);
+	mp_free(j->s);
+	mp_free(j);
 }
 
 #if 0

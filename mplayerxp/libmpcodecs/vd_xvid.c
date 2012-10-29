@@ -15,6 +15,7 @@
 #include "vd_internal.h"
 #include "codecs_ld.h"
 #include "libvo/video_out.h"
+#include "osdep/mplib.h"
 
 static const vd_info_t info = {
 	"XviD MPEG4 codec ",
@@ -362,7 +363,7 @@ static int init(sh_video_t *sh){
 		,xvid_gbl_info.num_threads
 		,xvid_gbl_info.cpu_flags);
 
-	p = malloc(sizeof(priv_t));
+	p = mp_malloc(sizeof(priv_t));
 	memset(p,0,sizeof(priv_t));
 	p->cs = cs;
 	p->hdl = dec_p.handle;
@@ -388,7 +389,7 @@ static void uninit(sh_video_t *sh){
     priv_t* p = sh->context;
     if(!p) return;
     (*xvid_decore_ptr)(p->hdl,XVID_DEC_DESTROY, NULL, NULL);
-    free(p);
+    mp_free(p);
     dlclose(dll_handle);
 }
 

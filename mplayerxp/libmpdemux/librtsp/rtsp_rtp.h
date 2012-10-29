@@ -3,7 +3,7 @@
  *   heavily base on the Freebox patch for xine by Vincent Mussard
  *   but with many enhancements for better RTSP RFC compliance.
  *
- *   This program is free software; you can redistribute it and/or modify
+ *   This program is mp_free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.

@@ -9,10 +9,10 @@
 
 #include "mp_config.h"
 //#define ENABLE_PROFILE
-#include "osdep/my_profile.h"
 #include <inttypes.h>
 #include "osdep/cpudetect.h"
 #include "osdep/mangle.h"
+#include "osdep/mplib.h"
 #include "mplayer.h"
 #include "osd.h"
 #include "vo_msg.h"

@@ -1,13 +1,12 @@
 #include "../mp_config.h"
 // based on libmpeg2/header.c by Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 #include <inttypes.h>
 #include <stdio.h>
 
 #include "mpeg_hdr.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
+
 
 static int frameratecode2framerate[16] = {
   0,
@@ -302,7 +301,7 @@ int h264_parse_sps(mp_mpeg_header_t * picture, unsigned char * buf, int len)
   unsigned char *dest;
   int frame_mbs_only;
 
-  dest = (unsigned char*) malloc(len);
+  dest = (unsigned char*) mp_malloc(len);
   if(! dest)
     return 0;
   j = i = 0;
@@ -362,6 +361,6 @@ int h264_parse_sps(mp_mpeg_header_t * picture, unsigned char * buf, int len)
   if(getbits(buf, n++, 1))
     n = h264_parse_vui(picture, buf, n);
 
-  free(dest);
+  mp_free(dest);
   return n;
 }

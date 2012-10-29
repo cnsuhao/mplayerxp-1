@@ -24,6 +24,7 @@
 #include "stheader.h"
 #include "osdep/bswap.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 static int smjpeg_probe(demuxer_t* demuxer){
     int orig_pos = stream_tell(demuxer->stream);
@@ -120,7 +121,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	    demuxer->video->sh = sh_video;
 	    sh_video->ds = demuxer->video;
 	    
-	    sh_video->bih = malloc(sizeof(BITMAPINFOHEADER));
+	    sh_video->bih = mp_malloc(sizeof(BITMAPINFOHEADER));
 	    memset(sh_video->bih, 0, sizeof(BITMAPINFOHEADER));
 
 	    stream_skip(demuxer->stream, 4); /* number of frames */
@@ -143,7 +144,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	    demuxer->audio->sh = sh_audio;
 	    sh_audio->ds = demuxer->audio;
 
-	    sh_audio->wf = malloc(sizeof(WAVEFORMATEX));
+	    sh_audio->wf = mp_malloc(sizeof(WAVEFORMATEX));
 	    memset(sh_audio->wf, 0, sizeof(WAVEFORMATEX));
 	    
 	    sh_audio->samplerate = stream_read_word(demuxer->stream);

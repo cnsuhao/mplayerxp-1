@@ -1,4 +1,4 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,7 +20,7 @@
 #include "tcp.h"
 #include "url.h"
 #include "demux_msg.h"
-
+#include "osdep/mplib.h"
 
 struct stream_priv_s {
   char* user;
@@ -346,9 +346,9 @@ static void __FASTCALL__ ftp_close(stream_t *s) {
   FtpSendCmd("QUIT",p,NULL);
 
   if(p->handle) closesocket(p->handle);
-  if(p->buf) free(p->buf);
+  if(p->buf) mp_free(p->buf);
 
-  free(p);
+  mp_free(p);
 }
 
 static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned flags)
@@ -360,18 +360,18 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
   char *uname;
 
   UNUSED(flags);
-  if(!(uname=malloc(strlen(filename)+7))) return 0;
+  if(!(uname=mp_malloc(strlen(filename)+7))) return 0;
   strcpy(uname,"ftp://");
   strcat(uname,filename);
   if(!(url=url_new(uname))) goto bad_url;
-  free(uname);
+  mp_free(uname);
 //  url = check4proxies (rurl);
   if(!(url->hostname && url->file)) {
     bad_url:
     MSG_ERR("[ftp] Bad url\n");
     return 0;
   }
-  p=stream->priv=malloc(sizeof(struct stream_priv_s));
+  p=stream->priv=mp_malloc(sizeof(struct stream_priv_s));
   memset(p,0,sizeof(struct stream_priv_s));
   p->user=url->username?url->username:"anonymous";
   p->pass=url->password?url->password:"no@spam";
@@ -385,13 +385,13 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
 
   if(p->handle < 0) {
     url_free(url);
-    free(stream->priv);
+    mp_free(stream->priv);
     return 0;
   }
 
   // We got a connection, let's start serious things
   stream->fd = -1;
-  p->buf = malloc(BUFSIZE);
+  p->buf = mp_malloc(BUFSIZE);
 
   if (readresp(p, NULL) == 0) {
     ftp_close(stream);

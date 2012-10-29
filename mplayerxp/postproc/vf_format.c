@@ -3,12 +3,13 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "pp_msg.h"
+#include "osdep/mplib.h"
 
 struct vf_priv_s {
     unsigned int fmt;
@@ -75,7 +76,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->default_caps=0;
     if(!vf->priv) {
-      vf->priv=malloc(sizeof(struct vf_priv_s));
+      vf->priv=mp_malloc(sizeof(struct vf_priv_s));
       vf->priv->fmt=IMGFMT_YUY2;
     }
     if(args){
@@ -92,7 +93,7 @@ static int __FASTCALL__ vf_no_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->default_caps=0;
     if(!vf->priv) {
-      vf->priv=malloc(sizeof(struct vf_priv_s));
+      vf->priv=mp_malloc(sizeof(struct vf_priv_s));
       vf->priv->fmt=IMGFMT_YUY2;
     }
     if(args){

@@ -1,7 +1,7 @@
 /*
     Copyright (C) 2004 Michael Niedermayer <michaelni@gmx.at>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -18,7 +18,7 @@
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include <stdlib.h>
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include "stream.h"
 #include "demuxer.h"
@@ -29,6 +29,7 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpconf/cfgparser.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define PROBE_BUF_SIZE 2048
 
@@ -160,7 +161,7 @@ static uint8_t char2int(char c) {
 
 static void parse_cryptokey(AVFormatContext *avfc, const char *str) {
     int len = strlen(str) / 2;
-    uint8_t *key = calloc(1,len);
+    uint8_t *key = mp_calloc(1,len);
     int i;
     avfc->keylen = len;
     avfc->key = key;
@@ -172,7 +173,7 @@ static int lavf_probe(demuxer_t *demuxer){
     AVProbeData avpd;
     uint8_t buf[PROBE_BUF_SIZE];
     lavf_priv_t *priv;
-    if(!demuxer->priv) demuxer->priv=calloc(sizeof(lavf_priv_t),1);
+    if(!demuxer->priv) demuxer->priv=mp_calloc(sizeof(lavf_priv_t),1);
     priv= demuxer->priv;
 
     av_register_all();
@@ -181,7 +182,7 @@ static int lavf_probe(demuxer_t *demuxer){
     else av_log_set_level(AV_LOG_INFO);
 
     if(stream_read(demuxer->stream, buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE) {
-	free(demuxer->priv);
+	mp_free(demuxer->priv);
 	return 0;
     }
     avpd.filename= "xxx";
@@ -204,7 +205,7 @@ static int lavf_probe(demuxer_t *demuxer){
     priv->avif= av_probe_input_format(&avpd, 1);
     if(!priv->avif){
 	MSG_V("LAVF_check: file format not recognized!\n");
-	free(demuxer->priv);
+	mp_free(demuxer->priv);
 	return 0;
     }else
 	MSG_V("LAVF_check: %s\n", priv->avif->long_name);
@@ -268,7 +269,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 	i=j;
         switch(codec->codec_type){
         case AVMEDIA_TYPE_AUDIO:{
-            WAVEFORMATEX *wf= calloc(sizeof(WAVEFORMATEX) + codec->extradata_size, 1);
+            WAVEFORMATEX *wf= mp_calloc(sizeof(WAVEFORMATEX) + codec->extradata_size, 1);
             sh_audio_t* sh_audio=new_sh_audio(demuxer, i);
             priv->audio_streams++;
             if(!codec->codec_tag)
@@ -335,7 +336,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
             }
             break;}
         case AVMEDIA_TYPE_VIDEO:{
-            BITMAPINFOHEADER *bih=calloc(sizeof(BITMAPINFOHEADER) + codec->extradata_size,1);
+            BITMAPINFOHEADER *bih=mp_calloc(sizeof(BITMAPINFOHEADER) + codec->extradata_size,1);
             sh_video_t* sh_video=new_sh_video(demuxer, i);
 
 	    priv->video_streams++;
@@ -444,7 +445,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 
     if(0/*pkt.destruct == av_destruct_packet*/){
         //ok kids, dont try this at home :)
-        dp=(demux_packet_t*)malloc(sizeof(demux_packet_t));
+        dp=(demux_packet_t*)mp_malloc(sizeof(demux_packet_t));
         dp->len=pkt.size;
         dp->next=NULL;
 //        dp->refcount=1;
@@ -489,7 +490,7 @@ static void lavf_close(demuxer_t *demuxer)
 	    avformat_close_input(&priv->avfc);
 	}
 	av_freep(&priv->pb);
-	free(priv); demuxer->priv= NULL;
+	mp_free(priv); demuxer->priv= NULL;
     }
 }
 

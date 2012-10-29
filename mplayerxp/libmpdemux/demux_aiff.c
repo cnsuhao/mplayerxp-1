@@ -9,6 +9,7 @@
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
+#include "osdep/mplib.h"
 
 static unsigned long cvt_extended(const char * buf)
 {
@@ -51,9 +52,9 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
   s = demuxer->stream;
 
   sh_audio = new_sh_audio(demuxer,0);
-  priv=demuxer->priv=malloc(sizeof(priv_t));
+  priv=demuxer->priv=mp_malloc(sizeof(priv_t));
   memset(priv,0,sizeof(priv_t));
-  sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX));
+  sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('r','a','w',' '); /* S16BE */
   w->nChannels = sh_audio->channels =
   w->nSamplesPerSec = sh_audio->samplerate =
@@ -211,7 +212,7 @@ static void aiff_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void aiff_close(demuxer_t* demuxer)
 {
-    free(demuxer->priv);
+    mp_free(demuxer->priv);
 }
 
 static int aiff_control(demuxer_t *demuxer,int cmd,any_t*args)

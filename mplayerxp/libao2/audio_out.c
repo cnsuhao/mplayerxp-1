@@ -2,7 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 #include "audio_out.h"
 #include "afmt.h"
 #include "ao_msg.h"
@@ -206,14 +207,14 @@ ao_data_t* __FASTCALL__ ao_init(unsigned flags,const char *subdevice)
 {
     ao_data_t* ao;
     int retval;
-    ao=malloc(sizeof(ao_data_t));
+    ao=mp_malloc(sizeof(ao_data_t));
     memset(ao,0,sizeof(ao_data_t));
-    if(subdevice) ao->subdevice=strdup(subdevice);
+    if(subdevice) ao->subdevice=mp_strdup(subdevice);
     ao->outburst=OUTBURST;
     ao->buffersize=-1;
     retval = audio_out->init(ao,flags);
     if(retval) return ao;
-    free(ao);
+    mp_free(ao);
     return NULL;
 }
 
@@ -227,8 +228,8 @@ int __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsig
 void ao_uninit(ao_data_t*ao)
 {
     audio_out->uninit(ao);
-    if(ao->subdevice) free(ao->subdevice);
-    free(ao);
+    if(ao->subdevice) mp_free(ao->subdevice);
+    mp_free(ao);
     ao=NULL;
 }
 

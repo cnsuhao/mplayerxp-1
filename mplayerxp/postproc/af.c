@@ -2,14 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
+#include "mp_config.h"
 #include "af.h"
-#include "../mp_config.h"
-#include "../help_mp.h"
-#include "../libao2/audio_out.h"
+#include "help_mp.h"
+#include "libao2/audio_out.h"
+#include "osdep/mplib.h"
 
 extern ao_data_t* ao_data;
 
@@ -115,7 +112,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
   char* cmdline = name;
 
   // Allocate space for the new filter and reset all pointers
-  af_instance_t* _new=malloc(sizeof(af_instance_t));
+  af_instance_t* _new=mp_malloc(sizeof(af_instance_t));
   if(!_new){
     MSG_ERR(MSGTR_OutOfMemory);
     return NULL;
@@ -127,7 +124,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
 
   // Find filter from name
   if(NULL == (_new->info=af_find(name))) {
-    free(_new);
+    mp_free(_new);
     return NULL;
   }
   /* Make sure that the filter is not already in the list if it is
@@ -136,7 +133,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
     if(af_get(s,name)){
       MSG_ERR("[libaf] There can only be one instance of" 
 	     " the filter '%s' in each stream\n",name);  
-      free(_new);
+      mp_free(_new);
       return NULL;
     }
   }
@@ -154,7 +151,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
       return _new;
   }
 
-  free(_new);
+  mp_free(_new);
   MSG_ERR("[libaf] Couldn't create or open audio filter '%s'\n", name);
   return NULL;
 }
@@ -230,9 +227,9 @@ void af_remove(af_stream_t* s, af_instance_t* af)
   else
     s->last=af->prev;
 
-  // Uninitialize af and free memory   
+  // Uninitialize af and mp_free memory   
   af->uninit(af);
-  free(af);
+  mp_free(af);
 }
 
 /* Reinitializes all filters downstream from the filter given in the
@@ -512,7 +509,7 @@ af_instance_t* af_add(af_stream_t* s, char* name){
 
   // Reinitalize the filter list
   if(AF_OK != af_reinit(s, s->first)){
-    free(new);
+    mp_free(new);
     return NULL;
   }
   return new;
@@ -640,11 +637,11 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data)
   register int len = af_lencalc(af->mul,data);
   MSG_V("[libaf] Reallocating memory in module %s, " 
 	 "old len = %i, new len = %i\n",af->info->name,af->data->len,len);
-  // If there is a buffer free it
+  // If there is a buffer mp_free it
   if(af->data->audio) 
-    free(af->data->audio);
+    mp_free(af->data->audio);
   // Create new buffer and check that it is OK
-  af->data->audio = malloc(len);
+  af->data->audio = mp_malloc(len);
   if(!af->data->audio){
     MSG_FATAL(MSGTR_OutOfMemory);
     return AF_ERROR;
@@ -719,7 +716,7 @@ void af_help (void) {
 af_stream_t *af_new(any_t*_parent)
 {
     af_stream_t *rval;
-    rval = malloc(sizeof(af_stream_t));
+    rval = mp_malloc(sizeof(af_stream_t));
     memset(rval,0,sizeof(af_stream_t));
     rval->parent = _parent;
     return rval;

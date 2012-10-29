@@ -2,10 +2,10 @@
  * parse.c
  * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
  *
- * This file is part of dtsdec, a free DTS Coherent Acoustics stream decoder.
+ * This file is part of dtsdec, a mp_free DTS Coherent Acoustics stream decoder.
  * See http://www.videolan.org/dtsdec.html for updates.
  *
- * dtsdec is free software; you can redistribute it and/or modify
+ * dtsdec is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -20,15 +20,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../../mp_config.h"
+#include "mp_config.h"
 
 #include <stdio.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-
 #include <math.h>
+
+#include "osdep/mplib.h"
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795029
@@ -48,11 +49,11 @@
 /* #define LOG_DEBUG */
 
 #if defined(HAVE_MEMALIGN) && !defined(__cplusplus)
-/* some systems have memalign() but no declaration for it */
-any_t* memalign (size_t align, size_t size);
+/* some systems have mp_memalign() but no declaration for it */
+any_t* mp_memalign (size_t align, size_t size);
 #else
-/* assume malloc alignment is sufficient */
-#define memalign(align,size) malloc (size)
+/* assume mp_malloc alignment is sufficient */
+#define mp_memalign(align,size) mp_malloc (size)
 #endif
 
 //#define LOG_DEBUG 1
@@ -76,15 +77,15 @@ dca_state_t * dca_init (uint32_t mm_accel)
     dca_state_t * state;
     int i;
 
-    state = (dca_state_t *) malloc (sizeof (dca_state_t));
+    state = (dca_state_t *) mp_malloc (sizeof (dca_state_t));
     if (state == NULL)
         return NULL;
 
     memset (state, 0, sizeof(dca_state_t));
 
-    state->samples = (sample_t *) memalign (16, 256 * 12 * sizeof (sample_t));
+    state->samples = (sample_t *) mp_memalign (16, 256 * 12 * sizeof (sample_t));
     if (state->samples == NULL) {
-        free (state);
+        mp_free (state);
         return NULL;
     }
 
@@ -1293,6 +1294,6 @@ void dca_dynrng (dca_state_t * state,
 
 void dca_free (dca_state_t * state)
 {
-    free (state->samples);
-    free (state);
+    mp_free (state->samples);
+    mp_free (state);
 }

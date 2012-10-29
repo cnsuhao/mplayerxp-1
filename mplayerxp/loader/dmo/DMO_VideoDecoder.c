@@ -4,7 +4,8 @@
 	Copyright 2000 Eugene Kuznetsov  (divx@euro.ru)
 
 *********************************************************/
-#include "../../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 #include "guids.h"
 #include "interfaces.h"
 #include "registry.h"
@@ -99,7 +100,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
     HRESULT result;
     ct* c;
                         
-    this = malloc(sizeof(DMO_VideoDecoder));
+    this = mp_malloc(sizeof(DMO_VideoDecoder));
     memset( this, 0, sizeof(DMO_VideoDecoder));
     
     this->m_sVhdr2 = 0;
@@ -118,7 +119,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
 	bihs = (format->biSize < (int) sizeof(BITMAPINFOHEADER)) ?
 	    sizeof(BITMAPINFOHEADER) : format->biSize;
      
-        this->iv.m_bh = (BITMAPINFOHEADER*)malloc(bihs);
+        this->iv.m_bh = (BITMAPINFOHEADER*)mp_malloc(bihs);
         memcpy(this->iv.m_bh, format, bihs);
 
         this->iv.m_State = STOP;
@@ -130,7 +131,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
         this->iv.m_bCapable16b = true;
                 
         bihs += sizeof(VIDEOINFOHEADER) - sizeof(BITMAPINFOHEADER);
-	this->m_sVhdr = (VIDEOINFOHEADER*)malloc(bihs);
+	this->m_sVhdr = (VIDEOINFOHEADER*)mp_malloc(bihs);
 	memset(this->m_sVhdr, 0, bihs);
 	memcpy(&this->m_sVhdr->bmiHeader, this->iv.m_bh, this->iv.m_bh->biSize);
 	this->m_sVhdr->rcSource.left = this->m_sVhdr->rcSource.top = 0;
@@ -150,7 +151,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
         this->m_sOurType.cbFormat = bihs;
         this->m_sOurType.pbFormat = (char*)this->m_sVhdr;
 
-	this->m_sVhdr2 = (VIDEOINFOHEADER*)(malloc(sizeof(VIDEOINFOHEADER)+12));
+	this->m_sVhdr2 = (VIDEOINFOHEADER*)(mp_malloc(sizeof(VIDEOINFOHEADER)+12));
 	memcpy(this->m_sVhdr2, this->m_sVhdr, sizeof(VIDEOINFOHEADER));
 	memset((char*)this->m_sVhdr2 + sizeof(VIDEOINFOHEADER), 0, 12);
 	this->m_sVhdr2->bmiHeader.biCompression = 0;
@@ -189,9 +190,9 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
 	if (!this->m_pDMO_Filter)
 	{
 	    printf("Failed to create DMO filter\n");
-	    free(this->m_sVhdr);
-	    free(this->m_sVhdr2);
-	    free(this);
+	    mp_free(this->m_sVhdr);
+	    mp_free(this->m_sVhdr2);
+	    mp_free(this);
 	    return 0;
 	}
 
@@ -276,8 +277,8 @@ void DMO_VideoDecoder_Destroy(DMO_VideoDecoder *this)
 {
     DMO_VideoDecoder_StopInternal(this);
     this->iv.m_State = STOP;
-    free(this->m_sVhdr);
-    free(this->m_sVhdr2);
+    mp_free(this->m_sVhdr);
+    mp_free(this->m_sVhdr2);
     DMO_Filter_Destroy(this->m_pDMO_Filter);
 }
 

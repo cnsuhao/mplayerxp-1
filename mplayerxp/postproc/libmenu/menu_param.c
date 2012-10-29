@@ -1,4 +1,3 @@
-
 #include "mp_config.h"
 
 #include <stdlib.h>
@@ -26,8 +25,8 @@
 #include "menu_list.h"
 #include "input/input.h"
 #include "osdep/keycodes.h"
-//#include "command.h"
-#include "../pp_msg.h"
+#include "osdep/mplib.h"
+#include "pp_msg.h"
 
 struct list_entry_s {
   struct list_entry p;
@@ -70,19 +69,19 @@ static void entry_set_text(menu_t* menu, list_entry_t* e) {
     mp_property_print(e->prop, menu->ctx);
   int l,edit = (mpriv->edit && e == mpriv->p.current);
   if(!val || !val[0]) {
-    if(val) free(val);
+    if(val) mp_free(val);
     if(mpriv->hide_na) {
       e->p.hide = 1;
       return;
     }
-    val = strdup(mpriv->na);
+    val = mp_strdup(mpriv->na);
   } else if(mpriv->hide_na)
       e->p.hide = 0;
   l = strlen(e->name) + 2 + strlen(val) + (edit ? 4 : 0) + 1;
-  if(e->p.txt) free(e->p.txt);
-  e->p.txt = malloc(l);
+  if(e->p.txt) mp_free(e->p.txt);
+  e->p.txt = mp_malloc(l);
   sprintf(e->p.txt,"%s: %s%s%s",e->name,edit ? "> " : "",val,edit ? " <" : "");
-  free(val);
+  mp_free(val);
 }
 
 static void update_entries(menu_t* menu) {
@@ -109,8 +108,8 @@ static int parse_args(menu_t* menu,const char* args) {
       asx_parser_free(parser);
       if(!m)
         MSG_WARN("[libmenu] No entry found in the menu definition\n");
-      m = calloc(1,sizeof(struct list_entry_s));
-      m->p.txt = strdup("Back");
+      m = mp_calloc(1,sizeof(struct list_entry_s));
+      m->p.txt = mp_strdup("Back");
       menu_list_add_entry(menu,m);
       return 1;
     }
@@ -120,11 +119,11 @@ static int parse_args(menu_t* menu,const char* args) {
         MSG_WARN("[libmenu] Submenu definition need a menu attribut\n");
         goto next_element;
       }
-      m = calloc(1,sizeof(struct list_entry_s));
+      m = mp_calloc(1,sizeof(struct list_entry_s));
       m->menu = name;
       name = NULL; // we want to keep it
       m->p.txt = asx_get_attrib("name",attribs);
-      if(!m->p.txt) m->p.txt = strdup(m->menu);
+      if(!m->p.txt) m->p.txt = mp_strdup(m->menu);
       menu_list_add_entry(menu,m);
       goto next_element;
     }
@@ -139,22 +138,22 @@ static int parse_args(menu_t* menu,const char* args) {
     txt = asx_get_attrib("txt",attribs);
     if(!(name || txt)) {
       MSG_WARN("[libmenu] PrefMenu entry definitions need: %i\n",parser->line);
-      if(txt) free(txt), txt = NULL;
+      if(txt) mp_free(txt), txt = NULL;
       goto next_element;
     }
-    m = calloc(1,sizeof(struct list_entry_s));
+    m = mp_calloc(1,sizeof(struct list_entry_s));
     m->opt = opt;
     m->txt = txt; txt = NULL;
     m->prop = name; name = NULL;
     m->name = asx_get_attrib("name",attribs);
-    if(!m->name) m->name = strdup(opt ? opt->name : "-");
+    if(!m->name) m->name = mp_strdup(opt ? opt->name : "-");
     entry_set_text(menu,m);
     menu_list_add_entry(menu,m);
 
   next_element:
-    free(element);
-    if(body) free(body);
-    if(name) free(name);
+    mp_free(element);
+    if(body) mp_free(body);
+    if(name) mp_free(name);
     asx_free_attribs(attribs);
   }
 }
@@ -213,7 +212,7 @@ static void read_cmd(menu_t* menu,int cmd) {
     case MENU_CMD_RIGHT:
     case MENU_CMD_OK: {
       mp_cmd_t* c;
-      char* txt = malloc(10 + strlen(e->menu) + 1);
+      char* txt = mp_malloc(10 + strlen(e->menu) + 1);
       sprintf(txt,"set_menu %s",e->menu);
       c = mp_input_parse_cmd(txt);
       if(c) mp_input_queue_cmd(c);
@@ -233,12 +232,12 @@ static void read_cmd(menu_t* menu,int cmd) {
 }
 
 static void free_entry(list_entry_t* entry) {
-  free(entry->p.txt);
-  if(entry->name) free(entry->name);
-  if(entry->txt)  free(entry->txt);
-  if(entry->prop) free(entry->prop);
-  if(entry->menu) free(entry->menu);
-  free(entry);
+  mp_free(entry->p.txt);
+  if(entry->name) mp_free(entry->name);
+  if(entry->txt)  mp_free(entry->txt);
+  if(entry->prop) mp_free(entry->prop);
+  if(entry->menu) mp_free(entry->menu);
+  mp_free(entry);
 }
 
 static void closeMenu(menu_t* menu) {

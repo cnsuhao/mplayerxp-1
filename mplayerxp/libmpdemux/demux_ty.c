@@ -12,7 +12,7 @@
  * either author.
  *
  *
- * This program is free software; you can redistribute it and/or
+ * This program is mp_free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -45,6 +45,7 @@
 #include "stheader.h"
 #include "sub_cc.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 
 #define AV_RB24(x)  ((((uint8_t*)(x))[0] << 16) | \
@@ -840,14 +841,14 @@ static void ty_close( demuxer_t *demux )
 {
    TiVoInfo         *tivo = demux->priv;
 
-      free( tivo );
+      mp_free( tivo );
       sub_justify = 0;
 }
 
 
 static int ty_probe(demuxer_t* demuxer)
 {
-  TiVoInfo *tivo = calloc(1, sizeof(TiVoInfo));
+  TiVoInfo *tivo = mp_calloc(1, sizeof(TiVoInfo));
   demuxer->priv = tivo;
   return ds_fill_buffer(demuxer->video) ? 1 : 0;
 }

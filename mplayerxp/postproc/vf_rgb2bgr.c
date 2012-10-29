@@ -10,6 +10,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "libswscale/rgb2rgb.h"
 #include "pp_msg.h"
 
@@ -89,7 +90,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     vf->priv->forced=args && !strcasecmp(args,"swap");
     return 1;
 }

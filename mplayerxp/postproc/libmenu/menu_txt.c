@@ -18,7 +18,8 @@
 
 #include "libvo/video_out.h"
 #include "osdep/keycodes.h"
-#include "../pp_msg.h"
+#include "pp_msg.h"
+#include "osdep/mplib.h"
 
 extern vo_data_t* vo_data;
 
@@ -151,8 +152,8 @@ static int open_txt(menu_t* menu,const char* args) {
     r = fread(buf+pos,1,BUF_SIZE-pos-1,fd);
     if(r <= 0) {
       if(pos > 0) {
-	mpriv->lines = realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
-	mpriv->lines[mpriv->num_lines] = strdup(buf);
+	mpriv->lines = mp_realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
+	mpriv->lines[mpriv->num_lines] = mp_strdup(buf);
 	mpriv->num_lines++;
       }
       fclose(fd);
@@ -163,8 +164,8 @@ static int open_txt(menu_t* menu,const char* args) {
     
     while((l = strchr(buf,'\n')) != NULL) {
       s = l-buf;
-      mpriv->lines = realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
-      mpriv->lines[mpriv->num_lines] = malloc(s+1);
+      mpriv->lines = mp_realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
+      mpriv->lines[mpriv->num_lines] = mp_malloc(s+1);
       memcpy(mpriv->lines[mpriv->num_lines],buf,s);
       mpriv->lines[mpriv->num_lines][s] = '\0';
       pos -= s + 1;
@@ -175,8 +176,8 @@ static int open_txt(menu_t* menu,const char* args) {
     }
     if(pos >= BUF_SIZE-1) {
       MSG_WARN("[libmenu] Warning too long line splitting\n");
-      mpriv->lines = realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
-      mpriv->lines[mpriv->num_lines] = strdup(buf);
+      mpriv->lines = mp_realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
+      mpriv->lines[mpriv->num_lines] = mp_strdup(buf);
       mpriv->num_lines++;
       pos = 0;
     }

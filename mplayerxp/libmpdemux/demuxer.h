@@ -180,21 +180,10 @@ typedef struct demuxer_driver_s
     int			(*control)(demuxer_t *d,int cmd,any_t*arg);
 }demuxer_driver_t;
 
-inline static demux_packet_t* new_demux_packet(int len){
-  demux_packet_t* dp=malloc(sizeof(demux_packet_t));
-  dp->len=len;
-  dp->buffer=malloc(len);
-  dp->next=NULL;
-  dp->pts=0;
-  dp->pos=0;
-  dp->flags=0;
-  return dp;
-}
 
-inline static void free_demux_packet(demux_packet_t* dp){
-  free(dp->buffer);
-  free(dp);
-}
+demux_packet_t* new_demux_packet(int len);
+void free_demux_packet(demux_packet_t* dp);
+void resize_demux_packet(demux_packet_t* dp, int len);
 
 demux_packet_t* clone_demux_packet(demux_packet_t* pack);
 demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id);
@@ -243,24 +232,6 @@ float ds_get_next_pts(demux_stream_t *ds);
 
 // This is defined here because demux_stream_t ins't defined in stream.h
 stream_t* __FASTCALL__ new_ds_stream(demux_stream_t *ds);
-
-inline static void resize_demux_packet(demux_packet_t* dp, int len)
-{
-  if(dp->len!=len)
-  {
-    if(len)
-    {
-	dp->buffer=(unsigned char *)realloc(dp->buffer,len+8);
-	memset(dp->buffer+len,0,8);
-    }
-    else
-    {
-	if(dp->buffer) free(dp->buffer);
-	dp->buffer=NULL;
-    }
-    dp->len=len;
-  }
-}
 
 demuxer_t* demux_open(stream_t *stream,int file_format,int aid,int vid,int sid);
 int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka);

@@ -3,10 +3,10 @@
  * Copyright (C) 2000-2002 Michel Lespinasse <walken@zoy.org>
  * Copyright (C) 1999-2000 Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
  *
- * This file is part of a52dec, a free ATSC A-52 stream decoder.
+ * This file is part of a52dec, a mp_free ATSC A-52 stream decoder.
  * See http://liba52.sourceforge.net/ for updates.
  *
- * a52dec is free software; you can redistribute it and/or modify
+ * a52dec is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -21,12 +21,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../../mp_config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+
+#include "osdep/mplib.h"
 
 #include "a52.h"
 #include "a52_internal.h"
@@ -34,11 +36,11 @@
 #include "tables.h"
 
 #ifdef HAVE_MEMALIGN
-/* some systems have memalign() but no declaration for it */
-any_t* memalign (size_t align, size_t size);
+/* some systems have mp_memalign() but no declaration for it */
+any_t* mp_memalign (size_t align, size_t size);
 #else
-/* assume malloc alignment is sufficient */
-#define memalign(align,size) malloc (size)
+/* assume mp_malloc alignment is sufficient */
+#define mp_memalign(align,size) mp_malloc (size)
 #endif
 
 typedef struct {
@@ -60,13 +62,13 @@ a52_state_t * a52_init (uint32_t mm_accel)
     int i;
     char *opts;
 
-    state = malloc (sizeof (a52_state_t));
+    state = mp_malloc (sizeof (a52_state_t));
     if (state == NULL)
 	return NULL;
 
-    state->samples = memalign (16, 256 * 12 * sizeof (sample_t));
+    state->samples = mp_memalign (16, 256 * 12 * sizeof (sample_t));
     if (state->samples == NULL) {
-	free (state);
+	mp_free (state);
 	return NULL;
     }
 
@@ -902,6 +904,6 @@ int a52_block (a52_state_t * state)
 
 void a52_free (a52_state_t * state)
 {
-    free (state->samples);
-    free (state);
+    mp_free (state->samples);
+    mp_free (state);
 }

@@ -10,7 +10,7 @@ SRCS = asmrp.c \
        xbuffer.c
 OBJS=$(SRCS:.c=.o)
 
-CFLAGS  = $(OPTFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
+CFLAGS  = $(OPTFLAGS) -I. -I.. -I../.. $(EXTRA_INC) -Wall
 
 .SUFFIXES: .c .o
 

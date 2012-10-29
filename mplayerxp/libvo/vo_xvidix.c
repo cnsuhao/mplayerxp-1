@@ -16,6 +16,7 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
+#include "osdep/mplib.h"
 #include "xmp_core.h"
 
 #include "video_out.h"
@@ -174,8 +175,8 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     int window_depth;
     vo_query_fourcc_t qfourcc;
 //    if (title)
-//	free(title);
-    title = strdup("MPlayerXP VIDIX X11 Overlay");
+//	mp_free(title);
+    title = mp_strdup("MPlayerXP VIDIX X11 Overlay");
 
     priv->image_height = height;
     priv->image_width = width;
@@ -389,18 +390,18 @@ static void uninit(vo_data_t*vo)
 
     saver_on(vo,vo->mDisplay); /* screen saver back on */
     vo_x11_uninit(vo,vo->mDisplay, vo->window);
-    if(priv->name) { free(priv->name); priv->name = NULL; }
+    if(priv->name) { mp_free(priv->name); priv->name = NULL; }
     priv->X_already_started--;
-    free(priv);
+    mp_free(priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=malloc(sizeof(priv_t));
+    vo->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     memset(priv,0,sizeof(priv_t));
     if (arg)
-        priv->name = strdup(arg);
+        priv->name = mp_strdup(arg);
     else {
 	MSG_V( "No vidix driver name provided, probing available ones!\n");
 	priv->name = NULL;

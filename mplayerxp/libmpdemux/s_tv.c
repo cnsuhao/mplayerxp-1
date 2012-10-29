@@ -18,6 +18,7 @@
 #include <string.h>
 #include "stream.h"
 #include "input/input.h"
+#include "osdep/mplib.h"
 #include "mrl.h"
 
 /* some default values */
@@ -362,7 +363,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 	    sh_audio->channels;
 
 	// emulate WF for win32 codecs:
-	sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 	sh_audio->wf->wFormatTag = sh_audio->wtag;
 	sh_audio->wf->nChannels = sh_audio->channels;
 	sh_audio->wf->wBitsPerSample = sh_audio->samplesize * 8;
@@ -601,7 +602,7 @@ static off_t __FASTCALL__ _tv_tell(stream_t *stream)
 
 static void __FASTCALL__ _tv_close(stream_t*stream)
 {
-    free(stream->priv);
+    mp_free(stream->priv);
 }
 
 static void __FASTCALL__ _tv_cmd_handler(stream_t *s,unsigned cmd)

@@ -15,19 +15,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 typedef struct {
-    float   v_pts;  
+    float   v_pts;
     int video_pack_no;
     unsigned int a_format;
     unsigned int v_format;
-    unsigned char fps;            
+    unsigned char fps;
 } nsv_priv_t;
 
 /**
@@ -142,7 +143,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
     sh_video_t *sh_video = NULL;
     sh_audio_t *sh_audio = NULL;
 
-    nsv_priv_t * priv = malloc(sizeof(nsv_priv_t));
+    nsv_priv_t * priv = mp_malloc(sizeof(nsv_priv_t));
     demuxer->priv=priv;
     priv->video_pack_no=0;
 
@@ -242,7 +243,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
             // new video stream! parse header
             sh_video->src_w=hdr[12]|(hdr[13]<<8);
             sh_video->src_h=hdr[14]|(hdr[15]<<8);
-            sh_video->bih=(BITMAPINFOHEADER*)calloc(1,sizeof(BITMAPINFOHEADER));
+            sh_video->bih=(BITMAPINFOHEADER*)mp_calloc(1,sizeof(BITMAPINFOHEADER));
             sh_video->bih->biSize=sizeof(BITMAPINFOHEADER);
             sh_video->bih->biPlanes=1; 
             sh_video->bih->biBitCount=24;
@@ -336,7 +337,7 @@ static void nsv_close(demuxer_t* demuxer) {
 
     if(!priv)
         return;
-    free(priv);
+    mp_free(priv);
 
 }
 

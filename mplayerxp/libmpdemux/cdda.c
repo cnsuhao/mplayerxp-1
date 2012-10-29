@@ -5,6 +5,7 @@
 
 #include "stream.h"
 #include "libmpconf/cfgparser.h"
+#include "osdep/mplib.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,14 +80,14 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
   unsigned char arr[256];
   int st_inited;
 
-  priv = (cdda_priv*)malloc(sizeof(cdda_priv));
+  priv = (cdda_priv*)mp_malloc(sizeof(cdda_priv));
   memset(priv, 0, sizeof(cdda_priv));
 
   priv->cd = cdio_cddap_identify(dev,mp_conf.verbose?1:0,NULL);
 
   if(!priv->cd) {
     MSG_ERR("Can't open cdda device: %s\n",dev);
-    free(priv);
+    mp_free(priv);
     return 0;
   }
 
@@ -95,7 +96,7 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
   if(cdio_cddap_open(priv->cd) != 0) {
     MSG_ERR("Can't open disc\n");
     cdda_close(priv->cd);
-    free(priv);
+    mp_free(priv);
     return 0;
   }
 
@@ -219,7 +220,7 @@ off_t __FASTCALL__ tell_cdda(stream_t* s) {
 void __FASTCALL__ close_cdda(stream_t* s) {
   cdda_priv* p = (cdda_priv*)s->priv;
   cdio_cddap_close(p->cd);
-  free(p);
+  mp_free(p);
 }
 
 #endif

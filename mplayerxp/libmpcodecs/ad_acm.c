@@ -7,7 +7,8 @@
 #include "ad_internal.h"
 #include "codecs_ld.h"
 #include "loader/wineacm.h"
-#include "../libmpdemux/aviprint.h"
+#include "libmpdemux/aviprint.h"
+#include "osdep/mplib.h"
 #include "help_mp.h"
 
 static const ad_info_t info =
@@ -50,7 +51,7 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     priv->o_wf.cbSize=0;
     if(!in_fmt)
     {
-	in_fmt=sh_audio->wf=malloc(sizeof(WAVEFORMATEX));
+	in_fmt=sh_audio->wf=mp_malloc(sizeof(WAVEFORMATEX));
 	memcpy(in_fmt,&priv->o_wf,sizeof(WAVEFORMATEX));
 	in_fmt->wFormatTag=sh_audio->wtag;
     }
@@ -94,7 +95,7 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     sh_audio->samplerate=priv->o_wf.nSamplesPerSec;
     sh_audio->samplesize=(priv->o_wf.wBitsPerSample+7)/8;
     sh_audio->a_in_buffer_size=2*sh_audio->audio_in_minsize;
-    sh_audio->a_in_buffer=malloc(sh_audio->a_in_buffer_size);
+    sh_audio->a_in_buffer=mp_malloc(sh_audio->a_in_buffer_size);
     sh_audio->a_in_buffer_len=0;
 
     return 1;
@@ -142,7 +143,7 @@ int preinit(sh_audio_t *sh_audio)
 {
   /* Win32 ACM audio codec: */
   acm_priv_t *priv;
-  if(!(sh_audio->context=malloc(sizeof(acm_priv_t)))) return 0;
+  if(!(sh_audio->context=mp_malloc(sizeof(acm_priv_t)))) return 0;
   priv=sh_audio->context;
   if(!init_acm_audio_codec(sh_audio)){
     MSG_ERR(MSGTR_ACMiniterror);
@@ -155,7 +156,7 @@ int preinit(sh_audio_t *sh_audio)
 void uninit(sh_audio_t *sh)
 {
   close_acm_audio_codec(sh);
-  free(sh->context);
+  mp_free(sh->context);
 }
 
 int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)

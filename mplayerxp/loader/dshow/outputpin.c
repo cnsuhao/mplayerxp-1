@@ -1,8 +1,8 @@
-
 #include "wine/winerror.h"
 #include "wine/windef.h"
 #include "mediatype.h"
 #include "outputpin.h"
+#include "osdep/mplib.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -139,8 +139,8 @@ static HRESULT STDCALL CEnumMediaTypes_Clone(IEnumMediaTypes * This,
 static void CEnumMediaTypes_Destroy(CEnumMediaTypes* This)
 {
     FreeMediaType(&(This->type));
-    free(This->vt);
-    free(This);
+    mp_free(This->vt);
+    mp_free(This);
 }
 
 // IEnumMediaTypes->IUnknown methods
@@ -156,15 +156,15 @@ IMPLEMENT_IUNKNOWN(CEnumMediaTypes)
  */
 static CEnumMediaTypes* CEnumMediaTypesCreate(const AM_MEDIA_TYPE* amt)
 {
-    CEnumMediaTypes *This = (CEnumMediaTypes*) malloc(sizeof(CEnumMediaTypes)) ;
+    CEnumMediaTypes *This = (CEnumMediaTypes*) mp_malloc(sizeof(CEnumMediaTypes)) ;
 
     if (!This)
         return NULL;
 
-    This->vt = (IEnumMediaTypes_vt*) malloc(sizeof(IEnumMediaTypes_vt));
+    This->vt = (IEnumMediaTypes_vt*) mp_malloc(sizeof(IEnumMediaTypes_vt));
     if (!This->vt)
     {
-	free(This);
+	mp_free(This);
 	return NULL;
     }
 
@@ -789,13 +789,13 @@ static void COutputPin_SetNewFormat(COutputPin* This, const AM_MEDIA_TYPE* amt)
 static void COutputPin_Destroy(COutputPin* This)
 {
     if (This->mempin->vt)
-	free(This->mempin->vt);
+	mp_free(This->mempin->vt);
     if (This->mempin)
-	free(This->mempin);
+	mp_free(This->mempin);
     if (This->vt)
-	free(This->vt);
+	mp_free(This->vt);
     FreeMediaType(&(This->type));
-    free(This);
+    mp_free(This);
 }
 
 /**
@@ -889,20 +889,20 @@ static HRESULT STDCALL COutputMemPin_Release(IUnknown* This)
  */
 COutputPin* COutputPinCreate(const AM_MEDIA_TYPE* amt,SAMPLEPROC SampleProc,any_t* pUserData)
 {
-    COutputPin* This = (COutputPin*) malloc(sizeof(COutputPin));
+    COutputPin* This = (COutputPin*) mp_malloc(sizeof(COutputPin));
     IMemInputPin_vt* ivt;
 
     if (!This)
         return NULL;
 
-    This->vt = (IPin_vt*) malloc(sizeof(IPin_vt));
-    This->mempin = (COutputMemPin*) malloc(sizeof(COutputMemPin));
-    ivt = (IMemInputPin_vt*) malloc(sizeof(IMemInputPin_vt));
+    This->vt = (IPin_vt*) mp_malloc(sizeof(IPin_vt));
+    This->mempin = (COutputMemPin*) mp_malloc(sizeof(COutputMemPin));
+    ivt = (IMemInputPin_vt*) mp_malloc(sizeof(IMemInputPin_vt));
 
     if (!This->vt || !This->mempin || !ivt)
     {
         COutputPin_Destroy(This);
-        free(ivt);
+        mp_free(ivt);
 	return NULL;
     }
 

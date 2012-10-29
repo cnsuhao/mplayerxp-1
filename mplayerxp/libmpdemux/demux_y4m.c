@@ -18,6 +18,7 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "demux_msg.h"
 
 typedef struct {
@@ -41,7 +42,7 @@ static int y4m_probe(demuxer_t* demuxer){
 	    return 0;
     }
 
-    demuxer->priv = malloc(sizeof(y4m_priv_t));
+    demuxer->priv = mp_malloc(sizeof(y4m_priv_t));
     priv = demuxer->priv;
 
     priv->is_older = 0;
@@ -124,7 +125,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
     int err;
 
     priv->framenum = 0;
-    priv->si = malloc(sizeof(y4m_stream_info_t));
+    priv->si = mp_malloc(sizeof(y4m_stream_info_t));
 
     if (priv->is_older)
     {
@@ -205,7 +206,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 
     sh->fourcc = mmioFOURCC('Y', 'V', '1', '2');
 
-    sh->bih=malloc(sizeof(BITMAPINFOHEADER));
+    sh->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
     memset(sh->bih,0,sizeof(BITMAPINFOHEADER));
     sh->bih->biSize=40;
     sh->bih->biWidth = sh->src_w;
@@ -259,8 +260,8 @@ static void y4m_close(demuxer_t *demuxer)
       return;
     if (!priv->is_older)
 	y4m_fini_stream_info(((y4m_priv_t*)demuxer->priv)->si);
-    free(((y4m_priv_t*)demuxer->priv)->si);
-    free(demuxer->priv);
+    mp_free(((y4m_priv_t*)demuxer->priv)->si);
+    mp_free(demuxer->priv);
     return;
 }
 

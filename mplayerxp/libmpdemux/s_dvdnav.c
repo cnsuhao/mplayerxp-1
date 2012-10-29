@@ -12,13 +12,14 @@
 #include "libmpsub/spudec.h"
 #include "libvo/sub.h"
 #include "input/input.h"
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "demux_msg.h"
 
 #include <dvdnav/dvdnav.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "../osdep/timer.h"
+#include "osdep/timer.h"
+#include "osdep/mplib.h"
 #include "mrl.h"
 #define DVD_BLOCK_SIZE 2048
 
@@ -67,23 +68,23 @@ static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * fi
   if (!filename)
     return NULL;
 
-  if (!(dvdnav_priv=(dvdnav_priv_t*)calloc(1,sizeof(*dvdnav_priv))))
+  if (!(dvdnav_priv=(dvdnav_priv_t*)mp_calloc(1,sizeof(*dvdnav_priv))))
     return NULL;
 
-  if (!(dvdnav_priv->filename=strdup(filename))) {
-    free(dvdnav_priv);
+  if (!(dvdnav_priv->filename=mp_strdup(filename))) {
+    mp_free(dvdnav_priv);
     return NULL;
   }
 
   if(dvdnav_open(&(dvdnav_priv->dvdnav),dvdnav_priv->filename)!=DVDNAV_STATUS_OK)
   {
-    free(dvdnav_priv->filename);
-    free(dvdnav_priv);
+    mp_free(dvdnav_priv->filename);
+    mp_free(dvdnav_priv);
     return NULL;
   }
 
   if (!dvdnav_priv->dvdnav) {
-    free(dvdnav_priv);
+    mp_free(dvdnav_priv);
     return NULL;
   }
 
@@ -213,20 +214,20 @@ static int __FASTCALL__ __dvdnav_open(stream_t *stream,const char *filename,unsi
 	    else
 		goto dvd_ok;
 	}
-	free(stream->priv);
-	if(dvd_device) free(dvd_device);
+	mp_free(stream->priv);
+	if(dvd_device) mp_free(dvd_device);
         return 0;
     }
     dvd_ok:
-    if(dvd_device) free(dvd_device);
+    if(dvd_device) mp_free(dvd_device);
     ((dvdnav_priv_t *)stream->priv)->started=1;
     if(mp_conf.s_cache_size)
     {
-	tevent = malloc(sizeof(dvdnav_event_t));
+	tevent = mp_malloc(sizeof(dvdnav_event_t));
 	if(tevent) 
-	    if((tevent->details=malloc(DVD_BLOCK_SIZE))==NULL)
+	    if((tevent->details=mp_malloc(DVD_BLOCK_SIZE))==NULL)
 	    {
-		free(tevent);
+		mp_free(tevent);
 		tevent=NULL;
 	    }
     }
@@ -419,8 +420,8 @@ static void __FASTCALL__ __dvdnav_close(stream_t *stream)
 {
   dvdnav_priv_t *dvdnav_priv=stream->priv;
   dvdnav_close(dvdnav_priv->dvdnav);
-  free(dvdnav_priv);
-  if(tevent) { free(tevent->details); free(tevent); }
+  mp_free(dvdnav_priv);
+  if(tevent) { mp_free(tevent->details); mp_free(tevent); }
 }
 
 /**

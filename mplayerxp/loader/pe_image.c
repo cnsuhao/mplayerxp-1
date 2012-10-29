@@ -1,4 +1,4 @@
-/* 
+/*
  *  Copyright	1994	Eric Youndale & Erik Bos
  *  Copyright	1995	Martin von Löwis
  *  Copyright   1996-98 Marcus Meissner
@@ -34,6 +34,7 @@
  *   to 4096 byte boundaries on disk.
  */
 #include "config.h"
+#include "osdep/mplib.h"
 
 #include <errno.h>
 #include <assert.h>
@@ -800,7 +801,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule,
     wm->binfmt.pe.pe_resource = pe_resource;
     wm->binfmt.pe.tlsindex = -1;
 
-    wm->filename = malloc(strlen(filename)+1);
+    wm->filename = mp_malloc(strlen(filename)+1);
     strcpy(wm->filename, filename );
     wm->modname = strrchr( wm->filename, '\\' );
     if (!wm->modname) wm->modname = wm->filename;
@@ -873,9 +874,9 @@ void PE_UnloadLibrary(WINE_MODREF *wm)
     TRACE(" unloading %s\n", wm->filename);
 
     if (wm->filename)
-	free(wm->filename);
+	mp_free(wm->filename);
     if (wm->short_filename)
-	free(wm->short_filename);
+	mp_free(wm->short_filename);
     HeapFree( GetProcessHeap(), 0, wm->deps );
     VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE );
     HeapFree( GetProcessHeap(), 0, wm );

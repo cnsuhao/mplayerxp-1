@@ -9,6 +9,7 @@
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
+#include "osdep/mplib.h"
 
 #define	KEYWORD_BYTES	4
 #define	VERSION_BYTES	8
@@ -52,7 +53,7 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
   s = demuxer->stream;
 
   sh_audio = new_sh_audio(demuxer,0);
-  sh_audio->wf = w = (WAVEFORMATEX*)malloc(sizeof(WAVEFORMATEX)+sizeof(headerInfo));
+  sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX)+sizeof(headerInfo));
   hi = (headerInfo *)&w[1];
   memset(hi,0,sizeof(headerInfo));
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('T','W','I','N'); /* TWinVQ */

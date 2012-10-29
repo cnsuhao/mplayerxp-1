@@ -242,7 +242,7 @@ struct m_option_type {
    *  \param dst Pointer to the data, usually a pointer that should be freed and
    *             set to NULL.
    */
-  void (*free)(any_t* dst);
+  void (*mp_free)(any_t* dst);
 };
 
 ///@}
@@ -496,11 +496,11 @@ m_option_copy(const m_option_t* opt,any_t* dst, any_t* src) {
     memcpy(dst,src,opt->type->size);
 }
 
-/// Helper around \ref m_option_type::free.
+/// Helper around \ref m_option_type::mp_free.
 inline static void
 m_option_free(const m_option_t* opt,any_t* dst) {
-  if(opt->type->free)
-    opt->type->free(dst);
+  if(opt->type->mp_free)
+    opt->type->mp_free(dst);
 }
 
 /*@}*/

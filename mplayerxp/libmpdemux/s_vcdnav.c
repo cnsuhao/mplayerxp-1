@@ -11,6 +11,7 @@
 
 #include <libvcd/info.h>
 #include <libvcd/logging.h>
+#include "osdep/mplib.h"
 #include "mrl.h"
 #include "help_mp.h"
 
@@ -72,7 +73,7 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     if(param) vcd_track=atoi(param);
-    priv=stream->priv=calloc(1,sizeof(vcd_priv_t));
+    priv=stream->priv=mp_calloc(1,sizeof(vcd_priv_t));
 //    vcdinfo_init(priv->fd);
     if(mp_conf.verbose>1) vcd_loglevel_default=VCD_LOG_DEBUG;
     else if(mp_conf.verbose) vcd_loglevel_default=VCD_LOG_INFO;
@@ -81,11 +82,11 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     {
 	dev=DEFAULT_CDROM_DEVICE;
 	open_rc=vcdinfo_open(&priv->fd,device?&device:&dev,DRIVER_UNKNOWN,NULL);
-	free(device);
+	mp_free(device);
 	if(!priv->fd)
 	{
 	    MSG_ERR("Can't open stream\n");
-	    free(priv);
+	    mp_free(priv);
 	    _cdio_detect_media(device?device:dev);
 	    return 0;
 	}
@@ -95,7 +96,7 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     MSG_DBG2("VCDNAV geometry:\n");
     if((priv->ntracks=vcdinfo_get_num_tracks(priv->fd))>0)
     {
-	priv->track=calloc(priv->ntracks,sizeof(vcd_item_info_t));
+	priv->track=mp_calloc(priv->ntracks,sizeof(vcd_item_info_t));
 	for(i=0;i<priv->ntracks;i++)
 	{
 	    priv->track[i].size=vcdinfo_get_track_sect_count(priv->fd,i+1);
@@ -107,7 +108,7 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     }
     if((priv->nentries=vcdinfo_get_num_entries(priv->fd))>0)
     {
-	priv->entry=calloc(priv->nentries,sizeof(vcd_item_info_t));
+	priv->entry=mp_calloc(priv->nentries,sizeof(vcd_item_info_t));
 	for(i=0;i<priv->nentries;i++)
 	{
 	    priv->entry[i].size=vcdinfo_get_entry_sect_count(priv->fd,i);
@@ -117,7 +118,7 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     }
     if((priv->nsegments=vcdinfo_get_num_segments(priv->fd))>0)
     {
-	priv->segment=calloc(priv->nsegments,sizeof(vcd_item_info_t));
+	priv->segment=mp_calloc(priv->nsegments,sizeof(vcd_item_info_t));
 	for(i=0;i<priv->nsegments;i++)
 	{
 	    priv->segment[i].size=vcdinfo_get_seg_sector_count(priv->fd,i);
@@ -256,10 +257,10 @@ static void __FASTCALL__ _vcdnav_close(stream_t*stream)
     vcd_priv_t*priv=stream->priv;
     MSG_DBG2("vcdnav_close\n");
     vcdinfo_close(((vcd_priv_t *)stream->priv)->fd);
-    if(priv->track) free(priv->track);
-    if(priv->entry) free(priv->entry);
-    if(priv->segment) free(priv->segment);
-    free(stream->priv);
+    if(priv->track) mp_free(priv->track);
+    if(priv->entry) mp_free(priv->entry);
+    if(priv->segment) mp_free(priv->segment);
+    mp_free(stream->priv);
 }
 static int __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);

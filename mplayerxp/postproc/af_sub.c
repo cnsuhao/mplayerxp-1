@@ -20,11 +20,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 #include <inttypes.h>
 
 #include "af.h"
 #include "dsp.h"
+#include "osdep/mplib.h"
 
 // Q value for low-pass filter
 #define Q 1.0
@@ -119,9 +120,9 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 #ifndef IIR
@@ -165,8 +166,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=s=calloc(1,sizeof(af_sub_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=s=mp_calloc(1,sizeof(af_sub_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
   // Set default values

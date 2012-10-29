@@ -6,7 +6,7 @@
  *  This file is ripped from the lavtools package (mjpeg.sourceforge.net)
  *  Ported to mplayer by Rik Snel <snel@phys.uu.nl>
  *
- *  This program is free software; you can redistribute it and/or
+ *  This program is mp_free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
@@ -22,7 +22,7 @@
  *
  */
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <unistd.h>
 #include <stdio.h>
@@ -31,11 +31,12 @@
 #include "yuv4mpeg.h"
 #include "yuv4mpeg_intern.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 static int _y4mparam_allow_unknown_tags = 1;  /* default is forgiveness */
 
-static any_t*(*_y4m_alloc)(size_t bytes) = malloc;
-static void (*_y4m_free)(any_t*ptr) = free;
+static any_t*(*_y4m_alloc)(size_t bytes) = mp_malloc;
+static void (*_y4m_free)(any_t*ptr) = mp_free;
 
 int y4m_allow_unknown_tags(int yn) {
 	int old = _y4mparam_allow_unknown_tags;

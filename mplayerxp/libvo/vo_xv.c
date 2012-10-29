@@ -19,6 +19,7 @@
 #include "mp_config.h"
 #include "mplayer.h"
 #include "xmp_core.h"
+#include "osdep/mplib.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 
@@ -557,12 +558,12 @@ static void uninit(vo_data_t*vo)
     vo_vm_close(vo,vo->mDisplay);
 #endif
     vo_x11_uninit(vo,vo->mDisplay, vo->window);
-    free(vo->priv);
+    mp_free(vo->priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=malloc(sizeof(priv_t));
+    vo->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     memset(priv,0,sizeof(priv_t));
     priv->num_buffers=1;

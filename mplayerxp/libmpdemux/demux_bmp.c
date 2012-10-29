@@ -63,7 +63,7 @@ static int demux_rw_close(struct SDL_RWops *context)
 
 static void demux_dup_rw_stream(demuxer_t* demuxer, struct SDL_RWops*rwops)
 {
-    /* it's not a danger to malloc 8 bytes */
+    /* it's not a danger to mp_malloc 8 bytes */
     rwops->hidden.unknown.data1=demuxer;
     rwops->type=0;
     rwops->close=demux_rw_close;
@@ -251,7 +251,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
 
   // load the BITMAPINFOHEADER
   // allocate size and take the palette table into account
-  sh_video->bih = (BITMAPINFOHEADER *)malloc(data_offset - 12);
+  sh_video->bih = (BITMAPINFOHEADER *)mp_malloc(data_offset - 12);
   sh_video->bih->biSize = stream_read_dword_le(demuxer->stream);
   sh_video->bih->biWidth = stream_read_dword_le(demuxer->stream);
   sh_video->bih->biHeight = stream_read_dword_le(demuxer->stream);
@@ -268,7 +268,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
     sh_video->bih->biClrUsed * 4);
 
   // load the data
-  bmp_image = (bmp_image_t *)malloc(sizeof(bmp_image_t));
+  bmp_image = (bmp_image_t *)mp_malloc(sizeof(bmp_image_t));
   bmp_image->image_size = filesize - data_offset;
   bmp_image->image_offset = data_offset;
 
@@ -292,7 +292,7 @@ static void bmp_close(demuxer_t* demuxer) {
 
   if(!bmp_image)
     return;
-  free(bmp_image);
+  mp_free(bmp_image);
 }
 #endif
 

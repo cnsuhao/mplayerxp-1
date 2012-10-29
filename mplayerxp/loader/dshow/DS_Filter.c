@@ -1,4 +1,5 @@
-#include "../../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 #include "DS_Filter.h"
 #include "driver.h"
 #include "com.h"
@@ -79,7 +80,7 @@ void DS_Filter_Destroy(DS_Filter* This)
     if (This->m_iHandle)
 	FreeLibrary((unsigned)This->m_iHandle);
 
-    free(This);
+    mp_free(This);
 
 #ifdef HAVE_WIN32LOADER
     CodecRelease();
@@ -123,7 +124,7 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
     MemAllocator* tempAll;
     ALLOCATOR_PROPERTIES props,props1;
     HRESULT result;
-    DS_Filter* This = (DS_Filter*) malloc(sizeof(DS_Filter));
+    DS_Filter* This = (DS_Filter*) mp_malloc(sizeof(DS_Filter));
     if (!This)
 	return NULL;
 

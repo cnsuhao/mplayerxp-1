@@ -11,6 +11,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 
 #ifdef OSD_SUPPORT
 #include "libvo/sub.h"
@@ -199,7 +200,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     vf->print_conf=print_conf;
-    if(!vf->priv) vf->priv=malloc(sizeof(struct vf_priv_s));
+    if(!vf->priv) vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv,0,sizeof(struct vf_priv_s));
     vf->priv->panscan=0;
     if(args) sscanf(args,"%f",&vf->priv->panscan);
@@ -260,7 +261,7 @@ static int __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     vf->print_conf=print_conf;
-    if(!vf->priv) vf->priv=malloc(sizeof(struct vf_priv_s));
+    if(!vf->priv) vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv,0,sizeof(struct vf_priv_s));
     vf->priv->ps_x=
     vf->priv->ps_y=

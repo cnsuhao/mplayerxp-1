@@ -1,7 +1,7 @@
 /*
     Copyright (C) 2007 Michael Niedermayer <michaelni@gmx.at>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -24,7 +24,7 @@
  * @todo use QP to decide filter strength
  * @todo wavelet normalization / least squares optimal signal vs. noise thresholds
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
@@ -32,12 +32,8 @@
 
 #include "mp_config.h"
 
-
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
+#include "osdep/mplib.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "pp_msg.h"
@@ -215,7 +211,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, 
     vf->priv->stride= (width+15)&(~15);
     for(j=0; j<4; j++){
         for(i=0; i<=vf->priv->depth; i++)
-            vf->priv->plane[i][j]= malloc(vf->priv->stride*h*sizeof(vf->priv->plane[0][0][0]));
+            vf->priv->plane[i][j]= mp_malloc(vf->priv->stride*h*sizeof(vf->priv->plane[0][0][0]));
     }
 
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
@@ -278,12 +274,12 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 
     for(j=0; j<4; j++){
         for(i=0; i<16; i++){
-            free(vf->priv->plane[i][j]);
+            mp_free(vf->priv->plane[i][j]);
             vf->priv->plane[i][j]= NULL;
         }
     }
 
-    free(vf->priv);
+    mp_free(vf->priv);
     vf->priv=NULL;
 }
 
@@ -313,7 +309,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->get_image=get_image;
     vf->query_format=query_format;
     vf->uninit=uninit;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv, 0, sizeof(struct vf_priv_s));
 
     vf->priv->depth= 8;

@@ -7,6 +7,7 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/fastmemcpy.h"
 #include "af.h"
+#include "osdep/mplib.h"
 
 #define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)
 
@@ -107,7 +108,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
         return AF_ERROR;
     }
     s->frame_size = s->lavc_context->frame_size*((af_data_t*)arg)->nch*2/*bps*/;
-    s->tail=malloc(s->frame_size);
+    s->tail=mp_malloc(s->frame_size);
     /* correct in format */
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->nch    = ((af_data_t*)arg)->nch;
@@ -144,12 +145,12 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
   af_ffenc_t *s=af->setup;
   avcodec_close(s->lavc_context);
   if(s->lavc_context)
-    free(s->lavc_context);
-  free(s->tail);
+    mp_free(s->lavc_context);
+  mp_free(s->tail);
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // Filter data through filter
@@ -162,9 +163,9 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   uint8_t *inp,*outp;
 
   ilen=tlen=in->len;
-  if(out->len<tlen) if(out->audio) free(out->audio);
+  if(out->len<tlen) if(out->audio) mp_free(out->audio);
   // Create new buffer and check that it is OK
-  out->audio = malloc(tlen);
+  out->audio = mp_malloc(tlen);
   MSG_DBG2("ff_encoding %u bytes frame_size=%u tail=%lu\n",tlen,s->frame_size,s->tail_size);
   if(out->audio) {
     out->len=0;
@@ -210,8 +211,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->data=malloc(sizeof(af_data_t));
-  af->setup=calloc(1,sizeof(af_ffenc_t));
+  af->data=mp_malloc(sizeof(af_data_t));
+  af->setup=mp_calloc(1,sizeof(af_ffenc_t));
   if(af->data == NULL) return AF_ERROR;
   return AF_OK;
 }

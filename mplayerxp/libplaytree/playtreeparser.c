@@ -15,6 +15,7 @@
 #include "asxparser.h"
 #include "playtree.h"
 #include "playtreeparser.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "__mp_msg.h"
 
@@ -41,7 +42,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
   int r,resize = 0;
 
   if(p->buffer == NULL) {
-    p->buffer = (char*)malloc(BUF_STEP);
+    p->buffer = (char*)mp_malloc(BUF_STEP);
     p->buffer_size = BUF_STEP;
     p->iter = p->buffer;
   }
@@ -53,7 +54,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
 
     if(resize) {
       r = p->iter - p->buffer;
-      p->buffer = (char*)realloc(p->buffer,p->buffer_size+BUF_STEP);
+      p->buffer = (char*)mp_realloc(p->buffer,p->buffer_size+BUF_STEP);
       p->iter = p->buffer + r;
       p->buffer_size += BUF_STEP;
       resize = 0;
@@ -81,7 +82,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
 
   line_end = (end > p->iter && *(end-1) == '\r') ? end-1 : end;
   if(line_end - p->iter >= 0)
-    p->line = (char*)realloc(p->line,line_end - p->iter+1);
+    p->line = (char*)mp_realloc(p->line,line_end - p->iter+1);
   else
     return NULL;
   if(line_end - p->iter > 0)
@@ -214,7 +215,7 @@ static int __FASTCALL__ pls_read_entry(char* line,pls_entry_t** _e,int* _max_ent
     MSG_WARN("No entry index in entry %s\nAssuming %d\n",line,num);
   }
   if(num > max_entry) {
-    e = (pls_entry_t*)realloc(e,num*sizeof(pls_entry_t));
+    e = (pls_entry_t*)mp_realloc(e,num*sizeof(pls_entry_t));
     memset(&e[max_entry],0,(num-max_entry)*sizeof(pls_entry_t));
     max_entry = num;
   }
@@ -265,19 +266,19 @@ parse_pls(play_tree_parser_t* p) {
       if(num < 0)
 	MSG_ERR("No value in entry %s\n",line);
       else
-	entries[num-1].file = strdup(v);
+	entries[num-1].file = mp_strdup(v);
     } else if(strncasecmp(line,"Title",5) == 0) {
       num = pls_read_entry(line+5,&entries,&max_entry,&v);
       if(num < 0)
 	MSG_ERR("No value in entry %s\n",line);
       else
-	entries[num-1].title = strdup(v);
+	entries[num-1].title = mp_strdup(v);
     } else if(strncasecmp(line,"Length",6) == 0) {
       num = pls_read_entry(line+6,&entries,&max_entry,&v);
       if(num < 0)
 	MSG_ERR("No value in entry %s\n",line);
       else
-	entries[num-1].length = strdup(v);
+	entries[num-1].length = mp_strdup(v);
     } else 
       MSG_WARN("Unknow entry type %s\n",line);
     line = play_tree_parser_get_line(p);
@@ -290,7 +291,7 @@ parse_pls(play_tree_parser_t* p) {
       MSG_DBG2("Adding entry %s\n",entries[num].file);
       entry = play_tree_new();
       play_tree_add_file(entry,entries[num].file);
-      free(entries[num].file);
+      mp_free(entries[num].file);
       if(list)
 	play_tree_append_entry(list,entry);
       else
@@ -298,15 +299,15 @@ parse_pls(play_tree_parser_t* p) {
     }
     if(entries[num].title) {
       // When we have info in playtree we add this info
-      free(entries[num].title);
+      mp_free(entries[num].title);
     }
     if(entries[num].length) {
       // When we have info in playtree we add this info
-      free(entries[num].length);
+      mp_free(entries[num].length);
     }
   }
 
-  free(entries);
+  mp_free(entries);
 
   entry = play_tree_new();
   play_tree_set_child(entry,list);	
@@ -377,7 +378,7 @@ play_tree_t* parse_playlist_file(const char* file) {
 play_tree_parser_t* play_tree_parser_new(stream_t * stream,int deep) {
   play_tree_parser_t* p;
 
-  p = (play_tree_parser_t*)calloc(1,sizeof(play_tree_parser_t));
+  p = (play_tree_parser_t*)mp_calloc(1,sizeof(play_tree_parser_t));
   if(!p)
     return NULL;
   p->stream = stream;
@@ -395,9 +396,9 @@ play_tree_parser_free(play_tree_parser_t* p) {
   assert(p != NULL);
 #endif
 
-  if(p->buffer) free(p->buffer);
-  if(p->line) free(p->line);
-  free(p);
+  if(p->buffer) mp_free(p->buffer);
+  if(p->line) mp_free(p->line);
+  mp_free(p);
 }
 
 play_tree_t*

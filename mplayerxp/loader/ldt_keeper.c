@@ -19,6 +19,7 @@
  */
 
 #include "ldt_keeper.h"
+#include "osdep/mplib.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -101,7 +102,7 @@ struct modify_ldt_ldt_s {
 /* user level (privilege level: 3) ldt (1<<2) segment selector */
 #define       LDT_SEL(idx) ((idx) << 3 | 1 << 2 | 3)
 
-/* i got this value from wine sources, it's the first free LDT entry */
+/* i got this value from wine sources, it's the first mp_free LDT entry */
 #if defined(__FreeBSD__) && defined(LDT_AUTO_ALLOC)
 #define       TEB_SEL_IDX     LDT_AUTO_ALLOC
 #endif
@@ -189,7 +190,7 @@ ldt_fs_t* Setup_LDT_Keeper(void)
 {
     struct modify_ldt_ldt_s array;
     int ret;
-    ldt_fs_t* ldt_fs = (ldt_fs_t*) malloc(sizeof(ldt_fs_t));
+    ldt_fs_t* ldt_fs = (ldt_fs_t*) mp_malloc(sizeof(ldt_fs_t));
 
     if (!ldt_fs)
 	return NULL;
@@ -197,7 +198,7 @@ ldt_fs_t* Setup_LDT_Keeper(void)
     ldt_fs->fd = open("/dev/zero", O_RDWR);
     if(ldt_fs->fd<0){
         perror( "Cannot open /dev/zero for READ+WRITE. Check permissions! error: ");
-        free(ldt_fs);
+        mp_free(ldt_fs);
 	return NULL;
     }
     fs_seg=
@@ -207,7 +208,7 @@ ldt_fs_t* Setup_LDT_Keeper(void)
     {
 	perror("ERROR: Couldn't allocate memory for fs segment");
         close(ldt_fs->fd);
-        free(ldt_fs);
+        mp_free(ldt_fs);
 	return NULL;
     }
     *(any_t**)((char*)ldt_fs->fs_seg+0x18) = ldt_fs->fs_seg;
@@ -273,7 +274,7 @@ ldt_fs_t* Setup_LDT_Keeper(void)
 
     Setup_FS_Segment();
 
-    ldt_fs->prev_struct = malloc(8);
+    ldt_fs->prev_struct = mp_malloc(8);
     *(any_t**)array.base_addr = ldt_fs->prev_struct;
 
     return ldt_fs;
@@ -284,9 +285,9 @@ void Restore_LDT_Keeper(ldt_fs_t* ldt_fs)
     if (ldt_fs == NULL || ldt_fs->fs_seg == 0)
 	return;
     if (ldt_fs->prev_struct)
-	free(ldt_fs->prev_struct);
+	mp_free(ldt_fs->prev_struct);
     munmap((char*)ldt_fs->fs_seg, getpagesize());
     ldt_fs->fs_seg = 0;
     close(ldt_fs->fd);
-    free(ldt_fs);
+    mp_free(ldt_fs);
 }

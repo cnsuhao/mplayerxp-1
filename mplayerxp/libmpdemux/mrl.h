@@ -12,8 +12,8 @@
   * @param port		buffer which will contain port of media source if present (maybe NULL)
   * @return		pointer to tail of source line (arguments)
   *
-  * @warning		All pointers will be allocated by malloc() and should be
-  *			destroyed with calling of free() function.
+  * @warning		All pointers will be allocated by mp_malloc() and should be
+  *			destroyed with calling of mp_free() function.
   * @note		line must not contain initial MRL descriptor (like dvdnav:// ftp:// ...)
   * @remark		Description of MRL:
   *			UPR://~user*pass@media_source:port#arg1=value1,arg2=value2,arg3=value3
@@ -31,7 +31,7 @@ extern const char *mrl_parse_line(const char *line,char **user,char **pass,char 
 #define MRL_TYPE_STRING		4 /**< String type. Accepts any values */
 
 /** Structurizes argument's parsing
-  * @note		all string arguments will be allocated by malloc() function
+  * @note		all string arguments will be allocated by mp_malloc() function
 **/
 typedef struct mrl_config
 {

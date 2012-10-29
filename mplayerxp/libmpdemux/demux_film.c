@@ -20,6 +20,7 @@
 #include "help_mp.h"
 
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
@@ -209,7 +210,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
   int counting_chunks;
   unsigned int total_audio_bytes = 0;
 
-  film_data = (film_data_t *)malloc(sizeof(film_data_t));
+  film_data = (film_data_t *)mp_malloc(sizeof(film_data_t));
   film_data->total_chunks = 0;
   film_data->current_chunk = 0;
   film_data->chunks = NULL;
@@ -225,7 +226,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
   if (chunk_type != CHUNK_FILM)
   {
     MSG_ERR( "Not a FILM file\n");
-    free(film_data);
+    mp_free(film_data);
     return NULL;
   }
 
@@ -298,7 +299,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
           demuxer->audio->sh = sh_audio;
           sh_audio->ds = demuxer->audio;
 
-          sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
+          sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 
           // uncompressed PCM format
           sh_audio->wf->wFormatTag = 1;
@@ -329,7 +330,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
         demuxer->audio->sh = sh_audio;
         sh_audio->ds = demuxer->audio;
 
-        sh_audio->wf = (WAVEFORMATEX *)malloc(sizeof(WAVEFORMATEX));
+        sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 
         // uncompressed PCM format
         sh_audio->wf->wFormatTag = 1;
@@ -364,7 +365,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
 
       // allocate enough entries for the chunk
       film_data->chunks = 
-        (film_chunk_t *)malloc(film_data->total_chunks * sizeof(film_chunk_t));
+        (film_chunk_t *)mp_malloc(film_data->total_chunks * sizeof(film_chunk_t));
 
       // build the chunk index
       counting_chunks = 1;
@@ -430,8 +431,8 @@ static void film_close(demuxer_t* demuxer) {
   if(!film_data)
     return;
   if(film_data->chunks)
-    free(film_data->chunks);
-  free(film_data);
+    mp_free(film_data->chunks);
+  mp_free(film_data);
   
 }
 

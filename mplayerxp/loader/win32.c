@@ -17,7 +17,8 @@ for DLL to know too much about its environment.
  * $Id: win32.c,v 1.15 2007/11/22 18:51:39 nickols_k Exp $
  */
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 
 #define QTX 1
 #define REALPLAYER
@@ -52,9 +53,6 @@ for DLL to know too much about its environment.
 #include <ctype.h>
 #include <pthread.h>
 #include <errno.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #include <time.h>
 #include <math.h>
 #include <unistd.h>
@@ -268,7 +266,7 @@ static any_t* my_mreq(int size, int to_zero)
     //    test_heap();
     if(heap==NULL)
     {
-	heap=malloc(20000000);
+	heap=mp_malloc(20000000);
 	memset(heap, 0xCC,20000000);
     }
     if(heap==0)
@@ -298,7 +296,7 @@ static int my_release(char* memory)
     //    test_heap();
     if(memory==NULL)
     {
-	printf("ERROR: free(0)\n");
+	printf("ERROR: mp_free(0)\n");
 	return 0;
     }
     if(*(int*)(memory-8)!=0x433476)
@@ -351,7 +349,7 @@ any_t* mreq_private(int size, int to_zero, int type);
 any_t* mreq_private(int size, int to_zero, int type)
 {
     int nsize = size + sizeof(alloc_header);
-    alloc_header* header = (alloc_header* ) malloc(nsize);
+    alloc_header* header = (alloc_header* ) mp_malloc(nsize);
     if (!header)
         return 0;
     if (to_zero)
@@ -444,7 +442,7 @@ static int my_release(any_t* memory)
 	return 0;
 #endif
     //memset(header + 1, 0xcc, header->size);
-    free(header);
+    mp_free(header);
     return 0;
 }
 #endif
@@ -1335,7 +1333,7 @@ static void WINAPI expInitializeCriticalSection(CRITICAL_SECTION* c)
 	    return;
 	}
 	dbgprintf("got unused space at %d\n", i);
-	cs = malloc(sizeof(struct CRITSECT));
+	cs = mp_malloc(sizeof(struct CRITSECT));
 	if (!cs)
 	{
 	    printf("InitializeCriticalSection(%p) - out of memory\n", c);
@@ -1634,8 +1632,8 @@ static any_t* WINAPI expGlobalAlloc(int flags, int size)
     dbgprintf("GlobalAlloc(%d, flags 0x%X)\n", size, flags);
 
     z=my_mreq(size, (flags & GMEM_ZEROINIT));
-    //z=calloc(size, 1);
-    //z=malloc(size);
+    //z=mp_calloc(size, 1);
+    //z=mp_malloc(size);
     if(z==0)
 	printf("GlobalAlloc() failed\n");
     dbgprintf("GlobalAlloc(%d, flags 0x%x) => 0x%x\n", size, flags, z);
@@ -2085,14 +2083,14 @@ static any_t* WINAPI expGlobalFree(any_t* v)
 {
     dbgprintf("GlobalFree(0x%x) => 0\n", v);
     my_release(v);
-    //free(v);
+    //mp_free(v);
     return 0;
 }
 
 static any_t* WINAPI expGlobalReAlloc(any_t* v, int size, int flags)
 {
     any_t* result=my_realloc(v, size);
-    //any_t* result=realloc(v, size);
+    //any_t* result=mp_realloc(v, size);
     dbgprintf("GlobalReAlloc(0x%x, size %d, flags 0x%x) => 0x%x\n", v,size,flags,result);
     return result;
 }
@@ -2742,7 +2740,7 @@ static int WINAPI expGetPrivateProfileIntA(const char* appname,
 	dbgprintf("GetPrivateProfileIntA('%s', '%s', %d, '%s') => %d\n", appname, keyname, default_value, filename, default_value );
 	return default_value;
     }
-    fullname=malloc(50+strlen(appname)+strlen(keyname)+strlen(filename));
+    fullname=mp_malloc(50+strlen(appname)+strlen(keyname)+strlen(filename));
     strcpy(fullname, "Software\\IniFileMapping\\");
     strcat(fullname, appname);
     strcat(fullname, "\\");
@@ -2753,7 +2751,7 @@ static int WINAPI expGetPrivateProfileIntA(const char* appname,
     if((size>=0)&&(size<256))
 	buffer[size]=0;
     //    printf("GetPrivateProfileIntA(%s, %s, %s) -> %s\n", appname, keyname, filename, buffer);
-    free(fullname);
+    mp_free(fullname);
     if(result)
 	result=default_value;
     else
@@ -2780,7 +2778,7 @@ static int WINAPI expGetPrivateProfileStringA(const char* appname,
     char* fullname;
     dbgprintf("GetPrivateProfileStringA('%s', '%s', def_val '%s', 0x%x, 0x%x, '%s')", appname, keyname, def_val, dest, len, filename );
     if(!(appname && keyname && filename) ) return 0;
-    fullname=malloc(50+strlen(appname)+strlen(keyname)+strlen(filename));
+    fullname=mp_malloc(50+strlen(appname)+strlen(keyname)+strlen(filename));
     strcpy(fullname, "Software\\IniFileMapping\\");
     strcat(fullname, appname);
     strcat(fullname, "\\");
@@ -2789,7 +2787,7 @@ static int WINAPI expGetPrivateProfileStringA(const char* appname,
     strcat(fullname, filename);
     size=len;
     result=RegQueryValueExA(HKEY_LOCAL_MACHINE, fullname, NULL, NULL, (int*)dest, &size);
-    free(fullname);
+    mp_free(fullname);
     if(result)
     {
 	strncpy(dest, def_val, size);
@@ -2811,7 +2809,7 @@ static int WINAPI expWritePrivateProfileStringA(const char* appname,
 	dbgprintf(" => -1\n");
 	return -1;
     }
-    fullname=malloc(50+strlen(appname)+strlen(keyname)+strlen(filename));
+    fullname=mp_malloc(50+strlen(appname)+strlen(keyname)+strlen(filename));
     strcpy(fullname, "Software\\IniFileMapping\\");
     strcat(fullname, appname);
     strcat(fullname, "\\");
@@ -2821,7 +2819,7 @@ static int WINAPI expWritePrivateProfileStringA(const char* appname,
     RegSetValueExA(HKEY_LOCAL_MACHINE, fullname, 0, REG_SZ, (int*)string, strlen(string));
     //    printf("RegSetValueExA(%s,%d)\n", string, strlen(string));
     //    printf("WritePrivateProfileStringA(%s, %s, %s, %s)\n", appname, keyname, string, filename );
-    free(fullname);
+    mp_free(fullname);
     dbgprintf(" => 0\n");
     return 0;
 }
@@ -3219,7 +3217,7 @@ int RegisterComClass(const GUID* clsid, GETCLASSOBJECT gcs)
 {
     if(!clsid || !gcs)
 	return -1;
-    com_object_table=realloc(com_object_table, sizeof(struct COM_OBJECT_INFO)*(++com_object_size));
+    com_object_table=mp_realloc(com_object_table, sizeof(struct COM_OBJECT_INFO)*(++com_object_size));
     com_object_table[com_object_size-1].clsid=*clsid;
     com_object_table[com_object_size-1].GetClassObject=gcs;
     return 0;
@@ -3254,7 +3252,7 @@ int UnregisterComClass(const GUID* clsid, GETCLASSOBJECT gcs)
     {
 	if (--com_object_size == 0)
 	{
-	    free(com_object_table);
+	    mp_free(com_object_table);
 	    com_object_table = 0;
 	}
     }
@@ -3513,23 +3511,23 @@ static HANDLE WINAPI expCreateFileA(LPCSTR cs1,DWORD i1,DWORD i2,
     if(strstr(cs1, "QuickTime.qts"))
     {
 	int result;
-	char* tmp=malloc(strlen(def_path)+50);
+	char* tmp=mp_malloc(strlen(def_path)+50);
 	strcpy(tmp, def_path);
 	strcat(tmp, "/");
 	strcat(tmp, "QuickTime.qts");
 	result=open(tmp, O_RDONLY);
-	free(tmp);
+	mp_free(tmp);
 	return result;
     }
     if(strstr(cs1, ".qtx"))
     {
 	int result;
-	char* tmp=malloc(strlen(def_path)+250);
+	char* tmp=mp_malloc(strlen(def_path)+250);
 	char* x=strrchr(cs1,'\\');
 	sprintf(tmp,"%s/%s",def_path,x?(x+1):cs1);
 //	printf("### Open: %s -> %s\n",cs1,tmp);
 	result=open(tmp, O_RDONLY);
-	free(tmp);
+	mp_free(tmp);
 	return result;
     }
 #endif
@@ -3537,19 +3535,19 @@ static HANDLE WINAPI expCreateFileA(LPCSTR cs1,DWORD i1,DWORD i2,
     if(strncmp(cs1, "AP", 2) == 0)
     {
 	int result;
-	char* tmp=malloc(strlen(def_path)+50);
+	char* tmp=mp_malloc(strlen(def_path)+50);
 	strcpy(tmp, def_path);
 	strcat(tmp, "/");
 	strcat(tmp, "APmpg4v1.apl");
 	result=open(tmp, O_RDONLY);
-	free(tmp);
+	mp_free(tmp);
 	return result;
     }
     if (strstr(cs1, "vp3"))
     {
 	int r;
 	int flg = 0;
-	char* tmp=malloc(20 + strlen(cs1));
+	char* tmp=mp_malloc(20 + strlen(cs1));
 	strcpy(tmp, "/tmp/");
 	strcat(tmp, cs1);
 	r = 4;
@@ -3567,7 +3565,7 @@ static HANDLE WINAPI expCreateFileA(LPCSTR cs1,DWORD i1,DWORD i2,
 	    printf("Warning: openning filename %s  %d (flags; 0x%x) for write\n", tmp, r, flg);
 	}
 	r=open(tmp, flg);
-	free(tmp);
+	mp_free(tmp);
 	return r;
     }
 
@@ -3840,7 +3838,7 @@ static HRESULT WINAPI expCoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
 
 // required by PIM1 codec (used by win98 PCTV Studio capture sw)
 static HRESULT WINAPI expCoInitialize(
-				      LPVOID lpReserved	/* [in] pointer to win32 malloc interface
+				      LPVOID lpReserved	/* [in] pointer to win32 mp_malloc interface
 				      (obsolete, should be NULL) */
 				     )
 {
@@ -3882,27 +3880,27 @@ static DWORD WINAPI expSetThreadAffinityMask
  */
 static any_t* expmalloc(int size)
 {
-    //printf("malloc");
-    //    return malloc(size);
+    //printf("mp_malloc");
+    //    return mp_malloc(size);
     any_t* result=my_mreq(size,0);
-    dbgprintf("malloc(0x%x) => 0x%x\n", size,result);
+    dbgprintf("mp_malloc(0x%x) => 0x%x\n", size,result);
     if(result==0)
-	printf("WARNING: malloc() failed\n");
+	printf("WARNING: mp_malloc() failed\n");
     return result;
 }
 static void expfree(any_t* mem)
 {
-    //    return free(mem);
-    dbgprintf("free(%p)\n", mem);
+    //    return mp_free(mem);
+    dbgprintf("mp_free(%p)\n", mem);
     my_release(mem);
 }
 /* needed by atrac3.acm */
 static any_t*expcalloc(int num, int size)
 {
     any_t* result=my_mreq(num*size,1);
-    dbgprintf("calloc(%d,%d) => %p\n", num,size,result);
+    dbgprintf("mp_calloc(%d,%d) => %p\n", num,size,result);
     if(result==0)
-	printf("WARNING: calloc() failed\n");
+	printf("WARNING: mp_calloc() failed\n");
     return result;
 }
 static any_t* expnew(int size)
@@ -4478,7 +4476,7 @@ static void WINAPI expGlobalMemoryStatus(
     if (f)
     {
         char buffer[256];
-        int total, used, free, shared, buffers, cached;
+        int total, used, mp_free, shared, buffers, cached;
 
         lpmem->dwLength = sizeof(MEMORYSTATUS);
         lpmem->dwTotalPhys = lpmem->dwAvailPhys = 0;
@@ -4486,26 +4484,26 @@ static void WINAPI expGlobalMemoryStatus(
         while (fgets( buffer, sizeof(buffer), f ))
         {
 	    /* old style /proc/meminfo ... */
-            if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &free, &shared, &buffers, &cached ))
+            if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &mp_free, &shared, &buffers, &cached ))
             {
                 lpmem->dwTotalPhys += total;
-                lpmem->dwAvailPhys += free + buffers + cached;
+                lpmem->dwAvailPhys += mp_free + buffers + cached;
             }
-            if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &free ))
+            if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &mp_free ))
             {
                 lpmem->dwTotalPageFile += total;
-                lpmem->dwAvailPageFile += free;
+                lpmem->dwAvailPageFile += mp_free;
             }
 
 	    /* new style /proc/meminfo ... */
 	    if (sscanf(buffer, "MemTotal: %d", &total))
 	    	lpmem->dwTotalPhys = total*1024;
-	    if (sscanf(buffer, "MemFree: %d", &free))
-	    	lpmem->dwAvailPhys = free*1024;
+	    if (sscanf(buffer, "MemFree: %d", &mp_free))
+	    	lpmem->dwAvailPhys = mp_free*1024;
 	    if (sscanf(buffer, "SwapTotal: %d", &total))
 	        lpmem->dwTotalPageFile = total*1024;
-	    if (sscanf(buffer, "SwapFree: %d", &free))
-	        lpmem->dwAvailPageFile = free*1024;
+	    if (sscanf(buffer, "SwapFree: %d", &mp_free))
+	        lpmem->dwAvailPageFile = mp_free*1024;
 	    if (sscanf(buffer, "Buffers: %d", &buffers))
 	        lpmem->dwAvailPhys += buffers*1024;
 	    if (sscanf(buffer, "Cached: %d", &cached))
@@ -4667,7 +4665,7 @@ static HPALETTE WINAPI expCreatePalette(CONST LOGPALETTE *lpgpl)
     dbgprintf("CreatePalette(%x) => NULL\n", lpgpl);
 
     i = sizeof(LOGPALETTE)+((lpgpl->palNumEntries-1)*sizeof(PALETTEENTRY));
-    test = (HPALETTE)malloc(i);
+    test = (HPALETTE)mp_malloc(i);
     memcpy((any_t*)test, lpgpl, i);
 
     return test;
@@ -4734,7 +4732,7 @@ static void WINAPI expRegisterClipboardFormatA(const char *name) {
 /* needed by imagepower mjpeg2k */
 static any_t*exprealloc(any_t*ptr, size_t size)
 {
-    dbgprintf("realloc(0x%x, %x)\n", ptr, size);
+    dbgprintf("mp_realloc(0x%x, %x)\n", ptr, size);
     if (!ptr)
 	return my_mreq(size,0);
     else
@@ -5073,7 +5071,7 @@ struct exports exp_msvcrt[]={
     {"clock",-1,(any_t*)&clock},
     {"memchr",-1,(any_t*)&memchr},
     {"vfprintf",-1,(any_t*)&vfprintf},
-//    {"realloc",-1,(any_t*)&realloc},
+//    {"mp_realloc",-1,(any_t*)&mp_realloc},
     FF(realloc,-1)
     {"puts",-1,(any_t*)&puts}
 };
@@ -5213,9 +5211,9 @@ struct exports exp_oleaut32[]={
 /*  realplayer8:
 	DLL Name: PNCRT.dll
 	vma:  Hint/Ord Member-Name
-	22ff4	  615  free
+	22ff4	  615  mp_free
 	2302e	  250  _ftol
-	22fea	  666  malloc
+	22fea	  666  mp_malloc
 	2303e	  609  fprintf
 	2305e	  167  _adjust_fdiv
 	23052	  280  _initterm

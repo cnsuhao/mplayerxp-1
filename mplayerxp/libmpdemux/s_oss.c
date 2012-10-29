@@ -14,13 +14,14 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "../mplayer.h"
-#include "../postproc/af_format.h"
-#include "../postproc/af_mp.h"
-#include "../postproc/af.h"
-#include "../libao2/afmt.h"
-#include "../libao2/audio_out.h"
+#include "mplayer.h"
+#include "postproc/af_format.h"
+#include "postproc/af_mp.h"
+#include "postproc/af.h"
+#include "libao2/afmt.h"
+#include "libao2/audio_out.h"
 #include "loader/wine/mmreg.h"
+#include "osdep/mplib.h"
 #include "stream.h"
 #include "mrl.h"
 
@@ -42,7 +43,7 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
     unsigned tmp,param;
     int err;
     UNUSED(flags);
-    if(!(stream->priv = malloc(sizeof(oss_priv_t)))) return 0;
+    if(!(stream->priv = mp_malloc(sizeof(oss_priv_t)))) return 0;
     oss_priv=stream->priv;
     if(strcmp(filename,"help") == 0)
     {
@@ -69,7 +70,7 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
 	oss_priv->bps=2;
     }
     stream->fd = open(oss_device?oss_device:PATH_DEV_DSP,O_RDONLY);
-    if(stream->fd<0) { free(stream->priv); return 0; }
+    if(stream->fd<0) { mp_free(stream->priv); return 0; }
     ioctl(stream->fd, SNDCTL_DSP_RESET, NULL);
 //    ioctl(stream->fd, SNDCTL_DSP_SYNC, NULL);
     stream->type = STREAMTYPE_STREAM|STREAMTYPE_RAWAUDIO;
@@ -166,7 +167,7 @@ static void __FASTCALL__ oss_close(stream_t *stream)
 {
     ioctl(stream->fd, SNDCTL_DSP_RESET, NULL);
     close(stream->fd);
-    free(stream->priv);
+    mp_free(stream->priv);
 }
 
 static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,any_t*args)

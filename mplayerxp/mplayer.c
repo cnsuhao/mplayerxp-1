@@ -25,7 +25,7 @@
 #include "mp_config.h"
 #include "sig_hand.h"
 #include "mplayer.h"
-#include "osdep/my_malloc.h"
+#include "osdep/mplib.h"
 #include "postproc/swscale.h"
 #include "postproc/af.h"
 #include "postproc/vf.h"
@@ -178,13 +178,13 @@ static int cfg_include(struct config *conf, char *filename){
 
 
 static void mpxp_init_structs(void) {
-    mp_data=random_malloc(sizeof(mp_data_t),1000);
+    mp_data=mp_malloc(sizeof(mp_data_t));
     memset(mp_data,0,sizeof(mp_data_t));
     mp_data->seek_time=-1;
-    mp_data->bench=malloc(sizeof(time_usage_t));
+    mp_data->bench=mp_malloc(sizeof(time_usage_t));
     mp_data->use_pts_fix2=-1;
     memset(mp_data->bench,0,sizeof(time_usage_t));
-    mp_data->priv=malloc(sizeof(priv_t));
+    mp_data->priv=mp_malloc(sizeof(priv_t));
     memset(mp_data->priv,0,sizeof(priv_t));
     priv_t*priv=mp_data->priv;
     priv->osd_function=OSD_PLAY;
@@ -214,10 +214,11 @@ static void mpxp_init_structs(void) {
 }
 
 static void mpxp_uninit_structs(void) {
-    free(mp_data->bench);
-    free(mp_data->priv);
-    free(mp_data);
+    mp_free(mp_data->bench);
+    mp_free(mp_data->priv);
+    mp_free(mp_data);
     mp_data=NULL;
+    mp_uninit_malloc(1);
 }
 
 /* XP audio buffer */
@@ -253,10 +254,10 @@ audio_buffer_t audio_buffer;
 int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sha )
 {
     MSG_V("Using audio buffer %i bytes (min reserve = %i, indices %i)\n",size,min_reserv, indices);
-    if( !(audio_buffer.buffer = malloc(size)) )
+    if( !(audio_buffer.buffer = mp_malloc(size)) )
         return ENOMEM;
-    if( !(audio_buffer.indices = malloc(indices*sizeof(audio_buffer_index_t))) ) {
-        free(audio_buffer.buffer);
+    if( !(audio_buffer.indices = mp_malloc(indices*sizeof(audio_buffer_index_t))) ) {
+        mp_free(audio_buffer.buffer);
         audio_buffer.buffer=NULL;
         return ENOMEM;
     }
@@ -318,11 +319,11 @@ void uninit_audio_buffer(void)
     pthread_cond_destroy( &audio_buffer.wait_buffer_cond );
 
     if( audio_buffer.buffer )
-        free( audio_buffer.buffer );
+        mp_free( audio_buffer.buffer );
     audio_buffer.buffer = NULL;
 
     if( audio_buffer.indices )
-        free( audio_buffer.indices );
+        mp_free( audio_buffer.indices );
     audio_buffer.indices = NULL;
     /* audio_buffer.sh_audio = ?; */
 }
@@ -743,10 +744,10 @@ void parse_cfgfiles( m_config_t* conf )
 	MSG_WARN(MSGTR_NoHomeDir);
     } else {
 	mkdir(conffile, 0777);
-	free(conffile);
+	mp_free(conffile);
 	if ((conffile = get_path("config")) == NULL) {
 	    MSG_ERR(MSGTR_GetpathProblem);
-	    conffile=(char*)malloc(strlen("config")+1);
+	    conffile=(char*)mp_malloc(strlen("config")+1);
 	    if(conffile)
 		strcpy(conffile,"config");
 	}
@@ -757,7 +758,7 @@ void parse_cfgfiles( m_config_t* conf )
 	}
 	if (m_config_parse_config_file(conf, conffile) < 0)
 	    exit(1);
-	free(conffile);
+	mp_free(conffile);
     }
 }
 
@@ -861,47 +862,54 @@ static void init_player( void )
     if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0)
     {
 	vo_print_help(vo_data);
+	mpxp_uninit_structs();
 	exit(0);
     }
     if(mp_conf.audio_driver && strcmp(mp_conf.audio_driver,"help")==0)
     {
 	ao_print_help();
+	mpxp_uninit_structs();
 	exit(0);
     }
     if(mp_conf.video_family && strcmp(mp_conf.video_family,"help")==0){
-      vfm_help();
-      exit(0);
+	vfm_help();
+	mpxp_uninit_structs();
+	exit(0);
     }
     if(mp_conf.audio_family && strcmp(mp_conf.audio_family,"help")==0){
-      afm_help();
-      exit(0);
+	afm_help();
+	mpxp_uninit_structs();
+	exit(0);
     }
     if(vf_cfg.list && strcmp(vf_cfg.list,"help")==0){
-      vf_help();
-      MSG_INFO("\n");
-      exit(0);
+	vf_help();
+	mpxp_uninit_structs();
+	exit(0);
     }
     if(af_cfg.list && strcmp(af_cfg.list,"help")==0){
-      af_help();
-      MSG_INFO("\n");
-      exit(0);
+	af_help();
+	mpxp_uninit_structs();
+	exit(0);
     }
 
     /* check codec.conf*/
     if(!parse_codec_cfg(get_path("codecs.conf"))){
       if(!parse_codec_cfg(CONFDIR"/codecs.conf")){
-        MSG_HINT(MSGTR_CopyCodecsConf);
-        exit(0);
+	MSG_HINT(MSGTR_CopyCodecsConf);
+	mpxp_uninit_structs();
+	exit(0);
       }
     }
 
     if(mp_conf.audio_codec && strcmp(mp_conf.audio_codec,"help")==0){
-      list_codecs(1);
-      exit(0);
+	list_codecs(1);
+	mpxp_uninit_structs();
+	exit(0);
     }
     if(mp_conf.video_codec && strcmp(mp_conf.video_codec,"help")==0){
-      list_codecs(0);
-      exit(0);
+	list_codecs(0);
+	mpxp_uninit_structs();
+	exit(0);
     }
 }
 
@@ -925,8 +933,9 @@ void show_long_help(void) {
     /* check codec.conf*/
     if(!parse_codec_cfg(get_path("codecs.conf"))){
       if(!parse_codec_cfg(CONFDIR"/codecs.conf")){
-        MSG_HINT(MSGTR_CopyCodecsConf);
-        exit(0);
+	MSG_HINT(MSGTR_CopyCodecsConf);
+	mpxp_uninit_structs();
+	exit(0);
       }
     }
     list_codecs(0);
@@ -1208,7 +1217,7 @@ static int vplayer_do_sleep(int rtc_fd,float sleep_time)
     }
 
     while(sleep_time>XP_MIN_TIMESLICE) {
-	/* free cpu for threads */
+	/* mp_free cpu for threads */
 	usleep(1);
 	sleep_time-=GetRelativeTime();
     }
@@ -1584,7 +1593,7 @@ static char * mpxp_init_output_subsystems(void) {
 	if ((i=strcspn(mp_conf.video_driver, ":")) > 0) {
 	    size_t i2 = strlen(mp_conf.video_driver);
 	    if (mp_conf.video_driver[i] == ':') {
-		vo_conf.subdevice = malloc(i2-i);
+		vo_conf.subdevice = mp_malloc(i2-i);
 		if (vo_conf.subdevice != NULL)
 		    strncpy(vo_conf.subdevice, (char *)(mp_conf.video_driver+i+1), i2-i);
 		mp_conf.video_driver[i] = '\0';
@@ -1613,7 +1622,7 @@ static char * mpxp_init_output_subsystems(void) {
 
 	    if (mp_conf.audio_driver[i] == ':')
 	    {
-		rs = malloc(i2-i);
+		rs = mp_malloc(i2-i);
 		if (rs != NULL)  strncpy(rs, (char *)(mp_conf.audio_driver+i+1), i2-i);
 		mp_conf.audio_driver[i] = '\0';
 	    }
@@ -1642,11 +1651,11 @@ static int mpxp_init_vobsub(const char *filename) {
       }
     }else if(mp_conf.sub_auto && filename && (strlen(filename)>=5)){
       /* try to autodetect vobsub from movie filename ::atmos */
-      char *buf = malloc((strlen(filename)-3) * sizeof(char));
+      char *buf = mp_malloc((strlen(filename)-3) * sizeof(char));
       memset(buf,0,strlen(filename)-3); // make sure string is terminated
       strncpy(buf, filename, strlen(filename)-4); 
       vo_data->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&vo_data->spudec);
-      free(buf);
+      mp_free(buf);
     }
     if(vo_data->vobsub)
     {
@@ -1700,20 +1709,20 @@ static void mpxp_init_dvd_nls(void) {
     if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
     MP_UNIT("dvd lang->id");
     if(mp_conf.audio_lang) {
-	lang=malloc(max(strlen(mp_conf.audio_lang)+1,4));
+	lang=mp_malloc(max(strlen(mp_conf.audio_lang)+1,4));
 	strcpy(lang,mp_conf.audio_lang);
 	if(mp_conf.audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang) == SCTRL_OK) {
 	    mp_conf.audio_id=*(int *)lang;
 	}
-	free(lang);
+	mp_free(lang);
     }
     if(mp_conf.dvdsub_lang) {
-	lang=malloc(max(strlen(mp_conf.dvdsub_lang)+1,4));
+	lang=mp_malloc(max(strlen(mp_conf.dvdsub_lang)+1,4));
 	strcpy(lang,mp_conf.dvdsub_lang);
 	if(mp_conf.dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang) == SCTRL_OK) {
 	    mp_conf.dvdsub_id=*(int *)lang;
 	}
-	free(lang);
+	mp_free(lang);
     }
 }
 
@@ -2346,6 +2355,8 @@ int main(int argc,char* argv[], char *envp[]){
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 
+    mp_init_malloc(1000,10);
+
     mpxp_init_structs();
     priv_t*priv=mp_data->priv;
     vo_data=vo_preinit_structs();
@@ -2372,6 +2383,7 @@ int main(int argc,char* argv[], char *envp[]){
     if(!mp_conf.xp) {
 	MSG_ERR("Error: detected option: -core.xp=0\n"
 		"Note!  Single-thread mode is not longer supported by MPlayerXP\n");
+	mpxp_uninit_structs();
 	return 0;
     }
 
@@ -2381,6 +2393,7 @@ int main(int argc,char* argv[], char *envp[]){
 #endif
     if(!sws_init()) {
 	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
+	mpxp_uninit_structs();
 	return 0;
     }
     if(mp_conf.shuffle_playback) priv->playtree->flags|=PLAY_TREE_RND;
@@ -2403,6 +2416,7 @@ int main(int argc,char* argv[], char *envp[]){
 
     if(!filename){
 	show_help();
+	mpxp_uninit_structs();
 	return 0;
     }
 
@@ -2548,7 +2562,7 @@ play_next_file:
 	MSG_ERR(MSGTR_CannotInitAO);
 	sh_audio=d_audio->sh=NULL;
     }
-    if(ao_subdevice) free(ao_subdevice);
+    if(ao_subdevice) mp_free(ao_subdevice);
 
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");
@@ -2630,7 +2644,7 @@ main:
     } else {
 	MSG_INFO(MSGTR_NoSound);
 	if(mp_conf.verbose) MSG_V("Freeing %d unused audio chunks\n",d_audio->packs);
-	ds_free_packs(d_audio); // free buffered chunks
+	ds_free_packs(d_audio); // mp_free buffered chunks
 	d_audio->id=-2;         // do not read audio chunks
 	if(priv->ao_inited) uninit_player(INITED_AO); // close device
     }
@@ -2849,5 +2863,6 @@ while(playtree_iter != NULL) {
     if(stream_dump_type>1) dump_mux_close(priv->demuxer);
     exit_player(MSGTR_Exit_eof);
 
+    mpxp_uninit_structs();
     return 1;
 }

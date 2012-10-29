@@ -5,36 +5,37 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "font_load.h"
 #include "sub.h"
-#include "../osdep/get_path.h"
+#include "osdep/get_path.h"
+#include "osdep/mplib.h"
 #include "vo_msg.h"
 
 raw_file* load_raw(char *name,int verbose){
     int bpp;
-    raw_file* raw=malloc(sizeof(raw_file));
+    raw_file* raw=mp_malloc(sizeof(raw_file));
     unsigned char head[32];
     FILE *f=fopen(name,"rb");
-    if(!f) { free(raw); return NULL; } // can't open
-    if(fread(head,32,1,f)<1) { free(raw); fclose(f); return NULL; } // too small
-    if(memcmp(head,"mhwanh",6)) { free(raw); fclose(f); return NULL; } // not raw file
+    if(!f) { mp_free(raw); return NULL; } // can't open
+    if(fread(head,32,1,f)<1) { mp_free(raw); fclose(f); return NULL; } // too small
+    if(memcmp(head,"mhwanh",6)) { mp_free(raw); fclose(f); return NULL; } // not raw file
     raw->w=head[8]*256+head[9];
     raw->h=head[10]*256+head[11];
     raw->c=head[12]*256+head[13];
     if(raw->w == 0) /* 2 bytes were not enough for the width... read 4 bytes from the end of the header */
 	raw->w = ((head[28]*0x100 + head[29])*0x100 + head[30])*0x100 + head[31];
-    if(raw->c>256) { free(raw); fclose(f); return NULL; }  // too many colors!?
+    if(raw->c>256) { mp_free(raw); fclose(f); return NULL; }  // too many colors!?
     MSG_V("RAW: %s  %d x %d, %d colors\n",name,raw->w,raw->h,raw->c);
     if(raw->c){
-        raw->pal=malloc(raw->c*3);
+        raw->pal=mp_malloc(raw->c*3);
         fread(raw->pal,3,raw->c,f);
         bpp=1;
     } else {
         raw->pal=NULL;
         bpp=3;
     }
-    raw->bmp=malloc(raw->h*raw->w*bpp);
+    raw->bmp=mp_malloc(raw->h*raw->w*bpp);
     fread(raw->bmp,raw->h*raw->w*bpp,1,f);
     fclose(f);
     return raw;
@@ -52,13 +53,13 @@ int chardb=0;
 int fontdb=-1;
 int version=0;
 
-desc=malloc(sizeof(font_desc_t));if(!desc) return NULL;
+desc=mp_malloc(sizeof(font_desc_t));if(!desc) return NULL;
 memset(desc,0,sizeof(font_desc_t));
 
-f=fopen(fname,"rt");if(!f){ MSG_ERR("font: can't open file: %s\n",fname); free(desc); return NULL;}
+f=fopen(fname,"rt");if(!f){ MSG_ERR("font: can't open file: %s\n",fname); mp_free(desc); return NULL;}
 
 i = strlen (fname) - 9;
-if ((dn = malloc(i+1))){
+if ((dn = mp_malloc(i+1))){
    strncpy (dn, fname, i);
    dn[i]='\0';
 }
@@ -124,8 +125,8 @@ while(fgets(sor,1020,f)){
   if(strcmp(section,"[fpath]")==0){
       if(pdb==1){
 	  if (desc->fpath)
-	     free (desc->fpath); // release previously allocated memory
-          desc->fpath=strdup(p[0]);
+	     mp_free (desc->fpath); // release previously allocated memory
+          desc->fpath=mp_strdup(p[0]);
           continue;
       }
   } else
@@ -134,51 +135,51 @@ while(fgets(sor,1020,f)){
       char *default_dir=DATADIR"/font";
       if(pdb==2 && strcmp(p[0],"alpha")==0){
 	  char *cp;
-	  if (!(cp=malloc(strlen(desc->fpath)+strlen(p[1])+2))) return NULL;
+	  if (!(cp=mp_malloc(strlen(desc->fpath)+strlen(p[1])+2))) return NULL;
 
 	  snprintf(cp,strlen(desc->fpath)+strlen(p[1])+2,"%s/%s",
 		desc->fpath,p[1]);
           if(!((desc->pic_a[fontdb]=load_raw(cp,verbose)))){
-		free(cp);
-		if (!(cp=malloc(strlen(default_dir)+strlen(p[1])+2))) 
+		mp_free(cp);
+		if (!(cp=mp_malloc(strlen(default_dir)+strlen(p[1])+2))) 
 		   return NULL;
 		snprintf(cp,strlen(default_dir)+strlen(p[1])+2,"%s/%s",
 			 default_dir,p[1]);
 		if (!((desc->pic_a[fontdb]=load_raw(cp,verbose)))){
 		   MSG_ERR("Can't load font bitmap: %s\n",p[1]);
-		   free(cp);
+		   mp_free(cp);
 		   return NULL;
 		}
           }
-	  free(cp);
+	  mp_free(cp);
           continue;
       }
       if(pdb==2 && strcmp(p[0],"bitmap")==0){
 	  char *cp;
-	  if (!(cp=malloc(strlen(desc->fpath)+strlen(p[1])+2))) return NULL;
+	  if (!(cp=mp_malloc(strlen(desc->fpath)+strlen(p[1])+2))) return NULL;
 
 	  snprintf(cp,strlen(desc->fpath)+strlen(p[1])+2,"%s/%s",
 		desc->fpath,p[1]);
           if(!((desc->pic_b[fontdb]=load_raw(cp,verbose)))){
-		free(cp);
-		if (!(cp=malloc(strlen(default_dir)+strlen(p[1])+2))) 
+		mp_free(cp);
+		if (!(cp=mp_malloc(strlen(default_dir)+strlen(p[1])+2))) 
 		   return NULL;
 		snprintf(cp,strlen(default_dir)+strlen(p[1])+2,"%s/%s",
 			 default_dir,p[1]);
 		if (!((desc->pic_b[fontdb]=load_raw(cp,verbose)))){
 		   MSG_ERR("Can't load font bitmap: %s\n",p[1]);
-		   free(cp);
+		   mp_free(cp);
 		   return NULL;
 		}
           }
-	  free(cp);
+	  mp_free(cp);
           continue;
       }
   } else
 
   if(strcmp(section,"[info]")==0){
       if(pdb==2 && strcmp(p[0],"name")==0){
-          desc->name=strdup(p[1]);
+          desc->name=mp_strdup(p[1]);
           continue;
       }
       if(pdb==2 && strcmp(p[0],"descversion")==0){

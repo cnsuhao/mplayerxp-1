@@ -10,6 +10,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "postproc/swscale.h"
 #include "pp_msg.h"
 
@@ -186,7 +187,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     vf->priv->direction=args?atoi(args):0;
     if(!(vf->priv->direction==0 || vf->priv->direction==90 ||
        vf->priv->direction==180 || vf->priv->direction==270))

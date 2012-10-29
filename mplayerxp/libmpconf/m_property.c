@@ -13,6 +13,7 @@
 #include "m_option.h"
 #include "m_property.h"
 #include "help_mp.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "__mp_msg.h"
 
@@ -66,14 +67,14 @@ int m_property_do(m_option_t* prop_list, const char* name,
         // fallback on the options API. Get the type, value and print.
         if((r = do_action(prop_list,name,M_PROPERTY_GET_TYPE,&opt,ctx)) <= 0)
             return r;
-        val = calloc(1,opt->type->size);
+        val = mp_calloc(1,opt->type->size);
         if((r = do_action(prop_list,name,M_PROPERTY_GET,val,ctx)) <= 0) {
-            free(val);
+            mp_free(val);
             return r;
         }
         if(!arg) return M_PROPERTY_ERROR;
         str = m_option_print(opt,val);
-        free(val);
+        mp_free(val);
         *(char**)arg = str == (char*)-1 ? NULL : str;
         return str != (char*)-1;
     case M_PROPERTY_PARSE:
@@ -85,14 +86,14 @@ int m_property_do(m_option_t* prop_list, const char* name,
         if((r = do_action(prop_list,name,M_PROPERTY_GET_TYPE,&opt,ctx)) <= 0)
             return r;
         if(!arg) return M_PROPERTY_ERROR;
-        val = calloc(1,opt->type->size);
+        val = mp_calloc(1,opt->type->size);
         if((r = m_option_parse(opt,opt->name,arg,val,M_CONFIG_FILE)) <= 0) {
-            free(val);
+            mp_free(val);
             return r;
         }
         r = do_action(prop_list,name,M_PROPERTY_SET,val,ctx);
         m_option_free(opt,val);
-        free(val);
+        mp_free(val);
         return r;
     }
     return do_action(prop_list,name,action,arg,ctx);
@@ -100,7 +101,7 @@ int m_property_do(m_option_t* prop_list, const char* name,
 
 char* m_properties_expand_string(m_option_t* prop_list,char* str, any_t*ctx) {
     int l,fr=0,pos=0,size=strlen(str)+512;
-    char *p = NULL,*e,*ret = malloc(size), num_val;
+    char *p = NULL,*e,*ret = mp_malloc(size), num_val;
     int skip = 0, lvl = 0, skip_lvl = 0;
     
     while(str[0]) {
@@ -162,11 +163,11 @@ char* m_properties_expand_string(m_option_t* prop_list,char* str, any_t*ctx) {
         
         if(pos+l+1 > size) {
             size = pos+l+512;
-            ret = realloc(ret,size);
+            ret = mp_realloc(ret,size);
         }
         memcpy(ret+pos,p,l);
         pos += l;
-        if(fr) free(p), fr = 0;
+        if(fr) mp_free(p), fr = 0;
     }
     
     ret[pos] = 0;
@@ -250,7 +251,7 @@ int m_property_flag(m_option_t* prop,int action,
         return 1;
     case M_PROPERTY_PRINT:
         if(!arg) return 0;
-        *(char**)arg = strdup((*var > prop->min) ? "enabled" : "disabled");
+        *(char**)arg = mp_strdup((*var > prop->min) ? "enabled" : "disabled");
         return 1;
     }
     return m_property_int_range(prop,action,arg,var);
@@ -265,7 +266,7 @@ int m_property_float_ro(m_option_t* prop,int action,
         return 1;
     case M_PROPERTY_PRINT:
         if(!arg) return 0;
-        *(char**)arg = malloc(20);
+        *(char**)arg = mp_malloc(20);
         sprintf(*(char**)arg,"%.2f",var);
         return 1;
     }
@@ -295,7 +296,7 @@ int m_property_delay(m_option_t* prop,int action,
     switch(action) {
     case M_PROPERTY_PRINT:
         if(!arg) return 0;
-        *(char**)arg = malloc(20);
+        *(char**)arg = mp_malloc(20);
         sprintf(*(char**)arg,"%d ms",ROUND((*var)*1000));
         return 1;
     default:
@@ -312,7 +313,7 @@ int m_property_double_ro(m_option_t* prop,int action,
         return 1;
     case M_PROPERTY_PRINT:
         if(!arg) return 0;
-        *(char**)arg = malloc(20);
+        *(char**)arg = mp_malloc(20);
         sprintf(*(char**)arg,"%.2f",var);
         return 1;
     }
@@ -331,7 +332,7 @@ int m_property_time_ro(m_option_t* prop,int action,
 	    s -= h * 3600;
 	    m = s / 60;
 	    s -= m * 60;
-	    *(char **) arg = malloc(20);
+	    *(char **) arg = mp_malloc(20);
 	    if (h > 0)
 		sprintf(*(char **) arg, "%d:%02d:%02d", h, m, s);
 	    else if (m > 0)
@@ -352,7 +353,7 @@ int m_property_string_ro(m_option_t* prop,int action,any_t* arg,char* str) {
         return 1;
     case M_PROPERTY_PRINT:
         if(!arg) return 0;
-        *(char**)arg = str ? strdup(str) : NULL;
+        *(char**)arg = str ? mp_strdup(str) : NULL;
         return 1;
     }
     return M_PROPERTY_NOT_IMPLEMENTED;
@@ -363,7 +364,7 @@ int m_property_bitrate(m_option_t* prop,int action,any_t* arg,int rate) {
     case M_PROPERTY_PRINT:
         if (!arg)
 	    return M_PROPERTY_ERROR;
-        *(char**)arg = malloc (16);
+        *(char**)arg = mp_malloc (16);
         sprintf(*(char**)arg, "%d kbps", rate*8/1000);
         return M_PROPERTY_OK;
     }

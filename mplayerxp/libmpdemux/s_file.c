@@ -11,8 +11,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "../mplayer.h"
+#include "mplayer.h"
 #include "stream.h"
+#include "osdep/mplib.h"
 
 typedef struct file_priv_s
 {
@@ -24,10 +25,10 @@ typedef struct file_priv_s
 static int __FASTCALL__ file_open(stream_t *stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
-    if(!(stream->priv = malloc(sizeof(file_priv_t)))) return 0;
+    if(!(stream->priv = mp_malloc(sizeof(file_priv_t)))) return 0;
     if(strcmp(filename,"-")==0) stream->fd=0;
     else stream->fd=open(filename,O_RDONLY);
-    if(stream->fd<0) { free(stream->priv); return 0; }
+    if(stream->fd<0) { mp_free(stream->priv); return 0; }
     ((file_priv_t*)stream->priv)->was_open = stream->fd==0?0:1;
     stream->end_pos = lseek(stream->fd,0,SEEK_END);
     lseek(stream->fd,0,SEEK_SET);
@@ -88,7 +89,7 @@ static void __FASTCALL__ file_close(stream_t *stream)
 {
     int was_open = ((file_priv_t*)stream->priv)->was_open;
     if(was_open) close(stream->fd);
-    free(stream->priv);
+    mp_free(stream->priv);
 }
 
 static int __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,any_t*args) {

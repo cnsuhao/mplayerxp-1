@@ -17,8 +17,8 @@
 #include <string.h>
 #include <sys/poll.h>
 
-#include "../mp_config.h"
-#include "../mplayer.h"
+#include "mp_config.h"
+#include "mplayer.h"
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #define ALSA_PCM_NEW_SW_PARAMS_API
 #include <alsa/asoundlib.h>
@@ -27,7 +27,8 @@
 #include "audio_out_internal.h"
 #include "afmt.h"
 #include "ao_msg.h"
-#include "../libmpdemux/mrl.h"
+#include "libmpdemux/mrl.h"
+#include "osdep/mplib.h"
 
 static ao_info_t info =
 {
@@ -319,7 +320,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
     char *alsa_port=NULL;
     char alsa_device[ALSA_DEVICE_SIZE];
     UNUSED(flags);
-    ao->priv=malloc(sizeof(priv_t));
+    ao->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=ao->priv;
     memset(priv,0,sizeof(priv_t));
     priv->first=1;
@@ -632,21 +633,21 @@ static void uninit(ao_data_t* ao)
     priv_t*priv=ao->priv;
     if(!priv->handler) {
 	MSG_ERR("alsa-uninit: no handler defined!\n");
-	free(priv);
+	mp_free(priv);
 	return;
     }
 
     if (!priv_conf.noblock) {
 	if ((err = snd_pcm_drain(priv->handler)) < 0) {
 	    MSG_ERR("alsa-uninit: pcm drain error: %s\n", snd_strerror(err));
-	    free(priv);
+	    mp_free(priv);
 	    return;
 	}
     }
 
     if ((err = snd_pcm_close(priv->handler)) < 0) {
 	MSG_ERR("alsa-uninit: pcm close error: %s\n", snd_strerror(err));
-	free(priv);
+	mp_free(priv);
 	return;
     } else {
 	priv->handler = NULL;
@@ -654,7 +655,7 @@ static void uninit(ao_data_t* ao)
     }
     snd_pcm_hw_params_free(priv->hwparams);
     snd_pcm_sw_params_free(priv->swparams);
-    free(priv);
+    mp_free(priv);
 }
 
 static void audio_pause(ao_data_t* ao)
@@ -848,7 +849,7 @@ static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,any_t* data, unsigned len)
     int count;
 
     count = snd_pcm_poll_descriptors_count (priv->handler);
-    ufds = malloc(sizeof(struct pollfd) * count);
+    ufds = mp_malloc(sizeof(struct pollfd) * count);
     snd_pcm_poll_descriptors(priv->handler, ufds, count);
 
     //first wait_for_poll
@@ -929,7 +930,7 @@ static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,any_t* data, unsigned len)
     if ((int)result < 0) result = 0;
 
 #ifdef USE_POLL
-    free(ufds);
+    mp_free(ufds);
 #endif
 
     return result;
@@ -943,7 +944,7 @@ typedef enum space_status_e {
     GET_SPACE_XRUN,
     GET_SPACE_UNDEFINED
 }space_status;
-/* how many byes are free in the buffer */
+/* how many byes are mp_free in the buffer */
 static unsigned get_space(ao_data_t* ao)
 {
     priv_t*priv=ao->priv;
@@ -1001,7 +1002,7 @@ static unsigned get_space(ao_data_t* ao)
     }
 
     if (e_status!=GET_SPACE_RUNNING)
-	MSG_V("alsa-space: free space = %i, status=%i, %i --\n", ret, st, e_status);
+	MSG_V("alsa-space: mp_free space = %i, status=%i, %i --\n", ret, st, e_status);
     snd_pcm_status_free(status);
 
     if (ret < 0) {

@@ -6,7 +6,7 @@
  *
  * This file is part of MPlayer.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -33,8 +33,9 @@
 #include "postproc/af_format.h"
 #include "afmt.h"
 #include "osdep/timer.h"
+#include "osdep/mplib.h"
 
-#include "../fifo.h"
+#include "fifo.h"
 #include <jack/jack.h>
 #include "ao_msg.h"
 
@@ -212,7 +213,7 @@ static void print_help (void)
 }
 #endif
 static int init(ao_data_t* ao,unsigned flags) {
-    ao->priv=malloc(sizeof(priv_t));
+    ao->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=ao->priv;
     memset(priv,0,sizeof(priv_t));
     UNUSED(flags);
@@ -250,7 +251,7 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
     goto err_out;
   }
   if (!client_name) {
-    client_name = malloc(40);
+    client_name = mp_malloc(40);
     sprintf(client_name, "MPlayerXP [%d]", getpid());
   }
   if (!autostart)
@@ -307,15 +308,15 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
   ao->bps = channels * rate * sizeof(float);
   ao->buffersize = CHUNK_SIZE * NUM_CHUNKS;
   ao->outburst = CHUNK_SIZE;
-  free(matching_ports);
-  free(port_name);
-  free(client_name);
+  mp_free(matching_ports);
+  mp_free(port_name);
+  mp_free(client_name);
   return 1;
 
 err_out:
-  free(matching_ports);
-  free(port_name);
-  free(client_name);
+  mp_free(matching_ports);
+  mp_free(port_name);
+  mp_free(client_name);
   if (priv->client)
     jack_client_close(priv->client);
   cb_fifo_free(priv->buffer);
@@ -332,7 +333,7 @@ static void uninit(ao_data_t* ao) {
   jack_client_close(priv->client);
   cb_fifo_free(priv->buffer);
   priv->buffer = NULL;
-  free(priv);
+  mp_free(priv);
 }
 
 /**

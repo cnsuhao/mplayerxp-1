@@ -16,6 +16,7 @@
 
 #include "af.h"
 #include "dsp.h"
+#include "osdep/mplib.h"
 
 /* Below definition selects the length of each poly phase component.
    Valid definitions are L8 and L16, where the number denotes the
@@ -205,8 +206,8 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     if(s->xq){
       for(i=1;i<af->data->nch;i++)
 	if(s->xq[i])
-	  free(s->xq[i]);
-      free(s->xq);
+	  mp_free(s->xq[i]);
+      mp_free(s->xq);
     }
 
     if(AF_DETACH == (rv = set_types(af,n)))
@@ -240,9 +241,9 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     }
 
     // Create space for circular bufers
-    s->xq = malloc(n->nch*sizeof(any_t*));
+    s->xq = mp_malloc(n->nch*sizeof(any_t*));
     for(i=0;i<n->nch;i++)
-      s->xq[i] = malloc(2*L*af->data->bps);
+      s->xq[i] = mp_malloc(2*L*af->data->bps);
     s->xi = 0;
 
     // Check if the the design needs to be redone
@@ -270,10 +271,10 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       // Calculate cuttof frequency for filter
       fc = 1/(float)(max(s->up,s->dn));
       // Allocate space for polyphase filter bank and protptype filter
-      w = malloc(sizeof(float) * s->up *L);
+      w = mp_malloc(sizeof(float) * s->up *L);
       if(NULL != s->w)
-	free(s->w);
-      s->w = malloc(L*s->up*af->data->bps);
+	mp_free(s->w);
+      s->w = mp_malloc(L*s->up*af->data->bps);
 
       // Design prototype filter type using Kaiser window with beta = 10
       if(NULL == w || NULL == s->w || 
@@ -294,7 +295,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	  wt++;
 	}
       }
-      free(w);
+      mp_free(w);
     }
 
     // Set multiplier and delay
@@ -344,7 +345,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
 }
 
 // Filter data through filter
@@ -418,8 +419,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=calloc(1,sizeof(af_resample_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=mp_calloc(1,sizeof(af_resample_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
   ((af_resample_t*)af->setup)->setup = RSMP_INT | FREQ_SLOPPY;

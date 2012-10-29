@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 
 #include <unistd.h>
 #include <inttypes.h>
@@ -19,6 +19,7 @@
 #include <limits.h>
 
 #include "af.h"
+#include "osdep/mplib.h"
 
 // Data for specific instances of this filter
 typedef struct af_sinesuppress_s
@@ -84,9 +85,9 @@ static int control(struct af_instance_s* af, int cmd, any_t* arg)
 static void uninit(struct af_instance_s* af)
 {
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // Filter data through filter
@@ -151,8 +152,8 @@ static int open(af_instance_t* af){
   af->play=play_s16;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=calloc(1,sizeof(af_sinesuppress_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=mp_calloc(1,sizeof(af_sinesuppress_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
 

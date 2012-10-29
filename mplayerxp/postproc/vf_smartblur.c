@@ -1,7 +1,7 @@
 /*
     Copyright (C) 2002 Michael Niedermayer <michaelni@gmx.at>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -28,14 +28,11 @@
 #include <locale.h>
 #endif
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "postproc/swscale.h"
 #include "vf_scale.h"
 #include "pp_msg.h"
@@ -200,7 +197,7 @@ static int __FASTCALL__ sab_allocStuff(FilterParam *f, int width, int height){
 	SwsVector *vec;
 	SwsFilter swsF;
 	int i,x,y;
-	f->preFilterBuf= (uint8_t*)memalign(8, stride*height);
+	f->preFilterBuf= (uint8_t*)mp_memalign(8, stride*height);
 	f->preFilterStride= stride;
 
 	vec = sws_getGaussianVec(f->preFilterRadius, f->quality);
@@ -224,7 +221,7 @@ static int __FASTCALL__ sab_allocStuff(FilterParam *f, int width, int height){
 	vec = sws_getGaussianVec(f->radius, f->quality);
 	f->distWidth= vec->length;
 	f->distStride= (vec->length+7)&~7;
-	f->distCoeff= (int32_t*)memalign(8, f->distWidth*f->distStride*sizeof(int32_t));
+	f->distCoeff= (int32_t*)mp_memalign(8, f->distWidth*f->distStride*sizeof(int32_t));
 
 	for(y=0; y<vec->length; y++){
 		for(x=0; x<vec->length; x++){
@@ -244,10 +241,10 @@ static void __FASTCALL__ sab_freeBuffers(FilterParam *f){
 	if(f->preFilterContext) sws_freeContext(f->preFilterContext);
 	f->preFilterContext=NULL;
 	
-	if(f->preFilterBuf) free(f->preFilterBuf);
+	if(f->preFilterBuf) mp_free(f->preFilterBuf);
 	f->preFilterBuf=NULL;
 	
-	if(f->distCoeff) free(f->distCoeff);
+	if(f->distCoeff) mp_free(f->distCoeff);
 	f->distCoeff=NULL;
 }
 
@@ -384,7 +381,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 	    vf->priv->freeBuffers(&vf->priv->luma);
 	    vf->priv->freeBuffers(&vf->priv->chroma);
 	}
-	free(vf->priv);
+	mp_free(vf->priv);
 	vf->priv=NULL;
 }
 
@@ -499,7 +496,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->put_slice=put_slice;
 	vf->query_format=query_format;
 	vf->uninit=uninit;
-	vf->priv=malloc(sizeof(struct vf_priv_s));
+	vf->priv=mp_malloc(sizeof(struct vf_priv_s));
 	memset(vf->priv, 0, sizeof(struct vf_priv_s));
 
 	if(args==NULL) return 0;

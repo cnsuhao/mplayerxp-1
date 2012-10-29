@@ -41,9 +41,9 @@ static void mpxp_free(any_t*ptr)
     /* XXX: this test should not be needed on most libcs */
     if (ptr)
 #ifdef MEMALIGN_HACK
-        free(ptr - ((char*)ptr)[-1]);
+        mp_free(ptr - ((char*)ptr)[-1]);
 #else
-        free(ptr);
+        mp_free(ptr);
 #endif
 }
 
@@ -117,17 +117,17 @@ static muxer_stream_t* lavf_new_stream(muxer_t *muxer, int type)
 		return NULL;
 	}
 	
-	stream = (muxer_stream_t*) calloc(1, sizeof(muxer_stream_t));
+	stream = (muxer_stream_t*) mp_calloc(1, sizeof(muxer_stream_t));
 	if(!stream)
 	{
 		MSG_ERR("Could not alloc muxer_stream, EXIT\n");
 		return NULL;
 	}
 	muxer->streams[muxer->avih.dwStreams] = stream;
-	spriv = (muxer_stream_priv_t*) calloc(1, sizeof(muxer_stream_priv_t));
+	spriv = (muxer_stream_priv_t*) mp_calloc(1, sizeof(muxer_stream_priv_t));
 	if(!spriv) 
 	{
-		free(stream);
+		mp_free(stream);
 		return NULL;
 	}
 	stream->priv = spriv;
@@ -201,7 +201,7 @@ static void fix_parameters(struct muxer_t *muxer)
 		ctx->block_align = stream->h.dwSampleSize;
 		if(stream->wf+1 && stream->wf->cbSize)
 		{
-			ctx->extradata = malloc(stream->wf->cbSize);
+			ctx->extradata = mp_malloc(stream->wf->cbSize);
 			if(ctx->extradata != NULL)
 			{
 				ctx->extradata_size = stream->wf->cbSize;
@@ -230,7 +230,7 @@ static void fix_parameters(struct muxer_t *muxer)
 #endif
 		if(stream->bih+1 && (stream->bih->biSize > sizeof(BITMAPINFOHEADER)))
 		{
-			ctx->extradata = malloc(stream->bih->biSize - sizeof(BITMAPINFOHEADER));
+			ctx->extradata = mp_malloc(stream->bih->biSize - sizeof(BITMAPINFOHEADER));
 			if(ctx->extradata != NULL)
 			{
 				ctx->extradata_size = stream->bih->biSize - sizeof(BITMAPINFOHEADER);
@@ -360,7 +360,7 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 "REMEMBER: libavformat muxing is presently broken and will generate\n"
 "INCORRECT files in the presence of B frames\n"
 "*******************************************************************************\n");
-	priv = (muxer_priv_t *) calloc(1, sizeof(muxer_priv_t));
+	priv = (muxer_priv_t *) mp_calloc(1, sizeof(muxer_priv_t));
 	if(priv == NULL)
 		return 0;
 
@@ -411,6 +411,6 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	return 1;
 	
 fail:
-	free(priv);
+	mp_free(priv);
 	return 0;
 }

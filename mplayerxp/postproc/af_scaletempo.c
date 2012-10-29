@@ -4,7 +4,7 @@
  *
  * This file is part of MPlayer.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -37,6 +37,7 @@
 #include "osdep/fastmemcpy.h"
 
 #include "af.h"
+#include "osdep/mplib.h"
 
 #define FFMAX(a,b) ((a) > (b) ? (a) : (b))
 #define FFMIN(a,b) ((a) > (b) ? (b) : (a))
@@ -181,7 +182,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   if (max_bytes_out > af->data->len) {
     MSG_V("[libaf] Reallocating memory in module %s, "
           "old len = %i, new len = %i\n",af->info->name,af->data->len,max_bytes_out);
-    af->data->audio = realloc(af->data->audio, max_bytes_out);
+    af->data->audio = mp_realloc(af->data->audio, max_bytes_out);
     if (!af->data->audio) {
       MSG_FATAL("[libaf] Could not allocate memory\n");
       return NULL;
@@ -280,8 +281,8 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       s->bytes_overlap    = frames_overlap * nch * bps;
       s->bytes_standing   = s->bytes_stride - s->bytes_overlap;
       s->samples_standing = s->bytes_standing / bps;
-      s->buf_overlap      = realloc(s->buf_overlap, s->bytes_overlap);
-      s->table_blend      = realloc(s->table_blend, s->bytes_overlap * 4);
+      s->buf_overlap      = mp_realloc(s->buf_overlap, s->bytes_overlap);
+      s->table_blend      = mp_realloc(s->table_blend, s->bytes_overlap * 4);
       if(!s->buf_overlap || !s->table_blend) {
         MSG_FATAL("[af_scaletempo] Out of memory\n");
         return AF_ERROR;
@@ -303,8 +304,8 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       s->best_overlap_offset = NULL;
     } else {
         float* pw;
-        s->buf_pre_corr = realloc(s->buf_pre_corr, s->bytes_overlap);
-        s->table_window = realloc(s->table_window, s->bytes_overlap - nch * bps);
+        s->buf_pre_corr = mp_realloc(s->buf_pre_corr, s->bytes_overlap);
+        s->table_window = mp_realloc(s->table_window, s->bytes_overlap - nch * bps);
         if(!s->buf_pre_corr || !s->table_window) {
           MSG_FATAL( "[af_scaletempo] Out of memory\n");
           return AF_ERROR;
@@ -324,7 +325,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 
     s->bytes_queue
       = (s->frames_search + frames_stride + frames_overlap) * bps * nch;
-    s->buf_queue = realloc(s->buf_queue, s->bytes_queue + UNROLL_PADDING);
+    s->buf_queue = mp_realloc(s->buf_queue, s->bytes_queue + UNROLL_PADDING);
     if(!s->buf_queue) {
       MSG_FATAL("[af_scaletempo] Out of memory\n");
       return AF_ERROR;
@@ -423,14 +424,14 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   af_scaletempo_t* s = af->setup;
-  free(af->data->audio);
-  free(af->data);
-  free(s->buf_queue);
-  free(s->buf_overlap);
-  free(s->buf_pre_corr);
-  free(s->table_blend);
-  free(s->table_window);
-  free(af->setup);
+  mp_free(af->data->audio);
+  mp_free(af->data);
+  mp_free(s->buf_queue);
+  mp_free(s->buf_overlap);
+  mp_free(s->buf_pre_corr);
+  mp_free(s->table_blend);
+  mp_free(s->table_window);
+  mp_free(af->setup);
 }
 
 // Allocate memory and set function pointers
@@ -442,8 +443,8 @@ static int __FASTCALL__ af_open(struct af_instance_s* af){
   af->play      = play;
   af->mul.d     = 1;
   af->mul.n     = 1;
-  af->data      = calloc(1,sizeof(af_data_t));
-  af->setup     = calloc(1,sizeof(af_scaletempo_t));
+  af->data      = mp_calloc(1,sizeof(af_data_t));
+  af->setup     = mp_calloc(1,sizeof(af_scaletempo_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
 

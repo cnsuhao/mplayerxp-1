@@ -357,7 +357,7 @@ if(!codec_inited){
 //    decpar.port = OutBufferGWorld;
 //    decpar.preferredOffscreenPixelSize=17207;
     
-//    decpar.sequenceID=malloc(1000);
+//    decpar.sequenceID=mp_malloc(1000);
 //    memset(decpar.sequenceID,0,1000);
 
 //    SrcRect.top=17207;

@@ -29,6 +29,7 @@
 
 #include "mpxpav64.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 typedef struct priv_mpxpav64_stream_s
 {
@@ -118,7 +119,7 @@ static void mpxpav64_put_unicode(FILE *f, const char *tag)
     char *str=nls_recode_from_screen_cp("UTF-16LE",tag,&len);
     mpxpav64_put16(f,len);
     fwrite(str,len,1,f);
-    free(str);
+    mp_free(str);
 }
 
 static void mpxpav64_put_frcc_unicode(FILE *f, const char *frcc,const char *tag)
@@ -167,16 +168,16 @@ static muxer_stream_t* mpxpav64_new_stream(muxer_t *muxer,int type)
 	MSG_ERR("Too many streams! increase MUXER_MAX_STREAMS !\n");
 	return NULL;
     }
-    s=malloc(sizeof(muxer_stream_t));
+    s=mp_malloc(sizeof(muxer_stream_t));
     memset(s,0,sizeof(muxer_stream_t));
     if(!s) return NULL; // no mem!?
     if(!muxer->priv)
     {
-	muxer->priv=malloc(sizeof(priv_mpxpav64_t));
+	muxer->priv=mp_malloc(sizeof(priv_mpxpav64_t));
 	memset(muxer->priv,0,sizeof(priv_mpxpav64_t));
 	((priv_mpxpav64_t *)muxer->priv)->prev_seek=-SEEKPOINT_THRESHOLD*2;
     }
-    s->priv=malloc(sizeof(priv_mpxpav64_stream_t));
+    s->priv=mp_malloc(sizeof(priv_mpxpav64_stream_t));
     memset(s->priv,0,sizeof(priv_mpxpav64_stream_t));
     muxer->streams[muxer->avih.dwStreams]=s;
     s->type=type;
@@ -498,8 +499,8 @@ static void mpxpav64_write_packet(muxer_stream_t *s,size_t len,unsigned int flag
 	}
 	is_seek=1;
 	pmpxpav64->prev_seek=pts;
-	if(!privs->idx)	privs->idx=malloc(sizeof(uint64_t));
-	else		privs->idx=realloc(privs->idx,(privs->idx_size+1)*sizeof(uint64_t));
+	if(!privs->idx)	privs->idx=mp_malloc(sizeof(uint64_t));
+	else		privs->idx=mp_realloc(privs->idx,(privs->idx_size+1)*sizeof(uint64_t));
 	((uint64_t *)(privs->idx))[privs->idx_size]=off;
 	privs->idx_size++;
 	fwrite(seek,3,1,f);
@@ -618,7 +619,7 @@ static void mpxpav64_write_index(muxer_t *muxer)
 		mpxpav64_write_index_32(muxer->streams[i]);
 	    else
 		mpxpav64_write_index_64(muxer->streams[i]);
-	    free(((priv_mpxpav64_stream_t *)muxer->streams[i]->priv)->idx);
+	    mp_free(((priv_mpxpav64_stream_t *)muxer->streams[i]->priv)->idx);
 	    ((priv_mpxpav64_stream_t *)muxer->streams[i]->priv)->idx=NULL;
 	}
     }

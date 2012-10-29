@@ -3,7 +3,7 @@ Linux Real Mode Interface - A library of DPMI-like functions for Linux.
 
 Copyright (C) 1998 by Josh Vanderhoof
 
-You are free to distribute and modify this file, as long as you
+You are mp_free to distribute and modify this file, as long as you
 do not remove this copyright notice and clearly label modified
 versions as being modified.
 
@@ -53,7 +53,7 @@ Original location: http://cvs.debian.org/lrmi/
 struct mem_block
 	{
 	unsigned int size : 20;
-	unsigned int free : 1;
+	unsigned int mp_free : 1;
 	};
 
 static struct
@@ -93,7 +93,7 @@ real_mem_init(void)
 	mem_info.ready = 1;
 	mem_info.count = 1;
 	mem_info.blocks[0].size = REAL_MEM_SIZE;
-	mem_info.blocks[0].free = 1;
+	mem_info.blocks[0].mp_free = 1;
 
 	return 1;
 	}
@@ -137,12 +137,12 @@ LRMI_alloc_real(int size)
 
 	for (i = 0; i < mem_info.count; i++)
 		{
-		if (mem_info.blocks[i].free && size < mem_info.blocks[i].size)
+		if (mem_info.blocks[i].mp_free && size < mem_info.blocks[i].size)
 			{
 			insert_block(i);
 
 			mem_info.blocks[i].size = size;
-			mem_info.blocks[i].free = 0;
+			mem_info.blocks[i].mp_free = 0;
 			mem_info.blocks[i + 1].size -= size;
 
 			return (any_t*)r;
@@ -173,15 +173,15 @@ LRMI_free_real(any_t*m)
 			return;
 		}
 
-	mem_info.blocks[i].free = 1;
+	mem_info.blocks[i].mp_free = 1;
 
-	if (i + 1 < mem_info.count && mem_info.blocks[i + 1].free)
+	if (i + 1 < mem_info.count && mem_info.blocks[i + 1].mp_free)
 		{
 		mem_info.blocks[i].size += mem_info.blocks[i + 1].size;
 		delete_block(i + 1);
 		}
 
-	if (i - 1 >= 0 && mem_info.blocks[i - 1].free)
+	if (i - 1 >= 0 && mem_info.blocks[i - 1].mp_free)
 		{
 		mem_info.blocks[i - 1].size += mem_info.blocks[i].size;
 		delete_block(i);

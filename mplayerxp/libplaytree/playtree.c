@@ -11,6 +11,7 @@
 #endif
 #include "libmpdemux/stream.h"
 #include "playtree.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "__mp_msg.h"
 
@@ -19,7 +20,7 @@ play_tree_is_valid(play_tree_t* pt);
 
 play_tree_t*
 play_tree_new(void) {
-  play_tree_t* r = (play_tree_t*)calloc(1,sizeof(play_tree_t));
+  play_tree_t* r = (play_tree_t*)mp_calloc(1,sizeof(play_tree_t));
   if(r == NULL)
     MSG_ERR("Can't allocate %d bytes of memory\n",sizeof(play_tree_t));
   r->entry_type = PLAY_TREE_ENTRY_NODE;
@@ -48,15 +49,15 @@ play_tree_free(play_tree_t* pt, int childs) {
   for(iter = pt->child ; iter != NULL ; iter = iter->next)
     iter->parent = NULL;
 
-  //if(pt->params) free(pt->params);
+  //if(pt->params) mp_free(pt->params);
   if(pt->files) {
     int i;
     for(i = 0 ; pt->files[i] != NULL ; i++)
-      free(pt->files[i]);
-    free(pt->files);
+      mp_free(pt->files[i]);
+    mp_free(pt->files);
   }
 
-  free(pt);
+  mp_free(pt);
 }
 
 void
@@ -260,13 +261,13 @@ play_tree_add_file(play_tree_t* pt,const char* file) {
     for(n = 0 ; pt->files[n] != NULL ; n++)
       /* NOTHING */;
   }
-  pt->files = (char**)realloc(pt->files,(n+2)*sizeof(char*));
+  pt->files = (char**)mp_realloc(pt->files,(n+2)*sizeof(char*));
   if(pt->files ==NULL) {
     MSG_ERR("Can't allocate %d bytes of memory\n",(n+2)*sizeof(char*));
     return;
   }
 
-  e = pt->files[n] = strdup(file);
+  e = pt->files[n] = mp_strdup(file);
   pt->files[n+1] = NULL;
 
   if(strncasecmp(e,"vcd://",6) == 0) {
@@ -305,17 +306,17 @@ play_tree_remove_file(play_tree_t* pt,const char* file) {
   assert(n > f);
 #endif
 
-  free(pt->files[f]);
+  mp_free(pt->files[f]);
 
   if(n > 1) {
     memmove(&pt->files[f],&pt->files[f+1],(n-f)*sizeof(char*));
-    pt->files = (char**)realloc(pt->files,n*sizeof(char*));
+    pt->files = (char**)mp_realloc(pt->files,n*sizeof(char*));
     if(pt->files == NULL) {
       MSG_ERR("Can't allocate %d bytes of memory\n",(n+2)*sizeof(char*));
       return -1;
     }
   } else {
-    free(pt->files);
+    mp_free(pt->files);
     pt->files = NULL;
   }
 
@@ -338,19 +339,19 @@ void play_tree_set_param(play_tree_t* pt,const char* name,const char* val) {
   }
 
   if(ni > 0) {
-    if(pt->params[n].value != NULL) free(pt->params[n].value);
-    pt->params[n].value = val != NULL ? strdup(val) : NULL;
+    if(pt->params[n].value != NULL) mp_free(pt->params[n].value);
+    pt->params[n].value = val != NULL ? mp_strdup(val) : NULL;
     return;
   }
 
-  pt->params = (play_tree_param_t*)realloc(pt->params,(n+2)*sizeof(play_tree_param_t));
+  pt->params = (play_tree_param_t*)mp_realloc(pt->params,(n+2)*sizeof(play_tree_param_t));
   if(pt->params == NULL)
   {
-    MSG_FATAL("Can't realloc params\n");
+    MSG_FATAL("Can't mp_realloc params\n");
     return;
   }
-  pt->params[n].name = strdup(name);
-  pt->params[n].value = val != NULL ? strdup(val) : NULL;
+  pt->params[n].name = mp_strdup(name);
+  pt->params[n].value = val != NULL ? mp_strdup(val) : NULL;
   memset(&pt->params[n+1],0,sizeof(play_tree_param_t));
 
   return;
@@ -373,18 +374,18 @@ int play_tree_unset_param(play_tree_t* pt,const char* name) {
   if(ni < 0)
     return 0;
 
-  if(pt->params[ni].name) free(pt->params[ni].name);
-  if(pt->params[ni].value) free(pt->params[ni].value);
+  if(pt->params[ni].name) mp_free(pt->params[ni].name);
+  if(pt->params[ni].value) mp_free(pt->params[ni].value);
 
   if(n > 1) {
     memmove(&pt->params[ni],&pt->params[ni+1],(n-ni)*sizeof(play_tree_param_t));
-    pt->params = (play_tree_param_t*)realloc(pt->params,n*sizeof(play_tree_param_t));
+    pt->params = (play_tree_param_t*)mp_realloc(pt->params,n*sizeof(play_tree_param_t));
     if(pt->params == NULL) {
       MSG_ERR("Can't allocate %d bytes of memory\n",n*sizeof(play_tree_param_t));
       return -1;
     }
   } else {
-    free(pt->params);
+    mp_free(pt->params);
     pt->params = NULL;
   }
 
@@ -479,7 +480,7 @@ play_tree_iter_new(play_tree_t* pt,m_config_t* config) {
   if( ! play_tree_is_valid(pt))
     return NULL;
 
-  iter = (play_tree_iter_t*)calloc(1,sizeof(play_tree_iter_t));
+  iter = (play_tree_iter_t*)mp_calloc(1,sizeof(play_tree_iter_t));
   if(! iter) return NULL;
   iter->root = pt;
   iter->tree = NULL;
@@ -502,10 +503,10 @@ play_tree_iter_free(play_tree_iter_t* iter) {
 #ifdef MP_DEBUG
     assert(iter->stack_size > 0);
 #endif
-    free(iter->status_stack);
+    mp_free(iter->status_stack);
   }
 
-  free(iter);
+  mp_free(iter);
 }
 
 static play_tree_t*
@@ -515,7 +516,7 @@ play_tree_rnd_step(play_tree_t* pt) {
   time_t tim;
   play_tree_t *i,*head;
 
-  // Count how many free choice we have
+  // Count how many mp_free choice we have
   for(i = pt ; i->prev ; i = i->prev)
     if(!(i->flags & PLAY_TREE_RND_PLAYED)) count++;
   head = i;
@@ -697,9 +698,9 @@ play_tree_iter_up_step(play_tree_iter_t* iter, int d,int with_nodes) {
   iter->stack_size--;
   iter->loop = iter->status_stack[iter->stack_size];
   if(iter->stack_size > 0)
-    iter->status_stack = (int*)realloc(iter->status_stack,iter->stack_size*sizeof(int));
+    iter->status_stack = (int*)mp_realloc(iter->status_stack,iter->stack_size*sizeof(int));
   else {
-    free(iter->status_stack);
+    mp_free(iter->status_stack);
     iter->status_stack = NULL;
   }
   if(iter->stack_size > 0 && iter->status_stack == NULL) {
@@ -734,7 +735,7 @@ play_tree_iter_down_step(play_tree_iter_t* iter, int d,int with_nodes) {
     play_tree_iter_push_params(iter);
 
   iter->stack_size++;
-  iter->status_stack = (int*)realloc(iter->status_stack,iter->stack_size*sizeof(int));
+  iter->status_stack = (int*)mp_realloc(iter->status_stack,iter->stack_size*sizeof(int));
   if(iter->status_stack == NULL) {
     MSG_ERR("Can't allocate %d bytes of memory\n",iter->stack_size*sizeof(int));
     return PLAY_TREE_ITER_ERROR;
@@ -804,7 +805,7 @@ play_tree_iter_get_file(play_tree_iter_t* iter, int d) {
   case PLAY_TREE_ENTRY_TV : 
     {
       if(strlen(entry) != 0) {
-	char *s,*e, *val = (char*)malloc(strlen(entry) + 11 + 1);
+	char *s,*e, *val = (char*)mp_malloc(strlen(entry) + 11 + 1);
 	sprintf(val,"on:channel=%s",entry);
 	if(iter->config)
 	  m_config_set_option(iter->config,"tv",val);
@@ -816,7 +817,7 @@ play_tree_iter_get_file(play_tree_iter_t* iter, int d) {
 	  strncpy(s,entry,val-e);
 	  s[val-e] = '\0';
 	}
-	free(val);
+	mp_free(val);
 	return playtree_ret_filename;
       } else {
 	if(iter->config)
@@ -870,7 +871,7 @@ play_tree_iter_t* play_tree_iter_new_copy(play_tree_iter_t const* old) {
   assert(old != NULL);
 #endif
 
-  iter = (play_tree_iter_t*)malloc(sizeof(play_tree_iter_t));
+  iter = (play_tree_iter_t*)mp_malloc(sizeof(play_tree_iter_t));
   if(iter == NULL) {
     MSG_ERR("Can't allocate %d bytes of memory\n",sizeof(play_tree_iter_t));
     return NULL;
@@ -878,10 +879,10 @@ play_tree_iter_t* play_tree_iter_new_copy(play_tree_iter_t const* old) {
 
   memcpy(iter,old,sizeof(play_tree_iter_t));
   if(old->status_stack) {
-    iter->status_stack = (int*)malloc(old->stack_size * sizeof(int));
+    iter->status_stack = (int*)mp_malloc(old->stack_size * sizeof(int));
     if(iter->status_stack == NULL) {
       MSG_ERR("Can't allocate %d bytes of memory\n",old->stack_size * sizeof(int));
-      free(iter);
+      mp_free(iter);
       return NULL;
     }
     memcpy(iter->status_stack,old->status_stack,iter->stack_size*sizeof(int));
@@ -918,7 +919,7 @@ void pt_iter_destroy(play_tree_iter_t** iter)
 {
   if (iter && *iter)
   {
-    free(*iter);
+    mp_free(*iter);
     iter=NULL;
   }
 }
@@ -987,7 +988,7 @@ void pt_add_file(play_tree_t** ppt,const char* filename)
 
 void pt_add_gui_file(play_tree_t** ppt,const char* path,const char* file)
 {
-  char* wholename = malloc(strlen(path)+strlen(file)+2);
+  char* wholename = mp_malloc(strlen(path)+strlen(file)+2);
 
   if (wholename)
   {
@@ -995,7 +996,7 @@ void pt_add_gui_file(play_tree_t** ppt,const char* path,const char* file)
     strcat(wholename, "/");
     strcat(wholename, file);
     pt_add_file(ppt, wholename);
-    free(wholename); // As pt_add_file strdups it anyway!
+    mp_free(wholename); // As pt_add_file strdups it anyway!
   }
 }
 

@@ -3,7 +3,7 @@
  *
  * This file is part of MPlayerXP.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -31,6 +31,7 @@
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "libvo/video_out.h"
+#include "osdep/mplib.h"
 #include "help_mp.h"
 #include "ao_msg.h"
 
@@ -98,7 +99,7 @@ static int control(ao_data_t* ao,int cmd,long arg){
 static int init(ao_data_t* ao,unsigned flags) {
     // set defaults
     UNUSED(flags);
-    ao->priv=malloc(sizeof(priv_t));
+    ao->priv=mp_malloc(sizeof(priv_t));
     priv_t* priv=ao->priv;
     memset(priv,0,sizeof(priv_t));
     priv->pcm_waveheader=1;
@@ -111,7 +112,7 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
     char str[256];
 
     if(ao->subdevice)	priv->out_filename = ao->subdevice;
-    else		priv->out_filename = strdup("mpxp_adump.wav");
+    else		priv->out_filename = mp_strdup("mpxp_adump.wav");
 
     bits=8;
     switch(format){
@@ -196,8 +197,8 @@ static void uninit(ao_data_t* ao){
     }
     fclose(priv->fp);
     if (priv->out_filename)
-	free(priv->out_filename);
-    free(priv);
+	mp_free(priv->out_filename);
+    mp_free(priv);
 }
 
 // stop playing and empty buffers (for seeking/pause)

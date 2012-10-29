@@ -60,7 +60,7 @@ extern CpuCaps gCpuCaps;
 
 void GetCpuCaps(CpuCaps *caps);
 
-/* returned value is malloc()'ed so free() it after use */
+/* returned value is mp_malloc()'ed so mp_free() it after use */
 char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]);
 
 #endif /* !CPUDETECT_H */

@@ -3,9 +3,10 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
+#include "osdep/mplib.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "pp_msg.h"
@@ -68,7 +69,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 //===========================================================================//
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){
-	free(vf->priv);
+	mp_free(vf->priv);
 }
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
@@ -87,7 +88,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->put_slice=put_slice;
 //    vf->uninit=uninit;
     vf->query_format=query_format;
-//    vf->priv=calloc(1, sizeof(struct vf_priv_s));
+//    vf->priv=mp_calloc(1, sizeof(struct vf_priv_s));
 //    if (args)
 //	vf->priv->csp = atoi(args);
     return 1;

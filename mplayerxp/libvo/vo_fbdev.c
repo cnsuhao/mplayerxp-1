@@ -27,6 +27,7 @@
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "sub.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
@@ -228,7 +229,7 @@ static int __FASTCALL__ parse_fbmode_cfg(vo_data_t*vo,char *cfgfile)
 	return -1;
     }
 
-    if ((priv->line = (char *) malloc(MAX_LINE_LEN + 1)) == NULL) {
+    if ((priv->line = (char *) mp_malloc(MAX_LINE_LEN + 1)) == NULL) {
 	MSG_ERR("can't get memory for 'priv->line': %s\n", strerror(errno));
 	return -2;
     }
@@ -250,9 +251,9 @@ static int __FASTCALL__ parse_fbmode_cfg(vo_data_t*vo,char *cfgfile)
 	    }
 	    if (!validate_mode(mode)) goto err_out_not_valid;
 	    loop_enter:
-	    if (!(fb_modes = (fb_mode_t *) realloc(fb_modes,
+	    if (!(fb_modes = (fb_mode_t *) mp_realloc(fb_modes,
 				sizeof(fb_mode_t) * (nr_modes + 1)))) {
-		MSG_ERR("can't realloc 'fb_modes' (nr_modes = %d):"
+		MSG_ERR("can't mp_realloc 'fb_modes' (nr_modes = %d):"
 			" %s\n", nr_modes, strerror(errno));
 		goto err_out;
 	    }
@@ -267,8 +268,8 @@ static int __FASTCALL__ parse_fbmode_cfg(vo_data_t*vo,char *cfgfile)
 		    goto err_out_print_linenum;
 		}
 	    }
-	    if (!(mode->name = strdup(priv->token[0]))) {
-		MSG_ERR("can't strdup -> 'name': %s\n", strerror(errno));
+	    if (!(mode->name = mp_strdup(priv->token[0]))) {
+		MSG_ERR("can't mp_strdup -> 'name': %s\n", strerror(errno));
 		goto err_out;
 	    }
 	    in_mode_def = 1;
@@ -353,7 +354,7 @@ static int __FASTCALL__ parse_fbmode_cfg(vo_data_t*vo,char *cfgfile)
     if (!validate_mode(mode)) goto err_out_not_valid;
 out:
     MSG_DBG2("%d modes\n", nr_modes);
-    free(priv->line);
+    mp_free(priv->line);
     fclose(priv->fp);
     return nr_modes;
 err_out_parse_error:
@@ -362,12 +363,12 @@ err_out_print_linenum:
     PRINT_LINENUM;
 err_out:
     if (fb_modes) {
-	free(fb_modes);
+	mp_free(fb_modes);
 	fb_modes = NULL;
     }
     nr_modes = 0;
-    free(priv->line);
-    free(priv->fp);
+    mp_free(priv->line);
+    mp_free(priv->fp);
     return -2;
 err_out_not_valid:
     MSG_ERR("previous mode is not correct");
@@ -548,8 +549,8 @@ static range_t * __FASTCALL__ str2range(char *s)
     if (!s) return NULL;
     for (i = 0; *endptr; i++) {
 	if (*s == ',') goto out_err;
-	if (!(r = (range_t *) realloc(r, sizeof(*r) * (i + 2)))) {
-	    MSG_ERR("can't realloc 'r'\n");
+	if (!(r = (range_t *) mp_realloc(r, sizeof(*r) * (i + 2)))) {
+	    MSG_ERR("can't mp_realloc 'r'\n");
 	    return NULL;
 	}
 	tmp_min = strtod(s, &endptr);
@@ -582,7 +583,7 @@ static range_t * __FASTCALL__ str2range(char *s)
     r[i].min = r[i].max = -1;
     return r;
 out_err:
-    if (r) free(r);
+    if (r) mp_free(r);
     return NULL;
 }
 
@@ -611,7 +612,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     cols = (rcols > gcols ? rcols : gcols);
     cols = (cols > bcols ? cols : bcols);
 
-    red = malloc(cols * sizeof(red[0]));
+    red = mp_malloc(cols * sizeof(red[0]));
     if(!red) {
 	MSG_ERR("Can't allocate red palette with %d entries.\n", cols);
 	return NULL;
@@ -619,31 +620,31 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     for(i=0; i< rcols; i++)
 	red[i] = (65535/(rcols-1)) * i;
 
-    green = malloc(cols * sizeof(green[0]));
+    green = mp_malloc(cols * sizeof(green[0]));
     if(!green) {
 	MSG_ERR("Can't allocate green palette with %d entries.\n", cols);
-	free(red);
+	mp_free(red);
 	return NULL;
     }
     for(i=0; i< gcols; i++)
 	green[i] = (65535/(gcols-1)) * i;
 
-    blue = malloc(cols * sizeof(blue[0]));
+    blue = mp_malloc(cols * sizeof(blue[0]));
     if(!blue) {
 	MSG_ERR("Can't allocate blue palette with %d entries.\n", cols);
-	free(red);
-	free(green);
+	mp_free(red);
+	mp_free(green);
 	return NULL;
     }
     for(i=0; i< bcols; i++)
 	blue[i] = (65535/(bcols-1)) * i;
 
-    cmap = malloc(sizeof(struct fb_cmap));
+    cmap = mp_malloc(sizeof(struct fb_cmap));
     if(!cmap) {
 	MSG_ERR("Can't allocate color map\n");
-	free(red);
-	free(green);
-	free(blue);
+	mp_free(red);
+	mp_free(green);
+	mp_free(blue);
 	return NULL;
     }
     cmap->start = 0;
@@ -959,10 +960,10 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 		return 1;
 	    }
 	    priv->cmap_changed = 1;
-	    free(cmap->red);
-	    free(cmap->green);
-	    free(cmap->blue);
-	    free(cmap);
+	    mp_free(cmap->red);
+	    mp_free(cmap->green);
+	    mp_free(cmap->blue);
+	    mp_free(cmap);
 	    break;
 	default:
 	    MSG_ERR(FBDEV "visual: %d not yet supported\n",priv->finfo.visual);
@@ -1025,8 +1026,8 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 
 	priv->total_fr=vo_conf.da_buffs;
 	for(i=0;i<priv->total_fr;i++)
-	    if (!(priv->next_frame[i] = (uint8_t *) malloc(priv->out_width * priv->out_height * priv->pixel_size))) {
-		MSG_ERR(FBDEV "Can't malloc priv->next_frame: %s\n", strerror(errno));
+	    if (!(priv->next_frame[i] = (uint8_t *) mp_malloc(priv->out_width * priv->out_height * priv->pixel_size))) {
+		MSG_ERR(FBDEV "Can't mp_malloc priv->next_frame: %s\n", strerror(errno));
 		return 1;
 	    }
     }
@@ -1087,7 +1088,7 @@ static void uninit(vo_data_t*vo)
 		MSG_ERR(FBDEV "Can't restore original cmap\n");
 	priv->cmap_changed = 0;
     }
-    for(i=0;i<priv->total_fr;i++) free(priv->next_frame[i]);
+    for(i=0;i<priv->total_fr;i++) mp_free(priv->next_frame[i]);
     if (ioctl(priv->dev_fd, FBIOGET_VSCREENINFO, &priv->vinfo))
 	MSG_ERR(FBDEV "ioctl FBIOGET_VSCREENINFO: %s\n", strerror(errno));
     priv->orig_vinfo.xoffset = priv->vinfo.xoffset;
@@ -1105,12 +1106,12 @@ static void uninit(vo_data_t*vo)
 #ifdef CONFIG_VIDIX
     if(vidix_name) vidix_term(vo);
 #endif
-    free(vo->priv);
+    mp_free(vo->priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=malloc(sizeof(priv_t));
+    vo->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     memset(priv,0,sizeof(priv_t));
     priv_conf.mode_cfgfile = "/etc/priv->modes";

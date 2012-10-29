@@ -3,7 +3,7 @@
  *
  * Copyright (C) Aaron Holtzman - June 2000
  *
- *  mpeg2dec is free software; you can redistribute it and/or modify
+ *  mpeg2dec is mp_free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
@@ -33,7 +33,7 @@
 #include "postproc/swscale.h"
 #include "postproc/vf.h"
 #include "xmp_core.h"
-#include "osdep/my_malloc.h"
+#include "osdep/mplib.h"
 #include "mplayer.h"
 #include "osdep/fastmemcpy.h"
 #include "img_format.h"
@@ -181,13 +181,13 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     vo_conf.da_buffs=64;
     vo_conf.WinID=-1;
 
-    vo=random_malloc(sizeof(vo_data_t),1000);
+    vo=mp_malloc(sizeof(vo_data_t));
     memset(vo,0,sizeof(vo_data_t));
     vo->window = None;
     vo->osd_progbar_type=-1;
     vo->osd_progbar_value=100;   // 0..256
 
-    vo->vo_priv=malloc(sizeof(vo_priv_t));
+    vo->vo_priv=mp_malloc(sizeof(vo_priv_t));
     memset(vo->vo_priv,0,sizeof(vo_priv_t));
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     pthread_mutexattr_init(&attr);
@@ -894,7 +894,7 @@ void vo_uninit(vo_data_t*vo)
     vo_inited--;
     video_out->uninit(vo);
     pthread_mutex_destroy(&priv->surfaces_mutex);
-    free(vo->vo_priv);
+    mp_free(vo->vo_priv);
 }
 
 uint32_t __FASTCALL__ vo_control(vo_data_t*vo,uint32_t request, any_t*data)

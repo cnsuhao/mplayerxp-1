@@ -7,7 +7,7 @@
 #ifndef __MANGLE_H
 #define __MANGLE_H
 
-/* Feel free to add more to the list, eg. a.out IMO */
+/* Feel mp_free to add more to the list, eg. a.out IMO */
 #if defined(__CYGWIN__) || defined(__OS2__) || (defined (__OpenBSD__) && !defined(__ELF__))
 #define MANGLE(a) "_" #a
 #else

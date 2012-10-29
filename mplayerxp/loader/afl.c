@@ -5,7 +5,7 @@
   Its content will be based mainly on wine/dlls/msacm32
   actually, for audio decompression only the following functions
   are needed:
-  
+
   acmStreamOpen ( takes formats of src and dest, returns stream handle )
   acmStreamPrepareHeader ( takes stream handler and info on data )
   acmStreamConvert ( the same as PrepareHeader )
@@ -13,13 +13,13 @@
   acmStreamClose
   acmStreamSize
   maybe acmStreamReset
-  
+
   In future I'll also add functions for format enumeration, 
   but not right now.
 
-  
 ***************************************************************************/
 #include "config.h"
+#include "osdep/mplib.h"
 
 #include "wine/winbase.h"
 #include "wine/windef.h"
@@ -282,9 +282,9 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(const char* pszFileName,
 	MSACM_hHeap = GetProcessHeap();
 #endif
     padid = (PWINE_ACMDRIVERID) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
-    padid->pszFileName = (char*)malloc(strlen(pszFileName)+1);
+    padid->pszFileName = (char*)mp_malloc(strlen(pszFileName)+1);
     strcpy(padid->pszFileName, pszFileName);
-//    1~strdup(pszDriverAlias);
+//    1~mp_strdup(pszDriverAlias);
     padid->wFormatTag = wFormatTag;
     padid->hInstModule = hinstModule;
     padid->bEnabled = TRUE;
@@ -312,7 +312,7 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 	acmDriverClose((HACMDRIVER) p->pACMDriverList, 0);
     
     if (p->pszFileName)
-	free(p->pszFileName);
+	mp_free(p->pszFileName);
     
     if (p == MSACM_pFirstACMDriverID)
 	MSACM_pFirstACMDriverID = p->pNextACMDriverID;

@@ -5,10 +5,6 @@
 #include "mp_config.h"
 #include "help_mp.h"
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include "xmp_core.h"
 #include "libmpconf/codec-cfg.h"
 
@@ -17,6 +13,7 @@
 #include "libmpdemux/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
+#include "osdep/mplib.h"
 #include "vd.h"
 #include "postproc/vf.h"
 #include "vd_msg.h"

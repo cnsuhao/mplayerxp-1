@@ -11,6 +11,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 
 #ifdef OSD_SUPPORT
 #include "libvo/video_out.h"
@@ -121,7 +122,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->control=control;
     vf->query_format=query_format;
     vf->put_slice=put_slice;
-    if(!vf->priv) vf->priv=malloc(sizeof(struct vf_priv_s));
+    if(!vf->priv) vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv,0,sizeof(struct vf_priv_s));
     if(args) sscanf(args,"%d:%d",&vf->priv->up_h,&vf->priv->dn_h);
     else     vf->priv->up_h=vf->priv->dn_h=-1;

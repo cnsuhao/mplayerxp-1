@@ -15,6 +15,7 @@
 #include "libmpcodecs/dec_audio.h"
 #include "aviprint.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 /*
  * Load 16/32-bit values in little endian byte order
  * from an unaligned address
@@ -115,7 +116,7 @@ static int asf_probe(demuxer_t *demuxer){
   const unsigned char asfhdrguid[16]= {0x30,0x26,0xB2,0x75,0x8E,0x66,0xCF,0x11,0xA6,0xD9,0x00,0xAA,0x00,0x62,0xCE,0x6C};
   const unsigned char asf2hdrguid[16]={0xD1,0x29,0xE2,0xD6,0xDA,0x35,0xD1,0x11,0x90,0x34,0x00,0xA0,0xC9,0x03,0x49,0xBE};
   asf_priv_t *apriv;
-  apriv = demuxer->priv=malloc(sizeof(asf_priv_t));
+  apriv = demuxer->priv=mp_malloc(sizeof(asf_priv_t));
   apriv->asf_scrambling_h=1;
   apriv->asf_scrambling_w=1;
   apriv->asf_scrambling_b=1;
@@ -127,17 +128,17 @@ static int asf_probe(demuxer_t *demuxer){
   le2me_ASF_header_t(&apriv->asfh);			// swap to machine endian
   if(memcmp(asf2hdrguid,apriv->asfh.objh.guid,16)==0){
     MSG_ERR("ASF_check: found ASF v2 guid!\nCurrently is not supported - please report!\n");
-    free(demuxer->priv);
+    mp_free(demuxer->priv);
     return 0; // not ASF guid
   }
   if(memcmp(asfhdrguid,apriv->asfh.objh.guid,16)){
     MSG_V("ASF_check: not ASF guid!\n");
-    free(demuxer->priv);
+    mp_free(demuxer->priv);
     return 0; // not ASF guid
   }
   if(apriv->asfh.cno>256){
     MSG_V("ASF_check: invalid subchunks_no %d\n",(int) apriv->asfh.cno);
-    free(demuxer->priv);
+    mp_free(demuxer->priv);
     return 0; // invalid header???
   }
   demuxer->file_format=DEMUXER_TYPE_ASF;
@@ -182,7 +183,7 @@ while(!stream_eof(demuxer->stream)){
       case ASF_GUID_PREFIX_audio_stream: {
         sh_audio_t* sh_audio=new_sh_audio(demuxer,apriv->streamh.stream_no & 0x7F);
 	++audio_streams;
-        sh_audio->wf=calloc((apriv->streamh.type_size<sizeof(WAVEFORMATEX))?sizeof(WAVEFORMATEX):apriv->streamh.type_size,1);
+        sh_audio->wf=mp_calloc((apriv->streamh.type_size<sizeof(WAVEFORMATEX))?sizeof(WAVEFORMATEX):apriv->streamh.type_size,1);
         memcpy(sh_audio->wf,buffer,apriv->streamh.type_size);
 	le2me_WAVEFORMATEX(sh_audio->wf);
         if(mp_conf.verbose>=1) print_wave_header(sh_audio->wf,apriv->streamh.type_size);
@@ -202,7 +203,7 @@ while(!stream_eof(demuxer->stream)){
 	sh_video_t* sh_video=new_sh_video(demuxer,apriv->streamh.stream_no & 0x7F);
 	unsigned int len=apriv->streamh.type_size-(4+4+1+2);
 	++video_streams;
-        sh_video->bih=calloc((len<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):len,1);
+        sh_video->bih=mp_calloc((len<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):len,1);
         memcpy(sh_video->bih,&buffer[4+4+1+2],len);
 	le2me_BITMAPINFOHEADER(sh_video->bih);
         if(mp_conf.verbose>=1) print_video_header(sh_video->bih,len);
@@ -239,41 +240,41 @@ while(!stream_eof(demuxer->stream)){
 	MSG_V("\n");
         // extract the title
         if( apriv->contenth.title_size!=0 ) {
-          string=(char*)malloc(apriv->contenth.title_size);
+          string=(char*)mp_malloc(apriv->contenth.title_size);
           stream_read(demuxer->stream, string, apriv->contenth.title_size);
 	  pack_asf_string(string, apriv->contenth.title_size);
 	  demux_info_add(demuxer, INFOT_NAME, string);
         }
         // extract the author 
         if( apriv->contenth.author_size!=0 ) {
-          string=(char*)realloc((any_t*)string, apriv->contenth.author_size);
+          string=(char*)mp_realloc((any_t*)string, apriv->contenth.author_size);
           stream_read(demuxer->stream, string, apriv->contenth.author_size);
 	  pack_asf_string(string, apriv->contenth.author_size);
 	  demux_info_add(demuxer, INFOT_AUTHOR, string);
         }
         // extract the copyright
         if( apriv->contenth.copyright_size!=0 ) {
-          string=(char*)realloc((any_t*)string, apriv->contenth.copyright_size);
+          string=(char*)mp_realloc((any_t*)string, apriv->contenth.copyright_size);
           stream_read(demuxer->stream, string, apriv->contenth.copyright_size);
 	  pack_asf_string(string, apriv->contenth.copyright_size);
 	  demux_info_add(demuxer, INFOT_COPYRIGHT, string);
         }
         // extract the comment
         if( apriv->contenth.comment_size!=0 ) {
-          string=(char*)realloc((any_t*)string, apriv->contenth.comment_size);
+          string=(char*)mp_realloc((any_t*)string, apriv->contenth.comment_size);
           stream_read(demuxer->stream, string, apriv->contenth.comment_size);
 	  pack_asf_string(string, apriv->contenth.comment_size);
 	  demux_info_add(demuxer, INFOT_COMMENTS, string);
         }
         // extract the rating
         if( apriv->contenth.rating_size!=0 ) {
-          string=(char*)realloc((any_t*)string, apriv->contenth.rating_size);
+          string=(char*)mp_realloc((any_t*)string, apriv->contenth.rating_size);
           stream_read(demuxer->stream, string, apriv->contenth.rating_size);
 	  pack_asf_string(string, apriv->contenth.comment_size);
 	  demux_info_add(demuxer, INFOT_RATING, string);
         }
 	MSG_V("\n");
-        free(string);
+        mp_free(string);
       break;
     }
     case ASF_GUID_PREFIX_stream_group: {
@@ -282,10 +283,10 @@ while(!stream_eof(demuxer->stream)){
         char *object=NULL, *ptr=NULL;
         MSG_V("============ ASF Stream group == START ===\n");
         MSG_V(" object size = %d\n", (int)apriv->objh.size);
-        object = (char*)malloc(apriv->objh.size);
+        object = (char*)mp_malloc(apriv->objh.size);
 	if( object==NULL ) {
           MSG_ERR("Memory allocation failed\n");
-	  free(demuxer->priv);
+	  mp_free(demuxer->priv);
 	  return NULL;
 	}
         stream_read( demuxer->stream, object, apriv->objh.size );
@@ -294,7 +295,7 @@ while(!stream_eof(demuxer->stream)){
         stream_count = le2me_16(*(uint16_t*)ptr);
         ptr += sizeof(uint16_t);
         if(stream_count > 0)
-              streams = (uint32_t*)malloc(2*stream_count*sizeof(uint32_t));
+              streams = (uint32_t*)mp_malloc(2*stream_count*sizeof(uint32_t));
         MSG_V(" stream count=[0x%x][%u]\n", stream_count, stream_count );
         for( i=0 ; i<stream_count && ptr<((char*)object+apriv->objh.size) ; i++ ) {
           stream_id = le2me_16(*(uint16_t*)ptr);
@@ -308,7 +309,7 @@ while(!stream_eof(demuxer->stream)){
           streams[2*i+1] = max_bitrate;
         }
         MSG_V("============ ASF Stream group == END ===\n");
-        free( object );
+        mp_free( object );
       break;
     }
   } // switch GUID
@@ -339,7 +340,7 @@ if(streams) {
       best_audio = id;
     }
   }
-  free(streams);
+  mp_free(streams);
 }
 
 MSG_V("ASF: %d audio and %d video streams found\n",audio_streams,video_streams);
@@ -348,7 +349,7 @@ else if(best_audio > 0 && demuxer->audio->id == -1) demuxer->audio->id=best_audi
 if(!video_streams){
     if(!audio_streams){
 	MSG_ERR("ASF: no audio or video headers found - broken file?\n");
-	free(demuxer->priv);
+	mp_free(demuxer->priv);
 	return NULL;
     }
     demuxer->video->id=-2; // audio-only
@@ -393,7 +394,7 @@ return demuxer;
 // based on asf file-wtag doc by Eugene [http://divx.euro.ru]
 
 static void asf_descrambling(asf_priv_t *apriv, unsigned char *src,int len){
-  unsigned char *dst=malloc(len);
+  unsigned char *dst=mp_malloc(len);
   unsigned char *s2=src;
   int i=0,x,y;
   while(len-i>=apriv->asf_scrambling_h*apriv->asf_scrambling_w*apriv->asf_scrambling_b){
@@ -405,7 +406,7 @@ static void asf_descrambling(asf_priv_t *apriv, unsigned char *src,int len){
 	s2+=apriv->asf_scrambling_h*apriv->asf_scrambling_w*apriv->asf_scrambling_b;
   }
   memcpy(src,dst,i);
-  free(dst);
+  mp_free(dst);
 }
 
 
@@ -453,7 +454,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
         // append data to it!
         demux_packet_t* dp=ds->asf_packet;
         if(dp->len!=offs && offs!=-1) MSG_V("warning! fragment.len=%d BUT next fragment offset=%d  \n",dp->len,offs);
-        dp->buffer=realloc(dp->buffer,dp->len+len);
+        dp->buffer=mp_realloc(dp->buffer,dp->len+len);
 	stream_seek(demux->stream,dataoff);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
         MSG_DBG3("data appended! %d+%d\n",dp->len,len);
@@ -708,7 +709,7 @@ static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void asf_close(demuxer_t *demuxer)
 {
-    free(demuxer->priv);
+    mp_free(demuxer->priv);
 }
 
 static int asf_control(demuxer_t *demuxer,int cmd,any_t*args)

@@ -4,12 +4,10 @@
  * $Id: driver.c,v 1.3 2006/09/13 08:13:07 nickols_k Exp $
  */
 
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 
 #include <stdio.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #include <stdlib.h>
 #ifdef __FreeBSD__
 #include <sys/time.h>
@@ -72,14 +70,14 @@ extern char* def_path;
 static int needs_free=0;
 void SetCodecPath(const char* path)
 {
-    if(needs_free)free(def_path);
+    if(needs_free)mp_free(def_path);
     if(path==0)
     {
 	def_path=WIN32_PATH;
 	needs_free=0;
 	return;
     }
-    def_path = (char*) malloc(strlen(path)+1);
+    def_path = (char*) mp_malloc(strlen(path)+1);
     strcpy(def_path, path);
     needs_free=1;
 }
@@ -138,7 +136,7 @@ void DrvClose(HDRVR hDriver)
 	    }
 	    FreeLibrary(d->hDriverModule);
 	}
-	free(d);
+	mp_free(d);
     }
 #ifdef HAVE_WIN32LOADER
     CodecRelease();
@@ -164,7 +162,7 @@ HDRVR DrvOpen(LPARAM lParam2)
     printf("Loading codec DLL: '%s'\n",filename);
 #endif
 
-    hDriver = (NPDRVR) malloc(sizeof(DRVR));
+    hDriver = (NPDRVR) mp_malloc(sizeof(DRVR));
     if (!hDriver)
 	return ((HDRVR) 0);
     memset((any_t*)hDriver, 0, sizeof(DRVR));

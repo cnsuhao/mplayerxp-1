@@ -8,6 +8,7 @@
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "codecs_ld.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
@@ -143,7 +144,7 @@ enum mpg123_errors
 	MPG123_ERR_16TO8TABLE,	/**< Unable to allocate memory for 16 to 8 converter table! */
 	MPG123_BAD_PARAM,		/**< Bad parameter id! */
 	MPG123_BAD_BUFFER,		/**< Bad buffer given -- invalid pointer or too small size. */
-	MPG123_OUT_OF_MEM,		/**< Out of memory -- some malloc() failed. */
+	MPG123_OUT_OF_MEM,		/**< Out of memory -- some mp_malloc() failed. */
 	MPG123_NOT_INITIALIZED,	/**< You didn't initialize the library! */
 	MPG123_BAD_DECODER,		/**< Invalid decoder choice. */
 	MPG123_BAD_HANDLE,		/**< Invalid mpg123 handle. */
@@ -272,7 +273,7 @@ int init(sh_audio_t *sh)
   sh->samplesize=4;
   sh->sample_format=AFMT_FLOAT32;
   mpg123_init();
-  priv = malloc(sizeof(mp3_priv_t));
+  priv = mp_malloc(sizeof(mp3_priv_t));
   memset(priv,0,sizeof(mp3_priv_t));
   sh->context = priv;
   priv->mh = mpg123_new(NULL,&err);
@@ -302,7 +303,7 @@ int init(sh_audio_t *sh)
     mpg123_close(priv->mh);
     mpg123_delete(priv->mh);
     mpg123_exit();
-    free(priv);
+    mp_free(priv);
     return 0;
   }
   mpg123_getformat(priv->mh, &rate, &nch, &enc);
@@ -341,7 +342,7 @@ void uninit(sh_audio_t *sh)
   mpg123_close(priv->mh);
   mpg123_delete(priv->mh);
   mpg123_exit();
-  free(priv);
+  mp_free(priv);
   dlclose(dll_handle);
 }
 

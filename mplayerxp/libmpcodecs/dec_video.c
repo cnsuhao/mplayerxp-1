@@ -5,9 +5,6 @@
 #endif
 
 #include <stdio.h>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 #include <stdlib.h>
 #include <unistd.h>
 #include "mplayer.h"
@@ -15,6 +12,7 @@
 
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
+#include "osdep/mplib.h"
 
 #include "libmpdemux/stream.h"
 #include "libmpdemux/demuxer.h"

@@ -12,6 +12,7 @@
 
 #include "vd_internal.h"
 #include "vd_msg.h"
+#include "osdep/mplib.h"
 
 static const vd_info_t info = {
    "Theora/VP3 video decoder",
@@ -71,7 +72,7 @@ static int init(sh_video_t *sh){
     /* this is not a loop, just a context, from which we can break on error */
     do
     {
-       context = (theora_struct_t *)calloc (sizeof (theora_struct_t), 1);
+       context = (theora_struct_t *)mp_calloc (sizeof (theora_struct_t), 1);
        sh->context = context;
        if (!context)
 	  break;
@@ -108,7 +109,7 @@ static int init(sh_video_t *sh){
     {
        if (context)
        {
-	  free (context);
+	  mp_free (context);
 	  sh->context = NULL;
        }
        return 0;
@@ -135,7 +136,7 @@ static void uninit(sh_video_t *sh)
    if (context)
    {
       theora_clear (&context->st);
-      free (context);
+      mp_free (context);
    }
 }
 

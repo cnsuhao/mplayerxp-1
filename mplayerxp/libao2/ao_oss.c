@@ -10,8 +10,9 @@
 #include <errno.h>
 #include <string.h>
 
-#include "../mp_config.h"
-#include "../mixer.h"
+#include "mp_config.h"
+#include "mixer.h"
+#include "osdep/mplib.h"
 
 #include "afmt.h"
 #include "audio_out.h"
@@ -198,7 +199,7 @@ static void show_caps(ao_data_t* ao)
 static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
   char *mixer_channels [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
   UNUSED(flags);
-  ao->priv=malloc(sizeof(priv_t));
+  ao->priv=mp_malloc(sizeof(priv_t));
   priv_t*priv=ao->priv;
   memset(priv,0,sizeof(priv_t));
   priv->dsp=PATH_DEV_DSP;
@@ -309,7 +310,7 @@ ac3_retry:
           MSG_V("OSS-CONF: %d bytes/frag (GETBLKSIZE)\n",ao->outburst);
       }
   } else {
-      MSG_V("OSS-CONF: frags: %3d/%d  (%d bytes/frag)  free: %6d\n",
+      MSG_V("OSS-CONF: frags: %3d/%d  (%d bytes/frag)  mp_free: %6d\n",
           priv->zz.fragments, priv->zz.fragstotal, priv->zz.fragsize, priv->zz.bytes);
       if(ao->buffersize==0) ao->buffersize=priv->zz.bytes;
       ao->outburst=priv->zz.fragsize;
@@ -320,7 +321,7 @@ ac3_retry:
     any_t* data;
     ao->buffersize=0;
 #ifdef HAVE_AUDIO_SELECT
-    data=malloc(ao->outburst); memset(data,0,ao->outburst);
+    data=mp_malloc(ao->outburst); memset(data,0,ao->outburst);
     while(ao->buffersize<0x40000){
       fd_set rfds;
       struct timeval tv;
@@ -330,7 +331,7 @@ ac3_retry:
       write(priv->fd,data,ao->outburst);
       ao->buffersize+=ao->outburst;
     }
-    free(data);
+    mp_free(data);
     if(ao->buffersize==0){
         MSG_ERR("\n   *** OSS-CONF: Your audio driver DOES NOT support select()  ***\n"
           "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mp_config.h !\n\n");
@@ -358,7 +359,7 @@ static void uninit(ao_data_t* ao){
 #endif
     close(priv->fd);
     priv->fd = -1;
-    free(ao->priv);
+    mp_free(ao->priv);
 }
 
 // stop playing and empty buffers (for seeking/pause)

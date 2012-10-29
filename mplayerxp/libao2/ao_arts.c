@@ -5,7 +5,7 @@
  *
  * This file is part of MPlayer.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -30,7 +30,7 @@
 #include "afmt.h"
 #include "ao_msg.h"
 
-/* Feel free to experiment with the following values: */
+/* Feel mp_free to experiment with the following values: */
 #define ARTS_PACKETS 10 /* Number of audio packets */
 #define ARTS_PACKET_SIZE_LOG2 11 /* Log2 of audio packet size */
 

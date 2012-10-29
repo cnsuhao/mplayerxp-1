@@ -3,9 +3,10 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
-#include "../libvo/img_format.h"
+#include "libvo/img_format.h"
+#include "osdep/mplib.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "pp_msg.h"
@@ -44,7 +45,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 	vf->config = config;
 	vf->put_slice = vf_next_put_slice;
 	//vf->default_caps = 0;
-	vf->priv = calloc(sizeof(struct vf_priv_s), 1);
+	vf->priv = mp_calloc(sizeof(struct vf_priv_s), 1);
 	vf->priv->aspect = 4.0/3.0;
 	if (args) {
 		if (strcmp(args,"dvb") == 0) vf->priv->aspect = 768.;

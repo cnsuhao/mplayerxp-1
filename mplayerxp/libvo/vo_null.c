@@ -3,9 +3,9 @@
  *
  *	Copyright (C) Aaron Holtzman - June 2000
  *
- *  This file is part of mpeg2dec, a free MPEG-2 video stream decoder.
+ *  This file is part of mpeg2dec, a mp_free MPEG-2 video stream decoder.
  *	
- *  mpeg2dec is free software; you can redistribute it and/or modify
+ *  mpeg2dec is mp_free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
@@ -29,9 +29,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#ifdef HAVE_MEMALIGN
-#include <malloc.h>
-#endif
+#include "osdep/mplib.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "dri_vo.h"
@@ -151,9 +149,9 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     for(i=0;i<priv->num_frames;i++) {
 	if(!priv->bm_buffs[i])
 #ifdef HAVE_MEMALIGN
-	    priv->bm_buffs[i] = memalign(getpagesize(),priv->frame_size);
+	    priv->bm_buffs[i] = mp_memalign(getpagesize(),priv->frame_size);
 #else
-	    priv->bm_buffs[i] = malloc(priv->frame_size);
+	    priv->bm_buffs[i] = mp_malloc(priv->frame_size);
 #endif
 	if(!(priv->bm_buffs[i])) {
 		MSG_ERR("Can't allocate memory for busmastering\n");
@@ -174,10 +172,10 @@ static void uninit(vo_data_t*vo)
     priv_t*priv=(priv_t*)vo->priv;
     size_t i;
     for(i=0;i<priv->num_frames;i++) {
-	free(priv->bm_buffs[i]);
+	mp_free(priv->bm_buffs[i]);
 	priv->bm_buffs[i]=NULL;
     }
-    free(priv);
+    mp_free(priv);
 }
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
@@ -186,7 +184,7 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 	MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
 	return ENOSYS;
     }
-    vo->priv=malloc(sizeof(priv_t));
+    vo->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     memset(priv,0,sizeof(priv_t));
     return 0;

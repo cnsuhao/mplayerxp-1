@@ -11,6 +11,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "postproc/swscale.h"
 #include "pp_msg.h"
 
@@ -126,7 +127,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
-	free(vf->priv);
+	mp_free(vf->priv);
 }
 
 static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
@@ -136,7 +137,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 	vf->put_slice=put_slice;
 	vf->uninit=uninit;
 
-	vf->priv = calloc(1, sizeof (struct vf_priv_s));
+	vf->priv = mp_calloc(1, sizeof (struct vf_priv_s));
 	vf->priv->skipline = 0;
 	vf->priv->scalew = 1;
 	vf->priv->scaleh = 2;

@@ -460,7 +460,7 @@ G_private = priv; /* Oooh, sick */
 /* Video Configuration */
 
 priv->videoready = TRUE;
-priv->btdev = strdup("/dev/bktr0");
+priv->btdev = mp_strdup("/dev/bktr0");
 priv->immediatemode = FALSE;
 priv->iformat = METEOR_FMT_PAL;
 priv->maxheight = PAL_HEIGHT;
@@ -525,7 +525,7 @@ if(priv->videoready == TRUE)
 
     for(count=0;count<RINGSIZE;count++)
         {
-        priv->framebuf[count].buf = malloc(priv->framebufsize);
+        priv->framebuf[count].buf = mp_malloc(priv->framebufsize);
 
         if(priv->framebuf[count].buf == NULL)
             {
@@ -541,7 +541,7 @@ if(priv->videoready == TRUE)
 
 /* Tuner Configuration */
 
-priv->tunerdev = strdup("/dev/tuner0");
+priv->tunerdev = mp_strdup("/dev/tuner0");
 priv->tunerready = TRUE;
 
 priv->tunerfd = open(priv->tunerdev, O_RDONLY);
@@ -555,7 +555,7 @@ if(priv->tunerfd < 0)
 /* Audio Configuration */
 
 priv->dspready = TRUE;
-priv->dspdev = strdup("/dev/dsp");
+priv->dspdev = mp_strdup("/dev/dsp");
 priv->dspsamplesize = 16;
 priv->dspstereo = 1;
 priv->dspspeed = 44100;

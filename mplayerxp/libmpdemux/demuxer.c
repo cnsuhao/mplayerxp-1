@@ -21,6 +21,7 @@
 #include "stheader.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "libvo/sub.h"
 #include "demux_msg.h"
 
@@ -104,14 +105,14 @@ void free_demuxer_stream(demux_stream_t *ds){
     if(ds)
     {
 	ds_free_packs(ds);
-	free(ds);
+	mp_free(ds);
     }
 }
 
 int demux_aid_vid_mismatch = 0;
 
 demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
-  demux_stream_t* ds=malloc(sizeof(demux_stream_t));
+  demux_stream_t* ds=mp_malloc(sizeof(demux_stream_t));
   ds->buffer_pos=ds->buffer_size=0;
   ds->buffer=NULL;
   ds->pts=0;
@@ -137,7 +138,7 @@ demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
 }
 
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
-  demuxer_t *d=malloc(sizeof(demuxer_t));
+  demuxer_t *d=mp_malloc(sizeof(demuxer_t));
   memset(d,0,sizeof(demuxer_t));
   d->stream=stream;
   d->movi_start=stream->start_pos;
@@ -150,7 +151,7 @@ demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
   d->video=new_demuxer_stream(d,v_id);
   d->sub=new_demuxer_stream(d,s_id);
   d->file_format=type;
-  d->info=malloc(sizeof(demuxer_info_t));
+  d->info=mp_malloc(sizeof(demuxer_info_t));
   memset(d->info,0,sizeof(demuxer_info_t));
   stream_reset(stream);
   stream_seek(stream,stream->start_pos);
@@ -180,7 +181,7 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
     } else {
         sh_audio_t *sh;
         MSG_V("==> Found audio stream: %d\n",id);
-        demuxer->a_streams[id]=calloc(1, sizeof(sh_audio_t));
+        demuxer->a_streams[id]=mp_calloc(1, sizeof(sh_audio_t));
         sh = demuxer->a_streams[id];
         // set some defaults
         sh->samplesize=2;
@@ -194,8 +195,8 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
 
 void free_sh_audio(sh_audio_t* sh){
     MSG_V("DEMUXER: freeing sh_audio at %p  \n",sh);
-    if(sh->wf) free(sh->wf);
-    free(sh);
+    if(sh->wf) mp_free(sh->wf);
+    mp_free(sh);
 }
 
 sh_video_t *get_sh_video(demuxer_t *demuxer, int id)
@@ -220,7 +221,7 @@ sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
         MSG_WARN(MSGTR_VideoStreamRedefined,id);
     } else {
         MSG_V("==> Found video stream: %d\n",id);
-        demuxer->v_streams[id]=calloc(1, sizeof(sh_video_t));
+        demuxer->v_streams[id]=mp_calloc(1, sizeof(sh_video_t));
           MSG_V("ID_VIDEO_ID=%d\n", vid);
     }
     ((sh_video_t *)demuxer->v_streams[id])->vid = vid;
@@ -229,8 +230,8 @@ sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
 
 void free_sh_video(sh_video_t* sh){
     MSG_V("DEMUXER: freeing sh_video at %p  \n",sh);
-    if(sh->bih) free(sh->bih);
-    free(sh);
+    if(sh->bih) mp_free(sh->bih);
+    mp_free(sh);
 }
 
 void free_demuxer(demuxer_t *demuxer){
@@ -241,19 +242,19 @@ void free_demuxer(demuxer_t *demuxer){
 
 	if(demuxer->driver) demuxer->driver->close(demuxer);
 
-	// free streams:
+	// mp_free streams:
 	for(i=0;i<256;i++){
 	    if(demuxer->a_streams[i]) free_sh_audio(demuxer->a_streams[i]);
 	    if(demuxer->v_streams[i]) free_sh_video(demuxer->v_streams[i]);
 	}
 	//if(sh_audio) free_sh_audio(sh_audio);
 	//if(sh_video) free_sh_video(sh_video);
-	// free demuxers:
+	// mp_free demuxers:
 	FREE_DEMUXER_STREAM(demuxer->audio);
 	FREE_DEMUXER_STREAM(demuxer->video);
 	FREE_DEMUXER_STREAM(demuxer->sub);
 	demux_info_free(demuxer);
-	free(demuxer);
+	mp_free(demuxer);
     }
 }
 
@@ -308,7 +309,7 @@ int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds){
 //     1 = succesfull
 int ds_fill_buffer(demux_stream_t *ds){
   demuxer_t *demux=ds->demuxer;
-  if(ds->buffer) free(ds->buffer);
+  if(ds->buffer) mp_free(ds->buffer);
   if(mp_conf.verbose>2){
     if(ds==demux->audio)
 	MSG_DBG3("ds_fill_buffer(d_audio) called\n");
@@ -337,7 +338,7 @@ int ds_fill_buffer(demux_stream_t *ds){
       }
       ds->pts_bytes+=p->len; // !!!
       ds->flags=p->flags;
-      // free packet:
+      // mp_free packet:
       ds->bytes-=p->len;
       ds->current=p;
       ds->first=p->next;
@@ -397,15 +398,15 @@ void ds_free_packs(demux_stream_t *ds){
     dp=dn;
   }
   if(ds->asf_packet){
-    // free unfinished .asf fragments:
-    free(ds->asf_packet->buffer);
-    free(ds->asf_packet);
+    // mp_free unfinished .asf fragments:
+    mp_free(ds->asf_packet->buffer);
+    mp_free(ds->asf_packet);
     ds->asf_packet=NULL;
   }
   ds->first=ds->last=NULL;
   ds->packs=0; // !!!!!
   ds->bytes=0;
-  if(ds->current) free(ds->current);
+  if(ds->current) mp_free(ds->current);
   ds->current=NULL;
   ds->buffer=NULL;
   ds->buffer_pos=ds->buffer_size;
@@ -427,9 +428,9 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
   if(!dp)
   {
     if(ds->asf_packet){
-	// free unfinished .asf fragments:
-	free(ds->asf_packet->buffer);
-	free(ds->asf_packet);
+	// mp_free unfinished .asf fragments:
+	mp_free(ds->asf_packet->buffer);
+	mp_free(ds->asf_packet);
 	ds->asf_packet=NULL;
     }
     ds->first=ds->last=NULL;
@@ -444,7 +445,7 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
     ds->bytes-=bytes;
     ds->pts=dp->pts;
   }
-  if(ds->current) free(ds->current);
+  if(ds->current) mp_free(ds->current);
   ds->current=NULL;
   ds->buffer=NULL;
   ds->buffer_pos=ds->buffer_size;
@@ -452,7 +453,7 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
 }
 
 demux_packet_t* clone_demux_packet(demux_packet_t* pack){
-  demux_packet_t* dp=(demux_packet_t*)malloc(sizeof(demux_packet_t));
+  demux_packet_t* dp=(demux_packet_t*)mp_malloc(sizeof(demux_packet_t));
 //  while(pack->master) pack=pack->master; // find the master
   memcpy(dp,pack,sizeof(demux_packet_t));
 //  dp->next=NULL;
@@ -705,7 +706,7 @@ int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param)
     if(((demuxer_info_t *)demuxer->info)->id[opt])
     {
 	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],((demuxer_info_t *)demuxer->info)->id[opt]);
-	free(((demuxer_info_t *)demuxer->info)->id[opt]);
+	mp_free(((demuxer_info_t *)demuxer->info)->id[opt]);
     }
     ((demuxer_info_t *)demuxer->info)->id[opt]=nls_recode2screen_cp(sub_data.cp,param,strlen(param));
     return 1;
@@ -728,8 +729,8 @@ void demux_info_free(demuxer_t* demuxer)
     {
 	for(i=0;i<INFOT_MAX;i++)
 	    if(((demuxer_info_t *)demuxer->info)->id[i])
-		free(((demuxer_info_t *)demuxer->info)->id[i]);
-	free(demuxer->info);
+		mp_free(((demuxer_info_t *)demuxer->info)->id[i]);
+	mp_free(demuxer->info);
     }
 }
 
@@ -787,4 +788,38 @@ int demuxer_switch_subtitle(demuxer_t *demuxer, int id)
     if (demux_control(demuxer, DEMUX_CMD_SWITCH_SUBS, &id) == DEMUX_UNKNOWN)
 	id = demuxer->audio->id;
     return id;
+}
+
+demux_packet_t* new_demux_packet(int len){
+  demux_packet_t* dp=mp_malloc(sizeof(demux_packet_t));
+  dp->len=len;
+  dp->buffer=mp_malloc(len);
+  dp->next=NULL;
+  dp->pts=0;
+  dp->pos=0;
+  dp->flags=0;
+  return dp;
+}
+
+void free_demux_packet(demux_packet_t* dp){
+  mp_free(dp->buffer);
+  mp_free(dp);
+}
+
+void resize_demux_packet(demux_packet_t* dp, int len)
+{
+  if(dp->len!=len)
+  {
+    if(len)
+    {
+	dp->buffer=(unsigned char *)mp_realloc(dp->buffer,len+8);
+	memset(dp->buffer+len,0,8);
+    }
+    else
+    {
+	if(dp->buffer) mp_free(dp->buffer);
+	dp->buffer=NULL;
+    }
+    dp->len=len;
+  }
 }

@@ -5,9 +5,9 @@
 /*
  * Copyright (C) 2002 the xine project
  *
- * This file is part of xine, a free video player.
+ * This file is part of xine, a mp_free video player.
  *
- * xine is free software; you can redistribute it and/or modify
+ * xine is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -29,9 +29,10 @@
 #include "rmff.h"
 #include "xbuffer.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "mplayer.h"
 #include "md5.h"
-#include "../demux_msg.h"
+#include "demux_msg.h"
 
 /*
 #define LOG
@@ -257,7 +258,7 @@ void rmff_dump_pheader(rmff_pheader_t *h, char *data) {
 
 static rmff_fileheader_t *rmff_scan_fileheader(const char *data) {
 
-  rmff_fileheader_t *fileheader=malloc(sizeof(rmff_fileheader_t));
+  rmff_fileheader_t *fileheader=mp_malloc(sizeof(rmff_fileheader_t));
 
   fileheader->object_id=AV_RB32(data);
   fileheader->size=AV_RB32(&data[4]);
@@ -275,7 +276,7 @@ static rmff_fileheader_t *rmff_scan_fileheader(const char *data) {
 
 static rmff_prop_t *rmff_scan_prop(const char *data) {
 
-  rmff_prop_t *prop=malloc(sizeof(rmff_prop_t));
+  rmff_prop_t *prop=mp_malloc(sizeof(rmff_prop_t));
 
   prop->object_id=AV_RB32(data);
   prop->size=AV_RB32(&data[4]);
@@ -302,7 +303,7 @@ static rmff_prop_t *rmff_scan_prop(const char *data) {
 
 static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
 
-  rmff_mdpr_t *mdpr=malloc(sizeof(rmff_mdpr_t));
+  rmff_mdpr_t *mdpr=mp_malloc(sizeof(rmff_mdpr_t));
 
   mdpr->object_id=AV_RB32(data);
   mdpr->size=AV_RB32(&data[4]);
@@ -322,17 +323,17 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
   mdpr->duration=AV_RB32(&data[36]);
   
   mdpr->stream_name_size=data[40];
-  mdpr->stream_name=malloc(mdpr->stream_name_size+1);
+  mdpr->stream_name=mp_malloc(mdpr->stream_name_size+1);
   memcpy(mdpr->stream_name, &data[41], mdpr->stream_name_size);
   mdpr->stream_name[mdpr->stream_name_size]=0;
   
   mdpr->mime_type_size=data[41+mdpr->stream_name_size];
-  mdpr->mime_type=malloc(mdpr->mime_type_size+1);
+  mdpr->mime_type=mp_malloc(mdpr->mime_type_size+1);
   memcpy(mdpr->mime_type, &data[42+mdpr->stream_name_size], mdpr->mime_type_size);
   mdpr->mime_type[mdpr->mime_type_size]=0;
   
   mdpr->type_specific_len=AV_RB32(&data[42+mdpr->stream_name_size+mdpr->mime_type_size]);
-  mdpr->type_specific_data=malloc(mdpr->type_specific_len);
+  mdpr->type_specific_data=mp_malloc(mdpr->type_specific_len);
   memcpy(mdpr->type_specific_data, 
       &data[46+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
   
@@ -341,7 +342,7 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
 
 static rmff_cont_t *rmff_scan_cont(const char *data) {
 
-  rmff_cont_t *cont=malloc(sizeof(rmff_cont_t));
+  rmff_cont_t *cont=mp_malloc(sizeof(rmff_cont_t));
   int pos;
 
   cont->object_id=AV_RB32(data);
@@ -353,22 +354,22 @@ static rmff_cont_t *rmff_scan_cont(const char *data) {
       cont->object_version);
   }
   cont->title_len=AV_RB16(&data[10]);
-  cont->title=malloc(cont->title_len+1);
+  cont->title=mp_malloc(cont->title_len+1);
   memcpy(cont->title, &data[12], cont->title_len);
   cont->title[cont->title_len]=0;
   pos=cont->title_len+12;
   cont->author_len=AV_RB16(&data[pos]);
-  cont->author=malloc(cont->author_len+1);
+  cont->author=mp_malloc(cont->author_len+1);
   memcpy(cont->author, &data[pos+2], cont->author_len);
   cont->author[cont->author_len]=0;
   pos=pos+2+cont->author_len;
   cont->copyright_len=AV_RB16(&data[pos]);
-  cont->copyright=malloc(cont->copyright_len+1);
+  cont->copyright=mp_malloc(cont->copyright_len+1);
   memcpy(cont->copyright, &data[pos+2], cont->copyright_len);
   cont->copyright[cont->copyright_len]=0;
   pos=pos+2+cont->copyright_len;
   cont->comment_len=AV_RB16(&data[pos]);
-  cont->comment=malloc(cont->comment_len+1);
+  cont->comment=mp_malloc(cont->comment_len+1);
   memcpy(cont->comment, &data[pos+2], cont->comment_len);
   cont->comment[cont->comment_len]=0;
 
@@ -377,7 +378,7 @@ static rmff_cont_t *rmff_scan_cont(const char *data) {
 
 static rmff_data_t *rmff_scan_dataheader(const char *data) {
 
-  rmff_data_t *dh=malloc(sizeof(rmff_data_t));
+  rmff_data_t *dh=mp_malloc(sizeof(rmff_data_t));
 
   dh->object_id=AV_RB32(data);
   dh->size=AV_RB32(&data[4]);
@@ -395,7 +396,7 @@ static rmff_data_t *rmff_scan_dataheader(const char *data) {
  
 rmff_header_t *rmff_scan_header(const char *data) {
 
-	rmff_header_t *header=malloc(sizeof(rmff_header_t));
+	rmff_header_t *header=mp_malloc(sizeof(rmff_header_t));
 	rmff_mdpr_t   *mdpr=NULL;
 	int           chunk_size;
 	uint32_t      chunk_type;
@@ -411,13 +412,13 @@ rmff_header_t *rmff_scan_header(const char *data) {
   if (chunk_type != RMF_TAG)
   {
     MSG_ERR("rmff: not an real media file header (.RMF tag not found).\n");
-    free(header);
+    mp_free(header);
     return NULL;
   }
   header->fileheader=rmff_scan_fileheader(ptr);
   ptr += header->fileheader->size;
 	
-	header->streams=malloc(sizeof(rmff_mdpr_t*)*(header->fileheader->num_headers));
+	header->streams=mp_malloc(sizeof(rmff_mdpr_t*)*(header->fileheader->num_headers));
   for (i=0; i<header->fileheader->num_headers; i++) {
     header->streams[i]=NULL;
   }
@@ -513,7 +514,7 @@ void rmff_scan_pheader(rmff_pheader_t *h, char *data) {
 
 rmff_fileheader_t *rmff_new_fileheader(uint32_t num_headers) {
 
-  rmff_fileheader_t *fileheader=malloc(sizeof(rmff_fileheader_t));
+  rmff_fileheader_t *fileheader=mp_malloc(sizeof(rmff_fileheader_t));
 
   fileheader->object_id=RMF_TAG;
   fileheader->size=18;
@@ -537,7 +538,7 @@ rmff_prop_t *rmff_new_prop (
     uint16_t num_streams,
     uint16_t flags ) {
 
-  rmff_prop_t *prop=malloc(sizeof(rmff_prop_t));
+  rmff_prop_t *prop=mp_malloc(sizeof(rmff_prop_t));
 
   prop->object_id=PROP_TAG;
   prop->size=50;
@@ -572,7 +573,7 @@ rmff_mdpr_t *rmff_new_mdpr(
       uint32_t   type_specific_len,
       const char *type_specific_data ) {
 
-  rmff_mdpr_t *mdpr=malloc(sizeof(rmff_mdpr_t));
+  rmff_mdpr_t *mdpr=mp_malloc(sizeof(rmff_mdpr_t));
   
   mdpr->object_id=MDPR_TAG;
   mdpr->object_version=0;
@@ -587,16 +588,16 @@ rmff_mdpr_t *rmff_new_mdpr(
   mdpr->duration=duration;
   mdpr->stream_name_size=0;
   if (stream_name) {
-    mdpr->stream_name=strdup(stream_name);
+    mdpr->stream_name=mp_strdup(stream_name);
     mdpr->stream_name_size=strlen(stream_name);
   }
   mdpr->mime_type_size=0;
   if (mime_type) {
-    mdpr->mime_type=strdup(mime_type);
+    mdpr->mime_type=mp_strdup(mime_type);
     mdpr->mime_type_size=strlen(mime_type);
   }
   mdpr->type_specific_len=type_specific_len;
-  mdpr->type_specific_data=malloc(type_specific_len);
+  mdpr->type_specific_data=mp_malloc(type_specific_len);
   memcpy(mdpr->type_specific_data,type_specific_data,type_specific_len);
   mdpr->mlti_data=NULL;
   
@@ -607,7 +608,7 @@ rmff_mdpr_t *rmff_new_mdpr(
 
 rmff_cont_t *rmff_new_cont(const char *title, const char *author, const char *copyright, const char *comment) {
 
-  rmff_cont_t *cont=malloc(sizeof(rmff_cont_t));
+  rmff_cont_t *cont=mp_malloc(sizeof(rmff_cont_t));
 
   cont->object_id=CONT_TAG;
   cont->object_version=0;
@@ -624,19 +625,19 @@ rmff_cont_t *rmff_new_cont(const char *title, const char *author, const char *co
 
   if (title) {
     cont->title_len=strlen(title);
-    cont->title=strdup(title);
+    cont->title=mp_strdup(title);
   }
   if (author) {
     cont->author_len=strlen(author);
-    cont->author=strdup(author);
+    cont->author=mp_strdup(author);
   }
   if (copyright) {
     cont->copyright_len=strlen(copyright);
-    cont->copyright=strdup(copyright);
+    cont->copyright=mp_strdup(copyright);
   }
   if (comment) {
     cont->comment_len=strlen(comment);
-    cont->comment=strdup(comment);
+    cont->comment=mp_strdup(comment);
   }
   cont->size=cont->title_len+cont->author_len+cont->copyright_len+cont->comment_len+18;
 
@@ -645,7 +646,7 @@ rmff_cont_t *rmff_new_cont(const char *title, const char *author, const char *co
 
 rmff_data_t *rmff_new_dataheader(uint32_t num_packets, uint32_t next_data_header) {
 
-  rmff_data_t *data=malloc(sizeof(rmff_data_t));
+  rmff_data_t *data=mp_malloc(sizeof(rmff_data_t));
 
   data->object_id=DATA_TAG;
   data->size=18;
@@ -777,7 +778,7 @@ void rmff_fix_header(rmff_header_t *h) {
 #ifdef LOG
     printf("rmff_fix_header: no DATA chunk, creating one\n");
 #endif
-    h->data=malloc(sizeof(rmff_data_t));
+    h->data=mp_malloc(sizeof(rmff_data_t));
     h->data->object_id=DATA_TAG;
     h->data->object_version=0;
     h->data->size=34;
@@ -791,7 +792,7 @@ void rmff_fix_header(rmff_header_t *h) {
 #ifdef LOG
     printf("rmff_fix_header: no fileheader, creating one");
 #endif
-    h->fileheader=malloc(sizeof(rmff_fileheader_t));
+    h->fileheader=mp_malloc(sizeof(rmff_fileheader_t));
     h->fileheader->object_id=RMF_TAG;
     h->fileheader->size=34;
     h->fileheader->object_version=0;
@@ -849,29 +850,29 @@ void rmff_free_header(rmff_header_t *h) {
 
   if (!h) return;
 
-  if (h->fileheader) free(h->fileheader);
-  if (h->prop) free(h->prop);
-  if (h->data) free(h->data);
+  if (h->fileheader) mp_free(h->fileheader);
+  if (h->prop) mp_free(h->prop);
+  if (h->data) mp_free(h->data);
   if (h->cont)
   {
-    free(h->cont->title);
-    free(h->cont->author);
-    free(h->cont->copyright);
-    free(h->cont->comment);
-    free(h->cont);
+    mp_free(h->cont->title);
+    mp_free(h->cont->author);
+    mp_free(h->cont->copyright);
+    mp_free(h->cont->comment);
+    mp_free(h->cont);
   }
   if (h->streams)
   {
     rmff_mdpr_t **s=h->streams;
 
     while(*s) {
-      free((*s)->stream_name);
-      free((*s)->mime_type);
-      free((*s)->type_specific_data);
-      free(*s);
+      mp_free((*s)->stream_name);
+      mp_free((*s)->mime_type);
+      mp_free((*s)->type_specific_data);
+      mp_free(*s);
       s++;
     }
-    free(h->streams);
+    mp_free(h->streams);
   }
-  free(h);
+  mp_free(h);
 }

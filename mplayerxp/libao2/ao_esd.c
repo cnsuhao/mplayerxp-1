@@ -5,7 +5,7 @@
  *
  * This file is part of MPlayer.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * MPlayer is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -53,6 +53,7 @@
 #include "postproc/af_format.h"
 #include "afmt.h"
 #include "ao_msg.h"
+#include "osdep/mplib.h"
 
 
 #define ESD_RESAMPLES 0
@@ -162,7 +163,7 @@ static int control(ao_data_t* ao,int cmd, long arg)
  */
 static int init(ao_data_t* ao,unsigned flags)
 {
-    ao->priv=malloc(sizeof(priv_t));
+    ao->priv=mp_malloc(sizeof(priv_t));
     priv_t*priv=ao->priv;
     memset(priv,0,sizeof(priv_t));
     priv->fd=priv->play_fd=-1;
@@ -314,7 +315,7 @@ static void uninit(ao_data_t* ao)
 	esd_close(priv->fd);
 	priv->fd = -1;
     }
-    free(priv);
+    mp_free(priv);
 }
 
 
@@ -453,7 +454,7 @@ static unsigned get_space(ao_data_t* ao)
     if (!FD_ISSET(priv->play_fd, &wfds))
 	return 0;
 
-    /* try to fill 50% of the remaining "free" buffer space */
+    /* try to fill 50% of the remaining "mp_free" buffer space */
     space = (ESD_MAX_DELAY - current_delay) * ao->bps * 0.5f;
 
     /* round up to next multiple of ESD_BUF_SIZE */

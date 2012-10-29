@@ -6,10 +6,7 @@
 
 #include "mp_config.h"
 #include "osdep/cpudetect.h"
-
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
+#include "osdep/mplib.h"
 
 #include "libvo/img_format.h"
 #include "mp_image.h"
@@ -153,7 +150,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->put_slice=put_slice;
     vf->uninit=uninit;
     vf->default_caps=VFCAP_ACCEPT_STRIDE|VFCAP_POSTPROC;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     vf->priv->context=NULL;
 
     // check csp:

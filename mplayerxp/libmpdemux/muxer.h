@@ -21,24 +21,8 @@ typedef struct muxer_packet_s{
     struct muxer_packet_s *next;
 }muxer_packet_t;
 
-static inline muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags)
-{
-    muxer_packet_t* retval;
-    retval = malloc(sizeof(muxer_packet_t));
-    retval->data = malloc(length);
-    retval->pts=pts;
-    memcpy(retval->data,data,length);
-    retval->length=length;
-    retval->flags=flags;
-    retval->next=NULL;
-    return retval;
-}
-
-static inline void free_muxer_packet(muxer_packet_t *packet)
-{
-    free(packet->data);
-    free(packet);
-}
+muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags);
+void free_muxer_packet(muxer_packet_t *packet);
 
 typedef struct {
   // muxer data:

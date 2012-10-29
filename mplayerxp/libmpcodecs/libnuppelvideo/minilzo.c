@@ -8,7 +8,7 @@
    Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
 
-   The LZO library is free software; you can redistribute it and/or
+   The LZO library is mp_free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
    published by the Free Software Foundation; either version 2 of
    the License, or (at your option) any later version.

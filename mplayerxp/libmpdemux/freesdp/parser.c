@@ -1,8 +1,8 @@
 /*
   This file is part of FreeSDP
   Copyright (C) 2001,2002,2003 Federico Montesino Pouzols <fedemp@altern.org>
-  
-  FreeSDP is free software; you can redistribute it and/or modify it
+
+  FreeSDP is mp_free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
@@ -34,6 +34,7 @@
  **/
 
 #include "parserpriv.h"
+#include "osdep/mplib.h"
 
 /**
  * \brief find the start of the next line
@@ -107,9 +108,9 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
          "[0-9] %2s %3s %" MSFLENS "s", fsdp_buf[0], fsdp_buf[1],
          fsdp_buf[2], fsdp_buf[3], fsdp_buf[4], fsdp_buf[5]) != 6)
       return FSDPE_INVALID_OWNER;
-    dsc->o_username = strdup (fsdp_buf[0]);
-    dsc->o_session_id = strdup (fsdp_buf[1]);
-    dsc->o_announcement_version = strdup (fsdp_buf[2]);
+    dsc->o_username = mp_strdup (fsdp_buf[0]);
+    dsc->o_session_id = mp_strdup (fsdp_buf[1]);
+    dsc->o_announcement_version = mp_strdup (fsdp_buf[2]);
     if (!strncmp (fsdp_buf[3], "IN", 2))
     {
       dsc->o_network_type = FSDP_NETWORK_TYPE_INET;
@@ -125,7 +126,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       return FSDPE_INVALID_OWNER;
     }
     /* TODO? check valid unicast address/FQDN */
-    dsc->o_address = strdup (fsdp_buf[5]);
+    dsc->o_address = mp_strdup (fsdp_buf[5]);
   }
   else
   {
@@ -139,7 +140,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   {
     if (sscanf (p, "s=%" MLFLENS "[^\r\n]", longfsdp_buf) < 1)
       return FSDPE_EMPTY_NAME;
-    dsc->s_name = strdup (longfsdp_buf);
+    dsc->s_name = mp_strdup (longfsdp_buf);
   }
   else
   {
@@ -152,7 +153,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   if (!strncmp (p, "i=", 2)
       && sscanf (p, "i=%" MLFLENS "[^\r\n]", longfsdp_buf))
   {
-    dsc->i_information = strdup (longfsdp_buf);
+    dsc->i_information = mp_strdup (longfsdp_buf);
     NEXT_LINE (p);
   }
   else
@@ -166,7 +167,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       && sscanf (p, "u=%" MLFLENS "[^\r\n]", longfsdp_buf))
   {
     /* TODO? check valid uri */
-    dsc->u_uri = strdup (longfsdp_buf);
+    dsc->u_uri = mp_strdup (longfsdp_buf);
     NEXT_LINE (p);
   }
   else
@@ -188,12 +189,12 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   if (dsc->emails_count > 0)
   {
     /* Then, build the array of emails */
-    dsc->emails = calloc (j, sizeof (const char *));
+    dsc->emails = mp_calloc (j, sizeof (const char *));
     for (j = 0; j < dsc->emails_count; j++)
     {
       sscanf (p, "e=%" MLFLENS "[^\r\n]", longfsdp_buf);
       /* TODO? check valid email-address. */
-      dsc->emails[j] = strdup (longfsdp_buf);
+      dsc->emails[j] = mp_strdup (longfsdp_buf);
       NEXT_LINE (p);
     }
   }
@@ -210,12 +211,12 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   dsc->phones_count = j;
   if (dsc->phones_count > 0)
   {
-    dsc->phones = calloc (j, sizeof (const char *));
+    dsc->phones = mp_calloc (j, sizeof (const char *));
     for (j = 0; j < dsc->phones_count; j++)
     {
       sscanf (p, "p=%" MLFLENS "[^\r\n]", longfsdp_buf);
       /* TODO? check valid phone-number. */
-      dsc->phones[j] = strdup (longfsdp_buf);
+      dsc->phones[j] = mp_strdup (longfsdp_buf);
       NEXT_LINE (p);
     }
   }
@@ -250,7 +251,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   dsc->time_periods_count = j;
   if (dsc->time_periods_count == 0)
     return FSDPE_MISSING_TIME;
-  dsc->time_periods = calloc (dsc->time_periods_count,
+  dsc->time_periods = mp_calloc (dsc->time_periods_count,
 			      sizeof (fsdp_time_period_t *));
   _index = 0;
   for (j = 0; j < dsc->time_periods_count; j++)
@@ -262,7 +263,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       dsc->time_periods_count = j;
       return FSDPE_INVALID_TIME;
     }
-    dsc->time_periods[j] = calloc (1, sizeof (fsdp_time_period_t));
+    dsc->time_periods[j] = mp_calloc (1, sizeof (fsdp_time_period_t));
 
     /* convert from NTP to time_t time */
     if (wuint[0] != 0)
@@ -287,7 +288,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     {
       unsigned int _index2 = 0;
       dsc->time_periods[j]->repeats =
-        calloc (h, sizeof (fsdp_repeat_t *));
+        mp_calloc (h, sizeof (fsdp_repeat_t *));
       for (h = 0; h < dsc->time_periods[j]->repeats_count; h++)
       {
         /*
@@ -300,7 +301,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
         {
           fsdp_repeat_t *repeat;
           dsc->time_periods[j]->repeats[h] =
-            calloc (1, sizeof (fsdp_repeat_t));
+            mp_calloc (1, sizeof (fsdp_repeat_t));
           repeat = dsc->time_periods[j]->repeats[h];
           /* get interval, duration and list of offsets */
           result =
@@ -322,7 +323,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
                   i++;
               }
               repeat->offsets_count = k;
-              repeat->offsets = calloc (k, sizeof (time_t));
+              repeat->offsets = mp_calloc (k, sizeof (time_t));
               i = longfsdp_buf;
               for (k = 0;
                    (k < repeat->offsets_count)
@@ -370,7 +371,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     if (sscanf (p, "z=%" MLFLENS "[^\r\n]", longfsdp_buf))
     {
       /* TODO: guess how many pairs are there and process them */
-      dsc->timezone_adj = strdup (longfsdp_buf);
+      dsc->timezone_adj = mp_strdup (longfsdp_buf);
       NEXT_LINE (p);
     }
     else
@@ -401,11 +402,11 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     {
       /* session-level value attributes */
       if (!strncmp (fsdp_buf[0], "cat", 3))
-        dsc->a_category = strdup (fsdp_buf[1]);
+        dsc->a_category = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "keywds", 6))
-        dsc->a_keywords = strdup (fsdp_buf[1]);
+        dsc->a_keywords = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "tool", 4))
-        dsc->a_keywords = strdup (fsdp_buf[1]);
+        dsc->a_keywords = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "rtpmap", 6))
         fsdp_parse_rtpmap (&(dsc->a_rtpmaps),
                            &(dsc->a_rtpmaps_count), fsdp_buf[1]);
@@ -425,19 +426,19 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
           return FSDPE_INVALID_SESSION_TYPE;
       }
       else if (!strncmp (fsdp_buf[0], "charset", 7))
-        dsc->a_charset = strdup (fsdp_buf[1]);
+        dsc->a_charset = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "sdplang", 7))
       {
         if (NULL == dsc->a_sdplangs)
         {
           dsc->a_sdplangs_count = 0;
           dsc->a_sdplangs =
-            calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+            mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
         }
         if (dsc->a_sdplangs_count < SDPLANGS_MAX_COUNT)
         {
           dsc->a_sdplangs[dsc->a_sdplangs_count] =
-            strdup (fsdp_buf[1]);
+            mp_strdup (fsdp_buf[1]);
           dsc->a_sdplangs_count++;
         }
       }
@@ -446,11 +447,11 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
         if (NULL == dsc->a_langs)
         {
           dsc->a_langs_count = 0;
-          dsc->a_langs = calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+          dsc->a_langs = mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
         }
         if (dsc->a_langs_count < SDPLANGS_MAX_COUNT)
         {
-          dsc->a_langs[dsc->a_langs_count] = strdup (fsdp_buf[1]);
+          dsc->a_langs[dsc->a_langs_count] = mp_strdup (fsdp_buf[1]);
           dsc->a_langs_count++;
         }
       }
@@ -460,20 +461,20 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
         {
           dsc->a_controls_count = 0;
           dsc->a_controls =
-            calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
+            mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
         }
         if (dsc->a_controls_count < SDPCONTROLS_MAX_COUNT)
         {
           dsc->a_controls[dsc->a_controls_count] =
-            strdup (fsdp_buf[1]);
+            mp_strdup (fsdp_buf[1]);
           dsc->a_controls_count++;
         }
       }
       else if (!strncmp (fsdp_buf[0], "range", 5))
       {
         if (dsc->a_range)
-          free (dsc->a_range);
-        dsc->a_range = strdup (fsdp_buf[1]);
+          mp_free (dsc->a_range);
+        dsc->a_range = mp_strdup (fsdp_buf[1]);
       }
       else
       {
@@ -486,7 +487,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
         {
           dsc->unidentified_attributes_count = 0;
           dsc->unidentified_attributes =
-            calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+            mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
                     sizeof (char *));
         }
         if (dsc->unidentified_attributes_count <
@@ -494,7 +495,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
         {
           dsc->unidentified_attributes
             [dsc->unidentified_attributes_count] =
-            strdup (longfsdp_buf);
+            mp_strdup (longfsdp_buf);
           dsc->unidentified_attributes_count++;
         }
       }
@@ -520,7 +521,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
         {
           dsc->unidentified_attributes_count = 0;
           dsc->unidentified_attributes =
-            calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+            mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
                     sizeof (char *));
         }
         if (dsc->unidentified_attributes_count <
@@ -528,7 +529,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
         {
           dsc->unidentified_attributes
             [dsc->unidentified_attributes_count] =
-            strdup (longfsdp_buf);
+            mp_strdup (longfsdp_buf);
           dsc->unidentified_attributes_count++;
         }
       }
@@ -573,7 +574,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   else
   {				/* dsc->media_announcements_count > 0 */
     dsc->media_announcements =
-      calloc (j, sizeof (fsdp_media_announcement_t *));
+      mp_calloc (j, sizeof (fsdp_media_announcement_t *));
     for (j = 0; j < dsc->media_announcements_count; j++)
     {
       fsdp_media_announcement_t *media = NULL;
@@ -589,7 +590,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       else
       {
         dsc->media_announcements[j] =
-          calloc (1, sizeof (fsdp_media_announcement_t));
+          mp_calloc (1, sizeof (fsdp_media_announcement_t));
         media = dsc->media_announcements[j];
         if (!strncmp (fsdp_buf[0], "audio", 5))
           media->media_type = FSDP_MEDIA_AUDIO;
@@ -643,14 +644,14 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
           }
           k++;		/* when there is no space left, count the last format */
           media->formats_count = k;
-          media->formats = calloc (k, sizeof (char *));
+          media->formats = mp_calloc (k, sizeof (char *));
           s = longfsdp_buf;
           for (k = 0; k < media->formats_count; k++)
           {
             char *space = strchr (s, ' ');
             if (NULL != space)
               *space = '\0';
-            media->formats[k] = strdup (s);
+            media->formats[k] = mp_strdup (s);
             s = space + 1;
           }
         }
@@ -662,7 +663,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       if (!strncmp (p, "i=", 2)
           && sscanf (p, "i=%" MLFLENS "[^\r\n]", longfsdp_buf))
       {
-        media->i_title = strdup (longfsdp_buf);
+        media->i_title = mp_strdup (longfsdp_buf);
         NEXT_LINE (p);
       }
       else
@@ -729,12 +730,12 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->a_sdplangs_count = 0;
               media->a_sdplangs =
-                calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+                mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
             }
             if (media->a_sdplangs_count < SDPLANGS_MAX_COUNT)
             {
               media->a_sdplangs[dsc->a_sdplangs_count] =
-                strdup (longfsdp_buf);
+                mp_strdup (longfsdp_buf);
               media->a_sdplangs_count++;
             }
           }
@@ -744,12 +745,12 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->a_langs_count = 0;
               media->a_langs =
-                calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+                mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
             }
             if (media->a_langs_count < SDPLANGS_MAX_COUNT)
             {
               media->a_langs[dsc->a_langs_count] =
-                strdup (longfsdp_buf);
+                mp_strdup (longfsdp_buf);
               media->a_langs_count++;
             }
           }
@@ -759,20 +760,20 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->a_controls_count = 0;
               media->a_controls =
-                calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
+                mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
             }
             if (media->a_controls_count < SDPCONTROLS_MAX_COUNT)
             {
               media->a_controls[media->a_controls_count] =
-                strdup (longfsdp_buf);
+                mp_strdup (longfsdp_buf);
               media->a_controls_count++;
             }
           }
           else if (!strncmp (fsdp_buf[0], "range", 5))
           {
             if (media->a_range)
-              free (media->a_range);
-            media->a_range = strdup (fsdp_buf[1]);
+              mp_free (media->a_range);
+            media->a_range = mp_strdup (fsdp_buf[1]);
           }
           else if (!strncmp (fsdp_buf[0], "framerate", 9))
             media->a_framerate = strtod (longfsdp_buf, NULL);
@@ -782,12 +783,12 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->a_fmtps_count = 0;
               media->a_fmtps =
-                calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+                mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
             }
             if (media->a_fmtps_count < SDPLANGS_MAX_COUNT)
             {
               media->a_fmtps[media->a_fmtps_count] =
-                strdup (longfsdp_buf);
+                mp_strdup (longfsdp_buf);
               media->a_fmtps_count++;
             }
           }
@@ -823,7 +824,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
                   /*add specific code? */
                   if (opts >= 4)
                     media->a_rtcp_address =
-                      strdup (fsdp_buf[2]);
+                      mp_strdup (fsdp_buf[2]);
                 }
               }
             }
@@ -839,7 +840,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->unidentified_attributes_count = 0;
               media->unidentified_attributes =
-                calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+                mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
                         sizeof (char *));
             }
             if (media->unidentified_attributes_count <
@@ -847,7 +848,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->unidentified_attributes
                 [media->unidentified_attributes_count] =
-                strdup (fsdp_buf[1]);
+                mp_strdup (fsdp_buf[1]);
               media->unidentified_attributes_count++;
             }
           }
@@ -873,7 +874,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->unidentified_attributes_count = 0;
               media->unidentified_attributes =
-                calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+                mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
                         sizeof (char *));
             }
             if (media->unidentified_attributes_count <
@@ -881,7 +882,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
             {
               media->unidentified_attributes
                 [media->unidentified_attributes_count] =
-                strdup (longfsdp_buf);
+                mp_strdup (longfsdp_buf);
               media->unidentified_attributes_count++;
             }
           }
@@ -941,7 +942,7 @@ fsdp_parse_c (const char **p, fsdp_network_type_t * ntype,
         char *slash = strchr (fsdp_buf[2], '/');
         if (NULL == slash)
         {
-          address->address = strdup (fsdp_buf[2]);
+          address->address = mp_strdup (fsdp_buf[2]);
           address->address_ttl = 0;
           address->address_count = 0;
         }
@@ -951,7 +952,7 @@ fsdp_parse_c (const char **p, fsdp_network_type_t * ntype,
           char *slash2;
           *slash = '\0';
           slash++;
-          address->address = strdup (fsdp_buf[2]);
+          address->address = mp_strdup (fsdp_buf[2]);
           slash2 = strchr (slash + 1, '/');
           if (NULL == slash2)
           {
@@ -992,7 +993,7 @@ fsdp_parse_b (const char **p, fsdp_bw_modifier_t ** bw_modifiers,
     NEXT_LINE (lp);
     i++;
   }
-  *bw_modifiers = calloc (i, sizeof (fsdp_bw_modifier_t));
+  *bw_modifiers = mp_calloc (i, sizeof (fsdp_bw_modifier_t));
   *bw_modifiers_count = i;
 
   while (i > 0)
@@ -1015,7 +1016,7 @@ fsdp_parse_b (const char **p, fsdp_bw_modifier_t ** bw_modifiers,
       {
         (*bw_modifiers)[_index].b_mod_type = FSDP_BW_MOD_TYPE_UNKNOWN;
         (*bw_modifiers)[_index].b_unknown_bw_modt =
-          (char *) strdup (fsdp_buf);
+          (char *) mp_strdup (fsdp_buf);
       }
       (*bw_modifiers)[_index].b_value = wuint;
       NEXT_LINE (*p);
@@ -1058,7 +1059,7 @@ fsdp_parse_k (const char **p, fsdp_encryption_method_t * method,
           *method = FSDP_ENCRYPTION_METHOD_URI;
         else
           return FSDPE_INVALID_ENCRYPTION_METHOD;
-        *content = strdup (longfsdp_buf);
+        *content = mp_strdup (longfsdp_buf);
         NEXT_LINE (*p);
       }
     }
@@ -1075,7 +1076,7 @@ fsdp_parse_rtpmap (fsdp_rtpmap_t *** rtpmap, unsigned int *counter,
   if (0 == *counter)
   {
     *counter = 0;
-    *rtpmap = calloc (MEDIA_RTPMAPS_MAX_COUNT, sizeof (fsdp_rtpmap_t *));
+    *rtpmap = mp_calloc (MEDIA_RTPMAPS_MAX_COUNT, sizeof (fsdp_rtpmap_t *));
   }
   if (*counter < MEDIA_RTPMAPS_MAX_COUNT)
   {
@@ -1083,14 +1084,14 @@ fsdp_parse_rtpmap (fsdp_rtpmap_t *** rtpmap, unsigned int *counter,
     fsdp_rtpmap_t **map = *rtpmap;
     char fsdp_buf[MAXSHORTFIELDLEN];
     char longfsdp_buf[MAXLONGFIELDLEN];
-    map[c] = calloc (1, sizeof (fsdp_rtpmap_t));
+    map[c] = mp_calloc (1, sizeof (fsdp_rtpmap_t));
 
     /* a=rtpmap:<payload type> <encoding name>/<clock rate>[/<encoding
        parameters]> */
     if (2 == sscanf (value, "%s %s", fsdp_buf, longfsdp_buf))
     {
       char *slash1;
-      map[c]->pt = strdup (fsdp_buf);
+      map[c]->pt = mp_strdup (fsdp_buf);
       /* parse <encoding name>/<clock rate>[/<encoding parameters>] */
       slash1 = strchr (longfsdp_buf, '/');
       if (NULL == slash1)
@@ -1102,13 +1103,13 @@ fsdp_parse_rtpmap (fsdp_rtpmap_t *** rtpmap, unsigned int *counter,
         char *slash2;
         *slash1 = '\0';
         slash1++;
-        map[c]->encoding_name = strdup (longfsdp_buf);
+        map[c]->encoding_name = mp_strdup (longfsdp_buf);
         slash2 = strchr (slash1, '/');
         if (NULL != slash2)
         {
           *slash2 = '\0';
           slash2++;
-          map[c]->parameters = strdup (slash2);
+          map[c]->parameters = mp_strdup (slash2);
         }
         map[c]->clock_rate = strtol (slash1, NULL, 10);
       }

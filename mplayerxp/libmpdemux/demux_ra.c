@@ -15,6 +15,7 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "aviprint.h"
 #include "demux_msg.h"
 
@@ -98,7 +99,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	int i;
 	char *buf;
 
-  if ((ra_priv = (ra_priv_t *)malloc(sizeof(ra_priv_t))) == NULL) {
+  if ((ra_priv = (ra_priv_t *)mp_malloc(sizeof(ra_priv_t))) == NULL) {
     MSG_ERR(MSGTR_OutOfMemory);
     return 0;
   }
@@ -161,32 +162,32 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	}
 
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
-		buf = malloc(i+1);
+		buf = mp_malloc(i+1);
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_NAME, buf);
-		free(buf);
+		mp_free(buf);
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
-		buf = malloc(i+1);
+		buf = mp_malloc(i+1);
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_AUTHOR, buf);
-		free(buf);
+		mp_free(buf);
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
-		buf = malloc(i+1);
+		buf = mp_malloc(i+1);
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_COPYRIGHT, buf);
-		free(buf);
+		mp_free(buf);
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
-		buf = malloc(i+1);
+		buf = mp_malloc(i+1);
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_COMMENTS, buf);
-		free(buf);
+		mp_free(buf);
 	}
 
 	if (ra_priv->version == 3) {
@@ -224,7 +225,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	}
 
 	/* Fill WAVEFORMATEX */
-	sh->wf = malloc(sizeof(WAVEFORMATEX));
+	sh->wf = mp_malloc(sizeof(WAVEFORMATEX));
 	memset(sh->wf, 0, sizeof(WAVEFORMATEX));
 	sh->wf->nChannels = sh->channels;
 	sh->wf->wBitsPerSample = sh->samplesize;
@@ -238,7 +239,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		case FOURCC_144:
 			MSG_V("Audio: 14_4\n");
 			    sh->wf->cbSize = 10/*+codecdata_length*/;
-			    sh->wf = realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
+			    sh->wf = mp_realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
 			    ((short*)(sh->wf+1))[0]=0;
 			    ((short*)(sh->wf+1))[1]=240;
 			    ((short*)(sh->wf+1))[2]=0;
@@ -248,7 +249,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		case FOURCC_288:
 			MSG_V("Audio: 28_8\n");
 			    sh->wf->cbSize = 10/*+codecdata_length*/;
-			    sh->wf = realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
+			    sh->wf = mp_realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
 			    ((short*)(sh->wf+1))[0]=0;
 			    ((short*)(sh->wf+1))[1]=ra_priv->sub_packet_h;
 			    ((short*)(sh->wf+1))[2]=ra_priv->codec_flavor;
@@ -279,7 +280,7 @@ static void ra_close(demuxer_t *demuxer)
 	ra_priv_t* ra_priv = demuxer->priv;
  
 	if (ra_priv)
-		free(ra_priv);
+		mp_free(ra_priv);
 
 	return;
 }

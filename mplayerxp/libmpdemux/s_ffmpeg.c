@@ -5,7 +5,8 @@
 #include "libavformat/avformat.h"
 #include "libavformat/avio.h"
 #include "libavformat/url.h"
-#include "../libmpcodecs/codecs_ld.h"
+#include "libmpcodecs/codecs_ld.h"
+#include "osdep/mplib.h"
 #include "stream.h"
 #include "demux_msg.h"
 
@@ -55,7 +56,7 @@ static void __FASTCALL__ ffmpeg_close(stream_t *stream)
 {
     ffmpeg_priv_t*p=stream->priv;
     ffurl_close(p->ctx);
-    free(p);
+    mp_free(p);
 }
 
 static const char prefix[] = "ffmpeg://";
@@ -71,7 +72,7 @@ static int __FASTCALL__ ffmpeg_open(stream_t *stream,const char *filename,unsign
     MSG_V("[ffmpeg] Opening %s\n", filename);
 
     if (ffurl_open(&ctx, filename, 0, &int_cb, NULL) < 0) return 0;
-    p = malloc(sizeof(ffmpeg_priv_t));
+    p = mp_malloc(sizeof(ffmpeg_priv_t));
     p->ctx = ctx;
     p->spos = 0;
     size = ffurl_size(ctx);

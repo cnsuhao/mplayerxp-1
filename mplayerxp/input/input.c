@@ -22,6 +22,7 @@
 #include "osdep/keycodes.h"
 #include "osdep/get_path.h"
 #include "osdep/timer.h"
+#include "osdep/mplib.h"
 #include "libmpconf/cfgparser.h"
 
 #include "joystick.h"
@@ -470,7 +471,7 @@ mp_input_rm_cmd_fd(int fd) {
   if(cmd_fds[i].close_func)
     cmd_fds[i].close_func(cmd_fds[i].fd);
   if(cmd_fds[i].buffer)
-    free(cmd_fds[i].buffer);
+    mp_free(cmd_fds[i].buffer);
 
   if(i + 1 < num_cmd_fd)
     memmove(&cmd_fds[i],&cmd_fds[i+1],(num_cmd_fd - i - 1)*sizeof(mp_input_fd_t));
@@ -546,9 +547,9 @@ mp_input_parse_cmd(char* str) {
 
   cmd_def = &mp_cmds[i];
 
-  cmd = (mp_cmd_t*)malloc(sizeof(mp_cmd_t));
+  cmd = (mp_cmd_t*)mp_malloc(sizeof(mp_cmd_t));
   cmd->id = cmd_def->id;
-  cmd->name = strdup(cmd_def->name);
+  cmd->name = mp_strdup(cmd_def->name);
 
   ptr = str;
 
@@ -605,7 +606,7 @@ mp_input_parse_cmd(char* str) {
 	break;
       } else if(!e) e = ptr+strlen(ptr);
       l = e-start;
-      cmd->args[i].v.s = (char*)malloc((l+1)*sizeof(char));
+      cmd->args[i].v.s = (char*)mp_malloc((l+1)*sizeof(char));
       strncpy(cmd->args[i].v.s,start,l);
       cmd->args[i].v.s[l] = '\0';
       ptr2 = start;
@@ -632,7 +633,7 @@ mp_input_parse_cmd(char* str) {
   for( ; i < MP_CMD_MAX_ARGS && cmd_def->args[i].type != -1 ; i++) {
     memcpy(&cmd->args[i],&cmd_def->args[i],sizeof(mp_cmd_arg_t));
     if(cmd_def->args[i].type == MP_CMD_ARG_STRING && cmd_def->args[i].v.s != NULL)
-      cmd->args[i].v.s = strdup(cmd_def->args[i].v.s);
+      cmd->args[i].v.s = mp_strdup(cmd_def->args[i].v.s);
   }
 
   if(i < MP_CMD_MAX_ARGS)
@@ -664,7 +665,7 @@ mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 
   // Allocate the buffer if it dont exist
   if(!mp_fd->buffer) {
-    mp_fd->buffer = (char*)malloc(MP_CMD_MAX_SIZE*sizeof(char));
+    mp_fd->buffer = (char*)mp_malloc(MP_CMD_MAX_SIZE*sizeof(char));
     mp_fd->pos = 0;
     mp_fd->size = MP_CMD_MAX_SIZE;
   }
@@ -718,7 +719,7 @@ mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 
     // Not dropping : put the cmd in ret
     if( ! (mp_fd->flags & MP_FD_DROP)) {
-      (*ret) = (char*)malloc((l+1)*sizeof(char));
+      (*ret) = (char*)mp_malloc((l+1)*sizeof(char));
       strncpy((*ret),mp_fd->buffer,l);
       (*ret)[l] = '\0';
     } else { // Remove the dropping flag
@@ -757,7 +758,7 @@ mp_input_default_cmd_func(int fd,char* buf, int l) {
 
 void
 mp_input_add_cmd_filter(mp_input_cmd_filter func, any_t* ctx) {
-  mp_cmd_filter_t* filter = malloc(sizeof(mp_cmd_filter_t))/*, *prev*/;
+  mp_cmd_filter_t* filter = mp_malloc(sizeof(mp_cmd_filter_t))/*, *prev*/;
 
   filter->filter = func;
   filter->ctx = ctx;
@@ -1089,7 +1090,7 @@ mp_input_read_cmds(int time) {
       continue;
     }
     ret = mp_input_parse_cmd(cmd);
-    free(cmd);
+    mp_free(cmd);
     if(!ret)
       continue;
     last_loop = i;
@@ -1129,7 +1130,7 @@ mp_input_get_queued_cmd(int peek_only) {
 
 /**
  * \param peek_only when set, the returned command stays in the queue.
- * Do not free the returned cmd whe you set this!
+ * Do not mp_free the returned cmd whe you set this!
  */
 mp_cmd_t*
 mp_input_get_cmd(int time, int paused, int peek_only) {
@@ -1169,13 +1170,13 @@ mp_cmd_free(mp_cmd_t* cmd) {
   if ( !cmd ) return;
 
   if(cmd->name)
-    free(cmd->name);
+    mp_free(cmd->name);
   
   for(i=0; i < MP_CMD_MAX_ARGS && cmd->args[i].type != -1; i++) {
     if(cmd->args[i].type == MP_CMD_ARG_STRING && cmd->args[i].v.s != NULL)
-      free(cmd->args[i].v.s);
+      mp_free(cmd->args[i].v.s);
   }
-  free(cmd);
+  mp_free(cmd);
 }
 
 mp_cmd_t*
@@ -1186,13 +1187,13 @@ mp_cmd_clone(mp_cmd_t* cmd) {
   assert(cmd != NULL);
 #endif
 
-  ret = (mp_cmd_t*)malloc(sizeof(mp_cmd_t));
+  ret = (mp_cmd_t*)mp_malloc(sizeof(mp_cmd_t));
   memcpy(ret,cmd,sizeof(mp_cmd_t));
   if(cmd->name)
-    ret->name = strdup(cmd->name);
+    ret->name = mp_strdup(cmd->name);
   for(i = 0;  i < MP_CMD_MAX_ARGS && cmd->args[i].type != -1; i++) {
     if(cmd->args[i].type == MP_CMD_ARG_STRING && cmd->args[i].v.s != NULL)
-      ret->args[i].v.s = strdup(cmd->args[i].v.s);
+      ret->args[i].v.s = mp_strdup(cmd->args[i].v.s);
   }
 
   return ret;
@@ -1286,13 +1287,13 @@ mp_input_bind_keys(int keys[MP_MAX_KEY_DOWN+1], char* cmd) {
   }
 
   if(!bind) {
-    cmd_binds = (mp_cmd_bind_t*)realloc(cmd_binds,(i+2)*sizeof(mp_cmd_bind_t));
+    cmd_binds = (mp_cmd_bind_t*)mp_realloc(cmd_binds,(i+2)*sizeof(mp_cmd_bind_t));
     memset(&cmd_binds[i],0,2*sizeof(mp_cmd_bind_t));
     bind = &cmd_binds[i];
   }
   if(bind->cmd)
-    free(bind->cmd);
-  bind->cmd = strdup(cmd);
+    mp_free(bind->cmd);
+  bind->cmd = mp_strdup(cmd);
   memcpy(bind->input,keys,(MP_MAX_KEY_DOWN+1)*sizeof(int));
 }
 
@@ -1305,9 +1306,9 @@ mp_input_free_binds(mp_cmd_bind_t* binds) {
     return;
 
   for(i = 0; binds[i].cmd != NULL; i++)
-    free(binds[i].cmd);
+    mp_free(binds[i].cmd);
 
-  free(binds);
+  mp_free(binds);
 
 }
   

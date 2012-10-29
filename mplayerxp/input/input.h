@@ -188,7 +188,7 @@ mp_input_parse_cmd(char* str);
 void
 mp_input_add_cmd_filter(mp_input_cmd_filter, any_t* ctx);
 
-// After getting a command from mp_input_get_cmd you need to free it using this
+// After getting a command from mp_input_get_cmd you need to mp_free it using this
 // function
 void
 mp_cmd_free(mp_cmd_t* cmd);

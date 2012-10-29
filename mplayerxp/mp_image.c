@@ -5,10 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
+#include "osdep/mplib.h"
 #include "libvo/img_format.h"
 #include "mp_image.h"
 #include "osdep/fastmemcpy.h"
@@ -144,7 +141,7 @@ void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
 }
 
 mp_image_t* new_mp_image(unsigned w,unsigned h,unsigned xp_idx){
-    mp_image_t* mpi=(mp_image_t*)malloc(sizeof(mp_image_t));
+    mp_image_t* mpi=(mp_image_t*)mp_malloc(sizeof(mp_image_t));
     if(!mpi) return NULL; // error!
     memset(mpi,0,sizeof(mp_image_t));
     mpi->xp_idx = xp_idx;
@@ -157,9 +154,9 @@ void free_mp_image(mp_image_t* mpi){
     if(!mpi) return;
     if(mpi->flags&MP_IMGFLAG_ALLOCATED){
 	/* becouse we allocate the whole image in once */
-	if(mpi->planes[0]) free(mpi->planes[0]);
+	if(mpi->planes[0]) mp_free(mpi->planes[0]);
     }
-    free(mpi);
+    mp_free(mpi);
 }
 
 mp_image_t* alloc_mpi(unsigned w, unsigned h, unsigned int fmt,unsigned xp_idx) {
@@ -174,15 +171,15 @@ void mpi_alloc_planes(mp_image_t *mpi) {
   // IF09 - allocate space for 4. plane delta info - unused
   if (mpi->imgfmt == IMGFMT_IF09)
     {
-      mpi->planes[0]=memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8+
+      mpi->planes[0]=mp_memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8+
 			      mpi->chroma_width*mpi->chroma_height);
       /* delta table, just for fun ;) */
       mpi->planes[3]=mpi->planes[0]+2*(mpi->chroma_width*mpi->chroma_height);
     }
   else
-    mpi->planes[0]=memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8);
+    mpi->planes[0]=mp_memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8);
   if(mpi->flags&MP_IMGFLAG_PLANAR){
-    // YV12/I420/YVU9/IF09. feel free to add other planar formats here...
+    // YV12/I420/YVU9/IF09. feel mp_free to add other planar formats here...
     if(!mpi->stride[0]) mpi->stride[0]=mpi->width;
     if(!mpi->stride[1]) mpi->stride[1]=mpi->stride[2]=mpi->chroma_width;
     if(mpi->flags&MP_IMGFLAG_SWAPPED){

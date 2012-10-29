@@ -35,6 +35,7 @@
 
 #include "osdep/bswap.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 /*
  * #defines below taken from PVA spec (see URL above)
@@ -136,7 +137,7 @@ static demuxer_t* pva_open (demuxer_t * demuxer)
 	stream_reset(demuxer->stream);
 	stream_seek(demuxer->stream,0);
 
-	priv=malloc(sizeof(pva_priv_t));
+	priv=mp_malloc(sizeof(pva_priv_t));
 	demuxer->flags|=DEMUXF_SEEKABLE;
 	
 	demuxer->priv=priv;
@@ -511,7 +512,7 @@ static void pva_close(demuxer_t * demuxer)
 {
 	if(demuxer->priv)
 	{
-		free(demuxer->priv);
+		mp_free(demuxer->priv);
 		demuxer->priv=NULL;
 	}
 }

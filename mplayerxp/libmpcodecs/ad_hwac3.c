@@ -187,7 +187,7 @@ int init(sh_audio_t *sh_audio)
   sh_audio->samplerate=ai.samplerate;   // SET by a52_fillbuff()
   sh_audio->samplesize=ai.framesize;
   sh_audio->i_bps=ai.bitrate*(1000/8);  // SET by a52_fillbuff()
-  sh_audio->ac3_frame=malloc(6144);
+  sh_audio->ac3_frame=mp_malloc(6144);
   sh_audio->o_bps=sh_audio->i_bps;  // XXX FIXME!!! XXX
 
    o_bps is calculated from samplesize*channels*samplerate

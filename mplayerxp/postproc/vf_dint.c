@@ -8,6 +8,7 @@
 
 #include "mp_image.h"
 #include "libvo/img_format.h"
+#include "osdep/mplib.h"
 #include "vf.h"
 #include "pp_msg.h"
 
@@ -41,7 +42,7 @@ static int __FASTCALL__ kd_config(struct vf_instance_s* vf,
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
-	free(vf->priv);
+	mp_free(vf->priv);
 }
 
 static inline int IsRGB(mp_image_t *mpi)
@@ -444,7 +445,7 @@ static int __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
     vf->put_slice = put_slice;
     vf->print_conf = print_conf;
 //    vf->default_reqs=VFCAP_ACCEPT_STRIDE;
-    vf->priv = malloc (sizeof(struct vf_priv_s));
+    vf->priv = mp_malloc (sizeof(struct vf_priv_s));
     vf->priv->sense = 0.1;
     vf->priv->level = 0.15;
     vf->priv->pmpi = NULL;

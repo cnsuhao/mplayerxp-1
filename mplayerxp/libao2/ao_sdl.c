@@ -18,6 +18,7 @@
 #include "afmt.h"
 #include <SDL/SDL.h>
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "ao_msg.h"
 
 static ao_info_t info = 
@@ -98,7 +99,7 @@ static int __FASTCALL__ read_buffer(ao_data_t* ao,unsigned char* data,int len){
 static void setenv(const char *name, const char *val, int _xx)
 {
   int len  = strlen(name) + strlen(val) + 2;
-  char *env = malloc(len);
+  char *env = mp_malloc(len);
 
   if (env != NULL) {
     strcpy(env, name);
@@ -147,12 +148,12 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 {
 	unsigned i;
 	UNUSED(flags);
-	ao->priv=malloc(sizeof(priv_t));
+	ao->priv=mp_malloc(sizeof(priv_t));
 	memset(ao->priv,0,sizeof(priv_t));
 	priv_t*priv=ao->priv;
 	priv->volume=127;
 	/* Allocate ring-priv->buffer memory */
-	for(i=0;i<NUM_BUFS;i++) priv->buffer[i]=(unsigned char *) malloc(BUFFSIZE);
+	for(i=0;i<NUM_BUFS;i++) priv->buffer[i]=(unsigned char *) mp_malloc(BUFFSIZE);
 
 	if(ao->subdevice) {
 		setenv("SDL_AUDIODRIVER", ao->subdevice, 1);
@@ -276,7 +277,7 @@ static void uninit(ao_data_t* ao){
 	MSG_V("SDL: Audio Subsystem shutting down!\n");
 	SDL_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	free(ao->priv);
+	mp_free(ao->priv);
 }
 
 // stop playing and empty buffers (for seeking/pause)

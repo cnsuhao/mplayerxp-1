@@ -1,4 +1,5 @@
-#include "../../mp_config.h"
+#include "mp_config.h"
+#include "osdep/mplib.h"
 #include "allocator.h"
 #include "com.h"
 #include "wine/winerror.h"
@@ -53,7 +54,7 @@ static inline int avm_list_print(avm_list_t* head)
 
 static inline avm_list_t* avm_list_add_head(avm_list_t* head, any_t* member)
 {
-    avm_list_t* n = (avm_list_t*) malloc(sizeof(avm_list_t));
+    avm_list_t* n = (avm_list_t*) mp_malloc(sizeof(avm_list_t));
     n->member = member;
 
     if (!head)
@@ -87,7 +88,7 @@ static inline avm_list_t* avm_list_del_head(avm_list_t* head)
 	    head->prev->next = head->next;
 	    head->next->prev = head->prev;
 	}
-	free(head);
+	mp_free(head);
     }
     return n;
 }
@@ -297,15 +298,15 @@ static void MemAllocator_Destroy(MemAllocator* This)
     if (--AllocatorKeeper == 0)
 	UnregisterComClass(&CLSID_MemoryAllocator, MemAllocator_CreateAllocator);
 #endif
-    free(This->vt);
-    free(This);
+    mp_free(This->vt);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(MemAllocator)
 
 MemAllocator* MemAllocatorCreate()
 {
-    MemAllocator* This = (MemAllocator*) malloc(sizeof(MemAllocator));
+    MemAllocator* This = (MemAllocator*) mp_malloc(sizeof(MemAllocator));
 
     if (!This)
         return NULL;
@@ -318,11 +319,11 @@ MemAllocator* MemAllocatorCreate()
     This->props.cbAlign = 1;
     This->props.cbPrefix = 0;
 
-    This->vt = (IMemAllocator_vt*) malloc(sizeof(IMemAllocator_vt));
+    This->vt = (IMemAllocator_vt*) mp_malloc(sizeof(IMemAllocator_vt));
 
     if (!This->vt)
     {
-        free(This);
+        mp_free(This);
 	return NULL;
     }
 

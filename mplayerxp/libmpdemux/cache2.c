@@ -19,6 +19,7 @@
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "help_mp.h"
 #include "mpdemux.h"
 #include "mplayer.h"
@@ -193,7 +194,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 
 static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
   pthread_mutex_t tmpl=PTHREAD_MUTEX_INITIALIZER;
-  cache_vars_t* c=malloc(sizeof(cache_vars_t));
+  cache_vars_t* c=mp_malloc(sizeof(cache_vars_t));
   char *pmem;
   unsigned i,num;
   memset(c,0,sizeof(cache_vars_t));
@@ -201,12 +202,12 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
   /* collection of all c2_packets in continuous memory area minimizes cache pollution
      and speedups cache as C+D=3.27% instead of 4.77% */
   i=sizeof(cache_packet_t)*num;
-  c->packets=malloc(i);
-  c->mem=malloc(num*sector);
+  c->packets=mp_malloc(i);
+  c->mem=mp_malloc(num*sector);
   if(!c->packets || !c->mem)
   {
     MSG_ERR(MSGTR_OutOfMemory);
-    free(c);
+    mp_free(c);
     return 0;
   }
   memset(c->packets,0,i);
@@ -328,9 +329,9 @@ void stream_disable_cache(stream_t *st)
 	c->pth->state=Pth_Canceling;
 	while(c->pth->state==Pth_Canceling && !was_killed) usleep(0);
     }
-    free(c->packets);
-    free(c->mem);
-    free(c);
+    mp_free(c->packets);
+    mp_free(c->mem);
+    mp_free(c);
   }
 }
 

@@ -11,6 +11,7 @@
 #include "mp_config.h"
 #include "help_mp.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 
 #define FF_API_OLD_DECODE_AUDIO 1
 #include "libavcodec/avcodec.h"
@@ -70,7 +71,7 @@ int init(sh_audio_t *sh_audio)
 	lavc_context->bits_per_coded_sample = sh_audio->wf->wBitsPerSample;
 	/* alloc extra data */
 	if (sh_audio->wf->cbSize > 0) {
-	    lavc_context->extradata = malloc(sh_audio->wf->cbSize+FF_INPUT_BUFFER_PADDING_SIZE);
+	    lavc_context->extradata = mp_malloc(sh_audio->wf->cbSize+FF_INPUT_BUFFER_PADDING_SIZE);
 	    lavc_context->extradata_size = sh_audio->wf->cbSize;
 	    memcpy(lavc_context->extradata, (char *)sh_audio->wf + sizeof(WAVEFORMATEX),
 		    lavc_context->extradata_size);
@@ -79,7 +80,7 @@ int init(sh_audio_t *sh_audio)
     // for QDM2
     if (sh_audio->codecdata_len && sh_audio->codecdata && !lavc_context->extradata)
     {
-        lavc_context->extradata = malloc(sh_audio->codecdata_len);
+        lavc_context->extradata = mp_malloc(sh_audio->codecdata_len);
         lavc_context->extradata_size = sh_audio->codecdata_len;
         memcpy(lavc_context->extradata, (char *)sh_audio->codecdata,
                lavc_context->extradata_size);
@@ -131,8 +132,8 @@ void uninit(sh_audio_t *sh)
 {
   AVCodecContext *lavc_context=sh->context;
   avcodec_close(sh->context);
-  if (lavc_context->extradata) free(lavc_context->extradata);
-  free(lavc_context);
+  if (lavc_context->extradata) mp_free(lavc_context->extradata);
+  mp_free(lavc_context);
   acodec_inited=0;
 }
 

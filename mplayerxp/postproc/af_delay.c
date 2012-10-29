@@ -8,7 +8,9 @@
 #include <inttypes.h>
 
 #include "af.h"
-#include "../help_mp.h"
+#include "mp_config.h"
+#include "help_mp.h"
+#include "osdep/mplib.h"
 
 #define L 65536
 
@@ -35,7 +37,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     // Free prevous delay queues
     for(i=0;i<af->data->nch;i++){
       if(s->q[i])
-	free(s->q[i]);
+	mp_free(s->q[i]);
     }
 
     af->data->rate   = ((af_data_t*)arg)->rate;
@@ -45,7 +47,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 
     // Allocate new delay queues
     for(i=0;i<af->data->nch;i++){
-      s->q[i] = calloc(L,af->data->bps);
+      s->q[i] = mp_calloc(L,af->data->bps);
       if(NULL == s->q[i])
 	MSG_FATAL(MSGTR_OutOfMemory);
     }
@@ -98,12 +100,12 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   int i;
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   for(i=0;i<AF_NCH;i++)
     if(((af_delay_t*)(af->setup))->q[i])
-      free(((af_delay_t*)(af->setup))->q[i]);
+      mp_free(((af_delay_t*)(af->setup))->q[i]);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // Filter data through filter
@@ -172,8 +174,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=calloc(1,sizeof(af_delay_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=mp_calloc(1,sizeof(af_delay_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
   return AF_OK;

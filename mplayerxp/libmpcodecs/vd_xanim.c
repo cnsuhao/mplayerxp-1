@@ -21,6 +21,7 @@
 #include "libvo/img_format.h"
 #include "osdep/timer.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "mp_config.h"
 #include "vd_internal.h"
 #include "codecs_ld.h"
@@ -367,7 +368,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     XA_CODEC_HDR codec_hdr;
     int i;
 
-    xacodec_driver = realloc(xacodec_driver, sizeof(struct xacodec_driver));
+    xacodec_driver = mp_realloc(xacodec_driver, sizeof(struct xacodec_driver));
     if (xacodec_driver == NULL)
     {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
@@ -389,7 +390,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
 	return(0);
 
     codec_hdr.xapi_rev = XAVID_API_REV;
-    codec_hdr.anim_hdr = malloc(4096);
+    codec_hdr.anim_hdr = mp_malloc(4096);
     codec_hdr.description = vidinfo->codec->s_info;
     codec_hdr.compression = bswap_32(vidinfo->bih->biCompression);
     codec_hdr.decoder = NULL;
@@ -448,9 +449,9 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     if (xacodec_query(xacodec_driver, &codec_hdr) == 0)
 	return(0);
 
-//    free(codec_hdr.anim_hdr);
+//    mp_free(codec_hdr.anim_hdr);
 
-    xacodec_driver->decinfo = malloc(sizeof(XA_DEC_INFO));
+    xacodec_driver->decinfo = mp_malloc(sizeof(XA_DEC_INFO));
     if (xacodec_driver->decinfo == NULL)
     {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
@@ -475,7 +476,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     xacodec_driver->image.bpp = codec_hdr.depth;
     xacodec_driver->image.width = codec_hdr.x;
     xacodec_driver->image.height = codec_hdr.y;
-    xacodec_driver->image.mem = malloc(codec_hdr.y * codec_hdr.x * ((codec_hdr.depth+7)/8));
+    xacodec_driver->image.mem = mp_malloc(codec_hdr.y * codec_hdr.x * ((codec_hdr.depth+7)/8));
 
     if (xacodec_driver->image.mem == NULL)
     {
@@ -594,8 +595,8 @@ int xacodec_exit(void)
 	}
     dlclose(xacodec_driver->file_handler);
     if (xacodec_driver->decinfo != NULL)
-	free(xacodec_driver->decinfo);
-    free(xacodec_driver);
+	mp_free(xacodec_driver->decinfo);
+    mp_free(xacodec_driver);
     return(TRUE);
 }
 

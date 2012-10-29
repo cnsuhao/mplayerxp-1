@@ -11,7 +11,7 @@
 #include "stream.h"
 #include "help_mp.h"
 #include "demux_msg.h"
-
+#include "osdep/mplib.h"
 
 #include <dvdread/dvd_reader.h>
 #include <dvdread/ifo_types.h>
@@ -645,10 +645,10 @@ static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,uns
     dvd = DVDOpen(dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
     if( !dvd ) {
         MSG_ERR(MSGTR_CantOpenDVD,dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
-	if(dvd_device) free(dvd_device);
+	if(dvd_device) mp_free(dvd_device);
         return 0;
     }
-    if(dvd_device) free(dvd_device);
+    if(dvd_device) mp_free(dvd_device);
     MSG_V(MSGTR_DVDwait);
 
     /**
@@ -711,7 +711,7 @@ static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,uns
     --dvd_angle; // remap 1.. -> 0..
     
     // store data
-    d=malloc(sizeof(dvd_priv_t)); memset(d,0,sizeof(dvd_priv_t));
+    d=mp_malloc(sizeof(dvd_priv_t)); memset(d,0,sizeof(dvd_priv_t));
     d->dvd=dvd;
     d->title=0;
     d->vmg_file=vmg_file;
@@ -722,7 +722,7 @@ static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,uns
 
     if(!dvd_next_title(d,dvd_title))
     {
-	free(d);
+	mp_free(d);
         ifoClose( vmg_file );
         DVDClose( dvd );
 	return 0;
@@ -773,7 +773,7 @@ static off_t __FASTCALL__ __dvdread_tell(stream_t *stream)
 static void __FASTCALL__ __dvdread_close(stream_t *stream)
 {
     dvd_close(stream->priv);
-    free(stream->priv);
+    mp_free(stream->priv);
 }
 
 static unsigned int * __FASTCALL__ dvdread_stream_get_palette(stream_t *stream)

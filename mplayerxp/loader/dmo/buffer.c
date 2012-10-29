@@ -2,6 +2,7 @@
 
 #include "wine/winerror.h"
 #include "wine/windef.h"
+#include "osdep/mplib.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -59,9 +60,9 @@ static void CMediaBuffer_Destroy(CMediaBuffer* This)
 {
     Debug printf("CMediaBuffer_Destroy(%p) called\n", This);
     if (This->freemem)
-        free(This->mem);
-    free(This->vt);
-    free(This);
+        mp_free(This->mem);
+    mp_free(This->vt);
+    mp_free(This);
 }
 
 IMPLEMENT_IUNKNOWN(CMediaBuffer)
@@ -69,12 +70,12 @@ IMPLEMENT_IUNKNOWN(CMediaBuffer)
 CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, any_t* mem,
 				 unsigned long len, int copy)
 {
-    CMediaBuffer* This = (CMediaBuffer*) malloc(sizeof(CMediaBuffer));
+    CMediaBuffer* This = (CMediaBuffer*) mp_malloc(sizeof(CMediaBuffer));
 
     if (!This)
         return NULL;
 
-    This->vt = (IMediaBuffer_vt*) malloc(sizeof(IMediaBuffer_vt));
+    This->vt = (IMediaBuffer_vt*) mp_malloc(sizeof(IMediaBuffer_vt));
     if (!This->vt)
     {
         CMediaBuffer_Destroy(This);
@@ -93,7 +94,7 @@ CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, any_t* mem,
     {
 	if (This->maxlen)
 	{
-	    This->mem = malloc(This->maxlen);
+	    This->mem = mp_malloc(This->maxlen);
 	    if (!This->mem)
 	    {
 		CMediaBuffer_Destroy(This);

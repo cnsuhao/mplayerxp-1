@@ -1,4 +1,3 @@
-
 #include "mp_config.h"
 #include "help_mp.h"
 
@@ -21,7 +20,8 @@
 
 #include "input/input.h"
 #include "version.h"
-#include "../pp_msg.h"
+#include "pp_msg.h"
+#include "osdep/mplib.h"
 
 struct list_entry_s {
   struct list_entry p;
@@ -96,11 +96,11 @@ static void read_key(menu_t* menu,int c){
 
 static void free_entry(list_entry_t* entry) {
   if(entry->ok)
-    free(entry->ok);
+    mp_free(entry->ok);
   if(entry->cancel)
-    free(entry->cancel);
-  free(entry->p.txt);
-  free(entry);
+    mp_free(entry->cancel);
+  mp_free(entry->p.txt);
+  mp_free(entry);
 }
 
 static void close_menu(menu_t* menu) {
@@ -129,12 +129,12 @@ static int parse_args(menu_t* menu,const char* args) {
     name = asx_get_attrib("name",attribs);
     if(!name) {
       MSG_WARN("[libmenu] ListMenu entry definitions need a name: %i\n",parser->line);
-      free(element);
-      if(body) free(body);
+      mp_free(element);
+      if(body) mp_free(body);
       asx_free_attribs(attribs);
       continue;
     }
-    m = calloc(1,sizeof(struct list_entry_s));
+    m = mp_calloc(1,sizeof(struct list_entry_s));
     m->p.txt = name;
     m->ok = asx_get_attrib("ok",attribs);
     m->cancel = asx_get_attrib("cancel",attribs);
@@ -142,8 +142,8 @@ static int parse_args(menu_t* menu,const char* args) {
     m->right = asx_get_attrib("right",attribs);
     menu_list_add_entry(menu,m);
 
-    free(element);
-    if(body) free(body);
+    mp_free(element);
+    if(body) mp_free(body);
     asx_free_attribs(attribs);
   }
 }

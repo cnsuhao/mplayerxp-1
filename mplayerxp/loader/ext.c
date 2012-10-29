@@ -15,9 +15,6 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #include <unistd.h>
 #include <sys/mman.h>
 #include <errno.h>
@@ -31,17 +28,18 @@
 #include "wine/debugtools.h"
 #include "wine/heap.h"
 #include "ext.h"
+#include "osdep/mplib.h"
 
 #if 0
 //REMOVE SIMPLIFY
 static any_t* mymalloc(unsigned int size)
 {
-    printf("malloc %d\n", size);
-    return malloc(size);
+    printf("mp_malloc %d\n", size);
+    return mp_malloc(size);
 }
 
-#undef malloc
-#define malloc mymalloc
+#undef mp_malloc
+#define mp_malloc mymalloc
 #endif
 
 int dbg_header_err( const char *dbg_channel, const char *func )
@@ -83,7 +81,7 @@ HANDLE WINAPI GetProcessHeap(void)
 LPVOID WINAPI HeapAlloc(HANDLE heap, DWORD flags, DWORD size)
 {
     static int i = 5;
-    any_t* m = (flags & 0x8) ? calloc(size, 1) : malloc(size);
+    any_t* m = (flags & 0x8) ? mp_calloc(size, 1) : mp_malloc(size);
     //printf("HeapAlloc %p  %d  (%d)\n", m, size, flags);
     //if (--i == 0)
     //    abort();
@@ -92,7 +90,7 @@ LPVOID WINAPI HeapAlloc(HANDLE heap, DWORD flags, DWORD size)
 
 WIN_BOOL WINAPI HeapFree(HANDLE heap, DWORD flags, LPVOID mem)
 {
-    if (mem) free(mem);
+    if (mem) mp_free(mem);
     //printf("HeapFree  %p\n", mem);
     //if (!mem)
     //    abort();
@@ -195,8 +193,8 @@ WIN_BOOL WINAPI IsBadReadPtr(LPCVOID data, UINT size)
 }
 LPSTR HEAP_strdupA(HANDLE heap, DWORD flags, LPCSTR string)
 {
-//    return strdup(string);
-    char* answ = (char*) malloc(strlen(string) + 1);
+//    return mp_strdup(string);
+    char* answ = (char*) mp_malloc(strlen(string) + 1);
     strcpy(answ, string);
     return answ;
 }
@@ -207,7 +205,7 @@ LPWSTR HEAP_strdupAtoW(HANDLE heap, DWORD flags, LPCSTR string)
     if(string==0)
 	return 0;
     size=strlen(string);
-    answer = (WCHAR*) malloc(sizeof(WCHAR) * (size + 1));
+    answer = (WCHAR*) mp_malloc(sizeof(WCHAR) * (size + 1));
     for(i=0; i<=size; i++)
 	answer[i]=(short)string[i];
     return answer;
@@ -221,7 +219,7 @@ LPSTR HEAP_strdupWtoA(HANDLE heap, DWORD flags, LPCWSTR string)
     size=0;
     while(string[size])
        size++;
-    answer = (char*) malloc(size + 2);
+    answer = (char*) mp_malloc(size + 2);
     for(i=0; i<=size; i++)
 	answer[i]=(char)string[i];
     return answer;
@@ -398,12 +396,12 @@ HANDLE WINAPI CreateFileMappingA(HANDLE handle, LPSECURITY_ATTRIBUTES lpAttr,
     {
 	if(fm==0)
 	{
-	    fm = (file_mapping*) malloc(sizeof(file_mapping));
+	    fm = (file_mapping*) mp_malloc(sizeof(file_mapping));
 	    fm->prev=NULL;
 	}
 	else
 	{
-	    fm->next = (file_mapping*) malloc(sizeof(file_mapping));
+	    fm->next = (file_mapping*) mp_malloc(sizeof(file_mapping));
 	    fm->next->prev=fm;
 	    fm=fm->next;
 	}
@@ -411,7 +409,7 @@ HANDLE WINAPI CreateFileMappingA(HANDLE handle, LPSECURITY_ATTRIBUTES lpAttr,
 	fm->handle=answer;
 	if(name)
 	{
-	    fm->name = (char*) malloc(strlen(name)+1);
+	    fm->name = (char*) mp_malloc(strlen(name)+1);
 	    strcpy(fm->name, name);
 	}
 	else
@@ -438,10 +436,10 @@ WIN_BOOL WINAPI UnmapViewOfFile(LPVOID handle)
 	    if(p->next)p->next->prev=p->prev;
 	    if(p->prev)p->prev->next=p->next;
 	    if(p->name)
-		free(p->name);
+		mp_free(p->name);
 	    if(p==fm)
 		fm=p->prev;
-	    free(p);
+	    mp_free(p);
 	    return result;
 	}
     }
@@ -547,7 +545,7 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
     }
     else
     {
-	virt_alloc *new_vm = (virt_alloc*) malloc(sizeof(virt_alloc));
+	virt_alloc *new_vm = (virt_alloc*) mp_malloc(sizeof(virt_alloc));
 	new_vm->mapping_size=size;
 	new_vm->address=(char*)answer;
         new_vm->prev=vm;
@@ -584,7 +582,7 @@ WIN_BOOL WINAPI VirtualFree(LPVOID  address, SIZE_T dwSize, DWORD dwFreeType)//n
 	if(str->next)str->next->prev=str->prev;
 	if(str->prev)str->prev->next=str->next;
 	if(vm==str)vm=str->prev;
-	free(str);
+	mp_free(str);
 	return 0;
     }
     return -1;

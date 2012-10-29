@@ -2,6 +2,7 @@
 #include <string.h>
 #include "mrl.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #undef TEST_MRL
 
@@ -27,7 +28,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(user)
 	{
 	    ssize=endp-line+1;
-	    *user=malloc(ssize);
+	    *user=mp_malloc(ssize);
 	    memcpy(*user,line,ssize-1);
 	    (*user)[ssize-1]='\0';
 	}
@@ -41,7 +42,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(pass)
 	{
 	    ssize=endp-line+1;
-	    *pass=malloc(ssize);
+	    *pass=mp_malloc(ssize);
 	    memcpy(*pass,line,ssize-1);
 	    (*pass)[ssize-1]='\0';
 	}
@@ -54,7 +55,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(ms)
 	{
 	    ssize=endp-line+1;
-	    *ms=malloc(ssize);
+	    *ms=mp_malloc(ssize);
 	    memcpy(*ms,line,ssize-1);
 	    (*ms)[ssize-1]='\0';
 	}
@@ -68,7 +69,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(port)
 	{
 	    ssize=endp-line+1;
-	    *port=malloc(ssize);
+	    *port=mp_malloc(ssize);
 	    memcpy(*port,line,ssize-1);
 	    (*port)[ssize-1]='\0';
 	}
@@ -97,7 +98,7 @@ static void mrl_store_args(const char *arg,char *value, mrl_config_t * args)
 		case MRL_TYPE_PRINT:
 			MSG_INFO("%s", (char *)args[i].value);
 		default:
-			free(value);
+			mp_free(value);
 			break;
 		case MRL_TYPE_BOOL:
 			if(strcasecmp(value,"on")==0 ||
@@ -106,12 +107,12 @@ static void mrl_store_args(const char *arg,char *value, mrl_config_t * args)
 			    *((int *)args[i].value)=args[i].max;
 			else
 			    *((int *)args[i].value)=args[i].min;
-			free(value);
+			mp_free(value);
 			break;
 		case MRL_TYPE_INT:
 		{
 		    int result=atoi(value);
-		    free(value);
+		    mp_free(value);
 		    if(result < args[i].min) result=args[i].min;
 		    if(result > args[i].max) result=args[i].max;
 		    *((int *)args[i].value)=result;
@@ -120,7 +121,7 @@ static void mrl_store_args(const char *arg,char *value, mrl_config_t * args)
 		case MRL_TYPE_FLOAT:
 		{
 		    int result=atof(value);
-		    free(value);
+		    mp_free(value);
 		    if(result < args[i].min) result=args[i].min;
 		    if(result > args[i].max) result=args[i].max;
 		    *((float *)args[i].value)=result;
@@ -157,12 +158,12 @@ const char * mrl_parse_params(const char *param, mrl_config_t * args)
 	    endp=strchr(sep,MRL_ARG_SEP);
 	    if(!endp) endp=endl;
 	    ssize=sep-param-1;
-	    if(arg) free(arg);
-	    arg=malloc(ssize+1);
+	    if(arg) mp_free(arg);
+	    arg=mp_malloc(ssize+1);
 	    memcpy(arg,param,ssize);
 	    arg[ssize]='\0';
 	    ssize=endp-sep;
-	    value=malloc(ssize+1);
+	    value=mp_malloc(ssize+1);
 	    memcpy(value,sep,ssize);
 	    value[ssize]='\0';
 	    mrl_store_args(arg,value,args);
@@ -172,8 +173,8 @@ const char * mrl_parse_params(const char *param, mrl_config_t * args)
 	param=endp+1;
 	if(endp==endl) { param--; break; }
     }
-    if(arg) free(arg);
-    if(value) free(value);
+    if(arg) mp_free(arg);
+    if(value) mp_free(value);
     return param;
 }
 
@@ -201,10 +202,10 @@ int main(int argc, char *argv[])
     printf("arguments: '%s'\n",param);
     param=mrl_parse_params(param,NULL);
     printf("unparsed params: '%s'\n",param);
-    if(user) free(user);
-    if(pass) free(pass);
-    if(ms) free(ms);
-    if(port) free(port);
+    if(user) mp_free(user);
+    if(pass) mp_free(pass);
+    if(ms) mp_free(ms);
+    if(port) mp_free(port);
     return EXIT_SUCCESS;
 }
 #endif

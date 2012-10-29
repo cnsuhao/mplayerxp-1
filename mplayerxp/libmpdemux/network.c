@@ -41,8 +41,9 @@
 #ifndef STREAMING_LIVE_DOT_COM
 #include "rtp.h"
 #endif
-#include "../version.h"
+#include "version.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 /* Variables for the command line option -user, -passwd & -bandwidth */
 char *network_username=NULL;
@@ -93,7 +94,7 @@ static struct {
 
 streaming_ctrl_t * streaming_ctrl_new(void) {
 	streaming_ctrl_t *streaming_ctrl;
-	streaming_ctrl = (streaming_ctrl_t*)malloc(sizeof(streaming_ctrl_t));
+	streaming_ctrl = (streaming_ctrl_t*)mp_malloc(sizeof(streaming_ctrl_t));
 	if( streaming_ctrl==NULL ) {
 		MSG_FATAL(MSGTR_OutOfMemory);
 		return NULL;
@@ -105,9 +106,9 @@ streaming_ctrl_t * streaming_ctrl_new(void) {
 void streaming_ctrl_free( streaming_ctrl_t *streaming_ctrl ) {
 	if( streaming_ctrl==NULL ) return;
 	if( streaming_ctrl->url ) url_free( streaming_ctrl->url );
-	if( streaming_ctrl->buffer ) free( streaming_ctrl->buffer );
-	if( streaming_ctrl->data ) free( streaming_ctrl->data );
-	free( streaming_ctrl );
+	if( streaming_ctrl->buffer ) mp_free( streaming_ctrl->buffer );
+	if( streaming_ctrl->data ) mp_free( streaming_ctrl->data );
+	mp_free( streaming_ctrl );
 }
 
 URL_t*
@@ -145,7 +146,7 @@ check4proxies( URL_t *url ) {
 
 			MSG_V("Using HTTP proxy: %s\n", proxy_url->url );
 			len = strlen( proxy_url->hostname ) + strlen( url->url ) + 20;	// 20 = http_proxy:// + port
-			new_url = malloc( len+1 );
+			new_url = mp_malloc( len+1 );
 			if( new_url==NULL ) {
 				MSG_FATAL(MSGTR_OutOfMemory);
 				return url_out;
@@ -157,7 +158,7 @@ check4proxies( URL_t *url ) {
 			}
 			url_free( url_out );
 			url_out = tmp_url;
-			free( new_url );
+			mp_free( new_url );
 			url_free( proxy_url );
 		}
 	}
@@ -282,11 +283,11 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 	}
 	if( *auth_retry>0 ) {
 		if( url->username ) {
-			free( url->username );
+			mp_free( url->username );
 			url->username = NULL;
 		}
 		if( url->password ) {
-			free( url->password );
+			mp_free( url->password );
 			url->password = NULL;
 		}
 	}
@@ -301,7 +302,7 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 		MSG_INFO("Authentication required\n");
 	}
 	if( network_username ) {
-		url->username = strdup(network_username);
+		url->username = mp_strdup(network_username);
 		if( url->username==NULL ) {
 			MSG_FATAL(MSGTR_OutOfMemory);
 			return -1;
@@ -311,7 +312,7 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 		return -1;
 	}
 	if( network_password ) {
-		url->password = strdup(network_password);
+		url->password = mp_strdup(network_password);
 		if( url->password==NULL ) {
 			MSG_FATAL(MSGTR_OutOfMemory);
 			return -1;
@@ -563,7 +564,7 @@ err_out:
 int
 streaming_bufferize( streaming_ctrl_t *streaming_ctrl, char *buffer, int size) {
 //printf("streaming_bufferize\n");
-	streaming_ctrl->buffer = (char*)malloc(size);
+	streaming_ctrl->buffer = (char*)mp_malloc(size);
 	if( streaming_ctrl->buffer==NULL ) {
 		MSG_FATAL(MSGTR_OutOfMemory);
 		return -1;
@@ -585,7 +586,7 @@ nop_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctr
 		stream_ctrl->buffer_pos += len;
 //printf("buffer_pos = %d\n", stream_ctrl->buffer_pos );
 		if( stream_ctrl->buffer_pos>=stream_ctrl->buffer_size ) {
-			free( stream_ctrl->buffer );
+			mp_free( stream_ctrl->buffer );
 			stream_ctrl->buffer = NULL;
 			stream_ctrl->buffer_size = 0;
 			stream_ctrl->buffer_pos = 0;
@@ -768,7 +769,7 @@ realrtsp_streaming_start( stream_t *stream ) {
 		file = stream->streaming_ctrl->url->file;
 		if (file[0] == '/')
 		    file++;
-		mrl = malloc(sizeof(char)*(strlen(stream->streaming_ctrl->url->hostname)+strlen(file)+16));
+		mrl = mp_malloc(sizeof(char)*(strlen(stream->streaming_ctrl->url->hostname)+strlen(file)+16));
 		sprintf(mrl,"rtsp://%s:%i/%s",stream->streaming_ctrl->url->hostname,port,file);
 		rtsp = rtsp_session_start(fd,&mrl, file,
 			stream->streaming_ctrl->url->hostname, port, &redirected);
@@ -779,7 +780,7 @@ realrtsp_streaming_start( stream_t *stream ) {
 			closesocket(fd);
 		}
 
-		free(mrl);
+		mp_free(mrl);
 		temp--;
 
 	} while( (redirected != 0) && (temp > 0) );	

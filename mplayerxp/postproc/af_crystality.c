@@ -63,9 +63,10 @@ and high-freqs and try to restore FR as:
 #include "af.h"
 #include "dsp.h"
 
-#include "../libmpdemux/stream.h"
-#include "../libmpdemux/demuxer.h"
-#include "../libmpdemux/stheader.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/stheader.h"
+#include "osdep/mplib.h"
 
 #define SAMPLE_MAX 1.
 
@@ -510,9 +511,9 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // Filter data through filter
@@ -531,8 +532,8 @@ static int __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=calloc(1,sizeof(af_crystality_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=mp_calloc(1,sizeof(af_crystality_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
   set_defaults(af->setup);

@@ -5,9 +5,9 @@
 /*
  * Copyright (C) 2002 the xine project
  *
- * This file is part of xine, a free video player.
+ * This file is part of xine, a mp_free video player.
  *
- * xine is free software; you can redistribute it and/or modify
+ * xine is mp_free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -28,10 +28,11 @@
  
 #include "mp_config.h"
 #include "mplayer.h"
-#include "../librtsp/rtsp.h"
+#include "librtsp/rtsp.h"
 #include "sdpplin.h"
 #include "xbuffer.h"
-#include "../demux_msg.h"
+#include "demux_msg.h"
+#include "osdep/mplib.h"
 
 /*
 #define LOG
@@ -127,18 +128,18 @@ static int filter(const char *in, const char *filter, char **out) {
 }
 static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
-  sdpplin_stream_t *desc=calloc(1,sizeof(sdpplin_stream_t));
+  sdpplin_stream_t *desc=mp_calloc(1,sizeof(sdpplin_stream_t));
   char      *buf=xbuffer_init(32);
   char      *decoded=xbuffer_init(32);
   int       handled;
   int       got_mimetype;
     
   if (filter(*data, "m=", &buf)) {
-    desc->id = strdup(buf);
+    desc->id = mp_strdup(buf);
   } else
   {
     printf("sdpplin: no m= found.\n");
-    free(desc);
+    mp_free(desc);
     xbuffer_free(buf);
     return NULL;
   }
@@ -199,14 +200,14 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     }
 
     if(filter(*data,"a=StreamName:string;",&buf)) {
-      desc->stream_name=strdup(buf);
+      desc->stream_name=mp_strdup(buf);
       desc->stream_name_size=strlen(desc->stream_name);
       handled=1;
       *data=nl(*data);
     }
 
     if(filter(*data,"a=mimetype:string;",&buf)) {
-      desc->mime_type=strdup(buf);
+      desc->mime_type=mp_strdup(buf);
       desc->mime_type_size=strlen(desc->mime_type);
       handled=1;
       got_mimetype = 1;
@@ -215,7 +216,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
     if(filter(*data,"a=OpaqueData:buffer;",&buf)) {
       decoded = b64_decode(buf, decoded, &(desc->mlti_data_size));
-      desc->mlti_data=malloc(desc->mlti_data_size);
+      desc->mlti_data=mp_malloc(desc->mlti_data_size);
       memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
       handled=1;
       *data=nl(*data);
@@ -225,7 +226,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     }
     
     if(filter(*data,"a=ASMRuleBook:string;",&buf)) {
-      desc->asm_rule_book=strdup(buf);
+      desc->asm_rule_book=mp_strdup(buf);
       handled=1;
       *data=nl(*data);
     }
@@ -243,7 +244,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
   if (!got_mimetype) {
     MSG_V("libreal: sdpplin_stream: no mimetype\n");
-    desc->mime_type = strdup("audio/x-pn-realaudio");
+    desc->mime_type = mp_strdup("audio/x-pn-realaudio");
     desc->mime_type_size = strlen(desc->mime_type);
     if (desc->stream_id)
       MSG_WARN("libreal: sdpplin_stream: implicit mimetype for stream_id != 0, weird.\n");
@@ -257,7 +258,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
 sdpplin_t *sdpplin_parse(char *data) {
 
-  sdpplin_t        *desc=calloc(1,sizeof(sdpplin_t));
+  sdpplin_t        *desc=mp_calloc(1,sizeof(sdpplin_t));
   char             *buf=xbuffer_init(32);
   char             *decoded=xbuffer_init(32);
   int              handled;
@@ -286,16 +287,16 @@ sdpplin_t *sdpplin_parse(char *data) {
       {
       MSG_ERR("sdpplin: bad stream_id %d (must be >= 0, < %d). Broken sdp?\n",
         stream->stream_id, desc->stream_count);
-      free(stream);
+      mp_free(stream);
       } else {
         MSG_V("sdpplin: got 'm=', but 'a=StreamCount' is still unknown.\n");
         if (stream->stream_id == 0) {
           desc->stream_count=1;
-          desc->stream=malloc(sizeof(sdpplin_stream_t*));
+          desc->stream=mp_malloc(sizeof(sdpplin_stream_t*));
           desc->stream[0]=stream;
         } else {
           MSG_ERR("sdpplin: got 'm=', but 'a=StreamCount' is still unknown and stream_id != 0. Broken sdp?\n");
-          free(stream);
+          mp_free(stream);
         }
       }
       continue;
@@ -303,35 +304,35 @@ sdpplin_t *sdpplin_parse(char *data) {
 
     if(filter(data,"a=Title:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->title=strdup(decoded);
+      desc->title=mp_strdup(decoded);
       handled=1;
       data=nl(data);
     }
     
     if(filter(data,"a=Author:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->author=strdup(decoded);
+      desc->author=mp_strdup(decoded);
       handled=1;
       data=nl(data);
     }
     
     if(filter(data,"a=Copyright:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->copyright=strdup(decoded);
+      desc->copyright=mp_strdup(decoded);
       handled=1;
       data=nl(data);
     }
     
     if(filter(data,"a=Abstract:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
-      desc->abstract=strdup(decoded);
+      desc->abstract=mp_strdup(decoded);
       handled=1;
       data=nl(data);
     }
     
     if(filter(data,"a=StreamCount:integer;",&buf)) {
       desc->stream_count=(unsigned int)atoi(buf);
-      desc->stream=malloc(sizeof(sdpplin_stream_t*)*desc->stream_count);
+      desc->stream=mp_malloc(sizeof(sdpplin_stream_t*)*desc->stream_count);
       handled=1;
       data=nl(data);
     }
@@ -369,28 +370,28 @@ void sdpplin_free(sdpplin_t *description) {
   for (i = 0; i < description->stream_count; i++) {
     if (description->stream[i]) {
       if (description->stream[i]->stream_name)
-        free(description->stream[i]->stream_name);
+        mp_free(description->stream[i]->stream_name);
       if (description->stream[i]->mime_type)
-        free(description->stream[i]->mime_type);
+        mp_free(description->stream[i]->mime_type);
       if (description->stream[i]->mlti_data)
-        free(description->stream[i]->mlti_data);
+        mp_free(description->stream[i]->mlti_data);
       if (description->stream[i]->asm_rule_book)
-        free(description->stream[i]->asm_rule_book);
-      free(description->stream[i]);
+        mp_free(description->stream[i]->asm_rule_book);
+      mp_free(description->stream[i]);
     }
   }
 
   if(description->stream_count)
-    free(description->stream);
+    mp_free(description->stream);
   if (description->title)
-    free(description->title);
+    mp_free(description->title);
   if (description->author)
-    free(description->author);
+    mp_free(description->author);
   if (description->copyright)
-    free(description->copyright);
+    mp_free(description->copyright);
   if (description->abstract)
-    free(description->abstract);
+    mp_free(description->abstract);
 
-  free(description);
+  mp_free(description);
 }
 

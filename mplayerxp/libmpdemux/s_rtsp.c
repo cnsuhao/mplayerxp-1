@@ -1,4 +1,4 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,6 +22,7 @@
 #include "librtsp/rtsp.h"
 #include "librtsp/rtsp_session.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define RTSP_DEFAULT_PORT 554
 
@@ -95,7 +96,7 @@ static int __FASTCALL__ rtsp_streaming_start (stream_t *stream)
     if (file[0] == '/')
       file++;
 
-    mrl = malloc (strlen (stream->streaming_ctrl->url->hostname)
+    mrl = mp_malloc (strlen (stream->streaming_ctrl->url->hostname)
                   + strlen (file) + 16);
     
     sprintf (mrl, "rtsp://%s:%i/%s",
@@ -115,7 +116,7 @@ static int __FASTCALL__ rtsp_streaming_start (stream_t *stream)
       closesocket (fd);
     }
 
-    free (mrl);
+    mp_free (mrl);
     temp--;
   } while ((redirected != 0) && (temp > 0));    
 

@@ -1,7 +1,7 @@
 /*
     (C) Alex Beregszaszi
     License: GPL
-    
+
     This filter adds a center channel to the audio stream by
     averaging the left and right channel.
     There are two runtime controls one for setting which channel to
@@ -12,9 +12,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 
 #include "af.h"
+#include "osdep/mplib.h"
 
 // Data for specific instances of this filter
 typedef struct af_center_s
@@ -64,9 +65,9 @@ static int control(struct af_instance_s* af, int cmd, any_t* arg)
 static void uninit(struct af_instance_s* af)
 {
   if(af->data)
-    free(af->data);
+    mp_free(af->data);
   if(af->setup)
-    free(af->setup);
+    mp_free(af->setup);
 }
 
 // Filter data through filter
@@ -97,8 +98,8 @@ static int open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=calloc(1,sizeof(af_data_t));
-  af->setup=s=calloc(1,sizeof(af_center_t));
+  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->setup=s=mp_calloc(1,sizeof(af_center_t));
   if(af->data == NULL || af->setup == NULL)
     return AF_ERROR;
   // Set default values

@@ -25,6 +25,7 @@
 #include "aviprint.h"
 #include "mpxpav64.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define MAX_AV_STREAMS MAX_V_STREAMS+MAX_A_STREAMS+MAX_S_STREAMS
 
@@ -173,7 +174,7 @@ static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_of
 	{
 	    is_valid=1;
 	    priv->idx_size[id]=iid>>2; /* 32-bit in file */
-	    priv->idx[id]=malloc(priv->idx_size[id]<<3); /* 64-bit in memory */
+	    priv->idx[id]=mp_malloc(priv->idx_size[id]<<3); /* 64-bit in memory */
 	    for(i=0;i<priv->idx_size[id];i++)
 		((uint64_t *)priv->idx[id])[i]=stream_read_dword_le(s);
 	}
@@ -188,7 +189,7 @@ static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_of
 	{
 	    is_valid=1;
 	    priv->idx_size[id]=iid>>3;
-	    priv->idx[id]=malloc(priv->idx_size[id]<<3);
+	    priv->idx[id]=mp_malloc(priv->idx_size[id]<<3);
 	    for(i=0;i<priv->idx_size[id];i++)
 		((uint64_t *)priv->idx[id])[i]=stream_read_qword_le(s);
 	}
@@ -215,7 +216,7 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
 	switch(fourcc)
 	{
 	    case mmioFOURCC('B','I','H',' '):
-		sh->bih=malloc(fsize<sizeof(BITMAPINFOHEADER)?sizeof(BITMAPINFOHEADER):fsize);
+		sh->bih=mp_malloc(fsize<sizeof(BITMAPINFOHEADER)?sizeof(BITMAPINFOHEADER):fsize);
 		stream_read(s,(char *)sh->bih,fsize);
 		le2me_BITMAPINFOHEADER(sh->bih);
 		if(mp_conf.verbose>=1) print_video_header(sh->bih,fsize);
@@ -255,7 +256,7 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		}
 		else
 		{
-		    sh->ImageDesc = malloc(fsize);
+		    sh->ImageDesc = mp_malloc(fsize);
 		    stream_read(s,(char *)sh->ImageDesc,fsize);
 		    le2me_ImageDesc(((ImageDescription *)sh->ImageDesc));
 		}
@@ -289,7 +290,7 @@ static int mpxpav64_read_st64a(demuxer_t *demuxer,unsigned hsize,unsigned id){
 	switch(fourcc)
 	{
 	    case mmioFOURCC('W','A','V','E'):
-		sh->wf=malloc(fsize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):fsize);
+		sh->wf=mp_malloc(fsize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):fsize);
 		stream_read(s,(char *)sh->wf,fsize);
 		le2me_WAVEFORMATEX(sh->wf);
 		if(mp_conf.verbose>=1) print_wave_header(sh->wf,fsize);
@@ -424,11 +425,11 @@ static void mpxpav64_read_fcnt(demuxer_t* demuxer,unsigned fsize)
 	}
 	if(infot)
 	{
-	    str=malloc(len);
+	    str=mp_malloc(len);
 	    stream_read(s,str,len);
 	    sub_data.cp=nls_get_screen_cp();
 	    demux_info_add(demuxer,infot,nls_recode2screen_cp(codepage,str,len));
-	    free(str);
+	    mp_free(str);
 	}
 	else stream_skip(s,len);
     }
@@ -465,7 +466,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
     hsize=stream_read_qword_le(s); /* header size */
     
     // priv struct:
-    priv=malloc(sizeof(mpxpav64_priv_t));
+    priv=mp_malloc(sizeof(mpxpav64_priv_t));
     memset(priv,0,sizeof(mpxpav64_priv_t));
     demuxer->priv=(any_t*)priv;
     demuxer->video->id=-1;
@@ -483,7 +484,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
 		{
 		    MSG_ERR("Size of FPRP(%u) != %u\n",fsize,sizeof(mpxpav64FileProperties_t));
 		    open_failed:
-		    free(priv);
+		    mp_free(priv);
 		    return NULL;
 		}
 		stream_read(s,(char *)&priv->fprop,sizeof(mpxpav64FileProperties_t));
@@ -884,8 +885,8 @@ static void mpxpav64_close(demuxer_t *demuxer)
   unsigned i;
   mpxpav64_priv_t* priv=demuxer->priv;
   if(!priv) return;
-  for(i=0;i<MAX_AV_STREAMS;i++) if(priv->idx[i]!=NULL) free(priv->idx[i]);
-  free(priv);
+  for(i=0;i<MAX_AV_STREAMS;i++) if(priv->idx[i]!=NULL) mp_free(priv->idx[i]);
+  mp_free(priv);
 }
 
 static int mpxpav64_control(demuxer_t *demuxer,int cmd,any_t*args)

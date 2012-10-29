@@ -1,4 +1,4 @@
-/* 
+/*
  * HTTP Helper
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
  * (C) 2001, MPlayer team.
@@ -11,6 +11,7 @@
 #include "http.h"
 #include "url.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
 #endif
@@ -19,7 +20,7 @@ HTTP_header_t *
 http_new_header() {
 	HTTP_header_t *http_hdr;
 
-	http_hdr = (HTTP_header_t*)malloc(sizeof(HTTP_header_t));
+	http_hdr = (HTTP_header_t*)mp_malloc(sizeof(HTTP_header_t));
 	if( http_hdr==NULL ) return NULL;
 	memset( http_hdr, 0, sizeof(HTTP_header_t) );
 
@@ -30,21 +31,21 @@ void
 http_free( HTTP_header_t *http_hdr ) {
 	HTTP_field_t *field, *field2free;
 	if( http_hdr==NULL ) return;
-	if( http_hdr->protocol!=NULL ) free( http_hdr->protocol );
-	if( http_hdr->uri!=NULL ) free( http_hdr->uri );
-	if( http_hdr->reason_phrase!=NULL ) free( http_hdr->reason_phrase );
-	if( http_hdr->field_search!=NULL ) free( http_hdr->field_search );
-	if( http_hdr->method!=NULL ) free( http_hdr->method );
-	if( http_hdr->buffer!=NULL ) free( http_hdr->buffer );
+	if( http_hdr->protocol!=NULL ) mp_free( http_hdr->protocol );
+	if( http_hdr->uri!=NULL ) mp_free( http_hdr->uri );
+	if( http_hdr->reason_phrase!=NULL ) mp_free( http_hdr->reason_phrase );
+	if( http_hdr->field_search!=NULL ) mp_free( http_hdr->field_search );
+	if( http_hdr->method!=NULL ) mp_free( http_hdr->method );
+	if( http_hdr->buffer!=NULL ) mp_free( http_hdr->buffer );
 	field = http_hdr->first_field;
 	while( field!=NULL ) {
 		field2free = field;
 		if (field->field_name)
-		  free(field->field_name);
+		  mp_free(field->field_name);
 		field = field->next;
-		free( field2free );
+		mp_free( field2free );
 	}
-	free( http_hdr );
+	mp_free( http_hdr );
 	http_hdr = NULL;
 }
 
@@ -56,7 +57,7 @@ http_response_append( HTTP_header_t *http_hdr, char *response, int length ) {
 		MSG_FATAL("Bad size in memory (re)allocation\n");
 		return -1;
 	}
-	http_hdr->buffer = (char*)realloc( http_hdr->buffer, http_hdr->buffer_size+length+1 );
+	http_hdr->buffer = (char*)mp_realloc( http_hdr->buffer, http_hdr->buffer_size+length+1 );
 	if(http_hdr->buffer ==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return -1;
@@ -93,7 +94,7 @@ http_response_parse( HTTP_header_t *http_hdr ) {
 		return -1;
 	}
 	len = hdr_ptr-http_hdr->buffer;
-	http_hdr->protocol = (char*)malloc(len+1);
+	http_hdr->protocol = (char*)mp_malloc(len+1);
 	if( http_hdr->protocol==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return -1;
@@ -121,7 +122,7 @@ http_response_parse( HTTP_header_t *http_hdr ) {
 		return -1;
 	}
 	len = ptr-hdr_ptr;
-	http_hdr->reason_phrase = (char*)malloc(len+1);
+	http_hdr->reason_phrase = (char*)mp_malloc(len+1);
 	if( http_hdr->reason_phrase==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return -1;
@@ -152,7 +153,7 @@ http_response_parse( HTTP_header_t *http_hdr ) {
 		while( *ptr!='\r' && *ptr!='\n' ) ptr++;
 		len = ptr-hdr_ptr;
 		if( len==0 ) break;
-		field = (char*)realloc(field, len+1);
+		field = (char*)mp_realloc(field, len+1);
 		if( field==NULL ) {
 			MSG_FATAL("Memory allocation failed\n");
 			return -1;
@@ -163,7 +164,7 @@ http_response_parse( HTTP_header_t *http_hdr ) {
 		hdr_ptr = ptr+((*ptr=='\r')?2:1);
 	} while( hdr_ptr<(http_hdr->buffer+pos_hdr_sep) );
 	
-	if( field!=NULL ) free( field );
+	if( field!=NULL ) mp_free( field );
 
 	if( pos_hdr_sep+hdr_sep_len<http_hdr->buffer_size ) {
 		// Response has data!
@@ -185,7 +186,7 @@ http_build_request( HTTP_header_t *http_hdr ) {
 	if( http_hdr->method==NULL ) http_set_method( http_hdr, "GET");
 	if( http_hdr->uri==NULL ) http_set_uri( http_hdr, "/");
 	else {
-		uri = (char*)malloc(strlen(http_hdr->uri) + 1);
+		uri = (char*)mp_malloc(strlen(http_hdr->uri) + 1);
 		if( uri==NULL ) {
 			MSG_FATAL("Memory allocation failed\n");
 			return NULL;
@@ -210,10 +211,10 @@ http_build_request( HTTP_header_t *http_hdr ) {
 	}
 	// Free the buffer if it was previously used
 	if( http_hdr->buffer!=NULL ) {
-		free( http_hdr->buffer );
+		mp_free( http_hdr->buffer );
 		http_hdr->buffer = NULL;
 	}
-	http_hdr->buffer = (char*)malloc(len+1);
+	http_hdr->buffer = (char*)mp_malloc(len+1);
 	if( http_hdr->buffer==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return NULL;
@@ -236,7 +237,7 @@ http_build_request( HTTP_header_t *http_hdr ) {
 		memcpy( ptr, http_hdr->body, http_hdr->body_size );
 	}
 
-	if( uri ) free( uri );
+	if( uri ) mp_free( uri );
 	return http_hdr->buffer;	
 }
 
@@ -244,7 +245,7 @@ char *
 http_get_field( HTTP_header_t *http_hdr, const char *field_name ) {
 	if( http_hdr==NULL || field_name==NULL ) return NULL;
 	http_hdr->field_search_pos = http_hdr->first_field;
-	http_hdr->field_search = (char*)realloc( http_hdr->field_search, strlen(field_name)+1 );
+	http_hdr->field_search = (char*)mp_realloc( http_hdr->field_search, strlen(field_name)+1 );
 	if( http_hdr->field_search==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return NULL;
@@ -279,16 +280,16 @@ http_set_field( HTTP_header_t *http_hdr, const char *field_name ) {
 	HTTP_field_t *new_field;
 	if( http_hdr==NULL || field_name==NULL ) return;
 
-	new_field = (HTTP_field_t*)malloc(sizeof(HTTP_field_t));
+	new_field = (HTTP_field_t*)mp_malloc(sizeof(HTTP_field_t));
 	if( new_field==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return;
 	}
 	new_field->next = NULL;
-	new_field->field_name = (char*)malloc(strlen(field_name)+1);
+	new_field->field_name = (char*)mp_malloc(strlen(field_name)+1);
 	if( new_field->field_name==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
-		free(new_field);
+		mp_free(new_field);
 		return;
 	}
 	strcpy( new_field->field_name, field_name );
@@ -306,7 +307,7 @@ void
 http_set_method( HTTP_header_t *http_hdr, const char *method ) {
 	if( http_hdr==NULL || method==NULL ) return;
 
-	http_hdr->method = (char*)malloc(strlen(method)+1);
+	http_hdr->method = (char*)mp_malloc(strlen(method)+1);
 	if( http_hdr->method==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return;
@@ -318,7 +319,7 @@ void
 http_set_uri( HTTP_header_t *http_hdr, const char *uri ) {
 	if( http_hdr==NULL || uri==NULL ) return;
 
-	http_hdr->uri = (char*)malloc(strlen(uri)+1);
+	http_hdr->uri = (char*)mp_malloc(strlen(uri)+1);
 	if( http_hdr->uri==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return;
@@ -337,7 +338,7 @@ http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, co
 		pass_len = strlen(password);
 	}
 	
-	usr_pass = (char*)malloc(strlen(username)+pass_len+2);
+	usr_pass = (char*)mp_malloc(strlen(username)+pass_len+2);
 	if( usr_pass==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		goto out;
@@ -347,7 +348,7 @@ http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, co
 
 	// Base 64 encode with at least 33% more data than the original size
 	encoded_len = strlen(usr_pass)*2;
-	b64_usr_pass = (char*)malloc(encoded_len);
+	b64_usr_pass = (char*)mp_malloc(encoded_len);
 	if( b64_usr_pass==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		goto out;
@@ -361,7 +362,7 @@ http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, co
 
 	b64_usr_pass[out_len]='\0';
 	
-	auth = (char*)malloc(encoded_len+22);
+	auth = (char*)mp_malloc(encoded_len+22);
 	if( auth==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		goto out;
@@ -372,9 +373,9 @@ http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, co
 	res = 0;
 	
 out:
-	free( usr_pass );
-	free( b64_usr_pass );
-	free( auth );
+	mp_free( usr_pass );
+	mp_free( b64_usr_pass );
+	mp_free( auth );
 	
 	return res;
 }

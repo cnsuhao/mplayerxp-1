@@ -17,6 +17,7 @@
 #include "osdep/mm_accel.h"
 #include "postproc/postprocess.h"
 #include "codecs_ld.h"
+#include "osdep/mplib.h"
 
 static const vd_info_t info =
 {
@@ -186,7 +187,7 @@ static int control(sh_video_t *sh,int cmd,any_t* arg,...){
 static int init(sh_video_t *sh){
     priv_t *priv;
     if(!load_lib("libmpeg2"SLIBSUFFIX)) return 0;
-    priv=sh->context=malloc(sizeof(priv_t));
+    priv=sh->context=mp_malloc(sizeof(priv_t));
     if(!(priv->mpeg2dec=mpeg2_init(mp_data->mplayer_accel))) return 0;
     return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
@@ -195,7 +196,7 @@ static int init(sh_video_t *sh){
 static void uninit(sh_video_t *sh){
     priv_t *priv=sh->context;
     mpeg2_close(priv->mpeg2dec);
-    free(priv);
+    mp_free(priv);
     dlclose(dll_handle);
 }
 
@@ -247,7 +248,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 		    if(!priv->mpeg2dec->decoder.mpq_store)
 		    {
 			priv->mpeg2dec->decoder.mpq_stride=(info->sequence->picture_width+15)>>4;
-			priv->mpeg2dec->decoder.mpq_store=malloc(priv->mpeg2dec->decoder.mpq_stride*((info->sequence->picture_height+15)>>4));
+			priv->mpeg2dec->decoder.mpq_store=mp_malloc(priv->mpeg2dec->decoder.mpq_stride*((info->sequence->picture_height+15)>>4));
 		    }
 #endif
 		    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK

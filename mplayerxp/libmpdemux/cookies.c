@@ -18,6 +18,7 @@
 #include "cookies.h"
 #include "http.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
 
 #define MAX_COOKIES 20
 
@@ -38,7 +39,7 @@ typedef struct cookie_list_type {
 static struct cookie_list_type *cookie_list = NULL;
 
 
-/* Like strdup, but stops at anything <31. */
+/* Like mp_strdup, but stops at anything <31. */
 static char *col_dup(const char *src)
 {
     char *dst;
@@ -47,7 +48,7 @@ static char *col_dup(const char *src)
     while (src[length] > 31)
 	length++;
 
-    dst = malloc(length + 1);
+    dst = mp_malloc(length + 1);
     strncpy(dst, src, length);
     dst[length] = 0;
 
@@ -114,21 +115,21 @@ static char *load_file(const char *filename, off_t * length)
     }
 
     if (*length > SIZE_MAX - 1) {
-	MSG_V("File too big, could not malloc.");
+	MSG_V("File too big, could not mp_malloc.");
 	close(fd);
 	return NULL;
     }
 
     lseek(fd, SEEK_SET, 0);
 
-    if (!(buffer = malloc(*length + 1))) {
-	MSG_V("Could not malloc.");
+    if (!(buffer = mp_malloc(*length + 1))) {
+	MSG_V("Could not mp_malloc.");
 	close(fd);
 	return NULL;
     }
 
     if (read(fd, buffer, *length) != *length) {
-	free(buffer);
+	mp_free(buffer);
 	MSG_V("Read is behaving funny.");
 	close(fd);
 	return NULL;
@@ -157,7 +158,7 @@ static struct cookie_list_type *load_cookies_from(const char *filename,
 	char *cols[7];
 	if (parse_line(&ptr, cols)) {
 	    struct cookie_list_type *new;
-	    new = malloc(sizeof(cookie_list_t));
+	    new = mp_malloc(sizeof(cookie_list_t));
 	    new->name = col_dup(cols[5]);
 	    new->value = col_dup(cols[6]);
 	    new->path = col_dup(cols[2]);
@@ -188,30 +189,30 @@ static struct cookie_list_type *load_cookies(void)
 	return list;
 
 
-    buf = malloc(strlen(homedir) + sizeof("/.mozilla/default") + 1);
+    buf = mp_malloc(strlen(homedir) + sizeof("/.mozilla/default") + 1);
     sprintf(buf, "%s/.mozilla/default", homedir);
     dir = opendir(buf);
-    free(buf);
+    mp_free(buf);
 
     if (dir) {
 	while ((ent = readdir(dir)) != NULL) {
 	    if ((ent->d_name)[0] != '.') {
-		buf = malloc(strlen(getenv("HOME")) + 
+		buf = mp_malloc(strlen(getenv("HOME")) + 
                              sizeof("/.mozilla/default/") + 
                              strlen(ent->d_name) + sizeof("cookies.txt") + 1);
 		sprintf(buf, "%s/.mozilla/default/%s/cookies.txt",
 			 getenv("HOME"), ent->d_name);
 		list = load_cookies_from(buf, list);
-		free(buf);
+		mp_free(buf);
 	    }
 	}
 	closedir(dir);
     }
 
-    buf = malloc(strlen(homedir) + sizeof("/.netscape/cookies.txt") + 1);
+    buf = mp_malloc(strlen(homedir) + sizeof("/.netscape/cookies.txt") + 1);
     sprintf(buf, "%s/.netscape/cookies.txt", homedir);
     list = load_cookies_from(buf, list);
-    free(buf);
+    mp_free(buf);
 
     return list;
 }
@@ -264,21 +265,21 @@ cookies_set(HTTP_header_t * http_hdr, const char *domain, const char *url)
     }
 
 
-    buf = strdup("Cookie:");
+    buf = mp_strdup("Cookie:");
 
     for (i = 0; i < found_cookies; i++) {
 	char *nbuf;
 
-	nbuf = malloc(strlen(buf) + strlen(" ") + strlen(cookies[i]->name) +
+	nbuf = mp_malloc(strlen(buf) + strlen(" ") + strlen(cookies[i]->name) +
 		    strlen("=") + strlen(cookies[i]->value) + strlen(";") + 1);
 	sprintf(nbuf, "%s %s=%s;", buf, cookies[i]->name,
 		 cookies[i]->value);
-	free(buf);
+	mp_free(buf);
 	buf = nbuf;
     }
 
     if (found_cookies)
 	http_set_field(http_hdr, buf);
     else
-	free(buf);
+	mp_free(buf);
 }

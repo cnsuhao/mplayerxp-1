@@ -2,7 +2,7 @@
   This file is part of FreeSDP
   Copyright (C) 2001,2002,2003 Federico Montesino Pouzols <fedemp@altern.org>
 
-  FreeSDP is free software; you can redistribute it and/or modify it
+  FreeSDP is mp_free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
@@ -49,7 +49,7 @@ BEGIN_C_DECLS
  * SDP.  
  * @param dsc pointer that is updated to point to a fsdp_description_t
  * object. This fsdp_description_t object should have been previously
- * allocated using <code>fsdp_description_new()</code>; to free it,
+ * allocated using <code>fsdp_description_new()</code>; to mp_free it,
  * <code>fsdp_description_delete()</code> should be used.
  *
  * @return FSDPE_OK when parsing completes successfully. Otherwise,

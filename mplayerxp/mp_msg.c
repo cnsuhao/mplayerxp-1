@@ -8,6 +8,7 @@
 #include "mp_config.h"
 #include "nls/nls.h"
 #include "mp_msg.h"
+#include "osdep/mplib.h"
 
 #define _bg(x) ((x) >> 4)
 #define _fg(x) ((x) & 0x0f)
@@ -93,7 +94,7 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
 	char *obuf;
 	obuf=nls_recode2screen_cp("UTF-8",sbuf,ssize);
 	fputs(obuf,stderr);
-	free(obuf);
+	mp_free(obuf);
     }
     else fputs(sbuf,stderr);
     if(format[strlen(format)-1]=='\n') was_eol=1;

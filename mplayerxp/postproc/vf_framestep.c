@@ -57,6 +57,7 @@
 
 #include "libvo/img_format.h"
 #include "mp_image.h"
+#include "osdep/mplib.h"
 #include "vf.h"
 #include "pp_msg.h"
 
@@ -134,7 +135,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
     /* Free private data */
-    free(vf->priv);
+    mp_free(vf->priv);
 }
 
 /* Main entry funct for the filter */
@@ -145,7 +146,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
         vf->put_slice = put_slice;
 	vf->uninit = uninit;
 	vf->default_reqs = VFCAP_ACCEPT_STRIDE;
-	vf->priv = p = calloc(1, sizeof(struct vf_priv_s));
+	vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
         if (p == NULL) {
             return(0);
         }

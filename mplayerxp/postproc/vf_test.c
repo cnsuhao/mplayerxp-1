@@ -1,7 +1,7 @@
 /*
     Copyright (C) 2002 Michael Niedermayer <michaelni@gmx.at>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -28,6 +28,7 @@
 #include "vf.h"
 #include "swscale.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 //===========================================================================//
@@ -417,7 +418,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
-    vf->priv=malloc(sizeof(struct vf_priv_s));
+    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     memset(vf->priv,0,sizeof(struct vf_priv_s));
     method='!';
     if(args)

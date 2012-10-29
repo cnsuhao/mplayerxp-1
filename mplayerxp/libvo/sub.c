@@ -3,9 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
 
 #include "mplayer.h"
 #include "xmp_core.h"
@@ -16,6 +13,7 @@
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 #include "libmpdemux/stream.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_OSD
 #include "__mp_msg.h"
 
@@ -58,10 +56,10 @@ static void alloc_buf(mp_osd_obj_t* obj)
     len = obj->stride*(obj->bbox.y2-obj->bbox.y1);
     if (obj->allocated<len) {
 	obj->allocated = len;
-	free(obj->bitmap_buffer);
-	free(obj->alpha_buffer);
-	obj->bitmap_buffer = (unsigned char *)memalign(16, len);
-	obj->alpha_buffer = (unsigned char *)memalign(16, len);
+	mp_free(obj->bitmap_buffer);
+	mp_free(obj->alpha_buffer);
+	obj->bitmap_buffer = (unsigned char *)mp_memalign(16, len);
+	obj->alpha_buffer = (unsigned char *)mp_memalign(16, len);
     }
     memset(obj->bitmap_buffer, sub_data.bg_color, len);
     memset(obj->alpha_buffer, sub_data.bg_alpha, len);
@@ -413,7 +411,7 @@ static void __FASTCALL__ vo_draw_text_sub(any_t*v,unsigned idx,mp_osd_obj_t* obj
 }
 
 mp_osd_obj_t* __FASTCALL__ new_osd_obj(int type){
-    mp_osd_obj_t* osd=malloc(sizeof(mp_osd_obj_t));
+    mp_osd_obj_t* osd=mp_malloc(sizeof(mp_osd_obj_t));
     memset(osd,0,sizeof(mp_osd_obj_t));
     osd->next=vo_osd_list;
     vo_osd_list=osd;
@@ -425,7 +423,7 @@ void free_osd_list(void){
     mp_osd_obj_t* obj=vo_osd_list;
     while(obj){
 	mp_osd_obj_t* next=obj->next;
-	free(obj);
+	mp_free(obj);
 	obj=next;
     }
     vo_osd_list=NULL;

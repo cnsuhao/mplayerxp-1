@@ -1,7 +1,7 @@
 /*
     Copyright (C) 2002 Michael Niedermayer <michaelni@gmx.at>
 
-    This program is free software; you can redistribute it and/or modify
+    This program is mp_free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -25,14 +25,11 @@
 
 #include "mp_config.h"
 
-#ifdef HAVE_MALLOC
-#include <malloc.h>
-#endif
-
 #include "libvo/img_format.h"
 #include "mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "pp_msg.h"
 
 #define SUB_PIXEL_BITS 8
@@ -107,7 +104,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	int i, j;
 
 	vf->priv->pvStride= width;
-	vf->priv->pv= (any_t*)memalign(8, width*height*2*sizeof(int32_t));
+	vf->priv->pv= (any_t*)mp_memalign(8, width*height*2*sizeof(int32_t));
 	initPv(vf->priv, width, height);
 	
 	for(i=0; i<SUB_PIXELS; i++){
@@ -131,10 +128,10 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 	if(!vf->priv) return;
 
-	if(vf->priv->pv) free(vf->priv->pv);
+	if(vf->priv->pv) mp_free(vf->priv->pv);
 	vf->priv->pv= NULL;
 
-	free(vf->priv);
+	mp_free(vf->priv);
 	vf->priv=NULL;
 }
 
@@ -338,7 +335,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->put_slice=put_slice;
 	vf->query_format=query_format;
 	vf->uninit=uninit;
-	vf->priv=malloc(sizeof(struct vf_priv_s));
+	vf->priv=mp_malloc(sizeof(struct vf_priv_s));
 	memset(vf->priv, 0, sizeof(struct vf_priv_s));
 
 	if(args==NULL) return 0;

@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -15,6 +14,7 @@
 
 #include "libvo/video_out.h"
 #include "osdep/keycodes.h"
+#include "osdep/mplib.h"
 
 #define IMPL 1
 #include "menu_list.h"
@@ -260,14 +260,14 @@ void menu_list_add_entry(menu_t* menu,list_entry_t* entry) {
     
 void menu_list_init(menu_t* menu) {
   if(!mpriv)
-    mpriv = calloc(1,sizeof(struct menu_priv_s));
+    mpriv = mp_calloc(1,sizeof(struct menu_priv_s));
 
 }
 
 void menu_list_uninit(menu_t* menu,free_entry_t free_func) {
   list_entry_t *i,*j;
 
-  if(!free_func) free_func = (free_entry_t)free;
+  if(!free_func) free_func = (free_entry_t)mp_free;
 
   for(i = mpriv->menu ; i != NULL ; ) {
     j = i->next;

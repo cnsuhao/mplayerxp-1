@@ -5,7 +5,7 @@
  *
  * This file is part of MPlayer.
  *
- * MPlayer is free software; you can redistribute it and/or
+ * MPlayer is mp_free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
@@ -24,12 +24,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "demux_msg.h"
 
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
+#include "osdep/mplib.h"
 
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
@@ -139,7 +140,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 {
    unsigned char dv_frame[DV_PAL_FRAME_SIZE];
    sh_video_t *sh_video = NULL;
-   rawdv_frames_t *frames = malloc(sizeof(rawdv_frames_t));
+   rawdv_frames_t *frames = mp_malloc(sizeof(rawdv_frames_t));
    dv_decoder_t *dv_decoder=NULL;
 
    MSG_V("demux_open_rawdv() end_pos %"PRId64"\n",(int64_t)demuxer->stream->end_pos);
@@ -184,7 +185,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
    sh_video->fps= (dv_decoder->system==e_dv_system_525_60?29.97:25);
 
   // emulate BITMAPINFOHEADER for win32 decoders:
-  sh_video->bih=calloc(1, sizeof(BITMAPINFOHEADER));
+  sh_video->bih=mp_calloc(1, sizeof(BITMAPINFOHEADER));
   sh_video->bih->biSize=40;
   sh_video->bih->biWidth = dv_decoder->width;
   sh_video->bih->biHeight = dv_decoder->height;
@@ -209,7 +210,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 	// custom fourcc for internal MPlayer use
 	sh_audio->wtag = mmioFOURCC('R', 'A', 'D', 'V');
 
-	sh_audio->wf = malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = mp_malloc(sizeof(WAVEFORMATEX));
 	memset(sh_audio->wf, 0, sizeof(WAVEFORMATEX));
 	sh_audio->wf->wFormatTag = sh_audio->wtag;
 	sh_audio->wf->nChannels = dv_decoder->audio->num_channels;
@@ -234,7 +235,7 @@ static void dv_close(demuxer_t* demuxer)
 
    if(frames==0)
       return;
-  free(frames);
+  mp_free(frames);
 }
 
 static int dv_control(demuxer_t *demuxer,int cmd, any_t*arg) {
