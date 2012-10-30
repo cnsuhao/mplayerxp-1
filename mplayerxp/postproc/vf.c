@@ -278,19 +278,19 @@ static int __FASTCALL__ vf_default_query_format(struct vf_instance_s* vf, unsign
   return 1;//vf_next_query_format(vf,fmt,w,h);
 }
 
-vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** filter_list,vf_instance_t* next,sh_video_t *sh,char *name, char *args){
+vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_instance_t* next,sh_video_t *sh,char *name, char *args){
     vf_instance_t* vf;
     int i;
     for(i=0;;i++){
-	if(!filter_list[i]){
+	if(!_filter_list[i]){
 	    MSG_ERR("Can't find video filter: %s\n",name);
 	    return NULL; // no such filter!
 	}
-	if(!strcmp(filter_list[i]->name,name)) break;
+	if(!strcmp(_filter_list[i]->name,name)) break;
     }
     vf=mp_malloc(sizeof(vf_instance_t));
     memset(vf,0,sizeof(vf_instance_t));
-    vf->info=filter_list[i];
+    vf->info=_filter_list[i];
     vf->next=next;
     vf->prev=NULL;
     vf->config=vf_next_config;
@@ -402,7 +402,7 @@ int __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* d
 }
 
 int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned width,unsigned height){
-    int flags=vf->next?vf->next->query_format(vf->next,fmt,width,height):vf->default_caps;
+    int flags=vf->next?vf->next->query_format(vf->next,fmt,width,height):(int)vf->default_caps;
     if(flags) flags|=vf->default_caps;
     return flags;
 }

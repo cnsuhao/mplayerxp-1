@@ -306,11 +306,11 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     return vf_next_config(vf,vf->priv->w,vf->priv->h,d_width,d_height,flags,best,tune);
 }
 
-static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2, uint8_t *src[3], int src_stride[3], int y, int h, 
-                  uint8_t *dst[3], int dst_stride[3], int interlaced){
+static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2, const uint8_t *src[3], int src_stride[3], int y, int h,
+                  uint8_t *dst[3], unsigned dst_stride[3], int interlaced){
     if(interlaced){
         int i;
-        uint8_t *src2[3]={src[0], src[1], src[2]};
+        const uint8_t *src2[3]={src[0], src[1], src[2]};
         uint8_t *dst2[3]={dst[0], dst[1], dst[2]};
         int src_stride2[3]={2*src_stride[0], 2*src_stride[1], 2*src_stride[2]};
         int dst_stride2[3]={2*dst_stride[0], 2*dst_stride[1], 2*dst_stride[2]};
@@ -322,13 +322,13 @@ static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2,
         }
         sws_scale(sws2, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
     }else{
-        sws_scale(sws1, src, src_stride, y, h, dst, dst_stride);
+        sws_scale(sws1, src, src_stride, y, h, dst, (int *)dst_stride);
     }
 }
 
 static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;//=mpi->priv;
-    uint8_t *planes[4];
+    const uint8_t *planes[4];
     int stride[4];
     planes[0]=mpi->planes[0];
     stride[0]=mpi->stride[0];
@@ -350,8 +350,9 @@ static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;//=mpi->priv;
-    uint8_t *planes[4],*dplanes[4];
-    int stride[4],newy,newh;
+    const uint8_t *planes[4];
+    uint8_t* dplanes[4];
+    int stride[4];
     planes[0]=mpi->planes[0];
     stride[0]=mpi->stride[0];
     if(mpi->flags&MP_IMGFLAG_PLANAR){
@@ -513,17 +514,12 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->uninit=uninit;
     vf->print_conf=print_conf;
     if(!vf->priv) {
-    vf->priv=mp_malloc(sizeof(struct vf_priv_s));
-    memset(vf->priv,0,sizeof(struct vf_priv_s));
-    // TODO: parse args ->
-    vf->priv->ctx=NULL;
-    vf->priv->ctx2=NULL;
-    vf->priv->w=
-    vf->priv->h=-1;
-    vf->priv->v_chr_drop=0;
-    vf->priv->param[0]=
-    vf->priv->param[1]=SWS_PARAM_DEFAULT;
-    vf->priv->palette=NULL;
+	vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
+	// TODO: parse args ->
+	vf->priv->w=
+	vf->priv->h=-1;
+	vf->priv->param[0]=
+	vf->priv->param[1]=SWS_PARAM_DEFAULT;
     } // if(!vf->priv)
     if(args) sscanf(args, "%d:%d:%d:%lf:%lf",
     &vf->priv->w,
