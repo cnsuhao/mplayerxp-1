@@ -226,8 +226,7 @@ static int init(sh_video_t *sh){
 	avcodec_register_all();
 	vcodec_inited=1;
     }
-    vdff_ctx=mp_malloc(sizeof(priv_t));
-    memset(vdff_ctx,0,sizeof(priv_t));
+    vdff_ctx=mp_mallocz(sizeof(priv_t));
     sh->context = vdff_ctx;
     vdff_ctx->frame_number=-2;
     vdff_ctx->lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
