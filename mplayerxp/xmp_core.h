@@ -59,6 +59,13 @@ typedef struct mpxp_thread_s {
     volatile enum mpxp_thread_state state;
 }mpxp_thread_t;
 
+typedef struct initial_audio_pts_correction_s
+{
+    int need_correction;
+    int pts_bytes;
+    int nbytes;
+}initial_audio_pts_correction_t;
+
 #define main_id 0
 typedef struct xp_core_s {
     int				has_video;
@@ -74,6 +81,9 @@ typedef struct xp_core_s {
     /* doubtful stuff */
     unsigned			num_a_buffs; // number of audio buffers
     unsigned			num_v_buffs; // number of video buffers
+    int				bad_pts;     // for MPEGxx codecs
+    float			initial_apts;
+    initial_audio_pts_correction_t initial_apts_corr;
 }xp_core_t;
 extern xp_core_t xp_core;
 
@@ -152,8 +162,6 @@ extern pthread_cond_t audio_decode_cond;
 
 #define __MP_ATOMIC(OP) { static pthread_mutex_t loc_mutex; pthread_mutex_lock(&loc_mutex); OP; pthread_mutex_unlock(&loc_mutex); }
 #define __MP_SYNCHRONIZE(mtx,OP) { pthread_mutex_lock(&mtx); OP; pthread_mutex_unlock(&mtx); }
-
-extern int xp_is_bad_pts;
 
 extern volatile int dec_ahead_can_aseek;
 			/*

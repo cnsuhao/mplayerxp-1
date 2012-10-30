@@ -37,6 +37,7 @@ xp_core_t xp_core;
 
 void xmp_init(void) {
     memset(&xp_core,0,sizeof(xp_core_t));
+    xp_core.initial_apts=HUGE;
 }
 
 void xmp_uninit(void) {}
@@ -195,8 +196,6 @@ extern int get_free_audio_buffer(void);
 
 any_t* audio_play_routine( any_t* arg );
 
-int xp_is_bad_pts=0;
-
 /* Audio stuff */
 volatile float dec_ahead_audio_delay;
 static int xp_thread_decode_audio(void)
@@ -257,7 +256,7 @@ static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
 
 static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float drop_barrier) {
     unsigned rc=0;
-    float screen_pts=dae_played_fra(xp_core.video).v_pts-(mp_conf.av_sync_pts?0:initial_audio_pts);
+    float screen_pts=dae_played_fra(xp_core.video).v_pts-(mp_conf.av_sync_pts?0:xp_core.initial_apts);
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
     max_frame_delay = mp_data->bench->max_video+mp_data->bench->max_vout;
@@ -354,13 +353,13 @@ any_t* Va_dec_ahead_routine( any_t* arg )
 	priv->name = "video decoder+vf";
     drop_barrier=(float)(xp_core.num_v_buffs/2)*(1/sh_video->fps);
     if(mp_conf.av_sync_pts == -1 && !mp_data->use_pts_fix2)
-	xp_is_bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
+	xp_core.bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS;
     else
-	xp_is_bad_pts = mp_conf.av_sync_pts?0:1;
+	xp_core.bad_pts = mp_conf.av_sync_pts?0:1;
 while(!priv->dae->eof){
     unsigned char* start=NULL;
     int in_size;
@@ -369,7 +368,7 @@ while(!priv->dae->eof){
 pt_sleep:
 	priv->state=Pth_ASleep;
 	while(priv->state==Pth_ASleep) usleep(0);
-	if(xp_is_bad_pts) mpeg_timer=HUGE;
+	if(xp_core.bad_pts) mpeg_timer=HUGE;
 	continue;
     }
     __MP_UNIT(priv->p_idx,"dec_ahead 1");
@@ -394,7 +393,7 @@ pt_sleep:
     /* in_size==0: it's or broken stream or demuxer's bug */
     if(in_size==0 && priv->state!=Pth_Canceling) continue;
     /* frame was decoded into current decoder_idx */
-    if(xp_is_bad_pts) {
+    if(xp_core.bad_pts) {
 	if(mpeg_timer==HUGE) mpeg_timer=v_pts;
 	else if( mpeg_timer-duration<v_pts ) {
 	    mpeg_timer=v_pts;
@@ -442,14 +441,14 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     if(!blit_frame && drop_param) priv->dae->num_dropped_frames++;
     if(blit_frame) {
 	unsigned idx=dae_curr_vdecoded();
-	if(xp_is_bad_pts)
+	if(xp_core.bad_pts)
 	    xp_core.video->fra[idx].v_pts=mpeg_timer;
 	else
 	    xp_core.video->fra[idx].v_pts = v_pts;
 	xp_core.video->fra[idx].stream_pts = v_pts;
 	xp_core.video->fra[idx].duration=duration;
 	xp_core.video->fra[idx].eof=0;
-	if(!xp_is_bad_pts) {
+	if(!xp_core.bad_pts) {
 	    int _idx = dae_prev_vdecoded();
 	    xp_core.video->fra[_idx].duration=v_pts-xp_core.video->fra[_idx].v_pts;
 	}
@@ -715,7 +714,7 @@ void xmp_restart_threads(int xp_id)
     reset_audio_buffer();
     /* Ugly hack: but we should read audio packet before video after seeking.
        Else we'll get picture destortion on the screen */
-    initial_audio_pts=HUGE;
+    xp_core.initial_apts=HUGE;
 
     unsigned i;
     for(i=1;i<xp_core.num_threads;i++) {

@@ -162,7 +162,6 @@ any_t* mp_malloc(size_t __size)
 }
 
 any_t*	mp_realloc(any_t*__ptr, size_t __size) { return realloc(__ptr,__size); }
-any_t*	mp_calloc (size_t __nelem, size_t __size) { return mp_mallocz(__nelem*__size); }
 
 any_t*	mp_mallocz (size_t __size) {
     any_t* rp;

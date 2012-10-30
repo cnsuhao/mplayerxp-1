@@ -139,15 +139,6 @@ mp_data_t*mp_data=NULL;
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
 
-/************************************************************************
-    Special case: inital audio PTS:
-    example: some movies has a_pts = v_pts = XX sec
-    but mplayerxp always starts audio playback at 0 sec
-************************************************************************/
-static pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
-float initial_audio_pts=HUGE;
-initial_audio_pts_correction_t initial_audio_pts_corr;
-
 /**************************************************************************
              Config file
 **************************************************************************/
@@ -175,7 +166,6 @@ static int cfg_include(struct config *conf, char *filename){
 /* Common FIFO functions, and keyboard/event FIFO code */
 #include "fifo.h"
 /**************************************************************************/
-
 
 static void mpxp_init_structs(void) {
     mp_data=mp_malloc(sizeof(mp_data_t));
@@ -221,7 +211,11 @@ static void mpxp_uninit_structs(void) {
     mp_uninit_malloc(1);
 }
 
+/************************************************************************
+    AUDIO XP-CORE! ToDo: rewrite it in packet-mode
+************************************************************************/
 /* XP audio buffer */
+static pthread_mutex_t audio_timer_mutex=PTHREAD_MUTEX_INITIALIZER;
 typedef struct audio_buffer_index_s {
     float pts;
     int index;
@@ -1265,8 +1259,8 @@ int mpxp_play_video( int rtc_fd )
     if(xp_core.video->eof) can_blit=1; /* force blitting until end of stream will be reached */
     vplayer_check_chapter_change(&shva_prev,v_pts);
 #if 0
-MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f stream_pts=%f duration=%f\n"
-,initial_audio_pts
+MSG_INFO("xp_core.initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f stream_pts=%f duration=%f\n"
+,xp_core.initial_apts
 ,xp_core.audio->eof
 ,sh_audio && !xp_core.audio->eof?d_audio->pts+(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps:0
 ,sh_audio && !xp_core.audio->eof?sh_audio->timer-ao_get_delay(ao_data):0
@@ -1276,7 +1270,7 @@ MSG_INFO("initial_audio_pts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f str
 #endif
     /*--------- add OSD to the next frame contents ---------*/
     if(can_blit) {
-	screen_pts=v_pts-(mp_conf.av_sync_pts?0:initial_audio_pts);
+	screen_pts=v_pts-(mp_conf.av_sync_pts?0:xp_core.initial_apts);
 #ifdef USE_OSD
 	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
 	MP_UNIT("draw_osd");
@@ -2508,7 +2502,7 @@ play_next_file:
 
 //============ Open priv->demuxerS --- DETECT file type =======================
     if(mp_conf.playbackspeed_factor!=1.0) mp_conf.has_audio=0;
-    initial_audio_pts=HUGE;
+    xp_core.initial_apts=HUGE;
     if(!mp_conf.has_audio) mp_conf.audio_id=-2;  // do NOT read audio packets...
     if(!mp_conf.has_video) mp_conf.video_id=-2;  // do NOT read video packets...
     if(!mp_conf.has_dvdsub) mp_conf.dvdsub_id=-2;// do NOT read subtitle packets...
@@ -2788,7 +2782,7 @@ do_loop:
 	    if(seek_args.secs && sh_video) {
 	    frame_attr_t shvap = dae_played_fra(xp_core.video);
 	    frame_attr_t shvad = xp_core.video->fra[dae_prev_decoded(xp_core.video)];
-		seek_args.secs -= (xp_is_bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
+		seek_args.secs -= (xp_core.bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
 	    }
 
 	    mpxp_seek(&osd,&seek_args);

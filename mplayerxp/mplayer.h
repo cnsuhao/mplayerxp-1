@@ -4,16 +4,6 @@
 #include <pthread.h>
 #include "mp_config.h"
 
-typedef struct initial_audio_pts_correction_s
-{
-    int need_correction;
-    int pts_bytes;
-    int nbytes;
-}initial_audio_pts_correction_t;
-
-extern initial_audio_pts_correction_t initial_audio_pts_corr;
-extern float initial_audio_pts;
-
 typedef struct mp_conf_s {
     int		has_video;
     int		has_audio;
@@ -106,6 +96,7 @@ typedef struct mp_data_s {
     any_t*	mconfig;
     time_usage_t*bench;
     any_t*	priv;
+    any_t*	msg_priv;
 }mp_data_t;
 extern mp_data_t* mp_data;
 

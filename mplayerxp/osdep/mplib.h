@@ -44,7 +44,7 @@ extern unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose);
 extern any_t*	__FASTCALL__ mp_malloc(size_t __size);
 extern any_t*	__FASTCALL__ mp_mallocz(size_t __size);
 extern any_t*	__FASTCALL__ mp_realloc(any_t*__ptr, size_t __size);
-extern any_t*	__FASTCALL__ mp_calloc (size_t __nelem, size_t __size);
+static inline any_t*	mp_calloc (size_t __nelem, size_t __size) { return mp_mallocz(__nelem*__size); }
 extern any_t*	__FASTCALL__ mp_memalign (size_t boundary, size_t __size);
 extern void  	__FASTCALL__ mp_free(any_t*__ptr);
 extern char *	__FASTCALL__ mp_strdup(const char *src);

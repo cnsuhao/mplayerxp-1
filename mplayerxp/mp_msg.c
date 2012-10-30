@@ -12,71 +12,96 @@
 
 #define _bg(x) ((x) >> 4)
 #define _fg(x) ((x) & 0x0f)
-static int _color[8] = {0,4,2,6,1,5,3,7};
-char vtmp[100];
+typedef struct priv_s {
+    int		_color[8];
+    char	vtmp[100];
+    char	scol[9][20];
+    pthread_mutex_t mp_msg_mutex;
+}priv_t;
 uint32_t mp_msg_filter=0xFFFFFFFF;
-static char scol[9][20];
 const char hl[9] = { 0xC, 0x4, 0xE, 0xA, 0xB, 0x7, 0x9, 0x3, 0x7 };
-pthread_mutex_t mp_msg_mutex=PTHREAD_MUTEX_INITIALIZER;
 
 static char *_2ansi(unsigned char attr)
 {
+    priv_t*priv=mp_data->msg_priv;
     int bg = _bg(attr);
-    int bc = _color[bg & 7];
+    int bc = priv->_color[bg & 7];
 
-    sprintf(vtmp,
+    sprintf(priv->vtmp,
 	"\033[%d;3%d;4%d%sm",
 	_fg(attr) > 7,
-	_color[_fg(attr) & 7],
+	priv->_color[_fg(attr) & 7],
 	bc,
 	bg > 7 ? ";5" : ""
     );
-    return vtmp;
+    return priv->vtmp;
 }
 
 void mp_msg_init(int verbose)
 {
+    pthread_mutexattr_t attr;
     unsigned i;
-    for(i=0;i<sizeof(hl)/sizeof(char);i++) memcpy(scol[i],_2ansi(hl[i]),sizeof(scol[0]));
+    int _color[8]={0,4,2,6,1,5,3,7};
+    mp_data->msg_priv=mp_mallocz(sizeof(priv_t));
+    priv_t*priv=mp_data->msg_priv;
+    memcpy(priv->_color,_color,sizeof(_color));
+    pthread_mutexattr_init(&attr);
+    pthread_mutex_init(&priv->mp_msg_mutex,&attr);
+    pthread_mutexattr_destroy(&attr);
+    for(i=0;i<sizeof(hl)/sizeof(char);i++)
+	memcpy(priv->scol[i],_2ansi(hl[i]),sizeof(priv->scol[0]));
 }
 
-const char * msg_prefix[] = 
+void mp_msg_uninit(void)
 {
-"GLOBAL",
-"PLAYER",
-"LIBVO",
-"LIBAO",
-"DEMUX",
-"CFGPRS",
-"DECAUD",
-"DECVID",
-"VOBSUB",
-"OSDEP",
-"SPUDEC",
-"PLAYTR",
-"INPUT",
-"OSD",
-"CPUDTC",
-"CODCFG",
-"SWS",
-"FINDSB",
-"SUBRDR",
-"POSTPR"
+    priv_t*priv=mp_data->msg_priv;
+    if(isatty(fileno(stderr))) fprintf(stderr,priv->scol[8]);
+    mp_msg_flush();
+    pthread_mutex_destroy(&priv->mp_msg_mutex);
+    mp_free(priv);
+}
+
+const char * msg_prefix[] =
+{
+    "GLOBAL",
+    "PLAYER",
+    "LIBVO",
+    "LIBAO",
+    "DEMUX",
+    "CFGPRS",
+    "DECAUD",
+    "DECVID",
+    "VOBSUB",
+    "OSDEP",
+    "SPUDEC",
+    "PLAYTR",
+    "INPUT",
+    "OSD",
+    "CPUDTC",
+    "CODCFG",
+    "SWS",
+    "FINDSB",
+    "SUBRDR",
+    "POSTPR"
 };
 
 void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *format, ... ){
 /* TODO: more useful usage of module_id */
+    priv_t*priv=NULL;
     va_list va;
     char sbuf[0xFFFFF];
     unsigned ssize;
     unsigned level=(x>>28)&0xF;
     unsigned mod=x&0x0FFFFFFF;
     static int was_eol=1;
+    if(mp_data) priv=mp_data->msg_priv;
     if(level>mp_conf.verbose+MSGL_V-1) return; /* do not display */
     if((mod&mp_msg_filter)==0) return; /* do not display */
-    pthread_mutex_lock(&mp_msg_mutex);
-    if(isatty(fileno(stderr)))
-	fprintf(stderr,scol[level<9?level:8]);
+    if(priv) {
+	pthread_mutex_lock(&priv->mp_msg_mutex);
+	if(isatty(fileno(stderr)))
+	    fprintf(stderr,priv->scol[level<9?level:8]);
+    }
     if(mp_conf.verbose>1 && was_eol)
     {
 	unsigned mod_name;
@@ -100,13 +125,7 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
     if(format[strlen(format)-1]=='\n') was_eol=1;
     else was_eol=0;
     fflush(stderr);
-    pthread_mutex_unlock(&mp_msg_mutex);
+    if(priv) pthread_mutex_unlock(&priv->mp_msg_mutex);
 }
 
 void mp_msg_flush(void) { fflush(stderr); }
-
-void mp_msg_uninit(void)
-{
-    if(isatty(fileno(stderr))) fprintf(stderr,scol[8]);
-    mp_msg_flush();
-}

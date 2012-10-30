@@ -21,7 +21,7 @@ static float get_ds_stream_pts(demux_stream_t *ds,int nbytes)
 {
     float retval;
     demuxer_t*demuxer=ds->demuxer;
-    initial_audio_pts_corr.need_correction=0;
+    xp_core.initial_apts_corr.need_correction=0;
     MSG_DBG2("initial_apts from: stream_pts=%f pts_bytes=%u got_bytes=%u i_bps=%u\n"
     ,ds->pts,ds_tell_pts(ds),nbytes,((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
     /* FIXUP AUDIO PTS*/
@@ -47,9 +47,9 @@ static float get_ds_stream_pts(demux_stream_t *ds,int nbytes)
 	retval = ds->pts+ds->pts_corr+((float)(ds_tell_pts(ds)-nbytes))/(float)(((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
     else
     {
-	initial_audio_pts_corr.need_correction=1;
-	initial_audio_pts_corr.pts_bytes=ds_tell_pts(ds);
-	initial_audio_pts_corr.nbytes=nbytes;
+	xp_core.initial_apts_corr.need_correction=1;
+	xp_core.initial_apts_corr.pts_bytes=ds_tell_pts(ds);
+	xp_core.initial_apts_corr.nbytes=nbytes;
 	retval = ds->pts;
     }
     MSG_DBG2("initial_apts is: %f\n",retval);
@@ -66,7 +66,7 @@ int demux_getc_r(demux_stream_t *ds,float *pts)
     if(mp_conf.benchmark) t=GetTimer();
     retval = demux_getc(ds);
     *pts=get_ds_stream_pts(ds,1);
-    if(initial_audio_pts == HUGE) initial_audio_pts=*pts;
+    if(xp_core.initial_apts == HUGE) xp_core.initial_apts=*pts;
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
@@ -111,7 +111,7 @@ int demux_read_data_r(demux_stream_t *ds,unsigned char* mem,int len,float *pts)
     if(mp_conf.benchmark) t=GetTimer();
     retval = demux_read_data(ds,mem,len);
     *pts=get_ds_stream_pts(ds,retval);
-    if(initial_audio_pts == HUGE) initial_audio_pts=*pts;
+    if(xp_core.initial_apts == HUGE) xp_core.initial_apts=*pts;
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
@@ -135,7 +135,7 @@ int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts)
     if(mp_conf.benchmark) t=GetTimer();
     retval = ds_get_packet(ds,start);
     *pts=get_ds_stream_pts(ds,retval);
-    if(initial_audio_pts == HUGE) initial_audio_pts=*pts;
+    if(xp_core.initial_apts == HUGE) xp_core.initial_apts=*pts;
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
