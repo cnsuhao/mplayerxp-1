@@ -174,8 +174,8 @@ static int mpxp_init_antiviral_protection(int verbose)
 {
     int rc;
     rc=mp_mprotect(antiviral_hole1,sizeof(antiviral_hole1),PROT_NONE);
-    rc!=mp_mprotect(antiviral_hole2,sizeof(antiviral_hole2),PROT_NONE);
-    rc!=mp_mprotect(antiviral_hole3,sizeof(antiviral_hole3),PROT_NONE);
+    rc|=mp_mprotect(antiviral_hole2,sizeof(antiviral_hole2),PROT_NONE);
+    rc|=mp_mprotect(antiviral_hole3,sizeof(antiviral_hole3),PROT_NONE);
     if(verbose) {
 	if(rc)
 	    MSG_ERR("*** Error! Cannot initialize antiviral protection: '%s' ***!\n",strerror(errno));
