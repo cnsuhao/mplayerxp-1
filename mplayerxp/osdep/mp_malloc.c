@@ -211,3 +211,8 @@ unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose) {
 	,priv->stat_num_allocs);
     return priv->stat_num_allocs;
 }
+
+int __FASTCALL__ mp_mprotect(const any_t* addr,size_t len,int flags)
+{
+    return mprotect(addr,len,flags);
+}

@@ -70,6 +70,7 @@
 /**************************************************************************
              Private data
 **************************************************************************/
+static volatile char antiviral_hole1[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 typedef struct x86_features_s {
     int simd;
@@ -129,6 +130,7 @@ typedef struct priv_s {
 }priv_t;
 
 mp_conf_t mp_conf;
+static volatile char antiviral_hole2[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 mp_data_t*mp_data=NULL;
 
 /**************************************************************************
@@ -138,6 +140,7 @@ mp_data_t*mp_data=NULL;
 
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
+static volatile char antiviral_hole3[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 
 /**************************************************************************
              Config file
@@ -166,6 +169,21 @@ static int cfg_include(struct config *conf, char *filename){
 /* Common FIFO functions, and keyboard/event FIFO code */
 #include "fifo.h"
 /**************************************************************************/
+
+static int mpxp_init_antiviral_protection(int verbose)
+{
+    int rc;
+    rc=mp_mprotect(antiviral_hole1,sizeof(antiviral_hole1),PROT_NONE);
+    rc!=mp_mprotect(antiviral_hole2,sizeof(antiviral_hole2),PROT_NONE);
+    rc!=mp_mprotect(antiviral_hole3,sizeof(antiviral_hole3),PROT_NONE);
+    if(verbose) {
+	if(rc)
+	    MSG_ERR("*** Error! Cannot initialize antiviral protection: '%s' ***!\n",strerror(errno));
+	else
+	    MSG_OK("*** Antiviral protection was inited ***!!!\n");
+    }
+    return rc;
+}
 
 static void mpxp_init_structs(void) {
     mp_data=mp_malloc(sizeof(mp_data_t));
@@ -2339,6 +2357,8 @@ For future:
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
 int main(int argc,char* argv[], char *envp[]){
+    mpxp_init_antiviral_protection(1);
+    int i;
     stream_t* stream=NULL;
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
@@ -2350,7 +2370,6 @@ int main(int argc,char* argv[], char *envp[]){
     int eof=0;
     osd_args_t osd = { 100, 9 };
     int rtc_fd=-1;
-    int i;
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 

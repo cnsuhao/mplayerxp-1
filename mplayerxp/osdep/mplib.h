@@ -9,6 +9,7 @@
 #ifndef __MPLIB_H_INCLUDED__
 #define __MPLIB_H_INCLUDED__ 1
 #include <stddef.h>
+#include <sys/mman.h>
 #include "mp_config.h"
 
 extern volatile unsigned long long int my_profile_start,my_profile_end,my_profile_total;
@@ -49,4 +50,6 @@ extern any_t*	__FASTCALL__ mp_memalign (size_t boundary, size_t __size);
 extern void  	__FASTCALL__ mp_free(any_t*__ptr);
 extern char *	__FASTCALL__ mp_strdup(const char *src);
 
+/* flags: PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC */
+extern int	__FASTCALL__ mp_mprotect(const any_t* addr,size_t len,int flags);
 #endif

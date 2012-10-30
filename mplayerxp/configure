@@ -416,6 +416,22 @@ else
   def_asmalign='#define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"'
 fi
 
+# find pagesize on this system
+echocheck "VM pagesize is"
+cat > $TMPC << EOF
+#include <stdio.h>
+#include <unistd.h>
+int main(void) { printf("%i\n",getpagesize()); }
+EOF
+syspagesize="no"
+cc_check && syspagesize="yes"
+if enabled syspagesize ; then
+vm_pagesize=`$TMPO`
+else
+vm_pagesize="1"
+fi
+echores "$vm_pagesize"
+
 check_func3 _ISOC9X_SOURCE math.h lrint -lm
 print_config HAVE_ mp_config.h mp_config.mak lrint
 
@@ -826,6 +842,14 @@ $def_debug
 /* ASMALIGN */
 $def_asmalign
 
+/* Physical size of page on this system */
+#define __VM_PAGE_SIZE__ $vm_pagesize
+#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ > 0)
+#define __PAGE_ALIGNED__ __attribute__ ((aligned (__VM_PAGE_SIZE__)))
+#else
+#define __PAGE_ALIGNED__
+#endif
+
 /* Define this if your system has the llrint in "math.h" header file */
 #ifndef HAVE_LLRINT
 #define HAVE_LLRINT 1
@@ -873,6 +897,7 @@ $def_ossaudio_devmixer
 
 /* libvo options */
 $def_fbdev_nocopy
+
 
 /* Defined to some form of __attribute__ ((...)) if the compiler supports
    a different, more efficient calling convention.  */
