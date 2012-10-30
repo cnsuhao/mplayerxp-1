@@ -8,6 +8,7 @@
 #include "codecs_ld.h"
 
 #include "mp_config.h"
+#include "mplayer.h"
 #include "help_mp.h"
 #include "osdep/cpudetect.h"
 
@@ -41,9 +42,6 @@ static const config_t options[] = {
 };
 
 LIBAD_EXTERN(a52)
-
-extern int audio_output_channels;
-
 int a52_fillbuff(sh_audio_t *sh_audio,float *pts){
 int length=0;
 int flags=0;
@@ -127,7 +125,7 @@ int preinit(sh_audio_t *sh)
     sh->samplesize=4;
     sh->sample_format=AFMT_FLOAT32;
   }
-  sh->audio_out_minsize=audio_output_channels*sh->samplesize*256*6;
+  sh->audio_out_minsize=mp_conf.ao_channels*sh->samplesize*256*6;
   sh->audio_in_minsize=MAX_AC3_FRAME;
   sh->context=mp_malloc(sizeof(a52_priv_t));
   return 1;
@@ -151,7 +149,7 @@ int init(sh_audio_t *sh_audio)
   }
   /* 'a52 cannot upmix' hotfix:*/
   a52_printinfo(sh_audio);
-  sh_audio->channels=audio_output_channels;
+  sh_audio->channels=mp_conf.ao_channels;
 while(sh_audio->channels>0){
   switch(sh_audio->channels){
 	    case 1: mpxp_a52_flags=A52_MONO; break;

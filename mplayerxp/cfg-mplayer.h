@@ -2,10 +2,6 @@
  * config for cfgparser
  */
 
-extern uint32_t mp_msg_filter;
-#ifdef HAVE_PNG
-extern int z_compression;
-#endif
 #ifdef HAVE_SDL
 //extern char *sdl_driver;
 extern int sdl_noxv;
@@ -13,39 +9,6 @@ extern int sdl_forcexv;
 extern int sdl_forcegl;
 //extern char *sdl_adriver;
 #endif
-#ifdef USE_FAKE_MONO
-extern int fakemono; // defined in dec_audio.c
-#endif
-
-extern int subcc_enabled;
-
-#ifdef HAVE_AA
-extern int vo_aa_parseoption(struct config * conf, char *opt, char * param);
-extern void vo_aa_revertoption(config_t* opt,char* param);
-#endif
-
-#ifdef HAVE_ZR
-extern int vo_zr_parseoption(struct config * conf, char *opt, char * param);
-extern void vo_zr_revertoption(config_t* opt,char* pram);
-#endif
-
-#ifdef HAVE_XINERAMA
-extern int xinerama_screen;
-#endif
-
-extern int enable_xp_audio;
-
-/* from libvo/aspect.c */
-extern float monitor_pixel_aspect;
-
-/* from dec_audio, currently used for ac3surround decoder only */
-extern int audio_output_channels;
-
-extern int sws_flags;
-extern int readPPOpt(any_t*conf, char *arg);
-extern char *npp_options;
-
-extern int shuffle_playback;
 
 extern int   network_prefer_ipv4;
 extern char *network_username;
@@ -205,8 +168,8 @@ static const config_t subtitle_config[]={
 	{"noutf8", &sub_data.utf8, CONF_TYPE_FLAG, 0, 1, 0, "tells MPlayerXP to handle the subtitle file as non-UTF8"},
 	{"pos",&sub_data.pos,  CONF_TYPE_INT, CONF_RANGE, 0, 100, "specifies vertical shift of subtitles"},
 #endif
-	{"cc", &subcc_enabled, CONF_TYPE_FLAG, 0, 0, 1, "enable DVD Closed Caption (CC) subtitles"},
-	{"nocc", &subcc_enabled, CONF_TYPE_FLAG, 0, 1, 0, "disable DVD Closed Caption (CC) subtitles"},
+	{"cc", &mp_conf.subcc_enabled, CONF_TYPE_FLAG, 0, 0, 1, "enable DVD Closed Caption (CC) subtitles"},
+	{"nocc", &mp_conf.subcc_enabled, CONF_TYPE_FLAG, 0, 1, 0, "disable DVD Closed Caption (CC) subtitles"},
 	{"id", &mp_conf.dvdsub_id, CONF_TYPE_INT, CONF_RANGE, 0, 31, "selects subtitle channel"},
 	{"lang", &mp_conf.dvdsub_lang, CONF_TYPE_STRING, 0, 0, 0, "specifies language of DVD-subtitle stream as two-letter country code(s)"},
 	{"ifo", &mp_conf.spudec_ifo, CONF_TYPE_STRING, 0, 0, 0, "specifies .ifo file for DVD subtitles"},
@@ -219,7 +182,7 @@ static const config_t x11_config[]={
 	{"wid", &vo_conf.WinID, CONF_TYPE_INT, 0, 0, 0, "tells MPlayerXP to use existing X11 window (for using MPlayerXP as plugin)"},
 	{"rootwin", &vo_conf.WinID, CONF_TYPE_FLAG, 0, -1, 0, "render movie in the root window (desktop background)"},
 #ifdef HAVE_XINERAMA
-	{"xinerama", &xinerama_screen, CONF_TYPE_INT, CONF_RANGE, 0, 32, "tells MPlayerXP the display for movie playback"},
+	{"xinerama", &mp_conf.xinerama_screen, CONF_TYPE_INT, CONF_RANGE, 0, 32, "tells MPlayerXP the display for movie playback"},
 #endif
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
@@ -229,13 +192,10 @@ static const config_t audio_config[]={
 	{"on", &mp_conf.has_audio, CONF_TYPE_FLAG, 0, 0, 1, "enables audio-steam playback"},
 	{"off", &mp_conf.has_audio, CONF_TYPE_FLAG, 0, 1, 0, "disables audio-stream playback"},
 	{"mixer", &oss_mixer_device, CONF_TYPE_STRING, 0, 0, 0, "select audio-mixer device"},
-	{"channels", &audio_output_channels, CONF_TYPE_INT, CONF_RANGE, 2, 8, "select number of audio output channels to be used"},
+	{"channels", &mp_conf.ao_channels, CONF_TYPE_INT, CONF_RANGE, 2, 8, "select number of audio output channels to be used"},
 	{"rate", &mp_conf.force_srate, CONF_TYPE_INT, CONF_RANGE, 1000, 8*48000, "specifies Hz for audio playback"},
 	{"lang", &mp_conf.audio_lang, CONF_TYPE_STRING, 0, 0, 0, "specifies language of DVD-audio stream as two-letter country code(s)"},
 	{"id", &mp_conf.audio_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, "selects audio channel"},
-#ifdef USE_FAKE_MONO
-	{"stereo", &fakemono, CONF_TYPE_INT, CONF_RANGE, 0, 2, "selects type of MP2/MP3 stereo output"},
-#endif
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
@@ -251,7 +211,7 @@ static const config_t video_config[]={
 	{"noaspect", &vo_conf.movie_aspect, CONF_TYPE_FLAG, 0, 0, 0, "unsets aspect-ratio of movies"},
 	{"aspect-ratio", &vo_conf.softzoom, CONF_TYPE_FLAG, 0, 0, 1, "keeps aspect-ratio of the movie during window resize"},
 	{"noaspect-ratio", &vo_conf.softzoom, CONF_TYPE_FLAG, 0, 1, 0, "render movie to the user-defined window's geometry"},
-	{"monitorpixelaspect", &monitor_pixel_aspect, CONF_TYPE_FLOAT, CONF_RANGE, 0.2, 9.0, "sets the aspect-ratio of a single pixel of TV screen"},
+	{"monitorpixelaspect", &mp_conf.monitor_pixel_aspect, CONF_TYPE_FLOAT, CONF_RANGE, 0.2, 9.0, "sets the aspect-ratio of a single pixel of TV screen"},
 	{"vm", &vo_conf.vidmode, CONF_TYPE_FLAG, 0, 0, 1, "enables video-mode changing during playback"},
 	{"novm", &vo_conf.vidmode, CONF_TYPE_FLAG, 0, 1, 0, "disables video-mode changing during playback"},
 	{"fs", &vo_conf.fullscreen, CONF_TYPE_FLAG, 0, 0, 1, "fullscreen playback"},
@@ -264,10 +224,9 @@ static const config_t video_config[]={
 	{"bm2", &vo_conf.use_bm, CONF_TYPE_FLAG, 0, 0, 2, "enables using of bus-mastering to store all decoded-ahead frames in video-memory"},
 	{"nobm", &vo_conf.use_bm, CONF_TYPE_FLAG, 0, 1, 0, "disables using of bus-mastering"},
 	{"id", &mp_conf.video_id, CONF_TYPE_INT, CONF_RANGE, 0, 255, "selects video channel"},
-	{"pp", &npp_options, CONF_TYPE_STRING, 0, 0, 0, "specifies options of post-processing"},
-	{"sws", &sws_flags, CONF_TYPE_INT, 0, 0, 2, "specifies the quality of the software scaler"},
+	{"pp", &mp_conf.npp_options, CONF_TYPE_STRING, 0, 0, 0, "specifies options of post-processing"},
 #ifdef HAVE_PNG
-	{"z", &z_compression, CONF_TYPE_INT, CONF_RANGE, 0, 9, "specifies compression level for PNG output"},
+	{"z", &mp_conf.z_compression, CONF_TYPE_INT, CONF_RANGE, 0, 9, "specifies compression level for PNG output"},
 #endif
 #ifdef HAVE_SDL
 	{"noxv", &sdl_noxv, CONF_TYPE_FLAG, 0, 0, 1, "disable XVideo hardware acceleration for SDL"},
@@ -308,7 +267,7 @@ static const config_t mplayer_opts[]={
 	{"v", cfg_inc_verbose, CONF_TYPE_FUNC, CONF_GLOBAL|CONF_NOSAVE, 0, 0, "verbose output (more -v means more verbosity)"},
 	{"slave", &mp_conf.slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, "turns MPlayerXP into slave mode as a backend for other programs"},
 	{"use-stdin", &mp_conf.use_stdin, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "forces reading of keyboard codes from STDIN instead of terminal's console"},
-	{"msgfilter", &mp_msg_filter, CONF_TYPE_INT, CONF_RANGE, 0, 0xFFFFFFFF, "specifies filter for verbosed messages"},
+	{"msgfilter", &mp_conf.msg_filter, CONF_TYPE_INT, CONF_RANGE, 0, 0xFFFFFFFF, "specifies filter for verbosed messages"},
 
 	{"core", &xpcore_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "XP-core related options" },
 	{"play", &playback_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Playback specific options" },

@@ -36,6 +36,7 @@
 #include <stdarg.h>
 
 #include "mp_config.h"
+#include "mplayer.h"
 #include "osdep/bswap.h"
 #include "help_mp.h"
 
@@ -706,7 +707,7 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
          lastXDS[ 0x06 ] = type;
          lastXDS[ 0x07 ] = b >> 8;
          lastXDS[ 0x08 ] = b;
-         if ( subcc_enabled )
+         if ( mp_conf.subcc_enabled )
             demux_ty_CopyToDemuxPacket( demux->video, lastXDS, 0x09,
                demux->filepos + offset, tivo->lastVideoPTS );
       }
@@ -814,7 +815,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
      if( i == 0x1B3 || i == 0x1B8 ) break; // found it!
      if( !i || !skip_video_packet( d_video ) ) break; // EOF?
    }
-   if ( subcc_enabled )
+   if ( mp_conf.subcc_enabled )
       ty_ClearOSD( 0 );
 }
 

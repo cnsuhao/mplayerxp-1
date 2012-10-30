@@ -2,6 +2,7 @@
 #define __MPLAYERXP_MAIN 1
 
 #include <pthread.h>
+#include <stdint.h>
 #include "mp_config.h"
 
 typedef struct mp_conf_s {
@@ -10,6 +11,7 @@ typedef struct mp_conf_s {
     int		has_dvdsub;
     int		use_stdin;
     int		slave_mode;
+    uint32_t	msg_filter;
 // XP-core
     int		xp;   /* XP-mode */
     int		gomp; /* currently it's experimental feature */
@@ -59,6 +61,13 @@ typedef struct mp_conf_s {
     float	sub_fps;
     int		sub_auto;
     char*	vobsub_name;
+    int		subcc_enabled;
+// others
+    char*	npp_options;
+    int		ao_channels;
+    int		z_compression;
+    int		xinerama_screen;
+    float	monitor_pixel_aspect;
 }mp_conf_t;
 extern mp_conf_t mp_conf;
 

@@ -78,10 +78,6 @@ typedef struct priv_s {
 #endif
 }priv_t;
 
-#ifdef HAVE_XINERAMA
-int xinerama_screen;
-#endif
-
 int __FASTCALL__ vo_x11_Shmem_Flag(vo_data_t*vo)
 {
     priv_t*priv=(priv_t*)vo->priv2;
@@ -306,13 +302,13 @@ int vo_x11_init(vo_data_t*vo)
 	int num_screens;
 
 	screens = XineramaQueryScreens(vo->mDisplay, &num_screens);
-	if(xinerama_screen >= num_screens) xinerama_screen = 0;
+	if(mp_conf.xinerama_screen >= num_screens) mp_conf.xinerama_screen = 0;
 	if (! vo_conf.screenwidth)
-	    vo_conf.screenwidth=screens[xinerama_screen].width;
+	    vo_conf.screenwidth=screens[mp_conf.xinerama_screen].width;
 	if (! vo_conf.screenheight)
-	    vo_conf.screenheight=screens[xinerama_screen].height;
-	priv->xinerama_x = screens[xinerama_screen].x_org;
-	priv->xinerama_y = screens[xinerama_screen].y_org;
+	    vo_conf.screenheight=screens[mp_conf.xinerama_screen].height;
+	priv->xinerama_x = screens[mp_conf.xinerama_screen].x_org;
+	priv->xinerama_y = screens[mp_conf.xinerama_screen].y_org;
 
 	XFree(screens);
     } else

@@ -180,7 +180,6 @@ enum mpg123_errors
 	,MPG123_LSEEK_FAILED /**< Low-level seek failed. */
 };
 
-extern int fakemono;
 static void (*mpg123_init_ptr)(void);
 #define mpg123_init() (*mpg123_init_ptr)()
 static void (*mpg123_exit_ptr)(void);

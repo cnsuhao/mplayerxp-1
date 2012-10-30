@@ -9,7 +9,6 @@
 #include "vo_msg.h"
 
 float monitor_aspect=0;
-float monitor_pixel_aspect=1;
 
 static struct {
   uint32_t orgw; // real width
@@ -33,7 +32,7 @@ void __FASTCALL__ aspect_save_prescale(uint32_t prew, uint32_t preh){
 void __FASTCALL__ aspect_save_screenres(uint32_t scrw, uint32_t scrh){
   aspdat.scrw = scrw;
   aspdat.scrh = scrh;
-  monitor_aspect = monitor_pixel_aspect * scrw / scrh;
+  monitor_aspect = mp_conf.monitor_pixel_aspect * scrw / scrh;
 }
 
 /* aspect is called with the source resolution and the

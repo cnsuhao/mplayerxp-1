@@ -219,6 +219,9 @@ static void mpxp_init_structs(void) {
     mp_conf.has_dvdsub=1;
     mp_conf.osd_level=2;
     mp_conf.playbackspeed_factor=1.0;
+    mp_conf.ao_channels=2;
+    mp_conf.monitor_pixel_aspect=1;
+    mp_conf.msg_filter=0xFFFFFFFF;
 }
 
 static void mpxp_uninit_structs(void) {
@@ -1953,7 +1956,7 @@ static int mpxp_configure_audio(void) {
 
     MP_UNIT("af_preinit");
     ao_data->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->samplerate;
-    ao_data->channels=audio_output_channels?audio_output_channels:sh_audio->channels;
+    ao_data->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->channels;
     ao_data->format=sh_audio->sample_format;
 #if 1
     if(!mpca_preinit_filters(sh_audio,

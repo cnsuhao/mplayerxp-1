@@ -13,8 +13,6 @@
 #define MSGT_CLASS MSGT_PP
 #include "__mp_msg.h"
 
-char * npp_options=NULL;
-
 extern void exit_player(char *);
 pp_context *pp2_get_context(int width, int height, int flags)
 {
@@ -29,7 +27,7 @@ pp_context *pp2_get_context(int width, int height, int flags)
 
 int	pp2_init(void)
 {
-    if(strcmp(npp_options,"help")==0)
+    if(strcmp(mp_conf.npp_options,"help")==0)
     {
 	if(pp_help)	MSG_INFO(*pp_help);
 	else		MSG_ERR("Can't access to PP's help\n");

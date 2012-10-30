@@ -8,6 +8,7 @@
 #include "codecs_ld.h"
 
 #include "mp_config.h"
+#include "mplayer.h"
 #include "help_mp.h"
 #include "osdep/cpudetect.h"
 
@@ -45,8 +46,6 @@ static const config_t options[] = {
 };
 
 LIBAD_EXTERN(dca)
-
-extern int audio_output_channels;
 
 int dca_fillbuff(sh_audio_t *sh_audio,float *pts){
 int length=0,flen=0;
@@ -127,7 +126,7 @@ int preinit(sh_audio_t *sh)
 	sh->samplesize=4;
 	sh->sample_format=AFMT_FLOAT32;
     }
-    sh->audio_out_minsize=audio_output_channels*sh->samplesize*256*8;
+    sh->audio_out_minsize=mp_conf.ao_channels*sh->samplesize*256*8;
     sh->audio_in_minsize=MAX_AC5_FRAME;
     sh->context=mp_malloc(sizeof(dca_priv_t));
     return 1;
@@ -151,7 +150,7 @@ int init(sh_audio_t *sh_audio)
   }
   /* 'dca cannot upmix' hotfix:*/
   dca_printinfo(sh_audio);
-  sh_audio->channels=audio_output_channels;
+  sh_audio->channels=mp_conf.ao_channels;
 while(sh_audio->channels>0){
   switch(sh_audio->channels){
 	case 1: mpxp_dca_flags=DCA_MONO; break;

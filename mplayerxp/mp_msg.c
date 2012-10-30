@@ -18,7 +18,6 @@ typedef struct priv_s {
     char	scol[9][20];
     pthread_mutex_t mp_msg_mutex;
 }priv_t;
-uint32_t mp_msg_filter=0xFFFFFFFF;
 const char hl[9] = { 0xC, 0x4, 0xE, 0xA, 0xB, 0x7, 0x9, 0x3, 0x7 };
 
 static char *_2ansi(unsigned char attr)
@@ -96,7 +95,7 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
     static int was_eol=1;
     if(mp_data) priv=mp_data->msg_priv;
     if(level>mp_conf.verbose+MSGL_V-1) return; /* do not display */
-    if((mod&mp_msg_filter)==0) return; /* do not display */
+    if((mod&mp_conf.msg_filter)==0) return; /* do not display */
     if(priv) {
 	pthread_mutex_lock(&priv->mp_msg_mutex);
 	if(isatty(fileno(stderr)))

@@ -6,6 +6,7 @@
 #include "codecs_ld.h"
 
 #include "mp_config.h"
+#include "mplayer.h"
 #include "help_mp.h"
 #include "osdep/mplib.h"
 #include "ad_internal.h"
@@ -40,13 +41,11 @@ static int init(sh_audio_t *sh)
   return 1;
 }
 
-extern int audio_output_channels;
-
 static int preinit(sh_audio_t *sh_audio)
 {
   dmo_priv_t*priv;
-  int chans=(audio_output_channels==sh_audio->wf->nChannels) ?
-      audio_output_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
+  int chans=(mp_conf.ao_channels==sh_audio->wf->nChannels) ?
+      mp_conf.ao_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
   if(!(sh_audio->context=mp_malloc(sizeof(dmo_priv_t)))) return 0;
   priv=sh_audio->context;
   if(!(priv->ds_adec=DMO_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf,chans)))

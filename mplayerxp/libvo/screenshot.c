@@ -38,8 +38,6 @@ typedef struct sshot_priv_s {
 }sshot_priv_t;
 static sshot_priv_t sshot = { RGB, 0, 0 };
 #ifdef HAVE_PNG
-int z_compression = Z_NO_COMPRESSION;
-
 struct pngdata {
 	FILE * fp;
 	png_structp png_ptr;
@@ -89,7 +87,7 @@ static struct pngdata create_png (char * fname)
     png_init_io(png.png_ptr, png.fp);
 
     /* set the zlib compression level */
-    png_set_compression_level(png.png_ptr, z_compression);
+    png_set_compression_level(png.png_ptr, mp_conf.z_compression);
 
     png_set_IHDR(png.png_ptr, png.info_ptr, sshot.image_width, sshot.image_height,
        8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
@@ -211,8 +209,8 @@ int gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t
 	return -1;
     }
 #ifdef HAVE_PNG
-    if((z_compression >= 0) && (z_compression <= 9)) {
-	    if(z_compression == 0) {
+    if((mp_conf.z_compression >= 0) && (mp_conf.z_compression <= 9)) {
+	    if(mp_conf.z_compression == 0) {
 		    MSG_HINT("PNG Warning: compression level set to 0, compression disabled!\n");
 		    MSG_HINT("PNG Info: Use the -z <n> switch to set compression level from 0 to 9.\n");
 		    MSG_HINT("PNG Info: (0 = no compression, 1 = fastest, lowest - 9 best, slowest compression)\n");
@@ -222,9 +220,9 @@ int gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t
 	    MSG_WARN("PNG Warning: compression level out of range setting to 1!\n");
 	    MSG_WARN("PNG Info: Use the -z <n> switch to set compression level from 0 to 9.\n");
 	    MSG_WARN("PNG Info: (0 = no compression, 1 = fastest, lowest - 9 best, slowest compression)\n");
-	    z_compression = Z_BEST_SPEED;
+	    mp_conf.z_compression = Z_BEST_SPEED;
     }
-    MSG_V("PNG Compression level %i\n", z_compression);
+    MSG_V("PNG Compression level %i\n", mp_conf.z_compression);
 #endif
     dstStride[0]=sshot.image_width*3;
     dstStride[1]=

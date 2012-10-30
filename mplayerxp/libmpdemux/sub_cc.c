@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "mp_config.h"
+#include "mplayer.h"
 #include "sub_cc.h"
 
 #include "libmpsub/subreader.h"
@@ -29,7 +30,6 @@
 
 #define CC_MAX_LINE_LENGTH 64
 
-int   subcc_enabled=0;
 static char chartbl[128];
 
 static subtitle buf1,buf2;
@@ -328,7 +328,7 @@ static void subcc_decode(const unsigned char *inputbuffer, unsigned int inputlen
 
 void subcc_process_data(const unsigned char *inputdata,unsigned int len)
 {
-	if(!subcc_enabled) return;
+	if(!mp_conf.subcc_enabled) return;
 	if(!inited) subcc_init();
 	
 	subcc_decode(inputdata, len);

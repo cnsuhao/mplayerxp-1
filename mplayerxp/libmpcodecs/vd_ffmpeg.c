@@ -77,7 +77,6 @@ LIBVD_EXTERN(ffmpeg)
 #include "libvo/video_out.h"
 
 
-extern char *npp_options;
 static int vcodec_inited=0;
 typedef struct priv_s
 {
@@ -220,7 +219,7 @@ static int init(sh_video_t *sh){
     unsigned avc_version=0;
     priv_t *vdff_ctx;
     int pp_flags,rc;
-    if(npp_options) pp2_init();
+    if(mp_conf.npp_options) pp2_init();
     if(!vcodec_inited){
 //	avcodec_init();
 	avcodec_register_all();
@@ -381,7 +380,7 @@ static int init(sh_video_t *sh){
     MSG_V("INFO: libavcodec.so (%06X) video codec[%c%c%c%c] init OK!\n"
     ,avc_version
     ,((char *)&sh->fourcc)[0],((char *)&sh->fourcc)[1],((char *)&sh->fourcc)[2],((char *)&sh->fourcc)[3]);
-    if(npp_options)
+    if(mp_conf.npp_options)
     {
 	pp_flags=0;
 	switch(sh->codec->outfmt[sh->outfmtidx])

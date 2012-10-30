@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "mp_config.h"
+#include "mplayer.h"
 #include "help_mp.h"
 
 #include "sub_cc.h"
@@ -862,7 +863,7 @@ void ty_processuserdata(const unsigned char* buf, int len )
 
 	sub_justify = 1;
 
-	if ( subcc_enabled )
+	if ( mp_conf.subcc_enabled )
 	{
 		if ( tyOSDInited == 0 )
 		{
