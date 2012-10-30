@@ -55,14 +55,6 @@ typedef int (*m_opt_func_param_t)(const m_option_t *, const char *);
 /// Callback used by m_option_type_func options.
 typedef int (*m_opt_func_t)(const m_option_t *);
 
-#if 0
-// Backwards compatibility
-typedef m_opt_default_func_t cfg_default_func_t;
-typedef m_opt_func_full_t cfg_func_arg_param_t;
-typedef m_opt_func_param_t cfg_func_param_t;
-typedef m_opt_func_t cfg_func_t;
-#endif
-
 #define END_AT_NONE   0
 #define END_AT_TIME   1
 #define END_AT_SIZE   2

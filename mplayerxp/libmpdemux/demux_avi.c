@@ -1553,17 +1553,17 @@ static int avi_control(demuxer_t *demuxer,int cmd,any_t*args)
 }
 
 static const config_t avi_options[] = {
-	{"ni", &force_ni, CONF_TYPE_FLAG, 0, 0, 1, NULL,"force usage of non-interleaved AVI parser"},
-	{"noni", &force_ni, CONF_TYPE_FLAG, 0, 1, 0, NULL,"disables usage of non-interleaved AVI parser"},
-	{"noidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 0, NULL, "disables INDEXES for AVI's demuxing"},
-	{"idx", &index_mode, CONF_TYPE_FLAG, 0, -1, 1, NULL, "builds internal INDEXES of incomplete AVIs"},
-	{"forceidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 2, NULL, "forces rebuilding of INDEXES for broken AVIs"},
-  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+	{"ni", &force_ni, CONF_TYPE_FLAG, 0, 0, 1, "force usage of non-interleaved AVI parser"},
+	{"noni", &force_ni, CONF_TYPE_FLAG, 0, 1, 0, "disables usage of non-interleaved AVI parser"},
+	{"noidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 0, "disables INDEXES for AVI's demuxing"},
+	{"idx", &index_mode, CONF_TYPE_FLAG, 0, -1, 1, "builds internal INDEXES of incomplete AVIs"},
+	{"forceidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 2, "forces rebuilding of INDEXES for broken AVIs"},
+  { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t avi_opts[] = {
-  { "avi", &avi_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "AVI related options" },
-  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+  { "avi", &avi_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "AVI related options" },
+  { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 demuxer_driver_t demux_avi =

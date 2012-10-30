@@ -51,6 +51,6 @@ typedef struct mrl_config
   *			may want to use non-standard arguments for plugin.
   * @see		mrl_parse_line
 **/
-extern const char *	mrl_parse_params(const char *param,mrl_config_t * args);
+extern const char *	mrl_parse_params(const char *param,const mrl_config_t * args);
 
 #endif

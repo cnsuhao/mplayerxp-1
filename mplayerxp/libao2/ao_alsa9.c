@@ -54,7 +54,7 @@ typedef struct priv_conf_s {
     int noblock;
 }priv_conf_t;
 static priv_conf_t priv_conf;
-static mrl_config_t alsaconf[]={
+static const mrl_config_t alsaconf[]={
     { "mmap", &priv_conf.mmap, MRL_TYPE_BOOL, 0, 1 },
     { "noblock", &priv_conf.noblock, MRL_TYPE_BOOL, 0, 1 },
     { NULL, NULL, 0, 0, 0 }

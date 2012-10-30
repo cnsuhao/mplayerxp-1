@@ -39,7 +39,7 @@ static int tv_param_input = 0; /* used in v4l and bttv */
 static char *tv_param_outfmt = "yv12";
 static float tv_param_fps = -1.0;
 
-static mrl_config_t tvopts_conf[]={
+static const mrl_config_t tvopts_conf[]={
 	{"driver", &tv_param_driver, MRL_TYPE_STRING, 0, 0 },
 	{"device", &tv_param_device, MRL_TYPE_STRING, 0, 0 },
 	{"freq", &tv_param_freq, MRL_TYPE_STRING, 0, 0 },

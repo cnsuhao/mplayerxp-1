@@ -46,9 +46,6 @@ struct config {
 	unsigned int type;
 	unsigned int flags;
 	float min,max;
-  /* Use this field when your need to do something before a new value is
-     assigned to your option */
-	cfg_default_func_t default_func;
 	const char *help;
 };
 
@@ -68,7 +65,7 @@ struct m_config {
 };
 
 struct config_save {
-  config_t* opt;
+  const config_t* opt;
   union {
     int as_int;
     float as_float;
@@ -121,7 +118,7 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param);
 /** Get the config struct defining an option
   * @return NULL on error
 **/
-config_t* m_config_get_option(m_config_t const *config,const char* arg);
+const config_t* m_config_get_option(m_config_t const *config,const char* arg);
 
 /** Get the p field of the struct defining an option
   * @return NULL on error

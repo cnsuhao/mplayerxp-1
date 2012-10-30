@@ -47,28 +47,28 @@ static char *lavc_avopt = NULL;
 
 static int enable_ffslices=1;
 static const config_t ff_options[] = {
-	{"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, NULL, "enables slice-based method of frame rendering in ffmpeg decoder"},
-	{"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, NULL, "disables slice-based method of frame rendering in ffmpeg decoder"},
-	{"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error resilience for ffmpeg decoders"},
-	{"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies idct algorithm for ffmpeg decoders"},
-	{"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, NULL,"specifies error concealment for ffmpeg decoders"},
-	{"vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, NULL,"specifies vstat for ffmpeg decoders"},
-	{"debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, NULL,"specifies debug level for ffmpeg decoders"},
-	{"vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, NULL,"specifies visualize motion vectors (MVs) for ffmpeg decoders"},
-	{"st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, NULL,"specifies skipping top lines for ffmpeg decoders"},
-	{"sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, NULL,"specifies skipping bottom lines for ffmpeg decoders"},
-	{"lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies decoding at 1= 1/2, 2=1/4, 3=1/8 resolutions for ffmpeg decoders"},
-	{"skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies skipping of loop filters for ffmpeg decoders"},
-	{"skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies skipping of IDCT filters for ffmpeg decoders"},
-	{"skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, NULL,"indicates frame skipping for ffmpeg decoders"},
-	{"threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, NULL,"specifies number of threads for ffmpeg decoders"},
-	{"o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, NULL,"specifies additional option for ffmpeg decoders"},
-	{ NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+	{"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, "enables slice-based method of frame rendering in ffmpeg decoder"},
+	{"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, "disables slice-based method of frame rendering in ffmpeg decoder"},
+	{"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error resilience for ffmpeg decoders"},
+	{"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies idct algorithm for ffmpeg decoders"},
+	{"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error concealment for ffmpeg decoders"},
+	{"vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, "specifies vstat for ffmpeg decoders"},
+	{"debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies debug level for ffmpeg decoders"},
+	{"vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies visualize motion vectors (MVs) for ffmpeg decoders"},
+	{"st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping top lines for ffmpeg decoders"},
+	{"sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping bottom lines for ffmpeg decoders"},
+	{"lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, "specifies decoding at 1= 1/2, 2=1/4, 3=1/8 resolutions for ffmpeg decoders"},
+	{"skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of loop filters for ffmpeg decoders"},
+	{"skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of IDCT filters for ffmpeg decoders"},
+	{"skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, "indicates frame skipping for ffmpeg decoders"},
+	{"threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, "specifies number of threads for ffmpeg decoders"},
+	{"o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, "specifies additional option for ffmpeg decoders"},
+	{ NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t options[] = {
-	{"ffmpeg", &ff_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "FFMPEG specific options"},
-	{ NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+	{"ffmpeg", &ff_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "FFMPEG specific options"},
+	{ NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 LIBVD_EXTERN(ffmpeg)

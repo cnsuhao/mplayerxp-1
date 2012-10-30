@@ -79,7 +79,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
     return line;
 }
 
-static void mrl_store_args(const char *arg,char *value, mrl_config_t * args)
+static void mrl_store_args(const char *arg,char *value, const mrl_config_t * args)
 {
 #ifdef TEST_MRL
     printf("arg='%s' value='%s'\n",arg,value);
@@ -143,7 +143,7 @@ static void mrl_store_args(const char *arg,char *value, mrl_config_t * args)
 
 #define MRL_ARG_SEP ','
 
-const char * mrl_parse_params(const char *param, mrl_config_t * args)
+const char * mrl_parse_params(const char *param, const mrl_config_t * args)
 {
     const char *sep,*endp,*endl;
     char *arg=NULL,*value=NULL;

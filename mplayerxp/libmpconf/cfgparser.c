@@ -41,15 +41,15 @@
 #define MSGT_CLASS MSGT_CFGPARSER
 #include "__mp_msg.h"
 
-typedef int (*cfg_func_arg_param_t)(config_t *,const char *,const char *);
-typedef int (*cfg_func_param_t)(config_t *,const char *);
-typedef int (*cfg_func_t)(config_t *);
+typedef int (*cfg_func_arg_param_t)(const config_t *,const char *,const char *);
+typedef int (*cfg_func_param_t)(const config_t *,const char *);
+typedef int (*cfg_func_t)(const config_t *);
 
 static void
-m_config_save_option(m_config_t* config, config_t* conf,const char* opt,const char *param) {
+m_config_save_option(m_config_t* config,const config_t* conf,const char* opt,const char *param) {
   config_save_t* save;
   int sl=0;
- 
+
 #ifdef MP_DEBUG
   assert(config != NULL);
   assert(config->cs_level >= 0);
@@ -127,9 +127,6 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
 
   arg = save->opt_name ? save->opt_name : save->opt->name;
   MSG_DBG2("Reverting option %s\n",arg);
-
-  if(save->opt->default_func)
-    save->opt->default_func(save->opt,arg);
 
   switch(save->opt->type) {
   case CONF_TYPE_FLAG :
@@ -332,14 +329,14 @@ static int config_is_entry_option(m_config_t *config,const char *opt,const char 
     return 0;
 }
 
-static int config_read_option(m_config_t *config,config_t** conf_list,const char *opt,const char *param)
+static int config_read_option(m_config_t *config,const config_t** conf_list,const char *opt,const char *param)
 {
 	int i=0,nconf = 0;
 	long tmp_int;
 	double tmp_float;
 	int ret = -1;
 	char *endptr;
-	config_t* conf=NULL;
+	const config_t* conf=NULL;
 
 #ifdef MP_DEBUG
 	assert(config != NULL);
@@ -647,7 +644,7 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
   if(strchr(opt,'.')) {
     int flg,ret;
     const config_t *subconf=NULL;
-    config_t* olist[] = { NULL, NULL };
+    const config_t* olist[] = { NULL, NULL };
     MSG_DBG2("Parsing %s as subconfig\n",opt);
     do {
 	if(!(e = strchr(opt,'.'))) break;
@@ -677,7 +674,7 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
   e = strchr(opt,':');
   if(e && e[1] != '\0') {
     int ret;
-    config_t* opt_list[] = { NULL, NULL };
+    const config_t* opt_list[] = { NULL, NULL };
     char* s = (char*)mp_malloc((e-opt+1)*sizeof(char));
     strncpy(s,opt,e-opt);
     s[e-opt] = '\0';
@@ -902,6 +899,7 @@ int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char 
 	int tmp;
 	char *opt;
 	int no_more_opts = 0;
+	UNUSED(envp);
 
 #ifdef MP_DEBUG
 	assert(config != NULL);
@@ -1059,7 +1057,7 @@ int m_config_register_options(m_config_t *config,const config_t *args) {
       /* NOTHING */;
   }
 
-  conf_list = (config_t**)mp_realloc(conf_list,sizeof(struct conf*)*(list_len+2));
+  conf_list = (const config_t**)mp_realloc(conf_list,sizeof(struct conf*)*(list_len+2));
   if(conf_list == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(struct conf*)*(list_len+2),strerror(errno));
     return 0;
@@ -1087,7 +1085,7 @@ static const config_t* m_config_find_option(const config_t **list,const char *na
   return NULL;
 }
 
-config_t* m_config_get_option(m_config_t const*config,const char* arg) {
+const config_t* m_config_get_option(m_config_t const*config,const char* arg) {
   char *e;
   const config_t **conf_list;
   const config_t* cl[] = { NULL, NULL };
@@ -1113,7 +1111,7 @@ config_t* m_config_get_option(m_config_t const*config,const char* arg) {
 }
 
 any_t* m_config_get_option_ptr(m_config_t const*config,const char* arg) {
-  config_t* conf;
+  const config_t* conf;
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -1166,7 +1164,7 @@ float m_config_get_float (m_config_t const *config,const char* arg,int* err_ret)
 #define AS_INT(c) (*((int*)c->p))
 
 int m_config_set_int(m_config_t *config,const char* arg,int val) {
-  config_t* opt;
+  const config_t* opt;
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -1190,7 +1188,7 @@ int m_config_set_int(m_config_t *config,const char* arg,int val) {
 }
 
 int m_config_set_float(m_config_t *config,const char* arg,float val) {
-  config_t* opt;
+  const config_t* opt;
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -1216,7 +1214,7 @@ int m_config_set_float(m_config_t *config,const char* arg,float val) {
 
 int
 m_config_switch_flag(m_config_t *config,const char* opt) {
-  config_t *conf;
+  const config_t *conf;
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -1233,7 +1231,7 @@ m_config_switch_flag(m_config_t *config,const char* opt) {
 }
 
 int m_config_set_flag(m_config_t* config,const char* opt, int state) {
-  config_t *conf;
+  const config_t *conf;
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -1248,7 +1246,7 @@ int m_config_set_flag(m_config_t* config,const char* opt, int state) {
 }
 
 int m_config_get_flag(m_config_t const *config,const char* opt) {
-  config_t *conf;
+  const config_t *conf;
 
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -1266,7 +1264,7 @@ int m_config_get_flag(m_config_t const *config,const char* opt) {
 }
 
 int m_config_is_option_set(m_config_t const*config,const char* arg) {
-  config_t* opt;
+  const config_t* opt;
   config_save_t* save;
   int l,i;
 

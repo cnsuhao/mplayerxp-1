@@ -398,39 +398,39 @@ static const char* js_dev = "/dev/input/js0";
 static const char* in_file = NULL;
 static int in_file_fd = -1;
 
-static int mp_input_print_key_list(config_t* cfg);
-static int mp_input_print_cmd_list(config_t* cfg);
+static int mp_input_print_key_list(const config_t* cfg);
+static int mp_input_print_cmd_list(const config_t* cfg);
 
 static const config_t joystick_conf[] = {
-  { "on", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of joystick" },
-  { "off", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of joystick" },
-  { "dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies the joystick device" },
-  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+  { "on", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of joystick" },
+  { "off", &use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of joystick" },
+  { "dev", &js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies the joystick device" },
+  { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 extern char *lirc_configfile;
 // Our command line options
 static const config_t input_conf[] = {
-  { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies alternative input.conf" },
-  { "ar-delay", &ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "autorepeate a key delay in milliseconds (0 to disable)" },
-  { "ar-rate", &ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, NULL, "number of key-presses per second generating on autorepeat" },
-  { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "prints all keys that can be bound to commands" },
-  { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, NULL, "prints all commands that can be bound to keys" },
-  { "file", &in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifes file with commands (useful for FIFO)" },
+  { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies alternative input.conf" },
+  { "ar-delay", &ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "autorepeate a key delay in milliseconds (0 to disable)" },
+  { "ar-rate", &ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "number of key-presses per second generating on autorepeat" },
+  { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, "prints all keys that can be bound to commands" },
+  { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, "prints all commands that can be bound to keys" },
+  { "file", &in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifes file with commands (useful for FIFO)" },
 #ifdef HAVE_LIRC
-  { "lircconf", &lirc_configfile, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, NULL, "specifies a config.file for LIRC"}, 
+  { "lircconf", &lirc_configfile, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies a config.file for LIRC"}, 
 #endif
-  { "lirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc" },
-  { "nolirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc" },
-  { "lircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL, "enables using of lirc daemon" },
-  { "nolircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, NULL, "disables using of lirc daemon" },
-  { "joystick", &joystick_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Joystick related options" },
-  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+  { "lirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of lirc" },
+  { "nolirc", &use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of lirc" },
+  { "lircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of lirc daemon" },
+  { "nolircc", &use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of lirc daemon" },
+  { "joystick", &joystick_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Joystick related options" },
+  { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t mp_input_opts[] = {
-  { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Input specific options"},
-  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+  { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Input specific options"},
+  { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static int mp_input_default_key_func(int fd);
@@ -441,7 +441,7 @@ static char* mp_input_get_key_name(int key);
 
 
 int
-mp_input_add_cmd_fd(int fd, int select, mp_cmd_func_t read_func, mp_close_func_t close_func) {
+mp_input_add_cmd_fd(int fd, int sel, mp_cmd_func_t read_func, mp_close_func_t close_func) {
   if(num_cmd_fd == MP_MAX_CMD_FD) {
     MSG_ERR("Too much command fd, unable to register fd %d\n",fd);
     return 0;
@@ -451,7 +451,7 @@ mp_input_add_cmd_fd(int fd, int select, mp_cmd_func_t read_func, mp_close_func_t
   cmd_fds[num_cmd_fd].fd = fd;
   cmd_fds[num_cmd_fd].read_func = read_func ? read_func : mp_input_default_cmd_func;
   cmd_fds[num_cmd_fd].close_func = close_func;
-  if(!select)
+  if(!sel)
     cmd_fds[num_cmd_fd].flags = MP_FD_NO_SELECT;
   num_cmd_fd++;
 
@@ -497,7 +497,7 @@ mp_input_rm_key_fd(int fd) {
 }
 
 int
-mp_input_add_key_fd(int fd, int select, mp_key_func_t read_func, mp_close_func_t close_func) {
+mp_input_add_key_fd(int fd, int sel, mp_key_func_t read_func, mp_close_func_t close_func) {
   if(num_key_fd == MP_MAX_KEY_FD) {
     MSG_ERR("Too much key fd, unable to register fd %d\n",fd);
     return 0;
@@ -507,7 +507,7 @@ mp_input_add_key_fd(int fd, int select, mp_key_func_t read_func, mp_close_func_t
   key_fds[num_key_fd].fd = fd;
   key_fds[num_key_fd].read_func = read_func ? read_func : mp_input_default_key_func;
   key_fds[num_key_fd].close_func = close_func;
-  if(!select)
+  if(!sel)
     key_fds[num_key_fd].flags |= MP_FD_NO_SELECT;
   num_key_fd++;
 
@@ -826,7 +826,7 @@ mp_input_get_cmd_from_keys(int n,int* keys, int paused) {
 }
 
 int
-mp_input_read_key_code(int time) {
+mp_input_read_key_code(int tim) {
 #ifndef HAVE_NO_POSIX_SELECT
   fd_set fds;
   struct timeval tv,*time_val;
@@ -864,9 +864,9 @@ mp_input_read_key_code(int time) {
 // if we have fd's without MP_FD_NO_SELECT flag, call select():
 if(n>0){
 
-  if(time >= 0 ) {
-    tv.tv_sec=time/1000;
-    tv.tv_usec = (time%1000)*1000;
+  if(tim >= 0 ) {
+    tv.tv_sec=tim/1000;
+    tv.tv_usec = (tim%1000)*1000;
     time_val = &tv;
   } else
     time_val = NULL;
@@ -898,7 +898,7 @@ if(n>0){
       continue;
 #endif
     if(key_fds[i].fd == 0) { // stdin is handled by getch2
-      code = getch2(time);
+      code = getch2(tim);
       if(code < 0)
 	code = MP_INPUT_NOTHING;
     }
@@ -919,8 +919,8 @@ if(n>0){
 }
 
 static mp_cmd_t*
-mp_input_read_keys(int time,int paused) {
-  int code = mp_input_read_key_code(time);
+mp_input_read_keys(int tim,int paused) {
+  int code = mp_input_read_key_code(tim);
   unsigned int j;
   mp_cmd_t* ret;
 
@@ -1010,7 +1010,7 @@ mp_input_read_keys(int time,int paused) {
 }
 
 static mp_cmd_t*
-mp_input_read_cmds(int time) {
+mp_input_read_cmds(int tim) {
 #ifndef HAVE_NO_POSIX_SELECT
   fd_set fds;
   struct timeval tv,*time_val;
@@ -1046,9 +1046,9 @@ mp_input_read_cmds(int time) {
     return NULL;
 
 #ifndef HAVE_NO_POSIX_SELECT
-  if(time >= 0) {
-    tv.tv_sec=time/1000; 
-    tv.tv_usec = (time%1000)*1000;
+  if(tim >= 0) {
+    tv.tv_sec=tim/1000;
+    tv.tv_usec = (tim%1000)*1000;
     time_val = &tv;
   } else
     time_val = NULL;
@@ -1133,7 +1133,7 @@ mp_input_get_queued_cmd(int peek_only) {
  * Do not mp_free the returned cmd whe you set this!
  */
 mp_cmd_t*
-mp_input_get_cmd(int time, int paused, int peek_only) {
+mp_input_get_cmd(int tim, int paused, int peek_only) {
   mp_cmd_t* ret = NULL;
   mp_cmd_filter_t* cf;
   int from_queue;
@@ -1143,9 +1143,9 @@ mp_input_get_cmd(int time, int paused, int peek_only) {
     ret = mp_input_get_queued_cmd(peek_only);
     if(ret) break;
     from_queue = 0;
-    ret = mp_input_read_keys(time,paused);
+    ret = mp_input_read_keys(tim,paused);
     if(ret) break;
-    ret = mp_input_read_cmds(time);
+    ret = mp_input_read_cmds(tim);
     break;
   }
   if(!ret) return NULL;
@@ -1268,7 +1268,7 @@ mp_input_get_input_from_name(char* name,int* keys) {
 void
 mp_input_bind_keys(int keys[MP_MAX_KEY_DOWN+1], char* cmd) {
   int i = 0,j;
-  mp_cmd_bind_t* bind = NULL;
+  mp_cmd_bind_t* _bind = NULL;
 
 #ifdef MP_DEBUG
   assert(keys != NULL);
@@ -1280,21 +1280,21 @@ mp_input_bind_keys(int keys[MP_MAX_KEY_DOWN+1], char* cmd) {
       for(j = 0 ; cmd_binds[i].input[j] == keys[j]  && keys[j] != 0 ; j++)
 	/* NOTHING */;
       if(keys[j] == 0 && cmd_binds[i].input[j] == 0 ) {
-	bind = &cmd_binds[i];
+	_bind = &cmd_binds[i];
 	break;
       }
     }
   }
 
-  if(!bind) {
+  if(!_bind) {
     cmd_binds = (mp_cmd_bind_t*)mp_realloc(cmd_binds,(i+2)*sizeof(mp_cmd_bind_t));
     memset(&cmd_binds[i],0,2*sizeof(mp_cmd_bind_t));
-    bind = &cmd_binds[i];
+    _bind = &cmd_binds[i];
   }
-  if(bind->cmd)
-    mp_free(bind->cmd);
-  bind->cmd = mp_strdup(cmd);
-  memcpy(bind->input,keys,(MP_MAX_KEY_DOWN+1)*sizeof(int));
+  if(_bind->cmd)
+    mp_free(_bind->cmd);
+  _bind->cmd = mp_strdup(cmd);
+  memcpy(_bind->input,keys,(MP_MAX_KEY_DOWN+1)*sizeof(int));
 }
 
 
@@ -1559,7 +1559,7 @@ void mp_input_print_keys(void) {
     MSG_INFO("%s\n",key_names[i].name);
 }
 
-static int mp_input_print_key_list(config_t* cfg) {
+static int mp_input_print_key_list(const config_t* cfg) {
   mp_input_print_keys();
   exit(0);
 }
@@ -1606,15 +1606,15 @@ void mp_input_print_cmds(void) {
   }
 }
 
-static int mp_input_print_cmd_list(config_t* cfg) {
+static int mp_input_print_cmd_list(const config_t* cfg) {
   mp_input_print_cmds();
   exit(0);
 }
 
 int
-mp_input_check_interrupt(int time) {
+mp_input_check_interrupt(int tim) {
   mp_cmd_t* cmd;
-  if((cmd = mp_input_get_cmd(time,0,1)) == NULL)
+  if((cmd = mp_input_get_cmd(tim,0,1)) == NULL)
     return 0;
   switch(cmd->id) {
   case MP_CMD_QUIT:
@@ -1626,7 +1626,7 @@ mp_input_check_interrupt(int time) {
     return 1;
   }
   // remove the cmd from the queue
-  cmd = mp_input_get_cmd(time,0,0);
+  cmd = mp_input_get_cmd(tim,0,0);
   mp_cmd_free(cmd);
   return 0;
 }

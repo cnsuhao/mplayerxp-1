@@ -34,7 +34,7 @@ static const vd_info_t info = {
 };
 
 static const config_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+  { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 LIBVD_EXTERN(xanim)

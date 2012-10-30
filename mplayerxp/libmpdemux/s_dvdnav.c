@@ -184,7 +184,7 @@ static dvdnav_event_t *tevent;
 static int tevent_full=0;
 static int dvd_title=-1,dvd_chapter=-1;
 
-static mrl_config_t dvdnavopts_conf[]={
+static const mrl_config_t dvdnavopts_conf[]={
 	{ "skipopening", &dvd_nav_skip_opening, MRL_TYPE_BOOL, 0, 1 },
 	{ "T", &dvd_title, MRL_TYPE_INT, 0, 999 },
 	{ "C", &dvd_chapter, MRL_TYPE_INT, 0, 999 },

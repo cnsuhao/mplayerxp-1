@@ -658,7 +658,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     return cmap;
 }
 
-static mrl_config_t fbconf[]=
+static const mrl_config_t fbconf[]=
 {
     { "modeconfig", &priv_conf.mode_cfgfile, MRL_TYPE_STRING, 0, 0 },
     { "hfreq", &priv_conf.monitor_hfreq_str, MRL_TYPE_STRING, 0, 0 },

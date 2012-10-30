@@ -78,23 +78,23 @@ typedef struct {
 } vivo_priv_t;
 
 
-static config_t vivoopts_conf[]={
-	{"version", &vivo_param_version, CONF_TYPE_INT, 0, 0, 0, NULL, "forces version of VIVO stream"},
+static const config_t vivoopts_conf[]={
+	{"version", &vivo_param_version, CONF_TYPE_INT, 0, 0, 0, "forces version of VIVO stream"},
 	/* audio options */
-	{"acodec", &vivo_param_acodec, CONF_TYPE_STRING, 0, 0, 0, NULL, "specifies audio-codec of VIVO stream"},
-	{"abitrate", &vivo_param_abitrate, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies audio bitrate of VIVO stream"},
-	{"samplerate", &vivo_param_samplerate, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies audio samplerate of VIVO stream"},
-	{"bytesperblock", &vivo_param_bytesperblock, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies number of bytes per audio-block in VIVO stream"},
+	{"acodec", &vivo_param_acodec, CONF_TYPE_STRING, 0, 0, 0, "specifies audio-codec of VIVO stream"},
+	{"abitrate", &vivo_param_abitrate, CONF_TYPE_INT, 0, 0, 0, "specifies audio bitrate of VIVO stream"},
+	{"samplerate", &vivo_param_samplerate, CONF_TYPE_INT, 0, 0, 0, "specifies audio samplerate of VIVO stream"},
+	{"bytesperblock", &vivo_param_bytesperblock, CONF_TYPE_INT, 0, 0, 0, "specifies number of bytes per audio-block in VIVO stream"},
 	/* video options */
-	{"width", &vivo_param_width, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies width of video in VIVO stream" },
-	{"height", &vivo_param_height, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies height of video in VIVO stream"},
-	{"vformat", &vivo_param_vformat, CONF_TYPE_INT, 0, 0, 0, NULL, "specifies video-codec of VIVO stream"},
-	{NULL, NULL, 0, 0, 0, 0, NULL, NULL}
+	{"width", &vivo_param_width, CONF_TYPE_INT, 0, 0, 0, "specifies width of video in VIVO stream" },
+	{"height", &vivo_param_height, CONF_TYPE_INT, 0, 0, 0, "specifies height of video in VIVO stream"},
+	{"vformat", &vivo_param_vformat, CONF_TYPE_INT, 0, 0, 0, "specifies video-codec of VIVO stream"},
+	{NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static config_t vivo_conf[] = {
-  { "vivo", &vivoopts_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL, "Vivo specific options"},
-  { NULL,NULL, 0, 0, 0, 0, NULL, NULL}
+static const config_t vivo_conf[] = {
+  { "vivo", &vivoopts_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Vivo specific options"},
+  { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
 /* parse all possible extra headers */
