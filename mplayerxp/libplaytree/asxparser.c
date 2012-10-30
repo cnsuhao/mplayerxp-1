@@ -144,71 +144,68 @@ static int __FASTCALL__ asx_get_yes_no_attrib(ASX_Parser_t* parser, char* elemen
 #define asx_warning_body_parse_error(p,e) MSG_WARN("At line %d : error while parsing %s body",p->line,e)
 
 ASX_Parser_t* asx_parser_new(void) {
-  ASX_Parser_t* parser = mp_calloc(1,sizeof(ASX_Parser_t));
-  return parser;
+    ASX_Parser_t* parser = mp_calloc(1,sizeof(ASX_Parser_t));
+    return parser;
 }
 
 void __FASTCALL__ asx_parser_free(ASX_Parser_t* parser) {
-  if(!parser) return;
-  if(parser->ret_stack) mp_free(parser->ret_stack);
-  mp_free(parser);
-
+    if(!parser) return;
+    if(parser->ret_stack) mp_free(parser->ret_stack);
+    mp_free(parser);
 }
 
 int __FASTCALL__ asx_parse_attribs(ASX_Parser_t* parser,char* buffer,char*** _attribs) {
-  char *ptr1, *ptr2, *ptr3;
-  int n_attrib = 0;
-  char **attribs = NULL;
-  char *attrib, *val;
+    char *ptr1, *ptr2, *ptr3;
+    int n_attrib = 0;
+    char **attribs = NULL;
+    char *attrib, *val;
 
-  ptr1 = buffer;
-  while(1) {
-    for( ; isspace(*ptr1); ptr1++) { // Skip space
-      if(*ptr1 == '\0') break;
-    }
-    ptr3 = strchr(ptr1,'=');
-    if(ptr3 == NULL) break;
-    for(ptr2 = ptr3-1; isspace(*ptr2); ptr2--) {
-      if (ptr2 <= ptr1) {
-	MSG_ERR("At line %d : this should never append, back to attribute begin while skipping end space",parser->line);
-	break;
-      }
-    }
-    attrib = (char*)mp_malloc(ptr2-ptr1+2);
-    strncpy(attrib,ptr1,ptr2-ptr1+1);
-    attrib[ptr2-ptr1+1] = '\0';
+    ptr1 = buffer;
+    while(1) {
+	for( ; isspace(*ptr1); ptr1++) { // Skip space
+	    if(*ptr1 == '\0') goto pa_end;
+	}
+	ptr3 = strchr(ptr1,'=');
+	if(ptr3 == NULL) break;
+	for(ptr2 = ptr3-1; isspace(*ptr2); ptr2--) {
+	    if (ptr2 <= ptr1) {
+		MSG_ERR("At line %d : this should never append, back to attribute begin while skipping end space",parser->line);
+		goto pa_end;
+	    }
+	}
+	attrib = (char*)mp_malloc(ptr2-ptr1+2);
+	strncpy(attrib,ptr1,ptr2-ptr1+1);
+	attrib[ptr2-ptr1+1] = '\0';
 
-    ptr1 = strchr(ptr3,'"');
-    if(ptr1 == NULL || ptr1[1] == '\0') {
-      MSG_WARN("At line %d : can't find attribute %s value",parser->line,attrib);
-      mp_free(attrib);
-      break;
-    }
-    ptr1++;
-    ptr2 = strchr(ptr1,'"');
-    if (ptr2 == NULL) {
-      MSG_WARN("At line %d : value of attribute %s isn't finished",parser->line,attrib);
-      mp_free(attrib);
-      break;
-    }
-    val = (char*)mp_malloc(ptr2-ptr1+1);
-    strncpy(val,ptr1,ptr2-ptr1);
-    val[ptr2-ptr1] = '\0';
-    n_attrib++;
-    
-    attribs = (char**)mp_realloc(attribs,2*n_attrib*sizeof(char*)+1);
-    attribs[n_attrib*2-2] = attrib;
-    attribs[n_attrib*2-1] = val;
-    
-    ptr1 = ptr2+2;
-  }
-  
-  if(n_attrib > 0)
-    attribs[n_attrib*2] = NULL;
+	ptr1 = strchr(ptr3,'"');
+	if(ptr1 == NULL || ptr1[1] == '\0') {
+	    MSG_WARN("At line %d : can't find attribute %s value",parser->line,attrib);
+	    mp_free(attrib);
+	    break;
+	}
+	ptr1++;
+	ptr2 = strchr(ptr1,'"');
+	if (ptr2 == NULL) {
+	    MSG_WARN("At line %d : value of attribute %s isn't finished",parser->line,attrib);
+	    mp_free(attrib);
+	    break;
+	}
+	val = (char*)mp_malloc(ptr2-ptr1+1);
+	strncpy(val,ptr1,ptr2-ptr1);
+	val[ptr2-ptr1] = '\0';
+	n_attrib++;
 
-  *_attribs = attribs;
-  
-  return n_attrib;
+	attribs = (char**)mp_realloc(attribs,(2*n_attrib+1)*sizeof(char*));
+	attribs[n_attrib*2-2] = attrib;
+	attribs[n_attrib*2-1] = val;
+
+	ptr1 = ptr2+1;
+    }
+pa_end:
+    if(n_attrib > 0)
+	attribs[n_attrib*2-0] = NULL;
+    *_attribs = attribs;
+    return n_attrib;
 }
  
 /*
@@ -294,7 +291,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
       return -1;
     }
     if(ptr1[0] == '\n') parser->line++;
-  } 
+  }
 
   for(ptr2 = ptr1; isalpha(*ptr2); ptr2++) { // Go to end of name
     if(*ptr2 == '\0'){
@@ -317,8 +314,6 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
     if(ptr2[0] == '\n') parser->line++;
   }
   attrib_line = parser->line;
-
-  
 
   for(ptr3 = ptr2; ptr3[0] != '\0'; ptr3++) { // Go to element end
     if(ptr3[0] == '>' || strncmp(ptr3,"/>",2) == 0)
