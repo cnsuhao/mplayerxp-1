@@ -332,9 +332,8 @@ static void uninit(vo_data_t*vo)
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=mp_malloc(sizeof(priv_t));
+    vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
-    memset(priv,0,sizeof(priv_t));
     priv->num_buffers=1;
     UNUSED(arg);
     if (!vo_x11_init(vo)) return -1;

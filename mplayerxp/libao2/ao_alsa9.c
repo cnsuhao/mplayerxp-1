@@ -320,9 +320,8 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
     char *alsa_port=NULL;
     char alsa_device[ALSA_DEVICE_SIZE];
     UNUSED(flags);
-    ao->priv=mp_malloc(sizeof(priv_t));
+    ao->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=ao->priv;
-    memset(priv,0,sizeof(priv_t));
     priv->first=1;
 
     priv->handler = NULL;

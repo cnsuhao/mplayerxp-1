@@ -52,8 +52,7 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
   s = demuxer->stream;
 
   sh_audio = new_sh_audio(demuxer,0);
-  priv=demuxer->priv=mp_malloc(sizeof(priv_t));
-  memset(priv,0,sizeof(priv_t));
+  priv=demuxer->priv=mp_mallocz(sizeof(priv_t));
   sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('r','a','w',' '); /* S16BE */
   w->nChannels = sh_audio->channels =

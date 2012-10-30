@@ -112,12 +112,11 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
   char* cmdline = name;
 
   // Allocate space for the new filter and reset all pointers
-  af_instance_t* _new=mp_malloc(sizeof(af_instance_t));
+  af_instance_t* _new=mp_mallocz(sizeof(af_instance_t));
   if(!_new){
     MSG_ERR(MSGTR_OutOfMemory);
     return NULL;
   }
-  memset(_new,0,sizeof(af_instance_t));
   _new->parent=s;
   // Check for commandline parameters
   strsep(&cmdline, "=");
@@ -716,8 +715,7 @@ void af_help (void) {
 af_stream_t *af_new(any_t*_parent)
 {
     af_stream_t *rval;
-    rval = mp_malloc(sizeof(af_stream_t));
-    memset(rval,0,sizeof(af_stream_t));
+    rval = mp_mallocz(sizeof(af_stream_t));
     rval->parent = _parent;
     return rval;
 }

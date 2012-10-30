@@ -709,9 +709,9 @@ static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,uns
         return 0;
     }
     --dvd_angle; // remap 1.. -> 0..
-    
+
     // store data
-    d=mp_malloc(sizeof(dvd_priv_t)); memset(d,0,sizeof(dvd_priv_t));
+    d=mp_mallocz(sizeof(dvd_priv_t));
     d->dvd=dvd;
     d->title=0;
     d->vmg_file=vmg_file;

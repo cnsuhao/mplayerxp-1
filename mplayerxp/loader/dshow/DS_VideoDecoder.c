@@ -96,10 +96,9 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
     DS_VideoDecoder *this;
     HRESULT result;
     ct* c;
-                        
-    this = mp_malloc(sizeof(DS_VideoDecoder));
-    memset( this, 0, sizeof(DS_VideoDecoder));
-    
+
+    this = mp_mallocz(sizeof(DS_VideoDecoder));
+
     this->m_sVhdr2 = 0;
     this->m_iLastQuality = -1;
     this->m_iMaxAuto = maxauto;

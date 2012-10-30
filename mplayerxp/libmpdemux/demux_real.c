@@ -323,8 +323,7 @@ static int real_probe(demuxer_t* demuxer)
     if (c != MKTAG('.', 'R', 'M', 'F'))
 	return 0; /* bad magic */
 
-    priv = mp_malloc(sizeof(real_priv_t));
-    memset(priv, 0, sizeof(real_priv_t));
+    priv = mp_mallocz(sizeof(real_priv_t));
     demuxer->priv = priv;
     demuxer->file_format=DEMUXER_TYPE_REAL;
     return 1;
@@ -1076,8 +1075,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
                    }
 
 		    /* Emulate WAVEFORMATEX struct: */
-		    sh->wf = mp_malloc(sizeof(WAVEFORMATEX));
-		    memset(sh->wf, 0, sizeof(WAVEFORMATEX));
+		    sh->wf = mp_mallocz(sizeof(WAVEFORMATEX));
 		    sh->wf->nChannels = sh->channels;
 		    sh->wf->wBitsPerSample = sh->samplesize*8;
 		    sh->wf->nSamplesPerSec = sh->samplerate;
@@ -1179,8 +1177,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    sh_audio_t *sh = new_sh_audio(demuxer, stream_id);
 
 		    /* Emulate WAVEFORMATEX struct: */
-		    sh->wf = mp_malloc(sizeof(WAVEFORMATEX));
-		    memset(sh->wf, 0, sizeof(WAVEFORMATEX));
+		    sh->wf = mp_mallocz(sizeof(WAVEFORMATEX));
 		    sh->wf->nChannels = 0;//sh->channels;
 		    sh->wf->wBitsPerSample = 16;
 		    sh->wf->nSamplesPerSec = 0;//sh->samplerate;

@@ -411,8 +411,7 @@ static void __FASTCALL__ vo_draw_text_sub(any_t*v,unsigned idx,mp_osd_obj_t* obj
 }
 
 mp_osd_obj_t* __FASTCALL__ new_osd_obj(int type){
-    mp_osd_obj_t* osd=mp_malloc(sizeof(mp_osd_obj_t));
-    memset(osd,0,sizeof(mp_osd_obj_t));
+    mp_osd_obj_t* osd=mp_mallocz(sizeof(mp_osd_obj_t));
     osd->next=vo_osd_list;
     vo_osd_list=osd;
     osd->type=type;

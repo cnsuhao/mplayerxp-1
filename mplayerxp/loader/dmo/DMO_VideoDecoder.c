@@ -99,10 +99,9 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
     DMO_VideoDecoder *this;
     HRESULT result;
     ct* c;
-                        
-    this = mp_malloc(sizeof(DMO_VideoDecoder));
-    memset( this, 0, sizeof(DMO_VideoDecoder));
-    
+
+    this = mp_mallocz(sizeof(DMO_VideoDecoder));
+
     this->m_sVhdr2 = 0;
     this->m_iLastQuality = -1;
     this->m_iMaxAuto = maxauto;

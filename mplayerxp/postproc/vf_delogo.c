@@ -214,8 +214,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->uninit=uninit;
     if (!vf->priv)
     {
-        vf->priv=mp_malloc(sizeof(struct vf_priv_s));
-	memset(vf->priv, 0, sizeof(struct vf_priv_s));
+        vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
     }
 
     if (args) res = sscanf(args, "%d:%d:%d:%d:%d",

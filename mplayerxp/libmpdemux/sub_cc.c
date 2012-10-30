@@ -112,8 +112,7 @@ static void append_char(char c)
 	if(!bb->lines) {bb->lines++; cursor_pos=0;}
 	if(bb->text[bb->lines - 1]==NULL) 
 	{
-		bb->text[bb->lines - 1]=mp_malloc(CC_MAX_LINE_LENGTH);
-		memset(bb->text[bb->lines - 1],0,CC_MAX_LINE_LENGTH);
+		bb->text[bb->lines - 1]=mp_mallocz(CC_MAX_LINE_LENGTH);
 		cursor_pos=0;
 	}
 	

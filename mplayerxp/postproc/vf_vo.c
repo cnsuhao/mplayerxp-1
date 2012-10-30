@@ -152,8 +152,7 @@ static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
 //===========================================================================//
 
 static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
-    vf->priv = mp_malloc(sizeof(struct vf_priv_s));
-    memset(vf->priv, 0, sizeof(struct vf_priv_s));
+    vf->priv = mp_mallocz(sizeof(struct vf_priv_s));
     vf->config=config;
     vf->control=control;
     vf->uninit=uninit;

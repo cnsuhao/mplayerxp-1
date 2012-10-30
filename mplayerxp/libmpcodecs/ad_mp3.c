@@ -272,8 +272,7 @@ int init(sh_audio_t *sh)
   sh->samplesize=4;
   sh->sample_format=AFMT_FLOAT32;
   mpg123_init();
-  priv = mp_malloc(sizeof(mp3_priv_t));
-  memset(priv,0,sizeof(mp3_priv_t));
+  priv = mp_mallocz(sizeof(mp3_priv_t));
   sh->context = priv;
   priv->mh = mpg123_new(NULL,&err);
   if(err) {

@@ -2064,10 +2064,9 @@ static ES_stream_t *new_pid(ts_priv_t *priv, int pid)
 {
 	ES_stream_t *tss;
 	
-	tss = mp_malloc(sizeof(ES_stream_t));
+	tss = mp_mallocz(sizeof(ES_stream_t));
 	if(! tss)
 		return NULL;
-	memset(tss, 0, sizeof(ES_stream_t));
 	tss->pid = pid;
 	tss->last_cc = -1;
 	tss->type = UNKNOWN;

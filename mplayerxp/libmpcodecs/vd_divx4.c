@@ -200,9 +200,8 @@ static int init(sh_video_t *sh){
 	  MSG_ERR("Unsupported out_fmt: 0x%X\n",sh->codec->outfmt[sh->outfmtidx]);
 	  return 0;
     }
-    if(!(p=mp_malloc(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return 0; }
+    if(!(p=mp_mallocz(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return 0; }
     sh->context=p;
-    memset(p,0,sizeof(priv_t));
     if(!(p->decoder=getDecore_ptr(sh->fourcc))) {
 	char *p=(char *)&(sh->fourcc);
 	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",p[0],p[1],p[2],p[3]);

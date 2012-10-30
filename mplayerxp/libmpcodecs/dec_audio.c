@@ -73,8 +73,7 @@ int mpca_init(sh_audio_t *sh_audio)
       sh_audio->a_in_buffer_size=sh_audio->audio_in_minsize;
       MSG_V("dec_audio: Allocating %d bytes for input buffer\n",
           sh_audio->a_in_buffer_size);
-      sh_audio->a_in_buffer=mp_malloc(sh_audio->a_in_buffer_size);
-      memset(sh_audio->a_in_buffer,0,sh_audio->a_in_buffer_size);
+      sh_audio->a_in_buffer=mp_mallocz(sh_audio->a_in_buffer_size);
       sh_audio->a_in_buffer_len=0;
   }
 
@@ -84,12 +83,11 @@ int mpca_init(sh_audio_t *sh_audio)
   MSG_V("dec_audio: Allocating %d + %d = %d bytes for output buffer\n",
       sh_audio->audio_out_minsize,MAX_OUTBURST,sh_audio->a_buffer_size);
 
-  sh_audio->a_buffer=mp_malloc(sh_audio->a_buffer_size);
+  sh_audio->a_buffer=mp_mallocz(sh_audio->a_buffer_size);
   if(!sh_audio->a_buffer){
       MSG_ERR(MSGTR_CantAllocAudioBuf);
       return 0;
   }
-  memset(sh_audio->a_buffer,0,sh_audio->a_buffer_size);
   sh_audio->a_buffer_len=0;
 
   if(!mpadec->init(sh_audio)){
@@ -237,8 +235,7 @@ int mpca_init_filters(sh_audio_t *sh_audio,
   sh_audio->af_bps = afs->output.rate*afs->output.nch*afs->output.bps;
 
   sh_audio->a_buffer_size=out_maxsize;
-  sh_audio->a_buffer=mp_malloc(sh_audio->a_buffer_size);
-  memset(sh_audio->a_buffer,0,sh_audio->a_buffer_size);
+  sh_audio->a_buffer=mp_mallocz(sh_audio->a_buffer_size);
   sh_audio->a_buffer_len=0;
 
   af_showconf(afs->first);

@@ -618,10 +618,8 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     int err;
     static int reent=0;
     MSG_DBG2("vidix_preinit(%s) was called\n",drvname);
-    priv_t* priv=mp_malloc(sizeof(priv_t));
+    priv_t* priv=mp_mallocz(sizeof(priv_t));
     vo->priv3=priv;
-    memset(priv,0,sizeof(priv_t));
-    memset(priv->bm_buffs,0,sizeof(priv->bm_buffs));
     ALLOC_VIDIX_STRUCTS()
     if(vdlGetVersion() != VIDIX_VERSION) {
 	MSG_FATAL("You have wrong version of VIDIX library\n");

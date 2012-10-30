@@ -206,8 +206,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 
     sh->fourcc = mmioFOURCC('Y', 'V', '1', '2');
 
-    sh->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
-    memset(sh->bih,0,sizeof(BITMAPINFOHEADER));
+    sh->bih=mp_mallocz(sizeof(BITMAPINFOHEADER));
     sh->bih->biSize=40;
     sh->bih->biWidth = sh->src_w;
     sh->bih->biHeight = sh->src_h;

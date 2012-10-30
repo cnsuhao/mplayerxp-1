@@ -210,8 +210,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 	// custom fourcc for internal MPlayer use
 	sh_audio->wtag = mmioFOURCC('R', 'A', 'D', 'V');
 
-	sh_audio->wf = mp_malloc(sizeof(WAVEFORMATEX));
-	memset(sh_audio->wf, 0, sizeof(WAVEFORMATEX));
+	sh_audio->wf = mp_mallocz(sizeof(WAVEFORMATEX));
 	sh_audio->wf->wFormatTag = sh_audio->wtag;
 	sh_audio->wf->nChannels = dv_decoder->audio->num_channels;
 	sh_audio->wf->wBitsPerSample = 16;

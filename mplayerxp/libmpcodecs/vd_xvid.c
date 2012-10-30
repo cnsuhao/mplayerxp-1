@@ -363,8 +363,7 @@ static int init(sh_video_t *sh){
 		,xvid_gbl_info.num_threads
 		,xvid_gbl_info.cpu_flags);
 
-	p = mp_malloc(sizeof(priv_t));
-	memset(p,0,sizeof(priv_t));
+	p = mp_mallocz(sizeof(priv_t));
 	p->cs = cs;
 	p->hdl = dec_p.handle;
 	p->vo_initialized = 0;

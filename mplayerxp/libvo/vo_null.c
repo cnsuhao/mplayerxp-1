@@ -184,9 +184,7 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 	MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
 	return ENOSYS;
     }
-    vo->priv=mp_malloc(sizeof(priv_t));
-    priv_t*priv=(priv_t*)vo->priv;
-    memset(priv,0,sizeof(priv_t));
+    vo->priv=mp_mallocz(sizeof(priv_t));
     return 0;
 }
 

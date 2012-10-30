@@ -2281,7 +2281,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
   mkv_d->audio_tracks[mkv_d->last_aid] = track->tnum;
 
   sh_a->ds = demuxer->audio;
-  sh_a->wf = mp_malloc (sizeof (WAVEFORMATEX));
+  sh_a->wf = mp_mallocz (sizeof (WAVEFORMATEX));
   if (track->ms_compat && (track->private_size >= sizeof(WAVEFORMATEX)))
     {
       WAVEFORMATEX *wf = (WAVEFORMATEX *)track->private_data;
@@ -2304,7 +2304,6 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
     }
   else
     {
-      memset(sh_a->wf, 0, sizeof (WAVEFORMATEX));
       if (!strcmp(track->codec_id, MKV_A_MP3) ||
           !strcmp(track->codec_id, MKV_A_MP2))
         track->a_formattag = 0x0055;

@@ -289,10 +289,8 @@ while(1){
       print_avisuperindex_chunk(s);
 
       msize = sizeof (uint32_t) * s->wLongsPerEntry * s->nEntriesInUse;
-      s->aIndex = mp_malloc(msize);
-      memset (s->aIndex, 0, msize);
-      s->stdidx = mp_malloc (s->nEntriesInUse * sizeof (avistdindex_chunk));
-      memset (s->stdidx, 0, s->nEntriesInUse * sizeof (avistdindex_chunk));
+      s->aIndex = mp_mallocz(msize);
+      s->stdidx = mp_mallocz(s->nEntriesInUse * sizeof (avistdindex_chunk));
 
       // now the real index of indices
       for (i=0; i<s->nEntriesInUse; i++) {
@@ -309,8 +307,7 @@ while(1){
       break; }
     case ckidSTREAMFORMAT: {      // read 'strf'
       if(last_fccType==streamtypeVIDEO){
-        sh_video->bih=mp_calloc((chunksize<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):chunksize,1);
-//        sh_video->bih=mp_malloc(chunksize); memset(sh_video->bih,0,chunksize);
+        sh_video->bih=mp_mallocz((chunksize<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):chunksize);
         MSG_V("found 'bih', %u bytes of %d\n",chunksize,sizeof(BITMAPINFOHEADER));
         stream_read(demuxer->stream,(char*) sh_video->bih,chunksize);
 	le2me_BITMAPINFOHEADER(sh_video->bih);  // swap to machine endian
@@ -363,8 +360,7 @@ while(1){
       } else
       if(last_fccType==streamtypeAUDIO){
 	unsigned wf_size = chunksize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):chunksize;
-        sh_audio->wf=mp_calloc(wf_size,1);
-//        sh_audio->wf=mp_malloc(chunksize); memset(sh_audio->wf,0,chunksize);
+        sh_audio->wf=mp_mallocz(wf_size);
         MSG_V("found 'wf', %d bytes of %d\n",chunksize,sizeof(WAVEFORMATEX));
         stream_read(demuxer->stream,(char*) sh_audio->wf,chunksize);
 	le2me_WAVEFORMATEX(sh_audio->wf);
@@ -1144,10 +1140,9 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
     demux_stream_t *d_video=demuxer->video;
     sh_audio_t *sh_audio=NULL;
     sh_video_t *sh_video=NULL;
-    avi_priv_t* priv=mp_malloc(sizeof(avi_priv_t));
+    avi_priv_t* priv=mp_mallocz(sizeof(avi_priv_t));
 
   // priv struct:
-  memset(priv,0,sizeof(avi_priv_t));
   demuxer->priv=(any_t*)priv;
 
   //---- AVI header:

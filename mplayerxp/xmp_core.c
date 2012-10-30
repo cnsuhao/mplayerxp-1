@@ -44,8 +44,7 @@ void xmp_uninit(void) {}
 
 unsigned xmp_register_main(sig_handler_t sigfunc) {
     unsigned idx=0;
-    xp_core.mpxp_threads[idx]=mp_malloc(sizeof(mpxp_thread_t));
-    memset(xp_core.mpxp_threads[idx],0,sizeof(mpxp_thread_t));
+    xp_core.mpxp_threads[idx]=mp_mallocz(sizeof(mpxp_thread_t));
     xp_core.mpxp_threads[idx]->p_idx=idx;
     xp_core.mpxp_threads[idx]->pid=getpid();
     xp_core.main_pth_id=xp_core.mpxp_threads[idx]->pth_id=pthread_self();
@@ -638,8 +637,7 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
     /* requires root privelegies */
     pthread_attr_setschedpolicy(&attr,SCHED_FIFO);
 #endif
-    xp_core.mpxp_threads[idx]=mp_malloc(sizeof(mpxp_thread_t));
-    memset(xp_core.mpxp_threads[idx],0,sizeof(mpxp_thread_t));
+    xp_core.mpxp_threads[idx]=mp_mallocz(sizeof(mpxp_thread_t));
 
     xp_core.mpxp_threads[idx]->p_idx=idx;
     xp_core.mpxp_threads[idx]->name=name;

@@ -59,8 +59,7 @@ static int init(sh_audio_t *sh)
   sh->channels=h->nChannels;
   sh->samplerate=h->nSamplesPerSec;
   sh->samplesize=(h->wBitsPerSample+7)/8;
-  priv = mp_malloc(sizeof(libdv_priv_t));
-  memset(priv,0,sizeof(libdv_priv_t));
+  priv = mp_mallocz(sizeof(libdv_priv_t));
   priv->decoder=init_global_rawdv_decoder();
   sh->context = priv;
   for (i=0; i < 4; i++)

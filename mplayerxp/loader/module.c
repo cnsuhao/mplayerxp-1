@@ -830,8 +830,7 @@ static int report_func(any_t*stack_base, int stack_size, reg386_t *reg, uint32_t
   // memory management:
   case 0x150011: //NewPtrClear
   case 0x150012: //NewPtrSysClear
-      reg->eax=(uint32_t)mp_malloc(((uint32_t *)stack_base)[1]);
-      memset((any_t*)reg->eax,0,((uint32_t *)stack_base)[1]);
+      reg->eax=(uint32_t)mp_mallocz(((uint32_t *)stack_base)[1]);
 #ifdef DEBUG_QTX_API
       printf("%*sLEAVE(%d): EMULATED! 0x%X\n",ret_i*2,"",ret_i, reg->eax);
 #endif

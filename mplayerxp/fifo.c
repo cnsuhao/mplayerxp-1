@@ -82,10 +82,9 @@ int mplayer_get_key(void){
 
 CBFifoBuffer *cb_fifo_alloc(unsigned int size)
 {
-    CBFifoBuffer *f= mp_malloc(sizeof(CBFifoBuffer));
+    CBFifoBuffer *f= mp_mallocz(sizeof(CBFifoBuffer));
     if(!f)
         return NULL;
-    memset(f,0,sizeof(CBFifoBuffer));
     f->buffer = mp_malloc(size);
     f->end = f->buffer + size;
     cb_fifo_reset(f);

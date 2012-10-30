@@ -1199,11 +1199,8 @@ static void uninit(vo_data_t*vo)
 
 static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    priv_t *priv = mp_malloc(sizeof(priv_t));
+    priv_t *priv = mp_mallocz(sizeof(priv_t));
     vo->priv=priv;
-    memset(priv,0,sizeof(priv_t));
-    memset(priv->rgbsurface,0,sizeof(priv->rgbsurface));
-    memset(priv->overlay,0,sizeof(priv->overlay));
     priv->num_buffs = 1;
     priv->surface = NULL;
     if(arg) strcpy(sdl_subdevice,arg);

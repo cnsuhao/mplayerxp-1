@@ -865,9 +865,8 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   assert(demuxer != NULL);
   assert(demuxer->stream != NULL);
 #endif
-  
-  priv = (da_priv_t*)mp_malloc(sizeof(da_priv_t));
-  memset(priv,0,sizeof(da_priv_t));
+
+  priv = (da_priv_t*)mp_mallocz(sizeof(da_priv_t));
   s = demuxer->stream;
   stream_reset(s);
   stream_seek(s,s->start_pos);

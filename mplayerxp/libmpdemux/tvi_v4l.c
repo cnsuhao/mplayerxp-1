@@ -224,10 +224,9 @@ static int init(priv_t *priv)
     priv->height = priv->capability.minheight;
     MSG_V( " Inputs: %d\n", priv->capability.channels);
 
-    priv->channels = (struct video_channel *)mp_malloc(sizeof(struct video_channel)*priv->capability.channels);
+    priv->channels = (struct video_channel *)mp_mallocz(sizeof(struct video_channel)*priv->capability.channels);
     if (!priv->channels)
 	goto malloc_failed;
-    memset(priv->channels, 0, sizeof(struct video_channel)*priv->capability.channels);
     for (i = 0; i < priv->capability.channels; i++)
     {
 	priv->channels[i].channel = i;
@@ -334,11 +333,9 @@ static int init(priv_t *priv)
     priv->nbuf = priv->mbuf.frames;
     
     /* video buffers */
-    priv->buf = (struct video_mmap *)mp_malloc(priv->nbuf * sizeof(struct video_mmap));
+    priv->buf = (struct video_mmap *)mp_mallocz(priv->nbuf * sizeof(struct video_mmap));
     if (!priv->buf)
 	goto malloc_failed;
-    memset(priv->buf, 0, priv->nbuf * sizeof(struct video_mmap));
-    
     /* audio init */
 #if 1
     priv->audio_fd = open(priv->audio_device, O_RDONLY);

@@ -99,11 +99,10 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	int i;
 	char *buf;
 
-  if ((ra_priv = (ra_priv_t *)mp_malloc(sizeof(ra_priv_t))) == NULL) {
-    MSG_ERR(MSGTR_OutOfMemory);
-    return 0;
-  }
-	memset(ra_priv, 0, sizeof(ra_priv_t));
+    if ((ra_priv = (ra_priv_t *)mp_mallocz(sizeof(ra_priv_t))) == NULL) {
+	MSG_ERR(MSGTR_OutOfMemory);
+	return 0;
+    }
 
 	demuxer->priv = ra_priv;
 	sh = new_sh_audio(demuxer, 0);
@@ -225,8 +224,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	}
 
 	/* Fill WAVEFORMATEX */
-	sh->wf = mp_malloc(sizeof(WAVEFORMATEX));
-	memset(sh->wf, 0, sizeof(WAVEFORMATEX));
+	sh->wf = mp_mallocz(sizeof(WAVEFORMATEX));
 	sh->wf->nChannels = sh->channels;
 	sh->wf->wBitsPerSample = sh->samplesize;
 	sh->wf->nSamplesPerSec = sh->samplerate;

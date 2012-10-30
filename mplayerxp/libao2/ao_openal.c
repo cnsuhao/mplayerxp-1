@@ -93,9 +93,8 @@ static void print_help(void) {
 #endif
 static int init(ao_data_t* ao,unsigned flags)
 {
-    ao->priv=mp_malloc(sizeof(priv_t));
+    ao->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=ao->priv;
-    memset(priv,0,sizeof(priv_t));
   UNUSED(flags);
   priv->alc_dev = alcOpenDevice(NULL);
   if (!priv->alc_dev) {

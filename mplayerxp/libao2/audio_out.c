@@ -207,8 +207,7 @@ ao_data_t* __FASTCALL__ ao_init(unsigned flags,const char *subdevice)
 {
     ao_data_t* ao;
     int retval;
-    ao=mp_malloc(sizeof(ao_data_t));
-    memset(ao,0,sizeof(ao_data_t));
+    ao=mp_mallocz(sizeof(ao_data_t));
     if(subdevice) ao->subdevice=mp_strdup(subdevice);
     ao->outburst=OUTBURST;
     ao->buffersize=-1;

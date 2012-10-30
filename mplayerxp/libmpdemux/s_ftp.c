@@ -371,8 +371,7 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
     MSG_ERR("[ftp] Bad url\n");
     return 0;
   }
-  p=stream->priv=mp_malloc(sizeof(struct stream_priv_s));
-  memset(p,0,sizeof(struct stream_priv_s));
+  p=stream->priv=mp_mallocz(sizeof(struct stream_priv_s));
   p->user=url->username?url->username:"anonymous";
   p->pass=url->password?url->password:"no@spam";
   p->host=url->hostname;

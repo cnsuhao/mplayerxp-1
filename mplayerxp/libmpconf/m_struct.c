@@ -43,7 +43,7 @@ m_struct_alloc(const m_struct_t* st) {
 
   r = mp_calloc(1,st->size);
   memcpy(r,st->defaults,st->size);
- 
+
   for(i = 0 ; st->fields[i].name ; i++) {
     if(st->fields[i].type->flags & M_OPT_TYPE_DYNAMIC)
       memset(M_ST_MB_P(r,st->fields[i].p),0,st->fields[i].type->size);
@@ -106,7 +106,7 @@ any_t*
 m_struct_copy(const m_struct_t* st, any_t* obj) {
   any_t* r = mp_malloc(st->size);
   int i;
-  
+
   memcpy(r,obj,st->size);
   for(i = 0 ; st->fields[i].name ; i++) {
     if(st->fields[i].type->flags & M_OPT_TYPE_DYNAMIC)

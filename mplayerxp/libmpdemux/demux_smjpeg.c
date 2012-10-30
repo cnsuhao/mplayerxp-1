@@ -120,9 +120,8 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	    sh_video = new_sh_video(demuxer, 0);
 	    demuxer->video->sh = sh_video;
 	    sh_video->ds = demuxer->video;
-	    
-	    sh_video->bih = mp_malloc(sizeof(BITMAPINFOHEADER));
-	    memset(sh_video->bih, 0, sizeof(BITMAPINFOHEADER));
+
+	    sh_video->bih = mp_mallocz(sizeof(BITMAPINFOHEADER));
 
 	    stream_skip(demuxer->stream, 4); /* number of frames */
 //	    sh_video->fps = 24;
@@ -144,9 +143,8 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	    demuxer->audio->sh = sh_audio;
 	    sh_audio->ds = demuxer->audio;
 
-	    sh_audio->wf = mp_malloc(sizeof(WAVEFORMATEX));
-	    memset(sh_audio->wf, 0, sizeof(WAVEFORMATEX));
-	    
+	    sh_audio->wf = mp_mallocz(sizeof(WAVEFORMATEX));
+
 	    sh_audio->samplerate = stream_read_word(demuxer->stream);
 	    sh_audio->wf->wBitsPerSample = stream_read_char(demuxer->stream);
 	    sh_audio->channels = stream_read_char(demuxer->stream);

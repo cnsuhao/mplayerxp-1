@@ -181,14 +181,12 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     vo_conf.da_buffs=64;
     vo_conf.WinID=-1;
 
-    vo=mp_malloc(sizeof(vo_data_t));
-    memset(vo,0,sizeof(vo_data_t));
+    vo=mp_mallocz(sizeof(vo_data_t));
     vo->window = None;
     vo->osd_progbar_type=-1;
     vo->osd_progbar_value=100;   // 0..256
 
-    vo->vo_priv=mp_malloc(sizeof(vo_priv_t));
-    memset(vo->vo_priv,0,sizeof(vo_priv_t));
+    vo->vo_priv=mp_mallocz(sizeof(vo_priv_t));
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     pthread_mutexattr_init(&attr);
     pthread_mutex_init(&priv->surfaces_mutex,&attr);

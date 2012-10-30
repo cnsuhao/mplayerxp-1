@@ -610,7 +610,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
             is_multicast ? RTSP_MULTICAST_PORT : RTSP_UNICAST_CLIENT_PORT,
             client_rtp_port, client_rtcp_port);
   MSG_V("RTSP Transport: %s\n", temp_buf);
-  
+
   rtsp_unschedule_field (rtsp_session, RTSP_SESSION);
   rtsp_schedule_field (rtsp_session, temp_buf);
 

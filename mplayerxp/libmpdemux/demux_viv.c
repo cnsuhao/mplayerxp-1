@@ -112,8 +112,7 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 
     if (!demux->priv)
     {
-	priv = mp_malloc(sizeof(vivo_priv_t));
-	memset(priv, 0, sizeof(vivo_priv_t));
+	priv = mp_mallocz(sizeof(vivo_priv_t));
 	demux->priv = priv;
 	priv->supported = 0;
     }
@@ -268,8 +267,7 @@ static int vivo_probe(demuxer_t* demuxer){
     MSG_DBG2("header block 1 size: %d\n",len);
     //stream_skip(demuxer->stream,len);
 
-    priv=mp_malloc(sizeof(vivo_priv_t));
-    memset(priv,0,sizeof(vivo_priv_t));
+    priv=mp_mallocz(sizeof(vivo_priv_t));
     demuxer->priv=priv;
 
 #if 0
@@ -607,8 +605,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		    sh->src_h = height;
 
 		// emulate BITMAPINFOHEADER:
-		sh->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
-		memset(sh->bih,0,sizeof(BITMAPINFOHEADER));
+		sh->bih=mp_mallocz(sizeof(BITMAPINFOHEADER));
 		sh->bih->biSize=40;
 		if (priv->width)
 		    sh->bih->biWidth = priv->width;
@@ -672,8 +669,7 @@ if (demuxer->audio->id >= -1){
 		}
 
 		// Emulate WAVEFORMATEX struct:
-		sh->wf=mp_malloc(sizeof(WAVEFORMATEX));
-		memset(sh->wf,0,sizeof(WAVEFORMATEX));
+		sh->wf=mp_mallocz(sizeof(WAVEFORMATEX));
 		sh->wf->wFormatTag=sh->wtag;
 		sh->wf->nChannels=1; /* 1 channels for both Siren and G.723 */
 

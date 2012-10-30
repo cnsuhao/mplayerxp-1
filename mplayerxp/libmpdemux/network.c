@@ -94,12 +94,11 @@ static struct {
 
 streaming_ctrl_t * streaming_ctrl_new(void) {
 	streaming_ctrl_t *streaming_ctrl;
-	streaming_ctrl = (streaming_ctrl_t*)mp_malloc(sizeof(streaming_ctrl_t));
+	streaming_ctrl = (streaming_ctrl_t*)mp_mallocz(sizeof(streaming_ctrl_t));
 	if( streaming_ctrl==NULL ) {
 		MSG_FATAL(MSGTR_OutOfMemory);
 		return NULL;
 	}
-	memset( streaming_ctrl, 0, sizeof(streaming_ctrl_t) );
 	return streaming_ctrl;
 }
 

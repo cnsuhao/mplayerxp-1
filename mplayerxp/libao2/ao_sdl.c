@@ -148,8 +148,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 {
 	unsigned i;
 	UNUSED(flags);
-	ao->priv=mp_malloc(sizeof(priv_t));
-	memset(ao->priv,0,sizeof(priv_t));
+	ao->priv=mp_mallocz(sizeof(priv_t));
 	priv_t*priv=ao->priv;
 	priv->volume=127;
 	/* Allocate ring-priv->buffer memory */

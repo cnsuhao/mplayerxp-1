@@ -271,9 +271,8 @@ int vo_x11_init(vo_data_t*vo)
 
     if(vo->depthonscreen) return 1; // already called
 
-    vo->priv2=mp_malloc(sizeof(priv_t));
+    vo->priv2=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv2;
-    memset(priv,0,sizeof(priv_t));
     priv->CompletionType=-1;
 
     XSetErrorHandler(x11_errorhandler);

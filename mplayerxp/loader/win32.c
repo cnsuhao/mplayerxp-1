@@ -305,7 +305,6 @@ static int my_release(char* memory)
 	return 0;
     }
     printf("Freed %d bytes of memory\n", *(int*)(memory-4));
-    //    memset(memory-8, *(int*)(memory-4), 0xCC);
     return 0;
 }
 

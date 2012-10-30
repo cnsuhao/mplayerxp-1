@@ -71,7 +71,7 @@ static void my_callback(int signo)
 
 void init_signal_handling( void )
 {
-#ifndef MP_DEBUG
+#ifdef MP_DEBUG
   /*========= Catch terminate signals: ================*/
   /* terminate requests:*/
   signal(SIGTERM,my_callback); /* kill*/

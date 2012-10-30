@@ -119,9 +119,8 @@ void dump_mux_init(demuxer_t *demuxer)
   char stream_dump_name[1024];
   /* TODO copy it from demuxer */
   if(demuxer->priv) return;
-  demuxer->priv=mp_malloc(sizeof(priv_t));
+  demuxer->priv=mp_mallocz(sizeof(priv_t));
   priv_t*priv=demuxer->priv;
-  memset(priv,0,sizeof(priv_t));
   /* describe other useless dumps */
   priv->mux_type=MUX_HAVE_AUDIO|MUX_HAVE_VIDEO|MUX_HAVE_SUBS;
   if(port)

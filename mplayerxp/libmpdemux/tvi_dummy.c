@@ -126,13 +126,12 @@ tvi_handle_t *new_handle()
 
     if (!h)
 	return(NULL);
-    h->priv = (priv_t *)mp_malloc(sizeof(priv_t));
+    h->priv = (priv_t *)mp_mallocz(sizeof(priv_t));
     if (!h->priv)
     {
 	mp_free(h);
 	return(NULL);
     }
-    memset(h->priv, 0, sizeof(priv_t));
     h->info = &info;
     h->functions = &functions;
     h->seq = 0;

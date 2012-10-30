@@ -194,15 +194,14 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 
 static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
   pthread_mutex_t tmpl=PTHREAD_MUTEX_INITIALIZER;
-  cache_vars_t* c=mp_malloc(sizeof(cache_vars_t));
+  cache_vars_t* c=mp_mallocz(sizeof(cache_vars_t));
   char *pmem;
   unsigned i,num;
-  memset(c,0,sizeof(cache_vars_t));
   c->npackets=num=size/sector;
   /* collection of all c2_packets in continuous memory area minimizes cache pollution
      and speedups cache as C+D=3.27% instead of 4.77% */
   i=sizeof(cache_packet_t)*num;
-  c->packets=mp_malloc(i);
+  c->packets=mp_mallocz(i);
   c->mem=mp_malloc(num*sector);
   if(!c->packets || !c->mem)
   {
@@ -210,7 +209,6 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
     mp_free(c);
     return 0;
   }
-  memset(c->packets,0,i);
   pmem = c->mem;
   MSG_DBG2("For cache navigation was allocated %u bytes as %u packets (%u/%u)\n",i,num,size,sector);
   c->first=c->last=0;

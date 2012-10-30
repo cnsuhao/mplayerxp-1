@@ -302,11 +302,9 @@ static int mov_probe(demuxer_t* demuxer){
     int flags=0;
     int no=0;
     unsigned ver;
-    mov_priv_t* priv=mp_malloc(sizeof(mov_priv_t));
+    mov_priv_t* priv=mp_mallocz(sizeof(mov_priv_t));
 
     MSG_V("Checking for MOV\n");
-
-    memset(priv,0,sizeof(mov_priv_t));
 
     while(1){
 	int i;
@@ -611,8 +609,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		return;
 	    }
 	    if(!priv->track_db) MSG_V("--------------\n");
-	    trak=mp_malloc(sizeof(mov_track_t));
-	    memset(trak,0,sizeof(mov_track_t));
+	    trak=mp_mallocz(sizeof(mov_track_t));
 	    MSG_V("MOV: Track #%d:\n",priv->track_db);
 	    trak->id=priv->track_db;
 	    priv->tracks[priv->track_db]=trak;
@@ -917,8 +914,7 @@ quit_vorbis_block:
 		}  
 		MSG_V("Fourcc: %.4s\n",&trak->fourcc);
 		// Emulate WAVEFORMATEX struct:
-		sh->wf=mp_malloc(sizeof(WAVEFORMATEX));
-		memset(sh->wf,0,sizeof(WAVEFORMATEX));
+		sh->wf=mp_mallocz(sizeof(WAVEFORMATEX));
 		sh->wf->wFormatTag=afourcc2wtag(sh->wtag);
 		sh->wf->nChannels=sh->channels;
 		sh->wf->wBitsPerSample=(trak->stdata[18]<<8)+trak->stdata[19];
@@ -1147,8 +1143,7 @@ quit_vorbis_block:
 		// emulate BITMAPINFOHEADER:
 		if (palette_count)
 		{
-		  sh->bih=mp_malloc(sizeof(BITMAPINFOHEADER) + palette_count * 4);
-		  memset(sh->bih,0,sizeof(BITMAPINFOHEADER) + palette_count * 4);
+		  sh->bih=mp_mallocz(sizeof(BITMAPINFOHEADER) + palette_count * 4);
 		  sh->bih->biSize=40 + palette_count * 4;
 		  // fetch the relevant fields
 		  flag = BE_16(trak->stdata[hdr_ptr]);
@@ -1235,16 +1230,14 @@ quit_vorbis_block:
 		    MSG_ERR( "Invalid extradata size %d, skipping\n",trak->stream_header_len);
 		    trak->stream_header_len = 0;
 		  }
-		  sh->bih=mp_malloc(sizeof(BITMAPINFOHEADER) + trak->stream_header_len);
-		  memset(sh->bih,0,sizeof(BITMAPINFOHEADER) + trak->stream_header_len);
+		  sh->bih=mp_mallocz(sizeof(BITMAPINFOHEADER) + trak->stream_header_len);
 		  sh->bih->biSize=40  + trak->stream_header_len;
 		  memcpy(((unsigned char *)sh->bih)+40,  trak->stream_header, trak->stream_header_len);
 		  mp_free (trak->stream_header);
 		  trak->stream_header_len = 0;
 		  trak->stream_header = NULL;
 		 } else {
-		  sh->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
-		  memset(sh->bih,0,sizeof(BITMAPINFOHEADER));
+		  sh->bih=mp_mallocz(sizeof(BITMAPINFOHEADER));
 		  sh->bih->biSize=40;
 		 }
 		}

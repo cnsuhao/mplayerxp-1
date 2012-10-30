@@ -138,8 +138,7 @@ demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
 }
 
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
-  demuxer_t *d=mp_malloc(sizeof(demuxer_t));
-  memset(d,0,sizeof(demuxer_t));
+  demuxer_t *d=mp_mallocz(sizeof(demuxer_t));
   d->stream=stream;
   d->movi_start=stream->start_pos;
   d->movi_end=stream->end_pos;
@@ -151,8 +150,7 @@ demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
   d->video=new_demuxer_stream(d,v_id);
   d->sub=new_demuxer_stream(d,s_id);
   d->file_format=type;
-  d->info=mp_malloc(sizeof(demuxer_info_t));
-  memset(d->info,0,sizeof(demuxer_info_t));
+  d->info=mp_mallocz(sizeof(demuxer_info_t));
   stream_reset(stream);
   stream_seek(stream,stream->start_pos);
   return d;

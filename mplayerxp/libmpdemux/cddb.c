@@ -574,13 +574,11 @@ int __FASTCALL__ cddb_resolve(char **xmcd_file) {
 cd_info_t* __FASTCALL__ cd_info_new() {
 	cd_info_t *cd_info = NULL;
 	
-	cd_info = (cd_info_t*)mp_malloc(sizeof(cd_info_t));
+	cd_info = (cd_info_t*)mp_mallocz(sizeof(cd_info_t));
 	if( cd_info==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return NULL;
 	}
-	
-	memset(cd_info, 0, sizeof(cd_info_t));
 	
 	return cd_info;
 }
@@ -606,13 +604,11 @@ cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name,
 	
 	if( cd_info==NULL || track_name==NULL ) return NULL;
 	
-	cd_track = (cd_track_t*)mp_malloc(sizeof(cd_track_t));
+	cd_track = (cd_track_t*)mp_mallocz(sizeof(cd_track_t));
 	if( cd_track==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		return NULL;
 	}
-	memset(cd_track, 0, sizeof(cd_track_t));
-	
 	cd_track->name = (char*)mp_malloc(strlen(track_name)+1);
 	if( cd_track->name==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");

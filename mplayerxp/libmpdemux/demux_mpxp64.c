@@ -466,8 +466,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
     hsize=stream_read_qword_le(s); /* header size */
     
     // priv struct:
-    priv=mp_malloc(sizeof(mpxpav64_priv_t));
-    memset(priv,0,sizeof(mpxpav64_priv_t));
+    priv=mp_mallocz(sizeof(mpxpav64_priv_t));
     demuxer->priv=(any_t*)priv;
     demuxer->video->id=-1;
     demuxer->audio->id=-1;

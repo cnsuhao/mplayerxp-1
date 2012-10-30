@@ -32,11 +32,10 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 {
     HRESULT hr = 0;
     const char* em = NULL;
-    DMO_Filter* This = (DMO_Filter*) mp_malloc(sizeof(DMO_Filter));
+    DMO_Filter* This = (DMO_Filter*) mp_mallocz(sizeof(DMO_Filter));
     if (!This)
 	return NULL;
 
-    memset(This, 0, sizeof(DMO_Filter));
 #ifdef HAVE_WIN32LOADER
     CodecAlloc();
 #endif

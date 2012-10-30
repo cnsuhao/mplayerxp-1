@@ -162,10 +162,9 @@ HDRVR DrvOpen(LPARAM lParam2)
     printf("Loading codec DLL: '%s'\n",filename);
 #endif
 
-    hDriver = (NPDRVR) mp_malloc(sizeof(DRVR));
+    hDriver = (NPDRVR) mp_mallocz(sizeof(DRVR));
     if (!hDriver)
 	return ((HDRVR) 0);
-    memset((any_t*)hDriver, 0, sizeof(DRVR));
 
 #ifdef HAVE_WIN32LOADER
     CodecAlloc();

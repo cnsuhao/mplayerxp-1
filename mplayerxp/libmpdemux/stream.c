@@ -219,9 +219,8 @@ void __FASTCALL__ nc_stream_reset(stream_t *s){
 }
 
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
-  stream_t *s=mp_malloc(sizeof(stream_t)+len);
+  stream_t *s=mp_mallocz(sizeof(stream_t)+len);
   if(s==NULL) return NULL;
-  memset(s,0,sizeof(stream_t));
   s->fd=-1;
   s->type=STREAMTYPE_MEMORY;
   s->buf_pos=0; s->buf_len=len;
@@ -236,10 +235,9 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
 }
 
 stream_t* __FASTCALL__ new_stream(int type){
-  stream_t *s=mp_malloc(sizeof(stream_t));
+  stream_t *s=mp_mallocz(sizeof(stream_t));
   if(s==NULL) return NULL;
-  memset(s,0,sizeof(stream_t));
-  
+
   s->fd=-1;
   s->type=type;
   s->sector_size=STREAM_BUFFER_SIZE;

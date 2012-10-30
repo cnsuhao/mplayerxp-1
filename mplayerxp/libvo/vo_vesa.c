@@ -719,9 +719,8 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     int pre_init_err = 0;
     MSG_DBG2("vo_vesa: preinit(%s) was called\n",arg);
     MSG_DBG3("vo_vesa: subdevice %s is being initialized\n",arg);
-    vo->priv=mp_malloc(sizeof(priv_t));
+    vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
-    memset(priv,0,sizeof(priv_t));
     priv->subdev_flags = 0xFFFFFFFEUL;
     if(arg) priv->subdev_flags = parseSubDevice(vo,arg);
 #ifdef CONFIG_VIDIX

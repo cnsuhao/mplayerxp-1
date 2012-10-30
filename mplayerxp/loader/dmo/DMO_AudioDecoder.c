@@ -49,17 +49,17 @@ DMO_AudioDecoder * DMO_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX
 #ifdef HAVE_WIN32LOADER
     Setup_LDT_Keeper();
     Setup_FS_Segment();
-#endif        
+#endif
     this = mp_malloc(sizeof(DMO_AudioDecoder));
-    
+
     this->m_iFlushed=1;
-    
+
     sz = 18 + wf->cbSize;
     this->m_sVhdr = mp_malloc(sz);
     memcpy(this->m_sVhdr, wf, sz);
     this->m_sVhdr2 = mp_malloc(18);
     memcpy(this->m_sVhdr2, this->m_sVhdr, 18);
-    
+
     pWF = (WAVEFORMATEX*)this->m_sVhdr2;
     pWF->wFormatTag = 1;
     pWF->wBitsPerSample = 16;
@@ -67,7 +67,7 @@ DMO_AudioDecoder * DMO_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX
     pWF->nBlockAlign = 2*pWF->nChannels; //pWF->nChannels * (pWF->wBitsPerSample + 7) / 8;
     pWF->nAvgBytesPerSec = pWF->nBlockAlign * pWF->nSamplesPerSec;
     pWF->cbSize = 0;
-    
+
     memset(&this->m_sOurType, 0, sizeof(this->m_sOurType));
     this->m_sOurType.majortype=MEDIATYPE_Audio;
     this->m_sOurType.subtype=MEDIASUBTYPE_PCM;

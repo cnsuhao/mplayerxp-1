@@ -53,8 +53,7 @@ int chardb=0;
 int fontdb=-1;
 int version=0;
 
-desc=mp_malloc(sizeof(font_desc_t));if(!desc) return NULL;
-memset(desc,0,sizeof(font_desc_t));
+desc=mp_mallocz(sizeof(font_desc_t));if(!desc) return NULL;
 
 f=fopen(fname,"rt");if(!f){ MSG_ERR("font: can't open file: %s\n",fname); mp_free(desc); return NULL;}
 

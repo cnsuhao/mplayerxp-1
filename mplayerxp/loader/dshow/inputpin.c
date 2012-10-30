@@ -1214,7 +1214,7 @@ CBaseFilter2* CBaseFilter2Create()
     This->refcount = 1;
     This->pin = (IPin*) CRemotePin2Create(This);
 
-    This->vt = (IBaseFilter_vt*) mp_malloc(sizeof(IBaseFilter_vt));
+    This->vt = (IBaseFilter_vt*) mp_mallocz(sizeof(IBaseFilter_vt));
 
     if (!This->pin || !This->vt)
     {
@@ -1222,7 +1222,6 @@ CBaseFilter2* CBaseFilter2Create()
         return NULL;
     }
 
-    memset(This->vt, 0, sizeof(IBaseFilter_vt));
     This->vt->QueryInterface = CBaseFilter2_QueryInterface;
     This->vt->AddRef = CBaseFilter2_AddRef;
     This->vt->Release = CBaseFilter2_Release;
@@ -1377,7 +1376,7 @@ CRemotePin* CRemotePinCreate(CBaseFilter* pt, IPin* rpin)
     This->remote_pin = rpin;
     This->refcount = 1;
 
-    This->vt = (IPin_vt*) mp_malloc(sizeof(IPin_vt));
+    This->vt = (IPin_vt*) mp_mallocz(sizeof(IPin_vt));
 
     if (!This->vt)
     {
@@ -1385,7 +1384,6 @@ CRemotePin* CRemotePinCreate(CBaseFilter* pt, IPin* rpin)
 	return NULL;
     }
 
-    memset(This->vt, 0, sizeof(IPin_vt));
     This->vt->QueryInterface = CRemotePin_QueryInterface;
     This->vt->AddRef = CRemotePin_AddRef;
     This->vt->Release = CRemotePin_Release;
@@ -1466,7 +1464,7 @@ CRemotePin2* CRemotePin2Create(CBaseFilter2* p)
     This->parent = p;
     This->refcount = 1;
 
-    This->vt = (IPin_vt*) mp_malloc(sizeof(IPin_vt));
+    This->vt = (IPin_vt*) mp_mallocz(sizeof(IPin_vt));
 
     if (!This->vt)
     {
@@ -1474,7 +1472,6 @@ CRemotePin2* CRemotePin2Create(CBaseFilter2* p)
         return NULL;
     }
 
-    memset(This->vt, 0, sizeof(IPin_vt));
     This->vt->QueryInterface = CRemotePin2_QueryInterface;
     This->vt->AddRef = CRemotePin2_AddRef;
     This->vt->Release = CRemotePin2_Release;

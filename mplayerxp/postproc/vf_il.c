@@ -140,9 +140,8 @@ static void __FASTCALL__ parse(FilterParam *fp,const char* args){
 static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
 	vf->put_slice=put_slice;
-	vf->priv=mp_malloc(sizeof(struct vf_priv_s));
-	memset(vf->priv, 0, sizeof(struct vf_priv_s));
-	
+	vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
+
 	if(args)
 	{
 		char *arg2= strchr(args,':');

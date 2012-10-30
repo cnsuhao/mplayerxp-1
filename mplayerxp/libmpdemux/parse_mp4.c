@@ -39,11 +39,11 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   uint8_t len;
 #ifdef MP4_DUMPATOM
   {int i;
-  MSG_DBG2("ESDS Dump (%dbyte):\n", datalen);  
+  MSG_DBG2("ESDS Dump (%dbyte):\n", datalen);
   for(i = 0; i < datalen; i++)
     MSG_DBG2("%02X ", data[i]);
   MSG_DBG2("\nESDS Dumped\n");}
-#endif  
+#endif
   memset(esds, 0, sizeof(esds_t));
 
   esds->version = stream_read_char(s);

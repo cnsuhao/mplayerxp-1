@@ -288,8 +288,7 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_ins
 	}
 	if(!strcmp(_filter_list[i]->name,name)) break;
     }
-    vf=mp_malloc(sizeof(vf_instance_t));
-    memset(vf,0,sizeof(vf_instance_t));
+    vf=mp_mallocz(sizeof(vf_instance_t));
     vf->info=_filter_list[i];
     vf->next=next;
     vf->prev=NULL;

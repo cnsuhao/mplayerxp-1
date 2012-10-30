@@ -251,18 +251,18 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   af_data_t*   	 l = af->data;	 		// Local data
   af_channels_t* s = af->setup;
   int 		 i;
-  
+
   if(AF_OK != RESIZE_LOCAL_BUFFER(af,data))
     return NULL;
 
   // Reset unused channels
   memset(l->audio,0,(c->len*af->mul.n)/af->mul.d);
-  
+
   if(AF_OK == check_routes(s,c->nch,l->nch))
     for(i=0;i<s->nr;i++)
       copy(c->audio,l->audio,c->nch,s->route[i][FR],
 	   l->nch,s->route[i][TO],c->len,c->bps);
-  
+
   // Set output data
   c->audio = l->audio;
   c->len   = (c->len*af->mul.n)/af->mul.d;

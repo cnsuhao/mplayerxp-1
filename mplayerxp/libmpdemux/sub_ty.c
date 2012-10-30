@@ -224,9 +224,9 @@ static int ty_CCdecode( char b1, char b2 )
 
          if ( CC_mode != CURRENT ) return 0;
       }
-    
+
       // preamble address code (row & indent)
-      if ( b2 & 0x40 ) 
+      if ( b2 & 0x40 )
       {
          TY_CC_CUR_Y = CC_row[ ( ( b1 << 1 ) & 14 ) | ( ( b2 >> 5 ) & 1 ) ];
 
@@ -443,7 +443,7 @@ static int ty_CCdecode( char b1, char b2 )
 
                      TY_CC_CUR_X = 1;
                      TY_CC_CUR_Y = -1;
-              
+
                      TY_CC_ptr = TY_CC_buf;
                      memset( TY_CC_buf, 0, sizeof( TY_CC_buf ) );
                   }

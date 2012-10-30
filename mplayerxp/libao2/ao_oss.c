@@ -199,9 +199,8 @@ static void show_caps(ao_data_t* ao)
 static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
   char *mixer_channels [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
   UNUSED(flags);
-  ao->priv=mp_malloc(sizeof(priv_t));
+  ao->priv=mp_mallocz(sizeof(priv_t));
   priv_t*priv=ao->priv;
-  memset(priv,0,sizeof(priv_t));
   priv->dsp=PATH_DEV_DSP;
   priv->mixer_channel=SOUND_MIXER_PCM;
   priv->fd=-1;
@@ -321,7 +320,7 @@ ac3_retry:
     any_t* data;
     ao->buffersize=0;
 #ifdef HAVE_AUDIO_SELECT
-    data=mp_malloc(ao->outburst); memset(data,0,ao->outburst);
+    data=mp_mallocz(ao->outburst);
     while(ao->buffersize<0x40000){
       fd_set rfds;
       struct timeval tv;

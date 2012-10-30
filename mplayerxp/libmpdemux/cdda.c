@@ -80,8 +80,7 @@ int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
   unsigned char arr[256];
   int st_inited;
 
-  priv = (cdda_priv*)mp_malloc(sizeof(cdda_priv));
-  memset(priv, 0, sizeof(cdda_priv));
+  priv = (cdda_priv*)mp_mallocz(sizeof(cdda_priv));
 
   priv->cd = cdio_cddap_identify(dev,mp_conf.verbose?1:0,NULL);
 

@@ -128,8 +128,7 @@ static int init_vfw_video_codec(sh_video_t *sh_video){
     return 0;
   }
 
-  priv->o_bih=mp_malloc(temp_len);
-  memset(priv->o_bih, 0, temp_len);
+  priv->o_bih=mp_mallocz(temp_len);
   priv->o_bih->biSize = temp_len;
 
   ret = ICDecompressGetFormat(priv->hic, sh_video->bih, priv->o_bih);

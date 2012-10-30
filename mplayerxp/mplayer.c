@@ -186,14 +186,11 @@ static int mpxp_init_antiviral_protection(int verbose)
 }
 
 static void mpxp_init_structs(void) {
-    mp_data=mp_malloc(sizeof(mp_data_t));
-    memset(mp_data,0,sizeof(mp_data_t));
+    mp_data=mp_mallocz(sizeof(mp_data_t));
     mp_data->seek_time=-1;
-    mp_data->bench=mp_malloc(sizeof(time_usage_t));
+    mp_data->bench=mp_mallocz(sizeof(time_usage_t));
     mp_data->use_pts_fix2=-1;
-    memset(mp_data->bench,0,sizeof(time_usage_t));
-    mp_data->priv=mp_malloc(sizeof(priv_t));
-    memset(mp_data->priv,0,sizeof(priv_t));
+    mp_data->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=mp_data->priv;
     priv->osd_function=OSD_PLAY;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
@@ -1671,9 +1668,8 @@ static int mpxp_init_vobsub(const char *filename) {
       }
     }else if(mp_conf.sub_auto && filename && (strlen(filename)>=5)){
       /* try to autodetect vobsub from movie filename ::atmos */
-      char *buf = mp_malloc((strlen(filename)-3) * sizeof(char));
-      memset(buf,0,strlen(filename)-3); // make sure string is terminated
-      strncpy(buf, filename, strlen(filename)-4); 
+      char *buf = mp_mallocz((strlen(filename)-3) * sizeof(char));
+      strncpy(buf, filename, strlen(filename)-4);
       vo_data->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&vo_data->spudec);
       mp_free(buf);
     }
@@ -2388,7 +2384,6 @@ int main(int argc,char* argv[], char *envp[]){
 
     mp_msg_init(MSGL_STATUS);
     MSG_INFO("%s",banner_text);
-//  memset(&vtune,0,sizeof(vo_tune_info_t));
   /* Test for cpu capabilities (and corresponding OS support) for optimizing */
 
     priv->playtree = play_tree_new();

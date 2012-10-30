@@ -168,17 +168,14 @@ static muxer_stream_t* mpxpav64_new_stream(muxer_t *muxer,int type)
 	MSG_ERR("Too many streams! increase MUXER_MAX_STREAMS !\n");
 	return NULL;
     }
-    s=mp_malloc(sizeof(muxer_stream_t));
-    memset(s,0,sizeof(muxer_stream_t));
+    s=mp_mallocz(sizeof(muxer_stream_t));
     if(!s) return NULL; // no mem!?
     if(!muxer->priv)
     {
-	muxer->priv=mp_malloc(sizeof(priv_mpxpav64_t));
-	memset(muxer->priv,0,sizeof(priv_mpxpav64_t));
+	muxer->priv=mp_mallocz(sizeof(priv_mpxpav64_t));
 	((priv_mpxpav64_t *)muxer->priv)->prev_seek=-SEEKPOINT_THRESHOLD*2;
     }
-    s->priv=mp_malloc(sizeof(priv_mpxpav64_stream_t));
-    memset(s->priv,0,sizeof(priv_mpxpav64_stream_t));
+    s->priv=mp_mallocz(sizeof(priv_mpxpav64_stream_t));
     muxer->streams[muxer->avih.dwStreams]=s;
     s->type=type;
     s->id=muxer->avih.dwStreams;
