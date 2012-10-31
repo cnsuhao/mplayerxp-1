@@ -33,10 +33,20 @@
 #include "help_mp.h"
 
 #include "libmpdemux/stream.h"
+#include "libmpdemux/demuxer.h"
+#include "libmpdemux/stheader.h"
+#include "libmpdemux/parse_es.h"
+
 #include "libmpconf/cfgparser.h"
 #include "libmpconf/codec-cfg.h"
 #include "libmpconf/m_struct.h"
 #include "cfg-mplayer-def.h"
+
+#include "libmpcodecs/dec_video.h"
+#include "libmpcodecs/dec_audio.h"
+
+/* Common FIFO functions, and keyboard/event FIFO code */
+#include "fifo.h"
 
 #ifdef USE_SUB
 #include "libmpsub/subreader.h"
@@ -53,7 +63,7 @@
 #include "osdep/keycodes.h"
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
-
+#include "osdep/get_path.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 
@@ -61,8 +71,9 @@
 #include "dump.h"
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
+#include "mixer.h"
 
-#define ABS(x) (((x)>=0)?(x):(-(x)))
+#include "xmp_core.h"
 
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
@@ -90,6 +101,8 @@ typedef struct x86_features_s {
 }x86_features_t;
 static x86_features_t x86;
 #endif
+
+#define ABS(x) (((x)>=0)?(x):(-(x)))
 
 #define INITED_VO	0x00000001
 #define INITED_AO	0x00000002
@@ -136,7 +149,6 @@ mp_data_t*mp_data=NULL;
 /**************************************************************************
              Decoding ahead
 **************************************************************************/
-#include "xmp_core.h"
 
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
@@ -151,24 +163,10 @@ static int cfg_include(struct config *conf, char *filename){
 	UNUSED(conf);
 	return m_config_parse_config_file(mp_data->mconfig, filename);
 }
+#include "cfg-mplayer.h"
 
-#include "osdep/get_path.h"
-
-/**************************************************************************
-             Input media streaming & demultiplexer:
-**************************************************************************/
-
-#include "libmpdemux/stream.h"
-#include "libmpdemux/demuxer.h"
-#include "libmpdemux/stheader.h"
-#include "libmpdemux/parse_es.h"
-
-#include "libmpcodecs/dec_video.h"
-#include "libmpcodecs/dec_audio.h"
-
-/* Common FIFO functions, and keyboard/event FIFO code */
-#include "fifo.h"
 /**************************************************************************/
+extern void mp_register_options(m_config_t* cfg);
 
 static int mpxp_init_antiviral_protection(int verbose)
 {
@@ -756,11 +754,6 @@ void exit_sighandler(void)
   xmp_killall_threads(pthread_self());
   __exit_sighandler();
 }
-
-extern void mp_register_options(m_config_t* cfg);
-
-#include "mixer.h"
-#include "cfg-mplayer.h"
 
 void parse_cfgfiles( m_config_t* conf )
 {
@@ -2211,19 +2204,19 @@ For future:
 	  mp_conf.osd_level= v > 3 ? 3 : v;
       } break;
     case MP_CMD_MUTE:
-      mixer_mute();
+      mixer_mute(ao_data);
       break;
     case MP_CMD_VOLUME :  {
       int v = cmd->args[0].v.i;
       if(v > 0)
-	mixer_incvolume();
+	mixer_incvolume(ao_data);
       else
-	mixer_decvolume();
+	mixer_decvolume(ao_data);
 #ifdef USE_OSD
       if(mp_conf.osd_level){
 	osd->visible=sh_video->fps; // 1 sec
 	vo_data->osd_progbar_type=OSD_VOLUME;
-	vo_data->osd_progbar_value=(mixer_getbothvolume()*256.0)/100.0;
+	vo_data->osd_progbar_value=(mixer_getbothvolume(ao_data)*256.0)/100.0;
 	vo_osd_changed(OSDTYPE_PROGBAR);
       }
 #endif

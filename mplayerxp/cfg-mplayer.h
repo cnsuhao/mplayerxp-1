@@ -2,6 +2,7 @@
  * config for cfgparser
  */
 
+extern const char *oss_mixer_device;
 #ifdef HAVE_SDL
 //extern char *sdl_driver;
 extern int sdl_noxv;
