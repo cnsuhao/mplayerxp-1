@@ -89,11 +89,11 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 	return 0;
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->put_slice=put_slice;
     vf->get_image=get_image;
     vf->query_format=query_format;
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_swapuv = {

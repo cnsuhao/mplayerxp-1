@@ -344,7 +344,7 @@ void uninit(sh_audio_t *sh)
   dlclose(dll_handle);
 }
 
-int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
   UNUSED(sh);
   UNUSED(cmd);

@@ -626,7 +626,7 @@ static void __FASTCALL__ xv_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
     }
 }
 
-static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t*priv=(priv_t*)vo->priv;
   switch (request) {
@@ -634,28 +634,28 @@ static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
     return query_format(vo,(vo_query_fourcc_t*)data);
   case VOCTRL_FULLSCREEN:
     vo_x11_fullscreen(vo);
-    return VO_TRUE;
+    return CONTROL_TRUE;
   case VOCTRL_CHECK_EVENTS:
     {
      vo_resize_t * vrest = (vo_resize_t *)data;
      vrest->event_type = check_events(vo,vrest->adjust_size);
-     return VO_TRUE;
+     return CONTROL_TRUE;
     }
   case VOCTRL_GET_NUM_FRAMES:
 	*(uint32_t *)data = priv->num_buffers;
-	return VO_TRUE;
+	return CONTROL_TRUE;
   case DRI_GET_SURFACE_CAPS:
 	xv_dri_get_surface_caps(vo,data);
-	return VO_TRUE;
+	return CONTROL_TRUE;
   case DRI_GET_SURFACE:
 	xv_dri_get_surface(vo,data);
-	return VO_TRUE;
+	return CONTROL_TRUE;
   case VOCTRL_SET_EQUALIZER:
-	if(!xv_set_video_eq(vo,data)) return VO_TRUE;
-	return VO_FALSE;
+	if(!xv_set_video_eq(vo,data)) return CONTROL_TRUE;
+	return CONTROL_FALSE;
   case VOCTRL_GET_EQUALIZER:
-	if(xv_get_video_eq(vo,data)) return VO_TRUE;
-	return VO_FALSE;
+	if(xv_get_video_eq(vo,data)) return CONTROL_TRUE;
+	return CONTROL_FALSE;
   }
-  return VO_NOTIMPL;
+  return CONTROL_NA;
 }

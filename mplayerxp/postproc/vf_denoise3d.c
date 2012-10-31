@@ -321,91 +321,84 @@ static void __FASTCALL__ hqPrecalcCoefs(int *Ct, double Dist25)
     }
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
-        double LumSpac, LumTmp, ChromSpac, ChromTmp;
-        double Param1, Param2, Param3, Param4;
-	int e;
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+    double LumSpac, LumTmp, ChromSpac, ChromTmp;
+    double Param1, Param2, Param3, Param4;
+    int e;
 
-	vf->config=config;
-	vf->put_slice=put_slice;
-        vf->query_format=query_format;
-        vf->uninit=uninit;
-	vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
+    vf->config=config;
+    vf->put_slice=put_slice;
+    vf->query_format=query_format;
+    vf->uninit=uninit;
+    vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
 
-	e=0;
-        if (args)
-        {
-	    sscanf(args, "%lf:%lf:%lf:%lf", &Param1, &Param2, &Param3, &Param4 );
-            switch(e)
-            {
+    e=0;
+    if (args) {
+	sscanf(args, "%lf:%lf:%lf:%lf", &Param1, &Param2, &Param3, &Param4 );
+	switch(e) {
 	    default:
-            case 0:
-                LumSpac = PARAM1_DEFAULT;
-                LumTmp = PARAM3_DEFAULT;
+	    case 0:
+		LumSpac = PARAM1_DEFAULT;
+		LumTmp = PARAM3_DEFAULT;
 
-                ChromSpac = PARAM2_DEFAULT;
-                ChromTmp = LumTmp * ChromSpac / LumSpac;
-                break;
+		ChromSpac = PARAM2_DEFAULT;
+		ChromTmp = LumTmp * ChromSpac / LumSpac;
+		break;
 
-            case 1:
-                LumSpac = Param1;
-                LumTmp = PARAM3_DEFAULT * Param1 / PARAM1_DEFAULT;
+	    case 1:
+		LumSpac = Param1;
+		LumTmp = PARAM3_DEFAULT * Param1 / PARAM1_DEFAULT;
 
-                ChromSpac = PARAM2_DEFAULT * Param1 / PARAM1_DEFAULT;
-                ChromTmp = LumTmp * ChromSpac / LumSpac;
-                break;
+		ChromSpac = PARAM2_DEFAULT * Param1 / PARAM1_DEFAULT;
+		ChromTmp = LumTmp * ChromSpac / LumSpac;
+		break;
 
-            case 2:
-                LumSpac = Param1;
-                LumTmp = PARAM3_DEFAULT * Param1 / PARAM1_DEFAULT;
+	    case 2:
+		LumSpac = Param1;
+		LumTmp = PARAM3_DEFAULT * Param1 / PARAM1_DEFAULT;
 
-                ChromSpac = Param2;
-                ChromTmp = LumTmp * ChromSpac / LumSpac;
-                break;
+		ChromSpac = Param2;
+		ChromTmp = LumTmp * ChromSpac / LumSpac;
+		break;
 
-            case 3:
-                LumSpac = Param1;
-                LumTmp = Param3;
+	    case 3:
+		LumSpac = Param1;
+		LumTmp = Param3;
 
-                ChromSpac = Param2;
-                ChromTmp = LumTmp * ChromSpac / LumSpac;
-                break;
+		ChromSpac = Param2;
+		ChromTmp = LumTmp * ChromSpac / LumSpac;
+		break;
 
-            case 4:
-                LumSpac = Param1;
-                LumTmp = Param3;
+	    case 4:
+		LumSpac = Param1;
+		LumTmp = Param3;
 
-                ChromSpac = Param2;
-                ChromTmp = Param4;
+		ChromSpac = Param2;
+		ChromTmp = Param4;
 		vf->put_slice=hq_put_slice;
-                break;
+		break;
 
-            }
-        }
-        else
-        {
-            LumSpac = PARAM1_DEFAULT;
-            LumTmp = PARAM3_DEFAULT;
-
-            ChromSpac = PARAM2_DEFAULT;
-            ChromTmp = LumTmp * ChromSpac / LumSpac;
-        }
-
-	if(e==4)
-	{
-	    hqPrecalcCoefs(vf->priv->Coefs[0], LumSpac);
-	    hqPrecalcCoefs(vf->priv->Coefs[1], LumTmp);
-	    hqPrecalcCoefs(vf->priv->Coefs[2], ChromSpac);
-	    hqPrecalcCoefs(vf->priv->Coefs[3], ChromTmp);
 	}
-	else
-	{
-	    PrecalcCoefs(vf->priv->Coefs[0], LumSpac);
-	    PrecalcCoefs(vf->priv->Coefs[1], LumTmp);
-	    PrecalcCoefs(vf->priv->Coefs[2], ChromSpac);
-	    PrecalcCoefs(vf->priv->Coefs[3], ChromTmp);
-	}
-	return 1;
+    } else {
+	LumSpac = PARAM1_DEFAULT;
+	LumTmp = PARAM3_DEFAULT;
+
+	ChromSpac = PARAM2_DEFAULT;
+	ChromTmp = LumTmp * ChromSpac / LumSpac;
+    }
+
+    if(e==4) {
+	hqPrecalcCoefs(vf->priv->Coefs[0], LumSpac);
+	hqPrecalcCoefs(vf->priv->Coefs[1], LumTmp);
+	hqPrecalcCoefs(vf->priv->Coefs[2], ChromSpac);
+	hqPrecalcCoefs(vf->priv->Coefs[3], ChromTmp);
+    } else {
+	PrecalcCoefs(vf->priv->Coefs[0], LumSpac);
+	PrecalcCoefs(vf->priv->Coefs[1], LumTmp);
+	PrecalcCoefs(vf->priv->Coefs[2], ChromSpac);
+	PrecalcCoefs(vf->priv->Coefs[3], ChromTmp);
+    }
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_denoise3d = {

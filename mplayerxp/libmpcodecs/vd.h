@@ -17,10 +17,10 @@ typedef struct vd_functions_s
 {
     const vd_info_t *info;
     const config_t*  options;/**< Optional: MPlayerXP's option related */
-    int (*init)(sh_video_t *sh);
-    void (*uninit)(sh_video_t *sh);
-    ControlCodes (*control)(sh_video_t *sh,int cmd,any_t* arg, ...);
-    mp_image_t* (*decode)(sh_video_t *sh,any_t* data,int len,int flags);
+    int (*__FASTCALL__ init)(sh_video_t *sh);
+    void (*__FASTCALL__ uninit)(sh_video_t *sh);
+    ControlCodes (*__FASTCALL__ control)(sh_video_t *sh,int cmd,any_t* arg, ...);
+    mp_image_t* (*__FASTCALL__ decode)(sh_video_t *sh,any_t* data,int len,int flags);
 } vd_functions_t;
 
 // NULL terminated array of all drivers
@@ -34,9 +34,9 @@ enum {
     VDCTRL_RESYNC_STREAM	=7 /* resync video stream if needed */
 };
 // callbacks:
-int mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune);
-mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h);
-void mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
-void mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);
+int __FASTCALL__ mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune);
+mp_image_t* __FASTCALL__ mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h);
+void __FASTCALL__ mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
+void __FASTCALL__ mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);
 
 #endif

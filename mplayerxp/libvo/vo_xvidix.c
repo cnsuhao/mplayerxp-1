@@ -409,20 +409,20 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     return 0;
 }
 
-static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
   switch (request) {
   case VOCTRL_QUERY_FORMAT:
     return query_format(vo,(vo_query_fourcc_t*)data);
   case VOCTRL_FULLSCREEN:
     vo_x11_fullscreen(vo);
-    return VO_TRUE;
+    return CONTROL_TRUE;
   case VOCTRL_CHECK_EVENTS:
     {
      vo_resize_t * vrest = (vo_resize_t *)data;
      vrest->event_type = check_events(vo,vrest->adjust_size);
-     return VO_TRUE;
+     return CONTROL_TRUE;
     }
   }
-  return VO_NOTIMPL;
+  return CONTROL_NA;
 }

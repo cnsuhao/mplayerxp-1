@@ -25,14 +25,14 @@ typedef struct af_center_s
 }af_center_t;
 
 // Initialization and runtime control
-static int control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_center_t* s   = af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     // Sanity check
-    if(!arg) return AF_ERROR;
+    if(!arg) return CONTROL_ERROR;
 
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->nch    = max(s->ch+1,((af_data_t*)arg)->nch);
@@ -48,18 +48,18 @@ static int control(struct af_instance_s* af, int cmd, any_t* arg)
     if((ch >= AF_NCH) || (ch < 0)){
       MSG_ERR("[sub] Center channel number must be between "
 	     " 0 and %i current value is %i\n", AF_NCH-1, ch);
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     s->ch = ch;
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_SHOWCONF:
   {
     MSG_INFO("[af_center] %i\n",s->ch);
-    return AF_OK;
+    return CONTROL_OK;
   }
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -92,7 +92,7 @@ static af_data_t* play(struct af_instance_s* af, af_data_t* data,int final)
 }
 
 // Allocate memory and set function pointers
-static int open(af_instance_t* af){
+static ControlCodes open(af_instance_t* af){
   af_center_t* s;
   af->control=control;
   af->uninit=uninit;
@@ -102,10 +102,10 @@ static int open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=s=mp_calloc(1,sizeof(af_center_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
   // Set default values
   s->ch = 1;  	 // Channel nr 2
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -731,7 +731,7 @@ static int from_ulaw(any_t* in, any_t* out, int len, int bps, int format)
   register int i;
   // Make sure the input parametrs are OK
   if(format & (AF_FORMAT_SPECIAL_MASK | AF_FORMAT_US))
-      return AF_ERROR;
+      return CONTROL_ERROR;
     
   // Convert to int or to float
   if((format & AF_FORMAT_POINT_MASK) == AF_FORMAT_I){
@@ -761,7 +761,7 @@ static int from_ulaw(any_t* in, any_t* out, int len, int bps, int format)
       } 
       break;
     default:
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
   }
   else{
@@ -772,7 +772,7 @@ static int from_ulaw(any_t* in, any_t* out, int len, int bps, int format)
 	((float*)out)[i] = +1.0/32768.0 * (float)ulaw_decode[(((int8_t*)in)[i]) & 0x7F];
     }
   }
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 /* Convert from singed int8 to singned int32 or float to ulaw */
@@ -781,7 +781,7 @@ static int to_ulaw(any_t* in, any_t* out, int len, int bps, int format)
   register int i;
   // Make sure the input parametrs are OK
   if(format & (AF_FORMAT_SPECIAL_MASK | AF_FORMAT_US))
-      return AF_ERROR;
+      return CONTROL_ERROR;
     
   // Convert from int or to float
   if((format & AF_FORMAT_POINT_MASK) == AF_FORMAT_I){
@@ -811,7 +811,7 @@ static int to_ulaw(any_t* in, any_t* out, int len, int bps, int format)
       }
       break;
     default:
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
   }
   else{
@@ -822,7 +822,7 @@ static int to_ulaw(any_t* in, any_t* out, int len, int bps, int format)
 	((int8_t*)out)[i] = 0x7F & ulaw_encode[(int)(-32767.0/4.0 * ((float*)in)[i])];
     }
   }
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 #endif /* __af_format_ulaw_c */

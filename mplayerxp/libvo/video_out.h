@@ -5,7 +5,7 @@
  *	Strongly modified, most parts rewritten: A'rpi/ESP-team - 2000-2001
  *
  */
- 
+
 #ifndef __VIDEO_OUT_H
 #define __VIDEO_OUT_H 1
 
@@ -21,6 +21,7 @@
 #include "libmpsub/subreader.h"
 #include "img_format.h"
 #include "mp_image.h"
+#include "xmp_enums.h"
 
 enum {
     VO_EVENT_EXPOSE=1,
@@ -45,14 +46,6 @@ enum {
     VOCTRL_UNUSED4=14,
     VOCTRL_SET_EQUALIZER=1000,	/**< Set video equalizer */
     VOCTRL_GET_EQUALIZER=1001	/**< Get video equalizer */
-};
-
-enum {
-    VO_TRUE=1,
-    VO_FALSE=0,
-    VO_ERROR=-1,
-    VO_NOTAVAIL=-2,
-    VO_NOTIMPL=-3
 };
 
 enum {
@@ -115,13 +108,13 @@ typedef struct vo_videq_s
 }vo_videq_t;
 
 typedef struct vo_gamma_s{
-    int			brightness;
-    int			saturation;
-    int			contrast;
-    int			hue;
-    int			red_intensity;
-    int			green_intensity;
-    int			blue_intensity;
+    int		brightness;
+    int		saturation;
+    int		contrast;
+    int		hue;
+    int		red_intensity;
+    int		green_intensity;
+    int		blue_intensity;
 }vo_gamma_t;
 
 typedef struct vo_rect_s {
@@ -229,14 +222,14 @@ typedef struct vo_functions_s
 	/** Control interface
 	 * @param request	command. See VOCTRL_** for detail
 	 * @param data		data associated with command
-	 * @return		VO_TRUE if success VO_FALSE VO_ERROR VO_NOTIMPL otherwise
+	 * @return		CONTROL_TRUE if success CONTROL_FALSE VO_ERROR CONTROL_NA otherwise
 	 **/
-	uint32_t (* __FASTCALL__ control)(vo_data_t* vo,uint32_t request, any_t*data);
+	ControlCodes (* __FASTCALL__ control)(vo_data_t* vo,uint32_t request, any_t*data);
 
         /** Returns driver information.
          * @return	read-only pointer to a vo_info_t structure.
          **/
-        const vo_info_t* (*get_info)(vo_data_t* vo);
+        const vo_info_t* (* __FASTCALL__ get_info)(vo_data_t* vo);
 
         /** Blit/Flip buffer to the screen. Must be called after each frame!
 	 * @param idex	index of frame to be selected as active frame
@@ -245,7 +238,7 @@ typedef struct vo_functions_s
 
         /** Closes driver. Should restore the original state of the system.
          **/
-        void (*uninit)(vo_data_t* vo);
+        void (* __FASTCALL__ uninit)(vo_data_t* vo);
 
 } vo_functions_t;
 
@@ -280,7 +273,7 @@ extern void		vo_flush_page(vo_data_t* vo,unsigned decoder_idx);
 extern void		vo_draw_osd(vo_data_t* vo,unsigned idx);
 extern void		vo_draw_spudec_direct(vo_data_t* vo,unsigned idx);
 extern void		vo_uninit(vo_data_t* vo);
-extern uint32_t __FASTCALL__ vo_control(vo_data_t* vo,uint32_t request, any_t*data);
+extern ControlCodes __FASTCALL__ vo_control(vo_data_t* vo,uint32_t request, any_t*data);
 extern int __FASTCALL__ vo_is_final(vo_data_t* vo);
 
 /** Contains geometry of fourcc */

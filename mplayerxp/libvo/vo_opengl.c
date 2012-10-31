@@ -369,7 +369,7 @@ static void __FASTCALL__ gl_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static uint32_t control(vo_data_t*vo,uint32_t request, any_t*data)
+static ControlCodes control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t*priv=(priv_t*)vo->priv;
     switch (request) {
@@ -378,21 +378,21 @@ static uint32_t control(vo_data_t*vo,uint32_t request, any_t*data)
 	case VOCTRL_FULLSCREEN:
 	    vo_fullscreen(vo);
 	    resize(vo,vo->dest.w, vo->dest.h);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case VOCTRL_GET_NUM_FRAMES:
 	    *(uint32_t *)data = priv->num_buffers;
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE_CAPS:
 	    gl_dri_get_surface_caps(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE:
 	    gl_dri_get_surface(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case VOCTRL_CHECK_EVENTS: {
 	    vo_resize_t * vrest = (vo_resize_t *)data;
 	    vrest->event_type = check_events(vo,vrest->adjust_size);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	}
     }
-    return VO_NOTIMPL;
+    return CONTROL_NA;
 }

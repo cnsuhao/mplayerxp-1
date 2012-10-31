@@ -86,13 +86,13 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int outf
     return vf_next_query_format(vf,fmt,w,h) & (~VFCAP_CSP_SUPPORTED_BY_HW);
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
     vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     vf->priv->forced=args && !strcasecmp(args,"swap");
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_rgb2bgr = {

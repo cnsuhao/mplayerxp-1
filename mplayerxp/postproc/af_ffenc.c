@@ -79,7 +79,7 @@ static uint32_t find_atag(const char *codec)
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_ffenc_t *s=af->setup;
   switch(cmd){
@@ -91,11 +91,11 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     if(strcmp(s->cname,"help")==0)
     {
 	print_encoders();
-	return AF_ERROR;
+	return CONTROL_ERROR;
     }
     if(!(s->lavc_codec=avcodec_find_encoder_by_name(s->cname))) {
 	MSG_ERR("Can't find encoder %s in libavcodec\n",s->cname);
-	return AF_ERROR;
+	return CONTROL_ERROR;
     }
     s->lavc_context=avcodec_alloc_context3(s->lavc_codec);
     /* put sample parameters */
@@ -106,7 +106,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     /* open it */
     if (avcodec_open(s->lavc_context, s->lavc_codec) < 0) {
         MSG_ERR("could not open codec %s with libavcodec\n",s->cname);
-        return AF_ERROR;
+        return CONTROL_ERROR;
     }
     s->frame_size = s->lavc_context->frame_size*((af_data_t*)arg)->nch*2/*bps*/;
     s->tail=mp_malloc(s->frame_size);
@@ -117,10 +117,10 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     af->data->bps    = 2;
     ((af_data_t*)arg)->format=AF_FORMAT_SI | AF_FORMAT_NE;
     MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X and bps = %i\n",af->data->rate,af->data->nch,af->data->format,af->data->bps);
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_ffenc] in use [%s %u]\n",s->cname,s->brate);
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
     char *comma;
     strcpy(s->cname,"mp3");
@@ -134,10 +134,10 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	    s->brate=atoi(++comma);
 	}
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -206,7 +206,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -214,8 +214,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->mul.n=1;
   af->data=mp_malloc(sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_ffenc_t));
-  if(af->data == NULL) return AF_ERROR;
-  return AF_OK;
+  if(af->data == NULL) return CONTROL_ERROR;
+  return CONTROL_OK;
 }
 
 // Description of this filter

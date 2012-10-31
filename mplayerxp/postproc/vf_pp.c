@@ -67,7 +67,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_QUERY_MAX_PP_LEVEL:
 	return PP_QUALITY_MAX;
@@ -137,12 +137,12 @@ static unsigned int fmt_list[]={
     0
 };
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     char *endptr;
     const char* name;
     int i;
     int hex_mode=0;
-    
+
     vf->query_format=query_format;
     vf->control=control;
     vf->config=config;
@@ -156,24 +156,24 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     // check csp:
     vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,IMGFMT_YV12,1,1);
     if(!vf->priv->outfmt) return 0; // no csp match :(
-    
+
     if(args){
 	hex_mode= strtol(args, &endptr, 0);
 	if(*endptr){
-            name= args;
+	    name= args;
 	}else
-            name= NULL;
+	    name= NULL;
     }else{
-        name="de";
+	name="de";
     }
 
     for(i=0; i<=PP_QUALITY_MAX; i++){
-        vf->priv->ppMode[i]= pp_get_mode_by_name_and_quality(name, i);
-        if(vf->priv->ppMode[i]==NULL) return -1;
+	vf->priv->ppMode[i]= pp_get_mode_by_name_and_quality(name, i);
+	if(vf->priv->ppMode[i]==NULL) return CONTROL_ERROR;
     }
-    
+
     vf->priv->pp=PP_QUALITY_MAX;
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_pp = {

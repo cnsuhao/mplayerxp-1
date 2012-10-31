@@ -39,14 +39,14 @@ static af_data_t* play_float(struct af_instance_s* af, af_data_t* data,int final
 #endif
 
 // Initialization and runtime control
-static int control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     // Sanity check
-    if(!arg) return AF_ERROR;
+    if(!arg) return CONTROL_ERROR;
     
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->nch    = 1;
@@ -71,15 +71,15 @@ static int control(struct af_instance_s* af, int cmd, any_t* arg)
     sscanf((char*)arg,"%f:%f", &f1,&f2);
     s->freq = f1;
     s->decay = f2;
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_SHOWCONF:
   {
     MSG_INFO("[af_sinesuppress] %f:%f\n",s->freq,s->decay);
-    return AF_OK;
+    return CONTROL_OK;
   }
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -147,7 +147,7 @@ static af_data_t* play_float(struct af_instance_s* af, af_data_t* data,int final
 #endif
 
 // Allocate memory and set function pointers
-static int open(af_instance_t* af){
+static ControlCodes open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play_s16;
@@ -156,11 +156,11 @@ static int open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_sinesuppress_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
 
   ((af_sinesuppress_t*)af->setup)->freq = 50.0;
   ((af_sinesuppress_t*)af->setup)->decay = 0.0001;
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

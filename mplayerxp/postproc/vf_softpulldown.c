@@ -145,16 +145,16 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 	mp_free(vf->priv);
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
-	struct vf_priv_s *p;
-	vf->config = config;
-	vf->put_slice = put_slice;
-	vf->uninit = uninit;
-	vf->default_reqs = VFCAP_ACCEPT_STRIDE;
-	vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
-	vf->priv->state = 0;
-	return 1;
+    struct vf_priv_s *p;
+    vf->config = config;
+    vf->put_slice = put_slice;
+    vf->uninit = uninit;
+    vf->default_reqs = VFCAP_ACCEPT_STRIDE;
+    vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
+    vf->priv->state = 0;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_softpulldown = {

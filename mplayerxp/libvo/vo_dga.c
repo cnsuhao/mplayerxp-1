@@ -781,7 +781,7 @@ static void __FASTCALL__ dga_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t*priv=(priv_t*)vo->priv;
     switch (request) {
@@ -790,16 +790,16 @@ static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	case VOCTRL_CHECK_EVENTS:
 	    check_events(vo);
 	    (*(vo_resize_t *)data).event_type = 0; /* VO_EVENT_RESIZE is meaningless here */
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case VOCTRL_GET_NUM_FRAMES:
 	    *(uint32_t *)data = priv->num_buffers;
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE_CAPS:
 	    dga_dri_get_surface_caps(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE:
 	    dga_dri_get_surface(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
     }
-    return VO_NOTIMPL;
+    return CONTROL_NA;
 }

@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -29,14 +29,14 @@ typedef struct af_pan_s
 }af_pan_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_pan_t* s = af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:
     // Sanity check
-    if(!arg) return AF_ERROR;
+    if(!arg) return CONTROL_ERROR;
 
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
@@ -48,7 +48,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
        (af->data->bps != ((af_data_t*)arg)->bps)){
       ((af_data_t*)arg)->format = af->data->format;
       ((af_data_t*)arg)->bps = af->data->bps;
-      return AF_FALSE;
+      return CONTROL_FALSE;
     }
     return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->data->nch);
   case AF_CONTROL_COMMAND_LINE:{
@@ -58,8 +58,8 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     int   j,k;
     // Read number of outputs
     sscanf((char*)arg,"%i%n", &nch,&n);
-    if(AF_OK != control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &nch))
-      return AF_ERROR;
+    if(CONTROL_OK != control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &nch))
+      return CONTROL_ERROR;
 
     // Read pan values
     cp = &((char*)arg)[n];
@@ -76,7 +76,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	k++;
       }
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_PAN_LEVEL | AF_CONTROL_SET:{
     int    i;
@@ -84,7 +84,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     float* level = ((af_control_ext_t*)arg)->arg;
     for(i=0;i<AF_NCH;i++)
       s->level[ch][i] = clamp(level[i],0.0,1.0);
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_PAN_LEVEL | AF_CONTROL_GET:{
     int    i;
@@ -92,7 +92,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     float* level = ((af_control_ext_t*)arg)->arg;
     for(i=0;i<AF_NCH;i++)
       level[i] = s->level[ch][i];
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_PAN_NOUT | AF_CONTROL_SET:
     // Reinit must be called after this function has been called
@@ -101,16 +101,16 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     if(((int*)arg)[0] <= 0 || ((int*)arg)[0] > AF_NCH){
       MSG_ERR("[pan] The number of output channels must be" 
 	     " between 1 and %i. Current value is %i\n",AF_NCH,((int*)arg)[0]);
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     af->data->nch=((int*)arg)[0];
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_PAN_NOUT | AF_CONTROL_GET:
     *(int*)arg = af->data->nch;
-    return AF_OK;
+    return CONTROL_OK;
   default: break;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -137,7 +137,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   int		ncho = l->nch;		// Number of output channels
   register int  j,k;
 
-  if(AF_OK != RESIZE_LOCAL_BUFFER(af,data))
+  if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af,data))
     return NULL;
 
   out = l->audio;
@@ -164,7 +164,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -173,9 +173,9 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_pan_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
   // Set initial pan to pass-through.
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

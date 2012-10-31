@@ -57,7 +57,7 @@ typedef struct af_raw_s
    cmd control command
    arg argument
 */
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_raw_t* s = af->setup;
 
@@ -95,16 +95,16 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     }
     MSG_V("[af_raw] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X and bps = %i\n",af->data->rate,af->data->nch,af->data->format,af->data->bps);
     af->data->format=AF_FORMAT_SI | AF_FORMAT_NE; // fake! fixme !!!
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_raw] in use %s\n",s->filename);
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:
     s->filename=mp_strdup(arg);
-    return AF_OK;
+    return CONTROL_OK;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 /* Free allocated memory and clean up other stuff too.
@@ -154,9 +154,9 @@ static af_data_t* __FASTCALL__ play( struct af_instance_s* af, af_data_t* data,i
 
 /* Allocate memory and set function pointers
    af audio filter instance 
-   returns AF_OK or AF_ERROR
+   returns CONTROL_OK or CONTROL_ERROR
 */
-static int __FASTCALL__ af_open( af_instance_t* af )
+static ControlCodes __FASTCALL__ af_open( af_instance_t* af )
 {
   af->control = control;
   af->uninit  = uninit;
@@ -166,11 +166,11 @@ static int __FASTCALL__ af_open( af_instance_t* af )
   af->data    = mp_calloc(1, sizeof(af_data_t));
   af->setup   = mp_calloc(1, sizeof(af_raw_t));
   if((af->data == NULL) || (af->setup == NULL))
-    return AF_ERROR;
+    return CONTROL_ERROR;
 
   ((af_raw_t *)af->setup)->filename = "1.wav";
 
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

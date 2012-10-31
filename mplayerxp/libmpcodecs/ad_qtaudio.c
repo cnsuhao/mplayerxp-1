@@ -313,7 +313,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
     return ConvertedBytes;
 }
 
-static int control(sh_audio_t *sh,int cmd,any_t* arg, ...){
+static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...){
     // various optional functions you MAY implement:
   UNUSED(sh);
   UNUSED(cmd);

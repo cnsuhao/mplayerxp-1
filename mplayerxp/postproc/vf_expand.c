@@ -104,7 +104,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_START_FRAME:
 	vf->priv->new_frame=1;
@@ -117,7 +117,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return vf_next_query_format(vf->next,fmt,w,h);
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->control=control;
     vf->query_format=query_format;
@@ -125,7 +125,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(!vf->priv) vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
     if(args) sscanf(args,"%d:%d",&vf->priv->up_h,&vf->priv->dn_h);
     else     vf->priv->up_h=vf->priv->dn_h=-1;
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_expand = {

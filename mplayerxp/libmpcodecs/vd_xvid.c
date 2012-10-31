@@ -459,7 +459,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 }
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,any_t* arg,...){
+static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t* p = sh->context;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:

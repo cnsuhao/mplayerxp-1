@@ -131,7 +131,7 @@ static int __FASTCALL__ fmt2alsa(int format)
 }
 
 /* to set/get/query special features/parameters */
-static int __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
+static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=ao->priv;
     int rval;

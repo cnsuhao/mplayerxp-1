@@ -166,7 +166,7 @@ static int load_lib( const char *libname )
 }
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,any_t* arg,...){
+static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *priv;
     priv=sh->context;
     switch(cmd)

@@ -2,6 +2,7 @@
 #define XMP_ENUMS_H_INCLUDED
 
 typedef enum ControlCodes_e{
+    CONTROL_DETACH	=2,
     CONTROL_OK		=1,
     CONTROL_TRUE	=1,
     CONTROL_FALSE	=0,

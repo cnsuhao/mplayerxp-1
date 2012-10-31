@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -50,14 +50,14 @@ typedef struct af_volume_s
 }af_volume_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_volume_t* s   = (af_volume_t*)af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:
     // Sanity check
-    if(!arg) return AF_ERROR;
+    if(!arg) return CONTROL_ERROR;
     
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->nch    = ((af_data_t*)arg)->nch;
@@ -78,7 +78,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     return af_test_output(af,(af_data_t*)arg);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_volume] using soft %i\n",s->soft);
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
     float v=-10.0;
     float vol[AF_NCH];
@@ -90,19 +90,19 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
   case AF_CONTROL_POST_CREATE:	
     s->fast = ((((af_cfg_t*)arg)->force & AF_INIT_FORMAT_MASK) == 
       AF_INIT_FLOAT) ? 0 : 1;
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_SET:
     memcpy(s->enable,(int*)arg,AF_NCH*sizeof(int));
-    return AF_OK; 
+    return CONTROL_OK; 
   case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_GET:
     memcpy((int*)arg,s->enable,AF_NCH*sizeof(int));
-    return AF_OK; 
+    return CONTROL_OK; 
   case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_SET:
     s->soft = *(int*)arg;
-    return AF_OK; 
+    return CONTROL_OK; 
   case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_GET:
     *(int*)arg = s->soft;
-    return AF_OK; 
+    return CONTROL_OK; 
   case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
     return af_from_dB(AF_NCH,(float*)arg,s->level,20.0,-200.0,60.0);
   case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
@@ -120,11 +120,11 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	af_to_dB(1, &m, &m, 10.0);
 	MSG_INFO("[volume] The maximum volume was %0.2fdB \n", m);
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   default: break;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -203,7 +203,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   int i = 0;
   af->control=control;
   af->uninit=uninit;
@@ -213,13 +213,13 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_volume_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
   // Enable volume control and set initial volume to 0dB.
   for(i=0;i<AF_NCH;i++){
     ((af_volume_t*)af->setup)->enable[i] = 1;
     ((af_volume_t*)af->setup)->level[i]  = 1.0;
   }
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

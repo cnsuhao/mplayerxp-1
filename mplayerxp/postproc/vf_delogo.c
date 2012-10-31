@@ -204,18 +204,15 @@ static unsigned int fmt_list[]={
     0
 };
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     int res;
-    
+
     vf->config=config;
     vf->put_slice=put_slice;
     vf->get_image=get_image;
     vf->query_format=query_format;
     vf->uninit=uninit;
-    if (!vf->priv)
-    {
-        vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
-    }
+    if (!vf->priv) vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
 
     if (args) res = sscanf(args, "%d:%d:%d:%d:%d",
 			   &vf->priv->xoff, &vf->priv->yoff,
@@ -223,7 +220,7 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 			   &vf->priv->band);
     if (args && (res != 5)) {
 	uninit(vf);
-	return 0; // bad syntax
+	return CONTROL_FALSE; // bad syntax
     }
 
     MSG_V( "delogo: %d x %d, %d x %d, band = %d\n",
@@ -237,7 +234,6 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->priv->band = 4;
 	vf->priv->show = 1;
     }
-    
 
     vf->priv->lw += vf->priv->band*2;
     vf->priv->lh += vf->priv->band*2;
@@ -246,13 +242,12 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
     // check csp:
     vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,IMGFMT_YV12,1,1);
-    if(!vf->priv->outfmt)
-    {
+    if(!vf->priv->outfmt) {
 	uninit(vf);
-        return 0; // no csp match :(
+	return CONTROL_FALSE; // no csp match :(
     }
 
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_delogo = {

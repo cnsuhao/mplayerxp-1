@@ -363,7 +363,7 @@ static void __FASTCALL__ set_saturation (vf_eq2_t *eq2, double s)
   print_values (eq2);
 }
 
-static int __FASTCALL__ control (vf_instance_t *vf, int request, any_t*data)
+static ControlCodes __FASTCALL__ control (vf_instance_t *vf, int request, any_t*data)
 {
   vf_equalizer_t *eq;
 
@@ -440,7 +440,7 @@ static void __FASTCALL__ uninit (vf_instance_t *vf)
   }
 }
 
-static int __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
+static ControlCodes __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
 {
   unsigned i;
   vf_eq2_t *eq2;
@@ -506,7 +506,7 @@ static int __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
     set_saturation (eq2, par[3]);
   }
 
-  return 1;
+  return CONTROL_OK;
 }
 
 const vf_info_t vf_info_eq = {

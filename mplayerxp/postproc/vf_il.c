@@ -137,19 +137,18 @@ static void __FASTCALL__ parse(FilterParam *fp,const char* args){
 	if(pos && pos<max) fp->interleave=-1;
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
-	vf->put_slice=put_slice;
-	vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
+    vf->put_slice=put_slice;
+    vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
 
-	if(args)
-	{
-		char *arg2= strchr(args,':');
-		if(arg2) parse(&vf->priv->chromaParam, arg2+1);
-		parse(&vf->priv->lumaParam, args);
-	}
+    if(args) {
+	char *arg2= strchr(args,':');
+	if(arg2) parse(&vf->priv->chromaParam, arg2+1);
+	parse(&vf->priv->lumaParam, args);
+    }
 
-	return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_il = {

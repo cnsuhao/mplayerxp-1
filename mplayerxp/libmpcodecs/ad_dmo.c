@@ -71,7 +71,7 @@ static void uninit(sh_audio_t *sh)
     mp_free(priv);
 }
 
-static int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+static ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
   int skip;
   UNUSED(arg);

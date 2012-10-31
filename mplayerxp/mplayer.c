@@ -2405,7 +2405,7 @@ int main(int argc,char* argv[], char *envp[]){
 	exit_player(MSGTR_Exit_quit);
     }
     if(mp_conf.test_av) {
-	mpxp_test_antiviral_protection(mp_conf.verbose);
+	mpxp_test_antiviral_protection(1);
 	exit_player("Bad test of antiviral protection");
     }
 

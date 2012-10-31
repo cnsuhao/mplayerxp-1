@@ -42,7 +42,7 @@ typedef struct priv_s {
 const char *oss_mixer_device = PATH_DEV_MIXER;
 
 // to set/get/query special features/parameters
-static int __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
     priv_t*priv=ao->priv;
     int rval;
     switch(cmd){

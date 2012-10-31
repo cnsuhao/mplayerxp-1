@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -148,12 +148,12 @@ static int __FASTCALL__ linint(af_data_t* c,af_data_t* l, af_resample_t* s)
 static int __FASTCALL__ set_types(struct af_instance_s* af, af_data_t* data)
 {
   af_resample_t* s = af->setup;
-  int rv = AF_OK;
+  int rv = CONTROL_OK;
   float rd = 0;
 
   // Make sure this filter isn't redundant 
   if((af->data->rate == data->rate) || (af->data->rate == 0))
-    return AF_DETACH;
+    return CONTROL_DETACH;
 
   /* If sloppy and small resampling difference (2%) */
   rd = abs((float)af->data->rate - (float)data->rate)/(float)data->rate;
@@ -185,7 +185,7 @@ static int __FASTCALL__ set_types(struct af_instance_s* af, af_data_t* data)
   }
 
   if(af->data->format != data->format || af->data->bps != data->bps)
-    rv = AF_FALSE;
+    rv = CONTROL_FALSE;
   data->format = af->data->format;
   data->bps = af->data->bps;
   af->data->nch = data->nch;
@@ -193,14 +193,14 @@ static int __FASTCALL__ set_types(struct af_instance_s* af, af_data_t* data)
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_resample_t* s   = (af_resample_t*)af->setup; 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     af_data_t* 	   n   = (af_data_t*)arg; // New configuration
     int            i,d = 0;
-    int 	   rv  = AF_OK;
+    int 	   rv  = CONTROL_OK;
 
     // Free space for circular bufers
     s->ifreq=n->rate;
@@ -211,8 +211,8 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       mp_free(s->xq);
     }
 
-    if(AF_DETACH == (rv = set_types(af,n)))
-      return AF_DETACH;
+    if(CONTROL_DETACH == (rv = set_types(af,n)))
+      return CONTROL_DETACH;
     
     // If linear interpolation 
     if((s->setup & RSMP_MASK) == RSMP_LIN){
@@ -281,7 +281,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       if(NULL == w || NULL == s->w || 
 	 -1 == design_fir(s->up*L, w, &fc, LP|KAISER , 10.0)){
 	MSG_ERR("[resample] Unable to design prototype filter.\n");
-	return AF_ERROR;
+	return CONTROL_ERROR;
       }
       // Copy data from prototype to polyphase filter
       wt=w;
@@ -307,7 +307,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
   }
   case AF_CONTROL_SHOWCONF:
      MSG_INFO("[af_resample] New filter designed up: %i down: %i (%i -> %i Hz)\n", s->up, s->dn,s->ifreq,af->data->rate);
-     return AF_OK;
+     return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
     af_resample_t* s   = (af_resample_t*)af->setup; 
     int rate=0;
@@ -321,7 +321,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
   case AF_CONTROL_POST_CREATE:	
     if((((af_cfg_t*)arg)->force & AF_INIT_FORMAT_MASK) == AF_INIT_FLOAT)
       ((af_resample_t*)af->setup)->setup = RSMP_FLOAT;
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET: 
     // Reinit must be called after this function has been called
     
@@ -330,16 +330,16 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       MSG_ERR("[resample] The output sample frequency " 
 	     "must be between 4kHz and 192kHz. Current value is %i \n",
 	     ((int*)arg)[0]);
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
 
     af->data->rate=((int*)arg)[0]; 
     MSG_V("[resample] Changing sample rate "  
 	   "to %iHz\n",af->data->rate);
-    return AF_OK;
+    return CONTROL_OK;
   default: break;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -365,7 +365,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   register uint32_t	wi    = 0;
   register uint32_t	xi    = 0;
 
-  if(AF_OK != RESIZE_LOCAL_BUFFER(af,data))
+  if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af,data))
     return NULL;
 
   // Run resampling
@@ -409,12 +409,12 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   c->audio = l->audio;
   c->len   = len*l->bps;
   c->rate  = l->rate;
-  
+
   return c;
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -423,9 +423,9 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_resample_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
   ((af_resample_t*)af->setup)->setup = RSMP_INT | FREQ_SLOPPY;
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this plugin

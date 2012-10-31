@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -214,13 +214,13 @@ static unsigned char alaw_encode [2049] =
 } ; /* alaw_encode */
 
 /* Convert from alaw to signd int8 to signed int32 or float */
-static int from_alaw(any_t* in, any_t* out, int len, int bps, int format)
+static ControlCodes from_alaw(any_t* in, any_t* out, int len, int bps, int format)
 {
   register int i;
   // Make sure the input parametrs are OK
   if(format & (AF_FORMAT_SPECIAL_MASK | AF_FORMAT_US))
-      return AF_ERROR;
-    
+      return CONTROL_ERROR;
+
   // Convert to int or to float
   if((format & AF_FORMAT_POINT_MASK) == AF_FORMAT_I){
     switch(bps){
@@ -230,7 +230,7 @@ static int from_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	  ((int8_t*)out)[i] = (-1 * alaw_decode[(((int8_t*)in)[i]) & 0x7F]) >> 8;
 	else
 	  ((int8_t*)out)[i] = (alaw_decode[(((int8_t*)in)[i]) & 0x7F]) >> 8;
-      } 
+      }
       break;
     case(2):
       for(i=0;i<len;i++){
@@ -238,7 +238,7 @@ static int from_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	  ((int16_t*)out)[i] = -1 * alaw_decode[(((int8_t*)in)[i]) & 0x7F];
 	else
 	  ((int16_t*)out)[i] = alaw_decode[(((int8_t*)in)[i]) & 0x7F];
-      } 
+      }
       break;
     case(4):
       for(i=0;i<len;i++){
@@ -246,10 +246,10 @@ static int from_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	  ((int32_t*)out)[i] = (-1 * alaw_decode[(((int8_t*)in)[i]) & 0x7F]) << 16;
 	else
 	  ((int32_t*)out)[i] = (alaw_decode[(((int8_t*)in)[i]) & 0x7F]) << 16;
-      } 
+      }
       break;
     default:
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
   }
   else{
@@ -260,21 +260,21 @@ static int from_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	((float*)out)[i] = +1.0/32768.0 * (float)alaw_decode[(((int8_t*)in)[i]) & 0x7F];
     }
   }
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 /* Convert from singed int8 to singned int32 or float to alaw */
-static int to_alaw(any_t* in, any_t* out, int len, int bps, int format)
+static ControlCodes to_alaw(any_t* in, any_t* out, int len, int bps, int format)
 {
   register int i;
   // Make sure the input parametrs are OK
   if(format & (AF_FORMAT_SPECIAL_MASK | AF_FORMAT_US))
-      return AF_ERROR;
+      return CONTROL_ERROR;
     
   // Convert from int or to float
   if((format & AF_FORMAT_POINT_MASK) == AF_FORMAT_I){
     switch(bps){
-    case(1): 
+    case(1):
       for(i=0;i<len;i++){
 	if(((int8_t*)in)[i] >= 0)
 	  ((int8_t*)out)[i] = alaw_encode[((int8_t*)in)[i] << 4];
@@ -282,7 +282,7 @@ static int to_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	  ((int8_t*)out)[i] = 0x7F & alaw_encode[-((int8_t*)in)[i] << 4];
       }
       break;
-    case(2): 
+    case(2):
       for(i=0;i<len;i++){
 	if(((int16_t*)in)[i] >= 0)
 	  ((int8_t*)out)[i] = alaw_encode[((int16_t*)in)[i] / 16];
@@ -290,7 +290,7 @@ static int to_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	  ((int8_t*)out)[i] = 0x7F & alaw_encode[((int16_t*)in)[i] / -16];
       }
       break;
-    case(4): 
+    case(4):
       for(i=0;i<len;i++){
 	if(((int32_t*)in)[i] >= 0)
 	  ((int8_t*)out)[i] = alaw_encode[((int32_t*)in)[i] >> (16 + 4)];
@@ -299,7 +299,7 @@ static int to_alaw(any_t* in, any_t* out, int len, int bps, int format)
       }
       break;
     default:
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
   }
   else{
@@ -310,6 +310,6 @@ static int to_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	((int8_t*)out)[i] = 0x7F & alaw_encode[(int)(-32767.0/16.0 * ((float*)in)[i])];
     }
   }
-  return AF_OK;
+  return CONTROL_OK;
 }
 #endif /* __af_format_alaw_c */

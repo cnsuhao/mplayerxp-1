@@ -17,7 +17,7 @@
 // Data for specific instances of this filter
 
 // Initialization and runtime control
-static int control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
 {
 	switch(cmd){
 		case AF_CONTROL_REINIT:
@@ -27,7 +27,7 @@ static int control(struct af_instance_s* af, int cmd, any_t* arg)
 		af->data->bps	= 4;
 		return af_test_output(af,(af_data_t*)arg);
 	}
-	return AF_UNKNOWN;
+	return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -62,7 +62,7 @@ static af_data_t* play(struct af_instance_s* af, af_data_t* data,int final)
 }
 
 // Allocate memory and set function pointers
-static int open(af_instance_t* af){
+static ControlCodes open(af_instance_t* af){
 	af->control	= control;
 	af->uninit	= uninit;
 	af->play	= play;
@@ -71,9 +71,9 @@ static int open(af_instance_t* af){
 	af->data	= mp_calloc(1,sizeof(af_data_t));
 
 	if(af->data == NULL)
-		return AF_ERROR;
+		return CONTROL_ERROR;
 	
-	return AF_OK;
+	return CONTROL_OK;
 }
 
 // Description of this filter

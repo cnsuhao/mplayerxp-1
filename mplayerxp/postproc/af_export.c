@@ -52,7 +52,7 @@ typedef struct af_export_s
    cmd control command
    arg argument
 */
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_export_t* s = af->setup;
 
@@ -129,7 +129,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	mp_free(s->filename);
 
       s->filename = get_path(SHARED_FILE);
-      return AF_OK;
+      return CONTROL_OK;
     }
 	
     while((str[i]) && (str[i] != ':'))
@@ -152,13 +152,13 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       MSG_ERR( "[export] Buffer size must be between"
 	      " 1 and 2048\n" );
 
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_EXPORT_SZ | AF_CONTROL_GET:
     *(int*) arg = s->sz;
-    return AF_OK;
+    return CONTROL_OK;
   default: break;      
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 /* Free allocated memory and clean up other stuff too.
@@ -239,9 +239,9 @@ static af_data_t* __FASTCALL__ play( struct af_instance_s* af, af_data_t* data,i
 
 /* Allocate memory and set function pointers
    af audio filter instance 
-   returns AF_OK or AF_ERROR
+   returns CONTROL_OK or CONTROL_ERROR
 */
-static int __FASTCALL__ af_open( af_instance_t* af )
+static ControlCodes __FASTCALL__ af_open( af_instance_t* af )
 {
   af->control = control;
   af->uninit  = uninit;
@@ -251,11 +251,11 @@ static int __FASTCALL__ af_open( af_instance_t* af )
   af->data    = mp_calloc(1, sizeof(af_data_t));
   af->setup   = mp_calloc(1, sizeof(af_export_t));
   if((af->data == NULL) || (af->setup == NULL))
-    return AF_ERROR;
+    return CONTROL_ERROR;
 
   ((af_export_t *)af->setup)->filename = get_path(SHARED_FILE);
 
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

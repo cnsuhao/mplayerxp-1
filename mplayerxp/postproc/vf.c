@@ -303,7 +303,7 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_ins
     vf->dh=sh->src_h;
     vf->dfourcc=sh->fourcc;
     if(next) next->prev=vf;
-    if(vf->info->open(vf,(char*)args)>0) return vf; // Success!
+    if(vf->info->open(vf,(char*)args)==CONTROL_OK) return vf; // Success!
     mp_free(vf);
     MSG_ERR("Can't open video filter: %s\n",name);
     return NULL;

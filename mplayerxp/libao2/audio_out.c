@@ -262,7 +262,7 @@ void ao_resume(ao_data_t*ao)
     if(ao) audio_out->resume(ao);
 }
 
-int __FASTCALL__ ao_control(ao_data_t*ao,int cmd,long arg)
+ControlCodes __FASTCALL__ ao_control(ao_data_t*ao,int cmd,long arg)
 {
     return ao?audio_out->control(ao,cmd,arg):CONTROL_ERROR;
 }

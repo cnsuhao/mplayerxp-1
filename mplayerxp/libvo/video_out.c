@@ -435,7 +435,7 @@ uint32_t __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, ui
 	priv->image_width = w;
 	priv->image_height = h;
 	ps_tune(vo,priv->image_width,priv->org_height);
-	if(dri_retv == VO_TRUE) dri_reconfig(vo,0);
+	if(dri_retv == CONTROL_TRUE) dri_reconfig(vo,0);
 	MSG_V("dri_vo_caps: driver does %s support DRI\n",priv->dri.has_dri?"":"not");
 	MSG_V("dri_vo_caps: caps=%08X fourcc=%08X(%s) x,y,w,h(%u %u %u %u)\n"
 	      "dri_vo_caps: width_height(%u %u) strides(%u %u %u %u) priv->dri.bpp=%u\n"
@@ -531,25 +531,25 @@ uint32_t __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi, unsigned deco
 	if(mpi->type==MP_IMGTYPE_STATIC && priv->dri.num_xp_frames>1)
 	{
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->type==MP_IMGTYPE_STATIC && priv->dri.num_xp_frames>1\n");
-	    return VO_FALSE;
+	    return CONTROL_FALSE;
 	}
 	/*I+P requires 2+ static buffers for R/W */
 	if(mpi->type==MP_IMGTYPE_IP && (priv->dri.num_xp_frames < 2 || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
 	{
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IP && priv->dri.num_xp_frames < 2) || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
-	    return VO_FALSE;
+	    return CONTROL_FALSE;
 	}
 	/*I+P+B requires 3+ static buffers for R/W */
 	if(mpi->type==MP_IMGTYPE_IPB && (priv->dri.num_xp_frames != 3 || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED))
 	{
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IPB && priv->dri.num_xp_frames != 3) || (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
-	    return VO_FALSE;
+	    return CONTROL_FALSE;
 	}
 	/* video surface is bad thing for reading */
 	if(((mpi->flags&MP_IMGFLAG_READABLE)||(mpi->type==MP_IMGTYPE_TEMP)) && (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED)
 	{
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->flags&MP_IMGFLAG_READABLE && (priv->dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
-	    return VO_FALSE;
+	    return CONTROL_FALSE;
 	}
 	/* it seems that surfaces are equal */
 	if((((mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && width_less_stride) || priv->dri.planes_eq) && priv->dri.dr)
@@ -564,12 +564,12 @@ uint32_t __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi, unsigned deco
 	    mpi->flags|=MP_IMGFLAG_DIRECT;
 	    vo_unlock_surfaces(vo);
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface OK\n");
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	}
 	MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE && width_less_stride) || priv->dri.planes_eq) && priv->dri.dr\n");
-	return VO_FALSE;
+	return CONTROL_FALSE;
     }
-    else return VO_FALSE;
+    else return CONTROL_FALSE;
 }
 
 static int __FASTCALL__ adjust_size(any_t*vo,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh)
@@ -612,7 +612,7 @@ int vo_check_events(vo_data_t*vo)
        but there is only one driver (vo_x11) which changes surfaces
        on 'fullscreen' key */
     need_repaint=0;
-    if(priv->dri.has_dri && retval == VO_TRUE && (vrest.event_type & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
+    if(priv->dri.has_dri && retval == CONTROL_TRUE && (vrest.event_type & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
     {
 	need_repaint=1;
 	dri_reconfig(vo,vrest.event_type);
@@ -627,9 +627,9 @@ uint32_t vo_fullscreen(vo_data_t*vo)
     MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
     etype = 0;
     retval = video_out->control(vo,VOCTRL_FULLSCREEN,&etype);
-    if(priv->dri.has_dri && retval == VO_TRUE && (etype & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
+    if(priv->dri.has_dri && retval == CONTROL_TRUE && (etype & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	dri_reconfig(vo,etype);
-    if(retval == VO_TRUE) priv->dri.flags ^= VOFLG_FS;
+    if(retval == CONTROL_TRUE) priv->dri.flags ^= VOFLG_FS;
     return retval;
 }
 
@@ -895,7 +895,7 @@ void vo_uninit(vo_data_t*vo)
     mp_free(vo->vo_priv);
 }
 
-uint32_t __FASTCALL__ vo_control(vo_data_t*vo,uint32_t request, any_t*data)
+ControlCodes __FASTCALL__ vo_control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     uint32_t rval;
     rval=video_out->control(vo,request,data);

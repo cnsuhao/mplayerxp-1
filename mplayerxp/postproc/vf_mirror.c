@@ -124,22 +124,21 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     int dir;
     vf->config=config;
     vf->put_slice=put_slice;
     vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     dir=1;
     if(args)  dir=args[0]=='x'?1:args[0]=='y'?0:-1;
-    if(dir==-1)
-    {
+    if(dir==-1) {
 	MSG_ERR("[vf_mirror] unknown directoin: %c\n",args[0]);
-	return 0;
+	return CONTROL_FALSE;
     }
     if(dir==0)	vf->priv->method=mirror_x;
     else	vf->priv->method=mirror_y;
     vf->priv->dir=dir;
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_mirror = {

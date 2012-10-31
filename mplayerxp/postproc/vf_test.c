@@ -413,15 +413,14 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return vf_next_query_format(vf,IMGFMT_YV12,w,h) & (~VFCAP_CSP_SUPPORTED_BY_HW);
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     char method;
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
     vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
     method='!';
-    if(args)
-    {
+    if(args) {
 	sscanf(args,"%c",&method);
 	args++;
 	if(*args) args++;
@@ -430,17 +429,15 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	    vf->priv->frame_num= atoi(args);
 	}
     }
-    if(method=='r') 
-    {
+    if(method=='r') {
 	vf->config=rgb_config;
 	vf->put_slice=rgb_put_slice;
 	vf->query_format=rgb_query_format;
     }
-    else
-    {
+    else {
 	initIdct();
     }
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_test = {

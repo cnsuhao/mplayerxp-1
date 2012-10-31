@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -49,18 +49,17 @@ typedef struct af_sub_s
   float	fc;		// Cutoff frequency [Hz] for low-pass filter
   float k;		// Filter gain;
   int ch;		// Channel number which to insert the filtered data
-  
 }af_sub_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_sub_t* s   = af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     // Sanity check
-    if(!arg) return AF_ERROR;
+    if(!arg) return CONTROL_ERROR;
 
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->nch    = max(s->ch+1,((af_data_t*)arg)->nch);
@@ -73,18 +72,18 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
        (float)af->data->rate, &s->k, s->w[0])) ||
        (-1 == szxform(sp[1].a, sp[1].b, Q, s->fc,
        (float)af->data->rate, &s->k, s->w[1])))
-      return AF_ERROR;
+      return CONTROL_ERROR;
     return af_test_output(af,(af_data_t*)arg);
   }
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_sub] assigned channel %i\n",s->ch);
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
     int   ch=5;
     float fc=60.0;
     sscanf(arg,"%f:%i", &fc , &ch);
-    if(AF_OK != control(af,AF_CONTROL_SUB_CH | AF_CONTROL_SET, &ch))
-      return AF_ERROR;
+    if(CONTROL_OK != control(af,AF_CONTROL_SUB_CH | AF_CONTROL_SET, &ch))
+      return CONTROL_ERROR;
     return control(af,AF_CONTROL_SUB_FC | AF_CONTROL_SET, &fc);
   }
   case AF_CONTROL_SUB_CH | AF_CONTROL_SET: // Requires reinit
@@ -92,29 +91,29 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     if((*(int*)arg >= AF_NCH) || (*(int*)arg < 0)){
       MSG_ERR("[sub] Subwoofer channel number must be between "
 	     " 0 and %i current value is %i\n", AF_NCH-1, *(int*)arg);
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     s->ch = *(int*)arg;
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_SUB_CH | AF_CONTROL_GET:
     *(int*)arg = s->ch;
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_SUB_FC | AF_CONTROL_SET: // Requires reinit
     // Sanity check
     if((*(float*)arg > 300) || (*(float*)arg < 20)){
       MSG_ERR("[sub] Cutoff frequency must be between 20Hz and"
 	     " 300Hz current value is %0.2f",*(float*)arg);
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     // Set cutoff frequency
     s->fc = *(float*)arg;
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_SUB_FC | AF_CONTROL_GET:
     *(float*)arg = s->fc;
-    return AF_OK;
+    return CONTROL_OK;
   default: break;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -160,7 +159,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af_sub_t* s;
   af->control=control;
   af->uninit=uninit;
@@ -170,11 +169,11 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=s=mp_calloc(1,sizeof(af_sub_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
   // Set default values
   s->ch = 5;  	 // Channel nr 6
   s->fc = 60; 	 // Cutoff frequency 60Hz
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

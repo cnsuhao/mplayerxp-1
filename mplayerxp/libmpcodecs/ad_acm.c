@@ -159,7 +159,7 @@ void uninit(sh_audio_t *sh)
   mp_free(sh->context);
 }
 
-int control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
   int skip;
     switch(cmd)

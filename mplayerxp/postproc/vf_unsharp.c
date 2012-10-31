@@ -320,7 +320,7 @@ static unsigned int fmt_list[] = {
     0
 };
 
-static int __FASTCALL__ vf_open( vf_instance_t *vf,const char* args ) {
+static ControlCodes __FASTCALL__ vf_open( vf_instance_t *vf,const char* args ) {
     vf->config       = config;
     vf->put_slice    = put_slice;
     vf->get_image    = get_image;
@@ -334,8 +334,8 @@ static int __FASTCALL__ vf_open( vf_instance_t *vf,const char* args ) {
 	if( args2 )
 	    parse( &vf->priv->lumaParam, args2 );
 	else {
-	    vf->priv->lumaParam.amount = 
-	    vf->priv->lumaParam.msizeX = 
+	    vf->priv->lumaParam.amount =
+	    vf->priv->lumaParam.msizeX =
 	    vf->priv->lumaParam.msizeY = 0;
 	}
 
@@ -343,23 +343,23 @@ static int __FASTCALL__ vf_open( vf_instance_t *vf,const char* args ) {
 	if( args2 ) 
 	    parse( &vf->priv->chromaParam, args2 );
 	else {
-	    vf->priv->chromaParam.amount = 
-	    vf->priv->chromaParam.msizeX = 
+	    vf->priv->chromaParam.amount =
+	    vf->priv->chromaParam.msizeX =
 	    vf->priv->chromaParam.msizeY = 0;
 	}
 
 	if( !vf->priv->lumaParam.msizeX && !vf->priv->chromaParam.msizeX )
-	    return 0; // nothing to do
+	    return CONTROL_FALSE; // nothing to do
     }
 
     // check csp:
     vf->priv->outfmt = vf_match_csp( &vf->next, fmt_list, IMGFMT_YV12,1,1 );
     if( !vf->priv->outfmt ) {
 	uninit( vf );
-        return 0; // no csp match :(
+	return CONTROL_FALSE; // no csp match :(
     }
 
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_unsharp = {

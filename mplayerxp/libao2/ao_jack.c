@@ -34,10 +34,10 @@
 #include "afmt.h"
 #include "osdep/timer.h"
 #include "osdep/mplib.h"
+#include "ao_msg.h"
 
 #include "fifo.h"
 #include <jack/jack.h>
-#include "ao_msg.h"
 
 static const ao_info_t info =
 {
@@ -140,7 +140,7 @@ static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned n
 
 // end ring priv->buffer stuff
 
-static int control(ao_data_t* ao,int cmd, long arg) {
+static ControlCodes control(ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
   UNUSED(cmd);
   UNUSED(arg);

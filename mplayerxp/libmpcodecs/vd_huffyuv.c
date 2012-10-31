@@ -160,10 +160,8 @@ unsigned char huff_decompress(unsigned int* in, unsigned int *pos,
 				DecodeTable *decode_table, unsigned char *decode_shift);
 
 
-
-
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,any_t* arg,...)
+static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...)
 {
 	switch(cmd) {
 		case VDCTRL_QUERY_FORMAT:

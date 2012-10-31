@@ -23,11 +23,11 @@ typedef struct af_delay_s
   any_t* q[AF_NCH];   	// Circular queues used for delaying audio signal
   int 	wi[AF_NCH];  	// Write index
   int 	ri;		// Read index
-  float	d[AF_NCH];   	// Delay [ms] 	
+  float	d[AF_NCH];   	// Delay [ms]
 }af_delay_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_delay_t* s = af->setup;
 
@@ -66,12 +66,12 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       cl=&cl[n];
       i++;
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_DELAY_LEN | AF_CONTROL_SET:{
     int i;
-    if(AF_OK != af_from_ms(AF_NCH, arg, s->wi, af->data->rate, 0.0, 1000.0))
-      return AF_ERROR;
+    if(CONTROL_OK != af_from_ms(AF_NCH, arg, s->wi, af->data->rate, 0.0, 1000.0))
+      return CONTROL_ERROR;
     s->ri = 0;
     for(i=0;i<AF_NCH;i++){
       MSG_DBG2("[delay] Channel %i delayed by %0.3fms\n",
@@ -79,7 +79,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       MSG_DBG2("[delay] Channel %i delayed by %i samples\n",
 	     i,s->wi[i]);
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_DELAY_LEN | AF_CONTROL_GET:{
     int i;
@@ -93,7 +93,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
   }
   default: break;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -169,7 +169,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -178,8 +178,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_delay_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
-  return AF_OK;
+    return CONTROL_ERROR;
+  return CONTROL_OK;
 }
 
 // Description of this filter

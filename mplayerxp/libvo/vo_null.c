@@ -256,12 +256,12 @@ static int __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
     case IMGFMT_BG4B:
     case IMGFMT_RG4B:
     case IMGFMT_BGR1:
-    case IMGFMT_RGB1: return VO_TRUE;
+    case IMGFMT_RGB1: return CONTROL_TRUE;
     }
-    return VO_FALSE;
+    return CONTROL_FALSE;
 }
 
-static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t*priv=(priv_t*)vo->priv;
   switch (request) {
@@ -269,15 +269,15 @@ static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	return null_query_format(data);
     case VOCTRL_GET_NUM_FRAMES:
 	*(uint32_t *)data = priv->num_frames;
-	return VO_TRUE;
+	return CONTROL_TRUE;
     case DRI_GET_SURFACE_CAPS:
 	null_dri_get_surface_caps(vo,data);
-	return VO_TRUE;
+	return CONTROL_TRUE;
     case DRI_GET_SURFACE:
 	null_dri_get_surface(vo,data);
-	return VO_TRUE;
+	return CONTROL_TRUE;
     case VOCTRL_FLUSH_PAGES:
-	return VO_TRUE;
+	return CONTROL_TRUE;
   }
-  return VO_NOTIMPL;
+  return CONTROL_NA;
 }

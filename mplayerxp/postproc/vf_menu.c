@@ -239,14 +239,14 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
   return vf_next_query_format(vf,fmt,w,h);
 }
 
-static int __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
   if(!st_priv) {
     st_priv = mp_calloc(1,sizeof(struct vf_priv_s));
     st_priv->root = st_priv->current = menu_open(args);
     if(!st_priv->current) {
       mp_free(st_priv);
       st_priv = NULL;
-      return 0;
+      return CONTROL_FALSE;
     }
     st_priv->root->show = menu_startup;
     mp_input_add_cmd_filter((mp_input_cmd_filter)cmd_filter,st_priv);
@@ -260,7 +260,7 @@ static int __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
   vf->priv=st_priv;
   go2pause=0;
 
-  return 1;
+  return CONTROL_OK;
 }
 
 const vf_info_t vf_info_menu  = {

@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -69,13 +69,13 @@ static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
 
   a[0] = (1.0 + C) * cos(th);
   a[1] = -1 * C;
-  
+
   b[0] = (1.0 - C)/2.0;
   b[1] = -1.0050;
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_equalizer_t* s   = (af_equalizer_t*)af->setup; 
 
@@ -83,20 +83,20 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
   case AF_CONTROL_REINIT:{
     int k =0;
     float F[KM] = CF;
-    
+
     // Sanity check
-    if(!arg) return AF_ERROR;
-    
+    if(!arg) return CONTROL_ERROR;
+
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->nch    = ((af_data_t*)arg)->nch;
     af->data->format = AF_FORMAT_NE | AF_FORMAT_F;
     af->data->bps    = 4;
-    
+
     // Calculate number of active filters
     s->K=KM;
     while(F[s->K-1] > (float)af->data->rate/2.2)
       s->K--;
-    
+
     if(s->K != KM)
       MSG_INFO("[equalizer] Limiting the number of filters to" 
 	     " %i due to low sample rate.\n",s->K);
@@ -118,7 +118,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	    MSG_INFO("%f:",log10(s->g[0][k]+1.0) * 20.0);
 	MSG_INFO("\n");
     }
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
     float g[10]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     int i,j;
@@ -130,34 +130,34 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	  pow(10.0,clamp(g[j],G_MIN,G_MAX)/20.0)-1.0;
       }
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_EQUALIZER_GAIN | AF_CONTROL_SET:{
     float* gain = ((af_control_ext_t*)arg)->arg;
     int    ch   = ((af_control_ext_t*)arg)->ch;
     int    k;
     if(ch > AF_NCH || ch < 0)
-      return AF_ERROR;
+      return CONTROL_ERROR;
 
     for(k = 0 ; k<KM ; k++)
       s->g[ch][k] = pow(10.0,clamp(gain[k],G_MIN,G_MAX)/20.0)-1.0;
 
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_EQUALIZER_GAIN | AF_CONTROL_GET:{
     float* gain = ((af_control_ext_t*)arg)->arg;
     int    ch   = ((af_control_ext_t*)arg)->ch;
     int    k;
     if(ch > AF_NCH || ch < 0)
-      return AF_ERROR;
+      return CONTROL_ERROR;
 
     for(k = 0 ; k<KM ; k++)
       gain[k] = log10(s->g[ch][k]+1.0) * 20.0;
 
-    return AF_OK;
+    return CONTROL_OK;
   }
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -209,7 +209,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -218,8 +218,8 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_equalizer_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
-  return AF_OK;
+    return CONTROL_ERROR;
+  return CONTROL_OK;
 }
 
 // Description of this filter

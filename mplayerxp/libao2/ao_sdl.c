@@ -21,12 +21,11 @@
 #include "osdep/mplib.h"
 #include "ao_msg.h"
 
-static ao_info_t info = 
-{
-	"SDLlib audio output",
-	"sdl",
-	"Felix Buenemann <atmosfear@users.sourceforge.net>",
-	""
+static ao_info_t info = {
+    "SDLlib audio output",
+    "sdl",
+    "Felix Buenemann <atmosfear@users.sourceforge.net>",
+    ""
 };
 
 LIBAO_EXTERN(sdl)
@@ -110,9 +109,8 @@ static void setenv(const char *name, const char *val, int _xx)
 }
 #endif
 
-
 // to set/get/query special features/parameters
-static int __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
     priv_t*priv=ao->priv;
 	switch (cmd) {
 		case AOCONTROL_QUERY_FORMAT:

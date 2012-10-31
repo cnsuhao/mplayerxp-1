@@ -449,15 +449,14 @@ static unsigned int fmt_list[]={
     0
 };
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->get_image=get_image;
     vf->query_format=query_format;
     vf->uninit=uninit;
     vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
-    if(args)
-    {
+    if(args) {
 	char *arg2= strchr(args,':');
 	if(arg2) parse(&vf->priv->chromaParam, arg2+1);
 	parse(&vf->priv->lumaParam, args);
@@ -465,15 +464,13 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
     // check csp:
     vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,IMGFMT_YV12,1,1);
-    if(!vf->priv->outfmt)
-    {
+    if(!vf->priv->outfmt) {
 	uninit(vf);
-        return 0; // no csp match :(
+	return CONTROL_FALSE; // no csp match :(
     }
 
- 
 #ifdef CAN_COMPILE_MMX
-    if(gCpuCaps.hasMMX){
+    if(gCpuCaps.hasMMX) {
         lineNoise= lineNoise_MMX;
         lineNoiseAvg= lineNoiseAvg_MMX;
     }
@@ -482,8 +479,8 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(gCpuCaps.hasMMX2) lineNoise= lineNoise_MMX2;
 //    if(gCpuCaps.hasMMX) lineNoiseAvg= lineNoiseAvg_MMX2;
 #endif
-    
-    return 1;
+
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_noise = {

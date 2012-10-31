@@ -164,15 +164,14 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return vf_next_query_format(vf->next,best,w,h);
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     unsigned int i;
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
     vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
     for(i=0;i<256;i++) gray_pal[i]=0x01010101*i;
-    if (args)
-    {
+    if (args) {
 	if (!strcasecmp(args,"rgb15")) vf->priv->fmt=IMGFMT_RGB15; else
 	if (!strcasecmp(args,"rgb16")) vf->priv->fmt=IMGFMT_RGB16; else
 	if (!strcasecmp(args,"rgb24")) vf->priv->fmt=IMGFMT_RGB24; else
@@ -183,10 +182,10 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	if (!strcasecmp(args,"bgr32")) vf->priv->fmt=IMGFMT_BGR32; else
 	{
 	    printf("Unknown forced format name: '%s'\n", args);
-	    return(0);
+	    return CONTROL_FALSE;
 	}
     }
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_palette = {

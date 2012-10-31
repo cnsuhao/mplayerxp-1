@@ -139,46 +139,42 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 }
 
 /* Main entry funct for the filter */
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
-	struct vf_priv_s *p;
+    struct vf_priv_s *p;
 
-        vf->put_slice = put_slice;
-	vf->uninit = uninit;
-	vf->default_reqs = VFCAP_ACCEPT_STRIDE;
-	vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
-        if (p == NULL) {
-            return(0);
-        }
+    vf->put_slice = put_slice;
+    vf->uninit = uninit;
+    vf->default_reqs = VFCAP_ACCEPT_STRIDE;
+    vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
+    if (p == NULL) return CONTROL_FALSE;
 
-        if (args != NULL) {
+    if (args != NULL) {
 #ifdef DUMP_FORMAT_DATA
-            if (*args == 'd') {
-                p->dump_iframe = 3;
-            }
-            else
+	if (*args == 'd') {
+	    p->dump_iframe = 3;
+	} else
 #endif
-            if (*args == 'I') {
-                /* Dump only KEY (ie INTRA) frame */
-                p->dump_iframe = 2;
-            }
-            else {
-                if (*args == 'i') {
-                    /* Print a 'I!' when a i-frame is encounter */
-                    p->dump_iframe = 1;
-                    ++args;
-                }
+	if (*args == 'I') {
+	    /* Dump only KEY (ie INTRA) frame */
+	    p->dump_iframe = 2;
+	} else {
+	    if (*args == 'i') {
+		/* Print a 'I!' when a i-frame is encounter */
+		p->dump_iframe = 1;
+		++args;
+	    }
 
-                if (*args != '\0') {
-                    p->frame_step = atoi(args);
-                    if (p->frame_step <= 0) {
-                        MSG_WARN("[vf_framestep] Error parsing of arguments\n");
-                        return(0);
-                    }
-                }
-            }
-        }
-	return 1;
+	    if (*args != '\0') {
+		p->frame_step = atoi(args);
+		if (p->frame_step <= 0) {
+		    MSG_WARN("[vf_framestep] Error parsing of arguments\n");
+		    return CONTROL_FALSE;
+		}
+	    }
+	}
+    }
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_framestep = {

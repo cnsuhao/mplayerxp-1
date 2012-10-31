@@ -115,43 +115,43 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h)
 {
-	/* FIXME - really any YUV 4:2:0 input format should work */
-	switch (fmt) {
+    /* FIXME - really any YUV 4:2:0 input format should work */
+    switch (fmt) {
 	case IMGFMT_YV12:
 	case IMGFMT_IYUV:
 	case IMGFMT_I420:
-		return vf_next_query_format(vf, IMGFMT_YV12,w,h);
-	}
-	return 0;
+	    return vf_next_query_format(vf, IMGFMT_YV12,w,h);
+    }
+    return 0;
 }
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
-	mp_free(vf->priv);
+    mp_free(vf->priv);
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
-	vf->config=config;
-	vf->query_format=query_format;
-	vf->put_slice=put_slice;
-	vf->uninit=uninit;
+    vf->config=config;
+    vf->query_format=query_format;
+    vf->put_slice=put_slice;
+    vf->uninit=uninit;
 
-	vf->priv = mp_calloc(1, sizeof (struct vf_priv_s));
-	vf->priv->skipline = 0;
-	vf->priv->scalew = 1;
-	vf->priv->scaleh = 2;
-	if (args) sscanf(args, "%d:%d:%d", &vf->priv->skipline, &vf->priv->scalew, &vf->priv->scaleh);
+    vf->priv = mp_calloc(1, sizeof (struct vf_priv_s));
+    vf->priv->skipline = 0;
+    vf->priv->scalew = 1;
+    vf->priv->scaleh = 2;
+    if (args) sscanf(args, "%d:%d:%d", &vf->priv->skipline, &vf->priv->scalew, &vf->priv->scaleh);
 
-	return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_down3dright = {
-	"convert stereo movie from top-bottom to left-right field",
-	"down3dright",
-	"Zdenek Kabelac",
-	"",
-	VF_FLAGS_THREADS,
-	vf_open
+    "convert stereo movie from top-bottom to left-right field",
+    "down3dright",
+    "Zdenek Kabelac",
+    "",
+    VF_FLAGS_THREADS,
+    vf_open
 };
 

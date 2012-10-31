@@ -56,13 +56,13 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
     fclose(vf->priv->out);
     mp_free(vf->priv);
 }
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->uninit=uninit;
     vf->priv=mp_malloc(sizeof(struct vf_priv_s));
-    if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { mp_free(vf->priv); return 0; }
-    return 1;
+    if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { mp_free(vf->priv); return CONTROL_FALSE; }
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_raw = {

@@ -25,14 +25,13 @@ typedef struct ad_functions_s
 {
     const ad_info_t *info;
     const config_t*  options;/**< Optional: MPlayerXP's option related */
-    int (*preinit)(sh_audio_t *);
-    int (*init)(sh_audio_t *sh);
-    void (*uninit)(sh_audio_t *sh);
-    ControlCodes (*control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
-    unsigned (*decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
+    int (* __FASTCALL__ preinit)(sh_audio_t *);
+    int (* __FASTCALL__ init)(sh_audio_t *sh);
+    void (* __FASTCALL__ uninit)(sh_audio_t *sh);
+    ControlCodes (* __FASTCALL__ control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
+    unsigned (* __FASTCALL__ decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 
-// NULL terminated array of all drivers
 extern const ad_functions_t* mpcodecs_ad_drivers[];
 #define FIX_APTS(sh_audio,pts,in_size) (sh_audio->i_bps?((float)(pts)+(float)(in_size)/(float)sh_audio->i_bps):((float)(pts)))
 

@@ -237,7 +237,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_scaletempo_t* s = af->setup;
   switch(cmd){
@@ -254,7 +254,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 
     if (s->scale == 1.0) {
       if (s->speed_tempo && s->speed_pitch)
-        return AF_DETACH;
+        return CONTROL_DETACH;
       memcpy(af->data, data, sizeof(af_data_t));
       return af_test_output(af, data);
     }
@@ -286,7 +286,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       s->table_blend      = mp_realloc(s->table_blend, s->bytes_overlap * 4);
       if(!s->buf_overlap || !s->table_blend) {
         MSG_FATAL("[af_scaletempo] Out of memory\n");
-        return AF_ERROR;
+        return CONTROL_ERROR;
       }
       bzero(s->buf_overlap, s->bytes_overlap);
       {
@@ -309,7 +309,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
         s->table_window = mp_realloc(s->table_window, s->bytes_overlap - nch * bps);
         if(!s->buf_pre_corr || !s->table_window) {
           MSG_FATAL( "[af_scaletempo] Out of memory\n");
-          return AF_ERROR;
+          return CONTROL_ERROR;
         }
         pw = (float*)s->table_window;
         for (i=1; i<frames_overlap; i++) {
@@ -329,7 +329,7 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
     s->buf_queue = mp_realloc(s->buf_queue, s->bytes_queue + UNROLL_PADDING);
     if(!s->buf_queue) {
       MSG_FATAL("[af_scaletempo] Out of memory\n");
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
 
     MSG_V ( "[af_scaletempo] "
@@ -358,16 +358,16 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
         break;
       }
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_SCALETEMPO_AMOUNT | AF_CONTROL_SET:{
     s->scale = *(float*)arg;
     s->scale = s->speed * s->scale_nominal;
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_SCALETEMPO_AMOUNT | AF_CONTROL_GET:
     *(float*)arg = s->scale;
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
     char speedstr[80]="tempo";
     if(arg)
@@ -379,19 +379,19 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	 &speedstr[0]);
     if (s->scale_nominal <= 0) {
       MSG_ERR("[af_scaletempo] Error: scale_nominal is out of range: > 0\n");
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     if (s->ms_stride <= 0) {
       MSG_ERR("[af_scaletempo] Error: ms_stride is out of range: > 0\n");
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     if (s->percent_overlap < 0 || s->percent_overlap > 1) {
       MSG_ERR("[af_scaletempo] Error: percent_overlap is out of range: [0..1]\n");
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     if (s->ms_search < 0) {
       MSG_ERR("[af_scaletempo] Error: ms_search is out of range: >= 0\n");
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     if (strlen(speedstr) > 0) {
       if (strcmp(speedstr, "pitch") == 0) {
@@ -408,17 +408,17 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
         s->speed_pitch = 1;
       } else {
         MSG_ERR("[af_scaletempo] Error: speed is out of range: [pitch|tempo|none|both]\n");
-        return AF_ERROR;
+        return CONTROL_ERROR;
       }
     }
     s->scale = s->speed * s->scale_nominal;
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_scaletempo] %6.3f scale, %6.2f stride, %6.2f overlap, %6.2f search, speed = %s\n", s->scale_nominal, s->ms_stride, s->percent_overlap, s->ms_search, (s->speed_tempo?(s->speed_pitch?"tempo and speed":"tempo"):(s->speed_pitch?"pitch":"none")));
-    return AF_OK;
+    return CONTROL_OK;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory
@@ -436,7 +436,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ af_open(struct af_instance_s* af){
+static ControlCodes __FASTCALL__ af_open(struct af_instance_s* af){
   af_scaletempo_t* s;
 
   af->control   = control;
@@ -447,7 +447,7 @@ static int __FASTCALL__ af_open(struct af_instance_s* af){
   af->data      = mp_calloc(1,sizeof(af_data_t));
   af->setup     = mp_calloc(1,sizeof(af_scaletempo_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
 
   s = af->setup;
   s->scale = s->speed = s->scale_nominal = 1.0;
@@ -457,7 +457,7 @@ static int __FASTCALL__ af_open(struct af_instance_s* af){
   s->percent_overlap = .20;
   s->ms_search = 14;
 
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

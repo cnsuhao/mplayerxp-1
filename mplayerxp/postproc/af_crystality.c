@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -464,7 +464,7 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
 }
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_crystality_t* s   = (af_crystality_t*)af->setup; 
 
@@ -472,8 +472,8 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
   case AF_CONTROL_REINIT:{
     unsigned i_bps,fmt;
     // Sanity check
-    if(!arg) return AF_ERROR;
-    if(((af_data_t*)arg)->nch!=2) return AF_ERROR;
+    if(!arg) return CONTROL_ERROR;
+    if(((af_data_t*)arg)->nch!=2) return CONTROL_ERROR;
 
     af->data->rate   = ((af_data_t*)arg)->rate;
     af->data->nch    = ((af_data_t*)arg)->nch;
@@ -500,11 +500,11 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 	    &s->feedback_threshold,
 	    &s->harmonics_level);
     s->filter_level=clamp(s->filter_level,0,4);
-    return AF_OK;
+    return CONTROL_OK;
   }
   default: break;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory 
@@ -526,7 +526,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 }
 
 // Allocate memory and set function pointers
-static int __FASTCALL__ af_open(af_instance_t* af){
+static ControlCodes __FASTCALL__ af_open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -535,14 +535,14 @@ static int __FASTCALL__ af_open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_crystality_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
   set_defaults(af->setup);
   init_crystality(af->setup,44100);
   left0p = right0p = 0;
   _bufPos = BUF_SIZE - 1;
   shBufPos = SH_BUF_SIZE - 8;
   shBufPos1 = SH_BUF_SIZE - 8;
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Description of this filter

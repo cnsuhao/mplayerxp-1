@@ -45,7 +45,7 @@ static const ao_info_t info =
 
 LIBAO_EXTERN(arts)
 
-static int control(ao_data_t* ao,int cmd, long arg)
+static ControlCodes control(ao_data_t* ao,int cmd, long arg)
 {
     UNUSED(ao);
     UNUSED(cmd);

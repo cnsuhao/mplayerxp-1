@@ -141,10 +141,10 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
   MSG_V("[libaf] Adding filter %s \n",name);
 
   // Initialize the new filter
-  if(AF_OK == _new->info->open(_new) && 
-     AF_ERROR < _new->control(_new,AF_CONTROL_POST_CREATE,&s->cfg)){
+  if(CONTROL_OK == _new->info->open(_new) && 
+     CONTROL_ERROR < _new->control(_new,AF_CONTROL_POST_CREATE,&s->cfg)){
     if(cmdline){
-      if(AF_ERROR<_new->control(_new,AF_CONTROL_COMMAND_LINE,cmdline))
+      if(CONTROL_ERROR<_new->control(_new,AF_CONTROL_COMMAND_LINE,cmdline))
 	return _new;
     }
     else
@@ -233,12 +233,12 @@ void af_remove(af_stream_t* s, af_instance_t* af)
 }
 
 /* Reinitializes all filters downstream from the filter given in the
-   argument the return value is AF_OK if success and AF_ERROR if
+   argument the return value is CONTROL_OK if success and CONTROL_ERROR if
    failure */
 int af_reinit(af_stream_t* s, af_instance_t* af)
 {
   if(!af)
-    return AF_ERROR;
+    return CONTROL_ERROR;
 
   MSG_DBG2("af_reinit()\n");
   do{
@@ -256,9 +256,9 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
     
     rv = af->control(af,AF_CONTROL_REINIT,&in);
     switch(rv){
-    case AF_OK:
+    case CONTROL_OK:
       break;
-    case AF_FALSE:{ // Configuration filter is needed
+    case CONTROL_FALSE:{ // Configuration filter is needed
       // Do auto insertion only if force is not specified
       if((AF_INIT_TYPE_MASK & s->cfg.force) != AF_INIT_FORCE){
 	af_instance_t* _new = NULL;
@@ -266,32 +266,32 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	if((af->prev?af->prev->data->nch:s->input.nch) != in.nch){
 	  // Create channels filter
 	  if(NULL == (_new = af_prepend(s,af,"channels")))
-	    return AF_ERROR;
+	    return CONTROL_ERROR;
 	  // Set number of output channels
-	  if(AF_OK != (rv = _new->control(_new,AF_CONTROL_CHANNELS,&in.nch)))
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_CHANNELS,&in.nch)))
 	    return rv;
 	  // Initialize channels filter
 	  if(!_new->prev) 
 	    memcpy(&in,&(s->input),sizeof(af_data_t));
 	  else
 	    memcpy(&in,_new->prev->data,sizeof(af_data_t));
-	  if(AF_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
 	    return rv;
 	}
 	// Insert rate filter
 	if((af->prev?af->prev->data->rate:s->input.rate) != in.rate){
 	  // Create channels filter
 	  if(NULL == (_new = af_prepend(s,af,"resample")))
-	    return AF_ERROR;
+	    return CONTROL_ERROR;
 	  // Set number of output channels
-	  if(AF_OK != (rv = _new->control(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate)))
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate)))
 	    return rv;
 	  // Initialize channels filter
 	  if(!_new->prev) 
 	    memcpy(&in,&(s->input),sizeof(af_data_t));
 	  else
 	    memcpy(&in,_new->prev->data,sizeof(af_data_t));
-	  if(AF_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
 	    return rv;
 	}
 	// Insert format filter
@@ -299,29 +299,29 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	   ((af->prev?af->prev->data->bps:s->input.bps) != in.bps)){
 	  // Create format filter
 	  if(NULL == (_new = af_prepend(s,af,"format")))
-	    return AF_ERROR;
+	    return CONTROL_ERROR;
 	  // Set output bits per sample
-	  if(AF_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_BPS,&in.bps)) || 
-	     AF_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_FMT,&in.format)))
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_BPS,&in.bps)) || 
+	     CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_FMT,&in.format)))
 	    return rv;
 	  // Initialize format filter
 	  if(!_new->prev) 
 	    memcpy(&in,&(s->input),sizeof(af_data_t));
 	  else
 	    memcpy(&in,_new->prev->data,sizeof(af_data_t));
-	  if(AF_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
 	    return rv;
 	}
 	if(!_new){ // Should _never_ happen
 	  MSG_ERR("[libaf] Unable to correct audio format. " 
 		 "This error should never occur, please send bugreport.\n");
-	  return AF_ERROR;
+	  return CONTROL_ERROR;
 	}
 	af=_new;
       }
       break;
     }
-    case AF_DETACH:{ // Filter is redundant and wants to be unloaded
+    case CONTROL_DETACH:{ // Filter is redundant and wants to be unloaded
       // Do auto remove only if force is not specified
       if((AF_INIT_TYPE_MASK & s->cfg.force) != AF_INIT_FORCE){
 	af_instance_t* aft=af->prev;
@@ -336,7 +336,7 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
     default:
       MSG_ERR("[libaf] Reinitialization did not work, audio" 
 	     " filter '%s' returned error code %i for r=%i c=%i fmt=%x bps=%i\n",af->info->name,rv,in.rate,in.nch,in.format,in.bps);
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     // Check if there are any filters left in the list
     if(NULL == af){
@@ -346,7 +346,7 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
     else
       af=af->next;
   }while(af);
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // Uninit and remove all filters
@@ -401,7 +401,7 @@ int af_init(af_stream_t* s, int force_output)
   if(strcmp(s->last->info->name,"ao2")!=0) if(!af_append(s,s->last,"ao2")) return -1;
 
   // Init filters 
-  if(AF_OK != af_reinit(s,s->first))
+  if(CONTROL_OK != af_reinit(s,s->first))
     return -1;
 
   // If force_output isn't set do not compensate for output format
@@ -430,7 +430,7 @@ int af_init(af_stream_t* s, int force_output)
 	}
       }
       // Init the new filter
-      if(!af || (AF_OK != af->control(af,AF_CONTROL_RESAMPLE_RATE,
+      if(!af || (CONTROL_OK != af->control(af,AF_CONTROL_RESAMPLE_RATE,
 				      &(s->output.rate))))
 	return -1;
       // Use lin int if the user wants fast
@@ -439,7 +439,7 @@ int af_init(af_stream_t* s, int force_output)
 	sprintf(args, "%d:0:0", s->output.rate);
 	af->control(af, AF_CONTROL_COMMAND_LINE, args);
       }
-      if(AF_OK != af_reinit(s,af))
+      if(CONTROL_OK != af_reinit(s,af))
       	return -1;
     }	
       
@@ -451,9 +451,9 @@ int af_init(af_stream_t* s, int force_output)
       else
 	af = af_append(s,s->last,"channels");
       // Init the new filter
-      if(!af || (AF_OK != af->control(af,AF_CONTROL_CHANNELS,&(s->output.nch))))
+      if(!af || (CONTROL_OK != af->control(af,AF_CONTROL_CHANNELS,&(s->output.nch))))
 	return -1;
-      if(AF_OK != af_reinit(s,af))
+      if(CONTROL_OK != af_reinit(s,af))
 	return -1;
     }
     
@@ -465,15 +465,15 @@ int af_init(af_stream_t* s, int force_output)
       else
 	af = s->last;
       // Init the new filter
-      if(!af ||(AF_OK != af->control(af,AF_CONTROL_FORMAT_BPS,&(s->output.bps))) 
-	 || (AF_OK != af->control(af,AF_CONTROL_FORMAT_FMT,&(s->output.format))))
+      if(!af ||(CONTROL_OK != af->control(af,AF_CONTROL_FORMAT_BPS,&(s->output.bps))) 
+	 || (CONTROL_OK != af->control(af,AF_CONTROL_FORMAT_FMT,&(s->output.format))))
 	return -1;
-      if(AF_OK != af_reinit(s,af))
+      if(CONTROL_OK != af_reinit(s,af))
 	return -1;
     }
 
     // Re init again just in case
-    if(AF_OK != af_reinit(s,s->first))
+    if(CONTROL_OK != af_reinit(s,s->first))
       return -1;
 
     if((s->last->data->format != s->output.format) || 
@@ -508,7 +508,7 @@ af_instance_t* af_add(af_stream_t* s, char* name){
     return NULL;
 
   // Reinitalize the filter list
-  if(AF_OK != af_reinit(s, s->first)){
+  if(CONTROL_OK != af_reinit(s, s->first)){
     mp_free(new);
     return NULL;
   }
@@ -644,22 +644,22 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data)
   af->data->audio = mp_malloc(len);
   if(!af->data->audio){
     MSG_FATAL(MSGTR_OutOfMemory);
-    return AF_ERROR;
+    return CONTROL_ERROR;
   }
   af->data->len=len;
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 // send control to all filters, starting with the last until
-// one responds with AF_OK
+// one responds with CONTROL_OK
 int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
-  int res = AF_UNKNOWN;
+  int res = CONTROL_UNKNOWN;
   af_instance_t* filt = s->last;
-  while (filt && res != AF_OK) {
+  while (filt && res != CONTROL_OK) {
     res = filt->control(filt, cmd, arg);
     filt = filt->prev;
   }
-  return (res == AF_OK);
+  return (res == CONTROL_OK);
 }
 
 int __FASTCALL__ af_query_fmt (af_stream_t* s,int fmt)
@@ -729,7 +729,7 @@ void af_showconf(af_instance_t *first)
   // Iterate through all filters 
   do{
 	MSG_INFO("  ");
-	if(af->control(af,AF_CONTROL_SHOWCONF,NULL)!=AF_OK)
+	if(af->control(af,AF_CONTROL_SHOWCONF,NULL)!=CONTROL_OK)
 	    MSG_INFO("[af_%s %s]\n",af->info->name,af->info->info);
 	af=af->next;
   }while(af);

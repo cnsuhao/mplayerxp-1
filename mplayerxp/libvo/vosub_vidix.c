@@ -581,7 +581,7 @@ static void __FASTCALL__ vidix_dri_get_surface(vo_data_t* vo,dri_surface_t *surf
     surf->planes[3] = 0;
 }
 
-uint32_t __FASTCALL__ vidix_control(vo_data_t* vo,uint32_t request, any_t*data)
+ControlCodes __FASTCALL__ vidix_control(vo_data_t* vo,uint32_t request, any_t*data)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     switch (request) {
@@ -593,24 +593,24 @@ uint32_t __FASTCALL__ vidix_control(vo_data_t* vo,uint32_t request, any_t*data)
 	    break;
 	case VOCTRL_GET_NUM_FRAMES:
 	    *(uint32_t *)data = (vo_conf.use_bm == 1) ? vo_conf.da_buffs : priv->play->num_frames;
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE_CAPS:
 	    vidix_dri_get_surface_caps(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE:
 	    vidix_dri_get_surface(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case VOCTRL_FLUSH_PAGES:
 	    if(vo_conf.use_bm > 1) vidix_copy_dma(vo,*(uint32_t *)data,1);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case VOCTRL_GET_EQUALIZER:
-	    if(!vidix_get_video_eq(vo,data)) return VO_TRUE;
-	    else return VO_FALSE;
+	    if(!vidix_get_video_eq(vo,data)) return CONTROL_TRUE;
+	    else return CONTROL_FALSE;
 	case VOCTRL_SET_EQUALIZER:
-	    if(!vidix_set_video_eq(vo,data)) return VO_TRUE;
-	    else return VO_FALSE;
+	    if(!vidix_set_video_eq(vo,data)) return CONTROL_TRUE;
+	    else return CONTROL_FALSE;
     }
-    return VO_NOTIMPL;
+    return CONTROL_NA;
 }
 
 int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*server)

@@ -489,7 +489,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 	return 0;
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	int e;
 
 	vf->config=config;
@@ -498,8 +498,8 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->uninit=uninit;
 	vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
 
-	if(args==NULL) return 0;
-	
+	if(args==NULL) return CONTROL_FALSE;
+
 #ifdef USE_SETLOCALE
     setlocale( LC_NUMERIC, "C" );
 #endif
@@ -518,14 +518,14 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 #endif
 
 	vf->priv->luma.quality = vf->priv->chroma.quality= 3.0;
-	
+
 	if(e==4){
 		vf->priv->chroma.radius= vf->priv->luma.radius;
 		vf->priv->chroma.strength= vf->priv->luma.strength;
 		vf->priv->chroma.threshold = vf->priv->luma.threshold;
 		vf->priv->chroma.preFilterRadius = vf->priv->luma.preFilterRadius;
 	}else if(e!=8)
-		return 0;
+		return CONTROL_FALSE;
 	vf->priv->allocStuff=allocStuff;
 	vf->priv->freeBuffers=freeBuffers;
 	if(vf->priv->chroma.preFilterRadius!=0. || vf->priv->luma.preFilterRadius!=0.)
@@ -537,13 +537,13 @@ static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	else
 	if(vf->priv->luma.threshold==0 && vf->priv->chroma.threshold==0)
 	{
-	    if(vf->priv->luma.radius < 0) return 0;
-	    if(vf->priv->chroma.radius < 0) return 0;
+	    if(vf->priv->luma.radius < 0) return CONTROL_FALSE;
+	    if(vf->priv->chroma.radius < 0) return CONTROL_FALSE;
 	    vf->priv->allocStuff=NULL;
 	    vf->priv->freeBuffers=NULL;
 	    vf->put_slice=bb_put_slice;
 	}
-	return 1;
+	return CONTROL_OK;
 }
 
 const vf_info_t vf_info_smartblur = {

@@ -7,6 +7,7 @@
 #include "../mp_config.h"
 #include "af_control.h"
 #include "af_format.h"
+#include "xmp_enums.h"
 
 struct af_instance_s;
 
@@ -42,20 +43,20 @@ typedef struct af_info_s
   const char *author;
   const char *comment;
   const unsigned flags;
-  int (* __FASTCALL__ open)(struct af_instance_s* vf);
+  ControlCodes (* __FASTCALL__ open)(struct af_instance_s* vf);
 } af_info_t;
 
 // Linked list of audio filters
 typedef struct af_instance_s
 {
   const af_info_t* info;
-  int (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
+  ControlCodes (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
   void (* __FASTCALL__ uninit)(struct af_instance_s* af);
   af_data_t* (* __FASTCALL__ play)(struct af_instance_s* af, af_data_t* data,int final);
   any_t* setup;	  // setup data for this specific instance and filter
   af_data_t* data; // configuration for outgoing data stream
   struct af_instance_s* next;
-  struct af_instance_s* prev;  
+  struct af_instance_s* prev;
   any_t*parent;
   double delay; // Delay caused by the filter [ms]
   frac_t mul; /* length multiplier: how much does this instance change
@@ -105,19 +106,6 @@ typedef struct af_stream_s
   any_t*parent;
 }af_stream_t;
 
-/*********************************************
-// Return values
-*/
-enum {
-    AF_DETACH	=2,
-    AF_OK	=1,
-    AF_TRUE	=1,
-    AF_FALSE	=0,
-    AF_UNKNOWN	=-1,
-    AF_ERROR	=-2,
-    AF_FATAL	=-3
-};
-
 
 /*********************************************
 // Export functions
@@ -141,7 +129,7 @@ int af_init(af_stream_t* s, int force_output);
 void af_uninit(af_stream_t* s);
 
 /* Reinitializes all filters downstream from the filter given in the
-   argument the return value is AF_OK if success and AF_ERROR if
+   argument the return value is CONTROL_OK if success and CONTROL_ERROR if
    failure */
 int af_reinit(af_stream_t* s, af_instance_t* af);
 
@@ -162,9 +150,9 @@ af_instance_t* __FASTCALL__ af_get(af_stream_t* s, char* name);
 af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data);
 
 // send control to all filters, starting with the last until
-// one accepts the command with AF_OK.
+// one accepts the command with CONTROL_OK.
 // Returns true if accepting filter was found.
-int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg);
+ControlCodes __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg);
 
 /* Calculate how long the output from the filters will be given the
    input length "len". The calculated length is >= the actual
@@ -203,10 +191,10 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data);
 int __FASTCALL__ af_lencalc(frac_t mul, af_data_t* data);
 
 /* Helper function used to convert to gain value from dB. Returns
-   AF_OK if of and AF_ERROR if fail */
+   CONTROL_OK if of and CONTROL_ERROR if fail */
 int __FASTCALL__ af_from_dB(int n, float* in, float* out, float k, float mi, float ma);
 /* Helper function used to convert from gain value to dB. Returns
-   AF_OK if of and AF_ERROR if fail */
+   CONTROL_OK if of and CONTROL_ERROR if fail */
 int __FASTCALL__ af_to_dB(int n, float* in, float* out, float k);
 /* Helper function used to convert from ms to sample time*/
 int __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, float ma);
@@ -232,7 +220,7 @@ extern void af_showconf(af_instance_t *first);
    filter doesn't operate on the incoming buffer this macro must be
    called to ensure the buffer is big enough. */
 #define RESIZE_LOCAL_BUFFER(a,d)\
-((a->data->len < af_lencalc(a->mul,d))?af_resize_local_buffer(a,d):AF_OK)
+((a->data->len < af_lencalc(a->mul,d))?af_resize_local_buffer(a,d):CONTROL_OK)
 
 /* Some other useful macro definitions*/
 #ifndef min

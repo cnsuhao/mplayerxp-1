@@ -758,7 +758,7 @@ static void __FASTCALL__ vesa_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t*priv=(priv_t*)vo->priv;
     switch (request) {
@@ -766,13 +766,13 @@ static uint32_t __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	    return query_format((vo_query_fourcc_t*)data);
 	case VOCTRL_GET_NUM_FRAMES:
 	    *(uint32_t *)data = priv->multi_size;
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE_CAPS:
 	    vesa_dri_get_surface_caps(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE:
 	    vesa_dri_get_surface(vo,data);
-	    return VO_TRUE;
+	    return CONTROL_TRUE;
     }
-    return VO_NOTIMPL;
+    return CONTROL_NA;
 }

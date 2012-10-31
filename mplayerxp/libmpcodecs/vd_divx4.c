@@ -138,7 +138,7 @@ static LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
 static any_t*dll_handle;
 
 // to set/get/query special features/parameters
-static int control(sh_video_t *sh,int cmd,any_t* arg,...){
+static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t*p=sh->context;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL: return 100; // for divx4linux

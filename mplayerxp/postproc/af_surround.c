@@ -1,4 +1,4 @@
-/* 
+/*
    This is an libaf filter to do simple decoding of matrixed surround
    sound.  This will provide a (basic) surround-sound effect from
    audio encoded for Dolby Surround, Pro Logic etc.
@@ -81,7 +81,7 @@ typedef struct af_surround_s
 }af_surround_t;
 
 // Initialization and runtime control
-static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_surround_t *s = af->setup;
   switch(cmd){
@@ -94,13 +94,13 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 
     if (af->data->nch != 4){
       MSG_ERR("[surround] Only stereo input is supported.\n");
-      return AF_DETACH;
+      return CONTROL_DETACH;
     }
     // Surround filer coefficients
     fc = 2.0 * 7000.0/(float)af->data->rate;
     if (-1 == design_fir(L, s->w, &fc, LP|HAMMING, 0)){
       MSG_ERR("[surround] Unable to design low-pass filter.\n");
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
 
     // Free previous delay queues
@@ -115,8 +115,8 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
       MSG_FATAL(MSGTR_OutOfMemory);
     
     // Initialize delay queue index
-    if(AF_OK != af_from_ms(1, &s->d, &s->wi, af->data->rate, 0.0, 1000.0))
-      return AF_ERROR;
+    if(CONTROL_OK != af_from_ms(1, &s->d, &s->wi, af->data->rate, 0.0, 1000.0))
+      return CONTROL_ERROR;
 //    printf("%i\n",s->wi);
     s->ri = 0;
 
@@ -124,27 +124,27 @@ static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
        (af->data->bps    != ((af_data_t*)arg)->bps)){
       ((af_data_t*)arg)->format = af->data->format;
       ((af_data_t*)arg)->bps = af->data->bps;
-      return AF_FALSE;
+      return CONTROL_FALSE;
     }
-    return AF_OK;
+    return CONTROL_OK;
   }
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_surround] delay time %f\n",s->d);
-    return AF_OK;
+    return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
     float d = 0;
     sscanf((char*)arg,"%f",&d);
     if ((d < 0) || (d > 1000)){
       MSG_ERR("[surround] Invalid delay time, valid time values"
 	     " are 0ms to 1000ms current value is %0.3f ms\n",d);
-      return AF_ERROR;
+      return CONTROL_ERROR;
     }
     s->d = d;
-    return AF_OK;
+    return CONTROL_OK;
   }
   default: break;
   }
-  return AF_UNKNOWN;
+  return CONTROL_UNKNOWN;
 }
 
 // Deallocate memory
@@ -180,7 +180,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   int 		 ri  = s->ri;	// Read index for delay queue
   int 		 wi  = s->wi;	// Write index for delay queue
 
-  if (AF_OK != RESIZE_LOCAL_BUFFER(af, data))
+  if (CONTROL_OK != RESIZE_LOCAL_BUFFER(af, data))
     return NULL;
 
   out = af->data->audio;
@@ -237,10 +237,10 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 #endif
 
     // Next sample...
-    in = &in[data->nch];  
+    in = &in[data->nch];
     out = &out[af->data->nch];
   }
-  
+
   // Save indexes
   s->i  = i; s->ri = ri; s->wi = wi;
 
@@ -252,7 +252,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   return data;
 }
 
-static int __FASTCALL__ open(af_instance_t* af){
+static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -261,9 +261,9 @@ static int __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(af_data_t));
   af->setup=mp_calloc(1,sizeof(af_surround_t));
   if(af->data == NULL || af->setup == NULL)
-    return AF_ERROR;
+    return CONTROL_ERROR;
   ((af_surround_t*)af->setup)->d = 20;
-  return AF_OK;
+  return CONTROL_OK;
 }
 
 const af_info_t af_info_surround =

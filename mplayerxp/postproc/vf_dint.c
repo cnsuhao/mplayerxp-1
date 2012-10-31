@@ -438,7 +438,7 @@ static int __FASTCALL__ put_slice (struct vf_instance_s* vf, mp_image_t *mpi)
     return vf_next_put_slice (vf, mpi);
 }
 
-static int __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
     int e;
     float a,b;
     vf->config = config;
@@ -456,20 +456,16 @@ static int __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
     vf->priv->sharp = 0;
     vf->priv->twoway = 0;
     e=0;
-    if (args)
-    {
+    if (args) {
 	e=sscanf(args, "%f:%f:%d:%d:%d",
 		&a, &b,
 		&vf->priv->order, &vf->priv->sharp,
 		&vf->priv->twoway);
-	if(e==2)
-	{
+	if(e==2) {
 	    vf->priv->sense=a;
 	    vf->priv->level=b;
-	}
-	else
-	{
-	    if(e!=5) return 0;
+	} else {
+	    if(e!=5) return CONTROL_FALSE;
 	    vf->priv->thresh=a;
 	    vf->priv->map=b;
 	    vf->uninit=uninit;
@@ -478,7 +474,7 @@ static int __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
 	    vf->query_format=kd_query_format;
 	}
     }
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_dint = {

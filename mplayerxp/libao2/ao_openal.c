@@ -60,7 +60,7 @@ typedef struct priv_s {
     int16_t*	tmpbuf;
 }priv_t;
 
-static int control(ao_data_t* ao,int cmd, long arg) {
+static ControlCodes control(ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
   switch (cmd) {
     case AOCONTROL_GET_VOLUME:

@@ -183,27 +183,25 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static int __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
     vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     vf->priv->direction=args?atoi(args):0;
     if(!(vf->priv->direction==0 || vf->priv->direction==90 ||
-       vf->priv->direction==180 || vf->priv->direction==270))
-    {
+       vf->priv->direction==180 || vf->priv->direction==270)) {
 	MSG_ERR("[vf_rotate] can rotate on 0, 90, 180, 270 degrees only\n");
-	return 0;
+	return CONTROL_FALSE;
     }
-    if(vf->priv->direction==0)
-    {
+    if(vf->priv->direction==0) {
 	/* passthrough mode */
 	vf->put_slice=vf_next_put_slice;
 	vf->query_format=vf_next_query_format;
 	vf->config=vf_next_config;
 	MSG_INFO("[vf_rotate] passthrough mode\n");
     }
-    return 1;
+    return CONTROL_OK;
 }
 
 const vf_info_t vf_info_rotate = {

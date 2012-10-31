@@ -137,7 +137,7 @@ void uninit(sh_audio_t *sh)
   acodec_inited=0;
 }
 
-int control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
     AVCodecContext *lavc_context = sh->context;

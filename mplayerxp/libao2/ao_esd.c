@@ -93,7 +93,7 @@ typedef struct priv_s {
 /*
  * to set/get/query special features/parameters
  */
-static int control(ao_data_t* ao,int cmd, long arg)
+static ControlCodes control(ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=ao->priv;
     esd_player_info_t *esd_pi;

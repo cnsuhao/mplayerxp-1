@@ -97,7 +97,7 @@ static void drain(ao_data_t* ao){
 }
 
 // to set/get/query special features/parameters
-static int __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
