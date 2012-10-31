@@ -188,13 +188,13 @@ csp_again:
 
     // autodetect flipping
     if(vo_conf.flip==0){
-	VO_FLIP_UNSET(vo_data);
+	vo_FLIP_UNSET(vo_data);
 	if(sh->codec->outflags[j]&CODECS_FLAG_FLIP)
 	    if(!(sh->codec->outflags[j]&CODECS_FLAG_NOFLIP))
-		VO_FLIP_SET(vo_data);
+		vo_FLIP_SET(vo_data);
     }
-    if(vo_data->flags&VFCAP_FLIPPED) VO_FLIP_REVERT(vo_data);
-    if(VO_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
+    if(vo_data->flags&VFCAP_FLIPPED) vo_FLIP_REVERT(vo_data);
+    if(vo_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
 	sh->vfilter=vf=vf_open_filter(vf,sh,"mirror","x");
     }

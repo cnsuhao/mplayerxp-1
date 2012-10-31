@@ -29,9 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "yuv4mpeg.h"
-#include "yuv4mpeg_intern.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
+#include "yuv4mpeg_intern.h"
 
 /* quick test of two ratios for equality (i.e. identical components) */
 #define Y4M_RATIO_EQL(a,b) ( ((a).n == (b).n) && ((a).d == (b).d) )
@@ -153,7 +153,7 @@ void y4m_copy_xtag_list(y4m_xtag_list_t *dest, const y4m_xtag_list_t *src)
 static int y4m_snprint_xtags(char *s, int maxn, y4m_xtag_list_t *xtags)
 {
   int i, room;
-  
+
   for (i = 0, room = maxn - 1; i < xtags->count; i++) {
     int n = snprintf(s, room + 1, " %s", xtags->tags[i]);
     if ((n < 0) || (n > room)) return Y4M_ERR_HEADER;

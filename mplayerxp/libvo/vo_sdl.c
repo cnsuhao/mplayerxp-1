@@ -926,7 +926,7 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,int (* __FASTCALL__ adju
 		    retval = VO_EVENT_RESIZE;
 		} else if ( keypressed == SDLK_n ) {
 #ifdef HAVE_X11
-		    aspect(&priv->dstwidth, &priv->dstheight,VO_ZOOM(vo)?A_ZOOM:A_NOZOOM);
+		    aspect(&priv->dstwidth, &priv->dstheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
 #endif
 		    if (priv->surface->w != priv->dstwidth || priv->surface->h != priv->dstheight) {
 			if(set_video_mode(vo,priv->dstwidth, priv->dstheight, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);

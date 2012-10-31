@@ -145,7 +145,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,
     aspect_save_prescale(d_width,d_height);
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
 
-    aspect(&d_width,&d_height,VO_FS(vo)?A_ZOOM:A_NOZOOM);
+    aspect(&d_width,&d_height,vo_FS(vo)?A_ZOOM:A_NOZOOM);
 
     vo_x11_calcpos(vo,&hint,d_width,d_height,flags);
     hint.flags=PPosition | PSize;
@@ -167,7 +167,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,
     xswamask=CWBackPixel | CWBorderPixel | CWColormap;
 
 #ifdef HAVE_XF86VM
-    if ( VO_VM(vo) ) {
+    if ( vo_VM(vo) ) {
 	xswa.override_redirect=True;
 	xswamask|=CWOverrideRedirect;
     }
@@ -185,7 +185,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,
     }
     vo_x11_classhint( vo->mDisplay,vo->window,"vo_x11" );
     vo_x11_hidecursor(vo->mDisplay,vo->window);
-    if ( VO_FS(vo) ) vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
+    if ( vo_FS(vo) ) vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
     XSelectInput( vo->mDisplay,vo->window,StructureNotifyMask );
     XSetStandardProperties( vo->mDisplay,vo->window,title,title,None,NULL,0,&hint );
     XMapWindow( vo->mDisplay,vo->window );
@@ -205,7 +205,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,
 	((vo_conf.WinID==0)?0:(ButtonPressMask | ButtonReleaseMask | PointerMotionMask)) );
 
 #ifdef HAVE_XF86VM
-    if ( VO_VM(vo) ) {
+    if ( vo_VM(vo) ) {
 	/* Grab the mouse pointer in our window */
 	XGrabPointer(vo->mDisplay, vo->window, True, 0,
 		   GrabModeAsync, GrabModeAsync,

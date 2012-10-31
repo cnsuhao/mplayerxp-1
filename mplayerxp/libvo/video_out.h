@@ -182,19 +182,19 @@ typedef struct vo_data_s {
     const subtitle*	sub;
     int			osd_changed_flag;
 }vo_data_t;
-#define VO_ZOOM(vo)	((vo)->flags&VOFLAG_SWSCALE)
-#define VO_ZOOM_SET(vo)	((vo)->flags|=VOFLAG_SWSCALE)
-#define VO_ZOOM_UNSET(vo) ((vo)->flags&=~VOFLAG_SWSCALE)
-#define VO_FS(vo)	((vo)->flags&VOFLAG_FULLSCREEN)
-#define VO_FS_SET(vo)	((vo)->flags|=VOFLAG_FULLSCREEN)
-#define VO_FS_UNSET(vo)	((vo)->flags&=~VOFLAG_FULLSCREEN)
-#define VO_VM(vo)	((vo)->flags&VOFLAG_MODESWITCHING)
-#define VO_VM_SET(vo)	((vo)->flags|=VOFLAG_MODESWITCHING)
-#define VO_VM_UNSET(vo)	((vo)->flags&=~VOFLAG_MODESWITCHING)
-#define VO_FLIP(vo)	((vo)->flags&VOFLAG_FLIPPING)
-#define VO_FLIP_SET(vo)	((vo)->flags|=VOFLAG_FLIPPING)
-#define VO_FLIP_UNSET(vo) ((vo)->flags&=~VOFLAG_FLIPPING)
-#define VO_FLIP_REVERT(vo) ((vo)->flags^=VOFLAG_FLIPPING)
+static inline int  vo_ZOOM(const vo_data_t*vo) { return vo->flags&VOFLAG_SWSCALE; }
+static inline void vo_ZOOM_SET(vo_data_t*vo)   { vo->flags|=VOFLAG_SWSCALE; }
+static inline void vo_ZOOM_UNSET(vo_data_t*vo) { vo->flags&=~VOFLAG_SWSCALE; }
+static inline int  vo_FS(const vo_data_t*vo)   { return vo->flags&VOFLAG_FULLSCREEN; }
+static inline void vo_FS_SET(vo_data_t*vo)     { vo->flags|=VOFLAG_FULLSCREEN; }
+static inline void vo_FS_UNSET(vo_data_t*vo)   { vo->flags&=~VOFLAG_FULLSCREEN; }
+static inline int  vo_VM(const vo_data_t*vo)   { return vo->flags&VOFLAG_MODESWITCHING; }
+static inline void vo_VM_SET(vo_data_t*vo)     { vo->flags|=VOFLAG_MODESWITCHING; }
+static inline void vo_VM_UNSET(vo_data_t*vo)   { vo->flags&=~VOFLAG_MODESWITCHING; }
+static inline int  vo_FLIP(const vo_data_t*vo) { return vo->flags&VOFLAG_FLIPPING; }
+static inline void vo_FLIP_SET(vo_data_t*vo)   { vo->flags|=VOFLAG_FLIPPING; }
+static inline void vo_FLIP_UNSET(vo_data_t*vo) { vo->flags&=~VOFLAG_FLIPPING; }
+static inline void vo_FLIP_REVERT(vo_data_t*vo){ vo->flags^=VOFLAG_FLIPPING; }
 
 /** VO-driver interface */
 typedef struct vo_functions_s

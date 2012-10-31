@@ -1890,10 +1890,10 @@ static int mpxp_find_vcodec(void) {
     /* Go through the codec.conf and find the best codec...*/
     sh_video->inited=0;
     vo_data->flags=0;
-    if(vo_conf.fullscreen)	VO_FS_SET(vo_data);
-    if(vo_conf.softzoom)	VO_ZOOM_SET(vo_data);
-    if(vo_conf.flip>0)		VO_FLIP_SET(vo_data);
-    if(vo_conf.vidmode)		VO_VM_SET(vo_data);
+    if(vo_conf.fullscreen)	vo_FS_SET(vo_data);
+    if(vo_conf.softzoom)	vo_ZOOM_SET(vo_data);
+    if(vo_conf.flip>0)		vo_FLIP_SET(vo_data);
+    if(vo_conf.vidmode)		vo_VM_SET(vo_data);
     codecs_reset_selection(0);
     if(mp_conf.video_codec) {
     /* forced codec by name: */

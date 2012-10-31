@@ -750,7 +750,7 @@ void __FASTCALL__ vo_x11_calcpos(vo_data_t*vo,XSizeHints* hint, unsigned d_width
     hint->width=d_width;
     hint->height=d_height;
 #ifdef HAVE_XF86VM
-    if ( VO_VM(vo) ) {
+    if ( vo_VM(vo) ) {
 	vm_width=d_width; vm_height=d_height;
 	vo_vm_switch(vo,vm_width, vm_height,&modeline_width, &modeline_height);
 	hint->x=(vo_conf.screenwidth-modeline_width)/2;
@@ -760,7 +760,7 @@ void __FASTCALL__ vo_x11_calcpos(vo_data_t*vo,XSizeHints* hint, unsigned d_width
     }
     else
 #endif
-    if ( VO_FS(vo) ) {
+    if ( vo_FS(vo) ) {
       hint->width=vo_conf.screenwidth;
       hint->height=vo_conf.screenheight;
       hint->x=0;
@@ -772,13 +772,13 @@ void vo_x11_fullscreen(vo_data_t*vo )
 {
     priv_t*priv=(priv_t*)vo->priv2;
     XUnmapWindow( vo->mDisplay,vo->window );
-    if ( !VO_FS(vo) ) {
-	VO_FS_SET(vo);
+    if ( !vo_FS(vo) ) {
+	vo_FS_SET(vo);
 	priv->prev=vo->dest;
 	vo->dest.x=0;  vo->dest.y=0; vo->dest.w=vo_conf.screenwidth; vo->dest.h=vo_conf.screenheight;
 	vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
     } else {
-	VO_FS_UNSET(vo);
+	vo_FS_UNSET(vo);
 	vo->dest=priv->prev;
 	vo_x11_decoration(vo,vo->mDisplay,vo->window,1 );
     }

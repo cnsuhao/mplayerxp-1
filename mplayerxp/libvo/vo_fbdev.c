@@ -841,12 +841,12 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     }
     if (priv->pre_init_err) return 1;
 
-    if (priv_conf.mode_name && !VO_VM(vo)) {
+    if (priv_conf.mode_name && !vo_VM(vo)) {
 	MSG_ERR(FBDEV "-fbmode can only be used with -vm\n");
 	return 1;
     }
-    if (VO_VM(vo) && (parse_fbmode_cfg(vo,priv_conf.mode_cfgfile) < 0)) return 1;
-    if (d_width && (VO_ZOOM(vo) || VO_VM(vo))) {
+    if (vo_VM(vo) && (parse_fbmode_cfg(vo,priv_conf.mode_cfgfile) < 0)) return 1;
+    if (d_width && (vo_ZOOM(vo) || vo_VM(vo))) {
 	priv->out_width = d_width;
 	priv->out_height = d_height;
     } else {
@@ -863,7 +863,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    return 1;
 	}
 	fb_mode2fb_vinfo(priv->mode, &priv->vinfo);
-    } else if (VO_VM(vo)) {
+    } else if (vo_VM(vo)) {
 	priv->monitor_hfreq = str2range(priv_conf.monitor_hfreq_str);
 	priv->monitor_vfreq = str2range(priv_conf.monitor_vfreq_str);
 	priv->monitor_dotclock = str2range(priv_conf.monitor_dotclock_str);
@@ -925,7 +925,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    break;
     }
 
-    if (VO_FLIP(vo) && ((((priv->pixel_format & 0xff) + 7) / 8) != priv->pixel_size)) {
+    if (vo_FLIP(vo) && ((((priv->pixel_format & 0xff) + 7) / 8) != priv->pixel_size)) {
 	MSG_ERR(FBDEV "Flipped output with depth conversion is not "
 			"supported\n");
 	return 1;
@@ -977,12 +977,12 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     memset(priv->next_frame,0,sizeof(priv->next_frame));
     priv->out_width=width;
     priv->out_height=height;
-    if(VO_ZOOM(vo)) {
+    if(vo_ZOOM(vo)) {
 	aspect_save_orig(width,height);
 	aspect_save_prescale(d_width,d_height);
 	aspect_save_screenres(priv->xres,priv->yres);
 	aspect(&priv->out_width,&priv->out_height,A_ZOOM);
-    } else if(VO_FS(vo)) {
+    } else if(vo_FS(vo)) {
 	priv->out_width = priv->xres;
 	priv->out_height = priv->yres;
     }

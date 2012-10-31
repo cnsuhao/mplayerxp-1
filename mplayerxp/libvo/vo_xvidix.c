@@ -80,12 +80,12 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update,const vo_t
     XTranslateCoordinates(vo->mDisplay, vo->window, priv->mRoot, 0, 0,
 	&priv->drwcX, &priv->drwcY, &priv->mRoot);
 
-    if (!VO_FS(vo))
+    if (!vo_FS(vo))
 	MSG_V( "[xvidix] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",
 	    priv->drwcX, priv->drwcY, priv->drwX, priv->drwY, priv->drwWidth, priv->drwHeight);
 
     /* following stuff copied from vo_xmga.c */
-    if (VO_FS(vo)) {
+    if (vo_FS(vo)) {
 	priv->drwX = (vo_conf.screenwidth - (priv->dwidth > vo_conf.screenwidth ? vo_conf.screenwidth : priv->dwidth)) / 2;
 	priv->drwcX += priv->drwX;
 	priv->drwY = (vo_conf.screenheight - (priv->dheight > vo_conf.screenheight ? vo_conf.screenheight : priv->dheight)) / 2;
@@ -153,7 +153,7 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update,const vo_t
     XClearWindow( vo->mDisplay,vo->window );
     XSetForeground(vo->mDisplay, vo->gc, priv->fgColor);
     XFillRectangle(vo->mDisplay, vo->window, vo->gc, priv->drwX, priv->drwY, priv->drwWidth,
-	(VO_FS(vo) ? priv->drwHeight - 1 : priv->drwHeight));
+	(vo_FS(vo) ? priv->drwHeight - 1 : priv->drwHeight));
     /* flush, update drawable */
     XFlush(vo->mDisplay);
 
@@ -223,7 +223,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     priv->win_w = d_width;
     priv->win_h = d_height;
 
-    if (VO_FS(vo)) { vo->dest.w=d_width; vo->dest.h=d_height; }
+    if (vo_FS(vo)) { vo->dest.w=d_width; vo->dest.h=d_height; }
 
     priv->X_already_started++;
 
@@ -247,8 +247,8 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 
     aspect(&d_width, &d_height,flags & VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
 
-    if (VO_FS(vo)) { /* fullscreen */
-	if (VO_ZOOM(vo)) aspect(&d_width, &d_height, A_ZOOM);
+    if (vo_FS(vo)) { /* fullscreen */
+	if (vo_ZOOM(vo)) aspect(&d_width, &d_height, A_ZOOM);
 	else {
 	    d_width = vo_conf.screenwidth;
 	    d_height = vo_conf.screenheight;
@@ -269,7 +269,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
         window_depth = 24;
     XMatchVisualInfo(vo->mDisplay, vo->mScreen, window_depth, TrueColor, &vinfo);
 
-    xswa.background_pixel = VO_FS(vo) ? BlackPixel(vo->mDisplay, vo->mScreen) : priv->fgColor;
+    xswa.background_pixel = vo_FS(vo) ? BlackPixel(vo->mDisplay, vo->mScreen) : priv->fgColor;
     xswa.border_pixel     = 0;
     xswa.colormap         = XCreateColormap(vo->mDisplay, RootWindow(vo->mDisplay, vo->mScreen),
 					    vinfo.visual, AllocNone);
@@ -290,7 +290,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     vo_x11_classhint(vo->mDisplay, vo->window, "xvidix");
     vo_x11_hidecursor(vo->mDisplay, vo->window);
 
-    if (VO_FS(vo)) vo_x11_decoration(vo,vo->mDisplay, vo->window, 0);
+    if (vo_FS(vo)) vo_x11_decoration(vo,vo->mDisplay, vo->window, 0);
 
     XGetNormalHints(vo->mDisplay, vo->window, &hint);
     hint.x = priv->win_x;

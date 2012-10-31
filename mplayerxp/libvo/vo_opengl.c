@@ -132,7 +132,7 @@ static void gl_init_fb(vo_data_t*vo,unsigned x,unsigned y,unsigned d_width,unsig
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
     glRasterPos2i(x, y);
-    glPixelZoom(sx,VO_FLIP(vo)?sy:-sy);
+    glPixelZoom(sx,vo_FLIP(vo)?sy:-sy);
 }
 
 static void resize(vo_data_t*vo,int x,int y){
@@ -172,12 +172,12 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     priv->image_width = width;
     priv->image_format=format;
 
-    if ( VO_FS(vo) ) { vo->dest.w=d_width; vo->dest.h=d_height; }
+    if ( vo_FS(vo) ) { vo->dest.w=d_width; vo->dest.h=d_height; }
 
     priv->num_buffers=vo_conf.da_buffs;
 
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
-    aspect(&d_width,&d_height,VO_ZOOM(vo)?A_ZOOM:A_NOZOOM);
+    aspect(&d_width,&d_height,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
     vo_x11_calcpos(vo,&hint,d_width,d_height,flags);
     hint.flags = PPosition | PSize;
 
@@ -208,7 +208,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 		((vo_conf.WinID==0) ? 0 : (PointerMotionMask
 		| ButtonPressMask | ButtonReleaseMask )));
     XSetStandardProperties(vo->mDisplay, vo->window, hello, hello, None, NULL, 0, &hint);
-    if ( VO_FS(vo) ) vo_x11_decoration(vo, vo->mDisplay,vo->window,0 );
+    if ( vo_FS(vo) ) vo_x11_decoration(vo, vo->mDisplay,vo->window,0 );
     XMapWindow(vo->mDisplay, vo->window);
 #ifdef HAVE_XINERAMA
     vo_x11_xinerama_move(vo,vo->mDisplay,vo->window,&hint);
@@ -217,7 +217,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     XFlush(vo->mDisplay);
     XSync(vo->mDisplay, False);
 #ifdef HAVE_XF86VM
-    if ( VO_VM(vo) ) {
+    if ( vo_VM(vo) ) {
 	/* Grab the mouse pointer in our window */
 	XGrabPointer(   vo->mDisplay, vo->window, True, 0,
 			GrabModeAsync, GrabModeAsync,
