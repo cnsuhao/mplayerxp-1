@@ -12,6 +12,7 @@ typedef struct mp_conf_s {
     int		use_stdin;
     int		slave_mode;
     uint32_t	msg_filter;
+    int		test_av;
 // XP-core
     int		xp;   /* XP-mode */
     int		gomp; /* currently it's experimental feature */

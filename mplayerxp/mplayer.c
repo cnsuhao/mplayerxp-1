@@ -173,15 +173,24 @@ static int cfg_include(struct config *conf, char *filename){
 static int mpxp_init_antiviral_protection(int verbose)
 {
     int rc;
-    rc=mp_mprotect(antiviral_hole1,sizeof(antiviral_hole1),PROT_NONE);
-    rc|=mp_mprotect(antiviral_hole2,sizeof(antiviral_hole2),PROT_NONE);
-    rc|=mp_mprotect(antiviral_hole3,sizeof(antiviral_hole3),PROT_NONE);
+    rc=mp_mprotect(antiviral_hole1,sizeof(antiviral_hole1),MP_PROT_NONE);
+    rc|=mp_mprotect(antiviral_hole2,sizeof(antiviral_hole2),MP_PROT_NONE);
+    rc|=mp_mprotect(antiviral_hole3,sizeof(antiviral_hole3),MP_PROT_NONE);
     if(verbose) {
 	if(rc)
 	    MSG_ERR("*** Error! Cannot initialize antiviral protection: '%s' ***!\n",strerror(errno));
 	else
 	    MSG_OK("*** Antiviral protection was inited ***!!!\n");
     }
+    return rc;
+}
+
+static int mpxp_test_antiviral_protection(int verbose)
+{
+    int rc;
+    if(verbose) MSG_INFO("Right now MPlayerXP should make coredump!\n");
+    rc=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole2[0];
+    MSG_ERR("Antiviral protection of MPlayerXP doesn't work!");
     return rc;
 }
 
@@ -2401,6 +2410,10 @@ int main(int argc,char* argv[], char *envp[]){
 	MSG_ERR("Error: detected option: -core.xp=0\n"
 		"Note!  Single-thread mode is not longer supported by MPlayerXP\n");
 	exit_player(MSGTR_Exit_quit);
+    }
+    if(mp_conf.test_av) {
+	mpxp_test_antiviral_protection(mp_conf.verbose);
+	exit_player("Bad test of antiviral protection");
     }
 
     xp_num_cpu=get_number_cpu();

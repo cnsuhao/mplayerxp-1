@@ -36,13 +36,13 @@ static inline unsigned long long int read_tsc( void )
   * @note                  Pseudo-randomizing memory objects makes memory
   *                        exploits harder
 */
-enum {
+enum mp_malloc_e {
     MPA_FLG_RANDOMIZER   = 0x00000000,
     MPA_FLG_BOUNDS_CHECK = 0x00000001,
     MPA_FLG_BEFORE_CHECK = 0x00000002,
     MPA_FLG_BACKTRACE    = 0x00000004
 };
-extern void	__FASTCALL__ mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,unsigned flags);
+extern void	__FASTCALL__ mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags);
 extern void	__FASTCALL__ mp_uninit_malloc(int verbose);
 
 extern void	__FASTCALL__ mp_open_malloc_stat(void);
@@ -57,5 +57,11 @@ extern void  	__FASTCALL__ mp_free(any_t*__ptr);
 extern char *	__FASTCALL__ mp_strdup(const char *src);
 
 /* flags: PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC */
-extern int	__FASTCALL__ mp_mprotect(const any_t* addr,size_t len,int flags);
+enum mp_prot_e {
+    MP_PROT_READ	=0x1,	/* Page can be read.  */
+    MP_PROT_WRITE	=0x2,	/* Page can be written.  */
+    MP_PROT_EXEC	=0x4,	/* Page can be executed.  */
+    MP_PROT_NONE	=0x0,	/* Page can not be accessed.  */
+};
+extern int	__FASTCALL__ mp_mprotect(const any_t* addr,size_t len,enum mp_prot_e flags);
 #endif

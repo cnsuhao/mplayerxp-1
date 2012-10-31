@@ -46,6 +46,7 @@ static const config_t xpcore_config[]={
 	{"autoq", &mp_conf.autoq, CONF_TYPE_INT, CONF_RANGE, 0, 100, "dynamically changes the level of postprocessing depending on spare CPU time available"},
 	{"speed", &mp_conf.playbackspeed_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.01, 100.0, "sets playback speed factor"},
 	{"benchmark", &mp_conf.benchmark, CONF_TYPE_FLAG, 0, 0, 1, "performs benchmarking to estimate performance of MPlayerXP"},
+	{"test-av", &mp_conf.test_av, CONF_TYPE_FLAG, 0, 0, 1, "test antiviral protection of MPlayerXP"},
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 

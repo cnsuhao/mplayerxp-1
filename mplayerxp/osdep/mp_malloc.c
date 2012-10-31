@@ -115,7 +115,7 @@ char * my_strdup(const char *s)
 typedef struct priv_s {
     unsigned			rnd_limit;
     unsigned			every_nth_call;
-    unsigned			flags;
+    enum mp_malloc_e		flags;
     // statistics
     unsigned long long int	total_calls;
     unsigned long long int	num_allocs;
@@ -126,7 +126,7 @@ typedef struct priv_s {
 }priv_t;
 static priv_t* priv;
 
-void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,unsigned flags)
+void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
 {
     if(!priv) priv=malloc(sizeof(priv_t));
     memset(priv,0,sizeof(priv_t));
@@ -214,7 +214,7 @@ unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose) {
     return priv->stat_num_allocs;
 }
 
-int __FASTCALL__ mp_mprotect(const any_t* addr,size_t len,int flags)
+int __FASTCALL__ mp_mprotect(const any_t* addr,size_t len,enum mp_prot_e flags)
 {
     return mprotect(addr,len,flags);
 }
