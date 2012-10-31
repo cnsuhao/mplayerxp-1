@@ -36,7 +36,13 @@ static inline unsigned long long int read_tsc( void )
   * @note                  Pseudo-randomizing memory objects makes memory
   *                        exploits harder
 */
-extern void	__FASTCALL__ mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call);
+enum {
+    MPA_FLG_RANDOMIZER   = 0x00000000,
+    MPA_FLG_BOUNDS_CHECK = 0x00000001,
+    MPA_FLG_BEFORE_CHECK = 0x00000002,
+    MPA_FLG_BACKTRACE    = 0x00000004
+};
+extern void	__FASTCALL__ mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,unsigned flags);
 extern void	__FASTCALL__ mp_uninit_malloc(int verbose);
 
 extern void	__FASTCALL__ mp_open_malloc_stat(void);
@@ -45,7 +51,7 @@ extern unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose);
 extern any_t*	__FASTCALL__ mp_malloc(size_t __size);
 extern any_t*	__FASTCALL__ mp_mallocz(size_t __size);
 extern any_t*	__FASTCALL__ mp_realloc(any_t*__ptr, size_t __size);
-static inline any_t*	mp_calloc (size_t __nelem, size_t __size) { return mp_mallocz(__nelem*__size); }
+static inline any_t* mp_calloc (size_t __nelem, size_t __size) { return mp_mallocz(__nelem*__size); }
 extern any_t*	__FASTCALL__ mp_memalign (size_t boundary, size_t __size);
 extern void  	__FASTCALL__ mp_free(any_t*__ptr);
 extern char *	__FASTCALL__ mp_strdup(const char *src);

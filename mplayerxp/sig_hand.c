@@ -18,6 +18,8 @@
 #include "xmp_core.h"
 #include "mp_msg.h"
 #include "osdep/mplib.h"
+#define MSGT_CLASS MSGT_CPLAYER
+#include "mp_msg.h"
 
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>

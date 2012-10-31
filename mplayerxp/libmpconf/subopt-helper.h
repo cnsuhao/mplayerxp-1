@@ -10,13 +10,13 @@
  *        of the suboption parser.
  *
  */
-
-#define OPT_ARG_BOOL 0
-#define OPT_ARG_INT  1
-#define OPT_ARG_STR  2
-#define OPT_ARG_MSTRZ 3 ///< A malloced, zero terminated string, use mp_free()!
-#define OPT_ARG_FLOAT 4
-
+enum {
+    OPT_ARG_BOOL	=0,
+    OPT_ARG_INT		=1,
+    OPT_ARG_STR		=2,
+    OPT_ARG_MSTRZ	=3, ///< A malloced, zero terminated string, use mp_free()!
+    OPT_ARG_FLOAT	=4
+};
 typedef int (*opt_test_f)(any_t*);
 
 /** simple structure for defining the option name, type and storage location */

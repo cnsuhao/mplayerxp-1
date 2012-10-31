@@ -12,17 +12,14 @@ struct m_option;
 
 /// Struct definition
 typedef struct m_struct_st {
-  /// For error messages and debugging
-  const char* name;
-  /// size of the whole struct
-  unsigned int size;
-  /// Pointer to a struct filled with the default settings
-  const any_t* defaults;
+    const char* name; /// For error messages and debugging
+    unsigned int size; /// size of the whole struct
+    const any_t* defaults; /// Pointer to a struct filled with the default settings
   /// Field list.
   /** The p field of the \ref m_option struct must contain the offset
    *  of the member in the struct (use M_ST_OFF macro for this).
    */
-  const struct m_option* fields;
+    const struct m_option* fields;
 } m_struct_t;
 
 

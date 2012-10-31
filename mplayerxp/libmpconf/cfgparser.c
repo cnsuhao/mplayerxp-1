@@ -39,7 +39,7 @@
 #include "cfgparser.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CFGPARSER
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 typedef int (*cfg_func_arg_param_t)(const config_t *,const char *,const char *);
 typedef int (*cfg_func_param_t)(const config_t *,const char *);

@@ -38,6 +38,7 @@
 
 #include "af.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 #define FFMAX(a,b) ((a) > (b) ? (a) : (b))
 #define FFMIN(a,b) ((a) > (b) ? (b) : (a))

@@ -14,52 +14,34 @@
 /// \ingroup Properties
 ///@{
 
-/// Get the current value.
+enum {
 /** \param arg Pointer to a variable of the right type.
  */
-#define M_PROPERTY_GET         0
-
-/// Get a string representing the current value.
+    M_PROPERTY_GET		=0, /// Get the current value.
 /** Set the variable to a newly allocated string or NULL.
  *  \param arg Pointer to a char* variable.
  */
-#define M_PROPERTY_PRINT       1
-
-/// Set a new value.
+    M_PROPERTY_PRINT		=1, /// Get a string representing the current value.
 /** The variable is updated to the value actually set.
  *  \param arg Pointer to a variable of the right type.
  */
-#define M_PROPERTY_SET         2
-
-/// Set a new value from a string.
-/** \param arg String containing the value.
- */
-#define M_PROPERTY_PARSE       3
-
-/// Increment the current value.
+    M_PROPERTY_SET		=2, /// Set a new value.
+    M_PROPERTY_PARSE		=3, /// Set a new value from a string. param arg String containing the value.
 /** The sign of the argument is also taken into account if applicable.
  *  \param arg Pointer to a variable of the right type or NULL.
  */
-#define M_PROPERTY_STEP_UP     4
-
-/// Decrement the current value.
+    M_PROPERTY_STEP_UP		=4, /// Increment the current value.
 /** The sign of the argument is also taken into account if applicable.
  *  \param arg Pointer to a variable of the right type or NULL.
  */
-#define M_PROPERTY_STEP_DOWN   5
-
-/// Get a string containg a parsable representation.
+    M_PROPERTY_STEP_DOWN	=5, /// Decrement the current value.
 /** Set the variable to a newly allocated string or NULL.
  *  \param arg Pointer to a char* variable.
  */
-#define M_PROPERTY_TO_STRING   6
-
-/// Pass down an action to a sub-property.
-#define M_PROPERTY_KEY_ACTION  7
-
-/// Get a m_option describing the property.
-#define M_PROPERTY_GET_TYPE    8
-
+    M_PROPERTY_TO_STRING	=6, /// Get a string containg a parsable representation.
+    M_PROPERTY_KEY_ACTION	=7, /// Pass down an action to a sub-property.
+    M_PROPERTY_GET_TYPE		=8 /// Get a m_option describing the property.
+};
 ///@}
 
 /// \defgroup PropertyActionsArg Property actions argument type
@@ -81,25 +63,14 @@ typedef struct {
 /// \brief  Return values for the control function.
 ///@{
 
-/// Returned on success.
-#define M_PROPERTY_OK                1
-
-/// Returned on error.
-#define M_PROPERTY_ERROR             0
-
-/// \brief Returned when the property can't be used, for example something about
-/// the subs while playing audio only
-#define M_PROPERTY_UNAVAILABLE      -1
-
-/// Returned if the requested action is not implemented.
-#define M_PROPERTY_NOT_IMPLEMENTED  -2
-
-/// Returned when asking for a property that doesn't exist.
-#define M_PROPERTY_UNKNOWN          -3
-
-/// Returned when the action can't be done (like setting the volume when edl mute).
-#define M_PROPERTY_DISABLED         -4
-
+enum {
+    M_PROPERTY_OK		=1, /// Returned on success.
+    M_PROPERTY_ERROR		=0, /// Returned on error.
+    M_PROPERTY_UNAVAILABLE	=-1, /// \brief Returned when the property can't be used, for example something about the subs while playing audio only
+    M_PROPERTY_NOT_IMPLEMENTED	=-2, /// Returned if the requested action is not implemented.
+    M_PROPERTY_UNKNOWN		=-3, /// Returned when asking for a property that doesn't exist.
+    M_PROPERTY_DISABLED		=-4 /// Returned when the action can't be done (like setting the volume when edl mute).
+};
 ///@}
 
 /// \ingroup Properties
@@ -146,13 +117,13 @@ char* mp_property_print(const char *name, any_t* ctx);
 ///@{
 
 /// Clamp a value according to \ref m_option::min and \ref m_option::max.
-#define M_PROPERTY_CLAMP(prop,val) do {                                 \
-        if(((prop)->flags & M_OPT_MIN) && (val) < (prop)->min)          \
-            (val) = (prop)->min;                                        \
-        else if(((prop)->flags & M_OPT_MAX) && (val) > (prop)->max)     \
-            (val) = (prop)->max;                                        \
-    } while(0)
-
+static inline double M_PROPERTY_CLAMP(m_option_t* prop,double val) {
+    if((prop->flags & M_OPT_MIN) && (val<prop->min))
+	val=prop->min;
+    else if((prop->flags & M_OPT_MAX) && (val>prop->max))
+	val=prop->max;
+    return val;
+}
 /// Implement get.
 int m_property_int_ro(m_option_t* prop,int action,
                       any_t* arg,int var);

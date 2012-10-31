@@ -2,33 +2,35 @@
 #ifndef __PLAYTREE_H
 #define __PLAYTREE_H
 
-#define PLAY_TREE_ITER_ERROR 0
-#define PLAY_TREE_ITER_ENTRY 1
-#define PLAY_TREE_ITER_NODE  2
-#define PLAY_TREE_ITER_END 3
-
-#define PLAY_TREE_ENTRY_NODE -1
-#define PLAY_TREE_ENTRY_DVD 0
-#define PLAY_TREE_ENTRY_VCD 1
-#define PLAY_TREE_ENTRY_TV    2
-#define PLAY_TREE_ENTRY_FILE  3
-
+enum {
+    PLAY_TREE_ITER_ERROR=0,
+    PLAY_TREE_ITER_ENTRY=1,
+    PLAY_TREE_ITER_NODE =2,
+    PLAY_TREE_ITER_END  =3
+};
+enum {
+    PLAY_TREE_ENTRY_NODE=-1,
+    PLAY_TREE_ENTRY_DVD =0,
+    PLAY_TREE_ENTRY_VCD =1,
+    PLAY_TREE_ENTRY_TV  =2,
+    PLAY_TREE_ENTRY_FILE=3
+};
 /// \defgroup PlaytreeEntryFlags Playtree flags
 /// \ingroup Playtree
 ///@{
 /// Play the item children in random order.
-#define PLAY_TREE_RND  (1<<0)
+enum {
+    PLAY_TREE_RND	=(1<<0),
 /// Playtree flags used by the iterator to mark items already "randomly" played.
-#define PLAY_TREE_RND_PLAYED  (1<<8)
+    PLAY_TREE_RND_PLAYED=(1<<8),
 ///@}
-
 /// \defgroup PlaytreeIterMode Playtree iterator mode
 /// \ingroup PlaytreeIter
 ///@{
-#define PLAY_TREE_ITER_NORMAL 0
-#define PLAY_TREE_ITER_RND 1
+    PLAY_TREE_ITER_NORMAL=0,
+    PLAY_TREE_ITER_RND	 =1
 ///@}
-
+};
 /// \defgroup Playtree
 ///@{
 
@@ -55,7 +57,6 @@ struct play_tree_param {
   char* value;
 };
 
-
 struct play_tree {
   play_tree_t* parent;
   play_tree_t* child;
@@ -69,7 +70,7 @@ struct play_tree {
   int entry_type;
   int flags;
 };
-  
+
 struct play_tree_iter {
   play_tree_t* root; // Iter root tree
   play_tree_t* tree; // Current tree
@@ -79,13 +80,12 @@ struct play_tree_iter {
   int num_files;
   int entry_pushed;
   int mode;
- 
+
   int* status_stack; //  loop/valid stack to save/revert status when we go up/down
   int stack_size;  // status stack size
 };
 
-play_tree_t* 
-play_tree_new(void);
+play_tree_t* play_tree_new(void);
 
 // If childs is true mp_free also the childs
 void
@@ -186,8 +186,8 @@ void pt_iter_destroy(play_tree_iter_t** iter);
 char* pt_iter_get_file(play_tree_iter_t* iter, int d);
 
 // Two Macros that implement forward and backward direction.
-#define pt_iter_get_next_file(iter) pt_iter_get_file(iter, 1)
-#define pt_iter_get_prev_file(iter) pt_iter_get_file(iter, -1)
+static inline char* pt_iter_get_next_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, 1); }
+static inline char* pt_iter_get_prev_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, -1); }
 
 /// Inserts entry into the playtree.
 void pt_iter_insert_entry(play_tree_iter_t* iter, play_tree_t* entry);
@@ -198,13 +198,13 @@ void pt_iter_replace_entry(play_tree_iter_t* iter, play_tree_t* entry);
 /// Adds a new file to the playtree, if it is not valid it is created.
 void pt_add_file(play_tree_t** ppt,const char* filename);
 
-/// \brief Performs a convert to playtree-syntax, by concat path/file 
+/// \brief Performs a convert to playtree-syntax, by concat path/file
 /// and performs pt_add_file
 void pt_add_gui_file(play_tree_t** ppt,const char* path,const char* file);
 
 // Two macros to use only the iter and not the other things.
-#define pt_iter_add_file(iter, filename) pt_add_file(&iter->tree, filename)
-#define pt_iter_add_gui_file(iter, path, name) pt_add_gui_file(&iter->tree, path, name)
+static inline void pt_iter_add_file(play_tree_iter_t* iter, const char *filename) { pt_add_file(&iter->tree, filename); }
+static inline void pt_iter_add_gui_file(play_tree_iter_t* iter,const char* path,const char* name) { pt_add_gui_file(&iter->tree, path, name); }
 
 /// Resets the iter and goes back to head.
 void pt_iter_goto_head(play_tree_iter_t* iter);

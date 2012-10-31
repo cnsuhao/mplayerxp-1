@@ -22,11 +22,11 @@ int (* dca_resample32) (float * _f, float * s16)=NULL;
 #include "resample_mmx.c"
 #endif
 
-any_t* dca_resample_init(dca_state_t * state,uint32_t mm_accel,int flags,int chans){
+any_t* dca_resample_init(dca_state_t * state,uint32_t _mm_accel,int flags,int chans){
 any_t* tmp;
 
 #ifdef CAN_COMPILE_MMX
-    if(mm_accel&MM_ACCEL_X86_MMX){
+    if(_mm_accel&MM_ACCEL_X86_MMX){
 	tmp=dca_resample_MMX(state,flags,chans);
 	if(tmp){
 	    if(dca_resample==NULL) fprintf(stderr, "Using MMX optimized resampler\n");
@@ -42,16 +42,16 @@ any_t* tmp;
 	dca_resample=tmp;
 	return tmp;
     }
-    
+
     fprintf(stderr, "Unimplemented resampler for mode 0x%X -> %d channels conversion - Contact MPlayer developers!\n", flags, chans);
     return NULL;
 }
 
-any_t* dca_resample_init_float(dca_state_t * state,uint32_t mm_accel,int flags,int chans){
+any_t* dca_resample_init_float(dca_state_t * state,uint32_t _mm_accel,int flags,int chans){
 any_t* tmp;
 
 #if 0 //#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-    if(mm_accel&MM_ACCEL_X86_MMX){
+    if(_mm_accel&MM_ACCEL_X86_MMX){
 	tmp=dca_resample_MMX(state,flags,chans);
 	if(tmp){
 	    if(dca_resample==NULL) fprintf(stderr, "Using MMX optimized resampler\n");

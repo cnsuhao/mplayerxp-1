@@ -7,23 +7,28 @@ typedef struct mp_osd_bbox_s {
     int x1,y1,x2,y2;
 } mp_osd_bbox_t;
 
-#define OSDTYPE_OSD		1
-#define OSDTYPE_SUBTITLE	2
-#define OSDTYPE_PROGBAR		3
-#define OSDTYPE_SPU		4
-#define OSDTYPE_VOBSUB		5
-#define OSDTYPE_DVDNAV		6
-#define OSDTYPE_TELETEXT	7
+enum {
+    OSDTYPE_OSD		=1,
+    OSDTYPE_SUBTITLE	=2,
+    OSDTYPE_PROGBAR	=3,
+    OSDTYPE_SPU		=4,
+    OSDTYPE_VOBSUB	=5,
+    OSDTYPE_DVDNAV	=6,
+    OSDTYPE_TELETEXT	=7
+};
 
-#define OSDFLAG_VISIBLE		1
-#define OSDFLAG_CHANGED		2
-#define OSDFLAG_BBOX		4
-#define OSDFLAG_OLD_BBOX	8
-#define OSDFLAG_FORCE_UPDATE	16
+enum {
+    OSDFLAG_VISIBLE	=1,
+    OSDFLAG_CHANGED	=2,
+    OSDFLAG_BBOX	=4,
+    OSDFLAG_OLD_BBOX	=8,
+    OSDFLAG_FORCE_UPDATE=16
+};
 
-#define MAX_UCS			1600
-#define MAX_UCSLINES		16
-
+enum {
+    MAX_UCS		=1600,
+    MAX_UCSLINES	=16
+};
 typedef struct mp_osd_obj_s {
     struct mp_osd_obj_s* next;
     unsigned char type;
@@ -51,32 +56,25 @@ typedef struct mp_osd_obj_s {
     unsigned char *bitmap_buffer;
 } mp_osd_obj_t;
 
+enum {
+    OSD_PLAY		=0x01,
+    OSD_PAUSE		=0x02,
+    OSD_STOP		=0x03,
+    OSD_REW		=0x04,
+    OSD_FFW		=0x05,
+    OSD_CLOCK		=0x06,
+    OSD_CONTRAST	=0x07,
+    OSD_SATURATION	=0x08,
+    OSD_VOLUME		=0x09,
+    OSD_BRIGHTNESS	=0x0A,
+    OSD_HUE		=0x0B,
+    OSD_DVDMENU		=0x0C,
 
-#if 0
-
-// disable subtitles:
-static inline void vo_draw_text_osd(int dxs,int dys,void (*draw_alpha)(int x0,int y0, int w,int h, unsigned char* src, unsigned char *srca, int stride)){
-}
-
-#else
-
-#define OSD_PLAY	0x01
-#define OSD_PAUSE	0x02
-#define OSD_STOP	0x03
-#define OSD_REW		0x04
-#define OSD_FFW		0x05
-#define OSD_CLOCK	0x06
-#define OSD_CONTRAST	0x07
-#define OSD_SATURATION	0x08
-#define OSD_VOLUME	0x09
-#define OSD_BRIGHTNESS	0x0A
-#define OSD_HUE		0x0B
-#define OSD_DVDMENU	0x0C
-
-#define OSD_PB_START	0x10
-#define OSD_PB_0	0x11
-#define OSD_PB_END	0x12
-#define OSD_PB_1	0x13
+    OSD_PB_START	=0x10,
+    OSD_PB_0		=0x11,
+    OSD_PB_END		=0x12,
+    OSD_PB_1		=0x13
+};
 
 typedef struct sub_data_s {
     char *	cp;
@@ -103,5 +101,4 @@ int __FASTCALL__ vo_osd_changed(int new_value);
 int __FASTCALL__ get_osd_height(any_t* vo,int c,int h);
 void __FASTCALL__ osd_set_nav_box (uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey);
 
-#endif
 #endif

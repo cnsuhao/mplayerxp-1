@@ -6,32 +6,34 @@
 #define __CONFIG_H
 
 /* config types */
-#define CONF_TYPE_FLAG		0
-#define CONF_TYPE_INT		1
-#define CONF_TYPE_FLOAT		2
-#define CONF_TYPE_STRING	3
-#define CONF_TYPE_PRINT		4
-#define CONF_TYPE_FUNC		5
-#define CONF_TYPE_FUNC_PARAM	6
-#define CONF_TYPE_FUNC_FULL	7
-#define CONF_TYPE_SUBCONFIG	8
-
-
-#define ERR_NOT_AN_OPTION	-1
-#define ERR_MISSING_PARAM	-2
-#define ERR_OUT_OF_RANGE	-3
-#define ERR_FUNC_ERR		-4
-#define ERR_NO_SUBCONF		-5
-
+enum {
+    CONF_TYPE_FLAG	=0,
+    CONF_TYPE_INT	=1,
+    CONF_TYPE_FLOAT	=2,
+    CONF_TYPE_STRING	=3,
+    CONF_TYPE_PRINT	=4,
+    CONF_TYPE_FUNC	=5,
+    CONF_TYPE_FUNC_PARAM=6,
+    CONF_TYPE_FUNC_FULL	=7,
+    CONF_TYPE_SUBCONFIG	=8
+};
+enum {
+    ERR_NOT_AN_OPTION	=-1,
+    ERR_MISSING_PARAM	=-2,
+    ERR_OUT_OF_RANGE	=-3,
+    ERR_FUNC_ERR	=-4,
+    ERR_NO_SUBCONF	=-5
+};
 /* config flags */
-#define CONF_MIN		(1<<0)
-#define CONF_MAX		(1<<1)
-#define CONF_RANGE		(CONF_MIN|CONF_MAX)
-#define CONF_NOCFG		(1<<2)
-#define CONF_NOCMD		(1<<3)
-#define CONF_GLOBAL		(1<<4)
-#define CONF_NOSAVE		(1<<5)
-
+enum {
+    CONF_MIN		=(1<<0),
+    CONF_MAX		=(1<<1),
+    CONF_RANGE		=(CONF_MIN|CONF_MAX),
+    CONF_NOCFG		=(1<<2),
+    CONF_NOCMD		=(1<<3),
+    CONF_GLOBAL		=(1<<4),
+    CONF_NOSAVE		=(1<<5)
+};
 typedef struct config config_t;
 typedef struct m_config m_config_t;
 typedef struct config_save config_save_t;
@@ -41,37 +43,37 @@ typedef struct config_save config_save_t;
 typedef void (*cfg_default_func_t)(config_t *,const char*);
 
 struct config {
-	const char *name;
-	any_t* const p;
-	unsigned int type;
-	unsigned int flags;
-	float min,max;
-	const char *help;
+    const char *name;
+    any_t* const p;
+    unsigned int type;
+    unsigned int flags;
+    float min,max;
+    const char *help;
 };
 
 struct m_config {
-  const config_t** opt_list;
-  config_save_t** config_stack;
-  any_t**dynamics;
-  unsigned dynasize;
-  int cs_level;
-  int parser_mode;  /* COMMAND_LINE or CONFIG_FILE */
-  int flags;
-  const char* sub_conf; // When we save a subconfig
-  play_tree_t* pt; // play tree we use for playlist option, etc
-  play_tree_t* last_entry; // last added entry
-  play_tree_t* last_parent; // if last_entry is NULL we must create child of this
-  int recursion_depth;
+    const config_t** opt_list;
+    config_save_t** config_stack;
+    any_t**dynamics;
+    unsigned dynasize;
+    int cs_level;
+    int parser_mode;  /* COMMAND_LINE or CONFIG_FILE */
+    int flags;
+    const char* sub_conf; // When we save a subconfig
+    play_tree_t* pt; // play tree we use for playlist option, etc
+    play_tree_t* last_entry; // last added entry
+    play_tree_t* last_parent; // if last_entry is NULL we must create child of this
+    int recursion_depth;
 };
 
 struct config_save {
-  const config_t* opt;
-  union {
-    int as_int;
-    float as_float;
-    any_t* as_pointer;
-  } param;
-  char* opt_name;
+    const config_t* opt;
+    union {
+	int as_int;
+	float as_float;
+	any_t* as_pointer;
+    } param;
+    char* opt_name;
 };
 
 /* parse_config_file returns:

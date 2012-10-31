@@ -132,6 +132,7 @@
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
 #endif
+#include "vo_msg.h"
 LIBVO_EXTERN(sdl)
 
 int sdl_noxv;

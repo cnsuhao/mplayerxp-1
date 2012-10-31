@@ -15,7 +15,7 @@
 #include "help_mp.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 #define ROUND(x) ((int)((x)<0 ? (x)-0.5 : (x)+0.5))
 
@@ -217,14 +217,14 @@ int m_property_int_range(m_option_t* prop,int action,
     switch(action) {
     case M_PROPERTY_SET:
         if(!arg) return 0;
-        M_PROPERTY_CLAMP(prop,*(int*)arg);
+        *(int*)arg=M_PROPERTY_CLAMP(prop,*(int*)arg);
         *var = *(int*)arg;
         return 1;
     case M_PROPERTY_STEP_UP:
     case M_PROPERTY_STEP_DOWN:
         *var += (arg ? *(int*)arg : 1) *
             (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
-        M_PROPERTY_CLAMP(prop,*var);
+        *var=M_PROPERTY_CLAMP(prop,*var);
         return 1;
     }
     return m_property_int_ro(prop,action,arg,*var);
@@ -278,14 +278,14 @@ int m_property_float_range(m_option_t* prop,int action,
     switch(action) {
     case M_PROPERTY_SET:
         if(!arg) return 0;
-        M_PROPERTY_CLAMP(prop,*(float*)arg);
+        *(float*)arg=M_PROPERTY_CLAMP(prop,*(float*)arg);
         *var = *(float*)arg;
         return 1;
     case M_PROPERTY_STEP_UP:
     case M_PROPERTY_STEP_DOWN:
         *var += (arg ? *(float*)arg : 0.1) *
             (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
-        M_PROPERTY_CLAMP(prop,*var);
+        *var=M_PROPERTY_CLAMP(prop,*var);
         return 1;
     }
     return m_property_float_ro(prop,action,arg,*var);

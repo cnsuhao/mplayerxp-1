@@ -1,7 +1,7 @@
 #include "mp_config.h"
 #include "mplib.h"
 #define MSGT_CLASS MSGT_OSDEP
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -115,6 +115,7 @@ char * my_strdup(const char *s)
 typedef struct priv_s {
     unsigned			rnd_limit;
     unsigned			every_nth_call;
+    unsigned			flags;
     // statistics
     unsigned long long int	total_calls;
     unsigned long long int	num_allocs;
@@ -125,12 +126,13 @@ typedef struct priv_s {
 }priv_t;
 static priv_t* priv;
 
-void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call)
+void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,unsigned flags)
 {
     if(!priv) priv=malloc(sizeof(priv_t));
     memset(priv,0,sizeof(priv_t));
     priv->rnd_limit=rnd_limit;
     priv->every_nth_call=every_nth_call;
+    priv->flags=flags;
 }
 
 void	mp_uninit_malloc(int verbose)
@@ -144,7 +146,7 @@ void	mp_uninit_malloc(int verbose)
 any_t* mp_malloc(size_t __size)
 {
     any_t* rb,*rnd_buff=NULL;
-    if(!priv) mp_init_malloc(1000,10);
+    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
     if(priv->every_nth_call && priv->rnd_limit) {
 	if(priv->total_calls%priv->every_nth_call==0) {
 	    rnd_buff=malloc(rand()%priv->rnd_limit);
@@ -172,7 +174,7 @@ any_t*	mp_mallocz (size_t __size) {
 /* randomizing of memalign is useless feature */
 any_t*	mp_memalign (size_t boundary, size_t __size)
 {
-    if(!priv) mp_init_malloc(1000,10);
+    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
     priv->num_allocs++;
     if(priv->enable_stat) priv->stat_num_allocs++;
     return memalign(boundary,__size);
@@ -180,7 +182,7 @@ any_t*	mp_memalign (size_t boundary, size_t __size)
 
 void	mp_free(any_t*__ptr)
 {
-    if(!priv) mp_init_malloc(1000,10);
+    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
     free(__ptr);
     priv->num_allocs--;
     if(priv->enable_stat) priv->stat_num_allocs--;
@@ -197,13 +199,13 @@ char *	mp_strdup(const char *src) {
 }
 
 void	__FASTCALL__ mp_open_malloc_stat(void) {
-    if(!priv) mp_init_malloc(1000,10);
+    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
     priv->enable_stat=1;
     priv->stat_total_calls=priv->stat_num_allocs=0ULL;
 }
 
 unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose) {
-    if(!priv) mp_init_malloc(1000,10);
+    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
     priv->enable_stat=0;
     if(verbose)
 	MSG_INFO("mp_malloc stat: from %lli total calls of alloc() were not freed %lli buffers\n"

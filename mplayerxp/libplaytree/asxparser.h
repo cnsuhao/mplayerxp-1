@@ -1,6 +1,7 @@
 #ifndef ASXPARSER_H
 #define ASXPARSER_H 1
 
+#include "osdep/mplib.h"
 #include "playtree.h"
 
 typedef struct _ASX_Parser_t ASX_Parser_t;
@@ -38,12 +39,12 @@ extern char* __FASTCALL__ asx_get_attrib(const char* attrib,char** attribs);
 
 extern int __FASTCALL__ asx_attrib_to_enum(const char* val,char** valid_vals);
 
-#define asx_free_attribs(a) asx_list_free(&a,mp_free)
-
 ////// List utils
 
 typedef void (* __FASTCALL__ ASX_FreeFunc)(any_t* arg);
 
 extern void __FASTCALL__ asx_list_free(any_t* list_ptr,ASX_FreeFunc free_func);
+
+static inline void asx_free_attribs(any_t*a) { asx_list_free(&a,mp_free); }
 
 #endif

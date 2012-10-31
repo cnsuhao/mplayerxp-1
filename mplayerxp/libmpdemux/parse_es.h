@@ -1,7 +1,10 @@
+#ifndef PARSE_ES_INCLUDED
+#define PARSE_ES_INCLUDED 1
 
-#define MAX_VIDEO_PACKET_SIZE (224*1024+4)
-#define VIDEOBUFFER_SIZE 0x100000
-
+enum {
+    MAX_VIDEO_PACKET_SIZE=(224*1024+4),
+    VIDEOBUFFER_SIZE=0x100000
+};
 extern unsigned char* videobuffer;
 extern int videobuf_len;
 extern unsigned char videobuf_code[4];
@@ -15,4 +18,4 @@ int read_video_packet(demux_stream_t *ds);
 
 // return: next packet code
 int skip_video_packet(demux_stream_t *ds);
-
+#endif

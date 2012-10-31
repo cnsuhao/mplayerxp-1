@@ -26,6 +26,7 @@
 #include "af.h"
 #include "dsp.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 // Q value for low-pass filter
 #define Q 1.0

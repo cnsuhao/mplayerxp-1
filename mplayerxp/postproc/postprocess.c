@@ -11,7 +11,7 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
 #define MSGT_CLASS MSGT_PP
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 extern void exit_player(char *);
 pp_context *pp2_get_context(int width, int height, int flags)

@@ -9,7 +9,7 @@
 #ifndef __VIDEO_OUT_H
 #define __VIDEO_OUT_H 1
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include <inttypes.h>
 #include <stdarg.h>
 
@@ -20,41 +20,47 @@
 #include "sub.h"
 #include "libmpsub/subreader.h"
 #include "img_format.h"
-#include "vo_msg.h"
-#include "../mp_image.h"
+#include "mp_image.h"
 
-#define VO_EVENT_EXPOSE 1
-#define VO_EVENT_RESIZE 2
-#define VO_EVENT_KEYPRESS 4
-#define VO_EVENT_FORCE_UPDATE 0x80000000
+enum {
+    VO_EVENT_EXPOSE=1,
+    VO_EVENT_RESIZE=2,
+    VO_EVENT_KEYPRESS=4,
+    VO_EVENT_FORCE_UPDATE=0x80000000
+};
 
-#define VOCTRL_UNUSED0 1
-#define VOCTRL_QUERY_FORMAT 2	/**< Query direct FOURCC support. Takes a pointer to uint32_t fourcc */
-#define VOCTRL_RESET 3		/**< Signal a device reset seek */
-#define VOCTRL_FULLSCREEN 4	/**< Signal to switch window to fullscreen. Must affect window only (not surfaces) */
-#define VOCTRL_UNUSED 5
-#define VOCTRL_PAUSE 6		/**< Notification to stop a device (for dxr3) */
-#define VOCTRL_RESUME 7		/**< Notification to start/resume playback after pause (for dxr3) */
-#define VOCTRL_UNUSED2 8
-#define VOCTRL_CHECK_EVENTS 9	/**< Notification that user performs key pressing. Takes (vo_resize_t *)&vrest as arg. Must return at least VO_EVENT_RESIZE */
-#define VOCTRL_GET_NUM_FRAMES 10/**< Query total number of allocated frames (multibuffering) */
-#define VOCTRL_UNUSED3 12
-#define VOCTRL_FLUSH_PAGES 13	/**< Flush pages of frame from RAM into video memory (bus mastering) */
-#define VOCTRL_UNUSED4 14
-#define VOCTRL_SET_EQUALIZER    1000 /**< Set video equalizer */
-#define VOCTRL_GET_EQUALIZER    1001 /**< Get video equalizer */
+enum {
+    VOCTRL_UNUSED0=1,
+    VOCTRL_QUERY_FORMAT=2,	/**< Query direct FOURCC support. Takes a pointer to uint32_t fourcc */
+    VOCTRL_RESET=3,		/**< Signal a device reset seek */
+    VOCTRL_FULLSCREEN=4,	/**< Signal to switch window to fullscreen. Must affect window only (not surfaces) */
+    VOCTRL_UNUSED=5,
+    VOCTRL_PAUSE=6,		/**< Notification to stop a device (for dxr3) */
+    VOCTRL_RESUME=7,		/**< Notification to start/resume playback after pause (for dxr3) */
+    VOCTRL_UNUSED2=8,
+    VOCTRL_CHECK_EVENTS=9,	/**< Notification that user performs key pressing. Takes (vo_resize_t *)&vrest as arg. Must return at least VO_EVENT_RESIZE */
+    VOCTRL_GET_NUM_FRAMES=10,	/**< Query total number of allocated frames (multibuffering) */
+    VOCTRL_UNUSED3=12,
+    VOCTRL_FLUSH_PAGES=13,	/**< Flush pages of frame from RAM into video memory (bus mastering) */
+    VOCTRL_UNUSED4=14,
+    VOCTRL_SET_EQUALIZER=1000,	/**< Set video equalizer */
+    VOCTRL_GET_EQUALIZER=1001	/**< Get video equalizer */
+};
 
+enum {
+    VO_TRUE=1,
+    VO_FALSE=0,
+    VO_ERROR=-1,
+    VO_NOTAVAIL=-2,
+    VO_NOTIMPL=-3
+};
 
-#define VO_TRUE		1
-#define VO_FALSE	0
-#define VO_ERROR	-1
-#define VO_NOTAVAIL	-2
-#define VO_NOTIMPL	-3
-
-#define VOFLAG_FULLSCREEN	0x01 /**< User wants to have fullscreen playback */
-#define VOFLAG_MODESWITCHING	0x02 /**< User enables to find the best video mode */
-#define VOFLAG_SWSCALE		0x04 /**< Obsolete. User enables slow Software scaler */
-#define VOFLAG_FLIPPING		0x08 /**< User enables page flipping (doublebuffering / XP mode) */
+enum {
+    VOFLAG_FULLSCREEN=0x01,	/**< User wants to have fullscreen playback */
+    VOFLAG_MODESWITCHING=0x02,	/**< User enables to find the best video mode */
+    VOFLAG_SWSCALE=0x04,	/**< Obsolete. User enables slow Software scaler */
+    VOFLAG_FLIPPING=0x08	/**< User enables page flipping (doublebuffering / XP mode) */
+};
 
 /** Text description of VO-driver */
 typedef struct vo_info_s

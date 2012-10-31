@@ -46,6 +46,7 @@
 #include "video_out_internal.h"
 #include "dri_vo.h"
 #include "mp_image.h"
+#include "vo_msg.h"
 LIBVO_EXTERN( x11 )
 
 static vo_info_t vo_info =

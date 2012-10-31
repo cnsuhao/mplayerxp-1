@@ -27,8 +27,10 @@
 extern int sws_init(void);
 extern void sws_uninit(void);
 
-#define MODE_RGB  0x1
-#define MODE_BGR  0x2
+enum {
+    MODE_RGB	=0x1,
+    MODE_BGR	=0x2
+};
 extern void palette8torgb32(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
 extern void palette8tobgr32(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
 extern void palette8torgb24(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);

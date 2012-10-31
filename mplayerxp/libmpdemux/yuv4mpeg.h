@@ -28,26 +28,23 @@
 #define __YUV4MPEG_H__
 
 #include <stdlib.h>
-//#include "mp_msg.h"
 #include "stream.h"
 
 
 /************************************************************************
  *  error codes returned by y4m_* functions
  ************************************************************************/
-#define Y4M_OK          0
-#define Y4M_ERR_RANGE   1
-#define Y4M_ERR_SYSTEM  2
-#define Y4M_ERR_HEADER  3
-#define Y4M_ERR_BADTAG  4
-#define Y4M_ERR_MAGIC   5
-#define Y4M_ERR_EOF     6
-#define Y4M_ERR_XXTAGS  7
-
-
-/* generic 'unknown' value for integer parameters (e.g. interlace, height) */
-#define Y4M_UNKNOWN -1
-
+enum {
+    Y4M_OK		=0,
+    Y4M_ERR_RANGE	=1,
+    Y4M_ERR_SYSTEM	=2,
+    Y4M_ERR_HEADER	=3,
+    Y4M_ERR_BADTAG	=4,
+    Y4M_ERR_MAGIC	=5,
+    Y4M_ERR_EOF		=6,
+    Y4M_ERR_XXTAGS	=7,
+    Y4M_UNKNOWN		=-1 /* generic 'unknown' value for integer parameters (e.g. interlace, height) */
+};
 
 
 /************************************************************************
@@ -96,8 +93,10 @@ extern const y4m_ratio_t y4m_sar_PAL_SVCD_16_9; /* PAL SVCD 16:9           */
  *     Use the y4m_xtag_*() functions (see below).
  *     You must initialize/finalize this structure before/after use.
  ************************************************************************/
-#define Y4M_MAX_XTAGS 32        /* maximum number of xtags in list       */
-#define Y4M_MAX_XTAG_SIZE 32    /* max length of an xtag (including 'X') */
+enum {
+    Y4M_MAX_XTAGS	=32, /* maximum number of xtags in list       */
+    Y4M_MAX_XTAG_SIZE	=32  /* max length of an xtag (including 'X') */
+};
 typedef struct _y4m_xtag_list {
   int count;
   char *tags[Y4M_MAX_XTAGS];
@@ -127,10 +126,11 @@ typedef struct _y4m_stream_info {
 } y4m_stream_info_t;
 
 /* possible options for the interlace parameter */
-#define Y4M_ILACE_NONE          0   /* non-interlaced, progressive frame */
-#define Y4M_ILACE_TOP_FIRST     1   /* interlaced, top-field first       */
-#define Y4M_ILACE_BOTTOM_FIRST  2   /* interlaced, bottom-field first    */
-
+enum {
+    Y4M_ILACE_NONE		=0,  /* non-interlaced, progressive frame */
+    Y4M_ILACE_TOP_FIRST		=1,  /* interlaced, top-field first       */
+    Y4M_ILACE_BOTTOM_FIRST	=2   /* interlaced, bottom-field first    */
+};
 
 /************************************************************************
  *  'frame_info' --- frame header information

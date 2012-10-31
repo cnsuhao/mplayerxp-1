@@ -1,17 +1,20 @@
+#ifndef FREQUENCIES_H_INCLUDED
+#define FREQUENCIES_H_INCLUDED 1
 /*
  * Worldwide channel/frequency list
  *
  * Nathan Laredo (laredo@broked.net)
  *
- * Frequencies are given in kHz 
+ * Frequencies are given in kHz
  */
-#define NTSC_AUDIO_CARRIER	4500
-#define PAL_AUDIO_CARRIER_I	6000
-#define PAL_AUDIO_CARRIER_BGHN	5500
-#define PAL_AUDIO_CARRIER_MN	4500
-#define PAL_AUDIO_CARRIER_D	6500
-#define SEACAM_AUDIO_DKK1L	6500
-#define SEACAM_AUDIO_BG		5500
+enum {
+    NTSC_AUDIO_CARRIER		=4500,
+    PAL_AUDIO_CARRIER_I		=6000,
+    PAL_AUDIO_CARRIER_BGHN	=5500,
+    PAL_AUDIO_CARRIER_MN	=4500,
+    PAL_AUDIO_CARRIER_D		=6500,
+    SEACAM_AUDIO_DKK1L		=6500,
+    SEACAM_AUDIO_BG		=5500,
 /* NICAM 728 32-kHz, 14-bit digital stereo audio is transmitted in 1ms frames
    containing 8 bits frame sync, 5 bits control, 11 bits additional data, and
    704 bits audio data.  The bit rate is reduced by transmitting only 10 bits
@@ -21,8 +24,9 @@
    companeded audio data is interleaved to reduce the influence of dropouts
    and the whole frame except for sync bits is scrambled for spectrum shaping.
    Data is modulated using QPSK, at below following subcarrier freqs */
-#define NICAM728_PAL_BGH	5850
-#define NICAM728_PAL_I		6552
+    NICAM728_PAL_BGH		=5850,
+    NICAM728_PAL_I		=6552
+};
 
 /* COMPREHENSIVE LIST OF FORMAT BY COUNTRY
    (M) NTSC used in:
@@ -108,3 +112,4 @@ extern struct CHANLISTS   chanlists[];
 extern int                chantab;
 extern struct CHANLIST   *chanlist;
 extern int                chancount;
+#endif

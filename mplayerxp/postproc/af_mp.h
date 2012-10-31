@@ -3,7 +3,6 @@
 #define __af_mp_h__
 
 #include "mp_config.h"
-#include "pp_msg.h"
 #include "libao2/afmt.h"
 #include "osdep/cpudetect.h"
 

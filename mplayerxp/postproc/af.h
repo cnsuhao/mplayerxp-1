@@ -29,12 +29,13 @@ typedef struct frac_s
 } frac_t;
 
 // Flags used for defining the behavior of an audio filter
-#define AF_FLAGS_REENTRANT 	0x00000000
-#define AF_FLAGS_NOT_REENTRANT 	0x00000001
-
+enum {
+    AF_FLAGS_REENTRANT		=0x00000000,
+    AF_FLAGS_NOT_REENTRANT	=0x00000001
+};
 /* Audio filter information not specific for current instance, but for
-   a specific filter */ 
-typedef struct af_info_s 
+   a specific filter */
+typedef struct af_info_s
 {
   const char *info;
   const char *name;
@@ -63,18 +64,18 @@ typedef struct af_instance_s
 
 // Initialization flags
 extern int* af_cpu_speed;
+enum {
+    AF_INIT_AUTO	=0x00000000,
+    AF_INIT_SLOW	=0x00000001,
+    AF_INIT_FAST	=0x00000002,
+    AF_INIT_FORCE	=0x00000003,
+    AF_INIT_TYPE_MASK	=0x00000003,
 
-#define AF_INIT_AUTO		0x00000000
-#define AF_INIT_SLOW		0x00000001
-#define AF_INIT_FAST		0x00000002
-#define AF_INIT_FORCE	  	0x00000003
-#define AF_INIT_TYPE_MASK 	0x00000003
-
-#define AF_INIT_INT		0x00000000
-#define AF_INIT_FLOAT		0x00000004
-#define AF_INIT_FORMAT_MASK	0x00000004
-
-// Default init type 
+    AF_INIT_INT		=0x00000000,
+    AF_INIT_FLOAT	=0x00000004,
+    AF_INIT_FORMAT_MASK	=0x00000004
+};
+// Default init type
 #ifndef AF_INIT_TYPE
 #if defined(HAVE_SSE) || defined(HAVE_3DNOW)
 #define AF_INIT_TYPE (af_cpu_speed?*af_cpu_speed:AF_INIT_FAST)
@@ -107,15 +108,15 @@ typedef struct af_stream_s
 /*********************************************
 // Return values
 */
-
-#define AF_DETACH   2
-#define AF_OK       1
-#define AF_TRUE     1
-#define AF_FALSE    0
-#define AF_UNKNOWN -1
-#define AF_ERROR   -2
-#define AF_FATAL   -3
-
+enum {
+    AF_DETACH	=2,
+    AF_OK	=1,
+    AF_TRUE	=1,
+    AF_FALSE	=0,
+    AF_UNKNOWN	=-1,
+    AF_ERROR	=-2,
+    AF_FATAL	=-3
+};
 
 
 /*********************************************

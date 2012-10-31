@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#define ds_tell_pts_r(ds) ds_tell_pts(ds)
+static inline int ds_tell_pts_r(demux_stream_t *ds) { return ds_tell_pts(ds); }
 
 extern int demux_getc_r(demux_stream_t *ds,float *pts);
 extern int video_read_frame_r(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,unsigned char** start,int force_fps);

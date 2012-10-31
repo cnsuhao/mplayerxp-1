@@ -8,6 +8,7 @@
 #include "osdep/fastmemcpy.h"
 #include "af.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 #define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)
 

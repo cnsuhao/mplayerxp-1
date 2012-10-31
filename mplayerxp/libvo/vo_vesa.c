@@ -42,7 +42,7 @@
 #endif
 #include "dri_vo.h"
 #include "help_mp.h"
-
+#include "vo_msg.h"
 LIBVO_EXTERN(vesa)
 
 #ifndef max

@@ -16,8 +16,6 @@
 #include "libvo/sub.h"
 #include "osdep/mplib.h"
 
-#define ERR ((any_t*) -1)
-
 #ifdef USE_ICONV
 #ifdef HAVE_GICONV
 #include <giconv.h>
@@ -26,10 +24,11 @@
 #endif
 #endif
 #define MSGT_CLASS MSGT_SUBREADER
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 /* Maximal length of line of a subtitle */
 #define LINE_LEN 1000
+#define ERR ((any_t*) -1)
 
 static float mpsub_position=0;
 
@@ -132,7 +131,7 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 		return 0;
 	    }
 	}
-	    
+
     } while (state != 99);
 
     // For the last subtitle
@@ -142,7 +141,7 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 	if (text[0] != '\0')
 	    current->text[current->lines++] = mp_strdup (text);
     }
-    
+
     return current;
 }
 
@@ -150,19 +149,19 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 static const char * __FASTCALL__ sub_readtext(const char *source, char **dest) {
     int len=0;
     const char *p=source;
-    
+
     while ( !eol(*p) && *p!= '|' ) {
 	p++,len++;
     }
-    
+
     *dest= (char *)mp_malloc (len+1);
     if (!dest) {return ERR;}
-    
+
     strncpy(*dest, source, len);
     (*dest)[len]=0;
-    
+
     while (*p=='\r' || *p=='\n' || *p=='|') p++;
-    
+
     if (*p) return p;  // not-last text field
     else return NULL;  // last text field
 }
@@ -182,7 +181,7 @@ static subtitle * __FASTCALL__ sub_read_line_microdvd(FILE *fd,subtitle *current
 	     (sscanf (line,
 		      "{%ld}{%ld}%[^\r\n]",
 		      &(current->start), &(current->end), line2) < 3));
-	
+
     p=line2;
 
     next=p, i=0;
@@ -230,7 +229,7 @@ static subtitle * __FASTCALL__ sub_read_line_subviewer(FILE *fd,subtitle *curren
     int a1,a2,a3,a4,b1,b2,b3,b4;
     char *p=NULL;
     int i,len;
-    
+
     while (!current->text[0]) {
 	if (!fgets (line, LINE_LEN, fd)) return NULL;
 	if ((len=sscanf (line, "%d:%d:%d,%d --> %d:%d:%d,%d",&a1,&a2,&a3,&a4,&b1,&b2,&b3,&b4)) < 8)
@@ -274,7 +273,7 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current)
                 // colon! look, what simple it can be:
                 p = &line[ plen ];
 
- 		i=0;
+		i=0;
 		if (*p!='|') {
 			//
 			next = p,i=0;
@@ -298,7 +297,7 @@ static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
     char *p=NULL;
     const char *next=NULL;
     int i,len,plen;
-    
+
     while (!current->text[0]) {
 	if (!fgets (line, LINE_LEN, fd)) return NULL;
 	//TODO: it seems that format of time is not easily determined, it may be 1:12, 1:12.0 or 0:1:12.0
@@ -468,7 +467,7 @@ static int sub_autodetect (FILE *fd) {
     char line[LINE_LEN+1];
     int i,j=0;
     char p;
-    
+
     while (j < 100) {
 	j++;
 	if (!fgets (line, LINE_LEN, fd))
@@ -679,7 +678,7 @@ subtitle* sub_read_file (const char *filename, float fps) {
 #endif
         if(sub==ERR) ++sub_errs; else ++sub_num; // Error vs. Valid
     }
-    
+
     fclose(fd);
 
 #ifdef USE_ICONV
@@ -704,7 +703,7 @@ char * strreplace( char * in,char * what,char * whereof )
 {
  int i;
  char * tmp;
- 
+
  if ( ( in == NULL )||( what == NULL )||( whereof == NULL )||( ( tmp=strstr( in,what ) ) == NULL ) ) return NULL;
  for( i=0;i<strlen( whereof );i++ ) tmp[i]=whereof[i];
  if ( strlen( what ) > strlen( whereof ) ) tmp[i]=0;
@@ -850,9 +849,9 @@ void dump_mpsub(subtitle* subs, float fps){
 void sub_free( subtitle * subs )
 {
  int i;
- 
+
  if ( !subs ) return;
- 
+
  sub_num=0;
  sub_errs=0;
  for ( i=0;i<subs->lines;i++ ) mp_free( subs->text[i] );
@@ -866,7 +865,7 @@ int main(int argc, char **argv) {  // for testing
     int i,j;
     subtitle *subs;
     subtitle *egysub;
-    
+
     if(argc<2){
         printf("\nUsage: subreader filename.sub\n\n");
         exit(1);
@@ -877,7 +876,7 @@ int main(int argc, char **argv) {  // for testing
         printf("Couldn't load file.\n");
         exit(1);
     }
-    
+
     list_sub_file(subs);
 
     return 0;

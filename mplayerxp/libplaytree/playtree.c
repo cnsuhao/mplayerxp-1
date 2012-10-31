@@ -13,7 +13,7 @@
 #include "playtree.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 static int
 play_tree_is_valid(play_tree_t* pt);

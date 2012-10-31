@@ -1,6 +1,7 @@
 #ifndef __AUDIO_OUT_H
 #define __AUDIO_OUT_H 1
-#include "../mp_config.h"
+#include "mp_config.h"
+#include "xmp_enums.h"
 /** Text description of AO-driver */
 typedef struct ao_info_s
 {
@@ -34,7 +35,7 @@ typedef struct ao_functions_s
 	 * @param arg	argument associated with command
 	 * @return	CONTROL_OK if success CONTROL_FALSE CONTROL_ERROR CONTROL_NA otherwise
 	 **/
-	int (* __FASTCALL__ control)(ao_data_t*,int cmd,long arg);
+	ControlCodes (* __FASTCALL__ control)(ao_data_t*,int cmd,long arg);
 
 	/** Preinitializes driver
 	 * @param flag	currently unused
@@ -80,21 +81,15 @@ typedef struct ao_functions_s
 
 extern const ao_functions_t* audio_out_drivers[]; /**< NULL terminated array of all drivers */
 
-#define CONTROL_OK 1
-#define CONTROL_TRUE 1
-#define CONTROL_FALSE 0
-#define CONTROL_UNKNOWN -1
-#define CONTROL_ERROR -2
-#define CONTROL_NA -3
-
-#define AOCONTROL_SET_DEVICE 1	/**< Sets new audio device (example: /dev/dsp2) */
-#define AOCONTROL_GET_DEVICE 2	/**< Query current audio device (example: /dev/dsp) */
-#define AOCONTROL_QUERY_FORMAT 3 /**< Test for support of given format */
-#define AOCONTROL_QUERY_CHANNELS 4 /**< Test for support of a given number of channels */
-#define AOCONTROL_QUERY_RATE 5 /**< Test for support of given rate */
-#define AOCONTROL_GET_VOLUME 6 /**< Query volume level */
-#define AOCONTROL_SET_VOLUME 7 /**< Sets new volume level */
-
+enum {
+    AOCONTROL_SET_DEVICE	=1, /**< Sets new audio device (example: /dev/dsp2) */
+    AOCONTROL_GET_DEVICE	=2, /**< Query current audio device (example: /dev/dsp) */
+    AOCONTROL_QUERY_FORMAT	=3, /**< Test for support of given format */
+    AOCONTROL_QUERY_CHANNELS	=4, /**< Test for support of a given number of channels */
+    AOCONTROL_QUERY_RATE	=5, /**< Test for support of given rate */
+    AOCONTROL_GET_VOLUME	=6, /**< Query volume level */
+    AOCONTROL_SET_VOLUME	=7 /**< Sets new volume level */
+};
 typedef struct ao_control_vol_s {
 	float left;
 	float right;

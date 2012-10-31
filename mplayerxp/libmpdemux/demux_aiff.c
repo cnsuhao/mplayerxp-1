@@ -10,6 +10,7 @@
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
 #include "osdep/mplib.h"
+#include "demux_msg.h"
 
 static unsigned long cvt_extended(const char * buf)
 {

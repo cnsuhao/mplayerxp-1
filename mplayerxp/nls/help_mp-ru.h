@@ -5,12 +5,12 @@
 
 #ifdef HELP_MP_DEFINE_STATIC
 #define MSGTR_BANNER_TEXT 1
-static char* banner_text=
+static const char* banner_text=
 "\n\n"
 "MPlayerXP " VERSION "2002 Nickols_K 2000-2002 Arpad Gereoffy (см. DOCS!)\n"
 "\n";
 
-static char help_text[]=
+static const char help_text[]=
 "Запуск:   mplayerxp [опции] [path/]filename\n"
 "\n"
 "Опции:\n"

@@ -31,27 +31,30 @@ extern void __FASTCALL__ kaiser(int n, _ftype_t* w,_ftype_t b);
 // Flags used for filter design
 
 // Filter characteristics
-#define LP          0x00010000 // Low pass
-#define HP          0x00020000 // High pass
-#define BP          0x00040000 // Band pass
-#define BS          0x00080000 // Band stop
-#define TYPE_MASK   0x000F0000
-
+enum {
+    LP		=0x00010000, // Low pass
+    HP		=0x00020000, // High pass
+    BP		=0x00040000, // Band pass
+    BS		=0x00080000, // Band stop
+    TYPE_MASK	=0x000F0000
+};
 // Window types
-#define BOXCAR      0x00000001
-#define TRIANG      0x00000002
-#define HAMMING     0x00000004
-#define HANNING     0x00000008
-#define BLACKMAN    0x00000010
-#define FLATTOP     0x00000011
-#define KAISER      0x00000012
-#define WINDOW_MASK 0x0000001F
-
+enum {
+    BOXCAR	=0x00000001,
+    TRIANG	=0x00000002,
+    HAMMING	=0x00000004,
+    HANNING	=0x00000008,
+    BLACKMAN	=0x00000010,
+    FLATTOP	=0x00000011,
+    KAISER	=0x00000012,
+    WINDOW_MASK	=0x0000001F
+};
 // Parallel filter design
-#define	FWD   	    0x00000001 // Forward indexing of polyphase filter
-#define REW         0x00000002 // Reverse indexing of polyphase filter
-#define ODD         0x00000010 // Make filter HP
-
+enum {
+    FWD		=0x00000001, // Forward indexing of polyphase filter
+    REW		=0x00000002, // Reverse indexing of polyphase filter
+    ODD		=0x00000010 // Make filter HP
+};
 // Exported functions
 extern _ftype_t __FASTCALL__ fir(unsigned int n, _ftype_t* w, _ftype_t* x);
 
@@ -69,7 +72,7 @@ extern int __FASTCALL__ szxform(_ftype_t* a, _ftype_t* b, _ftype_t Q, _ftype_t f
 /* Add new data to circular queue designed to be used with a FIR
    filter. xq is the circular queue, in pointing at the new sample, xi
    current index for xq and n the length of the filter. xq must be n*2
-   long. 
+   long.
 */
 #define updateq(n,xi,xq,in)\
   xq[xi]=(xq)[(xi)+(n)]=*(in);\

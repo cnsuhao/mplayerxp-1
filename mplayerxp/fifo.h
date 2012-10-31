@@ -6,7 +6,7 @@
 #ifndef MSGT_CLASS
 #define MSGT_CLASS MSGT_GLOBAL
 #endif
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 #include <stdint.h>
 #include <stddef.h>

@@ -17,6 +17,7 @@
 #include "af.h"
 #include "dsp.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 /* Below definition selects the length of each poly phase component.
    Valid definitions are L8 and L16, where the number denotes the

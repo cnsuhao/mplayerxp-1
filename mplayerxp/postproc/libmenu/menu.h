@@ -28,15 +28,15 @@ typedef struct menu_info_s {
   int (*mopen)(menu_t* menu, const char* args);
 } menu_info_t;
 
-
-#define MENU_CMD_UP 0
-#define MENU_CMD_DOWN 1
-#define MENU_CMD_OK 2
-#define MENU_CMD_CANCEL 3
-#define MENU_CMD_LEFT 4
-#define MENU_CMD_RIGHT 5 
-#define MENU_CMD_ACTION 6
-
+enum {
+    MENU_CMD_UP		=0,
+    MENU_CMD_DOWN	=1,
+    MENU_CMD_OK		=2,
+    MENU_CMD_CANCEL	=3,
+    MENU_CMD_LEFT	=4,
+    MENU_CMD_RIGHT	=5,
+    MENU_CMD_ACTION	=6
+};
 /// Global init/uninit
 int menu_init(struct MPContext *mpctx, char* cfg_file);
 void menu_unint(void);
@@ -53,17 +53,17 @@ void menu_read_key(menu_t* menu,int cmd);
 void menu_dflt_read_key(menu_t* menu,int cmd);
 
 /////////// Helpers
-
-#define MENU_TEXT_TOP	(1<<0)
-#define MENU_TEXT_VCENTER	(1<<1)
-#define MENU_TEXT_BOT	(1<<2)
-#define MENU_TEXT_VMASK	(MENU_TEXT_TOP|MENU_TEXT_VCENTER|MENU_TEXT_BOT)
-#define MENU_TEXT_LEFT	(1<<3)
-#define MENU_TEXT_HCENTER	(1<<4)
-#define MENU_TEXT_RIGHT	(1<<5)
-#define MENU_TEXT_HMASK	(MENU_TEXT_LEFT|MENU_TEXT_HCENTER|MENU_TEXT_RIGHT)
-#define MENU_TEXT_CENTER	(MENU_TEXT_VCENTER|MENU_TEXT_HCENTER)
-
+enum {
+    MENU_TEXT_TOP	=(1<<0),
+    MENU_TEXT_VCENTER	=(1<<1),
+    MENU_TEXT_BOT	=(1<<2),
+    MENU_TEXT_VMASK	=(MENU_TEXT_TOP|MENU_TEXT_VCENTER|MENU_TEXT_BOT),
+    MENU_TEXT_LEFT	=(1<<3),
+    MENU_TEXT_HCENTER	=(1<<4),
+    MENU_TEXT_RIGHT	=(1<<5),
+    MENU_TEXT_HMASK	=(MENU_TEXT_LEFT|MENU_TEXT_HCENTER|MENU_TEXT_RIGHT),
+    MENU_TEXT_CENTER	=(MENU_TEXT_VCENTER|MENU_TEXT_HCENTER)
+};
 void menu_draw_text(mp_image_t* mpi, char* txt, int x, int y);
 int menu_text_length(char* txt);
 int menu_text_num_lines(char* txt, int max_width);

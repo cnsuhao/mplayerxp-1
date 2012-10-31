@@ -24,13 +24,14 @@
 
 extern uint32_t dca_accel;
 
-#define DCA_SUBFRAMES_MAX (16)
-#define DCA_PRIM_CHANNELS_MAX (5)
-#define DCA_SUBBANDS (32)
-#define DCA_ABITS_MAX (32) /* Should be 28 */
-#define DCA_SUBSUBFAMES_MAX (4)
-#define DCA_LFE_MAX (3)
-
+enum {
+    DCA_SUBFRAMES_MAX	=16,
+    DCA_PRIM_CHANNELS_MAX=5,
+    DCA_SUBBANDS	=32,
+    DCA_ABITS_MAX	=32, /* Should be 28 */
+    DCA_SUBSUBFAMES_MAX	=4,
+    DCA_LFE_MAX		=3
+};
 struct dca_state_s {
 
     /* Frame header */

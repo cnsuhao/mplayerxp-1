@@ -8,13 +8,10 @@
  * AUTHOR: Jason Carter
  ***********************************
  */
-
-
 #ifndef _GENRES_H
 #define _GENRES_H
 
-
-char *genres[] = {
+static char *genres[] = {
 "Blues",					/* 0 */
 "Classic Rock",				/* 1 */
 "Country",					/* 2 */
@@ -272,6 +269,4 @@ char *genres[] = {
 "Unknown",					/* 254 */
 "Unknown",					/* 255 */
 };
-
-
 #endif /* _GENRES_H */

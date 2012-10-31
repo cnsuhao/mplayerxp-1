@@ -8,9 +8,11 @@
 struct vf_instance_s;
 struct vf_priv_s;
 
-#define VF_FLAGS_THREADS	0x00000001UL /**< Thread safe plugin (requires to be applied within of threads) */
-#define VF_FLAGS_OSD		0x00000002UL /**< requires to be applied during page flipping */
-#define VF_FLAGS_SLICES		0x00000004UL /**< really can draw slices (requires to be applied on SMP etc) */
+enum {
+    VF_FLAGS_THREADS	=0x00000001UL, /**< Thread safe plugin (requires to be applied within of threads) */
+    VF_FLAGS_OSD	=0x00000002UL, /**< requires to be applied during page flipping */
+    VF_FLAGS_SLICES	=0x00000004UL /**< really can draw slices (requires to be applied on SMP etc) */
+};
 
 typedef struct vf_info_s {
     const char *info;
@@ -71,23 +73,24 @@ typedef struct vf_cfg_s{
 // control codes:
 #include "mpc_info.h"
 
-typedef struct vf_seteq_s 
+typedef struct vf_seteq_s
 {
     char *item;
     int value;
 } vf_equalizer_t;
 
-#define VFCTRL_QUERY_MAX_PP_LEVEL	4 /* test for postprocessing support (max level) */
-#define VFCTRL_SET_PP_LEVEL		5 /* set postprocessing level */
-#define VFCTRL_SET_EQUALIZER		6 /* set color options (brightness,contrast etc) */
-#define VFCTRL_GET_EQUALIZER		8 /* gset color options (brightness,contrast etc) */
-#define VFCTRL_START_FRAME		7
-#define VFCTRL_CHANGE_RECTANGLE		9 /* Change the rectangle boundaries */
-#define VFCTRL_SELECT_FRAME		10 /* Tell the vo to flip pages */
-#define VFCTRL_DUPLICATE_FRAME		11 /* For encoding - encode zero-change frame */
-#define VFCTRL_SKIP_NEXT_FRAME		12 /* For encoding - drop the next frame that passes thru */
-#define VFCTRL_FLUSH_PAGES		13 /* For encoding - flush delayed frames */
-
+enum {
+    VFCTRL_QUERY_MAX_PP_LEVEL	=4, /* test for postprocessing support (max level) */
+    VFCTRL_SET_PP_LEVEL		=5, /* set postprocessing level */
+    VFCTRL_SET_EQUALIZER	=6, /* set color options (brightness,contrast etc) */
+    VFCTRL_GET_EQUALIZER	=8, /* gset color options (brightness,contrast etc) */
+    VFCTRL_START_FRAME		=7,
+    VFCTRL_CHANGE_RECTANGLE	=9, /* Change the rectangle boundaries */
+    VFCTRL_SELECT_FRAME		=10, /* Tell the vo to flip pages */
+    VFCTRL_DUPLICATE_FRAME	=11, /* For encoding - encode zero-change frame */
+    VFCTRL_SKIP_NEXT_FRAME	=12, /* For encoding - drop the next frame that passes thru */
+    VFCTRL_FLUSH_PAGES		=13 /* For encoding - flush delayed frames */
+};
 #include "vfcap.h"
 
 // functions:

@@ -15,7 +15,7 @@
 #include "libmpdemux/stream.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_OSD
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 static const char * __sub_osd_names[]={
     "Seekbar",

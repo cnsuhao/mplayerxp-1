@@ -1,16 +1,19 @@
+#ifndef MUXER_H_INCLUDED
+#define MUXER_H_INCLUDED 1
 
-#define MUXER_MAX_STREAMS 16
+enum {
+    MUXER_MAX_STREAMS	=16,
 
-#define MUXER_TYPE_VIDEO 0
-#define MUXER_TYPE_AUDIO 1
-#define MUXER_TYPE_SUBS  2
+    MUXER_TYPE_VIDEO	=0,
+    MUXER_TYPE_AUDIO	=1,
+    MUXER_TYPE_SUBS	=2,
 
-#define MUXER_TYPE_RAW		0
-#define MUXER_TYPE_MPXP64	1
-#define MUXER_TYPE_LAVF		2
+    MUXER_TYPE_RAW	=0,
+    MUXER_TYPE_MPXP64	=1,
+    MUXER_TYPE_LAVF	=2,
 
-#define MUXER_MPEG_BLOCKSIZE 2048	// 2048 or 2324 - ?
-
+    MUXER_MPEG_BLOCKSIZE=2048 // 2048 or 2324 - ?
+};
 #include "demuxer_r.h"
 
 typedef struct muxer_packet_s{
@@ -28,7 +31,7 @@ typedef struct {
   // muxer data:
   int type;  // audio or video
   int id;    // stream no
-  // to compute AveBitRate: 
+  // to compute AveBitRate:
   off_t		size;
   double	timer;
   // buffering:
@@ -82,3 +85,4 @@ muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f);
 extern void muxer_init_muxer_raw(muxer_t *);
 extern void muxer_init_muxer_mpxp64(muxer_t *);
 extern int  muxer_init_muxer_lavf(muxer_t *,const char *);
+#endif

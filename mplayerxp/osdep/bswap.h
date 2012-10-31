@@ -1,38 +1,36 @@
 #ifndef __BSWAP_H__
 #define __BSWAP_H__
 
-#ifdef HAVE_CONFIG_H
-#include "mp_config.h"
-#endif
-
 #ifdef HAVE_BYTESWAP_H
 #include <byteswap.h>
 #else
 
 #include <inttypes.h> /* for __WORDSIZE */
+#include "mp_config.h"
 
-#define MAKE_FOURCC( ch0, ch1, ch2, ch3 ) \
-        (((long)(unsigned char)(ch3)       ) | \
-        ( (long)(unsigned char)(ch2) << 8  ) | \
-        ( (long)(unsigned char)(ch1) << 16 ) | \
-        ( (long)(unsigned char)(ch0) << 24 ) )
-#define MAKE_TWOCC(ch0, ch1) \
-        ((short)(unsigned char)(ch0) |\
-        ((short)(unsigned char)(ch1) << 8))
+#define FOURCC_TAG(ch0,ch1,ch2,ch3) (((uint32_t)(ch3)|((uint32_t)ch2<<8)|(uint32_t)ch1<<16)|((uint32_t)ch0<<24))
+#define TWOCC_TAG(ch0,ch1) ((uint16_t)ch0|((uint16_t)ch1)<<8)
 
+static inline uint32_t MAKE_FOURCC(uint8_t ch0,uint8_t ch1,uint8_t ch2,uint8_t ch3 ) {
+    return  (uint32_t)ch3|
+	    ((uint32_t)ch2)<<8|
+	    ((uint32_t)ch1)<<16|
+	    ((uint32_t)ch0)<<24;
+}
+
+static inline uint16_t MAKE_TWOCC(uint8_t ch0,uint8_t ch1) {
+    return  (uint16_t)ch0|((uint16_t)ch1)<<8;
+}
 
 #if defined(__i386__)
-inline static unsigned short ByteSwap16(unsigned short x)
-{
+static inline uint16_t bswap_16(uint16_t x) {
   __asm("xchgb %b0,%h0"	:
         "=q" (x)	:
         "0" (x));
     return x;
 }
-#define bswap_16(x) ByteSwap16(x)
 
-inline static unsigned int ByteSwap32(unsigned int x)
-{
+static inline uint32_t bswap_32(uint32_t x) {
 #if __CPU__ > 386
  __asm("bswap	%0":
       "=r" (x)     :
@@ -45,10 +43,8 @@ inline static unsigned int ByteSwap32(unsigned int x)
       "0" (x));
   return x;
 }
-#define bswap_32(x) ByteSwap32(x)
 
-inline static unsigned long long int ByteSwap64(unsigned long long int x)
-{
+static inline uint64_t bswap_64(uint64_t x) {
   register union { __extension__ unsigned long long int __ll;
           unsigned long int __l[2]; } __x;
   asm("xchgl	%0,%1":
@@ -56,67 +52,64 @@ inline static unsigned long long int ByteSwap64(unsigned long long int x)
       "0"(bswap_32((unsigned long)x)),"1"(bswap_32((unsigned long)(x>>32))));
   return __x.__ll;
 }
-#define bswap_64(x) ByteSwap64(x)
 
 #elif defined(__x86_64__)
 
-inline static unsigned short ByteSwap16(unsigned short x)
-{
+static inline uint16_t bswap_16(uint16_t x) {
   __asm("rorw $8, %w0"	:
 	"=r" (x)	:
 	"0" (x)		:
 	"cc");
     return x;
 }
-#define bswap_16(x) ByteSwap16(x)
 
-inline static unsigned int ByteSwap32(unsigned int x)
-{
+static inline uint32_t bswap_32(uint32_t x) {
  __asm("bswapl	%0":
       "=r" (x)     :
       "0" (x));
   return x;
 }
-#define bswap_32(x) ByteSwap32(x)
 
-inline static unsigned long long int ByteSwap64(unsigned long long int x)
-{
+static inline uint64_t bswap_64(uint64_t x) {
  __asm("bswapq	%0":
       "=r" (x)     :
       "0" (x));
   return x;
 }
-#define bswap_64(x) ByteSwap64(x)
 
-#else
+#else // not __i386__ and not __x86_64__
 
-#define bswap_16(x) (((x) & 0x00ff) << 8 | ((x) & 0xff00) >> 8)
-			
+static inline uint16_t bswap_16(uint16_t) { return ((x)&0x00ff)<<8|((x)&0xff00)>>8; }
 
 // code from bits/byteswap.h (C) 1997, 1998 Free Software Foundation, Inc.
-#define bswap_32(x) \
-     ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
-      (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
-
+static inline uint32_t bswap_32(uint32_t x) {
+    return (((x)&0xff000000)>>24)|(((x)&0x00ff0000)>>8)|
+	    (((x)&0x0000ff00)<<8)|(((x)&0x000000ff)<<24);
+}
 #if __WORDSIZE >= 64
-# define bswap_64(x) \
-     ((((x) & 0xff00000000000000ull) >> 56)				      \
-      | (((x) & 0x00ff000000000000ull) >> 40)				      \
-      | (((x) & 0x0000ff0000000000ull) >> 24)				      \
-      | (((x) & 0x000000ff00000000ull) >> 8)				      \
-      | (((x) & 0x00000000ff000000ull) << 8)				      \
-      | (((x) & 0x0000000000ff0000ull) << 24)				      \
-      | (((x) & 0x000000000000ff00ull) << 40)				      \
-      | (((x) & 0x00000000000000ffull) << 56))
+static inline uint64_t bswap_64(uint64_t x) {
+    return (((x) &0xff00000000000000ull)>>56)|
+	    (((x)&0x00ff000000000000ull)>>40)|
+	    (((x)&0x0000ff0000000000ull)>>24)|
+	    (((x)&0x000000ff00000000ull)>>8)|
+	    (((x)&0x00000000ff000000ull)<<8)|
+	    (((x)&0x0000000000ff0000ull)<<24)|
+	    (((x)&0x000000000000ff00ull)<<40)|
+	    (((x)&0x00000000000000ffull)<<56);
+}
 #else
-#define bswap_64(x) \
-     (__extension__						\
-      ({ union { __extension__ unsigned long long int __ll;	\
-                 unsigned long int __l[2]; } __w, __r;		\
-         __w.__ll = (x);					\
-         __r.__l[0] = bswap_32 (__w.__l[1]);			\
-         __r.__l[1] = bswap_32 (__w.__l[0]);			\
-         __r.__ll; }))
+static inline uint64_t bswap_64(uint64_t x) {
+    return __extension__ {
+	union {
+	    __extension__ unsigned long long int __ll;
+		 unsigned long int __l[2];
+	} __w, __r;
+	 __w.__ll = (x);
+	 __r.__l[0] = bswap_32 (__w.__l[1]);
+	 __r.__l[1] = bswap_32 (__w.__l[0]);
+	 __r.__ll;
+    };
+}
 #endif
 #endif	/* !ARCH_X86 */
 
@@ -157,43 +150,43 @@ inline static long double bswap_ldbl(long double x) {
 // le2me ... LittleEndian to MachineEndian
 
 #ifdef WORDS_BIGENDIAN
-#define be2me_16(x) (x)
-#define be2me_32(x) (x)
-#define be2me_64(x) (x)
-#define me2be_16(x) (x)
-#define me2be_32(x) (x)
-#define me2be_64(x) (x)
-#define le2me_16(x) bswap_16(x)
-#define le2me_32(x) bswap_32(x)
-#define le2me_64(x) bswap_64(x)
-#define me2le_16(x) bswap_16(x)
-#define me2le_32(x) bswap_32(x)
-#define me2le_64(x) bswap_64(x)
-#define be2me_flt(x) (x)
-#define be2me_dbl(x) (x)
-#define be2me_ldbl(x) (x)
-#define le2me_flt(x) bswap_flt(x)
-#define le2me_dbl(x) bswap_dbl(x)
-#define le2me_ldbl(x) bswap_ldbl(x)
+static inline uint16_t be2me_16(uint16_t x) { return x; }
+static inline uint32_t be2me_32(uint32_t x) { return x; }
+static inline uint64_t be2me_64(uint64_t x) { return x; }
+static inline uint16_t me2be_16(uint16_t x) { return x; }
+static inline uint32_t me2be_32(uint32_t x) { return x; }
+static inline uint64_t me2be_64(uint64_t x) { return x; }
+static inline uint16_t le2me_16(uint16_t x) { return bswap_16(x); }
+static inline uint32_t le2me_32(uint32_t x) { return bswap_32(x); }
+static inline uint64_t le2me_64(uint64_t x) { return bswap_64(x); }
+static inline uint16_t me2le_16(uint16_t x) { return bswap_16(x); }
+static inline uint32_t me2le_32(uint32_t x) { return bswap_32(x); }
+static inline uint64_t me2le_64(uint64_t x) { return bswap_64(x); }
+static inline float    be2me_flt(float x) { return x; }
+static inline double   be2me_dbl(double x) { return x; }
+static inline long double be2me_ldbl(long double x) { return x; }
+static inline float    le2me_flt(float x) { return bswap_flt(x); }
+static inline double   le2me_dbl(double x) { return bswap_dbl(x); }
+static inline long double le2me_ldbl(long double x) { return bswap_ldbl(x); }
 #else
-#define be2me_16(x) bswap_16(x)
-#define be2me_32(x) bswap_32(x)
-#define be2me_64(x) bswap_64(x)
-#define me2be_16(x) bswap_16(x)
-#define me2be_32(x) bswap_32(x)
-#define me2be_64(x) bswap_64(x)
-#define le2me_16(x) (x)
-#define le2me_32(x) (x)
-#define le2me_64(x) (x)
-#define me2le_16(x) (x)
-#define me2le_32(x) (x)
-#define me2le_64(x) (x)
-#define be2me_flt(x) bswap_flt(x)
-#define be2me_dbl(x) bswap_dbl(x)
-#define be2me_ldbl(x) bswap_ldbl(x)
-#define le2me_flt(x) (x)
-#define le2me_dbl(x) (x)
-#define le2me_ldbl(x) (x)
+static inline uint16_t be2me_16(uint16_t x) { return bswap_16(x); }
+static inline uint32_t be2me_32(uint32_t x) { return bswap_32(x); }
+static inline uint64_t be2me_64(uint64_t x) { return bswap_64(x); }
+static inline uint16_t me2be_16(uint16_t x) { return bswap_16(x); }
+static inline uint32_t me2be_32(uint32_t x) { return bswap_32(x); }
+static inline uint64_t me2be_64(uint64_t x) { return bswap_64(x); }
+static inline uint16_t le2me_16(uint16_t x) { return x; }
+static inline uint32_t le2me_32(uint32_t x) { return x; }
+static inline uint64_t le2me_64(uint64_t x) { return x; }
+static inline uint16_t me2le_16(uint16_t x) { return x; }
+static inline uint32_t me2le_32(uint32_t x) { return x; }
+static inline uint64_t me2le_64(uint64_t x) { return x; }
+static inline float    be2me_flt(float x) { return bswap_flt(x); }
+static inline double   be2me_dbl(double x) { return bswap_dbl(x); }
+static inline long double be2me_ldbl(long double x) { return bswap_ldbl(x); }
+static inline float    le2me_flt(float x) { return x; }
+static inline double   le2me_dbl(double x) { return x; }
+static inline long double le2me_ldbl(long double x) { return x; }
 #endif
 
 #endif

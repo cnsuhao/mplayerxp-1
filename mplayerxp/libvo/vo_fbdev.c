@@ -36,6 +36,7 @@
 #include "osd.h"
 #include "dri_vo.h"
 #include "libmpdemux/mrl.h"
+#include "vo_msg.h"
 
 LIBVO_EXTERN(fbdev)
 

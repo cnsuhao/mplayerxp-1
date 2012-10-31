@@ -6,6 +6,7 @@
 
 #include "af.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 typedef struct s_lp
 {

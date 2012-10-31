@@ -41,7 +41,8 @@ typedef struct dec_ahead_engine_s {
     long long int	num_dropped_frames;
 }dec_ahead_engine_t;
 
-#define MAX_MPXP_THREADS 16
+enum { main_id=0 };
+enum { MAX_MPXP_THREADS=16 };
 enum mpxp_thread_state { Pth_Stand=0, Pth_Canceling, Pth_Run, Pth_Sleep, Pth_ASleep };
 
 typedef any_t*(*mpxp_routine_t)(any_t*);
@@ -66,7 +67,6 @@ typedef struct initial_audio_pts_correction_s
     int nbytes;
 }initial_audio_pts_correction_t;
 
-#define main_id 0
 typedef struct xp_core_s {
     int				has_video;
     int				has_audio;

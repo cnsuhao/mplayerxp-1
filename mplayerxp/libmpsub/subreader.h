@@ -6,19 +6,21 @@ extern int sub_errs;
 extern int sub_num;         // number of subtitle structs
 
 // subtitle formats
-#define SUB_INVALID   -1
-#define SUB_MICRODVD  0
-#define SUB_SUBRIP    1
-#define SUB_SUBVIEWER 2
-#define SUB_SAMI      3
-#define SUB_VPLAYER   4
-#define SUB_RT        5
-#define SUB_SSA       6
-#define SUB_DUNNOWHAT 7		// FIXME what format is it ?
-#define SUB_MPSUB     8
-#define SUB_AQTITLE   9
+enum {
+    SUB_INVALID		=-1,
+    SUB_MICRODVD	=0,
+    SUB_SUBRIP		=1,
+    SUB_SUBVIEWER	=2,
+    SUB_SAMI		=3,
+    SUB_VPLAYER		=4,
+    SUB_RT		=5,
+    SUB_SSA		=6,
+    SUB_DUNNOWHAT	=7, // FIXME what format is it ?
+    SUB_MPSUB		=8,
+    SUB_AQTITLE		=9,
 
-#define SUB_MAX_TEXT 5
+    SUB_MAX_TEXT	=5
+};
 
 typedef struct {
 

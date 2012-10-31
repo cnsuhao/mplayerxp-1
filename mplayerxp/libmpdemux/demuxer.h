@@ -4,54 +4,53 @@
 #include "stream.h"
 
 #define MAX_PACK_BYTES (0x1024*0x1024*4)
-
-#define DEMUXER_TYPE_UNKNOWN	0
-#define DEMUXER_TYPE_MPEG_ES	1
-#define DEMUXER_TYPE_MPEG4_ES	2
-#define DEMUXER_TYPE_H264_ES	3
-#define DEMUXER_TYPE_MPEG_PS	4
-#define DEMUXER_TYPE_MPEG_TS	5
-#define DEMUXER_TYPE_AVI	6
-#define DEMUXER_TYPE_ASF	7
-#define DEMUXER_TYPE_MOV	8
-#define DEMUXER_TYPE_REAL	9
-#define DEMUXER_TYPE_VIVO	10
-#define DEMUXER_TYPE_TV		11
-#define DEMUXER_TYPE_FLI	12
-#define DEMUXER_TYPE_Y4M	13
-#define DEMUXER_TYPE_NUV	14
-#define DEMUXER_TYPE_FILM	15
-#define DEMUXER_TYPE_ROQ	16
-#define DEMUXER_TYPE_AUDIO	17
-#define DEMUXER_TYPE_OGG	18
-#define DEMUXER_TYPE_BMP	19
-#define DEMUXER_TYPE_RAWAUDIO	20
-#define DEMUXER_TYPE_RAWVIDEO	21
-#define DEMUXER_TYPE_PVA	22
-#define DEMUXER_TYPE_SMJPEG	23
-#define DEMUXER_TYPE_NSV	24
-#define DEMUXER_TYPE_MATROSKA   25
+enum {
+    DEMUXER_TYPE_UNKNOWN=0,
+    DEMUXER_TYPE_MPEG_ES,
+    DEMUXER_TYPE_MPEG4_ES,
+    DEMUXER_TYPE_H264_ES,
+    DEMUXER_TYPE_MPEG_PS,
+    DEMUXER_TYPE_MPEG_TS,
+    DEMUXER_TYPE_AVI,
+    DEMUXER_TYPE_ASF,
+    DEMUXER_TYPE_MOV,
+    DEMUXER_TYPE_REAL,
+    DEMUXER_TYPE_VIVO,
+    DEMUXER_TYPE_TV,
+    DEMUXER_TYPE_FLI,
+    DEMUXER_TYPE_Y4M,
+    DEMUXER_TYPE_NUV,
+    DEMUXER_TYPE_FILM,
+    DEMUXER_TYPE_ROQ,
+    DEMUXER_TYPE_AUDIO,
+    DEMUXER_TYPE_OGG,
+    DEMUXER_TYPE_BMP,
+    DEMUXER_TYPE_RAWAUDIO,
+    DEMUXER_TYPE_RAWVIDEO,
+    DEMUXER_TYPE_PVA,
+    DEMUXER_TYPE_SMJPEG,
+    DEMUXER_TYPE_NSV,
+    DEMUXER_TYPE_MATROSKA,
 /*
  This should always match the higest demuxer type number.
  Unless you want to disallow users to force the demuxer to some types
 */
-#define DEMUXER_TYPE_MIN	0
-#define DEMUXER_TYPE_MAX	25
-
-
-#define DEMUXER_TYPE_DEMUXERS (1<<16)
+    DEMUXER_TYPE_MIN	=0,
+    DEMUXER_TYPE_MAX	=DEMUXER_TYPE_MATROSKA,
+    DEMUXER_TYPE_DEMUXERS=(1<<16),
 /* A virtual demuxer type for the network code */
-#define DEMUXER_TYPE_PLAYLIST (2<<16)
-
-
-#define DEMUXER_TIME_NONE 0
-#define DEMUXER_TIME_PTS 1
-#define DEMUXER_TIME_FILE 2
-#define DEMUXER_TIME_BPS 3
-
-#define DP_NONKEYFRAME	0x00000000UL
-#define DP_KEYFRAME	0x00000001UL
-
+    DEMUXER_TYPE_PLAYLIST=(2<<16)
+};
+enum {
+    DEMUXER_TIME_NONE	=0,
+    DEMUXER_TIME_PTS	=1,
+    DEMUXER_TIME_FILE	=2,
+    DEMUXER_TIME_BPS	=3
+};
+enum {
+    DP_NONKEYFRAME	=0x00000000UL,
+    DP_KEYFRAME		=0x00000001UL
+};
 /** Describes demuxer's packet */
 typedef struct demux_packet_st {
     int			len;	/**< length of packet's data */
@@ -93,12 +92,14 @@ typedef struct demux_stream_s {
     int			pts_flags;	/**< PTS flags like trigger for correction applying (DVD's PTS correction) */
 } demux_stream_t;
 
-#define MAX_A_STREAMS 256
-#define MAX_V_STREAMS 256
-#define MAX_S_STREAMS 256
-
-
-#define DEMUXF_SEEKABLE 0x00000001UL
+enum {
+    MAX_A_STREAMS	=256,
+    MAX_V_STREAMS	=256,
+    MAX_S_STREAMS	=256
+};
+enum {
+    DEMUXF_SEEKABLE	=0x00000001UL
+};
 /** Describes demuxer (demultiplexer) of movie */
 typedef struct demuxer_s {
     stream_t*		stream;		/**< stream for movie reading */
@@ -122,23 +123,28 @@ typedef struct demuxer_s {
 } demuxer_t;
 
 /* Return values for control interface */
-#define DEMUX_UNKNOWN		-1
-#define DEMUX_FALSE		0
-#define DEMUX_OK		1
-
-#define DEMUX_SEEK_CUR		0x00
-#define DEMUX_SEEK_SET		0x01
-#define DEMUX_SEEK_SECONDS	0x00
-#define DEMUX_SEEK_PERCENTS	0x02
+enum {
+    DEMUX_UNKNOWN	=-1,
+    DEMUX_FALSE		=0,
+    DEMUX_OK		=1
+};
+enum {
+    DEMUX_SEEK_CUR	=0x00,
+    DEMUX_SEEK_SET	=0x01,
+    DEMUX_SEEK_SECONDS	=0x00,
+    DEMUX_SEEK_PERCENTS	=0x02
+};
 typedef struct seek_args_s {
     float	secs;
     unsigned	flags;
 }seek_args_t;
 
 /* Commands for control interface */
-#define DEMUX_CMD_SWITCH_AUDIO		1
-#define DEMUX_CMD_SWITCH_VIDEO		2
-#define DEMUX_CMD_SWITCH_SUBS		3
+enum {
+    DEMUX_CMD_SWITCH_AUDIO	=1,
+    DEMUX_CMD_SWITCH_VIDEO	=2,
+    DEMUX_CMD_SWITCH_SUBS	=3
+};
 /** Demuxer's driver interface */
 typedef struct demuxer_driver_s
 {
@@ -180,7 +186,6 @@ typedef struct demuxer_driver_s
     int			(*control)(demuxer_t *d,int cmd,any_t*arg);
 }demuxer_driver_t;
 
-
 demux_packet_t* new_demux_packet(int len);
 void free_demux_packet(demux_packet_t* dp);
 void resize_demux_packet(demux_packet_t* dp, int len);
@@ -210,9 +215,11 @@ inline static int ds_tell_pts(demux_stream_t *ds){
 int demux_read_data(demux_stream_t *ds,unsigned char* mem,int len);
 
 #if 1
-#define demux_getc(ds) (\
-     (ds->buffer_pos<ds->buffer_size) ? ds->buffer[ds->buffer_pos++] \
-     :((!ds_fill_buffer(ds))? (-1) : ds->buffer[ds->buffer_pos++] ) )
+static inline int demux_getc(demux_stream_t *ds){
+    return
+	(ds->buffer_pos<ds->buffer_size) ? ds->buffer[ds->buffer_pos++]:
+	((!ds_fill_buffer(ds))? (-1) : ds->buffer[ds->buffer_pos++]);
+}
 #else
 inline static int demux_getc(demux_stream_t *ds){
   if(ds->buffer_pos>=ds->buffer_size){
@@ -242,26 +249,26 @@ extern int index_mode;  /**< -1=untouched  0=don't use index  1=use (geneate) in
 extern int force_ni;
 extern int pts_from_bps;
 extern int demux_aid_vid_mismatch;
-
-#define INFOT_NULL		0
-#define INFOT_AUTHOR		1
-#define INFOT_NAME		2
-#define INFOT_SUBJECT		3
-#define INFOT_COPYRIGHT		4
-#define INFOT_DESCRIPTION	5
-#define INFOT_ALBUM		6
-#define INFOT_DATE		7
-#define INFOT_TRACK		8
-#define INFOT_GENRE		9
-#define INFOT_ENCODER		10
-#define INFOT_SOURCE_MEDIA	11
-#define INFOT_WWW		12
-#define INFOT_MAIL		13
-#define INFOT_RATING		14
-#define INFOT_COMMENTS		15
-#define INFOT_MIME		16
-
-#define INFOT_MAX		16
+enum {
+    INFOT_NULL		=0,
+    INFOT_AUTHOR	=1,
+    INFOT_NAME		=2,
+    INFOT_SUBJECT	=3,
+    INFOT_COPYRIGHT	=4,
+    INFOT_DESCRIPTION	=5,
+    INFOT_ALBUM		=6,
+    INFOT_DATE		=7,
+    INFOT_TRACK		=8,
+    INFOT_GENRE		=9,
+    INFOT_ENCODER	=10,
+    INFOT_SOURCE_MEDIA	=11,
+    INFOT_WWW		=12,
+    INFOT_MAIL		=13,
+    INFOT_RATING	=14,
+    INFOT_COMMENTS	=15,
+    INFOT_MIME		=16,
+    INFOT_MAX		=16
+};
 int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param);
 const char* demux_info_get(demuxer_t *demuxer, unsigned opt);
 int demux_info_print(demuxer_t *demuxer,const char *filename);

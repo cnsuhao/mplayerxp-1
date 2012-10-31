@@ -18,7 +18,7 @@
 #include "libmpdemux/url.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 // Don't mp_free for 'production' atm
 #ifndef MP_DEBUG

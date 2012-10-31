@@ -10,7 +10,7 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
 #define MSGT_CLASS MSGT_PP
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 /**
  * Convert the palette to the same packet 32-bit format as the palette

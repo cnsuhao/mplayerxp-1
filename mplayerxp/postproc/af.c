@@ -7,6 +7,7 @@
 #include "help_mp.h"
 #include "libao2/audio_out.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 extern ao_data_t* ao_data;
 

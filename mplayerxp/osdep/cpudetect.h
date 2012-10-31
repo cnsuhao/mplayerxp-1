@@ -31,10 +31,12 @@
 #  define REG_BP "ebp"
 #endif
 
-#define CPUTYPE_I386	3
-#define CPUTYPE_I486	4
-#define CPUTYPE_I586	5
-#define CPUTYPE_I686    6
+enum {
+    CPUTYPE_I386=3,
+    CPUTYPE_I486=4,
+    CPUTYPE_I586=5,
+    CPUTYPE_I686=6
+};
 
 typedef struct cpucaps_s {
 	int cpuType;

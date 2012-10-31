@@ -17,6 +17,7 @@
 
 #include "libvo/img_format.h"
 #include "osdep/fastmemcpy.h"
+#include "demux_msg.h"
 
 #ifdef HAVE_SDL_IMAGE
 #include <SDL/SDL_image.h>

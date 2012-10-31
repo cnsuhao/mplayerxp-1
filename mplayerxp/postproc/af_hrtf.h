@@ -1,7 +1,8 @@
-#define HRTF_MIX_51 0
-#define HRTF_MIX_STEREO 1
-#define HRTF_MIX_MATRIX2CH 2
-
+enum {
+    HRTF_MIX_51		=0,
+    HRTF_MIX_STEREO	=1,
+    HRTF_MIX_MATRIX2CH	=2
+};
 /* Amplitude scaling factors */
 #define M17_0DB		0.1414213562
 #define M9_03DB		0.3535533906

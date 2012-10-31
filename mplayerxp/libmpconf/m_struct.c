@@ -11,7 +11,7 @@
 #include "m_struct.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 const m_option_t*
 m_struct_get_field(const m_struct_t* st,const char* f) {

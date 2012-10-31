@@ -9,6 +9,7 @@
 #include <string.h>
 #include "stream.h"
 #include "osdep/mplib.h"
+#include "demux_msg.h"
 
 #ifdef HAVE_LIBCDIO
 #include "cdd.h"

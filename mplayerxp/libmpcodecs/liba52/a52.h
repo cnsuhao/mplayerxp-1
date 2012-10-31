@@ -34,21 +34,22 @@ typedef double sample_t;
 
 typedef struct a52_state_s a52_state_t;
 
-#define A52_CHANNEL 0
-#define A52_MONO 1
-#define A52_STEREO 2
-#define A52_3F 3
-#define A52_2F1R 4
-#define A52_3F1R 5
-#define A52_2F2R 6
-#define A52_3F2R 7
-#define A52_CHANNEL1 8
-#define A52_CHANNEL2 9
-#define A52_DOLBY 10
-#define A52_CHANNEL_MASK 15
-
-#define A52_LFE 16
-#define A52_ADJUST_LEVEL 32
+enum {
+    A52_CHANNEL	=0,
+    A52_MONO	=1,
+    A52_STEREO	=2,
+    A52_3F	=3,
+    A52_2F1R	=4,
+    A52_3F1R	=5,
+    A52_2F2R	=6,
+    A52_3F2R	=7,
+    A52_CHANNEL1=8,
+    A52_CHANNEL2=9,
+    A52_DOLBY	=10,
+    A52_CHANNEL_MASK=15,
+    A52_LFE	=16,
+    A52_ADJUST_LEVEL=32
+};
 
 a52_state_t * a52_init (uint32_t mm_accel);
 sample_t * a52_samples (a52_state_t * state);
@@ -65,6 +66,5 @@ extern any_t* a52_resample_init_float(a52_state_t * state,uint32_t mm_accel,int 
 extern any_t* a52_resample_init(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
 extern int (* a52_resample) (float * _f, int16_t * s16);
 extern int (* a52_resample32) (float * _f, float * s16);
-
 
 #endif /* A52_H */

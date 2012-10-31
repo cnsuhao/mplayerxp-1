@@ -19,6 +19,7 @@
 #include "help_mp.h"
 #include "osdep/get_path.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */
 #define WAV_ID_WAVE 0x45564157 /* "WAVE" */

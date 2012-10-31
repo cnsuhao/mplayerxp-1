@@ -3,7 +3,7 @@
 #include "mp_config.h"
 #include "mplayer.h"
 #define MSGT_CLASS MSGT_GLOBAL
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 #if defined(USE_FASTMEMCPY)
 #include "fastmemcpy.h"

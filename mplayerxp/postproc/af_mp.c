@@ -1,5 +1,6 @@
 #include "af.h"
 #include "libao2/afmt.h"
+#include "pp_msg.h"
 
 #define AFMT_AF_FLAGS             0x70000000
 
@@ -27,11 +28,11 @@ int __FASTCALL__ af_format_decode(int ifmt,unsigned *bps)
     ofmt = AF_FORMAT_BE|AF_FORMAT_SI;
     *bps=2;
     break;
-  case(AFMT_U16_LE):	
+  case(AFMT_U16_LE):
     ofmt = AF_FORMAT_LE|AF_FORMAT_US;
     *bps=2;
     break;
-  case(AFMT_U16_BE):	
+  case(AFMT_U16_BE):
     ofmt = AF_FORMAT_BE|AF_FORMAT_US;
     *bps=2;
     break;
@@ -39,7 +40,7 @@ int __FASTCALL__ af_format_decode(int ifmt,unsigned *bps)
     ofmt = AF_FORMAT_LE|AF_FORMAT_SI;
     *bps=3;
     break;
-  case(AFMT_S24_BE):	
+  case(AFMT_S24_BE):
     ofmt = AF_FORMAT_BE|AF_FORMAT_SI;
     *bps=3;
     break;
@@ -47,7 +48,7 @@ int __FASTCALL__ af_format_decode(int ifmt,unsigned *bps)
     ofmt = AF_FORMAT_LE|AF_FORMAT_US;
     *bps=3;
     break;
-  case(AFMT_U24_BE):	
+  case(AFMT_U24_BE):
     ofmt = AF_FORMAT_BE|AF_FORMAT_US;
     *bps=3;
     break;
@@ -55,7 +56,7 @@ int __FASTCALL__ af_format_decode(int ifmt,unsigned *bps)
     ofmt = AF_FORMAT_LE|AF_FORMAT_SI;
     *bps=4;
     break;
-  case(AFMT_S32_BE):	
+  case(AFMT_S32_BE):
     ofmt = AF_FORMAT_BE|AF_FORMAT_SI;
     *bps=4;
     break;
@@ -63,7 +64,7 @@ int __FASTCALL__ af_format_decode(int ifmt,unsigned *bps)
     ofmt = AF_FORMAT_LE|AF_FORMAT_US;
     *bps=4;
     break;
-  case(AFMT_U32_BE):	
+  case(AFMT_U32_BE):
     ofmt = AF_FORMAT_BE|AF_FORMAT_US;
     *bps=4;
     break;
@@ -91,12 +92,12 @@ int __FASTCALL__ af_format_decode(int ifmt,unsigned *bps)
     ofmt = AF_FORMAT_F | AF_FORMAT_NE;
     *bps=4;
     break;
-  default: 
+  default:
     if ((ifmt & AFMT_AF_FLAGS) == AFMT_AF_FLAGS) {
       ofmt = ifmt & ~AFMT_AF_FLAGS;
       break;
     }
-    //This can not happen .... 
+    //This can not happen ....
     MSG_FATAL("[af_mp] Unrecognized input audio format %i\n",ifmt);
     break;
   }

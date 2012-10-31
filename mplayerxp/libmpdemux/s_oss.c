@@ -24,6 +24,7 @@
 #include "osdep/mplib.h"
 #include "stream.h"
 #include "mrl.h"
+#include "demux_msg.h"
 
 
 typedef struct oss_priv_s

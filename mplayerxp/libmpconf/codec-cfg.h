@@ -3,26 +3,28 @@
 
 #include <stdint.h>
 
-#define CODECS_MAX_FOURCC	128
-#define CODECS_MAX_OUTFMT	16
-#define CODECS_MAX_INFMT	16
-
+enum {
+    CODECS_MAX_FOURCC	=128,
+    CODECS_MAX_OUTFMT	=16,
+    CODECS_MAX_INFMT	=16
+};
+enum {
 // Global flags:
-#define CODECS_FLAG_SEEKABLE	(1<<0)
-#define CODECS_FLAG_SELECTED	(1<<15)  /* for internal use */
+    CODECS_FLAG_SEEKABLE	=(1<<0),
+    CODECS_FLAG_SELECTED	=(1<<15),  /* for internal use */
 
 // Outfmt flags:
-#define CODECS_FLAG_FLIP	(1<<0)
-#define CODECS_FLAG_NOFLIP	(1<<1)
-#define CODECS_FLAG_YUVHACK	(1<<2)
+    CODECS_FLAG_FLIP		=(1<<0),
+    CODECS_FLAG_NOFLIP		=(1<<1),
+    CODECS_FLAG_YUVHACK		=(1<<2),
 
-#define CODECS_STATUS__MIN		0
-#define CODECS_STATUS_NOT_WORKING	0
-#define CODECS_STATUS_UNTESTED		-1
-#define CODECS_STATUS_PROBLEMS		1
-#define CODECS_STATUS_WORKING		2
-#define CODECS_STATUS__MAX		2
-
+    CODECS_STATUS__MIN		=0,
+    CODECS_STATUS_NOT_WORKING	=0,
+    CODECS_STATUS_UNTESTED	=-1,
+    CODECS_STATUS_PROBLEMS	=1,
+    CODECS_STATUS_WORKING	=2,
+    CODECS_STATUS__MAX		=2
+};
 #ifndef GUID_TYPE
 #define GUID_TYPE
 typedef struct {

@@ -35,11 +35,10 @@
 #include <string.h>
 
 #include "common.h"
-
-#define NTP_EPOCH_OFFSET 2208988800UL
-
-#define FSDP_MAX_LENGTH 2000
-
+enum {
+    NTP_EPOCH_OFFSET=2208988800UL,
+    FSDP_MAX_LENGTH=2000
+};
 /* Tags for doxygen documentation */
 
 /**
@@ -262,11 +261,11 @@ struct fsdp_description_t_s
   char **unidentified_attributes;
   unsigned int unidentified_attributes_count;
 };
-
-#define MEDIA_RTPMAPS_MAX_COUNT 5
-#define SDPLANGS_MAX_COUNT 5
-#define SDPCONTROLS_MAX_COUNT 10
-#define UNIDENTIFIED_ATTRIBUTES_MAX_COUNT 5
-
+enum {
+    MEDIA_RTPMAPS_MAX_COUNT=5,
+    SDPLANGS_MAX_COUNT=5,
+    SDPCONTROLS_MAX_COUNT=10,
+    UNIDENTIFIED_ATTRIBUTES_MAX_COUNT=5
+};
 END_C_DECLS
 #endif /* FSDP_PRIV_H */

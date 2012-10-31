@@ -29,6 +29,7 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/libnuppelvideo/minilzo.h"
 #include "osdep/mplib.h"
+#include "demux_msg.h"
 
 #ifdef USE_QTX_CODECS
 #include "loader/qtx/qtxsdk/components.h"

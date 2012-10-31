@@ -16,6 +16,8 @@
 #include <sys/time.h>
 #include "osdep/mplib.h"
 #define DA_PREFIX "DEC_AHEAD:"
+#define MSGT_CLASS MSGT_CPLAYER
+#include "mp_msg.h"
 
 #include "xmp_core.h"
 #include "mplayer.h"

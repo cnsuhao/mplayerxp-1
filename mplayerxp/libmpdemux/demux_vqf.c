@@ -10,6 +10,7 @@
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
 #include "osdep/mplib.h"
+#include "demux_msg.h"
 
 #define	KEYWORD_BYTES	4
 #define	VERSION_BYTES	8

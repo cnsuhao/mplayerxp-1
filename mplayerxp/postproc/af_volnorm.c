@@ -19,6 +19,7 @@
 
 #include "af.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 // Methods:
 // 1: uses a 1 value memory and coefficients new=a*old+b*cur (with a+b=1)

@@ -7,10 +7,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include "codecs_ld.h"
-#include "../mp_config.h"
-#include "../help_mp.h"
+#include "mp_config.h"
+#include "help_mp.h"
 #define MSGT_CLASS MSGT_GLOBAL
-#include "../__mp_msg.h"
+#include "mp_msg.h"
 
 any_t* ld_codec(const char *name,const char *url_hint)
 {

@@ -1,15 +1,21 @@
+#ifndef VIDEOOUT_MJPEG_H_INCLUDED
+#define VIDEOOUT_MJPEG_H_INCLUDED 1
 /* These are the MJPEG API extensions for the Video4Linux API,
    first introduced by the Iomega Buz driver by Rainer Johanni 
    <rainer@johanni.de>
 */
-
+enum {
+    JPEG_MARKER_DHT=(1<<3), /* Define Huffman Tables */
+    JPEG_MARKER_DQT=(1<<4), /* Define Quantization Tables */
+    JPEG_MARKER_DRI=(1<<5), /* Define Restart Interval */
+    JPEG_MARKER_COM=(1<<6), /* Comment segment */
+    JPEG_MARKER_APP=(1<<7)  /* App segment, driver will allways use APP0 */
+};
 /* This is identical with the mgavideo internal params struct, 
    please tell me if you change this struct here ! <gz@lysator.liu.se) */
 struct mjpeg_params
 {
-
    /* The following parameters can only be queried */
-
    int major_version;            /* Major version number of driver */
    int minor_version;            /* Minor version number of driver */
 
@@ -66,12 +72,6 @@ struct mjpeg_params
                                      which can read it.
                                      The presence of the APP and COM marker is
                                      influenced by APP0_len and COM_len ONLY! */
-#define JPEG_MARKER_DHT (1<<3)    /* Define Huffman Tables */
-#define JPEG_MARKER_DQT (1<<4)    /* Define Quantization Tables */
-#define JPEG_MARKER_DRI (1<<5)    /* Define Restart Interval */
-#define JPEG_MARKER_COM (1<<6)    /* Comment segment */
-#define JPEG_MARKER_APP (1<<7)    /* App segment, driver will allways use APP0 */
-
    int  VFIFO_FB;                 /* Flag for enabling Video Fifo Feedback.
                                      If this flag is turned on and JPEG decompressing
                                      is going to the screen, the decompress process
@@ -116,3 +116,4 @@ Private IOCTL to set up for displaying MJPEG
 #define MJPIOC_QBUF_PLAY      _IOW ('v', BASE_VIDIOCPRIVATE+4,  int)
 #define MJPIOC_SYNC           _IOR ('v', BASE_VIDIOCPRIVATE+5,  struct mjpeg_sync)
 #define MJPIOC_G_STATUS       _IOWR('v', BASE_VIDIOCPRIVATE+6,  struct mjpeg_status)
+#endif

@@ -15,6 +15,7 @@
 #include "osdep/mplib.h"
 #include "dsp.h"
 #include "loader/wine/mmreg.h"
+#include "pp_msg.h"
 
 // Integer to float conversion through lrintf()
 #ifdef HAVE_LRINTF

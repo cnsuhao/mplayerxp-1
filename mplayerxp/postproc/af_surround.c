@@ -43,6 +43,7 @@
 #include "dsp.h"
 #include "help_mp.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 #define L  32    // Length of fir filter
 #define LD 65536 // Length of delay buffer

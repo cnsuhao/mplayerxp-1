@@ -7,6 +7,7 @@
 #include "osdep/mplib.h"
 
 #include "af.h"
+#include "pp_msg.h"
 
 extern ao_data_t* ao_data;
 

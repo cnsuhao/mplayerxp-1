@@ -11,6 +11,6 @@ extern float mixer_getbothvolume( void );
 void mixer_mute( void );
 
 //extern void mixer_setbothvolume( int v );
-#define mixer_setbothvolume( v ) mixer_setvolume( v,v )
+static inline void mixer_setbothvolume( float v ) { mixer_setvolume( v,v ); }
 
 #endif

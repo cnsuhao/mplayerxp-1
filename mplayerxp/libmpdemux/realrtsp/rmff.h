@@ -46,21 +46,16 @@
 #ifndef HAVE_RMFF_H
 #define HAVE_RMFF_H
 
+enum {
+    RMFF_HEADER_SIZE	=0x12,
+    RMFF_FILEHEADER_SIZE=18,
+    RMFF_PROPHEADER_SIZE=50,
+    RMFF_MDPRHEADER_SIZE=46,
+    RMFF_CONTHEADER_SIZE=18,
+    RMFF_DATAHEADER_SIZE=18
+};
 
-#define RMFF_HEADER_SIZE 0x12
-
-#define RMFF_FILEHEADER_SIZE 18
-#define RMFF_PROPHEADER_SIZE 50
-#define RMFF_MDPRHEADER_SIZE 46
-#define RMFF_CONTHEADER_SIZE 18
-#define RMFF_DATAHEADER_SIZE 18
-
-#define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
-        (((long)(unsigned char)(ch3)       ) | \
-        ( (long)(unsigned char)(ch2) << 8  ) | \
-        ( (long)(unsigned char)(ch1) << 16 ) | \
-        ( (long)(unsigned char)(ch0) << 24 ) )
-
+#define FOURCC_TAG(ch0,ch1,ch2,ch3) (((long)(ch3)|((long)ch2<<8)|(*long)ch1<<16)|((long)ch0<<24))
 
 #define RMF_TAG   FOURCC_TAG('.', 'R', 'M', 'F')
 #define PROP_TAG  FOURCC_TAG('P', 'R', 'O', 'P')
@@ -73,10 +68,11 @@
 #define MLTI_TAG  FOURCC_TAG('M', 'L', 'T', 'I')
 
 /* prop flags */
-#define PN_SAVE_ENABLED         0x01
-#define PN_PERFECT_PLAY_ENABLED 0x02
-#define PN_LIVE_BROADCAST       0x04
-
+enum {
+    PN_SAVE_ENABLED		=0x01,
+    PN_PERFECT_PLAY_ENABLED	=0x02,
+    PN_LIVE_BROADCAST		=0x04
+};
 /*
  * rm header data structs
  */

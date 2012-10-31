@@ -105,15 +105,19 @@ typedef struct __attribute__((packed)) {
 
 // Definition of the stream type
 #ifdef WORDS_BIGENDIAN
-	#define ASF_STREAMING_CLEAR	0x2443		// $C
-	#define ASF_STREAMING_DATA	0x2444		// $D
-	#define ASF_STREAMING_END_TRANS	0x2445		// $E
-	#define	ASF_STREAMING_HEADER	0x2448		// $H
+enum {
+    ASF_STREAMING_CLEAR	=0x2443,// $C
+    ASF_STREAMING_DATA	=0x2444,// $D
+    ASF_STREAMING_END_TRANS=0x2445,// $E
+    ASF_STREAMING_HEADER=0x2448// $H
+};
 #else
-	#define ASF_STREAMING_CLEAR	0x4324		// $C
-	#define ASF_STREAMING_DATA	0x4424		// $D
-	#define ASF_STREAMING_END_TRANS	0x4524		// $E
-	#define	ASF_STREAMING_HEADER	0x4824		// $H
+enum {
+    ASF_STREAMING_CLEAR	=0x4324,// $C
+    ASF_STREAMING_DATA	=0x4424,// $D
+    ASF_STREAMING_END_TRANS=0x4524,// $E
+    ASF_STREAMING_HEADER=0x4824// $H
+};
 #endif
 
 // Definition of the differents type of ASF streaming

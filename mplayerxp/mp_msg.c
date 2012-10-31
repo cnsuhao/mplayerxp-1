@@ -84,7 +84,7 @@ const char * msg_prefix[] =
     "POSTPR"
 };
 
-void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *format, ... ){
+void mp_msg_c( unsigned x, const char *format, ... ){
 /* TODO: more useful usage of module_id */
     priv_t*priv=NULL;
     va_list va;
@@ -109,7 +109,7 @@ void mp_msg_c( unsigned x, const char *srcfile,unsigned linenum,const char *form
 	while((mod&0x1)==0) { mod_name++; mod>>=1; }
 	if(mod_name < sizeof(msg_prefix)/sizeof(msg_prefix[0]))
 		smod = msg_prefix[mod_name];
-	fprintf(stderr,"%s.%s(%u): ",smod?smod:"UNKNOWN",srcfile,linenum);
+	fprintf(stderr,"%s: ",smod?smod:"UNKNOWN");
     }
     va_start(va, format);
     ssize=vsprintf(sbuf,format, va);

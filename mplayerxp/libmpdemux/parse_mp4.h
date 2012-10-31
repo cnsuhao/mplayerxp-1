@@ -10,58 +10,49 @@
 #include <inttypes.h>
 
 /* one byte tag identifiers */
-#define MP4ODescrTag			0x01 
-#define MP4IODescrTag			0x02 
-#define MP4ESDescrTag			0x03 
-#define MP4DecConfigDescrTag		0x04 
-#define MP4DecSpecificDescrTag		0x05 
-#define MP4SLConfigDescrTag		0x06 
-#define MP4ContentIdDescrTag		0x07 
-#define MP4SupplContentIdDescrTag	0x08 
-#define MP4IPIPtrDescrTag		0x09 
-#define MP4IPMPPtrDescrTag		0x0A 
-#define MP4IPMPDescrTag			0x0B 
-#define MP4RegistrationDescrTag		0x0D 
-#define MP4ESIDIncDescrTag		0x0E 
-#define MP4ESIDRefDescrTag		0x0F 
-#define MP4FileIODescrTag		0x10 
-#define MP4FileODescrTag		0x11 
-#define MP4ExtProfileLevelDescrTag	0x13 
-#define MP4ExtDescrTagsStart		0x80 
-#define MP4ExtDescrTagsEnd		0xFE 
-
+enum {
+    MP4ODescrTag		=0x01,
+    MP4IODescrTag		=0x02,
+    MP4ESDescrTag		=0x03,
+    MP4DecConfigDescrTag	=0x04,
+    MP4DecSpecificDescrTag	=0x05,
+    MP4SLConfigDescrTag		=0x06,
+    MP4ContentIdDescrTag	=0x07,
+    MP4SupplContentIdDescrTag	=0x08,
+    MP4IPIPtrDescrTag		=0x09,
+    MP4IPMPPtrDescrTag		=0x0A,
+    MP4IPMPDescrTag		=0x0B,
+    MP4RegistrationDescrTag	=0x0D,
+    MP4ESIDIncDescrTag		=0x0E,
+    MP4ESIDRefDescrTag		=0x0F,
+    MP4FileIODescrTag		=0x10,
+    MP4FileODescrTag		=0x11,
+    MP4ExtProfileLevelDescrTag	=0x13,
+    MP4ExtDescrTagsStart	=0x80,
+    MP4ExtDescrTagsEnd		=0xFE
+};
 /* object type identifiers in the ESDS */
 /* See http://gpac.sourceforge.net/tutorial/mediatypes.htm */
-/* BIFS stream version 1 */
-#define MP4OTI_MPEG4Systems1                                0x01
-/* BIFS stream version 2 */
-#define MP4OTI_MPEG4Systems2                                0x02
-/* MPEG-4 visual stream */
-#define MP4OTI_MPEG4Visual                                  0x20
-/* MPEG-4 audio stream */
-#define MP4OTI_MPEG4Audio                                   0x40
-/* MPEG-2 visual streams with various profiles */
-#define MP4OTI_MPEG2VisualSimple                            0x60
-#define MP4OTI_MPEG2VisualMain                              0x61
-#define MP4OTI_MPEG2VisualSNR                               0x62
-#define MP4OTI_MPEG2VisualSpatial                           0x63
-#define MP4OTI_MPEG2VisualHigh                              0x64
-#define MP4OTI_MPEG2Visual422                               0x65
-/* MPEG-2 audio stream part 7 ("AAC") with various profiles */
-#define MP4OTI_MPEG2AudioMain                               0x66
-#define MP4OTI_MPEG2AudioLowComplexity                      0x67
-#define MP4OTI_MPEG2AudioScaleableSamplingRate              0x68
-/* MPEG-2 audio part 3 ("MP3") */
-#define MP4OTI_MPEG2AudioPart3                              0x69
-/* MPEG-1 visual visual stream */
-#define MP4OTI_MPEG1Visual                                  0x6A
-/* MPEG-1 audio stream part 3 ("MP3") */
-#define MP4OTI_MPEG1Audio                                   0x6B
-/* JPEG visual stream */
-#define MP4OTI_JPEG                                         0x6C
-/* 3GPP2 */
-#define MP4OTI_13kVoice                                     0xE1
-
+enum {
+    MP4OTI_MPEG4Systems1	=0x01, /* BIFS stream version 1 */
+    MP4OTI_MPEG4Systems2	=0x02, /* BIFS stream version 2 */
+    MP4OTI_MPEG4Visual		=0x20, /* MPEG-4 visual stream */
+    MP4OTI_MPEG4Audio		=0x40, /* MPEG-4 audio stream */
+    MP4OTI_MPEG2VisualSimple	=0x60, /* MPEG-2 visual streams with various profiles */
+    MP4OTI_MPEG2VisualMain	=0x61,
+    MP4OTI_MPEG2VisualSNR	=0x62,
+    MP4OTI_MPEG2VisualSpatial	=0x63,
+    MP4OTI_MPEG2VisualHigh	=0x64,
+    MP4OTI_MPEG2Visual422	=0x65,
+    MP4OTI_MPEG2AudioMain	=0x66, /* MPEG-2 audio stream part 7 ("AAC") with various profiles */
+    MP4OTI_MPEG2AudioLowComplexity=0x67,
+    MP4OTI_MPEG2AudioScaleableSamplingRate=0x68,
+    MP4OTI_MPEG2AudioPart3	=0x69, /* MPEG-2 audio part 3 ("MP3") */
+    MP4OTI_MPEG1Visual		=0x6A, /* MPEG-1 visual visual stream */
+    MP4OTI_MPEG1Audio		=0x6B, /* MPEG-1 audio stream part 3 ("MP3") */
+    MP4OTI_JPEG			=0x6C, /* JPEG visual stream */
+    MP4OTI_13kVoice		=0xE1 /* 3GPP2 */
+};
 /* I define uint24 here for better understanding */
 #ifndef uint24_t
 #define uint24_t uint32_t

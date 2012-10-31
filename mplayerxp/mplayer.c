@@ -65,7 +65,7 @@
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
 #define MSGT_CLASS MSGT_CPLAYER
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 /**************************************************************************
              Private data
@@ -2372,7 +2372,7 @@ int main(int argc,char* argv[], char *envp[]){
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 
-    mp_init_malloc(1000,10);
+    mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
 
     mpxp_init_structs();
     priv_t*priv=mp_data->priv;

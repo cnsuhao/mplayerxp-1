@@ -19,6 +19,7 @@
 
 #include "af.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 // Data for specific instances of this filter
 typedef struct af_extrastereo_s

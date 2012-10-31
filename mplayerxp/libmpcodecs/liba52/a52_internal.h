@@ -93,16 +93,18 @@ struct a52_state_s {
 #define LEVEL_45DB 0.5946035575013605
 #define LEVEL_6DB 0.5
 
-#define EXP_REUSE (0)
-#define EXP_D15   (1)
-#define EXP_D25   (2)
-#define EXP_D45   (3)
-
-#define DELTA_BIT_REUSE (0)
-#define DELTA_BIT_NEW (1)
-#define DELTA_BIT_NONE (2)
-#define DELTA_BIT_RESERVED (3)
-
+enum {
+    EXP_REUSE	=0,
+    EXP_D15	=1,
+    EXP_D25	=2,
+    EXP_D45	=3
+};
+enum {
+    DELTA_BIT_REUSE	=0,
+    DELTA_BIT_NEW	=1,
+    DELTA_BIT_NONE	=2,
+    DELTA_BIT_RESERVED	=3
+};
 void a52_bit_allocate (a52_state_t * state, ba_t * ba, int bndstart,
 		       int start, int end, int fastleak, int slowleak,
 		       expbap_t * expbap);

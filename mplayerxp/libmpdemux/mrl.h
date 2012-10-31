@@ -24,12 +24,13 @@
 **/
 extern const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port);
 
-#define MRL_TYPE_PRINT		0 /**< NoType! Just printout value of argument */
-#define MRL_TYPE_BOOL		1 /**< Boolean type. Accepts "on" "off" "yes" "no" "1" "0" values */
-#define MRL_TYPE_INT		2 /**< Integer type. Accepts any values in min-max range */
-#define MRL_TYPE_FLOAT		3 /**< Float type. Accepts any values in min-max range */
-#define MRL_TYPE_STRING		4 /**< String type. Accepts any values */
-
+enum {
+    MRL_TYPE_PRINT	=0, /**< NoType! Just printout value of argument */
+    MRL_TYPE_BOOL	=1, /**< Boolean type. Accepts "on" "off" "yes" "no" "1" "0" values */
+    MRL_TYPE_INT	=2, /**< Integer type. Accepts any values in min-max range */
+    MRL_TYPE_FLOAT	=3, /**< Float type. Accepts any values in min-max range */
+    MRL_TYPE_STRING	=4  /**< String type. Accepts any values */
+};
 /** Structurizes argument's parsing
   * @note		all string arguments will be allocated by mp_malloc() function
 **/

@@ -12,6 +12,7 @@
 
 #include "mplayer.h"
 #include "xmp_core.h"
+#include "demux_msg.h"
 
 pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;
 #define LOCK_DEMUXER() { pthread_mutex_lock(&demuxer_mutex); }

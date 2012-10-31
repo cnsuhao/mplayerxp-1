@@ -26,7 +26,7 @@
 #include "postproc/swscale.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_SPUDEC
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 #ifndef MIN
 #define MIN(a, b)	((a)<(b)?(a):(b))

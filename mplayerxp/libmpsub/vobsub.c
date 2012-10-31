@@ -21,7 +21,7 @@
 #include "vobsub.h"
 #include "spudec.h"
 #define MSGT_CLASS MSGT_VOBSUB
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 #ifdef HAVE_GETLINE
 extern ssize_t getline(char **, size_t *, FILE *);

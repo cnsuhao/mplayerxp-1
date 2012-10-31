@@ -43,6 +43,7 @@ LIBVO_EXTERN(xv)
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
+#include "vo_msg.h"
 
 static vo_info_t vo_info =
 {

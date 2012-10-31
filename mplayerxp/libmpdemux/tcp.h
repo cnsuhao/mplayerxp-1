@@ -25,8 +25,9 @@
 /* Connect to a server using a TCP connection */
 int tcp_connect2Server (const char *host, int port, int verb);
 
-#define TCP_ERROR_TIMEOUT -3     /* connection timeout */
-#define TCP_ERROR_FATAL   -2     /* unable to resolve name */
-#define TCP_ERROR_PORT    -1     /* unable to connect to a particular port */
-
+enum {
+    TCP_ERROR_TIMEOUT	=-3, /* connection timeout */
+    TCP_ERROR_FATAL	=-2, /* unable to resolve name */
+    TCP_ERROR_PORT	=-1  /* unable to connect to a particular port */
+};
 #endif /* TCP_H */

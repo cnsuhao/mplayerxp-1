@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include "xmp_core.h"
 
-#define __MP_UNIT(id,name) (xp_core.mpxp_threads[id]->unit=name)
-#define MP_UNIT(name) (xp_core.mpxp_threads[main_id]->unit=name)
+static inline void __MP_UNIT(unsigned id,const char *name)  { xp_core.mpxp_threads[id]->unit=name; }
+static inline void MP_UNIT(const char *name) { xp_core.mpxp_threads[main_id]->unit=name; }
 
 extern void init_signal_handling( void );
 extern void uninit_signal_handling( int xp_id );

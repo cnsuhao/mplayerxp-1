@@ -7,6 +7,7 @@
 #include "af.h"
 #include "mp_config.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 // Initialization and runtime control
 static int __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)

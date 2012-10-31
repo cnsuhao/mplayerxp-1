@@ -34,10 +34,10 @@
 
 
 /* some codes returned by rtsp_request_* functions */
-
-#define RTSP_STATUS_SET_PARAMETER  10
-#define RTSP_STATUS_OK            200
-
+enum {
+    RTSP_STATUS_SET_PARAMETER	=10,
+    RTSP_STATUS_OK		=200
+};
 #define RTSP_METHOD_OPTIONS "OPTIONS"
 #define RTSP_METHOD_DESCRIBE "DESCRIBE"
 #define RTSP_METHOD_SETUP "SETUP"

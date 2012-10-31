@@ -12,6 +12,7 @@
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "ad.h"
+#include "ad_msg.h"
 
 /* Missed vorbis, mad, dshow */
 

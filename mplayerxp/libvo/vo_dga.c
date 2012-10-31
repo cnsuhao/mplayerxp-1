@@ -40,10 +40,7 @@ LIBVO_EXTERN( dga )
 #include "osdep/fastmemcpy.h"
 #include "osdep/mplib.h"
 #include "dri_vo.h"
-//#define VO_DGA_DBG 1
-//#undef HAVE_DGA2
-//#undef HAVE_XF86VM
-
+#include "vo_msg.h"
 
 static vo_info_t vo_info =
 {

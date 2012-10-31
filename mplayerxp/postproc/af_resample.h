@@ -39,7 +39,7 @@
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 #define FIR(x,w,y) {y[0]=FIR_i16(x,w);}
 #endif
-#else 
+#else
 #define SHIFT
 #define FORMAT float
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
@@ -134,7 +134,7 @@
 	len++;	out+=nch;
 
 	// Update wi to point at the correct polyphase component
-	wi=(wi+dn)%up;  
+	wi=(wi+dn)%up;
 
 	// Insert i number of new samples in queue
 	i = inc;

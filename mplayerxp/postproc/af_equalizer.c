@@ -23,6 +23,7 @@
 
 #include "af.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 #define L   	2      // Storage for filter taps
 #define KM  	10     // Max number of bands 

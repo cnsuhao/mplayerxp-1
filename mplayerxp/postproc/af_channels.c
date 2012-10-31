@@ -10,6 +10,7 @@
 
 #include "af.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 #define FR 0
 #define TO 1

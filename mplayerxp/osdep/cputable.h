@@ -7,7 +7,7 @@
 
 //#define N_UNKNOWN "unknown"
 //#define N_UNKNOWNEXT "unknown extended model"
-#define N_UNKNOWN "" 
+#define N_UNKNOWN ""
 #define N_UNKNOWNEXT ""
 
 #define F_UNKNOWN { \

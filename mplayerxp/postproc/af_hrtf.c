@@ -13,6 +13,7 @@
 #include "af.h"
 #include "dsp.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 /* HRTF filter coefficients and adjustable parameters */
 #include "af_hrtf.h"

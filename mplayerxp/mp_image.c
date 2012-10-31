@@ -10,7 +10,7 @@
 #include "mp_image.h"
 #include "osdep/fastmemcpy.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
     mpi->flags&=~(MP_IMGFLAG_PLANAR|MP_IMGFLAG_YUV|MP_IMGFLAG_SWAPPED);

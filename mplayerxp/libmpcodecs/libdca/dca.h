@@ -24,13 +24,7 @@
 #define DCA_H
 
 #include "mp_config.h"
-
-/* x86 accelerations */
-#define MM_ACCEL_X86_MMX	0x80000000
-#define MM_ACCEL_X86_3DNOW	0x40000000
-#define MM_ACCEL_X86_MMXEXT	0x20000000
-
-uint32_t mm_accel (void);
+#include "osdep/mm_accel.h"
 
 #if defined(LIBDTS_FIXED)
 typedef int32_t sample_t;
@@ -45,26 +39,28 @@ typedef float level_t;
 
 typedef struct dca_state_s dca_state_t;
 
-#define DCA_MONO 0
-#define DCA_CHANNEL 1
-#define DCA_STEREO 2
-#define DCA_STEREO_SUMDIFF 3
-#define DCA_STEREO_TOTAL 4
-#define DCA_3F 5
-#define DCA_2F1R 6
-#define DCA_3F1R 7
-#define DCA_2F2R 8
-#define DCA_3F2R 9
-#define DCA_4F2R 10
+enum {
+    DCA_MONO	=0,
+    DCA_CHANNEL	=1,
+    DCA_STEREO	=2,
+    DCA_STEREO_SUMDIFF=3,
+    DCA_STEREO_TOTAL=4,
+    DCA_3F	=5,
+    DCA_2F1R	=6,
+    DCA_3F1R	=7,
+    DCA_2F2R	=8,
+    DCA_3F2R	=9,
+    DCA_4F2R	=10,
 
-#define DCA_DOLBY 101 /* FIXME */
+    DCA_DOLBY	=101, /* FIXME */
 
-#define DCA_CHANNEL_MAX  DCA_3F2R /* We don't handle anything above that */
-#define DCA_CHANNEL_BITS 6
-#define DCA_CHANNEL_MASK 0x3F
+    DCA_CHANNEL_MAX=DCA_3F2R, /* We don't handle anything above that */
+    DCA_CHANNEL_BITS=6,
+    DCA_CHANNEL_MASK=0x3F,
 
-#define DCA_LFE 0x80
-#define DCA_ADJUST_LEVEL 0x100
+    DCA_LFE	=0x80,
+    DCA_ADJUST_LEVEL=0x100
+};
 
 extern dca_state_t * dca_init (uint32_t mm_accel);
 extern int dca_syncinfo (dca_state_t *state, uint8_t * buf, int * flags,

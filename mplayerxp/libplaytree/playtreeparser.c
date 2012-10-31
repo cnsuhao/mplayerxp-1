@@ -17,7 +17,7 @@
 #include "playtreeparser.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE
-#include "__mp_msg.h"
+#include "mp_msg.h"
 
 #define BUF_STEP 1024
 

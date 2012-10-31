@@ -306,16 +306,17 @@ typedef void (__LZO_ENTRY *lzo_progress_callback_t) (lzo_uint, lzo_uint);
  * values are errors, positive values will be used for special but
  * normal events.
  */
-#define LZO_E_OK                    0
-#define LZO_E_ERROR                 (-1)
-#define LZO_E_OUT_OF_MEMORY         (-2)    /* not used right now */
-#define LZO_E_NOT_COMPRESSIBLE      (-3)    /* not used right now */
-#define LZO_E_INPUT_OVERRUN         (-4)
-#define LZO_E_OUTPUT_OVERRUN        (-5)
-#define LZO_E_LOOKBEHIND_OVERRUN    (-6)
-#define LZO_E_EOF_NOT_FOUND         (-7)
-#define LZO_E_INPUT_NOT_CONSUMED    (-8)
-
+enum {
+    LZO_E_OK			=0,
+    LZO_E_ERROR			=-1,
+    LZO_E_OUT_OF_MEMORY		=-2,    /* not used right now */
+    LZO_E_NOT_COMPRESSIBLE	=-3,    /* not used right now */
+    LZO_E_INPUT_OVERRUN		=-4,
+    LZO_E_OUTPUT_OVERRUN	=-5,
+    LZO_E_LOOKBEHIND_OVERRUN	=-6,
+    LZO_E_EOF_NOT_FOUND		=-7,
+    LZO_E_INPUT_NOT_CONSUMED	=-8
+};
 
 /* lzo_init() should be the first function you call.
  * Check the return code !

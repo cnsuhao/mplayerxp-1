@@ -11,6 +11,7 @@
 #include "mp_config.h"
 #include "help_mp.h"
 #include "osdep/mplib.h"
+#include "pp_msg.h"
 
 #define L 65536
 

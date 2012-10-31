@@ -18,11 +18,13 @@ typedef struct tagFarPtr
   unsigned short seg;
 }FarPtr;
 
-#define VBE_DAC_8BIT       (1 << 0)
-#define VBE_NONVGA_CRTC    (1 << 1)
-#define VBE_SNOWED_RAMDAC  (1 << 2)
-#define VBE_STEREOSCOPIC   (1 << 3)
-#define VBE_STEREO_EVC     (1 << 4)
+enum {
+    VBE_DAC_8BIT	=(1 << 0),
+    VBE_NONVGA_CRTC	=(1 << 1),
+    VBE_SNOWED_RAMDAC	=(1 << 2),
+    VBE_STEREOSCOPIC	=(1 << 3),
+    VBE_STEREO_EVC	=(1 << 4)
+};
 
 struct VbeInfoBlock {
   char          VESASignature[4]; /* 'VESA' 4 byte signature */
@@ -68,22 +70,24 @@ static inline any_t* PhysToVirtSO(unsigned short seg,unsigned short off)
   return (any_t*)((seg << 4) | off);
 }
 
-#define MODE_ATTR_MODE_SUPPORTED (1 << 0)
-#define MODE_ATTR_TTY 		(1 << 2)
-#define MODE_ATTR_COLOR 	(1 << 3)
-#define MODE_ATTR_GRAPHICS 	(1 << 4)
-#define MODE_ATTR_NOT_VGA 	(1 << 5)
-#define MODE_ATTR_NOT_WINDOWED 	(1 << 6)
-#define MODE_ATTR_LINEAR 	(1 << 7)
-#define MODE_ATTR_DOUBLESCAN 	(1 << 8)
-#define MODE_ATTR_INTERLACE 	(1 << 9)
-#define MODE_ATTR_TRIPLEBUFFER 	(1 << 10)
-#define MODE_ATTR_STEREOSCOPIC 	(1 << 11)
-#define MODE_ATTR_DUALDISPLAY 	(1 << 12)
+enum {
+    MODE_ATTR_MODE_SUPPORTED	=(1 << 0),
+    MODE_ATTR_TTY		=(1 << 2),
+    MODE_ATTR_COLOR		=(1 << 3),
+    MODE_ATTR_GRAPHICS		=(1 << 4),
+    MODE_ATTR_NOT_VGA		=(1 << 5),
+    MODE_ATTR_NOT_WINDOWED	=(1 << 6),
+    MODE_ATTR_LINEAR		=(1 << 7),
+    MODE_ATTR_DOUBLESCAN	=(1 << 8),
+    MODE_ATTR_INTERLACE		=(1 << 9),
+    MODE_ATTR_TRIPLEBUFFER	=(1 << 10),
+    MODE_ATTR_STEREOSCOPIC	=(1 << 11),
+    MODE_ATTR_DUALDISPLAY	=(1 << 12),
 
-#define MODE_WIN_RELOCATABLE 	(1 << 0)
-#define MODE_WIN_READABLE 	(1 << 1)
-#define MODE_WIN_WRITEABLE 	(1 << 2)
+    MODE_WIN_RELOCATABLE	=(1 << 0),
+    MODE_WIN_READABLE		=(1 << 1),
+    MODE_WIN_WRITEABLE		=(1 << 2)
+};
 
 /* SuperVGA mode information block */
 struct VesaModeInfoBlock {
@@ -161,15 +165,16 @@ struct VesaCRTCInfoBlock {
   unsigned char  Reserved[40];/* remainder of CRTCInfoBlock*/
 }__attribute__ ((packed));
 
-#define VESA_CRTC_DOUBLESCAN 0x01
-#define VESA_CRTC_INTERLACED 0x02
-#define VESA_CRTC_HSYNC_NEG  0x04
-#define VESA_CRTC_VSYNC_NEG  0x08
+enum {
+    VESA_CRTC_DOUBLESCAN	=0x01,
+    VESA_CRTC_INTERLACED	=0x02,
+    VESA_CRTC_HSYNC_NEG		=0x04,
+    VESA_CRTC_VSYNC_NEG		=0x08,
 
-#define VESA_MODE_CRTC_REFRESH (1 << 11)
-#define VESA_MODE_USE_LINEAR   (1 << 14)
-#define VESA_MODE_NOT_CLEAR    (1 << 15)
-
+    VESA_MODE_CRTC_REFRESH	=(1 << 11),
+    VESA_MODE_USE_LINEAR	=(1 << 14),
+    VESA_MODE_NOT_CLEAR		=(1 << 15)
+};
 /* This will contain accesible 32-bit protmode pointers */
 struct VesaProtModeInterface
 {
@@ -185,15 +190,15 @@ struct VesaProtModeInterface
   0xffff if vm86 syscall error occurs
   0x4fxx if VESA error occurs
 */
-
-#define VBE_OK                 0
-#define VBE_VM86_FAIL         -1
-#define VBE_OUT_OF_DOS_MEM    -2
-#define VBE_OUT_OF_MEM        -3
-#define VBE_BROKEN_BIOS       -4
-#define VBE_VESA_ERROR_MASK   0x004f
-#define VBE_VESA_ERRCODE_MASK 0xff00
-
+enum {
+    VBE_OK			=0,
+    VBE_VM86_FAIL		=-1,
+    VBE_OUT_OF_DOS_MEM		=-2,
+    VBE_OUT_OF_MEM		=-3,
+    VBE_BROKEN_BIOS		=-4,
+    VBE_VESA_ERROR_MASK		=0x004f,
+    VBE_VESA_ERRCODE_MASK	=0xff00
+};
 extern int vbeInit( void );
 extern int vbeDestroy( void );
 
@@ -215,7 +220,7 @@ extern int vbeSetScheduledDisplayStart(unsigned long offset, int vsync);
 /*
    Func 0x08-0x09:
    Support of palette currently is not implemented.
-*/ 
+*/
 extern int vbeGetProtModeInfo(struct VesaProtModeInterface *);
 
 /* Standard VGA stuff */
