@@ -125,7 +125,7 @@ static int asf_probe(demuxer_t *demuxer){
   apriv->asf_movielength=0;
 
   stream_read(demuxer->stream,(char*)&apriv->asfh,sizeof(ASF_header_t)); // header obj
-  le2me_ASF_header_t(&apriv->asfh);			// swap to machine endian
+  le2me_ASF_header_t(&apriv->asfh);	// swap to machine endian
   if(memcmp(asf2hdrguid,apriv->asfh.objh.guid,16)==0){
     MSG_ERR("ASF_check: found ASF v2 guid!\nCurrently is not supported - please report!\n");
     mp_free(demuxer->priv);

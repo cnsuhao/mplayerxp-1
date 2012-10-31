@@ -88,10 +88,10 @@ typedef struct sh_video_s {
 
 sh_audio_t* get_sh_audio(demuxer_t *demuxer,int id);
 sh_video_t* get_sh_video(demuxer_t *demuxer,int id);
-#define new_sh_audio(d, i) new_sh_audio_aid(d, i, i)
 sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid);
-#define new_sh_video(d, i) new_sh_video_vid(d, i, i)
+static inline sh_audio_t* new_sh_audio(demuxer_t *d, int i){ return new_sh_audio_aid(d, i, i); }
 sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid);
+static inline sh_video_t* new_sh_video(demuxer_t *d,int i) { return new_sh_video_vid(d, i, i); }
 void free_sh_audio(sh_audio_t *sh);
 void free_sh_video(sh_video_t *sh);
 

@@ -33,6 +33,12 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+/* quick test of two ratios for equality (i.e. identical components) */
+#define Y4M_RATIO_EQL(a,b) ( ((a).n == (b).n) && ((a).d == (b).d) )
+
+/* quick conversion of a ratio to a double (no divide-by-zero check!) */
+#define Y4M_RATIO_DBL(r) ((double)(r).n / (double)(r).d)
+
 static int _y4mparam_allow_unknown_tags = 1;  /* default is forgiveness */
 
 static any_t*(*_y4m_alloc)(size_t bytes) = mp_malloc;

@@ -521,14 +521,14 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 		goto freeout;
 	    }
 
-	    le2me_AVISTDIDXCHUNK(&cx->stdidx[j]);
+	    le2me_avisuperindex_chunk(&cx->stdidx[j]);
 	    print_avistdindex_chunk(&cx->stdidx[j]);
 	    priv->idx_size += cx->stdidx[j].nEntriesInUse;
 	    cx->stdidx[j].aIndex = mp_malloc(cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
 	    stream_read(demuxer->stream, (char *)cx->stdidx[j].aIndex, 
 		    cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
 	    for (k=0;k<cx->stdidx[j].nEntriesInUse; k++)
-		le2me_AVISTDIDXENTRY(&cx->stdidx[j].aIndex[k]);
+		le2me_avistdindex_entry(&cx->stdidx[j].aIndex[k]);
 
 	    cx->stdidx[j].dwReserved3 = 0;
 

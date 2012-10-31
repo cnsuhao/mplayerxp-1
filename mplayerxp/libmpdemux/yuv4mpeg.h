@@ -163,13 +163,6 @@ void y4m_ratio_reduce(y4m_ratio_t *r);
 /* parse "nnn:ddd" into a ratio (returns Y4M_OK or Y4M_ERR_RANGE) */
 int y4m_parse_ratio(y4m_ratio_t *r, const char *s);
 
-/* quick test of two ratios for equality (i.e. identical components) */
-#define Y4M_RATIO_EQL(a,b) ( ((a).n == (b).n) && ((a).d == (b).d) )
-
-/* quick conversion of a ratio to a double (no divide-by-zero check!) */
-#define Y4M_RATIO_DBL(r) ((double)(r).n / (double)(r).d)
-
-
 
 /************************************************************************
  *  'xtag' functions

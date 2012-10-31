@@ -26,4 +26,4 @@ int mp4_header_process_vol(mp_mpeg_header_t * picture, unsigned char * buffer);
 int mp4_header_process_vop(mp_mpeg_header_t * picture, unsigned char * buffer);
 int h264_parse_sps(mp_mpeg_header_t * picture, unsigned char * buf, int len);
 extern unsigned char mp_getbits(unsigned char*, unsigned int, unsigned char);
-#define getbits mp_getbits
+static inline unsigned char getbits(unsigned char*a, unsigned int b, unsigned char c) { return mp_getbits(a,b,c); }
