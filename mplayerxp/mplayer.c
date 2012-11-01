@@ -238,7 +238,7 @@ static void mpxp_uninit_structs(void) {
     if(ao_data) mp_free(ao_data);
     mp_data=NULL;
     xmp_uninit();
-    mp_uninit_malloc(1);
+    mp_uninit_malloc(mp_conf.verbose);
 }
 
 /************************************************************************

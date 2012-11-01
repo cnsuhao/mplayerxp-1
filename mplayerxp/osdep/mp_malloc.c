@@ -25,13 +25,9 @@ typedef struct priv_s {
     unsigned			rnd_limit;
     unsigned			every_nth_call;
     enum mp_malloc_e		flags;
-    // statistics
+    /* for randomizer */
     unsigned long long int	total_calls;
-    unsigned long long int	num_allocs;
-    // local statistics
-    int				enable_stat;
-    unsigned long long int	stat_total_calls;
-    unsigned long long int	stat_num_allocs;
+    /* backtrace and protector slots */
     mp_slot_t*			slots;
     size_t			nslots;
 }priv_t;
@@ -238,13 +234,11 @@ void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e 
 void	mp_uninit_malloc(int verbose)
 {
     if(priv->flags&MPA_FLG_BACKTRACE) {
-	if(priv->nslots)
+	if(priv->nslots) {
 	    MSG_WARN("Warning! %lli slots were not freed\n",priv->nslots);
-    } else {
-	if(priv->num_allocs && verbose)
-	    MSG_WARN("Warning! From %lli total calls of alloc() were not freed %lli buffers\n",priv->total_calls,priv->num_allocs);
+	    if(verbose) bt_print_slots();
+	}
     }
-    if(priv->flags&MPA_FLG_BACKTRACE && verbose) bt_print_slots();
     free(priv);
     priv=NULL;
 }
@@ -263,11 +257,6 @@ any_t* mp_malloc(size_t __size)
     else							rb=malloc(__size);
     if(rnd_buff) free(rnd_buff);
     priv->total_calls++;
-    priv->num_allocs++;
-    if(priv->enable_stat) {
-	priv->stat_total_calls++;
-	priv->stat_num_allocs++;
-    }
     return rb;
 }
 
@@ -279,12 +268,6 @@ any_t*	mp_memalign (size_t boundary, size_t __size)
     if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK)) rb=prot_memalign(boundary,__size);
     else if(priv->flags&MPA_FLG_BACKTRACE)			rb=bt_memalign(boundary,__size);
     else							rb=memalign(boundary,__size);
-    priv->total_calls++;
-    priv->num_allocs++;
-    if(priv->enable_stat) {
-	priv->stat_total_calls++;
-	priv->stat_num_allocs++;
-    }
     return rb;
 }
 
@@ -300,11 +283,12 @@ void	mp_free(any_t*__ptr)
 {
     if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
     if(__ptr) {
-	if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK)) prot_free(__ptr);
-	else if(priv->flags&MPA_FLG_BACKTRACE)			bt_free(__ptr);
-	else							free(__ptr);
-	priv->num_allocs--;
-	if(priv->enable_stat) priv->stat_num_allocs--;
+	if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK))
+	    prot_free(__ptr);
+	else if(priv->flags&MPA_FLG_BACKTRACE)
+	    bt_free(__ptr);
+	else
+	    free(__ptr);
     }
 }
 
@@ -325,22 +309,6 @@ char *	mp_strdup(const char *src) {
 	if(rs) strcpy(rs,src);
     }
     return rs;
-}
-
-void	__FASTCALL__ mp_open_malloc_stat(void) {
-    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
-    priv->enable_stat=1;
-    priv->stat_total_calls=priv->stat_num_allocs=0ULL;
-}
-
-unsigned long long __FASTCALL__ mp_close_malloc_stat(int verbose) {
-    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
-    priv->enable_stat=0;
-    if(verbose)
-	MSG_INFO("mp_malloc stat: from %lli total calls of alloc() were not freed %lli buffers\n"
-	,priv->stat_total_calls
-	,priv->stat_num_allocs);
-    return priv->stat_num_allocs;
 }
 
 int __FASTCALL__ mp_mprotect(const any_t* addr,size_t len,enum mp_prot_e flags)
