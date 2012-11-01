@@ -172,9 +172,9 @@ extern void mp_register_options(m_config_t* cfg);
 static int mpxp_init_antiviral_protection(int verbose)
 {
     int rc;
-    rc=mp_mprotect(antiviral_hole1,sizeof(antiviral_hole1),MP_PROT_NONE);
-    rc|=mp_mprotect(antiviral_hole2,sizeof(antiviral_hole2),MP_PROT_NONE);
-    rc|=mp_mprotect(antiviral_hole3,sizeof(antiviral_hole3),MP_PROT_NONE);
+    rc=mp_mprotect(antiviral_hole1,sizeof(antiviral_hole1),MP_DENY_ALL);
+    rc|=mp_mprotect(antiviral_hole2,sizeof(antiviral_hole2),MP_DENY_ALL);
+    rc|=mp_mprotect(antiviral_hole3,sizeof(antiviral_hole3),MP_DENY_ALL);
     if(verbose) {
 	if(rc)
 	    MSG_ERR("*** Error! Cannot initialize antiviral protection: '%s' ***!\n",strerror(errno));
@@ -187,7 +187,7 @@ static int mpxp_init_antiviral_protection(int verbose)
 static int mpxp_test_antiviral_protection(int verbose)
 {
     int rc;
-    if(verbose) MSG_INFO("Right now MPlayerXP should make coredump!\n");
+    if(verbose) MSG_INFO("Your've specified test-av option!\nRight now MPlayerXP should make coredump!\n");
     rc=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole2[0];
     MSG_ERR("Antiviral protection of MPlayerXP doesn't work!");
     return rc;
@@ -2379,7 +2379,7 @@ int main(int argc,char* argv[], char *envp[]){
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 
-    mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
+    mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER); // MPA_FLG_BACKTRACE
 
     mpxp_init_structs();
     priv_t*priv=mp_data->priv;
