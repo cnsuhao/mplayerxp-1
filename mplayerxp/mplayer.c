@@ -40,7 +40,6 @@
 #include "libmpconf/cfgparser.h"
 #include "libmpconf/codec-cfg.h"
 #include "libmpconf/m_struct.h"
-#include "cfg-mplayer-def.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
@@ -765,6 +764,12 @@ void exit_sighandler(void)
   xmp_killall_threads(pthread_self());
   __exit_sighandler();
 }
+
+static char* default_config=
+"# Write your default config options here!\n"
+"\n"
+//"nosound=nein"
+"\n";
 
 void parse_cfgfiles( m_config_t* conf )
 {
