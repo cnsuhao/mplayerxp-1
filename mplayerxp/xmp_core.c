@@ -40,7 +40,11 @@ void xmp_init(void) {
     xp_core->initial_apts=HUGE;
 }
 
-void xmp_uninit(void) { mp_free(xp_core); xp_core=NULL; }
+void xmp_uninit(void) {
+    mp_free(xp_core->mpxp_threads[0]);
+    mp_free(xp_core);
+    xp_core=NULL;
+}
 
 unsigned xmp_register_main(sig_handler_t sigfunc) {
     unsigned idx=0;

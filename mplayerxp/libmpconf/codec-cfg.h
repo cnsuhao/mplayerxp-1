@@ -61,5 +61,5 @@ extern codecs_t* find_audio_codec(unsigned int fourcc, unsigned int *fourccmap,c
 extern codecs_t* find_codec(unsigned int fourcc,unsigned int *fourccmap,const codecs_t *start,int audioflag);
 extern void list_codecs(int audioflag);
 extern void codecs_reset_selection(int audioflag);
-
+extern void free_codec_cfg(void);
 #endif

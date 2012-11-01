@@ -389,6 +389,11 @@ static codecs_t *audio_codecs=NULL;
 static int nr_vcodecs = 0;
 static int nr_acodecs = 0;
 
+void free_codec_cfg(void) {
+    if(video_codecs) mp_free(video_codecs);
+    if(audio_codecs) mp_free(audio_codecs);
+}
+
 int parse_codec_cfg(const char *cfgfile)
 {
 	codecs_t *codec = NULL; // current codec

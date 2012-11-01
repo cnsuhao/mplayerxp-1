@@ -3,6 +3,7 @@
 #define MSGT_CLASS MSGT_OSDEP
 #include "mp_msg.h"
 
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,9 +84,9 @@ static void	prot_free_slot(any_t* ptr) {
     size_t idx=prot_find_slot_idx(ptr);
     if(idx!=UINT_MAX) {
 	memmove(&priv->slots[idx],&priv->slots[idx+1],sizeof(mp_slot_t)*(priv->nslots-(idx+1)));
-	priv->slots=realloc(priv->slots,sizeof(mp_slot_t)*(priv->nslots-1));
 	priv->nslots--;
-    }
+	priv->slots=realloc(priv->slots,sizeof(mp_slot_t)*priv->nslots);
+    } else printf("Internal error! Can't find slot for address: %p\n",ptr);
 }
 
 static any_t* __prot_malloc(size_t size) {
@@ -100,6 +101,8 @@ static any_t* __prot_malloc(size_t size) {
     }
     return rp;
 }
+
+static any_t* __prot_memalign(size_t boundary,size_t size) { UNUSED(boundary);  return __prot_malloc(size); }
 
 static void __prot_free(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
@@ -137,6 +140,12 @@ static any_t* prot_malloc(size_t size) {
     return rp;
 }
 
+static any_t* prot_memalign(size_t boundary,size_t size) {
+    any_t* rp;
+    rp=__prot_memalign(boundary,size);
+    return rp;
+}
+
 static any_t* prot_realloc(any_t*ptr,size_t size) {
     any_t* rp;
     rp=__prot_realloc(ptr,size);
@@ -158,15 +167,36 @@ static __always_inline any_t* bt_malloc(size_t size) {
     return rp;
 }
 
+static __always_inline any_t* bt_memalign(size_t boundary,size_t size) {
+    any_t*rp;
+    mp_slot_t* slot;
+    rp=memalign(boundary,size);
+    if(rp) {
+	slot=prot_append_slot(rp,size);
+	slot->ncalls=backtrace(slot->calls,10);
+    }
+    return rp;
+}
+
 static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
-    return realloc(ptr,size);
+    any_t* rp;
+    mp_slot_t* slot;
+    if(!ptr) return bt_malloc(size);
+    rp=realloc(ptr,size);
+    if(rp) {
+	slot=prot_find_slot(ptr);
+	if(!slot) MSG_WARN("Internal error! Can't find slot for address: %p\n",ptr);
+	else {
+	    slot->page_ptr=rp; // update address after realloc
+	    slot->size=size;
+	}
+    }
+    return rp;
 }
 
 static __always_inline void bt_free(any_t*ptr) {
     mp_slot_t* slot=prot_find_slot(ptr);
-    if(!slot) {
-	MSG_WARN("Internal error! Can't find slot for address: %p\n",ptr);
-    }
+    if(!slot) MSG_WARN("Internal error! Can't find slot for address: %p\n",ptr);
     prot_free_slot(ptr);
     free(ptr);
 }
@@ -174,13 +204,28 @@ static __always_inline void bt_free(any_t*ptr) {
 static void bt_print_slots(void) {
     size_t i,j;
     for(i=0;i<priv->nslots;i++) {
-	MSG_INFO("Alloc's address: %p size: %u bt_stack: %u\n",priv->slots[i].page_ptr,priv->slots[i].size,priv->slots[i].ncalls);
+	char *s;
+	int printable=1;
+	MSG_INFO("address: %p size: %u dump: ",priv->slots[i].page_ptr,priv->slots[i].size);
+	s=priv->slots[i].page_ptr;
+	for(j=0;j<min(priv->slots[i].size,20);j++) {
+	    if(!isprint(s[j])) {
+		printable=0;
+		break;
+	    }
+	}
+	if(printable) MSG_INFO("%20s",s);
+	else for(j=0;j<min(priv->slots[i].size,10);j++) {
+	    MSG_INFO("%02X ",(unsigned char)s[j]);
+	}
+	MSG_INFO("\n");
 	for(j=0;j<priv->slots[i].ncalls;j++) {
 	    MSG_INFO("    %p\n",priv->slots[i].calls[j]);
 	}
     }
+    MSG_HINT("For source lines print in (gdb): list *0xADDRESS\n");
 }
-/* ================== HEAD ======================= */
+/* ================== HEAD FUNCTIONS  ======================= */
 void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
 {
     if(!priv) priv=malloc(sizeof(priv_t));
@@ -192,9 +237,14 @@ void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e 
 
 void	mp_uninit_malloc(int verbose)
 {
-    if(priv->num_allocs && verbose)
-	MSG_WARN("Warning! From %lli total calls of alloc() were not freed %lli buffers\n",priv->total_calls,priv->num_allocs);
-    if(priv->flags&MPA_FLG_BACKTRACE) bt_print_slots();
+    if(priv->flags&MPA_FLG_BACKTRACE) {
+	if(priv->nslots)
+	    MSG_WARN("Warning! %lli slots were not freed\n",priv->nslots);
+    } else {
+	if(priv->num_allocs && verbose)
+	    MSG_WARN("Warning! From %lli total calls of alloc() were not freed %lli buffers\n",priv->total_calls,priv->num_allocs);
+    }
+    if(priv->flags&MPA_FLG_BACKTRACE && verbose) bt_print_slots();
     free(priv);
     priv=NULL;
 }
@@ -212,6 +262,23 @@ any_t* mp_malloc(size_t __size)
     else if(priv->flags&MPA_FLG_BACKTRACE)			rb=bt_malloc(__size);
     else							rb=malloc(__size);
     if(rnd_buff) free(rnd_buff);
+    priv->total_calls++;
+    priv->num_allocs++;
+    if(priv->enable_stat) {
+	priv->stat_total_calls++;
+	priv->stat_num_allocs++;
+    }
+    return rb;
+}
+
+/* randomizing of memalign is useless feature */
+any_t*	mp_memalign (size_t boundary, size_t __size)
+{
+    any_t* rb;
+    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
+    if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK)) rb=prot_memalign(boundary,__size);
+    else if(priv->flags&MPA_FLG_BACKTRACE)			rb=bt_memalign(boundary,__size);
+    else							rb=memalign(boundary,__size);
     priv->total_calls++;
     priv->num_allocs++;
     if(priv->enable_stat) {
@@ -248,15 +315,6 @@ any_t*	mp_mallocz (size_t __size) {
     rp=mp_malloc(__size);
     if(rp) memset(rp,0,__size);
     return rp;
-}
-
-/* randomizing of memalign is useless feature */
-any_t*	mp_memalign (size_t boundary, size_t __size)
-{
-    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
-    priv->num_allocs++;
-    if(priv->enable_stat) priv->stat_num_allocs++;
-    return memalign(boundary,__size);
 }
 
 char *	mp_strdup(const char *src) {

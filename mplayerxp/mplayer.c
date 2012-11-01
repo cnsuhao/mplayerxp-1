@@ -230,9 +230,12 @@ static void mpxp_init_structs(void) {
 }
 
 static void mpxp_uninit_structs(void) {
+    free_codec_cfg();
     mp_free(mp_data->bench);
     mp_free(mp_data->priv);
     mp_free(mp_data);
+    if(vo_data) mp_free(vo_data);
+    if(ao_data) mp_free(ao_data);
     mp_data=NULL;
     xmp_uninit();
     mp_uninit_malloc(1);
@@ -640,6 +643,7 @@ void uninit_player(unsigned int mask){
 	priv->inited_flags&=~INITED_VO;
 	MP_UNIT("uninit_vo");
 	vo_uninit(vo_data);
+	vo_data=NULL;
     }
 
     if(mask&INITED_ACODEC){
@@ -653,6 +657,7 @@ void uninit_player(unsigned int mask){
 	priv->inited_flags&=~INITED_AO;
 	MP_UNIT("uninit_ao");
 	ao_uninit(ao_data);
+	ao_data=NULL;
     }
 
     if(mask&INITED_GETCH2){
