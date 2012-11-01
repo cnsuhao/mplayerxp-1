@@ -116,10 +116,10 @@ int mpca_init(sh_audio_t *sh_audio)
 	}
   }
   else
-  if(xp_core.initial_apts_corr.need_correction==1)
+  if(xp_core->initial_apts_corr.need_correction==1)
   {
-    xp_core.initial_apts += ((float)(xp_core.initial_apts_corr.pts_bytes-xp_core.initial_apts_corr.nbytes))/(float)sh_audio->i_bps;
-    xp_core.initial_apts_corr.need_correction=0;
+    xp_core->initial_apts += ((float)(xp_core->initial_apts_corr.pts_bytes-xp_core->initial_apts_corr.nbytes))/(float)sh_audio->i_bps;
+    xp_core->initial_apts_corr.need_correction=0;
   }
   MSG_OK("[AC] %s decoder: [%s] drv:%s.%s ratio %i->%i\n",mp_conf.audio_codec?"Forcing":"Selecting"
   ,sh_audio->codec->codec_name

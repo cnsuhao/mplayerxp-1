@@ -68,8 +68,6 @@ typedef struct initial_audio_pts_correction_s
 }initial_audio_pts_correction_t;
 
 typedef struct xp_core_s {
-    int				has_video;
-    int				has_audio;
     dec_ahead_engine_t*		video;
     dec_ahead_engine_t*		audio;
     volatile int		in_pause;
@@ -85,7 +83,7 @@ typedef struct xp_core_s {
     float			initial_apts;
     initial_audio_pts_correction_t initial_apts_corr;
 }xp_core_t;
-extern xp_core_t xp_core;
+extern xp_core_t *xp_core;
 
 extern void		xmp_init(void);
 extern void		xmp_uninit(void);
@@ -124,12 +122,12 @@ extern unsigned dae_next_decoded(const dec_ahead_engine_t* it);
 extern unsigned dae_get_decoder_outrun(const dec_ahead_engine_t* it);
 extern void	dae_wait_decoder_outrun(const dec_ahead_engine_t* it);
 
-static inline unsigned dae_curr_vplayed() { return xp_core.video->player_idx; }
-static inline unsigned dae_curr_vdecoded() { return xp_core.video->decoder_idx; }
-static inline unsigned dae_prev_vplayed() { return dae_prev_played(xp_core.video); }
-static inline unsigned dae_prev_vdecoded() { return dae_prev_decoded(xp_core.video); }
-static inline unsigned dae_next_vplayed() { return dae_next_played(xp_core.video); }
-static inline unsigned dae_next_vdecoded() { return dae_next_decoded(xp_core.video); }
+static inline unsigned dae_curr_vplayed(const xp_core_t* xpc) { return xpc->video->player_idx; }
+static inline unsigned dae_curr_vdecoded(const xp_core_t* xpc) { return xpc->video->decoder_idx; }
+static inline unsigned dae_prev_vplayed(const xp_core_t* xpc) { return dae_prev_played(xpc->video); }
+static inline unsigned dae_prev_vdecoded(const xp_core_t* xpc) { return dae_prev_decoded(xpc->video); }
+static inline unsigned dae_next_vplayed(const xp_core_t* xpc) { return dae_next_played(xpc->video); }
+static inline unsigned dae_next_vdecoded(const xp_core_t* xpc) { return dae_next_decoded(xpc->video); }
 
 extern frame_attr_t dae_played_fra(const dec_ahead_engine_t* it);
 extern frame_attr_t dae_decoded_fra(const dec_ahead_engine_t* it);

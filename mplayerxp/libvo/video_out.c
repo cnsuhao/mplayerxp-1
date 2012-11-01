@@ -391,7 +391,7 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 	/* TODO: smart analizer of scaling possibilities of vo_driver */
 	if((event & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	{
-	    xp_core.in_resize=1;
+	    xp_core->in_resize=1;
 	    vf_reinit_vo(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,1);
 	}
 	vf_reinit_vo(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,0);

@@ -244,7 +244,7 @@ mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, in
     }
     else {
 	MSG_DBG2("vf_get_image forces xp_idx retrieving\n");
-	mpi->xp_idx=dae_curr_vdecoded();
+	mpi->xp_idx=dae_curr_vdecoded(xp_core);
     }
     if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)
 	if(vf->start_slice) vf->start_slice(vf,mpi);

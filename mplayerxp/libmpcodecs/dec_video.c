@@ -264,7 +264,7 @@ int mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_f
 
     if(drop_frame) return 0;
     update_subtitle(sh_video,pts,mpi->xp_idx);
-    vo_flush_page(vo_data,dae_curr_vdecoded());
+    vo_flush_page(vo_data,dae_curr_vdecoded(xp_core));
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;

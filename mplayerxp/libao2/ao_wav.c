@@ -222,7 +222,7 @@ static void audio_resume(ao_data_t* ao)
 extern vo_data_t* vo_data;
 static unsigned get_space(ao_data_t* ao){
     priv_t* priv=ao->priv;
-    float pts=dae_played_fra(xp_core.video).v_pts;
+    float pts=dae_played_fra(xp_core->video).v_pts;
     if(pts)
 	return ao->pts < pts + priv->fast * 30000 ? ao->outburst : 0;
     return ao->outburst;

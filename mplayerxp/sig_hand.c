@@ -52,19 +52,19 @@ static void my_callback(int signo)
 {
     int i;
     pthread_t _self = pthread_self();
-    for(i=0; i < xp_core.num_threads && !pthread_equal(xp_core.mpxp_threads[i]->pth_id, _self); i++);
-    if(i >= xp_core.num_threads ||
-	!pthread_equal(xp_core.mpxp_threads[i]->pth_id, _self)) i = 0; /* Use 0 as default handler */
+    for(i=0; i < xp_core->num_threads && !pthread_equal(xp_core->mpxp_threads[i]->pth_id, _self); i++);
+    if(i >= xp_core->num_threads ||
+	!pthread_equal(xp_core->mpxp_threads[i]->pth_id, _self)) i = 0; /* Use 0 as default handler */
 
     mp_msg(MSGT_CPLAYER,MSGL_FATAL,__FILE__,__LINE__,"catching signal: %s in thread: %s (%i) in module: %s\n"
 	,strsignal(signo)
-	,xp_core.mpxp_threads[i]->name
+	,xp_core->mpxp_threads[i]->name
 	,i
-	,xp_core.mpxp_threads[i]->unit);
+	,xp_core->mpxp_threads[i]->unit);
 #ifdef HAVE_BACKTRACE
     dump_trace();
 #endif
-    xp_core.mpxp_threads[i]->sigfunc();
+    xp_core->mpxp_threads[i]->sigfunc();
 
     signal(signo,SIG_DFL); /* try coredump*/
 

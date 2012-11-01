@@ -532,7 +532,7 @@ void __FASTCALL__ vo_remove_text(any_t*v,unsigned idx,int dxs,int dys,clear_osd_
 //	  obj->flags&=~OSDFLAG_OLD_BBOX;
           if(obj->cleared_frames>=0) {
               obj->cleared_frames++;
-              if(obj->cleared_frames>=xp_core.num_v_buffs)
+              if(obj->cleared_frames>=xp_core->num_v_buffs)
                   obj->cleared_frames=-1;  // All cleared stop
           }
       }
