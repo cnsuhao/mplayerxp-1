@@ -12,16 +12,50 @@
 #include "help_mp.h"
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
+#include "libmpconf/codec-cfg.h"
 
 #define FF_API_OLD_DECODE_AUDIO 1
 #include "libavcodec/avcodec.h"
+#include "libavformat/riff.h"
 #include "codecs_ld.h"
+
+static int acodec_inited;
+
+struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
+    unsigned i;
+    struct codecs_st* acodec = NULL;
+    const char *what="AVCodecID";
+    enum AVCodecID id = ff_codec_get_id(ff_codec_wav_tags,sh->wtag);
+    if (id <= 0) {
+	prn_err:
+	MSG_ERR("Cannot find %s for for '0x%X' tag! Try force -ac option\n"
+		,what
+		,sh->wtag);
+	return 0;
+    }
+    if(!acodec_inited){
+//	avcodec_init();
+	avcodec_register_all();
+	acodec_inited=1;
+    }
+    AVCodec *codec=avcodec_find_decoder(id);
+    if(!codec) { what="AVCodec"; goto prn_err; }
+
+    acodec=mp_mallocz(sizeof(struct codecs_st));
+    strcpy(acodec->dll_name,avcodec_get_name(id));
+    strcpy(acodec->driver_name,"ffmpeg");
+    strcpy(acodec->codec_name,acodec->dll_name);
+    if(codec->sample_fmts)
+    for(i=0;i<CODECS_MAX_OUTFMT;i++) {
+	if(codec->sample_fmts[i]==-1) break;
+	acodec->outfmt[i]=ff_codec_get_tag(ff_codec_wav_tags,codec->sample_fmts[i]);
+    }
+    return acodec;
+}
 
 #ifndef FF_INPUT_BUFFER_PADDING_SIZE
 #define FF_INPUT_BUFFER_PADDING_SIZE 8
 #endif
-
-static int acodec_inited;
 
 static const ad_info_t info =
 {

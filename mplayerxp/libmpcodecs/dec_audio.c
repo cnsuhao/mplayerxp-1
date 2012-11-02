@@ -14,7 +14,6 @@
 #include "libmpconf/codec-cfg.h"
 
 #include "dec_audio.h"
-#include "ad.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "mplayer.h"
@@ -28,6 +27,16 @@
 af_cfg_t af_cfg; // Configuration for audio filters
 
 static const ad_functions_t* mpadec;
+
+const ad_functions_t* mpca_find_driver(const char *name) {
+  unsigned i;
+  for (i=0; mpcodecs_ad_drivers[i] != NULL; i++) {
+    if(strcmp(mpcodecs_ad_drivers[i]->info->driver_name,name)==0){
+	return mpcodecs_ad_drivers[i];
+    }
+  }
+  return NULL;
+}
 
 int mpca_init(sh_audio_t *sh_audio)
 {

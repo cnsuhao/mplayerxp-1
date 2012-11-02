@@ -1864,6 +1864,7 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
 }
 
 static void mpxp_find_acodec(void) {
+    int found=0;
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     demux_stream_t *d_audio=priv->demuxer->audio;
@@ -1871,7 +1872,6 @@ static void mpxp_find_acodec(void) {
     sh_audio->codec=NULL;
     if(mp_conf.audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,mp_conf.audio_family);
     while(1) {
-	const char *fmt;
 	sh_audio->codec=find_codec(sh_audio->wtag,NULL,sh_audio->codec,1);
 	if(!sh_audio->codec) {
 	    if(mp_conf.audio_family) {
@@ -1880,20 +1880,30 @@ static void mpxp_find_acodec(void) {
 		mp_conf.audio_family=NULL;
 		continue;
 	    }
-	    MSG_ERR(MSGTR_CantFindAudioCodec);
-	    fmt = (const char *)&sh_audio->wtag;
-	    if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
-		MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
-	    else
-		MSG_ERR(" 0x%08X!\n",sh_audio->wtag);
-	    MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("codecs.conf"));
-	    sh_audio=d_audio->sh=NULL;
 	    break;
 	}
 	if(mp_conf.audio_codec && strcmp(sh_audio->codec->codec_name,mp_conf.audio_codec)) continue;
 	else if(mp_conf.audio_family && strcmp(sh_audio->codec->driver_name,mp_conf.audio_family)) continue;
-	MSG_V("%s audio codec: [%s] drv:%s (%s)\n",mp_conf.audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
-	break;
+	if(mpca_find_driver(sh_audio->codec->driver_name)) {
+	    MSG_V("%s audio codec: [%s] drv:%s (%s)\n",mp_conf.audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
+	    found=1;
+	    break;
+	}
+    }
+    if(!found) {
+	sh_audio->codec=find_ffmpeg_audio(sh_audio);
+	if(sh_audio->codec) found=1;
+    }
+    if(!found) {
+	const char *fmt;
+	MSG_ERR(MSGTR_CantFindAudioCodec);
+	fmt = (const char *)&sh_audio->wtag;
+	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
+	    MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
+	else
+	    MSG_ERR(" 0x%08X!\n",sh_audio->wtag);
+	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("codecs.conf"));
+	sh_audio=d_audio->sh=NULL;
     }
 }
 

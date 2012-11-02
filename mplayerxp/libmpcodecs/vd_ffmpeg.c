@@ -233,6 +233,7 @@ static int find_vdecoder(sh_video_t* sh) {
     strcpy(sh->codec->dll_name,"ffmpeg");
     strcpy(sh->codec->driver_name,"ffmpeg");
     strcpy(sh->codec->codec_name,avcodec_get_name(id));
+    if(codec->pix_fmts)
     for(i=0;i<CODECS_MAX_OUTFMT;i++) {
 	if(codec->pix_fmts[i]==-1) break;
 	sh->codec->outfmt[i]=avcodec_pix_fmt_to_codec_tag(codec->pix_fmts[i]);
