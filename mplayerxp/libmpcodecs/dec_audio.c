@@ -174,8 +174,7 @@ int mpca_preinit_filters(sh_audio_t *sh_audio,
   afs->output.rate   = *out_samplerate ? *out_samplerate : afs->input.rate;
   afs->output.nch    = *out_channels ? *out_channels : afs->input.nch;
   if(*out_format) afs->output.format = af_format_decode(*out_format,&afs->output.bps);
-  else
-  {
+  else {
     afs->output.format = afs->input.format;
     afs->output.bps    = out_bps ? out_bps : afs->input.bps;
   }
@@ -223,7 +222,7 @@ int mpca_init_filters(sh_audio_t *sh_audio,
   afs->output.nch    = out_channels ? out_channels : afs->input.nch;
   afs->output.format = af_format_decode(out_format ? out_format : afs->input.format,&afs->output.bps);
 
-  // filter config:  
+  // filter config:
   memcpy(&afs->cfg,&af_cfg,sizeof(af_cfg_t));
 
   MSG_V("Building audio filter chain for %dHz/%dch/%dbit (%s) -> %dHz/%dch/%dbit (%s)...\n",

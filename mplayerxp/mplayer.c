@@ -729,7 +729,7 @@ static void soft_exit_player(void)
     if(sh_audio) while(get_len_audio_buffer()) usleep(0);
     if(sh_video) {
 	for(;;) {
-	    if(dae_played_fra(xp_core->video).eof) break;
+	    if(dae_played_eof(xp_core->video)) break;
 	    usleep(0);
 	}
     }
@@ -1175,7 +1175,7 @@ static void show_status_line_no_apts(float v_pts) {
     fflush(stdout);
 }
 
-static void vplayer_check_chapter_change(frame_attr_t* shva_prev,float v_pts)
+static void vplayer_check_chapter_change(xmp_frame_t* shva_prev,float v_pts)
 {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
@@ -1202,7 +1202,7 @@ static void vplayer_check_chapter_change(frame_attr_t* shva_prev,float v_pts)
     }
 }
 
-static float vplayer_compute_sleep_time(frame_attr_t* shva_prev,float screen_pts)
+static float vplayer_compute_sleep_time(xmp_frame_t* shva_prev,float screen_pts)
 {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
@@ -1280,14 +1280,14 @@ int mpxp_play_video( int rtc_fd )
     int can_blit=0;
     int delay_corrected=1;
     int final_frame=0;
-    frame_attr_t shva_prev,shva;
+    xmp_frame_t shva_prev,shva;
 
-    shva_prev=dae_played_fra(xp_core->video);
-    final_frame = shva_prev.eof;
+    shva_prev=dae_played_frame(xp_core->video);
+    final_frame = dae_played_eof(xp_core->video);
     if(xp_core->video->eof && final_frame) return 1;
 
     can_blit=dae_try_inc_played(xp_core->video); /* <-- TRY SWITCH TO NEXT FRAME */
-    shva=dae_next_played_fra(xp_core->video);
+    shva=dae_next_played_frame(xp_core->video);
     v_pts = shva.v_pts;
     /*------------------------ frame decoded. --------------------*/
 /* blit frame */
@@ -1309,7 +1309,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 #ifdef USE_OSD
 	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
 	MP_UNIT("draw_osd");
-	update_osd(shva.stream_pts);
+	update_osd(shva.v_pts);
 	vo_draw_osd(vo_data,dae_next_played(xp_core->video));
 #endif
     }
@@ -2168,7 +2168,7 @@ For future:
       i_abs = (cmd->nargs > 1) ? cmd->args[1].v.i : 0;
       if(i_abs) {
 	seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
-	if(sh_video) priv->osd_function= (v > dae_played_fra(xp_core->video).v_pts) ? OSD_FFW : OSD_REW;
+	if(sh_video) priv->osd_function= (v > dae_played_frame(xp_core->video).v_pts) ? OSD_FFW : OSD_REW;
 	seek->secs = v/100.;
       }
       else {
@@ -2834,8 +2834,8 @@ do_loop:
 	    xmp_halt_threads(0);
 
 	    if(seek_args.secs && sh_video) {
-	    frame_attr_t shvap = dae_played_fra(xp_core->video);
-	    frame_attr_t shvad = xp_core->video->fra[dae_prev_decoded(xp_core->video)];
+	    xmp_frame_t shvap = dae_played_frame(xp_core->video);
+	    xmp_frame_t shvad = dae_prev_decoded_frame(xp_core->video);
 		seek_args.secs -= (xp_core->bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
 	    }
 

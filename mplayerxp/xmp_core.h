@@ -19,21 +19,29 @@
 
 enum xp_modes { XP_NA=0, XP_Video, XP_VideoAudio, XP_VAPlay, XP_VAFull };
 
-typedef struct frame_attr_s
+typedef struct xmp_frame_s
 {
-    int			eof;		/* indicates last frame in stream */
+    float		v_pts;		/* presentation time-stamp from input stream
+					   __huge_valf indicates EOF */
     float		duration;	/* frame duration */
-    float		v_pts;		/* presentation time-stamp from input stream */
-    float		stream_pts;	/* real stream's PTS mainly for OSD */
-}frame_attr_t;
+    any_t*		priv;
+}xmp_frame_t;
+
+struct dec_ahead_engine_s;
+
+typedef any_t* (*func_new_frame_priv_t)(struct dec_ahead_engine_s*);
+typedef void   (*func_free_frame_priv_t)(struct dec_ahead_engine_s*,any_t*);
 
 typedef struct dec_ahead_engine_s {
     volatile unsigned	player_idx;	/* index of frame which is currently played */
     volatile unsigned	decoder_idx;	/* index of frame which is currently decoded */
     unsigned		nframes;	/* number of frames in buffer */
-    frame_attr_t*	fra;		/* frame related attributes */
+    xmp_frame_t*	frame;		/* frame related attributes */
     any_t*		sh;		/* corresponded sh_audio_t or sh_video_t */
     int			eof;		/* EOF for stream */
+    /* methods */
+    func_new_frame_priv_t  new_priv;
+    func_free_frame_priv_t free_priv;
     /* for statistics */
     unsigned		num_slow_frames;/* number of frames which were delayed due slow computer */
     long long int	num_played_frames;
@@ -129,12 +137,17 @@ static inline unsigned dae_prev_vdecoded(const xp_core_t* xpc) { return dae_prev
 static inline unsigned dae_next_vplayed(const xp_core_t* xpc) { return dae_next_played(xpc->video); }
 static inline unsigned dae_next_vdecoded(const xp_core_t* xpc) { return dae_next_decoded(xpc->video); }
 
-extern frame_attr_t dae_played_fra(const dec_ahead_engine_t* it);
-extern frame_attr_t dae_decoded_fra(const dec_ahead_engine_t* it);
-extern frame_attr_t dae_next_played_fra(const dec_ahead_engine_t* it);
-extern frame_attr_t dae_next_decoded_fra(const dec_ahead_engine_t* it);
-extern frame_attr_t dae_prev_played_fra(const dec_ahead_engine_t* it);
-extern frame_attr_t dae_prev_decoded_fra(const dec_ahead_engine_t* it);
+extern xmp_frame_t dae_played_frame(const dec_ahead_engine_t* it);
+extern xmp_frame_t dae_decoded_frame(const dec_ahead_engine_t* it);
+extern xmp_frame_t dae_next_played_frame(const dec_ahead_engine_t* it);
+extern xmp_frame_t dae_next_decoded_frame(const dec_ahead_engine_t* it);
+extern xmp_frame_t dae_prev_played_frame(const dec_ahead_engine_t* it);
+extern xmp_frame_t dae_prev_decoded_frame(const dec_ahead_engine_t* it);
+
+extern int	dae_played_eof(const dec_ahead_engine_t* it);
+extern int	dae_decoded_eof(const dec_ahead_engine_t* it);
+extern void	dae_decoded_mark_eof(dec_ahead_engine_t* it);
+extern inline void dae_decoded_clear_eof(dec_ahead_engine_t* it) { UNUSED(it); }
 
 extern pthread_mutex_t audio_play_mutex;
 extern pthread_cond_t audio_play_cond;

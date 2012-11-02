@@ -90,12 +90,12 @@ void dae_reset(dec_ahead_engine_t* it) {
 void dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh)
 {
     it->nframes=nframes;
-    it->fra = mp_malloc(sizeof(frame_attr_t)*nframes);
+    it->frame = mp_malloc(sizeof(xmp_frame_t)*nframes);
     it->sh=sh;
     dae_reset(it);
 }
 
-void dae_uninit(dec_ahead_engine_t* it) { mp_free(it->fra); it->fra=0; }
+void dae_uninit(dec_ahead_engine_t* it) { mp_free(it->frame); it->frame=NULL; }
 
 /* returns 1 - on success 0 - if busy */
 int dae_try_inc_played(dec_ahead_engine_t* it) {
@@ -114,6 +114,7 @@ int dae_inc_played(dec_ahead_engine_t* it) {
     unsigned new_idx;
     new_idx=(it->player_idx+1)%it->nframes;
     if(new_idx==it->decoder_idx) return 0;
+    if(it->free_priv) (*it->free_priv)(it,it->frame[it->player_idx].priv);
     it->player_idx=new_idx;
     return 1;
 }
@@ -124,6 +125,7 @@ int dae_inc_decoded(dec_ahead_engine_t* it) {
     new_idx=(it->decoder_idx+1)%it->nframes;
     if(new_idx==it->player_idx) return 0;
     it->decoder_idx=new_idx;
+    if(it->new_priv) it->frame[it->player_idx].priv=(*it->new_priv)(it);
     it->num_decoded_frames++;
     return 1;
 }
@@ -147,29 +149,44 @@ void dae_wait_decoder_outrun(const dec_ahead_engine_t* it) {
     }
 }
 
-frame_attr_t dae_played_fra(const dec_ahead_engine_t* it) {
+xmp_frame_t dae_played_frame(const dec_ahead_engine_t* it) {
     unsigned idx=it->player_idx;
-    return it->fra[idx];
+    return it->frame[idx];
 }
-frame_attr_t dae_decoded_fra(const dec_ahead_engine_t* it) {
+xmp_frame_t dae_decoded_frame(const dec_ahead_engine_t* it) {
     unsigned idx=it->decoder_idx;
-    return it->fra[idx];
+    return it->frame[idx];
 }
-frame_attr_t dae_next_played_fra(const dec_ahead_engine_t* it) {
+xmp_frame_t dae_next_played_frame(const dec_ahead_engine_t* it) {
     unsigned idx=dae_next_played(it);
-    return it->fra[idx];
+    return it->frame[idx];
 }
-frame_attr_t dae_next_decoded_fra(const dec_ahead_engine_t* it) {
+xmp_frame_t dae_next_decoded_frame(const dec_ahead_engine_t* it) {
     unsigned idx=dae_next_decoded(it);
-    return it->fra[idx];
+    return it->frame[idx];
 }
-frame_attr_t dae_prev_played_fra(const dec_ahead_engine_t* it) {
+xmp_frame_t dae_prev_played_frame(const dec_ahead_engine_t* it) {
     unsigned idx=dae_prev_played(it);
-    return it->fra[idx];
+    return it->frame[idx];
 }
-frame_attr_t dae_prev_decoded_fra(const dec_ahead_engine_t* it) {
+xmp_frame_t dae_prev_decoded_frame(const dec_ahead_engine_t* it) {
     unsigned idx=dae_prev_decoded(it);
-    return it->fra[idx];
+    return it->frame[idx];
+}
+
+int dae_played_eof(const dec_ahead_engine_t* it) {
+    unsigned idx=it->player_idx;
+    return (it->frame[idx].v_pts==HUGE_VALF)?1:0;
+}
+
+int dae_decoded_eof(const dec_ahead_engine_t* it) {
+    unsigned idx=it->decoder_idx;
+    return (it->frame[idx].v_pts==HUGE_VALF)?1:0;
+}
+
+void dae_decoded_mark_eof(dec_ahead_engine_t* it) {
+    unsigned idx=it->decoder_idx;
+    it->frame[idx].v_pts=HUGE_VALF;
 }
 
 pthread_mutex_t audio_play_mutex=PTHREAD_MUTEX_INITIALIZER;
@@ -260,7 +277,7 @@ static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
 
 static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float drop_barrier) {
     unsigned rc=0;
-    float screen_pts=dae_played_fra(xp_core->video).v_pts-(mp_conf.av_sync_pts?0:xp_core->initial_apts);
+    float screen_pts=dae_played_frame(xp_core->video).v_pts-(mp_conf.av_sync_pts?0:xp_core->initial_apts);
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
     max_frame_delay = mp_data->bench->max_video+mp_data->bench->max_vout;
@@ -308,7 +325,7 @@ static void reorder_pts_in_mpeg(void) {
 
     idx1 = dae_curr_vdecoded(xp_core);
     idx2 = dae_prev_vdecoded(xp_core);
-    frame_attr_t* fra=xp_core->video->fra;
+    xmp_frame_t* fra=xp_core->video->frame;
     while( dae_curr_vplayed(xp_core) != idx2 &&
 	   fra[idx2].v_pts > fra[idx1].v_pts &&
 	   fra[idx2].v_pts < fra[idx1].v_pts+1.0 ) {
@@ -317,8 +334,6 @@ static void reorder_pts_in_mpeg(void) {
 	fra[idx1].v_pts = fra[idx2].v_pts;
 	fra[idx2].v_pts = tmp;
 
-	fra[idx1].stream_pts = fra[idx1].v_pts;
-	fra[idx2].stream_pts = fra[idx2].v_pts;
 	fra[idx2].duration =   fra[idx1].v_pts - fra[idx2].v_pts;
 
 	idx3=(idx2-1)%xp_core->num_v_buffs;
@@ -390,7 +405,7 @@ pt_sleep:
 /*--------------------  Decode a frame: -----------------------*/
     in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,sh_video->fps);
     if(in_size<0) {
-	xp_core->video->fra[xp_core->video->decoder_idx].eof=1;
+	dae_decoded_mark_eof(xp_core->video);
 	priv->dae->eof=1;
 	break;
     }
@@ -447,15 +462,14 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
     if(blit_frame) {
 	unsigned idx=dae_curr_vdecoded(xp_core);
 	if(xp_core->bad_pts)
-	    xp_core->video->fra[idx].v_pts=mpeg_timer;
+	    xp_core->video->frame[idx].v_pts=mpeg_timer;
 	else
-	    xp_core->video->fra[idx].v_pts = v_pts;
-	xp_core->video->fra[idx].stream_pts = v_pts;
-	xp_core->video->fra[idx].duration=duration;
-	xp_core->video->fra[idx].eof=0;
+	    xp_core->video->frame[idx].v_pts = v_pts;
+	xp_core->video->frame[idx].duration=duration;
+	dae_decoded_clear_eof(xp_core->video);
 	if(!xp_core->bad_pts) {
 	    int _idx = dae_prev_vdecoded(xp_core);
-	    xp_core->video->fra[_idx].duration=v_pts-xp_core->video->fra[_idx].v_pts;
+	    xp_core->video->frame[_idx].duration=v_pts-xp_core->video->frame[_idx].v_pts;
 	}
 	if(mp_conf.frame_reorder) reorder_pts_in_mpeg();
     } /* if (blit_frame) */
@@ -892,7 +906,7 @@ void sig_dec_ahead_video( void )
     mp_msg_flush();
 
     xp_core->video->eof = 1;
-    xp_core->video->fra[dae_curr_vdecoded(xp_core)].eof=1;
+    dae_decoded_mark_eof(xp_core->video);
     /*
 	Unlock all mutex
 	( man page says it may deadlock, but what is worse deadlock here or later? )
