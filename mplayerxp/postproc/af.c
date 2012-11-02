@@ -271,10 +271,8 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_CHANNELS,&in.nch)))
 	    return rv;
 	  // Initialize channels filter
-	  if(!_new->prev) 
-	    memcpy(&in,&(s->input),sizeof(af_data_t));
-	  else
-	    memcpy(&in,_new->prev->data,sizeof(af_data_t));
+	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
+	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
 	    return rv;
 	}
@@ -287,12 +285,21 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate)))
 	    return rv;
 	  // Initialize channels filter
-	  if(!_new->prev) 
-	    memcpy(&in,&(s->input),sizeof(af_data_t));
-	  else
-	    memcpy(&in,_new->prev->data,sizeof(af_data_t));
-	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
+	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
+	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) {
+	    af_instance_t* af2 = af_prepend(s,af,"format");
+	    // Init the new filter
+	    if(af2) {
+		if((CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_BPS,&(in.bps)))
+		    || (CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_FMT,&(in.format))))
+		    return -1;
+		if(CONTROL_OK != af_reinit(s,af2))
+		    return -1;
+		rv = _new->control(_new,AF_CONTROL_REINIT,&in);
+	    }
 	    return rv;
+	  }
 	}
 	// Insert format filter
 	if(((af->prev?af->prev->data->format:s->input.format) != in.format) || 
@@ -305,10 +312,8 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	     CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_FMT,&in.format)))
 	    return rv;
 	  // Initialize format filter
-	  if(!_new->prev) 
-	    memcpy(&in,&(s->input),sizeof(af_data_t));
-	  else
-	    memcpy(&in,_new->prev->data,sizeof(af_data_t));
+	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
+	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
 	    return rv;
 	}

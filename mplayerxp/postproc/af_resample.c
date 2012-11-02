@@ -168,7 +168,7 @@ static int __FASTCALL__ set_types(struct af_instance_s* af, af_data_t* data)
   else{
     /* If the input format is float or if float is explicitly selected
        use float, otherwise use int */
-    if((data->format == (AF_FORMAT_NE | AF_FORMAT_F)) || 
+    if((data->format == (AF_FORMAT_NE | AF_FORMAT_F)) ||
        ((s->setup & RSMP_MASK) == RSMP_FLOAT)){
       s->setup = (s->setup & ~RSMP_MASK) | RSMP_FLOAT;
       af->data->format = AF_FORMAT_NE | AF_FORMAT_F;
@@ -184,8 +184,11 @@ static int __FASTCALL__ set_types(struct af_instance_s* af, af_data_t* data)
 	   ((s->setup & FREQ_MASK) == FREQ_SLOPPY)?"inexact":"exact");
   }
 
-  if(af->data->format != data->format || af->data->bps != data->bps)
+  if(af->data->format != data->format || af->data->bps != data->bps) {
+    char buff[256];
+    MSG_V("[resample] doesn't fork with '%s' input format\n",fmt2str(data->format,data->bps,buff,sizeof(buff)));
     rv = CONTROL_FALSE;
+  }
   data->format = af->data->format;
   data->bps = af->data->bps;
   af->data->nch = data->nch;
@@ -195,7 +198,7 @@ static int __FASTCALL__ set_types(struct af_instance_s* af, af_data_t* data)
 // Initialization and runtime control
 static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_resample_t* s   = (af_resample_t*)af->setup; 
+  af_resample_t* s   = (af_resample_t*)af->setup;
   switch(cmd){
   case AF_CONTROL_REINIT:{
     af_data_t* 	   n   = (af_data_t*)arg; // New configuration
@@ -213,8 +216,8 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
     if(CONTROL_DETACH == (rv = set_types(af,n)))
       return CONTROL_DETACH;
-    
-    // If linear interpolation 
+
+    // If linear interpolation
     if((s->setup & RSMP_MASK) == RSMP_LIN){
       s->pt=0LL;
       s->step=((uint64_t)n->rate<<STEPACCURACY)/(uint64_t)af->data->rate+1LL;
@@ -235,7 +238,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       int dn=n->rate/2;
       int m=2;
       while(af->data->rate/(d*m) > 50){
-	d=gcd(up,dn); 
+	d=gcd(up,dn);
 	up/=2; dn/=2; m*=2;
       }
       d*=m;
@@ -255,7 +258,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       int j;
       if(af->data->rate/d && n->rate/d)
       {
-	s->up = af->data->rate/d;	
+	s->up = af->data->rate/d;
 	s->dn = n->rate/d;
       }
       else if(af->data->rate/d)
@@ -278,7 +281,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       s->w = mp_malloc(L*s->up*af->data->bps);
 
       // Design prototype filter type using Kaiser window with beta = 10
-      if(NULL == w || NULL == s->w || 
+      if(NULL == w || NULL == s->w ||
 	 -1 == design_fir(s->up*L, w, &fc, LP|KAISER , 10.0)){
 	MSG_ERR("[resample] Unable to design prototype filter.\n");
 	return CONTROL_ERROR;
@@ -309,32 +312,32 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
      MSG_INFO("[af_resample] New filter designed up: %i down: %i (%i -> %i Hz)\n", s->up, s->dn,s->ifreq,af->data->rate);
      return CONTROL_OK;
   case AF_CONTROL_COMMAND_LINE:{
-    af_resample_t* s   = (af_resample_t*)af->setup; 
+    af_resample_t* s   = (af_resample_t*)af->setup;
     int rate=0;
     int type=RSMP_INT;
     int sloppy=1;
     sscanf((char*)arg,"%i:%i:%i", &rate, &sloppy, &type);
-    s->setup = (sloppy?FREQ_SLOPPY:FREQ_EXACT) | 
+    s->setup = (sloppy?FREQ_SLOPPY:FREQ_EXACT) |
       (clamp(type,RSMP_LIN,RSMP_FLOAT));
     return af->control(af,AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET, &rate);
   }
-  case AF_CONTROL_POST_CREATE:	
+  case AF_CONTROL_POST_CREATE:
     if((((af_cfg_t*)arg)->force & AF_INIT_FORMAT_MASK) == AF_INIT_FLOAT)
       ((af_resample_t*)af->setup)->setup = RSMP_FLOAT;
     return CONTROL_OK;
   case AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET: 
     // Reinit must be called after this function has been called
-    
+
     // Sanity check
     if(((int*)arg)[0] < 4000 || ((int*)arg)[0] > 192000){
-      MSG_ERR("[resample] The output sample frequency " 
+      MSG_ERR("[resample] The output sample frequency "
 	     "must be between 4kHz and 192kHz. Current value is %i \n",
 	     ((int*)arg)[0]);
       return CONTROL_ERROR;
     }
 
-    af->data->rate=((int*)arg)[0]; 
-    MSG_V("[resample] Changing sample rate "  
+    af->data->rate=((int*)arg)[0];
+    MSG_V("[resample] Changing sample rate "
 	   "to %iHz\n",af->data->rate);
     return CONTROL_OK;
   default: break;
