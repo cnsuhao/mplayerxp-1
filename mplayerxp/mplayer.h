@@ -114,7 +114,6 @@ extern mp_data_t* mp_data;
 
 extern void update_osd( float v_pts );
 
-extern float get_delay_audio_buffer(void);
 extern pthread_mutex_t audio_timer_mutex;
 
 extern void exit_player(char* how);

@@ -175,14 +175,9 @@ extern pthread_cond_t audio_decode_cond;
 #define __MP_SYNCHRONIZE(mtx,OP) { pthread_mutex_lock(&mtx); OP; pthread_mutex_unlock(&mtx); }
 
 extern volatile int dec_ahead_can_aseek;
-			/*
-			   stream - pointer to openned stream
-			   astream - pointer to audio stream
-			 */
 
-extern void sig_dec_ahead_video( void );
-extern void sig_audio_play( void );
-extern void sig_audio_decode( void );
+extern struct timespec audio_play_timeout;
+extern int audio_play_in_sleep;
 
 /* Audio stuff */
 extern volatile float dec_ahead_audio_delay;

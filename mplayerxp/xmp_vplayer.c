@@ -9,6 +9,7 @@
 #include "libvo/video_out.h"
 #include "osdep/timer.h"
 #include "libmpdemux/demuxer.h"
+#include "xmp_adecoder.h"
 
 #include <stdio.h>
 #include <unistd.h> // for usleep()
