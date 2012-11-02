@@ -20,6 +20,8 @@
 #include "mp_msg.h"
 
 #include "xmp_core.h"
+#include "xmp_vplayer.h"
+
 #include "mplayer.h"
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
@@ -687,6 +689,10 @@ int xmp_run_players(void)
     unsigned rc;
     if( xp_core->audio && mp_conf.xp >= XP_VAPlay ) {
 	if((rc=xmp_register_thread(xp_core->audio,sig_audio_play,audio_play_routine,"audio player"))==UINT_MAX) return rc;
+	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
+    }
+    if( xp_core->video ) {
+	if((rc=xmp_register_thread(xp_core->video,sig_video_play,xmp_video_player,"video player"))==UINT_MAX) return rc;
 	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }
     return 0;

@@ -98,8 +98,10 @@ typedef struct time_usage_s {
 
 /* non-configurable through command line stuff */
 typedef struct mp_data_s {
+    int		rtc_fd;
     int		seek_time;
     int		output_quality;
+    unsigned	mpxp_after_seek;
     int		use_pts_fix2;
     unsigned	mplayer_accel;
     any_t* 	subtitles;
@@ -110,6 +112,10 @@ typedef struct mp_data_s {
 }mp_data_t;
 extern mp_data_t* mp_data;
 
+extern void update_osd( float v_pts );
+
+extern float get_delay_audio_buffer(void);
+extern pthread_mutex_t audio_timer_mutex;
 
 extern void exit_player(char* how);
 extern void mpxp_resync_audio_stream(void);

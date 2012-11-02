@@ -25,7 +25,7 @@ LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
 SRCS_COMMON = mp_msg.c mp_image.c
 SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c sig_hand.c dump.c
-SRCS_MPLAYER+= xmp_core.c
+SRCS_MPLAYER+= xmp_core.c xmp_vplayer.c
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 
