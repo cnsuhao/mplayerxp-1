@@ -69,7 +69,7 @@ static const config_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-LIBAD_EXTERN(ffmp3)
+LIBAD_EXTERN(ffmpeg)
 
 int preinit(sh_audio_t *sh)
 {

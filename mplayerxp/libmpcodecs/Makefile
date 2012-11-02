@@ -21,7 +21,7 @@ SRCS=dec_video.c \
      ad.c \
      dec_audio.c \
      ad_null.c \
-     ad_ffmp3.c \
+     ad_ffmpeg.c \
      ad_mp3.c \
      ad_hwac3.c \
      ad_pcm.c \

@@ -18,7 +18,7 @@
 
 extern const ad_functions_t mpcodecs_ad_null;
 extern const ad_functions_t mpcodecs_ad_mp3;
-extern const ad_functions_t mpcodecs_ad_ffmp3;
+extern const ad_functions_t mpcodecs_ad_ffmpeg;
 extern const ad_functions_t mpcodecs_ad_a52;
 extern const ad_functions_t mpcodecs_ad_dca;
 extern const ad_functions_t mpcodecs_ad_hwac3;
@@ -41,7 +41,7 @@ const ad_functions_t* mpcodecs_ad_drivers[] =
   &mpcodecs_ad_a52,
   &mpcodecs_ad_dca,
   &mpcodecs_ad_hwac3,
-  &mpcodecs_ad_ffmp3,
+  &mpcodecs_ad_ffmpeg,
   &mpcodecs_ad_pcm,
   &mpcodecs_ad_dvdpcm,
   &mpcodecs_ad_faad,
