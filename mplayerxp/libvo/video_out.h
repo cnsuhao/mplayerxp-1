@@ -263,7 +263,7 @@ extern uint32_t		vo_resume(vo_data_t* vo);
 
 extern void		vo_lock_surfaces(vo_data_t* vo);
 extern void		vo_unlock_surfaces(vo_data_t* vo);
-extern uint32_t	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi,unsigned decoder_idx);
+extern uint32_t	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi);
 
 extern int		vo_check_events(vo_data_t* vo);
 extern unsigned	 __FASTCALL__ vo_get_num_frames(vo_data_t* vo);

@@ -511,13 +511,12 @@ void vo_unlock_surfaces(vo_data_t*vo) {
     pthread_mutex_unlock(&priv->surfaces_mutex);
 }
 
-uint32_t __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi, unsigned decoder_idx)
+uint32_t __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     int width_less_stride;
     MSG_DBG2("dri_vo_dbg: vo_get_surface type=%X flg=%X\n",mpi->type,mpi->flags);
     width_less_stride = 0;
-    mpi->xp_idx = decoder_idx;
     if(mpi->flags & MP_IMGFLAG_PLANAR)
     {
 	width_less_stride = mpi->w <= priv->dri.cap.strides[0] &&
@@ -555,9 +554,9 @@ uint32_t __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi, unsigned deco
 	if((((mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && width_less_stride) || priv->dri.planes_eq) && priv->dri.dr)
 	{
 	    vo_lock_surfaces(vo);
-	    mpi->planes[0]=priv->dri.surf[decoder_idx].planes[0]+priv->dri.off[0];
-	    mpi->planes[1]=priv->dri.surf[decoder_idx].planes[1]+priv->dri.off[1];
-	    mpi->planes[2]=priv->dri.surf[decoder_idx].planes[2]+priv->dri.off[2];
+	    mpi->planes[0]=priv->dri.surf[mpi->xp_idx].planes[0]+priv->dri.off[0];
+	    mpi->planes[1]=priv->dri.surf[mpi->xp_idx].planes[1]+priv->dri.off[1];
+	    mpi->planes[2]=priv->dri.surf[mpi->xp_idx].planes[2]+priv->dri.off[2];
 	    mpi->stride[0]=priv->dri.cap.strides[0];
 	    mpi->stride[1]=priv->dri.cap.strides[1];
 	    mpi->stride[2]=priv->dri.cap.strides[2];

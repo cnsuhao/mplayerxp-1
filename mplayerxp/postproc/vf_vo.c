@@ -124,7 +124,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
     unsigned i;
     int finalize = vo_is_final(vo_data);
     struct vf_priv_s *priv = vf->priv;
-    retval=vo_get_surface(vo_data,mpi,mpi->xp_idx);
+    retval=vo_get_surface(vo_data,mpi);
     if(retval==CONTROL_TRUE) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
 	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
