@@ -74,6 +74,7 @@ static const config_t options[] = {
 LIBVD_EXTERN(ffmpeg)
 
 #include "libavcodec/avcodec.h"
+#include "libavformat/riff.h"
 #include "libvo/video_out.h"
 
 
@@ -214,6 +215,32 @@ static int ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)
     return 1;
 }
 
+static int find_vdecoder(sh_video_t* sh) {
+    unsigned i;
+    unsigned char flag = CODECS_FLAG_NOFLIP;
+    enum AVCodecID id = ff_codec_get_id(ff_codec_bmp_tags,sh->fourcc);
+    if (id <= 0) {
+	const char *fourcc;
+	prn_err:
+	fourcc=&sh->fourcc;
+	MSG_ERR("Cannot find AVCodecID for for '%c%c%c%c' fourcc! Try force -vc option\n"
+		,fourcc[0],fourcc[1],fourcc[2],fourcc[3]);
+	return 0;
+    }
+    AVCodec *codec=avcodec_find_decoder(id);
+    if(!codec) goto prn_err;
+    sh->codec=mp_mallocz(sizeof(struct codecs_st));
+    strcpy(sh->codec->dll_name,"ffmpeg");
+    strcpy(sh->codec->driver_name,"ffmpeg");
+    strcpy(sh->codec->codec_name,avcodec_get_name(id));
+    for(i=0;i<CODECS_MAX_OUTFMT;i++) {
+	if(codec->pix_fmts[i]==-1) break;
+	sh->codec->outfmt[i]=avcodec_pix_fmt_to_codec_tag(codec->pix_fmts[i]);
+	sh->codec->outflags[i]=flag;
+    }
+    return 1;
+}
+
 extern unsigned xp_num_cpu;
 static int init(sh_video_t *sh){
     unsigned avc_version=0;
@@ -228,6 +255,10 @@ static int init(sh_video_t *sh){
     vdff_ctx=mp_mallocz(sizeof(priv_t));
     sh->context = vdff_ctx;
     vdff_ctx->frame_number=-2;
+    if(!sh->codec) if(!find_vdecoder(sh)) {
+	MSG_ERR("Can't find ffmpeg decoder\n");
+	return 0;
+    }
     vdff_ctx->lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
     if(!vdff_ctx->lavc_codec){
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh->codec->dll_name);

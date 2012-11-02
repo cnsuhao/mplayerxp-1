@@ -267,27 +267,25 @@ err_out_parse_error:
 	return 0;
 }
 
-static int validate_codec(codecs_t *c, int type)
+static int validate_codec(codecs_t *c)
 {
-	unsigned i;
-	char *tmp_name = mp_strdup(c->codec_name);
+    unsigned i;
+    char *tmp_name = mp_strdup(c->codec_name);
 
-	for (i = 0; i < strlen(tmp_name) && isalnum(tmp_name[i]); i++)
-		/* NOTHING */;
+    for (i = 0; i < strlen(tmp_name) && isalnum(tmp_name[i]); i++)/* NOTHING */;
 
-	if (i < strlen(tmp_name)) {
-		MSG_ERR("\ncodec(%s) name is not valid!\n", c->codec_name);
-		mp_free(tmp_name);
-		return 0;
-	}
-
-	if (!c->s_info) 
-	{
-	    strncpy(c->s_info,c->codec_name,sizeof(c->s_info));
-	    c->s_info[sizeof(c->s_info)-1]=0;
-	}
+    if (i < strlen(tmp_name)) {
+	MSG_ERR("\ncodec(%s) name is not valid!\n", c->codec_name);
 	mp_free(tmp_name);
-	return 1;
+	return 0;
+    }
+
+    if (!c->s_info) {
+	strncpy(c->s_info,c->codec_name,sizeof(c->s_info));
+	c->s_info[sizeof(c->s_info)-1]=0;
+    }
+    mp_free(tmp_name);
+    return 1;
 }
 
 static short get_cpuflags(char *s)
@@ -399,9 +397,9 @@ int parse_codec_cfg(const char *cfgfile)
 	codecs_t *codec = NULL; // current codec
 	codecs_t **codecsp = NULL;// points to audio_codecs or to video_codecs
 	char *endptr;	// strtoul()...
-	int *nr_codecsp;
+	int *nr_codecsp=NULL;
 	const char *err_hint=NULL;
-	int codec_type;		/* TYPE_VIDEO/TYPE_AUDIO */
+	int codec_type=0;	/* TYPE_VIDEO/TYPE_AUDIO */
 	int tmp, i;
 	
 	// in case we call it secont time
@@ -414,7 +412,7 @@ int parse_codec_cfg(const char *cfgfile)
 	nr_vcodecs = 0;
 	nr_acodecs = 0;
 
-	if(cfgfile==NULL)return 0; 
+	if(cfgfile==NULL) return 0;
 	
 	if ((fp = fopen(cfgfile, "r")) == NULL) {
 		MSG_FATAL("can't open '%s': %s\n", cfgfile, strerror(errno));
@@ -444,7 +442,7 @@ int parse_codec_cfg(const char *cfgfile)
 			continue;
 		if (!strcmp(token[0], "audiocodec") ||
 				!strcmp(token[0], "videocodec")) {
-			if (!validate_codec(codec, codec_type))
+			if (!validate_codec(codec))
 				goto err_out_not_valid;
 		loop_enter:
 			if (*token[0] == 'v') {
@@ -613,7 +611,7 @@ int parse_codec_cfg(const char *cfgfile)
     } else
 	goto err_out_parse_error;
     }
-    if (!validate_codec(codec, codec_type))
+    if (!validate_codec(codec))
 	goto err_out_not_valid;
     MSG_INFO("%d audio & %d video codecs\n", nr_acodecs, nr_vcodecs);
     if(video_codecs) video_codecs[nr_vcodecs].codec_name[0] = '\0';
@@ -649,106 +647,103 @@ err_out_not_valid:
 codecs_t *find_audio_codec(unsigned int fourcc, unsigned int *fourccmap,
 		const codecs_t *start)
 {
-	return find_codec(fourcc, fourccmap, start, 1);
+    return find_codec(fourcc, fourccmap, start, 1);
 }
 
 codecs_t *find_video_codec(unsigned int fourcc, unsigned int *fourccmap,
 		const codecs_t *start)
 {
-	return find_codec(fourcc, fourccmap, start, 0);
+    return find_codec(fourcc, fourccmap, start, 0);
 }
 
 codecs_t* find_codec(unsigned int fourcc,unsigned int *fourccmap,
 		const codecs_t *start, int audioflag)
 {
-	int i, j;
-	codecs_t *c;
-        {
-		if (audioflag) {
-			i = nr_acodecs;
-			c = audio_codecs;
-		} else {
-			i = nr_vcodecs;
-			c = video_codecs;
-		}
-		if(!i) return NULL;
-		for (/* NOTHING */; i--; c++) {
-                        if(start && c<=start) continue;
-			for (j = 0; j < CODECS_MAX_FOURCC; j++) {
-				if (c->fourcc[j]==fourcc || c->driver_name==0) {
-					if (fourccmap)
-						*fourccmap = c->fourccmap[j];
-					return c;
-				}
-			}
-		}
+    int i, j;
+    codecs_t *c;
+    if (audioflag) {
+	i = nr_acodecs;
+	c = audio_codecs;
+    } else {
+	i = nr_vcodecs;
+	c = video_codecs;
+    }
+    if(!i) return NULL;
+    for (/* NOTHING */; i--; c++) {
+	if(start && c<=start) continue;
+	for (j = 0; j < CODECS_MAX_FOURCC; j++) {
+	    if (c->fourcc[j]==fourcc || c->driver_name==0) {
+		if (fourccmap)
+		    *fourccmap = c->fourccmap[j];
+		return c;
+	    }
 	}
-	return NULL;
+    }
+    return NULL;
 }
 
 void codecs_reset_selection(int audioflag){
-	int i;
-	codecs_t *c;
-	if (audioflag) {
-		i = nr_acodecs;
-		c = audio_codecs;
-	} else {
-		i = nr_vcodecs;
-		c = video_codecs;
-	}
-	if(i)
-	for (/* NOTHING */; i--; c++)
-		c->flags&=(~CODECS_FLAG_SELECTED);
+    int i;
+    codecs_t *c;
+    if (audioflag) {
+	i = nr_acodecs;
+	c = audio_codecs;
+    } else {
+	i = nr_vcodecs;
+	c = video_codecs;
+    }
+    if(i)
+    for (/* NOTHING */; i--; c++)
+	c->flags&=(~CODECS_FLAG_SELECTED);
 }
 
 void list_codecs(int audioflag){
     int i;
     codecs_t *c;
 
-	if (audioflag) {
-		i = nr_acodecs;
-		c = audio_codecs;
-		MSG_INFO("Available audio codecs:\n");
-	} else {
-		i = nr_vcodecs;
-		c = video_codecs;
-		MSG_INFO("Available video codecs:\n");
-	}
-	MSG_INFO("  %-11s %-10s  %s  %s  [%s]\n"
+    if (audioflag) {
+	i = nr_acodecs;
+	c = audio_codecs;
+	MSG_INFO("Available audio codecs:\n");
+    } else {
+	i = nr_vcodecs;
+	c = video_codecs;
+	MSG_INFO("Available video codecs:\n");
+    }
+    MSG_INFO("  %-11s %-10s  %s  %s  [%s]\n"
 		,audioflag?"ac:":"vc:"
 		,audioflag?"afm:":"vfm:"
 		,"status:"
 		,"info:"
 		,"lib/dll");
-	if(!i) return;
-	for (/* NOTHING */; i--; c++) {
-		char* s="unknown ";
-		switch(c->status){
-		  case CODECS_STATUS_WORKING:     s="working ";break;
-		  case CODECS_STATUS_PROBLEMS:    s="problems";break;
-		  case CODECS_STATUS_NOT_WORKING: s="crashing";break;
-		  case CODECS_STATUS_UNTESTED:    s="untested";break;
-		}
-		if(c->dll_name)
-		  MSG_INFO("  %-11s %-10s  %s  %s  [%s]\n",c->codec_name,c->driver_name,s,c->s_info,c->dll_name);
-		else
-		  MSG_INFO("  %-11s %-10s  %s  %s\n",c->codec_name,c->driver_name,s,c->s_info);
+    if(!i) return;
+    for (/* NOTHING */; i--; c++) {
+	char* s="unknown ";
+	switch(c->status){
+	    case CODECS_STATUS_WORKING:     s="working ";break;
+	    case CODECS_STATUS_PROBLEMS:    s="problems";break;
+	    case CODECS_STATUS_NOT_WORKING: s="crashing";break;
+	    case CODECS_STATUS_UNTESTED:    s="untested";break;
 	}
-     MSG_INFO("\n");
+	if(c->dll_name)
+	    MSG_INFO("  %-11s %-10s  %s  %s  [%s]\n",c->codec_name,c->driver_name,s,c->s_info,c->dll_name);
+	else
+	    MSG_INFO("  %-11s %-10s  %s  %s\n",c->codec_name,c->driver_name,s,c->s_info);
+    }
+    MSG_INFO("\n");
 }
-
-
 
 #ifdef CODECS2HTML
 
 void wrapline(FILE *f2,char *s){
     int c;
     if(!s){
-        fprintf(f2,"-");
-        return;
+	fprintf(f2,"-");
+	return;
     }
     while((c=*s++)){
-        if(c==',') fprintf(f2,"<br>"); else fputc(c,f2);
+	if(c==',') fprintf(f2,"<br>");
+	else fputc(c,f2);
     }
 }
 
@@ -760,7 +755,7 @@ void parsehtml(FILE *f1,FILE *f2,codecs_t *codec,int section,int dshow){
                 continue;
             }
             d=fgetc(f1);
-            
+
             switch(d){
             case '.':
                 return; // end of section
@@ -802,14 +797,14 @@ void parsehtml(FILE *f1,FILE *f2,codecs_t *codec,int section,int dshow){
 }
 
 void skiphtml(FILE *f1){
-        int c,d;
-        while((c=fgetc(f1))>=0){
-            if(c!='%'){
-                continue;
-            }
-            d=fgetc(f1);
-            if(d=='.') return; // end of section
-        }
+    int c,d;
+    while((c=fgetc(f1))>=0){
+	if(c!='%'){
+	    continue;
+	}
+	d=fgetc(f1);
+	if(d=='.') return; // end of section
+    }
 }
 
 int main(void)
@@ -830,7 +825,7 @@ int main(void)
 
         f1=fopen("DOCS/codecs-in.html","rb"); if(!f1) exit(1);
         f2=fopen("DOCS/codecs-status.html","wb"); if(!f2) exit(1);
-        
+
         while((c=fgetc(f1))>=0){
             if(c!='%'){
                 fputc(c,f2);
@@ -890,16 +885,16 @@ int main(void)
                 fseeko(f1,pos,SEEK_SET);
                 skiphtml(f1);
 //void parsehtml(FILE *f1,FILE *f2,codecs_t *codec,int section,int dshow){
-                
+
                 continue;
             }
             fputc(c,f2);
             fputc(d,f2);
-        }
-        
-        fclose(f2);
-        fclose(f1);
-	return 0;
+    }
+
+    fclose(f2);
+    fclose(f1);
+    return 0;
 }
 
 #endif

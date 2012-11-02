@@ -88,15 +88,57 @@ extern vo_data_t*vo_data;
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
 
+static const vd_functions_t* mpcv_find_driver_by_name(const char *name) {
+    unsigned i;
+    for (i=0; mpcodecs_vd_drivers[i] != NULL; i++)
+	if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,name)==0) break;
+    return mpcodecs_vd_drivers[i];
+}
+
+static void mpcv_print_codec_info(sh_video_t* sh_video) {
+    MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
+	,mp_conf.video_codec?"Forcing":"Selected"
+	,sh_video->codec->codec_name
+	,mpvdec->info->driver_name
+	,sh_video->codec->dll_name
+	,sh_video->src_w
+	,sh_video->src_h
+	,sh_video->aspect
+	,sh_video->fps);
+    // Yeah! We got it!
+    sh_video->inited=1;
+    sh_video->vf_flags=vf_query_flags(sh_video->vfilter);
+#ifdef _OPENMP
+    if(mp_conf.gomp) {
+	smp_num_cpus=omp_get_num_procs();
+	use_vf_threads=0;
+	if(((sh_video->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
+	if(use_vf_threads)
+	    MSG_STATUS("[mpdec] will perform parallel video-filter on %u CPUs\n",smp_num_cpus);
+    }
+#else
+    MSG_V("[mpdec] GOMP was not compiled-in! Using single threaded video filtering!\n");
+#endif
+}
+
+int mpcv_ffmpeg_init(sh_video_t*sh_video) {
+    /* Use ffmpeg's drivers  as last hope */
+    mpvdec=mpcv_find_driver_by_name("ffmpeg");
+    if(!mpvdec->init(sh_video)){
+	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
+	    return 0;
+    }
+    mpcv_print_codec_info(sh_video);
+    return 1;
+}
+
 int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
-    unsigned o_bps,bpp;
     sh_video->codec=NULL;
     MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->fourcc,
-      sh_video->bih?((unsigned int*) &sh_video->bih->biCompression):NULL,
-      sh_video->codec,0) )){
+	    sh_video->bih?((unsigned int*) &sh_video->bih->biCompression):NULL,
+	    sh_video->codec,0) )){
 	// ok we found one codec
-	int i;
 	if(sh_video->codec->flags&CODECS_FLAG_SELECTED) {
 	    MSG_DBG3("mpcv_init: %s already tried and failed\n",sh_video->codec->codec_name);
 	    continue;
@@ -115,63 +157,14 @@ int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int st
 	}
 	sh_video->codec->flags|=CODECS_FLAG_SELECTED; // tagging it
 	// ok, it matches all rules, let's find the driver!
-	for (i=0; mpcodecs_vd_drivers[i] != NULL; i++)
-	    if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,sh_video->codec->driver_name)==0) break;
-	mpvdec=mpcodecs_vd_drivers[i];
-	if(!mpvdec) continue;
+	if(!(mpvdec=mpcv_find_driver_by_name(sh_video->codec->driver_name))) continue;
 	else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
 	// it's available, let's try to init!
 	if(!mpvdec->init(sh_video)){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 	    continue; // try next...
 	}
-	switch(sh_video->codec->outfmt[sh_video->outfmtidx])
-	{
-		case IMGFMT_RGB8:
-		case IMGFMT_BGR8:
-		case IMGFMT_Y800: bpp=8; break;
-		case IMGFMT_YVU9:
-		case IMGFMT_IF09: bpp = 9; break;
-		case IMGFMT_YV12:
-		case IMGFMT_I420:
-		case IMGFMT_IYUV: bpp = 12; break;
-		default:
-		case IMGFMT_RGB15:
-		case IMGFMT_BGR15:
-		case IMGFMT_RGB16:
-		case IMGFMT_BGR16:
-		case IMGFMT_YUY2:
-		case IMGFMT_YVYU:
-		case IMGFMT_UYVY: bpp = 16; break;
-		case IMGFMT_RGB24:
-		case IMGFMT_BGR24: bpp = 24; break;
-		case IMGFMT_RGB32:
-		case IMGFMT_BGR32: bpp = 32; break;
-	}
-	o_bps=sh_video->fps*sh_video->src_w*sh_video->src_h*bpp/8;
-	MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
-	,mp_conf.video_codec?"Forcing":"Selected"
-	,sh_video->codec->codec_name
-	,mpvdec->info->driver_name
-	,sh_video->codec->dll_name
-	,sh_video->src_w
-	,sh_video->src_h
-	,sh_video->aspect
-	,sh_video->fps);
-	// Yeah! We got it!
-	sh_video->inited=1;
-	sh_video->vf_flags=vf_query_flags(sh_video->vfilter);
-#ifdef _OPENMP
-	if(mp_conf.gomp) {
-	    smp_num_cpus=omp_get_num_procs();
-	    use_vf_threads=0;
-	    if(((sh_video->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
-	    if(use_vf_threads)
-		MSG_STATUS("[mpdec] will perform parallel video-filter on %u CPUs\n",smp_num_cpus);
-	}
-#else
-	MSG_V("[mpdec] GOMP was not compiled-in! Using single threaded video filtering!\n");
-#endif
+	mpcv_print_codec_info(sh_video);
 	return 1;
     }
     return 0;

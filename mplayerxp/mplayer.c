@@ -1208,7 +1208,7 @@ static float vplayer_compute_sleep_time(frame_attr_t* shva_prev,float screen_pts
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     sh_video_t* sh_video=priv->demuxer->video->sh;
     float sleep_time=0;
-    if(sh_audio) {
+    if(sh_audio && xp_core->audio) {
 	/* FIXME!!! need the same technique to detect xp_core->audio->eof as for video_eof!
 	   often ao_get_delay() never returns 0 :( */
 	if(xp_core->audio->eof && !get_delay_audio_buffer()) goto nosound_model;
@@ -1234,6 +1234,7 @@ static int vplayer_do_sleep(int rtc_fd,float sleep_time)
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
 #define XP_MIN_AUDIOBUFF 0.05
 #define XP_MAX_TIMESLICE 0.1
+    if(!xp_core->audio) sh_audio=NULL;
     if(sh_audio && (!xp_core->audio->eof || ao_get_delay(ao_data)) && sleep_time>XP_MAX_TIMESLICE) {
 	float t;
 
@@ -1360,6 +1361,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
   /* FIXME: this block was added to fix A-V resync caused by some strange things
      like playing 48KHz audio on 44.1KHz soundcard and other.
      Now we know PTS of every audio frame so don't need to have it */
+  if(!xp_core->audio) sh_audio=NULL;
   if(sh_audio && (!xp_core->audio->eof || ao_get_delay(ao_data)) && !mp_conf.av_sync_pts) {
     float a_pts=0;
 
@@ -1923,6 +1925,9 @@ static int mpxp_find_vcodec(void) {
 	    if(mpcv_init(sh_video,NULL,NULL,status)) break;
 	}
     }
+    /* Use ffmpeg decoders as last hope */
+    if(!sh_video->inited) mpcv_ffmpeg_init(sh_video);
+
     if(!sh_video->inited) {
 	const char *fmt;
 	MSG_ERR(MSGTR_CantFindVideoCodec);
@@ -1936,6 +1941,7 @@ static int mpxp_find_vcodec(void) {
 	rc=-1;
     } else  priv->inited_flags|=INITED_VCODEC;
 
+    if(sh_video)
     MSG_V("%s video codec: [%s] vfm:%s (%s)\n",
 	mp_conf.video_codec?"Forcing":"Detected",sh_video->codec->codec_name,sh_video->codec->driver_name,sh_video->codec->s_info);
     return rc;
