@@ -349,7 +349,7 @@ any_t* Va_dec_ahead_routine( any_t* arg )
 
     priv->state=Pth_Run;
     priv->dae->eof = 0;
-    xp_core->audio->eof=0;
+    if(xp_core->audio) xp_core->audio->eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
     __MP_UNIT(priv->p_idx,"dec_ahead");
     priv->pid = getpid();
