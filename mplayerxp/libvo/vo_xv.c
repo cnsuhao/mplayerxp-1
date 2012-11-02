@@ -18,7 +18,7 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 #include "osdep/mplib.h"
 #include "video_out.h"
 #include "video_out_internal.h"

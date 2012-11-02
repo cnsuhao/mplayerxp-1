@@ -6,7 +6,7 @@
 #include "help_mp.h"
 
 #include "mplayer.h"
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 
 #include "libmpdemux/stream.h"
 #include "libmpdemux/demuxer.h"

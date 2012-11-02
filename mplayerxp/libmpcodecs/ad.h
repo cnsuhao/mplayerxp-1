@@ -5,7 +5,7 @@
 #define AD_H_INCLUDED 1
 
 #include "libmpconf/cfgparser.h"
-#include "xmp_enums.h"
+#include "xmpcore/xmp_enums.h"
 
 typedef struct ad_info_s
 {

@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "mp_config.h"
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 #include "mplayer.h"
 #include "help_mp.h"
 

@@ -32,7 +32,7 @@
 #include "osdep/shmem.h"
 #include "postproc/swscale.h"
 #include "postproc/vf.h"
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 #include "osdep/mplib.h"
 #include "mplayer.h"
 #include "osdep/fastmemcpy.h"

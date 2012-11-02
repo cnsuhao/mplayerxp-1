@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 #include "mp_msg.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER

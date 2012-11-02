@@ -28,7 +28,7 @@
 
 #include "mp_config.h"
 #include "mplayer.h"
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 #include "aspect.h"
 #include "video_out.h"
 

@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 #include "spudec.h"
 #include "postproc/swscale.h"
 #include "osdep/mplib.h"

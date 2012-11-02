@@ -72,9 +72,9 @@
 #include "postproc/libmenu/menu.h"
 #include "mixer.h"
 
-#include "xmp_core.h"
-#include "xmp_vplayer.h"
-#include "xmp_adecoder.h"
+#include "xmpcore/xmp_core.h"
+#include "xmpcore/xmp_vplayer.h"
+#include "xmpcore/xmp_adecoder.h"
 
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"

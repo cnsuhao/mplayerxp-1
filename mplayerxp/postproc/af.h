@@ -4,10 +4,10 @@
 #include <stdio.h>
 
 #include "af_mp.h"
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "af_control.h"
 #include "af_format.h"
-#include "xmp_enums.h"
+#include "xmpcore/xmp_enums.h"
 
 struct af_instance_s;
 

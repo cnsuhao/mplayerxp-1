@@ -1,6 +1,5 @@
 #ifndef MP_CODEC_INFO_T
 #define MP_CODEC_INFO_T
-#include "xmp_enums.h"
 
 typedef struct mp_codec_info_s
 {

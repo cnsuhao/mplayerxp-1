@@ -5,7 +5,7 @@
 #include "mp_config.h"
 #include "help_mp.h"
 
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 #include "libmpconf/codec-cfg.h"
 
 #include "libvo/img_format.h"

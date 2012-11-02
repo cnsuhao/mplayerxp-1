@@ -13,7 +13,7 @@ PRG = $(PROGNAME)
 PRG_FIBMAP = fibmap_mplayerxp
 PRG_CFG = codec-cfg-xp
 # these subdirectories required installation due binaries within them
-SUBDIRS = libmpdemux libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input nls libvo
+SUBDIRS = libmpdemux libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input nls libvo xmpcore
 ifeq ($(TARGET_ARCH_X86),yes)
 SUBDIRS+=loader
 endif
@@ -25,7 +25,6 @@ LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
 SRCS_COMMON = mp_msg.c mp_image.c
 SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c sig_hand.c dump.c
-SRCS_MPLAYER+= xmp_core.c xmp_aplayer.c xmp_vplayer.c xmp_vdecoder.c xmp_adecoder.c
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 
@@ -45,7 +44,8 @@ MP_LIBS = libmpdemux/libmpdemux.a \
 	  libvo/libvo.a \
 	  osdep/libosdep.a \
 	  nls/libnls.a \
-	  libmpconf/libmpconf.a
+	  libmpconf/libmpconf.a \
+	  xmpcore/libxmpcore.a
 ifeq ($(TARGET_ARCH_X86),yes)
 	  MP_LIBS += loader/libloader.a
 endif

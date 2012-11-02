@@ -2,7 +2,7 @@
 #define VD_H_INCLUDED 1
 
 #include "libmpconf/cfgparser.h"
-#include "xmp_enums.h"
+#include "xmpcore/xmp_enums.h"
 
 typedef struct vd_info_s
 {

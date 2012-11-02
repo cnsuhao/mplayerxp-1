@@ -5,7 +5,7 @@
 #define __SIG_HAND_H 1
 
 #include <sys/types.h>
-#include "xmp_core.h"
+#include "xmpcore/xmp_core.h"
 
 static inline void __MP_UNIT(unsigned id,const char *name)  { xp_core->mpxp_threads[id]->unit=name; }
 static inline void MP_UNIT(const char *name) { xp_core->mpxp_threads[main_id]->unit=name; }

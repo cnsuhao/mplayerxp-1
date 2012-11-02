@@ -21,7 +21,7 @@
 #include "libmpsub/subreader.h"
 #include "img_format.h"
 #include "mp_image.h"
-#include "xmp_enums.h"
+#include "xmpcore/xmp_enums.h"
 
 enum {
     VO_EVENT_EXPOSE=1,
