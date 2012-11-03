@@ -1171,7 +1171,7 @@ mp_cmd_free(mp_cmd_t* cmd) {
 
   if(cmd->name)
     mp_free(cmd->name);
-  
+
   for(i=0; i < MP_CMD_MAX_ARGS && cmd->args[i].type != -1; i++) {
     if(cmd->args[i].type == MP_CMD_ARG_STRING && cmd->args[i].v.s != NULL)
       mp_free(cmd->args[i].v.s);
@@ -1545,6 +1545,15 @@ mp_input_uninit(void) {
       cmd_fds[i].close_func(cmd_fds[i].fd);
   }
 
+    if(cmd_binds) {
+	unsigned i=0;
+	for(i=0;;i++) {
+	    if(cmd_binds[i].cmd != NULL) mp_free(cmd_binds[i].cmd);
+	    else break;
+	}
+	mp_free(cmd_binds);
+	cmd_binds=NULL;
+    }
 }
 
 void
@@ -1623,7 +1632,7 @@ mp_input_check_interrupt(int tim) {
   case MP_CMD_PLAY_TREE_UP_STEP:
   case MP_CMD_PLAY_ALT_SRC_STEP:
     // The cmd will be executed when we are back in the main loop
-    return 1;
+    return 1; //<-- memory leaks here 
   }
   // remove the cmd from the queue
   cmd = mp_input_get_cmd(tim,0,0);
