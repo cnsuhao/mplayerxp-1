@@ -13,6 +13,7 @@ typedef struct mp_conf_s {
     int		slave_mode;
     uint32_t	msg_filter;
     int		test_av;
+    int		malloc_debug;
 // XP-core
     int		xp;   /* XP-mode */
     int		gomp; /* currently it's experimental feature */

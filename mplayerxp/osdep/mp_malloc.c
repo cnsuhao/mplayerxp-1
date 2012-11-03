@@ -21,6 +21,11 @@ typedef struct mp_slot_s {
     any_t*	calls[10];
 }mp_slot_t;
 
+typedef struct mp_slot_container_s {
+    mp_slot_t*	slots;
+    size_t	nslots;
+}mp_slot_container_t;
+
 typedef struct priv_s {
     const char*			argv0;
     unsigned			rnd_limit;
@@ -29,8 +34,9 @@ typedef struct priv_s {
     /* for randomizer */
     unsigned long long int	total_calls;
     /* backtrace and protector slots */
-    mp_slot_t*			slots;
-    size_t			nslots;
+    mp_slot_container_t		mallocs;/* not freed mallocs */
+    mp_slot_container_t		reallocs; /* suspect reallocs */
+    mp_slot_container_t		frees;    /* suspect free */
 }priv_t;
 static priv_t* priv;
 
@@ -44,46 +50,49 @@ static size_t prot_fullsize(size_t size) {
     return fullsize;
 }
 static any_t* prot_last_page(any_t* rp,size_t fullsize) { return rp+(fullsize-__VM_PAGE_SIZE__); }
-static void __prot_print_slots(void) {
+static void __prot_print_slots(mp_slot_container_t* c) {
     size_t i;
-    for(i=0;i<priv->nslots;i++) {
-	MSG_INFO("slot[%u] address: %p size: %u\n",i,priv->slots[i].page_ptr,priv->slots[i].size);
+    for(i=0;i<c->nslots;i++) {
+	MSG_INFO("slot[%u] address: %p size: %u\n"
+		,i
+		,c->slots[i].page_ptr
+		,c->slots[i].size);
     }
 }
 
-static size_t	prot_find_slot_idx(any_t* ptr) {
+static size_t	prot_find_slot_idx(mp_slot_container_t* c,any_t* ptr) {
     size_t i;
-    for(i=0;i<priv->nslots;i++) {
-	if(priv->slots[i].page_ptr==ptr) return i;
+    for(i=0;i<c->nslots;i++) {
+	if(c->slots[i].page_ptr==ptr) return i;
     }
     return UINT_MAX;
 }
 
-static mp_slot_t*	prot_find_slot(any_t* ptr) {
-    size_t idx=prot_find_slot_idx(ptr);
-    if(idx!=UINT_MAX) return &priv->slots[idx];
+static mp_slot_t*	prot_find_slot(mp_slot_container_t* c,any_t* ptr) {
+    size_t idx=prot_find_slot_idx(c,ptr);
+    if(idx!=UINT_MAX) return &c->slots[idx];
     return NULL;
 }
 
-static mp_slot_t*	prot_append_slot(any_t*ptr,size_t size) {
-    mp_slot_t* slot;
-    if(!priv->slots)	slot=malloc(sizeof(mp_slot_t));
-    else		slot=realloc(priv->slots,sizeof(mp_slot_t)*(priv->nslots+1));
-    priv->slots=slot;
-    memset(&priv->slots[priv->nslots],0,sizeof(mp_slot_t));
-    priv->slots[priv->nslots].page_ptr=ptr;
-    priv->slots[priv->nslots].size=size;
-    priv->nslots++;
-    return &priv->slots[priv->nslots-1];
+static mp_slot_t*	prot_append_slot(mp_slot_container_t* c,any_t*ptr,size_t size) {
+    mp_slot_t* s;
+    if(!c->slots)	s=malloc(sizeof(mp_slot_t));
+    else		s=realloc(c->slots,sizeof(mp_slot_t)*(c->nslots+1));
+    c->slots=s;
+    memset(&c->slots[c->nslots],0,sizeof(mp_slot_t));
+    c->slots[c->nslots].page_ptr=ptr;
+    c->slots[c->nslots].size=size;
+    c->nslots++;
+    return &c->slots[c->nslots-1];
 }
 
-static void	prot_free_slot(any_t* ptr) {
-    size_t idx=prot_find_slot_idx(ptr);
+static void	prot_free_slot(mp_slot_container_t* c,any_t* ptr) {
+    size_t idx=prot_find_slot_idx(c,ptr);
     if(idx!=UINT_MAX) {
-	memmove(&priv->slots[idx],&priv->slots[idx+1],sizeof(mp_slot_t)*(priv->nslots-(idx+1)));
-	priv->nslots--;
-	priv->slots=realloc(priv->slots,sizeof(mp_slot_t)*priv->nslots);
-    } else printf("Internal error! Can't find slot for address: %p\n",ptr);
+	memmove(&c->slots[idx],&c->slots[idx+1],sizeof(mp_slot_t)*(c->nslots-(idx+1)));
+	c->nslots--;
+	c->slots=realloc(c->slots,sizeof(mp_slot_t)*c->nslots);
+    } else printf("[prot_free_slot] Internal error! Can't find slot for address: %p\n",ptr);
 }
 
 static any_t* __prot_malloc(size_t size) {
@@ -91,7 +100,7 @@ static any_t* __prot_malloc(size_t size) {
     size_t fullsize=prot_fullsize(size);
     rp=mp_memalign(__VM_PAGE_SIZE__,fullsize);
     if(rp) {
-	prot_append_slot(rp,size);
+	prot_append_slot(&priv->mallocs,rp,size);
 	// protect last page here
 	mprotect(prot_last_page(rp,fullsize),__VM_PAGE_SIZE__,MP_DENY_ALL);
 	rp+=fullsize-__VM_PAGE_SIZE__-size;
@@ -104,25 +113,25 @@ static any_t* __prot_memalign(size_t boundary,size_t size) { UNUSED(boundary);  
 static void __prot_free(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
     free(page_ptr);
-    mp_slot_t* slot=prot_find_slot(page_ptr);
+    mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
-	printf("Internal error! Can't find slot for address: %p\n",ptr);
-	__prot_print_slots();
+	printf("[__prot_free] suspect call found! Can't find slot for address: %p\n",ptr);
+	__prot_print_slots(&priv->mallocs);
 	kill(getpid(), SIGILL);
     }
     size_t fullsize=prot_fullsize(slot->size);
     mprotect(prot_last_page(page_ptr,fullsize),__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
-    prot_free_slot(ptr);
+    prot_free_slot(&priv->mallocs,ptr);
 }
 
 #define min(a,b) ((a)<(b)?(a):(b))
 static any_t* __prot_realloc(any_t*ptr,size_t size) {
     any_t* rp;
     if((rp=__prot_malloc(size))!=NULL && ptr) {
-	mp_slot_t* slot=prot_find_slot(prot_page_align(ptr));
+	mp_slot_t* slot=prot_find_slot(&priv->mallocs,prot_page_align(ptr));
 	if(!slot) {
-	    printf("Internal error! Can't find slot for address: %p\n",ptr);
-	    __prot_print_slots();
+	    printf("[__prot_realloc] suspect call found! Can't find slot for address: %p\n",ptr);
+	    __prot_print_slots(&priv->mallocs);
 	    kill(getpid(), SIGILL);
 	}
 	memcpy(rp,ptr,min(slot->size,size));
@@ -158,7 +167,7 @@ static __always_inline any_t* bt_malloc(size_t size) {
     mp_slot_t* slot;
     rp=malloc(size);
     if(rp) {
-	slot=prot_append_slot(rp,size);
+	slot=prot_append_slot(&priv->mallocs,rp,size);
 	slot->ncalls=backtrace(slot->calls,10);
     }
     return rp;
@@ -166,10 +175,10 @@ static __always_inline any_t* bt_malloc(size_t size) {
 
 static __always_inline any_t* bt_memalign(size_t boundary,size_t size) {
     any_t*rp;
-    mp_slot_t* slot;
     rp=memalign(boundary,size);
     if(rp) {
-	slot=prot_append_slot(rp,size);
+	mp_slot_t* slot;
+	slot=prot_append_slot(&priv->mallocs,rp,size);
 	slot->ncalls=backtrace(slot->calls,10);
     }
     return rp;
@@ -181,9 +190,13 @@ static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
     if(!ptr) return bt_malloc(size);
     rp=realloc(ptr,size);
     if(rp) {
-	slot=prot_find_slot(ptr);
-	if(!slot) MSG_WARN("BT Internal error! Can't find slot for address: %p\n",ptr);
-	else {
+	slot=prot_find_slot(&priv->mallocs,ptr);
+	if(!slot) {
+	    MSG_WARN("[bt_realloc] suspect call found! Can't find slot for address: %p\n",ptr);
+	    mp_slot_t* _slot;
+	    _slot=prot_append_slot(&priv->reallocs,ptr,size);
+	    _slot->ncalls=backtrace(_slot->calls,10);
+	} else {
 	    slot->page_ptr=rp; // update address after realloc
 	    slot->size=size;
 	}
@@ -192,9 +205,15 @@ static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
 }
 
 static __always_inline void bt_free(any_t*ptr) {
-    mp_slot_t* slot=prot_find_slot(ptr);
-    if(!slot) MSG_WARN("BT Internal error! Can't find slot for address: %p\n",ptr);
-    prot_free_slot(ptr);
+    mp_slot_t* slot=prot_find_slot(&priv->mallocs,ptr);
+    if(!slot) {
+	MSG_WARN("[bt_free] suspect call found! Can't find slot for address: %p\n",ptr);
+	mp_slot_t* _slot;
+	_slot=prot_append_slot(&priv->frees,ptr,0);
+	_slot->ncalls=backtrace(_slot->calls,10);
+	return;
+    }
+    prot_free_slot(&priv->mallocs,ptr);
     free(ptr);
 }
 
@@ -260,31 +279,28 @@ static char * addr2line(bt_cache_t* cache,any_t*ptr) {
     return NULL;
 }
 
-static void bt_print_slots(void) {
-    bt_cache_t* cache=init_bt_cache();
+static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
     size_t i,j;
-    for(i=0;i<priv->nslots;i++) {
+    for(i=0;i<c->nslots;i++) {
 	char *s;
 	int printable=1;
-	MSG_INFO("address: %p size: %u dump: ",priv->slots[i].page_ptr,priv->slots[i].size);
-	s=priv->slots[i].page_ptr;
-	for(j=0;j<min(priv->slots[i].size,20);j++) {
+	MSG_INFO("address: %p size: %u dump: ",c->slots[i].page_ptr,c->slots[i].size);
+	s=c->slots[i].page_ptr;
+	for(j=0;j<min(c->slots[i].size,20);j++) {
 	    if(!isprint(s[j])) {
 		printable=0;
 		break;
 	    }
 	}
 	if(printable) MSG_INFO("%20s",s);
-	else for(j=0;j<min(priv->slots[i].size,10);j++) {
+	else for(j=0;j<min(c->slots[i].size,10);j++) {
 	    MSG_INFO("%02X ",(unsigned char)s[j]);
 	}
 	MSG_INFO("\n");
-	for(j=0;j<priv->slots[i].ncalls;j++) {
-	    MSG_INFO("%s%p -> %s\n",j==0?"bt=>":"    ",priv->slots[i].calls[j],addr2line(cache,priv->slots[i].calls[j]));
+	for(j=0;j<c->slots[i].ncalls;j++) {
+	    MSG_INFO("%s%p -> %s\n",j==0?"bt=>":"    ",c->slots[i].calls[j],addr2line(cache,c->slots[i].calls[j]));
 	}
     }
-    MSG_HINT("For source lines you may also print in (gdb): list *0xADDRESS\n");
-    uninit_bt_cache(cache);
 }
 /* ================== HEAD FUNCTIONS  ======================= */
 void	mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
@@ -299,12 +315,36 @@ void	mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call
 
 void	mp_uninit_malloc(int verbose)
 {
+    int done=0;
+    bt_cache_t* cache=init_bt_cache();
     if(priv->flags&MPA_FLG_BACKTRACE) {
-	if(priv->nslots) {
-	    MSG_WARN("Warning! %lli slots were not freed\n",priv->nslots);
-	    if(verbose) bt_print_slots();
+	if(priv->mallocs.nslots) {
+	    unsigned long total;
+	    unsigned i;
+	    total=0;
+	    for(i=0;i<priv->mallocs.nslots;i++) total+=priv->mallocs.slots[i].size;
+	    MSG_WARN("Warning! %lli slots were not freed. Totally %llu bytes was leaked\n",priv->mallocs.nslots,total);
+	}
+	if(verbose) {
+	    if(priv->mallocs.nslots) {
+		MSG_INFO("****** List of malloced but not freed pointers *******\n");
+		bt_print_slots(cache,&priv->mallocs);
+		done=1;
+	    }
+	    if(priv->reallocs.nslots) {
+		MSG_INFO("\n****** List of suspect realloc() calls *******\n");
+		bt_print_slots(cache,&priv->reallocs);
+		done=1;
+	    }
+	    if(priv->frees.nslots) {
+		MSG_INFO("\n****** List of suspect free() calls *******\n");
+		bt_print_slots(cache,&priv->frees);
+		done=1;
+	    }
 	}
     }
+    if(done) MSG_HINT("\nFor source lines you may also print in (gdb): list *0xADDRESS\n");
+    uninit_bt_cache(cache);
     free(priv);
     priv=NULL;
 }
