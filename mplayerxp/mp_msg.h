@@ -54,10 +54,10 @@ enum {
 void mp_msg_init(int verbose);
 void mp_msg_uninit(void);
 void mp_msg_flush(void);
-void mp_msg_c( unsigned x, const char *format, ... );
+int  mp_msg_c( unsigned x, const char *format, ... );
 
 #ifdef __GNUC__
-static inline void mp_msg_dummy(void) {}
+static inline int mp_msg_dummy(void) {return 0; }
 #define mp_msg(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mp_msg_c(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mp_msg_dummy()))
 #else
 #define mp_msg(mod,lev, ... ) mp_msg_c(((lev&0xF)<<28)|(mod&0x0FFFFFFF),__VA_ARGS__)
@@ -68,18 +68,18 @@ static inline void mp_msg_dummy(void) {}
 #endif
 
 #ifdef __va_arg_pack /* requires gcc-4.3.x */
-static __always_inline void MSG_INFO(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_INFO,args,__va_arg_pack ()); }
-static __always_inline void MSG_FATAL(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_FATAL,args,__va_arg_pack ()); }
-static __always_inline void MSG_WARN(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_WARN,args,__va_arg_pack ()); }
-static __always_inline void MSG_ERR(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_ERR,args,__va_arg_pack ()); }
-static __always_inline void MSG_V(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_V,args,__va_arg_pack ()); }
-static __always_inline void MSG_OK(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_OK,args,__va_arg_pack ()); }
-static __always_inline void MSG_HINT(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_HINT,args,__va_arg_pack ()); }
-static __always_inline void MSG_STATUS(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_STATUS,args,__va_arg_pack ()); }
+static __always_inline int MSG_INFO(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_INFO,args,__va_arg_pack ()); }
+static __always_inline int MSG_FATAL(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_FATAL,args,__va_arg_pack ()); }
+static __always_inline int MSG_WARN(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_WARN,args,__va_arg_pack ()); }
+static __always_inline int MSG_ERR(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_ERR,args,__va_arg_pack ()); }
+static __always_inline int MSG_V(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_V,args,__va_arg_pack ()); }
+static __always_inline int MSG_OK(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_OK,args,__va_arg_pack ()); }
+static __always_inline int MSG_HINT(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_HINT,args,__va_arg_pack ()); }
+static __always_inline int MSG_STATUS(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_STATUS,args,__va_arg_pack ()); }
 
 #ifdef MP_DEBUG
-static __always_inline void MSG_DBG2(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_DBG3,args,__va_arg_pack ()); }
-static __always_inline void MSG_DBG3(const char* args,...) { mp_msg(MSGT_CLASS,MSGL_DBG4,args,__va_arg_pack ()); }
+static __always_inline int MSG_DBG2(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_DBG3,args,__va_arg_pack ()); }
+static __always_inline int MSG_DBG3(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_DBG4,args,__va_arg_pack ()); }
 #else
 #define MSG_DBG2(args...)
 #define MSG_DBG3(args...)

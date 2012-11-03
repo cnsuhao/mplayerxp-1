@@ -42,7 +42,7 @@ enum mp_malloc_e {
     MPA_FLG_BEFORE_CHECK = 0x00000002,
     MPA_FLG_BACKTRACE    = 0x00000004
 };
-extern void	__FASTCALL__ mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags);
+extern void	__FASTCALL__ mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags);
 extern void	__FASTCALL__ mp_uninit_malloc(int verbose);
 
 extern any_t*	__FASTCALL__ mp_malloc(size_t __size);

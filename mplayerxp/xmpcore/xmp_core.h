@@ -101,7 +101,7 @@ typedef struct xp_core_s {
 }xp_core_t;
 extern xp_core_t *xp_core;
 
-static inline int xmp_test_model(unsigned value) { return (xp_core->flags&value)!=0; }
+static inline int xmp_test_model(xmp_model_e value) { return (xp_core->flags&value)!=0; }
 
 extern void		xmp_init(void);
 extern void		xmp_uninit(void);

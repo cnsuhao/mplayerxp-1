@@ -84,8 +84,9 @@ const char * msg_prefix[] =
     "POSTPR"
 };
 
-void mp_msg_c( unsigned x, const char *format, ... ){
+int mp_msg_c( unsigned x, const char *format, ... ){
 /* TODO: more useful usage of module_id */
+    int rc=0;
     priv_t*priv=NULL;
     va_list va;
     char sbuf[0xFFFFF];
@@ -117,14 +118,15 @@ void mp_msg_c( unsigned x, const char *format, ... ){
     if(strcmp(nls_get_screen_cp(),"UTF-8")!=0) {
 	char *obuf;
 	obuf=nls_recode2screen_cp("UTF-8",sbuf,ssize);
-	fputs(obuf,stderr);
+	rc=fputs(obuf,stderr);
 	mp_free(obuf);
     }
-    else fputs(sbuf,stderr);
+    else rc=fputs(sbuf,stderr);
     if(format[strlen(format)-1]=='\n') was_eol=1;
     else was_eol=0;
     fflush(stderr);
     if(priv) pthread_mutex_unlock(&priv->mp_msg_mutex);
+    return rc;
 }
 
 void mp_msg_flush(void) { fflush(stderr); }

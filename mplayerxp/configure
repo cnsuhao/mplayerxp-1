@@ -570,7 +570,7 @@ if win32 ; then
 enabled opengl	&& require2 opengl "windows.h GL/gl.h" wglCreateContext -lopengl32 -lgdi32
 else
 disabled x11	&& disable opengl
-enabled opengl  && require2 opengl "GL/gl.h GL/glx.h GL/glut.h" glutInitWindowSize -lglut -lGL 
+enabled opengl  && require2 opengl "GL/gl.h GL/glx.h GL/glut.h" glutInitWindowSize -lglut -lGL -lGLU
 fi
 print_config HAVE_ mp_config.h mp_config.mak opengl
 enabled opengl	&& vomodules="opengl $vomodules" || novomodules="opengl $novomodules"

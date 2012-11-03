@@ -22,6 +22,7 @@ typedef struct mp_slot_s {
 }mp_slot_t;
 
 typedef struct priv_s {
+    const char*			argv0;
     unsigned			rnd_limit;
     unsigned			every_nth_call;
     enum mp_malloc_e		flags;
@@ -181,7 +182,7 @@ static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
     rp=realloc(ptr,size);
     if(rp) {
 	slot=prot_find_slot(ptr);
-	if(!slot) MSG_WARN("Internal error! Can't find slot for address: %p\n",ptr);
+	if(!slot) MSG_WARN("BT Internal error! Can't find slot for address: %p\n",ptr);
 	else {
 	    slot->page_ptr=rp; // update address after realloc
 	    slot->size=size;
@@ -192,12 +193,75 @@ static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
 
 static __always_inline void bt_free(any_t*ptr) {
     mp_slot_t* slot=prot_find_slot(ptr);
-    if(!slot) MSG_WARN("Internal error! Can't find slot for address: %p\n",ptr);
+    if(!slot) MSG_WARN("BT Internal error! Can't find slot for address: %p\n",ptr);
     prot_free_slot(ptr);
     free(ptr);
 }
 
+/*======== STATISTICS =======*/
+typedef struct bt_cache_entry_s {
+    any_t*	addr;
+    char*	str;
+}bt_cache_entry_t;
+
+typedef struct bt_cache_s {
+    bt_cache_entry_t*	entry;
+    unsigned		num_entries;
+}bt_cache_t;
+
+static bt_cache_t*	init_bt_cache(void) { return calloc(1,sizeof(bt_cache_t)); }
+
+static void		uninit_bt_cache(bt_cache_t* cache) {
+    unsigned i;
+    for(i=0;i<cache->num_entries;i++) free(cache->entry[i].str);
+    free(cache->entry);
+    free(cache);
+}
+
+static char* bt_find_cache(bt_cache_t* cache,any_t* ptr) {
+    unsigned i;
+    for(i=0;i<cache->num_entries;i++) if(cache->entry[i].addr==ptr) return cache->entry[i].str;
+    return NULL;
+}
+
+static bt_cache_entry_t* bt_append_cache(bt_cache_t* cache,any_t* ptr,const char *str) {
+    if(!cache->entry)	cache->entry=malloc(sizeof(bt_cache_entry_t));
+    else		cache->entry=realloc(cache->entry,sizeof(bt_cache_entry_t)*(cache->num_entries+1));
+    cache->entry[cache->num_entries].addr=ptr;
+    cache->entry[cache->num_entries].str=strdup(str);
+    cache->num_entries++;
+    return &cache->entry[cache->num_entries-1];
+}
+
+static char * addr2line(bt_cache_t* cache,any_t*ptr) {
+    char *rs;
+    if(priv->argv0) {
+	bt_cache_entry_t* centry;
+	unsigned i;
+	char cmd[4096],result[4096];
+	char ch;
+	if((rs=bt_find_cache(cache,ptr))!=NULL) return rs;
+	sprintf(cmd,"addr2line -s -e %s %p\n",priv->argv0,ptr);
+	FILE* in=popen(cmd,"r");
+	if(!in) return NULL;
+	i=0;
+	while(1) {
+	    ch=fgetc(in);
+	    if(feof(in)) break;
+	    if(ch=='\n') break;
+	    result[i++]=ch;
+	    if(i>=sizeof(result)-1) break;
+	}
+	result[i]='\0';
+	pclose(in);
+	centry=bt_append_cache(cache,ptr,result);
+	return centry->str;
+    }
+    return NULL;
+}
+
 static void bt_print_slots(void) {
+    bt_cache_t* cache=init_bt_cache();
     size_t i,j;
     for(i=0;i<priv->nslots;i++) {
 	char *s;
@@ -216,16 +280,18 @@ static void bt_print_slots(void) {
 	}
 	MSG_INFO("\n");
 	for(j=0;j<priv->slots[i].ncalls;j++) {
-	    MSG_INFO("    %p\n",priv->slots[i].calls[j]);
+	    MSG_INFO("%s%p -> %s\n",j==0?"bt=>":"    ",priv->slots[i].calls[j],addr2line(cache,priv->slots[i].calls[j]));
 	}
     }
-    MSG_HINT("For source lines print in (gdb): list *0xADDRESS\n");
+    MSG_HINT("For source lines you may also print in (gdb): list *0xADDRESS\n");
+    uninit_bt_cache(cache);
 }
 /* ================== HEAD FUNCTIONS  ======================= */
-void	mp_init_malloc(unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
+void	mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
 {
     if(!priv) priv=malloc(sizeof(priv_t));
     memset(priv,0,sizeof(priv_t));
+    priv->argv0=argv0;
     priv->rnd_limit=rnd_limit;
     priv->every_nth_call=every_nth_call;
     priv->flags=flags;
@@ -246,7 +312,7 @@ void	mp_uninit_malloc(int verbose)
 any_t* mp_malloc(size_t __size)
 {
     any_t* rb,*rnd_buff=NULL;
-    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
+    if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
     if(priv->every_nth_call && priv->rnd_limit && !priv->flags) {
 	if(priv->total_calls%priv->every_nth_call==0) {
 	    rnd_buff=malloc(rand()%priv->rnd_limit);
@@ -264,7 +330,7 @@ any_t* mp_malloc(size_t __size)
 any_t*	mp_memalign (size_t boundary, size_t __size)
 {
     any_t* rb;
-    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
+    if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
     if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK)) rb=prot_memalign(boundary,__size);
     else if(priv->flags&MPA_FLG_BACKTRACE)			rb=bt_memalign(boundary,__size);
     else							rb=memalign(boundary,__size);
@@ -281,7 +347,7 @@ any_t*	mp_realloc(any_t*__ptr, size_t __size) {
 
 void	mp_free(any_t*__ptr)
 {
-    if(!priv) mp_init_malloc(1000,10,MPA_FLG_RANDOMIZER);
+    if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
     if(__ptr) {
 	if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK))
 	    prot_free(__ptr);
