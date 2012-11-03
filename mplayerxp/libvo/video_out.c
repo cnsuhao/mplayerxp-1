@@ -178,7 +178,7 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     memset(&vo_conf,0,sizeof(vo_conf_t));
     vo_conf.movie_aspect=-1.0;
     vo_conf.flip=-1;
-    vo_conf.da_buffs=64;
+    vo_conf.xp_buffs=64;
     vo_conf.WinID=-1;
 
     vo=mp_mallocz(sizeof(vo_data_t));

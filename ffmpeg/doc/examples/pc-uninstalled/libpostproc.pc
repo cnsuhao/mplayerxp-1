@@ -8,5 +8,5 @@ Description: FFmpeg postprocessing library
 Version: 52.0.100
 Requires: libavutil = 51.73.101
 Conflicts:
-Libs: -L${libdir} -lpostproc 
+Libs: -L${libdir} -lpostproc64 
 Cflags: -I${includedir}

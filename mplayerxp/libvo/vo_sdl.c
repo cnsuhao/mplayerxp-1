@@ -734,7 +734,7 @@ static int setup_surfaces( vo_data_t*vo )
 {
     priv_t *priv = vo->priv;
     unsigned i,retval;
-    priv->num_buffs=vo_conf.da_buffs;
+    priv->num_buffs=vo_conf.xp_buffs;
 #ifdef CONFIG_VIDIX
     if(!vidix_name) {
 #endif

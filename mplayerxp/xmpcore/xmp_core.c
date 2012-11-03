@@ -209,24 +209,53 @@ int audio_play_in_sleep=0;
 /* Min audio buffer to keep mp_free, used to tell differ between full and empty buffer */
 #define MIN_BUFFER_RESERV 8
 
+static unsigned xmp_engine_compute_model(sh_video_t *shv, sh_audio_t *sha) {
+    unsigned rc;
+    rc=0;
+    if(!shv && sha) {
+	switch(mp_conf.xp) {
+	    case XP_UniCore:	rc=XMP_Run_AudioPlayback; break;
+	    default:		rc=XMP_Run_AudioPlayer|XMP_Run_AudioDecoder; break;
+	}
+    } else if(shv && !sha) {
+	switch(mp_conf.xp) {
+	    default:
+	    case XP_UniCore:	rc=XMP_Run_VideoPlayer|XMP_Run_VideoDecoder; break;
+	}
+    } else { /* both shv and sha */
+	switch(mp_conf.xp) {
+	    case XP_UniCore:
+		rc=XMP_Run_VideoPlayer|XMP_Run_VA_Decoder|XMP_Run_AudioPlayer; break;
+	    case XP_DualCore:
+		rc=XMP_Run_VideoPlayer|XMP_Run_VideoDecoder|XMP_Run_AudioPlayback; break;
+	    default: /* TripleCore */
+		rc=XMP_Run_VideoPlayer|XMP_Run_VideoDecoder|XMP_Run_AudioPlayer|XMP_Run_AudioDecoder; break;
+	}
+    }
+    return rc;
+}
+
 int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 {
+    xp_core->flags=xmp_engine_compute_model(shv,sha);
     if(shv) {
 	xp_core->video=mp_mallocz(sizeof(dec_ahead_engine_t));
 	dae_init(xp_core->video,xp_core->num_v_buffs,shv);
     }
-    if(mp_conf.xp>=XP_VideoAudio && sha) {
-	int asize;
-	unsigned o_bps;
-	unsigned min_reserv;
-	o_bps=sha->afilter_inited?sha->af_bps:sha->o_bps;
-	if(xp_core->video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_core->num_v_buffs/shv->fps))+MIN_BUFFER_RESERV;
-	else			asize = o_bps*xp_core->num_a_buffs;
-	/* FIXME: get better indices from asize/real_audio_packet_size */
-	min_reserv = sha->audio_out_minsize;
-	if (o_bps > sha->o_bps)
-	    min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
-	init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
+    if(sha) {
+	if(xmp_test_model(XMP_Run_AudioPlayer)) {
+	    int asize;
+	    unsigned o_bps;
+	    unsigned min_reserv;
+	    o_bps=sha->afilter_inited?sha->af_bps:sha->o_bps;
+	    if(xp_core->video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_core->num_v_buffs/shv->fps))+MIN_BUFFER_RESERV;
+	    else			asize = o_bps*xp_core->num_a_buffs;
+	    /* FIXME: get better indices from asize/real_audio_packet_size */
+	    min_reserv = sha->audio_out_minsize;
+	    if (o_bps > sha->o_bps)
+		min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
+	    init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
+	}
 	xp_core->audio=mp_mallocz(sizeof(dec_ahead_engine_t));
 	dae_init(xp_core->audio,xp_core->num_a_buffs,sha);
     }
@@ -284,12 +313,12 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
 int xmp_run_decoders( void )
 {
     unsigned rc;
-    if((xp_core->audio && mp_conf.xp >= XP_VAFull) || !xp_core->video) {
-	if((rc=xmp_register_thread(xp_core->audio,sig_audio_decode,a_dec_ahead_routine,"audio decoder+af"))==UINT_MAX) return rc;
+    if(xp_core->audio && xmp_test_model(XMP_Run_AudioDecoder)) {
+	if((rc=xmp_register_thread(xp_core->audio,sig_audio_decode,a_dec_ahead_routine,"audio decoder"))==UINT_MAX) return rc;
 	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }
-    if(xp_core->video) {
-	if((rc=xmp_register_thread(xp_core->video,sig_video_decode,xmp_video_decoder,"video+audio decoders+filters"))==UINT_MAX) return rc;
+    if(xp_core->video && xmp_test_model(XMP_Run_VideoDecoder|XMP_Run_VA_Decoder)) {
+	if((rc=xmp_register_thread(xp_core->video,sig_video_decode,xmp_video_decoder,"video+audio decoders"))==UINT_MAX) return rc;
 	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }
     return 0;
@@ -298,11 +327,11 @@ int xmp_run_decoders( void )
 int xmp_run_players(void)
 {
     unsigned rc;
-    if( xp_core->audio && mp_conf.xp >= XP_VAPlay ) {
+    if(xp_core->audio && xmp_test_model(XMP_Run_AudioPlayer|XMP_Run_AudioPlayback)) {
 	if((rc=xmp_register_thread(xp_core->audio,sig_audio_play,audio_play_routine,"audio player"))==UINT_MAX) return rc;
 	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }
-    if( xp_core->video ) {
+    if(xp_core->video && xmp_test_model(XMP_Run_VideoPlayer)) {
 	if((rc=xmp_register_thread(xp_core->video,sig_video_play,xmp_video_player,"video player"))==UINT_MAX) return rc;
 	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
     }

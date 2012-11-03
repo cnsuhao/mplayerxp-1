@@ -188,6 +188,16 @@ static int mpxp_test_antiviral_protection(int verbose)
     return rc;
 }
 
+unsigned xp_num_cpu;
+static unsigned get_number_cpu(void) {
+#ifdef _OPENMP
+    return omp_get_num_procs();
+#else
+    /* TODO ? */
+    return 1;
+#endif
+}
+
 static void mpxp_init_structs(void) {
     mp_data=mp_mallocz(sizeof(mp_data_t));
     mp_data->seek_time=-1;
@@ -201,7 +211,7 @@ static void mpxp_init_structs(void) {
     memset(&x86,-1,sizeof(x86_features_t));
 #endif
     memset(&mp_conf,0,sizeof(mp_conf_t));
-    mp_conf.xp=XP_VAPlay;
+    mp_conf.xp=get_number_cpu();
     mp_conf.audio_id=-1;
     mp_conf.video_id=-1;
     mp_conf.dvdsub_id=-1;
@@ -462,17 +472,6 @@ static int libmpdemux_was_interrupted(int eof)
     }
     return eof;
 }
-
-unsigned xp_num_cpu;
-static unsigned get_number_cpu(void) {
-#ifdef _OPENMP
-    return omp_get_num_procs();
-#else
-    /* TODO ? */
-    return 1;
-#endif
-}
-
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 static void get_mmx_optimizations( void )
@@ -803,7 +802,7 @@ static void show_benchmark_status(void)
 {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
-    if( mp_conf.xp <= XP_Video )
+    if(xmp_test_model(XMP_Run_AudioPlayback))
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
 			,sh_audio->timer-ao_get_delay(ao_data)
 			,(sh_audio->timer>0.5)?100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)sh_audio->timer:0
@@ -1354,7 +1353,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	}
 
 	if (priv->ao_inited && sh_audio) {
-	    if( mp_conf.xp >= XP_VAPlay ) {
+	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=1;
 		while( !dec_ahead_can_aseek ) usleep(0);
 	    }
@@ -1374,7 +1373,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	if(priv->osd_function==OSD_PAUSE) priv->osd_function=OSD_PLAY;
 	if (priv->ao_inited && sh_audio) {
 	    ao_resume(ao_data);	// resume audio
-	    if( mp_conf.xp >= XP_VAPlay ) {
+	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
 	    }
@@ -1712,7 +1711,7 @@ int main(int argc,char* argv[], char *envp[]){
       }
     }
 
-    xp_core->num_a_buffs = vo_conf.da_buffs;
+    xp_core->num_a_buffs = vo_conf.xp_buffs;
 
     init_player();
 
@@ -2002,6 +2001,7 @@ main:
 	,xp_core->mpxp_threads[idx]->name
 	,xp_core->mpxp_threads[idx]->pid
 	,xp_core->mpxp_threads[idx]->pth_id);
+
 //==================== START PLAYING =======================
 
     MSG_OK(MSGTR_StartPlaying);fflush(stdout);
@@ -2018,34 +2018,20 @@ main:
 	eof |= xp_core->audio->eof;
 /*========================== UPDATE TIMERS ============================*/
 	MP_UNIT("Update timers");
+	if(sh_video && input_state.need_repaint) goto repaint;
+	if(sh_audio) eof = xp_core->audio->eof;
+	if(sh_video) eof|=dae_played_eof(xp_core->video);
 	if(!sh_video) {
 	    if(mp_conf.benchmark && mp_conf.verbose) show_benchmark_status();
 	    else mpxp_print_audio_status();
-
-	    if(mp_conf.xp >= XP_VAPlay) { usleep(100000); eof = xp_core->audio->eof; }
-	    goto read_input;
-	} else {
-	    int l_eof;
-
-/*========================== PLAY VIDEO ============================*/
-	    if(input_state.need_repaint) goto repaint;
-	    if((sh_video->is_static ||(stream->type&STREAMTYPE_MENU)==STREAMTYPE_MENU) && xp_core->video->num_played_frames) {
-	/* don't decode if it's picture */
-		usleep(0);
-	    } else {
+	}
+	usleep(250000);
+//read_input:
+	vo_check_events(vo_data);
 repaint:
-		usleep(100000);
-		l_eof = dae_played_eof(xp_core->video);
-		//mpxp_play_video(rtc_fd);
-		eof |= l_eof;
-		if(eof) goto do_loop;
-	    }
-	    vo_check_events(vo_data);
-read_input:
 #ifdef USE_OSD
-	    if((mpxp_paint_osd(&osd.visible,&in_pause))!=0) goto repaint;
+	if((mpxp_paint_osd(&osd.visible,&in_pause))!=0) goto repaint;
 #endif
-	} /* else if(!sh_video) */
 
 //================= Keyboard events, SEEKing ====================
 
@@ -2064,7 +2050,6 @@ read_input:
 		seek_args.secs += d;
 	    mp_conf.seek_to_sec = NULL;
 	}
-do_loop:
   /* Looping. */
 	if(eof && mp_conf.loop_times>=0) {
 	    MSG_V("loop_times = %d, eof = %d\n", mp_conf.loop_times,eof);

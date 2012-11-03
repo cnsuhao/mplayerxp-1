@@ -285,7 +285,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 
     if ( vo_FS(vo) ) { vo->dest.w=d_width; vo->dest.h=d_height; }
 
-    priv->num_buffers=vo_conf.da_buffs;
+    priv->num_buffers=vo_conf.xp_buffs;
 
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
 

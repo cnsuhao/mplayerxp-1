@@ -69,7 +69,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     size_t i;
     priv->image_width = width;
     priv->image_height = height;
-    priv->num_frames = vo_conf.da_buffs;
+    priv->num_frames = vo_conf.xp_buffs;
     priv->fourcc=format;
     UNUSED(d_width);
     UNUSED(d_height);

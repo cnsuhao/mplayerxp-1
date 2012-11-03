@@ -15,9 +15,7 @@
 #include "libmpdemux/demuxer_r.h"
 #include "libvo/video_out.h"
 
-//#define ENABLE_DEC_AHEAD_DEBUG 1
-
-enum xp_modes { XP_NA=0, XP_Video, XP_VideoAudio, XP_VAPlay, XP_VAFull };
+enum xp_modes { XP_NA=0, XP_UniCore, XP_DualCore, XP_TripleCore, XP_MultiCore };
 
 typedef struct xmp_frame_s
 {
@@ -56,6 +54,15 @@ enum mpxp_thread_state { Pth_Stand=0, Pth_Canceling, Pth_Run, Pth_Sleep, Pth_ASl
 typedef any_t*(*mpxp_routine_t)(any_t*);
 typedef void (*sig_handler_t)(void);
 
+typedef enum xmp_model {
+    XMP_Run_AudioPlayer		=0x00000001,
+    XMP_Run_AudioPlayback	=0x00000002, /* audio player+decoder together */
+    XMP_Run_VideoPlayer		=0x00000004,
+    XMP_Run_VA_Decoder		=0x00000008, /* audio+video decoders together */
+    XMP_Run_AudioDecoder	=0x00000010,
+    XMP_Run_VideoDecoder	=0x00000020
+}xmp_model_e;
+
 typedef struct mpxp_thread_s {
     unsigned		p_idx;
     const char*		name;
@@ -76,6 +83,7 @@ typedef struct initial_audio_pts_correction_s
 }initial_audio_pts_correction_t;
 
 typedef struct xp_core_s {
+    xmp_model_e			flags;
     dec_ahead_engine_t*		video;
     dec_ahead_engine_t*		audio;
     volatile int		in_pause;
@@ -92,6 +100,8 @@ typedef struct xp_core_s {
     initial_audio_pts_correction_t initial_apts_corr;
 }xp_core_t;
 extern xp_core_t *xp_core;
+
+static inline int xmp_test_model(unsigned value) { return (xp_core->flags&value)!=0; }
 
 extern void		xmp_init(void);
 extern void		xmp_uninit(void);

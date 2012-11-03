@@ -724,7 +724,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heig
     dest_frame_size = priv->width*HW_MODE.vdm_bytespp*priv->vp_height;
 
     priv->num_buffers = (ram_size*1024)/dest_frame_size;
-    if(priv->num_buffers > vo_conf.da_buffs) priv->num_buffers = vo_conf.da_buffs;
+    if(priv->num_buffers > vo_conf.xp_buffs) priv->num_buffers = vo_conf.xp_buffs;
     if(priv->num_buffers > MAX_DRI_BUFFERS) priv->num_buffers = MAX_DRI_BUFFERS;
 
     for(freq=1;freq<priv->num_buffers;freq++) {

@@ -52,8 +52,6 @@ LIBVO_EXTERN(vesa)
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-#define UNUSED(x) ((void)(x)) /**< Removes warning about unused arguments */
-
 static vo_info_t vo_info =
 {
 	"VESA VBE 2.0 video output"
@@ -602,7 +600,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 		     ,vsize);
 		MSG_V(" at %08lXh",(unsigned long)lfb);
 		MSG_V("\n");
-		if(!(priv->multi_size = fillMultiBuffer(vo,vsize,vo_conf.da_buffs))) return -1;
+		if(!(priv->multi_size = fillMultiBuffer(vo,vsize,vo_conf.xp_buffs))) return -1;
 		if(priv->multi_size < 2) MSG_ERR("vo_vesa: Can't use double buffering: not enough video memory\n");
 		else MSG_V("vo_vesa: using %u buffers for multi buffering\n",priv->multi_size);
 	    }

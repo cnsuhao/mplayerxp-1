@@ -132,7 +132,7 @@ typedef struct vo_conf_s {
     int			WinID; /* output window id */
     int			vsync;
 
-    unsigned		da_buffs; /**< contains number of buffers for decoding ahead */
+    unsigned		xp_buffs; /**< contains number of buffers for decoding ahead */
     unsigned		use_bm; /**< indicates user's agreement for using busmastering */
 
     vo_gamma_t		gamma;

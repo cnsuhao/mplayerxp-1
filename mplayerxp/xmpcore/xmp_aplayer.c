@@ -26,7 +26,7 @@
 
 extern ao_data_t*ao_data;
 
-static int decore_audio(demux_stream_t *d_audio,sh_audio_t* sh_audio,sh_video_t*sh_video,unsigned _xp_id )
+static int decore_audio(demux_stream_t *d_audio,sh_audio_t* sh_audio,sh_video_t*sh_video)
 {
     int eof = 0;
 /*========================== PLAY AUDIO ============================*/
@@ -54,11 +54,10 @@ while(sh_audio){
   MP_UNIT("mpca_decode");   // Enter AUDIO decoder module
   t=GetTimer();
   while(sh_audio->a_buffer_len<playsize && !xp_core->audio->eof){
-      if(mp_conf.xp>=XP_VideoAudio) {
+      if(!xmp_test_model(XMP_Run_AudioPlayback)) {
           ret=read_audio_buffer(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
                               playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
-      } else
-      {
+      } else {
           ret=mpca_decode(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
                            playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
@@ -81,14 +80,14 @@ while(sh_audio){
   }
   if(playsize>sh_audio->a_buffer_len) playsize=sh_audio->a_buffer_len;
 
-  if(mp_conf.xp>=XP_VAPlay) dec_ahead_audio_delay=ao_get_delay(ao_data);
+  if(xmp_test_model(XMP_Run_AudioPlayer)) dec_ahead_audio_delay=ao_get_delay(ao_data);
 
   playsize=ao_play(ao_data,sh_audio->a_buffer,playsize,0);
 
   if(playsize>0){
       sh_audio->a_buffer_len-=playsize;
       memcpy(sh_audio->a_buffer,&sh_audio->a_buffer[playsize],sh_audio->a_buffer_len);
-      if(!mp_conf.av_sync_pts && mp_conf.xp>=XP_VAPlay)
+      if(!mp_conf.av_sync_pts && xmp_test_model(XMP_Run_AudioPlayer))
           pthread_mutex_lock(&audio_timer_mutex);
       if(mp_data->use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
@@ -116,7 +115,7 @@ while(sh_audio){
 	  sh_audio->timer=pts+(ret-sh_audio->a_buffer_len)/(float)(sh_audio->af_bps);
       else
 	  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
-      if(!mp_conf.av_sync_pts && mp_conf.xp>=XP_VAPlay)
+      if(!mp_conf.av_sync_pts && xmp_test_model(XMP_Run_AudioPlayer))
           pthread_mutex_unlock(&audio_timer_mutex);
   }
 
@@ -161,6 +160,8 @@ any_t* audio_play_routine( any_t* arg )
     priv->pid = getpid();
     __MP_UNIT(priv->p_idx,"audio_play_routine");
     priv->state=Pth_Run;
+    if(xmp_test_model(XMP_Run_AudioPlayback))
+	priv->name = "audio decoder+player";
     dec_ahead_can_aseek=0;
 
     while(priv->state!=Pth_Canceling) {
@@ -171,7 +172,7 @@ any_t* audio_play_routine( any_t* arg )
 	}
 	__MP_UNIT(priv->p_idx,"audio decore_audio");
 	dec_ahead_audio_delay = NOTHING_PLAYED;
-	eof = decore_audio(d_audio,sh_audio,sh_video,priv->p_idx);
+	eof = decore_audio(d_audio,sh_audio,sh_video);
 
 	if(priv->state==Pth_Canceling) break;
 

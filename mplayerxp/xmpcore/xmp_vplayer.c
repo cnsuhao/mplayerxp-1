@@ -118,7 +118,7 @@ static int vplayer_do_sleep(sh_audio_t* sh_audio,int rtc_fd,float sleep_time)
     if(sh_audio && (!xp_core->audio->eof || ao_get_delay(ao_data)) && sleep_time>XP_MAX_TIMESLICE) {
 	float t;
 
-	if( mp_conf.xp < XP_VAPlay ) {
+	if(xmp_test_model(XMP_Run_AudioPlayback)) {
 	    t=ao_get_delay(ao_data)-XP_MIN_AUDIOBUFF;
 	    if(t>XP_MAX_TIMESLICE)
 		t=XP_MAX_TIMESLICE;
@@ -127,7 +127,7 @@ static int vplayer_do_sleep(sh_audio_t* sh_audio,int rtc_fd,float sleep_time)
 
 	usleep(t*1000000);
 	sleep_time-=GetRelativeTime();
-	if(mp_conf.xp >= XP_VAPlay || t<XP_MAX_TIMESLICE || sleep_time>XP_MAX_TIMESLICE) {
+	if(xmp_test_model(XMP_Run_AudioPlayer) || t<XP_MAX_TIMESLICE || sleep_time>XP_MAX_TIMESLICE) {
 	    // exit due no sound in soundcard
 	    return 0;
 	}
@@ -237,7 +237,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 
     // unplayed bytes in our and soundcard/dma buffer:
     float delay=ao_get_delay(ao_data)+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
-    if(mp_conf.xp>=XP_VideoAudio)
+    if(xmp_test_model(XMP_Run_AudioPlayer))
 	delay += get_delay_audio_buffer();
 
     if(pts_from_bps){
@@ -264,10 +264,10 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	if(x<-max_pts_correction) x=-max_pts_correction;
 	else if(x> max_pts_correction) x= max_pts_correction;
 	max_pts_correction=shva.duration*0.10; // +-10% of time
-	if(mp_conf.xp>=XP_VAPlay)
+	if(xmp_test_model(XMP_Run_AudioPlayer))
 	    pthread_mutex_lock(&audio_timer_mutex);
 	sh_audio->timer+=x;
-	if(mp_conf.xp>=XP_VAPlay)
+	if(xmp_test_model(XMP_Run_AudioPlayer))
 	    pthread_mutex_unlock(&audio_timer_mutex);
 	if(mp_conf.benchmark && mp_conf.verbose) __show_status_line(a_pts,v_pts,delay,AV_delay);
     }

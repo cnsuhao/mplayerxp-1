@@ -39,20 +39,19 @@ fonts.
 .LP
 .SH "XP OPTIONS"
 .TP
-.B \-core.xp\ <0-4>
-start MPlayerXP in XP mode. You should get smoothness (fixed FPS on the screen)
-with UP systems and decoding speedup with SMP.
-    0 : XP mode off
-    1 : Decode video in separate thread
-    2 : Decode audio and video in the same separate thread
-    3 : As 2 plus audio playing in separate thread
-.B [default]
-    4 : Decode video and audio and play audio in three different threads
+.B \-core.xp\
+Specifies number cpus to use for playback.
+    0 : not playback possible. (Immediate exit)
+    1 : build multi-thread model for Uni-Processor systems
+    2 : build multi-thread model for Dual-Processors systems
+    3 : build multi-thread model for Tripple-Processors systems
+    4+: build multi-thread model for Multi-Processors systems
+By default this value is autodetected depends on number CPU, but you
+may force prefered multi-thread model.
 .TP
-.B \-core.da_buffs
+.B \-core.xp_buffs
 Allows you specify number of buffers for decoding ahead.
-You can set it from 5 upto 64. 64 is default. (I recommend to use
-10 buffers as minimum to avoid screen juddering and other negative factors).
+You can set it from 3 upto 1024. 64 is default.
 .I NOTE:
 .B (For both - UP and SMP)
 drivers which provide direct BES access will change it automatically

@@ -1025,7 +1025,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	MSG_DBG2(FBDEV "priv->L123123875 @ %p\n", priv->L123123875);
 	MSG_V(FBDEV "pixel per priv->line: %d\n", priv->line_len / priv->pixel_size);
 
-	priv->total_fr=vo_conf.da_buffs;
+	priv->total_fr=vo_conf.xp_buffs;
 	for(i=0;i<priv->total_fr;i++)
 	    if (!(priv->next_frame[i] = (uint8_t *) mp_malloc(priv->out_width * priv->out_height * priv->pixel_size))) {
 		MSG_ERR(FBDEV "Can't mp_malloc priv->next_frame: %s\n", strerror(errno));

@@ -140,7 +140,7 @@ void vidix_term(vo_data_t* vo)
     vidix_stop(vo);
     vdlClose(priv->handler);
     if(vo_conf.use_bm) {
-	for(i=0;i<vo_conf.da_buffs;i++) {
+	for(i=0;i<vo_conf.xp_buffs;i++) {
 	    if(priv->bm_locked) munlock(priv->bm_buffs[i],priv->play->frame_size);
 	    mp_free(priv->bm_buffs[i]);
 	    priv->bm_buffs[i]=NULL;
@@ -405,7 +405,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
     priv->play->dest.w = dst_width;
     priv->play->dest.h = dst_height;
     priv->play->num_frames=(vo_conf.use_bm!=1)?NUM_FRAMES-1:1;
-    if(priv->play->num_frames > vo_conf.da_buffs) priv->play->num_frames = vo_conf.da_buffs;
+    if(priv->play->num_frames > vo_conf.xp_buffs) priv->play->num_frames = vo_conf.xp_buffs;
     priv->play->src.pitch.y = priv->play->src.pitch.u = priv->play->src.pitch.v = 0;
     if(info) {
 	switch(((const vo_tune_info_t *)info)->pitch[0]) {
@@ -456,7 +456,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
 	if(priv->cap->flags & FLAG_DMA) {
 	    int psize = getpagesize();
 	    priv->bm_locked=1;
-	    for(i=0;i<vo_conf.da_buffs;i++) {
+	    for(i=0;i<vo_conf.xp_buffs;i++) {
 		if(!priv->bm_buffs[i]) priv->bm_buffs[i] = mp_memalign(psize, priv->play->frame_size);
 		if(!(priv->bm_buffs[i])) {
 		    MSG_ERR("Can't allocate memory for busmastering\n");
@@ -592,7 +592,7 @@ ControlCodes __FASTCALL__ vidix_control(vo_data_t* vo,uint32_t request, any_t*da
 	    if(priv->inited) return (*server_control)(vo,request,data);
 	    break;
 	case VOCTRL_GET_NUM_FRAMES:
-	    *(uint32_t *)data = (vo_conf.use_bm == 1) ? vo_conf.da_buffs : priv->play->num_frames;
+	    *(uint32_t *)data = (vo_conf.use_bm == 1) ? vo_conf.xp_buffs : priv->play->num_frames;
 	    return CONTROL_TRUE;
 	case DRI_GET_SURFACE_CAPS:
 	    vidix_dri_get_surface_caps(vo,data);
@@ -624,7 +624,7 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     if(vdlGetVersion() != VIDIX_VERSION) {
 	MSG_FATAL("You have wrong version of VIDIX library\n");
 	mp_free(priv);
-	return NULL;
+	return -1;
     }
     priv->handler = vdlOpen(VIDIX_PATH,
 			drvname ? drvname[0] == ':' ? &drvname[1] : drvname[0] ? drvname : NULL : NULL,
@@ -633,12 +633,12 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     if(priv->handler == NULL) {
 	MSG_FATAL("Couldn't find working VIDIX driver\n");
 	mp_free(priv);
-	return NULL;
+	return -1;
     }
     if((err=vdlGetCapability(priv->handler,priv->cap)) != 0) {
 	MSG_FATAL("Couldn't get capability: %s\n",strerror(err));
 	mp_free(priv);
-	return NULL;
+	return -1;
     }
     else MSG_V("Driver capability: %X\n",priv->cap->flags);
     MSG_V("Using: %s by %s\n",priv->cap->name,priv->cap->author);
@@ -651,5 +651,5 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     }
     priv->vo_server = server;
     priv->inited=1;
-    return priv;
+    return 0;
 }

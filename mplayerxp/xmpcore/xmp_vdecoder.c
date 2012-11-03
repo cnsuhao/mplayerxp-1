@@ -129,8 +129,8 @@ any_t* xmp_video_decoder( any_t* arg )
     MSG_T("\nDEC_AHEAD: entering...\n");
     __MP_UNIT(priv->p_idx,"dec_ahead");
     priv->pid = getpid();
-    if(!(xp_core->audio && mp_conf.xp < XP_VAFull))
-	priv->name = "video decoder+vf";
+    if(!xmp_test_model(XMP_Run_VA_Decoder) && xp_core->audio)
+	priv->name = "video decoder";
     drop_barrier=(float)(xp_core->num_v_buffs/2)*(1/sh_video->fps);
     if(mp_conf.av_sync_pts == -1 && !mp_data->use_pts_fix2)
 	xp_core->bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
@@ -152,7 +152,6 @@ pt_sleep:
 	continue;
     }
     __MP_UNIT(priv->p_idx,"dec_ahead 1");
-
 /* get it! */
 #if 0
     /* prevent reent access to non-reent demuxer */
@@ -243,7 +242,7 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
 	    ,dae_curr_vplayed(),dae_curr_vdecoded());
 	if(priv->state==Pth_Canceling) goto pt_exit;
 	if(priv->state==Pth_Sleep) goto pt_sleep;
-	if(xp_core->audio && mp_conf.xp<XP_VAFull) {
+	if(xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
 	    __MP_UNIT(priv->p_idx,"decode audio");
 	    xp_thread_decode_audio(d_audio);
 	    __MP_UNIT(priv->p_idx,"dec_ahead 5");
@@ -253,7 +252,7 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
 /*------------------------ frame decoded. --------------------*/
 } /* while(!priv->dae->eof)*/
 
-if(xp_core->audio && mp_conf.xp<XP_VAFull) {
+if(xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
     while(!xp_core->audio->eof && priv->state!=Pth_Canceling && priv->state!=Pth_Sleep) {
 	__MP_UNIT(priv->p_idx,"decode audio");
 	if(!xp_thread_decode_audio(d_audio)) usleep(1);
