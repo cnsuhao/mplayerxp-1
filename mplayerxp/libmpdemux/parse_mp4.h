@@ -53,20 +53,18 @@ enum {
     MP4OTI_JPEG			=0x6C, /* JPEG visual stream */
     MP4OTI_13kVoice		=0xE1 /* 3GPP2 */
 };
-/* I define uint24 here for better understanding */
-#ifndef uint24_t
-#define uint24_t uint32_t
-#endif
+
+typedef uint32_t uint24_t;
 
 /* esds_t */
 typedef struct {
   uint8_t  version;
   uint24_t flags;
-  
+
   /* 0x03 ESDescrTag */
   uint16_t ESId;
   uint8_t  streamPriority;
-  
+
   /* 0x04 DecConfigDescrTag */
   uint8_t  objectTypeId;
   uint8_t  streamType;
@@ -74,7 +72,7 @@ typedef struct {
    * only 6bit, followed by:
    * 1bit  upStream
    * 1bit  reserved
-   */  
+   */
   uint24_t bufferSizeDB;
   uint32_t maxBitrate;
   uint32_t avgBitrate;
@@ -92,7 +90,6 @@ typedef struct {
    * for them and doubt they
    * are currently needed ::atmos
    */
-  
 } esds_t;
 
 int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds);
