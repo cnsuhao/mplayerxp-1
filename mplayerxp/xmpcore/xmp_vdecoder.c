@@ -165,10 +165,12 @@ pt_sleep:
 /*--------------------  Decode a frame: -----------------------*/
     in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,sh_video->fps);
     if(in_size<0) {
+	pt_exit_loop:
 	dae_decoded_mark_eof(xp_core->video);
 	priv->dae->eof=1;
 	break;
     }
+    if(mp_conf.play_n_frames>0 && xp_core->video->num_decoded_frames >= mp_conf.play_n_frames) goto pt_exit_loop;
     /* in_size==0: it's or broken stream or demuxer's bug */
     if(in_size==0 && priv->state!=Pth_Canceling) continue;
     /* frame was decoded into current decoder_idx */

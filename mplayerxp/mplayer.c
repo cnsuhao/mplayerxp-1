@@ -2010,11 +2010,6 @@ main:
     while(!eof){
 	int in_pause=0;
 
-	if(mp_conf.play_n_frames>=0){
-	    --mp_conf.play_n_frames;
-	    if(mp_conf.play_n_frames<0) eof = PT_NEXT_ENTRY;
-	}
-
 	eof |= xp_core->audio->eof;
 /*========================== UPDATE TIMERS ============================*/
 	MP_UNIT("Update timers");
