@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"

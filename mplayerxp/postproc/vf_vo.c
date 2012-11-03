@@ -4,7 +4,7 @@
 
 #include "mp_config.h"
 
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "vfcap.h"
 #include "libvo/video_out.h"

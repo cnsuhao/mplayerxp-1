@@ -34,7 +34,7 @@
 
 #include "libvo/img_format.h"
 #include "osdep/mplib.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "pp_msg.h"
 

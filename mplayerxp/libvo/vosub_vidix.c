@@ -33,7 +33,7 @@
 #include "sub.h"
 #include "video_out.h"
 #include "dri_vo.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vo_msg.h"
 
 #ifndef min

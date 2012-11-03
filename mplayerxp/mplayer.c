@@ -23,7 +23,7 @@
 
 #include "version.h"
 #include "mp_config.h"
-#include "sig_hand.h"
+#include "xmpcore/sig_hand.h"
 #include "mplayer.h"
 #include "osdep/mplib.h"
 #include "postproc/swscale.h"

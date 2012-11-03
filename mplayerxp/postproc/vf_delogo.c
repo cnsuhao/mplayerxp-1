@@ -28,7 +28,7 @@
 #include "osdep/cpudetect.h"
 
 #include "libvo/img_format.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
 #include "osdep/mplib.h"

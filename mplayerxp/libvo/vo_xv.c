@@ -36,7 +36,7 @@ LIBVO_EXTERN(xv)
 #include "sub.h"
 #include "aspect.h"
 #include "dri_vo.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 
 #include <X11/extensions/Xv.h>
 #include <X11/extensions/Xvlib.h>

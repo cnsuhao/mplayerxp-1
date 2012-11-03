@@ -23,8 +23,8 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
-SRCS_COMMON = mp_msg.c mp_image.c
-SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c sig_hand.c dump.c
+SRCS_COMMON = mp_msg.c
+SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c dump.c
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 

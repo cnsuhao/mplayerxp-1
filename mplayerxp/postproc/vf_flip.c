@@ -23,7 +23,7 @@
 #include "config.h"
 #include "pp_msg.h"
 
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vf.h"
 
 #include "libvo/video_out.h"

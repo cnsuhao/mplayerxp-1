@@ -19,7 +19,7 @@
 #include "libmpconf/cfgparser.h"
 
 #include "libvo/img_format.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 
 #include "menu.h"
 #include "menu_list.h"

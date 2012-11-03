@@ -9,7 +9,7 @@
 #include "osdep/mplib.h"
 
 #include "libvo/img_format.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vf.h"
 
 #include "postprocess.h"

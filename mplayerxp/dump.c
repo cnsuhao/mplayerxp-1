@@ -10,7 +10,7 @@
 #include "mp_config.h"
 
 #include "dump.h"
-#include "sig_hand.h"
+#include "xmpcore/sig_hand.h"
 #include "help_mp.h"
 #include "input/input.h"
 #include "mplayer.h"

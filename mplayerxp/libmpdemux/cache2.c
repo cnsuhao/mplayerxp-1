@@ -14,7 +14,7 @@
 #include <pthread.h>
 
 #include "stream.h"
-#include "sig_hand.h"
+#include "xmpcore/sig_hand.h"
 #include "osdep/timer.h"
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"

@@ -7,7 +7,7 @@
 #include "loader/wine/avifmt.h"
 #include "loader/wine/vfw.h"
 
-#include "../mp_image.h"
+#include "xmpcore/mp_image.h"
 
 typedef struct sh_audio_s {
     int			aid;

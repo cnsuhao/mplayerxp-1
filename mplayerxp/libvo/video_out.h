@@ -20,7 +20,7 @@
 #include "sub.h"
 #include "libmpsub/subreader.h"
 #include "img_format.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "xmpcore/xmp_enums.h"
 
 enum {

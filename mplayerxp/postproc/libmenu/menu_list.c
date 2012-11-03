@@ -7,7 +7,7 @@
 
 #include "libvo/img_format.h"
 #include "libvo/sub.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 
 #include "libmpconf/m_struct.h"
 #include "menu.h"

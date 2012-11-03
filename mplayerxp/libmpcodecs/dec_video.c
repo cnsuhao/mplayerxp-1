@@ -18,7 +18,7 @@
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/parse_es.h"
 #include "libmpdemux/stheader.h"
-#include "sig_hand.h"
+#include "xmpcore/sig_hand.h"
 
 #include "libmpconf/codec-cfg.h"
 

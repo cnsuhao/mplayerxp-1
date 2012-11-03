@@ -45,7 +45,7 @@
 #include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
 #include "video_out_internal.h"
 #include "dri_vo.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vo_msg.h"
 LIBVO_EXTERN( x11 )
 

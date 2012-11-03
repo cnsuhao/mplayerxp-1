@@ -128,7 +128,7 @@
 #include "osdep/keycodes.h"
 #include "dri_vo.h"
 #include "video_out_internal.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
 #endif

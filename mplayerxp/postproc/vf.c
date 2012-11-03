@@ -9,7 +9,7 @@
 
 #include "libvo/img_format.h"
 #include "libvo/video_out.h"
-#include "mp_image.h"
+#include "xmpcore/mp_image.h"
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
