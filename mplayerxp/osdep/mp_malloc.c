@@ -41,7 +41,7 @@ typedef struct priv_s {
 static priv_t* priv;
 
 static any_t* prot_page_align(any_t *ptr) { return (any_t*)(((unsigned long)ptr)&(~(__VM_PAGE_SIZE__-1))); }
-static size_t prot_fullsize(size_t size) {
+static size_t app_fullsize(size_t size) {
     unsigned npages = size/__VM_PAGE_SIZE__;
     unsigned fullsize;
     if(size%__VM_PAGE_SIZE__) npages++;
@@ -95,9 +95,11 @@ static void	prot_free_slot(mp_slot_container_t* c,any_t* ptr) {
     } else printf("[prot_free_slot] Internal error! Can't find slot for address: %p\n",ptr);
 }
 
-static any_t* __prot_malloc(size_t size) {
+/* ----------- append ------------ */
+
+static any_t* __prot_malloc_append(size_t size) {
     any_t* rp;
-    size_t fullsize=prot_fullsize(size);
+    size_t fullsize=app_fullsize(size);
     rp=memalign(__VM_PAGE_SIZE__,fullsize);
     if(rp) {
 	prot_append_slot(&priv->mallocs,rp,size);
@@ -108,58 +110,109 @@ static any_t* __prot_malloc(size_t size) {
     return rp;
 }
 
-static any_t* __prot_memalign(size_t boundary,size_t size) { UNUSED(boundary);  return __prot_malloc(size); }
+static any_t* __prot_memalign_append(size_t boundary,size_t size) { UNUSED(boundary);  return __prot_malloc_append(size); }
 
-static void __prot_free(any_t*ptr) {
+static void __prot_free_append(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
-    free(page_ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
-	printf("[__prot_free] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
+	printf("[__prot_free_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
 	kill(getpid(), SIGILL);
     }
-    size_t fullsize=prot_fullsize(slot->size);
+    size_t fullsize=app_fullsize(slot->size);
     mprotect(prot_last_page(page_ptr,fullsize),__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
+    free(page_ptr);
     prot_free_slot(&priv->mallocs,page_ptr);
 }
 
 #define min(a,b) ((a)<(b)?(a):(b))
-static any_t* __prot_realloc(any_t*ptr,size_t size) {
+static any_t* __prot_realloc_append(any_t*ptr,size_t size) {
     any_t* rp;
-    if((rp=__prot_malloc(size))!=NULL && ptr) {
+    if((rp=__prot_malloc_append(size))!=NULL && ptr) {
 	mp_slot_t* slot=prot_find_slot(&priv->mallocs,prot_page_align(ptr));
 	if(!slot) {
-	    printf("[__prot_realloc] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
+	    printf("[__prot_realloc_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
 	    kill(getpid(), SIGILL);
 	}
 	memcpy(rp,ptr,min(slot->size,size));
-	__prot_free(ptr);
+	__prot_free_append(ptr);
+    }
+    return rp;
+}
+
+/* ----------- prepend ------------ */
+static any_t* pre_page_align(any_t *ptr) { return (any_t*)((unsigned long)ptr-__VM_PAGE_SIZE__); }
+static size_t pre_fullsize(size_t size) { return size+__VM_PAGE_SIZE__; }
+
+static any_t* __prot_malloc_prepend(size_t size) {
+    any_t* rp;
+    size_t fullsize=pre_fullsize(size);
+    rp=memalign(__VM_PAGE_SIZE__,fullsize);
+    if(rp) {
+	prot_append_slot(&priv->mallocs,rp,size);
+	// protect last page here
+	mprotect(rp,__VM_PAGE_SIZE__,MP_DENY_ALL);
+	rp+=__VM_PAGE_SIZE__;
+    }
+    return rp;
+}
+
+static any_t* __prot_memalign_prepend(size_t boundary,size_t size) { UNUSED(boundary);  return __prot_malloc_prepend(size); }
+
+static void __prot_free_prepend(any_t*ptr) {
+    any_t *page_ptr=pre_page_align(ptr);
+    mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
+    if(!slot) {
+	printf("[__prot_free_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
+	__prot_print_slots(&priv->mallocs);
+	kill(getpid(), SIGILL);
+    }
+    mprotect(page_ptr,__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
+    free(page_ptr);
+    prot_free_slot(&priv->mallocs,page_ptr);
+}
+
+static any_t* __prot_realloc_prepend(any_t*ptr,size_t size) {
+    any_t* rp;
+    if((rp=__prot_malloc_prepend(size))!=NULL && ptr) {
+	mp_slot_t* slot=prot_find_slot(&priv->mallocs,pre_page_align(ptr));
+	if(!slot) {
+	    printf("[__prot_realloc_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,pre_page_align(ptr));
+	    __prot_print_slots(&priv->mallocs);
+	    kill(getpid(), SIGILL);
+	}
+	memcpy(rp,ptr,min(slot->size,size));
+	__prot_free_prepend(ptr);
     }
     return rp;
 }
 
 static any_t* prot_malloc(size_t size) {
     any_t* rp;
-    rp=__prot_malloc(size);
+    if(priv->flags&MPA_FLG_BOUNDS_CHECK) rp=__prot_malloc_append(size);
+    else				 rp=__prot_malloc_prepend(size);
     return rp;
 }
 
 static any_t* prot_memalign(size_t boundary,size_t size) {
     any_t* rp;
-    rp=__prot_memalign(boundary,size);
+    if(priv->flags&MPA_FLG_BOUNDS_CHECK) rp=__prot_memalign_append(boundary,size);
+    else				 rp=__prot_memalign_prepend(boundary,size);
     return rp;
 }
 
 static any_t* prot_realloc(any_t*ptr,size_t size) {
     any_t* rp;
-    rp=__prot_realloc(ptr,size);
+    if(priv->flags&MPA_FLG_BOUNDS_CHECK) rp=__prot_realloc_append(ptr,size);
+    else				 rp=__prot_realloc_prepend(ptr,size);
     return rp;
 }
 
 static void prot_free(any_t*ptr) {
-    __prot_free(ptr);
+    if(priv->flags&MPA_FLG_BOUNDS_CHECK) __prot_free_append(ptr);
+    else				 __prot_free_prepend(ptr);
 }
 
 static __always_inline any_t* bt_malloc(size_t size) {

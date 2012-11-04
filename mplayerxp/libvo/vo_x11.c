@@ -303,6 +303,8 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo, vo_query_fourcc_t* forma
 	else
 	    return 0x1|0x4;
     }
+// just for tests:
+//if(format->fourcc==IMGFMT_YUY2) return 0x1|0x2|0x4;
     return 0;
 }
 

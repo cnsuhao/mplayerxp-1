@@ -52,12 +52,12 @@
 // local data
 typedef struct af_resample_s
 {
-  any_t*  	w;	// Current filter weights
-  any_t** 	xq; 	// Circular buffers
-  uint32_t	xi; 	// Index for circular buffers
+  any_t*	w;	// Current filter weights
+  any_t**	xq;	// Circular buffers
+  uint32_t	xi;	// Index for circular buffers
   uint32_t	wi;	// Index for w
-  uint32_t	i; 	// Number of new samples to put in x queue 
-  uint32_t  	dn;     // Down sampling factor
+  uint32_t	i;	// Number of new samples to put in x queue 
+  uint32_t	dn;	// Down sampling factor
   uint32_t	up;	// Up sampling factor 
   uint64_t	step;	// Step size for linear interpolation
   uint64_t	pt;	// Pointer remainder for linear interpolation
@@ -100,9 +100,9 @@ static void frac_cancel(frac_t *f) {
 // Fast linear interpolation resample with modest audio quality
 static int __FASTCALL__ linint(af_data_t* c,af_data_t* l, af_resample_t* s)
 {
-  uint32_t	len   = 0; 		// Number of input samples
-  uint32_t	nch   = l->nch;   	// Words pre transfer
-  uint64_t	step  = s->step; 
+  uint32_t	len   = 0;		// Number of input samples
+  uint32_t	nch   = l->nch;		// Words pre transfer
+  uint64_t	step  = s->step;
   int16_t*	in16  = ((int16_t*)c->audio);
   int16_t*	out16 = ((int16_t*)l->audio);
   int32_t*	in32  = ((int32_t*)c->audio);
@@ -110,35 +110,35 @@ static int __FASTCALL__ linint(af_data_t* c,af_data_t* l, af_resample_t* s)
   uint64_t 	end   = ((((uint64_t)c->len)/2LL)<<STEPACCURACY);
   uint64_t	pt    = s->pt;
   uint16_t 	tmp;
-  
+
   switch (nch){
   case 1:
     while(pt < end){
-      out16[len++]=in16[pt>>STEPACCURACY];    	    
+      out16[len++]=in16[pt>>STEPACCURACY];
       pt+=step;
     }
     s->pt=pt & ((1LL<<STEPACCURACY)-1);
-    break;		
+    break;
   case 2:
     end/=2;
     while(pt < end){
-      out32[len++]=in32[pt>>STEPACCURACY];    	    
+      out32[len++]=in32[pt>>STEPACCURACY];
       pt+=step;
     }
     len=(len<<1);
     s->pt=pt & ((1LL<<STEPACCURACY)-1);
     break;
-  default:	
+  default:
     end /=nch;
     while(pt < end){
       tmp=nch;
-      do {	 
-	tmp--;   
-	out16[len+tmp]=in16[tmp+(pt>>STEPACCURACY)*nch];    	    
+      do {
+	tmp--;
+	out16[len+tmp]=in16[tmp+(pt>>STEPACCURACY)*nch];
       } while (tmp);
       len+=nch;
       pt+=step;
-    }	
+    }
     s->pt=pt & ((1LL<<STEPACCURACY)-1);
   }
   return len;
@@ -345,7 +345,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   return CONTROL_UNKNOWN;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -378,7 +378,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
     if(s->up>s->dn){
 #     define UP
 #     include "af_resample.h"
-#     undef UP 
+#     undef UP
     }
     else{
 #     define DN
@@ -392,7 +392,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
     if(s->up>s->dn){
 #     define UP
 #     include "af_resample.h"
-#     undef UP 
+#     undef UP
     }
     else{
 #     define DN

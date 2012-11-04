@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -11,8 +11,8 @@
 /* This file contains the resampling engine, the sample format is
    controlled by the FORMAT parameter, the filter length by the L
    parameter and the resampling type by UP and DN. This file should
-   only be included by af_resample.c 
-*/ 
+   only be included by af_resample.c
+*/
 
 #undef L
 #undef SHIFT
@@ -48,10 +48,10 @@
 #endif
 
 // Short filter
-#if defined(L8) 
+#if defined(L8)
 
-#define L   	8	// Filter length
-// Unrolled loop to speed up execution 
+#define L	8	// Filter length
+// Unrolled loop to speed up execution
 #if !(defined( ARCH_X86 ) || defined(ARCH_X86_64))
 #define FIR(x,w,y) \
   (y[0])  = ( w[0]*x[0]+w[1]*x[1]+w[2]*x[2]+w[3]*x[3] \
@@ -61,7 +61,7 @@
 
 #else  /* L8/L16 */
 
-#define L   	16
+#define L	16
 // Unrolled loop to speed up execution 
 #if !(defined( ARCH_X86 ) || defined(ARCH_X86_64))
 #define FIR(x,w,y) \
@@ -79,8 +79,8 @@
 
 #if defined(UP)
 
-  uint32_t		inc   = s->up/s->dn; 
-  uint32_t		level = s->up%s->dn; 
+  uint32_t		inc   = s->up/s->dn;
+  uint32_t		level = s->up%s->dn;
   register FORMAT*	w     = s->w;
 
   // Index current channel
@@ -111,8 +111,8 @@
 #endif /* UP */
 
 #if defined(DN) /* DN */
-  uint32_t		inc   = s->dn/s->up; 
-  uint32_t		level = s->dn%s->up; 
+  uint32_t		inc   = s->dn/s->up;
+  uint32_t		level = s->dn%s->up;
   FORMAT*		w     = s->w;
 
   // Index current channel
@@ -132,10 +132,8 @@
 	// Run the FIR filter
 	FIR((&x[xi]),(&w[wi*L]),out);
 	len++;	out+=nch;
-
 	// Update wi to point at the correct polyphase component
 	wi=(wi+dn)%up;
-
 	// Insert i number of new samples in queue
 	i = inc;
 	if(wi<level) i++;

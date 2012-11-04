@@ -383,14 +383,14 @@ int af_init(af_stream_t* s, int force_output)
 
   // Figure out how fast the machine is
   if(AF_INIT_AUTO == (AF_INIT_TYPE_MASK & s->cfg.force))
-    s->cfg.force = (s->cfg.force & ~AF_INIT_TYPE_MASK) | AF_INIT_TYPE;
+    s->cfg.force = (s->cfg.force & ~AF_INIT_TYPE_MASK) | AF_INIT_TYPE();
 
   // Check if this is the first call
   if(!s->first){
     // Add all filters in the list (if there are any)
     if(!s->cfg.list){      // To make automatic format conversion work
-      if(!af_append(s,s->first,"ao2")) 
-	return -1; 
+      if(!af_append(s,s->first,"ao2"))
+	return -1;
     }
     else{
       af_name=s->cfg.list;
@@ -405,7 +405,7 @@ int af_init(af_stream_t* s, int force_output)
   }
   if(strcmp(s->last->info->name,"ao2")!=0) if(!af_append(s,s->last,"ao2")) return -1;
 
-  // Init filters 
+  // Init filters
   if(CONTROL_OK != af_reinit(s,s->first))
     return -1;
 
@@ -426,7 +426,7 @@ int af_init(af_stream_t* s, int force_output)
 	    af = af_append(s,s->first,"resample");
 	  else
 	    af = af_prepend(s,s->first,"resample");
-	}		
+	}
 	else{
 	  if(!strcmp(s->last->info->name,"format"))
 	    af = af_prepend(s,s->last,"resample");
@@ -445,9 +445,9 @@ int af_init(af_stream_t* s, int force_output)
 	af->control(af, AF_CONTROL_COMMAND_LINE, args);
       }
       if(CONTROL_OK != af_reinit(s,af))
-      	return -1;
-    }	
-      
+	return -1;
+    }
+
     // Check number of output channels fix if not OK
     // If needed always inserted last -> easy to screw up other filters
     if(s->last->data->nch!=s->output.nch){
@@ -461,7 +461,7 @@ int af_init(af_stream_t* s, int force_output)
       if(CONTROL_OK != af_reinit(s,af))
 	return -1;
     }
-    
+
     // Check output format fix if not OK
     if((s->last->data->format != s->output.format) || 
        (s->last->data->bps != s->output.bps)){
@@ -611,7 +611,7 @@ int __FASTCALL__ af_calc_insize_constrained(af_stream_t* s, int len,
     if( (t * (((in/t)*mul.n))/mul.d) >= len) return in;
     in+=t;
   }
-  
+
   // Could no meet constraint nr 3.
   while(out > max_outsize || in > max_insize){
     in-=t;
@@ -640,11 +640,11 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data)
 {
   // Calculate new length
   register int len = af_lencalc(af->mul,data);
-  MSG_V("[libaf] Reallocating memory in module %s, " 
+  MSG_V("[libaf] Reallocating memory in module %s, "
 	 "old len = %i, new len = %i\n",af->info->name,af->data->len,len);
   // If there is a buffer mp_free it
-  if(af->data->audio) 
-    mp_free(af->data->audio);
+printf("len=%i\n",len);
+  if(af->data->audio) mp_free(af->data->audio);
   // Create new buffer and check that it is OK
   af->data->audio = mp_malloc(len);
   if(!af->data->audio){
@@ -728,10 +728,10 @@ af_stream_t *af_new(any_t*_parent)
 
 void af_showconf(af_instance_t *first)
 {
-  af_instance_t* af=first; 
+  af_instance_t* af=first;
   // ok!
   MSG_INFO("[libaf] Using audio filters chain:\n");
-  // Iterate through all filters 
+  // Iterate through all filters
   do{
 	MSG_INFO("  ");
 	if(af->control(af,AF_CONTROL_SHOWCONF,NULL)!=CONTROL_OK)

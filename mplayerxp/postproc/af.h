@@ -79,9 +79,9 @@ enum {
 // Default init type
 #ifndef AF_INIT_TYPE
 #if defined(HAVE_SSE) || defined(HAVE_3DNOW)
-#define AF_INIT_TYPE (af_cpu_speed?*af_cpu_speed:AF_INIT_FAST)
+static inline int AF_INIT_TYPE(void) { return (af_cpu_speed?*af_cpu_speed:AF_INIT_FAST); }
 #else
-#define AF_INIT_TYPE (af_cpu_speed?*af_cpu_speed:AF_INIT_SLOW)
+static inline int AF_INIT_TYPE(void) { return (af_cpu_speed?*af_cpu_speed:AF_INIT_SLOW); }
 #endif
 #endif
 
@@ -171,8 +171,8 @@ int __FASTCALL__ af_inputlen(af_stream_t* s, int len);
       block length
    2. OUT <= max_outsize, where max_outsize is the maximum possible
       output block length
-   3. If possible OUT >= len. 
-   Return -1 in case of error */ 
+   3. If possible OUT >= len.
+   Return -1 in case of error */
 int __FASTCALL__ af_calc_insize_constrained(af_stream_t* s, int len,
 			       int max_outsize,int max_insize);
 
@@ -219,8 +219,9 @@ extern void af_showconf(af_instance_t *first);
 /* Memory reallocation macro: if a local buffer is used (i.e. if the
    filter doesn't operate on the incoming buffer this macro must be
    called to ensure the buffer is big enough. */
-#define RESIZE_LOCAL_BUFFER(a,d)\
-((a->data->len < af_lencalc(a->mul,d))?af_resize_local_buffer(a,d):CONTROL_OK)
+static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, af_data_t* d) {
+    return (a->data->len < af_lencalc(a->mul,d))?af_resize_local_buffer(a,d):CONTROL_OK;
+}
 
 /* Some other useful macro definitions*/
 #ifndef min

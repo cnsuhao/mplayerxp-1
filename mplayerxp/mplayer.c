@@ -499,7 +499,7 @@ static void get_mmx_optimizations( void )
     gCpuCaps.has3DNowExt=
     gCpuCaps.hasSSE=
     gCpuCaps.hasSSE2=
-    gCpuCaps.hasSSE2=
+    gCpuCaps.hasSSE3=
     gCpuCaps.hasSSSE3=
     gCpuCaps.hasSSE41=
     gCpuCaps.hasSSE42=
