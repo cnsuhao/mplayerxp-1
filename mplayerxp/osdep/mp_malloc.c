@@ -98,7 +98,7 @@ static void	prot_free_slot(mp_slot_container_t* c,any_t* ptr) {
 static any_t* __prot_malloc(size_t size) {
     any_t* rp;
     size_t fullsize=prot_fullsize(size);
-    rp=mp_memalign(__VM_PAGE_SIZE__,fullsize);
+    rp=memalign(__VM_PAGE_SIZE__,fullsize);
     if(rp) {
 	prot_append_slot(&priv->mallocs,rp,size);
 	// protect last page here
@@ -115,13 +115,13 @@ static void __prot_free(any_t*ptr) {
     free(page_ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
-	printf("[__prot_free] suspect call found! Can't find slot for address: %p\n",ptr);
+	printf("[__prot_free] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
 	kill(getpid(), SIGILL);
     }
     size_t fullsize=prot_fullsize(slot->size);
     mprotect(prot_last_page(page_ptr,fullsize),__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
-    prot_free_slot(&priv->mallocs,ptr);
+    prot_free_slot(&priv->mallocs,page_ptr);
 }
 
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -130,7 +130,7 @@ static any_t* __prot_realloc(any_t*ptr,size_t size) {
     if((rp=__prot_malloc(size))!=NULL && ptr) {
 	mp_slot_t* slot=prot_find_slot(&priv->mallocs,prot_page_align(ptr));
 	if(!slot) {
-	    printf("[__prot_realloc] suspect call found! Can't find slot for address: %p\n",ptr);
+	    printf("[__prot_realloc] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
 	    kill(getpid(), SIGILL);
 	}
@@ -367,7 +367,7 @@ any_t* mp_malloc(size_t __size)
 }
 
 /* randomizing of memalign is useless feature */
-any_t*	mp_memalign (size_t boundary, size_t __size)
+any_t*	__FASTCALL__ mp_memalign (size_t boundary, size_t __size)
 {
     any_t* rb;
     if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
