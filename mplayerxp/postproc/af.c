@@ -643,7 +643,6 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data)
   MSG_V("[libaf] Reallocating memory in module %s, "
 	 "old len = %i, new len = %i\n",af->info->name,af->data->len,len);
   // If there is a buffer mp_free it
-printf("len=%i\n",len);
   if(af->data->audio) mp_free(af->data->audio);
   // Create new buffer and check that it is OK
   af->data->audio = mp_malloc(len);

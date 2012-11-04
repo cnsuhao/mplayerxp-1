@@ -130,7 +130,7 @@
       in+=nch;
       if((--i)<=0){
 	// Run the FIR filter
-	FIR((&x[xi]),(&w[wi*L]),out);
+	if(out<l->audio+l->len-L) FIR((&x[xi]),(&w[wi*L]),out);
 	len++;	out+=nch;
 	// Update wi to point at the correct polyphase component
 	wi=(wi+dn)%up;
