@@ -40,7 +40,7 @@ LIBAD_EXTERN(faad)
 typedef struct faad_priv_s
 {
   float pts;
-}faad_priv_t;
+}priv_t;
 
 typedef any_t*NeAACDecHandle;
 typedef struct NeAACDecConfiguration
@@ -160,7 +160,7 @@ static int preinit(sh_audio_t *sh)
 {
   sh->audio_out_minsize=8192*FAAD_MAX_CHANNELS;
   sh->audio_in_minsize=FAAD_BUFFLEN;
-  if(!(sh->context=mp_malloc(sizeof(faad_priv_t)))) return 0;
+  if(!(sh->context=mp_malloc(sizeof(priv_t)))) return 0;
   return load_dll("libfaad"SLIBSUFFIX);
 }
 
@@ -278,7 +278,7 @@ static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 
 static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  faad_priv_t *priv=sh->context;
+  priv_t *priv=sh->context;
   int j = 0;
   unsigned len = 0;
   any_t*NeAAC_sample_buffer;

@@ -45,12 +45,12 @@ typedef struct libdv_priv_s
 {
     dv_decoder_t* decoder;
     int16_t *audioBuffers[4];
-}libdv_priv_t;
+}priv_t;
 
 static int init(sh_audio_t *sh)
 {
   unsigned i;
-  libdv_priv_t *priv;
+  priv_t *priv;
   WAVEFORMATEX *h=sh->wf;
 
   if(!h) return 0;
@@ -59,7 +59,7 @@ static int init(sh_audio_t *sh)
   sh->channels=h->nChannels;
   sh->samplerate=h->nSamplesPerSec;
   sh->samplesize=(h->wBitsPerSample+7)/8;
-  priv = mp_mallocz(sizeof(libdv_priv_t));
+  priv = mp_mallocz(sizeof(priv_t));
   priv->decoder=init_global_rawdv_decoder();
   sh->context = priv;
   for (i=0; i < 4; i++)
@@ -70,7 +70,7 @@ static int init(sh_audio_t *sh)
 
 static void uninit(sh_audio_t *sh_audio)
 {
-  libdv_priv_t *priv = sh_audio->context;
+  priv_t *priv = sh_audio->context;
   unsigned i;
   UNUSED(sh_audio);
   for (i=0; i < 4; i++)
@@ -88,7 +88,7 @@ static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 
 static unsigned decode(sh_audio_t *sh, unsigned char *buf, unsigned minlen, unsigned maxlen,float *pts)
 {
-   libdv_priv_t *priv = sh->context;
+   priv_t *priv = sh->context;
    dv_decoder_t* decoder=priv->decoder;  //global_rawdv_decoder;
    unsigned char* dv_audio_frame=NULL;
    unsigned xx;

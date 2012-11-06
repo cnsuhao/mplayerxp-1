@@ -82,17 +82,17 @@ static void uninit(sh_video_t *sh){
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     mp_image_t* mpi;
     if(len<=0) return NULL; // skipped frame
-    
+
     if(flags&3){
 	// framedrop:
         DMO_VideoDecoder_DecodeInternal(sh->context, data, len, sh->ds->flags&1, 0);
 	return NULL;
     }
-    
+
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/, 
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
-    
+
     if(!mpi){	// temporary!
 	MSG_ERR("couldn't allocate image for cinepak codec\n");
 	return NULL;

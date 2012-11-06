@@ -25,18 +25,18 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(msacm)
 
-typedef struct acm_priv_s
+typedef struct priv_s
 {
   float pts;
   WAVEFORMATEX o_wf;   // out format
   HACMSTREAM srcstream;  // handle
-}acm_priv_t;
+}priv_t;
 
 static int init_acm_audio_codec(sh_audio_t *sh_audio){
     HRESULT ret;
     WAVEFORMATEX *in_fmt=sh_audio->wf;
     unsigned int srcsize=0;
-    acm_priv_t*priv=sh_audio->context;
+    priv_t*priv=sh_audio->context;
 
     MSG_V("======= Win32 (ACM) AUDIO Codec init =======\n");
 
@@ -104,7 +104,7 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
 static int close_acm_audio_codec(sh_audio_t *sh_audio)
 {
     HRESULT ret;
-    acm_priv_t *priv=sh_audio->context;
+    priv_t *priv=sh_audio->context;
 
     ret = acmStreamClose(priv->srcstream, 0);
 
@@ -142,8 +142,8 @@ int init(sh_audio_t *sh_audio)
 int preinit(sh_audio_t *sh_audio)
 {
   /* Win32 ACM audio codec: */
-  acm_priv_t *priv;
-  if(!(sh_audio->context=mp_malloc(sizeof(acm_priv_t)))) return 0;
+  priv_t *priv;
+  if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
   priv=sh_audio->context;
   if(!init_acm_audio_codec(sh_audio)){
     MSG_ERR(MSGTR_ACMiniterror);
@@ -190,7 +190,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	HRESULT hr;
 	DWORD srcsize=0;
 	DWORD len=minlen;
-	acm_priv_t *priv=sh_audio->context;
+	priv_t *priv=sh_audio->context;
 
 	acmStreamSize(priv->srcstream,len , &srcsize, ACM_STREAMSIZEF_DESTINATION);
 	MSG_V("acm says: srcsize=%ld  (bufflen=%d size=%d)  out_size=%d\n",srcsize,sh_audio->a_in_buffer_len,sh_audio->a_in_buffer_size,len);

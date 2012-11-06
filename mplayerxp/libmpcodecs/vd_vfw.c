@@ -39,13 +39,13 @@ LIBVD_EXTERN(vfw)
 LIBVD_EXTERN(vfwex)
 #undef info
 
-typedef struct vfw_priv_s
+typedef struct priv_s
 {
     BITMAPINFOHEADER *o_bih; /* out format */
     HIC hic;
     int ex;
     unsigned char *palette;
-}vfw_priv_t;
+}priv_t;
 
 static void set_csp(BITMAPINFOHEADER *o_bih,unsigned int outfmt){
     int yuv = 0;
@@ -110,7 +110,7 @@ static int init_vfw_video_codec(sh_video_t *sh_video){
   HRESULT ret;
   int temp_len;
   int ex;
-  vfw_priv_t *priv = sh_video->context;
+  priv_t *priv = sh_video->context;
 
   ex = priv->ex;
   MSG_V("======= Win32 (VFW) VIDEO Codec init =======\n");
@@ -193,14 +193,14 @@ static int init_vfw_video_codec(sh_video_t *sh_video){
 
 static int vfw_set_postproc(sh_video_t* sh_video,int quality){
   // Works only with opendivx/divx4 based DLL
-  vfw_priv_t *priv=sh_video->context;
+  priv_t *priv=sh_video->context;
   return ICSendMessage(priv->hic, ICM_USER+80, (long)(&quality) ,NULL);
 }
 
 static int vfw_close_video_codec(sh_video_t *sh_video)
 {
     HRESULT ret;
-    vfw_priv_t *priv=sh_video->context;
+    priv_t *priv=sh_video->context;
     
     ret = priv->ex ? ICDecompressEndEx(priv->hic):ICDecompressEnd(priv->hic);
     if (ret)
@@ -220,7 +220,7 @@ static int vfw_close_video_codec(sh_video_t *sh_video)
 
 // to set/get/query special features/parameters
 static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
-    vfw_priv_t *priv = sh->context;
+    priv_t *priv = sh->context;
     switch(cmd){
     case VDCTRL_QUERY_MAX_PP_LEVEL:
 	return 9;
@@ -252,11 +252,11 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 
 // init driver
 static int init(sh_video_t *sh){
-    vfw_priv_t *priv;
+    priv_t *priv;
     int vfw_ex;
     if(strcmp(sh->codec->driver_name,"vfwex") == 0) vfw_ex=1;
     else					    vfw_ex=0;
-    if(!(priv = mp_malloc(sizeof(vfw_priv_t)))) 
+    if(!(priv = mp_malloc(sizeof(priv_t)))) 
     { 
 	MSG_ERR(MSGTR_OutOfMemory);
 	return 0;
@@ -271,7 +271,7 @@ static int init(sh_video_t *sh){
 // uninit driver
 static void uninit(sh_video_t *sh)
 {
-  vfw_priv_t *priv=sh->context;
+  priv_t *priv=sh->context;
   vfw_close_video_codec(sh);
   mp_free(priv->o_bih);
   mp_free(sh->context);
@@ -279,10 +279,10 @@ static void uninit(sh_video_t *sh)
 
 // decode a frame
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
-    vfw_priv_t *priv = sh->context;
+    priv_t *priv = sh->context;
     mp_image_t* mpi;
     HRESULT ret;
-    
+
     if(len<=0) return NULL; // skipped frame
 
     mpi=mpcodecs_get_image(sh, 

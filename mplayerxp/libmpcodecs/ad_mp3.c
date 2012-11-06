@@ -253,11 +253,11 @@ int preinit(sh_audio_t *sh)
   return rval;
 }
 
-typedef struct mp3_priv_s{
+typedef struct priv_s{
     mpg123_handle *mh;
     off_t pos;
     float pts;
-}mp3_priv_t;
+}priv_t;
 
 int init(sh_audio_t *sh)
 {
@@ -268,11 +268,11 @@ int init(sh_audio_t *sh)
   int err=0,nch,enc;
   unsigned char *indata;
   struct mpg123_frameinfo fi;
-  mp3_priv_t *priv;
+  priv_t *priv;
   sh->samplesize=4;
   sh->sample_format=AFMT_FLOAT32;
   mpg123_init();
-  priv = mp_mallocz(sizeof(mp3_priv_t));
+  priv = mp_mallocz(sizeof(priv_t));
   sh->context = priv;
   priv->mh = mpg123_new(NULL,&err);
   if(err) {
@@ -336,7 +336,7 @@ int init(sh_audio_t *sh)
 
 void uninit(sh_audio_t *sh)
 {
-  mp3_priv_t *priv=sh->context;
+  priv_t *priv=sh->context;
   mpg123_close(priv->mh);
   mpg123_delete(priv->mh);
   mpg123_exit();
@@ -354,7 +354,7 @@ ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 
 unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-    mp3_priv_t *priv=sh->context;
+    priv_t *priv=sh->context;
     unsigned char *indata=NULL,*outdata=NULL;
     int err=MPG123_OK,indata_size=0;
     off_t offset,cpos;

@@ -27,7 +27,7 @@ typedef struct dshow_priv_s
 {
   float pts;
   DS_AudioDecoder* ds_adec;
-}dshow_priv_t;
+}priv_t;
 
 int init(sh_audio_t *sh)
 {
@@ -37,8 +37,8 @@ int init(sh_audio_t *sh)
 
 int preinit(sh_audio_t *sh_audio)
 {
-  dshow_priv_t *priv;
-  if(!(sh_audio->context=mp_malloc(sizeof(dshow_priv_t)))) return 0;
+  priv_t *priv;
+  if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
   priv=sh_audio->context;
   if(!(priv->ds_adec=DS_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf)))
   {
@@ -58,7 +58,7 @@ int preinit(sh_audio_t *sh_audio)
 
 void uninit(sh_audio_t *sh)
 {
-  dshow_priv_t* priv = sh->context;
+  priv_t* priv = sh->context;
   DS_AudioDecoder_Destroy(priv->ds_adec);
   mp_free(priv);
 }
@@ -91,7 +91,7 @@ ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  dshow_priv_t* priv = sh_audio->context;
+  priv_t* priv = sh_audio->context;
   unsigned len=0;
   UNUSED(minlen);
       { unsigned size_in=0;

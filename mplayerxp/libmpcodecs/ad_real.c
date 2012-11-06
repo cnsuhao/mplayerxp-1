@@ -64,10 +64,10 @@ typedef struct {
     any_t* extradata;
 } ra_init_t;
 
-typedef struct {
+typedef struct priv_s {
     any_t*internal;
     float pts;
-} real_priv_t;
+} priv_t;
 
 static int preinit(sh_audio_t *sh){
   // let's check if the driver is available, return 0 if not.
@@ -77,8 +77,8 @@ static int preinit(sh_audio_t *sh){
   any_t* prop;
   char path[4096];
   char cpath[4096];
-  real_priv_t *rpriv;
-  rpriv=sh->context=mp_malloc(sizeof(real_priv_t));
+  priv_t *priv;
+  priv=sh->context=mp_malloc(sizeof(priv_t));
   if(!(handle = dlopen (sh->codec->dll_name, RTLD_LAZY)))
   {
       mp_free(sh->context);
@@ -123,10 +123,10 @@ static int preinit(sh_audio_t *sh){
     if(raOpenCodec2)
     {
 	strcat(cpath,"/");
-	result=raOpenCodec2(&rpriv->internal,cpath);
+	result=raOpenCodec2(&priv->internal,cpath);
     }
     else
-	result=raOpenCodec(&rpriv->internal);
+	result=raOpenCodec(&priv->internal);
     if(result){
       MSG_WARN("Decoder open failed, error code: 0x%X\n",result);
       mp_free(sh->context);
@@ -148,7 +148,7 @@ static int preinit(sh_audio_t *sh){
 	((short*)(sh->wf+1))[4], // codec data length
 	((char*)(sh->wf+1))+10 // extras
     };
-    result=raInitDecoder(rpriv->internal,&init_data);
+    result=raInitDecoder(priv->internal,&init_data);
     if(result){
       MSG_WARN("Decoder init failed, error code: 0x%X\n",result);
       mp_free(sh->context);
@@ -158,27 +158,27 @@ static int preinit(sh_audio_t *sh){
   
     if(raSetPwd){
 	// used by 'SIPR'
-	raSetPwd(rpriv->internal,"Ardubancel Quazanga"); // set password... lol.
+	raSetPwd(priv->internal,"Ardubancel Quazanga"); // set password... lol.
     }
 
-    result=raSetFlavor(rpriv->internal,((short*)(sh->wf+1))[2]);
+    result=raSetFlavor(priv->internal,((short*)(sh->wf+1))[2]);
     if(result){
       MSG_WARN("Decoder flavor setup failed, error code: 0x%X\n",result);
       mp_free(sh->context);
       return 0;
     }
 
-    prop=raGetFlavorProperty(rpriv->internal,((short*)(sh->wf+1))[2],0,&len);
+    prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],0,&len);
     MSG_INFO("Audio codec: [%d] %s\n",((short*)(sh->wf+1))[2],prop);
 
-    prop=raGetFlavorProperty(rpriv->internal,((short*)(sh->wf+1))[2],1,&len);
+    prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],1,&len);
     if(prop){
 	sh->i_bps=((*((int*)prop))+4)/8;
 	MSG_INFO("Audio bitrate: %5.3f kbit/s (%d bps)  \n",(*((int*)prop))*0.001f,sh->i_bps);
     } else
 	sh->i_bps=sh->wf->nAvgBytesPerSec;
 
-//    prop=raGetFlavorProperty(rpriv->internal,((short*)(sh->wf+1))[2],0x13,&len);
+//    prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],0x13,&len);
 //    MSG_INFO("Samples/block?: %d  \n",(*((int*)prop)));
 
   sh->audio_out_minsize=128000; // no idea how to get... :(
@@ -196,9 +196,9 @@ static int init(sh_audio_t *sh_audio){
 
 static void uninit(sh_audio_t *sh){
   // uninit the decoder etc...
-  real_priv_t *rpriv = sh->context;
-  if (raFreeDecoder) raFreeDecoder(rpriv->internal);
-  if (raCloseCodec) raCloseCodec(rpriv->internal);
+  priv_t *priv = sh->context;
+  if (raFreeDecoder) raFreeDecoder(priv->internal);
+  if (raCloseCodec) raCloseCodec(priv->internal);
   mp_free(sh->context);
 }
 
@@ -210,7 +210,7 @@ static const unsigned char sipr_swaps[38][2]={
     {77,80} };
 
 static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
-  real_priv_t *rpriv = sh->context;
+  priv_t *priv = sh->context;
   float null_pts;
   int result;
   unsigned len=0;
@@ -268,15 +268,15 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
       sh->a_in_buffer_size=
       sh->a_in_buffer_len=w*h*sps;
     }
-    rpriv->pts=*pts;
+    priv->pts=*pts;
   }
-  else *pts=rpriv->pts;
+  else *pts=priv->pts;
 
-  result=raDecode(rpriv->internal, sh->a_in_buffer+sh->a_in_buffer_size-sh->a_in_buffer_len, sh->wf->nBlockAlign,
+  result=raDecode(priv->internal, sh->a_in_buffer+sh->a_in_buffer_size-sh->a_in_buffer_len, sh->wf->nBlockAlign,
        buf, &len, -1);
   if((int)len<0) len=0;
   sh->a_in_buffer_len-=sh->wf->nBlockAlign;
-  rpriv->pts=FIX_APTS(sh,rpriv->pts,sh->wf->nBlockAlign);
+  priv->pts=FIX_APTS(sh,priv->pts,sh->wf->nBlockAlign);
 
   return len; // return value: number of _bytes_ written to output buffer,
               // or -1 for EOF (or uncorrectable error)

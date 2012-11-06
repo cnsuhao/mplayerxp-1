@@ -27,10 +27,10 @@ dca_state_t* mpxp_dca_state;
 uint32_t mpxp_dca_accel=0;
 uint32_t mpxp_dca_flags=0;
 
-typedef struct dca_priv_s
+typedef struct priv_s
 {
     float last_pts;
-}dca_priv_t;
+}priv_t;
 
 
 static const ad_info_t info =
@@ -53,14 +53,14 @@ int flags=0;
 int sample_rate=0;
 int bit_rate=0;
 float apts=0.,null_pts;
-dca_priv_t *dca_priv=sh_audio->context;
+priv_t *priv=sh_audio->context;
 
     sh_audio->a_in_buffer_len=0;
     /* sync frame:*/
 while(1){
     while(sh_audio->a_in_buffer_len<16){
 	int c=demux_getc_r(sh_audio->ds,apts?&null_pts:&apts);
-	if(c<0) { dca_priv->last_pts=*pts=apts; return -1; } /* EOF*/
+	if(c<0) { priv->last_pts=*pts=apts; return -1; } /* EOF*/
         sh_audio->a_in_buffer[sh_audio->a_in_buffer_len++]=c;
     }
     length = dca_syncinfo (mpxp_dca_state,sh_audio->a_in_buffer, &flags, &sample_rate, &bit_rate, &flen);
@@ -74,7 +74,7 @@ while(1){
     sh_audio->samplerate=sample_rate;
     sh_audio->i_bps=bit_rate/8;
     demux_read_data_r(sh_audio->ds,sh_audio->a_in_buffer+16,length-16,apts?&null_pts:&apts);
-    dca_priv->last_pts=*pts=apts;
+    priv->last_pts=*pts=apts;
 
     return length;
 }
@@ -128,7 +128,7 @@ int preinit(sh_audio_t *sh)
     }
     sh->audio_out_minsize=mp_conf.ao_channels*sh->samplesize*256*8;
     sh->audio_in_minsize=MAX_AC5_FRAME;
-    sh->context=mp_malloc(sizeof(dca_priv_t));
+    sh->context=mp_malloc(sizeof(priv_t));
     return 1;
 }
 
@@ -217,14 +217,14 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
     sample_t level=1, bias=384;
     unsigned i,nblocks,flags=mpxp_dca_flags|DCA_ADJUST_LEVEL;
     unsigned len=0;
-    dca_priv_t *dca_priv=sh_audio->context;
+    priv_t *priv=sh_audio->context;
     UNUSED(minlen);
     UNUSED(maxlen);
 	if(!sh_audio->a_in_buffer_len)
 	{
 	    if(dca_fillbuff(sh_audio,pts)<0) return len; /* EOF */
 	}
-	else *pts=dca_priv->last_pts;
+	else *pts=priv->last_pts;
 	sh_audio->a_in_buffer_len=0;
 	if (dca_frame (mpxp_dca_state, sh_audio->a_in_buffer, &flags, &level, bias)!=0){
 	    MSG_WARN("dca: error decoding frame\n");

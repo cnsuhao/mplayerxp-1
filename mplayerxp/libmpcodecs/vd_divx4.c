@@ -127,8 +127,7 @@ typedef struct DecInit
 }DecInit;
 
 
-typedef struct
-{
+typedef struct priv_s {
     any_t*pHandle;
     LibQDecoreFunction* decoder;
     int resync;

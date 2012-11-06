@@ -13,9 +13,12 @@
 #include "osdep/cpudetect.h"
 
 #include "libao2/afmt.h"
-#include "ad_a52.h"
 
 #define IEC61937_DATA_TYPE_AC3 1
+
+typedef struct priv_s {
+    float last_pts;
+}priv_t;
 
 struct hwac3info {
   int bitrate, framesize, samplerate, bsmod;

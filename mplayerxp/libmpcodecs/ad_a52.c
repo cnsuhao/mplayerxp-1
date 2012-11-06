@@ -15,10 +15,13 @@
 #include "osdep/mm_accel.h"
 #include "mplayer.h"
 #include "liba52/a52.h"
-#include "ad_a52.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
+
+typedef struct priv_s {
+    float last_pts;
+}priv_t;
 
 #define MAX_AC3_FRAME 3840
 
@@ -48,14 +51,14 @@ int flags=0;
 int sample_rate=0;
 int bit_rate=0;
 float apts=0.,null_pts;
-a52_priv_t *a52_priv=sh_audio->context;
+priv_t *priv=sh_audio->context;
 
     sh_audio->a_in_buffer_len=0;
     /* sync frame:*/
 while(1){
     while(sh_audio->a_in_buffer_len<8){
 	int c=demux_getc_r(sh_audio->ds,apts?&null_pts:&apts);
-	if(c<0) { a52_priv->last_pts=*pts=apts; return -1; } /* EOF*/
+	if(c<0) { priv->last_pts=*pts=apts; return -1; } /* EOF*/
         sh_audio->a_in_buffer[sh_audio->a_in_buffer_len++]=c;
     }
     if(sh_audio->wtag!=0x2000) swab(sh_audio->a_in_buffer,sh_audio->a_in_buffer,8);
@@ -72,7 +75,7 @@ while(1){
     sh_audio->i_bps=bit_rate/8;
     demux_read_data_r(sh_audio->ds,sh_audio->a_in_buffer+8,length-8,apts?&null_pts:&apts);
     if(sh_audio->wtag!=0x2000) swab(sh_audio->a_in_buffer+8,sh_audio->a_in_buffer+8,length-8);
-    a52_priv->last_pts=*pts=apts;
+    priv->last_pts=*pts=apts;
     if(crc16_block(sh_audio->a_in_buffer+2,length-2)!=0)
 	MSG_STATUS("a52: CRC check failed!  \n");
     return length;
@@ -127,7 +130,7 @@ int preinit(sh_audio_t *sh)
   }
   sh->audio_out_minsize=mp_conf.ao_channels*sh->samplesize*256*6;
   sh->audio_in_minsize=MAX_AC3_FRAME;
-  sh->context=mp_malloc(sizeof(a52_priv_t));
+  sh->context=mp_malloc(sizeof(priv_t));
   return 1;
 }
 
@@ -220,12 +223,12 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
     unsigned len=0;
     UNUSED(minlen);
     UNUSED(maxlen);
-    a52_priv_t *a52_priv=sh_audio->context;
+    priv_t *priv=sh_audio->context;
 	if(!sh_audio->a_in_buffer_len)
 	{
 	    if(a52_fillbuff(sh_audio,pts)<0) return len; /* EOF */
 	}
-	else *pts=a52_priv->last_pts;
+	else *pts=priv->last_pts;
 	sh_audio->a_in_buffer_len=0;
 	if (a52_frame (mpxp_a52_state, sh_audio->a_in_buffer, &flags, &level, bias)){
 	    MSG_WARN("a52: error decoding frame\n");

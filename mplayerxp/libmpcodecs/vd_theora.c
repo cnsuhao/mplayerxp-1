@@ -30,11 +30,11 @@ LIBVD_EXTERN(theora)
 #define THEORA_NUM_HEADER_PACKETS 3
 
 
-typedef struct theora_struct_st {
+typedef struct priv_s {
     theora_state st;
     theora_comment cc;
     theora_info inf;
-} theora_struct_t;
+} priv_t;
 
 // to set/get/query special features/parameters
 static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
@@ -52,7 +52,7 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
  * init driver
  */
 static int init(sh_video_t *sh){
-    theora_struct_t *context = NULL;
+    priv_t *priv = NULL;
     int failed = 1;
     int errorCode = 0;
     ogg_packet op;
@@ -72,20 +72,19 @@ static int init(sh_video_t *sh){
     /* this is not a loop, just a context, from which we can break on error */
     do
     {
-       context = (theora_struct_t *)mp_calloc (sizeof (theora_struct_t), 1);
-       sh->context = context;
-       if (!context)
-	  break;
+       priv = (priv_t *)mp_calloc (sizeof (priv_t), 1);
+       sh->context = priv;
+       if (!priv) break;
 
-       theora_info_init(&context->inf);
-       theora_comment_init(&context->cc);
+       theora_info_init(&priv->inf);
+       theora_comment_init(&priv->cc);
 
        /* Read all header packets, pass them to theora_decode_header. */
        for (i = 0; i < THEORA_NUM_HEADER_PACKETS; i++)
        {
           op.bytes = ds_get_packet_r (sh->ds, &op.packet,&pts);
           op.b_o_s = 1;
-          if ( (errorCode = theora_decode_header (&context->inf, &context->cc, &op)) )
+          if ( (errorCode = theora_decode_header (&priv->inf, &priv->cc, &op)) )
           {
             MSG_ERR("Broken Theora header; errorCode=%i!\n", errorCode);
             break;
@@ -95,7 +94,7 @@ static int init(sh_video_t *sh){
           break;
 
        /* now init codec */
-       errorCode = theora_decode_init (&context->st, &context->inf);
+       errorCode = theora_decode_init (&priv->st, &priv->inf);
        if (errorCode)
        {
 	  MSG_ERR("Theora decode init failed: %i \n",
@@ -107,18 +106,18 @@ static int init(sh_video_t *sh){
 
     if (failed)
     {
-       if (context)
+       if (priv)
        {
-	  mp_free (context);
+	  mp_free (priv);
 	  sh->context = NULL;
        }
        return 0;
     }
 
-    if(sh->aspect==0.0 && context->inf.aspect_denominator!=0)
+    if(sh->aspect==0.0 && priv->inf.aspect_denominator!=0)
     {
-       sh->aspect = (float)(context->inf.aspect_numerator * context->inf.frame_width)/
-          (context->inf.aspect_denominator * context->inf.frame_height);
+       sh->aspect = (float)(priv->inf.aspect_numerator * priv->inf.frame_width)/
+          (priv->inf.aspect_denominator * priv->inf.frame_height);
     }
 
     MSG_V("INFO: Theora video init ok!\n");
@@ -131,12 +130,12 @@ static int init(sh_video_t *sh){
  */
 static void uninit(sh_video_t *sh)
 {
-   theora_struct_t *context = (theora_struct_t *)sh->context;
+   priv_t *priv = (priv_t *)sh->context;
 
-   if (context)
+   if (priv)
    {
-      theora_clear (&context->st);
-      mp_free (context);
+      theora_clear (&priv->st);
+      mp_free (priv);
    }
 }
 
@@ -145,7 +144,7 @@ static void uninit(sh_video_t *sh)
  */
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags) 
 {
-   theora_struct_t *context = (theora_struct_t *)sh->context;
+   priv_t *priv = (priv_t *)sh->context;
    int errorCode = 0;
    ogg_packet op;
    yuv_buffer yuv;
@@ -157,7 +156,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
    op.packet = data;
    op.granulepos = -1;
 
-   errorCode = theora_decode_packetin (&context->st, &op);
+   errorCode = theora_decode_packetin (&priv->st, &op);
    if (errorCode)
    {
       MSG_ERR("Theora decode packetin failed: %i \n",
@@ -165,7 +164,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
       return NULL;
    }
 
-   errorCode = theora_decode_YUVout (&context->st, &yuv);
+   errorCode = theora_decode_YUVout (&priv->st, &yuv);
    if (errorCode)
    {
       MSG_ERR("Theora decode YUVout failed: %i \n",
@@ -174,7 +173,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
    }
 
     mpi = mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
-    
+
     mpi->planes[0]=yuv.y;
     mpi->stride[0]=yuv.y_stride;
     mpi->planes[1]=yuv.u;

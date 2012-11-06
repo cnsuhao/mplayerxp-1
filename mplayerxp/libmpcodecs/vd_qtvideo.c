@@ -288,7 +288,7 @@ static int init(sh_video_t *sh){
 	    break;
 	default:
 	    MSG_ERR("Unknown requested csp\n");
-	    return(0);    
+	    return(0);
     }
     MSG_V("imgfmt: %s qt_imgfmt: %.4s\n", vo_format_name(imgfmt), &qt_imgfmt);
     sh->context = qt_imgfmt;
@@ -314,7 +314,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     int i;
     mp_image_t* mpi;
     ComponentResult cres;
-    
+
     if(len<=0) return NULL; // skipped frame
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_STATIC, MP_IMGFLAG_PRESERVE, 
@@ -327,13 +327,13 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 
 if(!codec_inited){
     result = QTNewGWorldFromPtr(
-        &OutBufferGWorld,  
+        &OutBufferGWorld,
 //        kYUVSPixelFormat, //pixel format of new GWorld == YUY2
 	sh->context,
         &OutBufferRect,   //we should benchmark if yvu9 is faster for svq3, too
-        0, 
-        0, 
-        0, 
+        0,
+        0,
+        0,
         mpi->planes[0],
         mpi->stride[0]);
     MSG_V("NewGWorldFromPtr returned:%d\n",65536-(result&0xffff));
@@ -356,7 +356,7 @@ if(!codec_inited){
     decpar.accuracy = codecNormalQuality;
 //    decpar.port = OutBufferGWorld;
 //    decpar.preferredOffscreenPixelSize=17207;
-    
+
 //    decpar.sequenceID=mp_malloc(1000);
 //    memset(decpar.sequenceID,0,1000);
 
@@ -367,13 +367,13 @@ if(!codec_inited){
 
 //    decpar.srcRect = SrcRect;
     decpar.srcRect = OutBufferRect;
-    
+
     decpar.transferMode = srcCopy;
     decpar.dstPixMap = **GetGWorldPixMap( OutBufferGWorld);//destPixmap; 
-  
+
     cres=ImageCodecPreDecompress(ci,&decpar);
     MSG_V("ImageCodecPreDecompress cres=0x%X\n",cres);
-    
+
     if(decpar.wantedDestinationPixelTypes)
     { OSType *p=*(decpar.wantedDestinationPixelTypes);
       if(p) while(*p){
@@ -381,7 +381,6 @@ if(!codec_inited){
 	  ++p;
       }
     }
-    
 
 //    decpar.conditionFlags=0x10FFF; // first
 //    decpar.preferredOffscreenPixelSize=17207;

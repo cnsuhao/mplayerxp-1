@@ -265,7 +265,7 @@ static int init(sh_video_t *sh){
 	xvid_gbl_info_t xvid_gbl_info;
 	xvid_gbl_init_t xvid_ini;
 	xvid_dec_create_t dec_p;
-	priv_t* p;
+	priv_t* priv;
 	int cs;
 
     if(!load_lib("libxvidcore"SLIBSUFFIX)) return 0;
@@ -363,21 +363,21 @@ static int init(sh_video_t *sh){
 		,xvid_gbl_info.num_threads
 		,xvid_gbl_info.cpu_flags);
 
-	p = mp_mallocz(sizeof(priv_t));
-	p->cs = cs;
-	p->hdl = dec_p.handle;
-	p->vo_initialized = 0;
-	sh->context = p;
+	priv = mp_mallocz(sizeof(priv_t));
+	priv->cs = cs;
+	priv->hdl = dec_p.handle;
+	priv->vo_initialized = 0;
+	sh->context = priv;
 
 	switch(cs) {
 	case XVID_CSP_INTERNAL:
-		p->img_type = MP_IMGTYPE_EXPORT;
+		priv->img_type = MP_IMGTYPE_EXPORT;
 		break;
 	case XVID_CSP_USER:
-		p->img_type = MP_IMGTYPE_STATIC;
+		priv->img_type = MP_IMGTYPE_STATIC;
 		break;
 	default:
-		p->img_type = MP_IMGTYPE_TEMP;
+		priv->img_type = MP_IMGTYPE_TEMP;
 		break;
 	}
 	return mpcodecs_config_vo(sh, sh->src_w, sh->src_h, NULL);
@@ -385,10 +385,10 @@ static int init(sh_video_t *sh){
 
 // uninit driver
 static void uninit(sh_video_t *sh){
-    priv_t* p = sh->context;
-    if(!p) return;
-    (*xvid_decore_ptr)(p->hdl,XVID_DEC_DESTROY, NULL, NULL);
-    mp_free(p);
+    priv_t* priv = sh->context;
+    if(!priv) return;
+    (*xvid_decore_ptr)(priv->hdl,XVID_DEC_DESTROY, NULL, NULL);
+    mp_free(priv);
     dlclose(dll_handle);
 }
 
@@ -399,8 +399,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	xvid_dec_stats_t stats;
 	mp_image_t* mpi = NULL;
 	int consumed;
-	priv_t* p = sh->context;
-
+	priv_t* priv = sh->context;
 
 	if(!data || len <= 0) return NULL;
 
@@ -412,21 +411,21 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	dec.bitstream = data;
 	dec.length = len;
 	dec.general = 0;
-	dec.brightness = p->brightness;
-	if(!p->pp_level)	dec.general |= XVID_LOWDELAY | XVID_DEC_FAST;
-	if(p->pp_level>0)	dec.general = 0;
-	if(p->pp_level>1)	dec.general |= XVID_DEBLOCKY;
-	if(p->pp_level>2)	dec.general |= XVID_DEBLOCKUV;
-	if(p->pp_level>3)	dec.general |= XVID_DERINGY;
-	if(p->pp_level>4)	dec.general |= XVID_DERINGUV;
-	if(p->resync)		{ dec.general |= XVID_DISCONTINUITY; p->resync=0; }
+	dec.brightness = priv->brightness;
+	if(!priv->pp_level)	dec.general |= XVID_LOWDELAY | XVID_DEC_FAST;
+	if(priv->pp_level>0)	dec.general = 0;
+	if(priv->pp_level>1)	dec.general |= XVID_DEBLOCKY;
+	if(priv->pp_level>2)	dec.general |= XVID_DEBLOCKUV;
+	if(priv->pp_level>3)	dec.general |= XVID_DERINGY;
+	if(priv->pp_level>4)	dec.general |= XVID_DERINGUV;
+	if(priv->resync)	{ dec.general |= XVID_DISCONTINUITY; priv->resync=0; }
 
 	if(flags&3) dec.general |= XVID_DEC_DROP;
-	dec.output.csp = p->cs;
-	mpi = mpcodecs_get_image(sh, p->img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
+	dec.output.csp = priv->cs;
+	mpi = mpcodecs_get_image(sh, priv->img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
 				 sh->src_w, sh->src_h);
 	if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
-	if(p->cs != XVID_CSP_INTERNAL) {
+	if(priv->cs != XVID_CSP_INTERNAL) {
 	    dec.output.plane[0] = mpi->planes[0];
 	    dec.output.plane[1] = mpi->planes[1];
 	    dec.output.plane[2] = mpi->planes[2];
@@ -437,7 +436,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	while(dec.length > 0) {
 
 		/* Decode data */
-		consumed = (*xvid_decore_ptr)(p->hdl, XVID_DEC_DECODE, &dec, &stats);
+		consumed = (*xvid_decore_ptr)(priv->hdl, XVID_DEC_DECODE, &dec, &stats);
 		if (consumed < 0) {
 			MSG_ERR("Decoding error\n");
 			return NULL;
@@ -446,7 +445,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 		dec.bitstream += consumed;
 		dec.length -= consumed;
 	}
-	if (mpi != NULL && p->cs == XVID_CSP_INTERNAL) {
+	if (mpi != NULL && priv->cs == XVID_CSP_INTERNAL) {
 	    mpi->planes[0] = dec.output.plane[0];
 	    mpi->planes[1] = dec.output.plane[1];
 	    mpi->planes[2] = dec.output.plane[2];
@@ -460,14 +459,14 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 
 // to set/get/query special features/parameters
 static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
-    priv_t* p = sh->context;
+    priv_t* priv = sh->context;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    return 5; // for xvid_linux
 	case VDCTRL_SET_PP_LEVEL: {
 	    int quality=*((int*)arg);
 	    if(quality<0 || quality>5) quality=5;
-	    p->pp_level=quality;
+	    priv->pp_level=quality;
 	    return CONTROL_OK;
 	}
 	case VDCTRL_SET_EQUALIZER: {
@@ -479,24 +478,24 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 
 	    if(strcmp(arg,VO_EC_BRIGHTNESS)!=0) return CONTROL_FALSE;
 	
-	    p->brightness = (value * 256) / 100;
+	    priv->brightness = (value * 256) / 100;
 	    return CONTROL_OK;
 	}
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YUY2 ||
-		*((int*)arg) == IMGFMT_UYVY || 
-		*((int*)arg) == IMGFMT_YVYU || 
-		*((int*)arg) == IMGFMT_YV12 || 
-		*((int*)arg) == IMGFMT_I420 || 
-		*((int*)arg) == IMGFMT_IYUV || 
-		*((int*)arg) == IMGFMT_BGR15 || 
-		*((int*)arg) == IMGFMT_BGR16 || 
-		*((int*)arg) == IMGFMT_BGR24 || 
+		*((int*)arg) == IMGFMT_UYVY ||
+		*((int*)arg) == IMGFMT_YVYU ||
+		*((int*)arg) == IMGFMT_YV12 ||
+		*((int*)arg) == IMGFMT_I420 ||
+		*((int*)arg) == IMGFMT_IYUV ||
+		*((int*)arg) == IMGFMT_BGR15 ||
+		*((int*)arg) == IMGFMT_BGR16 ||
+		*((int*)arg) == IMGFMT_BGR24 ||
 		*((int*)arg) == IMGFMT_BGR32)
 			return CONTROL_TRUE;
-	    else 	return CONTROL_FALSE;
+	    else	return CONTROL_FALSE;
 	case VDCTRL_RESYNC_STREAM:
-	    p->resync=1;
+	    priv->resync=1;
 	    return CONTROL_TRUE;
 	default: break;
     }

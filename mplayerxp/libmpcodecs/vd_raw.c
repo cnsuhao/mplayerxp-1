@@ -53,7 +53,7 @@ static void uninit(sh_video_t *sh){
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     mp_image_t* mpi;
     if(len<=0) return NULL; // skipped frame
-    
+
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0, 
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
@@ -91,7 +91,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	mpi->planes[0]=data;
 	mpi->stride[0]=mpi->width*((mpi->bpp+7)/8);
     }
-    
+
     return mpi;
 }
 

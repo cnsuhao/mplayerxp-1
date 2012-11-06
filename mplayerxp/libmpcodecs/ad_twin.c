@@ -212,7 +212,7 @@ static int   (__cdecl* TvqGetNumFixedBitsPerFrame_ptr)();
 #define	BYTE_BIT	8
 #define	BBUFSIZ		1024		/* Bit buffer size (bytes) */
 #define	BBUFLEN		(BBUFSIZ*BYTE_BIT)	/* Bit buffer length (bits) */
-typedef struct vqf_priv_s
+typedef struct priv_s
 {
   float pts;
   WAVEFORMATEX o_wf;   // out format
@@ -226,7 +226,7 @@ typedef struct vqf_priv_s
   int ptr;           /* current point in the bit buffer */
   int nbuf;          /* bit buffer size */
   char buf[BBUFSIZ];  /* the bit buffer */
-}vqf_priv_t;
+}priv_t;
 
 static HINSTANCE vqf_dll;
 
@@ -259,7 +259,7 @@ static int load_dll( const char *libname )
 
 static int init_vqf_audio_codec(sh_audio_t *sh_audio){
     WAVEFORMATEX *in_fmt=sh_audio->wf;
-    vqf_priv_t*priv=sh_audio->context;
+    priv_t*priv=sh_audio->context;
     int ver;
     MSG_V("======= Win32 (TWinVQ) AUDIO Codec init =======\n");
 
@@ -314,7 +314,7 @@ static int init_vqf_audio_codec(sh_audio_t *sh_audio){
 
 static int close_vqf_audio_codec(sh_audio_t *sh_audio)
 {
-    vqf_priv_t*priv=sh_audio->context;
+    priv_t*priv=sh_audio->context;
     TvqTerminate(&priv->index);
     return 1;
 }
@@ -328,8 +328,8 @@ int init(sh_audio_t *sh_audio)
 int preinit(sh_audio_t *sh_audio)
 {
   /* Win32 VQF audio codec: */
-  vqf_priv_t *priv;
-  if(!(sh_audio->context=mp_malloc(sizeof(vqf_priv_t)))) return 0;
+  priv_t *priv;
+  if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
   priv=sh_audio->context;
   if(!load_dll((const char *)sh_audio->codec->dll_name))
   {
@@ -384,7 +384,7 @@ static int bread(char	*data,    /* Output: Output data array */
     int	 ibits, iptr, idata, ibufadr, ibufbit, icl;
     unsigned char mask, tmpdat;
     int  retval;
-    vqf_priv_t *priv=sh->context;
+    priv_t *priv=sh->context;
 	
     /*--- Main operation ---*/
     retval = 0;
@@ -529,7 +529,7 @@ static int GetPpcInfo( tvqConfInfo *cf, INDEX *index, sh_audio_t *sh)
 {
 	int idiv, i_sup;
 	int bitcount = 0;
-	vqf_priv_t*priv=sh->context;
+	priv_t*priv=sh->context;
 	float pts;
 	
 	for ( idiv=0; idiv<cf->N_DIV_P; idiv++ ){
@@ -570,7 +570,7 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *index,float *pts)
 	int bitcount;
 	int numFixedBitsPerFrame = TvqGetNumFixedBitsPerFrame();
 	int btype;
-	vqf_priv_t *priv=sh->context;
+	priv_t *priv=sh->context;
 	
 	/*--- Initialization ---*/
 	variableBits = 0;
@@ -637,7 +637,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 {
 	unsigned l,len=0;
 	float null_pts;
-	vqf_priv_t *priv=sh_audio->context;
+	priv_t *priv=sh_audio->context;
 	UNUSED(maxlen);
 	while(len<minlen)
 	{

@@ -64,14 +64,14 @@ static void uninit(sh_video_t *sh){
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
 {
    mp_image_t* mpi;
-   dv_decoder_t *decoder=sh->context;
+   dv_decoder_t *priv=sh->context;
 
    if(len<=0 || (flags&3)){
 //      fprintf(stderr,"decode() (rawdv) SKIPPED\n");
       return NULL; // skipped frame
    }
 
-   dv_parse_header(decoder, data);
+   dv_parse_header(priv, data);
 
    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, sh->src_w, sh->src_h);
 
@@ -80,7 +80,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
       return NULL;
    }
 
-   dv_decode_full_frame(decoder, data, e_dv_color_yuv, mpi->planes, mpi->stride);
+   dv_decode_full_frame(priv, data, e_dv_color_yuv, mpi->planes, mpi->stride);
 
    return mpi;
 }

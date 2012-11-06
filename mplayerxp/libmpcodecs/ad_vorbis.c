@@ -29,17 +29,17 @@ LIBAD_EXTERN(vorbis)
 #include <vorbis/codec.h>
 
 // This struct is also defined in demux_ogg.c => common header ?
-typedef struct ov_struct_st {
+typedef struct priv_s {
   vorbis_info      vi; /* struct that stores all the static vorbis bitstream
 			  settings */
   vorbis_comment   vc; /* struct that stores all the bitstream user comments */
   vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
   vorbis_block     vb; /* local working space for packet->PCM decode */
-} ov_struct_t;
+} priv_t;
 
 static int preinit(sh_audio_t *sh)
 {
-  if(!(sh->context=mp_malloc(sizeof(ov_struct_t)))) return 0;
+  if(!(sh->context=mp_malloc(sizeof(priv_t)))) return 0;
   sh->audio_out_minsize=1024*4; // 1024 samples/frame
   return 1;
 }
@@ -48,7 +48,7 @@ static int init(sh_audio_t *sh)
 {
   ogg_packet op;
   vorbis_comment vc;
-  struct ov_struct_st *ov;
+  priv_t *ov;
   float pts;
 
   /// Init the decoder with the 3 header packets
@@ -145,7 +145,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
         int samples;
         float **pcm;
         ogg_packet op;
-        struct ov_struct_st *ov = sh->context;
+        priv_t *ov = sh->context;
         op.b_o_s =  op.e_o_s = 0;
 	while(len < minlen) {
 	  /* if file contains audio only steam there is no pts */

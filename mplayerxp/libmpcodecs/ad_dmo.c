@@ -33,7 +33,7 @@ typedef struct dmo_priv_s
 {
   float pts;
   DMO_AudioDecoder* ds_adec;
-}dmo_priv_t;
+}priv_t;
 
 static int init(sh_audio_t *sh)
 {
@@ -43,10 +43,10 @@ static int init(sh_audio_t *sh)
 
 static int preinit(sh_audio_t *sh_audio)
 {
-  dmo_priv_t*priv;
+  priv_t*priv;
   int chans=(mp_conf.ao_channels==sh_audio->wf->nChannels) ?
       mp_conf.ao_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
-  if(!(sh_audio->context=mp_malloc(sizeof(dmo_priv_t)))) return 0;
+  if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
   priv=sh_audio->context;
   if(!(priv->ds_adec=DMO_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf,chans)))
   {
@@ -66,7 +66,7 @@ static int preinit(sh_audio_t *sh_audio)
 
 static void uninit(sh_audio_t *sh)
 {
-    dmo_priv_t*priv = sh->context;
+    priv_t*priv = sh->context;
     DMO_AudioDecoder_Destroy(priv->ds_adec);
     mp_free(priv);
 }
@@ -94,7 +94,7 @@ static ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 
 static unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  dmo_priv_t* priv = sh_audio->context;
+  priv_t* priv = sh_audio->context;
   unsigned len=0;
   UNUSED(minlen);
   {
