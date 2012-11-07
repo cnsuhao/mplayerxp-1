@@ -112,12 +112,86 @@ static any_t* __prot_malloc_append(size_t size) {
 
 static any_t* __prot_memalign_append(size_t boundary,size_t size) { UNUSED(boundary);  return __prot_malloc_append(size); }
 
+/* REPORT */
+typedef struct bt_cache_entry_s {
+    any_t*	addr;
+    char*	str;
+}bt_cache_entry_t;
+
+typedef struct bt_cache_s {
+    bt_cache_entry_t*	entry;
+    unsigned		num_entries;
+}bt_cache_t;
+
+static bt_cache_t*	init_bt_cache(void) { return calloc(1,sizeof(bt_cache_t)); }
+
+static void		uninit_bt_cache(bt_cache_t* cache) {
+    unsigned i;
+    for(i=0;i<cache->num_entries;i++) free(cache->entry[i].str);
+    free(cache->entry);
+    free(cache);
+}
+
+static char* bt_find_cache(bt_cache_t* cache,any_t* ptr) {
+    unsigned i;
+    for(i=0;i<cache->num_entries;i++) if(cache->entry[i].addr==ptr) return cache->entry[i].str;
+    return NULL;
+}
+
+static bt_cache_entry_t* bt_append_cache(bt_cache_t* cache,any_t* ptr,const char *str) {
+    if(!cache->entry)	cache->entry=malloc(sizeof(bt_cache_entry_t));
+    else		cache->entry=realloc(cache->entry,sizeof(bt_cache_entry_t)*(cache->num_entries+1));
+    cache->entry[cache->num_entries].addr=ptr;
+    cache->entry[cache->num_entries].str=strdup(str);
+    cache->num_entries++;
+    return &cache->entry[cache->num_entries-1];
+}
+
+static char * addr2line(bt_cache_t* cache,any_t*ptr) {
+    char *rs;
+    if(priv->argv0) {
+	bt_cache_entry_t* centry;
+	unsigned i;
+	char cmd[4096],result[4096];
+	char ch;
+	if((rs=bt_find_cache(cache,ptr))!=NULL) return rs;
+	sprintf(cmd,"addr2line -s -e %s %p\n",priv->argv0,ptr);
+	FILE* in=popen(cmd,"r");
+	if(!in) return NULL;
+	i=0;
+	while(1) {
+	    ch=fgetc(in);
+	    if(feof(in)) break;
+	    if(ch=='\n') break;
+	    result[i++]=ch;
+	    if(i>=sizeof(result)-1) break;
+	}
+	result[i]='\0';
+	pclose(in);
+	centry=bt_append_cache(cache,ptr,result);
+	return centry->str;
+    }
+    return NULL;
+}
+static __always_inline void print_backtrace(void) {
+    bt_cache_t* cache=init_bt_cache();
+    any_t*	calls[10];
+    unsigned	i,ncalls;
+    ncalls=backtrace(calls,10);
+    MSG_INFO("*** Backtrace for suspect call ***\n");
+    for(i=0;i<ncalls;i++) {
+	MSG_INFO("    %p -> %s\n",calls[i],addr2line(cache,calls[i]));
+    }
+    uninit_bt_cache(cache);
+}
+
 static void __prot_free_append(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
 	printf("[__prot_free_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
+	print_backtrace();
 	kill(getpid(), SIGILL);
     }
     size_t fullsize=app_fullsize(slot->size);
@@ -134,6 +208,7 @@ static any_t* __prot_realloc_append(any_t*ptr,size_t size) {
 	if(!slot) {
 	    printf("[__prot_realloc_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
+	    print_backtrace();
 	    kill(getpid(), SIGILL);
 	}
 	memcpy(rp,ptr,min(slot->size,size));
@@ -167,6 +242,7 @@ static void __prot_free_prepend(any_t*ptr) {
     if(!slot) {
 	printf("[__prot_free_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
+	print_backtrace();
 	kill(getpid(), SIGILL);
     }
     mprotect(page_ptr,__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
@@ -181,6 +257,7 @@ static any_t* __prot_realloc_prepend(any_t*ptr,size_t size) {
 	if(!slot) {
 	    printf("[__prot_realloc_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,pre_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
+	    print_backtrace();
 	    kill(getpid(), SIGILL);
 	}
 	memcpy(rp,ptr,min(slot->size,size));
@@ -271,66 +348,6 @@ static __always_inline void bt_free(any_t*ptr) {
 }
 
 /*======== STATISTICS =======*/
-typedef struct bt_cache_entry_s {
-    any_t*	addr;
-    char*	str;
-}bt_cache_entry_t;
-
-typedef struct bt_cache_s {
-    bt_cache_entry_t*	entry;
-    unsigned		num_entries;
-}bt_cache_t;
-
-static bt_cache_t*	init_bt_cache(void) { return calloc(1,sizeof(bt_cache_t)); }
-
-static void		uninit_bt_cache(bt_cache_t* cache) {
-    unsigned i;
-    for(i=0;i<cache->num_entries;i++) free(cache->entry[i].str);
-    free(cache->entry);
-    free(cache);
-}
-
-static char* bt_find_cache(bt_cache_t* cache,any_t* ptr) {
-    unsigned i;
-    for(i=0;i<cache->num_entries;i++) if(cache->entry[i].addr==ptr) return cache->entry[i].str;
-    return NULL;
-}
-
-static bt_cache_entry_t* bt_append_cache(bt_cache_t* cache,any_t* ptr,const char *str) {
-    if(!cache->entry)	cache->entry=malloc(sizeof(bt_cache_entry_t));
-    else		cache->entry=realloc(cache->entry,sizeof(bt_cache_entry_t)*(cache->num_entries+1));
-    cache->entry[cache->num_entries].addr=ptr;
-    cache->entry[cache->num_entries].str=strdup(str);
-    cache->num_entries++;
-    return &cache->entry[cache->num_entries-1];
-}
-
-static char * addr2line(bt_cache_t* cache,any_t*ptr) {
-    char *rs;
-    if(priv->argv0) {
-	bt_cache_entry_t* centry;
-	unsigned i;
-	char cmd[4096],result[4096];
-	char ch;
-	if((rs=bt_find_cache(cache,ptr))!=NULL) return rs;
-	sprintf(cmd,"addr2line -s -e %s %p\n",priv->argv0,ptr);
-	FILE* in=popen(cmd,"r");
-	if(!in) return NULL;
-	i=0;
-	while(1) {
-	    ch=fgetc(in);
-	    if(feof(in)) break;
-	    if(ch=='\n') break;
-	    result[i++]=ch;
-	    if(i>=sizeof(result)-1) break;
-	}
-	result[i]='\0';
-	pclose(in);
-	centry=bt_append_cache(cache,ptr,result);
-	return centry->str;
-    }
-    return NULL;
-}
 
 static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
     size_t i,j;
