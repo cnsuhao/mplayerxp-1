@@ -27,7 +27,7 @@ typedef struct af_center_s
 // Initialization and runtime control
 static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_center_t* s   = af->setup; 
+  af_center_t* s   = af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{

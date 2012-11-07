@@ -3,7 +3,7 @@ include ../mp_config.mak
 LIBNAME = libxmpcore.a
 
 SRCS=xmp_core.c xmp_aplayer.c xmp_vplayer.c xmp_vdecoder.c xmp_adecoder.c
-SRCS+=mp_image.c sig_hand.c
+SRCS+=mp_aframe.c mp_image.c sig_hand.c
 OBJS=$(SRCS:.c=.o)
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall
