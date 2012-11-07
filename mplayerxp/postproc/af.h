@@ -183,12 +183,12 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s);
 
 /* Helper function called by the macro with the same name only to be
    called from inside filters */
-int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data);
+int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data,unsigned len);
 
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-int __FASTCALL__ af_lencalc(frac_t mul, af_data_t* data);
+unsigned __FASTCALL__ af_lencalc(frac_t mul, af_data_t* data);
 
 /* Helper function used to convert to gain value from dB. Returns
    CONTROL_OK if of and CONTROL_ERROR if fail */
@@ -220,7 +220,8 @@ extern void af_showconf(af_instance_t *first);
    filter doesn't operate on the incoming buffer this macro must be
    called to ensure the buffer is big enough. */
 static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, af_data_t* d) {
-    return (a->data->len < af_lencalc(a->mul,d))?af_resize_local_buffer(a,d):CONTROL_OK;
+    unsigned len=af_lencalc(a->mul,d);
+    return ((unsigned)a->data->len < len)?af_resize_local_buffer(a,d,len):CONTROL_OK;
 }
 
 /* Some other useful macro definitions*/

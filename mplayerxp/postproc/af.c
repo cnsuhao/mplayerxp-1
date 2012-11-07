@@ -278,16 +278,14 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
 	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) {
-#if 0
 	    af_instance_t* af2 = af_prepend(s,af,"format");
 	    // Init the new filter
 	    if(af2) {
 		if((CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_BPS,&(in.bps)))
 		    || (CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_FMT,&(in.format)))) return -1;
-		if(CONTROL_OK != af_reinit(s,af2)) return -1;
+		if(CONTROL_OK != af_reinit(s,af2)) return CONTROL_ERROR;
 		rv = _new->control(_new,AF_CONTROL_REINIT,&in);
 	    }
-#endif
 	    return rv;
 	  }
 	}
@@ -508,8 +506,8 @@ af_instance_t* af_add(af_stream_t* s, char* name){
 // Filter data chunk through the filters in the list
 af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data)
 {
-  af_instance_t* af=s->first; 
-  // Iterate through all filters 
+  af_instance_t* af=s->first;
+  // Iterate through all filters
   do{
     MSG_DBG2("filtering %s\n",af->info->name);
     data=af->play(af,data,af->next?0:1);
@@ -521,8 +519,8 @@ af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data)
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-int __FASTCALL__ af_lencalc(frac_t mul, af_data_t* d){
-  register int t = d->bps*d->nch;
+unsigned __FASTCALL__ af_lencalc(frac_t mul, af_data_t* d){
+  register unsigned t = d->bps*d->nch;
   return t*(((d->len/t)*mul.n)/(unsigned)mul.d + 1);
 }
 
@@ -621,10 +619,9 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s)
 
 /* Helper function called by the macro with the same name this
    function should not be called directly */
-int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data)
+int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data,unsigned len)
 {
   // Calculate new length
-  register int len = af_lencalc(af->mul,data);
   MSG_V("[libaf] Reallocating memory in module %s, "
 	 "old len = %i, new len = %i\n",af->info->name,af->data->len,len);
   // If there is a buffer mp_free it
