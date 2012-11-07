@@ -249,12 +249,12 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
   af_data_t*   	 c = data;			// Current working data
-  af_data_t*   	 l = af->data;	 		// Local data
   af_channels_t* s = af->setup;
   int 		 i;
 
   if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af,data))
     return NULL;
+  af_data_t*   	 l = af->data;	 		// Local data
 
   // Reset unused channels
   memset(l->audio,0,(c->len*af->mul.n)/af->mul.d);

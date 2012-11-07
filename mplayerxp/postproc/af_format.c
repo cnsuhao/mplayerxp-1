@@ -280,11 +280,11 @@ char* fmt2str(int format, unsigned bps, char* str, size_t size)
 // Helper functions to check sanity for input arguments
 
 // Sanity check for bytes per sample
-static int __FASTCALL__ check_bps(int bps)
+static int __FASTCALL__ check_bps(const char *pfx,int bps)
 {
   if(bps != 4 && bps != 3 && bps != 2 && bps != 1){
-    MSG_ERR("[format] The number of bytes per sample" 
-	   " must be 1, 2, 3 or 4. Current value is %i \n",bps);
+    MSG_ERR("[%s-format] The number of bytes per sample"
+	   " must be 1, 2, 3 or 4. Current value is %i \n",pfx,bps);
     return CONTROL_ERROR;
   }
   return CONTROL_OK;
@@ -311,15 +311,15 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   char buf1[256],buf2[256];
   switch(cmd){
   case AF_CONTROL_REINIT:{
-    // Make sure this filter isn't redundant 
+    // Make sure this filter isn't redundant
     if(af->data->format == ((af_data_t*)arg)->format && 
        af->data->bps == ((af_data_t*)arg)->bps)
       return CONTROL_DETACH;
 
     // Check for errors in configuraton
-    if((CONTROL_OK != check_bps(((af_data_t*)arg)->bps)) ||
+    if((CONTROL_OK != check_bps("new",((af_data_t*)arg)->bps)) ||
        (CONTROL_OK != check_format(((af_data_t*)arg)->format)) ||
-       (CONTROL_OK != check_bps(af->data->bps)) ||
+       (CONTROL_OK != check_bps("prev",af->data->bps)) ||
        (CONTROL_OK != check_format(af->data->format)))
       return CONTROL_ERROR;
 
@@ -341,7 +341,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     int format = AF_FORMAT_NE;
     // Convert string to format
     format = str2fmt((char *)arg,&bps);
-    
+
     if((CONTROL_OK != af->control(af,AF_CONTROL_FORMAT_BPS | AF_CONTROL_SET,&bps)) ||
        (CONTROL_OK != af->control(af,AF_CONTROL_FORMAT_FMT | AF_CONTROL_SET,&format)))
       return CONTROL_ERROR;
@@ -349,9 +349,9 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   }
   case AF_CONTROL_FORMAT_BPS | AF_CONTROL_SET:
     // Reinit must be called after this function has been called
-    
+
     // Check for errors in configuraton
-    if(CONTROL_OK != check_bps(*(int*)arg))
+    if(CONTROL_OK != check_bps("arg",*(int*)arg))
       return CONTROL_ERROR;
 
     af->data->bps = *(int*)arg;
@@ -370,7 +370,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   return CONTROL_UNKNOWN;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -382,12 +382,12 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 // Filter data through filter
 static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
 {
-  af_data_t*   l   = af->data;	// Local data
   af_data_t*   c   = data;	// Current working data
   int 	       len = c->len/c->bps; // Lenght in samples of current audio block
 
   if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af,data))
     return NULL;
+  af_data_t*   l   = af->data;	// Local data
 
   // Change to cpu native endian format
   if((c->format&AF_FORMAT_END_MASK)!=AF_FORMAT_NE)
@@ -429,7 +429,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
     break;
   default:
     // Input must be int
-    
+
     // Change signed/unsigned
     if((c->format&AF_FORMAT_SIGN_MASK) != (l->format&AF_FORMAT_SIGN_MASK)){
       if((c->format&AF_FORMAT_SIGN_MASK) == AF_FORMAT_US)
@@ -593,5 +593,5 @@ static void us2si(any_t* in, any_t* out, int len, int bps,int final)
     for(i=0;i<len;i++)
       ((int32_t*)out)[i]=(int32_t)(INT_MIN+((uint32_t*)in)[i]);
     break;
-  }	
+  }
 }

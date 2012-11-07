@@ -1656,6 +1656,8 @@ int main(int argc,char* argv[], char *envp[]){
     mp_conf.malloc_debug=0;
     for(i=0;i<argc;i++) if(strcmp(argv[i],"-core.malloc-debug")==0) { mp_conf.malloc_debug=1; break; }
     mp_init_malloc(argv[0],1000,10,mp_conf.malloc_debug?MPA_FLG_BACKTRACE:MPA_FLG_RANDOMIZER);
+//    mp_init_malloc(argv[0],1000,10,MPA_FLG_BOUNDS_CHECK);
+//    mp_init_malloc(argv[0],1000,10,MPA_FLG_BEFORE_CHECK);
 
     mpxp_init_structs();
     priv_t*priv=mp_data->priv;

@@ -166,7 +166,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     af->data->format = AF_FORMAT_NE | AF_FORMAT_F;
     af->data->bps    = 4;
     init_echo3d(s,af->data->rate);
-    
+
     return af_test_output(af,arg);
   }
   case AF_CONTROL_COMMAND_LINE:{
@@ -182,7 +182,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   return CONTROL_UNKNOWN;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)

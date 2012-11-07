@@ -331,7 +331,7 @@ struct Interpolation{
     int acount;		// counter
     float lval, rval;	// value
     float sal, sar;	// sum
-    float al, ar;		
+    float al, ar;
     float a1l, a1r;
 };
 

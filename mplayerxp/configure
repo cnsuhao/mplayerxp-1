@@ -320,7 +320,7 @@ disabled ffmpeg && die "**FATAL**: local copy of ffmpeg doesn't exist!"
 add_cflags "-I$srcdir/../ffmpeg"
 print_config HAVE_ mp_config.h mp_config.mak ffmpeg
 # Configuring external ffmpeg stuff
-ffmpeg_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample --disable-swresample"
+ffmpeg_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample"
 if test -n $host ; then
 _arch=$host_arch
 x86_32 && _arch="i686"
@@ -332,7 +332,7 @@ fi
 test "$debug" != "0" && ffmpeg_args="$ffmpeg_args --enable-debug=$debug"
 enabled $profile  && ffmpeg_args="$ffmpeg_args --enable-profile"
 if test -f "../ffmpeg/libavcodec/libavcodec$ff_libsuffix.a"; then
-echocheck "ffmpeg was already configured for $ff_libsuffix"
+echocheck "ffmpeg was already configured for $_arch"
 else
 echocheck "configuring ffmpeg stuff: --cc=\"$cc\" $ffmpeg_args"
 cd ../ffmpeg

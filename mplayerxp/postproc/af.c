@@ -227,7 +227,7 @@ void af_remove(af_stream_t* s, af_instance_t* af)
   else
     s->last=af->prev;
 
-  // Uninitialize af and mp_free memory   
+  // Uninitialize af and mp_free memory
   af->uninit(af);
   mp_free(af);
 }
@@ -245,15 +245,14 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
     af_data_t in; // Format of the input to current filter
     int rv=0; // Return value
 
-    // Check if this is the first filter 
-    if(!af->prev) 
-      memcpy(&in,&(s->input),sizeof(af_data_t));
-    else
-      memcpy(&in,af->prev->data,sizeof(af_data_t));
+    // Check if this is the first filter
+    if(!af->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
+    else	  memcpy(&in,af->prev->data,sizeof(af_data_t));
+
     // Reset just in case...
     in.audio=NULL;
     in.len=0;
-    
+
     rv = af->control(af,AF_CONTROL_REINIT,&in);
     switch(rv){
     case CONTROL_OK:
@@ -264,58 +263,44 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	af_instance_t* _new = NULL;
 	// Insert channels filter
 	if((af->prev?af->prev->data->nch:s->input.nch) != in.nch){
-	  // Create channels filter
-	  if(NULL == (_new = af_prepend(s,af,"channels")))
-	    return CONTROL_ERROR;
-	  // Set number of output channels
-	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_CHANNELS,&in.nch)))
-	    return rv;
+	  if(NULL == (_new = af_prepend(s,af,"channels"))) return CONTROL_ERROR;
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_CHANNELS,&in.nch))) return rv;
 	  // Initialize channels filter
 	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
 	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
-	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
-	    return rv;
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) return rv;
 	}
 	// Insert rate filter
 	if((af->prev?af->prev->data->rate:s->input.rate) != in.rate){
-	  // Create channels filter
-	  if(NULL == (_new = af_prepend(s,af,"resample")))
-	    return CONTROL_ERROR;
-	  // Set number of output channels
-	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate)))
-	    return rv;
+	  if(NULL == (_new = af_prepend(s,af,"resample"))) return CONTROL_ERROR;
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate))) return rv;
 	  // Initialize channels filter
 	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
 	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) {
+#if 0
 	    af_instance_t* af2 = af_prepend(s,af,"format");
 	    // Init the new filter
 	    if(af2) {
 		if((CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_BPS,&(in.bps)))
-		    || (CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_FMT,&(in.format))))
-		    return -1;
-		if(CONTROL_OK != af_reinit(s,af2))
-		    return -1;
+		    || (CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_FMT,&(in.format)))) return -1;
+		if(CONTROL_OK != af_reinit(s,af2)) return -1;
 		rv = _new->control(_new,AF_CONTROL_REINIT,&in);
 	    }
+#endif
 	    return rv;
 	  }
 	}
 	// Insert format filter
-	if(((af->prev?af->prev->data->format:s->input.format) != in.format) || 
+	if(((af->prev?af->prev->data->format:s->input.format) != in.format) ||
 	   ((af->prev?af->prev->data->bps:s->input.bps) != in.bps)){
-	  // Create format filter
-	  if(NULL == (_new = af_prepend(s,af,"format")))
-	    return CONTROL_ERROR;
-	  // Set output bits per sample
-	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_BPS,&in.bps)) || 
-	     CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_FMT,&in.format)))
-	    return rv;
+	  if(NULL == (_new = af_prepend(s,af,"format"))) return CONTROL_ERROR;
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_BPS,&in.bps)) ||
+	     CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_FMT,&in.format))) return rv;
 	  // Initialize format filter
 	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
 	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
-	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in)))
-	    return rv;
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) return rv;
 	}
 	if(!_new){ // Should _never_ happen
 	  MSG_ERR("[libaf] Unable to correct audio format. " 

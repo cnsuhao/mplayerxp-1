@@ -30,6 +30,7 @@ OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 
 FF_LIBS = ../ffmpeg/libavcodec/libavcodec$(FF_SUFFIX).a \
 	  ../ffmpeg/libswscale/libswscale$(FF_SUFFIX).a \
+	  ../ffmpeg/libswresample/libswresample$(FF_SUFFIX).a \
 	  ../ffmpeg/libpostproc/libpostproc$(FF_SUFFIX).a \
 	  ../ffmpeg/libavformat/libavformat$(FF_SUFFIX).a \
 	  ../ffmpeg/libavutil/libavutil$(FF_SUFFIX).a
