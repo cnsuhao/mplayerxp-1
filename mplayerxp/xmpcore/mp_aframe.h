@@ -2,6 +2,7 @@
 #define __MP_AUDIO_FRAME_INCLUDED_H 1
 
 #include "mp_config.h"
+#include <stdlib.h>
 
 /* The sample format system is based on bitmasks. The
    format definition only refers to the storage format not the
@@ -35,6 +36,13 @@ typedef enum mpaf_format_enum{
     MPAF_AC3		=0x20000000UL, // Dolby Digital AC3
     MPAF_SPECIAL_MASK	=0xFFFF0000UL
 }mpaf_format_e;
+
+/* Decodes the format from mplayer format to libaf format */
+extern mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned format);
+extern unsigned __FASTCALL__      mpaf_format_encode(mpaf_format_e fmt);
+extern char* __FASTCALL__         mpaf_fmt2str(mpaf_format_e format, char* str, size_t size);
+extern mpaf_format_e __FASTCALL__ mpaf_str2fmt(const char *str);
+
 
 typedef struct mp_audio_frame_s {
     unsigned		flags; /* currently unused */

@@ -183,7 +183,7 @@ static int init(sh_audio_t *sh)
     MSG_DBG2("FAAD: codecdata extracted from WAVEFORMATEX\n");
   }
   NeAAC_conf = NeAACDecGetCurrentConfiguration(NeAAC_hdec);
-  if(sh->samplerate) NeAAC_conf->defSampleRate = sh->samplerate;
+  if(sh->rate) NeAAC_conf->defSampleRate = sh->rate;
 #ifdef WORDS_BIGENDIAN
 #define NeAAC_FMT32 AFMT_S32_BE
 #define NeAAC_FMT24 AFMT_S24_BE
@@ -199,14 +199,12 @@ static int init(sh_audio_t *sh)
      af_query_fmt(sh->afilter,NeAAC_FMT32) == CONTROL_OK ||
      af_query_fmt(sh->afilter,NeAAC_FMT24) == CONTROL_OK)
   {
-    sh->samplesize=4;
-    sh->sample_format=AFMT_FLOAT32;
+    sh->afmt=AFMT_FLOAT32;
     NeAAC_conf->outputFormat=FAAD_FMT_FLOAT;
   }
   else
   {
-    sh->samplesize=2;
-    sh->sample_format=NeAAC_FMT16;
+    sh->afmt=NeAAC_FMT16;
     NeAAC_conf->outputFormat=FAAD_FMT_16BIT;
   }
   /* Set the default object type and samplerate */
@@ -223,12 +221,6 @@ static int init(sh_audio_t *sh)
     // XXX FIXME: shouldn't we memcpy() here in a_in_buffer ?? --A'rpi
 
   } else { // We have ES DS in codecdata
-#if 0
-    int i;
-    for(i = 0; i < sh->codecdata_len; i++)
-      printf("codecdata_dump[%d]=0x%02X\n", i, sh->codecdata[i]);
-#endif
-
     NeAAC_init = NeAACDecInit2(NeAAC_hdec, sh->codecdata,
        sh->codecdata_len,	&NeAAC_samplerate, &NeAAC_channels);
   }
@@ -239,18 +231,17 @@ static int init(sh_audio_t *sh)
     return 0;
   } else {
     NeAAC_conf = NeAACDecGetCurrentConfiguration(NeAAC_hdec);
-    sh->channels = NeAAC_channels;
-    sh->samplerate = NeAAC_samplerate;
+    sh->nch = NeAAC_channels;
+    sh->rate = NeAAC_samplerate;
     switch(NeAAC_conf->outputFormat){
 	default:
-	case FAAD_FMT_16BIT: sh->samplesize=2; break;
-	case FAAD_FMT_24BIT: sh->samplesize=3; break;
+	case FAAD_FMT_16BIT: sh->afmt=bps2afmt(2); break;
+	case FAAD_FMT_24BIT: sh->afmt=bps2afmt(3); break;
 	case FAAD_FMT_FLOAT:
-	case FAAD_FMT_32BIT: sh->samplesize=4; break;
-	case FAAD_FMT_DOUBLE: sh->samplesize=8; break;
+	case FAAD_FMT_32BIT: sh->afmt=bps2afmt(4); break;
     }
     MSG_V("FAAD: Decoder init done (%dBytes)!\n", sh->a_in_buffer_len); // XXX: remove or move to debug!
-    MSG_V("FAAD: Negotiated samplerate: %dHz  channels: %d bps: %d\n", NeAAC_samplerate, NeAAC_channels,sh->samplesize);
+    MSG_V("FAAD: Negotiated samplerate: %dHz  channels: %d bps: %d\n", NeAAC_samplerate, NeAAC_channels,afmt2bps(sh->afmt));
     //sh->o_bps = sh->samplesize*NeAAC_channels*NeAAC_samplerate;
     if(!sh->i_bps) {
       MSG_WARN("FAAD: compressed input bitrate missing, assuming 128kbit/s!\n");
@@ -342,8 +333,8 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
       /* XXX: samples already multiplied by channels! */
       MSG_DBG2("FAAD: Successfully decoded frame (%d Bytes)!\n",
       sh->samplesize*NeAAC_finfo.samples);
-      memcpy(buf+len,NeAAC_sample_buffer, sh->samplesize*NeAAC_finfo.samples);
-      len += sh->samplesize*NeAAC_finfo.samples;
+      memcpy(buf+len,NeAAC_sample_buffer, afmt2bps(sh->afmt)*NeAAC_finfo.samples);
+      len += afmt2bps(sh->afmt)*NeAAC_finfo.samples;
     //printf("FAAD: buffer: %d bytes  consumed: %d \n", k, NeAAC_finfo.bytesconsumed);
     }
   }

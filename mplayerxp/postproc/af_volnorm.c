@@ -77,22 +77,20 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   case AF_CONTROL_REINIT:
     // Sanity check
     if(!arg) return CONTROL_ERROR;
-    
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
-    
-    if(((af_data_t*)arg)->format != (AF_FORMAT_F | AF_FORMAT_NE) &&
-       ((af_data_t*)arg)->format != (AF_FORMAT_SI | AF_FORMAT_NE))
+
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+
+    if(((mp_aframe_t*)arg)->format != (MPAF_F | MPAF_NE) &&
+       ((mp_aframe_t*)arg)->format != (MPAF_SI | MPAF_NE))
        return CONTROL_ERROR;
-    
-    if(((af_data_t*)arg)->format == (AF_FORMAT_SI | AF_FORMAT_NE)){
-      af->data->format = AF_FORMAT_SI | AF_FORMAT_NE;
-      af->data->bps    = 2;
+
+    if(((mp_aframe_t*)arg)->format == (MPAF_SI | MPAF_NE)){
+      af->data->format = MPAF_SI|MPAF_NE|2;
     }else{
-      af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
-      af->data->bps    = 4;
+      af->data->format = MPAF_F|MPAF_NE|4;
     }
-    return af_test_output(af,(af_data_t*)arg);
+    return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_volnorm] using method %d\n",s->method);
     return CONTROL_OK;
@@ -118,7 +116,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
     mp_free(af->setup);
 }
 
-static void __FASTCALL__ method1_int16(af_volnorm_t *s, af_data_t *c,int final)
+static void __FASTCALL__ method1_int16(af_volnorm_t *s, mp_aframe_t *c,int final)
 {
   register int i = 0;
   int16_t *data = (int16_t*)c->audio;	// Audio data
@@ -160,7 +158,7 @@ static void __FASTCALL__ method1_int16(af_volnorm_t *s, af_data_t *c,int final)
   s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
 }
 
-static void __FASTCALL__ method1_float(af_volnorm_t *s, af_data_t *c,int final)
+static void __FASTCALL__ method1_float(af_volnorm_t *s, mp_aframe_t *c,int final)
 {
   register int i = 0;
   float *data = (float*)c->audio;	// Audio data
@@ -197,7 +195,7 @@ static void __FASTCALL__ method1_float(af_volnorm_t *s, af_data_t *c,int final)
   s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
 }
 
-static void __FASTCALL__ method2_int16(af_volnorm_t *s, af_data_t *c,int final)
+static void __FASTCALL__ method2_int16(af_volnorm_t *s, mp_aframe_t *c,int final)
 {
   register int i = 0;
   int16_t *data = (int16_t*)c->audio;	// Audio data
@@ -247,7 +245,7 @@ static void __FASTCALL__ method2_int16(af_volnorm_t *s, af_data_t *c,int final)
   s->idx = (s->idx + 1) % NSAMPLES;
 }
 
-static void __FASTCALL__ method2_float(af_volnorm_t *s, af_data_t *c,int final)
+static void __FASTCALL__ method2_float(af_volnorm_t *s, mp_aframe_t *c,int final)
 {
   register int i = 0;
   float *data = (float*)c->audio;	// Audio data
@@ -294,18 +292,18 @@ static void __FASTCALL__ method2_float(af_volnorm_t *s, af_data_t *c,int final)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   af_volnorm_t *s = af->setup;
 
-  if(af->data->format == (AF_FORMAT_SI | AF_FORMAT_NE))
+  if(af->data->format == (MPAF_SI | MPAF_NE))
   {
     if (s->method)
 	method2_int16(s, data,final);
     else
 	method1_int16(s, data,final);
   }
-  else if(af->data->format == (AF_FORMAT_F | AF_FORMAT_NE))
+  else if(af->data->format == (MPAF_F | MPAF_NE))
   { 
     if (s->method)
 	method2_float(s, data,final);
@@ -323,7 +321,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_volnorm_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

@@ -82,7 +82,7 @@ struct syncframe {
     unsigned char bsidmod;
     unsigned char acmod;
   } bsi;
-}; 
+};
 
 int ac3_iec958_build_burst(int length, int data_type, int big_endian, unsigned char * data, unsigned char * out)
 {
@@ -105,22 +105,22 @@ int ac3_iec958_build_burst(int length, int data_type, int big_endian, unsigned c
 int ac3_iec958_parse_syncinfo(unsigned char *buf, int size, struct hwac3info *ai, int *skipped)
 {
 	int samplerates[4] = { 48000, 44100, 32000, -1 };
-	unsigned short sync = 0;
+	unsigned short _sync = 0;
 	unsigned char *ptr = buf;
 	int fscod, frmsizecod;
 	struct syncframe *sf;
 	
-	sync = buf[0] << 8;
-	sync |= buf[1];
+	_sync = buf[0] << 8;
+	_sync |= buf[1];
 	ptr = buf + 2;
 	*skipped = 0;
-	while (sync != 0xb77 && *skipped < size - 8) {
-		sync <<= 8;
-		sync |= *ptr;
+	while (_sync != 0xb77 && *skipped < size - 8) {
+		_sync <<= 8;
+		_sync |= *ptr;
 		ptr++;
 		*skipped += 1;
 	}
-	if (sync != 0xb77)
+	if (_sync != 0xb77)
 		return -1;
 	ptr -= 2;
 	sf = (struct syncframe *) ptr;
@@ -168,8 +168,8 @@ int preinit(sh_audio_t *sh)
   mpcodecs_ad_a52.preinit(sh);
   sh->audio_out_minsize=4*256*6;
   sh->audio_in_minsize=3840;
-  sh->channels=2;
-  sh->sample_format=AFMT_AC3;
+  sh->nch=2;
+  sh->afmt=AFMT_AC3;
   return 1;
 }
 
@@ -186,7 +186,7 @@ int init(sh_audio_t *sh_audio)
        MSG_ERR("A52 sync failed\n");
        return 0;
   }
- /* 
+ /*
   sh_audio->samplerate=ai.samplerate;   // SET by a52_fillbuff()
   sh_audio->samplesize=ai.framesize;
   sh_audio->i_bps=ai.bitrate*(1000/8);  // SET by a52_fillbuff()
@@ -195,8 +195,8 @@ int init(sh_audio_t *sh_audio)
 
    o_bps is calculated from samplesize*channels*samplerate
    a single ac3 frame is always translated to 6144 byte packet. (zero padding)*/
-  sh_audio->channels=2;
-  sh_audio->samplesize=2;   /* 2*2*(6*256) = 6144 (very TRICKY!)*/
+  sh_audio->nch=2;
+  sh_audio->afmt=bps2afmt(2);   /* 2*2*(6*256) = 6144 (very TRICKY!)*/
   return 1;
 }
 

@@ -22,6 +22,7 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libvo/video_out.h"
+#include "libao2/afmt.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
@@ -545,7 +546,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
   // the header
   if(ds == d->audio && ((sh_audio_t*)ds->sh)->wtag == FOURCC_VORBIS) {
      context = ((sh_audio_t *)ds->sh)->context;
-     samplesize = ((sh_audio_t *)ds->sh)->samplesize;
+     samplesize = afmt2bps(((sh_audio_t *)ds->sh)->afmt);
   }
   if (ds == d->video && ((sh_audio_t*)ds->sh)->wtag == FOURCC_THEORA)
      context = ((sh_video_t *)ds->sh)->context;
@@ -608,7 +609,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
     /* demux_ogg_read_packet needs decoder context for Vorbis streams */
     if(((sh_audio_t*)demuxer->audio->sh)->wtag == FOURCC_VORBIS) {
       context = ((sh_audio_t*)demuxer->audio->sh)->context;
-      samplesize = ((sh_audio_t*)demuxer->audio->sh)->samplesize;
+      samplesize = afmt2bps(((sh_audio_t*)demuxer->audio->sh)->afmt);
     }
   }
   os = &ogg_d->subs[sid];
@@ -901,17 +902,17 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	extra_size = get_uint16(pack.packet+140);
 	sh_a->wf = (WAVEFORMATEX*)mp_calloc(1,sizeof(WAVEFORMATEX)+extra_size);
 	sh_a->wtag = sh_a->wf->wFormatTag = get_uint16(pack.packet+124);
-	sh_a->channels = sh_a->wf->nChannels = get_uint16(pack.packet+126);
-	sh_a->samplerate = sh_a->wf->nSamplesPerSec = get_uint32(pack.packet+128);
+	sh_a->nch = sh_a->wf->nChannels = get_uint16(pack.packet+126);
+	sh_a->rate = sh_a->wf->nSamplesPerSec = get_uint32(pack.packet+128);
 	sh_a->wf->nAvgBytesPerSec = get_uint32(pack.packet+132);
 	sh_a->wf->nBlockAlign = get_uint16(pack.packet+136);
 	sh_a->wf->wBitsPerSample = get_uint16(pack.packet+138);
-	sh_a->samplesize = (sh_a->wf->wBitsPerSample+7)/8;
+	sh_a->afmt = bps2afmt((sh_a->wf->wBitsPerSample+7)/8);
 	sh_a->wf->cbSize = extra_size;
 	if(extra_size > 0)
 	  memcpy(sh_a->wf+sizeof(WAVEFORMATEX),pack.packet+142,extra_size);
 
-	ogg_d->subs[ogg_d->num_sub].samplerate = sh_a->samplerate; // * sh_a->channels;
+	ogg_d->subs[ogg_d->num_sub].samplerate = sh_a->rate; // * sh_a->nch;
 	ogg_d->subs[ogg_d->num_sub].id = n_audio;
 	n_audio++;
 	MSG_V("Ogg stream %d is audio (old hdr)\n",ogg_d->num_sub);
@@ -953,17 +954,17 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
 	sh_a->wf = (WAVEFORMATEX*)mp_calloc(1,sizeof(WAVEFORMATEX)+extra_size);
 	sh_a->wtag =  sh_a->wf->wFormatTag = strtol(buffer, NULL, 16);
-	sh_a->channels = sh_a->wf->nChannels = get_uint16(&st->sh.audio.channels);
-	sh_a->samplerate = sh_a->wf->nSamplesPerSec = get_uint64(&st->samples_per_unit);
+	sh_a->nch = sh_a->wf->nChannels = get_uint16(&st->sh.audio.channels);
+	sh_a->rate = sh_a->wf->nSamplesPerSec = get_uint64(&st->samples_per_unit);
 	sh_a->wf->nAvgBytesPerSec = get_uint32(&st->sh.audio.avgbytespersec);
 	sh_a->wf->nBlockAlign = get_uint16(&st->sh.audio.blockalign);
 	sh_a->wf->wBitsPerSample = get_uint16(&st->bits_per_sample);
-	sh_a->samplesize = (sh_a->wf->wBitsPerSample+7)/8;
+	sh_a->afmt = bps2afmt((sh_a->wf->wBitsPerSample+7)/8);
 	sh_a->wf->cbSize = extra_size;
 	if(extra_size)
 	  memcpy(sh_a->wf+sizeof(WAVEFORMATEX),st+1,extra_size);
 
-	ogg_d->subs[ogg_d->num_sub].samplerate = sh_a->samplerate; // * sh_a->channels;
+	ogg_d->subs[ogg_d->num_sub].samplerate = sh_a->rate; // * sh_a->nch;
 	ogg_d->subs[ogg_d->num_sub].id = n_audio;
 	n_audio++;
 	MSG_V("Ogg stream %d is audio (new hdr)\n",ogg_d->num_sub);
@@ -1283,7 +1284,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
       context = ((sh_audio_t*)demuxer->audio->sh)->context;
     vi = &((ov_struct_t*)((sh_audio_t*)ds->sh)->context)->vi;
     rate = (float)vi->rate;
-    samplesize = ((sh_audio_t*)ds->sh)->samplesize;
+    samplesize = afmt2bps(((sh_audio_t*)ds->sh)->afmt);
   }
 
   os = &ogg_d->subs[ds->id];

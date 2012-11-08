@@ -71,7 +71,7 @@ while(1){
     apts=0;
 }
     MSG_DBG2("a52: len=%d  flags=0x%X  %d Hz %d bit/s\n",length,flags,sample_rate,bit_rate);
-    sh_audio->samplerate=sample_rate;
+    sh_audio->rate=sample_rate;
     sh_audio->i_bps=bit_rate/8;
     demux_read_data_r(sh_audio->ds,sh_audio->a_in_buffer+8,length-8,apts?&null_pts:&apts);
     if(sh_audio->wtag!=0x2000) swab(sh_audio->a_in_buffer+8,sh_audio->a_in_buffer+8,length-8);
@@ -104,7 +104,7 @@ int channels=0;
 	channels, (flags&A52_LFE)?1:0,
 	mode, (flags&A52_LFE)?"+lfe":"",
 	sample_rate, bit_rate*0.001f,
-	sh_audio->samplesize*8);
+	afmt2bps(sh_audio->afmt)*8);
   return (flags&A52_LFE) ? (channels+1) : channels;
 }
 
@@ -120,15 +120,14 @@ int preinit(sh_audio_t *sh)
 #define A52_FMT32 AFMT_S32_LE
 #define A52_FMT24 AFMT_S24_LE
 #endif
-  sh->samplesize=2;
+  sh->afmt=bps2afmt(2);
   if(af_query_fmt(sh->afilter,AFMT_FLOAT32) == CONTROL_OK||
      af_query_fmt(sh->afilter,A52_FMT32) == CONTROL_OK ||
      af_query_fmt(sh->afilter,A52_FMT24) == CONTROL_OK)
   {
-    sh->samplesize=4;
-    sh->sample_format=AFMT_FLOAT32;
+    sh->afmt=AFMT_FLOAT32;
   }
-  sh->audio_out_minsize=mp_conf.ao_channels*sh->samplesize*256*6;
+  sh->audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh->afmt)*256*6;
   sh->audio_in_minsize=MAX_AC3_FRAME;
   sh->context=mp_malloc(sizeof(priv_t));
   return 1;
@@ -152,9 +151,9 @@ int init(sh_audio_t *sh_audio)
   }
   /* 'a52 cannot upmix' hotfix:*/
   a52_printinfo(sh_audio);
-  sh_audio->channels=mp_conf.ao_channels;
-while(sh_audio->channels>0){
-  switch(sh_audio->channels){
+  sh_audio->nch=mp_conf.ao_channels;
+while(sh_audio->nch>0){
+  switch(sh_audio->nch){
 	    case 1: mpxp_a52_flags=A52_MONO; break;
 /*	    case 2: mpxp_a52_flags=A52_STEREO; break; */
 	    case 2: mpxp_a52_flags=A52_DOLBY; break;
@@ -173,17 +172,14 @@ while(sh_audio->channels>0){
   }
   MSG_V("A52 flags after a52_frame: 0x%X\n",flags);
   /* frame decoded, let's init resampler:*/
-  if(sh_audio->samplesize==4)
-  {
-    if(a52_resample_init_float(mpxp_a52_state,mpxp_a52_accel,flags,sh_audio->channels)) break;
+  if(afmt2bps(sh_audio->afmt)==4) {
+    if(a52_resample_init_float(mpxp_a52_state,mpxp_a52_accel,flags,sh_audio->nch)) break;
+  } else {
+    if(a52_resample_init(mpxp_a52_state,mpxp_a52_accel,flags,sh_audio->nch)) break;
   }
-  else
-  {
-    if(a52_resample_init(mpxp_a52_state,mpxp_a52_accel,flags,sh_audio->channels)) break;
-  }
-  --sh_audio->channels; /* try to decrease no. of channels*/
+  --sh_audio->nch; /* try to decrease no. of channels*/
 }
-  if(sh_audio->channels<=0){
+  if(sh_audio->nch<=0){
     MSG_ERR("a52: no resampler. try different channel setup!\n");
     return 0;
   }
@@ -241,7 +237,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 		MSG_WARN("a52: error at resampling\n");
 		break;
 	    }
-	    if(sh_audio->samplesize==4)
+	    if(afmt2bps(sh_audio->afmt)==4)
 		len+=4*a52_resample32(a52_samples(mpxp_a52_state),(float *)&buf[len]);
 	    else
 		len+=2*a52_resample(a52_samples(mpxp_a52_state),(int16_t *)&buf[len]);

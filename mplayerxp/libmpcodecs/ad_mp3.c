@@ -269,8 +269,7 @@ int init(sh_audio_t *sh)
   unsigned char *indata;
   struct mpg123_frameinfo fi;
   priv_t *priv;
-  sh->samplesize=4;
-  sh->sample_format=AFMT_FLOAT32;
+  sh->afmt=AFMT_FLOAT32;
   mpg123_init();
   priv = mp_mallocz(sizeof(priv_t));
   sh->context = priv;
@@ -305,8 +304,8 @@ int init(sh_audio_t *sh)
     return 0;
   }
   mpg123_getformat(priv->mh, &rate, &nch, &enc);
-  sh->samplerate = rate;
-  sh->channels = nch;
+  sh->rate = rate;
+  sh->nch = nch;
   mpg123_info(priv->mh,&fi);
   sh->i_bps=((fi.abr_rate?fi.abr_rate:fi.bitrate)/8)*1000;
   // Prints first frame header in ascii.
@@ -381,11 +380,11 @@ unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxle
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
 	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
 	}
-	else {
+	if(err==MPG123_OK) {
 	    MSG_DBG2("ad_mp3.decode: copy %u bytes from %p\n",done,outdata);
 	    memcpy(buf,outdata,done);
 	}
-	if(err==MPG123_NEED_MORE) {
+	else if(err==MPG123_NEED_MORE) {
 	    float apts=0.;
 	    indata_size=ds_get_packet_r(sh->ds,&indata,&apts);
 	    if(indata_size<0) return 0;

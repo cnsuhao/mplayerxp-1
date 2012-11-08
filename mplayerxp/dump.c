@@ -165,8 +165,8 @@ void dump_mux_init(demuxer_t *demuxer)
 	sha->wf=mp_malloc(sizeof(WAVEFORMATEX));
 	sha->wf->nBlockAlign = 1; //mux_a->h.dwSampleSize;
 	sha->wf->wFormatTag = sha->wtag;
-	sha->wf->nChannels = sha->channels;
-	sha->wf->nSamplesPerSec = sha->samplerate;
+	sha->wf->nChannels = sha->nch;
+	sha->wf->nSamplesPerSec = sha->rate;
 	sha->wf->nAvgBytesPerSec=sha->i_bps; //mux_a->h.dwSampleSize*mux_a->wf->nSamplesPerSec;
 	sha->wf->wBitsPerSample = 16; // FIXME
 	sha->wf->cbSize=0; // FIXME for l3codeca.acm

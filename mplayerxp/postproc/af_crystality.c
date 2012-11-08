@@ -473,12 +473,11 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     unsigned i_bps,fmt;
     // Sanity check
     if(!arg) return CONTROL_ERROR;
-    if(((af_data_t*)arg)->nch!=2) return CONTROL_ERROR;
+    if(((mp_aframe_t*)arg)->nch!=2) return CONTROL_ERROR;
 
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
-    af->data->format = AF_FORMAT_NE | AF_FORMAT_F;
-    af->data->bps    = 4;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->format = MPAF_NE|MPAF_F|4;
     init_crystality(s,af->data->rate);
     i_bps=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->i_bps*8;
     fmt=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->wtag;
@@ -517,9 +516,9 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-    af_data_t* c = data; /* Current working data */
+    mp_aframe_t* c = data; /* Current working data */
     echo3d(af->setup,(float*)c->audio, c->len);
     bandext(af->setup,(float*)c->audio, c->len);
     return c;
@@ -532,7 +531,7 @@ static ControlCodes __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_crystality_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

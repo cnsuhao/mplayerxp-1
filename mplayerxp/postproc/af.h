@@ -3,24 +3,12 @@
 
 #include <stdio.h>
 
-#include "af_mp.h"
 #include "mp_config.h"
 #include "af_control.h"
-#include "af_format.h"
 #include "xmpcore/xmp_enums.h"
+#include "xmpcore/mp_aframe.h"
 
 struct af_instance_s;
-
-// Audio data chunk
-typedef struct af_data_s
-{
-  any_t* audio;  // data buffer
-  int len;      // buffer length
-  int rate;	// sample rate
-  int nch;	// number of channels
-  int format;	// format
-  int bps; 	// bytes per sample
-} af_data_t;
 
 // Fraction, used to calculate buffer lengths
 typedef struct frac_s
@@ -52,9 +40,9 @@ typedef struct af_instance_s
   const af_info_t* info;
   ControlCodes (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
   void (* __FASTCALL__ uninit)(struct af_instance_s* af);
-  af_data_t* (* __FASTCALL__ play)(struct af_instance_s* af, af_data_t* data,int final);
+  mp_aframe_t* (* __FASTCALL__ play)(struct af_instance_s* af, mp_aframe_t* data,int final);
   any_t* setup;	  // setup data for this specific instance and filter
-  af_data_t* data; // configuration for outgoing data stream
+  mp_aframe_t* data; // configuration for outgoing data stream
   struct af_instance_s* next;
   struct af_instance_s* prev;
   any_t*parent;
@@ -99,8 +87,8 @@ typedef struct af_stream_s
   af_instance_t* first;
   af_instance_t* last;
   // Storage for input and output data formats
-  af_data_t input;
-  af_data_t output;
+  mp_aframe_t input;
+  mp_aframe_t output;
   // Configuration for this stream
   af_cfg_t cfg;
   any_t*parent;
@@ -147,7 +135,7 @@ void af_remove(af_stream_t* s, af_instance_t* af);
 af_instance_t* __FASTCALL__ af_get(af_stream_t* s, char* name);
 
 // Filter data chunk through the filters in the list
-af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data);
+mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s, mp_aframe_t* data);
 
 // send control to all filters, starting with the last until
 // one accepts the command with CONTROL_OK.
@@ -165,17 +153,6 @@ int __FASTCALL__ af_outputlen(af_stream_t* s, int len);
    calculated length is <= the actual length */
 int __FASTCALL__ af_inputlen(af_stream_t* s, int len);
 
-/* Calculate how long the input IN to the filters should be to produce
-   a certain output length OUT but with the following three constraints:
-   1. IN <= max_insize, where max_insize is the maximum possible input
-      block length
-   2. OUT <= max_outsize, where max_outsize is the maximum possible
-      output block length
-   3. If possible OUT >= len.
-   Return -1 in case of error */
-int __FASTCALL__ af_calc_insize_constrained(af_stream_t* s, int len,
-			       int max_outsize,int max_insize);
-
 /* Calculate the total delay caused by the filters */
 double __FASTCALL__ af_calc_delay(af_stream_t* s);
 
@@ -183,12 +160,12 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s);
 
 /* Helper function called by the macro with the same name only to be
    called from inside filters */
-int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data,unsigned len);
+int __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len);
 
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-unsigned __FASTCALL__ af_lencalc(frac_t mul, af_data_t* data);
+unsigned __FASTCALL__ af_lencalc(frac_t mul, mp_aframe_t* data);
 
 /* Helper function used to convert to gain value from dB. Returns
    CONTROL_OK if of and CONTROL_ERROR if fail */
@@ -201,17 +178,17 @@ int __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, floa
 /* Helper function used to convert from sample time to ms */
 int __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate); 
 /* Helper function for testing the output format */
-int __FASTCALL__ af_test_output(struct af_instance_s* af, af_data_t* out);
+int __FASTCALL__ af_test_output(struct af_instance_s* af, mp_aframe_t* out);
 
 /** Print a list of all available audio filters */
 void af_help(void);
 
 /* returns 1 if first filter requires (or ao_driver supports) fmt */
-int __FASTCALL__ af_query_fmt (af_stream_t* s,int fmt);
+ControlCodes __FASTCALL__ af_query_fmt (af_stream_t* s,mpaf_format_e fmt);
 /* returns 1 if first filter requires (or ao_driver supports) rate */
-int __FASTCALL__ af_query_rate (af_stream_t* s,int rate);
+ControlCodes __FASTCALL__ af_query_rate (af_stream_t* s,unsigned rate);
 /* returns 1 if first filter requires (or ao_driver supports) nch */
-int __FASTCALL__ af_query_channels (af_stream_t* s,int nch);
+ControlCodes __FASTCALL__ af_query_channels (af_stream_t* s,unsigned nch);
 
 /* print out configuration of filter's chain */
 extern void af_showconf(af_instance_t *first);
@@ -219,9 +196,9 @@ extern void af_showconf(af_instance_t *first);
 /* Memory reallocation macro: if a local buffer is used (i.e. if the
    filter doesn't operate on the incoming buffer this macro must be
    called to ensure the buffer is big enough. */
-static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, af_data_t* d) {
+static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, mp_aframe_t* d) {
     unsigned len=af_lencalc(a->mul,d);
-    return ((unsigned)a->data->len < len)?af_resize_local_buffer(a,d,len):CONTROL_OK;
+    return ((unsigned)a->data->len < len)?af_resize_local_buffer(a,len):CONTROL_OK;
 }
 
 /* Some other useful macro definitions*/
@@ -238,7 +215,7 @@ static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, af_data_t* d) {
 #endif
 
 #ifndef sign
-#define sign(a) (((a)>0)?(1):(-1)) 
+#define sign(a) (((a)>0)?(1):(-1))
 #endif
 
 #ifndef lrnd

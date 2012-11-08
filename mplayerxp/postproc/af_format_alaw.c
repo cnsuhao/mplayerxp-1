@@ -218,11 +218,11 @@ static ControlCodes from_alaw(any_t* in, any_t* out, int len, int bps, int forma
 {
   register int i;
   // Make sure the input parametrs are OK
-  if(format & (AF_FORMAT_SPECIAL_MASK | AF_FORMAT_US))
+  if(format & (MPAF_SPECIAL_MASK | MPAF_US))
       return CONTROL_ERROR;
 
   // Convert to int or to float
-  if((format & AF_FORMAT_POINT_MASK) == AF_FORMAT_I){
+  if((format & MPAF_POINT_MASK) == MPAF_I){
     switch(bps){
     case(1): 
       for(i=0;i<len;i++){
@@ -268,11 +268,11 @@ static ControlCodes to_alaw(any_t* in, any_t* out, int len, int bps, int format)
 {
   register int i;
   // Make sure the input parametrs are OK
-  if(format & (AF_FORMAT_SPECIAL_MASK | AF_FORMAT_US))
+  if(format & (MPAF_SPECIAL_MASK | MPAF_US))
       return CONTROL_ERROR;
     
   // Convert from int or to float
-  if((format & AF_FORMAT_POINT_MASK) == AF_FORMAT_I){
+  if((format & MPAF_POINT_MASK) == MPAF_I){
     switch(bps){
     case(1):
       for(i=0;i<len;i++){

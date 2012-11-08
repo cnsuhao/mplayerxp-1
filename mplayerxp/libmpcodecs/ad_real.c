@@ -12,6 +12,7 @@
 #include "codecs_ld.h"
 #include "ad_msg.h"
 #include "osdep/mplib.h"
+#include "libao2/afmt.h"
 static const ad_info_t info =  {
 	"RealAudio decoder",
 	"realaud",
@@ -133,9 +134,9 @@ static int preinit(sh_audio_t *sh){
       return 0;
     }
 
-  sh->samplerate=sh->wf->nSamplesPerSec;
-  sh->samplesize=sh->wf->wBitsPerSample/8;
-  sh->channels=sh->wf->nChannels;
+  sh->rate=sh->wf->nSamplesPerSec;
+  sh->afmt=bps2afmt(sh->wf->wBitsPerSample/8);
+  sh->nch=sh->wf->nChannels;
 
   {
     ra_init_t init_data={

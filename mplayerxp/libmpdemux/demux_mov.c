@@ -36,6 +36,7 @@
 
 #include "loader/qtx/qtxsdk/components.h"
 #include "demux_msg.h"
+#include "libao2/afmt.h"
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
@@ -418,8 +419,8 @@ static int mov_probe(demuxer_t* demuxer){
 		  case MOV_FOURCC('r','m','d','a'):
 		      continue;
 		  case MOV_FOURCC('r','d','r','f'): {
-		      int tmp=stream_read_dword(demuxer->stream);
-		      int type=stream_read_dword_le(demuxer->stream);
+		      stream_read_dword(demuxer->stream);
+		      /*int type=*/stream_read_dword_le(demuxer->stream);
 	              int slen=stream_read_dword(demuxer->stream);
 		      //char* s=mp_malloc(slen+1);
 		      //stream_read(demuxer->stream,s,slen);
@@ -658,24 +659,24 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		switch( sh->wtag ) {
 		    case 0x726D6173: /* samr */
 			/* amr narrowband */
-			trak->samplebytes=sh->samplesize=1;
-			trak->nchannels=sh->channels=1;
-			sh->samplerate=8000;
+			sh->afmt=bps2afmt(trak->samplebytes=1);
+			trak->nchannels=sh->nch=1;
+			sh->rate=8000;
 			break;
 			
 		    case 0x62776173: /* sawb */
 			/* amr wideband */
-			trak->samplebytes=sh->samplesize=1;
-			trak->nchannels=sh->channels=1;
-			sh->samplerate=16000;
+			trak->samplebytes=1;
+			trak->nchannels=sh->nch=1;
+			sh->rate=16000;
 			break;
 
 		    default:
-			
+
 // assumptions for below table: short is 16bit, int is 32bit, intfp is 16bit
-// XXX: 32bit fixed point numbers (intfp) are only 2 Byte!		
-// short values are usually one byte leftpadded by zero		
-//   int values are usually two byte leftpadded by zero		
+// XXX: 32bit fixed point numbers (intfp) are only 2 Byte!
+// short values are usually one byte leftpadded by zero
+//   int values are usually two byte leftpadded by zero
 //  stdata[]:
 //	8   short	version
 //	10  short	revision
@@ -692,17 +693,17 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 //	36  int		bytes_per_frame
 //	40  int		bytes_per_sample
 // there may be additional atoms following at 28 (version 0)
-// or 44 (version 1), eg. esds atom of .MP4 files		
+// or 44 (version 1), eg. esds atom of .MP4 files
 // esds atom:
 //      28  int		atom size (bytes of int size, int type and data)
-//      32  char[4]	atom type (fourc charater code -> esds)		
+//      32  char[4]	atom type (fourc charater code -> esds)
 //      36  char[]  	atom data (len=size-8)
 
 // TODO: fix parsing for files using version 2.
 		version=char2short(trak->stdata,8);
 		if (version > 1)
 		    MSG_WARN("MOV: version %d sound atom may not parse correctly!\n", version);
-		trak->samplebytes=sh->samplesize=char2short(trak->stdata,18)/8;
+		sh->afmt=bps2afmt(trak->samplebytes=char2short(trak->stdata,18)/8);
 
 		/* I can't find documentation, but so far this is the case. -Corey */
 		switch (char2short(trak->stdata,16)) {
@@ -717,33 +718,31 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 			    char2short(trak->stdata,16));
 		    trak->nchannels = 2;
 		}
-		sh->channels = trak->nchannels;
+		sh->nch = trak->nchannels;
 
 		/*MSG_V("MOV: timescale: %d samplerate: %d durmap: %d (%d) -> %d (%d)\n",
 		    trak->timescale, char2short(trak->stdata,24), trak->durmap[0].dur,
 		    trak->durmap[0].num, trak->timescale/trak->durmap[0].dur,
 		    char2short(trak->stdata,24)/trak->durmap[0].dur);*/
-		sh->samplerate=char2short(trak->stdata,24);
-		if((sh->samplerate < 7000) && trak->durmap) {
+		sh->rate=char2short(trak->stdata,24);
+		if((sh->rate < 7000) && trak->durmap) {
 		  switch(char2short(trak->stdata,24)/trak->durmap[0].dur) {
 		    // TODO: add more cases.
 		    case 31:
-		      sh->samplerate = 32000; break;
+		      sh->rate = 32000; break;
 		    case 43:
-		      sh->samplerate = 44100; break;
+		      sh->rate = 44100; break;
 		    case 47:
-		      sh->samplerate = 48000; break;
+		      sh->rate = 48000; break;
 		    default:
 		      MSG_WARN(
 			  "MOV: unable to determine audio samplerate, "
 			  "assuming 44.1kHz (got %d)\n",
 			  char2short(trak->stdata,24)/trak->durmap[0].dur);
-		      sh->samplerate = 44100;
-		  }  
-		}  
+		      sh->rate = 44100;
+		  }
 		}
-		MSG_V("Audio bits: %d  chans: %d  rate: %d\n",
-		    sh->samplesize*8,sh->channels,sh->samplerate);
+		}
 
 		if(trak->stdata_len >= 44 && trak->stdata[9]>=1){
 		  MSG_V("Audio header: samp/pack=%d bytes/pack=%d bytes/frame=%d bytes/samp=%d  \n",
@@ -870,8 +869,8 @@ quit_vorbis_block:
 
 			    if(esds.objectTypeId==MP4OTI_13kVoice) { // 13K Voice, defined by 3GPP2
 				sh->wtag=mmioFOURCC('Q', 'c', 'l', 'p');
-				trak->nchannels=sh->channels=1;
-				trak->samplebytes=sh->samplesize=1;
+				trak->nchannels=sh->nch=1;
+				sh->afmt=bps2afmt(trak->samplebytes=1);
 			    }
 
 			    // dump away the codec specific configuration for the AAC decoder
@@ -916,10 +915,10 @@ quit_vorbis_block:
 		// Emulate WAVEFORMATEX struct:
 		sh->wf=mp_mallocz(sizeof(WAVEFORMATEX));
 		sh->wf->wFormatTag=afourcc2wtag(sh->wtag);
-		sh->wf->nChannels=sh->channels;
+		sh->wf->nChannels=sh->nch;
 		sh->wf->wBitsPerSample=(trak->stdata[18]<<8)+trak->stdata[19];
 		// sh->wf->nSamplesPerSec=trak->timescale;
-		sh->wf->nSamplesPerSec=sh->samplerate;
+		sh->wf->nSamplesPerSec=sh->rate;
 		if(trak->stdata_len >= 44 && trak->stdata[9]>=1 && char2int(trak->stdata,28)>0){
 		//Audio header: samp/pack=4096 bytes/pack=743 bytes/frame=1486 bytes/samp=2
 		  sh->wf->nAvgBytesPerSec=(sh->wf->nChannels*sh->wf->nSamplesPerSec*
@@ -947,8 +946,8 @@ quit_vorbis_block:
 		break;
 	    }
 	    case MOV_TRAK_VIDEO: {
-		int i, entry;
-		int flag, start, count_flag, end, palette_count, gray;
+		unsigned i;
+		int entry,flag, start, count_flag, end, palette_count, gray;
 		int hdr_ptr = 76;  // the byte just after depth
 		unsigned char *palette_map;
 		sh_video_t* sh=new_sh_video(demuxer,priv->track_db);
@@ -990,27 +989,27 @@ quit_vorbis_block:
 //      82  char[4]	atom type
 //	86  ...		atom data
 
-	{	ImageDescription* id=mp_malloc(8+trak->stdata_len);
-		trak->desc=id;
-		id->idSize=8+trak->stdata_len;
-//		id->cType=bswap_32(trak->fourcc);
-		id->cType=le2me_32(trak->fourcc);
-		id->version=char2short(trak->stdata,8);
-		id->revisionLevel=char2short(trak->stdata,10);
-		id->vendor=char2int(trak->stdata,12);
-		id->temporalQuality=char2int(trak->stdata,16);
-		id->spatialQuality=char2int(trak->stdata,20);
-		id->width=char2short(trak->stdata,24);
-		id->height=char2short(trak->stdata,26);
-		id->hRes=char2int(trak->stdata,28);
-		id->vRes=char2int(trak->stdata,32);
-		id->dataSize=char2int(trak->stdata,36);
-		id->frameCount=char2short(trak->stdata,40);
-		memcpy(&id->name,trak->stdata+42,32);
-		id->depth=char2short(trak->stdata,74);
-		id->clutID=char2short(trak->stdata,76);
-		if(trak->stdata_len>78)	memcpy(((char*)&id->clutID)+2,trak->stdata+78,trak->stdata_len-78);
-		sh->ImageDesc=id;
+	{	ImageDescription* imd=mp_malloc(8+trak->stdata_len);
+		trak->desc=imd;
+		imd->idSize=8+trak->stdata_len;
+//		imd->cType=bswap_32(trak->fourcc);
+		imd->cType=le2me_32(trak->fourcc);
+		imd->version=char2short(trak->stdata,8);
+		imd->revisionLevel=char2short(trak->stdata,10);
+		imd->vendor=char2int(trak->stdata,12);
+		imd->temporalQuality=char2int(trak->stdata,16);
+		imd->spatialQuality=char2int(trak->stdata,20);
+		imd->width=char2short(trak->stdata,24);
+		imd->height=char2short(trak->stdata,26);
+		imd->hRes=char2int(trak->stdata,28);
+		imd->vRes=char2int(trak->stdata,32);
+		imd->dataSize=char2int(trak->stdata,36);
+		imd->frameCount=char2short(trak->stdata,40);
+		memcpy(&imd->name,trak->stdata+42,32);
+		imd->depth=char2short(trak->stdata,74);
+		imd->clutID=char2short(trak->stdata,76);
+		if(trak->stdata_len>78)	memcpy(((char*)&imd->clutID)+2,trak->stdata+78,trak->stdata_len-78);
+		sh->ImageDesc=imd;
 	}
 
 		if(trak->stdata_len >= 86) { // extra atoms found
@@ -1064,13 +1063,14 @@ quit_vorbis_block:
 			  memcpy(trak->stream_header, esds.decoderConfig, trak->stream_header_len);
 			}
 			mp4_free_esds(&esds); // freeup esds mem
-		      }	      
+		      }
 		      break;
 		    case MOV_FOURCC('a','v','c','C'):
 		      // AVC decoder configuration record
 		      MSG_V("MOV: AVC decoder configuration record atom (%d)!\n", atom_len);
 		      if(atom_len > 8) {
-		        int i, poffs, cnt=0;
+			int poffs;
+		        unsigned _i,cnt=0;
 		        // Parse some parts of avcC, just for fun :)
 		        // real parsing is done by avc1 decoder
 		        MSG_V("MOV: avcC version: %d\n", *(trak->stdata+pos+8));
@@ -1082,14 +1082,14 @@ quit_vorbis_block:
 		        MSG_V("MOV: avcC nal length size: %d\n", ((*(trak->stdata+pos+12))&0x03)+1);
 		        MSG_V("MOV: avcC number of sequence param sets: %d\n", cnt = (*(trak->stdata+pos+13) & 0x1f));
 		        poffs = pos + 14;
-		        for (i = 0; i < cnt; i++) {
-		          MSG_V("MOV: avcC sps %d have length %d\n", i, BE_16(*(trak->stdata+poffs)));
+		        for (_i = 0; _i < cnt; i++) {
+		          MSG_V("MOV: avcC sps %d have length %d\n", _i, BE_16(*(trak->stdata+poffs)));
 		          poffs += BE_16(*(trak->stdata+poffs)) + 2;
 		        }
 		        MSG_V("MOV: avcC number of picture param sets: %d\n", BE_16(*(trak->stdata+poffs)));
 		        poffs++;
-		        for (i = 0; i < cnt; i++) {
-		          MSG_V("MOV: avcC pps %d have length %d\n", i, BE_16(*(trak->stdata+poffs)));
+		        for (_i = 0; _i < cnt; _i++) {
+		          MSG_V("MOV: avcC pps %d have length %d\n", _i, BE_16(*(trak->stdata+poffs)));
 		          poffs += BE_16(*(trak->stdata+poffs)) + 2;
 		        }
 		        // Copy avcC for the AVC decoder
@@ -1172,13 +1172,13 @@ quit_vorbis_block:
 		      else if (palette_count == 256) {
 		        memcpy(palette_map, qt_default_grayscale_palette_256, 256 * 4);
 		        if (trak->fourcc == mmioFOURCC('c','v','i','d')) {
-		          int i;
+			  unsigned _i;
 		          // Hack for grayscale CVID, negative palette
 		          // If you have samples where this is not required contact me (rxt)
 		          MSG_V( "MOV: greyscale cvid with default palette,"
 		            " enabling negative palette hack.\n");
-		          for (i = 0; i < 256 * 4; i++)
-		            palette_map[i] = palette_map[i] ^ 0xff;
+		          for (_i = 0; _i < 256 * 4; _i++)
+		            palette_map[_i] = palette_map[_i] ^ 0xff;
 		        }
 		      }
 		    }
@@ -1304,8 +1304,8 @@ quit_vorbis_block:
 	    stream_t* backup;
 
 	    if (moov_sz > SIZE_MAX - 16) {
-              MSG_ERR( "Invalid cmvd atom size %d\n", moov_sz);
-              break;
+	      MSG_ERR( "Invalid cmvd atom size %d\n", moov_sz);
+	      break;
             }
 	    MSG_V( "Compressed header size: %d / %d\n",cmov_sz,moov_sz);
 
@@ -1522,16 +1522,16 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('h','d','l','r'): {
-      unsigned int tmp = stream_read_dword(demuxer->stream);
+      stream_read_dword(demuxer->stream);
       unsigned int type = stream_read_dword_le(demuxer->stream);
       unsigned int subtype = stream_read_dword_le(demuxer->stream);
       unsigned int manufact = stream_read_dword_le(demuxer->stream);
-      unsigned int comp_flags = stream_read_dword(demuxer->stream);
-      unsigned int comp_mask = stream_read_dword(demuxer->stream);
-      int len = stream_read_char(demuxer->stream);
-      char* str = mp_malloc(len + 1);
-      stream_read(demuxer->stream, str, len);
-      str[len] = 0;
+      /*unsigned int comp_flags =*/ stream_read_dword(demuxer->stream);
+      /*unsigned int comp_mask =*/ stream_read_dword(demuxer->stream);
+      unsigned _len = stream_read_char(demuxer->stream);
+      char* str = mp_malloc(_len + 1);
+      stream_read(demuxer->stream, str, _len);
+      str[_len] = 0;
       MSG_V( "MOV: %*sHandler header: %.4s/%.4s (%.4s) %s\n", level, "",
              &type, &subtype, &manufact, str);
       mp_free(str);
@@ -1576,17 +1576,17 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       MSG_V( "MOV: %*sDescription list! (cnt:%d)\n",
              level, "", count);
       for (i = 0; i < count; i++) {
-        off_t pos = stream_tell(demuxer->stream);
-        off_t len = stream_read_dword(demuxer->stream);
+        off_t _pos = stream_tell(demuxer->stream);
+        unsigned _len = stream_read_dword(demuxer->stream);
         unsigned int fourcc = stream_read_dword_le(demuxer->stream);
         /* some files created with Broadcast 2000 (e.g. ilacetest.mov)
            contain raw I420 video but have a yv12 fourcc */
         if (fourcc == mmioFOURCC('y','v','1','2'))
           fourcc = mmioFOURCC('I','4','2','0');
-        if (len < 8)
+        if (_len < 8)
           break; // error
         MSG_V( "MOV: %*s desc #%d: %.4s  (%d bytes)\n", level, "",
-               i, &fourcc, len - 16);
+               i, &fourcc, _len - 16);
         if (fourcc != trak->fourcc && i)
           MSG_WARN( MSGTR_MOVvariableFourCC);
 //      if(!i)
@@ -1594,24 +1594,23 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
           trak->fourcc = fourcc;
           // read type specific (audio/video/time/text etc) header
           // NOTE: trak type is not yet known at this point :(((
-          trak->stdata_len = len - 8;
+          trak->stdata_len = _len - 8;
           trak->stdata = mp_malloc(trak->stdata_len);
           stream_read(demuxer->stream, trak->stdata, trak->stdata_len);
         }
-        if (!stream_seek(demuxer->stream, pos + len))
+        if (!stream_seek(demuxer->stream, _pos + _len))
           break;
       }
       break;
     }
     case MOV_FOURCC('s','t','t','s'): {
-      int temp = stream_read_dword(demuxer->stream);
-      int len = stream_read_dword(demuxer->stream);
-      int i;
+      stream_read_dword(demuxer->stream);
+      unsigned i,_len = stream_read_dword(demuxer->stream);
       unsigned int pts = 0;
-      MSG_V("MOV: %*sSample duration table! (%d blocks)\n", level, "", len);
-      trak->durmap = mp_calloc(len, sizeof(mov_durmap_t));
-      trak->durmap_size = len;
-      for (i = 0; i < len; i++) {
+      MSG_V("MOV: %*sSample duration table! (%d blocks)\n", level, "", _len);
+      trak->durmap = mp_calloc(_len, sizeof(mov_durmap_t));
+      trak->durmap_size = _len;
+      for (i = 0; i < _len; i++) {
         trak->durmap[i].num = stream_read_dword(demuxer->stream);
         trak->durmap[i].dur = stream_read_dword(demuxer->stream);
         pts += trak->durmap[i].num * trak->durmap[i].dur;
@@ -1621,17 +1620,16 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('s','t','s','c'): {
-      int temp = stream_read_dword(demuxer->stream);
-      int len = stream_read_dword(demuxer->stream);
-      int ver = (temp << 24);
-      int flags = (temp << 16) | (temp << 8) | temp;
-      int i;
+      unsigned temp = stream_read_dword(demuxer->stream);
+      unsigned i,_len = stream_read_dword(demuxer->stream);
+      unsigned ver = (temp << 24);
+      unsigned flags = (temp << 16) | (temp << 8) | temp;
       MSG_V( "MOV: %*sSample->Chunk mapping table!  (%d blocks) (ver:%d,flags:%ld)\n", level, "",
-             len, ver, flags);
+             _len, ver, flags);
       // read data:
-      trak->chunkmap_size = len;
-      trak->chunkmap = mp_malloc(sizeof(mov_chunkmap_t) * len);
-      for (i = 0; i < len; i++) {
+      trak->chunkmap_size = _len;
+      trak->chunkmap = mp_malloc(sizeof(mov_chunkmap_t) * _len);
+      for (i = 0; i < _len; i++) {
         trak->chunkmap[i].first = stream_read_dword(demuxer->stream) - 1;
         trak->chunkmap[i].spc = stream_read_dword(demuxer->stream);
         trak->chunkmap[i].sdid = stream_read_dword(demuxer->stream);
@@ -1660,38 +1658,36 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('s','t','c','o'): {
-      int temp = stream_read_dword(demuxer->stream);
-      int len = stream_read_dword(demuxer->stream);
-      int i;
+      stream_read_dword(demuxer->stream);
+      unsigned i,_len = stream_read_dword(demuxer->stream);
       MSG_V( "MOV: %*sChunk offset table! (%d chunks)\n", level, "",
-             len);
+             _len);
       // extend array if needed:
-      if (len > trak->chunks_size) {
+      if (_len > trak->chunks_size) {
         trak->chunks = trak->chunks ?
-		mp_realloc(trak->chunks, sizeof(mov_chunk_t) * len) :
-		mp_malloc(sizeof(mov_chunk_t) * len);
-        trak->chunks_size = len;
+		mp_realloc(trak->chunks, sizeof(mov_chunk_t) * _len) :
+		mp_malloc(sizeof(mov_chunk_t) * _len);
+        trak->chunks_size = _len;
       }
       // read elements:
-      for(i = 0; i < len; i++)
+      for(i = 0; i < _len; i++)
         trak->chunks[i].pos = stream_read_dword(demuxer->stream);
       break;
     }
     case MOV_FOURCC('c','o','6','4'): {
-      int temp = stream_read_dword(demuxer->stream);
-      int len = stream_read_dword(demuxer->stream);
-      int i;
+      stream_read_dword(demuxer->stream);
+      unsigned i,_len = stream_read_dword(demuxer->stream);
       MSG_V( "MOV: %*s64bit chunk offset table! (%d chunks)\n", level, "",
-             len);
+             _len);
       // extend array if needed:
-      if (len > trak->chunks_size) {
-        trak->chunks = trak->chunks ? 
-		mp_realloc(trak->chunks, sizeof(mov_chunk_t) * len) :
-		mp_malloc(sizeof(mov_chunk_t) * len);
-        trak->chunks_size = len;
+      if (_len > trak->chunks_size) {
+        trak->chunks = trak->chunks ?
+		mp_realloc(trak->chunks, sizeof(mov_chunk_t) * _len) :
+		mp_malloc(sizeof(mov_chunk_t) * _len);
+        trak->chunks_size = _len;
       }
       // read elements:
-      for (i = 0; i < len; i++) {
+      for (i = 0; i < _len; i++) {
 #ifndef	_LARGEFILE_SOURCE
         if (stream_read_dword(demuxer->stream) != 0)
           MSG_WARN( "Chunk %d has got 64bit address, but you've MPlayer compiled without LARGEFILE support!\n", i);

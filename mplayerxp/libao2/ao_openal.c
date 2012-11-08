@@ -31,7 +31,7 @@
 
 #include "audio_out.h"
 #include "audio_out_internal.h"
-#include "postproc/af_format.h"
+#include "postproc/af.h"
 #include "afmt.h"
 #include "osdep/timer.h"
 #include "osdep/mplib.h"

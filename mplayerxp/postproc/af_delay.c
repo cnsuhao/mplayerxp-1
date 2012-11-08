@@ -33,7 +33,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
-    int i;
+    unsigned i;
 
     // Free prevous delay queues
     for(i=0;i<af->data->nch;i++){
@@ -41,14 +41,13 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	mp_free(s->q[i]);
     }
 
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
-    af->data->format = ((af_data_t*)arg)->format;
-    af->data->bps    = ((af_data_t*)arg)->bps;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->format = ((mp_aframe_t*)arg)->format;
 
     // Allocate new delay queues
     for(i=0;i<af->data->nch;i++){
-      s->q[i] = mp_calloc(L,af->data->bps);
+      s->q[i] = mp_calloc(L,af->data->format&MPAF_BPS_MASK);
       if(NULL == s->q[i])
 	MSG_FATAL(MSGTR_OutOfMemory);
     }
@@ -110,19 +109,19 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*   	c   = data;	 // Current working data
+  mp_aframe_t*   	c   = data;	 // Current working data
   af_delay_t*  	s   = af->setup; // Setup for this instance
   int 		nch = c->nch;	 // Number of channels
-  int		len = c->len/c->bps; // Number of sample in data chunk
+  int		len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
   int		ri  = 0;
   int 		ch,i;
   for(ch=0;ch<nch;ch++){
-    switch(c->bps){
+    switch(c->format&MPAF_BPS_MASK){
     case 1:{
       int8_t* a = c->audio;
-      int8_t* q = s->q[ch]; 
+      int8_t* q = s->q[ch];
       int wi = s->wi[ch];
       ri = s->ri;
       for(i=ch;i<len;i+=nch){
@@ -136,7 +135,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
     }
     case 2:{
       int16_t* a = c->audio;
-      int16_t* q = s->q[ch]; 
+      int16_t* q = s->q[ch];
       int wi = s->wi[ch];
       ri = s->ri;
       for(i=ch;i<len;i+=nch){
@@ -175,7 +174,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_delay_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

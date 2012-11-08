@@ -67,10 +67,9 @@ ControlCodes __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate)
 }
 
 /* Helper function for testing the output format */
-ControlCodes __FASTCALL__ af_test_output(struct af_instance_s* af, af_data_t* out)
+ControlCodes __FASTCALL__ af_test_output(struct af_instance_s* af, mp_aframe_t* out)
 {
-  if((af->data->format != out->format) || 
-     (af->data->bps    != out->bps)    ||
+  if((af->data->format != out->format) ||
      (af->data->rate   != out->rate)   ||
      (af->data->nch    != out->nch)){
 #if 0
@@ -80,7 +79,7 @@ ControlCodes __FASTCALL__ af_test_output(struct af_instance_s* af, af_data_t* ou
     af->data->rate,out->rate,
     af->data->nch,out->nch);
 #endif
-    memcpy(out,af->data,sizeof(af_data_t));
+    memcpy(out,af->data,sizeof(mp_aframe_t));
     return CONTROL_FALSE;
   }
   return CONTROL_OK;

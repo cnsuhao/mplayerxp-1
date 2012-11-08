@@ -58,13 +58,12 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   case AF_CONTROL_REINIT:
     // Sanity check
     if(!arg) return CONTROL_ERROR;
-    
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
-    
-    if(s->fast && (((af_data_t*)arg)->format != (AF_FORMAT_F | AF_FORMAT_NE))){
-      af->data->format = AF_FORMAT_SI | AF_FORMAT_NE;
-      af->data->bps    = 2;
+
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+
+    if(s->fast && (((mp_aframe_t*)arg)->format != (MPAF_F|MPAF_NE))){
+      af->data->format = MPAF_SI|MPAF_NE|2;
     }
     else{
       // Cutoff set to 10Hz for forgetting factor
@@ -72,10 +71,9 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       float t = 2.0-cos(x);
       s->time = 1.0 - (t - sqrt(t*t - 1));
       MSG_DBG2("[volume] Forgetting factor = %0.5f\n",s->time);
-      af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
-      af->data->bps    = 4;
+      af->data->format = MPAF_F|MPAF_NE|4;
     }
-    return af_test_output(af,(af_data_t*)arg);
+    return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_volume] using soft %i\n",s->soft);
     return CONTROL_OK;
@@ -137,16 +135,16 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*    c   = data;			// Current working data
+  mp_aframe_t*    c   = data;			// Current working data
   af_volume_t*  s   = (af_volume_t*)af->setup; 	// Setup for this instance
   int           ch  = 0;			// Channel counter
   register int	nch = c->nch;			// Number of channels	
   register int  i   = 0;
 
   // Basic operation volume control only (used on slow machines)
-  if(af->data->format == (AF_FORMAT_SI | AF_FORMAT_NE)){
+  if(af->data->format == (MPAF_SI | MPAF_NE)){
     int16_t*    a   = (int16_t*)c->audio;	// Audio data
     int         len = c->len/2;			// Number of samples
     for(ch = 0; ch < nch ; ch++){
@@ -160,7 +158,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
     }
   }
   // Machine is fast and data is floating point
-  else if(af->data->format == (AF_FORMAT_F | AF_FORMAT_NE)){ 
+  else if(af->data->format == (MPAF_F | MPAF_NE)){
     float*   	a   	= (float*)c->audio;	// Audio data
     int       	len 	= c->len/4;		// Number of samples
     for(ch = 0; ch < nch ; ch++){
@@ -169,18 +167,18 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
 	float	t   = 1.0 - s->time;
 	for(i=ch;i<len;i+=nch){
 	  register float x 	= a[i];
-	  register float pow 	= x*x;	
+	  register float _pow 	= x*x;
 	  // Check maximum power value
-	  if(pow > s->max[ch])
-	    s->max[ch] = pow;
+	  if(_pow > s->max[ch])
+	    s->max[ch] = _pow;
 	  // Set volume
 	  x *= s->level[ch];
 	  // Peak meter
-	  pow 	= x*x;
-	  if(pow > s->pow[ch])
-	    s->pow[ch] = pow;
+	  _pow 	= x*x;
+	  if(_pow > s->pow[ch])
+	    s->pow[ch] = _pow;
 	  else
-	    s->pow[ch] = t*s->pow[ch] + pow*s->time; // LP filter
+	    s->pow[ch] = t*s->pow[ch] + _pow*s->time; // LP filter
 	  /* Soft clipping, the sound of a dream, thanks to Jon Wattes
 	     post to Musicdsp.org */
 	  if(s->soft){
@@ -210,7 +208,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_volume_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

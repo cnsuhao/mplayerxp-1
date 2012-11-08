@@ -284,7 +284,7 @@ static int init(priv_t *priv)
 		    break;
 	    }
 	    
-	    priv->audio_format[i] = AFMT_S16_LE;
+	    priv->audio_format[i] = bps2afmt(2);
 	    priv->audio_samplerate[i] = 44100;
 	    priv->audio_samplesize[i] =
 		priv->audio_samplerate[i]/8/priv->fps*

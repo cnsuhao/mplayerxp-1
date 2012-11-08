@@ -57,6 +57,7 @@
 
 #include "libvo/sub.h"
 #include "libao2/audio_out.h"
+#include "libao2/afmt.h"
 
 #include "osdep/getch2.h"
 #include "osdep/keycodes.h"
@@ -1216,15 +1217,15 @@ static int mpxp_configure_audio(void) {
     MP_UNIT("setup_audio");
     MSG_V("AO: [%s] %iHz %s %s\n",
 	info->short_name,
-	mp_conf.force_srate?mp_conf.force_srate:sh_audio->samplerate,
-	sh_audio->channels>7?"surround71":
-	sh_audio->channels>6?"surround61":
-	sh_audio->channels>5?"surround51":
-	sh_audio->channels>4?"surround41":
-	sh_audio->channels>3?"surround40":
-	sh_audio->channels>2?"stereo2.1":
-	sh_audio->channels>1?"Stereo":"Mono",
-	ao_format_name(sh_audio->sample_format)
+	mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate,
+	sh_audio->nch>7?"surround71":
+	sh_audio->nch>6?"surround61":
+	sh_audio->nch>5?"surround51":
+	sh_audio->nch>4?"surround41":
+	sh_audio->nch>3?"surround40":
+	sh_audio->nch>2?"stereo2.1":
+	sh_audio->nch>1?"Stereo":"Mono",
+	ao_format_name(sh_audio->afmt)
     );
     MSG_V("AO: Description: %s\nAO: Author: %s\n",
 	info->name, info->author);
@@ -1232,22 +1233,22 @@ static int mpxp_configure_audio(void) {
 	MSG_V("AO: Comment: %s\n", info->comment);
 
     MP_UNIT("af_preinit");
-    ao_data->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->samplerate;
-    ao_data->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->channels;
-    ao_data->format=sh_audio->sample_format;
+    ao_data->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate;
+    ao_data->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
+    ao_data->format=sh_audio->afmt;
 #if 1
     if(!mpca_preinit_filters(sh_audio,
 	    // input:
-	    (int)(sh_audio->samplerate),
-	    sh_audio->channels, sh_audio->sample_format, sh_audio->samplesize,
+	    (int)(sh_audio->rate),
+	    sh_audio->nch, sh_audio->afmt,
 	    // output:
-	    &ao_data->samplerate, &ao_data->channels, &ao_data->format,
-	    ao_format_bits(ao_data->format)/8)){
+	    &ao_data->samplerate, &ao_data->channels, &ao_data->format)){
 	    MSG_ERR("Audio filter chain preinit failed\n");
     } else {
-	MSG_V("AF_pre: %dHz %dch (%s)%08X\n",
+	MSG_V("AF_pre: %dHz %dch (%s) afmt=%08X sh_audio_min=%i\n",
 		ao_data->samplerate, ao_data->channels,
-		ao_format_name(ao_data->format),ao_data->format);
+		ao_format_name(ao_data->format),ao_data->format
+		,sh_audio->audio_out_minsize);
     }
 #endif
     if(!ao_configure(ao_data,mp_conf.force_srate?mp_conf.force_srate:ao_data->samplerate,
@@ -1259,10 +1260,9 @@ static int mpxp_configure_audio(void) {
 	priv->inited_flags|=INITED_AO;
 	MP_UNIT("af_init");
 	if(!mpca_init_filters(sh_audio,
-	    (int)(sh_audio->samplerate),
-	    sh_audio->channels, sh_audio->sample_format, sh_audio->samplesize,
+	    sh_audio->rate,
+	    sh_audio->nch, sh_audio->afmt,
 	    ao_data->samplerate, ao_data->channels, ao_data->format,
-	    ao_format_bits(ao_data->format)/8, /* ao_data->bps, */
 	    ao_data->outburst*4, ao_data->buffersize)) {
 		MSG_ERR("No matching audio filter found!\n");
 	    }
@@ -1874,8 +1874,9 @@ play_next_file:
 	    MSG_ERR(MSGTR_CouldntInitAudioCodec);
 	    sh_audio=d_audio->sh=NULL;
 	} else {
-	    MSG_V("AUDIO: srate=%d  chans=%d  bps=%d  sfmt=0x%X  ratio: %d->%d\n",sh_audio->samplerate,sh_audio->channels,sh_audio->samplesize,
-	    sh_audio->sample_format,sh_audio->i_bps,sh_audio->af_bps);
+	    MSG_V("AUDIO: srate=%d  chans=%d  bps=%d  sfmt=0x%X  ratio: %d->%d\n"
+	    ,sh_audio->rate,sh_audio->nch,afmt2bps(sh_audio->afmt)
+	    ,sh_audio->afmt,sh_audio->i_bps,sh_audio->af_bps);
 	}
     }
 

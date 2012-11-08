@@ -28,6 +28,7 @@
 #include "libvo/sub.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/libnuppelvideo/minilzo.h"
+#include "libao2/afmt.h"
 #include "osdep/mplib.h"
 #include "demux_msg.h"
 
@@ -2442,18 +2443,18 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
 
   sh_a->wtag = track->a_formattag;
   sh_a->wf->wFormatTag = track->a_formattag;
-  sh_a->channels = track->a_channels;
+  sh_a->nch = track->a_channels;
   sh_a->wf->nChannels = track->a_channels;
-  sh_a->samplerate = (uint32_t) track->a_sfreq;
+  sh_a->rate = (uint32_t) track->a_sfreq;
   sh_a->wf->nSamplesPerSec = (uint32_t) track->a_sfreq;
   if (track->a_bps == 0)
     {
-      sh_a->samplesize = 2;
+      sh_a->afmt = bps2afmt(2);
       sh_a->wf->wBitsPerSample = 16;
     }
   else
     {
-      sh_a->samplesize = track->a_bps / 8;
+      sh_a->afmt=bps2afmt(track->a_bps/8);
       sh_a->wf->wBitsPerSample = track->a_bps;
     }
   if (track->a_formattag == 0x0055)  /* MP3 || MP2 */
@@ -2469,7 +2470,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
     }
   else if (track->a_formattag == 0x0001)  /* PCM || PCM_BE */
     {
-      sh_a->wf->nAvgBytesPerSec = sh_a->channels * sh_a->samplerate*2;
+      sh_a->wf->nAvgBytesPerSec = sh_a->nch*sh_a->rate*2;
       sh_a->wf->nBlockAlign = sh_a->wf->nAvgBytesPerSec;
       if (!strcmp(track->codec_id, MKV_A_PCM_BE))
         sh_a->wtag = mmioFOURCC('t', 'w', 'o', 's');
@@ -2508,7 +2509,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
 
       /* Recreate the 'private data' */
       /* which faad2 uses in its initialization */
-      srate_idx = aac_get_sample_rate_index (sh_a->samplerate);
+      srate_idx = aac_get_sample_rate_index (sh_a->rate);
       if (!strncmp (&track->codec_id[12], "MAIN", 4))
         profile = 0;
       else if (!strncmp (&track->codec_id[12], "LC", 2))
@@ -2526,18 +2527,18 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
           /* HE-AAC (aka SBR AAC) */
           sh_a->codecdata_len = 5;
 
-          sh_a->samplerate *= 2;
+          sh_a->rate *= 2;
           sh_a->wf->nSamplesPerSec *= 2;
-          srate_idx = aac_get_sample_rate_index(sh_a->samplerate);
+          srate_idx = aac_get_sample_rate_index(sh_a->rate);
           sh_a->codecdata[2] = AAC_SYNC_EXTENSION_TYPE >> 3;
           sh_a->codecdata[3] = ((AAC_SYNC_EXTENSION_TYPE&0x07)<<5) | 5;
           sh_a->codecdata[4] = (1 << 7) | (srate_idx << 3);
-          track->default_duration = 1024.0 / (sh_a->samplerate / 2);
+          track->default_duration = 1024.0 / (sh_a->rate / 2);
         }
       else
         {
           sh_a->codecdata_len = 2;
-          track->default_duration = 1024.0 / (float)sh_a->samplerate;
+          track->default_duration = 1024.0 / (float)sh_a->rate;
         }
     }
   else if (track->a_formattag == mmioFOURCC('v', 'r', 'b', 's'))  /* VORBIS */

@@ -14,8 +14,8 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 {
   switch(cmd){
   case AF_CONTROL_REINIT:
-    memcpy(af->data,(af_data_t*)arg,sizeof(af_data_t));
-    MSG_V("[dummy] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X and bps = %i\n",af->data->rate,af->data->nch,af->data->format,af->data->bps);
+    memcpy(af->data,(mp_aframe_t*)arg,sizeof(mp_aframe_t));
+    MSG_V("[dummy] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
     return CONTROL_OK;
   default: break;
   }
@@ -30,7 +30,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   // Do something necessary to get rid of annoying warning during compile
   if(!af)
@@ -45,7 +45,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->data=mp_malloc(sizeof(af_data_t));
+  af->data=mp_malloc(sizeof(mp_aframe_t));
   if(af->data == NULL)
     return CONTROL_ERROR;
   return CONTROL_OK;

@@ -15,6 +15,7 @@
 #include "libmpdemux/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
+#include "libao2/afmt.h"
 
 #include "ad_internal.h"
 
@@ -56,9 +57,9 @@ static int init(sh_audio_t *sh)
   if(!h) return 0;
 
   sh->i_bps=h->nAvgBytesPerSec;
-  sh->channels=h->nChannels;
-  sh->samplerate=h->nSamplesPerSec;
-  sh->samplesize=(h->wBitsPerSample+7)/8;
+  sh->nch=h->nChannels;
+  sh->rate=h->nSamplesPerSec;
+  sh->afmt=bps2afmt((h->wBitsPerSample+7)/8);
   priv = mp_mallocz(sizeof(priv_t));
   priv->decoder=init_global_rawdv_decoder();
   sh->context = priv;

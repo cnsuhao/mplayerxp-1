@@ -21,11 +21,10 @@ static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
 {
 	switch(cmd){
 		case AF_CONTROL_REINIT:
-		af->data->rate	= ((af_data_t*)arg)->rate;
-		af->data->nch	= ((af_data_t*)arg)->nch;
-		af->data->format= AF_FORMAT_NE | AF_FORMAT_F;
-		af->data->bps	= 4;
-		return af_test_output(af,(af_data_t*)arg);
+		af->data->rate	= ((mp_aframe_t*)arg)->rate;
+		af->data->nch	= ((mp_aframe_t*)arg)->nch;
+		af->data->format= MPAF_NE|MPAF_F|4;
+		return af_test_output(af,(mp_aframe_t*)arg);
 	}
 	return CONTROL_UNKNOWN;
 }
@@ -38,9 +37,9 @@ static void uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-	af_data_t*	c	= data;		 // Current working data
+	mp_aframe_t*	c	= data;		 // Current working data
 	float*		a	= c->audio;	 // Audio data
 	int			len	= c->len/4;	 // Number of samples in current audio block 
 	int			nch	= c->nch;	 // Number of channels
@@ -68,7 +67,7 @@ static ControlCodes open(af_instance_t* af){
 	af->play	= play;
 	af->mul.n	= 1;
 	af->mul.d	= 1;
-	af->data	= mp_calloc(1,sizeof(af_data_t));
+	af->data	= mp_calloc(1,sizeof(mp_aframe_t));
 
 	if(af->data == NULL)
 		return CONTROL_ERROR;

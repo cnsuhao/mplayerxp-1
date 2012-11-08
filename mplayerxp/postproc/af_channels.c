@@ -129,11 +129,11 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     if(!s->router){
       int i;
       // Make sure this filter isn't redundant 
-      if(af->data->nch == ((af_data_t*)arg)->nch)
+      if(af->data->nch == ((mp_aframe_t*)arg)->nch)
 	return CONTROL_DETACH;
 
       // If mono: fake stereo
-      if(((af_data_t*)arg)->nch == 1){
+      if(((mp_aframe_t*)arg)->nch == 1){
 	s->nr = min(af->data->nch,2);
 	for(i=0;i<s->nr;i++){
 	  s->route[i][FR] = 0;
@@ -141,20 +141,19 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	}
       }
       else{
-	s->nr = min(af->data->nch, ((af_data_t*)arg)->nch);
+	s->nr = min(af->data->nch, ((mp_aframe_t*)arg)->nch);
 	for(i=0;i<s->nr;i++){
 	  s->route[i][FR] = i;
 	  s->route[i][TO] = i;
 	}
       }
     }
-    s->ich=((af_data_t*)arg)->nch;
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->format = ((af_data_t*)arg)->format;
-    af->data->bps    = ((af_data_t*)arg)->bps;
-    af->mul.n        = af->data->nch;
-    af->mul.d	     = ((af_data_t*)arg)->nch;
-    return check_routes(s,((af_data_t*)arg)->nch,af->data->nch);
+    s->ich=((mp_aframe_t*)arg)->nch;
+    af->data->rate	= ((mp_aframe_t*)arg)->rate;
+    af->data->format	= ((mp_aframe_t*)arg)->format;
+    af->mul.n		= af->data->nch;
+    af->mul.d		= ((mp_aframe_t*)arg)->nch;
+    return check_routes(s,((mp_aframe_t*)arg)->nch,af->data->nch);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_channels] Changing channels %d -> %d\n",s->ich,af->data->nch);
     return CONTROL_OK;
@@ -246,15 +245,15 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*   	 c = data;			// Current working data
+  mp_aframe_t*   	 c = data;			// Current working data
   af_channels_t* s = af->setup;
   int 		 i;
 
   if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af,data))
     return NULL;
-  af_data_t*   	 l = af->data;	 		// Local data
+  mp_aframe_t*   	 l = af->data;	 		// Local data
 
   // Reset unused channels
   memset(l->audio,0,(c->len*af->mul.n)/af->mul.d);
@@ -262,7 +261,7 @@ static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,in
   if(CONTROL_OK == check_routes(s,c->nch,l->nch))
     for(i=0;i<s->nr;i++)
       copy(c->audio,l->audio,c->nch,s->route[i][FR],
-	   l->nch,s->route[i][TO],c->len,c->bps);
+	   l->nch,s->route[i][TO],c->len,c->format&MPAF_BPS_MASK);
 
   // Set output data
   c->audio = l->audio;
@@ -279,7 +278,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_channels_t));
   if((af->data == NULL) || (af->setup == NULL))
     return CONTROL_ERROR;

@@ -41,22 +41,22 @@ static uint64_t get_ch_layout(unsigned nch) {
     return 0;
 }
 
-static enum AVSampleFormat get_sample_format(unsigned fmt,unsigned nbps) {
-    switch(nbps) {
-	case 1: if((fmt&AF_FORMAT_SIGN_MASK) == AF_FORMAT_US) return AV_SAMPLE_FMT_U8;
+static enum AVSampleFormat get_sample_format(mpaf_format_e fmt) {
+    switch(fmt&MPAF_BPS_MASK) {
+	case 1: if((fmt&MPAF_SIGN_MASK) == MPAF_US) return AV_SAMPLE_FMT_U8;
 		break;
-	case 2: if((fmt&AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI &&
-		   (fmt&AF_FORMAT_POINT_MASK) == AF_FORMAT_I &&
-		   (fmt&AF_FORMAT_END_MASK) == AF_FORMAT_NE) return AV_SAMPLE_FMT_S16;
+	case 2: if((fmt&MPAF_SIGN_MASK) == MPAF_SI &&
+		   (fmt&MPAF_POINT_MASK) == MPAF_I &&
+		   (fmt&MPAF_END_MASK) == MPAF_NE) return AV_SAMPLE_FMT_S16;
 		break;
-	case 4: if((fmt&AF_FORMAT_POINT_MASK) == AF_FORMAT_I) {
-		    if((fmt&AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI &&
-			(fmt&AF_FORMAT_POINT_MASK) == AF_FORMAT_I &&
-			(fmt&AF_FORMAT_END_MASK) == AF_FORMAT_NE) return AV_SAMPLE_FMT_S32;
+	case 4: if((fmt&MPAF_POINT_MASK) == MPAF_I) {
+		    if((fmt&MPAF_SIGN_MASK) == MPAF_SI &&
+			(fmt&MPAF_POINT_MASK) == MPAF_I &&
+			(fmt&MPAF_END_MASK) == MPAF_NE) return AV_SAMPLE_FMT_S32;
 		}
 		else return AV_SAMPLE_FMT_FLT;
 		break;
-	case 8: if((fmt&AF_FORMAT_POINT_MASK) == AF_FORMAT_F) return AV_SAMPLE_FMT_DBL;
+	case 8: if((fmt&MPAF_POINT_MASK) == MPAF_F) return AV_SAMPLE_FMT_DBL;
 		break;
     }
     return AV_SAMPLE_FMT_NONE;
@@ -68,7 +68,6 @@ typedef struct af_resample_s {
     unsigned irate;
     unsigned inch;
     unsigned ifmt;
-    unsigned ibps;
 } af_resample_t;
 
 // Initialization and runtime control
@@ -79,7 +78,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	case AF_CONTROL_REINIT: {
 	    enum AVSampleFormat avfmt;
 	    uint64_t		nch;
-	    af_data_t*		n   = (af_data_t*)arg; // New configuration
+	    mp_aframe_t*		n   = (mp_aframe_t*)arg; // New configuration
 	    int			rv  = CONTROL_OK;
 
 	    if(s->ctx) { swr_free(&s->ctx); s->ctx=NULL; }
@@ -89,14 +88,14 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 			af->data->rate,n->rate);
 		return CONTROL_DETACH;
 	    }
-	    avfmt=get_sample_format(n->format,n->bps);
+	    avfmt=get_sample_format(n->format);
 	    nch=get_ch_layout(n->nch);
 	    if(avfmt==AV_SAMPLE_FMT_NONE) rv=CONTROL_ERROR;
 	    if(nch==0) rv=CONTROL_ERROR;
 	    if(rv!=CONTROL_OK) {
 		char buff[256];
 		MSG_V("[af_resample] doesn't work with '%s' x %i\n"
-		,fmt2str(n->format,n->bps,buff,sizeof(buff))
+		,mpaf_fmt2str(n->format,buff,sizeof(buff))
 		,n->nch);
 	    }
 	    s->ctx = swr_alloc_set_opts(NULL,
@@ -109,13 +108,11 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	    }
 
 	    af->data->format = n->format;
-	    af->data->bps = n->bps;
 	    af->data->nch = n->nch;
 
 	    s->irate=n->rate;
 	    s->inch=n->nch;
 	    s->ifmt=n->format;
-	    s->ibps=n->bps;
 	    // Set multiplier and delay
 	    af->delay = (double)swr_get_delay(s->ctx,1000);
 	    af->mul.n = af->data->rate;
@@ -153,23 +150,23 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
     int rc;
-    af_data_t*     c = data;	 // Current working data
-    af_resample_t* s = (af_resample_t*)af->setup;
+    mp_aframe_t*	c = data; // Current working data
+    af_resample_t*	s = (af_resample_t*)af->setup;
 
     if (CONTROL_OK != RESIZE_LOCAL_BUFFER(af, data)) return NULL;
-    af_data_t*     l = af->data; // Local data
+    mp_aframe_t*	l = af->data; // Local data
     uint8_t*		ain[SWR_CH_MAX];
     const uint8_t*	aout[SWR_CH_MAX];
 
     aout[0]=l->audio;
     ain[0]=c->audio;
 
-    rc=swr_convert(s->ctx,aout,l->len/(l->nch*l->bps),ain,c->len/(c->nch*c->bps));
+    rc=swr_convert(s->ctx,aout,l->len/(l->nch*(l->format&MPAF_BPS_MASK)),ain,c->len/(c->nch*(c->format&MPAF_BPS_MASK)));
     if(rc<0)	MSG_ERR("%i=swr_convert\n",rc);
-    else	l->len=rc*l->nch*l->bps;
+    else	l->len=rc*l->nch*(l->format&MPAF_BPS_MASK);
 
     return l;
 }
@@ -181,7 +178,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
     af->play=play;
     af->mul.n=1;
     af->mul.d=1;
-    af->data=mp_calloc(1,sizeof(af_data_t));
+    af->data=mp_calloc(1,sizeof(mp_aframe_t));
     af->setup=mp_calloc(1,sizeof(af_resample_t));
     if(af->data == NULL || af->setup == NULL) return CONTROL_ERROR;
     return CONTROL_OK;

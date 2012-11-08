@@ -28,6 +28,7 @@
 #include "libavformat/avformat.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpconf/cfgparser.h"
+#include "libao2/afmt.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
@@ -304,19 +305,19 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 //            printf("sca:%d rat:%d fs:%d sr:%d ba:%d\n", sh_audio->audio.dwScale, sh_audio->audio.dwRate, codec->frame_size, codec->sample_rate, codec->block_align);
             sh_audio->ds= demuxer->audio;
             sh_audio->wtag= codec->codec_tag;
-            sh_audio->channels= codec->channels;
-            sh_audio->samplerate= codec->sample_rate;
+            sh_audio->nch= codec->channels;
+            sh_audio->rate= codec->sample_rate;
             sh_audio->i_bps= codec->bit_rate/8;
             switch (codec->codec_id) {
               case CODEC_ID_PCM_S8:
               case CODEC_ID_PCM_U8:
-                sh_audio->samplesize = 1;
+                sh_audio->afmt=bps2afmt(1);
                 break;
               case CODEC_ID_PCM_S16LE:
               case CODEC_ID_PCM_S16BE:
               case CODEC_ID_PCM_U16LE:
               case CODEC_ID_PCM_U16BE:
-                sh_audio->samplesize = 2;
+                sh_audio->afmt=bps2afmt(2);
                 break;
               case CODEC_ID_PCM_ALAW:
                 sh_audio->wtag = 0x6;

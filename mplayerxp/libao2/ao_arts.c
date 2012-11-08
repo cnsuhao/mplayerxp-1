@@ -26,7 +26,7 @@
 #include "mp_config.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
-#include "postproc/af_format.h"
+#include "postproc/af.h"
 #include "afmt.h"
 #include "ao_msg.h"
 

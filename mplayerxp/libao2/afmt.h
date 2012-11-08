@@ -1,5 +1,6 @@
-
 /* Defines that AFMT_ stuff */
+#ifndef __AFMT_H_INCLUDED
+#define __AFMT_H_INCLUDED 1
 
 #ifdef	HAVE_SYS_SOUNDCARD_H
 #include <sys/soundcard.h>	/* For AFMT_* on linux */
@@ -8,6 +9,7 @@
 #include <soundcard.h> /* OpenBSD have this instead of <sys/soundcard> */
 #endif
 #endif
+#include "mp_config.h"
 
 /* standard, old OSS audio formats */
 #ifndef AFMT_MU_LAW
@@ -32,14 +34,19 @@
 
 /* 32 bit formats (MSB aligned) formats */
 #ifndef AFMT_S32_LE
-#	define AFMT_S24_LE	        0x00000800
-#	define AFMT_S24_BE	        0x00001000
-#	define AFMT_U24_LE	        0x00002000
-#	define AFMT_U24_BE	        0x00004000
-#	define AFMT_S32_LE	        0x00008000
-#	define AFMT_S32_BE	        0x00010000
-#	define AFMT_U32_LE	        0x00020000
-#	define AFMT_U32_BE	        0x00040000
+#	define AFMT_S24_LE		0x00000800
+#	define AFMT_S24_BE		0x00001000
+#	define AFMT_U24_LE		0x00002000
+#	define AFMT_U24_BE		0x00004000
+#	define AFMT_S32_LE		0x00008000
+#	define AFMT_S32_BE		0x00010000
+#	define AFMT_U32_LE		0x00020000
+#	define AFMT_U32_BE		0x00040000
 #endif
 
-#	define AFMT_FLOAT32	        0x00100000
+#	define AFMT_FLOAT32		0x00100000
+
+extern unsigned __FASTCALL__ afmt2bps(unsigned fmt);
+extern unsigned __FASTCALL__ bps2afmt(unsigned bps); /**< very approximate prediction */
+
+#endif

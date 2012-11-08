@@ -15,8 +15,7 @@
 #include <string.h>
 
 #include "mplayer.h"
-#include "postproc/af_format.h"
-#include "postproc/af_mp.h"
+#include "xmpcore/mp_aframe.h"
 #include "postproc/af.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
@@ -31,8 +30,7 @@ typedef struct oss_priv_s
 {
     unsigned nchannels; /* 1,2,6 */
     unsigned samplerate; /* 32000, 44100, 48000 */
-    unsigned sampleformat; /* S32_LE, S16_BE, ... */
-    unsigned bps;
+    mpaf_format_e sampleformat; /* S32_LE, S16_BE, ... */
     off_t spos;
 }oss_priv_t;
 
@@ -63,12 +61,11 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
     comma=strchr(args,',');
     if(comma) *comma=0;
     if(args[0])
-	oss_priv->sampleformat=str2fmt(args,&oss_priv->bps);
+	oss_priv->sampleformat=mpaf_str2fmt(args);
     else
     {
 	/* Default to S16_NE */
-	oss_priv->sampleformat=AF_FORMAT_NE|AF_FORMAT_SI|AF_FORMAT_I;
-	oss_priv->bps=2;
+	oss_priv->sampleformat=MPAF_NE|MPAF_SI|MPAF_I|2;
     }
     stream->fd = open(oss_device?oss_device:PATH_DEV_DSP,O_RDONLY);
     if(stream->fd<0) { mp_free(stream->priv); return 0; }
@@ -98,13 +95,12 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
     if(err<0) MSG_ERR("[s_oss] Can't set channels to %u (will use %u)\n",tmp,oss_priv->nchannels);
     else MSG_DBG2("[o_oss] Did set channels to %u\n",oss_priv->nchannels);
     {
-	af_data_t afd;
+	mp_aframe_t afd;
 	int oss_fmt;
 	afd.rate=oss_priv->samplerate;
 	afd.nch=oss_priv->nchannels;
 	afd.format=oss_priv->sampleformat;
-	afd.bps=oss_priv->bps;
-	oss_fmt=af_format_encode(&afd);
+	oss_fmt=mpaf_format_encode(oss_priv->sampleformat);
 	tmp=oss_fmt;
 	if(ioctl(stream->fd, SNDCTL_DSP_SETFMT, &oss_fmt)<0)
 	    MSG_ERR("[s_oss] Can't set format %s (will use %s)\n",ao_format_name(tmp),ao_format_name(oss_fmt));
@@ -124,10 +120,10 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
 	MSG_DBG2("[o_oss] Did get blocksize as %u\n",stream->sector_size);
     // correct the blocksize to a reasonable value
     if (stream->sector_size <= 0) {
-	stream->sector_size = 4096*oss_priv->nchannels*oss_priv->bps;
+	stream->sector_size = 4096*oss_priv->nchannels*(oss_priv->sampleformat&MPAF_BPS_MASK);
     } else
-    if (stream->sector_size < 4096*oss_priv->nchannels*oss_priv->bps) {
-	stream->sector_size *= 4096*oss_priv->nchannels*oss_priv->bps/stream->sector_size;
+    if (stream->sector_size < 4096*oss_priv->nchannels*(oss_priv->sampleformat&MPAF_BPS_MASK)) {
+	stream->sector_size *= 4096*oss_priv->nchannels*(oss_priv->sampleformat&MPAF_BPS_MASK)/stream->sector_size;
     }
     MSG_DBG2("[o_oss] Correct blocksize as %u\n",stream->sector_size);
     return 1;

@@ -21,7 +21,7 @@
 // Data for specific instances of this filter
 typedef struct af_center_s
 {
-  int ch;		// Channel number which to insert the filtered data
+    unsigned ch;		// Channel number which to insert the filtered data
 }af_center_t;
 
 // Initialization and runtime control
@@ -34,12 +34,11 @@ static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
     // Sanity check
     if(!arg) return CONTROL_ERROR;
 
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = max(s->ch+1,((af_data_t*)arg)->nch);
-    af->data->format = AF_FORMAT_NE | AF_FORMAT_F;
-    af->data->bps    = 4;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = max(s->ch+1,((mp_aframe_t*)arg)->nch);
+    af->data->format = MPAF_NE|MPAF_F|4;
 
-    return af_test_output(af,(af_data_t*)arg);
+    return af_test_output(af,(mp_aframe_t*)arg);
   }
   case AF_CONTROL_COMMAND_LINE:{
     int   ch=1;
@@ -72,9 +71,9 @@ static void uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*    c   = data;	 // Current working data
+  mp_aframe_t*    c   = data;	 // Current working data
   af_center_t*  s   = af->setup; // Setup for this instance
   float*   	a   = c->audio;	 // Audio data
   int		len = c->len/4;	 // Number of samples in current audio block 
@@ -99,7 +98,7 @@ static ControlCodes open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=s=mp_calloc(1,sizeof(af_center_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

@@ -9,6 +9,7 @@
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
+#include "libao2/afmt.h"
 #include "osdep/mplib.h"
 #include "demux_msg.h"
 
@@ -56,12 +57,12 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
   priv=demuxer->priv=mp_mallocz(sizeof(priv_t));
   sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('r','a','w',' '); /* S16BE */
-  w->nChannels = sh_audio->channels =
-  w->nSamplesPerSec = sh_audio->samplerate =
+  w->nChannels = sh_audio->nch =
+  w->nSamplesPerSec = sh_audio->rate =
   w->nAvgBytesPerSec =
   w->nBlockAlign = 0;
-  sh_audio->samplesize = 2;
-  w->wBitsPerSample = 8*sh_audio->samplesize;
+  sh_audio->afmt = bps2afmt(2);
+  w->wBitsPerSample = 8*afmt2bps(sh_audio->afmt);
   w->cbSize = 0;
   stream_reset(s);
   stream_seek(s,8);
@@ -101,21 +102,21 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
 	    return NULL;
 	}
 	if(stream_read(s,buf,chunk_size)!=chunk_size) return NULL;
-	w->nChannels = sh_audio->channels = be2me_16(*((uint16_t *)&buf[0]));
+	w->nChannels = sh_audio->nch = be2me_16(*((uint16_t *)&buf[0]));
 	frames=be2me_32(*((uint32_t *)&buf[2]));
 	w->wBitsPerSample = be2me_16(*((uint16_t *)&buf[6]));
-	sh_audio->samplesize = w->wBitsPerSample/8;
-	w->nSamplesPerSec = sh_audio->samplerate = cvt_extended(&buf[8]);
-	w->nAvgBytesPerSec = sh_audio->samplerate*sh_audio->samplesize*sh_audio->channels;
-	w->nBlockAlign = sh_audio->channels*sh_audio->samplesize;
+	sh_audio->afmt = bps2afmt(w->wBitsPerSample/8);
+	w->nSamplesPerSec = sh_audio->rate = cvt_extended(&buf[8]);
+	w->nAvgBytesPerSec = sh_audio->rate*afmt2bps(sh_audio->afmt)*sh_audio->nch;
+	w->nBlockAlign = sh_audio->nch*afmt2bps(sh_audio->afmt);
 	if(priv->verc)
 	{
 	    sh_audio->wtag = *((uint32_t *)&buf[18]);
 	    if(sh_audio->wtag == mmioFOURCC('N','O','N','E')) sh_audio->wtag=mmioFOURCC('r','a','w',' ');
-	    MSG_V("AIFC: fourcc %08X ch %u frames %u bps %u rate %u\n",sh_audio->wtag,sh_audio->channels,frames,w->wBitsPerSample,sh_audio->samplerate);
+	    MSG_V("AIFC: fourcc %08X ch %u frames %u bps %u rate %u\n",sh_audio->wtag,sh_audio->nch,frames,w->wBitsPerSample,sh_audio->rate);
 	}
 	else
-	    MSG_V("AIFF: ch %u frames %u bps %u rate %u\n",sh_audio->channels,frames,w->wBitsPerSample,sh_audio->samplerate);
+	    MSG_V("AIFF: ch %u frames %u bps %u rate %u\n",sh_audio->nch,frames,w->wBitsPerSample,sh_audio->rate);
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('S','S','N','D') ||
@@ -205,7 +206,7 @@ static void aiff_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
   base = (seeka->flags&DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?(demuxer->movi_end - demuxer->movi_start):sh_audio->i_bps)*seeka->secs;
-  pos -= (pos % (sh_audio->channels * sh_audio->samplesize) );
+  pos -= (pos % (sh_audio->nch * afmt2bps(sh_audio->afmt)));
   stream_seek(s,pos);
   mpca_resync_stream(sh_audio);
 }

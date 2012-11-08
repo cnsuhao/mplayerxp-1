@@ -19,10 +19,10 @@ typedef struct sh_audio_s {
     unsigned		i_bps; // == bitrate  (compressed bytes/sec)
 // output format:
     float		timer;  // value of old a_frame
-    unsigned		samplerate;
-    unsigned		samplesize;
-    unsigned		channels;
-    unsigned		o_bps; // == samplerate*samplesize*channels   (uncompr. bytes/sec)
+    unsigned		rate;  // sample rate
+    unsigned		afmt;  // sample format
+    unsigned		nch;   // number of chanels
+    unsigned		o_bps; // == rate*afmt2bps*nch   (uncompr. bytes/sec)
 // in buffers:
     char*		a_in_buffer;
     int			a_in_buffer_len;
@@ -41,7 +41,6 @@ typedef struct sh_audio_s {
     unsigned		af_buffer_len;
     float		af_pts;
 
-    int			sample_format;
     float		a_pts;
     int			a_pts_pos;
     int			chapter_change;

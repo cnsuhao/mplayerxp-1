@@ -145,16 +145,16 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 
 	    sh_audio->wf = mp_mallocz(sizeof(WAVEFORMATEX));
 
-	    sh_audio->samplerate = stream_read_word(demuxer->stream);
+	    sh_audio->rate = stream_read_word(demuxer->stream);
 	    sh_audio->wf->wBitsPerSample = stream_read_char(demuxer->stream);
-	    sh_audio->channels = stream_read_char(demuxer->stream);
+	    sh_audio->nch = stream_read_char(demuxer->stream);
 	    sh_audio->wtag = stream_read_dword_le(demuxer->stream);
 	    sh_audio->wf->wFormatTag = sh_audio->wtag;
-	    sh_audio->wf->nChannels = sh_audio->channels;
-	    sh_audio->wf->nSamplesPerSec = sh_audio->samplerate;
+	    sh_audio->wf->nChannels = sh_audio->nch;
+	    sh_audio->wf->nSamplesPerSec = sh_audio->rate;
 	    sh_audio->wf->nAvgBytesPerSec = sh_audio->wf->nChannels*
 	    sh_audio->wf->wBitsPerSample*sh_audio->wf->nSamplesPerSec/8;
-	    sh_audio->wf->nBlockAlign = sh_audio->channels *2;
+	    sh_audio->wf->nBlockAlign = sh_audio->nch*2;
 	    sh_audio->wf->cbSize = 0;
 	    break;
 	case mmioFOURCC('_','T','X','T'):

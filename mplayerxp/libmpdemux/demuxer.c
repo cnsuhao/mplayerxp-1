@@ -23,6 +23,7 @@
 #include "osdep/fastmemcpy.h"
 #include "osdep/mplib.h"
 #include "libvo/sub.h"
+#include "libao2/afmt.h"
 #include "demux_msg.h"
 
 extern demuxer_driver_t demux_aiff;
@@ -182,8 +183,7 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
         demuxer->a_streams[id]=mp_calloc(1, sizeof(sh_audio_t));
         sh = demuxer->a_streams[id];
         // set some defaults
-        sh->samplesize=2;
-        sh->sample_format=0x01; /* PCM */
+        sh->afmt=bps2afmt(2); /* PCM */
         sh->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
           MSG_V("ID_AUDIO_ID=%d\n", aid);
     }

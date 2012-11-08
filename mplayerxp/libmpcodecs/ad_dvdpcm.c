@@ -26,38 +26,34 @@ int init(sh_audio_t *sh)
     if(sh->codecdata_len==3){
 	// we have LPCM header:
 	unsigned char h=sh->codecdata[1];
-	sh->channels=1+(h&7);
+	sh->nch=1+(h&7);
 	switch((h>>4)&3){
-	case 0: sh->samplerate=48000;break;
-	case 1: sh->samplerate=96000;break;
-	case 2: sh->samplerate=44100;break;
-	case 3: sh->samplerate=32000;break;
+	case 0: sh->rate=48000;break;
+	case 1: sh->rate=96000;break;
+	case 2: sh->rate=44100;break;
+	case 3: sh->rate=32000;break;
 	}
 	switch ((h >> 6) & 3) {
 	  case 0:
-	    sh->sample_format = AFMT_S16_BE;
-	    sh->samplesize = 2;
+	    sh->afmt = AFMT_S16_BE;
 	    break;
 	  case 1:
-	    //sh->sample_format = AFMT_S20_BE;
-	    sh->i_bps = sh->channels * sh->samplerate * 5 / 2;
-	  case 2: 
-	    sh->sample_format = AFMT_S24_BE;
-	    sh->samplesize = 3;
+	    //sh->afmt = AFMT_S20_BE;
+	    sh->i_bps = sh->nch * sh->rate * 5 / 2;
+	  case 2:
+	    sh->afmt = AFMT_S24_BE;
 	    break;
 	  default:
-	    sh->sample_format = AFMT_S16_BE;
-	    sh->samplesize = 2;
+	    sh->afmt = AFMT_S16_BE;
 	}
     } else {
 	// use defaults:
-	sh->channels=2;
-	sh->samplerate=48000;
-	sh->sample_format = AFMT_S16_BE;
-	sh->samplesize = 2;
+	sh->nch=2;
+	sh->rate=48000;
+	sh->afmt = AFMT_S16_BE;
     }
     if (!sh->i_bps)
-    sh->i_bps = sh->samplesize * sh->channels * sh->samplerate;
+    sh->i_bps = afmt2bps(sh->afmt) * sh->nch * sh->rate;
     return 1;
 }
 
@@ -98,7 +94,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
   unsigned len;
   float null_pts;
   UNUSED(maxlen);
-  if (sh_audio->samplesize == 3) {
+  if (afmt2bps(sh_audio->afmt) == 3) {
     if (((sh_audio->codecdata[1] >> 6) & 3) == 1) {
       // 20 bit
       // not sure if the "& 0xf0" and "<< 4" are the right way around

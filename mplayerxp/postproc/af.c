@@ -72,7 +72,7 @@ static const af_info_t* filter_list[]={
    &af_info_ffenc,
    &af_info_scaletempo,
    &af_info_raw,
-   NULL 
+   NULL
 };
 
 // CPU speed
@@ -90,13 +90,13 @@ static const af_info_t* __FASTCALL__ af_find(char*name)
   }
   MSG_ERR("Couldn't find audio filter '%s'\n",name);
   return NULL;
-} 
+}
 
 /* Find filter in the dynamic filter list using it's name This
    function is used for finding already initialized filters */
 af_instance_t* __FASTCALL__ af_get(af_stream_t* s, char* name)
 {
-  af_instance_t* af=s->first; 
+  af_instance_t* af=s->first;
   // Find the filter
   while(af != NULL){
     if(!strcmp(af->info->name,name))
@@ -242,12 +242,12 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 
   MSG_DBG2("af_reinit()\n");
   do{
-    af_data_t in; // Format of the input to current filter
+    mp_aframe_t in; // Format of the input to current filter
     int rv=0; // Return value
 
     // Check if this is the first filter
-    if(!af->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
-    else	  memcpy(&in,af->prev->data,sizeof(af_data_t));
+    if(!af->prev) memcpy(&in,&(s->input),sizeof(mp_aframe_t));
+    else	  memcpy(&in,af->prev->data,sizeof(mp_aframe_t));
 
     // Reset just in case...
     in.audio=NULL;
@@ -266,8 +266,8 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	  if(NULL == (_new = af_prepend(s,af,"channels"))) return CONTROL_ERROR;
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_CHANNELS,&in.nch))) return rv;
 	  // Initialize channels filter
-	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
-	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
+	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(mp_aframe_t));
+	  else		  memcpy(&in,_new->prev->data,sizeof(mp_aframe_t));
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) return rv;
 	}
 	// Insert rate filter
@@ -275,14 +275,13 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	  if(NULL == (_new = af_prepend(s,af,"resample"))) return CONTROL_ERROR;
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate))) return rv;
 	  // Initialize channels filter
-	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
-	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
+	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(mp_aframe_t));
+	  else		  memcpy(&in,_new->prev->data,sizeof(mp_aframe_t));
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) {
 	    af_instance_t* af2 = af_prepend(s,af,"format");
 	    // Init the new filter
 	    if(af2) {
-		if((CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_BPS,&(in.bps)))
-		    || (CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT_FMT,&(in.format)))) return -1;
+		if((CONTROL_OK != af2->control(af2,AF_CONTROL_FORMAT,&in.format))) return -1;
 		if(CONTROL_OK != af_reinit(s,af2)) return CONTROL_ERROR;
 		rv = _new->control(_new,AF_CONTROL_REINIT,&in);
 	    }
@@ -290,14 +289,12 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
 	  }
 	}
 	// Insert format filter
-	if(((af->prev?af->prev->data->format:s->input.format) != in.format) ||
-	   ((af->prev?af->prev->data->bps:s->input.bps) != in.bps)){
+	if(((af->prev?af->prev->data->format:s->input.format) != in.format)) {
 	  if(NULL == (_new = af_prepend(s,af,"format"))) return CONTROL_ERROR;
-	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_BPS,&in.bps)) ||
-	     CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT_FMT,&in.format))) return rv;
+	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_FORMAT,&in.format))) return rv;
 	  // Initialize format filter
-	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_data_t));
-	  else		  memcpy(&in,_new->prev->data,sizeof(af_data_t));
+	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(mp_aframe_t));
+	  else		  memcpy(&in,_new->prev->data,sizeof(mp_aframe_t));
 	  if(CONTROL_OK != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) return rv;
 	}
 	if(!_new){ // Should _never_ happen
@@ -323,7 +320,7 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
     }
     default:
       MSG_ERR("[libaf] Reinitialization did not work, audio" 
-	     " filter '%s' returned error code %i for r=%i c=%i fmt=%x bps=%i\n",af->info->name,rv,in.rate,in.nch,in.format,in.bps);
+	     " filter '%s' returned error code %i for r=%i c=%i fmt=%x\n",af->info->name,rv,in.rate,in.nch,in.format);
       return CONTROL_ERROR;
     }
     // Check if there are any filters left in the list
@@ -394,7 +391,7 @@ int af_init(af_stream_t* s, int force_output)
 
   // If force_output isn't set do not compensate for output format
   if(!force_output){
-    memcpy(&s->output, s->last->data, sizeof(af_data_t));
+    memcpy(&s->output, s->last->data, sizeof(mp_aframe_t));
     return 0;
   }
 
@@ -446,15 +443,13 @@ int af_init(af_stream_t* s, int force_output)
     }
 
     // Check output format fix if not OK
-    if((s->last->data->format != s->output.format) || 
-       (s->last->data->bps != s->output.bps)){
+    if((s->last->data->format != s->output.format)){
       if(strcmp(s->last->info->name,"format"))
 	af = af_append(s,s->last,"format");
       else
 	af = s->last;
       // Init the new filter
-      if(!af ||(CONTROL_OK != af->control(af,AF_CONTROL_FORMAT_BPS,&(s->output.bps))) 
-	 || (CONTROL_OK != af->control(af,AF_CONTROL_FORMAT_FMT,&(s->output.format))))
+      if(!af ||(CONTROL_OK != af->control(af,AF_CONTROL_FORMAT,&s->output.format)))
 	return -1;
       if(CONTROL_OK != af_reinit(s,af))
 	return -1;
@@ -464,12 +459,11 @@ int af_init(af_stream_t* s, int force_output)
     if(CONTROL_OK != af_reinit(s,s->first))
       return -1;
 
-    if((s->last->data->format != s->output.format) || 
-       (s->last->data->bps    != s->output.bps)    ||
-       (s->last->data->nch    != s->output.nch)    || 
+    if((s->last->data->format != s->output.format) ||
+       (s->last->data->nch    != s->output.nch)    ||
        (s->last->data->rate   != s->output.rate))  {
-      // Something is stuffed audio out will not work 
-      MSG_ERR("[libaf] Unable to setup filter system can not" 
+      // Something is stuffed audio out will not work
+      MSG_ERR("[libaf] Unable to setup filter system can not"
 	     " meet sound-card demands, please send bugreport. \n");
       af_uninit(s);
       return -1;
@@ -504,7 +498,7 @@ af_instance_t* af_add(af_stream_t* s, char* name){
 }
 
 // Filter data chunk through the filters in the list
-af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data)
+mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s, mp_aframe_t* data)
 {
   af_instance_t* af=s->first;
   // Iterate through all filters
@@ -519,8 +513,8 @@ af_data_t* __FASTCALL__ af_play(af_stream_t* s, af_data_t* data)
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-unsigned __FASTCALL__ af_lencalc(frac_t mul, af_data_t* d){
-  register unsigned t = d->bps*d->nch;
+unsigned __FASTCALL__ af_lencalc(frac_t mul, mp_aframe_t* d){
+  unsigned t = (d->format&MPAF_BPS_MASK)*d->nch;
   return t*(((d->len/t)*mul.n)/(unsigned)mul.d + 1);
 }
 
@@ -529,10 +523,10 @@ unsigned __FASTCALL__ af_lencalc(frac_t mul, af_data_t* d){
    length. */
 int __FASTCALL__ af_outputlen(af_stream_t* s, int len)
 {
-  int t = s->input.bps*s->input.nch;
-  af_instance_t* af=s->first; 
+  unsigned t = (s->input.format&MPAF_BPS_MASK)*s->input.nch;
+  af_instance_t* af=s->first;
   register frac_t mul = {1,1};
-  // Iterate through all filters 
+  // Iterate through all filters
   do{
     mul.n *= af->mul.n;
     mul.d *= af->mul.d;
@@ -547,10 +541,10 @@ int __FASTCALL__ af_outputlen(af_stream_t* s, int len)
    calculated length is <= the actual length */
 int __FASTCALL__ af_inputlen(af_stream_t* s, int len)
 {
-  int t = s->input.bps*s->input.nch;
-  af_instance_t* af=s->first; 
+  unsigned t = (s->input.format&MPAF_BPS_MASK)*s->input.nch;
+  af_instance_t* af=s->first;
   register frac_t mul = {1,1};
-  // Iterate through all filters 
+  // Iterate through all filters
   do{
     mul.n *= af->mul.n;
     mul.d *= af->mul.d;
@@ -559,57 +553,12 @@ int __FASTCALL__ af_inputlen(af_stream_t* s, int len)
   return t * (((len/t) * mul.d - 1)/mul.n);
 }
 
-/* Calculate how long the input IN to the filters should be to produce
-   a certain output length OUT but with the following three constraints:
-   1. IN <= max_insize, where max_insize is the maximum possible input
-      block length
-   2. OUT <= max_outsize, where max_outsize is the maximum possible
-      output block length
-   3. If possible OUT >= len. 
-   Return -1 in case of error */ 
-int __FASTCALL__ af_calc_insize_constrained(af_stream_t* s, int len,
-			       int max_outsize,int max_insize)
-{
-  int t   = s->input.bps*s->input.nch;
-  int in  = 0;
-  int out = 0;
-  af_instance_t* af=s->first; 
-  register frac_t mul = {1,1};
-  // Iterate through all filters and calculate total multiplication factor
-  do{
-    mul.n *= af->mul.n;
-    mul.d *= af->mul.d;
-    af=af->next;
-  }while(af);
-  // Sanity check 
-  if(!mul.n || !mul.d) 
-    return -1;
-
-  in = t * (((len/t) * mul.d - 1)/mul.n);
-  
-  if(in>max_insize) in=t*(max_insize/t);
-
-  // Try to meet constraint nr 3. 
-  while((out=t * (((in/t+1)*mul.n - 1)/mul.d)) <= max_outsize && in<=max_insize){
-    if( (t * (((in/t)*mul.n))/mul.d) >= len) return in;
-    in+=t;
-  }
-
-  // Could no meet constraint nr 3.
-  while(out > max_outsize || in > max_insize){
-    in-=t;
-    if(in<t) return -1; // Input parameters are probably incorrect
-    out = t * (((in/t)*mul.n + 1)/mul.d);
-  }
-  return in;
-}
-
 /* Calculate the total delay [ms] caused by the filters */
 double __FASTCALL__ af_calc_delay(af_stream_t* s)
 {
-  af_instance_t* af=s->first; 
+  af_instance_t* af=s->first;
   register double delay = 0.0;
-  // Iterate through all filters 
+  // Iterate through all filters
   while(af){
     delay += af->delay;
     af=af->next;
@@ -619,7 +568,7 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s)
 
 /* Helper function called by the macro with the same name this
    function should not be called directly */
-int __FASTCALL__ af_resize_local_buffer(af_instance_t* af, af_data_t* data,unsigned len)
+ControlCodes __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len)
 {
   // Calculate new length
   MSG_V("[libaf] Reallocating memory in module %s, "
@@ -648,39 +597,36 @@ int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
   return (res == CONTROL_OK);
 }
 
-int __FASTCALL__ af_query_fmt (af_stream_t* s,int fmt)
+ControlCodes __FASTCALL__ af_query_fmt (af_stream_t* s,mpaf_format_e fmt)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
   if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_FORMAT,fmt);
   else
   {
-    int bps;
-    int ifmt=af_format_decode(fmt,&bps);
-    if(ifmt==filt->data->format && bps==filt->data->bps) return CONTROL_TRUE;
+    unsigned ifmt=mpaf_format_decode(fmt);
+    if(ifmt==filt->data->format) return CONTROL_TRUE;
   }
   return CONTROL_FALSE;
 }
 
-int __FASTCALL__ af_query_rate (af_stream_t* s,int rate)
+ControlCodes __FASTCALL__ af_query_rate (af_stream_t* s,unsigned rate)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
   if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_RATE,rate);
-  else
-  {
+  else {
     if(rate==filt->data->rate) return CONTROL_TRUE;
   }
   return CONTROL_FALSE;
 }
 
-int __FASTCALL__ af_query_channels (af_stream_t* s,int nch)
+ControlCodes __FASTCALL__ af_query_channels (af_stream_t* s,unsigned nch)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
   if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,nch);
-  else
-  {
+  else {
     if(nch==filt->data->nch) return CONTROL_TRUE;
   }
   return CONTROL_FALSE;

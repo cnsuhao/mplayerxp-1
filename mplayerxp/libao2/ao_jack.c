@@ -30,7 +30,7 @@
 
 #include "audio_out.h"
 #include "audio_out_internal.h"
-#include "postproc/af_format.h"
+#include "postproc/af.h"
 #include "afmt.h"
 #include "osdep/timer.h"
 #include "osdep/mplib.h"
@@ -142,9 +142,9 @@ static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned n
 
 static ControlCodes control(ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
-  UNUSED(cmd);
-  UNUSED(arg);
-  return CONTROL_UNKNOWN;
+    UNUSED(cmd);
+    UNUSED(arg);
+    return CONTROL_UNKNOWN;
 }
 
 /**

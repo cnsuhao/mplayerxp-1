@@ -263,17 +263,17 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	    demuxer->audio->sh = sh_audio;
 	    sh_audio->ds = demuxer->audio;
 	    sh_audio->wtag = 0x1;
-	    sh_audio->channels = 2;
-	    sh_audio->samplerate = 44100;
+	    sh_audio->nch = 2;
+	    sh_audio->rate = 44100;
 
 	    sh_audio->wf = mp_mallocz(sizeof(WAVEFORMATEX));
 	    sh_audio->wf->wFormatTag = sh_audio->wtag;
-	    sh_audio->wf->nChannels = sh_audio->channels;
+	    sh_audio->wf->nChannels = sh_audio->nch;
 	    sh_audio->wf->wBitsPerSample = 16;
-	    sh_audio->wf->nSamplesPerSec = sh_audio->samplerate;
+	    sh_audio->wf->nSamplesPerSec = sh_audio->rate;
 	    sh_audio->wf->nAvgBytesPerSec = sh_audio->wf->nChannels*
 		sh_audio->wf->wBitsPerSample*sh_audio->wf->nSamplesPerSec/8;
-	    sh_audio->wf->nBlockAlign = sh_audio->channels * 2;
+	    sh_audio->wf->nBlockAlign = sh_audio->nch * 2;
 	    sh_audio->wf->cbSize = 0;
 	}
 

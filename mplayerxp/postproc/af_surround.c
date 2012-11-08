@@ -87,10 +87,9 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   switch(cmd){
   case AF_CONTROL_REINIT:{
     float fc;
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch*2;
-    af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
-    af->data->bps    = 4;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch*2;
+    af->data->format = MPAF_F|MPAF_NE|4;
 
     if (af->data->nch != 4){
       MSG_ERR("[surround] Only stereo input is supported.\n");
@@ -109,22 +108,20 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     if(s->dr)
       mp_free(s->dr);
     // Allocate new delay queues
-    s->dl = mp_calloc(LD,af->data->bps);
-    s->dr = mp_calloc(LD,af->data->bps);
+    s->dl = mp_calloc(LD,af->data->format&MPAF_BPS_MASK);
+    s->dr = mp_calloc(LD,af->data->format&MPAF_BPS_MASK);
     if((NULL == s->dl) || (NULL == s->dr))
       MSG_FATAL(MSGTR_OutOfMemory);
-    
+
     // Initialize delay queue index
     if(CONTROL_OK != af_from_ms(1, &s->d, &s->wi, af->data->rate, 0.0, 1000.0))
       return CONTROL_ERROR;
 //    printf("%i\n",s->wi);
     s->ri = 0;
 
-    if((af->data->format != ((af_data_t*)arg)->format) || 
-       (af->data->bps    != ((af_data_t*)arg)->bps)){
-      ((af_data_t*)arg)->format = af->data->format;
-      ((af_data_t*)arg)->bps = af->data->bps;
-      return CONTROL_FALSE;
+    if((af->data->format != ((mp_aframe_t*)arg)->format)) {
+	((mp_aframe_t*)arg)->format = af->data->format;
+	return CONTROL_FALSE;
     }
     return CONTROL_OK;
   }
@@ -170,7 +167,7 @@ static float steering_matrix[][12] = {
 //static int amp_L = 0, amp_R = 0, amp_C = 0, amp_S = 0;
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final){
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final){
   af_surround_t* s   = (af_surround_t*)af->setup;
   float*	 m   = steering_matrix[0]; 
   float*     	 in  = data->audio; 	// Input audio data
@@ -258,7 +255,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=2;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_surround_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

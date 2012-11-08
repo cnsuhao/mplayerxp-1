@@ -26,7 +26,7 @@
 #include "xmpcore/xmp_core.h"
 
 #include "osdep/bswap.h"
-#include "postproc/af_format.h"
+#include "postproc/af.h"
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
@@ -160,7 +160,9 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
 
     MSG_INFO("ao_wav: %s %d-%s %s\n"
 		,priv->out_filename
-		,rate, (channels > 1) ? "Stereo" : "Mono", fmt2str(format,ao->bps,str,sizeof(str)));
+		,rate
+		,(channels > 1) ? "Stereo" : "Mono"
+		,mpaf_fmt2str(format,str,sizeof(str)));
 
     priv->fp = fopen(priv->out_filename, "wb");
     if(priv->fp) {

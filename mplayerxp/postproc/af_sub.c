@@ -48,23 +48,22 @@ typedef struct af_sub_s
   float q[2][2];	// Circular queues
   float	fc;		// Cutoff frequency [Hz] for low-pass filter
   float k;		// Filter gain;
-  int ch;		// Channel number which to insert the filtered data
+  unsigned ch;		// Channel number which to insert the filtered data
 }af_sub_t;
 
 // Initialization and runtime control
 static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_sub_t* s   = af->setup; 
+  af_sub_t* s   = af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     // Sanity check
     if(!arg) return CONTROL_ERROR;
 
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = max(s->ch+1,((af_data_t*)arg)->nch);
-    af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
-    af->data->bps    = 4;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = max(s->ch+1,((mp_aframe_t*)arg)->nch);
+    af->data->format = MPAF_F|MPAF_NE|4;
 
     // Design low-pass filter
     s->k = 1.0;
@@ -73,7 +72,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
        (-1 == szxform(sp[1].a, sp[1].b, Q, s->fc,
        (float)af->data->rate, &s->k, s->w[1])))
       return CONTROL_ERROR;
-    return af_test_output(af,(af_data_t*)arg);
+    return af_test_output(af,(mp_aframe_t*)arg);
   }
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_sub] assigned channel %i\n",s->ch);
@@ -137,9 +136,9 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 #endif
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*    c   = data;	 // Current working data
+  mp_aframe_t*    c   = data;	 // Current working data
   af_sub_t*  	s   = af->setup; // Setup for this instance
   float*   	a   = c->audio;	 // Audio data
   int		len = c->len/4;	 // Number of samples in current audio block 
@@ -166,7 +165,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=s=mp_calloc(1,sizeof(af_sub_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

@@ -16,6 +16,7 @@
 #include "stheader.h"
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
+#include "libao2/afmt.h"
 #include "aviprint.h"
 #include "demux_msg.h"
 
@@ -94,10 +95,10 @@ static int ra_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 
 static demuxer_t * ra_open(demuxer_t* demuxer)
 {
-	ra_priv_t* ra_priv = demuxer->priv;
-	sh_audio_t *sh;
-	int i;
-	char *buf;
+    ra_priv_t* ra_priv = demuxer->priv;
+    sh_audio_t *sh;
+    int i;
+    char *buf;
 
     if ((ra_priv = (ra_priv_t *)mp_mallocz(sizeof(ra_priv_t))) == NULL) {
 	MSG_ERR(MSGTR_OutOfMemory);
@@ -137,12 +138,12 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		ra_priv->sub_packet_size = stream_read_word(demuxer->stream);
 		MSG_V("[RealAudio] Sub packet size: %d\n", ra_priv->sub_packet_size);
 		stream_skip(demuxer->stream, 2);
-		sh->samplerate = stream_read_word(demuxer->stream);
+		sh->rate = stream_read_word(demuxer->stream);
 		stream_skip(demuxer->stream, 2);
-		sh->samplesize = stream_read_word(demuxer->stream);
-		sh->channels = stream_read_word(demuxer->stream);
-		MSG_V("[RealAudio] %d channel, %d bit, %dHz\n", sh->channels,
-			sh->samplesize, sh->samplerate);
+		sh->afmt = bps2afmt(stream_read_word(demuxer->stream));
+		sh->nch = stream_read_word(demuxer->stream);
+		MSG_V("[RealAudio] %d channel, %d bit, %dHz\n", sh->nch,
+			afmt2bps(sh->afmt), sh->rate);
 		i = stream_read_char(demuxer->stream);
 		*((unsigned int *)(ra_priv->genr)) = stream_read_dword(demuxer->stream);
 		if (i != 4) {
@@ -206,18 +207,18 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 				"MPlayer developers\n", sh->wtag);
 		}
 
-		sh->channels = 1;
-		sh->samplesize = 16;
-		sh->samplerate = 8000;
+		sh->nch = 1;
+		sh->afmt = bps2afmt(2);
+		sh->rate = 8000;
 		ra_priv->frame_size = 240;
 		sh->wtag = FOURCC_144;
 	    } else {
 		// If a stream does not have fourcc, let's assume it's 14.4
 		sh->wtag = FOURCC_LPCJ;
 
-		sh->channels = 1;
-		sh->samplesize = 16;
-		sh->samplerate = 8000;
+		sh->nch = 1;
+		sh->afmt = bps2afmt(2);
+		sh->rate = 8000;
 		ra_priv->frame_size = 240;
 		sh->wtag = FOURCC_144;
 	    }
@@ -225,10 +226,10 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 
 	/* Fill WAVEFORMATEX */
 	sh->wf = mp_mallocz(sizeof(WAVEFORMATEX));
-	sh->wf->nChannels = sh->channels;
-	sh->wf->wBitsPerSample = sh->samplesize;
-	sh->wf->nSamplesPerSec = sh->samplerate;
-	sh->wf->nAvgBytesPerSec = sh->samplerate*sh->samplesize/8;
+	sh->wf->nChannels = sh->nch;
+	sh->wf->wBitsPerSample = afmt2bps(sh->afmt);
+	sh->wf->nSamplesPerSec = sh->rate;
+	sh->wf->nAvgBytesPerSec = sh->rate*afmt2bps(sh->afmt);
 	sh->wf->nBlockAlign = ra_priv->frame_size;
 	sh->wf->cbSize = 0;
 	sh->wf->wFormatTag = sh->wtag;

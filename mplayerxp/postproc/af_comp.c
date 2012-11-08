@@ -42,15 +42,14 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   case AF_CONTROL_REINIT:
     // Sanity check
     if(!arg) return CONTROL_ERROR;
-    
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
-    af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
-    af->data->bps    = 4;
+
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->format = MPAF_F|MPAF_NE|4;
 
     // Time constant set to 0.1s
-    //    s->alpha = (1.0/0.2)/(2.0*M_PI*(float)((af_data_t*)arg)->rate); 
-    return af_test_output(af,(af_data_t*)arg);
+    //    s->alpha = (1.0/0.2)/(2.0*M_PI*(float)((mp_aframe_t*)arg)->rate); 
+    return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_COMMAND_LINE:{
 /*     float v=-10.0; */
 /*     float vol[AF_NCH]; */
@@ -107,9 +106,9 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*    c   = data;			// Current working data
+  mp_aframe_t*    c   = data;			// Current working data
   af_comp_t*  	s   = (af_comp_t*)af->setup; 	// Setup for this instance
   float*   	a   = (float*)c->audio;		// Audio data
   int       	len = c->len/4;			// Number of samples
@@ -146,7 +145,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_comp_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

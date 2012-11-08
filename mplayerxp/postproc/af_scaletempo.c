@@ -82,7 +82,7 @@ typedef struct af_scaletempo_s
   short   speed_pitch;
 } af_scaletempo_t;
 
-static int fill_queue(struct af_instance_s* af, af_data_t* data, int offset)
+static int fill_queue(struct af_instance_s* af, mp_aframe_t* data, int offset)
 {
   af_scaletempo_t* s = af->setup;
   int bytes_in = data->len - offset;
@@ -167,11 +167,11 @@ static void output_overlap_float(af_scaletempo_t* s, int8_t* buf_out,
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   af_scaletempo_t* s = af->setup;
   int offset_in;
-  int max_bytes_out;
+  unsigned max_bytes_out;
   int8_t* pout;
 
   if (s->scale == 1.0) {
@@ -242,7 +242,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   af_scaletempo_t* s = af->setup;
   switch(cmd){
   case AF_CONTROL_REINIT:{
-    af_data_t* data = (af_data_t*)arg;
+    mp_aframe_t* data = (mp_aframe_t*)arg;
     float srate = data->rate / 1000;
     int nch = data->nch;
     int bps;
@@ -255,14 +255,13 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     if (s->scale == 1.0) {
       if (s->speed_tempo && s->speed_pitch)
         return CONTROL_DETACH;
-      memcpy(af->data, data, sizeof(af_data_t));
+      memcpy(af->data, data, sizeof(mp_aframe_t));
       return af_test_output(af, data);
     }
 
     af->data->rate = data->rate;
     af->data->nch  = data->nch;
-    af->data->format = AF_FORMAT_NE | AF_FORMAT_F;
-    af->data->bps    = bps = 4;
+    af->data->format = MPAF_NE|MPAF_F|4;
 
     frames_stride           = srate * s->ms_stride;
     s->bytes_stride         = frames_stride * bps * nch;
@@ -342,7 +341,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
             s->frames_search,
             (int)(s->bytes_queue / nch / bps));
 
-    return af_test_output(af, (af_data_t*)arg);
+    return af_test_output(af, (mp_aframe_t*)arg);
   }
   case AF_CONTROL_PLAYBACK_SPEED | AF_CONTROL_SET:{
     if (s->speed_tempo) {
@@ -444,7 +443,7 @@ static ControlCodes __FASTCALL__ af_open(struct af_instance_s* af){
   af->play      = play;
   af->mul.d     = 1;
   af->mul.n     = 1;
-  af->data      = mp_calloc(1,sizeof(af_data_t));
+  af->data      = mp_calloc(1,sizeof(mp_aframe_t));
   af->setup     = mp_calloc(1,sizeof(af_scaletempo_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

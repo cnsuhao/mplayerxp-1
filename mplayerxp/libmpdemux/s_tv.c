@@ -19,6 +19,7 @@
 #include "stream.h"
 #include "input/input.h"
 #include "osdep/mplib.h"
+#include "libao2/afmt.h"
 #include "mrl.h"
 
 /* some default values */
@@ -252,7 +253,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 	}
     }
 
-done:    
+done:
     /* also start device! */
 	return 1;
 }
@@ -262,7 +263,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
     sh_video_t *sh_video = NULL;
     sh_audio_t *sh_audio = NULL;
     tvi_functions_t *funcs = tvh->functions;
-    
+
     sh_video = new_sh_video(demuxer, 0);
 
     /* get IMAGE FORMAT */
@@ -348,27 +349,24 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 	
 	sh_audio = new_sh_audio(demuxer, 0);
 
-	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_SAMPLERATE, 
-                   &sh_audio->samplerate);
-	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_SAMPLESIZE, 
-                   &sh_audio->samplesize);
-	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_CHANNELS, 
-                   &sh_audio->channels);
+	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_SAMPLERATE,
+                   &sh_audio->rate);
+	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_CHANNELS,
+                   &sh_audio->nch);
 
 	sh_audio->wtag = sh_audio_format;
-	sh_audio->sample_format = audio_format;
+	sh_audio->afmt = audio_format;
 
 	sh_audio->i_bps = sh_audio->o_bps =
-	    sh_audio->samplerate * sh_audio->samplesize * 
-	    sh_audio->channels;
+	    sh_audio->rate * afmt2bps(sh_audio->afmt) * sh_audio->nch;
 
 	// emulate WF for win32 codecs:
 	sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 	sh_audio->wf->wFormatTag = sh_audio->wtag;
-	sh_audio->wf->nChannels = sh_audio->channels;
-	sh_audio->wf->wBitsPerSample = sh_audio->samplesize * 8;
-	sh_audio->wf->nSamplesPerSec = sh_audio->samplerate;
-	sh_audio->wf->nBlockAlign = sh_audio->samplesize * sh_audio->channels;
+	sh_audio->wf->nChannels = sh_audio->nch;
+	sh_audio->wf->wBitsPerSample = afmt2bps(sh_audio->afmt) * 8;
+	sh_audio->wf->nSamplesPerSec = sh_audio->rate;
+	sh_audio->wf->nBlockAlign = afmt2bps(sh_audio->afmt) * sh_audio->nch;
 	sh_audio->wf->nAvgBytesPerSec = sh_audio->i_bps;
 
 	MSG_V( "  TV audio: %d channels, %d bits, %d Hz\n",

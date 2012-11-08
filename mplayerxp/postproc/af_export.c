@@ -58,8 +58,8 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
   switch (cmd){
   case AF_CONTROL_REINIT:{
-    int i=0;
-    int mapsize;
+    unsigned i=0;
+    unsigned mapsize;
 
     // Free previous buffers
     if (s->buf && s->buf[0])
@@ -67,44 +67,43 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
     // unmap previous area
     if(s->mmap_area)
-      munmap(s->mmap_area, SIZE_HEADER + (af->data->bps*s->sz*af->data->nch));
+      munmap(s->mmap_area, SIZE_HEADER + ((af->data->format&MPAF_BPS_MASK)*s->sz*af->data->nch));
     // close previous file descriptor
     if(s->fd)
-      close(s->fd);	
+      close(s->fd);
 
     // Accept only int16_t as input format (which sucks)
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
-    af->data->format = AF_FORMAT_SI | AF_FORMAT_NE;
-    af->data->bps    = 2;
-	
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->format = MPAF_SI|MPAF_NE|2;
+
     // If buffer length isn't set, set it to the default value
     if(s->sz == 0)
       s->sz = DEF_SZ;
-	
+
     // Allocate new buffers (as one continuous block)
-    s->buf[0] = mp_calloc(s->sz*af->data->nch, af->data->bps);
+    s->buf[0] = mp_calloc(s->sz*af->data->nch, af->data->format&MPAF_BPS_MASK);
     if(NULL == s->buf[0])
       MSG_FATAL(MSGTR_OutOfMemory);
     for(i = 1; i < af->data->nch; i++)
-      s->buf[i] = s->buf[0] + i*s->sz*af->data->bps;
-	
+      s->buf[i] = s->buf[0] + i*s->sz*(af->data->format&MPAF_BPS_MASK);
+
     // Init memory mapping
     s->fd = open(s->filename, O_RDWR | O_CREAT | O_TRUNC, 0640);
     MSG_INFO( "[export] Exporting to file: %s\n", s->filename);
     if(s->fd < 0)
       MSG_FATAL( "[export] Could not open/create file: %s\n", 
 	     s->filename);
-    
+
     // header + buffer
-    mapsize = (SIZE_HEADER + (af->data->bps * s->sz * af->data->nch));
-    
+    mapsize = (SIZE_HEADER + ((af->data->format&MPAF_BPS_MASK) * s->sz * af->data->nch));
+
     // grow file to needed size
     for(i = 0; i < mapsize; i++){
       char null = 0;
       write(s->fd, (any_t*) &null, 1);
     }
-	
+
     // mmap size
     s->mmap_area = mmap(0, mapsize, PROT_READ|PROT_WRITE,MAP_SHARED, s->fd, 0);
     if(s->mmap_area == NULL)
@@ -114,16 +113,16 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
     // Initialize header
     *((int*)s->mmap_area) = af->data->nch;
-    *((int*)s->mmap_area + 1) = s->sz * af->data->bps * af->data->nch;
+    *((int*)s->mmap_area + 1) = s->sz * (af->data->format&MPAF_BPS_MASK) * af->data->nch;
     msync(s->mmap_area, mapsize, MS_ASYNC);
 
     // Use test_output to return FALSE if necessary
-    return af_test_output(af, (af_data_t*)arg);
+    return af_test_output(af, (mp_aframe_t*)arg);
   }
   case AF_CONTROL_COMMAND_LINE:{
     int i=0;
     char *str = arg;
-    
+
     if (!str){
       if(s->filename) 
 	mp_free(s->filename);
@@ -131,7 +130,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       s->filename = get_path(SHARED_FILE);
       return CONTROL_OK;
     }
-	
+
     while((str[i]) && (str[i] != ':'))
       i++;
 
@@ -141,9 +140,9 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     s->filename = mp_calloc(i + 1, sizeof(char));
     memcpy(s->filename, str, i);
     s->filename[i] = 0;
-	
+
     sscanf(str + i + 1, "%d", &(s->sz));
-  
+
     return af->control(af, AF_CONTROL_EXPORT_SZ | AF_CONTROL_SET, &s->sz);
   }
   case AF_CONTROL_EXPORT_SZ | AF_CONTROL_SET:
@@ -156,7 +155,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   case AF_CONTROL_EXPORT_SZ | AF_CONTROL_GET:
     *(int*) arg = s->sz;
     return CONTROL_OK;
-  default: break;      
+  default: break;
   }
   return CONTROL_UNKNOWN;
 }
@@ -166,7 +165,6 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 */
 static void __FASTCALL__ uninit( struct af_instance_s* af )
 {
-  int i;
   if (af->data){
     mp_free(af->data);
     af->data = NULL;
@@ -176,7 +174,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
     af_export_t* s = af->setup;
     if (s->buf && s->buf[0])
       mp_free(s->buf[0]);
-    
+
     // Free mmaped area
     if(s->mmap_area)
       munmap(s->mmap_area, sizeof(af_export_t));	  
@@ -196,17 +194,17 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
    af audio filter instance
    data audio data
 */
-static af_data_t* __FASTCALL__ play( struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*   	c   = data;	     // Current working data
-  af_export_t* 	s   = af->setup;     // Setup for this instance
-  int16_t* 	a   = c->audio;	     // Incomming sound
-  int 		nch = c->nch;	     // Number of channels
-  int		len = c->len/c->bps; // Number of sample in data chunk
-  int 		sz  = s->sz;         // buffer size (in samples)
-  int 		flag = 0;	     // Set to 1 if buffer is filled
-  
-  int 		ch, i;
+  mp_aframe_t*	c   = data;	     // Current working data
+  af_export_t*	s   = af->setup;     // Setup for this instance
+  int16_t*	a   = c->audio;	     // Incomming sound
+  int		nch = c->nch;	     // Number of channels
+  int		len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
+  int		sz  = s->sz;         // buffer size (in samples)
+  int		flag = 0;	     // Set to 1 if buffer is filled
+
+  int		ch, i;
 
   // Fill all buffers
   for(ch = 0; ch < nch; ch++){
@@ -227,9 +225,9 @@ static af_data_t* __FASTCALL__ play( struct af_instance_s* af, af_data_t* data,i
   // Export buffer to mmaped area
   if(flag){
     // update buffer in mapped area
-	stream_copy(s->mmap_area + SIZE_HEADER, s->buf[0], sz * c->bps * nch);
+	stream_copy(s->mmap_area + SIZE_HEADER, s->buf[0], sz * (c->format&MPAF_BPS_MASK) * nch);
     s->count++; // increment counter (to sync)
-	stream_copy(s->mmap_area + SIZE_HEADER - sizeof(s->count), 
+	stream_copy(s->mmap_area + SIZE_HEADER - sizeof(s->count),
 		&(s->count), sizeof(s->count));
   }
 
@@ -248,7 +246,7 @@ static ControlCodes __FASTCALL__ af_open( af_instance_t* af )
   af->play    = play;
   af->mul.n   = 1;
   af->mul.d   = 1;
-  af->data    = mp_calloc(1, sizeof(af_data_t));
+  af->data    = mp_calloc(1, sizeof(mp_aframe_t));
   af->setup   = mp_calloc(1, sizeof(af_export_t));
   if((af->data == NULL) || (af->setup == NULL))
     return CONTROL_ERROR;

@@ -33,9 +33,9 @@ typedef struct af_sinesuppress_s
     double pos;
 }af_sinesuppress_t;
 
-static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data,int final);
+static mp_aframe_t* play_s16(struct af_instance_s* af, mp_aframe_t* data,int final);
 #if 0
-static af_data_t* play_float(struct af_instance_s* af, af_data_t* data,int final);
+static mp_aframe_t* play_float(struct af_instance_s* af, mp_aframe_t* data,int final);
 #endif
 
 // Initialization and runtime control
@@ -47,24 +47,22 @@ static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
   case AF_CONTROL_REINIT:{
     // Sanity check
     if(!arg) return CONTROL_ERROR;
-    
-    af->data->rate   = ((af_data_t*)arg)->rate;
+
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = 1;
 #if 0
-    if (((af_data_t*)arg)->format == AF_FORMAT_NE | AF_FORMAT_F)
+    if (((mp_aframe_t*)arg)->format == MPAF_NE | MPAF_F)
     {
-	af->data->format = AF_FORMAT_FLOAT_NE;
-	af->data->bps = 4;
+	af->data->format = MPAF_FLOAT_NE|4;
 	af->play = play_float;
     }// else
 #endif
     {
-	af->data->format = AF_FORMAT_NE | AF_FORMAT_SI;
-	af->data->bps = 2;
+	af->data->format = MPAF_NE|MPAF_SI|2;
 	af->play = play_s16;
     }
 
-    return af_test_output(af,(af_data_t*)arg);
+    return af_test_output(af,(mp_aframe_t*)arg);
   }
   case AF_CONTROL_COMMAND_LINE:{
     float f1,f2;
@@ -92,7 +90,7 @@ static void uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* play_s16(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   af_sinesuppress_t *s = af->setup;
   register int i = 0;
@@ -123,7 +121,7 @@ static af_data_t* play_s16(struct af_instance_s* af, af_data_t* data,int final)
 }
 
 #if 0
-static af_data_t* play_float(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* play_float(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   af_sinesuppress_t *s = af->setup;
   register int i = 0;
@@ -153,7 +151,7 @@ static ControlCodes open(af_instance_t* af){
   af->play=play_s16;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_sinesuppress_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

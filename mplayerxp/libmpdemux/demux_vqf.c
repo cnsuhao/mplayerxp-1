@@ -9,6 +9,7 @@
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
+#include "libao2/afmt.h"
 #include "osdep/mplib.h"
 #include "demux_msg.h"
 
@@ -57,12 +58,12 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
   sh_audio->wf = w = (WAVEFORMATEX*)mp_mallocz(sizeof(WAVEFORMATEX)+sizeof(headerInfo));
   hi = (headerInfo *)&w[1];
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('T','W','I','N'); /* TWinVQ */
-  w->nChannels = sh_audio->channels = 2;
-  w->nSamplesPerSec = sh_audio->samplerate = 44100;
-  w->nAvgBytesPerSec = w->nSamplesPerSec*sh_audio->channels*2;
+  w->nChannels = sh_audio->nch = 2;
+  w->nSamplesPerSec = sh_audio->rate = 44100;
+  w->nAvgBytesPerSec = w->nSamplesPerSec*sh_audio->nch*2;
   w->nBlockAlign = 0;
-  sh_audio->samplesize = 2;
-  w->wBitsPerSample = 8*sh_audio->samplesize;
+  sh_audio->afmt = bps2afmt(2);
+  w->wBitsPerSample = 8*afmt2bps(sh_audio->afmt);
   w->cbSize = 0;
   stream_reset(s);
   stream_seek(s,0);
@@ -81,7 +82,7 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
 	i=0;
 	subchunk_size=be2me_32(*((uint32_t *)&buf[0]));
 	hi->channelMode=be2me_32(*((uint32_t *)&buf[4]));
-	w->nChannels=sh_audio->channels=hi->channelMode+1; /*0-mono;1-stereo*/
+	w->nChannels=sh_audio->nch=hi->channelMode+1; /*0-mono;1-stereo*/
 	hi->bitRate=be2me_32(*((uint32_t *)&buf[8]));
 	sh_audio->i_bps=hi->bitRate*1000/8; /* bitrate kbit/s */
 	w->nAvgBytesPerSec = sh_audio->i_bps;
@@ -100,11 +101,11 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
 		w->nSamplesPerSec=hi->samplingRate*1000;
 		break;
 	}
-	sh_audio->samplerate=w->nSamplesPerSec;
+	sh_audio->rate=w->nSamplesPerSec;
 	hi->securityLevel=be2me_32(*((uint32_t *)&buf[16]));
 	w->nBlockAlign = 0;
-	sh_audio->samplesize = 4;
-	w->wBitsPerSample = 8*sh_audio->samplesize;
+	sh_audio->afmt = bps2afmt(4);
+	w->wBitsPerSample = 8*afmt2bps(sh_audio->afmt);
 	w->cbSize = 0;
 	i+=subchunk_size+4;
 	while(i<chunk_size-8)
@@ -211,7 +212,7 @@ static void vqf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
   base = (seeka->flags&DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_audio->i_bps)*seeka->secs;
-  pos -= (pos % (sh_audio->channels * sh_audio->samplesize) );
+  pos -= (pos % (sh_audio->nch * afmt2bps(sh_audio->afmt)));
   stream_seek(s,pos);
   mpca_resync_stream(sh_audio);
 }

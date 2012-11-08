@@ -100,23 +100,22 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     s->lavc_context=avcodec_alloc_context3(s->lavc_codec);
     /* put sample parameters */
     s->lavc_context->bit_rate = s->brate;
-    s->lavc_context->sample_rate = ((af_data_t*)arg)->rate;
-    s->lavc_context->channels = ((af_data_t*)arg)->nch;
+    s->lavc_context->sample_rate = ((mp_aframe_t*)arg)->rate;
+    s->lavc_context->channels = ((mp_aframe_t*)arg)->nch;
     s->lavc_context->sample_fmt = AV_SAMPLE_FMT_S16;
     /* open it */
     if (avcodec_open(s->lavc_context, s->lavc_codec) < 0) {
         MSG_ERR("could not open codec %s with libavcodec\n",s->cname);
         return CONTROL_ERROR;
     }
-    s->frame_size = s->lavc_context->frame_size*((af_data_t*)arg)->nch*2/*bps*/;
+    s->frame_size = s->lavc_context->frame_size*((mp_aframe_t*)arg)->nch*2/*bps*/;
     s->tail=mp_malloc(s->frame_size);
     /* correct in format */
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
     af->data->format = find_atag(s->cname)<<16;
-    af->data->bps    = 2;
-    ((af_data_t*)arg)->format=AF_FORMAT_SI | AF_FORMAT_NE;
-    MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X and bps = %i\n",af->data->rate,af->data->nch,af->data->format,af->data->bps);
+    ((mp_aframe_t*)arg)->format=MPAF_SI|MPAF_NE|2;
+    MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
     return CONTROL_OK;
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_ffenc] in use [%s %u]\n",s->cname,s->brate);
@@ -155,12 +154,12 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   unsigned tlen,ilen,olen,delta;
   af_ffenc_t *s=af->setup;
-  af_data_t*   	 in = data;
-  af_data_t*   	 out = af->data;
+  mp_aframe_t*   	 in = data;
+  mp_aframe_t*   	 out = af->data;
   uint8_t *inp,*outp;
 
   ilen=tlen=in->len;
@@ -212,7 +211,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->data=mp_malloc(sizeof(af_data_t));
+  af->data=mp_malloc(sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_ffenc_t));
   if(af->data == NULL) return CONTROL_ERROR;
   return CONTROL_OK;

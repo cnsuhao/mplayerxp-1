@@ -20,7 +20,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   af_lp_t* s   = (af_lp_t*)af->setup; 
   switch(cmd){
   case AF_CONTROL_REINIT:
-    memcpy(af->data,(af_data_t*)arg,sizeof(af_data_t));
+    memcpy(af->data,(mp_aframe_t*)arg,sizeof(mp_aframe_t));
     s->fin=af->data->rate;
     af->delay=(float)s->fake_out/af->data->rate;
     af->data->rate=s->fake_out;
@@ -60,7 +60,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   // Do something necessary to get rid of annoying warning during compile
   if(!af)
@@ -75,7 +75,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->data=mp_malloc(sizeof(af_data_t));
+  af->data=mp_malloc(sizeof(mp_aframe_t));
   af->setup=mp_malloc(sizeof(af_lp_t));
   if(af->data == NULL)
     return CONTROL_ERROR;

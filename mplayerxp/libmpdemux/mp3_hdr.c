@@ -31,22 +31,22 @@ int mp_mp3_get_lsf(unsigned char* hbuf){
 /*
  * return frame size or -1 (bad frame)
  */
-int mp_decode_mp3_header(unsigned char* hbuf,int *fmt,int *brate,int *samplerate,int *channels){
+int mp_decode_mp3_header(unsigned char* hbuf,unsigned *fmt,unsigned *brate,unsigned *samplerate,unsigned *channels){
     int nch,ssize,crc,lsf,mpeg25,framesize,padding,bitrate_index,sampling_frequency,mp3_fmt;
-    unsigned long newhead = 
+    unsigned long newhead =
       hbuf[0] << 24 |
       hbuf[1] << 16 |
       hbuf[2] <<  8 |
       hbuf[3];
 
-    if( (newhead & 0xffe00000) != 0xffe00000 ||  
+    if( (newhead & 0xffe00000) != 0xffe00000 ||
         (newhead & 0x0000fc00) == 0x0000fc00){
-	MSG_DBG2("mp3_hdr: head_check failed: %08X\n",newhead); 
+	MSG_DBG2("mp3_hdr: head_check failed: %08X\n",newhead);
 	return -1;
     }
 
-    if(((newhead>>17)&3)==0){ 
-      MSG_DBG2("mp3_hdr: not layer-123: %08X %u\n",newhead,((newhead>>17)&3)); 
+    if(((newhead>>17)&3)==0){
+      MSG_DBG2("mp3_hdr: not layer-123: %08X %u\n",newhead,((newhead>>17)&3));
       return -1;
     }
     mp3_fmt = 4-((newhead>>17)&3);
@@ -81,7 +81,7 @@ int mp_decode_mp3_header(unsigned char* hbuf,int *fmt,int *brate,int *samplerate
 //    fr->emphasis  = newhead & 0x3;
 
     nch = ( (((newhead>>6)&0x3)) == 3) ? 1 : 2;
-    
+
     if(channels) *channels=nch;
 
     if(!bitrate_index){
@@ -98,7 +98,7 @@ int mp_decode_mp3_header(unsigned char* hbuf,int *fmt,int *brate,int *samplerate
     switch(mp3_fmt)
     {
 	case 1:		framesize = (long) tabsel_123[lsf][0][bitrate_index]*12000;
-    			framesize /= freqs[sampling_frequency];
+			framesize /= freqs[sampling_frequency];
 			framesize = (framesize + padding)<<2;
 			break;
 	default:

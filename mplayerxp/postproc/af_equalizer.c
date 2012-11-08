@@ -54,12 +54,12 @@
 // Data for specific instances of this filter
 typedef struct af_equalizer_s
 {
-  float   a[KM][L];        	// A weights
-  float   b[KM][L];	     	// B weights
-  float   wq[AF_NCH][KM][L];  	// Circular buffer for W data
-  float   g[AF_NCH][KM];      	// Gain factor for each channel and band
-  int     K; 		   	// Number of used eq bands
-  int     channels;        	// Number of channels
+  float		a[KM][L];	// A weights
+  float		b[KM][L];		// B weights
+  float		wq[AF_NCH][KM][L];	// Circular buffer for W data
+  float		g[AF_NCH][KM];		// Gain factor for each channel and band
+  unsigned	K;			// Number of used eq bands
+  unsigned	channels;	// Number of channels
 } af_equalizer_t;
 
 // 2nd order Band-pass Filter design
@@ -81,16 +81,15 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
-    int k =0;
+    unsigned k =0;
     float F[KM] = CF;
 
     // Sanity check
     if(!arg) return CONTROL_ERROR;
 
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->nch    = ((af_data_t*)arg)->nch;
-    af->data->format = AF_FORMAT_NE | AF_FORMAT_F;
-    af->data->bps    = 4;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->format = MPAF_NE|MPAF_F|4;
 
     // Calculate number of active filters
     s->K=KM;
@@ -170,9 +169,9 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*       c 	= data;			    	// Current working data
+  mp_aframe_t*       c 	= data;			    	// Current working data
   af_equalizer_t*  s 	= (af_equalizer_t*)af->setup; 	// Setup 
   uint32_t  	   ci  	= af->data->nch; 	    	// Index for channels
   uint32_t	   nch 	= af->data->nch;   	    	// Number of channels
@@ -215,7 +214,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_equalizer_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

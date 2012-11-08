@@ -8,20 +8,21 @@
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
+#include "libao2/afmt.h"
 #include "osdep/mplib.h"
 #include "aviprint.h"
 
 int use_rawaudio = 0;
 static int channels = 2;
 static int samplerate = 44100;
-static int samplesize = 2;
+static int afmt = AFMT_S16_LE;
 static int wtag = 0x1; // Raw PCM
 
 static const config_t demux_rawaudio_opts[] = {
   { "on", &use_rawaudio, CONF_TYPE_FLAG, 0,0, 1, "forces treating stream as raw-audio" },
   { "channels", &channels, CONF_TYPE_INT,CONF_RANGE,1,8, "specifies number of channels in raw-audio steram" },
   { "rate", &samplerate, CONF_TYPE_INT,CONF_RANGE,1000,8*48000, "specifies sample-rate of raw-audio steram" },
-  { "samplesize", &samplesize, CONF_TYPE_INT,CONF_RANGE,1,8, "specifies sample-size of raw-audio steram" },
+  { "afmt", &afmt, CONF_TYPE_INT,CONF_RANGE,1,8, "specifies sample-format of raw-audio steram" },
   { "wtag", &wtag, CONF_TYPE_INT, CONF_MIN, 0 , 0, "specifies compression-wtag of raw-audio stream" },
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
@@ -42,6 +43,7 @@ static int rawaudio_probe(demuxer_t* demuxer)
 }
 
 static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
+  unsigned samplesize;
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
 
@@ -52,12 +54,12 @@ static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
   sh_audio = new_sh_audio(demuxer,0);
   sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = sh_audio->wtag = wtag;
-  w->nChannels = sh_audio->channels = channels;
-  sh_audio->samplerate = samplerate;
+  w->nChannels = sh_audio->nch = channels;
+  sh_audio->rate = samplerate;
   w->nSamplesPerSec = samplerate;
   w->nAvgBytesPerSec = samplerate*samplesize*channels;
   w->nBlockAlign = channels*samplesize*8;
-  sh_audio->samplesize = samplesize;
+  sh_audio->afmt = bps2afmt(samplesize);
   w->wBitsPerSample = samplesize*8;
   w->cbSize = 0;
   print_wave_header(w,sizeof(WAVEFORMATEX));
@@ -100,7 +102,7 @@ static void rawaudio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
   base = (seeka->flags & DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_audio->i_bps)*seeka->secs;
-  pos -= (pos % (sh_audio->channels * sh_audio->samplesize) );
+  pos -= (pos % (sh_audio->nch * afmt2bps(sh_audio->afmt)));
   stream_seek(s,pos);
   mpca_resync_stream(sh_audio);
 }

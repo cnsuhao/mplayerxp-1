@@ -38,17 +38,14 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     // Sanity check
     if(!arg) return CONTROL_ERROR;
 
-    af->data->rate   = ((af_data_t*)arg)->rate;
-    af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
-    af->data->bps    = 4;
+    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->format = MPAF_F|MPAF_NE|4;
     af->mul.n        = af->data->nch;
-    af->mul.d	     = ((af_data_t*)arg)->nch;
+    af->mul.d	     = ((mp_aframe_t*)arg)->nch;
 
-    if((af->data->format != ((af_data_t*)arg)->format) || 
-       (af->data->bps != ((af_data_t*)arg)->bps)){
-      ((af_data_t*)arg)->format = af->data->format;
-      ((af_data_t*)arg)->bps = af->data->bps;
-      return CONTROL_FALSE;
+    if((af->data->format != ((mp_aframe_t*)arg)->format)) {
+	((mp_aframe_t*)arg)->format = af->data->format;
+	return CONTROL_FALSE;
     }
     return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->data->nch);
   case AF_CONTROL_COMMAND_LINE:{
@@ -125,10 +122,10 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static af_data_t* __FASTCALL__ play(struct af_instance_s* af, af_data_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
-  af_data_t*    c    = data;		// Current working data
-  af_data_t*	l    = af->data;	// Local data
+  mp_aframe_t*    c    = data;		// Current working data
+  mp_aframe_t*	l    = af->data;	// Local data
   af_pan_t*  	s    = af->setup; 	// Setup for this instance
   float*   	in   = c->audio;	// Input audio data
   float*   	out  = NULL;		// Output audio data
@@ -170,7 +167,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(af_data_t));
+  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_pan_t));
   if(af->data == NULL || af->setup == NULL)
     return CONTROL_ERROR;

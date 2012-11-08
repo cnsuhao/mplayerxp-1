@@ -33,6 +33,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include "osdep/mplib.h"
 #include "aviprint.h"
 #include "libmpcodecs/dec_audio.h"
+#include "libao2/afmt.h"
 #include "demux_msg.h"
 
 #define MKTAG(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))
@@ -1021,9 +1022,9 @@ static demuxer_t* real_open(demuxer_t* demuxer)
                       MSG_WARN("Version 3 audio with FourCC %8x, please report to "
                              "MPlayer developers\n", sh->wtag);
                     }
-                    sh->channels = 1;
-                    sh->samplesize = 16;
-                    sh->samplerate = 8000;
+                    sh->nch = 1;
+                    sh->afmt = bps2afmt(2);
+                    sh->rate = 8000;
                     frame_size = 240;
                     strcpy(buf, "14_4");
                    } else {
@@ -1048,16 +1049,16 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    sub_packet_size = stream_read_word(demuxer->stream);
 		    MSG_V("sub_packet_size: %d\n", sub_packet_size);
 		    stream_skip(demuxer->stream, 2); // 0
-		    
+
 		    if (version == 5)
 			stream_skip(demuxer->stream, 6); //0,srate,0
 
-		    sh->samplerate = stream_read_word(demuxer->stream);
+		    sh->rate = stream_read_word(demuxer->stream);
 		    stream_skip(demuxer->stream, 2);  // 0
-		    sh->samplesize = stream_read_word(demuxer->stream)/8;
-		    sh->channels = stream_read_word(demuxer->stream);
+		    sh->afmt = bps2afmt(stream_read_word(demuxer->stream)/8);
+		    sh->nch = stream_read_word(demuxer->stream);
 		    MSG_V("samplerate: %d, channels: %d\n",
-			sh->samplerate, sh->channels);
+			sh->rate, sh->nch);
 
 		    if (version == 5)
 		    {
@@ -1076,9 +1077,9 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 
 		    /* Emulate WAVEFORMATEX struct: */
 		    sh->wf = mp_mallocz(sizeof(WAVEFORMATEX));
-		    sh->wf->nChannels = sh->channels;
-		    sh->wf->wBitsPerSample = sh->samplesize*8;
-		    sh->wf->nSamplesPerSec = sh->samplerate;
+		    sh->wf->nChannels = sh->nch;
+		    sh->wf->wBitsPerSample = afmt2bps(sh->afmt)*8;
+		    sh->wf->nSamplesPerSec = sh->rate;
 		    sh->wf->nAvgBytesPerSec = bitrate;
 		    sh->wf->nBlockAlign = frame_size;
 		    sh->wf->cbSize = 0;

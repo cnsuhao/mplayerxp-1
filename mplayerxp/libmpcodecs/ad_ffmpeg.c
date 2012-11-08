@@ -133,29 +133,21 @@ int init(sh_audio_t *sh_audio)
    x=decode(sh_audio,sh_audio->a_buffer,1,sh_audio->a_buffer_size,&pts);
    if(x>0) sh_audio->a_buffer_len=x;
 
-  sh_audio->channels=lavc_context->channels;
-  sh_audio->samplerate=lavc_context->sample_rate;
+  sh_audio->nch=lavc_context->channels;
+  sh_audio->rate=lavc_context->sample_rate;
   switch(lavc_context->sample_fmt) {
     case AV_SAMPLE_FMT_U8:  ///< unsigned 8 bits
-	sh_audio->samplesize=1;
-	sh_audio->sample_format=AFMT_U8;
+	sh_audio->afmt=AFMT_U8;
 	break;
     default:
     case AV_SAMPLE_FMT_S16:             ///< signed 16 bits
-	sh_audio->samplesize=2;
-	sh_audio->sample_format=AFMT_S16_LE;
+	sh_audio->afmt=AFMT_S16_LE;
 	break;
     case AV_SAMPLE_FMT_S32:             ///< signed 32 bits
-	sh_audio->samplesize=4;
-	sh_audio->sample_format=AFMT_S32_LE;
+	sh_audio->afmt=AFMT_S32_LE;
 	break;
     case AV_SAMPLE_FMT_FLT:             ///< float
-	sh_audio->samplesize=4;
-	sh_audio->sample_format=AFMT_FLOAT32;
-	break;
-    case AV_SAMPLE_FMT_DBL:             ///< double
-	sh_audio->samplesize=8;
-	sh_audio->sample_format=AFMT_FLOAT32;
+	sh_audio->afmt=AFMT_FLOAT32;
 	break;
   }
   sh_audio->i_bps=lavc_context->bit_rate/8;

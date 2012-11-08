@@ -71,7 +71,7 @@ while(1){
     apts=0;
 }
     MSG_DBG2("dca[%08X]: len=%d  flags=0x%X  %d Hz %d bit/s frame=%u\n",*((long *)sh_audio->a_in_buffer),length,flags,sample_rate,bit_rate,flen);
-    sh_audio->samplerate=sample_rate;
+    sh_audio->rate=sample_rate;
     sh_audio->i_bps=bit_rate/8;
     demux_read_data_r(sh_audio->ds,sh_audio->a_in_buffer+16,length-16,apts?&null_pts:&apts);
     priv->last_pts=*pts=apts;
@@ -102,7 +102,7 @@ int channels=0;
 	channels, (flags&DCA_LFE)?1:0,
 	mode, (flags&DCA_LFE)?"+lfe":"",
 	sample_rate, bit_rate*0.001f,
-	sh_audio->samplesize*8);
+	afmt2bps(sh_audio->afmt)*8);
   return (flags&DCA_LFE) ? (channels+1) : channels;
 }
 
@@ -118,15 +118,14 @@ int preinit(sh_audio_t *sh)
 #define DCA_FMT32 AFMT_S32_LE
 #define DCA_FMT24 AFMT_S24_LE
 #endif
-    sh->samplesize=2;
+    sh->afmt=bps2afmt(2);
     if(	af_query_fmt(sh->afilter,AFMT_FLOAT32) == CONTROL_OK||
 	af_query_fmt(sh->afilter,DCA_FMT32) == CONTROL_OK ||
 	af_query_fmt(sh->afilter,DCA_FMT24) == CONTROL_OK)
     {
-	sh->samplesize=4;
-	sh->sample_format=AFMT_FLOAT32;
+	sh->afmt=AFMT_FLOAT32;
     }
-    sh->audio_out_minsize=mp_conf.ao_channels*sh->samplesize*256*8;
+    sh->audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh->afmt)*256*8;
     sh->audio_in_minsize=MAX_AC5_FRAME;
     sh->context=mp_malloc(sizeof(priv_t));
     return 1;
@@ -150,9 +149,9 @@ int init(sh_audio_t *sh_audio)
   }
   /* 'dca cannot upmix' hotfix:*/
   dca_printinfo(sh_audio);
-  sh_audio->channels=mp_conf.ao_channels;
-while(sh_audio->channels>0){
-  switch(sh_audio->channels){
+  sh_audio->nch=mp_conf.ao_channels;
+while(sh_audio->nch>0){
+  switch(sh_audio->nch){
 	case 1: mpxp_dca_flags=DCA_MONO; break;
 	case 2: mpxp_dca_flags=DCA_STEREO; break;
 /*	case 2: mpxp_dca_flags=DCA_DOLBY; break; */
@@ -170,17 +169,14 @@ while(sh_audio->channels>0){
     return 0;
   }
   MSG_V("dca flags after dca_frame: 0x%X\n",flags);
-  if(sh_audio->samplesize==4)
-  {
-    if(dca_resample_init_float(mpxp_dca_state,mpxp_dca_accel,flags,sh_audio->channels)) break;
+  if(afmt2bps(sh_audio->afmt)==4) {
+    if(dca_resample_init_float(mpxp_dca_state,mpxp_dca_accel,flags,sh_audio->nch)) break;
+  } else {
+    if(dca_resample_init(mpxp_dca_state,mpxp_dca_accel,flags,sh_audio->nch)) break;
   }
-  else
-  {
-    if(dca_resample_init(mpxp_dca_state,mpxp_dca_accel,flags,sh_audio->channels)) break;
-  }
-  --sh_audio->channels; /* try to decrease no. of channels*/
+  --sh_audio->nch; /* try to decrease no. of channels*/
 }
-  if(sh_audio->channels<=0){
+  if(sh_audio->nch<=0){
     MSG_ERR("dca: no resampler. try different channel setup!\n");
     return 0;
   }
@@ -220,8 +216,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
     priv_t *priv=sh_audio->context;
     UNUSED(minlen);
     UNUSED(maxlen);
-	if(!sh_audio->a_in_buffer_len)
-	{
+	if(!sh_audio->a_in_buffer_len) {
 	    if(dca_fillbuff(sh_audio,pts)<0) return len; /* EOF */
 	}
 	else *pts=priv->last_pts;
@@ -238,7 +233,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 		MSG_WARN("dca: error at deblock\n");
 		break;
 	    }
-	    if(sh_audio->samplesize==4)
+	    if(afmt2bps(sh_audio->afmt)==4)
 		len+=4*dca_resample32(dca_samples(mpxp_dca_state),(float *)&buf[len]);
 	    else
 		len+=2*dca_resample(dca_samples(mpxp_dca_state),(int16_t *)&buf[len]);

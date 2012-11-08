@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "ad_internal.h"
-#include "../libao2/afmt.h"
+#include "libao2/afmt.h"
 
 static const ad_info_t info =
 {
@@ -22,36 +22,30 @@ int init(sh_audio_t *sh_audio)
 {
   WAVEFORMATEX *h=sh_audio->wf;
   sh_audio->i_bps=h->nAvgBytesPerSec;
-  sh_audio->channels=h->nChannels;
-  sh_audio->samplerate=h->nSamplesPerSec;
-  sh_audio->samplesize=(h->wBitsPerSample+7)/8;
+  sh_audio->nch=h->nChannels;
+  sh_audio->rate=h->nSamplesPerSec;
+  sh_audio->afmt=bps2afmt((h->wBitsPerSample+7)/8);
   switch(sh_audio->wtag){ /* hardware formats: */
-    case 0x3: sh_audio->sample_format=AFMT_FLOAT32; break;
-    case 0x6:  sh_audio->sample_format=AFMT_A_LAW;break;
-    case 0x7:  sh_audio->sample_format=AFMT_MU_LAW;break;
-    case 0x11: sh_audio->sample_format=AFMT_IMA_ADPCM;break;
-    case 0x50: sh_audio->sample_format=AFMT_MPEG;break;
+    case 0x3:  sh_audio->afmt=AFMT_FLOAT32; break;
+    case 0x6:  sh_audio->afmt=AFMT_A_LAW;break;
+    case 0x7:  sh_audio->afmt=AFMT_MU_LAW;break;
+    case 0x11: sh_audio->afmt=AFMT_IMA_ADPCM;break;
+    case 0x50: sh_audio->afmt=AFMT_MPEG;break;
 /*    case 0x2000: sh_audio->sample_format=AFMT_AC3; */
     case mmioFOURCC('r','a','w',' '): /* 'raw '*/
-       if(sh_audio->samplesize==1) sh_audio->sample_format=AFMT_S8;
-       else if(sh_audio->samplesize==2) sh_audio->sample_format=AFMT_S16_BE;
-       else if(sh_audio->samplesize==3) sh_audio->sample_format=AFMT_S24_BE;
-       else sh_audio->sample_format=AFMT_S32_BE;
-       break;
+        break;
     case mmioFOURCC('t','w','o','s'): /* 'twos'*/
-       if(sh_audio->samplesize==1) sh_audio->sample_format=AFMT_S8;
-       else			   sh_audio->sample_format=AFMT_S16_BE;
-       break;
+	if(afmt2bps(sh_audio->afmt)!=1) sh_audio->afmt=AFMT_S16_BE;
+	break;
     case mmioFOURCC('s','o','w','t'): /* 'swot'*/
-       if(sh_audio->samplesize==1) sh_audio->sample_format=AFMT_S8;
-       else			   sh_audio->sample_format=AFMT_S16_LE;
-       break;
+	if(afmt2bps(sh_audio->afmt)!=1) sh_audio->afmt=AFMT_S16_LE;
+	break;
     default:
-       if(sh_audio->samplesize==1) sh_audio->sample_format=AFMT_S8;
-       else if(sh_audio->samplesize==2) sh_audio->sample_format=AFMT_S16_LE;
-       else if(sh_audio->samplesize==3) sh_audio->sample_format=AFMT_S24_LE;
-       else sh_audio->sample_format=AFMT_S32_LE;
-       break;
+	if(afmt2bps(sh_audio->afmt)==1);
+	else if(afmt2bps(sh_audio->afmt)==2) sh_audio->afmt=AFMT_S16_LE;
+	else if(afmt2bps(sh_audio->afmt)==3) sh_audio->afmt=AFMT_S24_LE;
+	else sh_audio->afmt=AFMT_S32_LE;
+	break;
   }
   return 1;
 }
@@ -89,7 +83,7 @@ ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  unsigned len = sh_audio->channels*sh_audio->samplesize;
+  unsigned len = sh_audio->nch*afmt2bps(sh_audio->afmt);
   len = (minlen + len - 1) / len * len;
   if (len > maxlen)
       /* if someone needs hundreds of channels adjust audio_out_minsize based on channels in preinit() */

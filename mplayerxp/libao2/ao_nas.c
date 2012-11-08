@@ -57,7 +57,7 @@
 
 #include "audio_out.h"
 #include "audio_out_internal.h"
-#include "postproc/af_format.h"
+#include "postproc/af.h"
 #include "osdep/mplib.h"
 #include "afmt.h"
 #include "ao_msg.h"
@@ -442,7 +442,7 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
 	buffer_size = ao->bps; /* buffer 1 second */
 
 	MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
-		fmt2str(format,ao->bps,str,256));
+		mpaf_fmt2str(format,str,256));
 
 	/*
 	 * round up to multiple of NAS_FRAG_SIZE

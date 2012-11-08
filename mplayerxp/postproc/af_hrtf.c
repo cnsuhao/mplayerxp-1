@@ -273,7 +273,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s *af, int cmd, any_
 
     switch(cmd) {
     case AF_CONTROL_REINIT:
-	af->data->rate   = ((af_data_t*)arg)->rate;
+	af->data->rate   = ((mp_aframe_t*)arg)->rate;
 	if(af->data->rate != 48000) {
 	    // automatic samplerate adjustment in the filter chain
 	    // is not yet supported.
@@ -284,20 +284,19 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s *af, int cmd, any_
 	    /* NK: Let use af_resample here */
 	    af->data->rate = 48000;
 	}
-	af->data->nch    = ((af_data_t*)arg)->nch;
+	af->data->nch    = ((mp_aframe_t*)arg)->nch;
 	    if(af->data->nch == 2) {
- 	       /* 2 channel input */
- 	       if(s->decode_mode != HRTF_MIX_MATRIX2CH) {
-   		  /* Default behavior is stereo mixing. */
- 		  s->decode_mode = HRTF_MIX_STEREO;
-	       }
+		/* 2 channel input */
+		if(s->decode_mode != HRTF_MIX_MATRIX2CH) {
+		    /* Default behavior is stereo mixing. */
+		    s->decode_mode = HRTF_MIX_STEREO;
+		}
 	    }
 	    else if (af->data->nch < 5) af->data->nch = 5;
-	af->data->format = AF_FORMAT_F | AF_FORMAT_NE;
-	af->data->bps    = 4;
+	af->data->format = MPAF_F|MPAF_NE|4;
 	af->mul.n = 2;
 	af->mul.d = af->data->nch;
-	test_output_res = af_test_output(af, (af_data_t*)arg);
+	test_output_res = af_test_output(af, (mp_aframe_t*)arg);
 	// after testing input set the real output format
 	af->data->nch = 2;
 	return test_output_res;
@@ -385,7 +384,7 @@ frequencies).
 2. A bass compensation is introduced to ensure that 0-200 Hz are not
 damped (without any real 3D acoustical image, however).
 */
-static af_data_t* __FASTCALL__ play(struct af_instance_s *af, af_data_t *data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af, mp_aframe_t *data,int final)
 {
     af_hrtf_t *s = af->setup;
     real_t *in = data->audio; // Input audio data
@@ -577,7 +576,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af)
     af->play = play;
     af->mul.n = 1;
     af->mul.d = 1;
-    af->data = mp_calloc(1, sizeof(af_data_t));
+    af->data = mp_calloc(1, sizeof(mp_aframe_t));
     af->setup = mp_calloc(1, sizeof(af_hrtf_t));
     if((af->data == NULL) || (af->setup == NULL))
 	return CONTROL_ERROR;

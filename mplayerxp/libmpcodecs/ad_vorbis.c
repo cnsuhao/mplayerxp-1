@@ -89,8 +89,8 @@ static int init(sh_audio_t *sh)
   }
 
   // Setup the decoder
-  sh->channels=ov->vi.channels;
-  sh->samplerate=ov->vi.rate;
+  sh->nch=ov->vi.channels;
+  sh->rate=ov->vi.rate;
 #ifdef WORDS_BIGENDIAN
 #define OGG_FMT32 AFMT_S32_BE
 #define OGG_FMT24 AFMT_S24_BE
@@ -100,12 +100,9 @@ static int init(sh_audio_t *sh)
 #define OGG_FMT24 AFMT_S24_LE
 #define OGG_FMT16 AFMT_S16_LE
 #endif
-  sh->samplesize=2;
-  sh->sample_format=OGG_FMT16;
-  if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == CONTROL_OK)
-  {
-    sh->samplesize=4;
-    sh->sample_format=OGG_FMT32;
+  sh->afmt=OGG_FMT16;
+  if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == CONTROL_OK) {
+    sh->afmt=OGG_FMT32;
   }
   // assume 128kbit if bitrate not specified in the header
   sh->i_bps=((ov->vi.bitrate_nominal>0) ? ov->vi.bitrate_nominal : 128000)/8;
@@ -162,8 +159,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
 	
 	    if(bout<=0) break;
 
-	    if(sh->samplesize==4)
-	    {
+	    if(afmt2bps(sh->afmt)==4) {
 	    /* convert floats to 32 bit signed ints (host order) and
 	       interleave */
 	    for(i=0;i<(unsigned)ov->vi.channels;i++){
@@ -221,7 +217,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
 		
 	    if(clipflag)
 	      MSG_DBG2("Clipping in frame %ld\n",(long)(ov->vd.sequence));
-	    len+=sh->samplesize*ov->vi.channels*bout;
+	    len+=afmt2bps(sh->afmt)*ov->vi.channels*bout;
 	    MSG_DBG2("\n[decoded: %d / %d ]\n",bout,samples);
 	    vorbis_synthesis_read(&ov->vd,bout); /* tell libvorbis how
 						    many samples we
