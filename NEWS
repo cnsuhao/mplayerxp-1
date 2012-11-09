@@ -1,5 +1,19 @@
 MplayerXP NEWS -- history of user-visible changes.
 
+Version x.x.x
+
+* XP-CORE becomes mutex-free. Single-thread mode is no longer available.
+  Now -core.xp indicates number cpus which should be utilized for playback.
+* video player now moved into separate thread and no longer depends on behaviour
+  of libinput
+* Added middle-level antiviral protection mechanism. Now MPlayerXP uses
+  pseudo-randomized malloc and contains several antiviral holes. Added
+  -core.test-av key for testing anti-viral protector.
+* For debug mode added protected malloc-realloc-free mechanism similar to
+  libefence but with extended functionality.
+* Upgrade ffmpeg upto ffmpeg-1.0.0. Now MPlayerXP finds codecs within of
+  libavcodec even they are unlisted in codecs.conf
+
 Version 0.7.96
 
 * enable software scaler in x11 fullscreen mode. Fixed xinerama moving position
