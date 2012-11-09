@@ -42,7 +42,7 @@
 #include <string.h>
 #include "asmrp.h"
 #include "demux_msg.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 
 /*

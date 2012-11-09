@@ -22,7 +22,7 @@
 #include "osdep/mplib.h"
 #include "help_mp.h"
 #include "mpdemux.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "demux_msg.h"
 
 #ifndef min

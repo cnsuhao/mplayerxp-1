@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 

@@ -13,7 +13,7 @@
 #include "xmpcore/sig_hand.h"
 #include "help_mp.h"
 #include "input/input.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "libmpdemux/muxer.h"
 #include "libmpdemux/mrl.h"
 #include "osdep/mplib.h"

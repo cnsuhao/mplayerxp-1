@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"

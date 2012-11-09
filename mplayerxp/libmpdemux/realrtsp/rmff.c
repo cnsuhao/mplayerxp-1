@@ -30,7 +30,7 @@
 #include "xbuffer.h"
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "md5.h"
 #include "demux_msg.h"
 

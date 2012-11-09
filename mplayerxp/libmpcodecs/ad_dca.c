@@ -8,13 +8,13 @@
 #include "codecs_ld.h"
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "help_mp.h"
 #include "osdep/cpudetect.h"
 
 #include "libdca/dca.h"
 #include "osdep/mm_accel.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/bswap.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"

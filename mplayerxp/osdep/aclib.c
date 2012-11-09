@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
 

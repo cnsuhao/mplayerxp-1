@@ -1,5 +1,5 @@
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 
 #ifdef HAVE_LIBCDIO
 

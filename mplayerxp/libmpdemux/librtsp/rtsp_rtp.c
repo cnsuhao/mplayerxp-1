@@ -27,7 +27,7 @@
 #include <inttypes.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 
 #ifndef HAVE_WINSOCK2

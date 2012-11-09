@@ -21,7 +21,7 @@
 #include <errno.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 
 #include <vidix/vidixlib.h>

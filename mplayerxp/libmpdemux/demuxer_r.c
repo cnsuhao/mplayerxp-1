@@ -10,7 +10,7 @@
 #include "libmpsub/vobsub.h"
 #include "osdep/timer.h"
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "demux_msg.h"
 

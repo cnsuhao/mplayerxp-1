@@ -9,7 +9,7 @@
 #include "playtreeparser.h"
 #include "asxparser.h"
 #include "libmpconf/cfgparser.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"

@@ -1,4 +1,4 @@
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "fifo.h"
 #include "osdep/mplib.h"
 

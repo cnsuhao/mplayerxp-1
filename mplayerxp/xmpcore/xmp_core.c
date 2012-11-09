@@ -25,7 +25,7 @@
 #include "xmp_adecoder.h"
 #include "xmp_vdecoder.h"
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
 

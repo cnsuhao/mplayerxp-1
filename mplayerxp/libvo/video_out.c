@@ -34,7 +34,7 @@
 #include "postproc/vf.h"
 #include "xmpcore/xmp_core.h"
 #include "osdep/mplib.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/fastmemcpy.h"
 #include "img_format.h"
 #include "screenshot.h"

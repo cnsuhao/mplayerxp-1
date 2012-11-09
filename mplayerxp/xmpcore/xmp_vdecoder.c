@@ -1,4 +1,4 @@
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
 #include "xmp_core.h"

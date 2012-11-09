@@ -7,7 +7,7 @@
  */
 #define USE_QTX_CODECS 1
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 
 #include <stdlib.h>
 #include <stdio.h>

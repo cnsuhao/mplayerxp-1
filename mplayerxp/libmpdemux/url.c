@@ -14,7 +14,7 @@
 #include "url.h"
 #include "help_mp.h"
 #include "demux_msg.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 
 #ifndef SIZE_MAX

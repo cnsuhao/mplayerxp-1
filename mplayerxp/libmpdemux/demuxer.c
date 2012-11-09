@@ -12,7 +12,7 @@
 #include "stream.h"
 #include "mp_config.h"
 #include "help_mp.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
 #include "nls/nls.h"

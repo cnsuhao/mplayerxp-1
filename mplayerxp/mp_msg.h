@@ -1,7 +1,7 @@
 #ifndef __MP_MSG_H
 #define __MP_MSG_H 1
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 
 // verbosity elevel:
 

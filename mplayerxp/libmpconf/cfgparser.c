@@ -598,7 +598,7 @@ static int config_read_option(m_config_t *config,const config_t** conf_list,cons
 			MSG_INFO("%s", (char *) conf[i].p);
 			exit(1);
 		default:
-			MSG_ERR( "Unknown config type specified in conf-mplayer.h!\n");
+			MSG_ERR( "Unknown config type specified in conf-mplayerxp.h!\n");
 			break;
 	}
 out:

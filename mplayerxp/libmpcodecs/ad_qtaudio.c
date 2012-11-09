@@ -8,7 +8,7 @@
 #include "ad_internal.h"
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "libao2/afmt.h"
 #ifdef WIN32_LOADER
 #include "loader/ldt_keeper.h"

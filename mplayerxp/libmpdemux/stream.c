@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "help_mp.h"
 
 #include "osdep/fastmemcpy.h"

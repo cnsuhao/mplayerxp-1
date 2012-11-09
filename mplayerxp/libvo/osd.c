@@ -13,7 +13,7 @@
 #include "osdep/cpudetect.h"
 #include "osdep/mangle.h"
 #include "osdep/mplib.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osd.h"
 #include "vo_msg.h"
 

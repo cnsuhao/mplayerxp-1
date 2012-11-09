@@ -11,7 +11,7 @@
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "vd_internal.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"

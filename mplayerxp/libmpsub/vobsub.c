@@ -15,7 +15,7 @@
 #include <sys/types.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "libmpdemux/stream.h"
 #include "osdep/mplib.h"
 #include "vobsub.h"

@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "stream.h"
 #include "osdep/mplib.h"
 

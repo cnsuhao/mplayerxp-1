@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "help_mp.h"
 
 #include "sub_cc.h"

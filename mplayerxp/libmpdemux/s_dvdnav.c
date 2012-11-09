@@ -12,7 +12,7 @@
 #include "libmpsub/spudec.h"
 #include "libvo/sub.h"
 #include "input/input.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "demux_msg.h"
 
 #include <dvdnav/dvdnav.h>

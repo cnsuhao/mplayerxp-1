@@ -24,7 +24,7 @@ MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
 SRCS_COMMON = mp_msg.c
-SRCS_MPLAYER = mplayer.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c dump.c
+SRCS_MPLAYER = mplayerxp.c fifo.c $(SRCS_COMMON) mixer.c mp-opt-reg.c dump.c
 
 OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
 

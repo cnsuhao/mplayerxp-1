@@ -36,7 +36,7 @@
 #include <stdarg.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/bswap.h"
 #include "help_mp.h"
 

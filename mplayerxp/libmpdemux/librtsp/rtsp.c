@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close
 #include <sys/socket.h>

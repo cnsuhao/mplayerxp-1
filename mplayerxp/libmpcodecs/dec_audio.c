@@ -5,7 +5,7 @@
 #include "mp_config.h"
 #include "help_mp.h"
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 
 #include "libmpdemux/stream.h"
@@ -16,7 +16,7 @@
 #include "dec_audio.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "libmpdemux/demuxer_r.h"
 #include "postproc/af.h"
 #include "osdep/fastmemcpy.h"

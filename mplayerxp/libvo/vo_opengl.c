@@ -24,7 +24,7 @@
 
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 
 #include "dri_vo.h"

@@ -15,7 +15,7 @@
 #include "stheader.h"
 #include "parse_es.h"
 #include "mpeg_hdr.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "demux_msg.h"
 
 /* biCompression constant */

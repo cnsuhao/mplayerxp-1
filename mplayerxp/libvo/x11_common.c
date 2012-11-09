@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 #ifdef HAVE_X11
 

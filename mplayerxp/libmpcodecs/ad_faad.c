@@ -15,7 +15,7 @@
 #include "codecs_ld.h"
 #include "mp_config.h"
 #include "ad_internal.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 #include "osdep/mplib.h"

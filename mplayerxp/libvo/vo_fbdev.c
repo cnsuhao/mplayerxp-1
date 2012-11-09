@@ -23,7 +23,7 @@
 #include <linux/fb.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "osdep/fastmemcpy.h"

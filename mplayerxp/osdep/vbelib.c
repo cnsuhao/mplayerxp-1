@@ -19,7 +19,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "../mplayer.h"
+#include "../mplayerxp.h"
 #include "cpudetect.h"
 #include "osdep_msg.h"
 

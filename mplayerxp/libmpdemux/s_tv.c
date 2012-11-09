@@ -12,7 +12,7 @@
 */
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #ifdef USE_TV
 #include <stdlib.h>
 #include <string.h>

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "help_mp.h"
 
 #include "osdep/timer.h"

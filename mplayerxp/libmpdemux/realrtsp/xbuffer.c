@@ -13,7 +13,7 @@
  *
  */
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 
 #include <stdlib.h>
 #include <string.h>

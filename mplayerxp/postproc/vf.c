@@ -4,7 +4,7 @@
 
 #include "mp_config.h"
 #include "xmpcore/xmp_core.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "help_mp.h"
 
 #include "libvo/img_format.h"

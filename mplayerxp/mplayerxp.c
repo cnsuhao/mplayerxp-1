@@ -24,7 +24,7 @@
 #include "version.h"
 #include "mp_config.h"
 #include "xmpcore/sig_hand.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 #include "postproc/swscale.h"
 #include "postproc/af.h"
@@ -160,7 +160,7 @@ static int cfg_include(struct config *conf, char *filename){
 	UNUSED(conf);
 	return m_config_parse_config_file(mp_data->mconfig, filename);
 }
-#include "cfg-mplayer.h"
+#include "cfg-mplayerxp.h"
 
 /**************************************************************************/
 extern void mp_register_options(m_config_t* cfg);

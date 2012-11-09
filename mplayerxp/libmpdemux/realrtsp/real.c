@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
 #include "real.h"

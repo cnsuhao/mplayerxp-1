@@ -14,7 +14,7 @@
 #include <inttypes.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #ifdef HAVE_PNG
 #ifdef HAVE_LIBPNG_PNG
 #include <libpng/png.h>

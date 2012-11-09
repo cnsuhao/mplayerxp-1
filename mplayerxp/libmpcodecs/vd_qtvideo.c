@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 

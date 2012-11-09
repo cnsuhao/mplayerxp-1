@@ -1,4 +1,4 @@
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "xmp_vplayer.h"
 #include "xmp_core.h"
 #include "help_mp.h"

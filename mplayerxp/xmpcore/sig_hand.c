@@ -2,7 +2,7 @@
   MplayerXP's Signal handling
 */
 #include "mp_config.h"
-#include "mplayer.h"
+#include "mplayerxp.h"
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE   /* to get definition of strsignal */
 #endif

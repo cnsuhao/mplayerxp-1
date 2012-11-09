@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "video_out.h"
 #include "font_load.h"

@@ -14,7 +14,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "mplayer.h"
+#include "mplayerxp.h"
 #include "xmpcore/mp_aframe.h"
 #include "postproc/af.h"
 #include "libao2/afmt.h"
