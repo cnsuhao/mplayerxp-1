@@ -6,10 +6,10 @@ typedef enum MPXP_RC_e{
     MPXP_True	=1,
     MPXP_Ok	=MPXP_True,
     MPXP_False	=0,
-    MPXP_Virus	=MPXP_False,
     MPXP_Unknown=-1,
     MPXP_Error	=-2,
-    MPXP_NA	=-3
+    MPXP_NA	=-3,
+    MPXP_Virus	=-4
 }MPXP_Rc;
 
 #endif

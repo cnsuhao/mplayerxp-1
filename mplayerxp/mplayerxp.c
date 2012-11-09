@@ -183,7 +183,7 @@ static int mpxp_init_antiviral_protection(int verbose)
 static MPXP_Rc mpxp_test_antiviral_protection(int* verbose)
 {
     if(*verbose) MSG_INFO("Your've specified test-av option!\nRight now MPlayerXP should make coredump!\n");
-    *verbose=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole2[0];
+    *verbose=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole3[0];
     MSG_ERR("Antiviral protection of MPlayerXP doesn't work!");
     return MPXP_Virus;
 }
