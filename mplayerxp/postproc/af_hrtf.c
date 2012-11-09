@@ -265,7 +265,7 @@ inline void update_ch(af_hrtf_t *s, real_t *in, const int k)
 }
 
 /* Initialization and runtime control */
-static ControlCodes __FASTCALL__ control(struct af_instance_s *af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s *af, int cmd, any_t* arg)
 {
     af_hrtf_t *s = af->setup;
     int test_output_res;
@@ -279,7 +279,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s *af, int cmd, any_
 	    // is not yet supported.
 	    //MSG_ERR("[hrtf] ERROR: Sampling rate is not 48000 Hz (%d)!\n",
 	    //	   af->data->rate);
-	    //return CONTROL_ERROR;
+	    //return MPXP_Error;
 	    
 	    /* NK: Let use af_resample here */
 	    af->data->rate = 48000;
@@ -317,9 +317,9 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s *af, int cmd, any_
 	default:
 	    MSG_ERR("[hrtf] Mode is neither 'm', 's', nor '0' (%c).\n",
 		   mode);
-	    return CONTROL_ERROR;
+	    return MPXP_Error;
 	}
-	return CONTROL_OK;
+	return MPXP_Ok;
   case AF_CONTROL_SHOWCONF:
   {
 	switch (s->decode_mode) {
@@ -341,11 +341,11 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s *af, int cmd, any_
 	
 	if(s->matrix_mode)
 	  MSG_INFO("[af_hrtf] Using active matrix to decode rear center channel\n");
-	return CONTROL_OK;
+	return MPXP_Ok;
   }
   default: break;    
   }    
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 /* Deallocate memory */
@@ -393,7 +393,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af, mp_aframe_t *dat
     float common, left, right, diff, left_b, right_b;
     const int dblen = s->dlbuflen, hlen = s->hrflen, blen = s->basslen;
 
-    if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af, data))
+    if(MPXP_Ok != RESIZE_LOCAL_BUFFER(af, data))
 	return NULL;
 
     out = af->data->audio;
@@ -565,7 +565,7 @@ static int __FASTCALL__ allocate(af_hrtf_t *s)
 }
 
 /* Allocate memory and set function pointers */
-static ControlCodes __FASTCALL__ open(af_instance_t* af)
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af)
 {
     int i;
     af_hrtf_t *s;
@@ -579,7 +579,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af)
     af->data = mp_calloc(1, sizeof(mp_aframe_t));
     af->setup = mp_calloc(1, sizeof(af_hrtf_t));
     if((af->data == NULL) || (af->setup == NULL))
-	return CONTROL_ERROR;
+	return MPXP_Error;
 
     s = af->setup;
 
@@ -596,7 +596,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af)
 
     if (allocate(s) != 0) {
  	MSG_ERR("[hrtf] Memory allocation error.\n");
-	return CONTROL_ERROR;
+	return MPXP_Error;
     }
 
     for(i = 0; i < s->dlbuflen; i++)
@@ -615,19 +615,19 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af)
 
     if((s->ba_ir = mp_malloc(s->basslen * sizeof(float))) == NULL) {
  	MSG_ERR("[hrtf] Memory allocation error.\n");
-	return CONTROL_ERROR;
+	return MPXP_Error;
     }
     fc = 2.0 * BASSFILTFREQ / (float)af->data->rate;
     if(design_fir(s->basslen, s->ba_ir, &fc, LP | KAISER, 4 * M_PI) ==
        -1) {
 	MSG_ERR("[hrtf] Unable to design low-pass "
 	       "filter.\n");
-	return CONTROL_ERROR;
+	return MPXP_Error;
     }
     for(i = 0; i < s->basslen; i++)
 	s->ba_ir[i] *= BASSGAIN;
     
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 /* Description of this filter */

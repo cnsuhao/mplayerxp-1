@@ -82,7 +82,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->uninit=uninit;
     vf->put_slice=put_slice;
@@ -91,7 +91,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 //    vf->priv=mp_calloc(1, sizeof(struct vf_priv_s));
 //    if (args)
 //	vf->priv->csp = atoi(args);
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_yuvcsp = {

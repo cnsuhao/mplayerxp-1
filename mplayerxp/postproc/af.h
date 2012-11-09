@@ -31,14 +31,14 @@ typedef struct af_info_s
   const char *author;
   const char *comment;
   const unsigned flags;
-  ControlCodes (* __FASTCALL__ open)(struct af_instance_s* vf);
+  MPXP_Rc (* __FASTCALL__ open)(struct af_instance_s* vf);
 } af_info_t;
 
 // Linked list of audio filters
 typedef struct af_instance_s
 {
   const af_info_t* info;
-  ControlCodes (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
+  MPXP_Rc (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
   void (* __FASTCALL__ uninit)(struct af_instance_s* af);
   mp_aframe_t* (* __FASTCALL__ play)(struct af_instance_s* af, mp_aframe_t* data,int final);
   any_t* setup;	  // setup data for this specific instance and filter
@@ -117,7 +117,7 @@ int af_init(af_stream_t* s, int force_output);
 void af_uninit(af_stream_t* s);
 
 /* Reinitializes all filters downstream from the filter given in the
-   argument the return value is CONTROL_OK if success and CONTROL_ERROR if
+   argument the return value is MPXP_Ok if success and MPXP_Error if
    failure */
 int af_reinit(af_stream_t* s, af_instance_t* af);
 
@@ -138,9 +138,9 @@ af_instance_t* __FASTCALL__ af_get(af_stream_t* s, char* name);
 mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s, mp_aframe_t* data);
 
 // send control to all filters, starting with the last until
-// one accepts the command with CONTROL_OK.
+// one accepts the command with MPXP_Ok.
 // Returns true if accepting filter was found.
-ControlCodes __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg);
+MPXP_Rc __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg);
 
 /* Calculate how long the output from the filters will be given the
    input length "len". The calculated length is >= the actual
@@ -168,10 +168,10 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len);
 unsigned __FASTCALL__ af_lencalc(frac_t mul, mp_aframe_t* data);
 
 /* Helper function used to convert to gain value from dB. Returns
-   CONTROL_OK if of and CONTROL_ERROR if fail */
+   MPXP_Ok if of and MPXP_Error if fail */
 int __FASTCALL__ af_from_dB(int n, float* in, float* out, float k, float mi, float ma);
 /* Helper function used to convert from gain value to dB. Returns
-   CONTROL_OK if of and CONTROL_ERROR if fail */
+   MPXP_Ok if of and MPXP_Error if fail */
 int __FASTCALL__ af_to_dB(int n, float* in, float* out, float k);
 /* Helper function used to convert from ms to sample time*/
 int __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, float ma);
@@ -184,11 +184,11 @@ int __FASTCALL__ af_test_output(struct af_instance_s* af, mp_aframe_t* out);
 void af_help(void);
 
 /* returns 1 if first filter requires (or ao_driver supports) fmt */
-ControlCodes __FASTCALL__ af_query_fmt (af_stream_t* s,mpaf_format_e fmt);
+MPXP_Rc __FASTCALL__ af_query_fmt (af_stream_t* s,mpaf_format_e fmt);
 /* returns 1 if first filter requires (or ao_driver supports) rate */
-ControlCodes __FASTCALL__ af_query_rate (af_stream_t* s,unsigned rate);
+MPXP_Rc __FASTCALL__ af_query_rate (af_stream_t* s,unsigned rate);
 /* returns 1 if first filter requires (or ao_driver supports) nch */
-ControlCodes __FASTCALL__ af_query_channels (af_stream_t* s,unsigned nch);
+MPXP_Rc __FASTCALL__ af_query_channels (af_stream_t* s,unsigned nch);
 
 /* print out configuration of filter's chain */
 extern void af_showconf(af_instance_t *first);
@@ -198,7 +198,7 @@ extern void af_showconf(af_instance_t *first);
    called to ensure the buffer is big enough. */
 static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, mp_aframe_t* d) {
     unsigned len=af_lencalc(a->mul,d);
-    return ((unsigned)a->data->len < len)?af_resize_local_buffer(a,len):CONTROL_OK;
+    return ((unsigned)a->data->len < len)?af_resize_local_buffer(a,len):MPXP_Ok;
 }
 
 /* Some other useful macro definitions*/

@@ -186,7 +186,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 }
 
 
-static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     return vf_next_control(vf,request,data);
 }
 
@@ -194,7 +194,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return vf_next_query_format(vf->next,fmt,w,h);
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->control=control;
     vf->query_format=query_format;
@@ -203,8 +203,8 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(!vf->priv) vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
     vf->priv->panscan=0;
     if(args) sscanf(args,"%f",&vf->priv->panscan);
-    if(vf->priv->panscan<=0.) return CONTROL_FALSE;
-    return CONTROL_OK;
+    if(vf->priv->panscan<=0.) return MPXP_False;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_panscan = {
@@ -251,7 +251,7 @@ static int __FASTCALL__ crop_config(struct vf_instance_s* vf,
     return vf_next_config(vf,w,h,d_w,d_h,flags,outfmt,tune);
 }
 
-static ControlCodes __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args){
     vf->config=crop_config;
     vf->control=control;
     vf->query_format=query_format;
@@ -263,7 +263,7 @@ static ControlCodes __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args
     vf->priv->ps_w=
     vf->priv->ps_h=-1;
     if(args) sscanf(args,"%i,%i,%i,%i",&vf->priv->ps_x,&vf->priv->ps_y,&vf->priv->ps_w,&vf->priv->ps_h);
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_crop = {

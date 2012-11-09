@@ -32,7 +32,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt,tune);
 }
 
-static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t*data)
+static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t*data)
 {
     const int *const tmp = data;
     switch(request){
@@ -160,7 +160,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t* mpi){
     return vf_next_put_slice(vf, dmpi);
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {
     vf->config = config;
     vf->control = control;
     vf->put_slice = put_slice;
@@ -172,7 +172,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {
     if (args)
 	sscanf(args, "%d:%d:%d:%d",
 	       &vf->priv->w, &vf->priv->h, &vf->priv->x, &vf->priv->y);
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_rectangle = {

@@ -205,24 +205,24 @@ void uninit(sh_audio_t *sh)
   mpcodecs_ad_a52.uninit(sh);
 }
 
-ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_RESYNC_STREAM:
 	  sh->a_in_buffer_len=0;   // reset ACM/DShow audio buffer
-	  return CONTROL_TRUE;
+	  return MPXP_True;
       case ADCTRL_SKIP_FRAME:
 	{
 	  float pts;
 	  a52_fillbuff(sh,&pts); // skip AC3 frame
-	  return CONTROL_TRUE;
+	  return MPXP_True;
 	}
       default:
-	  return CONTROL_UNKNOWN;
+	  return MPXP_Unknown;
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

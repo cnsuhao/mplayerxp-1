@@ -180,13 +180,12 @@ static int mpxp_init_antiviral_protection(int verbose)
     return rc;
 }
 
-static int mpxp_test_antiviral_protection(int verbose)
+static MPXP_Rc mpxp_test_antiviral_protection(int* verbose)
 {
-    int rc;
-    if(verbose) MSG_INFO("Your've specified test-av option!\nRight now MPlayerXP should make coredump!\n");
-    rc=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole2[0];
+    if(*verbose) MSG_INFO("Your've specified test-av option!\nRight now MPlayerXP should make coredump!\n");
+    *verbose=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole2[0];
     MSG_ERR("Antiviral protection of MPlayerXP doesn't work!");
-    return rc;
+    return MPXP_Virus;
 }
 
 unsigned xp_num_cpu;
@@ -1688,8 +1687,9 @@ int main(int argc,char* argv[], char *envp[]){
 	exit_player(MSGTR_Exit_quit);
     }
     if(mp_conf.test_av) {
-	mpxp_test_antiviral_protection(1);
-	exit_player("Bad test of antiviral protection");
+	int verb=1;
+	if(mpxp_test_antiviral_protection(&verb)==MPXP_Virus)
+	    exit_player("Bad test of antiviral protection");
     }
 
     xp_num_cpu=get_number_cpu();

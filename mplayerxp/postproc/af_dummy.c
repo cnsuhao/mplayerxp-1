@@ -10,16 +10,16 @@
 #include "pp_msg.h"
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   switch(cmd){
   case AF_CONTROL_REINIT:
     memcpy(af->data,(mp_aframe_t*)arg,sizeof(mp_aframe_t));
     MSG_V("[dummy] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
-    return CONTROL_OK;
+    return MPXP_Ok;
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -39,7 +39,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -47,8 +47,8 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->mul.n=1;
   af->data=mp_malloc(sizeof(mp_aframe_t));
   if(af->data == NULL)
-    return CONTROL_ERROR;
-  return CONTROL_OK;
+    return MPXP_Error;
+  return MPXP_Ok;
 }
 
 // Description of this filter

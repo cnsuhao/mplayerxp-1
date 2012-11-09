@@ -81,7 +81,7 @@ typedef struct af_surround_s
 }af_surround_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_surround_t *s = af->setup;
   switch(cmd){
@@ -93,13 +93,13 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
     if (af->data->nch != 4){
       MSG_ERR("[surround] Only stereo input is supported.\n");
-      return CONTROL_DETACH;
+      return MPXP_Detach;
     }
     // Surround filer coefficients
     fc = 2.0 * 7000.0/(float)af->data->rate;
     if (-1 == design_fir(L, s->w, &fc, LP|HAMMING, 0)){
       MSG_ERR("[surround] Unable to design low-pass filter.\n");
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
 
     // Free previous delay queues
@@ -114,34 +114,34 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       MSG_FATAL(MSGTR_OutOfMemory);
 
     // Initialize delay queue index
-    if(CONTROL_OK != af_from_ms(1, &s->d, &s->wi, af->data->rate, 0.0, 1000.0))
-      return CONTROL_ERROR;
+    if(MPXP_Ok != af_from_ms(1, &s->d, &s->wi, af->data->rate, 0.0, 1000.0))
+      return MPXP_Error;
 //    printf("%i\n",s->wi);
     s->ri = 0;
 
     if((af->data->format != ((mp_aframe_t*)arg)->format)) {
 	((mp_aframe_t*)arg)->format = af->data->format;
-	return CONTROL_FALSE;
+	return MPXP_False;
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_surround] delay time %f\n",s->d);
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     float d = 0;
     sscanf((char*)arg,"%f",&d);
     if ((d < 0) || (d > 1000)){
       MSG_ERR("[surround] Invalid delay time, valid time values"
 	     " are 0ms to 1000ms current value is %0.3f ms\n",d);
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
     s->d = d;
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory
@@ -177,7 +177,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   int 		 ri  = s->ri;	// Read index for delay queue
   int 		 wi  = s->wi;	// Write index for delay queue
 
-  if (CONTROL_OK != RESIZE_LOCAL_BUFFER(af, data))
+  if (MPXP_Ok != RESIZE_LOCAL_BUFFER(af, data))
     return NULL;
 
   out = af->data->audio;
@@ -249,7 +249,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   return data;
 }
 
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -258,9 +258,9 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_surround_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
+    return MPXP_Error;
   ((af_surround_t*)af->setup)->d = 20;
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 const af_info_t af_info_surround =

@@ -20,7 +20,7 @@ typedef struct vf_info_s {
     const char *author;
     const char *comment;
     const unsigned flags;
-    ControlCodes (* __FASTCALL__ open)(struct vf_instance_s* vf,const char* args);
+    MPXP_Rc (* __FASTCALL__ open)(struct vf_instance_s* vf,const char* args);
 } vf_info_t;
 
 typedef struct vf_image_context_s {
@@ -36,7 +36,7 @@ typedef struct vf_instance_s {
     int (* __FASTCALL__ config)(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt,any_t*tune);
-    ControlCodes (* __FASTCALL__ control)(struct vf_instance_s* vf,
+    MPXP_Rc (* __FASTCALL__ control)(struct vf_instance_s* vf,
         int request, any_t* data);
     int (* __FASTCALL__ query_format)(struct vf_instance_s* vf,
         unsigned int fmt,unsigned w,unsigned h);
@@ -113,7 +113,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src);
 int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt,any_t*tune);
-ControlCodes __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data);
+MPXP_Rc __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data);
 int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h);
 int __FASTCALL__ vf_next_put_slice(struct vf_instance_s* vf,mp_image_t *mpi);
 

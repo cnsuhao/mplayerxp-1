@@ -413,7 +413,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return vf_next_query_format(vf,IMGFMT_YV12,w,h) & (~VFCAP_CSP_SUPPORTED_BY_HW);
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     char method;
     vf->config=config;
     vf->put_slice=put_slice;
@@ -437,7 +437,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     else {
 	initIdct();
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_test = {

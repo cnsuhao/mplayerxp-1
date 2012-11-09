@@ -124,7 +124,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     int dir;
     vf->config=config;
     vf->put_slice=put_slice;
@@ -133,12 +133,12 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(args)  dir=args[0]=='x'?1:args[0]=='y'?0:-1;
     if(dir==-1) {
 	MSG_ERR("[vf_mirror] unknown directoin: %c\n",args[0]);
-	return CONTROL_FALSE;
+	return MPXP_False;
     }
     if(dir==0)	vf->priv->method=mirror_x;
     else	vf->priv->method=mirror_y;
     vf->priv->dir=dir;
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_mirror = {

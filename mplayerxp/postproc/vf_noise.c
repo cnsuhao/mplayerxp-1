@@ -449,7 +449,7 @@ static unsigned int fmt_list[]={
     0
 };
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->get_image=get_image;
@@ -466,7 +466,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,IMGFMT_YV12,1,1);
     if(!vf->priv->outfmt) {
 	uninit(vf);
-	return CONTROL_FALSE; // no csp match :(
+	return MPXP_False; // no csp match :(
     }
 
 #ifdef CAN_COMPILE_MMX
@@ -480,7 +480,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 //    if(gCpuCaps.hasMMX) lineNoiseAvg= lineNoiseAvg_MMX2;
 #endif
 
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_noise = {

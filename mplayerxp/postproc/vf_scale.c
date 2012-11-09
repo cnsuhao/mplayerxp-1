@@ -390,7 +390,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,dmpi);
 }
 
-static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     int *table;
     int *inv_table;
     int r;
@@ -415,7 +415,7 @@ static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, 
 	}
 	else
 		break;
-	return CONTROL_TRUE;
+	return MPXP_True;
     case VFCTRL_SET_EQUALIZER:
 	r= sws_getColorspaceDetails(vf->priv->ctx, &inv_table, &srcRange, &table, &dstRange, &brightness, &contrast, &saturation);
 	if(r<0) break;
@@ -441,7 +441,7 @@ static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, 
             if(r<0) break;
         }
 
-	return CONTROL_TRUE;
+	return MPXP_True;
     default:
 	break;
     }
@@ -506,7 +506,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s *vf){
     firstTime=1;
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_frame;
     vf->query_format=query_format;
@@ -531,10 +531,10 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->priv->w,
     vf->priv->h);
     if(!mp_conf.verbose) av_log_set_level(AV_LOG_FATAL); /* suppress: slices start in the middle */
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
-static ControlCodes __FASTCALL__ vf_open_fmtcvt(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open_fmtcvt(vf_instance_t *vf,const char* args){
     int retval = vf_open(vf,args);
     vf->put_slice=put_slice;
     vf->print_conf=print_conf_fmtcvt;

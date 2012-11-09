@@ -42,55 +42,55 @@ typedef struct priv_s {
 const char *oss_mixer_device = PATH_DEV_MIXER;
 
 // to set/get/query special features/parameters
-static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
     priv_t*priv=ao->priv;
     int rval;
     switch(cmd){
 	case AOCONTROL_SET_DEVICE:
 	    priv->dsp=(char*)arg;
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	case AOCONTROL_QUERY_FORMAT:
 	    if (ioctl (priv->fd, SNDCTL_DSP_GETFMTS, &rval) != -1)
 	    {
-		if((rval & AFMT_MU_LAW) && arg==AFMT_MU_LAW) return CONTROL_OK;
-		if((rval & AFMT_A_LAW) && arg==AFMT_A_LAW) return CONTROL_OK;
-		if((rval & AFMT_IMA_ADPCM) && arg==AFMT_IMA_ADPCM) return CONTROL_OK;
-		if((rval & AFMT_U8) && arg==AFMT_U8) return CONTROL_OK;
-		if((rval & AFMT_S16_LE) && arg==AFMT_S16_LE) return CONTROL_OK;
-		if((rval & AFMT_S16_BE) && arg==AFMT_S16_BE) return CONTROL_OK;
-		if((rval & AFMT_S8) && arg==AFMT_S8) return CONTROL_OK;
-		if((rval & AFMT_U16_LE) && arg==AFMT_U16_LE) return CONTROL_OK;
-		if((rval & AFMT_U16_BE) && arg==AFMT_U16_BE) return CONTROL_OK;
-		if((rval & AFMT_MPEG) && arg==AFMT_MPEG) return CONTROL_OK;
-		if((rval & AFMT_AC3) && arg==AFMT_AC3) return CONTROL_OK;
-		if((rval & AFMT_S24_LE) && arg==AFMT_S24_LE) return CONTROL_OK;
-		if((rval & AFMT_S24_BE) && arg==AFMT_S24_BE) return CONTROL_OK;
-		if((rval & AFMT_U24_LE) && arg==AFMT_U24_LE) return CONTROL_OK;
-		if((rval & AFMT_U24_BE) && arg==AFMT_U24_BE) return CONTROL_OK;
-		if((rval & AFMT_S32_LE) && arg==AFMT_S32_LE) return CONTROL_OK;
-		if((rval & AFMT_S32_BE) && arg==AFMT_S32_BE) return CONTROL_OK;
-		if((rval & AFMT_U32_LE) && arg==AFMT_U32_LE) return CONTROL_OK;
-		if((rval & AFMT_U32_BE) && arg==AFMT_U32_BE) return CONTROL_OK;
+		if((rval & AFMT_MU_LAW) && arg==AFMT_MU_LAW) return MPXP_Ok;
+		if((rval & AFMT_A_LAW) && arg==AFMT_A_LAW) return MPXP_Ok;
+		if((rval & AFMT_IMA_ADPCM) && arg==AFMT_IMA_ADPCM) return MPXP_Ok;
+		if((rval & AFMT_U8) && arg==AFMT_U8) return MPXP_Ok;
+		if((rval & AFMT_S16_LE) && arg==AFMT_S16_LE) return MPXP_Ok;
+		if((rval & AFMT_S16_BE) && arg==AFMT_S16_BE) return MPXP_Ok;
+		if((rval & AFMT_S8) && arg==AFMT_S8) return MPXP_Ok;
+		if((rval & AFMT_U16_LE) && arg==AFMT_U16_LE) return MPXP_Ok;
+		if((rval & AFMT_U16_BE) && arg==AFMT_U16_BE) return MPXP_Ok;
+		if((rval & AFMT_MPEG) && arg==AFMT_MPEG) return MPXP_Ok;
+		if((rval & AFMT_AC3) && arg==AFMT_AC3) return MPXP_Ok;
+		if((rval & AFMT_S24_LE) && arg==AFMT_S24_LE) return MPXP_Ok;
+		if((rval & AFMT_S24_BE) && arg==AFMT_S24_BE) return MPXP_Ok;
+		if((rval & AFMT_U24_LE) && arg==AFMT_U24_LE) return MPXP_Ok;
+		if((rval & AFMT_U24_BE) && arg==AFMT_U24_BE) return MPXP_Ok;
+		if((rval & AFMT_S32_LE) && arg==AFMT_S32_LE) return MPXP_Ok;
+		if((rval & AFMT_S32_BE) && arg==AFMT_S32_BE) return MPXP_Ok;
+		if((rval & AFMT_U32_LE) && arg==AFMT_U32_LE) return MPXP_Ok;
+		if((rval & AFMT_U32_BE) && arg==AFMT_U32_BE) return MPXP_Ok;
 	    }
-	    return CONTROL_FALSE;
+	    return MPXP_False;
 	case AOCONTROL_QUERY_CHANNELS:
 	    rval=arg;
 	    if (rval > 2) {
 		if ( ioctl(priv->fd, SNDCTL_DSP_CHANNELS, &rval) == -1 ||
-		rval != arg ) return CONTROL_FALSE;
+		rval != arg ) return MPXP_False;
 	    }
 	    else {
 		int c = rval-1;
-		if (ioctl (priv->fd, SNDCTL_DSP_STEREO, &c) == -1) return CONTROL_FALSE;
+		if (ioctl (priv->fd, SNDCTL_DSP_STEREO, &c) == -1) return MPXP_False;
 	    }
-	    return CONTROL_TRUE;
+	    return MPXP_True;
 	case AOCONTROL_QUERY_RATE:
 	    rval=arg;
 	    if (ioctl(priv->fd, SNDCTL_DSP_SPEED, &rval) != -1)
 	    {
-		if(rval == arg) return CONTROL_OK;
+		if(rval == arg) return MPXP_Ok;
 	    }
-	    return CONTROL_FALSE;
+	    return MPXP_False;
 	case AOCONTROL_GET_VOLUME:
 	case AOCONTROL_SET_VOLUME:
 	{
@@ -98,7 +98,7 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 	    int fd, v, devs;
 
 	    if(ao->format == AFMT_AC3)
-		return CONTROL_TRUE;
+		return MPXP_True;
 
 	    if ((fd = open(oss_mixer_device, O_RDONLY)) > 0)
 	    {
@@ -120,15 +120,15 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 		else
 		{
 		    close(fd);
-		    return CONTROL_ERROR;
+		    return MPXP_Error;
 		}
 		close(fd);
-		return CONTROL_OK;
+		return MPXP_Ok;
 	    }
 	}
-	return CONTROL_ERROR;
+	return MPXP_Error;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static void show_fmts(ao_data_t* ao)

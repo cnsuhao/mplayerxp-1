@@ -50,14 +50,14 @@ typedef struct af_volume_s
 }af_volume_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_volume_t* s   = (af_volume_t*)af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:
     // Sanity check
-    if(!arg) return CONTROL_ERROR;
+    if(!arg) return MPXP_Error;
 
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
@@ -76,7 +76,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_volume] using soft %i\n",s->soft);
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     float v=-10.0;
     float vol[AF_NCH];
@@ -88,19 +88,19 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   case AF_CONTROL_POST_CREATE:	
     s->fast = ((((af_cfg_t*)arg)->force & AF_INIT_FORMAT_MASK) == 
       AF_INIT_FLOAT) ? 0 : 1;
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_SET:
     memcpy(s->enable,(int*)arg,AF_NCH*sizeof(int));
-    return CONTROL_OK; 
+    return MPXP_Ok; 
   case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_GET:
     memcpy((int*)arg,s->enable,AF_NCH*sizeof(int));
-    return CONTROL_OK; 
+    return MPXP_Ok; 
   case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_SET:
     s->soft = *(int*)arg;
-    return CONTROL_OK; 
+    return MPXP_Ok; 
   case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_GET:
     *(int*)arg = s->soft;
-    return CONTROL_OK; 
+    return MPXP_Ok; 
   case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
     return af_from_dB(AF_NCH,(float*)arg,s->level,20.0,-200.0,60.0);
   case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
@@ -118,11 +118,11 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	af_to_dB(1, &m, &m, 10.0);
 	MSG_INFO("[volume] The maximum volume was %0.2fdB \n", m);
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -201,7 +201,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   int i = 0;
   af->control=control;
   af->uninit=uninit;
@@ -211,13 +211,13 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_volume_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
+    return MPXP_Error;
   // Enable volume control and set initial volume to 0dB.
   for(i=0;i<AF_NCH;i++){
     ((af_volume_t*)af->setup)->enable[i] = 1;
     ((af_volume_t*)af->setup)->level[i]  = 1.0;
   }
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 // Description of this filter

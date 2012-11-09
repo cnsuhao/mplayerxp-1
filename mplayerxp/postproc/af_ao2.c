@@ -20,23 +20,23 @@ static unsigned __FASTCALL__ find_best_rate(unsigned irate)
     unsigned i,ii;
     int rval;
     rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,irate);
-    if(rval == CONTROL_TRUE) return irate;
+    if(rval == MPXP_True) return irate;
     for(i=0;i<sizeof(rates)/sizeof(unsigned)-1;i++) {
 	if(irate >= rates[i] && irate < rates[i+1]) break;
     }
     ii=i;
     for(;i<sizeof(rates)/sizeof(unsigned);i++) {
 	rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,rates[i]);
-	if(rval == CONTROL_TRUE) return rates[i];
+	if(rval == MPXP_True) return rates[i];
     }
     i=ii;
     for(;i<sizeof(rates)/sizeof(unsigned);i--) {
 	rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,rates[i]);
-	if(rval == CONTROL_TRUE) return rates[i];
+	if(rval == MPXP_True) return rates[i];
     }
     for(i=0;i<sizeof(rates)/sizeof(unsigned);i++) {
 	rval=ao_control(ao_data,AOCONTROL_QUERY_RATE,rates[i]);
-	if(rval == CONTROL_TRUE) return rates[i];
+	if(rval == MPXP_True) return rates[i];
     }
     return 44100;
 }
@@ -46,14 +46,14 @@ static unsigned __FASTCALL__ find_best_ch(unsigned ich)
     unsigned i;
     int rval;
     rval=ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,ich);
-    if(rval == CONTROL_TRUE) return ich;
+    if(rval == MPXP_True) return ich;
     for(i=ich>1?ich:1;i<AF_NCH;i++) {
 	rval=ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,i);
-	if(rval == CONTROL_TRUE) return i;
+	if(rval == MPXP_True) return i;
     }
     for(i=1;i<AF_NCH;i++) {
 	rval=ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,i);
-	if(rval == CONTROL_TRUE) return i;
+	if(rval == MPXP_True) return i;
     }
     return 2;
 }
@@ -88,7 +88,7 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
     unsigned i,j;
     int rval;
     rval=ao_control(ao_data,AOCONTROL_QUERY_FORMAT,ifmt);
-    if(rval == CONTROL_TRUE) return ifmt;
+    if(rval == MPXP_True) return ifmt;
     rval=-1;
     for(i=0;i<sizeof(cvt_list)/sizeof(fmt_cvt_t);i++) {
 	if(ifmt==cvt_list[i].base_fourcc) { rval=i; break; }
@@ -98,7 +98,7 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
     for(j=0;j<20;j++) {
 	if(cvt_list[i].cvt_fourcc[j]==0) break;
 	rval=ao_control(ao_data,AOCONTROL_QUERY_FORMAT,cvt_list[i].cvt_fourcc[j]);
-	if(rval == CONTROL_TRUE) return cvt_list[i].cvt_fourcc[j];
+	if(rval == MPXP_True) return cvt_list[i].cvt_fourcc[j];
     }
     return AFMT_S16_LE;
 }
@@ -110,13 +110,13 @@ typedef struct af_ao2_s{
 }af_ao2_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
     af_ao2_t* s = af->setup;
     switch(cmd){
 	case AF_CONTROL_REINIT:
 	    /* Sanity check */
-	    if(!arg) return CONTROL_ERROR;
+	    if(!arg) return MPXP_Error;
 	    s->rate = af->data->rate = find_best_rate(((mp_aframe_t*)arg)->rate);
 	    s->nch = af->data->nch  = find_best_ch(((mp_aframe_t*)arg)->nch);
 	    s->format = af->data->format = mpaf_format_decode(find_best_fmt(mpaf_format_encode(((mp_aframe_t*)arg)->format)));
@@ -127,11 +127,11 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	    MSG_INFO("AO-CONF: [%s] %uHz nch=%u %s (%3.1f-kbit)\n"
 		,info->short_name,s->rate,s->nch,mpaf_fmt2str(s->format,sbuf,sizeof(sbuf))
 		,(s->rate*s->nch*(s->format&MPAF_BPS_MASK)*8)*0.001f);
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	}
 	default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 // Deallocate memory
@@ -150,7 +150,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
     af->control=control;
     af->uninit=uninit;
     af->play=play;
@@ -158,8 +158,8 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
     af->mul.n=1;
     af->data=mp_malloc(sizeof(mp_aframe_t));
     af->setup=mp_calloc(1,sizeof(af_ao2_t));
-    if((af->data == NULL) || (af->setup == NULL)) return CONTROL_ERROR;
-    return CONTROL_OK;
+    if((af->data == NULL) || (af->setup == NULL)) return MPXP_Error;
+    return MPXP_Ok;
 }
 
 // Description of this filter

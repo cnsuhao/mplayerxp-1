@@ -321,7 +321,7 @@ static void __FASTCALL__ hqPrecalcCoefs(int *Ct, double Dist25)
     }
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     double LumSpac, LumTmp, ChromSpac, ChromTmp;
     double Param1, Param2, Param3, Param4;
     int e;
@@ -398,7 +398,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	PrecalcCoefs(vf->priv->Coefs[2], ChromSpac);
 	PrecalcCoefs(vf->priv->Coefs[3], ChromTmp);
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_denoise3d = {

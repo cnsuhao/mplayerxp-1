@@ -140,11 +140,11 @@ static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned n
 
 // end ring priv->buffer stuff
 
-static ControlCodes control(ao_data_t* ao,int cmd, long arg) {
+static MPXP_Rc control(ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 /**

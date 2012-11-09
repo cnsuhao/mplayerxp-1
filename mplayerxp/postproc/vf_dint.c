@@ -438,7 +438,7 @@ static int __FASTCALL__ put_slice (struct vf_instance_s* vf, mp_image_t *mpi)
     return vf_next_put_slice (vf, mpi);
 }
 
-static ControlCodes __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
     int e;
     float a,b;
     vf->config = config;
@@ -465,7 +465,7 @@ static ControlCodes __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
 	    vf->priv->sense=a;
 	    vf->priv->level=b;
 	} else {
-	    if(e!=5) return CONTROL_FALSE;
+	    if(e!=5) return MPXP_False;
 	    vf->priv->thresh=a;
 	    vf->priv->map=b;
 	    vf->uninit=uninit;
@@ -474,7 +474,7 @@ static ControlCodes __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
 	    vf->query_format=kd_query_format;
 	}
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_dint = {

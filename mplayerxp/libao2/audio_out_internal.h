@@ -1,7 +1,7 @@
 #include "mp_config.h"
 // prototypes:
 //static ao_info_t info;
-static ControlCodes __FASTCALL__ control(ao_data_t*,int cmd,long arg);
+static MPXP_Rc __FASTCALL__ control(ao_data_t*,int cmd,long arg);
 static int __FASTCALL__ init(ao_data_t*,unsigned flags);
 static int __FASTCALL__ configure(ao_data_t*,unsigned rate,unsigned channels,unsigned format);
 static void __FASTCALL__ uninit(ao_data_t*);

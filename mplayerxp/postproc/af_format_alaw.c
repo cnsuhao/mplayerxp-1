@@ -214,12 +214,12 @@ static unsigned char alaw_encode [2049] =
 } ; /* alaw_encode */
 
 /* Convert from alaw to signd int8 to signed int32 or float */
-static ControlCodes from_alaw(any_t* in, any_t* out, int len, int bps, int format)
+static MPXP_Rc from_alaw(any_t* in, any_t* out, int len, int bps, int format)
 {
   register int i;
   // Make sure the input parametrs are OK
   if(format & (MPAF_SPECIAL_MASK | MPAF_US))
-      return CONTROL_ERROR;
+      return MPXP_Error;
 
   // Convert to int or to float
   if((format & MPAF_POINT_MASK) == MPAF_I){
@@ -249,7 +249,7 @@ static ControlCodes from_alaw(any_t* in, any_t* out, int len, int bps, int forma
       }
       break;
     default:
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
   }
   else{
@@ -260,16 +260,16 @@ static ControlCodes from_alaw(any_t* in, any_t* out, int len, int bps, int forma
 	((float*)out)[i] = +1.0/32768.0 * (float)alaw_decode[(((int8_t*)in)[i]) & 0x7F];
     }
   }
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 /* Convert from singed int8 to singned int32 or float to alaw */
-static ControlCodes to_alaw(any_t* in, any_t* out, int len, int bps, int format)
+static MPXP_Rc to_alaw(any_t* in, any_t* out, int len, int bps, int format)
 {
   register int i;
   // Make sure the input parametrs are OK
   if(format & (MPAF_SPECIAL_MASK | MPAF_US))
-      return CONTROL_ERROR;
+      return MPXP_Error;
     
   // Convert from int or to float
   if((format & MPAF_POINT_MASK) == MPAF_I){
@@ -299,7 +299,7 @@ static ControlCodes to_alaw(any_t* in, any_t* out, int len, int bps, int format)
       }
       break;
     default:
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
   }
   else{
@@ -310,6 +310,6 @@ static ControlCodes to_alaw(any_t* in, any_t* out, int len, int bps, int format)
 	((int8_t*)out)[i] = 0x7F & alaw_encode[(int)(-32767.0/16.0 * ((float*)in)[i])];
     }
   }
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 #endif /* __af_format_alaw_c */

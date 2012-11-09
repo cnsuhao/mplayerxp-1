@@ -78,13 +78,13 @@ static void uninit(sh_audio_t *sh_audio)
     mp_free(priv->audioBuffers[i]);
 }
 
-static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     // TODO!!!
   UNUSED(sh);
   UNUSED(cmd);
   UNUSED(arg);
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 static unsigned decode(sh_audio_t *sh, unsigned char *buf, unsigned minlen, unsigned maxlen,float *pts)

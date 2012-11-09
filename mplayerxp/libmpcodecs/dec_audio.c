@@ -344,8 +344,8 @@ void mpca_resync_stream(sh_audio_t *sh_audio)
    of audio data - used to sync audio to video after seeking */
 void mpca_skip_frame(sh_audio_t *sh_audio)
 {
-    int rc=CONTROL_TRUE;
+    int rc=MPXP_True;
     if(sh_audio)
     if(sh_audio->inited && mpadec) rc=mpadec->control(sh_audio,ADCTRL_SKIP_FRAME,NULL);
-    if(rc!=CONTROL_TRUE) ds_fill_buffer(sh_audio->ds);
+    if(rc!=MPXP_True) ds_fill_buffer(sh_audio->ds);
 }

@@ -33,9 +33,9 @@ typedef struct ao_functions_s
     /** Control interface
      * @param cmd	command. See AOCONTROL_** for detail
      * @param arg	argument associated with command
-     * @return	CONTROL_OK if success CONTROL_FALSE CONTROL_ERROR CONTROL_NA otherwise
+     * @return	MPXP_Ok if success MPXP_False MPXP_Error MPXP_NA otherwise
      **/
-    ControlCodes (* __FASTCALL__ control)(ao_data_t*,int cmd,long arg);
+    MPXP_Rc (* __FASTCALL__ control)(ao_data_t*,int cmd,long arg);
 
     /** Preinitializes driver
      * @param flag	currently unused
@@ -109,5 +109,5 @@ extern unsigned		__FASTCALL__ ao_play(ao_data_t* priv,any_t* data,unsigned len,u
 extern float		__FASTCALL__ ao_get_delay(ao_data_t* priv);
 extern void		__FASTCALL__ ao_pause(ao_data_t* priv);
 extern void		__FASTCALL__ ao_resume(ao_data_t* priv);
-extern ControlCodes	__FASTCALL__ ao_control(ao_data_t* priv,int cmd,long arg);
+extern MPXP_Rc	__FASTCALL__ ao_control(ao_data_t* priv,int cmd,long arg);
 #endif

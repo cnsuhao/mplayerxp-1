@@ -45,12 +45,12 @@ static const ao_info_t info =
 
 LIBAO_EXTERN(arts)
 
-static ControlCodes control(ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
 {
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
-	return CONTROL_UNKNOWN;
+	return MPXP_Unknown;
 }
 
 static int init(ao_data_t* ao,unsigned flags)

@@ -93,7 +93,7 @@ static    OSErr           (*QTNewGWorldFromPtr)(GWorldPtr *gw,
 static    OSErr           (*NewHandleClear)(Size byteCount);
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd) {
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -107,11 +107,11 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 		*((int*)arg) == IMGFMT_BGR24||
 		*((int*)arg) == IMGFMT_BGR32||
 		*((int*)arg) == IMGFMT_RGB32)
-			return CONTROL_TRUE;
-	    else 	return CONTROL_FALSE;
+			return MPXP_True;
+	    else 	return MPXP_False;
       default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static int codec_inited=0;

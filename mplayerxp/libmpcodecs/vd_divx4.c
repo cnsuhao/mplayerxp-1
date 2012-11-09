@@ -137,7 +137,7 @@ static LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
 static any_t*dll_handle;
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t*p=sh->context;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL: return 100; // for divx4linux
@@ -145,7 +145,7 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    int iOperation = DEC_PAR_POSTPROCESSING;
 	    int iLevel = *((int*)arg);
 	    if(iLevel<0 || iLevel>100) iLevel=100;
-	    return p->decoder(p->pHandle,DEC_OPT_SET,&iOperation,&iLevel)==DEC_OK?CONTROL_OK:CONTROL_FALSE;
+	    return p->decoder(p->pHandle,DEC_OPT_SET,&iOperation,&iLevel)==DEC_OK?MPXP_Ok:MPXP_False;
 	}
 	case VDCTRL_SET_EQUALIZER: {
 	    int value;
@@ -158,22 +158,22 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    if(!strcmp(arg,VO_EC_BRIGHTNESS)) option=DEC_PAR_BRIGHTNESS;
 	    else if(!strcmp(arg, VO_EC_CONTRAST)) option=DEC_PAR_CONTRAST;
 	    else if(!strcmp(arg,VO_EC_SATURATION)) option=DEC_PAR_SATURATION;
-	    else return CONTROL_FALSE;
+	    else return MPXP_False;
 
 	    value = (value * 256) / 100;
-	    return p->decoder(p->pHandle,DEC_OPT_SET,&option,&value)==DEC_OK?CONTROL_OK:CONTROL_FALSE;
+	    return p->decoder(p->pHandle,DEC_OPT_SET,&option,&value)==DEC_OK?MPXP_Ok:MPXP_False;
 	}
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 || 
 		*((int*)arg) == IMGFMT_I420 || 
 		*((int*)arg) == IMGFMT_IYUV)
-			return CONTROL_TRUE;
-	    else 	return CONTROL_FALSE;
+			return MPXP_True;
+	    else 	return MPXP_False;
 	case VDCTRL_RESYNC_STREAM:
 	    p->resync=1;
-	    return CONTROL_TRUE;
+	    return MPXP_True;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 

@@ -60,7 +60,7 @@ typedef struct priv_s {
     int16_t*	tmpbuf;
 }priv_t;
 
-static ControlCodes control(ao_data_t* ao,int cmd, long arg) {
+static MPXP_Rc control(ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
   switch (cmd) {
     case AOCONTROL_GET_VOLUME:
@@ -73,10 +73,10 @@ static ControlCodes control(ao_data_t* ao,int cmd, long arg) {
       }
       alGetListenerf(AL_GAIN, &volume);
       vol->left = vol->right = volume * 100;
-      return CONTROL_TRUE;
+      return MPXP_True;
     }
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 #if 0

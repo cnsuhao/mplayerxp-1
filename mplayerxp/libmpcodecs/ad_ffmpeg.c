@@ -163,17 +163,17 @@ void uninit(sh_audio_t *sh)
   acodec_inited=0;
 }
 
-ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
     AVCodecContext *lavc_context = sh->context;
     switch(cmd){
 	case ADCTRL_RESYNC_STREAM:
 	    avcodec_flush_buffers(lavc_context);
-	    return CONTROL_TRUE;
+	    return MPXP_True;
 	default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

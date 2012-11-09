@@ -363,7 +363,7 @@ static void __FASTCALL__ set_saturation (vf_eq2_t *eq2, double s)
   print_values (eq2);
 }
 
-static ControlCodes __FASTCALL__ control (vf_instance_t *vf, int request, any_t*data)
+static MPXP_Rc __FASTCALL__ control (vf_instance_t *vf, int request, any_t*data)
 {
   vf_equalizer_t *eq;
 
@@ -373,19 +373,19 @@ static ControlCodes __FASTCALL__ control (vf_instance_t *vf, int request, any_t*
 
       if (strcmp (eq->item, VO_EC_GAMMA) == 0) {
         set_gamma (vf->priv, exp (log (8.0) * eq->value / 100.0));
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_CONTRAST) == 0) {
         set_contrast (vf->priv, (1.0 / 100.0) * (eq->value + 100));
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_BRIGHTNESS) == 0) {
         set_brightness (vf->priv, (1.0 / 100.0) * eq->value);
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_SATURATION) == 0) {
         set_saturation (vf->priv, (double) (eq->value + 100) / 100.0);
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       break;
 
@@ -393,19 +393,19 @@ static ControlCodes __FASTCALL__ control (vf_instance_t *vf, int request, any_t*
       eq = (vf_equalizer_t *) data;
       if (strcmp (eq->item, VO_EC_GAMMA) == 0) {
         eq->value = (int) (100.0 * log (vf->priv->gamma) / log (8.0));
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_CONTRAST) == 0) {
         eq->value = (int) (100.0 * vf->priv->contrast) - 100;
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_BRIGHTNESS) == 0) {
         eq->value = (int) (100.0 * vf->priv->brightness);
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_SATURATION) == 0) {
         eq->value = (int) (100.0 * vf->priv->saturation) - 100;
-        return CONTROL_TRUE;
+        return MPXP_True;
       }
       break;
   }
@@ -440,7 +440,7 @@ static void __FASTCALL__ uninit (vf_instance_t *vf)
   }
 }
 
-static ControlCodes __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
+static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
 {
   unsigned i;
   vf_eq2_t *eq2;
@@ -506,7 +506,7 @@ static ControlCodes __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
     set_saturation (eq2, par[3]);
   }
 
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 const vf_info_t vf_info_eq = {

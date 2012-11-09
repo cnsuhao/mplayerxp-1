@@ -303,7 +303,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 }
 
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->get_image=get_image;
@@ -322,7 +322,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
                      &vf->priv->mode,
                      &vf->priv->delta);
 
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_ow = {

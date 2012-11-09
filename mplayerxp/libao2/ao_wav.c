@@ -87,7 +87,7 @@ typedef struct priv_s {
 /* init with default values */
 
 // to set/get/query special features/parameters
-static ControlCodes control(ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc control(ao_data_t* ao,int cmd,long arg){
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);

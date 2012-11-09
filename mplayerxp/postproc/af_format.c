@@ -48,7 +48,7 @@ static void us2si(any_t* in, any_t* out, int len, int bps,int final);
 // Helper functions to check sanity for input arguments
 
 // Sanity check for unsupported formats
-static ControlCodes __FASTCALL__ check_format(mpaf_format_e format)
+static MPXP_Rc __FASTCALL__ check_format(mpaf_format_e format)
 {
     char buf[256];
     switch(format & MPAF_SPECIAL_MASK){
@@ -56,18 +56,18 @@ static ControlCodes __FASTCALL__ check_format(mpaf_format_e format)
 	case MPAF_AC3 :
 	    MSG_ERR("[format] Sample format %s not yet supported \n",
 	    mpaf_fmt2str(format,buf,255));
-	    return CONTROL_ERROR;
+	    return MPXP_Error;
     }
     if((format&MPAF_BPS_MASK) < 1 || (format&MPAF_BPS_MASK) > 4) {
 	MSG_ERR("[format] The number of bytes per sample"
 		" must be 1, 2, 3 or 4. Current value is %i \n",format&MPAF_BPS_MASK);
-	return CONTROL_ERROR;
+	return MPXP_Error;
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
     af_format_t* s = af->setup;
     char buf1[256],buf2[256];
@@ -75,39 +75,39 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	case AF_CONTROL_REINIT:
 	    // Make sure this filter isn't redundant
 	    if(af->data->format == ((mp_aframe_t*)arg)->format)
-		return CONTROL_DETACH;
+		return MPXP_Detach;
 	    // Check for errors in configuraton
-	    if((CONTROL_OK != check_format(((mp_aframe_t*)arg)->format)) ||
-		(CONTROL_OK != check_format(af->data->format)))
-		return CONTROL_ERROR;
+	    if((MPXP_Ok != check_format(((mp_aframe_t*)arg)->format)) ||
+		(MPXP_Ok != check_format(af->data->format)))
+		return MPXP_Error;
 	    s->fmt = ((mp_aframe_t*)arg)->format;
 	    af->data->rate = ((mp_aframe_t*)arg)->rate;
 	    af->data->nch  = ((mp_aframe_t*)arg)->nch;
 	    af->mul.n      = af->data->format&MPAF_BPS_MASK;
 	    af->mul.d      = ((mp_aframe_t*)arg)->format&MPAF_BPS_MASK;
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	case AF_CONTROL_SHOWCONF:
 	    MSG_INFO("[af_format] Changing sample format %s -> %s\n",
 		mpaf_fmt2str(s->fmt,buf1,255),
 		mpaf_fmt2str(af->data->format,buf2,255));
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	case AF_CONTROL_COMMAND_LINE:{
 	    int format = MPAF_NE;
 	    // Convert string to format
 	    format = mpaf_str2fmt((char *)arg);
-	    if((CONTROL_OK != af->control(af,AF_CONTROL_FORMAT | AF_CONTROL_SET,&format)))
-		return CONTROL_ERROR;
-	    return CONTROL_OK;
+	    if((MPXP_Ok != af->control(af,AF_CONTROL_FORMAT | AF_CONTROL_SET,&format)))
+		return MPXP_Error;
+	    return MPXP_Ok;
 	}
 	case AF_CONTROL_FORMAT | AF_CONTROL_SET:
 	    // Reinit must be called after this function has been called
 	    // Check for errors in configuraton
-	    if(CONTROL_OK != check_format(*(int*)arg)) return CONTROL_ERROR;
+	    if(MPXP_Ok != check_format(*(int*)arg)) return MPXP_Error;
 	    af->data->format = *(int*)arg;
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 // Deallocate memory
@@ -123,7 +123,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
     mp_aframe_t*c   = data;	// Current working data
     int		len = c->len/(c->format&MPAF_BPS_MASK); // Lenght in samples of current audio block
 
-    if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af,data)) return NULL;
+    if(MPXP_Ok != RESIZE_LOCAL_BUFFER(af,data)) return NULL;
     mp_aframe_t*   l   = af->data;	// Local data
 
     // Change to cpu native endian format
@@ -207,7 +207,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
     af->control=control;
     af->uninit=uninit;
     af->play=play;
@@ -215,8 +215,8 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
     af->mul.d=1;
     af->data=mp_calloc(1,sizeof(mp_aframe_t));
     af->setup=mp_calloc(1,sizeof(af_format_t));
-    if(af->data == NULL) return CONTROL_ERROR;
-    return CONTROL_OK;
+    if(af->data == NULL) return MPXP_Error;
+    return MPXP_Ok;
 }
 
 // Description of this filter

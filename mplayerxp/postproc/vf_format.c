@@ -71,7 +71,7 @@ static uint32_t get_format(const char *args)
 	return 0;
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
     vf->config=config;
     vf->default_caps=0;
@@ -82,13 +82,13 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(args){
 	if(!(vf->priv->fmt=get_format(args))) {
 	    printf("Unknown format name: '%s'\n",args);
-	    return CONTROL_FALSE;
+	    return MPXP_False;
 	}
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
-static ControlCodes __FASTCALL__ vf_no_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_no_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_noformat;
     vf->config=config;
     vf->default_caps=0;
@@ -99,10 +99,10 @@ static ControlCodes __FASTCALL__ vf_no_open(vf_instance_t *vf,const char* args){
     if(args){
 	if(!(vf->priv->fmt=get_format(args))) {
 	    printf("Unknown format name: '%s'\n",args);
-	    return CONTROL_FALSE;
+	    return MPXP_False;
 	}
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_format = {

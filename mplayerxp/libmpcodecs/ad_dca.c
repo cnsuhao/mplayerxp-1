@@ -119,9 +119,9 @@ int preinit(sh_audio_t *sh)
 #define DCA_FMT24 AFMT_S24_LE
 #endif
     sh->afmt=bps2afmt(2);
-    if(	af_query_fmt(sh->afilter,AFMT_FLOAT32) == CONTROL_OK||
-	af_query_fmt(sh->afilter,DCA_FMT32) == CONTROL_OK ||
-	af_query_fmt(sh->afilter,DCA_FMT24) == CONTROL_OK)
+    if(	af_query_fmt(sh->afilter,AFMT_FLOAT32) == MPXP_Ok||
+	af_query_fmt(sh->afilter,DCA_FMT32) == MPXP_Ok ||
+	af_query_fmt(sh->afilter,DCA_FMT24) == MPXP_Ok)
     {
 	sh->afmt=AFMT_FLOAT32;
     }
@@ -188,24 +188,24 @@ void uninit(sh_audio_t *sh)
   mp_free(sh->context);
 }
 
-ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
     switch(cmd)
     {
       case ADCTRL_RESYNC_STREAM:
           sh->a_in_buffer_len=0;   // reset ACM/DShow audio buffer
-	  return CONTROL_TRUE;
+	  return MPXP_True;
       case ADCTRL_SKIP_FRAME:
 	{
 	  float pts;
 	  dca_fillbuff(sh,&pts); // skip AC3 frame
-	  return CONTROL_TRUE;
+	  return MPXP_True;
 	}
       default:
-	  return CONTROL_UNKNOWN;
+	  return MPXP_Unknown;
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

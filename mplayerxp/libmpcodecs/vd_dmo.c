@@ -28,7 +28,7 @@ static const config_t options[] = {
 LIBVD_EXTERN(dmo)
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd){
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -37,11 +37,11 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 		*((int*)arg) == IMGFMT_YVU9 ||
 		*((int*)arg) == IMGFMT_YUY2 ||
 		*((int*)arg) == IMGFMT_UYVY)
-			return CONTROL_TRUE;
-	    else 	return CONTROL_FALSE;
+			return MPXP_True;
+	    else 	return MPXP_False;
       default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 // init driver

@@ -183,7 +183,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
@@ -192,7 +192,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(!(vf->priv->direction==0 || vf->priv->direction==90 ||
        vf->priv->direction==180 || vf->priv->direction==270)) {
 	MSG_ERR("[vf_rotate] can rotate on 0, 90, 180, 270 degrees only\n");
-	return CONTROL_FALSE;
+	return MPXP_False;
     }
     if(vf->priv->direction==0) {
 	/* passthrough mode */
@@ -201,7 +201,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->config=vf_next_config;
 	MSG_INFO("[vf_rotate] passthrough mode\n");
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_rotate = {

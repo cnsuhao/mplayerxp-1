@@ -328,7 +328,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 	return 0;
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	int e;
 
 	vf->config=config;
@@ -337,7 +337,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->uninit=uninit;
 	vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
 
-	if(args==NULL) return CONTROL_FALSE;
+	if(args==NULL) return MPXP_False;
 	
 	e=sscanf(args, "%lf:%lf:%lf:%lf:%lf:%lf:%lf:%lf:%d",
 		&vf->priv->ref[0][0], &vf->priv->ref[0][1],
@@ -348,9 +348,9 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 		);
 
 	if(e!=9)
-		return CONTROL_FALSE;
+		return MPXP_False;
 
-	return CONTROL_OK;
+	return MPXP_Ok;
 }
 
 const vf_info_t vf_info_perspective = {

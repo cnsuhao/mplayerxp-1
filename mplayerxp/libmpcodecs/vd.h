@@ -19,7 +19,7 @@ typedef struct vd_functions_s
     const config_t*  options;/**< Optional: MPlayerXP's option related */
     int (*__FASTCALL__ init)(sh_video_t *sh);
     void (*__FASTCALL__ uninit)(sh_video_t *sh);
-    ControlCodes (*__FASTCALL__ control)(sh_video_t *sh,int cmd,any_t* arg, ...);
+    MPXP_Rc (*__FASTCALL__ control)(sh_video_t *sh,int cmd,any_t* arg, ...);
     mp_image_t* (*__FASTCALL__ decode)(sh_video_t *sh,any_t* data,int len,int flags);
 } vd_functions_t;
 

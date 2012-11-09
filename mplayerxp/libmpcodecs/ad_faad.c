@@ -195,9 +195,9 @@ static int init(sh_audio_t *sh)
 #endif
   /* Set the maximal quality */
   /* This is useful for expesive audio cards */
-  if(af_query_fmt(sh->afilter,AFMT_FLOAT32) == CONTROL_OK ||
-     af_query_fmt(sh->afilter,NeAAC_FMT32) == CONTROL_OK ||
-     af_query_fmt(sh->afilter,NeAAC_FMT24) == CONTROL_OK)
+  if(af_query_fmt(sh->afilter,AFMT_FLOAT32) == MPXP_Ok ||
+     af_query_fmt(sh->afilter,NeAAC_FMT32) == MPXP_Ok ||
+     af_query_fmt(sh->afilter,NeAAC_FMT24) == MPXP_Ok)
   {
     sh->afmt=AFMT_FLOAT32;
     NeAAC_conf->outputFormat=FAAD_FMT_FLOAT;
@@ -259,12 +259,12 @@ static void uninit(sh_audio_t *sh)
   mp_free(sh->context);
 }
 
-static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
   UNUSED(sh);
   UNUSED(cmd);
   UNUSED(arg);
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

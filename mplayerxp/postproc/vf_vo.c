@@ -73,31 +73,31 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     return 1;
 }
 
-static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data)
+static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data)
 {
     MSG_DBG2("vf_control: %u\n",request);
     switch(request){
     case VFCTRL_SELECT_FRAME:
     {
-	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
+	if(!vo_config_count) return MPXP_False; // vo not configured?
 	vo_select_frame(vo_data,(unsigned)data);
-	return CONTROL_TRUE;
+	return MPXP_True;
     }
     case VFCTRL_SET_EQUALIZER:
     {
 	vf_equalizer_t *eq=data;
-	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
+	if(!vo_config_count) return MPXP_False; // vo not configured?
 	return vo_control(vo_data,VOCTRL_SET_EQUALIZER, eq);
     }
     case VFCTRL_GET_EQUALIZER:
     {
 	vf_equalizer_t *eq=data;
-	if(!vo_config_count) return CONTROL_FALSE; // vo not configured?
+	if(!vo_config_count) return MPXP_False; // vo not configured?
 	return vo_control(vo_data,VOCTRL_GET_EQUALIZER, eq);
     }
     }
     // return video_out->control(request,data);
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
@@ -125,7 +125,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
     int finalize = vo_is_final(vo_data);
     struct vf_priv_s *priv = vf->priv;
     retval=vo_get_surface(vo_data,mpi);
-    if(retval==CONTROL_TRUE) {
+    if(retval==MPXP_True) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
 	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
 	MSG_DBG2("vf_vo_get_image was called successfully\n");
@@ -151,7 +151,7 @@ static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
 
 //===========================================================================//
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->priv = mp_mallocz(sizeof(struct vf_priv_s));
     vf->config=config;
     vf->control=control;
@@ -160,7 +160,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
     vf->get_image=get_image;
     vf->put_slice=put_slice;
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_vo = {

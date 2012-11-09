@@ -52,14 +52,14 @@ typedef struct af_sub_s
 }af_sub_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_sub_t* s   = af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     // Sanity check
-    if(!arg) return CONTROL_ERROR;
+    if(!arg) return MPXP_Error;
 
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = max(s->ch+1,((mp_aframe_t*)arg)->nch);
@@ -71,18 +71,18 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
        (float)af->data->rate, &s->k, s->w[0])) ||
        (-1 == szxform(sp[1].a, sp[1].b, Q, s->fc,
        (float)af->data->rate, &s->k, s->w[1])))
-      return CONTROL_ERROR;
+      return MPXP_Error;
     return af_test_output(af,(mp_aframe_t*)arg);
   }
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_sub] assigned channel %i\n",s->ch);
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     int   ch=5;
     float fc=60.0;
     sscanf(arg,"%f:%i", &fc , &ch);
-    if(CONTROL_OK != control(af,AF_CONTROL_SUB_CH | AF_CONTROL_SET, &ch))
-      return CONTROL_ERROR;
+    if(MPXP_Ok != control(af,AF_CONTROL_SUB_CH | AF_CONTROL_SET, &ch))
+      return MPXP_Error;
     return control(af,AF_CONTROL_SUB_FC | AF_CONTROL_SET, &fc);
   }
   case AF_CONTROL_SUB_CH | AF_CONTROL_SET: // Requires reinit
@@ -90,29 +90,29 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     if((*(int*)arg >= AF_NCH) || (*(int*)arg < 0)){
       MSG_ERR("[sub] Subwoofer channel number must be between "
 	     " 0 and %i current value is %i\n", AF_NCH-1, *(int*)arg);
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
     s->ch = *(int*)arg;
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_SUB_CH | AF_CONTROL_GET:
     *(int*)arg = s->ch;
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_SUB_FC | AF_CONTROL_SET: // Requires reinit
     // Sanity check
     if((*(float*)arg > 300) || (*(float*)arg < 20)){
       MSG_ERR("[sub] Cutoff frequency must be between 20Hz and"
 	     " 300Hz current value is %0.2f",*(float*)arg);
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
     // Set cutoff frequency
     s->fc = *(float*)arg;
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_SUB_FC | AF_CONTROL_GET:
     *(float*)arg = s->fc;
-    return CONTROL_OK;
+    return MPXP_Ok;
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -158,7 +158,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af_sub_t* s;
   af->control=control;
   af->uninit=uninit;
@@ -168,11 +168,11 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=s=mp_calloc(1,sizeof(af_sub_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
+    return MPXP_Error;
   // Set default values
   s->ch = 5;  	 // Channel nr 6
   s->fc = 60; 	 // Cutoff frequency 60Hz
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 // Description of this filter

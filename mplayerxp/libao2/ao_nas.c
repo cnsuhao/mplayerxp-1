@@ -368,12 +368,12 @@ static unsigned int nas_aformat_to_auformat(unsigned int *format)
 }
 
 // to set/get/query special features/parameters
-static ControlCodes control(ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=ao->priv;
 	AuElementParameters aep;
 	AuStatus as;
-	int retval = CONTROL_UNKNOWN;
+	int retval = MPXP_Unknown;
 
 	ao_control_vol_t *vol = (ao_control_vol_t *)arg;
 
@@ -384,7 +384,7 @@ static ControlCodes control(ao_data_t* ao,int cmd, long arg)
 		vol->left = vol->right;
 
 		MSG_DBG2( "ao_nas: AOCONTROL_GET_VOLUME: %.2f\n", vol->right);
-		retval = CONTROL_OK;
+		retval = MPXP_Ok;
 		break;
 
 	case AOCONTROL_SET_VOLUME:
@@ -405,8 +405,8 @@ static ControlCodes control(ao_data_t* ao,int cmd, long arg)
 		if (as != AuSuccess) {
 			nas_print_error(priv->aud,
 			                "control(): AuSetElementParameters", as);
-			retval = CONTROL_ERROR;
-		} else retval = CONTROL_OK;
+			retval = MPXP_Error;
+		} else retval = MPXP_Ok;
 		break;
 	};
 

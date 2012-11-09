@@ -71,7 +71,7 @@ static void uninit(sh_audio_t *sh)
     mp_free(priv);
 }
 
-static ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+static MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
   int skip;
   UNUSED(arg);
@@ -86,10 +86,10 @@ static ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 		      if(skip<16) skip=16;
 		    }
 		    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
-	  return CONTROL_TRUE;
+	  return MPXP_True;
 	}
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 static unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

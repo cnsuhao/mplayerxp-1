@@ -22,7 +22,7 @@
  */
 #ifndef __VIDEO_OUT_INTERNAL_H
 #define __VIDEO_OUT_INTERNAL_H 1
-static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data);
+static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data);
 static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		     uint32_t d_height, uint32_t fullscreen, char *title,
 		     uint32_t format,const vo_tune_info_t *);

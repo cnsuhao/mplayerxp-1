@@ -26,14 +26,14 @@ static const config_t options[] = {
 LIBVD_EXTERN(dshow)
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd){
       case VDCTRL_QUERY_MAX_PP_LEVEL:
 	return 4;
       case VDCTRL_SET_PP_LEVEL:
-	if(!sh->context) return CONTROL_ERROR;
+	if(!sh->context) return MPXP_Error;
 	DS_VideoDecoder_SetValue(sh->context,"Quality",*((int*)arg));
-	return CONTROL_OK;
+	return MPXP_Ok;
       case VDCTRL_SET_EQUALIZER: {
 	va_list ap;
 	int value;
@@ -42,8 +42,8 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	va_end(ap);
 	value=(value/2)+50;
 	if(DS_VideoDecoder_SetValue(sh->context,arg,value)==0)
-	    return CONTROL_OK;
-	return CONTROL_FALSE;
+	    return MPXP_Ok;
+	return MPXP_False;
       }
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -52,11 +52,11 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 		*((int*)arg) == IMGFMT_YVU9 ||
 		*((int*)arg) == IMGFMT_YUY2 ||
 		*((int*)arg) == IMGFMT_UYVY)
-			return CONTROL_TRUE;
-	    else 	return CONTROL_FALSE;
+			return MPXP_True;
+	    else 	return MPXP_False;
       default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 // init driver

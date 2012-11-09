@@ -67,13 +67,13 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static ControlCodes __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_QUERY_MAX_PP_LEVEL:
 	return PP_QUALITY_MAX;
     case VFCTRL_SET_PP_LEVEL:
 	vf->priv->pp= *((unsigned int*)data);
-	return CONTROL_TRUE;
+	return MPXP_True;
     }
     return vf_next_control(vf,request,data);
 }
@@ -137,7 +137,7 @@ static unsigned int fmt_list[]={
     0
 };
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     char *endptr;
     const char* name;
     int i;
@@ -169,11 +169,11 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
     for(i=0; i<=PP_QUALITY_MAX; i++){
 	vf->priv->ppMode[i]= pp_get_mode_by_name_and_quality(name, i);
-	if(vf->priv->ppMode[i]==NULL) return CONTROL_ERROR;
+	if(vf->priv->ppMode[i]==NULL) return MPXP_Error;
     }
 
     vf->priv->pp=PP_QUALITY_MAX;
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_pp = {

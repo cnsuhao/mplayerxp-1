@@ -126,7 +126,7 @@ const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
 };
 
 /* to set/get/query special features/parameters */
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *ctx = sh->context;
     uint32_t out_fourcc;
     AVCodecContext *avctx = ctx->ctx;
@@ -137,7 +137,7 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    int quality=*((int*)arg);
 	    if(quality<0 || quality>PP_QUALITY_MAX) quality=PP_QUALITY_MAX;
 	    divx_quality = quality;
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	}
 	case VDCTRL_QUERY_FORMAT:
         {
@@ -158,7 +158,7 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    else
 		MSG_DBG2("[vd_ffmpeg]avctx->codec->pix_fmts doesn't exist\n");
 	    out_fourcc = fourcc_from_pixfmt(avctx->pix_fmt);
-	    if(out_fourcc==format) return CONTROL_TRUE;
+	    if(out_fourcc==format) return MPXP_True;
 	// possible conversions:
 	    switch( format ){
 		case IMGFMT_YV12:
@@ -167,26 +167,26 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 		    // "converted" using pointer/stride modification
 		    if(	avctx->pix_fmt==PIX_FMT_YUV420P || // u/v swap
 			avctx->pix_fmt==PIX_FMT_YUV422P ||
-			avctx->pix_fmt==PIX_FMT_YUVJ420P) return CONTROL_TRUE;// half stride
+			avctx->pix_fmt==PIX_FMT_YUVJ420P) return MPXP_True;// half stride
 		    /* these codecs may return only: PIX_FMT_YUV422P, PIX_FMT_YUV444P, PIX_FMT_YUV420P*/
 		    /* TODO: we must test pix_fmt after decoding first frame at least */
 		    if(	avctx->codec_id == CODEC_ID_MPEG1VIDEO ||
-			avctx->codec_id == CODEC_ID_MPEG2VIDEO) return CONTROL_TRUE;
+			avctx->codec_id == CODEC_ID_MPEG2VIDEO) return MPXP_True;
 		    break;
 #ifdef HAVE_XVMC
 		case IMGFMT_XVMC_IDCT_MPEG2:
 		case IMGFMT_XVMC_MOCO_MPEG2:
-		    if(avctx->pix_fmt==PIX_FMT_XVMC_MPEG2_IDCT) return CONTROL_TRUE;
+		    if(avctx->pix_fmt==PIX_FMT_XVMC_MPEG2_IDCT) return MPXP_True;
 #endif
 	    }
-	    return CONTROL_FALSE;
+	    return MPXP_False;
         }
 	break;
 	case VDCTRL_RESYNC_STREAM:
 	    avcodec_flush_buffers(avctx);
-	    return CONTROL_TRUE;
+	    return MPXP_True;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static int ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)

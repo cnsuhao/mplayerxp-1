@@ -72,13 +72,13 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 
 //===========================================================================//
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf, char *args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf, char *args){
     vf->config=config;
 //    vf->get_image=get_image;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
 //    vf->default_reqs=VFCAP_ACCEPT_STRIDE;
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_flip = {

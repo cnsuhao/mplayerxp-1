@@ -74,9 +74,9 @@ enum {
 enum {
 /* Reinitialize filter. The optional argument contains the new
    configuration in form of a mp_aframe_t struct. If the filter does not
-   support the new format the struct should be changed and CONTROL_FALSE
+   support the new format the struct should be changed and MPXP_False
    should be returned. If the incoming and outgoing data streams are
-   identical the filter can return CONTROL_DETACH. This will remove the
+   identical the filter can return MPXP_Detach. This will remove the
    filter. */
     AF_CONTROL_REINIT		=0x00000100|AF_CONTROL_MANDATORY,
     AF_CONTROL_SHOWCONF		=0x00000200|AF_CONTROL_MANDATORY, /* should printout how filter was configured */

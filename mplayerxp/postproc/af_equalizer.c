@@ -75,7 +75,7 @@ static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
 }
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_equalizer_t* s   = (af_equalizer_t*)af->setup; 
 
@@ -85,7 +85,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     float F[KM] = CF;
 
     // Sanity check
-    if(!arg) return CONTROL_ERROR;
+    if(!arg) return MPXP_Error;
 
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
@@ -117,7 +117,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	    MSG_INFO("%f:",log10(s->g[0][k]+1.0) * 20.0);
 	MSG_INFO("\n");
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     float g[10]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     int i,j;
@@ -129,34 +129,34 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	  pow(10.0,clamp(g[j],G_MIN,G_MAX)/20.0)-1.0;
       }
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_EQUALIZER_GAIN | AF_CONTROL_SET:{
     float* gain = ((af_control_ext_t*)arg)->arg;
     int    ch   = ((af_control_ext_t*)arg)->ch;
     int    k;
     if(ch > AF_NCH || ch < 0)
-      return CONTROL_ERROR;
+      return MPXP_Error;
 
     for(k = 0 ; k<KM ; k++)
       s->g[ch][k] = pow(10.0,clamp(gain[k],G_MIN,G_MAX)/20.0)-1.0;
 
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_EQUALIZER_GAIN | AF_CONTROL_GET:{
     float* gain = ((af_control_ext_t*)arg)->arg;
     int    ch   = ((af_control_ext_t*)arg)->ch;
     int    k;
     if(ch > AF_NCH || ch < 0)
-      return CONTROL_ERROR;
+      return MPXP_Error;
 
     for(k = 0 ; k<KM ; k++)
       gain[k] = log10(s->g[ch][k]+1.0) * 20.0;
 
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -208,7 +208,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -217,8 +217,8 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_equalizer_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
-  return CONTROL_OK;
+    return MPXP_Error;
+  return MPXP_Ok;
 }
 
 // Description of this filter

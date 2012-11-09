@@ -27,7 +27,7 @@ typedef struct af_delay_s
 }af_delay_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_delay_t* s = af->setup;
 
@@ -65,12 +65,12 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       cl=&cl[n];
       i++;
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_DELAY_LEN | AF_CONTROL_SET:{
     int i;
-    if(CONTROL_OK != af_from_ms(AF_NCH, arg, s->wi, af->data->rate, 0.0, 1000.0))
-      return CONTROL_ERROR;
+    if(MPXP_Ok != af_from_ms(AF_NCH, arg, s->wi, af->data->rate, 0.0, 1000.0))
+      return MPXP_Error;
     s->ri = 0;
     for(i=0;i<AF_NCH;i++){
       MSG_DBG2("[delay] Channel %i delayed by %0.3fms\n",
@@ -78,7 +78,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
       MSG_DBG2("[delay] Channel %i delayed by %i samples\n",
 	     i,s->wi[i]);
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_DELAY_LEN | AF_CONTROL_GET:{
     int i;
@@ -92,7 +92,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
   }
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -168,7 +168,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -177,8 +177,8 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_delay_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
-  return CONTROL_OK;
+    return MPXP_Error;
+  return MPXP_Ok;
 }
 
 // Description of this filter

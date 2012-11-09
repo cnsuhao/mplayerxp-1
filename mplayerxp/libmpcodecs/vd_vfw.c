@@ -219,20 +219,20 @@ static int vfw_close_video_codec(sh_video_t *sh_video)
 }
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *priv = sh->context;
     switch(cmd){
     case VDCTRL_QUERY_MAX_PP_LEVEL:
 	return 9;
     case VDCTRL_SET_PP_LEVEL:
 	vfw_set_postproc(sh,10*(*((int*)arg)));
-	return CONTROL_OK;
+	return MPXP_Ok;
     // FIXME: make this optional...
     case VDCTRL_QUERY_FORMAT:
       {
 	HRESULT ret;
 //	if(!(sh->codec->outflags[sh->outfmtidx]&CODECS_FLAG_QUERY))
-//	    return CONTROL_UNKNOWN;	// do not query!
+//	    return MPXP_Unknown;	// do not query!
 	set_csp(priv->o_bih,*((int*)arg));
 	if(priv->ex)
 	    ret = ICDecompressQueryEx(priv->hic, sh->bih, priv->o_bih);
@@ -241,13 +241,13 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	if (ret)
 	{
 	    MSG_DBG2("ICDecompressQuery failed:: Error %d\n", (int)ret);
-	    return CONTROL_FALSE;
+	    return MPXP_False;
 	}
-	return CONTROL_TRUE;
+	return MPXP_True;
       }
     default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 // init driver

@@ -97,11 +97,11 @@ static void drain(ao_data_t* ao){
 }
 
 // to set/get/query special features/parameters
-static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
-    return CONTROL_TRUE;
+    return MPXP_True;
 }
 
 // open & setup audio device

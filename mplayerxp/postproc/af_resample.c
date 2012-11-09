@@ -71,7 +71,7 @@ typedef struct af_resample_s {
 } af_resample_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
     af_resample_t* s   = (af_resample_t*)af->setup;
     switch(cmd){
@@ -79,20 +79,20 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	    enum AVSampleFormat avfmt;
 	    uint64_t		nch;
 	    mp_aframe_t*		n   = (mp_aframe_t*)arg; // New configuration
-	    int			rv  = CONTROL_OK;
+	    int			rv  = MPXP_Ok;
 
 	    if(s->ctx) { swr_free(&s->ctx); s->ctx=NULL; }
 	    // Make sure this filter isn't redundant
 	    if((af->data->rate == n->rate) || (af->data->rate == 0)) {
 		MSG_V("[af_resample] detach due: %i -> %i Hz\n",
 			af->data->rate,n->rate);
-		return CONTROL_DETACH;
+		return MPXP_Detach;
 	    }
 	    avfmt=get_sample_format(n->format);
 	    nch=get_ch_layout(n->nch);
-	    if(avfmt==AV_SAMPLE_FMT_NONE) rv=CONTROL_ERROR;
-	    if(nch==0) rv=CONTROL_ERROR;
-	    if(rv!=CONTROL_OK) {
+	    if(avfmt==AV_SAMPLE_FMT_NONE) rv=MPXP_Error;
+	    if(nch==0) rv=MPXP_Error;
+	    if(rv!=MPXP_Ok) {
 		char buff[256];
 		MSG_V("[af_resample] doesn't work with '%s' x %i\n"
 		,mpaf_fmt2str(n->format,buff,sizeof(buff))
@@ -104,7 +104,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 				      0, NULL);
 	    if(swr_init(s->ctx)<0) {
 		MSG_ERR("[af_resample] Cannot init swr_init\n");
-		rv=CONTROL_ERROR;
+		rv=MPXP_Error;
 	    }
 
 	    af->data->format = n->format;
@@ -121,20 +121,20 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	}
 	case AF_CONTROL_SHOWCONF:
 	    MSG_INFO("[af_resample] New filter designed (%i -> %i Hz)\n", s->irate,af->data->rate);
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	case AF_CONTROL_COMMAND_LINE:{
 	    int rate=0;
 	    sscanf((char*)arg,"%i", &rate);
 	    return af->control(af,AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET, &rate);
 	}
-	case AF_CONTROL_POST_CREATE: return CONTROL_OK;
+	case AF_CONTROL_POST_CREATE: return MPXP_Ok;
 	case AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET: {
 	    af->data->rate = ((int*)arg)[0];
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	}
 	default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 // Deallocate memory
@@ -156,7 +156,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
     mp_aframe_t*	c = data; // Current working data
     af_resample_t*	s = (af_resample_t*)af->setup;
 
-    if (CONTROL_OK != RESIZE_LOCAL_BUFFER(af, data)) return NULL;
+    if (MPXP_Ok != RESIZE_LOCAL_BUFFER(af, data)) return NULL;
     mp_aframe_t*	l = af->data; // Local data
     uint8_t*		ain[SWR_CH_MAX];
     const uint8_t*	aout[SWR_CH_MAX];
@@ -172,7 +172,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
     af->control=control;
     af->uninit=uninit;
     af->play=play;
@@ -180,8 +180,8 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
     af->mul.d=1;
     af->data=mp_calloc(1,sizeof(mp_aframe_t));
     af->setup=mp_calloc(1,sizeof(af_resample_t));
-    if(af->data == NULL || af->setup == NULL) return CONTROL_ERROR;
-    return CONTROL_OK;
+    if(af->data == NULL || af->setup == NULL) return MPXP_Error;
+    return MPXP_Ok;
 }
 
 // Description of this plugin

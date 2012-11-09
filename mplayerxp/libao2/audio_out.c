@@ -262,7 +262,7 @@ void ao_resume(ao_data_t*ao)
     if(ao) audio_out->resume(ao);
 }
 
-ControlCodes __FASTCALL__ ao_control(ao_data_t*ao,int cmd,long arg)
+MPXP_Rc __FASTCALL__ ao_control(ao_data_t*ao,int cmd,long arg)
 {
-    return ao?audio_out->control(ao,cmd,arg):CONTROL_ERROR;
+    return ao?audio_out->control(ao,cmd,arg):MPXP_Error;
 }

@@ -350,7 +350,7 @@ void uninit(sh_audio_t *sh)
   FreeLibrary(vqf_dll);
 }
 
-ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
   int skip;
   UNUSED(arg);
@@ -365,12 +365,12 @@ ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 		      if(skip<16) skip=16;
 		    }
 		    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
-	  return CONTROL_TRUE;
+	  return MPXP_True;
 	}
       default:
-	  return CONTROL_UNKNOWN;
+	  return MPXP_Unknown;
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 static int bread(char	*data,    /* Output: Output data array */

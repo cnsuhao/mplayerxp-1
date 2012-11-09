@@ -132,7 +132,7 @@ csp_again:
 	if((flags&VFCAP_CSP_SUPPORTED_BY_HW) || ((flags&VFCAP_CSP_SUPPORTED) && j<0)){
 	    // check (query) if codec really support this outfmt...
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)==CONTROL_FALSE) {
+	    if(mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
 		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",mpvdec->info->driver_name,vo_format_name(out_fmt));
 		continue;
 	    }
@@ -142,7 +142,7 @@ csp_again:
 	} else
 	if(!palette && !(vo_data->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)!=CONTROL_FALSE)
+	    if(mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
 		palette=1;
 	}
     }

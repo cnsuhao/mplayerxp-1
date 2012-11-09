@@ -164,7 +164,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return vf_next_query_format(vf->next,best,w,h);
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     unsigned int i;
     vf->config=config;
     vf->put_slice=put_slice;
@@ -182,10 +182,10 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	if (!strcasecmp(args,"bgr32")) vf->priv->fmt=IMGFMT_BGR32; else
 	{
 	    printf("Unknown forced format name: '%s'\n", args);
-	    return CONTROL_FALSE;
+	    return MPXP_False;
 	}
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_palette = {

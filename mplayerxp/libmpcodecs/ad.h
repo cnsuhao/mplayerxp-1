@@ -28,7 +28,7 @@ typedef struct ad_functions_s
     int (* __FASTCALL__ preinit)(sh_audio_t *);
     int (* __FASTCALL__ init)(sh_audio_t *sh);
     void (* __FASTCALL__ uninit)(sh_audio_t *sh);
-    ControlCodes (* __FASTCALL__ control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
+    MPXP_Rc (* __FASTCALL__ control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
     unsigned (* __FASTCALL__ decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 

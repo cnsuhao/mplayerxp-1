@@ -222,9 +222,9 @@ typedef struct vo_functions_s
 	/** Control interface
 	 * @param request	command. See VOCTRL_** for detail
 	 * @param data		data associated with command
-	 * @return		CONTROL_TRUE if success CONTROL_FALSE VO_ERROR CONTROL_NA otherwise
+	 * @return		MPXP_True if success MPXP_False VO_ERROR MPXP_NA otherwise
 	 **/
-	ControlCodes (* __FASTCALL__ control)(vo_data_t* vo,uint32_t request, any_t*data);
+	MPXP_Rc (* __FASTCALL__ control)(vo_data_t* vo,uint32_t request, any_t*data);
 
         /** Returns driver information.
          * @return	read-only pointer to a vo_info_t structure.
@@ -273,7 +273,7 @@ extern void		vo_flush_page(vo_data_t* vo,unsigned decoder_idx);
 extern void		vo_draw_osd(vo_data_t* vo,unsigned idx);
 extern void		vo_draw_spudec_direct(vo_data_t* vo,unsigned idx);
 extern void		vo_uninit(vo_data_t* vo);
-extern ControlCodes __FASTCALL__ vo_control(vo_data_t* vo,uint32_t request, any_t*data);
+extern MPXP_Rc __FASTCALL__ vo_control(vo_data_t* vo,uint32_t request, any_t*data);
 extern int __FASTCALL__ vo_is_final(vo_data_t* vo);
 
 /** Contains geometry of fourcc */

@@ -101,7 +101,7 @@ static int init(sh_audio_t *sh)
 #define OGG_FMT16 AFMT_S16_LE
 #endif
   sh->afmt=OGG_FMT16;
-  if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == CONTROL_OK) {
+  if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == MPXP_Ok) {
     sh->afmt=OGG_FMT32;
   }
   // assume 128kbit if bitrate not specified in the header
@@ -121,7 +121,7 @@ static void uninit(sh_audio_t *sh)
   mp_free(sh->context);
 }
 
-static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(sh);
     UNUSED(cmd);
@@ -129,11 +129,11 @@ static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
     switch(cmd)
     {
 #if 0
-      case ADCTRL_RESYNC_STREAM:  return CONTROL_TRUE;
-      case ADCTRL_SKIP_FRAME:  return CONTROL_TRUE;
+      case ADCTRL_RESYNC_STREAM:  return MPXP_True;
+      case ADCTRL_SKIP_FRAME:  return MPXP_True;
 #endif
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

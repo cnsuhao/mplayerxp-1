@@ -68,7 +68,7 @@ void uninit(sh_audio_t *sh)
     UNUSED(sh);
 }
 
-ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
   int skip;
   UNUSED(arg);
@@ -80,12 +80,12 @@ ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 	skip=sh->i_bps/16;
 	skip=skip&(~3);
 	demux_read_data_r(sh->ds,NULL,skip,&pts);
-	return CONTROL_TRUE;
+	return MPXP_True;
       }
       default:
-	return CONTROL_UNKNOWN;
+	return MPXP_Unknown;
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

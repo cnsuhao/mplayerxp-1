@@ -67,9 +67,9 @@ int mpcv_set_colors(sh_video_t *sh_video,char *item,int value)
     vf_equalizer_t eq;
     eq.item=item;
     eq.value=value*10;
-    if(vf->control(vf,VFCTRL_SET_EQUALIZER,&eq)!=CONTROL_TRUE)
+    if(vf->control(vf,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True)
     {
-	if(mpvdec) return mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,item,(int)value)==CONTROL_OK?1:0;
+	if(mpvdec) return mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,item,(int)value)==MPXP_Ok?1:0;
     }
     return 1;
 }

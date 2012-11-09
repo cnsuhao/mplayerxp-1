@@ -110,18 +110,18 @@ static void setenv(const char *name, const char *val, int _xx)
 #endif
 
 // to set/get/query special features/parameters
-static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
     priv_t*priv=ao->priv;
 	switch (cmd) {
 		case AOCONTROL_QUERY_FORMAT:
 		case AOCONTROL_QUERY_CHANNELS:
 		case AOCONTROL_QUERY_RATE:
-		    return CONTROL_FALSE;
+		    return MPXP_False;
 		case AOCONTROL_GET_VOLUME:
 		{
 			ao_control_vol_t* vol = (ao_control_vol_t*)arg;
 			vol->left = vol->right = (float)((priv->volume + 127)/2.55);
-			return CONTROL_OK;
+			return MPXP_Ok;
 		}
 		case AOCONTROL_SET_VOLUME:
 		{
@@ -129,7 +129,7 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 			ao_control_vol_t* vol = (ao_control_vol_t*)arg;
 			diff = (vol->left+vol->right) / 2;
 			priv->volume = (int)(diff * 2.55) - 127;
-			return CONTROL_OK;
+			return MPXP_Ok;
 		}
 	}
 	return -1;

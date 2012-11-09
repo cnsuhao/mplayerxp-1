@@ -131,7 +131,7 @@ static int __FASTCALL__ fmt2alsa(int format)
 }
 
 /* to set/get/query special features/parameters */
-static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=ao->priv;
     int rval;
@@ -139,15 +139,15 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 	case AOCONTROL_QUERY_FORMAT:
 	    rval=fmt2alsa(arg);
 	    return snd_pcm_hw_params_test_format(priv->handler, priv->hwparams,rval)==0?
-		    CONTROL_TRUE:CONTROL_FALSE;
+		    MPXP_True:MPXP_False;
 	case AOCONTROL_QUERY_CHANNELS:
 	    rval=arg;
 	    return snd_pcm_hw_params_test_channels(priv->handler, priv->hwparams,rval)==0?
-		    CONTROL_TRUE:CONTROL_FALSE;
+		    MPXP_True:MPXP_False;
 	case AOCONTROL_QUERY_RATE:
 	    rval=arg;
 	    return snd_pcm_hw_params_test_rate(priv->handler, priv->hwparams,rval,0)==0?
-		    CONTROL_TRUE:CONTROL_FALSE;
+		    MPXP_True:MPXP_False;
 	case AOCONTROL_GET_VOLUME:
 	case AOCONTROL_SET_VOLUME:
 #ifndef WORDS_BIGENDIAN
@@ -166,7 +166,7 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 	    long get_vol, set_vol;
 	    float calc_vol, diff, f_multi;
 
-	    if(ao->format == AFMT_AC3) return CONTROL_TRUE;
+	    if(ao->format == AFMT_AC3) return MPXP_True;
 
 	    //allocate simple id
 	    snd_mixer_selem_id_alloca(&sid);
@@ -177,31 +177,31 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 
 	    if ((err = snd_mixer_open(&handle, 0)) < 0) {
 		MSG_ERR("alsa-control: mixer open error: %s\n", snd_strerror(err));
-		return CONTROL_ERROR;
+		return MPXP_Error;
 	    }
 
 	    if ((err = snd_mixer_attach(handle, card)) < 0) {
 		MSG_ERR("alsa-control: mixer attach %s error: %s", card, snd_strerror(err));
 		snd_mixer_close(handle);
-		return CONTROL_ERROR;
+		return MPXP_Error;
 	    }
 
 	    if ((err = snd_mixer_selem_register(handle, NULL, NULL)) < 0) {
 		MSG_ERR("alsa-control: mixer register error: %s", snd_strerror(err));
 		snd_mixer_close(handle);
-		return CONTROL_ERROR;
+		return MPXP_Error;
 	    }
 	    if ((err = snd_mixer_load(handle)) < 0) {
 		MSG_ERR("alsa-control: mixer load error: %s", snd_strerror(err));
 		snd_mixer_close(handle);
-		return CONTROL_ERROR;
+		return MPXP_Error;
 	    }
 
 	    elem = snd_mixer_find_selem(handle, sid);
 	    if (!elem) {
 		MSG_ERR("alsa-control: unable to find simple control '%s',%i\n", snd_mixer_selem_id_get_name(sid), snd_mixer_selem_id_get_index(sid));
 		snd_mixer_close(handle);
-		return CONTROL_ERROR;
+		return MPXP_Error;
 	    }
 
 	    snd_mixer_selem_get_playback_volume_range(elem,&pmin,&pmax);
@@ -218,11 +218,11 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 		//setting channels
 		if ((err = snd_mixer_selem_set_playback_volume(elem, 0, set_vol)) < 0) {
 		    MSG_ERR("alsa-control: error setting left channel, %s",snd_strerror(err));
-		    return CONTROL_ERROR;
+		    return MPXP_Error;
 		}
 		if ((err = snd_mixer_selem_set_playback_volume(elem, 1, set_vol)) < 0) {
 		    MSG_ERR("alsa-control: error setting right channel, %s",snd_strerror(err));
-		    return CONTROL_ERROR;
+		    return MPXP_Error;
 		}
 	    } else {
 		snd_mixer_selem_get_playback_volume(elem, 0, &get_vol);
@@ -234,13 +234,13 @@ static ControlCodes __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
 		//printf("get_vol = %i, calc=%i\n",get_vol, calc_vol);
 	    }
 	    snd_mixer_close(handle);
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	}
 #else // end big-endian
-	return CONTROL_UNKNOWN;
+	return MPXP_Unknown;
 #endif
     } //end witch
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static void __FASTCALL__ show_caps(unsigned device)

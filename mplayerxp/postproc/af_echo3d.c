@@ -151,15 +151,15 @@ static void __FASTCALL__ echo3d(af_crystality_t *s,float *data, unsigned datasiz
 }
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_crystality_t* s   = (af_crystality_t*)af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     // Sanity check
-    if(!arg) return CONTROL_ERROR;
-    if(((mp_aframe_t*)arg)->nch!=2) return CONTROL_ERROR;
+    if(!arg) return MPXP_Error;
+    if(((mp_aframe_t*)arg)->nch!=2) return MPXP_Error;
 
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
@@ -174,11 +174,11 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	    &s->echo_level,
 	    &s->feedback_level);
     s->echos=clamp(s->echos,1,3);
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory
@@ -201,7 +201,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ af_open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -210,10 +210,10 @@ static ControlCodes __FASTCALL__ af_open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_crystality_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
+    return MPXP_Error;
   set_defaults(af->setup);
   init_echo3d(af->setup,44100);
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 // Description of this filter

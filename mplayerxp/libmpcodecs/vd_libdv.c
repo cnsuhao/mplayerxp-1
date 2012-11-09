@@ -33,8 +33,8 @@ static const config_t options[] = {
 LIBVD_EXTERN(libdv)
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
-    return CONTROL_UNKNOWN;
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
+    return MPXP_Unknown;
 }
 
 static dv_decoder_t* global_rawdv_decoder=NULL;

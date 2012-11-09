@@ -17,7 +17,7 @@
 // Data for specific instances of this filter
 
 // Initialization and runtime control
-static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 {
 	switch(cmd){
 		case AF_CONTROL_REINIT:
@@ -26,7 +26,7 @@ static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
 		af->data->format= MPAF_NE|MPAF_F|4;
 		return af_test_output(af,(mp_aframe_t*)arg);
 	}
-	return CONTROL_UNKNOWN;
+	return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -61,7 +61,7 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 }
 
 // Allocate memory and set function pointers
-static ControlCodes open(af_instance_t* af){
+static MPXP_Rc open(af_instance_t* af){
 	af->control	= control;
 	af->uninit	= uninit;
 	af->play	= play;
@@ -70,9 +70,9 @@ static ControlCodes open(af_instance_t* af){
 	af->data	= mp_calloc(1,sizeof(mp_aframe_t));
 
 	if(af->data == NULL)
-		return CONTROL_ERROR;
+		return MPXP_Error;
 	
-	return CONTROL_OK;
+	return MPXP_Ok;
 }
 
 // Description of this filter

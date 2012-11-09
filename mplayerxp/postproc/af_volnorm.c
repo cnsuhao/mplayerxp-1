@@ -69,21 +69,21 @@ typedef struct af_volume_s
 }af_volnorm_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_volnorm_t* s   = (af_volnorm_t*)af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:
     // Sanity check
-    if(!arg) return CONTROL_ERROR;
+    if(!arg) return MPXP_Error;
 
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
 
     if(((mp_aframe_t*)arg)->format != (MPAF_F | MPAF_NE) &&
        ((mp_aframe_t*)arg)->format != (MPAF_SI | MPAF_NE))
-       return CONTROL_ERROR;
+       return MPXP_Error;
 
     if(((mp_aframe_t*)arg)->format == (MPAF_SI | MPAF_NE)){
       af->data->format = MPAF_SI|MPAF_NE|2;
@@ -93,18 +93,18 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_volnorm] using method %d\n",s->method);
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     int   i;
     sscanf((char*)arg,"%d", &i);
     if (i != 1 && i != 2)
-	return CONTROL_ERROR;
+	return MPXP_Error;
     s->method = i-1;
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -314,7 +314,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   int i = 0;
   af->control=control;
   af->uninit=uninit;
@@ -324,7 +324,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_volnorm_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
+    return MPXP_Error;
 
   ((af_volnorm_t*)af->setup)->mul = MUL_INIT;
   ((af_volnorm_t*)af->setup)->lastavg = MID_S16;
@@ -334,7 +334,7 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
      ((af_volnorm_t*)af->setup)->mem[i].len = 0;
      ((af_volnorm_t*)af->setup)->mem[i].avg = 0;
   }
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 // Description of this filter

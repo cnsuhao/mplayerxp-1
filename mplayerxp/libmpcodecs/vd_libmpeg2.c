@@ -166,7 +166,7 @@ static int load_lib( const char *libname )
 }
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *priv;
     priv=sh->context;
     switch(cmd)
@@ -174,14 +174,14 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	case VDCTRL_RESYNC_STREAM:
 	    /*lib starts looking for the next sequence header.*/
 	    mpeg2_reset(priv->mpeg2dec,1);
-	    return CONTROL_TRUE;
+	    return MPXP_True;
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12)
-			return CONTROL_TRUE;
-	    else 	return CONTROL_FALSE;
+			return MPXP_True;
+	    else 	return MPXP_False;
 	default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static int init(sh_video_t *sh){

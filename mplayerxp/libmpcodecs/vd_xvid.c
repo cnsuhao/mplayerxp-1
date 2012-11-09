@@ -458,7 +458,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 }
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t* priv = sh->context;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
@@ -467,7 +467,7 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    int quality=*((int*)arg);
 	    if(quality<0 || quality>5) quality=5;
 	    priv->pp_level=quality;
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	}
 	case VDCTRL_SET_EQUALIZER: {
 	    va_list ap;
@@ -476,10 +476,10 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    value=va_arg(ap, int);
 	    va_end(ap);
 
-	    if(strcmp(arg,VO_EC_BRIGHTNESS)!=0) return CONTROL_FALSE;
+	    if(strcmp(arg,VO_EC_BRIGHTNESS)!=0) return MPXP_False;
 	
 	    priv->brightness = (value * 256) / 100;
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	}
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YUY2 ||
@@ -492,12 +492,12 @@ static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
 		*((int*)arg) == IMGFMT_BGR16 ||
 		*((int*)arg) == IMGFMT_BGR24 ||
 		*((int*)arg) == IMGFMT_BGR32)
-			return CONTROL_TRUE;
-	    else	return CONTROL_FALSE;
+			return MPXP_True;
+	    else	return MPXP_False;
 	case VDCTRL_RESYNC_STREAM:
 	    priv->resync=1;
-	    return CONTROL_TRUE;
+	    return MPXP_True;
 	default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }

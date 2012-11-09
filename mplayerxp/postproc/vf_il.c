@@ -137,7 +137,7 @@ static void __FASTCALL__ parse(FilterParam *fp,const char* args){
 	if(pos && pos<max) fp->interleave=-1;
 }
 
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
     vf->put_slice=put_slice;
     vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
@@ -148,7 +148,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	parse(&vf->priv->lumaParam, args);
     }
 
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_il = {

@@ -160,14 +160,14 @@ void uninit(sh_audio_t *sh)
   mp_free(sh->context);
 }
 
-ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
   int skip;
     switch(cmd)
     {
 //      case ADCTRL_RESYNC_STREAM:
 //          sh_audio->a_in_buffer_len=0;/* reset ACM/DShow audio buffer */
-//	  return CONTROL_TRUE;
+//	  return MPXP_True;
       case ADCTRL_SKIP_FRAME:
 	{
 		float pts;
@@ -177,12 +177,12 @@ ControlCodes control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 		      if(skip<16) skip=16;
 		    }
 		    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
-	  return CONTROL_TRUE;
+	  return MPXP_True;
 	}
       default:
-	  return CONTROL_UNKNOWN;
+	  return MPXP_Unknown;
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

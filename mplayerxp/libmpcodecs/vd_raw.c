@@ -19,13 +19,13 @@ static const config_t options[] = {
 LIBVD_EXTERN(raw)
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd) {
       case VDCTRL_QUERY_FORMAT:
-	    return CONTROL_TRUE;
+	    return MPXP_True;
       default: break;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 // init driver

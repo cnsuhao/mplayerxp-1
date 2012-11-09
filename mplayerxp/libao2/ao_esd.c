@@ -93,7 +93,7 @@ typedef struct priv_s {
 /*
  * to set/get/query special features/parameters
  */
-static ControlCodes control(ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=ao->priv;
     esd_player_info_t *esd_pi;
@@ -107,12 +107,12 @@ static ControlCodes control(ao_data_t* ao,int cmd, long arg)
 	time(&now);
 	if (now == vol_cache_time) {
 	    *(ao_control_vol_t *)arg = vol_cache;
-	    return CONTROL_OK;
+	    return MPXP_Ok;
 	}
 
 	dprintf("esd: get vol\n");
 	if ((esd_i = esd_get_all_info(priv->fd)) == NULL)
-	    return CONTROL_ERROR;
+	    return MPXP_Error;
 
 	for (esd_pi = esd_i->player_list; esd_pi != NULL; esd_pi = esd_pi->next)
 	    if (strcmp(esd_pi->name, ESD_CLIENT_NAME) == 0)
@@ -128,12 +128,12 @@ static ControlCodes control(ao_data_t* ao,int cmd, long arg)
 	}
 	esd_free_all_info(esd_i);
 
-	return CONTROL_OK;
+	return MPXP_Ok;
 
     case AOCONTROL_SET_VOLUME:
 	dprintf("esd: set vol\n");
 	if ((esd_i = esd_get_all_info(priv->fd)) == NULL)
-	    return CONTROL_ERROR;
+	    return MPXP_Error;
 
 	for (esd_pi = esd_i->player_list; esd_pi != NULL; esd_pi = esd_pi->next)
 	    if (strcmp(esd_pi->name, ESD_CLIENT_NAME) == 0)
@@ -149,10 +149,10 @@ static ControlCodes control(ao_data_t* ao,int cmd, long arg)
 	    time(&vol_cache_time);
 	}
 	esd_free_all_info(esd_i);
-	return CONTROL_OK;
+	return MPXP_Ok;
 
     default:
-	return CONTROL_UNKNOWN;
+	return MPXP_Unknown;
     }
 }
 

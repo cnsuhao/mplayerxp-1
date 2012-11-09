@@ -20,8 +20,8 @@ static const config_t options[] = {
 LIBVD_EXTERN(mpegpes)
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
-    return CONTROL_UNKNOWN;
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
+    return MPXP_Unknown;
 }
 
 // init driver

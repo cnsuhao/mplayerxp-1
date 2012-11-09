@@ -29,14 +29,14 @@ typedef struct af_pan_s
 }af_pan_t;
 
 // Initialization and runtime control
-static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_pan_t* s = af->setup; 
 
   switch(cmd){
   case AF_CONTROL_REINIT:
     // Sanity check
-    if(!arg) return CONTROL_ERROR;
+    if(!arg) return MPXP_Error;
 
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->format = MPAF_F|MPAF_NE|4;
@@ -45,7 +45,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 
     if((af->data->format != ((mp_aframe_t*)arg)->format)) {
 	((mp_aframe_t*)arg)->format = af->data->format;
-	return CONTROL_FALSE;
+	return MPXP_False;
     }
     return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->data->nch);
   case AF_CONTROL_COMMAND_LINE:{
@@ -55,8 +55,8 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     int   j,k;
     // Read number of outputs
     sscanf((char*)arg,"%i%n", &nch,&n);
-    if(CONTROL_OK != control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &nch))
-      return CONTROL_ERROR;
+    if(MPXP_Ok != control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &nch))
+      return MPXP_Error;
 
     // Read pan values
     cp = &((char*)arg)[n];
@@ -73,7 +73,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
 	k++;
       }
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_PAN_LEVEL | AF_CONTROL_SET:{
     int    i;
@@ -81,7 +81,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     float* level = ((af_control_ext_t*)arg)->arg;
     for(i=0;i<AF_NCH;i++)
       s->level[ch][i] = clamp(level[i],0.0,1.0);
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_PAN_LEVEL | AF_CONTROL_GET:{
     int    i;
@@ -89,7 +89,7 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     float* level = ((af_control_ext_t*)arg)->arg;
     for(i=0;i<AF_NCH;i++)
       level[i] = s->level[ch][i];
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_PAN_NOUT | AF_CONTROL_SET:
     // Reinit must be called after this function has been called
@@ -98,16 +98,16 @@ static ControlCodes __FASTCALL__ control(struct af_instance_s* af, int cmd, any_
     if(((int*)arg)[0] <= 0 || ((int*)arg)[0] > AF_NCH){
       MSG_ERR("[pan] The number of output channels must be" 
 	     " between 1 and %i. Current value is %i\n",AF_NCH,((int*)arg)[0]);
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
     af->data->nch=((int*)arg)[0];
-    return CONTROL_OK;
+    return MPXP_Ok;
   case AF_CONTROL_PAN_NOUT | AF_CONTROL_GET:
     *(int*)arg = af->data->nch;
-    return CONTROL_OK;
+    return MPXP_Ok;
   default: break;
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -134,7 +134,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   int		ncho = l->nch;		// Number of output channels
   register int  j,k;
 
-  if(CONTROL_OK != RESIZE_LOCAL_BUFFER(af,data))
+  if(MPXP_Ok != RESIZE_LOCAL_BUFFER(af,data))
     return NULL;
 
   out = l->audio;
@@ -161,7 +161,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static ControlCodes __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -170,9 +170,9 @@ static ControlCodes __FASTCALL__ open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_pan_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
+    return MPXP_Error;
   // Set initial pan to pass-through.
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 // Description of this filter

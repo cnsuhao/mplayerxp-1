@@ -139,7 +139,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 }
 
 /* Main entry funct for the filter */
-static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
+static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
     struct vf_priv_s *p;
 
@@ -147,7 +147,7 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
     vf->uninit = uninit;
     vf->default_reqs = VFCAP_ACCEPT_STRIDE;
     vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
-    if (p == NULL) return CONTROL_FALSE;
+    if (p == NULL) return MPXP_False;
 
     if (args != NULL) {
 #ifdef DUMP_FORMAT_DATA
@@ -169,12 +169,12 @@ static ControlCodes __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 		p->frame_step = atoi(args);
 		if (p->frame_step <= 0) {
 		    MSG_WARN("[vf_framestep] Error parsing of arguments\n");
-		    return CONTROL_FALSE;
+		    return MPXP_False;
 		}
 	    }
 	}
     }
-    return CONTROL_OK;
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_framestep = {

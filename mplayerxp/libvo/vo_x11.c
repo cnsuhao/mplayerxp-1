@@ -365,7 +365,7 @@ static void __FASTCALL__ x11_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t* priv=(priv_t*)vo->priv;
   switch (request) {
@@ -375,20 +375,20 @@ static ControlCodes __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*da
     {
      vo_resize_t * vrest = (vo_resize_t *)data;
      vrest->event_type = check_events(vo,vrest->adjust_size);
-     return CONTROL_TRUE;
+     return MPXP_True;
     }
   case VOCTRL_FULLSCREEN:
     vo_x11_fullscreen(vo);
-    return CONTROL_TRUE;
+    return MPXP_True;
   case VOCTRL_GET_NUM_FRAMES:
 	*(uint32_t *)data = priv->num_buffers;
-	return CONTROL_TRUE;
+	return MPXP_True;
   case DRI_GET_SURFACE_CAPS:
 	x11_dri_get_surface_caps(vo,data);
-	return CONTROL_TRUE;
+	return MPXP_True;
   case DRI_GET_SURFACE:
 	x11_dri_get_surface(vo,data);
-	return CONTROL_TRUE;
+	return MPXP_True;
   }
-  return CONTROL_NA;
+  return MPXP_NA;
 }

@@ -79,20 +79,20 @@ void __pure_virtual(void)
 
 
 // to set/get/query special features/parameters
-static ControlCodes control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd){
 //    case VDCTRL_QUERY_MAX_PP_LEVEL:
 //	return 9;
 //    case VDCTRL_SET_PP_LEVEL:
 //	vfw_set_postproc(sh,10*(*((int*)arg)));
-//	return CONTROL_OK;
+//	return MPXP_Ok;
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_I420 ||
 		*((int*)arg) == IMGFMT_IYUV) 
-			return CONTROL_TRUE;
-	    else 	return CONTROL_FALSE;
+			return MPXP_True;
+	    else 	return MPXP_False;
     }
-    return CONTROL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 /* exits program when failure */

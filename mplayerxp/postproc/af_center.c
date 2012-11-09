@@ -25,14 +25,14 @@ typedef struct af_center_s
 }af_center_t;
 
 // Initialization and runtime control
-static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_center_t* s   = af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
     // Sanity check
-    if(!arg) return CONTROL_ERROR;
+    if(!arg) return MPXP_Error;
 
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = max(s->ch+1,((mp_aframe_t*)arg)->nch);
@@ -47,18 +47,18 @@ static ControlCodes control(struct af_instance_s* af, int cmd, any_t* arg)
     if((ch >= AF_NCH) || (ch < 0)){
       MSG_ERR("[sub] Center channel number must be between "
 	     " 0 and %i current value is %i\n", AF_NCH-1, ch);
-      return CONTROL_ERROR;
+      return MPXP_Error;
     }
     s->ch = ch;
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   case AF_CONTROL_SHOWCONF:
   {
     MSG_INFO("[af_center] %i\n",s->ch);
-    return CONTROL_OK;
+    return MPXP_Ok;
   }
   }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
 
 // Deallocate memory 
@@ -91,7 +91,7 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 }
 
 // Allocate memory and set function pointers
-static ControlCodes open(af_instance_t* af){
+static MPXP_Rc open(af_instance_t* af){
   af_center_t* s;
   af->control=control;
   af->uninit=uninit;
@@ -101,10 +101,10 @@ static ControlCodes open(af_instance_t* af){
   af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=s=mp_calloc(1,sizeof(af_center_t));
   if(af->data == NULL || af->setup == NULL)
-    return CONTROL_ERROR;
+    return MPXP_Error;
   // Set default values
   s->ch = 1;  	 // Channel nr 2
-  return CONTROL_OK;
+  return MPXP_Ok;
 }
 
 // Description of this filter

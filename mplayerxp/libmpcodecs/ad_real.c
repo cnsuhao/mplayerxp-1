@@ -283,7 +283,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
               // or -1 for EOF (or uncorrectable error)
 }
 
-static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...){
+static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...){
     UNUSED(sh);
     UNUSED(arg);
     // various optional functions you MAY implement:
@@ -291,13 +291,13 @@ static ControlCodes control(sh_audio_t *sh,int cmd,any_t* arg, ...){
       case ADCTRL_RESYNC_STREAM:
         // it is called once after seeking, to resync.
 	// Note: sh_audio->a_in_buffer_len=0; is done _before_ this call!
-	return CONTROL_TRUE;
+	return MPXP_True;
       case ADCTRL_SKIP_FRAME:
         // it is called to skip (jump over) small amount (1/10 sec or 1 frame)
 	// of audio data - used to sync audio to video after seeking
-	// if you don't return CONTROL_TRUE, it will defaults to:
+	// if you don't return MPXP_True, it will defaults to:
 	//      ds_fill_buffer(sh_audio->ds);  // skip 1 demux packet
-	return CONTROL_TRUE;
+	return MPXP_True;
     }
-  return CONTROL_UNKNOWN;
+  return MPXP_Unknown;
 }
