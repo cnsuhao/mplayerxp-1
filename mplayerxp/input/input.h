@@ -1,5 +1,5 @@
 #ifndef INPUT_H_INCLUDED
-#define INPUT_H_ICLUDED 1
+#define INPUT_H_INCLUDED 1
 
 // All commands id
 enum {
@@ -104,49 +104,44 @@ enum {
 };
 
 typedef union mp_cmd_arg_value {
-  int i;
-  float f;
-  char* s;
-  any_t* v;
+    int i;
+    float f;
+    char* s;
+    any_t* v;
 } mp_cmd_arg_value_t;
 
 typedef struct mp_cmd_arg {
-  int type;
-  mp_cmd_arg_value_t v;
+    int type;
+    mp_cmd_arg_value_t v;
 } mp_cmd_arg_t;
 
 typedef struct mp_cmd {
-  int id;
-  char* name;
-  int nargs;
-  mp_cmd_arg_t args[MP_CMD_MAX_ARGS];
+    int id;
+    char* name;
+    int nargs;
+    mp_cmd_arg_t args[MP_CMD_MAX_ARGS];
 } mp_cmd_t;
 
 
 typedef struct mp_cmd_bind {
-  int input[MP_MAX_KEY_DOWN+1];
-  char* cmd;
+    int input[MP_MAX_KEY_DOWN+1];
+    char* cmd;
 } mp_cmd_bind_t;
 
 typedef struct mp_key_name {
-  int key;
-  char* name;
+    int key;
+    char* name;
 } mp_key_name_t;
 
 // These typedefs are for the drivers. They are the functions used to retrive
 // the next key code or command.
 
-// These functions should return the key code or one of the error code
-typedef int (*mp_key_func_t)(int fd);
-// These functions should act like read but they must use our error code (if needed ;-)
-typedef int (*mp_cmd_func_t)(int fd,char* dest,int size);
-// These are used to close the driver
-typedef void (*mp_close_func_t)(int fd);
+typedef int (*mp_key_func_t)(int fd); // These functions should return the key code or one of the error code
+typedef int (*mp_cmd_func_t)(int fd,char* dest,int size); // These functions should act like read but they must use our error code (if needed ;-)
+typedef void (*mp_close_func_t)(int fd); // These are used to close the driver
+typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, any_t* ctx); // Should return 1 if the command was processed
 
-// Set this to grab all incoming key code 
-extern void (*mp_input_key_cb)(int code);
-// Should return 1 if the command was processed
-typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, any_t* ctx);
+extern void (*mp_input_key_cb)(int code); // Set this to grab all incoming key code
 
 // This function add a new key driver.
 // The first arg is a file descriptor (use a negative value if you don't use any fd)
@@ -155,62 +150,49 @@ typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, any_t* ctx);
 // fd will be used.
 // The last arg can be NULL if nothing is needed to close the driver. The close
 // function can be used
-int
-mp_input_add_cmd_fd(int fd, int select, mp_cmd_func_t read_func, mp_close_func_t close_func);
+extern int mp_input_add_cmd_fd(int fd, int select, mp_cmd_func_t read_func, mp_close_func_t close_func);
 
 // This remove a cmd driver, you usally don't need to use it
-void
-mp_input_rm_cmd_fd(int fd);
+extern void mp_input_rm_cmd_fd(int fd);
 
 // The args are the sames as for the keys drivers. If you don't use any valid fd you MUST
 // give a read_func.
-int
-mp_input_add_key_fd(int fd, int select, mp_key_func_t read_func, mp_close_func_t close_func);
+extern int mp_input_add_key_fd(int fd, int select, mp_key_func_t read_func, mp_close_func_t close_func);
 
 // As for the cmd one you usally don't need this function
-void
-mp_input_rm_key_fd(int fd);
+extern void mp_input_rm_key_fd(int fd);
 
 // This function can be used to reput a command in the system. It's used by libmpdemux
 // when it perform a blocking operation to resend the command it received to the main
 // loop.
-int
-mp_input_queue_cmd(mp_cmd_t* cmd);
+extern int mp_input_queue_cmd(mp_cmd_t* cmd);
 
 // This function retrive the next avaible command waiting no more than time msec.
 // If pause is true, the next input will always return a pause command.
-mp_cmd_t*
-mp_input_get_cmd(int time, int paused, int peek_only);
+extern mp_cmd_t* mp_input_get_cmd(int time, int paused, int peek_only);
 
-mp_cmd_t*
-mp_input_parse_cmd(char* str);
+extern mp_cmd_t* mp_input_parse_cmd(char* str);
 
 /// These filter allow you to process the command before mplayer
 /// If a filter return a true value mp_input_get_cmd will return NULL
-void
-mp_input_add_cmd_filter(mp_input_cmd_filter, any_t* ctx);
+extern void mp_input_add_cmd_filter(mp_input_cmd_filter, any_t* ctx);
 
 // After getting a command from mp_input_get_cmd you need to mp_free it using this
 // function
-void
-mp_cmd_free(mp_cmd_t* cmd);
+extern void mp_cmd_free(mp_cmd_t* cmd);
 
 // This create a copy of a command (used by the auto repeat stuff)
-mp_cmd_t*
-mp_cmd_clone(mp_cmd_t* cmd);
+extern mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd);
 
 // When you create a new driver you should add it in this 2 functions.
-void
-mp_input_init(void);
+extern void mp_input_init(void);
 
-void
-mp_input_uninit(void);
+extern void mp_input_uninit(void);
 
 // Interruptible usleep:  (used by libmpdemux)
-int
-mp_input_check_interrupt(int time);
+extern int mp_input_check_interrupt(int time);
 
-void mp_input_print_keys(void);
-void mp_input_print_cmds(void);
-void mp_input_print_binds(void);
+extern void mp_input_print_keys(void);
+extern void mp_input_print_cmds(void);
+extern void mp_input_print_binds(void);
 #endif
