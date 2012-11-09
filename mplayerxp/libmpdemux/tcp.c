@@ -198,7 +198,7 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 	FD_SET( socket_server_fd, &set );
 	// When the connection will be made, we will have a writeable fd
 	while((ret = select(FD_SETSIZE, NULL, &set, NULL, &tv)) == 0) {
-	      if(count > 30 || mp_input_check_interrupt(500)) {
+	      if(count > 30 || mp_input_check_interrupt(500)==MPXP_Ok) {
 		if(count > 30)
 		  MSG_ERR("[tcp%s] Connecting timeout\n",IP_NAME);
 		else

@@ -695,353 +695,329 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
   return config_read_option(config,config->opt_list,opt,param);
 }
 
-int m_config_parse_config_file(m_config_t *config, char *conffile)
+MPXP_Rc m_config_parse_config_file(m_config_t *config, char *conffile)
 {
 #define PRINT_LINENUM	MSG_ERR("%s(%d): ", conffile, line_num)
 #define MAX_LINE_LEN	1000
 #define MAX_OPT_LEN	100
 #define MAX_PARAM_LEN	100
-	FILE *fp;
-	char *line;
-	char opt[MAX_OPT_LEN + 1];
-	char param[MAX_PARAM_LEN + 1];
-	char c;		/* for the "" and '' check */
-	int tmp;
-	int line_num = 0;
-	int line_pos;	/* line pos */
-	int opt_pos;	/* opt pos */
-	int param_pos;	/* param pos */
-	int ret = 1;
-	int errors = 0;
+    FILE *fp;
+    char *line;
+    char opt[MAX_OPT_LEN + 1];
+    char param[MAX_PARAM_LEN + 1];
+    char c;		/* for the "" and '' check */
+    int tmp;
+    int line_num = 0;
+    int line_pos;	/* line pos */
+    int opt_pos;	/* opt pos */
+    int param_pos;	/* param pos */
+    MPXP_Rc ret = MPXP_Ok;
+    int errors = 0;
 
 #ifdef MP_DEBUG
-	assert(config != NULL);
-	//	assert(conf_list != NULL);
+    assert(config != NULL);
+    //	assert(conf_list != NULL);
 #endif
-	if (++config->recursion_depth > 1)
-		MSG_INFO("Reading config file: %s", conffile);
+    if (++config->recursion_depth > 1) MSG_INFO("Reading config file: %s", conffile);
 
-	if (config->recursion_depth > MAX_RECURSION_DEPTH) {
-		MSG_FATAL(": too deep 'include'. check your configfiles\n");
-		ret = -1;
-		goto out;
+    if (config->recursion_depth > MAX_RECURSION_DEPTH) {
+	MSG_FATAL(": too deep 'include'. check your configfiles\n");
+	ret = MPXP_False;
+	goto out;
+    }
+
+    if (init_conf(config, CONFIG_FILE) == -1) {
+	ret = MPXP_False;
+	goto out;
+    }
+
+    if ((line = (char *) mp_malloc(MAX_LINE_LEN + 1)) == NULL) {
+	MSG_FATAL("\ncan't get memory for 'line': %s", strerror(errno));
+	ret = MPXP_False;
+	goto out;
+    }
+
+    if ((fp = fopen(conffile, "r")) == NULL) {
+	if (config->recursion_depth > 1) MSG_ERR(": %s\n", strerror(errno));
+	mp_free(line);
+	ret = MPXP_Ok;
+	goto out;
+    }
+    if (config->recursion_depth > 1) MSG_FATAL("\n");
+
+    while (fgets(line, MAX_LINE_LEN, fp)) {
+	if (errors >= 16) {
+	    MSG_FATAL("too many errors\n");
+	    goto out;
 	}
 
-	if (init_conf(config, CONFIG_FILE) == -1) {
-		ret = -1;
-		goto out;
-	}
+	line_num++;
+	line_pos = 0;
 
-	if ((line = (char *) mp_malloc(MAX_LINE_LEN + 1)) == NULL) {
-		MSG_FATAL("\ncan't get memory for 'line': %s", strerror(errno));
-		ret = -1;
-		goto out;
-	}
+	/* skip whitespaces */
+	while (isspace(line[line_pos])) ++line_pos;
 
-	if ((fp = fopen(conffile, "r")) == NULL) {
-		if (config->recursion_depth > 1)
-			MSG_ERR(": %s\n", strerror(errno));
-		mp_free(line);
-		ret = 0;
-		goto out;
-	}
-	if (config->recursion_depth > 1)
-		MSG_FATAL("\n");
+	/* EOL / comment */
+	if (line[line_pos] == '\0' || line[line_pos] == '#') continue;
 
-	while (fgets(line, MAX_LINE_LEN, fp)) {
-		if (errors >= 16) {
-			MSG_FATAL("too many errors\n");
-			goto out;
-		}
-
-		line_num++;
-		line_pos = 0;
-
-		/* skip whitespaces */
-		while (isspace(line[line_pos]))
-			++line_pos;
-
-		/* EOL / comment */
-		if (line[line_pos] == '\0' || line[line_pos] == '#')
-			continue;
-
-		/* read option. */
-		for (opt_pos = 0; isprint(line[line_pos]) &&
-				line[line_pos] != ' ' &&
-				line[line_pos] != '#' &&
-				line[line_pos] != '='; /* NOTHING */) {
-			opt[opt_pos++] = line[line_pos++];
-			if (opt_pos >= MAX_OPT_LEN) {
-				PRINT_LINENUM;
-				MSG_ERR("too long option\n");
-				errors++;
-				ret = -1;
-				goto nextline;
-			}
-		}
-		if (opt_pos == 0) {
-			PRINT_LINENUM;
-			MSG_ERR("parse error\n");
-			ret = -1;
-			errors++;
-			continue;
-		}
-		opt[opt_pos] = '\0';
-
-#ifdef MP_DEBUG
+	/* read option. */
+	for (opt_pos = 0; isprint(line[line_pos]) &&
+		line[line_pos] != ' ' &&
+		line[line_pos] != '#' &&
+		line[line_pos] != '='; /* NOTHING */) {
+	    opt[opt_pos++] = line[line_pos++];
+	    if (opt_pos >= MAX_OPT_LEN) {
 		PRINT_LINENUM;
-		MSG_DBG2("option: %s\n", opt);
-#endif
-
-		/* skip whitespaces */
-		while (isspace(line[line_pos]))
-			++line_pos;
-
-		/* check '=' */
-		if (line[line_pos++] != '=') {
-			PRINT_LINENUM;
-			MSG_ERR("option without parameter\n");
-			ret = -1;
-			errors++;
-			continue;
-		}
-
-		/* whitespaces... */
-		while (isspace(line[line_pos]))
-			++line_pos;
-
-		/* read the parameter */
-		if (line[line_pos] == '"' || line[line_pos] == '\'') {
-			c = line[line_pos];
-			++line_pos;
-			for (param_pos = 0; line[line_pos] != c; /* NOTHING */) {
-				param[param_pos++] = line[line_pos++];
-				if (param_pos >= MAX_PARAM_LEN) {
-					PRINT_LINENUM;
-					MSG_ERR("too long parameter\n");
-					ret = -1;
-					errors++;
-					goto nextline;
-				}
-			}
-			line_pos++;	/* skip the closing " or ' */
-		} else {
-			for (param_pos = 0; isprint(line[line_pos]) && !isspace(line[line_pos])
-					&& line[line_pos] != '#'; /* NOTHING */) {
-				param[param_pos++] = line[line_pos++];
-				if (param_pos >= MAX_PARAM_LEN) {
-					PRINT_LINENUM;
-					MSG_ERR("too long parameter\n");
-					ret = -1;
-					errors++;
-					goto nextline;
-				}
-			}
-		}
-		param[param_pos] = '\0';
-
-		/* did we read a parameter? */
-		if (param_pos == 0) {
-			PRINT_LINENUM;
-			MSG_ERR("option without parameter\n");
-			ret = -1;
-			errors++;
-			continue;
-		}
+		MSG_ERR("too long option\n");
+		errors++;
+		ret = MPXP_False;
+		goto nextline;
+	    }
+	}
+	if (opt_pos == 0) {
+	    PRINT_LINENUM;
+	    MSG_ERR("parse error\n");
+	    ret = MPXP_False;
+	    errors++;
+	    continue;
+	}
+	opt[opt_pos] = '\0';
 
 #ifdef MP_DEBUG
-		PRINT_LINENUM;
-		MSG_DBG2("parameter: %s\n", param);
+	PRINT_LINENUM;
+	MSG_DBG2("option: %s\n", opt);
 #endif
 
-		/* now, check if we have some more chars on the line */
-		/* whitespace... */
-		while (isspace(line[line_pos]))
-			++line_pos;
+	/* skip whitespaces */
+	while (isspace(line[line_pos])) ++line_pos;
 
-		/* EOL / comment */
-		if (line[line_pos] != '\0' && line[line_pos] != '#') {
-			PRINT_LINENUM;
-			MSG_ERR("extra characters on line: %s\n", line+line_pos);
-			ret = -1;
+	/* check '=' */
+	if (line[line_pos++] != '=') {
+	    PRINT_LINENUM;
+	    MSG_ERR("option without parameter\n");
+	    ret = MPXP_False;
+	    errors++;
+	    continue;
+	}
+
+	/* whitespaces... */
+	while (isspace(line[line_pos])) ++line_pos;
+
+	/* read the parameter */
+	if (line[line_pos] == '"' || line[line_pos] == '\'') {
+	    c = line[line_pos];
+	    ++line_pos;
+	    for (param_pos = 0; line[line_pos] != c; /* NOTHING */) {
+		param[param_pos++] = line[line_pos++];
+		if (param_pos >= MAX_PARAM_LEN) {
+		    PRINT_LINENUM;
+		    MSG_ERR("too long parameter\n");
+		    ret = MPXP_False;
+		    errors++;
+		    goto nextline;
 		}
+	    }
+	    line_pos++;	/* skip the closing " or ' */
+	} else {
+	    for (param_pos = 0; isprint(line[line_pos]) && !isspace(line[line_pos])
+			&& line[line_pos] != '#'; /* NOTHING */) {
+		param[param_pos++] = line[line_pos++];
+		if (param_pos >= MAX_PARAM_LEN) {
+		    PRINT_LINENUM;
+		    MSG_ERR("too long parameter\n");
+		    ret = MPXP_False;
+		    errors++;
+		    goto nextline;
+		}
+	    }
+	}
+	param[param_pos] = '\0';
 
-		tmp = m_config_set_option(config, opt, param);
-		switch (tmp) {
+	/* did we read a parameter? */
+	if (param_pos == 0) {
+	    PRINT_LINENUM;
+	    MSG_ERR("option without parameter\n");
+	    ret = MPXP_False;
+	    errors++;
+	    continue;
+	}
+
+#ifdef MP_DEBUG
+	PRINT_LINENUM;
+	MSG_DBG2("parameter: %s\n", param);
+#endif
+
+	/* now, check if we have some more chars on the line */
+	/* whitespace... */
+	while (isspace(line[line_pos])) ++line_pos;
+
+	/* EOL / comment */
+	if (line[line_pos] != '\0' && line[line_pos] != '#') {
+	    PRINT_LINENUM;
+	    MSG_ERR("extra characters on line: %s\n", line+line_pos);
+	    ret = MPXP_False;
+	}
+
+	tmp = m_config_set_option(config, opt, param);
+	switch (tmp) {
+	    case ERR_NOT_AN_OPTION:
+	    case ERR_MISSING_PARAM:
+	    case ERR_OUT_OF_RANGE:
+	    case ERR_NO_SUBCONF:
+	    case ERR_FUNC_ERR:
+		PRINT_LINENUM;
+		MSG_ERR("%s\n", opt);
+		ret = MPXP_False;
+		errors++;
+		continue;
+		/* break */
+	}
+nextline:
+	;
+    }
+
+    mp_free(line);
+    fclose(fp);
+out:
+    --config->recursion_depth;
+    return ret;
+}
+
+extern void show_help(void);
+extern void show_long_help(void);
+MPXP_Rc m_config_parse_command_line(m_config_t *config, int argc, char **argv, char **envp)
+{
+    int i;
+    int tmp;
+    char *opt;
+    int no_more_opts = 0;
+    UNUSED(envp);
+
+#ifdef MP_DEBUG
+    assert(config != NULL);
+    assert(config->pt != NULL);
+    assert(argv != NULL);
+    assert(envp != NULL);
+    assert(argc >= 1);
+#endif
+
+    if (init_conf(config, COMMAND_LINE) == -1) return MPXP_False;
+    if(config->last_parent == NULL) config->last_parent = config->pt;
+    /* in order to work recursion detection properly in parse_config_file */
+    ++config->recursion_depth;
+
+    for (i = 1; i < argc; i++) {
+	 //next:
+	opt = argv[i];
+	if(strcmp(opt,"--help")==0) {
+	    show_help();
+	    exit(0);
+	}
+	if(strcmp(opt,"--long-help")==0) {
+	    show_long_help();
+	    exit(0);
+	}
+	/* check for -- (no more options id.) except --help! */
+	if ((*opt == '-') && (*(opt+1) == '-')) {
+	    no_more_opts = 1;
+	    if (i+1 >= argc) {
+		MSG_ERR( "You added '--' but no filenames presented!\n");
+		goto err_out;
+	    }
+	    continue;
+	}
+	if((opt[0] == '{') && (opt[1] == '\0')) {
+	    play_tree_t* entry = play_tree_new();
+	    UNSET_GLOBAL(config);
+	    if(config->last_entry == NULL) {
+		play_tree_set_child(config->last_parent,entry);
+	    } else {
+		play_tree_append_entry(config->last_entry,entry);
+		config->last_entry = NULL;
+	    }
+	    config->last_parent = entry;
+	    continue;
+	}
+
+	if((opt[0] == '}') && (opt[1] == '\0')) {
+	    if( ! config->last_parent || ! config->last_parent->parent) {
+		MSG_ERR( "too much }-\n");
+		goto err_out;
+	    }
+	    config->last_entry = config->last_parent;
+	    config->last_parent = config->last_entry->parent;
+	    continue;
+	}
+
+	if ((no_more_opts == 0) && (*opt == '-') && (*(opt+1) != 0)) /* option */ {
+	    /* remove leading '-' */
+	    char *assign,*item,*parm;
+	    opt++;
+
+	    MSG_DBG2( "this_option: %s\n", opt);
+	    parm = argv[i+1];
+	    item=opt;
+	    assign = strchr(opt,'=');
+	    if(assign) {
+		item = mp_malloc(assign-opt);
+		memcpy(item,opt,assign-opt);
+		item[assign-opt]='\0';
+		parm = mp_strdup(assign+1);
+	    }
+	    tmp = m_config_set_option(config, item, parm);
+	    if(!tmp && assign) MSG_ERR("Option '%s' doesn't require arguments\n",item);
+	    if(assign) {
+		mp_free(item);
+		mp_free(parm);
+	    }
+	    if(!tmp && assign) goto err_out;
+
+	    switch (tmp) {
 		case ERR_NOT_AN_OPTION:
 		case ERR_MISSING_PARAM:
 		case ERR_OUT_OF_RANGE:
 		case ERR_NO_SUBCONF:
 		case ERR_FUNC_ERR:
-			PRINT_LINENUM;
-			MSG_ERR("%s\n", opt);
-			ret = -1;
-			errors++;
-			continue;
-			/* break */
-		}	
-nextline:
-		;
-	}
-
-	mp_free(line);
-	fclose(fp);
-out:
-	--config->recursion_depth;
-	return ret;
-}
-
-extern void show_help(void);
-extern void show_long_help(void);
-int m_config_parse_command_line(m_config_t *config, int argc, char **argv, char **envp)
-{
-	int i;
-	int tmp;
-	char *opt;
-	int no_more_opts = 0;
-	UNUSED(envp);
-
-#ifdef MP_DEBUG
-	assert(config != NULL);
-	assert(config->pt != NULL);
-	assert(argv != NULL);
-	assert(envp != NULL);
-	assert(argc >= 1);
-#endif
-	
-	if (init_conf(config, COMMAND_LINE) == -1)
-		return -1;
-	if(config->last_parent == NULL)
-	  config->last_parent = config->pt;
-	/* in order to work recursion detection properly in parse_config_file */
-	++config->recursion_depth;
-
-	for (i = 1; i < argc; i++) {
-	  //next:
-		opt = argv[i];
-		if(strcmp(opt,"--help")==0) {
-		    show_help();
-		    exit(0);
-		}
-		if(strcmp(opt,"--long-help")==0) {
-		    show_long_help();
-		    exit(0);
-		}
-		/* check for -- (no more options id.) except --help! */
-		if ((*opt == '-') && (*(opt+1) == '-'))
-		{
-			no_more_opts = 1;
-			if (i+1 >= argc)
-			{
-			    MSG_ERR( "You added '--' but no filenames presented!\n");
-			    goto err_out;
-			}
-			continue;
-		}
-		if((opt[0] == '{') && (opt[1] == '\0'))
-		  {
-		    play_tree_t* entry = play_tree_new();
-		    UNSET_GLOBAL(config);
-		    if(config->last_entry == NULL) {
-		      play_tree_set_child(config->last_parent,entry);
-		    } else {
-		      play_tree_append_entry(config->last_entry,entry);
-		      config->last_entry = NULL;
-		    }
-		    config->last_parent = entry;
-		    continue;
-		  }
-
-		if((opt[0] == '}') && (opt[1] == '\0'))
-		  {
-		    if( ! config->last_parent || ! config->last_parent->parent) {
-		      MSG_ERR( "too much }-\n");
-		      goto err_out;
-		    }
-		    config->last_entry = config->last_parent;
-		    config->last_parent = config->last_entry->parent;
-		    continue;
-		  }
-
-		if ((no_more_opts == 0) && (*opt == '-') && (*(opt+1) != 0)) /* option */
-		{
-		    /* remove leading '-' */
-		    char *assign,*item,*parm;
-		    opt++;
-
-		    MSG_DBG2( "this_option: %s\n", opt);
-		    parm = argv[i+1];
-		    item=opt;
-		    assign = strchr(opt,'=');
-		    if(assign) {
-			item = mp_malloc(assign-opt);
-			memcpy(item,opt,assign-opt);
-			item[assign-opt]='\0';
-			parm = mp_strdup(assign+1);
-		    }
-		    tmp = m_config_set_option(config, item, parm);
-		    if(!tmp && assign) 
-			MSG_ERR("Option '%s' doesn't require arguments\n",item);
-		    if(assign) {
-			mp_free(item);
-			mp_free(parm);
-		    }
-		    if(!tmp && assign) goto err_out;
-
-		    switch (tmp) {
-		    case ERR_NOT_AN_OPTION:
-		    case ERR_MISSING_PARAM:
-		    case ERR_OUT_OF_RANGE:
-		    case ERR_NO_SUBCONF:
-		    case ERR_FUNC_ERR:
-			MSG_ERR( "Error '%s' while parsing option: '%s'!\n"
+		    MSG_ERR( "Error '%s' while parsing option: '%s'!\n"
 				,tmp==ERR_NOT_AN_OPTION?"no-option":
 				 tmp==ERR_MISSING_PARAM?"missing-param":
 				 tmp==ERR_OUT_OF_RANGE?"out-of-range":
 				 tmp==ERR_NO_SUBCONF?"no-subconfig":
 				 "func-error"
 				,opt);
-			goto err_out;
-		    default:
-			i += tmp;
-			if(assign) i--;
-			break;
-		    }
-		}
-		else /* filename */
-		{
-		    play_tree_t* entry = play_tree_new();
-		    MSG_DBG2("Adding file %s\n",argv[i]);
-		    play_tree_add_file(entry,argv[i]);
-		    if(strcasecmp(argv[i],"-") == 0)
-		      m_config_set_option(config,"use-stdin",NULL);
-		    /* opt is not an option -> treat it as a filename */
-		    UNSET_GLOBAL(config); // We start entry specific options
-		    if(config->last_entry == NULL)
-		      play_tree_set_child(config->last_parent,entry);
-		    else
-		      play_tree_append_entry(config->last_entry,entry);
-		    config->last_entry = entry;
-		}
+		    goto err_out;
+		default:
+		    i += tmp;
+		    if(assign) i--;
+		    break;
+	    }
+	} else /* filename */ {
+	    play_tree_t* entry = play_tree_new();
+	    MSG_DBG2("Adding file %s\n",argv[i]);
+	    play_tree_add_file(entry,argv[i]);
+	    if(strcasecmp(argv[i],"-") == 0) m_config_set_option(config,"use-stdin",NULL);
+	    /* opt is not an option -> treat it as a filename */
+	    UNSET_GLOBAL(config); // We start entry specific options
+	    if(config->last_entry == NULL) play_tree_set_child(config->last_parent,entry);
+	    else play_tree_append_entry(config->last_entry,entry);
+	    config->last_entry = entry;
 	}
+    }
 
-	--config->recursion_depth;
-	if(config->last_parent != config->pt)
-	  MSG_ERR("Missing }- ?\n");
-	UNSET_GLOBAL(config);
-	SET_RUNNING(config);
-	return 1;
+    --config->recursion_depth;
+    if(config->last_parent != config->pt) MSG_ERR("Missing }- ?\n");
+    UNSET_GLOBAL(config);
+    SET_RUNNING(config);
+    return MPXP_Ok;
 #if 0
 err_out_mem:
-	MSG_ERR( "can't allocate memory for filenames (%s)\n", strerror(errno));
+    MSG_ERR( "can't allocate memory for filenames (%s)\n", strerror(errno));
 #endif
 err_out:
-	--config->recursion_depth;
-	MSG_ERR( "command line: %s\n", argv[i]);
-	return -1;
+    --config->recursion_depth;
+    MSG_ERR( "command line: %s\n", argv[i]);
+    return MPXP_False;
 }
-
-
 
 int m_config_register_options(m_config_t *config,const config_t *args) {
   int list_len = 0;
@@ -1212,8 +1188,7 @@ int m_config_set_float(m_config_t *config,const char* arg,float val) {
 }
 
 
-int
-m_config_switch_flag(m_config_t *config,const char* opt) {
+int m_config_switch_flag(m_config_t *config,const char* opt) {
   const config_t *conf;
 
 #ifdef MP_DEBUG

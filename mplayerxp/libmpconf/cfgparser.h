@@ -1,9 +1,9 @@
 /*
  * command line and config file parser
  */
-
 #ifndef __CONFIG_H
-#define __CONFIG_H
+#define __CONFIG_H 1
+#include "xmpcore/xmp_enums.h"
 
 /* config types */
 enum {
@@ -81,13 +81,13 @@ struct config_save {
  * 	 0 if can't open configfile
  * 	 1 on success
  */
-int m_config_parse_config_file(m_config_t *config, char *conffile);
+MPXP_Rc m_config_parse_config_file(m_config_t *config, char *conffile);
 
 /* parse_command_line returns:
  * 	-1 on error (invalid option...)
  * 	 1 otherwise
  */
-int m_config_parse_command_line(m_config_t* config, int argc, char **argv, char **envp);
+MPXP_Rc m_config_parse_command_line(m_config_t* config, int argc, char **argv, char **envp);
 
 m_config_t* m_config_new(play_tree_t* pt);
 

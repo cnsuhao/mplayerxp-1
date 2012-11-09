@@ -1,6 +1,8 @@
 #ifndef INPUT_H_INCLUDED
 #define INPUT_H_INCLUDED 1
 
+#include "xmpcore/xmp_enums.h"
+
 // All commands id
 enum {
     MP_CMD_SEEK			=0,
@@ -150,14 +152,14 @@ extern void (*mp_input_key_cb)(int code); // Set this to grab all incoming key c
 // fd will be used.
 // The last arg can be NULL if nothing is needed to close the driver. The close
 // function can be used
-extern int mp_input_add_cmd_fd(int fd, int select, mp_cmd_func_t read_func, mp_close_func_t close_func);
+extern MPXP_Rc mp_input_add_cmd_fd(int fd, int select, mp_cmd_func_t read_func, mp_close_func_t close_func);
 
 // This remove a cmd driver, you usally don't need to use it
 extern void mp_input_rm_cmd_fd(int fd);
 
 // The args are the sames as for the keys drivers. If you don't use any valid fd you MUST
 // give a read_func.
-extern int mp_input_add_key_fd(int fd, int select, mp_key_func_t read_func, mp_close_func_t close_func);
+extern MPXP_Rc mp_input_add_key_fd(int fd, int select, mp_key_func_t read_func, mp_close_func_t close_func);
 
 // As for the cmd one you usally don't need this function
 extern void mp_input_rm_key_fd(int fd);
@@ -165,7 +167,7 @@ extern void mp_input_rm_key_fd(int fd);
 // This function can be used to reput a command in the system. It's used by libmpdemux
 // when it perform a blocking operation to resend the command it received to the main
 // loop.
-extern int mp_input_queue_cmd(mp_cmd_t* cmd);
+extern MPXP_Rc mp_input_queue_cmd(mp_cmd_t* cmd);
 
 // This function retrive the next avaible command waiting no more than time msec.
 // If pause is true, the next input will always return a pause command.
@@ -190,7 +192,7 @@ extern void mp_input_init(void);
 extern void mp_input_uninit(void);
 
 // Interruptible usleep:  (used by libmpdemux)
-extern int mp_input_check_interrupt(int time);
+extern MPXP_Rc mp_input_check_interrupt(int time);
 
 extern void mp_input_print_keys(void);
 extern void mp_input_print_cmds(void);

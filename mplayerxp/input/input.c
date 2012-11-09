@@ -437,10 +437,10 @@ static int mp_input_default_key_func(int fd);
 static int mp_input_default_cmd_func(int fd,char* buf, int l);
 static char* mp_input_get_key_name(int key);
 
-int mp_input_add_cmd_fd(int fd, int sel, mp_cmd_func_t read_func, mp_close_func_t close_func) {
+MPXP_Rc mp_input_add_cmd_fd(int fd, int sel, mp_cmd_func_t read_func, mp_close_func_t close_func) {
     if(num_cmd_fd == MP_MAX_CMD_FD) {
 	MSG_ERR("Too much command fd, unable to register fd %d\n",fd);
-	return 0;
+	return MPXP_False;
     }
 
     memset(&cmd_fds[num_cmd_fd],0,sizeof(mp_input_fd_t));
@@ -450,7 +450,7 @@ int mp_input_add_cmd_fd(int fd, int sel, mp_cmd_func_t read_func, mp_close_func_
     if(!sel) cmd_fds[num_cmd_fd].flags = MP_FD_NO_SELECT;
     num_cmd_fd++;
 
-    return 1;
+    return MPXP_Ok;
 }
 
 void mp_input_rm_cmd_fd(int fd) {
@@ -478,10 +478,10 @@ void mp_input_rm_key_fd(int fd) {
     num_key_fd--;
 }
 
-int mp_input_add_key_fd(int fd, int sel, mp_key_func_t read_func, mp_close_func_t close_func) {
+MPXP_Rc mp_input_add_key_fd(int fd, int sel, mp_key_func_t read_func, mp_close_func_t close_func) {
     if(num_key_fd == MP_MAX_KEY_FD) {
 	MSG_ERR("Too much key fd, unable to register fd %d\n",fd);
-	return 0;
+	return MPXP_False;
     }
 
     memset(&key_fds[num_key_fd],0,sizeof(mp_input_fd_t));
@@ -491,10 +491,8 @@ int mp_input_add_key_fd(int fd, int sel, mp_key_func_t read_func, mp_close_func_
     if(!sel) key_fds[num_key_fd].flags |= MP_FD_NO_SELECT;
     num_key_fd++;
 
-    return 1;
+    return MPXP_Ok;
 }
-
-
 
 mp_cmd_t* mp_input_parse_cmd(char* str) {
     int i,l;
@@ -994,12 +992,12 @@ static mp_cmd_t* mp_input_read_cmds(int tim) {
     return NULL;
 }
 
-int mp_input_queue_cmd(mp_cmd_t* cmd) {
-    if(cmd_queue_length  >= CMD_QUEUE_SIZE) return 0;
+MPXP_Rc mp_input_queue_cmd(mp_cmd_t* cmd) {
+    if(cmd_queue_length  >= CMD_QUEUE_SIZE) return MPXP_False;
     cmd_queue[cmd_queue_end] = cmd;
     cmd_queue_end = (cmd_queue_end + 1) % CMD_QUEUE_SIZE;
     cmd_queue_length++;
-    return 1;
+    return MPXP_Ok;
 }
 
 static mp_cmd_t* mp_input_get_queued_cmd(int peek_only) {
@@ -1436,7 +1434,7 @@ static int mp_input_print_cmd_list(const config_t* cfg) {
     exit(0);
 }
 
-int mp_input_check_interrupt(int tim) {
+MPXP_Rc mp_input_check_interrupt(int tim) {
     mp_cmd_t* cmd;
     if((cmd = mp_input_get_cmd(tim,0,1)) == NULL) return 0;
     switch(cmd->id) {
@@ -1446,10 +1444,10 @@ int mp_input_check_interrupt(int tim) {
 	case MP_CMD_PLAY_TREE_UP_STEP:
 	case MP_CMD_PLAY_ALT_SRC_STEP:
 	    // The cmd will be executed when we are back in the main loop
-	    return 1; //<-- memory leaks here 
+	    return MPXP_Ok; //<-- memory leaks here
     }
     // remove the cmd from the queue
     cmd = mp_input_get_cmd(tim,0,0);
     mp_cmd_free(cmd);
-    return 0;
+    return MPXP_False;
 }

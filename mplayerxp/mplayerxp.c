@@ -156,9 +156,9 @@ vo_data_t* vo_data=NULL;
 **************************************************************************/
 static int cfg_inc_verbose(struct config *conf){ UNUSED(conf); ++mp_conf.verbose; return 0;}
 
-static int cfg_include(struct config *conf, char *filename){
-	UNUSED(conf);
-	return m_config_parse_config_file(mp_data->mconfig, filename);
+static MPXP_Rc cfg_include(struct config *conf, char *filename){
+    UNUSED(conf);
+    return m_config_parse_config_file(mp_data->mconfig, filename);
 }
 #include "cfg-mplayerxp.h"
 
@@ -441,8 +441,7 @@ void parse_cfgfiles( m_config_t* conf )
 	    write(conffile_fd, default_config, strlen(default_config));
 	    close(conffile_fd);
 	}
-	if (m_config_parse_config_file(conf, conffile) < 0)
-	    exit(1);
+	if (m_config_parse_config_file(conf, conffile) != MPXP_Ok) exit(1);
 	mp_free(conffile);
     }
 }
@@ -1677,7 +1676,7 @@ int main(int argc,char* argv[], char *envp[]){
     mp_register_options(mp_data->mconfig);
     parse_cfgfiles(mp_data->mconfig);
 
-    if(m_config_parse_command_line(mp_data->mconfig, argc, argv, envp) < 0)
+    if(m_config_parse_command_line(mp_data->mconfig, argc, argv, envp)!=MPXP_Ok)
 	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
