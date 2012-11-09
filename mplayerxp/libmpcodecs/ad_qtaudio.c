@@ -9,6 +9,7 @@
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "mplayer.h"
+#include "libao2/afmt.h"
 #ifdef WIN32_LOADER
 #include "loader/ldt_keeper.h"
 #endif
@@ -231,9 +232,9 @@ static int preinit(sh_audio_t *sh){
     sh->audio_out_minsize=OutputBufferSize;
     sh->audio_in_minsize=InputBufferSize;
 
-    sh->channels=sh->wf->nChannels;
-    sh->samplerate=sh->wf->nSamplesPerSec;
-    sh->samplesize=2; //(sh->wf->wBitsPerSample+7)/8;
+    sh->nch=sh->wf->nChannels;
+    sh->rate=sh->wf->nSamplesPerSec;
+    sh->afmt=bps2afmt(2); //(sh->wf->wBitsPerSample+7)/8;
 
     sh->i_bps=sh->wf->nAvgBytesPerSec;
 //InputBufferSize*WantedBufferSize/OutputBufferSize;

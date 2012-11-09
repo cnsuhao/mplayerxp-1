@@ -55,8 +55,8 @@ static int preinit(sh_audio_t *sh_audio)
     return 0;
   }
     sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
-    sh_audio->channels=chans;
-    sh_audio->samplerate=sh_audio->wf->nSamplesPerSec;
+    sh_audio->nch=chans;
+    sh_audio->rate=sh_audio->wf->nSamplesPerSec;
     sh_audio->audio_in_minsize=4*sh_audio->wf->nBlockAlign;
     if(sh_audio->audio_in_minsize<8192) sh_audio->audio_in_minsize=8192;
     sh_audio->audio_out_minsize=4*16384;

@@ -270,10 +270,9 @@ static int init_vqf_audio_codec(sh_audio_t *sh_audio){
     priv->o_wf.nBlockAlign=4*in_fmt->nChannels;
     priv->o_wf.wBitsPerSample=in_fmt->wBitsPerSample;
     priv->o_wf.cbSize=0;
-    sh_audio->channels=in_fmt->nChannels;
-    sh_audio->samplerate=in_fmt->nSamplesPerSec;
-    sh_audio->samplesize=4;
-    sh_audio->sample_format=AFMT_FLOAT32;
+    sh_audio->nch=in_fmt->nChannels;
+    sh_audio->rate=in_fmt->nSamplesPerSec;
+    sh_audio->afmt=AFMT_FLOAT32;
 
     if(mp_conf.verbose)
     {
@@ -456,23 +455,23 @@ static int GetVqInfo( tvqConfInfoSubBlock *cfg,
 			int bits0[],
 			int bits1[],
 			int variableBits,
-			INDEX *index,
+			INDEX *_index,
 			sh_audio_t *sh)
 {
 	int idiv;
 	int bitcount = 0;
 	float pts;
-	if ( index->btype == BLK_LONG ){
+	if ( _index->btype == BLK_LONG ){
 		TvqUpdateVectorInfo( variableBits, &cfg->ndiv, bits0, bits1 ); // re-calculate VQ bits
 	}
 	for ( idiv=0; idiv<cfg->ndiv; idiv++ ){
-		bitcount += get_bstm(&index->wvq[idiv],bits0[idiv],sh,&pts); /* CB 0 */
-		bitcount += get_bstm(&index->wvq[idiv+cfg->ndiv],bits1[idiv],sh,&pts); /* CB 1 */
+		bitcount += get_bstm(&_index->wvq[idiv],bits0[idiv],sh,&pts); /* CB 0 */
+		bitcount += get_bstm(&_index->wvq[idiv+cfg->ndiv],bits1[idiv],sh,&pts); /* CB 1 */
 	}
 	return bitcount;
 }
 
-static int GetBseInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *index, sh_audio_t *sh)
+static int GetBseInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, sh_audio_t *sh)
 {
 	int i_sup, isf, itmp, idiv;
 	int bitcount = 0;
@@ -481,51 +480,51 @@ static int GetBseInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *index, 
 		for ( isf=0; isf<cfg->nsf; isf++ ){
 			for ( idiv=0; idiv<cfg->fw_ndiv; idiv++ ){
 				itmp = idiv + ( isf + i_sup * cfg->nsf ) * cfg->fw_ndiv;
-				bitcount += get_bstm(&index->fw[itmp],cfg->fw_nbit,sh,&pts);
+				bitcount += get_bstm(&_index->fw[itmp],cfg->fw_nbit,sh,&pts);
 			}
 		}
 	}
 	for ( i_sup=0; i_sup<cf->N_CH; i_sup++ ){
 		for ( isf=0; isf<cfg->nsf; isf++ ){
-			bitcount += get_bstm(&index->fw_alf[i_sup * cfg->nsf + isf],cf->FW_ARSW_BITS,sh,&pts);
+			bitcount += get_bstm(&_index->fw_alf[i_sup * cfg->nsf + isf],cf->FW_ARSW_BITS,sh,&pts);
 		}
 	}
 	return bitcount;
 }
 
-static int GetGainInfo(tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *index, sh_audio_t *sh )
+static int GetGainInfo(tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, sh_audio_t *sh )
 {
 	int i_sup, iptop, isf;
 	int bitcount = 0;
 	float pts;
 	for ( i_sup=0; i_sup<cf->N_CH; i_sup++ ){
 		iptop = ( cfg->nsubg + 1 ) * i_sup;
-		bitcount += get_bstm(&index->pow[iptop], cf->GAIN_BITS,sh,&pts);
+		bitcount += get_bstm(&_index->pow[iptop], cf->GAIN_BITS,sh,&pts);
 		for ( isf=0; isf<cfg->nsubg; isf++ ){
-			bitcount += get_bstm(&index->pow[iptop+isf+1], cf->SUB_GAIN_BITS,sh,&pts);
+			bitcount += get_bstm(&_index->pow[iptop+isf+1], cf->SUB_GAIN_BITS,sh,&pts);
 		}
 	}
 	return bitcount;
 }
 
-static int GetLspInfo( tvqConfInfo *cf, INDEX *index, sh_audio_t *sh )
+static int GetLspInfo( tvqConfInfo *cf, INDEX *_index, sh_audio_t *sh )
 {
 	int i_sup, itmp;
 	int bitcount = 0;
 	float pts;
 
 	for ( i_sup=0; i_sup<cf->N_CH; i_sup++ ){
-		bitcount += get_bstm(&index->lsp[i_sup][0], cf->LSP_BIT0,sh,&pts); /* pred. switch */
-		bitcount += get_bstm(&index->lsp[i_sup][1], cf->LSP_BIT1,sh,&pts); /* first stage */
+		bitcount += get_bstm(&_index->lsp[i_sup][0], cf->LSP_BIT0,sh,&pts); /* pred. switch */
+		bitcount += get_bstm(&_index->lsp[i_sup][1], cf->LSP_BIT1,sh,&pts); /* first stage */
 		for ( itmp=0; itmp<cf->LSP_SPLIT; itmp++ ){         /* second stage */
-			bitcount += get_bstm(&index->lsp[i_sup][itmp+2], cf->LSP_BIT2,sh,&pts);
+			bitcount += get_bstm(&_index->lsp[i_sup][itmp+2], cf->LSP_BIT2,sh,&pts);
 		}
 	}
 
 	return bitcount;
 }
 
-static int GetPpcInfo( tvqConfInfo *cf, INDEX *index, sh_audio_t *sh)
+static int GetPpcInfo( tvqConfInfo *cf, INDEX *_index, sh_audio_t *sh)
 {
 	int idiv, i_sup;
 	int bitcount = 0;
@@ -533,18 +532,18 @@ static int GetPpcInfo( tvqConfInfo *cf, INDEX *index, sh_audio_t *sh)
 	float pts;
 	
 	for ( idiv=0; idiv<cf->N_DIV_P; idiv++ ){
-		bitcount += get_bstm(&(index->pls[idiv]), priv->bits_0[BLK_PPC][idiv],sh,&pts);       /*CB0*/
-		bitcount += get_bstm(&(index->pls[idiv+cf->N_DIV_P]), priv->bits_1[BLK_PPC][idiv],sh,&pts);/*CB1*/
+		bitcount += get_bstm(&(_index->pls[idiv]), priv->bits_0[BLK_PPC][idiv],sh,&pts);       /*CB0*/
+		bitcount += get_bstm(&(_index->pls[idiv+cf->N_DIV_P]), priv->bits_1[BLK_PPC][idiv],sh,&pts);/*CB1*/
 	}
 	for (i_sup=0; i_sup<cf->N_CH; i_sup++){
-		bitcount += get_bstm(&(index->pit[i_sup]), cf->BASF_BIT,sh,&pts);
-		bitcount += get_bstm(&(index->pgain[i_sup]), cf->PGAIN_BIT,sh,&pts);
+		bitcount += get_bstm(&(_index->pit[i_sup]), cf->BASF_BIT,sh,&pts);
+		bitcount += get_bstm(&(_index->pgain[i_sup]), cf->PGAIN_BIT,sh,&pts);
 	}
 	
 	return bitcount;
 }
 
-static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *index, sh_audio_t *sh)
+static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, sh_audio_t *sh)
 {
 	int i_sup, isf, itmp;
 	int bitcount = 0;
@@ -554,7 +553,7 @@ static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *index, 
 		for ( isf=0; isf<cfg->nsf; isf++){
 			int indexSfOffset = isf * ( cfg->ncrb - cfg->ebc_crb_base ) - cfg->ebc_crb_base;
 			for ( itmp=cfg->ebc_crb_base; itmp<cfg->ncrb; itmp++ ){
-				bitcount += get_bstm(&index->bc[i_sup][itmp+indexSfOffset], cfg->ebc_bits,sh,&pts);
+				bitcount += get_bstm(&_index->bc[i_sup][itmp+indexSfOffset], cfg->ebc_bits,sh,&pts);
 			}
 		}
 	}
@@ -562,7 +561,7 @@ static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *index, 
 	return bitcount;
 }
 
-static int vqf_read_frame(sh_audio_t *sh,INDEX *index,float *pts)
+static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
 {
 	/*--- Variables ---*/
 	tvqConfInfoSubBlock *cfg;
@@ -578,12 +577,12 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *index,float *pts)
 
 	/*--- read block independent factors ---*/
 	/* Window type */
-	bitcount += get_bstm( &index->w_type, priv->cf.BITS_WTYPE, sh,pts);
-	if ( TvqWtypeToBtype( index->w_type, &index->btype ) ) {
-		MSG_ERR("Error: unknown window type: %d\n", index->w_type);
+	bitcount += get_bstm( &_index->w_type, priv->cf.BITS_WTYPE, sh,pts);
+	if ( TvqWtypeToBtype( _index->w_type, &_index->btype ) ) {
+		MSG_ERR("Error: unknown window type: %d\n", _index->w_type);
 		return 0;
 	}
-	btype = index->btype;
+	btype = _index->btype;
 
 	/*--- read block dependent factors ---*/
 	cfg = &priv->cf.cfg[btype]; // set the block dependent paremeters table
@@ -591,21 +590,21 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *index,float *pts)
 	bitcount += variableBits;
 	
 	/* Interleaved vector quantization */
-	bitcount += GetVqInfo( cfg, priv->bits_0[btype], priv->bits_1[btype], variableBits, index, sh );
+	bitcount += GetVqInfo( cfg, priv->bits_0[btype], priv->bits_1[btype], variableBits, _index, sh );
 	
 	/* Bark-scale envelope */
-	bitcount += GetBseInfo( &priv->cf, cfg, index, sh );
+	bitcount += GetBseInfo( &priv->cf, cfg, _index, sh );
 	/* Gain */
-	bitcount += GetGainInfo( &priv->cf, cfg, index, sh );
+	bitcount += GetGainInfo( &priv->cf, cfg, _index, sh );
 	/* LSP */
-	bitcount += GetLspInfo( &priv->cf, index, sh );
+	bitcount += GetLspInfo( &priv->cf, _index, sh );
 	/* PPC */
 	if ( cfg->ppc_enable ){
-		bitcount += GetPpcInfo( &priv->cf, index, sh );
+		bitcount += GetPpcInfo( &priv->cf, _index, sh );
 	}
 	/* Energy Balance Calibration */
 	if ( cfg->ebc_enable ){
-		bitcount += GetEbcInfo( &priv->cf, cfg, index, sh );
+		bitcount += GetEbcInfo( &priv->cf, cfg, _index, sh );
 	}
 	
 	return bitcount == numFixedBitsPerFrame ? bitcount/8 : 0;
@@ -641,13 +640,13 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	UNUSED(maxlen);
 	while(len<minlen)
 	{
-	    float out[priv->framesize*sh_audio->channels];
+	    float out[priv->framesize*sh_audio->nch];
 	    l=vqf_read_frame(sh_audio,&priv->index,len?&null_pts:pts);
 	    if(!l) break;
 	    TvqDecodeFrame(&priv->index, out);
-	    frtobuf(out, (float *)buf, priv->framesize, sh_audio->channels);
-	    len += priv->framesize*sh_audio->channels*4;
-	    buf += priv->framesize*sh_audio->channels*4;
+	    frtobuf(out, (float *)buf, priv->framesize, sh_audio->nch);
+	    len += priv->framesize*sh_audio->nch*4;
+	    buf += priv->framesize*sh_audio->nch*4;
 	}
 	return len;
 }

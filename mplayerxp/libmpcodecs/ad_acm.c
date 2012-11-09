@@ -9,6 +9,7 @@
 #include "loader/wineacm.h"
 #include "libmpdemux/aviprint.h"
 #include "osdep/mplib.h"
+#include "libao2/afmt.h"
 #include "help_mp.h"
 
 static const ad_info_t info =
@@ -42,12 +43,12 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
 
     priv->srcstream=0;
 
-    priv->o_wf.nChannels=sh_audio->channels;
-    priv->o_wf.nSamplesPerSec=sh_audio->samplerate;
+    priv->o_wf.nChannels=sh_audio->nch;
+    priv->o_wf.nSamplesPerSec=sh_audio->rate;
     priv->o_wf.nAvgBytesPerSec=2*priv->o_wf.nSamplesPerSec*priv->o_wf.nChannels;
     priv->o_wf.wFormatTag=WAVE_FORMAT_PCM;
-    priv->o_wf.nBlockAlign=2*sh_audio->channels;
-    priv->o_wf.wBitsPerSample=sh_audio->samplesize?sh_audio->samplesize*8:16;
+    priv->o_wf.nBlockAlign=2*sh_audio->nch;
+    priv->o_wf.wBitsPerSample=sh_audio->afmt?afmt2bps(sh_audio->afmt)*8:16;
     priv->o_wf.cbSize=0;
     if(!in_fmt)
     {
@@ -91,9 +92,9 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     sh_audio->audio_in_minsize=srcsize; // audio input min. size
     MSG_V("Audio ACM input buffer min. size: %ld\n",srcsize);
     sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
-    sh_audio->channels=priv->o_wf.nChannels;
-    sh_audio->samplerate=priv->o_wf.nSamplesPerSec;
-    sh_audio->samplesize=(priv->o_wf.wBitsPerSample+7)/8;
+    sh_audio->nch=priv->o_wf.nChannels;
+    sh_audio->rate=priv->o_wf.nSamplesPerSec;
+    sh_audio->afmt=bps2afmt((priv->o_wf.wBitsPerSample+7)/8);
     sh_audio->a_in_buffer_size=2*sh_audio->audio_in_minsize;
     sh_audio->a_in_buffer=mp_malloc(sh_audio->a_in_buffer_size);
     sh_audio->a_in_buffer_len=0;
