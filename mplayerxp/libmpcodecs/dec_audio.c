@@ -38,7 +38,7 @@ const ad_functions_t* mpca_find_driver(const char *name) {
     return NULL;
 }
 
-int mpca_init(sh_audio_t *sh_audio)
+MPXP_Rc mpca_init(sh_audio_t *sh_audio)
 {
     unsigned i;
     for (i=0; mpcodecs_ad_drivers[i] != NULL; i++)
@@ -47,7 +47,7 @@ int mpca_init(sh_audio_t *sh_audio)
 	}
     if(!mpadec){
 	MSG_ERR(MSGTR_CODEC_BAD_AFAMILY,sh_audio->codec->codec_name, sh_audio->codec->driver_name);
-	return 0; // no such driver
+	return MPXP_False; // no such driver
     }
 
     /* reset in/out buffer size/pointer: */
@@ -72,7 +72,7 @@ int mpca_init(sh_audio_t *sh_audio)
 
     if(mpadec->preinit(sh_audio)!=MPXP_Ok) {
 	MSG_ERR(MSGTR_CODEC_CANT_PREINITA);
-	return 0;
+	return MPXP_False;
     }
 
     /* allocate audio in buffer: */
@@ -93,14 +93,14 @@ int mpca_init(sh_audio_t *sh_audio)
     sh_audio->a_buffer=mp_mallocz(sh_audio->a_buffer_size);
     if(!sh_audio->a_buffer) {
 	MSG_ERR(MSGTR_CantAllocAudioBuf);
-	return 0;
+	return MPXP_False;
     }
     sh_audio->a_buffer_len=0;
 
     if(mpadec->init(sh_audio)!=MPXP_Ok){
 	MSG_WARN(MSGTR_CODEC_CANT_INITA);
 	mpca_uninit(sh_audio); /* mp_free buffers */
-	return 0;
+	return MPXP_False;
     }
 
     sh_audio->inited=1;
@@ -108,7 +108,7 @@ int mpca_init(sh_audio_t *sh_audio)
     if(!sh_audio->nch || !sh_audio->rate) {
 	MSG_WARN(MSGTR_UnknownAudio);
 	mpca_uninit(sh_audio); /* mp_free buffers */
-	return 0;
+	return MPXP_False;
     }
 
     if(!sh_audio->o_bps)
@@ -128,7 +128,7 @@ int mpca_init(sh_audio_t *sh_audio)
 	,mpadec->info->driver_name
 	,sh_audio->codec->dll_name
 	,sh_audio->i_bps,sh_audio->o_bps);
-    return 1;
+    return MPXP_Ok;
 }
 
 void mpca_uninit(sh_audio_t *sh_audio)
@@ -152,7 +152,7 @@ void mpca_uninit(sh_audio_t *sh_audio)
 }
 
  /* Init audio filters */
-int mpca_preinit_filters(sh_audio_t *sh_audio,
+MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 	unsigned in_samplerate, unsigned in_channels, unsigned in_format,
 	unsigned* out_samplerate, unsigned* out_channels, unsigned* out_format){
     char strbuf[200];
@@ -176,9 +176,9 @@ int mpca_preinit_filters(sh_audio_t *sh_audio,
 	afs->input.rate,afs->input.nch,(afs->input.format&MPAF_BPS_MASK)*8);
 
     // let's autoprobe it!
-    if(0 != af_init(afs,0)){
+    if(MPXP_Ok != af_init(afs,0)){
 	mp_free(afs);
-	return 0; // failed :(
+	return MPXP_False; // failed :(
     }
 
     *out_samplerate=afs->output.rate;
@@ -193,11 +193,11 @@ int mpca_preinit_filters(sh_audio_t *sh_audio,
 	sh_audio->af_bps);
 
     sh_audio->afilter=(any_t*)afs;
-    return 1;
+    return MPXP_Ok;
 }
 
  /* Init audio filters */
-int mpca_init_filters(sh_audio_t *sh_audio,
+MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
 	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
 	unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,
 	unsigned out_minsize, unsigned out_maxsize){
@@ -223,10 +223,10 @@ int mpca_init_filters(sh_audio_t *sh_audio,
 	afs->output.rate,afs->output.nch,(afs->output.format&MPAF_BPS_MASK)*8,ao_format_name(mpaf_format_encode(afs->output.format)));
 
     // let's autoprobe it!
-    if(0 != af_init(afs,1)){
+    if(MPXP_Ok != af_init(afs,1)){
 	sh_audio->afilter=NULL;
 	mp_free(afs);
-	return 0; // failed :(
+	return MPXP_False; // failed :(
     }
 
     // allocate the a_out_* buffers:
@@ -247,11 +247,11 @@ int mpca_init_filters(sh_audio_t *sh_audio,
     af_showconf(afs->first);
     sh_audio->afilter=(any_t*)afs;
     sh_audio->afilter_inited=1;
-    return 1;
+    return MPXP_Ok;
 }
 
  /* Init audio filters */
-int mpca_reinit_filters(sh_audio_t *sh_audio,
+MPXP_Rc mpca_reinit_filters(sh_audio_t *sh_audio,
 	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
 	unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,
 	unsigned out_minsize, unsigned out_maxsize)

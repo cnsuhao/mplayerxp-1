@@ -1236,12 +1236,12 @@ static int mpxp_configure_audio(void) {
     ao_data->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
     ao_data->format=sh_audio->afmt;
 #if 1
-    if(!mpca_preinit_filters(sh_audio,
+    if(mpca_preinit_filters(sh_audio,
 	    // input:
 	    (int)(sh_audio->rate),
 	    sh_audio->nch, sh_audio->afmt,
 	    // output:
-	    &ao_data->samplerate, &ao_data->channels, &ao_data->format)){
+	    &ao_data->samplerate, &ao_data->channels, &ao_data->format)!=MPXP_Ok){
 	    MSG_ERR("Audio filter chain preinit failed\n");
     } else {
 	MSG_V("AF_pre: %dHz %dch (%s) afmt=%08X sh_audio_min=%i\n",
@@ -1258,11 +1258,11 @@ static int mpxp_configure_audio(void) {
     } else {
 	priv->inited_flags|=INITED_AO;
 	MP_UNIT("af_init");
-	if(!mpca_init_filters(sh_audio,
+	if(mpca_init_filters(sh_audio,
 	    sh_audio->rate,
 	    sh_audio->nch, sh_audio->afmt,
 	    ao_data->samplerate, ao_data->channels, ao_data->format,
-	    ao_data->outburst*4, ao_data->buffersize)) {
+	    ao_data->outburst*4, ao_data->buffersize)!=MPXP_Ok) {
 		MSG_ERR("No matching audio filter found!\n");
 	    }
     }
@@ -1870,7 +1870,7 @@ play_next_file:
 
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");
-	if(!mpca_init(sh_audio)){
+	if(mpca_init(sh_audio)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CouldntInitAudioCodec);
 	    sh_audio=d_audio->sh=NULL;
 	} else {

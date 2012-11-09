@@ -111,7 +111,7 @@ af_stream_t *af_new(any_t*_parent);
    format given in "s", otherwise the output format in the last filter
    will be copied "s". The return value is 0 if success and -1 if
    failure */
-int af_init(af_stream_t* s, int force_output);
+MPXP_Rc af_init(af_stream_t* s, int force_output);
 
 // Uninit and remove all filters
 void af_uninit(af_stream_t* s);

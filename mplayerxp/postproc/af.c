@@ -351,11 +351,11 @@ void af_uninit(af_stream_t* s)
    format given in "s", otherwise the output fromat in the last filter
    will be copied "s". The return value is 0 if success and -1 if
    failure */
-int af_init(af_stream_t* s, int force_output)
+MPXP_Rc af_init(af_stream_t* s, int force_output)
 {
   char *af_name,*af_next;
   // Sanity check
-  if(!s) return -1;
+  if(!s) return MPXP_False;
 
   // Precaution in case caller is misbehaving
   s->input.audio  = s->output.audio  = NULL;
@@ -370,7 +370,7 @@ int af_init(af_stream_t* s, int force_output)
     // Add all filters in the list (if there are any)
     if(!s->cfg.list){      // To make automatic format conversion work
       if(!af_append(s,s->first,"ao2"))
-	return -1;
+	return MPXP_False;
     }
     else{
       af_name=s->cfg.list;
@@ -378,21 +378,21 @@ int af_init(af_stream_t* s, int force_output)
 	af_next=strchr(af_name,',');
 	if(af_next) { *af_next=0; af_next++; }
 	if(!af_append(s,s->last,af_name))
-	    return -1;
+	    return MPXP_False;
 	af_name=af_next;
       }
     }
   }
-  if(strcmp(s->last->info->name,"ao2")!=0) if(!af_append(s,s->last,"ao2")) return -1;
+  if(strcmp(s->last->info->name,"ao2")!=0) if(!af_append(s,s->last,"ao2")) return MPXP_False;
 
   // Init filters
   if(MPXP_Ok != af_reinit(s,s->first))
-    return -1;
+    return MPXP_False;
 
   // If force_output isn't set do not compensate for output format
   if(!force_output){
     memcpy(&s->output, s->last->data, sizeof(mp_aframe_t));
-    return 0;
+    return MPXP_Ok;
   }
 
   // Check output format
@@ -417,7 +417,7 @@ int af_init(af_stream_t* s, int force_output)
       // Init the new filter
       if(!af || (MPXP_Ok != af->control(af,AF_CONTROL_RESAMPLE_RATE,
 				      &(s->output.rate))))
-	return -1;
+	return MPXP_False;
       // Use lin int if the user wants fast
       if ((AF_INIT_TYPE_MASK & s->cfg.force) == AF_INIT_FAST) {
         char args[32];
@@ -425,7 +425,7 @@ int af_init(af_stream_t* s, int force_output)
 	af->control(af, AF_CONTROL_COMMAND_LINE, args);
       }
       if(MPXP_Ok != af_reinit(s,af))
-	return -1;
+	return MPXP_False;
     }
 
     // Check number of output channels fix if not OK
@@ -437,9 +437,9 @@ int af_init(af_stream_t* s, int force_output)
 	af = af_append(s,s->last,"channels");
       // Init the new filter
       if(!af || (MPXP_Ok != af->control(af,AF_CONTROL_CHANNELS,&(s->output.nch))))
-	return -1;
+	return MPXP_False;
       if(MPXP_Ok != af_reinit(s,af))
-	return -1;
+	return MPXP_False;
     }
 
     // Check output format fix if not OK
@@ -450,14 +450,14 @@ int af_init(af_stream_t* s, int force_output)
 	af = s->last;
       // Init the new filter
       if(!af ||(MPXP_Ok != af->control(af,AF_CONTROL_FORMAT,&s->output.format)))
-	return -1;
+	return MPXP_False;
       if(MPXP_Ok != af_reinit(s,af))
-	return -1;
+	return MPXP_False;
     }
 
     // Re init again just in case
     if(MPXP_Ok != af_reinit(s,s->first))
-      return -1;
+      return MPXP_False;
 
     if((s->last->data->format != s->output.format) ||
        (s->last->data->nch    != s->output.nch)    ||
@@ -466,10 +466,10 @@ int af_init(af_stream_t* s, int force_output)
       MSG_ERR("[libaf] Unable to setup filter system can not"
 	     " meet sound-card demands, please send bugreport. \n");
       af_uninit(s);
-      return -1;
+      return MPXP_False;
     }
   }
-  return 0;
+  return MPXP_Ok;
 }
 
 /* Add filter during execution. This function adds the filter "name"
