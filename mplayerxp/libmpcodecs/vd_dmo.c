@@ -15,10 +15,10 @@
 #include "vd_msg.h"
 
 static const vd_info_t info = {
-	"Win32/DMO video codecs",
-	"dmo",
-	"A'rpi",
-	"build-in"
+    "Win32/DMO video codecs",
+    "dmo",
+    "A'rpi",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -45,15 +45,15 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     unsigned int out_fmt;
     if(!(sh->context=DMO_VideoDecoder_Open(sh->codec->dll_name,&sh->codec->guid, sh->bih, 0, 0))){
-        MSG_ERR(MSGTR_MissingDLLcodec,sh->codec->dll_name);
-        MSG_HINT("Maybe you forget to upgrade your win32 codecs?? It's time to download the new\n"
-                 "package from:  ftp://mplayerhq.hu/MPlayer/releases/w32codec.tar.bz2!\n");
-	return 0;
+	MSG_ERR(MSGTR_MissingDLLcodec,sh->codec->dll_name);
+	MSG_HINT("Maybe you forget to upgrade your win32 codecs?? It's time to download the new\n"
+		 "package from:  ftp://mplayerhq.hu/MPlayer/releases/w32codec.tar.bz2!\n");
+	return MPXP_False;
     }
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return MPXP_False;
     out_fmt=sh->codec->outfmt[sh->outfmtidx];
     switch(out_fmt){
     case IMGFMT_YUY2:
@@ -70,7 +70,7 @@ static int init(sh_video_t *sh){
     }
     DMO_VideoDecoder_StartInternal(sh->context);
     MSG_V("INFO: Win32/DMOhow video codec init OK!\n");
-    return 1;
+    return MPXP_Ok;
 }
 
 // uninit driver

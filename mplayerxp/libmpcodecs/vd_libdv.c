@@ -18,12 +18,11 @@
 
 #include "vd_internal.h"
 
-static const vd_info_t info =
-{
-	"Raw DV Video Decoder",
-	"libdv",
-	"Alexander Neundorf <neundorf@kde.org>",
-	"http://libdv.sourceforge.net"
+static const vd_info_t info = {
+    "Raw DV Video Decoder",
+    "libdv",
+    "Alexander Neundorf <neundorf@kde.org>",
+    "http://libdv.sourceforge.net"
 };
 
 static const config_t options[] = {
@@ -41,24 +40,23 @@ static dv_decoder_t* global_rawdv_decoder=NULL;
 
 dv_decoder_t* init_global_rawdv_decoder(void)
 {
- if(!global_rawdv_decoder){
-   global_rawdv_decoder=dv_decoder_new(TRUE,TRUE,FALSE);
-   global_rawdv_decoder->quality=DV_QUALITY_BEST;
-   global_rawdv_decoder->prev_frame_decoded = 0;
- }
- return global_rawdv_decoder;
+    if(!global_rawdv_decoder){
+	global_rawdv_decoder=dv_decoder_new(TRUE,TRUE,FALSE);
+	global_rawdv_decoder->quality=DV_QUALITY_BEST;
+	global_rawdv_decoder->prev_frame_decoded = 0;
+    }
+    return global_rawdv_decoder;
 }
 
 // init driver
-static int init(sh_video_t *sh)
+static MPXP_Rc init(sh_video_t *sh)
 {
-   sh->context = (any_t*)init_global_rawdv_decoder();
-   return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
+    sh->context = (any_t*)init_global_rawdv_decoder();
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-}
+static void uninit(sh_video_t *sh) {}
 
 // decode a frame
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)

@@ -48,30 +48,29 @@ int divx_quality=PP_QUALITY_MAX;
 
 const vd_functions_t* mpvdec=NULL;
 
-int mpcv_get_quality_max(sh_video_t *sh_video){
-  if(mpvdec){
-    int ret=mpvdec->control(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,NULL);
-    if(ret>=0) return ret;
-  }
- return 0;
+MPXP_Rc mpcv_get_quality_max(sh_video_t *sh_video,unsigned *quality){
+    if(mpvdec){
+	MPXP_Rc ret=mpvdec->control(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
+	if(ret>=MPXP_Ok) return ret;
+    }
+    return MPXP_False;
 }
 
-void mpcv_set_quality(sh_video_t *sh_video,int quality){
-  if(mpvdec)
-    mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
+MPXP_Rc mpcv_set_quality(sh_video_t *sh_video,int quality){
+    if(mpvdec)
+	return mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
 }
 
-int mpcv_set_colors(sh_video_t *sh_video,char *item,int value)
+MPXP_Rc mpcv_set_colors(sh_video_t *sh_video,char *item,int value)
 {
     vf_instance_t* vf=sh_video->vfilter;
     vf_equalizer_t eq;
     eq.item=item;
     eq.value=value*10;
-    if(vf->control(vf,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True)
-    {
-	if(mpvdec) return mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,item,(int)value)==MPXP_Ok?1:0;
+    if(vf->control(vf,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
+	if(mpvdec) return mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,item,(int)value);
     }
-    return 1;
+    return MPXP_False;
 }
 
 void mpcv_uninit(sh_video_t *sh_video){
@@ -121,18 +120,18 @@ static void mpcv_print_codec_info(sh_video_t* sh_video) {
 #endif
 }
 
-int mpcv_ffmpeg_init(sh_video_t*sh_video) {
+MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video) {
     /* Use ffmpeg's drivers  as last hope */
     mpvdec=mpcv_find_driver_by_name("ffmpeg");
-    if(!mpvdec->init(sh_video)){
-	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-	    return 0;
+    if(mpvdec->init(sh_video)!=MPXP_Ok){
+	MSG_ERR(MSGTR_CODEC_CANT_INITV);
+	return MPXP_False;
     }
     mpcv_print_codec_info(sh_video);
-    return 1;
+    return MPXP_Ok;
 }
 
-int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
+MPXP_Rc mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
     sh_video->codec=NULL;
     MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->fourcc,
@@ -160,14 +159,14 @@ int mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int st
 	if(!(mpvdec=mpcv_find_driver_by_name(sh_video->codec->driver_name))) continue;
 	else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
 	// it's available, let's try to init!
-	if(!mpvdec->init(sh_video)){
+	if(mpvdec->init(sh_video)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 	    continue; // try next...
 	}
 	mpcv_print_codec_info(sh_video);
-	return 1;
+	return MPXP_Ok;
     }
-    return 0;
+    return MPXP_False;
 }
 
 void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)

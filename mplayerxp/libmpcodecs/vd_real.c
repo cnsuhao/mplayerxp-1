@@ -12,10 +12,10 @@
 #include "osdep/mplib.h"
 
 static const vd_info_t info = {
-	"RealPlayer video codecs",
-	"realvid",
-	"Florian Schneider (using original closed source codecs for Linux)",
-	"build-in"
+    "RealPlayer video codecs",
+    "realvid",
+    "Florian Schneider (using original closed source codecs for Linux)",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -40,18 +40,18 @@ typedef struct dp_hdr_s {
  * for the pointer.
  */
 typedef struct cmsg_data_s {
-	uint32_t data1;
-	uint32_t data2;
-	uint32_t* dimensions;
+    uint32_t data1;
+    uint32_t data2;
+    uint32_t* dimensions;
 } cmsg_data_t;
 
 typedef struct transform_in_s {
-	uint32_t len;
-	uint32_t unknown1;
-	uint32_t chunks;
-	uint32_t* extra;
-	uint32_t unknown2;
-	uint32_t timestamp;
+    uint32_t len;
+    uint32_t unknown1;
+    uint32_t chunks;
+    uint32_t* extra;
+    uint32_t unknown2;
+    uint32_t timestamp;
 } transform_in_t;
 
 
@@ -64,17 +64,17 @@ uint32_t (*rvyuv_transform)(char*, char*,transform_in_t*,unsigned int*,any_t*);
 any_t*rv_handle=NULL;
 
 any_t*__builtin_vec_new(unsigned long size) {
-	return mp_malloc(size);
+    return mp_malloc(size);
 }
 
 void __builtin_vec_delete(any_t*mem) {
-	mp_free(mem);
+    mp_free(mem);
 }
 
 void __pure_virtual(void)
 {
-	MSG_ERR( "I'm outa here!\n");
-	exit(1);
+    MSG_ERR( "I'm outa here!\n");
+    exit(1);
 }
 
 
@@ -82,7 +82,8 @@ void __pure_virtual(void)
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd){
 //    case VDCTRL_QUERY_MAX_PP_LEVEL:
-//	return 9;
+//	    *((unsigned*)arg)=9;
+//	    return MPXP_Ok;
 //    case VDCTRL_SET_PP_LEVEL:
 //	vfw_set_postproc(sh,10*(*((int*)arg)));
 //	return MPXP_Ok;
@@ -97,96 +98,96 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 
 /* exits program when failure */
 static int load_syms(char *path) {
-		any_t*handle;
-		char *error;
+    any_t*handle;
+    char *error;
 
-		rv_handle = handle = dlopen (path, RTLD_LAZY);
-		if (!handle) {
-			MSG_ERR("DLError: %s\n",dlerror());
-			return 0;
-		}
+    rv_handle = handle = dlopen (path, RTLD_LAZY);
+    if (!handle) {
+	MSG_ERR("DLError: %s\n",dlerror());
+	return 0;
+    }
 
-		rvyuv_custom_message = ld_sym(handle, "RV20toYUV420CustomMessage");
-		if ((error = dlerror()) != NULL)  {
-			MSG_ERR( "ld_sym(rvyuvCustomMessage): %s\n", error);
-			return 0;
-		}
-		rvyuv_free = ld_sym(handle, "RV20toYUV420Free");
-		if ((error = dlerror()) != NULL)  {
-			MSG_ERR( "ld_sym(rvyuvFree): %s\n", error);
-			return 0;
-		}
-		rvyuv_hive_message = ld_sym(handle, "RV20toYUV420HiveMessage");
-		if ((error = dlerror()) != NULL)  {
-			MSG_ERR( "ld_sym(rvyuvHiveMessage): %s\n", error);
-			return 0;
-		}
-		rvyuv_init = ld_sym(handle, "RV20toYUV420Init");
-		if ((error = dlerror()) != NULL)  {
-			MSG_ERR( "ld_sym(rvyuvInit): %s\n", error);
-			return 0;
-		}
-		rvyuv_transform = ld_sym(handle, "RV20toYUV420Transform");
-		if ((error = dlerror()) != NULL)  {
-			MSG_ERR( "ld_sym(rvyuvTransform): %s\n", error);
-			return 0;
-		}
-	return 1;
+    rvyuv_custom_message = ld_sym(handle, "RV20toYUV420CustomMessage");
+    if ((error = dlerror()) != NULL)  {
+	MSG_ERR( "ld_sym(rvyuvCustomMessage): %s\n", error);
+	return 0;
+    }
+    rvyuv_free = ld_sym(handle, "RV20toYUV420Free");
+    if ((error = dlerror()) != NULL)  {
+	MSG_ERR( "ld_sym(rvyuvFree): %s\n", error);
+	return 0;
+    }
+    rvyuv_hive_message = ld_sym(handle, "RV20toYUV420HiveMessage");
+    if ((error = dlerror()) != NULL)  {
+	MSG_ERR( "ld_sym(rvyuvHiveMessage): %s\n", error);
+	return 0;
+    }
+    rvyuv_init = ld_sym(handle, "RV20toYUV420Init");
+    if ((error = dlerror()) != NULL)  {
+	MSG_ERR( "ld_sym(rvyuvInit): %s\n", error);
+	return 0;
+    }
+    rvyuv_transform = ld_sym(handle, "RV20toYUV420Transform");
+    if ((error = dlerror()) != NULL)  {
+	MSG_ERR( "ld_sym(rvyuvTransform): %s\n", error);
+	return 0;
+    }
+    return 1;
 }
 
 /* we need exact positions */
 struct rv_init_t {
-	short unk1;
-	short w;
-	short h;
-	short unk3;
-	int unk2;
-	int subformat;
-	int unk5;
-	int format;
+    short unk1;
+    short w;
+    short h;
+    short unk3;
+    int unk2;
+    int subformat;
+    int unk5;
+    int format;
 } rv_init_t;
 
 // init driver
-static int init(sh_video_t *sh){
-	//unsigned int out_fmt;
-	int result;
-	// we export codec id and sub-id from demuxer in bitmapinfohdr:
-	unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
-	struct rv_init_t init_data={
-		11, sh->src_w, sh->src_h,0,0,extrahdr[0],
-		1,extrahdr[1]}; // rv30
+static MPXP_Rc init(sh_video_t *sh){
+    //unsigned int out_fmt;
+    int result;
+    // we export codec id and sub-id from demuxer in bitmapinfohdr:
+    unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
+    struct rv_init_t init_data={
+	11, sh->src_w, sh->src_h,0,0,extrahdr[0],
+	1,extrahdr[1]
+    }; // rv30
 
-	MSG_V("realvideo codec id: 0x%08X  sub-id: 0x%08X\n",extrahdr[1],extrahdr[0]);
+    MSG_V("realvideo codec id: 0x%08X  sub-id: 0x%08X\n",extrahdr[1],extrahdr[0]);
 
-	if(!load_syms(sh->codec->dll_name)){
-		return 0;
-	}
-	// only I420 supported
-	if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
-	// init codec:
-	sh->context=NULL;
-	result=(*rvyuv_init)(&init_data, &sh->context);
-	if (result){
-	    MSG_ERR("Couldn't open RealVideo codec, error code: 0x%X  \n",result);
-	    return 0;
-	}
-	// setup rv30 codec (codec sub-type and image dimensions):
-	if(extrahdr[1]>=0x20200002){
-	    uint32_t cmsg24[4]={sh->src_w,sh->src_h,sh->src_w,sh->src_h};
-	    /* FIXME: Broken for 64-bit pointers */
-	    cmsg_data_t cmsg_data={0x24,1+(extrahdr[1]&7), &cmsg24[0]};
-	    (*rvyuv_custom_message)(&cmsg_data,sh->context);
-	}
-	MSG_V("INFO: RealVideo codec init OK!\n");
-	return 1;
+    if(!load_syms(sh->codec->dll_name)) return MPXP_False;
+
+    // only I420 supported
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return MPXP_False;
+    // init codec:
+    sh->context=NULL;
+    result=(*rvyuv_init)(&init_data, &sh->context);
+    if (result){
+	MSG_ERR("Couldn't open RealVideo codec, error code: 0x%X  \n",result);
+	return MPXP_False;
+    }
+    // setup rv30 codec (codec sub-type and image dimensions):
+    if(extrahdr[1]>=0x20200002){
+	uint32_t cmsg24[4]={sh->src_w,sh->src_h,sh->src_w,sh->src_h};
+	/* FIXME: Broken for 64-bit pointers */
+	cmsg_data_t cmsg_data={0x24,1+(extrahdr[1]&7), &cmsg24[0]};
+	(*rvyuv_custom_message)(&cmsg_data,sh->context);
+    }
+    MSG_V("INFO: RealVideo codec init OK!\n");
+    return MPXP_Ok;
 }
 
 // uninit driver
 static void uninit(sh_video_t *sh){
-	if(rvyuv_free) rvyuv_free(sh->context);
-	if(rv_handle) dlclose(rv_handle);
-	rv_handle=NULL;
-	if(!sh) __pure_virtual();
+    if(rvyuv_free) rvyuv_free(sh->context);
+    if(rv_handle) dlclose(rv_handle);
+    rv_handle=NULL;
+    if(!sh) __pure_virtual();
 }
 
 // decode a frame

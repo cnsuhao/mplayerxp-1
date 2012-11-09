@@ -70,7 +70,7 @@ int mpca_init(sh_audio_t *sh_audio)
     sh_audio->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
     sh_audio->audio_in_minsize=0;
 
-    if(!mpadec->preinit(sh_audio)) {
+    if(mpadec->preinit(sh_audio)!=MPXP_Ok) {
 	MSG_ERR(MSGTR_CODEC_CANT_PREINITA);
 	return 0;
     }
@@ -97,7 +97,7 @@ int mpca_init(sh_audio_t *sh_audio)
     }
     sh_audio->a_buffer_len=0;
 
-    if(!mpadec->init(sh_audio)){
+    if(mpadec->init(sh_audio)!=MPXP_Ok){
 	MSG_WARN(MSGTR_CODEC_CANT_INITA);
 	mpca_uninit(sh_audio); /* mp_free buffers */
 	return 0;
@@ -344,7 +344,7 @@ void mpca_resync_stream(sh_audio_t *sh_audio)
    of audio data - used to sync audio to video after seeking */
 void mpca_skip_frame(sh_audio_t *sh_audio)
 {
-    int rc=MPXP_True;
+    MPXP_Rc rc=MPXP_True;
     if(sh_audio)
     if(sh_audio->inited && mpadec) rc=mpadec->control(sh_audio,ADCTRL_SKIP_FRAME,NULL);
     if(rc!=MPXP_True) ds_fill_buffer(sh_audio->ds);

@@ -23,13 +23,13 @@ enum {
 /* interface of video decoder drivers */
 typedef struct ad_functions_s
 {
-    const ad_info_t *info;
-    const config_t*  options;/**< Optional: MPlayerXP's option related */
-    int (* __FASTCALL__ preinit)(sh_audio_t *);
-    int (* __FASTCALL__ init)(sh_audio_t *sh);
-    void (* __FASTCALL__ uninit)(sh_audio_t *sh);
-    MPXP_Rc (* control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
-    unsigned (* __FASTCALL__ decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
+    const ad_info_t*	info;
+    const config_t*	options;/**< Optional: MPlayerXP's option related */
+    MPXP_Rc		(* __FASTCALL__ preinit)(sh_audio_t *);
+    MPXP_Rc		(* __FASTCALL__ init)(sh_audio_t *sh);
+    void		(* __FASTCALL__ uninit)(sh_audio_t *sh);
+    MPXP_Rc		(* control)(sh_audio_t *sh,int cmd,any_t* arg, ...);
+    unsigned		(* __FASTCALL__ decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 
 extern const ad_functions_t* mpcodecs_ad_drivers[];

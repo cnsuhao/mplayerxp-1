@@ -23,10 +23,10 @@
 #include "libvo/video_out.h"
 
 static const vd_info_t info = {
-	"FFmpeg's libavcodec codec family",
-	"ffmpeg",
-	"A'rpi",
-	"build-in"
+    "FFmpeg's libavcodec codec family",
+    "ffmpeg",
+    "A'rpi",
+    "build-in"
 };
 
 static int lavc_param_error_resilience=2;
@@ -47,28 +47,28 @@ static char *lavc_avopt = NULL;
 
 static int enable_ffslices=1;
 static const config_t ff_options[] = {
-	{"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, "enables slice-based method of frame rendering in ffmpeg decoder"},
-	{"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, "disables slice-based method of frame rendering in ffmpeg decoder"},
-	{"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error resilience for ffmpeg decoders"},
-	{"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies idct algorithm for ffmpeg decoders"},
-	{"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error concealment for ffmpeg decoders"},
-	{"vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, "specifies vstat for ffmpeg decoders"},
-	{"debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies debug level for ffmpeg decoders"},
-	{"vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies visualize motion vectors (MVs) for ffmpeg decoders"},
-	{"st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping top lines for ffmpeg decoders"},
-	{"sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping bottom lines for ffmpeg decoders"},
-	{"lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, "specifies decoding at 1= 1/2, 2=1/4, 3=1/8 resolutions for ffmpeg decoders"},
-	{"skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of loop filters for ffmpeg decoders"},
-	{"skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of IDCT filters for ffmpeg decoders"},
-	{"skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, "indicates frame skipping for ffmpeg decoders"},
-	{"threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, "specifies number of threads for ffmpeg decoders"},
-	{"o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, "specifies additional option for ffmpeg decoders"},
-	{ NULL, NULL, 0, 0, 0, 0, NULL}
+    {"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, "enables slice-based method of frame rendering in ffmpeg decoder"},
+    {"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, "disables slice-based method of frame rendering in ffmpeg decoder"},
+    {"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error resilience for ffmpeg decoders"},
+    {"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies idct algorithm for ffmpeg decoders"},
+    {"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error concealment for ffmpeg decoders"},
+    {"vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, "specifies vstat for ffmpeg decoders"},
+    {"debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies debug level for ffmpeg decoders"},
+    {"vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies visualize motion vectors (MVs) for ffmpeg decoders"},
+    {"st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping top lines for ffmpeg decoders"},
+    {"sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping bottom lines for ffmpeg decoders"},
+    {"lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, "specifies decoding at 1= 1/2, 2=1/4, 3=1/8 resolutions for ffmpeg decoders"},
+    {"skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of loop filters for ffmpeg decoders"},
+    {"skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of IDCT filters for ffmpeg decoders"},
+    {"skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, "indicates frame skipping for ffmpeg decoders"},
+    {"threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, "specifies number of threads for ffmpeg decoders"},
+    {"o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, "specifies additional option for ffmpeg decoders"},
+    { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t options[] = {
-	{"ffmpeg", &ff_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "FFMPEG specific options"},
-	{ NULL, NULL, 0, 0, 0, 0, NULL}
+    {"ffmpeg", &ff_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "FFMPEG specific options"},
+    { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 LIBVD_EXTERN(ffmpeg)
@@ -79,8 +79,7 @@ LIBVD_EXTERN(ffmpeg)
 
 
 static int vcodec_inited=0;
-typedef struct priv_s
-{
+typedef struct priv_s {
     int use_slices;
     int cap_slices;
     int use_dr1;
@@ -101,18 +100,16 @@ typedef struct priv_s
     int hello_printed;
 }priv_t;
 static pp_context* ppContext=NULL;
-static void draw_slice(struct AVCodecContext *s,
-                        const AVFrame *src, int offset[4],
-                        int y, int type, int height);
+static void draw_slice(struct AVCodecContext *s, const AVFrame *src, int offset[4], int y, int type, int height);
 
 static enum AVDiscard str2AVDiscard(char *str) {
-    if (!str)                               return AVDISCARD_DEFAULT;
-    if (strcasecmp(str, "none"   ) == 0)    return AVDISCARD_NONE;
-    if (strcasecmp(str, "default") == 0)    return AVDISCARD_DEFAULT;
-    if (strcasecmp(str, "nonref" ) == 0)    return AVDISCARD_NONREF;
-    if (strcasecmp(str, "bidir"  ) == 0)    return AVDISCARD_BIDIR;
-    if (strcasecmp(str, "nonkey" ) == 0)    return AVDISCARD_NONKEY;
-    if (strcasecmp(str, "all"    ) == 0)    return AVDISCARD_ALL;
+    if (!str)					return AVDISCARD_DEFAULT;
+    if (strcasecmp(str, "none"   ) == 0)	return AVDISCARD_NONE;
+    if (strcasecmp(str, "default") == 0)	return AVDISCARD_DEFAULT;
+    if (strcasecmp(str, "nonref" ) == 0)	return AVDISCARD_NONREF;
+    if (strcasecmp(str, "bidir"  ) == 0)	return AVDISCARD_BIDIR;
+    if (strcasecmp(str, "nonkey" ) == 0)	return AVDISCARD_NONKEY;
+    if (strcasecmp(str, "all"    ) == 0)	return AVDISCARD_ALL;
     MSG_ERR("Unknown discard value %s\n", str);
     return AVDISCARD_DEFAULT;
 }
@@ -132,7 +129,8 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     AVCodecContext *avctx = ctx->ctx;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
-	    return PP_QUALITY_MAX;
+	    *((unsigned*)arg)=PP_QUALITY_MAX;
+	    return MPXP_Ok;
 	case VDCTRL_SET_PP_LEVEL: {
 	    int quality=*((int*)arg);
 	    if(quality<0 || quality>PP_QUALITY_MAX) quality=PP_QUALITY_MAX;
@@ -189,18 +187,16 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static int ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)
+static MPXP_Rc ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)
 {
     priv_t *priv=sh->context;
     vo_tune_info_t vfi;
-    if(!priv->vo_inited)
-    {
+    if(!priv->vo_inited) {
 	unsigned halign=15,valign=15;
 	vfi.pitch[0]=32;
 	vfi.pitch[1]=
 	vfi.pitch[2]=16;
-	if(priv->ctx->pix_fmt == PIX_FMT_YUV410P && priv->cap_dr1)
-	{
+	if(priv->ctx->pix_fmt == PIX_FMT_YUV410P && priv->cap_dr1) {
 	    //yes seriously, its really needed (16x16 chroma blocks in SVQ1 -> 64x64)
 	    valign=63;
 	    vfi.pitch[0]=64;
@@ -212,10 +208,10 @@ static int ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)
 	priv->vo_inited=1;
 	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,&vfi);
     }
-    return 1;
+    return MPXP_Ok;
 }
 
-static int find_vdecoder(sh_video_t* sh) {
+static MPXP_Rc find_vdecoder(sh_video_t* sh) {
     unsigned i;
     unsigned char flag = CODECS_FLAG_NOFLIP;
     enum AVCodecID id = ff_codec_get_id(ff_codec_bmp_tags,sh->fourcc);
@@ -225,7 +221,7 @@ static int find_vdecoder(sh_video_t* sh) {
 	fourcc=&sh->fourcc;
 	MSG_ERR("Cannot find AVCodecID for for '%c%c%c%c' fourcc! Try force -vc option\n"
 		,fourcc[0],fourcc[1],fourcc[2],fourcc[3]);
-	return 0;
+	return MPXP_False;
     }
     AVCodec *codec=avcodec_find_decoder(id);
     if(!codec) goto prn_err;
@@ -239,11 +235,11 @@ static int find_vdecoder(sh_video_t* sh) {
 	sh->codec->outfmt[i]=avcodec_pix_fmt_to_codec_tag(codec->pix_fmts[i]);
 	sh->codec->outflags[i]=flag;
     }
-    return 1;
+    return MPXP_Ok;
 }
 
 extern unsigned xp_num_cpu;
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     unsigned avc_version=0;
     priv_t *priv;
     int pp_flags,rc;
@@ -256,22 +252,21 @@ static int init(sh_video_t *sh){
     priv=mp_mallocz(sizeof(priv_t));
     sh->context = priv;
     priv->frame_number=-2;
-    if(!sh->codec) if(!find_vdecoder(sh)) {
+    if(!sh->codec) if(find_vdecoder(sh)!=MPXP_False) {
 	MSG_ERR("Can't find ffmpeg decoder\n");
-	return 0;
+	return MPXP_False;
     }
     priv->lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
     if(!priv->lavc_codec){
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh->codec->dll_name);
-	return 0;
+	return MPXP_False;
     }
 
     priv->ctx = avcodec_alloc_context3(priv->lavc_codec);
     priv->lavc_picture = avcodec_alloc_frame();
-    if(!(priv->ctx && priv->lavc_picture))
-    {
-        MSG_ERR(MSGTR_OutOfMemory);
-        return 0;
+    if(!(priv->ctx && priv->lavc_picture)) {
+	MSG_ERR(MSGTR_OutOfMemory);
+	return MPXP_False;
     }
 
     priv->ctx->width = sh->src_w;
@@ -284,18 +279,17 @@ static int init(sh_video_t *sh){
     priv->ctx->idct_algo=0; /*auto*/
 #if 0
     if (lavc_param_debug)
-        av_log_set_level(AV_LOG_DEBUG);
+	av_log_set_level(AV_LOG_DEBUG);
 #endif
     priv->ctx->debug_mv= lavc_param_vismv;
     priv->ctx->skip_top   = lavc_param_skip_top;
     priv->ctx->skip_bottom= lavc_param_skip_bottom;
-    if(lavc_param_lowres_str != NULL)
-    {
+    if(lavc_param_lowres_str != NULL) {
 	int lowres_w=0;
-        sscanf(lavc_param_lowres_str, "%d,%d", &lavc_param_lowres, &lowres_w);
-        if(lavc_param_lowres < 1 || lavc_param_lowres > 16 || (lowres_w > 0 && priv->ctx->width < lowres_w))
-            lavc_param_lowres = 0;
-        priv->ctx->lowres = lavc_param_lowres;
+	sscanf(lavc_param_lowres_str, "%d,%d", &lavc_param_lowres, &lowres_w);
+	if(lavc_param_lowres < 1 || lavc_param_lowres > 16 || (lowres_w > 0 && priv->ctx->width < lowres_w))
+	    lavc_param_lowres = 0;
+	priv->ctx->lowres = lavc_param_lowres;
     }
     priv->ctx->skip_loop_filter = str2AVDiscard(lavc_param_skip_loop_filter_str);
     priv->ctx->skip_idct = str2AVDiscard(lavc_param_skip_idct_str);
@@ -308,34 +302,32 @@ static int init(sh_video_t *sh){
        MJPG fourcc :( */
     if (sh->bih && (sh->bih->biSize != sizeof(BITMAPINFOHEADER)) &&
 	(sh->fourcc == mmioFOURCC('A','V','R','n') ||
-	sh->fourcc == mmioFOURCC('M','J','P','G')))
-    {
+	sh->fourcc == mmioFOURCC('M','J','P','G'))) {
 //	priv->ctx->flags |= CODEC_FLAG_EXTERN_HUFF;
 	priv->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
 	priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
 	memcpy(priv->ctx->extradata, sh->bih+sizeof(BITMAPINFOHEADER),
 	    priv->ctx->extradata_size);
     }
-    if(   sh->fourcc == mmioFOURCC('R', 'V', '1', '0')
-       || sh->fourcc == mmioFOURCC('R', 'V', '1', '3')
-       || sh->fourcc == mmioFOURCC('R', 'V', '2', '0')
-       || sh->fourcc == mmioFOURCC('R', 'V', '3', '0')
-       || sh->fourcc == mmioFOURCC('R', 'V', '4', '0'))
-       {
-        priv->ctx->extradata_size= 8;
-        priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
-        if(sh->bih->biSize!=sizeof(*sh->bih)+8){
-            /* only 1 packet per frame & sub_id from fourcc */
-	    ((uint32_t*)priv->ctx->extradata)[0] = 0;
-	    ((uint32_t*)priv->ctx->extradata)[1] =
-        	(sh->fourcc == mmioFOURCC('R', 'V', '1', '3')) ? 0x10003001 : 0x10000000;
-        } else {
-	    /* has extra slice header (demux_rm or rm->avi streamcopy) */
-	    unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
-	    ((uint32_t*)priv->ctx->extradata)[0] = extrahdr[0];
-	    ((uint32_t*)priv->ctx->extradata)[1] = extrahdr[1];
+    if(sh->fourcc == mmioFOURCC('R', 'V', '1', '0')
+	|| sh->fourcc == mmioFOURCC('R', 'V', '1', '3')
+	|| sh->fourcc == mmioFOURCC('R', 'V', '2', '0')
+	|| sh->fourcc == mmioFOURCC('R', 'V', '3', '0')
+	|| sh->fourcc == mmioFOURCC('R', 'V', '4', '0')) {
+	    priv->ctx->extradata_size= 8;
+	    priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
+	    if(sh->bih->biSize!=sizeof(*sh->bih)+8){
+		/* only 1 packet per frame & sub_id from fourcc */
+		((uint32_t*)priv->ctx->extradata)[0] = 0;
+		((uint32_t*)priv->ctx->extradata)[1] =
+		(sh->fourcc == mmioFOURCC('R', 'V', '1', '3')) ? 0x10003001 : 0x10000000;
+	    } else {
+		/* has extra slice header (demux_rm or rm->avi streamcopy) */
+		unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
+		((uint32_t*)priv->ctx->extradata)[0] = extrahdr[0];
+		((uint32_t*)priv->ctx->extradata)[1] = extrahdr[1];
+	    }
 	}
-    }
     if (sh->bih && (sh->bih->biSize != sizeof(BITMAPINFOHEADER)) &&
 	(sh->fourcc == mmioFOURCC('M','4','S','2') ||
 	 sh->fourcc == mmioFOURCC('M','P','4','S') ||
@@ -354,32 +346,30 @@ static int init(sh_video_t *sh){
 	 sh->fourcc == mmioFOURCC('a','v','c','1') ||
 	 sh->fourcc == mmioFOURCC('L','O','C','O') ||
 	 sh->fourcc == mmioFOURCC('t','h','e','o')
-         ))
-    {
-	priv->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
-	priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
-	memcpy(priv->ctx->extradata, sh->bih+1, priv->ctx->extradata_size);
+         )) {
+	    priv->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
+	    priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
+	    memcpy(priv->ctx->extradata, sh->bih+1, priv->ctx->extradata_size);
     }
     if (sh->ImageDesc &&
 	 sh->fourcc == mmioFOURCC('S','V','Q','3')){
-	priv->ctx->extradata_size = *(int*)sh->ImageDesc;
-	priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
-	memcpy(priv->ctx->extradata, ((int*)sh->ImageDesc)+1, priv->ctx->extradata_size);
+	    priv->ctx->extradata_size = *(int*)sh->ImageDesc;
+	    priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
+	    memcpy(priv->ctx->extradata, ((int*)sh->ImageDesc)+1, priv->ctx->extradata_size);
     }
-
     /* Pass palette to codec */
 #if 0
     if (sh->bih && (sh->bih->biBitCount <= 8)) {
-        priv->ctx->palctrl = (AVPaletteControl*)mp_calloc(1,sizeof(AVPaletteControl));
-        priv->ctx->palctrl->palette_changed = 1;
-        if (sh->bih->biSize-sizeof(BITMAPINFOHEADER))
-            /* Palette size in biSize */
-            memcpy(priv->ctx->palctrl->palette, sh->bih+1,
-                   min(sh->bih->biSize-sizeof(BITMAPINFOHEADER), AVPALETTE_SIZE));
-        else
-            /* Palette size in biClrUsed */
-            memcpy(priv->ctx->palctrl->palette, sh->bih+1,
-                   min(sh->bih->biClrUsed * 4, AVPALETTE_SIZE));
+	priv->ctx->palctrl = (AVPaletteControl*)mp_calloc(1,sizeof(AVPaletteControl));
+	priv->ctx->palctrl->palette_changed = 1;
+	if (sh->bih->biSize-sizeof(BITMAPINFOHEADER))
+	    /* Palette size in biSize */
+	    memcpy(priv->ctx->palctrl->palette, sh->bih+1,
+		   min(sh->bih->biSize-sizeof(BITMAPINFOHEADER), AVPALETTE_SIZE));
+	else
+	    /* Palette size in biClrUsed */
+	    memcpy(priv->ctx->palctrl->palette, sh->bih+1,
+		   min(sh->bih->biClrUsed * 4, AVPALETTE_SIZE));
 	}
 #endif
     if(sh->bih)
@@ -401,17 +391,15 @@ static int init(sh_video_t *sh){
     }
     /* open it */
     if (avcodec_open2(priv->ctx, priv->lavc_codec, NULL) < 0) {
-        MSG_ERR(MSGTR_CantOpenCodec);
-        return 0;
+	MSG_ERR(MSGTR_CantOpenCodec);
+	return 0;
     }
     MSG_V("INFO: libavcodec.so (%06X) video codec[%c%c%c%c] init OK!\n"
-    ,avc_version
-    ,((char *)&sh->fourcc)[0],((char *)&sh->fourcc)[1],((char *)&sh->fourcc)[2],((char *)&sh->fourcc)[3]);
-    if(mp_conf.npp_options)
-    {
+	,avc_version
+	,((char *)&sh->fourcc)[0],((char *)&sh->fourcc)[1],((char *)&sh->fourcc)[2],((char *)&sh->fourcc)[3]);
+    if(mp_conf.npp_options) {
 	pp_flags=0;
-	switch(sh->codec->outfmt[sh->outfmtidx])
-	{
+	switch(sh->codec->outfmt[sh->outfmtidx]) {
 	    case IMGFMT_YV12:
 	    case IMGFMT_I420:
 	    case IMGFMT_IYUV:	pp_flags = PP_FORMAT_420;
@@ -421,8 +409,7 @@ static int init(sh_video_t *sh){
 				break;
 	    case IMGFMT_411P:	pp_flags = PP_FORMAT_411;
 				break;
-	    default:
-	    {
+	    default: {
 		const char *fmt;
 		fmt = (const char *)&sh->codec->outfmt[sh->outfmtidx];
 		MSG_WARN("Can't apply postprocessing for");
@@ -432,10 +419,7 @@ static int init(sh_video_t *sh){
 		break;
 	    }
 	}
-	if(pp_flags)
-	{
-	    ppContext=pp2_get_context(sh->src_w,sh->src_h,pp_flags);
-	}
+	if(pp_flags) ppContext=pp2_get_context(sh->src_w,sh->src_h,pp_flags);
     }
     return ff_config_vo(sh,sh->src_w,sh->src_h);
 }

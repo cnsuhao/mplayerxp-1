@@ -13,11 +13,11 @@
 #include "ad_msg.h"
 #include "osdep/mplib.h"
 #include "libao2/afmt.h"
-static const ad_info_t info =  {
-	"RealAudio decoder",
-	"realaud",
-	"A'rpi",
-	"build-in"
+static const ad_info_t info = {
+    "RealAudio decoder",
+    "realaud",
+    "A'rpi",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -29,12 +29,12 @@ LIBAD_EXTERN(real)
 static any_t*handle=NULL;
 
 any_t*__builtin_new(unsigned long size) {
-	return mp_malloc(size);
+    return mp_malloc(size);
 }
 
 /* required for cook's uninit: */
 void __builtin_delete(any_t* ize) {
-	mp_free(ize);
+    mp_free(ize);
 }
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
@@ -70,21 +70,20 @@ typedef struct priv_s {
     float pts;
 } priv_t;
 
-static int preinit(sh_audio_t *sh){
-  // let's check if the driver is available, return 0 if not.
-  // (you should do that if you use external lib(s) which is optional)
-  unsigned int result;
-  int len=0;
-  any_t* prop;
-  char path[4096];
-  char cpath[4096];
-  priv_t *priv;
-  priv=sh->context=mp_malloc(sizeof(priv_t));
-  if(!(handle = dlopen (sh->codec->dll_name, RTLD_LAZY)))
-  {
-      mp_free(sh->context);
-      return 0;
-  }
+static MPXP_Rc preinit(sh_audio_t *sh){
+    // let's check if the driver is available, return 0 if not.
+    // (you should do that if you use external lib(s) which is optional)
+    unsigned int result;
+    int len=0;
+    any_t* prop;
+    char path[4096];
+    char cpath[4096];
+    priv_t *priv;
+    priv=sh->context=mp_malloc(sizeof(priv_t));
+    if(!(handle = dlopen (sh->codec->dll_name, RTLD_LAZY))) {
+	mp_free(sh->context);
+	return MPXP_False;
+    }
 
     raCloseCodec = ld_sym(handle, "RACloseCodec");
     raDecode = ld_sym(handle, "RADecode");
@@ -96,49 +95,44 @@ static int preinit(sh_audio_t *sh){
     raSetFlavor = ld_sym(handle, "RASetFlavor");
     raSetDLLAccessPath = ld_sym(handle, "SetDLLAccessPath");
     raSetPwd = ld_sym(handle, "RASetPwd"); /* optional, used by SIPR */
-    
-  if(!raCloseCodec || !raDecode || !raFreeDecoder ||
-     !raGetFlavorProperty || !(raOpenCodec2||raOpenCodec) || !raSetFlavor ||
-     !raInitDecoder){
-      mp_free(sh->context);
-      return 0;
-  }
 
-  {
-      char *end;
-      strcpy(cpath,sh->codec->dll_name);
-      end = strrchr(cpath,'/');
-      if(end) *end=0;
-      if(!strlen(cpath)) strcpy(cpath,"/usr/lib");
-      sprintf(path, "DT_Codecs=%s", cpath);
-      if(path[strlen(path)-1]!='/'){
-        path[strlen(path)+1]=0;
-        path[strlen(path)]='/';
-      }
-      path[strlen(path)+1]=0;
+    if(!raCloseCodec || !raDecode || !raFreeDecoder ||
+	!raGetFlavorProperty || !(raOpenCodec2||raOpenCodec) || !raSetFlavor ||
+	!raInitDecoder){
+	    mp_free(sh->context);
+	    return MPXP_False;
+    }
 
-  }
-  if(raSetDLLAccessPath)
-      raSetDLLAccessPath(path);
+    char *end;
+    strcpy(cpath,sh->codec->dll_name);
+    end = strrchr(cpath,'/');
+    if(end) *end=0;
+    if(!strlen(cpath)) strcpy(cpath,"/usr/lib");
+    sprintf(path, "DT_Codecs=%s", cpath);
+    if(path[strlen(path)-1]!='/'){
+	path[strlen(path)+1]=0;
+	path[strlen(path)]='/';
+    }
+    path[strlen(path)+1]=0;
 
-    if(raOpenCodec2)
-    {
+    if(raSetDLLAccessPath)
+	raSetDLLAccessPath(path);
+
+    if(raOpenCodec2) {
 	strcat(cpath,"/");
 	result=raOpenCodec2(&priv->internal,cpath);
     }
-    else
-	result=raOpenCodec(&priv->internal);
+    else result=raOpenCodec(&priv->internal);
     if(result){
-      MSG_WARN("Decoder open failed, error code: 0x%X\n",result);
-      mp_free(sh->context);
-      return 0;
+	MSG_WARN("Decoder open failed, error code: 0x%X\n",result);
+	mp_free(sh->context);
+	return MPXP_False;
     }
 
-  sh->rate=sh->wf->nSamplesPerSec;
-  sh->afmt=bps2afmt(sh->wf->wBitsPerSample/8);
-  sh->nch=sh->wf->nChannels;
+    sh->rate=sh->wf->nSamplesPerSec;
+    sh->afmt=bps2afmt(sh->wf->wBitsPerSample/8);
+    sh->nch=sh->wf->nChannels;
 
-  {
     ra_init_t init_data={
 	sh->wf->nSamplesPerSec,
 	sh->wf->wBitsPerSample,
@@ -151,12 +145,11 @@ static int preinit(sh_audio_t *sh){
     };
     result=raInitDecoder(priv->internal,&init_data);
     if(result){
-      MSG_WARN("Decoder init failed, error code: 0x%X\n",result);
-      mp_free(sh->context);
-      return 0;
+	MSG_WARN("Decoder init failed, error code: 0x%X\n",result);
+	mp_free(sh->context);
+	return MPXP_False;
     }
-  }
-  
+
     if(raSetPwd){
 	// used by 'SIPR'
 	raSetPwd(priv->internal,"Ardubancel Quazanga"); // set password... lol.
@@ -164,9 +157,9 @@ static int preinit(sh_audio_t *sh){
 
     result=raSetFlavor(priv->internal,((short*)(sh->wf+1))[2]);
     if(result){
-      MSG_WARN("Decoder flavor setup failed, error code: 0x%X\n",result);
-      mp_free(sh->context);
-      return 0;
+	MSG_WARN("Decoder flavor setup failed, error code: 0x%X\n",result);
+	mp_free(sh->context);
+	return MPXP_False;
     }
 
     prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],0,&len);
@@ -176,31 +169,30 @@ static int preinit(sh_audio_t *sh){
     if(prop){
 	sh->i_bps=((*((int*)prop))+4)/8;
 	MSG_INFO("Audio bitrate: %5.3f kbit/s (%d bps)  \n",(*((int*)prop))*0.001f,sh->i_bps);
-    } else
-	sh->i_bps=sh->wf->nAvgBytesPerSec;
+    } else sh->i_bps=sh->wf->nAvgBytesPerSec;
 
 //    prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],0x13,&len);
 //    MSG_INFO("Samples/block?: %d  \n",(*((int*)prop)));
 
-  sh->audio_out_minsize=128000; // no idea how to get... :(
-  sh->audio_in_minsize=((short*)(sh->wf+1))[1]*sh->wf->nBlockAlign;
-  
-  return 1; // return values: 1=OK 0=ERROR
+    sh->audio_out_minsize=128000; // no idea how to get... :(
+    sh->audio_in_minsize=((short*)(sh->wf+1))[1]*sh->wf->nBlockAlign;
+
+    return MPXP_True; // return values: 1=OK 0=ERROR
 }
 
-static int init(sh_audio_t *sh_audio){
-  // initialize the decoder, set tables etc...
-  // set sample format/rate parameters if you didn't do it in preinit() yet.
-  UNUSED(sh_audio);
-  return 1; // return values: 1=OK 0=ERROR
+static MPXP_Rc init(sh_audio_t *sh_audio){
+    // initialize the decoder, set tables etc...
+    // set sample format/rate parameters if you didn't do it in preinit() yet.
+    UNUSED(sh_audio);
+    return MPXP_Ok; // return values: 1=OK 0=ERROR
 }
 
 static void uninit(sh_audio_t *sh){
-  // uninit the decoder etc...
-  priv_t *priv = sh->context;
-  if (raFreeDecoder) raFreeDecoder(priv->internal);
-  if (raCloseCodec) raCloseCodec(priv->internal);
-  mp_free(sh->context);
+    // uninit the decoder etc...
+    priv_t *priv = sh->context;
+    if (raFreeDecoder) raFreeDecoder(priv->internal);
+    if (raCloseCodec) raCloseCodec(priv->internal);
+    mp_free(sh->context);
 }
 
 static const unsigned char sipr_swaps[38][2]={
@@ -288,16 +280,16 @@ static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...){
     UNUSED(arg);
     // various optional functions you MAY implement:
     switch(cmd){
-      case ADCTRL_RESYNC_STREAM:
-        // it is called once after seeking, to resync.
-	// Note: sh_audio->a_in_buffer_len=0; is done _before_ this call!
-	return MPXP_True;
-      case ADCTRL_SKIP_FRAME:
-        // it is called to skip (jump over) small amount (1/10 sec or 1 frame)
-	// of audio data - used to sync audio to video after seeking
-	// if you don't return MPXP_True, it will defaults to:
-	//      ds_fill_buffer(sh_audio->ds);  // skip 1 demux packet
-	return MPXP_True;
+	case ADCTRL_RESYNC_STREAM:
+	    // it is called once after seeking, to resync.
+	    // Note: sh_audio->a_in_buffer_len=0; is done _before_ this call!
+	    return MPXP_True;
+	 case ADCTRL_SKIP_FRAME:
+	    // it is called to skip (jump over) small amount (1/10 sec or 1 frame)
+	    // of audio data - used to sync audio to video after seeking
+	    // if you don't return MPXP_True, it will defaults to:
+	    //      ds_fill_buffer(sh_audio->ds);  // skip 1 demux packet
+	    return MPXP_True;
     }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }

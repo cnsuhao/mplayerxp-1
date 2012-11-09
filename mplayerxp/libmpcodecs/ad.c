@@ -34,32 +34,31 @@ extern const ad_functions_t mpcodecs_ad_twin;
 extern const ad_functions_t mpcodecs_ad_dmo;
 extern const ad_functions_t mpcodecs_ad_qtaudio;
 
-const ad_functions_t* mpcodecs_ad_drivers[] =
-{
-  &mpcodecs_ad_null,
-  &mpcodecs_ad_mp3,
-  &mpcodecs_ad_a52,
-  &mpcodecs_ad_dca,
-  &mpcodecs_ad_hwac3,
-  &mpcodecs_ad_ffmpeg,
-  &mpcodecs_ad_pcm,
-  &mpcodecs_ad_dvdpcm,
-  &mpcodecs_ad_faad,
+const ad_functions_t* mpcodecs_ad_drivers[] = {
+    &mpcodecs_ad_null,
+    &mpcodecs_ad_mp3,
+    &mpcodecs_ad_a52,
+    &mpcodecs_ad_dca,
+    &mpcodecs_ad_hwac3,
+    &mpcodecs_ad_ffmpeg,
+    &mpcodecs_ad_pcm,
+    &mpcodecs_ad_dvdpcm,
+    &mpcodecs_ad_faad,
 #ifdef HAVE_LIBVORBIS
-  &mpcodecs_ad_vorbis,
+    &mpcodecs_ad_vorbis,
 #endif
 #ifdef HAVE_LIBDV
-  &mpcodecs_ad_libdv,
+    &mpcodecs_ad_libdv,
 #endif
-  &mpcodecs_ad_real,
+    &mpcodecs_ad_real,
 #ifdef HAVE_WIN32LOADER
-  &mpcodecs_ad_dshow,
-  &mpcodecs_ad_twin,
-  &mpcodecs_ad_msacm,
-  &mpcodecs_ad_dmo,
-  &mpcodecs_ad_qtaudio,
+    &mpcodecs_ad_dshow,
+    &mpcodecs_ad_twin,
+    &mpcodecs_ad_msacm,
+    &mpcodecs_ad_dmo,
+    &mpcodecs_ad_qtaudio,
 #endif
-  NULL
+    NULL
 };
 
 static unsigned int nddrivers=sizeof(mpcodecs_ad_drivers)/sizeof(ad_functions_t*);

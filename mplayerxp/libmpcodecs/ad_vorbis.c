@@ -11,12 +11,11 @@
 
 extern ao_data_t* ao_data;
 
-static const ad_info_t info =
-{
-	"Ogg/Vorbis audio decoder",
-	"libvorbis",
-	"Felix Buenemann, A'rpi",
-	"build-in"
+static const ad_info_t info = {
+    "Ogg/Vorbis audio decoder",
+    "libvorbis",
+    "Felix Buenemann, A'rpi",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -30,67 +29,66 @@ LIBAD_EXTERN(vorbis)
 
 // This struct is also defined in demux_ogg.c => common header ?
 typedef struct priv_s {
-  vorbis_info      vi; /* struct that stores all the static vorbis bitstream
-			  settings */
-  vorbis_comment   vc; /* struct that stores all the bitstream user comments */
-  vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
-  vorbis_block     vb; /* local working space for packet->PCM decode */
+    vorbis_info      vi; /* struct that stores all the static vorbis bitstream
+			    settings */
+    vorbis_comment   vc; /* struct that stores all the bitstream user comments */
+    vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
+    vorbis_block     vb; /* local working space for packet->PCM decode */
 } priv_t;
 
-static int preinit(sh_audio_t *sh)
+static MPXP_Rc preinit(sh_audio_t *sh)
 {
-  if(!(sh->context=mp_malloc(sizeof(priv_t)))) return 0;
-  sh->audio_out_minsize=1024*4; // 1024 samples/frame
-  return 1;
+    if(!(sh->context=mp_malloc(sizeof(priv_t)))) return MPXP_False;
+    sh->audio_out_minsize=1024*4; // 1024 samples/frame
+    return MPXP_Ok;
 }
 
-static int init(sh_audio_t *sh)
+static MPXP_Rc init(sh_audio_t *sh)
 {
-  ogg_packet op;
-  vorbis_comment vc;
-  priv_t *ov;
-  float pts;
+    ogg_packet op;
+    vorbis_comment vc;
+    priv_t *ov;
+    float pts;
 
-  /// Init the decoder with the 3 header packets
-  ov = sh->context;
-  vorbis_info_init(&ov->vi);
-  vorbis_comment_init(&vc);
-  op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
-  op.b_o_s  = 1;
-  /// Header
-  if(vorbis_synthesis_headerin(&ov->vi,&vc,&op) <0) {
-    MSG_ERR("OggVorbis: initial (identification) header broken!\n");
-    mp_free(ov);
-    return 0;
-  }
-  op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
-  op.b_o_s  = 0;
-  /// Comments
-  if(vorbis_synthesis_headerin(&ov->vi,&vc,&op) <0) {
-    MSG_ERR("OggVorbis: comment header broken!\n");
-    mp_free(ov);
-    return 0;
-  }
-  op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
-  //// Codebook
-  if(vorbis_synthesis_headerin(&ov->vi,&vc,&op)<0) {
-    MSG_WARN("OggVorbis: codebook header broken!\n");
-    mp_free(ov);
-    return 0;
-  } else { /// Print the infos
-    char **ptr=vc.user_comments;
-    while(*ptr){
-      MSG_V("OggVorbisComment: %s\n",*ptr);
-      ++ptr;
+    /// Init the decoder with the 3 header packets
+    ov = sh->context;
+    vorbis_info_init(&ov->vi);
+    vorbis_comment_init(&vc);
+    op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
+    op.b_o_s  = 1;
+    /// Header
+    if(vorbis_synthesis_headerin(&ov->vi,&vc,&op) <0) {
+	MSG_ERR("OggVorbis: initial (identification) header broken!\n");
+	mp_free(ov);
+	return MPXP_False;
     }
-    MSG_V("OggVorbis: Bitstream is %d channel, %dHz, %dbit/s %cBR\n",(int)ov->vi.channels,(int)ov->vi.rate,(int)ov->vi.bitrate_nominal,
-	(ov->vi.bitrate_lower!=ov->vi.bitrate_nominal)||(ov->vi.bitrate_upper!=ov->vi.bitrate_nominal)?'V':'C');
-    MSG_V("OggVorbis: Encoded by: %s\n",vc.vendor);
-  }
-
-  // Setup the decoder
-  sh->nch=ov->vi.channels;
-  sh->rate=ov->vi.rate;
+    op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
+    op.b_o_s  = 0;
+    /// Comments
+    if(vorbis_synthesis_headerin(&ov->vi,&vc,&op) <0) {
+	MSG_ERR("OggVorbis: comment header broken!\n");
+	mp_free(ov);
+	return MPXP_False;
+    }
+    op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
+    //// Codebook
+    if(vorbis_synthesis_headerin(&ov->vi,&vc,&op)<0) {
+	MSG_WARN("OggVorbis: codebook header broken!\n");
+	mp_free(ov);
+	return MPXP_False;
+    } else { /// Print the infos
+	char **ptr=vc.user_comments;
+	while(*ptr) {
+	    MSG_V("OggVorbisComment: %s\n",*ptr);
+	    ++ptr;
+	}
+	MSG_V("OggVorbis: Bitstream is %d channel, %dHz, %dbit/s %cBR\n",(int)ov->vi.channels,(int)ov->vi.rate,(int)ov->vi.bitrate_nominal,
+	    (ov->vi.bitrate_lower!=ov->vi.bitrate_nominal)||(ov->vi.bitrate_upper!=ov->vi.bitrate_nominal)?'V':'C');
+	MSG_V("OggVorbis: Encoded by: %s\n",vc.vendor);
+    }
+    // Setup the decoder
+    sh->nch=ov->vi.channels;
+    sh->rate=ov->vi.rate;
 #ifdef WORDS_BIGENDIAN
 #define OGG_FMT32 AFMT_S32_BE
 #define OGG_FMT24 AFMT_S24_BE
@@ -100,25 +98,25 @@ static int init(sh_audio_t *sh)
 #define OGG_FMT24 AFMT_S24_LE
 #define OGG_FMT16 AFMT_S16_LE
 #endif
-  sh->afmt=OGG_FMT16;
-  if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == MPXP_Ok) {
-    sh->afmt=OGG_FMT32;
-  }
-  // assume 128kbit if bitrate not specified in the header
-  sh->i_bps=((ov->vi.bitrate_nominal>0) ? ov->vi.bitrate_nominal : 128000)/8;
-  sh->context = ov;
+    sh->afmt=OGG_FMT16;
+    if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == MPXP_Ok) {
+	sh->afmt=OGG_FMT32;
+    }
+    // assume 128kbit if bitrate not specified in the header
+    sh->i_bps=((ov->vi.bitrate_nominal>0) ? ov->vi.bitrate_nominal : 128000)/8;
+    sh->context = ov;
 
-  /// Finish the decoder init
-  vorbis_synthesis_init(&ov->vd,&ov->vi);
-  vorbis_block_init(&ov->vd,&ov->vb);
-  MSG_V("OggVorbis: Init OK!\n");
+    /// Finish the decoder init
+    vorbis_synthesis_init(&ov->vd,&ov->vi);
+    vorbis_block_init(&ov->vd,&ov->vb);
+    MSG_V("OggVorbis: Init OK!\n");
 
-  return 1;
+    return MPXP_Ok;
 }
 
 static void uninit(sh_audio_t *sh)
 {
-  mp_free(sh->context);
+    mp_free(sh->context);
 }
 
 static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
@@ -126,14 +124,13 @@ static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
     UNUSED(sh);
     UNUSED(cmd);
     UNUSED(arg);
-    switch(cmd)
-    {
+    switch(cmd) {
 #if 0
-      case ADCTRL_RESYNC_STREAM:  return MPXP_True;
-      case ADCTRL_SKIP_FRAME:  return MPXP_True;
+	case ADCTRL_RESYNC_STREAM:  return MPXP_True;
+	case ADCTRL_SKIP_FRAME:  return MPXP_True;
 #endif
     }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
 static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
@@ -214,9 +211,8 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
 	      }
 	    }
 	    }
-		
-	    if(clipflag)
-	      MSG_DBG2("Clipping in frame %ld\n",(long)(ov->vd.sequence));
+
+	    if(clipflag) { MSG_DBG2("Clipping in frame %ld\n",(long)(ov->vd.sequence)); }
 	    len+=afmt2bps(sh->afmt)*ov->vi.channels*bout;
 	    MSG_DBG2("\n[decoded: %d / %d ]\n",bout,samples);
 	    vorbis_synthesis_read(&ov->vd,bout); /* tell libvorbis how

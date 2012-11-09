@@ -27,10 +27,10 @@
 #include "codecs_ld.h"
 
 static const vd_info_t info = {
-	"XAnim codecs",
-	"xanim",
-	"A'rpi & Alex <Xanim (http://xanim.va.pubnix.com/)>",
-	"build-in"
+    "XAnim codecs",
+    "xanim",
+    "A'rpi & Alex <Xanim (http://xanim.va.pubnix.com/)>",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -40,12 +40,11 @@ static const config_t options[] = {
 LIBVD_EXTERN(xanim)
 
 /*************************** START OF XA CODEC BINARY INTERFACE ****************/
-typedef struct
-{
-  unsigned int		what;
-  unsigned int		id;
-  int			(*iq_func)();	/* init/query function */
-  unsigned int		(*dec_func)();  /* opt decode function */
+typedef struct {
+    unsigned int	what;
+    unsigned int	id;
+    int			(*iq_func)();	/* init/query function */
+    unsigned int	(*dec_func)();  /* opt decode function */
 } XAVID_FUNC_HDR;
 
 #define XAVID_WHAT_NO_MORE	0x0000
@@ -55,31 +54,29 @@ typedef struct
 
 #define XAVID_API_REV		0x0003
 
-typedef struct
-{
-  unsigned int		api_rev;
-  char			*desc;
-  char			*rev;
-  char			*copyright;
-  char			*mod_author;
-  char			*authors;
-  unsigned int		num_funcs;
-  XAVID_FUNC_HDR	*funcs;
+typedef struct {
+    unsigned int	api_rev;
+    char		*desc;
+    char		*rev;
+    char		*copyright;
+    char		*mod_author;
+    char		*authors;
+    unsigned int	num_funcs;
+    XAVID_FUNC_HDR	*funcs;
 } XAVID_MOD_HDR;
 
 /* XA CODEC .. */
-typedef struct
-{
-  any_t*anim_hdr;
-  unsigned long		compression;
-  unsigned long		x, y;
-  unsigned long		depth;
-  any_t*extra;
-  unsigned long		xapi_rev;
-  unsigned long		(*decoder)();
-  char			*description;
-  unsigned long		avi_ctab_flag;
-  unsigned long		(*avi_read_ext)();
+typedef struct {
+    any_t*		anim_hdr;
+    unsigned long	compression;
+    unsigned long	x, y;
+    unsigned long	depth;
+    any_t*		extra;
+    unsigned long	xapi_rev;
+    unsigned long	(*decoder)();
+    char*		description;
+    unsigned long	avi_ctab_flag;
+    unsigned long	(*avi_read_ext)();
 } XA_CODEC_HDR;
 
 #define CODEC_SUPPORTED 1
@@ -87,55 +84,50 @@ typedef struct
 #define CODEC_UNSUPPORTED -1
 
 /* fuckin colormap structures for xanim */
-typedef struct
-{
-  unsigned short	red;
-  unsigned short	green;
-  unsigned short	blue;
-  unsigned short	gray;
+typedef struct {
+    unsigned short	red;
+    unsigned short	green;
+    unsigned short	blue;
+    unsigned short	gray;
 } ColorReg;
 
-typedef struct XA_ACTION_STRUCT
-{
-  int			type;
-  int			cmap_rev;
-  unsigned char		*data;
-  struct XA_ACTION_STRUCT *next;
-  struct XA_CHDR_STRUCT	*chdr;
-  ColorReg		*h_cmap;
-  unsigned int		*map;
-  struct XA_ACTION_STRUCT *next_same_chdr;
+typedef struct XA_ACTION_STRUCT {
+    int				type;
+    int				cmap_rev;
+    unsigned char*		data;
+    struct XA_ACTION_STRUCT*	next;
+    struct XA_CHDR_STRUCT*	chdr;
+    ColorReg*			h_cmap;
+    unsigned int*		map;
+    struct XA_ACTION_STRUCT*	next_same_chdr;
 } XA_ACTION;
 
-typedef struct XA_CHDR_STRUCT
-{
-  unsigned int		rev;
-  ColorReg		*cmap;
-  unsigned int		csize, coff;
-  unsigned int		*map;
-  unsigned int		msize, moff;
-  struct XA_CHDR_STRUCT	*next;
-  XA_ACTION		*acts;
-  struct XA_CHDR_STRUCT	*new_chdr;
+typedef struct XA_CHDR_STRUCT {
+    unsigned int		rev;
+    ColorReg*			cmap;
+    unsigned int		csize, coff;
+    unsigned int*		map;
+    unsigned int		msize, moff;
+    struct XA_CHDR_STRUCT*	next;
+    XA_ACTION*			acts;
+    struct XA_CHDR_STRUCT*	new_chdr;
 } XA_CHDR;
 
-typedef struct
-{
-  unsigned int		cmd;
-  unsigned int		skip_flag;
-  unsigned int		imagex, imagey;	/* image buffer size */
-  unsigned int		imaged;		/* image depth */
-  XA_CHDR		*chdr;		/* color map header */
-  unsigned int		map_flag;
-  unsigned int		*map;
-  unsigned int		xs, ys;
-  unsigned int		xe, ye;
-  unsigned int		special;
-  any_t*extra;
+typedef struct {
+    unsigned int	cmd;
+    unsigned int	skip_flag;
+    unsigned int	imagex, imagey;	/* image buffer size */
+    unsigned int	imaged;		/* image depth */
+    XA_CHDR*		chdr;		/* color map header */
+    unsigned int	map_flag;
+    unsigned int*	map;
+    unsigned int	xs, ys;
+    unsigned int	xe, ye;
+    unsigned int	special;
+    any_t*		extra;
 } XA_DEC_INFO;
 
-typedef struct
-{
+typedef struct {
     unsigned int	file_num;
     unsigned int	anim_type;
     unsigned int	imagex;
@@ -146,20 +138,17 @@ typedef struct
 
 // Added by A'rpi
 typedef struct {
-    unsigned int out_fmt;
-    int bpp;
-    int width,height;
-    unsigned char* planes[3];
-    int stride[3];
-    unsigned char *mem;
+    unsigned int	out_fmt;
+    unsigned		bpp;
+    unsigned		width,height;
+    unsigned char*	planes[3];
+    unsigned		stride[3];
+    unsigned char*	mem;
 } xacodec_image_t;
-
 
 //int xacodec_init_video(sh_video_t *vidinfo, int out_format);
 //xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_flag);
 //int xacodec_exit();
-
-
 #if 0
 typedef char xaBYTE;
 typedef short xaSHORT;
@@ -186,15 +175,14 @@ typedef unsigned int xaULONG;
 #define XA_CLOSE_FUNCS 5
 int xa_close_func = 0;
 
-typedef struct xacodec_driver
-{
-    XA_DEC_INFO *decinfo;
-    any_t*file_handler;
+typedef struct xacodec_driver {
+    XA_DEC_INFO*	decinfo;
+    any_t*		file_handler;
     long (*iq_func)(XA_CODEC_HDR *codec_hdr);
     unsigned int (*dec_func)(unsigned char *image, unsigned char *delta,
 	unsigned int dsize, XA_DEC_INFO *dec_info);
-    any_t*close_func[XA_CLOSE_FUNCS];
-    xacodec_image_t image;
+    any_t*		close_func[XA_CLOSE_FUNCS];
+    xacodec_image_t	image;
 } xacodec_driver_t;
 
 xacodec_driver_t *xacodec_driver = NULL;
@@ -247,8 +235,7 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
     unsigned int i;
 
     codec_driver->file_handler = dlopen(filename, RTLD_NOW|RTLD_GLOBAL);
-    if (!codec_driver->file_handler)
-    {
+    if (!codec_driver->file_handler) {
 	error = dlerror();
 	if (error)
 	    MSG_FATAL( "xacodec: failed to dlopen %s while %s\n", filename, error);
@@ -258,16 +245,14 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
     }
 
     what_the = ld_sym(codec_driver->file_handler, "What_The");
-    if ((error = dlerror()) != NULL)
-    {
+    if ((error = dlerror()) != NULL) {
 	MSG_FATAL( "xacodec: failed to init %s while %s\n", filename, error);
 	dlclose(codec_driver->file_handler);
 	return(0);
     }
-	
+
     mod_hdr = what_the();
-    if (!mod_hdr)
-    {
+    if (!mod_hdr) {
 	MSG_FATAL( "xacodec: initializer function failed in %s\n", filename);
 	dlclose(codec_driver->file_handler);
 	return(0);
@@ -283,8 +268,7 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
     if (mod_hdr->authors)
 	MSG_INFO( " Codec Author(s): %s\n", mod_hdr->authors);
 
-    if (mod_hdr->api_rev > XAVID_API_REV)
-    {
+    if (mod_hdr->api_rev > XAVID_API_REV) {
 	MSG_FATAL( "xacodec: not supported api revision (%d) in %s\n",
 	    mod_hdr->api_rev, filename);
 	dlclose(codec_driver->file_handler);
@@ -292,8 +276,7 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
     }
 
     func = mod_hdr->funcs;
-    if (!func)
-    {
+    if (!func) {
 	MSG_FATAL( "xacodec: function table error in %s\n", filename);
 	dlclose(codec_driver->file_handler);
 	return(0);
@@ -301,24 +284,20 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
 
     MSG_DBG2( "Exported functions by codec: [functable: 0x%08x entries: %d]\n",
 	mod_hdr->funcs, mod_hdr->num_funcs);
-    for (i = 0; i < mod_hdr->num_funcs; i++)
-    {
+    for (i = 0; i < mod_hdr->num_funcs; i++) {
 	MSG_DBG2( " %d: %d %d [iq:0x%08x d:0x%08x]\n",
 		i, func[i].what, func[i].id, func[i].iq_func, func[i].dec_func);
-	if (func[i].what & XAVID_AVI_QUERY)
-	{
+	if (func[i].what & XAVID_AVI_QUERY) {
 	    MSG_DBG2( " 0x%08x: avi init/query func (id: %d)\n",
 		func[i].iq_func, func[i].id);
 	    codec_driver->iq_func = (any_t*)func[i].iq_func;
 	}
-	if (func[i].what & XAVID_QT_QUERY)
-	{
+	if (func[i].what & XAVID_QT_QUERY) {
 	    MSG_DBG2( " 0x%08x: qt init/query func (id: %d)\n",
 		func[i].iq_func, func[i].id);
 	    codec_driver->iq_func = (any_t*)func[i].iq_func;
 	}
-	if (func[i].what & XAVID_DEC_FUNC)
-	{
+	if (func[i].what & XAVID_DEC_FUNC) {
 	    MSG_DBG2( " 0x%08x: decoder func (init/query: 0x%08x) (id: %d)\n",
 		func[i].dec_func, func[i].iq_func, func[i].id);
 	    codec_driver->dec_func = (any_t*)func[i].dec_func;
@@ -333,16 +312,14 @@ int xacodec_query(xacodec_driver_t *codec_driver, XA_CODEC_HDR *codec_hdr)
 
 #if 0
     /* the brute one */
-    if (codec_driver->dec_func)
-    {
+    if (codec_driver->dec_func) {
 	codec_hdr->decoder = codec_driver->dec_func;
 	MSG_DBG2( "We got decoder's address at init! %p\n", codec_hdr->decoder);
 	return(1);
     }
 #endif
     codec_ret = codec_driver->iq_func(codec_hdr);
-    switch(codec_ret)
-    {
+    switch(codec_ret) {
 	case CODEC_SUPPORTED:
 	    codec_driver->dec_func = (any_t*)codec_hdr->decoder;
 	    MSG_DBG2( "Codec is supported: found decoder for %s at 0x%08x\n",
@@ -369,8 +346,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     int i;
 
     xacodec_driver = mp_realloc(xacodec_driver, sizeof(struct xacodec_driver));
-    if (xacodec_driver == NULL)
-    {
+    if (xacodec_driver == NULL) {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
 	    strerror(errno));
 	return(0);
@@ -401,8 +377,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     codec_hdr.avi_read_ext = NULL;
     codec_hdr.extra = NULL;
 
-    switch(out_format)
-    {
+    switch(out_format) {
 /*	case IMGFMT_RGB8:
 	    codec_hdr.depth = 8;
 	    break;
@@ -452,8 +427,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
 //    mp_free(codec_hdr.anim_hdr);
 
     xacodec_driver->decinfo = mp_malloc(sizeof(XA_DEC_INFO));
-    if (xacodec_driver->decinfo == NULL)
-    {
+    if (xacodec_driver->decinfo == NULL) {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
 	    strerror(errno));
 	return(0);
@@ -478,8 +452,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     xacodec_driver->image.height = codec_hdr.y;
     xacodec_driver->image.mem = mp_malloc(codec_hdr.y * codec_hdr.x * ((codec_hdr.depth+7)/8));
 
-    if (xacodec_driver->image.mem == NULL)
-    {
+    if (xacodec_driver->image.mem == NULL) {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
 	    strerror(errno));
 	return(0);
@@ -528,8 +501,7 @@ xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_f
     ret = xacodec_driver->dec_func((uint8_t*)&xacodec_driver->image, frame, frame_size, xacodec_driver->decinfo);
 
 
-    if (ret == ACT_DLTA_NORM)
-    {
+    if (ret == ACT_DLTA_NORM) {
 //	MSG_DBG2( "norm\n");
 	return &xacodec_driver->image;
     }
@@ -546,35 +518,30 @@ xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_f
     }
 */
 
-    if (ret & ACT_DLTA_XOR)
-    {
+    if (ret & ACT_DLTA_XOR) {
 	MSG_DBG2( "xor\n");
 	return &xacodec_driver->image;
     }
 
     /* nothing changed */
-    if (ret & ACT_DLTA_NOP)
-    {
+    if (ret & ACT_DLTA_NOP) {
 	MSG_DBG2( "nop\n");
 	return NULL;
     }
 
     /* frame dropped (also display latest frame) */
-    if (ret & ACT_DLTA_DROP)
-    {
+    if (ret & ACT_DLTA_DROP) {
 	MSG_DBG2( "drop\n");
 	return NULL;
     }
 
-    if (ret & ACT_DLTA_BAD)
-    {
+    if (ret & ACT_DLTA_BAD) {
 	MSG_DBG2( "bad\n");
 	return NULL;
     }
 
     /* used for double buffer */
-    if (ret & ACT_DLTA_BODY)
-    {
+    if (ret & ACT_DLTA_BODY) {
 	MSG_DBG2( "body\n");
 	return NULL;
     }
@@ -604,13 +571,11 @@ int xacodec_exit(void)
 /* *** XANIM Conversions *** */
 /* like loader/win32.c - mini XANIM library */
 
-unsigned long XA_Time_Read()
-{
+unsigned long XA_Time_Read() {
     return GetTimer(); //(GetRelativeTime());
 }
 
-void XA_dummy()
-{
+void XA_dummy() {
     XA_Print("dummy() called");
 }
 
@@ -907,10 +872,10 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     if(xacodec_init_video(sh,sh->codec->outfmt[sh->outfmtidx]))
 	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
-    return 0;
+    return MPXP_False;
 }
 
 // uninit driver

@@ -9,12 +9,11 @@
 #include "loader/dshow/DS_AudioDecoder.h"
 #include "codecs_ld.h"
 
-static const ad_info_t info =
-{
-	"Win32/DirectShow decoders",
-	"dshow",
-	"Nickols_K",
-	"build-in"
+static const ad_info_t info = {
+    "Win32/DirectShow decoders",
+    "dshow",
+    "Nickols_K",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -23,70 +22,66 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(dshow)
 
-typedef struct dshow_priv_s
-{
-  float pts;
-  DS_AudioDecoder* ds_adec;
+typedef struct dshow_priv_s {
+    float pts;
+    DS_AudioDecoder* ds_adec;
 }priv_t;
 
-int init(sh_audio_t *sh)
+MPXP_Rc init(sh_audio_t *sh)
 {
   UNUSED(sh);
-  return 1;
+  return MPXP_Ok;
 }
 
-int preinit(sh_audio_t *sh_audio)
+MPXP_Rc preinit(sh_audio_t *sh_audio)
 {
-  priv_t *priv;
-  if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
-  priv=sh_audio->context;
-  if(!(priv->ds_adec=DS_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf)))
-  {
-    MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
-    mp_free(sh_audio->context);
-    return 0;
-  }
-  sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
-  sh_audio->nch=sh_audio->wf->nChannels;
-  sh_audio->rate=sh_audio->wf->nSamplesPerSec;
-  sh_audio->audio_in_minsize=2*sh_audio->wf->nBlockAlign;
-  if(sh_audio->audio_in_minsize<8192) sh_audio->audio_in_minsize=8192;
-  sh_audio->audio_out_minsize=16384;
-  MSG_V("INFO: Win32/DShow init OK!\n");
-  return 1;
+    priv_t *priv;
+    if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
+    priv=sh_audio->context;
+    if(!(priv->ds_adec=DS_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf))) {
+	MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
+	mp_free(sh_audio->context);
+	return MPXP_False;
+    }
+    sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
+    sh_audio->nch=sh_audio->wf->nChannels;
+    sh_audio->rate=sh_audio->wf->nSamplesPerSec;
+    sh_audio->audio_in_minsize=2*sh_audio->wf->nBlockAlign;
+    if(sh_audio->audio_in_minsize<8192) sh_audio->audio_in_minsize=8192;
+    sh_audio->audio_out_minsize=16384;
+    MSG_V("INFO: Win32/DShow init OK!\n");
+    return MPXP_Ok;
 }
 
 void uninit(sh_audio_t *sh)
 {
-  priv_t* priv = sh->context;
-  DS_AudioDecoder_Destroy(priv->ds_adec);
-  mp_free(priv);
+    priv_t* priv = sh->context;
+    DS_AudioDecoder_Destroy(priv->ds_adec);
+    mp_free(priv);
 }
 
 MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
-  int skip;
+    int skip;
     UNUSED(arg);
-    switch(cmd)
-    {
-      case ADCTRL_RESYNC_STREAM:
-          sh_audio->a_in_buffer_len=0; // reset ACM/DShow audio buffer
-	  return MPXP_True;
-      case ADCTRL_SKIP_FRAME:
-	{
-		float pts;
-		    skip=sh_audio->wf->nBlockAlign;
-		    if(skip<16){
-		      skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
-		      if(skip<16) skip=16;
-		    }
-		    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
+    switch(cmd) {
+	case ADCTRL_RESYNC_STREAM:
+	    sh_audio->a_in_buffer_len=0; // reset ACM/DShow audio buffer
+	    return MPXP_True;
+	case ADCTRL_SKIP_FRAME: {
+	    float pts;
+	    skip=sh_audio->wf->nBlockAlign;
+	    if(skip<16){
+		skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
+		if(skip<16) skip=16;
+	    }
+	    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
 	}
 	return MPXP_True;
-      default:
-	  return MPXP_Unknown;
+	default:
+	    return MPXP_Unknown;
     }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

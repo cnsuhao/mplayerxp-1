@@ -16,10 +16,10 @@
 #include "vd_msg.h"
 
 static const vd_info_t info = {
-	"Quicktime Video decoder",
-	"qtvideo",
-	"A'rpi & Faust3",
-	"build-in"
+    "Quicktime Video decoder",
+    "qtvideo",
+    "A'rpi & Faust3",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -64,32 +64,32 @@ static    OSErr (*InitializeQTML)(long flags);
 static    OSErr (*EnterMovies)(void);
 static    ComponentInstance (*OpenComponent)(Component c);
 static    ComponentResult (*ImageCodecInitialize)(ComponentInstance ci,
-                                 ImageSubCodecDecompressCapabilities * cap);
+				 ImageSubCodecDecompressCapabilities * cap);
 static    ComponentResult (*ImageCodecBeginBand)(ComponentInstance      ci,
-                                 CodecDecompressParams * params,
-                                 ImageSubCodecDecompressRecord * drp,
-                                 long                   flags);
+				 CodecDecompressParams * params,
+				 ImageSubCodecDecompressRecord * drp,
+				 long                   flags);
 static    ComponentResult (*ImageCodecDrawBand)(ComponentInstance      ci,
-                                 ImageSubCodecDecompressRecord * drp);
+				 ImageSubCodecDecompressRecord * drp);
 static    ComponentResult (*ImageCodecEndBand)(ComponentInstance      ci,
-                                 ImageSubCodecDecompressRecord * drp,
-                                 OSErr                  result,
-                                 long                   flags);
+				 ImageSubCodecDecompressRecord * drp,
+				 OSErr                  result,
+				 long                   flags);
 static    ComponentResult (*ImageCodecGetCodecInfo)(ComponentInstance      ci,
-                                 CodecInfo *            info);
+				 CodecInfo *            info);
 static    ComponentResult (*ImageCodecPreDecompress)(ComponentInstance      ci,
-                                 CodecDecompressParams * params);
+				 CodecDecompressParams * params);
 static    ComponentResult (*ImageCodecBandDecompress)(ComponentInstance      ci,
-                                 CodecDecompressParams * params);
+				 CodecDecompressParams * params);
 static    PixMapHandle    (*GetGWorldPixMap)(GWorldPtr offscreenGWorld);
 static    OSErr           (*QTNewGWorldFromPtr)(GWorldPtr *gw,
-			       OSType pixelFormat,
-			       const Rect *boundsRect,
-			       CTabHandle cTable,
-                               /*GDHandle*/any_t* aGDevice, //unused anyway
-                               GWorldFlags flags,
-                               any_t*baseAddr,
-                               long rowBytes); 
+				 OSType pixelFormat,
+				 const Rect *boundsRect,
+				 CTabHandle cTable,
+				 /*GDHandle*/any_t* aGDevice, //unused anyway
+				 GWorldFlags flags,
+				 any_t*baseAddr,
+				 long rowBytes);
 static    OSErr           (*NewHandleClear)(Size byteCount);
 
 // to set/get/query special features/parameters
@@ -116,17 +116,16 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 
 static int codec_inited=0;
 // init driver
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     long result = 1;
     ComponentResult cres;
     ComponentDescription desc;
     Component prev=NULL;
     CodecInfo cinfo;	// for ImageCodecGetCodecInfo()
     ImageSubCodecDecompressCapabilities icap; // for ImageCodecInitialize()
-    if(mp_conf.s_cache_size)
-    {
+    if(mp_conf.s_cache_size) {
 	MSG_FATAL("Disabling video:\nwin32 quicktime DLLs must be initialized in single-threaded mode! Try -nocache\n");
-	return 0;
+	return MPXP_False;
     }
 #ifdef MACOSX
     EnterMovies();
@@ -153,10 +152,10 @@ static int init(sh_video_t *sh){
     QTNewGWorldFromPtr = (OSErr(*)(GWorldPtr *,OSType,const Rect *,CTabHandle,any_t*,GWorldFlags,any_t*,long))GetProcAddress(handler, "QTNewGWorldFromPtr");
     NewHandleClear = (OSErr(*)(Size))GetProcAddress(handler, "NewHandleClear");
     //     = GetProcAddress(handler, "");
-    
+
     if(!InitializeQTML || !EnterMovies || !FindNextComponent || !ImageCodecBandDecompress){
 	MSG_ERR("invalid qt DLL!\n");
-	return 0;
+	return MPXP_False;
     }
 
     result=InitializeQTML(6+16);
@@ -183,7 +182,6 @@ static int init(sh_video_t *sh){
     }
 #endif
 
-
     memset(&desc,0,sizeof(desc));
     desc.componentType= (((unsigned char)'i')<<24)|
 			(((unsigned char)'m')<<16)|
@@ -206,7 +204,7 @@ static int init(sh_video_t *sh){
     prev=FindNextComponent(NULL,&desc);
     if(!prev){
 	MSG_ERR("Cannot find requested component\n");
-	return(0);
+	return MPXP_False;
     }
     MSG_V("Found it! ID = 0x%X\n",prev);
 
@@ -216,7 +214,7 @@ static int init(sh_video_t *sh){
     memset(&icap,0,sizeof(icap));
     cres=ImageCodecInitialize(ci,&icap);
     MSG_V("ImageCodecInitialize->%p  size=%d (%d)\n",cres,icap.recordSize,icap.decompressRecordSize);
-    
+
     memset(&cinfo,0,sizeof(cinfo));
     cres=ImageCodecGetCodecInfo(ci,&cinfo);
     MSG_V("Flags: compr: 0x%X  decomp: 0x%X format: 0x%X\n",
@@ -253,11 +251,9 @@ static int init(sh_video_t *sh){
 
     sh->context = kYUVSPixelFormat;
 #if 1
-    {
-	int imgfmt = sh->codec->outfmt[sh->outfmtidx];
-	int qt_imgfmt;
-    switch(imgfmt)
-    {
+    int imgfmt = sh->codec->outfmt[sh->outfmtidx];
+    int qt_imgfmt;
+    switch(imgfmt) {
 	case IMGFMT_YUY2:
 	    qt_imgfmt = kYUVSPixelFormat;
 	    break;
@@ -288,17 +284,15 @@ static int init(sh_video_t *sh){
 	    break;
 	default:
 	    MSG_ERR("Unknown requested csp\n");
-	    return(0);
+	    return MPXP_False;
     }
     MSG_V("imgfmt: %s qt_imgfmt: %.4s\n", vo_format_name(imgfmt), &qt_imgfmt);
     sh->context = qt_imgfmt;
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
-    }
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return MPXP_False;
 #else
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return 0;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return MPXP_False;
 #endif
-
-    return 1;
+    return MPXP_Ok;
 }
 
 // uninit driver
@@ -440,9 +434,7 @@ if((int)sh->context==0x73797639){	// Sorenson 16-bit YUV -> std YVU9
 	for(x=0;x<mpi->w/4;x++) dst[x]=src[x];
 	src+=((mpi->w+63)&(~63))/4;
     }
-    
+
 }
-
-
     return mpi;
 }

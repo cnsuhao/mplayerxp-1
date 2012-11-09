@@ -12,12 +12,11 @@
 #include "ad_internal.h"
 #include "ad_msg.h"
 
-static const ad_info_t info = 
-{
-	"Win32/DMO decoders",
-	"dmo",
-	"A'rpi",
-	"build-in"
+static const ad_info_t info = {
+    "Win32/DMO decoders",
+    "dmo",
+    "A'rpi",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -26,42 +25,39 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(dmo)
 
-
 #include "loader/dmo/DMO_AudioDecoder.h"
 
-typedef struct dmo_priv_s
-{
-  float pts;
-  DMO_AudioDecoder* ds_adec;
+typedef struct dmo_priv_s {
+    float pts;
+    DMO_AudioDecoder* ds_adec;
 }priv_t;
 
-static int init(sh_audio_t *sh)
+static MPXP_Rc init(sh_audio_t *sh)
 {
-  UNUSED(sh);
-  return 1;
+    UNUSED(sh);
+    return MPXP_Ok;
 }
 
-static int preinit(sh_audio_t *sh_audio)
+static MPXP_Rc preinit(sh_audio_t *sh_audio)
 {
-  priv_t*priv;
-  int chans=(mp_conf.ao_channels==sh_audio->wf->nChannels) ?
-      mp_conf.ao_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
-  if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
-  priv=sh_audio->context;
-  if(!(priv->ds_adec=DMO_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf,chans)))
-  {
-    MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
-    mp_free(sh_audio->context);
-    return 0;
-  }
+    priv_t*priv;
+    int chans=(mp_conf.ao_channels==sh_audio->wf->nChannels) ?
+	mp_conf.ao_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
+    if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return MPXP_False;
+    priv=sh_audio->context;
+    if(!(priv->ds_adec=DMO_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf,chans))) {
+	MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
+	mp_free(sh_audio->context);
+	return MPXP_False;
+    }
     sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
     sh_audio->nch=chans;
     sh_audio->rate=sh_audio->wf->nSamplesPerSec;
     sh_audio->audio_in_minsize=4*sh_audio->wf->nBlockAlign;
     if(sh_audio->audio_in_minsize<8192) sh_audio->audio_in_minsize=8192;
     sh_audio->audio_out_minsize=4*16384;
-  MSG_V("INFO: Win32/DMO audio codec init OK!\n");
-  return 1;
+    MSG_V("INFO: Win32/DMO audio codec init OK!\n");
+    return MPXP_Ok;
 }
 
 static void uninit(sh_audio_t *sh)
@@ -73,23 +69,21 @@ static void uninit(sh_audio_t *sh)
 
 static MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
-  int skip;
-  UNUSED(arg);
-    switch(cmd)
-    {
-      case ADCTRL_SKIP_FRAME:
-	{
+    int skip;
+    UNUSED(arg);
+    switch(cmd) {
+	case ADCTRL_SKIP_FRAME: {
 	    float pts;
-		    skip=sh_audio->wf->nBlockAlign;
-		    if(skip<16){
-		      skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
-		      if(skip<16) skip=16;
-		    }
-		    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
-	  return MPXP_True;
+	    skip=sh_audio->wf->nBlockAlign;
+	    if(skip<16){
+		skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
+		if(skip<16) skip=16;
+	    }
+	    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
+	    return MPXP_True;
 	}
     }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
 static unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

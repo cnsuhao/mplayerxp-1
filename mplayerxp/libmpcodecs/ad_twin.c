@@ -13,12 +13,11 @@
 
 #include "help_mp.h"
 
-static const ad_info_t info = 
-{
-	"TWinVQ decoder",
-	"vqf",
-	"Nickols_K",
-	"build-in"
+static const ad_info_t info = {
+    "TWinVQ decoder",
+    "vqf",
+    "Nickols_K",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -32,80 +31,72 @@ LIBAD_EXTERN(twin)
 /************************/
 /* Initialization error code */
 enum INIT_ERROR_CODE {
-	TVQ_NO_ERROR = 0,     // no error
-	TVQ_ERROR,            // general
-	TVQ_ERROR_VERSION,    // wrong version
-	TVQ_ERROR_CHANNEL,    // channel setting error
-	TVQ_ERROR_MODE,       // wrong coding mode
-	TVQ_ERROR_PARAM,      // inner parameter setting error
-	TVQ_ERROR_N_CAN,      // wrong number of VQ pre-selection candidates, used only in encoder
+    TVQ_NO_ERROR = 0,	// no error
+    TVQ_ERROR,		// general
+    TVQ_ERROR_VERSION,	// wrong version
+    TVQ_ERROR_CHANNEL,	// channel setting error
+    TVQ_ERROR_MODE,	// wrong coding mode
+    TVQ_ERROR_PARAM,	// inner parameter setting error
+    TVQ_ERROR_N_CAN,	// wrong number of VQ pre-selection candidates, used only in encoder
 };
 
 /* version ID */
-#define TVQ_UNKNOWN_VERSION  -1
-#define V2                    0
-#define V2PP                  1
+#define TVQ_UNKNOWN_VERSION	-1
+#define V2			0
+#define V2PP			1
 
-#define N_VERSIONS            2
+#define N_VERSIONS		2
 
 /* window types */
 enum WINDOW_TYPE {
-  ONLY_LONG_WINDOW = 0,
-  LONG_SHORT_WINDOW,
-  ONLY_SHORT_WINDOW,
-  SHORT_LONG_WINDOW,
-  SHORT_MEDIUM_WINDOW,
-  MEDIUM_LONG_WINDOW,
-  LONG_MEDIUM_WINDOW,
-  MEDIUM_SHORT_WINDOW,
-  ONLY_MEDIUM_WINDOW,
+    ONLY_LONG_WINDOW = 0,
+    LONG_SHORT_WINDOW,
+    ONLY_SHORT_WINDOW,
+    SHORT_LONG_WINDOW,
+    SHORT_MEDIUM_WINDOW,
+    MEDIUM_LONG_WINDOW,
+    LONG_MEDIUM_WINDOW,
+    MEDIUM_SHORT_WINDOW,
+    ONLY_MEDIUM_WINDOW,
 };
 
 /* block types */
 enum BLOCK_TYPE {
-	BLK_SHORT = 0,
-	BLK_MEDIUM,
-	BLK_LONG,
-	BLK_PPC,
+    BLK_SHORT = 0,
+    BLK_MEDIUM,
+    BLK_LONG,
+    BLK_PPC,
 };
-#define N_BTYPE     3  // number of block types
-#define N_INTR_TYPE 4  // number of interleave types, enum BLOCK_TYPE is commonly used for detecting interleave types.
+#define N_BTYPE		3  // number of block types
+#define N_INTR_TYPE	4  // number of interleave types, enum BLOCK_TYPE is commonly used for detecting interleave types.
 
 /* maximum number of channels */
-#define N_CH_MAX     2
+#define N_CH_MAX	2
 
 /* type definition of code information interface */
 typedef struct {
-	/* block type */
+    /* block type */
     int  w_type;
     int  btype;
-
-	/* FBC info */
+    /* FBC info */
     int  *segment_sw[ N_CH_MAX ];
     int  *band_sw[ N_CH_MAX ];
     int	 *fg_intensity[ N_CH_MAX ];
-
-	/* VQ info */
+    /* VQ info */
     int  *wvq;
-
-	/* BSE info */
+    /* BSE info */
     int  *fw;
     int  *fw_alf;
-
-	/* gain info */
+    /* gain info */
     int  *pow;
-
-	/* LSP info */
+    /* LSP info */
     int  *lsp[ N_CH_MAX ];
-
-	/* PPC info */
+    /* PPC info */
     int  pit[ N_CH_MAX ];
     int  *pls;
     int  pgain[ N_CH_MAX ];
-
-	/* EBC info */
+    /* EBC info */
     int  *bc[ N_CH_MAX ];
-
     any_t*manager;
 } INDEX;
 
@@ -114,49 +105,46 @@ typedef struct {
 /***********************************************/
 /* type definition of tvqConfInfoSubBlock */
 typedef struct {
-	int sf_sz;         // subframe size
-	int nsf;           // number of subframes
-	int ndiv;          // number of division of weighted interleave vector quantization
-	int ncrb;          // number of Bark-scale subbands
-	int fw_ndiv;       // number of division of BSE VQ
-	int fw_nbit;       // number of bits for BSE VQ
-	int nsubg;         // number of sub-blocks for gain coding
-	int ppc_enable;    // PPC switch
-	int ebc_enable;    // EBC switch
-	int ebc_crb_base;  // EBC base band
-	int ebc_bits;      // EBC bits
-	int fbc_enable;    // FBC switch
-	int fbc_n_segment; // FBC number of segments
-	int fbc_nband;     // FBC number of subbands
-	int *fbc_crb_tbl;  // FBC subband table
+    int sf_sz;		// subframe size
+    int nsf;		// number of subframes
+    int ndiv;		// number of division of weighted interleave vector quantization
+    int ncrb;		// number of Bark-scale subbands
+    int fw_ndiv;	// number of division of BSE VQ
+    int fw_nbit;	// number of bits for BSE VQ
+    int nsubg;		// number of sub-blocks for gain coding
+    int ppc_enable;	// PPC switch
+    int ebc_enable;	// EBC switch
+    int ebc_crb_base;	// EBC base band
+    int ebc_bits;	// EBC bits
+    int fbc_enable;	// FBC switch
+    int fbc_n_segment;	// FBC number of segments
+    int fbc_nband;	// FBC number of subbands
+    int *fbc_crb_tbl;	// FBC subband table
 } tvqConfInfoSubBlock;
 
 /* type definition of tvqConfInfo */
 typedef struct {
-  /* frame configuration */
-  int N_CH;
-  /* window type coding */
-  int BITS_WTYPE;
-  /* LSP coding */
-  int LSP_BIT0;
-  int LSP_BIT1;
-  int LSP_BIT2;
-  int LSP_SPLIT;
-  /* Bark-scale envelope coding */
-  int FW_ARSW_BITS;
-  /* gain coding */
-  int GAIN_BITS;
-  int SUB_GAIN_BITS;
-  /* pitch excitation */
-  int N_DIV_P;
-  int BASF_BIT;
-  int PGAIN_BIT;
-
-  /* block type dependent parameters */
-  tvqConfInfoSubBlock cfg[N_BTYPE];
-
+    /* frame configuration */
+    int N_CH;
+    /* window type coding */
+    int BITS_WTYPE;
+    /* LSP coding */
+    int LSP_BIT0;
+    int LSP_BIT1;
+    int LSP_BIT2;
+    int LSP_SPLIT;
+    /* Bark-scale envelope coding */
+    int FW_ARSW_BITS;
+    /* gain coding */
+    int GAIN_BITS;
+    int SUB_GAIN_BITS;
+    /* pitch excitation */
+    int N_DIV_P;
+    int BASF_BIT;
+    int PGAIN_BIT;
+    /* block type dependent parameters */
+    tvqConfInfoSubBlock cfg[N_BTYPE];
 } tvqConfInfo;
-
 
 #define	KEYWORD_BYTES	4
 #define	VERSION_BYTES	8
@@ -164,22 +152,22 @@ typedef struct {
 /*
  */
 typedef struct{
-	char		ID[KEYWORD_BYTES+VERSION_BYTES+1];
-	int size;
-	/* Common Chunk */
-	int channelMode;   /* channel mode (mono:0/stereo:1) */
-	int bitRate;       /* bit rate (kbit/s) */
-	int samplingRate;  /* sampling rate (44.1 kHz -> 44) */
-	int securityLevel; /* security level (always 0) */
-	/* Text Chunk */
-	char	Name[BUFSIZ];
-	char	Comt[BUFSIZ];
-	char	Auth[BUFSIZ];
-	char	Cpyr[BUFSIZ];
-	char	File[BUFSIZ];
-	char	Extr[BUFSIZ];  // add by OKAMOTO 99.12.21
-	/* Data size chunk*/
-	int		Dsiz;
+    char	ID[KEYWORD_BYTES+VERSION_BYTES+1];
+    int		size;
+    /* Common Chunk */
+    int		channelMode;   /* channel mode (mono:0/stereo:1) */
+    int		bitRate;       /* bit rate (kbit/s) */
+    int		samplingRate;  /* sampling rate (44.1 kHz -> 44) */
+    int		securityLevel; /* security level (always 0) */
+    /* Text Chunk */
+    char	Name[BUFSIZ];
+    char	Comt[BUFSIZ];
+    char	Auth[BUFSIZ];
+    char	Cpyr[BUFSIZ];
+    char	File[BUFSIZ];
+    char	Extr[BUFSIZ];  // add by OKAMOTO 99.12.21
+    /* Data size chunk*/
+    int		Dsiz;
 } headerInfo;
 
 extern HMODULE   WINAPI LoadLibraryA(LPCSTR);
@@ -214,18 +202,18 @@ static int   (__cdecl* TvqGetNumFixedBitsPerFrame_ptr)();
 #define	BBUFLEN		(BBUFSIZ*BYTE_BIT)	/* Bit buffer length (bits) */
 typedef struct priv_s
 {
-  float pts;
-  WAVEFORMATEX o_wf;   // out format
-  INDEX index;
-  tvqConfInfo cf;
-  headerInfo hi;
-  int *bits_0[N_INTR_TYPE], *bits_1[N_INTR_TYPE];
-  unsigned framesize;
-  /* stream related */
-  int readable;
-  int ptr;           /* current point in the bit buffer */
-  int nbuf;          /* bit buffer size */
-  char buf[BBUFSIZ];  /* the bit buffer */
+    float pts;
+    WAVEFORMATEX o_wf;   // out format
+    INDEX index;
+    tvqConfInfo cf;
+    headerInfo hi;
+    int *bits_0[N_INTR_TYPE], *bits_1[N_INTR_TYPE];
+    unsigned framesize;
+    /* stream related */
+    int readable;
+    int ptr;           /* current point in the bit buffer */
+    int nbuf;          /* bit buffer size */
+    char buf[BBUFSIZ]; /* the bit buffer */
 }priv_t;
 
 static HINSTANCE vqf_dll;
@@ -236,22 +224,21 @@ static int load_dll( const char *libname )
     Setup_LDT_Keeper_ptr();
 #endif
     vqf_dll = LoadLibraryA((LPCSTR)libname);
-    if( vqf_dll == NULL )
-    {
+    if( vqf_dll == NULL ) {
         MSG_ERR("failed loading dll\n" );
 	return 0;
     }
-  TvqInitialize_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqInitialize");
-  TvqTerminate_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqTerminate");
-  TvqGetVectorInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetVectorInfo");
-  TvqDecodeFrame_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqDecodeFrame");
-  TvqWtypeToBtype_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqWtypeToBtype");
-  TvqUpdateVectorInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqUpdateVectorInfo");
-  TvqCheckVersion_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqCheckVersion");
-  TvqGetConfInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetConfInfo");
-  TvqGetFrameSize_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetFrameSize");
-  TvqGetNumFixedBitsPerFrame_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetNumFixedBitsPerFrame");
-  return TvqInitialize_ptr && TvqTerminate_ptr && TvqGetVectorInfo_ptr &&
+    TvqInitialize_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqInitialize");
+    TvqTerminate_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqTerminate");
+    TvqGetVectorInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetVectorInfo");
+    TvqDecodeFrame_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqDecodeFrame");
+    TvqWtypeToBtype_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqWtypeToBtype");
+    TvqUpdateVectorInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqUpdateVectorInfo");
+    TvqCheckVersion_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqCheckVersion");
+    TvqGetConfInfo_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetConfInfo");
+    TvqGetFrameSize_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetFrameSize");
+    TvqGetNumFixedBitsPerFrame_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqGetNumFixedBitsPerFrame");
+    return TvqInitialize_ptr && TvqTerminate_ptr && TvqGetVectorInfo_ptr &&
 	 TvqDecodeFrame_ptr && TvqWtypeToBtype_ptr && TvqUpdateVectorInfo_ptr &&
 	 TvqCheckVersion_ptr && TvqGetConfInfo_ptr && TvqGetFrameSize_ptr &&
 	 TvqGetNumFixedBitsPerFrame_ptr;
@@ -274,8 +261,7 @@ static int init_vqf_audio_codec(sh_audio_t *sh_audio){
     sh_audio->rate=in_fmt->nSamplesPerSec;
     sh_audio->afmt=AFMT_FLOAT32;
 
-    if(mp_conf.verbose)
-    {
+    if(mp_conf.verbose) {
 	MSG_V("Input format:\n");
 	print_wave_header(in_fmt,sizeof(WAVEFORMATEX));
 	MSG_V("Output fmt:\n");
@@ -307,7 +293,6 @@ static int init_vqf_audio_codec(sh_audio_t *sh_audio){
     sh_audio->a_in_buffer=mp_malloc(sh_audio->a_in_buffer_size);
     sh_audio->a_in_buffer_len=0;
 
-
     return 1;
 }
 
@@ -318,59 +303,56 @@ static int close_vqf_audio_codec(sh_audio_t *sh_audio)
     return 1;
 }
 
-int init(sh_audio_t *sh_audio)
+MPXP_Rc init(sh_audio_t *sh_audio)
 {
     UNUSED(sh_audio);
-    return 1;
+    return MPXP_Ok;
 }
 
-int preinit(sh_audio_t *sh_audio)
+MPXP_Rc preinit(sh_audio_t *sh_audio)
 {
-  /* Win32 VQF audio codec: */
-  priv_t *priv;
-  if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return 0;
-  priv=sh_audio->context;
-  if(!load_dll((const char *)sh_audio->codec->dll_name))
-  {
-    MSG_ERR("win32.dll looks broken :(\n");
-    return 0;
-  }
-  if(!init_vqf_audio_codec(sh_audio)){
-    MSG_ERR("TWinVQ initialization fail\n");
-    return 0;
-  }
-  MSG_V("INFO: TWinVQ audio codec init OK!\n");
-  return 1;
+    /* Win32 VQF audio codec: */
+    priv_t *priv;
+    if(!(sh_audio->context=mp_malloc(sizeof(priv_t)))) return MPXP_False;
+    priv=sh_audio->context;
+    if(!load_dll((const char *)sh_audio->codec->dll_name)) {
+	MSG_ERR("win32.dll looks broken :(\n");
+	return MPXP_False;
+    }
+    if(!init_vqf_audio_codec(sh_audio)){
+	MSG_ERR("TWinVQ initialization fail\n");
+	return MPXP_False;
+    }
+    MSG_V("INFO: TWinVQ audio codec init OK!\n");
+    return MPXP_Ok;
 }
 
 void uninit(sh_audio_t *sh)
 {
-  close_vqf_audio_codec(sh);
-  mp_free(sh->context);
-  FreeLibrary(vqf_dll);
+    close_vqf_audio_codec(sh);
+    mp_free(sh->context);
+    FreeLibrary(vqf_dll);
 }
 
 MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
-  int skip;
-  UNUSED(arg);
-    switch(cmd)
-    {
-      case ADCTRL_SKIP_FRAME:
-	{
-		float pts;
-		    skip=sh_audio->wf->nBlockAlign;
-		    if(skip<16){
-		      skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
-		      if(skip<16) skip=16;
-		    }
-		    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
-	  return MPXP_True;
+    int skip;
+    UNUSED(arg);
+    switch(cmd) {
+	case ADCTRL_SKIP_FRAME: {
+	    float pts;
+	    skip=sh_audio->wf->nBlockAlign;
+	    if(skip<16){
+		skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
+		if(skip<16) skip=16;
+	    }
+	    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
+	    return MPXP_True;
 	}
-      default:
-	  return MPXP_Unknown;
+	default:
+	    return MPXP_Unknown;
     }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
 static int bread(char	*data,    /* Output: Output data array */

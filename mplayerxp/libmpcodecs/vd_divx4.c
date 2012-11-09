@@ -23,10 +23,10 @@
 #include "osdep/mplib.h"
 
 static const vd_info_t info = {
-	"DivX4Linux lib (divx4/5 mode)",
-	"divx4",
-	"Nickols_K",
-	"http://labs.divx.com/DivXLinuxCodec"
+    "DivX4Linux lib (divx4/5 mode)",
+    "divx4",
+    "Nickols_K",
+    "http://labs.divx.com/DivXLinuxCodec"
 };
 
 static const config_t options[] = {
@@ -140,7 +140,9 @@ static any_t*dll_handle;
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t*p=sh->context;
     switch(cmd){
-	case VDCTRL_QUERY_MAX_PP_LEVEL: return 100; // for divx4linux
+	case VDCTRL_QUERY_MAX_PP_LEVEL:
+	    *((unsigned*)arg)=100;
+	    return MPXP_Ok;
 	case VDCTRL_SET_PP_LEVEL: {
 	    int iOperation = DEC_PAR_POSTPROCESSING;
 	    int iLevel = *((int*)arg);
@@ -185,26 +187,26 @@ static int load_lib( const char *libname )
 }
 
 // init driver
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     DecInit dinit;
     priv_t*p;
     int bits=12;
-    if(!load_lib("libdivx"SLIBSUFFIX)) return 0;
-    if(!(mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL))) return 0;
+    if(!load_lib("libdivx"SLIBSUFFIX)) return MPXP_False;
+    if(!(mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL))) return MPXP_False;
     switch(sh->codec->outfmt[sh->outfmtidx]){
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
 	case IMGFMT_IYUV: break;
 	default:
-	  MSG_ERR("Unsupported out_fmt: 0x%X\n",sh->codec->outfmt[sh->outfmtidx]);
-	  return 0;
+	    MSG_ERR("Unsupported out_fmt: 0x%X\n",sh->codec->outfmt[sh->outfmtidx]);
+	    return MPXP_False;
     }
-    if(!(p=mp_mallocz(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return 0; }
+    if(!(p=mp_mallocz(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return MPXP_False; }
     sh->context=p;
     if(!(p->decoder=getDecore_ptr(sh->fourcc))) {
 	char *p=(char *)&(sh->fourcc);
 	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",p[0],p[1],p[2],p[3]);
-	return 0;
+	return MPXP_False;
     }
     dinit.formatOut.fourCC=sh->codec->outfmt[sh->outfmtidx];
     dinit.formatOut.bpp=bits;
@@ -221,7 +223,7 @@ static int init(sh_video_t *sh){
     }
     MSG_V("INFO: DivX4Linux (libdivx.so) video codec init OK!\n");
     fflush(stdout);
-    return 1;
+    return MPXP_Ok;
 }
 
 // uninit driver
@@ -253,7 +255,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 		     mpi->flags&MP_IMGFLAG_PLANAR?mpi->stride[0]:mpi->stride[0]/2:
 		     mpi->width;
     if(p->resync) { decFrame.bBitstreamUpdated=1; p->resync=0; }
-    
+
     if(p->decoder(p->pHandle, DEC_OPT_FRAME, &decFrame, 0)!=DEC_OK) MSG_WARN("divx: Error happened during decoding\n");
 
     return mpi;

@@ -19,12 +19,15 @@
 #include "libavformat/riff.h"
 #include "codecs_ld.h"
 
-static int acodec_inited;
+typedef struct priv_s {
+    AVCodecContext *lavc_ctx;
+}priv_t;
 
 struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
     unsigned i;
     struct codecs_st* acodec = NULL;
     const char *what="AVCodecID";
+    priv_t* priv=sh->context;
     enum AVCodecID id = ff_codec_get_id(ff_codec_wav_tags,sh->wtag);
     if (id <= 0) {
 	prn_err:
@@ -33,10 +36,11 @@ struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
 		,sh->wtag);
 	return 0;
     }
-    if(!acodec_inited){
+    if(!priv){
+	priv=mp_mallocz(sizeof(priv_t));
+	sh->context=priv;
 //	avcodec_init();
 	avcodec_register_all();
-	acodec_inited=1;
     }
     AVCodec *codec=avcodec_find_decoder(id);
     if(!codec) { what="AVCodec"; goto prn_err; }
@@ -57,12 +61,11 @@ struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
 #define FF_INPUT_BUFFER_PADDING_SIZE 8
 #endif
 
-static const ad_info_t info =
-{
-	"FFmpeg/libavcodec audio decoders",
-	"ffmpeg",
-	"Nickols_K",
-	"build-in"
+static const ad_info_t info = {
+    "FFmpeg/libavcodec audio decoders",
+    "ffmpeg",
+    "Nickols_K",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -71,105 +74,104 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(ffmpeg)
 
-int preinit(sh_audio_t *sh)
+MPXP_Rc preinit(sh_audio_t *sh)
 {
-  sh->audio_out_minsize=AVCODEC_MAX_AUDIO_FRAME_SIZE;
-  return 1;
+    sh->audio_out_minsize=AVCODEC_MAX_AUDIO_FRAME_SIZE;
+    return MPXP_Ok;
 }
 
-int init(sh_audio_t *sh_audio)
+MPXP_Rc init(sh_audio_t *sh_audio)
 {
-   int x;
-   float pts;
-   AVCodec *lavc_codec=NULL;
-   AVCodecContext *lavc_context;
-   MSG_V("FFmpeg's libavcodec audio codec\n");
-    if(!acodec_inited){
+    int x;
+    float pts;
+    AVCodec *lavc_codec=NULL;
+    priv_t* priv=sh_audio->context;
+    MSG_V("FFmpeg's libavcodec audio codec\n");
+    if(!priv){
+	priv=mp_mallocz(sizeof(priv_t));
+	sh_audio->context=priv;
 //	avcodec_init();
 	avcodec_register_all();
-	acodec_inited=1;
     }
     lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh_audio->codec->dll_name);
-    if(!lavc_codec){
+    if(!lavc_codec) {
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh_audio->codec->dll_name);
-	return 0;
+	return MPXP_False;
     }
-    lavc_context = avcodec_alloc_context3(lavc_codec);
-    sh_audio->context = lavc_context;
-    if(sh_audio->wf)
-    {
-	lavc_context->channels = sh_audio->wf->nChannels;
-	lavc_context->sample_rate = sh_audio->wf->nSamplesPerSec;
-	lavc_context->bit_rate = sh_audio->wf->nAvgBytesPerSec * 8;
-	lavc_context->block_align = sh_audio->wf->nBlockAlign;
-	lavc_context->bits_per_coded_sample = sh_audio->wf->wBitsPerSample;
+    priv->lavc_ctx = avcodec_alloc_context3(lavc_codec);
+    if(sh_audio->wf) {
+	priv->lavc_ctx->channels = sh_audio->wf->nChannels;
+	priv->lavc_ctx->sample_rate = sh_audio->wf->nSamplesPerSec;
+	priv->lavc_ctx->bit_rate = sh_audio->wf->nAvgBytesPerSec * 8;
+	priv->lavc_ctx->block_align = sh_audio->wf->nBlockAlign;
+	priv->lavc_ctx->bits_per_coded_sample = sh_audio->wf->wBitsPerSample;
 	/* alloc extra data */
 	if (sh_audio->wf->cbSize > 0) {
-	    lavc_context->extradata = mp_malloc(sh_audio->wf->cbSize+FF_INPUT_BUFFER_PADDING_SIZE);
-	    lavc_context->extradata_size = sh_audio->wf->cbSize;
-	    memcpy(lavc_context->extradata, (char *)sh_audio->wf + sizeof(WAVEFORMATEX),
-		    lavc_context->extradata_size);
+	    priv->lavc_ctx->extradata = mp_malloc(sh_audio->wf->cbSize+FF_INPUT_BUFFER_PADDING_SIZE);
+	    priv->lavc_ctx->extradata_size = sh_audio->wf->cbSize;
+	    memcpy(priv->lavc_ctx->extradata, (char *)sh_audio->wf + sizeof(WAVEFORMATEX),
+		    priv->lavc_ctx->extradata_size);
 	}
     }
     // for QDM2
-    if (sh_audio->codecdata_len && sh_audio->codecdata && !lavc_context->extradata)
-    {
-        lavc_context->extradata = mp_malloc(sh_audio->codecdata_len);
-        lavc_context->extradata_size = sh_audio->codecdata_len;
-        memcpy(lavc_context->extradata, (char *)sh_audio->codecdata,
-               lavc_context->extradata_size);
+    if (sh_audio->codecdata_len && sh_audio->codecdata && !priv->lavc_ctx->extradata) {
+	priv->lavc_ctx->extradata = mp_malloc(sh_audio->codecdata_len);
+	priv->lavc_ctx->extradata_size = sh_audio->codecdata_len;
+	memcpy(priv->lavc_ctx->extradata, (char *)sh_audio->codecdata,
+		priv->lavc_ctx->extradata_size);
     }
-    lavc_context->codec_tag = sh_audio->wtag;
-    lavc_context->codec_type = lavc_codec->type;
-    lavc_context->codec_id = lavc_codec->id;
+    priv->lavc_ctx->codec_tag = sh_audio->wtag;
+    priv->lavc_ctx->codec_type = lavc_codec->type;
+    priv->lavc_ctx->codec_id = lavc_codec->id;
     /* open it */
-    if (avcodec_open2(lavc_context, lavc_codec, NULL) < 0) {
-        MSG_ERR( MSGTR_CantOpenCodec);
-        return 0;
+    if (avcodec_open2(priv->lavc_ctx, lavc_codec, NULL) < 0) {
+	MSG_ERR( MSGTR_CantOpenCodec);
+	return MPXP_False;
     }
-   MSG_V("INFO: libavcodec init OK!\n");
+    MSG_V("INFO: libavcodec init OK!\n");
 
-   // Decode at least 1 byte:  (to get header filled)
-   x=decode(sh_audio,sh_audio->a_buffer,1,sh_audio->a_buffer_size,&pts);
-   if(x>0) sh_audio->a_buffer_len=x;
+    // Decode at least 1 byte:  (to get header filled)
+    x=decode(sh_audio,sh_audio->a_buffer,1,sh_audio->a_buffer_size,&pts);
+    if(x>0) sh_audio->a_buffer_len=x;
 
-  sh_audio->nch=lavc_context->channels;
-  sh_audio->rate=lavc_context->sample_rate;
-  switch(lavc_context->sample_fmt) {
-    case AV_SAMPLE_FMT_U8:  ///< unsigned 8 bits
-	sh_audio->afmt=AFMT_U8;
-	break;
-    default:
-    case AV_SAMPLE_FMT_S16:             ///< signed 16 bits
-	sh_audio->afmt=AFMT_S16_LE;
-	break;
-    case AV_SAMPLE_FMT_S32:             ///< signed 32 bits
-	sh_audio->afmt=AFMT_S32_LE;
-	break;
-    case AV_SAMPLE_FMT_FLT:             ///< float
-	sh_audio->afmt=AFMT_FLOAT32;
-	break;
-  }
-  sh_audio->i_bps=lavc_context->bit_rate/8;
-  return 1;
+    sh_audio->nch=priv->lavc_ctx->channels;
+    sh_audio->rate=priv->lavc_ctx->sample_rate;
+    switch(priv->lavc_ctx->sample_fmt) {
+	case AV_SAMPLE_FMT_U8:  ///< unsigned 8 bits
+	    sh_audio->afmt=AFMT_U8;
+	    break;
+	default:
+	case AV_SAMPLE_FMT_S16:             ///< signed 16 bits
+	    sh_audio->afmt=AFMT_S16_LE;
+	    break;
+	case AV_SAMPLE_FMT_S32:             ///< signed 32 bits
+	    sh_audio->afmt=AFMT_S32_LE;
+	    break;
+	case AV_SAMPLE_FMT_FLT:             ///< float
+	    sh_audio->afmt=AFMT_FLOAT32;
+	    break;
+    }
+    sh_audio->i_bps=priv->lavc_ctx->bit_rate/8;
+    return MPXP_Ok;
 }
 
 void uninit(sh_audio_t *sh)
 {
-  AVCodecContext *lavc_context=sh->context;
-  avcodec_close(sh->context);
-  if (lavc_context->extradata) mp_free(lavc_context->extradata);
-  mp_free(lavc_context);
-  acodec_inited=0;
+    priv_t* priv=sh->context;
+    avcodec_close(priv->lavc_ctx);
+    if (priv->lavc_ctx->extradata) mp_free(priv->lavc_ctx->extradata);
+    mp_free(priv->lavc_ctx);
+    mp_free(priv);
+    sh->context=NULL;
 }
 
 MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
-    AVCodecContext *lavc_context = sh->context;
+    priv_t* priv = sh->context;
     switch(cmd){
 	case ADCTRL_RESYNC_STREAM:
-	    avcodec_flush_buffers(lavc_context);
+	    avcodec_flush_buffers(priv->lavc_ctx);
 	    return MPXP_True;
 	default: break;
     }
@@ -178,6 +180,7 @@ MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
+    priv_t* priv = sh_audio->context;
     unsigned char *start=NULL;
     int y;
     unsigned len=0;
@@ -191,7 +194,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	av_init_packet(&pkt);
 	pkt.data = start;
 	pkt.size = x;
-	y=avcodec_decode_audio3(sh_audio->context,(int16_t*)buf,&len2,&pkt);
+	y=avcodec_decode_audio3(priv->lavc_ctx,(int16_t*)buf,&len2,&pkt);
 	if(y<0){ MSG_V("lavc_audio: error\n");break; }
 	if(y<x)
 	{

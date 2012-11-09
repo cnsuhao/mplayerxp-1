@@ -39,11 +39,11 @@ typedef struct priv_s {
 // to set/get/query special features/parameters
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd) {
-      case VDCTRL_QUERY_FORMAT:
+	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12)
 			return MPXP_True;
-	    else 	return MPXP_False;
-      default: break;
+	    else	return MPXP_False;
+	default: break;
     }
     return MPXP_Unknown;
 }
@@ -51,7 +51,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 /*
  * init driver
  */
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     priv_t *priv = NULL;
     int failed = 1;
     int errorCode = 0;
@@ -60,64 +60,53 @@ static int init(sh_video_t *sh){
     float pts;
 
     /* check whether video output format is supported */
-    switch(sh->codec->outfmt[sh->outfmtidx])
-    {
-       case IMGFMT_YV12: /* well, this should work... */ break;
-       default: 
-	  MSG_ERR("Unsupported out_fmt: 0x%X\n",
-		  sh->codec->outfmt[sh->outfmtidx]);
-	  return 0;
+    switch(sh->codec->outfmt[sh->outfmtidx]) {
+	case IMGFMT_YV12: /* well, this should work... */ break;
+	default:
+	    MSG_ERR("Unsupported out_fmt: 0x%X\n", sh->codec->outfmt[sh->outfmtidx]);
+	return MPXP_False;
     }
 
     /* this is not a loop, just a context, from which we can break on error */
-    do
-    {
-       priv = (priv_t *)mp_calloc (sizeof (priv_t), 1);
-       sh->context = priv;
-       if (!priv) break;
+    do {
+	priv = (priv_t *)mp_calloc (sizeof (priv_t), 1);
+	sh->context = priv;
+	if (!priv) break;
 
-       theora_info_init(&priv->inf);
-       theora_comment_init(&priv->cc);
+	theora_info_init(&priv->inf);
+	theora_comment_init(&priv->cc);
 
-       /* Read all header packets, pass them to theora_decode_header. */
-       for (i = 0; i < THEORA_NUM_HEADER_PACKETS; i++)
-       {
-          op.bytes = ds_get_packet_r (sh->ds, &op.packet,&pts);
-          op.b_o_s = 1;
-          if ( (errorCode = theora_decode_header (&priv->inf, &priv->cc, &op)) )
-          {
-            MSG_ERR("Broken Theora header; errorCode=%i!\n", errorCode);
-            break;
-          }
-       }
-       if (errorCode)
-          break;
+	/* Read all header packets, pass them to theora_decode_header. */
+	for (i = 0; i < THEORA_NUM_HEADER_PACKETS; i++) {
+	    op.bytes = ds_get_packet_r (sh->ds, &op.packet,&pts);
+	    op.b_o_s = 1;
+	    if ( (errorCode = theora_decode_header (&priv->inf, &priv->cc, &op))) {
+		MSG_ERR("Broken Theora header; errorCode=%i!\n", errorCode);
+		break;
+	    }
+	}
+	if (errorCode) break;
 
-       /* now init codec */
-       errorCode = theora_decode_init (&priv->st, &priv->inf);
-       if (errorCode)
-       {
-	  MSG_ERR("Theora decode init failed: %i \n",
-		 errorCode);
-	  break;
-       }
-       failed = 0;
+	/* now init codec */
+	errorCode = theora_decode_init (&priv->st, &priv->inf);
+	if (errorCode) {
+	    MSG_ERR("Theora decode init failed: %i \n", errorCode);
+	    break;
+	}
+	failed = 0;
     } while (0);
 
-    if (failed)
-    {
-       if (priv)
-       {
-	  mp_free (priv);
-	  sh->context = NULL;
-       }
-       return 0;
+    if (failed) {
+	if (priv) {
+	    mp_free (priv);
+	    sh->context = NULL;
+	}
+	return MPXP_False;
     }
 
-    if(sh->aspect==0.0 && priv->inf.aspect_denominator!=0)
-    {
-       sh->aspect = (float)(priv->inf.aspect_numerator * priv->inf.frame_width)/
-          (priv->inf.aspect_denominator * priv->inf.frame_height);
+    if(sh->aspect==0.0 && priv->inf.aspect_denominator!=0) {
+	sh->aspect = (float)(priv->inf.aspect_numerator * priv->inf.frame_width)/
+		(priv->inf.aspect_denominator * priv->inf.frame_height);
     }
 
     MSG_V("INFO: Theora video init ok!\n");
@@ -130,13 +119,11 @@ static int init(sh_video_t *sh){
  */
 static void uninit(sh_video_t *sh)
 {
-   priv_t *priv = (priv_t *)sh->context;
-
-   if (priv)
-   {
-      theora_clear (&priv->st);
-      mp_free (priv);
-   }
+    priv_t *priv = (priv_t *)sh->context;
+    if (priv) {
+	theora_clear (&priv->st);
+	mp_free (priv);
+    }
 }
 
 /*
@@ -144,33 +131,31 @@ static void uninit(sh_video_t *sh)
  */
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags) 
 {
-   priv_t *priv = (priv_t *)sh->context;
-   int errorCode = 0;
-   ogg_packet op;
-   yuv_buffer yuv;
-   mp_image_t* mpi;
-   int i;
+    priv_t *priv = (priv_t *)sh->context;
+    int errorCode = 0;
+    ogg_packet op;
+    yuv_buffer yuv;
+    mp_image_t* mpi;
+    int i;
 
-   bzero (&op, sizeof (op));
-   op.bytes = len;
-   op.packet = data;
-   op.granulepos = -1;
+    bzero (&op, sizeof (op));
+    op.bytes = len;
+    op.packet = data;
+    op.granulepos = -1;
 
-   errorCode = theora_decode_packetin (&priv->st, &op);
-   if (errorCode)
-   {
-      MSG_ERR("Theora decode packetin failed: %i \n",
+    errorCode = theora_decode_packetin (&priv->st, &op);
+    if (errorCode) {
+	MSG_ERR("Theora decode packetin failed: %i \n",
 	     errorCode);
-      return NULL;
-   }
+	return NULL;
+    }
 
-   errorCode = theora_decode_YUVout (&priv->st, &yuv);
-   if (errorCode)
-   {
-      MSG_ERR("Theora decode YUVout failed: %i \n",
+    errorCode = theora_decode_YUVout (&priv->st, &yuv);
+    if (errorCode) {
+	MSG_ERR("Theora decode YUVout failed: %i \n",
 	     errorCode);
-      return 0;
-   }
+        return NULL;
+    }
 
     mpi = mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
 

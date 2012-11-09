@@ -19,12 +19,11 @@
 #include "codecs_ld.h"
 #include "osdep/mplib.h"
 
-static const vd_info_t info =
-{
-	"libmpeg2 MPEG 1/2 Video decoder",
-	"libmpeg2",
-	"A'rpi",
-	"http://libmpeg2.sourceforge.net"
+static const vd_info_t info = {
+    "libmpeg2 MPEG 1/2 Video decoder",
+    "libmpeg2",
+    "A'rpi",
+    "http://libmpeg2.sourceforge.net"
 };
 
 static const config_t options[] = {
@@ -43,8 +42,7 @@ LIBVD_EXTERN(libmpeg2)
 
 typedef struct mpeg2dec_s mpeg2dec_t;
 
-typedef struct priv_s
-{
+typedef struct priv_s {
     mpeg2dec_t *mpeg2dec;
 }priv_t;
 
@@ -130,7 +128,6 @@ typedef enum {
     STATE_SEQUENCE_MODIFIED = 11
 } mpeg2_state_t;
 
-
 static mpeg2dec_t* (*mpeg2_init_ptr) (unsigned);
 #define mpeg2_init(a) (*mpeg2_init_ptr)(a)
 static void (*mpeg2_close_ptr) (mpeg2dec_t * mpeg2dec);
@@ -149,28 +146,27 @@ static void (*mpeg2_reset_ptr) (mpeg2dec_t * mpeg2dec, int full_reset);
 #define mpeg2_reset(a,b) (*mpeg2_reset_ptr)(a,b)
 
 static any_t*dll_handle;
-static int load_lib( const char *libname )
+static MPXP_Rc load_lib( const char *libname )
 {
-  if(!(dll_handle=ld_codec(libname,mpcodecs_vd_libmpeg2.info->url))) return 0;
-  mpeg2_init_ptr = ld_sym(dll_handle,"mpeg2_init");
-  mpeg2_close_ptr = ld_sym(dll_handle,"mpeg2_close");
-  mpeg2_info_ptr = ld_sym(dll_handle,"mpeg2_info");
-  mpeg2_parse_ptr = ld_sym(dll_handle,"mpeg2_parse");
-  mpeg2_buffer_ptr = ld_sym(dll_handle,"mpeg2_buffer");
-  mpeg2_set_buf_ptr = ld_sym(dll_handle,"mpeg2_set_buf");
-  mpeg2_stride_ptr = ld_sym(dll_handle,"mpeg2_stride");
-  mpeg2_reset_ptr = ld_sym(dll_handle,"mpeg2_reset");
-  return mpeg2_init_ptr && mpeg2_close_ptr && mpeg2_info_ptr &&
-	 mpeg2_parse_ptr && mpeg2_buffer_ptr && mpeg2_set_buf_ptr &&
-	 mpeg2_stride_ptr && mpeg2_reset_ptr;
+    if(!(dll_handle=ld_codec(libname,mpcodecs_vd_libmpeg2.info->url))) return MPXP_False;
+    mpeg2_init_ptr = ld_sym(dll_handle,"mpeg2_init");
+    mpeg2_close_ptr = ld_sym(dll_handle,"mpeg2_close");
+    mpeg2_info_ptr = ld_sym(dll_handle,"mpeg2_info");
+    mpeg2_parse_ptr = ld_sym(dll_handle,"mpeg2_parse");
+    mpeg2_buffer_ptr = ld_sym(dll_handle,"mpeg2_buffer");
+    mpeg2_set_buf_ptr = ld_sym(dll_handle,"mpeg2_set_buf");
+    mpeg2_stride_ptr = ld_sym(dll_handle,"mpeg2_stride");
+    mpeg2_reset_ptr = ld_sym(dll_handle,"mpeg2_reset");
+    return (mpeg2_init_ptr && mpeg2_close_ptr && mpeg2_info_ptr &&
+	mpeg2_parse_ptr && mpeg2_buffer_ptr && mpeg2_set_buf_ptr &&
+	mpeg2_stride_ptr && mpeg2_reset_ptr)?MPXP_Ok:MPXP_False;
 }
 
 // to set/get/query special features/parameters
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *priv;
     priv=sh->context;
-    switch(cmd)
-    {
+    switch(cmd) {
 	case VDCTRL_RESYNC_STREAM:
 	    /*lib starts looking for the next sequence header.*/
 	    mpeg2_reset(priv->mpeg2dec,1);
@@ -184,11 +180,11 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     priv_t *priv;
-    if(!load_lib("libmpeg2"SLIBSUFFIX)) return 0;
+    if(!load_lib("libmpeg2"SLIBSUFFIX)) return MPXP_False;
     priv=sh->context=mp_malloc(sizeof(priv_t));
-    if(!(priv->mpeg2dec=mpeg2_init(mp_data->mplayer_accel))) return 0;
+    if(!(priv->mpeg2dec=mpeg2_init(mp_data->mplayer_accel))) return MPXP_False;
     return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 

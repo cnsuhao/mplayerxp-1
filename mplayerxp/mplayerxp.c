@@ -1180,8 +1180,8 @@ static int mpxp_find_vcodec(void) {
 	if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
 	for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 	    if(mp_conf.video_family) /* try first the preferred codec family:*/
-		if(mpcv_init(sh_video,NULL,mp_conf.video_family,status)) break;
-	    if(mpcv_init(sh_video,NULL,NULL,status)) break;
+		if(mpcv_init(sh_video,NULL,mp_conf.video_family,status)==MPXP_Ok) break;
+	    if(mpcv_init(sh_video,NULL,NULL,status)==MPXP_Ok) break;
 	}
     }
     /* Use ffmpeg decoders as last hope */
@@ -1506,7 +1506,7 @@ For future:
       else      v_cont+=v;
       if(v_cont > 100) v_cont=100;
       if(v_cont < -100) v_cont = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_CONTRAST,v_cont)){
+      if(mpcv_set_colors(sh_video,VO_EC_CONTRAST,v_cont)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1524,7 +1524,7 @@ For future:
       else     v_bright+=v;
       if(v_bright > 100) v_bright = 100;
       if(v_bright < -100) v_bright = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_BRIGHTNESS,v_bright)){
+      if(mpcv_set_colors(sh_video,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1542,7 +1542,7 @@ For future:
       else      v_hue+=v;
       if(v_hue > 100) v_hue = 100;
       if(v_hue < -100) v_hue = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_HUE,v_hue)){
+      if(mpcv_set_colors(sh_video,VO_EC_HUE,v_hue)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1560,7 +1560,7 @@ For future:
       else      v_saturation+=v;
       if(v_saturation > 100) v_saturation = 100;
       if(v_saturation < -100) v_saturation = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_SATURATION,v_saturation)){
+      if(mpcv_set_colors(sh_video,VO_EC_SATURATION,v_saturation)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1904,7 +1904,10 @@ play_next_file:
 
     if(mp_conf.autoq>0){
 	/* Auto quality option enabled*/
-	mp_data->output_quality=mpcv_get_quality_max(sh_video);
+	MPXP_Rc rc;
+	unsigned quality;
+	rc=mpcv_get_quality_max(sh_video,&quality);
+	if(rc==MPXP_Ok) mp_data->output_quality=quality;
 	if(mp_conf.autoq>mp_data->output_quality) mp_conf.autoq=mp_data->output_quality;
 	else mp_data->output_quality=mp_conf.autoq;
 	MSG_V("AutoQ: setting quality to %d\n",mp_data->output_quality);

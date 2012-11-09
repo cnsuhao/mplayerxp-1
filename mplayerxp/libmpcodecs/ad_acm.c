@@ -12,12 +12,11 @@
 #include "libao2/afmt.h"
 #include "help_mp.h"
 
-static const ad_info_t info =
-{
-	"Win32/ACM decoders",
-	"acm",
-	"Nickols_K",
-	"build-in"
+static const ad_info_t info = {
+    "Win32/ACM decoders",
+    "acm",
+    "Nickols_K",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -26,8 +25,7 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(msacm)
 
-typedef struct priv_s
-{
+typedef struct priv_s {
   float pts;
   WAVEFORMATEX o_wf;   // out format
   HACMSTREAM srcstream;  // handle
@@ -50,15 +48,13 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     priv->o_wf.nBlockAlign=2*sh_audio->nch;
     priv->o_wf.wBitsPerSample=sh_audio->afmt?afmt2bps(sh_audio->afmt)*8:16;
     priv->o_wf.cbSize=0;
-    if(!in_fmt)
-    {
+    if(!in_fmt) {
 	in_fmt=sh_audio->wf=mp_malloc(sizeof(WAVEFORMATEX));
 	memcpy(in_fmt,&priv->o_wf,sizeof(WAVEFORMATEX));
 	in_fmt->wFormatTag=sh_audio->wtag;
     }
 
-    if(mp_conf.verbose)
-    {
+    if(mp_conf.verbose) {
 	MSG_V("Output fmt:\n");
 	print_wave_header(&priv->o_wf,sizeof(WAVEFORMATEX));
     }
@@ -128,19 +124,19 @@ static int close_acm_audio_codec(sh_audio_t *sh_audio)
     return(1);
 }
 
-int init(sh_audio_t *sh_audio)
+MPXP_Rc init(sh_audio_t *sh_audio)
 {
     float pts;
     int ret=decode(sh_audio,sh_audio->a_buffer,4096,sh_audio->a_buffer_size,&pts);
     if(ret<0){
         MSG_INFO("ACM decoding error: %d\n",ret);
-        return 0;
+        return MPXP_False;
     }
     sh_audio->a_buffer_len=ret;
-    return 1;
+    return MPXP_Ok;
 }
 
-int preinit(sh_audio_t *sh_audio)
+MPXP_Rc preinit(sh_audio_t *sh_audio)
 {
   /* Win32 ACM audio codec: */
   priv_t *priv;
@@ -148,10 +144,10 @@ int preinit(sh_audio_t *sh_audio)
   priv=sh_audio->context;
   if(!init_acm_audio_codec(sh_audio)){
     MSG_ERR(MSGTR_ACMiniterror);
-    return 0;
+    return MPXP_False;
   }
   MSG_V("INFO: Win32/ACM init OK!\n");
-  return 1;
+  return MPXP_Ok;
 }
 
 void uninit(sh_audio_t *sh)
@@ -163,26 +159,24 @@ void uninit(sh_audio_t *sh)
 MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
   int skip;
-    switch(cmd)
-    {
-//      case ADCTRL_RESYNC_STREAM:
-//          sh_audio->a_in_buffer_len=0;/* reset ACM/DShow audio buffer */
+    switch(cmd) {
+//	case ADCTRL_RESYNC_STREAM:
+//	     sh_audio->a_in_buffer_len=0;/* reset ACM/DShow audio buffer */
 //	  return MPXP_True;
-      case ADCTRL_SKIP_FRAME:
-	{
-		float pts;
-		    skip=sh_audio->wf->nBlockAlign;
-		    if(skip<16){
-		      skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
-		      if(skip<16) skip=16;
-		    }
-		    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
-	  return MPXP_True;
+	case ADCTRL_SKIP_FRAME: {
+	    float pts;
+	    skip=sh_audio->wf->nBlockAlign;
+	    if(skip<16){
+		skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
+		if(skip<16) skip=16;
+	    }
+	    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
+	    return MPXP_True;
 	}
-      default:
-	  return MPXP_Unknown;
+	default:
+	    return MPXP_Unknown;
     }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

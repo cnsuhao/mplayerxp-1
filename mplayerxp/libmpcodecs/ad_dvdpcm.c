@@ -5,12 +5,11 @@
 #include "osdep/bswap.h"
 #include "libao2/afmt.h"
 
-static const ad_info_t info =
-{
-	"Uncompressed DVD/VOB LPCM audio decoder",
-	"dvdpcm",
-	"Nickols_K",
-	"build-in"
+static const ad_info_t info = {
+    "Uncompressed DVD/VOB LPCM audio decoder",
+    "dvdpcm",
+    "Nickols_K",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -19,7 +18,7 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(dvdpcm)
 
-int init(sh_audio_t *sh)
+MPXP_Rc init(sh_audio_t *sh)
 {
 /* DVD PCM Audio:*/
     sh->i_bps = 0;
@@ -28,23 +27,23 @@ int init(sh_audio_t *sh)
 	unsigned char h=sh->codecdata[1];
 	sh->nch=1+(h&7);
 	switch((h>>4)&3){
-	case 0: sh->rate=48000;break;
-	case 1: sh->rate=96000;break;
-	case 2: sh->rate=44100;break;
-	case 3: sh->rate=32000;break;
+	    case 0: sh->rate=48000;break;
+	    case 1: sh->rate=96000;break;
+	    case 2: sh->rate=44100;break;
+	    case 3: sh->rate=32000;break;
 	}
 	switch ((h >> 6) & 3) {
-	  case 0:
-	    sh->afmt = AFMT_S16_BE;
-	    break;
-	  case 1:
-	    //sh->afmt = AFMT_S20_BE;
-	    sh->i_bps = sh->nch * sh->rate * 5 / 2;
-	  case 2:
-	    sh->afmt = AFMT_S24_BE;
-	    break;
-	  default:
-	    sh->afmt = AFMT_S16_BE;
+	    case 0:
+		sh->afmt = AFMT_S16_BE;
+		break;
+	    case 1:
+		//sh->afmt = AFMT_S20_BE;
+		sh->i_bps = sh->nch * sh->rate * 5 / 2;
+	    case 2:
+		sh->afmt = AFMT_S24_BE;
+		break;
+	    default:
+		sh->afmt = AFMT_S16_BE;
 	}
     } else {
 	// use defaults:
@@ -54,13 +53,13 @@ int init(sh_audio_t *sh)
     }
     if (!sh->i_bps)
     sh->i_bps = afmt2bps(sh->afmt) * sh->nch * sh->rate;
-    return 1;
+    return MPXP_Ok;
 }
 
-int preinit(sh_audio_t *sh)
+MPXP_Rc preinit(sh_audio_t *sh)
 {
-  sh->audio_out_minsize=2048;
-  return 1;
+    sh->audio_out_minsize=2048;
+    return MPXP_Ok;
 }
 
 void uninit(sh_audio_t *sh)
@@ -70,22 +69,20 @@ void uninit(sh_audio_t *sh)
 
 MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
-  int skip;
-  UNUSED(arg);
-    switch(cmd)
-    {
-      case ADCTRL_SKIP_FRAME:
-      {
-        float pts;
-	skip=sh->i_bps/16;
-	skip=skip&(~3);
-	demux_read_data_r(sh->ds,NULL,skip,&pts);
-	return MPXP_True;
-      }
-      default:
-	return MPXP_Unknown;
+    int skip;
+    UNUSED(arg);
+    switch(cmd) {
+	case ADCTRL_SKIP_FRAME: {
+	    float pts;
+	    skip=sh->i_bps/16;
+	    skip=skip&(~3);
+	    demux_read_data_r(sh->ds,NULL,skip,&pts);
+	    return MPXP_True;
+	}
+	default:
+	    return MPXP_Unknown;
     }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
 unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)

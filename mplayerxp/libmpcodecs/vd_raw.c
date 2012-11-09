@@ -6,10 +6,10 @@
 #include "vd_internal.h"
 
 static const vd_info_t info = {
-	"RAW Uncompressed Video",
-	"raw",
-	"A'rpi & Alex",
-	"build-in"
+    "RAW Uncompressed Video",
+    "raw",
+    "A'rpi & Alex",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -21,15 +21,15 @@ LIBVD_EXTERN(raw)
 // to set/get/query special features/parameters
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd) {
-      case VDCTRL_QUERY_FORMAT:
+	case VDCTRL_QUERY_FORMAT:
 	    return MPXP_True;
-      default: break;
+	default: break;
     }
     return MPXP_Unknown;
 }
 
 // init driver
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     // set format fourcc for raw RGB:
     if(sh->fourcc==0){
 	switch(sh->bih->biBitCount){
@@ -46,8 +46,7 @@ static int init(sh_video_t *sh){
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-}
+static void uninit(sh_video_t *sh) {}
 
 // decode a frame
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
@@ -91,7 +90,6 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	mpi->planes[0]=data;
 	mpi->stride[0]=mpi->width*((mpi->bpp+7)/8);
     }
-
     return mpi;
 }
 

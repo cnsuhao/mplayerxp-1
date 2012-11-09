@@ -5,12 +5,11 @@
 
 #include "vd_internal.h"
 
-static const vd_info_t info =
-{
-	"MPEG 1/2 Video passthrough",
-	"mpegpes",
-	"A'rpi",
-	"build-in"
+static const vd_info_t info = {
+    "MPEG 1/2 Video passthrough",
+    "mpegpes",
+    "A'rpi",
+    "build-in"
 };
 
 static const config_t options[] = {
@@ -25,13 +24,12 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static int init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh){
     return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-}
+static void uninit(sh_video_t *sh) {}
 
 // decode a frame
 static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
