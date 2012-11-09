@@ -333,7 +333,7 @@ int munlock(const any_t*addr,size_t len) { return ENOSYS; }
     }\
 }
 
-int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_height,
+MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_height,
 		   unsigned x_org,unsigned y_org,unsigned dst_width,
 		   unsigned dst_height,unsigned format,unsigned dest_bpp,
 		   unsigned vid_w,unsigned vid_h,const any_t*info)
@@ -355,7 +355,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
 	MSG_FATAL("video server has unsupported resolution (%dx%d), supported: %dx%d-%dx%d\n",
 		vid_w, vid_h, priv->cap->minwidth, priv->cap->minheight,
 		priv->cap->maxwidth, priv->cap->maxheight);
-	return -1;
+	return MPXP_False;
     }
     priv->fourcc->fourcc = format;
     vdlQueryFourcc(priv->handler,priv->fourcc);
@@ -375,17 +375,17 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
     if(err) {
 	MSG_FATAL("video server has unsupported color depth by vidix (%d)\n"
 		,priv->fourcc->depth);
-		return -1;
+		return MPXP_False;
     }
     if((dst_width > src_width || dst_height > src_height) && (priv->cap->flags & FLAG_UPSCALER) != FLAG_UPSCALER) {
 	MSG_FATAL("vidix driver can't upscale image (%d%d -> %d%d)\n",
 		src_width, src_height, dst_width, dst_height);
-	return -1;
+	return MPXP_False;
     }
     if((dst_width > src_width || dst_height > src_height) && (priv->cap->flags & FLAG_DOWNSCALER) != FLAG_DOWNSCALER) {
 	MSG_FATAL("vidix driver can't downscale image (%d%d -> %d%d)\n",
 		src_width, src_height, dst_width, dst_height);
-	return -1;
+	return MPXP_False;
     }
     priv->image_width = src_width;
     priv->image_height = src_height;
@@ -447,7 +447,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
     }
     if((err=vdlConfigPlayback(priv->handler,priv->play))!=0) {
 	MSG_FATAL("Can't configure playback: %s\n",strerror(err));
-	return -1;
+	return MPXP_False;
     }
     MSG_V("using %d buffers\n", priv->play->num_frames);
     /* configure busmastering */
@@ -460,7 +460,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
 		if(!priv->bm_buffs[i]) priv->bm_buffs[i] = mp_memalign(psize, priv->play->frame_size);
 		if(!(priv->bm_buffs[i])) {
 		    MSG_ERR("Can't allocate memory for busmastering\n");
-		    return -1;
+		    return MPXP_False;
 		}
 		if(mlock(priv->bm_buffs[i],priv->play->frame_size) != 0) {
 		    unsigned j;
@@ -539,7 +539,7 @@ int  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_heigh
 	    priv->dstrides->v /= 2;
 	    break;
     }
-    return 0;
+    return MPXP_Ok;
 }
 
 static void __FASTCALL__ vidix_dri_get_surface_caps(vo_data_t* vo,dri_surface_cap_t *caps)
@@ -613,7 +613,7 @@ MPXP_Rc __FASTCALL__ vidix_control(vo_data_t* vo,uint32_t request, any_t*data)
     return MPXP_NA;
 }
 
-int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*server)
+MPXP_Rc __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*server)
 {
     int err;
     static int reent=0;
@@ -624,7 +624,7 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     if(vdlGetVersion() != VIDIX_VERSION) {
 	MSG_FATAL("You have wrong version of VIDIX library\n");
 	mp_free(priv);
-	return -1;
+	return MPXP_False;
     }
     priv->handler = vdlOpen(VIDIX_PATH,
 			drvname ? drvname[0] == ':' ? &drvname[1] : drvname[0] ? drvname : NULL : NULL,
@@ -633,12 +633,12 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     if(priv->handler == NULL) {
 	MSG_FATAL("Couldn't find working VIDIX driver\n");
 	mp_free(priv);
-	return -1;
+	return MPXP_False;
     }
     if((err=vdlGetCapability(priv->handler,priv->cap)) != 0) {
 	MSG_FATAL("Couldn't get capability: %s\n",strerror(err));
 	mp_free(priv);
-	return -1;
+	return MPXP_False;
     }
     else MSG_V("Driver capability: %X\n",priv->cap->flags);
     MSG_V("Using: %s by %s\n",priv->cap->name,priv->cap->author);
@@ -651,5 +651,5 @@ int __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*serv
     }
     priv->vo_server = server;
     priv->inited=1;
-    return 0;
+    return MPXP_Ok;
 }

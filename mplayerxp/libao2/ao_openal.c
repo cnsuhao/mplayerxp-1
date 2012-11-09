@@ -91,34 +91,34 @@ static void print_help(void) {
         );
 }
 #endif
-static int init(ao_data_t* ao,unsigned flags)
+static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
     ao->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=ao->priv;
-  UNUSED(flags);
-  priv->alc_dev = alcOpenDevice(NULL);
-  if (!priv->alc_dev) {
-    MSG_ERR("[OpenAL] could not open device\n");
-    return 0;
-  }
-  return 1;
+    UNUSED(flags);
+    priv->alc_dev = alcOpenDevice(NULL);
+    if (!priv->alc_dev) {
+	MSG_ERR("[OpenAL] could not open device\n");
+	return MPXP_False;
+    }
+    return MPXP_Ok;
 }
 
-static int configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned format)
+static MPXP_Rc configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned format)
 {
     priv_t*priv=ao->priv;
-  ALCcontext *ctx = NULL;
-  float position[3] = {0, 0, 0};
-  float direction[6] = {0, 0, 1, 0, -1, 0};
-  float sppos[MAX_CHANS][3] = {
-    {-1, 0, 0.5}, {1, 0, 0.5},
-    {-1, 0,  -1}, {1, 0,  -1},
-    {0,  0,   1}, {0, 0, 0.1},
-    {-1, 0,   0}, {1, 0,   0},
-  };
-  ALCint freq = 0;
-  ALCint attribs[] = {ALC_FREQUENCY, rate, 0, 0};
-  unsigned i;
+    ALCcontext *ctx = NULL;
+    float position[3] = {0, 0, 0};
+    float direction[6] = {0, 0, 1, 0, -1, 0};
+    float sppos[MAX_CHANS][3] = {
+	{-1, 0, 0.5}, {1, 0, 0.5},
+	{-1, 0,  -1}, {1, 0,  -1},
+	{0,  0,   1}, {0, 0, 0.1},
+	{-1, 0,   0}, {1, 0,   0},
+    };
+    ALCint freq = 0;
+    ALCint attribs[] = {ALC_FREQUENCY, rate, 0, 0};
+    unsigned i;
 /*
   const opt_t subopts[] = {
     {NULL}
@@ -128,39 +128,38 @@ static int configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned fo
     return 0;
   }
 */
-  UNUSED(format);
-  if (channels > MAX_CHANS) {
-    MSG_ERR("[OpenAL] Invalid number of channels: %i\n", channels);
-    goto err_out;
-  }
-  ctx = alcCreateContext(priv->alc_dev, attribs);
-  alcMakeContextCurrent(ctx);
-  alListenerfv(AL_POSITION, position);
-  alListenerfv(AL_ORIENTATION, direction);
-  alGenSources(channels, priv->sources);
-  for (i = 0; i < channels; i++) {
-    priv->cur_buf[i] = 0;
-    priv->unqueue_buf[i] = 0;
-    alGenBuffers(NUM_BUF, priv->buffers[i]);
-    alSourcefv(priv->sources[i], AL_POSITION, sppos[i]);
-    alSource3f(priv->sources[i], AL_VELOCITY, 0, 0, 0);
-  }
-  if (channels == 1)
-    alSource3f(priv->sources[0], AL_POSITION, 0, 0, 1);
-  ao->channels = channels;
-  alcGetIntegerv(priv->alc_dev, ALC_FREQUENCY, 1, &freq);
-  if (alcGetError(priv->alc_dev) == ALC_NO_ERROR && freq)
-    rate = freq;
-  ao->samplerate = rate;
-  ao->format = AFMT_S16_NE;
-  ao->bps = channels * rate * 2;
-  ao->buffersize = CHUNK_SIZE * NUM_BUF;
-  ao->outburst = channels * CHUNK_SIZE;
-  priv->tmpbuf = mp_malloc(CHUNK_SIZE);
-  return 1;
-
+    UNUSED(format);
+    if (channels > MAX_CHANS) {
+	MSG_ERR("[OpenAL] Invalid number of channels: %i\n", channels);
+	goto err_out;
+    }
+    ctx = alcCreateContext(priv->alc_dev, attribs);
+    alcMakeContextCurrent(ctx);
+    alListenerfv(AL_POSITION, position);
+    alListenerfv(AL_ORIENTATION, direction);
+    alGenSources(channels, priv->sources);
+    for (i = 0; i < channels; i++) {
+	priv->cur_buf[i] = 0;
+	priv->unqueue_buf[i] = 0;
+	alGenBuffers(NUM_BUF, priv->buffers[i]);
+	alSourcefv(priv->sources[i], AL_POSITION, sppos[i]);
+	alSource3f(priv->sources[i], AL_VELOCITY, 0, 0, 0);
+    }
+    if (channels == 1)
+	alSource3f(priv->sources[0], AL_POSITION, 0, 0, 1);
+    ao->channels = channels;
+    alcGetIntegerv(priv->alc_dev, ALC_FREQUENCY, 1, &freq);
+    if (alcGetError(priv->alc_dev) == ALC_NO_ERROR && freq)
+	rate = freq;
+    ao->samplerate = rate;
+    ao->format = AFMT_S16_NE;
+    ao->bps = channels * rate * 2;
+    ao->buffersize = CHUNK_SIZE * NUM_BUF;
+    ao->outburst = channels * CHUNK_SIZE;
+    priv->tmpbuf = mp_malloc(CHUNK_SIZE);
+    return MPXP_Ok;
 err_out:
-  return 0;
+    return MPXP_False;
 }
 
 // close audio device

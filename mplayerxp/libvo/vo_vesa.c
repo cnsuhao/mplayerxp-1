@@ -397,7 +397,7 @@ static unsigned __FASTCALL__ fillMultiBuffer(vo_data_t*vo,unsigned long vsize, u
  * bit 2 (0x04) enables software scaling (-zoom)
  * bit 3 (0x08) enables flipping (-flip) (NK: and for what?)
  */
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv;
     struct VbeInfoBlock vib;
@@ -413,9 +413,9 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     fs_mode = 0;
     if(priv->subdev_flags == 0xFFFFFFFEUL) {
 	MSG_ERR("vo_vesa: detected internal fatal error: init is called before preinit\n");
-	return -1;
+	return MPXP_False;
     }
-    if(priv->subdev_flags == 0xFFFFFFFFUL) return -1;
+    if(priv->subdev_flags == 0xFFFFFFFFUL) return MPXP_False;
     if(flags & 0x8) {
 	MSG_WARN("vo_vesa: switch -flip is not supported\n");
     }
@@ -428,7 +428,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     if((err=vbeGetControllerInfo(&vib)) != VBE_OK) {
 	PRINT_VBE_ERR("vbeGetControllerInfo",err);
 	MSG_FATAL("vo_vesa: possible reason: No VBE2 BIOS found\n");
-	return -1;
+	return MPXP_False;
     }
     /* Print general info here */
     MSG_V("vo_vesa: Found VESA VBE BIOS Version %x.%x Revision: %x\n",
@@ -518,7 +518,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     for(i=0;i < num_modes;i++) {
 	if((err=vbeGetModeInfo(mode_ptr[i],&vmib)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeGetModeInfo",err);
-	    return -1;
+	    return MPXP_False;
 	}
 	if(vmib.XResolution >= w &&
 	   vmib.YResolution >= h &&
@@ -552,12 +552,12 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	fflush(stdout);
 	if((err=vbeGetMode(&priv->init_mode)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeGetMode",err);
-	    return -1;
+	    return MPXP_False;
 	}
 	MSG_V("vo_vesa: Initial video mode: %x\n",priv->init_mode);
 	if((err=vbeGetModeInfo(priv->video_mode,&priv->vmode_info)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeGetModeInfo",err);
-	    return -1;
+	    return MPXP_False;
 	}
 	priv->dstBpp = priv->vmode_info.BitsPerPixel;
 	MSG_V("vo_vesa: Using VESA mode (%u) = %x [%ux%u@%u]\n"
@@ -600,23 +600,23 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 		     ,vsize);
 		MSG_V(" at %08lXh",(unsigned long)lfb);
 		MSG_V("\n");
-		if(!(priv->multi_size = fillMultiBuffer(vo,vsize,vo_conf.xp_buffs))) return -1;
+		if(!(priv->multi_size = fillMultiBuffer(vo,vsize,vo_conf.xp_buffs))) return MPXP_False;
 		if(priv->multi_size < 2) MSG_ERR("vo_vesa: Can't use double buffering: not enough video memory\n");
 		else MSG_V("vo_vesa: using %u buffers for multi buffering\n",priv->multi_size);
 	    }
 	}
 	if(priv->win.idx == -2) {
 	   MSG_ERR("vo_vesa: Can't find neither DGA nor relocatable window's frame.\n");
-	   return -1;
+	   return MPXP_False;
 	}
 	if(!HAS_DGA()) {
 	    if(priv->subdev_flags & SUBDEV_FORCEDGA) {
 		MSG_ERR("vo_vesa: you've forced DGA. Exiting\n");
-		return -1;
+		return MPXP_False;
 	    }
 	    if(!(win_seg = priv->win.idx == 0 ? priv->vmode_info.WinASegment:priv->vmode_info.WinBSegment)) {
 		MSG_ERR("vo_vesa: Can't find valid window address\n");
-		return -1;
+		return MPXP_False;
 	    }
 	    priv->win.ptr = PhysToVirtSO(win_seg,0);
 	    priv->win.low = 0L;
@@ -644,41 +644,41 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    {
 		if(!(priv->dga_buffer = mp_memalign(64,priv->vmode_info.XResolution*priv->vmode_info.YResolution*priv->dstBpp))) {
 		    MSG_ERR("vo_vesa: Can't allocate temporary buffer\n");
-		    return -1;
+		    return MPXP_False;
 		}
 		MSG_V("vo_vesa: dga emulator was allocated = %p\n",priv->dga_buffer);
 	    }
 	}
 	if((err=vbeSaveState(&priv->init_state)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeSaveState",err);
-	    return -1;
+	    return MPXP_False;
 	}
 	if((err=vbeSetMode(priv->video_mode,NULL)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeSetMode",err);
-	    return -1;
+	    return MPXP_False;
 	}
 	/* Now we are in video mode!!!*/
-	/* Below 'return -1' is impossible */
+	/* Below 'return MPXP_False' is impossible */
 	MSG_V("vo_vesa: Graphics mode was activated\n");
 #ifdef CONFIG_VIDIX
 	if(priv->vidix_name) {
 	    if(vidix_init(vo,width,height,priv->x_offset,priv->y_offset,priv->dstW,
 			priv->dstH,format,priv->dstBpp,
-			priv->vmode_info.XResolution,priv->vmode_info.YResolution,info) != 0) {
+			priv->vmode_info.XResolution,priv->vmode_info.YResolution,info) != MPXP_Ok) {
 		MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
 		priv->vidix_name = NULL;
 		vesa_term(vo);
-		return -1;
+		return MPXP_False;
 	    } else MSG_V("vo_vesa: Using VIDIX\n");
 	    if(vidix_start(vo)!=0) {
 		vesa_term(vo);
-		return -1;
+		return MPXP_False;
 	    }
 	}
 #endif
     } else {
 	MSG_ERR("vo_vesa: Can't find mode for: %ux%u@%u\n",width,height,bpp);
-	return -1;
+	return MPXP_False;
     }
     MSG_V("vo_vesa: VESA initialization complete\n");
     if(HAS_DGA()) {
@@ -695,7 +695,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	if(x < 0) x = 0;
 	vbeWriteString(x,0,7,title);
     }
-    return 0;
+    return MPXP_Ok;
 }
 
 static const vo_info_t* get_info(vo_data_t*vo)
@@ -712,7 +712,7 @@ static void uninit(vo_data_t*vo)
     mp_free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     int pre_init_err = 0;
     MSG_DBG2("vo_vesa: preinit(%s) was called\n",arg);
@@ -727,7 +727,7 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     MSG_DBG3("vo_subdevice: initialization returns: %i\n",pre_init_err);
     if(!pre_init_err)
 	if((pre_init_err=vbeInit()) != VBE_OK) PRINT_VBE_ERR("vbeInit",pre_init_err);
-    return pre_init_err;
+    return pre_init_err?MPXP_False:MPXP_Ok;
 }
 
 static void __FASTCALL__ vesa_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)

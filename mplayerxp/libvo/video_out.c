@@ -194,7 +194,7 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     return vo;
 }
 
-int __FASTCALL__ vo_init(vo_data_t*vo,const char *subdevice)
+MPXP_Rc __FASTCALL__ vo_init(vo_data_t*vo,const char *subdevice)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_init(%s)\n",subdevice);
@@ -398,18 +398,17 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 }
 
 static int vo_inited=0;
-uint32_t __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
+MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		   uint32_t d_height, uint32_t fullscreen, char *title,
 		   uint32_t format,const vo_tune_info_t *vti)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
-    uint32_t retval;
+    MPXP_Rc retval;
     unsigned dest_fourcc,w,d_w,h,d_h;
     MSG_DBG3("dri_vo_dbg: vo_config\n");
-    if(vo_inited)
-    {
+    if(vo_inited) {
 	MSG_FATAL("!!!video_out internal fatal error: video_out is initialized more than once!!!\n");
-	return -1;
+	return MPXP_False;
     }
     vo_inited++;
     dest_fourcc = format;
@@ -427,8 +426,7 @@ uint32_t __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, ui
 	,w,h,d_w,d_h,fullscreen,title,vo_format_name(dest_fourcc));
     retval = video_out->config(vo,w,h,d_w,d_h,fullscreen,title,dest_fourcc,vti);
     priv->srcFourcc=format;
-    if(retval == 0)
-    {
+    if(retval == MPXP_Ok) {
 	int dri_retv;
 	dri_retv = video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv->dri.cap);
 	priv->image_format = format;
@@ -475,13 +473,13 @@ uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned sr
     return retval;
 }
 
-uint32_t vo_reset(vo_data_t*vo)
+MPXP_Rc vo_reset(vo_data_t*vo)
 {
     MSG_DBG3("dri_vo_dbg: vo_reset\n");
     return video_out->control(vo,VOCTRL_RESET,NULL);
 }
 
-uint32_t vo_screenshot(vo_data_t*vo,unsigned idx )
+MPXP_Rc vo_screenshot(vo_data_t*vo,unsigned idx )
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     char buf[256];
@@ -490,13 +488,13 @@ uint32_t vo_screenshot(vo_data_t*vo,unsigned idx )
     return gr_screenshot(buf,priv->dri.surf[idx].planes,priv->dri.cap.strides,priv->dri.cap.fourcc,priv->dri.cap.width,priv->dri.cap.height);
 }
 
-uint32_t vo_pause(vo_data_t*vo)
+MPXP_Rc vo_pause(vo_data_t*vo)
 {
     MSG_DBG3("dri_vo_dbg: vo_pause\n");
     return video_out->control(vo,VOCTRL_PAUSE,0);
 }
 
-uint32_t vo_resume(vo_data_t*vo)
+MPXP_Rc vo_resume(vo_data_t*vo)
 {
     MSG_DBG3("dri_vo_dbg: vo_resume\n");
     return video_out->control(vo,VOCTRL_RESUME,0);
@@ -511,7 +509,7 @@ void vo_unlock_surfaces(vo_data_t*vo) {
     pthread_mutex_unlock(&priv->surfaces_mutex);
 }
 
-uint32_t __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi)
+MPXP_Rc __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     int width_less_stride;
@@ -619,10 +617,11 @@ int vo_check_events(vo_data_t*vo)
     return (need_repaint && !priv->dri.accel) || (vrest.event_type&VO_EVENT_FORCE_UPDATE);
 }
 
-uint32_t vo_fullscreen(vo_data_t*vo)
+MPXP_Rc vo_fullscreen(vo_data_t*vo)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
-    uint32_t retval,etype;
+    uint32_t etype;
+    MPXP_Rc retval;
     MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
     etype = 0;
     retval = video_out->control(vo,VOCTRL_FULLSCREEN,&etype);
@@ -637,20 +636,18 @@ unsigned __FASTCALL__ vo_get_num_frames(vo_data_t*vo) {
     return priv->dri.num_xp_frames;
 }
 
-uint32_t __FASTCALL__ vo_draw_slice(vo_data_t*vo,const mp_image_t *mpi)
+MPXP_Rc __FASTCALL__ vo_draw_slice(vo_data_t*vo,const mp_image_t *mpi)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     unsigned i,_w[4],_h[4],x,y;
     MSG_DBG3("dri_vo_dbg: vo_draw_slice xywh=%i %i %i %i\n",mpi->x,mpi->y,mpi->w,mpi->h);
-    if(priv->dri.has_dri)
-    {
+    if(priv->dri.has_dri) {
 	uint8_t *dst[4];
 	const uint8_t *ps_src[4];
 	int dstStride[4];
 	int finalize=vo_is_final(vo);
 	unsigned idx = mpi->xp_idx;
-	for(i=0;i<4;i++)
-	{
+	for(i=0;i<4;i++) {
 	    dst[i]=priv->dri.surf[idx].planes[i]+priv->dri.off[i];
 	    dstStride[i]=priv->dri.cap.strides[i];
 	    dst[i]+=((mpi->y*dstStride[i])*priv->vod.y_mul[i])/priv->vod.y_div[i];
@@ -669,9 +666,9 @@ uint32_t __FASTCALL__ vo_draw_slice(vo_data_t*vo,const mp_image_t *mpi)
 		    memcpy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
 	    }
 	}
-	return 0;
+	return MPXP_Ok;
     }
-    return -1;
+    return MPXP_False;
 }
 
 void vo_select_frame(vo_data_t*vo,unsigned play_idx)

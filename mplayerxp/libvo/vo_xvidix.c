@@ -132,7 +132,7 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update,const vo_t
 	vidix_stop(vo);
 	if (vidix_init(vo,priv->image_width, priv->image_height, priv->win_x, priv->win_y,
 	    priv->win_w, priv->win_h, priv->image_format, vo->depthonscreen,
-	    vo_conf.screenwidth, vo_conf.screenheight,info) != 0)
+	    vo_conf.screenwidth, vo_conf.screenheight,info) != MPXP_Ok)
         {
 	    MSG_FATAL( "Can't initialize VIDIX driver: %s: %s\n",
 		priv->name, strerror(errno));
@@ -163,7 +163,7 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update,const vo_t
 /* connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
     uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv;
@@ -209,10 +209,9 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    break;
     }
 
-    if (!vo_x11_init(vo))
-    {
+    if (vo_x11_init(vo)!=MPXP_Ok) {
 	MSG_ERR("vo_x11_init failed\n");
-        return -1;
+	return MPXP_False;
     }
     aspect_save_orig(width, height);
     aspect_save_prescale(d_width, d_height);
@@ -350,7 +349,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 
     saver_off(vo,vo->mDisplay); /* turning off screen saver */
 
-    return(0);
+    return MPXP_Ok;
 }
 
 static const vo_info_t *get_info(vo_data_t*vo)
@@ -395,7 +394,7 @@ static void uninit(vo_data_t*vo)
     mp_free(priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
@@ -405,8 +404,8 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 	MSG_V( "No vidix driver name provided, probing available ones!\n");
 	priv->name = NULL;
     }
-    if (vidix_preinit(vo,priv->name, &video_out_xvidix) != 0) return 1;
-    return 0;
+    if(vidix_preinit(vo,priv->name, &video_out_xvidix)!=MPXP_Ok) return MPXP_False;
+    return MPXP_Ok;
 }
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)

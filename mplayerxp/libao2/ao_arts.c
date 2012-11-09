@@ -50,37 +50,37 @@ static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
-	return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
-static int init(ao_data_t* ao,unsigned flags)
+static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
-	int err;
-	UNUSED(ao);
-	UNUSED(flags);
+    int err;
+    UNUSED(ao);
+    UNUSED(flags);
 
-	if( (err=arts_init()) ) {
-		MSG_ERR("[aRts] init failed: %s\n", arts_error_text(err));
-		/*TODO: system("artsd -l0");*/
-		return 0;
-	}
-	MSG_INFO("[aRts] connected to server\n");
-	return 1;
+    if( (err=arts_init()) ) {
+	MSG_ERR("[aRts] init failed: %s\n", arts_error_text(err));
+	/*TODO: system("artsd -l0");*/
+	return MPXP_False;
+    }
+    MSG_INFO("[aRts] connected to server\n");
+    return MPXP_Ok;
 }
 
-static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
     arts_stream_t stream;
-	unsigned frag_spec,samplesize;
-	/*
-	 * arts supports 8bit unsigned and 16bit signed sample formats
-	 * (16bit apparently in little endian format, even in the case
-	 * when artsd runs on a big endian cpu).
-	 *
-	 * Unsupported formats are translated to one of these two formats
-	 * using mplayer's audio filters.
-	 */
-	switch (format) {
+    unsigned frag_spec,samplesize;
+    /*
+     * arts supports 8bit unsigned and 16bit signed sample formats
+     * (16bit apparently in little endian format, even in the case
+     * when artsd runs on a big endian cpu).
+     *
+     * Unsupported formats are translated to one of these two formats
+     * using mplayer's audio filters.
+     */
+    switch (format) {
 	case AFMT_U8:
 	case AFMT_S8:
 	    format = AFMT_U8;
@@ -106,34 +106,34 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,
 	    samplesize=2;
 	    format = AFMT_S16_LE;    /* artsd always expects little endian?*/
 	    break;
-	}
+    }
 
-	ao->format = format;
-	ao->channels = channels;
-	ao->samplerate = rate;
-	ao->bps = rate*channels*samplesize;
+    ao->format = format;
+    ao->channels = channels;
+    ao->samplerate = rate;
+    ao->bps = rate*channels*samplesize;
 
-	stream=arts_play_stream(rate, samplesize*8, channels, "MPlayerXP");
-	ao->priv=stream;
+    stream=arts_play_stream(rate, samplesize*8, channels, "MPlayerXP");
+    ao->priv=stream;
 
-	if(stream == NULL) {
-		MSG_ERR("[aRts] Can't open stream\n");
-		arts_free();
-		return 0;
-	}
+    if(stream == NULL) {
+	MSG_ERR("[aRts] Can't open stream\n");
+	arts_free();
+	return MPXP_False;
+    }
 
-	/* Set the stream to blocking: it will not block anyway, but it seems */
-	/* to be working better */
-	arts_stream_set(stream, ARTS_P_BLOCKING, 1);
-	frag_spec = ARTS_PACKET_SIZE_LOG2 | ARTS_PACKETS << 16;
-	arts_stream_set(stream, ARTS_P_PACKET_SETTINGS, frag_spec);
-	ao->buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
-	MSG_INFO("[aRts] Stream opened\n");
+    /* Set the stream to blocking: it will not block anyway, but it seems */
+    /* to be working better */
+    arts_stream_set(stream, ARTS_P_BLOCKING, 1);
+    frag_spec = ARTS_PACKET_SIZE_LOG2 | ARTS_PACKETS << 16;
+    arts_stream_set(stream, ARTS_P_PACKET_SETTINGS, frag_spec);
+    ao->buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
+    MSG_INFO("[aRts] Stream opened\n");
 
-	MSG_V("[aRts] buffersize=%u\n",ao->buffersize);
-	MSG_V("[aRts] buffersize=%u\n", arts_stream_get(stream, ARTS_P_PACKET_SIZE));
+    MSG_V("[aRts] buffersize=%u\n",ao->buffersize);
+    MSG_V("[aRts] buffersize=%u\n", arts_stream_get(stream, ARTS_P_PACKET_SIZE));
 
-	return 1;
+    return MPXP_Ok;
 }
 
 static void uninit(ao_data_t* ao)

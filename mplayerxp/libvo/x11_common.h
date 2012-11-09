@@ -8,8 +8,8 @@
 #include "video_out.h"
 #include "dri_vo.h"
 
-int __FASTCALL__ vo_x11_init(vo_data_t*vo);
-int __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window);
+MPXP_Rc __FASTCALL__ vo_x11_init(vo_data_t*vo);
+MPXP_Rc __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window);
 /* local data */
 int __FASTCALL__ vo_x11_Shmem_Flag(vo_data_t*vo);
 XImage* __FASTCALL__ vo_x11_Image(vo_data_t*vo,unsigned idx);

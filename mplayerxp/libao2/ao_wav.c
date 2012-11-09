@@ -96,16 +96,16 @@ static MPXP_Rc control(ao_data_t* ao,int cmd,long arg){
 
 // open & setup audio device
 // return: 1=success 0=fail
-static int init(ao_data_t* ao,unsigned flags) {
+static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
     // set defaults
     UNUSED(flags);
     ao->priv=mp_mallocz(sizeof(priv_t));
     priv_t* priv=ao->priv;
     priv->pcm_waveheader=1;
-    return 1;
+    return MPXP_Ok;
 }
 
-static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
+static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
     priv_t* priv=ao->priv;
     unsigned bits;
     char str[256];
@@ -169,10 +169,10 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
 	if(priv->pcm_waveheader){ /* Reserve space for wave header */
 	    fwrite(&priv->wavhdr,sizeof(priv->wavhdr),1,priv->fp);
 	}
-	return 1;
+	return MPXP_Ok;
     }
     MSG_ERR("ao_wav: can't open output file: %s\n", priv->out_filename);
-    return 0;
+    return MPXP_False;
 }
 
 // close audio device

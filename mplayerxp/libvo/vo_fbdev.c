@@ -140,7 +140,7 @@ typedef struct priv_s {
     unsigned		out_height;
     int			last_row;
     int			fs;
-    int			pre_init_err;
+    MPXP_Rc		pre_init_err;
 }priv_t;
 
 typedef struct priv_conf_s {
@@ -682,11 +682,11 @@ static uint32_t __FASTCALL__ parseSubDevice(const char *sd)
     return 0;
 }
 
-static int fb_preinit(vo_data_t*vo)
+static MPXP_Rc fb_preinit(vo_data_t*vo)
 {
     priv_t*priv=(priv_t*)vo->priv;
     static int fb_preinit_done = 0;
-    static int fb_works = 0;
+    static MPXP_Rc fb_works = MPXP_Ok;
 
     if (fb_preinit_done) return fb_works;
 
@@ -728,8 +728,8 @@ static int fb_preinit(vo_data_t*vo)
     }
 
     fb_preinit_done = 1;
-    fb_works = 1;
-    return 1;
+    fb_works = MPXP_Ok;
+    return MPXP_Ok;
 err_out_tty_fd:
     close(priv->tty_fd);
     priv->tty_fd = -1;
@@ -738,8 +738,8 @@ err_out_fd:
     priv->dev_fd = -1;
 err_out:
     fb_preinit_done = 1;
-    fb_works = 0;
-    return 0;
+    fb_works = MPXP_False;
+    return MPXP_False;
 }
 
 static void lots_of_printf(vo_data_t*vo)
@@ -825,7 +825,7 @@ static void __FASTCALL__ vt_set_textarea(vo_data_t*vo,int u, int l)
     fflush(priv->vt_fp);
 }
 
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		uint32_t d_height, uint32_t fullscreen, char *title,
 		uint32_t format,const vo_tune_info_t *info)
 {
@@ -835,17 +835,17 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 
     UNUSED(title);
     priv->srcFourcc = format;
-    if((int)priv->pre_init_err == -2) {
+    if((int)priv->pre_init_err == MPXP_Error) {
 	MSG_ERR(FBDEV "Internal fatal error: init() was called before preinit()\n");
-	return -1;
+	return MPXP_False;
     }
-    if (priv->pre_init_err) return 1;
+    if (priv->pre_init_err!=MPXP_Ok) return MPXP_False;
 
     if (priv_conf.mode_name && !vo_VM(vo)) {
 	MSG_ERR(FBDEV "-fbmode can only be used with -vm\n");
-	return 1;
+	return MPXP_False;
     }
-    if (vo_VM(vo) && (parse_fbmode_cfg(vo,priv_conf.mode_cfgfile) < 0)) return 1;
+    if (vo_VM(vo) && (parse_fbmode_cfg(vo,priv_conf.mode_cfgfile) < 0)) return MPXP_False;
     if (d_width && (vo_ZOOM(vo) || vo_VM(vo))) {
 	priv->out_width = d_width;
 	priv->out_height = d_height;
@@ -860,7 +860,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     if (priv_conf.mode_name) {
 	if (!(priv->mode = find_mode_by_name(priv_conf.mode_name))) {
 	    MSG_ERR(FBDEV "can't find requested video mode\n");
-	    return 1;
+	    return MPXP_False;
 	}
 	fb_mode2fb_vinfo(priv->mode, &priv->vinfo);
     } else if (vo_VM(vo)) {
@@ -870,13 +870,13 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	if (!priv->monitor_hfreq || !priv->monitor_vfreq || !priv->monitor_dotclock) {
 	    MSG_ERR(FBDEV "you have to specify the capabilities of"
 			" the monitor.\n");
-	    return 1;
+	    return MPXP_False;
 	}
 	if (!(priv->mode = find_best_mode(priv->out_width, priv->out_height,
 					priv->monitor_hfreq, priv->monitor_vfreq,
 					priv->monitor_dotclock))) {
 	    MSG_ERR(FBDEV "can't find best video mode\n");
-	    return 1;
+	    return MPXP_False;
 	}
 	MSG_ERR(FBDEV "using mode %dx%d @ %.1fHz\n", priv->mode->xres,
 		priv->mode->yres, vsf(priv->mode));
@@ -898,7 +898,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	if (priv->tty_fd >= 0 && ioctl(priv->tty_fd, KDSETMODE, KD_TEXT) < 0) {
 	    MSG_ERR(FBDEV "Can't restore text mode: %s\n", strerror(errno));
 	}
-	return 1;
+	return MPXP_False;
     }
 
     priv->pixel_size = (priv->vinfo.bits_per_pixel+7) / 8;
@@ -928,7 +928,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     if (vo_FLIP(vo) && ((((priv->pixel_format & 0xff) + 7) / 8) != priv->pixel_size)) {
 	MSG_ERR(FBDEV "Flipped output with depth conversion is not "
 			"supported\n");
-	return 1;
+	return MPXP_False;
     }
 
     priv->xres = priv->vinfo.xres;
@@ -937,14 +937,14 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 
     if (ioctl(priv->dev_fd, FBIOGET_FSCREENINFO, &priv->finfo)) {
 	MSG_ERR(FBDEV "Can't get FSCREENINFO: %s\n", strerror(errno));
-	return 1;
+	return MPXP_False;
     }
 
     lots_of_printf(vo);
 
     if (priv->finfo.type != FB_TYPE_PACKED_PIXELS) {
 	MSG_ERR(FBDEV "type %d not supported\n", priv->finfo.type);
-	return 1;
+	return MPXP_False;
     }
 
     switch (priv->finfo.visual) {
@@ -953,12 +953,12 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    MSG_DBG2(FBDEV "creating cmap for directcolor\n");
 	    if (ioctl(priv->dev_fd, FBIOGETCMAP, &priv->oldcmap)) {
 		MSG_ERR(FBDEV "can't get cmap: %s\n",strerror(errno));
-		return 1;
+		return MPXP_False;
 	    }
-	    if (!(cmap = make_directcolor_cmap(&priv->vinfo))) return 1;
+	    if (!(cmap = make_directcolor_cmap(&priv->vinfo))) return MPXP_False;
 	    if (ioctl(priv->dev_fd, FBIOPUTCMAP, cmap)) {
 		MSG_ERR(FBDEV "can't put cmap: %s\n",strerror(errno));
-		return 1;
+		return MPXP_False;
 	    }
 	    priv->cmap_changed = 1;
 	    mp_free(cmap->red);
@@ -968,7 +968,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    break;
 	default:
 	    MSG_ERR(FBDEV "visual: %d not yet supported\n",priv->finfo.visual);
-	    return 1;
+	    return MPXP_False;
     }
 
     priv->line_len = priv->finfo.line_length;
@@ -997,26 +997,26 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     if(vidix_name) {
 	if(vidix_init(vo,width,height,x_offset,y_offset,priv->out_width,
 		    priv->out_height,format,priv->bpp,
-		    priv->xres,priv->yres,info) != 0) {
+		    priv->xres,priv->yres,info) != MPXP_Ok) {
 			MSG_ERR(FBDEV "Can't initialize VIDIX driver\n");
 			vidix_name = NULL;
 			vidix_term(vo);
-			return -1;
+			return MPXP_False;
 	} else MSG_V(FBDEV "Using VIDIX\n");
 	if ((priv->frame_buffer = (uint8_t *) mmap(0, priv->size, PROT_READ | PROT_WRITE,
 						     MAP_SHARED, priv->dev_fd, 0)) == (uint8_t *) -1) {
 	    MSG_ERR(FBDEV "Can't mmap %s: %s\n", priv_conf.dev_name, strerror(errno));
-	    return -1;
+	    return MPXP_False;
 	}
 	memset(priv->frame_buffer, 0, priv->line_len * priv->yres);
-	if(vidix_start(vo)!=0) { vidix_term(vo); return -1; }
+	if(vidix_start(vo)!=0) { vidix_term(vo); return MPXP_False; }
     } else
 #endif
     {
 	if ((priv->frame_buffer = (uint8_t *) mmap(0, priv->size, PROT_READ | PROT_WRITE,
 				    MAP_SHARED, priv->dev_fd, 0)) == (uint8_t *) -1) {
 	    MSG_ERR(FBDEV "Can't mmap %s: %s\n", priv_conf.dev_name, strerror(errno));
-	    return 1;
+	    return MPXP_False;
 	}
 	if(priv->out_width > priv->xres) priv->out_width=priv->xres;
 	if(priv->out_height > priv->yres) priv->out_width=priv->yres;
@@ -1029,7 +1029,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	for(i=0;i<priv->total_fr;i++)
 	    if (!(priv->next_frame[i] = (uint8_t *) mp_malloc(priv->out_width * priv->out_height * priv->pixel_size))) {
 		MSG_ERR(FBDEV "Can't mp_malloc priv->next_frame: %s\n", strerror(errno));
-		return 1;
+		return MPXP_False;
 	    }
     }
     if (priv->vt_doit && (priv->vt_fd = open("/dev/tty", O_WRONLY)) == -1) {
@@ -1044,7 +1044,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     if (priv->vt_doit)
 	vt_set_textarea(vo,priv->last_row, priv->yres);
 
-    return 0;
+    return MPXP_Ok;
 }
 
 static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t * format)
@@ -1110,19 +1110,19 @@ static void uninit(vo_data_t*vo)
     mp_free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     priv_conf.mode_cfgfile = "/etc/priv->modes";
     priv->vt_doit = 1;
-    priv->pre_init_err = 0;
+    priv->pre_init_err = MPXP_Ok;
     if(arg) parseSubDevice(arg);
 #ifdef CONFIG_VIDIX
     if(vidix_name) priv->pre_init_err = vidix_preinit(vo,vidix_name,&video_out_fbdev);
     MSG_DBG2("vo_subdevice: initialization returns: %i\n",priv->pre_init_err);
 #endif
-    if(priv->pre_init_err) priv->pre_init_err=(fb_preinit(vo)?0:-1);
+    if(priv->pre_init_err) priv->pre_init_err=fb_preinit(vo);
     return priv->pre_init_err;
 }
 

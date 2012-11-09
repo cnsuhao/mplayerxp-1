@@ -111,7 +111,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjus
    return ret;
 }
 
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format,const vo_tune_info_t *info)
 {
     priv_t* priv=(priv_t*)vo->priv;
     // int interval, prefer_blank, allow_exp, nothing;
@@ -238,20 +238,20 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,
 #ifdef WORDS_BIGENDIAN
     if(priv->mode==MODE_BGR && priv->bpp!=32) {
 	MSG_ERR("BGR%d not supported, please contact the developers\n", priv->bpp);
-	return -1;
+	return MPXP_False;
     }
     if(priv->mode==MODE_RGB && priv->bpp==32) {
 	MSG_ERR("RGB32 not supported on big-endian systems, please contact the developers\n");
-	return -1;
+	return MPXP_False;
     }
 #else
     if(priv->mode==MODE_BGR) {
 	MSG_ERR("BGR not supported, please contact the developers\n");
-	return -1;
+	return MPXP_False;
     }
 #endif
     saver_off(vo,vo->mDisplay);
-    return 0;
+    return MPXP_Ok;
 }
 
 static const vo_info_t* get_info( vo_data_t*vo )
@@ -323,20 +323,17 @@ static void uninit(vo_data_t*vo)
     mp_free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t* priv=(priv_t*)vo->priv;
     priv->num_buffers=1;
-    if(arg)
-    {
+    if(arg) {
 	MSG_ERR("vo_x11: Unknown subdevice: %s\n",arg);
-	return ENOSYS;
+	return MPXP_False;
     }
-
-    if( !vo_x11_init(vo) ) return -1; // Can't open X11
-
-    return 0;
+    if(vo_x11_init(vo)!=MPXP_Ok) return MPXP_False; // Can't open X11
+    return MPXP_Ok;
 }
 
 static void __FASTCALL__ x11_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)

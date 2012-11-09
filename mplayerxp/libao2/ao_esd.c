@@ -161,7 +161,7 @@ static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
  * open & setup audio device
  * return: 1=success 0=fail
  */
-static int init(ao_data_t* ao,unsigned flags)
+static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
     ao->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=ao->priv;
@@ -172,13 +172,13 @@ static int init(ao_data_t* ao,unsigned flags)
 	priv->fd = esd_open_sound(server);
 	if (priv->fd < 0) {
 	    MSG_ERR("ESD: Can't open sound: %s\n", strerror(errno));
-	    return 0;
+	    return MPXP_False;
 	}
     }
-    return 1;
+    return MPXP_Ok;
 }
 
-static int configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
+static MPXP_Rc configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
 {
     priv_t*priv=ao->priv;
     char *server = ao->subdevice;  /* NULL for localhost */
@@ -264,7 +264,7 @@ static int configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned f
 					   server, ESD_CLIENT_NAME);
     if (priv->play_fd < 0) {
 	MSG_ERR("ESD: Can't open play stream: %s\n", strerror(errno));
-	return 0;
+	return MPXP_False;
     }
 
     /* enable non-blocking i/o on the socket connection to the esd server */
@@ -290,7 +290,7 @@ static int configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned f
     priv->samples_written = 0;
     priv->bytes_per_sample = bytes_per_sample;
 
-    return 1;
+    return MPXP_Ok;
 }
 
 

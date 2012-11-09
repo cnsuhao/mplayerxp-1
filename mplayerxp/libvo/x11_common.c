@@ -260,7 +260,7 @@ static int x11_errorhandler(Display *display, XErrorEvent *event)
     return 0;
 }
 
-int vo_x11_init(vo_data_t*vo)
+MPXP_Rc vo_x11_init(vo_data_t*vo)
 {
     unsigned depth, bpp;
     unsigned int mask;
@@ -269,7 +269,7 @@ int vo_x11_init(vo_data_t*vo)
     XWindowAttributes attribs;
     char* dispName;
 
-    if(vo->depthonscreen) return 1; // already called
+    if(vo->depthonscreen) return MPXP_Ok; // already called
 
     vo->priv2=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv2;
@@ -290,7 +290,7 @@ int vo_x11_init(vo_data_t*vo)
     vo->mDisplay=XOpenDisplay(dispName);
     if ( !vo->mDisplay ) {
 	MSG_ERR( "vo: couldn't open the X11 display (%s)!\n",dispName );
-	return 0;
+	return MPXP_False;
     }
     vo->mScreen=DefaultScreen( vo->mDisplay );     // Screen ID.
     priv->mRootWin=RootWindow( vo->mDisplay,vo->mScreen );// Root window ID.
@@ -376,7 +376,7 @@ int vo_x11_init(vo_data_t*vo)
 	depth, vo->depthonscreen,
 	dispName,priv->mLocalDisplay?"local":"remote");
 
-    return 1;
+    return MPXP_Ok;
 }
 
 
@@ -608,7 +608,7 @@ void __FASTCALL__ vo_x11_classhint( Display * display,Window window,char *name )
 	    XSetClassHint(display,window,&wmClass);
 }
 
-int __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window)
+MPXP_Rc __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window)
 {
     XSetErrorHandler(NULL);
     /* and -wid is set */
@@ -617,7 +617,7 @@ int __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window)
     XCloseDisplay(display);
     vo->depthonscreen = 0;
     mp_free(vo->priv2);
-    return 1;
+    return MPXP_Ok;
 }
 
 

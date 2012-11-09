@@ -196,157 +196,149 @@ static void show_caps(ao_data_t* ao)
 }
 // open & setup audio device
 // return: 1=success 0=fail
-static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
-  char *mixer_channels [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
-  UNUSED(flags);
-  ao->priv=mp_mallocz(sizeof(priv_t));
-  priv_t*priv=ao->priv;
-  priv->dsp=PATH_DEV_DSP;
-  priv->mixer_channel=SOUND_MIXER_PCM;
-  priv->fd=-1;
-  priv->delay_method=2;
-  if (ao->subdevice)
-  {
-    char *p;
-    p=strrchr(ao->subdevice,':');
-    priv->dsp = ao->subdevice;
-    if(p) { *p=0; p++;  if(strcmp(p,"-1")==0) { show_caps(ao); return 0; } }
-  }
+static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags){
+    char *mixer_channels [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
+    UNUSED(flags);
+    ao->priv=mp_mallocz(sizeof(priv_t));
+    priv_t*priv=ao->priv;
+    priv->dsp=PATH_DEV_DSP;
+    priv->mixer_channel=SOUND_MIXER_PCM;
+    priv->fd=-1;
+    priv->delay_method=2;
+    if (ao->subdevice) {
+	char *p;
+	p=strrchr(ao->subdevice,':');
+	priv->dsp = ao->subdevice;
+	if(p) { *p=0; p++;  if(strcmp(p,"-1")==0) { show_caps(ao); return MPXP_False; } }
+    }
 
-  MSG_V("audio_setup: using '%s' priv->dsp device\n", priv->dsp);
-  MSG_V("audio_setup: using '%s'(%s) mixer device\n", oss_mixer_device,mixer_channels[priv->mixer_channel]);
+    MSG_V("audio_setup: using '%s' priv->dsp device\n", priv->dsp);
+    MSG_V("audio_setup: using '%s'(%s) mixer device\n", oss_mixer_device,mixer_channels[priv->mixer_channel]);
 
 #ifdef __linux__
-  priv->fd=open(priv->dsp, O_WRONLY | O_NONBLOCK);
+    priv->fd=open(priv->dsp, O_WRONLY | O_NONBLOCK);
 #else
-  priv->fd=open(priv->dsp, O_WRONLY);
+    priv->fd=open(priv->dsp, O_WRONLY);
 #endif
-  if(priv->fd<0){
-    MSG_ERR("Can't open audio device %s: %s\n", priv->dsp, strerror(errno));
-    return 0;
-  }
+    if(priv->fd<0){
+	MSG_ERR("Can't open audio device %s: %s\n", priv->dsp, strerror(errno));
+	return MPXP_False;
+    }
 
 #ifdef __linux__
   /* Remove the non-blocking flag */
-  if(fcntl(priv->fd, F_SETFL, 0) < 0) {
-   MSG_ERR("Can't make filedescriptor non-blocking: %s\n", strerror(errno));
-   return 0;
-  }
+    if(fcntl(priv->fd, F_SETFL, 0) < 0) {
+	MSG_ERR("Can't make filedescriptor non-blocking: %s\n", strerror(errno));
+	return MPXP_False;
+    }
 #endif
 
 #if defined(FD_CLOEXEC) && defined(F_SETFD)
-  fcntl(priv->fd, F_SETFD, FD_CLOEXEC);
+    fcntl(priv->fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-    return 1;
+    return MPXP_Ok;
 }
 
-static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
     priv_t*priv=ao->priv;
     MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
     ao_format_name(format));
 
-  if(format == AFMT_AC3) {
-    ao->samplerate=rate;
-    ioctl (priv->fd, SNDCTL_DSP_SPEED, &ao->samplerate);
-  }
+    if(format == AFMT_AC3) {
+	ao->samplerate=rate;
+	ioctl (priv->fd, SNDCTL_DSP_SPEED, &ao->samplerate);
+    }
 
 ac3_retry:
-  ao->format=format;
-  if( ioctl(priv->fd, SNDCTL_DSP_SETFMT, &ao->format)<0 ||
-      ao->format != format)
-  {
-   if(format == AFMT_AC3){
-    MSG_WARN("OSS-CONF: Can't set audio device %s to AC3 output, trying S16...\n", priv->dsp);
-#ifdef WORDS_BIGENDIAN
-    format=AFMT_S16_BE;
-#else
-    format=AFMT_S16_LE;
-#endif
-    goto ac3_retry;
-   }
-   else
-   {
-    MSG_ERR("OSS-CONF: Can't configure for: %s\n",ao_format_name(format));
-    show_fmts(ao);
     ao->format=format;
-    return 0;
-   }
-  }
-  ao->channels = channels;
-  if(format != AFMT_AC3) {
-    // We only use SNDCTL_DSP_CHANNELS for >2 channels, in case some drivers don't have it
-    if (ao->channels > 2) {
-      if ( ioctl(priv->fd, SNDCTL_DSP_CHANNELS, &ao->channels) == -1 ||
-	   ao->channels != channels ) {
-	MSG_ERR("OSS-CONF: Failed to set audio device to %d channels\n", channels);
-	return 0;
-      }
-    }
-    else {
-      int c = ao->channels-1;
-      if (ioctl (priv->fd, SNDCTL_DSP_STEREO, &c) == -1) {
-	MSG_ERR("OSS-CONF: Failed to set audio device to %d channels\n", ao->channels);
-	return 0;
-      }
-      ao->channels=c+1;
-    }
-    MSG_V("OSS-CONF: using %d channels (requested: %d)\n", ao->channels, channels);
-    // set rate
-    ao->samplerate=rate;
-    ioctl (priv->fd, SNDCTL_DSP_SPEED, &ao->samplerate);
-    MSG_V("OSS-CONF: using %d Hz samplerate (requested: %d)\n",ao->samplerate,rate);
-  }
-
-  if(ioctl(priv->fd, SNDCTL_DSP_GETOSPACE, &priv->zz)==-1){
-      int r=0;
-      MSG_WARN("OSS-CONF: driver doesn't support SNDCTL_DSP_GETOSPACE :-(\n");
-      if(ioctl(priv->fd, SNDCTL_DSP_GETBLKSIZE, &r)==-1){
-          MSG_V("OSS-CONF: %d bytes/frag (mp_config.h)\n",ao->outburst);
-      } else {
-          ao->outburst=r;
-          MSG_V("OSS-CONF: %d bytes/frag (GETBLKSIZE)\n",ao->outburst);
-      }
-  } else {
-      MSG_V("OSS-CONF: frags: %3d/%d  (%d bytes/frag)  mp_free: %6d\n",
-          priv->zz.fragments, priv->zz.fragstotal, priv->zz.fragsize, priv->zz.bytes);
-      if(ao->buffersize==0) ao->buffersize=priv->zz.bytes;
-      ao->outburst=priv->zz.fragsize;
-  }
-
-  if(ao->buffersize==0){
-    // Measuring buffer size:
-    any_t* data;
-    ao->buffersize=0;
-#ifdef HAVE_AUDIO_SELECT
-    data=mp_mallocz(ao->outburst);
-    while(ao->buffersize<0x40000){
-      fd_set rfds;
-      struct timeval tv;
-      FD_ZERO(&rfds); FD_SET(priv->fd,&rfds);
-      tv.tv_sec=0; tv.tv_usec = 0;
-      if(!select(priv->fd+1, NULL, &rfds, NULL, &tv)) break;
-      write(priv->fd,data,ao->outburst);
-      ao->buffersize+=ao->outburst;
-    }
-    mp_free(data);
-    if(ao->buffersize==0){
-        MSG_ERR("\n   *** OSS-CONF: Your audio driver DOES NOT support select()  ***\n"
-          "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mp_config.h !\n\n");
-        return 0;
-    }
+    if( ioctl(priv->fd, SNDCTL_DSP_SETFMT, &ao->format)<0 || ao->format != format) {
+	if(format == AFMT_AC3){
+	    MSG_WARN("OSS-CONF: Can't set audio device %s to AC3 output, trying S16...\n", priv->dsp);
+#ifdef WORDS_BIGENDIAN
+	    format=AFMT_S16_BE;
+#else
+	    format=AFMT_S16_LE;
 #endif
-  }
+	    goto ac3_retry;
+	} else {
+	    MSG_ERR("OSS-CONF: Can't configure for: %s\n",ao_format_name(format));
+	    show_fmts(ao);
+	    ao->format=format;
+	    return MPXP_False;
+	}
+    }
+    ao->channels = channels;
+    if(format != AFMT_AC3) {
+	// We only use SNDCTL_DSP_CHANNELS for >2 channels, in case some drivers don't have it
+	if (ao->channels > 2) {
+	    if ( ioctl(priv->fd, SNDCTL_DSP_CHANNELS, &ao->channels) == -1 || ao->channels != channels ) {
+		MSG_ERR("OSS-CONF: Failed to set audio device to %d channels\n", channels);
+		return MPXP_False;
+	    }
+	} else {
+	    int c = ao->channels-1;
+	    if (ioctl (priv->fd, SNDCTL_DSP_STEREO, &c) == -1) {
+		MSG_ERR("OSS-CONF: Failed to set audio device to %d channels\n", ao->channels);
+		return MPXP_False;
+	    }
+	    ao->channels=c+1;
+	}
+	MSG_V("OSS-CONF: using %d channels (requested: %d)\n", ao->channels, channels);
+	// set rate
+	ao->samplerate=rate;
+	ioctl (priv->fd, SNDCTL_DSP_SPEED, &ao->samplerate);
+	MSG_V("OSS-CONF: using %d Hz samplerate (requested: %d)\n",ao->samplerate,rate);
+    }
 
-  ao->bps=ao->channels;
-  if(ao->format != AFMT_U8 && ao->format != AFMT_S8)
-    ao->bps*=2;
+    if(ioctl(priv->fd, SNDCTL_DSP_GETOSPACE, &priv->zz)==-1){
+	int r=0;
+	MSG_WARN("OSS-CONF: driver doesn't support SNDCTL_DSP_GETOSPACE :-(\n");
+	if(ioctl(priv->fd, SNDCTL_DSP_GETBLKSIZE, &r)==-1){
+	    MSG_V("OSS-CONF: %d bytes/frag (mp_config.h)\n",ao->outburst);
+	} else {
+	    ao->outburst=r;
+	    MSG_V("OSS-CONF: %d bytes/frag (GETBLKSIZE)\n",ao->outburst);
+	}
+    } else {
+	MSG_V("OSS-CONF: frags: %3d/%d  (%d bytes/frag)  mp_free: %6d\n",
+	    priv->zz.fragments, priv->zz.fragstotal, priv->zz.fragsize, priv->zz.bytes);
+	if(ao->buffersize==0) ao->buffersize=priv->zz.bytes;
+	ao->outburst=priv->zz.fragsize;
+    }
 
-  ao->outburst-=ao->outburst % ao->bps; // round down
-  ao->bps*=ao->samplerate;
+    if(ao->buffersize==0){
+	// Measuring buffer size:
+	any_t* data;
+	ao->buffersize=0;
+#ifdef HAVE_AUDIO_SELECT
+	data=mp_mallocz(ao->outburst);
+	while(ao->buffersize<0x40000) {
+	    fd_set rfds;
+	    struct timeval tv;
+	    FD_ZERO(&rfds); FD_SET(priv->fd,&rfds);
+	    tv.tv_sec=0; tv.tv_usec = 0;
+	    if(!select(priv->fd+1, NULL, &rfds, NULL, &tv)) break;
+	    write(priv->fd,data,ao->outburst);
+	    ao->buffersize+=ao->outburst;
+	}
+	mp_free(data);
+	if(ao->buffersize==0){
+	    MSG_ERR("\n   *** OSS-CONF: Your audio driver DOES NOT support select()  ***\n"
+		    "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mp_config.h !\n\n");
+	    return MPXP_False;
+	}
+#endif
+    }
 
-  return 1;
+    ao->bps=ao->channels;
+    if(ao->format != AFMT_U8 && ao->format != AFMT_S8) ao->bps*=2;
+
+    ao->outburst-=ao->outburst % ao->bps; // round down
+    ao->bps*=ao->samplerate;
+
+    return MPXP_Ok;
 }
 
 // close audio device

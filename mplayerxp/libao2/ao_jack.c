@@ -212,18 +212,18 @@ static void print_help (void)
          );
 }
 #endif
-static int init(ao_data_t* ao,unsigned flags) {
+static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
     ao->priv=mp_mallocz(sizeof(priv_t));
     UNUSED(flags);
-    return 1;
+    return MPXP_Ok;
 }
 
-static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format) {
+static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format) {
     priv_t*priv=ao->priv;
-  const char **matching_ports = NULL;
-  char *port_name = NULL;
-  char *client_name = NULL;
-  int autostart = 0;
+    const char **matching_ports = NULL;
+    char *port_name = NULL;
+    char *client_name = NULL;
+    int autostart = 0;
 /*
   const opt_t subopts[] = {
     {"port", OPT_ARG_MSTRZ, &port_name, NULL},
@@ -233,93 +233,92 @@ static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned form
     {NULL}
   };
 */
-  jack_options_t open_options = JackUseExactName;
-  int port_flags = JackPortIsInput;
-  unsigned i;
-  priv->estimate = 1;
-  UNUSED(format);
+    jack_options_t open_options = JackUseExactName;
+    int port_flags = JackPortIsInput;
+    unsigned i;
+    priv->estimate = 1;
+    UNUSED(format);
 /*
   if (subopt_parse(ao->subdevice, subopts) != 0) {
     print_help();
     return 0;
   }
 */
-  if (channels > MAX_CHANS) {
-    MSG_FATAL("[JACK] Invalid number of channels: %i\n", channels);
-    goto err_out;
-  }
-  if (!client_name) {
-    client_name = mp_malloc(40);
-    sprintf(client_name, "MPlayerXP [%d]", getpid());
-  }
-  if (!autostart)
-    open_options |= JackNoStartServer;
-  priv->client = jack_client_open(client_name, open_options, NULL);
-  if (!priv->client) {
-    MSG_FATAL("[JACK] cannot open server\n");
-    goto err_out;
-  }
-  priv->buffer = cb_fifo_alloc(BUFFSIZE);
-  jack_set_process_callback(priv->client, outputaudio, ao);
-
-  // list matching priv->ports
-  if (!port_name)
-    port_flags |= JackPortIsPhysical;
-  matching_ports = jack_get_ports(priv->client, ao->subdevice, NULL, port_flags);
-  if (!matching_ports || !matching_ports[0]) {
-    MSG_FATAL("[JACK] no physical priv->ports available\n");
-    goto err_out;
-  }
-  i = 1;
-  while (matching_ports[i]) i++;
-  if (channels > i) channels = i;
-  priv->num_ports = channels;
-
-  // create out output priv->ports
-  for (i = 0; i < priv->num_ports; i++) {
-    char pname[30];
-    snprintf(pname, 30, "out_%d", i);
-    priv->ports[i] = jack_port_register(priv->client, pname, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-    if (!priv->ports[i]) {
-      MSG_FATAL("[JACK] not enough priv->ports available\n");
-      goto err_out;
+    if (channels > MAX_CHANS) {
+	MSG_FATAL("[JACK] Invalid number of channels: %i\n", channels);
+	goto err_out;
     }
-  }
-  if (jack_activate(priv->client)) {
-    MSG_FATAL("[JACK] activate failed\n");
-    goto err_out;
-  }
-  for (i = 0; i < priv->num_ports; i++) {
-    if (jack_connect(priv->client, jack_port_name(priv->ports[i]), matching_ports[i])) {
-      MSG_FATAL( "[JACK] connecting failed\n");
-      goto err_out;
+    if (!client_name) {
+	client_name = mp_malloc(40);
+	sprintf(client_name, "MPlayerXP [%d]", getpid());
     }
-  }
-  rate = jack_get_sample_rate(priv->client);
-  priv->latency = (float)(jack_port_get_total_latency(priv->client, priv->ports[0]) +
-                         jack_get_buffer_size(priv->client)) / (float)rate;
-  priv->callback_interval = 0;
+    if (!autostart)
+	open_options |= JackNoStartServer;
+    priv->client = jack_client_open(client_name, open_options, NULL);
+    if (!priv->client) {
+	MSG_FATAL("[JACK] cannot open server\n");
+	goto err_out;
+    }
+    priv->buffer = cb_fifo_alloc(BUFFSIZE);
+    jack_set_process_callback(priv->client, outputaudio, ao);
 
-  ao->channels = channels;
-  ao->samplerate = rate;
-  ao->format = AFMT_FLOAT32;
-  ao->bps = channels * rate * sizeof(float);
-  ao->buffersize = CHUNK_SIZE * NUM_CHUNKS;
-  ao->outburst = CHUNK_SIZE;
-  mp_free(matching_ports);
-  mp_free(port_name);
-  mp_free(client_name);
-  return 1;
+    // list matching priv->ports
+    if (!port_name)
+	port_flags |= JackPortIsPhysical;
+    matching_ports = jack_get_ports(priv->client, ao->subdevice, NULL, port_flags);
+    if (!matching_ports || !matching_ports[0]) {
+	MSG_FATAL("[JACK] no physical priv->ports available\n");
+	goto err_out;
+    }
+    i = 1;
+    while (matching_ports[i]) i++;
+    if (channels > i) channels = i;
+    priv->num_ports = channels;
+
+    // create out output priv->ports
+    for (i = 0; i < priv->num_ports; i++) {
+	char pname[30];
+	snprintf(pname, 30, "out_%d", i);
+	priv->ports[i] = jack_port_register(priv->client, pname, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+	if (!priv->ports[i]) {
+	    MSG_FATAL("[JACK] not enough priv->ports available\n");
+	    goto err_out;
+	}
+    }
+    if (jack_activate(priv->client)) {
+	MSG_FATAL("[JACK] activate failed\n");
+	goto err_out;
+    }
+    for (i = 0; i < priv->num_ports; i++) {
+	if (jack_connect(priv->client, jack_port_name(priv->ports[i]), matching_ports[i])) {
+	    MSG_FATAL( "[JACK] connecting failed\n");
+	    goto err_out;
+	}
+    }
+    rate = jack_get_sample_rate(priv->client);
+    priv->latency = (float)(jack_port_get_total_latency(priv->client, priv->ports[0]) +
+			    jack_get_buffer_size(priv->client)) / (float)rate;
+    priv->callback_interval = 0;
+
+    ao->channels = channels;
+    ao->samplerate = rate;
+    ao->format = AFMT_FLOAT32;
+    ao->bps = channels * rate * sizeof(float);
+    ao->buffersize = CHUNK_SIZE * NUM_CHUNKS;
+    ao->outburst = CHUNK_SIZE;
+    mp_free(matching_ports);
+    mp_free(port_name);
+    mp_free(client_name);
+    return MPXP_Ok;
 
 err_out:
-  mp_free(matching_ports);
-  mp_free(port_name);
-  mp_free(client_name);
-  if (priv->client)
-    jack_client_close(priv->client);
-  cb_fifo_free(priv->buffer);
-  priv->buffer = NULL;
-  return 0;
+    mp_free(matching_ports);
+    mp_free(port_name);
+    mp_free(client_name);
+    if (priv->client) jack_client_close(priv->client);
+    cb_fifo_free(priv->buffer);
+    priv->buffer = NULL;
+    return MPXP_False;
 }
 
 // close audio device

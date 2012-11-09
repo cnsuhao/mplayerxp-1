@@ -206,22 +206,18 @@ const ao_info_t* ao_get_info( void )
 ao_data_t* __FASTCALL__ ao_init(unsigned flags,const char *subdevice)
 {
     ao_data_t* ao;
-    int retval;
     ao=mp_mallocz(sizeof(ao_data_t));
     if(subdevice) ao->subdevice=mp_strdup(subdevice);
     ao->outburst=OUTBURST;
     ao->buffersize=-1;
-    retval = audio_out->init(ao,flags);
-    if(retval) return ao;
+    if(audio_out->init(ao,flags)==MPXP_Ok) return ao;
     mp_free(ao);
     return NULL;
 }
 
-int __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
+MPXP_Rc __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
 {
-    int retval;
-    retval=audio_out->configure(ao,rate,channels,format);
-    return retval;
+    return audio_out->configure(ao,rate,channels,format);
 }
 
 void ao_uninit(ao_data_t*ao)

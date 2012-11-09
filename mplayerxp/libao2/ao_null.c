@@ -106,7 +106,7 @@ static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 
 // open & setup audio device
 // return: 1=success 0=fail
-static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
+static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags){
     ao->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv = (priv_t*)ao->priv;
     char *null_dev=NULL,*mode=NULL;
@@ -118,10 +118,10 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags){
 	//if(priv->fd) priv->fast_mode=1;
 	if(strcmp(mode,"wav")==0) priv->wav_mode=1;
     } //end parsing ao->subdevice
-    return 1;
+    return MPXP_Ok;
 }
 
-static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
+static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
     priv_t*priv = (priv_t*)ao->priv;
     unsigned bits;
     ao->buffersize= 0xFFFFF;
@@ -173,7 +173,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,
 	fwrite(&wavhdr,sizeof(wavhdr),1,priv->fd);
 	wavhdr.file_length=wavhdr.data_length=0;
     }
-    return 1;
+    return MPXP_Ok;
 }
 
 // close audio device

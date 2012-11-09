@@ -284,9 +284,9 @@ typedef struct priv_s {
 
 static void __FASTCALL__ erase_area_4(int x_start, int width, int height, int pitch, uint32_t color, uint8_t* pixels);
 static void __FASTCALL__ erase_area_1(int x_start, int width, int height, int pitch, uint8_t color, uint8_t* pixels);
-static int setup_surfaces(vo_data_t*);
-static int __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx);
-static int __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, int bpp, uint32_t sdlflags);
+static MPXP_Rc __FASTCALL__ setup_surfaces(vo_data_t*);
+static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx);
+static MPXP_Rc __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, int bpp, uint32_t sdlflags);
 static void __FASTCALL__ erase_rectangle(vo_data_t*vo,unsigned idx,int x, int y, int w, int h);
 
 static char sdl_subdevice[100]="";
@@ -329,7 +329,7 @@ static int sdl_open ( vo_data_t*vo )
 #ifdef CONFIG_VIDIX
     if(memcmp(sdl_subdevice,"vidix",5) == 0) {
 	vidix_name = &sdl_subdevice[5]; /* vidix_name will be valid within init() */
-	if(vidix_preinit(vo,vidix_name,&video_out_sdl)!=0) return -1;
+	if(vidix_preinit(vo,vidix_name,&video_out_sdl)!=MPXP_Ok) return -1;
 	strcpy(priv->driver,"vidix");
     } else {
 #endif
@@ -472,11 +472,11 @@ static int sdl_close (vo_data_t*vo)
 }
 
 /* Set video mode. Not fullscreen */
-static int __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, int bpp, uint32_t sdlflags)
+static MPXP_Rc __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, int bpp, uint32_t sdlflags)
 {
     priv_t *priv = vo->priv;
     SDL_Surface* newsurface;
-    int retval=-1;
+    MPXP_Rc retval=MPXP_False;
     newsurface = SDL_SetVideoMode(width, height, bpp, sdlflags);
 
     if(newsurface) {
@@ -497,10 +497,11 @@ static int __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, int b
     return retval;
 }
 
-static int __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
+static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
     priv_t *priv = vo->priv;
     SDL_Surface *newsurface = NULL;
-    int screen_surface_w, screen_surface_h,retval=-1;
+    int screen_surface_w, screen_surface_h;
+    MPXP_Rc retval=MPXP_False;
 
     /* if we haven't set a fullmode yet, default to the lowest res fullmode first */
     /* But select a mode where the full video enter */
@@ -564,11 +565,11 @@ static int __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
  *   returns : non-zero on success, zero on error.
  **/
 
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
 //static int sdl_setup (int width, int height)
 {
     priv_t *priv = vo->priv;
-    int retval;
+    MPXP_Rc retval;
 
     UNUSED(info);
     priv->info=info;
@@ -597,7 +598,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    break;
 	default:
 	    MSG_ERR("SDL: Unsupported image format (0x%X)\n",format);
-	    return -1;
+	    return MPXP_False;
     }
 
     MSG_V("SDL: Using 0x%X (%s) image format\n", format,
@@ -671,7 +672,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 		break;
 	    default:
 		MSG_ERR("SDL: Unsupported image format in GL mode (0x%X)\n",format);
-		return -1;
+		return MPXP_False;
 	}
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
     }
@@ -696,7 +697,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	MSG_V("SDL: Info - please use -vm or -zoom to switch to best resolution.\n");
 	priv->fulltype = FS;
 	retval = set_fullmode(vo,priv->fullmode);
-	if(retval) return retval;
+	if(retval!=MPXP_Ok) return retval;
     } else if(flags&VM) {
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
 	priv->fulltype = VM;
@@ -705,7 +706,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
 	priv->fulltype = ZOOM;
 	retval = set_fullmode(vo,priv->fullmode);
-	if(retval) return retval;
+	if(retval!=MPXP_Ok) return retval;
     } else {
 	if((strcmp(priv->driver, "x11") == 0)
 	    ||(strcmp(priv->driver, "windib") == 0)
@@ -714,48 +715,49 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	    && priv->X)) {
 		MSG_V("SDL: setting windowed mode\n");
 		retval = set_video_mode(vo,priv->dstwidth, priv->dstheight, priv->bpp, priv->sdlflags);
-		if(retval) return retval;
+		if(retval!=MPXP_Ok) return retval;
 	    } else {
 		MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
 		priv->fulltype = ZOOM;
 		retval = set_fullmode(vo,priv->fullmode);
-		if(retval) return retval;
+		if(retval!=MPXP_Ok) return retval;
 	    }
     }
 
     if(!priv->surface) { // cannot SetVideoMode
 	MSG_ERR("SDL: failed to set video mode: %s\n", SDL_GetError());
-	return -1;
+	return MPXP_False;
     }
-    return 0;
+    return MPXP_Ok;
 }
 
-static int setup_surfaces( vo_data_t*vo )
+static MPXP_Rc setup_surfaces( vo_data_t*vo )
 {
     priv_t *priv = vo->priv;
-    unsigned i,retval;
+    unsigned i;
+    MPXP_Rc retval;
     priv->num_buffs=vo_conf.xp_buffs;
 #ifdef CONFIG_VIDIX
     if(!vidix_name) {
 #endif
     for(i=0;i<priv->num_buffs;i++) {
 	retval = setup_surface(vo,i);
-	if(retval) return retval;
+	if(retval!=MPXP_Ok) return retval;
     }
 #ifdef CONFIG_VIDIX
     }
     else {
 	if(vidix_init(vo,priv->width,priv->height,0,priv->y,
 			priv->dstwidth,priv->dstheight,priv->format,priv->bpp,
-			priv->XWidth,priv->XHeight,priv->info) != 0) {
+			priv->XWidth,priv->XHeight,priv->info) != MPXP_Ok) {
 	    MSG_ERR("vo_sdl: Can't initialize VIDIX driver\n");
 	    vidix_name = NULL;
-	    return -1;
+	    return MPXP_False;
 	} else MSG_V("vo_sdl: Using VIDIX\n");
-	if(vidix_start(vo)!=0) return -1;
+	if(vidix_start(vo)!=0) return MPXP_False;
     }
 #endif
-    return 0;
+    return MPXP_Ok;
 }
 
 /* Free priv->rgbsurface or priv->overlay if they are != NULL.
@@ -763,7 +765,7 @@ static int setup_surfaces( vo_data_t*vo )
  * The size of the created surface or overlay depends on the size of
  * priv->surface, priv->width, priv->height, priv->dstwidth and priv->dstheight.
  */
-static int __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
+static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
 {
     priv_t *priv = vo->priv;
     float v_scale = ((float) priv->dstheight) / priv->height;
@@ -829,13 +831,13 @@ static int __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
 	    /* Initialize and create the YUV Overlay used for video out */
 	    if (!(priv->overlay[idx] = SDL_CreateYUVOverlay (surfwidth, surfheight, priv->format==IMGFMT_I420?IMGFMT_IYUV:priv->format, priv->surface))) {
 		MSG_ERR ("SDL: Couldn't create a YUV overlay: %s\n", SDL_GetError());
-		return -1;
+		return MPXP_False;
 	    }
     }
     if(priv->mode != YUV && priv->mode != GL) {
 	if(!priv->rgbsurface[idx]) {
 	    MSG_ERR ("SDL: Couldn't create a RGB surface: %s\n", SDL_GetError());
-	    return -1;
+	    return MPXP_False;
 	}
 
 	if((priv->format&0xFF) != priv->bpp)
@@ -844,7 +846,7 @@ static int __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
     }
     erase_rectangle(vo,idx,0, 0, surfwidth, surfheight);
 
-    return 0;
+    return MPXP_Ok;
 }
 
 /**
@@ -1198,7 +1200,7 @@ static void uninit(vo_data_t*vo)
     mp_free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     priv_t *priv = mp_mallocz(sizeof(priv_t));
     vo->priv=priv;
@@ -1206,12 +1208,12 @@ static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     priv->surface = NULL;
     if(arg) strcpy(sdl_subdevice,arg);
 #ifdef HAVE_X11
-    if( !vo_x11_init(vo) ) return -1; // Can't open X11
+    if(vo_x11_init(vo)!=MPXP_Ok) return MPXP_False; // Can't open X11
     saver_off(vo,vo->mDisplay);
 #endif
     if (sdl_open(vo) != 0)
-	return -1;
-    return 0;
+	return MPXP_False;
+    return MPXP_Ok;
 }
 
 #ifndef max

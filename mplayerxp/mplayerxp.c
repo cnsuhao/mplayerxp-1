@@ -891,8 +891,7 @@ static char * mpxp_init_output_subsystems(void) {
 	exit_player(MSGTR_Exit_error);
     }
     MP_UNIT("vo_init");
-    if((i=vo_init(vo_data,vo_conf.subdevice))!=0)
-    {
+    if(vo_init(vo_data,vo_conf.subdevice)!=MPXP_Ok) {
 	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
 	exit_player(MSGTR_Exit_error);
     }
@@ -1250,7 +1249,7 @@ static int mpxp_configure_audio(void) {
 		,sh_audio->audio_out_minsize);
     }
 #endif
-    if(!ao_configure(ao_data,mp_conf.force_srate?mp_conf.force_srate:ao_data->samplerate,
+    if(MPXP_Ok!=ao_configure(ao_data,mp_conf.force_srate?mp_conf.force_srate:ao_data->samplerate,
 		    ao_data->channels,ao_data->format)) {
 	MSG_ERR("Can't configure audio device\n");
 	sh_audio=d_audio->sh=NULL;

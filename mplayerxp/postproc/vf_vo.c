@@ -63,7 +63,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps=query_format(vf,outfmt,d_width,d_height);// & VFCAP_ACCEPT_STRIDE;
 
-    if(vo_config(vo_data,width,height,d_width,d_height,flags,"MPlayerXP",outfmt,tune))
+    if(MPXP_Ok!=vo_config(vo_data,width,height,d_width,d_height,flags,"MPlayerXP",outfmt,tune))
 	return 0;
     vf->priv->is_planar=vo_describe_fourcc(outfmt,&vf->priv->vd);
     vf->dw=d_width;
@@ -120,12 +120,12 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 
 static void __FASTCALL__ get_image(struct vf_instance_s* vf,
         mp_image_t *mpi){
-    int retval;
+    MPXP_Rc retval;
     unsigned i;
     int finalize = vo_is_final(vo_data);
     struct vf_priv_s *priv = vf->priv;
     retval=vo_get_surface(vo_data,mpi);
-    if(retval==MPXP_True) {
+    if(retval==MPXP_Ok) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
 	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
 	MSG_DBG2("vf_vo_get_image was called successfully\n");
@@ -136,8 +136,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf,
         mp_image_t *mpi){
   if(!vo_config_count) return 0; // vo not configured?
-  if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED)))
-  {
+  if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
     MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
     vo_draw_slice(vo_data,mpi);
   }

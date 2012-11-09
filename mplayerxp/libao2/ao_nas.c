@@ -66,199 +66,198 @@
 #define NAS_FRAG_SIZE 4096
 
 static const char * const nas_event_types[] = {
-	"Undefined",
-	"Undefined",
-	"ElementNotify",
-	"GrabNotify",
-	"MonitorNotify",
-	"BucketNotify",
-	"DeviceNotify"
+    "Undefined",
+    "Undefined",
+    "ElementNotify",
+    "GrabNotify",
+    "MonitorNotify",
+    "BucketNotify",
+    "DeviceNotify"
 };
 
 static const char * const nas_elementnotify_kinds[] = {
-	"LowWater",
-	"HighWater",
-	"State",
-	"Unknown"
+    "LowWater",
+    "HighWater",
+    "State",
+    "Unknown"
 };
 
 static const char * const nas_states[] = {
-	"Stop",
-	"Start",
-	"Pause",
-	"Any"
+    "Stop",
+    "Start",
+    "Pause",
+    "Any"
 };
 
 static const char * const nas_reasons[] = {
-	"User",
-	"Underrun",
-	"Overrun",
-	"EOF",
-	"Watermark",
-	"Hardware",
-	"Any"
+    "User",
+    "Underrun",
+    "Overrun",
+    "EOF",
+    "Watermark",
+    "Hardware",
+    "Any"
 };
 #ifdef MP_DEBUG
 static const char* nas_reason(unsigned int reason)
 {
-	if (reason > 6) reason = 6;
-	return nas_reasons[reason];
+    if (reason > 6) reason = 6;
+    return nas_reasons[reason];
 }
 
 static const char* nas_elementnotify_kind(unsigned int kind)
 {
-	if (kind > 2) kind = 3;
-	return nas_elementnotify_kinds[kind];
+    if (kind > 2) kind = 3;
+    return nas_elementnotify_kinds[kind];
 }
 
 static const char* nas_event_type(unsigned int type) {
-	if (type > 6) type = 0;
-	return nas_event_types[type];
+    if (type > 6) type = 0;
+    return nas_event_types[type];
 }
 
 static const char* nas_state(unsigned int state) {
-	if (state>3) state = 3;
-	return nas_states[state];
+    if (state>3) state = 3;
+    return nas_states[state];
 }
 #endif
 
-static const ao_info_t info =
-{
-	"NAS audio output",
-	"nas",
-	"Tobias Diedrich <ranma+mplayer@tdiedrich.de>",
-	""
+static const ao_info_t info = {
+    "NAS audio output",
+    "nas",
+    "Tobias Diedrich <ranma+mplayer@tdiedrich.de>",
+    ""
 };
 
 typedef struct priv_s {
-	AuServer	*aud;
-	AuFlowID	flow;
-	AuDeviceID	dev;
-	AuFixedPoint	gain;
+    AuServer	*aud;
+    AuFlowID	flow;
+    AuDeviceID	dev;
+    AuFixedPoint	gain;
 
-	unsigned int state;
-	int expect_underrun;
+    unsigned int state;
+    int expect_underrun;
 
-	char *client_buffer;
-	char *server_buffer;
-	unsigned int client_buffer_size;
-	unsigned int client_buffer_used;
-	unsigned int server_buffer_size;
-	unsigned int server_buffer_used;
-	pthread_mutex_t buffer_mutex;
+    char *client_buffer;
+    char *server_buffer;
+    unsigned int client_buffer_size;
+    unsigned int client_buffer_used;
+    unsigned int server_buffer_size;
+    unsigned int server_buffer_used;
+    pthread_mutex_t buffer_mutex;
 
-	pthread_t event_thread;
-	int stop_thread;
+    pthread_t event_thread;
+    int stop_thread;
 }priv_t;
 
 LIBAO_EXTERN(nas)
 
 static void nas_print_error(AuServer *aud, const char *prefix, AuStatus as)
 {
-	char s[100];
-	AuGetErrorText(aud, as, s, 100);
-	MSG_ERR("ao_nas: %s: returned status %d (%s)\n", prefix, as, s);
+    char s[100];
+    AuGetErrorText(aud, as, s, 100);
+    MSG_ERR("ao_nas: %s: returned status %d (%s)\n", prefix, as, s);
 }
 
 static int nas_readBuffer(priv_t *priv, unsigned int num)
 {
-	AuStatus as;
+    AuStatus as;
 
-	pthread_mutex_lock(&priv->buffer_mutex);
-	MSG_DBG2("ao_nas: nas_readBuffer(): num=%d client=%d/%d server=%d/%d\n",
+    pthread_mutex_lock(&priv->buffer_mutex);
+    MSG_DBG2("ao_nas: nas_readBuffer(): num=%d client=%d/%d server=%d/%d\n",
 			num,
 			priv->client_buffer_used, priv->client_buffer_size,
 			priv->server_buffer_used, priv->server_buffer_size);
 
-	if (priv->client_buffer_used == 0) {
-		MSG_DBG2("ao_nas: buffer is empty, nothing read.\n");
-		pthread_mutex_unlock(&priv->buffer_mutex);
-		return 0;
-	}
-	if (num > priv->client_buffer_used)
-		num = priv->client_buffer_used;
-
-	/*
-	 * It is not appropriate to call AuWriteElement() here because the
-	 * buffer is locked and delays writing to the network will cause
-	 * other threads to block waiting for buffer_mutex.  Instead the
-	 * data is copied to "server_buffer" and written to the network
-	 * outside of the locked section of code.
-	 *
-	 * (Note: Rather than these two buffers, a single circular buffer
-	 *  could eliminate the memcpy/memmove steps.)
-	 */
-	/* make sure we don't overflow the buffer */
-	if (num > priv->server_buffer_size)
-		num = priv->server_buffer_size;
-	memcpy(priv->server_buffer, priv->client_buffer, num);
-
-	priv->client_buffer_used -= num;
-	priv->server_buffer_used += num;
-	memmove(priv->client_buffer, priv->client_buffer + num, priv->client_buffer_used);
+    if (priv->client_buffer_used == 0) {
+	MSG_DBG2("ao_nas: buffer is empty, nothing read.\n");
 	pthread_mutex_unlock(&priv->buffer_mutex);
+	return 0;
+    }
+    if (num > priv->client_buffer_used)
+	num = priv->client_buffer_used;
 
-	/*
-	 * Now write the new buffer to the network.
-	 */
-	AuWriteElement(priv->aud, priv->flow, 0, num, priv->server_buffer, AuFalse, &as);
-	if (as != AuSuccess)
-		nas_print_error(priv->aud, "nas_readBuffer(): AuWriteElement", as);
+    /*
+     * It is not appropriate to call AuWriteElement() here because the
+     * buffer is locked and delays writing to the network will cause
+     * other threads to block waiting for buffer_mutex.  Instead the
+     * data is copied to "server_buffer" and written to the network
+     * outside of the locked section of code.
+     *
+     * (Note: Rather than these two buffers, a single circular buffer
+     *  could eliminate the memcpy/memmove steps.)
+     */
+    /* make sure we don't overflow the buffer */
+    if (num > priv->server_buffer_size)
+	num = priv->server_buffer_size;
+    memcpy(priv->server_buffer, priv->client_buffer, num);
 
-	return num;
+    priv->client_buffer_used -= num;
+    priv->server_buffer_used += num;
+    memmove(priv->client_buffer, priv->client_buffer + num, priv->client_buffer_used);
+    pthread_mutex_unlock(&priv->buffer_mutex);
+
+    /*
+     * Now write the new buffer to the network.
+     */
+    AuWriteElement(priv->aud, priv->flow, 0, num, priv->server_buffer, AuFalse, &as);
+    if (as != AuSuccess)
+	nas_print_error(priv->aud, "nas_readBuffer(): AuWriteElement", as);
+
+    return num;
 }
 
 static int nas_writeBuffer(priv_t *priv, any_t*data, unsigned int len)
 {
-	pthread_mutex_lock(&priv->buffer_mutex);
-	MSG_DBG2("ao_nas: nas_writeBuffer(): len=%d client=%d/%d server=%d/%d\n",
-			len, priv->client_buffer_used, priv->client_buffer_size,
-			priv->server_buffer_used, priv->server_buffer_size);
+    pthread_mutex_lock(&priv->buffer_mutex);
+    MSG_DBG2("ao_nas: nas_writeBuffer(): len=%d client=%d/%d server=%d/%d\n",
+		len, priv->client_buffer_used, priv->client_buffer_size,
+		priv->server_buffer_used, priv->server_buffer_size);
 
-	/* make sure we don't overflow the buffer */
-	if (len > priv->client_buffer_size - priv->client_buffer_used)
-		len = priv->client_buffer_size - priv->client_buffer_used;
-	memcpy(priv->client_buffer + priv->client_buffer_used, data, len);
-	priv->client_buffer_used += len;
+    /* make sure we don't overflow the buffer */
+    if (len > priv->client_buffer_size - priv->client_buffer_used)
+	len = priv->client_buffer_size - priv->client_buffer_used;
+    memcpy(priv->client_buffer + priv->client_buffer_used, data, len);
+    priv->client_buffer_used += len;
 
-	pthread_mutex_unlock(&priv->buffer_mutex);
+    pthread_mutex_unlock(&priv->buffer_mutex);
 
-	return len;
+    return len;
 }
 
 static int nas_empty_event_queue(priv_t *priv)
 {
-	AuEvent ev;
-	int result = 0;
+    AuEvent ev;
+    int result = 0;
 
-	while (AuScanForTypedEvent(priv->aud, AuEventsQueuedAfterFlush,
+    while (AuScanForTypedEvent(priv->aud, AuEventsQueuedAfterFlush,
 				   AuTrue, AuEventTypeElementNotify, &ev)) {
-		AuDispatchEvent(priv->aud, &ev);
-		result = 1;
-	}
-	return result;
+	AuDispatchEvent(priv->aud, &ev);
+	result = 1;
+    }
+    return result;
 }
 
 static any_t*nas_event_thread_start(any_t*data)
 {
-	priv_t *priv = data;
+    priv_t *priv = data;
 
-	do {
-		MSG_DBG2(
-		       "ao_nas: event thread heartbeat (state=%s)\n",
-		       nas_state(priv->state));
-		nas_empty_event_queue(priv);
-		usleep(1000);
-	} while (!priv->stop_thread);
+    do {
+	MSG_DBG2(
+	       "ao_nas: event thread heartbeat (state=%s)\n",
+	       nas_state(priv->state));
+	nas_empty_event_queue(priv);
+	usleep(1000);
+    } while (!priv->stop_thread);
 
-	return NULL;
+    return NULL;
 }
 
 static AuBool nas_error_handler(AuServer* aud, AuErrorEvent* ev)
 {
-	char s[100];
-	AuGetErrorText(aud, ev->error_code, s, 100);
-	MSG_ERR( "ao_nas: error [%s]\n"
+    char s[100];
+    AuGetErrorText(aud, ev->error_code, s, 100);
+    MSG_ERR( "ao_nas: error [%s]\n"
 		"error_code: %d\n"
 		"request_code: %d\n"
 		"minor_code: %d\n",
@@ -267,7 +266,7 @@ static AuBool nas_error_handler(AuServer* aud, AuErrorEvent* ev)
 		ev->request_code,
 		ev->minor_code);
 
-	return AuTrue;
+    return AuTrue;
 }
 
 static AuBool nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHandlerRec *hnd)
@@ -414,125 +413,125 @@ static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
 }
 
 
-static int init(ao_data_t* ao,unsigned flags)
+static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
     ao->priv=mp_mallocz(sizeof(priv_t));
     priv_t* priv=ao->priv;
     UNUSED(flags);
-    return 1;
+    return MPXP_Ok;
 }
 // open & setup audio device
 // return: 1=success 0=fail
-static int configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
     priv_t* priv=ao->priv;
-	AuElement elms[3];
-	AuStatus as;
-	char str[256];
-	unsigned char auformat = nas_aformat_to_auformat(&format);
-	unsigned bytes_per_sample = channels * AuSizeofFormat(auformat);
-	unsigned buffer_size;
-	char *server;
+    AuElement elms[3];
+    AuStatus as;
+    char str[256];
+    unsigned char auformat = nas_aformat_to_auformat(&format);
+    unsigned bytes_per_sample = channels * AuSizeofFormat(auformat);
+    unsigned buffer_size;
+    char *server;
 
-	ao->format = format;
-	ao->samplerate = rate;
-	ao->channels = channels;
-	ao->outburst = NAS_FRAG_SIZE;
-	ao->bps = rate * bytes_per_sample;
-	buffer_size = ao->bps; /* buffer 1 second */
+    ao->format = format;
+    ao->samplerate = rate;
+    ao->channels = channels;
+    ao->outburst = NAS_FRAG_SIZE;
+    ao->bps = rate * bytes_per_sample;
+    buffer_size = ao->bps; /* buffer 1 second */
 
-	MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
+    MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
 		mpaf_fmt2str(format,str,256));
 
-	/*
-	 * round up to multiple of NAS_FRAG_SIZE
-	 * divide by 3 first because of 2:1 split
-	 */
-	buffer_size = (buffer_size/3 + NAS_FRAG_SIZE-1) & ~(NAS_FRAG_SIZE-1);
-	ao->buffersize = buffer_size*3;
+    /*
+     * round up to multiple of NAS_FRAG_SIZE
+     * divide by 3 first because of 2:1 split
+     */
+    buffer_size = (buffer_size/3 + NAS_FRAG_SIZE-1) & ~(NAS_FRAG_SIZE-1);
+    ao->buffersize = buffer_size*3;
 
-	priv->client_buffer_size = buffer_size*2;
-	priv->client_buffer = mp_malloc(priv->client_buffer_size);
-	priv->server_buffer_size = buffer_size;
-	priv->server_buffer = mp_malloc(priv->server_buffer_size);
+    priv->client_buffer_size = buffer_size*2;
+    priv->client_buffer = mp_malloc(priv->client_buffer_size);
+    priv->server_buffer_size = buffer_size;
+    priv->server_buffer = mp_malloc(priv->server_buffer_size);
 
-	if (!bytes_per_sample) {
-		MSG_ERR("ao_nas: init(): Zero bytes per sample -> nosound\n");
-		return 0;
-	}
+    if (!bytes_per_sample) {
+	MSG_ERR("ao_nas: init(): Zero bytes per sample -> nosound\n");
+	return MPXP_False;
+    }
 
-	if (!(server = getenv("AUDIOSERVER")) &&
+    if (!(server = getenv("AUDIOSERVER")) &&
 	    !(server = getenv("DISPLAY"))) {
-		MSG_ERR("ao_nas: init(): AUDIOSERVER environment variable not set -> nosound\n");
-		return 0;
-	}
+	MSG_ERR("ao_nas: init(): AUDIOSERVER environment variable not set -> nosound\n");
+	return MPXP_False;
+    }
 
-	MSG_V("ao_nas: init(): Using audioserver %s\n", server);
+    MSG_V("ao_nas: init(): Using audioserver %s\n", server);
 
-	priv->aud = AuOpenServer(server, 0, NULL, 0, NULL, NULL);
-	if (!priv->aud) {
-		MSG_ERR("ao_nas: init(): Can't open nas audio server -> nosound\n");
-		return 0;
-	}
+    priv->aud = AuOpenServer(server, 0, NULL, 0, NULL, NULL);
+    if (!priv->aud) {
+	MSG_ERR("ao_nas: init(): Can't open nas audio server -> nosound\n");
+	return MPXP_False;
+    }
 
-	while (channels>0) {
-		priv->dev = nas_find_device(priv->aud, channels);
-		if (priv->dev != AuNone &&
-		    ((priv->flow = AuCreateFlow(priv->aud, NULL)) != 0))
-			break;
-		channels--;
-	}
+    while (channels>0) {
+	priv->dev = nas_find_device(priv->aud, channels);
+	if (priv->dev != AuNone &&
+	    ((priv->flow = AuCreateFlow(priv->aud, NULL)) != 0))
+		break;
+	channels--;
+    }
 
-	if (priv->flow == 0) {
-		MSG_ERR("ao_nas: init(): Can't find a suitable output device -> nosound\n");
-		AuCloseServer(priv->aud);
-		priv->aud = 0;
-		return 0;
-	}
+    if (priv->flow == 0) {
+	MSG_ERR("ao_nas: init(): Can't find a suitable output device -> nosound\n");
+	AuCloseServer(priv->aud);
+	priv->aud = 0;
+	return MPXP_False;
+    }
 
-	AuMakeElementImportClient(elms, rate, auformat, channels, AuTrue,
+    AuMakeElementImportClient(elms, rate, auformat, channels, AuTrue,
 				buffer_size / bytes_per_sample,
 				(buffer_size - NAS_FRAG_SIZE) /
 				bytes_per_sample, 0, NULL);
-	priv->gain = AuFixedPointFromFraction(1, 1);
-	AuMakeElementMultiplyConstant(elms+1, 0, priv->gain);
-	AuMakeElementExportDevice(elms+2, 1, priv->dev, rate,
+    priv->gain = AuFixedPointFromFraction(1, 1);
+    AuMakeElementMultiplyConstant(elms+1, 0, priv->gain);
+    AuMakeElementExportDevice(elms+2, 1, priv->dev, rate,
 				AuUnlimitedSamples, 0, NULL);
-	AuSetElements(priv->aud, priv->flow, AuTrue, sizeof(elms)/sizeof(*elms), elms, &as);
-	if (as != AuSuccess) {
-		nas_print_error(priv->aud, "init(): AuSetElements", as);
-		AuCloseServer(priv->aud);
-		priv->aud = 0;
-		return 0;
-	}
-	AuRegisterEventHandler(priv->aud, AuEventHandlerIDMask |
+    AuSetElements(priv->aud, priv->flow, AuTrue, sizeof(elms)/sizeof(*elms), elms, &as);
+    if (as != AuSuccess) {
+	nas_print_error(priv->aud, "init(): AuSetElements", as);
+	AuCloseServer(priv->aud);
+	priv->aud = 0;
+	return MPXP_False;
+    }
+    AuRegisterEventHandler(priv->aud, AuEventHandlerIDMask |
 				AuEventHandlerTypeMask,
 				AuEventTypeElementNotify, priv->flow,
 				nas_event_handler, (AuPointer) priv);
-	AuSetErrorHandler(priv->aud, nas_error_handler);
-	priv->state=AuStateStop;
-	priv->expect_underrun=0;
+    AuSetErrorHandler(priv->aud, nas_error_handler);
+    priv->state=AuStateStop;
+    priv->expect_underrun=0;
 
-	pthread_mutex_init(&priv->buffer_mutex, NULL);
-	pthread_create(&priv->event_thread, NULL, &nas_event_thread_start, priv);
+    pthread_mutex_init(&priv->buffer_mutex, NULL);
+    pthread_create(&priv->event_thread, NULL, &nas_event_thread_start, priv);
 
-	return 1;
+    return MPXP_Ok;
 }
 
 // close audio device
 static void uninit(ao_data_t* ao){
 
     priv_t* priv=ao->priv;
-	MSG_DBG3("ao_nas: uninit()\n");
+    MSG_DBG3("ao_nas: uninit()\n");
 
-	priv->expect_underrun = 1;
-	while (priv->state != AuStateStop) usleep(1000);
-	priv->stop_thread = 1;
-	pthread_join(priv->event_thread, NULL);
-	AuCloseServer(priv->aud);
-	priv->aud = 0;
-	mp_free(priv->client_buffer);
-	mp_free(priv->server_buffer);
+    priv->expect_underrun = 1;
+    while (priv->state != AuStateStop) usleep(1000);
+    priv->stop_thread = 1;
+    pthread_join(priv->event_thread, NULL);
+    AuCloseServer(priv->aud);
+    priv->aud = 0;
+    mp_free(priv->client_buffer);
+    mp_free(priv->server_buffer);
     mp_free(priv);
 }
 

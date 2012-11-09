@@ -58,38 +58,38 @@ enum {
 /** Text description of VO-driver */
 typedef struct vo_info_s
 {
-        const char *name;	/**< driver name ("Matrox Millennium G200/G400") */
-        const char *short_name; /**< short name (for config strings) ("mga") */
-        const char *author;	/**< author ("Aaron Holtzman <aholtzma@ess.engr.uvic.ca>") */
-        const char *comment;	/**< any additional comments */
+    const char *name;	/**< driver name ("Matrox Millennium G200/G400") */
+    const char *short_name; /**< short name (for config strings) ("mga") */
+    const char *author;	/**< author ("Aaron Holtzman <aholtzma@ess.engr.uvic.ca>") */
+    const char *comment;	/**< any additional comments */
 } vo_info_t;
 
 /** Misc info to tuneup VO-driver */
 typedef struct vo_tune_info_s
 {
-	int	pitch[3]; /**< Picthes for image lines. Should be 0 if unknown else power of 2 */
+    int	pitch[3]; /**< Picthes for image lines. Should be 0 if unknown else power of 2 */
 }vo_tune_info_t;
 
 /** Request for supported FOURCC by VO-driver */
 typedef struct vo_query_fourcc_s
 {
-	uint32_t	fourcc;	/**< Fourcc of decoded image */
-	unsigned	w,h;	/**< Width and height of decoded image */
+    uint32_t	fourcc;	/**< Fourcc of decoded image */
+    unsigned	w,h;	/**< Width and height of decoded image */
 }vo_query_fourcc_t;
 
 /** Notification event when windowed output has been resized (as data of VOCTRL_CHECK_EVENT) */
 typedef struct vo_resize_s
 {
-	uint32_t	event_type; /**< X11 event type */
+    uint32_t	event_type; /**< X11 event type */
 
-	/** callback to adjust size of window keeping aspect ratio 
-	 * @param cw	current window width
-	 * @param ch	current window height
-	 * @param nw	storage for new width to be stored current window width
-	 * @param nh	storage for new height to be stored current window width
-	 * @return	0 if fail  !0 if success
-	**/
-	int		(*__FASTCALL__ adjust_size)(any_t*,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
+    /** callback to adjust size of window keeping aspect ratio 
+ * @param cw	current window width
+     * @param ch	current window height
+     * @param nw	storage for new width to be stored current window width
+     * @param nh	storage for new height to be stored current window width
+     * @return	0 if fail  !0 if success
+    **/
+    int		(*__FASTCALL__ adjust_size)(any_t*,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
 }vo_resize_t;
 
 /** Named video equalizer */
@@ -103,8 +103,8 @@ typedef struct vo_videq_s
 #define VO_EC_RED_INTENSITY "RedIntensity"
 #define VO_EC_GREEN_INTENSITY "GreenIntensity"
 #define VO_EC_BLUE_INTENSITY "BlueIntensity"
-	const char *name;	/**< name of equalizer control */
-	int	    value;	/**< value of equalizer control in range -1000 +1000 */
+    const char *name;	/**< name of equalizer control */
+    int	    value;	/**< value of equalizer control in range -1000 +1000 */
 }vo_videq_t;
 
 typedef struct vo_gamma_s{
@@ -122,7 +122,7 @@ typedef struct vo_rect_s {
 }vo_rect_t;
 
 struct vo_rect2 {
-  int left, right, top, bottom, width, height;
+    int left, right, top, bottom, width, height;
 };
 
 typedef struct vo_conf_s {
@@ -201,9 +201,9 @@ typedef struct vo_functions_s
 {
 	/** Preinitializes driver (real INITIALIZATION)
 	 * @param arg	currently it's vo_subdevice
-	 * @return	zero on successful initialization, non-zero on error.
+	 * @return	MPXP_Ok on successful initialization.
 	**/
-	uint32_t (* __FASTCALL__ preinit)(vo_data_t* vo,const char *arg);
+	MPXP_Rc (* __FASTCALL__ preinit)(vo_data_t* vo,const char *arg);
 
         /** Initializes (means CONFIGURE) the display driver.
 	 * @param width		width of source image
@@ -215,7 +215,7 @@ typedef struct vo_functions_s
 	 * @param format	fourcc of source image
          * @return		zero on successful initialization, non-zero on error.
          **/
-        uint32_t (* __FASTCALL__ config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
+        MPXP_Rc (* __FASTCALL__ config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 			 uint32_t d_height, uint32_t fullscreen, char *title,
 			 uint32_t format,const vo_tune_info_t *);
 
@@ -250,24 +250,24 @@ extern vo_data_t*	 __FASTCALL__ vo_preinit_structs( void );
 extern void		vo_print_help(vo_data_t*);
 extern const vo_functions_t * vo_register(vo_data_t* vo,const char *driver_name);
 extern const vo_info_t*	vo_get_info(vo_data_t* vo);
-extern int	 __FASTCALL__ vo_init(vo_data_t* vo,const char *subdevice_name);
-extern uint32_t  __FASTCALL__ vo_config(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
+extern MPXP_Rc  __FASTCALL__ vo_init(vo_data_t* vo,const char *subdevice_name);
+extern MPXP_Rc  __FASTCALL__ vo_config(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 				  uint32_t d_height, uint32_t fullscreen, char *title,
 				  uint32_t format,const vo_tune_info_t *);
 extern uint32_t	 __FASTCALL__ vo_query_format(vo_data_t* vo,uint32_t* fourcc,unsigned src_w,unsigned src_h);
-extern uint32_t		vo_reset(vo_data_t* vo);
-extern uint32_t		vo_fullscreen(vo_data_t* vo);
-extern uint32_t		vo_screenshot(vo_data_t* vo,unsigned idx );
-extern uint32_t		vo_pause(vo_data_t* vo);
-extern uint32_t		vo_resume(vo_data_t* vo);
+extern MPXP_Rc		vo_reset(vo_data_t* vo);
+extern MPXP_Rc		vo_fullscreen(vo_data_t* vo);
+extern MPXP_Rc		vo_screenshot(vo_data_t* vo,unsigned idx );
+extern MPXP_Rc		vo_pause(vo_data_t* vo);
+extern MPXP_Rc		vo_resume(vo_data_t* vo);
 
 extern void		vo_lock_surfaces(vo_data_t* vo);
 extern void		vo_unlock_surfaces(vo_data_t* vo);
-extern uint32_t	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi);
+extern MPXP_Rc	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi);
 
 extern int		vo_check_events(vo_data_t* vo);
 extern unsigned	 __FASTCALL__ vo_get_num_frames(vo_data_t* vo);
-extern uint32_t  __FASTCALL__ vo_draw_slice(vo_data_t* vo,const mp_image_t *mpi);
+extern MPXP_Rc   __FASTCALL__ vo_draw_slice(vo_data_t* vo,const mp_image_t *mpi);
 extern void		vo_select_frame(vo_data_t* vo,unsigned idx);
 extern void		vo_flush_page(vo_data_t* vo,unsigned decoder_idx);
 extern void		vo_draw_osd(vo_data_t* vo,unsigned idx);

@@ -261,7 +261,7 @@ static void set_gamma_correction( vo_data_t*vo )
  * connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv;
 // int screen;
@@ -343,7 +343,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	/* check for Xvideo support */
 	if (Success != XvQueryAdaptors(vo->mDisplay,DefaultRootWindow(vo->mDisplay), &priv->adaptors,&priv->ai)) {
 	    MSG_ERR("Xv: XvQueryAdaptors failed");
-	    return -1;
+	    return MPXP_False;
 	}
 	/* check priv->adaptors */
 	for (i = 0; i < priv->adaptors && priv->port == 0; i++) {
@@ -421,13 +421,13 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 		MSG_V( "[xv-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",priv->drwcX,priv->drwcY,priv->drwX,priv->drwY,priv->drwWidth,priv->drwHeight );
 	    }
 	    saver_off(vo,vo->mDisplay);  // turning off screen saver
-	    return 0;
+	    return MPXP_Ok;
 	}
     }
 
     MSG_FATAL("Sorry, Xv not supported by this X11 version/driver\n");
     MSG_FATAL("******** Try with  -vo x11  or  -vo sdl  *********\n");
-    return 1;
+    return MPXP_False;
 }
 
 static const vo_info_t * get_info(vo_data_t*vo)
@@ -514,7 +514,7 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t* format
     priv_t*priv=(priv_t*)vo->priv;
     unsigned i;
     XvPortID xv_p;
-    if (!vo_x11_init(vo)) return 0;
+    if (vo_x11_init(vo)!=MPXP_Ok) return 0;
     priv->port = 0;
     if (Success == XvQueryExtension(vo->mDisplay,&priv->ver,&priv->rel,&priv->req,&priv->ev,&priv->err)) {
 	/* check for Xvideo support */
@@ -562,16 +562,16 @@ static void uninit(vo_data_t*vo)
     mp_free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     priv->num_buffers=1;
     if(arg) {
 	MSG_ERR("vo_xv: Unknown subdevice: %s\n",arg);
-	return ENOSYS;
+	return MPXP_False;
     }
-    return 0;
+    return MPXP_Ok;
 }
 
 #ifndef max

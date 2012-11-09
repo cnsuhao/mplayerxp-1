@@ -176,7 +176,7 @@ static void write_bmp(const char *fname,unsigned w,unsigned h,uint8_t *data)
 }
 #endif
 
-int gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t fourcc,unsigned w,unsigned h)
+MPXP_Rc gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t fourcc,unsigned w,unsigned h)
 {
     unsigned k;
     char buf[256];
@@ -196,17 +196,16 @@ int gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t
     pixfmt_from_fourcc(IMGFMT_RGB24)
 #endif
     );
-    if(!sws)
-    {
+    if(!sws) {
 	MSG_ERR("vo_png: Can't initialize SwScaler\n");
-	return -1;
+	return MPXP_False;
     }
     sshot.image_width = w;
     sshot.image_height = h;
     if(!(image_data = mp_malloc(sshot.image_width*sshot.image_height*3)))
     {
 	MSG_ERR("vo_png: Can't allocate temporary buffer\n");
-	return -1;
+	return MPXP_False;
     }
 #ifdef HAVE_PNG
     if((mp_conf.z_compression >= 0) && (mp_conf.z_compression <= 9)) {
@@ -257,5 +256,5 @@ int gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t
 #endif
     if(image_data){ mp_free(image_data);image_data=NULL;}
     if(sws) sws_freeContext(sws);
-    return 0;
+    return MPXP_Ok;
 }

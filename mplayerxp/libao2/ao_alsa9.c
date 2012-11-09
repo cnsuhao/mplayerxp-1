@@ -310,7 +310,7 @@ static void __FASTCALL__ show_caps(unsigned device)
     open & setup audio device
     return: 1=success 0=fail
 */
-static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
+static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 {
     int err;
     int cards = -1;
@@ -341,7 +341,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 		if(strcmp(p+1,"-1")==0) {
 		    *p='\0';
 		    show_caps(atoi(alsa_port));
-		    return 0;
+		    return MPXP_False;
 		}
 	    }
 	    if(alsa_port) snprintf(alsa_device,sizeof(alsa_device),"%s:%s",alsa_dev,alsa_port);
@@ -352,7 +352,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 
     if ((err = snd_card_next(&cards)) < 0 || cards < 0) {
 	MSG_ERR("alsa-init: no soundcards found: %s\n", snd_strerror(err));
-	return 0;
+	return MPXP_False;
     }
 
     if (alsa_device[0] == '\0') {
@@ -360,17 +360,17 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 
 	if ((err = snd_pcm_info_malloc(&alsa_info)) < 0) {
 	    MSG_ERR("alsa-init: memory allocation error: %s\n", snd_strerror(err));
-	    return 0;
+	    return MPXP_False;
 	}
 	
 	if ((tmp_device = snd_pcm_info_get_device(alsa_info)) < 0) {
 	    MSG_ERR("alsa-init: cant get device\n");
-	    return 0;
+	    return MPXP_False;
 	}
 
 	if ((tmp_subdevice = snd_pcm_info_get_subdevice(alsa_info)) < 0) {
 	    MSG_ERR("alsa-init: cant get subdevice\n");
-	    return 0;
+	    return MPXP_False;
 	}
 	MSG_V("alsa-init: got device=%i, subdevice=%i\n", tmp_device, tmp_subdevice);
 
@@ -401,7 +401,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 		if ((err = snd_pcm_open(&priv->handler, alsa_device, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
 		    MSG_ERR("alsa-init: playback open error: %s\n", snd_strerror(err));
 		    alsa_device[0]='\0';
-		    return 0;
+		    return MPXP_False;
 		} else {
 		    block_mode = 0;
 		    str_block_mode = "block-mode";
@@ -409,7 +409,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 	    } else {
 		MSG_ERR("alsa-init: playback open error: %s\n", snd_strerror(err));
 		alsa_device[0]='\0';
-		return 0;
+		return MPXP_False;
 	    }
 	}
       alsa_device[0]='\0';
@@ -426,7 +426,7 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 	{
 	  MSG_ERR("alsa-init: unable to get initial parameters: %s\n",
 		 snd_strerror(err));
-	  return 0;
+	  return MPXP_False;
 	}
     MSG_DBG2("snd_pcm_hw_params_any()\n");
       if (priv_conf.mmap) {
@@ -443,13 +443,13 @@ static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
       }
       if (err < 0) {
 	MSG_ERR("alsa-init: unable to set access type: %s\n", snd_strerror(err));
-	return 0;
+	return MPXP_False;
       }
     } // end switch priv->handler (spdif)
-    return 1;
+    return MPXP_Ok;
 } // end init
 
-static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
+static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
 {
     priv_t*priv=ao->priv;
     int err,i;
@@ -492,7 +492,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
       case -1:
 	MSG_ERR("alsa-conf: invalid format (%s) requested - output disabled\n",
 	       ao_format_name(format));
-	return 0;
+	return MPXP_False;
       default:
 	break;
     }
@@ -508,7 +508,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
 	    if (!(snd_pcm_hw_params_test_format(priv->handler, priv->hwparams, i)))
 		MSG_HINT("%s ",snd_pcm_format_name(i));
 	MSG_HINT("\n");
-	return 0;
+	return MPXP_False;
     }
     MSG_DBG2("snd_pcm_hw_params_set_format(%i)\n",priv->format);
 
@@ -516,7 +516,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
 	MSG_ERR("alsa-conf: unable to set samplerate %u: %s\n",
 		ao->samplerate,
 		snd_strerror(err));
-	return 0;
+	return MPXP_False;
     }
     MSG_DBG2("snd_pcm_hw_params_set_rate_near(%i)\n",ao->samplerate);
 
@@ -525,7 +525,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
 	MSG_ERR("alsa-conf: unable to set %u channels: %s\n",
 		ao->channels,
 		snd_strerror(err));
-	return 0;
+	return MPXP_False;
     }
     MSG_DBG2("snd_pcm_hw_params_set_channels(%i)\n",ao->channels);
 #ifdef BUFFERTIME
@@ -536,7 +536,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
 	if ((err = snd_pcm_hw_params_set_buffer_time_near(priv->handler, priv->hwparams, &alsa_buffer_time, &dir)) < 0) {
 	    MSG_ERR("alsa-init: unable to set buffer time near: %s\n",
 		snd_strerror(err));
-	    return 0;
+	    return MPXP_False;
 	}
 	MSG_DBG2("snd_pcm_hw_set_buffer_time_near(%i)\n",alsa_buffer_time);
 
@@ -545,7 +545,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
 	  /* original: alsa_buffer_time/ao->bps */
 	    MSG_ERR("alsa-init: unable to set period time: %s\n",
 		snd_strerror(err));
-	    return 0;
+	    return MPXP_False;
 	}
 	MSG_DBG2("snd_pcm_hw_set_period_time_near(%i)\n",period_time);
 	MSG_V("alsa-init: buffer_time: %d, period_time :%d\n",alsa_buffer_time, period_time);
@@ -557,14 +557,14 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
 	snd_pcm_uframes_t size;
 	if ((err = snd_pcm_hw_params_set_period_time_near(priv->handler, priv->hwparams, &period_time, &dir)) < 0) {
 	    MSG_ERR("alsa-init: unable to set period_time: %s\n", snd_strerror(err));
-	    return 0;
+	    return MPXP_False;
 	}
 	MSG_DBG2("snd_pcm_hw_set_period_time(%i)\n",period_time);
 
 	//get chunksize
 	if ((err = snd_pcm_hw_params_get_period_size(priv->hwparams, &size, &dir)) < 0) {
 	    MSG_ERR("alsa-init: unable to get period_size: %s\n", snd_strerror(err));
-	    return 0;
+	    return MPXP_False;
 	}
 	MSG_DBG2("snd_pcm_hw_get_period_size(%i)\n",size);
 	chunk_size=size;
@@ -573,7 +573,7 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
         // gets buffersize for control
     if ((err = snd_pcm_hw_params_get_buffer_size(priv->hwparams,&dummy)) < 0) {
 	MSG_ERR("alsa-conf: unable to get buffersize: %s\n", snd_strerror(err));
-	return 0;
+	return MPXP_False;
     } else {
 	ao->buffersize = dummy * priv->bytes_per_sample;
 	MSG_V("alsa-conf: got buffersize=%i\n", ao->buffersize);
@@ -590,39 +590,39 @@ static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channe
     if ((err = snd_pcm_hw_params(priv->handler, priv->hwparams)) < 0) {
 	MSG_ERR("alsa-conf: unable to set hw-parameters: %s\n",
 		 snd_strerror(err));
-	return 0;
+	return MPXP_False;
     }
     MSG_DBG2("snd_pcm_hw_params()\n");
     // setting sw-params (only avail-min) if noblocking mode was choosed
     if (priv_conf.noblock) {
 	if ((err = snd_pcm_sw_params_current(priv->handler, priv->swparams)) < 0) {
 	    MSG_ERR("alsa-conf: unable to get parameters: %s\n",snd_strerror(err));
-	    return 0;
+	    return MPXP_False;
 	}
 
 	//set min available frames to consider pcm ready (4)
 	//increased for nonblock-mode should be set dynamically later
 	if ((err = snd_pcm_sw_params_set_avail_min(priv->handler, priv->swparams, 4)) < 0) {
 	    MSG_ERR("alsa-conf: unable to set avail_min %s\n",snd_strerror(err));
-	    return 0;
+	    return MPXP_False;
 	}
 
 	if ((err = snd_pcm_sw_params(priv->handler, priv->swparams)) < 0) {
-	      MSG_ERR("alsa-conf: unable to install sw-params\n");
-	      return 0;
+	    MSG_ERR("alsa-conf: unable to install sw-params\n");
+	    return MPXP_False;
 	}
 
     }//end swparams
 
     if ((err = snd_pcm_prepare(priv->handler)) < 0) {
 	MSG_ERR("alsa-conf: pcm prepare error: %s\n", snd_strerror(err));
-	return 0;
+	return MPXP_False;
     }
     // end setting hw-params
     MSG_V("alsa-conf: %d Hz/%d channels/%d bpf/%d bytes buffer/%s\n",
 	ao->samplerate, ao->channels, priv->bytes_per_sample, ao->buffersize,
 	snd_pcm_format_description(priv->format));
-    return 1;
+    return MPXP_Ok;
 } // end configure
 
 /* close audio device */

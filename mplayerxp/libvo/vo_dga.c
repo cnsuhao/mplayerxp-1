@@ -274,7 +274,7 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo, vo_query_fourcc_t *fourc
 	}
 	priv->udf_screenw = vo_conf.screenwidth;
 	priv->udf_screenh = vo_conf.screenheight;
-	if(!vo_x11_init(vo)){
+	if(vo_x11_init(vo)!=MPXP_Ok){
 	    MSG_ERR( "vo_dga: vo_x11_init() failed!\n");
 	    return 1;
 	}
@@ -565,7 +565,7 @@ static void __FASTCALL__ xf86vm_select_mode(vo_data_t*vo, int dga_modenum )
 #endif
 #endif
 
-static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t height,
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t height,
                       uint32_t d_width,uint32_t d_height,
                       uint32_t flags,char *title,uint32_t format,const vo_tune_info_t *info )
 {
@@ -578,7 +578,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heig
 
     UNUSED(title);
     UNUSED(info);
-    if( priv->is_running ) return -1;
+    if( priv->is_running ) return MPXP_False;
 
     priv->src_format = format;
     priv->src_width = priv->dest_width = width;
@@ -593,9 +593,9 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heig
     if(priv->udf_screenw) wanted_width = priv->udf_screenw;
     if(priv->udf_screenh) wanted_height = priv->udf_screenh;
 
-    if( !vo_x11_init(vo)) {
+    if(vo_x11_init(vo)!=MPXP_Ok) {
 	MSG_ERR( "vo_dga: vo_x11_init() failed!\n");
-	return 1;
+	return MPXP_False;
     }
 
     if(!vo_conf.dbpp )	priv->src_mode = priv->XServer_mode;
@@ -611,12 +611,12 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heig
 
     if(!priv->src_mode) {
 	MSG_ERR( "vo_dga: unsupported video format!\n");
-	return 1;
+	return MPXP_False;
     }
 
     if((vo->mDisplay = XOpenDisplay(0))==NULL) {
 	MSG_ERR( "vo_dga: Can't open display\n");
-	return 1;
+	return MPXP_False;
     }
 
 // choose a suitable mode ...
@@ -638,7 +638,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heig
 	    SRC_MODE.vdm_bitspp);
 /* now lets start the DGA thing */
 #ifdef HAVE_DGA2
-    if(dga2_select_mode(vo,dga_modenum)) return 1;
+    if(dga2_select_mode(vo,dga_modenum)) return MPXP_False;
 #else
 
 #ifdef HAVE_XF86VM
@@ -672,7 +672,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heig
 	}
 #endif
 #endif
-	return 1;
+	return MPXP_False;
     }
 
     if((flags&0x04)||(flags&0x01)) { /* -zoom or -fs */
@@ -740,19 +740,19 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heig
     }
     MSG_V("vo_dga: Doublebuffering is %s.\n",priv->num_buffers>1?"enabled":"disabled");
     priv->is_running = 1;
-    return 0;
+    return MPXP_Ok;
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     if(arg) {
 	MSG_V( "vo_dga: Unknown subdevice: %s\n",arg);
-	return ENOSYS;
+	return MPXP_False;
     }
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     priv->num_buffers=1;
-    return 0;
+    return MPXP_Ok;
 }
 
 static void __FASTCALL__ dga_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)

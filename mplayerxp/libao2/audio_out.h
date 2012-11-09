@@ -41,7 +41,7 @@ typedef struct ao_functions_s
      * @param flag	currently unused
      * @return	1 on successful initialization, 0 on error.
     **/
-    int (* __FASTCALL__ init)(ao_data_t*,unsigned flags);
+    MPXP_Rc (* __FASTCALL__ init)(ao_data_t*,unsigned flags);
 
     /** Configures the audio driver.
      * @param rate		specifies samplerate in Hz
@@ -49,7 +49,7 @@ typedef struct ao_functions_s
      * @param format	specifies format of audio samples (see AFMT_* for detail)
      * @return		1 on successful configuration, 0 on error.
      **/
-    int (* __FASTCALL__ configure)(ao_data_t*,unsigned rate,unsigned channels,unsigned format);
+    MPXP_Rc (* __FASTCALL__ configure)(ao_data_t*,unsigned rate,unsigned channels,unsigned format);
 
     /** Closes driver. Should restore the original state of the system.
      **/
@@ -101,7 +101,7 @@ extern void		ao_print_help( void );
 extern const ao_functions_t* __FASTCALL__ ao_register(const char *driver_name);
 extern const ao_info_t*	ao_get_info( void );
 extern ao_data_t*	__FASTCALL__ ao_init(unsigned flags,const char *subdevice);
-extern int		__FASTCALL__ ao_configure(ao_data_t* priv,unsigned rate,unsigned channels,unsigned format);
+extern MPXP_Rc		__FASTCALL__ ao_configure(ao_data_t* priv,unsigned rate,unsigned channels,unsigned format);
 extern void		__FASTCALL__ ao_uninit(ao_data_t* priv);
 extern void		__FASTCALL__ ao_reset(ao_data_t* priv);
 extern unsigned		__FASTCALL__ ao_get_space(ao_data_t* priv);

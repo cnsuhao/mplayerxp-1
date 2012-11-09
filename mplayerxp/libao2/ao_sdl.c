@@ -142,131 +142,131 @@ static void outputaudio(any_t* ao, Uint8 *stream, int len) {
 
 // open & setup audio device
 // return: 1=success 0=fail
-static int __FASTCALL__ init(ao_data_t* ao,unsigned flags)
+static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 {
-	unsigned i;
-	UNUSED(flags);
-	ao->priv=mp_mallocz(sizeof(priv_t));
-	priv_t*priv=ao->priv;
-	priv->volume=127;
-	/* Allocate ring-priv->buffer memory */
-	for(i=0;i<NUM_BUFS;i++) priv->buffer[i]=(unsigned char *) mp_malloc(BUFFSIZE);
+    unsigned i;
+    UNUSED(flags);
+    ao->priv=mp_mallocz(sizeof(priv_t));
+    priv_t*priv=ao->priv;
+    priv->volume=127;
+    /* Allocate ring-priv->buffer memory */
+    for(i=0;i<NUM_BUFS;i++) priv->buffer[i]=(unsigned char *) mp_malloc(BUFFSIZE);
 
-	if(ao->subdevice) {
-		setenv("SDL_AUDIODRIVER", ao->subdevice, 1);
-	}
-	return 1;
+    if(ao->subdevice) {
+	setenv("SDL_AUDIODRIVER", ao->subdevice, 1);
+    }
+    return MPXP_Ok;
 }
 
-static int __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
-	/* SDL Audio Specifications */
-	SDL_AudioSpec aspec, obtained;
-	char drv_name[80];
+    /* SDL Audio Specifications */
+    SDL_AudioSpec aspec, obtained;
+    char drv_name[80];
 
-	ao->channels=channels;
-	ao->samplerate=rate;
-	ao->format=format;
+    ao->channels=channels;
+    ao->samplerate=rate;
+    ao->format=format;
 
-	ao->bps=channels*rate;
-	if(format != AFMT_U8 && format != AFMT_S8)
-	  ao->bps*=2;
-	
-	/* The desired audio format (see SDL_AudioSpec) */
-	switch(format) {
-	    case AFMT_U8:
-		aspec.format = AUDIO_U8;
-	    break;
-	    case AFMT_S16_LE:
-		aspec.format = AUDIO_S16LSB;
-	    break;
-	    case AFMT_S16_BE:
-		aspec.format = AUDIO_S16MSB;
-	    break;
-	    case AFMT_S8:
-		aspec.format = AUDIO_S8;
-	    break;
-	    case AFMT_U16_LE:
-		aspec.format = AUDIO_U16LSB;
-	    break;
-	    case AFMT_U16_BE:
-		aspec.format = AUDIO_U16MSB;
-	    break;
-	    default:
-                MSG_ERR("SDL: Unsupported audio format: 0x%x.\n", format);
-                return 0;
-	}
+    ao->bps=channels*rate;
+    if(format != AFMT_U8 && format != AFMT_S8)
+	 ao->bps*=2;
 
-	/* The desired audio frequency in samples-per-second. */
-	aspec.freq     = rate;
-
-	/* Number of channels (mono/stereo) */
-	aspec.channels = channels;
-
-	/* The desired size of the audio priv->buffer in samples. This number should be a power of two, and may be adjusted by the audio driver to a value more suitable for the hardware. Good values seem to range between 512 and 8192 inclusive, depending on the application and CPU speed. Smaller values yield faster response time, but can lead to underflow if the application is doing heavy processing and cannot fill the audio priv->buffer in time. A stereo sample consists of both right and left channels in LR ordering. Note that the number of samples is directly related to time by the following formula: ms = (samples*1000)/freq */
-	aspec.samples  = SAMPLESIZE;
-
-	/* This should be set to a function that will be called when the audio device is ready for more data. It is passed a pointer to the audio priv->buffer, and the length in bytes of the audio priv->buffer. This function usually runs in a separate thread, and so you should protect data structures that it accesses by calling SDL_LockAudio and SDL_UnlockAudio in your code. The callback prototype is:
-void callback(any_t*userdata, Uint8 *stream, int len); userdata is the pointer stored in userdata field of the SDL_AudioSpec. stream is a pointer to the audio priv->buffer you want to fill with information and len is the length of the audio priv->buffer in bytes. */
-	aspec.callback = outputaudio;
-
-	/* This pointer is passed as the first parameter to the callback function. */
-	aspec.userdata = ao;
-
-	/* initialize the SDL Audio system */
-	if (SDL_Init (SDL_INIT_AUDIO/*|SDL_INIT_NOPARACHUTE*/)) {
-		MSG_ERR("SDL: Initializing of SDL Audio failed: %s.\n", SDL_GetError());
-		return 0;
-        }
-
-	/* Open the audio device and start playing sound! */
-	if(SDL_OpenAudio(&aspec, &obtained) < 0) {
-		MSG_ERR("SDL: Unable to open audio: %s\n", SDL_GetError());
-		return(0);
-	}
-	
-	/* did we got what we wanted ? */
-	ao->channels=obtained.channels;
-	ao->samplerate=obtained.freq;
-
-	switch(obtained.format) {
-	    case AUDIO_U8 :
-		ao->format = AFMT_U8;
+    /* The desired audio format (see SDL_AudioSpec) */
+    switch(format) {
+	case AFMT_U8:
+	    aspec.format = AUDIO_U8;
 	    break;
-	    case AUDIO_S16LSB :
-		ao->format = AFMT_S16_LE;
+	case AFMT_S16_LE:
+	    aspec.format = AUDIO_S16LSB;
 	    break;
-	    case AUDIO_S16MSB :
-		ao->format = AFMT_S16_BE;
+	case AFMT_S16_BE:
+	    aspec.format = AUDIO_S16MSB;
 	    break;
-	    case AUDIO_S8 :
-		ao->format = AFMT_S8;
+	case AFMT_S8:
+	    aspec.format = AUDIO_S8;
 	    break;
-	    case AUDIO_U16LSB :
-		ao->format = AFMT_U16_LE;
+	case AFMT_U16_LE:
+	    aspec.format = AUDIO_U16LSB;
 	    break;
-	    case AUDIO_U16MSB :
-		ao->format = AFMT_U16_BE;
+	case AFMT_U16_BE:
+	    aspec.format = AUDIO_U16MSB;
 	    break;
-	    default:
-		MSG_WARN("SDL: Unsupported SDL audio format: 0x%x.\n", obtained.format);
-		return 0;
-	}
+	default:
+	    MSG_ERR("SDL: Unsupported audio format: 0x%x.\n", format);
+	    return MPXP_False;
+    }
 
-	MSG_V("SDL: buf size = %d\n",aspec.size);
-	ao->buffersize=obtained.size;
+    /* The desired audio frequency in samples-per-second. */
+    aspec.freq     = rate;
 
-	SDL_AudioDriverName(drv_name, sizeof(drv_name));
-	MSG_OK("SDL: using %s audio driver (%iHz %s \"%s\")\n"
+    /* Number of channels (mono/stereo) */
+    aspec.channels = channels;
+
+    /* The desired size of the audio priv->buffer in samples. This number should be a power of two, and may be adjusted by the audio driver to a value more suitable for the hardware. Good values seem to range between 512 and 8192 inclusive, depending on the application and CPU speed. Smaller values yield faster response time, but can lead to underflow if the application is doing heavy processing and cannot fill the audio priv->buffer in time. A stereo sample consists of both right and left channels in LR ordering. Note that the number of samples is directly related to time by the following formula: ms = (samples*1000)/freq */
+    aspec.samples  = SAMPLESIZE;
+
+    /* This should be set to a function that will be called when the audio device is ready for more data. It is passed a pointer to the audio priv->buffer, and the length in bytes of the audio priv->buffer. This function usually runs in a separate thread, and so you should protect data structures that it accesses by calling SDL_LockAudio and SDL_UnlockAudio in your code. The callback prototype is:
+	void callback(any_t*userdata, Uint8 *stream, int len); userdata is the pointer stored in userdata field of the SDL_AudioSpec. stream is a pointer to the audio priv->buffer you want to fill with information and len is the length of the audio priv->buffer in bytes. */
+    aspec.callback = outputaudio;
+
+    /* This pointer is passed as the first parameter to the callback function. */
+    aspec.userdata = ao;
+
+    /* initialize the SDL Audio system */
+    if (SDL_Init (SDL_INIT_AUDIO/*|SDL_INIT_NOPARACHUTE*/)) {
+	MSG_ERR("SDL: Initializing of SDL Audio failed: %s.\n", SDL_GetError());
+	return MPXP_False;
+    }
+
+    /* Open the audio device and start playing sound! */
+    if(SDL_OpenAudio(&aspec, &obtained) < 0) {
+	MSG_ERR("SDL: Unable to open audio: %s\n", SDL_GetError());
+	return MPXP_False;
+    }
+
+    /* did we got what we wanted ? */
+    ao->channels=obtained.channels;
+    ao->samplerate=obtained.freq;
+
+    switch(obtained.format) {
+	case AUDIO_U8 :
+	    ao->format = AFMT_U8;
+	    break;
+	case AUDIO_S16LSB :
+	    ao->format = AFMT_S16_LE;
+	    break;
+	case AUDIO_S16MSB :
+	    ao->format = AFMT_S16_BE;
+	    break;
+	case AUDIO_S8 :
+	    ao->format = AFMT_S8;
+	    break;
+	case AUDIO_U16LSB :
+	    ao->format = AFMT_U16_LE;
+	    break;
+	case AUDIO_U16MSB :
+	    ao->format = AFMT_U16_BE;
+	    break;
+	default:
+	    MSG_WARN("SDL: Unsupported SDL audio format: 0x%x.\n", obtained.format);
+	    return MPXP_False;
+    }
+
+    MSG_V("SDL: buf size = %d\n",aspec.size);
+    ao->buffersize=obtained.size;
+
+    SDL_AudioDriverName(drv_name, sizeof(drv_name));
+    MSG_OK("SDL: using %s audio driver (%iHz %s \"%s\")\n"
 		,drv_name
 		,rate
 		,channels>4?"Surround":channels>2?"Quadro":channels>1?"Stereo":"Mono"
 		,ao_format_name(format));
 
-	/* unsilence audio, if callback is ready */
-	SDL_PauseAudio(0);
+    /* unsilence audio, if callback is ready */
+    SDL_PauseAudio(0);
 
-	return 1;
+    return MPXP_Ok;
 }
 
 // close audio device

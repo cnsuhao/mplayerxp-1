@@ -62,7 +62,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
     UNUSED(idx);
 }
 
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t fullscreen, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t fullscreen, char *title, uint32_t format,const vo_tune_info_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv;
     unsigned awidth;
@@ -155,10 +155,10 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 #endif
 	if(!(priv->bm_buffs[i])) {
 		MSG_ERR("Can't allocate memory for busmastering\n");
-		return -1;
+		return MPXP_False;
 	}
     }
-    return 0;
+    return MPXP_Ok;
 }
 
 static const vo_info_t* get_info(vo_data_t*vo)
@@ -178,14 +178,14 @@ static void uninit(vo_data_t*vo)
     mp_free(priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     if(arg) {
 	MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
-	return ENOSYS;
+	return MPXP_False;
     }
     vo->priv=mp_mallocz(sizeof(priv_t));
-    return 0;
+    return MPXP_Ok;
 }
 
 static void __FASTCALL__ null_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)

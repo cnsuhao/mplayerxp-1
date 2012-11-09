@@ -153,7 +153,7 @@ static void resize(vo_data_t*vo,int x,int y){
 /* connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv;
     int is_bgr;
@@ -226,24 +226,24 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
     }
 #endif
 #ifdef GL_WIN32
-    if (!vo_w32_config(d_width, d_height, flags)) return -1;
+    if (!vo_w32_config(d_width, d_height, flags)) return MPXP_False;
 #else
     {
 	XVisualInfo *vi;
 	vi = get_visual_info(vo->mDisplay, vo->window);
 	if (vi == NULL) {
 	    MSG_ERR("[vo_oengl]: Can't get XVisualInfo\n");
-	    return -1;
+	    return MPXP_False;
 	}
 	priv->glx_context = glXCreateContext(vo->mDisplay, vi, NULL, True);
 	XFree(vi);
 	if (priv->glx_context == NULL) {
 	    MSG_ERR("[vo_oengl]: Can't create GLX context\n");
-	    return -1;
+	    return MPXP_False;
 	}
 	if (!glXMakeCurrent(vo->mDisplay, vo->window, priv->glx_context)) {
 	    MSG_ERR("[vo_oengl]: Can't make GLX context current\n");
-	    return -1;
+	    return MPXP_False;
 	}
     }
 #endif
@@ -271,7 +271,7 @@ static uint32_t __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height
 	default: break;
     }
     saver_off(vo,vo->mDisplay);
-    return 0;
+    return MPXP_Ok;
 }
 
 static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
@@ -330,14 +330,14 @@ static void uninit(vo_data_t*vo)
     mp_free(vo->priv);
 }
 
-static uint32_t __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     priv->num_buffers=1;
     UNUSED(arg);
-    if (!vo_x11_init(vo)) return -1;
-    return 0;
+    if (vo_x11_init(vo)!=MPXP_Ok) return MPXP_False;
+    return MPXP_Ok;
 }
 
 static void __FASTCALL__ gl_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
