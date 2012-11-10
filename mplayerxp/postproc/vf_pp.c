@@ -125,8 +125,6 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-extern int divx_quality;
-
 static unsigned int fmt_list[]={
     IMGFMT_YV12,
     IMGFMT_I420,

@@ -394,7 +394,7 @@ static void uninit(sh_video_t *sh){
 
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     xvid_dec_frame_t dec;
     xvid_dec_stats_t stats;
     mp_image_t* mpi = NULL;
@@ -420,7 +420,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     if(priv->pp_level>4)	dec.general |= XVID_DERINGUV;
     if(priv->resync)	{ dec.general |= XVID_DISCONTINUITY; priv->resync=0; }
 
-    if(flags&3) dec.general |= XVID_DEC_DROP;
+    if(frame->flags&3) dec.general |= XVID_DEC_DROP;
     dec.output.csp = priv->cs;
     mpi = mpcodecs_get_image(sh, priv->img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
 				 sh->src_w, sh->src_h);

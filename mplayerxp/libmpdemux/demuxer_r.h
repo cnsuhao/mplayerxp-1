@@ -22,6 +22,7 @@ typedef struct enc_frame_s {
     float		duration;
     unsigned		len;
     any_t*		data;
+    unsigned		flags; // codec specific flags. filled by video_decode
 }enc_frame_t;
 
 extern	enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float duration);

@@ -235,7 +235,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     priv_t*p=sh->context;
     mp_image_t* mpi;
     DecFrame decFrame;
@@ -249,7 +249,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
 
     decFrame.bitstream.pBuff = frame->data;
     decFrame.bitstream.iLength = frame->len;
-    decFrame.shallowDecode = (flags&3)?1:0;
+    decFrame.shallowDecode = (frame->flags&3)?1:0;
     decFrame.pBmp=mpi->planes[0];
     decFrame.bmpStride=(mpi->flags&(MP_IMGFLAG_YUV|MP_IMGFLAG_DIRECT))==(MP_IMGFLAG_YUV|MP_IMGFLAG_DIRECT)?
 		     mpi->flags&MP_IMGFLAG_PLANAR?mpi->stride[0]:mpi->stride[0]/2:

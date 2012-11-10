@@ -240,9 +240,8 @@ MPXP_Rc preinit(sh_audio_t *sh)
 {
     int rval;
     sh->audio_out_minsize=9216;
-    rval=0;
     rval = load_dll("libmpg123"SLIBSUFFIX); /* try standard libmpg123 first */
-    return rval;
+    return rval?MPXP_Ok:MPXP_False;
 }
 
 typedef struct priv_s {

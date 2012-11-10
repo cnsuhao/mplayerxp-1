@@ -40,7 +40,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 static void uninit(sh_video_t *sh) {}
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     mp_image_t* mpi;
     if(frame->len<=0) return NULL; // skipped frame
 

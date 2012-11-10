@@ -1,4 +1,5 @@
 #include "mp_config.h"
+#include "mplayerxp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,7 +170,7 @@ static MPXP_Rc init_vfw_video_codec(sh_video_t *sh_video){
 
 //  avi_header.our_in_buffer=mp_malloc(avi_header.video.dwSuggestedBufferSize); // FIXME!!!!
 
-    ICSendMessage(priv->hic, ICM_USER+80, (long)(&divx_quality), 0);
+    ICSendMessage(priv->hic, ICM_USER+80, (long)(&mp_data->output_quality), 0);
 
   // don't do this palette mess always, it makes div3 dll crashing...
     if(sh_video->codec->outfmt[sh_video->outfmtidx]==IMGFMT_BGR8){
@@ -268,7 +269,7 @@ static void uninit(sh_video_t *sh)
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     priv_t *priv = sh->context;
     mp_image_t* mpi;
     HRESULT ret;
@@ -289,13 +290,13 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     if(priv->ex)
     ret = ICDecompressEx(priv->hic,
 	  ( (sh->ds->flags&1) ? 0 : ICDECOMPRESS_NOTKEYFRAME ) |
-	  ( ((flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
-	   sh->bih, frame->data, priv->o_bih, (flags&3) ? 0 : mpi->planes[0]);
+	  ( ((frame->flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
+	   sh->bih, frame->data, priv->o_bih, (frame->flags&3) ? 0 : mpi->planes[0]);
     else
     ret = ICDecompress(priv->hic,
 	  ( (sh->ds->flags&1) ? 0 : ICDECOMPRESS_NOTKEYFRAME ) |
-	  ( ((flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
-	   sh->bih, frame->data, priv->o_bih, (flags&3) ? 0 : mpi->planes[0]);
+	  ( ((frame->flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
+	   sh->bih, frame->data, priv->o_bih, (frame->flags&3) ? 0 : mpi->planes[0]);
 
     if ((int)ret){
       MSG_WARN("Error decompressing frame, err=%d\n",ret);

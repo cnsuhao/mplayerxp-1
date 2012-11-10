@@ -121,10 +121,11 @@ void get_screen_size(){
 #endif
 }
 
-int getch2(int time){
+int getch2(int _time){
   int len=0;
   int code=0;
   int i=0;
+  int c;
 
   while(!getch2_len || (getch2_len==1 && getch2_buf[0]==27)){
     fd_set rfds;
@@ -133,7 +134,7 @@ int getch2(int time){
     /* Watch stdin (fd 0) to see when it has input. */
     FD_ZERO(&rfds); FD_SET(0,&rfds);
     /* Wait up to 'time' microseconds. */
-    tv.tv_sec=time/1000; tv.tv_usec = (time%1000)*1000;
+    tv.tv_sec=_time/1000; tv.tv_usec = (_time%1000)*1000;
     retval=select(1, &rfds, NULL, NULL, &tv);
     if(retval<=0) return -1;
     /* Data is available now. */
@@ -161,22 +162,22 @@ int getch2(int time){
       if(code==8 || code==127){ code=KEY_BS; goto found;}
       if(code==10 || code==13){
         if(getch2_len>1){
-          int c=getch2_buf[1];
+          c=getch2_buf[1];
           if(c==10 || c==13) if(c!=code) len=2;
         }
         code=KEY_ENTER;
         goto found;
       }
     } else if(getch2_len>1){
-      int c=getch2_buf[1];
+      c=getch2_buf[1];
       if(c==27){ code=KEY_ESC; len=2; goto found;}
       if(c>='0' && c<='9'){ code=c-'0'+KEY_F; len=2; goto found;}
       if(getch2_len>=4 && c=='[' && getch2_buf[2]=='['){
-        int c=getch2_buf[3];
+        c=getch2_buf[3];
         if(c>='A' && c<'A'+12){ code=KEY_F+1+c-'A';len=4;goto found;}
       }
       if(c=='[' || c=='O') if(getch2_len>=3){
-        int c=getch2_buf[2];
+        c=getch2_buf[2];
         static short int ctable[]={ KEY_UP,KEY_DOWN,KEY_RIGHT,KEY_LEFT,0,
                        KEY_END,KEY_PGDWN,KEY_HOME,KEY_PGUP,0,0,KEY_INS,0,0,0,
                        KEY_F+1,KEY_F+2,KEY_F+3,KEY_F+4};
@@ -184,12 +185,12 @@ int getch2(int time){
           if(ctable[c-'A']){ code=ctable[c-'A']; len=3; goto found;}
       }
       if(getch2_len>=4 && c=='[' && getch2_buf[3]=='~'){
-        int c=getch2_buf[2];
+        c=getch2_buf[2];
         int ctable[8]={KEY_HOME,KEY_INS,KEY_DEL,KEY_END,KEY_PGUP,KEY_PGDWN,KEY_HOME,KEY_END};
         if(c>='1' && c<='8'){ code=ctable[c-'1']; len=4; goto found;}
       }
       if(getch2_len>=5 && c=='[' && getch2_buf[4]=='~'){
-        int i=getch2_buf[2]-'0';
+        i=getch2_buf[2]-'0';
         int j=getch2_buf[3]-'0';
         if(i>=0 && i<=9 && j>=0 && j<=9){
           static short int ftable[20]={
@@ -202,7 +203,6 @@ int getch2(int time){
     }
 found:
   if((getch2_len-=len)>0){
-    int i;
     for(i=0;i<getch2_len;i++) getch2_buf[i]=getch2_buf[len+i];
   }
   return code;

@@ -129,7 +129,7 @@ static void uninit(sh_video_t *sh)
 /*
  * decode frame
  */
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags)
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
 {
     priv_t *priv = (priv_t *)sh->context;
     int errorCode = 0;

@@ -134,7 +134,6 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 	case VDCTRL_SET_PP_LEVEL: {
 	    int quality=*((int*)arg);
 	    if(quality<0 || quality>PP_QUALITY_MAX) quality=PP_QUALITY_MAX;
-	    divx_quality = quality;
 	    return MPXP_Ok;
 	}
 	case VDCTRL_QUERY_FORMAT:
@@ -646,7 +645,7 @@ typedef struct __attribute__((__packed__)) dp_hdr_s {
 } dp_hdr_t;
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     int got_picture=0;
     int ret,has_b_frames;
     unsigned len=frame->len;
@@ -657,7 +656,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     priv->ctx->opaque=sh;
     if(frame->len<=0) return NULL; // skipped frame
 
-    priv->ctx->skip_frame=(flags&3)?((flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
+    priv->ctx->skip_frame=(frame->flags&3)?((frame->flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
     if(priv->cap_slices)	priv->use_slices= !(sh->vf_flags&VF_FLAGS_SLICES)?0:(priv->ctx->skip_frame!=AVDISCARD_NONE)?0:1;
     else			priv->use_slices=0;
 /*
@@ -707,7 +706,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
         priv->ctx->release_buffer= release_buffer;
         priv->ctx->reget_buffer= get_buffer;
     }
-    if(!(flags&3) && priv->use_slices)
+    if(!(frame->flags&3) && priv->use_slices)
     {
 	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->src_w, sh->src_h);
 	priv->mpi = mpi;

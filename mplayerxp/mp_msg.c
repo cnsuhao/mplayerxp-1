@@ -95,8 +95,8 @@ int mp_msg_c( unsigned x, const char *format, ... ){
     unsigned mod=x&0x0FFFFFFF;
     static int was_eol=1;
     if(mp_data) priv=mp_data->msg_priv;
-    if(level>mp_conf.verbose+MSGL_V-1) return; /* do not display */
-    if((mod&mp_conf.msg_filter)==0) return; /* do not display */
+    if(level>mp_conf.verbose+MSGL_V-1) return 0; /* do not display */
+    if((mod&mp_conf.msg_filter)==0) return 0; /* do not display */
     if(priv) {
 	pthread_mutex_lock(&priv->mp_msg_mutex);
 	if(isatty(fileno(stderr)))

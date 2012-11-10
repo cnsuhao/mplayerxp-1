@@ -44,8 +44,6 @@ extern int v_cont;
 extern int v_hue;
 extern int v_saturation;
 
-int divx_quality=PP_QUALITY_MAX;
-
 const vd_functions_t* mpvdec=NULL;
 
 MPXP_Rc mpcv_get_quality_max(sh_video_t *sh_video,unsigned *quality){
@@ -225,7 +223,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 
 extern vo_data_t* vo_data;
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
-int mpcv_decode(sh_video_t *sh_video,const enc_frame_t* frame,int drop_frame){
+int mpcv_decode(sh_video_t *sh_video,const enc_frame_t* frame){
     vf_instance_t* vf;
     mp_image_t *mpi=NULL;
     unsigned int t;
@@ -238,7 +236,7 @@ int mpcv_decode(sh_video_t *sh_video,const enc_frame_t* frame,int drop_frame){
     vf->control(vf,VFCTRL_START_FRAME,NULL);
 
     sh_video->active_slices=0;
-    mpi=mpvdec->decode(sh_video, frame, drop_frame);
+    mpi=mpvdec->decode(sh_video, frame);
     MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
     while(sh_video->active_slices!=0) usleep(0);
 /* ------------------------ frame decoded. -------------------- */
@@ -255,7 +253,7 @@ int mpcv_decode(sh_video_t *sh_video,const enc_frame_t* frame,int drop_frame){
 	mp_data->bench->cur_video=tt;
     }
 
-    if(drop_frame) return 0;
+    if(frame->flags) return 0;
     update_subtitle(sh_video,frame->pts,mpi->xp_idx);
     vo_flush_page(vo_data,dae_curr_vdecoded(xp_core));
 

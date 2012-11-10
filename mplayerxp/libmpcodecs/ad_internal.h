@@ -12,8 +12,8 @@
 
 #include "ad_msg.h"
 
-static int __FASTCALL__ init(sh_audio_t *sh);
-static int __FASTCALL__  preinit(sh_audio_t *sh);
+static MPXP_Rc __FASTCALL__ init(sh_audio_t *sh);
+static MPXP_Rc __FASTCALL__  preinit(sh_audio_t *sh);
 static void __FASTCALL__  uninit(sh_audio_t *sh);
 static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...);
 static unsigned __FASTCALL__  decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
@@ -23,7 +23,7 @@ static unsigned __FASTCALL__  decode(sh_audio_t *sh_audio,unsigned char *buf,uns
 	&options,\
 	preinit,\
 	init,\
-        uninit,\
+	uninit,\
 	control,\
 	decode\
 };

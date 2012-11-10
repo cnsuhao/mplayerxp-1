@@ -3,6 +3,7 @@
 #include <stdarg.h>
 
 #include "mp_config.h"
+#include "mplayerxp.h"
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "help_mp.h"
@@ -83,7 +84,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	default:
 	    DS_VideoDecoder_SetDestFmt(sh->context,out_fmt&255,0);    // RGB/BGR
     }
-    DS_SetAttr_DivX("Quality",divx_quality);
+    DS_SetAttr_DivX("Quality",mp_data->output_quality);
     DS_VideoDecoder_StartInternal(sh->context);
     MSG_V("INFO: Win32/DShow init OK!\n");
     return MPXP_Ok;
@@ -95,11 +96,11 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     mp_image_t* mpi;
     if(frame->len<=0) return NULL; // skipped frame
 
-    if(flags&3){
+    if(frame->flags&3){
 	// framedrop:
 	DS_VideoDecoder_DecodeInternal(sh->context, frame->data, frame->len, sh->ds->flags&1, 0);
 	return NULL;

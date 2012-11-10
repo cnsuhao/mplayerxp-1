@@ -209,7 +209,7 @@ static void draw_frame(mp_image_t *mpi,sh_video_t *sh,unsigned w,const mpeg2_fbu
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     priv_t *priv=sh->context;
     mp_image_t *mpi;
     const mpeg2_info_t *_info;

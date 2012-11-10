@@ -191,7 +191,7 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     mp_image_t* mpi;
     unsigned long result;
     const dp_hdr_t* dp_hdr=(const dp_hdr_t*)frame->data;
@@ -208,7 +208,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
 	dp_hdr->timestamp,// timestamp (the integer value from the stream)
     };
 
-    if(frame->len<=0 || flags&2) return NULL; // skipped frame || hardframedrop
+    if(frame->len<=0 || frame->flags&2) return NULL; // skipped frame || hardframedrop
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
 		sh->src_w, sh->src_h);

@@ -463,7 +463,7 @@ static void uninit(sh_video_t *sh)
  * Decode a HuffYUV frame
  *
  */
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags)
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
 {
     mp_image_t* mpi;
     int pixel_ptr;

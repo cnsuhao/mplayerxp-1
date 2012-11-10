@@ -212,7 +212,8 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	else
 	if(mp_conf.autoq) mpcv_set_quality(sh_video,our_quality>0?our_quality:0);
     }
-    blit_frame=mpcv_decode(sh_video,frame,drop_param);
+    frame->flags=drop_param;
+    blit_frame=mpcv_decode(sh_video,frame);
 MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
     if(mp_data->output_quality) {
 	if(drop_param) mpcv_set_quality(sh_video,mp_data->output_quality);

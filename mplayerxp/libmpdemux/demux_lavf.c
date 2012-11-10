@@ -236,7 +236,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 	parse_cryptokey(avfc, opt_cryptokey);
 
     priv->pb = avio_alloc_context(priv->buffer, BIO_BUFFER_SIZE, 0,
-				demuxer->stream, mpxp_read, NULL, mpxp_seek);
+				demuxer->stream, mpxp_read, NULL/*mpxp_write*/, mpxp_seek);
     avfc->pb = priv->pb;
 
     if((err=avformat_open_input(&avfc, mp_filename, priv->avif, NULL))<0){

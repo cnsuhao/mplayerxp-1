@@ -7,15 +7,13 @@ extern MPXP_Rc	__FASTCALL__ mpcv_init(sh_video_t *sh_video, const char *codec_na
 extern void	__FASTCALL__ mpcv_uninit(sh_video_t *sh_video);
 extern MPXP_Rc	__FASTCALL__ mpcv_ffmpeg_init(sh_video_t*,any_t* libinput);
 
-extern int	__FASTCALL__ mpcv_decode(sh_video_t *sh_video,const enc_frame_t* frame,int drop_frame);
+extern int	__FASTCALL__ mpcv_decode(sh_video_t *sh_video,const enc_frame_t* frame);
 
 extern MPXP_Rc	__FASTCALL__ mpcv_get_quality_max(sh_video_t *sh_video,unsigned *qual);
 extern MPXP_Rc	__FASTCALL__ mpcv_set_quality(sh_video_t *sh_video,int quality);
 
 extern MPXP_Rc	__FASTCALL__ mpcv_set_colors(sh_video_t *sh_video,char *item,int value);
 extern void	__FASTCALL__ mpcv_resync_stream(sh_video_t *sh_video);
-
-extern int divx_quality;
 
 extern void vfm_help(void);
 #endif
