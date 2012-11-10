@@ -79,13 +79,13 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     mp_image_t* mpi;
-    if(len<=0) return NULL; // skipped frame
+    if(frame->len<=0) return NULL; // skipped frame
 
     if(flags&3){
 	// framedrop:
-        DMO_VideoDecoder_DecodeInternal(sh->context, data, len, sh->ds->flags&1, 0);
+        DMO_VideoDecoder_DecodeInternal(sh->context, frame->data, frame->len, sh->ds->flags&1, 0);
 	return NULL;
     }
 
@@ -98,7 +98,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	return NULL;
     }
 
-    DMO_VideoDecoder_DecodeInternal(sh->context, data, len, sh->ds->flags&1, mpi->planes[0]);
+    DMO_VideoDecoder_DecodeInternal(sh->context, frame->data, frame->len, sh->ds->flags&1, mpi->planes[0]);
 
     return mpi;
 }

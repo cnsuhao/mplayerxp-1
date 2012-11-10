@@ -209,22 +209,14 @@ static void draw_frame(mp_image_t *mpi,sh_video_t *sh,unsigned w,const mpeg2_fbu
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     priv_t *priv=sh->context;
     mp_image_t *mpi;
-    const mpeg2_info_t *info;
+    const mpeg2_info_t *_info;
     int state,buf;
-    if(len<=0) return NULL; // skipped null frame
+    if(frame->len<=0) return NULL; // skipped null frame
 
-#if 0
-    // append extra 'end of frame' code:
-    ((char*)data+len)[0]=0;
-    ((char*)data+len)[1]=0;
-    ((char*)data+len)[2]=1;
-    ((char*)data+len)[3]=0xff;
-    len+=4;
-#endif
-    info=mpeg2_info(priv->mpeg2dec);
+    _info=mpeg2_info(priv->mpeg2dec);
     mpi=NULL;
     buf=0;
     MSG_DBG2("len=%u ***mpeg2_info***\n",len);
@@ -235,7 +227,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	switch(state)
 	{
 	    case STATE_BUFFER:
-		mpeg2_buffer(priv->mpeg2dec,data,data+len);
+		mpeg2_buffer(priv->mpeg2dec,frame->data,frame->data+frame->len);
 		buf++;
 		if(buf>2) return NULL; /* parsing of the passed buffer finished, return. */
 		break;
@@ -243,31 +235,31 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 #if 0
 		    if(!priv->mpeg2dec->decoder.mpq_store)
 		    {
-			priv->mpeg2dec->decoder.mpq_stride=(info->sequence->picture_width+15)>>4;
-			priv->mpeg2dec->decoder.mpq_store=mp_malloc(priv->mpeg2dec->decoder.mpq_stride*((info->sequence->picture_height+15)>>4));
+			priv->mpeg2dec->decoder.mpq_stride=(_info->sequence->picture_width+15)>>4;
+			priv->mpeg2dec->decoder.mpq_store=mp_malloc(priv->mpeg2dec->decoder.mpq_stride*((_info->sequence->picture_height+15)>>4));
 		    }
 #endif
 		    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
-					,info->sequence->width,info->sequence->height);
+					,_info->sequence->width,_info->sequence->height);
 		    mpeg2_stride(priv->mpeg2dec,mpi->stride[0]);
 		    break;
 	    case STATE_SLICE:
 	    case STATE_END:
 	    case STATE_INVALID:
 		/* we must call draw_frame() only after STATE_BUFFER and STATE_PICTURE events */
-		MSG_DBG2("display=%X discard=%X current=%X mpi=%X\n",info->display_fbuf,info->discard_fbuf,info->current_fbuf,mpi);
+		MSG_DBG2("display=%X discard=%X current=%X mpi=%X\n",_info->display_fbuf,_info->discard_fbuf,_info->current_fbuf,mpi);
 		/* Workaround for broken (badly demuxed) streams.
 		Reset libmpeg2 to start decoding at the next picture. */
 		if(state==STATE_END) mpeg2_reset(priv->mpeg2dec,0);
-		if (info->display_fbuf && mpi)
+		if (_info->display_fbuf && mpi)
 		{
-		    mpi->pict_type=info->current_picture->flags&PIC_MASK_CODING_TYPE;
+		    mpi->pict_type=_info->current_picture->flags&PIC_MASK_CODING_TYPE;
 #if 0
 		    mpi->qscale_type= 1;
 		    mpi->qscale=priv->mpeg2dec->decoder.mpq_store;
 		    mpi->qstride=priv->mpeg2dec->decoder.mpq_stride;
 #endif
-		    draw_frame (mpi,sh,info->sequence->width,info->display_fbuf);
+		    draw_frame (mpi,sh,_info->sequence->width,_info->display_fbuf);
 		    return mpi;
 		}
 		break;

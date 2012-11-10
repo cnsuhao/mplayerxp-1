@@ -9,10 +9,24 @@
 #include "demuxer_r.h"
 #include "libmpsub/vobsub.h"
 #include "osdep/timer.h"
+#include "osdep/mplib.h"
 
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "demux_msg.h"
+
+enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float duration) {
+    enc_frame_t* frame=mp_mallocz(sizeof(enc_frame_t));
+    frame->type=type;
+    frame->pts=pts;
+    frame->duration=duration;
+    frame->len=len;
+    return frame;
+}
+void free_enc_frame(enc_frame_t* frame) {
+    if(frame->data && frame->type!=VideoFrame) mp_free(frame->data);
+    mp_free(frame);
+}
 
 pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;
 #define LOCK_DEMUXER() { pthread_mutex_lock(&demuxer_mutex); }
@@ -81,15 +95,21 @@ int demux_getc_r(demux_stream_t *ds,float *pts)
     return retval;
 }
 
-int video_read_frame_r(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,unsigned char** start,int force_fps)
+enc_frame_t* video_read_frame_r(sh_video_t* sh_video,int force_fps)
 {
+    enc_frame_t* frame;
+    float frame_time,v_pts;
+    unsigned char* start;
     int retval;
     unsigned int t=0;
     unsigned int t2=0;
     double tt;
     LOCK_DEMUXER();
     if(mp_conf.benchmark) t=GetTimer();
-    retval = video_read_frame(sh_video,frame_time_ptr,v_pts,start,force_fps);
+    retval = video_read_frame(sh_video,&frame_time,&v_pts,&start,force_fps);
+    if(retval<=0) return NULL;
+    frame=new_enc_frame(VideoFrame,retval,v_pts,frame_time);
+    frame->data=start;
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
@@ -99,7 +119,7 @@ int video_read_frame_r(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,u
 	if(tt < mp_data->bench->min_demux) mp_data->bench->min_demux=tt;
     }
     UNLOCK_DEMUXER();
-    return retval;
+    return frame;
 }
 
 int demux_read_data_r(demux_stream_t *ds,unsigned char* mem,int len,float *pts)

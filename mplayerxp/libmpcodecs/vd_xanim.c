@@ -884,13 +884,13 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     mp_image_t* mpi;
     xacodec_image_t* image;
 
-    if(len<=0) return NULL; // skipped frame
+    if(frame->len<=0) return NULL; // skipped frame
 
-    image=xacodec_decode_frame(data,len,(flags&3)?1:0);
+    image=xacodec_decode_frame(frame->data,frame->len,(flags&3)?1:0);
     if(!image) return NULL;
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE, 

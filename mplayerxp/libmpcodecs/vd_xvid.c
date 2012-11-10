@@ -394,22 +394,22 @@ static void uninit(sh_video_t *sh){
 
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     xvid_dec_frame_t dec;
     xvid_dec_stats_t stats;
     mp_image_t* mpi = NULL;
     int consumed;
     priv_t* priv = sh->context;
 
-    if(!data || len <= 0) return NULL;
+    if(frame->len <= 0) return NULL;
 
     memset(&dec,0,sizeof(xvid_dec_frame_t));
     memset(&stats, 0, sizeof(xvid_dec_stats_t));
     dec.version = XVID_VERSION;
     stats.version = XVID_VERSION;
 
-    dec.bitstream = data;
-    dec.length = len;
+    dec.bitstream = frame->data;
+    dec.length = frame->len;
     dec.general = 0;
     dec.brightness = priv->brightness;
     if(!priv->pp_level)	dec.general |= XVID_LOWDELAY | XVID_DEC_FAST;

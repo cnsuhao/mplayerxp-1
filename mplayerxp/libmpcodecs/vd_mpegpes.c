@@ -32,13 +32,13 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 static void uninit(sh_video_t *sh) {}
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     mp_image_t* mpi;
     static vo_mpegpes_t packet;
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
-    packet.data=data;
-    packet.size=len-4;
+    packet.data=frame->data;
+    packet.size=frame->len-4;
     packet.timestamp=sh->ds->pts;
     packet.id=0x1E0; //+sh_video->ds->id;
     mpi->planes[0]=(uint8_t*)(&packet);

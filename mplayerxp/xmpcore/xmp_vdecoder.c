@@ -115,13 +115,14 @@ any_t* xmp_video_decoder( any_t* arg )
     demux_stream_t *d_video=sh_video->ds;
     demuxer_t* demuxer=d_video->demuxer;
     demux_stream_t* d_audio=demuxer->audio;
+    enc_frame_t* frame;
 
     float duration=0;
     float drop_barrier;
     int blit_frame=0;
     int drop_param=0;
     unsigned xp_n_frame_to_drop;
-    float v_pts,mpeg_timer=HUGE;
+    float mpeg_timer=HUGE;
 
     priv->state=Pth_Run;
     priv->dae->eof = 0;
@@ -141,8 +142,6 @@ any_t* xmp_video_decoder( any_t* arg )
     else
 	xp_core->bad_pts = mp_conf.av_sync_pts?0:1;
 while(!priv->dae->eof){
-    unsigned char* start=NULL;
-    int in_size;
     if(priv->state==Pth_Canceling) break;
     if(priv->state==Pth_Sleep) {
 pt_sleep:
@@ -163,24 +162,22 @@ pt_sleep:
     }
 #endif
 /*--------------------  Decode a frame: -----------------------*/
-    in_size=video_read_frame_r(sh_video,&duration,&v_pts,&start,sh_video->fps);
-    if(in_size<0) {
+    frame=video_read_frame_r(sh_video,sh_video->fps);
+    if(!frame) {
 	pt_exit_loop:
 	dae_decoded_mark_eof(xp_core->video);
 	priv->dae->eof=1;
 	break;
     }
     if(mp_conf.play_n_frames>0 && xp_core->video->num_decoded_frames >= mp_conf.play_n_frames) goto pt_exit_loop;
-    /* in_size==0: it's or broken stream or demuxer's bug */
-    if(in_size==0 && priv->state!=Pth_Canceling) continue;
     /* frame was decoded into current decoder_idx */
     if(xp_core->bad_pts) {
-	if(mpeg_timer==HUGE) mpeg_timer=v_pts;
-	else if( mpeg_timer-duration<v_pts ) {
-	    mpeg_timer=v_pts;
+	if(mpeg_timer==HUGE) mpeg_timer=frame->pts;
+	else if( mpeg_timer-duration<frame->pts ) {
+	    mpeg_timer=frame->pts;
 	    MSG_DBG2("Sync mpeg pts %f\n", mpeg_timer);
 	}
-	else mpeg_timer+=duration;
+	else mpeg_timer+=frame->duration;
     }
     /* compute frame dropping */
     xp_n_frame_to_drop=0;
@@ -188,9 +185,9 @@ pt_sleep:
 	int cur_time;
 	cur_time = GetTimerMS();
 	/* Ugly solution: disable frame dropping right after seeking! */
-	if(cur_time - mp_data->seek_time > (xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,v_pts,drop_barrier);
+	if(cur_time - mp_data->seek_time > (xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
-    if(!finite(v_pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",v_pts);
+    if(!finite(frame->pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",frame->pts);
 #if 0
 /*
     We can't seriously examine question of too slow machines
@@ -215,7 +212,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	else
 	if(mp_conf.autoq) mpcv_set_quality(sh_video,our_quality>0?our_quality:0);
     }
-    blit_frame=mpcv_decode(sh_video,start,in_size,drop_param,v_pts);
+    blit_frame=mpcv_decode(sh_video,frame,drop_param);
 MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
     if(mp_data->output_quality) {
 	if(drop_param) mpcv_set_quality(sh_video,mp_data->output_quality);
@@ -226,12 +223,12 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
 	if(xp_core->bad_pts)
 	    xp_core->video->frame[idx].v_pts=mpeg_timer;
 	else
-	    xp_core->video->frame[idx].v_pts = v_pts;
+	    xp_core->video->frame[idx].v_pts = frame->pts;
 	xp_core->video->frame[idx].duration=duration;
 	dae_decoded_clear_eof(xp_core->video);
 	if(!xp_core->bad_pts) {
 	    int _idx = dae_prev_vdecoded(xp_core);
-	    xp_core->video->frame[_idx].duration=v_pts-xp_core->video->frame[_idx].v_pts;
+	    xp_core->video->frame[_idx].duration=frame->pts-xp_core->video->frame[_idx].v_pts;
 	}
 	if(mp_conf.frame_reorder) reorder_pts_in_mpeg();
     } /* if (blit_frame) */
@@ -251,6 +248,7 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
 	}
 	usleep(1);
     }
+    free_enc_frame(frame);
 /*------------------------ frame decoded. --------------------*/
 } /* while(!priv->dae->eof)*/
 

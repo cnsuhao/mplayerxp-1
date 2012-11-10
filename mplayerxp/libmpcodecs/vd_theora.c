@@ -129,18 +129,17 @@ static void uninit(sh_video_t *sh)
 /*
  * decode frame
  */
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags) 
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags)
 {
     priv_t *priv = (priv_t *)sh->context;
     int errorCode = 0;
     ogg_packet op;
     yuv_buffer yuv;
     mp_image_t* mpi;
-    int i;
 
     bzero (&op, sizeof (op));
-    op.bytes = len;
-    op.packet = data;
+    op.bytes = frame->len;
+    op.packet = frame->data;
     op.granulepos = -1;
 
     errorCode = theora_decode_packetin (&priv->st, &op);

@@ -49,7 +49,7 @@ typedef struct transform_in_s {
     uint32_t len;
     uint32_t unknown1;
     uint32_t chunks;
-    uint32_t* extra;
+    const uint32_t* extra;
     uint32_t unknown2;
     uint32_t timestamp;
 } transform_in_t;
@@ -191,31 +191,31 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
-	mp_image_t* mpi;
-	unsigned long result;
-	dp_hdr_t* dp_hdr=(dp_hdr_t*)data;
-	unsigned char* dp_data=((unsigned char*)data)+sizeof(dp_hdr_t);
-	uint32_t* extra=(uint32_t*)(((char*)data)+dp_hdr->chunktab);
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
+    mp_image_t* mpi;
+    unsigned long result;
+    const dp_hdr_t* dp_hdr=(const dp_hdr_t*)frame->data;
+    const unsigned char* dp_data=((const unsigned char*)frame->data)+sizeof(dp_hdr_t);
+    const uint32_t* extra=(const uint32_t*)(((const char*)frame->data)+dp_hdr->chunktab);
 
-	unsigned int transform_out[5];
-	transform_in_t transform_in={
-		dp_hdr->len,	// length of the packet (sub-packets appended)
-		0,		// unknown, seems to be unused
-		dp_hdr->chunks,	// number of sub-packets - 1
-		extra,		// table of sub-packet offsets
-		0,		// unknown, seems to be unused
-		dp_hdr->timestamp,// timestamp (the integer value from the stream)
-	};
+    unsigned int transform_out[5];
+    transform_in_t transform_in={
+	dp_hdr->len,	// length of the packet (sub-packets appended)
+	0,		// unknown, seems to be unused
+	dp_hdr->chunks,	// number of sub-packets - 1
+	extra,		// table of sub-packet offsets
+	0,		// unknown, seems to be unused
+	dp_hdr->timestamp,// timestamp (the integer value from the stream)
+    };
 
-	if(len<=0 || flags&2) return NULL; // skipped frame || hardframedrop
+    if(frame->len<=0 || flags&2) return NULL; // skipped frame || hardframedrop
 
-	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
+    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
 		sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
-	
-	result=(*rvyuv_transform)(dp_data, mpi->planes[0], &transform_in,
-		transform_out, sh->context);
 
-	return (result?NULL:mpi);
+    result=(*rvyuv_transform)(dp_data, mpi->planes[0], &transform_in,
+	transform_out, sh->context);
+
+    return (result?NULL:mpi);
 }

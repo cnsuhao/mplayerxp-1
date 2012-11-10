@@ -463,7 +463,7 @@ static void uninit(sh_video_t *sh)
  * Decode a HuffYUV frame
  *
  */
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags)
 {
     mp_image_t* mpi;
     int pixel_ptr;
@@ -472,8 +472,8 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
     unsigned char tmp, mi, mx, med;
     unsigned char *swap;
     int row, col;
-    signed int pos = 32;
-    unsigned char *encoded = (unsigned char *)data;
+    unsigned int pos = 32;
+    const unsigned char *encoded = (const unsigned char *)frame->data;
     priv_t *priv = (priv_t *) sh->context; // Decoder context
     unsigned char *abovebuf = priv->abovebuf1;
     unsigned char *curbuf = priv->abovebuf2;
@@ -483,7 +483,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags)
     int bgr32;
 
     // skipped frame
-    if(len <= 0) return NULL;
+    if(frame->len <= 0) return NULL;
 
     /* Do not accept stride for rgb, it gives me wrong output :-( */
     if (priv->bitmaptype == BMPTYPE_YUV)

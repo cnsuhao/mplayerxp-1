@@ -242,7 +242,7 @@ extern unsigned xp_num_cpu;
 static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     unsigned avc_version=0;
     priv_t *priv;
-    int pp_flags,rc;
+    int pp_flags;
     if(mp_conf.npp_options) pp2_init();
     if(!vcodec_inited){
 //	avcodec_init();
@@ -646,14 +646,16 @@ typedef struct __attribute__((__packed__)) dp_hdr_s {
 } dp_hdr_t;
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     int got_picture=0;
     int ret,has_b_frames;
+    unsigned len=frame->len;
+    any_t* data=frame->data;
     priv_t *priv=sh->context;
     mp_image_t* mpi=NULL;
 
     priv->ctx->opaque=sh;
-    if(len<=0) return NULL; // skipped frame
+    if(frame->len<=0) return NULL; // skipped frame
 
     priv->ctx->skip_frame=(flags&3)?((flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
     if(priv->cap_slices)	priv->use_slices= !(sh->vf_flags&VF_FLAGS_SLICES)?0:(priv->ctx->skip_frame!=AVDISCARD_NONE)?0:1;
@@ -685,16 +687,16 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
        || sh->fourcc == mmioFOURCC('R', 'V', '4', '0'))
     if(sh->bih->biSize==sizeof(*sh->bih)+8){
         int i;
-        dp_hdr_t *hdr= (dp_hdr_t*)data;
+        const dp_hdr_t *hdr= (const dp_hdr_t*)data;
 
-        if(priv->ctx->slice_offset==NULL) 
+        if(priv->ctx->slice_offset==NULL)
             priv->ctx->slice_offset= mp_malloc(sizeof(int)*1000);
 
 //        for(i=0; i<25; i++) printf("%02X ", ((uint8_t*)data)[i]);
 
         priv->ctx->slice_count= hdr->chunks+1;
         for(i=0; i<priv->ctx->slice_count; i++)
-            priv->ctx->slice_offset[i]= ((uint32_t*)(data+hdr->chunktab))[2*i+1];
+            priv->ctx->slice_offset[i]= ((const uint32_t*)(data+hdr->chunktab))[2*i+1];
 	len=hdr->len;
         data+= sizeof(dp_hdr_t);
     }

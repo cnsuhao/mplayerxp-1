@@ -49,16 +49,15 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 static void uninit(sh_video_t *sh) {}
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     mp_image_t* mpi;
-    if(len<=0) return NULL; // skipped frame
+    if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0, 
-	sh->src_w, sh->src_h);
+    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0, sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-	mpi->planes[0]=data;
+	mpi->planes[0]=frame->data;
 	mpi->stride[0]=mpi->width;
 	switch(sh->codec->outfmt[sh->outfmtidx])
 	{
@@ -66,7 +65,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 	    case IMGFMT_I420:
 	    case IMGFMT_IYUV:
 	    case IMGFMT_YV12:
-		mpi->planes[1]=data+mpi->width*mpi->height;
+		mpi->planes[1]=frame->data+mpi->width*mpi->height;
 		mpi->stride[1]=mpi->width/2;
 		mpi->planes[2]=mpi->planes[1]+(mpi->width/2)*(mpi->height/2);
 		mpi->stride[2]=mpi->width/2;
@@ -78,7 +77,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 		mpi->stride[3]=mpi->width/4;
 		*/
 	    case IMGFMT_YVU9:
-		mpi->planes[1]=data+mpi->width*mpi->height;
+		mpi->planes[1]=frame->data+mpi->width*mpi->height;
 		mpi->stride[1]=mpi->width/4;
 		mpi->planes[2]=mpi->planes[1]+(mpi->width/4)*(mpi->height/4);
 		mpi->stride[2]=mpi->width/4;
@@ -87,7 +86,7 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
 		break;
 	}
     } else {
-	mpi->planes[0]=data;
+	mpi->planes[0]=frame->data;
 	mpi->stride[0]=mpi->width*((mpi->bpp+7)/8);
     }
     return mpi;

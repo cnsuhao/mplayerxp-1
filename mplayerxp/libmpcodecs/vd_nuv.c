@@ -40,15 +40,15 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 static void uninit(sh_video_t *sh) {}
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     mp_image_t* mpi;
-    if(len<=0) return NULL; // skipped frame
+    if(frame->len<=0) return NULL; // skipped frame
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
-    decode_nuv(data, len, mpi->planes[0], sh->src_w, sh->src_h);
+    decode_nuv(frame->data, frame->len, mpi->planes[0], sh->src_w, sh->src_h);
 
     return mpi;
 }

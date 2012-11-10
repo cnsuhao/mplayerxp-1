@@ -204,8 +204,8 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(!(p=mp_mallocz(sizeof(priv_t)))) { MSG_ERR("Out of memory\n"); return MPXP_False; }
     sh->context=p;
     if(!(p->decoder=getDecore_ptr(sh->fourcc))) {
-	char *p=(char *)&(sh->fourcc);
-	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",p[0],p[1],p[2],p[3]);
+	char *fcc=(char *)&(sh->fourcc);
+	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",fcc[0],fcc[1],fcc[2],fcc[3]);
 	return MPXP_False;
     }
     dinit.formatOut.fourCC=sh->codec->outfmt[sh->outfmtidx];
@@ -218,8 +218,8 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     dinit.formatIn.fourCC=sh->fourcc;
     dinit.formatIn.framePeriod=sh->fps;
     if(p->decoder(NULL, DEC_OPT_INIT, (any_t*) &p->pHandle, &dinit)!=DEC_OK) {
-	char *p=(char *)&(dinit.formatOut);
-	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",p[0],p[1],p[2],p[3]);
+	char *fcc=(char *)&(dinit.formatOut);
+	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",fcc[0],fcc[1],fcc[2],fcc[3]);
     }
     MSG_V("INFO: DivX4Linux (libdivx.so) video codec init OK!\n");
     fflush(stdout);
@@ -235,20 +235,20 @@ static void uninit(sh_video_t *sh){
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     priv_t*p=sh->context;
     mp_image_t* mpi;
     DecFrame decFrame;
 
     memset(&decFrame,0,sizeof(DecFrame));
-    if(len<=0) return NULL; // skipped frame
+    if(frame->len<=0) return NULL; // skipped frame
 
     mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
-    decFrame.bitstream.pBuff = data;
-    decFrame.bitstream.iLength = len;
+    decFrame.bitstream.pBuff = frame->data;
+    decFrame.bitstream.iLength = frame->len;
     decFrame.shallowDecode = (flags&3)?1:0;
     decFrame.pBmp=mpi->planes[0];
     decFrame.bmpStride=(mpi->flags&(MP_IMGFLAG_YUV|MP_IMGFLAG_DIRECT))==(MP_IMGFLAG_YUV|MP_IMGFLAG_DIRECT)?

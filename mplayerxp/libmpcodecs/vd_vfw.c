@@ -112,7 +112,7 @@ static MPXP_Rc init_vfw_video_codec(sh_video_t *sh_video){
 
     ex = priv->ex;
     MSG_V("======= Win32 (VFW) VIDEO Codec init =======\n");
-    priv->hic = ICOpen(IC_FCCTYPE, sh_video->fourcc, ICMODE_DECOMPRESS);
+    priv->hic = ICOpen((long)IC_FCCTYPE, sh_video->fourcc, ICMODE_DECOMPRESS);
     if(!priv->hic){
 	MSG_ERR("ICOpen failed! unknown codec / wrong parameters?\n");
 	return MPXP_False;
@@ -169,7 +169,7 @@ static MPXP_Rc init_vfw_video_codec(sh_video_t *sh_video){
 
 //  avi_header.our_in_buffer=mp_malloc(avi_header.video.dwSuggestedBufferSize); // FIXME!!!!
 
-    ICSendMessage(priv->hic, ICM_USER+80, (long)(&divx_quality) ,NULL);
+    ICSendMessage(priv->hic, ICM_USER+80, (long)(&divx_quality), 0);
 
   // don't do this palette mess always, it makes div3 dll crashing...
     if(sh_video->codec->outfmt[sh_video->outfmtidx]==IMGFMT_BGR8){
@@ -188,7 +188,7 @@ static MPXP_Rc init_vfw_video_codec(sh_video_t *sh_video){
 static int vfw_set_postproc(sh_video_t* sh_video,int quality){
     // Works only with opendivx/divx4 based DLL
     priv_t *priv=sh_video->context;
-    return ICSendMessage(priv->hic, ICM_USER+80, (long)(&quality) ,NULL);
+    return ICSendMessage(priv->hic, ICM_USER+80, (long)(&quality), 0);
 }
 
 static MPXP_Rc vfw_close_video_codec(sh_video_t *sh_video)
@@ -268,12 +268,12 @@ static void uninit(sh_video_t *sh)
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
+static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame,int flags){
     priv_t *priv = sh->context;
     mp_image_t* mpi;
     HRESULT ret;
 
-    if(len<=0) return NULL; // skipped frame
+    if(frame->len<=0) return NULL; // skipped frame
 
     mpi=mpcodecs_get_image(sh, 
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_WIDTH, 
@@ -284,18 +284,18 @@ static mp_image_t* decode(sh_video_t *sh,any_t* data,int len,int flags){
     sh->bih->biWidth=mpi->width; //mpi->stride[0]/(mpi->bpp/8);
     priv->o_bih->biWidth=mpi->width; //mpi->stride[0]/(mpi->bpp/8);
 
-    sh->bih->biSizeImage = len;
+    sh->bih->biSizeImage = frame->len;
 
     if(priv->ex)
     ret = ICDecompressEx(priv->hic,
 	  ( (sh->ds->flags&1) ? 0 : ICDECOMPRESS_NOTKEYFRAME ) |
 	  ( ((flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
-	   sh->bih, data, priv->o_bih, (flags&3) ? 0 : mpi->planes[0]);
+	   sh->bih, frame->data, priv->o_bih, (flags&3) ? 0 : mpi->planes[0]);
     else
     ret = ICDecompress(priv->hic,
 	  ( (sh->ds->flags&1) ? 0 : ICDECOMPRESS_NOTKEYFRAME ) |
 	  ( ((flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
-	   sh->bih, data, priv->o_bih, (flags&3) ? 0 : mpi->planes[0]);
+	   sh->bih, frame->data, priv->o_bih, (flags&3) ? 0 : mpi->planes[0]);
 
     if ((int)ret){
       MSG_WARN("Error decompressing frame, err=%d\n",ret);
