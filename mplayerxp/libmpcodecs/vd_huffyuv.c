@@ -184,7 +184,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...)
  * Init HuffYUV decoder
  *
  */
-static MPXP_Rc init(sh_video_t *sh)
+static MPXP_Rc init(sh_video_t *sh,any_t* libinput)
 {
     MPXP_Rc vo_ret; // Video output init ret value
     priv_t *priv; // Decoder context
@@ -314,7 +314,7 @@ static MPXP_Rc init(sh_video_t *sh)
     switch (priv->bitmaptype) {
 	case BMPTYPE_RGB:
 	case BMPTYPE_YUV:
-	    vo_ret = mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
+	    vo_ret = mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput);
 	    break;
 	case BMPTYPE_RGBA:
 	    MSG_ERR( "[HuffYUV] RGBA not supported yet.\n");

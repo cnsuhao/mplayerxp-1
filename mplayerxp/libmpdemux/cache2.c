@@ -276,7 +276,7 @@ static any_t*cache2_routine(any_t*arg)
     return arg;
 }
 
-int stream_enable_cache(stream_t *stream,int size,int _min,int prefill){
+int stream_enable_cache(stream_t *stream,any_t* libinput,int size,int _min,int prefill){
   int ss=stream->sector_size>1?stream->sector_size:STREAM_BUFFER_SIZE;
   cache_vars_t* c;
 
@@ -311,7 +311,7 @@ int stream_enable_cache(stream_t *stream,int size,int _min,int prefill){
 	    100.0*(float)(END_FILEPOS(c)-c->read_filepos)/(float)(c->buffer_size),
 	    END_FILEPOS(c)-c->read_filepos);
 	if(c->eof) break; // file is smaller than prefill size
-	if(mpdemux_check_interrupt(PREFILL_SLEEP_TIME))
+	if(mpdemux_check_interrupt(libinput,PREFILL_SLEEP_TIME))
 	  return 0;
     }
     MSG_STATUS("cache info: size=%u min=%u prefill=%u\n",size,_min,prefill);

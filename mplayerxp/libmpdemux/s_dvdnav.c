@@ -58,7 +58,7 @@ static int dvd_nav_skip_opening=0;     /* skip opening stalls? */
 
 static void __FASTCALL__ dvdnav_stream_ignore_timers(stream_t * stream, int ignore) {
   dvdnav_priv_t *dvdnav_priv=stream->priv;
-  dvdnav_priv->ignore_timers=ignore; 
+  dvdnav_priv->ignore_timers=ignore;
 }
 
 static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * filename) {
@@ -191,12 +191,13 @@ static const mrl_config_t dvdnavopts_conf[]={
 	{ NULL, NULL, 0, 0, 0 }
 };
 
-static int __FASTCALL__ __dvdnav_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *dvd_device;
     int ntitles;
     UNUSED(flags);
+    UNUSED(libinput);
     stream->type = STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM;
     param=mrl_parse_line(filename,NULL,NULL,&dvd_device,NULL);
     if(strcmp(param,"help") == 0)

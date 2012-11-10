@@ -16,11 +16,12 @@
 #include "mrl.h"
 
 static track_t track_idx=255;
-static int __FASTCALL__ _cdda_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *device;
     int retval;
+    UNUSED(libinput);
     UNUSED(flags);
     stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
     stream->sector_size=CD_FRAMESIZE_RAW;
@@ -35,7 +36,7 @@ static int __FASTCALL__ _cdda_open(stream_t *stream,const char *filename,unsigne
     return retval;
 }
 
-static int __FASTCALL__ _cddb_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *device;

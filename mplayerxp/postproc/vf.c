@@ -278,7 +278,7 @@ static int __FASTCALL__ vf_default_query_format(struct vf_instance_s* vf, unsign
   return 1;//vf_next_query_format(vf,fmt,w,h);
 }
 
-vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_instance_t* next,sh_video_t *sh,char *name, char *args){
+vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_instance_t* next,sh_video_t *sh,char *name, char *args,any_t* libinput){
     vf_instance_t* vf;
     int i;
     for(i=0;;i++){
@@ -302,6 +302,7 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_ins
     vf->dw=sh->src_w;
     vf->dh=sh->src_h;
     vf->dfourcc=sh->fourcc;
+    vf->libinput=libinput;
     if(next) next->prev=vf;
     if(vf->info->open(vf,(char*)args)==MPXP_Ok) return vf; // Success!
     mp_free(vf);
@@ -309,11 +310,11 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_ins
     return NULL;
 }
 
-vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,char *name, char *args){
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,char *name, char *args,any_t*libinput){
   if(strcmp(name,"vo")) {
       MSG_V("Open video filter: [%s]\n", name);
   }
-  return vf_open_plugin(filter_list,next,sh,name,args);
+  return vf_open_plugin(filter_list,next,sh,name,args,libinput);
 }
 
 //============================================================================
@@ -333,7 +334,7 @@ unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,un
     if(best) return best; // bingo, they have common csp!
     // ok, then try with scale:
     if(vf->info == &vf_info_scale) return 0; // avoid infinite recursion!
-    vf=vf_open_filter(vf,vf->sh,"fmtcvt",NULL);
+    vf=vf_open_filter(vf,vf->sh,"fmtcvt",NULL,vf->libinput);
     if(!vf) return 0; // failed to init "scale"
     // try the preferred csp first:
     if(preferred && vf->query_format(vf,preferred,w,h)) best=preferred; else
@@ -374,7 +375,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
 	// let's insert the 'scale' filter, it does the job for us:
 	vf_instance_t* vf2;
 	if(vf->next->info==&vf_info_scale) return 0; // scale->scale
-	vf2=vf_open_filter(vf->next,vf->sh,"scale",NULL);
+	vf2=vf_open_filter(vf->next,vf->sh,"scale",NULL,vf->libinput);
 	if(!vf2) return 0; // shouldn't happen!
 	vf->next=vf2;
 	flags=vf_next_query_format(vf->next,outfmt,d_width,d_height);
@@ -388,7 +389,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
     if(miss&VFCAP_ACCEPT_STRIDE){
 	// vf requires stride support but vf->next doesn't support it!
 	// let's insert the 'expand' filter, it does the job for us:
-	vf_instance_t* vf2=vf_open_filter(vf->next,vf->sh,"expand",NULL);
+	vf_instance_t* vf2=vf_open_filter(vf->next,vf->sh,"expand",NULL,vf->libinput);
 	if(!vf2) return 0; // shouldn't happen!
 	vf->next=vf2;
     }
@@ -458,13 +459,13 @@ void vf_help(){
 
 extern vf_cfg_t vf_cfg;
 static sh_video_t *sh_video;
-vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh)
+vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh,any_t* libinput)
 {
     char *vf_last=NULL,*vf_name=vf_cfg.list;
     char *arg;
     vf_instance_t* vfi=NULL,*vfi_prev=NULL,*vfi_first;
     sh_video=sh;
-    vfi=vf_open_filter(NULL,sh,"vo",NULL);
+    vfi=vf_open_filter(NULL,sh,"vo",NULL,libinput);
     vfi_prev=vfi;
     if(vf_name)
     while(vf_name!=vf_last){
@@ -474,7 +475,7 @@ vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh)
 	arg=strchr(vf_last,'=');
 	if(arg) { *arg=0; arg++; }
 	MSG_V("Attach filter %s\n",vf_last);
-	vfi=vf_open_plugin(filter_list,vfi,sh,vf_last,arg);
+	vfi=vf_open_plugin(filter_list,vfi,sh,vf_last,arg,libinput);
 	if(!vfi) vfi=vfi_prev;
 	vfi_prev=vfi;
     }
@@ -607,7 +608,7 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
     {
 	MSG_V("vf_reinit->config %i %i %s=> %i %i %s\n",sw,sh,vo_format_name(sfourcc),w,h,vo_format_name(fmt));
 	_saved=_this->prev;
-	vf_scaler=vf_open_filter(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL);
+	vf_scaler=vf_open_filter(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput);
 	if(vf_scaler)
 	{
 	    any_t*sfnc;

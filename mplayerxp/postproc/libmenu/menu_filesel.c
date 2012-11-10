@@ -349,9 +349,9 @@ static void read_cmd(menu_t* menu,int cmd) {
       c = mp_input_parse_cmd(str);
       if(str != mpriv->file_action)
 	mp_free(str);
-    }	  
+    }
     if(c) {
-      mp_input_queue_cmd(c);
+      mp_input_queue_cmd(menu->libinput,c);
       if(mpriv->auto_close)
 	menu->cl = 1;
     }
@@ -362,7 +362,7 @@ static void read_cmd(menu_t* menu,int cmd) {
     char *str;
     sprintf(filename,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
     str = replace_path(action, filename);
-    mp_input_queue_cmd(mp_input_parse_cmd(str));
+    mp_input_queue_cmd(menu->libinput,mp_input_parse_cmd(str));
     if(str != action)
       mp_free(str);
   } break;

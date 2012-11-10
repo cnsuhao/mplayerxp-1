@@ -57,7 +57,7 @@ static void __FASTCALL__ _cdio_detect_media(char *device)
 
 static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp);
 
-static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     vcd_priv_t *priv;
     const char *param;
@@ -66,6 +66,7 @@ static int __FASTCALL__ _vcdnav_open(stream_t *stream,const char *filename,unsig
     int vcd_track=-1;
     vcdinfo_open_return_t open_rc;
     UNUSED(flags);
+    UNUSED(libinput);
     if(strcmp(filename,"help") == 0)
     {
 	MSG_HINT("Usage: vcdnav://<@device><#trackno>\n");

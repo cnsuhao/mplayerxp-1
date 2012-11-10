@@ -481,7 +481,7 @@ static void __FASTCALL__ asx_parse_ref(ASX_Parser_t* parser, char** attribs, pla
 
 }
 
-static play_tree_t* __FASTCALL__ asx_parse_entryref(ASX_Parser_t* parser,char* buffer,char** _attribs) {
+static play_tree_t* __FASTCALL__ asx_parse_entryref(any_t* libinput,ASX_Parser_t* parser,char* buffer,char** _attribs) {
   play_tree_t* pt;
   char *href;
   stream_t* stream;
@@ -496,7 +496,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entryref(ASX_Parser_t* parser,char* b
     asx_warning_attrib_required(parser,"ENTRYREF" ,"HREF" );
     return NULL;
   }
-  stream=open_stream(href,&f,NULL);
+  stream=open_stream(libinput,href,&f,NULL);
   if(!stream) {
     MSG_WARN("Can't open playlist %s\n",href);
     return NULL;
@@ -511,13 +511,13 @@ static play_tree_t* __FASTCALL__ asx_parse_entryref(ASX_Parser_t* parser,char* b
 
   ptp = play_tree_parser_new(stream,parser->deep+1);
 
-  pt = play_tree_parser_get_play_tree(ptp);
+  pt = play_tree_parser_get_play_tree(libinput,ptp);
 
   play_tree_parser_free(ptp);
   free_stream(stream);
 
   //MSG_INFO("Need to implement entryref\n");
-    
+
   return pt;
 }
 
@@ -554,7 +554,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entry(ASX_Parser_t* parser,char* buff
 
 }
 
-static play_tree_t* __FASTCALL__ asx_parse_repeat(ASX_Parser_t* parser,char* buffer,char** _attribs) {
+static play_tree_t* __FASTCALL__ asx_parse_repeat(any_t*libinput,ASX_Parser_t* parser,char* buffer,char** _attribs) {
   char *element,*body,**attribs;
   play_tree_t *repeat, *list=NULL, *entry;
   char* count;
@@ -589,14 +589,14 @@ static play_tree_t* __FASTCALL__ asx_parse_repeat(ASX_Parser_t* parser,char* buf
 	 MSG_DBG2("Adding element %s to repeat\n",element);
        }
     } else if(strcasecmp(element,"ENTRYREF") == 0) {
-       entry = asx_parse_entryref(parser,body,attribs);
+       entry = asx_parse_entryref(libinput,parser,body,attribs);
        if(entry) {
 	 if(!list) list =  entry;
 	 else play_tree_append_entry(list,entry);
 	 MSG_DBG2("Adding element %s to repeat\n",element);
        }
      } else if(strcasecmp(element,"REPEAT") == 0) {
-       entry = asx_parse_repeat(parser,body,attribs);
+       entry = asx_parse_repeat(libinput,parser,body,attribs);
        if(entry) {
 	 if(!list) list =  entry;
 	 else play_tree_append_entry(list,entry);
@@ -620,7 +620,7 @@ static play_tree_t* __FASTCALL__ asx_parse_repeat(ASX_Parser_t* parser,char* buf
 
 }
 
-play_tree_t* __FASTCALL__ asx_parser_build_tree(char* buffer,int deep) {
+play_tree_t* __FASTCALL__ asx_parser_build_tree(any_t*libinput,char* buffer,int deep) {
   char *element,*asx_body,**asx_attribs,*body, **attribs;
   int r;
   play_tree_t *asx,*entry,*list = NULL;
@@ -674,14 +674,14 @@ play_tree_t* __FASTCALL__ asx_parser_build_tree(char* buffer,int deep) {
 	 MSG_DBG2("Adding element %s to asx\n",element);
        }
      } else if(strcasecmp(element,"ENTRYREF") == 0) {
-       entry = asx_parse_entryref(parser,body,attribs);
+       entry = asx_parse_entryref(libinput,parser,body,attribs);
        if(entry) {
 	 if(!list) list =  entry;
 	 else play_tree_append_entry(list,entry);
 	 MSG_DBG2("Adding element %s to asx\n",element);
        }
      } else if(strcasecmp(element,"REPEAT") == 0) {
-       entry = asx_parse_repeat(parser,body,attribs);
+       entry = asx_parse_repeat(libinput,parser,body,attribs);
        if(entry) {
 	 if(!list) list =  entry;
 	 else play_tree_append_entry(list,entry);
@@ -700,7 +700,7 @@ play_tree_t* __FASTCALL__ asx_parser_build_tree(char* buffer,int deep) {
 
   if(!list) {
     play_tree_free(asx,1);
-    
+
     return NULL;
   }
 

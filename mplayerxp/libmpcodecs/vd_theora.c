@@ -51,7 +51,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 /*
  * init driver
  */
-static MPXP_Rc init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     priv_t *priv = NULL;
     int failed = 1;
     int errorCode = 0;
@@ -111,7 +111,7 @@ static MPXP_Rc init(sh_video_t *sh){
 
     MSG_V("INFO: Theora video init ok!\n");
 
-    return mpcodecs_config_vo (sh,sh->src_w,sh->src_h,NULL);
+    return mpcodecs_config_vo (sh,sh->src_w,sh->src_h,NULL,libinput);
 }
 
 /*

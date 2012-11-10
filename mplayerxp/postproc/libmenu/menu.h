@@ -14,6 +14,7 @@ struct  menu_s {
   int show; // Draw it ?
   int cl; // Close request (user sent a close cmd or
   menu_t* parent;
+  any_t*	libinput;
 };
 
 typedef struct menu_info_s {
@@ -42,7 +43,7 @@ int menu_init(struct MPContext *mpctx, char* cfg_file);
 void menu_unint(void);
 
 /// Open a menu defined in the config file
-menu_t* menu_open(const char *name);
+menu_t* menu_open(const char *name,any_t*libinput);
 
 void menu_draw(menu_t* menu,mp_image_t* mpi);
 void menu_read_cmd(menu_t* menu,int cmd);

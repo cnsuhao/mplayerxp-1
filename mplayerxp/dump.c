@@ -73,16 +73,17 @@ void dump_stream(stream_t *stream)
 #define MUX_HAVE_VIDEO 0x02
 #define MUX_HAVE_SUBS  0x04
 typedef struct priv_s {
-    int my_use_pts;
-    FILE *mux_file;
-    muxer_t *muxer;
+    int		my_use_pts;
+    FILE*	mux_file;
+    muxer_t*	muxer;
     muxer_stream_t *m_audio,*m_video,*m_subs;
-    unsigned decoded_frameno;
-    unsigned a_frameno;
-    int mux_type;
-    uint64_t vsize,asize,ssize;
-    float timer_corr; /* use common time-base */
-    float vtimer;
+    unsigned	decoded_frameno;
+    unsigned	a_frameno;
+    int		mux_type;
+    uint64_t	vsize,asize,ssize;
+    float	timer_corr; /* use common time-base */
+    float	vtimer;
+    any_t*	libinput;
 }priv_t;
 
 void __FASTCALL__ dump_stream_event_handler(struct stream_s *s,const stream_packet_t*sp)
@@ -93,12 +94,12 @@ void __FASTCALL__ dump_stream_event_handler(struct stream_s *s,const stream_pack
     returns: 0 - nothing interested
 	    -1 - quit
 */
-static int check_cmd(void)
+static int check_cmd(priv_t* priv)
 {
   mp_cmd_t* cmd;
   int retval;
   retval = 0;
-  while((cmd = mp_input_get_cmd(0,0,0)) != NULL)
+  while((cmd = mp_input_get_cmd(priv->libinput,0,0,0)) != NULL)
   {
     switch(cmd->id)
     {
@@ -112,124 +113,108 @@ static int check_cmd(void)
   return retval;
 }
 
-void dump_mux_init(demuxer_t *demuxer)
+void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 {
     sh_audio_t* sha=demuxer->audio->sh;
     sh_video_t* shv=demuxer->video->sh;
-  char stream_dump_name[1024];
-  /* TODO copy it from demuxer */
-  if(demuxer->priv) return;
-  demuxer->priv=mp_mallocz(sizeof(priv_t));
-  priv_t*priv=demuxer->priv;
-  /* describe other useless dumps */
-  priv->mux_type=MUX_HAVE_AUDIO|MUX_HAVE_VIDEO|MUX_HAVE_SUBS;
-  if(port)
-  {
-    if(strcmp(port,"audio") ==0 ) { strcpy(stream_dump_name,"a_"); priv->mux_type&=~(MUX_HAVE_VIDEO|MUX_HAVE_SUBS); }
-    else
-    if(strcmp(port,"video") ==0 ) { strcpy(stream_dump_name,"v_"); priv->mux_type&=~(MUX_HAVE_AUDIO|MUX_HAVE_SUBS); }
-    else
-    if(strcmp(port,"sub") ==0 ) { strcpy(stream_dump_name,"s_"); priv->mux_type&=~(MUX_HAVE_AUDIO|MUX_HAVE_VIDEO); }
-    else strcpy(stream_dump_name,port);
-  }
-  else strcpy(stream_dump_name,"avs_");
-  if(strcmp(media,"lavf") == 0) { strcpy(stream_dump_name,"avs_dump."); strcat(stream_dump_name,port); }
-  else
-  if(strcmp(media,"mpxp") == 0) strcat(stream_dump_name,"dump.mpxp");
-  else
-  if(strcmp(media,"raw") == 0) strcat(stream_dump_name,"dump.raw");
-  else
-  {
-    MSG_FATAL("Unsupported muxer format %s found\n",media);
-    exit_player(MSGTR_Exit_error);
-  }
-  priv->mux_file=fopen(stream_dump_name,"wb");
-  MSG_DBG2("Preparing stream dumping: %s\n",stream_dump_name);
-  if(!priv->mux_file){
-    MSG_FATAL(MSGTR_CantOpenDumpfile);
-    exit_player(MSGTR_Exit_error);
-  }
-  if(!(priv->muxer=muxer_new_muxer(media,port,priv->mux_file)))
-  {
-    MSG_FATAL("Can't initialize muxer\n");
-    exit_player(MSGTR_Exit_error);
-  }
-  if(sha && (priv->mux_type&MUX_HAVE_AUDIO))
-  {
-    priv->m_audio=muxer_new_stream(priv->muxer,MUXER_TYPE_AUDIO);
-    priv->m_audio->buffer_size=0x100000; //16384;
-    priv->m_audio->source=sha;
-    priv->m_audio->codec=0;
-    if(!sha->wf)
-    {
-	sha->wf=mp_malloc(sizeof(WAVEFORMATEX));
-	sha->wf->nBlockAlign = 1; //mux_a->h.dwSampleSize;
-	sha->wf->wFormatTag = sha->wtag;
-	sha->wf->nChannels = sha->nch;
-	sha->wf->nSamplesPerSec = sha->rate;
-	sha->wf->nAvgBytesPerSec=sha->i_bps; //mux_a->h.dwSampleSize*mux_a->wf->nSamplesPerSec;
-	sha->wf->wBitsPerSample = 16; // FIXME
-	sha->wf->cbSize=0; // FIXME for l3codeca.acm
+    char stream_dump_name[1024];
+    /* TODO copy it from demuxer */
+    if(demuxer->priv) return;
+    demuxer->priv=mp_mallocz(sizeof(priv_t));
+    priv_t*priv=demuxer->priv;
+    priv->libinput=libinput;
+    /* describe other useless dumps */
+    priv->mux_type=MUX_HAVE_AUDIO|MUX_HAVE_VIDEO|MUX_HAVE_SUBS;
+    if(port) {
+	if(strcmp(port,"audio") ==0 ) { strcpy(stream_dump_name,"a_"); priv->mux_type&=~(MUX_HAVE_VIDEO|MUX_HAVE_SUBS); }
+	else if(strcmp(port,"video") ==0 ) { strcpy(stream_dump_name,"v_"); priv->mux_type&=~(MUX_HAVE_AUDIO|MUX_HAVE_SUBS); }
+	else if(strcmp(port,"sub") ==0 ) { strcpy(stream_dump_name,"s_"); priv->mux_type&=~(MUX_HAVE_AUDIO|MUX_HAVE_VIDEO); }
+	else strcpy(stream_dump_name,port);
+    } else strcpy(stream_dump_name,"avs_");
+    if(strcmp(media,"lavf") == 0) { strcpy(stream_dump_name,"avs_dump."); strcat(stream_dump_name,port); }
+    else if(strcmp(media,"mpxp") == 0) strcat(stream_dump_name,"dump.mpxp");
+    else if(strcmp(media,"raw") == 0) strcat(stream_dump_name,"dump.raw");
+    else {
+	MSG_FATAL("Unsupported muxer format %s found\n",media);
+	exit_player(MSGTR_Exit_error);
     }
-    priv->m_audio->wf=mp_malloc(sha->wf->cbSize+sizeof(WAVEFORMATEX));
-    memcpy(priv->m_audio->wf,sha->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
-    if(!sha->wf->cbSize && sha->codecdata_len)
-    {
-	priv->m_audio->wf->cbSize=sha->wf->cbSize=sha->codecdata_len;
-	priv->m_audio->wf=mp_realloc(priv->m_audio->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
-	memcpy((char *)(priv->m_audio->wf+1),sha->codecdata,sha->codecdata_len);
+    priv->mux_file=fopen(stream_dump_name,"wb");
+    MSG_DBG2("Preparing stream dumping: %s\n",stream_dump_name);
+    if(!priv->mux_file){
+	MSG_FATAL(MSGTR_CantOpenDumpfile);
+	exit_player(MSGTR_Exit_error);
     }
-    if(!sha->i_bps) sha->i_bps=priv->m_audio->wf->nAvgBytesPerSec;
-    if(sha->audio.dwScale){
-	priv->m_audio->h.dwSampleSize=sha->audio.dwSampleSize;
-	priv->m_audio->h.dwScale=sha->audio.dwScale;
-	priv->m_audio->h.dwRate=sha->audio.dwRate;
-    } else {
-	priv->m_audio->h.dwSampleSize=priv->m_audio->wf->nBlockAlign;
-	priv->m_audio->h.dwScale=priv->m_audio->h.dwSampleSize;
-	priv->m_audio->h.dwRate=priv->m_audio->wf->nAvgBytesPerSec;
+    if(!(priv->muxer=muxer_new_muxer(media,port,priv->mux_file))) {
+	MSG_FATAL("Can't initialize muxer\n");
+	exit_player(MSGTR_Exit_error);
     }
-  }
-  else priv->m_audio=NULL;
-  if(shv && (priv->mux_type&MUX_HAVE_VIDEO))
-  {
-    priv->m_video=muxer_new_stream(priv->muxer,MUXER_TYPE_VIDEO);
-    priv->m_video->buffer_size=0x200000; // 2MB
-    priv->m_video->source=shv;
-    priv->m_video->h.dwSampleSize=0; // VBR
-    priv->m_video->h.dwScale=10000;
-    priv->m_video->h.dwRate=priv->m_video->h.dwScale*shv->fps;
-    priv->m_video->h.dwSuggestedBufferSize=shv->video.dwSuggestedBufferSize;
-    if(!shv->bih)
-    {
-	shv->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
-	shv->bih->biSize=sizeof(BITMAPINFOHEADER);
-	shv->bih->biWidth=shv->src_w;
-	shv->bih->biHeight=shv->src_h;
-	shv->bih->biCompression=shv->fourcc;
-	shv->bih->biPlanes=1;
-	shv->bih->biBitCount=24; // FIXME!!!
-	shv->bih->biSizeImage=shv->bih->biWidth*shv->bih->biHeight*(shv->bih->biBitCount/8);
-    }
-    priv->m_video->bih=mp_malloc(shv->bih->biSize);
-    memcpy(priv->m_video->bih,shv->bih,shv->bih->biSize);
-    priv->m_video->ImageDesc=shv->ImageDesc;
-    priv->m_video->aspect=shv->aspect;
-    priv->m_video->codec=0;
-  }
-  else priv->m_video=NULL;
-  if(demuxer->sub->sh && (priv->mux_type&MUX_HAVE_SUBS))
-  {
-    priv->m_subs=muxer_new_stream(priv->muxer,MUXER_TYPE_SUBS);
-    priv->m_subs->buffer_size=0x100000; //16384;
-    priv->m_subs->source=NULL;
-    priv->m_subs->codec=0;
-  }
-  else priv->m_subs=NULL;
-  MSG_DBG2("Opening dump: %X\n",demuxer);
-  MSG_INFO("Dumping stream to %s\n",stream_dump_name);
-  muxer_fix_parameters(priv->muxer);
-  muxer_write_header(priv->muxer,demuxer);
+    if(sha && (priv->mux_type&MUX_HAVE_AUDIO)) {
+	priv->m_audio=muxer_new_stream(priv->muxer,MUXER_TYPE_AUDIO);
+	priv->m_audio->buffer_size=0x100000; //16384;
+	priv->m_audio->source=sha;
+	priv->m_audio->codec=0;
+	if(!sha->wf) {
+	    sha->wf=mp_malloc(sizeof(WAVEFORMATEX));
+	    sha->wf->nBlockAlign = 1; //mux_a->h.dwSampleSize;
+	    sha->wf->wFormatTag = sha->wtag;
+	    sha->wf->nChannels = sha->nch;
+	    sha->wf->nSamplesPerSec = sha->rate;
+	    sha->wf->nAvgBytesPerSec=sha->i_bps; //mux_a->h.dwSampleSize*mux_a->wf->nSamplesPerSec;
+	    sha->wf->wBitsPerSample = 16; // FIXME
+	    sha->wf->cbSize=0; // FIXME for l3codeca.acm
+	}
+	priv->m_audio->wf=mp_malloc(sha->wf->cbSize+sizeof(WAVEFORMATEX));
+	memcpy(priv->m_audio->wf,sha->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
+	if(!sha->wf->cbSize && sha->codecdata_len) {
+	    priv->m_audio->wf->cbSize=sha->wf->cbSize=sha->codecdata_len;
+	    priv->m_audio->wf=mp_realloc(priv->m_audio->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
+	    memcpy((char *)(priv->m_audio->wf+1),sha->codecdata,sha->codecdata_len);
+	}
+	if(!sha->i_bps) sha->i_bps=priv->m_audio->wf->nAvgBytesPerSec;
+	if(sha->audio.dwScale){
+	    priv->m_audio->h.dwSampleSize=sha->audio.dwSampleSize;
+	    priv->m_audio->h.dwScale=sha->audio.dwScale;
+	    priv->m_audio->h.dwRate=sha->audio.dwRate;
+	} else {
+	    priv->m_audio->h.dwSampleSize=priv->m_audio->wf->nBlockAlign;
+	    priv->m_audio->h.dwScale=priv->m_audio->h.dwSampleSize;
+	    priv->m_audio->h.dwRate=priv->m_audio->wf->nAvgBytesPerSec;
+	}
+    } else priv->m_audio=NULL;
+    if(shv && (priv->mux_type&MUX_HAVE_VIDEO)) {
+	priv->m_video=muxer_new_stream(priv->muxer,MUXER_TYPE_VIDEO);
+	priv->m_video->buffer_size=0x200000; // 2MB
+	priv->m_video->source=shv;
+	priv->m_video->h.dwSampleSize=0; // VBR
+	priv->m_video->h.dwScale=10000;
+	priv->m_video->h.dwRate=priv->m_video->h.dwScale*shv->fps;
+	priv->m_video->h.dwSuggestedBufferSize=shv->video.dwSuggestedBufferSize;
+	if(!shv->bih) {
+	    shv->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
+	    shv->bih->biSize=sizeof(BITMAPINFOHEADER);
+	    shv->bih->biWidth=shv->src_w;
+	    shv->bih->biHeight=shv->src_h;
+	    shv->bih->biCompression=shv->fourcc;
+	    shv->bih->biPlanes=1;
+	    shv->bih->biBitCount=24; // FIXME!!!
+	    shv->bih->biSizeImage=shv->bih->biWidth*shv->bih->biHeight*(shv->bih->biBitCount/8);
+	}
+	priv->m_video->bih=mp_malloc(shv->bih->biSize);
+	memcpy(priv->m_video->bih,shv->bih,shv->bih->biSize);
+	priv->m_video->ImageDesc=shv->ImageDesc;
+	priv->m_video->aspect=shv->aspect;
+	priv->m_video->codec=0;
+    } else priv->m_video=NULL;
+    if(demuxer->sub->sh && (priv->mux_type&MUX_HAVE_SUBS)) {
+	priv->m_subs=muxer_new_stream(priv->muxer,MUXER_TYPE_SUBS);
+	priv->m_subs->buffer_size=0x100000; //16384;
+	priv->m_subs->source=NULL;
+	priv->m_subs->codec=0;
+    } else priv->m_subs=NULL;
+    MSG_DBG2("Opening dump: %X\n",demuxer);
+    MSG_INFO("Dumping stream to %s\n",stream_dump_name);
+    muxer_fix_parameters(priv->muxer);
+    muxer_write_header(priv->muxer,demuxer);
 }
 
 void dump_mux_close(demuxer_t *demuxer)
@@ -371,7 +356,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
 	   The ideal case is:  type=read_packet(ANY_TYPE); put_packet(type);
 	 */
 	in_size=ds_get_packet_r(sha->ds,&start,&a_pts);
-	cmd = check_cmd();
+	cmd = check_cmd(priv);
 	if(cmd == -1) goto done;
 	else
 	a_duration=(float)in_size/(float)(sha->i_bps);
@@ -406,7 +391,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
     {
 	float v_pts;
 	in_size=video_read_frame(shv,&frame_time,&v_pts,&start,0);
-	cmd = check_cmd();
+	cmd = check_cmd(priv);
 	if(cmd == -1) goto done;
 	else
 	if(mpeg_vtimer==HUGE) mpeg_vtimer=v_pts;
@@ -438,7 +423,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
 	    in_size=ds_get_packet_r(demuxer->sub,&start,&s_pts);
 	    seof=demuxer->sub->eof;
 	    if(seof) break;
-	    cmd = check_cmd();
+	    cmd = check_cmd(priv);
 	    if(cmd == -1) goto done;
 	    else
 	    MSG_V("Got sub frame: %f\n",s_pts);

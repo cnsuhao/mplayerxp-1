@@ -61,13 +61,14 @@ static void __FASTCALL__ ffmpeg_close(stream_t *stream)
 
 static const char prefix[] = "ffmpeg://";
 
-static int __FASTCALL__ ffmpeg_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ ffmpeg_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     URLContext *ctx = NULL;
     ffmpeg_priv_t *p;
     int64_t size;
 
     UNUSED(flags);
+    UNUSED(libinput);
     av_register_all();
     MSG_V("[ffmpeg] Opening %s\n", filename);
 

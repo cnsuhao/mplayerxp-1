@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include "../input/input.h"
 #include "demux_msg.h"
-int mpdemux_check_interrupt(int time) {
+int mpdemux_check_interrupt(any_t* libinput,int _time) {
   mp_cmd_t* cmd;
-  if((cmd = mp_input_get_cmd(time,0,1)) == NULL)
+  if((cmd = mp_input_get_cmd(libinput,_time,0,1)) == NULL)
     return 0;
 
   switch(cmd->id) {
@@ -18,7 +18,7 @@ int mpdemux_check_interrupt(int time) {
     return 1;
   default:
     // remove the cmd from then queue
-    cmd = mp_input_get_cmd(time,0,0);
+    cmd = mp_input_get_cmd(libinput,_time,0,0);
     mp_cmd_free(cmd);
     return 0;
   }

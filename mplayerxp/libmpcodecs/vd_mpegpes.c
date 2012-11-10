@@ -24,8 +24,8 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh){
-    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
+static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput);
 }
 
 // uninit driver

@@ -49,7 +49,7 @@
 // 		WMP sequence is MMSU then MMST and then HTTP.
 // 		In MPlayer case since HTTP support is more reliable,
 // 		we are doing HTTP first then we try MMST if HTTP fail.
-int asf_http_streaming_start(stream_t *stream, int *demuxer_type );
+static int asf_http_streaming_start(any_t*,stream_t *stream, int *demuxer_type );
 int asf_mmst_streaming_start(stream_t *stream );
 
 /*
@@ -72,8 +72,7 @@ int asf_mmst_streaming_start(stream_t *stream );
  		In MPlayer case since HTTP support is more reliable,
  		we are doing HTTP first then we try MMST if HTTP fail.
 */
-int
-asf_streaming_start( stream_t *stream, int *demuxer_type) {
+int asf_streaming_start(any_t* libinput, stream_t *stream, int *demuxer_type) {
     char *proto = stream->streaming_ctrl->url->protocol;
     int fd = -1;
     int port = stream->streaming_ctrl->url->port;
@@ -113,7 +112,7 @@ asf_streaming_start( stream_t *stream, int *demuxer_type) {
 	!strncasecmp(proto, "mms", 3))
     {
 		MSG_V("Trying ASF/HTTP...\n");
-		fd = asf_http_streaming_start( stream, demuxer_type );
+		fd = asf_http_streaming_start(libinput, stream, demuxer_type );
 		stream->streaming_ctrl->url->port = port;
 		if( fd>-1 ) return fd;
 		MSG_V("  ===> ASF/HTTP failed\n");
@@ -747,8 +746,7 @@ asf_http_parse_response(asf_http_streaming_ctrl_t *asf_http_ctrl, HTTP_header_t 
 	return 0;
 }
 
-int
-asf_http_streaming_start( stream_t *stream, int *demuxer_type ) {
+static int asf_http_streaming_start(any_t*libinput, stream_t *stream, int *demuxer_type ) {
 	HTTP_header_t *http_hdr=NULL;
 	URL_t *url = stream->streaming_ctrl->url;
 	asf_http_streaming_ctrl_t *asf_http_ctrl;
@@ -778,7 +776,7 @@ asf_http_streaming_start( stream_t *stream, int *demuxer_type ) {
 		} else {
 			if( url->port==0 ) url->port = 80;
 		}
-		fd = tcp_connect2Server( url->hostname, url->port, 0);
+		fd = tcp_connect2Server(libinput, url->hostname, url->port, 0);
 		if( fd<0 ) return fd;
 
 		http_hdr = asf_http_request( stream->streaming_ctrl );

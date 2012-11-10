@@ -81,12 +81,12 @@ static int __FASTCALL__ udp_streaming_start (stream_t *stream)
 }
 
 extern int network_bandwidth;
-static int __FASTCALL__ udp_open (stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ udp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
   URL_t *url;
   UNUSED(flags);
   MSG_V("STREAM_UDP, URL: %s\n", filename);
-  stream->streaming_ctrl = streaming_ctrl_new ();
+  stream->streaming_ctrl = streaming_ctrl_new (libinput);
   if (!stream->streaming_ctrl)
     return 0;
 

@@ -15,8 +15,9 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "../mp_config.h"
-#include "../mplayerxp.h"
+#include "mp_config.h"
+#include "mplayerxp.h"
+#include "asf_streaming.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close
 #else
@@ -92,13 +93,14 @@ static struct {
 	{ "misc/ultravox", DEMUXER_TYPE_NSV}
 };
 
-streaming_ctrl_t * streaming_ctrl_new(void) {
+streaming_ctrl_t * streaming_ctrl_new(any_t*libinput) {
 	streaming_ctrl_t *streaming_ctrl;
 	streaming_ctrl = (streaming_ctrl_t*)mp_mallocz(sizeof(streaming_ctrl_t));
 	if( streaming_ctrl==NULL ) {
 		MSG_FATAL(MSGTR_OutOfMemory);
 		return NULL;
 	}
+	streaming_ctrl->libinput=libinput;
 	return streaming_ctrl;
 }
 
@@ -164,8 +166,7 @@ check4proxies( URL_t *url ) {
 	return url_out;
 }
 
-int
-http_send_request( URL_t *url, off_t pos ) {
+int http_send_request(any_t* libinput, URL_t *url, off_t pos ) {
 	HTTP_header_t *http_hdr;
 	URL_t *server_url;
 	char str[256];
@@ -198,12 +199,12 @@ http_send_request( URL_t *url, off_t pos ) {
 
 	http_set_field(http_hdr, "Icy-MetaData: 1");
 
-	if(pos>0) { 
+	if(pos>0) {
 	// Extend http_send_request with possibility to do partial content retrieval
 	    snprintf(str, 256, "Range: bytes=%d-", (int)pos);
 	    http_set_field(http_hdr, str);
 	}
-	    
+
 	if (network_cookies_enabled) cookies_set( http_hdr, server_url->hostname, server_url->url );
 
 	http_set_field( http_hdr, "Connection: closed");
@@ -214,15 +215,15 @@ http_send_request( URL_t *url, off_t pos ) {
 
 	if( proxy ) {
 		if( url->port==0 ) url->port = 8080;			// Default port for the proxy server
-		fd = tcp_connect2Server( url->hostname, url->port, 0);
+		fd = tcp_connect2Server(libinput, url->hostname, url->port, 0);
 		url_free( server_url );
 		server_url = NULL;
 	} else {
 		if( server_url->port==0 ) server_url->port = 80;	// Default port for the web server
-		fd = tcp_connect2Server( server_url->hostname, server_url->port, 0);
+		fd = tcp_connect2Server(libinput, server_url->hostname, server_url->port, 0);
 	}
 	if( fd<0 ) {
-		goto err_out; 
+		goto err_out;
 	}
 	MSG_DBG2("Request: [%s]\n", http_hdr->buffer );
 	
@@ -330,7 +331,7 @@ http_seek( stream_t *stream, off_t pos ) {
 	if( stream==NULL ) return 0;
 
 	if( stream->fd>0 ) closesocket(stream->fd); // need to reconnect to seek in http-stream
-	fd = http_send_request( stream->streaming_ctrl->url, pos ); 
+	fd = http_send_request(stream->streaming_ctrl->libinput, stream->streaming_ctrl->url, pos ); 
 	if( fd<0 ) return 0;
 
 	http_hdr = http_read_response( fd );
@@ -431,7 +432,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 
 		// HTTP based protocol
 		if( !strcasecmp(url->protocol, "http") || !strcasecmp(url->protocol, "http_proxy") ) {
-			fd = http_send_request( url, 0 );
+			fd = http_send_request(streaming_ctrl->libinput, url, 0 );
 			if( fd<0 ) {
 				goto err_out;
 			}
@@ -613,7 +614,7 @@ nop_streaming_seek( int fd, off_t pos, streaming_ctrl_t *stream_ctrl ) {
 }
 
 int
-nop_streaming_start( stream_t *stream ) {
+nop_streaming_start(any_t* libinput, stream_t *stream ) {
 	HTTP_header_t *http_hdr = NULL;
 	char *next_url=NULL;
 	URL_t *rd_url=NULL;
@@ -622,7 +623,7 @@ nop_streaming_start( stream_t *stream ) {
 
 	fd = stream->fd;
 	if( fd<0 ) {
-		fd = http_send_request( stream->streaming_ctrl->url,0); 
+		fd = http_send_request(libinput, stream->streaming_ctrl->url,0);
 		if( fd<0 ) return -1;
 		http_hdr = http_read_response( fd );
 		if( http_hdr==NULL ) return -1;
@@ -650,7 +651,7 @@ nop_streaming_start( stream_t *stream ) {
 				if (next_url != NULL && rd_url != NULL) {
 					MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
 							stream->streaming_ctrl->url=check4proxies(rd_url);
-					ret=nop_streaming_start(stream); //recursively get streaming started 
+					ret=nop_streaming_start(libinput,stream); //recursively get streaming started 
 				} else {
 					MSG_ERR("Redirection failed\n");
 					closesocket( fd );
@@ -712,13 +713,12 @@ pnm_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctr
 }
 
 
-int
-pnm_streaming_start( stream_t *stream ) {
+int pnm_streaming_start(any_t* libinput, stream_t *stream ) {
 	int fd;
 	pnm_t *pnm;
 	if( stream==NULL ) return -1;
 
-	fd = tcp_connect2Server( stream->streaming_ctrl->url->hostname,
+	fd = tcp_connect2Server(libinput, stream->streaming_ctrl->url->hostname,
 	    stream->streaming_ctrl->url->port ? stream->streaming_ctrl->url->port : 7070, 0);
 	printf("PNM:// fd=%d\n",fd);
 	if(fd<0) return -1;
@@ -833,13 +833,12 @@ rtp_streaming_start( stream_t *stream, int raw_udp ) {
 	return 0;
 }
 #endif
-extern int asf_streaming_start( stream_t *stream, int *demuxer_type);
-int
-streaming_start(stream_t *stream, int *demuxer_type, URL_t *url) {
+
+int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *url) {
 	int ret;
 	if( stream==NULL ) return -1;
 
-	stream->streaming_ctrl = streaming_ctrl_new();
+	stream->streaming_ctrl = streaming_ctrl_new(libinput);
 	if( stream->streaming_ctrl==NULL ) {
 		return -1;
 	}
@@ -876,7 +875,7 @@ streaming_start(stream_t *stream, int *demuxer_type, URL_t *url) {
 
 	if( !strcasecmp( stream->streaming_ctrl->url->protocol, "pnm")) {
 		stream->fd = -1;
-		ret = pnm_streaming_start( stream );
+		ret = pnm_streaming_start(libinput, stream );
 		if (ret == -1) {
 		    MSG_INFO("Can't connect with pnm, retrying with http.\n");
 		    goto stream_switch;
@@ -918,7 +917,7 @@ stream_switch:
 			// ASF raw stream is encapsulated.
 			// It can also be a playlist (redirector)
 			// so we need to pass demuxer_type too
-			ret = asf_streaming_start( stream, demuxer_type );
+			ret = asf_streaming_start(stream->streaming_ctrl->libinput, stream, demuxer_type );
 			if( ret<0 ) {
                                 //sometimes a file is just on a webserver and it is not streamed.
 				//try loading them default method as last resort for http protocol
@@ -927,7 +926,7 @@ stream_switch:
                                 //reset stream
                                 close(stream->fd);
 		                stream->fd=-1;
-                                ret=nop_streaming_start(stream);
+                                ret=nop_streaming_start(libinput,stream);
                                 }
 
                          if (ret<0) {
@@ -962,7 +961,7 @@ stream_switch:
 		case DEMUXER_TYPE_NSV: 
 			// Generic start, doesn't need to filter
 			// the network stream, it's a raw stream
-			ret = nop_streaming_start( stream );
+			ret = nop_streaming_start(libinput, stream );
 			if( ret<0 ) {
 			    MSG_ERR("nop_streaming_start failed\n");
 			}

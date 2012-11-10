@@ -187,12 +187,12 @@ static int load_lib( const char *libname )
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     DecInit dinit;
     priv_t*p;
     int bits=12;
     if(!load_lib("libdivx"SLIBSUFFIX)) return MPXP_False;
-    if(!(mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL))) return MPXP_False;
+    if(!(mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput))) return MPXP_False;
     switch(sh->codec->outfmt[sh->outfmtidx]){
 	case IMGFMT_YV12:
 	case IMGFMT_I420:

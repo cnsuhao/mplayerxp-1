@@ -187,7 +187,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static MPXP_Rc ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)
+static MPXP_Rc ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h,any_t* libinput)
 {
     priv_t *priv=sh->context;
     vo_tune_info_t vfi;
@@ -206,7 +206,7 @@ static MPXP_Rc ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h)
 	sh->src_w=w;//(w+valign)&(~valign);
 	sh->src_h=(h+halign)&(~halign);
 	priv->vo_inited=1;
-	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,&vfi);
+	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,&vfi,libinput);
     }
     return MPXP_Ok;
 }
@@ -239,7 +239,7 @@ static MPXP_Rc find_vdecoder(sh_video_t* sh) {
 }
 
 extern unsigned xp_num_cpu;
-static MPXP_Rc init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     unsigned avc_version=0;
     priv_t *priv;
     int pp_flags,rc;
@@ -421,7 +421,7 @@ static MPXP_Rc init(sh_video_t *sh){
 	}
 	if(pp_flags) ppContext=pp2_get_context(sh->src_w,sh->src_h,pp_flags);
     }
-    return ff_config_vo(sh,sh->src_w,sh->src_h);
+    return ff_config_vo(sh,sh->src_w,sh->src_h,libinput);
 }
 
 // uninit driver

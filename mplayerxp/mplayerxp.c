@@ -137,6 +137,7 @@ typedef struct priv_s {
 // priv data
     demuxer_t*	demuxer;
     play_tree_t*playtree;
+    any_t*	libinput;
 }priv_t;
 
 mp_conf_t mp_conf;
@@ -333,14 +334,14 @@ void uninit_player(unsigned int mask){
     if(mask&INITED_INPUT){
 	priv->inited_flags&=~INITED_INPUT;
 	MP_UNIT("uninit_input");
-	mp_input_uninit();
+	mp_input_close(priv->libinput);
     }
 
 #ifdef USE_SUB
     if(mask&INITED_SUBTITLE){
 	priv->inited_flags&=~INITED_SUBTITLE;
 	MP_UNIT("sub_free");
-	mp_input_uninit();
+	mp_input_close(priv->libinput);
 	sub_free( mp_data->subtitles );
 	mp_conf.sub_name=NULL;
 	vo_data->sub=NULL;
@@ -451,8 +452,9 @@ void parse_cfgfiles( m_config_t* conf )
 // The function return a new value for eof.
 static int libmpdemux_was_interrupted(int eof)
 {
+    priv_t*priv=mp_data->priv;
     mp_cmd_t* cmd;
-    if((cmd = mp_input_get_cmd(0,0,0)) != NULL) {
+    if((cmd = mp_input_get_cmd(priv->libinput,0,0,0)) != NULL) {
 	switch(cmd->id) {
 	    case MP_CMD_QUIT:
 	    case MP_CMD_SOFT_QUIT: // should never happen
@@ -594,8 +596,9 @@ void show_help(void) {
 }
 
 void show_long_help(void) {
+    priv_t*priv=mp_data->priv;
     m_config_show_options(mp_data->mconfig);
-    mp_input_print_binds();
+    mp_input_print_binds(priv->libinput);
     print_stream_drivers();
     vo_print_help(vo_data);
     ao_print_help();
@@ -756,7 +759,6 @@ static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stre
 
 static void init_benchmark(void)
 {
-    priv_t*priv=mp_data->priv;
     mp_data->bench->max_audio=0; mp_data->bench->max_video=0; mp_data->bench->max_vout=0;
     mp_data->bench->min_audio=HUGE; mp_data->bench->min_video=HUGE; mp_data->bench->min_vout=HUGE;
 
@@ -774,7 +776,6 @@ static void init_benchmark(void)
 
 static void show_benchmark(void)
 {
-    priv_t*priv=mp_data->priv;
     double tot=(mp_data->bench->video+mp_data->bench->vout+mp_data->bench->audio+mp_data->bench->audio_decode+mp_data->bench->demux+mp_data->bench->c2);
     double total_time_usage;
 
@@ -826,13 +827,13 @@ static void mpxp_init_keyboard_fifo(void)
     fifo_make_pipe(&keyb_fifo_get,&keyb_fifo_put);
     /* Init input system */
     MP_UNIT("init_input");
-    mp_input_init();
+    priv->libinput=mp_input_open();
     if(keyb_fifo_get > 0)
-	mp_input_add_key_fd(keyb_fifo_get,1,NULL,NULL);
+	mp_input_add_key_fd(priv->libinput,keyb_fifo_get,1,NULL,NULL);
     if(mp_conf.slave_mode)
-	mp_input_add_cmd_fd(0,1,NULL,NULL);
+	mp_input_add_cmd_fd(priv->libinput,0,1,NULL,NULL);
     else if(!mp_conf.use_stdin)
-	mp_input_add_key_fd(0,1,NULL,NULL);
+	mp_input_add_key_fd(priv->libinput,0,1,NULL,NULL);
     priv->inited_flags|=INITED_INPUT;
 }
 
@@ -954,7 +955,7 @@ static int mpxp_handle_playlist(const char *filename) {
     // Handle playlist
     MP_UNIT("handle_playlist");
     MSG_V("Parsing playlist %s...\n",filename);
-    entry = parse_playtree(stream);
+    entry = parse_playtree(priv->libinput,stream);
     if(!entry) {
       entry = playtree_iter->tree;
       if(play_tree_iter_step(playtree_iter,1,0) != PLAY_TREE_ITER_ENTRY) {
@@ -1171,19 +1172,19 @@ static int mpxp_find_vcodec(void) {
     if(mp_conf.video_codec) {
     /* forced codec by name: */
 	MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
-	mpcv_init(sh_video,mp_conf.video_codec,NULL,-1);
+	mpcv_init(sh_video,mp_conf.video_codec,NULL,-1,priv->libinput);
     } else {
 	int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
 	if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
 	for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 	    if(mp_conf.video_family) /* try first the preferred codec family:*/
-		if(mpcv_init(sh_video,NULL,mp_conf.video_family,status)==MPXP_Ok) break;
-	    if(mpcv_init(sh_video,NULL,NULL,status)==MPXP_Ok) break;
+		if(mpcv_init(sh_video,NULL,mp_conf.video_family,status,priv->libinput)==MPXP_Ok) break;
+	    if(mpcv_init(sh_video,NULL,NULL,status,priv->libinput)==MPXP_Ok) break;
 	}
     }
     /* Use ffmpeg decoders as last hope */
-    if(!sh_video->inited) mpcv_ffmpeg_init(sh_video);
+    if(!sh_video->inited) mpcv_ffmpeg_init(sh_video,priv->libinput);
 
     if(!sh_video->inited) {
 	const char *fmt;
@@ -1357,13 +1358,13 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	    ao_pause(ao_data);	// pause audio, keep data if possible
 	}
 
-	while( (cmd = mp_input_get_cmd(20,1,1)) == NULL) {
+	while( (cmd = mp_input_get_cmd(priv->libinput,20,1,1)) == NULL) {
 	    if(sh_video && priv->vo_inited) vo_check_events(vo_data);
 	    usleep(20000);
 	}
 
 	if (cmd && cmd->id == MP_CMD_PAUSE) {
-	    cmd = mp_input_get_cmd(0,1,0);
+	    cmd = mp_input_get_cmd(priv->libinput,0,1,0);
 	    mp_cmd_free(cmd);
 	}
 
@@ -1406,7 +1407,7 @@ For future:
 */
   int eof=0;
   mp_cmd_t* cmd;
-  while( (cmd = mp_input_get_cmd(0,0,0)) != NULL) {
+  while( (cmd = mp_input_get_cmd(priv->libinput,0,0,0)) != NULL) {
     switch(cmd->id) {
     case MP_CMD_SEEK : {
       int v,i_abs;
@@ -1664,13 +1665,15 @@ int main(int argc,char* argv[], char *envp[]){
     xmp_init();
     xmp_register_main(exit_sighandler);
 
+    mpxp_init_keyboard_fifo();
+
     mp_msg_init(MSGL_STATUS);
     MSG_INFO("%s",banner_text);
   /* Test for cpu capabilities (and corresponding OS support) for optimizing */
 
     priv->playtree = play_tree_new();
 
-    mp_data->mconfig = m_config_new(priv->playtree);
+    mp_data->mconfig = m_config_new(priv->playtree,priv->libinput);
     m_config_register_options(mp_data->mconfig,mplayer_opts);
     // TODO : add something to let modules register their options
     mp_register_options(mp_data->mconfig);
@@ -1734,7 +1737,6 @@ int main(int argc,char* argv[], char *envp[]){
 //------ load global data first ------
     mpxp_init_osd();
 // ========== Init keyboard FIFO (connection to libvo) ============
-    mpxp_init_keyboard_fifo();
 
     MP_UNIT(NULL);
 
@@ -1780,7 +1782,7 @@ play_next_file:
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
     MP_UNIT("open_stream");
-    if(!input_state.after_dvdmenu) stream=open_stream(filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
+    if(!input_state.after_dvdmenu) stream=open_stream(priv->libinput,filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
     if(!stream) { // error...
 	eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY);
 	goto goto_next_file;
@@ -1797,7 +1799,7 @@ play_next_file:
     // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
     if(mp_conf.s_cache_size && !stream_dump_type){
 	MP_UNIT("enable_cache");
-	if(!stream_enable_cache(stream,mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
+	if(!stream_enable_cache(stream,priv->libinput,mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
 	    if((eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY))) goto goto_next_file;
     }
 
@@ -1856,7 +1858,7 @@ play_next_file:
     if(sh_audio) mpxp_find_acodec();
 
     if(stream_dump_type>1) {
-	dump_mux_init(priv->demuxer);
+	dump_mux_init(priv->demuxer,priv->libinput);
 	goto dump_file;
     }
 
@@ -1890,7 +1892,7 @@ play_next_file:
 
     MP_UNIT("init_video_filters");
     if(sh_video->vfilter_inited<=0) {
-	sh_video->vfilter=vf_init(sh_video);
+	sh_video->vfilter=vf_init(sh_video,priv->libinput);
 	sh_video->vfilter_inited=1;
     }
     if((mpxp_find_vcodec())!=0) {

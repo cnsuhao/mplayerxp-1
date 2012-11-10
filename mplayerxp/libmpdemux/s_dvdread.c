@@ -599,7 +599,7 @@ static void __FASTCALL__ dvd_close(dvd_priv_t *d) {
   dvd_angle=1;
 }
 
-static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     int dvd_title,last_title=-1;
     const char *args;
@@ -610,7 +610,7 @@ static int __FASTCALL__ __dvdread_open(stream_t *stream,const char *filename,uns
     dvd_reader_t *dvd;
     ifo_handle_t *vmg_file;
     tt_srpt_t *tt_srpt;
-
+    UNUSED(libinput);
     if(strcmp(filename,"help") == 0 || strlen(filename)==10)
     {
 	MSG_HINT("Usage: dvdread://<@device>#<titleno>-<lasttitle>,<chapter>-<lastchapter>,<angle>\n");

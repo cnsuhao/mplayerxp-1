@@ -64,7 +64,7 @@ typedef struct stream_s{
     stream_callback event_handler;  /**< callback for streams which provide events */
 } stream_t;
 
-int stream_enable_cache(stream_t *stream,int size,int min,int prefill);
+int stream_enable_cache(stream_t *stream,any_t* libinput,int size,int min,int prefill);
 void stream_disable_cache(stream_t *stream);
 
 #include <string.h>
@@ -93,7 +93,7 @@ void __FASTCALL__ stream_reset(stream_t *s);
 stream_t* __FASTCALL__ new_stream(int type);
 void __FASTCALL__ free_stream(stream_t *s);
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len);
-stream_t* __FASTCALL__ open_stream(const char* filename,int* file_format,stream_callback event_handler);
+stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
 
 extern unsigned int __FASTCALL__ stream_read_word(stream_t *s);
 extern unsigned int __FASTCALL__ stream_read_dword(stream_t *s);
@@ -161,13 +161,14 @@ typedef struct stream_driver_s
     const char		*mrl;	/**< MRL of stream driver */
     const char		*descr;	/**< description of the driver */
 		/** Opens stream with given name
+		  * @param libinput	points libinput2
 		  * @param _this	points structure to be filled by driver
 		  * @param filename	points MRL of stream (vcdnav://, file://, http://, ...)
 		  * @param flags	currently unused and filled as 0
 		  * @return		0 if stream can't be opened by this driver
 		  *			1 - if stream was successfully opened
 		**/
-    int		(* __FASTCALL__ open)(stream_t *_this,const char *filename,unsigned flags);
+    int		(* __FASTCALL__ open)(any_t* libinput,stream_t *_this,const char *filename,unsigned flags);
 
 		/** Reads next packet from stream
 		  * @param _this	points structure which identifies stream

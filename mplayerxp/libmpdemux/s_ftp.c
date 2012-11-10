@@ -53,7 +53,7 @@ static int __FASTCALL__ fd_can_read(int fd,int timeout) {
   FD_SET(fd,&fds);
   tv.tv_sec = timeout;
   tv.tv_usec = 0;
-  
+
   return (select(fd+1, &fds, NULL, NULL, &tv) > 0);
 }
 
@@ -67,7 +67,7 @@ static int __FASTCALL__ readline(char *buf,int max,struct stream_priv_s *ctl)
     int x,retval = 0;
     char *end,*bp=buf;
     int eof = 0;
- 
+
     do {
       if (ctl->cavail > 0) {
 	x = (max >= ctl->cavail) ? ctl->cavail : max-1;
@@ -122,7 +122,7 @@ static int __FASTCALL__ readline(char *buf,int max,struct stream_priv_s *ctl)
       ctl->cavail += x;
       ctl->cput += x;
     } while (1);
-    
+
     return retval;
 }
 
@@ -140,7 +140,7 @@ static int __FASTCALL__ readresp(struct stream_priv_s* ctl,char* rsp)
 
     if (readline(response,256,ctl) == -1)
       return 0;
- 
+
     r = atoi(response)/100;
     if(rsp) strcpy(rsp,response);
 
@@ -180,14 +180,14 @@ static int __FASTCALL__ FtpSendCmd(const char *cmd, struct stream_priv_s *nContr
     cmd += s;
     l -= s;
   }
-    
-  if (hascrlf)  
+
+  if (hascrlf)
     return readresp(nControl,rsp);
   else
     return FtpSendCmd("\r\n", nControl, rsp);
 }
 
-static int __FASTCALL__ FtpOpenPort(struct stream_priv_s* p) {
+static int __FASTCALL__ FtpOpenPort(any_t* libinput,struct stream_priv_s* p) {
   int resp,fd;
   char rsp_txt[256];
   char* par,str[128];
@@ -198,9 +198,9 @@ static int __FASTCALL__ FtpOpenPort(struct stream_priv_s* p) {
     MSG_WARN("[ftp] command 'PASV' failed: %s\n",rsp_txt);
     return 0;
   }
-  
+
   par = strchr(rsp_txt,'(');
-  
+
   if(!par || !par[0] || !par[1]) {
     MSG_ERR("[ftp] invalid server response: %s ??\n",rsp_txt);
     return 0;
@@ -209,7 +209,7 @@ static int __FASTCALL__ FtpOpenPort(struct stream_priv_s* p) {
   sscanf(par+1,"%u,%u,%u,%u,%u,%u",&num[0],&num[1],&num[2],
 	 &num[3],&num[4],&num[5]);
   snprintf(str,127,"%d.%d.%d.%d",num[0],num[1],num[2],num[3]);
-  fd = tcp_connect2Server(str,(num[4]<<8)+num[5],0);
+  fd = tcp_connect2Server(libinput,str,(num[4]<<8)+num[5],0);
 
   if(fd < 0)
     MSG_ERR("[ftp] failed to create data connection\n");
@@ -223,7 +223,7 @@ static int __FASTCALL__ FtpOpenData(stream_t* s,size_t newpos) {
   char str[256],rsp_txt[256];
 
   // Open a new connection
-  s->fd = FtpOpenPort(p);
+  s->fd = FtpOpenPort(s->streaming_ctrl->libinput,p);
 
   if(s->fd < 0) return 0;
 
@@ -351,7 +351,7 @@ static void __FASTCALL__ ftp_close(stream_t *s) {
   mp_free(p);
 }
 
-static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
   int len = 0,resp;
   struct stream_priv_s* p;
@@ -380,7 +380,7 @@ static int __FASTCALL__ ftp_open(stream_t *stream,const char *filename,unsigned 
   MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n",p->user,p->pass,p->host,p->port,p->filename);
 
   // Open the control connection
-  p->handle = tcp_connect2Server(p->host,p->port,1);
+  p->handle = tcp_connect2Server(libinput,p->host,p->port,1);
 
   if(p->handle < 0) {
     url_free(url);

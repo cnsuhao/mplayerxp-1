@@ -53,16 +53,15 @@ static const char *af2String(int af) {
 }
 
 
-
 // Connect to a server using a TCP connection, with specified address family
 // return -2 for fatal error, like unable to resolve name, connection timeout...
 // return -1 is unable to connect to a particular port
 
 static int
-connect2Server_with_af(const char *host, int port, int af,int verb) {
+connect2Server_with_af(any_t* libinput,const char *host, int port, int af,int verb) {
 	int socket_server_fd;
 	int err;
-        socklen_t err_len;
+	socklen_t err_len;
 	int ret,count = 0;
 	fd_set set;
 	struct timeval tv;
@@ -76,7 +75,7 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 	any_t*our_s_addr;	// Pointer to sin_addr or sin6_addr
 	struct hostent *hp=NULL;
 	char buf[255];
-	
+
 #ifdef HAVE_WINSOCK2
 	u_long val;
 	int to;
@@ -86,8 +85,7 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 	
 	MSG_V("[tcp%s] Trying to resolv host '%s' For AF %s\n", IP_NAME, host, af2String(af));
 	socket_server_fd = socket(af, SOCK_STREAM, 0);
-	
-	
+
 	if( socket_server_fd==-1 ) {
 		return TCP_ERROR_FATAL;
 	}
@@ -113,10 +111,9 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 			MSG_ERR("[tcp%s] UnknownAF: %i\n", IP_NAME, af);
 			return TCP_ERROR_FATAL;
 	}
-	
-	
+
 	memset(&server_address, 0, sizeof(server_address));
-	
+
 	MSG_V("[tcp%s] PreResolving Host '%s' For AF %s\n", IP_NAME, host, af2String(af));
 #ifndef HAVE_WINSOCK2
 #ifdef USE_ATON
@@ -129,7 +126,7 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 #endif
 	{
 		MSG_V("[tcp%s] Resolving Host '%s' For AF %s\n", IP_NAME, host, af2String(af));
-		
+
 #ifdef HAVE_GETHOSTBYNAME2
 		hp=(struct hostent*)gethostbyname2( host, af );
 #else
@@ -148,14 +145,14 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 		memcpy( our_s_addr, (any_t*)&addr, sizeof(addr) );
 	}
 #endif
-	
+
 	switch (af) {
 		case AF_INET:
 			server_address.four.sin_family=af;
-			server_address.four.sin_port=htons(port);			
+			server_address.four.sin_port=htons(port);
 			server_address_size = sizeof(server_address.four);
 			break;
-#ifdef HAVE_AF_INET6		
+#ifdef HAVE_AF_INET6
 		case AF_INET6:
 			server_address.six.sin6_family=af;
 			server_address.six.sin6_port=htons(port);
@@ -198,7 +195,7 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 	FD_SET( socket_server_fd, &set );
 	// When the connection will be made, we will have a writeable fd
 	while((ret = select(FD_SETSIZE, NULL, &set, NULL, &tv)) == 0) {
-	      if(count > 30 || mp_input_check_interrupt(500)==MPXP_Ok) {
+	      if(count > 30 || mp_input_check_interrupt(libinput,500)==MPXP_Ok) {
 		if(count > 30)
 		  MSG_ERR("[tcp%s] Connecting timeout\n",IP_NAME);
 		else
@@ -231,8 +228,8 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 		MSG_ERR("[tcp%s] Connection error: %s\n",IP_NAME,strerror(err));
 		return TCP_ERROR_PORT;
 	}
-	
-	return socket_server_fd;
+
+    return socket_server_fd;
 }
 
 // Connect to a server using a TCP connection
@@ -240,14 +237,12 @@ connect2Server_with_af(const char *host, int port, int af,int verb) {
 // return -1 is unable to connect to a particular port
 
 
-int
-tcp_connect2Server(const char *host, int  port, int verb) {
+int tcp_connect2Server(any_t* libinput,const char *host, int  port, int verb) {
 #ifdef HAVE_AF_INET6
-	return connect2Server_with_af(host, port, network_prefer_ipv4 ? AF_INET:AF_INET6,verb);
-#else	
-	network_prefer_ipv4=1;
-	return connect2Server_with_af(host, port, AF_INET,verb);
+    return connect2Server_with_af(libinput,host, port, network_prefer_ipv4 ? AF_INET:AF_INET6,verb);
+#else
+    network_prefer_ipv4=1;
+    return connect2Server_with_af(libinput,host, port, AF_INET,verb);
 #endif
 
-	
 }

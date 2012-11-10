@@ -556,9 +556,10 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
     return 0;
 }
 
-static int __FASTCALL__ _tv_open(stream_t*stream,const char *filename,unsigned flags)
+static int __FASTCALL__ _tv_open(any_t*libinput,stream_t*stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
+    UNUSED(libinput);
     mrl_parse_params(filename,tvopts_conf);
     /* create tvi handler */
     if(!(stream->priv = tv_begin())) goto tv_err;

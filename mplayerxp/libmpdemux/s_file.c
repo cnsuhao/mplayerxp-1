@@ -22,9 +22,10 @@ typedef struct file_priv_s
 }file_priv_t;
 
 
-static int __FASTCALL__ file_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
+    UNUSED(libinput);
     if(!(stream->priv = mp_malloc(sizeof(file_priv_t)))) return 0;
     if(strcmp(filename,"-")==0) stream->fd=0;
     else stream->fd=open(filename,O_RDONLY);
@@ -44,7 +45,7 @@ static int __FASTCALL__ file_open(stream_t *stream,const char *filename,unsigned
 
 static int __FASTCALL__ stdin_open(stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);
-    return file_open(stream,"-",flags);
+    return file_open(NULL,stream,"-",flags);
 }
 
 #ifndef TEMP_FAILURE_RETRY

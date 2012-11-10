@@ -119,13 +119,12 @@ static void __FASTCALL__ play_tree_parser_stop_keeping(play_tree_parser_t* p) {
 }
 
 
-play_tree_t*
-parse_asx(play_tree_parser_t* p) {
+static play_tree_t* parse_asx(any_t* libinput,play_tree_parser_t* p) {
   int comments = 0,get_line = 1;
   char* line = NULL;
 
   MSG_V("Trying asx...\n");
-  
+
   while(1) {
     if(get_line) {
       line = play_tree_parser_get_line(p);
@@ -179,12 +178,12 @@ parse_asx(play_tree_parser_t* p) {
     /* NOTHING */;
 
  MSG_DBG3("Parsing asx file : [%s]\n",p->buffer);
- return asx_parser_build_tree(p->buffer,p->deep);
+ return asx_parser_build_tree(libinput,p->buffer,p->deep);
 }
 
 static char* __FASTCALL__ pls_entry_get_value(char* line) {
   char* i;
-  
+
   i = strchr(line,'=');
   if(!i || i[1] == '\0')
     return NULL;
@@ -333,14 +332,14 @@ parse_textplain(play_tree_parser_t* p) {
     else
       play_tree_append_entry(list,entry);
   }
-   
+
   if(!list) return NULL;
   entry = play_tree_new();
   play_tree_set_child(entry,list);
-  return entry;    
+  return entry;
 }
 
-play_tree_t* parse_playtree(stream_t * stream) {
+play_tree_t* parse_playtree(any_t*libinput,stream_t * stream) {
   play_tree_parser_t* p;
   play_tree_t* ret;
 
@@ -353,22 +352,22 @@ play_tree_t* parse_playtree(stream_t * stream) {
   if(!p)
     return NULL;
 
-  ret = play_tree_parser_get_play_tree(p);
+  ret = play_tree_parser_get_play_tree(libinput,p);
   play_tree_parser_free(p);
 
   return ret;
 }
 
-play_tree_t* parse_playlist_file(const char* file) {
+play_tree_t* parse_playlist_file(any_t*libinput,const char* file) {
   stream_t *stream;
   play_tree_t* ret;
   int ff;
 
   MSG_V("Parsing playlist file %s...\n",file);
   ff=0;
-  stream = open_stream(file,&ff,NULL);
+  stream = open_stream(libinput,file,&ff,NULL);
   stream->type|=STREAMTYPE_TEXT;
-  ret = parse_playtree(stream);
+  ret = parse_playtree(libinput,stream);
   free_stream(stream);
 
   return ret;
@@ -402,7 +401,7 @@ play_tree_parser_free(play_tree_parser_t* p) {
 }
 
 play_tree_t*
-play_tree_parser_get_play_tree(play_tree_parser_t* p) {
+play_tree_parser_get_play_tree(any_t* libinput,play_tree_parser_t* p) {
   play_tree_t* tree = NULL;
 
 #ifdef MP_DEBUG
@@ -413,7 +412,7 @@ play_tree_parser_get_play_tree(play_tree_parser_t* p) {
   while(play_tree_parser_get_line(p) != NULL) {
     play_tree_parser_reset(p);
 
-    tree = parse_asx(p);
+    tree = parse_asx(libinput,p);
     if(tree) break;
     play_tree_parser_reset(p);
 

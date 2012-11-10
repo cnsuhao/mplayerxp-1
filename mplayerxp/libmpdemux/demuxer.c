@@ -600,16 +600,20 @@ demuxer_t* demux_open(stream_t *vs,int file_format,int audio_id,int video_id,int
   stream_t *as = NULL,*ss = NULL;
   demuxer_t *vd,*ad = NULL,*sd = NULL;
   int afmt = 0,sfmt = 0;
+  any_t* libinput=NULL;
+#ifdef HAVE_STREAMIN
+    libinput=vs->streaming_strl->libinput;
+#endif
 
   if(audio_stream) {
-    as = open_stream(audio_stream,&afmt,NULL);
+    as = open_stream(libinput,audio_stream,&afmt,NULL);
     if(!as) {
       MSG_ERR("Can't open audio stream: %s\n",audio_stream);
       return NULL;
     }
   }
   if(sub_stream) {
-    ss = open_stream(sub_stream,&sfmt,NULL);
+    ss = open_stream(libinput,sub_stream,&sfmt,NULL);
     if(!ss) {
       MSG_ERR("Can't open subtitles stream: %s\n",sub_stream);
       return NULL;

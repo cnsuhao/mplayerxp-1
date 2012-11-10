@@ -16,6 +16,7 @@ typedef struct {
 	char *xmcd_file;
 	size_t xmcd_file_size;
 	any_t*user_data;
+	any_t*libinput;
 } cddb_data_t;
 
 typedef struct {

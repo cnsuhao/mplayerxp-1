@@ -64,6 +64,7 @@ struct m_config {
     play_tree_t* last_entry; // last added entry
     play_tree_t* last_parent; // if last_entry is NULL we must create child of this
     int recursion_depth;
+    any_t*	libinput;
 };
 
 struct config_save {
@@ -89,7 +90,7 @@ MPXP_Rc m_config_parse_config_file(m_config_t *config, char *conffile);
  */
 MPXP_Rc m_config_parse_command_line(m_config_t* config, int argc, char **argv, char **envp);
 
-m_config_t* m_config_new(play_tree_t* pt);
+m_config_t* m_config_new(play_tree_t* pt,any_t*libinput);
 
 void m_config_free(m_config_t* config);
 

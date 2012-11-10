@@ -236,7 +236,7 @@ int m_config_pop(m_config_t* config) {
   return ret;
 }
 
-m_config_t* m_config_new(play_tree_t* pt) {
+m_config_t* m_config_new(play_tree_t* pt,any_t*libinput) {
   m_config_t* config;
 
 #ifdef MP_DEBUG
@@ -256,6 +256,7 @@ m_config_t* m_config_new(play_tree_t* pt) {
   }
   SET_GLOBAL(config); // We always start with global options
   config->pt = pt;
+  config->libinput=libinput;
   return config;
 }
 
@@ -309,7 +310,7 @@ static int config_is_entry_option(m_config_t *config,const char *opt,const char 
   if(strcasecmp(opt,"playlist") == 0) { // We handle playlist here
     if(!param)
       return ERR_MISSING_PARAM;
-    entry = parse_playlist_file(param);
+    entry = parse_playlist_file(config->libinput,param);
     if(!entry) {
       MSG_ERR( "Playlist parsing failed: %s\n",param);
       return 1;

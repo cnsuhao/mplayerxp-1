@@ -19,7 +19,6 @@
 #include "network.h"
 
 extern int stream_open_mf(char * filename,stream_t * stream);
-extern int streaming_start(stream_t *stream, int *demuxer_type, URL_t *url);
 
 typedef struct network_priv_s
 {
@@ -27,13 +26,13 @@ typedef struct network_priv_s
     off_t  spos;
 }network_priv_t;
 
-static int __FASTCALL__ network_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
   URL_t* url;
   UNUSED(flags);
   url = url_new(filename);
   if(url) {
-	if(streaming_start(stream, &stream->file_format, url)<0){
+	if(streaming_start(libinput,stream, &stream->file_format, url)<0){
           MSG_ERR(MSGTR_UnableOpenURL, filename);
 	  url_free(url);
 	  return 0;

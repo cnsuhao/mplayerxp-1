@@ -201,7 +201,7 @@ void menu_dflt_read_key(menu_t* menu,int cmd) {
   }
 }
 
-menu_t* menu_open(const char *name) {
+menu_t* menu_open(const char *name,any_t* libinput) {
   menu_t* m;
   int i;
 
@@ -224,6 +224,7 @@ menu_t* menu_open(const char *name) {
     return NULL;
   }
   m = mp_calloc(1,sizeof(menu_t));
+  m->libinput = libinput;
   m->priv_st = &(menu_list[i].type->priv_st);
   m->priv = m_struct_copy(m->priv_st,menu_list[i].cfg);
   m->ctx = menu_ctx;

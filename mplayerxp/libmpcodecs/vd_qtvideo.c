@@ -116,7 +116,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 
 static int codec_inited=0;
 // init driver
-static MPXP_Rc init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     long result = 1;
     ComponentResult cres;
     ComponentDescription desc;
@@ -288,9 +288,9 @@ static MPXP_Rc init(sh_video_t *sh){
     }
     MSG_V("imgfmt: %s qt_imgfmt: %.4s\n", vo_format_name(imgfmt), &qt_imgfmt);
     sh->context = qt_imgfmt;
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return MPXP_False;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput)) return MPXP_False;
 #else
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL)) return MPXP_False;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput)) return MPXP_False;
 #endif
     return MPXP_Ok;
 }

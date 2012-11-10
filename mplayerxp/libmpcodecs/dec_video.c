@@ -120,10 +120,10 @@ static void mpcv_print_codec_info(sh_video_t* sh_video) {
 #endif
 }
 
-MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video) {
+MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
     /* Use ffmpeg's drivers  as last hope */
     mpvdec=mpcv_find_driver_by_name("ffmpeg");
-    if(mpvdec->init(sh_video)!=MPXP_Ok){
+    if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	MSG_ERR(MSGTR_CODEC_CANT_INITV);
 	return MPXP_False;
     }
@@ -131,7 +131,7 @@ MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video) {
     return MPXP_Ok;
 }
 
-MPXP_Rc mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status){
+MPXP_Rc mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
     sh_video->codec=NULL;
     MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->fourcc,
@@ -159,7 +159,7 @@ MPXP_Rc mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,in
 	if(!(mpvdec=mpcv_find_driver_by_name(sh_video->codec->driver_name))) continue;
 	else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
 	// it's available, let's try to init!
-	if(mpvdec->init(sh_video)!=MPXP_Ok){
+	if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 	    continue; // try next...
 	}

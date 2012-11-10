@@ -34,7 +34,7 @@ typedef struct oss_priv_s
     off_t spos;
 }oss_priv_t;
 
-static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *args;
     char *oss_device,*comma;
@@ -42,6 +42,7 @@ static int __FASTCALL__ oss_open(stream_t *stream,const char *filename,unsigned 
     unsigned tmp,param;
     int err;
     UNUSED(flags);
+    UNUSED(libinput);
     if(!(stream->priv = mp_malloc(sizeof(oss_priv_t)))) return 0;
     oss_priv=stream->priv;
     if(strcmp(filename,"help") == 0)

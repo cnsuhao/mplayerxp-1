@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>
@@ -26,36 +26,37 @@
 #define BUFFER_SIZE		2048
 
 typedef enum {
-	streaming_stopped_e,
-	streaming_playing_e
+    streaming_stopped_e,
+    streaming_playing_e
 } streaming_status;
 
 typedef struct streaming_control {
-	URL_t *url;
-	streaming_status status;
-	int buffering;	// boolean
-	unsigned int prebuffer_size;
-	char *buffer;
-	unsigned int buffer_size;
-	unsigned int buffer_pos;
-	unsigned int bandwidth;	// The downstream available
-	int (*streaming_read)( int fd, char *buffer, int buffer_size, struct streaming_control *stream_ctrl );
-	int (*streaming_seek)( int fd, off_t pos, struct streaming_control *stream_ctrl );
-	any_t*data;
+    URL_t *url;
+    streaming_status status;
+    int buffering;	// boolean
+    unsigned int prebuffer_size;
+    char *buffer;
+    unsigned int buffer_size;
+    unsigned int buffer_pos;
+    unsigned int bandwidth;	// The downstream available
+    int (*streaming_read)( int fd, char *buffer, int buffer_size, struct streaming_control *stream_ctrl );
+    int (*streaming_seek)( int fd, off_t pos, struct streaming_control *stream_ctrl );
+    any_t*data;
+    any_t* libinput;   /**< provides possibility to inperrupt network streams */
 } streaming_ctrl_t;
 
 struct stream_s;
 extern void fixup_network_stream_cache(struct stream_s *s);
-//int streaming_start( stream_t *stream, int *demuxer_type, URL_t *url );
+extern int streaming_start(any_t* libinput,struct stream_s *stream, int *demuxer_type, URL_t *url);
 extern int streaming_bufferize( streaming_ctrl_t *streaming_ctrl, char *buffer, int size);
-extern streaming_ctrl_t *streaming_ctrl_new(void);
+extern streaming_ctrl_t *streaming_ctrl_new(any_t* libinput);
 extern void streaming_ctrl_free( streaming_ctrl_t *streaming_ctrl );
 extern URL_t* check4proxies( URL_t *url );
 
 int nop_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl );
 int nop_streaming_seek( int fd, off_t pos, streaming_ctrl_t *stream_ctrl );
 
-int http_send_request(URL_t *url, off_t pos);
+int http_send_request(any_t* libinput,URL_t *url, off_t pos);
 HTTP_header_t *http_read_response(int fd);
 
 int http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry);

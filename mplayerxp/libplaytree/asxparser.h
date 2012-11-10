@@ -18,8 +18,8 @@ struct _ASX_Parser_t {
   char* last_body;
   int deep;
 };
-  
-extern play_tree_t* __FASTCALL__ asx_parser_build_tree(char* buffer, int ref);
+
+extern play_tree_t* __FASTCALL__ asx_parser_build_tree(any_t* libinput,char* buffer, int ref);
 
 extern ASX_Parser_t* asx_parser_new(void);
 

@@ -66,7 +66,7 @@ typedef struct mp_conf_s {
     int		subcc_enabled;
 // others
     char*	npp_options;
-    int		ao_channels;
+    unsigned	ao_channels;
     int		z_compression;
     int		xinerama_screen;
     float	monitor_pixel_aspect;

@@ -242,7 +242,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh){
+static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     priv_t *priv;
     int vfw_ex;
     if(strcmp(sh->codec->driver_name,"vfwex") == 0) vfw_ex=1;
@@ -255,7 +255,7 @@ static MPXP_Rc init(sh_video_t *sh){
     priv->ex = vfw_ex;
     if(init_vfw_video_codec(sh)!=MPXP_Ok) return MPXP_False;
     MSG_V("INFO: Win32/VFW init OK!\n");
-    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL);
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput);
 }
 
 // uninit driver

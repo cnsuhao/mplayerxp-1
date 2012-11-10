@@ -96,7 +96,7 @@ void vfm_help(void) {
 extern vo_data_t* vo_data;
 extern const vd_functions_t* mpvdec; // FIXME!
 
-MPXP_Rc mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune){
+MPXP_Rc mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune, any_t* libinput){
     int i,j;
     unsigned int out_fmt=0;
     int screen_size_x=0;//SCREEN_SIZE_X;
@@ -154,13 +154,13 @@ csp_again:
 		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
 	    }
 	    MSG_WARN("Trying -vf fmtcvt\n");
-	    sc=vf=vf_open_filter(vf,sh,"fmtcvt",NULL);
+	    sc=vf=vf_open_filter(vf,sh,"fmtcvt",NULL,libinput);
 	    goto csp_again;
 	} else
 	if(palette==1){
 	    MSG_V("vd: Trying -vf palette...\n");
 	    palette=-1;
-	    vf=vf_open_filter(vf,sh,"palette",NULL);
+	    vf=vf_open_filter(vf,sh,"palette",NULL,libinput);
 	    goto csp_again;
 	} else {
 	// sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
@@ -194,7 +194,7 @@ csp_again:
     if(vo_data->flags&VFCAP_FLIPPED) vo_FLIP_REVERT(vo_data);
     if(vo_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
-	sh->vfilter=vf=vf_open_filter(vf,sh,"mirror","x");
+	sh->vfilter=vf=vf_open_filter(vf,sh,"mirror","x",libinput);
     }
 
     // time to do aspect ratio corrections...

@@ -457,7 +457,7 @@ static int packet_length1;
 static int asf_mmst_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl ) 
 {
   int len;
-  
+
   while( stream_ctrl->buffer_size==0 ) {
           // buffer is empty - fill it!
 	  int ret = get_media_packet( fd, packet_length1, stream_ctrl);
@@ -467,7 +467,7 @@ static int asf_mmst_streaming_read( int fd, char *buffer, int size, streaming_ct
 	  } else if (ret==0) //EOF?
 		  return ret;
   }
-  
+
 	  len = stream_ctrl->buffer_size-stream_ctrl->buffer_pos;
 	  if(len>size) len=size;
 	  memcpy( buffer, (stream_ctrl->buffer)+(stream_ctrl->buffer_pos), len );
@@ -491,7 +491,7 @@ static int asf_mmst_streaming_seek( int fd, off_t pos, streaming_ctrl_t *streami
 	streaming_ctrl=NULL;
 }
 
-int asf_mmst_streaming_start(stream_t *stream)
+int asf_mmst_streaming_start(any_t* libinput,stream_t *stream)
 {
   char                 str[1024];
   char                 data[BUF_SIZE];
@@ -506,7 +506,7 @@ int asf_mmst_streaming_start(stream_t *stream)
 	  closesocket( stream->fd );
 	  stream->fd = -1;
   }
-  
+
   /* parse url */
   path = strchr(url1->file,'/') + 1;
 
@@ -516,22 +516,21 @@ int asf_mmst_streaming_start(stream_t *stream)
   unescpath=mp_malloc(strlen(path)+1);
   if (!unescpath) {
 	MSG_FATAL("Memory allocation failed!\n");
-	return -1; 
+	return -1;
   }
   url_unescape_string(unescpath,path);
   path=unescpath;
-  
 
   if( url1->port==0 ) {
 	url1->port=1755;
   }
-  s = tcp_connect2Server( url1->hostname, url1->port, 0);
+  s = tcp_connect2Server(libinput, url1->hostname, url1->port, 0);
   if( s<0 ) {
 	  mp_free(path);
 	  return s;
   }
   MSG_INFO ("connected\n");
-  
+
   seq_num=0;
 
   /*

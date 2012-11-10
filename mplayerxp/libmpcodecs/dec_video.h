@@ -3,9 +3,9 @@
 #include "xmpcore/xmp_enums.h"
 
 // dec_video.c:
-extern MPXP_Rc	__FASTCALL__ mpcv_init(sh_video_t *sh_video, const char *codec_name,const char *family,int status);
+extern MPXP_Rc	__FASTCALL__ mpcv_init(sh_video_t *sh_video, const char *codec_name,const char *family,int status,any_t*libinput);
 extern void	__FASTCALL__ mpcv_uninit(sh_video_t *sh_video);
-extern MPXP_Rc	__FASTCALL__ mpcv_ffmpeg_init(sh_video_t*);
+extern MPXP_Rc	__FASTCALL__ mpcv_ffmpeg_init(sh_video_t*,any_t* libinput);
 
 extern int	__FASTCALL__ mpcv_decode(sh_video_t *sh_video,unsigned char *start,int in_size,int drop_frame,float pts);
 

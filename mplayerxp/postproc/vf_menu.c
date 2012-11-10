@@ -33,6 +33,7 @@ struct vf_priv_s {
   menu_t* root;
   menu_t* current;
   int passthrough;
+  any_t*  libinput;
 };
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi);
@@ -48,7 +49,7 @@ static void __FASTCALL__ set_menu(struct vf_priv_s * priv,const char *name)
 {
 	const char* menu = name;
 	menu_t* l = priv->current;
-	priv->current = menu_open(menu);
+	priv->current = menu_open(menu,priv->libinput);
 	if(!priv->current) {
 	    MSG_WARN("[vf_menu] Failed to open menu: %s\n",menu);
 	    priv->current = l;
@@ -132,7 +133,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     return;
   }
 }
-  
+
 static void key_cb(int code) {
   menu_read_key(st_priv->current,code);
 }
@@ -170,7 +171,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     if(!pause_mpi)
       pause_mpi = alloc_mpi(mpi->w,mpi->h,mpi->imgfmt,XP_IDX_INVALID);
     copy_mpi(pause_mpi,mpi);
-    mp_input_queue_cmd(mp_input_parse_cmd("pause"));
+    mp_input_queue_cmd(vf->libinput,mp_input_parse_cmd("pause"));
     go2pause = 2;
     break;
   }
@@ -242,14 +243,15 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 static MPXP_Rc __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
   if(!st_priv) {
     st_priv = mp_calloc(1,sizeof(struct vf_priv_s));
-    st_priv->root = st_priv->current = menu_open(args);
+    st_priv->root = st_priv->current = menu_open(args,vf->libinput);
+    st_priv->libinput=vf->libinput;
     if(!st_priv->current) {
       mp_free(st_priv);
       st_priv = NULL;
       return MPXP_False;
     }
     st_priv->root->show = menu_startup;
-    mp_input_add_cmd_filter((mp_input_cmd_filter)cmd_filter,st_priv);
+    mp_input_add_cmd_filter(vf->libinput,(mp_input_cmd_filter)cmd_filter,(any_t*)st_priv);
   }
 
   vf->config = config;

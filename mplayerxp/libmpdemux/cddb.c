@@ -138,8 +138,6 @@ unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
 	return ((n % 0xff) << 24 | t << 8 | tot_trks);
 }
 
-
-
 int __FASTCALL__ cddb_http_request(char *command, int (*reply_parser)(HTTP_header_t*,cddb_data_t*), cddb_data_t *cddb_data) {
 	char request[4096];
 	int fd, ret = 0;
@@ -157,7 +155,7 @@ int __FASTCALL__ cddb_http_request(char *command, int (*reply_parser)(HTTP_heade
 		return -1;
 	}
 	
-	fd = http_send_request(url,0);
+	fd = http_send_request(cddb_data->libinput,url,0);
 	if( fd<0 ) {
 		MSG_ERR("failed to send the http request\n");
 		return -1;
@@ -323,7 +321,7 @@ static int cddb_read_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 int __FASTCALL__ cddb_request_titles(cddb_data_t *cddb_data) {
 	char command[1024];
 	sprintf( command, "cddb+read+%s+%08lx", cddb_data->category, cddb_data->disc_id);
-	return cddb_http_request(command, cddb_read_parse, cddb_data); 
+	return cddb_http_request(command, cddb_read_parse, cddb_data);
 }
 
 static int cddb_query_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
@@ -527,11 +525,12 @@ int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	return 0;
 }
 
-int __FASTCALL__ cddb_resolve(char **xmcd_file) {
+int __FASTCALL__ cddb_resolve(any_t*libinput,char **xmcd_file) {
 	char cddb_cache_dir[] = DEFAULT_CACHE_DIR;
 	char *home_dir = NULL;
 	cddb_data_t cddb_data;
 
+	cddb_data.libinput=libinput;
 	cddb_data.tracks = read_toc();
 	cddb_data.disc_id = cddb_discid(cddb_data.tracks);
 	cddb_data.anonymous = 1;	// Don't send user info by default
@@ -787,7 +786,7 @@ int __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *track) 
 	char *xmcd_file = NULL;
 	int ret;
 	
-	ret = cddb_resolve(&xmcd_file);
+	ret = cddb_resolve(stream->streaming_ctrl->libinput,&xmcd_file);
 	if( ret==0 ) {
 		cd_info = cddb_parse_xmcd(xmcd_file);
 		mp_free(xmcd_file);

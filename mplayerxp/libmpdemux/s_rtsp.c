@@ -54,7 +54,7 @@ static int __FASTCALL__ rtsp_ctrl(stream_t *s,unsigned cmd,any_t*args)
 static void __FASTCALL__ rtsp_stream_close(stream_t*s)
 {
   rtsp_session_t *rtsp = NULL;
-  
+
   rtsp = (rtsp_session_t *) s->streaming_ctrl->data;
   if (rtsp)
     rtsp_session_end (rtsp);
@@ -62,7 +62,7 @@ static void __FASTCALL__ rtsp_stream_close(stream_t*s)
   streaming_ctrl_free (s->streaming_ctrl);
 }
 
-static int __FASTCALL__ rtsp_streaming_start (stream_t *stream)
+static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
 {
   int fd;
   rtsp_session_t *rtsp;
@@ -80,25 +80,25 @@ static int __FASTCALL__ rtsp_streaming_start (stream_t *stream)
   do {
     redirected = 0;
 
-    fd = tcp_connect2Server (stream->streaming_ctrl->url->hostname,
+    fd = tcp_connect2Server (libinput,stream->streaming_ctrl->url->hostname,
                          port = (stream->streaming_ctrl->url->port ?
                                  stream->streaming_ctrl->url->port :
                                  RTSP_DEFAULT_PORT), 1);
-    
+
     if (fd < 0 && !stream->streaming_ctrl->url->port)
-      fd = tcp_connect2Server (stream->streaming_ctrl->url->hostname,
+      fd = tcp_connect2Server (libinput,stream->streaming_ctrl->url->hostname,
                            port = 7070, 1);
 
     if (fd < 0)
       return -1;
-    
+
     file = stream->streaming_ctrl->url->file;
     if (file[0] == '/')
       file++;
 
     mrl = mp_malloc (strlen (stream->streaming_ctrl->url->hostname)
                   + strlen (file) + 16);
-    
+
     sprintf (mrl, "rtsp://%s:%i/%s",
              stream->streaming_ctrl->url->hostname, port, file);
 
@@ -118,31 +118,31 @@ static int __FASTCALL__ rtsp_streaming_start (stream_t *stream)
 
     mp_free (mrl);
     temp--;
-  } while ((redirected != 0) && (temp > 0));    
+  } while ((redirected != 0) && (temp > 0));
 
   if (!rtsp)
     return -1;
 
   stream->fd = fd;
   stream->streaming_ctrl->data = rtsp;
-  
+
   stream->streaming_ctrl->prebuffer_size = 128*1024;  // 640 KBytes
   stream->streaming_ctrl->buffering = 1;
   stream->streaming_ctrl->status = streaming_playing_e;
-  
+
   return 0;
 }
 
 extern int network_bandwidth;
 extern int index_mode;
-static int __FASTCALL__ rtsp_open (stream_t *stream,const char *filename,unsigned flags)
+static int __FASTCALL__ rtsp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
   URL_t *url;
   UNUSED(flags);
   if(strncmp(filename,"rtsp://",7)!=0) return 0;
 
   MSG_V("STREAM_RTSP, URL: %s\n", filename);
-  stream->streaming_ctrl = streaming_ctrl_new ();
+  stream->streaming_ctrl = streaming_ctrl_new (libinput);
   if (!stream->streaming_ctrl)
     return 0;
 
@@ -152,7 +152,7 @@ static int __FASTCALL__ rtsp_open (stream_t *stream,const char *filename,unsigne
 
   stream->fd = -1;
   index_mode = -1; /* prevent most RTSP streams from locking due to -idx */
-  if (rtsp_streaming_start (stream) < 0)
+  if (rtsp_streaming_start (libinput,stream) < 0)
   {
     streaming_ctrl_free (stream->streaming_ctrl);
     stream->streaming_ctrl = NULL;

@@ -421,7 +421,7 @@ static void read_key(menu_t* menu,int c) {
 	break;
 #endif
       default: // Send the other commands to mplayer
-	mp_input_queue_cmd(c);
+	mp_input_queue_cmd(menu->libinput,c);
       }
     }
     return;

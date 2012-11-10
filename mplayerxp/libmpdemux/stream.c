@@ -86,7 +86,7 @@ static const stream_driver_t *sdrivers[] =
 
 static const unsigned int nsdrivers=sizeof(sdrivers)/sizeof(stream_driver_t*);
 
-stream_t* __FASTCALL__ open_stream(const char* filename,int* file_format,stream_callback event_handler)
+stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler)
 {
   unsigned i,done;
   unsigned mrl_len;
@@ -98,7 +98,7 @@ stream_t* __FASTCALL__ open_stream(const char* filename,int* file_format,stream_
 	mrl_len=strlen(sdrivers[i]->mrl);
 	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0) {
 	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
-	    if(sdrivers[i]->open(stream,&filename[mrl_len],0)) {
+	    if(sdrivers[i]->open(libinput,stream,&filename[mrl_len],0)) {
 		MSG_V("OK\n");
 		*file_format = stream->file_format;
 		stream->driver=sdrivers[i];
@@ -110,7 +110,7 @@ stream_t* __FASTCALL__ open_stream(const char* filename,int* file_format,stream_
 	}
   }
   /* Last hope */
-  if(file_stream.open(stream,filename,0)) {
+  if(file_stream.open(libinput,stream,filename,0)) {
 	*file_format = stream->file_format;
 	stream->driver=&file_stream;
 	stream->event_handler=event_handler;
@@ -205,7 +205,7 @@ int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos)
 	return 1;
     }
   }
-  
+
   MSG_V("stream_seek: WARNING! Can't seek to 0x%llX !\n",(long long)(pos+newpos));
   return 0;
 
