@@ -67,7 +67,7 @@
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 
-#include "input/input.h"
+#include "input2/input.h"
 #include "dump.h"
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
