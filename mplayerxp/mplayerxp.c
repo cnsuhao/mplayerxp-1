@@ -2030,7 +2030,7 @@ main:
 	}
 	usleep(250000);
 //read_input:
-	vo_check_events(vo_data);
+	if(sh_video) vo_check_events(vo_data);
 repaint:
 #ifdef USE_OSD
 	if((mpxp_paint_osd(&osd.visible,&in_pause))!=0) goto repaint;

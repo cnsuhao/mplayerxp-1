@@ -71,7 +71,7 @@ typedef struct af_volume_s
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_volnorm_t* s   = (af_volnorm_t*)af->setup; 
+  af_volnorm_t* s   = (af_volnorm_t*)af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:
@@ -81,8 +81,8 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
 
-    if(((mp_aframe_t*)arg)->format != (MPAF_F | MPAF_NE) &&
-       ((mp_aframe_t*)arg)->format != (MPAF_SI | MPAF_NE))
+    if(!(((mp_aframe_t*)arg)->format == (MPAF_F | MPAF_NE) ||
+       ((mp_aframe_t*)arg)->format == (MPAF_SI | MPAF_NE)))
        return MPXP_Error;
 
     if(((mp_aframe_t*)arg)->format == (MPAF_SI | MPAF_NE)){

@@ -52,7 +52,7 @@ typedef struct af_volume_s
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_volume_t* s   = (af_volume_t*)af->setup; 
+  af_volume_t* s   = (af_volume_t*)af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:
@@ -85,22 +85,22 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     for(i=0;i<AF_NCH;i++) vol[i]=v;
     return control(af,AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET, vol);
   }
-  case AF_CONTROL_POST_CREATE:	
-    s->fast = ((((af_cfg_t*)arg)->force & AF_INIT_FORMAT_MASK) == 
+  case AF_CONTROL_POST_CREATE:
+    s->fast = ((((af_cfg_t*)arg)->force & AF_INIT_FORMAT_MASK) ==
       AF_INIT_FLOAT) ? 0 : 1;
     return MPXP_Ok;
   case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_SET:
     memcpy(s->enable,(int*)arg,AF_NCH*sizeof(int));
-    return MPXP_Ok; 
+    return MPXP_Ok;
   case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_GET:
     memcpy((int*)arg,s->enable,AF_NCH*sizeof(int));
-    return MPXP_Ok; 
+    return MPXP_Ok;
   case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_SET:
     s->soft = *(int*)arg;
-    return MPXP_Ok; 
+    return MPXP_Ok;
   case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_GET:
     *(int*)arg = s->soft;
-    return MPXP_Ok; 
+    return MPXP_Ok;
   case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
     return af_from_dB(AF_NCH,(float*)arg,s->level,20.0,-200.0,60.0);
   case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
@@ -125,7 +125,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -140,7 +140,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   mp_aframe_t*    c   = data;			// Current working data
   af_volume_t*  s   = (af_volume_t*)af->setup; 	// Setup for this instance
   int           ch  = 0;			// Channel counter
-  register int	nch = c->nch;			// Number of channels	
+  register int	nch = c->nch;			// Number of channels
   register int  i   = 0;
 
   // Basic operation volume control only (used on slow machines)

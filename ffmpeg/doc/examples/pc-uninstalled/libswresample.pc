@@ -8,5 +8,5 @@ Description: FFmpeg audio rescaling library
 Version: 0.15.100
 Requires: libavutil = 51.73.101
 Conflicts:
-Libs: -L${libdir} -lswresample -lm
+Libs: -L${libdir} -lswresample64 -lm
 Cflags: -I${includedir}

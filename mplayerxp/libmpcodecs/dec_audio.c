@@ -133,6 +133,7 @@ MPXP_Rc mpca_init(sh_audio_t *sh_audio)
 
 void mpca_uninit(sh_audio_t *sh_audio)
 {
+    if(!sh_audio) return;
     if(sh_audio->afilter){
 	MSG_V("Uninit audio filters...\n");
 	af_uninit(sh_audio->afilter);
