@@ -17,7 +17,7 @@ typedef struct s_lp
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_lp_t* s   = (af_lp_t*)af->setup; 
+  af_lp_t* s   = (af_lp_t*)af->setup;
   switch(cmd){
   case AF_CONTROL_REINIT:
     memcpy(af->data,(mp_aframe_t*)arg,sizeof(mp_aframe_t));

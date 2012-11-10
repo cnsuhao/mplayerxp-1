@@ -19,14 +19,14 @@
 // Initialization and runtime control
 static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-	switch(cmd){
-		case AF_CONTROL_REINIT:
-		af->data->rate	= ((mp_aframe_t*)arg)->rate;
-		af->data->nch	= ((mp_aframe_t*)arg)->nch;
-		af->data->format= MPAF_NE|MPAF_F|4;
-		return af_test_output(af,(mp_aframe_t*)arg);
-	}
-	return MPXP_Unknown;
+    switch(cmd){
+	case AF_CONTROL_REINIT:
+	af->data->rate	= ((mp_aframe_t*)arg)->rate;
+	af->data->nch	= ((mp_aframe_t*)arg)->nch;
+	af->data->format= MPAF_NE|MPAF_F|4;
+	return af_test_output(af,(mp_aframe_t*)arg);
+    }
+    return MPXP_Unknown;
 }
 
 // Deallocate memory 

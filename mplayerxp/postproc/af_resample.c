@@ -78,7 +78,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	case AF_CONTROL_REINIT: {
 	    enum AVSampleFormat avfmt;
 	    uint64_t		nch;
-	    mp_aframe_t*		n   = (mp_aframe_t*)arg; // New configuration
+	    mp_aframe_t*	n   = (mp_aframe_t*)arg; // New configuration
 	    int			rv  = MPXP_Ok;
 
 	    if(s->ctx) { swr_free(&s->ctx); s->ctx=NULL; }

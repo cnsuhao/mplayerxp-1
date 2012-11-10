@@ -128,7 +128,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     // Set default channel assignment
     if(!s->router){
       int i;
-      // Make sure this filter isn't redundant 
+      // Make sure this filter isn't redundant
       if(af->data->nch == ((mp_aframe_t*)arg)->nch)
 	return MPXP_Detach;
 

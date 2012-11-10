@@ -43,6 +43,8 @@ extern unsigned __FASTCALL__      mpaf_format_encode(mpaf_format_e fmt);
 extern char* __FASTCALL__         mpaf_fmt2str(mpaf_format_e format, char* str, size_t size);
 extern mpaf_format_e __FASTCALL__ mpaf_str2fmt(const char *str);
 
+static inline int mpaf_test(mpaf_format_e f,unsigned bits) { return f&bits; }
+static inline int mpaf_testa(mpaf_format_e f,unsigned bits) { return (f&bits)==bits; }
 
 typedef struct mp_audio_frame_s {
     unsigned		flags; /* currently unused */

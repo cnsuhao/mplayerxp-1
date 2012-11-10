@@ -62,10 +62,9 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
 
-    if(s->fast && (((mp_aframe_t*)arg)->format != (MPAF_F|MPAF_NE))){
-      af->data->format = MPAF_SI|MPAF_NE|2;
-    }
-    else{
+    if(s->fast && !mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_F|MPAF_NE))
+	af->data->format = MPAF_SI|MPAF_NE|2;
+    else {
       // Cutoff set to 10Hz for forgetting factor
       float x = 2.0*M_PI*15.0/(float)af->data->rate;
       float t = 2.0-cos(x);

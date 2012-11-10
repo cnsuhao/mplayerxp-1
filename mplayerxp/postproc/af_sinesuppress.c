@@ -51,8 +51,7 @@ static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = 1;
 #if 0
-    if (((mp_aframe_t*)arg)->format == MPAF_NE | MPAF_F)
-    {
+    if (mpaf_testa((mp_aframe_t*)arg)->format,MPAF_NE | MPAF_F) {
 	af->data->format = MPAF_FLOAT_NE|4;
 	af->play = play_float;
     }// else

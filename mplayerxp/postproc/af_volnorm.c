@@ -81,15 +81,14 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
 
-    if(!(((mp_aframe_t*)arg)->format&(MPAF_F|MPAF_NE) ||
-	((mp_aframe_t*)arg)->format&(MPAF_SI|MPAF_NE)))
+    if(!(mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_F|MPAF_NE) ||
+	mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_SI|MPAF_NE)))
 	return MPXP_Error;
 
-    if(((mp_aframe_t*)arg)->format&(MPAF_F|MPAF_NE)){
+    if(mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_F|MPAF_NE))
 	af->data->format = MPAF_F|MPAF_NE|4;
-    }else{
+    else
 	af->data->format = MPAF_SI|MPAF_NE|2;
-    }
     return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_volnorm] using method %d\n",s->method);

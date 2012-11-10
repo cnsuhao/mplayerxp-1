@@ -37,7 +37,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    if(((mp_aframe_t*)arg)->format != (MPAF_SI|MPAF_NE) ||
+    if(!mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_SI|MPAF_NE) ||
        (((mp_aframe_t*)arg)->nch != 2))
        return MPXP_Error;
 
