@@ -11,7 +11,7 @@
 #include "demuxer.h"
 #include "libmpsub/spudec.h"
 #include "libvo/sub.h"
-#include "input/input.h"
+#include "input2/input.h"
 #include "mplayerxp.h"
 #include "demux_msg.h"
 

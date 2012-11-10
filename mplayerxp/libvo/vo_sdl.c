@@ -123,8 +123,8 @@
 #include "x11_common.h"
 #endif
 
-#include "input/input.h"
-#include "input/mouse.h"
+#include "input2/input.h"
+#include "input2/mouse.h"
 #include "osdep/keycodes.h"
 #include "dri_vo.h"
 #include "video_out_internal.h"

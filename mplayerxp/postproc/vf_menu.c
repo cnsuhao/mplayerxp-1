@@ -15,7 +15,7 @@
 #include "osdep/fastmemcpy.h"
 #include "libvo/video_out.h"
 #include "libvo/font_load.h"
-#include "input/input.h"
+#include "input2/input.h"
 #include "libmpconf/m_struct.h"
 #include "libmenu/menu.h"
 #include "osdep/mplib.h"

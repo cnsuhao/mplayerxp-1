@@ -15,10 +15,10 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include "help_mp.h"
-#include "../input/input.h"
+#include "input2/input.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>

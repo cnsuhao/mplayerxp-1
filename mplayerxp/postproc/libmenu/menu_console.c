@@ -24,7 +24,7 @@
 
 #include "libvo/font_load.h"
 #include "osdep/keycodes.h"
-#include "input/input.h"
+#include "input2/input.h"
 #include "osdep/timer.h"
 #include "pp_msg.h"
 #include "osdep/mplib.h"

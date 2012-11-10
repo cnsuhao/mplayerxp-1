@@ -1,7 +1,7 @@
 
 include ../mp_config.mak
 
-LIBNAME = libinput.a
+LIBNAME = libinput2.a
 
 SRCS=input.c joystick.c lirc.c
 OBJS=$(SRCS:.c=.o)

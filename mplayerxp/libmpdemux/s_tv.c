@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
-#include "input/input.h"
+#include "input2/input.h"
 #include "osdep/mplib.h"
 #include "libao2/afmt.h"
 #include "mrl.h"

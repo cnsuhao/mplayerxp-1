@@ -18,7 +18,7 @@
 
 #include "libvo/font_load.h"
 
-#include "input/input.h"
+#include "input2/input.h"
 #include "version.h"
 #include "pp_msg.h"
 #include "osdep/mplib.h"

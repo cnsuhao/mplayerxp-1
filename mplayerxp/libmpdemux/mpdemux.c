@@ -1,7 +1,6 @@
-
-#include "../mp_config.h"
+#include "mp_config.h"
 #include <stdlib.h>
-#include "../input/input.h"
+#include "input2/input.h"
 #include "demux_msg.h"
 int mpdemux_check_interrupt(any_t* libinput,int _time) {
   mp_cmd_t* cmd;

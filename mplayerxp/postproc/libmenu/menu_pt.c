@@ -15,7 +15,7 @@
 
 #include "libmpdemux/stream.h"
 #include "libplaytree/playtree.h"
-#include "input/input.h"
+#include "input2/input.h"
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 

@@ -23,7 +23,7 @@
 
 #include "menu.h"
 #include "menu_list.h"
-#include "input/input.h"
+#include "input2/input.h"
 #include "osdep/keycodes.h"
 #include "osdep/mplib.h"
 #include "pp_msg.h"

@@ -31,8 +31,8 @@
 #include <X11/XF86keysym.h>
 #endif
 
-#include "../input/input.h"
-#include "../input/mouse.h"
+#include "input2/input.h"
+#include "input2/mouse.h"
 #include "vo_msg.h"
 
 #ifdef HAVE_SHM
