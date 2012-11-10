@@ -28,7 +28,7 @@
 #include <limits.h>
 
 #include "af.h"
-#include "dsp.h"
+#include "aflib.h"
 #include "osdep/mplib.h"
 
 #define DELAY1 35000

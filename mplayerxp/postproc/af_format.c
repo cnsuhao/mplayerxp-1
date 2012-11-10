@@ -13,7 +13,7 @@
 #include "af.h"
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
-#include "dsp.h"
+#include "aflib.h"
 #include "loader/wine/mmreg.h"
 #include "pp_msg.h"
 

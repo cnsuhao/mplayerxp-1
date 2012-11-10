@@ -19,7 +19,6 @@
 #include "libswresample/swresample.h"
 
 #include "af.h"
-#include "dsp.h"
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 

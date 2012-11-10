@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -18,7 +18,7 @@
 #ifndef HAVE_LRINTF
 #define lrintf(x) ((int)(x))
 #endif
-#include "dsp.h"
+#include "aflib.h"
 
 extern uint32_t load24bit(any_t* data, int pos);
 extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
@@ -28,7 +28,7 @@ extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
 #include "mp_config.h"
 #include "osdep/cpudetect.h"
 
-#define PVECTOR_ACCEL_H "dsp_accel.h"
+#define PVECTOR_ACCEL_H "aflib_accel.h"
 #include "pvector/pvector_inc.h"
 
 /******************************************************************************

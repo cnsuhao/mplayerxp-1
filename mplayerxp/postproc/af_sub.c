@@ -24,7 +24,7 @@
 #include <inttypes.h>
 
 #include "af.h"
-#include "dsp.h"
+#include "aflib.h"
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 

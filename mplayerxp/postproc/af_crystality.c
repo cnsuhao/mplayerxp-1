@@ -61,7 +61,7 @@ and high-freqs and try to restore FR as:
 #include <limits.h>
 
 #include "af.h"
-#include "dsp.h"
+#include "aflib.h"
 
 #include "libmpdemux/stream.h"
 #include "libmpdemux/demuxer.h"

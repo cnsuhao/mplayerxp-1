@@ -1,5 +1,5 @@
 /*=============================================================================
-//	
+//
 //  This software has been released under the terms of the GNU General Public
 //  license. See http://www.gnu.org/copyleft/gpl.html for details.
 //
@@ -8,14 +8,14 @@
 //=============================================================================
 */
 
-#ifndef	_DSP_H
-#define	_DSP_H 	1
+#ifndef	_AFLIB_H
+#define	_AFLIB_H	1
 
-#include "../mp_config.h"
+#include "mp_config.h"
 /* Implementation of routines used for DSP */
 
 /* Size of floating point type used in routines */
-#define _ftype_t float
+typedef float _ftype_t;
 
 extern void __FASTCALL__ boxcar(int n, _ftype_t* w);
 extern void __FASTCALL__ triang(int n, _ftype_t* w);
