@@ -34,6 +34,11 @@
 #define __ivec		__m64
 #endif
 
+static __inline int __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(ivec_aligned)(const any_t* p) { return (((long)p)&(__IVEC_SIZE-1))==0; }
+#undef _ivec_aligned
+#define _ivec_aligned PVECTOR_RENAME(ivec_aligned)
+
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(empty)(void)
 {

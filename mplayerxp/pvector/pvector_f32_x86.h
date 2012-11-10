@@ -34,6 +34,11 @@
 #define __f32vec	__m64
 #endif
 
+extern __inline int  __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(f32vec_aligned)(const any_t* p) { return (((long)p)&(__F32VEC_SIZE-1))==0; }
+#undef _f32vec_aligned
+#define _f32vec_aligned PVECTOR_RENAME(f32vec_aligned)
+
 extern __inline __f32vec __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(f32_loadu)(float const *__P)
 {

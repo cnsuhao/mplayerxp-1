@@ -47,11 +47,6 @@
 #undef HAVE_F32_PVECTOR
 #endif
 
-#undef IVEC_ALIGNED
-#define IVEC_ALIGNED(p) ((((long)((any_t*)(p)))&(__IVEC_SIZE-1))==0)
-#undef F32VEC_ALIGNED
-#define F32VEC_ALIGNED(p) ((((long)((any_t*)(p)))&(__F32VEC_SIZE-1))==0)
-
 /*
   ABBREVIATION:
   s8   - signed   int8_t
