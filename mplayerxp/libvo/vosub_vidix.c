@@ -321,22 +321,23 @@ int mlock(const any_t*addr,size_t len) { return ENOSYS; }
 int munlock(const any_t*addr,size_t len) { return ENOSYS; }
 #endif
 
-#define ALLOC_VIDIX_STRUCTS()\
-{\
-    if(!priv->cap) priv->cap = vdlAllocCapabilityS();\
-    if(!priv->play) priv->play = vdlAllocPlaybackS();\
-    if(!priv->fourcc) priv->fourcc = vdlAllocFourccS();\
-    if(!priv->dstrides) priv->dstrides = vdlAllocYUVS();\
-    if(!(priv->cap && priv->play && priv->fourcc && priv->dstrides)) {\
-	 MSG_FATAL("Can not alloc certain structures\n");\
-	 return -1;\
-    }\
+static MPXP_Rc alloc_vidix_structs(any_t* ctx) {
+    priv_t* priv=(priv_t*)ctx;
+    if(!priv->cap) priv->cap = vdlAllocCapabilityS();
+    if(!priv->play) priv->play = vdlAllocPlaybackS();
+    if(!priv->fourcc) priv->fourcc = vdlAllocFourccS();
+    if(!priv->dstrides) priv->dstrides = vdlAllocYUVS();
+    if(!(priv->cap && priv->play && priv->fourcc && priv->dstrides)) {
+	 MSG_FATAL("Can not alloc certain structures\n");
+	 return MPXP_False;
+    }
+    return MPXP_Ok;
 }
 
 MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_height,
 		   unsigned x_org,unsigned y_org,unsigned dst_width,
 		   unsigned dst_height,unsigned format,unsigned dest_bpp,
-		   unsigned vid_w,unsigned vid_h,const any_t*info)
+		   unsigned vid_w,unsigned vid_h)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     size_t i;
@@ -407,44 +408,6 @@ MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_h
     priv->play->num_frames=(vo_conf.use_bm!=1)?NUM_FRAMES-1:1;
     if(priv->play->num_frames > vo_conf.xp_buffs) priv->play->num_frames = vo_conf.xp_buffs;
     priv->play->src.pitch.y = priv->play->src.pitch.u = priv->play->src.pitch.v = 0;
-    if(info) {
-	switch(((const vo_tune_info_t *)info)->pitch[0]) {
-	    case 2:
-	    case 4:
-	    case 8:
-	    case 16:
-	    case 32:
-	    case 64:
-	    case 128:
-	    case 256: priv->play->src.pitch.y = ((const vo_tune_info_t *)info)->pitch[0];
-			break;
-	    default: break;
-	}
-	switch(((const vo_tune_info_t *)info)->pitch[1]) {
-	    case 2:
-	    case 4:
-	    case 8:
-	    case 16:
-	    case 32:
-	    case 64:
-	    case 128:
-	    case 256: priv->play->src.pitch.u = ((const vo_tune_info_t *)info)->pitch[1];
-			break;
-	    default: break;
-	}
-	switch(((const vo_tune_info_t *)info)->pitch[2]) {
-	    case 2:
-	    case 4:
-	    case 8:
-	    case 16:
-	    case 32:
-	    case 64:
-	    case 128:
-	    case 256: priv->play->src.pitch.v = ((const vo_tune_info_t *)info)->pitch[2];
-			break;
-	    default: break;
-	}
-    }
     if((err=vdlConfigPlayback(priv->handler,priv->play))!=0) {
 	MSG_FATAL("Can't configure playback: %s\n",strerror(err));
 	return MPXP_False;
@@ -620,7 +583,7 @@ MPXP_Rc __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*
     MSG_DBG2("vidix_preinit(%s) was called\n",drvname);
     priv_t* priv=mp_mallocz(sizeof(priv_t));
     vo->priv3=priv;
-    ALLOC_VIDIX_STRUCTS()
+    if(alloc_vidix_structs(priv)!=MPXP_Ok) return MPXP_False;
     if(vdlGetVersion() != VIDIX_VERSION) {
 	MSG_FATAL("You have wrong version of VIDIX library\n");
 	mp_free(priv);

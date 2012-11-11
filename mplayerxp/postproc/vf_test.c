@@ -110,10 +110,10 @@ static void __FASTCALL__ rgb_put_pixel(uint8_t *buf, int x, int y, int stride, i
 
 static int __FASTCALL__ rgb_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
     vf->priv->fmt=rgb_getfmt(outfmt);
     MSG_V("rgb test format:%s\n", vo_format_name(outfmt));
-    return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt);
 }
 
 static int __FASTCALL__ rgb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
@@ -151,7 +151,7 @@ static int __FASTCALL__ rgb_query_format(struct vf_instance_s* vf, unsigned int 
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 
     if(vf_next_query_format(vf,IMGFMT_YV12,d_width,d_height)<=0){
 	printf("yv12 not supported by next filter/vo :(\n");
@@ -162,7 +162,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     d_width= width= WIDTH;
     d_height= height= HEIGHT;
 
-    return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YV12,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YV12);
 }
 
 static double c[64];

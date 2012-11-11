@@ -28,7 +28,7 @@ static unsigned int bgr_list[]={
     IMGFMT_IYUV,
     IMGFMT_422P,
     IMGFMT_444P,
-    
+
     IMGFMT_YUY2,
     IMGFMT_BGR15,
     IMGFMT_RGB15,
@@ -65,7 +65,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
     if (!vf->priv->fmt)
 	vf->priv->fmt=find_best(vf,d_width,d_height);
     if(!vf->priv->fmt){
@@ -74,7 +74,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	else if(outfmt==IMGFMT_BGR8) vf->priv->fmt=IMGFMT_BGR32;
 	else return 0;
     }
-    return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt);
 }
 
 static int bittab[8]={128,64,32,16,8,4,2,1};

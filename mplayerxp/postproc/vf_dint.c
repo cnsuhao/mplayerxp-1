@@ -34,9 +34,9 @@ struct vf_priv_s {
 
 static int __FASTCALL__ kd_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 
-	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 
@@ -297,7 +297,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 
 static int __FASTCALL__ config (struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune)
+	unsigned int flags, unsigned int outfmt)
 {
     int rowsize;
 
@@ -326,7 +326,7 @@ static int __FASTCALL__ config (struct vf_instance_s* vf,
       vf->priv->diff = 31;
 //    vf->priv->rdfr = vf->priv->dfr = 0;
     vf->priv->was_dint = 0;
-    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 static int __FASTCALL__ put_slice (struct vf_instance_s* vf, mp_image_t *mpi)

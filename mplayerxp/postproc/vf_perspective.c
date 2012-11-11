@@ -100,7 +100,7 @@ static double __FASTCALL__ getCoeff(double d){
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 	int i, j;
 
 	vf->priv->pvStride= width;
@@ -122,7 +122,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 			vf->priv->coeff[i][j]= (int)floor((1<<COEFF_BITS)*temp[j]/sum + 0.5);
 	}
 
-	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){

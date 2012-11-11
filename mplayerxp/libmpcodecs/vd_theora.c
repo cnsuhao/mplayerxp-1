@@ -111,7 +111,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 
     MSG_V("INFO: Theora video init ok!\n");
 
-    return mpcodecs_config_vo (sh,sh->src_w,sh->src_h,NULL,libinput);
+    return mpcodecs_config_vo (sh,sh->src_w,sh->src_h,libinput);
 }
 
 /*

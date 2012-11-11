@@ -261,7 +261,7 @@ static void set_gamma_correction( vo_data_t*vo )
  * connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
     priv_t*priv=(priv_t*)vo->priv;
 // int screen;
@@ -275,7 +275,6 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     XSetWindowAttributes xswa;
     unsigned long xswamask,i;
 
-    UNUSED(info);
     aspect_save_orig(width,height);
     aspect_save_prescale(d_width,d_height);
 

@@ -397,7 +397,7 @@ static unsigned __FASTCALL__ fillMultiBuffer(vo_data_t*vo,unsigned long vsize, u
  * bit 2 (0x04) enables software scaling (-zoom)
  * bit 3 (0x08) enables flipping (-flip) (NK: and for what?)
  */
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
     priv_t*priv=(priv_t*)vo->priv;
     struct VbeInfoBlock vib;
@@ -664,7 +664,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	if(priv->vidix_name) {
 	    if(vidix_init(vo,width,height,priv->x_offset,priv->y_offset,priv->dstW,
 			priv->dstH,format,priv->dstBpp,
-			priv->vmode_info.XResolution,priv->vmode_info.YResolution,info) != MPXP_Ok) {
+			priv->vmode_info.XResolution,priv->vmode_info.YResolution) != MPXP_Ok) {
 		MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
 		priv->vidix_name = NULL;
 		vesa_term(vo);

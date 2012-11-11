@@ -14,7 +14,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
        int width, int height, int d_width, int d_height,
-       unsigned int flags, unsigned int outfmt,any_t*tune)
+       unsigned int flags, unsigned int outfmt)
 {
     if (vf->priv->w < 0 || width < vf->priv->w)
 	vf->priv->w = width;
@@ -29,7 +29,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	MSG_WARN("rectangle: bad position/width/height - rectangle area is out of the original!\n");
 	return 0;
     }
-    return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt,tune);
+    return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt);
 }
 
 static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t*data)

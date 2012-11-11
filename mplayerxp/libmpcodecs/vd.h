@@ -34,7 +34,7 @@ enum {
     VDCTRL_RESYNC_STREAM	=7 /* resync video stream if needed */
 };
 // callbacks:
-MPXP_Rc		__FASTCALL__ mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune, any_t* libinput);
+MPXP_Rc		__FASTCALL__ mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t* libinput);
 mp_image_t*	__FASTCALL__ mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h);
 void		__FASTCALL__ mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
 void		__FASTCALL__ mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);

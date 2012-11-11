@@ -47,8 +47,6 @@ static vo_info_t vo_info =
     ""
 };
 
-#define UNUSED(x) ((void)(x)) /* Removes warning about unused arguments */
-
 typedef struct priv_s {
 /* Image parameters */
     uint32_t		image_width;
@@ -67,10 +65,9 @@ typedef struct priv_s {
     uint32_t		fgColor;
 /* VIDIX related */
     char *		name;
-    vo_tune_info_t	vtune;
 }priv_t;
 
-static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update,const vo_tune_info_t *info)
+static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update)
 {
     priv_t*priv=(priv_t*)vo->priv;
     uint32_t retval=0;
@@ -132,7 +129,7 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update,const vo_t
 	vidix_stop(vo);
 	if (vidix_init(vo,priv->image_width, priv->image_height, priv->win_x, priv->win_y,
 	    priv->win_w, priv->win_h, priv->image_format, vo->depthonscreen,
-	    vo_conf.screenwidth, vo_conf.screenheight,info) != MPXP_Ok)
+	    vo_conf.screenwidth, vo_conf.screenheight) != MPXP_Ok)
         {
 	    MSG_FATAL( "Can't initialize VIDIX driver: %s: %s\n",
 		priv->name, strerror(errno));
@@ -164,7 +161,7 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update,const vo_t
  * allocate colors and (shared) memory
  */
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
-    uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+    uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
     priv_t*priv=(priv_t*)vo->priv;
     XVisualInfo vinfo;
@@ -341,9 +338,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 #endif
     }
 
-    set_window(vo,1,info);
-    if(info) memcpy(&priv->vtune,info,sizeof(vo_tune_info_t));
-    else     memset(&priv->vtune,0,sizeof(vo_tune_info_t));
+    set_window(vo,1);
     XFlush(vo->mDisplay);
     XSync(vo->mDisplay, False);
 
@@ -362,8 +357,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjus
 {
     priv_t*priv=(priv_t*)vo->priv;
     uint32_t event = vo_x11_check_events(vo,vo->mDisplay,adjust_size);
-    if((event & VO_EVENT_RESIZE))
-	event = set_window(vo,0,&priv->vtune);
+    if((event & VO_EVENT_RESIZE)) event = set_window(vo,0);
     return event;
 }
 

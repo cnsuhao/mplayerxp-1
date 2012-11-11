@@ -187,23 +187,23 @@ static int __FASTCALL__ vd_ModeValid( unsigned mplayer_depth){
     return 0;
 }
 
-static char * __FASTCALL__ vd_GetModeString(int index){
+static char * __FASTCALL__ vd_GetModeString(int _index){
 
 #define VO_DGA_MAX_STRING_LEN 100
   static char stringbuf[VO_DGA_MAX_STRING_LEN];
   stringbuf[VO_DGA_MAX_STRING_LEN-1]=0;
   snprintf(stringbuf, VO_DGA_MAX_STRING_LEN-2,
     "depth=%d, bpp=%d, r=%06x, g=%06x, b=%06x, %s (-bpp %d)",
-    vo_dga_modes[index].vdm_depth,
-    vo_dga_modes[index].vdm_bitspp,
-    vo_dga_modes[index].vdm_rmask,
-    vo_dga_modes[index].vdm_gmask,
-    vo_dga_modes[index].vdm_bmask,
-    vo_dga_modes[index].vdm_supported ? 
-    (vo_dga_modes[index].vdm_conversion_func == VDM_CONV_NATIVE ? 
+    vo_dga_modes[_index].vdm_depth,
+    vo_dga_modes[_index].vdm_bitspp,
+    vo_dga_modes[_index].vdm_rmask,
+    vo_dga_modes[_index].vdm_gmask,
+    vo_dga_modes[_index].vdm_bmask,
+    vo_dga_modes[_index].vdm_supported ? 
+    (vo_dga_modes[_index].vdm_conversion_func == VDM_CONV_NATIVE ? 
         "native (fast),    " : "conversion (slow),") :
         "not supported :-( ",
-    vo_dga_modes[index].vdm_mplayer_depth);
+    vo_dga_modes[_index].vdm_mplayer_depth);
   return stringbuf;
 }
 
@@ -565,9 +565,9 @@ static void __FASTCALL__ xf86vm_select_mode(vo_data_t*vo, int dga_modenum )
 #endif
 #endif
 
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t height,
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,uint32_t height,
                       uint32_t d_width,uint32_t d_height,
-                      uint32_t flags,char *title,uint32_t format,const vo_tune_info_t *info )
+                      uint32_t flags,char *title,uint32_t format)
 {
     priv_t*priv=(priv_t*)vo->priv;
     unsigned wanted_width, wanted_height;
@@ -577,7 +577,6 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,  uint32_t heigh
     unsigned mX,mY;
 
     UNUSED(title);
-    UNUSED(info);
     if( priv->is_running ) return MPXP_False;
 
     priv->src_format = format;

@@ -26,7 +26,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt,any_t*tune){
+	unsigned int voflags, unsigned int outfmt){
     int flags=
           (gCpuCaps.hasMMX   ? PP_CPU_CAPS_MMX   : 0)
 	| (gCpuCaps.hasMMX2  ? PP_CPU_CAPS_MMX2  : 0)
@@ -42,7 +42,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     if(vf->priv->context) pp_free_context(vf->priv->context);
     vf->priv->context= pp2_get_context(width, height, flags);
 
-    return vf_next_config(vf,width,height,d_width,d_height,voflags,outfmt,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,voflags,outfmt);
 }
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){

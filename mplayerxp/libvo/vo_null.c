@@ -62,7 +62,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
     UNUSED(idx);
 }
 
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t fullscreen, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t fullscreen, char *title, uint32_t format)
 {
     priv_t*priv=(priv_t*)vo->priv;
     unsigned awidth;
@@ -76,44 +76,6 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     UNUSED(fullscreen);
     UNUSED(title);
     priv->pitch_y=priv->pitch_u=priv->pitch_v=1;
-    if(info) {
-	switch(((const vo_tune_info_t *)info)->pitch[0]) {
-	    case 2:
-	    case 4:
-	    case 8:
-	    case 16:
-	    case 32:
-	    case 64:
-	    case 128:
-	    case 256: priv->pitch_y = ((const vo_tune_info_t *)info)->pitch[0];
-		      break;
-	    default: break;
-	}
-	switch(((const vo_tune_info_t *)info)->pitch[1]) {
-	    case 2:
-	    case 4:
-	    case 8:
-	    case 16:
-	    case 32:
-	    case 64:
-	    case 128:
-	    case 256: priv->pitch_u = ((const vo_tune_info_t *)info)->pitch[1];
-		      break;
-	    default: break;
-	}
-	switch(((const vo_tune_info_t *)info)->pitch[2]) {
-	    case 2:
-	    case 4:
-	    case 8:
-	    case 16:
-	    case 32:
-	    case 64:
-	    case 128:
-	    case 256: priv->pitch_v = ((const vo_tune_info_t *)info)->pitch[2];
-		      break;
-	    default: break;
-	}
-    }
     priv->offset_y=priv->offset_u=priv->offset_v=0;
     switch(format) {
     case IMGFMT_Y800:

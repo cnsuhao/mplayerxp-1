@@ -364,7 +364,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src){
 
 int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt, any_t*tune){
+	unsigned int voflags, unsigned int outfmt){
     int miss;
     int flags=vf_next_query_format(vf,outfmt,d_width,d_height);
     vf->dw=width;
@@ -394,7 +394,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
 	vf->next=vf2;
     }
     vf_showlist(vf);
-    return vf->next->config(vf->next,width,height,d_width,d_height,voflags,outfmt,tune);
+    return vf->next->config(vf->next,width,height,d_width,d_height,voflags,outfmt);
 }
 
 int __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data){
@@ -617,7 +617,7 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
 	    if(vf_scaler->config(vf_scaler,sw,sh,
 				w,h,
 				VOFLAG_SWSCALE,
-				sfourcc,NULL)==0){
+				sfourcc)==0){
 		MSG_WARN(MSGTR_CannotInitVO);
 		vf_scaler=NULL;
 	    }

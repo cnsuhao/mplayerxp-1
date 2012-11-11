@@ -64,12 +64,6 @@ typedef struct vo_info_s
     const char *comment;	/**< any additional comments */
 } vo_info_t;
 
-/** Misc info to tuneup VO-driver */
-typedef struct vo_tune_info_s
-{
-    int	pitch[3]; /**< Picthes for image lines. Should be 0 if unknown else power of 2 */
-}vo_tune_info_t;
-
 /** Request for supported FOURCC by VO-driver */
 typedef struct vo_query_fourcc_s
 {
@@ -217,7 +211,7 @@ typedef struct vo_functions_s
          **/
         MPXP_Rc (* __FASTCALL__ config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 			 uint32_t d_height, uint32_t fullscreen, char *title,
-			 uint32_t format,const vo_tune_info_t *);
+			 uint32_t format);
 
 	/** Control interface
 	 * @param request	command. See VOCTRL_** for detail
@@ -253,7 +247,7 @@ extern const vo_info_t*	vo_get_info(vo_data_t* vo);
 extern MPXP_Rc  __FASTCALL__ vo_init(vo_data_t* vo,const char *subdevice_name);
 extern MPXP_Rc  __FASTCALL__ vo_config(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 				  uint32_t d_height, uint32_t fullscreen, char *title,
-				  uint32_t format,const vo_tune_info_t *);
+				  uint32_t format);
 extern uint32_t	 __FASTCALL__ vo_query_format(vo_data_t* vo,uint32_t* fourcc,unsigned src_w,unsigned src_h);
 extern MPXP_Rc		vo_reset(vo_data_t* vo);
 extern MPXP_Rc		vo_fullscreen(vo_data_t* vo);

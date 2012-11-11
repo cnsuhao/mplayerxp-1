@@ -185,7 +185,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(!load_lib("libmpeg2"SLIBSUFFIX)) return MPXP_False;
     priv=sh->context=mp_malloc(sizeof(priv_t));
     if(!(priv->mpeg2dec=mpeg2_init(mp_data->mplayer_accel))) return MPXP_False;
-    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput);
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput);
 }
 
 // uninit driver

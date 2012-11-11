@@ -163,7 +163,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(!load_syms(sh->codec->dll_name)) return MPXP_False;
 
     // only I420 supported
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput)) return MPXP_False;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput)) return MPXP_False;
     // init codec:
     sh->context=NULL;
     result=(*rvyuv_init)(&init_data, &sh->context);

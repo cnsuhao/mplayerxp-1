@@ -827,7 +827,7 @@ static void __FASTCALL__ vt_set_textarea(vo_data_t*vo,int u, int l)
 
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		uint32_t d_height, uint32_t fullscreen, char *title,
-		uint32_t format,const vo_tune_info_t *info)
+		uint32_t format)
 {
     priv_t*priv=(priv_t*)vo->priv;
     struct fb_cmap *cmap;
@@ -997,7 +997,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     if(vidix_name) {
 	if(vidix_init(vo,width,height,x_offset,y_offset,priv->out_width,
 		    priv->out_height,format,priv->bpp,
-		    priv->xres,priv->yres,info) != MPXP_Ok) {
+		    priv->xres,priv->yres) != MPXP_Ok) {
 			MSG_ERR(FBDEV "Can't initialize VIDIX driver\n");
 			vidix_name = NULL;
 			vidix_term(vo);

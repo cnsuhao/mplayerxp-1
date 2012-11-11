@@ -96,7 +96,7 @@ void vfm_help(void) {
 extern vo_data_t* vo_data;
 extern const vd_functions_t* mpvdec; // FIXME!
 
-MPXP_Rc mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t*tune, any_t* libinput){
+MPXP_Rc mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t* libinput){
     int i,j;
     unsigned int out_fmt=0;
     int screen_size_x=0;//SCREEN_SIZE_X;
@@ -250,16 +250,16 @@ csp_again:
     if(vf->config(vf,sh->src_w,sh->src_h,
 		screen_size_x,screen_size_y,
 		vo_data->flags,
-		out_fmt,tune)==0){
+		out_fmt)==0){
 		    MSG_WARN(MSGTR_CannotInitVO);
 		    sh->vfilter_inited=-1;
 		    return MPXP_False;
     }
-    MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s',%p)\n",
+    MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s')\n",
 	sh->src_w,sh->src_h,
 	screen_size_x,screen_size_y,
 	vo_data->flags,
-	vo_format_name(out_fmt),tune);
+	vo_format_name(out_fmt));
     return MPXP_True;
 }
 

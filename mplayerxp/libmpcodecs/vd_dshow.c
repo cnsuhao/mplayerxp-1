@@ -69,7 +69,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	MSG_HINT("package from:  ftp://mplayerhq.hu/MPlayer/releases/w32codec.zip  !\n");
 	return MPXP_False;
     }
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput)) return MPXP_False;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput)) return MPXP_False;
     out_fmt=sh->codec->outfmt[sh->outfmtidx];
     switch(out_fmt){
 	case IMGFMT_YUY2:

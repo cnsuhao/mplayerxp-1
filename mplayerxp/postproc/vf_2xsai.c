@@ -271,11 +271,11 @@ void Super2xSaI_ex(uint8_t *src, uint32_t src_pitch,
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt, any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 
     Init_2xSaI(outfmt&255);
 
-    return vf_next_config(vf,2*width,2*height,2*d_width,2*d_height,flags,outfmt,tune);
+    return vf_next_config(vf,2*width,2*height,2*d_width,2*d_height,flags,outfmt);
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){

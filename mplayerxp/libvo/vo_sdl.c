@@ -202,84 +202,40 @@ static void setenv(const char *name, const char *val, int _xx)
 #define SDL_SRF_UNLOCK(srf)
 #endif
 
+typedef enum {
+    YUV=0,
+    RGB,
+    BGR,
+    GL
+}sdl_mode_e;
+
 /** Private SDL Data structure **/
-
 typedef struct priv_s {
-
-	/* output driver used by sdl */
-	char driver[8];
-	
-	/* SDL display surface */
-	SDL_Surface *surface;
-	
-	/* SDL RGB surface */
-	SDL_Surface *rgbsurface[MAX_DRI_BUFFERS];
-	
-	/* SDL YUV overlay */
-	SDL_Overlay *overlay[MAX_DRI_BUFFERS];
-	
-	/* XP related indexes */
-	unsigned num_buffs;
-	
-	/* available fullscreen modes */
-	SDL_Rect **fullmodes;
-
-	/* surface attributes for fullscreen and windowed mode */
-	Uint32 sdlflags, sdlfullflags;
-
-	/* save the windowed output extents */
-	SDL_Rect windowsize;
-	
-	/* Bits per Pixel */
-	Uint8 bpp;
-
-	/* RGB or YUV? */
-#define YUV 0
-#define RGB 1
-#define BGR 2
-#define GL  3
-	Uint8 mode;
-
-	/* current fullscreen mode, 0 = highest available fullscreen mode */
-	int fullmode;
-
-	/* Flip image */
-	int flip;
-
-	/* fullscreen behaviour; see init */
-	int fulltype;
-
-	/* is X running (0/1) */
-	int X;
-
-	/* X11 Resolution */
-	int XWidth, XHeight;
-	
-        /* original image dimensions */
-	int width, height;
-
-	/* destination dimensions */
-	int dstwidth, dstheight;
-
-    /* Draw image at coordinate y on the SDL surfaces */
-    int y;
-
-    /* The image is displayed between those y coordinates in priv->surface */
-    int y_screen_top, y_screen_bottom;
-
-    /* 1 if the OSD has changed otherwise 0 */
-    int osd_has_changed;
-
-	/* source image format (YUV/RGB/...) */
-    uint32_t format;
-
+    char	driver[8]; /* output driver used by sdl */
+    SDL_Surface*surface; /* SDL display surface */
+    SDL_Surface*rgbsurface[MAX_DRI_BUFFERS]; /* SDL RGB surface */
+    SDL_Overlay*overlay[MAX_DRI_BUFFERS]; /* SDL YUV overlay */
+    unsigned	num_buffs; /* XP related indexes */
+    SDL_Rect**	fullmodes; /* available fullscreen modes */
+    Uint32	sdlflags, sdlfullflags; /* surface attributes for fullscreen and windowed mode */
+    SDL_Rect	windowsize; /* save the windowed output extents */
+    Uint8	bpp; /* Bits per Pixel */
+    sdl_mode_e	mode; /* RGB or YUV? */
+    int		fullmode; /* current fullscreen mode, 0 = highest available fullscreen mode */
+    int		flip; /* Flip image */
+    int		fulltype; /* fullscreen behaviour; see init */
+    int		X; /* is X running (0/1) */
+    int		XWidth, XHeight; /* X11 Resolution */
+    int		width, height; /* original image dimensions */
+    int		dstwidth, dstheight; /* destination dimensions */
+    int		y; /* Draw image at coordinate y on the SDL surfaces */
+    int		y_screen_top, y_screen_bottom; /* The image is displayed between those y coordinates in priv->surface */
+    int		osd_has_changed; /* 1 if the OSD has changed otherwise 0 */
+    uint32_t	format; /* source image format (YUV/RGB/...) */
     /* dirty_off_frame[0] contains a bounding box around the osd contents drawn above the image
        dirty_off_frame[1] is the corresponding thing for OSD contents drawn below the image
     */
-    SDL_Rect dirty_off_frame[2];
-
-    /* stride info from video decoder */
-    const vo_tune_info_t *info;
+    SDL_Rect	dirty_off_frame[2];
 }priv_t;
 
 static void __FASTCALL__ erase_area_4(int x_start, int width, int height, int pitch, uint32_t color, uint8_t* pixels);
@@ -565,14 +521,12 @@ static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
  *   returns : non-zero on success, zero on error.
  **/
 
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 //static int sdl_setup (int width, int height)
 {
     priv_t *priv = vo->priv;
     MPXP_Rc retval;
 
-    UNUSED(info);
-    priv->info=info;
     if(sdl_forcegl) priv->mode = GL;
     else
     switch(format){
@@ -749,7 +703,7 @@ static MPXP_Rc setup_surfaces( vo_data_t*vo )
     else {
 	if(vidix_init(vo,priv->width,priv->height,0,priv->y,
 			priv->dstwidth,priv->dstheight,priv->format,priv->bpp,
-			priv->XWidth,priv->XHeight,priv->info) != MPXP_Ok) {
+			priv->XWidth,priv->XHeight) != MPXP_Ok) {
 	    MSG_ERR("vo_sdl: Can't initialize VIDIX driver\n");
 	    vidix_name = NULL;
 	    return MPXP_False;

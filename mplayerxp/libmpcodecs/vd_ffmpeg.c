@@ -186,30 +186,6 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static MPXP_Rc ff_config_vo(sh_video_t *sh,uint32_t w,uint32_t h,any_t* libinput)
-{
-    priv_t *priv=sh->context;
-    vo_tune_info_t vfi;
-    if(!priv->vo_inited) {
-	unsigned halign=15,valign=15;
-	vfi.pitch[0]=32;
-	vfi.pitch[1]=
-	vfi.pitch[2]=16;
-	if(priv->ctx->pix_fmt == PIX_FMT_YUV410P && priv->cap_dr1) {
-	    //yes seriously, its really needed (16x16 chroma blocks in SVQ1 -> 64x64)
-	    valign=63;
-	    vfi.pitch[0]=64;
-	    vfi.pitch[1]=
-	    vfi.pitch[2]=16;
-	}
-	sh->src_w=w;//(w+valign)&(~valign);
-	sh->src_h=(h+halign)&(~halign);
-	priv->vo_inited=1;
-	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,&vfi,libinput);
-    }
-    return MPXP_Ok;
-}
-
 static MPXP_Rc find_vdecoder(sh_video_t* sh) {
     unsigned i;
     unsigned char flag = CODECS_FLAG_NOFLIP;
@@ -420,7 +396,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	}
 	if(pp_flags) ppContext=pp2_get_context(sh->src_w,sh->src_h,pp_flags);
     }
-    return ff_config_vo(sh,sh->src_w,sh->src_h,libinput);
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput);
 }
 
 // uninit driver

@@ -34,7 +34,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
     unsigned h,dh;
     vf->priv->w=width;
     vf->priv->h=height;
@@ -42,7 +42,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	vf->priv->dn_h=vf->priv->up_h=(get_osd_height(vo_data,OSD_PB_START,0)*4)/3;
     h=height+vf->priv->up_h+vf->priv->dn_h;
     dh=d_height+vf->priv->up_h+vf->priv->dn_h;
-    return vf_next_config(vf,width,h,d_width,dh,flags,outfmt,tune);
+    return vf_next_config(vf,width,h,d_width,dh,flags,outfmt);
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){

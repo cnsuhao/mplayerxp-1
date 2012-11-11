@@ -125,9 +125,9 @@ static void __FASTCALL__ delogo(uint8_t *dst, uint8_t *src, int dstStride, int s
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
 		  int width, int height, int d_width, int d_height,
-		  unsigned int flags, unsigned int outfmt,any_t*tune){
+		  unsigned int flags, unsigned int outfmt){
 
-    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 

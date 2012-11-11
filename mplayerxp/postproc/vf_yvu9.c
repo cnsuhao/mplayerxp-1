@@ -17,14 +17,14 @@
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 
     if(vf_next_query_format(vf,IMGFMT_YV12,d_width,d_height)<=0){
 	MSG_ERR("yv12 isn't supported by next filter/vo :(\n");
 	return 0;
     }
 
-    return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YV12,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YV12);
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){

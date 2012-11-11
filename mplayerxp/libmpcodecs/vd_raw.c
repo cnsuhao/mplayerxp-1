@@ -42,7 +42,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	    MSG_WARN("RAW: depth %d not supported\n",sh->bih->biBitCount);
 	}
     }
-    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput);
+    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput);
 }
 
 // uninit driver

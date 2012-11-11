@@ -34,7 +34,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
     unsigned w,h,d_w,d_h;
     vf->priv->org_w=width;
     vf->priv->org_h=height;
@@ -82,7 +82,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     }
     vf->priv->fmt=outfmt;
     MSG_DBG2("w,h=%i %i org_w,h=%i %i\n",w,h,vf->priv->org_w,vf->priv->org_h);
-    return vf_next_config(vf,w,h,d_w,d_h,flags,outfmt,tune);
+    return vf_next_config(vf,w,h,d_w,d_h,flags,outfmt);
 }
 
 
@@ -219,7 +219,7 @@ const vf_info_t vf_info_panscan = {
 //===========================================================================//
 static int __FASTCALL__ crop_config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
     unsigned w,h,d_w,d_h;
     vf->priv->org_w=width;
     vf->priv->org_h=height;
@@ -248,7 +248,7 @@ static int __FASTCALL__ crop_config(struct vf_instance_s* vf,
     }
     d_w=(float)d_width*vf->priv->ps_w/width;
     d_h=(float)d_height*vf->priv->ps_h/height;
-    return vf_next_config(vf,w,h,d_w,d_h,flags,outfmt,tune);
+    return vf_next_config(vf,w,h,d_w,d_h,flags,outfmt);
 }
 
 static MPXP_Rc __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args){

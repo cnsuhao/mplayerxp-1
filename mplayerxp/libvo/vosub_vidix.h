@@ -18,7 +18,7 @@ MPXP_Rc	 __FASTCALL__ vidix_preinit(vo_data_t* vo,const char *drvname,const any_
 MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t*,unsigned src_width,unsigned src_height,
 		    unsigned dest_x,unsigned dest_y,unsigned dst_width,
 		    unsigned dst_height,unsigned format,unsigned dest_bpp,
-		    unsigned vid_w,unsigned vid_h,const any_t*info);
+		    unsigned vid_w,unsigned vid_h);
 int	 vidix_start(vo_data_t*);
 int	 vidix_stop(vo_data_t*);
 void     vidix_term(vo_data_t*);

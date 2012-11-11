@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "mp_config.h"
 #include "pp_msg.h"
 
 #include "xmpcore/mp_image.h"
@@ -32,9 +32,9 @@
 
 static int __FASTCALL__ config(struct vf_instance_s *vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
     flags&=~VOFLAG_FLIPPING; // remove the FLIP flag
-    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 static int __FASTCALL__ put_slice(struct vf_instance_s *vf, mp_image_t *mpi){

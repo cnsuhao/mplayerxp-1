@@ -111,7 +111,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjus
    return ret;
 }
 
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format,const vo_tune_info_t *info)
+static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format)
 {
     priv_t* priv=(priv_t*)vo->priv;
     // int interval, prefer_blank, allow_exp, nothing;
@@ -123,8 +123,6 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     XSetWindowAttributes xswa;
     unsigned long xswamask;
     unsigned i;
-
-    UNUSED(info);
 
     priv->num_buffers=vo_conf.xp_buffs;
 

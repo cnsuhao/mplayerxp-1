@@ -288,9 +288,9 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     }
     MSG_V("imgfmt: %s qt_imgfmt: %.4s\n", vo_format_name(imgfmt), &qt_imgfmt);
     sh->context = qt_imgfmt;
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput)) return MPXP_False;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput)) return MPXP_False;
 #else
-    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput)) return MPXP_False;
+    if(!mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput)) return MPXP_False;
 #endif
     return MPXP_Ok;
 }

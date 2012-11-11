@@ -354,7 +354,7 @@ static int __FASTCALL__ allocStuff(FilterParam *f, int width, int height){
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 	
 	int sw, sh;
 
@@ -365,7 +365,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	if(vf->priv->allocStuff)
 	    vf->priv->allocStuff(&vf->priv->chroma, width>>sw, height>>sh);
 
-	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 static void __FASTCALL__ freeBuffers(FilterParam *f){

@@ -18,7 +18,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune)
+	unsigned int flags, unsigned int outfmt)
 {
 	if(vf->priv->aspect==768.)
 	{
@@ -37,7 +37,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 			d_width = width;
 		}
 	}
-	return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt, tune);
+	return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt);
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)

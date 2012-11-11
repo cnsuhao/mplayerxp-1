@@ -314,7 +314,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput)
     switch (priv->bitmaptype) {
 	case BMPTYPE_RGB:
 	case BMPTYPE_YUV:
-	    vo_ret = mpcodecs_config_vo(sh,sh->src_w,sh->src_h,NULL,libinput);
+	    vo_ret = mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput);
 	    break;
 	case BMPTYPE_RGBA:
 	    MSG_ERR( "[HuffYUV] RGBA not supported yet.\n");

@@ -155,7 +155,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 
 static int __FASTCALL__ config( struct vf_instance_s* vf,
 		   int width, int height, int d_width, int d_height,
-		   unsigned int flags, unsigned int outfmt,any_t*tune) {
+		   unsigned int flags, unsigned int outfmt) {
 
     int z, stepsX, stepsY;
     FilterParam *fp;
@@ -176,7 +176,7 @@ static int __FASTCALL__ config( struct vf_instance_s* vf,
     for( z=0; z<2*stepsY; z++ )
 	fp->SC[z] = mp_memalign( 16, sizeof(*(fp->SC[z])) * (width+2*stepsX) );
 
-    return vf_next_config( vf, width, height, d_width, d_height, flags, outfmt, tune);
+    return vf_next_config( vf, width, height, d_width, d_height, flags, outfmt);
 }
 
 //===========================================================================//

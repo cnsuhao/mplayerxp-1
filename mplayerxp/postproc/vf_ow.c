@@ -204,7 +204,7 @@ static void __FASTCALL__ filter(struct vf_priv_s *p, uint8_t *dst, uint8_t *src,
 //    printf("%f\n", sum/height/width);
 }
 
-static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height, unsigned int flags, unsigned int outfmt, any_t*tune){
+static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height, unsigned int flags, unsigned int outfmt){
     int h= (height+15)&(~15);
     int i,j;
 
@@ -213,8 +213,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf, int width, int height, 
         for(i=0; i<=vf->priv->depth; i++)
             vf->priv->plane[i][j]= mp_malloc(vf->priv->stride*h*sizeof(vf->priv->plane[0][0][0]));
     }
-
-    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){

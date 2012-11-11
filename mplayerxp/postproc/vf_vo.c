@@ -43,7 +43,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 
     if ((width <= 0) || (height <= 0) || (d_width <= 0) || (d_height <= 0))
     {
@@ -63,7 +63,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps=query_format(vf,outfmt,d_width,d_height);// & VFCAP_ACCEPT_STRIDE;
 
-    if(MPXP_Ok!=vo_config(vo_data,width,height,d_width,d_height,flags,"MPlayerXP",outfmt,tune))
+    if(MPXP_Ok!=vo_config(vo_data,width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
 	return 0;
     vf->priv->is_planar=vo_describe_fourcc(outfmt,&vf->priv->vd);
     vf->dw=d_width;
@@ -73,7 +73,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     return 1;
 }
 
-static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data)
+static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request,any_t* data)
 {
     MSG_DBG2("vf_control: %u\n",request);
     switch(request){

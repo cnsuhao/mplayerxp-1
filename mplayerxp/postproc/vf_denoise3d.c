@@ -57,14 +57,14 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
 
 	uninit(vf);
         vf->priv->Line = mp_malloc(width*sizeof(int));
 	vf->priv->pmpi=NULL;
 //        vf->default_caps &= !VFCAP_ACCEPT_STRIDE;
 
-	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt,tune);
+	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 #define LowPass(Prev, Curr, Coef) (Curr + Coef[Prev - Curr])

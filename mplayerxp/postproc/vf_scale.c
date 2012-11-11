@@ -130,7 +130,7 @@ static void __FASTCALL__ print_conf_fmtcvt(struct vf_instance_s* vf)
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
         int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt,any_t*tune){
+	unsigned int flags, unsigned int outfmt){
     unsigned int best=find_best_out(vf,d_width,d_height);
     int vo_flags;
     int int_sws_flags=0;
@@ -303,7 +303,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	//d_width=d_width*vf->priv->w/width;
 	//d_height=d_height*vf->priv->h/height;
     }
-    return vf_next_config(vf,vf->priv->w,vf->priv->h,d_width,d_height,flags,best,tune);
+    return vf_next_config(vf,vf->priv->w,vf->priv->h,d_width,d_height,flags,best);
 }
 
 static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2, const uint8_t *src[3], int src_stride[3], int y, int h,
