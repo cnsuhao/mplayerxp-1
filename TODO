@@ -1,5 +1,6 @@
 TODO for mplayerxp:
 
+- replace suspect codecs.conf with built-in database
 - remove all #define with values (they maybe intercepted in other .h files)
 - add anti-viral protection for QOS("Query of Service") to not be a virus' servant
 - add passport control for drivers as one of anti-viral traps.
