@@ -125,14 +125,14 @@ int af_reinit(af_stream_t* s, af_instance_t* af);
    to the stream s. The filter will be inserted somewhere nice in the
    list of filters. The return value is a pointer to the new filter,
    If the filter couldn't be added the return value is NULL. */
-af_instance_t* af_add(af_stream_t* s, char* name);
+af_instance_t* af_add(af_stream_t* s,const char* name);
 
 // Uninit and remove the filter "af"
 void af_remove(af_stream_t* s, af_instance_t* af);
 
 /* Find filter in the dynamic filter list using it's name This
    function is used for finding already initialized filters */
-af_instance_t* __FASTCALL__ af_get(af_stream_t* s, char* name);
+af_instance_t* __FASTCALL__ af_get(af_stream_t* s,const char* name);
 
 // Filter data chunk through the filters in the list
 mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s, mp_aframe_t* data);

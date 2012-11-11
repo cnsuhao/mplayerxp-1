@@ -34,8 +34,7 @@ extern const ad_functions_t mpcodecs_ad_twin;
 extern const ad_functions_t mpcodecs_ad_dmo;
 extern const ad_functions_t mpcodecs_ad_qtaudio;
 
-const ad_functions_t* mpcodecs_ad_drivers[] = {
-    &mpcodecs_ad_null,
+static const ad_functions_t* mpcodecs_ad_drivers[] = {
     &mpcodecs_ad_mp3,
     &mpcodecs_ad_a52,
     &mpcodecs_ad_dca,
@@ -58,20 +57,31 @@ const ad_functions_t* mpcodecs_ad_drivers[] = {
     &mpcodecs_ad_dmo,
     &mpcodecs_ad_qtaudio,
 #endif
-    NULL
+    &mpcodecs_ad_null,
+
 };
 
 static unsigned int nddrivers=sizeof(mpcodecs_ad_drivers)/sizeof(ad_functions_t*);
 
 void libmpcodecs_ad_register_options(m_config_t* cfg)
 {
-  unsigned i;
-  for(i=0;i<nddrivers;i++)
-  {
-    if(mpcodecs_ad_drivers[i])
-	if(mpcodecs_ad_drivers[i]->options)
-	    m_config_register_options(cfg,mpcodecs_ad_drivers[i]->options);
-  }
+    unsigned i;
+    for(i=0;i<nddrivers;i++) {
+	if(mpcodecs_ad_drivers[i])
+	    if(mpcodecs_ad_drivers[i]->options)
+		m_config_register_options(cfg,mpcodecs_ad_drivers[i]->options);
+	if(mpcodecs_ad_drivers[i]==&mpcodecs_ad_null) break;
+    }
+}
+
+const ad_functions_t* afm_find_driver(const char *name) {
+    unsigned i;
+    for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
+	if(strcmp(mpcodecs_ad_drivers[i]->info->driver_name,name)==0){
+	    return mpcodecs_ad_drivers[i];
+	}
+    }
+    return NULL;
 }
 
 void afm_help(void) {

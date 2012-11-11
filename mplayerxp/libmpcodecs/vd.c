@@ -41,8 +41,7 @@ extern const vd_functions_t mpcodecs_vd_dmo;
 extern const vd_functions_t mpcodecs_vd_qtvideo;
 extern const vd_functions_t mpcodecs_vd_theora;
 
-const vd_functions_t* mpcodecs_vd_drivers[] = {
-    &mpcodecs_vd_null,
+static const vd_functions_t* mpcodecs_vd_drivers[] = {
     &mpcodecs_vd_ffmpeg,
 #ifdef HAVE_WIN32LOADER
     &mpcodecs_vd_dshow,
@@ -66,6 +65,7 @@ const vd_functions_t* mpcodecs_vd_drivers[] = {
 #ifdef HAVE_LIBDV
     &mpcodecs_vd_libdv,
 #endif
+    &mpcodecs_vd_null,
     NULL
 };
 static unsigned int nddrivers=sizeof(mpcodecs_vd_drivers)/sizeof(vd_functions_t*);
@@ -77,7 +77,16 @@ void libmpcodecs_vd_register_options(m_config_t* cfg)
 	if(mpcodecs_vd_drivers[i])
 	    if(mpcodecs_vd_drivers[i]->options)
 		m_config_register_options(cfg,mpcodecs_vd_drivers[i]->options);
+	if(mpcodecs_vd_drivers[i]==&mpcodecs_vd_null) break;
     }
+}
+
+const vd_functions_t* vfm_find_driver(const char *name) {
+    unsigned i;
+    for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++)
+	if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,name)==0)
+	    return mpcodecs_vd_drivers[i];
+    return NULL;
 }
 
 void vfm_help(void) {

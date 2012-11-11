@@ -40,8 +40,9 @@ extern const af_info_t af_info_raw;
 extern const af_info_t af_info_karaoke;
 extern const af_info_t af_info_sinesuppress;
 extern const af_info_t af_info_scaletempo;
+extern const af_info_t af_info_null;
 
-static const af_info_t* filter_list[]={ 
+static const af_info_t* filter_list[]={
    &af_info_ao,
    &af_info_center,
    &af_info_channels,
@@ -72,6 +73,7 @@ static const af_info_t* filter_list[]={
    &af_info_ffenc,
    &af_info_scaletempo,
    &af_info_raw,
+   &af_info_null,
    NULL
 };
 
@@ -80,10 +82,10 @@ int* af_cpu_speed = NULL;
 
 /* Find a filter in the static list of filters using it's name. This
    function is used internally */
-static const af_info_t* __FASTCALL__ af_find(char*name)
+static const af_info_t* __FASTCALL__ af_find(const char* name)
 {
   int i=0;
-  while(filter_list[i]){
+  while(filter_list[i]!=&af_info_null){
     if(!strcmp(filter_list[i]->name,name))
       return filter_list[i];
     i++;
@@ -94,7 +96,7 @@ static const af_info_t* __FASTCALL__ af_find(char*name)
 
 /* Find filter in the dynamic filter list using it's name This
    function is used for finding already initialized filters */
-af_instance_t* __FASTCALL__ af_get(af_stream_t* s, char* name)
+af_instance_t* __FASTCALL__ af_get(af_stream_t* s,const char* name)
 {
   af_instance_t* af=s->first;
   // Find the filter
@@ -108,7 +110,7 @@ af_instance_t* __FASTCALL__ af_get(af_stream_t* s, char* name)
 
 /*/ Function for creating a new filter of type name. The name may
   contain the commandline parameters for the filter */
-static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
+static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
 {
   char* cmdline = name;
 
@@ -159,7 +161,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s, char* name)
 /* Create and insert a new filter of type name before the filter in the
    argument. This function can be called during runtime, the return
    value is the new filter */
-static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af, char* name)
+static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,const char* name)
 {
   // Create the new filter and make sure it is OK
   af_instance_t* new=af_create(s,name);
@@ -184,7 +186,7 @@ static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,
 /* Create and insert a new filter of type name after the filter in the
    argument. This function can be called during runtime, the return
    value is the new filter */
-af_instance_t* af_append(af_stream_t* s, af_instance_t* af, char* name)
+static af_instance_t* af_append(af_stream_t* s, af_instance_t* af,const char* name)
 {
   // Create the new filter and make sure it is OK
   af_instance_t* new=af_create(s,name);
@@ -325,8 +327,8 @@ int af_reinit(af_stream_t* s, af_instance_t* af)
     }
     // Check if there are any filters left in the list
     if(NULL == af){
-      if(!(af=af_append(s,s->first,"dummy"))) 
-	return -1; 
+      if(!(af=af_append(s,s->first,"dummy")))
+	return -1;
     }
     else
       af=af->next;
@@ -476,7 +478,7 @@ MPXP_Rc af_init(af_stream_t* s, int force_output)
    to the stream s. The filter will be inserted somewhere nice in the
    list of filters. The return value is a pointer to the new filter,
    If the filter couldn't be added the return value is NULL. */
-af_instance_t* af_add(af_stream_t* s, char* name){
+af_instance_t* af_add(af_stream_t* s,const char* name){
   af_instance_t* new;
   // Sanity check
   if(!s || !s->first || !name)

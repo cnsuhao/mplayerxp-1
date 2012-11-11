@@ -53,8 +53,9 @@ extern demuxer_driver_t demux_mpgts;
 extern demuxer_driver_t demux_ty;
 extern demuxer_driver_t demux_audio;
 extern demuxer_driver_t demux_lavf;
+extern demuxer_driver_t demux_null;
 
-static demuxer_driver_t *ddrivers[] =
+static const demuxer_driver_t *ddrivers[] =
 {
     &demux_rawaudio,
     &demux_rawvideo,
@@ -84,27 +85,27 @@ static demuxer_driver_t *ddrivers[] =
     &demux_audio,
     &demux_mpgts,
     &demux_ty,
-    &demux_lavf
+    &demux_lavf,
+    &demux_null,
+    NULL
 };
-static unsigned int nddrivers=sizeof(ddrivers)/sizeof(demuxer_driver_t*);
 
 typedef struct demuxer_info_st {
-  char *id[INFOT_MAX];
+    char *id[INFOT_MAX];
 } demuxer_info_t;
 
 void libmpdemux_register_options(m_config_t* cfg)
 {
-  unsigned i;
-  for(i=0;i<nddrivers;i++)
-  {
-    if(ddrivers[i]->options)
-	m_config_register_options(cfg,ddrivers[i]->options);
-  }
+    unsigned i;
+    for(i=0;ddrivers[i];i++) {
+	if(ddrivers[i]->options)
+	    m_config_register_options(cfg,ddrivers[i]->options);
+	if(ddrivers[i]==&demux_null) break;
+    }
 }
 
 void free_demuxer_stream(demux_stream_t *ds){
-    if(ds)
-    {
+    if(ds) {
 	ds_free_packs(ds);
 	mp_free(ds);
     }
@@ -159,8 +160,7 @@ demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
 
 sh_audio_t *get_sh_audio(demuxer_t *demuxer, int id)
 {
-    if(id > MAX_A_STREAMS-1 || id < 0)
-    {
+    if(id > MAX_A_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested audio stream id overflow (%d > %d)\n",
 	    id, MAX_A_STREAMS);
 	return NULL;
@@ -169,13 +169,12 @@ sh_audio_t *get_sh_audio(demuxer_t *demuxer, int id)
 }
 
 sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
-    if(id > MAX_A_STREAMS-1 || id < 0)
-    {
+    if(id > MAX_A_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested audio stream id overflow (%d > %d)\n",
 	    id, MAX_A_STREAMS);
 	return NULL;
     }
-    if(demuxer->a_streams[id]){
+    if(demuxer->a_streams[id]) {
         MSG_WARN(MSGTR_AudioStreamRedefined,id);
     } else {
         sh_audio_t *sh;
@@ -199,8 +198,7 @@ void free_sh_audio(sh_audio_t* sh){
 
 sh_video_t *get_sh_video(demuxer_t *demuxer, int id)
 {
-    if(id > MAX_V_STREAMS-1 || id < 0)
-    {
+    if(id > MAX_V_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested video stream id overflow (%d > %d)\n",
 	    id, MAX_V_STREAMS);
 	return NULL;
@@ -209,13 +207,12 @@ sh_video_t *get_sh_video(demuxer_t *demuxer, int id)
 }
 
 sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
-    if(id > MAX_V_STREAMS-1 || id < 0)
-    {
+    if(id > MAX_V_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested video stream id overflow (%d > %d)\n",
 	    id, MAX_V_STREAMS);
 	return NULL;
     }
-    if(demuxer->v_streams[id]){
+    if(demuxer->v_streams[id]) {
         MSG_WARN(MSGTR_VideoStreamRedefined,id);
     } else {
         MSG_V("==> Found video stream: %d\n",id);
@@ -263,11 +260,10 @@ void ds_add_packet(demux_stream_t *ds,demux_packet_t* dp){
 //    dp->pts=pts; //(float)pts/90000.0f;
 //    dp->pos=pos;
     // append packet to DS stream:
-    if(dp->len>0)
-    {
+    if(dp->len>0) {
 	++ds->packs;
 	ds->bytes+=dp->len;
-	if(ds->last){
+	if(ds->last) {
 	    // next packet in stream
 	    ds->last->next=dp;
 	    ds->last=dp;
@@ -309,7 +305,7 @@ int ds_fill_buffer(demux_stream_t *ds){
   demuxer_t *demux=ds->demuxer;
   if(ds->buffer) mp_free(ds->buffer);
 /*  ds_free_packs(ds); */
-  if(mp_conf.verbose>2){
+  if(mp_conf.verbose>2) {
     if(ds==demux->audio)
 	MSG_DBG3("ds_fill_buffer(d_audio) called\n");
     else
@@ -543,16 +539,14 @@ static demuxer_t* demux_open_stream(stream_t *stream,int file_format,int audio_i
     pts_from_bps=0;
     demux_aid_vid_mismatch = 0;
     i=0;
-    again:
-    for(;i<nddrivers;i++)
-    {
+again:
+    for(;ddrivers[i]!=&demux_null;i++) {
 	/* don't remove it from loop!!! (for initializing) */
 	demuxer = new_demuxer(stream,DEMUXER_TYPE_UNKNOWN,audio_id,video_id,dvdsub_id);
 	MSG_V("Probing %s ... ",ddrivers[i]->name);
 	stream_reset(demuxer->stream);
 	stream_seek(demuxer->stream,demuxer->stream->start_pos);
-	if(ddrivers[i]->probe(demuxer))
-	{
+	if(ddrivers[i]->probe(demuxer)) {
 	    MSG_V("OK\n");
 	    demuxer->driver = ddrivers[i];
 	    break;
@@ -560,15 +554,13 @@ static demuxer_t* demux_open_stream(stream_t *stream,int file_format,int audio_i
 	MSG_V("False\n");
 	FREE_DEMUXER(demuxer);
     }
-    if(!demuxer || !demuxer->driver)
-    {
+    if(!demuxer || !demuxer->driver) {
 	MSG_ERR(MSGTR_FormatNotRecognized);
         FREE_DEMUXER(demuxer);
 	return NULL;
     }
 
-    if(!(new_demux=demuxer->driver->open(demuxer)))
-    {
+    if(!(new_demux=demuxer->driver->open(demuxer))) {
 	MSG_ERR("Can't open stream with '%s'\n", demuxer->driver->name);
 	demuxer->driver=NULL;
 	i++;
@@ -577,13 +569,10 @@ static demuxer_t* demux_open_stream(stream_t *stream,int file_format,int audio_i
     demuxer=new_demux;
     MSG_OK("Using: %s\n",demuxer->driver->name);
     for(i=0;i<sizeof(stream_txt_ids)/sizeof(struct s_stream_txt_ids);i++)
-    if(!demux_info_get(demuxer,stream_txt_ids[i].demuxer_id))
-    {
+    if(!demux_info_get(demuxer,stream_txt_ids[i].demuxer_id)) {
 	char stream_name[256];
-	if(demuxer->stream->driver->control)
-	{
-	    if(demuxer->stream->driver->control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == SCTRL_OK)
-	    {
+	if(demuxer->stream->driver->control) {
+	    if(demuxer->stream->driver->control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == SCTRL_OK) {
 		demux_info_add(demuxer,stream_txt_ids[i].demuxer_id,stream_name);
 	    }
 	}

@@ -39,7 +39,7 @@ SRCS += demux_nuv.c demux_film.c demux_roq.c demux_audio.c demux_demuxers.c
 SRCS += mpdemux.c demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
 SRCS += demux_pva.c demux_rawvideo.c demux_smjpeg.c demux_ts.c demux_ty.c demux_nsv.c
 SRCS += demux_mkv.c demux_mpxp64.c sub_cc.c sub_ty.c
-SRCS += demux_lavf.c
+SRCS += demux_lavf.c demux_null.c
 ifeq ($(HAVE_LIBVORBIS),yes)
 SRCS += demux_ogg.c
 endif

@@ -173,11 +173,12 @@ static char * addr2line(bt_cache_t* cache,any_t*ptr) {
     }
     return NULL;
 }
-static __always_inline void print_backtrace(void) {
+
+static __always_inline void __print_backtrace(unsigned num) {
     bt_cache_t* cache=init_bt_cache();
-    any_t*	calls[10];
+    any_t*	calls[num];
     unsigned	i,ncalls;
-    ncalls=backtrace(calls,10);
+    ncalls=backtrace(calls,num);
     MSG_INFO("*** Backtrace for suspect call ***\n");
     for(i=0;i<ncalls;i++) {
 	MSG_INFO("    %p -> %s\n",calls[i],addr2line(cache,calls[i]));
@@ -185,13 +186,15 @@ static __always_inline void print_backtrace(void) {
     uninit_bt_cache(cache);
 }
 
+void print_backtrace(unsigned num) { __print_backtrace(num); }
+
 static void __prot_free_append(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
 	printf("[__prot_free_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
-	print_backtrace();
+	__print_backtrace(10);
 	kill(getpid(), SIGILL);
     }
     size_t fullsize=app_fullsize(slot->size);
@@ -208,7 +211,7 @@ static any_t* __prot_realloc_append(any_t*ptr,size_t size) {
 	if(!slot) {
 	    printf("[__prot_realloc_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
-	    print_backtrace();
+	    __print_backtrace(10);
 	    kill(getpid(), SIGILL);
 	}
 	memcpy(rp,ptr,min(slot->size,size));
@@ -242,7 +245,7 @@ static void __prot_free_prepend(any_t*ptr) {
     if(!slot) {
 	printf("[__prot_free_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
-	print_backtrace();
+	__print_backtrace(10);
 	kill(getpid(), SIGILL);
     }
     mprotect(page_ptr,__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
@@ -257,7 +260,7 @@ static any_t* __prot_realloc_prepend(any_t*ptr,size_t size) {
 	if(!slot) {
 	    printf("[__prot_realloc_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,pre_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
-	    print_backtrace();
+	    __print_backtrace(10);
 	    kill(getpid(), SIGILL);
 	}
 	memcpy(rp,ptr,min(slot->size,size));
@@ -489,5 +492,5 @@ char *	mp_strdup(const char *src) {
 
 int __FASTCALL__ mp_mprotect(const any_t* addr,size_t len,enum mp_prot_e flags)
 {
-    return mprotect(addr,len,flags);
+    return mprotect((any_t*)addr,len,flags);
 }

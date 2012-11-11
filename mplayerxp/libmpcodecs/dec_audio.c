@@ -28,23 +28,9 @@ af_cfg_t af_cfg; // Configuration for audio filters
 
 static const ad_functions_t* mpadec;
 
-const ad_functions_t* mpca_find_driver(const char *name) {
-    unsigned i;
-    for (i=0; mpcodecs_ad_drivers[i] != NULL; i++) {
-	if(strcmp(mpcodecs_ad_drivers[i]->info->driver_name,name)==0){
-	    return mpcodecs_ad_drivers[i];
-	}
-    }
-    return NULL;
-}
-
 MPXP_Rc mpca_init(sh_audio_t *sh_audio)
 {
-    unsigned i;
-    for (i=0; mpcodecs_ad_drivers[i] != NULL; i++)
-	if(strcmp(mpcodecs_ad_drivers[i]->info->driver_name,sh_audio->codec->driver_name)==0){
-	    mpadec=mpcodecs_ad_drivers[i]; break;
-	}
+    mpadec=afm_find_driver(sh_audio->codec->driver_name);
     if(!mpadec){
 	MSG_ERR(MSGTR_CODEC_BAD_AFAMILY,sh_audio->codec->codec_name, sh_audio->codec->driver_name);
 	return MPXP_False; // no such driver

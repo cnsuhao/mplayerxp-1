@@ -57,6 +57,7 @@ extern const vf_info_t vf_info_vo;
 extern const vf_info_t vf_info_yuvcsp;
 extern const vf_info_t vf_info_yuy2;
 extern const vf_info_t vf_info_yvu9;
+extern const vf_info_t vf_info_null;
 
 // list of available filters:
 static const vf_info_t* filter_list[]={
@@ -98,6 +99,7 @@ static const vf_info_t* filter_list[]={
     &vf_info_yuvcsp,
     &vf_info_yuy2,
     &vf_info_yvu9,
+    &vf_info_null,
     NULL
 };
 
@@ -278,18 +280,18 @@ static int __FASTCALL__ vf_default_query_format(struct vf_instance_s* vf, unsign
   return 1;//vf_next_query_format(vf,fmt,w,h);
 }
 
-vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_instance_t* next,sh_video_t *sh,char *name, char *args,any_t* libinput){
+static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t* libinput){
     vf_instance_t* vf;
     int i;
     for(i=0;;i++){
-	if(!_filter_list[i]){
+	if(filter_list[i]==&vf_info_null){
 	    MSG_ERR("Can't find video filter: %s\n",name);
 	    return NULL; // no such filter!
 	}
-	if(!strcmp(_filter_list[i]->name,name)) break;
+	if(!strcmp(filter_list[i]->name,name)) break;
     }
     vf=mp_mallocz(sizeof(vf_instance_t));
-    vf->info=_filter_list[i];
+    vf->info=filter_list[i];
     vf->next=next;
     vf->prev=NULL;
     vf->config=vf_next_config;
@@ -310,11 +312,11 @@ vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** _filter_list,vf_ins
     return NULL;
 }
 
-vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,char *name, char *args,any_t*libinput){
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t*libinput){
   if(strcmp(name,"vo")) {
       MSG_V("Open video filter: [%s]\n", name);
   }
-  return vf_open_plugin(filter_list,next,sh,name,args,libinput);
+  return vf_open_plugin(next,sh,name,args,libinput);
 }
 
 //============================================================================
@@ -422,9 +424,6 @@ int __FASTCALL__ vf_next_put_slice(struct vf_instance_s* vf,mp_image_t *mpi){
 //============================================================================
 
 vf_instance_t* __FASTCALL__ append_filters(vf_instance_t* last){
-  vf_instance_t* vf;
-  int i; 
-
   return last;
 }
 
@@ -475,7 +474,7 @@ vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh,any_t* libinput)
 	arg=strchr(vf_last,'=');
 	if(arg) { *arg=0; arg++; }
 	MSG_V("Attach filter %s\n",vf_last);
-	vfi=vf_open_plugin(filter_list,vfi,sh,vf_last,arg,libinput);
+	vfi=vf_open_plugin(vfi,sh,vf_last,arg,libinput);
 	if(!vfi) vfi=vfi_prev;
 	vfi_prev=vfi;
     }

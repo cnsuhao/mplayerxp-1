@@ -66,7 +66,7 @@ extern vo_functions_t video_out_vesa;
 extern vo_functions_t video_out_xvidix;
 #endif
 
-const vo_functions_t* video_out_drivers[] =
+static const vo_functions_t* video_out_drivers[] =
 {
 #ifdef HAVE_XV
         &video_out_xv,
@@ -152,17 +152,16 @@ void vo_print_help(vo_data_t*vo)
 
 const vo_functions_t *vo_register(vo_data_t*vo,const char *driver_name)
 {
-  unsigned i;
-  if(!driver_name)
-    video_out=video_out_drivers[0];
-  else
-  for (i=0; video_out_drivers[i] != NULL; i++){
-    const vo_info_t *info = video_out_drivers[i]->get_info (vo);
-    if(strcmp(info->short_name,driver_name) == 0){
-      video_out = video_out_drivers[i];break;
+    unsigned i;
+    if(!driver_name) video_out=video_out_drivers[0];
+    else
+    for (i=0; video_out_drivers[i] != &video_out_null; i++){
+	const vo_info_t *info = video_out_drivers[i]->get_info (vo);
+	if(strcmp(info->short_name,driver_name) == 0){
+	    video_out = video_out_drivers[i];break;
+	}
     }
-  }
-  return video_out;
+    return video_out;
 }
 
 const vo_info_t* vo_get_info(vo_data_t*vo)

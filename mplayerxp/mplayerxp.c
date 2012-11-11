@@ -1132,7 +1132,7 @@ static void mpxp_find_acodec(void) {
 	}
 	if(mp_conf.audio_codec && strcmp(sh_audio->codec->codec_name,mp_conf.audio_codec)) continue;
 	else if(mp_conf.audio_family && strcmp(sh_audio->codec->driver_name,mp_conf.audio_family)) continue;
-	if(mpca_find_driver(sh_audio->codec->driver_name)) {
+	if(afm_find_driver(sh_audio->codec->driver_name)) {
 	    MSG_V("%s audio codec: [%s] drv:%s (%s)\n",mp_conf.audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
 	    found=1;
 	    break;

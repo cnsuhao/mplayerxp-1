@@ -32,7 +32,7 @@ typedef struct ad_functions_s
     unsigned		(* __FASTCALL__ decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 
-extern const ad_functions_t* mpcodecs_ad_drivers[];
+extern const ad_functions_t* afm_find_driver(const char *name);
 #define FIX_APTS(sh_audio,pts,in_size) (sh_audio->i_bps?((float)(pts)+(float)(in_size)/(float)sh_audio->i_bps):((float)(pts)))
 
 #endif

@@ -23,8 +23,7 @@ typedef struct vd_functions_s
     mp_image_t*		(*__FASTCALL__ decode)(sh_video_t *sh,const enc_frame_t* frame);
 } vd_functions_t;
 
-// NULL terminated array of all drivers
-extern const vd_functions_t* mpcodecs_vd_drivers[];
+const vd_functions_t* vfm_find_driver(const char *name);
 
 enum {
     VDCTRL_QUERY_FORMAT		=3, /* test for availabilty of a format */

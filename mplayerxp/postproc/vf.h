@@ -104,9 +104,8 @@ void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h);
 mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx);
 int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned width,unsigned height);
 
-vf_instance_t* __FASTCALL__ vf_open_plugin(const vf_info_t** filter_list, vf_instance_t* next,sh_video_t *sh, char *name, char *args,any_t*libinput);
-vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,char *name, char *args,any_t*libinput);
-vf_instance_t* __FASTCALL__ vf_open_encoder(vf_instance_t* next, char *name, char *args);
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t*libinput);
+vf_instance_t* __FASTCALL__ vf_open_encoder(vf_instance_t* next,const char *name,const char *args);
 
 unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,unsigned int preferred,unsigned w,unsigned h);
 void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src);

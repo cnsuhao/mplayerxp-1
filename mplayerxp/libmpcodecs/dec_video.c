@@ -86,13 +86,6 @@ extern vo_data_t*vo_data;
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
 
-static const vd_functions_t* mpcv_find_driver_by_name(const char *name) {
-    unsigned i;
-    for (i=0; mpcodecs_vd_drivers[i] != NULL; i++)
-	if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,name)==0) break;
-    return mpcodecs_vd_drivers[i];
-}
-
 static void mpcv_print_codec_info(sh_video_t* sh_video) {
     MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
 	,mp_conf.video_codec?"Forcing":"Selected"
@@ -121,9 +114,14 @@ static void mpcv_print_codec_info(sh_video_t* sh_video) {
 
 MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
     /* Use ffmpeg's drivers  as last hope */
-    mpvdec=mpcv_find_driver_by_name("ffmpeg");
-    if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
-	MSG_ERR(MSGTR_CODEC_CANT_INITV);
+    mpvdec=vfm_find_driver("ffmpeg");
+    if(mpvdec) {
+	if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
+	    return MPXP_False;
+	}
+    } else {
+	MSG_ERR("Cannot find ffmpeg video decoder\n");
 	return MPXP_False;
     }
     mpcv_print_codec_info(sh_video);
@@ -155,7 +153,7 @@ MPXP_Rc mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,in
 	}
 	sh_video->codec->flags|=CODECS_FLAG_SELECTED; // tagging it
 	// ok, it matches all rules, let's find the driver!
-	if(!(mpvdec=mpcv_find_driver_by_name(sh_video->codec->driver_name))) continue;
+	if(!(mpvdec=vfm_find_driver(sh_video->codec->driver_name))) continue;
 	else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
 	// it's available, let's try to init!
 	if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){

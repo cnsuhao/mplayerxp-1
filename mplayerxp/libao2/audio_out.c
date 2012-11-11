@@ -35,7 +35,7 @@ extern const ao_functions_t audio_out_nas;
 extern const ao_functions_t audio_out_jack;
 #endif
 
-const ao_functions_t* audio_out_drivers[] =
+static const ao_functions_t* audio_out_drivers[] =
 {
 #ifdef USE_OSS_AUDIO
         &audio_out_oss,
@@ -184,18 +184,17 @@ void ao_print_help( void )
 
 const ao_functions_t* __FASTCALL__ ao_register(const char *driver_name)
 {
-  unsigned i;
-  if(!driver_name)
-    audio_out=audio_out_drivers[0];
-  else
-  for (i=0; audio_out_drivers[i] != NULL; i++)
-  {
-    const ao_info_t *info = audio_out_drivers[i]->info;
-    if(strcmp(info->short_name,driver_name) == 0){
-      audio_out = audio_out_drivers[i];break;
+    unsigned i;
+    if(!driver_name)
+	audio_out=audio_out_drivers[0];
+    else
+    for (i=0; audio_out_drivers[i] != &audio_out_null; i++) {
+	const ao_info_t *info = audio_out_drivers[i]->info;
+	if(strcmp(info->short_name,driver_name) == 0){
+	    audio_out = audio_out_drivers[i];break;
+	}
     }
-  }
-  return audio_out;
+    return audio_out;
 }
 
 const ao_info_t* ao_get_info( void )
