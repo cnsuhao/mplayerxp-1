@@ -52,7 +52,7 @@ int sync_video_packet(demux_stream_t *ds){
 // return: packet length
 int read_video_packet(demux_stream_t *ds){
 int packet_start;
-  
+
   // SYNC STREAM
 //  if(!sync_video_packet(ds)) return 0; // cannot sync (EOF)
 
@@ -63,7 +63,7 @@ int packet_start;
   videobuffer[videobuf_len+2]=videobuf_code[2];
   videobuffer[videobuf_len+3]=videobuf_code[3];
   videobuf_len+=4;
-  
+
   // READ PACKET:
   { unsigned int head=-1;
     while(videobuf_len<VIDEOBUFFER_SIZE){
@@ -81,12 +81,12 @@ int packet_start;
 #endif
     }
   }
-  
+
   if(ds->eof){
     videobuf_code_len=0; // EOF, no next code
     return videobuf_len-packet_start;
   }
-  
+
   videobuf_len-=4;
 
   MSG_DBG2("videobuf: packet 0x1%02X  len=%d  (total=%d)\n",videobuffer[packet_start+3],videobuf_len-packet_start,videobuf_len);
@@ -106,9 +106,9 @@ int skip_video_packet(demux_stream_t *ds){
 
   // SYNC STREAM
 //  if(!sync_video_packet(ds)) return 0; // cannot sync (EOF)
-  
+
   videobuf_code_len=0; // force resync
-  
+
   // SYNC AGAIN:
   return sync_video_packet(ds);
 }

@@ -43,12 +43,12 @@ static off_t __FASTCALL__ rtsp_tell(stream_t *stream)
     return 0;
 }
 
-static int __FASTCALL__ rtsp_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ rtsp_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static void __FASTCALL__ rtsp_stream_close(stream_t*s)
@@ -135,34 +135,31 @@ static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
 
 extern int network_bandwidth;
 extern int index_mode;
-static int __FASTCALL__ rtsp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ rtsp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
-  URL_t *url;
-  UNUSED(flags);
-  if(strncmp(filename,"rtsp://",7)!=0) return 0;
+    URL_t *url;
+    UNUSED(flags);
+    if(strncmp(filename,"rtsp://",7)!=0) return MPXP_False;
 
-  MSG_V("STREAM_RTSP, URL: %s\n", filename);
-  stream->streaming_ctrl = streaming_ctrl_new (libinput);
-  if (!stream->streaming_ctrl)
-    return 0;
+    MSG_V("STREAM_RTSP, URL: %s\n", filename);
+    stream->streaming_ctrl = streaming_ctrl_new (libinput);
+    if (!stream->streaming_ctrl) return MPXP_False;
 
-  stream->streaming_ctrl->bandwidth = network_bandwidth;
-  url = url_new (filename);
-  stream->streaming_ctrl->url = check4proxies (url);
+    stream->streaming_ctrl->bandwidth = network_bandwidth;
+    url = url_new (filename);
+    stream->streaming_ctrl->url = check4proxies (url);
 
-  stream->fd = -1;
-  index_mode = -1; /* prevent most RTSP streams from locking due to -idx */
-  if (rtsp_streaming_start (libinput,stream) < 0)
-  {
-    streaming_ctrl_free (stream->streaming_ctrl);
-    stream->streaming_ctrl = NULL;
-    return 0;
-  }
+    stream->fd = -1;
+    index_mode = -1; /* prevent most RTSP streams from locking due to -idx */
+    if (rtsp_streaming_start (libinput,stream) < 0) {
+	streaming_ctrl_free (stream->streaming_ctrl);
+	stream->streaming_ctrl = NULL;
+	return MPXP_False;
+    }
 
-  fixup_network_stream_cache (stream);
-  stream->type = STREAMTYPE_STREAM;
-
-  return 1;
+    fixup_network_stream_cache (stream);
+    stream->type = STREAMTYPE_STREAM;
+    return MPXP_Ok;
 }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */

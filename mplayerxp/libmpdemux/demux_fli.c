@@ -65,13 +65,13 @@ static int fli_demux(demuxer_t *demuxer,demux_stream_t *__ds){
   return 1;
 }
 
-static int fli_probe(demuxer_t* demuxer){
+static MPXP_Rc fli_probe(demuxer_t* demuxer){
   unsigned magic_number;
   demuxer->movi_end = stream_skip(demuxer->stream,4);
-  magic_number = stream_read_word_le(demuxer->stream);  
-  if ((magic_number != 0xAF11) && (magic_number != 0xAF12)) return 0;    
+  magic_number = stream_read_word_le(demuxer->stream);
+  if ((magic_number != 0xAF11) && (magic_number != 0xAF12)) return MPXP_False;
   demuxer->file_format=DEMUXER_TYPE_FLI;
-  return 1;
+  return MPXP_Ok;
 }
 
 static demuxer_t* fli_open(demuxer_t* demuxer){
@@ -191,9 +191,9 @@ static void fli_close(demuxer_t* demuxer) {
   mp_free(frames);
 }
 
-static int fli_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc fli_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_fli =

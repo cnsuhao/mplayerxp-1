@@ -112,7 +112,7 @@ static const char* asf_chunk_type(const unsigned char* guid) {
   }
 }
 
-static int asf_probe(demuxer_t *demuxer){
+static MPXP_Rc asf_probe(demuxer_t *demuxer){
   const unsigned char asfhdrguid[16]= {0x30,0x26,0xB2,0x75,0x8E,0x66,0xCF,0x11,0xA6,0xD9,0x00,0xAA,0x00,0x62,0xCE,0x6C};
   const unsigned char asf2hdrguid[16]={0xD1,0x29,0xE2,0xD6,0xDA,0x35,0xD1,0x11,0x90,0x34,0x00,0xA0,0xC9,0x03,0x49,0xBE};
   asf_priv_t *apriv;
@@ -129,20 +129,20 @@ static int asf_probe(demuxer_t *demuxer){
   if(memcmp(asf2hdrguid,apriv->asfh.objh.guid,16)==0){
     MSG_ERR("ASF_check: found ASF v2 guid!\nCurrently is not supported - please report!\n");
     mp_free(demuxer->priv);
-    return 0; // not ASF guid
+    return MPXP_False; // not ASF guid
   }
   if(memcmp(asfhdrguid,apriv->asfh.objh.guid,16)){
     MSG_V("ASF_check: not ASF guid!\n");
     mp_free(demuxer->priv);
-    return 0; // not ASF guid
+    return MPXP_False; // not ASF guid
   }
   if(apriv->asfh.cno>256){
     MSG_V("ASF_check: invalid subchunks_no %d\n",(int) apriv->asfh.cno);
     mp_free(demuxer->priv);
-    return 0; // invalid header???
+    return MPXP_False; // invalid header???
   }
   demuxer->file_format=DEMUXER_TYPE_ASF;
-  return 1;
+  return MPXP_Ok;
 }
 
 static demuxer_t* asf_open(demuxer_t *demuxer){
@@ -712,9 +712,9 @@ static void asf_close(demuxer_t *demuxer)
     mp_free(demuxer->priv);
 }
 
-static int asf_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc asf_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_asf =

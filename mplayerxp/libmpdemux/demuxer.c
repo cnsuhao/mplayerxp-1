@@ -546,7 +546,7 @@ again:
 	MSG_V("Probing %s ... ",ddrivers[i]->name);
 	stream_reset(demuxer->stream);
 	stream_seek(demuxer->stream,demuxer->stream->start_pos);
-	if(ddrivers[i]->probe(demuxer)) {
+	if(ddrivers[i]->probe(demuxer)==MPXP_Ok) {
 	    MSG_V("OK\n");
 	    demuxer->driver = ddrivers[i];
 	    break;
@@ -572,7 +572,7 @@ again:
     if(!demux_info_get(demuxer,stream_txt_ids[i].demuxer_id)) {
 	char stream_name[256];
 	if(demuxer->stream->driver->control) {
-	    if(demuxer->stream->driver->control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == SCTRL_OK) {
+	    if(demuxer->stream->driver->control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
 		demux_info_add(demuxer,stream_txt_ids[i].demuxer_id,stream_name);
 	    }
 	}
@@ -751,17 +751,17 @@ void demuxer_register_options(m_config_t* cfg) {
   m_config_register_options(cfg,demuxer_opts);
 }
 
-static int demux_control(demuxer_t *demuxer, int cmd, any_t*arg) {
+static MPXP_Rc demux_control(demuxer_t *demuxer, int cmd, any_t*arg) {
 
     if(demuxer->driver)
 	return demuxer->driver->control(demuxer,cmd,arg);
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 int demuxer_switch_audio(demuxer_t *demuxer, int id)
 {
     if(id>MAX_A_STREAMS) id=0;
-    if (demux_control(demuxer, DEMUX_CMD_SWITCH_AUDIO, &id) == DEMUX_UNKNOWN)
+    if (demux_control(demuxer, DEMUX_CMD_SWITCH_AUDIO, &id) == MPXP_Unknown)
 	id = demuxer->audio->id;
     return id;
 }
@@ -769,7 +769,7 @@ int demuxer_switch_audio(demuxer_t *demuxer, int id)
 int demuxer_switch_video(demuxer_t *demuxer, int id)
 {
     if(id>MAX_V_STREAMS) id=0;
-    if (demux_control(demuxer, DEMUX_CMD_SWITCH_VIDEO, &id) == DEMUX_UNKNOWN)
+    if (demux_control(demuxer, DEMUX_CMD_SWITCH_VIDEO, &id) == MPXP_Unknown)
 	id = demuxer->audio->id;
     return id;
 }
@@ -777,7 +777,7 @@ int demuxer_switch_video(demuxer_t *demuxer, int id)
 int demuxer_switch_subtitle(demuxer_t *demuxer, int id)
 {
     if(id>MAX_S_STREAMS) id=0;
-    if (demux_control(demuxer, DEMUX_CMD_SWITCH_SUBS, &id) == DEMUX_UNKNOWN)
+    if (demux_control(demuxer, DEMUX_CMD_SWITCH_SUBS, &id) == MPXP_Unknown)
 	id = demuxer->audio->id;
     return id;
 }

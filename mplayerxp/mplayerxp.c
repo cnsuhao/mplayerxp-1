@@ -993,7 +993,7 @@ static void mpxp_init_dvd_nls(void) {
     if(mp_conf.audio_lang) {
 	lang=mp_malloc(max(strlen(mp_conf.audio_lang)+1,4));
 	strcpy(lang,mp_conf.audio_lang);
-	if(mp_conf.audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang) == SCTRL_OK) {
+	if(mp_conf.audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
 	    mp_conf.audio_id=*(int *)lang;
 	}
 	mp_free(lang);
@@ -1001,7 +1001,7 @@ static void mpxp_init_dvd_nls(void) {
     if(mp_conf.dvdsub_lang) {
 	lang=mp_malloc(max(strlen(mp_conf.dvdsub_lang)+1,4));
 	strcpy(lang,mp_conf.dvdsub_lang);
-	if(mp_conf.dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang) == SCTRL_OK) {
+	if(mp_conf.dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
 	    mp_conf.dvdsub_id=*(int *)lang;
 	}
 	mp_free(lang);
@@ -1076,7 +1076,7 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
     if (vo_data->spudec==NULL) {
 	unsigned *pal;
 	MP_UNIT("spudec_init");
-	if(stream->driver->control(stream,SCTRL_VID_GET_PALETTE,&pal)==SCTRL_OK)
+	if(stream->driver->control(stream,SCTRL_VID_GET_PALETTE,&pal)==MPXP_Ok)
 	    vo_data->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
     }
 
@@ -1330,7 +1330,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
     }
     if(priv->osd_function==OSD_DVDMENU) {
 	rect_highlight_t hl;
-	if(stream->driver->control(stream,SCTRL_VID_GET_HILIGHT,&hl)==SCTRL_OK) {
+	if(stream->driver->control(stream,SCTRL_VID_GET_HILIGHT,&hl)==MPXP_Ok) {
 	    osd_set_nav_box (hl.sx, hl.sy, hl.ex, hl.ey);
 	    MSG_V("Set nav box: %i %i %i %i\n",hl.sx, hl.sy, hl.ex, hl.ey);
 	    vo_osd_changed (OSDTYPE_DVDNAV);
@@ -1587,18 +1587,15 @@ For future:
 	stream->driver->control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->id);
 	break;
     case MP_CMD_DVDNAV:
-      if(stream->driver->control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==SCTRL_OK)
-      {
-	if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT)
-	{
+      if(stream->driver->control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
+	if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
 //		seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
 //		seek->secs = 0.;
 		stream->type|=STREAMTYPE_MENU;
 		state->need_repaint=1;
 	}
 	priv->osd_function=OSD_DVDMENU;
-	if(cmd->args[0].v.i==MP_CMD_DVDNAV_SELECT)
-	{
+	if(cmd->args[0].v.i==MP_CMD_DVDNAV_SELECT) {
 		priv->osd_function=NULL;
 		state->need_repaint=1;
 		state->after_dvdmenu=1;

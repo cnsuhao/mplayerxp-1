@@ -525,43 +525,41 @@ int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	return 0;
 }
 
-int __FASTCALL__ cddb_resolve(any_t*libinput,char **xmcd_file) {
-	char cddb_cache_dir[] = DEFAULT_CACHE_DIR;
-	char *home_dir = NULL;
-	cddb_data_t cddb_data;
+MPXP_Rc __FASTCALL__ cddb_resolve(any_t*libinput,char **xmcd_file) {
+    char cddb_cache_dir[] = DEFAULT_CACHE_DIR;
+    char *home_dir = NULL;
+    cddb_data_t cddb_data;
 
-	cddb_data.libinput=libinput;
-	cddb_data.tracks = read_toc();
-	cddb_data.disc_id = cddb_discid(cddb_data.tracks);
-	cddb_data.anonymous = 1;	// Don't send user info by default
-	
-	home_dir = getenv("HOME");
-	if( home_dir==NULL ) {
-		cddb_data.cache_dir = NULL;
-	} else {
-		cddb_data.cache_dir = (char*)mp_malloc(strlen(home_dir)+strlen(cddb_cache_dir)+1);
-		if( cddb_data.cache_dir==NULL ) {
-			MSG_FATAL("Memory allocation failed\n");
-			return -1;
-		}
-		sprintf(cddb_data.cache_dir, "%s%s", home_dir, cddb_cache_dir );
-	}
+    cddb_data.libinput=libinput;
+    cddb_data.tracks = read_toc();
+    cddb_data.disc_id = cddb_discid(cddb_data.tracks);
+    cddb_data.anonymous = 1;	// Don't send user info by default
 
-	// Check for a cached file
-	if( cddb_read_cache(&cddb_data)<0 ) {
-		// No Cache found
-		if( cddb_retrieve(&cddb_data)<0 ) {
-			return -1;
-		}
+    home_dir = getenv("HOME");
+    if( home_dir==NULL ) {
+	    cddb_data.cache_dir = NULL;
+    } else {
+	cddb_data.cache_dir = (char*)mp_malloc(strlen(home_dir)+strlen(cddb_cache_dir)+1);
+	if( cddb_data.cache_dir==NULL ) {
+	    MSG_FATAL("Memory allocation failed\n");
+	    return MPXP_False;
 	}
+	sprintf(cddb_data.cache_dir, "%s%s", home_dir, cddb_cache_dir );
+    }
+    // Check for a cached file
+    if( cddb_read_cache(&cddb_data)<0 ) {
+	// No Cache found
+	if( cddb_retrieve(&cddb_data)<0 ) {
+	    return MPXP_False;
+	}
+    }
 
-	if( cddb_data.xmcd_file!=NULL ) {
-//		printf("%s\n", cddb_data.xmcd_file );
-		*xmcd_file = cddb_data.xmcd_file;
-		return 0;
-	}
-	
-	return -1;
+    if( cddb_data.xmcd_file!=NULL ) {
+//	printf("%s\n", cddb_data.xmcd_file );
+	*xmcd_file = cddb_data.xmcd_file;
+	return MPXP_Ok;
+    }
+    return MPXP_False;
 }
 
 /*******************************************************************************************************************
@@ -571,15 +569,15 @@ int __FASTCALL__ cddb_resolve(any_t*libinput,char **xmcd_file) {
  *******************************************************************************************************************/
 
 cd_info_t* __FASTCALL__ cd_info_new() {
-	cd_info_t *cd_info = NULL;
-	
-	cd_info = (cd_info_t*)mp_mallocz(sizeof(cd_info_t));
-	if( cd_info==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return NULL;
-	}
-	
-	return cd_info;
+    cd_info_t *cd_info = NULL;
+
+    cd_info = (cd_info_t*)mp_mallocz(sizeof(cd_info_t));
+    if( cd_info==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	return NULL;
+    }
+
+    return cd_info;
 }
 
 void __FASTCALL__ cd_info_free(cd_info_t *cd_info) {
@@ -781,19 +779,19 @@ cd_info_t* __FASTCALL__ cddb_parse_xmcd(char *xmcd_file) {
 	return cd_info;
 }
 
-int __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *track) {
-	cd_info_t *cd_info = NULL;
-	char *xmcd_file = NULL;
-	int ret;
-	
-	ret = cddb_resolve(stream->streaming_ctrl->libinput,&xmcd_file);
-	if( ret==0 ) {
-		cd_info = cddb_parse_xmcd(xmcd_file);
-		mp_free(xmcd_file);
-		cd_info_debug( cd_info );
-	}
-	ret = open_cdda(stream, dev, track);
+MPXP_Rc __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *track) {
+    cd_info_t *cd_info = NULL;
+    char *xmcd_file = NULL;
+    MPXP_Rc ret;
 
-	return ret;
+    ret = cddb_resolve(stream->streaming_ctrl->libinput,&xmcd_file);
+    if( ret==MPXP_False ) {
+	cd_info = cddb_parse_xmcd(xmcd_file);
+	mp_free(xmcd_file);
+	cd_info_debug( cd_info );
+    }
+    ret = open_cdda(stream, dev, track);
+
+    return ret;
 }
 #endif

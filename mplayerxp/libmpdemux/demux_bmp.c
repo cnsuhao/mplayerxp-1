@@ -80,13 +80,13 @@ static void demux_rw_close_stream(struct SDL_RWops*rwops)
 static SDL_RWops my_rw;
 static SDL_Surface *img;
 
-static int bmp_probe(demuxer_t *demuxer)
+static MPXP_Rc bmp_probe(demuxer_t *demuxer)
 {
     demux_dup_rw_stream(demuxer,&my_rw);
     stream_reset(demuxer->stream);
     img = IMG_Load_RW(&my_rw,0);
     if(img) demuxer->file_format=DEMUXER_TYPE_BMP;
-    return img ? 1 : 0;
+    return img ? MPXP_Ok : MPXP_False;
 }
 
 static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
@@ -297,9 +297,9 @@ static void bmp_close(demuxer_t* demuxer) {
 }
 #endif
 
-static int bmp_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc bmp_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_bmp =

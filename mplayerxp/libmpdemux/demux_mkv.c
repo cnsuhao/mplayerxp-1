@@ -2774,31 +2774,30 @@ static void mkv_seek (demuxer_t *demuxer,const seek_args_t* seeka);
 static int demux_mkv_reverse_id(mkv_demuxer_t *d, int num, int type)
 {
   int i, id;
-  
+
   for (i=0, id=0; i < d->num_tracks; i++)
     if (d->tracks[i] != NULL && d->tracks[i]->type == type) {
       if (d->tracks[i]->tnum == num)
         return id;
       id++;
     }
-  
+
   return -1;
 }
 
-static int mkv_probe(demuxer_t *demuxer)
+static MPXP_Rc mkv_probe(demuxer_t *demuxer)
 {
-  stream_t *s = demuxer->stream;
-  int version;
-  char *str;
-  stream_seek(s, s->start_pos);
-  str = ebml_read_header (s, &version);
-  if (str == NULL || strcmp (str, "matroska") || version > 1)
-    {
-      MSG_DBG2( "[mkv] no head found\n");
-      return 0;
+    stream_t *s = demuxer->stream;
+    int version;
+    char *str;
+    stream_seek(s, s->start_pos);
+    str = ebml_read_header (s, &version);
+    if (str == NULL || strcmp (str, "matroska") || version > 1) {
+	MSG_DBG2( "[mkv] no head found\n");
+	return MPXP_False;
     }
-  mp_free (str);
-  return 1;
+    mp_free (str);
+    return MPXP_Ok;
 }
 
 static demuxer_t* mkv_open (demuxer_t *demuxer)
@@ -2811,11 +2810,10 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
 
   stream_seek(s, s->start_pos);
   str = ebml_read_header (s, &version);
-  if (str == NULL || strcmp (str, "matroska") || version > 2)
-    {
+  if (str == NULL || strcmp (str, "matroska") || version > 2) {
       MSG_DBG2( "[mkv] no head found\n");
       return 0;
-    }
+  }
   mp_free (str);
 
   MSG_V( "[mkv] Found the head...\n");
@@ -4007,50 +4005,38 @@ static void mkv_seek (demuxer_t *demuxer,const seek_args_t* seeka)
     }
 }
 
-static int mkv_control (demuxer_t *demuxer, int cmd, any_t*arg)
+static MPXP_Rc mkv_control (demuxer_t *demuxer, int cmd, any_t*arg)
 {
-  mkv_demuxer_t *mkv_d = (mkv_demuxer_t *) demuxer->priv;
-  
-  switch (cmd)
-    {
+    mkv_demuxer_t *mkv_d = (mkv_demuxer_t *) demuxer->priv;
+    switch (cmd) {
 #if 0
-    case DEMUXER_CTRL_GET_TIME_LENGTH:
-      if (mkv_d->duration == 0)
-        return DEMUX_UNKNOWN;
+	case DEMUXER_CTRL_GET_TIME_LENGTH:
+	    if (mkv_d->duration == 0) return MPXP_Unknown;
+	    *((double *)arg) = (double)mkv_d->duration;
+	    return MPXP_Ok;
 
-      *((double *)arg) = (double)mkv_d->duration;
-      return DEMUX_OK;
-
-    case DEMUXER_CTRL_GET_PERCENT_POS:
-      if (mkv_d->duration == 0)
-        {
-            return DEMUX_UNKNOWN;
-        }
-
-      *((int *) arg) = (int) (100 * mkv_d->last_pts / mkv_d->duration);
-      return DEMUX_OK; 
+	case DEMUXER_CTRL_GET_PERCENT_POS:
+	    if (mkv_d->duration == 0) return MPXP_Unknown;
+	    *((int *) arg) = (int) (100 * mkv_d->last_pts / mkv_d->duration);
+	    return MPXP_Ok;
 #endif
-    case DEMUX_CMD_SWITCH_AUDIO:
-      if (demuxer->audio && demuxer->audio->sh) {
-        sh_audio_t *sh = demuxer->a_streams[demuxer->audio->id];
-        int aid = *(int*)arg;
-        if (aid < 0)
-          aid = (sh->aid + 1) % mkv_d->last_aid;
-        if (aid != sh->aid) {
-          mkv_track_t *track = demux_mkv_find_track_by_num (mkv_d, aid, MATROSKA_TRACK_AUDIO);
-          if (track) {
-            demuxer->audio->id = track->tnum;
-            sh = demuxer->a_streams[demuxer->audio->id];
-            ds_free_packs(demuxer->audio);
-          }
-        }
-        *(int*)arg = sh->aid;
-      } else
-        *(int*)arg = -2;
-      return DEMUX_OK;
-
-    default:
-      return DEMUX_UNKNOWN;
+	case DEMUX_CMD_SWITCH_AUDIO:
+	    if (demuxer->audio && demuxer->audio->sh) {
+		sh_audio_t *sh = demuxer->a_streams[demuxer->audio->id];
+		int aid = *(int*)arg;
+		if (aid < 0) aid = (sh->aid + 1) % mkv_d->last_aid;
+		if (aid != sh->aid) {
+		    mkv_track_t *track = demux_mkv_find_track_by_num (mkv_d, aid, MATROSKA_TRACK_AUDIO);
+		    if (track) {
+			demuxer->audio->id = track->tnum;
+			sh = demuxer->a_streams[demuxer->audio->id];
+			ds_free_packs(demuxer->audio);
+		    }
+		}
+		*(int*)arg = sh->aid;
+	    } else *(int*)arg = -2;
+	    return MPXP_Ok;
+	default: return MPXP_Unknown;
     }
 }
 

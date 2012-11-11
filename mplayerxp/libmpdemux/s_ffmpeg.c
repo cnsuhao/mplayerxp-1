@@ -44,12 +44,12 @@ static off_t ffmpeg_tell(stream_t *s)
     return p->spos;
 }
 
-static int __FASTCALL__ ffmpeg_ctrl(stream_t *s, unsigned cmd, any_t*arg)
+static MPXP_Rc __FASTCALL__ ffmpeg_ctrl(stream_t *s, unsigned cmd, any_t*arg)
 {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(arg);
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static void __FASTCALL__ ffmpeg_close(stream_t *stream)
@@ -61,7 +61,7 @@ static void __FASTCALL__ ffmpeg_close(stream_t *stream)
 
 static const char prefix[] = "ffmpeg://";
 
-static int __FASTCALL__ ffmpeg_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ ffmpeg_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     URLContext *ctx = NULL;
     ffmpeg_priv_t *p;
@@ -72,7 +72,7 @@ static int __FASTCALL__ ffmpeg_open(any_t*libinput,stream_t *stream,const char *
     av_register_all();
     MSG_V("[ffmpeg] Opening %s\n", filename);
 
-    if (ffurl_open(&ctx, filename, 0, &int_cb, NULL) < 0) return 0;
+    if (ffurl_open(&ctx, filename, 0, &int_cb, NULL) < 0) return MPXP_False;
     p = mp_malloc(sizeof(ffmpeg_priv_t));
     p->ctx = ctx;
     p->spos = 0;
@@ -82,7 +82,7 @@ static int __FASTCALL__ ffmpeg_open(any_t*libinput,stream_t *stream,const char *
     stream->type = STREAMTYPE_SEEKABLE;
     stream->priv = p;
     if (ctx->is_streamed) stream->type = STREAMTYPE_STREAM;
-    return 1;
+    return MPXP_Ok;
 }
 
 const stream_driver_t ffmpeg_stream =

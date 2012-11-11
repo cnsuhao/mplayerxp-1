@@ -170,7 +170,7 @@ static void parse_cryptokey(AVFormatContext *avfc, const char *str) {
         *key++ = (char2int(str[0]) << 4) | char2int(str[1]);
 }
 
-static int lavf_probe(demuxer_t *demuxer){
+static MPXP_Rc lavf_probe(demuxer_t *demuxer){
     AVProbeData avpd;
     uint8_t buf[PROBE_BUF_SIZE];
     lavf_priv_t *priv;
@@ -184,7 +184,7 @@ static int lavf_probe(demuxer_t *demuxer){
 
     if(stream_read(demuxer->stream, buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE) {
 	mp_free(demuxer->priv);
-	return 0;
+	return MPXP_False;
     }
     avpd.filename= "xxx";
     avpd.buf= buf;
@@ -193,26 +193,26 @@ static int lavf_probe(demuxer_t *demuxer){
     if (opt_format) {
 	if (strcmp(opt_format, "help") == 0) {
 	   list_formats();
-	   return 0;
+	   return MPXP_False;
 	}
 	priv->avif= av_find_input_format(opt_format);
 	if (!priv->avif) {
 	    MSG_FATAL("Unknown lavf format %s\n", opt_format);
-	    return 0;
+	    return MPXP_False;
 	}
 	MSG_INFO("Forced lavf %s demuxer\n", priv->avif->long_name);
-	return 1;
+	return MPXP_Ok;
     }
     priv->avif= av_probe_input_format(&avpd, 1);
     if(!priv->avif){
 	MSG_V("LAVF_check: file format not recognized!\n");
 	mp_free(demuxer->priv);
-	return 0;
+	return MPXP_False;
     }else
 	MSG_V("LAVF_check: %s\n", priv->avif->long_name);
     demuxer->file_format=DEMUXER_TYPE_ASF;
 
-    return 1;
+    return MPXP_Ok;
 }
 
 extern const unsigned char ff_codec_bmp_tags[];
@@ -477,9 +477,9 @@ static void lavf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     av_seek_frame(priv->avfc, -1, priv->last_pts + seeka->secs*AV_TIME_BASE, seeka->secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
 }
 
-static int lavf_control(demuxer_t *demuxer, int cmd, any_t*arg)
+static MPXP_Rc lavf_control(demuxer_t *demuxer, int cmd, any_t*arg)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static void lavf_close(demuxer_t *demuxer)

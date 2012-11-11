@@ -1,7 +1,7 @@
 #ifndef __DEMUXER_H
 #define __DEMUXER_H 1
-
 #include "stream.h"
+#include "xmpcore/xmp_enums.h"
 
 #define MAX_PACK_BYTES (0x1024*0x1024*4)
 enum {
@@ -122,12 +122,6 @@ typedef struct demuxer_s {
     struct demuxer_driver_s* driver;	/**< driver associated with this demuxer */
 } demuxer_t;
 
-/* Return values for control interface */
-enum {
-    DEMUX_UNKNOWN	=-1,
-    DEMUX_FALSE		=0,
-    DEMUX_OK		=1
-};
 enum {
     DEMUX_SEEK_CUR	=0x00,
     DEMUX_SEEK_SET	=0x01,
@@ -153,12 +147,10 @@ typedef struct demuxer_driver_s
     const any_t*	options;/**< Optional: MPlayerXP's option related */
 			/** Probing stream.
 			  * @param d	_this demuxer
-			  * @return	0 - fail; 1 if driver may handle this stream
 			 **/
-    int			(*probe)(demuxer_t *d);
+    MPXP_Rc		(*probe)(demuxer_t *d);
 			/** Opens stream.
 			  * @param d	_this demxuer
-			  * @return	0 - fail; 1 - successful
 			 **/
     demuxer_t*		(*open)(demuxer_t *d);
 			/** Reads and demuxes stream.
@@ -183,7 +175,7 @@ typedef struct demuxer_driver_s
 			  * @param arg	optional arguments for thsis command
 			  * @return	one of DEMUX_* states
 			 **/
-    int			(*control)(demuxer_t *d,int cmd,any_t*arg);
+    MPXP_Rc		(*control)(demuxer_t *d,int cmd,any_t*arg);
 }demuxer_driver_t;
 
 demux_packet_t* new_demux_packet(int len);

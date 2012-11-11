@@ -556,7 +556,7 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
     return 0;
 }
 
-static int __FASTCALL__ _tv_open(any_t*libinput,stream_t*stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _tv_open(any_t*libinput,stream_t*stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
     UNUSED(libinput);
@@ -571,13 +571,13 @@ static int __FASTCALL__ _tv_open(any_t*libinput,stream_t*stream,const char *file
 	goto tv_err;
 
     stream->type = STREAMTYPE_STREAM;
-    return 1;
+    return MPXP_Ok;
 
     /* something went wrong - uninit */
 tv_err:
     MSG_ERR("Can not initialize TV\n");
     tv_uninit(stream->priv);
-    return 0;
+    return MPXP_False;
 }
 
 static int __FASTCALL__ _tv_read(stream_t *stream,stream_packet_t*sp)
@@ -623,17 +623,16 @@ static void __FASTCALL__ _tv_cmd_handler(stream_t *s,unsigned cmd)
     }
 }
 
-static int __FASTCALL__ _tv_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ _tv_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
-    switch(cmd)
-    {
+    switch(cmd) {
 	case SCRTL_MPXP_CMD:
 	    _tv_cmd_handler(s,(unsigned)args);
-	    return SCTRL_OK;
+	    return MPXP_Ok;
 	default:
 	    break;
     }
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 const stream_driver_t tv_stream=

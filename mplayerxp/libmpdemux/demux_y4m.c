@@ -27,19 +27,19 @@ typedef struct {
     int is_older;
 } y4m_priv_t;
 
-static int y4m_probe(demuxer_t* demuxer){
+static MPXP_Rc y4m_probe(demuxer_t* demuxer){
     int orig_pos = stream_tell(demuxer->stream);
     char buf[10];
     y4m_priv_t* priv;
-    
+
     MSG_V( "Checking for YUV4MPEG2\n");
-    
+
     stream_read(demuxer->stream, buf, 9);
     buf[9] = 0;
-    
+
     if (strncmp("YUV4MPEG2", buf, 9) && strncmp("YUV4MPEG ", buf, 9)) {
-	    MSG_DBG2( "Failed: YUV4MPEG2\n");
-	    return 0;
+	MSG_DBG2( "Failed: YUV4MPEG2\n");
+	return MPXP_False;
     }
 
     demuxer->priv = mp_malloc(sizeof(y4m_priv_t));
@@ -47,8 +47,7 @@ static int y4m_probe(demuxer_t* demuxer){
 
     priv->is_older = 0;
 
-    if (!strncmp("YUV4MPEG ", buf, 9))
-    {
+    if (!strncmp("YUV4MPEG ", buf, 9)) {
 	MSG_V( "Found older YUV4MPEG format (used by xawtv)\n");
 	priv->is_older = 1;
     }
@@ -57,7 +56,7 @@ static int y4m_probe(demuxer_t* demuxer){
 
     stream_seek(demuxer->stream, orig_pos);
     demuxer->file_format=DEMUXER_TYPE_Y4M;
-    return 1;
+    return MPXP_Ok;
 }
 
 
@@ -264,9 +263,9 @@ static void y4m_close(demuxer_t *demuxer)
     return;
 }
 
-static int y4m_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc y4m_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_y4m =

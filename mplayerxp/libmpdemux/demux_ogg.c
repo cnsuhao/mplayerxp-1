@@ -159,14 +159,14 @@ static subtitle ogg_sub;
 static float clear_sub;
 //FILE* subout;
 
-static int ogg_probe(demuxer_t *demuxer)
+static MPXP_Rc ogg_probe(demuxer_t *demuxer)
 {
     uint32_t fcc;
     fcc=me2be_32(stream_read_dword(demuxer->stream));
-    if(fcc != mmioFOURCC('O','g','g','S')) return 0;
+    if(fcc != mmioFOURCC('O','g','g','S')) return MPXP_False;
     demuxer->file_format=DEMUXER_TYPE_OGG;
     stream_seek(demuxer->stream,0);
-    return 1;
+    return MPXP_Ok;
 }
 
 
@@ -1457,9 +1457,9 @@ static void ogg_close(demuxer_t* demuxer) {
   mp_free(ogg_d);
 }
 
-static int ogg_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc ogg_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_ogg =

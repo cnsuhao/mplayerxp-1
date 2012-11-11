@@ -89,11 +89,11 @@ static int parse_psm(demuxer_t *demux, int len) {
   unsigned char c, id, type;
   unsigned int plen, prog_len, es_map_len;
   mpg_demuxer_t *priv = (mpg_demuxer_t *) demux->priv;
-  
+
   MSG_DBG2("PARSE_PSM, len=%d\n", len);
   if(! len)
     return 0;
-  
+
   c = stream_read_char(demux->stream);
   if(! (c & 0x80)) {
     stream_skip(demux->stream, len - 1);  //not yet valid, discard
@@ -626,7 +626,7 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   0x000001FF		- prog_stream_dir
 */
 extern demuxer_driver_t demux_mpgps;
-static int mpgps_probe(demuxer_t*demuxer)
+static MPXP_Rc mpgps_probe(demuxer_t*demuxer)
 {
     uint32_t code,id;
     uint8_t d[4];
@@ -650,17 +650,16 @@ static int mpgps_probe(demuxer_t*demuxer)
 		    code=stream_read_dword_le(demuxer->stream);
 		    while((bswap_32(code) & 0xffffff00) != 0x100) code=stream_read_dword_le(demuxer->stream);
 		}
-		else return 0;
+		else return MPXP_False;
 	    }
-	    else return 0;
+	    else return MPXP_False;
 	}
-	else return 0;
+	else return MPXP_False;
     }
 
     code = bswap_32(code);
     /* test stream only if stream is started from 0000001XX */
-    if ((code & 0xffffff00) == 0x100)
-    {
+    if ((code & 0xffffff00) == 0x100) {
 	stream_seek(demuxer->stream,demuxer->stream->start_pos);
 	memset(&mpg_stat,0,sizeof(struct mpg_stat_s));
 	
@@ -722,37 +721,30 @@ static int mpgps_probe(demuxer_t*demuxer)
 		if(mpg_stat.num_elementary_packets100>=2 && mpg_stat.num_elementary_packets101>=2 &&
 		    abs(mpg_stat.num_elementary_packets101+8-mpg_stat.num_elementary_packets100)<16){
 			if(mpg_stat.num_elementary_packetsPES>=4 && mpg_stat.num_elementary_packetsPES>=mpg_stat.num_elementary_packets100-4){
-			    --pes;continue; /* tricky... */
+			    --pes;
+			    continue; /* tricky... */
 			}
 			demuxer->file_format=DEMUXER_TYPE_MPEG_ES; /*  <-- hack is here :) */
 			demux_mpgps.name="MPG/ES (Elementary stream) parser";
-		} else 
-#if 1
-		    /* fuzzy mpeg4-es detection. do NOT enable without heavy testing of mpeg formats detection! */
-		    if(mpg_stat.num_elementary_packets1B6>3 && mpg_stat.num_elementary_packets12x>=1 &&
+		} else if(mpg_stat.num_elementary_packets1B6>3 && mpg_stat.num_elementary_packets12x>=1 &&
 		    mpg_stat.num_elementary_packetsPES==0 && mpg_stat.num_elementary_packets100<=mpg_stat.num_elementary_packets12x &&
-		    demuxer->synced<2){
+		    demuxer->synced<2) {
+			/* fuzzy mpeg4-es detection. do NOT enable without heavy testing of mpeg formats detection! */
 			demuxer->file_format=DEMUXER_TYPE_MPEG4_ES;
 			demux_mpgps.name="MPG/MPEG4-ES (MPEG-4 Elementary stream) parser";
-		    } else
-#endif
-#if 1
-		    /* fuzzy h264-es detection. do NOT enable without heavy testing of mpeg formats detection!*/
-		    if((mpg_stat.num_h264_slice>3 || (mpg_stat.num_h264_dpa>3 && mpg_stat.num_h264_dpb>3 && mpg_stat.num_h264_dpc>3)) && 
+		    } else if((mpg_stat.num_h264_slice>3 || (mpg_stat.num_h264_dpa>3 && mpg_stat.num_h264_dpb>3 && mpg_stat.num_h264_dpc>3)) && 
 		    /* FIXME mpg_stat.num_h264_sps>=1 && */ mpg_stat.num_h264_pps>=1 && mpg_stat.num_h264_idr>=1 &&
 		    mpg_stat.num_elementary_packets1B6==0 && mpg_stat.num_elementary_packetsPES==0 &&
-		    demuxer->synced<2){
+		    demuxer->synced<2) {
+			/* fuzzy h264-es detection. do NOT enable without heavy testing of mpeg formats detection!*/
 			demuxer->file_format=DEMUXER_TYPE_H264_ES;
 			demux_mpgps.name="MPG/H264-ES (H264 Elementary stream) parser";
-		    } else
-#endif
-		    {
+		    } else {
 			if(demuxer->synced==2)
 			    MSG_ERR("MPEG: " MSGTR_MissingVideoStreamBug);
-			else
-			{
+			else {
 			    MSG_V("Not MPEG System Stream format...\n");
-			    return 0;
+			    return MPXP_False;
 			}
 		    }
 	    }
@@ -761,32 +753,29 @@ static int mpgps_probe(demuxer_t*demuxer)
 	if( demuxer->file_format==DEMUXER_TYPE_MPEG_ES ||
 	    demuxer->file_format==DEMUXER_TYPE_MPEG4_ES ||
 	    demuxer->file_format==DEMUXER_TYPE_H264_ES){ /* little hack, see above! */
-			demux_mpgps.demux=mpges_demux;
-			if(!demuxer->v_streams[0]) new_sh_video(demuxer,0);
-			if(demuxer->video->id==-1) demuxer->video->id=0;
-			demuxer->video->sh=demuxer->v_streams[0];
-			stream_seek(demuxer->stream,demuxer->stream->start_pos);
-			return mpges_demux(demuxer,demuxer->video);
-	}
-	else
-	{
-		/*
-		NK: Main hack is here !!!
-		We have something packetized - means both audio and video should be present!
-		But some streams are "badly" interleaved.
-		Since mpgps_demux() reads stream until first audio or video packet only
-		- we need force stream reading several times at least.
-		*/
+		demux_mpgps.demux=mpges_demux;
+		if(!demuxer->v_streams[0]) new_sh_video(demuxer,0);
+		if(demuxer->video->id==-1) demuxer->video->id=0;
+		demuxer->video->sh=demuxer->v_streams[0];
+		stream_seek(demuxer->stream,demuxer->stream->start_pos);
+		return mpges_demux(demuxer,demuxer->video)?MPXP_Ok:MPXP_False;
+	} else {
+	    /*
+	    NK: Main hack is here !!!
+	    We have something packetized - means both audio and video should be present!
+	    But some streams are "badly" interleaved.
+	    Since mpgps_demux() reads stream until first audio or video packet only
+	    - we need force stream reading several times at least.
+	    */
 	    unsigned attempts=64;
-	    while((!demuxer->video->sh || !demuxer->audio->sh) && attempts)
-	    {
+	    while((!demuxer->video->sh || !demuxer->audio->sh) && attempts) {
 		mpgps_demux(demuxer,demuxer->video); /* try it again */
 		attempts--;
 	    }
-	    return 1;
+	    return MPXP_Ok;
 	}
     }
-    return 0;
+    return MPXP_False;
 }
 
 static demuxer_t* mpgps_open(demuxer_t*demuxer)
@@ -816,49 +805,46 @@ static demuxer_t* mpgps_open(demuxer_t*demuxer)
 
 static void mpgps_close(demuxer_t*demuxer)
 {
-  mpg_demuxer_t* mpg_d = demuxer->priv;
-  if (mpg_d) mp_free(mpg_d);
+    mpg_demuxer_t* mpg_d = demuxer->priv;
+    if (mpg_d) mp_free(mpg_d);
 }
 
-static int mpgps_control(demuxer_t *demuxer,int cmd,any_t*arg)
+static MPXP_Rc mpgps_control(demuxer_t *demuxer,int cmd,any_t*arg)
 {
     mpg_demuxer_t *mpg_d=(mpg_demuxer_t*)demuxer->priv;
-    switch(cmd)
-    {
+    switch(cmd) {
 	case DEMUX_CMD_SWITCH_AUDIO:
-            if (mpg_d && mpg_d->num_a_streams > 1 && demuxer->audio && demuxer->audio->sh) {
-              demux_stream_t *d_audio = demuxer->audio;
-              sh_audio_t *sh_audio = d_audio->sh;
-              sh_audio_t *sh_a=NULL;
-              int i;
-              if (*((int*)arg) < 0)
-              {
-              for (i = 0; i < mpg_d->num_a_streams; i++) {
-                if (d_audio->id == mpg_d->a_stream_ids[i]) break;
-              }
-              do {
-                i = (i+1) % mpg_d->num_a_streams;
-                sh_a = (sh_audio_t*)demuxer->a_streams[mpg_d->a_stream_ids[i]];
-              } while (sh_a->wtag != sh_audio->wtag);
-              }
-              else {
-                for (i = 0; i < mpg_d->num_a_streams; i++)
-                  if (*((int*)arg) == mpg_d->a_stream_ids[i]) break;
-                if (i < mpg_d->num_a_streams)
-                  sh_a = (sh_audio_t*)demuxer->a_streams[*((int*)arg)];
-                if (sh_a->wtag != sh_audio->wtag)
-                  i = mpg_d->num_a_streams;
-              }
-              if (i < mpg_d->num_a_streams && d_audio->id != mpg_d->a_stream_ids[i]) {
-                d_audio->id = mpg_d->a_stream_ids[i];
-                d_audio->sh = sh_a;
-                ds_free_packs(d_audio);
-              }
-            }
-            *((int*)arg) = demuxer->audio->id;
-            return DEMUX_OK;
+	    if (mpg_d && mpg_d->num_a_streams > 1 && demuxer->audio && demuxer->audio->sh) {
+		demux_stream_t *d_audio = demuxer->audio;
+		sh_audio_t *sh_audio = d_audio->sh;
+		sh_audio_t *sh_a=NULL;
+		int i;
+		if (*((int*)arg) < 0) {
+		    for (i = 0; i < mpg_d->num_a_streams; i++) {
+			if (d_audio->id == mpg_d->a_stream_ids[i]) break;
+		    }
+		    do {
+			i = (i+1) % mpg_d->num_a_streams;
+			sh_a = (sh_audio_t*)demuxer->a_streams[mpg_d->a_stream_ids[i]];
+		    } while (sh_a->wtag != sh_audio->wtag);
+		} else {
+		    for (i = 0; i < mpg_d->num_a_streams; i++)
+			if (*((int*)arg) == mpg_d->a_stream_ids[i]) break;
+			if (i < mpg_d->num_a_streams)
+			    sh_a = (sh_audio_t*)demuxer->a_streams[*((int*)arg)];
+			if (sh_a->wtag != sh_audio->wtag)
+			    i = mpg_d->num_a_streams;
+		}
+		if (i < mpg_d->num_a_streams && d_audio->id != mpg_d->a_stream_ids[i]) {
+		    d_audio->id = mpg_d->a_stream_ids[i];
+		    d_audio->sh = sh_a;
+		    ds_free_packs(d_audio);
+		}
+	    }
+	    *((int*)arg) = demuxer->audio->id;
+	    return MPXP_Ok;
     }
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_mpgps =

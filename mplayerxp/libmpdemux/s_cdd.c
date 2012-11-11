@@ -16,7 +16,7 @@
 #include "mrl.h"
 
 static track_t track_idx=255;
-static int __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *device;
@@ -25,10 +25,9 @@ static int __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *f
     UNUSED(flags);
     stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
     stream->sector_size=CD_FRAMESIZE_RAW;
-    if(strcmp(filename,"help") == 0)
-    {
+    if(strcmp(filename,"help") == 0) {
 	MSG_HINT("Usage: cdda://<@device><#trackno>\n");
-	return 0;
+	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     retval = open_cdda(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
@@ -36,7 +35,7 @@ static int __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *f
     return retval;
 }
 
-static int __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *device;
@@ -44,10 +43,9 @@ static int __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const char *f
     UNUSED(flags);
     stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
     stream->sector_size=CD_FRAMESIZE_RAW;
-    if(strcmp(filename,"help") == 0)
-    {
+    if(strcmp(filename,"help") == 0) {
 	MSG_HINT("Usage: cddb://<@device><#trackno>\n");
-	return 0;
+	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     retval = open_cddb(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
@@ -78,35 +76,33 @@ static void __FASTCALL__ cdd_close(stream_t*stream)
     close_cdda(stream);
 }
 
-static int __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     cdda_priv *p=s->priv;
-    switch(cmd)
-    {
-	case SCTRL_TXT_GET_STREAM_NAME:
-	{
+    switch(cmd) {
+	case SCTRL_TXT_GET_STREAM_NAME: {
 	    if(track_idx!=255)
 		sprintf((char *)args,"Track %d",track_idx);
-	    return SCTRL_OK;
+	    return MPXP_Ok;
 	}
 	break;
 	case SCTRL_AUD_GET_CHANNELS:
-		*(int *)args=cdio_cddap_track_channels(p->cd, track_idx);
-		if(*(int *)args<=0) *(int *)args=2;
-		MSG_V("cdda channels: %u\n",*(int *)args);
-		return SCTRL_OK;
+	    *(int *)args=cdio_cddap_track_channels(p->cd, track_idx);
+	    if(*(int *)args<=0) *(int *)args=2;
+	    MSG_V("cdda channels: %u\n",*(int *)args);
+	    return MPXP_Ok;
 	case SCTRL_AUD_GET_SAMPLERATE:
-		*(int *)args = 44100;
-		return SCTRL_OK;
+	    *(int *)args = 44100;
+	    return MPXP_Ok;
 	case SCTRL_AUD_GET_SAMPLESIZE:
-		*(int *)args=2;
-		return SCTRL_OK;
+	    *(int *)args=2;
+	    return MPXP_Ok;
 	case SCTRL_AUD_GET_FORMAT:
-		*(int *)args=0x01; /* Raw PCM */
-		return SCTRL_OK;
+	    *(int *)args=0x01; /* Raw PCM */
+	    return MPXP_Ok;
 	default: break;
     }
-    return SCTRL_FALSE;
+    return MPXP_False;
 }
 
 const stream_driver_t cdda_stream=

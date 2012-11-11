@@ -3,9 +3,9 @@
  * like the Hauppauge WinTV DVBs, for MPlayer.
  *
  * Uses info from the PVA file specifications found at
- * 
+ *
  * http://www.technotrend.de/download/av_format_v1.pdf
- * 
+ *
  * WARNING: Quite a hack was required in order to get files by MultiDec played back correctly.
  * If it breaks anything else, just comment out the "#define DEMUX_PVA_MULTIDEC_HACK" below
  * and it will not be compiled in.
@@ -108,22 +108,19 @@ static int pva_sync(demuxer_t * demuxer)
 	}
 }
 
-static int pva_probe(demuxer_t * demuxer)
+static MPXP_Rc pva_probe(demuxer_t * demuxer)
 {
-	uint8_t buffer[5]={0,0,0,0,0};
-	MSG_V("Checking for PVA\n");
-	stream_read(demuxer->stream,buffer,5);
-	if(buffer[0]=='A' && buffer[1] == 'V' && buffer[4] == 0x55)
-	{
-		MSG_DBG2("Success: PVA\n");
-		demuxer->file_format=DEMUXER_TYPE_PVA;
-		return 1;
-	}
-	else
-	{
-		MSG_DBG2("Failed: PVA\n");
-		return 0;
-	}
+    uint8_t buffer[5]={0,0,0,0,0};
+    MSG_V("Checking for PVA\n");
+    stream_read(demuxer->stream,buffer,5);
+    if(buffer[0]=='A' && buffer[1] == 'V' && buffer[4] == 0x55) {
+	MSG_DBG2("Success: PVA\n");
+	demuxer->file_format=DEMUXER_TYPE_PVA;
+	return MPXP_Ok;
+    } else {
+	MSG_DBG2("Failed: PVA\n");
+	return MPXP_False;
+    }
 }
 
 static demuxer_t* pva_open (demuxer_t * demuxer)
@@ -486,41 +483,40 @@ static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
 	 * the overhead caused by PVA and PES headers.
 	 * If the calculated SOF offset is negative, seek to the beginning of the file.
 	 */
-	
+
 	dest_offset=(seeka->flags&DEMUX_SEEK_SET?demuxer->movi_start:stream_tell(demuxer->stream))+seeka->secs*total_bitrate;
 	if(dest_offset<0) dest_offset=0;
-	
+
 	stream_seek(demuxer->stream,dest_offset);
 
 	if(!pva_sync(demuxer)) { MSG_V("demux_pva: Couldn't seek!\n"); return ; }
-	
+
 	/*
 	 * Reset the PTS info inside the pva_priv_t structure. This way we don't deliver
 	 * data with the wrong PTSs (the ones we had before seeking).
 	 *
 	 */
-	
+
 	priv->last_video_pts=-1;
 	priv->last_audio_pts=-1;
-	
+
 }
 
 
 
 static void pva_close(demuxer_t * demuxer)
 {
-	if(demuxer->priv)
-	{
-		mp_free(demuxer->priv);
-		demuxer->priv=NULL;
-	}
+    if(demuxer->priv) {
+	mp_free(demuxer->priv);
+	demuxer->priv=NULL;
+    }
 }
 
-static int pva_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc pva_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
-		
+
 demuxer_driver_t demux_pva =
 {
     "PVA (for DVB boards) parser",

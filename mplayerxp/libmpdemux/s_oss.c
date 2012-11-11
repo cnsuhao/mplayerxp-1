@@ -34,7 +34,7 @@ typedef struct oss_priv_s
     off_t spos;
 }oss_priv_t;
 
-static int __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *args;
     char *oss_device,*comma;
@@ -43,12 +43,11 @@ static int __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *fil
     int err;
     UNUSED(flags);
     UNUSED(libinput);
-    if(!(stream->priv = mp_malloc(sizeof(oss_priv_t)))) return 0;
+    if(!(stream->priv = mp_malloc(sizeof(oss_priv_t)))) return MPXP_False;
     oss_priv=stream->priv;
-    if(strcmp(filename,"help") == 0)
-    {
+    if(strcmp(filename,"help") == 0) {
 	MSG_HINT("Usage: oss://<@device>#<channels>,<samplerate>,<sampleformat>\n");
-	return 0;
+	return MPXP_False;
     }
     args=mrl_parse_line(filename,NULL,NULL,&oss_device,NULL);
     comma=strchr(args,',');
@@ -63,13 +62,12 @@ static int __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *fil
     if(comma) *comma=0;
     if(args[0])
 	oss_priv->sampleformat=mpaf_str2fmt(args);
-    else
-    {
+    else {
 	/* Default to S16_NE */
 	oss_priv->sampleformat=MPAF_NE|MPAF_SI|MPAF_I|2;
     }
     stream->fd = open(oss_device?oss_device:PATH_DEV_DSP,O_RDONLY);
-    if(stream->fd<0) { mp_free(stream->priv); return 0; }
+    if(stream->fd<0) { mp_free(stream->priv); return MPXP_False; }
     ioctl(stream->fd, SNDCTL_DSP_RESET, NULL);
 //    ioctl(stream->fd, SNDCTL_DSP_SYNC, NULL);
     stream->type = STREAMTYPE_STREAM|STREAMTYPE_RAWAUDIO;
@@ -127,7 +125,7 @@ static int __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *fil
 	stream->sector_size *= 4096*oss_priv->nchannels*(oss_priv->sampleformat&MPAF_BPS_MASK)/stream->sector_size;
     }
     MSG_DBG2("[o_oss] Correct blocksize as %u\n",stream->sector_size);
-    return 1;
+    return MPXP_Ok;
 }
 
 #ifndef TEMP_FAILURE_RETRY
@@ -168,44 +166,39 @@ static void __FASTCALL__ oss_close(stream_t *stream)
     mp_free(stream->priv);
 }
 
-static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     int rval;
     oss_priv_t *oss_priv = s->priv;
     if(args) *(int *)args=0;
-    switch(cmd)
-    {
+    switch(cmd) {
 	case SCTRL_AUD_GET_CHANNELS:
-	    
 	    rval = oss_priv->nchannels;
 	    if (rval > 2) {
 		if ( ioctl(s->fd, SNDCTL_DSP_CHANNELS, &rval) == -1 ||
-		(unsigned)rval != oss_priv->nchannels ) return SCTRL_FALSE;
+		(unsigned)rval != oss_priv->nchannels ) return MPXP_False;
 		*(int *)args=rval;
-		return SCTRL_OK;
+		return MPXP_Ok;
 	    }
 	    else {
 		int c = rval-1;
-		if (ioctl (s->fd, SNDCTL_DSP_STEREO, &c) == -1) return SCTRL_FALSE;
+		if (ioctl (s->fd, SNDCTL_DSP_STEREO, &c) == -1) return MPXP_False;
 		*(int *)args=c+1;
-		return SCTRL_OK;
+		return MPXP_Ok;
 	    }
 	    break;
 	case SCTRL_AUD_GET_SAMPLERATE:
 	    rval=oss_priv->samplerate;
-	    if (ioctl(s->fd, SNDCTL_DSP_SPEED, &rval) != -1)
-	    {
+	    if (ioctl(s->fd, SNDCTL_DSP_SPEED, &rval) != -1) {
 		*(int *)args = rval;
-		return SCTRL_OK;
+		return MPXP_Ok;
 	    }
-	    return SCTRL_FALSE;
+	    return MPXP_False;
 	    break;
 	case SCTRL_AUD_GET_SAMPLESIZE:
 	    *(int *)args=2;
-	    if (ioctl (s->fd, SNDCTL_DSP_GETFMTS, &rval) != -1)
-	    {
-		switch(rval)
-		{
+	    if (ioctl (s->fd, SNDCTL_DSP_GETFMTS, &rval) != -1) {
+		switch(rval) {
 		    case AFMT_MU_LAW:
 		    case AFMT_A_LAW:
 		    case AFMT_IMA_ADPCM:
@@ -214,41 +207,39 @@ static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,any_t*args)
 		    case AFMT_U8:
 		    case AFMT_S8:
 			*(int *)args=1;
-			return SCTRL_OK;
+			return MPXP_Ok;
 		    default:
 		    case AFMT_S16_LE:
 		    case AFMT_S16_BE:
 		    case AFMT_U16_LE:
 		    case AFMT_U16_BE:
 			*(int *)args=2;
-			return SCTRL_OK;
+			return MPXP_Ok;
 		    case AFMT_S24_LE:
 		    case AFMT_S24_BE:
 		    case AFMT_U24_LE:
 		    case AFMT_U24_BE:
 			*(int *)args=3;
-			return SCTRL_OK;
+			return MPXP_Ok;
 		    case AFMT_S32_LE:
 		    case AFMT_S32_BE:
 		    case AFMT_U32_LE:
 		    case AFMT_U32_BE:
 			*(int *)args=4;
-			return SCTRL_OK;
+			return MPXP_Ok;
 		}
 		break;
 	    }
-	    return SCTRL_FALSE;
+	    return MPXP_False;
 	case SCTRL_AUD_GET_FORMAT:
 	    *(int *)args=0x01; /* Raw PCM */
-	    if (ioctl (s->fd, SNDCTL_DSP_GETFMTS, &rval) != -1)
-	    {
-		switch(rval)
-		{
-		    case AFMT_MU_LAW: *(int *)args=WAVE_FORMAT_MULAW; return SCTRL_OK;
-		    case AFMT_A_LAW:  *(int *)args=WAVE_FORMAT_ALAW; return SCTRL_OK;
-		    case AFMT_IMA_ADPCM: *(int *)args=WAVE_FORMAT_ADPCM; return SCTRL_OK;
-		    case AFMT_MPEG: *(int *)args=WAVE_FORMAT_MPEG; return SCTRL_OK; /* 0x55? */
-		    case AFMT_AC3:  *(int *)args=0x2000; return SCTRL_OK;
+	    if (ioctl (s->fd, SNDCTL_DSP_GETFMTS, &rval) != -1) {
+		switch(rval) {
+		    case AFMT_MU_LAW: *(int *)args=WAVE_FORMAT_MULAW; return MPXP_Ok;
+		    case AFMT_A_LAW:  *(int *)args=WAVE_FORMAT_ALAW; return MPXP_Ok;
+		    case AFMT_IMA_ADPCM: *(int *)args=WAVE_FORMAT_ADPCM; return MPXP_Ok;
+		    case AFMT_MPEG: *(int *)args=WAVE_FORMAT_MPEG; return MPXP_Ok; /* 0x55? */
+		    case AFMT_AC3:  *(int *)args=0x2000; return MPXP_Ok;
 		    default:
 		    case AFMT_U8:
 		    case AFMT_S8:
@@ -263,15 +254,15 @@ static int __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,any_t*args)
 		    case AFMT_S32_LE:
 		    case AFMT_S32_BE:
 		    case AFMT_U32_LE:
-		    case AFMT_U32_BE: *(int *)args=0x01;/* Raw PCM */ return SCTRL_OK;
+		    case AFMT_U32_BE: *(int *)args=0x01;/* Raw PCM */ return MPXP_Ok;
 		}
 		break;
 	    }
-	    return SCTRL_FALSE;
+	    return MPXP_False;
 	default:
 	    break;
     }
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 const stream_driver_t oss_stream =

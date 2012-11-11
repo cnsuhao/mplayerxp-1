@@ -72,67 +72,66 @@ static unsigned cdda_parse_tracks(unsigned char *arr,unsigned nelem,const char *
     return rval;
 }
 
-int __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
-  unsigned cd_tracks;
-  cdda_priv* priv;
-  unsigned int audiolen=0;
-  unsigned i;
-  unsigned char arr[256];
-  int st_inited;
+MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
+    unsigned cd_tracks;
+    cdda_priv* priv;
+    unsigned int audiolen=0;
+    unsigned i;
+    unsigned char arr[256];
+    int st_inited;
 
-  priv = (cdda_priv*)mp_mallocz(sizeof(cdda_priv));
+    priv = (cdda_priv*)mp_mallocz(sizeof(cdda_priv));
 
-  priv->cd = cdio_cddap_identify(dev,mp_conf.verbose?1:0,NULL);
+    priv->cd = cdio_cddap_identify(dev,mp_conf.verbose?1:0,NULL);
 
-  if(!priv->cd) {
-    MSG_ERR("Can't open cdda device: %s\n",dev);
-    mp_free(priv);
-    return 0;
-  }
-
-  cdio_cddap_verbose_set(priv->cd, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT);
-
-  if(cdio_cddap_open(priv->cd) != 0) {
-    MSG_ERR("Can't open disc\n");
-    cdda_close(priv->cd);
-    mp_free(priv);
-    return 0;
-  }
-
-  cd_tracks=cdio_cddap_tracks(priv->cd);
-  MSG_V("Found %d tracks on disc\n",cd_tracks);
-  if(!arg[0])
-    for(i=1;i<=cd_tracks;i++) priv->tracks[i-1].play=1;
-  cdda_parse_tracks(arr,sizeof(arr)/sizeof(unsigned),arg);
-  for(i=1;i<=256;i++) if (arr[i]) priv->tracks[i-1].play=1;
-
-  st_inited=0;
-  MSG_V("[CDDA] Queued tracks:");
-  for(i=0;i<cd_tracks;i++) {
-    if(priv->tracks[i].play) {
-	priv->tracks[i].start_sector=cdio_cddap_track_firstsector(priv->cd,i+1);
-	priv->tracks[i].end_sector=cdio_cddap_track_lastsector(priv->cd,i+1);
-	MSG_V(" %d[%d-%d]",i+1,priv->tracks[i].start_sector,priv->tracks[i].end_sector);
-	if(!st_inited) { priv->start_sector=priv->tracks[i].start_sector; st_inited=1; }
-	priv->end_sector=priv->tracks[i].end_sector;
-	audiolen += priv->tracks[i].end_sector-priv->tracks[i].start_sector+1;
+    if(!priv->cd) {
+	MSG_ERR("Can't open cdda device: %s\n",dev);
+	mp_free(priv);
+	return MPXP_False;
     }
-  }
-  for(;i<256;i++) priv->tracks[i].play=0;
-  MSG_V("\n");
-  priv->min  = (unsigned int)(audiolen/(60*75));
-  priv->sec  = (unsigned int)((audiolen/75)%60);
-  priv->msec = (unsigned int)(audiolen%75);
 
-  if(speed)
-    cdio_cddap_speed_set(priv->cd,speed);
+    cdio_cddap_verbose_set(priv->cd, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT);
 
-  priv->sector = priv->start_sector;
-  st->type = STREAMTYPE_SEEKABLE|STREAMTYPE_RAWAUDIO;
-  st->priv = priv;
-  st->start_pos = priv->start_sector*CDIO_CD_FRAMESIZE_RAW;
-  st->end_pos = priv->end_sector*CDIO_CD_FRAMESIZE_RAW;
-  return 1;
+    if(cdio_cddap_open(priv->cd) != 0) {
+	MSG_ERR("Can't open disc\n");
+	cdda_close(priv->cd);
+	mp_free(priv);
+	return MPXP_False;
+    }
+
+    cd_tracks=cdio_cddap_tracks(priv->cd);
+    MSG_V("Found %d tracks on disc\n",cd_tracks);
+    if(!arg[0])
+	for(i=1;i<=cd_tracks;i++) priv->tracks[i-1].play=1;
+    cdda_parse_tracks(arr,sizeof(arr)/sizeof(unsigned),arg);
+    for(i=1;i<=256;i++) if (arr[i]) priv->tracks[i-1].play=1;
+
+    st_inited=0;
+    MSG_V("[CDDA] Queued tracks:");
+    for(i=0;i<cd_tracks;i++) {
+	if(priv->tracks[i].play) {
+	    priv->tracks[i].start_sector=cdio_cddap_track_firstsector(priv->cd,i+1);
+	    priv->tracks[i].end_sector=cdio_cddap_track_lastsector(priv->cd,i+1);
+	    MSG_V(" %d[%d-%d]",i+1,priv->tracks[i].start_sector,priv->tracks[i].end_sector);
+	    if(!st_inited) { priv->start_sector=priv->tracks[i].start_sector; st_inited=1; }
+	    priv->end_sector=priv->tracks[i].end_sector;
+	    audiolen += priv->tracks[i].end_sector-priv->tracks[i].start_sector+1;
+	}
+    }
+    for(;i<256;i++) priv->tracks[i].play=0;
+    MSG_V("\n");
+    priv->min  = (unsigned int)(audiolen/(60*75));
+    priv->sec  = (unsigned int)((audiolen/75)%60);
+    priv->msec = (unsigned int)(audiolen%75);
+
+    if(speed) cdio_cddap_speed_set(priv->cd,speed);
+
+    priv->sector = priv->start_sector;
+    st->type = STREAMTYPE_SEEKABLE|STREAMTYPE_RAWAUDIO;
+    st->priv = priv;
+    st->start_pos = priv->start_sector*CDIO_CD_FRAMESIZE_RAW;
+    st->end_pos = priv->end_sector*CDIO_CD_FRAMESIZE_RAW;
+    return MPXP_Ok;
 }
 
 static lsn_t map_sector(cdda_priv*p,lsn_t sector,track_t *tr)

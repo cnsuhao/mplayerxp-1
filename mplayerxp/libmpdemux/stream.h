@@ -5,6 +5,7 @@
 #include <sys/types.h>
 
 #include "mp_config.h"
+#include "xmpcore/xmp_enums.h"
 
 enum {
     STREAM_BUFFER_SIZE	=4096,
@@ -112,12 +113,6 @@ typedef struct {
   uint16_t ex, ey;
 } rect_highlight_t;
 
-/* return codes: */
-enum {
-    SCTRL_FALSE		=0,
-    SCTRL_OK		=1,
-    SCTRL_UNKNOWN	=-1
-};
 /* These controls extracts text info from stream */
 enum {
     SCTRL_TXT_GET_STREAM_AUTHOR		=1, /**< Returns author of stream. Accepts char *name as pointer on 256 bytes array  */
@@ -165,10 +160,8 @@ typedef struct stream_driver_s
 		  * @param _this	points structure to be filled by driver
 		  * @param filename	points MRL of stream (vcdnav://, file://, http://, ...)
 		  * @param flags	currently unused and filled as 0
-		  * @return		0 if stream can't be opened by this driver
-		  *			1 - if stream was successfully opened
 		**/
-    int		(* __FASTCALL__ open)(any_t* libinput,stream_t *_this,const char *filename,unsigned flags);
+    MPXP_Rc	(* __FASTCALL__ open)(any_t* libinput,stream_t *_this,const char *filename,unsigned flags);
 
 		/** Reads next packet from stream
 		  * @param _this	points structure which identifies stream
@@ -198,9 +191,9 @@ typedef struct stream_driver_s
 		/** Pass to driver player's commands (like ioctl)
 		  * @param _this	points structure which identifies stream
 		  * @param cmd		contains the command (for detail see SCTRL_* definitions)
-		  * @return		result of command processing (SCTRL_OK, SCTRL_FALSE, ...)
+		  * @return		result of command processing
 		**/
-    int		(* __FASTCALL__ control)(stream_t *_this,unsigned cmd,any_t*param);
+    MPXP_Rc	(* __FASTCALL__ control)(stream_t *_this,unsigned cmd,any_t*param);
 }stream_driver_t;
 
 void print_stream_drivers(void);

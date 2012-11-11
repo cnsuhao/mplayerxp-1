@@ -8,7 +8,7 @@
 
     Details of the FILM file format can be found at:
       http://www.pcisys.net/~melanson/codecs/
-      
+
     TODO: demuxer->movi_length
 */
 
@@ -183,16 +183,16 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   return 1;
 }
 
-static int film_probe(demuxer_t* demuxer)
+static MPXP_Rc film_probe(demuxer_t* demuxer)
 {
   uint32_t chunk_type;
 
   // read the master chunk type
   chunk_type = le2me_32(stream_read_fourcc(demuxer->stream));
   // validate the chunk type
-  if (chunk_type != CHUNK_FILM) return 0;
+  if (chunk_type != CHUNK_FILM) return MPXP_False;
   demuxer->file_format=DEMUXER_TYPE_FILM;
-  return 1;
+  return MPXP_Ok;
 }
 
 static demuxer_t* film_open(demuxer_t* demuxer)
@@ -433,12 +433,12 @@ static void film_close(demuxer_t* demuxer) {
   if(film_data->chunks)
     mp_free(film_data->chunks);
   mp_free(film_data);
-  
+
 }
 
-static int film_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc film_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_film =

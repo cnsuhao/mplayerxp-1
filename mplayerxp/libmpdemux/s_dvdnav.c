@@ -191,7 +191,7 @@ static const mrl_config_t dvdnavopts_conf[]={
 	{ NULL, NULL, 0, 0, 0 }
 };
 
-static int __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *dvd_device;
@@ -200,16 +200,14 @@ static int __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char
     UNUSED(libinput);
     stream->type = STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM;
     param=mrl_parse_line(filename,NULL,NULL,&dvd_device,NULL);
-    if(strcmp(param,"help") == 0)
-    {
+    if(strcmp(param,"help") == 0) {
 	MSG_HINT("Usage: dvdnav://<title>,<chapter>\n");
-	return 0;
+	return MPXP_False;
     }
     param=mrl_parse_params(param,dvdnavopts_conf);
     if (!(stream->priv=new_dvdnav_stream(stream,dvd_device?dvd_device:DEFAULT_DVD_DEVICE))) {
 	MSG_ERR(MSGTR_CantOpenDVD,dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
-	if(!dvd_device)
-	{
+	if(!dvd_device) {
 	    if (!(stream->priv=new_dvdnav_stream(stream,DEFAULT_CDROM_DEVICE)))
 		MSG_ERR(MSGTR_CantOpenDVD,DEFAULT_CDROM_DEVICE);
 	    else
@@ -217,17 +215,15 @@ static int __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char
 	}
 	mp_free(stream->priv);
 	if(dvd_device) mp_free(dvd_device);
-        return 0;
+        return MPXP_False;
     }
     dvd_ok:
     if(dvd_device) mp_free(dvd_device);
     ((dvdnav_priv_t *)stream->priv)->started=1;
-    if(mp_conf.s_cache_size)
-    {
+    if(mp_conf.s_cache_size) {
 	tevent = mp_malloc(sizeof(dvdnav_event_t));
-	if(tevent) 
-	    if((tevent->details=mp_malloc(DVD_BLOCK_SIZE))==NULL)
-	    {
+	if(tevent)
+	    if((tevent->details=mp_malloc(DVD_BLOCK_SIZE))==NULL) {
 		mp_free(tevent);
 		tevent=NULL;
 	    }
@@ -238,8 +234,7 @@ static int __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char
     ntitles=0;
     dvdnav_get_number_of_titles(((dvdnav_priv_t *)stream->priv)->dvdnav,&ntitles);
     MSG_INFO(MSGTR_DVDnumTitles,ntitles);
-    if(dvd_title != -1)
-    {
+    if(dvd_title != -1) {
 	int nparts;
 	dvdnav_get_number_of_parts(((dvdnav_priv_t *)stream->priv)->dvdnav,dvd_title,&nparts);
 	MSG_INFO(MSGTR_DVDnumChapters,dvd_title,nparts);
@@ -253,7 +248,7 @@ static int __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char
     if(	dvdnav_is_domain_vmgm(((dvdnav_priv_t *)stream->priv)->dvdnav) ||
 	dvdnav_is_domain_vtsm(((dvdnav_priv_t *)stream->priv)->dvdnav))
 		stream->type = STREAMTYPE_MENU|STREAMTYPE_SEEKABLE;
-    return 1;
+    return MPXP_Ok;
 }
 
 static void __FASTCALL__ dvdnav_stream_read(stream_t * stream, dvdnav_event_t*de) {
@@ -611,48 +606,42 @@ static void __FASTCALL__ dvdnav_cmd_handler(stream_t* s,unsigned cmd)
     dvdnav_button_select(dvdnav_priv->dvdnav,pci,button);
 }
 
-static int __FASTCALL__ __dvdnav_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ __dvdnav_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     dvdnav_priv_t *dvdnav_priv=s->priv;
-    switch(cmd)
-    {
-	case SCTRL_TXT_GET_STREAM_NAME:
-	{
+    switch(cmd) {
+	case SCTRL_TXT_GET_STREAM_NAME: {
 	    const char *title_str;
-	    if (dvdnav_get_title_string(dvdnav_priv->dvdnav,&title_str)==DVDNAV_STATUS_OK)
-	    {
+	    if (dvdnav_get_title_string(dvdnav_priv->dvdnav,&title_str)==DVDNAV_STATUS_OK) {
 		strncpy(args,title_str,256);
 		((char *)args)[255]=0;
-		return SCTRL_OK;
+		return MPXP_Ok;
 	    }
 	}
 	break;
-	case SCTRL_VID_GET_PALETTE:
-	{
+	case SCTRL_VID_GET_PALETTE: {
 	    unsigned* pal;
 	    pal=dvdnav_stream_get_palette(s);
 	    *((unsigned **)args)=pal;
-	    return SCTRL_OK;
+	    return MPXP_Ok;
 	}
 	break;
 	case SCTRL_VID_GET_HILIGHT: {
 	    mp_dvdnav_get_highlight (s,args);
-	    return SCTRL_OK;
+	    return MPXP_Ok;
 	}
-	case SCRTL_EVT_HANDLE:
-	{
+	case SCRTL_EVT_HANDLE: {
 	    dvdnav_event_handler(s,args);
-	    return SCTRL_OK;
+	    return MPXP_Ok;
 	}
 	break;
-	case SCRTL_MPXP_CMD:
-	{
+	case SCRTL_MPXP_CMD: {
 	    dvdnav_cmd_handler(s,(unsigned)args);
-	    return SCTRL_OK;
+	    return MPXP_Ok;
 	}
 	default: break;
     }
-    return SCTRL_FALSE;
+    return MPXP_False;
 }
 
 const stream_driver_t dvdnav_stream=

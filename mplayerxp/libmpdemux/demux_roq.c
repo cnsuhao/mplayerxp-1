@@ -52,19 +52,16 @@ typedef struct roq_data_t
 // Check if a stream qualifies as a RoQ file based on the magic numbers
 // at the start of the file:
 //  84 10 FF FF FF FF xx xx
-static int roq_probe(demuxer_t *demuxer)
+static MPXP_Rc roq_probe(demuxer_t *demuxer)
 {
-  stream_reset(demuxer->stream);
-  stream_seek(demuxer->stream, demuxer->stream->start_pos);
+    stream_reset(demuxer->stream);
+    stream_seek(demuxer->stream, demuxer->stream->start_pos);
 
-  if ((stream_read_dword(demuxer->stream) == 0x8410FFFF) &&
-      ((stream_read_dword(demuxer->stream) & 0xFFFF0000) == 0xFFFF0000))
-    {
+    if ((stream_read_dword(demuxer->stream) == 0x8410FFFF) &&
+	((stream_read_dword(demuxer->stream) & 0xFFFF0000) == 0xFFFF0000)) {
 	demuxer->file_format=DEMUXER_TYPE_ROQ;
-	return 1;
-    }
-  else
-    return 0;
+	return MPXP_Ok;
+    } else return MPXP_False;
 }
 
 // return value:
@@ -257,9 +254,9 @@ static void roq_close(demuxer_t* demuxer) {
   mp_free(roq_data);
 }
 
-static int roq_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc roq_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_roq =

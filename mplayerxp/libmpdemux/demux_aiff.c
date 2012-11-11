@@ -34,15 +34,15 @@ typedef struct priv_s
     int verc;
 }priv_t;
 
-static int aiff_probe(demuxer_t* demuxer) 
+static MPXP_Rc aiff_probe(demuxer_t* demuxer) 
 {
   char buf[12];
   stream_t *s;
   s = demuxer->stream;
   stream_read(s,buf,12);
-  if(*((uint32_t *)&buf[0])==mmioFOURCC('F','O','R','M') && *((uint32_t *)&buf[8])==mmioFOURCC('A','I','F','F')) return 1;
-  if(*((uint32_t *)&buf[0])==mmioFOURCC('F','O','R','M') && *((uint32_t *)&buf[8])==mmioFOURCC('A','I','F','C')) return 1;
-  return 0;
+  if(*((uint32_t *)&buf[0])==mmioFOURCC('F','O','R','M') && *((uint32_t *)&buf[8])==mmioFOURCC('A','I','F','F')) return MPXP_Ok;
+  if(*((uint32_t *)&buf[0])==mmioFOURCC('F','O','R','M') && *((uint32_t *)&buf[8])==mmioFOURCC('A','I','F','C')) return MPXP_Ok;
+  return MPXP_False;
 }
 
 static demuxer_t* aiff_open(demuxer_t* demuxer) {
@@ -216,9 +216,9 @@ static void aiff_close(demuxer_t* demuxer)
     mp_free(demuxer->priv);
 }
 
-static int aiff_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc aiff_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_aiff =

@@ -6,7 +6,7 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-SRCS  = s_file.c s_ffmpeg.c
+SRCS  = s_file.c s_ffmpeg.c s_null.c
 ifeq ($(HAVE_LIBCDIO_CDDA),yes)
 SRCS += s_cdd.c cdda.c
 ifeq ($(HAVE_STREAMING),yes)

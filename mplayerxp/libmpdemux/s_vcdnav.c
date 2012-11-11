@@ -57,7 +57,7 @@ static void __FASTCALL__ _cdio_detect_media(char *device)
 
 static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp);
 
-static int __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     vcd_priv_t *priv;
     const char *param;
@@ -67,10 +67,9 @@ static int __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char 
     vcdinfo_open_return_t open_rc;
     UNUSED(flags);
     UNUSED(libinput);
-    if(strcmp(filename,"help") == 0)
-    {
+    if(strcmp(filename,"help") == 0) {
 	MSG_HINT("Usage: vcdnav://<@device><#trackno>\n");
-	return 0;
+	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     if(param) vcd_track=atoi(param);
@@ -79,27 +78,23 @@ static int __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char 
     if(mp_conf.verbose>1) vcd_loglevel_default=VCD_LOG_DEBUG;
     else if(mp_conf.verbose) vcd_loglevel_default=VCD_LOG_INFO;
     open_rc=vcdinfo_open(&priv->fd,&device,DRIVER_UNKNOWN,NULL);
-    if(!priv->fd)
-    {
+    if(!priv->fd) {
 	dev=DEFAULT_CDROM_DEVICE;
 	open_rc=vcdinfo_open(&priv->fd,device?&device:&dev,DRIVER_UNKNOWN,NULL);
 	mp_free(device);
-	if(!priv->fd)
-	{
+	if(!priv->fd) {
 	    MSG_ERR("Can't open stream\n");
 	    mp_free(priv);
 	    _cdio_detect_media(device?device:dev);
-	    return 0;
+	    return MPXP_False;
 	}
     }
     priv->nlids=vcdinfo_get_num_LIDs(priv->fd);
     if(vcdinfo_read_psd(priv->fd)) vcdinfo_visit_lot (priv->fd, false);
     MSG_DBG2("VCDNAV geometry:\n");
-    if((priv->ntracks=vcdinfo_get_num_tracks(priv->fd))>0)
-    {
+    if((priv->ntracks=vcdinfo_get_num_tracks(priv->fd))>0) {
 	priv->track=mp_calloc(priv->ntracks,sizeof(vcd_item_info_t));
-	for(i=0;i<priv->ntracks;i++)
-	{
+	for(i=0;i<priv->ntracks;i++) {
 	    priv->track[i].size=vcdinfo_get_track_sect_count(priv->fd,i+1);
 	    priv->track[i].start_LSN=vcdinfo_get_track_lsn(priv->fd,i+1);
 	    MSG_DBG2("track=%i start=%i size=%i\n",i,priv->track[i].start_LSN,priv->track[i].size);
@@ -107,21 +102,17 @@ static int __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char 
 	priv->start=priv->track[0].start_LSN;
 	priv->total=priv->track[i-1].size;
     }
-    if((priv->nentries=vcdinfo_get_num_entries(priv->fd))>0)
-    {
+    if((priv->nentries=vcdinfo_get_num_entries(priv->fd))>0) {
 	priv->entry=mp_calloc(priv->nentries,sizeof(vcd_item_info_t));
-	for(i=0;i<priv->nentries;i++)
-	{
+	for(i=0;i<priv->nentries;i++) {
 	    priv->entry[i].size=vcdinfo_get_entry_sect_count(priv->fd,i);
 	    priv->entry[i].start_LSN=vcdinfo_get_entry_lsn(priv->fd,i);
 	    MSG_DBG2("entry=%i start=%i size=%i\n",i,priv->entry[i].start_LSN,priv->entry[i].size);
 	}
     }
-    if((priv->nsegments=vcdinfo_get_num_segments(priv->fd))>0)
-    {
+    if((priv->nsegments=vcdinfo_get_num_segments(priv->fd))>0) {
 	priv->segment=mp_calloc(priv->nsegments,sizeof(vcd_item_info_t));
-	for(i=0;i<priv->nsegments;i++)
-	{
+	for(i=0;i<priv->nsegments;i++) {
 	    priv->segment[i].size=vcdinfo_get_seg_sector_count(priv->fd,i);
 	    priv->segment[i].start_LSN=vcdinfo_get_seg_lsn(priv->fd,i);
 	    MSG_DBG2("segment=%i start=%i size=%i\n",i,priv->segment[i].start_LSN,priv->segment[i].size);
@@ -131,10 +122,8 @@ static int __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char 
     ,priv->ntracks
     ,priv->nentries
     ,priv->nsegments);
-    if(vcd_track!=-1)
-    {
-	if(vcd_track>0 && (unsigned)vcd_track<=priv->ntracks)
-	{
+    if(vcd_track!=-1) {
+	if(vcd_track>0 && (unsigned)vcd_track<=priv->ntracks) {
 	    priv->start=priv->track[vcd_track-1].start_LSN;
 	    priv->total=priv->track[vcd_track-1].size;
 	}
@@ -149,7 +138,7 @@ static int __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char 
     stream->start_pos=priv->start*sizeof(vcdsector_t);
     stream->end_pos=(priv->start+priv->total)*sizeof(vcdsector_t);
     MSG_DBG2("vcdnav_open start=%i end=%i ssize=%i\n",priv->lsn,priv->total,stream->sector_size);
-    return 1;
+    return MPXP_Ok;
 }
 
 static void __FASTCALL__ _vcdnav_inc_lsn(vcd_priv_t *p)
@@ -263,11 +252,11 @@ static void __FASTCALL__ _vcdnav_close(stream_t*stream)
     if(priv->segment) mp_free(priv->segment);
     mp_free(stream->priv);
 }
-static int __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 const stream_driver_t vcdnav_stream=

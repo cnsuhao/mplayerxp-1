@@ -1,9 +1,9 @@
 /*
  SMJPEG file parser by Alex Beregszaszi
- 
+
  Only for testing some files.
  Commited only for Nexus' request.
- 
+
  Based on text by Arpi (SMJPEG-wtag.txt) and later on
  http://www.lokigames.com/development/download/smjpeg/SMJPEG.txt
 
@@ -26,37 +26,35 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
-static int smjpeg_probe(demuxer_t* demuxer){
+static MPXP_Rc smjpeg_probe(demuxer_t* demuxer){
     int orig_pos = stream_tell(demuxer->stream);
     char buf[8];
     int version;
-    
+
     MSG_V("Checking for SMJPEG\n");
-    
-    if (stream_read_word(demuxer->stream) == 0xA)
-    {
+
+    if (stream_read_word(demuxer->stream) == 0xA) {
 	stream_read(demuxer->stream, buf, 6);
 	buf[7] = 0;
-    
+
 	if (strncmp("SMJPEG", buf, 6)) {
 	    MSG_DBG2("Failed: SMJPEG\n");
-	    return 0;
+	    return MPXP_False;
 	}
     }
     else
-	return 0;
+	return MPXP_False;
 
     version = stream_read_dword(demuxer->stream);
-    if (version != 0)
-    {
+    if (version != 0) {
 	MSG_ERR("Unknown version (%d) of SMJPEG. Please report!\n",version);
-	return 0;
+	return MPXP_False;
     }
-    
+
     stream_seek(demuxer->stream, orig_pos);
     demuxer->file_format=DEMUXER_TYPE_SMJPEG;
 
-    return 1;
+    return MPXP_Ok;
 }
 
 
@@ -170,9 +168,9 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 
 static void smjpeg_close(demuxer_t *demuxer) {}
 
-static int smjpeg_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc smjpeg_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_smjpeg =

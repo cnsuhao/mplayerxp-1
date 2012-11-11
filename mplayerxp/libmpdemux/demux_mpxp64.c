@@ -464,7 +464,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
     id=stream_read_qword_le(s);
     if(memcmp(&id,"HEADER64",8)!=0) return NULL;
     hsize=stream_read_qword_le(s); /* header size */
-    
+
     // priv struct:
     priv=mp_mallocz(sizeof(mpxpav64_priv_t));
     demuxer->priv=(any_t*)priv;
@@ -858,7 +858,7 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
 }
 
-static int mpxpav64_probe(demuxer_t *demuxer)
+static MPXP_Rc mpxpav64_probe(demuxer_t *demuxer)
 {
   uint64_t id1,id2,id3;
   uint32_t id4;
@@ -875,8 +875,8 @@ static int mpxpav64_probe(demuxer_t *demuxer)
   if(memcmp(&id1,"MPXPAV64",8)==0 &&
      memcmp(&id2,"HEADER64",8)==0 &&
      memcmp(&id3,"AVDATA64",8)==0 &&
-     memcmp(&id4,"SEEK",4)==0) return 1;
-  return 0;
+     memcmp(&id4,"SEEK",4)==0) return MPXP_Ok;
+  return MPXP_False;
 }
 
 static void mpxpav64_close(demuxer_t *demuxer)
@@ -888,9 +888,9 @@ static void mpxpav64_close(demuxer_t *demuxer)
   mp_free(priv);
 }
 
-static int mpxpav64_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc mpxpav64_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_mpxpav64 =

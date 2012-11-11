@@ -67,7 +67,7 @@ static void dv_seek(demuxer_t *demuxer,const seek_args_t* seeka)
    frames->current_filepos=newpos*frames->frame_size;
 }
 
-static int dv_probe(demuxer_t *demuxer)
+static MPXP_Rc dv_probe(demuxer_t *demuxer)
 {
    unsigned char tmp_buffer[DV_PAL_FRAME_SIZE];
    int bytes_read=0;
@@ -78,26 +78,20 @@ static int dv_probe(demuxer_t *demuxer)
 
    bytes_read=stream_read(demuxer->stream,tmp_buffer,DV_PAL_FRAME_SIZE);
    if ((bytes_read!=DV_PAL_FRAME_SIZE) && (bytes_read!=DV_NTSC_FRAME_SIZE))
-      return 0;
+      return MPXP_False;
 
-   td=dv_decoder_new(TRUE,TRUE,FALSE);
-   if (!td)
-      return 0;
+   if(!(td=dv_decoder_new(TRUE,TRUE,FALSE))) return MPXP_False;
 
    td->quality=DV_QUALITY_BEST;
-   result=dv_parse_header(td, tmp_buffer);
-   if (result<0)
-      return 0;
+   if((result=dv_parse_header(td, tmp_buffer))<0) return MPXP_False;
 
    if ((( td->num_dif_seqs==10) || (td->num_dif_seqs==12))
        && (td->width==720)
        && ((td->height==576) || (td->height==480)))
       result=1;
    dv_decoder_free(td);
-   if (result)
-      return 1;
-   else
-      return 0;
+   if (result) return MPXP_Ok;
+   return MPXP_False;
 }
 
 // return value:
@@ -237,8 +231,8 @@ static void dv_close(demuxer_t* demuxer)
   mp_free(frames);
 }
 
-static int dv_control(demuxer_t *demuxer,int cmd, any_t*arg) {
-    return DEMUX_UNKNOWN;
+static MPXP_Rc dv_control(demuxer_t *demuxer,int cmd, any_t*arg) {
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_dv = {

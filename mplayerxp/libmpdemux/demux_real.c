@@ -1,7 +1,7 @@
 /*     Real parser & demuxer
-    
+
     (C) Alex Beregszaszi <alex@naxine.org>
-    
+
     Based on FFmpeg's libav/rm.c.
 
 Audio codecs: (supported by RealPlayer8 for Linux)
@@ -311,23 +311,23 @@ static int generate_index(demuxer_t *demuxer)
   return 0;
 }
 
-static int real_probe(demuxer_t* demuxer)
+static MPXP_Rc real_probe(demuxer_t* demuxer)
 {
     real_priv_t *priv;
     int c;
 
     MSG_V("Checking for REAL\n");
-    
+
     c = stream_read_dword_le(demuxer->stream);
     if (c == -256)
-	return 0; /* EOF */
+	return MPXP_False; /* EOF */
     if (c != MKTAG('.', 'R', 'M', 'F'))
-	return 0; /* bad magic */
+	return MPXP_False; /* bad magic */
 
     priv = mp_mallocz(sizeof(real_priv_t));
     demuxer->priv = priv;
     demuxer->file_format=DEMUXER_TYPE_REAL;
-    return 1;
+    return MPXP_Ok;
 }
 
 void hexdump(char *, unsigned long);
@@ -1590,9 +1590,9 @@ static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
     return;
 }
 
-static int real_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc real_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_real =

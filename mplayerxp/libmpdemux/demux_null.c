@@ -17,9 +17,9 @@ static const config_t null_conf[] = {
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
-static int null_probe(demuxer_t* demuxer)
+static MPXP_Rc null_probe(demuxer_t* demuxer)
 {
-    return 0;
+    return MPXP_False;
 }
 
 static demuxer_t* null_open(demuxer_t* demuxer) {
@@ -35,9 +35,9 @@ static void null_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void null_close(demuxer_t* demuxer) {}
 
-static int null_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc null_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_null =

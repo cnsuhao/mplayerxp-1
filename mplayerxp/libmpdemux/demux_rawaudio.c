@@ -32,14 +32,13 @@ static const config_t rawaudio_conf[] = {
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
-static int rawaudio_probe(demuxer_t* demuxer)
+static MPXP_Rc rawaudio_probe(demuxer_t* demuxer)
 {
- if(demuxer->stream->type & STREAMTYPE_RAWAUDIO || use_rawaudio)
- {
-    demuxer->file_format=DEMUXER_TYPE_RAWAUDIO;
-    return 1;
- }
- return 0;
+    if(demuxer->stream->type & STREAMTYPE_RAWAUDIO || use_rawaudio) {
+	demuxer->file_format=DEMUXER_TYPE_RAWAUDIO;
+	return MPXP_Ok;
+    }
+    return MPXP_False;
 }
 
 static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
@@ -109,9 +108,9 @@ static void rawaudio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void rawaudio_close(demuxer_t* demuxer) {}
 
-static int rawaudio_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc rawaudio_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_rawaudio =

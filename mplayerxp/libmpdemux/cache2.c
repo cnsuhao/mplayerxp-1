@@ -106,8 +106,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
   new_start = readpos - c->back_size;
   if(new_start<c->stream->start_pos) new_start=c->stream->start_pos;
   seek_eof=0;
-  if(!in_cache && c->stream->type&STREAMTYPE_SEEKABLE)
-  {
+  if(!in_cache && c->stream->type&STREAMTYPE_SEEKABLE) {
 	/* seeking... */
 	MSG_DBG2("Out of boundaries... seeking to %lli {in_cache(%i) %lli<%lli>%lli} \n"
 	,new_start,in_cache,START_FILEPOS(c),readpos,END_FILEPOS(c));
@@ -119,13 +118,10 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 	if(c->packets[c->first].filepos < new_start-(off_t)c->stream->sector_size)
 	    MSG_WARN("CACHE2: found wrong offset after seeking %lli (wanted: %lli)\n",c->packets[c->first].filepos,new_start);
 	MSG_DBG2("Seek done. new pos: %lli\n",START_FILEPOS(c));
-  }
-  else
-  {
+  } else {
     /* find new start of buffer according on readpos */
     cidx=c->first;
-    do
-    {
+    do {
 	if((new_start>=c->packets[cidx].filepos&&new_start<c->packets[cidx].filepos+c->packets[cidx].sp.len)
 	   && !c->packets[cidx].sp.type) break;
 	cidx=CP_NEXT(c,cidx);
@@ -134,8 +130,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
     c->first=cidx;
   }
   CACHE2_TUNLOCK(c);
-  if(CP_NEXT(c,c->last) == c->first || c->eof)
-  {
+  if(CP_NEXT(c,c->last) == c->first || c->eof) {
     MSG_DBG2("CACHE2: cache full\n");
     return 0; /* cache full */
   }
@@ -152,17 +147,15 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
     c->stream->driver->read(c->stream,&c->packets[cidx].sp);
     MSG_DBG2("CACHE2: read_packet at %lli (wanted %u got %u type %i)",c->packets[cidx].filepos,c->sector_size,c->packets[cidx].sp.len,c->packets[cidx].sp.type);
     if(mp_conf.verbose>1)
-	if(c->packets[cidx].sp.len>8) 
-	{ 
+	if(c->packets[cidx].sp.len>8) {
 	    int i;
 	    for(i=0;i<8;i++)
 		MSG_DBG2("%02X ",(int)(unsigned char)c->packets[cidx].sp.buf[i]);
-	} 
+	}
     MSG_DBG2("\n");
-    if(c->stream->driver->control(c->stream,SCTRL_EOF,NULL)==SCTRL_OK) legacy_eof=1;
+    if(c->stream->driver->control(c->stream,SCTRL_EOF,NULL)==MPXP_Ok) legacy_eof=1;
     else	legacy_eof=0;
-    if(c->packets[cidx].sp.len < 0 || (c->packets[cidx].sp.len == 0 && c->packets[cidx].sp.type == 0) || legacy_eof || seek_eof)
-    {
+    if(c->packets[cidx].sp.len < 0 || (c->packets[cidx].sp.len == 0 && c->packets[cidx].sp.type == 0) || legacy_eof || seek_eof) {
 	/* EOF */
 	MSG_DBG2("CACHE2: guess EOF: %lli %lli\n",START_FILEPOS(c),END_FILEPOS(c));
 	c->packets[cidx].state|=CPF_EOF;
@@ -180,8 +173,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
     CACHE2_PACKET_TUNLOCK(cidx);
     cidx=CP_NEXT(c,cidx);
     MSG_DBG2("CACHE2: start=%lli end_filepos = %lli\n",START_FILEPOS(c),END_FILEPOS(c));
-    if(cidx==c->first)
-    {
+    if(cidx==c->first) {
 	MSG_DBG2("CACHE2: end of queue is reached: %p\n",c->first);
 	break;
     }

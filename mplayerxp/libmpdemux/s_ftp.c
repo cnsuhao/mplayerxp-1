@@ -351,7 +351,7 @@ static void __FASTCALL__ ftp_close(stream_t *s) {
   mp_free(p);
 }
 
-static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
   int len = 0,resp;
   struct stream_priv_s* p;
@@ -360,7 +360,7 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
   char *uname;
 
   UNUSED(flags);
-  if(!(uname=mp_malloc(strlen(filename)+7))) return 0;
+  if(!(uname=mp_malloc(strlen(filename)+7))) return MPXP_False;
   strcpy(uname,"ftp://");
   strcat(uname,filename);
   if(!(url=url_new(uname))) goto bad_url;
@@ -369,7 +369,7 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
   if(!(url->hostname && url->file)) {
     bad_url:
     MSG_ERR("[ftp] Bad url\n");
-    return 0;
+    return MPXP_False;
   }
   p=stream->priv=mp_mallocz(sizeof(struct stream_priv_s));
   p->user=url->username?url->username:"anonymous";
@@ -385,7 +385,7 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
   if(p->handle < 0) {
     url_free(url);
     mp_free(stream->priv);
-    return 0;
+    return MPXP_False;
   }
 
   // We got a connection, let's start serious things
@@ -395,7 +395,7 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
   if (readresp(p, NULL) == 0) {
     ftp_close(stream);
     url_free(url);
-    return 0;
+    return MPXP_False;
   }
   // Login
   snprintf(str,255,"USER %s",p->user);
@@ -409,15 +409,14 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
       MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
       ftp_close(stream);
       url_free(url);
-      return 0;
+      return MPXP_False;
     }
   } else if(resp != 2) {
     MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
     ftp_close(stream);
     url_free(url);
-    return 0;
+    return MPXP_False;
   }
-
 
   // Set the transfer type
   resp = FtpSendCmd("TYPE I",p,rsp_txt);
@@ -425,7 +424,7 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
     MSG_ERR("[ftp] command 'TYPE I' failed: %s\n",rsp_txt);
     ftp_close(stream);
     url_free(url);
-    return 0;
+    return MPXP_False;
   }
 
   // Get System of FTP
@@ -434,7 +433,7 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
     MSG_ERR("[ftp] command 'SYST' failed: %s\n",rsp_txt);
     ftp_close(stream);
     url_free(url);
-    return 0;
+    return MPXP_False;
   }
   MSG_INFO("[ftp] System: %s\n",rsp_txt);
   resp = FtpSendCmd("STAT",p,rsp_txt);
@@ -442,7 +441,7 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
     MSG_ERR("[ftp] command 'STAT' failed: %s\n",rsp_txt);
     ftp_close(stream);
     url_free(url);
-    return 0;
+    return MPXP_False;
   }
 
   // Get the filesize
@@ -471,14 +470,14 @@ static int __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *fil
   stream->fd = -1;
 
   url_free(url);
-  return 1;
+  return MPXP_Ok;
 }
 
-static int __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */

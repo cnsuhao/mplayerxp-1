@@ -44,15 +44,15 @@ typedef struct {
 
 
 
-static int ra_probe(demuxer_t* demuxer)
+static MPXP_Rc ra_probe(demuxer_t* demuxer)
 {
-	unsigned int chunk_id;
-  
-	chunk_id = stream_read_dword_le(demuxer->stream);
-	if (chunk_id == FOURCC_DOTRA)
-		return 1;
-	else
-		return 0;
+    unsigned int chunk_id;
+
+    chunk_id = stream_read_dword_le(demuxer->stream);
+    if (chunk_id == FOURCC_DOTRA)
+	return MPXP_Ok;
+    else
+	return MPXP_False;
 }
 
 
@@ -276,12 +276,10 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 
 static void ra_close(demuxer_t *demuxer)
 {
-	ra_priv_t* ra_priv = demuxer->priv;
- 
-	if (ra_priv)
-		mp_free(ra_priv);
-
-	return;
+    ra_priv_t* ra_priv = demuxer->priv;
+    if (ra_priv)
+	mp_free(ra_priv);
+    return;
 }
 
 
@@ -301,9 +299,9 @@ int demux_seek_ra(demuxer_t *demuxer,const seek_args_t* seeka)
 }
 #endif
 
-static int ra_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc ra_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_ra =

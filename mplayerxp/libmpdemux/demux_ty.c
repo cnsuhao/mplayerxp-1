@@ -819,24 +819,19 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
       ty_ClearOSD( 0 );
 }
 
-static int ty_control( demuxer_t *demuxer,int cmd, any_t*arg )
+static MPXP_Rc ty_control( demuxer_t *demuxer,int cmd, any_t*arg )
 {
 #if 0
-   demux_stream_t *d_video = demuxer->video;
-   sh_video_t     *sh_video = d_video->sh;
-   switch(cmd)
-   {
-      case DEMUX_CMD_GET_TIME_LENGTH:
-             return DEMUXER_CTRL_DONTKNOW;
-      case DEMUX_CMD_GET_PERCENT_POS:
-          return DEMUX_UNKNOWN;
-       default:
-          return DEMUX_UNKNOWN;
+    demux_stream_t *d_video = demuxer->video;
+    sh_video_t     *sh_video = d_video->sh;
+    switch(cmd) {
+	case DEMUX_CMD_GET_TIME_LENGTH: return MPXP_NA;
+	case DEMUX_CMD_GET_PERCENT_POS: return MPXP_Unknown;
+	default: return MPXP_Unknown;
     }
 #endif
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
-
 
 static void ty_close( demuxer_t *demux )
 {
@@ -847,11 +842,11 @@ static void ty_close( demuxer_t *demux )
 }
 
 
-static int ty_probe(demuxer_t* demuxer)
+static MPXP_Rc ty_probe(demuxer_t* demuxer)
 {
   TiVoInfo *tivo = mp_calloc(1, sizeof(TiVoInfo));
   demuxer->priv = tivo;
-  return ds_fill_buffer(demuxer->video) ? 1 : 0;
+  return ds_fill_buffer(demuxer->video) ? MPXP_Ok : MPXP_False;
 }
 
 

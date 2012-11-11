@@ -51,6 +51,7 @@ extern const stream_driver_t vcdnav_stream;
 extern const stream_driver_t ffmpeg_stream;
 extern const stream_driver_t stdin_stream;
 extern const stream_driver_t file_stream;
+extern const stream_driver_t null_stream;
 
 static const stream_driver_t *sdrivers[] =
 {
@@ -82,23 +83,22 @@ static const stream_driver_t *sdrivers[] =
     &ffmpeg_stream,
     &stdin_stream,
     &file_stream,
+    &null_stream,
+    NULL
 };
-
-static const unsigned int nsdrivers=sizeof(sdrivers)/sizeof(stream_driver_t*);
 
 stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler)
 {
-  unsigned i,done;
-  unsigned mrl_len;
-  stream_t* stream=new_stream(STREAMTYPE_STREAM); /* No flags here */
-  stream->file_format=*file_format;
-  done=0;
-  for(i=0;i<nsdrivers;i++)
-  {
+    unsigned i,done;
+    unsigned mrl_len;
+    stream_t* stream=new_stream(STREAMTYPE_STREAM); /* No flags here */
+    stream->file_format=*file_format;
+    done=0;
+    for(i=0;sdrivers[i]!=&null_stream;i++) {
 	mrl_len=strlen(sdrivers[i]->mrl);
 	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0) {
 	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
-	    if(sdrivers[i]->open(libinput,stream,&filename[mrl_len],0)) {
+	    if(sdrivers[i]->open(libinput,stream,&filename[mrl_len],0)==MPXP_Ok) {
 		MSG_V("OK\n");
 		*file_format = stream->file_format;
 		stream->driver=sdrivers[i];
@@ -108,27 +108,27 @@ stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file
 	    }
 	    MSG_V("False\n");
 	}
-  }
-  /* Last hope */
-  if(file_stream.open(libinput,stream,filename,0)) {
+    }
+    /* Last hope if not mrl specified */
+    if(file_stream.open(libinput,stream,filename,0)) {
 	*file_format = stream->file_format;
 	stream->driver=&file_stream;
 	stream->event_handler=event_handler;
 	stream->buffer=mp_realloc(stream->buffer,stream->sector_size);
 	return stream;
-  }
-  mp_free(stream->buffer);
-  mp_free(stream);
-  return NULL;
+    }
+    mp_free(stream->buffer);
+    mp_free(stream);
+    return NULL;
 }
 
 void print_stream_drivers( void )
 {
-  unsigned i;
-  MSG_INFO("Available stream drivers:\n");
-  for(i=0;i<nsdrivers;i++) {
-    MSG_INFO(" %-10s %s\n",sdrivers[i]->mrl,sdrivers[i]->descr);
-  }
+    unsigned i;
+    MSG_INFO("Available stream drivers:\n");
+    for(i=0;i<sdrivers[i];i++) {
+	MSG_INFO(" %-10s %s\n",sdrivers[i]->mrl,sdrivers[i]->descr);
+    }
 }
 
 #define FILE_POS(s) (s->pos-s->buf_len)
@@ -151,7 +151,7 @@ int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
 	if(s->event_handler) s->event_handler(s,&sp);
 	continue;
     }
-    if(s->driver->control(s,SCTRL_EOF,NULL)==SCTRL_OK)	legacy_eof=1;
+    if(s->driver->control(s,SCTRL_EOF,NULL)==MPXP_Ok)	legacy_eof=1;
     else						legacy_eof=0;
     if(sp.len<=0 || legacy_eof)
     {

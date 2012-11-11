@@ -299,7 +299,7 @@ typedef struct {
 
 #define MOV_FOURCC(a,b,c,d) ((a<<24)|(b<<16)|(c<<8)|(d))
 
-static int mov_probe(demuxer_t* demuxer){
+static MPXP_Rc mov_probe(demuxer_t* demuxer){
     int flags=0;
     int no=0;
     unsigned ver;
@@ -346,43 +346,43 @@ static int mov_probe(demuxer_t* demuxer){
 	  switch(tmp) {
 	    case MOV_FOURCC('i','s','o','m'):
 	      MSG_V("MOV: File-Type Major-Brand: ISO Media File\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('m','p','4','1'):
 	      MSG_V("ISO: File Type Major Brand: ISO/IEC 14496-1 (MPEG-4 system) v1\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('m','p','4','2'):
 	      MSG_V("ISO: File Type Major Brand: ISO/IEC 14496-1 (MPEG-4 system) v2\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('M','4','A',' '):
 	      MSG_V("ISO: File Type Major Brand: Apple iTunes AAC-LC Audio\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('M','4','P',' '):
 	      MSG_V("ISO: File Type Major Brand: Apple iTunes AAC-LC Protected Audio\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('q','t',' ',' '):
 	      MSG_V("ISO: File Type Major Brand: Original QuickTime\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('3','g','p','1'):
 	      MSG_V("ISO: File Type Major Brand: 3GPP Profile 1\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('3','g','p','2'):
 	    case MOV_FOURCC('3','g','2','a'):
 	      MSG_V("ISO: File Type Major Brand: 3GPP Profile 2\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('3','g','p','3'):
 	      MSG_V("ISO: File Type Major Brand: 3GPP Profile 3\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('3','g','p','4'):
 	      MSG_V("ISO: File Type Major Brand: 3GPP Profile 4\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('3','g','p','5'):
 	      MSG_V("ISO: File Type Major Brand: 3GPP Profile 5\n");
-     	      break;
+	      break;
 	    case MOV_FOURCC('m','m','p','4'):
 	      MSG_V("ISO: File Type Major Brand: Mobile ISO/IEC 14496-1 (MPEG-4 system)\n");
-     	      break;
+	      break;
 	    default:
-	      tmp = BE_32(tmp);  
+	      tmp = BE_32(tmp);
 	      MSG_WARN("MOV: File-Type unknown Major-Brand: %.4s\n",&tmp);
 	  }
 	  ver=stream_read_dword(demuxer->stream);
@@ -394,7 +394,7 @@ static int mov_probe(demuxer_t* demuxer){
 	    MSG_V("MOV: File-Type Compatible-Brands #%d: %.4s\n",i,&tmp);
 	    skipped += 4;
 	  }
-#endif	  
+#endif
 	  } break;
 	case MOV_FOURCC('m','o','o','v'):
 //	case MOV_FOURCC('c','m','o','v'):
@@ -470,7 +470,7 @@ static int mov_probe(demuxer_t* demuxer){
 	    // if we're over the headers, then we can stop parsing here!
 	    demuxer->priv=priv;
 	    demuxer->file_format=DEMUXER_TYPE_MOV;
-	    return 1;
+	    return MPXP_Ok;
 	  }
 	  break;
 	case MOV_FOURCC('f','r','e','e'):
@@ -484,7 +484,7 @@ static int mov_probe(demuxer_t* demuxer){
 	  /* dunno what, but we shoudl ignore it */
 	  break;
 	default:
-	  if(no==0){ mp_free(priv); return 0;} // first chunk is bad!
+	  if(no==0){ mp_free(priv); return MPXP_False;} // first chunk is bad!
 	  id = BE_32(id);
 	  MSG_V("MOV: unknown chunk: %.4s %d\n",&id,(int)len);
 	}
@@ -496,21 +496,21 @@ skip_chunk:
     if(flags==3){
 	demuxer->priv=priv;
 	demuxer->file_format=DEMUXER_TYPE_MOV;
-	return 1;
+	return MPXP_Ok;
     }
     mp_free(priv);
 
     if ((flags==5) || (flags==7)) // reference & header sent
     {
 	demuxer->file_format=DEMUXER_TYPE_MOV;
-        return 1;
+	return MPXP_Ok;
     }
     if(flags==1)
 	MSG_WARN("MOV: missing data (mdat) chunk! Maybe broken file...\n");
     else if(flags==2)
 	MSG_WARN("MOV: missing header (moov/cmov) chunk! Maybe broken file...\n");
 
-    return 0;
+    return MPXP_False;
 }
 
 static unsigned short afourcc2wtag(uint32_t fourcc)
@@ -2085,9 +2085,9 @@ static void mov_close(demuxer_t *demuxer)
   mp_free(priv);
 }
 
-static int mov_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc mov_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_mov =

@@ -36,14 +36,14 @@ typedef struct{
 } headerInfo;
 
 
-static int vqf_probe(demuxer_t* demuxer) 
+static MPXP_Rc vqf_probe(demuxer_t* demuxer) 
 {
-  char buf[12];
-  stream_t *s;
-  s = demuxer->stream;
-  stream_read(s,buf,12);
-  if(memcmp(buf,"TWIN",4)==0) return 1; /*version: 97012000*/
-  return 0;
+    char buf[12];
+    stream_t *s;
+    s = demuxer->stream;
+    stream_read(s,buf,12);
+    if(memcmp(buf,"TWIN",4)==0) return MPXP_Ok; /*version: 97012000*/
+    return MPXP_False;
 }
 
 static demuxer_t* vqf_open(demuxer_t* demuxer) {
@@ -219,9 +219,9 @@ static void vqf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void vqf_close(demuxer_t* demuxer) {}
 
-static int vqf_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc vqf_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_vqf =

@@ -26,26 +26,26 @@ typedef struct network_priv_s
     off_t  spos;
 }network_priv_t;
 
-static int __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
-  URL_t* url;
-  UNUSED(flags);
-  url = url_new(filename);
-  if(url) {
+    URL_t* url;
+    UNUSED(flags);
+    url = url_new(filename);
+    if(url) {
 	if(streaming_start(libinput,stream, &stream->file_format, url)<0){
-          MSG_ERR(MSGTR_UnableOpenURL, filename);
-	  url_free(url);
-	  return 0;
+	    MSG_ERR(MSGTR_UnableOpenURL, filename);
+	    url_free(url);
+	    return MPXP_False;
 	}
-        MSG_INFO(MSGTR_ConnToServer, url->hostname);
+	MSG_INFO(MSGTR_ConnToServer, url->hostname);
 	stream->priv=mp_malloc(sizeof(network_priv_t));
 	((network_priv_t*)stream->priv)->url = url;
 	((network_priv_t*)stream->priv)->spos = 0;
 	stream->type = STREAMTYPE_STREAM;
 	stream->sector_size=STREAM_BUFFER_SIZE;
-	return 1;
-  }
-  return 0;
+	return MPXP_Ok;
+    }
+    return MPXP_False;
 }
 
 static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t*sp)
@@ -90,11 +90,11 @@ static void __FASTCALL__ network_close(stream_t *stream)
     if(stream->fd>0) close(stream->fd);
 }
 
-static int __FASTCALL__ network_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ network_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 const stream_driver_t network_stream =

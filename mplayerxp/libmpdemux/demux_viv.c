@@ -246,7 +246,7 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 	mp_free(param);
 }
 
-static int vivo_probe(demuxer_t* demuxer){
+static MPXP_Rc vivo_probe(demuxer_t* demuxer){
     int i=0;
     int len;
     int c;
@@ -257,11 +257,11 @@ static int vivo_probe(demuxer_t* demuxer){
     MSG_V("Checking for VIVO\n");
 
     c=stream_read_char(demuxer->stream);
-    if(c==-256) return 0;
+    if(c==-256) return MPXP_False;
     len=0;
     while((c=stream_read_char(demuxer->stream))>=0x80){
 	len+=0x80*(c-0x80);
-	if(len>1024) return 0;
+	if(len>1024) return MPXP_False;
     }
     len+=c;
     MSG_DBG2("header block 1 size: %d\n",len);
@@ -273,7 +273,7 @@ static int vivo_probe(demuxer_t* demuxer){
 #if 0
     vivo_parse_text_header(demuxer, len);
     if (priv->supported == 0)
-	return 0;
+	return MPXP_False;
 #else
     /* this is enought for check (for now) */
     stream_read(demuxer->stream,buf,len);
@@ -282,28 +282,26 @@ static int vivo_probe(demuxer_t* demuxer){
     // parse header:
     i=0;
     while(i<len && buf[i]==0x0D && buf[i+1]==0x0A) i+=2; // skip empty lines
-    if(strncmp(buf+i,"Version:Vivo/",13)) return 0; // bad version/type!
+    if(strncmp(buf+i,"Version:Vivo/",13)) return MPXP_False; // bad version/type!
 #endif
 
 #if 0
     c=stream_read_char(demuxer->stream);
-    if(c) return 0;
+    if(c) return MPXP_False;
     len2=0;
     while((c=stream_read_char(demuxer->stream))>=0x80){
 	len2+=0x80*(c-0x80);
-	if(len+len2>2048) return 0;
+	if(len+len2>2048) return MPXP_False;
     }
     len2+=c;
     MSG_DBG2("header block 2 size: %d\n",len2);
     stream_skip(demuxer->stream,len2);
 //    stream_read(demuxer->stream,buf+len,len2);
 #endif
-    
 //    c=stream_read_char(demuxer->stream);
-
     stream_seek(demuxer->stream, orig_pos);
     demuxer->file_format=DEMUXER_TYPE_VIVO;
-    return 1;
+    return MPXP_Ok;
 }
 
 static int audio_pos=0;
@@ -748,9 +746,9 @@ static void vivo_close(demuxer_t *demuxer)
     return;
 }
 
-static int vivo_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc vivo_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_vivo =

@@ -311,7 +311,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
     return demuxer;
 }
 
-static int nsv_probe ( demuxer_t* demuxer )
+static MPXP_Rc nsv_probe ( demuxer_t* demuxer )
 {
     unsigned int id;
 
@@ -319,17 +319,16 @@ static int nsv_probe ( demuxer_t* demuxer )
 //  off_t orig_pos = stream_tell(demuxer->stream);
 
     MSG_V("Checking for Nullsoft Streaming Video\n" );
-   
+
     //---- check NSVx header:
     id=stream_read_dword_le(demuxer->stream);
     if(id!=mmioFOURCC('N','S','V','f') && id!=mmioFOURCC('N','S','V','s'))
-        return 0; // not an NSV file
-    
+	return MPXP_False; // not an NSV file
+
     stream_reset(demuxer->stream); // clear EOF
     stream_seek(demuxer->stream,demuxer->stream->start_pos);
 
-    
-    return 1;
+    return MPXP_Ok;
 }
 
 static void nsv_close(demuxer_t* demuxer) {
@@ -341,9 +340,9 @@ static void nsv_close(demuxer_t* demuxer) {
 
 }
 
-static int nsv_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc nsv_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_nsv =

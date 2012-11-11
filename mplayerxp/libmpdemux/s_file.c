@@ -22,14 +22,14 @@ typedef struct file_priv_s
 }file_priv_t;
 
 
-static int __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
     UNUSED(libinput);
-    if(!(stream->priv = mp_malloc(sizeof(file_priv_t)))) return 0;
+    if(!(stream->priv = mp_malloc(sizeof(file_priv_t)))) return MPXP_False;
     if(strcmp(filename,"-")==0) stream->fd=0;
     else stream->fd=open(filename,O_RDONLY);
-    if(stream->fd<0) { mp_free(stream->priv); return 0; }
+    if(stream->fd<0) { mp_free(stream->priv); return MPXP_False; }
     ((file_priv_t*)stream->priv)->was_open = stream->fd==0?0:1;
     stream->end_pos = lseek(stream->fd,0,SEEK_END);
     lseek(stream->fd,0,SEEK_SET);
@@ -40,10 +40,10 @@ static int __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char *fi
     /* Note: Please locate sector_size changinf after all read/write operations of open() function */
     stream->sector_size=mp_conf.s_cache_size?mp_conf.s_cache_size*1024/10:STREAM_BUFFER_SIZE;
     ((file_priv_t*)stream->priv)->spos = 0;
-    return 1;
+    return MPXP_Ok;
 }
 
-static int __FASTCALL__ stdin_open(stream_t *stream,const char *filename,unsigned flags) {
+static MPXP_Rc __FASTCALL__ stdin_open(stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);
     return file_open(NULL,stream,"-",flags);
 }
@@ -93,11 +93,11 @@ static void __FASTCALL__ file_close(stream_t *stream)
     mp_free(stream->priv);
 }
 
-static int __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 const stream_driver_t stdin_stream =

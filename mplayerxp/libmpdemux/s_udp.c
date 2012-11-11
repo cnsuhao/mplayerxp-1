@@ -38,12 +38,12 @@ static off_t __FASTCALL__ udp_tell(stream_t *stream)
     return 0;
 }
 
-static int __FASTCALL__ udp_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ udp_ctrl(stream_t *s,unsigned cmd,any_t*args)
 {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
-    return SCTRL_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static void __FASTCALL__ udp_close(stream_t*stream)
@@ -81,41 +81,32 @@ static int __FASTCALL__ udp_streaming_start (stream_t *stream)
 }
 
 extern int network_bandwidth;
-static int __FASTCALL__ udp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ udp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
-  URL_t *url;
-  UNUSED(flags);
-  MSG_V("STREAM_UDP, URL: %s\n", filename);
-  stream->streaming_ctrl = streaming_ctrl_new (libinput);
-  if (!stream->streaming_ctrl)
-    return 0;
+    URL_t *url;
+    UNUSED(flags);
+    MSG_V("STREAM_UDP, URL: %s\n", filename);
+    stream->streaming_ctrl = streaming_ctrl_new (libinput);
+    if (!stream->streaming_ctrl) return MPXP_False;
 
-  stream->streaming_ctrl->bandwidth = network_bandwidth;
-  url = url_new (filename);
-  stream->streaming_ctrl->url = check4proxies (url);
-
-  if (url->port == 0)
-  {
-    MSG_ERR("You must enter a port number for UDP streams!\n");
-    streaming_ctrl_free (stream->streaming_ctrl);
-    stream->streaming_ctrl = NULL;
-
-    return 0;
-  }
-
-  if (udp_streaming_start (stream) < 0)
-  {
-    MSG_ERR("udp_streaming_start failed\n");
-    streaming_ctrl_free (stream->streaming_ctrl);
-    stream->streaming_ctrl = NULL;
-
-    return 0;
-  }
-
-  stream->type = STREAMTYPE_STREAM;
-  fixup_network_stream_cache (stream);
-
-  return 1;
+    stream->streaming_ctrl->bandwidth = network_bandwidth;
+    url = url_new (filename);
+    stream->streaming_ctrl->url = check4proxies (url);
+    if (url->port == 0) {
+	MSG_ERR("You must enter a port number for UDP streams!\n");
+	streaming_ctrl_free (stream->streaming_ctrl);
+	stream->streaming_ctrl = NULL;
+	return MPXP_False;
+    }
+    if (udp_streaming_start (stream) < 0) {
+	MSG_ERR("udp_streaming_start failed\n");
+	streaming_ctrl_free (stream->streaming_ctrl);
+	stream->streaming_ctrl = NULL;
+	return MPXP_False;
+    }
+    stream->type = STREAMTYPE_STREAM;
+    fixup_network_stream_cache (stream);
+    return MPXP_Ok;
 }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */

@@ -72,7 +72,7 @@ static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 
 		while(current_time < target_time )
 		{	
-      			if ((unsigned)stream_read ( demuxer->stream, (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
+			if ((unsigned)stream_read ( demuxer->stream, (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
 				return; /* EOF */
 			le2me_rtframeheader(&rtjpeg_frameheader);
 
@@ -287,26 +287,26 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	return demuxer;
 }
 
-static int nuv_probe ( demuxer_t* demuxer )
+static MPXP_Rc nuv_probe ( demuxer_t* demuxer )
 {
-	struct nuv_signature ns;
+    struct nuv_signature ns;
 
-	/* Store original position */
-	off_t orig_pos = stream_tell(demuxer->stream);
+    /* Store original position */
+    off_t orig_pos = stream_tell(demuxer->stream);
 
-	MSG_V( "Checking for NuppelVideo\n" );
+    MSG_V( "Checking for NuppelVideo\n" );
 
-	stream_read(demuxer->stream,(char*)&ns,sizeof(ns));
+    stream_read(demuxer->stream,(char*)&ns,sizeof(ns));
 
-	if ( strncmp ( ns.finfo, "NuppelVideo", 12 ) ) 
-		return 0; /* Not a NuppelVideo file */
-	if ( strncmp ( ns.version, "0.05", 5 ) ) 
-		return 0; /* Wrong version NuppelVideo file */
+    if ( strncmp ( ns.finfo, "NuppelVideo", 12 ) )
+	return MPXP_False; /* Not a NuppelVideo file */
+    if ( strncmp ( ns.version, "0.05", 5 ) )
+	return MPXP_False; /* Wrong version NuppelVideo file */
 
-	/* Return to original position */
-	stream_seek ( demuxer->stream, orig_pos );
-	demuxer->file_format=DEMUXER_TYPE_NUV;
-	return 1;
+    /* Return to original position */
+    stream_seek ( demuxer->stream, orig_pos );
+    demuxer->file_format=DEMUXER_TYPE_NUV;
+    return MPXP_Ok;
 }
 
 static void nuv_close(demuxer_t* demuxer) {
@@ -322,9 +322,9 @@ static void nuv_close(demuxer_t* demuxer) {
   mp_free(priv);
 }
 
-static int nuv_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc nuv_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_nuv =

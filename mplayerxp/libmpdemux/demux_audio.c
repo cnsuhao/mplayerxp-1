@@ -792,7 +792,7 @@ static int audio_get_raw_id(demuxer_t *demuxer,off_t fptr,unsigned *brate,unsign
   return retval;
 }
 
-static int audio_probe(demuxer_t* demuxer)
+static MPXP_Rc audio_probe(demuxer_t* demuxer)
 {
   uint32_t fcc1,fcc2;
   stream_t *s;
@@ -805,13 +805,13 @@ static int audio_probe(demuxer_t* demuxer)
   {
     stream_skip(s,4);
     fcc2 = stream_read_fourcc(s);
-    if(fcc2 == mmioFOURCC('W','A','V','E')) return 1;
+    if(fcc2 == mmioFOURCC('W','A','V','E')) return MPXP_Ok;
   }
   else
-  if(p[0] == 'I' && p[1] == 'D' && p[2] == '3' && (p[3] >= 2)) return 1;
+  if(p[0] == 'I' && p[1] == 'D' && p[2] == '3' && (p[3] >= 2)) return MPXP_Ok;
   else
-  if(audio_get_raw_id(demuxer,0,&fcc1,&fcc2,&fcc2)) return 1;
-  return 0;
+  if(audio_get_raw_id(demuxer,0,&fcc1,&fcc2,&fcc2)) return MPXP_Ok;
+  return MPXP_False;
 }
 
 #define FRAMES_FLAG     0x0001
@@ -1775,9 +1775,9 @@ static void audio_close(demuxer_t* demuxer) {
   mp_free(priv);
 }
 
-static int audio_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc audio_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 /****************** Options stuff ******************/

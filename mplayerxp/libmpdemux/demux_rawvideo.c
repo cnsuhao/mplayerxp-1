@@ -56,14 +56,14 @@ static const config_t rawvideo_conf[] = {
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
-static int rawvideo_probe(demuxer_t* demuxer)
+static MPXP_Rc rawvideo_probe(demuxer_t* demuxer)
 {
- if(demuxer->stream->type & STREAMTYPE_RAWVIDEO || priv.use_rawvideo) {
-    priv.fps=25;
-    demuxer->file_format=DEMUXER_TYPE_RAWVIDEO;
-    return 1;
- }
- return 0;
+    if(demuxer->stream->type & STREAMTYPE_RAWVIDEO || priv.use_rawvideo) {
+	priv.fps=25;
+	demuxer->file_format=DEMUXER_TYPE_RAWVIDEO;
+	return MPXP_Ok;
+    }
+    return MPXP_False;
 }
 
 static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
@@ -142,9 +142,9 @@ static void rawvideo_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void rawvideo_close(demuxer_t *demuxer) { }
 
-static int rawvideo_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc rawvideo_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 demuxer_driver_t demux_rawvideo =

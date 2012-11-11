@@ -1103,7 +1103,7 @@ do{
       id=stream_read_dword_le(demux->stream);      // list type
       continue;
   }
-  
+
   if(id==mmioFOURCC('R','I','F','F')){
       MSG_V("additional RIFF header...\n");
       id=stream_read_dword_le(demux->stream);      // "AVIX"
@@ -1517,7 +1517,7 @@ static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 }
 
 #define formtypeON2             mmioFOURCC('O', 'N', '2', 'f')
-static int avi_probe(demuxer_t *demuxer)
+static MPXP_Rc avi_probe(demuxer_t *demuxer)
 {
   uint32_t riff,id;
 
@@ -1525,9 +1525,9 @@ static int avi_probe(demuxer_t *demuxer)
   stream_read_dword_le(demuxer->stream); /*filesize */
   id=stream_read_dword_le(demuxer->stream); /* "AVI " */
   demuxer->file_format=DEMUXER_TYPE_AVI;
-  if(riff == mmioFOURCC('R','I','F','F') && id == formtypeAVI) return 1;
-  if(riff == mmioFOURCC('O','N','2',' ') && id == formtypeON2) return 1;
-  return 0;
+  if(riff == mmioFOURCC('R','I','F','F') && id == formtypeAVI) return MPXP_Ok;
+  if(riff == mmioFOURCC('O','N','2',' ') && id == formtypeON2) return MPXP_Ok;
+  return MPXP_False;
 }
 
 static void avi_close(demuxer_t *demuxer)
@@ -1542,9 +1542,9 @@ static void avi_close(demuxer_t *demuxer)
   mp_free(priv);
 }
 
-static int avi_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc avi_control(demuxer_t *demuxer,int cmd,any_t*args)
 {
-    return DEMUX_UNKNOWN;
+    return MPXP_Unknown;
 }
 
 static const config_t avi_options[] = {
