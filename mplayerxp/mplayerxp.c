@@ -592,7 +592,8 @@ void show_help(void) {
     // no file/vcd/dvd -> show HELP:
     MSG_INFO("%s",help_text);
     print_stream_drivers();
-    MSG_INFO("\nUse --long-help option for full help\n");
+    MSG_INFO("\nExample: mplayerxp -ao alsa:hw:0 -vo x11 your.avi\n"
+	     "Use --long-help option for full help\n");
 }
 
 void show_long_help(void) {
