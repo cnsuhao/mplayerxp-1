@@ -1,5 +1,6 @@
 TODO for mplayerxp:
 
+- add passport control for drivers as one of anti-viral traps.
 - possibility to DISABLE osd.level=2 from cmd line and from keyboard
 - replace built-in asm with "mmintrin" extensions of GCC (alse available in MSVC, ICC, ...)
 - replace network support with using of libavformat
