@@ -1,7 +1,10 @@
 TODO for mplayerxp:
 
+- remove all #define with values (they maybe intercepted in other .h files)
+- add anti-viral protection for QOS("Query of Service") to not be a virus' servant
 - add passport control for drivers as one of anti-viral traps.
-- possibility to DISABLE osd.level=2 from cmd line and from keyboard
+- add possibility to DISABLE osd.level=2 from cmd line and from keyboard
+***
 - replace built-in asm with "mmintrin" extensions of GCC (alse available in MSVC, ICC, ...)
 - replace network support with using of libavformat
 - implement distributed video playback with using of PVM. (need volunteers)
