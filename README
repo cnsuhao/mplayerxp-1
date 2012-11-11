@@ -129,4 +129,23 @@ buffers for decoding ahead through -da_buffs flag.
 By passing of -noxp key you disable new core and get 'old' good classic
 mplayer.
 
+Antiviral protection!!!
+~~~~~~~~~~~~~~~~~~~~~~~
+It seems that current state of linux distros is good environ for viruses.
+Linux-based distros are open sources, therefore malefactor has access to source
+code. It provides him possibility to write viruses using existance source code
+for, example, shared libraries. Other programs are linking with shared objects.
+If malefactor substitude any .so file with own version then it shall be harder
+to detect that. Even more, .so file with viruses will work at least with the
+same quality as its original version. But, after call of preliminarily prepared
+function from intercepted library control will be transmited into so-named
+viral-function, but not into original one. Thus, if malefactor knows sources of
+player he can prepare code which take control over player and it will work in
+not proper way.
+
+Considering that, MPlayerXP supports some middle-level mechanisms of antiviral
+protection, such as randomized-malloc which allocate memory at pseudo-random
+addresses. Also MPlayerXP has several antiviral holes and several antiviral
+traps. But last word in this way was not speaked. ;)
+
 Best regards! Nickols_K

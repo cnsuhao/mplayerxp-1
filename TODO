@@ -1,5 +1,6 @@
 TODO for mplayerxp:
 
+- possibility to DISABLE osd.level=2 from cmd line and from keyboard
 - replace built-in asm with "mmintrin" extensions of GCC (alse available in MSVC, ICC, ...)
 - replace network support with using of libavformat
 - implement distributed video playback with using of PVM. (need volunteers)
