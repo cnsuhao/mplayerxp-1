@@ -108,7 +108,7 @@ static x86_features_t x86;
 
 #define INITED_VO	0x00000001
 #define INITED_AO	0x00000002
-#define INITED_GETCH2	0x00000004
+#define INITED_RESERVED	0x00000004
 #define INITED_LIRC	0x00000008
 #define INITED_SPUDEC	0x00000010
 #define INITED_STREAM	0x00000020
@@ -309,13 +309,6 @@ void uninit_player(unsigned int mask){
 	MP_UNIT("uninit_ao");
 	ao_uninit(ao_data);
 	ao_data=NULL;
-    }
-
-    if(mask&INITED_GETCH2){
-	priv->inited_flags&=~INITED_GETCH2;
-	MP_UNIT("uninit_getch2");
-    // restore terminal:
-	getch2_disable();
     }
 
     if(mask&INITED_DEMUXER){
@@ -825,18 +818,19 @@ static void mpxp_init_keyboard_fifo(void)
 #ifdef HAVE_TERMCAP
     load_termcap(NULL); // load key-codes
 #endif
-    fifo_make_pipe(&keyb_fifo_get,&keyb_fifo_put);
     /* Init input system */
     MP_UNIT("init_input");
     priv->libinput=mp_input_open();
-    if(keyb_fifo_get > 0)
-	mp_input_add_key_fd(priv->libinput,keyb_fifo_get,1,NULL,NULL);
-    if(mp_conf.slave_mode)
-	mp_input_add_cmd_fd(priv->libinput,0,1,NULL,NULL);
-    else if(!mp_conf.use_stdin)
-	mp_input_add_key_fd(priv->libinput,0,1,NULL,NULL);
     priv->inited_flags|=INITED_INPUT;
 }
+
+void mplayer_put_key(int code){
+    priv_t*priv=mp_data->priv;
+    mp_cmd_t* cmd;
+    cmd=mp_input_get_cmd_from_keys(priv->libinput,1,&code);
+    mp_input_queue_cmd(priv->libinput,cmd);
+}
+
 
 static void mpxp_init_osd(void) {
 // check font
@@ -1742,13 +1736,6 @@ int main(int argc,char* argv[], char *envp[]){
 // ******************* Now, let's see the per-file stuff ********************
 play_next_file:
 
-    // We must enable getch2 here to be able to interrupt network connection
-    // or cache filling
-    if(!mp_conf.use_stdin && !mp_conf.slave_mode){
-	getch2_enable();  // prepare stdin for hotkeys...
-	priv->inited_flags|=INITED_GETCH2;
-    }
-
     ao_subdevice=mpxp_init_output_subsystems();
     if(filename) MSG_OK(MSGTR_Playing, filename);
 
@@ -2019,7 +2006,6 @@ main:
 	eof |= xp_core->audio->eof;
 /*========================== UPDATE TIMERS ============================*/
 	MP_UNIT("Update timers");
-	if(sh_video && input_state.need_repaint) goto repaint;
 	if(sh_audio) eof = xp_core->audio->eof;
 	if(sh_video) eof|=dae_played_eof(xp_core->video);
 	if(!sh_video) {
@@ -2027,11 +2013,9 @@ main:
 	    else mpxp_print_audio_status();
 	}
 	usleep(250000);
-//read_input:
 	if(sh_video) vo_check_events(vo_data);
-repaint:
 #ifdef USE_OSD
-	if((mpxp_paint_osd(&osd.visible,&in_pause))!=0) goto repaint;
+	while((mpxp_paint_osd(&osd.visible,&in_pause))!=0);
 #endif
 
 //================= Keyboard events, SEEKing ====================

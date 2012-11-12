@@ -136,32 +136,14 @@ typedef struct mp_key_name {
 // These typedefs are for the drivers. They are the functions used to retrive
 // the next key code or command.
 
-typedef int (*mp_key_func_t)(int fd); // These functions should return the key code or one of the error code
-typedef int (*mp_cmd_func_t)(int fd,char* dest,int size); // These functions should act like read but they must use our error code (if needed ;-)
-typedef void (*mp_close_func_t)(int fd); // These are used to close the driver
+typedef int (*mp_key_func_t)(any_t* ctx); // These functions should return the key code or one of the error code
+typedef int (*mp_cmd_func_t)(any_t* ctx,char* dest,int size); // These functions should act like read but they must use our error code (if needed ;-)
+typedef void (*mp_close_func_t)(any_t* ctx); // These are used to close the driver
 typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, any_t* ctx); // Should return 1 if the command was processed
 
 extern void (*mp_input_key_cb)(int code); // Set this to grab all incoming key code
 
-// This function add a new key driver.
-// The first arg is a file descriptor (use a negative value if you don't use any fd)
-// The second arg tell if we use select on the fd to know if something is avaible.
-// The third arg is optional. If null a default function wich read an int from the
-// fd will be used.
-// The last arg can be NULL if nothing is needed to close the driver. The close
-// function can be used
-extern MPXP_Rc mp_input_add_cmd_fd(any_t* handle,int fd, int select, mp_cmd_func_t read_func, mp_close_func_t close_func);
-
-// This remove a cmd driver, you usally don't need to use it
-extern void mp_input_rm_cmd_fd(any_t* handle,int fd);
-
-// The args are the sames as for the keys drivers. If you don't use any valid fd you MUST
-// give a read_func.
-extern MPXP_Rc mp_input_add_key_fd(any_t*handle,int fd, int select, mp_key_func_t read_func, mp_close_func_t close_func);
-
-// As for the cmd one you usally don't need this function
-extern void mp_input_rm_key_fd(any_t* handle,int fd);
-
+extern mp_cmd_t* mp_input_get_cmd_from_keys(any_t* handle,int n,int* keys);
 // This function can be used to reput a command in the system. It's used by libmpdemux
 // when it perform a blocking operation to resend the command it received to the main
 // loop.

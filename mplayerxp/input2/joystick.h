@@ -38,6 +38,7 @@ enum {
     JOY_BTN9	=(JOY_BTN_BASE+9)
 };
 
-extern int mp_input_joystick_init(const char* dev);
-extern int mp_input_joystick_read(int fd);
+extern any_t* mp_input_joystick_open(const char* dev);
+extern void   mp_input_joystick_close(any_t* ctx);
+extern int    mp_input_joystick_read(any_t* ctx);
 #endif

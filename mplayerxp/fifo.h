@@ -11,11 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 
-// keyboard:
-extern int keyb_fifo_put;
-extern int keyb_fifo_get;
-
-extern void __FASTCALL__ fifo_make_pipe(int* pr,int* pw);
+// Note: this suff really is used by ao_jack only
 
 typedef struct CBFifoBuffer {
     uint8_t *buffer;

@@ -19,47 +19,53 @@
 static struct lirc_config *lirc_config;
 char *lirc_configfile;
 
-static char* cmd_buf = NULL;
+typedef struct priv_s {
+    int		lirc_sock;
+    char*	cmd_buf;
+}priv_t;
 
-int mp_input_lirc_init(void) {
-    int lirc_sock;
+any_t* mp_input_lirc_init(void) {
+    priv_t* priv=mp_mallocz(sizeof(priv_t));
 
     MSG_INFO(MSGTR_SettingUpLIRC);
-    if((lirc_sock=lirc_init("mplayer",1))==-1){
+    if((priv->lirc_sock=lirc_init("mplayer",1))==-1){
 	MSG_ERR(MSGTR_LIRCopenfailed MSGTR_LIRCdisabled);
-	return -1;
+	mo_free(priv);
+	return NULL;
     }
 
     if(lirc_readconfig( lirc_configfile,&lirc_config,NULL )!=0 ){
 	MSG_ERR(MSGTR_LIRCcfgerr MSGTR_LIRCdisabled,
 		lirc_configfile == NULL ? "~/.lircrc" : lirc_configfile);
 	lirc_deinit();
-	return -1;
+	mp_free(priv);
+	return NULL;
     }
-    return lirc_sock;
+    return priv;
 }
 
-int mp_input_lirc_read(int fd,char* dest, int s) {
+int mp_input_lirc_read(any_t* ctx,char* dest, int s) {
+    priv_t* priv = (priv_t*)ctx;
     fd_set fds;
     struct timeval tv;
     int r,cl = 0;
     char *code = NULL,*c = NULL;
 
     // We have something in the buffer return it
-    if(cmd_buf != NULL) {
-	int l = strlen(cmd_buf), w = l > s ? s : l;
-	memcpy(dest,cmd_buf,w);
+    if(priv->cmd_buf != NULL) {
+	int l = strlen(priv->cmd_buf), w = l > s ? s : l;
+	memcpy(dest,priv->cmd_buf,w);
 	l -= w;
-	if(l > 0) memmove(cmd_buf,&cmd_buf[w],l+1);
+	if(l > 0) memmove(priv->cmd_buf,&cmd_buf[w],l+1);
 	else {
-	    mp_free(cmd_buf);
-	    cmd_buf = NULL;
+	    mp_free(priv->cmd_buf);
+	    priv->cmd_buf = NULL;
 	}
 	return w;
     }
     // Nothing in the buffer, pool the lirc fd
     FD_ZERO(&fds);
-    FD_SET(fd,&fds);
+    FD_SET(priv->lirc_sock,&fds);
     memset(&tv,0,sizeof(tv));
     while((r = select(fd+1,&fds,NULL,NULL,&tv)) <= 0) {
 	if(r < 0) {
@@ -81,28 +87,30 @@ int mp_input_lirc_read(int fd,char* dest, int s) {
     while((r = lirc_code2char(lirc_config,code,&c))==0 && c!=NULL) {
 	int l = strlen(c);
 	if(l <= 0) continue;
-	cmd_buf = mp_realloc(cmd_buf,cl+l+2);
-	memcpy(&cmd_buf[cl],c,l);
+	priv->cmd_buf = mp_realloc(priv->cmd_buf,cl+l+2);
+	memcpy(&priv->cmd_buf[cl],c,l);
 	cl += l+1;
-	cmd_buf[cl-1] = '\n';
-	cmd_buf[cl] = '\0';
+	priv->cmd_buf[cl-1] = '\n';
+	priv->cmd_buf[cl] = '\0';
     }
     mp_free(code);
 
     if(r < 0) return MP_INPUT_DEAD;
-    else if(cmd_buf) // return the first command in the buffer
-	return mp_input_lirc_read(fd,dest,s);
+    else if(priv->cmd_buf) // return the first command in the buffer
+	return mp_input_lirc_read(priv->lirc_sock,dest,s);
     else
 	return MP_INPUT_NOTHING;
 }
 
-void mp_input_lirc_close(int fd) {
-    if(cmd_buf) {
-	mp_free(cmd_buf);
-	cmd_buf = NULL;
+void mp_input_lirc_close(any_t* ctx) {
+    priv_t* priv = (priv_t*)ctx;
+    if(priv->cmd_buf) {
+	mp_free(priv->cmd_buf);
+	priv->cmd_buf = NULL;
     }
     lirc_freeconfig(lirc_config);
     lirc_deinit();
+    mp_free(priv);
 }
 
 #endif

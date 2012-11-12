@@ -9,8 +9,6 @@ typedef struct mp_conf_s {
     int		has_video;
     int		has_audio;
     int		has_dvdsub;
-    int		use_stdin;
-    int		slave_mode;
     uint32_t	msg_filter;
     int		test_av;
     int		malloc_debug;
@@ -123,5 +121,4 @@ extern void mpxp_reset_vcache(void);
 extern void __exit_sighandler(void);
 
 extern void mplayer_put_key(int code);
-extern int mplayer_get_key(void);
 #endif

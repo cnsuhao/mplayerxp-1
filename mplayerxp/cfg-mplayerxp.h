@@ -268,8 +268,6 @@ static const config_t mplayer_opts[]={
 	{"vc", &mp_conf.video_codec, CONF_TYPE_STRING, 0, 0, 0, "forces usage of specified video-decoder"},
 /*UD*/	{"verbose", &mp_conf.verbose, CONF_TYPE_INT, CONF_RANGE|CONF_GLOBAL, 0, 100, "verbose output"},
 	{"v", cfg_inc_verbose, CONF_TYPE_FUNC, CONF_GLOBAL|CONF_NOSAVE, 0, 0, "verbose output (more -v means more verbosity)"},
-	{"slave", &mp_conf.slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, "turns MPlayerXP into slave mode as a backend for other programs"},
-	{"use-stdin", &mp_conf.use_stdin, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "forces reading of keyboard codes from STDIN instead of terminal's console"},
 	{"msgfilter", &mp_conf.msg_filter, CONF_TYPE_INT, CONF_RANGE, 0, 0xFFFFFFFF, "specifies filter for verbosed messages"},
 
 	{"core", &xpcore_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "XP-core related options" },
