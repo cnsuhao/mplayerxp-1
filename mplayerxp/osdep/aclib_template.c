@@ -51,7 +51,7 @@ __asm__ __volatile__(\
 #if defined( OPTIMIZE_MMX ) && !defined( OPTIMIZE_MMX2 )
 #define MIN_LEN 0x800  /* 2K blocks. Was found experimentally */
 #else
-#define MIN_LEN __IVEC_SIZE*8
+#define MIN_LEN _ivec_size()*8
 #endif
 
 #undef FAST_MEMORY_COPY
@@ -60,7 +60,7 @@ __asm__ __volatile__(\
     any_t*retval;\
     const unsigned char *cfrom=from;\
     unsigned char *tto=to;\
-    const unsigned block_size = __IVEC_SIZE*8;\
+    const unsigned block_size = _ivec_size()*8;\
     __ivec iarr[8];\
     size_t i;\
     retval = to;\
@@ -101,24 +101,24 @@ __asm__ __volatile__(\
 	/* if SRC is misaligned */\
 	for(; i>0; i--)\
 	{\
-	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8]);\
-	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8+32]);\
-	    iarr[0] = _ivec_loadu(&cfrom[__IVEC_SIZE*0]);\
-	    iarr[1] = _ivec_loadu(&cfrom[__IVEC_SIZE*1]);\
-	    iarr[2] = _ivec_loadu(&cfrom[__IVEC_SIZE*2]);\
-	    iarr[3] = _ivec_loadu(&cfrom[__IVEC_SIZE*3]);\
-	    iarr[4] = _ivec_loadu(&cfrom[__IVEC_SIZE*4]);\
-	    iarr[5] = _ivec_loadu(&cfrom[__IVEC_SIZE*5]);\
-	    iarr[6] = _ivec_loadu(&cfrom[__IVEC_SIZE*6]);\
-	    iarr[7] = _ivec_loadu(&cfrom[__IVEC_SIZE*7]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*0],iarr[0]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*1],iarr[1]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*2],iarr[2]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*3],iarr[3]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*4],iarr[4]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*5],iarr[5]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*6],iarr[6]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*7],iarr[7]);\
+	    _ivec_prefetch(&cfrom[_ivec_size()*8]);\
+	    _ivec_prefetch(&cfrom[_ivec_size()*8+32]);\
+	    iarr[0] = _ivec_loadu(&cfrom[_ivec_size()*0]);\
+	    iarr[1] = _ivec_loadu(&cfrom[_ivec_size()*1]);\
+	    iarr[2] = _ivec_loadu(&cfrom[_ivec_size()*2]);\
+	    iarr[3] = _ivec_loadu(&cfrom[_ivec_size()*3]);\
+	    iarr[4] = _ivec_loadu(&cfrom[_ivec_size()*4]);\
+	    iarr[5] = _ivec_loadu(&cfrom[_ivec_size()*5]);\
+	    iarr[6] = _ivec_loadu(&cfrom[_ivec_size()*6]);\
+	    iarr[7] = _ivec_loadu(&cfrom[_ivec_size()*7]);\
+	    MEM_STORE(&tto[_ivec_size()*0],iarr[0]);\
+	    MEM_STORE(&tto[_ivec_size()*1],iarr[1]);\
+	    MEM_STORE(&tto[_ivec_size()*2],iarr[2]);\
+	    MEM_STORE(&tto[_ivec_size()*3],iarr[3]);\
+	    MEM_STORE(&tto[_ivec_size()*4],iarr[4]);\
+	    MEM_STORE(&tto[_ivec_size()*5],iarr[5]);\
+	    MEM_STORE(&tto[_ivec_size()*6],iarr[6]);\
+	    MEM_STORE(&tto[_ivec_size()*7],iarr[7]);\
 	    cfrom+=block_size;\
 	    tto+=block_size;\
 	}\
@@ -126,24 +126,24 @@ __asm__ __volatile__(\
 	/* if SRC is aligned */\
 	for(; i>0; i--)\
 	{\
-	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8]);\
-	    _ivec_prefetch(&cfrom[__IVEC_SIZE*8+32]);\
-	    iarr[0] = _ivec_loada(&cfrom[__IVEC_SIZE*0]);\
-	    iarr[1] = _ivec_loada(&cfrom[__IVEC_SIZE*1]);\
-	    iarr[2] = _ivec_loada(&cfrom[__IVEC_SIZE*2]);\
-	    iarr[3] = _ivec_loada(&cfrom[__IVEC_SIZE*3]);\
-	    iarr[4] = _ivec_loada(&cfrom[__IVEC_SIZE*4]);\
-	    iarr[5] = _ivec_loada(&cfrom[__IVEC_SIZE*5]);\
-	    iarr[6] = _ivec_loada(&cfrom[__IVEC_SIZE*6]);\
-	    iarr[7] = _ivec_loada(&cfrom[__IVEC_SIZE*7]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*0],iarr[0]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*1],iarr[1]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*2],iarr[2]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*3],iarr[3]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*4],iarr[4]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*5],iarr[5]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*6],iarr[6]);\
-	    MEM_STORE(&tto[__IVEC_SIZE*7],iarr[7]);\
+	    _ivec_prefetch(&cfrom[_ivec_size()*8]);\
+	    _ivec_prefetch(&cfrom[_ivec_size()*8+32]);\
+	    iarr[0] = _ivec_loada(&cfrom[_ivec_size()*0]);\
+	    iarr[1] = _ivec_loada(&cfrom[_ivec_size()*1]);\
+	    iarr[2] = _ivec_loada(&cfrom[_ivec_size()*2]);\
+	    iarr[3] = _ivec_loada(&cfrom[_ivec_size()*3]);\
+	    iarr[4] = _ivec_loada(&cfrom[_ivec_size()*4]);\
+	    iarr[5] = _ivec_loada(&cfrom[_ivec_size()*5]);\
+	    iarr[6] = _ivec_loada(&cfrom[_ivec_size()*6]);\
+	    iarr[7] = _ivec_loada(&cfrom[_ivec_size()*7]);\
+	    MEM_STORE(&tto[_ivec_size()*0],iarr[0]);\
+	    MEM_STORE(&tto[_ivec_size()*1],iarr[1]);\
+	    MEM_STORE(&tto[_ivec_size()*2],iarr[2]);\
+	    MEM_STORE(&tto[_ivec_size()*3],iarr[3]);\
+	    MEM_STORE(&tto[_ivec_size()*4],iarr[4]);\
+	    MEM_STORE(&tto[_ivec_size()*5],iarr[5]);\
+	    MEM_STORE(&tto[_ivec_size()*6],iarr[6]);\
+	    MEM_STORE(&tto[_ivec_size()*7],iarr[7]);\
 	    cfrom+=block_size;\
 	    tto+=block_size;\
 	}\

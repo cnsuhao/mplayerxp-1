@@ -21,21 +21,31 @@
 #include <mm3dnow.h>
 #endif
 
-#undef __F32VEC_SIZE
 #undef __f32vec
 #ifdef OPTIMIZE_AVX
-#define __F32VEC_SIZE	32
 #define __f32vec	__m256
 #elif defined( OPTIMIZE_SSE )
-#define __F32VEC_SIZE	16
 #define __f32vec	__m128
 #else
-#define __F32VEC_SIZE	8
 #define __f32vec	__m64
 #endif
 
+extern __inline unsigned __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(f32vec_size)()
+{
+#ifdef OPTIMIZE_AVX
+    return 32;
+#elif defined( OPTIMIZE_SSE )
+    return 16;
+#else
+    retturn 8;
+#endif
+}
+#undef _f32vec_size
+#define _f32vec_size PVECTOR_RENAME(f32vec_size)
+
 extern __inline int  __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32vec_aligned)(const any_t* p) { return (((long)p)&(__F32VEC_SIZE-1))==0; }
+PVECTOR_RENAME(f32vec_aligned)(const any_t* p) { return (((long)p)&(_f32vec_size()-1))==0; }
 #undef _f32vec_aligned
 #define _f32vec_aligned PVECTOR_RENAME(f32vec_aligned)
 

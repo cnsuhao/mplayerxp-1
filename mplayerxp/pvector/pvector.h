@@ -57,7 +57,7 @@
   u32  - unsigned uint32_t
 
   This interface defines:
-  __IVEC_SIZE       size of vector in bytes
+  _ivec_size        size of vector in bytes
   __ivec            type of vector
 
   functions:
@@ -174,7 +174,7 @@
   f32   - float32_t
 
   This interface defines:
-  __F32VEC_SIZE       size of vector in bytes
+  _f32vec_size()      size of vector in bytes
   __f32vec            type of vector
 
   functions:

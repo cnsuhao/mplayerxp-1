@@ -70,12 +70,12 @@ PROFILE_START();
 	    if(srca[x]) *dst=((dstbase[x]*srca[x])>>8)+src[x];
 	    if(_ivec_aligned(dst)) break; /* align on sizeof(MMREG) boundary */
 	}
-	if((w-x)>=__IVEC_SIZE)
-	for(;x<w;x+=__IVEC_SIZE){
+	if((w-x)>=_ivec_size())
+	for(;x<w;x+=_ivec_size()){
 	    __ivec vmsk,vdest,vsrc,vsrca,vt[4];
-	    _ivec_prefetchw(&dstbase[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&src[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&srca[x+__IVEC_SIZE*4]);
+	    _ivec_prefetchw(&dstbase[x+_ivec_size()*4]);
+	    _ivec_prefetch(&src[x+_ivec_size()*4]);
+	    _ivec_prefetch(&srca[x+_ivec_size()*4]);
 	    vdest = _ivec_loada(&dstbase[x]);
 	    if(_ivec_aligned(&src[x]))
 		vsrc  = _ivec_loada(&src[x]);
@@ -133,9 +133,9 @@ PROFILE_START();
 	mm[5]=_m_psllwi(mm[5],8);
 	mm[4]=_m_psrlwi(mm[4],8);
     for(;x<w;x+=4){
-	    _ivec_prefetchw(&dstbase[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&src[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&srca[x+__IVEC_SIZE*4]);
+	    _ivec_prefetchw(&dstbase[x+_ivec_size()*4]);
+	    _ivec_prefetch(&src[x+_ivec_size()*4]);
+	    _ivec_prefetch(&srca[x+_ivec_size()*4]);
 	    mm[0]=_m_load(&(((char *)dstbase)[x*2]));
 	    mm[1]=mm[0];
 	    mm[0]=_m_pand(mm[0],mm[4]);
@@ -192,9 +192,9 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigne
 	mm[6]=_mm_set1_pi8(0xFF);
     for(;x<w;x+=2){
      if(srca[x] || srca[x+1]) {
-	    _ivec_prefetchw(&dstbase[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&src[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&srca[x+__IVEC_SIZE*4]);
+	    _ivec_prefetchw(&dstbase[x+_ivec_size()*4]);
+	    _ivec_prefetch(&src[x+_ivec_size()*4]);
+	    _ivec_prefetch(&srca[x+_ivec_size()*4]);
 	    mm[0]=_m_load(&dstbase[0]);
 	    mm[1]=mm[0];
 	    mm[5]=mm[0];
@@ -264,9 +264,9 @@ PROFILE_START();
 	mm[6]=_mm_set1_pi8(0xFF);
     for(;x<w;x+=2){
      if(srca[x] || srca[x+1]) {
-	    _ivec_prefetchw(&dstbase[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&src[x+__IVEC_SIZE*4]);
-	    _ivec_prefetch(&srca[x+__IVEC_SIZE*4]);
+	    _ivec_prefetchw(&dstbase[x+_ivec_size()*4]);
+	    _ivec_prefetch(&src[x+_ivec_size()*4]);
+	    _ivec_prefetch(&srca[x+_ivec_size()*4]);
 	    mm[0]=_m_load(&dstbase[4*x]);
 	    mm[1]=mm[0];
 	    mm[0]=_m_punpcklbw(mm[0],mm[7]);

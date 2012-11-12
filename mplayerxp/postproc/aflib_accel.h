@@ -9,14 +9,14 @@ static void __FASTCALL__ PVECTOR_RENAME(int8_to_int16)(const int8_t* in_data, in
     unsigned i;
     i = 0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(__IVEC_SIZE-1));
+    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
     for(;i<len;i++) {
 	((uint16_t*)out_data)[i]=((uint16_t)((const uint8_t*)in_data)[i])<<8;
 	if(_ivec_aligned(out_data)) break;
     }
-    if((len_mm-i)>=__IVEC_SIZE)
-    for(;i<len_mm;i+=__IVEC_SIZE){
+    if((len_mm-i)>=_ivec_size())
+    for(;i<len_mm;i+=_ivec_size()){
 	__ivec ind,itmp[2];
 	if(_ivec_aligned(in_data))
 	    ind = _ivec_loada(&((const uint8_t *)in_data)[i]);
@@ -25,10 +25,10 @@ static void __FASTCALL__ PVECTOR_RENAME(int8_to_int16)(const int8_t* in_data, in
 	itmp[0] = _ivec_scale_u16_from_u8(ind,&itmp[1]);
 	if(final) {
 	    _ivec_stream(&((uint16_t*)out_data)[i],itmp[0]);
-	    _ivec_stream(&((uint16_t*)out_data)[i+__IVEC_SIZE/2],itmp[1]);
+	    _ivec_stream(&((uint16_t*)out_data)[i+_ivec_size()/2],itmp[1]);
 	} else {
 	    _ivec_storea(&((uint16_t*)out_data)[i],itmp[0]);
-	    _ivec_storea(&((uint16_t*)out_data)[i+__IVEC_SIZE/2],itmp[1]);
+	    _ivec_storea(&((uint16_t*)out_data)[i+_ivec_size()/2],itmp[1]);
 	}
     }
     _ivec_empty();
@@ -46,22 +46,22 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, i
     unsigned i;
     i = 0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(__IVEC_SIZE-1));
+    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
     for(;i<len;i++) {
 	((uint8_t*)out_data)[i]=(uint8_t)((((const uint16_t*)in_data)[i])>>8);
 	if(_ivec_aligned(out_data)) break;
     }
-    if((len_mm-i)>=__IVEC_SIZE)
-    for(;i<len_mm;i+=__IVEC_SIZE){
+    if((len_mm-i)>=_ivec_size())
+    for(;i<len_mm;i+=_ivec_size()){
 	__ivec outd,itmp[2];
 	if(_ivec_aligned(in_data)) {
 	    itmp[0] = _ivec_loada(&((const uint16_t*)in_data)[i]);
-	    itmp[1] = _ivec_loada(&((const uint16_t*)in_data)[i+__IVEC_SIZE/2]);
+	    itmp[1] = _ivec_loada(&((const uint16_t*)in_data)[i+_ivec_size()/2]);
 	}
 	else {
 	    itmp[0] = _ivec_loadu(&((const uint16_t*)in_data)[i]);
-	    itmp[1] = _ivec_loadu(&((const uint16_t*)in_data)[i+__IVEC_SIZE/2]);
+	    itmp[1] = _ivec_loadu(&((const uint16_t*)in_data)[i+_ivec_size()/2]);
 	}
 	outd     = _ivec_scale_s8_from_s16(itmp[0],itmp[1]);
 	if(final)
@@ -84,14 +84,14 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, 
     unsigned i;
     i=0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(__IVEC_SIZE-1));
+    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
     for(;i<len;i++){
 	((uint32_t*)out_data)[i]=((uint32_t)((const uint16_t*)in_data)[i])<<16;
 	if(_ivec_aligned(out_data)) break;
     }
-    if((len_mm-i)>=__IVEC_SIZE)
-    for(;i<len_mm;i+=__IVEC_SIZE)
+    if((len_mm-i)>=_ivec_size())
+    for(;i<len_mm;i+=_ivec_size())
     {
 	__ivec ind,tmp[2];
 	if(_ivec_aligned(in_data))
@@ -101,10 +101,10 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, 
 	tmp[0]= _ivec_scale_u32_from_u16(ind,&tmp[1]);
 	if(final) {
 	    _ivec_stream(&((uint8_t *)out_data)[i*2],tmp[0]);
-	    _ivec_stream(&((uint8_t *)out_data)[i*2+__IVEC_SIZE],tmp[1]);
+	    _ivec_stream(&((uint8_t *)out_data)[i*2+_ivec_size()],tmp[1]);
 	} else {
 	    _ivec_storea(&((uint8_t *)out_data)[i*2],tmp[0]);
-	    _ivec_storea(&((uint8_t *)out_data)[i*2+__IVEC_SIZE],tmp[1]);
+	    _ivec_storea(&((uint8_t *)out_data)[i*2+_ivec_size()],tmp[1]);
 	}
     }
     if(final) _ivec_sfence();
@@ -122,22 +122,22 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, 
     unsigned i;
     i=0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(__IVEC_SIZE-1));
+    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
     for(;i<len;i++){
 	((uint16_t*)out_data)[i]=(uint16_t)((((const uint32_t*)in_data)[i])>>16);
 	if(_ivec_aligned(out_data)) break;
     }
-    if((len_mm-i)>=__IVEC_SIZE)
-    for(;i<len_mm;i+=__IVEC_SIZE)
+    if((len_mm-i)>=_ivec_size())
+    for(;i<len_mm;i+=_ivec_size())
     {
 	__ivec ind[2],tmp;
 	if(_ivec_aligned(in_data)) {
 	    ind[0]=_ivec_loada(&((const uint8_t *)in_data)[i*2]);
-	    ind[1]=_ivec_loada(&((const uint8_t *)in_data)[i*2+__IVEC_SIZE]);
+	    ind[1]=_ivec_loada(&((const uint8_t *)in_data)[i*2+_ivec_size()]);
 	} else {
 	    ind[0]=_ivec_loadu(&((const uint8_t *)in_data)[i*2]);
-	    ind[1]=_ivec_loadu(&((const uint8_t *)in_data)[i*2+__IVEC_SIZE]);
+	    ind[1]=_ivec_loadu(&((const uint8_t *)in_data)[i*2+_ivec_size()]);
 	}
 	tmp   = _ivec_scale_s16_from_s32(ind[0],ind[1]);
 	if(final)
@@ -334,9 +334,9 @@ static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t
       if(_f32vec_aligned(out)) break;
     }
     _ivec_empty();
-    len_mm=len&(~(__F32VEC_SIZE-1));
-    if((len_mm-i)>=__F32VEC_SIZE/sizeof(float))
-    for(;i<len_mm;i+=__F32VEC_SIZE/sizeof(float)) {
+    len_mm=len&(~(_f32vec_size()-1));
+    if((len_mm-i)>=_f32vec_size()/sizeof(float))
+    for(;i<len_mm;i+=_f32vec_size()/sizeof(float)) {
 	__f32vec tmp;
 	if(_f32vec_aligned(in))
 	    tmp = _f32vec_loada(&((const float*)in)[i]);
@@ -372,8 +372,8 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out,
       if(_f32vec_aligned(out)) break;
     }
     _ivec_empty();
-    if((len-i)>=__F32VEC_SIZE)
-    for(;i<len;i+=__F32VEC_SIZE/sizeof(float)) {
+    if((len-i)>=_f32vec_size())
+    for(;i<len;i+=_f32vec_size()/sizeof(float)) {
 	__f32vec tmp;
 	if(_f32vec_aligned(in))
 	    tmp = _f32vec_from_s32a(&((const int32_t*)in)[i]);

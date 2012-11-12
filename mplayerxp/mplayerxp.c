@@ -101,29 +101,31 @@ typedef struct x86_features_s {
 static x86_features_t x86;
 #endif
 
-#define ABS(x) (((x)>=0)?(x):(-(x)))
+enum {
+    INITED_VO		=0x00000001,
+    INITED_AO		=0x00000002,
+    INITED_RESERVED	=0x00000004,
+    INITED_LIRC		=0x00000008,
+    INITED_SPUDEC	=0x00000010,
+    INITED_STREAM	=0x00000020,
+    INITED_INPUT	=0x00000040,
+    INITED_DEMUXER	=0x00000080,
+    INITED_ACODEC	=0x00000100,
+    INITED_VCODEC	=0x00000200,
+    INITED_VOBSUB	=0x00000400,
+    INITED_SUBTITLE	=0x10000000,
+    INITED_XMP		=0x80000000,
+    INITED_ALL		=0xFFFFFFFF
+};
 
-#define INITED_VO	0x00000001
-#define INITED_AO	0x00000002
-#define INITED_RESERVED	0x00000004
-#define INITED_LIRC	0x00000008
-#define INITED_SPUDEC	0x00000010
-#define INITED_STREAM	0x00000020
-#define INITED_INPUT	0x00000040
-#define INITED_DEMUXER  0x00000080
-#define INITED_ACODEC	0x00000100
-#define INITED_VCODEC	0x00000200
-#define INITED_VOBSUB	0x00000400
-#define INITED_SUBTITLE 0x10000000
-#define INITED_XMP	0x80000000
-#define INITED_ALL	0xFFFFFFFF
-
-#define PT_NEXT_ENTRY 1
-#define PT_PREV_ENTRY -1
-#define PT_NEXT_SRC 2
-#define PT_PREV_SRC -2
-#define PT_UP_NEXT 3
-#define PT_UP_PREV -3
+enum {
+    PT_NEXT_ENTRY	=1,
+    PT_PREV_ENTRY	=-1,
+    PT_NEXT_SRC		=2,
+    PT_PREV_SRC		=-2,
+    PT_UP_NEXT		=3,
+    PT_UP_PREV		=-3
+};
 
 typedef struct priv_s {
     unsigned	inited_flags;
@@ -524,54 +526,52 @@ static void get_mmx_optimizations( void )
 
 static void init_player( void )
 {
-    if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0)
-    {
+    if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0) {
 	vo_print_help(vo_data);
 	mpxp_uninit_structs();
 	exit(0);
     }
-    if(mp_conf.audio_driver && strcmp(mp_conf.audio_driver,"help")==0)
-    {
+    if(mp_conf.audio_driver && strcmp(mp_conf.audio_driver,"help")==0) {
 	ao_print_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
-    if(mp_conf.video_family && strcmp(mp_conf.video_family,"help")==0){
+    if(mp_conf.video_family && strcmp(mp_conf.video_family,"help")==0) {
 	vfm_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
-    if(mp_conf.audio_family && strcmp(mp_conf.audio_family,"help")==0){
+    if(mp_conf.audio_family && strcmp(mp_conf.audio_family,"help")==0) {
 	afm_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
-    if(vf_cfg.list && strcmp(vf_cfg.list,"help")==0){
+    if(vf_cfg.list && strcmp(vf_cfg.list,"help")==0) {
 	vf_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
-    if(af_cfg.list && strcmp(af_cfg.list,"help")==0){
+    if(af_cfg.list && strcmp(af_cfg.list,"help")==0) {
 	af_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
 
     /* check codec.conf*/
-    if(!parse_codec_cfg(get_path("codecs.conf"))){
-      if(!parse_codec_cfg(CONFDIR"/codecs.conf")){
+    if(!parse_codec_cfg(get_path("codecs.conf"))) {
+      if(!parse_codec_cfg(CONFDIR"/codecs.conf")) {
 	MSG_HINT(MSGTR_CopyCodecsConf);
 	mpxp_uninit_structs();
 	exit(0);
       }
     }
 
-    if(mp_conf.audio_codec && strcmp(mp_conf.audio_codec,"help")==0){
+    if(mp_conf.audio_codec && strcmp(mp_conf.audio_codec,"help")==0) {
 	list_codecs(1);
 	mpxp_uninit_structs();
 	exit(0);
     }
-    if(mp_conf.video_codec && strcmp(mp_conf.video_codec,"help")==0){
+    if(mp_conf.video_codec && strcmp(mp_conf.video_codec,"help")==0) {
 	list_codecs(0);
 	mpxp_uninit_structs();
 	exit(0);

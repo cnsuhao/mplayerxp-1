@@ -24,18 +24,29 @@
 #include <mmintrin.h>
 #endif
 
-#undef __IVEC_SIZE
 #undef __ivec
 #ifdef OPTIMIZE_SSE2
-#define __IVEC_SIZE	16
 #define __ivec		__m128i
 #else
-#define __IVEC_SIZE	8
 #define __ivec		__m64
 #endif
 
+static __inline unsigned __attribute__((__gnu_inline__, __always_inline__))
+PVECTOR_RENAME(ivec_size)()
+{
+#ifdef OPTIMIZE_AVX
+    return 32;
+#elif defined(OPTIMIZE_SSE2)
+    return 16;
+#else
+    return 8;
+#endif
+}
+#undef _ivec_size
+#define _ivec_size PVECTOR_RENAME(ivec_size)
+
 static __inline int __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(ivec_aligned)(const any_t* p) { return (((long)p)&(__IVEC_SIZE-1))==0; }
+PVECTOR_RENAME(ivec_aligned)(const any_t* p) { return (((long)p)&(_ivec_size()-1))==0; }
 #undef _ivec_aligned
 #define _ivec_aligned PVECTOR_RENAME(ivec_aligned)
 
