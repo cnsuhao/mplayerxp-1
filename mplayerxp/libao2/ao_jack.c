@@ -36,7 +36,7 @@
 #include "osdep/mplib.h"
 #include "ao_msg.h"
 
-#include "fifo.h"
+#include "libavutil/fifo.h"
 #include <jack/jack.h>
 
 static const ao_info_t info =
@@ -63,7 +63,7 @@ typedef struct priv_s {
     volatile float	callback_interval;
     volatile float	callback_time;
 
-    CBFifoBuffer *	buffer; //! buffer for audio data
+    AVFifoBuffer *	buffer; //! buffer for audio data
 }priv_t;
 
 
@@ -85,9 +85,9 @@ typedef struct priv_s {
  */
 static int write_buffer(ao_data_t* ao,unsigned char* data, int len) {
     priv_t*priv=ao->priv;
-  int _free = cb_fifo_space(priv->buffer);
+  int _free = av_fifo_space(priv->buffer);
   if (len > _free) len = _free;
-  return cb_fifo_generic_write(priv->buffer, data, len, NULL);
+  return av_fifo_generic_write(priv->buffer, data, len, NULL);
 }
 
 static void silence(float **bufs, int cnt, int num_bufs);
@@ -129,12 +129,12 @@ static void deinterleave(any_t*_info, any_t*src, int len) {
 static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned num_bufs) {
     priv_t*priv=ao->priv;
   struct deinterleave di = {bufs, num_bufs, 0, 0};
-  unsigned buffered = cb_fifo_size(priv->buffer);
+  unsigned buffered = av_fifo_size(priv->buffer);
   if (cnt * sizeof(float) * num_bufs > buffered) {
     silence(bufs, cnt, num_bufs);
     cnt = buffered / sizeof(float) / num_bufs;
   }
-  cb_fifo_generic_read(priv->buffer, &di, cnt * num_bufs * sizeof(float), deinterleave);
+  av_fifo_generic_read(priv->buffer, &di, cnt * num_bufs * sizeof(float), deinterleave);
   return cnt;
 }
 
@@ -259,7 +259,7 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
 	MSG_FATAL("[JACK] cannot open server\n");
 	goto err_out;
     }
-    priv->buffer = cb_fifo_alloc(BUFFSIZE);
+    priv->buffer = av_fifo_alloc(BUFFSIZE);
     jack_set_process_callback(priv->client, outputaudio, ao);
 
     // list matching priv->ports
@@ -316,7 +316,7 @@ err_out:
     mp_free(port_name);
     mp_free(client_name);
     if (priv->client) jack_client_close(priv->client);
-    cb_fifo_free(priv->buffer);
+    av_fifo_free(priv->buffer);
     priv->buffer = NULL;
     return MPXP_False;
 }
@@ -328,7 +328,7 @@ static void uninit(ao_data_t* ao) {
   reset(ao);
   usec_sleep(100 * 1000);
   jack_client_close(priv->client);
-  cb_fifo_free(priv->buffer);
+  av_fifo_free(priv->buffer);
   priv->buffer = NULL;
   mp_free(priv);
 }
@@ -339,7 +339,7 @@ static void uninit(ao_data_t* ao) {
 static void reset(ao_data_t* ao) {
     priv_t*priv=ao->priv;
   priv->paused = 1;
-  cb_fifo_reset(priv->buffer);
+  av_fifo_reset(priv->buffer);
   priv->paused = 0;
 }
 
@@ -361,7 +361,7 @@ static void audio_resume(ao_data_t* ao) {
 
 static unsigned get_space(ao_data_t* ao) {
     priv_t*priv=ao->priv;
-  return cb_fifo_space(priv->buffer);
+  return av_fifo_space(priv->buffer);
 }
 
 /**
@@ -376,7 +376,7 @@ static unsigned play(ao_data_t* ao,any_t*data, unsigned len, unsigned flags) {
 
 static float get_delay(ao_data_t* ao) {
     priv_t*priv=ao->priv;
-  int buffered = cb_fifo_size(priv->buffer); // could be less
+  int buffered = av_fifo_size(priv->buffer); // could be less
   float in_jack = priv->latency;
   if (priv->estimate && priv->callback_interval > 0) {
     float elapsed = (float)GetTimer() / 1000000.0 - priv->callback_time;
