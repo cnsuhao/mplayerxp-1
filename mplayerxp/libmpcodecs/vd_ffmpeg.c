@@ -515,24 +515,22 @@ static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
     priv_t *priv = sh->context;
     int i;
 
-  if(priv->ip_count <= 2 && priv->b_count<=1){
-    if(mpi->flags&MP_IMGFLAG_PRESERVE)
-        priv->ip_count--;
-    else
-        priv->b_count--;
-  }
+    if(priv->ip_count <= 2 && priv->b_count<=1){
+	if(mpi->flags&MP_IMGFLAG_PRESERVE)
+	    priv->ip_count--;
+	else
+	    priv->b_count--;
+    }
 
-	// Palette support: mp_free palette buffer allocated in get_buffer
-	if ( mpi && (mpi->bpp == 8) && (mpi->planes[1] != NULL))
-		mp_free(mpi->planes[1]);
+    if(mpi) if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK) free_mp_image(mpi);
 
     if(pic->type!=FF_BUFFER_TYPE_USER){
 	avcodec_default_release_buffer(avctx, pic);
-        return;
+	return;
     }
 
     for(i=0; i<4; i++){
-        pic->data[i]= NULL;
+	pic->data[i]= NULL;
     }
 //printf("R%X %X\n", pic->linesize[0], pic->data[0]);
 }
