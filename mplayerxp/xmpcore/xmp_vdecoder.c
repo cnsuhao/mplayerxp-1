@@ -188,6 +188,7 @@ pt_sleep:
 	if(cur_time - mp_data->seek_time > (xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
     if(!finite(frame->pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",frame->pts);
+    if(frame->type!=VideoFrame) escape_player("VideoDecoder doesn't parse non video frames",10);
 #if 0
 /*
     We can't seriously examine question of too slow machines

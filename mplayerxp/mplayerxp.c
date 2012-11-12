@@ -343,7 +343,7 @@ void uninit_player(unsigned int mask){
     MP_UNIT(NULL);
 }
 
-void exit_player(char* how){
+void exit_player(const char* why){
 
     fflush(stdout);
     fflush(stderr);
@@ -352,12 +352,12 @@ void exit_player(char* how){
     MP_UNIT("exit_player");
 
     sws_uninit();
-    if(how) MSG_HINT(MSGTR_Exiting,how);
+    if(why) MSG_HINT(MSGTR_Exiting,why);
     MSG_DBG2("max framesize was %d bytes\n",max_framesize);
     if(mp_data->mconfig) m_config_free(mp_data->mconfig);
     mp_msg_uninit();
     mpxp_uninit_structs();
-    if(how) exit(0);
+    if(why) exit(0);
     return; /* Still try coredump!!!*/
 }
 

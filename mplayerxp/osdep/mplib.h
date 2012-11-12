@@ -8,6 +8,7 @@
  */
 #ifndef __MPLIB_H_INCLUDED__
 #define __MPLIB_H_INCLUDED__ 1
+#include <execinfo.h>
 #include <stddef.h>
 #include <sys/mman.h>
 #include "mp_config.h"
@@ -62,5 +63,13 @@ enum mp_prot_e {
 };
 extern int	__FASTCALL__ mp_mprotect(const any_t* addr,size_t len,enum mp_prot_e flags);
 
-extern void print_backtrace(unsigned num);
+extern void print_backtrace(const char *why,any_t** stack,unsigned num);
+
+static inline void show_backtrace(const char *why,unsigned num_calls) {
+    any_t*	stack[num_calls];
+    unsigned ncalls;
+    ncalls=backtrace(stack,num_calls);
+    print_backtrace(why,stack,ncalls);
+}
+
 #endif

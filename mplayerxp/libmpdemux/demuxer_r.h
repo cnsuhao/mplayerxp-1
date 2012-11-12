@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 typedef enum enc_frame_type {
-    AudioFrame	=0,
+    AudioFrame=1,
     VideoFrame
 }enc_frame_type_e;
 

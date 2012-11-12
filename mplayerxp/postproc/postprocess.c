@@ -13,7 +13,6 @@
 #define MSGT_CLASS MSGT_PP
 #include "mp_msg.h"
 
-extern void exit_player(char *);
 pp_context *pp2_get_context(int width, int height, int flags)
 {
   flags &= 0x00FFFFFFUL; /* kill cpu related flags */

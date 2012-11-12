@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <stdint.h>
 #include "mp_config.h"
+#include "osdep/mplib.h"
 
 typedef struct mp_conf_s {
     int		has_video;
@@ -115,7 +116,12 @@ extern void update_osd( float v_pts );
 
 extern pthread_mutex_t audio_timer_mutex;
 
-extern void exit_player(char* how);
+extern void exit_player(const char* why);
+static inline void escape_player(const char* why,unsigned num_calls) {
+    show_backtrace(why,num_calls);
+    exit_player(why);
+}
+
 extern void mpxp_resync_audio_stream(void);
 extern void mpxp_reset_vcache(void);
 extern void __exit_sighandler(void);

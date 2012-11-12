@@ -12,7 +12,6 @@
 #include <limits.h>
 #include <time.h>
 #include <unistd.h>
-#include <execinfo.h>
 
 typedef struct mp_slot_s {
     any_t*	page_ptr;
@@ -186,7 +185,15 @@ static __always_inline void __print_backtrace(unsigned num) {
     uninit_bt_cache(cache);
 }
 
-void print_backtrace(unsigned num) { __print_backtrace(num); }
+void print_backtrace(const char *why,any_t** stack,unsigned num) {
+    bt_cache_t* cache=init_bt_cache();
+    unsigned	i;
+    MSG_INFO(why?why:"*** Backtrace for suspect call ***\n");
+    for(i=0;i<num;i++) {
+	MSG_INFO("    %p -> %s\n",stack[i],addr2line(cache,stack[i]));
+    }
+    uninit_bt_cache(cache);
+}
 
 static void __prot_free_append(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
