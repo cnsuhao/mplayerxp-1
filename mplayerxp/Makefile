@@ -10,7 +10,6 @@ INSTALL = install
 include mp_config.mak
 
 PRG = $(PROGNAME)
-PRG_FIBMAP = fibmap_mplayerxp
 PRG_CFG = codec-cfg-xp
 # these subdirectories required installation due binaries within them
 SUBDIRS = libmpdemux libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input2 nls libvo xmpcore
@@ -55,9 +54,6 @@ COMMON_LIBS = $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
 CFLAGS = $(OPTFLAGS) $(EXTRA_INC)
 
 ALL_PRG = $(PRG)
-ifeq ($(HAVE_CSS),yes)
-ALL_PRG += $(PRG_FIBMAP)
-endif
 
 .SUFFIXES: .c .o
 
@@ -78,9 +74,6 @@ $(PRG):	$(OBJS_MPLAYER) $(MP_LIBS)
 $(SRCS_MPLAYER): version.h
 #$(OBJS_MPLAYER): $(SRCS_MPLAYER)
 
-$(PRG_FIBMAP): fibmap_mplayer.o
-	$(CC) -o $(PRG_FIBMAP) fibmap_mplayer.o
-
 $(PRG_CFG): version.h codec-cfg.c codec-cfg.h
 	$(CC) $(CFLAGS) -g codec-cfg.c -o $(PRG_CFG) -DCODECS2HTML
 
@@ -100,21 +93,10 @@ endif
 	echo "*** for OSD/Subtitles support and extract to $(DATADIR)/font/" ; \
 	fi
 
-ifeq ($(HAVE_CSS),yes)
-	@echo "Following task requires root privs. If it fails don't panic"
-	@echo "however it means you can't use fibmap_mplayer."
-	@echo "Without this (or without running mplayer as root) you won't be"
-	@echo "able to play encrypted DVDs."
-	-$(INSTALL) -D -o 0 -g 0 -m 4755 -s $(PRG_FIBMAP) $(DESTDIR)$(BINDIR)/$(PRG_FIBMAP)
-endif
-
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/$(PRG)
 	rm -f $(DESTDIR)$(DATADIR)/font/*
 	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(DATADIR)/font
-ifeq ($(HAVE_CSS),yes)
-	rm -f $(DESTDIR)$(BINDIR)/$(PRG_FIBMAP)
-endif
 	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(BINDIR)
 
 clean:
@@ -123,7 +105,7 @@ clean:
 
 distclean:
 	$(DO_MAKE)
-	-rm -f *~ $(PRG) $(PRG_FIBMAP) $(OBJS)
+	-rm -f *~ $(PRG) $(OBJS)
 	-rm -f *.o *.a .depend configure.log
 	-rm -f mp_config.h mp_config.mak version.h
 	-rm -f cpuinfo help_mp.h
