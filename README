@@ -147,8 +147,8 @@ Considering that, MPlayerXP supports some middle-level mechanisms of antiviral
 protection, such as randomized-malloc which allocate memory at pseudo-random
 addresses. Also MPlayerXP has several antiviral holes and several antiviral
 traps. Thus, MPlayerXP locates its XP-CORE at pseudo-random address and hides
-pointer on XP-CORE between antiviral-holes. Also it attempts to prevent
-registration of unknown drivers using some antiviral traps.
+pointer on XP-CORE between antiviral-holes which reject memory scan. Also it
+attempts to prevent registration of unknown drivers using some antiviral traps.
 
 But last word in this way was not speaked. ;)
 
