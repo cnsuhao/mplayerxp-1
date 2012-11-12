@@ -23,6 +23,7 @@ typedef struct mp_slot_s {
 typedef struct mp_slot_container_s {
     mp_slot_t*	slots;
     size_t	nslots;
+    size_t	size;
 }mp_slot_container_t;
 
 typedef struct priv_s {
@@ -75,8 +76,17 @@ static mp_slot_t*	prot_find_slot(mp_slot_container_t* c,any_t* ptr) {
 
 static mp_slot_t*	prot_append_slot(mp_slot_container_t* c,any_t*ptr,size_t size) {
     mp_slot_t* s;
-    if(!c->slots)	s=malloc(sizeof(mp_slot_t));
-    else		s=realloc(c->slots,sizeof(mp_slot_t)*(c->nslots+1));
+    s=c->slots;
+    if(!c->slots) {
+	c->size=16;
+	s=malloc(sizeof(mp_slot_t)*16);
+    }
+    else {
+	if(c->nslots+1>c->size) {
+	    c->size+=16;
+	    s=realloc(c->slots,sizeof(mp_slot_t)*c->size);
+	}
+    }
     c->slots=s;
     memset(&c->slots[c->nslots],0,sizeof(mp_slot_t));
     c->slots[c->nslots].page_ptr=ptr;
@@ -90,7 +100,10 @@ static void	prot_free_slot(mp_slot_container_t* c,any_t* ptr) {
     if(idx!=UINT_MAX) {
 	memmove(&c->slots[idx],&c->slots[idx+1],sizeof(mp_slot_t)*(c->nslots-(idx+1)));
 	c->nslots--;
-	c->slots=realloc(c->slots,sizeof(mp_slot_t)*c->nslots);
+	if(c->nslots<c->size-16) {
+	    c->size-=16;
+	    c->slots=realloc(c->slots,sizeof(mp_slot_t)*c->size);
+	}
     } else printf("[prot_free_slot] Internal error! Can't find slot for address: %p\n",ptr);
 }
 

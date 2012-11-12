@@ -67,7 +67,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t* mpi){
     int finalize;
     unsigned int bpp = mpi->bpp / 8;
     unsigned int x, y, w, h;
-    dmpi = vf_get_image(vf->next, mpi->imgfmt, MP_IMGTYPE_TEMP,
+    dmpi = vf_get_new_image(vf->next, mpi->imgfmt, MP_IMGTYPE_TEMP,
 			MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
 			mpi->w, mpi->h,mpi->xp_idx);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;

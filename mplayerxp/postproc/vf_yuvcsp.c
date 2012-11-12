@@ -36,7 +36,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     uint8_t *y_in, *cb_in, *cr_in;
     uint8_t *y_out, *cb_out, *cr_out;
 
-    vf->dmpi=vf_get_image(vf->next,mpi->imgfmt,
+    vf->dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	mpi->w, mpi->h,mpi->xp_idx);
 

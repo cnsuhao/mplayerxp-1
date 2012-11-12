@@ -51,16 +51,16 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     if(vf->priv->new_frame)
     {
 	vf->priv->new_frame = 0;
-	dmpi=vf_get_image(vf->next,mpi->imgfmt,
+	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    vf->priv->w,vf->priv->up_h,mpi->xp_idx);
 	vf_mpi_clear(dmpi,0,0,vf->priv->w,vf->priv->up_h);
-	dmpi=vf_get_image(vf->next,mpi->imgfmt,
+	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    vf->priv->w,vf->priv->up_h+vf->priv->h+vf->priv->dn_h,mpi->xp_idx);
 	vf_mpi_clear(dmpi,0,0,vf->priv->w,vf->priv->dn_h);
     }
-    dmpi=vf_get_image(vf->next,mpi->imgfmt,
+    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    mpi->w,mpi->h+vf->priv->up_h,mpi->xp_idx);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;

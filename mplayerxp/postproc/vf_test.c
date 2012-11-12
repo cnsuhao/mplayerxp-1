@@ -121,7 +121,7 @@ static int __FASTCALL__ rgb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
     int x, y;
 
     // hope we'll get DR buffer:
-    dmpi=vf_get_image(vf->next,vf->priv->fmt,
+    dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	mpi->w, mpi->h, mpi->xp_idx);
 
@@ -376,7 +376,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     int frame= vf->priv->frame_num;
 
     // hope we'll get DR buffer:
-    dmpi=vf_get_image(vf->next,IMGFMT_YV12,
+    dmpi=vf_get_new_image(vf->next,IMGFMT_YV12,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	mpi->w,mpi->h,mpi->xp_idx);
 

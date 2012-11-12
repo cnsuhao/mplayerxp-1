@@ -130,18 +130,18 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     // hope we'll get DR buffer:
     if(vf->priv->direction==180)
     {
-	dmpi=vf_get_image(vf->next,mpi->imgfmt,
+	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	mpi->w, mpi->h, mpi->xp_idx);
     }
     else
     {
 	if(vf->priv->direction==90)
-	    dmpi=vf_get_image(vf->next,mpi->imgfmt,
+	    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    mpi->h, mpi->w, mpi->xp_idx);
 	else
-	    dmpi=vf_get_image(vf->next,mpi->imgfmt,
+	    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    mpi->h, mpi->w, mpi->xp_idx);
     }

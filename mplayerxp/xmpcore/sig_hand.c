@@ -23,29 +23,9 @@
 
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
-/* Obtain a backtrace and print it to stdout. */
-static void print_trace (void)
-{
-  any_t*array[10];
-  size_t size;
-  char **strings;
-  size_t i;
-
-  size = backtrace (array, 10);
-  strings = backtrace_symbols (array, size);
-
-  MSG_ERR ("Obtained %zd stack frames.\n", size);
-
-  for (i = 0; i < size; i++)
-     MSG_ERR ("%s\n", strings[i]);
-
-  mp_free (strings);
-}
-
 /* A dummy function to make the backtrace more interesting. */
-static void dump_trace (void)
-{
-  print_trace ();
+static void dump_trace (void) {
+    show_backtrace("Obtained %zd stack frames.\n",mp_conf.max_trace);
 }
 #endif
 static void my_callback(int signo)

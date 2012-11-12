@@ -153,123 +153,116 @@ void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h){
     }
 }
 
-mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx){
-  mp_image_t* mpi=NULL;
-  int w2=(mp_imgflag&MP_IMGFLAG_ACCEPT_ALIGNED_STRIDE)?((w+15)&(~15)):w;
-  unsigned xp_idx=idx;
-  MSG_DBG2("vf_get_image(%s,0x%X,0x%X,0x%X,0x%X,0x%X) was called\n",vf->info->name,outfmt,mp_imgtype,mp_imgflag,w,h);
+mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx){
+    int is_static=0;
+    mp_image_t* mpi=NULL;
+    int w2=(mp_imgflag&MP_IMGFLAG_ACCEPT_ALIGNED_STRIDE)?((w+15)&(~15)):w;
+    unsigned xp_idx=idx;
+    MSG_DBG2("vf_get_new_image(%s,0x%X,0x%X,0x%X,0x%X,0x%X) was called\n",vf->info->name,outfmt,mp_imgtype,mp_imgflag,w,h);
 
-  if(vf->put_slice==vf_next_put_slice){
-      MSG_DBG2("passthru mode to %s\n",vf->next->info->name);
-      return vf_get_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h,xp_idx);
-  }
-  // Note: we should call libvo first to check if it supports direct rendering
-  // and if not, then fallback to software buffers:
-  switch(mp_imgtype){
-  case MP_IMGTYPE_EXPORT:
-    if(!vf->imgctx.export_images[0]) vf->imgctx.export_images[0]=new_mp_image(w2,h,xp_idx);
-    mpi=vf->imgctx.export_images[0];
-    break;
-  case MP_IMGTYPE_STATIC:
-    if(!vf->imgctx.static_images[0]) vf->imgctx.static_images[0]=new_mp_image(w2,h,xp_idx);
-    mpi=vf->imgctx.static_images[0];
-    break;
-  case MP_IMGTYPE_TEMP:
-    if(!vf->imgctx.temp_images[0]) vf->imgctx.temp_images[0]=new_mp_image(w2,h,xp_idx);
-    mpi=vf->imgctx.temp_images[0];
-    break;
-  case MP_IMGTYPE_IPB:
-    if(!(mp_imgflag&MP_IMGFLAG_READABLE)){ // B frame:
-      if(!vf->imgctx.temp_images[0]) vf->imgctx.temp_images[0]=new_mp_image(w2,h,xp_idx);
-      mpi=vf->imgctx.temp_images[0];
-      break;
+    if(vf->put_slice==vf_next_put_slice){
+	MSG_DBG2("passthru mode to %s\n",vf->next->info->name);
+	return vf_get_new_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h,xp_idx);
     }
-  case MP_IMGTYPE_IP:
-    if(!vf->imgctx.static_images[vf->imgctx.static_idx]) vf->imgctx.static_images[vf->imgctx.static_idx]=new_mp_image(w2,h,xp_idx);
-    mpi=vf->imgctx.static_images[vf->imgctx.static_idx];
-    vf->imgctx.static_idx^=1;
-    break;
-  }
-  if(mpi){
-    mpi->type=mp_imgtype;
-    mpi->w=w; mpi->h=h;
-    // keep buffer allocation status & color flags only:
-    mpi->flags&=MP_IMGFLAG_ALLOCATED|MP_IMGFLAG_TYPE_DISPLAYED|MP_IMGFLAGMASK_COLORS;
-    // accept restrictions & draw_slice flags only:
-    mpi->flags|=mp_imgflag&(MP_IMGFLAGMASK_RESTRICTIONS|MP_IMGFLAG_DRAW_CALLBACK);
-    MSG_DBG2("vf_get_image fills mpi structure. flags=0x%X\n",mpi->flags);
-    if(mpi->width!=w2 || mpi->height!=h){
-	if(mpi->flags&MP_IMGFLAG_ALLOCATED){
-	    if(mpi->width<w2 || mpi->height<h){
-		// need to re-allocate buffer memory:
-		mp_free(mpi->planes[0]);
-		mpi->flags&=~MP_IMGFLAG_ALLOCATED;
-		MSG_DBG2("vf.c: have to REALLOCATE buffer memory :(\n");
+    // Note: we should call libvo first to check if it supports direct rendering
+    // and if not, then fallback to software buffers:
+    switch(mp_imgtype){
+	case MP_IMGTYPE_IP:
+	case MP_IMGTYPE_STATIC:
+	    is_static=1;
+	    break;
+	case MP_IMGTYPE_IPB:
+	    if(mp_imgflag&MP_IMGFLAG_READABLE) is_static=1;
+	default:
+	    break;
+    }
+    mpi=new_mp_image(w2,h,xp_idx);
+    if(mpi){
+	mpi->type=mp_imgtype;
+	mpi->w=w; mpi->h=h;
+	// keep buffer allocation status & color flags only:
+	mpi->flags&=MP_IMGFLAG_ALLOCATED|MP_IMGFLAG_TYPE_DISPLAYED|MP_IMGFLAGMASK_COLORS;
+	// accept restrictions & draw_slice flags only:
+	mpi->flags|=mp_imgflag&(MP_IMGFLAGMASK_RESTRICTIONS|MP_IMGFLAG_DRAW_CALLBACK);
+	MSG_DBG2("vf_get_new_image fills mpi structure. flags=0x%X\n",mpi->flags);
+	if(mpi->width!=w2 || mpi->height!=h){
+	    if(mpi->flags&MP_IMGFLAG_ALLOCATED){
+		if(mpi->width<w2 || mpi->height<h){
+		    // need to re-allocate buffer memory:
+		    mp_free(mpi->planes[0]);
+		    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
+		    MSG_DBG2("vf.c: have to REALLOCATE buffer memory :(\n");
+		}
 	    }
+	    mpi->width=w2; mpi->chroma_width=(w2 + (1<<mpi->chroma_x_shift) - 1)>>mpi->chroma_x_shift;
+	    mpi->height=h; mpi->chroma_height=(h + (1<<mpi->chroma_y_shift) - 1)>>mpi->chroma_y_shift;
 	}
-	mpi->width=w2; mpi->chroma_width=(w2 + (1<<mpi->chroma_x_shift) - 1)>>mpi->chroma_x_shift;
-	mpi->height=h; mpi->chroma_height=(h + (1<<mpi->chroma_y_shift) - 1)>>mpi->chroma_y_shift;
-    }
-    if(!mpi->bpp) mp_image_setfmt(mpi,outfmt);
-    MSG_DBG2("vf_get_image setfmt. flags=0x%X\n",mpi->flags);
-    if(!(mpi->flags&MP_IMGFLAG_ALLOCATED) && mpi->type>MP_IMGTYPE_EXPORT){
-
-	// check libvo first!
-	if(vf->get_image) vf->get_image(vf,mpi);
-	MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",mpi->xp_idx);
+	if(!mpi->bpp) mp_image_setfmt(mpi,outfmt);
+	MSG_DBG2("vf_get_new_image setfmt. flags=0x%X\n",mpi->flags);
+	if(!(mpi->flags&MP_IMGFLAG_ALLOCATED) && mpi->type>MP_IMGTYPE_EXPORT) {
+	    // check libvo first!
+	    if(vf->get_image) vf->get_image(vf,mpi);
+	    MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",mpi->xp_idx);
 	
-	if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
-	  // non-direct and not yet allocated image. allocate it!
-	
-	  // check if codec prefer aligned stride:
-	  if(mp_imgflag&MP_IMGFLAG_PREFER_ALIGNED_STRIDE){
-	      int align=(mpi->flags&MP_IMGFLAG_PLANAR &&
-	                 mpi->flags&MP_IMGFLAG_YUV) ?
-			 (8<<mpi->chroma_x_shift)-1 : 15; // -- maybe FIXME
-	      w2=((w+align)&(~align));
-	      if(mpi->width!=w2){
-		  // we have to change width... check if we CAN co it:
-		  int flags=vf->query_format(vf,outfmt,w,h); // should not fail
-		  if(!(flags&3)) MSG_WARN("??? vf_get_image{vf->query_format(outfmt)} failed!\n");
-//		  printf("query -> 0x%X    \n",flags);
-		  if(flags&VFCAP_ACCEPT_STRIDE){
-		      mpi->width=w2;
-		      mpi->chroma_width=(w2 + (1<<mpi->chroma_x_shift) - 1)>>mpi->chroma_x_shift;
-		  }
-	      }
-	  }
-
-	  mpi_alloc_planes(mpi);
-//	  printf("clearing img!\n");
-//	  vf_mpi_clear(mpi,0,0,mpi->width,mpi->height);
-        }
-    }
-    else {
-	MSG_DBG2("vf_get_image forces xp_idx retrieving\n");
-	mpi->xp_idx=dae_curr_vdecoded(xp_core);
-    }
-    if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)
-	if(vf->start_slice) vf->start_slice(vf,mpi);
-    if(!(mpi->flags&MP_IMGFLAG_TYPE_DISPLAYED)){
+	    if(!(mpi->flags&MP_IMGFLAG_DIRECT)) {
+		// non-direct and not yet allocated image. allocate it!
+		// check if codec prefer aligned stride:
+		if(mp_imgflag&MP_IMGFLAG_PREFER_ALIGNED_STRIDE) {
+		    int align=( mpi->flags&MP_IMGFLAG_PLANAR &&
+				mpi->flags&MP_IMGFLAG_YUV) ?
+				(8<<mpi->chroma_x_shift)-1 : 15; // -- maybe FIXME
+		    w2=((w+align)&(~align));
+		    if(mpi->width!=w2) {
+			// we have to change width... check if we CAN co it:
+			int flags=vf->query_format(vf,outfmt,w,h); // should not fail
+			if(!(flags&3)) MSG_WARN("??? vf_get_new_image{vf->query_format(outfmt)} failed!\n");
+			if(flags&VFCAP_ACCEPT_STRIDE){
+			    mpi->width=w2;
+			    mpi->chroma_width=(w2 + (1<<mpi->chroma_x_shift) - 1)>>mpi->chroma_x_shift;
+			}
+		    }
+		}
+		if(is_static) {
+		    unsigned idx=0;
+		    if(mpi->flags&(MP_IMGTYPE_IP|MP_IMGTYPE_IPB)) {
+			idx=vf->imgctx.static_idx;
+			vf->imgctx.static_idx^=1;
+		    }
+		    if(!vf->imgctx.static_planes[idx]) {
+			mpi_alloc_planes(mpi);
+			vf->imgctx.static_planes[idx]=mpi->planes[0];
+		    }
+		    mpi->planes[0]=vf->imgctx.static_planes[idx];
+		    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
+		} else
+		    mpi_alloc_planes(mpi);
+	    } // if !DIRECT
+	} else {
+	    MSG_DBG2("vf_get_new_image forces xp_idx retrieving\n");
+	    mpi->xp_idx=dae_curr_vdecoded(xp_core);
+	    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
+	}
+	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK && vf->start_slice)
+	    vf->start_slice(vf,mpi);
+	if(!(mpi->flags&MP_IMGFLAG_TYPE_DISPLAYED)){
 	    MSG_V("*** [%s] %s%s mp_image_t, %dx%dx%dbpp %s %s, %d bytes\n",
-		  vf->info->name,
-		  (mpi->type==MP_IMGTYPE_EXPORT)?"Exporting":
-	          ((mpi->flags&MP_IMGFLAG_DIRECT)?"Direct Rendering":"Allocating"),
-	          (mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)?" (slices)":"",
-	          mpi->width,mpi->height,mpi->bpp,
-		  (mpi->flags&MP_IMGFLAG_YUV)?"YUV":((mpi->flags&MP_IMGFLAG_SWAPPED)?"BGR":"RGB"),
-		  (mpi->flags&MP_IMGFLAG_PLANAR)?"planar":"packed",
-	          mpi->bpp*mpi->width*mpi->height/8);
+		vf->info->name,
+		(mpi->type==MP_IMGTYPE_EXPORT)?"Exporting":
+		((mpi->flags&MP_IMGFLAG_DIRECT)?"Direct Rendering":"Allocating"),
+		(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)?" (slices)":"",
+		mpi->width,mpi->height,mpi->bpp,
+		(mpi->flags&MP_IMGFLAG_YUV)?"YUV":((mpi->flags&MP_IMGFLAG_SWAPPED)?"BGR":"RGB"),
+		(mpi->flags&MP_IMGFLAG_PLANAR)?"planar":"packed",
+		mpi->bpp*mpi->width*mpi->height/8);
 	    MSG_DBG2("(imgfmt: %x, planes: %x,%x,%x strides: %d,%d,%d, chroma: %dx%d, shift: h:%d,v:%d)\n",
 		mpi->imgfmt, mpi->planes[0], mpi->planes[1], mpi->planes[2],
 		mpi->stride[0], mpi->stride[1], mpi->stride[2],
 		mpi->chroma_width, mpi->chroma_height, mpi->chroma_x_shift, mpi->chroma_y_shift);
 	    mpi->flags|=MP_IMGFLAG_TYPE_DISPLAYED;
+	}
     }
-
-  }
-  MSG_DBG2("vf_get_image returns xp_idx=%i\n",mpi->xp_idx);
-  return mpi;
+    MSG_DBG2("vf_get_new_image returns xp_idx=%i\n",mpi->xp_idx);
+    return mpi;
 }
 
 //============================================================================
@@ -418,7 +411,10 @@ int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned wi
 }
 
 int __FASTCALL__ vf_next_put_slice(struct vf_instance_s* vf,mp_image_t *mpi){
-    return vf->next->put_slice(vf->next,mpi);
+    int rc;
+    rc = vf->next->put_slice(vf->next,mpi);
+    free_mp_image(mpi);
+    return rc;
 }
 
 //============================================================================
@@ -431,10 +427,8 @@ vf_instance_t* __FASTCALL__ append_filters(vf_instance_t* last){
 
 void __FASTCALL__ vf_uninit_filter(vf_instance_t* vf){
     if(vf->uninit) vf->uninit(vf);
-    free_mp_image(vf->imgctx.static_images[0]);
-    free_mp_image(vf->imgctx.static_images[1]);
-    free_mp_image(vf->imgctx.temp_images[0]);
-    free_mp_image(vf->imgctx.export_images[0]);
+    if(vf->imgctx.static_planes[0]) free(vf->imgctx.static_planes[0]);
+    if(vf->imgctx.static_planes[1]) free(vf->imgctx.static_planes[1]);
     mp_free(vf);
 }
 

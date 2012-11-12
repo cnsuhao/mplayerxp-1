@@ -159,41 +159,39 @@ void free_mp_image(mp_image_t* mpi){
 }
 
 mp_image_t* alloc_mpi(unsigned w, unsigned h, unsigned int fmt,unsigned xp_idx) {
-  mp_image_t* mpi = new_mp_image(w,h,xp_idx);
+    mp_image_t* mpi = new_mp_image(w,h,xp_idx);
 
-  mp_image_setfmt(mpi,fmt);
-  mpi_alloc_planes(mpi);
-  return mpi;
+    mp_image_setfmt(mpi,fmt);
+    mpi_alloc_planes(mpi);
+    return mpi;
 }
 
 void mpi_alloc_planes(mp_image_t *mpi) {
-  // IF09 - allocate space for 4. plane delta info - unused
-  if (mpi->imgfmt == IMGFMT_IF09)
-    {
-      mpi->planes[0]=mp_memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8+
-			      mpi->chroma_width*mpi->chroma_height);
-      /* delta table, just for fun ;) */
-      mpi->planes[3]=mpi->planes[0]+2*(mpi->chroma_width*mpi->chroma_height);
-    }
-  else
-    mpi->planes[0]=mp_memalign(64, mpi->bpp*mpi->width*(mpi->height+2)/8);
-  if(mpi->flags&MP_IMGFLAG_PLANAR){
-    // YV12/I420/YVU9/IF09. feel mp_free to add other planar formats here...
-    if(!mpi->stride[0]) mpi->stride[0]=mpi->width;
-    if(!mpi->stride[1]) mpi->stride[1]=mpi->stride[2]=mpi->chroma_width;
-    if(mpi->flags&MP_IMGFLAG_SWAPPED){
-      // I420/IYUV  (Y,U,V)
-      mpi->planes[1]=mpi->planes[0]+mpi->width*mpi->height;
-      mpi->planes[2]=mpi->planes[1]+mpi->chroma_width*mpi->chroma_height;
+    unsigned size,delta;
+    size=mpi->bpp*mpi->width*(mpi->height+2)/8;
+    delta=0;
+    // IF09 - allocate space for 4. plane delta info - unused
+    if (mpi->imgfmt == IMGFMT_IF09) delta=mpi->chroma_width*mpi->chroma_height;
+    mpi->planes[0]=mp_memalign(64,size+delta);
+    if(delta) /* delta table, just for fun ;) */
+	mpi->planes[3]=mpi->planes[0]+2*(mpi->chroma_width*mpi->chroma_height);
+    if(mpi->flags&MP_IMGFLAG_PLANAR){
+	// YV12/I420/YVU9/IF09. feel mp_free to add other planar formats here...
+	if(!mpi->stride[0]) mpi->stride[0]=mpi->width;
+	if(!mpi->stride[1]) mpi->stride[1]=mpi->stride[2]=mpi->chroma_width;
+	if(mpi->flags&MP_IMGFLAG_SWAPPED){
+	    // I420/IYUV  (Y,U,V)
+	    mpi->planes[1]=mpi->planes[0]+mpi->width*mpi->height;
+	    mpi->planes[2]=mpi->planes[1]+mpi->chroma_width*mpi->chroma_height;
+	} else {
+	    // YV12,YVU9,IF09  (Y,V,U)
+	    mpi->planes[2]=mpi->planes[0]+mpi->width*mpi->height;
+	    mpi->planes[1]=mpi->planes[2]+mpi->chroma_width*mpi->chroma_height;
+	}
     } else {
-      // YV12,YVU9,IF09  (Y,V,U)
-      mpi->planes[2]=mpi->planes[0]+mpi->width*mpi->height;
-      mpi->planes[1]=mpi->planes[2]+mpi->chroma_width*mpi->chroma_height;
+	if(!mpi->stride[0]) mpi->stride[0]=mpi->width*mpi->bpp/8;
     }
-  } else {
-    if(!mpi->stride[0]) mpi->stride[0]=mpi->width*mpi->bpp/8;
-  }
-  mpi->flags|=MP_IMGFLAG_ALLOCATED;
+    mpi->flags|=MP_IMGFLAG_ALLOCATED;
 }
 
 void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi) {
@@ -218,4 +216,5 @@ void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned h
     dmpi->h = h;
     dmpi->chroma_height = h >> mpi->chroma_y_shift;
     dmpi->xp_idx = mpi->xp_idx;
+    dmpi->flags&=~MP_IMGFLAG_ALLOCATED;
 }

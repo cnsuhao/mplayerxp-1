@@ -133,12 +133,11 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
     MSG_DBG2("vf_vo_get_image was called failed\n");
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf,
-        mp_image_t *mpi){
+static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
   if(!vo_config_count) return 0; // vo not configured?
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
-    MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
-    vo_draw_slice(vo_data,mpi);
+	MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
+	vo_draw_slice(vo_data,mpi);
   }
   return 1;
 }

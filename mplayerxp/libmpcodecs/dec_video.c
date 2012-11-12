@@ -178,7 +178,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
     if(sh->vf_flags&VF_FLAGS_SLICES)
     {
 	unsigned j,i,y;
-	mp_image_t ampi[num_slices];
+	mp_image_t *ampi[num_slices];
 	static int hello_printed=0;
 	if(!hello_printed) {
 		MSG_OK("[VC] using %u threads for video filters\n",smp_num_cpus);
@@ -186,21 +186,25 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	}
 	y=0;
 	for(i=0;i<num_slices;i++) {
-	    mpi_fake_slice(&ampi[i],mpi,y,h_step);
+	    ampi[i]=new_mp_image(mpi->w,y,h_step);
+	    mpi_fake_slice(ampi[i],mpi,y,h_step);
 	    y+=h_step;
 	}
+	free_mp_image(mpi);
 #ifdef _OPENMP
 	if(use_vf_threads && (num_slices>smp_num_cpus)) {
 	    for(j=0;j<num_slices;j+=smp_num_cpus) {
 #pragma omp parallel for shared(vf) private(i)
 		for(i=j;i<smp_num_cpus;i++) {
 		    MSG_DBG2("parallel: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
-		    vf->put_slice(vf,&ampi[i]);
+		    vf->put_slice(vf,ampi[i]);
+		    free_mp_image(ampi[i]);
 		}
 	    }
 	    for(;j<num_slices;j++) {
 		MSG_DBG2("par_tail: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
-		vf->put_slice(vf,&ampi[j]);
+		vf->put_slice(vf,ampi[j]);
+		free_mp_image(ampi[j]);
 	    }
 	}
 	else
@@ -209,12 +213,14 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	    /* execute slices instead of whole frame make faster multiple filters */
 	    for(i=0;i<num_slices;i++) {
 		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i -> [%i]\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h,ampi[i].xp_idx);
-		vf->put_slice(vf,&ampi[i]);
+		vf->put_slice(vf,ampi[i]);
+		free_mp_image(ampi[i]);
 	    }
 	}
     } else {
 	MSG_DBG2("Put whole frame[%ux%u]\n",mpi->width,mpi->height);
 	vf->put_slice(vf,mpi);
+	free_mp_image(mpi);
     }
   }
 }

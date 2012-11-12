@@ -183,7 +183,7 @@ static int __FASTCALL__ hq_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	int ch= mpi->h >> mpi->chroma_y_shift;
         int W = mpi->w, H = mpi->h;
 
-	mp_image_t *dmpi=vf_get_image(vf->next,mpi->imgfmt,
+	mp_image_t *dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 		MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
                 mpi->w,mpi->h,mpi->xp_idx);
 
@@ -228,7 +228,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	int ch= mpi->h >> mpi->chroma_y_shift;
         int W = mpi->w, H = mpi->h;
 
-	mp_image_t *dmpi=vf_get_image(vf->next,mpi->imgfmt,
+	mp_image_t *dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 		MP_IMGTYPE_IP, MP_IMGFLAG_ACCEPT_STRIDE,
                 mpi->w,mpi->h,mpi->xp_idx);
 

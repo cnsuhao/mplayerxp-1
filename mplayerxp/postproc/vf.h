@@ -24,9 +24,7 @@ typedef struct vf_info_s {
 } vf_info_t;
 
 typedef struct vf_image_context_s {
-    mp_image_t* static_images[2];
-    mp_image_t* temp_images[1];
-    mp_image_t* export_images[1];
+    mp_image_t* static_planes[2];
     int static_idx;
 } vf_image_context_t;
 
@@ -101,7 +99,7 @@ vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh,any_t* libinput);
 void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cache);
 
 void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h);
-mp_image_t* __FASTCALL__ vf_get_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx);
+mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx);
 int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned width,unsigned height);
 
 vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t*libinput);

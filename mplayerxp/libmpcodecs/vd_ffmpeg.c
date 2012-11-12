@@ -684,6 +684,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     }
     if(!(frame->flags&3) && priv->use_slices)
     {
+	if(mpi) free_mp_image(mpi);
 	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->src_w, sh->src_h);
 	priv->mpi = mpi;
 	priv->frame_number++;
@@ -708,6 +709,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     if(!got_picture) return NULL;	// skipped image
     if(!priv->ctx->draw_horiz_band)
     {
+	if(mpi) free_mp_image(mpi);
 	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w,sh->src_h);
 	if(!mpi){	// temporary!
 	    MSG_ERR("couldn't allocate image for ffmpeg codec\n");

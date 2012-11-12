@@ -32,7 +32,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     int y,w,h,finalize;
 
     // hope we'll get DR buffer:
-    dmpi=vf_get_image(vf->next,IMGFMT_YV12,
+    dmpi=vf_get_new_image(vf->next,IMGFMT_YV12,
 	MP_IMGTYPE_TEMP, 0/*MP_IMGFLAG_ACCEPT_STRIDE*/,
 	mpi->w, mpi->h,mpi->xp_idx);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
