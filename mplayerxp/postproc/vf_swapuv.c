@@ -35,7 +35,7 @@
 //===========================================================================//
 
 static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
-    mp_image_t *dmpi= vf_get_new_genome(vf->next, mpi->type, mpi->flags, mpi);
+    mp_image_t *dmpi= vf_get_new_genome(vf->next,mpi);
 
     mpi->planes[0]=dmpi->planes[0];
     mpi->planes[1]=dmpi->planes[2];
@@ -56,7 +56,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     if(mpi->flags&MP_IMGFLAG_DIRECT){
 	dmpi=(mp_image_t*)mpi->priv;
     } else {
-	dmpi=vf_get_new_genome(vf->next, MP_IMGTYPE_EXPORT, 0, mpi);
+	dmpi=vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_EXPORT, 0, mpi);
 	assert(mpi->flags&MP_IMGFLAG_PLANAR);
 	dmpi->planes[0]=mpi->planes[0];
 	dmpi->planes[1]=mpi->planes[2];

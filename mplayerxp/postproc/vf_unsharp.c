@@ -187,7 +187,7 @@ static void __FASTCALL__ get_image( struct vf_instance_s* vf, mp_image_t *mpi ) 
     if( mpi->imgfmt!=vf->priv->outfmt )
 	return; // colorspace differ
 
-    vf->dmpi = vf_get_new_genome( vf->next, mpi->type, mpi->flags, mpi);
+    vf->dmpi = vf_get_new_genome(vf->next,mpi);
     mpi->planes[0] = vf->dmpi->planes[0];
     mpi->stride[0] = vf->dmpi->stride[0];
     mpi->width = vf->dmpi->width;

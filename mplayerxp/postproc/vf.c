@@ -265,12 +265,16 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
     return mpi;
 }
 
-mp_image_t* __FASTCALL__ vf_get_new_genome(vf_instance_t* vf, int mp_imgtype, int mp_imgflag, const mp_image_t* mpi){
+mp_image_t* __FASTCALL__ vf_get_new_genome(vf_instance_t* vf, const mp_image_t* mpi){
+    return vf_get_new_image(vf,mpi->imgfmt,mpi->type,mpi->flags,mpi->w,mpi->h,mpi->xp_idx);
+}
+
+mp_image_t* __FASTCALL__ vf_get_new_exportable_genome(vf_instance_t* vf, int mp_imgtype, int mp_imgflag, const mp_image_t* mpi){
     return vf_get_new_image(vf,mpi->imgfmt,mp_imgtype,mp_imgflag,mpi->w,mpi->h,mpi->xp_idx);
 }
 
 mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_image_t* mpi){
-    return vf_get_new_genome(vf,MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,mpi);
+    return vf_get_new_exportable_genome(vf,MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,mpi);
 }
 
 //============================================================================

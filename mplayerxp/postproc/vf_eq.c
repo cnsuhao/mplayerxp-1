@@ -263,7 +263,7 @@ static int __FASTCALL__ put_slice (vf_instance_t *vf, mp_image_t *src)
       eq2->buf[0] = (unsigned char *) mp_realloc (eq2->buf[0], img_n);
   }
 
-  dst = vf_get_new_genome (vf->next, MP_IMGTYPE_EXPORT, 0,src);
+  dst = vf_get_new_exportable_genome (vf->next, MP_IMGTYPE_EXPORT, 0,src);
 
 #ifdef _OPENMP
 #pragma omp parallel for
