@@ -33,9 +33,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
-    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w,mpi->h,mpi->xp_idx);
+    dmpi=vf_get_new_temp_genome(vf->next,mpi);
     if(mpi->flags&MP_IMGFLAG_PLANAR){
 	    fwrite(mpi->planes[0],mpi->stride[0],mpi->h,vf->priv->out);
 	    fwrite(mpi->planes[1],mpi->stride[1],mpi->h>>mpi->chroma_y_shift,vf->priv->out);

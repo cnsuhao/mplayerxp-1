@@ -83,9 +83,7 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	int finalize;
 
 	mp_image_t *pmpi;
-	mp_image_t *dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-		MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-		mpi->w,mpi->h,mpi->xp_idx);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
 	if(!dmpi) return 0;
 	pmpi=dmpi;
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;

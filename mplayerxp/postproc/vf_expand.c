@@ -51,9 +51,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     if(vf->priv->new_frame)
     {
 	vf->priv->new_frame = 0;
-	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	    vf->priv->w,vf->priv->up_h,mpi->xp_idx);
+	dmpi=vf_get_new_temp_genome(vf->next,mpi);
 	vf_mpi_clear(dmpi,0,0,vf->priv->w,vf->priv->up_h);
 	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,

@@ -99,9 +99,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
     int finalize;
     // hope we'll get DR buffer:
-    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h, mpi->xp_idx);
+    dmpi=vf_get_new_temp_genome(vf->next,mpi);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
     if(mpi->flags&MP_IMGFLAG_PLANAR){
 	    vf->priv->method(dmpi->planes[0],mpi->planes[0],

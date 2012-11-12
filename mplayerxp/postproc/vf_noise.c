@@ -327,8 +327,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     if(mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
     if(mpi->imgfmt!=vf->priv->outfmt) return; // colorspace differ
     // ok, we can do pp in-place (or pp disabled):
-    vf->dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-        mpi->type, mpi->flags, mpi->w, mpi->h,mpi->xp_idx);
+    vf->dmpi=vf_get_new_genome(vf->next,mpi->type,mpi->flags,mpi);
     mpi->planes[0]=vf->dmpi->planes[0];
     mpi->stride[0]=vf->dmpi->stride[0];
     mpi->width=vf->dmpi->width;

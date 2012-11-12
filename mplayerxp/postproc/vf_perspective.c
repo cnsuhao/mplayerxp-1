@@ -258,9 +258,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 
-	mp_image_t *dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-		MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-		mpi->w,mpi->h,mpi->xp_idx);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
 
 	assert(mpi->flags&MP_IMGFLAG_PLANAR);
 	

@@ -128,23 +128,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
-    if(vf->priv->direction==180)
-    {
-	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h, mpi->xp_idx);
-    }
-    else
-    {
-	if(vf->priv->direction==90)
-	    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	    mpi->h, mpi->w, mpi->xp_idx);
-	else
-	    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	    mpi->h, mpi->w, mpi->xp_idx);
-    }
+    dmpi=vf_get_new_temp_genome(vf->next,mpi);
     if(mpi->flags&MP_IMGFLAG_PLANAR){
 	rotate(dmpi->planes[0],mpi->planes[0],
 	       dmpi->stride[0],mpi->stride[0],

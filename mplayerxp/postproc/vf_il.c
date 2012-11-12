@@ -95,9 +95,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	FilterParam *luma  = &vf->priv->lumaParam;
 	FilterParam *chroma= &vf->priv->chromaParam;
 
-	mp_image_t *dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-		MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-		mpi->w,mpi->h,mpi->xp_idx);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
 
 	if(mpi->flags&MP_IMGFLAG_PLANAR)
 		w= mpi->w;

@@ -45,9 +45,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s *vf, mp_image_t *mpi){
 	return vf_next_put_slice(vf,(mp_image_t*)mpi->priv);
     }
 
-    vf->dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->width, mpi->height,mpi->xp_idx);
+    vf->dmpi=vf_get_new_genome(vf->next,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,mpi);
 
     // set up mpi as a upside-down image of dmpi:
     vf->dmpi->planes[0]=mpi->planes[0]+

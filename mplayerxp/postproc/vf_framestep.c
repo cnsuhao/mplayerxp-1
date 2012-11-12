@@ -109,9 +109,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 
     if (skip == 0) {
 	/* Get image, export type (we don't modify tghe image) */
-	dmpi=vf_get_new_image(vf->next, mpi->imgfmt,
-                      MP_IMGTYPE_EXPORT, 0,
-	              mpi->w, mpi->h,mpi->xp_idx);
+	dmpi=vf_get_new_genome(vf->next, MP_IMGTYPE_EXPORT, 0, mpi);
         /* Copy only the pointer ( MP_IMGTYPE_EXPORT ! ) */
         dmpi->planes[0] = mpi->planes[0];
         dmpi->planes[1] = mpi->planes[1];
