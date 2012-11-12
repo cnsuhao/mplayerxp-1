@@ -281,7 +281,7 @@ PVECTOR_RENAME(_m_movntq)(any_t*__P, __m64 src)
 #undef _m_movntq
 #define _m_movntq PVECTOR_RENAME(_m_movntq)
 #endif
-static int32_t __FASTCALL__ PVECTOR_RENAME(FIR_i16)(int16_t *x,int16_t *w)
+static int32_t __FASTCALL__ PVECTOR_RENAME(FIR_i16)(const int16_t *x,const int16_t *w)
 {
 #ifdef OPTIMIZE_SSE
     __m64 mm[8];
@@ -359,7 +359,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t
     }
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(const int32_t* in, float* out, unsigned len, int final)
 {
 #ifdef HAVE_F32_PVECTOR
     __f32vec rev_imax = _f32vec_broadcast(1.0/INT_MAX);
@@ -392,7 +392,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(int32_t* in, float* out,
       ((float*)out)[i]=(1.0/INT_MAX)*((float)((const int32_t*)in)[i]);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(float2int)(any_t* in, any_t* out, int len, int bps,int final)
+static void __FASTCALL__ PVECTOR_RENAME(float2int)(const any_t* in, any_t* out, int len, int bps,int final)
 {
   float ftmp;
   register int i;
@@ -433,7 +433,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float2int)(any_t* in, any_t* out, int le
   }
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int2float)(any_t* in, any_t* out, int len, int bps, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int2float)(const any_t* in, any_t* out, int len, int bps, int final)
 {
   register int i;
   switch(bps){
@@ -463,7 +463,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int2float)(any_t* in, any_t* out, int le
   }
 }
 
-static float __FASTCALL__ PVECTOR_RENAME(FIR_f32)(float *x,float *w)
+static float __FASTCALL__ PVECTOR_RENAME(FIR_f32)(const float *x,const float *w)
 {
 #if defined ( OPTIMIZE_SSE )
 /* GCC supports nested functions */

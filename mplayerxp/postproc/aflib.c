@@ -693,7 +693,7 @@ static void __FASTCALL__ init_change_bps(const any_t* in, any_t* out, unsigned l
 }
 void (* __FASTCALL__ change_bps)(const any_t* in, any_t* out, unsigned len, unsigned inbps, unsigned outbps,int final)=init_change_bps;
 
-static void __FASTCALL__ init_float2int(any_t* in, any_t* out, int len, int bps,int final)
+static void __FASTCALL__ init_float2int(const any_t* in, any_t* out, int len, int bps,int final)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) float2int = float2int_AVX;
@@ -728,9 +728,9 @@ static void __FASTCALL__ init_float2int(any_t* in, any_t* out, int len, int bps,
 	float2int = float2int_c;
 	(*float2int)(in,out,len,bps,final);
 }
-void (* __FASTCALL__ float2int)(any_t* in, any_t* out, int len, int bps,int final)=init_float2int;
+void (* __FASTCALL__ float2int)(const any_t* in, any_t* out, int len, int bps,int final)=init_float2int;
 
-static void __FASTCALL__ init_int2float(any_t* in, any_t* out, int len, int bps,int final)
+static void __FASTCALL__ init_int2float(const any_t* in, any_t* out, int len, int bps,int final)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) int2float = int2float_AVX;
@@ -765,10 +765,10 @@ static void __FASTCALL__ init_int2float(any_t* in, any_t* out, int len, int bps,
 	int2float = int2float_c;
 	(*int2float)(in,out,len,bps,final);
 }
-void (* __FASTCALL__ int2float)(any_t* in, any_t* out, int len, int bps,int final)=init_int2float;
+void (* __FASTCALL__ int2float)(const any_t* in, any_t* out, int len, int bps,int final)=init_int2float;
 
 
-static int32_t __FASTCALL__ FIR_i16_init(int16_t *x,int16_t *w)
+static int32_t __FASTCALL__ FIR_i16_init(const int16_t *x,const int16_t *w)
 {
 #ifdef __SSE2__
 	if(gCpuCaps.hasSSE2) FIR_i16 = FIR_i16_SSE2;
@@ -783,9 +783,9 @@ static int32_t __FASTCALL__ FIR_i16_init(int16_t *x,int16_t *w)
 	FIR_i16 = FIR_i16_c;
 	return (*FIR_i16)(x,w);
 }
-int32_t (* __FASTCALL__ FIR_i16)(int16_t *x,int16_t *w)=FIR_i16_init;
+int32_t (* __FASTCALL__ FIR_i16)(const int16_t *x,const int16_t *w)=FIR_i16_init;
 
-static float __FASTCALL__ FIR_f32_init(float *x,float *w)
+static float __FASTCALL__ FIR_f32_init(const float *x,const float *w)
 {
 #ifdef __SSE3__
 	if(gCpuCaps.hasSSE3) FIR_f32 = FIR_f32_SSE3;
@@ -808,4 +808,4 @@ static float __FASTCALL__ FIR_f32_init(float *x,float *w)
 	FIR_f32 = FIR_f32_c;
 	return (*FIR_f32)(x,w);
 }
-float (* __FASTCALL__ FIR_f32)(float *x,float *w)=FIR_f32_init;
+float (* __FASTCALL__ FIR_f32)(const float *x,const float *w)=FIR_f32_init;
