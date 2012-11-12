@@ -44,9 +44,6 @@
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
 
-/* Common FIFO functions, and keyboard/event FIFO code */
-#include "fifo.h"
-
 #ifdef USE_SUB
 #include "libmpsub/subreader.h"
 #endif
@@ -71,7 +68,7 @@
 #include "dump.h"
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
-#include "mixer.h"
+#include "libao2/mixer.h"
 
 #include "xmpcore/xmp_core.h"
 #include "xmpcore/xmp_vplayer.h"

@@ -4,7 +4,7 @@ include ../mp_config.mak
 LIBNAME = libao2.a
 
 # TODO: moveout ao_sdl.c so it's only used when SDL is detected
-SRCS= audio_out.c afmt.c ao_null.c ao_wav.c
+SRCS= audio_out.c afmt.c ao_null.c ao_wav.c mixer.c
 ifeq ($(HAVE_SDL),yes)
 SRCS+=ao_sdl.c
 endif
