@@ -22,10 +22,9 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
-SRCS_COMMON = mp_msg.c
-SRCS_MPLAYER = mplayerxp.c $(SRCS_COMMON) mp-opt-reg.c dump.c
+SRCS = mplayerxp.c mp-opt-reg.c dump.c mp_msg.c
 
-OBJS_MPLAYER = $(SRCS_MPLAYER:.c=.o)
+OBJS_MPLAYER = $(SRCS:.c=.o)
 
 FF_LIBS = ../ffmpeg/libavcodec/libavcodec$(FF_SUFFIX).a \
 	  ../ffmpeg/libswscale/libswscale$(FF_SUFFIX).a \
@@ -50,16 +49,14 @@ ifeq ($(TARGET_ARCH_X86),yes)
 	  MP_LIBS += loader/libloader.a
 endif
 
-COMMON_LIBS = $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
+LIBS+= $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
 CFLAGS = $(OPTFLAGS) $(EXTRA_INC)
-
-ALL_PRG = $(PRG)
 
 .SUFFIXES: .c .o
 
 # .PHONY: all clean
 
-all:	$(ALL_PRG) $(SUBDIRS)
+all:	$(PRG) $(SUBDIRS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -69,15 +66,15 @@ subdirs: $(MP_LIBS)
 
 $(PRG):	$(OBJS_MPLAYER) $(MP_LIBS)
 	$(DO_MAKE_ALL)
-	$(CC) -o $(PRG) $(OBJS_MPLAYER) $(COMMON_LIBS) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(PRG) $(OBJS_MPLAYER) $(LDFLAGS) $(LIBS)
 #-Xlinker --export-dynamic -Xlinker --gc-sections -Xlinker --sort-common
-$(SRCS_MPLAYER): version.h
-#$(OBJS_MPLAYER): $(SRCS_MPLAYER)
+$(SRCS): version.h
+#$(OBJS_MPLAYER): $(SRCS)
 
 $(PRG_CFG): version.h codec-cfg.c codec-cfg.h
 	$(CC) $(CFLAGS) -g codec-cfg.c -o $(PRG_CFG) -DCODECS2HTML
 
-install: $(ALL_PRG)
+install: $(PRG)
 ifeq ($(INSTALL),)
 	@echo "*** 'install' utility was not found and you can't run automatic"
 	@echo "*** installation. Please download 'fileutils' from ftp://ftp.gnu.org and"
@@ -115,7 +112,7 @@ version.h:
 	$(MAKE) dep
 
 dep:
-	$(CC) -MM $(CFLAGS) $(SRCS_MPLAYER) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
 	$(DO_MAKE)
 
 #
