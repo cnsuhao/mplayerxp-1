@@ -13,6 +13,7 @@ typedef struct mp_conf_s {
     uint32_t	msg_filter;
     int		test_av;
     int		malloc_debug;
+    unsigned	max_trace;
 // XP-core
     int		xp;   /* XP-mode */
     int		gomp; /* currently it's experimental feature */

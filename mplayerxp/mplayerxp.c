@@ -233,6 +233,7 @@ static void mpxp_init_structs(void) {
     mp_conf.ao_channels=2;
     mp_conf.monitor_pixel_aspect=1;
     mp_conf.msg_filter=0xFFFFFFFF;
+    mp_conf.max_trace=10;
 }
 
 static void mpxp_uninit_structs(void) {
