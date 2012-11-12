@@ -426,58 +426,56 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
     int align=15;
 //printf("get_buffer %d %d %d\n", pic->reference, ctx->ip_count, ctx->b_count);
     if(avctx->pix_fmt == PIX_FMT_YUV410P)
-        align=63; //yes seriously, its really needed (16x16 chroma blocks in SVQ1 -> 64x64)
+	align=63; //yes seriously, its really needed (16x16 chroma blocks in SVQ1 -> 64x64)
 
-  if (pic->buffer_hints) {
-    MSG_DBG2( "Buffer hints: %u\n", pic->buffer_hints);
-    type = MP_IMGTYPE_TEMP;
-    if (pic->buffer_hints & FF_BUFFER_HINTS_READABLE)
-        flags |= MP_IMGFLAG_READABLE;
-    if (pic->buffer_hints & FF_BUFFER_HINTS_PRESERVE) {
-        type = MP_IMGTYPE_STATIC;
-        flags |= MP_IMGFLAG_PRESERVE;
-    }
-    if (pic->buffer_hints & FF_BUFFER_HINTS_REUSABLE) {
-        type = MP_IMGTYPE_STATIC;
-        flags |= MP_IMGFLAG_PRESERVE;
-    }
-    flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv->use_slices) ?
-            MP_IMGFLAG_DRAW_CALLBACK:0;
-    MSG_DBG2( type == MP_IMGTYPE_STATIC ? "using STATIC\n" : "using TEMP\n");
-  } else {
-    if(!pic->reference){
-        priv->b_count++;
-        flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv->use_slices) ?
-                MP_IMGFLAG_DRAW_CALLBACK:0;
-    }else{
-        priv->ip_count++;
-        flags|= MP_IMGFLAG_PRESERVE|MP_IMGFLAG_READABLE
-                | (priv->use_slices ? MP_IMGFLAG_DRAW_CALLBACK : 0);
-    }
-  }
-
-  if (!pic->buffer_hints) {
-    if(priv->b_count>1 || priv->ip_count>2){
-	MSG_WARN("DR1 failure\n");
-	priv->use_dr1=0; //FIXME
-	avctx->get_buffer= avcodec_default_get_buffer;
-	return avctx->get_buffer(avctx, pic);
+    if (pic->buffer_hints) {
+	MSG_DBG2( "Buffer hints: %u\n", pic->buffer_hints);
+	type = MP_IMGTYPE_TEMP;
+	if (pic->buffer_hints & FF_BUFFER_HINTS_READABLE)
+	    flags |= MP_IMGFLAG_READABLE;
+	if (pic->buffer_hints & FF_BUFFER_HINTS_PRESERVE) {
+	    type = MP_IMGTYPE_STATIC;
+	    flags |= MP_IMGFLAG_PRESERVE;
+	}
+	if (pic->buffer_hints & FF_BUFFER_HINTS_REUSABLE) {
+	    type = MP_IMGTYPE_STATIC;
+	    flags |= MP_IMGFLAG_PRESERVE;
+	}
+	flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv->use_slices) ?
+		MP_IMGFLAG_DRAW_CALLBACK:0;
+	MSG_DBG2( type == MP_IMGTYPE_STATIC ? "using STATIC\n" : "using TEMP\n");
+    } else {
+	if(!pic->reference){
+	    priv->b_count++;
+	    flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv->use_slices) ?
+		    MP_IMGFLAG_DRAW_CALLBACK:0;
+	}else{
+	    priv->ip_count++;
+	    flags|= MP_IMGFLAG_PRESERVE|MP_IMGFLAG_READABLE
+		    | (priv->use_slices ? MP_IMGFLAG_DRAW_CALLBACK : 0);
+	}
     }
 
-    if(avctx->has_b_frames){
-        type= MP_IMGTYPE_IPB;
-    }else{
-        type= MP_IMGTYPE_IP;
+    if (!pic->buffer_hints) {
+	if(priv->b_count>1 || priv->ip_count>2){
+	    MSG_WARN("DR1 failure\n");
+	    priv->use_dr1=0; //FIXME
+	    avctx->get_buffer= avcodec_default_get_buffer;
+	    return avctx->get_buffer(avctx, pic);
+	}
+	if(avctx->has_b_frames){
+	    type= MP_IMGTYPE_IPB;
+	}else{
+	    type= MP_IMGTYPE_IP;
+	}
+	MSG_DBG2( type== MP_IMGTYPE_IPB ? "using IPB\n" : "using IP\n");
     }
-    MSG_DBG2( type== MP_IMGTYPE_IPB ? "using IPB\n" : "using IP\n");
-  }
 
     MSG_V("ff width=%i height=%i\n",width,height);
     mpi= mpcodecs_get_image(sh,type, flags, (width+align)&(~align), (height+align)&(~align));
     if(mpi->flags & MP_IMGFLAG_DIRECT) mpi->flags |= MP_IMGFLAG_RENDERED;
-	// Palette support: libavcodec copies palette to *data[1]
-	if (mpi->bpp == 8)
-		mpi->planes[1] = mp_malloc(AVPALETTE_SIZE);
+    // Palette support: libavcodec copies palette to *data[1]
+    if (mpi->bpp == 8) mpi->planes[1] = mp_malloc(AVPALETTE_SIZE);
 
     pic->data[0]= mpi->planes[0];
     pic->data[1]= mpi->planes[1];
@@ -492,18 +490,16 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
 
     pic->opaque = mpi;
 
-    if(pic->reference){
-//        pic->age= priv->ip_age[0];
-
-        priv->ip_age[0]= priv->ip_age[1]+1;
-        priv->ip_age[1]= 1;
-        priv->b_age++;
-    }else{
-  //      pic->age= priv->b_age;
-
-        priv->ip_age[0]++;
+    if(pic->reference) {
+//	 pic->age= priv->ip_age[0];
+	priv->ip_age[0]= priv->ip_age[1]+1;
+	priv->ip_age[1]= 1;
+	priv->b_age++;
+    } else {
+//	 pic->age= priv->b_age;
+	priv->ip_age[0]++;
 	priv->ip_age[1]++;
-        priv->b_age=1;
+	priv->b_age=1;
     }
     pic->type= FF_BUFFER_TYPE_USER;
     return 0;
@@ -522,7 +518,10 @@ static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
 	    priv->b_count--;
     }
 
-    if(mpi) if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK) free_mp_image(mpi);
+    if(mpi) {
+	if(mpi->bpp == 8 && mpi->planes[1]) mp_free(mpi->planes[1]);
+	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK) free_mp_image(mpi);
+    }
 
     if(pic->type!=FF_BUFFER_TYPE_USER){
 	avcodec_default_release_buffer(avctx, pic);
