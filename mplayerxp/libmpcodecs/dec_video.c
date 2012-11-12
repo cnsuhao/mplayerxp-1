@@ -190,7 +190,6 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	    mpi_fake_slice(ampi[i],mpi,y,h_step);
 	    y+=h_step;
 	}
-	free_mp_image(mpi);
 #ifdef _OPENMP
 	if(use_vf_threads && (num_slices>smp_num_cpus)) {
 	    for(j=0;j<num_slices;j+=smp_num_cpus) {
@@ -220,8 +219,8 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
     } else {
 	MSG_DBG2("Put whole frame[%ux%u]\n",mpi->width,mpi->height);
 	vf->put_slice(vf,mpi);
-	free_mp_image(mpi);
     }
+    free_mp_image(mpi);
   }
 }
 
