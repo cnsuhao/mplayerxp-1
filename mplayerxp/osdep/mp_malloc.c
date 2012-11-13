@@ -398,6 +398,7 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
 /* ================== HEAD FUNCTIONS  ======================= */
 void	mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
 {
+    srand(time(0));
     if(!priv) priv=malloc(sizeof(priv_t));
     memset(priv,0,sizeof(priv_t));
     priv->argv0=argv0;
