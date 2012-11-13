@@ -13,6 +13,7 @@
 #include "vd_internal.h"
 #include "vd_msg.h"
 #include "osdep/mplib.h"
+#include "osdep/bswap.h"
 
 static const vd_info_t info = {
    "Theora/VP3 video decoder",
@@ -27,7 +28,20 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(theora)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t probes[] = {
+
+    { "theora", "libtheora", FOURCC_TAG('T','H','E','O'), VCodecStatus_Problems, {FOURCC_TAG('Y','V','1','2'),FOURCC_TAG('4','2','2','P'),FOURCC_TAG('4','4','4','P')}, {0, 0} },
+    { "theora", "libtheora", FOURCC_TAG('T','H','R','A'), VCodecStatus_Problems, {FOURCC_TAG('Y','V','1','2'),FOURCC_TAG('4','2','2','P'),FOURCC_TAG('4','4','4','P')}, {0, 0} },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 #define THEORA_NUM_HEADER_PACKETS 3
 

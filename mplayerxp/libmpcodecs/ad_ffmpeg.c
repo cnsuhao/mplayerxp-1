@@ -21,13 +21,12 @@
 
 typedef struct priv_s {
     AVCodecContext *lavc_ctx;
+    audio_probe_t*  probe;
 }priv_t;
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
-
-struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
     unsigned i;
-    struct codecs_st* acodec = NULL;
+    audio_probe_t* acodec = NULL;
     const char *what="AVCodecID";
     priv_t* priv=sh->context;
     enum AVCodecID id = ff_codec_get_id(ff_codec_wav_tags,sh->wtag);
@@ -36,7 +35,7 @@ struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
 	MSG_ERR("Cannot find %s for for '0x%X' tag! Try force -ac option\n"
 		,what
 		,sh->wtag);
-	return 0;
+	return NULL;
     }
     if(!priv){
 	priv=mp_mallocz(sizeof(priv_t));
@@ -47,14 +46,29 @@ struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
     AVCodec *codec=avcodec_find_decoder(id);
     if(!codec) { what="AVCodec"; goto prn_err; }
 
-    acodec=mp_mallocz(sizeof(struct codecs_st));
-    strcpy(acodec->dll_name,avcodec_get_name(id));
-    strcpy(acodec->driver_name,"ffmpeg");
-    strcpy(acodec->codec_name,acodec->dll_name);
+    acodec=mp_mallocz(sizeof(audio_probe_t));
+    acodec->codec_dll=mp_strdup(avcodec_get_name(id));
+    acodec->driver="ffmpeg";
+    acodec->wtag=wtag;
     if(codec->sample_fmts)
-    for(i=0;i<CODECS_MAX_OUTFMT;i++) {
+    for(i=0;i<Audio_MaxOutSample;i++) {
 	if(codec->sample_fmts[i]==-1) break;
-	acodec->outfmt[i]=ff_codec_get_tag(ff_codec_wav_tags,codec->sample_fmts[i]);
+	acodec->sample_fmt[i]=ff_codec_get_tag(ff_codec_wav_tags,codec->sample_fmts[i]);
+    }
+    priv->probe=acodec;
+    return acodec;
+}
+
+struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
+    unsigned i;
+    audio_probe_t* aprobe=probe(sh,sh->wtag);
+    struct codecs_st* acodec = NULL;
+    if(aprobe) {
+	acodec=mp_mallocz(sizeof(struct codecs_st));
+	strcpy(acodec->dll_name,aprobe->codec_dll);
+	strcpy(acodec->driver_name,aprobe->driver);
+	strcpy(acodec->codec_name,acodec->dll_name);
+	memcpy(acodec->outfmt,aprobe->sample_fmt,sizeof(aprobe->sample_fmt));
     }
     return acodec;
 }

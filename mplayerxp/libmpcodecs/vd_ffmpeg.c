@@ -98,6 +98,7 @@ typedef struct priv_s {
     int b_count;
     int vo_inited;
     int hello_printed;
+    video_probe_t* probe;
 }priv_t;
 static pp_context* ppContext=NULL;
 static void draw_slice(struct AVCodecContext *s, const AVFrame *src, int offset[4], int y, int type, int height);
@@ -186,33 +187,47 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
-
-static MPXP_Rc find_vdecoder(sh_video_t* sh) {
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fcc) {
     unsigned i;
     unsigned char flag = CODECS_FLAG_NOFLIP;
-    enum AVCodecID id = ff_codec_get_id(ff_codec_bmp_tags,sh->fourcc);
+    video_probe_t* vprobe = NULL;
+    priv_t* priv=sh->context;
+    enum AVCodecID id = ff_codec_get_id(ff_codec_bmp_tags,fcc);
     if (id <= 0) {
 	const char *fourcc;
 	prn_err:
-	fourcc=&sh->fourcc;
+	fourcc=&fcc;
 	MSG_ERR("Cannot find AVCodecID for for '%c%c%c%c' fourcc! Try force -vc option\n"
 		,fourcc[0],fourcc[1],fourcc[2],fourcc[3]);
-	return MPXP_False;
+	return NULL;
     }
     AVCodec *codec=avcodec_find_decoder(id);
     if(!codec) goto prn_err;
-    sh->codec=mp_mallocz(sizeof(struct codecs_st));
-    strcpy(sh->codec->dll_name,"ffmpeg");
-    strcpy(sh->codec->driver_name,"ffmpeg");
-    strcpy(sh->codec->codec_name,avcodec_get_name(id));
+    vprobe=mp_mallocz(sizeof(video_probe_t));
+    vprobe->driver="ffmpeg";
+    vprobe->codec_dll=mp_strdup(avcodec_get_name(id));
     if(codec->pix_fmts)
     for(i=0;i<CODECS_MAX_OUTFMT;i++) {
 	if(codec->pix_fmts[i]==-1) break;
-	sh->codec->outfmt[i]=avcodec_pix_fmt_to_codec_tag(codec->pix_fmts[i]);
-	sh->codec->outflags[i]=flag;
+	vprobe->pix_fmt[i]=avcodec_pix_fmt_to_codec_tag(codec->pix_fmts[i]);
+	vprobe->flags[i]=flag;
     }
-    return MPXP_Ok;
+    priv->probe=vprobe;
+    return vprobe;
+}
+
+static MPXP_Rc find_vdecoder(sh_video_t* sh) {
+    unsigned i;
+    const video_probe_t* vprobe=probe(sh,sh->fourcc);
+    if(vprobe) {
+	sh->codec=mp_mallocz(sizeof(struct codecs_st));
+	strcpy(sh->codec->dll_name,vprobe->codec_dll);
+	strcpy(sh->codec->driver_name,vprobe->driver);
+	strcpy(sh->codec->codec_name,sh->codec->dll_name);
+	memcpy(sh->codec->outfmt,vprobe->pix_fmt,sizeof(vprobe->pix_fmt));
+	return MPXP_Ok;
+    }
+    return MPXP_False;
 }
 
 extern unsigned xp_num_cpu;

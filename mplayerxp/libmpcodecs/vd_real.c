@@ -10,6 +10,7 @@
 #include "vd_internal.h"
 #include "vd_msg.h"
 #include "osdep/mplib.h"
+#include "osdep/bswap.h"
 
 static const vd_info_t info = {
     "RealPlayer video codecs",
@@ -24,7 +25,20 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(real)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t probes[] = {
+    { "realvideo", "drv2.so.6.0", FOURCC_TAG('R','V','2','0'), VCodecStatus_Problems, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "realvideo", "drvc.so",     FOURCC_TAG('R','V','3','0'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "realvideo", "drvc.so",     FOURCC_TAG('R','V','4','0'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 /* copypaste from demux_real.c - it should match to get it working! */
 typedef struct dp_hdr_s {

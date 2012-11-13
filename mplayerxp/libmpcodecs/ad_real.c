@@ -12,6 +12,7 @@
 #include "codecs_ld.h"
 #include "ad_msg.h"
 #include "osdep/mplib.h"
+#include "osdep/bswap.h"
 #include "libao2/afmt.h"
 static const ad_info_t info = {
     "RealAudio decoder",
@@ -26,7 +27,22 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(real)
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+static const audio_probe_t probes[] = {
+    { "realaudio", "14_4.so.6.0", FOURCC_TAG('1','4','_','4'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "28_8.so.6.0", FOURCC_TAG('2','8','_','8'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "cook.so.6.0", FOURCC_TAG('C','O','O','K'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "sipr.so.6.0", FOURCC_TAG('S','I','P','R'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "atrc.so.6.0", FOURCC_TAG('A','T','R','C'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
+};
+
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    return &probes[i];
+    return NULL;
+}
 
 static any_t*handle=NULL;
 

@@ -12,7 +12,7 @@
 
 #include "ad_msg.h"
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag);
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag);
 static MPXP_Rc __FASTCALL__ init(sh_audio_t *sh);
 static MPXP_Rc __FASTCALL__  preinit(sh_audio_t *sh);
 static void __FASTCALL__  uninit(sh_audio_t *sh);

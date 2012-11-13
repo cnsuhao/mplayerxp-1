@@ -21,6 +21,7 @@
 #include "codecs_ld.h"
 #include "libvo/video_out.h"
 #include "osdep/mplib.h"
+#include "osdep/bswap.h"
 
 static const vd_info_t info = {
     "DivX4Linux lib (divx4/5 mode)",
@@ -35,7 +36,24 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(divx4)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t probes[] = {
+    { "divx", "libdivx.so",FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','3'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','4'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','5'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','6'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 #define DIVX4LINUX_BETA 0
 #define DIVX4LINUX	1

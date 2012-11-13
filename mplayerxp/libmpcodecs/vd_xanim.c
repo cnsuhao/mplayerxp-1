@@ -39,7 +39,27 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(xanim)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t probes[] = {
+    { "xanim", "vid_3ivX.xa", FOURCC_TAG('3','I','V','1'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_cvid.xa", FOURCC_TAG('C','V','I','D'), VCodecStatus_Problems, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_h261.xa", FOURCC_TAG('H','2','6','1'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_h263.xa", FOURCC_TAG('H','2','6','3'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_h263.xa", FOURCC_TAG('V','I','V','1'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_h263.xa", FOURCC_TAG('V','I','V','O'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_iv32.xa", FOURCC_TAG('I','V','3','1'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_iv32.xa", FOURCC_TAG('I','V','3','2'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_iv41.xa", FOURCC_TAG('I','V','4','1'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "xanim", "vid_iv50.xa", FOURCC_TAG('I','V','5','0'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 /*************************** START OF XA CODEC BINARY INTERFACE ****************/
 typedef struct {

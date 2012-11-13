@@ -11,6 +11,7 @@
 #include "help_mp.h"
 #include "codecs_ld.h"
 #include "osdep/cpudetect.h"
+#include "osdep/bswap.h"
 
 #include "libao2/afmt.h"
 
@@ -159,7 +160,23 @@ extern ad_functions_t mpcodecs_ad_a52;
 static a52_state_t * (*a52_init_ptr) (uint32_t mm_accel);
 #define a52_init(a) (*a52_init_ptr)(a)
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+static const audio_probe_t probes[] = {
+    { "hwac3", "hwac3", 0x2000, ACodecStatus_Working, {AFMT_AC3} },
+    { "hwac3", "hwac3", 0x2001, ACodecStatus_Working, {AFMT_AC3} },
+    { "hwac3", "hwac3", FOURCC_TAG('A','C','_','3'), ACodecStatus_Working, {AFMT_AC3} },
+    { "hwac3", "hwac3", FOURCC_TAG('D','N','E','T'), ACodecStatus_Working, {AFMT_AC3} },
+    { "hwac3", "hwac3", FOURCC_TAG('S','A','C','3'), ACodecStatus_Working, {AFMT_AC3} },
+    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
+};
+
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    return &probes[i];
+    return NULL;
+}
+
 
 MPXP_Rc preinit(sh_audio_t *sh)
 {

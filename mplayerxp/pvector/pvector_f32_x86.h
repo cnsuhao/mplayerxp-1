@@ -38,7 +38,7 @@ PVECTOR_RENAME(f32vec_size)()
 #elif defined( OPTIMIZE_SSE )
     return 16;
 #else
-    retturn 8;
+    return 8;
 #endif
 }
 #undef _f32vec_size

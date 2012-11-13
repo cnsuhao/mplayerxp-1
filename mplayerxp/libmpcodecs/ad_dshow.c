@@ -27,7 +27,7 @@ typedef struct dshow_priv_s {
     DS_AudioDecoder* ds_adec;
 }priv_t;
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
 
 MPXP_Rc init(sh_audio_t *sh)
 {

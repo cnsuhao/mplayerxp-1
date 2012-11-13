@@ -4,6 +4,7 @@
 #include "libnuppelvideo/nuppelvideo.h"
 #include "vd_internal.h"
 #include "codecs_ld.h"
+#include "osdep/bswap.h"
 
 static const vd_info_t info = {
     "NuppelVideo decoder",
@@ -18,7 +19,19 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(nuv)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t probes[] = {
+    { "nuv", "nuv", FOURCC_TAG('N','U','V','1'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "nuv", "nuv", FOURCC_TAG('R','J','P','G'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 // to set/get/query special features/parameters
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){

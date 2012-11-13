@@ -8,6 +8,7 @@
 #include "mp_config.h"
 
 #include "libvo/img_format.h"
+#include "osdep/bswap.h"
 
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
@@ -31,7 +32,32 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(libdv)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t probes[] = {
+    { "libdv", "libdv", FOURCC_TAG('A','V','d','1'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('A','V','d','v'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','C',' '), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','C','P'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','5','0'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','5','N'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','5','P'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','H','3'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','H','5'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','H','6'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','H','Q'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','H','P'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','P','P'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','S','C'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "libdv", "libdv", FOURCC_TAG('D','V','S','D'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 // to set/get/query special features/parameters
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){

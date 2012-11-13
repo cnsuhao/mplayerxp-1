@@ -9,6 +9,7 @@
 #include "osdep/mm_accel.h"
 #include "osdep/fastmemcpy.h"
 #include "osdep/mplib.h"
+#include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
@@ -27,7 +28,25 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(mp3)
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+static const audio_probe_t probes[] = {
+    { "libmp3", "libmpg123", 0x50, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "libmp3", "libmpg123", 0x55, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "libmp3", "libmpg123", 0x55005354, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "libmp3", "libmpg123", 0x5000736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "libmp3", "libmpg123", 0x5500736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "libmp3", "libmpg123", FOURCC_TAG('.','M','P','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "libmp3", "libmpg123", FOURCC_TAG('L','A','M','E'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "libmp3", "libmpg123", FOURCC_TAG('M','P','3',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
+};
+
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    return &probes[i];
+    return NULL;
+}
 
 /** Opaque structure for the libmpg123 decoder handle. */
 struct mpg123_handle_struct;

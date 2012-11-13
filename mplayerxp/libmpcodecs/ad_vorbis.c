@@ -8,6 +8,7 @@
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "osdep/mplib.h"
+#include "osdep/bswap.h"
 
 extern ao_data_t* ao_data;
 
@@ -24,7 +25,19 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(vorbis)
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+static const audio_probe_t probes[] = {
+    { "vorbis", "vorbis", 0x566F, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
+    { "vorbis", "vorbis", FOURCC_TAG('V','R','B','S'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
+    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
+};
+
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    return &probes[i];
+    return NULL;
+}
 
 #include <math.h>
 #include <vorbis/codec.h>

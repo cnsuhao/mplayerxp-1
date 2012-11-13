@@ -31,8 +31,7 @@ typedef struct priv_s {
   HACMSTREAM srcstream;  // handle
 }priv_t;
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
-
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
 
 static int init_acm_audio_codec(sh_audio_t *sh_audio){
     HRESULT ret;

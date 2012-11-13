@@ -2,8 +2,8 @@
 #include <stdlib.h>
 
 #include "mp_config.h"
-
 #include "vd_internal.h"
+#include "osdep/bswap.h"
 
 static const vd_info_t info = {
     "RAW Uncompressed Video",
@@ -18,7 +18,64 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(raw)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t probes[] = {
+    { "raw", "raw", 0x0,                        VCodecStatus_Working, {FOURCC_TAG('R','G','B',32),FOURCC_TAG('R','G','B',24),FOURCC_TAG('R','G','B',16),FOURCC_TAG('Y','U','Y','2'),FOURCC_TAG('Y','V','1','2'),FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('R','A','W',' '),VCodecStatus_Working, {FOURCC_TAG('R','G','B',32),FOURCC_TAG('R','G','B',24),FOURCC_TAG('R','G','B',16),FOURCC_TAG('Y','U','Y','2'),FOURCC_TAG('Y','V','1','2'),FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('R','G','B',32), VCodecStatus_Working, {FOURCC_TAG('R','G','B',32)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('R','G','B',24), VCodecStatus_Working, {FOURCC_TAG('R','G','B',24)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('R','G','B',16), VCodecStatus_Working, {FOURCC_TAG('R','G','B',16)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('R','G','B',15), VCodecStatus_Working, {FOURCC_TAG('R','G','B',15)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('R','G','B',8),  VCodecStatus_Working, {FOURCC_TAG('R','G','B',8)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('R','G','B',1),  VCodecStatus_Working, {FOURCC_TAG('R','G','B',1)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('B','G','R',32), VCodecStatus_Working, {FOURCC_TAG('B','G','R',32)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('B','G','R',24), VCodecStatus_Working, {FOURCC_TAG('B','G','R',24)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('B','G','R',16), VCodecStatus_Working, {FOURCC_TAG('B','G','R',16)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('B','G','R',15), VCodecStatus_Working, {FOURCC_TAG('B','G','R',15)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('B','G','R',8),  VCodecStatus_Working, {FOURCC_TAG('B','G','R',8)}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('B','G','R',1),  VCodecStatus_Working, {FOURCC_TAG('B','G','R',1)}, {0, 0} },
+
+    { "raw", "raw", FOURCC_TAG('V','4','2','2'),VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('V','Y','U','Y'),VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','U','N','V'),VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','U','V','2'),VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','U','V','S'),VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','U','Y','2'),VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2')}, {0, 0} },
+
+    { "raw", "raw", FOURCC_TAG('2','V','U','Y'),VCodecStatus_Working, {FOURCC_TAG('U','Y','V','Y')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('U','Y','V','1'),VCodecStatus_Working, {FOURCC_TAG('U','Y','V','Y')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('U','Y','V','Y'),VCodecStatus_Working, {FOURCC_TAG('U','Y','V','Y')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('U','Y','N','V'),VCodecStatus_Working, {FOURCC_TAG('U','Y','V','Y')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('U','Y','N','Y'),VCodecStatus_Working, {FOURCC_TAG('U','Y','V','Y')}, {0, 0} },
+
+    { "raw", "raw", FOURCC_TAG('4','4','4','P'),VCodecStatus_Working, {FOURCC_TAG('4','4','4','P')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('P','4','4','4'),VCodecStatus_Working, {FOURCC_TAG('4','4','4','P')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','V','2','4'),VCodecStatus_Working, {FOURCC_TAG('4','4','4','P')}, {0, 0} },
+
+    { "raw", "raw", FOURCC_TAG('4','2','2','P'),VCodecStatus_Working, {FOURCC_TAG('4','2','2','P')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('P','4','2','2'),VCodecStatus_Working, {FOURCC_TAG('4','2','2','P')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','4','2','B'),VCodecStatus_Working, {FOURCC_TAG('4','2','2','P')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','V','1','6'),VCodecStatus_Working, {FOURCC_TAG('4','2','2','P')}, {0, 0} },
+
+    { "raw", "raw", FOURCC_TAG('Y','V','1','2'),VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('I','4','2','0'),VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('I','Y','U','V'),VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+
+    { "raw", "raw", FOURCC_TAG('N','V','2','1'),VCodecStatus_Working, {FOURCC_TAG('N','V','2','1')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('N','V','1','2'),VCodecStatus_Working, {FOURCC_TAG('N','V','1','2')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('H','M','1','2'),VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2')}, {0, 0} },
+
+    { "raw", "raw", FOURCC_TAG('Y','V','U','9'),VCodecStatus_Working, {FOURCC_TAG('Y','V','U','9')}, {0, 0} },
+    { "raw", "raw", FOURCC_TAG('Y','8','0','0'),VCodecStatus_Working, {FOURCC_TAG('Y','8','0','0')}, {0, 0} },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 // to set/get/query special features/parameters
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){

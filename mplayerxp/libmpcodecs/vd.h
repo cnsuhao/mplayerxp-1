@@ -24,8 +24,8 @@ typedef enum {
 
 typedef struct video_probe_s {
     const char*		driver;
-    uint32_t		fourcc;
     const char*		codec_dll;
+    uint32_t		fourcc;
     vcodec_status_e	status;
     uint32_t		pix_fmt[Video_MaxOutFmt];
     video_flags_e	flags[Video_MaxOutFmt];
@@ -44,7 +44,7 @@ typedef struct vd_functions_s
 {
     const vd_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
-    video_probe_t*	(*__FASTCALL__ probe)(uint32_t fourcc);
+    const video_probe_t*(*__FASTCALL__ probe)(sh_video_t *sh,uint32_t fourcc);
     MPXP_Rc		(*__FASTCALL__ init)(sh_video_t *sh,any_t* libinput);
     void		(*__FASTCALL__ uninit)(sh_video_t *sh);
     MPXP_Rc		(* control)(sh_video_t *sh,int cmd,any_t* arg, ...);

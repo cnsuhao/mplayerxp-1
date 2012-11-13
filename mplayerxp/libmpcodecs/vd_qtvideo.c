@@ -28,7 +28,7 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(qtvideo)
 
-static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) { return NULL; }
 
 #include "osdep/bswap.h"
 

@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "ad_internal.h"
 #include "libao2/afmt.h"
+#include "osdep/bswap.h"
 
 static const ad_info_t info = {
     "Uncompressed PCM audio decoder",
@@ -17,7 +18,33 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(pcm)
 
-static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+static const audio_probe_t probes[] = {
+    { "pcm", "pcm", 0x0,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", 0x1,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", 0x3,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", 0xFFFE,ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('F','L','3','2'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('2','3','L','F'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('N','O','N','E'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('I','N','2','4'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('4','2','N','I'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('I','N','3','2'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('2','3','N','I'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('L','P','C','M'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('R','A','W',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('T','W','O','S'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "pcm", "pcm", FOURCC_TAG('S','O','W','T'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
+};
+
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    return &probes[i];
+    return NULL;
+}
+
 
 MPXP_Rc init(sh_audio_t *sh_audio)
 {
