@@ -48,13 +48,12 @@ LIBAD_EXTERN(dca)
 static const audio_probe_t probes[] = {
     { "libdca", "libdca", 0x86,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
     { "libdca", "libdca", 0x2001, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
-    { "libdca", "libdca", FOURCC_TAG('d','t','s',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
     { "libdca", "libdca", FOURCC_TAG('D','T','S',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
-    { "libdca", "libdca", FOURCC_TAG('d','t','s','b'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
-    { "libdca", "libdca", FOURCC_TAG('d','t','s','c'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
-    { "libdca", "libdca", FOURCC_TAG('d','t','s','e'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
-    { "libdca", "libdca", FOURCC_TAG('d','t','s','h'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
-    { "libdca", "libdca", FOURCC_TAG('d','t','s','l'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
+    { "libdca", "libdca", FOURCC_TAG('D','T','S','B'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
+    { "libdca", "libdca", FOURCC_TAG('D','T','S','C'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
+    { "libdca", "libdca", FOURCC_TAG('D','T','S','E'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
+    { "libdca", "libdca", FOURCC_TAG('D','T','S','H'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
+    { "libdca", "libdca", FOURCC_TAG('D','T','S','L'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 

@@ -49,10 +49,9 @@ LIBAD_EXTERN(a52)
 static const audio_probe_t probes[] = {
     { "liba52", "liba52", 0x2000, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
     { "liba52", "liba52", 0x20736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "liba52", "liba52", FOURCC_TAG('a','c','-','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "liba52", "liba52", FOURCC_TAG('A','C','-','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "liba52", "liba52", FOURCC_TAG('d','n','e','t'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "liba52", "liba52", FOURCC_TAG('s','a','c','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "liba52", "liba52", FOURCC_TAG('A','C','_','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "liba52", "liba52", FOURCC_TAG('D','N','E','T'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "liba52", "liba52", FOURCC_TAG('S','A','C','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
