@@ -1,6 +1,6 @@
 /********************************************************
 
-         DirectShow audio decoder
+	 DirectShow audio decoder
 	 Copyright 2001 Eugene Kuznetsov  (divx@euro.ru)
 
 *********************************************************/
@@ -20,7 +20,7 @@
 #include "DMO_AudioDecoder.h"
 
 struct _DMO_AudioDecoder
-{ 
+{
     DMO_MEDIA_TYPE m_sOurType, m_sDestType;
     DMO_Filter* m_pDMO_Filter;
     char* m_sVhdr;
@@ -92,14 +92,14 @@ DMO_AudioDecoder * DMO_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX
 print_wave_header((WAVEFORMATEX *)this->m_sVhdr);
 print_wave_header((WAVEFORMATEX *)this->m_sVhdr2);
 
-        this->m_pDMO_Filter = DMO_FilterCreate(dllname, guid, &this->m_sOurType, &this->m_sDestType);
+	this->m_pDMO_Filter = DMO_FilterCreate(dllname, guid, &this->m_sOurType, &this->m_sDestType);
 	if( !this->m_pDMO_Filter ) {
 	    mp_free(this->m_sVhdr);
 	    mp_free(this->m_sVhdr2);
 	    mp_free(this);
 	    return NULL;
-        }
-        
+	}
+
     return this;
 }
 
@@ -126,7 +126,7 @@ int DMO_AudioDecoder_Convert(DMO_AudioDecoder *this, const any_t* in_data, unsig
 
 #ifdef HAVE_WIN32LOADER
     Setup_FS_Segment();
-#endif    
+#endif
     //m_pDMO_Filter->m_pMedia->vt->Lock(m_pDMO_Filter->m_pMedia, 1);
     bufferin = CMediaBufferCreate(in_size, (any_t*)in_data, in_size, 1);
     r = this->m_pDMO_Filter->m_pMedia->vt->ProcessInput(this->m_pDMO_Filter->m_pMedia, 0,
@@ -154,7 +154,7 @@ int DMO_AudioDecoder_Convert(DMO_AudioDecoder *this, const any_t* in_data, unsig
 
 	((IMediaBuffer*)db.pBuffer)->vt->GetBufferAndLength((IMediaBuffer*)db.pBuffer, 0, &written);
 	((IMediaBuffer*)db.pBuffer)->vt->Release((IUnknown*)db.pBuffer);
- 
+
 	//printf("RESULTB: %d 0x%x %ld\n", r, r, written);
 	//printf("Converted  %d  -> %d\n", in_size, out_size);
     }

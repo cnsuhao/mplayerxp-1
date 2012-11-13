@@ -92,8 +92,8 @@ static int fill_queue(struct af_instance_s* af, mp_aframe_t* data, int offset)
     if (s->bytes_to_slide < s->bytes_queued) {
       int bytes_move = s->bytes_queued - s->bytes_to_slide;
       memmove(s->buf_queue,
-              s->buf_queue + s->bytes_to_slide,
-              bytes_move);
+	      s->buf_queue + s->bytes_to_slide,
+	      bytes_move);
       s->bytes_to_slide = 0;
       s->bytes_queued = bytes_move;
     } else {
@@ -110,8 +110,8 @@ static int fill_queue(struct af_instance_s* af, mp_aframe_t* data, int offset)
   if (bytes_in > 0) {
     int bytes_copy = FFMIN(s->bytes_queue - s->bytes_queued, bytes_in);
     memcpy(s->buf_queue + s->bytes_queued,
-           (int8_t*)data->audio + offset,
-           bytes_copy);
+	   (int8_t*)data->audio + offset,
+	   bytes_copy);
     s->bytes_queued += bytes_copy;
     offset += bytes_copy;
   }
@@ -182,7 +182,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   max_bytes_out = ((int)(data->len / s->bytes_stride_scaled) + 1) * s->bytes_stride;
   if (max_bytes_out > af->data->len) {
     MSG_V("[libaf] Reallocating memory in module %s, "
-          "old len = %i, new len = %i\n",af->info->name,af->data->len,max_bytes_out);
+	  "old len = %i, new len = %i\n",af->info->name,af->data->len,max_bytes_out);
     af->data->audio = mp_realloc(af->data->audio, max_bytes_out);
     if (!af->data->audio) {
       MSG_FATAL("[libaf] Could not allocate memory\n");
@@ -201,23 +201,23 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
     // output stride
     if (s->output_overlap) {
       if (s->best_overlap_offset)
-        bytes_off = s->best_overlap_offset(s);
+	bytes_off = s->best_overlap_offset(s);
       s->output_overlap(s, pout, bytes_off);
     }
     if(final)
     stream_copy(pout + s->bytes_overlap,
-           s->buf_queue + bytes_off + s->bytes_overlap,
-           s->bytes_standing);
+	   s->buf_queue + bytes_off + s->bytes_overlap,
+	   s->bytes_standing);
     else
     memcpy(pout + s->bytes_overlap,
-           s->buf_queue + bytes_off + s->bytes_overlap,
-           s->bytes_standing);
+	   s->buf_queue + bytes_off + s->bytes_overlap,
+	   s->bytes_standing);
     pout += s->bytes_stride;
 
     // input stride
     memcpy(s->buf_overlap,
-           s->buf_queue + bytes_off + s->bytes_stride,
-           s->bytes_overlap);
+	   s->buf_queue + bytes_off + s->bytes_stride,
+	   s->bytes_overlap);
     tf = s->frames_stride_scaled + s->frames_stride_error;
     ti = (int)tf;
     s->frames_stride_error = tf - ti;
@@ -250,11 +250,11 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     int i, j;
 
     MSG_V("[af_scaletempo] %.3f speed * %.3f scale_nominal = %.3f\n",
-           s->speed, s->scale_nominal, s->scale);
+	   s->speed, s->scale_nominal, s->scale);
 
     if (s->scale == 1.0) {
       if (s->speed_tempo && s->speed_pitch)
-        return MPXP_Detach;
+	return MPXP_Detach;
       memcpy(af->data, data, sizeof(mp_aframe_t));
       return af_test_output(af, data);
     }
@@ -284,40 +284,40 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
       s->buf_overlap      = mp_realloc(s->buf_overlap, s->bytes_overlap);
       s->table_blend      = mp_realloc(s->table_blend, s->bytes_overlap * 4);
       if(!s->buf_overlap || !s->table_blend) {
-        MSG_FATAL("[af_scaletempo] Out of memory\n");
-        return MPXP_Error;
+	MSG_FATAL("[af_scaletempo] Out of memory\n");
+	return MPXP_Error;
       }
       bzero(s->buf_overlap, s->bytes_overlap);
       {
-        float* pb = (float*)s->table_blend;
-        for (i=0; i<frames_overlap; i++) {
-          float v = i / (float)frames_overlap;
-          for (j=0; j<nch; j++) {
-            *pb++ = v;
-          }
-        }
-        s->output_overlap = output_overlap_float;
+	float* pb = (float*)s->table_blend;
+	for (i=0; i<frames_overlap; i++) {
+	  float v = i / (float)frames_overlap;
+	  for (j=0; j<nch; j++) {
+	    *pb++ = v;
+	  }
+	}
+	s->output_overlap = output_overlap_float;
       }
     }
     s->frames_search = (frames_overlap > 1) ? srate * s->ms_search : 0;
     if (s->frames_search <= 0) {
       s->best_overlap_offset = NULL;
     } else {
-        float* pw;
-        s->buf_pre_corr = mp_realloc(s->buf_pre_corr, s->bytes_overlap);
-        s->table_window = mp_realloc(s->table_window, s->bytes_overlap - nch * bps);
-        if(!s->buf_pre_corr || !s->table_window) {
-          MSG_FATAL( "[af_scaletempo] Out of memory\n");
-          return MPXP_Error;
-        }
-        pw = (float*)s->table_window;
-        for (i=1; i<frames_overlap; i++) {
-          float v = i * (frames_overlap - i);
-          for (j=0; j<nch; j++) {
-            *pw++ = v;
-          }
-        }
-        s->best_overlap_offset = best_overlap_offset_float;
+	float* pw;
+	s->buf_pre_corr = mp_realloc(s->buf_pre_corr, s->bytes_overlap);
+	s->table_window = mp_realloc(s->table_window, s->bytes_overlap - nch * bps);
+	if(!s->buf_pre_corr || !s->table_window) {
+	  MSG_FATAL( "[af_scaletempo] Out of memory\n");
+	  return MPXP_Error;
+	}
+	pw = (float*)s->table_window;
+	for (i=1; i<frames_overlap; i++) {
+	  float v = i * (frames_overlap - i);
+	  for (j=0; j<nch; j++) {
+	    *pw++ = v;
+	  }
+	}
+	s->best_overlap_offset = best_overlap_offset_float;
     }
 
     s->bytes_per_frame = bps * nch;
@@ -332,29 +332,29 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     }
 
     MSG_V ( "[af_scaletempo] "
-            "%.2f stride_in, %i stride_out, %i standing, "
-            "%i overlap, %i search, %i queue\n",
-            s->frames_stride_scaled,
-            (int)(s->bytes_stride / nch / bps),
-            (int)(s->bytes_standing / nch / bps),
-            (int)(s->bytes_overlap / nch / bps),
-            s->frames_search,
-            (int)(s->bytes_queue / nch / bps));
+	    "%.2f stride_in, %i stride_out, %i standing, "
+	    "%i overlap, %i search, %i queue\n",
+	    s->frames_stride_scaled,
+	    (int)(s->bytes_stride / nch / bps),
+	    (int)(s->bytes_standing / nch / bps),
+	    (int)(s->bytes_overlap / nch / bps),
+	    s->frames_search,
+	    (int)(s->bytes_queue / nch / bps));
 
     return af_test_output(af, (mp_aframe_t*)arg);
   }
   case AF_CONTROL_PLAYBACK_SPEED | AF_CONTROL_SET:{
     if (s->speed_tempo) {
       if (s->speed_pitch) {
-        break;
+	break;
       }
       s->speed = *(float*)arg;
       s->scale = s->speed * s->scale_nominal;
     } else {
       if (s->speed_pitch) {
-        s->speed = 1 / *(float*)arg;
-        s->scale = s->speed * s->scale_nominal;
-        break;
+	s->speed = 1 / *(float*)arg;
+	s->scale = s->speed * s->scale_nominal;
+	break;
       }
     }
     return MPXP_Ok;
@@ -394,20 +394,20 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     }
     if (strlen(speedstr) > 0) {
       if (strcmp(speedstr, "pitch") == 0) {
-        s->speed_tempo = 0;
-        s->speed_pitch = 1;
+	s->speed_tempo = 0;
+	s->speed_pitch = 1;
       } else if (strcmp(speedstr, "tempo") == 0) {
-        s->speed_tempo = 1;
-        s->speed_pitch = 0;
+	s->speed_tempo = 1;
+	s->speed_pitch = 0;
       } else if (strcmp(speedstr, "none") == 0) {
-        s->speed_tempo = 0;
-        s->speed_pitch = 0;
+	s->speed_tempo = 0;
+	s->speed_pitch = 0;
       } else if (strcmp(speedstr, "both") == 0) {
-        s->speed_tempo = 1;
-        s->speed_pitch = 1;
+	s->speed_tempo = 1;
+	s->speed_pitch = 1;
       } else {
-        MSG_ERR("[af_scaletempo] Error: speed is out of range: [pitch|tempo|none|both]\n");
-        return MPXP_Error;
+	MSG_ERR("[af_scaletempo] Error: speed is out of range: [pitch|tempo|none|both]\n");
+	return MPXP_Error;
       }
     }
     s->scale = s->speed * s->scale_nominal;

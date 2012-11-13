@@ -30,7 +30,7 @@ typedef struct af_extrastereo_s
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_extrastereo_t* s   = (af_extrastereo_t*)af->setup; 
+  af_extrastereo_t* s   = (af_extrastereo_t*)af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:
@@ -66,7 +66,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -83,11 +83,11 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   int16_t *a = (int16_t*)data->audio;	// Audio data
   int len = data->len/2;		// Number of samples
   int avg, l, r;
-  
+
   for (i = 0; i < len; i+=2)
   {
     avg = (a[i] + a[i + 1]) / 2;
-    
+
     l = avg + (int)(s->mul * (a[i] - avg));
     r = avg + (int)(s->mul * (a[i + 1] - avg));
 

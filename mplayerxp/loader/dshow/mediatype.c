@@ -43,19 +43,19 @@ void DisplayMediaType(const char * label,const AM_MEDIA_TYPE* pmt){
 
     Debug printf("=======================\n");
     if(label)
-        Debug printf("AM_MEDIA_TYPE: %s\n",label);
+	Debug printf("AM_MEDIA_TYPE: %s\n",label);
     else
-        Debug printf("AM_MEDIA_TYPE:\n");
+	Debug printf("AM_MEDIA_TYPE:\n");
     Debug printf("-(Ptr:%p)--------\n",pmt);
     for(i=0;i<sizeof(AM_MEDIA_TYPE);i++){
-        Debug printf("%02x ",(BYTE)((BYTE*)pmt)[i]);
-        if((i+1)%8==0) Debug printf("\n");
+	Debug printf("%02x ",(BYTE)((BYTE*)pmt)[i]);
+	if((i+1)%8==0) Debug printf("\n");
     }
     if((i)%8!=0) printf("\n");
     Debug printf("-(Ptr:%p)--(%02d)--\n",pmt->pbFormat,pmt->cbFormat);
     for(i=0;i<pmt->cbFormat;i++){
-        Debug printf("%02x ",(BYTE)pmt->pbFormat[i]);
-        if((i+1)%8==0) Debug printf("\n");
+	Debug printf("%02x ",(BYTE)pmt->pbFormat[i]);
+	if((i+1)%8==0) Debug printf("\n");
     }
     if((i)%8!=0) Debug printf("\n");
     Debug printf("-----------------------\n");
@@ -93,9 +93,9 @@ void DisplayMediaType(const char * label,const AM_MEDIA_TYPE* pmt){
     Debug printf("Vhdr: biSizeImage %d\n",Vhdr->bmiHeader.biSizeImage);
     Debug printf("Vhdr: biBitCount %d\n",Vhdr->bmiHeader.biBitCount);
     if(Vhdr->bmiHeader.biCompression){
-        Debug printf("Vhdr: biComression 0x%08x (%s)\n",Vhdr->bmiHeader.biCompression,vo_format_name(Vhdr->bmiHeader.biCompression));
+	Debug printf("Vhdr: biComression 0x%08x (%s)\n",Vhdr->bmiHeader.biCompression,vo_format_name(Vhdr->bmiHeader.biCompression));
     }else
-        Debug printf("Vhdr: biComression 0x00000000\n");
+	Debug printf("Vhdr: biComression 0x00000000\n");
 
     }
     Debug printf("=======================\n");
@@ -114,10 +114,10 @@ HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
     memcpy(pDest, pSrc, sizeof(AM_MEDIA_TYPE));
     if (!pSrc->pbFormat) return S_OK;
     if (!(pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat)))
-        return E_OUTOFMEMORY;
+	return E_OUTOFMEMORY;
     memcpy(pDest->pbFormat, pSrc->pbFormat, pSrc->cbFormat);
     if (pDest->pUnk)
-        pDest->pUnk->vt->AddRef(pDest->pUnk);
+	pDest->pUnk->vt->AddRef(pDest->pUnk);
     return S_OK;
 }
 
@@ -126,13 +126,13 @@ void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
     if (!pMediaType) return;
     if (pMediaType->pbFormat)
     {
-        CoTaskMemFree(pMediaType->pbFormat);
-        pMediaType->pbFormat = NULL;
+	CoTaskMemFree(pMediaType->pbFormat);
+	pMediaType->pbFormat = NULL;
     }
     if (pMediaType->pUnk)
     {
-        pMediaType->pUnk->vt->Release(pMediaType->pUnk);
-        pMediaType->pUnk = NULL;
+	pMediaType->pUnk->vt->Release(pMediaType->pUnk);
+	pMediaType->pUnk = NULL;
     }
 }
 
@@ -142,12 +142,12 @@ AM_MEDIA_TYPE * CreateMediaType(AM_MEDIA_TYPE const * pSrc)
     if (!pSrc) return NULL;
     pDest = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
     if (!pDest)
-        return NULL;
+	return NULL;
 
     if (FAILED(CopyMediaType(pDest, pSrc)))
     {
-        CoTaskMemFree(pDest);
-        return NULL;
+	CoTaskMemFree(pDest);
+	return NULL;
     }
 
     return pDest;
@@ -164,5 +164,5 @@ void DeleteMediaType(AM_MEDIA_TYPE * pMediaType)
 int CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, int bWildcards)
 {
     return (((bWildcards && (IsEqualGUID(&pmt1->majortype, &GUID_NULL) || IsEqualGUID(&pmt2->majortype, &GUID_NULL))) || IsEqualGUID(&pmt1->majortype, &pmt2->majortype)) &&
-            ((bWildcards && (IsEqualGUID(&pmt1->subtype, &GUID_NULL)   || IsEqualGUID(&pmt2->subtype, &GUID_NULL)))   || IsEqualGUID(&pmt1->subtype, &pmt2->subtype)));
+	    ((bWildcards && (IsEqualGUID(&pmt1->subtype, &GUID_NULL)   || IsEqualGUID(&pmt2->subtype, &GUID_NULL)))   || IsEqualGUID(&pmt1->subtype, &pmt2->subtype)));
 }

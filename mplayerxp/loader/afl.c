@@ -14,7 +14,7 @@
   acmStreamSize
   maybe acmStreamReset
 
-  In future I'll also add functions for format enumeration, 
+  In future I'll also add functions for format enumeration,
   but not right now.
 
 ***************************************************************************/
@@ -56,26 +56,26 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 {
     if (!phadid)
 	return MMSYSERR_INVALPARAM;
-    
+
     /* Check if any unknown flags */
-    if (fdwAdd & 
+    if (fdwAdd &
 	~(ACM_DRIVERADDF_FUNCTION|ACM_DRIVERADDF_NOTIFYHWND|
 	  ACM_DRIVERADDF_GLOBAL))
 	return MMSYSERR_INVALFLAG;
-    
+
     /* Check if any incompatible flags */
-    if ((fdwAdd & ACM_DRIVERADDF_FUNCTION) && 
+    if ((fdwAdd & ACM_DRIVERADDF_FUNCTION) &&
 	(fdwAdd & ACM_DRIVERADDF_NOTIFYHWND))
 	return MMSYSERR_INVALFLAG;
-    
-    /* FIXME: in fact, should GetModuleFileName(hinstModule) and do a 
+
+    /* FIXME: in fact, should GetModuleFileName(hinstModule) and do a
      * LoadDriver on it, to be sure we can call SendDriverMessage on the
      * hDrvr handle.
      */
     *phadid = (HACMDRIVERID) MSACM_RegisterDriver(NULL, 0, hinstModule);
-    
+
     /* FIXME: lParam, dwPriority and fdwAdd ignored */
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -86,10 +86,10 @@ MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
 {
     PWINE_ACMDRIVER  p;
     PWINE_ACMDRIVER* tp;
-    
+
     if (fdwClose)
 	return MMSYSERR_INVALFLAG;
-    
+
     p = MSACM_GetDriver(had);
     if (!p)
 	return MMSYSERR_INVALHANDLE;
@@ -100,12 +100,12 @@ MMRESULT WINAPI acmDriverClose(HACMDRIVER had, DWORD fdwClose)
 	    break;
 	}
     }
-    
+
     if (p->hDrvr && !p->obj.pACMDriverID->pACMDriverList)
 	CloseDriver(p->hDrvr);
-    
+
     HeapFree(MSACM_hHeap, 0, p);
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -120,11 +120,11 @@ MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWOR
     if (!fnCallback) {
 	return MMSYSERR_INVALPARAM;
     }
-    
+
     if (fdwEnum && ~(ACM_DRIVERENUMF_NOLOCAL|ACM_DRIVERENUMF_DISABLED)) {
 	return MMSYSERR_INVALFLAG;
     }
-    
+
     for (p = MSACM_pFirstACMDriverID; p; p = p->pNextACMDriverID) {
 	fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
 	if (!p->bEnabled) {
@@ -135,7 +135,7 @@ MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWOR
 	}
 	(*fnCallback)((HACMDRIVERID) p, dwInstance, fdwSupport);
     }
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -145,19 +145,19 @@ MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWOR
 MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID)
 {
     PWINE_ACMOBJ pao;
-    
+
     pao = MSACM_GetObj(hao);
     if (!pao)
 	return MMSYSERR_INVALHANDLE;
-    
+
     if (!phadid)
 	return MMSYSERR_INVALPARAM;
-    
+
     if (fdwDriverID)
 	return MMSYSERR_INVALFLAG;
-    
+
     *phadid = (HACMDRIVERID) pao->pACMDriverID;
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -171,12 +171,12 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
     PWINE_ACMDRIVER pad = MSACM_GetDriver(had);
     if (!pad)
 	return MMSYSERR_INVALPARAM;
-    
+
     /* FIXME: Check if uMsg legal */
-    
+
     if (!SendDriverMessage(pad->hDrvr, uMsg, lParam1, lParam2))
 	return MMSYSERR_NOTSUPPORTED;
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -199,14 +199,14 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 
     if (!phad)
 	return MMSYSERR_INVALPARAM;
-    
-    padid = MSACM_GetDriverID(hadid); 
+
+    padid = MSACM_GetDriverID(hadid);
     if (!padid)
 	return MMSYSERR_INVALHANDLE;
-    
+
     if (fdwOpen)
 	return MMSYSERR_INVALFLAG;
-    
+
     pad = (PWINE_ACMDRIVER) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVER));
     if (!pad)
 	return MMSYSERR_NOMEM;
@@ -222,7 +222,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 	pad->hDrvr = OpenDriverA((long)&icopen);
     else
 	pad->hDrvr = padid->hInstModule;
-    
+
     if (!pad->hDrvr) {
 	HeapFree(MSACM_hHeap, 0, pad);
 	return MMSYSERR_ERROR;
@@ -246,16 +246,16 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 MMRESULT WINAPI acmDriverRemove(HACMDRIVERID hadid, DWORD fdwRemove)
 {
     PWINE_ACMDRIVERID padid;
-    
+
     padid = MSACM_GetDriverID(hadid);
     if (!padid)
 	return MMSYSERR_INVALHANDLE;
-    
+
     if (fdwRemove)
 	return MMSYSERR_INVALFLAG;
-    
+
     MSACM_UnregisterDriver(padid);
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -268,7 +268,7 @@ PWINE_ACMDRIVERID MSACM_pFirstACMDriverID = NULL;
 PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
 
 /***********************************************************************
- *           MSACM_RegisterDriver32() 
+ *           MSACM_RegisterDriver32()
  */
 PWINE_ACMDRIVERID MSACM_RegisterDriver(const char* pszFileName,
 				       WORD wFormatTag,
@@ -296,7 +296,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(const char* pszFileName,
     MSACM_pLastACMDriverID = padid;
     if (!MSACM_pFirstACMDriverID)
 	MSACM_pFirstACMDriverID = padid;
-    
+
     return padid;
 }
 
@@ -307,13 +307,13 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(const char* pszFileName,
 PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 {
     PWINE_ACMDRIVERID pNextACMDriverID;
-    
+
     while (p->pACMDriverList)
 	acmDriverClose((HACMDRIVER) p->pACMDriverList, 0);
-    
+
     if (p->pszFileName)
 	mp_free(p->pszFileName);
-    
+
     if (p == MSACM_pFirstACMDriverID)
 	MSACM_pFirstACMDriverID = p->pNextACMDriverID;
     if (p == MSACM_pLastACMDriverID)
@@ -323,11 +323,11 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 	p->pPrevACMDriverID->pNextACMDriverID = p->pNextACMDriverID;
     if (p->pNextACMDriverID)
 	p->pNextACMDriverID->pPrevACMDriverID = p->pPrevACMDriverID;
-    
+
     pNextACMDriverID = p->pNextACMDriverID;
-    
+
     HeapFree(MSACM_hHeap, 0, p);
-    
+
     return pNextACMDriverID;
 }
 
@@ -344,7 +344,7 @@ void MSACM_UnregisterAllDrivers(void)
 }
 
 /***********************************************************************
- *           MSACM_GetDriverID32() 
+ *           MSACM_GetDriverID32()
  */
 PWINE_ACMDRIVERID MSACM_GetDriverID(HACMDRIVERID hDriverID)
 {
@@ -381,16 +381,16 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     MMRESULT		ret;
     int			wfxSrcSize;
     int			wfxDstSize;
-    
+
     TRACE("(%p, 0x%08x, %p, %p, %p, %ld, %ld, %ld)\n",
 	  phas, had, pwfxSrc, pwfxDst, pwfltr, dwCallback, dwInstance, fdwOpen);
 
-    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n", 
-	  pwfxSrc->wFormatTag, pwfxSrc->nChannels, pwfxSrc->nSamplesPerSec, pwfxSrc->nAvgBytesPerSec, 
+    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+	  pwfxSrc->wFormatTag, pwfxSrc->nChannels, pwfxSrc->nSamplesPerSec, pwfxSrc->nAvgBytesPerSec,
 	  pwfxSrc->nBlockAlign, pwfxSrc->wBitsPerSample, pwfxSrc->cbSize);
 
-    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n", 
-	  pwfxDst->wFormatTag, pwfxDst->nChannels, pwfxDst->nSamplesPerSec, pwfxDst->nAvgBytesPerSec, 
+    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+	  pwfxDst->wFormatTag, pwfxDst->nChannels, pwfxDst->nSamplesPerSec, pwfxDst->nAvgBytesPerSec,
 	  pwfxDst->nBlockAlign, pwfxDst->wBitsPerSample, pwfxDst->cbSize);
 
 #define SIZEOF_WFX(wfx) (sizeof(WAVEFORMATEX) + ((wfx->wFormatTag == WAVE_FORMAT_PCM) ? 0 : wfx->cbSize))
@@ -415,19 +415,19 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     } else {
 	was->drvInst.pwfltr = NULL;
     }
-    was->drvInst.dwCallback = dwCallback;    
+    was->drvInst.dwCallback = dwCallback;
     was->drvInst.dwInstance = dwInstance;
     was->drvInst.fdwOpen = fdwOpen;
-    was->drvInst.fdwDriver = 0L;  
-    was->drvInst.dwDriver = 0L;     
+    was->drvInst.fdwDriver = 0L;
+    was->drvInst.dwDriver = 0L;
     was->drvInst.has = (HACMSTREAM)was;
-    
+
     if (had) {
 	if (!(wad = MSACM_GetDriver(had))) {
 	    ret = MMSYSERR_INVALPARAM;
 	    goto errCleanUp;
 	}
-	
+
 	was->obj.pACMDriverID = wad->obj.pACMDriverID;
 	was->pDrv = wad;
 	was->hAcmDriver = 0; /* not to close it in acmStreamClose */
@@ -447,13 +447,13 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 		else
 		goto errCleanUp;
 
-	    ret=acmDriverOpen2(drv_tag); 
+	    ret=acmDriverOpen2(drv_tag);
 	    if (ret == MMSYSERR_NOERROR) {
 		if ((wad = MSACM_GetDriver(had)) != 0) {
 		    was->obj.pACMDriverID = wad->obj.pACMDriverID;
 		    was->pDrv = wad;
 		    was->hAcmDriver = had;
-		    
+
 		    ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
 		    if (ret == MMSYSERR_NOERROR) {
 			if (fdwOpen & ACM_STREAMOPENF_QUERY) {
@@ -465,7 +465,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 		acmDriverClose(had, 0L);*/
 	//if(MSACM_pFirstACMDriverID==NULL)
 	//    MSACM_RegisterAllDrivers();
-	
+
 	for (wadi = MSACM_pFirstACMDriverID; wadi; wadi = wadi->pNextACMDriverID)
 	{
 	    /* Check Format */
@@ -477,10 +477,10 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 		    was->obj.pACMDriverID = wad->obj.pACMDriverID;
 		    was->pDrv = wad;
 		    was->hAcmDriver = had;
-		    
+
 		    ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
 		    //lhacm - crash printf("RETOPEN %d\n", ret);
-                    //ret = 0;
+		    //ret = 0;
 		    if (ret == MMSYSERR_NOERROR) {
 			if (fdwOpen & ACM_STREAMOPENF_QUERY) {
 			    acmDriverClose(had, 0L);
@@ -488,7 +488,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 			break;
 		    }
 		}
-		// no match, close this acm driver and try next one 
+		// no match, close this acm driver and try next one
 		acmDriverClose(had, 0L);
 	    }
 	}
@@ -503,11 +503,11 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	    *phas = (HACMSTREAM)was;
 	TRACE("=> (%d)\n", ret);
 #ifdef HAVE_WIN32LOADER
-        CodecAlloc();
+	CodecAlloc();
 #endif
 	return ret;
     }
-errCleanUp:		
+errCleanUp:
     if (phas)
 	*phas = (HACMSTREAM)0;
     HeapFree(MSACM_hHeap, 0, was);
@@ -520,19 +520,19 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
 {
     PWINE_ACMSTREAM	was;
     MMRESULT		ret;
-		
+
     TRACE("(0x%08x, %ld)\n", has, fdwClose);
-    
+
     if ((was = ACM_GetStream(has)) == NULL) {
 	return MMSYSERR_INVALHANDLE;
     }
     ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_CLOSE, (DWORD)&was->drvInst, 0);
     if (ret == MMSYSERR_NOERROR) {
 	if (was->hAcmDriver)
-	    acmDriverClose(was->hAcmDriver, 0L);	
+	    acmDriverClose(was->hAcmDriver, 0L);
 	HeapFree(MSACM_hHeap, 0, was);
 #ifdef HAVE_WIN32LOADER
-        CodecRelease();
+	CodecRelease();
 #endif
     }
     TRACE("=> (%d)\n", ret);
@@ -542,7 +542,7 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
 /***********************************************************************
  *           acmStreamConvert (MSACM32.38)
  */
-MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash, 
+MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 				 DWORD fdwConvert)
 {
     PWINE_ACMSTREAM	was;
@@ -571,7 +571,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 	padsh->pbPreparedDst != padsh->pbDst ||
 	padsh->cbPreparedDstLength < padsh->cbDstLength) {
 	return MMSYSERR_INVALPARAM;
-    }	
+    }
 
     padsh->fdwConvert = fdwConvert;
 
@@ -587,7 +587,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 /***********************************************************************
  *           acmStreamPrepareHeader (MSACM32.41)
  */
-MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash, 
+MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 				       DWORD fdwPrepare)
 {
     PWINE_ACMSTREAM	was;
@@ -595,7 +595,7 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     PACMDRVSTREAMHEADER	padsh;
 
     TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwPrepare);
-    
+
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
@@ -670,15 +670,15 @@ MMRESULT WINAPI acmStreamReset(HACMSTREAM has, DWORD fdwReset)
 /***********************************************************************
  *           acmStreamSize (MSACM32.43)
  */
-MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput, 
+MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 			      LPDWORD pdwOutputBytes, DWORD fdwSize)
 {
     PWINE_ACMSTREAM	was;
     ACMDRVSTREAMSIZE	adss;
     MMRESULT		ret;
-    
+
     TRACE("(0x%08x, %ld, %p, %ld)\n", has, cbInput, pdwOutputBytes, fdwSize);
-    
+
     if ((was = ACM_GetStream(has)) == NULL) {
 	return MMSYSERR_INVALHANDLE;
     }
@@ -687,7 +687,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
     }
 
     *pdwOutputBytes = 0L;
-    
+
     switch (fdwSize & ACM_STREAMSIZEF_QUERYMASK) {
     case ACM_STREAMSIZEF_DESTINATION:
 	adss.cbDstLength = cbInput;
@@ -697,13 +697,13 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 	adss.cbSrcLength = cbInput;
 	adss.cbDstLength = 0;
 	break;
-    default:	
+    default:
 	return MMSYSERR_INVALFLAG;
     }
-    
+
     adss.cbStruct = sizeof(adss);
     adss.fdwSize = fdwSize;
-    ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_SIZE, 
+    ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_SIZE,
 			    (DWORD)&was->drvInst, (DWORD)&adss);
     if (ret == MMSYSERR_NOERROR) {
 	switch (fdwSize & ACM_STREAMSIZEF_QUERYMASK) {
@@ -722,7 +722,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 /***********************************************************************
  *           acmStreamUnprepareHeader (MSACM32.44)
  */
-MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash, 
+MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 					 DWORD fdwUnprepare)
 {
     PWINE_ACMSTREAM	was;
@@ -730,7 +730,7 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     PACMDRVSTREAMHEADER	padsh;
 
     TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwUnprepare);
-    
+
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
@@ -751,7 +751,7 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 	padsh->pbPreparedDst != padsh->pbDst ||
 	padsh->cbPreparedDstLength < padsh->cbDstLength) {
 	return MMSYSERR_INVALPARAM;
-    }	
+    }
 
     padsh->fdwConvert = fdwUnprepare;
 

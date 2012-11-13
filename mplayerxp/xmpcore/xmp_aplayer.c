@@ -55,11 +55,11 @@ while(sh_audio){
   t=GetTimer();
   while(sh_audio->a_buffer_len<playsize && !xp_core->audio->eof){
       if(!xmp_test_model(XMP_Run_AudioPlayback)) {
-          ret=read_audio_buffer(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
-                              playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
+	  ret=read_audio_buffer(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
+			      playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       } else {
-          ret=RND_RENAME3(mpca_decode)(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
-                           playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
+	  ret=RND_RENAME3(mpca_decode)(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
+			   playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
     if(ret>0) sh_audio->a_buffer_len+=ret;
     else {
@@ -88,7 +88,7 @@ while(sh_audio){
       sh_audio->a_buffer_len-=playsize;
       memcpy(sh_audio->a_buffer,&sh_audio->a_buffer[playsize],sh_audio->a_buffer_len);
       if(!mp_conf.av_sync_pts && xmp_test_model(XMP_Run_AudioPlayer))
-          pthread_mutex_lock(&audio_timer_mutex);
+	  pthread_mutex_lock(&audio_timer_mutex);
       if(mp_data->use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
 	      sh_audio->a_pts_pos-=playsize;
@@ -116,7 +116,7 @@ while(sh_audio){
       else
 	  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
       if(!mp_conf.av_sync_pts && xmp_test_model(XMP_Run_AudioPlayer))
-          pthread_mutex_unlock(&audio_timer_mutex);
+	  pthread_mutex_unlock(&audio_timer_mutex);
   }
 
   break;

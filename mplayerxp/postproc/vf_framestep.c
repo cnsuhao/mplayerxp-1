@@ -87,22 +87,22 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
      * current file time (in second) and the frame number on the console ;-)
      */
     if (priv->dump_iframe) {
-        if (mpi->pict_type == 1) {
-        	MSG_INFO("I!\n");
-        }
+	if (mpi->pict_type == 1) {
+		MSG_INFO("I!\n");
+	}
     }
 
     /* decide if frame must be shown */
     if (priv->dump_iframe == 2) {
-        /* Only key frame */
-        skip = mpi->pict_type == 1 ? 0 : 1;
+	/* Only key frame */
+	skip = mpi->pict_type == 1 ? 0 : 1;
     }
     else {
-        /* Only 1 every frame_step */
-        skip = 0;
-        if ((priv->frame_step != 0) && ((priv->frame_cur % priv->frame_step) != 0)) {
-            skip = 1;
-        }
+	/* Only 1 every frame_step */
+	skip = 0;
+	if ((priv->frame_step != 0) && ((priv->frame_cur % priv->frame_step) != 0)) {
+	    skip = 1;
+	}
     }
     /* Increment current frame */
     ++priv->frame_cur;
@@ -110,20 +110,20 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
     if (skip == 0) {
 	/* Get image, export type (we don't modify tghe image) */
 	dmpi=vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_EXPORT, 0, mpi);
-        /* Copy only the pointer ( MP_IMGTYPE_EXPORT ! ) */
-        dmpi->planes[0] = mpi->planes[0];
-        dmpi->planes[1] = mpi->planes[1];
-        dmpi->planes[2] = mpi->planes[2];
+	/* Copy only the pointer ( MP_IMGTYPE_EXPORT ! ) */
+	dmpi->planes[0] = mpi->planes[0];
+	dmpi->planes[1] = mpi->planes[1];
+	dmpi->planes[2] = mpi->planes[2];
 
-        dmpi->stride[0] = mpi->stride[0];
-        dmpi->stride[1] = mpi->stride[1];
-        dmpi->stride[2] = mpi->stride[2];
+	dmpi->stride[0] = mpi->stride[0];
+	dmpi->stride[1] = mpi->stride[1];
+	dmpi->stride[2] = mpi->stride[2];
 
-        dmpi->width     = mpi->width;
-        dmpi->height    = mpi->height;
+	dmpi->width     = mpi->width;
+	dmpi->height    = mpi->height;
 
-        /* Chain to next filter / output ... */
-        return vf_next_put_slice(vf, dmpi);
+	/* Chain to next filter / output ... */
+	return vf_next_put_slice(vf, dmpi);
     }
 
     /* Skip the frame */

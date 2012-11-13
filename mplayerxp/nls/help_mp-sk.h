@@ -9,7 +9,7 @@ static char* banner_text=
 "MPlayerXP " VERSION "2002 Nickols_K 2000-2002 Arpad Gereoffy (viď DOCS!)\n"
 "\n";
 
-// Preklad do slovenčiny 
+// Preklad do slovenčiny
 
 static char help_text[]=
 "Použitie:   mplayerxp [prepínače] [cesta/]menosúboru\n"
@@ -73,7 +73,7 @@ static char help_text[]=
 #define MSGTR_VOincompCodec "Žiaľ, vybrané video_out zariadenie je nekompatibilné s týmto kodekom.\n"
 #define MSGTR_CouldntInitVideoCodec "FATAL: Nemôžem inicializovať videokodek :(\n"
 #define MSGTR_EncodeFileExists "Súbor už existuje: %s (neprepíšte si svoj obľúbený AVI súbor!)\n"
-#define MSGTR_CantCreateEncodeFile "Nemôžem vytvoriť súbor pre encoding\n" 
+#define MSGTR_CantCreateEncodeFile "Nemôžem vytvoriť súbor pre encoding\n"
 #define MSGTR_CannotInitVO "FATAL: Nemôžem inicializovať video driver!\n"
 #define MSGTR_CannotInitAO "nemôžem otvoriť/inicializovať audio driver -> TICHO\n"
 #define MSGTR_StartPlaying "Začínam prehrávať...\n"
@@ -131,7 +131,7 @@ static char help_text[]=
 #define MSGTR_NI_Detected "Detekovaný"
 #define MSGTR_NI_Message "%s NEPREKLADANÝ formát súboru AVI!\n"
 
-#define MSGTR_UsingNINI "Používam NEPREKLADANÝ poškodený formát súboru AVI!\n" 
+#define MSGTR_UsingNINI "Používam NEPREKLADANÝ poškodený formát súboru AVI!\n"
 #define MSGTR_CouldntDetFNo "Nemôžem určiť počet snímkov (pre absolútny posun)  \n"
 #define MSGTR_CantSeekRawAVI "Nemôžem sa posúvať v surových (raw) .AVI prúdoch! (Potrebujem index, zkuste použíť voľbu -idx !)  \n"
 #define MSGTR_CantSeekFile "Nemôžem sa posúvať v tomto súbore!  \n"

@@ -169,7 +169,7 @@ static float steering_matrix[][12] = {
 // Filter data through filter
 static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final){
   af_surround_t* s   = (af_surround_t*)af->setup;
-  float*	 m   = steering_matrix[0]; 
+  float*	 m   = steering_matrix[0];
   float*     	 in  = data->audio; 	// Input audio data
   float*     	 out = NULL;		// Output audio data
   float*	 end = in + data->len / sizeof(float); // Loop end
@@ -191,12 +191,12 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
     /* About volume balancing...
        Surround encoding does the following:
-           Lt=L+.707*C+.707*S, Rt=R+.707*C-.707*S
+	   Lt=L+.707*C+.707*S, Rt=R+.707*C-.707*S
        So S should be extracted as:
-           (Lt-Rt)
+	   (Lt-Rt)
        But we are splitting the S to two output channels, so we
        must take 3dB off as we split it:
-           Ls=Rs=.707*(Lt-Rt)
+	   Ls=Rs=.707*(Lt-Rt)
        Trouble is, Lt could be +1, Rt -1, so possibility that S will
        overflow. So to avoid that, we cut L/R by 3dB (*.707), and S by
        6dB (/2). This keeps the overall balance, but guarantees no
@@ -265,10 +265,10 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
 
 const af_info_t af_info_surround =
 {
-        "Surround decoder filter",
-        "surround",
-        "Steve Davies <steve@daviesfam.org>",
-        "",
-        AF_FLAGS_NOT_REENTRANT,
-        open
+	"Surround decoder filter",
+	"surround",
+	"Steve Davies <steve@daviesfam.org>",
+	"",
+	AF_FLAGS_NOT_REENTRANT,
+	open
 };

@@ -1,6 +1,6 @@
-/* 
+/*
    RTjpeg (C) Justin Schoeman 1998 (justin@suntiger.ee.up.ac.za)
-   
+
    With modifications by:
    (c) 1998, 1999 by Joerg Walter <trouble@moes.pmnet.uni-oldenburg.de>
    and
@@ -19,7 +19,7 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-    
+
 */
 
 #ifndef _I386_TYPES_H
@@ -54,5 +54,5 @@ extern void RTjpeg_yuvrgb8(__u8 *buf, __u8 *rgb, int stride);
 extern void RTjpeg_yuvrgb16(__u8 *buf, __u8 *rgb, int stride);
 extern void RTjpeg_yuvrgb24(__u8 *buf, __u8 *rgb, int stride);
 extern void RTjpeg_yuvrgb32(__u8 *buf, __u8 *rgb, int stride);
-		  
+
 

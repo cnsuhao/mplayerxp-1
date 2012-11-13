@@ -81,13 +81,13 @@ static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
     redirected = 0;
 
     fd = tcp_connect2Server (libinput,stream->streaming_ctrl->url->hostname,
-                         port = (stream->streaming_ctrl->url->port ?
-                                 stream->streaming_ctrl->url->port :
-                                 RTSP_DEFAULT_PORT), 1);
+			 port = (stream->streaming_ctrl->url->port ?
+				 stream->streaming_ctrl->url->port :
+				 RTSP_DEFAULT_PORT), 1);
 
     if (fd < 0 && !stream->streaming_ctrl->url->port)
       fd = tcp_connect2Server (libinput,stream->streaming_ctrl->url->hostname,
-                           port = 7070, 1);
+			   port = 7070, 1);
 
     if (fd < 0)
       return -1;
@@ -97,17 +97,17 @@ static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
       file++;
 
     mrl = mp_malloc (strlen (stream->streaming_ctrl->url->hostname)
-                  + strlen (file) + 16);
+		  + strlen (file) + 16);
 
     sprintf (mrl, "rtsp://%s:%i/%s",
-             stream->streaming_ctrl->url->hostname, port, file);
+	     stream->streaming_ctrl->url->hostname, port, file);
 
     rtsp = rtsp_session_start (fd, &mrl, file,
-                               stream->streaming_ctrl->url->hostname,
-                               port, &redirected,
-                               stream->streaming_ctrl->bandwidth,
-                               stream->streaming_ctrl->url->username,
-                               stream->streaming_ctrl->url->password);
+			       stream->streaming_ctrl->url->hostname,
+			       port, &redirected,
+			       stream->streaming_ctrl->bandwidth,
+			       stream->streaming_ctrl->url->username,
+			       stream->streaming_ctrl->url->password);
 
     if (redirected == 1)
     {

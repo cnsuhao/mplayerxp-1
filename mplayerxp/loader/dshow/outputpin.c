@@ -159,7 +159,7 @@ static CEnumMediaTypes* CEnumMediaTypesCreate(const AM_MEDIA_TYPE* amt)
     CEnumMediaTypes *This = (CEnumMediaTypes*) mp_malloc(sizeof(CEnumMediaTypes)) ;
 
     if (!This)
-        return NULL;
+	return NULL;
 
     This->vt = (IEnumMediaTypes_vt*) mp_malloc(sizeof(IEnumMediaTypes_vt));
     if (!This->vt)
@@ -221,7 +221,7 @@ static HRESULT STDCALL COutputPin_QueryInterface(IUnknown* This, const GUID* iid
     {
 	*ppv = p;
 	p->vt->AddRef(This);
-        return 0;
+	return 0;
     }
     if (memcmp(iid, &IID_IMemInputPin, 16) == 0)
     {
@@ -490,9 +490,9 @@ static HRESULT STDCALL COutputPin_QueryInternalConnections(IPin * This,
  * \return S_OK - success
  * \return E_UNEXPECTED - The pin is output pin
  *
- * \note 
- * IMemoryInputPin::Receive,IMemoryInputPin::ReceiveMultiple, IMemoryInputPin::EndOfStream, 
- * IMemAllocator::GetBuffer runs in different (streaming) thread then other 
+ * \note
+ * IMemoryInputPin::Receive,IMemoryInputPin::ReceiveMultiple, IMemoryInputPin::EndOfStream,
+ * IMemAllocator::GetBuffer runs in different (streaming) thread then other
  * methods (application thread).
  * IMemoryInputPin::NewSegment runs either in streaming or application thread.
  * Developer must use critical sections for thread-safing work.
@@ -694,9 +694,9 @@ static HRESULT STDCALL COutputMemPin_GetAllocatorRequirements(IMemInputPin* This
  * In the last case method might block indefinitely. If this might
  * happen IMemInpuPin::ReceiveCAnBlock returns S_OK
  *
- * \note 
- * IMemoryInputPin::Receive,IMemoryInputPin::ReceiveMultiple, IMemoryInputPin::EndOfStream, 
- * IMemAllocator::GetBuffer runs in different (streaming) thread then other 
+ * \note
+ * IMemoryInputPin::Receive,IMemoryInputPin::ReceiveMultiple, IMemoryInputPin::EndOfStream,
+ * IMemAllocator::GetBuffer runs in different (streaming) thread then other
  * methods (application thread).
  * IMemoryInputPin::NewSegment runs either in streaming or application thread.
  * Developer must use critical sections for thread-safing work.
@@ -709,7 +709,7 @@ static HRESULT STDCALL COutputMemPin_Receive(IMemInputPin* This,
     if (!pSample)
 	return E_INVALIDARG;
     if(((COutputMemPin*)This)->parent->SampleProc)
-        return ((COutputMemPin*)This)->parent->SampleProc(((COutputMemPin*)This)->parent->pUserData,pSample);
+	return ((COutputMemPin*)This)->parent->SampleProc(((COutputMemPin*)This)->parent->pUserData,pSample);
     //reject sample
     return S_FALSE;
 }
@@ -732,9 +732,9 @@ static HRESULT STDCALL COutputMemPin_Receive(IMemInputPin* This,
  * \remarks
  * This method behaves like IMemInputPin::Receive but for array of samples
  *
- * \note 
- * IMemoryInputPin::Receive,IMemoryInputPin::ReceiveMultiple, IMemoryInputPin::EndOfStream, 
- * IMemAllocator::GetBuffer runs in different (streaming) thread then other 
+ * \note
+ * IMemoryInputPin::Receive,IMemoryInputPin::ReceiveMultiple, IMemoryInputPin::EndOfStream,
+ * IMemAllocator::GetBuffer runs in different (streaming) thread then other
  * methods (application thread).
  * IMemoryInputPin::NewSegment runs either in streaming or application thread.
  * Developer must use critical sections for thread-safing work.
@@ -748,8 +748,8 @@ static HRESULT STDCALL COutputMemPin_ReceiveMultiple(IMemInputPin * This,
     HRESULT hr;
     Debug printf("COutputMemPin_ReceiveMultiple(%p) %d\n", This,nSamples);
     for(*nSamplesProcessed=0; *nSamplesProcessed < nSamples; *nSamplesProcessed++) {
-         hr = This->vt->Receive(This,pSamples[*nSamplesProcessed]);
-         if (hr != S_OK) break;
+	 hr = This->vt->Receive(This,pSamples[*nSamplesProcessed]);
+	 if (hr != S_OK) break;
     }
     return hr;
 }
@@ -893,7 +893,7 @@ COutputPin* COutputPinCreate(const AM_MEDIA_TYPE* amt,SAMPLEPROC SampleProc,any_
     IMemInputPin_vt* ivt;
 
     if (!This)
-        return NULL;
+	return NULL;
 
     This->vt = (IPin_vt*) mp_malloc(sizeof(IPin_vt));
     This->mempin = (COutputMemPin*) mp_malloc(sizeof(COutputMemPin));
@@ -901,8 +901,8 @@ COutputPin* COutputPinCreate(const AM_MEDIA_TYPE* amt,SAMPLEPROC SampleProc,any_
 
     if (!This->vt || !This->mempin || !ivt)
     {
-        COutputPin_Destroy(This);
-        mp_free(ivt);
+	COutputPin_Destroy(This);
+	mp_free(ivt);
 	return NULL;
     }
 

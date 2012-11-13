@@ -91,7 +91,7 @@ static int add_to_format(const char *s, unsigned int *fourcc, unsigned int *four
 		return 0;
 	}
 
-        fourcc[i]=fourccmap[i]=strtoul(s,&endptr,0);
+	fourcc[i]=fourccmap[i]=strtoul(s,&endptr,0);
 	if (*endptr != '\0') {
 		MSG_ERR("parse error");
 		return 0;
@@ -166,7 +166,7 @@ static const struct {
 {"RGB48", IMGFMT_RGB48NE},
 {"RGB4",  IMGFMT_RGB|4},
 {"RGB8",  IMGFMT_RGB|8},
-{"RGB15", IMGFMT_RGB|15}, 
+{"RGB15", IMGFMT_RGB|15},
 {"RGB16", IMGFMT_RGB|16},
 {"RGB24", IMGFMT_RGB|24},
 {"RGB32", IMGFMT_RGB|32},
@@ -246,7 +246,7 @@ static int add_to_inout(const char *sfmt,const char *sflags, unsigned int *outfm
 		}
 		outfmt[i] = fmt_table[j].num;
 		outflags[i] = flags;
-                ++i;
+		++i;
 		sfmt+=strlen(fmt_table[j].name);
 	} while ((*(sfmt++) == ',') && --freeslots);
 
@@ -296,7 +296,7 @@ static short get_cpuflags(char *s)
 		"3dnow",
 		NULL
 	};
-        int i;
+	int i;
 	short flags = 0;
 
 	do {
@@ -401,19 +401,19 @@ int parse_codec_cfg(const char *cfgfile)
 	const char *err_hint=NULL;
 	int codec_type=0;	/* TYPE_VIDEO/TYPE_AUDIO */
 	int tmp, i;
-	
+
 	// in case we call it secont time
 	if(video_codecs!=NULL)mp_free(video_codecs);
 	else video_codecs=NULL;
 
 	if(audio_codecs!=NULL)mp_free(audio_codecs);
 	else audio_codecs=NULL;
-	
+
 	nr_vcodecs = 0;
 	nr_acodecs = 0;
 
 	if(cfgfile==NULL) return 0;
-	
+
 	if ((fp = fopen(cfgfile, "r")) == NULL) {
 		MSG_FATAL("can't open '%s': %s\n", cfgfile, strerror(errno));
 		return 0;
@@ -459,14 +459,14 @@ int parse_codec_cfg(const char *cfgfile)
 				goto err_out;
 #endif
 			}
-		        if (!(*codecsp = (codecs_t *) mp_realloc(*codecsp,
+			if (!(*codecsp = (codecs_t *) mp_realloc(*codecsp,
 				sizeof(codecs_t) * (*nr_codecsp + 2)))) {
 			    MSG_FATAL(" can't mp_realloc '*codecsp': %s\n", strerror(errno));
 			    goto err_out;
-		        }
+			}
 			codec=*codecsp + *nr_codecsp;
 			++*nr_codecsp;
-                        memset(codec,0,sizeof(codecs_t));
+			memset(codec,0,sizeof(codecs_t));
 			memset(codec->fourcc, 0xff, sizeof(codec->fourcc));
 			memset(codec->outfmt, 0xff, sizeof(codec->outfmt));
 			memset(codec->infmt, 0xff, sizeof(codec->infmt));
@@ -474,7 +474,7 @@ int parse_codec_cfg(const char *cfgfile)
 			if (get_token(1, 1) < 0)
 				goto err_out_parse_error;
 			for (i = 0; i < *nr_codecsp - 1; i++) {
-				if(( (*codecsp)[i].codec_name!=NULL) && 
+				if(( (*codecsp)[i].codec_name!=NULL) &&
 				    (!strcmp(token[0], (*codecsp)[i].codec_name)) ) {
 					MSG_ERR(" codec name '%s' isn't unique", token[0]);
 					goto err_out_print_linenum;
@@ -535,20 +535,20 @@ int parse_codec_cfg(const char *cfgfile)
 			if (get_token(11, 11) < 0) {
 				goto err_out_parse_error;
 			}
-                        codec->guid.f1=strtoul(token[0],&endptr,0);
+			codec->guid.f1=strtoul(token[0],&endptr,0);
 			if ((*endptr != ',' || *(endptr + 1) != '\0') &&
 					*endptr != '\0')
 				goto err_out_parse_error;
-                        codec->guid.f2=strtoul(token[1],&endptr,0);
+			codec->guid.f2=strtoul(token[1],&endptr,0);
 			if ((*endptr != ',' || *(endptr + 1) != '\0') &&
 					*endptr != '\0')
 				goto err_out_parse_error;
-                        codec->guid.f3=strtoul(token[2],&endptr,0);
+			codec->guid.f3=strtoul(token[2],&endptr,0);
 			if ((*endptr != ',' || *(endptr + 1) != '\0') &&
 					*endptr != '\0')
 				goto err_out_parse_error;
 			for (i = 0; i < 8; i++) {
-                            codec->guid.f4[i]=strtoul(token[i + 3],&endptr,0);
+			    codec->guid.f4[i]=strtoul(token[i + 3],&endptr,0);
 				if ((*endptr != ',' || *(endptr + 1) != '\0') &&
 						*endptr != '\0')
 					goto err_out_parse_error;
@@ -748,51 +748,51 @@ void wrapline(FILE *f2,char *s){
 }
 
 void parsehtml(FILE *f1,FILE *f2,codecs_t *codec,int section,int dshow){
-        int c,d;
-        while((c=fgetc(f1))>=0){
-            if(c!='%'){
-                fputc(c,f2);
-                continue;
-            }
-            d=fgetc(f1);
+	int c,d;
+	while((c=fgetc(f1))>=0){
+	    if(c!='%'){
+		fputc(c,f2);
+		continue;
+	    }
+	    d=fgetc(f1);
 
-            switch(d){
-            case '.':
-                return; // end of section
-            case 'n':
-                wrapline(f2,codec->name); break;
-            case 'i':
-                wrapline(f2,codec->info); break;
-            case 'c':
-                wrapline(f2,codec->comment); break;
-            case 'd':
-                wrapline(f2,codec->dll); break;
-            case 'D':
-                fprintf(f2,"%c",codec->driver==dshow?'+':'-'); break;
-            case 'F':
-                for(d=0;d<CODECS_MAX_FOURCC;d++)
-                    if(!d || codec->fourcc[d]!=0xFFFFFFFF)
-                        fprintf(f2,"%s%.4s",d?"<br>":"",(codec->fourcc[d]==0xFFFFFFFF || codec->fourcc[d]<0x20202020)?!d?"-":"":(char*) &codec->fourcc[d]);
-                break;
-            case 'f':
-                for(d=0;d<CODECS_MAX_FOURCC;d++)
-                    if(codec->fourcc[d]!=0xFFFFFFFF)
-                        fprintf(f2,"%s0x%X",d?"<br>":"",codec->fourcc[d]);
-                break;
-            case 'Y':
-                for(d=0;d<CODECS_MAX_OUTFMT;d++)
-                    if(codec->outfmt[d]!=0xFFFFFFFF){
-		        for (c=0; fmt_table[c].name; c++)
-                            if(fmt_table[c].num==codec->outfmt[d]) break;
-                        if(fmt_table[c].name)
-                            fprintf(f2,"%s%s",d?"<br>":"",fmt_table[c].name);
-                    }
-                break;
-            default:
-                fputc(c,f2);
-                fputc(d,f2);
-            }
-        }
+	    switch(d){
+	    case '.':
+		return; // end of section
+	    case 'n':
+		wrapline(f2,codec->name); break;
+	    case 'i':
+		wrapline(f2,codec->info); break;
+	    case 'c':
+		wrapline(f2,codec->comment); break;
+	    case 'd':
+		wrapline(f2,codec->dll); break;
+	    case 'D':
+		fprintf(f2,"%c",codec->driver==dshow?'+':'-'); break;
+	    case 'F':
+		for(d=0;d<CODECS_MAX_FOURCC;d++)
+		    if(!d || codec->fourcc[d]!=0xFFFFFFFF)
+			fprintf(f2,"%s%.4s",d?"<br>":"",(codec->fourcc[d]==0xFFFFFFFF || codec->fourcc[d]<0x20202020)?!d?"-":"":(char*) &codec->fourcc[d]);
+		break;
+	    case 'f':
+		for(d=0;d<CODECS_MAX_FOURCC;d++)
+		    if(codec->fourcc[d]!=0xFFFFFFFF)
+			fprintf(f2,"%s0x%X",d?"<br>":"",codec->fourcc[d]);
+		break;
+	    case 'Y':
+		for(d=0;d<CODECS_MAX_OUTFMT;d++)
+		    if(codec->outfmt[d]!=0xFFFFFFFF){
+			for (c=0; fmt_table[c].name; c++)
+			    if(fmt_table[c].num==codec->outfmt[d]) break;
+			if(fmt_table[c].name)
+			    fprintf(f2,"%s%s",d?"<br>":"",fmt_table[c].name);
+		    }
+		break;
+	    default:
+		fputc(c,f2);
+		fputc(d,f2);
+	    }
+	}
 
 }
 
@@ -810,86 +810,86 @@ void skiphtml(FILE *f1){
 int main(void)
 {
 	codecs_t *cl;
-        FILE *f1;
-        FILE *f2;
-        int c,d,i;
-        int pos;
-        int section=-1;
-        int nr_codecs;
-        int win32=-1;
-        int dshow=-1;
-        int win32ex=-1;
+	FILE *f1;
+	FILE *f2;
+	int c,d,i;
+	int pos;
+	int section=-1;
+	int nr_codecs;
+	int win32=-1;
+	int dshow=-1;
+	int win32ex=-1;
 
 	if (!(nr_codecs = parse_codec_cfg("etc/codecs.conf")))
 		return 0;
 
-        f1=fopen("DOCS/codecs-in.html","rb"); if(!f1) exit(1);
-        f2=fopen("DOCS/codecs-status.html","wb"); if(!f2) exit(1);
+	f1=fopen("DOCS/codecs-in.html","rb"); if(!f1) exit(1);
+	f2=fopen("DOCS/codecs-status.html","wb"); if(!f2) exit(1);
 
-        while((c=fgetc(f1))>=0){
-            if(c!='%'){
-                fputc(c,f2);
-                continue;
-            }
-            d=fgetc(f1);
-            if(d>='0' && d<='9'){
-                // begin section
-                section=d-'0';
-                printf("BEGIN %d\n",section);
-                if(section>=5){
-                    // audio
+	while((c=fgetc(f1))>=0){
+	    if(c!='%'){
+		fputc(c,f2);
+		continue;
+	    }
+	    d=fgetc(f1);
+	    if(d>='0' && d<='9'){
+		// begin section
+		section=d-'0';
+		printf("BEGIN %d\n",section);
+		if(section>=5){
+		    // audio
 		    cl = audio_codecs;
 		    nr_codecs = nr_acodecs;
-                    dshow=7;win32=4;
-                } else {
-                    // video
+		    dshow=7;win32=4;
+		} else {
+		    // video
 		    cl = video_codecs;
 		    nr_codecs = nr_vcodecs;
-                    dshow=4;win32=2;win32ex=6;
-                }
-                pos=ftello(f1);
-                for(i=0;i<nr_codecs;i++){
-                    fseeko(f1,pos,SEEK_SET);
-                    switch(section){
-                    case 0:
-                    case 5:
-                        if(cl[i].status==CODECS_STATUS_WORKING)
-                            if(!(cl[i].driver==win32 || cl[i].driver==dshow || cl[i].driver==win32ex))
-                                parsehtml(f1,f2,&cl[i],section,dshow);
-                        break;
-                    case 1:
-                    case 6:
-                        if(cl[i].status==CODECS_STATUS_WORKING)
-                            if(cl[i].driver==win32 || cl[i].driver==dshow || cl[i].driver==win32ex)
-                                parsehtml(f1,f2,&cl[i],section,dshow);
-                        break;
-                    case 2:
-                    case 7:
-                        if(cl[i].status==CODECS_STATUS_PROBLEMS)
-                            parsehtml(f1,f2,&cl[i],section,dshow);
-                        break;
-                    case 3:
-                    case 8:
-                        if(cl[i].status==CODECS_STATUS_NOT_WORKING)
-                            parsehtml(f1,f2,&cl[i],section,dshow);
-                        break;
-                    case 4:
-                    case 9:
-                        if(cl[i].status==CODECS_STATUS_UNTESTED)
-                            parsehtml(f1,f2,&cl[i],section,dshow);
-                        break;
-                    default:
-                        printf("Warning! unimplemented section: %d\n",section);
-                    }
-                }
-                fseeko(f1,pos,SEEK_SET);
-                skiphtml(f1);
+		    dshow=4;win32=2;win32ex=6;
+		}
+		pos=ftello(f1);
+		for(i=0;i<nr_codecs;i++){
+		    fseeko(f1,pos,SEEK_SET);
+		    switch(section){
+		    case 0:
+		    case 5:
+			if(cl[i].status==CODECS_STATUS_WORKING)
+			    if(!(cl[i].driver==win32 || cl[i].driver==dshow || cl[i].driver==win32ex))
+				parsehtml(f1,f2,&cl[i],section,dshow);
+			break;
+		    case 1:
+		    case 6:
+			if(cl[i].status==CODECS_STATUS_WORKING)
+			    if(cl[i].driver==win32 || cl[i].driver==dshow || cl[i].driver==win32ex)
+				parsehtml(f1,f2,&cl[i],section,dshow);
+			break;
+		    case 2:
+		    case 7:
+			if(cl[i].status==CODECS_STATUS_PROBLEMS)
+			    parsehtml(f1,f2,&cl[i],section,dshow);
+			break;
+		    case 3:
+		    case 8:
+			if(cl[i].status==CODECS_STATUS_NOT_WORKING)
+			    parsehtml(f1,f2,&cl[i],section,dshow);
+			break;
+		    case 4:
+		    case 9:
+			if(cl[i].status==CODECS_STATUS_UNTESTED)
+			    parsehtml(f1,f2,&cl[i],section,dshow);
+			break;
+		    default:
+			printf("Warning! unimplemented section: %d\n",section);
+		    }
+		}
+		fseeko(f1,pos,SEEK_SET);
+		skiphtml(f1);
 //void parsehtml(FILE *f1,FILE *f2,codecs_t *codec,int section,int dshow){
 
-                continue;
-            }
-            fputc(c,f2);
-            fputc(d,f2);
+		continue;
+	    }
+	    fputc(c,f2);
+	    fputc(d,f2);
     }
 
     fclose(f2);
@@ -903,7 +903,7 @@ int main(void)
 int main(void)
 {
 	codecs_t *c;
-        int i,j, nr_codecs, state;
+	int i,j, nr_codecs, state;
 
 	if (!(parse_codec_cfg("etc/codecs.conf")))
 		return 0;
@@ -952,7 +952,7 @@ next:
 		    for(j=0;j<8;j++) printf(" %02X",c->guid.f4[j]);
 		    printf("\n");
 
-		    
+
 		}
 	}
 	if (!state) {

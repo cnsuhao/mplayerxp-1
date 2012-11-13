@@ -58,11 +58,11 @@ int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sha )
 {
     MSG_V("Using audio buffer %i bytes (min reserve = %i, indices %i)\n",size,min_reserv, indices);
     if( !(audio_buffer.buffer = mp_malloc(size)) )
-        return ENOMEM;
+	return ENOMEM;
     if( !(audio_buffer.indices = mp_malloc(indices*sizeof(audio_buffer_index_t))) ) {
-        mp_free(audio_buffer.buffer);
-        audio_buffer.buffer=NULL;
-        return ENOMEM;
+	mp_free(audio_buffer.buffer);
+	audio_buffer.buffer=NULL;
+	return ENOMEM;
     }
     audio_buffer.index_len=indices;
     audio_buffer.index_head=0;
@@ -88,15 +88,15 @@ void uninit_audio_buffer(void)
     audio_buffer.eof = 1;
 
     if( audio_buffer.blocked_readers > 0 ) {     /* Make blocked reader exit */
-        int loops = 10;
-        pthread_cond_broadcast( &audio_buffer.wait_buffer_cond );
-        while( audio_buffer.blocked_readers > 0 && loops > 0 ) {
-            usleep(1);
-            loops--;
-        }
-        if( audio_buffer.blocked_readers > 0 )
-            MSG_V("uninit_audio_buffer: %d blocked readers did not wake up\n",
-                  audio_buffer.blocked_readers);
+	int loops = 10;
+	pthread_cond_broadcast( &audio_buffer.wait_buffer_cond );
+	while( audio_buffer.blocked_readers > 0 && loops > 0 ) {
+	    usleep(1);
+	    loops--;
+	}
+	if( audio_buffer.blocked_readers > 0 )
+	    MSG_V("uninit_audio_buffer: %d blocked readers did not wake up\n",
+		  audio_buffer.blocked_readers);
     }
 
     audio_buffer.index_len=0;
@@ -122,11 +122,11 @@ void uninit_audio_buffer(void)
     pthread_cond_destroy( &audio_buffer.wait_buffer_cond );
 
     if( audio_buffer.buffer )
-        mp_free( audio_buffer.buffer );
+	mp_free( audio_buffer.buffer );
     audio_buffer.buffer = NULL;
 
     if( audio_buffer.indices )
-        mp_free( audio_buffer.indices );
+	mp_free( audio_buffer.indices );
     audio_buffer.indices = NULL;
     /* audio_buffer.sh_audio = ?; */
 }
@@ -143,69 +143,69 @@ int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, unsigned minlen
     pthread_mutex_lock( &audio_buffer.tail_mutex );
 
     while( len < minlen ) {
-        if( audio_buffer.tail == audio_buffer.head ) {
-            if( audio_buffer.eof ) {
-                break;
-            }
-            audio_buffer.blocked_readers++;
-            dec_ahead_can_aseek=1; /* Safe to seek while we wait for data */
-            pthread_cond_wait(&audio_buffer.wait_buffer_cond, &audio_buffer.tail_mutex );
-            dec_ahead_can_aseek=0;
-            audio_buffer.blocked_readers--;
-            if( audio_buffer.HasReset ) {
-                audio_buffer.HasReset = 0;
-                len = 0;
-                l =0;
-            }
-            continue;
-        }
+	if( audio_buffer.tail == audio_buffer.head ) {
+	    if( audio_buffer.eof ) {
+		break;
+	    }
+	    audio_buffer.blocked_readers++;
+	    dec_ahead_can_aseek=1; /* Safe to seek while we wait for data */
+	    pthread_cond_wait(&audio_buffer.wait_buffer_cond, &audio_buffer.tail_mutex );
+	    dec_ahead_can_aseek=0;
+	    audio_buffer.blocked_readers--;
+	    if( audio_buffer.HasReset ) {
+		audio_buffer.HasReset = 0;
+		len = 0;
+		l =0;
+	    }
+	    continue;
+	}
 
-        l = min( (int)(maxlen - len), audio_buffer.head - audio_buffer.tail );
-        if(l<0) {
-            l = min( maxlen - len, audio_buffer.len - audio_buffer.tail );
-            if( l == 0 ) {
-                if( audio_buffer.head != audio_buffer.tail )
-                    audio_buffer.tail = 0;
-                continue;
-            }
-        }
+	l = min( (int)(maxlen - len), audio_buffer.head - audio_buffer.tail );
+	if(l<0) {
+	    l = min( maxlen - len, audio_buffer.len - audio_buffer.tail );
+	    if( l == 0 ) {
+		if( audio_buffer.head != audio_buffer.tail )
+		    audio_buffer.tail = 0;
+		continue;
+	    }
+	}
 
-        memcpy( &buffer[len], &audio_buffer.buffer[audio_buffer.tail], l );
-        len += l;
-        audio_buffer.tail += l;
-        if( audio_buffer.tail >= audio_buffer.len && audio_buffer.tail != audio_buffer.head )
-            audio_buffer.tail = 0;
+	memcpy( &buffer[len], &audio_buffer.buffer[audio_buffer.tail], l );
+	len += l;
+	audio_buffer.tail += l;
+	if( audio_buffer.tail >= audio_buffer.len && audio_buffer.tail != audio_buffer.head )
+	    audio_buffer.tail = 0;
     }
 
     if( len > 0 ) { /* get pts to return and calculate next pts */
-        next_idx = (audio_buffer.index_tail+1)%audio_buffer.index_len;
-        head_idx = audio_buffer.index_head;
-        head_pos = audio_buffer.indices[(head_idx-1+audio_buffer.index_len)%audio_buffer.index_len].index;
-        head = audio_buffer.head;
-        if( next_idx != head_idx && audio_buffer.indices[next_idx].index == audio_buffer.indices[audio_buffer.index_tail].index ) {
-            audio_buffer.index_tail = next_idx; /* Buffer was empty */
-            next_idx = (audio_buffer.index_tail+1)%audio_buffer.index_len;
-        }
-        *pts = audio_buffer.indices[audio_buffer.index_tail].pts;
+	next_idx = (audio_buffer.index_tail+1)%audio_buffer.index_len;
+	head_idx = audio_buffer.index_head;
+	head_pos = audio_buffer.indices[(head_idx-1+audio_buffer.index_len)%audio_buffer.index_len].index;
+	head = audio_buffer.head;
+	if( next_idx != head_idx && audio_buffer.indices[next_idx].index == audio_buffer.indices[audio_buffer.index_tail].index ) {
+	    audio_buffer.index_tail = next_idx; /* Buffer was empty */
+	    next_idx = (audio_buffer.index_tail+1)%audio_buffer.index_len;
+	}
+	*pts = audio_buffer.indices[audio_buffer.index_tail].pts;
 
-        MSG_DBG3("audio_ahead: len %i, tail %i pts %.3f  tail_idx %3i  head_idx %3i  head_pos %3i\n", len,audio_buffer.tail,*pts, audio_buffer.index_tail, head_idx, head_pos );
-        while( next_idx != head_idx &&
-               ((audio_buffer.tail <= head &&
-                 (audio_buffer.indices[next_idx].index <= audio_buffer.tail || 
-                  head_pos < audio_buffer.indices[next_idx].index)) ||
-                (head < audio_buffer.indices[next_idx].index &&
-                 audio_buffer.indices[next_idx].index <= audio_buffer.tail))) {
-            MSG_DBG3("audio_ahead: next_idx %3i index %3i \n", next_idx, audio_buffer.indices[next_idx].index);
-            next_idx=(next_idx+1)%audio_buffer.index_len;
-        }
-        audio_buffer.index_tail = (next_idx-1+audio_buffer.index_len)%audio_buffer.index_len;
-        if( audio_buffer.indices[audio_buffer.index_tail].index != audio_buffer.tail ) {
-            int buff_len = audio_buffer.len;
-            MSG_DBG3("audio_ahead: orig idx %3i pts %.3f  pos %i   \n",audio_buffer.index_tail, audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
-            audio_buffer.indices[audio_buffer.index_tail].pts += (float)((audio_buffer.tail - audio_buffer.indices[audio_buffer.index_tail].index + buff_len) % buff_len) / (float)audio_buffer.sh_audio->af_bps;
-            audio_buffer.indices[audio_buffer.index_tail].index = audio_buffer.tail;
-            MSG_DBG3("audio_ahead: read next_idx %3i next_pts %.3f  pos %i \n", audio_buffer.index_tail,audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
-        }
+	MSG_DBG3("audio_ahead: len %i, tail %i pts %.3f  tail_idx %3i  head_idx %3i  head_pos %3i\n", len,audio_buffer.tail,*pts, audio_buffer.index_tail, head_idx, head_pos );
+	while( next_idx != head_idx &&
+	       ((audio_buffer.tail <= head &&
+		 (audio_buffer.indices[next_idx].index <= audio_buffer.tail ||
+		  head_pos < audio_buffer.indices[next_idx].index)) ||
+		(head < audio_buffer.indices[next_idx].index &&
+		 audio_buffer.indices[next_idx].index <= audio_buffer.tail))) {
+	    MSG_DBG3("audio_ahead: next_idx %3i index %3i \n", next_idx, audio_buffer.indices[next_idx].index);
+	    next_idx=(next_idx+1)%audio_buffer.index_len;
+	}
+	audio_buffer.index_tail = (next_idx-1+audio_buffer.index_len)%audio_buffer.index_len;
+	if( audio_buffer.indices[audio_buffer.index_tail].index != audio_buffer.tail ) {
+	    int buff_len = audio_buffer.len;
+	    MSG_DBG3("audio_ahead: orig idx %3i pts %.3f  pos %i   \n",audio_buffer.index_tail, audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
+	    audio_buffer.indices[audio_buffer.index_tail].pts += (float)((audio_buffer.tail - audio_buffer.indices[audio_buffer.index_tail].index + buff_len) % buff_len) / (float)audio_buffer.sh_audio->af_bps;
+	    audio_buffer.indices[audio_buffer.index_tail].index = audio_buffer.tail;
+	    MSG_DBG3("audio_ahead: read next_idx %3i next_pts %.3f  pos %i \n", audio_buffer.index_tail,audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
+	}
     }
 
     pthread_mutex_unlock( &audio_buffer.tail_mutex );
@@ -217,7 +217,7 @@ float get_delay_audio_buffer(void)
 {
     int delay = audio_buffer.head - audio_buffer.tail;
     if( delay < 0 )
-        delay += audio_buffer.len;
+	delay += audio_buffer.len;
     return (float)delay / (float)audio_buffer.sh_audio->af_bps;
 }
 
@@ -231,75 +231,75 @@ int decode_audio_buffer(demux_stream_t *d_audio,unsigned len)
 
     t = GetTimer();
     if (len < audio_buffer.sh_audio->audio_out_minsize)
-        len = audio_buffer.sh_audio->audio_out_minsize;
+	len = audio_buffer.sh_audio->audio_out_minsize;
 
     if( audio_buffer.size - audio_buffer.head <= audio_buffer.min_reserv ) {
-        if( audio_buffer.tail == 0 ) {
-            pthread_mutex_unlock( &audio_buffer.head_mutex );
-            return 0;
-        }
-        audio_buffer.len = audio_buffer.head;
-        audio_buffer.head = 0;
-        len = min( len, audio_buffer.tail - audio_buffer.head - audio_buffer.min_reserv);
-        if( len < audio_buffer.sh_audio->audio_out_minsize ) {
-            pthread_mutex_unlock( &audio_buffer.head_mutex );
-            return 0;
-        }
+	if( audio_buffer.tail == 0 ) {
+	    pthread_mutex_unlock( &audio_buffer.head_mutex );
+	    return 0;
+	}
+	audio_buffer.len = audio_buffer.head;
+	audio_buffer.head = 0;
+	len = min( len, audio_buffer.tail - audio_buffer.head - audio_buffer.min_reserv);
+	if( len < audio_buffer.sh_audio->audio_out_minsize ) {
+	    pthread_mutex_unlock( &audio_buffer.head_mutex );
+	    return 0;
+	}
     }
 
     blen = audio_buffer.size - audio_buffer.head;
     if( (l = (blen - audio_buffer.min_reserv)) < len ) {
-        len = max(l,audio_buffer.sh_audio->audio_out_minsize);
+	len = max(l,audio_buffer.sh_audio->audio_out_minsize);
     }
 
     if( (l = (audio_buffer.tail - audio_buffer.head)) > 0 ) {
-        blen = l;
-        l -= audio_buffer.min_reserv;
-        if( l < len ) {
-            len = l;
-            if( len < audio_buffer.sh_audio->audio_out_minsize ) {
-                pthread_mutex_unlock( &audio_buffer.head_mutex );
-                return 0;
-            }
-        }
+	blen = l;
+	l -= audio_buffer.min_reserv;
+	if( l < len ) {
+	    len = l;
+	    if( len < audio_buffer.sh_audio->audio_out_minsize ) {
+		pthread_mutex_unlock( &audio_buffer.head_mutex );
+		return 0;
+	    }
+	}
     }
     MSG_DBG3("decode audio %d   h %d, t %d, l %d \n", len, audio_buffer.head, audio_buffer.tail,  audio_buffer.len);
 
     for( l = 0, l2 = len, ret = 0; l < len && l2 >= audio_buffer.sh_audio->audio_out_minsize; ) {
 	float pts;
-        ret = RND_RENAME3(mpca_decode)( audio_buffer.sh_audio, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
-        if( ret <= 0 )
-            break;
+	ret = RND_RENAME3(mpca_decode)( audio_buffer.sh_audio, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
+	if( ret <= 0 )
+	    break;
 
-        next_idx = (audio_buffer.index_head+1)%audio_buffer.index_len;
-        if( next_idx != audio_buffer.index_tail ) {
-            MSG_DBG3("decode audio idx %3i tail %3i next pts %.3f  %i\n",audio_buffer.index_head, audio_buffer.index_tail, pts, audio_buffer.head );
-            audio_buffer.indices[audio_buffer.index_head].pts = pts;
-            audio_buffer.indices[audio_buffer.index_head].index = audio_buffer.head;
-            audio_buffer.index_head = next_idx;
-        }
-        audio_buffer.head+=ret;
-        MSG_DBG3("new head %6d  \n", audio_buffer.head);
-        l += ret;
-        l2 -= ret;
-        blen -= ret;
+	next_idx = (audio_buffer.index_head+1)%audio_buffer.index_len;
+	if( next_idx != audio_buffer.index_tail ) {
+	    MSG_DBG3("decode audio idx %3i tail %3i next pts %.3f  %i\n",audio_buffer.index_head, audio_buffer.index_tail, pts, audio_buffer.head );
+	    audio_buffer.indices[audio_buffer.index_head].pts = pts;
+	    audio_buffer.indices[audio_buffer.index_head].index = audio_buffer.head;
+	    audio_buffer.index_head = next_idx;
+	}
+	audio_buffer.head+=ret;
+	MSG_DBG3("new head %6d  \n", audio_buffer.head);
+	l += ret;
+	l2 -= ret;
+	blen -= ret;
     }
     MSG_DBG2("decoded audio %d   diff %d\n", l, l - len);
 
     if( ret <= 0 && d_audio->eof) {
-        MSG_V("audio eof\n");
-        audio_buffer.eof=1;
-        pthread_mutex_unlock( &audio_buffer.head_mutex );
-        pthread_mutex_lock( &audio_buffer.tail_mutex );
-        pthread_cond_broadcast( &audio_buffer.wait_buffer_cond );
-        pthread_mutex_unlock( &audio_buffer.tail_mutex );
-        return 0;
+	MSG_V("audio eof\n");
+	audio_buffer.eof=1;
+	pthread_mutex_unlock( &audio_buffer.head_mutex );
+	pthread_mutex_lock( &audio_buffer.tail_mutex );
+	pthread_cond_broadcast( &audio_buffer.wait_buffer_cond );
+	pthread_mutex_unlock( &audio_buffer.tail_mutex );
+	return 0;
     }
 
     if( audio_buffer.head > audio_buffer.len )
-        audio_buffer.len=audio_buffer.head;
+	audio_buffer.len=audio_buffer.head;
     if( audio_buffer.head >= audio_buffer.size && audio_buffer.tail > 0 )
-        audio_buffer.head = 0;
+	audio_buffer.head = 0;
 
     pthread_cond_signal( &audio_buffer.wait_buffer_cond );
 
@@ -317,9 +317,9 @@ int decode_audio_buffer(demux_stream_t *d_audio,unsigned len)
 
     blen = audio_buffer.head - audio_buffer.tail;
     if( blen < 0 )
-        blen += audio_buffer.len;
+	blen += audio_buffer.len;
     if( blen < MAX_OUTBURST ) {
-        return 2;
+	return 2;
     }
     return 1;
 }
@@ -343,7 +343,7 @@ int get_len_audio_buffer(void)
 {
     int len = audio_buffer.head - audio_buffer.tail;
     if( len < 0 )
-        len += audio_buffer.len;
+	len += audio_buffer.len;
     return len;
 }
 
@@ -352,23 +352,23 @@ int get_free_audio_buffer(void)
     int len;
 
     if( audio_buffer.eof )
-        return -1;
+	return -1;
 
     if( audio_buffer.size - audio_buffer.head < audio_buffer.min_reserv &&
-        audio_buffer.tail > 0 ) {
-        pthread_mutex_lock( &audio_buffer.head_mutex );
-        audio_buffer.len = audio_buffer.head;
-        audio_buffer.head = 0;
-        pthread_mutex_unlock( &audio_buffer.head_mutex );
+	audio_buffer.tail > 0 ) {
+	pthread_mutex_lock( &audio_buffer.head_mutex );
+	audio_buffer.len = audio_buffer.head;
+	audio_buffer.head = 0;
+	pthread_mutex_unlock( &audio_buffer.head_mutex );
     }
 
     len = audio_buffer.tail - audio_buffer.head;
     if( len <= 0 )
-        len += audio_buffer.size;
+	len += audio_buffer.size;
     len -= audio_buffer.min_reserv;
 
     if( len <= 0 )
-        return 0;
+	return 0;
 
     return len;
 }

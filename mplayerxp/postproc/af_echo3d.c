@@ -119,7 +119,7 @@ static void __FASTCALL__ echo3d(af_crystality_t *s,float *data, unsigned datasiz
 	right[i] *= 0.5;
 	// ************ compute echo  **********
 	left[i+1] = s->buf[s->bufPos[i]++];
-	if (s->bufPos[i] == s->buf_size) s->bufPos[i] = 0;	
+	if (s->bufPos[i] == s->buf_size) s->bufPos[i] = 0;
 	right[i+1] = s->buf[s->bufPos[i]++];
 	if (s->bufPos[i] == s->buf_size) s->bufPos[i] = 0;
 	leftc += left[i]/weight[0][i];
@@ -153,7 +153,7 @@ static void __FASTCALL__ echo3d(af_crystality_t *s,float *data, unsigned datasiz
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_crystality_t* s   = (af_crystality_t*)af->setup; 
+  af_crystality_t* s   = (af_crystality_t*)af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{

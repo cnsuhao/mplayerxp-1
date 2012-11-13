@@ -276,7 +276,7 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
   MSG_DBG3( "nc_stream_read  %u bytes from %llu\n",total,FILE_POS(s)+s->buf_pos);
   if(stream_eof(s)) return 0;
   x=s->buf_len-s->buf_pos;
-  if(x>0) 
+  if(x>0)
   {
     ilen=min(_total,x);
     memcpy(mem,&s->buffer[s->buf_pos],ilen);

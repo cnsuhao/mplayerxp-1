@@ -68,8 +68,8 @@ static MPXP_Rc control(ao_data_t* ao,int cmd, long arg) {
       ALfloat volume;
       ao_control_vol_t *vol = (ao_control_vol_t *)arg;
       if (cmd == AOCONTROL_SET_VOLUME) {
-        volume = (vol->left + vol->right) / 200.0;
-        alListenerf(AL_GAIN, volume);
+	volume = (vol->left + vol->right) / 200.0;
+	alListenerf(AL_GAIN, volume);
       }
       alGetListenerf(AL_GAIN, &volume);
       vol->left = vol->right = volume * 100;
@@ -85,10 +85,10 @@ static MPXP_Rc control(ao_data_t* ao,int cmd, long arg) {
  */
 static void print_help(void) {
   MSG_FATAL(
-          "\n-ao openal commandline help:\n"
-          "Example: mplayer -ao openal\n"
-          "\nOptions:\n"
-        );
+	  "\n-ao openal commandline help:\n"
+	  "Example: mplayer -ao openal\n"
+	  "\nOptions:\n"
+	);
 }
 #endif
 static MPXP_Rc init(ao_data_t* ao,unsigned flags)
@@ -252,9 +252,9 @@ static unsigned play(ao_data_t* ao,any_t*data, unsigned len, unsigned flags) {
   for (i = 0; i < len; i++) {
     for (ch = 0; ch < ao->channels; ch++) {
       for (j = 0, k = ch; j < CHUNK_SIZE / 2; j++, k += ao->channels)
-        priv->tmpbuf[j] = d[k];
+	priv->tmpbuf[j] = d[k];
       alBufferData(priv->buffers[ch][priv->cur_buf[ch]], AL_FORMAT_MONO16, priv->tmpbuf,
-                     CHUNK_SIZE, ao->samplerate);
+		     CHUNK_SIZE, ao->samplerate);
       alSourceQueueBuffers(priv->sources[ch], 1, &priv->buffers[ch][priv->cur_buf[ch]]);
       priv->cur_buf[ch] = (priv->cur_buf[ch] + 1) % NUM_BUF;
     }

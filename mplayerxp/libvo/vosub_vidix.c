@@ -103,7 +103,7 @@ int vidix_start(vo_data_t* vo)
 	       ,vo_conf.gamma.red_intensity
 	       ,vo_conf.gamma.green_intensity
 	       ,vo_conf.gamma.blue_intensity);
-        /* To use full set of priv->eq.cap */
+	/* To use full set of priv->eq.cap */
 	if(vdlPlaybackGetEq(priv->handler,&priv->eq) == 0) {
 	    priv->eq.brightness = vo_conf.gamma.brightness;
 	    priv->eq.saturation = vo_conf.gamma.saturation;
@@ -183,7 +183,7 @@ static void __FASTCALL__ vidix_copy_dma(vo_data_t* vo,unsigned idx,int sync_mode
 	    /* We can switch back to DR here but for now exit */
 	    MSG_FATAL("\nerror '%s' occured during DMA transfer\n"
 			"Please send BUGREPORT to developers!!!\n",strerror(err));
-	    exit(EXIT_FAILURE); /* it's OK vidix_term will be called */ 
+	    exit(EXIT_FAILURE); /* it's OK vidix_term will be called */
 	}
 #if 0
 	printf("frame is DMA copied\n");

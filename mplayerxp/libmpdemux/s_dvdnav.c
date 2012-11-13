@@ -118,16 +118,16 @@ static void __FASTCALL__ dvdnav_stream_sleep(stream_t * stream, int seconds) {
     dvdnav_priv->sleeping=0;
     switch (seconds) {
     case 0:
-            return;
+	    return;
     case 0xff:
-            MSG_V( "Sleeping indefinately\n" );
-            dvdnav_priv->sleeping=2;
-            break;
+	    MSG_V( "Sleeping indefinately\n" );
+	    dvdnav_priv->sleeping=2;
+	    break;
     default:
-            MSG_V( "Sleeping %d sec(s)\n", seconds );
-            dvdnav_priv->sleep_until = GetTimer();// + seconds*1000000;
-            dvdnav_priv->sleeping=1;
-            break;
+	    MSG_V( "Sleeping %d sec(s)\n", seconds );
+	    dvdnav_priv->sleep_until = GetTimer();// + seconds*1000000;
+	    dvdnav_priv->sleeping=1;
+	    break;
     }
     //if (dvdnav_priv->started) dvd_nav_still=1;
 }
@@ -143,7 +143,7 @@ static int __FASTCALL__ dvdnav_stream_sleeping(stream_t * stream) {
       now=GetTimer();
       while(dvdnav_priv->sleeping>1 || now<dvdnav_priv->sleep_until) {
 //        usec_sleep(1000); /* 1ms granularity */
-        return 1; 
+	return 1;
       }
       dvdnav_still_skip(dvdnav_priv->dvdnav); // continue past...
       dvdnav_priv->sleeping=0;
@@ -215,7 +215,7 @@ static MPXP_Rc __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const 
 	}
 	mp_free(stream->priv);
 	if(dvd_device) mp_free(dvd_device);
-        return MPXP_False;
+	return MPXP_False;
     }
     dvd_ok:
     if(dvd_device) mp_free(dvd_device);
@@ -277,7 +277,7 @@ static void __FASTCALL__ dvdnav_stream_read(stream_t * stream, dvdnav_event_t*de
     }
     if(event == DVDNAV_STILL_FRAME)
     {
-        dvdnav_still_skip(dvdnav_priv->dvdnav); /* don't let dvdnav stall on this image */
+	dvdnav_still_skip(dvdnav_priv->dvdnav); /* don't let dvdnav stall on this image */
 	while (dvdnav_stream_sleeping(stream)) usleep(1000); /* 1ms */
     }
 #ifdef DVDNAV_WAIT
@@ -285,7 +285,7 @@ static void __FASTCALL__ dvdnav_stream_read(stream_t * stream, dvdnav_event_t*de
     if(event == DVDNAV_WAIT)
     {
 	usleep(1000);
-        dvdnav_wait_skip(dvdnav_priv->dvdnav); /* don't let dvdnav stall on this image */
+	dvdnav_wait_skip(dvdnav_priv->dvdnav); /* don't let dvdnav stall on this image */
     }
 #endif
     else
@@ -448,7 +448,7 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
     dvdnav_priv_t *priv=s->priv;
     switch(sp->type) {
 	    case DVDNAV_BLOCK_OK: /* be silent about this one */
-            			break;
+				break;
 	    case DVDNAV_HIGHLIGHT: {
 				pci_t *pnavpci = NULL;
 				dvdnav_highlight_event_t *_hlev = (dvdnav_highlight_event_t*)(sp->buf);
@@ -570,19 +570,19 @@ static void __FASTCALL__ dvdnav_cmd_handler(stream_t* s,unsigned cmd)
     int button;
     pci_t *pci = dvdnav_get_current_nav_pci(dvdnav_priv->dvdnav);
     switch (cmd) {
-        case MP_CMD_DVDNAV_UP:
-          dvdnav_upper_button_select(dvdnav_priv->dvdnav,pci);
-          break;
-        case MP_CMD_DVDNAV_DOWN:
-          dvdnav_lower_button_select(dvdnav_priv->dvdnav,pci);
-          break;
-        case MP_CMD_DVDNAV_LEFT:
-          dvdnav_left_button_select(dvdnav_priv->dvdnav,pci);
-          break;
-        case MP_CMD_DVDNAV_RIGHT:
-          dvdnav_right_button_select(dvdnav_priv->dvdnav,pci);
-          break;
-        case MP_CMD_DVDNAV_MENU: {
+	case MP_CMD_DVDNAV_UP:
+	  dvdnav_upper_button_select(dvdnav_priv->dvdnav,pci);
+	  break;
+	case MP_CMD_DVDNAV_DOWN:
+	  dvdnav_lower_button_select(dvdnav_priv->dvdnav,pci);
+	  break;
+	case MP_CMD_DVDNAV_LEFT:
+	  dvdnav_left_button_select(dvdnav_priv->dvdnav,pci);
+	  break;
+	case MP_CMD_DVDNAV_RIGHT:
+	  dvdnav_right_button_select(dvdnav_priv->dvdnav,pci);
+	  break;
+	case MP_CMD_DVDNAV_MENU: {
 	    int title,part;
 	    MSG_V("Menu call\n");
 	    dvdnav_current_title_info(dvdnav_priv->dvdnav, &title, &part);
@@ -593,14 +593,14 @@ static void __FASTCALL__ dvdnav_cmd_handler(stream_t* s,unsigned cmd)
 	    }
 	    dvdnav_menu_call(dvdnav_priv->dvdnav, DVD_MENU_Root);
 	    dvdnav_button_select(dvdnav_priv->dvdnav, pci, 1);
-        }
-        break;
-        case MP_CMD_DVDNAV_SELECT:
-          dvdnav_button_activate(dvdnav_priv->dvdnav,pci);
-          break;
-        default:
-          MSG_V("Weird DVD Nav cmd %d\n",cmd);
-          break;
+	}
+	break;
+	case MP_CMD_DVDNAV_SELECT:
+	  dvdnav_button_activate(dvdnav_priv->dvdnav,pci);
+	  break;
+	default:
+	  MSG_V("Weird DVD Nav cmd %d\n",cmd);
+	  break;
       }
     dvdnav_get_current_highlight(dvdnav_priv->dvdnav, &button);
     dvdnav_button_select(dvdnav_priv->dvdnav,pci,button);

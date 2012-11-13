@@ -72,7 +72,7 @@ static struct {
 	// MOV => video/quicktime
 	{ "video/quicktime", DEMUXER_TYPE_MOV },
 	// ASF
-        { "audio/x-ms-wax", DEMUXER_TYPE_ASF },
+	{ "audio/x-ms-wax", DEMUXER_TYPE_ASF },
 	{ "audio/x-ms-wma", DEMUXER_TYPE_ASF },
 	{ "video/x-ms-asf", DEMUXER_TYPE_ASF },
 	{ "video/x-ms-afs", DEMUXER_TYPE_ASF },
@@ -226,13 +226,13 @@ int http_send_request(any_t* libinput, URL_t *url, off_t pos ) {
 		goto err_out;
 	}
 	MSG_DBG2("Request: [%s]\n", http_hdr->buffer );
-	
+
 	ret = send( fd, http_hdr->buffer, http_hdr->buffer_size, 0);
 	if( ret!=(int)http_hdr->buffer_size ) {
 		MSG_ERR("Error while sending HTTP request: didn't sent all the request\n");
 		goto err_out;
 	}
-	
+
 	http_free( http_hdr );
 
 	return fd;
@@ -256,7 +256,7 @@ http_read_response( int fd ) {
 	}
 
 	do {
-		i = recv( fd, response, BUFFER_SIZE, 0); 
+		i = recv( fd, response, BUFFER_SIZE, 0);
 		if( i<0 ) {
 			MSG_ERR("Read failed\n");
 			http_free( http_hdr );
@@ -268,7 +268,7 @@ http_read_response( int fd ) {
 			return NULL;
 		}
 		http_response_append( http_hdr, response, i );
-	} while( !http_is_header_entire( http_hdr ) ); 
+	} while( !http_is_header_entire( http_hdr ) );
 	http_response_parse( http_hdr );
 	return http_hdr;
 }
@@ -331,7 +331,7 @@ http_seek( stream_t *stream, off_t pos ) {
 	if( stream==NULL ) return 0;
 
 	if( stream->fd>0 ) closesocket(stream->fd); // need to reconnect to seek in http-stream
-	fd = http_send_request(stream->streaming_ctrl->libinput, stream->streaming_ctrl->url, pos ); 
+	fd = http_send_request(stream->streaming_ctrl->libinput, stream->streaming_ctrl->url, pos );
 	if( fd<0 ) return 0;
 
 	http_hdr = http_read_response( fd );
@@ -446,15 +446,15 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 			if( mp_conf.verbose ) {
 				http_debug_hdr( http_hdr );
 			}
-			
+
 			streaming_ctrl->data = (any_t*)http_hdr;
-			
+
 			// Check if we can make partial content requests and thus seek in http-streams
-		        if( http_hdr!=NULL && http_hdr->status_code==200 ) {
+			if( http_hdr!=NULL && http_hdr->status_code==200 ) {
 			    char *accept_ranges;
 			    if( (accept_ranges = http_get_field(http_hdr,"Accept-Ranges")) != NULL )
 				seekable = strncmp(accept_ranges,"bytes",5)==0;
-			} 
+			}
 			// Check if the response is an ICY status_code reason_phrase
 			if( !strcasecmp(http_hdr->protocol, "ICY") ) {
 				switch( http_hdr->status_code ) {
@@ -474,10 +474,10 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 						if( (field_data = http_get_field(http_hdr, "icy-br")) != NULL )
 							MSG_INFO("Bitrate: %skbit/s\n", field_data); field_data = NULL;
 						// Ok, we have detected an mp3 stream
-						// If content-type == video/nsv we most likely have a winamp video stream 
-						// otherwise it should be mp3. if there are more types consider adding mime type 
+						// If content-type == video/nsv we most likely have a winamp video stream
+						// otherwise it should be mp3. if there are more types consider adding mime type
 						// handling like later
-				                if ( (field_data = http_get_field(http_hdr, "content-type")) != NULL && (!strcmp(field_data, "video/nsv") || !strcmp(field_data, "misc/ultravox")))
+						if ( (field_data = http_get_field(http_hdr, "content-type")) != NULL && (!strcmp(field_data, "video/nsv") || !strcmp(field_data, "misc/ultravox")))
 							*file_format = DEMUXER_TYPE_NSV;
 						else
 							*file_format = DEMUXER_TYPE_AUDIO;
@@ -501,7 +501,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 				}
 			}
 
-			// Assume standard http if not ICY			
+			// Assume standard http if not ICY
 			switch( http_hdr->status_code ) {
 				case 200: // OK
 					// Look if we can use the Content-Type
@@ -515,7 +515,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 						for( i=0 ; i<(sizeof(mime_type_table)/sizeof(mime_type_table[0])) ; i++ ) {
 							if( !strcasecmp( content_type, mime_type_table[i].mime_type ) ) {
 								*file_format = mime_type_table[i].demuxer_type;
-								return seekable; 
+								return seekable;
 							}
 						}
 					}
@@ -536,7 +536,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 						    MSG_WARN("Unsupported http %d redirect to %s protocol\n", http_hdr->status_code, url->protocol);
 						    goto err_out;
 						}
-						redirect = 1;	
+						redirect = 1;
 					}
 					break;
 				case 401: // Authentication required
@@ -604,7 +604,7 @@ nop_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctr
 		len += ret;
 //printf("read %d bytes from network\n", len );
 	}
-	
+
 	return len;
 }
 
@@ -651,7 +651,7 @@ nop_streaming_start(any_t* libinput, stream_t *stream ) {
 				if (next_url != NULL && rd_url != NULL) {
 					MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
 							stream->streaming_ctrl->url=check4proxies(rd_url);
-					ret=nop_streaming_start(libinput,stream); //recursively get streaming started 
+					ret=nop_streaming_start(libinput,stream); //recursively get streaming started
 				} else {
 					MSG_ERR("Redirection failed\n");
 					closesocket( fd );
@@ -722,7 +722,7 @@ int pnm_streaming_start(any_t* libinput, stream_t *stream ) {
 	    stream->streaming_ctrl->url->port ? stream->streaming_ctrl->url->port : 7070, 0);
 	printf("PNM:// fd=%d\n",fd);
 	if(fd<0) return -1;
-	
+
 	pnm = pnm_connect(fd,stream->streaming_ctrl->url->file);
 	if(!pnm) return -2;
 
@@ -753,18 +753,18 @@ realrtsp_streaming_start( stream_t *stream ) {
 	int port;
 	int redirected, temp;
 	if( stream==NULL ) return -1;
-	
+
 	temp = 5; // counter so we don't get caught in infinite redirections (you never know)
-	
+
 	do {
-	
+
 		redirected = 0;
 		port = stream->streaming_ctrl->url->port ? stream->streaming_ctrl->url->port : 554;
 		fd = tcp_connect2Server( stream->streaming_ctrl->url->hostname, port, 1);
 		if(fd<0 && !stream->streaming_ctrl->url->port)
 			fd = tcp_connect2Server( stream->streaming_ctrl->url->hostname,	port = 7070, 1 );
 		if(fd<0) return -1;
-		
+
 		file = stream->streaming_ctrl->url->file;
 		if (file[0] == '/')
 		    file++;
@@ -782,7 +782,7 @@ realrtsp_streaming_start( stream_t *stream ) {
 		mp_free(mrl);
 		temp--;
 
-	} while( (redirected != 0) && (temp > 0) );	
+	} while( (redirected != 0) && (temp > 0) );
 
 	if(!rtsp) return -1;
 
@@ -814,7 +814,7 @@ rtp_streaming_start( stream_t *stream, int raw_udp ) {
 	if( stream==NULL ) return -1;
 	streaming_ctrl = stream->streaming_ctrl;
 	fd = stream->fd;
-	
+
 	if( fd<0 ) {
 		fd = udp_open_socket( (streaming_ctrl->url) );
 		if( fd<0 ) return -1;
@@ -844,9 +844,9 @@ int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *
 	}
 	stream->streaming_ctrl->url = check4proxies( url );
 
-        if (*demuxer_type != DEMUXER_TYPE_PLAYLIST){ 
+	if (*demuxer_type != DEMUXER_TYPE_PLAYLIST){
 	ret = autodetectProtocol( stream->streaming_ctrl, &stream->fd, demuxer_type );
-        } else {
+	} else {
 	  ret=0;
 	}
 
@@ -859,10 +859,10 @@ int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *
 	}
 
 	ret = -1;
-	
+
 	// Get the bandwidth available
 	stream->streaming_ctrl->bandwidth = network_bandwidth;
-	
+
 	// For RTP streams, we usually don't know the stream type until we open it.
 	if( !strcasecmp( stream->streaming_ctrl->url->protocol, "rtp")) {
 		if(stream->fd >= 0) {
@@ -881,7 +881,7 @@ int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *
 		    goto stream_switch;
 		}
 	} else
-	
+
 #ifdef HAVE_RTSP_SESSION_H
 	if( (!strcasecmp( stream->streaming_ctrl->url->protocol, "rtsp")) &&
 			(*demuxer_type == DEMUXER_TYPE_REAL)) {
@@ -919,20 +919,20 @@ stream_switch:
 			// so we need to pass demuxer_type too
 			ret = asf_streaming_start(stream->streaming_ctrl->libinput, stream, demuxer_type );
 			if( ret<0 ) {
-                                //sometimes a file is just on a webserver and it is not streamed.
+				//sometimes a file is just on a webserver and it is not streamed.
 				//try loading them default method as last resort for http protocol
-                                if ( !strcasecmp(stream->streaming_ctrl->url->protocol, "http") ) {
-                                MSG_STATUS("Trying default streaming for http protocol\n ");
-                                //reset stream
-                                close(stream->fd);
-		                stream->fd=-1;
-                                ret=nop_streaming_start(libinput,stream);
-                                }
+				if ( !strcasecmp(stream->streaming_ctrl->url->protocol, "http") ) {
+				MSG_STATUS("Trying default streaming for http protocol\n ");
+				//reset stream
+				close(stream->fd);
+				stream->fd=-1;
+				ret=nop_streaming_start(libinput,stream);
+				}
 
-                         if (ret<0) {
+			 if (ret<0) {
 				MSG_ERR("asf_streaming_start failed\n");
-                                MSG_STATUS("Check if this is a playlist which requires -playlist option\nExample: mplayer -playlist <url>\n");
-                               }
+				MSG_STATUS("Check if this is a playlist which requires -playlist option\nExample: mplayer -playlist <url>\n");
+			       }
 			}
 			break;
 #ifdef STREAMING_LIVE_DOT_COM
@@ -958,7 +958,7 @@ stream_switch:
 		case DEMUXER_TYPE_OGG:
 		case DEMUXER_TYPE_PLAYLIST:
 		case DEMUXER_TYPE_UNKNOWN:
-		case DEMUXER_TYPE_NSV: 
+		case DEMUXER_TYPE_NSV:
 			// Generic start, doesn't need to filter
 			// the network stream, it's a raw stream
 			ret = nop_streaming_start(libinput, stream );

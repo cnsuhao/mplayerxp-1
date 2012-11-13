@@ -314,8 +314,8 @@ static AuBool nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHandlerRec *h
 			}
 		}
 		if (nas_readBuffer(priv,
-		                   priv->server_buffer_size -
-		                   priv->server_buffer_used) != 0) {
+				   priv->server_buffer_size -
+				   priv->server_buffer_used) != 0) {
 			event->cur_state = AuStateStart;
 			break;
 		}
@@ -403,7 +403,7 @@ static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
 		AuSetElementParameters(priv->aud, 1, &aep, &as);
 		if (as != AuSuccess) {
 			nas_print_error(priv->aud,
-			                "control(): AuSetElementParameters", as);
+					"control(): AuSetElementParameters", as);
 			retval = MPXP_Error;
 		} else retval = MPXP_Ok;
 		break;
@@ -574,7 +574,7 @@ static void audio_resume(ao_data_t* ao)
 	AuStartFlow(priv->aud, priv->flow, &as);
 	if (as != AuSuccess)
 		nas_print_error(priv->aud,
-		                "play(): AuStartFlow", as);
+				"play(): AuStartFlow", as);
 }
 
 

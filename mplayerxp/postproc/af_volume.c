@@ -21,7 +21,7 @@
    probing is enable by AF_CONTROL_VOLUME_PROBE_ON_OFF and is done on a
    per channel basis. The result from the probing is obtained using
    AF_CONTROL_VOLUME_PROBE_GET and AF_CONTROL_VOLUME_PROBE_GET_MAX. The
-   probed values are calculated in dB. 
+   probed values are calculated in dB.
 */
 
 #include <stdio.h>
@@ -148,7 +148,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
     int         len = c->len/2;			// Number of samples
     for(ch = 0; ch < nch ; ch++){
       if(s->enable[ch]){
-	register int vol = (int)(255.0 * s->level[ch]); 
+	register int vol = (int)(255.0 * s->level[ch]);
 	for(i=ch;i<len;i+=nch){
 	  register int x = (a[i] * vol) >> 8;
 	  a[i]=clamp(x,SHRT_MIN,SHRT_MAX);

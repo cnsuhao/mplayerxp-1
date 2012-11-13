@@ -76,10 +76,10 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_SET_HEIGHT:
 	    priv->height = (int)*(any_t**)arg;
-	    return(TVI_CONTROL_TRUE);	    
+	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_GET_HEIGHT:
 	    *(int *)arg = priv->height;
-	    return(TVI_CONTROL_TRUE);	    
+	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_CHK_WIDTH:
 	case TVI_CONTROL_VID_CHK_HEIGHT:
 	    return(TVI_CONTROL_TRUE);

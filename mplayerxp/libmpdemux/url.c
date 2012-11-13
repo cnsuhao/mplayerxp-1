@@ -49,21 +49,21 @@ URL_t*
 url_new(const char* url) {
 	int pos1, pos2,v6addr = 0;
 	URL_t* Curl = NULL;
-        char *escfilename=NULL;
+	char *escfilename=NULL;
 	char *ptr1=NULL, *ptr2=NULL, *ptr3=NULL, *ptr4=NULL;
 	int jumpSize = 3;
 
 	if( url==NULL ) return NULL;
-	
-        if (strlen(url) > (SIZE_MAX / 3 - 1)) {
-                MSG_FATAL("MemAllocFailed\n");
-                goto err_out;
-        }
-        escfilename=mp_malloc(strlen(url)*3+1);
-        if (!escfilename ) {
-                MSG_FATAL("MemAllocFailed\n");
-                goto err_out;
-        }
+
+	if (strlen(url) > (SIZE_MAX / 3 - 1)) {
+		MSG_FATAL("MemAllocFailed\n");
+		goto err_out;
+	}
+	escfilename=mp_malloc(strlen(url)*3+1);
+	if (!escfilename ) {
+		MSG_FATAL("MemAllocFailed\n");
+		goto err_out;
+	}
 
 	// Create the URL container
 	Curl = mp_malloc(sizeof(URL_t));
@@ -83,17 +83,17 @@ url_new(const char* url) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
 	}
-        MSG_V("Filename for url is now %s\n",escfilename);
+	MSG_V("Filename for url is now %s\n",escfilename);
 
 	// extract the protocol
 	ptr1 = strstr(escfilename, "://");
 	if( ptr1==NULL ) {
-	        // Check for a special case: "sip:" (without "//"):
-	        if (strstr(escfilename, "sip:") == escfilename) {
-		        ptr1 = (char *)&url[3]; // points to ':'
+		// Check for a special case: "sip:" (without "//"):
+		if (strstr(escfilename, "sip:") == escfilename) {
+			ptr1 = (char *)&url[3]; // points to ':'
 			jumpSize = 1;
 		} else {
-		        MSG_V("Not an URL!\n");
+			MSG_V("Not an URL!\n");
 			goto err_out;
 		}
 	}
@@ -160,7 +160,7 @@ url_new(const char* url) {
 		ptr2 = ptr1;
 
 	}
-	
+
 	// look if the port is given
 	ptr2 = strstr(ptr2, ":");
 	// If the : is after the first / it isn't the port
@@ -175,7 +175,7 @@ url_new(const char* url) {
 			pos2 = strlen(escfilename);
 		} else {
 			// We have an URL like http://www.hostname.com/file.txt
-                        pos2 = ptr3-escfilename;
+			pos2 = ptr3-escfilename;
 		}
 	} else {
 		// We have an URL beginning like http://www.hostname.com:1212
@@ -206,7 +206,7 @@ url_new(const char* url) {
 				goto err_out;
 			}
 		}
-	} 
+	}
 	// Check if a filename was given or set, else set it with '/'
 	if( Curl->file==NULL ) {
 		Curl->file = mp_malloc(2);
@@ -216,8 +216,8 @@ url_new(const char* url) {
 		}
 		strcpy(Curl->file, "/");
 	}
-	
-        mp_free(escfilename);
+
+	mp_free(escfilename);
 	return Curl;
 err_out:
 	if (escfilename) mp_free(escfilename);
@@ -244,8 +244,8 @@ void
 url_unescape_string(char *outbuf, const char *inbuf)
 {
 	unsigned char c,c1,c2;
-        int i,len=strlen(inbuf);
-        for (i=0;i<len;i++){
+	int i,len=strlen(inbuf);
+	for (i=0;i<len;i++){
 		c = inbuf[i];
 		if (c == '%' && i<len-2) { //must have 2 more chars
 			c1 = toupper(inbuf[i+1]); // we need uppercase characters
@@ -257,41 +257,41 @@ url_unescape_string(char *outbuf, const char *inbuf)
 				if (c2>='0' && c2<='9') c2-='0';
 				else c2-='A'-10;
 				c = (c1<<4) + c2;
-                                i=i+2; //only skip next 2 chars if valid esc
+				i=i+2; //only skip next 2 chars if valid esc
 			}
 		}
 		*outbuf++ = c;
-	} 
-        *outbuf++='\0'; //add nullterm to string
+	}
+	*outbuf++='\0'; //add nullterm to string
 }
 
 static void
 url_escape_string_part(char *outbuf, const char *inbuf) {
 	unsigned char c,c1,c2;
-        int i,len=strlen(inbuf);
+	int i,len=strlen(inbuf);
 
 	for  (i=0;i<len;i++) {
 		c = inbuf[i];
-                if ((c=='%') && i<len-2 ) { //need 2 more characters
-                    c1=toupper(inbuf[i+1]); c2=toupper(inbuf[i+2]); // need uppercase chars
-                   } else {
-                    c1=129; c2=129; //not escape chars
-                   }
+		if ((c=='%') && i<len-2 ) { //need 2 more characters
+		    c1=toupper(inbuf[i+1]); c2=toupper(inbuf[i+2]); // need uppercase chars
+		   } else {
+		    c1=129; c2=129; //not escape chars
+		   }
 
 		if(	(c >= 'A' && c <= 'Z') ||
 			(c >= 'a' && c <= 'z') ||
 			(c >= '0' && c <= '9') ||
 			(c >= 0x7f)) {
 			*outbuf++ = c;
-                } else if ( c=='%' && ((c1 >= '0' && c1 <= '9') || (c1 >= 'A' && c1 <= 'F')) &&
-                           ((c2 >= '0' && c2 <= '9') || (c2 >= 'A' && c2 <= 'F'))) {
-                                                              // check if part of an escape sequence
-                            *outbuf++=c;                      // already
-			      
-                                                              // dont escape again
-                            MSG_ERR("URL String already escaped: %c %c %c\n",c,c1,c2);
-                                                              // error as this should not happen against RFC 2396
-                                                              // to escape a string twice
+		} else if ( c=='%' && ((c1 >= '0' && c1 <= '9') || (c1 >= 'A' && c1 <= 'F')) &&
+			   ((c2 >= '0' && c2 <= '9') || (c2 >= 'A' && c2 <= 'F'))) {
+							      // check if part of an escape sequence
+			    *outbuf++=c;                      // already
+
+							      // dont escape again
+			    MSG_ERR("URL String already escaped: %c %c %c\n",c,c1,c2);
+							      // error as this should not happen against RFC 2396
+							      // to escape a string twice
 		} else {
 			/* all others will be escaped */
 			c1 = ((c & 0xf0) >> 4);
@@ -305,16 +305,16 @@ url_escape_string_part(char *outbuf, const char *inbuf) {
 			*outbuf++ = c2;
 		}
 	}
-        *outbuf++='\0';
+	*outbuf++='\0';
 }
 
 /* Replace specific characters in the URL string by an escape sequence */
 /* works like strcpy(), but without return argument */
 void
 url_escape_string(char *outbuf, const char *inbuf) {
-        int i = 0,j,len = strlen(inbuf);
+	int i = 0,j,len = strlen(inbuf);
 	char* tmp,*unesc = NULL, *in;
-	
+
 	// Look if we have an ip6 address, if so skip it there is
 	// no need to escape anything in there.
 	tmp = strstr(inbuf,"://[");
@@ -328,7 +328,7 @@ url_escape_string(char *outbuf, const char *inbuf) {
 			tmp = NULL;
 		}
 	}
-	
+
 	while(i < len) {
 		unsigned char c='\0';
 		// look for the next char that must be kept
@@ -354,7 +354,7 @@ url_escape_string(char *outbuf, const char *inbuf) {
 			in = tmp;
 		} else // take the rest of the string
 			in = (char*)inbuf+i;
-		
+
 		if(!unesc) unesc = mp_malloc(len+1);
 		// unescape first to avoid escaping escape
 		url_unescape_string(unesc,in);

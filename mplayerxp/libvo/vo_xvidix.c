@@ -1,8 +1,8 @@
 /*
     VIDIX accelerated overlay in a X window
-    
+
     (C) Alex Beregszaszi & Zoltan Ponekker & Nickols_K
-    
+
     WS window manager by Pontscho/Fresh!
 
     Based on vo_gl.c and vo_vesa.c and vo_xmga.c (.so mastah! ;))
@@ -99,9 +99,9 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update)
 	XineramaScreenInfo *screens;
 	int num_screens;
 	int i = 0;
-	
+
 	screens = XineramaQueryScreens(vo->mDisplay, &num_screens);
-	
+
 	/* find the screen we are on */
 	while (((unsigned)screens[i].x_org <= priv->drwcX) || ((unsigned)screens[i].y_org <= priv->drwcY) ||
 		((unsigned)screens[i].x_org + (unsigned)screens[i].width >= priv->drwcX) ||
@@ -130,7 +130,7 @@ static uint32_t __FASTCALL__ set_window(vo_data_t*vo,int force_update)
 	if (vidix_init(vo,priv->image_width, priv->image_height, priv->win_x, priv->win_y,
 	    priv->win_w, priv->win_h, priv->image_format, vo->depthonscreen,
 	    vo_conf.screenwidth, vo_conf.screenheight) != MPXP_Ok)
-        {
+	{
 	    MSG_FATAL( "Can't initialize VIDIX driver: %s: %s\n",
 		priv->name, strerror(errno));
 	    vidix_term(vo);
@@ -262,7 +262,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     window_depth = attribs.depth;
     if ((window_depth != 15) && (window_depth != 16) && (window_depth != 24)
 	&& (window_depth != 32))
-        window_depth = 24;
+	window_depth = 24;
     XMatchVisualInfo(vo->mDisplay, vo->mScreen, window_depth, TrueColor, &vinfo);
 
     xswa.background_pixel = vo_FS(vo) ? BlackPixel(vo->mDisplay, vo->mScreen) : priv->fgColor;
@@ -393,7 +393,7 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t*priv=(priv_t*)vo->priv;
     if (arg)
-        priv->name = mp_strdup(arg);
+	priv->name = mp_strdup(arg);
     else {
 	MSG_V( "No vidix driver name provided, probing available ones!\n");
 	priv->name = NULL;

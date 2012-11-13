@@ -40,7 +40,7 @@ static char help_text[]=
 
 // ========================= MPlayer messages ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\nKončím... (%s)\n"
 #define MSGTR_Exit_frames "Požadovaný počet snímků přehrán"
@@ -122,7 +122,7 @@ static char help_text[]=
 #define MSGTR_MissingMpegVideo "Chybějící MPEG video proud!? Kontaktujte autora, možná to je chyba (bug) :(\n"
 #define MSGTR_InvalidMPEGES "Neplatný MPEG-ES proud!? Kontaktuje autora, možná to je chyba (bug) :(\n"
 #define MSGTR_FormatNotRecognized "========== Bohužel, tento formát souboru není rozpoznán/podporován =========\n"\
-                                 "==== Pokud je tento soubor AVI, ASF nebo MPEG proud, kontaktuje autora! ====\n"
+				 "==== Pokud je tento soubor AVI, ASF nebo MPEG proud, kontaktuje autora! ====\n"
 #define MSGTR_MissingVideoStream "Žádný video proud nenalezen!\n"
 #define MSGTR_MissingAudioStream "Žádný audio proud nenalezen...  ->beze zvuku\n"
 #define MSGTR_MissingVideoStreamBug "Chybějící video proud!? Kontaktuje autora, možná to je chyba (bug) :(\n"

@@ -101,18 +101,18 @@ static uint32_t ddca_bitstream_get (ddca_state_t * state, uint32_t num_bits)
     uint32_t result;
 
     if (num_bits < state->bits_left) {
-        result = (state->current_word << (32 - state->bits_left))
+	result = (state->current_word << (32 - state->bits_left))
 				      >> (32 - num_bits);
 
-        state->bits_left -= num_bits;
-        return result;
+	state->bits_left -= num_bits;
+	return result;
     }
 
     return ddca_bitstream_get_bh (state, num_bits);
 }
 
 static void ddca_bitstream_init (ddca_state_t * state,const uint8_t * buf, int word_mode,
-                         int bigendian_mode)
+			 int bigendian_mode)
 {
     intptr_t align;
 
@@ -132,14 +132,14 @@ static void ddca_bitstream_fill_current (ddca_state_t * state)
     tmp = *(state->buffer_start++);
 
     if (state->bigendian_mode)
-        state->current_word = ddca_swab32 (tmp);
+	state->current_word = ddca_swab32 (tmp);
     else
-        state->current_word = ddca_swable32 (tmp);
+	state->current_word = ddca_swable32 (tmp);
 
     if (!state->word_mode)
     {
-        state->current_word = (state->current_word & 0x00003FFF) |
-            ((state->current_word & 0x3FFF0000 ) >> 2);
+	state->current_word = (state->current_word & 0x00003FFF) |
+	    ((state->current_word & 0x3FFF0000 ) >> 2);
     }
 }
 
@@ -153,7 +153,7 @@ static uint32_t ddca_bitstream_get_bh (ddca_state_t * state, uint32_t num_bits)
 	      (32 - state->bits_left));
 
     if ( !state->word_mode && num_bits > 28 ) {
-        ddca_bitstream_fill_current (state);
+	ddca_bitstream_fill_current (state);
 	result = (result << 28) | state->current_word;
 	num_bits -= 28;
     }
@@ -162,17 +162,17 @@ static uint32_t ddca_bitstream_get_bh (ddca_state_t * state, uint32_t num_bits)
 
     if ( state->word_mode )
     {
-        if (num_bits != 0)
+	if (num_bits != 0)
 	    result = (result << num_bits) |
-	             (state->current_word >> (32 - num_bits));
+		     (state->current_word >> (32 - num_bits));
 
 	state->bits_left = 32 - num_bits;
     }
     else
     {
-        if (num_bits != 0)
+	if (num_bits != 0)
 	    result = (result << num_bits) |
-	             (state->current_word >> (28 - num_bits));
+		     (state->current_word >> (28 - num_bits));
 
 	state->bits_left = 28 - num_bits;
     }
@@ -181,7 +181,7 @@ static uint32_t ddca_bitstream_get_bh (ddca_state_t * state, uint32_t num_bits)
 }
 
 static int ddca_syncinfo (ddca_state_t * state, unsigned * flags,
-                     unsigned * sample_rate, unsigned * bit_rate, unsigned * frame_length)
+		     unsigned * sample_rate, unsigned * bit_rate, unsigned * frame_length)
 {
 static const int ddca_sample_rates[] =
 {
@@ -252,44 +252,44 @@ static int ddca_decode_header (const uint8_t * buf, unsigned* sample_rate, unsig
     unsigned flags,frame_length,frame_size=0;
     /* 14 bits and little endian bitstream */
     if (buf[0] == 0xff && buf[1] == 0x1f &&
-        buf[2] == 0x00 && buf[3] == 0xe8 &&
-        (buf[4] & 0xf0) == 0xf0 && buf[5] == 0x07)
+	buf[2] == 0x00 && buf[3] == 0xe8 &&
+	(buf[4] & 0xf0) == 0xf0 && buf[5] == 0x07)
     {
 	MSG_DBG2("DCA: 14 bits and little endian bitstream\n");
-        ddca_bitstream_init (&state, buf, 0, 0);
-        frame_size = ddca_syncinfo (&state, &flags, sample_rate,
-                               bit_rate, &frame_length);
+	ddca_bitstream_init (&state, buf, 0, 0);
+	frame_size = ddca_syncinfo (&state, &flags, sample_rate,
+			       bit_rate, &frame_length);
     }
     else
     /* 14 bits and big endian bitstream */
     if (buf[0] == 0x1f && buf[1] == 0xff &&
-        buf[2] == 0xe8 && buf[3] == 0x00 &&
-        buf[4] == 0x07 && (buf[5] & 0xf0) == 0xf0)
+	buf[2] == 0xe8 && buf[3] == 0x00 &&
+	buf[4] == 0x07 && (buf[5] & 0xf0) == 0xf0)
     {
 	MSG_DBG2("DCA: 14 bits and big endian bitstream\n");
-        ddca_bitstream_init (&state, buf, 0, 1);
-        frame_size = ddca_syncinfo (&state, &flags, sample_rate,
-                               bit_rate, &frame_length);
+	ddca_bitstream_init (&state, buf, 0, 1);
+	frame_size = ddca_syncinfo (&state, &flags, sample_rate,
+			       bit_rate, &frame_length);
     }
     else
     /* 16 bits and little endian bitstream */
     if (buf[0] == 0xfe && buf[1] == 0x7f &&
-        buf[2] == 0x01 && buf[3] == 0x80)
+	buf[2] == 0x01 && buf[3] == 0x80)
     {
 	MSG_DBG2("DCA: 16 bits and little endian bitstream\n");
-        ddca_bitstream_init (&state, buf, 1, 0);
-        frame_size = ddca_syncinfo (&state, &flags, sample_rate,
-                               bit_rate, &frame_length);
+	ddca_bitstream_init (&state, buf, 1, 0);
+	frame_size = ddca_syncinfo (&state, &flags, sample_rate,
+			       bit_rate, &frame_length);
     }
     else
     /* 16 bits and big endian bitstream */
     if (buf[0] == 0x7f && buf[1] == 0xfe &&
-        buf[2] == 0x80 && buf[3] == 0x01)
+	buf[2] == 0x80 && buf[3] == 0x01)
     {
 	MSG_DBG2("DCA: 16 bits and big endian bitstream\n");
-        ddca_bitstream_init (&state, buf, 1, 1);
-        frame_size = ddca_syncinfo (&state, &flags, sample_rate,
-                               bit_rate, &frame_length);
+	ddca_bitstream_init (&state, buf, 1, 1);
+	frame_size = ddca_syncinfo (&state, &flags, sample_rate,
+			       bit_rate, &frame_length);
     }
     *channels=0;
     if(frame_size)
@@ -1010,7 +1010,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   {
     uint8_t chunk[4];
     uint32_t block_size;
-  	sh_audio->wtag = mmioFOURCC('f', 'L', 'a', 'C');
+	sh_audio->wtag = mmioFOURCC('f', 'L', 'a', 'C');
 	/* loop through the metadata blocks; use a do-while construct since there
 	* will always be 1 metadata block */
 	do {
@@ -1200,7 +1200,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
       fpos=stream_tell(s);
       switch(chunk_type)
       {
-        case mmioFOURCC('f','m','t',' '):
+	case mmioFOURCC('f','m','t',' '):
 		{
 		    l = chunk_size;
 		    MSG_DBG2("Found %u bytes WAVEFORMATEX\n",l);
@@ -1221,7 +1221,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 		    if(l) stream_skip(s,l);
 		}
 		break;
-        case mmioFOURCC('d', 'a', 't', 'a'): 
+	case mmioFOURCC('d', 'a', 't', 'a'):
 		MSG_DBG2("Found data chunk at %llu\n",fpos);
 		data_off=fpos;
 		stream_skip(s,chunk_size);
@@ -1561,7 +1561,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     else
 	priv->last_pts += priv->pts_per_packet;
     dp->pts = priv->last_pts - (ds_tell_pts(demux->audio) -
-              sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+	      sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     dp->flags=DP_NONKEYFRAME;
     ds_add_packet(ds, dp);
     return 1;

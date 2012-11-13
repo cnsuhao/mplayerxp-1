@@ -117,7 +117,7 @@ extern "C" {
 
 #ifdef __i386__
 # if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
-#  ifndef _EGCS_ 
+#  ifndef _EGCS_
 #define __stdcall __attribute__((__stdcall__))
 #define __cdecl   __attribute__((__cdecl__))
 #  define __RESTORE_ES  __asm__ __volatile__("pushl %ds\n\tpopl %es")
@@ -125,7 +125,7 @@ extern "C" {
 # else
 // #  error You need gcc >= 2.7 to build Wine on a 386
 # endif
-#else 
+#else
 # define __stdcall
 # define __cdecl
 # define __RESTORE_ES
@@ -394,7 +394,7 @@ typedef UINT16         *LPUINT16;
 	typedef HANDLE16 a##16; \
 	typedef a##16 *P##a##16; \
 	typedef a##16 *NP##a##16; \
-	typedef a##16 *LP##a##16 
+	typedef a##16 *LP##a##16
 
 DECLARE_HANDLE16(HACMDRIVERID);
 DECLARE_HANDLE16(HACMDRIVER);
@@ -548,15 +548,15 @@ typedef LRESULT CALLBACK (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 
 /* Macros to access unaligned or wrong-endian WORDs and DWORDs. */
 /* Note: These macros are semantically broken, at least for wrc.  wrc
-   spits out data in the platform's current binary format, *not* in 
+   spits out data in the platform's current binary format, *not* in
    little-endian format.  These macros are used throughout the resource
-   code to load and store data to the resources.  Since it is unlikely 
-   that we'll ever be dealing with little-endian resource data, the 
-   byte-swapping nature of these macros has been disabled.  Rather than 
+   code to load and store data to the resources.  Since it is unlikely
+   that we'll ever be dealing with little-endian resource data, the
+   byte-swapping nature of these macros has been disabled.  Rather than
    remove the use of these macros from the resource loading code, the
-   macros have simply been disabled.  In the future, someone may want 
+   macros have simply been disabled.  In the future, someone may want
    to reactivate these macros for other purposes.  In that case, the
-   resource code will have to be modified to use different macros. */ 
+   resource code will have to be modified to use different macros. */
 
 #if 1
 #define PUT_WORD(ptr,w)   (*(WORD *)(ptr) = (w))
@@ -565,13 +565,13 @@ typedef LRESULT CALLBACK (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 #define GET_DWORD(ptr)    (*(DWORD *)(ptr))
 #else
 #define PUT_WORD(ptr,w)   (*(BYTE *)(ptr) = LOBYTE(w), \
-                           *((BYTE *)(ptr) + 1) = HIBYTE(w))
+			   *((BYTE *)(ptr) + 1) = HIBYTE(w))
 #define GET_WORD(ptr)     ((WORD)(*(BYTE *)(ptr) | \
-                                  (WORD)(*((BYTE *)(ptr)+1) << 8)))
+				  (WORD)(*((BYTE *)(ptr)+1) << 8)))
 #define PUT_DWORD(ptr,dw) (PUT_WORD((ptr),LOWORD(dw)), \
-                           PUT_WORD((WORD *)(ptr)+1,HIWORD(dw)))
+			   PUT_WORD((WORD *)(ptr)+1,HIWORD(dw)))
 #define GET_DWORD(ptr)    ((DWORD)(GET_WORD(ptr) | \
-                                   ((DWORD)GET_WORD((WORD *)(ptr)+1) << 16)))
+				   ((DWORD)GET_WORD((WORD *)(ptr)+1) << 16)))
 #endif  /* 1 */
 
 /* min and max macros */
@@ -617,9 +617,9 @@ typedef struct tagSIZE
 typedef SIZE SIZEL, *PSIZEL, *LPSIZEL;
 
 #define CONV_SIZE16TO32(s16,s32) \
-            ((s32)->cx = (INT)(s16)->cx, (s32)->cy = (INT)(s16)->cy)
+	    ((s32)->cx = (INT)(s16)->cx, (s32)->cy = (INT)(s16)->cy)
 #define CONV_SIZE32TO16(s32,s16) \
-            ((s16)->cx = (INT16)(s32)->cx, (s16)->cy = (INT16)(s32)->cy)
+	    ((s16)->cx = (INT16)(s32)->cx, (s16)->cy = (INT16)(s32)->cy)
 
 /* The POINT structure */
 typedef struct tagPOINT
@@ -635,9 +635,9 @@ typedef struct _POINTL
 } POINTL;
 
 #define CONV_POINT16TO32(p16,p32) \
-            ((p32)->x = (INT)(p16)->x, (p32)->y = (INT)(p16)->y)
+	    ((p32)->x = (INT)(p16)->x, (p32)->y = (INT)(p16)->y)
 #define CONV_POINT32TO16(p32,p16) \
-            ((p16)->x = (INT16)(p32)->x, (p16)->y = (INT16)(p32)->y)
+	    ((p16)->x = (INT16)(p32)->x, (p16)->y = (INT16)(p32)->y)
 
 #define MAKEPOINT16(l) (*((POINT16 *)&(l)))
 
@@ -667,7 +667,7 @@ typedef const RECT *LPCRECT;
 typedef struct tagRECTL
 {
     LONG left;
-    LONG top;  
+    LONG top;
     LONG right;
     LONG bottom;
 } RECTL, *PRECTL, *LPRECTL;

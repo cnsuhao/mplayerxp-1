@@ -36,7 +36,7 @@ static char help_text[]=
 
 // ========================= MPlayer messages ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\nBezig met afsluiten... (%s)\n"
 #define MSGTR_Exit_frames "Gevraagde aantal frames afgespeeld"
@@ -80,7 +80,7 @@ static char help_text[]=
 #define MSGTR_NoSound "Audio: geen geluid!!!\n"
 #define MSGTR_FPSforced "FPS geforceerd om %5.3f te zijn (ftime: %5.3f)\n"
 
-// open.c, stream.c: 
+// open.c, stream.c:
 #define MSGTR_CdDevNotfound "CD-ROM Device '%s' niet gevonden!\n"
 #define MSGTR_ErrTrackSelect "Fout bij het selecteren van VCD track!"
 #define MSGTR_ReadSTDIN "Lezen van stdin...\n"

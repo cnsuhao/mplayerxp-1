@@ -58,7 +58,7 @@
 #define RTSP_NPT_NOW "npt=now-"
 #define RTSP_MEDIA_CONTAINER_MPEG_TS "33"
 #define RTSP_TRANSPORT_REQUEST "Transport: RTP/AVP;%s;%s%i-%i;mode=\"PLAY\""
-  
+
 #define RTSP_TRANSPORT_MULTICAST "multicast"
 #define RTSP_TRANSPORT_UNICAST "unicast"
 
@@ -83,7 +83,7 @@ rtcp_send_rr (rtsp_t *s, struct rtp_rtsp_session_t *st)
 {
   if (st->rtcp_socket == -1)
     return;
-  
+
   /* send RTCP RR every RTCP_SEND_FREQUENCY packets
    * FIXME : NOT CORRECT, HARDCODED, BUT MAKES SOME SERVERS HAPPY
    * not rfc compliant
@@ -109,14 +109,14 @@ static struct rtp_rtsp_session_t *
 rtp_session_new (void)
 {
   struct rtp_rtsp_session_t *st = NULL;
-  
+
   st = mp_malloc (sizeof (struct rtp_rtsp_session_t));
-  
+
   st->rtp_socket = -1;
   st->rtcp_socket = -1;
   st->control_url = NULL;
   st->count = 0;
-  
+
   return st;
 }
 
@@ -138,7 +138,7 @@ rtp_session_free (struct rtp_rtsp_session_t *st)
 
 static void
 rtp_session_set_fd (struct rtp_rtsp_session_t *st,
-                    int rtp_sock, int rtcp_sock)
+		    int rtp_sock, int rtcp_sock)
 {
   if (!st)
     return;
@@ -149,12 +149,12 @@ rtp_session_set_fd (struct rtp_rtsp_session_t *st,
 
 static int
 parse_port (const char *line, const char *param,
-            int *rtp_port, int *rtcp_port)
+	    int *rtp_port, int *rtcp_port)
 {
   char *parse1;
   char *parse2;
   char *parse3;
-  
+
   char *line_copy = mp_strdup (line);
 
   parse1 = strstr (line_copy, param);
@@ -162,14 +162,14 @@ parse_port (const char *line, const char *param,
   if (parse1)
   {
     parse2 = strstr (parse1, "-");
-    
+
     if (parse2)
     {
       parse3 = strstr (parse2, ";");
-      
+
       if (parse3)
 	parse3[0] = 0;
-      
+
       parse2[0] = 0;
     }
     else
@@ -183,12 +183,12 @@ parse_port (const char *line, const char *param,
     mp_free (line_copy);
     return 0;
   }
-  
+
   *rtp_port = atoi (parse1 + strlen (param));
   *rtcp_port = atoi (parse2 + 1);
 
   mp_free (line_copy);
-  
+
   return 1;
 }
 
@@ -201,21 +201,21 @@ parse_destination (const char *line)
   char *dest = NULL;
   char *line_copy = mp_strdup (line);
   int len;
-  
+
   parse1 = strstr (line_copy, RTSP_SETUP_DESTINATION);
   if (!parse1)
   {
     mp_free (line_copy);
     return NULL;
   }
-  
+
   parse2 = strstr (parse1, ";");
   if (!parse2)
   {
     mp_free (line_copy);
     return NULL;
   }
- 
+
   len = strlen (parse1) - strlen (parse2)
     - strlen (RTSP_SETUP_DESTINATION) + 1;
   dest = (char *) mp_malloc (len + 1);
@@ -231,7 +231,7 @@ rtcp_connect (int client_port, int server_port, const char* server_hostname)
   struct sockaddr_in sin;
   struct hostent *hp;
   int s;
-  
+
   if (client_port <= 1023)
     return -1;
 
@@ -249,7 +249,7 @@ rtcp_connect (int client_port, int server_port, const char* server_hostname)
   sin.sin_family = AF_INET;
   sin.sin_addr.s_addr = INADDR_ANY;
   sin.sin_port = htons (client_port);
-  
+
   if (bind (s, (struct sockaddr *) &sin, sizeof (sin)))
   {
 #ifndef HAVE_WINSOCK2
@@ -262,7 +262,7 @@ rtcp_connect (int client_port, int server_port, const char* server_hostname)
       return -1;
     }
   }
-  
+
   sin.sin_family = AF_INET;
   memcpy (&(sin.sin_addr.s_addr), hp->h_addr, sizeof (hp->h_addr));
   sin.sin_port = htons (server_port);
@@ -312,7 +312,7 @@ rtp_connect (char *hostname, int port)
   /* Increase the socket rx buffer size to maximum -- this is UDP */
   rxsockbufsz = 240 * 1024;
   if (setsockopt (s, SOL_SOCKET, SO_RCVBUF,
-                  &rxsockbufsz, sizeof (rxsockbufsz)))
+		  &rxsockbufsz, sizeof (rxsockbufsz)))
     MSG_ERR("Couldn't set receive socket buffer size\n");
 
   /* if multicast address, add membership */
@@ -329,7 +329,7 @@ rtp_connect (char *hostname, int port)
       return -1;
     }
   }
-  
+
   /* datagram socket */
   if (bind (s, (struct sockaddr *) &sin, sizeof (sin)))
   {
@@ -347,10 +347,10 @@ rtp_connect (char *hostname, int port)
 
   tv.tv_sec = 0;
   tv.tv_usec = (1 * 1000000); /* 1 second timeout */
-  
+
   FD_ZERO (&set);
   FD_SET (s, &set);
-  
+
   err = select (s + 1, &set, NULL, NULL, &tv);
   if (err < 0)
   {
@@ -364,7 +364,7 @@ rtp_connect (char *hostname, int port)
     close (s);
     return -1;
   }
-  
+
   err_len = sizeof (err);
   getsockopt (s, SOL_SOCKET, SO_ERROR, &err, (socklen_t *) &err_len);
   if (err)
@@ -373,7 +373,7 @@ rtp_connect (char *hostname, int port)
     close (s);
     return -1;
   }
-  
+
   return s;
 }
 
@@ -384,7 +384,7 @@ is_multicast_address (char *addr)
 
   if (!addr)
     return -1;
-  
+
   sin.sin_family = AF_INET;
 
 #ifndef HAVE_WINSOCK2
@@ -396,7 +396,7 @@ is_multicast_address (char *addr)
 #else
     sin.sin_addr.s_addr = htonl (INADDR_ANY);
 #endif
-  
+
   if ((ntohl (sin.sin_addr.s_addr) >> 28) == 0xe)
     return 1;
 
@@ -419,7 +419,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   int statut;
   int content_length = 0;
   int is_multicast = 0;
-  
+
   fsdp_description_t *dsc = NULL;
   fsdp_error_t result;
 
@@ -454,7 +454,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
     return NULL;
   }
   sdp[content_length] = 0;
-  
+
   /* 3. parse SDP message */
   dsc = fsdp_description_new ();
   result = fsdp_parse (sdp, dsc);
@@ -492,7 +492,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   }
 
   /* 6. parse the `m=<media>  <port>  <transport> <fmt list>' line */
- 
+
   /* check for an A/V media */
   if (fsdp_get_media_type (med_dsc) != FSDP_MEDIA_VIDEO &&
       fsdp_get_media_type (med_dsc) != FSDP_MEDIA_AUDIO)
@@ -500,7 +500,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
     fsdp_description_delete (dsc);
     return NULL;
   }
-  
+
   /* only RTP/AVP transport method is supported right now */
   if (fsdp_get_media_transport_protocol (med_dsc) != FSDP_TP_RTP_AVP)
   {
@@ -510,7 +510,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
 
   /* only MPEG-TS is supported at the moment */
   if (!strstr (fsdp_get_media_format (med_dsc, 0),
-               RTSP_MEDIA_CONTAINER_MPEG_TS))
+	       RTSP_MEDIA_CONTAINER_MPEG_TS))
   {
     fsdp_description_delete (dsc);
     return NULL;
@@ -536,7 +536,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
 
   /* RTCP port generally is RTP port + 1 */
   client_rtcp_port = client_rtp_port + 1;
-  
+
   MSG_V("RTP Port from SDP appears to be: %d\n", client_rtp_port);
   MSG_V("RTCP Port from SDP appears to be: %d\n", client_rtcp_port);
 
@@ -572,7 +572,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
     /* no control for media: try global one instead */
     server_addr = mp_strdup (fsdp_get_global_conn_address (dsc));
   }
-    
+
   if (!server_addr)
   {
     fsdp_description_delete (dsc);
@@ -605,10 +605,10 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   /* 9. create the payload for RTSP SETUP request */
   memset (temp_buf, '\0', MAX_LENGTH);
   snprintf (temp_buf, MAX_LENGTH,
-            RTSP_TRANSPORT_REQUEST,
-            is_multicast ? RTSP_TRANSPORT_MULTICAST : RTSP_TRANSPORT_UNICAST,
-            is_multicast ? RTSP_MULTICAST_PORT : RTSP_UNICAST_CLIENT_PORT,
-            client_rtp_port, client_rtcp_port);
+	    RTSP_TRANSPORT_REQUEST,
+	    is_multicast ? RTSP_TRANSPORT_MULTICAST : RTSP_TRANSPORT_UNICAST,
+	    is_multicast ? RTSP_MULTICAST_PORT : RTSP_UNICAST_CLIENT_PORT,
+	    client_rtp_port, client_rtcp_port);
   MSG_V("RTSP Transport: %s\n", temp_buf);
 
   rtsp_unschedule_field (rtsp_session, RTSP_SESSION);
@@ -617,11 +617,11 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   /* 10. check for the media control URL type and initiate RTSP SETUP */
   if (!strncmp (rtp_session->control_url, "rtsp://", 7)) /* full URL */
     statut = rtsp_request_setup (rtsp_session,
-                                 rtp_session->control_url, NULL);
+				 rtp_session->control_url, NULL);
   else /* relative URL */
     statut = rtsp_request_setup (rtsp_session,
-                                 NULL, rtp_session->control_url);
-    
+				 NULL, rtp_session->control_url);
+
   if (statut < 200 || statut > 299)
   {
     mp_free (server_addr);
@@ -646,13 +646,13 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
 
   if (is_multicast)
     parse_port (answer, RTSP_MULTICAST_PORT,
-                &client_rtp_port, &client_rtcp_port);
+		&client_rtp_port, &client_rtcp_port);
   else
   {
     parse_port (answer, RTSP_UNICAST_CLIENT_PORT,
-                &client_rtp_port, &client_rtcp_port);
+		&client_rtp_port, &client_rtcp_port);
     parse_port (answer, RTSP_UNICAST_SERVER_PORT,
-                &server_rtp_port, &server_rtcp_port);
+		&server_rtp_port, &server_rtcp_port);
   }
 
   /* now check network settings as determined by server */

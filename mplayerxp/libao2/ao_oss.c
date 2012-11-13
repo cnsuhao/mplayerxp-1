@@ -107,13 +107,13 @@ static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
 		{
 		    if (cmd == AOCONTROL_GET_VOLUME)
 		    {
-		        ioctl(fd, MIXER_READ(priv->mixer_channel), &v);
+			ioctl(fd, MIXER_READ(priv->mixer_channel), &v);
 			vol->right = (v & 0xFF00) >> 8;
 			vol->left = v & 0x00FF;
 		    }
 		    else
 		    {
-		        v = ((int)vol->right << 8) | (int)vol->left;
+			v = ((int)vol->right << 8) | (int)vol->left;
 			ioctl(fd, MIXER_WRITE(priv->mixer_channel), &v);
 		    }
 		}
@@ -159,7 +159,7 @@ static void show_fmts(ao_data_t* ao)
 	if(rval & AFMT_S32_BE) MSG_INFO("AFMT_S32_BE ");
 	if(rval & AFMT_U32_LE) MSG_INFO("AFMT_U32_LE ");
 	if(rval & AFMT_U32_BE) MSG_INFO("AFMT_U32_LE ");
-	MSG_INFO("\n");	
+	MSG_INFO("\n");
   }
 }
 
@@ -444,7 +444,7 @@ static float get_delay(ao_data_t* ao){
       ierr=ioctl(priv->fd, SNDCTL_DSP_GETODELAY, &r);
       if(ierr!=-1)
       {
-         return ((float)r)/(float)ao->bps;
+	 return ((float)r)/(float)ao->bps;
       }
 #endif
       priv->delay_method=1; // fallback if not supported
@@ -454,7 +454,7 @@ static float get_delay(ao_data_t* ao){
       ierr=ioctl(priv->fd, SNDCTL_DSP_GETOSPACE, &priv->zz);
       if(ierr!=-1)
       {
-         return ((float)(ao->buffersize-priv->zz.bytes))/(float)ao->bps;
+	 return ((float)(ao->buffersize-priv->zz.bytes))/(float)ao->bps;
       }
       priv->delay_method=0; // fallback if not supported
   }

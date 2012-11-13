@@ -78,7 +78,7 @@
 #include "mp_msg.h"
 
 /**************************************************************************
-             Private data
+	     Private data
 **************************************************************************/
 static volatile char antiviral_hole1[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
@@ -145,14 +145,14 @@ mp_data_t* mp_data=NULL;
 xp_core_t* xp_core=NULL;
 
 /**************************************************************************
-             Decoding ahead
+	     Decoding ahead
 **************************************************************************/
 static volatile char antiviral_hole3[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
 
 /**************************************************************************
-             Config file
+	     Config file
 **************************************************************************/
 static int cfg_inc_verbose(struct config *conf){ UNUSED(conf); ++mp_conf.verbose; return 0;}
 
@@ -625,7 +625,7 @@ void update_osd( float v_pts )
       char osd_text_tmp[64];
       if(pts==osd_last_pts-addon)
       {
-        if(mp_conf.osd_level==3&&priv->demuxer->movi_length!=UINT_MAX) ++pts;
+	if(mp_conf.osd_level==3&&priv->demuxer->movi_length!=UINT_MAX) ++pts;
 	else --pts;
       }
       else osd_last_pts=pts;
@@ -638,7 +638,7 @@ void update_osd( float v_pts )
 	  if(mp_conf.verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d",priv->osd_function,pts/3600,(pts/60)%60,pts%60);
 	  else sprintf(osd_text_tmp,"%c %02d:%02d:%02d",priv->osd_function,pts/3600,(pts/60)%60,pts%60);
 #else
-          sprintf(osd_text_tmp,"%c %02d:%02d:%02d",priv->osd_function,pts/3600,(pts/60)%60,pts%60);
+	  sprintf(osd_text_tmp,"%c %02d:%02d:%02d",priv->osd_function,pts/3600,(pts/60)%60,pts%60);
 #endif
       if(strcmp(vo_data->osd_text, osd_text_tmp)) {
 	      strcpy(vo_data->osd_text, osd_text_tmp);
@@ -918,7 +918,7 @@ static int mpxp_init_vobsub(const char *filename) {
     if (mp_conf.vobsub_name){
       vo_data->vobsub=vobsub_open(mp_conf.vobsub_name,mp_conf.spudec_ifo,1,&vo_data->spudec);
       if(vo_data->vobsub==NULL)
-        MSG_ERR(MSGTR_CantLoadSub,mp_conf.vobsub_name);
+	MSG_ERR(MSGTR_CantLoadSub,mp_conf.vobsub_name);
       else {
 	priv->inited_flags|=INITED_VOBSUB;
 	vobsub_set_from_lang(vo_data->vobsub, mp_conf.dvdsub_lang);
@@ -1606,7 +1606,7 @@ For future:
 	break;
     case MP_CMD_SUB_POS:
     {
-        int v;
+	int v;
 	v = cmd->args[0].v.i;
 
 	sub_data.pos+=v;

@@ -74,7 +74,7 @@ struct play_tree {
 struct play_tree_iter {
   play_tree_t* root; // Iter root tree
   play_tree_t* tree; // Current tree
-  m_config_t* config; 
+  m_config_t* config;
   int loop;  // Looping status
   int file;
   int num_files;
@@ -116,7 +116,7 @@ play_tree_prepend_entry(play_tree_t* pt, play_tree_t* entry);
 void
 play_tree_insert_entry(play_tree_t* pt, play_tree_t* entry);
 
-// Detach from the tree 
+// Detach from the tree
 void
 play_tree_remove(play_tree_t* pt, int free_it,int with_childs);
 
@@ -153,7 +153,7 @@ play_tree_iter_free(play_tree_iter_t* iter);
 // d is the direction : d > 0 == next , d < 0 == prev
 // with_node : TRUE == stop on nodes with childs, FALSE == go directly to the next child
 
-int 
+int
 play_tree_iter_step(play_tree_iter_t* iter, int d,int with_nodes);
 
 int // Break a loop, etc

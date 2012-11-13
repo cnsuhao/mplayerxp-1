@@ -25,14 +25,14 @@
 
 
 struct nuv_signature
-{ 
+{
 	char finfo[12];     /* "NuppelVideo" + \0 */
 	char version[5];    /* "0.05" + \0 */
 };
 
 typedef struct _nuv_position_t nuv_position_t;
 
-struct _nuv_position_t 
+struct _nuv_position_t
 {
 	off_t offset;
 	float time;
@@ -40,7 +40,7 @@ struct _nuv_position_t
 	nuv_position_t* next;
 };
 
-typedef struct _nuv_info_t 
+typedef struct _nuv_info_t
 {
 	int current_audio_frame;
 	int current_video_frame;
@@ -71,12 +71,12 @@ static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 
 
 		while(current_time < target_time )
-		{	
+		{
 			if ((unsigned)stream_read ( demuxer->stream, (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
 				return; /* EOF */
 			le2me_rtframeheader(&rtjpeg_frameheader);
 
-			if ( rtjpeg_frameheader.frametype == 'V' ) 
+			if ( rtjpeg_frameheader.frametype == 'V' )
 			{
 				priv->current_position->next = (nuv_position_t*) mp_malloc ( sizeof ( nuv_position_t ) );
 				priv->current_position = priv->current_position->next;
@@ -100,7 +100,7 @@ static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 				/* Adjust current sequence pointer */
 			}
 			else if ( rtjpeg_frameheader.frametype == 'A' )
-			{	
+			{
 				if ( start_time == MAX_TIME )
 				{
 					start_time = rtjpeg_frameheader.timecode;
@@ -158,7 +158,7 @@ static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
 	    (rtjpeg_frameheader.frametype == 'T') ||
 	    (rtjpeg_frameheader.frametype == 'S'))
 	    return 1;
-	
+
 	if (((rtjpeg_frameheader.frametype == 'D') &&
 	    (rtjpeg_frameheader.comptype == 'R')) ||
 	    (rtjpeg_frameheader.frametype == 'V'))
@@ -175,7 +175,7 @@ static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
 	    }
 	    /* put RTjpeg tables, Video info to video buffer */
 	    stream_seek ( demuxer->stream, orig_pos );
-	    ds_read_packet ( demuxer->video, demuxer->stream, rtjpeg_frameheader.packetlength + 12, 
+	    ds_read_packet ( demuxer->video, demuxer->stream, rtjpeg_frameheader.packetlength + 12,
 		    rtjpeg_frameheader.timecode*0.001, orig_pos, DP_NONKEYFRAME);
 
 
@@ -187,7 +187,7 @@ static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
 	    priv->current_audio_frame++;
 	    if (want_audio) {
 	    /* put Audio to audio buffer */
-		ds_read_packet ( demuxer->audio, demuxer->stream, rtjpeg_frameheader.packetlength, 
+		ds_read_packet ( demuxer->audio, demuxer->stream, rtjpeg_frameheader.packetlength,
 			rtjpeg_frameheader.timecode*0.001, orig_pos + 12, DP_NONKEYFRAME);
 	    } else {
 	      /* skip audio block */
@@ -237,7 +237,7 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	/* Make sure that the video demuxer stream header knows about its
 	 * parent video demuxer stream (this is getting wacky), or else
 	 * video_read_properties() will choke
-         */
+	 */
 	sh_video->ds = demuxer->video;
 
 	/* Custom fourcc for internal MPlayer use */
@@ -247,9 +247,9 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	sh_video->src_h = rtjpeg_fileheader.height;
 
 	/* NuppelVideo uses pixel aspect ratio
-           here display aspect ratio is used.
+	   here display aspect ratio is used.
 	   For the moment NuppelVideo only supports 1.0 thus
-	   1.33 == 4:3 aspect ratio.   
+	   1.33 == 4:3 aspect ratio.
 	*/
 	if(rtjpeg_fileheader.aspect == 1.0)
 		sh_video->aspect = (float) 4.0f/3.0f;

@@ -25,10 +25,10 @@ struct vf_priv_s {
 //===========================================================================//
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int voflags, unsigned int outfmt){
     int flags=
-          (gCpuCaps.hasMMX   ? PP_CPU_CAPS_MMX   : 0)
+	  (gCpuCaps.hasMMX   ? PP_CPU_CAPS_MMX   : 0)
 	| (gCpuCaps.hasMMX2  ? PP_CPU_CAPS_MMX2  : 0)
 	| (gCpuCaps.has3DNow ? PP_CPU_CAPS_3DNOW : 0);
 
@@ -48,7 +48,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){
     int i;
     for(i=0; i<=PP_QUALITY_MAX; i++){
-        if(vf->priv->ppMode[i])
+	if(vf->priv->ppMode[i])
 	    pp_free_mode(vf->priv->ppMode[i]);
     }
     if(vf->priv->context) pp_free_context(vf->priv->context);
@@ -80,7 +80,7 @@ static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t
 
 static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     if(vf->priv->pp&0xFFFF) return; // non-local filters enabled
-    if((mpi->type==MP_IMGTYPE_IPB || vf->priv->pp) && 
+    if((mpi->type==MP_IMGTYPE_IPB || vf->priv->pp) &&
 	mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
     if(!(mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && mpi->imgfmt!=vf->priv->outfmt)
 	return; // colorspace differ
@@ -90,8 +90,8 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     mpi->stride[0]=vf->dmpi->stride[0];
     mpi->width=vf->dmpi->width;
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-        mpi->planes[1]=vf->dmpi->planes[1];
-        mpi->planes[2]=vf->dmpi->planes[2];
+	mpi->planes[1]=vf->dmpi->planes[1];
+	mpi->planes[2]=vf->dmpi->planes[2];
 	mpi->stride[1]=vf->dmpi->stride[1];
 	mpi->stride[2]=vf->dmpi->stride[2];
     }

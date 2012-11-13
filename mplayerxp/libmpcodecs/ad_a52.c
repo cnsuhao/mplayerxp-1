@@ -32,7 +32,7 @@ uint32_t mpxp_a52_flags=0;
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
 
-static const ad_info_t info = 
+static const ad_info_t info =
 {
 	"liba52 AC3 driver",
 	"liba52",

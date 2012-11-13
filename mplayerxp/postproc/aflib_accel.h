@@ -223,7 +223,7 @@ static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const any_t* in_data, any_t*
 	  ((uint8_t*)out_data)[i]=(uint8_t)((((uint32_t*)in_data)[i])>>24);
 	break;
       case 2:
-        PVECTOR_RENAME(int32_to_int16)(in_data,out_data,len,final);
+	PVECTOR_RENAME(int32_to_int16)(in_data,out_data,len,final);
 	break;
       case 3:
 	for(i=0;i<len;i++)
@@ -305,9 +305,9 @@ static int32_t __FASTCALL__ PVECTOR_RENAME(FIR_i16)(const int16_t *x,const int16
     return _mm_cvtsi64_si32(mm[0]);
 #else
   return ( w[0] *x[0] +w[1] *x[1] +w[2] *x[2] +w[3] *x[3]
-         + w[4] *x[4] +w[5] *x[5] +w[6] *x[6] +w[7] *x[7]
-         + w[8] *x[8] +w[9] *x[9] +w[10]*x[10]+w[11]*x[11]
-         + w[12]*x[12]+w[13]*x[13]+w[14]*x[14]+w[15]*x[15] ) >> 16;
+	 + w[4] *x[4] +w[5] *x[5] +w[6] *x[6] +w[7] *x[7]
+	 + w[8] *x[8] +w[9] *x[9] +w[10]*x[10]+w[11]*x[11]
+	 + w[12]*x[12]+w[13]*x[13]+w[14]*x[14]+w[15]*x[15] ) >> 16;
 #endif
 }
 
@@ -531,8 +531,8 @@ inline __m128 _my_hadd_ps( __m128 a, __m128 b) {
     return rval.fpart;
 #else
   return ( w[0] *x[0] +w[1] *x[1] +w[2] *x[2] +w[3] *x[3]
-         + w[4] *x[4] +w[5] *x[5] +w[6] *x[6] +w[7] *x[7]
-         + w[8] *x[8] +w[9] *x[9] +w[10]*x[10]+w[11]*x[11]
-         + w[12]*x[12]+w[13]*x[13]+w[14]*x[14]+w[15]*x[15] );
+	 + w[4] *x[4] +w[5] *x[5] +w[6] *x[6] +w[7] *x[7]
+	 + w[8] *x[8] +w[9] *x[9] +w[10]*x[10]+w[11]*x[11]
+	 + w[12]*x[12]+w[13]*x[13]+w[14]*x[14]+w[15]*x[15] );
 #endif
 }

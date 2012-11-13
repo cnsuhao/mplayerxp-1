@@ -250,18 +250,18 @@ static unsigned int avi_aspect(float aspect)
     if (aspect <= 0.0) return 0;
 
     if (aspect > 15.99/9.0 && aspect < 16.01/9.0) {
-        return MAKE_AVI_ASPECT(16, 9);
+	return MAKE_AVI_ASPECT(16, 9);
     }
     if (aspect > 3.99/3.0 && aspect < 4.01/3.0) {
-        return MAKE_AVI_ASPECT(4, 3);
+	return MAKE_AVI_ASPECT(4, 3);
     }
 
     if (aspect >= 1.0) {
-        x = 16384;
-        y = (float)x / aspect;
+	x = 16384;
+	y = (float)x / aspect;
     } else {
-        y = 16384;
-        x = (float)y * aspect;
+	y = 16384;
+	x = (float)y * aspect;
     }
 
     return MAKE_AVI_ASPECT(x, y);
@@ -399,7 +399,7 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 	    fwrite("unknown/x-unknown",flags,1,f);
 	    break;
     }
-    
+
     mpxpav64_close_header32(f,fpos);
 }
 
@@ -464,7 +464,7 @@ static void mpxpav64_write_packet(muxer_stream_t *s,size_t len,unsigned int flag
     xflg=0;
     is_seek=0;
     if(!privs->data_off) privs->data_off=off;
-    if(privs->first_pts==HUGE) privs->first_pts=pts; 
+    if(privs->first_pts==HUGE) privs->first_pts=pts;
     privs->last_pts=pts;
     if(is_first_packet) { is_first_packet=0; is_seek=1; }
     if(s->muxer->def_v)

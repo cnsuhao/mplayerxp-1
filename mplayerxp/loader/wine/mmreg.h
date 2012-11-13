@@ -48,7 +48,7 @@ typedef struct __attribute__((__packed__)) WAVEFILTER_ECHO {
    DWORD           dwDelay;
 } ECHOWAVEFILTER, *PECHOWAVEFILTER, *NPECHOWAVEFILTER, *LPECHOWAVEFILTER;
 #endif  /* WAVEFILTER_ECHO */
-    
+
 #ifndef _WAVEFORMATEX_
 #define _WAVEFORMATEX_
 typedef struct __attribute__((__packed__)) _WAVEFORMATEX {
@@ -78,12 +78,12 @@ typedef struct __attribute__((packed))
 typedef struct {
     WAVEFORMATEX    Format;
     union {
-        WORD wValidBitsPerSample;       /* bits of precision  */
-        WORD wSamplesPerBlock;          /* valid if wBitsPerSample==0 */
-        WORD wReserved;                 /* If neither applies, set to zero. */
+	WORD wValidBitsPerSample;       /* bits of precision  */
+	WORD wSamplesPerBlock;          /* valid if wBitsPerSample==0 */
+	WORD wReserved;                 /* If neither applies, set to zero. */
     } Samples;
     DWORD           dwChannelMask;      /* which channels are */
-                                        /* present in stream  */
+					/* present in stream  */
     GUID            SubFormat;
 } WAVEFORMATEXTENSIBLE, *PWAVEFORMATEXTENSIBLE;
 #endif // !_WAVEFORMATEXTENSIBLE_

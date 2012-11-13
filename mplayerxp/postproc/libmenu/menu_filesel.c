@@ -49,7 +49,7 @@ struct menu_priv_s {
   char* dir_action;
   int auto_close;
   char** actions;
-  char* filter; 
+  char* filter;
 };
 
 static struct menu_priv_s cfg_dflt = {
@@ -91,21 +91,21 @@ static char* replace_path(char* title , char* dir) {
   if(p) {
     int tl = strlen(title);
     int dl = strlen(dir);
-    int t1l = p-title; 
+    int t1l = p-title;
     int l = tl - 2 + dl;
     char *r, *n, *d = dir;
     char term = *(p-1);
 
     do {
       if (*d == '\\' || *d == term)
-        l++;
+	l++;
     } while (*d++);
     r = mp_malloc(l + 1);
     n = r + t1l;
     memcpy(r,title,t1l);
     do {
       if (*dir == '\\' || *dir == term)
-        *n++ = '\\';
+	*n++ = '\\';
     } while ((*n++ = *dir++));
     if(tl - t1l - 2 > 0)
       strcpy(n-1,p+2);
@@ -228,29 +228,29 @@ static int open_dir(menu_t* menu,char* args) {
     if (menu_chroot && !strcmp (dp->d_name,"..")) {
       int len = strlen (menu_chroot);
       if ((strlen (mpriv->dir) == len || strlen (mpriv->dir) == len + 1)
-          && !strncmp (mpriv->dir, menu_chroot, len))
-        continue;
+	  && !strncmp (mpriv->dir, menu_chroot, len))
+	continue;
     }
     mylstat(args,dp->d_name,&st);
     if (file_filter && extensions && !S_ISDIR(st.st_mode)) {
       if((ext = strrchr(dp->d_name,'.')) == NULL)
-        continue;
+	continue;
       ext++;
       elem = extensions;
       do {
-        if (!strcasecmp(ext, *elem))
-          break;
+	if (!strcasecmp(ext, *elem))
+	  break;
       } while (*++elem);
       if (*elem == NULL)
-        continue;
+	continue;
     }
     if(n%20 == 0){ // Get some more mem
       if((tp = (char **) mp_realloc(namelist, (n+20) * sizeof (char *)))
-         == NULL) {
-        MSG_ERR("[libmenu] Realloc error: %s\n", strerror(errno));
+	 == NULL) {
+	MSG_ERR("[libmenu] Realloc error: %s\n", strerror(errno));
 	n--;
-        goto bailout;
-      } 
+	goto bailout;
+      }
       namelist=tp;
     }
 
@@ -260,7 +260,7 @@ static int open_dir(menu_t* menu,char* args) {
       n--;
       goto bailout;
     }
-     
+
     strcpy(namelist[n], dp->d_name);
     if(S_ISDIR(st.st_mode))
       strcat(namelist[n], "/");
@@ -293,7 +293,7 @@ bailout:
 
   return 1;
 }
-    
+
 
 static char *action;
 
@@ -378,9 +378,9 @@ static void read_key(menu_t* menu,int c){
     char **str;
     for (str=mpriv->actions; str && *str; str++)
       if (c == (*str)[0]) {
-        action = &(*str)[2];
-        read_cmd(menu,MENU_CMD_ACTION);
-        break;
+	action = &(*str)[2];
+	read_cmd(menu,MENU_CMD_ACTION);
+	break;
       }
     if (!str || !*str)
       menu_list_read_key(menu,c,1);
@@ -407,25 +407,25 @@ static int open_fs(menu_t* menu,const char* args) {
     if (!path || path[0] == '\0') {
       struct stat st;
       int path_fp;
-      
+
       path_fp = open (MENU_KEEP_PATH, O_RDONLY);
       if (path_fp >= 0) {
-        if (!fstat (path_fp, &st) && (st.st_size > 0)) {
-          path = mp_malloc(st.st_size+1);
-          if ((read(path_fp, path, st.st_size) == st.st_size) && path[0] != '\0'){
-            freepath = path;
-            path[st.st_size] = '\0';
-          }
-          else {
-            mp_free(path);
-            path = NULL;
-          }
-        }
-        close (path_fp);
+	if (!fstat (path_fp, &st) && (st.st_size > 0)) {
+	  path = mp_malloc(st.st_size+1);
+	  if ((read(path_fp, path, st.st_size) == st.st_size) && path[0] != '\0'){
+	    freepath = path;
+	    path[st.st_size] = '\0';
+	  }
+	  else {
+	    mp_free(path);
+	    path = NULL;
+	  }
+	}
+	close (path_fp);
       }
     }
   }
-  
+
   getcwd(wd,PATH_MAX);
   if(!path || path[0] == '\0') {
     int l = strlen(wd) + 2;
@@ -446,10 +446,10 @@ static int open_fs(menu_t* menu,const char* args) {
 
   if (freepath)
     mp_free(freepath);
-  
+
   return r;
 }
-  
+
 const menu_info_t menu_info_filesel = {
   "File seletor menu",
   "filesel",

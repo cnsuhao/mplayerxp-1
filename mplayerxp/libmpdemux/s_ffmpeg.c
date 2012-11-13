@@ -78,7 +78,7 @@ static MPXP_Rc __FASTCALL__ ffmpeg_open(any_t*libinput,stream_t *stream,const ch
     p->spos = 0;
     size = ffurl_size(ctx);
     if (size >= 0)
-        stream->end_pos = size;
+	stream->end_pos = size;
     stream->type = STREAMTYPE_SEEKABLE;
     stream->priv = p;
     if (ctx->is_streamed) stream->type = STREAMTYPE_STREAM;

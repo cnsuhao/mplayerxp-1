@@ -57,10 +57,10 @@ typedef struct af_control_ext_s{
 }af_control_ext_t;
 
 /*********************************************
-// Control parameters 
+// Control parameters
 */
 
-/* The control system is divided into 3 levels 
+/* The control system is divided into 3 levels
    mandatory calls 	 - all filters must answer to all of these
    optional calls  	 - are optional
    filter specific calls - applies only to some filters
@@ -115,8 +115,8 @@ enum {
     AF_CONTROL_VOLUME_ON_OFF	=0x00000A00|AF_CONTROL_FILTER_SPECIFIC, // Turn volume control on and off, arg is int*
     AF_CONTROL_VOLUME_SOFTCLIP	=0x00000B00|AF_CONTROL_FILTER_SPECIFIC, // Turn soft clipping of the volume on and off, arg is binary
     AF_CONTROL_VOLUME_LEVEL	=0x00000C00|AF_CONTROL_FILTER_SPECIFIC, // Set volume level, arg is a float* with the volume for all the channels
-    AF_CONTROL_VOLUME_PROBE	=0x00000D00|AF_CONTROL_FILTER_SPECIFIC, // Probed power level for all channels, arg is a float* 
-    AF_CONTROL_VOLUME_PROBE_MAX	=0x00000E00|AF_CONTROL_FILTER_SPECIFIC, // Maximum probed power level for all channels, arg is a float* 
+    AF_CONTROL_VOLUME_PROBE	=0x00000D00|AF_CONTROL_FILTER_SPECIFIC, // Probed power level for all channels, arg is a float*
+    AF_CONTROL_VOLUME_PROBE_MAX	=0x00000E00|AF_CONTROL_FILTER_SPECIFIC, // Maximum probed power level for all channels, arg is a float*
 // Compressor/expander
     AF_CONTROL_COMP_ON_OFF	=0x00000F00|AF_CONTROL_FILTER_SPECIFIC, // Turn compressor/expander on and off
     AF_CONTROL_COMP_THRESH	=0x00001000|AF_CONTROL_FILTER_SPECIFIC, // Compression/expansion threshold [dB]
@@ -130,7 +130,7 @@ enum {
     AF_CONTROL_GATE_RELEASE	=0x00001700|AF_CONTROL_FILTER_SPECIFIC, // Noise gate release time [ms]
     AF_CONTROL_GATE_RANGE	=0x00001800|AF_CONTROL_FILTER_SPECIFIC, // Noise gate release range level [dB]
 // Pan
-    AF_CONTROL_PAN_LEVEL	=0x00001900|AF_CONTROL_FILTER_SPECIFIC, // Pan levels, arg is a control_ext with a float* 
+    AF_CONTROL_PAN_LEVEL	=0x00001900|AF_CONTROL_FILTER_SPECIFIC, // Pan levels, arg is a control_ext with a float*
     AF_CONTROL_PAN_NOUT		=0x00001A00|AF_CONTROL_FILTER_SPECIFIC, // Number of outputs from pan, arg is int*
     AF_CONTROL_EQUALIZER_GAIN	=0x00001B00|AF_CONTROL_FILTER_SPECIFIC, // Set equalizer gain, arg is a control_ext with a float*
     AF_CONTROL_DELAY_LEN	=0x00001C00|AF_CONTROL_FILTER_SPECIFIC, // Delay length in ms, arg is a control_ext with a float*

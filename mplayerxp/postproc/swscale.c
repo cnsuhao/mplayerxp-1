@@ -20,7 +20,7 @@ void palette8torgb32(const uint8_t *src, uint8_t *dst, long num_pixels, const ui
     long i;
 
     for (i=0; i<num_pixels; i++)
-        ((uint32_t *) dst)[i] = ((const uint32_t *) palette)[src[i]];
+	((uint32_t *) dst)[i] = ((const uint32_t *) palette)[src[i]];
 }
 
 void palette8tobgr32(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette)
@@ -28,7 +28,7 @@ void palette8tobgr32(const uint8_t *src, uint8_t *dst, long num_pixels, const ui
     long i;
 
     for (i=0; i<num_pixels; i++)
-        ((uint32_t *) dst)[i] = bswap_32(((const uint32_t *) palette)[src[i]]);
+	((uint32_t *) dst)[i] = bswap_32(((const uint32_t *) palette)[src[i]]);
 }
 
 /**
@@ -39,11 +39,11 @@ void palette8torgb24(const uint8_t *src, uint8_t *dst, long num_pixels, const ui
     long i;
 
     for (i=0; i<num_pixels; i++) {
-        //FIXME slow?
-        dst[0]= palette[src[i]*4+0];
-        dst[1]= palette[src[i]*4+1];
-        dst[2]= palette[src[i]*4+2];
-        dst+= 3;
+	//FIXME slow?
+	dst[0]= palette[src[i]*4+0];
+	dst[1]= palette[src[i]*4+1];
+	dst[2]= palette[src[i]*4+2];
+	dst+= 3;
     }
 }
 
@@ -52,11 +52,11 @@ void palette8tobgr24(const uint8_t *src, uint8_t *dst, long num_pixels, const ui
     long i;
 
     for (i=0; i<num_pixels; i++) {
-        //FIXME slow?
-        dst[2]= palette[src[i]*4+0];
-        dst[1]= palette[src[i]*4+1];
-        dst[0]= palette[src[i]*4+2];
-        dst+= 3;
+	//FIXME slow?
+	dst[2]= palette[src[i]*4+0];
+	dst[1]= palette[src[i]*4+1];
+	dst[0]= palette[src[i]*4+2];
+	dst+= 3;
     }
 }
 
@@ -67,13 +67,13 @@ void palette8torgb16(const uint8_t *src, uint8_t *dst, long num_pixels, const ui
 {
     long i;
     for (i=0; i<num_pixels; i++)
-        ((uint16_t *)dst)[i] = ((const uint16_t *)palette)[src[i]];
+	((uint16_t *)dst)[i] = ((const uint16_t *)palette)[src[i]];
 }
 void palette8tobgr16(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette)
 {
     long i;
     for (i=0; i<num_pixels; i++)
-        ((uint16_t *)dst)[i] = bswap_16(((const uint16_t *)palette)[src[i]]);
+	((uint16_t *)dst)[i] = bswap_16(((const uint16_t *)palette)[src[i]]);
 }
 
 /**
@@ -83,13 +83,13 @@ void palette8torgb15(const uint8_t *src, uint8_t *dst, long num_pixels, const ui
 {
     long i;
     for (i=0; i<num_pixels; i++)
-        ((uint16_t *)dst)[i] = ((const uint16_t *)palette)[src[i]];
+	((uint16_t *)dst)[i] = ((const uint16_t *)palette)[src[i]];
 }
 void palette8tobgr15(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette)
 {
     long i;
     for (i=0; i<num_pixels; i++)
-        ((uint16_t *)dst)[i] = bswap_16(((const uint16_t *)palette)[src[i]]);
+	((uint16_t *)dst)[i] = bswap_16(((const uint16_t *)palette)[src[i]]);
 }
 
 

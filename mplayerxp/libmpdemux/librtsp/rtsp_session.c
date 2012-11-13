@@ -88,7 +88,7 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
   rtsp_session->s = NULL;
   rtsp_session->real_session = NULL;
   rtsp_session->rtp_session = NULL;
- 
+
 //connect:
   *redir = 0;
 
@@ -119,28 +119,28 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
       /* got an redirect? */
       if (rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION))
       {
-        mp_free(mrl_line);
+	mp_free(mrl_line);
 	mrl_line=mp_strdup(rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION));
-        MSG_INFO("rtsp_session: redirected to %s\n", mrl_line);
+	MSG_INFO("rtsp_session: redirected to %s\n", mrl_line);
 	rtsp_close(rtsp_session->s);
 	mp_free(server);
-        mp_free(*mrl);
-        mp_free(rtsp_session);
-        /* tell the caller to redirect, return url to redirect to in mrl */
-        *mrl = mrl_line;
-        *redir = 1;
-        return NULL;
+	mp_free(*mrl);
+	mp_free(rtsp_session);
+	/* tell the caller to redirect, return url to redirect to in mrl */
+	*mrl = mrl_line;
+	*redir = 1;
+	return NULL;
 //	goto connect; /* *shudder* i made a design mistake somewhere */
       } else
       {
-        MSG_ERR("rtsp_session: session can not be established.\n");
-        rtsp_close(rtsp_session->s);
-        mp_free (server);
-        mp_free(rtsp_session);
-        return NULL;
+	MSG_ERR("rtsp_session: session can not be established.\n");
+	rtsp_close(rtsp_session->s);
+	mp_free (server);
+	mp_free(rtsp_session);
+	return NULL;
       }
     }
-	
+
     rtsp_session->real_session = init_real_rtsp_session ();
     if(!strncmp(h->streams[0]->mime_type, "application/vnd.rn-rmadriver", h->streams[0]->mime_type_size) ||
        !strncmp(h->streams[0]->mime_type, "application/smil", h->streams[0]->mime_type_size)) {
@@ -153,19 +153,19 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
       rmff_dump_header (h, (char *) rtsp_session->real_session->header, HEADER_SIZE);
 
       if (rtsp_session->real_session->header_len < 0) {
-        MSG_ERR("rtsp_session: error while dumping RMFF headers, session can not be established.\n");
-        free_real_rtsp_session(rtsp_session->real_session);
-        rtsp_close(rtsp_session->s);
-        mp_free (server);
-        mp_free (mrl_line);
-        mp_free(rtsp_session);
-        return NULL;
+	MSG_ERR("rtsp_session: error while dumping RMFF headers, session can not be established.\n");
+	free_real_rtsp_session(rtsp_session->real_session);
+	rtsp_close(rtsp_session->s);
+	mp_free (server);
+	mp_free (mrl_line);
+	mp_free(rtsp_session);
+	return NULL;
       }
 
     rtsp_session->real_session->recv =
       xbuffer_copyin (rtsp_session->real_session->recv, 0,
-                      rtsp_session->real_session->header,
-                      rtsp_session->real_session->header_len);
+		      rtsp_session->real_session->header,
+		      rtsp_session->real_session->header_len);
 
     rtsp_session->real_session->recv_size =
       rtsp_session->real_session->header_len;
@@ -187,9 +187,9 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
 
     /* check for minimalistic RTSP RFC compliance */
     if (!strstr (public, RTSP_METHOD_DESCRIBE)
-        || !strstr (public, RTSP_METHOD_SETUP)
-        || !strstr (public, RTSP_METHOD_PLAY)
-        || !strstr (public, RTSP_METHOD_TEARDOWN))
+	|| !strstr (public, RTSP_METHOD_SETUP)
+	|| !strstr (public, RTSP_METHOD_PLAY)
+	|| !strstr (public, RTSP_METHOD_TEARDOWN))
     {
       MSG_ERR("Remote server does not meet minimal RTSP 1.0 compliance.\n");
       rtsp_close (rtsp_session->s);
@@ -213,12 +213,12 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
     }
   }
   mp_free(server);
-  
+
   return rtsp_session;
 }
 
 int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
-  
+
   if (this->real_session) {
   int to_copy=len;
   char *dest=data;
@@ -231,7 +231,7 @@ int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
   if (len < 0) return 0;
   if (this->real_session->recv_size < 0) return -1;
   while (to_copy > fill) {
-    
+
     memcpy(dest, source, fill);
     to_copy -= fill;
     dest += fill;
@@ -252,7 +252,7 @@ int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
       return len-to_copy;
     }
   }
-  
+
   memcpy(dest, source, to_copy);
   this->real_session->recv_read += to_copy;
 
@@ -272,7 +272,7 @@ int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
 
     if (l == 0)
       rtsp_session_end (this);
-    
+
     return l;
   }
 

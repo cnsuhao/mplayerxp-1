@@ -31,7 +31,7 @@
 //===========================================================================//
 
 static int __FASTCALL__ config(struct vf_instance_s *vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
     flags&=~VOFLAG_FLIPPING; // remove the FLIP flag
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
@@ -52,7 +52,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s *vf, mp_image_t *mpi){
 		    mpi->stride[0]*(mpi->height-1);
     vf->dmpi->stride[0]=-mpi->stride[0];
     if(vf->dmpi->flags&MP_IMGFLAG_PLANAR){
-        vf->dmpi->planes[1]=mpi->planes[1]+
+	vf->dmpi->planes[1]=mpi->planes[1]+
 	    mpi->stride[1]*((mpi->height>>mpi->chroma_y_shift)-1);
 	vf->dmpi->stride[1]=-mpi->stride[1];
 	vf->dmpi->planes[2]=mpi->planes[2]+

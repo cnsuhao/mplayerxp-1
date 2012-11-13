@@ -477,7 +477,7 @@ xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_f
     unsigned int ret;
     xacodec_image_t *image=&xacodec_driver->image;
 
-// ugyis kiirja a vegen h dropped vagy nem.. 
+// ugyis kiirja a vegen h dropped vagy nem..
 //    if (skip_flag > 0)
 //	MSG_DBG2( "frame will be dropped..\n");
 
@@ -678,7 +678,7 @@ void XA_YUV_2x2_clr(XA_2x2_Color *cmap2x2, unsigned int Y0, unsigned int Y1,
 {
 
   MSG_DBG3("XA_YUV_2x2_clr(%p [%d,%d,%d,%d][%d][%d] %d %p %p)\n",
-          cmap2x2,Y0,Y1,Y2,Y3,U,V,map_flag,map,chdr);
+	  cmap2x2,Y0,Y1,Y2,Y3,U,V,map_flag,map,chdr);
 
   cmap2x2->clr0_0=Y0;
   cmap2x2->clr0_1=Y1;
@@ -863,7 +863,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
 		*((int*)arg) == IMGFMT_I420 ||
-		*((int*)arg) == IMGFMT_IYUV) 
+		*((int*)arg) == IMGFMT_IYUV)
 			return MPXP_True;
 	    else 	return MPXP_False;
       default: break;
@@ -893,7 +893,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     image=xacodec_decode_frame(frame->data,frame->len,(frame->flags&3)?1:0);
     if(!image) return NULL;
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE, 
+    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,
 	sh->src_w, sh->src_h);
     if(!mpi) return NULL;
 

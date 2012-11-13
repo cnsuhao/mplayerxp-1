@@ -44,7 +44,7 @@ extern int   network_prefer_ipv4;
 static const char *af2String(int af) {
 	switch (af) {
 		case AF_INET:	return "AF_INET";
-		
+
 #ifdef HAVE_AF_INET6
 		case AF_INET6:	return "AF_INET6";
 #endif
@@ -82,7 +82,7 @@ connect2Server_with_af(any_t* libinput,const char *host, int port, int af,int ve
 #else
 	struct timeval to;
 #endif
-	
+
 	MSG_V("[tcp%s] Trying to resolv host '%s' For AF %s\n", IP_NAME, host, af2String(af));
 	socket_server_fd = socket(af, SOCK_STREAM, 0);
 
@@ -136,7 +136,7 @@ connect2Server_with_af(any_t* libinput,const char *host, int port, int af,int ve
 			MSG_V("[tcp%s] Can't resolv: %s '%s'\n", IP_NAME, af2String(af), host);
 			return TCP_ERROR_FATAL;
 		}
-		
+
 		memcpy( our_s_addr, (any_t*)hp->h_addr_list[0], hp->h_length );
 	}
 #ifdef HAVE_WINSOCK2

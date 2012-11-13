@@ -61,7 +61,7 @@ static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -76,7 +76,7 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
   mp_aframe_t*    c   = data;	 // Current working data
   af_center_t*  s   = af->setup; // Setup for this instance
   float*   	a   = c->audio;	 // Audio data
-  int		len = c->len/4;	 // Number of samples in current audio block 
+  int		len = c->len/4;	 // Number of samples in current audio block
   int		nch = c->nch;	 // Number of channels
   int		ch  = s->ch;	 // Channel in which to insert the center audio
   register int  i;

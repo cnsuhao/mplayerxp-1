@@ -112,7 +112,7 @@ typedef struct {
     unsigned int nchannels;
     unsigned int samplebytes;
     //
-    int tkdata_len;  // track data 
+    int tkdata_len;  // track data
     unsigned char* tkdata;
     int stdata_len;  // stream data
     unsigned char* stdata;
@@ -146,10 +146,10 @@ static void mov_build_index(mov_track_t* trak,int timescale){
     if (trak->chunks_size <= 0)
     {
 	MSG_WARN( "No chunk offset table, trying to build one!\n");
-	
+
 	trak->chunks_size = trak->samples_size; /* XXX: FIXME ! */
 	trak->chunks = mp_realloc(trak->chunks, sizeof(mov_chunk_t)*trak->chunks_size);
-	
+
 	for (i=0; i < trak->chunks_size; i++)
 	    trak->chunks[i].pos = -1;
     }
@@ -183,8 +183,8 @@ static void mov_build_index(mov_track_t* trak,int timescale){
     // calc pts of chunks:
     s=0;
     for(j=0;j<trak->chunks_size;j++){
-        trak->chunks[j].sample=s;
-        s+=trak->chunks[j].size;
+	trak->chunks[j].sample=s;
+	s+=trak->chunks[j].size;
     }
     i = 0;
     for (j = 0; j < trak->durmap_size; j++)
@@ -213,9 +213,9 @@ static void mov_build_index(mov_track_t* trak,int timescale){
 
     if (trak->samples_size < s) {
       MSG_WARN("MOV: durmap or chunkmap bigger than sample count (%i vs %i)\n",
-             s, trak->samples_size);
+	     s, trak->samples_size);
       trak->samples_size = s;
-      trak->samples = trak->samples ? 
+      trak->samples = trak->samples ?
 	    mp_realloc(trak->samples, sizeof(mov_sample_t) * s):
 	    mp_calloc(s, sizeof(mov_sample_t));
     }
@@ -336,7 +336,7 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 	switch(id){
 	case MOV_FOURCC('f','t','y','p'): {
 	  unsigned int tmp;
-	  // File Type Box (ftyp): 
+	  // File Type Box (ftyp):
 	  // char[4]  major_brand	   (eg. 'isom')
 	  // int      minor_version	   (eg. 0x00000000)
 	  // char[4]  compatible_brands[]  (eg. 'mp41')
@@ -411,7 +411,7 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 	      //set demuxer type to playlist ...
 	      //demuxer->type=DEMUXER_TYPE_PLAYLIST;
 	      while(i>0){
-	          int len=stream_read_dword(demuxer->stream)-8;
+		  int len=stream_read_dword(demuxer->stream)-8;
 		  int fcc=stream_read_dword(demuxer->stream);
 		  if(len<0) break; // EOF!?
 		  i-=8;
@@ -421,12 +421,12 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 		  case MOV_FOURCC('r','d','r','f'): {
 		      stream_read_dword(demuxer->stream);
 		      /*int type=*/stream_read_dword_le(demuxer->stream);
-	              int slen=stream_read_dword(demuxer->stream);
+		      int slen=stream_read_dword(demuxer->stream);
 		      //char* s=mp_malloc(slen+1);
 		      //stream_read(demuxer->stream,s,slen);
-		      
+
 		      //FIXME: also store type & data_rate ?
-		      ds_read_packet(demuxer->video, 
+		      ds_read_packet(demuxer->video,
 			demuxer->stream,
 			slen,
 			0,
@@ -569,7 +569,7 @@ static unsigned int store_ughvlc(unsigned char *s, unsigned int v){
 }
 
 static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
-                           off_t pos, off_t len, mov_track_t* trak);
+			   off_t pos, off_t len, mov_track_t* trak);
 
 static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak){
     mov_priv_t* priv=demuxer->priv;
@@ -618,23 +618,23 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 	    mov_build_index(trak,priv->timescale);
 	    switch(trak->type){
 	    case MOV_TRAK_AUDIO: {
-#if 0				   
+#if 0
 		struct {
 		   int16_t version;		// 0 or 1 (version 1 is qt3.0+)
 		   int16_t revision;		// 0
 		   int32_t vendor_id;		// 0
 		   int16_t channels;		// 1 or 2  (Mono/Stereo)
-		   int16_t samplesize;		// 8 or 16 (8Bit/16Bit)	
+		   int16_t samplesize;		// 8 or 16 (8Bit/16Bit)
 		   int16_t compression_id;	// if version 0 then 0
-		  				// if version 1 and vbr then -2 else 0
+						// if version 1 and vbr then -2 else 0
 		   int16_t packet_size;		// 0
 		   uint16_t sample_rate;	// samplerate (Hz)
 		   // qt3.0+ (version == 1)
 		   uint32_t samples_per_packet;	// 0 or num uncompressed samples in a packet
-		   				// if 0 below three values are also 0
+						// if 0 below three values are also 0
 		   uint32_t bytes_per_packet;	// 0 or num compressed bytes for one channel
 		   uint32_t bytes_per_frame;	// 0 or num compressed bytes for all channels
-		   				// (channels * bytes_per_packet)
+						// (channels * bytes_per_packet)
 		   uint32_t bytes_per_sample;	// 0 or size of uncompressed sample
 		   // if samples_per_packet and bytes_per_packet are constant (CBR)
 		   // then bytes_per_frame and bytes_per_sample must be 0 (else is VBR)
@@ -642,7 +642,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		   // optional additional atom-based fields
 		   // ([int32_t size,int32_t type,some data ],repeat)
 		} my_stdata;
-#endif		
+#endif
 		int version=0, adjust;
 		int is_vorbis = 0;
 		sh_audio_t* sh=new_sh_audio(demuxer,priv->track_db);
@@ -652,7 +652,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		if(trak->editlist_size>=1) {
 		    if(trak->editlist[0].pos == -1) {
 //			sh->stream_delay = (float)trak->editlist[0].dur/(float)priv->timescale;
-	    		MSG_V("MOV: Initial Audio-Delay: %.3f sec\n", (float)trak->editlist[0].dur/(float)priv->timescale);
+			MSG_V("MOV: Initial Audio-Delay: %.3f sec\n", (float)trak->editlist[0].dur/(float)priv->timescale);
 		    }
 		}
 
@@ -663,7 +663,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 			trak->nchannels=sh->nch=1;
 			sh->rate=8000;
 			break;
-			
+
 		    case 0x62776173: /* sawb */
 			/* amr wideband */
 			trak->samplebytes=1;
@@ -755,7 +755,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		    int fcc=char2int(trak->stdata,48);
 		    // we have extra audio headers!!!
 		    MSG_V("Audio extra header: len=%d  fcc=0x%X\n",len,fcc);
-		    if((len >= 4) && 
+		    if((len >= 4) &&
 		       (char2int(trak->stdata,52) >= 12) &&
 		       (char2int(trak->stdata,52+4) == MOV_FOURCC('f','r','m','a'))) {
 			switch(char2int(trak->stdata,52+8)) {
@@ -777,13 +777,13 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 				sh->wtag=char2int(trak->stdata,52+8);
 				MSG_V( "MOV: Found little endian PCM data, reversed fourcc:%04x\n", sh->wtag);
 			  }
-		          break;
-		         default:
+			  break;
+			 default:
 			  if (len > 8 && len + 44 <= trak->stdata_len) {
 				sh->codecdata_len = len-8;
 				sh->codecdata = trak->stdata+44+8;
 			  }
-		        }
+			}
 		    } else {
 		      if (len > 8 && len + 44 <= trak->stdata_len) {
 		    sh->codecdata_len = len-8;
@@ -810,7 +810,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 		      case MOV_FOURCC('e','s','d','s'): {
 			MSG_V( "MOV: Found MPEG4 audio Elementary Stream Descriptor atom (%d)!\n", atom_len);
 			if(atom_len > 8) {
-			  esds_t esds; 				  
+			  esds_t esds;
 			  if(!mp4_parse_esds(&trak->stdata[36+adjust], atom_len-8, &esds)) {
 			    /* 0xdd is a "user private" id, not an official allocated id (see http://www.mp4ra.org/object.html),
 			       so perform some extra checks to be sure that this is really vorbis audio */
@@ -844,12 +844,12 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 					sh->codecdata_len = len + len/255 + 64;
 					sh->codecdata = mp_malloc(sh->codecdata_len);
 					ptr = sh->codecdata;
-					
+
 					ptr[0] = 2;
 					offset = 1;
 					offset += store_ughvlc(&ptr[offset], sizes[0]);
 					offset += store_ughvlc(&ptr[offset], sizes[1]);
-					for(k = 0; k < 3; k++) 
+					for(k = 0; k < 3; k++)
 					{
 						memcpy(&ptr[offset], buf[k], sizes[k]);
 						offset += sizes[k];
@@ -862,7 +862,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 quit_vorbis_block:
 					sh->wtag = mmioFOURCC('v', 'r', 'b', 's');
 				}
-			    sh->i_bps = esds.avgBitrate/8; 
+			    sh->i_bps = esds.avgBitrate/8;
 
 			    if(esds.objectTypeId==MP4OTI_MPEG1Audio || esds.objectTypeId==MP4OTI_MPEG2AudioPart3)
 				sh->wtag=0x55; // .mp3
@@ -876,7 +876,7 @@ quit_vorbis_block:
 			    // dump away the codec specific configuration for the AAC decoder
 			    if(esds.decoderConfigLen){
 			    if( (esds.decoderConfig[0]>>3) == 29 )
-			    	sh->wtag = 0x1d61346d; // request multi-channel mp3 decoder
+				sh->wtag = 0x1d61346d; // request multi-channel mp3 decoder
 			    if(!is_vorbis)
 			    {
 				sh->codecdata_len = esds.decoderConfigLen;
@@ -897,20 +897,20 @@ quit_vorbis_block:
 			    memcpy(sh->codecdata, &trak->stdata[28], sh->codecdata_len);
 			}
 		      } break;
-                      case MOV_FOURCC('d','a','m','r'):
-                        MSG_V("MOV: Found AMR audio atom %c%c%c%c (%d)!\n", trak->stdata[32+adjust],trak->stdata[33+adjust],trak->stdata[34+adjust],trak->stdata[35+adjust], atom_len);
-                        if (atom_len>14) {
-                          MSG_V("MOV: Vendor: %c%c%c%c Version: %d\n",trak->stdata[36+adjust],trak->stdata[37+adjust],trak->stdata[38+adjust], trak->stdata[39+adjust],trak->stdata[40+adjust]);
-                          MSG_V("MOV: Modes set: %02x%02x\n",trak->stdata[41+adjust],trak->stdata[42+adjust]);
-                          MSG_V("MOV: Mode change period: %d Frames per sample: %d\n",trak->stdata[43+adjust],trak->stdata[44+adjust]);
-                        }
-                        break;
+		      case MOV_FOURCC('d','a','m','r'):
+			MSG_V("MOV: Found AMR audio atom %c%c%c%c (%d)!\n", trak->stdata[32+adjust],trak->stdata[33+adjust],trak->stdata[34+adjust],trak->stdata[35+adjust], atom_len);
+			if (atom_len>14) {
+			  MSG_V("MOV: Vendor: %c%c%c%c Version: %d\n",trak->stdata[36+adjust],trak->stdata[37+adjust],trak->stdata[38+adjust], trak->stdata[39+adjust],trak->stdata[40+adjust]);
+			  MSG_V("MOV: Modes set: %02x%02x\n",trak->stdata[41+adjust],trak->stdata[42+adjust]);
+			  MSG_V("MOV: Mode change period: %d Frames per sample: %d\n",trak->stdata[43+adjust],trak->stdata[44+adjust]);
+			}
+			break;
 		      default:
 			MSG_WARN("MOV: Found unknown audio atom %c%c%c%c (%d)!\n",
 			    trak->stdata[32+adjust],trak->stdata[33+adjust],trak->stdata[34+adjust],trak->stdata[35+adjust],
 			    atom_len);
 		    }
-		}  
+		}
 		MSG_V("Fourcc: %.4s\n",&trak->fourcc);
 		// Emulate WAVEFORMATEX struct:
 		sh->wf=mp_mallocz(sizeof(WAVEFORMATEX));
@@ -958,7 +958,7 @@ quit_vorbis_block:
 		if(trak->editlist_size>=1) {
 		    if(trak->editlist[0].pos == -1) {
 //			sh->stream_delay = (float)trak->editlist[0].dur/(float)priv->timescale;
-	    		MSG_V("MOV: Initial Video-Delay: %.3f sec\n", (float)trak->editlist[0].dur/(float)priv->timescale);
+			MSG_V("MOV: Initial Video-Delay: %.3f sec\n", (float)trak->editlist[0].dur/(float)priv->timescale);
 		    }
 		}
 
@@ -1047,9 +1047,9 @@ quit_vorbis_block:
 		      // beginning at stdata[86] to some variable to pass it
 		      // on to the decoder ::atmos
 		      if(atom_len > 8) {
-      			esds_t esds; 				  
+			esds_t esds;
 			if(!mp4_parse_esds(trak->stdata+pos+8, atom_len-8, &esds)) {
-    
+
 			  if(esds.objectTypeId==MP4OTI_MPEG2VisualSimple || esds.objectTypeId==MP4OTI_MPEG2VisualMain ||
 			     esds.objectTypeId==MP4OTI_MPEG2VisualSNR || esds.objectTypeId==MP4OTI_MPEG2VisualSpatial ||
 			     esds.objectTypeId==MP4OTI_MPEG2VisualHigh || esds.objectTypeId==MP4OTI_MPEG2Visual422)
@@ -1070,46 +1070,46 @@ quit_vorbis_block:
 		      MSG_V("MOV: AVC decoder configuration record atom (%d)!\n", atom_len);
 		      if(atom_len > 8) {
 			int poffs;
-		        unsigned _i,cnt=0;
-		        // Parse some parts of avcC, just for fun :)
-		        // real parsing is done by avc1 decoder
-		        MSG_V("MOV: avcC version: %d\n", *(trak->stdata+pos+8));
-		        if (*(trak->stdata+pos+8) != 1)
-		          MSG_ERR("MOV: unknown avcC version (%d). Expexct problems.\n", *(trak->stdata+pos+9));
-		        MSG_V("MOV: avcC profile: %d\n", *(trak->stdata+pos+9));
-		        MSG_V("MOV: avcC profile compatibility: %d\n", *(trak->stdata+pos+10));
-		        MSG_V("MOV: avcC level: %d\n", *(trak->stdata+pos+11));
-		        MSG_V("MOV: avcC nal length size: %d\n", ((*(trak->stdata+pos+12))&0x03)+1);
-		        MSG_V("MOV: avcC number of sequence param sets: %d\n", cnt = (*(trak->stdata+pos+13) & 0x1f));
-		        poffs = pos + 14;
-		        for (_i = 0; _i < cnt; i++) {
-		          MSG_V("MOV: avcC sps %d have length %d\n", _i, BE_16(*(trak->stdata+poffs)));
-		          poffs += BE_16(*(trak->stdata+poffs)) + 2;
-		        }
-		        MSG_V("MOV: avcC number of picture param sets: %d\n", BE_16(*(trak->stdata+poffs)));
-		        poffs++;
-		        for (_i = 0; _i < cnt; _i++) {
-		          MSG_V("MOV: avcC pps %d have length %d\n", _i, BE_16(*(trak->stdata+poffs)));
-		          poffs += BE_16(*(trak->stdata+poffs)) + 2;
-		        }
-		        // Copy avcC for the AVC decoder
-		        // This data will be put in extradata below, where BITMAPINFOHEADER is created
-		        trak->stream_header_len = atom_len-8;
-		        trak->stream_header = (unsigned char *)mp_malloc(trak->stream_header_len);
-		        memcpy(trak->stream_header, trak->stdata+pos+8, trak->stream_header_len);
+			unsigned _i,cnt=0;
+			// Parse some parts of avcC, just for fun :)
+			// real parsing is done by avc1 decoder
+			MSG_V("MOV: avcC version: %d\n", *(trak->stdata+pos+8));
+			if (*(trak->stdata+pos+8) != 1)
+			  MSG_ERR("MOV: unknown avcC version (%d). Expexct problems.\n", *(trak->stdata+pos+9));
+			MSG_V("MOV: avcC profile: %d\n", *(trak->stdata+pos+9));
+			MSG_V("MOV: avcC profile compatibility: %d\n", *(trak->stdata+pos+10));
+			MSG_V("MOV: avcC level: %d\n", *(trak->stdata+pos+11));
+			MSG_V("MOV: avcC nal length size: %d\n", ((*(trak->stdata+pos+12))&0x03)+1);
+			MSG_V("MOV: avcC number of sequence param sets: %d\n", cnt = (*(trak->stdata+pos+13) & 0x1f));
+			poffs = pos + 14;
+			for (_i = 0; _i < cnt; i++) {
+			  MSG_V("MOV: avcC sps %d have length %d\n", _i, BE_16(*(trak->stdata+poffs)));
+			  poffs += BE_16(*(trak->stdata+poffs)) + 2;
+			}
+			MSG_V("MOV: avcC number of picture param sets: %d\n", BE_16(*(trak->stdata+poffs)));
+			poffs++;
+			for (_i = 0; _i < cnt; _i++) {
+			  MSG_V("MOV: avcC pps %d have length %d\n", _i, BE_16(*(trak->stdata+poffs)));
+			  poffs += BE_16(*(trak->stdata+poffs)) + 2;
+			}
+			// Copy avcC for the AVC decoder
+			// This data will be put in extradata below, where BITMAPINFOHEADER is created
+			trak->stream_header_len = atom_len-8;
+			trak->stream_header = (unsigned char *)mp_malloc(trak->stream_header_len);
+			memcpy(trak->stream_header, trak->stdata+pos+8, trak->stream_header_len);
 		      }
 		      break;
-                    case MOV_FOURCC('d','2','6','3'):
-                      MSG_V("MOV: Found H.263 decoder atom %c%c%c%c (%d)!\n", trak->stdata[pos+4],trak->stdata[pos+5],trak->stdata[pos+6],trak->stdata[pos+7],atom_len);
-              	      if (atom_len>10)
-                        MSG_V("MOV: Vendor: %c%c%c%c H.263 level: %d H.263 profile: %d \n", trak->stdata[pos+8],trak->stdata[pos+9],trak->stdata[pos+10],trak->stdata[pos+11],trak->stdata[pos+12],trak->stdata[pos+13]);
-                      break;
+		    case MOV_FOURCC('d','2','6','3'):
+		      MSG_V("MOV: Found H.263 decoder atom %c%c%c%c (%d)!\n", trak->stdata[pos+4],trak->stdata[pos+5],trak->stdata[pos+6],trak->stdata[pos+7],atom_len);
+		      if (atom_len>10)
+			MSG_V("MOV: Vendor: %c%c%c%c H.263 level: %d H.263 profile: %d \n", trak->stdata[pos+8],trak->stdata[pos+9],trak->stdata[pos+10],trak->stdata[pos+11],trak->stdata[pos+12],trak->stdata[pos+13]);
+		      break;
 		    case 0:
 		      break;
 		    default:
-	      	      MSG_V( "MOV: Found unknown movie atom %c%c%c%c (%d)!\n",
-	      		  trak->stdata[pos+4],trak->stdata[pos+5],trak->stdata[pos+6],trak->stdata[pos+7],
-	      		  atom_len);
+		      MSG_V( "MOV: Found unknown movie atom %c%c%c%c (%d)!\n",
+			  trak->stdata[pos+4],trak->stdata[pos+5],trak->stdata[pos+6],trak->stdata[pos+7],
+			  atom_len);
 		   }
 		   if(atom_len<8) break;
 		   pos+=atom_len;
@@ -1129,7 +1129,7 @@ quit_vorbis_block:
 		  sh->aspect=trak->tkdata[77]|(trak->tkdata[76]<<8);
 		  sh->aspect/=trak->tkdata[81]|(trak->tkdata[80]<<8);
 		}
-		
+
 		if(depth>32+8) MSG_V("*** depth = 0x%X\n",depth);
 
 		// palettized?
@@ -1168,29 +1168,29 @@ quit_vorbis_block:
 		    {
 		      MSG_V( "Using default QT grayscale palette\n");
 		      if (palette_count == 16)
-		        memcpy(palette_map, qt_default_grayscale_palette_16, 16 * 4);
+			memcpy(palette_map, qt_default_grayscale_palette_16, 16 * 4);
 		      else if (palette_count == 256) {
-		        memcpy(palette_map, qt_default_grayscale_palette_256, 256 * 4);
-		        if (trak->fourcc == mmioFOURCC('c','v','i','d')) {
+			memcpy(palette_map, qt_default_grayscale_palette_256, 256 * 4);
+			if (trak->fourcc == mmioFOURCC('c','v','i','d')) {
 			  unsigned _i;
-		          // Hack for grayscale CVID, negative palette
-		          // If you have samples where this is not required contact me (rxt)
-		          MSG_V( "MOV: greyscale cvid with default palette,"
-		            " enabling negative palette hack.\n");
-		          for (_i = 0; _i < 256 * 4; _i++)
-		            palette_map[_i] = palette_map[_i] ^ 0xff;
-		        }
+			  // Hack for grayscale CVID, negative palette
+			  // If you have samples where this is not required contact me (rxt)
+			  MSG_V( "MOV: greyscale cvid with default palette,"
+			    " enabling negative palette hack.\n");
+			  for (_i = 0; _i < 256 * 4; _i++)
+			    palette_map[_i] = palette_map[_i] ^ 0xff;
+			}
 		      }
 		    }
 		    else
 		    {
 		      MSG_V( "Using default QT colour palette\n");
 		      if (palette_count == 4)
-		        memcpy(palette_map, qt_default_palette_4, 4 * 4);
+			memcpy(palette_map, qt_default_palette_4, 4 * 4);
 		      else if (palette_count == 16)
-		        memcpy(palette_map, qt_default_palette_16, 16 * 4);
+			memcpy(palette_map, qt_default_palette_16, 16 * 4);
 		      else if (palette_count == 256)
-		        memcpy(palette_map, qt_default_palette_256, 256 * 4);
+			memcpy(palette_map, qt_default_palette_256, 256 * 4);
 		    }
 		  }
 		  // load palette from file
@@ -1203,21 +1203,21 @@ quit_vorbis_block:
 		      hdr_ptr += 2;
 		      // apparently, if count_flag is set, entry is same as i
 		      if (count_flag & 0x8000)
-		        entry = i;
+			entry = i;
 		      // only care about top 8 bits of 16-bit R, G, or B value
 		      if (entry <= palette_count && entry >= 0)
 		      {
-		        palette_map[entry * 4 + 2] = trak->stdata[hdr_ptr + 0];
-		        palette_map[entry * 4 + 1] = trak->stdata[hdr_ptr + 2];
-		        palette_map[entry * 4 + 0] = trak->stdata[hdr_ptr + 4];
-		        MSG_DBG2("QT palette: added entry: %d of %d (colors: R:%x G:%x B:%x)\n",
+			palette_map[entry * 4 + 2] = trak->stdata[hdr_ptr + 0];
+			palette_map[entry * 4 + 1] = trak->stdata[hdr_ptr + 2];
+			palette_map[entry * 4 + 0] = trak->stdata[hdr_ptr + 4];
+			MSG_DBG2("QT palette: added entry: %d of %d (colors: R:%x G:%x B:%x)\n",
 			    entry, palette_count,
-			    palette_map[entry * 4 + 2], 
+			    palette_map[entry * 4 + 2],
 			    palette_map[entry * 4 + 1],
 			    palette_map[entry * 4 + 0]);
 		      }
 		      else
-		        MSG_V("QT palette: skipped entry (out of count): %d of %d\n",
+			MSG_V("QT palette: skipped entry (out of count): %d of %d\n",
 			    entry, palette_count);
 		      hdr_ptr += 6;
 		    }
@@ -1254,7 +1254,7 @@ quit_vorbis_block:
 		    trak->tkdata[77]|(trak->tkdata[76]<<8),
 		    trak->tkdata[81]|(trak->tkdata[80]<<8));
 		MSG_V( "Fourcc: %.4s  Codec: '%.*s'\n",&trak->fourcc,trak->stdata[42]&31,trak->stdata+43);
-		
+
 //		if(demuxer->video->id==-1 || demuxer->video->id==priv->track_db){
 //		    // (auto)selected video track:
 //		    demuxer->video->id=priv->track_db;
@@ -1306,7 +1306,7 @@ quit_vorbis_block:
 	    if (moov_sz > SIZE_MAX - 16) {
 	      MSG_ERR( "Invalid cmvd atom size %d\n", moov_sz);
 	      break;
-            }
+	    }
 	    MSG_V( "Compressed header size: %d / %d\n",cmov_sz,moov_sz);
 
 	    stream_read(demuxer->stream,cmov_buf,cmov_sz);
@@ -1318,7 +1318,7 @@ quit_vorbis_block:
 	      zstrm.avail_in        = cmov_sz;
 	      zstrm.next_out        = moov_buf;
 	      zstrm.avail_out       = moov_sz;
-	    
+
 	      zret = inflateInit(&zstrm);
 	      if (zret != Z_OK)
 		{ MSG_ERR( "QT cmov: inflateInit err %d\n",zret);
@@ -1330,9 +1330,9 @@ quit_vorbis_block:
 		return;
 		}
 	      if(moov_sz != zstrm.total_out)
-	        MSG_WARN( "Warning! moov size differs cmov: %d  zlib: %d\n",moov_sz,zstrm.total_out);
+		MSG_WARN( "Warning! moov size differs cmov: %d  zlib: %d\n",moov_sz,zstrm.total_out);
 	      zret = inflateEnd(&zstrm);
-	      
+
 	      backup=demuxer->stream;
 	       demuxer->stream=new_memory_stream(moov_buf,moov_sz);
 	       stream_skip(demuxer->stream,8);
@@ -1340,7 +1340,7 @@ quit_vorbis_block:
 	       //free_stream(demuxer->stream);
 	      demuxer->stream=backup;
 	      mp_free(cmov_buf);
-	      mp_free(moov_buf);	    
+	      mp_free(moov_buf);
 	      break;
 	}
 #endif
@@ -1349,7 +1349,7 @@ quit_vorbis_block:
 	    unsigned int udta_id;
 	    off_t udta_len;
 	    off_t udta_size = len;
-	
+
 	    MSG_DBG2( "mov: user data record found\n");
 
 	    while((len > 8) && (udta_size > 8))
@@ -1466,7 +1466,7 @@ quit_vorbis_block:
 }
 
 static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
-                           off_t pos, off_t len, mov_track_t* trak)
+			   off_t pos, off_t len, mov_track_t* trak)
 {
   switch(id) {
     case MOV_FOURCC('m','d','a','t'): {
@@ -1501,11 +1501,11 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
 80 4 Track height
 */
       MSG_V(  "tkhd len=%d ver=%d flags=0x%X id=%d dur=%d lay=%d vol=%d\n",
-              trak->tkdata_len, trak->tkdata[0], trak->tkdata[1],
-              char2int(trak->tkdata, 12), // id
-              char2int(trak->tkdata, 20), // duration
-              char2short(trak->tkdata, 32), // layer
-              char2short(trak->tkdata, 36)); // volume
+	      trak->tkdata_len, trak->tkdata[0], trak->tkdata[1],
+	      char2int(trak->tkdata, 12), // id
+	      char2int(trak->tkdata, 20), // duration
+	      char2short(trak->tkdata, 32), // layer
+	      char2short(trak->tkdata, 36)); // volume
       break;
     }
     case MOV_FOURCC('m','d','h','d'): {
@@ -1516,9 +1516,9 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       trak->timescale = stream_read_dword(demuxer->stream);
       // read length
       if (version == 1)
-          trak->length = stream_read_qword(demuxer->stream);
+	  trak->length = stream_read_qword(demuxer->stream);
       else
-          trak->length = stream_read_dword(demuxer->stream);
+	  trak->length = stream_read_dword(demuxer->stream);
       break;
     }
     case MOV_FOURCC('h','d','l','r'): {
@@ -1533,18 +1533,18 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       stream_read(demuxer->stream, str, _len);
       str[_len] = 0;
       MSG_V( "MOV: %*sHandler header: %.4s/%.4s (%.4s) %s\n", level, "",
-             &type, &subtype, &manufact, str);
+	     &type, &subtype, &manufact, str);
       mp_free(str);
       switch(bswap_32(type)) {
-        case MOV_FOURCC('m','h','l','r'):
-          trak->media_handler = bswap_32(subtype);
-          break;
-        case MOV_FOURCC('d','h','l','r'):
-          trak->data_handler = bswap_32(subtype);
-          break;
-        default:
-          MSG_V( "MOV: unknown handler class: 0x%X (%.4s)\n",
-                 bswap_32(type), &type);
+	case MOV_FOURCC('m','h','l','r'):
+	  trak->media_handler = bswap_32(subtype);
+	  break;
+	case MOV_FOURCC('d','h','l','r'):
+	  trak->data_handler = bswap_32(subtype);
+	  break;
+	default:
+	  MSG_V( "MOV: unknown handler class: 0x%X (%.4s)\n",
+		 bswap_32(type), &type);
       }
       break;
     }
@@ -1574,32 +1574,32 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       int i = stream_read_dword(demuxer->stream); // temp!
       int count = stream_read_dword(demuxer->stream);
       MSG_V( "MOV: %*sDescription list! (cnt:%d)\n",
-             level, "", count);
+	     level, "", count);
       for (i = 0; i < count; i++) {
-        off_t _pos = stream_tell(demuxer->stream);
-        unsigned _len = stream_read_dword(demuxer->stream);
-        unsigned int fourcc = stream_read_dword_le(demuxer->stream);
-        /* some files created with Broadcast 2000 (e.g. ilacetest.mov)
-           contain raw I420 video but have a yv12 fourcc */
-        if (fourcc == mmioFOURCC('y','v','1','2'))
-          fourcc = mmioFOURCC('I','4','2','0');
-        if (_len < 8)
-          break; // error
-        MSG_V( "MOV: %*s desc #%d: %.4s  (%d bytes)\n", level, "",
-               i, &fourcc, _len - 16);
-        if (fourcc != trak->fourcc && i)
-          MSG_WARN( MSGTR_MOVvariableFourCC);
+	off_t _pos = stream_tell(demuxer->stream);
+	unsigned _len = stream_read_dword(demuxer->stream);
+	unsigned int fourcc = stream_read_dword_le(demuxer->stream);
+	/* some files created with Broadcast 2000 (e.g. ilacetest.mov)
+	   contain raw I420 video but have a yv12 fourcc */
+	if (fourcc == mmioFOURCC('y','v','1','2'))
+	  fourcc = mmioFOURCC('I','4','2','0');
+	if (_len < 8)
+	  break; // error
+	MSG_V( "MOV: %*s desc #%d: %.4s  (%d bytes)\n", level, "",
+	       i, &fourcc, _len - 16);
+	if (fourcc != trak->fourcc && i)
+	  MSG_WARN( MSGTR_MOVvariableFourCC);
 //      if(!i)
-        {
-          trak->fourcc = fourcc;
-          // read type specific (audio/video/time/text etc) header
-          // NOTE: trak type is not yet known at this point :(((
-          trak->stdata_len = _len - 8;
-          trak->stdata = mp_malloc(trak->stdata_len);
-          stream_read(demuxer->stream, trak->stdata, trak->stdata_len);
-        }
-        if (!stream_seek(demuxer->stream, _pos + _len))
-          break;
+	{
+	  trak->fourcc = fourcc;
+	  // read type specific (audio/video/time/text etc) header
+	  // NOTE: trak type is not yet known at this point :(((
+	  trak->stdata_len = _len - 8;
+	  trak->stdata = mp_malloc(trak->stdata_len);
+	  stream_read(demuxer->stream, trak->stdata, trak->stdata_len);
+	}
+	if (!stream_seek(demuxer->stream, _pos + _len))
+	  break;
       }
       break;
     }
@@ -1611,12 +1611,12 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       trak->durmap = mp_calloc(_len, sizeof(mov_durmap_t));
       trak->durmap_size = _len;
       for (i = 0; i < _len; i++) {
-        trak->durmap[i].num = stream_read_dword(demuxer->stream);
-        trak->durmap[i].dur = stream_read_dword(demuxer->stream);
-        pts += trak->durmap[i].num * trak->durmap[i].dur;
+	trak->durmap[i].num = stream_read_dword(demuxer->stream);
+	trak->durmap[i].dur = stream_read_dword(demuxer->stream);
+	pts += trak->durmap[i].num * trak->durmap[i].dur;
       }
       if (trak->length != pts)
-        MSG_WARN("Warning! pts=%d  length=%d\n", pts, trak->length);
+	MSG_WARN("Warning! pts=%d  length=%d\n", pts, trak->length);
       break;
     }
     case MOV_FOURCC('s','t','s','c'): {
@@ -1625,14 +1625,14 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       unsigned ver = (temp << 24);
       unsigned flags = (temp << 16) | (temp << 8) | temp;
       MSG_V( "MOV: %*sSample->Chunk mapping table!  (%d blocks) (ver:%d,flags:%ld)\n", level, "",
-             _len, ver, flags);
+	     _len, ver, flags);
       // read data:
       trak->chunkmap_size = _len;
       trak->chunkmap = mp_malloc(sizeof(mov_chunkmap_t) * _len);
       for (i = 0; i < _len; i++) {
-        trak->chunkmap[i].first = stream_read_dword(demuxer->stream) - 1;
-        trak->chunkmap[i].spc = stream_read_dword(demuxer->stream);
-        trak->chunkmap[i].sdid = stream_read_dword(demuxer->stream);
+	trak->chunkmap[i].first = stream_read_dword(demuxer->stream) - 1;
+	trak->chunkmap[i].spc = stream_read_dword(demuxer->stream);
+	trak->chunkmap[i].sdid = stream_read_dword(demuxer->stream);
       }
       break;
     }
@@ -1644,16 +1644,16 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       int entries = stream_read_dword(demuxer->stream);
       int i;
       MSG_V("MOV: %*sSample size table! (entries=%d ss=%d) (ver:%d,flags:%ld)\n", level, "",
-             entries, ss, ver, flags);
+	     entries, ss, ver, flags);
       trak->samplesize = ss;
       if (!ss) {
-        // variable samplesize
-        trak->samples = trak->samples?
+	// variable samplesize
+	trak->samples = trak->samples?
 		mp_realloc(trak->samples,sizeof(mov_sample_t)*entries):
 		mp_calloc(entries, sizeof(mov_sample_t));
-        trak->samples_size = entries;
-        for (i = 0; i < entries; i++)
-          trak->samples[i].size = stream_read_dword(demuxer->stream);
+	trak->samples_size = entries;
+	for (i = 0; i < entries; i++)
+	  trak->samples[i].size = stream_read_dword(demuxer->stream);
       }
       break;
     }
@@ -1661,39 +1661,39 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       stream_read_dword(demuxer->stream);
       unsigned i,_len = stream_read_dword(demuxer->stream);
       MSG_V( "MOV: %*sChunk offset table! (%d chunks)\n", level, "",
-             _len);
+	     _len);
       // extend array if needed:
       if (_len > trak->chunks_size) {
-        trak->chunks = trak->chunks ?
+	trak->chunks = trak->chunks ?
 		mp_realloc(trak->chunks, sizeof(mov_chunk_t) * _len) :
 		mp_malloc(sizeof(mov_chunk_t) * _len);
-        trak->chunks_size = _len;
+	trak->chunks_size = _len;
       }
       // read elements:
       for(i = 0; i < _len; i++)
-        trak->chunks[i].pos = stream_read_dword(demuxer->stream);
+	trak->chunks[i].pos = stream_read_dword(demuxer->stream);
       break;
     }
     case MOV_FOURCC('c','o','6','4'): {
       stream_read_dword(demuxer->stream);
       unsigned i,_len = stream_read_dword(demuxer->stream);
       MSG_V( "MOV: %*s64bit chunk offset table! (%d chunks)\n", level, "",
-             _len);
+	     _len);
       // extend array if needed:
       if (_len > trak->chunks_size) {
-        trak->chunks = trak->chunks ?
+	trak->chunks = trak->chunks ?
 		mp_realloc(trak->chunks, sizeof(mov_chunk_t) * _len) :
 		mp_malloc(sizeof(mov_chunk_t) * _len);
-        trak->chunks_size = _len;
+	trak->chunks_size = _len;
       }
       // read elements:
       for (i = 0; i < _len; i++) {
 #ifndef	_LARGEFILE_SOURCE
-        if (stream_read_dword(demuxer->stream) != 0)
-          MSG_WARN( "Chunk %d has got 64bit address, but you've MPlayer compiled without LARGEFILE support!\n", i);
-        trak->chunks[i].pos = stream_read_dword(demuxer->stream);
+	if (stream_read_dword(demuxer->stream) != 0)
+	  MSG_WARN( "Chunk %d has got 64bit address, but you've MPlayer compiled without LARGEFILE support!\n", i);
+	trak->chunks[i].pos = stream_read_dword(demuxer->stream);
 #else
-        trak->chunks[i].pos = stream_read_qword(demuxer->stream);
+	trak->chunks[i].pos = stream_read_qword(demuxer->stream);
 #endif
       }
       break;
@@ -1705,11 +1705,11 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       int flags = (temp << 16) | (temp<<8) | temp;
       int i;
       MSG_V( "MOV: %*sSyncing samples (keyframes) table! (%d entries) (ver:%d,flags:%ld)\n", level, "",
-             entries, ver, flags);
+	     entries, ver, flags);
       trak->keyframes_size = entries;
       trak->keyframes = mp_malloc(sizeof(unsigned int) * entries);
       for (i = 0; i < entries; i++)
-        trak->keyframes[i] = stream_read_dword(demuxer->stream) - 1;
+	trak->keyframes[i] = stream_read_dword(demuxer->stream) - 1;
       break;
     }
     case MOV_FOURCC('m','d','i','a'): {
@@ -1739,19 +1739,19 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       int flags = (temp << 16) | (temp << 8) | temp;
       int i;
       MSG_V( "MOV: %*sEdit list table (%d entries) (ver:%d,flags:%ld)\n", level, "",
-             entries, ver, flags);
+	     entries, ver, flags);
 #if 1
       trak->editlist_size = entries;
       trak->editlist = mp_malloc(trak->editlist_size * sizeof(mov_editlist_t));
       for (i = 0; i < entries; i++) {
-        int dur = stream_read_dword(demuxer->stream);
-        int mt = stream_read_dword(demuxer->stream);
-        int mr = stream_read_dword(demuxer->stream); // 16.16fp
-        trak->editlist[i].dur = dur;
-        trak->editlist[i].pos = mt;
-        trak->editlist[i].speed = mr;
-        MSG_V( "MOV: %*s  entry#%d: duration: %d  start time: %d  speed: %3.1fx\n", level, "",
-                i, dur, mt, (float)mr/65536.0f);
+	int dur = stream_read_dword(demuxer->stream);
+	int mt = stream_read_dword(demuxer->stream);
+	int mr = stream_read_dword(demuxer->stream); // 16.16fp
+	trak->editlist[i].dur = dur;
+	trak->editlist[i].pos = mt;
+	trak->editlist[i].speed = mr;
+	MSG_V( "MOV: %*s  entry#%d: duration: %d  start time: %d  speed: %3.1fx\n", level, "",
+		i, dur, mt, (float)mr/65536.0f);
       }
 #endif
       break;
@@ -1773,10 +1773,10 @@ static demuxer_t* mov_open(demuxer_t* demuxer){
     int t_no;
     int best_a_id=-1, best_a_len=0;
     int best_v_id=-1, best_v_len=0;
-    
+
     MSG_DBG3( "mov_read_header!\n");
 
-    // Parse header:    
+    // Parse header:
     stream_reset(demuxer->stream);
     if(!stream_seek(demuxer->stream,priv->moov_start))
     {
@@ -1789,7 +1789,7 @@ static demuxer_t* mov_open(demuxer_t* demuxer){
 
     // find the best (longest) streams:
     for(t_no=0;t_no<priv->track_db;t_no++){
-        mov_track_t* trak=priv->tracks[t_no];
+	mov_track_t* trak=priv->tracks[t_no];
 	int len=(trak->samplesize) ? trak->chunks_size : trak->samples_size;
 	if(demuxer->a_streams[t_no]){ // need audio
 	    if(len>best_a_len){	best_a_len=len; best_a_id=t_no; }
@@ -1802,7 +1802,7 @@ static demuxer_t* mov_open(demuxer_t* demuxer){
 	best_a_id,best_a_len,best_v_id,best_v_len);
     if(demuxer->audio->id==-1 && best_a_id>=0) demuxer->audio->id=best_a_id;
     if(demuxer->video->id==-1 && best_v_id>=0) demuxer->video->id=best_v_id;
-    
+
     // setup sh pointers:
     if(demuxer->audio->id>=0){
 	sh_audio_t* sh=demuxer->a_streams[demuxer->audio->id];
@@ -1843,7 +1843,7 @@ static demuxer_t* mov_open(demuxer_t* demuxer){
 		    fd = open(name, O_CREAT|O_WRONLY);
 		    if( //trak->media_handler==MOV_FOURCC('s','p','r','t') &&
 			trak->stdata_len>=16 &&
-			char2int(trak->stdata,12)==MOV_FOURCC('z','l','i','b') 
+			char2int(trak->stdata,12)==MOV_FOURCC('z','l','i','b')
 		    ){
 			int newlen=stream_read_dword(demuxer->stream);
 #ifdef HAVE_ZLIB
@@ -1855,19 +1855,19 @@ static demuxer_t* mov_open(demuxer_t* demuxer){
 			len-=4;
 			stream_read(demuxer->stream, buf, len);
 
-	                zstrm.zalloc          = (alloc_func)0;
-	                zstrm.zfree           = (free_func)0;
-	                zstrm.opaque          = (voidpf)0;
-	                zstrm.next_in         = buf;
-	                zstrm.avail_in        = len;
-	                zstrm.next_out        = buf2;
-	                zstrm.avail_out       = newlen;
+			zstrm.zalloc          = (alloc_func)0;
+			zstrm.zfree           = (free_func)0;
+			zstrm.opaque          = (voidpf)0;
+			zstrm.next_in         = buf;
+			zstrm.avail_in        = len;
+			zstrm.next_out        = buf2;
+			zstrm.avail_out       = newlen;
 
-	                zret = inflateInit(&zstrm);
+			zret = inflateInit(&zstrm);
 			zret = inflate(&zstrm, Z_NO_FLUSH);
 			if(newlen != zstrm.total_out)
-	    		    MSG_WARN( "Warning! unzipped frame size differs hdr: %d  zlib: %d\n",newlen,zstrm.total_out);
-			
+			    MSG_WARN( "Warning! unzipped frame size differs hdr: %d  zlib: %d\n",newlen,zstrm.total_out);
+
 			write(fd, buf2, newlen);
 		    } else {
 #else
@@ -1909,7 +1909,7 @@ static int mov_demux(demuxer_t *demuxer,demux_stream_t* ds){
     float pts;
     int x;
     off_t pos;
-    
+
     trak = stream_track(priv, ds);
     if (!trak) return 0;
 
@@ -1932,7 +1932,7 @@ if(trak->samplesize){
     /* the following stuff is audio related */
     if (trak->type == MOV_TRAK_AUDIO){
       if(trak->stdata_len>=44 && trak->stdata[9]>=1 && char2int(trak->stdata,28)>0){
-        // stsd version 1 - we have audio compression ratio info:
+	// stsd version 1 - we have audio compression ratio info:
 	x/=char2int(trak->stdata,28); // samples/packet
 //	x*=char2int(trak->stdata,32); // bytes/packet
 	x*=char2int(trak->stdata,36); // bytes/frame

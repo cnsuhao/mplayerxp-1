@@ -50,8 +50,8 @@
 
 
 #define AV_RB24(x)  ((((uint8_t*)(x))[0] << 16) | \
-                     (((uint8_t*)(x))[1] <<  8) | \
-                      ((uint8_t*)(x))[2])
+		     (((uint8_t*)(x))[1] <<  8) | \
+		      ((uint8_t*)(x))[2])
 
 extern void mpca_skip_frame( sh_audio_t *sh_audio );
 int sub_justify;
@@ -133,8 +133,8 @@ static int ty_tmf_filetoparts( demuxer_t *demux, TiVoInfo *tivo )
       off_t   skip;
       if (stream_read(demux->stream, header, 512) < 512)
       {
-         MSG_DBG3("Read bad\n" );
-         break;
+	 MSG_DBG3("Read bad\n" );
+	 break;
       }
       name = header;
       name[99] = 0;
@@ -143,26 +143,26 @@ static int ty_tmf_filetoparts( demuxer_t *demux, TiVoInfo *tivo )
       size = strtol(sizestr, NULL, 8);
 
       MSG_DBG3( "name %-20.20s size %-12.12s %d\n",
-         name, sizestr, size );
+	 name, sizestr, size );
 
       extension = strrchr(name, '.');
       if (extension && strcmp(extension, ".ty") == 0)
       {
-         if ( parts >= MAX_TMF_PARTS ) {
-            MSG_ERR( "ty:tmf too big\n" );
-            break;
-         }
-         tivo->tmfparts[ parts ].fileSize = size;
-         tivo->tmfparts[ parts ].startOffset = stream_tell(demux->stream);
-         tivo->tmfparts[ parts ].chunks = size / CHUNKSIZE;
-         MSG_DBG3(
-           "tmf_filetoparts(): index %d, chunks %d\n"
-           "tmf_filetoparts(): size %"PRId64"\n"
-           "tmf_filetoparts(): startOffset %"PRId64"\n",
-           parts, tivo->tmfparts[ parts ].chunks,
-           tivo->tmfparts[ parts ].fileSize, tivo->tmfparts[ parts ].startOffset
-         );
-         parts++;
+	 if ( parts >= MAX_TMF_PARTS ) {
+	    MSG_ERR( "ty:tmf too big\n" );
+	    break;
+	 }
+	 tivo->tmfparts[ parts ].fileSize = size;
+	 tivo->tmfparts[ parts ].startOffset = stream_tell(demux->stream);
+	 tivo->tmfparts[ parts ].chunks = size / CHUNKSIZE;
+	 MSG_DBG3(
+	   "tmf_filetoparts(): index %d, chunks %d\n"
+	   "tmf_filetoparts(): size %"PRId64"\n"
+	   "tmf_filetoparts(): startOffset %"PRId64"\n",
+	   parts, tivo->tmfparts[ parts ].chunks,
+	   tivo->tmfparts[ parts ].fileSize, tivo->tmfparts[ parts ].startOffset
+	 );
+	 parts++;
       }
 
       // size rounded up to blocks
@@ -211,12 +211,12 @@ static int tmf_load_chunk( demuxer_t *demux, TiVoInfo *tivo,
    demux->filepos = stream_tell( demux->stream );
 
    MSG_DBG3( "tmf_load_chunk() count %x\n",
-           count );
+	   count );
 
    MSG_DBG3(
-           "tmf_load_chunk() bytes %x %x %x %x %x %x %x %x\n",
-           buff[ 0 ], buff[ 1 ], buff[ 2 ], buff[ 3 ],
-           buff[ 4 ], buff[ 5 ], buff[ 6 ], buff[ 7 ] );
+	   "tmf_load_chunk() bytes %x %x %x %x %x %x %x %x\n",
+	   buff[ 0 ], buff[ 1 ], buff[ 2 ], buff[ 3 ],
+	   buff[ 4 ], buff[ 5 ], buff[ 6 ], buff[ 7 ] );
 
    MSG_DBG3( "tmf_load_chunk() end\n" );
 
@@ -249,18 +249,18 @@ static int IsValidAudioPacket( int size, int *ptsOffset, int *ptsLen )
    // MPEG
       if ( (size & 15) == (SERIES1_PTS_LENGTH & 15) )
       {
-         *ptsOffset = SERIES1_PTS_OFFSET;
-         *ptsLen = SERIES1_PTS_LENGTH;
-         return 1;
+	 *ptsOffset = SERIES1_PTS_OFFSET;
+	 *ptsLen = SERIES1_PTS_LENGTH;
+	 return 1;
       }
-         if ( (size & 15) == (SERIES2_PTS_LENGTH & 15) )
-         {
-            *ptsOffset = SERIES2_PTS_OFFSET;
-            *ptsLen = SERIES2_PTS_LENGTH;
-            return 1;
-         }
+	 if ( (size & 15) == (SERIES2_PTS_LENGTH & 15) )
+	 {
+	    *ptsOffset = SERIES2_PTS_OFFSET;
+	    *ptsLen = SERIES2_PTS_LENGTH;
+	    return 1;
+	 }
       MSG_DBG3( "ty:Tossing Audio Packet Size %d\n",
-         size );
+	 size );
       return 0;
 }
 
@@ -283,7 +283,7 @@ static void demux_ty_AddToAudioBuffer( TiVoInfo *tivo, unsigned char *buffer,
    if ( tivo->lastAudioEnd + size < MAX_AUDIO_BUFFER )
    {
       memcpy( &tivo->lastAudio[ tivo->lastAudioEnd ],
-         buffer, size );
+	 buffer, size );
       tivo->lastAudioEnd += size;
    }
    else
@@ -313,7 +313,7 @@ static int demux_ty_FindESHeader( uint8_t nal,
       found <<= 8;
       found |= *p++;
       if (found == search)
-         return p - buffer - 4;
+	 return p - buffer - 4;
    }
    return -1;
 }
@@ -383,70 +383,70 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
       // extract program did the "right thing"
       if ( tivo->readHeader == 0 )
       {
-         off_t filePos;
-         tivo->readHeader = 1;
+	 off_t filePos;
+	 tivo->readHeader = 1;
 
-         filePos = demux->filepos;
-         stream_seek( demux->stream, 0 );
+	 filePos = demux->filepos;
+	 stream_seek( demux->stream, 0 );
 
-         readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
+	 readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
 
-         if ( memcmp( chunk, TMF_SIG, sizeof( TMF_SIG ) ) == 0 )
-         {
-            MSG_DBG3( "ty:Detected a tmf\n" );
-            tivo->tmf = 1;
-            ty_tmf_filetoparts( demux, tivo );
-            readSize = tmf_load_chunk( demux, tivo, chunk, 0 );
-         }
+	 if ( memcmp( chunk, TMF_SIG, sizeof( TMF_SIG ) ) == 0 )
+	 {
+	    MSG_DBG3( "ty:Detected a tmf\n" );
+	    tivo->tmf = 1;
+	    ty_tmf_filetoparts( demux, tivo );
+	    readSize = tmf_load_chunk( demux, tivo, chunk, 0 );
+	 }
 
-         if ( readSize == CHUNKSIZE && be2me_32(*((uint32_t*)chunk)) == TIVO_PES_FILEID )
-         {
-               off_t numberParts;
+	 if ( readSize == CHUNKSIZE && be2me_32(*((uint32_t*)chunk)) == TIVO_PES_FILEID )
+	 {
+	       off_t numberParts;
 
-               readSize = 0;
+	       readSize = 0;
 
-               if ( tivo->tmf != 1 )
-               {
-                  off_t offset;
+	       if ( tivo->tmf != 1 )
+	       {
+		  off_t offset;
 
-                  numberParts = demux->stream->end_pos / TIVO_PART_LENGTH;
-                  offset = numberParts * TIVO_PART_LENGTH;
+		  numberParts = demux->stream->end_pos / TIVO_PART_LENGTH;
+		  offset = numberParts * TIVO_PART_LENGTH;
 
-                  MSG_DBG3( "ty:ty/ty+Number Parts %"PRId64"\n",
-                    (int64_t)numberParts );
+		  MSG_DBG3( "ty:ty/ty+Number Parts %"PRId64"\n",
+		    (int64_t)numberParts );
 
-                  if ( offset + CHUNKSIZE < demux->stream->end_pos )
-                  {
-                     stream_seek( demux->stream, offset );
-                     readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
-                  }
-               }
-               else
-               {
-                  numberParts = tivo->tmf_totalparts;
-                  offset = numberParts * TIVO_PART_LENGTH;
-                  readSize = tmf_load_chunk( demux, tivo, chunk,
-                     numberParts * ( TIVO_PART_LENGTH - CHUNKSIZE ) /
-                     CHUNKSIZE );
-               }
+		  if ( offset + CHUNKSIZE < demux->stream->end_pos )
+		  {
+		     stream_seek( demux->stream, offset );
+		     readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
+		  }
+	       }
+	       else
+	       {
+		  numberParts = tivo->tmf_totalparts;
+		  offset = numberParts * TIVO_PART_LENGTH;
+		  readSize = tmf_load_chunk( demux, tivo, chunk,
+		     numberParts * ( TIVO_PART_LENGTH - CHUNKSIZE ) /
+		     CHUNKSIZE );
+	       }
 
-               if ( readSize == CHUNKSIZE && be2me_32(*((uint32_t*)chunk)) == TIVO_PES_FILEID )
-               {
-                     int size = AV_RB24(chunk + 12);
-                     size -= 4;
-                     size *= CHUNKSIZE;
-                     tivo->size = numberParts * TIVO_PART_LENGTH;
-                     tivo->size += size;
-                     MSG_DBG3(
-                        "ty:Header Calc Stream Size %"PRId64"\n", tivo->size );
-               }
-         }
+	       if ( readSize == CHUNKSIZE && be2me_32(*((uint32_t*)chunk)) == TIVO_PES_FILEID )
+	       {
+		     int size = AV_RB24(chunk + 12);
+		     size -= 4;
+		     size *= CHUNKSIZE;
+		     tivo->size = numberParts * TIVO_PART_LENGTH;
+		     tivo->size += size;
+		     MSG_DBG3(
+			"ty:Header Calc Stream Size %"PRId64"\n", tivo->size );
+	       }
+	 }
 
-         if ( demux->stream->start_pos > 0 )
-            filePos = demux->stream->start_pos;
-         stream_seek( demux->stream, filePos );
-         demux->filepos = stream_tell( demux->stream );
-         tivo->whichChunk = filePos / CHUNKSIZE;
+	 if ( demux->stream->start_pos > 0 )
+	    filePos = demux->stream->start_pos;
+	 stream_seek( demux->stream, filePos );
+	 demux->filepos = stream_tell( demux->stream );
+	 tivo->whichChunk = filePos / CHUNKSIZE;
       }
       demux->movi_start = 0;
       demux->movi_end = tivo->size;
@@ -466,8 +466,8 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
 
    if ( tivo->size > 0 && stream_tell( demux->stream ) > tivo->size )
    {
-         demux->stream->eof = 1;
-         return 0;
+	 demux->stream->eof = 1;
+	 return 0;
    }
 
    do {
@@ -476,23 +476,23 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
       // Make sure we are on a 128k boundary
       if ( demux->filepos % CHUNKSIZE != 0 )
       {
-         int whichChunk = demux->filepos / CHUNKSIZE;
-         if ( demux->filepos % CHUNKSIZE > CHUNKSIZE / 2 )
-            whichChunk++;
-         stream_seek( demux->stream, whichChunk * CHUNKSIZE );
+	 int whichChunk = demux->filepos / CHUNKSIZE;
+	 if ( demux->filepos % CHUNKSIZE > CHUNKSIZE / 2 )
+	    whichChunk++;
+	 stream_seek( demux->stream, whichChunk * CHUNKSIZE );
       }
 
       demux->filepos = stream_tell( demux->stream );
       tivo->whichChunk = demux->filepos / CHUNKSIZE;
       readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
       if ( readSize != CHUNKSIZE )
-         return 0;
+	 return 0;
    }
    else
    {
       readSize = tmf_load_chunk( demux, tivo, chunk, tivo->whichChunk );
       if ( readSize != CHUNKSIZE )
-         return 0;
+	 return 0;
       tivo->whichChunk++;
    }
    if (be2me_32(*((uint32_t*)chunk)) == TIVO_PES_FILEID)
@@ -529,162 +529,162 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
       recordsDecoded++;
 
       MSG_DBG3(
-         "ty:Record Type %x/%x %d\n", nybbleType, type, size );
+	 "ty:Record Type %x/%x %d\n", nybbleType, type, size );
 
       // ================================================================
       // Video Parsing
       // ================================================================
       if ( type == 0xe0 )
       {
-         if ( size > 0 && size + offset <= CHUNKSIZE )
-         {
-            int esOffset1 = demux_ty_FindESHeader( VIDEO_NAL, &chunk[ offset ],
-               size);
-            if ( esOffset1 != -1 )
-               tivo->lastVideoPTS = get_ty_pts(
-                  &chunk[ offset + esOffset1 + 9 ] );
+	 if ( size > 0 && size + offset <= CHUNKSIZE )
+	 {
+	    int esOffset1 = demux_ty_FindESHeader( VIDEO_NAL, &chunk[ offset ],
+	       size);
+	    if ( esOffset1 != -1 )
+	       tivo->lastVideoPTS = get_ty_pts(
+		  &chunk[ offset + esOffset1 + 9 ] );
 
-            // Do NOT Pass the PES Header onto the MPEG2 Decode
-            if( nybbleType != 0x06 )
-               demux_ty_CopyToDemuxPacket( demux->video,
-                  &chunk[ offset ], size, demux->filepos + offset,
-                  tivo->lastVideoPTS );
-            offset += size;
-         }
-         else
-            errorHeader++;
+	    // Do NOT Pass the PES Header onto the MPEG2 Decode
+	    if( nybbleType != 0x06 )
+	       demux_ty_CopyToDemuxPacket( demux->video,
+		  &chunk[ offset ], size, demux->filepos + offset,
+		  tivo->lastVideoPTS );
+	    offset += size;
+	 }
+	 else
+	    errorHeader++;
       }
       // ================================================================
       // Audio Parsing
       // ================================================================
       else if ( type == 0xc0 )
       {
-         if ( size > 0 && size + offset <= CHUNKSIZE )
-         {
-            if( demux->audio->id == -1 )
-            {
-               if ( nybbleType == 0x02 )
-                  continue;    // DTiVo inconclusive, wait for more
-               else if ( nybbleType == 0x09 )
-               {
-                  MSG_DBG3( "ty:Setting AC-3 Audio\n" );
-                  aid = 0x80;  // AC-3
-               }
-               else
-               {
-                  MSG_DBG3( "ty:Setting MPEG Audio\n" );
-                  aid = 0x0;   // MPEG Audio
-               }
+	 if ( size > 0 && size + offset <= CHUNKSIZE )
+	 {
+	    if( demux->audio->id == -1 )
+	    {
+	       if ( nybbleType == 0x02 )
+		  continue;    // DTiVo inconclusive, wait for more
+	       else if ( nybbleType == 0x09 )
+	       {
+		  MSG_DBG3( "ty:Setting AC-3 Audio\n" );
+		  aid = 0x80;  // AC-3
+	       }
+	       else
+	       {
+		  MSG_DBG3( "ty:Setting MPEG Audio\n" );
+		  aid = 0x0;   // MPEG Audio
+	       }
 
-               demux->audio->id = aid;
-               if( !demux->a_streams[ aid ] ) new_sh_audio( demux, aid );
-               if( demux->audio->id == aid )
-               {
-                  demux_stream_t *ds = demux->audio;
-                  if( !ds->sh ) {
-                    sh_audio_t* sh_a;
-                    ds->sh = demux->a_streams[ aid ];
-                    sh_a = (sh_audio_t*)ds->sh;
-                    switch(aid & 0xE0){  // 1110 0000 b  (high 3 bit: type  low 5: id)
-                      case 0x00: sh_a->wtag=0x50;break; // mpeg
-                      case 0xA0: sh_a->wtag=0x10001;break;  // dvd pcm
-                      case 0x80: if((aid & 0xF8) == 0x88) sh_a->wtag=0x2001;//dts
-                                  else sh_a->wtag=0x2000;break; // ac3
-                    }
-                 }
-               }
-            }
+	       demux->audio->id = aid;
+	       if( !demux->a_streams[ aid ] ) new_sh_audio( demux, aid );
+	       if( demux->audio->id == aid )
+	       {
+		  demux_stream_t *ds = demux->audio;
+		  if( !ds->sh ) {
+		    sh_audio_t* sh_a;
+		    ds->sh = demux->a_streams[ aid ];
+		    sh_a = (sh_audio_t*)ds->sh;
+		    switch(aid & 0xE0){  // 1110 0000 b  (high 3 bit: type  low 5: id)
+		      case 0x00: sh_a->wtag=0x50;break; // mpeg
+		      case 0xA0: sh_a->wtag=0x10001;break;  // dvd pcm
+		      case 0x80: if((aid & 0xF8) == 0x88) sh_a->wtag=0x2001;//dts
+				  else sh_a->wtag=0x2000;break; // ac3
+		    }
+		 }
+	       }
+	    }
 
-            aid = demux->audio->id;
+	    aid = demux->audio->id;
 
 
-            // SA DTiVo Audio Data, no PES
-            // ================================================
-            if ( nybbleType == 0x02 || nybbleType == 0x04 )
-            {
-               if ( nybbleType == 0x02 && tivo->tivoType == 2 )
-                  demux_ty_AddToAudioBuffer( tivo, &chunk[ offset ], size );
-               else
-               {
+	    // SA DTiVo Audio Data, no PES
+	    // ================================================
+	    if ( nybbleType == 0x02 || nybbleType == 0x04 )
+	    {
+	       if ( nybbleType == 0x02 && tivo->tivoType == 2 )
+		  demux_ty_AddToAudioBuffer( tivo, &chunk[ offset ], size );
+	       else
+	       {
 
-                  MSG_DBG3(
-                     "ty:Adding Audio Packet Size %d\n", size );
-                  demux_ty_CopyToDemuxPacket( demux->audio,
-                     &chunk[ offset ], size, ( demux->filepos + offset ),
-                     tivo->lastAudioPTS );
-               }
-            }
+		  MSG_DBG3(
+		     "ty:Adding Audio Packet Size %d\n", size );
+		  demux_ty_CopyToDemuxPacket( demux->audio,
+		     &chunk[ offset ], size, ( demux->filepos + offset ),
+		     tivo->lastAudioPTS );
+	       }
+	    }
 
-            // 3 - MPEG Audio with PES Header, either SA or DTiVo
-            // 9 - DTiVo AC3 Audio Data with PES Header
-            // ================================================
-            if ( nybbleType == 0x03 || nybbleType == 0x09 )
-            {
-               int esOffset1, esOffset2;
-               if ( nybbleType == 0x03 )
-               esOffset1 = demux_ty_FindESHeader( AUDIO_NAL, &chunk[ offset ],
-                  size);
+	    // 3 - MPEG Audio with PES Header, either SA or DTiVo
+	    // 9 - DTiVo AC3 Audio Data with PES Header
+	    // ================================================
+	    if ( nybbleType == 0x03 || nybbleType == 0x09 )
+	    {
+	       int esOffset1, esOffset2;
+	       if ( nybbleType == 0x03 )
+	       esOffset1 = demux_ty_FindESHeader( AUDIO_NAL, &chunk[ offset ],
+		  size);
 
-               // SA PES Header, No Audio Data
-               // ================================================
-               if ( nybbleType == 0x03 && esOffset1 == 0 && size == 16 )
-               {
-                  tivo->tivoType = 1;
-                  tivo->lastAudioPTS = get_ty_pts( &chunk[ offset +
-                     SERIES2_PTS_OFFSET ] );
-               }
-               else
-               // DTiVo Audio with PES Header
-               // ================================================
-               {
-                  tivo->tivoType = 2;
+	       // SA PES Header, No Audio Data
+	       // ================================================
+	       if ( nybbleType == 0x03 && esOffset1 == 0 && size == 16 )
+	       {
+		  tivo->tivoType = 1;
+		  tivo->lastAudioPTS = get_ty_pts( &chunk[ offset +
+		     SERIES2_PTS_OFFSET ] );
+	       }
+	       else
+	       // DTiVo Audio with PES Header
+	       // ================================================
+	       {
+		  tivo->tivoType = 2;
 
-                  demux_ty_AddToAudioBuffer( tivo, &chunk[ offset ], size );
-                  demux_ty_FindESPacket( nybbleType == 9 ? AC3_NAL : AUDIO_NAL,
-                     tivo->lastAudio, tivo->lastAudioEnd, &esOffset1,
-                     &esOffset2 );
+		  demux_ty_AddToAudioBuffer( tivo, &chunk[ offset ], size );
+		  demux_ty_FindESPacket( nybbleType == 9 ? AC3_NAL : AUDIO_NAL,
+		     tivo->lastAudio, tivo->lastAudioEnd, &esOffset1,
+		     &esOffset2 );
 
-                  if ( esOffset1 != -1 && esOffset2 != -1 )
-                  {
-                     int packetSize = esOffset2 - esOffset1;
-                     int headerSize;
-                     int ptsOffset;
+		  if ( esOffset1 != -1 && esOffset2 != -1 )
+		  {
+		     int packetSize = esOffset2 - esOffset1;
+		     int headerSize;
+		     int ptsOffset;
 
-                     if ( IsValidAudioPacket( packetSize, &ptsOffset,
-                           &headerSize ) )
-                     {
-                        MSG_DBG3(
-                           "ty:Adding DTiVo Audio Packet Size %d\n",
-                           packetSize );
+		     if ( IsValidAudioPacket( packetSize, &ptsOffset,
+			   &headerSize ) )
+		     {
+			MSG_DBG3(
+			   "ty:Adding DTiVo Audio Packet Size %d\n",
+			   packetSize );
 
-                        tivo->lastAudioPTS = get_ty_pts(
-                           &tivo->lastAudio[ esOffset1 + ptsOffset ] );
+			tivo->lastAudioPTS = get_ty_pts(
+			   &tivo->lastAudio[ esOffset1 + ptsOffset ] );
 
-                        if (nybbleType == 9) headerSize = 0;
-                        demux_ty_CopyToDemuxPacket
-                        (
-                           demux->audio,
-                           &tivo->lastAudio[ esOffset1 + headerSize ],
-                           packetSize - headerSize,
-                           demux->filepos + offset,
-                           tivo->lastAudioPTS
-                        );
+			if (nybbleType == 9) headerSize = 0;
+			demux_ty_CopyToDemuxPacket
+			(
+			   demux->audio,
+			   &tivo->lastAudio[ esOffset1 + headerSize ],
+			   packetSize - headerSize,
+			   demux->filepos + offset,
+			   tivo->lastAudioPTS
+			);
 
-                     }
+		     }
 
-                     // Collapse the Audio Buffer
-                     tivo->lastAudioEnd -= esOffset2;
-                     memmove( &tivo->lastAudio[ 0 ],
-                        &tivo->lastAudio[ esOffset2 ],
-                        tivo->lastAudioEnd );
-                  }
-               }
-            }
+		     // Collapse the Audio Buffer
+		     tivo->lastAudioEnd -= esOffset2;
+		     memmove( &tivo->lastAudio[ 0 ],
+			&tivo->lastAudio[ esOffset2 ],
+			tivo->lastAudioEnd );
+		  }
+	       }
+	    }
 
-            offset += size;
-         }
-         else
-            errorHeader++;
+	    offset += size;
+	 }
+	 else
+	    errorHeader++;
       }
       // ================================================================
       // 1 = Closed Caption
@@ -692,36 +692,36 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
       // ================================================================
       else if ( type == 0x01 || type == 0x02 )
       {
-                        unsigned char lastXDS[ 16 ];
-         int b = AV_RB24(recPtr) >> 4;
-         b &= 0x7f7f;
+			unsigned char lastXDS[ 16 ];
+	 int b = AV_RB24(recPtr) >> 4;
+	 b &= 0x7f7f;
 
-         MSG_DBG3( "ty:%s %04x\n", type == 1 ? "CC" : "XDS", b);
+	 MSG_DBG3( "ty:%s %04x\n", type == 1 ? "CC" : "XDS", b);
 
-         lastXDS[ 0x00 ] = 0x00;
-         lastXDS[ 0x01 ] = 0x00;
-         lastXDS[ 0x02 ] = 0x01;
-         lastXDS[ 0x03 ] = 0xb2;
-         lastXDS[ 0x04 ] = 'T';
-         lastXDS[ 0x05 ] = 'Y';
-         lastXDS[ 0x06 ] = type;
-         lastXDS[ 0x07 ] = b >> 8;
-         lastXDS[ 0x08 ] = b;
-         if ( mp_conf.subcc_enabled )
-            demux_ty_CopyToDemuxPacket( demux->video, lastXDS, 0x09,
-               demux->filepos + offset, tivo->lastVideoPTS );
+	 lastXDS[ 0x00 ] = 0x00;
+	 lastXDS[ 0x01 ] = 0x00;
+	 lastXDS[ 0x02 ] = 0x01;
+	 lastXDS[ 0x03 ] = 0xb2;
+	 lastXDS[ 0x04 ] = 'T';
+	 lastXDS[ 0x05 ] = 'Y';
+	 lastXDS[ 0x06 ] = type;
+	 lastXDS[ 0x07 ] = b >> 8;
+	 lastXDS[ 0x08 ] = b;
+	 if ( mp_conf.subcc_enabled )
+	    demux_ty_CopyToDemuxPacket( demux->video, lastXDS, 0x09,
+	       demux->filepos + offset, tivo->lastVideoPTS );
       }
       // ================================================================
       // Unknown
       // ================================================================
       else
       {
-         if ( size > 0 && size + offset <= CHUNKSIZE )
-            offset += size;
-         if (type != 3 && type != 5 && (type != 0 || size > 0)) {
-         MSG_DBG3( "ty:Invalid Type %x\n", type );
-         invalidType++;
-         }
+	 if ( size > 0 && size + offset <= CHUNKSIZE )
+	    offset += size;
+	 if (type != 3 && type != 5 && (type != 0 || size > 0)) {
+	 MSG_DBG3( "ty:Invalid Type %x\n", type );
+	 invalidType++;
+	 }
       }
      recPtr += 16;
    }
@@ -729,16 +729,16 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
    if ( errorHeader > 0 || invalidType > 0 )
    {
       MSG_DBG3(
-         "ty:Error Check - Records %d, Parsed %d, Errors %d + %d\n",
-         numberRecs, recordsDecoded, errorHeader, invalidType );
+	 "ty:Error Check - Records %d, Parsed %d, Errors %d + %d\n",
+	 numberRecs, recordsDecoded, errorHeader, invalidType );
 
       // Invalid MPEG ES Size Check
       if ( errorHeader > numberRecs / 2 )
-         return 0;
+	 return 0;
 
       // Invalid MPEG Stream Type Check
       if ( invalidType > numberRecs / 2 )
-         return 0;
+	 return 0;
    }
 
    demux->filepos = stream_tell( demux->stream );
@@ -802,14 +802,14 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
      int i;
      if( sh_audio && !d_audio->eof && d_video->pts && d_audio->pts )
      {
-        float a_pts = d_audio->pts;
-        a_pts += ( ds_tell_pts( d_audio ) - sh_audio->a_in_buffer_len ) /
-           (float)sh_audio->i_bps;
-        if( d_video->pts > a_pts )
-        {
-           mpca_skip_frame( sh_audio );  // sync audio
-           continue;
-        }
+	float a_pts = d_audio->pts;
+	a_pts += ( ds_tell_pts( d_audio ) - sh_audio->a_in_buffer_len ) /
+	   (float)sh_audio->i_bps;
+	if( d_video->pts > a_pts )
+	{
+	   mpca_skip_frame( sh_audio );  // sync audio
+	   continue;
+	}
      }
      i = sync_video_packet( d_video );
      if( i == 0x1B3 || i == 0x1B8 ) break; // found it!
@@ -858,12 +858,12 @@ static demuxer_t* ty_open(demuxer_t* demuxer)
     sh_video=demuxer->video->sh;sh_video->ds=demuxer->video;
 
     if(demuxer->audio->id!=-2) {
-        if(!ds_fill_buffer(demuxer->audio)){
-            MSG_V("MPEG: Missing Audio Stream\n");
-            demuxer->audio->sh=NULL;
-        } else {
-            sh_audio=demuxer->audio->sh;sh_audio->ds=demuxer->audio;
-        }
+	if(!ds_fill_buffer(demuxer->audio)){
+	    MSG_V("MPEG: Missing Audio Stream\n");
+	    demuxer->audio->sh=NULL;
+	} else {
+	    sh_audio=demuxer->audio->sh;sh_audio->ds=demuxer->audio;
+	}
     }
 
     return demuxer;

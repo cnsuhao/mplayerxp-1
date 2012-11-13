@@ -33,18 +33,18 @@ typedef struct vf_instance_s {
     char		antiviral_hole[RND_CHAR5];
     // funcs:
     int (* __FASTCALL__ config)(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt);
     MPXP_Rc (* __FASTCALL__ control)(struct vf_instance_s* vf,
-        int request, any_t* data);
+	int request, any_t* data);
     int (* __FASTCALL__ query_format)(struct vf_instance_s* vf,
-        unsigned int fmt,unsigned w,unsigned h);
+	unsigned int fmt,unsigned w,unsigned h);
     void (* __FASTCALL__ get_image)(struct vf_instance_s* vf,
-        mp_image_t *mpi);
+	mp_image_t *mpi);
     int (* __FASTCALL__ put_slice)(struct vf_instance_s* vf,
-        mp_image_t *mpi);
+	mp_image_t *mpi);
     void (* __FASTCALL__ start_slice)(struct vf_instance_s* vf,
-        mp_image_t *mpi);
+	mp_image_t *mpi);
     void (* __FASTCALL__ uninit)(struct vf_instance_s* vf);
     // optional: maybe NULL
     void (* __FASTCALL__ print_conf)(struct vf_instance_s* vf);
@@ -114,7 +114,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src);
 
 // default wrappers:
 int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt);
 MPXP_Rc __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data);
 int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h);

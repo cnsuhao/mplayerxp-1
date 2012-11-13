@@ -63,7 +63,7 @@ typedef struct stream_header_video
 	ogg_int32_t	width;
 	ogg_int32_t	height;
 } stream_header_video;
-	
+
 typedef struct stream_header_audio
 {
 	ogg_int16_t	channels;
@@ -259,7 +259,7 @@ static void demux_ogg_add_sub (ogg_stream_t* os,ogg_packet* pack) {
     if ((hdrlen > 0) && (duration > 0)) {
       float pts;
       if(pack->granulepos == -1)
-        pack->granulepos = os->lastpos + os->lastsize;
+	pack->granulepos = os->lastpos + os->lastsize;
       pts = (float)pack->granulepos/(float)os->samplerate;
       clear_sub = 1.0 + pts + (float)duration/1000.0;
     }
@@ -267,25 +267,25 @@ static void demux_ogg_add_sub (ogg_stream_t* os,ogg_packet* pack) {
       int c = packet[lcv++];
       if(c=='\n' || c==0 || line_pos >= OGG_SUB_MAX_LINE-1){
 	  ogg_sub.text[ogg_sub.lines][line_pos] = 0; // close sub
-          if(line_pos) ogg_sub.lines++;
+	  if(line_pos) ogg_sub.lines++;
 	  if(!c || ogg_sub.lines>=SUB_MAX_TEXT) break; // EOL or TooMany
-          line_pos = 0;
+	  line_pos = 0;
       }
       switch (c) {
-        case '\r':
-        case '\n': // just ignore linefeeds for now
-                   // their placement seems rather haphazard
-          break;
-        case '<': // some html markup, ignore for now
-          ignoring = 1;
-          break;
-        case '>':
-          ignoring = 0;
-          break;
-        default:
-          if(!ignoring) 
+	case '\r':
+	case '\n': // just ignore linefeeds for now
+		   // their placement seems rather haphazard
+	  break;
+	case '<': // some html markup, ignore for now
+	  ignoring = 1;
+	  break;
+	case '>':
+	  ignoring = 0;
+	  break;
+	default:
+	  if(!ignoring)
 	  ogg_sub.text[ogg_sub.lines][line_pos++] = c;
-          break;
+	  break;
       }
     }
   }
@@ -325,7 +325,7 @@ static  int demux_ogg_get_page_stream(ogg_demuxer_t* ogg_d,ogg_stream_state** os
     } else
       return -1;
   }
-  
+
   if(os)
     *os = &ogg_d->subs[id].stream;
 
@@ -363,15 +363,15 @@ static unsigned char* demux_ogg_read_packet(ogg_stream_t* os,ogg_packet* pack,an
      /* we pass complete packets to theora, mustn't strip the header! */
      data = pack->packet;
      os->lastsize = 1;
-     
+
      /* header packets beginn on 1-bit: thus check (*data&0x80).  We don't
 	have theora_state st, until all header packets were passed to the
 	decoder. */
      if (context != NULL && !(*data&0x80))
      {
-        theora_info *thi = ((theora_struct_t*)context)->st.i;
-        int keyframe_granule_shift=logf(thi->keyframe_frequency_force-1);
-        int64_t iframemask = (1 << keyframe_granule_shift) - 1;
+	theora_info *thi = ((theora_struct_t*)context)->st.i;
+	int keyframe_granule_shift=logf(thi->keyframe_frequency_force-1);
+	int64_t iframemask = (1 << keyframe_granule_shift) - 1;
 
 	if (pack->granulepos >= 0)
 	{
@@ -482,7 +482,7 @@ static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vor
 #if 0
 	dvdsub_id = index;
 #endif
-        MSG_V( "Ogg demuxer: Displaying subtitle stream id %d which matched -slang %s\n", id, val);
+	MSG_V( "Ogg demuxer: Displaying subtitle stream id %d which matched -slang %s\n", id, val);
       }
       else
 	hdr = "Language";
@@ -537,7 +537,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
   // (PACKET_TYPE_HEADER bit doesn't even exist for theora ?!)
   // We jump nothing for FLAC. Ain't this great? Packet contents have to be
   // handled differently for each and every stream type. The joy! The joy!
-  if(!os->flac && ((*pack->packet & PACKET_TYPE_HEADER) && 
+  if(!os->flac && ((*pack->packet & PACKET_TYPE_HEADER) &&
      (ds != d->audio || ( ((sh_audio_t*)ds->sh)->wtag != FOURCC_VORBIS || os->hdr_packets >= NUM_VORBIS_HDR_PACKETS ) ) &&
      (ds != d->video || (((sh_video_t*)ds->sh)->fourcc != FOURCC_THEORA))))
     return 0;
@@ -673,7 +673,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
     ogg_d->subs[np].lastpos = ogg_d->subs[np].lastsize = ogg_d->subs[np].hdr_packets = 0;
   }
 
-  
+
   // Get the first page
   while(1) {
     np = ogg_sync_pageout(sync,page);
@@ -684,7 +684,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
 	MSG_ERR("EOF while trying to get the first page !!!!\n");
 	break;
       }
-      
+
       ogg_sync_wrote(sync,len);
       continue;
     }
@@ -692,7 +692,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
     ogg_stream_pagein(oss,page);
     break;
   }
-  
+
 }
 
 /** \brief Return the number of subtitle tracks in the file.
@@ -822,10 +822,10 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	int errorCode = 0;
 	theora_info inf;
 	theora_comment cc;
-	
+
 	theora_info_init (&inf);
 	theora_comment_init (&cc);
-	
+
 	errorCode = theora_decode_header (&inf, &cc, &pack);
 	if (errorCode)
 	    MSG_ERR("Theora header parsing failed: %i \n",
@@ -843,7 +843,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	    sh_v->src_h = sh_v->bih->biHeight = inf.frame_height;
 	    sh_v->bih->biBitCount = 24;
 	    sh_v->bih->biPlanes = 3;
-	    sh_v->bih->biSizeImage = ((sh_v->bih->biBitCount/8) * 
+	    sh_v->bih->biSizeImage = ((sh_v->bih->biBitCount/8) *
 				      sh_v->bih->biWidth*sh_v->bih->biHeight);
 	    ogg_d->subs[ogg_d->num_sub].samplerate = sh_v->fps;
 	    ogg_d->subs[ogg_d->num_sub].theora = 1;
@@ -852,9 +852,9 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	    MSG_V(
 		   "Ogg : stream %d is theora v%i.%i.%i %i:%i, %.3f FPS,"
 		   " aspect %i:%i\n", ogg_d->num_sub,
-		   (int)inf.version_major, 
-		   (int)inf.version_minor, 
-		   (int)inf.version_subminor, 
+		   (int)inf.version_major,
+		   (int)inf.version_minor,
+		   (int)inf.version_subminor,
 		   inf.width, inf.height,
 		   sh_v->fps,
 		   inf.aspect_numerator, inf.aspect_denominator);
@@ -920,8 +920,8 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
       } else
 	MSG_WARN("Ogg stream %d contains an old header but the header type is unknown\n",ogg_d->num_sub);
 
-        // Check new header
-    } else if ( (*pack.packet & PACKET_TYPE_BITS ) == PACKET_TYPE_HEADER && 
+	// Check new header
+    } else if ( (*pack.packet & PACKET_TYPE_BITS ) == PACKET_TYPE_HEADER &&
 	      pack.bytes >= (int)sizeof(stream_header)+1) {
       stream_header *st = (stream_header*)(pack.packet+1);
       /// New video header
@@ -972,18 +972,18 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 
 	/// Check for text (subtitles) header
       } else if (strncmp(st->streamtype, "text", 4) == 0) {
-          MSG_V( "Ogg stream %d is text\n", ogg_d->num_sub);
+	  MSG_V( "Ogg stream %d is text\n", ogg_d->num_sub);
 	  ogg_d->subs[ogg_d->num_sub].samplerate= get_uint64(&st->time_unit)/10;
 	  ogg_d->subs[ogg_d->num_sub].text = 1;
-          ogg_d->subs[ogg_d->num_sub].id = ogg_d->n_text;
-          if (demuxer->sub->id == ogg_d->n_text)
-            text_id = ogg_d->num_sub;
-          ogg_d->n_text++;
-          ogg_d->text_ids = (int *)mp_realloc(ogg_d->text_ids, sizeof(int) * ogg_d->n_text);
-          ogg_d->text_ids[ogg_d->n_text - 1] = ogg_d->num_sub;
-          ogg_d->text_langs = (char **)mp_realloc(ogg_d->text_langs, sizeof(char *) * ogg_d->n_text);
-          ogg_d->text_langs[ogg_d->n_text - 1] = NULL;
-          demux_ogg_init_sub();
+	  ogg_d->subs[ogg_d->num_sub].id = ogg_d->n_text;
+	  if (demuxer->sub->id == ogg_d->n_text)
+	    text_id = ogg_d->num_sub;
+	  ogg_d->n_text++;
+	  ogg_d->text_ids = (int *)mp_realloc(ogg_d->text_ids, sizeof(int) * ogg_d->n_text);
+	  ogg_d->text_ids[ogg_d->n_text - 1] = ogg_d->num_sub;
+	  ogg_d->text_langs = (char **)mp_realloc(ogg_d->text_langs, sizeof(char *) * ogg_d->n_text);
+	  ogg_d->text_langs[ogg_d->n_text - 1] = NULL;
+	  demux_ogg_init_sub();
 	//// Unknown header type
       } else
 	MSG_ERR("Ogg stream %d has a header marker but is of an unknown type\n",ogg_d->num_sub);
@@ -1003,7 +1003,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	  demuxer->audio->sh = sh_a;
 	  sh_a->ds = demuxer->audio;
 	  ds = demuxer->audio;
-          audio_id = ogg_d->num_sub;
+	  audio_id = ogg_d->num_sub;
 	}
       }
       if(sh_v) {
@@ -1015,7 +1015,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	  demuxer->video->sh = sh_v;
 	  sh_v->ds = demuxer->video;
 	  ds = demuxer->video;
-          video_id = ogg_d->num_sub;
+	  video_id = ogg_d->num_sub;
 	}
       }
       /// Add the header packets if the stream isn't seekable
@@ -1026,7 +1026,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	} while(ogg_stream_packetout(&ogg_d->subs[ogg_d->num_sub].stream,&pack) == 1);
       }
     }
-    ogg_d->num_sub++;      
+    ogg_d->num_sub++;
   }
 
   if(!n_video && !n_audio) {
@@ -1064,7 +1064,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
     demux_ogg_scan_stream(demuxer);
   }
   MSG_V("Ogg demuxer : found %d audio stream%s, %d video stream%s and %d text stream%s\n",n_audio,n_audio>1?"s":"",n_video,n_video>1?"s":"",ogg_d->n_text,ogg_d->n_text>1?"s":"");
- 
+
   return demuxer;
 
 err_out:
@@ -1114,7 +1114,7 @@ static int ogg_demux(demuxer_t *d,demux_stream_t *__ds) {
 	      continue;
 	    }
 	    /// We need more data
-	    buf = ogg_sync_buffer(sync,BLOCK_SIZE);	    
+	    buf = ogg_sync_buffer(sync,BLOCK_SIZE);
 	    len = stream_read(s,buf,BLOCK_SIZE);
 	    if(len == 0 && s->eof) {
 	      MSG_DBG2("Ogg : Stream EOF !!!!\n");
@@ -1138,7 +1138,7 @@ static int ogg_demux(demuxer_t *d,demux_stream_t *__ds) {
       } else /// Packet was corrupted
 	MSG_WARN("Ogg : bad packet in stream %d\n",id);
     } /// Packet loop
-    
+
     /// Is the actual logical stream in use ?
     if(id == d->audio->id)
       ds = d->audio;
@@ -1203,7 +1203,7 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
       goto fallback;
     }
     // Add some data
-    plen = ds_get_packet(demuxer->audio,&p);    
+    plen = ds_get_packet(demuxer->audio,&p);
     buf = ogg_sync_buffer(&ogg_d->sync,plen);
     memcpy(buf,p,plen);
     ogg_sync_wrote(&ogg_d->sync,plen);
@@ -1325,7 +1325,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
       pos += (demuxer->movi_end - demuxer->movi_start) * seeka->secs;
     else {
       if (ogg_d->final_granulepos > 0) {
-        pos += seeka->secs * (demuxer->movi_end - demuxer->movi_start) / (ogg_d->final_granulepos / rate);
+	pos += seeka->secs * (demuxer->movi_end - demuxer->movi_start) / (ogg_d->final_granulepos / rate);
       } else if (os->lastpos > 0) {
       pos += seeka->secs * ogg_d->pos / (os->lastpos / rate);
     }
@@ -1345,7 +1345,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
   ogg_d->pos = pos;
   ogg_d->last_size = 0;
       /* we just guess that we reached correct granulepos, in case a
-         subsequent search occurs before we read a valid granulepos */
+	 subsequent search occurs before we read a valid granulepos */
       os->lastpos = gp;
       first = !(ogg_d->syncpoints);
       do_seek=0;
@@ -1380,50 +1380,50 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
       else if(np == 0)
 	break;
       if (first) { /* Discard the first packet as it's probably broken,
-           and we don't have any other means to decide whether it is
-           complete or not. */
-        first = 0;
-        break;
+	   and we don't have any other means to decide whether it is
+	   complete or not. */
+	first = 0;
+	break;
       }
       is_gp_valid = (op.granulepos >= 0);
       demux_ogg_read_packet(os,&op,context,&pts,&is_keyframe,samplesize);
       if (precision && is_gp_valid) {
-        precision--;
-        if (abs(gp - op.granulepos) > rate && (op.granulepos != old_gp)) {
-          //prepare another seek because we are off by more than 1s
-          pos += (gp - op.granulepos) * (pos - old_pos) / (op.granulepos - old_gp);
-          if (pos < 0) pos = 0;
-          if (pos < (demuxer->movi_end - demuxer->movi_start)) {
-            do_seek=1;
-            break;
-          }
-        }
+	precision--;
+	if (abs(gp - op.granulepos) > rate && (op.granulepos != old_gp)) {
+	  //prepare another seek because we are off by more than 1s
+	  pos += (gp - op.granulepos) * (pos - old_pos) / (op.granulepos - old_gp);
+	  if (pos < 0) pos = 0;
+	  if (pos < (demuxer->movi_end - demuxer->movi_start)) {
+	    do_seek=1;
+	    break;
+	  }
+	}
       }
       if (is_gp_valid && (pos > 0) && (old_gp > gp)
-          && (2 * (old_gp - op.granulepos) < old_gp - gp)) {
-        /* prepare another seek because looking for a syncpoint
-           destroyed the backward search */
-        pos = old_pos - 1.5 * (old_pos - pos);
-        if (pos < 0) pos = 0;
-        if (pos < (demuxer->movi_end - demuxer->movi_start)) {
-          do_seek=1;
-          break;
-        }
+	  && (2 * (old_gp - op.granulepos) < old_gp - gp)) {
+	/* prepare another seek because looking for a syncpoint
+	   destroyed the backward search */
+	pos = old_pos - 1.5 * (old_pos - pos);
+	if (pos < 0) pos = 0;
+	if (pos < (demuxer->movi_end - demuxer->movi_start)) {
+	  do_seek=1;
+	  break;
+	}
       }
       if(!precision && (is_keyframe || os->vorbis) ) {
-        ogg_sub.lines = 0;
-        vo_data->sub = &ogg_sub;
-        vo_osd_changed(OSDTYPE_SUBTITLE);
-        clear_sub = -1;
+	ogg_sub.lines = 0;
+	vo_data->sub = &ogg_sub;
+	vo_osd_changed(OSDTYPE_SUBTITLE);
+	clear_sub = -1;
 	demux_ogg_add_packet(ds,os,ds->id,&op);
 	if(sh_audio)
-	  mpca_resync_stream(sh_audio); 
+	  mpca_resync_stream(sh_audio);
 	return;
       }
      }
   }
 
-  MSG_ERR("Can't find the good packet :(\n");  
+  MSG_ERR("Can't find the good packet :(\n");
 
 }
 

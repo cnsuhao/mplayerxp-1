@@ -76,7 +76,7 @@ typedef struct vo_resize_s
 {
     uint32_t	event_type; /**< X11 event type */
 
-    /** callback to adjust size of window keeping aspect ratio 
+    /** callback to adjust size of window keeping aspect ratio
  * @param cw	current window width
      * @param ch	current window height
      * @param nw	storage for new width to be stored current window width
@@ -200,17 +200,17 @@ typedef struct vo_functions_s
 	**/
 	MPXP_Rc (* __FASTCALL__ preinit)(vo_data_t* vo,const char *arg);
 
-        /** Initializes (means CONFIGURE) the display driver.
+	/** Initializes (means CONFIGURE) the display driver.
 	 * @param width		width of source image
-         * @param height	height of source image
+	 * @param height	height of source image
 	 * @param d_width	width of destinition image (may require prescaling)
 	 * @param d_height	height of destinition image (may require prescaling)
 	 * @param fullscreen	flags (see VOFLAG_XXX for detail)
 	 * @param title		window title, if available
 	 * @param format	fourcc of source image
-         * @return		zero on successful initialization, non-zero on error.
-         **/
-        MPXP_Rc (* __FASTCALL__ config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
+	 * @return		zero on successful initialization, non-zero on error.
+	 **/
+	MPXP_Rc (* __FASTCALL__ config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 			 uint32_t d_height, uint32_t fullscreen, char *title,
 			 uint32_t format);
 
@@ -221,19 +221,19 @@ typedef struct vo_functions_s
 	 **/
 	MPXP_Rc (* __FASTCALL__ control)(vo_data_t* vo,uint32_t request, any_t*data);
 
-        /** Returns driver information.
-         * @return	read-only pointer to a vo_info_t structure.
-         **/
-        const vo_info_t* (* __FASTCALL__ get_info)(vo_data_t* vo);
+	/** Returns driver information.
+	 * @return	read-only pointer to a vo_info_t structure.
+	 **/
+	const vo_info_t* (* __FASTCALL__ get_info)(vo_data_t* vo);
 
-        /** Blit/Flip buffer to the screen. Must be called after each frame!
+	/** Blit/Flip buffer to the screen. Must be called after each frame!
 	 * @param idex	index of frame to be selected as active frame
-         **/
-        void (* __FASTCALL__ select_frame)(vo_data_t* vo,unsigned idx);
+	 **/
+	void (* __FASTCALL__ select_frame)(vo_data_t* vo,unsigned idx);
 
-        /** Closes driver. Should restore the original state of the system.
-         **/
-        void (* __FASTCALL__ uninit)(vo_data_t* vo);
+	/** Closes driver. Should restore the original state of the system.
+	 **/
+	void (* __FASTCALL__ uninit)(vo_data_t* vo);
 
 } vo_functions_t;
 

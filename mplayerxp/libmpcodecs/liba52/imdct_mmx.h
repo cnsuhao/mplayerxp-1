@@ -183,7 +183,7 @@ static void RENAME(imdct_512) (sample_t * data, sample_t * delay, sample_t bias)
 #endif
 
 #ifdef HAVE_SSE
-#elif defined ( HAVE_3DNOW )	
+#elif defined ( HAVE_3DNOW )
     for (i = 0; i < 128; i++) {
 	k = fftorder[i];
 	__asm __volatile(
@@ -265,7 +265,7 @@ static void RENAME(imdct_256)(sample_t * data, sample_t * delay, sample_t bias)
 #endif
 
 #ifdef HAVE_SSE
-#elif defined ( HAVE_3DNOW )	
+#elif defined ( HAVE_3DNOW )
     for (i = 0; i < 64; i++) {
 	k = fftorder[i];
 	__asm __volatile(
@@ -332,7 +332,7 @@ static void RENAME(imdct_256)(sample_t * data, sample_t * delay, sample_t bias)
     /* Post IFFT complex multiply */
     /* Window and convert to real valued signal */
     for (i = 0; i < 32; i++) {
-	/* y1[n] = z1[n] * (xcos2[n] + j * xs in2[n]) ; */ 
+	/* y1[n] = z1[n] * (xcos2[n] + j * xs in2[n]) ; */
 	t.real = post2[i].real;
 	t.imag = post2[i].imag;
 

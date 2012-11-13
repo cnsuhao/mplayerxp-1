@@ -39,7 +39,7 @@ extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
 
    n number of filter taps, where mod(n,4)==0
    w filter taps
-   x input signal must be a circular buffer which is indexed backwards 
+   x input signal must be a circular buffer which is indexed backwards
 */
 _ftype_t __FASTCALL__ fir(register unsigned int n, _ftype_t* w, _ftype_t* x)
 {
@@ -58,7 +58,7 @@ _ftype_t __FASTCALL__ fir(register unsigned int n, _ftype_t* w, _ftype_t* x)
    d  number of filters
    xi current index in xq
    w  filter taps k by n big
-   x  input signal must be a circular buffers which are indexed backwards 
+   x  input signal must be a circular buffers which are indexed backwards
    y  output buffer
    s  output buffer stride
 */
@@ -81,7 +81,7 @@ _ftype_t* __FASTCALL__ pfir(unsigned int n, unsigned int d, unsigned int xi, _ft
    at the new samples, xi current index in xq and n the length of the
    filter. xq must be n*2 by k big, s is the index for in.
 */
-int __FASTCALL__ updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** xq, _ftype_t* in, unsigned int s)  
+int __FASTCALL__ updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** xq, _ftype_t* in, unsigned int s)
 {
   register _ftype_t* txq = *xq + xi;
   register int nt = n*2;
@@ -102,11 +102,11 @@ int __FASTCALL__ updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftyp
 
    n     filter length must be odd for HP and BS filters
    w     buffer for the filter taps (must be n long)
-   fc    cutoff frequencies (1 for LP and HP, 2 for BP and BS) 
+   fc    cutoff frequencies (1 for LP and HP, 2 for BP and BS)
 	 0 < fc < 1 where 1 <=> Fs/2
    flags window and filter type as defined in filter.h
-	 variables are ored together: i.e. LP|HAMMING will give a 
-	 low pass filter designed using a hamming window  
+	 variables are ored together: i.e. LP|HAMMING will give a
+	 low pass filter designed using a hamming window
    opt   beta constant used only when designing using kaiser windows
 
    returns 0 if OK, -1 if fail
@@ -144,10 +144,10 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
   case(KAISER):
     kaiser(n,w,opt); break;
   default:
-    return -1;	
+    return -1;
   }
 
-  if(flags & (LP | HP)){ 
+  if(flags & (LP | HP)){
     fc1=*fc;
     // Cutoff frequency must be < 0.5 where 0.5 <=> Fs/2
     fc1 = ((fc1 <= 1.0) && (fc1 > 0.0)) ? fc1/2 : 0.25;
@@ -156,7 +156,7 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
     if(flags & LP){ // Low pass filter
 
       // If the filter length is odd, there is one point which is exactly
-      // in the middle. The value at this point is 2*fCutoff*sin(x)/x, 
+      // in the middle. The value at this point is 2*fCutoff*sin(x)/x,
       // where x is zero. To make sure nothing strange happens, we set this
       // value separately.
       if (o){
@@ -208,7 +208,7 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
 	t2 = sin(k3 * t1)/(M_PI * t1); // Sinc fc2
 	t3 = sin(k1 * t1)/(M_PI * t1); // Sinc fc1
 	g += w[end-i-1] * (t3 + t2);   // Total gain in filter
-	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3); 
+	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3);
       }
     }
     else{ // Band stop
@@ -222,7 +222,7 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
 	t1 = (_ftype_t)(i+1);
 	t2 = sin(k1 * t1)/(M_PI * t1); // Sinc fc1
 	t3 = sin(k3 * t1)/(M_PI * t1); // Sinc fc2
-	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3); 
+	w[end-i-1] = w[n-end+i] = w[end-i-1] * (t2 - t3);
 	g += 2*w[end-i-1]; // Total gain in filter
       }
     }
@@ -241,7 +241,7 @@ int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned 
    n     length of prototype filter
    k     number of polyphase components
    w     prototype filter taps
-   pw    Parallel FIR filter 
+   pw    Parallel FIR filter
    g     Filter gain
    flags FWD forward indexing
 	 REW reverse indexing
@@ -303,9 +303,9 @@ void __FASTCALL__ prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
 
    The transfer function for z-domain is:
 
-          1 + alpha1 * z^(-1) + alpha2 * z^(-2)
+	  1 + alpha1 * z^(-1) + alpha2 * z^(-2)
    H(z) = -------------------------------------
-          1 + beta1 * z^(-1) + beta2 * z^(-2)
+	  1 + beta1 * z^(-1) + beta2 * z^(-2)
 
    Store the 4 IIR coefficients in array pointed by coef in following
    order:
@@ -316,10 +316,10 @@ void __FASTCALL__ prewarp(_ftype_t* a, _ftype_t fc, _ftype_t fs)
    a       - s-domain numerator coefficients
    b       - s-domain denominator coefficients
    k 	   - filter gain factor. Initially set to 1 and modified by each
-             biquad section in such a way, as to make it the
-             coefficient by which to multiply the overall filter gain
-             in order to achieve a desired overall filter gain,
-             specified in initial value of k.  
+	     biquad section in such a way, as to make it the
+	     coefficient by which to multiply the overall filter gain
+	     in order to achieve a desired overall filter gain,
+	     specified in initial value of k.
    fs 	   - sampling rate (Hz)
    coef    - array of z-domain coefficients to be filled in.
 
@@ -367,9 +367,9 @@ void __FASTCALL__ bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _
    6  (s^2 + 0.5176387s + 1) * (s^2 + 1.414214 + 1) * (s^2 + 1.931852s + 1)
 
    For n=4 we have following equation for the filter transfer function:
-                       1                              1
+		       1                              1
    T(s) = --------------------------- * ----------------------------
-          s^2 + (1/Q) * 0.765367s + 1   s^2 + (1/Q) * 1.847759s + 1
+	  s^2 + (1/Q) * 0.765367s + 1   s^2 + (1/Q) * 1.847759s + 1
 
    The filter consists of two 2nd order sections since highest s power
    is 2.  Now we can take the coefficients, or the numbers by which s
@@ -378,16 +378,16 @@ void __FASTCALL__ bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _
 
    Our standard form for each 2nd order section is:
 
-          a2 * s^2 + a1 * s + a0
+	  a2 * s^2 + a1 * s + a0
    H(s) = ----------------------
-          b2 * s^2 + b1 * s + b0
+	  b2 * s^2 + b1 * s + b0
 
    Note that Butterworth numerator is 1 for all filter sections, which
    means s^2 = 0 and s^1 = 0
 
    Let's convert standard Butterworth polynomials into this form:
 
-             0 + 0 + 1                  0 + 0 + 1
+	     0 + 0 + 1                  0 + 0 + 1
    --------------------------- * --------------------------
    1 + ((1/Q) * 0.765367) + 1   1 + ((1/Q) * 1.847759) + 1
 
@@ -410,10 +410,10 @@ void __FASTCALL__ bilinear(_ftype_t* a, _ftype_t* b, _ftype_t* k, _ftype_t fs, _
    b       - s-domain denominator coefficients
    Q	   - Q value for the filter
    k 	   - filter gain factor. Initially set to 1 and modified by each
-             biquad section in such a way, as to make it the
-             coefficient by which to multiply the overall filter gain
-             in order to achieve a desired overall filter gain,
-             specified in initial value of k.  
+	     biquad section in such a way, as to make it the
+	     coefficient by which to multiply the overall filter gain
+	     in order to achieve a desired overall filter gain,
+	     specified in initial value of k.
    fs 	   - sampling rate (Hz)
    coef    - array of z-domain coefficients to be filled in.
 
@@ -430,7 +430,7 @@ int __FASTCALL__ szxform(_ftype_t* a, _ftype_t* b, _ftype_t Q, _ftype_t fc, _fty
   _ftype_t at[3];
   _ftype_t bt[3];
 
-  if(!a || !b || !k || !coef || (Q>1000.0 || Q< 1.0)) 
+  if(!a || !b || !k || !coef || (Q>1000.0 || Q< 1.0))
     return -1;
 
   memcpy(at,a,3*sizeof(_ftype_t));
@@ -472,7 +472,7 @@ void __FASTCALL__ boxcar(int n, _ftype_t* w)
 /*
 // Triang a.k.a Bartlett
 //
-//               |    (N-1)| 
+//               |    (N-1)|
 //           2 * |k - -----|
 //               |      2  |
 // w = 1.0 - ---------------
@@ -486,7 +486,7 @@ void __FASTCALL__ triang(int n, _ftype_t* w)
   _ftype_t k2  = 1/((_ftype_t)n + k1);
   int      end = (n + 1) >> 1;
   int	   i;
-  
+
   // Calculate window coefficients
   for (i=0 ; i<end ; i++)
     w[i] = w[n-i-1] = (2.0*((_ftype_t)(i+1))-(1.0-k1))*k2;
@@ -571,12 +571,12 @@ void __FASTCALL__ flattop(int n,_ftype_t* w)
 }
 
 /* Computes the 0th order modified Bessel function of the first kind.
-// (Needed to compute Kaiser window) 
+// (Needed to compute Kaiser window)
 //
 // y = sum( (x/(2*n))^2 )
 //      n
 */
-#define BIZ_EPSILON 1E-21 // Max error acceptable 
+#define BIZ_EPSILON 1E-21 // Max error acceptable
 
 _ftype_t __FASTCALL__ besselizero(_ftype_t x)
 {

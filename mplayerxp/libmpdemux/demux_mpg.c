@@ -110,29 +110,29 @@ static int parse_psm(demuxer_t *demux, int len) {
     if(id >= 0xB0 && id <= 0xEF && priv) {
       int idoffset = id - 0xB0;
       switch(type) {
-        case 0x1:
-          priv->es_map[idoffset] = VIDEO_MPEG1;
-          break;
-        case 0x2:
-          priv->es_map[idoffset] = VIDEO_MPEG2;
-          break;
-        case 0x3:
-        case 0x4:
-          priv->es_map[idoffset] = AUDIO_MP2;
-          break;
-        case 0x0f:
-        case 0x11:
-          priv->es_map[idoffset] = AUDIO_AAC;
-          break;
-        case 0x10:
-          priv->es_map[idoffset] = VIDEO_MPEG4;
-          break;
-        case 0x1b:
-          priv->es_map[idoffset] = VIDEO_H264;
-          break;
-        case 0x81:
-          priv->es_map[idoffset] = AUDIO_A52;
-          break;
+	case 0x1:
+	  priv->es_map[idoffset] = VIDEO_MPEG1;
+	  break;
+	case 0x2:
+	  priv->es_map[idoffset] = VIDEO_MPEG2;
+	  break;
+	case 0x3:
+	case 0x4:
+	  priv->es_map[idoffset] = AUDIO_MP2;
+	  break;
+	case 0x0f:
+	case 0x11:
+	  priv->es_map[idoffset] = AUDIO_AAC;
+	  break;
+	case 0x10:
+	  priv->es_map[idoffset] = VIDEO_MPEG4;
+	  break;
+	case 0x1b:
+	  priv->es_map[idoffset] = VIDEO_H264;
+	  break;
+	case 0x81:
+	  priv->es_map[idoffset] = AUDIO_A52;
+	  break;
       }
       MSG_DBG2("PSM ES, id=0x%x, type=%x, stype: %x\n", id, type, priv->es_map[idoffset]);
     }
@@ -155,7 +155,7 @@ static void new_audio_stream(demuxer_t *demux, int aid){
       case 0x00: sh_a->wtag=AUDIO_MP2;break;
       case 0xA0: sh_a->wtag=AUDIO_LPCM_BE;break;
       case 0x80: if((aid & 0xF8) == 0x88) sh_a->wtag=AUDIO_DTS;
-                 else sh_a->wtag=AUDIO_A52;
+		 else sh_a->wtag=AUDIO_A52;
 		 break;
     }
     if (mpg_d) mpg_d->a_stream_ids[mpg_d->num_a_streams++] = aid;
@@ -264,47 +264,47 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     }
     len-=hdrlen;
     if(hdrlen>0) stream_skip(demux->stream,hdrlen); // skip header bytes
-    
+
     //============== DVD Audio sub-stream ======================
     if(id==0x1BD){
       int aid=stream_read_char(demux->stream);--len;
       if(len<3) return -1; // invalid audio packet
-      
+
       // AID:
       // 0x20..0x3F  subtitle
       // 0x80..0x9F  AC3 audio
       // 0xA0..0xBF  PCM audio
-      
+
       if((aid & 0xE0) == 0x20){
-        // subtitle:
-        aid&=0x1F;
+	// subtitle:
+	aid&=0x1F;
 
-        if(!demux->s_streams[aid]){
-            MSG_V("==> Found subtitle: %d\n",aid);
-            demux->s_streams[aid]=1;
-        }
+	if(!demux->s_streams[aid]){
+	    MSG_V("==> Found subtitle: %d\n",aid);
+	    demux->s_streams[aid]=1;
+	}
 
-        if(demux->sub->id==aid){
-            ds=demux->sub;
-        }
-          
+	if(demux->sub->id==aid){
+	    ds=demux->sub;
+	}
+
       } else if((aid & 0xC0) == 0x80 || (aid & 0xE0) == 0x00) {
 
 //        aid=128+(aid&0x7F);
-        // aid=0x80..0xBF
+	// aid=0x80..0xBF
 
-        new_audio_stream(demux, aid);
+	new_audio_stream(demux, aid);
 
       if(demux->audio->id==aid){
-        int type;
-        ds=demux->audio;
-        if(!ds->sh) ds->sh=demux->a_streams[aid];
-        // READ Packet: Skip additional audio header data:
-        c=stream_read_char(demux->stream);//num of frames
-        type=stream_read_char(demux->stream);//startpos hi
-        type=(type<<8)|stream_read_char(demux->stream);//startpos lo
-        len-=3;
-        if((aid&0xE0)==0xA0 && len>=3){
+	int type;
+	ds=demux->audio;
+	if(!ds->sh) ds->sh=demux->a_streams[aid];
+	// READ Packet: Skip additional audio header data:
+	c=stream_read_char(demux->stream);//num of frames
+	type=stream_read_char(demux->stream);//startpos hi
+	type=(type<<8)|stream_read_char(demux->stream);//startpos lo
+	len-=3;
+	if((aid&0xE0)==0xA0 && len>=3){
 	  unsigned char* hdr;
 	  // save audio header as codecdata!
 	  if(!((sh_audio_t*)(ds->sh))->codecdata_len){
@@ -312,19 +312,19 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 	      ((sh_audio_t*)(ds->sh))->codecdata_len=3;
 	  }
 	  hdr=((sh_audio_t*)(ds->sh))->codecdata;
-          // read LPCM header:
+	  // read LPCM header:
 	  // emphasis[1], mute[1], rvd[1], frame number[5]:
-          hdr[0]=stream_read_char(demux->stream);
+	  hdr[0]=stream_read_char(demux->stream);
 //          printf(" [%01X:%02d]",c>>5,c&31);
 	  // quantization[2],freq[2],rvd[1],channels[3]
-          hdr[1]=stream_read_char(demux->stream);
+	  hdr[1]=stream_read_char(demux->stream);
 //          printf("[%01X:%01X] ",c>>4,c&15);
 	  // dynamic range control (0x80=off):
-          hdr[2]=stream_read_char(demux->stream);
+	  hdr[2]=stream_read_char(demux->stream);
 //          printf("[%02X] ",c);
-          len-=3;
-          if(len<=0) MSG_V("End of packet while searching for PCM header\n");
-        }
+	  len-=3;
+	  if(len<=0) MSG_V("End of packet while searching for PCM header\n");
+	}
       } //  if(demux->audio->id==aid)
 
       } else MSG_V("Unknown 0x1BD substream: 0x%02X  \n",aid);
@@ -344,7 +344,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     MSG_DBG2("Invalid PS data len: %d\n",len);
     return -1;  // invalid packet !!!!!!
   }
-  
+
   if(id>=0x1C0 && id<=0x1DF){
     // mpeg audio
     int aid=id-0x1C0;
@@ -373,7 +373,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 	sh_video_t *sh = (sh_video_t *)ds->sh;
 	if(priv->es_map[id - 0x1B0]) {
 	  sh->fourcc = priv->es_map[id - 0x1B0];
-          MSG_DBG2("ASSIGNED TO STREAM %d CODEC %x\n", id, priv->es_map[id - 0x1B0]);
+	  MSG_DBG2("ASSIGNED TO STREAM %d CODEC %x\n", id, priv->es_map[id - 0x1B0]);
 	}
       }
     }
@@ -383,17 +383,17 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     MSG_DBG2("DEMUX_MPG: Read %d data bytes from packet %04X\n",len,id);
 
     if(ds==ds->demuxer->sub) {
-        if (pts == MPGPES_BAD_PTS) {
-            pts = priv->last_sub_pts;
-        } else
-            priv->last_sub_pts = pts;
+	if (pts == MPGPES_BAD_PTS) {
+	    pts = priv->last_sub_pts;
+	} else
+	    priv->last_sub_pts = pts;
     }
     if(pts==MPGPES_BAD_PTS && ds->asf_packet)
     {
 	demux_packet_t* dp=ds->asf_packet;
 	dp->buffer=mp_realloc(dp->buffer,dp->len+len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
-        dp->len+=len;
+	dp->len+=len;
     }
     else
     {
@@ -409,11 +409,11 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 	dp->flags=sh?is_mpg_keyframe(sh->fourcc,id,dp->buffer):DP_NONKEYFRAME;
 	dp->pos=demux->filepos;
 	ds->asf_packet=dp;
-        if (ds==ds->demuxer->sub) {
-            // Add sub packets at ones
-            ds_add_packet(ds,ds->asf_packet);
-            ds->asf_packet=NULL;
-        }
+	if (ds==ds->demuxer->sub) {
+	    // Add sub packets at ones
+	    ds_add_packet(ds,ds->asf_packet);
+	    ds->asf_packet=NULL;
+	}
     }
 //    ds_read_packet(ds,demux->stream,len,pts/90000.0f,demux->filepos,0);
 //    if(ds==demux->sub) parse_dvdsub(ds->last->buffer,ds->last->len);
@@ -478,11 +478,11 @@ do{
   if(demux->synced>=2){
       ret=demux_mpg_read_packet(demux,head);
       if(!ret)
-        if(--max_packs==0){
+	if(--max_packs==0){
 	  stream_set_eof(demux->stream,1);
-          MSG_ERR(MSGTR_DoesntContainSelectedStream);
-          return 0;
-        }
+	  MSG_ERR(MSGTR_DoesntContainSelectedStream);
+	  return 0;
+	}
       if(demux->synced==3) demux->synced=(ret==1)?2:0; // PES detect
   } else {
     if(head>=0x100 && head<0x1B0){
@@ -512,15 +512,15 @@ do{
     }
 #if 1
     if( ( (mpg_stat.num_elementary_packets100>50 && mpg_stat.num_elementary_packets101>50) ||
-          (mpg_stat.num_elementary_packetsPES>50) ) && skipped>4000000){
-        MSG_V("sync_mpeg_ps: seems to be ES/PES stream...\n");
+	  (mpg_stat.num_elementary_packetsPES>50) ) && skipped>4000000){
+	MSG_V("sync_mpeg_ps: seems to be ES/PES stream...\n");
 	stream_set_eof(demux->stream,1);
-        break;
+	break;
     }
     if(mpg_stat.num_mp3audio_packets>100 && mpg_stat.num_elementary_packets100<10){
-        MSG_V("sync_mpeg_ps: seems to be MP3 stream...\n");
+	MSG_V("sync_mpeg_ps: seems to be MP3 stream...\n");
 	stream_set_eof(demux->stream,1);
-        break;
+	break;
     }
 #endif
   }
@@ -541,7 +541,7 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
   //================= seek in MPEG ==========================
     off_t newpos=(seeka->flags&DEMUX_SEEK_SET)?demuxer->movi_start:demuxer->filepos;
-	
+
     if(seeka->flags&DEMUX_SEEK_PERCENTS){
 	// float seek 0..1
 	newpos+=(demuxer->movi_end-demuxer->movi_start)*seeka->secs;
@@ -556,14 +556,14 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	}
 
 #ifdef _LARGEFILE_SOURCE
-        newpos&=~((long long)STREAM_BUFFER_SIZE-1);  /* sector boundary */
+	newpos&=~((long long)STREAM_BUFFER_SIZE-1);  /* sector boundary */
 #else
-        newpos&=~(STREAM_BUFFER_SIZE-1);  /* sector boundary */
+	newpos&=~(STREAM_BUFFER_SIZE-1);  /* sector boundary */
 #endif
-        stream_seek(demuxer->stream,newpos);
+	stream_seek(demuxer->stream,newpos);
 
-        // re-sync video:
-        videobuf_code_len=0; // reset ES stream buffer
+	// re-sync video:
+	videobuf_code_len=0; // reset ES stream buffer
 
 	ds_fill_buffer(d_video);
 	if(sh_audio){
@@ -573,28 +573,28 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 	while(1){
 	  int i;
-          if(sh_audio && !d_audio->eof && d_video->pts && d_audio->pts){
+	  if(sh_audio && !d_audio->eof && d_video->pts && d_audio->pts){
 	    float a_pts=d_audio->pts;
 	    a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    if(d_video->pts>a_pts){
 	      mpca_skip_frame(sh_audio);  // sync audio
 	      continue;
 	    }
-          }
-          i=sync_video_packet(d_video);
-          if(sh_video->fourcc == VIDEO_MPEG4) {
-            if(i==0x1B6) {			//vop (frame) startcode
+	  }
+	  i=sync_video_packet(d_video);
+	  if(sh_video->fourcc == VIDEO_MPEG4) {
+	    if(i==0x1B6) {			//vop (frame) startcode
 	      int pos = videobuf_len;
 	      if(!read_video_packet(d_video)) break; // EOF
 	      if((videobuffer[pos+4] & 0x3F) == 0) break;//I-frame
 	    }
-          } else if(sh_video->fourcc == VIDEO_H264){
-            if((i & ~0x60) == 0x101 || (i & ~0x60) == 0x102 || (i & ~0x60) == 0x105) break;
-          } else { //default VIDEO_MPEG1/VIDEO_MPEG2
+	  } else if(sh_video->fourcc == VIDEO_H264){
+	    if((i & ~0x60) == 0x101 || (i & ~0x60) == 0x102 || (i & ~0x60) == 0x105) break;
+	  } else { //default VIDEO_MPEG1/VIDEO_MPEG2
 	    if(i==0x1B3 || i==0x1B8) break; // found it!
 	  }
-          if(!i || !skip_video_packet(d_video)) break; // EOF?
-        }
+	  if(!i || !skip_video_packet(d_video)) break; // EOF?
+	}
 }
 
 /*
@@ -662,7 +662,7 @@ static MPXP_Rc mpgps_probe(demuxer_t*demuxer)
     if ((code & 0xffffff00) == 0x100) {
 	stream_seek(demuxer->stream,demuxer->stream->start_pos);
 	memset(&mpg_stat,0,sizeof(struct mpg_stat_s));
-	
+
 	while(pes>=0){
 	    /* try to pre-detect PES:*/
 	    tmppos=stream_tell(demuxer->stream);
@@ -732,7 +732,7 @@ static MPXP_Rc mpgps_probe(demuxer_t*demuxer)
 			/* fuzzy mpeg4-es detection. do NOT enable without heavy testing of mpeg formats detection! */
 			demuxer->file_format=DEMUXER_TYPE_MPEG4_ES;
 			demux_mpgps.name="MPG/MPEG4-ES (MPEG-4 Elementary stream) parser";
-		    } else if((mpg_stat.num_h264_slice>3 || (mpg_stat.num_h264_dpa>3 && mpg_stat.num_h264_dpb>3 && mpg_stat.num_h264_dpc>3)) && 
+		    } else if((mpg_stat.num_h264_slice>3 || (mpg_stat.num_h264_dpa>3 && mpg_stat.num_h264_dpb>3 && mpg_stat.num_h264_dpc>3)) &&
 		    /* FIXME mpg_stat.num_h264_sps>=1 && */ mpg_stat.num_h264_pps>=1 && mpg_stat.num_h264_idr>=1 &&
 		    mpg_stat.num_elementary_packets1B6==0 && mpg_stat.num_elementary_packetsPES==0 &&
 		    demuxer->synced<2) {

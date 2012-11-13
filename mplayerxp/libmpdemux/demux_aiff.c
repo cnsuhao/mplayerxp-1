@@ -34,7 +34,7 @@ typedef struct priv_s
     int verc;
 }priv_t;
 
-static MPXP_Rc aiff_probe(demuxer_t* demuxer) 
+static MPXP_Rc aiff_probe(demuxer_t* demuxer)
 {
   char buf[12];
   stream_t *s;

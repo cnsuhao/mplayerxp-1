@@ -61,7 +61,7 @@ static vo_info_t vo_info =
 	,
 	"vesa",
 	"Nickols_K <nickols_k@mail.ru>",
-        "Requires ROOT privileges"
+	"Requires ROOT privileges"
 };
 
 /* driver data */

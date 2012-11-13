@@ -48,7 +48,7 @@ static void copy_opt(const m_option_t* opt,any_t* dst,any_t* src) {
 }
 
 // Helper for the print funcs (from man printf)
-static char* dup_printf(const char *fmt, ...) {       
+static char* dup_printf(const char *fmt, ...) {
   /* Guess we need no more than 50 bytes. */
   int n, size = 50;
   char *p;
@@ -61,7 +61,7 @@ static char* dup_printf(const char *fmt, ...) {
     n = vsnprintf (p, size, fmt, ap);
     va_end(ap);
     /* If that worked, return the string. */
-    if (n > -1 && n < size)      
+    if (n > -1 && n < size)
       return p;
     /* Else try again with more space. */
     if (n > -1)    /* glibc 2.1 */
@@ -348,7 +348,7 @@ const m_option_type_t m_option_type_position = {
 #define VAL(x) (*(char**)(x))
 
 static int parse_str(const m_option_t* opt,const char *name, char *param, any_t* dst, int src) {
-  
+
 
   if (param == NULL)
       return M_OPT_MISSING_PARAM;
@@ -387,7 +387,7 @@ static void copy_str(const m_option_t* opt,any_t* dst, any_t* src) {
     VAL(dst) = VAL(src) ? mp_strdup(VAL(src)) : NULL;
   }
 }
-  
+
 static void free_str(any_t* src) {
   if(src && VAL(src)){
 #ifndef NO_FREE
@@ -409,7 +409,7 @@ const m_option_type_t m_option_type_string = {
   copy_str,
   free_str
 };
-  
+
 //////////// String list
 
 #define LIST_SEPARATOR ','
@@ -449,17 +449,17 @@ static int str_list_add(char** add, int n,any_t* dst,int pre) {
     /**/;
 
   lst = mp_realloc(lst,(n+ln+1)*sizeof(char*));
-  
+
   if(pre) {
     memmove(&lst[n],lst,(ln+1)*sizeof(char*));
     memcpy(lst,add,n*sizeof(char*));
-  } else 
+  } else
     memcpy(&lst[ln],add,(n+1)*sizeof(char*));
 
   mp_free(add);
 
   VAL(dst) = lst;
-  
+
   return 1;
 }
 
@@ -467,7 +467,7 @@ static int str_list_del(char** del, int n,any_t* dst) {
   char **lst,*ep,**d;
   int i,ln,s;
   long idx;
-  
+
   if(!dst) return M_OPT_PARSER_ERR;
   lst = VAL(dst);
 
@@ -513,16 +513,16 @@ static int str_list_del(char** del, int n,any_t* dst) {
 
   return 1;
 }
-  
+
 static char *get_nextsep(char *ptr, char sep, int modify) {
     char *last_ptr = ptr;
     for(;;){
-        ptr = strchr(ptr, sep);
-        if(ptr && ptr>last_ptr && ptr[-1]=='\\'){
-            if (modify) memmove(ptr-1, ptr, strlen(ptr)+1);
-            else ptr++;
-        }else
-            break;
+	ptr = strchr(ptr, sep);
+	if(ptr && ptr>last_ptr && ptr[-1]=='\\'){
+	    if (modify) memmove(ptr-1, ptr, strlen(ptr)+1);
+	    else ptr++;
+	}else
+	    break;
     }
     return ptr;
 }
@@ -570,7 +570,7 @@ static int parse_str_list(const m_option_t* opt,const char *name, char *param, a
   }
   if(n == 0)
     return M_OPT_INVALID;
-  if( ((opt->flags & M_OPT_MIN) && (n < opt->min)) || 
+  if( ((opt->flags & M_OPT_MIN) && (n < opt->min)) ||
       ((opt->flags & M_OPT_MAX) && (n > opt->max)) )
     return M_OPT_OUT_OF_RANGE;
 
@@ -613,7 +613,7 @@ static int parse_str_list(const m_option_t* opt,const char *name, char *param, a
 
   return 1;
 }
-  
+
 static void copy_str_list(const m_option_t* opt,any_t* dst, any_t* src) {
   int n;
   char **d,**s;
@@ -642,7 +642,7 @@ static char* print_str_list(const m_option_t* opt, any_t* src) {
   char **lst = NULL;
   char *ret = NULL,*last = NULL;
   int i;
-  
+
   if(!(src && VAL(src))) return NULL;
   lst = VAL(src);
 
@@ -666,7 +666,7 @@ const m_option_type_t m_option_type_string_list = {
   "\t-pre: Add the given parameters at the begining of the list.\n"
   "\t-del: Remove the entry at the given indices.\n"
   "\t-clr: Clear the list.\n"
-  "e.g: -vf-add flip,mirror -vf-del 2,5\n",  
+  "e.g: -vf-add flip,mirror -vf-del 2,5\n",
   sizeof(char**),
   M_OPT_TYPE_DYNAMIC | M_OPT_TYPE_ALLOW_WILDCARD,
   parse_str_list,
@@ -676,8 +676,8 @@ const m_option_type_t m_option_type_string_list = {
   copy_str_list,
   free_str_list
 };
- 
- 
+
+
 ///////////////////  Func based options
 
 // A chained list to save the various calls for func_param and func_full
@@ -697,7 +697,7 @@ static void free_func_pf(any_t* src) {
   if(!src) return;
 
   s = VAL(src);
-  
+
   while(s) {
     n = s->next;
     mp_free(s->name);
@@ -750,8 +750,8 @@ static void copy_func_pf(const m_option_t* opt,any_t* dst, any_t* src) {
     last = d;
     s = s->next;
   }
-  
-    
+
+
 }
 
 /////////////////// Func_param
@@ -761,7 +761,7 @@ static void set_func_param(const m_option_t* opt, any_t* dst, any_t* src) {
 
   if(!src) return;
   s = VAL(src);
-  
+
   if(!s) return;
 
   // Revert if needed
@@ -844,7 +844,7 @@ const m_option_type_t m_option_type_func = {
 /////////////////// Print
 
 static int parse_print(const m_option_t* opt,const char *name, char *param, any_t* dst, int src) {
-  if(opt->type == MCONF_TYPE_PRINT_INDIRECT) 
+  if(opt->type == MCONF_TYPE_PRINT_INDIRECT)
     MSG_INFO("%s", *(char **) opt->p);
   else if(opt->type == MCONF_TYPE_PRINT_FUNC)
     return ((m_opt_func_full_t) opt->p)(opt,name,param);
@@ -926,41 +926,41 @@ static int parse_subconf(const m_option_t* opt,const char *name, char *param, an
       strncpy(subopt, p, optlen + 1);
       p = &p[optlen];
       if (p[0] == '=') {
-        sscanf_ret = 2;
-        p = &p[1];
-        if (p[0] == '"') {
-          p = &p[1];
-          optlen = strcspn(p, "\"");
-          strncpy(subparam, p, optlen + 1);
-          p = &p[optlen];
-          if (p[0] != '"') {
-            MSG_ERR("Terminating '\"' missing for '%s'\n", subopt);
-            return M_OPT_INVALID;
-          }
-          p = &p[1];
-        } else if (p[0] == '%') {
-          p = &p[1];
-          optlen = (int)strtol(p, (char**)&p, 0);
-          if (!p || p[0] != '%' || (optlen > strlen(p) - 1)) {
-            MSG_ERR("Invalid length %i for '%s'\n", optlen, subopt);
-            return M_OPT_INVALID;
-          }
-          p = &p[1];
-          strncpy(subparam, p, optlen + 1);
-          p = &p[optlen];
-        } else {
-          optlen = strcspn(p, ":");
-          strncpy(subparam, p, optlen + 1);
-          p = &p[optlen];
-        }
+	sscanf_ret = 2;
+	p = &p[1];
+	if (p[0] == '"') {
+	  p = &p[1];
+	  optlen = strcspn(p, "\"");
+	  strncpy(subparam, p, optlen + 1);
+	  p = &p[optlen];
+	  if (p[0] != '"') {
+	    MSG_ERR("Terminating '\"' missing for '%s'\n", subopt);
+	    return M_OPT_INVALID;
+	  }
+	  p = &p[1];
+	} else if (p[0] == '%') {
+	  p = &p[1];
+	  optlen = (int)strtol(p, (char**)&p, 0);
+	  if (!p || p[0] != '%' || (optlen > strlen(p) - 1)) {
+	    MSG_ERR("Invalid length %i for '%s'\n", optlen, subopt);
+	    return M_OPT_INVALID;
+	  }
+	  p = &p[1];
+	  strncpy(subparam, p, optlen + 1);
+	  p = &p[optlen];
+	} else {
+	  optlen = strcspn(p, ":");
+	  strncpy(subparam, p, optlen + 1);
+	  p = &p[optlen];
+	}
       }
       if (p[0] == ':')
-        p = &p[1];
+	p = &p[1];
       else if (p[0]) {
-        MSG_ERR("Incorrect termination for '%s'\n", subopt);
-        return M_OPT_INVALID;
+	MSG_ERR("Incorrect termination for '%s'\n", subopt);
+	return M_OPT_INVALID;
       }
-			    
+
       switch(sscanf_ret)
 	{
 	case 1:
@@ -1086,7 +1086,7 @@ static int parse_imgfmt(const m_option_t* opt,const char *name, char *param, any
     MSG_INFO("\n");
     return M_OPT_EXIT - 1;
   }
-  
+
   if (sscanf(param, "0x%x", &fmt) != 1)
   {
   for(i = 0 ; mp_imgfmt_list[i].name ; i++) {
@@ -1166,7 +1166,7 @@ static int parse_afmt(const m_option_t* opt,const char *name, char *param, any_t
     MSG_INFO("\n");
     return M_OPT_EXIT - 1;
   }
-  
+
   if (sscanf(param, "0x%x", &fmt) != 1)
   {
   for(i = 0 ; mp_afmt_list[i].name ; i++) {
@@ -1224,7 +1224,7 @@ static int parse_time(const m_option_t* opt,const char *name, char *param, any_t
   time = parse_timestring(param);
   if (time == -1e100) {
     MSG_ERR("Option %s: invalid time: '%s'\n",
-           name,param);
+	   name,param);
     return M_OPT_INVALID;
   }
 
@@ -1282,7 +1282,7 @@ static int parse_time_size(const m_option_t* opt,const char *name, char *param, 
    * even a number followed by garbage */
   if ((end_at = parse_timestring(param)) == -1e100) {
     MSG_ERR("Option %s: invalid time or size: '%s'\n",
-           name,param);
+	   name,param);
     return M_OPT_INVALID;
   }
 
@@ -1350,7 +1350,7 @@ static int get_obj_param(const char* opt_name,const char* obj_name, const m_stru
     r = m_option_parse(opt,str,p,NULL,M_CONFIG_FILE);
     if(r < 0) {
       if(r > M_OPT_EXIT)
-        MSG_ERR("Option %s: Error while parsing %s parameter %s (%s)\n",opt_name,obj_name,str,p);
+	MSG_ERR("Option %s: Error while parsing %s parameter %s (%s)\n",opt_name,obj_name,str,p);
       eq[0] = '=';
       return r;
     }
@@ -1369,7 +1369,7 @@ static int get_obj_param(const char* opt_name,const char* obj_name, const m_stru
     r = m_option_parse(opt,opt->name,str,NULL,M_CONFIG_FILE);
     if(r < 0) {
       if(r > M_OPT_EXIT)
-        MSG_ERR("Option %s: Error while parsing %s parameter %s (%s)\n",opt_name,obj_name,opt->name,str);
+	MSG_ERR("Option %s: Error while parsing %s parameter %s (%s)\n",opt_name,obj_name,opt->name,str);
       return r;
     }
     if(dst) {
@@ -1472,7 +1472,7 @@ static int get_obj_params(const char* opt_name, const char* name,char* params,
     n++;
     last_ptr = ptr+1;
   }
-  ret[n*2] = ret[n*2+1] = NULL;  
+  ret[n*2] = ret[n*2+1] = NULL;
   *_ret = ret;
 
   return 1;
@@ -1566,8 +1566,8 @@ static int parse_obj_settings(const char* opt,char* str,const m_obj_list_t* list
   if(param) {
     if(!desc && _ret) {
       if(!strcmp(param,"help")) {
-        MSG_INFO("Option %s: %s have no option description.\n",opt,str);
-        return M_OPT_EXIT - 1;
+	MSG_INFO("Option %s: %s have no option description.\n",opt,str);
+	return M_OPT_EXIT - 1;
       }
       plist = mp_calloc(4,sizeof(char*));
       plist[0] = mp_strdup("_oldargs_");
@@ -1687,7 +1687,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
 	     " Negative index can be used (i.e. -1 is the last element)\n\n"
 	     "  %s-clr\n"
 	     " Clear the current list.\n",name,n,prefix,prefix,prefix,prefix);
-      
+
       return M_OPT_UNKNOWN;
     }
   }
@@ -1759,7 +1759,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
   if(n == 0)
     return M_OPT_INVALID;
 
-  if( ((opt->flags & M_OPT_MIN) && (n < opt->min)) || 
+  if( ((opt->flags & M_OPT_MIN) && (n < opt->min)) ||
       ((opt->flags & M_OPT_MAX) && (n > opt->max)) )
     return M_OPT_OUT_OF_RANGE;
 
@@ -1866,8 +1866,8 @@ static int parse_obj_presets(const m_option_t* opt,const char *name,
 
   if(!strcmp(param,"help")) {
     MSG_INFO("Available presets for %s->%s:",out_desc->name,name);
-    for(pre = obj_p->presets;(pre_name = M_ST_MB(char*,pre,obj_p->name_off)) ; 
-	pre +=  s) 
+    for(pre = obj_p->presets;(pre_name = M_ST_MB(char*,pre,obj_p->name_off)) ;
+	pre +=  s)
       MSG_ERR(" %s",pre_name);
     MSG_ERR("\n");
     return M_OPT_EXIT - 1;
@@ -1880,8 +1880,8 @@ static int parse_obj_presets(const m_option_t* opt,const char *name,
   if(!pre_name) {
     MSG_ERR("Option %s: There is no preset named %s\n"
 	   "Available presets are:",name,param);
-    for(pre = obj_p->presets;(pre_name = M_ST_MB(char*,pre,obj_p->name_off)) ; 
-	pre +=  s) 
+    for(pre = obj_p->presets;(pre_name = M_ST_MB(char*,pre,obj_p->name_off)) ;
+	pre +=  s)
       MSG_ERR(" %s",pre_name);
     MSG_ERR("\n");
     return M_OPT_INVALID;
@@ -1978,7 +1978,7 @@ static int parse_custom_url(const m_option_t* opt,const char *name,
 	if(!m_option_list_find(desc->fields,"password")) {
 	  MSG_WARN("Option %s: This URL doesn't have a password part.\n",name);
 	  // skip
-	} else { // Username and password   
+	} else { // Username and password
 	  if(dst) {
 	    ptr3[0] = '\0';
 	    r = m_struct_set(desc,dst,"username",ptr1);

@@ -36,7 +36,7 @@ typedef struct{
 } headerInfo;
 
 
-static MPXP_Rc vqf_probe(demuxer_t* demuxer) 
+static MPXP_Rc vqf_probe(demuxer_t* demuxer)
 {
     char buf[12];
     stream_t *s;

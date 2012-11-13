@@ -65,7 +65,7 @@ static int __FASTCALL__ udp_streaming_start (stream_t *stream)
 
   if (fd < 0)
   {
-    fd = udp_open_socket (streaming_ctrl->url); 
+    fd = udp_open_socket (streaming_ctrl->url);
     if (fd < 0)
       return -1;
     stream->fd = fd;

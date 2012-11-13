@@ -225,7 +225,7 @@ static int load_dll( const char *libname )
 #endif
     vqf_dll = LoadLibraryA((LPCSTR)libname);
     if( vqf_dll == NULL ) {
-        MSG_ERR("failed loading dll\n" );
+	MSG_ERR("failed loading dll\n" );
 	return 0;
     }
     TvqInitialize_ptr = GetProcAddress(vqf_dll,(LPCSTR)"TvqInitialize");
@@ -366,7 +366,7 @@ static int bread(char	*data,    /* Output: Output data array */
     unsigned char mask, tmpdat;
     int  retval;
     priv_t *priv=sh->context;
-	
+
     /*--- Main operation ---*/
     retval = 0;
     mask = 0x1;
@@ -386,7 +386,7 @@ static int bread(char	*data,    /* Output: Output data array */
 		tmpdat = (unsigned char)priv->buf[ibufadr];
 		tmpdat >>= (BYTE_BIT-ibufbit-1);
 		/* current data bit */
-		
+
 		idata = ibits*size;                   /* output data address */
 		data[idata] = (char)(tmpdat & mask);  /* set output data */
 		for (icl=1; icl<size; icl++)
@@ -413,7 +413,7 @@ static int get_bstm(int	*data,          /* Input: input data */
     unsigned	work;
     char	tmpbit[BITS_INT];
     int		retval;
-	
+
     if ( nbits > BITS_INT ){
 		MSG_ERR( "get_bstm(): %d: %d Error.\n",
 			nbits, BITS_INT);
@@ -512,7 +512,7 @@ static int GetPpcInfo( tvqConfInfo *cf, INDEX *_index, sh_audio_t *sh)
 	int bitcount = 0;
 	priv_t*priv=sh->context;
 	float pts;
-	
+
 	for ( idiv=0; idiv<cf->N_DIV_P; idiv++ ){
 		bitcount += get_bstm(&(_index->pls[idiv]), priv->bits_0[BLK_PPC][idiv],sh,&pts);       /*CB0*/
 		bitcount += get_bstm(&(_index->pls[idiv+cf->N_DIV_P]), priv->bits_1[BLK_PPC][idiv],sh,&pts);/*CB1*/
@@ -521,7 +521,7 @@ static int GetPpcInfo( tvqConfInfo *cf, INDEX *_index, sh_audio_t *sh)
 		bitcount += get_bstm(&(_index->pit[i_sup]), cf->BASF_BIT,sh,&pts);
 		bitcount += get_bstm(&(_index->pgain[i_sup]), cf->PGAIN_BIT,sh,&pts);
 	}
-	
+
 	return bitcount;
 }
 
@@ -539,7 +539,7 @@ static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index,
 			}
 		}
 	}
-	
+
 	return bitcount;
 }
 
@@ -552,7 +552,7 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
 	int numFixedBitsPerFrame = TvqGetNumFixedBitsPerFrame();
 	int btype;
 	priv_t *priv=sh->context;
-	
+
 	/*--- Initialization ---*/
 	variableBits = 0;
 	bitcount = 0;
@@ -570,10 +570,10 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
 	cfg = &priv->cf.cfg[btype]; // set the block dependent paremeters table
 
 	bitcount += variableBits;
-	
+
 	/* Interleaved vector quantization */
 	bitcount += GetVqInfo( cfg, priv->bits_0[btype], priv->bits_1[btype], variableBits, _index, sh );
-	
+
 	/* Bark-scale envelope */
 	bitcount += GetBseInfo( &priv->cf, cfg, _index, sh );
 	/* Gain */
@@ -588,7 +588,7 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
 	if ( cfg->ebc_enable ){
 		bitcount += GetEbcInfo( &priv->cf, cfg, _index, sh );
 	}
-	
+
 	return bitcount == numFixedBitsPerFrame ? bitcount/8 : 0;
 }
 
@@ -601,7 +601,7 @@ static void frtobuf(float out[],       /* Input  --- input data frame */
 	unsigned ismp, ich;
 	float *ptr;
 	register float dtmp;
-	
+
 	for ( ich=0; ich<numChannels; ich++ ){
 		ptr = out+ich*frameSize;
 		for ( ismp=0; ismp<frameSize; ismp++ ){

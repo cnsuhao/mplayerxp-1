@@ -169,7 +169,7 @@ void print_video_header(BITMAPINFOHEADER *h,unsigned size){
 	      ,decode_aspect_ratio(*(((char *)h)+0x28)));
       else
       {
-        unsigned i;
+	unsigned i;
 	uint8_t* p = ((uint8_t*)h) + sizeof(BITMAPINFOHEADER);
 	MSG_V("Unknown extra header dump: ");
 	    for (i = 0; i < (unsigned)h->biSize-sizeof(BITMAPINFOHEADER); i++) MSG_V("[%02X] ",(unsigned)p[i]);

@@ -23,7 +23,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_I420 ||
-		*((int*)arg) == IMGFMT_IYUV) 
+		*((int*)arg) == IMGFMT_IYUV)
 			return MPXP_True;
 	    else 	return MPXP_False;
 	default: break;

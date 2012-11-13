@@ -38,7 +38,7 @@ static char help_text[]=
 
 // ========================= MPlayer messages ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\nWychodzę... (%s)\n"
 #define MSGTR_Exit_frames "Zadana liczba klatek odtworzona"

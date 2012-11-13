@@ -38,7 +38,7 @@ typedef struct _CodecInfo
 typedef struct _CImage // public  your_libvo_mem
 {
     char* ptr;
-    
+
     /*char* (*Data)();
     {
 	return 0;
@@ -47,7 +47,7 @@ typedef struct _CImage // public  your_libvo_mem
     /*int (*Supported)(fourcc_t csp, int bits);
     {
 	return true;
-	// if you support such surface 
+	// if you support such surface
     }*/
 }CImage;
 
@@ -66,8 +66,8 @@ typedef struct _IAudioDecoder
     CodecInfo  record;
     /*(*IAudioDecoder)( CodecInfo * r, const WAVEFORMATEX* w);
     {
-        memcpy(&this->record,r,sizeof(CodecInfo));
-        in_fmt = *w;
+	memcpy(&this->record,r,sizeof(CodecInfo));
+	in_fmt = *w;
     }*/
 }IAudioDecoder;
 
@@ -116,7 +116,7 @@ typedef struct _BitmapInfo
     long  	biYPelsPerMeter;
     long 	biClrUsed;
     long 	biClrImportant;
-    int 	colors[3];    
+    int 	colors[3];
 } BitmapInfo;
 
 typedef struct _IVideoDecoder
@@ -130,7 +130,7 @@ typedef struct _IVideoDecoder
     /*
     IVideoDecoder(CodecInfo& info, const BITMAPINFOHEADER& format) : record(info)
     {
-        // implement init part
+	// implement init part
     }
     virtual ~IVideoDecoder();
     void Stop()

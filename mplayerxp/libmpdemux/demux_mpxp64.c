@@ -75,8 +75,8 @@ According to :
 Draft Version 1.1 of 5/13/94"
 */
 static float avi_aspects[]=
-{ 
-  1.0000, 0.6735, 0.7031, 0.7615, 0.8055, 0.8437, 0.8935, 
+{
+  1.0000, 0.6735, 0.7031, 0.7615, 0.8055, 0.8437, 0.8935,
   0.9375, 0.9815, 1.0255, 1.0695, 1.1250, 1.1575, 1.2015
 };
 
@@ -554,7 +554,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
     if(demux->audio->id==-1)
 	if(demux->a_streams[id])
 	    demux->audio->id=id;
-    
+
     if(id==(unsigned)demux->audio->id){
 	// audio
 	ds=demux->audio;
@@ -562,7 +562,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 	    ds->sh=demux->a_streams[id];
 	    MSG_V("Auto-selected MPXPAV64 audio ID = %d\n",ds->id);
 	}
-    } else 
+    } else
     if(id==(unsigned)demux->video->id){
 	// video
 	ds=demux->video;
@@ -582,7 +582,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 	dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
 	dp->pos=demux->filepos;
 	MSG_DBG2("MPXPAV64: reading %llu of %s PTS %f %skeyframe at %016llX\n",len,ds==demux->audio?"audio":"video",dp->pts,keyframe?"":"non",pos);
-        ds_add_packet(ds,dp);
+	ds_add_packet(ds,dp);
 	return 1;
     }
     else

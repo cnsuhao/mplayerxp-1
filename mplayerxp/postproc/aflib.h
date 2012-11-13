@@ -25,7 +25,7 @@ extern void __FASTCALL__ blackman(int n,_ftype_t* w);
 extern void __FASTCALL__ flattop(int n,_ftype_t* w);
 extern void __FASTCALL__ kaiser(int n, _ftype_t* w,_ftype_t b);
 
-// Design and implementation of different types of digital filters 
+// Design and implementation of different types of digital filters
 
 
 // Flags used for filter design
@@ -80,9 +80,9 @@ extern int __FASTCALL__ szxform(_ftype_t* a, _ftype_t* b, _ftype_t Q, _ftype_t f
 
 #include <math.h>
 /* Private data for Highpass effect
-              --------------
-              !
-              !
+	      --------------
+	      !
+	      !
 ---------------
 */
 typedef struct highpstuff {
@@ -92,9 +92,9 @@ typedef struct highpstuff {
 
 /* Private data for Lowpass effect
 --------------
-             !
-             !
-             --------------
+	     !
+	     !
+	     --------------
 */
 typedef struct lowpstuff {
 	double	A, B, C;

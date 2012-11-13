@@ -33,7 +33,7 @@ typedef struct
     WORD      flags;     /* Segment flags */
     WORD      minsize;   /* Min. size of segment in memory */
     HANDLE16  hSeg;      /* Selector or handle (selector - 1) */
-                         /* of segment in memory */
+			 /* of segment in memory */
 } SEGTABLEENTRY;
 
 
@@ -48,8 +48,8 @@ typedef struct
     FARPROC16 BootApp;       /* startup procedure */
     FARPROC16 LoadAppSeg;    /* procedure to load a segment */
     FARPROC16 reserved2;
-    FARPROC16 MyAlloc;       /* memory allocation procedure, 
-                              * wine must write this field */
+    FARPROC16 MyAlloc;       /* memory allocation procedure,
+			      * wine must write this field */
     FARPROC16 EntryAddrProc;
     FARPROC16 ExitProc;      /* exit procedure */
     WORD      reserved3[4];
@@ -65,7 +65,7 @@ typedef struct
     SEGPTR    reserved WINE_PACKED;
 } LOADPARAMS16;
 
-typedef struct 
+typedef struct
 {
     LPSTR lpEnvAddress;
     LPSTR lpCmdLine;
@@ -144,6 +144,6 @@ extern WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hModule );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 
 /* resource.c */
-extern INT       WINAPI AccessResource(HMODULE,HRSRC); 
+extern INT       WINAPI AccessResource(HMODULE,HRSRC);
 
 #endif  /* __WINE_MODULE_H */

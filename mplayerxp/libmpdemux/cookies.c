@@ -197,9 +197,9 @@ static struct cookie_list_type *load_cookies(void)
     if (dir) {
 	while ((ent = readdir(dir)) != NULL) {
 	    if ((ent->d_name)[0] != '.') {
-		buf = mp_malloc(strlen(getenv("HOME")) + 
-                             sizeof("/.mozilla/default/") + 
-                             strlen(ent->d_name) + sizeof("cookies.txt") + 1);
+		buf = mp_malloc(strlen(getenv("HOME")) +
+			     sizeof("/.mozilla/default/") +
+			     strlen(ent->d_name) + sizeof("cookies.txt") + 1);
 		sprintf(buf, "%s/.mozilla/default/%s/cookies.txt",
 			 getenv("HOME"), ent->d_name);
 		list = load_cookies_from(buf, list);

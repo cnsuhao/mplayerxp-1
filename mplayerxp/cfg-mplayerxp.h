@@ -26,7 +26,7 @@ extern vf_cfg_t vf_cfg; // Configuration for audio filters
 /*
  * CONF_TYPE_FUNC_FULL :
  * allows own implemtations for passing the params
- * 
+ *
  * the function receives parameter name and argument (if it does not start with - )
  * useful with a conf.name like 'aa*' to parse several parameters to a function
  * return 0 =ok, but we didn't need the param (could be the filename)
@@ -163,9 +163,9 @@ static const config_t subtitle_config[]={
 	{"file", &mp_conf.sub_name, CONF_TYPE_STRING, 0, 0, 0, "specifies the subtitle file"},
 #ifdef USE_ICONV
 	{"cp", &sub_data.cp, CONF_TYPE_STRING, 0, 0, 0, "specifies codepage of subtitles"},
-#endif	
+#endif
 	{"fps", &mp_conf.sub_fps, CONF_TYPE_FLOAT, 0, 0.0, 10.0, "specifies frame/sec rate of subtitle file"},
-        {"noauto", &mp_conf.sub_auto, CONF_TYPE_FLAG, 0, 1, 0, "disable autodetection of vobsub for textsubs if vobsub found"},
+	{"noauto", &mp_conf.sub_auto, CONF_TYPE_FLAG, 0, 1, 0, "disable autodetection of vobsub for textsubs if vobsub found"},
 	{"unicode", &sub_data.unicode, CONF_TYPE_FLAG, 0, 0, 1, "tells MPlayerXP to handle the subtitle file as UNICODE"},
 	{"nounicode", &sub_data.unicode, CONF_TYPE_FLAG, 0, 1, 0, "tells MPlayerXP to handle the subtitle file as non-UNICODE"},
 	{"utf8", &sub_data.utf8, CONF_TYPE_FLAG, 0, 0, 1, "tells MPlayerXP to handle the subtitle file as UTF8"},

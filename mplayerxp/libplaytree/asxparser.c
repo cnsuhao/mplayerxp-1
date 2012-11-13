@@ -45,7 +45,7 @@ static void __FASTCALL__ asx_list_remove(any_t* list_ptr,any_t* entry,ASX_FreeFu
   if(e == -1) return; // Not found
 
   if(free_func != NULL) free_func(list[e]);
-  
+
   if(c == 1) { // Only one entry, we drop all
     mp_free(list);
     *(any_t**)list_ptr = NULL;
@@ -57,7 +57,7 @@ static void __FASTCALL__ asx_list_remove(any_t* list_ptr,any_t* entry,ASX_FreeFu
 
   list = (any_t*)mp_realloc(list,(c-1)*sizeof(any_t*));
   list[c-1] = NULL;
-  
+
   *(any_t***)list_ptr = list;
 }
 
@@ -104,7 +104,7 @@ static void __FASTCALL__ asx_warning_attrib_invalid(ASX_Parser_t* parser, char* 
   int len;
 
   if(valid_vals == NULL || valid_vals[0] == NULL) return;
-  
+
   len = strlen(valid_vals[0]) + 1;
   for(ptr = valid_vals+1 ; ptr[0] != NULL; ptr++) {
     len += strlen(ptr[0]);
@@ -207,7 +207,7 @@ pa_end:
     *_attribs = attribs;
     return n_attrib;
 }
- 
+
 /*
  * Return -1 on error, 0 when nothing is found, 1 on sucess
  */
@@ -238,11 +238,11 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
 	parser->line = ls[i].line;
 	break;
       }
-      
+
     }
     if( i < parser->ret_stack_size) {
       i++;
-      if( i < parser->ret_stack_size)	
+      if( i < parser->ret_stack_size)
 	memmove(parser->ret_stack,parser->ret_stack+i, (parser->ret_stack_size - i)*sizeof(ASX_LineSave_t));
       parser->ret_stack_size -= i;
       if(parser->ret_stack_size > 0)
@@ -265,7 +265,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
     }
     //ptr1 = strchr(ptr1,'<');
     if(!ptr1 || ptr1[1] == '\0') return 0; // Nothing found
-    
+
     if(strncmp(ptr1,"<!--",4) == 0) { // Comments
       for( ; strncmp(ptr1,"-->",3) != 0 ; ptr1++) {
 	if(ptr1[0] == '\0') {
@@ -283,7 +283,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
       break;
     }
   }
-  
+
   // Is this space skip very useful ??
   for(ptr1++; isspace(ptr1[0]); ptr1++) { // Skip space
     if(ptr1[0] == '\0') {
@@ -364,7 +364,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
 	}
 	continue;
       }
-      if(ptr4 == NULL || ptr4[1] == '\0') { 
+      if(ptr4 == NULL || ptr4[1] == '\0') {
 	MSG_ERR("At line %d : EOB reached while parsing %s element body",parser->line,element);
 	mp_free(element);
 	if(attribs) mp_free(attribs);
@@ -389,7 +389,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
 	  ptr4++;
 	  body = (char*)mp_malloc(ptr4-ptr3+1);
 	  strncpy(body,ptr3,ptr4-ptr3);
-	  body[ptr4-ptr3] = '\0';	  
+	  body[ptr4-ptr3] = '\0';
 	}
 	break;
       } else {

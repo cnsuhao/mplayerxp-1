@@ -33,7 +33,7 @@ struct vf_priv_s {
 
 
 static int __FASTCALL__ kd_config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
 
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
@@ -62,7 +62,7 @@ static inline int IsYUY2(mp_image_t *mpi)
 static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
-        int W = mpi->w, H = mpi->h;
+	int W = mpi->w, H = mpi->h;
 	const unsigned char *prvp, *prvpp, *prvpn, *prvpnn, *prvppp, *prvp4p, *prvp4n;
 	const unsigned char *srcp_saved;
 	const unsigned char *srcp, *srcpp, *srcpn, *srcpnn, *srcppp, *srcp3p, *srcp3n, *srcp4p, *srcp4n;
@@ -206,13 +206,13 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 								valf = + 0.526*((int)srcpp[x] + (int)srcpn[x])
 								   + 0.170*((int)srcp[x] + (int)prvp[x])
 								   - 0.116*((int)srcppp[x] + (int)srcpnn[x] + (int)prvppp[x] + (int)prvpnn[x])
-					 			   - 0.026*((int)srcp3p[x] + (int)srcp3n[x])
+								   - 0.026*((int)srcp3p[x] + (int)srcp3n[x])
 								   + 0.031*((int)srcp4p[x] + (int)srcp4n[x] + (int)prvp4p[x] + (int)prvp4n[x]);
 							else
 								valf = + 0.526*((int)srcpp[x] + (int)srcpn[x])
 								   + 0.170*((int)prvp[x])
 								   - 0.116*((int)prvppp[x] + (int)prvpnn[x])
-					 			   - 0.026*((int)srcp3p[x] + (int)srcp3n[x])
+								   - 0.026*((int)srcp3p[x] + (int)srcp3n[x])
 								   + 0.031*((int)prvp4p[x] + (int)prvp4p[x]);
 							if (valf > hi) valf = hi;
 							else if (valf < lo) valf = lo;
@@ -275,7 +275,7 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 //===========================================================================//
 
 static int __FASTCALL__ kd_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
-        switch(fmt)
+	switch(fmt)
 	{
 	case IMGFMT_YV12:
 	case IMGFMT_RGB:
@@ -294,7 +294,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 #define MAXROWSIZE 1200
 
 static int __FASTCALL__ config (struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt)
 {
     int rowsize;

@@ -144,7 +144,7 @@ LPSTR WINAPI lstrcpynWtoA(LPSTR dest, LPCWSTR src, INT count)
 	return 0;
     while(moved<count)
     {
-        *dest=*src;
+	*dest=*src;
 	moved++;
 	if(*src==0)
 	    break;
@@ -160,7 +160,7 @@ int wcsnicmp(const unsigned short* s1, const unsigned short* s2, int n)
     if(s1==0)
 	return;
     if(s2==0)
-        return;
+	return;
     */
     while(n>0)
     {
@@ -188,7 +188,7 @@ WIN_BOOL WINAPI IsBadReadPtr(LPCVOID data, UINT size)
     if(size==0)
 	return 0;
     if(data==NULL)
-        return 1;
+	return 1;
     return 0;
 }
 LPSTR HEAP_strdupA(HANDLE heap, DWORD flags, LPCSTR string)
@@ -233,34 +233,34 @@ LPSTR HEAP_strdupWtoA(HANDLE heap, DWORD flags, LPCWSTR string)
 //#define MAP_SHARED
 #undef MAP_ANON
 LPVOID FILE_dommap( int unix_handle, LPVOID start,
-                    DWORD size_high, DWORD size_low,
-                    DWORD offset_high, DWORD offset_low,
-                    int prot, int flags )
+		    DWORD size_high, DWORD size_low,
+		    DWORD offset_high, DWORD offset_low,
+		    int prot, int flags )
 {
     int fd = -1;
     int pos;
     LPVOID ret;
 
     if (size_high || offset_high)
-        printf("offsets larger than 4Gb not supported\n");
+	printf("offsets larger than 4Gb not supported\n");
 
     if (unix_handle == -1)
     {
 #ifdef MAP_ANON
 //	printf("Anonymous\n");
-        flags |= MAP_ANON;
+	flags |= MAP_ANON;
 #else
-        static int fdzero = -1;
+	static int fdzero = -1;
 
-        if (fdzero == -1)
-        {
-            if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
-            {
-    		perror( "Cannot open /dev/zero for READ. Check permissions! error: " );
-                exit(1);
-            }
-        }
-        fd = fdzero;
+	if (fdzero == -1)
+	{
+	    if ((fdzero = open( "/dev/zero", O_RDONLY )) == -1)
+	    {
+		perror( "Cannot open /dev/zero for READ. Check permissions! error: " );
+		exit(1);
+	    }
+	}
+	fd = fdzero;
 #endif  /* MAP_ANON */
 	/* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
 #ifdef MAP_SHARED
@@ -275,7 +275,7 @@ LPVOID FILE_dommap( int unix_handle, LPVOID start,
 //    if ((ret = mmap( start, size_low, prot,
 //                     flags, fd, offset_low )) != (LPVOID)-1)
     if ((ret = mmap( start, size_low, prot,
-                     MAP_PRIVATE | MAP_FIXED, fd, offset_low )) != (LPVOID)-1)
+		     MAP_PRIVATE | MAP_FIXED, fd, offset_low )) != (LPVOID)-1)
     {
 //	    printf("address %08x\n", *(int*)ret);
 //	printf("%x\n", ret);
@@ -292,7 +292,7 @@ LPVOID FILE_dommap( int unix_handle, LPVOID start,
     if ((errno != ENOEXEC) && (errno != EINVAL)) return ret;
     if (prot & PROT_WRITE)
     {
-        /* We cannot fake shared write mappings */
+	/* We cannot fake shared write mappings */
 #ifdef MAP_SHARED
 	if (flags & MAP_SHARED) return ret;
 #endif
@@ -303,7 +303,7 @@ LPVOID FILE_dommap( int unix_handle, LPVOID start,
 /*    printf( "FILE_mmap: mmap failed (%d), faking it\n", errno );*/
     /* Reserve the memory with an anonymous mmap */
     ret = FILE_dommap( -1, start, size_high, size_low, 0, 0,
-                       PROT_READ | PROT_WRITE, flags );
+		       PROT_READ | PROT_WRITE, flags );
     if (ret == (LPVOID)-1)
 //    {
 //	perror(
@@ -311,9 +311,9 @@ LPVOID FILE_dommap( int unix_handle, LPVOID start,
     /* Now read in the file */
     if ((pos = lseek( fd, offset_low, SEEK_SET )) == -1)
     {
-        FILE_munmap( ret, size_high, size_low );
+	FILE_munmap( ret, size_high, size_low );
 //	printf("lseek\n");
-        return (LPVOID)-1;
+	return (LPVOID)-1;
     }
     read( fd, ret, size_low );
     lseek( fd, pos, SEEK_SET );  /* Restore the file pointer */
@@ -373,13 +373,13 @@ HANDLE WINAPI CreateFileMappingA(HANDLE handle, LPSECURITY_ATTRIBUTES lpAttr,
 	anon=1;
 	hFile=open("/dev/zero", O_RDWR);
 	if(hFile<0){
-    	    perror( "Cannot open /dev/zero for READ+WRITE. Check permissions! error: " );
+	    perror( "Cannot open /dev/zero for READ+WRITE. Check permissions! error: " );
 	    return 0;
 	}
     }
     if(!anon)
     {
-        len=lseek(hFile, 0, SEEK_END);
+	len=lseek(hFile, 0, SEEK_END);
 	lseek(hFile, 0, SEEK_SET);
     }
     else len=dwMaxLow;
@@ -391,7 +391,7 @@ HANDLE WINAPI CreateFileMappingA(HANDLE handle, LPSECURITY_ATTRIBUTES lpAttr,
 
     answer=mmap(NULL, len, mmap_access, MAP_PRIVATE, hFile, 0);
     if(anon)
-        close(hFile);
+	close(hFile);
     if(answer!=(LPVOID)-1)
     {
 	if(fm==0)
@@ -471,7 +471,7 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
 
     fd=open("/dev/zero", O_RDWR);
     if(fd<0){
-        perror( "Cannot open /dev/zero for READ+WRITE. Check permissions! error: " );
+	perror( "Cannot open /dev/zero for READ+WRITE. Check permissions! error: " );
 	return NULL;
     }
 
@@ -491,9 +491,9 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
     if(address!=0)
     {
     //check whether we can allow to allocate this
-        virt_alloc* str=vm;
-        while(str)
-        {
+	virt_alloc* str=vm;
+	while(str)
+	{
 	    if((unsigned)address>=(unsigned)str->address+str->mapping_size)
 	    {
 		str=str->prev;
@@ -517,7 +517,7 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
 		//printf(" VirtualAlloc(...) does not commit or not entirely within reserved, and\n");
 	    }
 	    /*printf(" VirtualAlloc(...) (0x%08X, %u) overlaps with (0x%08X, %u, state=%d)\n",
-	           (unsigned)address, size, (unsigned)str->address, str->mapping_size, str->state);*/
+		   (unsigned)address, size, (unsigned)str->address, str->mapping_size, str->state);*/
 	    close(fd);
 	    return NULL;
 	}
@@ -548,19 +548,19 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
 	virt_alloc *new_vm = (virt_alloc*) mp_malloc(sizeof(virt_alloc));
 	new_vm->mapping_size=size;
 	new_vm->address=(char*)answer;
-        new_vm->prev=vm;
+	new_vm->prev=vm;
 	if(type == MEM_RESERVE)
 	    new_vm->state=0;
 	else
 	    new_vm->state=1;
 	if(vm)
 	    vm->next=new_vm;
-    	vm=new_vm;
+	vm=new_vm;
 	vm->next=0;
 	//if(va_size!=0)
 	//    printf("Multiple VirtualAlloc!\n");
 	//printf(" VirtualAlloc(...) provides (0x%08X, %u)\n", (unsigned)answer, size);
-        return answer;
+	return answer;
     }
 }
 
@@ -604,7 +604,7 @@ INT WINAPI WideCharToMultiByte(UINT codepage, DWORD flags, LPCWSTR src,
     for(i=0; i<srclen; i++)
     {
 	src++;
-    	if(*src==0)
+	if(*src==0)
 	    return i+1;
     }
 	return srclen+1;

@@ -22,7 +22,7 @@ extern int WIN32_LastError;
 #define MAKE_HRESULT(sev,fac,code) \
     ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 #define MAKE_SCODE(sev,fac,code) \
-        ((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
+	((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 #define SUCCEEDED(stat) ((HRESULT)(stat)>=0)
 #define FAILED(stat) ((HRESULT)(stat)<0)
 

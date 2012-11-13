@@ -63,7 +63,7 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
     else {
 	unsigned fr_skip_divisor;
 	/*
-	if(delta < drop_barrier/4) fr_skip_divisor=1; -- drop every frame is not smooth thing 
+	if(delta < drop_barrier/4) fr_skip_divisor=1; -- drop every frame is not smooth thing
 	else
 	*/
 	if(delta < drop_barrier/2) fr_skip_divisor=2;

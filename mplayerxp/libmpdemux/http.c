@@ -162,7 +162,7 @@ http_response_parse( HTTP_header_t *http_hdr ) {
 		http_set_field( http_hdr, field );
 		hdr_ptr = ptr+((*ptr=='\r')?2:1);
 	} while( hdr_ptr<(http_hdr->buffer+pos_hdr_sep) );
-	
+
 	if( field!=NULL ) mp_free( field );
 
 	if( pos_hdr_sep+hdr_sep_len<http_hdr->buffer_size ) {
@@ -197,7 +197,7 @@ http_build_request( HTTP_header_t *http_hdr ) {
 	// Add the Method line
 	len = strlen(http_hdr->method)+strlen(uri)+12;
 	// Add the fields
-	field = http_hdr->first_field; 
+	field = http_hdr->first_field;
 	while( field!=NULL ) {
 		len += strlen(field->field_name)+2;
 		field = field->next;
@@ -237,7 +237,7 @@ http_build_request( HTTP_header_t *http_hdr ) {
 	}
 
 	if( uri ) mp_free( uri );
-	return http_hdr->buffer;	
+	return http_hdr->buffer;
 }
 
 char *
@@ -260,7 +260,7 @@ http_get_next_field( HTTP_header_t *http_hdr ) {
 	if( http_hdr==NULL ) return NULL;
 
 	field = http_hdr->field_search_pos;
-	while( field!=NULL ) { 
+	while( field!=NULL ) {
 		ptr = strstr( field->field_name, ":" );
 		if( ptr==NULL ) return NULL;
 		if( !strncasecmp( field->field_name, http_hdr->field_search, ptr-(field->field_name) ) ) {
@@ -336,7 +336,7 @@ http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, co
 	if( password!=NULL ) {
 		pass_len = strlen(password);
 	}
-	
+
 	usr_pass = (char*)mp_malloc(strlen(username)+pass_len+2);
 	if( usr_pass==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
@@ -360,22 +360,22 @@ http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, co
 	}
 
 	b64_usr_pass[out_len]='\0';
-	
+
 	auth = (char*)mp_malloc(encoded_len+22);
 	if( auth==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		goto out;
 	}
-	
+
 	sprintf( auth, "Authorization: Basic %s", b64_usr_pass);
 	http_set_field( http_hdr, auth );
 	res = 0;
-	
+
 out:
 	mp_free( usr_pass );
 	mp_free( b64_usr_pass );
 	mp_free( auth );
-	
+
 	return res;
 }
 
@@ -410,7 +410,7 @@ http_debug_hdr( HTTP_header_t *http_hdr ) {
 	MSG_V("--- HTTP DEBUG HEADER --- END ---\n");
 }
 
-int 
+int
 base64_encode(const any_t*enc, int encLen, char *out, int outMax) {
 	static const char	b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 

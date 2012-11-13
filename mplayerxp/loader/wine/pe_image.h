@@ -6,11 +6,11 @@
 
 #define PE_HEADER(module) \
     ((IMAGE_NT_HEADERS*)((LPBYTE)(module) + \
-                         (((IMAGE_DOS_HEADER*)(module))->e_lfanew)))
+			 (((IMAGE_DOS_HEADER*)(module))->e_lfanew)))
 
 #define PE_SECTIONS(module) \
     ((IMAGE_SECTION_HEADER*)((LPBYTE)&PE_HEADER(module)->OptionalHeader + \
-                           PE_HEADER(module)->FileHeader.SizeOfOptionalHeader))
+			   PE_HEADER(module)->FileHeader.SizeOfOptionalHeader))
 
 #define RVA_PTR(module,field) ((LPBYTE)(module) + PE_HEADER(module)->field)
 
@@ -40,11 +40,11 @@ extern void PE_UnloadLibrary(struct _wine_modref *);
 extern HGLOBAL PE_LoadResource(struct _wine_modref *wm,HRSRC);
 extern HMODULE PE_LoadImage( int hFile, LPCSTR filename, WORD *version );
 extern struct _wine_modref *PE_CreateModule( HMODULE hModule, LPCSTR filename,
-                                             DWORD flags, WIN_BOOL builtin );
-extern WIN_BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env, 
-                              LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                              WIN_BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                              LPPROCESS_INFORMATION info );
+					     DWORD flags, WIN_BOOL builtin );
+extern WIN_BOOL PE_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env,
+			      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+			      WIN_BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
+			      LPPROCESS_INFORMATION info );
 
 extern void PE_InitTls(void);
 extern WIN_BOOL PE_InitDLL(struct _wine_modref *wm, DWORD type, LPVOID lpReserved);

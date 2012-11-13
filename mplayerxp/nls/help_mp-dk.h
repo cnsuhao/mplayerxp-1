@@ -37,7 +37,7 @@ static char help_text[]=
 
 // ========================= MPlayer messages ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\n Afslutter... (%s)\n"
 #define MSGTR_Exit_frames "Anmoder om et antal billeder bliver afspillet"

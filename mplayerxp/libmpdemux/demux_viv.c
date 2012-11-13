@@ -123,7 +123,7 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
     stream_read(demux->stream, buf, header_len);
     i=0;
     while(i<header_len && buf[i]==0x0D && buf[i+1]==0x0A) i+=2; // skip empty lines
-    
+
     token = strtok(buf, (char *)&("\x0d\x0a"));
     while (token && (header_len>2))
     {
@@ -151,7 +151,7 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 	    }
 	}
 
-	/* video specific */	
+	/* video specific */
 	if (!strcmp(opt, "FPS"))
 	{
 	    MSG_DBG2( "FPS: %f\n", atof(param));
@@ -211,7 +211,7 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 	    if (priv->audio_bytesperblock == 24)
 		priv->audio_codec = VIVO_AUDIO_G723;
 	}
-	
+
 	/* only for displaying some informations about movie*/
 	if (!strcmp(opt, "Title"))
 	{
@@ -237,7 +237,7 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 	/* get next token */
 	token = strtok(NULL, (char *)&("\x0d\x0a"));
     }
-    
+
     if (buf)
 	mp_free(buf);
     if (opt)
@@ -317,7 +317,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
   int seq;
   int prefix=0;
   demux->filepos=stream_tell(demux->stream);
-  
+
   c=stream_read_char(demux->stream);
   if (c == -256) /* EOF */
     return 0;
@@ -328,7 +328,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       prefix = 1;
       c = stream_read_char(demux->stream);
       MSG_DBG2("packet 0x82(pos=%llu) chunk=%x\n",
-        stream_tell(demux->stream), c);
+	stream_tell(demux->stream), c);
   }
   switch(c&0xF0){
   case 0x00: // header - skip it!
@@ -349,9 +349,9 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
   }
   case 0x10:  // video packet
       if (prefix == 1)
-        len = stream_read_char(demux->stream);
+	len = stream_read_char(demux->stream);
       else
-        len=128;
+	len=128;
       ds=demux->video;
       break;
   case 0x20:  // video packet
@@ -360,23 +360,23 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       break;
   case 0x30:  // audio packet
       if (prefix == 1)
-        len = stream_read_char(demux->stream);
+	len = stream_read_char(demux->stream);
       else
-        len=40;	/* 40kbps */
+	len=40;	/* 40kbps */
       ds=demux->audio;
       audio_pos+=len;
       break;
   case 0x40:  // audio packet
       if (prefix == 1)
-        len = stream_read_char(demux->stream);
+	len = stream_read_char(demux->stream);
       else
-        len=24;	/* 24kbps */
+	len=24;	/* 24kbps */
       ds=demux->audio;
       audio_pos+=len;
       break;
   default:
       MSG_WARN("VIVO - unknown ID found: %02X at pos %lu contact author!\n",
-        c, stream_tell(demux->stream));
+	c, stream_tell(demux->stream));
       return 0;
   }
 
@@ -384,25 +384,25 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       if(len) stream_skip(demux->stream,len);
       return 1;
   }
-  
+
   seq=c&0x0F;
 
     if(ds->asf_packet){
       if(ds->asf_seq!=seq){
-        // closed segment, finalize packet:
-        ds_add_packet(ds,ds->asf_packet);
-        ds->asf_packet=NULL;
+	// closed segment, finalize packet:
+	ds_add_packet(ds,ds->asf_packet);
+	ds->asf_packet=NULL;
       } else {
-        // append data to it!
-        demux_packet_t* dp=ds->asf_packet;
-        dp->buffer=mp_realloc(dp->buffer,dp->len+len);
-        //memcpy(dp->buffer+dp->len,data,len);
+	// append data to it!
+	demux_packet_t* dp=ds->asf_packet;
+	dp->buffer=mp_realloc(dp->buffer,dp->len+len);
+	//memcpy(dp->buffer+dp->len,data,len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
-        MSG_DBG3("data appended! %d+%d\n",dp->len,len);
-        dp->len+=len;
-        // we are ready now.
+	MSG_DBG3("data appended! %d+%d\n",dp->len,len);
+	dp->len+=len;
+	// we are ready now.
 	if((c&0xF0)==0x20) --ds->asf_seq; // hack!
-        return 1;
+	return 1;
       }
     }
     // create new packet:
@@ -462,24 +462,24 @@ static unsigned int x_get_bits(int n){
 static int h263_decode_picture_header(unsigned char *b_ptr)
 {
 //    int i;
-        
+
     buffer=b_ptr;
     bufptr=bitcnt=buf=0;
 
     /* picture header */
     if (get_bits(&s->gb, 22) != 0x20){
 	MSG_ERR("bad picture header\n");
-        return -1;
+	return -1;
     }
     skip_bits(&s->gb, 8); /* picture timestamp */
 
     if (get_bits1(&s->gb) != 1){
 	MSG_ERR("bad marker\n");
-        return -1;	/* marker */
+	return -1;	/* marker */
     }
     if (get_bits1(&s->gb) != 0){
 	MSG_ERR("bad h263 id\n");
-        return -1;	/* h263 id */
+	return -1;	/* h263 id */
     }
     skip_bits1(&s->gb);	/* split screen off */
     skip_bits1(&s->gb);	/* camera  off */
@@ -488,10 +488,10 @@ static int h263_decode_picture_header(unsigned char *b_ptr)
     format = get_bits(&s->gb, 3);
 
     if (format != 7) {
-        MSG_ERR("h263_plus = 0  format = %d\n",format);
-        /* H.263v1 */
-        width = h263_format[format][0];
-        height = h263_format[format][1];
+	MSG_ERR("h263_plus = 0  format = %d\n",format);
+	/* H.263v1 */
+	width = h263_format[format][0];
+	height = h263_format[format][1];
 	MSG_ERR("%d x %d\n",width,height);
 //        if (!width) return -1;
 
@@ -502,46 +502,46 @@ static int h263_decode_picture_header(unsigned char *b_ptr)
 	MSG_V("advanced prediction mode: %d\n",get_bits1(&s->gb));
 	MSG_V("PB frame: %d\n",get_bits1(&s->gb));
 #else
-        if (get_bits1(&s->gb) != 0)
-            return -1;	/* SAC: off */
-        if (get_bits1(&s->gb) != 0)
-            return -1;	/* advanced prediction mode: off */
-        if (get_bits1(&s->gb) != 0)
-            return -1;	/* not PB frame */
+	if (get_bits1(&s->gb) != 0)
+	    return -1;	/* SAC: off */
+	if (get_bits1(&s->gb) != 0)
+	    return -1;	/* advanced prediction mode: off */
+	if (get_bits1(&s->gb) != 0)
+	    return -1;	/* not PB frame */
 #endif
 	MSG_V("qscale=%d\n",get_bits(&s->gb, 5));
-        skip_bits1(&s->gb);	/* Continuous Presence Multipoint mode: off */
+	skip_bits1(&s->gb);	/* Continuous Presence Multipoint mode: off */
     } else {
-        MSG_V("h263_plus = 1\n");
-        /* H.263v2 */
-        if (get_bits(&s->gb, 3) != 1){
+	MSG_V("h263_plus = 1\n");
+	/* H.263v2 */
+	if (get_bits(&s->gb, 3) != 1){
 	    MSG_ERR("H.263v2 A error\n");
-            return -1;
+	    return -1;
 	}
-        if (get_bits(&s->gb, 3) != 6){ /* custom source format */
+	if (get_bits(&s->gb, 3) != 6){ /* custom source format */
 	    MSG_ERR("custom source format\n");
-            return -1;
+	    return -1;
 	}
-        skip_bits(&s->gb, 12);
-        skip_bits(&s->gb, 3);
+	skip_bits(&s->gb, 12);
+	skip_bits(&s->gb, 3);
 	MSG_V("pict_type=%d\n",get_bits(&s->gb, 3) + 1);
 //        if (s->pict_type != I_TYPE &&
 //            s->pict_type != P_TYPE)
 //            return -1;
-        skip_bits(&s->gb, 7);
-        skip_bits(&s->gb, 4); /* aspect ratio */
-        width = (get_bits(&s->gb, 9) + 1) * 4;
-        skip_bits1(&s->gb);
-        height = get_bits(&s->gb, 9) * 4;
+	skip_bits(&s->gb, 7);
+	skip_bits(&s->gb, 4); /* aspect ratio */
+	width = (get_bits(&s->gb, 9) + 1) * 4;
+	skip_bits1(&s->gb);
+	height = get_bits(&s->gb, 9) * 4;
 	MSG_V("%d x %d\n",width,height);
-        //if (height == 0)
-        //    return -1;
+	//if (height == 0)
+	//    return -1;
 	MSG_V("qscale=%d\n",get_bits(&s->gb, 5));
     }
 
     /* PEI */
     while (get_bits1(&s->gb) != 0) {
-        skip_bits(&s->gb, 8);
+	skip_bits(&s->gb, 8);
     }
 //    s->f_code = 1;
 //    s->width = width;
@@ -566,7 +566,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 
 {		sh_video_t* sh=new_sh_video(demuxer,0);
 
-		/* viv1, viv2 (for better codecs.conf) */    
+		/* viv1, viv2 (for better codecs.conf) */
 		sh->fourcc = mmioFOURCC('v', 'i', 'v', priv->version);
 		if(!sh->fps)
 		{
@@ -586,7 +586,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 
 		if (vivo_param_height != -1)
 		    priv->disp_height = priv->height = vivo_param_height;
-		
+
 		if (vivo_param_vformat != -1)
 		{
 		    priv->disp_width = priv->width = h263_format[vivo_param_vformat][0];
@@ -622,7 +622,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		demuxer->video->sh=sh;
 		sh->ds=demuxer->video;
 		demuxer->video->id=0;
-		
+
 		/* disable seeking */
 		demuxer->flags &= ~DEMUXF_SEEKABLE;
 
@@ -716,7 +716,7 @@ if (demuxer->audio->id >= -1){
 		    sh->wf->nBlockAlign = priv->audio_bytesperblock;
 		if (vivo_param_bytesperblock != -1)
 		    sh->wf->nBlockAlign = vivo_param_bytesperblock;
-		
+
 		/* insert as stream */
 		demuxer->audio->sh=sh;
 		sh->ds=demuxer->audio;
@@ -731,11 +731,11 @@ nosound:
 static void vivo_close(demuxer_t *demuxer)
 {
     vivo_priv_t* priv=demuxer->priv;
- 
+
     if (priv) {
 	if (priv->title)
 	    mp_free(priv->title);
-        if (priv->author)
+	if (priv->author)
 	    mp_free(priv->author);
 	if (priv->copyright)
 	    mp_free(priv->copyright);

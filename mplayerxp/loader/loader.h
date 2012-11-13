@@ -26,7 +26,7 @@ int _WritePrivateProfileStringA(const char* appname, const char* keyname,
 	const char* string, const char* filename);
 
 INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
-                            LPSTR buffer, INT buflen );
+			    LPSTR buffer, INT buflen );
 
 #ifdef __cplusplus
 }

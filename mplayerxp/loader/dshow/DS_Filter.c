@@ -135,9 +135,9 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 #endif
 
     /*
-        tempAll is not used  anywhere. 
+	tempAll is not used  anywhere.
 	MemAllocatorCreate() is called to ensure that RegisterComObject for IMemoryAllocator
-	will be	called before possible call 
+	will be	called before possible call
 	to CoCreateInstance(...,&IID_IMemoryAllocator,...) from binary codec.
     */
     tempAll=MemAllocatorCreate();
@@ -162,7 +162,7 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 	IEnumPins* enum_pins = 0;
 	IPin* array[256];
 	ULONG fetched;
-        unsigned int i;
+	unsigned int i;
 
 	This->m_iHandle = LoadLibraryA(dllname);
 	if (!This->m_iHandle)
@@ -194,14 +194,14 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 	if (result || !This->m_pFilter)
 	{
 	    em = "object does not provide IBaseFilter interface";
-            break;
+	    break;
 	}
 	// enumerate pins
 	result = This->m_pFilter->vt->EnumPins(This->m_pFilter, &enum_pins);
 	if (result || !enum_pins)
 	{
 	    em = "could not enumerate pins";
-            break;
+	    break;
 	}
 
 	enum_pins->vt->Reset(enum_pins);
@@ -227,12 +227,12 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 	if (!This->m_pInputPin)
 	{
 	    em = "could not find input pin";
-            break;
+	    break;
 	}
 	if (!This->m_pOutputPin)
 	{
 	    em = "could not find output pin";
-            break;
+	    break;
 	}
 	result = This->m_pInputPin->vt->QueryInterface((IUnknown*)This->m_pInputPin,
 						       &IID_IMemInputPin,
@@ -245,11 +245,11 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 
 	This->m_pOurType = in_fmt;
 	This->m_pDestType = out_fmt;
-        result = This->m_pInputPin->vt->QueryAccept(This->m_pInputPin, This->m_pOurType);
+	result = This->m_pInputPin->vt->QueryAccept(This->m_pInputPin, This->m_pOurType);
 	if (result)
 	{
 	    em = "source format is not accepted";
-            break;
+	    break;
 	}
 	This->m_pParentFilter = CBaseFilter2Create();
 	This->m_pSrcFilter = CBaseFilterCreate(This->m_pOurType, This->m_pParentFilter);
@@ -262,16 +262,16 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 	if (result)
 	{
 	    em = "could not connect to input pin";
-            break;
+	    break;
 	}
 	result = This->m_pImp->vt->GetAllocator(This->m_pImp, &This->m_pAll);
 	if (result || !This->m_pAll)
 	{
 	    em="error getting IMemAllocator interface";
-            break;
+	    break;
 	}
 
-        //Seting allocator property according to our media type
+	//Seting allocator property according to our media type
 	props.cBuffers=1;
 	props.cbBuffer=This->m_pOurType->lSampleSize;
 	props.cbAlign=1;
@@ -289,11 +289,11 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
 	if (result)
 	{
 	    em = "could not connect to output pin";
-            break;
+	    break;
 	}
 
 	init++;
-        break;
+	break;
     }
     tempAll->vt->Release(tempAll);
 
@@ -301,7 +301,7 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
     {
 	DS_Filter_Destroy(This);
 	printf("Warning: DS_Filter() %s.  (DLL=%.200s, r=0x%x)\n", em, dllname, result);
-        This = 0;
+	This = 0;
     }
     return This;
 }

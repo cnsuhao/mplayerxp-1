@@ -167,11 +167,11 @@ static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp)
     do {
       if(p->lsn!=p->vcd_sector_lsn)
       {
-        if (cdio_read_mode2_sector(img, &p->vcd_sector, p->lsn, true)!=0) {
+	if (cdio_read_mode2_sector(img, &p->vcd_sector, p->lsn, true)!=0) {
 	    MSG_ERR("vcdnav: read error\n");
 	    _vcdnav_inc_lsn(p);
 	    return 0;
-        }
+	}
 	MSG_DBG3("LSN=%i SUBHEADER: %02X %02X %02X %02X %02X %02X %02X %02X\n"
 	,p->lsn
 	,p->vcd_sector.subheader[0]
@@ -201,14 +201,14 @@ static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp)
       _vcdnav_inc_lsn(p);
 
       if ( p->lsn >= p->start+p->total ) {
-        /* We've run off of the end of this entry. Do we continue or stop? */
-        MSG_DBG2("end reached in reading, cur: %u, end: %u\n", p->lsn, p->total);
-        break;
+	/* We've run off of the end of this entry. Do we continue or stop? */
+	MSG_DBG2("end reached in reading, cur: %u, end: %u\n", p->lsn, p->total);
+	break;
       }
-      
+
       /* Check header ID for a padding sector and simply discard
-         these.  It is alleged that VCD's put these in to keep the
-         bitrate constant.
+	 these.  It is alleged that VCD's put these in to keep the
+	 bitrate constant.
       */
     } while((p->vcd_sector.subheader[2]&~0x01)==0x60);
 

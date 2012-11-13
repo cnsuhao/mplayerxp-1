@@ -169,7 +169,7 @@ int __FASTCALL__ af_to_dB(int n, float* in, float* out, float k);
 /* Helper function used to convert from ms to sample time*/
 int __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, float ma);
 /* Helper function used to convert from sample time to ms */
-int __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate); 
+int __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate);
 /* Helper function for testing the output format */
 int __FASTCALL__ af_test_output(struct af_instance_s* af, mp_aframe_t* out);
 

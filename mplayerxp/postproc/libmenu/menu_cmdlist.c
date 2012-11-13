@@ -65,11 +65,11 @@ static void read_cmd(menu_t* menu,int cmd) {
     if(mpriv->p.current->ok) {
       mp_cmd_t* c = mp_input_parse_cmd(mpriv->p.current->ok);
       if(c)
-        {
-          if (mpriv->auto_close)
-              mp_input_queue_cmd (menu->libinput,mp_input_parse_cmd ("menu hide"));
+	{
+	  if (mpriv->auto_close)
+	      mp_input_queue_cmd (menu->libinput,mp_input_parse_cmd ("menu hide"));
 	mp_input_queue_cmd(menu->libinput,c);
-        }
+	}
     }
    } break;
   case MENU_CMD_LEFT:
@@ -119,7 +119,7 @@ static int parse_args(menu_t* menu,const char* args) {
       MSG_WARN("[libmenu] Syntax error at line: %i\n",parser->line);
       asx_parser_free(parser);
       return -1;
-    } else if(r == 0) {      
+    } else if(r == 0) {
       asx_parser_free(parser);
       if(!m)
 	MSG_WARN("[libmenu] No entry found in the menu definition\n");
@@ -158,7 +158,7 @@ static int open_cmdlist(menu_t* menu, const char* args) {
     MSG_WARN("libmenu] ListMenu needs an argument\n");
     return 0;
   }
- 
+
   menu_list_init(menu);
   if(!parse_args(menu,args))
     return 0;

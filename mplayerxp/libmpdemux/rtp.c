@@ -77,10 +77,10 @@ static int getrtp2(int fd, struct rtpheader *rh, char** data, int* lengthData);
 static void rtp_cache_reset(unsigned short seq)
 {
 	int i;
-	
+
 	rtpbuf.first = 0;
 	rtpbuf.seq[0] = ++seq;
-	
+
 	for (i=0; i<MAXRTPPACKETSIN; i++) {
 		rtpbuf.len[i] = 0;
 	}
@@ -94,34 +94,34 @@ static int rtp_cache(int fd, char *buffer, int length)
 	char *data;
 	unsigned short seq;
 	static int is_first = 1;
-	
+
 	getrtp2(fd, &rh, &data, &length);
 	if(!length)
 		return 0;
 	seq = rh.b.sequence;
-	
+
 	newseq = seq - rtpbuf.seq[rtpbuf.first];
-	
+
 	if ((newseq == 0) || is_first)
 	{
 		is_first = 0;
-		
+
 		rtpbuf.first = ( 1 + rtpbuf.first ) % MAXRTPPACKETSIN;
 		rtpbuf.seq[rtpbuf.first] = ++seq;
 		goto feed;
 	}
-	
+
 	if (newseq > MAXRTPPACKETSIN)
 	{
 		MSG_DBG2("Overrun(seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
 		rtp_cache_reset(seq);
 		goto feed;
 	}
-	
+
 	if (newseq < 0)
 	{
 		int i;
-		
+
 		// Is it a stray packet re-sent to network?
 		for (i=0; i<MAXRTPPACKETSIN; i++) {
 			if (rtpbuf.seq[i] == seq) {
@@ -134,19 +134,19 @@ static int rtp_cache(int fd, char *buffer, int length)
 			MSG_ERR("Too Old packet (seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
 			return  0; // Yes, it is!
 		}
-		
+
 		MSG_ERR("Underrun(seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
-		
+
 		rtp_cache_reset(seq);
 		goto feed;
 	}
-	
+
 	MSG_DBG3("Out of Seq (seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
 	newseq = ( newseq + rtpbuf.first ) % MAXRTPPACKETSIN;
 	memcpy (rtpbuf.data[newseq], data, length);
 	rtpbuf.len[newseq] = length;
 	rtpbuf.seq[newseq] = seq;
-	
+
 	return 0;
 
 feed:
@@ -164,17 +164,17 @@ static int rtp_get_next(int fd, char *buffer, int length)
 	// If we have empty buffer we loop to fill it
 	for (i=0; i < MAXRTPPACKETSIN -3; i++) {
 		if (rtpbuf.len[rtpbuf.first] != 0) break;
-		
+
 		length = rtp_cache(fd, buffer, length) ;
-		
-		// returns on first packet in sequence 
+
+		// returns on first packet in sequence
 		if (length > 0) {
 			return length;
 		} else if (length < 0) break;
-		
+
 		// Only if length == 0 loop continues!
 	}
-	
+
 	i = rtpbuf.first;
 	while (rtpbuf.len[i] == 0) {
 		MSG_ERR("Lost packet %hu\n", rtpbuf.seq[i]);
@@ -182,35 +182,35 @@ static int rtp_get_next(int fd, char *buffer, int length)
 		if (rtpbuf.first == i) break;
 	}
 	rtpbuf.first = i;
-	
+
 	// Copy next non empty packet from cache
 	MSG_DBG3( "Getting rtp from cache [%d] %hu\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first]);
 	memcpy (buffer, rtpbuf.data[rtpbuf.first], rtpbuf.len[rtpbuf.first]);
 	length = rtpbuf.len[rtpbuf.first]; // can be zero?
-	
+
 	// Reset fisrt slot and go next in cache
 	rtpbuf.len[rtpbuf.first] = 0;
 	nextseq = rtpbuf.seq[rtpbuf.first];
 	rtpbuf.first = ( 1 + rtpbuf.first ) % MAXRTPPACKETSIN;
 	rtpbuf.seq[rtpbuf.first] = nextseq + 1;
-	
+
 	return length;
 }
 
 
-// Read next rtp packet using cache 
+// Read next rtp packet using cache
 int read_rtp_from_server(int fd, char *buffer, int length) {
 	// Following test is ASSERT (i.e. uneuseful if code is correct)
 	if(buffer==NULL || length<STREAM_BUFFER_SIZE) {
 		MSG_ERR("RTP buffer invalid; no data return from network\n");
 		return 0;
 	}
-	
+
 	// loop just to skip empty packets
 	while ((length = rtp_get_next(fd, buffer, length)) == 0) {
 		MSG_ERR("Got empty packet from RTP cache!?\n");
 	}
-	
+
 	return(length);
 }
 

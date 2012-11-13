@@ -1,11 +1,11 @@
 /*
- * CDDB HTTP protocol 
+ * CDDB HTTP protocol
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
  * (C) 2002, MPlayer team.
  *
  * Implementation follow the freedb.howto1.06.txt specification
  * from http://freedb.freedb.org
- * 
+ *
  * discid computation by Jeremy D. Zawodny
  *	 Copyright (c) 1998-2000 Jeremy D. Zawodny <Jeremy@Zawodny.com>
  *	 Code release under GPL
@@ -143,9 +143,9 @@ int __FASTCALL__ cddb_http_request(char *command, int (*reply_parser)(HTTP_heade
 	int fd, ret = 0;
 	URL_t *url;
 	HTTP_header_t *http_hdr;
-	
+
 	if( reply_parser==NULL || command==NULL || cddb_data==NULL ) return -1;
-	
+
 	sprintf( request, "http://%s/~cddb/cddb.cgi?cmd=%s%s&proto=%d", cddb_data->freedb_server, command, cddb_data->cddb_hello, cddb_data->freedb_proto_level );
 	MSG_V("Request[%s]\n", request );
 
@@ -154,7 +154,7 @@ int __FASTCALL__ cddb_http_request(char *command, int (*reply_parser)(HTTP_heade
 		MSG_ERR("Not a valid URL\n");
 		return -1;
 	}
-	
+
 	fd = http_send_request(cddb_data->libinput,url,0);
 	if( fd<0 ) {
 		MSG_ERR("failed to send the http request\n");
@@ -183,7 +183,7 @@ int __FASTCALL__ cddb_http_request(char *command, int (*reply_parser)(HTTP_heade
 
 	http_free( http_hdr );
 	url_free( url );
-	
+
 	return ret;
 }
 
@@ -194,9 +194,9 @@ int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
 	size_t file_size;
 
 	if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
-	
+
 	sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
-	
+
 	file_fd = open(file_name, O_RDONLY);
 	if( file_fd<0 ) {
 		MSG_ERR("No cache found\n");
@@ -210,7 +210,7 @@ int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
 	} else {
 		file_size = stats.st_size;
 	}
-	
+
 	cddb_data->xmcd_file = (char*)mp_malloc(file_size);
 	if( cddb_data->xmcd_file==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
@@ -223,9 +223,9 @@ int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
 		close(file_fd);
 		return -1;
 	}
-	
+
 	close(file_fd);
-	
+
 	return 0;
 }
 
@@ -238,13 +238,13 @@ int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
 	if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
 
 	sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
-	
+
 	file_fd = creat(file_name, S_IREAD|S_IWRITE);
 	if( file_fd<0 ) {
 		perror("open");
 		return -1;
 	}
-	
+
 	wrote = write(file_fd, cddb_data->xmcd_file, cddb_data->xmcd_file_size);
 	if( wrote<0 ) {
 		MSG_ERR("write: %s",strerror(errno));
@@ -256,7 +256,7 @@ int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
 		close(file_fd);
 		return -1;
 	}
-	
+
 	close(file_fd);
 
 	return 0;
@@ -269,7 +269,7 @@ static int cddb_read_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 	int ret, status;
 
 	if( http_hdr==NULL || cddb_data==NULL ) return -1;
-	
+
 	ret = sscanf( http_hdr->body, "%d ", &status);
 	if( ret!=1 ) {
 		MSG_ERR("Parse error\n");
@@ -328,7 +328,7 @@ static int cddb_query_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 	char album_title[100];
 	char *ptr = NULL;
 	int ret, status;
-	
+
 	ret = sscanf( http_hdr->body, "%d ", &status);
 	if( ret!=1 ) {
 		MSG_ERR("Parse error\n");
@@ -398,7 +398,7 @@ misc c711930d Santana / Supernatural
 rock c711930d Santana / Supernatural
 blues c711930d Santana / Supernatural
 .]
-*/	
+*/
 		case 211:
 			// Found inexact matches, list follows
 			MSG_WARN("No exact matches found, list follows\n");
@@ -413,7 +413,7 @@ static int cddb_proto_level_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_dat
 	int max;
 	int ret, status;
 	char *ptr;
-	
+
 	ret = sscanf( http_hdr->body, "%d ", &status);
 	if( ret!=1 ) {
 		MSG_ERR("Parse error\n");
@@ -473,9 +473,9 @@ int __FASTCALL__ cddb_get_freedb_sites(cddb_data_t *cddb_data) {
 void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
 	char host_name[51];
 	char *user_name;
-	
+
 	if( cddb_data->anonymous ) {	// Default is anonymous
-		/* Note from Eduardo Pérez Ureta <eperez@it.uc3m.es> : 
+		/* Note from Eduardo Pérez Ureta <eperez@it.uc3m.es> :
 		 * We don't send current user/host name in hello to prevent spam.
 		 * Software that sends this is considered spyware
 		 * that most people don't like.
@@ -598,9 +598,9 @@ void __FASTCALL__ cd_info_free(cd_info_t *cd_info) {
 
 cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name, unsigned int track_nb, unsigned int min, unsigned int sec, unsigned int msec, unsigned long frame_begin, unsigned long frame_length) {
 	cd_track_t *cd_track;
-	
+
 	if( cd_info==NULL || track_name==NULL ) return NULL;
-	
+
 	cd_track = (cd_track_t*)mp_mallocz(sizeof(cd_track_t));
 	if( cd_track==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
@@ -628,12 +628,12 @@ cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name,
 	}
 
 	cd_track->prev = cd_info->last;
-	
+
 	cd_info->last = cd_track;
 	cd_info->current = cd_track;
 
 	cd_info->nb_tracks++;
-	
+
 	return cd_track;
 }
 
@@ -726,7 +726,7 @@ char* __FASTCALL__ xmcd_parse_ttitle(cd_info_t *cd_info, char *line) {
 		ptr = strstr(ptr, "=");
 		if( ptr==NULL ) return NULL;
 		ptr++;
-		
+
 		sec = cdtoc[track_nb].frame;
 		off = cdtoc[track_nb+1].frame-sec+1;
 
@@ -741,12 +741,12 @@ cd_info_t* __FASTCALL__ cddb_parse_xmcd(char *xmcd_file) {
 	char *ptr, *ptr2;
 	unsigned int audiolen;
 	if( xmcd_file==NULL ) return NULL;
-	
+
 	cd_info = cd_info_new();
 	if( cd_info==NULL ) {
 		return NULL;
 	}
-	
+
 	length = strlen(xmcd_file);
 	ptr = xmcd_file;
 	while( ptr!=NULL && pos<length ) {
@@ -775,7 +775,7 @@ cd_info_t* __FASTCALL__ cddb_parse_xmcd(char *xmcd_file) {
 	cd_info->min  = (unsigned int)(audiolen/(60*75));
 	cd_info->sec  = (unsigned int)((audiolen/75)%60);
 	cd_info->msec = (unsigned int)(audiolen%75);
-	
+
 	return cd_info;
 }
 

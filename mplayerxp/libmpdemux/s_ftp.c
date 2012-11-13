@@ -106,9 +106,9 @@ static int __FASTCALL__ readline(char *buf,int max,struct stream_priv_s *ctl)
       }
 
       if(!fd_can_read(ctl->handle, 15)) {
-        MSG_ERR("[ftp] read timed out\n");
-        retval = -1;
-        break;
+	MSG_ERR("[ftp] read timed out\n");
+	retval = -1;
+	break;
       }
 
       if ((x = recv(ctl->handle,ctl->cput,ctl->cleft,0)) == -1) {
@@ -176,7 +176,7 @@ static int __FASTCALL__ FtpSendCmd(const char *cmd, struct stream_priv_s *nContr
       MSG_ERR("[ftp] write error: %s\n",strerror(errno));
       return 0;
     }
-    
+
     cmd += s;
     l -= s;
   }
@@ -255,7 +255,7 @@ static int __FASTCALL__ ftp_read(stream_t *s,stream_packet_t*sp){
 
   if(s->fd < 0 && !FtpOpenData(s,s->pos))
     return -1;
-  
+
   if(!fd_can_read(s->fd, 15)) {
     MSG_ERR("[ftp] read timed out\n");
     return -1;
@@ -291,14 +291,14 @@ static off_t __FASTCALL__ ftp_seek(stream_t *s,off_t newpos) {
   if(s->fd >= 0) {
     static const char pre_cmd[]={TELNET_IAC,TELNET_IP,TELNET_IAC,TELNET_SYNCH};
     //int fl;
-    
+
 
     // First close the fd
     closesocket(s->fd);
     s->fd = 0;
-    
+
     // Send send the telnet sequence needed to make the server react
-    
+
     // Dunno if this is really needed, lftp have it. I let
     // it here in case it turn out to be needed on some other OS
     //fl=fcntl(p->handle,F_GETFL);
@@ -307,7 +307,7 @@ static off_t __FASTCALL__ ftp_seek(stream_t *s,off_t newpos) {
     // send only first byte as OOB due to OOB braindamage in many unices
     send(p->handle,pre_cmd,1,MSG_OOB);
     send(p->handle,pre_cmd+1,sizeof(pre_cmd)-1,0);
-    
+
     //fcntl(p->handle,F_SETFL,fl);
 
     // Get the 426 Transfer aborted

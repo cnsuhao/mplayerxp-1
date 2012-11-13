@@ -25,7 +25,7 @@
  * sdp/sdpplin parser.
  *
  */
- 
+
 #include "mp_config.h"
 #include "mplayerxp.h"
 #include "librtsp/rtsp.h"
@@ -64,7 +64,7 @@ static char *b64_decode(const char *in, char *out, int *size)
   dtable['='] = 0;
 
   k=0;
-  
+
   /*CONSTANTCONDITION*/
   for (j=0; j<strlen(in); j+=4)
   {
@@ -74,9 +74,9 @@ static char *b64_decode(const char *in, char *out, int *size)
       int c = in[i+j];
 
       if (dtable[c] & 0x80) {
-        printf("Illegal character '%c' in input.\n", c);
+	printf("Illegal character '%c' in input.\n", c);
 //        exit(1);
-        return NULL;
+	return NULL;
       }
       a[i] = (char) c;
       b[i] = (char) dtable[c];
@@ -123,7 +123,7 @@ static int filter(const char *in, const char *filter, char **out) {
 
     return len-flen;
   }
-  
+
   return 0;
 }
 static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
@@ -133,7 +133,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
   char      *decoded=xbuffer_init(32);
   int       handled;
   int       got_mimetype;
-    
+
   if (filter(*data, "m=", &buf)) {
     desc->id = mp_strdup(buf);
   } else
@@ -158,7 +158,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 #endif
 
     handled=0;
-    
+
     if(filter(*data,"a=control:streamid=",&buf)) {
       desc->stream_id=atoi(buf);
       handled=1;
@@ -168,7 +168,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     if(filter(*data,"a=MaxBitRate:integer;",&buf)) {
       desc->max_bit_rate=atoi(buf);
       if (!desc->avg_bit_rate)
-        desc->avg_bit_rate=desc->max_bit_rate;
+	desc->avg_bit_rate=desc->max_bit_rate;
       handled=1;
       *data=nl(*data);
     }
@@ -176,11 +176,11 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     if(filter(*data,"a=MaxPacketSize:integer;",&buf)) {
       desc->max_packet_size=atoi(buf);
       if (!desc->avg_packet_size)
-        desc->avg_packet_size=desc->max_packet_size;
+	desc->avg_packet_size=desc->max_packet_size;
       handled=1;
       *data=nl(*data);
     }
-    
+
     if(filter(*data,"a=StartTime:integer;",&buf)) {
       desc->start_time=atoi(buf);
       handled=1;
@@ -224,7 +224,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
       printf("mlti_data_size: %i\n", desc->mlti_data_size);
 #endif
     }
-    
+
     if(filter(*data,"a=ASMRuleBook:string;",&buf)) {
       desc->asm_rule_book=mp_strdup(buf);
       handled=1;
@@ -252,7 +252,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
   xbuffer_free(buf);
   xbuffer_free(decoded);
-  
+
   return desc;
 }
 
@@ -275,7 +275,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 #endif
 
     handled=0;
-    
+
     if (filter(data, "m=", &buf)) {
       sdpplin_stream_t *stream=sdpplin_parse_stream(&data);
 #ifdef LOG
@@ -286,18 +286,18 @@ sdpplin_t *sdpplin_parse(char *data) {
       else if (desc->stream)
       {
       MSG_ERR("sdpplin: bad stream_id %d (must be >= 0, < %d). Broken sdp?\n",
-        stream->stream_id, desc->stream_count);
+	stream->stream_id, desc->stream_count);
       mp_free(stream);
       } else {
-        MSG_V("sdpplin: got 'm=', but 'a=StreamCount' is still unknown.\n");
-        if (stream->stream_id == 0) {
-          desc->stream_count=1;
-          desc->stream=mp_malloc(sizeof(sdpplin_stream_t*));
-          desc->stream[0]=stream;
-        } else {
-          MSG_ERR("sdpplin: got 'm=', but 'a=StreamCount' is still unknown and stream_id != 0. Broken sdp?\n");
-          mp_free(stream);
-        }
+	MSG_V("sdpplin: got 'm=', but 'a=StreamCount' is still unknown.\n");
+	if (stream->stream_id == 0) {
+	  desc->stream_count=1;
+	  desc->stream=mp_malloc(sizeof(sdpplin_stream_t*));
+	  desc->stream[0]=stream;
+	} else {
+	  MSG_ERR("sdpplin: got 'm=', but 'a=StreamCount' is still unknown and stream_id != 0. Broken sdp?\n");
+	  mp_free(stream);
+	}
       }
       continue;
     }
@@ -308,28 +308,28 @@ sdpplin_t *sdpplin_parse(char *data) {
       handled=1;
       data=nl(data);
     }
-    
+
     if(filter(data,"a=Author:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
       desc->author=mp_strdup(decoded);
       handled=1;
       data=nl(data);
     }
-    
+
     if(filter(data,"a=Copyright:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
       desc->copyright=mp_strdup(decoded);
       handled=1;
       data=nl(data);
     }
-    
+
     if(filter(data,"a=Abstract:buffer;",&buf)) {
       decoded=b64_decode(buf, decoded, &len);
       desc->abstract=mp_strdup(decoded);
       handled=1;
       data=nl(data);
     }
-    
+
     if(filter(data,"a=StreamCount:integer;",&buf)) {
       desc->stream_count=(unsigned int)atoi(buf);
       desc->stream=mp_malloc(sizeof(sdpplin_stream_t*)*desc->stream_count);
@@ -356,7 +356,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 
   xbuffer_free(buf);
   xbuffer_free(decoded);
-  
+
   return desc;
 }
 
@@ -370,13 +370,13 @@ void sdpplin_free(sdpplin_t *description) {
   for (i = 0; i < description->stream_count; i++) {
     if (description->stream[i]) {
       if (description->stream[i]->stream_name)
-        mp_free(description->stream[i]->stream_name);
+	mp_free(description->stream[i]->stream_name);
       if (description->stream[i]->mime_type)
-        mp_free(description->stream[i]->mime_type);
+	mp_free(description->stream[i]->mime_type);
       if (description->stream[i]->mlti_data)
-        mp_free(description->stream[i]->mlti_data);
+	mp_free(description->stream[i]->mlti_data);
       if (description->stream[i]->asm_rule_book)
-        mp_free(description->stream[i]->asm_rule_book);
+	mp_free(description->stream[i]->asm_rule_book);
       mp_free(description->stream[i]);
     }
   }

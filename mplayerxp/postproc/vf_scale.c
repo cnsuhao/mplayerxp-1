@@ -96,20 +96,20 @@ static unsigned int __FASTCALL__ find_best_out(vf_instance_t *vf,unsigned w,unsi
 
     // find the best outfmt:
     for(i=0; i<sizeof(outfmt_list)/sizeof(int)-1; i++){
-        const int format= outfmt_list[i];
-        int ret= vf->priv->query_format_cache[i]-1;
-        if(ret == -1){
-            ret= vf_next_query_format(vf, outfmt_list[i],w,h);
-            vf->priv->query_format_cache[i]= ret+1;
-        }
+	const int format= outfmt_list[i];
+	int ret= vf->priv->query_format_cache[i]-1;
+	if(ret == -1){
+	    ret= vf_next_query_format(vf, outfmt_list[i],w,h);
+	    vf->priv->query_format_cache[i]= ret+1;
+	}
 
 	MSG_DBG2("scale: query(%s) -> %d\n",vo_format_name(format),ret&3);
 	if(ret&VFCAP_CSP_SUPPORTED_BY_HW){
-            best=format; // no conversion -> bingo!
-            break;
-        }
-	if(ret&VFCAP_CSP_SUPPORTED && !best) 
-            best=format; // best with conversion
+	    best=format; // no conversion -> bingo!
+	    break;
+	}
+	if(ret&VFCAP_CSP_SUPPORTED && !best)
+	    best=format; // best with conversion
     }
     return best;
 }
@@ -129,7 +129,7 @@ static void __FASTCALL__ print_conf_fmtcvt(struct vf_instance_s* vf)
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
     unsigned int best=find_best_out(vf,d_width,d_height);
     int vo_flags;
@@ -149,7 +149,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     // - no other sw/hw up/down scaling avail.
     // - we're after postproc
     // - user didn't set w:h
-    if(!(vo_flags&VFCAP_POSTPROC) && (flags&4) && 
+    if(!(vo_flags&VFCAP_POSTPROC) && (flags&4) &&
 	    vf->priv->w<0 && vf->priv->h<0){	// -zoom
 	int x=(vo_flags&VFCAP_SWSCALE) ? 0 : 1;
 	if(d_width<width || d_height<height){
@@ -225,7 +225,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	    srcFilter, dstFilter, vf->priv->param);
     MSG_DBG2("vf_scale: %p=sws_getContext\n",vf->priv->ctx);
     if(vf->priv->interlaced){
-        vf->priv->ctx2=sws_getContext(width, height >> 1,
+	vf->priv->ctx2=sws_getContext(width, height >> 1,
 	    pixfmt_from_fourcc(outfmt),
 		  vf->priv->w, vf->priv->h >> 1,
 	    pixfmt_from_fourcc(best),
@@ -252,7 +252,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	    vf->priv->palette[4*i+0]=4*(i>>6)*21;
 	    vf->priv->palette[4*i+1]=4*((i>>3)&7)*9;
 	    vf->priv->palette[4*i+2]=4*((i&7)&7)*9;
-            vf->priv->palette[4*i+3]=0;
+	    vf->priv->palette[4*i+3]=0;
 	}
 	break; }
     case IMGFMT_BGR8: {
@@ -263,10 +263,10 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	    vf->priv->palette[4*i+0]=4*(i&3)*21;
 	    vf->priv->palette[4*i+1]=4*((i>>2)&7)*9;
 	    vf->priv->palette[4*i+2]=4*((i>>5)&7)*9;
-            vf->priv->palette[4*i+3]=0;
+	    vf->priv->palette[4*i+3]=0;
 	}
 	break; }
-    case IMGFMT_BGR4: 
+    case IMGFMT_BGR4:
     case IMGFMT_BG4B: {
 	int i;
 	vf->priv->palette=mp_malloc(4*16);
@@ -274,7 +274,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	    vf->priv->palette[4*i+0]=4*(i&1)*63;
 	    vf->priv->palette[4*i+1]=4*((i>>1)&3)*21;
 	    vf->priv->palette[4*i+2]=4*((i>>3)&1)*63;
-            vf->priv->palette[4*i+3]=0;
+	    vf->priv->palette[4*i+3]=0;
 	}
 	break; }
     case IMGFMT_RGB4:
@@ -285,7 +285,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 	    vf->priv->palette[4*i+0]=4*(i>>3)*63;
 	    vf->priv->palette[4*i+1]=4*((i>>1)&3)*21;
 	    vf->priv->palette[4*i+2]=4*((i&1)&1)*63;
-            vf->priv->palette[4*i+3]=0;
+	    vf->priv->palette[4*i+3]=0;
 	}
 	break; }
     }
@@ -307,22 +307,22 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
 }
 
 static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2, const uint8_t *src[3], int src_stride[3], int y, int h,
-                  uint8_t *dst[3], unsigned dst_stride[3], int interlaced){
+		  uint8_t *dst[3], unsigned dst_stride[3], int interlaced){
     if(interlaced){
-        int i;
-        const uint8_t *src2[3]={src[0], src[1], src[2]};
-        uint8_t *dst2[3]={dst[0], dst[1], dst[2]};
-        int src_stride2[3]={2*src_stride[0], 2*src_stride[1], 2*src_stride[2]};
-        int dst_stride2[3]={2*dst_stride[0], 2*dst_stride[1], 2*dst_stride[2]};
+	int i;
+	const uint8_t *src2[3]={src[0], src[1], src[2]};
+	uint8_t *dst2[3]={dst[0], dst[1], dst[2]};
+	int src_stride2[3]={2*src_stride[0], 2*src_stride[1], 2*src_stride[2]};
+	int dst_stride2[3]={2*dst_stride[0], 2*dst_stride[1], 2*dst_stride[2]};
 
-        sws_scale(sws1, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
-        for(i=0; i<3; i++){
-            src2[i] += src_stride[i];
-            dst2[i] += dst_stride[i];
-        }
-        sws_scale(sws2, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
+	sws_scale(sws1, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
+	for(i=0; i<3; i++){
+	    src2[i] += src_stride[i];
+	    dst2[i] += dst_stride[i];
+	}
+	sws_scale(sws2, src2, src_stride2, y>>1, h>>1, dst2, dst_stride2);
     }else{
-        sws_scale(sws1, src, src_stride, y, h, dst, (int *)dst_stride);
+	sws_scale(sws1, src, src_stride, y, h, dst, (int *)dst_stride);
     }
 }
 
@@ -333,12 +333,12 @@ static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
     planes[0]=mpi->planes[0];
     stride[0]=mpi->stride[0];
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-          planes[1]=mpi->planes[1];
-          planes[2]=mpi->planes[2];
-          planes[3]=mpi->planes[3];
-          stride[1]=mpi->stride[1];
-          stride[2]=mpi->stride[2];
-          stride[3]=mpi->stride[3];
+	  planes[1]=mpi->planes[1];
+	  planes[2]=mpi->planes[2];
+	  planes[3]=mpi->planes[3];
+	  stride[1]=mpi->stride[1];
+	  stride[2]=mpi->stride[2];
+	  stride[3]=mpi->stride[3];
     }
     MSG_DBG2("vf_scale.put_frame was called\n");
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
@@ -356,12 +356,12 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     planes[0]=mpi->planes[0];
     stride[0]=mpi->stride[0];
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-          planes[1]=mpi->planes[1];
-          planes[2]=mpi->planes[2];
-          planes[3]=mpi->planes[3];
-          stride[1]=mpi->stride[1];
-          stride[2]=mpi->stride[2];
-          stride[3]=mpi->stride[3];
+	  planes[1]=mpi->planes[1];
+	  planes[2]=mpi->planes[2];
+	  planes[3]=mpi->planes[3];
+	  stride[1]=mpi->stride[1];
+	  stride[2]=mpi->stride[2];
+	  stride[3]=mpi->stride[3];
     }
     MSG_DBG2("vf_scale.put_slice was called[%i %i]\n",mpi->y, mpi->h);
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
@@ -437,9 +437,9 @@ static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t
 	r= sws_setColorspaceDetails(vf->priv->ctx, inv_table, srcRange, table, dstRange, brightness, contrast, saturation);
 	if(r<0) break;
 	if(vf->priv->ctx2){
-            r= sws_setColorspaceDetails(vf->priv->ctx2, inv_table, srcRange, table, dstRange, brightness, contrast, saturation);
-            if(r<0) break;
-        }
+	    r= sws_setColorspaceDetails(vf->priv->ctx2, inv_table, srcRange, table, dstRange, brightness, contrast, saturation);
+	    if(r<0) break;
+	}
 
 	return MPXP_True;
     default:
@@ -595,7 +595,7 @@ void sws_getFlagsAndFilterFromCmdLine(int *flags, SwsFilter **srcFilterParam, Sw
 		case 10:*flags|= SWS_SPLINE; break;
 		default:*flags|= SWS_BILINEAR; break;
 	}
-	
+
 	*srcFilterParam= src_filter;
 	*dstFilterParam= NULL;
 }

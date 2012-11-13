@@ -23,10 +23,10 @@ static inline int avm_list_size(avm_list_t* head)
     {
 	for (;;)
 	{
-            i++;
+	    i++;
 	    it = it->next;
 	    if (it == head)
-                break;
+		break;
 	}
     }
     return i;
@@ -46,7 +46,7 @@ static inline int avm_list_print(avm_list_t* head)
 		   i, it->member, it->next, it->prev);
 	    it = it->next;
 	    if (it == head)
-                break;
+		break;
 	}
     }
     return i;
@@ -60,7 +60,7 @@ static inline avm_list_t* avm_list_add_head(avm_list_t* head, any_t* member)
     if (!head)
     {
 	head = n;
-        head->prev = head;
+	head->prev = head;
     }
 
     n->prev = head->prev;
@@ -104,7 +104,7 @@ static inline avm_list_t* avm_list_find(avm_list_t* head, any_t* member)
 		return it;
 	    it = it->next;
 	    if (it == head)
-                break;
+		break;
 	}
     }
     return NULL;
@@ -143,12 +143,12 @@ static HRESULT STDCALL MemAllocator_SetProperties(IMemAllocator * This,
     *pActual = *pRequest;
     /*
        DirectShow DOCS ("Negotiating Allocators" chapter) says that allocator might not
-       honor the requested properties. Thus, since WMSP audio codecs requests bufer with two 
+       honor the requested properties. Thus, since WMSP audio codecs requests bufer with two
        bytes length for unknown reason, we should correct requested value. Otherwise above
        codec don't want to load.
     */
     if (pActual->cbBuffer == 2)
-        pActual->cbBuffer = 10240; //Enough for WMSP codec
+	pActual->cbBuffer = 10240; //Enough for WMSP codec
 
     me->props = *pActual;
 
@@ -182,7 +182,7 @@ static HRESULT STDCALL MemAllocator_Commit(IMemAllocator * This)
 	CMediaSample* sample = CMediaSampleCreate((IMemAllocator*)me,
 						  me->props.cbBuffer);
 	if (!sample)
-            return E_OUTOFMEMORY;
+	    return E_OUTOFMEMORY;
 	//printf("FREEEEEEEEEEEE ADDED %p\n", sample);
 	me->free_list = avm_list_add_tail(me->free_list, sample);
 	//avm_list_print(me->free_list);
@@ -206,7 +206,7 @@ static HRESULT STDCALL MemAllocator_Decommit(IMemAllocator * This)
 
     while (me->free_list)
     {
-        CMediaSample* sample = (CMediaSample*) me->free_list->member;
+	CMediaSample* sample = (CMediaSample*) me->free_list->member;
 	//printf("****************** Decommiting FREE %p\n", sample);
 	//sample->vt->Release((IUnknown*)sample);
 	CMediaSample_Destroy((CMediaSample*)sample);
@@ -309,7 +309,7 @@ MemAllocator* MemAllocatorCreate()
     MemAllocator* This = (MemAllocator*) mp_malloc(sizeof(MemAllocator));
 
     if (!This)
-        return NULL;
+	return NULL;
 
     Debug printf("MemAllocatorCreate() called -> %p\n", This);
 
@@ -323,7 +323,7 @@ MemAllocator* MemAllocatorCreate()
 
     if (!This->vt)
     {
-        mp_free(This);
+	mp_free(This);
 	return NULL;
     }
 

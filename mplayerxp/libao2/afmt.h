@@ -4,7 +4,7 @@
 
 #ifdef	HAVE_SYS_SOUNDCARD_H
 #include <sys/soundcard.h>	/* For AFMT_* on linux */
-#else 
+#else
 #ifdef HAVE_SOUNDCARD_H
 #include <soundcard.h> /* OpenBSD have this instead of <sys/soundcard> */
 #endif

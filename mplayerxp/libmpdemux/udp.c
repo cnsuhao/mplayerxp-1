@@ -79,7 +79,7 @@ udp_open_socket (URL_t *url)
       return -1;
     }
     memcpy ((any_t*) &server_address.sin_addr.s_addr,
-            (any_t*) hp->h_addr_list[0], hp->h_length);
+	    (any_t*) hp->h_addr_list[0], hp->h_length);
 #else
     server_address.sin_addr.s_addr = htonl (INADDR_ANY);
 #endif /* HAVE_WINSOCK2 */
@@ -103,7 +103,7 @@ udp_open_socket (URL_t *url)
       MSG_ERR("[udp] SO_REUSEADDR failed! ignore.\n");
 
   if (bind (socket_server_fd, (struct sockaddr *) &server_address,
-            sizeof (server_address)) == -1)
+	    sizeof (server_address)) == -1)
   {
 #ifndef HAVE_WINSOCK2
     if (errno != EINPROGRESS)
@@ -116,7 +116,7 @@ udp_open_socket (URL_t *url)
       return -1;
     }
   }
-	
+
 #ifdef HAVE_WINSOCK2
   if (isalpha (url->hostname[0]))
   {
@@ -128,7 +128,7 @@ udp_open_socket (URL_t *url)
       return -1;
     }
     memcpy ((any_t*) &server_address.sin_addr.s_addr,
-            (any_t*) hp->h_addr, hp->h_length);
+	    (any_t*) hp->h_addr, hp->h_length);
   }
   else
   {
@@ -140,7 +140,7 @@ udp_open_socket (URL_t *url)
   /* Increase the socket rx buffer size to maximum -- this is UDP */
   rxsockbufsz = 240 * 1024;
   if (setsockopt (socket_server_fd, SOL_SOCKET, SO_RCVBUF,
-                  &rxsockbufsz, sizeof (rxsockbufsz)))
+		  &rxsockbufsz, sizeof (rxsockbufsz)))
   {
     MSG_ERR("[udp] Couldn't set receive socket buffer size\n");
   }
@@ -151,7 +151,7 @@ udp_open_socket (URL_t *url)
     mcast.imr_interface.s_addr = 0;
 
     if (setsockopt (socket_server_fd, IPPROTO_IP,
-                    IP_ADD_MEMBERSHIP, &mcast, sizeof (mcast)))
+		    IP_ADD_MEMBERSHIP, &mcast, sizeof (mcast)))
     {
       MSG_ERR("[udp] IP_ADD_MEMBERSHIP failed (do you have multicasting enabled in your kernel?)\n");
       closesocket (socket_server_fd);
@@ -164,7 +164,7 @@ udp_open_socket (URL_t *url)
 
   FD_ZERO (&set);
   FD_SET (socket_server_fd, &set);
-  
+
   err = select (socket_server_fd + 1, &set, NULL, NULL, &tv);
   if (err < 0)
   {

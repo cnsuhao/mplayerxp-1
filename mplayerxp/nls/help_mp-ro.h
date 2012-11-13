@@ -35,7 +35,7 @@ static char help_text[]=
 
 // ========================= MPlayer messages ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\nIes... (%s)\n"
 #define MSGTR_Exit_frames "Numărul de cadre cerut a fost redat"

@@ -47,8 +47,8 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 	GETCLASS func;
 	struct IClassFactory* factory = NULL;
 	struct IUnknown* object = NULL;
-        unsigned int i;
-        unsigned long inputs, outputs;
+	unsigned int i;
+	unsigned long inputs, outputs;
 
 	This->m_iHandle = LoadLibraryA(dllname);
 	if (!This->m_iHandle)
@@ -79,14 +79,14 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 	hr = object->vt->QueryInterface(object, &IID_IMediaObject, (any_t**)&This->m_pMedia);
 	if (hr == 0)
 	{
-            /* query for some extra available interface */
+	    /* query for some extra available interface */
 	    HRESULT r = object->vt->QueryInterface(object, &IID_IMediaObjectInPlace, (any_t**)&This->m_pInPlace);
-            if (r == 0 && This->m_pInPlace)
+	    if (r == 0 && This->m_pInPlace)
 		printf("DMO dll supports InPlace - PLEASE REPORT to developer\n");
 	    r = object->vt->QueryInterface(object, &IID_IDMOVideoOutputOptimizations, (any_t**)&This->m_pOptim);
 	    if (r == 0 && This->m_pOptim)
 	    {
-                unsigned long flags;
+		unsigned long flags;
 		r = This->m_pOptim->vt->QueryOperationModePreferences(This->m_pOptim, 0, &flags);
 		printf("DMO dll supports VO Optimizations %ld %lx\n", r, flags);
 		if (flags & DMO_VOSF_NEEDS_PREVIOUS_SAMPLE)
@@ -108,7 +108,7 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 
 	if (0) {
 	    DMO_MEDIA_TYPE dmo;
-            VIDEOINFOHEADER* vi;
+	    VIDEOINFOHEADER* vi;
 	    memset(&dmo, 0, sizeof(dmo));
 	    i = This->m_pMedia->vt->GetOutputType(This->m_pMedia, 0, 2, &dmo);
 	    printf("GetOutputType %x \n", i);
@@ -124,12 +124,12 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 		   dmo.bFixedSizeSamples, dmo.bTemporalCompression,
 		   dmo.lSampleSize,
 		   dmo.formattype.f1,
-                   dmo.pUnk, dmo.cbFormat, dmo.pbFormat
+		   dmo.pUnk, dmo.cbFormat, dmo.pbFormat
 		  );
 /*          vi =  (VIDEOINFOHEADER*) dmo.pbFormat;
 	    vi =  (VIDEOINFOHEADER*) out_fmt->pbFormat;
 	    for (i = 0; i < out_fmt->cbFormat; i++)
-                printf("BYTE %d  %02x  %02x\n", i, ((uint8_t*)dmo.pbFormat)[i], ((uint8_t*)out_fmt->pbFormat)[i]);
+		printf("BYTE %d  %02x  %02x\n", i, ((uint8_t*)dmo.pbFormat)[i], ((uint8_t*)out_fmt->pbFormat)[i]);
 */
 	}
 
@@ -148,11 +148,11 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
 	hr = This->m_pMedia->vt->GetStreamCount(This->m_pMedia, &inputs, &outputs);
 	printf("StreamCount r=0x%lx  %ld  %ld\n", hr, inputs, outputs);
 
-        break;
+	break;
     }
     if (em)
     {
-        DMO_Filter_Destroy(This);
+	DMO_Filter_Destroy(This);
 	printf("IMediaObject ERROR: %p  %s (0x%lx : %ld)\n", em, em ? em : "", hr, hr);
 	This = 0;
     }

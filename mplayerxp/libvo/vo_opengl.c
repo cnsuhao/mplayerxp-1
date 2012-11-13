@@ -125,8 +125,8 @@ static void gl_init_fb(vo_data_t*vo,unsigned x,unsigned y,unsigned d_width,unsig
 
     glTranslatef(-0.5f, -0.5f, -Z_CAMERA);
     glScalef(1.0f / (GLfloat)d_width,
-             -1.0f / (GLfloat)d_height,
-             1.0f / (GLfloat)d_width);
+	     -1.0f / (GLfloat)d_height,
+	     1.0f / (GLfloat)d_width);
     glTranslatef(0.0f, -1.0f * (GLfloat)d_height, 0.0f);
 
     glClearColor(0.0, 0.0, 0.0, 1.0);

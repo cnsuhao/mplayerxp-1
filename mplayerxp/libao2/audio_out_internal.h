@@ -18,7 +18,7 @@ static void __FASTCALL__ audio_resume(ao_data_t*);
 	control,\
 	init,\
 	configure,\
-        uninit,\
+	uninit,\
 	reset,\
 	get_space,\
 	play,\

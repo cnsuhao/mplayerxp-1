@@ -23,8 +23,8 @@ CpuCaps gCpuCaps;
 #endif
 
 //#define X86_FXSR_MAGIC
-/* Thanks to the FreeBSD project for some of this cpuid code, and 
- * help understanding how to use it.  Thanks to the Mesa 
+/* Thanks to the FreeBSD project for some of this cpuid code, and
+ * help understanding how to use it.  Thanks to the Mesa
  * team for SSE support detection and more cpu detect code.
  */
 
@@ -181,7 +181,7 @@ char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
 			if(cpuname[i][CPUID_FAMILY][CPUID_MODEL]){
 				snprintf(retname,255,"%s %s",cpuvendors[i].name,cpuname[i][CPUID_FAMILY][CPUID_MODEL]);
 			} else {
-				snprintf(retname,255,"unknown %s %d. Generation CPU",cpuvendors[i].name,CPUID_FAMILY); 
+				snprintf(retname,255,"unknown %s %d. Generation CPU",cpuvendors[i].name,CPUID_FAMILY);
 				 MSG_ERR("unknown %s CPU:\n"
 					"Vendor:   %s\n"
 					"Type:     %d\n"

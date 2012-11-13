@@ -76,8 +76,8 @@ int packet_start;
       head|=c;
 #else
       if(videobuffer[videobuf_len-4]==0 &&
-         videobuffer[videobuf_len-3]==0 &&
-         videobuffer[videobuf_len-2]==1) break; // synced
+	 videobuffer[videobuf_len-3]==0 &&
+	 videobuffer[videobuf_len-2]==1) break; // synced
 #endif
     }
   }

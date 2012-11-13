@@ -45,7 +45,7 @@ struct menu_priv_s {
   char* na;
   int hide_na;
 };
- 
+
 static struct menu_priv_s cfg_dflt = {
   MENU_LIST_PRIV_DFLT,
   NULL,
@@ -96,7 +96,7 @@ static int parse_args(menu_t* menu,const char* args) {
   int r;
   m_option_t* opt;
   ASX_Parser_t* parser = asx_parser_new();
-  
+
 
   while(1) {
     r = asx_get_element(parser,&args,&element,&body,&attribs);
@@ -104,10 +104,10 @@ static int parse_args(menu_t* menu,const char* args) {
       MSG_ERR("[libmenu] Syntax error at line: %s\n",parser->line);
       asx_parser_free(parser);
       return -1;
-    } else if(r == 0) {      
+    } else if(r == 0) {
       asx_parser_free(parser);
       if(!m)
-        MSG_WARN("[libmenu] No entry found in the menu definition\n");
+	MSG_WARN("[libmenu] No entry found in the menu definition\n");
       m = mp_calloc(1,sizeof(struct list_entry_s));
       m->p.txt = mp_strdup("Back");
       menu_list_add_entry(menu,m);
@@ -116,8 +116,8 @@ static int parse_args(menu_t* menu,const char* args) {
     if(!strcmp(element,"menu")) {
       name = asx_get_attrib("menu",attribs);
       if(!name) {
-        MSG_WARN("[libmenu] Submenu definition need a menu attribut\n");
-        goto next_element;
+	MSG_WARN("[libmenu] Submenu definition need a menu attribut\n");
+	goto next_element;
       }
       m = mp_calloc(1,sizeof(struct list_entry_s));
       m->menu = name;
@@ -132,7 +132,7 @@ static int parse_args(menu_t* menu,const char* args) {
     opt = NULL;
     if(name && mp_property_do(name,M_PROPERTY_GET_TYPE,&opt,menu->ctx) <= 0) {
       MSG_WARN("[libmenu] Invalid property: %s %i\n",
-             name,parser->line);
+	     name,parser->line);
       goto next_element;
     }
     txt = asx_get_attrib("txt",attribs);
@@ -171,23 +171,23 @@ static void read_cmd(menu_t* menu,int cmd) {
       if(!mpriv->edit) break;
     case MENU_CMD_RIGHT:
       if(mp_property_do(e->prop,M_PROPERTY_STEP_UP,NULL,menu->ctx) > 0)
-        update_entries(menu);
+	update_entries(menu);
       return;
     case MENU_CMD_DOWN:
       if(!mpriv->edit) break;
     case MENU_CMD_LEFT:
       if(mp_property_do(e->prop,M_PROPERTY_STEP_DOWN,NULL,menu->ctx) > 0)
-        update_entries(menu);
+	update_entries(menu);
       return;
-      
+
     case MENU_CMD_OK:
       // check that the property is writable
       if(mp_property_do(e->prop,M_PROPERTY_SET,NULL,menu->ctx) < 0) return;
       // shortcut for flags
       if(e->opt->type == MCONF_TYPE_FLAG) {
 	if(mp_property_do(e->prop,M_PROPERTY_STEP_UP,NULL,menu->ctx) > 0)
-          update_entries(menu);
-        return;
+	  update_entries(menu);
+	return;
       }
       // switch
       mpriv->edit = !mpriv->edit;
@@ -195,10 +195,10 @@ static void read_cmd(menu_t* menu,int cmd) {
       update_entries(menu);
       // switch the pointer
       if(mpriv->edit) {
-        mpriv->ptr = mpriv->p.ptr;
-        mpriv->p.ptr = NULL;
+	mpriv->ptr = mpriv->p.ptr;
+	mpriv->p.ptr = NULL;
       } else
-        mpriv->p.ptr = mpriv->ptr;
+	mpriv->p.ptr = mpriv->ptr;
       return;
     case MENU_CMD_CANCEL:
       if(!mpriv->edit) break;
@@ -256,7 +256,7 @@ static int openMenu(menu_t* menu,const char* args) {
     MSG_ERR("[libmenu] PrefMenu needs an argument\n");
     return 0;
   }
- 
+
   menu_list_init(menu);
   return parse_args(menu,args);
 }

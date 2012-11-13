@@ -36,7 +36,7 @@
 
 typedef struct {
  int id; // 0 - 31 mpeg; 128 - 159 ac3; 160 - 191 pcm
- int language; 
+ int language;
  int type;
  int channels;
 } stream_language_t;
@@ -77,7 +77,7 @@ static int dvd_last_chapter=0;
 static int dvd_angle=1; /**< some DVD discs contain scenes that can be viewed from multiple angles */
 
 static const char * dvd_audio_stream_types[8] =
-        { "ac3","unknown","mpeg1","mpeg2ext","lpcm","unknown","dts" };
+	{ "ac3","unknown","mpeg1","mpeg2ext","lpcm","unknown","dts" };
 
 static const char * dvd_audio_stream_channels[8] =
 	{ "unknown", "stereo", "unknown", "unknown", "unknown", "5.1", "6.1", "7.1" };
@@ -188,23 +188,23 @@ static int __FASTCALL__ dvd_next_title(dvd_priv_t *d,int dvd_title)
     vts_file = ifoOpen( dvd, tt_srpt->title[dvd_title].title_set_nr );
     if( !vts_file ) {
 	MSG_ERR( MSGTR_DVDnoIFO,
-                 tt_srpt->title[dvd_title].title_set_nr );
-        ifoClose( vmg_file );
-        DVDClose( dvd );
-        return 0;
+		 tt_srpt->title[dvd_title].title_set_nr );
+	ifoClose( vmg_file );
+	DVDClose( dvd );
+	return 0;
     }
     /**
      * We've got enough info, time to open the title set data.
      */
     title = DVDOpenFile( dvd, tt_srpt->title[dvd_title].title_set_nr,
-                         DVD_READ_TITLE_VOBS );
+			 DVD_READ_TITLE_VOBS );
     if( !title ) {
 	MSG_ERR( MSGTR_DVDnoVOBs,
-                 tt_srpt->title[dvd_title].title_set_nr );
-        ifoClose( vts_file );
-        ifoClose( vmg_file );
-        DVDClose( dvd );
-        return 0;
+		 tt_srpt->title[dvd_title].title_set_nr );
+	ifoClose( vts_file );
+	ifoClose( vmg_file );
+	DVDClose( dvd );
+	return 0;
     }
     d->vts_file=vts_file;
     d->title=title;
@@ -222,17 +222,17 @@ static int __FASTCALL__ dvd_next_title(dvd_priv_t *d,int dvd_title)
 
      d->nr_of_channels=0;
 
-     if ( vts_file->vts_pgcit ) 
+     if ( vts_file->vts_pgcit )
       {
        int i;
        for ( i=0;i<8;i++ )
-        if ( vts_file->vts_pgcit->pgci_srp[0].pgc->audio_control[i] & 0x8000 )
+	if ( vts_file->vts_pgcit->pgci_srp[0].pgc->audio_control[i] & 0x8000 )
 	 {
 	  audio_attr_t * audio = &vts_file->vtsi_mat->vts_audio_attr[i];
 	  int language = 0;
 	  char tmp[] = "unknown";
 
-	  if ( audio->lang_type == 1 ) 
+	  if ( audio->lang_type == 1 )
 	   {
 	    language=audio->lang_code;
 	    tmp[0]=language>>8;
@@ -264,7 +264,7 @@ static int __FASTCALL__ dvd_next_title(dvd_priv_t *d,int dvd_title)
 	  //  1 - stereo
 	  //  5 - 5.1
 	  d->audio_streams[d->nr_of_channels].channels=audio->channels;
-          MSG_V("[open] audio stream: %d audio format: %s (%s) language: %s aid: %d\n",
+	  MSG_V("[open] audio stream: %d audio format: %s (%s) language: %s aid: %d\n",
 	    d->nr_of_channels,
 	    dvd_audio_stream_types[ audio->audio_format ],
 	    dvd_audio_stream_channels[ audio->channels ],
@@ -288,11 +288,11 @@ static int __FASTCALL__ dvd_next_title(dvd_priv_t *d,int dvd_title)
      for ( i=0;i<32;i++ )
       if ( vts_file->vts_pgcit->pgci_srp[0].pgc->subp_control[i] & 0x80000000 )
        {
-        subp_attr_t * subtitle = &vts_file->vtsi_mat->vts_subp_attr[i];
-        video_attr_t *video = &vts_file->vtsi_mat->vts_video_attr;
+	subp_attr_t * subtitle = &vts_file->vtsi_mat->vts_subp_attr[i];
+	video_attr_t *video = &vts_file->vtsi_mat->vts_video_attr;
 	int language = 0;
 	char tmp[] = "unknown";
-	
+
 	if ( subtitle->type == 1 )
 	 {
 	  language=subtitle->lang_code;
@@ -307,12 +307,12 @@ static int __FASTCALL__ dvd_next_title(dvd_priv_t *d,int dvd_title)
 	  d->subtitles[d->nr_of_subtitles].id = vts_file->vts_pgcit->pgci_srp[ttn].pgc->subp_control[i] >> 24 & 31;
 	else if(video->display_aspect_ratio == 3) /* 16:9 */
 	  d->subtitles[d->nr_of_subtitles].id = vts_file->vts_pgcit->pgci_srp[ttn].pgc->subp_control[i] >> 8 & 31;
-	
+
 	MSG_V("[open] subtitle ( sid ): %d language: %s\n",
 	  d->nr_of_subtitles,
 	  tmp
 	  );
-        d->nr_of_subtitles++;
+	d->nr_of_subtitles++;
        }
      MSG_V("[open] number of subtitles on disk: %d\n",d->nr_of_subtitles );
     }
@@ -349,12 +349,12 @@ static int __FASTCALL__ dvd_next_cell(dvd_priv_t *d){
     MSG_V( "dvd_next_cell: next1=0x%X  \n",next_cell);
 
     if( d->cur_pgc->cell_playback[ next_cell ].block_type
-                                        == BLOCK_TYPE_ANGLE_BLOCK ) {
+					== BLOCK_TYPE_ANGLE_BLOCK ) {
 	    while(next_cell<d->last_cell){
-                if( d->cur_pgc->cell_playback[next_cell].block_mode
-                                          == BLOCK_MODE_LAST_CELL ) break;
+		if( d->cur_pgc->cell_playback[next_cell].block_mode
+					  == BLOCK_MODE_LAST_CELL ) break;
 		++next_cell;
-            }
+	    }
     }
     MSG_V( "dvd_next_cell: next2=0x%X  \n",next_cell);
 
@@ -373,25 +373,25 @@ static int __FASTCALL__ dvd_read_sector(stream_t* stream,dvd_priv_t *d,unsigned 
     int len;
 read_first:
     if(d->packs_left==0){
-            /**
-             * If we're not at the end of this cell, we can determine the next
-             * VOBU to display using the VOBU_SRI information section of the
-             * DSI.  Using this value correctly follows the current angle,
-             * avoiding the doubled scenes in The Matrix, and makes our life
-             * really happy.
-             *
-             * Otherwise, we set our next address past the end of this cell to
-             * force the code above to go to the next cell in the program.
-             */
-            if( d->dsi_pack.vobu_sri.next_vobu != SRI_END_OF_CELL ) {
-                d->cur_pack= d->dsi_pack.dsi_gi.nv_pck_lbn +
+	    /**
+	     * If we're not at the end of this cell, we can determine the next
+	     * VOBU to display using the VOBU_SRI information section of the
+	     * DSI.  Using this value correctly follows the current angle,
+	     * avoiding the doubled scenes in The Matrix, and makes our life
+	     * really happy.
+	     *
+	     * Otherwise, we set our next address past the end of this cell to
+	     * force the code above to go to the next cell in the program.
+	     */
+	    if( d->dsi_pack.vobu_sri.next_vobu != SRI_END_OF_CELL ) {
+		d->cur_pack= d->dsi_pack.dsi_gi.nv_pck_lbn +
 		( d->dsi_pack.vobu_sri.next_vobu & 0x3fffffff );
 		MSG_V( "Navi  new pos=0x%X  \n",d->cur_pack);
-            } else {
+	    } else {
 		// end of cell! find next cell!
 		MSG_V( "--- END OF CELL !!! ---\n");
 		d->cur_pack=d->cell_last_pack+1;
-            }
+	    }
     }
 
 read_next:
@@ -401,7 +401,7 @@ read_next:
 	int next=dvd_next_cell(d);
 	if(next>=0){
 	    d->cur_cell=next;
-	    //    if( d->cur_pgc->cell_playback[d->cur_cell].block_type 
+	    //    if( d->cur_pgc->cell_playback[d->cur_cell].block_type
 	    //	== BLOCK_TYPE_ANGLE_BLOCK ) d->cur_cell+=dvd_angle;
 	    d->cur_pack = d->cur_pgc->cell_playback[ d->cur_cell ].first_sector;
 	    d->cell_last_pack=d->cur_pgc->cell_playback[ d->cur_cell ].last_sector;
@@ -438,11 +438,11 @@ The substream id for PCI packet is 0x00 and 0x01 for DSI.
        data[1024]==0 && data[1025]==0 && data[1026]==1 && data[1027]==0xBF){
 	// found a Navi packet!!!
 #if LIBDVDREAD_VERSION >= DVDREAD_VERSION(0,9,0)
-        navRead_DSI( &d->dsi_pack, &(data[DSI_START_BYTE]) );
-        navRead_PCI( &d->pci_pack, &(data[DSI_START_BYTE-0x3DA]) );
+	navRead_DSI( &d->dsi_pack, &(data[DSI_START_BYTE]) );
+	navRead_PCI( &d->pci_pack, &(data[DSI_START_BYTE-0x3DA]) );
 #else
-        navRead_DSI( &d->dsi_pack, &(data[DSI_START_BYTE]), sizeof(dsi_t));
-        navRead_PCI( &d->pci_pack, &(data[DSI_START_BYTE-0x3DA]), sizeof(pci_t));
+	navRead_DSI( &d->dsi_pack, &(data[DSI_START_BYTE]), sizeof(dsi_t));
+	navRead_PCI( &d->pci_pack, &(data[DSI_START_BYTE-0x3DA]), sizeof(pci_t));
 #endif
 	/*
 	    TODO!: if num_angles!=0 and d->dsi_pack.sml_agli.data[dvd_angle].address
@@ -495,7 +495,7 @@ The substream id for PCI packet is 0x00 and 0x01 for DSI.
 		} else {
 		    // check if we're in the right cell, jump otherwise:
 		    if( (d->dsi_pack.dsi_gi.vobu_c_idn==d->cur_pgc->cell_position[d->cur_cell].cell_nr) &&
-		        (d->dsi_pack.dsi_gi.vobu_vob_idn==d->cur_pgc->cell_position[d->cur_cell].vob_id_nr) ){
+			(d->dsi_pack.dsi_gi.vobu_vob_idn==d->cur_pgc->cell_position[d->cur_cell].vob_id_nr) ){
 			d->angle_seek=0;
 			MSG_V("Angle-seek synced by cell/vob IDN search!\n");
 		    } else {
@@ -540,7 +540,7 @@ if(d->cur_pack>d->cell_last_pack ||
 
     // ok, cell change, find the right cell!
     d->cur_cell=0;
-    if( d->cur_pgc->cell_playback[d->cur_cell].block_type 
+    if( d->cur_pgc->cell_playback[d->cur_cell].block_type
 	== BLOCK_TYPE_ANGLE_BLOCK ) d->cur_cell+=dvd_angle;
 
   while(1){
@@ -641,9 +641,9 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
      */
     dvd = DVDOpen(dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
     if( !dvd ) {
-        MSG_ERR(MSGTR_CantOpenDVD,dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
+	MSG_ERR(MSGTR_CantOpenDVD,dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
 	if(dvd_device) mp_free(dvd_device);
-        return MPXP_False;
+	return MPXP_False;
     }
     if(dvd_device) mp_free(dvd_device);
     MSG_V(MSGTR_DVDwait);
@@ -654,21 +654,21 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
      */
     vmg_file = ifoOpen( dvd, 0 );
     if( !vmg_file ) {
-        MSG_ERR( "Can't open VMG info!\n");
-        DVDClose( dvd );
-        return MPXP_False;
+	MSG_ERR( "Can't open VMG info!\n");
+	DVDClose( dvd );
+	return MPXP_False;
     }
     tt_srpt = vmg_file->tt_srpt;
     /**
      * Make sure our title number is valid.
      */
     MSG_INFO( MSGTR_DVDnumTitles,
-             tt_srpt->nr_of_srpts );
+	     tt_srpt->nr_of_srpts );
     if( dvd_title < 1 || dvd_title > tt_srpt->nr_of_srpts ) {
 	MSG_ERR( MSGTR_DVDinvalidTitle, dvd_title);
-        ifoClose( vmg_file );
-        DVDClose( dvd );
-        return MPXP_False;
+	ifoClose( vmg_file );
+	DVDClose( dvd );
+	return MPXP_False;
     }
     --dvd_title; // remap 1.. -> 0..
     --last_title;// remap 1.. -> 0..
@@ -677,7 +677,7 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
      * Make sure the chapter number is valid for this title.
      */
     MSG_INFO( MSGTR_DVDnumChapters,
-             tt_srpt->title[dvd_title].nr_of_ptts );
+	     tt_srpt->title[dvd_title].nr_of_ptts );
     if( dvd_chapter<1 || dvd_chapter>tt_srpt->title[dvd_title].nr_of_ptts ) {
 	MSG_ERR( MSGTR_DVDinvalidChapter, dvd_chapter);
 	ifoClose( vmg_file );
@@ -698,12 +698,12 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
      * Make sure the angle number is valid for this title.
      */
     MSG_V( MSGTR_DVDnumAngles,
-             tt_srpt->title[dvd_title].nr_of_angles );
+	     tt_srpt->title[dvd_title].nr_of_angles );
     if( dvd_angle<1 || dvd_angle>tt_srpt->title[dvd_title].nr_of_angles ) {
 	MSG_ERR( MSGTR_DVDinvalidAngle, dvd_angle);
-        ifoClose( vmg_file );
-        DVDClose( dvd );
-        return MPXP_False;
+	ifoClose( vmg_file );
+	DVDClose( dvd );
+	return MPXP_False;
     }
     --dvd_angle; // remap 1.. -> 0..
 

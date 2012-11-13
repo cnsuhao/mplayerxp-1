@@ -69,7 +69,7 @@ void menu_draw_text(mp_image_t* mpi, char* txt, int x, int y);
 int menu_text_length(char* txt);
 int menu_text_num_lines(char* txt, int max_width);
 
-void menu_text_size(char* txt,int max_width, 
+void menu_text_size(char* txt,int max_width,
 		    int vspace, int warp,
 		    int* _w, int* _h);
 

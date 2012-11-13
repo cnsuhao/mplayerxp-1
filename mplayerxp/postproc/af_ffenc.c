@@ -31,9 +31,9 @@ static void print_encoders(void)
     AVCodec *p;
     p = first_avcodec;
     while (p) {
-        if (p->encode != NULL && p->type == CODEC_TYPE_AUDIO)
-            MSG_INFO("%s ",p->name);
-        p = p->next;
+	if (p->encode != NULL && p->type == CODEC_TYPE_AUDIO)
+	    MSG_INFO("%s ",p->name);
+	p = p->next;
     }
     MSG_INFO("\n");
 #endif
@@ -43,7 +43,7 @@ static void print_encoders(void)
 static uint32_t find_atag(const char *codec)
 {
 	if(codec == NULL)
-	        return 0;
+		return 0;
 
 	if(! strcasecmp(codec, "adpcm_ima_wav"))
 		return 0x11;
@@ -105,8 +105,8 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     s->lavc_context->sample_fmt = AV_SAMPLE_FMT_S16;
     /* open it */
     if (avcodec_open(s->lavc_context, s->lavc_codec) < 0) {
-        MSG_ERR("could not open codec %s with libavcodec\n",s->cname);
-        return MPXP_Error;
+	MSG_ERR("could not open codec %s with libavcodec\n",s->cname);
+	return MPXP_Error;
     }
     s->frame_size = s->lavc_context->frame_size*((mp_aframe_t*)arg)->nch*2/*bps*/;
     s->tail=mp_malloc(s->frame_size);
@@ -139,7 +139,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   af_ffenc_t *s=af->setup;
@@ -176,7 +176,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 	delta=s->frame_size-s->tail_size;
 	memcpy(&s->tail[s->tail_size],inp,delta);
 	ilen-=delta;
-        olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)s->tail);
+	olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)s->tail);
 	MSG_DBG2("encoding tail %u bytes + %u stream => %u compressed\n",s->tail_size,delta,olen);
 	inp+=delta;
 	out->len += olen;

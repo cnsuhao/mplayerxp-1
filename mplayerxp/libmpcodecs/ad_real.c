@@ -235,16 +235,16 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
       unsigned char *p=sh->a_in_buffer;
       demux_read_data_r(sh->ds, p, h*w,pts);
       for(n=0;n<38;n++){
-          int i=bs*sipr_swaps[n][0];
-          int o=bs*sipr_swaps[n][1];
+	  int i=bs*sipr_swaps[n][0];
+	  int o=bs*sipr_swaps[n][1];
 	  // swap nibbles of block 'i' with 'o'      TODO: optimize
 	  for(j=0;j<bs;j++){
 	      int x=(i&1) ? (p[(i>>1)]>>4) : (p[(i>>1)]&15);
 	      int y=(o&1) ? (p[(o>>1)]>>4) : (p[(o>>1)]&15);
 	      if(o&1) p[(o>>1)]=(p[(o>>1)]&0x0F)|(x<<4);
-	        else  p[(o>>1)]=(p[(o>>1)]&0xF0)|x;
+		else  p[(o>>1)]=(p[(o>>1)]&0xF0)|x;
 	      if(i&1) p[(i>>1)]=(p[(i>>1)]&0x0F)|(y<<4);
-	        else  p[(i>>1)]=(p[(i>>1)]&0xF0)|y;
+		else  p[(i>>1)]=(p[(i>>1)]&0xF0)|y;
 	      ++i;++o;
 	  }
       }
@@ -272,7 +272,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
   priv->pts=FIX_APTS(sh,priv->pts,sh->wf->nBlockAlign);
 
   return len; // return value: number of _bytes_ written to output buffer,
-              // or -1 for EOF (or uncorrectable error)
+	      // or -1 for EOF (or uncorrectable error)
 }
 
 static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...){

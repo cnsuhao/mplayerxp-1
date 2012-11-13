@@ -42,7 +42,7 @@ const char * __FASTCALL__ vo_format_name(int format)
 	case IMGFMT_411P: return("Planar 411P");
 	case IMGFMT_NV12: return("Planar NV12");
 	case IMGFMT_NV21: return("Planar NV21");
-        case IMGFMT_HM12: return("Planar NV12 Macroblock");
+	case IMGFMT_HM12: return("Planar NV12 Macroblock");
 	case IMGFMT_IUYV: return("Packed IUYV");
 	case IMGFMT_IY41: return("Packed IY41");
 	case IMGFMT_IYU1: return("Packed IYU1");
@@ -166,33 +166,33 @@ unsigned rgbfmt_depth(unsigned fmt)
 //	case PIX_FMT_BGR48BE:
 //	case PIX_FMT_BGR48LE:
 	    return 48;
-        case PIX_FMT_BGRA:
-        case PIX_FMT_ABGR:
-        case PIX_FMT_RGBA:
-        case PIX_FMT_ARGB:
-            return 32;
-        case PIX_FMT_BGR24:
-        case PIX_FMT_RGB24:
-            return 24;
-        case PIX_FMT_BGR565:
-        case PIX_FMT_RGB565:
-        case PIX_FMT_GRAY16BE:
-        case PIX_FMT_GRAY16LE:
-            return 16;
-        case PIX_FMT_BGR555:
-        case PIX_FMT_RGB555:
-            return 15;
-        case PIX_FMT_BGR8:
-        case PIX_FMT_RGB8:
-            return 8;
-        case PIX_FMT_BGR4:
-        case PIX_FMT_RGB4:
-        case PIX_FMT_BGR4_BYTE:
-        case PIX_FMT_RGB4_BYTE:
-            return 4;
-        case PIX_FMT_MONOBLACK:
-            return 1;
-        default:
-            return 256;
+	case PIX_FMT_BGRA:
+	case PIX_FMT_ABGR:
+	case PIX_FMT_RGBA:
+	case PIX_FMT_ARGB:
+	    return 32;
+	case PIX_FMT_BGR24:
+	case PIX_FMT_RGB24:
+	    return 24;
+	case PIX_FMT_BGR565:
+	case PIX_FMT_RGB565:
+	case PIX_FMT_GRAY16BE:
+	case PIX_FMT_GRAY16LE:
+	    return 16;
+	case PIX_FMT_BGR555:
+	case PIX_FMT_RGB555:
+	    return 15;
+	case PIX_FMT_BGR8:
+	case PIX_FMT_RGB8:
+	    return 8;
+	case PIX_FMT_BGR4:
+	case PIX_FMT_RGB4:
+	case PIX_FMT_BGR4_BYTE:
+	case PIX_FMT_RGB4_BYTE:
+	    return 4;
+	case PIX_FMT_MONOBLACK:
+	    return 1;
+	default:
+	    return 256;
     }
 }

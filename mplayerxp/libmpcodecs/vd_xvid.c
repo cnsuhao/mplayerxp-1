@@ -210,12 +210,12 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 		float wpar;
 		float hpar;
 		float dar;
-	
+
 		/* MPEG4 strem stores PAR (Pixel Aspect Ratio), mplayer uses
 		 * DAR (Display Aspect Ratio)
-		 * 
+		 *
 		 * Both are related thanks to the equation:
-		 *            width 
+		 *            width
 		 *      DAR = ----- x PAR
 		 *            height
 		 *
@@ -477,7 +477,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    va_end(ap);
 
 	    if(strcmp(arg,VO_EC_BRIGHTNESS)!=0) return MPXP_False;
-	
+
 	    priv->brightness = (value * 256) / 100;
 	    return MPXP_Ok;
 	}

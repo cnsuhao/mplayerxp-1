@@ -38,7 +38,7 @@ static char help_text[]=
 
 // ========================= MPlayer messages ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\nSaliendo... (%s)\n"
 #define MSGTR_Exit_frames "Número de cuadros requeridos reproducidos"

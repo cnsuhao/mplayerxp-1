@@ -44,8 +44,8 @@ typedef struct {
 #endif
 
 #endif
-#define VFWAPI	
-#define VFWAPIV	
+#define VFWAPI
+#define VFWAPIV
 #ifndef __WINE_WINDEF_H
 typedef long (__stdcall__ *DRIVERPROC)(long,HDRVR,unsigned int,long,long);
 #endif
@@ -233,30 +233,30 @@ long VFWAPIV ICCompress(
 	ICSendMessage(					\
 	    hic, ICM_GETDEFAULTKEYFRAMERATE,		\
 	    (long)(void*)(lpint), 			\
-	    0	)		
+	    0	)
 
 #define ICGetDefaultQuality(hic,lpint) 			\
 	ICSendMessage(					\
 	    hic, ICM_GETDEFAULTQUALITY,			\
 	    (long)(void*)(lpint), 			\
-	    0	)		
-	    	
+	    0	)
+
 
 #define ICCompressBegin(hic, lpbiInput, lpbiOutput) 			\
     ICSendMessage(							\
-    	hic, ICM_COMPRESS_BEGIN, (long)(void*)(lpbiInput),		\
+	hic, ICM_COMPRESS_BEGIN, (long)(void*)(lpbiInput),		\
 	(long)(void*)(lpbiOutput)					\
     )
 
 #define ICCompressGetSize(hic, lpbiInput, lpbiOutput) 		\
     ICSendMessage(							\
-    	hic, ICM_COMPRESS_GET_SIZE, (long)(void*)(lpbiInput), 	\
+	hic, ICM_COMPRESS_GET_SIZE, (long)(void*)(lpbiInput), 	\
 	(long)(void*)(lpbiOutput)					\
     )
 
 #define ICCompressQuery(hic, lpbiInput, lpbiOutput)		\
     ICSendMessage(						\
-    	hic, ICM_COMPRESS_QUERY, (long)(void*)(lpbiInput),	\
+	hic, ICM_COMPRESS_QUERY, (long)(void*)(lpbiInput),	\
 	(long)(void*)(lpbiOutput)				\
     )
 
@@ -386,31 +386,31 @@ long VFWAPIV ICUniversalEx(HIC hic,int command,LPBITMAPINFOHEADER lpbiFormat,LPB
 
 #define ICDecompressBegin(hic, lpbiInput, lpbiOutput) 	\
     ICSendMessage(						\
-    	hic, ICM_DECOMPRESS_BEGIN, (long)(void*)(lpbiInput),	\
+	hic, ICM_DECOMPRESS_BEGIN, (long)(void*)(lpbiInput),	\
 	(long)(void*)(lpbiOutput)				\
     )
 
 #define ICDecompressBeginEx(hic, lpbiInput, lpbiOutput) 	\
     ICUniversalEx(						\
-    	hic, ICM_DECOMPRESSEX_BEGIN, (lpbiInput),		\
+	hic, ICM_DECOMPRESSEX_BEGIN, (lpbiInput),		\
 	(lpbiOutput)						\
     )
 
 #define ICDecompressQuery(hic, lpbiInput, lpbiOutput)	 	\
     ICSendMessage(						\
-    	hic,ICM_DECOMPRESS_QUERY, (long)(void*)(lpbiInput),	\
+	hic,ICM_DECOMPRESS_QUERY, (long)(void*)(lpbiInput),	\
 	(long) (void*)(lpbiOutput)				\
     )
 
 #define ICDecompressQueryEx(hic, lpbiInput, lpbiOutput) 	\
     ICUniversalEx(						\
-    	hic,ICM_DECOMPRESSEX_QUERY, (lpbiInput),		\
+	hic,ICM_DECOMPRESSEX_QUERY, (lpbiInput),		\
 	(lpbiOutput)						\
     )
 
 #define ICDecompressGetFormat(hic, lpbiInput, lpbiOutput)		\
     ((long)ICSendMessage(						\
-    	hic,ICM_DECOMPRESS_GET_FORMAT, (long)(void*)(lpbiInput),	\
+	hic,ICM_DECOMPRESS_GET_FORMAT, (long)(void*)(lpbiInput),	\
 	(long)(void*)(lpbiOutput)					\
     ))
 
@@ -419,12 +419,12 @@ long VFWAPIV ICUniversalEx(HIC hic,int command,LPBITMAPINFOHEADER lpbiFormat,LPB
 
 #define ICDecompressGetPalette(hic, lpbiInput, lpbiOutput)		\
     ICSendMessage(							\
-    	hic, ICM_DECOMPRESS_GET_PALETTE, (long)(void*)(lpbiInput), 	\
+	hic, ICM_DECOMPRESS_GET_PALETTE, (long)(void*)(lpbiInput), 	\
 	(long)(void*)(lpbiOutput)					\
     )
 
 #define ICDecompressSetPalette(hic,lpbiPalette)	\
-        ICSendMessage(				\
+	ICSendMessage(				\
 		hic,ICM_DECOMPRESS_SET_PALETTE,		\
 		(long)(void*)(lpbiPalette),0		\
 	)
@@ -449,22 +449,22 @@ LRESULT	VFWAPI ICSendMessage(HIC hic, unsigned int msg, long dw1, long dw2);
 int VFWAPI ICDoSomething(void);
 
 long	VFWAPIV	ICDrawBegin(
-        HIC			hic,
-        DWORD			dwFlags,/* flags */
-        HPALETTE		hpal,	/* palette to draw with */
-        HWND			hwnd,	/* window to draw to */
-        HDC			hdc,	/* HDC to draw to */
-        INT			xDst,	/* destination rectangle */
-        INT			yDst,
-        INT			dxDst,
-        INT			dyDst,
-        LPBITMAPINFOHEADER	lpbi,	/* format of frame to draw */
-        INT			xSrc,	/* source rectangle */
-        INT			ySrc,
-        INT			dxSrc,
-        INT			dySrc,
-        DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
-        DWORD			dwScale
+	HIC			hic,
+	DWORD			dwFlags,/* flags */
+	HPALETTE		hpal,	/* palette to draw with */
+	HWND			hwnd,	/* window to draw to */
+	HDC			hdc,	/* HDC to draw to */
+	INT			xDst,	/* destination rectangle */
+	INT			yDst,
+	INT			dxDst,
+	INT			dyDst,
+	LPBITMAPINFOHEADER	lpbi,	/* format of frame to draw */
+	INT			xSrc,	/* source rectangle */
+	INT			ySrc,
+	INT			dxSrc,
+	INT			dySrc,
+	DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
+	DWORD			dwScale
 );
 
 /* as passed to ICM_DRAW_BEGIN (FIXME: correct only for Win32?)  */

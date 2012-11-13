@@ -34,7 +34,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(sh->fourcc==0){
 	switch(sh->bih->biBitCount){
 	case 8: sh->fourcc=IMGFMT_BGR8; break;
-	case 15: 
+	case 15:
 	case 16: sh->fourcc=IMGFMT_BGR15; break;
 	case 24: sh->fourcc=IMGFMT_BGR24; break;
 	case 32: sh->fourcc=IMGFMT_BGR32; break;

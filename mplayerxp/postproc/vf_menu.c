@@ -143,12 +143,12 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
   if (vf->priv->passthrough) {
     dmpi=vf_get_new_image(vf->next, IMGFMT_MPEGPES, MP_IMGTYPE_EXPORT,
-                      0, mpi->w, mpi->h,mpi->xp_idx);
+		      0, mpi->w, mpi->h,mpi->xp_idx);
     dmpi->planes[0]=mpi->planes[0];
     return vf_next_put_slice(vf,dmpi);
   }
 
-  if(vf->priv->current->show 
+  if(vf->priv->current->show
   || (vf->priv->current->parent && vf->priv->current->parent->show)) {
   // Close all menu who requested it
   while(vf->priv->current->cl && vf->priv->current != vf->priv->root) {

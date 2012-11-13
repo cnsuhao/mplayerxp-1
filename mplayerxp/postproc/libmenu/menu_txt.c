@@ -115,14 +115,14 @@ static void draw(menu_t* menu,mp_image_t* mpi) {
     end = i + mpriv->disp_lines;
     if(end >= mpriv->num_lines) end = mpriv->num_lines - 1;
   }
-  
+
   for( ; i < end ; i++) {
     menu_draw_text(mpi,mpriv->lines[i],x,y);
     y += vo_data->font->height + mpriv->hspace;
   }
 
 }
-    
+
 #define BUF_SIZE 1024
 
 static int open_txt(menu_t* menu,const char* args) {
@@ -161,7 +161,7 @@ static int open_txt(menu_t* menu,const char* args) {
     }
     pos += r;
     buf[pos] = '\0';
-    
+
     while((l = strchr(buf,'\n')) != NULL) {
       s = l-buf;
       mpriv->lines = mp_realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));

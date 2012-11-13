@@ -28,7 +28,7 @@
  *    2006, Benjamin Zores and Vincent Mussard
  *      fixed a lot of RFC compliance issues.
  */
- 
+
 #ifndef HAVE_RTSP_H
 #define HAVE_RTSP_H
 

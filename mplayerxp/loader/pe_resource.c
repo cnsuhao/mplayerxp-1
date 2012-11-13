@@ -22,7 +22,7 @@
 #include "ext.h"
 
 /**********************************************************************
- *  HMODULE32toPE_MODREF 
+ *  HMODULE32toPE_MODREF
  *
  * small helper function to get a PE_MODREF from a passed HMODULE32
  */
@@ -51,20 +51,20 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
     int namelen;
 
     if (HIWORD(name)) {
-    	if (name[0]=='#') {
+	if (name[0]=='#') {
 		char	buf[10];
 
 		lstrcpynWtoA(buf,name+1,10);
 		return GetResDirEntryW(resdirptr,(LPCWSTR)atoi(buf),root,allowdefault);
 	}
 	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
-			(BYTE *) resdirptr + 
-                        sizeof(IMAGE_RESOURCE_DIRECTORY));
+			(BYTE *) resdirptr +
+			sizeof(IMAGE_RESOURCE_DIRECTORY));
 	namelen = lstrlenW(name);
 	for (entrynum = 0; entrynum < resdirptr->NumberOfNamedEntries; entrynum++)
 	{
 		PIMAGE_RESOURCE_DIR_STRING_U str =
-		(PIMAGE_RESOURCE_DIR_STRING_U) (root + 
+		(PIMAGE_RESOURCE_DIR_STRING_U) (root +
 			entryTable[entrynum].u1.s.NameOffset);
 		if(namelen != str->Length)
 			continue;
@@ -76,8 +76,8 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 	return NULL;
     } else {
 	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
-			(BYTE *) resdirptr + 
-                        sizeof(IMAGE_RESOURCE_DIRECTORY) +
+			(BYTE *) resdirptr +
+			sizeof(IMAGE_RESOURCE_DIRECTORY) +
 			resdirptr->NumberOfNamedEntries * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY));
 	for (entrynum = 0; entrynum < resdirptr->NumberOfIdEntries; entrynum++)
 	    if ((DWORD)entryTable[entrynum].u1.Name == (DWORD)name)
@@ -101,8 +101,8 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
 					   WIN_BOOL allowdefault )
 {
     PIMAGE_RESOURCE_DIRECTORY retv;
-    LPWSTR nameW = HIWORD(name)? HEAP_strdupAtoW( GetProcessHeap(), 0, name ) 
-                               : (LPWSTR)name;
+    LPWSTR nameW = HIWORD(name)? HEAP_strdupAtoW( GetProcessHeap(), 0, name )
+			       : (LPWSTR)name;
 
     retv = GetResDirEntryW( resdirptr, nameW, root, allowdefault );
 
@@ -123,7 +123,7 @@ HANDLE PE_FindResourceExW(
     PE_MODREF	*pem = &(wm->binfmt.pe);
 
     if (!pem || !pem->pe_resource)
-    	return 0;
+	return 0;
 
     resdirptr = pem->pe_resource;
     root = (DWORD) resdirptr;
@@ -134,7 +134,7 @@ HANDLE PE_FindResourceExW(
     result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
 	/* Try LANG_NEUTRAL, too */
     if(!result)
-        return (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
+	return (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
     return result;
 }
 
@@ -145,7 +145,7 @@ HANDLE PE_FindResourceExW(
 HANDLE PE_LoadResource( WINE_MODREF *wm, HANDLE hRsrc )
 {
     if (!hRsrc || !wm || wm->type!=MODULE32_PE)
-    	return 0;
+	return 0;
     return (HANDLE) (wm->module + ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
 }
 
@@ -157,7 +157,7 @@ DWORD PE_SizeofResource( HINSTANCE hModule, HANDLE hRsrc )
 {
     /* we don't need hModule */
     if (!hRsrc)
-   	 return 0;
+	 return 0;
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
 }
 
@@ -171,16 +171,16 @@ PE_EnumResourceTypesA(HMODULE hmod,ENUMRESTYPEPROCA lpfun,LONG lparam) {
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
     WIN_BOOL	ret;
-    HANDLE	heap = GetProcessHeap();	
+    HANDLE	heap = GetProcessHeap();
 
     if (!pem || !pem->pe_resource)
-    	return FALSE;
+	return FALSE;
 
     resdir = (PIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-    	LPSTR	name;
+	LPSTR	name;
 
 	if (et[i].u1.s.NameIsString)
 		name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset));
@@ -207,14 +207,14 @@ PE_EnumResourceTypesW(HMODULE hmod,ENUMRESTYPEPROCW lpfun,LONG lparam) {
     WIN_BOOL	ret;
 
     if (!pem || !pem->pe_resource)
-    	return FALSE;
+	return FALSE;
 
     resdir = (PIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
 	LPWSTR	type;
-    	if (et[i].u1.s.NameIsString)
+	if (et[i].u1.s.NameIsString)
 		type = (LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset);
 	else
 		type = (LPWSTR)(int)et[i].u1.Id;
@@ -238,11 +238,11 @@ PE_EnumResourceNamesA(
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
     WIN_BOOL	ret;
-    HANDLE	heap = GetProcessHeap();	
+    HANDLE	heap = GetProcessHeap();
     LPWSTR	typeW;
 
     if (!pem || !pem->pe_resource)
-    	return FALSE;
+	return FALSE;
     resdir = (PIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
     if (HIWORD(type))
 	typeW = HEAP_strdupAtoW(heap,0,type);
@@ -250,13 +250,13 @@ PE_EnumResourceNamesA(
 	typeW = (LPWSTR)type;
     resdir = GetResDirEntryW(resdir,typeW,(DWORD)pem->pe_resource,FALSE);
     if (HIWORD(typeW))
-    	HeapFree(heap,0,typeW);
+	HeapFree(heap,0,typeW);
     if (!resdir)
-    	return FALSE;
+	return FALSE;
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-    	LPSTR	name;
+	LPSTR	name;
 
 	if (et[i].u1.s.NameIsString)
 	    name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset));
@@ -284,17 +284,17 @@ PE_EnumResourceNamesW(
     WIN_BOOL	ret;
 
     if (!pem || !pem->pe_resource)
-    	return FALSE;
+	return FALSE;
 
     resdir = (PIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
     resdir = GetResDirEntryW(resdir,type,(DWORD)pem->pe_resource,FALSE);
     if (!resdir)
-    	return FALSE;
+	return FALSE;
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
 	LPWSTR	name;
-    	if (et[i].u1.s.NameIsString)
+	if (et[i].u1.s.NameIsString)
 		name = (LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset);
 	else
 		name = (LPWSTR)(int)et[i].u1.Id;
@@ -318,35 +318,35 @@ PE_EnumResourceLanguagesA(
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
     WIN_BOOL	ret;
-    HANDLE	heap = GetProcessHeap();	
+    HANDLE	heap = GetProcessHeap();
     LPWSTR	nameW,typeW;
 
     if (!pem || !pem->pe_resource)
-    	return FALSE;
+	return FALSE;
 
     resdir = (PIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
     if (HIWORD(name))
 	nameW = HEAP_strdupAtoW(heap,0,name);
     else
-    	nameW = (LPWSTR)name;
+	nameW = (LPWSTR)name;
     resdir = GetResDirEntryW(resdir,nameW,(DWORD)pem->pe_resource,FALSE);
     if (HIWORD(nameW))
-    	HeapFree(heap,0,nameW);
+	HeapFree(heap,0,nameW);
     if (!resdir)
-    	return FALSE;
+	return FALSE;
     if (HIWORD(type))
 	typeW = HEAP_strdupAtoW(heap,0,type);
     else
 	typeW = (LPWSTR)type;
     resdir = GetResDirEntryW(resdir,typeW,(DWORD)pem->pe_resource,FALSE);
     if (HIWORD(typeW))
-    	HeapFree(heap,0,typeW);
+	HeapFree(heap,0,typeW);
     if (!resdir)
-    	return FALSE;
+	return FALSE;
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-    	/* languages are just ids... I hopem */
+	/* languages are just ids... I hopem */
 	ret = lpfun(hmod,name,type,et[i].u1.Id,lparam);
 	if (!ret)
 		break;
@@ -369,15 +369,15 @@ PE_EnumResourceLanguagesW(
     WIN_BOOL	ret;
 
     if (!pem || !pem->pe_resource)
-    	return FALSE;
+	return FALSE;
 
     resdir = (PIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
     resdir = GetResDirEntryW(resdir,name,(DWORD)pem->pe_resource,FALSE);
     if (!resdir)
-    	return FALSE;
+	return FALSE;
     resdir = GetResDirEntryW(resdir,type,(DWORD)pem->pe_resource,FALSE);
     if (!resdir)
-    	return FALSE;
+	return FALSE;
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {

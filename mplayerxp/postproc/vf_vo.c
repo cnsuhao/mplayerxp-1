@@ -28,21 +28,21 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 {
     const vo_info_t *info = vo_get_info(vo_data);
     MSG_INFO("VO-CONF: [%s] %dx%d => %dx%d %s %s%s%s%s\n",info->short_name,
-         vf->priv->sw, vf->priv->sh,
-         vf->priv->dw, vf->priv->dh,
+	 vf->priv->sw, vf->priv->sh,
+	 vf->priv->dw, vf->priv->dh,
 	 vo_format_name(vf->priv->ofmt),
-         (vf->priv->sflg&1)?" [fs]":"",
-         (vf->priv->sflg&2)?" [vm]":"",
-         (vf->priv->sflg&4)?" [zoom]":"",
-         (vf->priv->sflg&8)?" [flip]":"");
+	 (vf->priv->sflg&1)?" [fs]":"",
+	 (vf->priv->sflg&2)?" [vm]":"",
+	 (vf->priv->sflg&4)?" [zoom]":"",
+	 (vf->priv->sflg&8)?" [flip]":"");
     MSG_V("VO: Description: %s\n",info->name);
     MSG_V("VO: Author: %s\n", info->author);
     if(info->comment && strlen(info->comment) > 0)
-        MSG_V("VO: Comment: %s\n", info->comment);
+	MSG_V("VO: Comment: %s\n", info->comment);
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
 
     if ((width <= 0) || (height <= 0) || (d_width <= 0) || (d_height <= 0))
@@ -111,7 +111,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 }
 
 static void __FASTCALL__ get_image(struct vf_instance_s* vf,
-        mp_image_t *mpi){
+	mp_image_t *mpi){
     MPXP_Rc retval;
     unsigned i;
     int finalize = vo_is_final(vo_data);

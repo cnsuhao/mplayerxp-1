@@ -36,7 +36,7 @@ static char help_text[]=
 
 // ========================= MPlayer Ausgaben ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\nBeende... (%s)\n"
 #define MSGTR_Exit_frames "Angeforderte Anzahl an Frames gespielt"

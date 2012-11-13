@@ -20,7 +20,7 @@
 struct _DS_VideoDecoder
 {
     IVideoDecoder iv;
-    
+
     DS_Filter* m_pDS_Filter;
     AM_MEDIA_TYPE m_sOurType, m_sDestType;
     VIDEOINFOHEADER* m_sVhdr;
@@ -68,7 +68,7 @@ static SampleProcUserData sampleProcData;
 
 int DS_VideoDecoder_GetCapabilities(DS_VideoDecoder *this)
 {return this->m_Caps;}
-	    
+
 typedef struct _ct ct;
 
 struct _ct {
@@ -77,7 +77,7 @@ struct _ct {
 		const GUID *subtype;
 		int cap;
 	    };
-            
+
 static ct check[] = {
 		{16, fccYUY2, &MEDIASUBTYPE_YUY2, CAP_YUY2},
 		{12, fccIYUV, &MEDIASUBTYPE_IYUV, CAP_IYUV},
@@ -110,24 +110,24 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
     //m_obh.biSize = sizeof(m_obh);
     /*try*/
     {
-        unsigned int bihs;
-        
+	unsigned int bihs;
+
 	bihs = (format->biSize < (int) sizeof(BITMAPINFOHEADER)) ?
 	    sizeof(BITMAPINFOHEADER) : format->biSize;
-     
-        this->iv.m_bh = (BITMAPINFOHEADER*)mp_malloc(bihs);
-        memcpy(this->iv.m_bh, format, bihs);
-        this->iv.m_bh->biSize = bihs;
 
-        this->iv.m_State = STOP;
-        //this->iv.m_pFrame = 0;
-        this->iv.m_Mode = DIRECT;
-        this->iv.m_iDecpos = 0;
-        this->iv.m_iPlaypos = -1;
-        this->iv.m_fQuality = 0.0f;
-        this->iv.m_bCapable16b = true;
-                
-        bihs += sizeof(VIDEOINFOHEADER) - sizeof(BITMAPINFOHEADER);
+	this->iv.m_bh = (BITMAPINFOHEADER*)mp_malloc(bihs);
+	memcpy(this->iv.m_bh, format, bihs);
+	this->iv.m_bh->biSize = bihs;
+
+	this->iv.m_State = STOP;
+	//this->iv.m_pFrame = 0;
+	this->iv.m_Mode = DIRECT;
+	this->iv.m_iDecpos = 0;
+	this->iv.m_iPlaypos = -1;
+	this->iv.m_fQuality = 0.0f;
+	this->iv.m_bCapable16b = true;
+
+	bihs += sizeof(VIDEOINFOHEADER) - sizeof(BITMAPINFOHEADER);
 	this->m_sVhdr = (VIDEOINFOHEADER*)mp_malloc(bihs);
 	memset(this->m_sVhdr, 0, bihs);
 	memcpy(&this->m_sVhdr->bmiHeader, this->iv.m_bh, this->iv.m_bh->biSize);
@@ -140,17 +140,17 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
 
 	this->m_sOurType.majortype = MEDIATYPE_Video;
 	this->m_sOurType.subtype = MEDIATYPE_Video;
-        this->m_sOurType.subtype.f1 = this->m_sVhdr->bmiHeader.biCompression;
+	this->m_sOurType.subtype.f1 = this->m_sVhdr->bmiHeader.biCompression;
 	this->m_sOurType.formattype = FORMAT_VideoInfo;
-        this->m_sOurType.bFixedSizeSamples = false;
+	this->m_sOurType.bFixedSizeSamples = false;
 	this->m_sOurType.bTemporalCompression = true;
 	this->m_sOurType.pUnk = 0;
-        this->m_sOurType.cbFormat = bihs;
-        this->m_sOurType.pbFormat = (char*)this->m_sVhdr;
+	this->m_sOurType.cbFormat = bihs;
+	this->m_sOurType.pbFormat = (char*)this->m_sVhdr;
 
 	this->m_sVhdr2 = (VIDEOINFOHEADER*)(mp_malloc(sizeof(VIDEOINFOHEADER)+12));
 	memcpy(this->m_sVhdr2, this->m_sVhdr, sizeof(VIDEOINFOHEADER));
-        memset((char*)this->m_sVhdr2 + sizeof(VIDEOINFOHEADER), 0, 12);
+	memset((char*)this->m_sVhdr2 + sizeof(VIDEOINFOHEADER), 0, 12);
 	this->m_sVhdr2->bmiHeader.biCompression = 0;
 	this->m_sVhdr2->bmiHeader.biBitCount = 24;
 
@@ -166,20 +166,20 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
 	this->m_sDestType.pUnk = 0;
 	this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
 	this->m_sDestType.pbFormat = (char*)this->m_sVhdr2;
-        
-        memset(&this->iv.m_obh, 0, sizeof(this->iv.m_obh));
+
+	memset(&this->iv.m_obh, 0, sizeof(this->iv.m_obh));
 	memcpy(&this->iv.m_obh, this->iv.m_bh, sizeof(this->iv.m_obh) < (unsigned) this->iv.m_bh->biSize
 	       ? sizeof(this->iv.m_obh) : (unsigned) this->iv.m_bh->biSize);
 	this->iv.m_obh.biBitCount=24;
-        this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
-        this->iv.m_obh.biCompression = 0;	//BI_RGB
-        //this->iv.m_obh.biHeight = labs(this->iv.m_obh.biHeight);
-        this->iv.m_obh.biSizeImage = labs(this->iv.m_obh.biWidth * this->iv.m_obh.biHeight)
-                              * ((this->iv.m_obh.biBitCount + 7) / 8);
+	this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
+	this->iv.m_obh.biCompression = 0;	//BI_RGB
+	//this->iv.m_obh.biHeight = labs(this->iv.m_obh.biHeight);
+	this->iv.m_obh.biSizeImage = labs(this->iv.m_obh.biWidth * this->iv.m_obh.biHeight)
+			      * ((this->iv.m_obh.biBitCount + 7) / 8);
 
 
 	this->m_pDS_Filter = DS_FilterCreate(dllname, guid, &this->m_sOurType, &this->m_sDestType,&sampleProcData);
-	
+
 	if (!this->m_pDS_Filter)
 	{
 	    printf("Failed to create DirectShow filter\n");
@@ -202,7 +202,7 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
 	    }
 	}
 
-        memcpy( &this->iv.m_decoder, &this->iv.m_obh, sizeof(this->iv.m_obh) );
+	memcpy( &this->iv.m_decoder, &this->iv.m_obh, sizeof(this->iv.m_obh) );
 
 	switch (this->iv.m_bh->biCompression)
 	{
@@ -223,7 +223,7 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
 	    break;
 #endif
 	default:
-              
+
 	    this->m_Caps = CAP_NONE;
 
 	    printf("Decoder supports the following YUV formats: ");
@@ -262,9 +262,9 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
     }
     /*catch (FatalError& error)
     {
-        delete[] m_sVhdr;
+	delete[] m_sVhdr;
 	delete[] m_sVhdr2;
-        delete m_pDS_Filter;
+	delete m_pDS_Filter;
 	throw;
     }*/
     return this;
@@ -286,7 +286,7 @@ void DS_VideoDecoder_StartInternal(DS_VideoDecoder *this)
     //cout << "DSSTART" << endl;
     this->m_pDS_Filter->m_pAll->vt->Commit(this->m_pDS_Filter->m_pAll);
     this->m_pDS_Filter->Start(this->m_pDS_Filter);
-    
+
     this->iv.m_State = START;
 }
 
@@ -301,17 +301,17 @@ int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const any_t* src, int 
     IMediaSample* sample = 0;
     char* ptr;
     int result;
-    
+
     Debug printf("DS_VideoDecoder_DecodeInternal(%p,%p,%d,%d,%p)\n",this,src,size,is_keyframe,pImage);
-            
+
     this->m_pDS_Filter->m_pAll->vt->GetBuffer(this->m_pDS_Filter->m_pAll, &sample, 0, 0, 0);
-    
+
     if (!sample)
     {
 	Debug printf("ERROR: null sample\n");
 	return -1;
     }
-    
+
     //cout << "DECODE " << (any_t*) pImage << "   d: " << (any_t*) pImage->Data() << endl;
 
     sample->vt->SetActualDataLength(sample, size);
@@ -344,7 +344,7 @@ int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const any_t* src, int 
 
     if (pImage)
     {
-        memcpy(pImage, sampleProcData.frame_pointer, sampleProcData.frame_size);
+	memcpy(pImage, sampleProcData.frame_pointer, sampleProcData.frame_size);
     }
 
     sample->vt->Release((IUnknown*)sample);
@@ -371,8 +371,8 @@ int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const any_t* src, int 
     else if (this->m_bIsDivX4)
     {
 
-        // maybe access methods directly to safe some cpu cycles...
-        DS_VideoDecoder_GetValue(this, "Postprocessing", this->m_iLastQuality);
+	// maybe access methods directly to safe some cpu cycles...
+	DS_VideoDecoder_GetValue(this, "Postprocessing", this->m_iLastQuality);
 	if (this->m_iLastQuality < 0)
 	    this->m_iLastQuality = 0;
 	else if (this->m_iLastQuality > this->m_iMaxAuto)
@@ -403,7 +403,7 @@ int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const any_t* src, int 
 			IHidden* hidden=(IHidden*)((int)this->m_pDS_Filter->m_pFilter + 0xb8);
 			hidden->vt->SetSmth(hidden, to, 0);
 		    }
-                    else
+		    else
 			DS_VideoDecoder_SetValue(this, "Postprocessing", to);
 #ifndef QUIET
 		    //printf("Switching quality %d -> %d  b:%d\n",m_iLastQuality, to, buffered);
@@ -426,24 +426,24 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
     HRESULT result;
     ALLOCATOR_PROPERTIES props,props1;
     int should_test=1;
-    int stoped = 0;   
-    
+    int stoped = 0;
+
     Debug printf("DS_VideoDecoder_SetDestFmt (%p, %d, %d)\n",this,bits,(int)csp);
-        
+
        /* if (!CImage::Supported(csp, bits))
 	return -1;
 */
     // BitmapInfo temp = m_obh;
-    
+
     if (!csp)	// RGB
     {
 	int ok = true;
 
 	switch (bits)
-        {
+	{
 	case 15:
 	    this->m_sDestType.subtype = MEDIASUBTYPE_RGB555;
-    	    break;
+	    break;
 	case 16:
 	    this->m_sDestType.subtype = MEDIASUBTYPE_RGB565;
 	    break;
@@ -454,41 +454,41 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
 	    this->m_sDestType.subtype = MEDIASUBTYPE_RGB32;
 	    break;
 	default:
-            ok = false;
+	    ok = false;
 	    break;
 	}
 
-        if (ok) {
+	if (ok) {
 	    if (bits == 15)
 		this->iv.m_obh.biBitCount=16;
 	    else
 		this->iv.m_obh.biBitCount=bits;
-            if( bits == 15 || bits == 16 ) {
+	    if( bits == 15 || bits == 16 ) {
 	      this->iv.m_obh.biSize=sizeof(BITMAPINFOHEADER)+12;
 	      this->iv.m_obh.biCompression=3;//BI_BITFIELDS
 	      this->iv.m_obh.biSizeImage=abs((int)(2*this->iv.m_obh.biWidth*this->iv.m_obh.biHeight));
 	    }
-            
-            if( bits == 16 ) {
+
+	    if( bits == 16 ) {
 	      this->iv.m_obh.colors[0]=0xF800;
 	      this->iv.m_obh.colors[1]=0x07E0;
 	      this->iv.m_obh.colors[2]=0x001F;
-            } else if ( bits == 15 ) {
+	    } else if ( bits == 15 ) {
 	      this->iv.m_obh.colors[0]=0x7C00;
 	      this->iv.m_obh.colors[1]=0x03E0;
 	      this->iv.m_obh.colors[2]=0x001F;
-            } else {
+	    } else {
 	      this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
 	      this->iv.m_obh.biCompression = 0;	//BI_RGB
 	      //this->iv.m_obh.biHeight = labs(this->iv.m_obh.biHeight);
 	      this->iv.m_obh.biSizeImage = labs(this->iv.m_obh.biWidth * this->iv.m_obh.biHeight)
-                              * ((this->iv.m_obh.biBitCount + 7) / 8);
-            }
-        }
+			      * ((this->iv.m_obh.biBitCount + 7) / 8);
+	    }
+	}
 	//.biSizeImage=abs(temp.biWidth*temp.biHeight*((temp.biBitCount+7)/8));
     } else
     {	// YUV
-        int ok = true;
+	int ok = true;
 	switch (csp)
 	{
 	case fccYUY2:
@@ -513,26 +513,26 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
 	    this->m_sDestType.subtype = MEDIASUBTYPE_YVU9;
 	default:
 	    ok = false;
-            break;
+	    break;
 	}
 
-        if (ok) {
+	if (ok) {
 	  if (csp != 0 && csp != 3 && this->iv.m_obh.biHeight > 0)
-    	    this->iv.m_obh.biHeight *= -1; // YUV formats uses should have height < 0
+	    this->iv.m_obh.biHeight *= -1; // YUV formats uses should have height < 0
 	  this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
 	  this->iv.m_obh.biCompression=csp;
 	  this->iv.m_obh.biBitCount=bits;
 	  this->iv.m_obh.biSizeImage=labs(this->iv.m_obh.biBitCount*
-             this->iv.m_obh.biWidth*this->iv.m_obh.biHeight)>>3;
-        }
+	     this->iv.m_obh.biWidth*this->iv.m_obh.biHeight)>>3;
+	}
     }
     this->m_sDestType.lSampleSize = this->iv.m_obh.biSizeImage;
     memcpy(&(this->m_sVhdr2->bmiHeader), &this->iv.m_obh, sizeof(this->iv.m_obh));
     this->m_sVhdr2->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     if (this->m_sVhdr2->bmiHeader.biCompression == 3)
-        this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
+	this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
     else
-        this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
+	this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
 
 
     switch(csp)
@@ -582,9 +582,9 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
 	memcpy(&(this->m_sVhdr2->bmiHeader), &this->iv.m_decoder, sizeof(this->iv.m_decoder));
 	this->m_sVhdr2->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	if (this->m_sVhdr2->bmiHeader.biCompression == 3)
-    	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
+	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
 	else
-    	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
+	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
 
 	return -1;
     }
@@ -601,8 +601,8 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
     if (this->iv.m_State == START)
     {
 	DS_VideoDecoder_StopInternal(this);
-        this->iv.m_State = STOP;
-        stoped = true;
+	this->iv.m_State = STOP;
+	stoped = true;
     }
 
     this->m_pDS_Filter->m_pInputPin->vt->Disconnect(this->m_pDS_Filter->m_pInputPin);
@@ -618,12 +618,12 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
     }
 
     if(this->m_pDS_Filter->m_pAll)
-        this->m_pDS_Filter->m_pAll->vt->Release(this->m_pDS_Filter->m_pAll);
+	this->m_pDS_Filter->m_pAll->vt->Release(this->m_pDS_Filter->m_pAll);
     this->m_pDS_Filter->m_pAll=MemAllocatorCreate();
     if (!this->m_pDS_Filter->m_pAll)
     {
-        printf("Call to MemAllocatorCreate failed\n");
-        return -1;
+	printf("Call to MemAllocatorCreate failed\n");
+	return -1;
     }
     //Seting allocator property according to our media type
     props.cBuffers=1;
@@ -646,7 +646,7 @@ int DS_VideoDecoder_SetDestFmt(DS_VideoDecoder *this, int bits, unsigned int csp
     if (stoped)
     {
 	DS_VideoDecoder_StartInternal(this);
-        this->iv.m_State = START; 
+	this->iv.m_State = START;
     }
 
     return 0;
@@ -722,7 +722,7 @@ int DS_VideoDecoder_GetValue(DS_VideoDecoder *this, const char* name, int* value
 	if (strcmp(name, "MaxAuto") == 0)
 	{
 	    value = m_iMaxAuto;
-            return 0;
+	    return 0;
 	}
     }
     else if (strcmp((const char*)record.dll, "ir50_32.dll") == 0)
@@ -788,7 +788,7 @@ int DS_VideoDecoder_SetValue(DS_VideoDecoder *this, const char* name, int value)
 	else if (strcasecmp(name, "Saturation") == 0)
 	    pIDivx->vt->put_Saturation(pIDivx, value);
 	else if (strcasecmp(name, "MaxAuto") == 0)
-            this->m_iMaxAuto = value;
+	    this->m_iMaxAuto = value;
 	pIDivx->vt->Release((IUnknown*)pIDivx);
 	//printf("Set %s  %d\n", name, value);
 	return 0;
@@ -811,11 +811,11 @@ int DS_VideoDecoder_SetValue(DS_VideoDecoder *this, const char* name, int value)
 // get4=set3 73
 // get5=set4 19
 	// get6=set5 23
-    	hidden = (IHidden*)((int)this->m_pDS_Filter->m_pFilter + 0xb8);
+	hidden = (IHidden*)((int)this->m_pDS_Filter->m_pFilter + 0xb8);
 	//printf("DS_SetValue for DIVX, name=%s  value=%d\n",name,value);
 	if (strcasecmp(name, "Quality") == 0)
 	{
-            this->m_iLastQuality = value;
+	    this->m_iLastQuality = value;
 	    return hidden->vt->SetSmth(hidden, value, 0);
 	}
 	if (strcasecmp(name, "Brightness") == 0)
@@ -828,11 +828,11 @@ int DS_VideoDecoder_SetValue(DS_VideoDecoder *this, const char* name, int value)
 	    return hidden->vt->SetSmth5(hidden, value, 0);
 	if (strcasecmp(name, "MaxAuto") == 0)
 	{
-            this->m_iMaxAuto = value;
+	    this->m_iMaxAuto = value;
 	}
-        return 0;
+	return 0;
     }
-#if 0    
+#if 0
     if (strcmp((const char*)record.dll, "ir50_32.dll") == 0)
     {
 	IHidden2* hidden = 0;
@@ -866,7 +866,7 @@ int DS_VideoDecoder_SetValue(DS_VideoDecoder *this, const char* name, int value)
 	if(!recordpar[5])
 	{
 	    hidden->vt->Release((IUnknown*)hidden);
-    	    return -1;
+	    return -1;
 	}
 	HRESULT result = hidden->vt->DecodeSet(hidden, recordpar);
 	hidden->vt->Release((IUnknown*)hidden);
@@ -883,57 +883,57 @@ vim: vi* sux.
 
 int DS_SetAttr_DivX(char* attribute, int value){
     int result, status, newkey;
-        if(strcasecmp(attribute, "Quality")==0){
+	if(strcasecmp(attribute, "Quality")==0){
 	    char* keyname="SOFTWARE\\Microsoft\\Scrunch";
-    	    result=RegCreateKeyExA(HKEY_CURRENT_USER, keyname, 0, 0, 0, 0, 0,	   		&newkey, &status);
-            if(result!=0)
+	    result=RegCreateKeyExA(HKEY_CURRENT_USER, keyname, 0, 0, 0, 0, 0,	   		&newkey, &status);
+	    if(result!=0)
 	    {
-	        printf("VideoDecoder::SetExtAttr: registry failure\n");
-	        return -1;
-	    }    
+		printf("VideoDecoder::SetExtAttr: registry failure\n");
+		return -1;
+	    }
 	    result=RegSetValueExA(newkey, "Current Post Process Mode", 0, REG_DWORD, &value, 4);
-            if(result!=0)
-	    {
-	        printf("VideoDecoder::SetExtAttr: error writing value\n");
-	        return -1;
-	    }    
-	    value=-1;
-	    result=RegSetValueExA(newkey, "Force Post Process Mode", 0, REG_DWORD, &value, 4);
-            if(result!=0)
+	    if(result!=0)
 	    {
 		printf("VideoDecoder::SetExtAttr: error writing value\n");
-	    	return -1;
-	    }    
-   	    RegCloseKey(newkey);
-   	    return 0;
-	}   	
+		return -1;
+	    }
+	    value=-1;
+	    result=RegSetValueExA(newkey, "Force Post Process Mode", 0, REG_DWORD, &value, 4);
+	    if(result!=0)
+	    {
+		printf("VideoDecoder::SetExtAttr: error writing value\n");
+		return -1;
+	    }
+	    RegCloseKey(newkey);
+	    return 0;
+	}
 
-        if(
+	if(
 	(strcasecmp(attribute, "Saturation")==0) ||
 	(strcasecmp(attribute, "Hue")==0) ||
 	(strcasecmp(attribute, "Contrast")==0) ||
 	(strcasecmp(attribute, "Brightness")==0)
 	)
-        {
+	{
 	    char* keyname="SOFTWARE\\Microsoft\\Scrunch\\Video";
-    	    result=RegCreateKeyExA(HKEY_CURRENT_USER, keyname, 0, 0, 0, 0, 0,	   		&newkey, &status);
-            if(result!=0)
+	    result=RegCreateKeyExA(HKEY_CURRENT_USER, keyname, 0, 0, 0, 0, 0,	   		&newkey, &status);
+	    if(result!=0)
 	    {
-	        printf("VideoDecoder::SetExtAttr: registry failure\n");
-	        return -1;
-	    }    
+		printf("VideoDecoder::SetExtAttr: registry failure\n");
+		return -1;
+	    }
 	    result=RegSetValueExA(newkey, attribute, 0, REG_DWORD, &value, 4);
-            if(result!=0)
+	    if(result!=0)
 	    {
-	        printf("VideoDecoder::SetExtAttr: error writing value\n");
-	        return -1;
-	    }    
-   	    RegCloseKey(newkey);
-   	    return 0;
-	}   	
+		printf("VideoDecoder::SetExtAttr: error writing value\n");
+		return -1;
+	    }
+	    RegCloseKey(newkey);
+	    return 0;
+	}
 
-        printf("Unknown attribute!\n");
-        return -200;
+	printf("Unknown attribute!\n");
+	return -200;
 }
 
 

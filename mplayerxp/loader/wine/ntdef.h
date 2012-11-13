@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define NTAPI   __stdcall 
+#define NTAPI   __stdcall
 
 #ifndef IN
 #define IN
@@ -32,7 +32,7 @@ typedef LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
 
 typedef short CSHORT;
-typedef CSHORT *PCSHORT;  
+typedef CSHORT *PCSHORT;
 
 typedef WCHAR * PWCHAR;
 
@@ -71,7 +71,7 @@ typedef struct _UNICODE_STRING {
 #define OBJ_KERNEL_HANDLE       0x00000200L
 #define OBJ_VALID_ATTRIBUTES    0x000003F2L
 
-typedef struct _OBJECT_ATTRIBUTES 
+typedef struct _OBJECT_ATTRIBUTES
 {   ULONG Length;
     HANDLE RootDirectory;
     PUNICODE_STRING ObjectName;

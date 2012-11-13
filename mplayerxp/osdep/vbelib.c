@@ -74,11 +74,11 @@ static void __dump_regs(struct LRMI_regs *r)
 static inline int VBE_LRMI_int(int int_no, struct LRMI_regs *r)
 {
   int retval;
-  if(mp_conf.verbose > 1) 
+  if(mp_conf.verbose > 1)
   {
     MSG_DBG2("vbelib: registers before int %02X\n",int_no);
     __dump_regs(r);
-  }    
+  }
   retval = LRMI_int(int_no,r);
   if(mp_conf.verbose > 1)
   {
@@ -87,7 +87,7 @@ static inline int VBE_LRMI_int(int int_no, struct LRMI_regs *r)
 	     ,retval
 	     ,int_no);
     __dump_regs(r);
-  }    
+  }
   return retval;
 }
 #else
@@ -160,7 +160,7 @@ int vbeInit( void )
    return VBE_OK;
 }
 
-int vbeDestroy( void ) 
+int vbeDestroy( void )
 {
   __set_cursor_type(my_stdout,1);
   restore_terminal_output();
@@ -172,7 +172,7 @@ int vbeDestroy( void )
 /* Fixme!!! This code is compatible only with mplayer's version of lrmi*/
 static inline int is_addr_valid(const any_t*p)
 {
-  return (p < (const any_t*)0x502) || 
+  return (p < (const any_t*)0x502) ||
 	 (p >= (const any_t*)0x10000 && p < (const any_t*)0x20000) ||
 	 (p >= (const any_t*)0xa0000 && p < (const any_t*)0x100000);
 }
@@ -181,13 +181,13 @@ static int check_str(const unsigned char *str)
 {
   size_t i;
   int null_found = 0;
-  for(i = 0;i < 256;i++) 
+  for(i = 0;i < 256;i++)
   {
     if(is_addr_valid(&str[i]))
     {
       if(VERR(&str[i]))
       {
-        if(!str[i]) { null_found = 1; break; }
+	if(!str[i]) { null_found = 1; break; }
       }
       else break;
     }
@@ -200,13 +200,13 @@ static int check_wrd(const unsigned short *str)
 {
   size_t i;
   int ffff_found = 0;
-  for(i = 0;i < 1024;i++) 
+  for(i = 0;i < 1024;i++)
   {
     if(is_addr_valid(&str[i]))
     {
       if(VERR(&str[i]))
       {
-        if(str[i] == 0xffff) { ffff_found = 1; break; }
+	if(str[i] == 0xffff) { ffff_found = 1; break; }
       }
       else break;
     }
@@ -270,7 +270,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
     {
 	data->VideoModePtr = NULL;
 	retval = VBE_BROKEN_BIOS;
-    }   
+    }
 #ifdef HAVE_mp_conf.verbose_VAR
     if(mp_conf.verbose > 1)
     {
@@ -671,7 +671,7 @@ int vbeGetProtModeInfo(struct VesaProtModeInterface *pm_info)
     {
 	pm_info->iopl_ports = NULL;
 /*	retval = VBE_BROKEN_BIOS; <- It's for broken BIOSes only */
-    }   
+    }
 #ifdef HAVE_mp_conf.verbose_VAR
     if(mp_conf.verbose > 1)
     {

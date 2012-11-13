@@ -67,7 +67,7 @@ any_t* tmp;
 	dca_resample32=tmp;
 	return tmp;
     }
-    
+
     fprintf(stderr, "Unimplemented resampler for mode 0x%X -> %d channels conversion - Contact MPlayer developers!\n", flags, chans);
     return NULL;
 }

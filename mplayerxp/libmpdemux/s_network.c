@@ -69,10 +69,10 @@ static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
     if( stream->streaming_ctrl!=NULL ) {
       newpos=stream->streaming_ctrl->streaming_seek( stream->fd, pos, stream->streaming_ctrl );
       if( newpos<0 ) {
-        MSG_WARN("Stream not seekable!\n");
-        return 1;
+	MSG_WARN("Stream not seekable!\n");
+	return 1;
       }
-    } 
+    }
     p->spos=newpos;
     return newpos;
 }

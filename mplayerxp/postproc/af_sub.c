@@ -31,7 +31,7 @@
 // Q value for low-pass filter
 #define Q 1.0
 
-// Analog domain biquad section 
+// Analog domain biquad section
 typedef struct{
   float a[3];		// Numerator coefficients
   float b[3];		// Denominator coefficients
@@ -115,7 +115,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -141,7 +141,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   mp_aframe_t*    c   = data;	 // Current working data
   af_sub_t*  	s   = af->setup; // Setup for this instance
   float*   	a   = c->audio;	 // Audio data
-  int		len = c->len/4;	 // Number of samples in current audio block 
+  int		len = c->len/4;	 // Number of samples in current audio block
   int		nch = c->nch;	 // Number of channels
   int		ch  = s->ch;	 // Channel in which to insert the sub audio
   register int  i;

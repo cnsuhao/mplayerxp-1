@@ -177,16 +177,16 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
 	return NULL;
     }
     if(demuxer->a_streams[id]) {
-        MSG_WARN(MSGTR_AudioStreamRedefined,id);
+	MSG_WARN(MSGTR_AudioStreamRedefined,id);
     } else {
-        sh_audio_t *sh;
-        MSG_V("==> Found audio stream: %d\n",id);
-        demuxer->a_streams[id]=mp_calloc(1, sizeof(sh_audio_t));
-        sh = demuxer->a_streams[id];
-        // set some defaults
-        sh->afmt=bps2afmt(2); /* PCM */
-        sh->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
-          MSG_V("ID_AUDIO_ID=%d\n", aid);
+	sh_audio_t *sh;
+	MSG_V("==> Found audio stream: %d\n",id);
+	demuxer->a_streams[id]=mp_calloc(1, sizeof(sh_audio_t));
+	sh = demuxer->a_streams[id];
+	// set some defaults
+	sh->afmt=bps2afmt(2); /* PCM */
+	sh->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
+	  MSG_V("ID_AUDIO_ID=%d\n", aid);
     }
     ((sh_audio_t *)demuxer->a_streams[id])->aid = aid;
     return demuxer->a_streams[id];
@@ -215,11 +215,11 @@ sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
 	return NULL;
     }
     if(demuxer->v_streams[id]) {
-        MSG_WARN(MSGTR_VideoStreamRedefined,id);
+	MSG_WARN(MSGTR_VideoStreamRedefined,id);
     } else {
-        MSG_V("==> Found video stream: %d\n",id);
-        demuxer->v_streams[id]=mp_calloc(1, sizeof(sh_video_t));
-          MSG_V("ID_VIDEO_ID=%d\n", vid);
+	MSG_V("==> Found video stream: %d\n",id);
+	demuxer->v_streams[id]=mp_calloc(1, sizeof(sh_video_t));
+	  MSG_V("ID_VIDEO_ID=%d\n", vid);
     }
     ((sh_video_t *)demuxer->v_streams[id])->vid = vid;
     return demuxer->v_streams[id];
@@ -317,7 +317,7 @@ int ds_fill_buffer(demux_stream_t *ds){
     if(ds==demux->sub)
 	MSG_DBG3("ds_fill_buffer(d_sub) called\n");
     else
-        MSG_DBG3("ds_fill_buffer(unknown %p) called\n",ds);
+	MSG_DBG3("ds_fill_buffer(unknown %p) called\n",ds);
   }
   while(1){
     if(ds->packs){
@@ -330,8 +330,8 @@ int ds_fill_buffer(demux_stream_t *ds){
       ds->dpos+=p->len; // !!!
       ++ds->pack_no;
       if(p->pts){
-        ds->pts=p->pts;
-        ds->pts_bytes=0;
+	ds->pts=p->pts;
+	ds->pts_bytes=0;
       }
       ds->pts_bytes+=p->len; // !!!
       ds->flags=p->flags;
@@ -462,33 +462,33 @@ demux_packet_t* clone_demux_packet(demux_packet_t* pack){
 
 int ds_get_packet(demux_stream_t *ds,unsigned char **start){
     while(1){
-        int len;
-        if(ds->buffer_pos>=ds->buffer_size){
-          if(!ds_fill_buffer(ds)){
-            // EOF
-            *start = NULL;
-            return -1;
-          }
-        }
-        len=ds->buffer_size-ds->buffer_pos;
-        *start = &ds->buffer[ds->buffer_pos];
-        ds->buffer_pos+=len;
-        return len;
+	int len;
+	if(ds->buffer_pos>=ds->buffer_size){
+	  if(!ds_fill_buffer(ds)){
+	    // EOF
+	    *start = NULL;
+	    return -1;
+	  }
+	}
+	len=ds->buffer_size-ds->buffer_pos;
+	*start = &ds->buffer[ds->buffer_pos];
+	ds->buffer_pos+=len;
+	return len;
     }
 }
 
 int ds_get_packet_sub(demux_stream_t *ds,unsigned char **start){
     while(1){
-        int len;
-        if(ds->buffer_pos>=ds->buffer_size){
-          *start = NULL;
-          if(!ds->packs) return -1; // no sub
-          if(!ds_fill_buffer(ds)) return -1; // EOF
-        }
-        len=ds->buffer_size-ds->buffer_pos;
-        *start = &ds->buffer[ds->buffer_pos];
-        ds->buffer_pos+=len;
-        return len;
+	int len;
+	if(ds->buffer_pos>=ds->buffer_size){
+	  *start = NULL;
+	  if(!ds->packs) return -1; // no sub
+	  if(!ds_fill_buffer(ds)) return -1; // EOF
+	}
+	len=ds->buffer_size-ds->buffer_pos;
+	*start = &ds->buffer[ds->buffer_pos];
+	ds->buffer_pos+=len;
+	return len;
     }
 }
 
@@ -558,7 +558,7 @@ again:
     }
     if(!demuxer || !demuxer->driver) {
 	MSG_ERR(MSGTR_FormatNotRecognized);
-        FREE_DEMUXER(demuxer);
+	FREE_DEMUXER(demuxer);
 	return NULL;
     }
 
@@ -719,7 +719,7 @@ int demux_info_print(demuxer_t *demuxer,const char *filename)
 void demux_info_free(demuxer_t* demuxer)
 {
     unsigned i;
-    if(demuxer->info) 
+    if(demuxer->info)
     {
 	for(i=0;i<INFOT_MAX;i++)
 	    if(((demuxer_info_t *)demuxer->info)->id[i])

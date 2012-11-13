@@ -46,8 +46,8 @@ static void (*_y4m_free)(any_t*ptr) = mp_free;
 
 int y4m_allow_unknown_tags(int yn) {
 	int old = _y4mparam_allow_unknown_tags;
-  	if (yn >= 0) _y4mparam_allow_unknown_tags = (yn) ? 1 : 0;
-  	return old;
+	if (yn >= 0) _y4mparam_allow_unknown_tags = (yn) ? 1 : 0;
+	return old;
 }
 
 
@@ -61,7 +61,7 @@ int y4m_allow_unknown_tags(int yn) {
  *               0 on complete success
  *               +(# of remaining bytes) on eof (for y4m_read)
  *               -(# of rem. bytes) on error (and ERRNO should be set)
- *     
+ *
  *************************************************************************/
 
 
@@ -141,7 +141,7 @@ void y4m_copy_xtag_list(y4m_xtag_list_t *dest, const y4m_xtag_list_t *src)
 {
   int i;
   for (i = 0; i < src->count; i++) {
-    if (dest->tags[i] == NULL) 
+    if (dest->tags[i] == NULL)
       dest->tags[i] = y4m_new_xtag();
     strncpy(dest->tags[i], src->tags[i], Y4M_MAX_XTAG_SIZE);
   }
@@ -223,13 +223,13 @@ int y4m_xtag_addlist(y4m_xtag_list_t *dest, const y4m_xtag_list_t *src)
   for (i = dest->count, j = 0;
        j < src->count;
        i++, j++) {
-    if (dest->tags[i] == NULL) 
+    if (dest->tags[i] == NULL)
       dest->tags[i] = y4m_new_xtag();
     strncpy(dest->tags[i], src->tags[i], Y4M_MAX_XTAG_SIZE);
   }
   dest->count += src->count;
   return Y4M_OK;
-}  
+}
 
 
 /*************************************************************************
@@ -283,7 +283,7 @@ int y4m_si_get_width(y4m_stream_info_t *si)
 
 void y4m_si_set_height(y4m_stream_info_t *si, int height)
 {
-  si->height = height; 
+  si->height = height;
   si->framelength = (si->height * si->width) * 3 / 2;
 }
 
@@ -342,7 +342,7 @@ void y4m_fini_frame_info(y4m_frame_info_t *info)
 
 /*************************************************************************
  *
- * Tag parsing 
+ * Tag parsing
  *
  *************************************************************************/
 
@@ -353,8 +353,8 @@ int y4m_parse_stream_tags(char *s, y4m_stream_info_t *i)
   int err;
 
   /* parse fields */
-  for (token = strtok(s, Y4M_DELIM); 
-       token != NULL; 
+  for (token = strtok(s, Y4M_DELIM);
+       token != NULL;
        token = strtok(NULL, Y4M_DELIM)) {
     if (token[0] == '\0') continue;   /* skip empty strings */
     tag = token[0];
@@ -365,7 +365,7 @@ int y4m_parse_stream_tags(char *s, y4m_stream_info_t *i)
       if (i->width <= 0) return Y4M_ERR_RANGE;
       break;
     case 'H':  /* height */
-      i->height = atoi(value); 
+      i->height = atoi(value);
       if (i->height <= 0) return Y4M_ERR_RANGE;
       break;
     case 'F':  /* frame rate (fps) */
@@ -422,8 +422,8 @@ static int y4m_parse_frame_tags(char *s, y4m_frame_info_t *i)
   int err;
 
   /* parse fields */
-  for (token = strtok(s, Y4M_DELIM); 
-       token != NULL; 
+  for (token = strtok(s, Y4M_DELIM);
+       token != NULL;
        token = strtok(NULL, Y4M_DELIM)) {
     if (token[0] == '\0') continue;   /* skip empty strings */
     tag = token[0];
@@ -469,7 +469,7 @@ int y4m_read_stream_header(stream_t *s, y4m_stream_info_t *i)
 
    /* read the header line */
    for (n = 0, p = line; n < Y4M_LINE_MAX; n++, p++) {
-     if (y4m_read(s, p, 1)) 
+     if (y4m_read(s, p, 1))
        return Y4M_ERR_SYSTEM;
      if (*p == '\n') {
        *p = '\0';           /* Replace linefeed by end of string */
@@ -508,8 +508,8 @@ int y4m_write_stream_header(int fd, y4m_stream_info_t *i)
 	       (i->interlace == Y4M_ILACE_BOTTOM_FIRST) ? "b" : "?",
 	       i->sampleaspect.n, i->sampleaspect.d);
   if ((n < 0) || (n > Y4M_LINE_MAX)) return Y4M_ERR_HEADER;
-  if ((err = y4m_snprint_xtags(s + n, sizeof(s) - n - 1, &(i->x_tags))) 
-      != Y4M_OK) 
+  if ((err = y4m_snprint_xtags(s + n, sizeof(s) - n - 1, &(i->x_tags)))
+      != Y4M_OK)
     return err;
   /* non-zero on error */
   return (y4m_write(fd, s, strlen(s)) ? Y4M_ERR_SYSTEM : Y4M_OK);
@@ -531,7 +531,7 @@ int y4m_read_frame_header(stream_t *s, y4m_frame_info_t *i)
   char *p;
   int n;
   ssize_t remain;
-  
+
   /* This is more clever than read_stream_header...
      Try to read "FRAME\n" all at once, and don't try to parse
      if nothing else is there...
@@ -575,11 +575,11 @@ int y4m_write_frame_header(int fd, y4m_frame_info_t *i)
   char s[Y4M_LINE_MAX+1];
   int n;
   int err;
-  
+
   n = snprintf(s, sizeof(s), "%s", Y4M_FRAME_MAGIC);
   if ((n < 0) || (n > Y4M_LINE_MAX)) return Y4M_ERR_HEADER;
-  if ((err = y4m_snprint_xtags(s + n, sizeof(s) - n - 1, &(i->x_tags))) 
-      != Y4M_OK) 
+  if ((err = y4m_snprint_xtags(s + n, sizeof(s) - n - 1, &(i->x_tags)))
+      != Y4M_OK)
     return err;
   /* non-zero on error */
   return (y4m_write(fd, s, strlen(s)) ? Y4M_ERR_SYSTEM : Y4M_OK);
@@ -594,13 +594,13 @@ int y4m_write_frame_header(int fd, y4m_frame_info_t *i)
  *
  *************************************************************************/
 
-int y4m_read_frame(stream_t *s, y4m_stream_info_t *si, 
+int y4m_read_frame(stream_t *s, y4m_stream_info_t *si,
 		   y4m_frame_info_t *fi, unsigned char *yuv[3])
 {
   int err;
   int w = si->width;
   int h = si->height;
-  
+
   /* Read frame header */
   if ((err = y4m_read_frame_header(s, fi)) != Y4M_OK) return err;
   /* Read luminance scanlines */
@@ -615,7 +615,7 @@ int y4m_read_frame(stream_t *s, y4m_stream_info_t *si,
 
 
 #if 0
-int y4m_write_frame(int fd, y4m_stream_info_t *si, 
+int y4m_write_frame(int fd, y4m_stream_info_t *si,
 		    y4m_frame_info_t *fi, unsigned char *yuv[3])
 {
   int err;
@@ -642,13 +642,13 @@ int y4m_write_frame(int fd, y4m_stream_info_t *si,
 
 #if 0
 int y4m_read_fields(int fd, y4m_stream_info_t *si, y4m_frame_info_t *fi,
-                    unsigned char *upper_field[3], 
-                    unsigned char *lower_field[3])
+		    unsigned char *upper_field[3],
+		    unsigned char *lower_field[3])
 {
   int i, y, err;
   int width = si->width;
   int height = si->height;
-  
+
   /* Read frame header */
   if ((err = y4m_read_frame_header(fd, fi)) != Y4M_OK) return err;
   /* Read Y', Cb, and Cr planes */
@@ -674,8 +674,8 @@ int y4m_read_fields(int fd, y4m_stream_info_t *si, y4m_frame_info_t *fi,
 
 
 int y4m_write_fields(int fd, y4m_stream_info_t *si, y4m_frame_info_t *fi,
-                     unsigned char *upper_field[3], 
-                     unsigned char *lower_field[3])
+		     unsigned char *upper_field[3],
+		     unsigned char *lower_field[3])
 {
   int i, y, err;
   int width = si->width;
@@ -733,7 +733,7 @@ void y4m_log_stream_info(const char *prefix, y4m_stream_info_t *i)
     MSG_V( "%s  frame rate:  ??? fps\n", prefix);
   else
     MSG_V( "%s  frame rate:  %d/%d fps (~%f)\n", prefix,
-	      i->framerate.n, i->framerate.d, 
+	      i->framerate.n, i->framerate.d,
 	      (double) i->framerate.n / (double) i->framerate.d);
   MSG_V( "%s   interlace:  %s\n", prefix,
 	  (i->interlace == Y4M_ILACE_NONE) ? "none/progressive" :
@@ -765,7 +765,7 @@ const char *y4m_strerr(int err)
   case Y4M_ERR_MAGIC:   return "bad header magic";
   case Y4M_ERR_XXTAGS:  return "too many xtags";
   case Y4M_ERR_EOF:     return "end-of-file";
-  default: 
+  default:
     return "unknown error code";
   }
 }

@@ -207,7 +207,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	  if(len==0) len=len2; else len+=len2;
 	  buf+=len2;
 	}
-        MSG_DBG2("Decoded %d -> %d  \n",y,len2);
+	MSG_DBG2("Decoded %d -> %d  \n",y,len2);
     }
   *pts=apts;
   return len;

@@ -142,10 +142,10 @@ void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h){
 #define CLEAR_PACKEDYUV_PATTERN_SWAPPED 0x10801080
 #endif
 	    if(mpi->flags&MP_IMGFLAG_SWAPPED){
-	        for(i=0;i<size-3;i+=4) p[i]=p[i+1]=p[i+2]=p[i+3]=CLEAR_PACKEDYUV_PATTERN_SWAPPED;
+		for(i=0;i<size-3;i+=4) p[i]=p[i+1]=p[i+2]=p[i+3]=CLEAR_PACKEDYUV_PATTERN_SWAPPED;
 		for(;i<size;i++) p[i]=CLEAR_PACKEDYUV_PATTERN_SWAPPED;
 	    } else {
-	        for(i=0;i<size-3;i+=4) p[i]=p[i+1]=p[i+2]=p[i+3]=CLEAR_PACKEDYUV_PATTERN;
+		for(i=0;i<size-3;i+=4) p[i]=p[i+1]=p[i+2]=p[i+3]=CLEAR_PACKEDYUV_PATTERN;
 		for(;i<size;i++) p[i]=CLEAR_PACKEDYUV_PATTERN;
 	    }
 	} else
@@ -203,7 +203,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	    // check libvo first!
 	    if(vf->get_image) vf->get_image(vf,mpi);
 	    MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",mpi->xp_idx);
-	
+
 	    if(!(mpi->flags&MP_IMGFLAG_DIRECT)) {
 		// non-direct and not yet allocated image. allocate it!
 		// check if codec prefer aligned stride:
@@ -371,7 +371,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src){
 }
 
 int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int voflags, unsigned int outfmt){
     int miss;
     int flags=vf_next_query_format(vf,outfmt,d_width,d_height);
@@ -457,8 +457,8 @@ void vf_help(){
     int i=0;
     MSG_INFO( "Available video filters:\n");
     while(filter_list[i]){
-        MSG_INFO("\t%-10s: %s\n",filter_list[i]->name,filter_list[i]->info);
-        i++;
+	MSG_INFO("\t%-10s: %s\n",filter_list[i]->name,filter_list[i]->info);
+	i++;
     }
     MSG_INFO("\n");
 }
@@ -536,7 +536,7 @@ unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
 }
 
 static int __FASTCALL__ dummy_config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int voflags, unsigned int outfmt,any_t*tune){
     return 1;
 }

@@ -118,7 +118,7 @@
   // Blend_s8 logic:
   //    if(Mask[7] == 1) dest[0..7] = src2[0..7]; else dest[0..7] = src[0..7]...
   //    if(Mask[63] == 1) Dest[56..63] = Source[56..63]...;
-  __ivec _ivec_blend_u8(__ivec src1,__ivec src2,__ivec mask); 
+  __ivec _ivec_blend_u8(__ivec src1,__ivec src2,__ivec mask);
 
   CONVERTION engine:
   ------------------
@@ -191,7 +191,7 @@
 
   CONVERTION engine:
   ------------------
-  __f32vec _f32vec_from_s32u(void const * src);		// convert s32 to f32 unaligned vector 
+  __f32vec _f32vec_from_s32u(void const * src);		// convert s32 to f32 unaligned vector
   void     _f32vec_to_s32u(any_t*dst,__f32vec src);	// convert f32 to s32 unaligned vector
   __f32vec _f32vec_from_s32a(void const * src);		// convert s32 to f32 aligned vector
   void     _f32vec_to_s32a(any_t*dst,__f32vec src);	// convert f32 to s32 aligned vector

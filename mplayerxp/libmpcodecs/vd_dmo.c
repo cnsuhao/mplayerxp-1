@@ -64,7 +64,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     case IMGFMT_IYUV:
 	DMO_VideoDecoder_SetDestFmt(sh->context,12,out_fmt);break; // planar YUV
     case IMGFMT_YVU9:
-        DMO_VideoDecoder_SetDestFmt(sh->context,9,out_fmt);break;
+	DMO_VideoDecoder_SetDestFmt(sh->context,9,out_fmt);break;
     default:
 	DMO_VideoDecoder_SetDestFmt(sh->context,out_fmt&255,0);    // RGB/BGR
     }
@@ -85,11 +85,11 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 
     if(frame->flags&3){
 	// framedrop:
-        DMO_VideoDecoder_DecodeInternal(sh->context, frame->data, frame->len, sh->ds->flags&1, 0);
+	DMO_VideoDecoder_DecodeInternal(sh->context, frame->data, frame->len, sh->ds->flags&1, 0);
 	return NULL;
     }
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/, 
+    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 

@@ -153,7 +153,7 @@ static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* da
 }
 
 /* Allocate memory and set function pointers
-   af audio filter instance 
+   af audio filter instance
    returns MPXP_Ok or MPXP_Error
 */
 static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )

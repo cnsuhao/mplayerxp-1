@@ -30,7 +30,7 @@ typedef enum mpaf_format_enum{
     MPAF_PCM		=0x00010000UL, //
     MPAF_A_LAW		=0x00060000UL, //
     MPAF_MU_LAW		=0x00070000UL, //
-    MPAF_IMA_ADPCM	=0x00110000UL, // Same as 16 bit signed int 
+    MPAF_IMA_ADPCM	=0x00110000UL, // Same as 16 bit signed int
     MPAF_MPEG2		=0x00500000UL, // MPEG1 layer2 audio
     MPAF_MPEG3		=0x00550000UL, // MPEG1 layer3 audio
     MPAF_AC3		=0x20000000UL, // Dolby Digital AC3

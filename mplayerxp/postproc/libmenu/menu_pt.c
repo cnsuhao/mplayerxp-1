@@ -27,7 +27,7 @@ struct list_entry_s {
   struct list_entry p;
   play_tree_t* pt;
 };
-  
+
 
 struct menu_priv_s {
   menu_list_priv_t p;
@@ -107,7 +107,7 @@ static int op(menu_t* menu,const char* args) {
   play_tree_t* i;
   list_entry_t* e;
   play_tree_iter_t* _playtree_iter = playtree_iter;
-  
+
   args = NULL; // Warning kill
 
   menu->draw = menu_list_draw;
@@ -125,7 +125,7 @@ static int op(menu_t* menu,const char* args) {
     e->pt = _playtree_iter->tree->parent;
     menu_list_add_entry(menu,e);
   }
-  
+
   for(i = _playtree_iter->tree ; i->prev != NULL ; i = i->prev)
     /* NOP */;
   for( ; i != NULL ; i = i->next ) {

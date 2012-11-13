@@ -25,7 +25,7 @@ static HRESULT STDCALL CMediaBuffer_SetLength(IMediaBuffer* This,
     CMediaBuffer* cmb = (CMediaBuffer*) This;
     Debug printf("CMediaBuffer_SetLength(%p) called (%ld, %ld)\n", This, cbLength, cmb->maxlen);
     if (cbLength > cmb->maxlen)
-        return E_INVALIDARG;
+	return E_INVALIDARG;
     cmb->len = cbLength;
     return S_OK;
 }
@@ -60,7 +60,7 @@ static void CMediaBuffer_Destroy(CMediaBuffer* This)
 {
     Debug printf("CMediaBuffer_Destroy(%p) called\n", This);
     if (This->freemem)
-        mp_free(This->mem);
+	mp_free(This->mem);
     mp_free(This->vt);
     mp_free(This);
 }
@@ -73,12 +73,12 @@ CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, any_t* mem,
     CMediaBuffer* This = (CMediaBuffer*) mp_malloc(sizeof(CMediaBuffer));
 
     if (!This)
-        return NULL;
+	return NULL;
 
     This->vt = (IMediaBuffer_vt*) mp_malloc(sizeof(IMediaBuffer_vt));
     if (!This->vt)
     {
-        CMediaBuffer_Destroy(This);
+	CMediaBuffer_Destroy(This);
 	return NULL;
     }
 
@@ -89,7 +89,7 @@ CMediaBuffer* CMediaBufferCreate(unsigned long maxlen, any_t* mem,
     This->mem = mem;
     if (copy)
 	/* make a private copy of data */
-        This->mem = 0;
+	This->mem = 0;
     if (This->mem == NULL)
     {
 	if (This->maxlen)

@@ -362,7 +362,7 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 	    MSG_ERR("alsa-init: memory allocation error: %s\n", snd_strerror(err));
 	    return MPXP_False;
 	}
-	
+
 	if ((tmp_device = snd_pcm_info_get_device(alsa_info)) < 0) {
 	    MSG_ERR("alsa-init: cant get device\n");
 	    return MPXP_False;
@@ -552,7 +552,7 @@ static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned ch
     }
 #else
     {
-        int dir=0;
+	int dir=0;
 	unsigned period_time=100000; /* period time in us */
 	snd_pcm_uframes_t size;
 	if ((err = snd_pcm_hw_params_set_period_time_near(priv->handler, priv->hwparams, &period_time, &dir)) < 0) {
@@ -570,7 +570,7 @@ static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned ch
 	chunk_size=size;
     }
 #endif
-        // gets buffersize for control
+	// gets buffersize for control
     if ((err = snd_pcm_hw_params_get_buffer_size(priv->hwparams,&dummy)) < 0) {
 	MSG_ERR("alsa-conf: unable to get buffersize: %s\n", snd_strerror(err));
 	return MPXP_False;
@@ -804,10 +804,10 @@ static unsigned __FASTCALL__ play_normal(ao_data_t* ao,any_t* data, unsigned len
 		MSG_ERR("alsa-play: xrun reset error");
 		return 0;
 	    }
-        } else if (res == -ESTRPIPE) { /* suspend */
+	} else if (res == -ESTRPIPE) { /* suspend */
 	    MSG_WARN("alsa-play: pcm in suspend mode. trying to resume\n");
 	    while ((res = snd_pcm_resume(priv->handler)) == -EAGAIN) sleep(1);
-        } else if (res < 0) {
+	} else if (res < 0) {
 	    MSG_ERR("alsa-play: unknown status, trying to reset soundcard\n");
 	    if ((res = snd_pcm_prepare(priv->handler)) < 0) {
 		MSG_ERR("alsa-play: snd prepare error");

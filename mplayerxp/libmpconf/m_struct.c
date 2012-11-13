@@ -60,14 +60,14 @@ m_struct_set(const m_struct_t* st, any_t* obj, char* field, char* param) {
     MSG_ERR("Struct %s doesn't have any %s field\n",
 	   st->name,field);
     return 0;
-  } 
+  }
 
   if(f->type->parse(f,field,param,M_ST_MB_P(obj,f->p),M_CONFIG_FILE) < 0) {
     MSG_ERR("Struct %s, field %s parsing error: %s\n",
 	   st->name,field,param);
     return 0;
   }
-  
+
   return 1;
 }
 
@@ -84,7 +84,7 @@ m_struct_reset(const m_struct_t* st, any_t* obj, const char* field) {
 
   // Only one
   f = m_struct_get_field(st,field);
-  if(!f) {    
+  if(!f) {
     MSG_ERR("Struct %s doesn't have any %s field\n",
 	   st->name,field);
     return;

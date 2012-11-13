@@ -1,5 +1,5 @@
-/* Straightforward (to be) optimized JPEG encoder for the YUV422 format 
- * based on mjpeg code from ffmpeg. 
+/* Straightforward (to be) optimized JPEG encoder for the YUV422 format
+ * based on mjpeg code from ffmpeg.
  *
  * Copyright (c) 2002, Rik Snel
  * Parts from ffmpeg Copyright (c) 2000, 2001 Gerard Lantau
@@ -35,11 +35,11 @@ typedef struct {
 	int v_rs;
 } jpeg_enc_t;
 
-jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize, 
+jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize,
 		int u_psize, int u_rsize, int v_psize, int v_rsize,
 		int cu, int q, int b);
 
-int jpeg_enc_frame(jpeg_enc_t *j, unsigned char *y_data, 
+int jpeg_enc_frame(jpeg_enc_t *j, unsigned char *y_data,
 		unsigned char *u_data, unsigned char *v_data, char *bufr);
 
 void jpeg_enc_uninit(jpeg_enc_t *j);

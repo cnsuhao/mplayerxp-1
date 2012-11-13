@@ -153,7 +153,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
     if (errorCode) {
 	MSG_ERR("Theora decode YUVout failed: %i \n",
 	     errorCode);
-        return NULL;
+	return NULL;
     }
 
     mpi = mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);

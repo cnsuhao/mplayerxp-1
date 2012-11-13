@@ -9,7 +9,7 @@
 
 /*---------- LIB_DRI ----------------*/
 /*
-  Note: Each dri voctl call has following format: 
+  Note: Each dri voctl call has following format:
     voctl(call_num,any_t*);
 */
 enum {

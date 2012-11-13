@@ -137,7 +137,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    return MPXP_Ok;
 	}
 	case VDCTRL_QUERY_FORMAT:
-        {
+	{
 	    uint32_t format =(*((int*)arg));
 	    if(avctx->pix_fmt == -1 &&
 		avctx->get_format &&
@@ -177,7 +177,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 #endif
 	    }
 	    return MPXP_False;
-        }
+	}
 	break;
 	case VDCTRL_RESYNC_STREAM:
 	    avcodec_flush_buffers(avctx);
@@ -321,7 +321,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	 sh->fourcc == mmioFOURCC('a','v','c','1') ||
 	 sh->fourcc == mmioFOURCC('L','O','C','O') ||
 	 sh->fourcc == mmioFOURCC('t','h','e','o')
-         )) {
+	 )) {
 	    priv->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
 	    priv->ctx->extradata = mp_malloc(priv->ctx->extradata_size);
 	    memcpy(priv->ctx->extradata, sh->bih+1, priv->ctx->extradata_size);
@@ -536,8 +536,8 @@ static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
 
 
 static void draw_slice(struct AVCodecContext *s,
-                        const AVFrame *src, int offset[4],
-                        int y, int type, int height)
+			const AVFrame *src, int offset[4],
+			int y, int type, int height)
 {
     sh_video_t *sh=s->opaque;
     priv_t *priv=sh->context;
@@ -658,26 +658,26 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
        || sh->fourcc == mmioFOURCC('R', 'V', '3', '0')
        || sh->fourcc == mmioFOURCC('R', 'V', '4', '0'))
     if(sh->bih->biSize==sizeof(*sh->bih)+8){
-        int i;
-        const dp_hdr_t *hdr= (const dp_hdr_t*)data;
+	int i;
+	const dp_hdr_t *hdr= (const dp_hdr_t*)data;
 
-        if(priv->ctx->slice_offset==NULL)
-            priv->ctx->slice_offset= mp_malloc(sizeof(int)*1000);
+	if(priv->ctx->slice_offset==NULL)
+	    priv->ctx->slice_offset= mp_malloc(sizeof(int)*1000);
 
 //        for(i=0; i<25; i++) printf("%02X ", ((uint8_t*)data)[i]);
 
-        priv->ctx->slice_count= hdr->chunks+1;
-        for(i=0; i<priv->ctx->slice_count; i++)
-            priv->ctx->slice_offset[i]= ((const uint32_t*)(data+hdr->chunktab))[2*i+1];
+	priv->ctx->slice_count= hdr->chunks+1;
+	for(i=0; i<priv->ctx->slice_count; i++)
+	    priv->ctx->slice_offset[i]= ((const uint32_t*)(data+hdr->chunktab))[2*i+1];
 	len=hdr->len;
-        data+= sizeof(dp_hdr_t);
+	data+= sizeof(dp_hdr_t);
     }
     if(priv->use_dr1){
 	priv->b_age= priv->ip_age[0]= priv->ip_age[1]= 256*256*256*64;
 	priv->ip_count= priv->b_count= 0;
-        priv->ctx->get_buffer= get_buffer;
-        priv->ctx->release_buffer= release_buffer;
-        priv->ctx->reget_buffer= get_buffer;
+	priv->ctx->get_buffer= get_buffer;
+	priv->ctx->release_buffer= release_buffer;
+	priv->ctx->reget_buffer= get_buffer;
     }
     if(!(frame->flags&3) && priv->use_slices)
     {

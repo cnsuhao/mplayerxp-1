@@ -1,6 +1,6 @@
 /*
  *   shmem.c - Shared memory allocation
- *   
+ *
  *   based on mpg123's xfermem.c by
  *   Oliver Fromme  <oliver.fromme@heim3.tu-clausthal.de>
  *   Sun Apr  6 02:26:26 MET DST 1997

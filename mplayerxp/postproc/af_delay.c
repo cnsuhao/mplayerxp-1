@@ -95,7 +95,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   int i;
@@ -149,7 +149,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
     }
     case 4:{
       int32_t* a = c->audio;
-      int32_t* q = s->q[ch]; 
+      int32_t* q = s->q[ch];
       int wi = s->wi[ch];
       ri = s->ri;
       for(i=ch;i<len;i+=nch){

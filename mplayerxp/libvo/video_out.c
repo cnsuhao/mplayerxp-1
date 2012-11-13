@@ -69,22 +69,22 @@ extern vo_functions_t video_out_xvidix;
 static const vo_functions_t* video_out_drivers[] =
 {
 #ifdef HAVE_XV
-        &video_out_xv,
+	&video_out_xv,
 #endif
 #ifdef HAVE_OPENGL
-        &video_out_opengl,
+	&video_out_opengl,
 #endif
-#if defined(CONFIG_VIDIX) && defined(HAVE_X11) 
+#if defined(CONFIG_VIDIX) && defined(HAVE_X11)
 	&video_out_xvidix,
 #endif
 #ifdef HAVE_DGA
-        &video_out_dga,
+	&video_out_dga,
 #endif
 #ifdef HAVE_X11
-        &video_out_x11,
+	&video_out_x11,
 #endif
 #ifdef HAVE_SDL
-        &video_out_sdl,
+	&video_out_sdl,
 #endif
 #ifdef HAVE_VESA
 	&video_out_vesa,
@@ -92,8 +92,8 @@ static const vo_functions_t* video_out_drivers[] =
 #ifdef HAVE_FBDEV
 	&video_out_fbdev,
 #endif
-        &video_out_null,
-        NULL
+	&video_out_null,
+	NULL
 };
 
 static const vo_functions_t *video_out=NULL;
@@ -741,7 +741,7 @@ static void __FASTCALL__ clear_rect_yuy2(vo_data_t*vo,unsigned _y0,unsigned h,ui
   unsigned i;
   for(i=0;i<h;i++)
   {
-	if(_y0+i<priv->dri.cap.y||_y0+i>=priv->dri.cap.y+priv->dri.cap.h) 
+	if(_y0+i<priv->dri.cap.y||_y0+i>=priv->dri.cap.y+priv->dri.cap.h)
 	{
 	    uint32_t *dst32;
 	    unsigned j,size32;

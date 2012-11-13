@@ -188,7 +188,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 			(((unsigned char)'d')<<8)|
 			(((unsigned char)'c'));
 #if 0
-    desc.componentSubType= 
+    desc.componentSubType=
 		    (((unsigned char)'S'<<24))|
 			(((unsigned char)'V')<<16)|
 			(((unsigned char)'Q')<<8)|
@@ -246,7 +246,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     dump_ImageDescription(*framedescHandle);
 #endif
 //Find codecscomponent for video decompression
-//    result = FindCodec ('SVQ1',anyCodec,&compressor,&decompressor );                 
+//    result = FindCodec ('SVQ1',anyCodec,&compressor,&decompressor );
 //    MSG_V("FindCodec SVQ1 returned:%i compressor: 0x%X decompressor: 0x%X\n",result,compressor,decompressor);
 
     sh->context = kYUVSPixelFormat;
@@ -311,7 +311,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 
     if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_STATIC, MP_IMGFLAG_PRESERVE, 
+    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_STATIC, MP_IMGFLAG_PRESERVE,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
@@ -321,15 +321,15 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 
 if(!codec_inited){
     result = QTNewGWorldFromPtr(
-        &OutBufferGWorld,
+	&OutBufferGWorld,
 //        kYUVSPixelFormat, //pixel format of new GWorld == YUY2
 	sh->context,
-        &OutBufferRect,   //we should benchmark if yvu9 is faster for svq3, too
-        0,
-        0,
-        0,
-        mpi->planes[0],
-        mpi->stride[0]);
+	&OutBufferRect,   //we should benchmark if yvu9 is faster for svq3, too
+	0,
+	0,
+	0,
+	mpi->planes[0],
+	mpi->stride[0]);
     MSG_V("NewGWorldFromPtr returned:%d\n",65536-(result&0xffff));
 //    if (65536-(result&0xFFFF) != 10000)
 //	return NULL;
@@ -363,7 +363,7 @@ if(!codec_inited){
     decpar.srcRect = OutBufferRect;
 
     decpar.transferMode = srcCopy;
-    decpar.dstPixMap = **GetGWorldPixMap( OutBufferGWorld);//destPixmap; 
+    decpar.dstPixMap = **GetGWorldPixMap( OutBufferGWorld);//destPixmap;
 
     cres=ImageCodecPreDecompress(ci,&decpar);
     MSG_V("ImageCodecPreDecompress cres=0x%X\n",cres);
@@ -371,7 +371,7 @@ if(!codec_inited){
     if(decpar.wantedDestinationPixelTypes)
     { OSType *p=*(decpar.wantedDestinationPixelTypes);
       if(p) while(*p){
-          MSG_V("supported csp: 0x%08X %.4s\n",*p,p);
+	  MSG_V("supported csp: 0x%08X %.4s\n",*p,p);
 	  ++p;
       }
     }
@@ -404,7 +404,7 @@ if(!codec_inited){
 	MSG_V("ImageCodecBandDecompress cres=0x%X (-0x%X) %d\n",cres,-cres,cres);
 	return NULL;
     }
-    
+
 //    for(i=0;i<8;i++)
 //	MSG_V("img_base[%d]=%p\n",i,((int*)decpar.dstPixMap.baseAddr)[i]);
 

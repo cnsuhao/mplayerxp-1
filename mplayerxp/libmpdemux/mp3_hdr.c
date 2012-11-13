@@ -17,7 +17,7 @@ static int tabsel_123[2][3][16] = {
 static long freqs[9] = { 44100, 48000, 32000, 22050, 24000, 16000 , 11025 , 12000 , 8000 };
 
 int mp_mp3_get_lsf(unsigned char* hbuf){
-    unsigned long newhead = 
+    unsigned long newhead =
       hbuf[0] << 24 |
       hbuf[1] << 16 |
       hbuf[2] <<  8 |
@@ -40,7 +40,7 @@ int mp_decode_mp3_header(unsigned char* hbuf,unsigned *fmt,unsigned *brate,unsig
       hbuf[3];
 
     if( (newhead & 0xffe00000) != 0xffe00000 ||
-        (newhead & 0x0000fc00) == 0x0000fc00){
+	(newhead & 0x0000fc00) == 0x0000fc00){
 	MSG_DBG2("mp3_hdr: head_check failed: %08X\n",newhead);
 	return -1;
     }

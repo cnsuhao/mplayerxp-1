@@ -1,10 +1,10 @@
 // Reminder of hard terms which need better/final solution later:
-//   (file links to be updated later if available!);  
-//   NAV; section/subsection;  XScreenSaver; keycolor;  
-//   AGP move failed on Y plane;  
+//   (file links to be updated later if available!);
+//   NAV; section/subsection;  XScreenSaver; keycolor;
+//   AGP move failed on Y plane;
 //   profile? demuxer? drain? flush?
 //
-// Translated by JRaSH <jrash06@163.com> 
+// Translated by JRaSH <jrash06@163.com>
 // (Translator before 2007-05-01)
 // Lu Ran <hephooey@fastmail.fm>, Sheldon Jin <jinsh2 AT yahoo.com>
 // (Translator before 2006-04-24)

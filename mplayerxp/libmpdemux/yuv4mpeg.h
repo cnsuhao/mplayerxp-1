@@ -73,7 +73,7 @@ extern const y4m_ratio_t y4m_fps_60;         /* 60fps                      */
 /************************************************************************
  *  useful standard sample (pixel) aspect ratios
  ************************************************************************/
-extern const y4m_ratio_t y4m_sar_UNKNOWN; 
+extern const y4m_ratio_t y4m_sar_UNKNOWN;
 extern const y4m_ratio_t y4m_sar_SQUARE;        /* square pixels */
 extern const y4m_ratio_t y4m_sar_NTSC_CCIR601;  /* 525-line (NTSC) Rec.601 */
 extern const y4m_ratio_t y4m_sar_NTSC_16_9;     /* 16:9 NTSC/Rec.601       */
@@ -191,21 +191,21 @@ const char *y4m_xtag_get(const y4m_xtag_list_t *xtags, int n);
 
 /* append a new tag to an xtag_list
     returns:          Y4M_OK - success
-              Y4M_ERR_XXTAGS - list is already full */
+	      Y4M_ERR_XXTAGS - list is already full */
 int y4m_xtag_add(y4m_xtag_list_t *xtags, const char *tag);
 
-/* remove a tag from an xtag_list 
+/* remove a tag from an xtag_list
     returns:         Y4M_OK - success
-              Y4M_ERR_RANGE - n is out of range */
+	      Y4M_ERR_RANGE - n is out of range */
 int y4m_xtag_remove(y4m_xtag_list_t *xtags, int n);
 
-/* remove all tags from an xtag_list 
+/* remove all tags from an xtag_list
     returns:   Y4M_OK - success       */
 int y4m_xtag_clearlist(y4m_xtag_list_t *xtags);
 
 /* append copies of tags from src list to dest list
     returns:          Y4M_OK - success
-              Y4M_ERR_XXTAGS - operation would overfill dest list */
+	      Y4M_ERR_XXTAGS - operation would overfill dest list */
 int y4m_xtag_addlist(y4m_xtag_list_t *dest, const y4m_xtag_list_t *src);
 
 
@@ -286,7 +286,7 @@ ssize_t y4m_write(int fd, char *buf, size_t len);
 
 /************************************************************************
  *  stream header processing functions
- *  
+ *
  *  o return values:
  *                   Y4M_OK - success
  *                Y4M_ERR_* - error (see y4m_strerr() for descriptions)
@@ -307,7 +307,7 @@ int y4m_write_stream_header(int fd,  y4m_stream_info_t *i);
 
 /************************************************************************
  *  frame processing functions
- *  
+ *
  *  o return values:
  *                   Y4M_OK - success
  *                Y4M_ERR_* - error (see y4m_strerr() for descriptions)
@@ -324,13 +324,13 @@ int y4m_write_frame_header(int fd, y4m_frame_info_t *i);
 
 /* read a complete frame (header + data)
    o yuv[3] points to three buffers, one each for Y, U, V planes */
-int y4m_read_frame(stream_t *s, y4m_stream_info_t *si, 
+int y4m_read_frame(stream_t *s, y4m_stream_info_t *si,
 		   y4m_frame_info_t *fi, unsigned char *yuv[3]);
 
 #if 0
 /* write a complete frame (header + data)
    o yuv[3] points to three buffers, one each for Y, U, V planes */
-int y4m_write_frame(int fd, y4m_stream_info_t *si, 
+int y4m_write_frame(int fd, y4m_stream_info_t *si,
 		    y4m_frame_info_t *fi, unsigned char *yuv[3]);
 #endif
 
@@ -341,7 +341,7 @@ int y4m_write_frame(int fd, y4m_stream_info_t *si,
    o lower_field[3] same as yuv[3] above, but for lower field
 */
 int y4m_read_fields(int fd, y4m_stream_info_t *si, y4m_frame_info_t *fi,
-		    unsigned char *upper_field[3], 
+		    unsigned char *upper_field[3],
 		    unsigned char *lower_field[3]);
 
 /* write a complete frame (header + data), but interleave fields
@@ -350,7 +350,7 @@ int y4m_read_fields(int fd, y4m_stream_info_t *si, y4m_frame_info_t *fi,
    o lower_field[3] same as yuv[3] above, but for lower field
 */
 int y4m_write_fields(int fd, y4m_stream_info_t *si, y4m_frame_info_t *fi,
-		     unsigned char *upper_field[3], 
+		     unsigned char *upper_field[3],
 		     unsigned char *lower_field[3]);
 
 #endif
@@ -370,7 +370,7 @@ const char *y4m_strerr(int err);
 /* set 'allow_unknown_tag' flag for library...
     o yn = 0 :  unknown header tags will produce a parsing error
     o yn = 1 :  unknown header tags/values will produce a warning, but
-                 are otherwise passed along via the xtags list
+		 are otherwise passed along via the xtags list
     o yn = -1:  don't change, just return current setting
 
    return value:  previous setting of flag
@@ -394,7 +394,7 @@ int y4m_allow_unknown_tags(int yn);
   FRAME consists of
     o one '\n' terminated FRAME-HEADER
     o "length" octets of planar YCrCb 4:2:0 image data
-        (if frame is interlaced, then the two fields are interleaved)
+	(if frame is interlaced, then the two fields are interleaved)
 
 
   STREAM-HEADER consists of
@@ -428,9 +428,9 @@ int y4m_allow_unknown_tags(int yn);
      W - [integer] frame width, pixels, should be > 0
      H - [integer] frame height, pixels, should be > 0
      I - [char] interlacing:  p - progressive (none)
-                            t - top-field-first
-                            b - bottom-field-first
-		            ? - unknown
+			    t - top-field-first
+			    b - bottom-field-first
+			    ? - unknown
      F - [ratio] frame-rate, 0:0 == unknown
      A - [ratio] sample (pixel) aspect ratio, 0:0 == unknown
      X - [character string] 'metadata' (unparsed, but passed around)

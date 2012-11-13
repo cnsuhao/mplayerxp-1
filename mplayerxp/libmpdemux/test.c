@@ -53,6 +53,6 @@ int file_format=DEMUXER_TYPE_UNKNOWN;
 	printf("Cannot open demuxer\n");
 	exit(1);
   }
-  
+
 
 }

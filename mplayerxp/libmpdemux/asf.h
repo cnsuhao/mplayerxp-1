@@ -27,7 +27,7 @@ typedef struct __attribute__((packed)) {
 #endif
 
 ///////////////////////
-// ASF Object Header 
+// ASF Object Header
 ///////////////////////
 typedef struct __attribute__((packed)) {
   uint8_t guid[16];
@@ -35,7 +35,7 @@ typedef struct __attribute__((packed)) {
 } ASF_obj_header_t;
 
 ////////////////
-// ASF Header 
+// ASF Header
 ////////////////
 typedef struct __attribute__((packed)) {
   ASF_obj_header_t objh;
@@ -45,7 +45,7 @@ typedef struct __attribute__((packed)) {
 } ASF_header_t;
 
 /////////////////////
-// ASF File Header 
+// ASF File Header
 /////////////////////
 typedef struct __attribute__((packed)) {
   uint8_t stream_id[16]; // stream GUID
@@ -86,7 +86,7 @@ typedef struct  __attribute__((packed)) {
 } ASF_content_description_t;
 
 ////////////////////////
-// ASF Segment Header 
+// ASF Segment Header
 ////////////////////////
 typedef struct __attribute__((packed)) {
   uint8_t streamno;

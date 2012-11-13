@@ -1,4 +1,4 @@
-/* 
+/*
  * xbuffer code
  *
  * Includes a minimalistic replacement for xine_buffer functions used in
@@ -31,7 +31,7 @@ typedef struct {
 
 
 
-any_t*xbuffer_init(int chunk_size) {  
+any_t*xbuffer_init(int chunk_size) {
   uint8_t *data=mp_calloc(1,chunk_size+XBUFFER_HEADER_SIZE);
 
   xbuffer_header_t *header=(xbuffer_header_t*)data;
@@ -83,7 +83,7 @@ any_t*xbuffer_ensure_size(any_t*buf, int size) {
     new_size = size + xbuf->chunk_size - (size % xbuf->chunk_size);
     xbuf->size = new_size;
     buf = ((uint8_t*)mp_realloc(((uint8_t*)buf)-XBUFFER_HEADER_SIZE,
-          new_size+XBUFFER_HEADER_SIZE)) + XBUFFER_HEADER_SIZE;
+	  new_size+XBUFFER_HEADER_SIZE)) + XBUFFER_HEADER_SIZE;
   }
 
   return buf;

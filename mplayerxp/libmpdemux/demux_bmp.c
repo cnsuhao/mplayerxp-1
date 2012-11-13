@@ -154,8 +154,8 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   npal_colors = img->format->palette ? img->format->palette->ncolors : 0;
     switch(img->format->BitsPerPixel)
     {
-	default: 
-	case 8:  sh_video->fourcc = npal_colors > 0 ? IMGFMT_BGR24 : 
+	default:
+	case 8:  sh_video->fourcc = npal_colors > 0 ? IMGFMT_BGR24 :
 				    img->format->Bshift < img->format->Rshift ? IMGFMT_BGR8 : IMGFMT_RGB8; break;
 	case 15: sh_video->fourcc = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR15 : IMGFMT_RGB15; break;
 	case 16: sh_video->fourcc = img->format->Bshift < img->format->Rshift ? IMGFMT_BGR16 : IMGFMT_RGB16; break;

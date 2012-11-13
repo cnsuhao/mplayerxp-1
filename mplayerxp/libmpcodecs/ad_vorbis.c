@@ -135,12 +135,12 @@ static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
 
 static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-        unsigned len = 0;
-        int samples;
-        float **pcm;
-        ogg_packet op;
-        priv_t *ov = sh->context;
-        op.b_o_s =  op.e_o_s = 0;
+	unsigned len = 0;
+	int samples;
+	float **pcm;
+	ogg_packet op;
+	priv_t *ov = sh->context;
+	op.b_o_s =  op.e_o_s = 0;
 	while(len < minlen) {
 	  /* if file contains audio only steam there is no pts */
 	  op.bytes = ds_get_packet_r(sh->ds,&op.packet,pts);
@@ -153,7 +153,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
 	    int clipflag=0;
 	    int convsize=(maxlen-len)/(2*ov->vi.channels); // max size!
 	    int bout=(samples<convsize?samples:convsize);
-	
+
 	    if(bout<=0) break;
 
 	    if(afmt2bps(sh->afmt)==4) {

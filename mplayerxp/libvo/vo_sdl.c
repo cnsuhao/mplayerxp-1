@@ -82,7 +82,7 @@
  *    - changed fullscreen-mode-cycling from '+' to 'c' (interferred with audiosync
  *       adjustment)
  *    Felix Buenemann <Atmosfear@users.sourceforge.net> - April 13, 2001
- *    - added keymapping to toggle OSD ('o' key) 
+ *    - added keymapping to toggle OSD ('o' key)
  *    - added some defines to modify some sdl-out internas (see comments)
  *
  *    Felix Buenemann: further changes will be visible through cvs log, don't want
@@ -183,7 +183,7 @@ static void setenv(const char *name, const char *val, int _xx)
 #define	SDL_OVR_LOCK(x)        if (SDL_LockYUVOverlay (priv->overlay[x])) { \
 				MSG_V("SDL: Couldn't lock YUV overlay\n"); \
 				return x; \
-	    		    }
+			    }
 #define SDL_OVR_UNLOCK(x)      SDL_UnlockYUVOverlay (priv->overlay[x]);
 
 #define SDL_SRF_LOCK(srf, x)   if(SDL_MUSTLOCK(srf)) { \
@@ -293,7 +293,7 @@ static int sdl_open ( vo_data_t*vo )
 
 	/* does the user want SDL to try and force Xv */
 	if(sdl_forcexv)	setenv("SDL_VIDEO_X11_NODIRECTCOLOR", "1", 1);
-	
+
 	/* does the user want to disable Xv and use software scaling instead */
 	if(sdl_noxv) setenv("SDL_VIDEO_YUV_HWACCEL", "0", 1);
 #ifdef CONFIG_VIDIX
@@ -348,7 +348,7 @@ static int sdl_open ( vo_data_t*vo )
 
     /* test for normal resizeable & windowed hardware accellerated surfaces */
     if (!SDL_ListModes (vidInfo->vfmt, priv->sdlflags)) {
-	/* test for NON hardware accelerated resizeable surfaces - poor you. 
+	/* test for NON hardware accelerated resizeable surfaces - poor you.
 	 * That's all we have. If this fails there's nothing left.
 	 * Theoretically there could be Fullscreenmodes left - we ignore this for now.
 	 */
@@ -374,7 +374,7 @@ static int sdl_open ( vo_data_t*vo )
 	priv->bpp = 16;
     }
 
-    /* We don't want those in our event queue. 
+    /* We don't want those in our event queue.
      * We use SDL_KEYUP cause SDL_KEYDOWN seems to cause problems
      * with keys need to be pressed twice, to be recognized.
      */
@@ -741,16 +741,16 @@ static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
     vo_osd_changed(1);
 
     if(priv->rgbsurface[idx])
-        SDL_FreeSurface(priv->rgbsurface[idx]);
+	SDL_FreeSurface(priv->rgbsurface[idx]);
     else if(priv->overlay[idx])
-        SDL_FreeYUVOverlay(priv->overlay[idx]);
+	SDL_FreeYUVOverlay(priv->overlay[idx]);
 
     priv->rgbsurface[idx] = NULL;
     priv->overlay[idx] = NULL;
 
     switch(priv->format) {
 	/* Initialize and create the RGB Surface used for video out in BGR/RGB mode */
-	//SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);	
+	//SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
 	//	SDL_SWSURFACE,SDL_HWSURFACE,SDL_SRCCOLORKEY, priv->flags?	guess: exchange Rmask and Bmask for BGR<->RGB
 	// 32 bit: a:ff000000 r:ff000 g:ff00 b:ff
 	// 24 bit: r:ff0000 g:ff00 b:ff
@@ -796,7 +796,7 @@ static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
 
 	if((priv->format&0xFF) != priv->bpp)
 	    MSG_WARN("SDL: using depth/colorspace conversion, this will slow things"
-                   "down (%ibpp -> %ibpp).\n", priv->format&0xFF, priv->bpp);
+		   "down (%ibpp -> %ibpp).\n", priv->format&0xFF, priv->bpp);
     }
     erase_rectangle(vo,idx,0, 0, surfwidth, surfheight);
 
@@ -810,7 +810,7 @@ static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
  *  returns : doesn't return
  **/
 
-#define shift_key (event.key.keysym.mod==(KMOD_LSHIFT||KMOD_RSHIFT)) 
+#define shift_key (event.key.keysym.mod==(KMOD_LSHIFT||KMOD_RSHIFT))
 static uint32_t __FASTCALL__ check_events (vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
     priv_t *priv = vo->priv;
@@ -915,7 +915,7 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,int (* __FASTCALL__ adju
 			case SDLK_KP_MINUS: mplayer_put_key('-');break;
 			case SDLK_TAB: mplayer_put_key('\t');break;
 			case SDLK_PAGEUP: mplayer_put_key(KEY_PAGE_UP);break;
-			case SDLK_PAGEDOWN: mplayer_put_key(KEY_PAGE_DOWN);break;  
+			case SDLK_PAGEDOWN: mplayer_put_key(KEY_PAGE_DOWN);break;
 #ifdef BUGGY_SDL
 			case SDLK_UP:
 			case SDLK_DOWN:
@@ -1069,11 +1069,11 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 	if(priv->mode == YUV) {
 		/* blit to the YUV overlay */
 		SDL_DisplayYUVOverlay (priv->overlay[idx], &priv->surface->clip_rect);
-		
+
 		/* check if we have a double buffered surface and flip() if we do. */
 		if ( priv->surface->flags & SDL_DOUBLEBUF )
 			SDL_Flip(priv->surface);
-		
+
 		//SDL_LockYUVOverlay (priv->overlay); // removed because unused!?
 	} else {
 	    /* blit to the RGB surface */

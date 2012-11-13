@@ -19,7 +19,7 @@ static char help_text[]=
 " -video.fs           fullskärmsuppspelning (eller -video.vm, -video.zoom, detaljer på manualsidan)\n"
 " -sub.file <fil>     specifiera textningsfil att använda\n"
 " -play.list <fil>    specifiera spellistefil\n"
-" -sync.framedrop     aktivera reducering av antalet bildrutor (för långsamma maskiner)\n" 
+" -sync.framedrop     aktivera reducering av antalet bildrutor (för långsamma maskiner)\n"
 "\n"
 "Grundläggande navigering: (komplett lista återfinns på manualsidan, läs även input.conf)\n"
 " <-  eller  ->       sök bakåt/framåt 10 sekunder\n"

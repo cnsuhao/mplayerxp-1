@@ -49,9 +49,9 @@ typedef struct FilterParam{
 	int uniform;
 	int temporal;
 	int quality;
-        int averaged;
-        int pattern;
-        int shiftptr;
+	int averaged;
+	int pattern;
+	int shiftptr;
 	int8_t *noise;
 	int8_t *prev_shift[MAX_RES][3];
 }FilterParam;
@@ -104,7 +104,7 @@ static int8_t * __FASTCALL__ initNoise(FilterParam *fp){
 				x2 = 2.0 * rand()/(float)RAND_MAX - 1.0;
 				w = x1 * x1 + x2 * x2;
 			} while ( w >= 1.0 );
-		
+
 			w = sqrt( (-2.0 * log( w ) ) / w );
 			y1= x1 * w;
 			y1*= strength / sqrt(3.0);
@@ -119,7 +119,7 @@ static int8_t * __FASTCALL__ initNoise(FilterParam *fp){
 		}
 		if (RAND_N(6) == 0) j--;
 	}
-	
+
 
 	for (i = 0; i < MAX_RES; i++)
 	    for (j = 0; j < 3; j++)
@@ -247,12 +247,12 @@ static inline void __FASTCALL__ lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int
 		"paddw %%mm2, %%mm3		\n\t"
 		"psrlw $8, %%mm1		\n\t"
 		"psrlw $8, %%mm3		\n\t"
-                "packuswb %%mm3, %%mm1		\n\t"
+		"packuswb %%mm3, %%mm1		\n\t"
 		"movq %%mm1, (%4, %%"REG_a")	\n\t"
 		"add  $8, %%"REG_a"			\n\t"
 		" js 1b				\n\t"
-		:: "r" (src+mmx_len), "r" (shift[0]+mmx_len), "r" (shift[1]+mmx_len), "r" (shift[2]+mmx_len), 
-                   "r" (dst+mmx_len), "g" (-mmx_len)
+		:: "r" (src+mmx_len), "r" (shift[0]+mmx_len), "r" (shift[1]+mmx_len), "r" (shift[2]+mmx_len),
+		   "r" (dst+mmx_len), "g" (-mmx_len)
 		: "%"REG_a, "memory", "cc"
 #ifdef FPU_CLOBBERED
 		,FPU_CLOBBERED
@@ -271,8 +271,8 @@ static inline void __FASTCALL__ lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int
 
 static inline void __FASTCALL__ lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int len, int8_t **shift){
 	int i;
-        int8_t *src2= (int8_t*)src;
-	
+	int8_t *src2= (int8_t*)src;
+
 	for(i=0; i<len; i++)
 	{
 	    const int n= shift[0][i] + shift[1][i] + shift[2][i];
@@ -317,7 +317,7 @@ static void __FASTCALL__ noise(uint8_t *dst, uint8_t *src, int dstStride, int sr
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
 
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
@@ -332,8 +332,8 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     mpi->stride[0]=vf->dmpi->stride[0];
     mpi->width=vf->dmpi->width;
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-        mpi->planes[1]=vf->dmpi->planes[1];
-        mpi->planes[2]=vf->dmpi->planes[2];
+	mpi->planes[1]=vf->dmpi->planes[1];
+	mpi->planes[2]=vf->dmpi->planes[2];
 	mpi->stride[1]=vf->dmpi->stride[1];
 	mpi->stride[2]=vf->dmpi->stride[2];
     }
@@ -372,7 +372,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 #ifdef _OPENMP
 }
 #endif
-        vf_clone_mpi_attributes(dmpi, mpi);
+	vf_clone_mpi_attributes(dmpi, mpi);
 
 #ifdef CAN_COMPILE_MMX
 	if(gCpuCaps.hasMMX) asm volatile ("emms\n\t":::"memory"
@@ -399,7 +399,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 
 	if(vf->priv->lumaParam.noise) mp_free(vf->priv->lumaParam.noise);
 	vf->priv->lumaParam.noise= NULL;
-	
+
 	mp_free(vf->priv);
 	vf->priv=NULL;
 }
@@ -470,8 +470,8 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
 #ifdef CAN_COMPILE_MMX
     if(gCpuCaps.hasMMX) {
-        lineNoise= lineNoise_MMX;
-        lineNoiseAvg= lineNoiseAvg_MMX;
+	lineNoise= lineNoise_MMX;
+	lineNoiseAvg= lineNoiseAvg_MMX;
     }
 #endif
 #ifdef CAN_COMPILE_MMX2

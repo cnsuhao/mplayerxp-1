@@ -103,16 +103,16 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 		w= mpi->w * mpi->bpp/8;
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
-	interleave(dmpi->planes[0], mpi->planes[0], 
+	interleave(dmpi->planes[0], mpi->planes[0],
 		w, mpi->h, dmpi->stride[0], mpi->stride[0], luma->interleave, luma->swap,finalize);
 
 	if(mpi->flags&MP_IMGFLAG_PLANAR){
 		int cw= mpi->w >> mpi->chroma_x_shift;
 		int ch= mpi->h >> mpi->chroma_y_shift;
 
-		interleave(dmpi->planes[1], mpi->planes[1], cw,ch, 
+		interleave(dmpi->planes[1], mpi->planes[1], cw,ch,
 			dmpi->stride[1], mpi->stride[1], chroma->interleave, luma->swap,finalize);
-		interleave(dmpi->planes[2], mpi->planes[2], cw,ch, 
+		interleave(dmpi->planes[2], mpi->planes[2], cw,ch,
 			dmpi->stride[2], mpi->stride[2], chroma->interleave, luma->swap,finalize);
 	}
 

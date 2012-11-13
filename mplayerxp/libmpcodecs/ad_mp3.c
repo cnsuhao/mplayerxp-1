@@ -89,7 +89,7 @@ enum mpg123_parms {
     MPG123_RVA,		/**< one of the RVA choices above (integer) */
     MPG123_DOWNSPEED,	/**< play a frame N times (integer) */
     MPG123_UPSPEED,	/**< play every Nth frame (integer) */
-    MPG123_START_FRAME,	/**< start with this frame (skip frames before that, integer) */ 
+    MPG123_START_FRAME,	/**< start with this frame (skip frames before that, integer) */
     MPG123_DECODE_FRAMES,/**< decode only this number of frames (integer) */
     MPG123_ICY_INTERVAL,/**< stream contains ICY metadata with this interval (integer) */
     MPG123_OUTSCALE,	/**< the scale for output samples (amplitude - integer or float according to mpg123 output format, normally integer) */

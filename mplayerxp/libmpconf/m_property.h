@@ -85,7 +85,7 @@ typedef int(*m_property_ctrl_f)(const m_option_t* prop,int action,const any_t* a
  *  \return See \ref PropertyActionsReturn.
  */
 int m_property_do(m_option_t* prop_list, const char* prop,
-                  int action, any_t* arg, any_t*ctx);
+		  int action, any_t* arg, any_t*ctx);
 
 /// Print a list of properties.
 void m_properties_print_help_list(m_option_t* list);
@@ -95,7 +95,7 @@ void m_properties_print_help_list(m_option_t* list);
  *  ${NAME} is expanded to the value of property NAME or an empty
  *  string in case of error. $(NAME:STR) expand STR only if the property
  *  NAME is available.
- * 
+ *
  *  \param prop_list An array of \ref m_option describing the available
  *                   properties.
  *  \param str The string to expand.
@@ -126,39 +126,39 @@ static inline double M_PROPERTY_CLAMP(m_option_t* prop,double val) {
 }
 /// Implement get.
 int m_property_int_ro(m_option_t* prop,int action,
-                      any_t* arg,int var);
+		      any_t* arg,int var);
 
 /// Implement set, get and step up/down.
 int m_property_int_range(m_option_t* prop,int action,
-                         any_t* arg,int* var);
+			 any_t* arg,int* var);
 
 /// Same as m_property_int_range but cycle.
 int m_property_choice(m_option_t* prop,int action,
-                      any_t* arg,int* var);
+		      any_t* arg,int* var);
 
 /// Switch betwen min and max.
 int m_property_flag(m_option_t* prop,int action,
-                    any_t* arg,int* var);
+		    any_t* arg,int* var);
 
 /// Implement get, print.
 int m_property_float_ro(m_option_t* prop,int action,
-                        any_t* arg,float var);
+			any_t* arg,float var);
 
 /// Implement set, get and step up/down
 int m_property_float_range(m_option_t* prop,int action,
-                           any_t* arg,float* var);
+			   any_t* arg,float* var);
 
 /// float with a print function which print the time in ms
 int m_property_delay(m_option_t* prop,int action,
-                     any_t* arg,float* var);
+		     any_t* arg,float* var);
 
 /// Implement get, print
 int m_property_double_ro(m_option_t* prop,int action,
-                         any_t* arg,double var);
+			 any_t* arg,double var);
 
 /// Implement print
 int m_property_time_ro(m_option_t* prop,int action,
-                       any_t* arg,double var);
+		       any_t* arg,double var);
 
 /// get/print the string
 int m_property_string_ro(m_option_t* prop,int action,any_t* arg, char* str);

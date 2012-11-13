@@ -114,7 +114,7 @@ static void open_registry(void)
 		regs[i].value=(char*)mp_malloc(regs[i].len+1);
 		if(regs[i].value==0)
 		{
-		        mp_free(regs[i].name);
+			mp_free(regs[i].name);
 			reg_size=i+1;
 			goto error;
 		}
@@ -141,7 +141,7 @@ static void save_registry(void)
 	write(fd, &reg_size, 4);
 	for(i=0; i<reg_size; i++)
 	{
-	        unsigned len=strlen(regs[i].name);
+		unsigned len=strlen(regs[i].name);
 		write(fd, &regs[i].type, 4);
 		write(fd, &len, 4);
 		write(fd, regs[i].name, len);
@@ -157,15 +157,15 @@ void free_registry(void)
     while (t)
     {
 	reg_handle_t* f = t;
-        if (t->name)
+	if (t->name)
 	    mp_free(t->name);
 	t=t->prev;
-        mp_free(f);
+	mp_free(f);
     }
     head = 0;
     if (regs)
     {
-        int i;
+	int i;
 	for(i=0; i<reg_size; i++)
 	{
 	    mp_free(regs[i].name);
@@ -246,7 +246,7 @@ static char* build_keyname(long key, const char* subkey)
 {
 	char* full_name;
 	reg_handle_t* t;
- 	if((t=find_handle(key))==0)
+	if((t=find_handle(key))==0)
 	{
 		TRACE("Invalid key\n");
 		return NULL;
@@ -293,7 +293,7 @@ static struct reg_value* insert_reg_value(int handle, const char* name, int type
 	memcpy(v->value, value, len);
 	v->name=(char*)mp_malloc(strlen(fullname)+1);
 	strcpy(v->name, fullname);
-        mp_free(fullname);
+	mp_free(fullname);
 	save_registry();
 	return v;
 }
@@ -308,19 +308,19 @@ static void init_registry(void)
 	localregpathname = regpathname;
 #if 0
 	// regpathname is an external pointer
-        //
+	//
 	// registry.c is holding it's own internal pointer
 	// localregpathname  - which is being allocate/deallocated
 
 	if (localregpathname == 0)
 	{
-            const char* pthn = regpathname;
+	    const char* pthn = regpathname;
 	    if (!regpathname)
 	    {
 		// avifile - for now reading data from user's home
 		struct passwd* pwent;
 		pwent = getpwuid(geteuid());
-                pthn = pwent->pw_dir;
+		pthn = pwent->pw_dir;
 	    }
 
 	    localregpathname = (char*)mp_malloc(strlen(pthn)+20);
@@ -337,7 +337,7 @@ static reg_handle_t* find_handle_2(long key, const char* subkey)
 {
 	char* full_name;
 	reg_handle_t* t;
- 	if((t=find_handle(key))==0)
+	if((t=find_handle(key))==0)
 	{
 		TRACE("Invalid key\n");
 		return (reg_handle_t*)-1;
@@ -361,7 +361,7 @@ long __stdcall RegOpenKeyExA(long key, const char* subkey, long reserved, long a
     TRACE("Opening key %s\n", subkey);
 
     if(!regs)
-        init_registry()
+	init_registry()
 ;
 /*	t=find_handle_2(key, subkey);
 
@@ -373,7 +373,7 @@ long __stdcall RegOpenKeyExA(long key, const char* subkey, long reserved, long a
 */
     full_name=build_keyname(key, subkey);
     if(!full_name)
-        return -1;
+	return -1;
     TRACE("Opening key Fullname %s\n", full_name);
     v=find_value_by_name(full_name);
 

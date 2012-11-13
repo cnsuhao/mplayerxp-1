@@ -45,13 +45,13 @@ LIBVO_EXTERN( dga )
 static vo_info_t vo_info =
 {
 #ifdef HAVE_DGA2
-        "X11/DGA ( Direct Graphic Access V2.0 )",
+	"X11/DGA ( Direct Graphic Access V2.0 )",
 #else
-        "X11/DGA ( Direct Graphic Access V1.0+XF86VidModeExtension )",
+	"X11/DGA ( Direct Graphic Access V1.0+XF86VidModeExtension )",
 #endif
-        "dga",
-        "Andreas Ackermann <acki@acki-netz.de>, Nickols_K <nickols_k@mail.ru>",
-        ""
+	"dga",
+	"Andreas Ackermann <acki@acki-netz.de>, Nickols_K <nickols_k@mail.ru>",
+	""
 };
 
 typedef struct priv_s {
@@ -92,7 +92,7 @@ typedef struct priv_s {
 #define VO_DGA_INVALID_RES 100000
 
 #define HW_MODE (vo_dga_modes[priv->hw_mode])
-#define SRC_MODE (vo_dga_modes[priv->src_mode]) 
+#define SRC_MODE (vo_dga_modes[priv->src_mode])
 
 struct vd_modes {
   unsigned vdm_mplayer_depth;
@@ -116,7 +116,7 @@ struct vd_modes {
 static struct vd_modes vo_dga_modes[] = {
   // these entries describe HW modes
   // however, we use the same entries to tell mplayer what we support
-  // so the last two values describe, which HW mode to use and which conversion 
+  // so the last two values describe, which HW mode to use and which conversion
   // function to use for a mode that is not supported by HW
 
   {  0,  0,  0,  0, 0,          0,          0, 0,      0, 0},
@@ -130,7 +130,7 @@ static unsigned vo_dga_mode_num = sizeof(vo_dga_modes)/sizeof(struct vd_modes);
 
 // enable a HW mode (by description)
 static int __FASTCALL__ vd_EnableMode( unsigned depth, unsigned bitspp,
-                    int rmask, int gmask, int bmask){
+		    int rmask, int gmask, int bmask){
     unsigned i;
     for(i=1; i<vo_dga_mode_num; i++){
 	if(vo_dga_modes[i].vdm_depth == depth &&
@@ -199,10 +199,10 @@ static char * __FASTCALL__ vd_GetModeString(int _index){
     vo_dga_modes[_index].vdm_rmask,
     vo_dga_modes[_index].vdm_gmask,
     vo_dga_modes[_index].vdm_bmask,
-    vo_dga_modes[_index].vdm_supported ? 
-    (vo_dga_modes[_index].vdm_conversion_func == VDM_CONV_NATIVE ? 
-        "native (fast),    " : "conversion (slow),") :
-        "not supported :-( ",
+    vo_dga_modes[_index].vdm_supported ?
+    (vo_dga_modes[_index].vdm_conversion_func == VDM_CONV_NATIVE ?
+	"native (fast),    " : "conversion (slow),") :
+	"not supported :-( ",
     vo_dga_modes[_index].vdm_mplayer_depth);
   return stringbuf;
 }
@@ -210,12 +210,12 @@ static char * __FASTCALL__ vd_GetModeString(int _index){
 
 //---------------------------------------------------------
 
-// quick & dirty - for debugging only 
+// quick & dirty - for debugging only
 
 #if 0
 static void __FASTCALL__ fillblock(char *strt, int yoff, int lines, int val){
   char *i;
-  for(i = strt + yoff * priv->width *HW_MODE.vdm_bytespp; 
+  for(i = strt + yoff * priv->width *HW_MODE.vdm_bytespp;
       i< strt + (lines+yoff) * priv->width *HW_MODE.vdm_bytespp;  ){
     *i++ = val;
   }
@@ -241,7 +241,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo, unsigned idx )
 		    XDGAFlipRetrace);
 #else
     XF86DGASetViewPort (vo->mDisplay, XDefaultScreen(vo->mDisplay),
-		        0, priv->dbf_y_offset[idx]);
+			0, priv->dbf_y_offset[idx]);
 #endif
 }
 
@@ -362,7 +362,7 @@ static void uninit(vo_data_t*vo)
 	}
 #else
 	XF86DGADirectVideo (vo->mDisplay, XDefaultScreen(vo->mDisplay), 0);
-	// first disable DirectVideo and then switch mode back!	
+	// first disable DirectVideo and then switch mode back!
 #ifdef HAVE_XF86VM
 	if (priv->vidmodes != NULL ){
 	    int screen;
@@ -429,7 +429,7 @@ static int __FASTCALL__ dga2_find_best_mode(vo_data_t*vo,unsigned wanted_width,u
 	return -1;
     }
 
-    MSG_V("vo_dga: DGA 2.0 available! Can switch resolution AND depth!\n");	
+    MSG_V("vo_dga: DGA 2.0 available! Can switch resolution AND depth!\n");
 
     for (i=0; i<modecount; i++) {
 	MSG_V("vo_dga: Trying hardware mode (%s) %ux%u@(depth %2d, bitspp %2d) *%3.2fHz [stride=%u]\n"
@@ -492,7 +492,7 @@ static int __FASTCALL__ dga2_select_mode(vo_data_t*vo, int dga_modenum )
 	priv->base = dgadevice->data;
 	XFree(dgadevice);
     }
-    else XF86DGAGetVideo (vo->mDisplay, XDefaultScreen(vo->mDisplay), 
+    else XF86DGAGetVideo (vo->mDisplay, XDefaultScreen(vo->mDisplay),
 		   (char **)&priv->base, &priv->width, &bank, &ram_size);
     XDGASetViewport (vo->mDisplay, XDefaultScreen(vo->mDisplay), 0, 0, XDGAFlipRetrace);
     return 0;
@@ -566,8 +566,8 @@ static void __FASTCALL__ xf86vm_select_mode(vo_data_t*vo, int dga_modenum )
 #endif
 
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,uint32_t height,
-                      uint32_t d_width,uint32_t d_height,
-                      uint32_t flags,char *title,uint32_t format)
+		      uint32_t d_width,uint32_t d_height,
+		      uint32_t flags,char *title,uint32_t format)
 {
     priv_t*priv=(priv_t*)vo->priv;
     unsigned wanted_width, wanted_height;
@@ -631,7 +631,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,uint32_t height,
 	    "        Thus, resolution switching is NOT possible.\n");
 #endif
 #endif
-    MSG_V("vo_dga: Video parameters by codec: %3d x %3d, depth %2d, bitspp %2d.\n", 
+    MSG_V("vo_dga: Video parameters by codec: %3d x %3d, depth %2d, bitspp %2d.\n",
 	    width, height,
 	    SRC_MODE.vdm_depth,
 	    SRC_MODE.vdm_bitspp);
@@ -699,8 +699,8 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,uint32_t height,
 	default: priv->dstFourcc = IMGFMT_BGR16; break;
     }
 
-    MSG_DBG2( "vo_dga: bytes/line: %d, screen res: %dx%d, depth: %d, base: %08x, bpp: %d\n", 
-	priv->width, priv->vp_width, 
+    MSG_DBG2( "vo_dga: bytes/line: %d, screen res: %dx%d, depth: %d, base: %08x, bpp: %d\n",
+	priv->width, priv->vp_width,
 	priv->vp_height, HW_MODE.vdm_bytespp, priv->base,
 	HW_MODE.vdm_bitspp);
 

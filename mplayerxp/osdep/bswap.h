@@ -25,8 +25,8 @@ static inline uint16_t MAKE_TWOCC(uint8_t ch0,uint8_t ch1) {
 #if defined(__i386__)
 static inline uint16_t bswap_16(uint16_t x) {
   __asm("xchgb %b0,%h0"	:
-        "=q" (x)	:
-        "0" (x));
+	"=q" (x)	:
+	"0" (x));
     return x;
 }
 
@@ -46,7 +46,7 @@ static inline uint32_t bswap_32(uint32_t x) {
 
 static inline uint64_t bswap_64(uint64_t x) {
   register union { __extension__ unsigned long long int __ll;
-          unsigned long int __l[2]; } __x;
+	  unsigned long int __l[2]; } __x;
   asm("xchgl	%0,%1":
       "=r"(__x.__l[0]),"=r"(__x.__l[1]):
       "0"(bswap_32((unsigned long)x)),"1"(bswap_32((unsigned long)(x>>32))));

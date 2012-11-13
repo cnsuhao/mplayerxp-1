@@ -28,12 +28,12 @@ raw_file* load_raw(char *name,int verbose){
     if(raw->c>256) { mp_free(raw); fclose(f); return NULL; }  // too many colors!?
     MSG_V("RAW: %s  %d x %d, %d colors\n",name,raw->w,raw->h,raw->c);
     if(raw->c){
-        raw->pal=mp_malloc(raw->c*3);
-        fread(raw->pal,3,raw->c,f);
-        bpp=1;
+	raw->pal=mp_malloc(raw->c*3);
+	fread(raw->pal,3,raw->c,f);
+	bpp=1;
     } else {
-        raw->pal=NULL;
-        bpp=3;
+	raw->pal=NULL;
+	bpp=3;
     }
     raw->bmp=mp_malloc(raw->h*raw->w*bpp);
     fread(raw->bmp,raw->h*raw->w*bpp,1,f);
@@ -88,18 +88,18 @@ while(fgets(sor,1020,f)){
       int c=*s++;
       if(c==0 || c==13 || c==10) break;
       if(!id){
-        if(c==39 || c==34){ id=c;continue;} // idezojel
-        if(c==';' || c=='#') break;
-        if(c==9) c=' ';
-        if(c==' '){
-          if(ec==' ') continue;
-          *d=0; ++d;
-          p[pdb]=(char *)d;++pdb;
-          if(pdb>=8) break;
-          continue;
-        }
+	if(c==39 || c==34){ id=c;continue;} // idezojel
+	if(c==';' || c=='#') break;
+	if(c==9) c=' ';
+	if(c==' '){
+	  if(ec==' ') continue;
+	  *d=0; ++d;
+	  p[pdb]=(char *)d;++pdb;
+	  if(pdb>=8) break;
+	  continue;
+	}
       } else {
-        if(id==c){ id=0;continue;} // idezojel
+	if(id==c){ id=0;continue;} // idezojel
 
       }
       *d=c;d++;
@@ -111,13 +111,13 @@ while(fgets(sor,1020,f)){
   if(pdb==1 && p[0][0]=='['){
       int len=strlen(p[0]);
       if(len && len<63 && p[0][len-1]==']'){
-        strcpy(section,p[0]);
-        MSG_V("font: Reading section: %s\n",section);
-        if(strcmp(section,"[files]")==0){
-            ++fontdb;
-            if(fontdb>=16){ MSG_ERR("font: Too many bitmaps defined!\n");return NULL;}
-        }
-        continue;
+	strcpy(section,p[0]);
+	MSG_V("font: Reading section: %s\n",section);
+	if(strcmp(section,"[files]")==0){
+	    ++fontdb;
+	    if(fontdb>=16){ MSG_ERR("font: Too many bitmaps defined!\n");return NULL;}
+	}
+	continue;
       }
   }
 
@@ -125,8 +125,8 @@ while(fgets(sor,1020,f)){
       if(pdb==1){
 	  if (desc->fpath)
 	     mp_free (desc->fpath); // release previously allocated memory
-          desc->fpath=mp_strdup(p[0]);
-          continue;
+	  desc->fpath=mp_strdup(p[0]);
+	  continue;
       }
   } else
 
@@ -138,9 +138,9 @@ while(fgets(sor,1020,f)){
 
 	  snprintf(cp,strlen(desc->fpath)+strlen(p[1])+2,"%s/%s",
 		desc->fpath,p[1]);
-          if(!((desc->pic_a[fontdb]=load_raw(cp,verbose)))){
+	  if(!((desc->pic_a[fontdb]=load_raw(cp,verbose)))){
 		mp_free(cp);
-		if (!(cp=mp_malloc(strlen(default_dir)+strlen(p[1])+2))) 
+		if (!(cp=mp_malloc(strlen(default_dir)+strlen(p[1])+2)))
 		   return NULL;
 		snprintf(cp,strlen(default_dir)+strlen(p[1])+2,"%s/%s",
 			 default_dir,p[1]);
@@ -149,9 +149,9 @@ while(fgets(sor,1020,f)){
 		   mp_free(cp);
 		   return NULL;
 		}
-          }
+	  }
 	  mp_free(cp);
-          continue;
+	  continue;
       }
       if(pdb==2 && strcmp(p[0],"bitmap")==0){
 	  char *cp;
@@ -159,9 +159,9 @@ while(fgets(sor,1020,f)){
 
 	  snprintf(cp,strlen(desc->fpath)+strlen(p[1])+2,"%s/%s",
 		desc->fpath,p[1]);
-          if(!((desc->pic_b[fontdb]=load_raw(cp,verbose)))){
+	  if(!((desc->pic_b[fontdb]=load_raw(cp,verbose)))){
 		mp_free(cp);
-		if (!(cp=mp_malloc(strlen(default_dir)+strlen(p[1])+2))) 
+		if (!(cp=mp_malloc(strlen(default_dir)+strlen(p[1])+2)))
 		   return NULL;
 		snprintf(cp,strlen(default_dir)+strlen(p[1])+2,"%s/%s",
 			 default_dir,p[1]);
@@ -170,51 +170,51 @@ while(fgets(sor,1020,f)){
 		   mp_free(cp);
 		   return NULL;
 		}
-          }
+	  }
 	  mp_free(cp);
-          continue;
+	  continue;
       }
   } else
 
   if(strcmp(section,"[info]")==0){
       if(pdb==2 && strcmp(p[0],"name")==0){
-          desc->name=mp_strdup(p[1]);
-          continue;
+	  desc->name=mp_strdup(p[1]);
+	  continue;
       }
       if(pdb==2 && strcmp(p[0],"descversion")==0){
-          version=atoi(p[1]);
-          continue;
+	  version=atoi(p[1]);
+	  continue;
       }
       if(pdb==2 && strcmp(p[0],"spacewidth")==0){
-          desc->spacewidth=atoi(p[1]);
-          continue;
+	  desc->spacewidth=atoi(p[1]);
+	  continue;
       }
       if(pdb==2 && strcmp(p[0],"charspace")==0){
-          desc->charspace=atoi(p[1]);
-          continue;
+	  desc->charspace=atoi(p[1]);
+	  continue;
       }
       if(pdb==2 && strcmp(p[0],"height")==0){
-          desc->height=atoi(p[1]);
-          continue;
+	  desc->height=atoi(p[1]);
+	  continue;
       }
   } else
 
   if(strcmp(section,"[characters]")==0){
       if(pdb==3){
-          int chr=p[0][0];
-          int start=atoi(p[1]);
-          int end=atoi(p[2]);
-          if(sub_data.unicode && (chr>=0x80)) chr=(chr<<8)+p[0][1];
-          else if(strlen(p[0])!=1) chr=strtol(p[0],NULL,0);
-          if(end<start) {
-              MSG_ERR("error in font desc: end<start for char '%c'\n",chr);
-          } else {
-              desc->start[chr]=start;
-              desc->width[chr]=end-start+1;
-              desc->font[chr]=fontdb;
-              ++chardb;
-          }
-          continue;
+	  int chr=p[0][0];
+	  int start=atoi(p[1]);
+	  int end=atoi(p[2]);
+	  if(sub_data.unicode && (chr>=0x80)) chr=(chr<<8)+p[0][1];
+	  else if(strlen(p[0])!=1) chr=strtol(p[0],NULL,0);
+	  if(end<start) {
+	      MSG_ERR("error in font desc: end<start for char '%c'\n",chr);
+	  } else {
+	      desc->start[chr]=start;
+	      desc->width[chr]=end-start+1;
+	      desc->font[chr]=fontdb;
+	      ++chardb;
+	  }
+	  continue;
       }
   }
   MSG_ERR("Syntax error in font desc: %s\n",sor);
@@ -224,19 +224,19 @@ fclose(f);
 
 for(i=0;i<=fontdb;i++){
     if(!desc->pic_a[i] || !desc->pic_b[i]){
-        MSG_ERR("font: Missing bitmap(s) for sub-font #%d\n",i);
-        return NULL;
+	MSG_ERR("font: Missing bitmap(s) for sub-font #%d\n",i);
+	return NULL;
     }
     //if(factor!=1.0f)
     {
-        // re-sample alpha
-        int f=factor*256.0f;
-        int size=desc->pic_a[i]->w*desc->pic_a[i]->h;
-        int j;
-        MSG_V("font: resampling alpha by factor %5.3f (%d) ",factor,f);fflush(stdout);
-        for(j=0;j<size;j++){
-            int x=desc->pic_a[i]->bmp[j];	// alpha
-            int y=desc->pic_b[i]->bmp[j];	// bitmap
+	// re-sample alpha
+	int f=factor*256.0f;
+	int size=desc->pic_a[i]->w*desc->pic_a[i]->h;
+	int j;
+	MSG_V("font: resampling alpha by factor %5.3f (%d) ",factor,f);fflush(stdout);
+	for(j=0;j<size;j++){
+	    int x=desc->pic_a[i]->bmp[j];	// alpha
+	    int y=desc->pic_b[i]->bmp[j];	// bitmap
 
 #ifdef FAST_OSD
 	    x=(x<(255-f))?0:1;
@@ -246,14 +246,14 @@ for(i=0;i<=fontdb;i++){
 
 	    if(x+y>255) x=255-y; // to avoid overflows
 
-            if(x<1) x=1; else
-            if(x>=252) x=0;
+	    if(x<1) x=1; else
+	    if(x>=252) x=0;
 #endif
 
-            desc->pic_a[i]->bmp[j]=x;
+	    desc->pic_a[i]->bmp[j]=x;
 //            desc->pic_b[i]->bmp[j]=0; // hack
-        }
-        MSG_V("DONE!\n");
+	}
+	MSG_V("DONE!\n");
     }
     if(!desc->height) desc->height=desc->pic_a[i]->h;
 }

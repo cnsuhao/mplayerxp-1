@@ -17,7 +17,7 @@
 //===========================================================================//
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
 
     sws_rgb2rgb_init();

@@ -292,8 +292,8 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
       if(mp_conf.sub_fps==0) mp_conf.sub_fps=sh_video->fps;
       MP_UNIT("find_sub");
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-         find_sub(mp_data->subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
-         sub_last_pts = pts;
+	 find_sub(mp_data->subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
+	 sub_last_pts = pts;
       }
       MP_UNIT(NULL);
   }

@@ -1,7 +1,7 @@
 // MPlayerXP Turkish Translation
 // Synced with help_mp-en.h r26067
 // Translated by: Tuncer Altay, tunceraltay (at) yahoo.com and Kadir T. İri, centurium (at) gmx.net
-// Additions by Mehmet KÖSE <mehmetkse@gmail.com> 
+// Additions by Mehmet KÖSE <mehmetkse@gmail.com>
 // ~/Turkey/Ankara/Ankara University/Computer Engineering Department
 // UTF-8
 #ifdef HELP_MP_DEFINE_STATIC

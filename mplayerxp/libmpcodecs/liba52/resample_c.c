@@ -188,7 +188,7 @@ static any_t* a52_resample_C(a52_state_t * state,int flags, int ch){
 
 typedef float real_t;
 
-static inline real_t normalize_f (float i) 
+static inline real_t normalize_f (float i)
 {
     return  (i-bias)/level;
 }

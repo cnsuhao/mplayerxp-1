@@ -52,8 +52,8 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 	    }
 	    case 'V':
 	    {
-#ifdef KEEP_BUFFER		
-		if (!previous_buffer) 
+#ifdef KEEP_BUFFER
+		if (!previous_buffer)
 			previous_buffer = ( unsigned char * ) mp_malloc ( width * height + ( width * height ) / 2 );
 #endif
 
@@ -61,7 +61,7 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 		    (encodedh->comptype == '3')) && !is_lzo_inited)
 		{
 		    /* frame using lzo, init lzo first if not inited */
-		    if ( lzo_init() != LZO_E_OK ) 
+		    if ( lzo_init() != LZO_E_OK )
 			{
 			fprintf ( stderr, "%s\n", "lzo_init() failed !!!" );
 			return;
@@ -78,7 +78,7 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 			RTjpeg_decompressYUV420 ( ( __s8 * ) encoded + 12, decoded );
 			break;
 		    case '2': /* RTJpeg with LZO */
-			if (!buffer) 
+			if (!buffer)
 			    buffer = ( unsigned char * ) mp_malloc ( width * height + ( width * height ) / 2 );
 			if (!buffer)
 			{
@@ -86,7 +86,7 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 			    break;
 			}
 			r = lzo1x_decompress ( encoded + 12, encodedh->packetlength, buffer, &out_len, NULL );
-			if ( r != LZO_E_OK ) 
+			if ( r != LZO_E_OK )
 			{
 				printf ( "Error decompressing\n" );
 				break;
@@ -95,7 +95,7 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 			break;
 		    case '3': /* raw YUV420 with LZO */
 			r = lzo1x_decompress ( encoded + 12, encodedh->packetlength, decoded, &out_len, NULL );
-			if ( r != LZO_E_OK ) 
+			if ( r != LZO_E_OK )
 			{
 				printf ( "Error decompressing\n" );
 				break;

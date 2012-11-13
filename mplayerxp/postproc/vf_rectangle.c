@@ -80,17 +80,17 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t* mpi){
 	if(finalize) {
 	stream_copy_pic(dmpi->planes[1],mpi->planes[1],
 		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-	           dmpi->stride[1],mpi->stride[1]);
+		   dmpi->stride[1],mpi->stride[1]);
 	stream_copy_pic(dmpi->planes[2],mpi->planes[2],
 		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-	           dmpi->stride[2],mpi->stride[2]);
+		   dmpi->stride[2],mpi->stride[2]);
 	} else {
 	memcpy_pic(dmpi->planes[1],mpi->planes[1],
 		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-	           dmpi->stride[1],mpi->stride[1]);
+		   dmpi->stride[1],mpi->stride[1]);
 	memcpy_pic(dmpi->planes[2],mpi->planes[2],
 		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-	           dmpi->stride[2],mpi->stride[2]);
+		   dmpi->stride[2],mpi->stride[2]);
 	}
     }
 

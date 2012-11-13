@@ -1,7 +1,7 @@
 #ifndef VIDEOOUT_MJPEG_H_INCLUDED
 #define VIDEOOUT_MJPEG_H_INCLUDED 1
 /* These are the MJPEG API extensions for the Video4Linux API,
-   first introduced by the Iomega Buz driver by Rainer Johanni 
+   first introduced by the Iomega Buz driver by Rainer Johanni
    <rainer@johanni.de>
 */
 enum {
@@ -11,7 +11,7 @@ enum {
     JPEG_MARKER_COM=(1<<6), /* Comment segment */
     JPEG_MARKER_APP=(1<<7)  /* App segment, driver will allways use APP0 */
 };
-/* This is identical with the mgavideo internal params struct, 
+/* This is identical with the mgavideo internal params struct,
    please tell me if you change this struct here ! <gz@lysator.liu.se) */
 struct mjpeg_params
 {
@@ -24,10 +24,10 @@ struct mjpeg_params
    int input;                    /* Input channel: 0 = Composite, 1 = S-VHS */
    int norm;                     /* Norm: VIDEO_MODE_PAL or VIDEO_MODE_NTSC */
    int decimation;               /* decimation of captured video,
-                                    enlargement of video played back.
-                                    Valid values are 1, 2, 4 or 0.
-                                    0 is a special value where the user
-                                    has full control over video scaling */
+				    enlargement of video played back.
+				    Valid values are 1, 2, 4 or 0.
+				    0 is a special value where the user
+				    has full control over video scaling */
 
    /* The following parameters only have to be set if decimation==0,
       for other values of decimation they provide the data how the image is captured */
@@ -35,28 +35,28 @@ struct mjpeg_params
    int HorDcm;                    /* Horizontal decimation: 1, 2 or 4 */
    int VerDcm;                    /* Vertical decimation: 1 or 2 */
    int TmpDcm;                    /* Temporal decimation: 1 or 2,
-                                     if TmpDcm==2 in capture every second frame is dropped,
-                                     in playback every frame is played twice */
+				     if TmpDcm==2 in capture every second frame is dropped,
+				     in playback every frame is played twice */
    int field_per_buff;            /* Number of fields per buffer: 1 or 2 */
    int img_x;                     /* start of image in x direction */
    int img_y;                     /* start of image in y direction */
    int img_width;                 /* image width BEFORE decimation,
-                                     must be a multiple of HorDcm*16 */
+				     must be a multiple of HorDcm*16 */
    int img_height;                /* image height BEFORE decimation,
-                                     must be a multiple of VerDcm*8 */
+				     must be a multiple of VerDcm*8 */
 
    /* --- End of parameters for decimation==0 only --- */
 
    /* JPEG control parameters */
 
    int  quality;                  /* Measure for quality of compressed images.
-                                     Scales linearly with the size of the compressed images.
-                                     Must be beetween 0 and 100, 100 is a compression
-                                     ratio of 1:4 */
+				     Scales linearly with the size of the compressed images.
+				     Must be beetween 0 and 100, 100 is a compression
+				     ratio of 1:4 */
 
    int  odd_even;                 /* Which field should come first ???
-                                     This is more aptly named "top_first",
-                                     i.e. (odd_even==1) --> top-field-first */
+				     This is more aptly named "top_first",
+				     i.e. (odd_even==1) --> top-field-first */
 
    int  APPn;                     /* Number of APP segment to be written, must be 0..15 */
    int  APP_len;                  /* Length of data in JPEG APPn segment */
@@ -66,18 +66,18 @@ struct mjpeg_params
    char COM_data[60];             /* Data in JPEG COM segment */
 
    unsigned long jpeg_markers;    /* Which markers should go into the JPEG output.
-                                     Unless you exactly know what you do, leave them untouched.
-                                     Inluding less markers will make the resulting code
-                                     smaller, but there will be fewer aplications
-                                     which can read it.
-                                     The presence of the APP and COM marker is
-                                     influenced by APP0_len and COM_len ONLY! */
+				     Unless you exactly know what you do, leave them untouched.
+				     Inluding less markers will make the resulting code
+				     smaller, but there will be fewer aplications
+				     which can read it.
+				     The presence of the APP and COM marker is
+				     influenced by APP0_len and COM_len ONLY! */
    int  VFIFO_FB;                 /* Flag for enabling Video Fifo Feedback.
-                                     If this flag is turned on and JPEG decompressing
-                                     is going to the screen, the decompress process
-                                     is stopped every time the Video Fifo is full.
-                                     This enables a smooth decompress to the screen
-                                     but the video output signal will get scrambled */
+				     If this flag is turned on and JPEG decompressing
+				     is going to the screen, the decompress process
+				     is stopped every time the Video Fifo is full.
+				     This enables a smooth decompress to the screen
+				     but the video output signal will get scrambled */
 
    /* Misc */
 

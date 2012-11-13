@@ -114,7 +114,7 @@ static void __FASTCALL__ rotate(unsigned char* dst,unsigned char* src,int dststr
 //===========================================================================//
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
     vf->priv->dw=width;
     vf->priv->dh=height;
@@ -142,7 +142,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     } else {
 	rotate(dmpi->planes[0],mpi->planes[0],
 	       dmpi->stride[0],mpi->stride[0],
-	       dmpi->w,dmpi->h,dmpi->bpp>>3,vf->priv->direction);	
+	       dmpi->w,dmpi->h,dmpi->bpp>>3,vf->priv->direction);
 	dmpi->planes[1] = mpi->planes[1]; // passthrough rgb8 palette
     }
     return vf_next_put_slice(vf,dmpi);

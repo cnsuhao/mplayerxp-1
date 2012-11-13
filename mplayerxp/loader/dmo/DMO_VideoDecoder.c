@@ -25,7 +25,7 @@
 struct _DMO_VideoDecoder
 {
     IVideoDecoder iv;
-    
+
     DMO_Filter* m_pDMO_Filter;
     AM_MEDIA_TYPE m_sOurType, m_sDestType;
     VIDEOINFOHEADER* m_sVhdr;
@@ -76,7 +76,7 @@ struct _ct {
     int cap;
     const char *cname;
 };
-            
+
 static ct check[] = {
     { fccI420, 12, &MEDIASUBTYPE_I420, CAP_I420, "I420" },
     { fccYV12, 12, &MEDIASUBTYPE_YV12, CAP_YV12, "IV12" },
@@ -113,23 +113,23 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
     //m_obh.biSize = sizeof(m_obh);
     /*try*/
     {
-        unsigned int bihs;
-        
+	unsigned int bihs;
+
 	bihs = (format->biSize < (int) sizeof(BITMAPINFOHEADER)) ?
 	    sizeof(BITMAPINFOHEADER) : format->biSize;
-     
-        this->iv.m_bh = (BITMAPINFOHEADER*)mp_malloc(bihs);
-        memcpy(this->iv.m_bh, format, bihs);
 
-        this->iv.m_State = STOP;
-        //this->iv.m_pFrame = 0;
-        this->iv.m_Mode = DIRECT;
-        this->iv.m_iDecpos = 0;
-        this->iv.m_iPlaypos = -1;
-        this->iv.m_fQuality = 0.0f;
-        this->iv.m_bCapable16b = true;
-                
-        bihs += sizeof(VIDEOINFOHEADER) - sizeof(BITMAPINFOHEADER);
+	this->iv.m_bh = (BITMAPINFOHEADER*)mp_malloc(bihs);
+	memcpy(this->iv.m_bh, format, bihs);
+
+	this->iv.m_State = STOP;
+	//this->iv.m_pFrame = 0;
+	this->iv.m_Mode = DIRECT;
+	this->iv.m_iDecpos = 0;
+	this->iv.m_iPlaypos = -1;
+	this->iv.m_fQuality = 0.0f;
+	this->iv.m_bCapable16b = true;
+
+	bihs += sizeof(VIDEOINFOHEADER) - sizeof(BITMAPINFOHEADER);
 	this->m_sVhdr = (VIDEOINFOHEADER*)mp_malloc(bihs);
 	memset(this->m_sVhdr, 0, bihs);
 	memcpy(&this->m_sVhdr->bmiHeader, this->iv.m_bh, this->iv.m_bh->biSize);
@@ -142,13 +142,13 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
 
 	this->m_sOurType.majortype = MEDIATYPE_Video;
 	this->m_sOurType.subtype = MEDIATYPE_Video;
-        this->m_sOurType.subtype.f1 = this->m_sVhdr->bmiHeader.biCompression;
+	this->m_sOurType.subtype.f1 = this->m_sVhdr->bmiHeader.biCompression;
 	this->m_sOurType.formattype = FORMAT_VideoInfo;
-        this->m_sOurType.bFixedSizeSamples = false;
+	this->m_sOurType.bFixedSizeSamples = false;
 	this->m_sOurType.bTemporalCompression = true;
 	this->m_sOurType.pUnk = 0;
-        this->m_sOurType.cbFormat = bihs;
-        this->m_sOurType.pbFormat = (char*)this->m_sVhdr;
+	this->m_sOurType.cbFormat = bihs;
+	this->m_sOurType.pbFormat = (char*)this->m_sVhdr;
 
 	this->m_sVhdr2 = (VIDEOINFOHEADER*)(mp_malloc(sizeof(VIDEOINFOHEADER)+12));
 	memcpy(this->m_sVhdr2, this->m_sVhdr, sizeof(VIDEOINFOHEADER));
@@ -172,20 +172,20 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
 	this->m_sDestType.pUnk = 0;
 	this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
 	this->m_sDestType.pbFormat = (char*)this->m_sVhdr2;
-        
-        memset(&this->iv.m_obh, 0, sizeof(this->iv.m_obh));
+
+	memset(&this->iv.m_obh, 0, sizeof(this->iv.m_obh));
 	memcpy(&this->iv.m_obh, this->iv.m_bh, sizeof(this->iv.m_obh) < (unsigned) this->iv.m_bh->biSize
 	       ? sizeof(this->iv.m_obh) : (unsigned) this->iv.m_bh->biSize);
 	this->iv.m_obh.biBitCount=24;
-        this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
-        this->iv.m_obh.biCompression = 0;	//BI_RGB
-        //this->iv.m_obh.biHeight = labs(this->iv.m_obh.biHeight);
-        this->iv.m_obh.biSizeImage = labs(this->iv.m_obh.biWidth * this->iv.m_obh.biHeight)
-                              * ((this->iv.m_obh.biBitCount + 7) / 8);
+	this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
+	this->iv.m_obh.biCompression = 0;	//BI_RGB
+	//this->iv.m_obh.biHeight = labs(this->iv.m_obh.biHeight);
+	this->iv.m_obh.biSizeImage = labs(this->iv.m_obh.biWidth * this->iv.m_obh.biHeight)
+			      * ((this->iv.m_obh.biBitCount + 7) / 8);
 
 
 	this->m_pDMO_Filter = DMO_FilterCreate(dllname, guid, &this->m_sOurType, &this->m_sDestType);
-	
+
 	if (!this->m_pDMO_Filter)
 	{
 	    printf("Failed to create DMO filter\n");
@@ -209,7 +209,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
 	    }
 	}
 
-        memcpy( &this->iv.m_decoder, &this->iv.m_obh, sizeof(this->iv.m_obh) );
+	memcpy( &this->iv.m_decoder, &this->iv.m_obh, sizeof(this->iv.m_obh) );
 
 	switch (this->iv.m_bh->biCompression)
 	{
@@ -230,7 +230,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
 	    break;
 #endif
 	default:
-              
+
 	    this->m_Caps = CAP_NONE;
 
 	    printf("Decoder supports the following formats: ");
@@ -264,9 +264,9 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
     }
     /*catch (FatalError& error)
     {
-        delete[] m_sVhdr;
+	delete[] m_sVhdr;
 	delete[] m_sVhdr2;
-        delete m_pDMO_Filter;
+	delete m_pDMO_Filter;
 	throw;
     }*/
     return this;
@@ -288,7 +288,7 @@ void DMO_VideoDecoder_StartInternal(DMO_VideoDecoder *this)
     Debug printf("DMO_VideoDecoder_StartInternal\n");
     //cout << "DSSTART" << endl;
     this->m_pDMO_Filter->Start(this->m_pDMO_Filter);
-    
+
     props.cBuffers = 1;
     props.cbBuffer = this->m_sDestType.lSampleSize;
 
@@ -296,7 +296,7 @@ void DMO_VideoDecoder_StartInternal(DMO_VideoDecoder *this)
     props.cbPrefix = 0;
     this->m_pDMO_Filter->m_pAll->vt->SetProperties(this->m_pDMO_Filter->m_pAll, &props, &props1);
     this->m_pDMO_Filter->m_pAll->vt->Commit(this->m_pDMO_Filter->m_pAll);
-#endif    
+#endif
     this->iv.m_State = START;
 }
 
@@ -315,7 +315,7 @@ int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const any_t* src, in
     DMO_OUTPUT_DATA_BUFFER db;
     CMediaBuffer* bufferin;
 //+    uint8_t* imdata = dest ? dest->Data() : 0;
-    
+
     Debug printf("DMO_VideoDecoder_DecodeInternal(%p,%p,%d,%d,%p)\n",this,src,size,is_keyframe,imdata);
 
 //    this->m_pDMO_Filter->m_pAll->vt->GetBuffer(this->m_pDMO_Filter->m_pAll, &sample, 0, 0, 0);
@@ -337,7 +337,7 @@ int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const any_t* src, in
 
     if (result != S_OK)
     {
-        /* something for process */
+	/* something for process */
 	if (result != S_FALSE)
 	    printf("ProcessInputError  r:0x%x=%d (keyframe: %d)\n", result, result, is_keyframe);
 	else
@@ -375,24 +375,24 @@ int DMO_VideoDecoder_SetDestFmt(DMO_VideoDecoder *this, int bits, unsigned int c
 {
     HRESULT result;
     int should_test=1;
-    int stoped = 0;   
-    
+    int stoped = 0;
+
     Debug printf("DMO_VideoDecoder_SetDestFmt (%p, %d, %d)\n",this,bits,(int)csp);
-        
+
        /* if (!CImage::Supported(csp, bits))
 	return -1;
 */
     // BitmapInfo temp = m_obh;
-    
+
     if (!csp)	// RGB
     {
 	int ok = true;
 
 	switch (bits)
-        {
+	{
 	case 15:
 	    this->m_sDestType.subtype = MEDIASUBTYPE_RGB555;
-    	    break;
+	    break;
 	case 16:
 	    this->m_sDestType.subtype = MEDIASUBTYPE_RGB565;
 	    break;
@@ -403,38 +403,38 @@ int DMO_VideoDecoder_SetDestFmt(DMO_VideoDecoder *this, int bits, unsigned int c
 	    this->m_sDestType.subtype = MEDIASUBTYPE_RGB32;
 	    break;
 	default:
-            ok = false;
+	    ok = false;
 	    break;
 	}
 
-        if (ok) {
+	if (ok) {
 	    this->iv.m_obh.biBitCount=bits;
-            if( bits == 15 || bits == 16 ) {
+	    if( bits == 15 || bits == 16 ) {
 	      this->iv.m_obh.biSize=sizeof(BITMAPINFOHEADER)+12;
 	      this->iv.m_obh.biCompression=3;//BI_BITFIELDS
 	      this->iv.m_obh.biSizeImage=abs((int)(2*this->iv.m_obh.biWidth*this->iv.m_obh.biHeight));
 	    }
-            
-            if( bits == 16 ) {
+
+	    if( bits == 16 ) {
 	      this->iv.m_obh.colors[0]=0xF800;
 	      this->iv.m_obh.colors[1]=0x07E0;
 	      this->iv.m_obh.colors[2]=0x001F;
-            } else if ( bits == 15 ) {
+	    } else if ( bits == 15 ) {
 	      this->iv.m_obh.colors[0]=0x7C00;
 	      this->iv.m_obh.colors[1]=0x03E0;
 	      this->iv.m_obh.colors[2]=0x001F;
-            } else {
+	    } else {
 	      this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
 	      this->iv.m_obh.biCompression = 0;	//BI_RGB
 	      //this->iv.m_obh.biHeight = labs(this->iv.m_obh.biHeight);
 	      this->iv.m_obh.biSizeImage = labs(this->iv.m_obh.biWidth * this->iv.m_obh.biHeight)
-                              * ((this->iv.m_obh.biBitCount + 7) / 8);
-            }
-        }
+			      * ((this->iv.m_obh.biBitCount + 7) / 8);
+	    }
+	}
 	//.biSizeImage=abs(temp.biWidth*temp.biHeight*((temp.biBitCount+7)/8));
     } else
     {	// YUV
-        int ok = true;
+	int ok = true;
 	switch (csp)
 	{
 	case fccYUY2:
@@ -459,26 +459,26 @@ int DMO_VideoDecoder_SetDestFmt(DMO_VideoDecoder *this, int bits, unsigned int c
 	    this->m_sDestType.subtype = MEDIASUBTYPE_YVU9;
 	default:
 	    ok = false;
-            break;
+	    break;
 	}
 
-        if (ok) {
+	if (ok) {
 	  if (csp != 0 && csp != 3 && this->iv.m_obh.biHeight > 0)
-    	    this->iv.m_obh.biHeight *= -1; // YUV formats uses should have height < 0
+	    this->iv.m_obh.biHeight *= -1; // YUV formats uses should have height < 0
 	  this->iv.m_obh.biSize = sizeof(BITMAPINFOHEADER);
 	  this->iv.m_obh.biCompression=csp;
 	  this->iv.m_obh.biBitCount=bits;
 	  this->iv.m_obh.biSizeImage = labs(this->iv.m_obh.biWidth * this->iv.m_obh.biHeight)
 					* ((this->iv.m_obh.biBitCount + 7) / 8);
-        }
+	}
     }
     this->m_sDestType.lSampleSize = this->iv.m_obh.biSizeImage;
     memcpy(&(this->m_sVhdr2->bmiHeader), &this->iv.m_obh, sizeof(this->iv.m_obh));
     this->m_sVhdr2->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     if (this->m_sVhdr2->bmiHeader.biCompression == 3)
-        this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
+	this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
     else
-        this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
+	this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
 
 
     switch(csp)
@@ -536,9 +536,9 @@ int DMO_VideoDecoder_SetDestFmt(DMO_VideoDecoder *this, int bits, unsigned int c
 	memcpy(&(this->m_sVhdr2->bmiHeader), &this->iv.m_decoder, sizeof(this->iv.m_decoder));
 	this->m_sVhdr2->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	if (this->m_sVhdr2->bmiHeader.biCompression == 3)
-    	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
+	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER) + 12;
 	else
-    	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
+	    this->m_sDestType.cbFormat = sizeof(VIDEOINFOHEADER);
 
 	return -1;
     }

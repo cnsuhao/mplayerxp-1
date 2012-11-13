@@ -122,13 +122,13 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
     //  16-bit: big-endian -> little-endian
     if (sh_audio->wf->wBitsPerSample == 8)
       for (i = 0; i < film_chunk.chunk_size; i++)
-        dp->buffer[i] += 128;
+	dp->buffer[i] += 128;
     else
       for (i = 0; i < film_chunk.chunk_size; i += 2)
       {
-        byte_swap = dp->buffer[i];
-        dp->buffer[i] = dp->buffer[i + 1];
-        dp->buffer[i + 1] = byte_swap;
+	byte_swap = dp->buffer[i];
+	dp->buffer[i] = dp->buffer[i + 1];
+	dp->buffer[i + 1] = byte_swap;
       }
 
     // append packet to DS stream
@@ -141,22 +141,22 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
     if (sh_video->fourcc == mmioFOURCC('c', 'v', 'i', 'd'))
     {
       if (film_data->film_version)
-        length_fix_bytes = 2;
+	length_fix_bytes = 2;
       else
-        length_fix_bytes = 6;
+	length_fix_bytes = 6;
 
       // account for the fix bytes when allocating the buffer
       dp = new_demux_packet(film_chunk.chunk_size - length_fix_bytes);
 
       // these CVID data chunks have a few extra bytes; skip them
       if (stream_read(demuxer->stream, dp->buffer, 10) != 10)
-        return 0;
+	return 0;
       stream_skip(demuxer->stream, length_fix_bytes);
 
-      if (stream_read(demuxer->stream, dp->buffer + 10, 
-        film_chunk.chunk_size - (10 + length_fix_bytes)) != 
-        (film_chunk.chunk_size - (10 + length_fix_bytes)))
-        return 0;
+      if (stream_read(demuxer->stream, dp->buffer + 10,
+	film_chunk.chunk_size - (10 + length_fix_bytes)) !=
+	(film_chunk.chunk_size - (10 + length_fix_bytes)))
+	return 0;
 
       dp->pts = film_chunk.pts;
       dp->pos = film_chunk.chunk_offset;
@@ -174,8 +174,8 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
     else
     {
       ds_read_packet(demuxer->video, demuxer->stream, film_chunk.chunk_size,
-        film_chunk.pts,
-        film_chunk.chunk_offset, (film_chunk.syncinfo1 & 0x80000000) ? DP_KEYFRAME : DP_NONKEYFRAME);
+	film_chunk.pts,
+	film_chunk.chunk_offset, (film_chunk.syncinfo1 & 0x80000000) ? DP_KEYFRAME : DP_NONKEYFRAME);
     }
   }
   film_data->current_chunk++;
@@ -261,91 +261,91 @@ static demuxer_t* film_open(demuxer_t* demuxer)
       video_format = stream_read_fourcc(demuxer->stream);
       if (video_format)
       {
-        // create and initialize the video stream header
-        sh_video = new_sh_video(demuxer, 0);
-        demuxer->video->sh = sh_video;
-        sh_video->ds = demuxer->video;
+	// create and initialize the video stream header
+	sh_video = new_sh_video(demuxer, 0);
+	demuxer->video->sh = sh_video;
+	sh_video->ds = demuxer->video;
 
-        sh_video->fourcc= video_format;
-        sh_video->src_h = stream_read_dword(demuxer->stream);
-        sh_video->src_w = stream_read_dword(demuxer->stream);
-        MSG_V(
-          "  FILM video: %d x %d\n", sh_video->src_w,
-          sh_video->src_h);
+	sh_video->fourcc= video_format;
+	sh_video->src_h = stream_read_dword(demuxer->stream);
+	sh_video->src_w = stream_read_dword(demuxer->stream);
+	MSG_V(
+	  "  FILM video: %d x %d\n", sh_video->src_w,
+	  sh_video->src_h);
       }
       else
-        // skip height and width if no video
-        stream_skip(demuxer->stream, 8);
+	// skip height and width if no video
+	stream_skip(demuxer->stream, 8);
 
       if(demuxer->audio->id<-1){
-          MSG_V("chunk size = 0x%X \n",chunk_size);
+	  MSG_V("chunk size = 0x%X \n",chunk_size);
 	stream_skip(demuxer->stream, chunk_size-12-8);
 	break; // audio disabled (or no soundcard)
       }
 
       // skip over unknown byte, but only if file had non-NULL version
       if (film_data->film_version)
-        stream_skip(demuxer->stream, 1);
+	stream_skip(demuxer->stream, 1);
 
       // fetch the audio channels to see if there's any audio
       // don't do this if the file is a quirky file with NULL version
       if (film_data->film_version)
       {
-        audio_channels = stream_read_char(demuxer->stream);
-        if (audio_channels > 0)
-        {
-          // create and initialize the audio stream header
-          sh_audio = new_sh_audio(demuxer, 0);
-          demuxer->audio->sh = sh_audio;
-          sh_audio->ds = demuxer->audio;
+	audio_channels = stream_read_char(demuxer->stream);
+	if (audio_channels > 0)
+	{
+	  // create and initialize the audio stream header
+	  sh_audio = new_sh_audio(demuxer, 0);
+	  demuxer->audio->sh = sh_audio;
+	  sh_audio->ds = demuxer->audio;
 
-          sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+	  sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 
-          // uncompressed PCM format
-          sh_audio->wf->wFormatTag = 1;
-          sh_audio->wtag = 1;
-          sh_audio->wf->nChannels = audio_channels;
-          sh_audio->wf->wBitsPerSample = stream_read_char(demuxer->stream);
-          stream_skip(demuxer->stream, 1);  // skip unknown byte
-          sh_audio->wf->nSamplesPerSec = stream_read_word(demuxer->stream);
-          sh_audio->wf->nAvgBytesPerSec = 
-            sh_audio->wf->nSamplesPerSec * sh_audio->wf->wBitsPerSample 
-            * sh_audio->wf->nChannels / 8;
-          stream_skip(demuxer->stream, 6);  // skip the rest of the unknown
+	  // uncompressed PCM format
+	  sh_audio->wf->wFormatTag = 1;
+	  sh_audio->wtag = 1;
+	  sh_audio->wf->nChannels = audio_channels;
+	  sh_audio->wf->wBitsPerSample = stream_read_char(demuxer->stream);
+	  stream_skip(demuxer->stream, 1);  // skip unknown byte
+	  sh_audio->wf->nSamplesPerSec = stream_read_word(demuxer->stream);
+	  sh_audio->wf->nAvgBytesPerSec =
+	    sh_audio->wf->nSamplesPerSec * sh_audio->wf->wBitsPerSample
+	    * sh_audio->wf->nChannels / 8;
+	  stream_skip(demuxer->stream, 6);  // skip the rest of the unknown
 
-          MSG_V(
-            "  FILM audio: %d channels, %d bits, %d Hz\n",
-            sh_audio->wf->nChannels, 8 * sh_audio->wf->wBitsPerSample, 
-            sh_audio->wf->nSamplesPerSec);
-        }
-        else
-          stream_skip(demuxer->stream, 10);
+	  MSG_V(
+	    "  FILM audio: %d channels, %d bits, %d Hz\n",
+	    sh_audio->wf->nChannels, 8 * sh_audio->wf->wBitsPerSample,
+	    sh_audio->wf->nSamplesPerSec);
+	}
+	else
+	  stream_skip(demuxer->stream, 10);
       }
       else
       {
-        // otherwise, make some assumptions about the audio
+	// otherwise, make some assumptions about the audio
 
-        // create and initialize the audio stream header
-        sh_audio = new_sh_audio(demuxer, 0);
-        demuxer->audio->sh = sh_audio;
-        sh_audio->ds = demuxer->audio;
+	// create and initialize the audio stream header
+	sh_audio = new_sh_audio(demuxer, 0);
+	demuxer->audio->sh = sh_audio;
+	sh_audio->ds = demuxer->audio;
 
-        sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 
-        // uncompressed PCM format
-        sh_audio->wf->wFormatTag = 1;
-        sh_audio->wtag = 1;
-        sh_audio->wf->nChannels = 1;
-        sh_audio->wf->wBitsPerSample = 8;
-        sh_audio->wf->nSamplesPerSec = 22050;
-        sh_audio->wf->nAvgBytesPerSec = 
-          sh_audio->wf->nSamplesPerSec * sh_audio->wf->wBitsPerSample 
-          * sh_audio->wf->nChannels / 8;
+	// uncompressed PCM format
+	sh_audio->wf->wFormatTag = 1;
+	sh_audio->wtag = 1;
+	sh_audio->wf->nChannels = 1;
+	sh_audio->wf->wBitsPerSample = 8;
+	sh_audio->wf->nSamplesPerSec = 22050;
+	sh_audio->wf->nAvgBytesPerSec =
+	  sh_audio->wf->nSamplesPerSec * sh_audio->wf->wBitsPerSample
+	  * sh_audio->wf->nChannels / 8;
 
-        MSG_V(
-          "  FILM audio: %d channels, %d bits, %d Hz\n",
-          sh_audio->wf->nChannels, sh_audio->wf->wBitsPerSample, 
-          sh_audio->wf->nSamplesPerSec);
+	MSG_V(
+	  "  FILM audio: %d channels, %d bits, %d Hz\n",
+	  sh_audio->wf->nChannels, sh_audio->wf->wBitsPerSample,
+	  sh_audio->wf->nSamplesPerSec);
       }
       break;
 
@@ -354,67 +354,67 @@ static demuxer_t* film_open(demuxer_t* demuxer)
 
       if (sh_video)
       {
-        sh_video->fps = stream_read_dword(demuxer->stream);
+	sh_video->fps = stream_read_dword(demuxer->stream);
       }
 
       // fetch the number of chunks
       film_data->total_chunks = stream_read_dword(demuxer->stream);
       film_data->current_chunk = 0;
       MSG_V(
-        "  STAB chunk contains %d chunks\n", film_data->total_chunks);
+	"  STAB chunk contains %d chunks\n", film_data->total_chunks);
 
       // allocate enough entries for the chunk
-      film_data->chunks = 
-        (film_chunk_t *)mp_malloc(film_data->total_chunks * sizeof(film_chunk_t));
+      film_data->chunks =
+	(film_chunk_t *)mp_malloc(film_data->total_chunks * sizeof(film_chunk_t));
 
       // build the chunk index
       counting_chunks = 1;
       for (i = 0; i < film_data->total_chunks; i++)
       {
-        film_chunk = film_data->chunks[i];
-        film_chunk.chunk_offset = 
-          demuxer->movi_start + stream_read_dword(demuxer->stream);
-        film_chunk.chunk_size = stream_read_dword(demuxer->stream);
-        film_chunk.syncinfo1 = stream_read_dword(demuxer->stream);
-        film_chunk.syncinfo2 = stream_read_dword(demuxer->stream);
+	film_chunk = film_data->chunks[i];
+	film_chunk.chunk_offset =
+	  demuxer->movi_start + stream_read_dword(demuxer->stream);
+	film_chunk.chunk_size = stream_read_dword(demuxer->stream);
+	film_chunk.syncinfo1 = stream_read_dword(demuxer->stream);
+	film_chunk.syncinfo2 = stream_read_dword(demuxer->stream);
 
-        // count chunks for the purposes of seeking
-        if (counting_chunks)
-        {
-          // if we're counting chunks, always count an audio chunk
-          if (film_chunk.syncinfo1 == 0xFFFFFFFF)
-            film_data->chunks_per_second++;
-          // if it's a video chunk, check if it's time to stop counting
-          else if ((film_chunk.syncinfo1 & 0x7FFFFFFF) >= sh_video->fps)
-            counting_chunks = 0;
-          else
-            film_data->chunks_per_second++;
-        }
+	// count chunks for the purposes of seeking
+	if (counting_chunks)
+	{
+	  // if we're counting chunks, always count an audio chunk
+	  if (film_chunk.syncinfo1 == 0xFFFFFFFF)
+	    film_data->chunks_per_second++;
+	  // if it's a video chunk, check if it's time to stop counting
+	  else if ((film_chunk.syncinfo1 & 0x7FFFFFFF) >= sh_video->fps)
+	    counting_chunks = 0;
+	  else
+	    film_data->chunks_per_second++;
+	}
 
-        // precalculate PTS
-        if (film_chunk.syncinfo1 == 0xFFFFFFFF)
-        {
+	// precalculate PTS
+	if (film_chunk.syncinfo1 == 0xFFFFFFFF)
+	{
 	  if(demuxer->audio->id>=-1)
-          film_chunk.pts =
-            (float)total_audio_bytes / (float)sh_audio->wf->nAvgBytesPerSec;
-          total_audio_bytes += film_chunk.chunk_size;
-        }
-        else
-          film_chunk.pts =
-            (film_chunk.syncinfo1 & 0x7FFFFFFF) / sh_video->fps;
+	  film_chunk.pts =
+	    (float)total_audio_bytes / (float)sh_audio->wf->nAvgBytesPerSec;
+	  total_audio_bytes += film_chunk.chunk_size;
+	}
+	else
+	  film_chunk.pts =
+	    (film_chunk.syncinfo1 & 0x7FFFFFFF) / sh_video->fps;
 
-        film_data->chunks[i] = film_chunk;
+	film_data->chunks[i] = film_chunk;
       }
 
       // in some FILM files (notably '1.09'), the length of the FDSC chunk
       // follows different rules
       if (chunk_size == (film_data->total_chunks * 16))
-        header_size -= 16;
+	header_size -= 16;
       break;
 
     default:
       MSG_ERR( "Unrecognized FILM header chunk: %08X\n",
-        chunk_type);
+	chunk_type);
       return NULL;
       break;
     }

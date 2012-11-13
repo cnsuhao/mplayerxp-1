@@ -273,7 +273,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	    len = buf[0] << 8 | buf[1];
 	    if (len > 0 && !stream_skip(mpeg->stream, len))
 		return -1;
-		
+
 	}
 	else {
 	    MSG_ERR( "unknown header 0x%02X%02X%02X%02X\n",
@@ -365,7 +365,7 @@ static int __FASTCALL__ packet_queue_ensure(packet_queue_t *queue, unsigned int 
 /* add one more packet */
 static int __FASTCALL__ packet_queue_grow(packet_queue_t *queue)
 {
-    if (packet_queue_ensure(queue, queue->packets_size + 1) < 0) 
+    if (packet_queue_ensure(queue, queue->packets_size + 1) < 0)
 	return -1;
     packet_construct(queue->packets + queue->packets_size);
     ++queue->packets_size;
@@ -655,11 +655,11 @@ static int __FASTCALL__ vobsub_parse_custom(vobsub_t *vob, const char *line)
 {
     //custom colors: OFF/ON(0/1)
     if ((strncmp("ON", line + 15, 2) == 0)||strncmp("1", line + 15, 1) == 0)
-        vob->custom=1;
+	vob->custom=1;
     else if ((strncmp("OFF", line + 15, 3) == 0)||strncmp("0", line + 15, 1) == 0)
-        vob->custom=0;
+	vob->custom=0;
     else
-        return -1;
+	return -1;
     return 0;
 }
 
@@ -670,7 +670,7 @@ static int __FASTCALL__ vobsub_parse_cuspal(vobsub_t *vob, const char *line)
     n = 0;
     line += 40;
     while(1){
-    	const char *p;
+	const char *p;
 	while (isspace(*line))
 	    ++line;
 	p=line;
@@ -705,11 +705,11 @@ static int __FASTCALL__ vobsub_parse_delay(vobsub_t *vob, const char *line)
     int h, m, s, ms;
     int forward = 1;
     if (*(line + 7) == '+'){
-    	forward = 1;
+	forward = 1;
 	line++;
     }
     else if (*(line + 7) == '-'){
-    	forward = -1;
+	forward = -1;
 	line++;
     }
     MSG_V( "forward=%d", forward);
@@ -728,7 +728,7 @@ static int __FASTCALL__ vobsub_parse_delay(vobsub_t *vob, const char *line)
 static int __FASTCALL__ vobsub_set_lang(vobsub_t *vob, const char *line)
 {
     if (mp_conf.vobsub_id == -1)
-        mp_conf.vobsub_id = atoi(line + 8);
+	mp_conf.vobsub_id = atoi(line + 8);
     return 0;
 }
 
@@ -782,7 +782,7 @@ int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const char *const name, unsigned 
     int res = -1;
     FILE *fd = fopen(name, "rb");
     if (fd == NULL) {
-        if (force)
+	if (force)
 	    MSG_WARN("VobSub: Can't open IFO file\n");
     } else {
 	// parse IFO header
@@ -902,7 +902,7 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 	      if(force)
 		MSG_ERR("VobSub: Can't open SUB file\n");
 	      else {
-		
+
 		mp_free(buf);
 		mp_free(vob);
 		return NULL;
@@ -1007,8 +1007,8 @@ int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle,const char * lang)
     vobsub_t *vob= (vobsub_t *) vobhandle;
     while(lang && strlen(lang) >= 2){
       for(i=0; i < vob->spu_streams_size; i++)
-        if (vob->spu_streams[i].id)
-          if ((strncmp(vob->spu_streams[i].id, lang, 2)==0)){
+	if (vob->spu_streams[i].id)
+	  if ((strncmp(vob->spu_streams[i].id, lang, 2)==0)){
 	    mp_conf.vobsub_id=i;
 	    MSG_INFO("Selected VOBSUB language: %d language: %s\n", i, vob->spu_streams[i].id);
 	    return 0;

@@ -44,22 +44,22 @@ int main(int argc,char* argv[]){
 #endif
 
       { unsigned char raw_head[32];
-        FILE *f3=fopen("test.raw","wb");
+	FILE *f3=fopen("test.raw","wb");
 
-        strcpy((char*)raw_head,"mhwanh");
-        raw_head[7]=4;
-        raw_head[8]=bih.biWidth>>8;
-        raw_head[9]=bih.biWidth&0xFF;
-        raw_head[10]=bih.biHeight>>8;
-        raw_head[11]=bih.biHeight&0xFF;
-        raw_head[12]=raw_head[13]=0; // 24bit
-        raw_head[14]=1;raw_head[15]=0x2C;
-        raw_head[16]=1;raw_head[17]=0x2C;
-        memset(raw_head+18,0,32-18);
-        fwrite(raw_head,32,1,f3);
+	strcpy((char*)raw_head,"mhwanh");
+	raw_head[7]=4;
+	raw_head[8]=bih.biWidth>>8;
+	raw_head[9]=bih.biWidth&0xFF;
+	raw_head[10]=bih.biHeight>>8;
+	raw_head[11]=bih.biHeight&0xFF;
+	raw_head[12]=raw_head[13]=0; // 24bit
+	raw_head[14]=1;raw_head[15]=0x2C;
+	raw_head[16]=1;raw_head[17]=0x2C;
+	memset(raw_head+18,0,32-18);
+	fwrite(raw_head,32,1,f3);
 
-        fwrite(dst,bih.biWidth*bih.biHeight*3,1,f3);
-        fclose(f3);
+	fwrite(dst,bih.biWidth*bih.biHeight*3,1,f3);
+	fclose(f3);
       }
 
     fclose(f);

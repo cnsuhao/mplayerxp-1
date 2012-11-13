@@ -784,7 +784,7 @@ unsigned char* DecompressHuffmanTable(unsigned char* hufftable,
 	int val;
 	int repeat;
 	int i = 0;
-	
+
 	do {
 		val = *hufftable & 31;
 		repeat = *hufftable++ >> 5;
@@ -807,7 +807,7 @@ unsigned char huff_decompress(unsigned int* in, unsigned int *pos, DecodeTable *
 	unsigned char outbyte;
 	unsigned char *tableptr;
 	int i;
-	
+
 	if (bit)
 		val = (val << bit) | (in[word + 1] >> (32 - bit));
   // figure out the appropriate lookup table based on the number of leading zeros
@@ -815,7 +815,7 @@ unsigned char huff_decompress(unsigned int* in, unsigned int *pos, DecodeTable *
 	val |= 1;
 	while ((val & (1 << i--)) == 0);
 	val &= ~(1 << (i+1));
-	tableptr = decode_table->table_pointers[i+1]; 
+	tableptr = decode_table->table_pointers[i+1];
 	val >>= *tableptr;
 
 	outbyte = tableptr[val+1];

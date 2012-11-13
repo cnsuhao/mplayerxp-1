@@ -61,7 +61,7 @@ typedef struct af_hrtf_s {
  *    nk:	length of the convolution kernel
  *    sx:	ring buffer
  *    sk:	convolution kernel
- *    offset:	offset on the ring buffer, can be 
+ *    offset:	offset on the ring buffer, can be
  */
 static float __FASTCALL__ conv(const int nx, const int nk, float *sx, float *sk,
 		  const int offset)
@@ -280,7 +280,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s *af, int cmd, any_t* ar
 	    //MSG_ERR("[hrtf] ERROR: Sampling rate is not 48000 Hz (%d)!\n",
 	    //	   af->data->rate);
 	    //return MPXP_Error;
-	    
+
 	    /* NK: Let use af_resample here */
 	    af->data->rate = 48000;
 	}
@@ -338,13 +338,13 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s *af, int cmd, any_t* ar
 	  MSG_WARN("[af_hrtf] bogus decode_mode: %d\n", s->decode_mode);
 	  break;
 	}
-	
+
 	if(s->matrix_mode)
 	  MSG_INFO("[af_hrtf] Using active matrix to decode rear center channel\n");
 	return MPXP_Ok;
   }
-  default: break;    
-  }    
+  default: break;
+  }
   return MPXP_Unknown;
 }
 
@@ -399,20 +399,20 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af, mp_aframe_t *dat
     out = af->data->audio;
 
     /* MPlayer's 5 channel layout (notation for the variable):
-     * 
+     *
      * 0: L (LF), 1: R (RF), 2: Ls (LR), 3: Rs (RR), 4: C (CF), matrix
      * encoded: Cs (CR)
-     * 
+     *
      * or: L = left, C = center, R = right, F = front, R = rear
-     * 
+     *
      * Filter notation:
-     * 
+     *
      *      CF
      * OF        AF
      *      Ear->
      * OR        AR
      *      CR
-     * 
+     *
      * or: C = center, A = same side, O = opposite, F = front, R = rear
      */
 
@@ -595,7 +595,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af)
     s->decode_mode = HRTF_MIX_51;
 
     if (allocate(s) != 0) {
- 	MSG_ERR("[hrtf] Memory allocation error.\n");
+	MSG_ERR("[hrtf] Memory allocation error.\n");
 	return MPXP_Error;
     }
 
@@ -614,7 +614,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af)
     s->cr_ir = cr_filt + (s->cr_o = pulse_detect(cr_filt));
 
     if((s->ba_ir = mp_malloc(s->basslen * sizeof(float))) == NULL) {
- 	MSG_ERR("[hrtf] Memory allocation error.\n");
+	MSG_ERR("[hrtf] Memory allocation error.\n");
 	return MPXP_Error;
     }
     fc = 2.0 * BASSFILTFREQ / (float)af->data->rate;
@@ -626,7 +626,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af)
     }
     for(i = 0; i < s->basslen; i++)
 	s->ba_ir[i] *= BASSGAIN;
-    
+
     return MPXP_Ok;
 }
 

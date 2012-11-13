@@ -122,7 +122,7 @@ static inline void bb_blur(uint8_t *dst, uint8_t *src, int w, int radius, int ds
 static inline void bb_blur2(uint8_t *dst, uint8_t *src, int w, int radius, int power, int dstStep, int srcStep){
 	uint8_t temp[2][4096];
 	uint8_t *a= temp[0], *b=temp[1];
-	
+
 	if(radius){
 		bb_blur(a, src, w, radius, 1, srcStep);
 		for(; power>2; power--){
@@ -146,9 +146,9 @@ static inline void bb_blur2(uint8_t *dst, uint8_t *src, int w, int radius, int p
 
 static void __FASTCALL__ hBlur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, int radius, int power){
 	int y;
-	
+
 	if(radius==0 && dst==src) return;
-	
+
 	for(y=0; y<h; y++){
 		bb_blur2(dst + y*dstStride, src + y*srcStride, w, radius, power, 1, 1);
 	}
@@ -157,7 +157,7 @@ static void __FASTCALL__ hBlur(uint8_t *dst, uint8_t *src, int w, int h, int dst
 //FIXME optimize (x before y !!!)
 static void __FASTCALL__ vBlur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, int radius, int power){
 	int x;
-	
+
 	if(radius==0 && dst==src) return;
 
 	for(x=0; x<w; x++){
@@ -172,19 +172,19 @@ static int __FASTCALL__ bb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
 
 	assert(mpi->flags&MP_IMGFLAG_PLANAR);
-	
-	hBlur(dmpi->planes[0], mpi->planes[0], mpi->w,mpi->h, 
+
+	hBlur(dmpi->planes[0], mpi->planes[0], mpi->w,mpi->h,
 		dmpi->stride[0], mpi->stride[0], vf->priv->luma.radius, vf->priv->luma.strength);
-	hBlur(dmpi->planes[1], mpi->planes[1], cw,ch, 
+	hBlur(dmpi->planes[1], mpi->planes[1], cw,ch,
 		dmpi->stride[1], mpi->stride[1], vf->priv->chroma.radius, vf->priv->chroma.strength);
-	hBlur(dmpi->planes[2], mpi->planes[2], cw,ch, 
+	hBlur(dmpi->planes[2], mpi->planes[2], cw,ch,
 		dmpi->stride[2], mpi->stride[2], vf->priv->chroma.radius, vf->priv->chroma.strength);
-	
-	vBlur(dmpi->planes[0], dmpi->planes[0], mpi->w,mpi->h, 
+
+	vBlur(dmpi->planes[0], dmpi->planes[0], mpi->w,mpi->h,
 		dmpi->stride[0], dmpi->stride[0], vf->priv->luma.radius, vf->priv->luma.strength);
-	vBlur(dmpi->planes[1], dmpi->planes[1], cw,ch, 
+	vBlur(dmpi->planes[1], dmpi->planes[1], cw,ch,
 		dmpi->stride[1], dmpi->stride[1], vf->priv->chroma.radius, vf->priv->chroma.strength);
-	vBlur(dmpi->planes[2], dmpi->planes[2], cw,ch, 
+	vBlur(dmpi->planes[2], dmpi->planes[2], cw,ch,
 		dmpi->stride[2], dmpi->stride[2], vf->priv->chroma.radius, vf->priv->chroma.strength);
 
 	return vf_next_put_slice(vf,dmpi);
@@ -203,16 +203,16 @@ static int __FASTCALL__ sab_allocStuff(FilterParam *f, int width, int height){
 	swsF.chrH= swsF.chrV= NULL;
 	f->preFilterContext= sws_getContext(
 		width, height, pixfmt_from_fourcc(IMGFMT_Y800), width, height, pixfmt_from_fourcc(IMGFMT_Y800), get_sws_cpuflags(), &swsF, NULL, NULL);
-	
+
 	sws_freeVec(vec);
 	vec = sws_getGaussianVec(f->strength, 5.0);
 	for(i=0; i<512; i++){
 		double d;
 		int index= i-256 + vec->length/2;
-		
+
 		if(index<0 || index>=vec->length) 	d= 0.0;
 		else					d= vec->coeff[index];
-		
+
 		f->colorDiffCoeff[i]= (int)(d/vec->coeff[vec->length/2]*(1<<12) + 0.5);
 	}
 	sws_freeVec(vec);
@@ -224,24 +224,24 @@ static int __FASTCALL__ sab_allocStuff(FilterParam *f, int width, int height){
 	for(y=0; y<vec->length; y++){
 		for(x=0; x<vec->length; x++){
 			double d= vec->coeff[x] * vec->coeff[y];
-			
+
 			f->distCoeff[x + y*f->distStride]= (int)(d*(1<<10) + 0.5);
 //			if(y==vec->length/2)
 //				printf("%6d ", f->distCoeff[x + y*f->distStride]);
 		}
 	}
 	sws_freeVec(vec);
-	
+
 	return 0;
 }
 
 static void __FASTCALL__ sab_freeBuffers(FilterParam *f){
 	if(f->preFilterContext) sws_freeContext(f->preFilterContext);
 	f->preFilterContext=NULL;
-	
+
 	if(f->preFilterBuf) mp_free(f->preFilterBuf);
 	f->preFilterBuf=NULL;
-	
+
 	if(f->distCoeff) mp_free(f->distCoeff);
 	f->distCoeff=NULL;
 }
@@ -257,7 +257,7 @@ static inline void sab_blur(uint8_t *dst, uint8_t *src, int w, int h, int dstStr
 
 //	f.preFilterContext->swScale(f.preFilterContext, srcArray, srcStrideArray, 0, h, dstArray, dstStrideArray);
 	sws_scale(f.preFilterContext, srcArray, srcStrideArray, 0, h, dstArray, dstStrideArray);
-	
+
 	for(y=0; y<h; y++){
 		for(x=0; x<w; x++){
 			int sum=0;
@@ -321,11 +321,11 @@ static int __FASTCALL__ sab_put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
 
 	assert(mpi->flags&MP_IMGFLAG_PLANAR);
-	
+
 	sab_blur(dmpi->planes[0], mpi->planes[0], mpi->w,mpi->h, dmpi->stride[0], mpi->stride[0], &vf->priv->luma);
 	sab_blur(dmpi->planes[1], mpi->planes[1], cw    , ch   , dmpi->stride[1], mpi->stride[1], &vf->priv->chroma);
 	sab_blur(dmpi->planes[2], mpi->planes[2], cw    , ch   , dmpi->stride[2], mpi->stride[2], &vf->priv->chroma);
-    
+
 	return vf_next_put_slice(vf,dmpi);
 }
 
@@ -349,14 +349,14 @@ static int __FASTCALL__ allocStuff(FilterParam *f, int width, int height){
 }
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
-	
+
 	int sw, sh;
 
 	if(vf->priv->allocStuff)
 	    vf->priv->allocStuff(&vf->priv->luma, width, height);
-	
+
 	getSubSampleFactors(&sw, &sh, outfmt);
 	if(vf->priv->allocStuff)
 	    vf->priv->allocStuff(&vf->priv->chroma, width>>sw, height>>sh);
@@ -390,14 +390,14 @@ static inline void blur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride,
 	int dstStrideArray[3]= {dstStride, 0, 0};
 
 	sws_scale(f.filterContext, srcArray, srcStrideArray, 0, h, dstArray, dstStrideArray);
-	
+
 	if(f.threshold > 0){
 		for(y=0; y<h; y++){
 			for(x=0; x<w; x++){
 				const int orig= src[x + y*srcStride];
 				const int filtered= dst[x + y*dstStride];
 				const int diff= orig - filtered;
-				
+
 				if(diff > 0){
 					if(diff > 2*f.threshold){
 						dst[x + y*dstStride]= orig;
@@ -419,7 +419,7 @@ static inline void blur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride,
 				const int orig= src[x + y*srcStride];
 				const int filtered= dst[x + y*dstStride];
 				const int diff= orig - filtered;
-				
+
 				if(diff > 0){
 					if(diff > -2*f.threshold){
 					}else if(diff > -f.threshold){
@@ -445,7 +445,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
 
 	assert(mpi->flags&MP_IMGFLAG_PLANAR);
-	
+
 #ifdef _OPENMP
 #pragma omp parallel sections
 {

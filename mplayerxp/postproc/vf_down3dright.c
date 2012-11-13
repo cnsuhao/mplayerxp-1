@@ -35,7 +35,7 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 		unsigned char* fromR = src[k];
 		unsigned char* to = dst[k];
 		unsigned int src = srcstride[k];
-                unsigned int dst = dststride[k];
+		unsigned int dst = dststride[k];
 		unsigned int ss;
 		unsigned int dd;
 		int i;
@@ -46,12 +46,12 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 			dd = w / 4;
 		} else {
 			i = h / 2 - p->skipline;
-                        ss = src * (h / 2 + p->skipline);
+			ss = src * (h / 2 + p->skipline);
 			dd = w / 2;
 		}
 		fromR += ss;
 		for ( ; i > 0; i--) {
-                        int j;
+			int j;
 			unsigned char* t = to;
 			unsigned char* sL = fromL;
 			unsigned char* sR = fromR;
@@ -76,7 +76,7 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 				stream_copy(to + dst, to, dst);
 			    else
 				memcpy(to + dst, to, dst);
-                                to += dst;
+				to += dst;
 			}
 			to += dst;
 			fromL += src;

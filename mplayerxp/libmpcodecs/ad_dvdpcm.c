@@ -97,49 +97,49 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
       // not sure if the "& 0xf0" and "<< 4" are the right way around
       // can somebody clarify?
       for (j = 0; j < minlen; j += 12) {
-        char tmp[10];
-        len = demux_read_data_r(sh_audio->ds, tmp, 10,j?&null_pts:pts);
-        if (len < 10) break;
-        // first sample
-        buf[j + 0] = tmp[0];
-        buf[j + 1] = tmp[1];
-        buf[j + 2] = tmp[8] & 0xf0;
-        // second sample
-        buf[j + 3] = tmp[2];
-        buf[j + 4] = tmp[3];
-        buf[j + 5] = tmp[8] << 4;
-        // third sample
-        buf[j + 6] = tmp[4];
-        buf[j + 7] = tmp[5];
-        buf[j + 8] = tmp[9] & 0xf0;
-        // fourth sample
-        buf[j + 9] = tmp[6];
-        buf[j + 10] = tmp[7];
-        buf[j + 11] = tmp[9] << 4;
+	char tmp[10];
+	len = demux_read_data_r(sh_audio->ds, tmp, 10,j?&null_pts:pts);
+	if (len < 10) break;
+	// first sample
+	buf[j + 0] = tmp[0];
+	buf[j + 1] = tmp[1];
+	buf[j + 2] = tmp[8] & 0xf0;
+	// second sample
+	buf[j + 3] = tmp[2];
+	buf[j + 4] = tmp[3];
+	buf[j + 5] = tmp[8] << 4;
+	// third sample
+	buf[j + 6] = tmp[4];
+	buf[j + 7] = tmp[5];
+	buf[j + 8] = tmp[9] & 0xf0;
+	// fourth sample
+	buf[j + 9] = tmp[6];
+	buf[j + 10] = tmp[7];
+	buf[j + 11] = tmp[9] << 4;
       }
       len = j;
     } else {
       // 24 bit
       for (j = 0; j < minlen; j += 12) {
-        char tmp[12];
-        len = demux_read_data_r(sh_audio->ds, tmp, 12, j?&null_pts:pts);
-        if (len < 12) break;
-        // first sample
-        buf[j + 0] = tmp[0];
-        buf[j + 1] = tmp[1];
-        buf[j + 2] = tmp[8];
-        // second sample
-        buf[j + 3] = tmp[2];
-        buf[j + 4] = tmp[3];
-        buf[j + 5] = tmp[9];
-        // third sample
-        buf[j + 6] = tmp[4];
-        buf[j + 7] = tmp[5];
-        buf[j + 8] = tmp[10];
-        // fourth sample
-        buf[j + 9] = tmp[6];
-        buf[j + 10] = tmp[7];
-        buf[j + 11] = tmp[11];
+	char tmp[12];
+	len = demux_read_data_r(sh_audio->ds, tmp, 12, j?&null_pts:pts);
+	if (len < 12) break;
+	// first sample
+	buf[j + 0] = tmp[0];
+	buf[j + 1] = tmp[1];
+	buf[j + 2] = tmp[8];
+	// second sample
+	buf[j + 3] = tmp[2];
+	buf[j + 4] = tmp[3];
+	buf[j + 5] = tmp[9];
+	// third sample
+	buf[j + 6] = tmp[4];
+	buf[j + 7] = tmp[5];
+	buf[j + 8] = tmp[10];
+	// fourth sample
+	buf[j + 9] = tmp[6];
+	buf[j + 10] = tmp[7];
+	buf[j + 11] = tmp[11];
       }
       len = j;
     }

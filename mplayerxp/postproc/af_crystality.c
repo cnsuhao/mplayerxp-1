@@ -18,7 +18,7 @@
   |  /                          \  |
   |/                              \|
 --+--------------------------------+---
-  40Hz?                         15-16kHz 
+  40Hz?                         15-16kHz
    Then we should do nothing!
    If we have this FR:
   |--------------------------------|
@@ -26,7 +26,7 @@
   |                                |
   |                                |
 --+--------------------------------+---
-  40Hz?                         15-16kHz 
+  40Hz?                         15-16kHz
    Then it would be correctly to predict that mp3 has cutted off basses
 and high-freqs and try to restore FR as:
      |--------------------------------|
@@ -34,7 +34,7 @@ and high-freqs and try to restore FR as:
   /  |                                |  \
 /    |                                |    \
 -----+--------------------------------+------
-    40Hz?                         15-16kHz 
+    40Hz?                         15-16kHz
 
 //=============================================================================
 */
@@ -274,10 +274,10 @@ static void __FASTCALL__ echo3d(af_crystality_t *setup,float *data, unsigned dat
     rsine=setup->rsine[(unsigned)(((rsf/4) + 0.5)*32768) % 65536];
     lharm0 =
 	+ ((lsf + SAMPLE_MAX/3) * (((((float)lsine*setup->harmonics_sfactor)) / 64))) / SAMPLE_MAX
-       	- ((float)rsine * setup->harmonics_sfactor) / 128;
+	- ((float)rsine * setup->harmonics_sfactor) / 128;
     rharm0 =
 	+ ((rsf + SAMPLE_MAX/3) * (((((float)lsine*setup->harmonics_sfactor)) / 64))) / SAMPLE_MAX
-     	- ((float)rsine * setup->harmonics_sfactor) / 128;
+	- ((float)rsine * setup->harmonics_sfactor) / 128;
     lharmb += (lharm0 * 32768 - lharmb) / 16384;
     rharmb += (rharm0 * 32768 - rharmb) / 16384;
 
@@ -302,7 +302,7 @@ static float shBuf[SH_BUF_SIZE];
 static unsigned shBufPos = SH_BUF_SIZE - 8;
 static unsigned shBufPos1 = SH_BUF_SIZE - 8;
 static int cond;
-static void __FASTCALL__ pitchShifter(const float lin, const float rin, float *lout, float *rout){ 
+static void __FASTCALL__ pitchShifter(const float lin, const float rin, float *lout, float *rout){
 
     shBuf[shBufPos++] = lin;
     shBuf[shBufPos++] = rin;
@@ -408,8 +408,8 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
     for (x = 0; x < datasize; x += 8) {
 
 	// ************ load sample **********
-       	left[0] = dataptr[0];
-       	right[0] = dataptr[1];
+	left[0] = dataptr[0];
+	right[0] = dataptr[1];
 
 #if 0
 	_left=lowpass(&setup->lp_bass[0],left[0]);
@@ -446,7 +446,7 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
 	interpolate(&bandext_energy, left[0]  - lprev[0], right[0] - rprev[0]);
 
 	// ************ mixer ***********
-	_left   = left[0] + _left  * calc_scalefactor(bandext_amplitude.lval, bandext_energy.lval) / setup->bext_sfactor; 
+	_left   = left[0] + _left  * calc_scalefactor(bandext_amplitude.lval, bandext_energy.lval) / setup->bext_sfactor;
 	_right  = right[0] + _right * calc_scalefactor(bandext_amplitude.rval, bandext_energy.rval) / setup->bext_sfactor; //16384
 
 	// ************ highpass filter part 2 **********
@@ -466,7 +466,7 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_crystality_t* s   = (af_crystality_t*)af->setup; 
+  af_crystality_t* s   = (af_crystality_t*)af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
@@ -506,7 +506,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)

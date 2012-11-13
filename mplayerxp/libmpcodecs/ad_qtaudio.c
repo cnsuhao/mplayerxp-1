@@ -64,8 +64,8 @@ typedef int (__cdecl* LPFUNC7)(SoundConverter sc,
 				unsigned long *outputBytes );
 typedef int (__cdecl* LPFUNC8)(SoundConverter sc,
 				any_t*outputPtr,
-                                unsigned long *outputFrames,
-                                unsigned long *outputBytes);
+				unsigned long *outputFrames,
+				unsigned long *outputBytes);
 typedef int (__cdecl* LPFUNC9)(SoundConverter         sc);
 
 static HINSTANCE qtml_dll;

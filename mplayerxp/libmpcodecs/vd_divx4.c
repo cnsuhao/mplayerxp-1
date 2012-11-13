@@ -43,7 +43,7 @@ LIBVD_EXTERN(divx4)
 #define DEC_OPT_RELEASE 1 ///< Release the decoder.  See LibQDecoreFunction for example usage.
 #define DEC_OPT_INFO 2 ///<  Obtain information about the video.  See LibQDecoreFunction for example usage.
 #define DEC_OPT_FRAME 3 ///<  Decode a frame.  See LibQDecoreFunction for example usage.
-#define DEC_OPT_SET 4 ///< Specify a parameter to adjust/set. 
+#define DEC_OPT_SET 4 ///< Specify a parameter to adjust/set.
 #define DEC_OPT_FLUSH 5 ///< Flush the decoder status.
 
 // Decoder parameter specifier
@@ -63,10 +63,10 @@ LIBVD_EXTERN(divx4)
 // Decoder return values.
 
 #define DEC_OK 0 ///< Decoder call succeded.
-#define DEC_INVALID_SYNTAX -1 ///< A semantic error occourred while parsing the stream. 
-#define DEC_FAIL 1 ///< General failure message. An unexpected problem occourred. 
-#define DEC_INVALID_ARGUMENT 3 ///< One of the arguments passed to the decoder is invalid. 
-#define DEC_NOT_IMPLEMENTED 4 ///< The stream requires tools that have not been implemented. 
+#define DEC_INVALID_SYNTAX -1 ///< A semantic error occourred while parsing the stream.
+#define DEC_FAIL 1 ///< General failure message. An unexpected problem occourred.
+#define DEC_INVALID_ARGUMENT 3 ///< One of the arguments passed to the decoder is invalid.
+#define DEC_NOT_IMPLEMENTED 4 ///< The stream requires tools that have not been implemented.
 
 typedef int (LibQDecoreFunction)(any_t* pHandle, int decOpt, any_t* pParam1, any_t* pParam2);
 
@@ -166,8 +166,8 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 	    return p->decoder(p->pHandle,DEC_OPT_SET,&option,&value)==DEC_OK?MPXP_Ok:MPXP_False;
 	}
 	case VDCTRL_QUERY_FORMAT:
-	    if (*((int*)arg) == IMGFMT_YV12 || 
-		*((int*)arg) == IMGFMT_I420 || 
+	    if (*((int*)arg) == IMGFMT_YV12 ||
+		*((int*)arg) == IMGFMT_I420 ||
 		*((int*)arg) == IMGFMT_IYUV)
 			return MPXP_True;
 	    else 	return MPXP_False;

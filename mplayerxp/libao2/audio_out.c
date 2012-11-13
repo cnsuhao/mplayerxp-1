@@ -38,10 +38,10 @@ extern const ao_functions_t audio_out_jack;
 static const ao_functions_t* audio_out_drivers[] =
 {
 #ifdef USE_OSS_AUDIO
-        &audio_out_oss,
+	&audio_out_oss,
 #endif
 #ifdef HAVE_SDL
-        &audio_out_sdl,
+	&audio_out_sdl,
 #endif
 #ifdef HAVE_ALSA
 	&audio_out_alsa,
@@ -61,8 +61,8 @@ static const ao_functions_t* audio_out_drivers[] =
 #ifdef HAVE_JACK
 	&audio_out_jack,
 #endif
-        &audio_out_wav,
-        &audio_out_null,
+	&audio_out_wav,
+	&audio_out_null,
 	NULL
 };
 
@@ -84,7 +84,7 @@ char * __FASTCALL__ ao_format_name(int format)
 	    return("Unsigned 8-bit");
 	case AFMT_U16_LE:
 	    return("Unsigned 16-bit (Little-Endian)");
-	case AFMT_U16_BE: 
+	case AFMT_U16_BE:
 	    return("Unsigned 16-bit (Big-Endian)");
 	case AFMT_S16_LE:
 	    return("Signed 16-bit (Little-Endian)");
@@ -92,7 +92,7 @@ char * __FASTCALL__ ao_format_name(int format)
 	    return("Signed 16-bit (Big-Endian)");
 	case AFMT_U24_LE:
 	    return("Unsigned 24-bit (Little-Endian)");
-	case AFMT_U24_BE: 
+	case AFMT_U24_BE:
 	    return("Unsigned 24-bit (Big-Endian)");
 	case AFMT_S24_LE:
 	    return("Signed 24-bit (Little-Endian)");
@@ -100,7 +100,7 @@ char * __FASTCALL__ ao_format_name(int format)
 	    return("Signed 24-bit (Big-Endian)");
 	case AFMT_U32_LE:
 	    return("Unsigned 32-bit (Little-Endian)");
-	case AFMT_U32_BE: 
+	case AFMT_U32_BE:
 	    return("Unsigned 32-bit (Big-Endian)");
 	case AFMT_S32_LE:
 	    return("Signed 32-bit (Little-Endian)");
@@ -154,7 +154,7 @@ int __FASTCALL__ ao_format_bits(int format){
 	case AFMT_S16_LE:
 	case AFMT_S16_BE:
 	return 16;//16 bits
-	
+
 	case AFMT_MU_LAW:
 	case AFMT_A_LAW:
 	case AFMT_IMA_ADPCM:
@@ -164,7 +164,7 @@ int __FASTCALL__ ao_format_bits(int format){
 	case AFMT_AC3:
 	default:
 	    return 8;//default 1 byte
-	
+
     }
     return 8;
 }

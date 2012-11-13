@@ -3,10 +3,10 @@
  *  AVIFMT - AVI file format definitions
  *
  ****************************************************************************/
-#ifndef AVIFMT 
+#ifndef AVIFMT
 #define AVIFMT
 
-#ifndef NOAVIFMT 
+#ifndef NOAVIFMT
 
 #ifndef  __WINE_WINDEF_H
 #include "loader/wine/windef.h"
@@ -22,24 +22,24 @@ typedef DWORD FOURCC;
 #ifdef _MSC_VER
 #pragma warning(disable:4200)
 #endif
-    
+
 /* The following is a short description of the AVI file format.  Please
  * see the accompanying documentation for a full explanation.
  *
  * An AVI file is the following RIFF form:
  *
- *	RIFF('AVI' 
+ *	RIFF('AVI'
  *	      LIST('hdrl'
  *		    avih(<MainAVIHeader>)
  *                  LIST ('strl'
  *                      strh(<Stream header>)
  *                      strf(<Stream format>)
  *                      ... additional header data
- *            LIST('movi'	 
- *      	  { LIST('rec' 
+ *            LIST('movi'
+ *      	  { LIST('rec'
  *      		      SubChunk...
  *      		   )
- *      	      | SubChunk } ....	    
+ *      	      | SubChunk } ....
  *            )
  *            [ <AVIIndex> ]
  *      )
@@ -51,7 +51,7 @@ typedef DWORD FOURCC;
  *	be a BITMAPINFO structure, including palette.  For an audio stream,
  *	this should be a WAVEFORMAT (or PCMWAVEFORMAT) structure.
  *
- *	The actual data is contained in subchunks within the 'movi' LIST 
+ *	The actual data is contained in subchunks within the 'movi' LIST
  *	chunk.  The first two characters of each data chunk are the
  *	stream number with which that data is associated.
  *
@@ -66,17 +66,17 @@ typedef DWORD FOURCC;
  *
  * The grouping into LIST 'rec' chunks implies only that the contents of
  *   the chunk should be read into memory at the same time.  This
- *   grouping is used for files specifically intended to be played from 
+ *   grouping is used for files specifically intended to be played from
  *   CD-ROM.
  *
- * The index chunk at the end of the file should contain one entry for 
+ * The index chunk at the end of the file should contain one entry for
  *   each data chunk in the file.
- *       
+ *
  * Limitations for the current software:
  *	Only one video stream and one audio stream are allowed.
  *	The streams must start at the beginning of the file.
  *
- * 
+ *
  * To register codec types please obtain a copy of the Multimedia
  * Developer Registration Kit from:
  *
@@ -143,7 +143,7 @@ typedef WORD TWOCC;
 /* Macro to get stream number out of a FOURCC ckid */
 #define FromHex(n)	(((n) >= 'A') ? ((n) + 10 - 'A') : ((n) - '0'))
 #define StreamFromFOURCC(fcc) ((WORD) ((FromHex(LOBYTE(LOWORD(fcc))) << 4) + \
-                                             (FromHex(HIBYTE(LOWORD(fcc))))))
+					     (FromHex(HIBYTE(LOWORD(fcc))))))
 
 /* Macro to get TWOCC chunk type out of a FOURCC ckid */
 #define TWOCCFromFOURCC(fcc)    HIWORD(fcc)
@@ -153,13 +153,13 @@ typedef WORD TWOCC;
 */
 #define ToHex(n)	((BYTE) (((n) > 9) ? ((n) - 10 + 'A') : ((n) + '0')))
 #define MAKEAVICKID(tcc, stream) \
-        MAKELONG((ToHex((stream) & 0x0f) << 8) | \
+	MAKELONG((ToHex((stream) & 0x0f) << 8) | \
 			    (ToHex(((stream) & 0xf0) >> 4)), tcc)
 
 /*
-** Main AVI File Header 
-*/	     
-		     
+** Main AVI File Header
+*/
+
 /* flags for use in <dwFlags> in AVIFileHdr */
 #define AVIF_HASINDEX		0x00000010	// Index at end of file?
 #define AVIF_MUSTUSEINDEX	0x00000020
@@ -176,16 +176,16 @@ typedef struct __attribute__((packed))
     DWORD		dwMicroSecPerFrame;	// frame display rate (or 0L)
     DWORD		dwMaxBytesPerSec;	// max. transfer rate
     DWORD		dwPaddingGranularity;	// pad to multiples of this
-                                                // size; normally 2K.
+						// size; normally 2K.
     DWORD		dwFlags;		// the ever-present flags
     DWORD		dwTotalFrames;		// # frames in file
     DWORD		dwInitialFrames;
     DWORD		dwStreams;
     DWORD		dwSuggestedBufferSize;
-    
+
     DWORD		dwWidth;
     DWORD		dwHeight;
-    
+
     DWORD		dwReserved[4];
 } MainAVIHeader;
 
@@ -197,7 +197,7 @@ typedef struct __attribute__((packed))
 
 #define AVISF_VIDEO_PALCHANGES		0x00010000
 
-  
+
 typedef struct __attribute__((packed))
 {
     FOURCC		fccType;
@@ -206,7 +206,7 @@ typedef struct __attribute__((packed))
     WORD		wPriority;
     WORD		wLanguage;
     DWORD		dwInitialFrames;
-    DWORD		dwScale;	
+    DWORD		dwScale;
     DWORD		dwRate;	/* dwRate / dwScale == samples/second */
     DWORD		dwStart;
     DWORD		dwLength; /* In units above... */
@@ -238,7 +238,7 @@ typedef struct __attribute__((packed))
 
 /* Below are located AVIX extensions */
 
-typedef struct __attribute__((packed)) _avisuperindex_entry 
+typedef struct __attribute__((packed)) _avisuperindex_entry
 {
     QWORD	qwOffset;           // full file offset
     DWORD	dwSize;             // size of index chunk at this offset
@@ -251,7 +251,7 @@ typedef struct __attribute__((packed)) _avistdindex_entry
     DWORD	dwSize;             // bit 31 is set if this is NOT a keyframe
 } avistdindex_entry;
 
-// Standard index 
+// Standard index
 typedef struct __attribute__((packed)) _avistdindex_chunk {
     BYTE	fcc[4];       // ix##
     DWORD	dwSize;            // size of this chunk
@@ -276,7 +276,7 @@ typedef struct __attribute__((packed)) _avisuperindex_chunk
     DWORD	nEntriesInUse;         // index of first unused member in aIndex array
     BYTE	dwChunkId[4];         // fcc of what is indexed
     DWORD	dwReserved[3];         // meaning differs for each index type/subtype.
-                                     // 0 if unused
+				     // 0 if unused
     avisuperindex_entry *aIndex;     // position of ix## chunks
     avistdindex_chunk *stdidx;       // the actual std indices
 } avisuperindex_chunk;

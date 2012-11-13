@@ -28,7 +28,7 @@ typedef struct af_dyn_s
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_dyn_t* s   = (af_dyn_t*)af->setup; 
+  af_dyn_t* s   = (af_dyn_t*)af->setup;
   switch(cmd){
   case AF_CONTROL_REINIT:
     // Sanity check
@@ -50,7 +50,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)

@@ -61,7 +61,7 @@ HTTP_header_t *http_read_response(int fd);
 
 int http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry);
 
-/* 
+/*
  * Joey Parrish <joey@yunamusic.com>:
  *
  * This define is to allow systems without inet_pton() to fallback on

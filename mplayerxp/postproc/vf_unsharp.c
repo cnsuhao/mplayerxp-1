@@ -126,7 +126,7 @@ static void __FASTCALL__ unsharp( uint8_t *dst, uint8_t *src, int dstStride, int
 	    if( x>=stepsX && y>=stepsY ) {
 		uint8_t* srx = src - stepsY*srcStride + x - stepsX;
 		uint8_t* dsx = dst - stepsY*dstStride + x - stepsX;
-		
+
 		res = (int32_t)*srx + ( ( ( (int32_t)*srx - (int32_t)((Tmp1+halfscale) >> scalebits) ) * amount ) >> 16 );
 		*dsx = res>255 ? 255 : res<0 ? 0 : (uint8_t)res;
 	    }
@@ -192,8 +192,8 @@ static void __FASTCALL__ get_image( struct vf_instance_s* vf, mp_image_t *mpi ) 
     mpi->stride[0] = vf->dmpi->stride[0];
     mpi->width = vf->dmpi->width;
     if( mpi->flags & MP_IMGFLAG_PLANAR ) {
-        mpi->planes[1] = vf->dmpi->planes[1];
-        mpi->planes[2] = vf->dmpi->planes[2];
+	mpi->planes[1] = vf->dmpi->planes[1];
+	mpi->planes[2] = vf->dmpi->planes[2];
 	mpi->stride[1] = vf->dmpi->stride[1];
 	mpi->stride[2] = vf->dmpi->stride[2];
     }
@@ -244,7 +244,7 @@ static int __FASTCALL__ put_slice( struct vf_instance_s* vf, mp_image_t *mpi ) {
     if(gCpuCaps.hasMMX2)
 	asm volatile ("sfence\n\t");
 #endif
-    
+
     return vf_next_put_slice( vf, dmpi );
 }
 
@@ -340,7 +340,7 @@ static MPXP_Rc __FASTCALL__ vf_open( vf_instance_t *vf,const char* args ) {
 	}
 
 	args2 = strchr( args, 'c' );
-	if( args2 ) 
+	if( args2 )
 	    parse( &vf->priv->chromaParam, args2 );
 	else {
 	    vf->priv->chromaParam.amount =

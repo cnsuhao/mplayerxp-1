@@ -37,50 +37,50 @@ int dca_downmix_init (int input, int flags, level_t * level,
 		      level_t clev, level_t slev)
 {
     static uint8_t table[11][10] = {
-        /* DCA_MONO */
-        {DCA_MONO,      DCA_MONO,       DCA_MONO,       DCA_MONO,
-         DCA_MONO,      DCA_MONO,       DCA_MONO,       DCA_MONO,
-         DCA_MONO,      DCA_MONO},
-        /* DCA_CHANNEL */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO},
-        /* DCA_STEREO */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO},
-        /* DCA_STEREO_SUMDIFF */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO},
-        /* DCA_STEREO_TOTAL */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO},
-        /* DCA_3F */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_3F,         DCA_3F,         DCA_3F,
-         DCA_3F,        DCA_3F},
-        /* DCA_2F1R */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_2F1R,       DCA_2F1R,       DCA_2F1R,
-         DCA_2F1R,      DCA_2F1R},
-        /* DCA_3F1R */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_3F,         DCA_3F1R,       DCA_3F1R,
-         DCA_3F1R,      DCA_3F1R},
-        /* DCA_2F2R */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_STEREO,     DCA_2F2R,       DCA_2F2R,
-         DCA_2F2R,      DCA_2F2R},
-        /* DCA_3F2R */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_3F,         DCA_3F2R,       DCA_3F2R,
-         DCA_3F2R,      DCA_3F2R},
-        /* DCA_4F2R */
-        {DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
-         DCA_STEREO,    DCA_4F2R,       DCA_4F2R,       DCA_4F2R,
-         DCA_4F2R,      DCA_4F2R},
+	/* DCA_MONO */
+	{DCA_MONO,      DCA_MONO,       DCA_MONO,       DCA_MONO,
+	 DCA_MONO,      DCA_MONO,       DCA_MONO,       DCA_MONO,
+	 DCA_MONO,      DCA_MONO},
+	/* DCA_CHANNEL */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO},
+	/* DCA_STEREO */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO},
+	/* DCA_STEREO_SUMDIFF */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO},
+	/* DCA_STEREO_TOTAL */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO,     DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO},
+	/* DCA_3F */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_3F,         DCA_3F,         DCA_3F,
+	 DCA_3F,        DCA_3F},
+	/* DCA_2F1R */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_2F1R,       DCA_2F1R,       DCA_2F1R,
+	 DCA_2F1R,      DCA_2F1R},
+	/* DCA_3F1R */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_3F,         DCA_3F1R,       DCA_3F1R,
+	 DCA_3F1R,      DCA_3F1R},
+	/* DCA_2F2R */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_STEREO,     DCA_2F2R,       DCA_2F2R,
+	 DCA_2F2R,      DCA_2F2R},
+	/* DCA_3F2R */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_3F,         DCA_3F2R,       DCA_3F2R,
+	 DCA_3F2R,      DCA_3F2R},
+	/* DCA_4F2R */
+	{DCA_MONO,      DCA_CHANNEL,    DCA_STEREO,     DCA_STEREO,
+	 DCA_STEREO,    DCA_4F2R,       DCA_4F2R,       DCA_4F2R,
+	 DCA_4F2R,      DCA_4F2R},
     };
     int output;
 

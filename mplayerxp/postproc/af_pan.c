@@ -31,7 +31,7 @@ typedef struct af_pan_s
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_pan_t* s = af->setup; 
+  af_pan_t* s = af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:
@@ -64,12 +64,12 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     while((*cp == ':') && (k < AF_NCH)){
       sscanf(cp, ":%f%n" , &s->level[k][j], &n);
       s->level[k][j] = clamp(s->level[k][j],0.0,1.0);
-      MSG_V("[pan] Pan level from channel %i to" 
+      MSG_V("[pan] Pan level from channel %i to"
 	     " channel %i = %f\n",j,k,s->level[k][j]);
       cp =&cp[n];
       j++;
       if(j>=nch){
-	j = 0; 
+	j = 0;
 	k++;
       }
     }
@@ -96,7 +96,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 
     // Sanity check
     if(((int*)arg)[0] <= 0 || ((int*)arg)[0] > AF_NCH){
-      MSG_ERR("[pan] The number of output channels must be" 
+      MSG_ERR("[pan] The number of output channels must be"
 	     " between 1 and %i. Current value is %i\n",AF_NCH,((int*)arg)[0]);
       return MPXP_Error;
     }
@@ -110,7 +110,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data->audio)
@@ -138,7 +138,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
     return NULL;
 
   out = l->audio;
-  // Execute panning 
+  // Execute panning
   // FIXME: Too slow
   while(in < end){
     for(j=0;j<ncho;j++){

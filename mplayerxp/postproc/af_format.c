@@ -196,7 +196,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 	}
     }
 
-    // Switch from cpu native endian to the correct endianess 
+    // Switch from cpu native endian to the correct endianess
     if((l->format&MPAF_END_MASK)!=MPAF_NE)
 	endian(l->audio,l->audio,len,l->format&MPAF_BPS_MASK,final);
     // Set output data

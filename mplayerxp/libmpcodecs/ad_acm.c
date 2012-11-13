@@ -61,10 +61,10 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     MSACM_RegisterDriver((const char *)sh_audio->codec->dll_name, sh_audio->wtag, 0);
     ret=acmStreamOpen(&priv->srcstream,(HACMDRIVER)NULL,in_fmt,&priv->o_wf,NULL,0,0,0);
     if(ret){
-        if(ret==ACMERR_NOTPOSSIBLE)
-            MSG_ERR("ACM_Decoder: Unappropriate audio format\n");
-        else
-            MSG_ERR("ACM_Decoder: acmStreamOpen error: %d", (int)ret);
+	if(ret==ACMERR_NOTPOSSIBLE)
+	    MSG_ERR("ACM_Decoder: Unappropriate audio format\n");
+	else
+	    MSG_ERR("ACM_Decoder: acmStreamOpen error: %d", (int)ret);
 	priv->srcstream=0;
 	return 0;
     }
@@ -74,8 +74,8 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     srcsize*=2;
     //if(srcsize<MAX_OUTBURST) srcsize=MAX_OUTBURST;
     if(!srcsize){
-        MSG_WARN("Warning! ACM codec reports srcsize=0\n");
-        srcsize=16384;
+	MSG_WARN("Warning! ACM codec reports srcsize=0\n");
+	srcsize=16384;
     }
     // limit srcsize to 4-16kb
     //while(srcsize && srcsize<4096) srcsize*=2;
@@ -129,8 +129,8 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     float pts;
     int ret=decode(sh_audio,sh_audio->a_buffer,4096,sh_audio->a_buffer_size,&pts);
     if(ret<0){
-        MSG_INFO("ACM decoding error: %d\n",ret);
-        return MPXP_False;
+	MSG_INFO("ACM decoding error: %d\n",ret);
+	return MPXP_False;
     }
     sh_audio->a_buffer_len=ret;
     return MPXP_Ok;
@@ -214,7 +214,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	memset(&ash, 0, sizeof(ash));
 	ash.cbStruct=sizeof(ash);
 	ash.fdwStatus=0;
-	ash.dwUser=0; 
+	ash.dwUser=0;
 	ash.pbSrc=sh_audio->a_in_buffer;
 	ash.cbSrcLength=sh_audio->a_in_buffer_len;
 	ash.pbDst=buf;

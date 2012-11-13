@@ -176,9 +176,9 @@ fsdp_description_recycle (fsdp_description_t * dsc)
     for (j = 0; j < dsc->media_announcements[i]->bw_modifiers_count; j++)
     {
       if (FSDP_BW_MOD_TYPE_UNKNOWN ==
-          dsc->media_announcements[i]->bw_modifiers[j].b_mod_type)
-        safe_free (dsc->media_announcements[i]->bw_modifiers[j].
-                   b_unknown_bw_modt);
+	  dsc->media_announcements[i]->bw_modifiers[j].b_mod_type)
+	safe_free (dsc->media_announcements[i]->bw_modifiers[j].
+		   b_unknown_bw_modt);
     }
     safe_free (dsc->media_announcements[i]->bw_modifiers);
 
@@ -188,7 +188,7 @@ fsdp_description_recycle (fsdp_description_t * dsc)
     {
       safe_free (dsc->media_announcements[i]->a_rtpmaps[j]->pt);
       safe_free (dsc->media_announcements[i]->a_rtpmaps[j]->
-                 encoding_name);
+		 encoding_name);
       safe_free (dsc->media_announcements[i]->a_rtpmaps[j]->parameters);
       safe_free (dsc->media_announcements[i]->a_rtpmaps[j]);
     }
@@ -211,7 +211,7 @@ fsdp_description_recycle (fsdp_description_t * dsc)
     safe_free (dsc->media_announcements[i]->a_fmtps);
 
     for (j = 0;
-         j < dsc->media_announcements[i]->unidentified_attributes_count; j++)
+	 j < dsc->media_announcements[i]->unidentified_attributes_count; j++)
       safe_free (dsc->media_announcements[i]->unidentified_attributes[j]);
     safe_free (dsc->media_announcements[i]->unidentified_attributes);
     safe_free (dsc->media_announcements[i]);

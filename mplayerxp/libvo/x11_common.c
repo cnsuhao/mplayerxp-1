@@ -183,7 +183,7 @@ void __FASTCALL__ vo_x11_hidecursor ( Display *disp, Window win )
 	static char bm_no_data[] = { 0,0,0,0, 0,0,0,0  };
 
 	if(vo_conf.WinID==0) return;	// do not hide, if we're playing at rootwin
-	
+
 	colormap = DefaultColormap(disp,DefaultScreen(disp));
 	XAllocNamedColor(disp,colormap,"black",&black,&dummy);
 	bm_no = XCreateBitmapFromData(disp, win, bm_no_data, 8,8);
@@ -224,7 +224,7 @@ static int __FASTCALL__ vo_find_depth_from_visuals(Display *dpy, int screen, Vis
        * previous 'best' visual
        */
       if (bestvisual_depth == -1
-	  || (visuals[i].depth >= 15 
+	  || (visuals[i].depth >= 15
 	      && (   visuals[i].depth < bestvisual_depth
 		  || bestvisual_depth < 15))) {
 	bestvisual = i;
@@ -875,14 +875,14 @@ void __FASTCALL__ vo_vm_switch(vo_data_t*vo,uint32_t X, uint32_t Y, int* modelin
 
     if (have_vm) {
       if (priv->vidmodes==NULL)
-        XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
+	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
       j=0;
       *modeline_width=priv->vidmodes[0]->hdisplay;
       *modeline_height=priv->vidmodes[0]->vdisplay;
 
       for (i=1; i<modecount; i++)
-        if ((priv->vidmodes[i]->hdisplay >= X) && (priv->vidmodes[i]->vdisplay >= Y))
-          if ( (priv->vidmodes[i]->hdisplay <= *modeline_width ) && (priv->vidmodes[i]->vdisplay <= *modeline_height) )
+	if ((priv->vidmodes[i]->hdisplay >= X) && (priv->vidmodes[i]->vdisplay >= Y))
+	  if ( (priv->vidmodes[i]->hdisplay <= *modeline_width ) && (priv->vidmodes[i]->vdisplay <= *modeline_height) )
 	    {
 	      *modeline_width=priv->vidmodes[i]->hdisplay;
 	      *modeline_height=priv->vidmodes[i]->vdisplay;
@@ -912,7 +912,7 @@ void __FASTCALL__ vo_vm_close(vo_data_t*vo,Display *dpy)
 	    if ((priv->vidmodes[i]->hdisplay == vo_conf.screenwidth) && (priv->vidmodes[i]->vdisplay == vo_conf.screenheight)) {
 		MSG_V("\nReturning to original mode %dx%d\n", vo_conf.screenwidth, vo_conf.screenheight);
 		break;
-            }
+	    }
 	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
 	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
 	mp_free(priv->vidmodes);

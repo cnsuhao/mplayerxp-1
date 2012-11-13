@@ -64,11 +64,11 @@ enum {
 
 extern dca_state_t * dca_init (uint32_t mm_accel);
 extern int dca_syncinfo (dca_state_t *state, uint8_t * buf, int * flags,
-                  int * sample_rate, int * bit_rate, int *frame_length);
+		  int * sample_rate, int * bit_rate, int *frame_length);
 extern int dca_frame (dca_state_t * state, uint8_t * buf, int * flags,
-               level_t * level, sample_t bias);
+	       level_t * level, sample_t bias);
 extern void dca_dynrng (dca_state_t * state,
-                 level_t (* call) (level_t, any_t*), any_t* data);
+		 level_t (* call) (level_t, any_t*), any_t* data);
 extern int dca_blocks_num (dca_state_t * state);
 extern int dca_block (dca_state_t * state);
 extern sample_t * dca_samples (dca_state_t * state);

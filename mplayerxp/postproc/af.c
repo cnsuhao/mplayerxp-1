@@ -134,8 +134,8 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
      non-reentrant */
   if(_new->info->flags & AF_FLAGS_NOT_REENTRANT){
     if(af_get(s,name)){
-      MSG_ERR("[libaf] There can only be one instance of" 
-	     " the filter '%s' in each stream\n",name);  
+      MSG_ERR("[libaf] There can only be one instance of"
+	     " the filter '%s' in each stream\n",name);
       mp_free(_new);
       return NULL;
     }
@@ -214,8 +214,8 @@ void af_remove(af_stream_t* s, af_instance_t* af)
 {
   if(!af) return;
 
-  // Print friendly message 
-  MSG_V("[libaf] Removing filter %s \n",af->info->name); 
+  // Print friendly message
+  MSG_V("[libaf] Removing filter %s \n",af->info->name);
 
   // Notify filter before changing anything
   af->control(af,AF_CONTROL_PRE_DESTROY,0);
@@ -301,7 +301,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 	  if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) return rv;
 	}
 	if(!_new){ // Should _never_ happen
-	  MSG_ERR("[libaf] Unable to correct audio format. " 
+	  MSG_ERR("[libaf] Unable to correct audio format. "
 		 "This error should never occur, please send bugreport.\n");
 	  return MPXP_Error;
 	}
@@ -322,7 +322,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
       break;
     }
     default:
-      MSG_ERR("[libaf] Reinitialization did not work, audio" 
+      MSG_ERR("[libaf] Reinitialization did not work, audio"
 	     " filter '%s' returned error code %i for r=%i c=%i fmt=%x\n",af->info->name,rv,in.rate,in.nch,in.format);
       return MPXP_Error;
     }
@@ -423,7 +423,7 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
 	return MPXP_False;
       // Use lin int if the user wants fast
       if ((AF_INIT_TYPE_MASK & s->cfg.force) == AF_INIT_FAST) {
-        char args[32];
+	char args[32];
 	sprintf(args, "%d:0:0", s->output.rate);
 	af->control(af, AF_CONTROL_COMMAND_LINE, args);
       }

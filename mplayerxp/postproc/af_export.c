@@ -1,9 +1,9 @@
 /* This audio filter exports the incomming signal to other processes
-   using memory mapping. Memory mapped area contains a header: 
+   using memory mapping. Memory mapped area contains a header:
       int nch,
       int size,
       unsigned long long counter (updated every time the  contents of
-                                  the area changes),
+				  the area changes),
    the rest is payload (non-interleaved).
 */
 
@@ -29,7 +29,7 @@
 #include "pp_msg.h"
 
 #define DEF_SZ 512 // default buffer size (in samples)
-#define SHARED_FILE "mplayer-af_export" /* default file name 
+#define SHARED_FILE "mplayer-af_export" /* default file name
 					   (relative to ~/.mplayer/ */
 
 #define SIZE_HEADER (2 * sizeof(int) + sizeof(unsigned long long))
@@ -92,7 +92,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     s->fd = open(s->filename, O_RDWR | O_CREAT | O_TRUNC, 0640);
     MSG_INFO( "[export] Exporting to file: %s\n", s->filename);
     if(s->fd < 0)
-      MSG_FATAL( "[export] Could not open/create file: %s\n", 
+      MSG_FATAL( "[export] Could not open/create file: %s\n",
 	     s->filename);
 
     // header + buffer
@@ -108,7 +108,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     s->mmap_area = mmap(0, mapsize, PROT_READ|PROT_WRITE,MAP_SHARED, s->fd, 0);
     if(s->mmap_area == NULL)
       MSG_FATAL( "[export] Could not mmap file %s\n", s->filename);
-    MSG_INFO( "[export] Memory mapped to file: %s (%p)\n", 
+    MSG_INFO( "[export] Memory mapped to file: %s (%p)\n",
 	   s->filename, s->mmap_area);
 
     // Initialize header
@@ -124,7 +124,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     char *str = arg;
 
     if (!str){
-      if(s->filename) 
+      if(s->filename)
 	mp_free(s->filename);
 
       s->filename = get_path(SHARED_FILE);
@@ -177,7 +177,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
 
     // Free mmaped area
     if(s->mmap_area)
-      munmap(s->mmap_area, sizeof(af_export_t));	  
+      munmap(s->mmap_area, sizeof(af_export_t));
 
     if(s->fd > -1)
       close(s->fd);
@@ -209,9 +209,9 @@ static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* da
   // Fill all buffers
   for(ch = 0; ch < nch; ch++){
     int 	wi = s->wi;    	 // Reset write index
-    int16_t* 	b  = s->buf[ch]; // Current buffer 
+    int16_t* 	b  = s->buf[ch]; // Current buffer
 
-    // Copy data to export buffers 
+    // Copy data to export buffers
     for(i = ch; i < len; i += nch){
       b[wi++] = a[i];
       if(wi >= sz){ // Don't write outside the end of the buffer
@@ -236,7 +236,7 @@ static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* da
 }
 
 /* Allocate memory and set function pointers
-   af audio filter instance 
+   af audio filter instance
    returns MPXP_Ok or MPXP_Error
 */
 static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )

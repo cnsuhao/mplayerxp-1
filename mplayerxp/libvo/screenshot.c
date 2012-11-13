@@ -44,36 +44,36 @@ struct pngdata {
 	png_infop info_ptr;
 	enum {OK,ERROR} status;
 };
-	
+
 static struct pngdata create_png (char * fname)
 {
     struct pngdata png;
-    
+
     png.png_ptr = png_create_write_struct
        (PNG_LIBPNG_VER_STRING, NULL,
-        NULL, NULL);
+	NULL, NULL);
     png.info_ptr = png_create_info_struct(png.png_ptr);
-   
+
     if (!png.png_ptr) {
        MSG_V("PNG Failed to init png pointer\n");
        png.status = ERROR;
        return png;
-    }   
-    
+    }
+
     if (!png.info_ptr) {
        MSG_V("PNG Failed to init png infopointer\n");
        png_destroy_write_struct(&png.png_ptr,
-         (png_infopp)NULL);
+	 (png_infopp)NULL);
        png.status = ERROR;
        return png;
     }
 
     if (setjmp(png.png_ptr->jmpbuf)) {
 	MSG_V("PNG Internal error!\n");
-        png_destroy_write_struct(&png.png_ptr, &png.info_ptr);
-        fclose(png.fp);
-        png.status = ERROR;
-        return png;
+	png_destroy_write_struct(&png.png_ptr, &png.info_ptr);
+	fclose(png.fp);
+	png.status = ERROR;
+	return png;
     }
 
     png.fp = fopen (fname, "wb");
@@ -97,15 +97,15 @@ static struct pngdata create_png (char * fname)
     png_write_info(png.png_ptr, png.info_ptr);
 
     if(sshot.cspace) {
-    	MSG_V("PNG Set BGR Conversion\n");
-    	png_set_bgr(png.png_ptr);
+	MSG_V("PNG Set BGR Conversion\n");
+	png_set_bgr(png.png_ptr);
     }
 
     png.status = OK;
     return png;
 
 }
-   
+
 static uint8_t destroy_png(struct pngdata png) {
 
     MSG_V("PNG Write End\n");

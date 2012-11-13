@@ -60,7 +60,7 @@ struct WaveHeader
 /* init with default values */
 static struct WaveHeader wavhdr = {
 	WAV_ID_RIFF,
-        /* same conventions than in sox/wav.c/wavwritehdr() */
+	/* same conventions than in sox/wav.c/wavwritehdr() */
 	0, //le2me_32(0x7ffff024),
 	WAV_ID_WAVE,
 	WAV_ID_FMT,

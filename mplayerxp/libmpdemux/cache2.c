@@ -348,7 +348,7 @@ static void __FASTCALL__ c2_stream_reset(cache_vars_t* c)
     cidx=c->first;
     was_eof=0;
     do{ was_eof |= (c->packets[cidx].state&CPF_EOF); c->packets[cidx].state&=~CPF_EOF; cidx=CP_NEXT(c,cidx); }while(cidx!=c->first);
-    c->eof=0;    
+    c->eof=0;
     if(was_eof)
     {
 	cidx=c->first;
@@ -360,11 +360,11 @@ static void __FASTCALL__ c2_stream_reset(cache_vars_t* c)
 }
 
 static int __FASTCALL__ c2_stream_seek_long(cache_vars_t* c,off_t pos){
-  
+
   MSG_DBG2("CACHE2_SEEK: %lli,%lli,%lli <> %lli\n",START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),pos);
   if(pos<0/* || pos>END_FILEPOS(c)*/) { c->eof=1; return 0; }
   while(c->in_fill) usleep(0);
-  CACHE2_LOCK(c);  
+  CACHE2_LOCK(c);
   if(c->eof) c2_stream_reset(c);
   C2_ASSERT(pos < c->stream->start_pos);
   c->read_filepos=pos;
@@ -383,13 +383,13 @@ static unsigned __FASTCALL__ c2_find_packet(cache_vars_t* c,off_t pos)
     {
 	CACHE2_PACKET_LOCK(retval);
 	while(c->packets[retval].state&CPF_EMPTY) { CACHE2_PACKET_UNLOCK(retval); usleep(0); CACHE2_PACKET_LOCK(retval); }
-	if((pos >= c->packets[retval].filepos && 
-	    pos < c->packets[retval].filepos+c->packets[retval].sp.len && 
+	if((pos >= c->packets[retval].filepos &&
+	    pos < c->packets[retval].filepos+c->packets[retval].sp.len &&
 	    !c->packets[retval].sp.type) ||
 	    (c->packets[retval].state&CPF_EOF))
 			break; /* packet is locked */
-	if(c->packets[retval].sp.type && 
-	   !(c->packets[retval].state&CPF_DONE) && 
+	if(c->packets[retval].sp.type &&
+	   !(c->packets[retval].state&CPF_DONE) &&
 	   c->stream->event_handler)
 	{
 	   c->stream->event_handler(c->stream,&c->packets[retval].sp);

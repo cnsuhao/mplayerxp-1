@@ -31,7 +31,7 @@ int Init_2xSaI(int d)
 
 	int minr = 0, ming = 0, minb = 0;
 	int i;
-	
+
 //	if (d != 15 && d != 16 && d != 24 && d != 32)
 //		return -1;
 
@@ -53,7 +53,7 @@ int Init_2xSaI(int d)
 	greenMask = makecol_depth(d, 0, 255, 0);
 
 	PixelsPerMask = (d <= 16) ? 2 : 1;
-	
+
 	if (PixelsPerMask == 2) {
 		colorMask |= (colorMask << 16);
 		qcolorMask |= (qcolorMask << 16);
@@ -96,9 +96,9 @@ void Super2xSaI_ex(uint8_t *src, uint32_t src_pitch,
 	src_line[1] = src;
 	src_line[2] = src + src_pitch;
 	src_line[3] = src + src_pitch * 2;
-	
+
 	x = 0, y = 0;
-	
+
 	if (PixelsPerMask == 2) {
 		unsigned short *sbp;
 		sbp = (unsigned short*)src_line[0];
@@ -270,7 +270,7 @@ void Super2xSaI_ex(uint8_t *src, uint32_t src_pitch,
 //===========================================================================//
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
 
     Init_2xSaI(outfmt&255);

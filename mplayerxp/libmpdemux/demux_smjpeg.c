@@ -66,11 +66,11 @@ static int smjpeg_demux(demuxer_t *demux,demux_stream_t *__ds)
     int dtype, dsize, dpts;
 
     demux->filepos = stream_tell(demux->stream);
-    
+
     dtype = stream_read_dword_le(demux->stream);
     dpts = stream_read_dword(demux->stream);
     dsize = stream_read_dword(demux->stream);
-    
+
     switch(dtype)
     {
 	case mmioFOURCC('s','n','d','D'):
@@ -100,10 +100,10 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
     /* file header */
     stream_skip(demuxer->stream, 8); /* \x00\x0aSMJPEG */
     stream_skip(demuxer->stream, 4);
-    
+
     MSG_V("This clip is %d seconds\n",
 	stream_read_dword(demuxer->stream));
-    
+
     /* stream header */
     while (i < 3)
     {

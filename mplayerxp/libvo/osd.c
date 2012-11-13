@@ -34,31 +34,31 @@ static unsigned short fast_osd_16bpp_table[256];
 static void __FASTCALL__ vo_draw_alpha_rgb15_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
-        register unsigned short *dst = (unsigned short*) dstbase;
-        register int x;
-        for(x=0;x<w;x++){
-            if(srca[x]){
+	register unsigned short *dst = (unsigned short*) dstbase;
+	register int x;
+	for(x=0;x<w;x++){
+	    if(srca[x]){
 #ifdef FAST_OSD
 #ifdef FAST_OSD_TABLE
-                dst[x]=fast_osd_15bpp_table[src[x]];
+		dst[x]=fast_osd_15bpp_table[src[x]];
 #else
 		register unsigned int a=src[x]>>3;
-                dst[x]=(a<<10)|(a<<5)|a;
+		dst[x]=(a<<10)|(a<<5)|a;
 #endif
 #else
-                unsigned char r=dst[x]&0x1F;
-                unsigned char g=(dst[x]>>5)&0x1F;
-                unsigned char b=(dst[x]>>10)&0x1F;
-                r=(((r*srca[x])>>5)+src[x])>>3;
-                g=(((g*srca[x])>>5)+src[x])>>3;
-                b=(((b*srca[x])>>5)+src[x])>>3;
-                dst[x]=(b<<10)|(g<<5)|r;
+		unsigned char r=dst[x]&0x1F;
+		unsigned char g=(dst[x]>>5)&0x1F;
+		unsigned char b=(dst[x]>>10)&0x1F;
+		r=(((r*srca[x])>>5)+src[x])>>3;
+		g=(((g*srca[x])>>5)+src[x])>>3;
+		b=(((b*srca[x])>>5)+src[x])>>3;
+		dst[x]=(b<<10)|(g<<5)|r;
 #endif
-            }
-        }
-        src+=srcstride;
-        srca+=srcstride;
-        dstbase+=dststride;
+	    }
+	}
+	src+=srcstride;
+	srca+=srcstride;
+	dstbase+=dststride;
     }
     return;
 }
@@ -66,30 +66,30 @@ static void __FASTCALL__ vo_draw_alpha_rgb15_c(int w,int h, const unsigned char*
 static void __FASTCALL__ vo_draw_alpha_rgb16_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
-        register unsigned short *dst = (unsigned short*) dstbase;
-        register int x;
-        for(x=0;x<w;x++){
-            if(srca[x]){
+	register unsigned short *dst = (unsigned short*) dstbase;
+	register int x;
+	for(x=0;x<w;x++){
+	    if(srca[x]){
 #ifdef FAST_OSD
 #ifdef FAST_OSD_TABLE
-                dst[x]=fast_osd_16bpp_table[src[x]];
+		dst[x]=fast_osd_16bpp_table[src[x]];
 #else
-                dst[x]=((src[x]>>3)<<11)|((src[x]>>2)<<5)|(src[x]>>3);
+		dst[x]=((src[x]>>3)<<11)|((src[x]>>2)<<5)|(src[x]>>3);
 #endif
 #else
-                unsigned char r=dst[x]&0x1F;
-                unsigned char g=(dst[x]>>5)&0x3F;
-                unsigned char b=(dst[x]>>11)&0x1F;
-                r=(((r*srca[x])>>5)+src[x])>>3;
-                g=(((g*srca[x])>>6)+src[x])>>2;
-                b=(((b*srca[x])>>5)+src[x])>>3;
-                dst[x]=(b<<11)|(g<<5)|r;
+		unsigned char r=dst[x]&0x1F;
+		unsigned char g=(dst[x]>>5)&0x3F;
+		unsigned char b=(dst[x]>>11)&0x1F;
+		r=(((r*srca[x])>>5)+src[x])>>3;
+		g=(((g*srca[x])>>6)+src[x])>>2;
+		b=(((b*srca[x])>>5)+src[x])>>3;
+		dst[x]=(b<<11)|(g<<5)|r;
 #endif
-            }
-        }
-        src+=srcstride;
-        srca+=srcstride;
-        dstbase+=dststride;
+	    }
+	}
+	src+=srcstride;
+	srca+=srcstride;
+	dstbase+=dststride;
     }
     return;
 }
@@ -110,8 +110,8 @@ void vo_draw_alpha_init( void ){
 #ifdef FAST_OSD_TABLE
     int i;
     for(i=0;i<256;i++){
-        fast_osd_15bpp_table[i]=((i>>3)<<10)|((i>>3)<<5)|(i>>3);
-        fast_osd_16bpp_table[i]=((i>>3)<<11)|((i>>2)<<5)|(i>>3);
+	fast_osd_15bpp_table[i]=((i>>3)<<10)|((i>>3)<<5)|(i>>3);
+	fast_osd_16bpp_table[i]=((i>>3)<<11)|((i>>2)<<5)|(i>>3);
     }
 #endif
 /*FIXME the optimized stuff is a lie for 15/16bpp as they arent optimized yet*/

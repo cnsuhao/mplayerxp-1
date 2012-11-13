@@ -22,7 +22,7 @@
 #include "demux_msg.h"
 
 typedef struct {
-    int framenum; 
+    int framenum;
     y4m_stream_info_t* si;
     int is_older;
 } y4m_priv_t;
@@ -85,7 +85,7 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
   if (priv->is_older)
   {
     int c;
-    
+
     c = stream_read_char(demux->stream); /* F */
     if (c == -256)
 	return 0; /* EOF */
@@ -145,7 +145,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 	buf[1] = 0;
 	frame_rate_code = atoi(buf);
 	stream_skip(demuxer->stream, 1); /* new-line */
-	
+
 	if (!sh->fps)
 	{
 	    /* values from xawtv */
@@ -183,9 +183,9 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
     else
     {
 	y4m_init_stream_info(priv->si);
-	if ((err=y4m_read_stream_header(demuxer->stream, priv->si)) != Y4M_OK) 
+	if ((err=y4m_read_stream_header(demuxer->stream, priv->si)) != Y4M_OK)
 	    MSG_FATAL( "error parsing YUV4MPEG header: %s\n", y4m_strerr(err));
-	
+
 	if(!sh->fps) {
 	    ratio = y4m_si_get_framerate(priv->si);
 	    if (ratio.d != 0)
@@ -200,7 +200,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 
 	sh->src_w = y4m_si_get_width(priv->si);
 	sh->src_h = y4m_si_get_height(priv->si);
-    	demuxer->flags &= ~DEMUXF_SEEKABLE;
+	demuxer->flags &= ~DEMUXF_SEEKABLE;
     }
 
     sh->fourcc = mmioFOURCC('Y', 'V', '1', '2');
@@ -217,11 +217,11 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
     demuxer->video->sh=sh;
     sh->ds=demuxer->video;
     demuxer->video->id=0;
-		
+
 
     MSG_V( "YUV4MPEG2 Video stream %d size: display: %dx%d, codec: %ux%u\n",
-            demuxer->video->id, sh->src_w, sh->src_h, sh->bih->biWidth,
-            sh->bih->biHeight);
+	    demuxer->video->id, sh->src_w, sh->src_h, sh->bih->biWidth,
+	    sh->bih->biHeight);
     return demuxer;
 }
 
@@ -237,14 +237,14 @@ static void y4m_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
     priv->framenum += rel_seek_frames;
 
     if (priv->is_older) {
-        /* Well this is easy: every frame takes up size+6 bytes
-         * in the stream and we may assume that the stream pointer
-         * is always at the beginning of a frame.
-         * framenum is the number of the frame that is about to be
-         * demuxed (counting from ONE (see demux_open_y4m)) */
-        stream_seek(demuxer->stream, curr_pos + rel_seek_frames*(size+6));
+	/* Well this is easy: every frame takes up size+6 bytes
+	 * in the stream and we may assume that the stream pointer
+	 * is always at the beginning of a frame.
+	 * framenum is the number of the frame that is about to be
+	 * demuxed (counting from ONE (see demux_open_y4m)) */
+	stream_seek(demuxer->stream, curr_pos + rel_seek_frames*(size+6));
     } else {
-	    /* should never come here, because seeking for YUV4MPEG2 
+	    /* should never come here, because seeking for YUV4MPEG2
 	     * is disabled. */
 	    MSG_WARN( "Seeking for YUV4MPEG2 not yet implemented!\n");
     }

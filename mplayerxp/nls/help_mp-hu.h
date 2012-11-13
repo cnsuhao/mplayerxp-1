@@ -36,7 +36,7 @@ static char help_text[]=
 
 // ========================= MPlayer messages ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\nKilépek... (%s)\n"
 #define MSGTR_Exit_frames "Kért számú képkocka lejátszásra került"

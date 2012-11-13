@@ -101,13 +101,13 @@ float SleepTime(int rtc_fd,int softsleep,float time_frame)
     {
 	// -------- USLEEP + SOFTSLEEP -----------
 	float min=softsleep?0.021:0.005;
-        while(time_frame>min){
-          if(time_frame<=0.020)
-             usec_sleep(0); // sleeps 1 clock tick (10ms)!
-          else
-             usec_sleep(1000000*(time_frame-0.020));
-          time_frame-=GetRelativeTime();
-        }
+	while(time_frame>min){
+	  if(time_frame<=0.020)
+	     usec_sleep(0); // sleeps 1 clock tick (10ms)!
+	  else
+	     usec_sleep(1000000*(time_frame-0.020));
+	  time_frame-=GetRelativeTime();
+	}
 	if(softsleep){
 	    if(time_frame<0) MSG_WARN( "Warning! Softsleep underflow!\n");
 	    while(time_frame>0) time_frame-=GetRelativeTime(); // burn the CPU

@@ -80,23 +80,23 @@ typedef struct
     CHAR         		szAliasName[128];
 } DRIVERINFOSTRUCT16, *LPDRIVERINFOSTRUCT16;
 
-LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
-                               LPARAM dwParam1, LPARAM dwParam2);
+LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
+			       LPARAM dwParam1, LPARAM dwParam2);
 LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hdrvr,
-                               UINT Msg, LPARAM lParam1, LPARAM lParam2);
+			       UINT Msg, LPARAM lParam1, LPARAM lParam2);
 HDRVR16 WINAPI OpenDriver16(LPCSTR szDriverName, LPCSTR szSectionName,
-                            LPARAM lParam2);
+			    LPARAM lParam2);
 HDRVR WINAPI OpenDriverA(LPCSTR szDriverName, LPCSTR szSectionName,
-                             LPARAM lParam2);
+			     LPARAM lParam2);
 HDRVR WINAPI OpenDriverW(LPCWSTR szDriverName, LPCWSTR szSectionName,
-                             LPARAM lParam2);
+			     LPARAM lParam2);
 #define OpenDriver WINELIB_NAME_AW(OpenDriver)
 LRESULT WINAPI CloseDriver16(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);
 LRESULT WINAPI CloseDriver(HDRVR hDriver, LPARAM lParam1, LPARAM lParam2);
 LRESULT WINAPI SendDriverMessage16( HDRVR16 hDriver, UINT16 message,
-                                    LPARAM lParam1, LPARAM lParam2 );
+				    LPARAM lParam1, LPARAM lParam2 );
 LRESULT WINAPI SendDriverMessage( HDRVR hDriver, UINT message,
-                                    LPARAM lParam1, LPARAM lParam2 );
+				    LPARAM lParam1, LPARAM lParam2 );
 HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDriver);
 HMODULE WINAPI GetDriverModuleHandle(HDRVR hDriver);
 

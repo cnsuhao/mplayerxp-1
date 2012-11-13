@@ -40,7 +40,7 @@ static char help_text[]=
 
 // ========================= MPlayer 메세지 ===========================
 
-// mplayer.c: 
+// mplayer.c:
 
 #define MSGTR_Exiting "\n종료합니다... (%s)\n"
 #define MSGTR_Exit_frames "요청한 프레임수를 재생하였습니다."

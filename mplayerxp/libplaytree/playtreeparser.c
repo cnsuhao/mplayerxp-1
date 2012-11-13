@@ -49,7 +49,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
 
   if(stream_eof(p->stream) && (p->buffer_end == 0 || p->iter[0] == '\0'))
     return NULL;
-    
+
   while(1) {
 
     if(resize) {
@@ -59,7 +59,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
       p->buffer_size += BUF_STEP;
       resize = 0;
     }
-    
+
     if(p->buffer_size - p->buffer_end > 1 && !stream_eof(p->stream)) {
       r = stream_read(p->stream,p->buffer + p->buffer_end,p->buffer_size - p->buffer_end - 1);
       if(r > 0) {
@@ -67,7 +67,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
 	p->buffer[p->buffer_end] = '\0';
       }
     }
-    
+
     end = strchr(p->iter,'\n');
     if(!end) {
       if(stream_eof(p->stream)) {
@@ -169,7 +169,7 @@ static play_tree_t* parse_asx(any_t* libinput,play_tree_parser_t* p) {
 	get_line = 1;
     }
   }
-	
+
   MSG_V("Detected asx format\n");
 
   // We have an asx : load it in memory and parse
@@ -278,7 +278,7 @@ parse_pls(play_tree_parser_t* p) {
 	MSG_ERR("No value in entry %s\n",line);
       else
 	entries[num-1].length = mp_strdup(v);
-    } else 
+    } else
       MSG_WARN("Unknow entry type %s\n",line);
     line = play_tree_parser_get_line(p);
   }
@@ -309,7 +309,7 @@ parse_pls(play_tree_parser_t* p) {
   mp_free(entries);
 
   entry = play_tree_new();
-  play_tree_set_child(entry,list);	
+  play_tree_set_child(entry,list);
   return entry;
 }
 
@@ -432,7 +432,7 @@ play_tree_parser_get_play_tree(any_t* libinput,play_tree_parser_t* p) {
 
   if(tree)
     tree = play_tree_cleanup(tree);
-  
+
   if(!tree) MSG_WARN("Warning empty playlist\n");
 
   return tree;

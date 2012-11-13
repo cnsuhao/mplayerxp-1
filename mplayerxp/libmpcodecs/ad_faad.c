@@ -1,5 +1,5 @@
 /* ad_faad.c - MPlayer AAC decoder using libfaad2
- * This file is part of MPlayer, see http://mplayerhq.hu/ for info.  
+ * This file is part of MPlayer, see http://mplayerhq.hu/ for info.
  * (c)2002 by Felix Buenemann <atmosfear at users.sourceforge.net>
  * File licensed under the GPL, see http://www.fsf.org/ for more info.
  */
@@ -301,7 +301,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
 
     if(NeAAC_finfo.error > 0) {
       MSG_WARN("FAAD: error: %s, trying to resync!\n",
-              NeAACDecGetErrorMessage(NeAAC_finfo.error));
+	      NeAACDecGetErrorMessage(NeAAC_finfo.error));
       j++;
     } else
       break;

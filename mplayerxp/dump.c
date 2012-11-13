@@ -351,7 +351,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
       float a_pts;
       while(sha->timer < (shv?priv->vtimer:HUGE) || !shv || veof) /* autolimitation of audio reading */
       {
-	/* we should try to keep structure of audio packets here 
+	/* we should try to keep structure of audio packets here
 	   and don't generate badly interlaved stream.
 	   The ideal case is:  type=read_packet(ANY_TYPE); put_packet(type);
 	 */
@@ -361,7 +361,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
 	else
 	a_duration=(float)in_size/(float)(sha->i_bps);
 	if(mpeg_atimer==HUGE) mpeg_atimer=a_pts;
-	else 
+	else
 	{
 	    if( mpeg_atimer-a_duration<a_pts) mpeg_atimer=a_pts;
 	    else	mpeg_atimer+=a_duration;

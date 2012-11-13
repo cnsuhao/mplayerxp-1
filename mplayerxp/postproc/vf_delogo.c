@@ -140,8 +140,8 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     mpi->stride[0]=vf->dmpi->stride[0];
     mpi->width=vf->dmpi->width;
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-        mpi->planes[1]=vf->dmpi->planes[1];
-        mpi->planes[2]=vf->dmpi->planes[2];
+	mpi->planes[1]=vf->dmpi->planes[1];
+	mpi->planes[2]=vf->dmpi->planes[2];
 	mpi->stride[1]=vf->dmpi->stride[1];
 	mpi->stride[2]=vf->dmpi->stride[2];
     }

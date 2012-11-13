@@ -64,7 +64,7 @@ void __FASTCALL__ aspect(uint32_t *srcw, uint32_t *srch, int zoom){
   }else{
     *srcw = aspdat.prew;
     *srch = (uint32_t)((float)aspdat.preh
-               * ((float)aspdat.scrh / ((float)aspdat.scrw / monitor_aspect)));
+	       * ((float)aspdat.scrh / ((float)aspdat.scrw / monitor_aspect)));
   }
   (*srch)+= (*srch)%2; // round
 #ifdef ASPECT_DEBUG
@@ -73,10 +73,10 @@ void __FASTCALL__ aspect(uint32_t *srcw, uint32_t *srch, int zoom){
   if(*srch>aspdat.scrh || *srch<aspdat.orgh){
     if(zoom)
       tmpw = (uint32_t)(((float)aspdat.scrh / (float)aspdat.preh * (float)aspdat.prew)
-                * ((float)aspdat.scrw / ((float)aspdat.scrh / (1.0/monitor_aspect))));
+		* ((float)aspdat.scrw / ((float)aspdat.scrh / (1.0/monitor_aspect))));
     else
       tmpw = (uint32_t)((float)aspdat.prew
-                * ((float)aspdat.scrw / ((float)aspdat.scrh / (1.0/monitor_aspect))));
+		* ((float)aspdat.scrw / ((float)aspdat.scrh / (1.0/monitor_aspect))));
     if(tmpw<=aspdat.scrw && tmpw>=aspdat.orgw){
       *srch = zoom?aspdat.scrh:aspdat.preh;
       *srcw = tmpw;

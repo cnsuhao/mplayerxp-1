@@ -2,9 +2,9 @@
     s_tv - TV stream interface
     --------------------------
     TV Interface for MPlayer
- 
+
     (C) Alex Beregszaszi <alex@naxine.org>
- 
+
     API idea based on libvo2
 
     Feb 19, 2002: Significant rewrites by Charles R. Henrich (henrich@msu.edu)
@@ -91,26 +91,26 @@ int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, demux_stream_t *ds, tvi_
 
     /* ================== ADD AUDIO PACKET =================== */
 
-    if (ds==demux->audio && tv_param_noaudio == 0 && 
-        tvh->functions->control(tvh->priv, 
-                                TVI_CONTROL_IS_AUDIO, 0) == TVI_CONTROL_TRUE)
-        {
-        len = tvh->functions->get_audio_framesize(tvh->priv);
+    if (ds==demux->audio && tv_param_noaudio == 0 &&
+	tvh->functions->control(tvh->priv,
+				TVI_CONTROL_IS_AUDIO, 0) == TVI_CONTROL_TRUE)
+	{
+	len = tvh->functions->get_audio_framesize(tvh->priv);
 
-        dp=new_demux_packet(len);
-        dp->pts=tvh->functions->grab_audio_frame(tvh->priv, dp->buffer,len);
-        ds_add_packet(demux->audio,dp);
-        }
+	dp=new_demux_packet(len);
+	dp->pts=tvh->functions->grab_audio_frame(tvh->priv, dp->buffer,len);
+	ds_add_packet(demux->audio,dp);
+	}
 
     /* ================== ADD VIDEO PACKET =================== */
 
-    if (ds==demux->video && tvh->functions->control(tvh->priv, 
-                            TVI_CONTROL_IS_VIDEO, 0) == TVI_CONTROL_TRUE)
-        {
+    if (ds==demux->video && tvh->functions->control(tvh->priv,
+			    TVI_CONTROL_IS_VIDEO, 0) == TVI_CONTROL_TRUE)
+	{
 		len = tvh->functions->get_video_framesize(tvh->priv);
-       	dp=new_demux_packet(len);
-  		dp->pts=tvh->functions->grab_video_frame(tvh->priv, dp->buffer, len);
-   		ds_add_packet(demux->video,dp);
+	dp=new_demux_packet(len);
+		dp->pts=tvh->functions->grab_video_frame(tvh->priv, dp->buffer, len);
+		ds_add_packet(demux->video,dp);
 	 }
 
     return 1;
@@ -162,7 +162,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 	{
 	    MSG_ERR( "Unable set requested width: %d\n", tv_param_width);
 	    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_WIDTH, &tv_param_width);
-	}    
+	}
     }
 
     /* set height */
@@ -174,7 +174,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 	{
 	    MSG_ERR( "Unable set requested height: %d\n", tv_param_height);
 	    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_HEIGHT, &tv_param_height);
-	}    
+	}
     }
 
     /* set some params got from cmdline */
@@ -193,7 +193,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 
     if (funcs->control(tvh->priv, TVI_CONTROL_IS_TUNER, 0) != TVI_CONTROL_TRUE)
     {
-	MSG_WARN( "Selected input hasn't got a tuner!\n");	
+	MSG_WARN( "Selected input hasn't got a tuner!\n");
 	goto done;
     }
 
@@ -226,7 +226,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
     {
 	unsigned long freq = atof(tv_param_freq)*16;
 
-        /* set freq in MHz */
+	/* set freq in MHz */
 	funcs->control(tvh->priv, TVI_CONTROL_TUN_SET_FREQ, &freq);
 
 	funcs->control(tvh->priv, TVI_CONTROL_TUN_GET_FREQ, &freq);
@@ -275,24 +275,24 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 
     if(!sh_video->fps)
     {
-        int tmp;
-        if (funcs->control(tvh->priv, TVI_CONTROL_VID_GET_FPS, &tmp) != TVI_CONTROL_TRUE)
-             sh_video->fps = 25.0f; /* on PAL */
-        else sh_video->fps = tmp;
+	int tmp;
+	if (funcs->control(tvh->priv, TVI_CONTROL_VID_GET_FPS, &tmp) != TVI_CONTROL_TRUE)
+	     sh_video->fps = 25.0f; /* on PAL */
+	else sh_video->fps = tmp;
     }
 
     if (tv_param_fps != -1.0f)
-        sh_video->fps = tv_param_fps;
+	sh_video->fps = tv_param_fps;
 
     MSG_V("fps: %f, frametime: %f\n", sh_video->fps, 1.0f/sh_video->fps);
 
 #ifdef HAVE_TV_BSDBT848
     /* If playback only mode, go to immediate mode, fail silently */
     if(tv_param_immediate == 1)
-        {
-        funcs->control(tvh->priv, TVI_CONTROL_IMMEDIATE, 0);
-        tv_param_noaudio = 1; 
-        }
+	{
+	funcs->control(tvh->priv, TVI_CONTROL_IMMEDIATE, 0);
+	tv_param_noaudio = 1;
+	}
 #endif
 
     /* set width */
@@ -302,7 +302,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
     funcs->control(tvh->priv, TVI_CONTROL_VID_GET_HEIGHT, &sh_video->src_h);
 
     MSG_V( "Output size: %dx%d\n", sh_video->src_w, sh_video->src_h);
-    
+
     demuxer->video->sh = sh_video;
     sh_video->ds = demuxer->video;
     demuxer->video->id = 0;
@@ -318,7 +318,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 
 	/* yeah, audio is present */
 
-	funcs->control(tvh->priv, TVI_CONTROL_AUD_SET_SAMPLERATE, 
+	funcs->control(tvh->priv, TVI_CONTROL_AUD_SET_SAMPLERATE,
 				  &tv_param_audiorate);
 
 	if (funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_FORMAT, &audio_format) != TVI_CONTROL_TRUE)
@@ -346,13 +346,13 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 		    ao_format_name(audio_format), audio_format);
 		goto no_audio;
 	}
-	
+
 	sh_audio = new_sh_audio(demuxer, 0);
 
 	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_SAMPLERATE,
-                   &sh_audio->rate);
+		   &sh_audio->rate);
 	funcs->control(tvh->priv, TVI_CONTROL_AUD_GET_CHANNELS,
-                   &sh_audio->nch);
+		   &sh_audio->nch);
 
 	sh_audio->wtag = sh_audio_format;
 	sh_audio->afmt = audio_format;
@@ -370,8 +370,8 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 	sh_audio->wf->nAvgBytesPerSec = sh_audio->i_bps;
 
 	MSG_V( "  TV audio: %d channels, %d bits, %d Hz\n",
-          sh_audio->wf->nChannels, sh_audio->wf->wBitsPerSample,
-          sh_audio->wf->nSamplesPerSec);
+	  sh_audio->wf->nChannels, sh_audio->wf->wBitsPerSample,
+	  sh_audio->wf->nSamplesPerSec);
 
 	demuxer->audio->sh = sh_audio;
 	sh_audio->ds = demuxer->audio;
@@ -379,7 +379,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
     }
 no_audio:
 
-    return(funcs->start(tvh->priv));	
+    return(funcs->start(tvh->priv));
 }
 
 /* ================== STREAM_TV ===================== */
@@ -398,7 +398,7 @@ tvi_handle_t * __FASTCALL__ tv_begin(void)
 	return (tvi_handle_t *)tvi_init_bsdbt848(tv_param_device);
 #endif
 
-    MSG_ERR( "No such driver: %s\n", tv_param_driver); 
+    MSG_ERR( "No such driver: %s\n", tv_param_driver);
     return(NULL);
 }
 
@@ -496,7 +496,7 @@ int __FASTCALL__ tv_set_color_options(tvi_handle_t *tvh, int opt, int value)
 	default:
 	    MSG_WARN( "Unknown color option (%d) specified!\n", opt);
     }
-    
+
     return(1);
 }
 
@@ -506,7 +506,7 @@ int __FASTCALL__ tv_set_freq(tvi_handle_t *tvh, unsigned long freq)
     {
 //	unsigned long freq = atof(tv_param_freq)*16;
 
-        /* set freq in MHz */
+	/* set freq in MHz */
 	tvh->functions->control(tvh->priv, TVI_CONTROL_TUN_SET_FREQ, &freq);
 
 	tvh->functions->control(tvh->priv, TVI_CONTROL_TUN_GET_FREQ, &freq);
@@ -528,7 +528,7 @@ int __FASTCALL__ tv_step_channel(tvi_handle_t *tvh, int direction)
 	    MSG_V( "Selected channel: %s (freq: %.3f)\n",
 		cl.name, (float)cl.freq/1000);
 	    tv_set_freq(tvh, (unsigned long)(((float)cl.freq/1000)*16));
-	}	
+	}
     }
 
     if (direction == TV_CHANNEL_HIGHER)
@@ -539,7 +539,7 @@ int __FASTCALL__ tv_step_channel(tvi_handle_t *tvh, int direction)
 	    MSG_V( "Selected channel: %s (freq: %.3f)\n",
 		cl.name, (float)cl.freq/1000);
 	    tv_set_freq(tvh, (unsigned long)(((float)cl.freq/1000)*16));
-	}	
+	}
     }
     return 0;
 }

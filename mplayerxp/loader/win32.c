@@ -350,7 +350,7 @@ any_t* mreq_private(int size, int to_zero, int type)
     int nsize = size + sizeof(alloc_header);
     alloc_header* header = (alloc_header* ) mp_malloc(nsize);
     if (!header)
-        return 0;
+	return 0;
     if (to_zero)
 	memset(header, 0, nsize);
 #ifdef GARBAGE
@@ -486,9 +486,9 @@ static int WINAPI ext_unknown()
 }
 
 static int  WINAPI expGetVolumeInformationA( const char *root, char *label,
-                                       unsigned int label_len, unsigned int *serial,
-                                       unsigned int *filename_len,unsigned int *flags,
-                                       char *fsname, unsigned int fsname_len )
+				       unsigned int label_len, unsigned int *serial,
+				       unsigned int *filename_len,unsigned int *flags,
+				       char *fsname, unsigned int fsname_len )
 {
 dbgprintf("GetVolumeInformationA( %s, 0x%x, %ld, 0x%x, 0x%x, 0x%x, 0x%x, %ld) => 1\n",
 		      root,label,label_len,serial,filename_len,flags,fsname,fsname_len);
@@ -848,7 +848,7 @@ static any_t* WINAPI expWaitForMultipleObjects(int count, const any_t** objects,
 
     dbgprintf("WaitForMultipleObjects(%d, 0x%x, %d, duration %d) =>\n",
 	count, objects, WaitAll, duration);
-    
+
     for (i = 0; i < count; i++)
     {
 	object = (any_t*)objects[i];
@@ -871,7 +871,7 @@ static HANDLE WINAPI expCreateMutexA(any_t*pSecAttr,
 		    char bInitialOwner, const char *name)
 {
     HANDLE mlist = (HANDLE)expCreateEventA(pSecAttr, 0, 0, name);
-    
+
     if (name)
 	dbgprintf("CreateMutexA(0x%x, %d, '%s') => 0x%x\n",
 	    pSecAttr, bInitialOwner, name, mlist);
@@ -953,7 +953,7 @@ static void WINAPI expGetSystemInfo(SYSTEM_INFO* si)
 
 	    if (gCpuCaps.cpuType == 4)
 	    {
-	        cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
+		cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
 		cachedsi.wProcessorLevel = 4;
 	    }
 	    else if (gCpuCaps.cpuType >= 5)
@@ -963,11 +963,11 @@ static void WINAPI expGetSystemInfo(SYSTEM_INFO* si)
 	    }
 	    else
 	    {
-	        cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
+		cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
 		cachedsi.wProcessorLevel = 3;
 	    }
 	    cachedsi.wProcessorRevision = gCpuCaps.cpuStepping;
-    	    cachedsi.dwNumberOfProcessors = 1;	/* hardcoded */
+	    cachedsi.dwNumberOfProcessors = 1;	/* hardcoded */
     }
 
 /* disable cpuid based detection (mplayer's cpudetect.c does this - see above) */
@@ -1015,8 +1015,8 @@ static void WINAPI expGetSystemInfo(SYSTEM_INFO* si)
 	if (!f)
 	{
 	  dbgprintf( "expGetSystemInfo: "
-	             "/proc/cpuinfo not readable! "
-	             "Expect bad performance and/or weird behaviour\n");
+		     "/proc/cpuinfo not readable! "
+		     "Expect bad performance and/or weird behaviour\n");
 	  goto exit;
 	}
 	while (fgets(line,200,f)!=NULL) {
@@ -1220,7 +1220,7 @@ static long WINAPI expHeapFree(HANDLE heap, DWORD dwFlags, LPVOID lpMem)
 	&& lpMem != (any_t*)0xbdbdbdbd)
 	// 0xbdbdbdbd is for i263_drv.drv && libefence
 	// it seems to be reading from relased memory
-        // EF_PROTECT_FREE doens't show any probleme
+	// EF_PROTECT_FREE doens't show any probleme
 	my_release(lpMem);
     else
     {
@@ -1351,7 +1351,7 @@ static void WINAPI expInitializeCriticalSection(CRITICAL_SECTION* c)
 					   0, AREATYPE_CRITSECT);
 	pthread_mutex_init(&cs->mutex, NULL);
 	cs->locked=0;
-        cs->deadbeef = 0xdeadbeef;
+	cs->deadbeef = 0xdeadbeef;
 	*(any_t**)c = cs;
     }
 #endif
@@ -1426,7 +1426,7 @@ static void WINAPI expDeleteCriticalSection(CRITICAL_SECTION *c)
 	dbgprintf("Win32 Warning: Deleting uninitialized Critical Section %p!!\n", c);
 	return;
     }
-    
+
     if (cs->locked)
     {
 	dbgprintf("Win32 Warning: Deleting unlocked Critical Section %p!!\n", c);
@@ -1584,7 +1584,7 @@ static int WINAPI expTlsFree(any_t* idx)
 	if(index->prev)
 	    index->prev->next=index->next;
 	if (g_tls == index)
-            g_tls = index->prev;
+	    g_tls = index->prev;
 	my_release((any_t*)index);
 	result=1;
     }
@@ -1875,7 +1875,7 @@ static long WINAPI expRegCreateKeyA(long hkey, const char* name, int *retkey)
 {
     dbgprintf("RegCreateKeyA(key 0x%x, name 0x%x='%s',newkey=0x%x)\n",hkey,name,retkey);
     return RegCreateKeyExA( hkey, name, 0, NULL,REG_OPTION_NON_VOLATILE,
-                            KEY_ALL_ACCESS , NULL, retkey, NULL );
+			    KEY_ALL_ACCESS , NULL, retkey, NULL );
 }
 
 static long WINAPI expRegCreateKeyExA(long key, const char* name, long reserved,
@@ -1933,9 +1933,9 @@ static long WINAPI expQueryPerformanceCounter(long long* z)
  * dummy function RegQueryInfoKeyA(), required by vss codecs
  */
 static DWORD WINAPI expRegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWORD reserved,
-                                         LPDWORD subkeys, LPDWORD max_subkey, LPDWORD max_class,
-                                         LPDWORD values, LPDWORD max_value, LPDWORD max_data,
-                                         LPDWORD security, FILETIME *modif )
+					 LPDWORD subkeys, LPDWORD max_subkey, LPDWORD max_class,
+					 LPDWORD values, LPDWORD max_value, LPDWORD max_data,
+					 LPDWORD security, FILETIME *modif )
 {
     return ERROR_SUCCESS;
 }
@@ -2547,7 +2547,7 @@ static int WINAPI expMonitorFromPoint(any_t*p, int flags)
     return 0;
 }
 
-static int WINAPI expEnumDisplayMonitors(any_t*dc, RECT *r, 
+static int WINAPI expEnumDisplayMonitors(any_t*dc, RECT *r,
     int WINAPI (*callback_proc)(), any_t*callback_param)
 {
     dbgprintf("EnumDisplayMonitors(0x%x, 0x%x, 0x%x, 0x%x) => ?\n",
@@ -2557,26 +2557,26 @@ static int WINAPI expEnumDisplayMonitors(any_t*dc, RECT *r,
 
 #if 0
 typedef struct tagMONITORINFO {
-    DWORD  cbSize; 
-    RECT   rcMonitor; 
-    RECT   rcWork; 
-    DWORD  dwFlags; 
-} MONITORINFO, *LPMONITORINFO; 
+    DWORD  cbSize;
+    RECT   rcMonitor;
+    RECT   rcWork;
+    DWORD  dwFlags;
+} MONITORINFO, *LPMONITORINFO;
 #endif
 
 #define CCHDEVICENAME 8
-typedef struct tagMONITORINFOEX {  
-    DWORD  cbSize; 
-    RECT   rcMonitor; 
-    RECT   rcWork; 
-    DWORD  dwFlags; 
+typedef struct tagMONITORINFOEX {
+    DWORD  cbSize;
+    RECT   rcMonitor;
+    RECT   rcWork;
+    DWORD  dwFlags;
     TCHAR  szDevice[CCHDEVICENAME];
-} MONITORINFOEX, *LPMONITORINFOEX; 
+} MONITORINFOEX, *LPMONITORINFOEX;
 
 static int WINAPI expGetMonitorInfoA(any_t*mon, LPMONITORINFO lpmi)
 {
     dbgprintf("GetMonitorInfoA(0x%x, 0x%x) => 1\n", mon, lpmi);
-    
+
     lpmi->rcMonitor.right = lpmi->rcWork.right = PSEUDO_SCREEN_WIDTH;
     lpmi->rcMonitor.left = lpmi->rcWork.left = 0;
     lpmi->rcMonitor.bottom = lpmi->rcWork.bottom = PSEUDO_SCREEN_HEIGHT;
@@ -2590,7 +2590,7 @@ static int WINAPI expGetMonitorInfoA(any_t*mon, LPMONITORINFO lpmi)
 	dbgprintf("MONITORINFOEX!\n");
 	strncpy(lpmiex->szDevice, "Monitor1", CCHDEVICENAME);
     }
-    
+
     return 1;
 }
 
@@ -2703,7 +2703,7 @@ static int WINAPI expGetTickCount(void)
     if (tcstart == 0)
     {
 	tcstart = 0;
-        tc = 0;
+	tc = 0;
     }
     dbgprintf("GetTickCount() => %d\n", tc);
     return tc;
@@ -3457,7 +3457,7 @@ static int WINAPI expCreateDirectoryA(const char *pathname, any_t*sa)
 	buf[0] = '.';
 	buf[1] = 0;
     }
-#if 0    
+#if 0
     if (strrchr(pathname, '\\'))
 	mkdir(strcat(strrchr(pathname, '\\')+1, '/'), 666);
     else
@@ -3640,9 +3640,9 @@ static DWORD WINAPI expGetFullPathNameA
 
 static DWORD WINAPI expGetShortPathNameA
 (
-        LPCSTR longpath,
-        LPSTR shortpath,
-        DWORD shortlen
+	LPCSTR longpath,
+	LPSTR shortpath,
+	DWORD shortlen
 ){
     if(!longpath) return 0;
     dbgprintf("GetShortPathNameA('%s',%p,%d)\n",longpath,shortpath,shortlen);
@@ -3720,7 +3720,7 @@ static WIN_BOOL WINAPI expGetProcessAffinityMask(HANDLE hProcess,
 
 // Fake implementation: does nothing, but does it right :)
 static WIN_BOOL WINAPI expSetProcessAffinityMask(HANDLE hProcess,
-                                              LPDWORD dwProcessAffinityMask)
+					      LPDWORD dwProcessAffinityMask)
 {
     dbgprintf("SetProcessAffinityMask(0x%x, 0x%x) => 1\n",
 	      hProcess, dwProcessAffinityMask);
@@ -3796,7 +3796,7 @@ static void WINAPI expInitCommonControls(void)
 /* needed by QuickTime.qts */
 static HWND WINAPI expCreateUpDownControl (DWORD style, INT x, INT y, INT cx, INT cy,
 	      HWND parent, INT id, HINSTANCE inst,
-              HWND buddy, INT maxVal, INT minVal, INT curVal)
+	      HWND buddy, INT maxVal, INT minVal, INT curVal)
 {
     dbgprintf("CreateUpDownControl(...)\n");
     return 0;
@@ -3850,7 +3850,7 @@ static HRESULT WINAPI expCoInitialize(
 static void WINAPI expCoUninitialize(void)
 {
     dbgprintf("CoUninitialize() called\n");
-} 
+}
 
 /* allow static linking */
 HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
@@ -3859,7 +3859,7 @@ HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
 }
 HRESULT WINAPI CoInitialize(LPVOID lpReserved)
 {
-    return expCoInitialize(lpReserved); 
+    return expCoInitialize(lpReserved);
 }
 void WINAPI CoUninitialize(void)
 {
@@ -3868,8 +3868,8 @@ void WINAPI CoUninitialize(void)
 
 static DWORD WINAPI expSetThreadAffinityMask
 (
-        HANDLE hThread,
-        DWORD dwThreadAffinityMask
+	HANDLE hThread,
+	DWORD dwThreadAffinityMask
 ){
     return 0;
 };
@@ -3944,7 +3944,7 @@ static HRESULT WINAPI expMoCopyMediaType(MY_MEDIA_TYPE* dest, const MY_MEDIA_TYP
     {
 	dest->pbFormat = (char*) my_mreq(dest->cbFormat, 0);
 	if (!dest->pbFormat)
-            return E_OUTOFMEMORY;
+	    return E_OUTOFMEMORY;
 	memcpy(dest->pbFormat, src->pbFormat, dest->cbFormat);
     }
     return S_OK;
@@ -3952,13 +3952,13 @@ static HRESULT WINAPI expMoCopyMediaType(MY_MEDIA_TYPE* dest, const MY_MEDIA_TYP
 static HRESULT WINAPI expMoInitMediaType(MY_MEDIA_TYPE* dest, DWORD cbFormat)
 {
     if (!dest)
-        return E_POINTER;
+	return E_POINTER;
     memset(dest, 0, sizeof(MY_MEDIA_TYPE));
     if (cbFormat)
     {
 	dest->pbFormat = (char*) my_mreq(cbFormat, 0);
 	if (!dest->pbFormat)
-            return E_OUTOFMEMORY;
+	    return E_OUTOFMEMORY;
     }
     return S_OK;
 }
@@ -3984,7 +3984,7 @@ static HRESULT WINAPI expMoFreeMediaType(MY_MEDIA_TYPE* dest)
     {
 	my_release(dest->pbFormat);
 	dest->pbFormat = 0;
-        dest->cbFormat = 0;
+	dest->cbFormat = 0;
     }
     return S_OK;
 }
@@ -4045,7 +4045,7 @@ static int exp_initterm(_INITTERMFUNC *start, _INITTERMFUNC *end)
 		 : "a"(p)
 		 : "memory"
 		);
-            //printf("done  %p  %d:%d\n", end);
+	    //printf("done  %p  %d:%d\n", end);
 	}
 	start++;
     }
@@ -4458,7 +4458,7 @@ static MMRESULT WINAPI exptimeEndPeriod(UINT wPeriod)
 #endif
 
 static void WINAPI expGlobalMemoryStatus(
-            LPMEMORYSTATUS lpmem
+	    LPMEMORYSTATUS lpmem
 ) {
     static MEMORYSTATUS	cached_memstatus;
     static int cache_lastchecked = 0;
@@ -4474,49 +4474,49 @@ static void WINAPI expGlobalMemoryStatus(
     f = fopen( "/proc/meminfo", "r" );
     if (f)
     {
-        char buffer[256];
-        int total, used, mp_free, shared, buffers, cached;
+	char buffer[256];
+	int total, used, mp_free, shared, buffers, cached;
 
-        lpmem->dwLength = sizeof(MEMORYSTATUS);
-        lpmem->dwTotalPhys = lpmem->dwAvailPhys = 0;
-        lpmem->dwTotalPageFile = lpmem->dwAvailPageFile = 0;
-        while (fgets( buffer, sizeof(buffer), f ))
-        {
+	lpmem->dwLength = sizeof(MEMORYSTATUS);
+	lpmem->dwTotalPhys = lpmem->dwAvailPhys = 0;
+	lpmem->dwTotalPageFile = lpmem->dwAvailPageFile = 0;
+	while (fgets( buffer, sizeof(buffer), f ))
+	{
 	    /* old style /proc/meminfo ... */
-            if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &mp_free, &shared, &buffers, &cached ))
-            {
-                lpmem->dwTotalPhys += total;
-                lpmem->dwAvailPhys += mp_free + buffers + cached;
-            }
-            if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &mp_free ))
-            {
-                lpmem->dwTotalPageFile += total;
-                lpmem->dwAvailPageFile += mp_free;
-            }
+	    if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &mp_free, &shared, &buffers, &cached ))
+	    {
+		lpmem->dwTotalPhys += total;
+		lpmem->dwAvailPhys += mp_free + buffers + cached;
+	    }
+	    if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &mp_free ))
+	    {
+		lpmem->dwTotalPageFile += total;
+		lpmem->dwAvailPageFile += mp_free;
+	    }
 
 	    /* new style /proc/meminfo ... */
 	    if (sscanf(buffer, "MemTotal: %d", &total))
-	    	lpmem->dwTotalPhys = total*1024;
+		lpmem->dwTotalPhys = total*1024;
 	    if (sscanf(buffer, "MemFree: %d", &mp_free))
-	    	lpmem->dwAvailPhys = mp_free*1024;
+		lpmem->dwAvailPhys = mp_free*1024;
 	    if (sscanf(buffer, "SwapTotal: %d", &total))
-	        lpmem->dwTotalPageFile = total*1024;
+		lpmem->dwTotalPageFile = total*1024;
 	    if (sscanf(buffer, "SwapFree: %d", &mp_free))
-	        lpmem->dwAvailPageFile = mp_free*1024;
+		lpmem->dwAvailPageFile = mp_free*1024;
 	    if (sscanf(buffer, "Buffers: %d", &buffers))
-	        lpmem->dwAvailPhys += buffers*1024;
+		lpmem->dwAvailPhys += buffers*1024;
 	    if (sscanf(buffer, "Cached: %d", &cached))
-	        lpmem->dwAvailPhys += cached*1024;
-        }
-        fclose( f );
+		lpmem->dwAvailPhys += cached*1024;
+	}
+	fclose( f );
 
-        if (lpmem->dwTotalPhys)
-        {
-            DWORD TotalPhysical = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
-            DWORD AvailPhysical = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
-            lpmem->dwMemoryLoad = (TotalPhysical-AvailPhysical)
-                                      / (TotalPhysical / 100);
-        }
+	if (lpmem->dwTotalPhys)
+	{
+	    DWORD TotalPhysical = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
+	    DWORD AvailPhysical = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
+	    lpmem->dwMemoryLoad = (TotalPhysical-AvailPhysical)
+				      / (TotalPhysical / 100);
+	}
     } else
 #endif
     {
@@ -4536,10 +4536,10 @@ static void WINAPI expGlobalMemoryStatus(
 
     /* it appears some memory display programs want to divide by these values */
     if(lpmem->dwTotalPageFile==0)
-        lpmem->dwTotalPageFile++;
+	lpmem->dwTotalPageFile++;
 
     if(lpmem->dwAvailPageFile==0)
-        lpmem->dwAvailPageFile++;
+	lpmem->dwAvailPageFile++;
 }
 
 static INT WINAPI expGetThreadPriority(HANDLE hthread)
@@ -4642,25 +4642,25 @@ static int expDirectDrawCreate(void)
 }
 
 #if 1
-typedef struct tagPALETTEENTRY { 
-    BYTE peRed; 
-    BYTE peGreen; 
-    BYTE peBlue; 
-    BYTE peFlags; 
-} PALETTEENTRY; 
+typedef struct tagPALETTEENTRY {
+    BYTE peRed;
+    BYTE peGreen;
+    BYTE peBlue;
+    BYTE peFlags;
+} PALETTEENTRY;
 
 /* reversed the first 2 entries */
-typedef struct tagLOGPALETTE { 
-    WORD         palNumEntries; 
-    WORD         palVersion; 
-    PALETTEENTRY palPalEntry[1]; 
-} LOGPALETTE; 
+typedef struct tagLOGPALETTE {
+    WORD         palNumEntries;
+    WORD         palVersion;
+    PALETTEENTRY palPalEntry[1];
+} LOGPALETTE;
 
 static HPALETTE WINAPI expCreatePalette(CONST LOGPALETTE *lpgpl)
 {
     HPALETTE test;
     int i;
-    
+
     dbgprintf("CreatePalette(%x) => NULL\n", lpgpl);
 
     i = sizeof(LOGPALETTE)+((lpgpl->palNumEntries-1)*sizeof(PALETTEENTRY));
@@ -4688,10 +4688,10 @@ static int WINAPI expGetClientRect(HWND win, RECT *r)
 }
 
 #if 0
-typedef struct tagPOINT { 
-    LONG x; 
-    LONG y; 
-} POINT, *PPOINT; 
+typedef struct tagPOINT {
+    LONG x;
+    LONG y;
+} POINT, *PPOINT;
 #endif
 
 static int WINAPI expClientToScreen(HWND win, POINT *p)
@@ -4735,7 +4735,7 @@ static any_t*exprealloc(any_t*ptr, size_t size)
     if (!ptr)
 	return my_mreq(size,0);
     else
-	return my_realloc(ptr, size);        
+	return my_realloc(ptr, size);
 }
 
 /* Fake GetOpenFileNameA from comdlg32.dll for ViVD codec */
@@ -5292,7 +5292,7 @@ static void ext_stubs(void)
 #if 1
     __asm__ __volatile__
 	(
-         "push %%edx		\n\t"
+	 "push %%edx		\n\t"
 	 "movl $0xdeadbeef, %%eax \n\t"
 	 "movl $0xdeadbeef, %%edx \n\t"
 	 "shl $5, %%eax		\n\t"			// ax * 32
@@ -5310,7 +5310,7 @@ static void ext_stubs(void)
 #else
     __asm__ __volatile__
 	(
-         "push %%edx		\n\t"
+	 "push %%edx		\n\t"
 	 "movl $0, %%eax	\n\t"
 	 "movl $0, %%edx	\n\t"
 	 "shl $5, %%eax		\n\t"			// ax * 32
@@ -5436,7 +5436,7 @@ any_t* LookupExternalByName(const char* library, const char* name)
 	{
 	    if(strcmp(name, libraries[i].exps[j].name))
 		continue;
- 	    if((unsigned int)(libraries[i].exps[j].func) == -1)
+	    if((unsigned int)(libraries[i].exps[j].func) == -1)
 		return NULL; //undefined func
 	    //	    printf("Hit: 0x%08X\n", libraries[i].exps[j].func);
 	    return libraries[i].exps[j].func;

@@ -26,13 +26,13 @@
 #include "pp_msg.h"
 
 #define L   	2      // Storage for filter taps
-#define KM  	10     // Max number of bands 
+#define KM  	10     // Max number of bands
 
 #define Q   1.2247449 /* Q value for band-pass filters 1.2247=(3/2)^(1/2)
 			 gives 4dB suppression @ Fc*2 and Fc/2 */
 
 /* Center frequencies for band-pass filters
-   The different frequency bands are:	
+   The different frequency bands are:
    nr.    	center frequency
    0  	31.25 Hz
    1 	62.50 Hz
@@ -49,7 +49,7 @@
 
 // Maximum and minimum gain for the bands
 #define G_MAX	+12.0
-#define G_MIN	-12.0	
+#define G_MIN	-12.0
 
 // Data for specific instances of this filter
 typedef struct af_equalizer_s
@@ -77,7 +77,7 @@ static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_equalizer_t* s   = (af_equalizer_t*)af->setup; 
+  af_equalizer_t* s   = (af_equalizer_t*)af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
@@ -97,7 +97,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
       s->K--;
 
     if(s->K != KM)
-      MSG_INFO("[equalizer] Limiting the number of filters to" 
+      MSG_INFO("[equalizer] Limiting the number of filters to"
 	     " %i due to low sample rate.\n",s->K);
 
     // Generate filter taps
@@ -121,11 +121,11 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   case AF_CONTROL_COMMAND_LINE:{
     float g[10]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     int i,j;
-    sscanf((char*)arg,"%f:%f:%f:%f:%f:%f:%f:%f:%f:%f", &g[0], &g[1], 
+    sscanf((char*)arg,"%f:%f:%f:%f:%f:%f:%f:%f:%f:%f", &g[0], &g[1],
 	   &g[2], &g[3], &g[4], &g[5], &g[6], &g[7], &g[8] ,&g[9]);
     for(i=0;i<AF_NCH;i++){
       for(j=0;j<KM;j++){
-	((af_equalizer_t*)af->setup)->g[i][j] = 
+	((af_equalizer_t*)af->setup)->g[i][j] =
 	  pow(10.0,clamp(g[j],G_MIN,G_MAX)/20.0)-1.0;
       }
     }
@@ -159,7 +159,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -172,12 +172,12 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   mp_aframe_t*       c 	= data;			    	// Current working data
-  af_equalizer_t*  s 	= (af_equalizer_t*)af->setup; 	// Setup 
+  af_equalizer_t*  s 	= (af_equalizer_t*)af->setup; 	// Setup
   uint32_t  	   ci  	= af->data->nch; 	    	// Index for channels
   uint32_t	   nch 	= af->data->nch;   	    	// Number of channels
 
   while(ci--){
-    float*	g   = s->g[ci];      // Gain factor 
+    float*	g   = s->g[ci];      // Gain factor
     float*	in  = ((float*)c->audio)+ci;
     float*	out = ((float*)c->audio)+ci;
     float* 	end = in + c->len/4; // Block loop end
@@ -186,20 +186,20 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
       register uint32_t	k  = 0;		// Frequency band index
       register float 	yt = *in; 	// Current input sample
       in+=nch;
-      
+
       // Run the filters
       for(;k<s->K;k++){
- 	// Pointer to circular buffer wq
- 	register float* wq = s->wq[ci][k];
- 	// Calculate output from AR part of current filter
- 	register float w=yt*s->b[k][0] + wq[0]*s->a[k][0] + wq[1]*s->a[k][1];
- 	// Calculate output form MA part of current filter
- 	yt+=(w + wq[1]*s->b[k][1])*g[k];
- 	// Update circular buffer
- 	wq[1] = wq[0];
+	// Pointer to circular buffer wq
+	register float* wq = s->wq[ci][k];
+	// Calculate output from AR part of current filter
+	register float w=yt*s->b[k][0] + wq[0]*s->a[k][0] + wq[1]*s->a[k][1];
+	// Calculate output form MA part of current filter
+	yt+=(w + wq[1]*s->b[k][1])*g[k];
+	// Update circular buffer
+	wq[1] = wq[0];
 	wq[0] = w;
       }
-      // Calculate output 
+      // Calculate output
       *out=yt;
       out+=nch;
     }

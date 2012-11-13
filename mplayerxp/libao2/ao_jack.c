@@ -197,19 +197,19 @@ static int outputaudio(jack_nframes_t nframes, any_t* ao) {
 static void print_help (void)
 {
   MSG_FATAL(
-           "\n-ao jack commandline help:\n"
-           "Example: mplayer -ao jack:port=myout\n"
-           "  connects MPlayer to the jack priv->ports named myout\n"
-           "\nOptions:\n"
-           "  port=<port name>\n"
-           "    Connects to the given priv->ports instead of the default physical ones\n"
-           "  name=<client name>\n"
-           "    priv->client name to pass to JACK\n"
-           "  priv->estimate\n"
-           "    priv->estimates the amount of data in priv->buffers (experimental)\n"
-           "  autostart\n"
-           "    Automatically start JACK server if necessary\n"
-         );
+	   "\n-ao jack commandline help:\n"
+	   "Example: mplayer -ao jack:port=myout\n"
+	   "  connects MPlayer to the jack priv->ports named myout\n"
+	   "\nOptions:\n"
+	   "  port=<port name>\n"
+	   "    Connects to the given priv->ports instead of the default physical ones\n"
+	   "  name=<client name>\n"
+	   "    priv->client name to pass to JACK\n"
+	   "  priv->estimate\n"
+	   "    priv->estimates the amount of data in priv->buffers (experimental)\n"
+	   "  autostart\n"
+	   "    Automatically start JACK server if necessary\n"
+	 );
 }
 #endif
 static MPXP_Rc init(ao_data_t* ao,unsigned flags) {

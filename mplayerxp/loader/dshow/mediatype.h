@@ -9,7 +9,7 @@
  * \brief print info from AM_MEDIA_TYPE structure
  * =param[in] label short lable for media type
  * \param[in] pmt pointer to AM_MEDIA_TYPE
- * 
+ *
  * routine used for debug purposes
  *
  */
@@ -44,7 +44,7 @@ void DeleteMediaType(AM_MEDIA_TYPE* pmt);
  *
  * \return S_OK - success
  * \return E_POINTER - pSrc or pDst is NULL or (pSrc->cbFormat && !pSrc->pbFormat)
- * \return E_INVALIDARG - (pSrc == pDst) 
+ * \return E_INVALIDARG - (pSrc == pDst)
  * \return E_OUTOFMEMORY - Insufficient memory
  *
  * \note

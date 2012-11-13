@@ -51,8 +51,8 @@ struct packet_t {
   unsigned int alpha[4];
   unsigned int control_start;	/* index of start of control data */
   unsigned int current_nibble[2]; /* next data nibble (4 bits) to be
-                                     processed (for RLE decoding) for
-                                     even and odd lines */
+				     processed (for RLE decoding) for
+				     even and odd lines */
   int deinterlace_oddness;	/* 0 or 1, index into current_nibble */
   unsigned int start_col, end_col;
   unsigned int start_row, end_row;
@@ -199,7 +199,7 @@ static inline void __FASTCALL__ spudec_cut_image(spudec_handle_t *this)
 	  this->image_size = 0;
 	  return;
   }
-  
+
 //  printf("new h %d new start %d (sz %d st %d)---\n\n", this->height, this->start_row, this->image_size, this->stride);
 
   image = mp_malloc(2 * this->stride * this->height);
@@ -373,7 +373,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
       case 0x00:
 	/* Menu ID, 1 byte */
 	MSG_DBG2("Menu ID\n");
-        /* shouldn't a Menu ID type force display start? */
+	/* shouldn't a Menu ID type force display start? */
 	start_pts = pts100 + date;
 	end_pts = UINT_MAX;
 	display = 1;
@@ -454,7 +454,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
       packet->start_pts = start_pts;
       if (end_pts == UINT_MAX && start_off != next_off) {
 	start_pts = pts100 + get_be16(this->packet + next_off) * 1024;
-        packet->end_pts = start_pts - 1;
+	packet->end_pts = start_pts - 1;
       } else packet->end_pts = end_pts;
       packet->current_nibble[0] = current_nibble[0];
       packet->current_nibble[1] = current_nibble[1];
@@ -545,7 +545,7 @@ void __FASTCALL__ spudec_assemble(any_t*this, unsigned char *packet, unsigned in
       y=get_be16(spu->packet+x+2); // next control pointer
       MSG_DBG2("SPUtest: x=%d y=%d off=%d size=%d\n",x,y,spu->packet_offset,spu->packet_size);
       if(x>=4 && x==y){		// if it points to self - we're done!
-        // we got it!
+	// we got it!
 	MSG_DBG2("SPUgot: off=%d  size=%d \n",spu->packet_offset,spu->packet_size);
 	spudec_decode(spu, pts100);
 	spu->packet_offset = 0;
@@ -553,8 +553,8 @@ void __FASTCALL__ spudec_assemble(any_t*this, unsigned char *packet, unsigned in
       }
       if(y<=x || y>=spu->packet_size){ // invalid?
 	MSG_WARN("SPUtest: broken packet!!!!! y=%d < x=%d\n",y,x);
-        spu->packet_size = spu->packet_offset = 0;
-        break;
+	spu->packet_size = spu->packet_offset = 0;
+	break;
       }
       x=y;
     }
@@ -654,13 +654,13 @@ void __FASTCALL__ spudec_calc_bbox(any_t*me, unsigned int dxs, unsigned int dys,
       break;
     case 1:
       if (sub_data.pos < 50) {
-        bbox[2] = dys*sub_data.pos/100 - spu->height * scaley / 0x200;
-        if ((int)(bbox[2]) < 0) bbox[2] = 0;
-        bbox[3] = bbox[2] + spu->height;
+	bbox[2] = dys*sub_data.pos/100 - spu->height * scaley / 0x200;
+	if ((int)(bbox[2]) < 0) bbox[2] = 0;
+	bbox[3] = bbox[2] + spu->height;
       } else {
-        bbox[3] = dys*sub_data.pos/100 + spu->height * scaley / 0x200;
-        if (bbox[3] > dys) bbox[3] = dys;
-        bbox[2] = bbox[3] - spu->height * scaley / 0x100;
+	bbox[3] = dys*sub_data.pos/100 + spu->height * scaley / 0x200;
+	if (bbox[3] > dys) bbox[3] = dys;
+	bbox[2] = bbox[3] - spu->height * scaley / 0x100;
       }
       break;
     case 2:
@@ -753,7 +753,7 @@ void  __FASTCALL__ sws_spu_image(unsigned char *d1, unsigned char *d2, int dw, i
 		firsttime = 0;
 		oldvar = spu_gaussvar;
 	}
-	
+
 	ctx=sws_getContext(sw, sh, pixfmt_from_fourcc(IMGFMT_Y800), dw, dh, pixfmt_from_fourcc(IMGFMT_Y800), SWS_GAUSS, &filter, NULL, NULL);
 	sws_scale(ctx,&s1,&ss,0,sh,&d1,&ds);
 	for (i=ss*sh-1; i>=0; i--) if (!s2[i]) s2[i] = 255; //else s2[i] = 1;
@@ -770,8 +770,8 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 
   if (spu->start_pts <= spu->now_pts && spu->now_pts < spu->end_pts) {
 
-    // check if only forced subtitles are requested 
-    if( (spu->forced_subs_only) && !(spu->is_forced_sub) ){ 
+    // check if only forced subtitles are requested
+    if( (spu->forced_subs_only) && !(spu->is_forced_sub) ){
 	return;
     }
 
@@ -895,7 +895,7 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 
 	       The original rectangular region that the scaled pixel
 	       represents is cut in 9 rectangular areas like this:
-	       
+
 	       +---+-----------------+---+
 	       | 1 |        2        | 3 |
 	       +---+-----------------+---+
@@ -955,8 +955,8 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 		double tmp;
 		unsigned int base;
 		/* Now use these informations to compute a good alpha,
-                   and lightness.  The sum is on each of the 9
-                   region's surface and alpha and lightness.
+		   and lightness.  The sum is on each of the 9
+		   region's surface and alpha and lightness.
 
 		  transformed alpha = sum(surface * alpha) / sum(surface)
 		  transformed color = sum(surface * alpha * color) / sum(surface * alpha)
@@ -1004,7 +1004,7 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 		      alpha += tmp;
 		      color += tmp * spu->image[base + walkx];
 		    }
-		  }		    
+		  }
 		}
 		/* 6: center right part */
 		if (right > 0.0 && height > 0) {
@@ -1065,23 +1065,23 @@ nothing_to_do:
 	}
       }
       if (spu->scaled_image){
-        switch (spu_alignment) {
-        case 0:
-          spu->scaled_start_row = dys*sub_data.pos/100;
+	switch (spu_alignment) {
+	case 0:
+	  spu->scaled_start_row = dys*sub_data.pos/100;
 	  if (spu->scaled_start_row + spu->scaled_height > dys)
 	    spu->scaled_start_row = dys - spu->scaled_height;
 	  break;
 	case 1:
-          spu->scaled_start_row = dys*sub_data.pos/100 - spu->scaled_height/2;
-          if (sub_data.pos < 50) {
+	  spu->scaled_start_row = dys*sub_data.pos/100 - spu->scaled_height/2;
+	  if (sub_data.pos < 50) {
 	    if ((int)(spu->scaled_start_row) < 0) spu->scaled_start_row = 0;
 	  } else {
 	    if (spu->scaled_start_row + spu->scaled_height > dys)
 	      spu->scaled_start_row = dys - spu->scaled_height;
 	  }
 	  break;
-        case 2:
-          spu->scaled_start_row = dys*sub_data.pos/100 - spu->scaled_height;
+	case 2:
+	  spu->scaled_start_row = dys*sub_data.pos/100 - spu->scaled_height;
 	  if ((int)(spu->scaled_start_row) < 0) spu->scaled_start_row = 0;
 	  break;
 	}
@@ -1094,7 +1094,7 @@ nothing_to_do:
   else
   {
     MSG_DBG2("SPU not displayed: start_pts=%d  end_pts=%d  now_pts=%d\n",
-        spu->start_pts, spu->end_pts, spu->now_pts);
+	spu->start_pts, spu->end_pts, spu->now_pts);
   }
 }
 

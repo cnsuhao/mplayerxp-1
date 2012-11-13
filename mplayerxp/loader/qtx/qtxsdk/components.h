@@ -266,7 +266,7 @@ typedef GrafPort *GWorldPtr;
 typedef GWorldPtr *GWorldHandle;
 #define anyCodec                ((CodecComponent)0)
 enum {
-                                                                /* transfer modes */
+								/* transfer modes */
     srcCopy                     = 0,                            /*the 16 transfer modes*/
     srcOr                       = 1,
     srcXor                      = 2,
@@ -445,26 +445,26 @@ struct __attribute__((__packed__)) CodecDecompressParams {
     ICMFrameTimePtr                 frameTime;                  /* banddecompress */
     int32_t                         reserved[1];
 
-                                                                /* The following fields only exist for QuickTime 2.0 and greater */
+								/* The following fields only exist for QuickTime 2.0 and greater */
     SInt8                           matrixFlags;                /* high bit set if 2x resize */
     SInt8                           matrixType;
     Rect                            dstRect;                    /* only valid for simple transforms */
 
-                                                                /* The following fields only exist for QuickTime 2.1 and greater */
+								/* The following fields only exist for QuickTime 2.1 and greater */
     UInt16                          majorSourceChangeSeed;
     UInt16                          minorSourceChangeSeed;
     CDSequenceDataSourcePtr         sourceData;
 
     RgnHandle                       maskRegion;
 
-                                                                /* The following fields only exist for QuickTime 2.5 and greater */
+								/* The following fields only exist for QuickTime 2.5 and greater */
     OSType **                       wantedDestinationPixelTypes; /* Handle to 0-terminated list of OSTypes */
 
     int32_t                         screenFloodMethod;
     int32_t                         screenFloodValue;
     short                           preferredOffscreenPixelSize;
 
-                                                                /* The following fields only exist for QuickTime 3.0 and greater */
+								/* The following fields only exist for QuickTime 3.0 and greater */
     ICMFrameTimeInfoPtr             syncFrameTime;              /* banddecompress */
     Boolean                         needUpdateOnTimeChange;     /* banddecompress */
     Boolean                         enableBlackLining;
@@ -478,14 +478,14 @@ struct __attribute__((__packed__)) CodecDecompressParams {
     int32_t                         requestedBufferWidth;       /* must set codecWantsSpecialScaling to indicate this field is valid*/
     int32_t                         requestedBufferHeight;      /* must set codecWantsSpecialScaling to indicate this field is valid*/
 
-                                                                /* The following fields only exist for QuickTime 4.0 and greater */
+								/* The following fields only exist for QuickTime 4.0 and greater */
     Rect                            displayableAreaOfRequestedBuffer; /* set in predecompress*/
     Boolean                         requestedSingleField;
     Boolean                         needUpdateOnNextIdle;
     Boolean                         pad2[2];
     Fixed                           bufferGammaLevel;
 
-                                                                /* The following fields only exist for QuickTime 5.0 and greater */
+								/* The following fields only exist for QuickTime 5.0 and greater */
     UInt32                          taskWeight;                 /* preferred weight for MP tasks implementing this operation*/
     OSType                          taskName;                   /* preferred name (type) for MP tasks implementing this operation*/
 };
@@ -499,16 +499,16 @@ struct __attribute__((__packed__)) ImageSubCodecDecompressCapabilities {
     Boolean                         canAsync;                   /* default true*/
     UInt8                           pad0;
 
-                                                                /* The following fields only exist for QuickTime 4.0 and greater */
+								/* The following fields only exist for QuickTime 4.0 and greater */
     UInt16                          suggestedQueueSize;
     Boolean                         canProvideTrigger;
 
-                                                                /* The following fields only exist for QuickTime 5.0 and greater */
+								/* The following fields only exist for QuickTime 5.0 and greater */
     Boolean                         subCodecFlushesScreen;      /* only used on Mac OS X*/
     Boolean                         subCodecCallsDrawBandComplete;
     UInt8                           pad2[1];
 
-                                                                /* The following fields only exist for QuickTime 5.1 and greater */
+								/* The following fields only exist for QuickTime 5.1 and greater */
     Boolean                         isChildCodec;               /* set by base codec before calling Initialize*/
     UInt8                           pad3[3];
 };
@@ -527,7 +527,7 @@ struct __attribute__((__packed__)) ImageSubCodecDecompressRecord {
     UInt8                           pad[2];
     int32_t                         priv[2];
 
-                                                                /* The following fields only exist for QuickTime 5.0 and greater */
+								/* The following fields only exist for QuickTime 5.0 and greater */
     ImageCodecDrawBandCompleteUPP   drawBandCompleteUPP;        /* only used if subcodec set subCodecCallsDrawBandComplete; if drawBandCompleteUPP is non-nil, codec must call it when a frame is finished, but may return from DrawBand before the frame is finished. */
     any_t*                          drawBandCompleteRefCon;     /* Note: do not call drawBandCompleteUPP directly from a hardware interrupt; instead, use DTInstall to run a function at deferred task time, and call drawBandCompleteUPP from that. */
 };
@@ -653,7 +653,7 @@ static inline void dump_ImageDescription(any_t* xxx){
 
 static inline void dump_Rect(char* title,Rect *r){
     printf("%s: %d;%d - %d;%d\n",title,
-        (int)r->top,(int)r->left,(int)r->bottom,(int)r->right);
+	(int)r->top,(int)r->left,(int)r->bottom,(int)r->right);
 }
 
 static inline void dump_MatrixRecord(char* title, MatrixRecord *m){
@@ -699,13 +699,13 @@ static inline void dump_CodecDecompressParams(any_t* xxx){
     printf("sequenceID=%d\n",cd->sequenceID);
     idh=cd->imageDescription;
     if(idh && idh[0]) dump_ImageDescription(idh[0]);
-    
+
     for(i=0;i<sizeof(CodecDecompressParams);i++){
 	printf(" %02X",((unsigned char*)cd)[i]);
 	if((i%16)==15) printf("\n");
     }
     printf("\n");
-    
+
     printf("data=%p  size=%d\n",cd->data,cd->bufferSize);
     printf("frameno=%d  lines: %d .. %d   condflags=0x%X  callerflags=0x%X\n",
 	cd->frameNumber, cd->startLine, cd->stopLine, cd->conditionFlags,cd->callerFlags);

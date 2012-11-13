@@ -62,7 +62,7 @@ static unsigned int __FASTCALL__ rgb_getfmt(unsigned int outfmt){
     case IMGFMT_ABGR:
 	return outfmt;
     }
-    return 0;    
+    return 0;
 }
 
 static void __FASTCALL__ rgb_put_pixel(uint8_t *buf, int x, int y, int stride, int r, int g, int b, int fmt){
@@ -75,41 +75,41 @@ static void __FASTCALL__ rgb_put_pixel(uint8_t *buf, int x, int y, int stride, i
     break;
     case IMGFMT_RGB16: ((uint16_t*)(buf + y*stride))[x]= ((b>>3)<<11) | ((g>>2)<<5) | (r>>3);
     break;
-    case IMGFMT_RGB24: 
-        buf[3*x + y*stride + 0]= r;
-        buf[3*x + y*stride + 1]= g;
-        buf[3*x + y*stride + 2]= b;
+    case IMGFMT_RGB24:
+	buf[3*x + y*stride + 0]= r;
+	buf[3*x + y*stride + 1]= g;
+	buf[3*x + y*stride + 2]= b;
     break;
     case IMGFMT_BGR24:
-        buf[3*x + y*stride + 0]= b;
-        buf[3*x + y*stride + 1]= g;
-        buf[3*x + y*stride + 2]= r;
+	buf[3*x + y*stride + 0]= b;
+	buf[3*x + y*stride + 1]= g;
+	buf[3*x + y*stride + 2]= r;
     break;
     case IMGFMT_RGBA:
-        buf[4*x + y*stride + 0]= r;
-        buf[4*x + y*stride + 1]= g;
-        buf[4*x + y*stride + 2]= b;
+	buf[4*x + y*stride + 0]= r;
+	buf[4*x + y*stride + 1]= g;
+	buf[4*x + y*stride + 2]= b;
     break;
     case IMGFMT_BGRA:
-        buf[4*x + y*stride + 0]= b;
-        buf[4*x + y*stride + 1]= g;
-        buf[4*x + y*stride + 2]= r;
+	buf[4*x + y*stride + 0]= b;
+	buf[4*x + y*stride + 1]= g;
+	buf[4*x + y*stride + 2]= r;
     break;
     case IMGFMT_ARGB:
-        buf[4*x + y*stride + 1]= r;
-        buf[4*x + y*stride + 2]= g;
-        buf[4*x + y*stride + 3]= b;
+	buf[4*x + y*stride + 1]= r;
+	buf[4*x + y*stride + 2]= g;
+	buf[4*x + y*stride + 3]= b;
     break;
     case IMGFMT_ABGR:
-        buf[4*x + y*stride + 1]= b;
-        buf[4*x + y*stride + 2]= g;
-        buf[4*x + y*stride + 3]= r;
+	buf[4*x + y*stride + 1]= b;
+	buf[4*x + y*stride + 2]= g;
+	buf[4*x + y*stride + 3]= r;
     break;
     }
 }
 
 static int __FASTCALL__ rgb_config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
     vf->priv->fmt=rgb_getfmt(outfmt);
     MSG_V("rgb test format:%s\n", vo_format_name(outfmt));
@@ -126,16 +126,16 @@ static int __FASTCALL__ rgb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 	mpi->w, mpi->h, mpi->xp_idx);
 
      for(y=0; y<mpi->h; y++){
-         for(x=0; x<mpi->w; x++){
-             int c= 256*x/mpi->w;
-             int r=0,g=0,b=0;
-             
-             if(3*y<mpi->h)        r=c;
-             else if(3*y<2*mpi->h) g=c;
-             else                  b=c;
-             
-             rgb_put_pixel(dmpi->planes[0], x, y, dmpi->stride[0], r, g, b, vf->priv->fmt);
-         }
+	 for(x=0; x<mpi->w; x++){
+	     int c= 256*x/mpi->w;
+	     int r=0,g=0,b=0;
+
+	     if(3*y<mpi->h)        r=c;
+	     else if(3*y<2*mpi->h) g=c;
+	     else                  b=c;
+
+	     rgb_put_pixel(dmpi->planes[0], x, y, dmpi->stride[0], r, g, b, vf->priv->fmt);
+	 }
      }
 
     return vf_next_put_slice(vf,dmpi);
@@ -150,7 +150,7 @@ static int __FASTCALL__ rgb_query_format(struct vf_instance_s* vf, unsigned int 
 //===========================================================================//
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
 
     if(vf_next_query_format(vf,IMGFMT_YV12,d_width,d_height)<=0){
@@ -387,7 +387,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
     if(frame%30)
     {
-        switch(frame/30)
+	switch(frame/30)
 	{
 	case 0:   dc1Test(dmpi->planes[0], dmpi->stride[0], 256, 256, frame%30); break;
 	case 1:   dc1Test(dmpi->planes[1], dmpi->stride[1], 256, 256, frame%30); break;

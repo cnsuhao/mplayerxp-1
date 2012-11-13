@@ -1,6 +1,6 @@
 /*
-        RoQ file demuxer for the MPlayer program
-        by Mike Melanson
+	RoQ file demuxer for the MPlayer program
+	by Mike Melanson
 	based on Dr. Tim Ferguson's RoQ document found at:
 	  http://www.csse.monash.edu.au/~timf/videocodec.html
 
@@ -127,28 +127,28 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
       // there should only be one RoQ_INFO chunk per file
       if (sh_video)
       {
-        MSG_WARN( "Found more than one RoQ_INFO chunk\n");
-        stream_skip(demuxer->stream, 8);
+	MSG_WARN( "Found more than one RoQ_INFO chunk\n");
+	stream_skip(demuxer->stream, 8);
       }
       else
       {
-        // this is a good opportunity to create a video stream header
-        sh_video = new_sh_video(demuxer, 0);
-        // make sure the demuxer knows about the new stream header
-        demuxer->video->sh = sh_video;
-        // make sure that the video demuxer stream header knows about its
-        // parent video demuxer stream
-        sh_video->ds = demuxer->video;
+	// this is a good opportunity to create a video stream header
+	sh_video = new_sh_video(demuxer, 0);
+	// make sure the demuxer knows about the new stream header
+	demuxer->video->sh = sh_video;
+	// make sure that the video demuxer stream header knows about its
+	// parent video demuxer stream
+	sh_video->ds = demuxer->video;
 
-        sh_video->src_w = stream_read_word_le(demuxer->stream);
-        sh_video->src_h = stream_read_word_le(demuxer->stream);
-        stream_skip(demuxer->stream, 4);
+	sh_video->src_w = stream_read_word_le(demuxer->stream);
+	sh_video->src_h = stream_read_word_le(demuxer->stream);
+	stream_skip(demuxer->stream, 4);
 
-        // custom fourcc for internal MPlayer use
-        sh_video->fourcc = mmioFOURCC('R', 'o', 'Q', 'V');
+	// custom fourcc for internal MPlayer use
+	sh_video->fourcc = mmioFOURCC('R', 'o', 'Q', 'V');
 
-        // constant frame rate
-        sh_video->fps = fps;
+	// constant frame rate
+	sh_video->fps = fps;
       }
     }
     else if ((chunk_id == RoQ_SOUND_MONO) ||
@@ -157,43 +157,43 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
       // create the audio stream header if it hasn't been created it
       if (sh_audio == NULL)
       {
-        // make the header first
-        sh_audio = new_sh_audio(demuxer, 0);
-        // make sure the demuxer knows about the new stream header
-        demuxer->audio->sh = sh_audio;
-        // make sure that the audio demuxer stream header knows about its
-        // parent audio demuxer stream
-        sh_audio->ds = demuxer->audio;
+	// make the header first
+	sh_audio = new_sh_audio(demuxer, 0);
+	// make sure the demuxer knows about the new stream header
+	demuxer->audio->sh = sh_audio;
+	// make sure that the audio demuxer stream header knows about its
+	// parent audio demuxer stream
+	sh_audio->ds = demuxer->audio;
 
-        // go through the bother of making a WAVEFORMATEX structure
-        sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+	// go through the bother of making a WAVEFORMATEX structure
+	sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
 
-        // custom fourcc for internal MPlayer use
-        sh_audio->wtag = mmioFOURCC('R', 'o', 'Q', 'A');
-        if (chunk_id == RoQ_SOUND_STEREO)
-          sh_audio->wf->nChannels = 2;
-        else
-          sh_audio->wf->nChannels = 1;
-        // always 22KHz, 16-bit
-        sh_audio->wf->nSamplesPerSec = 22050;
-        sh_audio->wf->wBitsPerSample = 16;
+	// custom fourcc for internal MPlayer use
+	sh_audio->wtag = mmioFOURCC('R', 'o', 'Q', 'A');
+	if (chunk_id == RoQ_SOUND_STEREO)
+	  sh_audio->wf->nChannels = 2;
+	else
+	  sh_audio->wf->nChannels = 1;
+	// always 22KHz, 16-bit
+	sh_audio->wf->nSamplesPerSec = 22050;
+	sh_audio->wf->wBitsPerSample = 16;
       }
 
       // index the chunk
       roq_data->chunks = (roq_chunk_t *)mp_realloc(roq_data->chunks,
-        (roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
+	(roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
       roq_data->chunks[roq_data->total_chunks].chunk_type = CHUNK_TYPE_AUDIO;
-      roq_data->chunks[roq_data->total_chunks].chunk_offset = 
-        stream_tell(demuxer->stream) - 8;
+      roq_data->chunks[roq_data->total_chunks].chunk_offset =
+	stream_tell(demuxer->stream) - 8;
       roq_data->chunks[roq_data->total_chunks].chunk_size = chunk_size + 8;
       roq_data->chunks[roq_data->total_chunks].running_audio_sample_count =
-        roq_data->total_audio_sample_count;
+	roq_data->total_audio_sample_count;
 
       // audio housekeeping
       if (chunk_size > largest_audio_chunk)
-        largest_audio_chunk = chunk_size;
-      roq_data->total_audio_sample_count += 
-        (chunk_size / sh_audio->wf->nChannels);
+	largest_audio_chunk = chunk_size;
+      roq_data->total_audio_sample_count +=
+	(chunk_size / sh_audio->wf->nChannels);
 
       stream_skip(demuxer->stream, chunk_size);
       roq_data->total_chunks++;
@@ -204,13 +204,13 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
       // index a new chunk if it's a codebook or quad VQ not following a
       // codebook
       roq_data->chunks = (roq_chunk_t *)mp_realloc(roq_data->chunks,
-        (roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
+	(roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
       roq_data->chunks[roq_data->total_chunks].chunk_type = CHUNK_TYPE_VIDEO;
-      roq_data->chunks[roq_data->total_chunks].chunk_offset = 
-        stream_tell(demuxer->stream) - 8;
+      roq_data->chunks[roq_data->total_chunks].chunk_offset =
+	stream_tell(demuxer->stream) - 8;
       roq_data->chunks[roq_data->total_chunks].chunk_size = chunk_size + 8;
-      roq_data->chunks[roq_data->total_chunks].video_chunk_number = 
-        roq_data->total_video_chunks++;
+      roq_data->chunks[roq_data->total_chunks].video_chunk_number =
+	roq_data->total_video_chunks++;
 
       stream_skip(demuxer->stream, chunk_size);
       roq_data->total_chunks++;
@@ -224,7 +224,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
     }
     else if (!stream_eof(demuxer->stream))
     {
-        MSG_WARN( "Unknown RoQ chunk ID: %04X\n", chunk_id);
+	MSG_WARN( "Unknown RoQ chunk ID: %04X\n", chunk_id);
     }
 
     last_chunk_id = chunk_id;

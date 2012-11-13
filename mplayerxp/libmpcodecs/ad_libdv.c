@@ -110,9 +110,9 @@ static unsigned decode(sh_audio_t *sh, unsigned char *buf, unsigned minlen, unsi
 
       for (i=0; i < decoder->audio->samples_this_frame; i++)
       {
-         int ch;
-         for (ch=0; ch < decoder->audio->num_channels; ch++)
-            bufP[len++] = priv->audioBuffers[ch][i];
+	 int ch;
+	 for (ch=0; ch < decoder->audio->num_channels; ch++)
+	    bufP[len++] = priv->audioBuffers[ch][i];
       }
     }
     len+=decoder->audio->samples_this_frame;

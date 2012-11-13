@@ -276,8 +276,8 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 
     if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh, 
-	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_WIDTH, 
+    mpi=mpcodecs_get_image(sh,
+	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_WIDTH,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 

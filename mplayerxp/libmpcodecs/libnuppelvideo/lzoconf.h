@@ -259,7 +259,7 @@ typedef int lzo_bool;
 /* cdecl calling convention for assembler functions */
 #if !defined(LZO_PUBLIC_CDECL)
 #  define LZO_PUBLIC_CDECL(_rettype) \
-                __LZO_EXPORT1 _rettype __LZO_EXPORT2 __LZO_CDECL
+		__LZO_EXPORT1 _rettype __LZO_EXPORT2 __LZO_CDECL
 #endif
 #if !defined(LZO_EXTERN_CDECL)
 #  define LZO_EXTERN_CDECL(_rettype)  __LZO_EXTERN_C LZO_PUBLIC_CDECL(_rettype)
@@ -268,30 +268,30 @@ typedef int lzo_bool;
 
 typedef int
 (__LZO_ENTRY *lzo_compress_t)   ( const lzo_byte *src, lzo_uint  src_len,
-                                        lzo_byte *dst, lzo_uint *dst_len,
-                                        lzo_voidp wrkmem );
+					lzo_byte *dst, lzo_uint *dst_len,
+					lzo_voidp wrkmem );
 
 typedef int
 (__LZO_ENTRY *lzo_decompress_t) ( const lzo_byte *src, lzo_uint  src_len,
-                                        lzo_byte *dst, lzo_uint *dst_len,
-                                        lzo_voidp wrkmem );
+					lzo_byte *dst, lzo_uint *dst_len,
+					lzo_voidp wrkmem );
 
 typedef int
 (__LZO_ENTRY *lzo_optimize_t)   (       lzo_byte *src, lzo_uint  src_len,
-                                        lzo_byte *dst, lzo_uint *dst_len,
-                                        lzo_voidp wrkmem );
+					lzo_byte *dst, lzo_uint *dst_len,
+					lzo_voidp wrkmem );
 
 typedef int
 (__LZO_ENTRY *lzo_compress_dict_t)(const lzo_byte *src, lzo_uint  src_len,
-                                        lzo_byte *dst, lzo_uint *dst_len,
-                                        lzo_voidp wrkmem,
-                                  const lzo_byte *dict, lzo_uint dict_len );
+					lzo_byte *dst, lzo_uint *dst_len,
+					lzo_voidp wrkmem,
+				  const lzo_byte *dict, lzo_uint dict_len );
 
 typedef int
 (__LZO_ENTRY *lzo_decompress_dict_t)(const lzo_byte *src, lzo_uint  src_len,
-                                        lzo_byte *dst, lzo_uint *dst_len,
-                                        lzo_voidp wrkmem,
-                                  const lzo_byte *dict, lzo_uint dict_len );
+					lzo_byte *dst, lzo_uint *dst_len,
+					lzo_voidp wrkmem,
+				  const lzo_byte *dict, lzo_uint dict_len );
 
 
 /* a progress indicator callback function */

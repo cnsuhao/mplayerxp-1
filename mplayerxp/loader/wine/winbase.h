@@ -94,15 +94,15 @@ typedef struct _DEBUG_EVENT {
     DWORD dwProcessId;
     DWORD dwThreadId;
     union {
-        EXCEPTION_DEBUG_INFO      Exception;
-        CREATE_THREAD_DEBUG_INFO  CreateThread;
-        CREATE_PROCESS_DEBUG_INFO CreateProcessInfo;
-        EXIT_THREAD_DEBUG_INFO    ExitThread;
-        EXIT_PROCESS_DEBUG_INFO   ExitProcess;
-        LOAD_DLL_DEBUG_INFO       LoadDll;
-        UNLOAD_DLL_DEBUG_INFO     UnloadDll;
-        OUTPUT_DEBUG_STRING_INFO  DebugString;
-        RIP_INFO                  RipInfo;
+	EXCEPTION_DEBUG_INFO      Exception;
+	CREATE_THREAD_DEBUG_INFO  CreateThread;
+	CREATE_PROCESS_DEBUG_INFO CreateProcessInfo;
+	EXIT_THREAD_DEBUG_INFO    ExitThread;
+	EXIT_PROCESS_DEBUG_INFO   ExitProcess;
+	LOAD_DLL_DEBUG_INFO       LoadDll;
+	UNLOAD_DLL_DEBUG_INFO     UnloadDll;
+	OUTPUT_DEBUG_STRING_INFO  DebugString;
+	RIP_INFO                  RipInfo;
     } u;
 } DEBUG_EVENT, *LPDEBUG_EVENT;
 
@@ -215,16 +215,16 @@ typedef struct
     BYTE iRegionIndex;
     WORD wFlags;
     union {
-        struct {
-            HANDLE hMem;
-            DWORD dwReserved[3];
-        } Block;
-        struct {
-            DWORD dwCommittedSize;
-            DWORD dwUnCommittedSize;
-            LPVOID lpFirstBlock;
-            LPVOID lpLastBlock;
-        } Region;
+	struct {
+	    HANDLE hMem;
+	    DWORD dwReserved[3];
+	} Block;
+	struct {
+	    DWORD dwCommittedSize;
+	    DWORD dwUnCommittedSize;
+	    LPVOID lpFirstBlock;
+	    LPVOID lpLastBlock;
+	} Region;
     } Foo;
 } PROCESS_HEAP_ENTRY, *LPPROCESS_HEAP_ENTRY;
 
@@ -321,9 +321,9 @@ typedef struct
 #define GETBASEIRQ	10
 
 /* Purge functions for Comm Port */
-#define PURGE_TXABORT       0x0001  /* Kill the pending/current writes to the 
+#define PURGE_TXABORT       0x0001  /* Kill the pending/current writes to the
 				       comm port */
-#define PURGE_RXABORT       0x0002  /*Kill the pending/current reads to 
+#define PURGE_RXABORT       0x0002  /*Kill the pending/current reads to
 				     the comm port */
 #define PURGE_TXCLEAR       0x0004  /* Kill the transmit queue if there*/
 #define PURGE_RXCLEAR       0x0008  /* Kill the typeahead buffer if there*/
@@ -398,7 +398,7 @@ typedef struct
 #define RT_GROUP_ICON        WINELIB_NAME_AW(RT_GROUP_ICON)
 
 
-#define LMEM_FIXED          0   
+#define LMEM_FIXED          0
 #define LMEM_MOVEABLE       0x0002
 #define LMEM_NOCOMPACT      0x0010
 #define LMEM_NODISCARD      0x0020
@@ -586,24 +586,24 @@ typedef struct
 #endif /* NOLOGERROR */
 
 typedef struct {
-        WORD wYear;
-        WORD wMonth;
-        WORD wDayOfWeek;
-        WORD wDay;
-        WORD wHour;
-        WORD wMinute;
-        WORD wSecond;
-        WORD wMilliseconds;
+	WORD wYear;
+	WORD wMonth;
+	WORD wDayOfWeek;
+	WORD wDay;
+	WORD wHour;
+	WORD wMinute;
+	WORD wSecond;
+	WORD wMilliseconds;
 } SYSTEMTIME, *LPSYSTEMTIME;
 
 /* The 'overlapped' data structure used by async I/O functions.
  */
 typedef struct {
-        DWORD Internal;
-        DWORD InternalHigh;
-        DWORD Offset;
-        DWORD OffsetHigh;
-        HANDLE hEvent;
+	DWORD Internal;
+	DWORD InternalHigh;
+	DWORD Offset;
+	DWORD OffsetHigh;
+	HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
 /* Process startup information.
@@ -622,45 +622,45 @@ typedef struct {
 #define	STARTF_USEHOTKEY	0x00000200
 
 typedef struct {
-        DWORD cb;		/* 00: size of struct */
-        LPSTR lpReserved;	/* 04: */
-        LPSTR lpDesktop;	/* 08: */
-        LPSTR lpTitle;		/* 0c: */
-        DWORD dwX;		/* 10: */
-        DWORD dwY;		/* 14: */
-        DWORD dwXSize;		/* 18: */
-        DWORD dwYSize;		/* 1c: */
-        DWORD dwXCountChars;	/* 20: */
-        DWORD dwYCountChars;	/* 24: */
-        DWORD dwFillAttribute;	/* 28: */
-        DWORD dwFlags;		/* 2c: */
-        WORD wShowWindow;	/* 30: */
-        WORD cbReserved2;	/* 32: */
-        BYTE *lpReserved2;	/* 34: */
-        HANDLE hStdInput;	/* 38: */
-        HANDLE hStdOutput;	/* 3c: */
-        HANDLE hStdError;	/* 40: */
+	DWORD cb;		/* 00: size of struct */
+	LPSTR lpReserved;	/* 04: */
+	LPSTR lpDesktop;	/* 08: */
+	LPSTR lpTitle;		/* 0c: */
+	DWORD dwX;		/* 10: */
+	DWORD dwY;		/* 14: */
+	DWORD dwXSize;		/* 18: */
+	DWORD dwYSize;		/* 1c: */
+	DWORD dwXCountChars;	/* 20: */
+	DWORD dwYCountChars;	/* 24: */
+	DWORD dwFillAttribute;	/* 28: */
+	DWORD dwFlags;		/* 2c: */
+	WORD wShowWindow;	/* 30: */
+	WORD cbReserved2;	/* 32: */
+	BYTE *lpReserved2;	/* 34: */
+	HANDLE hStdInput;	/* 38: */
+	HANDLE hStdOutput;	/* 3c: */
+	HANDLE hStdError;	/* 40: */
 } STARTUPINFOA, *LPSTARTUPINFOA;
 
 typedef struct {
-        DWORD cb;
-        LPWSTR lpReserved;
-        LPWSTR lpDesktop;
-        LPWSTR lpTitle;
-        DWORD dwX;
-        DWORD dwY;
-        DWORD dwXSize;
-        DWORD dwYSize;
-        DWORD dwXCountChars;
-        DWORD dwYCountChars;
-        DWORD dwFillAttribute;
-        DWORD dwFlags;
-        WORD wShowWindow;
-        WORD cbReserved2;
-        BYTE *lpReserved2;
-        HANDLE hStdInput;
-        HANDLE hStdOutput;
-        HANDLE hStdError;
+	DWORD cb;
+	LPWSTR lpReserved;
+	LPWSTR lpDesktop;
+	LPWSTR lpTitle;
+	DWORD dwX;
+	DWORD dwY;
+	DWORD dwXSize;
+	DWORD dwYSize;
+	DWORD dwXCountChars;
+	DWORD dwYCountChars;
+	DWORD dwFillAttribute;
+	DWORD dwFlags;
+	WORD wShowWindow;
+	WORD cbReserved2;
+	BYTE *lpReserved2;
+	HANDLE hStdInput;
+	HANDLE hStdOutput;
+	HANDLE hStdError;
 } STARTUPINFOW, *LPSTARTUPINFOW;
 
 DECL_WINELIB_TYPE_AW(STARTUPINFO)
@@ -674,13 +674,13 @@ typedef struct {
 } PROCESS_INFORMATION,*LPPROCESS_INFORMATION;
 
 typedef struct {
-        LONG Bias;
-        WCHAR StandardName[32];
-        SYSTEMTIME StandardDate;
-        LONG StandardBias;
-        WCHAR DaylightName[32];
-        SYSTEMTIME DaylightDate;
-        LONG DaylightBias;
+	LONG Bias;
+	WCHAR StandardName[32];
+	SYSTEMTIME StandardDate;
+	LONG StandardBias;
+	WCHAR DaylightName[32];
+	SYSTEMTIME DaylightDate;
+	LONG DaylightBias;
 } TIME_ZONE_INFORMATION, *LPTIME_ZONE_INFORMATION;
 
 #define TIME_ZONE_ID_UNKNOWN    0
@@ -833,10 +833,10 @@ typedef struct _LDT_ENTRY {
 	struct {
 	    BYTE	BaseMid;
 	    BYTE	Flags1;/*Declare as bytes to avoid alignment problems */
-	    BYTE	Flags2; 
+	    BYTE	Flags2;
 	    BYTE	BaseHi;
 	} Bytes;
-	struct {	    
+	struct {
 	    unsigned	BaseMid		: 8;
 	    unsigned	Type		: 5;
 	    unsigned	Dpl		: 2;
@@ -877,9 +877,9 @@ typedef struct _DllVersionInfo {
  * This one seems to be a Win32 only definition. It also is defined with
  * WINAPI instead of CALLBACK in the windows headers.
  */
-typedef DWORD WINAPI (*LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_INTEGER, 
-                                           LARGE_INTEGER, DWORD, DWORD, HANDLE,
-                                           HANDLE, LPVOID);
+typedef DWORD WINAPI (*LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_INTEGER,
+					   LARGE_INTEGER, DWORD, DWORD, HANDLE,
+					   HANDLE, LPVOID);
 
 
 #define WAIT_FAILED		0xffffffff
@@ -1000,12 +1000,12 @@ typedef struct {
 #endif
 
 typedef struct {
-        DWORD dwOSVersionInfoSize;
-        DWORD dwMajorVersion;
-        DWORD dwMinorVersion;
-        DWORD dwBuildNumber;
-        DWORD dwPlatformId;
-        CHAR szCSDVersion[128];
+	DWORD dwOSVersionInfoSize;
+	DWORD dwMajorVersion;
+	DWORD dwMinorVersion;
+	DWORD dwBuildNumber;
+	DWORD dwPlatformId;
+	CHAR szCSDVersion[128];
 } OSVERSIONINFO16;
 
 typedef struct {
@@ -1079,7 +1079,7 @@ typedef struct tagCOMMTIMEOUTS {
 	DWORD	WriteTotalTimeoutMultiplier;
 	DWORD	WriteTotalTimeoutConstant;
 } COMMTIMEOUTS,*LPCOMMTIMEOUTS;
-  
+
 #include "poppack.h"
 
 typedef void CALLBACK (*PAPCFUNC)(ULONG_PTR);
@@ -1099,7 +1099,7 @@ WIN_BOOL      WINAPI SetCommState(INT,LPDCB);
 WIN_BOOL      WINAPI TransmitCommChar(INT,CHAR);
 WIN_BOOL      WINAPI SetupComm(HANDLE, DWORD, DWORD);
 WIN_BOOL      WINAPI GetCommProperties(HANDLE, LPDCB *);
-  
+
 /*DWORD WINAPI GetVersion( void );*/
 WIN_BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16*);
 WIN_BOOL WINAPI GetVersionExA(OSVERSIONINFOA*);
@@ -1120,7 +1120,7 @@ void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
 WIN_BOOL    WINAPI SetProcessWorkingSetSize(HANDLE,DWORD,DWORD);
 WIN_BOOL    WINAPI TerminateProcess(HANDLE,DWORD);
 WIN_BOOL    WINAPI TerminateThread(HANDLE,DWORD);
-WIN_BOOL    WINAPI GetExitCodeThread(HANDLE,LPDWORD); 
+WIN_BOOL    WINAPI GetExitCodeThread(HANDLE,LPDWORD);
 
 /* GetBinaryType return values.
  */
@@ -1172,25 +1172,25 @@ HANDLE    WINAPI CreateEventA(LPSECURITY_ATTRIBUTES,WIN_BOOL,WIN_BOOL,LPCSTR);
 HANDLE    WINAPI CreateEventW(LPSECURITY_ATTRIBUTES,WIN_BOOL,WIN_BOOL,LPCWSTR);
 #define     CreateEvent WINELIB_NAME_AW(CreateEvent)
 HANDLE     WINAPI CreateFileA(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,
-                                 DWORD,DWORD,HANDLE);
+				 DWORD,DWORD,HANDLE);
 HANDLE     WINAPI CreateFileW(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,
-                                 DWORD,DWORD,HANDLE);
+				 DWORD,DWORD,HANDLE);
 #define     CreateFile WINELIB_NAME_AW(CreateFile)
 HANDLE    WINAPI CreateFileMappingA(HANDLE,LPSECURITY_ATTRIBUTES,DWORD,
-                                        DWORD,DWORD,LPCSTR);
+					DWORD,DWORD,LPCSTR);
 HANDLE    WINAPI CreateFileMappingW(HANDLE,LPSECURITY_ATTRIBUTES,DWORD,
-                                        DWORD,DWORD,LPCWSTR);
+					DWORD,DWORD,LPCWSTR);
 #define     CreateFileMapping WINELIB_NAME_AW(CreateFileMapping)
 HANDLE    WINAPI CreateMutexA(LPSECURITY_ATTRIBUTES,WIN_BOOL,LPCSTR);
 HANDLE    WINAPI CreateMutexW(LPSECURITY_ATTRIBUTES,WIN_BOOL,LPCWSTR);
 #define     CreateMutex WINELIB_NAME_AW(CreateMutex)
 WIN_BOOL      WINAPI CreatePipe(PHANDLE,PHANDLE,LPSECURITY_ATTRIBUTES,DWORD);
 WIN_BOOL      WINAPI CreateProcessA(LPCSTR,LPSTR,LPSECURITY_ATTRIBUTES,
-                                    LPSECURITY_ATTRIBUTES,WIN_BOOL,DWORD,LPVOID,LPCSTR,
-                                    LPSTARTUPINFOA,LPPROCESS_INFORMATION);
+				    LPSECURITY_ATTRIBUTES,WIN_BOOL,DWORD,LPVOID,LPCSTR,
+				    LPSTARTUPINFOA,LPPROCESS_INFORMATION);
 WIN_BOOL      WINAPI CreateProcessW(LPCWSTR,LPWSTR,LPSECURITY_ATTRIBUTES,
-                                    LPSECURITY_ATTRIBUTES,WIN_BOOL,DWORD,LPVOID,LPCWSTR,
-                                    LPSTARTUPINFOW,LPPROCESS_INFORMATION);
+				    LPSECURITY_ATTRIBUTES,WIN_BOOL,DWORD,LPVOID,LPCWSTR,
+				    LPSTARTUPINFOW,LPPROCESS_INFORMATION);
 #define     CreateProcess WINELIB_NAME_AW(CreateProcess)
 HANDLE    WINAPI CreateSemaphoreA(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCSTR);
 HANDLE    WINAPI CreateSemaphoreW(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCWSTR);
@@ -1209,14 +1209,14 @@ WIN_BOOL        WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCI
 WIN_BOOL        WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags);
 #define     EnumDateFormats WINELIB_NAME_AW(EnumDateFormats)
 WIN_BOOL      WINAPI EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,
-                                            ENUMRESLANGPROCA,LONG);
+					    ENUMRESLANGPROCA,LONG);
 WIN_BOOL      WINAPI EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,
-                                            ENUMRESLANGPROCW,LONG);
+					    ENUMRESLANGPROCW,LONG);
 #define     EnumResourceLanguages WINELIB_NAME_AW(EnumResourceLanguages)
 WIN_BOOL      WINAPI EnumResourceNamesA(HMODULE,LPCSTR,ENUMRESNAMEPROCA,
-                                        LONG);
+					LONG);
 WIN_BOOL      WINAPI EnumResourceNamesW(HMODULE,LPCWSTR,ENUMRESNAMEPROCW,
-                                        LONG);
+					LONG);
 #define     EnumResourceNames WINELIB_NAME_AW(EnumResourceNames)
 WIN_BOOL      WINAPI EnumResourceTypesA(HMODULE,ENUMRESTYPEPROCA,LONG);
 WIN_BOOL      WINAPI EnumResourceTypesW(HMODULE,ENUMRESTYPEPROCW,LONG);
@@ -1372,7 +1372,7 @@ WIN_BOOL        WINAPI LookupAccountSidW(LPCWSTR,PSID,LPWSTR,LPDWORD,LPWSTR,LPDW
 #define     LookupAccountSid WINELIB_NAME_AW(LookupAccountSidW)
 WIN_BOOL        WINAPI LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
 WIN_BOOL        WINAPI LockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
-WIN_BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);    
+WIN_BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);
 WIN_BOOL        WINAPI LookupPrivilegeValueA(LPCSTR,LPCSTR,LPVOID);
 WIN_BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,LPVOID);
 #define     LookupPrivilegeValue WINELIB_NAME_AW(LookupPrivilegeValue)

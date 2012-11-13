@@ -120,7 +120,7 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_yuy2)(int w,int h,const unsigned
 #endif
 PROFILE_START();
     for(y=0;y<h;y++){
-        register int x=0;
+	register int x=0;
 #ifdef HAVE_INT_PVECTOR
 	/* TODO: port this stuff on PVector */
 	__m64 mm[8];
@@ -155,20 +155,20 @@ PROFILE_START();
 		_m_store(&(((char *)dstbase)[x*2]),mm[0]);
 	}
 #endif
-        for(;x<w;x++){
+	for(;x<w;x++){
 #ifdef FAST_OSD
-            if(srca[2*x+0]) dstbase[4*x+0]=src[2*x+0];
-            if(srca[2*x+1]) dstbase[4*x+2]=src[2*x+1];
+	    if(srca[2*x+0]) dstbase[4*x+0]=src[2*x+0];
+	    if(srca[2*x+1]) dstbase[4*x+2]=src[2*x+1];
 #else
-            if(srca[x]) {
-               dstbase[2*x]=((dstbase[2*x]*srca[x])>>8)+src[x];
-               dstbase[2*x+1]=((((signed)dstbase[2*x+1]-128)*srca[x])>>8)+128;
-           }
+	    if(srca[x]) {
+	       dstbase[2*x]=((dstbase[2*x]*srca[x])>>8)+src[x];
+	       dstbase[2*x+1]=((((signed)dstbase[2*x+1]-128)*srca[x])>>8)+128;
+	   }
 #endif
-        }
+	}
 	src+=srcstride;
-        srca+=srcstride;
-        dstbase+=dststride;
+	srca+=srcstride;
+	dstbase+=dststride;
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
@@ -181,8 +181,8 @@ PROFILE_END("vo_draw_alpha_yuy2");
 static inline void PVECTOR_RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
-        register unsigned char *dst = dstbase;
-        register int x=0;
+	register unsigned char *dst = dstbase;
+	register int x=0;
 #ifdef HAVE_INT_PVECTOR
 	__m64 mm[8];
 	_ivec_prefetchw(&dstbase[x]);
@@ -227,8 +227,8 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigne
 	dst += 6;
     }
 #endif /* arch_x86 */
-        for(;x<w;x++){
-            if(srca[x]){
+	for(;x<w;x++){
+	    if(srca[x]){
 #ifdef FAST_OSD
 		dst[0]=dst[1]=dst[2]=src[x];
 #else
@@ -236,12 +236,12 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigne
 		dst[1]=((dst[1]*srca[x])>>8)+src[x];
 		dst[2]=((dst[2]*srca[x])>>8)+src[x];
 #endif
-            }
-            dst+=3; // 24bpp
-        }
-        src+=srcstride;
-        srca+=srcstride;
-        dstbase+=dststride;
+	    }
+	    dst+=3; // 24bpp
+	}
+	src+=srcstride;
+	srca+=srcstride;
+	dstbase+=dststride;
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();
@@ -254,7 +254,7 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_rgb32)(int w,int h,const unsigne
     int y;
 PROFILE_START();
     for(y=0;y<h;y++){
-        register int x=0;
+	register int x=0;
 #ifdef HAVE_INT_PVECTOR
 	__m64 mm[8];
 	_ivec_prefetchw(&dstbase[x]);
@@ -294,8 +294,8 @@ PROFILE_START();
 	}
     }
 #endif /* arch_x86 */
-        for(;x<w;x++){
-            if(srca[x]){
+	for(;x<w;x++){
+	    if(srca[x]){
 #ifdef FAST_OSD
 		dstbase[4*x+0]=dstbase[4*x+1]=dstbase[4*x+2]=src[x];
 #else
@@ -303,11 +303,11 @@ PROFILE_START();
 		dstbase[4*x+1]=((dstbase[4*x+1]*srca[x])>>8)+src[x];
 		dstbase[4*x+2]=((dstbase[4*x+2]*srca[x])>>8)+src[x];
 #endif
-            }
-        }
-        src+=srcstride;
-        srca+=srcstride;
-        dstbase+=dststride;
+	    }
+	}
+	src+=srcstride;
+	srca+=srcstride;
+	dstbase+=dststride;
     }
 #ifdef HAVE_INT_PVECTOR
     _ivec_empty();

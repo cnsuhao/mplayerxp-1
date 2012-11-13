@@ -1,5 +1,5 @@
 /*
-    (c)2006 MPlayer / Reynaldo H. Verdejo Pinochet 
+    (c)2006 MPlayer / Reynaldo H. Verdejo Pinochet
 	Based on code by Alex Beregszaszi for his 'center' filter
 
     License: GPL
@@ -29,7 +29,7 @@ static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
     return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void uninit(struct af_instance_s* af)
 {
 	if(af->data)
@@ -41,22 +41,22 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 {
 	mp_aframe_t*	c	= data;		 // Current working data
 	float*		a	= c->audio;	 // Audio data
-	int			len	= c->len/4;	 // Number of samples in current audio block 
+	int			len	= c->len/4;	 // Number of samples in current audio block
 	int			nch	= c->nch;	 // Number of channels
 	register int  i;
 
-	/*	  
-		FIXME1 add a low band pass filter to avoid suppressing 
+	/*
+		FIXME1 add a low band pass filter to avoid suppressing
 		centered bass/drums
 		FIXME2 better calculated* attenuation factor
 	*/
-	
+
 	for(i=0;i<len;i+=nch)
 	{
 		a[i] = (a[i] - a[i+1]) * 0.7;
 		a[i+1]=a[i];
 	}
-	
+
 	return c;
 }
 
@@ -71,7 +71,7 @@ static MPXP_Rc open(af_instance_t* af){
 
 	if(af->data == NULL)
 		return MPXP_Error;
-	
+
 	return MPXP_Ok;
 }
 

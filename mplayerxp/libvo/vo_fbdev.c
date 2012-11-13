@@ -2,7 +2,7 @@
  * Video driver for Framebuffer device
  * by Szabolcs Berecz <szabi@inf.elte.hu>
  * (C) 2001
- * 
+ *
  * Some idea and code borrowed from Chris Lawrence's ppmtofb-0.27
  */
 

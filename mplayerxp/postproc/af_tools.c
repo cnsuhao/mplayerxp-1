@@ -6,9 +6,9 @@
    fail */
 MPXP_Rc __FASTCALL__ af_from_dB(int n, float* in, float* out, float k, float mi, float ma)
 {
-  int i = 0; 
+  int i = 0;
   // Sanity check
-  if(!in || !out) 
+  if(!in || !out)
     return MPXP_Error;
 
   for(i=0;i<n;i++){
@@ -24,9 +24,9 @@ MPXP_Rc __FASTCALL__ af_from_dB(int n, float* in, float* out, float k, float mi,
    fail */
 MPXP_Rc __FASTCALL__ af_to_dB(int n, float* in, float* out, float k)
 {
-  int i = 0; 
+  int i = 0;
   // Sanity check
-  if(!in || !out) 
+  if(!in || !out)
     return MPXP_Error;
 
   for(i=0;i<n;i++){
@@ -41,9 +41,9 @@ MPXP_Rc __FASTCALL__ af_to_dB(int n, float* in, float* out, float k)
 /* Convert from ms to sample time */
 MPXP_Rc __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, float ma)
 {
-  int i = 0; 
+  int i = 0;
   // Sanity check
-  if(!in || !out) 
+  if(!in || !out)
     return MPXP_Error;
 
   for(i=0;i<n;i++)

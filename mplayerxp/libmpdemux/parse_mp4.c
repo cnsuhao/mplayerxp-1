@@ -110,7 +110,7 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   }
 
   /* read length */
-  esds->decoderConfigLen = len = mp4_read_descr_len(s); 
+  esds->decoderConfigLen = len = mp4_read_descr_len(s);
 
   esds->decoderConfig = mp_malloc(esds->decoderConfigLen);
   if (esds->decoderConfig) {

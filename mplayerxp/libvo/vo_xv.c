@@ -47,10 +47,10 @@ LIBVO_EXTERN(xv)
 
 static vo_info_t vo_info =
 {
-        "X11/Xv",
-        "xv",
-        "Gerd Knorr <kraxel@goldbach.in-berlin.de>",
-        ""
+	"X11/Xv",
+	"xv",
+	"Gerd Knorr <kraxel@goldbach.in-berlin.de>",
+	""
 };
 
 /* since it doesn't seem to be defined on some platforms */
@@ -111,7 +111,7 @@ static int __FASTCALL__ xv_set_video_eq(vo_data_t*vo,const vo_videq_t *info)
  /* get available attributes */
     attributes = XvQueryPortAttributes(vo->mDisplay, priv->port, &howmany);
     for (i = 0; (int)i < howmany && attributes; i++) {
-        if (attributes[i].flags & XvSettable) {
+	if (attributes[i].flags & XvSettable) {
 	    xv_min = attributes[i].min_value;
 	    xv_max = attributes[i].max_value;
 	    xv_atomka = XInternAtom(vo->mDisplay, attributes[i].name, True);
@@ -139,7 +139,7 @@ static int __FASTCALL__ xv_set_video_eq(vo_data_t*vo,const vo_videq_t *info)
 		    }
 		    else
 #endif
-                    /* Note: since 22.01.2002 GATOS supports these attrs for radeons (NK) */
+		    /* Note: since 22.01.2002 GATOS supports these attrs for radeons (NK) */
 		    if(!strcmp(attributes[i].name,"XV_RED_INTENSITY") && !strcmp(info->name,VO_EC_RED_INTENSITY)) {
 		    has_value=1;
 		    port_value = info->value;
@@ -205,7 +205,7 @@ static int __FASTCALL__ xv_get_video_eq(vo_data_t*vo, vo_videq_t *info)
 		    has_value=1;
 		    port_value = info->value;
 		} else if(!strcmp(attributes[i].name,"XV_RED_INTENSITY") && !strcmp(info->name,VO_EC_RED_INTENSITY)) {
-                    /* Note: since 22.01.2002 GATOS supports these attrs for radeons (NK) */
+		    /* Note: since 22.01.2002 GATOS supports these attrs for radeons (NK) */
 		    has_value=1;
 		    port_value = info->value;
 		} else if(!strcmp(attributes[i].name,"XV_GREEN_INTENSITY") && !strcmp(info->name,VO_EC_GREEN_INTENSITY)) {
@@ -218,7 +218,7 @@ static int __FASTCALL__ xv_get_video_eq(vo_data_t*vo, vo_videq_t *info)
 		else continue;
 		if(has_value) return 1;
 	    }
-        }
+	}
     }
     return 0;
 }
@@ -315,7 +315,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     vo_x11_classhint( vo->mDisplay,vo->window,"xv" );
     vo_x11_hidecursor(vo->mDisplay,vo->window);
 
-    XSelectInput(vo->mDisplay, vo->window, StructureNotifyMask | KeyPressMask | 
+    XSelectInput(vo->mDisplay, vo->window, StructureNotifyMask | KeyPressMask |
 	((vo_conf.WinID==0) ? 0 : (PointerMotionMask
 		| ButtonPressMask | ButtonReleaseMask)));
     XSetStandardProperties(vo->mDisplay, vo->window, hello, hello, None, NULL, 0, &hint);

@@ -74,15 +74,15 @@ static int pva_sync(demuxer_t * demuxer)
 	int count;
 	pva_priv_t * priv = (pva_priv_t *) demuxer->priv;
 
-	
+
 	 /* This function is used to find the next nearest PVA packet start after a seek, since a PVA file
 	  * is not indexed.
 	  * The just_synced field is in the priv structure so that pva_get_payload knows pva_sync
 	  * has already read (part of) the PVA header. This way we can avoid to seek back and (hopefully)
 	  * be able to read from pipes and such.
 	  */
-	
-	
+
+
 	for(count=0 ; count<PVA_MAX_VIDEO_PACK_LEN && !stream_eof(demuxer->stream) && !priv->just_synced ; count++)
 	{
 		buffer[0]=buffer[1];
@@ -91,7 +91,7 @@ static int pva_sync(demuxer_t * demuxer)
 		buffer[3]=buffer[4];
 		buffer[4]=stream_read_char(demuxer->stream);
 		/*
-		 * Check for a PVA packet beginning sequence: we check both the "AV" word at the 
+		 * Check for a PVA packet beginning sequence: we check both the "AV" word at the
 		 * very beginning and the "0x55" reserved byte (which is unused and set to 0x55 by spec)
 		 */
 		if(buffer[0]=='A' && buffer[1] == 'V' && buffer[4] == 0x55) priv->just_synced=1;
@@ -287,7 +287,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 #endif
 	pva_priv_t * priv=(pva_priv_t *) d->priv;
 
-	
+
 	if(d==NULL)
 	{
 		MSG_ERR("demux_pva: pva_get_payload got passed a NULL pointer!\n");
@@ -295,10 +295,10 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 	}
 
 	d->filepos=stream_tell(d->stream);
-	
-	
-	
-	
+
+
+
+
 	if(stream_eof(d->stream))
 	{
 		MSG_V("demux_pva: pva_get_payload() detected stream->eof!!!\n");
@@ -306,7 +306,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 	}
 
 	//printf("priv->just_synced %s\n",priv->just_synced?"SET":"UNSET");
-	
+
 #ifdef PVA_NEW_PREBYTES_CODE
 	if(priv->prebytes_delivered)
 		/* The previous call to this fn has delivered the preBytes. Then we are already inside
@@ -323,7 +323,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 		priv->prebytes_delivered = 0;
 		return 1;
 	}
-#endif	
+#endif
 	if(!priv->just_synced)
 	{
 		if(stream_read_word(d->stream) != (('A'<<8)|'V'))
@@ -380,7 +380,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 	}
 #endif
 
-	
+
 	if(!payload->is_packet_start)
 	{
 		payload->offset=stream_tell(d->stream);
@@ -393,13 +393,13 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 			case VIDEOSTREAM:
 				payload->pts=(float)(le2me_32(stream_read_dword(d->stream)))/90000;
 				//printf("Video PTS: %f\n",payload->pts);
-				if((flags&0x03) 
+				if((flags&0x03)
 #ifdef PVA_NEW_PREBYTES_CODE
 						&& !priv->prebytes_delivered
 #endif
 						)
 				{
-#ifndef PVA_NEW_PREBYTES_CODE					
+#ifndef PVA_NEW_PREBYTES_CODE
 					dp=new_demux_packet(flags&0x03);
 					stream_read(d->stream,dp->buffer,flags & 0x03); //read PreBytes
 					ds_add_packet(d->video,dp);
@@ -415,7 +415,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 					return 1;
 #endif
 				}
-				
+
 
 				//now we are at real beginning of payload.
 				payload->offset=stream_tell(d->stream);
@@ -426,8 +426,8 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 				stream_skip(d->stream,3); //FIXME properly parse PES header.
 				//printf("StreamID in audio PES header: 0x%2X\n",stream_read_char(d->stream));
 				stream_skip(d->stream,4);
-				
-				buffer[255]=stream_read_char(d->stream);			
+
+				buffer[255]=stream_read_char(d->stream);
 				pes_head_len=stream_read_char(d->stream);
 				stream_read(d->stream,buffer,pes_head_len);
 				if(!(buffer[255]&0x80)) //PES header does not contain PTS.
@@ -435,7 +435,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 					MSG_V("Audio PES packet does not contain PTS. (pes_head_len=%d)\n",pes_head_len);
 					payload->pts=priv->last_audio_pts;
 					break;
-				}			
+				}
 				else		//PES header DOES contain PTS
 				{
 					if((buffer[0] & 0xf0)!=0x20) // PTS badly formatted
@@ -447,7 +447,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 					else
 					{
 						uint64_t temp_pts;
-					
+
 						temp_pts=0LL;
 						temp_pts|=((uint64_t)(buffer[0] & 0x0e) << 29);
 						temp_pts|=buffer[1]<<22;
@@ -455,8 +455,8 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 						temp_pts|=buffer[3]<<7;
 						temp_pts|=(buffer[4] & 0xfe) >> 1;
 						/*
-					 	* PTS parsing is hopefully finished.
-					 	*/
+						* PTS parsing is hopefully finished.
+						*/
 						payload->pts=(float)le2me_64(temp_pts)/90000;
 					}
 				}

@@ -2,7 +2,7 @@
   Video 4 Linux input
 
   (C) Alex Beregszaszi <alex@naxine.org>
-  
+
   Some ideas are based on xawtv/libng's grab-v4l.c written by
     Gerd Knorr <kraxel@bytesex.org>
 
@@ -160,7 +160,7 @@ tvi_handle_t *tvi_init_v4l(char *device)
 {
     tvi_handle_t *h;
     priv_t *priv;
-    
+
     h = new_handle();
     if (!h)
 	return(NULL);
@@ -198,9 +198,9 @@ static int init(priv_t *priv)
 	    priv->video_device, strerror(errno));
 	goto err;
     }
-    
+
     priv->fps = 25; /* pal */
-    
+
     /* get capabilities (priv->capability is needed!) */
     if (ioctl(priv->video_fd, VIDIOCGCAP, &priv->capability) == -1)
     {
@@ -266,12 +266,12 @@ static int init(priv_t *priv)
 		MSG_ERR( "ioctl get audio failed: %s\n", strerror(errno));
 		break;
 	    }
-	    
+
 	    if (priv->audio[i].volume <= 0)
 		priv->audio[i].volume = 100;
 	    priv->audio[i].flags &= ~VIDEO_AUDIO_MUTE;
 	    ioctl(priv->video_fd, VIDIOCSAUDIO, &priv->audio[i]);
-	    
+
 	    switch(priv->audio[i].mode)
 	    {
 		case VIDEO_SOUND_MONO:
@@ -283,7 +283,7 @@ static int init(priv_t *priv)
 		    priv->audio_channels[i] = 2;
 		    break;
 	    }
-	    
+
 	    priv->audio_format[i] = bps2afmt(2);
 	    priv->audio_samplerate[i] = 44100;
 	    priv->audio_samplesize[i] =
@@ -310,7 +310,7 @@ static int init(priv_t *priv)
 	MSG_ERR( "Only grabbing supported (for overlay use another program)\n");
 	goto err;
     }
-    
+
     /* map grab buffer */
     if (ioctl(priv->video_fd, VIDIOCGMBUF, &priv->mbuf) == -1)
     {
@@ -331,7 +331,7 @@ static int init(priv_t *priv)
 
     /* num of buffers */
     priv->nbuf = priv->mbuf.frames;
-    
+
     /* video buffers */
     priv->buf = (struct video_mmap *)mp_mallocz(priv->nbuf * sizeof(struct video_mmap));
     if (!priv->buf)
@@ -347,13 +347,13 @@ static int init(priv_t *priv)
     else
     {
 	int ioctl_param;
-	
+
 	fcntl(priv->audio_fd, F_SETFL, O_NONBLOCK);
 
 	ioctl_param = 0 ;
 	MSG_V("ioctl dsp getfmt: %d\n",
 	    ioctl(priv->audio_fd, SNDCTL_DSP_GETFMTS, &ioctl_param));
-	
+
 	MSG_V("Supported formats: %x\n", ioctl_param);
 	if (!(ioctl_param & priv->audio_format[priv->audio_id]))
 	    MSG_WARN("notsupported format\n");
@@ -375,7 +375,7 @@ static int init(priv_t *priv)
 		ioctl(priv->audio_fd, SNDCTL_DSP_STEREO, &ioctl_param),
 		ioctl_param);
 	}
-	
+
 	ioctl_param = priv->audio_samplerate[priv->audio_id];
 	MSG_V("ioctl dsp speed: %d\n",
 	    ioctl(priv->audio_fd, SNDCTL_DSP_SPEED, &ioctl_param));
@@ -392,7 +392,7 @@ static int init(priv_t *priv)
 	    ioctl(priv->audio_fd, SNDCTL_DSP_GETBLKSIZE, &priv->audio_blocksize));
 	MSG_V("blocksize: %d\n", priv->audio_blocksize);
     }
-#endif    
+#endif
     return(1);
 
 
@@ -423,7 +423,7 @@ static int start(priv_t *priv)
 {
     int i;
 
-    
+
     if (ioctl(priv->video_fd, VIDIOCGPICT, &priv->picture) == -1)
     {
 	MSG_ERR( "ioctl get picture failed: %s\n", strerror(errno));
@@ -443,7 +443,7 @@ static int start(priv_t *priv)
     MSG_V( " Brightness: %d, Hue: %d, Colour: %d, Contrast: %d\n",
 	priv->picture.brightness, priv->picture.hue,
 	priv->picture.colour, priv->picture.contrast);
-    
+
 
     if (ioctl(priv->video_fd, VIDIOCSPICT, &priv->picture) == -1)
     {
@@ -459,12 +459,12 @@ static int start(priv_t *priv)
 	priv->buf[i].width = priv->width;
 	priv->buf[i].height = priv->height;
 	MSG_DBG2( "buffer: %d => %p\n", i, &priv->buf[i]);
-    } 
+    }
 
 #if 0
     {
 	struct video_play_mode pmode;
-	
+
 	pmode.mode = VID_PLAY_NORMAL;
 	pmode.p1 = 1;
 	pmode.p2 = 0;
@@ -487,7 +487,7 @@ static int start(priv_t *priv)
 	win.chromakey = -1;
 	win.flags = 0;
 	//win.clipcount = 0;
-	
+
 	ioctl(priv->video_fd, VIDIOCSWIN, &win);
     }
 
@@ -560,7 +560,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	case TVI_CONTROL_VID_CHK_WIDTH:
 	{
 	    int req_width = *(int *)arg;
-	    
+
 	    MSG_V( "Requested width: %d\n", req_width);
 	    if ((req_width >= priv->capability.minwidth) &&
 		(req_width <= priv->capability.maxwidth))
@@ -576,7 +576,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	case TVI_CONTROL_VID_CHK_HEIGHT:
 	{
 	    int req_height = *(int *)arg;
-	    
+
 	    MSG_V( "Requested height: %d\n", req_height);
 	    if ((req_height >= priv->capability.minheight) &&
 		(req_height <= priv->capability.maxheight))
@@ -624,13 +624,13 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	case TVI_CONTROL_TUN_GET_FREQ:
 	{
 	    unsigned long freq;
-	    
+
 	    if (ioctl(priv->video_fd, VIDIOCGFREQ, &freq) == -1)
 	    {
 		MSG_ERR( "ioctl get freq failed: %s\n", strerror(errno));
 		return(TVI_CONTROL_FALSE);
 	    }
-	    
+
 	    /* tuner uses khz not mhz ! */
 //	    if (priv->tuner.flags & VIDEO_TUNER_LOW)
 //	        freq /= 1000;
@@ -641,9 +641,9 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	{
 	    /* argument is in MHz ! */
 	    unsigned long freq = (unsigned long)*(any_t**)arg;
-	    
+
 	    MSG_V( "requested frequency: %.3f\n", (float)freq/16);
-	    
+
 	    /* tuner uses khz not mhz ! */
 //	    if (priv->tuner.flags & VIDEO_TUNER_LOW)
 //	        freq *= 1000;
@@ -662,7 +662,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 		MSG_ERR( "ioctl get tuner failed: %s\n", strerror(errno));
 		return(TVI_CONTROL_FALSE);
 	    }
-	    
+
 	    MSG_V( "Tuner (%s) range: %lu -> %lu\n", priv->tuner.name,
 		priv->tuner.rangelow, priv->tuner.rangehigh);
 	    return(TVI_CONTROL_TRUE);
@@ -679,7 +679,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	case TVI_CONTROL_TUN_SET_NORM:
 	{
 	    int req_mode = *(int *)arg;
-	    
+
 	    if ((!(priv->tuner.flags & VIDEO_TUNER_NORM)) ||
 		((req_mode == VIDEO_MODE_PAL) && !(priv->tuner.flags & VIDEO_TUNER_PAL)) ||
 		((req_mode == VIDEO_MODE_NTSC) && !(priv->tuner.flags & VIDEO_TUNER_NTSC)) ||
@@ -690,7 +690,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	    }
 
 	    priv->tuner.mode = req_mode;
-	    
+
 	    if (control(priv, TVI_CONTROL_TUN_SET_TUNER, &priv->tuner) != TVI_CONTROL_TRUE)
 		return(TVI_CONTROL_FALSE);
 	    return(TVI_CONTROL_TRUE);
@@ -701,7 +701,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 
 	    return(TVI_CONTROL_TRUE);
 	}
-	
+
 	/* ========== AUDIO controls =========== */
 	case TVI_CONTROL_AUD_GET_FORMAT:
 	{
@@ -726,7 +726,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	case TVI_CONTROL_AUD_SET_SAMPLERATE:
 	{
 	    int tmp = priv->audio_samplerate[priv->audio_id] = *(int *)arg;
-	    
+
 	    if (ioctl(priv->audio_fd, SNDCTL_DSP_SPEED, &tmp) == -1)
 		return(TVI_CONTROL_FALSE);
 	    priv->audio_samplesize[priv->audio_id] =
@@ -745,7 +745,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 		if (priv->channels[i].channel == req_chan)
 		    break;
 	    }
-	    
+
 	    priv->act_channel = i;
 
 	    if (ioctl(priv->video_fd, VIDIOCGCHAN, &priv->channels[i]) == -1)
@@ -761,7 +761,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	    struct video_channel chan;
 	    int req_chan = *(int *)arg;
 	    int i;
-	    
+
 	    if (req_chan >= priv->capability.channels)
 	    {
 		MSG_ERR( "Invalid input requested: %d, valid: 0-%d\n",
@@ -789,7 +789,7 @@ static int control(priv_t *priv, int cmd, any_t*arg)
 	    if (priv->channels[priv->act_channel].flags & VIDEO_VC_TUNER)
 		control(priv, TVI_CONTROL_TUN_GET_TUNER, 0);
 
-	    /* update local channel list */	
+	    /* update local channel list */
 	    control(priv, TVI_CONTROL_SPC_GET_INPUT, &req_chan);
 	    return(TVI_CONTROL_TRUE);
 	}
@@ -823,7 +823,7 @@ static double grab_video_frame(priv_t *priv, char *buffer, int len)
     priv->queue++;
     gettimeofday(&curtime, NULL);
     timestamp=curtime.tv_sec + curtime.tv_usec*.000001;
-    
+
     MSG_DBG3( "mmap: %p + offset: %d => %p\n",
 	priv->mmap, priv->mbuf.offsets[frame],
 	priv->mmap+priv->mbuf.offsets[frame]);
@@ -849,7 +849,7 @@ static double grab_audio_frame(priv_t *priv, char *buffer, int len)
 
     MSG_DBG2( "grab_audio_frame(priv=%p, buffer=%p, len=%d)\n",
 	priv, buffer, len);
-    
+
     while (--max_tries > 0)
     {
 	in_len = read(priv->audio_fd, buffer, len);

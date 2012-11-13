@@ -94,10 +94,10 @@ static void __FASTCALL__ create_lut (eq2_param_t *par)
       v = v*lw + pow(v, g)*gw;
 
       if (v >= 1.0) {
-        par->lut[i] = 255;
+	par->lut[i] = 255;
       }
       else {
-        par->lut[i] = (unsigned char) (256.0 * v);
+	par->lut[i] = (unsigned char) (256.0 * v);
       }
     }
   }
@@ -171,7 +171,7 @@ static void __FASTCALL__ affine_1d_MMX (eq2_param_t *par, unsigned char *dst, un
     for (i = w & 7; i > 0; i--) {
       pel = ((*src++ * contrast) >> 12) + brightness;
       if (pel & 768) {
-        pel = (-pel) >> 31;
+	pel = (-pel) >> 31;
       }
       *dst++ = pel;
     }
@@ -274,7 +274,7 @@ static int __FASTCALL__ put_slice (vf_instance_t *vf, mp_image_t *src)
       dst->stride[i] = eq2->buf_w[i];
 
       eq2->param[i].adjust (&eq2->param[i], dst->planes[i], src->planes[i],
-        eq2->buf_w[i], eq2->buf_h[i], dst->stride[i], src->stride[i]);
+	eq2->buf_w[i], eq2->buf_h[i], dst->stride[i], src->stride[i]);
     }
     else {
       dst->planes[i] = src->planes[i];
@@ -372,40 +372,40 @@ static MPXP_Rc __FASTCALL__ control (vf_instance_t *vf, int request, any_t*data)
       eq = (vf_equalizer_t *) data;
 
       if (strcmp (eq->item, VO_EC_GAMMA) == 0) {
-        set_gamma (vf->priv, exp (log (8.0) * eq->value / 100.0));
-        return MPXP_True;
+	set_gamma (vf->priv, exp (log (8.0) * eq->value / 100.0));
+	return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_CONTRAST) == 0) {
-        set_contrast (vf->priv, (1.0 / 100.0) * (eq->value + 100));
-        return MPXP_True;
+	set_contrast (vf->priv, (1.0 / 100.0) * (eq->value + 100));
+	return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_BRIGHTNESS) == 0) {
-        set_brightness (vf->priv, (1.0 / 100.0) * eq->value);
-        return MPXP_True;
+	set_brightness (vf->priv, (1.0 / 100.0) * eq->value);
+	return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_SATURATION) == 0) {
-        set_saturation (vf->priv, (double) (eq->value + 100) / 100.0);
-        return MPXP_True;
+	set_saturation (vf->priv, (double) (eq->value + 100) / 100.0);
+	return MPXP_True;
       }
       break;
 
     case VFCTRL_GET_EQUALIZER:
       eq = (vf_equalizer_t *) data;
       if (strcmp (eq->item, VO_EC_GAMMA) == 0) {
-        eq->value = (int) (100.0 * log (vf->priv->gamma) / log (8.0));
-        return MPXP_True;
+	eq->value = (int) (100.0 * log (vf->priv->gamma) / log (8.0));
+	return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_CONTRAST) == 0) {
-        eq->value = (int) (100.0 * vf->priv->contrast) - 100;
-        return MPXP_True;
+	eq->value = (int) (100.0 * vf->priv->contrast) - 100;
+	return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_BRIGHTNESS) == 0) {
-        eq->value = (int) (100.0 * vf->priv->brightness);
-        return MPXP_True;
+	eq->value = (int) (100.0 * vf->priv->brightness);
+	return MPXP_True;
       }
       else if (strcmp (eq->item, VO_EC_SATURATION) == 0) {
-        eq->value = (int) (100.0 * vf->priv->saturation) - 100;
-        return MPXP_True;
+	eq->value = (int) (100.0 * vf->priv->saturation) - 100;
+	return MPXP_True;
       }
       break;
   }

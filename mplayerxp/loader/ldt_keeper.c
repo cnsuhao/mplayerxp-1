@@ -82,15 +82,15 @@ int sysi86(int, any_t*);
 #define LDT_ENTRY_SIZE  8
 #pragma pack(4)
 struct modify_ldt_ldt_s {
-        unsigned int  entry_number;
-        unsigned long base_addr;
-        unsigned int  limit;
-        unsigned int  seg_32bit:1;
-        unsigned int  contents:2;
-        unsigned int  read_exec_only:1;
-        unsigned int  limit_in_pages:1;
-        unsigned int  seg_not_present:1;
-        unsigned int  useable:1;
+	unsigned int  entry_number;
+	unsigned long base_addr;
+	unsigned int  limit;
+	unsigned int  seg_32bit:1;
+	unsigned int  contents:2;
+	unsigned int  read_exec_only:1;
+	unsigned int  limit_in_pages:1;
+	unsigned int  seg_not_present:1;
+	unsigned int  useable:1;
 };
 
 #define MODIFY_LDT_CONTENTS_DATA        0
@@ -197,8 +197,8 @@ ldt_fs_t* Setup_LDT_Keeper(void)
 
     ldt_fs->fd = open("/dev/zero", O_RDWR);
     if(ldt_fs->fd<0){
-        perror( "Cannot open /dev/zero for READ+WRITE. Check permissions! error: ");
-        mp_free(ldt_fs);
+	perror( "Cannot open /dev/zero for READ+WRITE. Check permissions! error: ");
+	mp_free(ldt_fs);
 	return NULL;
     }
     fs_seg=
@@ -207,8 +207,8 @@ ldt_fs_t* Setup_LDT_Keeper(void)
     if (ldt_fs->fs_seg == (any_t*)-1)
     {
 	perror("ERROR: Couldn't allocate memory for fs segment");
-        close(ldt_fs->fd);
-        mp_free(ldt_fs);
+	close(ldt_fs->fd);
+	mp_free(ldt_fs);
 	return NULL;
     }
     *(any_t**)((char*)ldt_fs->fs_seg+0x18) = ldt_fs->fs_seg;
@@ -233,25 +233,25 @@ ldt_fs_t* Setup_LDT_Keeper(void)
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     {
-        unsigned long d[2];
+	unsigned long d[2];
 
-        LDT_EntryToBytes( d, &array );
+	LDT_EntryToBytes( d, &array );
 #if defined(__FreeBSD__) && defined(LDT_AUTO_ALLOC)
-        ret = i386_set_ldt(LDT_AUTO_ALLOC, (union descriptor *)d, 1);
-        array.entry_number = ret;
-        fs_ldt = ret;
+	ret = i386_set_ldt(LDT_AUTO_ALLOC, (union descriptor *)d, 1);
+	array.entry_number = ret;
+	fs_ldt = ret;
 #else
-        ret = i386_set_ldt(array.entry_number, (union descriptor *)d, 1);
+	ret = i386_set_ldt(array.entry_number, (union descriptor *)d, 1);
 #endif
-        if (ret < 0)
-        {
-            perror("install_fs");
+	if (ret < 0)
+	{
+	    perror("install_fs");
 	    printf("Couldn't install fs segment, expect segfault\n");
-            printf("Did you reconfigure the kernel with \"options USER_LDT\"?\n");
+	    printf("Did you reconfigure the kernel with \"options USER_LDT\"?\n");
 #ifdef __OpenBSD__
 	    printf("On newer OpenBSD systems did you set machdep.userldt to 1?\n");
 #endif
-        }
+	}
     }
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ || __DragonFly__ */
 

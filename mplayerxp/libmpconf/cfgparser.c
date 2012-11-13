@@ -146,9 +146,9 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
       for(i = config->cs_level - 1 ; i >= 0 ; i--){
 	if(config->config_stack[i] == NULL) continue;
 	for(iter = config->config_stack[i]; iter != NULL && iter->opt != NULL ; iter++) {
-	  if(iter->opt == save->opt && 
-	     ((save->param.as_pointer == NULL || iter->param.as_pointer == NULL) || strcasecmp(save->param.as_pointer,iter->param.as_pointer) == 0) && 
-	     (save->opt_name == NULL || 
+	  if(iter->opt == save->opt &&
+	     ((save->param.as_pointer == NULL || iter->param.as_pointer == NULL) || strcasecmp(save->param.as_pointer,iter->param.as_pointer) == 0) &&
+	     (save->opt_name == NULL ||
 	      (iter->opt_name && strcasecmp(save->opt_name,iter->opt_name)))) break;
 	}
       }
@@ -176,7 +176,7 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
 	if( ((cfg_func_arg_param_t) iter->opt->p)(iter->opt, arg, NULL) < 0)
 	  return -1;
       }else {
-	if (((cfg_func_arg_param_t) save->opt->p)(iter->opt, arg, (char*)iter->param.as_pointer) < 0) 
+	if (((cfg_func_arg_param_t) save->opt->p)(iter->opt, arg, (char*)iter->param.as_pointer) < 0)
 	  return -1;
 
       }
@@ -354,7 +354,7 @@ static int config_read_option(m_config_t *config,const config_t** conf_list,cons
 			/* allow 'aa*' in config.name */
 //			MSG_DBG3( "cmp_option: conf=%s opt='%s'\n",conf[i].name,opt);
 			namelength=strlen(conf[i].name);
-			if ( (conf[i].name[namelength-1]=='*') && 
+			if ( (conf[i].name[namelength-1]=='*') &&
 				    !memcmp(opt, conf[i].name, namelength-1))
 			  goto option_found;
 			if (!strcasecmp(opt, conf[i].name))
@@ -1256,7 +1256,7 @@ int m_config_is_option_set(m_config_t const*config,const char* arg) {
 
   for(l = config->cs_level ; l >= 0 ; l--) {
     save = config->config_stack[l];
-    if(!save) 
+    if(!save)
       continue;
     for(i = 0 ; save[i].opt != NULL ; i++) {
       if(save[i].opt == opt)

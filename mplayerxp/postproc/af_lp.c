@@ -32,7 +32,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     sscanf((char*)arg,"%i", &s->fake_out);
     // Sanity check
     if(s->fake_out < 8000 || s->fake_out > 192000){
-      MSG_ERR("[af_lp] The output sample frequency " 
+      MSG_ERR("[af_lp] The output sample frequency "
 	     "must be between 8kHz and 192kHz. Current value is %i \n",
 	     s->fake_out);
       return MPXP_Error;
@@ -50,7 +50,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)

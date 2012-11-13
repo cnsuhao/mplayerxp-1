@@ -103,10 +103,10 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     /* note that the following max lengths may vary in the future and
        are quite arbitary */
     if (sscanf
-        (p,
-         "%" MSFLENS "[\x21-\xFF] %" MSFLENS "[0-9] %" MSFLENS
-         "[0-9] %2s %3s %" MSFLENS "s", fsdp_buf[0], fsdp_buf[1],
-         fsdp_buf[2], fsdp_buf[3], fsdp_buf[4], fsdp_buf[5]) != 6)
+	(p,
+	 "%" MSFLENS "[\x21-\xFF] %" MSFLENS "[0-9] %" MSFLENS
+	 "[0-9] %2s %3s %" MSFLENS "s", fsdp_buf[0], fsdp_buf[1],
+	 fsdp_buf[2], fsdp_buf[3], fsdp_buf[4], fsdp_buf[5]) != 6)
       return FSDPE_INVALID_OWNER;
     dsc->o_username = mp_strdup (fsdp_buf[0]);
     dsc->o_session_id = mp_strdup (fsdp_buf[1]);
@@ -115,11 +115,11 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     {
       dsc->o_network_type = FSDP_NETWORK_TYPE_INET;
       if (!strncmp (fsdp_buf[4], "IP4", 3))
-        dsc->o_address_type = FSDP_ADDRESS_TYPE_IPV4;
+	dsc->o_address_type = FSDP_ADDRESS_TYPE_IPV4;
       else if (!strncmp (fsdp_buf[4], "IP6", 3))
-        dsc->o_address_type = FSDP_ADDRESS_TYPE_IPV6;
+	dsc->o_address_type = FSDP_ADDRESS_TYPE_IPV6;
       else
-        return FSDPE_INVALID_OWNER;
+	return FSDPE_INVALID_OWNER;
     }
     else
     {
@@ -288,78 +288,78 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     {
       unsigned int _index2 = 0;
       dsc->time_periods[j]->repeats =
-        mp_calloc (h, sizeof (fsdp_repeat_t *));
+	mp_calloc (h, sizeof (fsdp_repeat_t *));
       for (h = 0; h < dsc->time_periods[j]->repeats_count; h++)
       {
-        /*
-          get_repeat_values(p,&(dsc->time_periods[_index].repeats[_index2]));
-          fsdp_error_t get_repeat_values (const char *r, fsdp_repeat_t
-          *repeat);
-          */
-        if (sscanf (p, "r=%10s %10s %" MLFLENS "[^\r\n]",
-                    fsdp_buf[0], fsdp_buf[1], longfsdp_buf) == 3)
-        {
-          fsdp_repeat_t *repeat;
-          dsc->time_periods[j]->repeats[h] =
-            mp_calloc (1, sizeof (fsdp_repeat_t));
-          repeat = dsc->time_periods[j]->repeats[h];
-          /* get interval, duration and list of offsets */
-          result =
-            fsdp_repeat_time_to_uint (fsdp_buf[0],
-                                      &(repeat->interval));
-          if (result == FSDPE_OK)
-          {
-            result =
-              fsdp_repeat_time_to_uint (fsdp_buf[1],
-                                        &(repeat->duration));
-            if (result == FSDPE_OK)
-            {
-              unsigned int k = 1;
-              const char *i = longfsdp_buf;
-              while (NULL != (i = strchr (i, ' ')))
-              {
-                k++;
-                if (NULL != i)
-                  i++;
-              }
-              repeat->offsets_count = k;
-              repeat->offsets = mp_calloc (k, sizeof (time_t));
-              i = longfsdp_buf;
-              for (k = 0;
-                   (k < repeat->offsets_count)
-                     && (result == FSDPE_OK); k++)
-              {
-                result =
-                  fsdp_repeat_time_to_uint (i,
-                                            &(repeat->
-                                              offsets[k]));
-                i = strchr (i, ' ');
-                if (NULL != i)
-                  i++;
-              }
-              if (k < repeat->offsets_count)
-              {
-                /* there where invalid repeat offsets */
-                dsc->time_periods[j]->repeats_count = k;
-                return FSDPE_INVALID_REPEAT;
-              }
-            }
-          }
-          if (result != FSDPE_OK)
-          {
-            /* not all repeats have been succesfully parsed */
-            dsc->time_periods[j]->repeats_count = h;
-            return FSDPE_INVALID_REPEAT;
-          }
-          NEXT_LINE (p);
-        }
-        else
-        {
-          /* not all repeats have been succesfully parsed */
-          dsc->time_periods[j]->repeats_count = h;
-          return FSDPE_INVALID_REPEAT;
-        }
-        _index2++;
+	/*
+	  get_repeat_values(p,&(dsc->time_periods[_index].repeats[_index2]));
+	  fsdp_error_t get_repeat_values (const char *r, fsdp_repeat_t
+	  *repeat);
+	  */
+	if (sscanf (p, "r=%10s %10s %" MLFLENS "[^\r\n]",
+		    fsdp_buf[0], fsdp_buf[1], longfsdp_buf) == 3)
+	{
+	  fsdp_repeat_t *repeat;
+	  dsc->time_periods[j]->repeats[h] =
+	    mp_calloc (1, sizeof (fsdp_repeat_t));
+	  repeat = dsc->time_periods[j]->repeats[h];
+	  /* get interval, duration and list of offsets */
+	  result =
+	    fsdp_repeat_time_to_uint (fsdp_buf[0],
+				      &(repeat->interval));
+	  if (result == FSDPE_OK)
+	  {
+	    result =
+	      fsdp_repeat_time_to_uint (fsdp_buf[1],
+					&(repeat->duration));
+	    if (result == FSDPE_OK)
+	    {
+	      unsigned int k = 1;
+	      const char *i = longfsdp_buf;
+	      while (NULL != (i = strchr (i, ' ')))
+	      {
+		k++;
+		if (NULL != i)
+		  i++;
+	      }
+	      repeat->offsets_count = k;
+	      repeat->offsets = mp_calloc (k, sizeof (time_t));
+	      i = longfsdp_buf;
+	      for (k = 0;
+		   (k < repeat->offsets_count)
+		     && (result == FSDPE_OK); k++)
+	      {
+		result =
+		  fsdp_repeat_time_to_uint (i,
+					    &(repeat->
+					      offsets[k]));
+		i = strchr (i, ' ');
+		if (NULL != i)
+		  i++;
+	      }
+	      if (k < repeat->offsets_count)
+	      {
+		/* there where invalid repeat offsets */
+		dsc->time_periods[j]->repeats_count = k;
+		return FSDPE_INVALID_REPEAT;
+	      }
+	    }
+	  }
+	  if (result != FSDPE_OK)
+	  {
+	    /* not all repeats have been succesfully parsed */
+	    dsc->time_periods[j]->repeats_count = h;
+	    return FSDPE_INVALID_REPEAT;
+	  }
+	  NEXT_LINE (p);
+	}
+	else
+	{
+	  /* not all repeats have been succesfully parsed */
+	  dsc->time_periods[j]->repeats_count = h;
+	  return FSDPE_INVALID_REPEAT;
+	}
+	_index2++;
       }
     }
   }
@@ -381,7 +381,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   }
 
   /* `k=' line (encryption key) [optional] */
-  /* k=<method> 
+  /* k=<method>
      k=<method>:<encryption key> */
   result = fsdp_parse_k (&p, &(dsc->k_encryption_method),
 			 &(dsc->k_encryption_content));
@@ -397,107 +397,107 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     /* The "9" length specifier of the first string is subject to
        changes */
     if (sscanf
-        (p, "a=%9[^:\r\n]:%" MSFLENS "[^\r\n]", fsdp_buf[0],
-         fsdp_buf[1]) == 2)
+	(p, "a=%9[^:\r\n]:%" MSFLENS "[^\r\n]", fsdp_buf[0],
+	 fsdp_buf[1]) == 2)
     {
       /* session-level value attributes */
       if (!strncmp (fsdp_buf[0], "cat", 3))
-        dsc->a_category = mp_strdup (fsdp_buf[1]);
+	dsc->a_category = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "keywds", 6))
-        dsc->a_keywords = mp_strdup (fsdp_buf[1]);
+	dsc->a_keywords = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "tool", 4))
-        dsc->a_keywords = mp_strdup (fsdp_buf[1]);
+	dsc->a_keywords = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "rtpmap", 6))
-        fsdp_parse_rtpmap (&(dsc->a_rtpmaps),
-                           &(dsc->a_rtpmaps_count), fsdp_buf[1]);
+	fsdp_parse_rtpmap (&(dsc->a_rtpmaps),
+			   &(dsc->a_rtpmaps_count), fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "type", 4))
       {
-        if (!strncmp (fsdp_buf[1], "broadcast", 9))
-          dsc->a_type = FSDP_SESSION_TYPE_BROADCAST;
-        else if (!strncmp (fsdp_buf[1], "meeting", 7))
-          dsc->a_type = FSDP_SESSION_TYPE_MEETING;
-        else if (!strncmp (fsdp_buf[1], "moderated", 9))
-          dsc->a_type = FSDP_SESSION_TYPE_MODERATED;
-        else if (!strncmp (fsdp_buf[1], "test", 4))
-          dsc->a_type = FSDP_SESSION_TYPE_TEST;
-        else if (!strncmp (fsdp_buf[1], "H332", 4))
-          dsc->a_type = FSDP_SESSION_TYPE_H332;
-        else
-          return FSDPE_INVALID_SESSION_TYPE;
+	if (!strncmp (fsdp_buf[1], "broadcast", 9))
+	  dsc->a_type = FSDP_SESSION_TYPE_BROADCAST;
+	else if (!strncmp (fsdp_buf[1], "meeting", 7))
+	  dsc->a_type = FSDP_SESSION_TYPE_MEETING;
+	else if (!strncmp (fsdp_buf[1], "moderated", 9))
+	  dsc->a_type = FSDP_SESSION_TYPE_MODERATED;
+	else if (!strncmp (fsdp_buf[1], "test", 4))
+	  dsc->a_type = FSDP_SESSION_TYPE_TEST;
+	else if (!strncmp (fsdp_buf[1], "H332", 4))
+	  dsc->a_type = FSDP_SESSION_TYPE_H332;
+	else
+	  return FSDPE_INVALID_SESSION_TYPE;
       }
       else if (!strncmp (fsdp_buf[0], "charset", 7))
-        dsc->a_charset = mp_strdup (fsdp_buf[1]);
+	dsc->a_charset = mp_strdup (fsdp_buf[1]);
       else if (!strncmp (fsdp_buf[0], "sdplang", 7))
       {
-        if (NULL == dsc->a_sdplangs)
-        {
-          dsc->a_sdplangs_count = 0;
-          dsc->a_sdplangs =
-            mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
-        }
-        if (dsc->a_sdplangs_count < SDPLANGS_MAX_COUNT)
-        {
-          dsc->a_sdplangs[dsc->a_sdplangs_count] =
-            mp_strdup (fsdp_buf[1]);
-          dsc->a_sdplangs_count++;
-        }
+	if (NULL == dsc->a_sdplangs)
+	{
+	  dsc->a_sdplangs_count = 0;
+	  dsc->a_sdplangs =
+	    mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	}
+	if (dsc->a_sdplangs_count < SDPLANGS_MAX_COUNT)
+	{
+	  dsc->a_sdplangs[dsc->a_sdplangs_count] =
+	    mp_strdup (fsdp_buf[1]);
+	  dsc->a_sdplangs_count++;
+	}
       }
       else if (!strncmp (fsdp_buf[0], "lang", 4))
       {
-        if (NULL == dsc->a_langs)
-        {
-          dsc->a_langs_count = 0;
-          dsc->a_langs = mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
-        }
-        if (dsc->a_langs_count < SDPLANGS_MAX_COUNT)
-        {
-          dsc->a_langs[dsc->a_langs_count] = mp_strdup (fsdp_buf[1]);
-          dsc->a_langs_count++;
-        }
+	if (NULL == dsc->a_langs)
+	{
+	  dsc->a_langs_count = 0;
+	  dsc->a_langs = mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	}
+	if (dsc->a_langs_count < SDPLANGS_MAX_COUNT)
+	{
+	  dsc->a_langs[dsc->a_langs_count] = mp_strdup (fsdp_buf[1]);
+	  dsc->a_langs_count++;
+	}
       }
       else if (!strncmp (fsdp_buf[0], "control", 7))
       {
-        if (NULL == dsc->a_controls)
-        {
-          dsc->a_controls_count = 0;
-          dsc->a_controls =
-            mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
-        }
-        if (dsc->a_controls_count < SDPCONTROLS_MAX_COUNT)
-        {
-          dsc->a_controls[dsc->a_controls_count] =
-            mp_strdup (fsdp_buf[1]);
-          dsc->a_controls_count++;
-        }
+	if (NULL == dsc->a_controls)
+	{
+	  dsc->a_controls_count = 0;
+	  dsc->a_controls =
+	    mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
+	}
+	if (dsc->a_controls_count < SDPCONTROLS_MAX_COUNT)
+	{
+	  dsc->a_controls[dsc->a_controls_count] =
+	    mp_strdup (fsdp_buf[1]);
+	  dsc->a_controls_count++;
+	}
       }
       else if (!strncmp (fsdp_buf[0], "range", 5))
       {
-        if (dsc->a_range)
-          mp_free (dsc->a_range);
-        dsc->a_range = mp_strdup (fsdp_buf[1]);
+	if (dsc->a_range)
+	  mp_free (dsc->a_range);
+	dsc->a_range = mp_strdup (fsdp_buf[1]);
       }
       else
       {
-        /* ignore unknown attributes, but provide access to them */
-        *longfsdp_buf = '\0';
-        strncat (longfsdp_buf, fsdp_buf[0], MAXLONGFIELDLEN-1);
-        strncat (longfsdp_buf, ":", MAXLONGFIELDLEN-strlen(longfsdp_buf)-1);
-        strncat (longfsdp_buf, fsdp_buf[1], MAXLONGFIELDLEN-strlen(longfsdp_buf)-1);
-        if (NULL == dsc->unidentified_attributes)
-        {
-          dsc->unidentified_attributes_count = 0;
-          dsc->unidentified_attributes =
-            mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-                    sizeof (char *));
-        }
-        if (dsc->unidentified_attributes_count <
-            UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
-        {
-          dsc->unidentified_attributes
-            [dsc->unidentified_attributes_count] =
-            mp_strdup (longfsdp_buf);
-          dsc->unidentified_attributes_count++;
-        }
+	/* ignore unknown attributes, but provide access to them */
+	*longfsdp_buf = '\0';
+	strncat (longfsdp_buf, fsdp_buf[0], MAXLONGFIELDLEN-1);
+	strncat (longfsdp_buf, ":", MAXLONGFIELDLEN-strlen(longfsdp_buf)-1);
+	strncat (longfsdp_buf, fsdp_buf[1], MAXLONGFIELDLEN-strlen(longfsdp_buf)-1);
+	if (NULL == dsc->unidentified_attributes)
+	{
+	  dsc->unidentified_attributes_count = 0;
+	  dsc->unidentified_attributes =
+	    mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+		    sizeof (char *));
+	}
+	if (dsc->unidentified_attributes_count <
+	    UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
+	{
+	  dsc->unidentified_attributes
+	    [dsc->unidentified_attributes_count] =
+	    mp_strdup (longfsdp_buf);
+	  dsc->unidentified_attributes_count++;
+	}
       }
       NEXT_LINE (p);
     }
@@ -505,33 +505,33 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     {
       /* session-level property attributes */
       if (!strncmp (fsdp_buf[0], "recvonly", 8))
-        dsc->a_sendrecv_mode = FSDP_SENDRECV_RECVONLY;
+	dsc->a_sendrecv_mode = FSDP_SENDRECV_RECVONLY;
       else if (!strncmp (fsdp_buf[0], "sendonly", 8))
-        dsc->a_sendrecv_mode = FSDP_SENDRECV_SENDONLY;
+	dsc->a_sendrecv_mode = FSDP_SENDRECV_SENDONLY;
       else if (!strncmp (fsdp_buf[0], "inactive", 8))
-        dsc->a_sendrecv_mode = FSDP_SENDRECV_INACTIVE;
+	dsc->a_sendrecv_mode = FSDP_SENDRECV_INACTIVE;
       else if (!strncmp (fsdp_buf[0], "sendrecv", 8))
-        dsc->a_sendrecv_mode = FSDP_SENDRECV_SENDRECV;
+	dsc->a_sendrecv_mode = FSDP_SENDRECV_SENDRECV;
       else
       {
-        /* ignore unknown attributes, but provide access to them */
-        *longfsdp_buf = '\0';
-        strncat (longfsdp_buf, fsdp_buf[0], MAXLONGFIELDLEN-1);
-        if (NULL == dsc->unidentified_attributes)
-        {
-          dsc->unidentified_attributes_count = 0;
-          dsc->unidentified_attributes =
-            mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-                    sizeof (char *));
-        }
-        if (dsc->unidentified_attributes_count <
-            UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
-        {
-          dsc->unidentified_attributes
-            [dsc->unidentified_attributes_count] =
-            mp_strdup (longfsdp_buf);
-          dsc->unidentified_attributes_count++;
-        }
+	/* ignore unknown attributes, but provide access to them */
+	*longfsdp_buf = '\0';
+	strncat (longfsdp_buf, fsdp_buf[0], MAXLONGFIELDLEN-1);
+	if (NULL == dsc->unidentified_attributes)
+	{
+	  dsc->unidentified_attributes_count = 0;
+	  dsc->unidentified_attributes =
+	    mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+		    sizeof (char *));
+	}
+	if (dsc->unidentified_attributes_count <
+	    UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
+	{
+	  dsc->unidentified_attributes
+	    [dsc->unidentified_attributes_count] =
+	    mp_strdup (longfsdp_buf);
+	  dsc->unidentified_attributes_count++;
+	}
       }
       NEXT_LINE (p);
     }
@@ -553,15 +553,15 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     {
       if (c == 'i' || c == 'c' || c == 'b' || c == 'k' || c == 'a')
       {
-        NEXT_LINE (p2);
+	NEXT_LINE (p2);
       }
       else if (c == 'm')
       {
-        break;
+	break;
       }
       else
       {
-        return FSDPE_INVALID_LINE;
+	return FSDPE_INVALID_LINE;
       }
     }
   }
@@ -582,314 +582,314 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       /* m=<media>  <port>  <transport> <fmt list> */
       /* The max. string lengths are subject to change */
       if (sscanf (p, "m=%11s %8s %7s %" MLFLENS "[^\r\n]",
-                  fsdp_buf[0], fsdp_buf[1], fsdp_buf[2],
-                  longfsdp_buf) != 4)
+		  fsdp_buf[0], fsdp_buf[1], fsdp_buf[2],
+		  longfsdp_buf) != 4)
       {
-        return FSDPE_INVALID_MEDIA;
+	return FSDPE_INVALID_MEDIA;
       }
       else
       {
-        dsc->media_announcements[j] =
-          mp_calloc (1, sizeof (fsdp_media_announcement_t));
-        media = dsc->media_announcements[j];
-        if (!strncmp (fsdp_buf[0], "audio", 5))
-          media->media_type = FSDP_MEDIA_AUDIO;
-        else if (!strncmp (fsdp_buf[0], "video", 5))
-          media->media_type = FSDP_MEDIA_VIDEO;
-        else if (!strncmp (fsdp_buf[0], "application", 11))
-          media->media_type = FSDP_MEDIA_APPLICATION;
-        else if (!strncmp (fsdp_buf[0], "data", 4))
-          media->media_type = FSDP_MEDIA_DATA;
-        else if (!strncmp (fsdp_buf[0], "control", 7))
-          media->media_type = FSDP_MEDIA_CONTROL;
-        else
-          return FSDPE_UNKNOWN_MEDIA_TYPE;
-        {			/* try to get port specification as port/number */
-          char *slash;
-          if ((slash = strchr (fsdp_buf[1], '/')))
-          {
-            *slash = '\0';
-            slash++;
-            media->port = strtol (fsdp_buf[1], NULL, 10);
-            media->port_count = strtol (slash, NULL, 10);
-          }
-          else
-          {
-            media->port = strtol (fsdp_buf[1], NULL, 10);
-            media->port_count = 0;
-          }
-        }
-        if (!strncmp (fsdp_buf[2], "RTP/AVP", 7))
-          media->transport = FSDP_TP_RTP_AVP;
-        else if (!strncmp (fsdp_buf[2], "udp", 3))
-          media->transport = FSDP_TP_UDP;
-        else if (!strncmp (fsdp_buf[2], "TCP", 3))
-          media->transport = FSDP_TP_TCP;
-        else if (!strncmp (fsdp_buf[2], "UDPTL", 5))
-          media->transport = FSDP_TP_UDPTL;
-        else if (!strncmp (fsdp_buf[2], "vat", 3))
-          media->transport = FSDP_TP_VAT;
-        else if (!strncmp (fsdp_buf[2], "rtp", 3))
-          media->transport = FSDP_TP_OLD_RTP;
-        else
-          return FSDPE_UNKNOWN_MEDIA_TRANSPORT;
-        {
-          unsigned int k = 0;
-          char *s = longfsdp_buf;
-          while (NULL != (s = strchr (s, ' ')))
-          {
-            k++;
-            if (NULL != s)
-              s++;
-          }
-          k++;		/* when there is no space left, count the last format */
-          media->formats_count = k;
-          media->formats = mp_calloc (k, sizeof (char *));
-          s = longfsdp_buf;
-          for (k = 0; k < media->formats_count; k++)
-          {
-            char *space = strchr (s, ' ');
-            if (NULL != space)
-              *space = '\0';
-            media->formats[k] = mp_strdup (s);
-            s = space + 1;
-          }
-        }
-        NEXT_LINE (p);
+	dsc->media_announcements[j] =
+	  mp_calloc (1, sizeof (fsdp_media_announcement_t));
+	media = dsc->media_announcements[j];
+	if (!strncmp (fsdp_buf[0], "audio", 5))
+	  media->media_type = FSDP_MEDIA_AUDIO;
+	else if (!strncmp (fsdp_buf[0], "video", 5))
+	  media->media_type = FSDP_MEDIA_VIDEO;
+	else if (!strncmp (fsdp_buf[0], "application", 11))
+	  media->media_type = FSDP_MEDIA_APPLICATION;
+	else if (!strncmp (fsdp_buf[0], "data", 4))
+	  media->media_type = FSDP_MEDIA_DATA;
+	else if (!strncmp (fsdp_buf[0], "control", 7))
+	  media->media_type = FSDP_MEDIA_CONTROL;
+	else
+	  return FSDPE_UNKNOWN_MEDIA_TYPE;
+	{			/* try to get port specification as port/number */
+	  char *slash;
+	  if ((slash = strchr (fsdp_buf[1], '/')))
+	  {
+	    *slash = '\0';
+	    slash++;
+	    media->port = strtol (fsdp_buf[1], NULL, 10);
+	    media->port_count = strtol (slash, NULL, 10);
+	  }
+	  else
+	  {
+	    media->port = strtol (fsdp_buf[1], NULL, 10);
+	    media->port_count = 0;
+	  }
+	}
+	if (!strncmp (fsdp_buf[2], "RTP/AVP", 7))
+	  media->transport = FSDP_TP_RTP_AVP;
+	else if (!strncmp (fsdp_buf[2], "udp", 3))
+	  media->transport = FSDP_TP_UDP;
+	else if (!strncmp (fsdp_buf[2], "TCP", 3))
+	  media->transport = FSDP_TP_TCP;
+	else if (!strncmp (fsdp_buf[2], "UDPTL", 5))
+	  media->transport = FSDP_TP_UDPTL;
+	else if (!strncmp (fsdp_buf[2], "vat", 3))
+	  media->transport = FSDP_TP_VAT;
+	else if (!strncmp (fsdp_buf[2], "rtp", 3))
+	  media->transport = FSDP_TP_OLD_RTP;
+	else
+	  return FSDPE_UNKNOWN_MEDIA_TRANSPORT;
+	{
+	  unsigned int k = 0;
+	  char *s = longfsdp_buf;
+	  while (NULL != (s = strchr (s, ' ')))
+	  {
+	    k++;
+	    if (NULL != s)
+	      s++;
+	  }
+	  k++;		/* when there is no space left, count the last format */
+	  media->formats_count = k;
+	  media->formats = mp_calloc (k, sizeof (char *));
+	  s = longfsdp_buf;
+	  for (k = 0; k < media->formats_count; k++)
+	  {
+	    char *space = strchr (s, ' ');
+	    if (NULL != space)
+	      *space = '\0';
+	    media->formats[k] = mp_strdup (s);
+	    s = space + 1;
+	  }
+	}
+	NEXT_LINE (p);
       }
 
       /* `i=' line (media title) [optional] */
       /* i=<media title> */
       if (!strncmp (p, "i=", 2)
-          && sscanf (p, "i=%" MLFLENS "[^\r\n]", longfsdp_buf))
+	  && sscanf (p, "i=%" MLFLENS "[^\r\n]", longfsdp_buf))
       {
-        media->i_title = mp_strdup (longfsdp_buf);
-        NEXT_LINE (p);
+	media->i_title = mp_strdup (longfsdp_buf);
+	NEXT_LINE (p);
       }
       else
       {
-        /* (optional) information absent */
+	/* (optional) information absent */
       }
 
       /* `c=' line (connection information - overrides session-level
-         line) [optional if provided at session-level] */
+	 line) [optional if provided at session-level] */
       /* c=<network type> <address type> <connection address> */
       result = fsdp_parse_c (&p, &(media->c_network_type),
-                             &(media->c_address_type),
-                             &(media->c_address));
+			     &(media->c_address_type),
+			     &(media->c_address));
       if (result != FSDPE_OK)
-        return result;
+	return result;
 
       /* `b=' lines (bandwidth information) [optional] */
       /* b=<modifier>:<bandwidth-value> */
       result = fsdp_parse_b (&p, &(media->bw_modifiers),
-                             &(media->bw_modifiers_count));
+			     &(media->bw_modifiers_count));
       if (FSDPE_OK != result)
-        return result;
+	return result;
 
       /* `k=' line (encryption key) [optional] */
-      /* k=<method> 
-         k=<method>:<encryption key> */
+      /* k=<method>
+	 k=<method>:<encryption key> */
       result = fsdp_parse_k (&p, &(media->k_encryption_method),
-                             &(media->k_encryption_content));
+			     &(media->k_encryption_content));
       if (result != FSDPE_OK)
-        return result;
+	return result;
 
       /* B.1) Attributes */
 
       /* `a=' lines (zero or more media attribute lines) [optional] */
       /* a=<attribute>
-         a=<attribute>:<value> */
+	 a=<attribute>:<value> */
       while (!strncmp (p, "a=", 2))
       {
-        if (sscanf
-            (p, "a=%9[^:\r\n]:%" MLFLENS "[^\r\n]", fsdp_buf[0],
-             longfsdp_buf) == 2)
-        {
-          /* media-level value attributes */
-          if (!strncmp (fsdp_buf[0], "ptime", 5))
-            media->a_ptime = strtoul (longfsdp_buf, NULL, 10);
-          else if (!strncmp (fsdp_buf[0], "maxptime", 8))
-            media->a_maxptime = strtoul (longfsdp_buf, NULL, 10);
-          else if (!strncmp (fsdp_buf[0], "rtpmap", 6))
-            fsdp_parse_rtpmap (&(media->a_rtpmaps),
-                               &(media->a_rtpmaps_count),
-                               longfsdp_buf);
-          else if (!strncmp (fsdp_buf[0], "orient", 6))
-          {
-            if (!strncmp (longfsdp_buf, "portrait", 8))
-              media->a_orient = FSDP_ORIENT_PORTRAIT;
-            else if (!strncmp (longfsdp_buf, "landscape", 9))
-              media->a_orient = FSDP_ORIENT_LANDSCAPE;
-            else if (!strncmp (longfsdp_buf, "seascape", 9))
-              media->a_orient = FSDP_ORIENT_SEASCAPE;
-          }
-          else if (!strncmp (fsdp_buf[0], "sdplang", 7))
-          {
-            if (NULL == dsc->a_sdplangs)
-            {
-              media->a_sdplangs_count = 0;
-              media->a_sdplangs =
-                mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
-            }
-            if (media->a_sdplangs_count < SDPLANGS_MAX_COUNT)
-            {
-              media->a_sdplangs[dsc->a_sdplangs_count] =
-                mp_strdup (longfsdp_buf);
-              media->a_sdplangs_count++;
-            }
-          }
-          else if (!strncmp (fsdp_buf[0], "lang", 4))
-          {
-            if (NULL == dsc->a_langs)
-            {
-              media->a_langs_count = 0;
-              media->a_langs =
-                mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
-            }
-            if (media->a_langs_count < SDPLANGS_MAX_COUNT)
-            {
-              media->a_langs[dsc->a_langs_count] =
-                mp_strdup (longfsdp_buf);
-              media->a_langs_count++;
-            }
-          }
-          else if (!strncmp (fsdp_buf[0], "control", 7))
-          {
-            if (NULL == media->a_controls)
-            {
-              media->a_controls_count = 0;
-              media->a_controls =
-                mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
-            }
-            if (media->a_controls_count < SDPCONTROLS_MAX_COUNT)
-            {
-              media->a_controls[media->a_controls_count] =
-                mp_strdup (longfsdp_buf);
-              media->a_controls_count++;
-            }
-          }
-          else if (!strncmp (fsdp_buf[0], "range", 5))
-          {
-            if (media->a_range)
-              mp_free (media->a_range);
-            media->a_range = mp_strdup (fsdp_buf[1]);
-          }
-          else if (!strncmp (fsdp_buf[0], "framerate", 9))
-            media->a_framerate = strtod (longfsdp_buf, NULL);
-          else if (!strncmp (fsdp_buf[0], "fmtp", 4))
-          {
-            if (NULL == media->a_fmtps)
-            {
-              media->a_fmtps_count = 0;
-              media->a_fmtps =
-                mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
-            }
-            if (media->a_fmtps_count < SDPLANGS_MAX_COUNT)
-            {
-              media->a_fmtps[media->a_fmtps_count] =
-                mp_strdup (longfsdp_buf);
-              media->a_fmtps_count++;
-            }
-          }
-          else if (!strncmp (fsdp_buf[0], "rtcp", 4))
-          {
-            int opts = 0;
-            /* rtcp attribute: a=rtcp:<port> <nettype> <addrtype> <address> */
-            opts =
-              sscanf (longfsdp_buf, "%lu %2s %3s %" MSFLENS "s",
-                      &wuint[0], fsdp_buf[0], fsdp_buf[1],
-                      fsdp_buf[2]);
-            if (opts >= 1)
-            {
-              media->a_rtcp_port = wuint[0];
-              if (opts >= 2)
-              {
-                if (!strncmp (fsdp_buf[0], "IN", 2))
-                {
-                  media->a_rtcp_network_type =
-                    FSDP_NETWORK_TYPE_INET;
-                }	/* else
-                           ; TODO: define error code? */
-                if (opts >= 3)
-                {
-                  if (!strncmp (fsdp_buf[1], "IP4", 3))
-                    media->a_rtcp_address_type =
-                      FSDP_ADDRESS_TYPE_IPV4;
-                  else if (!strncmp (fsdp_buf[1], "IP6", 3))
-                    media->a_rtcp_address_type =
-                      FSDP_ADDRESS_TYPE_IPV6;
-                  else
-                    return FSDPE_INVALID_CONNECTION_NETTYPE;
-                  /*add specific code? */
-                  if (opts >= 4)
-                    media->a_rtcp_address =
-                      mp_strdup (fsdp_buf[2]);
-                }
-              }
-            }
-          }
-          else
-          {
-            /* ignore unknown attributes, but provide access to them */
-            *fsdp_buf[1] = '\0';
-            strncat (fsdp_buf[1], fsdp_buf[0], MAXSHORTFIELDLEN-1);
-            strncat (fsdp_buf[1], ":", MAXSHORTFIELDLEN-strlen(fsdp_buf[1])-1);
-            strncat (fsdp_buf[1], longfsdp_buf, MAXSHORTFIELDLEN-strlen(fsdp_buf[1])-1);
-            if (NULL == media->unidentified_attributes)
-            {
-              media->unidentified_attributes_count = 0;
-              media->unidentified_attributes =
-                mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-                        sizeof (char *));
-            }
-            if (media->unidentified_attributes_count <
-                UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
-            {
-              media->unidentified_attributes
-                [media->unidentified_attributes_count] =
-                mp_strdup (fsdp_buf[1]);
-              media->unidentified_attributes_count++;
-            }
-          }
-          NEXT_LINE (p);
-        }
-        else if (sscanf (p, "a=%8s", fsdp_buf[0]) == 1)
-        {
-          /* media-level property attributes */
-          if (!strncmp (fsdp_buf[0], "recvonly", 8))
-            media->a_sendrecv_mode = FSDP_SENDRECV_RECVONLY;
-          else if (!strncmp (fsdp_buf[0], "sendonly", 8))
-            media->a_sendrecv_mode = FSDP_SENDRECV_SENDONLY;
-          else if (!strncmp (fsdp_buf[0], "inactive", 8))
-            media->a_sendrecv_mode = FSDP_SENDRECV_INACTIVE;
-          else if (!strncmp (fsdp_buf[0], "sendrecv", 8))
-            media->a_sendrecv_mode = FSDP_SENDRECV_SENDRECV;
-          else
-          {
-            /* ignore unknown attributes, but provide access to them */
-            *longfsdp_buf = '\0';
-            strncat (longfsdp_buf, fsdp_buf[0], MAXLONGFIELDLEN-1);
-            if (NULL == media->unidentified_attributes)
-            {
-              media->unidentified_attributes_count = 0;
-              media->unidentified_attributes =
-                mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-                        sizeof (char *));
-            }
-            if (media->unidentified_attributes_count <
-                UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
-            {
-              media->unidentified_attributes
-                [media->unidentified_attributes_count] =
-                mp_strdup (longfsdp_buf);
-              media->unidentified_attributes_count++;
-            }
-          }
-          NEXT_LINE (p);
-        }
-        else
-          return FSDPE_INVALID_ATTRIBUTE;
+	if (sscanf
+	    (p, "a=%9[^:\r\n]:%" MLFLENS "[^\r\n]", fsdp_buf[0],
+	     longfsdp_buf) == 2)
+	{
+	  /* media-level value attributes */
+	  if (!strncmp (fsdp_buf[0], "ptime", 5))
+	    media->a_ptime = strtoul (longfsdp_buf, NULL, 10);
+	  else if (!strncmp (fsdp_buf[0], "maxptime", 8))
+	    media->a_maxptime = strtoul (longfsdp_buf, NULL, 10);
+	  else if (!strncmp (fsdp_buf[0], "rtpmap", 6))
+	    fsdp_parse_rtpmap (&(media->a_rtpmaps),
+			       &(media->a_rtpmaps_count),
+			       longfsdp_buf);
+	  else if (!strncmp (fsdp_buf[0], "orient", 6))
+	  {
+	    if (!strncmp (longfsdp_buf, "portrait", 8))
+	      media->a_orient = FSDP_ORIENT_PORTRAIT;
+	    else if (!strncmp (longfsdp_buf, "landscape", 9))
+	      media->a_orient = FSDP_ORIENT_LANDSCAPE;
+	    else if (!strncmp (longfsdp_buf, "seascape", 9))
+	      media->a_orient = FSDP_ORIENT_SEASCAPE;
+	  }
+	  else if (!strncmp (fsdp_buf[0], "sdplang", 7))
+	  {
+	    if (NULL == dsc->a_sdplangs)
+	    {
+	      media->a_sdplangs_count = 0;
+	      media->a_sdplangs =
+		mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	    }
+	    if (media->a_sdplangs_count < SDPLANGS_MAX_COUNT)
+	    {
+	      media->a_sdplangs[dsc->a_sdplangs_count] =
+		mp_strdup (longfsdp_buf);
+	      media->a_sdplangs_count++;
+	    }
+	  }
+	  else if (!strncmp (fsdp_buf[0], "lang", 4))
+	  {
+	    if (NULL == dsc->a_langs)
+	    {
+	      media->a_langs_count = 0;
+	      media->a_langs =
+		mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	    }
+	    if (media->a_langs_count < SDPLANGS_MAX_COUNT)
+	    {
+	      media->a_langs[dsc->a_langs_count] =
+		mp_strdup (longfsdp_buf);
+	      media->a_langs_count++;
+	    }
+	  }
+	  else if (!strncmp (fsdp_buf[0], "control", 7))
+	  {
+	    if (NULL == media->a_controls)
+	    {
+	      media->a_controls_count = 0;
+	      media->a_controls =
+		mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
+	    }
+	    if (media->a_controls_count < SDPCONTROLS_MAX_COUNT)
+	    {
+	      media->a_controls[media->a_controls_count] =
+		mp_strdup (longfsdp_buf);
+	      media->a_controls_count++;
+	    }
+	  }
+	  else if (!strncmp (fsdp_buf[0], "range", 5))
+	  {
+	    if (media->a_range)
+	      mp_free (media->a_range);
+	    media->a_range = mp_strdup (fsdp_buf[1]);
+	  }
+	  else if (!strncmp (fsdp_buf[0], "framerate", 9))
+	    media->a_framerate = strtod (longfsdp_buf, NULL);
+	  else if (!strncmp (fsdp_buf[0], "fmtp", 4))
+	  {
+	    if (NULL == media->a_fmtps)
+	    {
+	      media->a_fmtps_count = 0;
+	      media->a_fmtps =
+		mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	    }
+	    if (media->a_fmtps_count < SDPLANGS_MAX_COUNT)
+	    {
+	      media->a_fmtps[media->a_fmtps_count] =
+		mp_strdup (longfsdp_buf);
+	      media->a_fmtps_count++;
+	    }
+	  }
+	  else if (!strncmp (fsdp_buf[0], "rtcp", 4))
+	  {
+	    int opts = 0;
+	    /* rtcp attribute: a=rtcp:<port> <nettype> <addrtype> <address> */
+	    opts =
+	      sscanf (longfsdp_buf, "%lu %2s %3s %" MSFLENS "s",
+		      &wuint[0], fsdp_buf[0], fsdp_buf[1],
+		      fsdp_buf[2]);
+	    if (opts >= 1)
+	    {
+	      media->a_rtcp_port = wuint[0];
+	      if (opts >= 2)
+	      {
+		if (!strncmp (fsdp_buf[0], "IN", 2))
+		{
+		  media->a_rtcp_network_type =
+		    FSDP_NETWORK_TYPE_INET;
+		}	/* else
+			   ; TODO: define error code? */
+		if (opts >= 3)
+		{
+		  if (!strncmp (fsdp_buf[1], "IP4", 3))
+		    media->a_rtcp_address_type =
+		      FSDP_ADDRESS_TYPE_IPV4;
+		  else if (!strncmp (fsdp_buf[1], "IP6", 3))
+		    media->a_rtcp_address_type =
+		      FSDP_ADDRESS_TYPE_IPV6;
+		  else
+		    return FSDPE_INVALID_CONNECTION_NETTYPE;
+		  /*add specific code? */
+		  if (opts >= 4)
+		    media->a_rtcp_address =
+		      mp_strdup (fsdp_buf[2]);
+		}
+	      }
+	    }
+	  }
+	  else
+	  {
+	    /* ignore unknown attributes, but provide access to them */
+	    *fsdp_buf[1] = '\0';
+	    strncat (fsdp_buf[1], fsdp_buf[0], MAXSHORTFIELDLEN-1);
+	    strncat (fsdp_buf[1], ":", MAXSHORTFIELDLEN-strlen(fsdp_buf[1])-1);
+	    strncat (fsdp_buf[1], longfsdp_buf, MAXSHORTFIELDLEN-strlen(fsdp_buf[1])-1);
+	    if (NULL == media->unidentified_attributes)
+	    {
+	      media->unidentified_attributes_count = 0;
+	      media->unidentified_attributes =
+		mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+			sizeof (char *));
+	    }
+	    if (media->unidentified_attributes_count <
+		UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
+	    {
+	      media->unidentified_attributes
+		[media->unidentified_attributes_count] =
+		mp_strdup (fsdp_buf[1]);
+	      media->unidentified_attributes_count++;
+	    }
+	  }
+	  NEXT_LINE (p);
+	}
+	else if (sscanf (p, "a=%8s", fsdp_buf[0]) == 1)
+	{
+	  /* media-level property attributes */
+	  if (!strncmp (fsdp_buf[0], "recvonly", 8))
+	    media->a_sendrecv_mode = FSDP_SENDRECV_RECVONLY;
+	  else if (!strncmp (fsdp_buf[0], "sendonly", 8))
+	    media->a_sendrecv_mode = FSDP_SENDRECV_SENDONLY;
+	  else if (!strncmp (fsdp_buf[0], "inactive", 8))
+	    media->a_sendrecv_mode = FSDP_SENDRECV_INACTIVE;
+	  else if (!strncmp (fsdp_buf[0], "sendrecv", 8))
+	    media->a_sendrecv_mode = FSDP_SENDRECV_SENDRECV;
+	  else
+	  {
+	    /* ignore unknown attributes, but provide access to them */
+	    *longfsdp_buf = '\0';
+	    strncat (longfsdp_buf, fsdp_buf[0], MAXLONGFIELDLEN-1);
+	    if (NULL == media->unidentified_attributes)
+	    {
+	      media->unidentified_attributes_count = 0;
+	      media->unidentified_attributes =
+		mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
+			sizeof (char *));
+	    }
+	    if (media->unidentified_attributes_count <
+		UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
+	    {
+	      media->unidentified_attributes
+		[media->unidentified_attributes_count] =
+		mp_strdup (longfsdp_buf);
+	      media->unidentified_attributes_count++;
+	    }
+	  }
+	  NEXT_LINE (p);
+	}
+	else
+	  return FSDPE_INVALID_ATTRIBUTE;
       }
     }			/* end of for */
   }
@@ -901,7 +901,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     unsigned int c;
     for (c = 0; c < dsc->media_announcements_count; c++)
       if (NULL == dsc->media_announcements[c]->c_address.address)
-        return FSDPE_MISSING_CONNECTION_INFO;
+	return FSDPE_MISSING_CONNECTION_INFO;
   }
 
   /* finish */
@@ -922,51 +922,51 @@ fsdp_parse_c (const char **p, fsdp_network_type_t * ntype,
   if (!strncmp (*p, "c=", 2))
   {
     if (sscanf (*p, "c=%2s %3s %" MSFLENS "s",
-                fsdp_buf[0], fsdp_buf[1], fsdp_buf[2]))
+		fsdp_buf[0], fsdp_buf[1], fsdp_buf[2]))
     {
       if (!strncmp (fsdp_buf[0], "IN", 2))
       {
-        *ntype = FSDP_NETWORK_TYPE_INET;
-        if (!strncmp (fsdp_buf[1], "IP4", 3))
-          *atype = FSDP_ADDRESS_TYPE_IPV4;
-        else if (!strncmp (fsdp_buf[1], "IP6", 3))
-          *atype = FSDP_ADDRESS_TYPE_IPV6;
-        else
-          return FSDPE_INVALID_CONNECTION_NETTYPE;
+	*ntype = FSDP_NETWORK_TYPE_INET;
+	if (!strncmp (fsdp_buf[1], "IP4", 3))
+	  *atype = FSDP_ADDRESS_TYPE_IPV4;
+	else if (!strncmp (fsdp_buf[1], "IP6", 3))
+	  *atype = FSDP_ADDRESS_TYPE_IPV6;
+	else
+	  return FSDPE_INVALID_CONNECTION_NETTYPE;
       }
       else
       {
-        return FSDPE_INVALID_CONNECTION_ADDRTYPE;
+	return FSDPE_INVALID_CONNECTION_ADDRTYPE;
       }
       {
-        char *slash = strchr (fsdp_buf[2], '/');
-        if (NULL == slash)
-        {
-          address->address = mp_strdup (fsdp_buf[2]);
-          address->address_ttl = 0;
-          address->address_count = 0;
-        }
-        else
-        {
-          /* address is IP4 multicast */
-          char *slash2;
-          *slash = '\0';
-          slash++;
-          address->address = mp_strdup (fsdp_buf[2]);
-          slash2 = strchr (slash + 1, '/');
-          if (NULL == slash2)
-          {
-            address->address_ttl = strtol (slash, NULL, 10);
-            address->address_count = 0;
-          }
-          else
-          {
-            *slash2 = '\0';
-            slash2++;
-            address->address_ttl = strtol (slash, NULL, 10);
-            address->address_count = strtol (slash2, NULL, 10);
-          }
-        }
+	char *slash = strchr (fsdp_buf[2], '/');
+	if (NULL == slash)
+	{
+	  address->address = mp_strdup (fsdp_buf[2]);
+	  address->address_ttl = 0;
+	  address->address_count = 0;
+	}
+	else
+	{
+	  /* address is IP4 multicast */
+	  char *slash2;
+	  *slash = '\0';
+	  slash++;
+	  address->address = mp_strdup (fsdp_buf[2]);
+	  slash2 = strchr (slash + 1, '/');
+	  if (NULL == slash2)
+	  {
+	    address->address_ttl = strtol (slash, NULL, 10);
+	    address->address_count = 0;
+	  }
+	  else
+	  {
+	    *slash2 = '\0';
+	    slash2++;
+	    address->address_ttl = strtol (slash, NULL, 10);
+	    address->address_count = strtol (slash2, NULL, 10);
+	  }
+	}
       }
       NEXT_LINE (*p);
     }
@@ -1002,21 +1002,21 @@ fsdp_parse_b (const char **p, fsdp_bw_modifier_t ** bw_modifiers,
     if (2 == sscanf (*p, "b=%20[^:\r\n]:%lu", fsdp_buf, &wuint))
     {
       if (!strncmp (fsdp_buf, "CT", 2))
-        (*bw_modifiers)[_index].b_mod_type =
-          FSDP_BW_MOD_TYPE_CONFERENCE_TOTAL;
+	(*bw_modifiers)[_index].b_mod_type =
+	  FSDP_BW_MOD_TYPE_CONFERENCE_TOTAL;
       else if (!strncmp (fsdp_buf, "AS", 2))
-        (*bw_modifiers)[_index].b_mod_type =
-          FSDP_BW_MOD_TYPE_APPLICATION_SPECIFIC;
+	(*bw_modifiers)[_index].b_mod_type =
+	  FSDP_BW_MOD_TYPE_APPLICATION_SPECIFIC;
       else if (!strncmp (fsdp_buf, "RS", 2))
-        (*bw_modifiers)[_index].b_mod_type = FSDP_BW_MOD_TYPE_RTCP_SENDERS;
+	(*bw_modifiers)[_index].b_mod_type = FSDP_BW_MOD_TYPE_RTCP_SENDERS;
       else if (!strncmp (fsdp_buf, "RR", 2))
-        (*bw_modifiers)[_index].b_mod_type =
-          FSDP_BW_MOD_TYPE_RTCP_RECEIVERS;
+	(*bw_modifiers)[_index].b_mod_type =
+	  FSDP_BW_MOD_TYPE_RTCP_RECEIVERS;
       else
       {
-        (*bw_modifiers)[_index].b_mod_type = FSDP_BW_MOD_TYPE_UNKNOWN;
-        (*bw_modifiers)[_index].b_unknown_bw_modt =
-          (char *) mp_strdup (fsdp_buf);
+	(*bw_modifiers)[_index].b_mod_type = FSDP_BW_MOD_TYPE_UNKNOWN;
+	(*bw_modifiers)[_index].b_unknown_bw_modt =
+	  (char *) mp_strdup (fsdp_buf);
       }
       (*bw_modifiers)[_index].b_value = wuint;
       NEXT_LINE (*p);
@@ -1049,18 +1049,18 @@ fsdp_parse_k (const char **p, fsdp_encryption_method_t * method,
     else
     {
       if (sscanf
-          (*p, "k=%6[^:\r\n]:%" MLFLENS "s", fsdp_buf, longfsdp_buf))
+	  (*p, "k=%6[^:\r\n]:%" MLFLENS "s", fsdp_buf, longfsdp_buf))
       {
-        if (!strncmp (fsdp_buf, "clear", 5))
-          *method = FSDP_ENCRYPTION_METHOD_CLEAR;
-        else if (!strncmp (fsdp_buf, "base64", 6))
-          *method = FSDP_ENCRYPTION_METHOD_BASE64;
-        else if (!strncmp (fsdp_buf, "uri", 3))
-          *method = FSDP_ENCRYPTION_METHOD_URI;
-        else
-          return FSDPE_INVALID_ENCRYPTION_METHOD;
-        *content = mp_strdup (longfsdp_buf);
-        NEXT_LINE (*p);
+	if (!strncmp (fsdp_buf, "clear", 5))
+	  *method = FSDP_ENCRYPTION_METHOD_CLEAR;
+	else if (!strncmp (fsdp_buf, "base64", 6))
+	  *method = FSDP_ENCRYPTION_METHOD_BASE64;
+	else if (!strncmp (fsdp_buf, "uri", 3))
+	  *method = FSDP_ENCRYPTION_METHOD_URI;
+	else
+	  return FSDPE_INVALID_ENCRYPTION_METHOD;
+	*content = mp_strdup (longfsdp_buf);
+	NEXT_LINE (*p);
       }
     }
   }
@@ -1096,22 +1096,22 @@ fsdp_parse_rtpmap (fsdp_rtpmap_t *** rtpmap, unsigned int *counter,
       slash1 = strchr (longfsdp_buf, '/');
       if (NULL == slash1)
       {
-        result = FSDPE_INVALID_ATTRIBUTE_RTPMAP;
+	result = FSDPE_INVALID_ATTRIBUTE_RTPMAP;
       }
       else
       {
-        char *slash2;
-        *slash1 = '\0';
-        slash1++;
-        map[c]->encoding_name = mp_strdup (longfsdp_buf);
-        slash2 = strchr (slash1, '/');
-        if (NULL != slash2)
-        {
-          *slash2 = '\0';
-          slash2++;
-          map[c]->parameters = mp_strdup (slash2);
-        }
-        map[c]->clock_rate = strtol (slash1, NULL, 10);
+	char *slash2;
+	*slash1 = '\0';
+	slash1++;
+	map[c]->encoding_name = mp_strdup (longfsdp_buf);
+	slash2 = strchr (slash1, '/');
+	if (NULL != slash2)
+	{
+	  *slash2 = '\0';
+	  slash2++;
+	  map[c]->parameters = mp_strdup (slash2);
+	}
+	map[c]->clock_rate = strtol (slash1, NULL, 10);
       }
       (*counter)++;
     }

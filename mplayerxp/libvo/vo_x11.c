@@ -51,10 +51,10 @@ LIBVO_EXTERN( x11 )
 
 static vo_info_t vo_info =
 {
-        "X11 ( XImage/Shm )",
-        "x11",
-        "Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",
-        ""
+	"X11 ( XImage/Shm )",
+	"x11",
+	"Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",
+	""
 };
 
 #ifdef HAVE_SHM
@@ -199,7 +199,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     vo->gc=XCreateGC( vo->mDisplay,vo->window,0L,&xgcv );
 
     /* we cannot grab mouse events on root window :( */
-    XSelectInput( vo->mDisplay,vo->window,StructureNotifyMask | KeyPressMask | 
+    XSelectInput( vo->mDisplay,vo->window,StructureNotifyMask | KeyPressMask |
 	((vo_conf.WinID==0)?0:(ButtonPressMask | ButtonReleaseMask | PointerMotionMask)) );
 
 #ifdef HAVE_XF86VM

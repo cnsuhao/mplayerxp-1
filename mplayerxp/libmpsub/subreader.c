@@ -80,15 +80,15 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 		state = 1; continue;
 	    }
 	    break;
- 
+
 	case 1: /* find "<P" */
 	    if ((s = strstr (s, "<P"))) { s += 2; state = 2; continue; }
 	    break;
- 
+
 	case 2: /* find ">" */
 	    if ((s = strchr (s, '>'))) { s++; state = 3; p = text; continue; }
 	    break;
- 
+
 	case 3: /* get all text until '<' appears */
 	    if (*s == '\0') break;
 	    else if (!strncasecmp (s, "<br>", 4)) {
@@ -105,7 +105,7 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 
 	    /* skip duplicated space */
 	    if (p > text + 2) if (*(p-1) == ' ' && *(p-2) == ' ') p--;
-	    
+
 	    continue;
 
 	case 4: /* get current->end or skip <TAG> */
@@ -136,7 +136,7 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 
     // For the last subtitle
     if (current->end <= 0) {
-        current->end = current->start + sub_slacktime;
+	current->end = current->start + sub_slacktime;
 	*p = '\0'; trail_space (text);
 	if (text[0] != '\0')
 	    current->text[current->lines++] = mp_strdup (text);
@@ -186,7 +186,7 @@ static subtitle * __FASTCALL__ sub_read_line_microdvd(FILE *fd,subtitle *current
 
     next=p, i=0;
     while ((next =sub_readtext (next, &(current->text[i])))) {
-        if (current->text[i]==ERR) {return ERR;}
+	if (current->text[i]==ERR) {return ERR;}
 	i++;
 	if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
     }
@@ -200,7 +200,7 @@ static subtitle * __FASTCALL__ sub_read_line_subrip(FILE *fd, subtitle *current)
     int a1,a2,a3,a4,b1,b2,b3,b4;
     char *p=NULL, *q=NULL;
     int len;
-    
+
     while (1) {
 	if (!fgets (line, LINE_LEN, fd)) return NULL;
 	if (sscanf (line, "%d:%d:%d.%d,%d:%d:%d.%d",&a1,&a2,&a3,&a4,&b1,&b2,&b3,&b4) < 8) continue;
@@ -265,13 +265,13 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current)
 		if (!fgets (line, LINE_LEN, fd)) return NULL;
 		if ((len=sscanf (line, "%d:%d:%d%c%n",&a1,&a2,&a3,&separator,&plen)) < 4)
 			continue;
-		
+
 		if (!(current->start = a1*360000+a2*6000+a3*100))
 			continue;
-                // by wodzu: hey! this time we know what length it has! what is
-                // that magic for? it can't deal with space instead of third
-                // colon! look, what simple it can be:
-                p = &line[ plen ];
+		// by wodzu: hey! this time we know what length it has! what is
+		// that magic for? it can't deal with space instead of third
+		// colon! look, what simple it can be:
+		p = &line[ plen ];
 
 		i=0;
 		if (*p!='|') {
@@ -289,9 +289,9 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current)
 }
 
 static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
-	//TODO: This format uses quite rich (sub/super)set of xhtml 
+	//TODO: This format uses quite rich (sub/super)set of xhtml
 	// I couldn't check it since DTD is not included.
-	// WARNING: full XML parses can be required for proper parsing 
+	// WARNING: full XML parses can be required for proper parsing
     char line[LINE_LEN+1];
     int a1,a2,a3,a4,b1,b2,b3,b4;
     char *p=NULL;
@@ -309,7 +309,7 @@ static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
 	((len=sscanf (line, "<%*[tT]ime %*[bB]egin=\"%d:%d\" %*[Ee]nd=\"%d:%d.%d\"%*[^<]<clear/>%n",&a2,&a3,&b2,&b3,&b4,&plen)) < 5) &&
 //	((len=sscanf (line, "<%*[tT]ime %*[bB]egin=\"%d:%d.%d\" %*[Ee]nd=\"%d:%d\"%*[^<]<clear/>%n",&a2,&a3,&a4,&b2,&b3,&plen)) < 5) &&
 	((len=sscanf (line, "<%*[tT]ime %*[bB]egin=\"%d:%d.%d\" %*[Ee]nd=\"%d:%d.%d\"%*[^<]<clear/>%n",&a2,&a3,&a4,&b2,&b3,&b4,&plen)) < 6) &&
-	((len=sscanf (line, "<%*[tT]ime %*[bB]egin=\"%d:%d:%d.%d\" %*[Ee]nd=\"%d:%d:%d.%d\"%*[^<]<clear/>%n",&a1,&a2,&a3,&a4,&b1,&b2,&b3,&b4,&plen)) < 8) 
+	((len=sscanf (line, "<%*[tT]ime %*[bB]egin=\"%d:%d:%d.%d\" %*[Ee]nd=\"%d:%d:%d.%d\"%*[^<]<clear/>%n",&a1,&a2,&a3,&a4,&b1,&b2,&b3,&b4,&plen)) < 8)
 	)
 	    continue;
 	current->start = a1*360000+a2*6000+a3*100+a4/10;
@@ -331,7 +331,7 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
 	int hour1, min1, sec1, hunsec1,
 	    hour2, min2, sec2, hunsec2, nothing;
 	int num;
-	
+
 	char line[LINE_LEN+1],
 	     line3[LINE_LEN+1],
 	     *line2;
@@ -341,7 +341,7 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
 		if (!fgets (line, LINE_LEN, fd)) return NULL;
 	} while (sscanf (line, "Dialogue: Marked=%d,%d:%d:%d.%d,%d:%d:%d.%d,"
 			"%[^\n\r]", &nothing,
-			&hour1, &min1, &sec1, &hunsec1, 
+			&hour1, &min1, &sec1, &hunsec1,
 			&hour2, &min2, &sec2, &hunsec2,
 			line3) < 9);
 	line2=strstr(line3,",,");
@@ -352,7 +352,7 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
 	current->lines=1;num=0;
 	current->start = 360000*hour1 + 6000*min1 + 100*sec1 + hunsec1;
 	current->end   = 360000*hour2 + 6000*min2 + 100*sec2 + hunsec2;
-	
+
 	while ((tmp=strstr(line2, "\\n")) != NULL) {
 		current->text[num]=(char *)mp_malloc(tmp-line2+1);
 		strncpy (current->text[num], line2, tmp-line2);
@@ -430,9 +430,9 @@ static subtitle * __FASTCALL__ sub_read_line_aqt(FILE *fd,subtitle *current) {
 
     while (1) {
     // try to locate next subtitle
-        if (!fgets (line, LINE_LEN, fd))
+	if (!fgets (line, LINE_LEN, fd))
 		return NULL;
-        if (!(sscanf (line, "-->> %ld", &(current->start)) <1))
+	if (!(sscanf (line, "-->> %ld", &(current->start)) <1))
 		break;
     }
 
@@ -547,7 +547,7 @@ subtitle* subcp_recode (subtitle *sub)
 		ip = sub->text[--l];
 		ileft = strlen(ip);
 		oleft = ICBUFFSIZE - 1;
-		
+
 		if (iconv(icdsc, &ip, &ileft,
 			  &op, &oleft) == (size_t)(-1)) {
 			MSG_ERR ("SUB: error recoding line.\n");
@@ -557,7 +557,7 @@ subtitle* subcp_recode (subtitle *sub)
 		if (!(ot = (char *)mp_malloc(op - icbuffer + 1))){
 			MSG_FATAL ("SUB: error allocating mem.\n");
 			l++;
-		   	break;
+			break;
 		}
 		*op='\0' ;
 		strcpy (ot, icbuffer);
@@ -585,7 +585,7 @@ subtitle* subcp_recode1 (subtitle *sub)
      strncpy(ip, op, ICBUFFSIZE);
      ileft = strlen(ip);
      oleft = ICBUFFSIZE - 1;
-		
+
      if (iconv(icdsc, &ip, &ileft,
 	      &op, &oleft) == (size_t)(-1)) {
 	MSG_V("SUB: error recoding line (2).\n");
@@ -603,9 +603,9 @@ static void adjust_subs_time(subtitle* sub, float subtime, float fps){
 	subtitle* nextsub;
 	int i = sub_num;
 	unsigned long subfms = (sub_uses_time ? 100 : fps) * subtime;
-	
+
 	n=m=0;
-	if (i)	for (;;){	
+	if (i)	for (;;){
 		if (sub->end <= sub->start){
 			sub->end = sub->start + subfms;
 			m++;
@@ -664,19 +664,19 @@ subtitle* sub_read_file (const char *filename, float fps) {
     if(!first) { fclose(fd); return NULL; }
 
     while(1){
-        subtitle *sub;
-        if(sub_num>=n_max){
-            n_max+=16;
-            first=mp_realloc(first,n_max*sizeof(subtitle));
-        }
+	subtitle *sub;
+	if(sub_num>=n_max){
+	    n_max+=16;
+	    first=mp_realloc(first,n_max*sizeof(subtitle));
+	}
 	sub = &first[sub_num];
 	memset(sub, '\0', sizeof(subtitle));
-        sub=func[sub_format](fd,sub);
-        if(!sub) break;   // EOF
+	sub=func[sub_format](fd,sub);
+	if(!sub) break;   // EOF
 #ifdef USE_ICONV
 	if ((sub!=ERR) && (sub_data.utf8 & 2)) sub=subcp_recode(sub);
 #endif
-        if(sub==ERR) ++sub_errs; else ++sub_num; // Error vs. Valid
+	if(sub==ERR) ++sub_errs; else ++sub_num; // Error vs. Valid
     }
 
     fclose(fd);
@@ -711,7 +711,7 @@ char * strreplace( char * in,char * what,char * whereof )
 }
 #endif
 
-static const char * sub_exts[] = 
+static const char * sub_exts[] =
 {   ".utf",
     ".UTF",
     ".sub",
@@ -783,7 +783,7 @@ void list_sub_file(subtitle* subs){
 
     for(j=0;j<sub_num;j++){
 	subtitle* egysub=&subs[j];
-        MSG_INFO ("%i line%c (%li-%li) ",
+	MSG_INFO ("%i line%c (%li-%li) ",
 		    egysub->lines,
 		    (1==egysub->lines)?' ':'s',
 		    egysub->start,
@@ -812,7 +812,7 @@ void dump_mpsub(subtitle* subs, float fps){
 		perror ("dump_mpsub: fopen");
 		return;
 	}
-	
+
 
 	if (sub_uses_time) fprintf (fd,"FORMAT=TIME\n\n");
 	else fprintf (fd, "FORMAT=%5.2f\n\n", fps);
@@ -826,7 +826,7 @@ void dump_mpsub(subtitle* subs, float fps){
 			fprintf (fd, "%.0f",a);
 			else
 			fprintf (fd, "%.2f",a);
-			    
+
 			if ( (float)((int)b) == b)
 			fprintf (fd, " %.0f\n",b);
 			else
@@ -867,14 +867,14 @@ int main(int argc, char **argv) {  // for testing
     subtitle *egysub;
 
     if(argc<2){
-        printf("\nUsage: subreader filename.sub\n\n");
-        exit(1);
+	printf("\nUsage: subreader filename.sub\n\n");
+	exit(1);
     }
-    sub_cp = argv[2]; 
+    sub_cp = argv[2];
     subs=sub_read_file(argv[1]);
     if(!subs){
-        printf("Couldn't load file.\n");
-        exit(1);
+	printf("Couldn't load file.\n");
+	exit(1);
     }
 
     list_sub_file(subs);

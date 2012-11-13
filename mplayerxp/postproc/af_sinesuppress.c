@@ -41,7 +41,7 @@ static mp_aframe_t* play_float(struct af_instance_s* af, mp_aframe_t* data,int f
 // Initialization and runtime control
 static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup; 
+  af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup;
 
   switch(cmd){
   case AF_CONTROL_REINIT:{
@@ -79,7 +79,7 @@ static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -95,7 +95,7 @@ static mp_aframe_t* play_s16(struct af_instance_s* af, mp_aframe_t* data,int fin
   register int i = 0;
   int16_t *a = (int16_t*)data->audio;	// Audio data
   int len = data->len/2;		// Number of samples
-  
+
   for (i = 0; i < len; i++)
   {
     double co= cos(s->pos);
@@ -127,14 +127,14 @@ static mp_aframe_t* play_float(struct af_instance_s* af, mp_aframe_t* data,int f
   float *a = (float*)data->audio;	// Audio data
   int len = data->len/4;		// Number of samples
   float avg, l, r;
-  
+
   for (i = 0; i < len; i+=2)
   {
     avg = (a[i] + a[i + 1]) / 2;
-    
+
 /*    l = avg + (s->mul * (a[i] - avg));
     r = avg + (s->mul * (a[i + 1] - avg));*/
-    
+
     a[i] = af_softclip(l);
     a[i + 1] = af_softclip(r);
   }

@@ -18,7 +18,7 @@ struct vf_priv_s {
 //===========================================================================//
 
 static int __FASTCALL__ config(struct vf_instance_s* vf,
-        int width, int height, int d_width, int d_height,
+	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
     return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt);
 }

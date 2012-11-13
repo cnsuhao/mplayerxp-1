@@ -35,7 +35,7 @@ typedef struct af_comp_s
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_comp_t* s   = (af_comp_t*)af->setup; 
+  af_comp_t* s   = (af_comp_t*)af->setup;
   int i;
 
   switch(cmd){
@@ -48,7 +48,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     af->data->format = MPAF_F|MPAF_NE|4;
 
     // Time constant set to 0.1s
-    //    s->alpha = (1.0/0.2)/(2.0*M_PI*(float)((mp_aframe_t*)arg)->rate); 
+    //    s->alpha = (1.0/0.2)/(2.0*M_PI*(float)((mp_aframe_t*)arg)->rate);
     return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_COMMAND_LINE:{
 /*     float v=-10.0; */
@@ -67,10 +67,10 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   }
   case AF_CONTROL_COMP_ON_OFF | AF_CONTROL_SET:
     memcpy(s->enable,(int*)arg,AF_NCH*sizeof(int));
-    return MPXP_Ok; 
+    return MPXP_Ok;
   case AF_CONTROL_COMP_ON_OFF | AF_CONTROL_GET:
     memcpy((int*)arg,s->enable,AF_NCH*sizeof(int));
-    return MPXP_Ok; 
+    return MPXP_Ok;
   case AF_CONTROL_COMP_THRESH | AF_CONTROL_SET:
     return af_from_dB(AF_NCH,(float*)arg,s->tresh,20.0,-60.0,-1.0);
   case AF_CONTROL_COMP_THRESH | AF_CONTROL_GET:
@@ -84,19 +84,19 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   case AF_CONTROL_COMP_RELEASE | AF_CONTROL_GET:
     return af_to_ms(AF_NCH,s->release,(float*)arg,af->data->rate);
   case AF_CONTROL_COMP_RATIO | AF_CONTROL_SET:
-    for(i=0;i<AF_NCH;i++) 
+    for(i=0;i<AF_NCH;i++)
       s->ratio[i] = clamp(((float*)arg)[i],1.0,10.0);
     return MPXP_Ok;
   case AF_CONTROL_COMP_RATIO | AF_CONTROL_GET:
-    for(i=0;i<AF_NCH;i++) 
+    for(i=0;i<AF_NCH;i++)
       ((float*)arg)[i] = s->ratio[i];
-    return MPXP_Ok; 
+    return MPXP_Ok;
   default: break;
   }
   return MPXP_Unknown;
 }
 
-// Deallocate memory 
+// Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->data)
@@ -113,7 +113,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   float*   	a   = (float*)c->audio;		// Audio data
   int       	len = c->len/4;			// Number of samples
   int           ch  = 0;			// Channel counter
-  register int	nch = c->nch;			// Number of channels	
+  register int	nch = c->nch;			// Number of channels
   register int  i   = 0;
 
   // Compress/expand
@@ -122,8 +122,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
       float	t   = 1.0 - s->time[ch];
       for(i=ch;i<len;i+=nch){
 	register float x 	= a[i];
-	register float pow 	= x*x;	
-	s->pow[ch] = t*s->pow[ch] + 
+	register float pow 	= x*x;
+	s->pow[ch] = t*s->pow[ch] +
 	  pow*s->time[ch]; // LP filter
 	if(pow < s->pow[ch]){
 	  ;
