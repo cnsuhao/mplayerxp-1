@@ -150,6 +150,12 @@ traps. Thus, MPlayerXP locates its XP-CORE at pseudo-random address and hides
 pointer on XP-CORE between antiviral-holes which reject memory scan. Also it
 attempts to prevent registration of unknown drivers using some antiviral traps.
 
+Furthermore, GCC itself has a virual nature because it supports so-called
+__attribute__ ((alias (#name))); __attribute__ ((weak))
+which allow overload any function of program. To avoid that MPlayerXP uses
+RND_RENAME() macroses which generate pseudo-random names for some functions
+during configure time.
+
 But last word in this way was not speaked. ;)
 
 Best regards! Nickols_K

@@ -768,7 +768,15 @@ int main(void) {
 EOF
 cc_check || die "Canot generate pseudo-random numbers"
 
+echocheck "generating pseudo-random numbers"
 rnd_arr=`$TMPO`
+sleep 1
+rnd_carr=`$TMPO`
+sleep 1
+rnd_sarr=`$TMPO`
+sleep 1
+rnd_farr=`$TMPO`
+echores "done"
 
 rnd0=`echo $rnd_arr | cut -d ' ' -f 1`
 rnd1=`echo $rnd_arr | cut -d ' ' -f 2`
@@ -781,16 +789,49 @@ rnd7=`echo $rnd_arr | cut -d ' ' -f 8`
 rnd8=`echo $rnd_arr | cut -d ' ' -f 9`
 rnd9=`echo $rnd_arr | cut -d ' ' -f 10`
 
-crnd0=$(($rnd0 % 255))
-crnd1=$(($rnd1 % 255))
-crnd2=$(($rnd2 % 255))
-crnd3=$(($rnd3 % 255))
-crnd4=$(($rnd4 % 255))
-crnd5=$(($rnd5 % 255))
-crnd6=$(($rnd6 % 255))
-crnd7=$(($rnd7 % 255))
-crnd8=$(($rnd8 % 255))
-crnd9=$(($rnd9 % 255))
+srnd0=`echo $rnd_sarr | cut -d ' ' -f 1`
+srnd1=`echo $rnd_sarr | cut -d ' ' -f 2`
+srnd2=`echo $rnd_sarr | cut -d ' ' -f 3`
+srnd3=`echo $rnd_sarr | cut -d ' ' -f 4`
+srnd4=`echo $rnd_sarr | cut -d ' ' -f 5`
+srnd5=`echo $rnd_sarr | cut -d ' ' -f 6`
+srnd6=`echo $rnd_sarr | cut -d ' ' -f 7`
+srnd7=`echo $rnd_sarr | cut -d ' ' -f 8`
+srnd8=`echo $rnd_sarr | cut -d ' ' -f 9`
+srnd9=`echo $rnd_sarr | cut -d ' ' -f 10`
+
+frnd0=`echo $rnd_farr | cut -d ' ' -f 1`
+frnd1=`echo $rnd_farr | cut -d ' ' -f 2`
+frnd2=`echo $rnd_farr | cut -d ' ' -f 3`
+frnd3=`echo $rnd_farr | cut -d ' ' -f 4`
+frnd4=`echo $rnd_farr | cut -d ' ' -f 5`
+frnd5=`echo $rnd_farr | cut -d ' ' -f 6`
+frnd6=`echo $rnd_farr | cut -d ' ' -f 7`
+frnd7=`echo $rnd_farr | cut -d ' ' -f 8`
+frnd8=`echo $rnd_farr | cut -d ' ' -f 9`
+frnd9=`echo $rnd_farr | cut -d ' ' -f 10`
+
+crnd0=`echo $rnd_carr | cut -d ' ' -f 1`
+crnd1=`echo $rnd_carr | cut -d ' ' -f 2`
+crnd2=`echo $rnd_carr | cut -d ' ' -f 3`
+crnd3=`echo $rnd_carr | cut -d ' ' -f 4`
+crnd4=`echo $rnd_carr | cut -d ' ' -f 5`
+crnd5=`echo $rnd_carr | cut -d ' ' -f 6`
+crnd6=`echo $rnd_carr | cut -d ' ' -f 7`
+crnd7=`echo $rnd_carr | cut -d ' ' -f 8`
+crnd8=`echo $rnd_carr | cut -d ' ' -f 9`
+crnd9=`echo $rnd_carr | cut -d ' ' -f 10`
+
+crnd0=$(($crnd0 % 255))
+crnd1=$(($crnd1 % 255))
+crnd2=$(($crnd2 % 255))
+crnd3=$(($crnd3 % 255))
+crnd4=$(($crnd4 % 255))
+crnd5=$(($crnd5 % 255))
+crnd6=$(($crnd6 % 255))
+crnd7=$(($crnd7 % 255))
+crnd8=$(($crnd8 % 255))
+crnd9=$(($crnd9 % 255))
 
 #############################################################################
 echo "Creating mp_config.mak"
@@ -1004,28 +1045,28 @@ typedef void any_t;
 #define RND_NUMBER8 $rnd8
 #define RND_NUMBER9 $rnd9
 
-#define RND_STR0 "$rnd0"
-#define RND_STR1 "$rnd1"
-#define RND_STR2 "$rnd2"
-#define RND_STR3 "$rnd3"
-#define RND_STR4 "$rnd4"
-#define RND_STR5 "$rnd5"
-#define RND_STR6 "$rnd6"
-#define RND_STR7 "$rnd7"
-#define RND_STR8 "$rnd8"
-#define RND_STR9 "$rnd9"
+#define RND_STR0 "$srnd0"
+#define RND_STR1 "$srnd1"
+#define RND_STR2 "$srnd2"
+#define RND_STR3 "$srnd3"
+#define RND_STR4 "$srnd4"
+#define RND_STR5 "$srnd5"
+#define RND_STR6 "$srnd6"
+#define RND_STR7 "$srnd7"
+#define RND_STR8 "$srnd8"
+#define RND_STR9 "$srnd9"
 
 
-#define RND_RENAME0(a) a ## $rnd0
-#define RND_RENAME1(a) a ## $rnd1
-#define RND_RENAME2(a) a ## $rnd2
-#define RND_RENAME3(a) a ## $rnd3
-#define RND_RENAME4(a) a ## $rnd4
-#define RND_RENAME5(a) a ## $rnd5
-#define RND_RENAME6(a) a ## $rnd6
-#define RND_RENAME7(a) a ## $rnd7
-#define RND_RENAME8(a) a ## $rnd8
-#define RND_RENAME9(a) a ## $rnd9
+#define RND_RENAME0(a) a ## $frnd0
+#define RND_RENAME1(a) a ## $frnd1
+#define RND_RENAME2(a) a ## $frnd2
+#define RND_RENAME3(a) a ## $frnd3
+#define RND_RENAME4(a) a ## $frnd4
+#define RND_RENAME5(a) a ## $frnd5
+#define RND_RENAME6(a) a ## $frnd6
+#define RND_RENAME7(a) a ## $frnd7
+#define RND_RENAME8(a) a ## $frnd8
+#define RND_RENAME9(a) a ## $frnd9
 
 #endif /* MPXP_CONFIG_H */
 EOF

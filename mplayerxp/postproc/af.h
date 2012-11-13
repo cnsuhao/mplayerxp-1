@@ -38,6 +38,7 @@ typedef struct af_info_s
 typedef struct af_instance_s
 {
   const af_info_t* info;
+  char			antiviral_hole[RND_CHAR6];
   MPXP_Rc (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
   void (* __FASTCALL__ uninit)(struct af_instance_s* af);
   mp_aframe_t* (* __FASTCALL__ play)(struct af_instance_s* af, mp_aframe_t* data,int final);
@@ -83,6 +84,7 @@ typedef struct af_cfg_s{
 // Current audio stream
 typedef struct af_stream_s
 {
+  char			antiviral_hole[RND_CHAR7];
   // The first and last filter in the list
   af_instance_t* first;
   af_instance_t* last;
@@ -99,7 +101,7 @@ typedef struct af_stream_s
 // Export functions
 */
 
-af_stream_t *af_new(any_t*_parent);
+af_stream_t *RND_RENAME6(af_new)(any_t*_parent);
 
 /* Initialize the stream "s". This function creates a new filter list
    if necessary according to the values set in input and output. Input
@@ -111,15 +113,10 @@ af_stream_t *af_new(any_t*_parent);
    format given in "s", otherwise the output format in the last filter
    will be copied "s". The return value is 0 if success and -1 if
    failure */
-MPXP_Rc af_init(af_stream_t* s, int force_output);
+MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output);
 
 // Uninit and remove all filters
 void af_uninit(af_stream_t* s);
-
-/* Reinitializes all filters downstream from the filter given in the
-   argument the return value is MPXP_Ok if success and MPXP_Error if
-   failure */
-int af_reinit(af_stream_t* s, af_instance_t* af);
 
 /* Add filter during execution. This function adds the filter "name"
    to the stream s. The filter will be inserted somewhere nice in the
@@ -130,12 +127,8 @@ af_instance_t* af_add(af_stream_t* s,const char* name);
 // Uninit and remove the filter "af"
 void af_remove(af_stream_t* s, af_instance_t* af);
 
-/* Find filter in the dynamic filter list using it's name This
-   function is used for finding already initialized filters */
-af_instance_t* __FASTCALL__ af_get(af_stream_t* s,const char* name);
-
 // Filter data chunk through the filters in the list
-mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s, mp_aframe_t* data);
+mp_aframe_t* __FASTCALL__ RND_RENAME8(af_play)(af_stream_t* s, mp_aframe_t* data);
 
 // send control to all filters, starting with the last until
 // one accepts the command with MPXP_Ok.

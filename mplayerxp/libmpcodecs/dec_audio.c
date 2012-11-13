@@ -28,7 +28,7 @@ af_cfg_t af_cfg; // Configuration for audio filters
 
 static const ad_functions_t* mpadec;
 
-MPXP_Rc mpca_init(sh_audio_t *sh_audio)
+MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 {
     mpadec=afm_find_driver(sh_audio->codec->driver_name);
     if(!mpadec){
@@ -143,7 +143,7 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 	unsigned in_samplerate, unsigned in_channels, unsigned in_format,
 	unsigned* out_samplerate, unsigned* out_channels, unsigned* out_format){
     char strbuf[200];
-    af_stream_t* afs=af_new(sh_audio);
+    af_stream_t* afs=RND_RENAME6(af_new)(sh_audio);
 
     // input format: same as codec's output format:
     afs->input.rate   = in_samplerate;
@@ -163,7 +163,7 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 	afs->input.rate,afs->input.nch,(afs->input.format&MPAF_BPS_MASK)*8);
 
     // let's autoprobe it!
-    if(MPXP_Ok != af_init(afs,0)){
+    if(MPXP_Ok != RND_RENAME7(af_init)(afs,0)){
 	mp_free(afs);
 	return MPXP_False; // failed :(
     }
@@ -190,7 +190,7 @@ MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
 	unsigned out_minsize, unsigned out_maxsize){
     char strbuf[200];
     af_stream_t* afs=sh_audio->afilter;
-    if(!afs) afs = af_new(sh_audio);
+    if(!afs) afs = RND_RENAME6(af_new)(sh_audio);
 
     // input format: same as codec's output format:
     afs->input.rate   = in_samplerate;
@@ -210,7 +210,7 @@ MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
 	afs->output.rate,afs->output.nch,(afs->output.format&MPAF_BPS_MASK)*8,ao_format_name(mpaf_format_encode(afs->output.format)));
 
     // let's autoprobe it!
-    if(MPXP_Ok != af_init(afs,1)){
+    if(MPXP_Ok != RND_RENAME7(af_init)(afs,1)){
 	sh_audio->afilter=NULL;
 	mp_free(afs);
 	return MPXP_False; // failed :(
@@ -255,7 +255,7 @@ MPXP_Rc mpca_reinit_filters(sh_audio_t *sh_audio,
 				out_minsize,out_maxsize);
 }
 
-unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
+unsigned RND_RENAME3(mpca_decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
 {
     unsigned len;
     unsigned cp_size,cp_tile;
@@ -293,7 +293,7 @@ unsigned mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,uns
     afd.rate=sh_audio->rate;
     afd.nch=sh_audio->nch;
     afd.format=mpaf_format_decode(sh_audio->afmt);
-    pafd=af_play(sh_audio->afilter,&afd);
+    pafd=RND_RENAME8(af_play)(sh_audio->afilter,&afd);
 
     if(!pafd) {
 	MSG_V("decaudio: filter error\n");

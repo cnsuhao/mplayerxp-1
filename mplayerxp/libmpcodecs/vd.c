@@ -163,13 +163,13 @@ csp_again:
 		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
 	    }
 	    MSG_WARN("Trying -vf fmtcvt\n");
-	    sc=vf=vf_open_filter(vf,sh,"fmtcvt",NULL,libinput);
+	    sc=vf=RND_RENAME9(vf_open_filter)(vf,sh,"fmtcvt",NULL,libinput);
 	    goto csp_again;
 	} else
 	if(palette==1){
 	    MSG_V("vd: Trying -vf palette...\n");
 	    palette=-1;
-	    vf=vf_open_filter(vf,sh,"palette",NULL,libinput);
+	    vf=RND_RENAME9(vf_open_filter)(vf,sh,"palette",NULL,libinput);
 	    goto csp_again;
 	} else {
 	// sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
@@ -203,7 +203,7 @@ csp_again:
     if(vo_data->flags&VFCAP_FLIPPED) vo_FLIP_REVERT(vo_data);
     if(vo_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
-	sh->vfilter=vf=vf_open_filter(vf,sh,"mirror","x",libinput);
+	sh->vfilter=vf=RND_RENAME9(vf_open_filter)(vf,sh,"flip",NULL,libinput);
     }
 
     // time to do aspect ratio corrections...

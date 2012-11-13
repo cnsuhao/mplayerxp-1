@@ -15,6 +15,7 @@ typedef struct ao_info_s
 typedef struct ao_data_s
 {
     char*	subdevice;
+    char	antiviral_hole[RND_CHAR2];
     unsigned	samplerate;	/**< rate of samples in Hz */
     unsigned	channels;	/**< number of audio channels */
     unsigned	format;		/**< format of audio samples */
@@ -98,16 +99,16 @@ extern char *		 __FASTCALL__ ao_format_name(int format);
 extern int		 __FASTCALL__ ao_format_bits(int format);
 
 extern void		ao_print_help( void );
-extern const ao_functions_t* __FASTCALL__ ao_register(const char *driver_name);
+extern const ao_functions_t* __FASTCALL__ RND_RENAME4(ao_register)(const char *driver_name);
 extern const ao_info_t*	ao_get_info( void );
-extern ao_data_t*	__FASTCALL__ ao_init(unsigned flags,const char *subdevice);
+extern ao_data_t*	__FASTCALL__ RND_RENAME5(ao_init)(unsigned flags,const char *subdevice);
 extern MPXP_Rc		__FASTCALL__ ao_configure(ao_data_t* priv,unsigned rate,unsigned channels,unsigned format);
 extern void		__FASTCALL__ ao_uninit(ao_data_t* priv);
 extern void		__FASTCALL__ ao_reset(ao_data_t* priv);
 extern unsigned		__FASTCALL__ ao_get_space(ao_data_t* priv);
-extern unsigned		__FASTCALL__ ao_play(ao_data_t* priv,any_t* data,unsigned len,unsigned flags);
+extern unsigned		__FASTCALL__ RND_RENAME6(ao_play)(ao_data_t* priv,any_t* data,unsigned len,unsigned flags);
 extern float		__FASTCALL__ ao_get_delay(ao_data_t* priv);
 extern void		__FASTCALL__ ao_pause(ao_data_t* priv);
 extern void		__FASTCALL__ ao_resume(ao_data_t* priv);
-extern MPXP_Rc	__FASTCALL__ ao_control(ao_data_t* priv,int cmd,long arg);
+extern MPXP_Rc	__FASTCALL__ RND_RENAME7(ao_control)(ao_data_t* priv,int cmd,long arg);
 #endif

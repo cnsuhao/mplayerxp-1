@@ -99,7 +99,7 @@ static MPXP_Rc init(sh_audio_t *sh)
 #define OGG_FMT16 AFMT_S16_LE
 #endif
     sh->afmt=OGG_FMT16;
-    if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == MPXP_Ok) {
+    if(RND_RENAME7(ao_control)(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == MPXP_Ok) {
 	sh->afmt=OGG_FMT32;
     }
     // assume 128kbit if bitrate not specified in the header

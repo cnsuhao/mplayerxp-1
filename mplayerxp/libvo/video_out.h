@@ -150,6 +150,7 @@ extern vo_conf_t vo_conf;
 
 typedef struct vo_data_s {
     Display*		mDisplay;
+    char		antiviral_hole[RND_CHAR4];
     int			mScreen;
     Window		window;
     GC			gc;
@@ -242,10 +243,10 @@ typedef struct vo_functions_s
 \*****************************************************/
 extern vo_data_t*	 __FASTCALL__ vo_preinit_structs( void );
 extern void		vo_print_help(vo_data_t*);
-extern const vo_functions_t * vo_register(vo_data_t* vo,const char *driver_name);
+extern const vo_functions_t * RND_RENAME5(vo_register)(vo_data_t* vo,const char *driver_name);
 extern const vo_info_t*	vo_get_info(vo_data_t* vo);
-extern MPXP_Rc  __FASTCALL__ vo_init(vo_data_t* vo,const char *subdevice_name);
-extern MPXP_Rc  __FASTCALL__ vo_config(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
+extern MPXP_Rc  __FASTCALL__ RND_RENAME6(vo_init)(vo_data_t* vo,const char *subdevice_name);
+extern MPXP_Rc  __FASTCALL__ RND_RENAME7(vo_config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 				  uint32_t d_height, uint32_t fullscreen, char *title,
 				  uint32_t format);
 extern uint32_t	 __FASTCALL__ vo_query_format(vo_data_t* vo,uint32_t* fourcc,unsigned src_w,unsigned src_h);
@@ -261,13 +262,13 @@ extern MPXP_Rc	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi);
 
 extern int		vo_check_events(vo_data_t* vo);
 extern unsigned	 __FASTCALL__ vo_get_num_frames(vo_data_t* vo);
-extern MPXP_Rc   __FASTCALL__ vo_draw_slice(vo_data_t* vo,const mp_image_t *mpi);
-extern void		vo_select_frame(vo_data_t* vo,unsigned idx);
+extern MPXP_Rc   __FASTCALL__ RND_RENAME8(vo_draw_slice)(vo_data_t* vo,const mp_image_t *mpi);
+extern void		RND_RENAME9(vo_select_frame)(vo_data_t* vo,unsigned idx);
 extern void		vo_flush_page(vo_data_t* vo,unsigned decoder_idx);
 extern void		vo_draw_osd(vo_data_t* vo,unsigned idx);
 extern void		vo_draw_spudec_direct(vo_data_t* vo,unsigned idx);
 extern void		vo_uninit(vo_data_t* vo);
-extern MPXP_Rc __FASTCALL__ vo_control(vo_data_t* vo,uint32_t request, any_t*data);
+extern MPXP_Rc __FASTCALL__ RND_RENAME0(vo_control)(vo_data_t* vo,uint32_t request, any_t*data);
 extern int __FASTCALL__ vo_is_final(vo_data_t* vo);
 
 /** Contains geometry of fourcc */

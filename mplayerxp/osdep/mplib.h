@@ -72,4 +72,6 @@ static inline void show_backtrace(const char *why,unsigned num_calls) {
     print_backtrace(why,stack,ncalls);
 }
 
+extern any_t*	RND_RENAME0(rnd_fill)(any_t* buffer,size_t size);
+
 #endif

@@ -6,9 +6,9 @@
 
 // dec_audio.c:
 extern const ad_functions_t* __FASTCALL__ mpca_find_driver(const char *name);
-extern MPXP_Rc __FASTCALL__ mpca_init(sh_audio_t *sh_audio);
+extern MPXP_Rc __FASTCALL__ RND_RENAME2(mpca_init)(sh_audio_t *sh_audio);
 extern void __FASTCALL__ mpca_uninit(sh_audio_t *sh_audio);
-extern unsigned __FASTCALL__ mpca_decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts);
+extern unsigned __FASTCALL__ RND_RENAME3(mpca_decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts);
 extern void __FASTCALL__ mpca_resync_stream(sh_audio_t *sh_audio);
 extern void __FASTCALL__ mpca_skip_frame(sh_audio_t *sh_audio);
 struct codecs_st;

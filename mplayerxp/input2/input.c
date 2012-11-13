@@ -742,6 +742,7 @@ void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter func, any_t* ctx)
     filter->ctx = ctx;
     filter->next = priv->cmd_filters;
     priv->cmd_filters = filter;
+    RND_RENAME0(rnd_fill)(priv->antiviral_hole,sizeof(priv->antiviral_hole));
 }
 
 static char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {

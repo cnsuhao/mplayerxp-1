@@ -64,6 +64,7 @@ typedef struct demux_packet_st {
 /** Describes interface to stream associated with this demuxer */
 typedef struct demux_stream_s {
     int			id;		/**< stream ID  (for multiple audio/video streams) */
+    char		antiviral_hole[RND_CHAR2];
     int			buffer_pos;	/**< current buffer position */
     int			buffer_size;	/**< current buffer size */
     unsigned char*	buffer;		/**< current buffer */
@@ -102,6 +103,7 @@ enum {
 };
 /** Describes demuxer (demultiplexer) of movie */
 typedef struct demuxer_s {
+    char		antiviral_hole[RND_CHAR3];
     stream_t*		stream;		/**< stream for movie reading */
     demux_stream_t*	audio;		/**< audio buffer/demuxer */
     demux_stream_t*	video;		/**< video buffer/demuxer */
@@ -232,7 +234,7 @@ float ds_get_next_pts(demux_stream_t *ds);
 // This is defined here because demux_stream_t ins't defined in stream.h
 stream_t* __FASTCALL__ new_ds_stream(demux_stream_t *ds);
 
-demuxer_t* demux_open(stream_t *stream,int file_format,int aid,int vid,int sid);
+demuxer_t* RND_RENAME1(demux_open)(stream_t *stream,int file_format,int aid,int vid,int sid);
 int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka);
 demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd);
 

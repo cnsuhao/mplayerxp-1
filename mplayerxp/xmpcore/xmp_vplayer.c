@@ -214,7 +214,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	}
 
 	player_idx=dae_next_played(xp_core->video);
-	vo_select_frame(vo_data,player_idx);
+	RND_RENAME9(vo_select_frame)(vo_data,player_idx);
 	dae_inc_played(xp_core->video);
 	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
 	t2=GetTimer()-t2;

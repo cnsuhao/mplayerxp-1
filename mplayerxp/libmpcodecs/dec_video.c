@@ -128,7 +128,7 @@ MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
     return MPXP_Ok;
 }
 
-MPXP_Rc mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
+MPXP_Rc RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
     sh_video->codec=NULL;
     MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
     while((sh_video->codec=find_codec(sh_video->fourcc,
@@ -226,7 +226,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 
 extern vo_data_t* vo_data;
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
-int mpcv_decode(sh_video_t *sh_video,const enc_frame_t* frame){
+int RND_RENAME4(mpcv_decode)(sh_video_t *sh_video,const enc_frame_t* frame){
     vf_instance_t* vf;
     mp_image_t *mpi=NULL;
     unsigned int t;

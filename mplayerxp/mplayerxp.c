@@ -877,14 +877,14 @@ static char * mpxp_init_output_subsystems(void) {
 	    }
 	}
     MP_UNIT("vo_register");
-    priv->vo_inited = (vo_register(vo_data,mp_conf.video_driver)!=NULL)?1:0;
+    priv->vo_inited = (RND_RENAME5(vo_register)(vo_data,mp_conf.video_driver)!=NULL)?1:0;
 
     if(!priv->vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
 	exit_player(MSGTR_Exit_error);
     }
     MP_UNIT("vo_init");
-    if(vo_init(vo_data,vo_conf.subdevice)!=MPXP_Ok) {
+    if(RND_RENAME6(vo_init)(vo_data,vo_conf.subdevice)!=MPXP_Ok) {
 	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
 	exit_player(MSGTR_Exit_error);
     }
@@ -903,7 +903,7 @@ static char * mpxp_init_output_subsystems(void) {
 		mp_conf.audio_driver[i] = '\0';
 	    }
 	}
-    priv->ao_inited=(ao_register(mp_conf.audio_driver)!=NULL)?1:0;
+    priv->ao_inited=(RND_RENAME4(ao_register)(mp_conf.audio_driver)!=NULL)?1:0;
     if (!priv->ao_inited){
 	MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
 	exit_player(MSGTR_Exit_error);
@@ -1165,15 +1165,15 @@ static int mpxp_find_vcodec(void) {
     if(mp_conf.video_codec) {
     /* forced codec by name: */
 	MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
-	mpcv_init(sh_video,mp_conf.video_codec,NULL,-1,priv->libinput);
+	RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,NULL,-1,priv->libinput);
     } else {
 	int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
 	if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
 	for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 	    if(mp_conf.video_family) /* try first the preferred codec family:*/
-		if(mpcv_init(sh_video,NULL,mp_conf.video_family,status,priv->libinput)==MPXP_Ok) break;
-	    if(mpcv_init(sh_video,NULL,NULL,status,priv->libinput)==MPXP_Ok) break;
+		if(RND_RENAME3(mpcv_init)(sh_video,NULL,mp_conf.video_family,status,priv->libinput)==MPXP_Ok) break;
+	    if(RND_RENAME3(mpcv_init)(sh_video,NULL,NULL,status,priv->libinput)==MPXP_Ok) break;
 	}
     }
     /* Use ffmpeg decoders as last hope */
@@ -1765,7 +1765,7 @@ play_next_file:
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
     MP_UNIT("open_stream");
-    if(!input_state.after_dvdmenu) stream=open_stream(priv->libinput,filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
+    if(!input_state.after_dvdmenu) stream=RND_RENAME2(open_stream)(priv->libinput,filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
     if(!stream) { // error...
 	eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY);
 	goto goto_next_file;
@@ -1798,7 +1798,7 @@ play_next_file:
 
     MP_UNIT("demux_open");
 
-    if(!input_state.after_dvdmenu) priv->demuxer=demux_open(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id);
+    if(!input_state.after_dvdmenu) priv->demuxer=RND_RENAME1(demux_open)(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id);
     if(!priv->demuxer) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     priv->inited_flags|=INITED_DEMUXER;
     input_state.after_dvdmenu=0;
@@ -1845,7 +1845,7 @@ play_next_file:
 	goto dump_file;
     }
 
-    if(!(ao_data=ao_init(0,ao_subdevice))) {
+    if(!(ao_data=RND_RENAME5(ao_init)(0,ao_subdevice))) {
 	MSG_ERR(MSGTR_CannotInitAO);
 	sh_audio=d_audio->sh=NULL;
     }
@@ -1853,7 +1853,7 @@ play_next_file:
 
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");
-	if(mpca_init(sh_audio)!=MPXP_Ok){
+	if(RND_RENAME2(mpca_init)(sh_audio)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CouldntInitAudioCodec);
 	    sh_audio=d_audio->sh=NULL;
 	} else {
@@ -1875,7 +1875,7 @@ play_next_file:
 
     MP_UNIT("init_video_filters");
     if(sh_video->vfilter_inited<=0) {
-	sh_video->vfilter=vf_init(sh_video,priv->libinput);
+	sh_video->vfilter=RND_RENAME7(vf_init)(sh_video,priv->libinput);
 	sh_video->vfilter_inited=1;
     }
     if((mpxp_find_vcodec())!=0) {

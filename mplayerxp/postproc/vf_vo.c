@@ -63,7 +63,7 @@ static int __FASTCALL__ config(struct vf_instance_s* vf,
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps=query_format(vf,outfmt,d_width,d_height);// & VFCAP_ACCEPT_STRIDE;
 
-    if(MPXP_Ok!=vo_config(vo_data,width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
+    if(MPXP_Ok!=RND_RENAME7(vo_config)(vo_data,width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
 	return 0;
     vf->priv->is_planar=vo_describe_fourcc(outfmt,&vf->priv->vd);
     vf->dw=d_width;
@@ -77,23 +77,15 @@ static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request,any_t*
 {
     MSG_DBG2("vf_control: %u\n",request);
     switch(request){
-    case VFCTRL_SELECT_FRAME:
-    {
-	if(!vo_config_count) return MPXP_False; // vo not configured?
-	vo_select_frame(vo_data,(unsigned)data);
-	return MPXP_True;
-    }
-    case VFCTRL_SET_EQUALIZER:
-    {
+    case VFCTRL_SET_EQUALIZER: {
 	vf_equalizer_t *eq=data;
 	if(!vo_config_count) return MPXP_False; // vo not configured?
-	return vo_control(vo_data,VOCTRL_SET_EQUALIZER, eq);
+	return RND_RENAME0(vo_control)(vo_data,VOCTRL_SET_EQUALIZER, eq);
     }
-    case VFCTRL_GET_EQUALIZER:
-    {
+    case VFCTRL_GET_EQUALIZER: {
 	vf_equalizer_t *eq=data;
 	if(!vo_config_count) return MPXP_False; // vo not configured?
-	return vo_control(vo_data,VOCTRL_GET_EQUALIZER, eq);
+	return RND_RENAME0(vo_control)(vo_data,VOCTRL_GET_EQUALIZER, eq);
     }
     }
     // return video_out->control(request,data);
@@ -107,7 +99,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     rflags=0;
     if(flags)
     {
-	vo_control(vo_data,DRI_GET_SURFACE_CAPS,&dcaps);
+	RND_RENAME0(vo_control)(vo_data,DRI_GET_SURFACE_CAPS,&dcaps);
 	if(dcaps.caps&DRI_CAP_UPSCALER) rflags |=VFCAP_HWSCALE_UP;
 	if(dcaps.caps&DRI_CAP_DOWNSCALER) rflags |=VFCAP_HWSCALE_DOWN;
 	if(rflags&(VFCAP_HWSCALE_UP|VFCAP_HWSCALE_DOWN)) rflags |= VFCAP_SWSCALE;
@@ -137,7 +129,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
   if(!vo_config_count) return 0; // vo not configured?
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
 	MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
-	vo_draw_slice(vo_data,mpi);
+	RND_RENAME8(vo_draw_slice)(vo_data,mpi);
   }
   return 1;
 }

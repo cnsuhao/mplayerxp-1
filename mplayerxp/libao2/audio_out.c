@@ -66,7 +66,7 @@ static const ao_functions_t* audio_out_drivers[] =
 	NULL
 };
 
-static const ao_functions_t *audio_out=NULL;
+static const ao_functions_t *RND_RENAME8(audio_out)=NULL;
 
 char * __FASTCALL__ ao_format_name(int format)
 {
@@ -182,46 +182,47 @@ void ao_print_help( void )
     MSG_INFO("\n");
 }
 
-const ao_functions_t* __FASTCALL__ ao_register(const char *driver_name)
+const ao_functions_t* __FASTCALL__ RND_RENAME4(ao_register)(const char *driver_name)
 {
     unsigned i;
     if(!driver_name)
-	audio_out=audio_out_drivers[0];
+	RND_RENAME8(audio_out)=audio_out_drivers[0];
     else
     for (i=0; audio_out_drivers[i] != &audio_out_null; i++) {
 	const ao_info_t *info = audio_out_drivers[i]->info;
 	if(strcmp(info->short_name,driver_name) == 0){
-	    audio_out = audio_out_drivers[i];break;
+	    RND_RENAME8(audio_out) = audio_out_drivers[i];break;
 	}
     }
-    return audio_out;
+    return RND_RENAME8(audio_out);
 }
 
 const ao_info_t* ao_get_info( void )
 {
-    return audio_out->info;
+    return RND_RENAME8(audio_out)->info;
 }
 
-ao_data_t* __FASTCALL__ ao_init(unsigned flags,const char *subdevice)
+ao_data_t* __FASTCALL__ RND_RENAME5(ao_init)(unsigned flags,const char *subdevice)
 {
     ao_data_t* ao;
     ao=mp_mallocz(sizeof(ao_data_t));
     if(subdevice) ao->subdevice=mp_strdup(subdevice);
     ao->outburst=OUTBURST;
     ao->buffersize=-1;
-    if(audio_out->init(ao,flags)==MPXP_Ok) return ao;
+    RND_RENAME0(rnd_fill)(ao->antiviral_hole,sizeof(ao->antiviral_hole));
+    if(RND_RENAME8(audio_out)->init(ao,flags)==MPXP_Ok) return ao;
     mp_free(ao);
     return NULL;
 }
 
 MPXP_Rc __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
 {
-    return audio_out->configure(ao,rate,channels,format);
+    return RND_RENAME8(audio_out)->configure(ao,rate,channels,format);
 }
 
 void ao_uninit(ao_data_t*ao)
 {
-    audio_out->uninit(ao);
+    RND_RENAME8(audio_out)->uninit(ao);
     if(ao->subdevice) mp_free(ao->subdevice);
     mp_free(ao);
     ao=NULL;
@@ -229,35 +230,35 @@ void ao_uninit(ao_data_t*ao)
 
 void ao_reset(ao_data_t*ao)
 {
-    if(ao) audio_out->reset(ao);
+    if(ao) RND_RENAME8(audio_out)->reset(ao);
 }
 
 unsigned ao_get_space(ao_data_t*ao)
 {
-    return ao?audio_out->get_space(ao):0;
+    return ao?RND_RENAME8(audio_out)->get_space(ao):0;
 }
 
 float ao_get_delay(ao_data_t*ao)
 {
-    return ao?audio_out->get_delay(ao):0;
+    return ao?RND_RENAME8(audio_out)->get_delay(ao):0;
 }
 
-unsigned __FASTCALL__ ao_play(ao_data_t*ao,any_t* data,unsigned len,unsigned flags)
+unsigned __FASTCALL__ RND_RENAME6(ao_play)(ao_data_t*ao,any_t* data,unsigned len,unsigned flags)
 {
-    return ao?audio_out->play(ao,data,len,flags):0;
+    return ao?RND_RENAME8(audio_out)->play(ao,data,len,flags):0;
 }
 
 void ao_pause(ao_data_t*ao)
 {
-    if(ao) audio_out->pause(ao);
+    if(ao) RND_RENAME8(audio_out)->pause(ao);
 }
 
 void ao_resume(ao_data_t*ao)
 {
-    if(ao) audio_out->resume(ao);
+    if(ao) RND_RENAME8(audio_out)->resume(ao);
 }
 
-MPXP_Rc __FASTCALL__ ao_control(ao_data_t*ao,int cmd,long arg)
+MPXP_Rc __FASTCALL__ RND_RENAME7(ao_control)(ao_data_t*ao,int cmd,long arg)
 {
-    return ao?audio_out->control(ao,cmd,arg):MPXP_Error;
+    return ao?RND_RENAME8(audio_out)->control(ao,cmd,arg):MPXP_Error;
 }

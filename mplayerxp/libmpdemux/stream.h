@@ -42,6 +42,7 @@ typedef void (* __FASTCALL__ stream_callback)(struct stream_s *s,const stream_pa
 
 /** Stream description */
 typedef struct stream_s{
+    char		antiviral_hole[RND_CHAR3];
     int fd;		/**< file handler */
     off_t pos;		/**< SOF offset from begin of stream */
     int eof;		/**< indicates EOF */
@@ -94,7 +95,7 @@ void __FASTCALL__ stream_reset(stream_t *s);
 stream_t* __FASTCALL__ new_stream(int type);
 void __FASTCALL__ free_stream(stream_t *s);
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len);
-stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
+stream_t* __FASTCALL__ RND_RENAME2(open_stream)(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
 
 extern unsigned int __FASTCALL__ stream_read_word(stream_t *s);
 extern unsigned int __FASTCALL__ stream_read_dword(stream_t *s);
