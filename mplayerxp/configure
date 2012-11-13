@@ -756,6 +756,41 @@ enabled x11	&& enabled vidix	&& vomodules="vidix $vomodules" || novomodules="vid
 enabled joystick	&& test linux	|| disable joystick
 print_config HAVE_ mp_config.h mp_config.mak joystick
 
+# pseudo-ramdom names
+cat > $TMPC << EOF
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+int main(void) {
+    srand(time(0));
+    printf("%u %u %u %u %u %u %u %u %u %u\n"
+    ,rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand(),rand()); }
+EOF
+cc_check || die "Canot generate pseudo-random numbers"
+
+rnd_arr=`$TMPO`
+
+rnd0=`echo $rnd_arr | cut -d ' ' -f 1`
+rnd1=`echo $rnd_arr | cut -d ' ' -f 2`
+rnd2=`echo $rnd_arr | cut -d ' ' -f 3`
+rnd3=`echo $rnd_arr | cut -d ' ' -f 4`
+rnd4=`echo $rnd_arr | cut -d ' ' -f 5`
+rnd5=`echo $rnd_arr | cut -d ' ' -f 6`
+rnd6=`echo $rnd_arr | cut -d ' ' -f 7`
+rnd7=`echo $rnd_arr | cut -d ' ' -f 8`
+rnd8=`echo $rnd_arr | cut -d ' ' -f 9`
+rnd9=`echo $rnd_arr | cut -d ' ' -f 10`
+
+crnd0=$(($rnd0 % 255))
+crnd1=$(($rnd1 % 255))
+crnd2=$(($rnd2 % 255))
+crnd3=$(($rnd3 % 255))
+crnd4=$(($rnd4 % 255))
+crnd5=$(($rnd5 % 255))
+crnd6=$(($rnd6 % 255))
+crnd7=$(($rnd7 % 255))
+crnd8=$(($rnd8 % 255))
+crnd9=$(($rnd9 % 255))
 
 #############################################################################
 echo "Creating mp_config.mak"
@@ -778,6 +813,17 @@ INSTALL=$install
 # OPTFLAGS = -O3 $profile $debug $gcov $march $mcpu -pipe -fomit-frame-pointer -ffast-math
 OPTFLAGS = $CFLAGS
 DEBUG = -DDEBUG
+#-- Compile-time random numbers
+RND_NUMBER0 = $rnd0
+RND_NUMBER1 = $rnd1
+RND_NUMBER2 = $rnd2
+RND_NUMBER3 = $rnd3
+RND_NUMBER4 = $rnd4
+RND_NUMBER5 = $rnd5
+RND_NUMBER6 = $rnd6
+RND_NUMBER7 = $rnd7
+RND_NUMBER8 = $rnd8
+RND_NUMBER9 = $rnd9
 
 # --- HAZARDOUS STUFF
 
@@ -934,6 +980,52 @@ typedef void any_t;
 
 /* Removes warning about unused arguments */
 # define UNUSED(x) ((any_t)(x))
+
+/* Compile-time random numbers */
+#define RND_CHAR0 $crnd0
+#define RND_CHAR1 $crnd1
+#define RND_CHAR2 $crnd2
+#define RND_CHAR3 $crnd3
+#define RND_CHAR4 $crnd4
+#define RND_CHAR5 $crnd5
+#define RND_CHAR6 $crnd6
+#define RND_CHAR7 $crnd7
+#define RND_CHAR8 $crnd8
+#define RND_CHAR9 $crnd9
+
+#define RND_NUMBER0 $rnd0
+#define RND_NUMBER1 $rnd1
+#define RND_NUMBER2 $rnd2
+#define RND_NUMBER3 $rnd3
+#define RND_NUMBER4 $rnd4
+#define RND_NUMBER5 $rnd5
+#define RND_NUMBER6 $rnd6
+#define RND_NUMBER7 $rnd7
+#define RND_NUMBER8 $rnd8
+#define RND_NUMBER9 $rnd9
+
+#define RND_STR0 "$rnd0"
+#define RND_STR1 "$rnd1"
+#define RND_STR2 "$rnd2"
+#define RND_STR3 "$rnd3"
+#define RND_STR4 "$rnd4"
+#define RND_STR5 "$rnd5"
+#define RND_STR6 "$rnd6"
+#define RND_STR7 "$rnd7"
+#define RND_STR8 "$rnd8"
+#define RND_STR9 "$rnd9"
+
+
+#define RND_RENAME0(a) a ## $rnd0
+#define RND_RENAME1(a) a ## $rnd1
+#define RND_RENAME2(a) a ## $rnd2
+#define RND_RENAME3(a) a ## $rnd3
+#define RND_RENAME4(a) a ## $rnd4
+#define RND_RENAME5(a) a ## $rnd5
+#define RND_RENAME6(a) a ## $rnd6
+#define RND_RENAME7(a) a ## $rnd7
+#define RND_RENAME8(a) a ## $rnd8
+#define RND_RENAME9(a) a ## $rnd9
 
 #endif /* MPXP_CONFIG_H */
 EOF

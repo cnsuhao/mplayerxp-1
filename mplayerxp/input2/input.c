@@ -1,5 +1,3 @@
-#include "mp_config.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -53,6 +51,22 @@
 
 #define CMD_QUEUE_SIZE 100
 
+typedef int (*mp_key_func_t)(any_t* ctx); // These functions should return the key code or one of the error code
+typedef int (*mp_cmd_func_t)(any_t* ctx,char* dest,int size); // These functions should act like read but they must use our error code (if needed ;-)
+typedef void (*mp_close_func_t)(any_t* ctx); // These are used to close the driver
+
+
+typedef struct mp_cmd_bind {
+    int		input[MP_MAX_KEY_DOWN+1];
+    char*	cmd;
+} mp_cmd_bind_t;
+
+typedef struct mp_key_name {
+    int		key;
+    char*	name;
+} mp_key_name_t;
+
+
 typedef struct mp_input_fd {
     any_t*		opaque;
     any_t*		read_func;
@@ -75,6 +89,8 @@ typedef struct priv_s {
     // These are the user defined binds
     mp_cmd_bind_t*	cmd_binds;
     mp_cmd_filter_t*	cmd_filters;
+
+    char		antiviral_hole[RND_CHAR1];
 
     mp_input_fd_t	key_fds[MP_MAX_KEY_FD];
     unsigned int	num_key_fd;
@@ -403,6 +419,7 @@ static char* config_file = "input.conf";
 // Callback to allow the menu filter to grab the incoming keys
 void (*mp_input_key_cb)(int code) = NULL;
 
+static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd); // This create a copy of a command (used by the auto repeat stuff)
 static int mp_input_print_key_list(any_t*,const config_t* cfg);
 static int mp_input_print_cmd_list(any_t*,const config_t* cfg);
 
@@ -1001,7 +1018,7 @@ void mp_cmd_free(mp_cmd_t* cmd) {
     mp_free(cmd);
 }
 
-mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd) {
+static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd) {
     mp_cmd_t* ret;
     int i;
 #ifdef MP_DEBUG
@@ -1322,7 +1339,7 @@ static void mp_input_uninit(any_t* handle) {
     if(priv->in_file_fd==0) getch2_disable();
 }
 
-any_t* mp_input_open(void) {
+any_t* RND_RENAME0(mp_input_open)(void) {
     priv_t* priv;
     priv=mp_mallocz(sizeof(priv_t));
     priv->ar_state=-1;

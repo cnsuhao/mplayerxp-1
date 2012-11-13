@@ -818,7 +818,7 @@ static void mpxp_init_keyboard_fifo(void)
 #endif
     /* Init input system */
     MP_UNIT("init_input");
-    priv->libinput=mp_input_open();
+    priv->libinput=RND_RENAME0(mp_input_open)();
     priv->inited_flags|=INITED_INPUT;
 }
 

@@ -1,6 +1,6 @@
 #ifndef INPUT_H_INCLUDED
 #define INPUT_H_INCLUDED 1
-
+#include "mp_config.h"
 #include "xmpcore/xmp_enums.h"
 
 // All commands id
@@ -94,6 +94,7 @@ enum {
     MP_INPUT_DEAD	=-2,// A fatal error occured, this driver should be removed
     MP_INPUT_NOTHING	=-3 // No input were avaible
 };
+
 // For the keys drivers, if possible you can send key up and key down
 // events. Key up is the default, to send a key down you must or the key
 // code with MP_KEY_DOWN
@@ -122,25 +123,10 @@ typedef struct mp_cmd {
     mp_cmd_arg_t	args[MP_CMD_MAX_ARGS];
 } mp_cmd_t;
 
-
-typedef struct mp_cmd_bind {
-    int		input[MP_MAX_KEY_DOWN+1];
-    char*	cmd;
-} mp_cmd_bind_t;
-
-typedef struct mp_key_name {
-    int		key;
-    char*	name;
-} mp_key_name_t;
-
 // These typedefs are for the drivers. They are the functions used to retrive
 // the next key code or command.
 
-typedef int (*mp_key_func_t)(any_t* ctx); // These functions should return the key code or one of the error code
-typedef int (*mp_cmd_func_t)(any_t* ctx,char* dest,int size); // These functions should act like read but they must use our error code (if needed ;-)
-typedef void (*mp_close_func_t)(any_t* ctx); // These are used to close the driver
 typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, any_t* ctx); // Should return 1 if the command was processed
-
 extern void (*mp_input_key_cb)(int code); // Set this to grab all incoming key code
 
 extern mp_cmd_t* mp_input_get_cmd_from_keys(any_t* handle,int n,int* keys);
@@ -158,16 +144,12 @@ extern mp_cmd_t* mp_input_parse_cmd(char* str);
 /// These filter allow you to process the command before mplayer
 /// If a filter return a true value mp_input_get_cmd will return NULL
 extern void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter, any_t* ctx);
-
 // After getting a command from mp_input_get_cmd you need to mp_free it using this
 // function
 extern void mp_cmd_free(mp_cmd_t* cmd);
 
-// This create a copy of a command (used by the auto repeat stuff)
-extern mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd);
-
 // When you create a new driver you should add it in this 2 functions.
-extern any_t* mp_input_open(void);
+extern any_t* RND_RENAME0(mp_input_open)(void);
 extern void   mp_input_close(any_t* handle);
 
 // Interruptible usleep:  (used by libmpdemux)
@@ -175,5 +157,6 @@ extern MPXP_Rc mp_input_check_interrupt(any_t* handle,int time);
 
 extern void mp_input_print_keys(any_t*handle);
 extern void mp_input_print_cmds(any_t*handle);
+
 extern void mp_input_print_binds(any_t*handle);
 #endif
