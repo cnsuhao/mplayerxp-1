@@ -116,8 +116,9 @@ typedef struct input_conf_s {
     unsigned	ar_delay,ar_rate;
     const char*	js_dev;
     const char*	in_file;
+    int		print_key_list,print_cmd_list;
 }input_conf_t;
-static input_conf_t libinput_conf = { 1, 1, 1, 100, 8, "/dev/input/js0", NULL };
+static input_conf_t libinput_conf = { 1, 1, 1, 100, 8, "/dev/input/js0", NULL, 0, 0 };
 
 /// This array defines all know commands.
 /// The first field is an id used to recognize the command without too many strcmp
@@ -420,8 +421,8 @@ static char* config_file = "input.conf";
 void (*mp_input_key_cb)(int code) = NULL;
 
 static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd); // This create a copy of a command (used by the auto repeat stuff)
-static int mp_input_print_key_list(any_t*,const config_t* cfg);
-static int mp_input_print_cmd_list(any_t*,const config_t* cfg);
+static int mp_input_print_key_list(any_t*);
+static int mp_input_print_cmd_list(any_t*);
 
 static const config_t joystick_conf[] = {
   { "on", &libinput_conf.use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of joystick" },
@@ -436,8 +437,8 @@ static const config_t input_conf[] = {
   { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies alternative input.conf" },
   { "ar-delay", &libinput_conf.ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "autorepeate a key delay in milliseconds (0 to disable)" },
   { "ar-rate", &libinput_conf.ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "number of key-presses per second generating on autorepeat" },
-  { "keylist", mp_input_print_key_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, "prints all keys that can be bound to commands" },
-  { "cmdlist", mp_input_print_cmd_list, CONF_TYPE_FUNC, CONF_GLOBAL, 0, 0, "prints all commands that can be bound to keys" },
+  { "keylist", &libinput_conf.print_key_list, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "prints all keys that can be bound to commands" },
+  { "cmdlist", &libinput_conf.print_cmd_list, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "prints all commands that can be bound to keys" },
   { "file", &libinput_conf.in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifes file with commands (useful for FIFO)" },
 #ifdef HAVE_LIRC
   { "lircconf", &lirc_configfile, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies a config.file for LIRC"},
@@ -1346,6 +1347,8 @@ any_t* RND_RENAME0(mp_input_open)(void) {
     priv->ar_state=-1;
     priv->in_file_fd=-1;
     mp_input_init(priv);
+    if(libinput_conf.print_key_list) mp_input_print_key_list(priv);
+    if(libinput_conf.print_cmd_list) mp_input_print_cmd_list(priv);
     return priv;
 }
 
@@ -1365,8 +1368,7 @@ void mp_input_print_keys(any_t*handle) {
     for(i= 0; key_names[i].name != NULL ; i++) MSG_INFO("%s\n",key_names[i].name);
 }
 
-static int mp_input_print_key_list(any_t*handle,const config_t* cfg) {
-    UNUSED(cfg);
+static int mp_input_print_key_list(any_t*handle) {
     mp_input_print_keys(handle);
     exit(0);
 }
@@ -1412,8 +1414,7 @@ void mp_input_print_cmds(any_t*handle) {
     }
 }
 
-static int mp_input_print_cmd_list(any_t*handle,const config_t* cfg) {
-    UNUSED(cfg);
+static int mp_input_print_cmd_list(any_t*handle) {
     mp_input_print_cmds(handle);
     exit(0);
 }

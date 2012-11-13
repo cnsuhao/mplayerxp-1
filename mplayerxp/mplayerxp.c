@@ -154,12 +154,6 @@ vo_data_t* vo_data=NULL;
 /**************************************************************************
 	     Config file
 **************************************************************************/
-static int cfg_inc_verbose(struct config *conf){ UNUSED(conf); ++mp_conf.verbose; return 0;}
-
-static MPXP_Rc cfg_include(struct config *conf, char *filename){
-    UNUSED(conf);
-    return m_config_parse_config_file(mp_data->mconfig, filename);
-}
 #include "cfg-mplayerxp.h"
 
 /**************************************************************************/

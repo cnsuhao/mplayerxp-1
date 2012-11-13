@@ -38,22 +38,8 @@ extern const m_option_type_t m_option_type_subconfig;
 extern const m_option_type_t m_option_type_imgfmt;
 extern const m_option_type_t m_option_type_afmt;
 
-// Func-based types
-extern const m_option_type_t m_option_type_func_full;
-extern const m_option_type_t m_option_type_func_param;
-extern const m_option_type_t m_option_type_func;
-
 /// Callback used to reset func options.
 typedef void (*m_opt_default_func_t)(const m_option_t *, const char*);
-
-/// Callback used by m_option_type_func_full options.
-typedef int (*m_opt_func_full_t)(const m_option_t *, const char *, char *);
-
-/// Callback used by m_option_type_func_param options.
-typedef int (*m_opt_func_param_t)(const m_option_t *, const char *);
-
-/// Callback used by m_option_type_func options.
-typedef int (*m_opt_func_t)(const m_option_t *);
 
 enum {
     END_AT_NONE=0,
@@ -136,10 +122,7 @@ extern const m_obj_params_t m_span_params_def;
 #define MCONF_TYPE_FLOAT	(&m_option_type_float)
 #define MCONF_TYPE_DOUBLE	(&m_option_type_double)
 #define MCONF_TYPE_STRING	(&m_option_type_string)
-#define MCONF_TYPE_FUNC		(&m_option_type_func)
-#define MCONF_TYPE_FUNC_PARAM	(&m_option_type_func_param)
 #define MCONF_TYPE_PRINT	(&m_option_type_print)
-#define MCONF_TYPE_FUNC_FULL	(&m_option_type_func_full)
 #define MCONF_TYPE_SUBCONFIG	(&m_option_type_subconfig)
 #define MCONF_TYPE_POSITION	(&m_option_type_position)
 #define MCONF_TYPE_IMGFMT	(&m_option_type_imgfmt)

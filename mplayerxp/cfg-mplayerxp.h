@@ -23,19 +23,6 @@ extern char *cookies_file;
 extern af_cfg_t af_cfg; // Configuration for audio filters
 extern vf_cfg_t vf_cfg; // Configuration for audio filters
 
-/*
- * CONF_TYPE_FUNC_FULL :
- * allows own implemtations for passing the params
- *
- * the function receives parameter name and argument (if it does not start with - )
- * useful with a conf.name like 'aa*' to parse several parameters to a function
- * return 0 =ok, but we didn't need the param (could be the filename)
- * return 1 =ok, we accepted the param
- * negative values: see cfgparser.h, ERR_XXX
- *
- * by Folke
- */
-
 static const config_t xpcore_config[]={
 	{"xp", &mp_conf.xp, CONF_TYPE_INT, CONF_RANGE, 0, UINT_MAX, "specifies number cpus to use for playback"},
 	{"dump", &mp_conf.stream_dump, CONF_TYPE_STRING, 0, 0, 0, "specifies dump type and name for the dump of stream"},
@@ -256,7 +243,7 @@ static const config_t playback_config[]={
 
 static const config_t mplayer_opts[]={
 	/* name, pointer, type, flags, min, max, help */
-	{"include", cfg_include, CONF_TYPE_FUNC_PARAM, CONF_NOSAVE, 0, 0, ""}, /* this don't need anymore to be the first!!! */
+	{"include", NULL, CONF_TYPE_INCLUDE, CONF_NOSAVE, 0, 0, ""}, /* this don't need anymore to be the first!!! */
 
 //---------------------- libao/libvo/mplayer options ------------------------
 	{"vo", &mp_conf.video_driver, CONF_TYPE_STRING, 0, 0, 0, "select video output driver and optinaly device"},
@@ -268,7 +255,7 @@ static const config_t mplayer_opts[]={
 	{"ac", &mp_conf.audio_codec, CONF_TYPE_STRING, 0, 0, 0, "forces usage of specified audio-decoder"},
 	{"vc", &mp_conf.video_codec, CONF_TYPE_STRING, 0, 0, 0, "forces usage of specified video-decoder"},
 /*UD*/	{"verbose", &mp_conf.verbose, CONF_TYPE_INT, CONF_RANGE|CONF_GLOBAL, 0, 100, "verbose output"},
-	{"v", cfg_inc_verbose, CONF_TYPE_FUNC, CONF_GLOBAL|CONF_NOSAVE, 0, 0, "verbose output (more -v means more verbosity)"},
+	{"v", &mp_conf.verbose, CONF_TYPE_INC, 0, 0, 0, "verbose output (more -v means more verbosity)"},
 	{"msgfilter", &mp_conf.msg_filter, CONF_TYPE_INT, CONF_RANGE, 0, 0xFFFFFFFF, "specifies filter for verbosed messages"},
 
 	{"core", &xpcore_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "XP-core related options" },

@@ -12,10 +12,9 @@ enum {
     CONF_TYPE_FLOAT	=2,
     CONF_TYPE_STRING	=3,
     CONF_TYPE_PRINT	=4,
-    CONF_TYPE_FUNC	=5,
-    CONF_TYPE_FUNC_PARAM=6,
-    CONF_TYPE_FUNC_FULL	=7,
-    CONF_TYPE_SUBCONFIG	=8
+    CONF_TYPE_INC	=5,
+    CONF_TYPE_INCLUDE   =6,
+    CONF_TYPE_SUBCONFIG	=7
 };
 enum {
     ERR_NOT_AN_OPTION	=-1,
@@ -82,7 +81,7 @@ struct config_save {
  * 	 0 if can't open configfile
  * 	 1 on success
  */
-MPXP_Rc m_config_parse_config_file(m_config_t *config, char *conffile);
+MPXP_Rc m_config_parse_config_file(m_config_t *config,const char *conffile);
 
 /* parse_command_line returns:
  * 	-1 on error (invalid option...)

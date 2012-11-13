@@ -16,6 +16,7 @@
 #include <string.h>
 #include <errno.h>
 #include "mp_config.h"
+#include "osdep/mplib.h"
 
 #define COMMAND_LINE		0
 #define CONFIG_FILE		1
@@ -90,6 +91,7 @@ m_config_save_option(m_config_t* config,const config_t* conf,const char* opt,con
 
   switch(conf->type) {
   case CONF_TYPE_FLAG :
+  case CONF_TYPE_INC :
   case CONF_TYPE_INT :
     save[sl].param.as_int = *((int*)conf->p);
     break;
@@ -99,13 +101,9 @@ m_config_save_option(m_config_t* config,const config_t* conf,const char* opt,con
   case CONF_TYPE_STRING :
     save[sl].param.as_pointer = *((char**)conf->p);
     break;
-  case CONF_TYPE_FUNC_FULL :
-    if(strcasecmp(conf->name,opt) != 0) save->opt_name = mp_strdup(opt);
-  case CONF_TYPE_FUNC_PARAM :
+  case CONF_TYPE_INCLUDE :
     if(param)
       save->param.as_pointer = mp_strdup(param);
-  case CONF_TYPE_FUNC :
-    break;
   default :
     MSG_ERR("Should never append in m_config_save_option : conf->type=%d\n",conf->type);
   }
@@ -129,7 +127,8 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
   MSG_DBG2("Reverting option %s\n",arg);
 
   switch(save->opt->type) {
-  case CONF_TYPE_FLAG :
+  case CONF_TYPE_FLAG:
+  case CONF_TYPE_INC :
   case CONF_TYPE_INT :
     *((int*)save->opt->p) = save->param.as_int;
     break;
@@ -139,9 +138,7 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
   case CONF_TYPE_STRING :
     *((char**)save->opt->p) = save->param.as_pointer;
     break;
-  case CONF_TYPE_FUNC_PARAM :
-  case CONF_TYPE_FUNC_FULL :
-  case CONF_TYPE_FUNC :
+  case CONF_TYPE_INCLUDE :
     if(config->cs_level > 0) {
       for(i = config->cs_level - 1 ; i >= 0 ; i--){
 	if(config->config_stack[i] == NULL) continue;
@@ -159,27 +156,13 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
     if(i < 0) break;
     arg = iter->opt_name ? iter->opt_name : iter->opt->name;
     switch(iter->opt->type) {
-    case CONF_TYPE_FUNC :
-      if ((((cfg_func_t) iter->opt->p)(iter->opt)) < 0)
-	return -1;
-      break;
-    case CONF_TYPE_FUNC_PARAM :
+    case CONF_TYPE_INCLUDE :
       if (iter->param.as_pointer == NULL) {
 	MSG_ERR("We lost param for option %s?\n",iter->opt->name);
 	return -1;
       }
       if ((((cfg_func_param_t) iter->opt->p)(iter->opt, (char*)iter->param.as_pointer)) < 0)
 	return -1;
-      break;
-    case CONF_TYPE_FUNC_FULL :
-      if (iter->param.as_pointer != NULL && ((char*)iter->param.as_pointer)[0]=='-'){
-	if( ((cfg_func_arg_param_t) iter->opt->p)(iter->opt, arg, NULL) < 0)
-	  return -1;
-      }else {
-	if (((cfg_func_arg_param_t) save->opt->p)(iter->opt, arg, (char*)iter->param.as_pointer) < 0)
-	  return -1;
-
-      }
       break;
     }
     break;
@@ -330,6 +313,12 @@ static int config_is_entry_option(m_config_t *config,const char *opt,const char 
     return 0;
 }
 
+static MPXP_Rc cfg_include(m_config_t* conf,const char *filename){
+    return m_config_parse_config_file(conf, filename);
+}
+
+static int cfg_inc_int(int value){ return ++value; }
+
 static int config_read_option(m_config_t *config,const config_t** conf_list,const char *opt,const char *param)
 {
 	int i=0,nconf = 0;
@@ -344,7 +333,6 @@ static int config_read_option(m_config_t *config,const config_t** conf_list,cons
 	assert(conf_list != NULL);
 	assert(opt != NULL);
 #endif
-
 	MSG_DBG3( "read_option: conf=%p opt='%s' param='%s'\n",
 	    conf, opt, param);
 	for(nconf = 0 ;  conf_list[nconf] != NULL; nconf++) {
@@ -507,32 +495,18 @@ static int config_read_option(m_config_t *config,const config_t** conf_list,cons
 			MSG_DBG3("assigning %s=%s as string value\n",conf[i].name,param);
 			ret = 1;
 			break;
-		case CONF_TYPE_FUNC_PARAM:
+		case CONF_TYPE_INC:
+			*((int *) conf[i].p) = cfg_inc_int(*((int *) conf[i].p));
+			ret = 1;
+			break;
+		case CONF_TYPE_INCLUDE:
 			if (param == NULL)
 				goto err_missing_param;
-			if ((((cfg_func_param_t) conf[i].p)(conf + i, param)) < 0) {
+			if (cfg_include(config, param) < 0) {
 				ret = ERR_FUNC_ERR;
 				goto out;
 			}
 			ret = 1;
-			break;
-		case CONF_TYPE_FUNC_FULL:
-			if (param!=NULL && param[0]=='-'){
-			    ret=((cfg_func_arg_param_t) conf[i].p)(conf + i, opt, NULL);
-			    if (ret>=0) ret=0;
-			    /* if we return >=0: param is processed again (if there is any) */
-			}else{
-			    ret=((cfg_func_arg_param_t) conf[i].p)(conf + i, opt, param);
-			    /* if we return 0: need no param, precess it again */
-			    /* if we return 1: accepted param */
-			}
-			break;
-		case CONF_TYPE_FUNC:
-			if ((((cfg_func_t) conf[i].p)(conf + i)) < 0) {
-				ret = ERR_FUNC_ERR;
-				goto out;
-			}
-			ret = 0;
 			break;
 #if 0
 // we have handled it in other function
@@ -696,7 +670,7 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
   return config_read_option(config,config->opt_list,opt,param);
 }
 
-MPXP_Rc m_config_parse_config_file(m_config_t *config, char *conffile)
+MPXP_Rc m_config_parse_config_file(m_config_t *config,const char *conffile)
 {
 #define PRINT_LINENUM	MSG_ERR("%s(%d): ", conffile, line_num)
 #define MAX_LINE_LEN	1000
