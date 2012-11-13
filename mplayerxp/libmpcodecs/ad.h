@@ -20,11 +20,38 @@ enum {
     ADCTRL_SKIP_FRAME	=1
 };
 
+enum {
+    Audio_MaxOutSample	=16,
+};
+
+// Outfmt flags:
+typedef enum {
+    AudioFlag_Flip		=0x00000001,
+    AudioFlag_YUVHack		=0x00000002
+}audio_flags_e;
+
+typedef enum {
+    ACodecStatus_Working	=3,
+    ACodecStatus_Problems	=2,
+    ACodecStatus_Untested	=1,
+    ACodecStatus_NotWorking	=0,
+}acodec_status_e;
+
+typedef struct audio_probe_s {
+    const char*		driver;
+    uint32_t		wtag;
+    const char*		codec_dll;
+    acodec_status_e	status;
+    uint16_t		sample_fmt[Audio_MaxOutSample];
+    audio_flags_e	flags[Audio_MaxOutSample];
+}audio_probe_t;
+
 /* interface of video decoder drivers */
 typedef struct ad_functions_s
 {
     const ad_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
+    audio_probe_t	(* __FASTCALL__ probe)(uint32_t wtag);
     MPXP_Rc		(* __FASTCALL__ preinit)(sh_audio_t *);
     MPXP_Rc		(* __FASTCALL__ init)(sh_audio_t *sh);
     void		(* __FASTCALL__ uninit)(sh_audio_t *sh);

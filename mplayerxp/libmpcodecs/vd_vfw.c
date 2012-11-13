@@ -40,6 +40,8 @@ LIBVD_EXTERN(vfw)
 LIBVD_EXTERN(vfwex)
 #undef info
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 typedef struct priv_s {
     BITMAPINFOHEADER *o_bih; /* out format */
     HIC hic;

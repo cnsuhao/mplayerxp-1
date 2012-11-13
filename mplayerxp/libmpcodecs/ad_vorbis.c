@@ -24,6 +24,8 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(vorbis)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 #include <math.h>
 #include <vorbis/codec.h>
 

@@ -3,6 +3,33 @@
 
 #include "libmpconf/cfgparser.h"
 #include "xmpcore/xmp_enums.h"
+#include "dec_video.h"
+
+enum {
+    Video_MaxOutFmt	=16,
+};
+
+// Outfmt flags:
+typedef enum {
+    VideoFlag_Flip		=0x00000001,
+    VideoFlag_YUVHack		=0x00000002
+}video_flags_e;
+
+typedef enum {
+    VCodecStatus_Working	=3,
+    VCodecStatus_Problems	=2,
+    VCodecStatus_Untested	=1,
+    VCodecStatus_NotWorking	=0,
+}vcodec_status_e;
+
+typedef struct video_probe_s {
+    const char*		driver;
+    uint32_t		fourcc;
+    const char*		codec_dll;
+    vcodec_status_e	status;
+    uint32_t		pix_fmt[Video_MaxOutFmt];
+    video_flags_e	flags[Video_MaxOutFmt];
+}video_probe_t;
 
 typedef struct vd_info_s
 {
@@ -17,6 +44,7 @@ typedef struct vd_functions_s
 {
     const vd_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
+    video_probe_t*	(*__FASTCALL__ probe)(uint32_t fourcc);
     MPXP_Rc		(*__FASTCALL__ init)(sh_video_t *sh,any_t* libinput);
     void		(*__FASTCALL__ uninit)(sh_video_t *sh);
     MPXP_Rc		(* control)(sh_video_t *sh,int cmd,any_t* arg, ...);

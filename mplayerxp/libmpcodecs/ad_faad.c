@@ -40,6 +40,8 @@ typedef struct faad_priv_s {
   float pts;
 }priv_t;
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 typedef any_t*NeAACDecHandle;
 typedef struct NeAACDecConfiguration {
     unsigned char defObjectType;

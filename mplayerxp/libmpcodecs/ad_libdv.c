@@ -32,6 +32,8 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(libdv)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 // defined in vd_libdv.c:
 dv_decoder_t*  init_global_rawdv_decoder(void);
 

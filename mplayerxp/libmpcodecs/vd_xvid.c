@@ -41,6 +41,8 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(xvid)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 #define XVID_MAKE_VERSION(a,b,c) ((((a)&0xff)<<16) | (((b)&0xff)<<8) | ((c)&0xff))
 #define XVID_VERSION_MAJOR(a)    ((char)(((a)>>16) & 0xff))
 #define XVID_VERSION_MINOR(a)    ((char)(((a)>> 8) & 0xff))

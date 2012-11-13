@@ -12,6 +12,7 @@
 
 #include "ad_msg.h"
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag);
 static MPXP_Rc __FASTCALL__ init(sh_audio_t *sh);
 static MPXP_Rc __FASTCALL__  preinit(sh_audio_t *sh);
 static void __FASTCALL__  uninit(sh_audio_t *sh);
@@ -21,6 +22,7 @@ static unsigned __FASTCALL__  decode(sh_audio_t *sh_audio,unsigned char *buf,uns
 #define LIBAD_EXTERN(x) const ad_functions_t mpcodecs_ad_##x = {\
 	&info,\
 	&options,\
+	probe, \
 	preinit,\
 	init,\
 	uninit,\

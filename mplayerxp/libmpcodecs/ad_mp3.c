@@ -27,6 +27,8 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(mp3)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 /** Opaque structure for the libmpg123 decoder handle. */
 struct mpg123_handle_struct;
 typedef struct mpg123_handle_struct mpg123_handle;

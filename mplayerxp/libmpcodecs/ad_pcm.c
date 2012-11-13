@@ -17,6 +17,8 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(pcm)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 MPXP_Rc init(sh_audio_t *sh_audio)
 {
     WAVEFORMATEX *h=sh_audio->wf;

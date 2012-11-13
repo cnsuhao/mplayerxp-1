@@ -18,6 +18,8 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(dvdpcm)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 MPXP_Rc init(sh_audio_t *sh)
 {
 /* DVD PCM Audio:*/

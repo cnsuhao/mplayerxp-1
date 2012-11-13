@@ -24,6 +24,8 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(real)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 /* copypaste from demux_real.c - it should match to get it working! */
 typedef struct dp_hdr_s {
     uint32_t chunks;	// number of chunks

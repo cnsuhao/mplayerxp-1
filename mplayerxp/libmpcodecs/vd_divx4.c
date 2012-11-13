@@ -35,6 +35,8 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(divx4)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 #define DIVX4LINUX_BETA 0
 #define DIVX4LINUX	1
 #define DIVX5LINUX	2

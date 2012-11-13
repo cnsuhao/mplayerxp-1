@@ -32,6 +32,9 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(libmpeg2)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
+
 #include "libmpdemux/parse_es.h"
 #include "libvo/video_out.h"
 #ifdef ATTRIBUTE_ALIGNED_MAX

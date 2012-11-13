@@ -186,6 +186,8 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 static MPXP_Rc find_vdecoder(sh_video_t* sh) {
     unsigned i;
     unsigned char flag = CODECS_FLAG_NOFLIP;

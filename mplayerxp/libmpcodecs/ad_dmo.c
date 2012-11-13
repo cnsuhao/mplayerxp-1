@@ -32,6 +32,8 @@ typedef struct dmo_priv_s {
     DMO_AudioDecoder* ds_adec;
 }priv_t;
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 static MPXP_Rc init(sh_audio_t *sh)
 {
     UNUSED(sh);

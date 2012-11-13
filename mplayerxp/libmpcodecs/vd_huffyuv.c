@@ -38,6 +38,7 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(huffyuv)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
 
 /*
  * Bitmap types

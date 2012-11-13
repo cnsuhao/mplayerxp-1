@@ -39,6 +39,8 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(xanim)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 /*************************** START OF XA CODEC BINARY INTERFACE ****************/
 typedef struct {
     unsigned int	what;

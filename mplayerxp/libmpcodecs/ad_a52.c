@@ -46,6 +46,8 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(a52)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 int a52_fillbuff(sh_audio_t *sh_audio,float *pts){
     int length=0;
     int flags=0;

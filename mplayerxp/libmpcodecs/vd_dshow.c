@@ -26,6 +26,8 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(dshow)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 // to set/get/query special features/parameters
 static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd){

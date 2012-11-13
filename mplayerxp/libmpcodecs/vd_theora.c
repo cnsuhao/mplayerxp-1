@@ -27,6 +27,8 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(theora)
 
+static video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+
 #define THEORA_NUM_HEADER_PACKETS 3
 
 

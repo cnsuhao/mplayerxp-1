@@ -159,6 +159,8 @@ extern ad_functions_t mpcodecs_ad_a52;
 static a52_state_t * (*a52_init_ptr) (uint32_t mm_accel);
 #define a52_init(a) (*a52_init_ptr)(a)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 MPXP_Rc preinit(sh_audio_t *sh)
 {
     /* Dolby AC3 audio: */

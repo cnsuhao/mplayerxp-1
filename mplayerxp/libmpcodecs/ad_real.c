@@ -26,6 +26,8 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(real)
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 static any_t*handle=NULL;
 
 any_t*__builtin_new(unsigned long size) {

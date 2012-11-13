@@ -23,6 +23,8 @@ typedef struct priv_s {
     AVCodecContext *lavc_ctx;
 }priv_t;
 
+static audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
+
 struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
     unsigned i;
     struct codecs_st* acodec = NULL;
