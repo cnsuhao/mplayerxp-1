@@ -438,7 +438,7 @@ void	mp_uninit_malloc(int verbose)
 	} else {
 	    if(priv->reallocs.nslots || priv->frees.nslots)
 		MSG_WARN("*** Were found suspect calls of mp_realloc or mp_free  ***\n"
-			 "*** Most probably your copy of program contains VIRUSES!!!\n");
+			 "*** Most probably your copy of program contains viruses!!!\n");
 	}
     }
     if(done) MSG_HINT("\nFor source lines you may also print in (gdb): list *0xADDRESS\n");
