@@ -162,7 +162,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
     }
 
     demuxer->flags &= ~DEMUXF_SEEKABLE;
-
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

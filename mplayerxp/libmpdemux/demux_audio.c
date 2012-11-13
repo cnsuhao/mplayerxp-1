@@ -1362,6 +1362,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   if(mp_conf.verbose && sh_audio->wf) print_wave_header(sh_audio->wf,sizeof(WAVEFORMATEX));
   if(demuxer->movi_length==UINT_MAX && sh_audio->i_bps)
     demuxer->movi_length=(unsigned)(((float)demuxer->movi_end-(float)demuxer->movi_start)/(float)sh_audio->i_bps);
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
   return demuxer;
 }
 

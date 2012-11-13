@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mplayerxp.h"
 #include "af.h"
 #include "osdep/mplib.h"
 
@@ -62,25 +63,26 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 
 // Allocate memory and set function pointers
 static MPXP_Rc open(af_instance_t* af){
-	af->control	= control;
-	af->uninit	= uninit;
-	af->play	= play;
-	af->mul.n	= 1;
-	af->mul.d	= 1;
-	af->data	= mp_calloc(1,sizeof(mp_aframe_t));
+    af->control	= control;
+    af->uninit	= uninit;
+    af->play	= play;
+    af->mul.n	= 1;
+    af->mul.d	= 1;
+    af->data	= mp_calloc(1,sizeof(mp_aframe_t));
 
-	if(af->data == NULL)
-		return MPXP_Error;
+    if(af->data == NULL)
+	return MPXP_Error;
 
-	return MPXP_Ok;
+    check_pin("afilter",af->pin,AF_PIN);
+    return MPXP_Ok;
 }
 
 // Description of this filter
 const af_info_t af_info_karaoke = {
-	"Simple karaoke/voice-removal audio filter",
-	"karaoke",
-	"Reynaldo H. Verdejo Pinochet",
-	"",
-	AF_FLAGS_REENTRANT,
-	open
+    "Simple karaoke/voice-removal audio filter",
+    "karaoke",
+    "Reynaldo H. Verdejo Pinochet",
+    "",
+    AF_FLAGS_REENTRANT,
+    open
 };

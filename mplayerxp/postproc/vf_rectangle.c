@@ -170,6 +170,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {
     if (args)
 	sscanf(args, "%d:%d:%d:%d",
 	       &vf->priv->w, &vf->priv->h, &vf->priv->x, &vf->priv->y);
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

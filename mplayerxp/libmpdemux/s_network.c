@@ -45,6 +45,7 @@ static MPXP_Rc __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const 
 	stream->sector_size=STREAM_BUFFER_SIZE;
 	return MPXP_Ok;
     }
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_False;
 }
 

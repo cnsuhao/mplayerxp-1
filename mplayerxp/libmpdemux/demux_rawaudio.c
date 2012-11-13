@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "mplayerxp.h"
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
@@ -70,8 +71,8 @@ static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
   demuxer->audio->id = 0;
   sh_audio->ds = demuxer->audio;
   if(!(demuxer->stream->type & STREAMTYPE_SEEKABLE)) demuxer->flags &= ~DEMUXF_SEEKABLE;
-
-  return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static int rawaudio_demux(demuxer_t* demuxer, demux_stream_t *ds) {

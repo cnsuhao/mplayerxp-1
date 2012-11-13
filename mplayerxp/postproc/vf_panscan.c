@@ -204,6 +204,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->priv->panscan=0;
     if(args) sscanf(args,"%f",&vf->priv->panscan);
     if(vf->priv->panscan<=0.) return MPXP_False;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 
@@ -263,6 +264,7 @@ static MPXP_Rc __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args){
     vf->priv->ps_w=
     vf->priv->ps_h=-1;
     if(args) sscanf(args,"%i,%i,%i,%i",&vf->priv->ps_x,&vf->priv->ps_y,&vf->priv->ps_w,&vf->priv->ps_h);
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

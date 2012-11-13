@@ -27,6 +27,7 @@
 #include <math.h>
 #include <limits.h>
 
+#include "mplayerxp.h"
 #include "af.h"
 #include "aflib.h"
 #include "osdep/mplib.h"
@@ -213,6 +214,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     return MPXP_Error;
   set_defaults(af->setup);
   init_echo3d(af->setup,44100);
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

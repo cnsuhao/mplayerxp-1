@@ -571,6 +571,7 @@ static MPXP_Rc __FASTCALL__ _tv_open(any_t*libinput,stream_t*stream,const char *
 	goto tv_err;
 
     stream->type = STREAMTYPE_STREAM;
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 
     /* something went wrong - uninit */

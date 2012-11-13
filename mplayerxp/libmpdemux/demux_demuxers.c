@@ -35,7 +35,10 @@ demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd) {
   ret->audio = ad->audio;
   ret->sub = sd->sub;
 
-  return ret;
+    check_pin("demuxer",ad->pin,DEMUX_PIN);
+    check_pin("demuxer",vd->pin,DEMUX_PIN);
+    check_pin("demuxer",sd->pin,DEMUX_PIN);
+    return ret;
 }
 
 static int demux_demuxers_fill_buffer(demuxer_t *demux,demux_stream_t *ds) {

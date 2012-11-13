@@ -237,13 +237,11 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
   if (sh_audio)
     sh_audio->wf->nBlockAlign = largest_audio_chunk * 2;
 
-  roq_data->current_chunk = 0;
-
-  demuxer->priv = roq_data;
-
-  stream_reset(demuxer->stream);
-
-  return demuxer;
+    roq_data->current_chunk = 0;
+    demuxer->priv = roq_data;
+    stream_reset(demuxer->stream);
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void roq_close(demuxer_t* demuxer) {

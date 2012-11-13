@@ -62,9 +62,14 @@ typedef struct demux_packet_st {
 } demux_packet_t;
 
 /** Describes interface to stream associated with this demuxer */
+enum {
+    DS_PIN=RND_NUMBER1+RND_CHAR1
+};
+
 typedef struct demux_stream_s {
     int			id;		/**< stream ID  (for multiple audio/video streams) */
     char		antiviral_hole[RND_CHAR2];
+    unsigned		pin;		/**< personal identification number */
     int			buffer_pos;	/**< current buffer position */
     int			buffer_size;	/**< current buffer size */
     unsigned char*	buffer;		/**< current buffer */
@@ -91,7 +96,7 @@ typedef struct demux_stream_s {
     float		prev_pts;	/**< PTS of previous packet (DVD's PTS correction) */
     float		pts_corr;	/**< PTS correction (DVD's PTS correction) */
     int			pts_flags;	/**< PTS flags like trigger for correction applying (DVD's PTS correction) */
-} demux_stream_t;
+} demux_stream_t __attribute__ ((packed));
 
 enum {
     MAX_A_STREAMS	=256,
@@ -102,8 +107,13 @@ enum {
     DEMUXF_SEEKABLE	=0x00000001UL
 };
 /** Describes demuxer (demultiplexer) of movie */
+enum {
+    DEMUX_PIN=RND_NUMBER2+RND_CHAR2
+};
+
 typedef struct demuxer_s {
     char		antiviral_hole[RND_CHAR3];
+    unsigned		pin;		/**< personal identification number */
     stream_t*		stream;		/**< stream for movie reading */
     demux_stream_t*	audio;		/**< audio buffer/demuxer */
     demux_stream_t*	video;		/**< video buffer/demuxer */
@@ -122,7 +132,7 @@ typedef struct demuxer_s {
     any_t*		priv;		/**< private data of demuxer's driver.*/
     any_t*		info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
     struct demuxer_driver_s* driver;	/**< driver associated with this demuxer */
-} demuxer_t;
+} demuxer_t __attribute__ ((packed));
 
 enum {
     DEMUX_SEEK_CUR	=0x00,

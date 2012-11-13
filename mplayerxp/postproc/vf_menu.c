@@ -257,7 +257,7 @@ static MPXP_Rc __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
   vf->uninit=uninit;
   vf->priv=st_priv;
   go2pause=0;
-
+    check_pin("vfilter",vf->pin,VF_PIN);
   return MPXP_Ok;
 }
 

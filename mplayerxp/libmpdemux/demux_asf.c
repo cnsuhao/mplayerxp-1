@@ -388,7 +388,8 @@ if(!video_streams){
     }
   }
 }
-return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 // based on asf file-wtag doc by Eugene [http://divx.euro.ru]

@@ -12,8 +12,8 @@ extern "C" {
 #endif
 
 typedef enum enc_frame_type {
-    AudioFrame=1,
-    VideoFrame
+    AudioFrame=RND_NUMBER0,
+    VideoFrame=RND_NUMBER1
 }enc_frame_type_e;
 
 typedef struct enc_frame_s {

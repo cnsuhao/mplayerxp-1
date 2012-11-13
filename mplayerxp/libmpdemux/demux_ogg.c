@@ -1063,9 +1063,9 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
     demuxer->flags |= DEMUXF_SEEKABLE;
     demux_ogg_scan_stream(demuxer);
   }
-  MSG_V("Ogg demuxer : found %d audio stream%s, %d video stream%s and %d text stream%s\n",n_audio,n_audio>1?"s":"",n_video,n_video>1?"s":"",ogg_d->n_text,ogg_d->n_text>1?"s":"");
-
-  return demuxer;
+    MSG_V("Ogg demuxer : found %d audio stream%s, %d video stream%s and %d text stream%s\n",n_audio,n_audio>1?"s":"",n_video,n_video>1?"s":"",ogg_d->n_text,ogg_d->n_text>1?"s":"");
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 
 err_out:
   ogg_close(demuxer);

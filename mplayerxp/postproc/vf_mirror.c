@@ -136,6 +136,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(dir==0)	vf->priv->method=mirror_x;
     else	vf->priv->method=mirror_y;
     vf->priv->dir=dir;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

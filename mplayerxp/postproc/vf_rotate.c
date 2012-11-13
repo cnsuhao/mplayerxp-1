@@ -185,6 +185,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->config=vf_next_config;
 	MSG_INFO("[vf_rotate] passthrough mode\n");
     }
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

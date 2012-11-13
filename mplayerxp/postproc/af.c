@@ -121,6 +121,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
     return NULL;
   }
   RND_RENAME0(rnd_fill)(_new->antiviral_hole,sizeof(_new->antiviral_hole));
+  _new->pin=AF_PIN;
   _new->parent=s;
   // Check for commandline parameters
   strsep(&cmdline, "=");
@@ -210,7 +211,7 @@ static af_instance_t* af_append(af_stream_t* s, af_instance_t* af,const char* na
 }
 
 // Uninit and remove the filter "af"
-void af_remove(af_stream_t* s, af_instance_t* af)
+static void af_remove(af_stream_t* s, af_instance_t* af)
 {
   if(!af) return;
 
@@ -479,7 +480,7 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
    to the stream s. The filter will be inserted somewhere nice in the
    list of filters. The return value is a pointer to the new filter,
    If the filter couldn't be added the return value is NULL. */
-af_instance_t* af_add(af_stream_t* s,const char* name){
+static af_instance_t* af_add(af_stream_t* s,const char* name){
   af_instance_t* new;
   // Sanity check
   if(!s || !s->first || !name)
@@ -573,19 +574,20 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s)
    function should not be called directly */
 MPXP_Rc __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len)
 {
-  // Calculate new length
-  MSG_V("[libaf] Reallocating memory in module %s, "
+    // Calculate new length
+    MSG_V("[libaf] Reallocating memory in module %s, "
 	 "old len = %i, new len = %i\n",af->info->name,af->data->len,len);
-  // If there is a buffer mp_free it
-  if(af->data->audio) mp_free(af->data->audio);
-  // Create new buffer and check that it is OK
-  af->data->audio = mp_malloc(len);
-  if(!af->data->audio){
-    MSG_FATAL(MSGTR_OutOfMemory);
-    return MPXP_Error;
-  }
-  af->data->len=len;
-  return MPXP_Ok;
+    // If there is a buffer mp_free it
+    if(af->data->audio) mp_free(af->data->audio);
+    // Create new buffer and check that it is OK
+    af->data->audio = mp_malloc(len);
+    if(!af->data->audio){
+	MSG_FATAL(MSGTR_OutOfMemory);
+	return MPXP_Error;
+    }
+    af->data->len=len;
+    check_pin("afilter",af->pin,AF_PIN);
+    return MPXP_Ok;
 }
 
 // send control to all filters, starting with the last until
@@ -659,14 +661,15 @@ af_stream_t *RND_RENAME6(af_new)(any_t*_parent)
 
 void af_showconf(af_instance_t *first)
 {
-  af_instance_t* af=first;
-  // ok!
-  MSG_INFO("[libaf] Using audio filters chain:\n");
-  // Iterate through all filters
-  do{
+    af_instance_t* af=first;
+    // ok!
+    MSG_INFO("[libaf] Using audio filters chain:\n");
+    // Iterate through all filters
+    check_pin("afilter",af->pin,AF_PIN);
+    do{
 	MSG_INFO("  ");
 	if(af->control(af,AF_CONTROL_SHOWCONF,NULL)!=MPXP_Ok)
 	    MSG_INFO("[af_%s %s]\n",af->info->name,af->info->info);
 	af=af->next;
-  }while(af);
+    }while(af);
 }

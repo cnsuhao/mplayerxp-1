@@ -185,8 +185,8 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   sh_video->fps = 2;
 
 //  demuxer->priv = bmp_image;
-
-  return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void bmp_close(demuxer_t* demuxer)

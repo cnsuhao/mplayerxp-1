@@ -333,6 +333,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
      ((af_volnorm_t*)af->setup)->mem[i].len = 0;
      ((af_volnorm_t*)af->setup)->mem[i].avg = 0;
   }
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

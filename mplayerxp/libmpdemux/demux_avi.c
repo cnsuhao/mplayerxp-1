@@ -1324,7 +1324,8 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
    }
 #endif
   }
-  return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){

@@ -123,6 +123,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(!vf->priv) vf->priv=mp_mallocz(sizeof(struct vf_priv_s));
     if(args) sscanf(args,"%d:%d",&vf->priv->up_h,&vf->priv->dn_h);
     else     vf->priv->up_h=vf->priv->dn_h=-1;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

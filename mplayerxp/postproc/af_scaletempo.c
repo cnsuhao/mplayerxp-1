@@ -455,6 +455,7 @@ static MPXP_Rc __FASTCALL__ af_open(struct af_instance_s* af){
   s->ms_stride = 60;
   s->percent_overlap = .20;
   s->ms_search = 14;
+    check_pin("afilter",af->pin,AF_PIN);
 
   return MPXP_Ok;
 }

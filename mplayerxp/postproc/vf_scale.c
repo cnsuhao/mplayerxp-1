@@ -531,6 +531,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->priv->w,
     vf->priv->h);
     if(!mp_conf.verbose) av_log_set_level(AV_LOG_FATAL); /* suppress: slices start in the middle */
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 
@@ -538,6 +539,7 @@ static MPXP_Rc __FASTCALL__ vf_open_fmtcvt(vf_instance_t *vf,const char* args){
     int retval = vf_open(vf,args);
     vf->put_slice=put_slice;
     vf->print_conf=print_conf_fmtcvt;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return retval;
 }
 

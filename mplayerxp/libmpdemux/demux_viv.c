@@ -725,6 +725,7 @@ nosound:
 		;
 }
 }
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

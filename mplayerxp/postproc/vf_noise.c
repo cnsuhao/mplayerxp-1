@@ -478,7 +478,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     if(gCpuCaps.hasMMX2) lineNoise= lineNoise_MMX2;
 //    if(gCpuCaps.hasMMX) lineNoiseAvg= lineNoiseAvg_MMX2;
 #endif
-
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

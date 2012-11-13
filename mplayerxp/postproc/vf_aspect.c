@@ -59,7 +59,8 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 			sscanf(args, "%d:%d", &vf->priv->w, &vf->priv->h);
 		}
 	}
-	return MPXP_Ok;
+    check_pin("vfilter",vf->pin,VF_PIN);
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_aspect = {

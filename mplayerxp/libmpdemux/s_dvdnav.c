@@ -1,7 +1,7 @@
 /*
     s_dvdnav - DVDNAV's stream interface
 */
-#include "../mp_config.h"
+#include "mp_config.h"
 #ifdef USE_DVDNAV
 #include <stdlib.h>
 #include <string.h>
@@ -107,6 +107,7 @@ static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * fi
   if (dvdnav_get_title_string(dvdnav_priv->dvdnav,&title_str)==DVDNAV_STATUS_OK) {
     MSG_INFO("Title: '%s'\n",title_str);
   }
+  check_pin("stream",stream->pin,STREAM_PIN);
   return dvdnav_priv;
 }
 
@@ -248,6 +249,7 @@ static MPXP_Rc __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const 
     if(	dvdnav_is_domain_vmgm(((dvdnav_priv_t *)stream->priv)->dvdnav) ||
 	dvdnav_is_domain_vtsm(((dvdnav_priv_t *)stream->priv)->dvdnav))
 		stream->type = STREAMTYPE_MENU|STREAMTYPE_SEEKABLE;
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

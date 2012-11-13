@@ -79,6 +79,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af->setup=mp_malloc(sizeof(af_lp_t));
   if(af->data == NULL)
     return MPXP_Error;
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

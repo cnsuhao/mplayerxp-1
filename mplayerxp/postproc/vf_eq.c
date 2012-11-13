@@ -505,7 +505,7 @@ static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
     set_brightness (eq2, par[2]);
     set_saturation (eq2, par[3]);
   }
-
+    check_pin("vfilter",vf->pin,VF_PIN);
   return MPXP_Ok;
 }
 

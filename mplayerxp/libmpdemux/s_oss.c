@@ -125,6 +125,7 @@ static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char 
 	stream->sector_size *= 4096*oss_priv->nchannels*(oss_priv->sampleformat&MPAF_BPS_MASK)/stream->sector_size;
     }
     MSG_DBG2("[o_oss] Correct blocksize as %u\n",stream->sector_size);
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

@@ -268,7 +268,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 
 	if(!ds_fill_buffer(demuxer->audio))
 		MSG_WARN("[RealAudio] No data.\n");
-
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

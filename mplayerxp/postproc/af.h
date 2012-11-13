@@ -34,23 +34,27 @@ typedef struct af_info_s
   MPXP_Rc (* __FASTCALL__ open)(struct af_instance_s* vf);
 } af_info_t;
 
+enum {
+    AF_PIN=RND_NUMBER6+RND_CHAR6
+};
+
 // Linked list of audio filters
-typedef struct af_instance_s
-{
-  const af_info_t* info;
-  char			antiviral_hole[RND_CHAR6];
-  MPXP_Rc (* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
-  void (* __FASTCALL__ uninit)(struct af_instance_s* af);
-  mp_aframe_t* (* __FASTCALL__ play)(struct af_instance_s* af, mp_aframe_t* data,int final);
-  any_t* setup;	  // setup data for this specific instance and filter
-  mp_aframe_t* data; // configuration for outgoing data stream
-  struct af_instance_s* next;
-  struct af_instance_s* prev;
-  any_t*parent;
-  double delay; // Delay caused by the filter [ms]
-  frac_t mul; /* length multiplier: how much does this instance change
-		 the length of the buffer. */
-}af_instance_t;
+typedef struct af_instance_s {
+    const af_info_t*	info;
+    char		antiviral_hole[RND_CHAR6];
+    unsigned		pin; // personal identification number
+    MPXP_Rc		(* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
+    void		(* __FASTCALL__ uninit)(struct af_instance_s* af);
+    mp_aframe_t*	(* __FASTCALL__ play)(struct af_instance_s* af, mp_aframe_t* data,int final);
+    any_t*		setup; // setup data for this specific instance and filter
+    mp_aframe_t*	data; // configuration for outgoing data stream
+    struct af_instance_s* next;
+    struct af_instance_s* prev;
+    any_t*		parent;
+    double		delay; // Delay caused by the filter [ms]
+    frac_t		mul; /* length multiplier: how much does this instance change
+				the length of the buffer. */
+}af_instance_t __attribute__ ((packed));
 
 // Initialization flags
 extern int* af_cpu_speed;
@@ -117,15 +121,6 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output);
 
 // Uninit and remove all filters
 void af_uninit(af_stream_t* s);
-
-/* Add filter during execution. This function adds the filter "name"
-   to the stream s. The filter will be inserted somewhere nice in the
-   list of filters. The return value is a pointer to the new filter,
-   If the filter couldn't be added the return value is NULL. */
-af_instance_t* af_add(af_stream_t* s,const char* name);
-
-// Uninit and remove the filter "af"
-void af_remove(af_stream_t* s, af_instance_t* af);
 
 // Filter data chunk through the filters in the list
 mp_aframe_t* __FASTCALL__ RND_RENAME8(af_play)(af_stream_t* s, mp_aframe_t* data);

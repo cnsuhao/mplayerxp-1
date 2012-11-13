@@ -125,61 +125,56 @@ static MPXP_Rc pva_probe(demuxer_t * demuxer)
 
 static demuxer_t* pva_open (demuxer_t * demuxer)
 {
-	sh_video_t *sh_video = new_sh_video(demuxer,0);
-	sh_audio_t *sh_audio = new_sh_audio(demuxer,0);
+    sh_video_t *sh_video = new_sh_video(demuxer,0);
+    sh_audio_t *sh_audio = new_sh_audio(demuxer,0);
 
+    pva_priv_t * priv;
 
-	pva_priv_t * priv;
+    stream_reset(demuxer->stream);
+    stream_seek(demuxer->stream,0);
 
-	stream_reset(demuxer->stream);
-	stream_seek(demuxer->stream,0);
+    priv=mp_mallocz(sizeof(pva_priv_t));
+    demuxer->flags|=DEMUXF_SEEKABLE;
 
-	priv=mp_mallocz(sizeof(pva_priv_t));
-	demuxer->flags|=DEMUXF_SEEKABLE;
+    demuxer->priv=priv;
 
-	demuxer->priv=priv;
+    if(!pva_sync(demuxer))  {
+	MSG_ERR("Not a PVA file.\n");
+	return NULL;
+    }
 
-	if(!pva_sync(demuxer))
-	{
-		MSG_ERR("Not a PVA file.\n");
-		return NULL;
-	}
+    //printf("priv->just_synced %s after initial sync!\n",priv->just_synced?"set":"UNSET");
 
-	//printf("priv->just_synced %s after initial sync!\n",priv->just_synced?"set":"UNSET");
+    demuxer->video->sh=sh_video;
 
-	demuxer->video->sh=sh_video;
+    //printf("demuxer->stream->end_pos= %d\n",demuxer->stream->end_pos);
+    MSG_V("Opened PVA demuxer...\n");
+    /*
+     * Audio and Video codecs:
+     * the PVA spec only allows MPEG2 video and MPEG layer II audio. No need to check the formats then.
+     * Moreover, there would be no way to do that since the PVA stream format has no fields to describe
+     * the used codecs.
+     */
 
-	//printf("demuxer->stream->end_pos= %d\n",demuxer->stream->end_pos);
+    sh_video->fourcc=0x10000002;
+    sh_video->ds=demuxer->video;
 
+    /*
+    printf("demuxer->video->id==%d\n",demuxer->video->id);
+    printf("demuxer->audio->id==%d\n",demuxer->audio->id);
+    */
 
-	MSG_V("Opened PVA demuxer...\n");
+    demuxer->audio->sh=sh_audio;
+    sh_audio->wtag=0x50;
+    sh_audio->ds=demuxer->audio;
 
-	/*
-	 * Audio and Video codecs:
-	 * the PVA spec only allows MPEG2 video and MPEG layer II audio. No need to check the formats then.
-	 * Moreover, there would be no way to do that since the PVA stream format has no fields to describe
-	 * the used codecs.
-	 */
+    demuxer->movi_start=0;
+    demuxer->movi_end=demuxer->stream->end_pos;
 
-	sh_video->fourcc=0x10000002;
-	sh_video->ds=demuxer->video;
-
-	/*
-	printf("demuxer->video->id==%d\n",demuxer->video->id);
-	printf("demuxer->audio->id==%d\n",demuxer->audio->id);
-	*/
-
-	demuxer->audio->sh=sh_audio;
-	sh_audio->wtag=0x50;
-	sh_audio->ds=demuxer->audio;
-
-	demuxer->movi_start=0;
-	demuxer->movi_end=demuxer->stream->end_pos;
-
-	priv->last_video_pts=-1;
-	priv->last_audio_pts=-1;
-
-	return demuxer;
+    priv->last_video_pts=-1;
+    priv->last_audio_pts=-1;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static int pva_get_payload(demuxer_t * d,pva_payload_t * payload);

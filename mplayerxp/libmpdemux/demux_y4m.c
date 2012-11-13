@@ -222,6 +222,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
     MSG_V( "YUV4MPEG2 Video stream %d size: display: %dx%d, codec: %ux%u\n",
 	    demuxer->video->id, sh->src_w, sh->src_h, sh->bih->biWidth,
 	    sh->bih->biHeight);
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

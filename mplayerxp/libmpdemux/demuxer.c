@@ -116,6 +116,7 @@ int demux_aid_vid_mismatch = 0;
 demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
   demux_stream_t* ds=mp_malloc(sizeof(demux_stream_t));
   RND_RENAME0(rnd_fill)(ds->antiviral_hole,sizeof(ds->antiviral_hole));
+  ds->pin=DS_PIN;
   ds->buffer_pos=ds->buffer_size=0;
   ds->buffer=NULL;
   ds->pts=0;
@@ -143,6 +144,7 @@ demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
   demuxer_t *d=mp_mallocz(sizeof(demuxer_t));
   RND_RENAME0(rnd_fill)(d->antiviral_hole,sizeof(d->antiviral_hole));
+  d->pin=DEMUX_PIN;
   d->stream=stream;
   d->movi_start=stream->start_pos;
   d->movi_end=stream->end_pos;
@@ -167,6 +169,7 @@ sh_audio_t *get_sh_audio(demuxer_t *demuxer, int id)
 	    id, MAX_A_STREAMS);
 	return NULL;
     }
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer->a_streams[id];
 }
 
@@ -189,6 +192,7 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
 	  MSG_V("ID_AUDIO_ID=%d\n", aid);
     }
     ((sh_audio_t *)demuxer->a_streams[id])->aid = aid;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer->a_streams[id];
 }
 
@@ -205,6 +209,7 @@ sh_video_t *get_sh_video(demuxer_t *demuxer, int id)
 	    id, MAX_V_STREAMS);
 	return NULL;
     }
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer->v_streams[id];
 }
 
@@ -222,6 +227,7 @@ sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
 	  MSG_V("ID_VIDEO_ID=%d\n", vid);
     }
     ((sh_video_t *)demuxer->v_streams[id])->vid = vid;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer->v_streams[id];
 }
 
@@ -319,6 +325,7 @@ int ds_fill_buffer(demux_stream_t *ds){
     else
 	MSG_DBG3("ds_fill_buffer(unknown %p) called\n",ds);
   }
+    check_pin("demuxer",ds->pin,DS_PIN);
   while(1){
     if(ds->packs){
       demux_packet_t *p=ds->first;
@@ -666,6 +673,7 @@ int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     if(sh_audio) sh_audio->timer=0;
     if(demuxer->driver->seek) demuxer->driver->seek(demuxer,seeka);
     else MSG_WARN("Demuxer seek error\n");
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return 1;
 }
 
@@ -697,6 +705,7 @@ int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param)
 	return 0;
     }
     opt--;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     if(((demuxer_info_t *)demuxer->info)->id[opt])
     {
 	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],((demuxer_info_t *)demuxer->info)->id[opt]);
@@ -757,6 +766,7 @@ static MPXP_Rc demux_control(demuxer_t *demuxer, int cmd, any_t*arg) {
 
     if(demuxer->driver)
 	return demuxer->driver->control(demuxer,cmd,arg);
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return MPXP_Unknown;
 }
 
@@ -765,6 +775,7 @@ int demuxer_switch_audio(demuxer_t *demuxer, int id)
     if(id>MAX_A_STREAMS) id=0;
     if (demux_control(demuxer, DEMUX_CMD_SWITCH_AUDIO, &id) == MPXP_Unknown)
 	id = demuxer->audio->id;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return id;
 }
 
@@ -773,6 +784,7 @@ int demuxer_switch_video(demuxer_t *demuxer, int id)
     if(id>MAX_V_STREAMS) id=0;
     if (demux_control(demuxer, DEMUX_CMD_SWITCH_VIDEO, &id) == MPXP_Unknown)
 	id = demuxer->audio->id;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return id;
 }
 
@@ -781,6 +793,7 @@ int demuxer_switch_subtitle(demuxer_t *demuxer, int id)
     if(id>MAX_S_STREAMS) id=0;
     if (demux_control(demuxer, DEMUX_CMD_SWITCH_SUBS, &id) == MPXP_Unknown)
 	id = demuxer->audio->id;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return id;
 }
 

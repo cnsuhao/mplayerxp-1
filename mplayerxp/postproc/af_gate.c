@@ -17,6 +17,7 @@
 #include <math.h>
 #include <limits.h>
 
+#include "mplayerxp.h"
 #include "af.h"
 #include "osdep/mplib.h"
 
@@ -146,6 +147,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   af->setup=mp_calloc(1,sizeof(af_gate_t));
   if(af->data == NULL || af->setup == NULL)
     return MPXP_Error;
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

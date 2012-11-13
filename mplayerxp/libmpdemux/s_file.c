@@ -40,6 +40,7 @@ static MPXP_Rc __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char
     /* Note: Please locate sector_size changinf after all read/write operations of open() function */
     stream->sector_size=mp_conf.s_cache_size?mp_conf.s_cache_size*1024/10:STREAM_BUFFER_SIZE;
     ((file_priv_t*)stream->priv)->spos = 0;
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

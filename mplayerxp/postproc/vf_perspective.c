@@ -345,10 +345,10 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 		&vf->priv->cubic
 		);
 
-	if(e!=9)
-		return MPXP_False;
-
-	return MPXP_Ok;
+    if(e!=9)
+	return MPXP_False;
+    check_pin("vfilter",vf->pin,VF_PIN);
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_perspective = {

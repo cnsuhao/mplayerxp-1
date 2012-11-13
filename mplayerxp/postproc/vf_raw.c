@@ -60,6 +60,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->uninit=uninit;
     vf->priv=mp_malloc(sizeof(struct vf_priv_s));
     if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { mp_free(vf->priv); return MPXP_False; }
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

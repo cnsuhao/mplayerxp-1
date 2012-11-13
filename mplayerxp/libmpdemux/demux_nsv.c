@@ -307,7 +307,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
 
     // seek to start of NSV header
     stream_seek(demuxer->stream,stream_tell(demuxer->stream)-17);
-
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

@@ -855,7 +855,8 @@ static demuxer_t* ty_open(demuxer_t* demuxer)
     sh_audio_t *sh_audio=NULL;
     sh_video_t *sh_video=NULL;
 
-    sh_video=demuxer->video->sh;sh_video->ds=demuxer->video;
+    sh_video=demuxer->video->sh;
+    sh_video->ds=demuxer->video;
 
     if(demuxer->audio->id!=-2) {
 	if(!ds_fill_buffer(demuxer->audio)){
@@ -865,7 +866,7 @@ static demuxer_t* ty_open(demuxer_t* demuxer)
 	    sh_audio=demuxer->audio->sh;sh_audio->ds=demuxer->audio;
 	}
     }
-
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

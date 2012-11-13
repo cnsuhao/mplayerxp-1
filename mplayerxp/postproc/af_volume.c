@@ -216,6 +216,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
     ((af_volume_t*)af->setup)->enable[i] = 1;
     ((af_volume_t*)af->setup)->level[i]  = 1.0;
   }
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

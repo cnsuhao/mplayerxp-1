@@ -181,7 +181,8 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
   demuxer->audio->sh = sh_audio;
   sh_audio->ds = demuxer->audio;
   stream_seek(s,demuxer->movi_start);
-  return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static int vqf_demux(demuxer_t* demuxer, demux_stream_t *ds) {

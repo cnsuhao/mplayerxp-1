@@ -1,5 +1,6 @@
 TODO for mplayerxp:
 
+- test frame-dropping
 - replace suspect codecs.conf with built-in database [ mpcX-probe]
 - remove all #define with values (they maybe intercepted in other .h files)
 - add anti-viral protection for QOS("Query of Service")

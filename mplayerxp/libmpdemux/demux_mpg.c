@@ -800,7 +800,8 @@ static demuxer_t* mpgps_open(demuxer_t*demuxer)
     sh_audio->ds=demuxer->audio;
    }
   }
-  return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void mpgps_close(demuxer_t*demuxer)

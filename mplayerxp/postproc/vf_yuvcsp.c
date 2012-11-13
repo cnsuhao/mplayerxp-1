@@ -89,6 +89,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 //    vf->priv=mp_calloc(1, sizeof(struct vf_priv_s));
 //    if (args)
 //	vf->priv->csp = atoi(args);
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

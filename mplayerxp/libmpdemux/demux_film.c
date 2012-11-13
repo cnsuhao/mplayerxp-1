@@ -420,9 +420,9 @@ static demuxer_t* film_open(demuxer_t* demuxer)
     }
   }
 
-  demuxer->priv = film_data;
-
-  return demuxer;
+    demuxer->priv = film_data;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void film_close(demuxer_t* demuxer) {

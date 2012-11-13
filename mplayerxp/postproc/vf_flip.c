@@ -76,6 +76,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf, char *args){
     vf->put_slice=put_slice;
     vf->query_format=query_format;
 //    vf->default_reqs=VFCAP_ACCEPT_STRIDE;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

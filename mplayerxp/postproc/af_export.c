@@ -252,7 +252,7 @@ static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
     return MPXP_Error;
 
   ((af_export_t *)af->setup)->filename = get_path(SHARED_FILE);
-
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

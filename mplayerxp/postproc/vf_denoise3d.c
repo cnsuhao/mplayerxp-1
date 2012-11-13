@@ -394,6 +394,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	PrecalcCoefs(vf->priv->Coefs[2], ChromSpac);
 	PrecalcCoefs(vf->priv->Coefs[3], ChromTmp);
     }
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

@@ -283,8 +283,8 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	priv->index_list->offset = stream_tell ( demuxer->stream );
 	priv->index_list->next = NULL;
 	priv->current_position = priv->index_list;
-
-	return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static MPXP_Rc nuv_probe ( demuxer_t* demuxer )

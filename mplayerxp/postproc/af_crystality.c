@@ -60,6 +60,7 @@ and high-freqs and try to restore FR as:
 #include <math.h>
 #include <limits.h>
 
+#include "mplayerxp.h"
 #include "af.h"
 #include "aflib.h"
 
@@ -541,6 +542,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   _bufPos = BUF_SIZE - 1;
   shBufPos = SH_BUF_SIZE - 8;
   shBufPos1 = SH_BUF_SIZE - 8;
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

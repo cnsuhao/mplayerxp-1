@@ -462,15 +462,16 @@ static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char 
   else {
     stream->type = STREAMTYPE_STREAM;
   }
-  p->spos=0;
-  // The data connection is really opened only at the first
-  // read/seek. This must be done when the cache is used
-  // because the connection would stay open in the main process,
-  // preventing correct abort with many servers.
-  stream->fd = -1;
+    p->spos=0;
+    // The data connection is really opened only at the first
+    // read/seek. This must be done when the cache is used
+    // because the connection would stay open in the main process,
+    // preventing correct abort with many servers.
+    stream->fd = -1;
 
-  url_free(url);
-  return MPXP_Ok;
+    url_free(url);
+    check_pin("stream",stream->pin,STREAM_PIN);
+    return MPXP_Ok;
 }
 
 static MPXP_Rc __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,any_t*args) {

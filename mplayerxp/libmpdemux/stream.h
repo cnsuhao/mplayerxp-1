@@ -40,9 +40,13 @@ typedef struct {
 struct stream_s;
 typedef void (* __FASTCALL__ stream_callback)(struct stream_s *s,const stream_packet_t *);
 
+enum {
+    STREAM_PIN=RND_NUMBER2+RND_CHAR3
+};
 /** Stream description */
-typedef struct stream_s{
+typedef struct stream_s {
     char		antiviral_hole[RND_CHAR3];
+    unsigned		pin;		/**< personal identification number */
     int fd;		/**< file handler */
     off_t pos;		/**< SOF offset from begin of stream */
     int eof;		/**< indicates EOF */
@@ -64,7 +68,7 @@ typedef struct stream_s{
 #endif
     const struct stream_driver_s *driver; /**< low-level stream driver */
     stream_callback event_handler;  /**< callback for streams which provide events */
-} stream_t;
+} stream_t __attribute__ ((packed));
 
 int stream_enable_cache(stream_t *stream,any_t* libinput,int size,int min,int prefill);
 void stream_disable_cache(stream_t *stream);

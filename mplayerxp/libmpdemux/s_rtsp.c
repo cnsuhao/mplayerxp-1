@@ -159,6 +159,7 @@ static MPXP_Rc __FASTCALL__ rtsp_open (any_t* libinput,stream_t *stream,const ch
 
     fixup_network_stream_cache (stream);
     stream->type = STREAMTYPE_STREAM;
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

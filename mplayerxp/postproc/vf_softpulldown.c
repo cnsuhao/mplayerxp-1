@@ -152,6 +152,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
     vf->default_reqs = VFCAP_ACCEPT_STRIDE;
     vf->priv = p = mp_calloc(1, sizeof(struct vf_priv_s));
     vf->priv->state = 0;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

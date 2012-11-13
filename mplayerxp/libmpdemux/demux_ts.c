@@ -1033,8 +1033,9 @@ static demuxer_t *ts_open(demuxer_t * demuxer)
 	for(i = 0; i < priv->pmt_cnt; i++)
 		priv->pmt[i].section.buffer_len = 0;
 
-	demuxer->filepos = stream_tell(demuxer->stream);
-	return demuxer;
+    demuxer->filepos = stream_tell(demuxer->stream);
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void ts_close(demuxer_t * demuxer)

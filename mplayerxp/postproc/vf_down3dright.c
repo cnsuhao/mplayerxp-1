@@ -142,7 +142,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
     vf->priv->scalew = 1;
     vf->priv->scaleh = 2;
     if (args) sscanf(args, "%d:%d:%d", &vf->priv->skipline, &vf->priv->scalew, &vf->priv->scaleh);
-
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

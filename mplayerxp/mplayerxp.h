@@ -3,8 +3,10 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#include <string.h>
 #include "mp_config.h"
 #include "osdep/mplib.h"
+#include "xmpcore/xmp_enums.h"
 
 typedef struct mp_conf_s {
     int		has_video;
@@ -118,9 +120,20 @@ extern void update_osd( float v_pts );
 extern pthread_mutex_t audio_timer_mutex;
 
 extern void exit_player(const char* why);
+
 static inline void escape_player(const char* why,unsigned num_calls) {
     show_backtrace(why,num_calls);
     exit_player(why);
+}
+
+static inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) {
+    if(pin1!=pin2) {
+	char msg[4096];
+	strcpy(msg,"Found incorrect PIN in module: ");
+	strcat(msg,module);
+	escape_player(msg,mp_conf.max_trace);
+    }
+    return MPXP_Ok;
 }
 
 extern void mpxp_resync_audio_stream(void);

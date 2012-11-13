@@ -537,7 +537,8 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	    vf->priv->freeBuffers=NULL;
 	    vf->put_slice=bb_put_slice;
 	}
-	return MPXP_Ok;
+    check_pin("vfilter",vf->pin,VF_PIN);
+    return MPXP_Ok;
 }
 
 const vf_info_t vf_info_smartblur = {

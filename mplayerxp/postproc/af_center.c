@@ -104,6 +104,7 @@ static MPXP_Rc open(af_instance_t* af){
     return MPXP_Error;
   // Set default values
   s->ch = 1;  	 // Channel nr 2
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

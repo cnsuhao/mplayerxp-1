@@ -261,6 +261,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	    mpi->flags|=MP_IMGFLAG_TYPE_DISPLAYED;
 	}
     }
+    check_pin("vfilter",vf->pin,VF_PIN);
     MSG_DBG2("vf_get_new_image returns xp_idx=%i\n",mpi->xp_idx);
     return mpi;
 }
@@ -297,6 +298,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
     }
     vf=mp_mallocz(sizeof(vf_instance_t));
     RND_RENAME0(rnd_fill)(vf->antiviral_hole,sizeof(vf->antiviral_hole));
+    vf->pin=VF_PIN;
     vf->info=filter_list[i];
     vf->next=next;
     vf->prev=NULL;
@@ -319,10 +321,11 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
 }
 
 vf_instance_t* __FASTCALL__ RND_RENAME9(vf_open_filter)(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t*libinput){
-  if(strcmp(name,"vo")) {
-      MSG_V("Open video filter: [%s]\n", name);
-  }
-  return vf_open_plugin(next,sh,name,args,libinput);
+    if(strcmp(name,"vo")) {
+	MSG_V("Open video filter: [%s]\n", name);
+    }
+    if(next) check_pin("vfilter",next->pin,VF_PIN);
+    return vf_open_plugin(next,sh,name,args,libinput);
 }
 
 //============================================================================
@@ -402,6 +405,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
 	vf->next=vf2;
     }
     vf_showlist(vf);
+    check_pin("vfilter",vf->pin,VF_PIN);
     return vf->next->config(vf->next,width,height,d_width,d_height,voflags,outfmt);
 }
 
@@ -412,6 +416,7 @@ int __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* d
 int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned width,unsigned height){
     int flags=vf->next?vf->next->query_format(vf->next,fmt,width,height):(int)vf->default_caps;
     if(flags) flags|=vf->default_caps;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return flags;
 }
 
@@ -420,6 +425,7 @@ int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned wi
     vf->dw=width;
     vf->dh=height;
     vf->dfourcc=fmt;
+    check_pin("vfilter",vf->pin,VF_PIN);
     return vf->query_format(vf,fmt,width,height);
 }
 

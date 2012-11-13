@@ -1885,6 +1885,7 @@ static demuxer_t* mov_open(demuxer_t* demuxer){
 	}
     }
 #endif
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

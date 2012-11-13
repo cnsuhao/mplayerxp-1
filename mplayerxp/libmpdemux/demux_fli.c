@@ -169,12 +169,12 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
     }
   }
 
-  // save the actual number of frames indexed
-  frames->num_frames = frame_number;
+    // save the actual number of frames indexed
+    frames->num_frames = frame_number;
 
-  demuxer->priv = frames;
-
-  return demuxer;
+    demuxer->priv = frames;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void fli_close(demuxer_t* demuxer) {

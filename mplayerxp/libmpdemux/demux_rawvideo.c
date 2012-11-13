@@ -114,8 +114,8 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
 
   demuxer->video->sh = sh_video;
   sh_video->ds = demuxer->video;
-
-  return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static int rawvideo_demux(demuxer_t* demuxer, demux_stream_t *ds) {

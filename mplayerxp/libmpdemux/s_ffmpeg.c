@@ -82,6 +82,7 @@ static MPXP_Rc __FASTCALL__ ffmpeg_open(any_t*libinput,stream_t *stream,const ch
     stream->type = STREAMTYPE_SEEKABLE;
     stream->priv = p;
     if (ctx->is_streamed) stream->type = STREAMTYPE_STREAM;
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

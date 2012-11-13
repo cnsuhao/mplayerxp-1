@@ -1477,6 +1477,7 @@ header_end:
 	    &sh->fourcc,((unsigned int*)(sh->bih+1))[1],((unsigned int*)(sh->bih+1))[0],
 	    sh->src_w,sh->src_h,sh->aspect,sh->fps);
     }
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

@@ -28,9 +28,14 @@ typedef struct vf_image_context_s {
     int static_idx;
 } vf_image_context_t;
 
+enum {
+    VF_PIN=RND_NUMBER7+RND_CHAR7
+};
+
 typedef struct vf_instance_s {
     const vf_info_t* info;
     char		antiviral_hole[RND_CHAR5];
+    unsigned		pin; // personal identification number
     // funcs:
     int (* __FASTCALL__ config)(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
@@ -62,7 +67,7 @@ typedef struct vf_instance_s {
     unsigned dw,dh,dfourcc;
     /* event handler*/
     any_t*	libinput;
-} vf_instance_t;
+} vf_instance_t __attribute__ ((packed));
 
 // Configuration switches
 typedef struct vf_cfg_s{

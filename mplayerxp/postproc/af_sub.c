@@ -172,6 +172,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   // Set default values
   s->ch = 5;  	 // Channel nr 6
   s->fc = 60; 	 // Cutoff frequency 60Hz
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

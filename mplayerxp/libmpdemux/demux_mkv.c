@@ -3064,8 +3064,8 @@ static demuxer_t* mkv_open (demuxer_t *demuxer)
 	  mkv_seek (demuxer, &seeka);
 	}
     }
-
-  return demuxer;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void mkv_close (demuxer_t *demuxer)

@@ -32,6 +32,7 @@ static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const cha
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     retval = open_cdda(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
     if(device) mp_free(device);
+    check_pin("stream",stream->pin,STREAM_PIN);
     return retval;
 }
 
@@ -50,6 +51,7 @@ static MPXP_Rc __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const cha
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     retval = open_cddb(stream,device ? device : DEFAULT_CDROM_DEVICE,param);
     if(device) mp_free(device);
+    check_pin("stream",stream->pin,STREAM_PIN);
     return retval;
 }
 

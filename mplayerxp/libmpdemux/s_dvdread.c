@@ -736,6 +736,7 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
     stream->type = STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM;
     stream->sector_size=2048;
     d->spos=0;
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

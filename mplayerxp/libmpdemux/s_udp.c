@@ -106,6 +106,7 @@ static MPXP_Rc __FASTCALL__ udp_open (any_t* libinput,stream_t *stream,const cha
     }
     stream->type = STREAMTYPE_STREAM;
     fixup_network_stream_cache (stream);
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

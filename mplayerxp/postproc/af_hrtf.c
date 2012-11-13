@@ -627,6 +627,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af)
     for(i = 0; i < s->basslen; i++)
 	s->ba_ir[i] *= BASSGAIN;
 
+    check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }
 

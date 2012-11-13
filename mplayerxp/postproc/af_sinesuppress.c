@@ -157,6 +157,7 @@ static MPXP_Rc open(af_instance_t* af){
 
   ((af_sinesuppress_t*)af->setup)->freq = 50.0;
   ((af_sinesuppress_t*)af->setup)->decay = 0.0001;
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

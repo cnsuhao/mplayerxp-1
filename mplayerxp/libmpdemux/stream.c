@@ -212,16 +212,17 @@ int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos)
 }
 
 void __FASTCALL__ nc_stream_reset(stream_t *s){
-  if(s->eof){
-    s->pos=0;
-    s->eof=0;
-  }
+    if(s->eof){
+	s->pos=0;
+	s->eof=0;
+    }
 }
 
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   stream_t *s=mp_mallocz(sizeof(stream_t)+len);
   if(s==NULL) return NULL;
   s->fd=-1;
+  s->pin=STREAM_PIN;
   s->type=STREAMTYPE_MEMORY;
   s->buf_pos=0; s->buf_len=len;
   s->start_pos=0; s->end_pos=len;
@@ -239,6 +240,7 @@ stream_t* __FASTCALL__ new_stream(int type){
   if(s==NULL) return NULL;
 
   RND_RENAME0(rnd_fill)(s->antiviral_hole,sizeof(s->antiviral_hole));
+  s->pin=STREAM_PIN;
   s->fd=-1;
   s->type=type;
   s->sector_size=STREAM_BUFFER_SIZE;
@@ -257,10 +259,11 @@ void __FASTCALL__ free_stream(stream_t *s){
 }
 
 stream_t* __FASTCALL__ new_ds_stream(demux_stream_t *ds) {
-  stream_t* s = new_stream(STREAMTYPE_DS);
-  s->driver=ds->demuxer->stream->driver;
-  s->priv = ds;
-  return s;
+    stream_t* s = new_stream(STREAMTYPE_DS);
+    s->driver=ds->demuxer->stream->driver;
+    s->priv = ds;
+    check_pin("stream",ds->pin,DS_PIN);
+    return s;
 }
 
 int __FASTCALL__ nc_stream_read_char(stream_t *s)

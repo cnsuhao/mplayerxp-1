@@ -85,6 +85,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	    return MPXP_False;
 	}
     }
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 
@@ -102,6 +103,7 @@ static MPXP_Rc __FASTCALL__ vf_no_open(vf_instance_t *vf,const char* args){
 	    return MPXP_False;
 	}
     }
+    check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
 

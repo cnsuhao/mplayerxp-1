@@ -215,11 +215,12 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 
 //       sh_audio->context=(any_t*)dv_decoder;
     }
-   stream_reset(demuxer->stream);
-   stream_seek(demuxer->stream, 0);
-   dv_decoder_free(dv_decoder);  //we keep this in the context of both stream headers
-   demuxer->priv=frames;
-   return demuxer;
+    stream_reset(demuxer->stream);
+    stream_seek(demuxer->stream, 0);
+    dv_decoder_free(dv_decoder);  //we keep this in the context of both stream headers
+    demuxer->priv=frames;
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
+    return demuxer;
 }
 
 static void dv_close(demuxer_t* demuxer)

@@ -260,6 +260,7 @@ static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
   if(af->data == NULL || af->setup == NULL)
     return MPXP_Error;
   ((af_surround_t*)af->setup)->d = 20;
+    check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }
 

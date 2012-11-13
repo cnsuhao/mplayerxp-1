@@ -539,6 +539,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
     demuxer->movi_start=stream_tell(s);
     demuxer->movi_end=demuxer->movi_start+hsize;
     MSG_V("Found AVDATA64 at offset %016llX bytes\n",t);
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 

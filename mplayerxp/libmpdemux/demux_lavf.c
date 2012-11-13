@@ -401,7 +401,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 	}
 	demuxer->video->id=-2; // audio-only
     } //else if (best_video > 0 && demuxer->video->id == -1) demuxer->video->id = best_video;
-
+    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 
