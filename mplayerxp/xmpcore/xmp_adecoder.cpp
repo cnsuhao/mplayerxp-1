@@ -1,3 +1,8 @@
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h> // for usleep()
+#include <math.h>
+extern "C" {
 #include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
@@ -6,12 +11,7 @@
 #include "osdep/mplib.h"
 #include "osdep/timer.h"
 #include "libmpcodecs/dec_audio.h"
-
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h> // for usleep()
-#include <math.h>
-
+}
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else
@@ -57,9 +57,9 @@ audio_buffer_t audio_buffer;
 int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sha )
 {
     MSG_V("Using audio buffer %i bytes (min reserve = %i, indices %i)\n",size,min_reserv, indices);
-    if( !(audio_buffer.buffer = mp_malloc(size)) )
+    if( !(audio_buffer.buffer = (unsigned char*)mp_malloc(size)) )
 	return ENOMEM;
-    if( !(audio_buffer.indices = mp_malloc(indices*sizeof(audio_buffer_index_t))) ) {
+    if( !(audio_buffer.indices = (audio_buffer_index_t*)mp_malloc(indices*sizeof(audio_buffer_index_t))) ) {
 	mp_free(audio_buffer.buffer);
 	audio_buffer.buffer=NULL;
 	return ENOMEM;
@@ -378,9 +378,9 @@ int get_free_audio_buffer(void)
 volatile float dec_ahead_audio_delay;
 int xp_thread_decode_audio(demux_stream_t *d_audio)
 {
-    sh_audio_t* sh_audio=xp_core->audio->sh;
+    sh_audio_t* sh_audio=(sh_audio_t*)xp_core->audio->sh;
     sh_video_t* sh_video=NULL;
-    if(xp_core->video) sh_video=xp_core->video->sh;
+    if(xp_core->video) sh_video=(sh_video_t*)xp_core->video->sh;
     int free_buf, vbuf_size, pref_buf;
     unsigned len=0;
 
@@ -419,11 +419,11 @@ static volatile int dec_ahead_can_adseek=1;  /* It is safe to seek audio buffer 
 /* this routine decodes audio only */
 any_t* a_dec_ahead_routine( any_t* arg )
 {
-    mpxp_thread_t* priv=arg;
-    sh_audio_t* sh_audio=priv->dae->sh;
+    mpxp_thread_t* priv=(mpxp_thread_t*)arg;
+    sh_audio_t* sh_audio=(sh_audio_t*)priv->dae->sh;
     demux_stream_t *d_audio=sh_audio->ds;
 
-    int ret, retval;
+    int ret;
     struct timeval now;
     struct timespec timeout;
     float d;

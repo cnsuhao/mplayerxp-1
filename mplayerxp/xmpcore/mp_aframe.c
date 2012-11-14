@@ -257,11 +257,11 @@ mpaf_format_e mpaf_str2fmt(const char *str)
     return retval;
     try_special:
     for(i=0;i<sizeof(fmt_aliases)/sizeof(struct fmt_alias_s);i++) {
-	if(strcasecmp(str,fmt_aliases[i].name)==0) return fmt_aliases[i].wtag<<16;
+	if(strcasecmp(str,fmt_aliases[i].name)==0) return (mpaf_format_e)(fmt_aliases[i].wtag<<16);
     }
     bad_fmt:
     MSG_ERR("[af_format] Bad value %s. Examples: S08LE U24BE S32 MP3 AC3\n",str);
-    return 0;
+    return MPAF_BE;
 }
 
 /* Convert format to str input str is a buffer for the
@@ -298,8 +298,8 @@ char* mpaf_fmt2str(mpaf_format_e format, char* str, size_t size)
 }
 
 
-mp_aframe_t* new_mp_aframe(unsigned rate,unsigned nch,unsigned format,unsigned xp_idx) {
-    mp_aframe_t*  mpaf = mp_mallocz(sizeof(mp_aframe_t));
+mp_aframe_t* new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx) {
+    mp_aframe_t*  mpaf = (mp_aframe_t*)mp_mallocz(sizeof(mp_aframe_t));
     if(!mpaf) return NULL;
     mpaf->rate = rate;
     mpaf->nch = nch;

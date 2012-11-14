@@ -61,7 +61,7 @@ enum mp_prot_e {
     MP_PROT_EXEC	=0x4,	/* Page can be executed.  */
     MP_DENY_ALL		=0x0,	/* Page can not be accessed.  */
 };
-extern int	__FASTCALL__ mp_mprotect(const any_t* addr,size_t len,enum mp_prot_e flags);
+extern int	__FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags);
 
 extern void print_backtrace(const char *why,any_t** stack,unsigned num);
 

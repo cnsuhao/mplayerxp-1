@@ -39,7 +39,7 @@ enum {
     MENU_CMD_ACTION	=6
 };
 /// Global init/uninit
-int menu_init(struct MPContext *mpctx, char* cfg_file);
+int menu_init(struct MPContext *mpctx,const char* cfg_file);
 void menu_unint(void);
 
 /// Open a menu defined in the config file

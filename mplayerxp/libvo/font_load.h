@@ -22,7 +22,7 @@ typedef struct {
     short width[65536];
 } font_desc_t;
 
-raw_file* load_raw(char *name,int verbose);
-font_desc_t* read_font_desc(char* fname,float factor,int verbose);
+raw_file* load_raw(const char *name,int verbose);
+font_desc_t* read_font_desc(const char* fname,float factor,int verbose);
 
 #endif

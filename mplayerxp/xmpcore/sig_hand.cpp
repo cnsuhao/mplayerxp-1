@@ -1,8 +1,6 @@
 /*
   MplayerXP's Signal handling
 */
-#include "mp_config.h"
-#include "mplayerxp.h"
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE   /* to get definition of strsignal */
 #endif
@@ -11,16 +9,19 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/resource.h>
-#include "sig_hand.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
+extern "C" {
+#include "mp_config.h"
+#include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "mp_msg.h"
+#include "sig_hand.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
-
+}
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
 /* A dummy function to make the backtrace more interesting. */

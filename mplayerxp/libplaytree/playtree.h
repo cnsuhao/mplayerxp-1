@@ -1,6 +1,6 @@
-
 #ifndef __PLAYTREE_H
 #define __PLAYTREE_H
+#include "libmpdemux/stream.h"
 
 enum {
     PLAY_TREE_ITER_ERROR=0,

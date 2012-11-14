@@ -224,7 +224,7 @@ static const config_t video_config[]={
 	{"forcexv", &sdl_forcexv, CONF_TYPE_FLAG, 0, 0, 1, "force XVideo hardware acceleration for SDL"},
 	{"forcegl", &sdl_forcegl, CONF_TYPE_FLAG, 0, 0, 1, "force OpenGL hardware acceleration for SDL"},
 #endif
-	{"eq",&veq_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Video-equalizer specific options"},
+	{"eq",(any_t*)&veq_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Video-equalizer specific options"},
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
@@ -258,22 +258,22 @@ static const config_t mplayer_opts[]={
 	{"v", &mp_conf.verbose, CONF_TYPE_INC, 0, 0, 0, "verbose output (more -v means more verbosity)"},
 	{"msgfilter", &mp_conf.msg_filter, CONF_TYPE_INT, CONF_RANGE, 0, 0xFFFFFFFF, "specifies filter for verbosed messages"},
 
-	{"core", &xpcore_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "XP-core related options" },
-	{"play", &playback_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Playback specific options" },
-	{"audio", &audio_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Audio related options" },
-	{"video", &video_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Video related options" },
-	{"sub", &subtitle_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Subtitle related options" },
+	{"core", (any_t*)&xpcore_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "XP-core related options" },
+	{"play", (any_t*)&playback_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Playback specific options" },
+	{"audio", (any_t*)&audio_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Audio related options" },
+	{"video", (any_t*)&video_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Video related options" },
+	{"sub", (any_t*)&subtitle_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Subtitle related options" },
 #ifdef HAVE_X11
-	{"x", &x11_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "X11-specific options" },
+	{"x", (any_t*)&x11_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "X11-specific options" },
 #endif
-	{"osd", &osd_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "OSD-related options"},
-	{"sync", &avsync_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "AV-synchronization related options" },
+	{"osd", (any_t*)&osd_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "OSD-related options"},
+	{"sync", (any_t*)&avsync_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "AV-synchronization related options" },
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-	{"cpu", &cpu_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "CPU specific options" },
+	{"cpu", (any_t*)&cpu_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "CPU specific options" },
 #endif
 // ------------------------- stream options --------------------
 #ifdef HAVE_STREAMING
-	{ "net", &net_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Network specific options" },
+	{ "net", (any_t*)&net_config, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Network specific options" },
 #endif
 // ------------------------- codec/pp options --------------------
 	{NULL, NULL, 0, 0, 0, 0, NULL}

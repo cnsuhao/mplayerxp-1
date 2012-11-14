@@ -158,7 +158,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af_sub_t* s;
   af->control=control;
   af->uninit=uninit;
@@ -183,5 +183,5 @@ const af_info_t af_info_sub = {
     "Anders",
     "",
     AF_FLAGS_NOT_REENTRANT,
-    open
+    af_open
 };

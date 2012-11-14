@@ -5,7 +5,6 @@
    Note: Threaded engine to decode frames ahead
 */
 
-#include "mp_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,10 +13,12 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 #include <sys/time.h>
-#include "osdep/mplib.h"
+extern "C" {
+#include "mp_config.h"
 #define DA_PREFIX "DEC_AHEAD:"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
+#include "osdep/mplib.h"
 
 #include "xmp_core.h"
 #include "xmp_aplayer.h"
@@ -33,7 +34,7 @@
 #include "libmpcodecs/dec_audio.h"
 #include "sig_hand.h"
 #include "osdep/timer.h"
-
+}
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else
@@ -41,7 +42,7 @@
 #endif
 
 void xmp_init(void) {
-    xp_core=mp_mallocz(sizeof(xp_core_t));
+    xp_core=(xp_core_t*)mp_mallocz(sizeof(xp_core_t));
     xp_core->initial_apts=HUGE;
 }
 
@@ -53,7 +54,7 @@ void xmp_uninit(void) {
 
 unsigned xmp_register_main(sig_handler_t sigfunc) {
     unsigned idx=0;
-    xp_core->mpxp_threads[idx]=mp_mallocz(sizeof(mpxp_thread_t));
+    xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
     xp_core->mpxp_threads[idx]->p_idx=idx;
     xp_core->mpxp_threads[idx]->pid=getpid();
     xp_core->main_pth_id=xp_core->mpxp_threads[idx]->pth_id=pthread_self();
@@ -95,7 +96,7 @@ void dae_reset(dec_ahead_engine_t* it) {
 void dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh)
 {
     it->nframes=nframes;
-    it->frame = mp_malloc(sizeof(xmp_frame_t)*nframes);
+    it->frame = (xmp_frame_t*)mp_malloc(sizeof(xmp_frame_t)*nframes);
     it->sh=sh;
     dae_reset(it);
 }
@@ -209,9 +210,8 @@ int audio_play_in_sleep=0;
 /* Min audio buffer to keep mp_free, used to tell differ between full and empty buffer */
 #define MIN_BUFFER_RESERV 8
 
-static unsigned xmp_engine_compute_model(sh_video_t *shv, sh_audio_t *sha) {
-    unsigned rc;
-    rc=0;
+static xmp_model_e xmp_engine_compute_model(sh_video_t *shv, sh_audio_t *sha) {
+    xmp_model_e rc;
     if(!shv && sha) {
 	switch(mp_conf.xp) {
 	    case XP_UniCore:	rc=XMP_Run_AudioPlayback; break;
@@ -239,7 +239,7 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 {
     xp_core->flags=xmp_engine_compute_model(shv,sha);
     if(shv) {
-	xp_core->video=mp_mallocz(sizeof(dec_ahead_engine_t));
+	xp_core->video=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
 	dae_init(xp_core->video,xp_core->num_v_buffs,shv);
     }
     if(sha) {
@@ -256,7 +256,7 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 		min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
 	    init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
 	}
-	xp_core->audio=mp_mallocz(sizeof(dec_ahead_engine_t));
+	xp_core->audio=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
 	dae_init(xp_core->audio,xp_core->num_a_buffs,sha);
     }
     return 0;
@@ -294,7 +294,7 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
     /* requires root privelegies */
     pthread_attr_setschedpolicy(&attr,SCHED_FIFO);
 #endif
-    xp_core->mpxp_threads[idx]=mp_mallocz(sizeof(mpxp_thread_t));
+    xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
 
     xp_core->mpxp_threads[idx]->p_idx=idx;
     xp_core->mpxp_threads[idx]->name=name;

@@ -7,6 +7,12 @@
 #include "mp_config.h"
 #include "osdep/mplib.h"
 #include "xmpcore/xmp_enums.h"
+#include "libmpconf/cfgparser.h"
+#include "libmpsub/subreader.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct mp_conf_s {
     int		has_video;
@@ -19,7 +25,7 @@ typedef struct mp_conf_s {
 // XP-core
     int		xp;   /* XP-mode */
     int		gomp; /* currently it's experimental feature */
-    char*	stream_dump; // dump name
+    const char*	stream_dump; // dump name
     int		s_cache_size; /* cache2: was 1024 let it be 0 by default */
     int		autoq; /* quality's options: */
     unsigned	verbose;
@@ -39,35 +45,35 @@ typedef struct mp_conf_s {
     int		video_id;
     int		dvdsub_id;
     int		vobsub_id;
-    char*	audio_lang;
-    char*	dvdsub_lang;
-    char*	spudec_ifo;
+    const char*	audio_lang;
+    const char*	dvdsub_lang;
+    const char*	spudec_ifo;
     unsigned	force_srate;
 // seek:
-    char*	seek_to_sec;
+    const char*	seek_to_sec;
     long long int seek_to_byte;
     int		loop_times;
     int		shuffle_playback;
     int		play_n_frames;
 /* codecs: */
-    char*	audio_codec;  /* override audio codec */
-    char*	video_codec;  /* override video codec */
-    char*	audio_family; /* override audio codec family */
-    char*	video_family; /* override video codec family */
+    const char*	audio_codec;  /* override audio codec */
+    const char*	video_codec;  /* override video codec */
+    const char*	audio_family; /* override audio codec family */
+    const char*	video_family; /* override video codec family */
 // drivers:
     char*	video_driver; //"mga"; // default
     char*	audio_driver;
 // sub:
     int		osd_level;
-    char*	font_name;
+    const char*	font_name;
     float	font_factor;
-    char*	sub_name;
+    const char*	sub_name;
     float	sub_fps;
     int		sub_auto;
-    char*	vobsub_name;
+    const char*	vobsub_name;
     int		subcc_enabled;
 // others
-    char*	npp_options;
+    const char*	npp_options;
     unsigned	ao_channels;
     int		z_compression;
     int		xinerama_screen;
@@ -107,8 +113,8 @@ typedef struct mp_data_s {
     unsigned	mpxp_after_seek;
     int		use_pts_fix2;
     unsigned	mplayer_accel;
-    any_t* 	subtitles;
-    any_t*	mconfig;
+    subtitle* 	subtitles;
+    m_config_t*	mconfig;
     time_usage_t*bench;
     any_t*	priv;
     any_t*	msg_priv;
@@ -136,9 +142,14 @@ static inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) 
     return MPXP_Ok;
 }
 
+extern void mp_register_options(m_config_t* cfg);
 extern void mpxp_resync_audio_stream(void);
 extern void mpxp_reset_vcache(void);
 extern void __exit_sighandler(void);
 
 extern void mplayer_put_key(int code);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

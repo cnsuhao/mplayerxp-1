@@ -62,7 +62,7 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 }
 
 // Allocate memory and set function pointers
-static MPXP_Rc open(af_instance_t* af){
+static MPXP_Rc af_open(af_instance_t* af){
     af->control	= control;
     af->uninit	= uninit;
     af->play	= play;
@@ -84,5 +84,5 @@ const af_info_t af_info_karaoke = {
     "Reynaldo H. Verdejo Pinochet",
     "",
     AF_FLAGS_REENTRANT,
-    open
+    af_open
 };

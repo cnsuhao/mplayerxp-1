@@ -565,7 +565,7 @@ static int __FASTCALL__ allocate(af_hrtf_t *s)
 }
 
 /* Allocate memory and set function pointers */
-static MPXP_Rc __FASTCALL__ open(af_instance_t* af)
+static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af)
 {
     int i;
     af_hrtf_t *s;
@@ -638,5 +638,5 @@ const af_info_t af_info_hrtf = {
     "ylai",
     "",
     AF_FLAGS_REENTRANT,
-    open
+    af_open
 };

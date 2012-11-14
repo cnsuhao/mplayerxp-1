@@ -1,7 +1,7 @@
 #include "af.h"
 
 // Allocate memory and set function pointers
-static MPXP_Rc open(af_instance_t* af){
+static MPXP_Rc af_open(af_instance_t* af){
     return MPXP_Error;
 }
 
@@ -12,5 +12,5 @@ const af_info_t af_info_null = {
     "Nickols_K",
     "",
     AF_FLAGS_REENTRANT,
-    open
+    af_open
 };

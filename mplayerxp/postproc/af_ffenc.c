@@ -103,9 +103,9 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     s->lavc_context->sample_rate = ((mp_aframe_t*)arg)->rate;
     s->lavc_context->channels = ((mp_aframe_t*)arg)->nch;
     s->lavc_context->sample_fmt = AV_SAMPLE_FMT_S16;
-    /* open it */
+    /* af_open it */
     if (avcodec_open(s->lavc_context, s->lavc_codec) < 0) {
-	MSG_ERR("could not open codec %s with libavcodec\n",s->cname);
+	MSG_ERR("could not af_open codec %s with libavcodec\n",s->cname);
 	return MPXP_Error;
     }
     s->frame_size = s->lavc_context->frame_size*((mp_aframe_t*)arg)->nch*2/*bps*/;
@@ -205,7 +205,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 // Allocate memory and set function pointers
-static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -225,5 +225,5 @@ const af_info_t af_info_ffenc = {
     "Nickols_K",
     "",
     AF_FLAGS_REENTRANT,
-    open
+    af_open
 };

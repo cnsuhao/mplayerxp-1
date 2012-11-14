@@ -21,9 +21,11 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
-SRCS = mplayerxp.c mp-opt-reg.c dump.c mp_msg.c
+SRCS =  mp-opt-reg.c dump.c mp_msg.c
+XXSRCS = mplayerxp.cpp
 
 OBJS = $(SRCS:.c=.o)
+XXOBJS = $(XXSRCS:.cpp=.o)
 
 FF_LIBS = ../ffmpeg/libavcodec/libavcodec$(FF_SUFFIX).a \
 	  ../ffmpeg/libswscale/libswscale$(FF_SUFFIX).a \
@@ -50,8 +52,9 @@ endif
 
 LIBS+= $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
 CFLAGS = $(OPTFLAGS) $(EXTRA_INC)
+CXXFLAGS = $(OPTXXFLAGS) $(EXTRA_INC)
 
-.SUFFIXES: .c .o
+.SUFFIXES: .cpp .c .o
 
 # .PHONY: all clean
 
@@ -60,12 +63,15 @@ all:	$(TARGET_EXE) $(SUBDIRS)
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
 
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
+
 .PHONY: subdirs $(MP_LIBS)
 subdirs: $(MP_LIBS)
 
-$(TARGET_EXE):	$(OBJS) $(MP_LIBS)
+$(TARGET_EXE):	$(OBJS) $(XXOBJS) $(MP_LIBS)
 	$(DO_MAKE_ALL)
-	$(CC) -o $(TARGET_EXE) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(CXX) -o $(TARGET_EXE) $(XXOBJS) $(OBJS)  $(LDFLAGS) $(LDXXFLAGS) $(LIBS)
 #-Xlinker --export-dynamic -Xlinker --gc-sections -Xlinker --sort-common
 $(SRCS): version.h
 
@@ -93,7 +99,7 @@ uninstall:
 
 clean:
 	$(DO_MAKE)
-	-rm -f *.o *~ $(OBJS)
+	-rm -f *.o *~ $(OBJS) $(XXOBJS)
 
 distclean:
 	$(DO_MAKE)

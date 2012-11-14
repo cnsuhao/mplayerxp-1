@@ -15,6 +15,9 @@
 #include "libmpdemux/demuxer_r.h"
 #include "libvo/video_out.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 enum xp_modes { XP_NA=0, XP_UniCore, XP_DualCore, XP_TripleCore, XP_MultiCore };
 
 typedef struct xmp_frame_s
@@ -62,6 +65,11 @@ typedef enum xmp_model {
     XMP_Run_AudioDecoder	=0x00000010,
     XMP_Run_VideoDecoder	=0x00000020
 }xmp_model_e;
+#ifdef __cplusplus
+static inline xmp_model_e operator|(xmp_model_e a, xmp_model_e b) {
+    return static_cast<xmp_model_e>(static_cast<int>(a) | static_cast<int>(b));
+}
+#endif
 
 typedef struct mpxp_thread_s {
     unsigned		p_idx;
@@ -191,4 +199,7 @@ extern int audio_play_in_sleep;
 
 /* Audio stuff */
 extern volatile float dec_ahead_audio_delay;
+#ifdef __cplusplus
+}
+#endif
 #endif

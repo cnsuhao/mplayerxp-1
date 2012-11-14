@@ -4,7 +4,7 @@
 #include "libmpdemux/demuxer.h" // for seek_args_t
 
 extern any_t*  __FASTCALL__ vobsub_open(const char *subname, const char *const ifo, const int force, any_t** spu);
-extern void __FASTCALL__ vobsub_close(any_t*this);
+extern void __FASTCALL__ vobsub_close(any_t*__self);
 extern void __FASTCALL__ vobsub_reset(any_t*vob);
 extern int __FASTCALL__ vobsub_get_packet(any_t*vobhandle, float pts,any_t** data, int* timestamp);
 extern int __FASTCALL__ vobsub_parse_ifo(any_t* vob, const char *const name, unsigned int *palette, unsigned int *width, unsigned int *height, int force, int sid, char *langid);

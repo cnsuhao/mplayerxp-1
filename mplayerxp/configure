@@ -120,8 +120,10 @@ SYSTYPES_LIST=(
     "build|configure for building on BUILD [guessed]",
     "host|cross-compile to build program to run on HOST [BUILD]",
     "cc|use this C compiler to build PROGRAM|gcc",
+    "cxx|use this C++ compiler to build PROGRAM|g++",
     "as|use this ASSEMBLER to build PROGRAM|as",
     "ld|use this LINKER to build PROGRAM|gcc",
+    "ldxx|use this LINKER to build PROGRAM with C++ sources|g++",
     "ldconfig|use this LDCONFIG to install PROGRAM|ldconfig",
     "install|use this INSTALL to install PROGRAM|install",
     "pkg_config|use this PKG-CONFIG to configure PROGRAM|pkg-config",
@@ -138,7 +140,9 @@ SYSCONF_LIST=(
 EXTRA_LIST=(
     "asflags|add these FLAGS to [\$ASFLAGS=$ASFLAGS]",
     "cflags|add these FLAGS to [\$CFLAGS=$CFLAGS]",
+    "cxxflags|add these FLAGS to [\$CXXFLAGS=$CXXFLAGS]",
     "ldflags|add these FLAGS to [\$LDFLAGS=$LDFLAGS]",
+    "ldxxflags|add these FLAGS to [\$LDXXFLAGS=$LDXXFLAGS]",
     "extralibs|add these LIBS to [\$LIBS=$LIBS]"
 )
 
@@ -150,8 +154,11 @@ ENVIRONMENT_LIST=(
     "MAKE|Make command (example: 'make -j')|make",
     "AS|Assembler command|as",
     "CC|C compiler command (example: 'gcc -m64')|cc",
+    "CXX|C++ compiler command (example: 'g++ -m64')|cxx",
     "CFLAGS|C compiler flags (example: '-funit-at-a-time')",
+    "CXXFLAGS|C++ compiler flags (example: '-Weffc++')",
     "LDFLAGS|linker flags (example: '-L/opt/lib64')",
+    "LDXXFLAGS|C++ linker flags (example: '-L/opt/lib64')",
     "LIBS|additional libraries (example: 'LIBS=-lacml_mv')",
     "DESTDIR|specifies base of installation"
 )
@@ -302,10 +309,14 @@ check_cflags "-W -Wall -Wextra"
 
 echocheck CFLAGS
 echores   $CFLAGS
+echocheck CXXFLAGS
+echores   $CXXFLAGS
 echocheck ASFLAGS
 echores   $ASFLAGS
 echocheck LDFLAGS
 echores   $LDFLAGS
+echocheck LDXXFLAGS
+echores   $LDXXFLAGS
 echocheck LIBS
 echores   $LIBS
 echocheck extralibs
@@ -748,7 +759,6 @@ fi
 
 # 64 bit file offsets?
 enabled largefiles	&& CFLAGS="$CFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D__USE_FILE_OFFSET64 -D__USE_LARGEFILE -D_LARGEFILE64_SOURCE"
-
 # Dynamic linking flags 
 # (FIXME: 'echocheck "dynamic linking"' above and modify here accordingly)
 bsd && add_ldflags "-rdynamic"
@@ -846,6 +856,7 @@ rsuf=$((($rnd0+$rnd1+$rnd2+$rnd3+$rnd4+$rnd5+$rnd6+$rnd7+$rnd8+$rnd9)%255))
 prog_alias="$prog_alias.$rsuf"
 fi
 
+CXXFLAGS=$CFLAGS
 #############################################################################
 echo "Creating mp_config.mak"
 cat >> mp_config.mak << EOF
@@ -862,10 +873,12 @@ PROGNAME = $prog_alias
 FF_SUFFIX=$ff_libsuffix
 AR = ar
 CC = $cc
+CXX = $cxx
 LDCONFIG=$ldconfig
 INSTALL=$install
 # OPTFLAGS = -O3 $profile $debug $gcov $march $mcpu -pipe -fomit-frame-pointer -ffast-math
 OPTFLAGS = $CFLAGS
+OPTXXFLAGS = $CXXFLAGS
 DEBUG = -DDEBUG
 #-- Compile-time random numbers
 RND_NUMBER0 = $rnd0
@@ -884,6 +897,7 @@ RND_NUMBER9 = $rnd9
 EOF
 echo "EXTRALIBS=$extralibs" >> mp_config.mak
 echo "LDFLAGS=$LDFLAGS" >> mp_config.mak
+echo "LDXXFLAGS=$LDXXFLAGS" >> mp_config.mak
 
 #############################################################################
 echo "Creating mp_config.h"

@@ -121,7 +121,7 @@ static int menu_parse_config(char* buffer) {
 #define BUF_STEP 1024
 #define BUF_MIN 128
 #define BUF_MAX BUF_STEP*1024
-int menu_init(struct MPContext *mpctx, char* cfg_file) {
+int menu_init(struct MPContext *mpctx,const char* cfg_file) {
   char* buffer = NULL;
   int bl = BUF_STEP, br = 0;
   int f, fd;

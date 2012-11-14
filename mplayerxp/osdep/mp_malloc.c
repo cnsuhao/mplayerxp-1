@@ -515,7 +515,7 @@ char *	mp_strdup(const char *src) {
     return rs;
 }
 
-int __FASTCALL__ mp_mprotect(const any_t* addr,size_t len,enum mp_prot_e flags)
+int __FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags)
 {
-    return mprotect((any_t*)addr,len,flags);
+    return mprotect(addr,len,flags);
 }

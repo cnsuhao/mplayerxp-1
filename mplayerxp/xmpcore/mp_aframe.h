@@ -4,6 +4,9 @@
 #include "mp_config.h"
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* The sample format system is based on bitmasks. The
    format definition only refers to the storage format not the
    resolution. */
@@ -60,5 +63,7 @@ typedef struct mp_audio_frame_s {
 
 extern mp_aframe_t*	new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx);
 extern int		free_mp_aframe(mp_aframe_t* mpaf);
-
+#ifdef __cplusplus
+}
+#endif
 #endif

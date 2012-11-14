@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "mplayerxp.h"
 #include "help_mp.h"
 
@@ -24,7 +25,6 @@
 
 #include "libvo/video_out.h"
 #include "postproc/vf.h"
-
 #include "vd.h"
 
 #include "xmpcore/xmp_core.h"
@@ -49,7 +49,8 @@ typedef struct priv_s {
     const vd_functions_t* mpvdec;
 }priv_t;
 
-MPXP_Rc mpcv_get_quality_max(priv_t *priv,unsigned *quality){
+MPXP_Rc mpcv_get_quality_max(any_t *opaque,unsigned *quality){
+    priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     if(priv->mpvdec){
 	MPXP_Rc ret=priv->mpvdec->control(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
@@ -58,27 +59,30 @@ MPXP_Rc mpcv_get_quality_max(priv_t *priv,unsigned *quality){
     return MPXP_False;
 }
 
-MPXP_Rc mpcv_set_quality(priv_t *priv,int quality){
+MPXP_Rc mpcv_set_quality(any_t *opaque,int quality){
+    priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     if(priv->mpvdec)
 	return priv->mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
     return MPXP_False;
 }
 
-MPXP_Rc mpcv_set_colors(priv_t *priv,char *item,int value)
+MPXP_Rc mpcv_set_colors(any_t *opaque,const char *item,int value)
 {
+    priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     vf_instance_t* vf=sh_video->vfilter;
     vf_equalizer_t eq;
     eq.item=item;
     eq.value=value*10;
     if(vf->control(vf,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
-	if(priv->mpvdec) return priv->mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,item,(int)value);
+	if(priv->mpvdec) return priv->mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,(any_t*)item,(int)value);
     }
     return MPXP_False;
 }
 
-void mpcv_uninit(priv_t *priv){
+void mpcv_uninit(any_t *opaque){
+    priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     if(!sh_video->inited) { mp_free(priv); return; }
     MSG_V("uninit video ...\n");
@@ -121,7 +125,7 @@ static void mpcv_print_codec_info(const priv_t *priv) {
 #endif
 }
 
-priv_t * mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
+any_t * mpcv_ffmpeg_init(sh_video_t* sh_video,any_t* libinput) {
     priv_t* priv = mp_malloc(sizeof(priv_t));
     priv->parent=sh_video;
     sh_video->decoder=priv;
@@ -140,7 +144,7 @@ priv_t * mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
     return priv;
 }
 
-priv_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
+any_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
     int done=0;
     const video_probe_t* vprobe;
     sh_video->codec=NULL;
@@ -276,7 +280,8 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 
 extern vo_data_t* vo_data;
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
-int RND_RENAME4(mpcv_decode)(priv_t *priv,const enc_frame_t* frame){
+int RND_RENAME4(mpcv_decode)(any_t *opaque,const enc_frame_t* frame){
+    priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     vf_instance_t* vf;
     mp_image_t *mpi=NULL;
@@ -324,8 +329,9 @@ int RND_RENAME4(mpcv_decode)(priv_t *priv,const enc_frame_t* frame){
     return 1;
 }
 
-void mpcv_resync_stream(priv_t *priv)
+void mpcv_resync_stream(any_t *opaque)
 {
+    priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     if(sh_video)
     if(sh_video->inited && priv->mpvdec) priv->mpvdec->control(sh_video,VDCTRL_RESYNC_STREAM,NULL);

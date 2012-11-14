@@ -1,3 +1,4 @@
+extern "C" {
 #include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
@@ -6,7 +7,7 @@
 #include "xmp_vdecoder.h"
 #include "osdep/timer.h"
 #include "libmpcodecs/dec_video.h"
-
+}
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <math.h>
@@ -110,8 +111,8 @@ static void reorder_pts_in_mpeg(void) {
 
 any_t* xmp_video_decoder( any_t* arg )
 {
-    mpxp_thread_t* priv=arg;
-    sh_video_t* sh_video=priv->dae->sh;
+    mpxp_thread_t* priv=(mpxp_thread_t*)arg;
+    sh_video_t* sh_video=(sh_video_t*)priv->dae->sh;
     demux_stream_t *d_video=sh_video->ds;
     demuxer_t* demuxer=d_video->demuxer;
     demux_stream_t* d_audio=demuxer->audio;

@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <unistd.h> // for usleep()
+#include <pthread.h>
+#include <math.h>
+extern "C" {
 #include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
@@ -8,12 +13,7 @@
 #include "libmpcodecs/dec_audio.h"
 
 #include "libao2/audio_out.h"
-
-#include <stdio.h>
-#include <unistd.h> // for usleep()
-#include <pthread.h>
-#include <math.h>
-
+}
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else
@@ -55,10 +55,10 @@ while(sh_audio){
   t=GetTimer();
   while(sh_audio->a_buffer_len<playsize && !xp_core->audio->eof){
       if(!xmp_test_model(XMP_Run_AudioPlayback)) {
-	  ret=read_audio_buffer(sh_audio,&sh_audio->a_buffer[sh_audio->a_buffer_len],
+	  ret=read_audio_buffer(sh_audio,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			      playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       } else {
-	  ret=RND_RENAME3(mpca_decode)(sh_audio->decoder,&sh_audio->a_buffer[sh_audio->a_buffer_len],
+	  ret=RND_RENAME3(mpca_decode)(sh_audio->decoder,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			   playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
     if(ret>0) sh_audio->a_buffer_len+=ret;
@@ -128,17 +128,15 @@ while(sh_audio){
 extern ao_data_t* ao_data;
 any_t* audio_play_routine( any_t* arg )
 {
-    mpxp_thread_t* priv=arg;
-    sh_audio_t* sh_audio=priv->dae->sh;
+    mpxp_thread_t* priv=(mpxp_thread_t*)arg;
+    sh_audio_t* sh_audio=(sh_audio_t*)priv->dae->sh;
     demux_stream_t *d_audio=sh_audio->ds;
     demuxer_t *demuxer=d_audio->demuxer;
-    sh_video_t* sh_video=demuxer->video->sh;
+    sh_video_t* sh_video=(sh_video_t*)demuxer->video->sh;
 
     int eof = 0;
     struct timeval now;
-    struct timespec timeout;
     float d;
-    int retval;
     const float MAX_AUDIO_TIME = (float)ao_get_space(ao_data) / sh_audio->af_bps + ao_get_delay(ao_data);
     float min_audio_time = MAX_AUDIO_TIME;
     float min_audio, max_audio;

@@ -3,6 +3,9 @@
 
 #include "mp_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 //--------- codec's requirements (filled by the codec/vf) ---------
 
 //--- buffer content restrictions:
@@ -97,4 +100,7 @@ extern void mpi_alloc_planes(mp_image_t *mpi);
 extern void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi);
 extern void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned height);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

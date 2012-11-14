@@ -1,8 +1,8 @@
 /*
  * command line and config file parser
  */
-#ifndef __CONFIG_H
-#define __CONFIG_H 1
+#ifndef __CFG_PARSER_H
+#define __CFG_PARSER_H 1
 #include "xmpcore/xmp_enums.h"
 
 /* config types */

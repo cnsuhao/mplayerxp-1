@@ -12,7 +12,7 @@
 #include "osdep/mplib.h"
 #include "vo_msg.h"
 
-raw_file* load_raw(char *name,int verbose){
+raw_file* load_raw(const char *name,int verbose){
     int bpp;
     raw_file* raw=mp_malloc(sizeof(raw_file));
     unsigned char head[32];
@@ -41,7 +41,7 @@ raw_file* load_raw(char *name,int verbose){
     return raw;
 }
 
-font_desc_t* read_font_desc(char* fname,float factor,int verbose){
+font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 char sor[1024];
 unsigned char sor2[1024];
 font_desc_t *desc;

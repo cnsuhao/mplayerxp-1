@@ -249,7 +249,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   return data;
 }
 
-static MPXP_Rc __FASTCALL__ open(af_instance_t* af){
+static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -271,5 +271,5 @@ const af_info_t af_info_surround =
 	"Steve Davies <steve@daviesfam.org>",
 	"",
 	AF_FLAGS_NOT_REENTRANT,
-	open
+	af_open
 };

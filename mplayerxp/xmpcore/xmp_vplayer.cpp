@@ -1,3 +1,4 @@
+extern "C" {
 #include "mplayerxp.h"
 #include "xmp_vplayer.h"
 #include "xmp_core.h"
@@ -10,7 +11,7 @@
 #include "osdep/timer.h"
 #include "libmpdemux/demuxer.h"
 #include "xmp_adecoder.h"
-
+}
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <math.h>
@@ -280,11 +281,11 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 
 any_t* xmp_video_player( any_t* arg )
 {
-    mpxp_thread_t* priv=arg;
-    sh_video_t* sh_video=priv->dae->sh;
+    mpxp_thread_t* priv=(mpxp_thread_t*)arg;
+    sh_video_t* sh_video=(sh_video_t*)priv->dae->sh;
     demux_stream_t *d_video=sh_video->ds;
     demuxer_t *demuxer=d_video->demuxer;
-    sh_audio_t* sh_audio=demuxer->audio->sh;
+    sh_audio_t* sh_audio=(sh_audio_t*)demuxer->audio->sh;
 
     priv->state=Pth_Run;
     priv->dae->eof = 0;

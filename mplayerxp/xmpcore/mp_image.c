@@ -1,10 +1,10 @@
-#include "mp_config.h"
-#include "mplayerxp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "mp_config.h"
+#include "mplayerxp.h"
 #include "osdep/mplib.h"
 #include "libvo/img_format.h"
 #include "mp_image.h"

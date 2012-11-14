@@ -6,7 +6,7 @@
 #include "osdep_msg.h"
 #include "osdep/mplib.h"
 
-char *get_path(char *filename){
+char *get_path(const char *filename){
 	char *homedir;
 	char *buff;
 	static char *config_dir = "/."PROGNAME;
