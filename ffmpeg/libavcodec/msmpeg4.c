@@ -1240,7 +1240,7 @@ AVCodec ff_msmpeg4v2_decoder = {
 };
 
 AVCodec ff_msmpeg4v3_decoder = {
-    .name           = "msmpeg4",
+    .name           = "msmpeg4v3",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = AV_CODEC_ID_MSMPEG4V3,
     .priv_data_size = sizeof(MpegEncContext),
