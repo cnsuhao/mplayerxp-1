@@ -42,29 +42,31 @@ extern const vd_functions_t mpcodecs_vd_qtvideo;
 extern const vd_functions_t mpcodecs_vd_theora;
 
 static const vd_functions_t* mpcodecs_vd_drivers[] = {
-    &mpcodecs_vd_ffmpeg,
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     &mpcodecs_vd_dshow,
     &mpcodecs_vd_vfw,
     &mpcodecs_vd_vfwex,
     &mpcodecs_vd_dmo,
     &mpcodecs_vd_qtvideo,
 #endif
-    &mpcodecs_vd_divx4,
     &mpcodecs_vd_raw,
     &mpcodecs_vd_nuv,
     &mpcodecs_vd_libmpeg2,
     &mpcodecs_vd_xvid,
     &mpcodecs_vd_mpegpes,
     &mpcodecs_vd_huffyuv,
-    &mpcodecs_vd_xanim,
+#ifndef ENABLE_GPL_ONLY
+    &mpcodecs_vd_divx4,
     &mpcodecs_vd_real,
+    &mpcodecs_vd_xanim,
+#endif
 #ifdef HAVE_LIBTHEORA
     &mpcodecs_vd_theora,
 #endif
 #ifdef HAVE_LIBDV
     &mpcodecs_vd_libdv,
 #endif
+    &mpcodecs_vd_ffmpeg,
     &mpcodecs_vd_null,
     NULL
 };

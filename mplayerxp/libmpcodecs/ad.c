@@ -39,7 +39,6 @@ static const ad_functions_t* mpcodecs_ad_drivers[] = {
     &mpcodecs_ad_a52,
     &mpcodecs_ad_dca,
     &mpcodecs_ad_hwac3,
-    &mpcodecs_ad_ffmpeg,
     &mpcodecs_ad_pcm,
     &mpcodecs_ad_dvdpcm,
     &mpcodecs_ad_faad,
@@ -49,14 +48,17 @@ static const ad_functions_t* mpcodecs_ad_drivers[] = {
 #ifdef HAVE_LIBDV
     &mpcodecs_ad_libdv,
 #endif
+#ifndef ENABLE_GPL_ONLY
     &mpcodecs_ad_real,
-#ifdef HAVE_WIN32LOADER
+#endif
+#ifdef ENABLE_WIN32LOADER
     &mpcodecs_ad_dshow,
     &mpcodecs_ad_twin,
     &mpcodecs_ad_msacm,
     &mpcodecs_ad_dmo,
     &mpcodecs_ad_qtaudio,
 #endif
+    &mpcodecs_ad_ffmpeg,
     &mpcodecs_ad_null,
 
 };

@@ -9,15 +9,12 @@ SRCS=dec_video.c \
      vd.c \
      vd_null.c \
      vd_ffmpeg.c \
-     vd_divx4.c \
      vd_raw.c \
      vd_nuv.c \
      vd_libmpeg2.c \
      vd_xvid.c \
-     vd_xanim.c \
      vd_mpegpes.c \
      vd_huffyuv.c \
-     vd_real.c \
      ad.c \
      dec_audio.c \
      ad_null.c \
@@ -26,11 +23,17 @@ SRCS=dec_video.c \
      ad_hwac3.c \
      ad_pcm.c \
      ad_dvdpcm.c \
-     ad_real.c \
      ad_faad.c \
      ad_a52.c \
      ad_dca.c \
      codecs_ld.c
+
+ifeq ($(ENABLE_GPL_ONLY),no)
+SRCS+=vd_divx4.c \
+     ad_real.c \
+     vd_real.c \
+     vd_xanim.c
+endif
 ifeq ($(HAVE_LIBVORBIS),yes)
 SRCS+=ad_vorbis.c
 endif
@@ -41,7 +44,7 @@ ifeq ($(HAVE_LIBDV),yes)
 SRCS+= ad_libdv.c vd_libdv.c
 endif
 
-ifeq ($(HAVE_WIN32LOADER),yes)
+ifeq ($(ENABLE_WIN32LOADER),yes)
 SRCS+=vd_dshow.c \
       vd_vfw.c \
       vd_dmo.c \

@@ -9,7 +9,7 @@
 #include "guids.h"
 #include "interfaces.h"
 #include "registry.h"
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 #include "../ldt_keeper.h"
 #endif
 
@@ -106,7 +106,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHE
     this->m_iLastQuality = -1;
     this->m_iMaxAuto = maxauto;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_LDT_Keeper();
 #endif
     //memset(&m_obh, 0, sizeof(m_obh));
@@ -325,7 +325,7 @@ int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const any_t* src, in
 //	return -1;
 //    }
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_FS_Segment();
 #endif
     bufferin = CMediaBufferCreate(size, (any_t*)src, size, 0);
@@ -513,7 +513,7 @@ int DMO_VideoDecoder_SetDestFmt(DMO_VideoDecoder *this, int bits, unsigned int c
 	break;
     }
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_FS_Segment();
 #endif
 //    if(should_test)

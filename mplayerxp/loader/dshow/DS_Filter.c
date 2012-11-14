@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "win32.h" // printf macro
 
-//#ifndef HAVE_WIN32LOADER
+//#ifndef ENABLE_WIN32LOADER
 const GUID IID_IUnknown =
 {
     0x00000000, 0x0000, 0x0000,
@@ -82,7 +82,7 @@ void DS_Filter_Destroy(DS_Filter* This)
 
     mp_free(This);
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     CodecRelease();
 #else
     CoUninitialize();
@@ -128,7 +128,7 @@ DS_Filter* DS_FilterCreate(const char* dllname, const GUID* id,
     if (!This)
 	return NULL;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     CodecAlloc();
 #else
     CoInitialize(0L);

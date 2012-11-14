@@ -9,8 +9,7 @@ INSTALL = install
 
 include mp_config.mak
 
-PRG = $(PROGNAME)
-PRG_CFG = codec-cfg-xp
+TARGET_EXE = $(PROGNAME)
 # these subdirectories required installation due binaries within them
 SUBDIRS = libmpdemux libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input2 nls libvo xmpcore
 ifeq ($(TARGET_ARCH_X86),yes)
@@ -24,7 +23,7 @@ LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
 SRCS = mplayerxp.c mp-opt-reg.c dump.c mp_msg.c
 
-OBJS_MPLAYER = $(SRCS:.c=.o)
+OBJS = $(SRCS:.c=.o)
 
 FF_LIBS = ../ffmpeg/libavcodec/libavcodec$(FF_SUFFIX).a \
 	  ../ffmpeg/libswscale/libswscale$(FF_SUFFIX).a \
@@ -45,7 +44,7 @@ MP_LIBS = libmpdemux/libmpdemux.a \
 	  nls/libnls.a \
 	  libmpconf/libmpconf.a \
 	  xmpcore/libxmpcore.a
-ifeq ($(TARGET_ARCH_X86),yes)
+ifeq ($(ENABLE_WIN32LOADER),yes)
 	  MP_LIBS += loader/libloader.a
 endif
 
@@ -56,7 +55,7 @@ CFLAGS = $(OPTFLAGS) $(EXTRA_INC)
 
 # .PHONY: all clean
 
-all:	$(PRG) $(SUBDIRS)
+all:	$(TARGET_EXE) $(SUBDIRS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -64,17 +63,13 @@ all:	$(PRG) $(SUBDIRS)
 .PHONY: subdirs $(MP_LIBS)
 subdirs: $(MP_LIBS)
 
-$(PRG):	$(OBJS_MPLAYER) $(MP_LIBS)
+$(TARGET_EXE):	$(OBJS) $(MP_LIBS)
 	$(DO_MAKE_ALL)
-	$(CC) -o $(PRG) $(OBJS_MPLAYER) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXE) $(OBJS) $(LDFLAGS) $(LIBS)
 #-Xlinker --export-dynamic -Xlinker --gc-sections -Xlinker --sort-common
 $(SRCS): version.h
-#$(OBJS_MPLAYER): $(SRCS)
 
-$(PRG_CFG): version.h codec-cfg.c codec-cfg.h
-	$(CC) $(CFLAGS) -g codec-cfg.c -o $(PRG_CFG) -DCODECS2HTML
-
-install: $(PRG)
+install: $(TARGET_EXE)
 ifeq ($(INSTALL),)
 	@echo "*** 'install' utility was not found and you can't run automatic"
 	@echo "*** installation. Please download 'fileutils' from ftp://ftp.gnu.org and"
@@ -82,7 +77,7 @@ ifeq ($(INSTALL),)
 	@echo "*** of this project" 
 	@exit 1
 endif
-	$(INSTALL) -D -m 755 $(PRG) $(DESTDIR)$(BINDIR)/$(PRG)
+	$(INSTALL) -D -m 755 $(TARGET_EXE) $(DESTDIR)$(BINDIR)/$(TARGET_EXE)
 	@if test ! -d $(DESTDIR)$(DATADIR) ; then mkdir -p $(DESTDIR)$(DATADIR) ; fi
 	@if test ! -d $(DESTDIR)$(DATADIR)/font ; then mkdir -p $(DESTDIR)$(DATADIR)/font ; fi
 	@if test ! -f $(DESTDIR)$(DATADIR)/font/font.desc ; then \
@@ -91,7 +86,7 @@ endif
 	fi
 
 uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/$(PRG)
+	rm -f $(DESTDIR)$(BINDIR)/$(TARGET_EXE)
 	rm -f $(DESTDIR)$(DATADIR)/font/*
 	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(DATADIR)/font
 	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(BINDIR)
@@ -102,7 +97,7 @@ clean:
 
 distclean:
 	$(DO_MAKE)
-	-rm -f *~ $(PRG) $(OBJS)
+	-rm -f *~ $(TARGET_EXE) $(OBJS)
 	-rm -f *.o *.a .depend configure.log
 	-rm -f mp_config.h mp_config.mak version.h
 	-rm -f cpuinfo help_mp.h

@@ -19,7 +19,7 @@
 #include "wine/winreg.h"
 #include "wine/vfw.h"
 #include "registry.h"
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 #include "ldt_keeper.h"
 #endif
 #include "driver.h"
@@ -28,7 +28,7 @@
 #endif
 
 
-#ifndef HAVE_WIN32LOADER
+#ifndef ENABLE_WIN32LOADER
 char* def_path=WIN32_PATH;
 #else
 extern char* def_path;
@@ -100,7 +100,7 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT message,
     __asm__ __volatile__ ("fsave (%0)\n\t": :"r"(&qw));
 #endif
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_FS_Segment();
 #endif
 
@@ -125,7 +125,7 @@ void DrvClose(HDRVR hDriver)
 	DRVR* d = (DRVR*)hDriver;
 	if (d->hDriverModule)
 	{
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 	    Setup_FS_Segment();
 #endif
 	    if (d->DriverProc)
@@ -138,7 +138,7 @@ void DrvClose(HDRVR hDriver)
 	}
 	mp_free(d);
     }
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     CodecRelease();
 #endif
 }
@@ -156,7 +156,7 @@ HDRVR DrvOpen(LPARAM lParam2)
     const char* filename = (const char*) ((ICOPEN*) lParam2)->pV1Reserved;
 
 #ifdef MPLAYER
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_LDT_Keeper();
 #endif
     printf("Loading codec DLL: '%s'\n",filename);
@@ -166,7 +166,7 @@ HDRVR DrvOpen(LPARAM lParam2)
     if (!hDriver)
 	return ((HDRVR) 0);
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     CodecAlloc();
     Setup_FS_Segment();
 #endif

@@ -11,7 +11,7 @@
 #include "except.h"
 #else
 #include "libwin32.h"
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 #include "ldt_keeper.h"
 #endif
 #endif
@@ -46,7 +46,7 @@ DMO_AudioDecoder * DMO_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX
     int sz;
     WAVEFORMATEX* pWF;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_LDT_Keeper();
     Setup_FS_Segment();
 #endif
@@ -124,7 +124,7 @@ int DMO_AudioDecoder_Convert(DMO_AudioDecoder *this, const any_t* in_data, unsig
     if (!in_data || !out_data)
 	return -1;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_FS_Segment();
 #endif
     //m_pDMO_Filter->m_pMedia->vt->Lock(m_pDMO_Filter->m_pMedia, 1);

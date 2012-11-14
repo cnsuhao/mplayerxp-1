@@ -1,6 +1,6 @@
 include ../mp_config.mak
 
-ifeq ($(TARGET_ARCH_X86),yes)
+ifeq ($(ENABLE_WIN32LOADER),yes)
 LIBNAME=libloader.a
 SUBDIRS=dshow dmo
 else

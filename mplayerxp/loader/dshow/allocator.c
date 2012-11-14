@@ -294,7 +294,7 @@ static void MemAllocator_ResetPointer(MemAllocator* This)
 static void MemAllocator_Destroy(MemAllocator* This)
 {
     Debug printf("MemAllocator_Destroy(%p) called  (%d, %d)\n", This, This->refcount, AllocatorKeeper);
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     if (--AllocatorKeeper == 0)
 	UnregisterComClass(&CLSID_MemoryAllocator, MemAllocator_CreateAllocator);
 #endif
@@ -348,7 +348,7 @@ MemAllocator* MemAllocatorCreate()
     This->interfaces[0]=IID_IUnknown;
     This->interfaces[1]=IID_IMemAllocator;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     if (AllocatorKeeper++ == 0)
 	RegisterComClass(&CLSID_MemoryAllocator, MemAllocator_CreateAllocator);
 #endif

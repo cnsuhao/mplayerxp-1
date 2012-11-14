@@ -346,7 +346,6 @@ void exit_player(const char* why){
 
     MP_UNIT("exit_player");
 
-    sws_uninit();
     if(why) MSG_HINT(MSGTR_Exiting,why);
     MSG_DBG2("max framesize was %d bytes\n",max_framesize);
     if(mp_data->mconfig) m_config_free(mp_data->mconfig);
@@ -354,32 +353,6 @@ void exit_player(const char* why){
     mpxp_uninit_structs();
     if(why) exit(0);
     return; /* Still try coredump!!!*/
-}
-
-static void soft_exit_player(void)
-{
-    priv_t*priv=mp_data->priv;
-    sh_audio_t* sh_audio=priv->demuxer->audio->sh;
-    sh_video_t* sh_video=priv->demuxer->video->sh;
-    fflush(stdout);
-    fflush(stderr);
-    uninit_player(INITED_DEMUXER|INITED_STREAM);
-    if(sh_audio) while(get_len_audio_buffer()) usleep(0);
-    if(sh_video) {
-	for(;;) {
-	    if(dae_played_eof(xp_core->video)) break;
-	    usleep(0);
-	}
-    }
-    uninit_player((INITED_ALL)&(~(INITED_STREAM|INITED_DEMUXER)));
-
-    MP_UNIT("exit_player");
-    MSG_HINT(MSGTR_Exiting,MSGTR_Exit_quit);
-    MSG_DBG2("max framesize was %d bytes\n",max_framesize);
-    if(mp_data->mconfig) m_config_free(mp_data->mconfig);
-    mp_msg_uninit();
-    mpxp_uninit_structs();
-    exit(0);
 }
 
 void __exit_sighandler(void)
@@ -1430,7 +1403,7 @@ For future:
       priv->osd_function=OSD_PAUSE;
     } break;
     case MP_CMD_SOFT_QUIT : {
-      soft_exit_player();
+      exit_player(MSGTR_Exit_quit);
       break;
     }
     case MP_CMD_QUIT : {

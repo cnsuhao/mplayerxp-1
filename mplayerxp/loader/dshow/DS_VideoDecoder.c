@@ -38,7 +38,7 @@ static SampleProcUserData sampleProcData;
 #include "DS_VideoDecoder.h"
 
 #include "../wine/winerror.h"
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 #include "../ldt_keeper.h"
 #endif
 
@@ -103,7 +103,7 @@ DS_VideoDecoder * DS_VideoDecoder_Open(char* dllname, GUID* guid, BITMAPINFOHEAD
     this->m_iLastQuality = -1;
     this->m_iMaxAuto = maxauto;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_LDT_Keeper();
 #endif
     //memset(&m_obh, 0, sizeof(m_obh));
@@ -327,7 +327,7 @@ int DS_VideoDecoder_DecodeInternal(DS_VideoDecoder *this, const any_t* src, int 
     // crashes inside ...->Receive() fixed now?
     //
     // nope - but this is surely helpfull - I'll try some more experiments
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_FS_Segment();
 #endif
 #if 0

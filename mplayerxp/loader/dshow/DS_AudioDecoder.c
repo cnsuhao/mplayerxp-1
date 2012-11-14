@@ -26,7 +26,7 @@ struct _DS_AudioDecoder
 };
 
 #include "DS_AudioDecoder.h"
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 #include "../ldt_keeper.h"
 #endif
 
@@ -47,7 +47,7 @@ DS_AudioDecoder * DS_AudioDecoder_Open(char* dllname, GUID* guid, WAVEFORMATEX* 
     int sz;
     WAVEFORMATEX* pWF;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_LDT_Keeper();
     Setup_FS_Segment();
 #endif
@@ -146,7 +146,7 @@ int DS_AudioDecoder_Convert(DS_AudioDecoder *this, const any_t* in_data, unsigne
     if (!in_data || !out_data)
 	return -1;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     Setup_FS_Segment();
 #endif
     in_size -= in_size%this->in_fmt.nBlockAlign;

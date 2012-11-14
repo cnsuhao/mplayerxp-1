@@ -21,7 +21,7 @@ void DMO_Filter_Destroy(DMO_Filter* This)
 	This->m_pMedia->vt->Release((IUnknown*)This->m_pMedia);
 
     mp_free(This);
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     CodecRelease();
 #endif
 }
@@ -36,7 +36,7 @@ DMO_Filter* DMO_FilterCreate(const char* dllname, const GUID* id,
     if (!This)
 	return NULL;
 
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
     CodecAlloc();
 #endif
     //This->Start = DS_Filter_Start;

@@ -278,7 +278,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(const char* pszFileName,
 
     TRACE("('%s', '%x', 0x%08x)\n", pszFileName, wFormatTag, hinstModule);
 
-#ifndef HAVE_WIN32LOADER
+#ifndef ENABLE_WIN32LOADER
 	MSACM_hHeap = GetProcessHeap();
 #endif
     padid = (PWINE_ACMDRIVERID) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
@@ -502,7 +502,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	if (phas)
 	    *phas = (HACMSTREAM)was;
 	TRACE("=> (%d)\n", ret);
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 	CodecAlloc();
 #endif
 	return ret;
@@ -531,7 +531,7 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
 	if (was->hAcmDriver)
 	    acmDriverClose(was->hAcmDriver, 0L);
 	HeapFree(MSACM_hHeap, 0, was);
-#ifdef HAVE_WIN32LOADER
+#ifdef ENABLE_WIN32LOADER
 	CodecRelease();
 #endif
     }
