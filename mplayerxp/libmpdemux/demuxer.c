@@ -246,10 +246,8 @@ void free_demuxer(demuxer_t *demuxer){
 	if(demuxer->driver) demuxer->driver->close(demuxer);
 
 	// mp_free streams:
-	for(i=0;i<256;i++){
-	    if(demuxer->a_streams[i]) free_sh_audio(demuxer->a_streams[i]);
-	    if(demuxer->v_streams[i]) free_sh_video(demuxer->v_streams[i]);
-	}
+	for(i=0;i<MAX_A_STREAMS;i++) if(demuxer->a_streams[i]) free_sh_audio(demuxer->a_streams[i]);
+	for(i=0;i<MAX_V_STREAMS;i++) if(demuxer->v_streams[i]) free_sh_video(demuxer->v_streams[i]);
 	//if(sh_audio) free_sh_audio(sh_audio);
 	//if(sh_video) free_sh_video(sh_video);
 	// mp_free demuxers:
@@ -715,7 +713,7 @@ int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param)
     return 1;
 }
 
-int demux_info_print(demuxer_t *demuxer,const char *filename)
+int demux_info_print(const demuxer_t *demuxer,const char *filename)
 {
     unsigned i;
     MSG_HINT(" CLIP INFO (%s):\n",filename);
@@ -737,7 +735,7 @@ void demux_info_free(demuxer_t* demuxer)
     }
 }
 
-const char* demux_info_get(demuxer_t *demuxer, unsigned opt) {
+const char* demux_info_get(const demuxer_t *demuxer, unsigned opt) {
     if(!opt || opt > INFOT_MAX) return NULL;
     return ((demuxer_info_t *)demuxer->info)->id[opt-1];
 }
@@ -762,7 +760,7 @@ void demuxer_register_options(m_config_t* cfg) {
   m_config_register_options(cfg,demuxer_opts);
 }
 
-static MPXP_Rc demux_control(demuxer_t *demuxer, int cmd, any_t*arg) {
+static MPXP_Rc demux_control(const demuxer_t *demuxer, int cmd, any_t*arg) {
 
     if(demuxer->driver)
 	return demuxer->driver->control(demuxer,cmd,arg);
@@ -770,7 +768,7 @@ static MPXP_Rc demux_control(demuxer_t *demuxer, int cmd, any_t*arg) {
     return MPXP_Unknown;
 }
 
-int demuxer_switch_audio(demuxer_t *demuxer, int id)
+int demuxer_switch_audio(const demuxer_t *demuxer, int id)
 {
     if(id>MAX_A_STREAMS) id=0;
     if (demux_control(demuxer, DEMUX_CMD_SWITCH_AUDIO, &id) == MPXP_Unknown)
@@ -779,7 +777,7 @@ int demuxer_switch_audio(demuxer_t *demuxer, int id)
     return id;
 }
 
-int demuxer_switch_video(demuxer_t *demuxer, int id)
+int demuxer_switch_video(const demuxer_t *demuxer, int id)
 {
     if(id>MAX_V_STREAMS) id=0;
     if (demux_control(demuxer, DEMUX_CMD_SWITCH_VIDEO, &id) == MPXP_Unknown)
@@ -788,7 +786,7 @@ int demuxer_switch_video(demuxer_t *demuxer, int id)
     return id;
 }
 
-int demuxer_switch_subtitle(demuxer_t *demuxer, int id)
+int demuxer_switch_subtitle(const demuxer_t *demuxer, int id)
 {
     if(id>MAX_S_STREAMS) id=0;
     if (demux_control(demuxer, DEMUX_CMD_SWITCH_SUBS, &id) == MPXP_Unknown)

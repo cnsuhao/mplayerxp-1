@@ -4005,7 +4005,7 @@ static void mkv_seek (demuxer_t *demuxer,const seek_args_t* seeka)
     }
 }
 
-static MPXP_Rc mkv_control (demuxer_t *demuxer, int cmd, any_t*arg)
+static MPXP_Rc mkv_control (const demuxer_t *demuxer, int cmd, any_t*arg)
 {
     mkv_demuxer_t *mkv_d = (mkv_demuxer_t *) demuxer->priv;
     switch (cmd) {

@@ -61,7 +61,7 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
 
 struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
     unsigned i;
-    audio_probe_t* aprobe=probe(sh,sh->wtag);
+    const audio_probe_t* aprobe=probe(sh,sh->wtag);
     struct codecs_st* acodec = NULL;
     if(aprobe) {
 	acodec=mp_mallocz(sizeof(struct codecs_st));

@@ -1699,7 +1699,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     if(len > 0)
       high_res_mp3_seek(demuxer,len);
     sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-    mpca_resync_stream(sh_audio);
+    mpca_resync_stream(sh_audio->decoder);
     return;
   }
 
@@ -1736,7 +1736,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     if(len > 0)
       high_res_ac3_seek(demuxer,len);
     sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-    mpca_resync_stream(sh_audio);
+    mpca_resync_stream(sh_audio->decoder);
     return;
   }
   case RAW_DCA: {
@@ -1749,7 +1749,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     if(len > 0)
       high_res_ddca_seek(demuxer,len);
     sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-    mpca_resync_stream(sh_audio);
+    mpca_resync_stream(sh_audio->decoder);
     return;
   }
   case RAW_VOC:
@@ -1764,7 +1764,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
   stream_seek(s,pos);
 
-  mpca_resync_stream(sh_audio);
+  mpca_resync_stream(sh_audio->decoder);
 
 }
 
@@ -1776,7 +1776,7 @@ static void audio_close(demuxer_t* demuxer) {
   mp_free(priv);
 }
 
-static MPXP_Rc audio_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc audio_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

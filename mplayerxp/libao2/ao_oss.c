@@ -42,7 +42,7 @@ typedef struct priv_s {
 const char *oss_mixer_device = PATH_DEV_MIXER;
 
 // to set/get/query special features/parameters
-static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
     priv_t*priv=ao->priv;
     int rval;
     switch(cmd){
@@ -393,7 +393,7 @@ static void audio_resume(ao_data_t* ao)
 
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(ao_data_t* ao){
+static unsigned get_space(const ao_data_t* ao){
     priv_t*priv=ao->priv;
   unsigned playsize=ao->outburst;
 
@@ -425,7 +425,7 @@ static unsigned get_space(ao_data_t* ao){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags){
+static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags){
     priv_t*priv=ao->priv;
     UNUSED(flags);
     len/=ao->outburst;
@@ -434,7 +434,7 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data,unsigned len,unsigne
 }
 
 // return: delay in seconds between first and last sample in buffer
-static float get_delay(ao_data_t* ao){
+static float get_delay(const ao_data_t* ao){
     priv_t*priv=ao->priv;
   int ierr;
   /* Calculate how many bytes/second is sent out */

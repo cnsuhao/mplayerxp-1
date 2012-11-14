@@ -252,7 +252,7 @@ static void roq_close(demuxer_t* demuxer) {
   mp_free(roq_data);
 }
 
-static MPXP_Rc roq_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc roq_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

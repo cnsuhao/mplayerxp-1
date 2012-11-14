@@ -47,13 +47,13 @@
 #include "sub_cc.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
+#include "libmpcodecs/dec_audio.h"
 
 
 #define AV_RB24(x)  ((((uint8_t*)(x))[0] << 16) | \
 		     (((uint8_t*)(x))[1] <<  8) | \
 		      ((uint8_t*)(x))[2])
 
-extern void mpca_skip_frame( sh_audio_t *sh_audio );
 int sub_justify;
 
 // 2/c0: audio data
@@ -807,7 +807,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
 	   (float)sh_audio->i_bps;
 	if( d_video->pts > a_pts )
 	{
-	   mpca_skip_frame( sh_audio );  // sync audio
+	   mpca_skip_frame( sh_audio->decoder);  // sync audio
 	   continue;
 	}
      }
@@ -819,7 +819,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
       ty_ClearOSD( 0 );
 }
 
-static MPXP_Rc ty_control( demuxer_t *demuxer,int cmd, any_t*arg )
+static MPXP_Rc ty_control(const demuxer_t *demuxer,int cmd, any_t*arg )
 {
 #if 0
     demux_stream_t *d_video = demuxer->video;

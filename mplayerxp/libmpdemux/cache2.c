@@ -9,6 +9,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <errno.h>
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -112,7 +113,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 	,new_start,in_cache,START_FILEPOS(c),readpos,END_FILEPOS(c));
 	if(c->stream->eof || c->eof) nc_stream_reset(c->stream);
 	c->stream->driver->seek(c->stream,new_start);
-	if(c->stream->_Errno) { MSG_WARN("c2_seek(drv:%s) error: %s\n",c->stream->driver->mrl,strerror(c->stream->_Errno)); c->stream->_Errno=0; }
+	if(errno) { MSG_WARN("c2_seek(drv:%s) error: %s\n",c->stream->driver->mrl,strerror(errno)); errno=0; }
 	if((c->packets[c->first].filepos=c->stream->driver->tell(c->stream))<0) seek_eof=1;
 	c->last=c->first;
 	if(c->packets[c->first].filepos < new_start-(off_t)c->stream->sector_size)
@@ -162,7 +163,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 	c->eof=1;
 	c->packets[cidx].state&=~CPF_EMPTY;
 	c->packets[cidx].state&=~CPF_DONE;
-	if(c->stream->_Errno) { MSG_WARN("c2_fill_buffer(drv:%s) error: %s\n",c->stream->driver->mrl,strerror(c->stream->_Errno)); c->stream->_Errno=0; }
+	if(errno) { MSG_WARN("c2_fill_buffer(drv:%s) error: %s\n",c->stream->driver->mrl,strerror(errno)); errno=0; }
 	CACHE2_PACKET_TUNLOCK(cidx);
 	break;
     }

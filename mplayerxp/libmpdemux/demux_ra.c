@@ -299,7 +299,7 @@ int demux_seek_ra(demuxer_t *demuxer,const seek_args_t* seeka)
 }
 #endif
 
-static MPXP_Rc ra_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc ra_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

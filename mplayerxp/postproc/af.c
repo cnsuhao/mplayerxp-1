@@ -96,7 +96,7 @@ static const af_info_t* __FASTCALL__ af_find(const char* name)
 
 /* Find filter in the dynamic filter list using it's name This
    function is used for finding already initialized filters */
-static af_instance_t* __FASTCALL__ af_get(af_stream_t* s,const char* name)
+static af_instance_t* __FASTCALL__ af_get(const af_stream_t* s,const char* name)
 {
   af_instance_t* af=s->first;
   // Find the filter
@@ -110,7 +110,7 @@ static af_instance_t* __FASTCALL__ af_get(af_stream_t* s,const char* name)
 
 /*/ Function for creating a new filter of type name. The name may
   contain the commandline parameters for the filter */
-static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
+static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,char* name)
 {
   char* cmdline = name;
 
@@ -163,7 +163,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
 /* Create and insert a new filter of type name before the filter in the
    argument. This function can be called during runtime, the return
    value is the new filter */
-static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,const char* name)
+static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,char* name)
 {
   // Create the new filter and make sure it is OK
   af_instance_t* new=af_create(s,name);
@@ -188,7 +188,7 @@ static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,
 /* Create and insert a new filter of type name after the filter in the
    argument. This function can be called during runtime, the return
    value is the new filter */
-static af_instance_t* af_append(af_stream_t* s, af_instance_t* af,const char* name)
+static af_instance_t* af_append(af_stream_t* s, af_instance_t* af,char* name)
 {
   // Create the new filter and make sure it is OK
   af_instance_t* new=af_create(s,name);
@@ -480,7 +480,7 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
    to the stream s. The filter will be inserted somewhere nice in the
    list of filters. The return value is a pointer to the new filter,
    If the filter couldn't be added the return value is NULL. */
-static af_instance_t* af_add(af_stream_t* s,const char* name){
+static af_instance_t* af_add(af_stream_t* s,char* name){
   af_instance_t* new;
   // Sanity check
   if(!s || !s->first || !name)
@@ -517,7 +517,7 @@ mp_aframe_t* __FASTCALL__ RND_RENAME8(af_play)(af_stream_t* s, mp_aframe_t* data
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-unsigned __FASTCALL__ af_lencalc(frac_t mul, mp_aframe_t* d){
+unsigned __FASTCALL__ af_lencalc(frac_t mul,const mp_aframe_t* d){
   unsigned t = (d->format&MPAF_BPS_MASK)*d->nch;
   return t*(((d->len/t)*mul.n)/(unsigned)mul.d + 1);
 }
@@ -525,7 +525,7 @@ unsigned __FASTCALL__ af_lencalc(frac_t mul, mp_aframe_t* d){
 /* Calculate how long the output from the filters will be given the
    input length "len". The calculated length is >= the actual
    length. */
-int __FASTCALL__ af_outputlen(af_stream_t* s, int len)
+int __FASTCALL__ af_outputlen(const af_stream_t* s, int len)
 {
   unsigned t = (s->input.format&MPAF_BPS_MASK)*s->input.nch;
   af_instance_t* af=s->first;
@@ -543,7 +543,7 @@ int __FASTCALL__ af_outputlen(af_stream_t* s, int len)
    certain output length, i.e. the return value of this function is
    the input length required to produce the output length "len". The
    calculated length is <= the actual length */
-int __FASTCALL__ af_inputlen(af_stream_t* s, int len)
+int __FASTCALL__ af_inputlen(const af_stream_t* s, int len)
 {
   unsigned t = (s->input.format&MPAF_BPS_MASK)*s->input.nch;
   af_instance_t* af=s->first;
@@ -602,7 +602,7 @@ int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
   return (res == MPXP_Ok);
 }
 
-MPXP_Rc __FASTCALL__ af_query_fmt (af_stream_t* s,mpaf_format_e fmt)
+MPXP_Rc __FASTCALL__ af_query_fmt (const af_stream_t* s,mpaf_format_e fmt)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
@@ -615,7 +615,7 @@ MPXP_Rc __FASTCALL__ af_query_fmt (af_stream_t* s,mpaf_format_e fmt)
   return MPXP_False;
 }
 
-MPXP_Rc __FASTCALL__ af_query_rate (af_stream_t* s,unsigned rate)
+MPXP_Rc __FASTCALL__ af_query_rate (const af_stream_t* s,unsigned rate)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";
@@ -626,7 +626,7 @@ MPXP_Rc __FASTCALL__ af_query_rate (af_stream_t* s,unsigned rate)
   return MPXP_False;
 }
 
-MPXP_Rc __FASTCALL__ af_query_channels (af_stream_t* s,unsigned nch)
+MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch)
 {
   af_instance_t* filt = s?s->first:NULL;
   const char *filt_name=filt?filt->info->name:"ao2";

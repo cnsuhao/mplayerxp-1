@@ -322,7 +322,7 @@ static void nuv_close(demuxer_t* demuxer) {
   mp_free(priv);
 }
 
-static MPXP_Rc nuv_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc nuv_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

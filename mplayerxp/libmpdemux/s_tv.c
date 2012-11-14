@@ -594,7 +594,7 @@ static off_t __FASTCALL__ _tv_seek(stream_t *stream,off_t pos)
     return pos;
 }
 
-static off_t __FASTCALL__ _tv_tell(stream_t *stream)
+static off_t __FASTCALL__ _tv_tell(const stream_t *stream)
 {
     UNUSED(stream);
     return 0;
@@ -605,7 +605,7 @@ static void __FASTCALL__ _tv_close(stream_t*stream)
     mp_free(stream->priv);
 }
 
-static void __FASTCALL__ _tv_cmd_handler(stream_t *s,unsigned cmd)
+static void __FASTCALL__ _tv_cmd_handler(const stream_t *s,unsigned cmd)
 {
     switch(cmd)
     {
@@ -624,7 +624,7 @@ static void __FASTCALL__ _tv_cmd_handler(stream_t *s,unsigned cmd)
     }
 }
 
-static MPXP_Rc __FASTCALL__ _tv_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ _tv_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     switch(cmd) {
 	case SCRTL_MPXP_CMD:

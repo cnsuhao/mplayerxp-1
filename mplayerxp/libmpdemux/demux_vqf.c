@@ -215,12 +215,12 @@ static void vqf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_audio->i_bps)*seeka->secs;
   pos -= (pos % (sh_audio->nch * afmt2bps(sh_audio->afmt)));
   stream_seek(s,pos);
-  mpca_resync_stream(sh_audio);
+  mpca_resync_stream(sh_audio->decoder);
 }
 
 static void vqf_close(demuxer_t* demuxer) {}
 
-static MPXP_Rc vqf_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc vqf_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

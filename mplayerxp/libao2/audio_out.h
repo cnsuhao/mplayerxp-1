@@ -23,6 +23,7 @@ typedef struct ao_data_s
     unsigned	outburst;	/**< outburst */
     unsigned	buffersize;	/**< size of audio buffer */
     float	pts;		/**< PTS of audio buffer  */
+    any_t*	opaque;		/**< for internal use */
     any_t*	priv;
 } ao_data_t;
 
@@ -36,7 +37,7 @@ typedef struct ao_functions_s
      * @param arg	argument associated with command
      * @return	MPXP_Ok if success MPXP_False MPXP_Error MPXP_NA otherwise
      **/
-    MPXP_Rc (* __FASTCALL__ control)(ao_data_t*,int cmd,long arg);
+    MPXP_Rc (* __FASTCALL__ control)(const ao_data_t*,int cmd,long arg);
 
     /** Preinitializes driver
      * @param flag	currently unused
@@ -60,7 +61,7 @@ typedef struct ao_functions_s
     void (* __FASTCALL__ reset)(ao_data_t*);
 
     /** Returns how many bytes can be played without blocking **/
-    unsigned (* __FASTCALL__ get_space)(ao_data_t*);
+    unsigned (* __FASTCALL__ get_space)(const ao_data_t*);
 
     /** Plays decoded (PCM) audio buffer
       * @param data		buffer with PCM data
@@ -68,10 +69,10 @@ typedef struct ao_functions_s
       * @param flags	currently unused
       * return		number of bytes which were copied into audio card
     **/
-    unsigned (* __FASTCALL__ play)(ao_data_t*,any_t* data,unsigned len,unsigned flags);
+    unsigned (* __FASTCALL__ play)(ao_data_t*,const any_t* data,unsigned len,unsigned flags);
 
     /** Returns delay in seconds between first and last sample in buffer **/
-    float (* __FASTCALL__ get_delay)(ao_data_t*);
+    float (* __FASTCALL__ get_delay)(const ao_data_t*);
 
     /** Stops playing, keep buffers (for pause) */
     void (* __FASTCALL__ pause)(ao_data_t*);
@@ -99,16 +100,16 @@ extern char *		 __FASTCALL__ ao_format_name(int format);
 extern int		 __FASTCALL__ ao_format_bits(int format);
 
 extern void		ao_print_help( void );
-extern const ao_functions_t* __FASTCALL__ RND_RENAME4(ao_register)(const char *driver_name);
-extern const ao_info_t*	ao_get_info( void );
-extern ao_data_t*	__FASTCALL__ RND_RENAME5(ao_init)(unsigned flags,const char *subdevice);
+extern MPXP_Rc	__FASTCALL__ RND_RENAME4(ao_register)(ao_data_t* ao,const char *driver_name,unsigned flags);
+extern const ao_info_t*	ao_get_info( const ao_data_t* ao );
+extern ao_data_t*	__FASTCALL__ RND_RENAME5(ao_init)(const char *subdevice);
 extern MPXP_Rc		__FASTCALL__ ao_configure(ao_data_t* priv,unsigned rate,unsigned channels,unsigned format);
 extern void		__FASTCALL__ ao_uninit(ao_data_t* priv);
 extern void		__FASTCALL__ ao_reset(ao_data_t* priv);
-extern unsigned		__FASTCALL__ ao_get_space(ao_data_t* priv);
-extern unsigned		__FASTCALL__ RND_RENAME6(ao_play)(ao_data_t* priv,any_t* data,unsigned len,unsigned flags);
-extern float		__FASTCALL__ ao_get_delay(ao_data_t* priv);
+extern unsigned		__FASTCALL__ ao_get_space(const ao_data_t* priv);
+extern unsigned		__FASTCALL__ RND_RENAME6(ao_play)(ao_data_t* priv,const any_t* data,unsigned len,unsigned flags);
+extern float		__FASTCALL__ ao_get_delay(const ao_data_t* priv);
 extern void		__FASTCALL__ ao_pause(ao_data_t* priv);
 extern void		__FASTCALL__ ao_resume(ao_data_t* priv);
-extern MPXP_Rc	__FASTCALL__ RND_RENAME7(ao_control)(ao_data_t* priv,int cmd,long arg);
+extern MPXP_Rc	__FASTCALL__ RND_RENAME7(ao_control)(const ao_data_t* priv,int cmd,long arg);
 #endif

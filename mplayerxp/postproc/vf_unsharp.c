@@ -181,7 +181,7 @@ static int __FASTCALL__ config( struct vf_instance_s* vf,
 
 //===========================================================================//
 
-static void __FASTCALL__ get_image( struct vf_instance_s* vf, mp_image_t *mpi ) {
+static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi ) {
     if( mpi->flags & MP_IMGFLAG_PRESERVE )
 	return; // don't change
     if( mpi->imgfmt!=vf->priv->outfmt )
@@ -271,7 +271,7 @@ static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format( struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h) {
+static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h) {
     switch(fmt) {
     case IMGFMT_YV12:
     case IMGFMT_I420:

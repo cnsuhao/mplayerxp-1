@@ -1587,11 +1587,11 @@ static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 
     real_demux(demuxer,NULL);
     if (sh_audio)
-	mpca_resync_stream(sh_audio);
+	mpca_resync_stream(sh_audio->decoder);
     return;
 }
 
-static MPXP_Rc real_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc real_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

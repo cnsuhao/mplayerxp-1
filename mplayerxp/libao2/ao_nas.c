@@ -207,7 +207,7 @@ static int nas_readBuffer(priv_t *priv, unsigned int num)
     return num;
 }
 
-static int nas_writeBuffer(priv_t *priv, any_t*data, unsigned int len)
+static int nas_writeBuffer(priv_t *priv,const any_t*data, unsigned int len)
 {
     pthread_mutex_lock(&priv->buffer_mutex);
     MSG_DBG2("ao_nas: nas_writeBuffer(): len=%d client=%d/%d server=%d/%d\n",
@@ -367,7 +367,7 @@ static unsigned int nas_aformat_to_auformat(unsigned int *format)
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=ao->priv;
 	AuElementParameters aep;
@@ -416,7 +416,6 @@ static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
 static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
     ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t* priv=ao->priv;
     UNUSED(flags);
     return MPXP_Ok;
 }
@@ -579,7 +578,7 @@ static void audio_resume(ao_data_t* ao)
 
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(ao_data_t* ao)
+static unsigned get_space(const ao_data_t* ao)
 {
     priv_t* priv=ao->priv;
 	unsigned result;
@@ -596,7 +595,7 @@ static unsigned get_space(ao_data_t* ao)
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags)
+static unsigned play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
 {
     priv_t* priv=ao->priv;
 	unsigned written, maxbursts = 0, playbursts = 0;
@@ -640,7 +639,7 @@ static unsigned play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags)
 }
 
 // return: delay in seconds between first and last sample in buffer
-static float get_delay(ao_data_t* ao)
+static float get_delay(const ao_data_t* ao)
 {
     priv_t* priv=ao->priv;
 	float result;

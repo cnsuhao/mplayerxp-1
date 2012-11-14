@@ -761,7 +761,7 @@ static off_t __FASTCALL__ __dvdread_seek(stream_t *stream,off_t newpos)
     return d->spos;
 }
 
-static off_t __FASTCALL__ __dvdread_tell(stream_t *stream)
+static off_t __FASTCALL__ __dvdread_tell(const stream_t *stream)
 {
     dvd_priv_t *d = (dvd_priv_t *)stream->priv;
     return d->spos;
@@ -782,7 +782,7 @@ static unsigned int * __FASTCALL__ dvdread_stream_get_palette(stream_t *stream)
   return 0;
 }
 
-static MPXP_Rc __FASTCALL__ __dvdread_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ __dvdread_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     dvd_priv_t *dvd_priv=s->priv;
     switch(cmd) {

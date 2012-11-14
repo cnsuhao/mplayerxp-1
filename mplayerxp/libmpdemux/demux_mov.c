@@ -2086,7 +2086,7 @@ static void mov_close(demuxer_t *demuxer)
   mp_free(priv);
 }
 
-static MPXP_Rc mov_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc mov_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

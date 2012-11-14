@@ -230,7 +230,7 @@ af_info_t af_info_format = {
     open
 };
 
-uint32_t load24bit(any_t* data, int pos) {
+uint32_t load24bit(const any_t* data, int pos) {
 #if WORDS_BIGENDIAN
     return (((uint32_t)((uint8_t*)data)[3*pos])<<24) |
 	    (((uint32_t)((uint8_t*)data)[3*pos+1])<<16) |

@@ -78,24 +78,24 @@ typedef struct priv_s {
 #endif
 }priv_t;
 
-int __FASTCALL__ vo_x11_Shmem_Flag(vo_data_t*vo)
+int __FASTCALL__ vo_x11_Shmem_Flag(const vo_data_t*vo)
 {
     priv_t*priv=(priv_t*)vo->priv2;
     return priv->Shmem_Flag;
 }
 
-XImage* __FASTCALL__ vo_x11_Image(vo_data_t*vo,unsigned idx)
+XImage* __FASTCALL__ vo_x11_Image(const vo_data_t*vo,unsigned idx)
 {
     priv_t*priv=(priv_t*)vo->priv2;
     return priv->myximage[idx];
 }
 
-uint8_t* __FASTCALL__ vo_x11_ImageData(vo_data_t*vo,unsigned idx)
+uint8_t* __FASTCALL__ vo_x11_ImageData(const vo_data_t*vo,unsigned idx)
 {
     return vo_x11_Image(vo,idx)->data;
 }
 
-void __FASTCALL__ vo_x11_getMyXImage(vo_data_t*vo,unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h)
+void __FASTCALL__ vo_x11_getMyXImage(const vo_data_t*vo,unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h)
 {
     priv_t*priv=(priv_t*)vo->priv2;
 #ifdef HAVE_SHM

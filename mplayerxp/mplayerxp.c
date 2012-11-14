@@ -130,7 +130,7 @@ enum {
 typedef struct priv_s {
     unsigned	inited_flags;
     int		vo_inited;
-    int		ao_inited;
+    MPXP_Rc	ao_inited;
     int		osd_show_framedrop;
     int		osd_function;
 // priv data
@@ -282,7 +282,7 @@ void uninit_player(unsigned int mask){
     if(mask&INITED_VCODEC){
 	priv->inited_flags&=~INITED_VCODEC;
 	MP_UNIT("uninit_vcodec");
-	mpcv_uninit(sh_video);
+	mpcv_uninit(sh_video->decoder);
 	sh_video=NULL;
     }
 
@@ -296,7 +296,7 @@ void uninit_player(unsigned int mask){
     if(mask&INITED_ACODEC){
 	priv->inited_flags&=~INITED_ACODEC;
 	MP_UNIT("uninit_acodec");
-	mpca_uninit(sh_audio);
+	mpca_uninit(sh_audio->decoder);
 	sh_audio=NULL;
     }
 
@@ -661,14 +661,14 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 
 	if(sh_video){
 	    MP_UNIT("seek_video_reset");
-	    mpcv_resync_stream(sh_video);
+	    mpcv_resync_stream(sh_video->decoder);
 	    vo_reset(vo_data);
 	    sh_video->chapter_change=-1;
 	}
 
 	if(sh_audio){
 	    MP_UNIT("seek_audio_reset");
-	    mpca_resync_stream(sh_audio);
+	    mpca_resync_stream(sh_audio->decoder);
 	    ao_reset(ao_data); // stop audio, throwing away buffered data
 	}
 
@@ -717,10 +717,10 @@ void mpxp_resync_audio_stream(void)
 {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
-    mpca_resync_stream(sh_audio);
+    mpca_resync_stream(sh_audio->decoder);
 }
 
-static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stream_packet_t *sp)
+static void __FASTCALL__ mpxp_stream_event_handler(const struct stream_s *s,const stream_packet_t *sp)
 {
     s->driver->control(s,SCRTL_EVT_HANDLE,(any_t*)sp);
 }
@@ -879,11 +879,6 @@ static char * mpxp_init_output_subsystems(void) {
 		mp_conf.audio_driver[i] = '\0';
 	    }
 	}
-    priv->ao_inited=(RND_RENAME4(ao_register)(mp_conf.audio_driver)!=NULL)?1:0;
-    if (!priv->ao_inited){
-	MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
-	exit_player(MSGTR_Exit_error);
-    }
     return rs;
 }
 
@@ -1082,11 +1077,13 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
 
 static void mpxp_find_acodec(void) {
     int found=0;
+    any_t* mpca=0;
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     demux_stream_t *d_audio=priv->demuxer->audio;
     sh_audio->codec=NULL;
-    found=RND_RENAME2(mpca_init)(sh_audio); // try auto-probe first
+    mpca=RND_RENAME2(mpca_init)(sh_audio); // try auto-probe first
+    if(mpca) { sh_audio->decoder=mpca; found=1; }
 #ifdef ENABLE_WIN32LOADER
     if(!found) {
 // Go through the codec.conf and find the best codec...
@@ -1136,7 +1133,7 @@ static MPXP_Rc mpxp_find_vcodec(void) {
     MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
     sh_video->inited=0;
-    if(RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,priv->libinput)==MPXP_Ok) sh_video->inited=1;
+    if((sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,priv->libinput))) sh_video->inited=1;
 #ifdef ENABLE_WIN32LOADER
     if(!sh_video->inited) {
 /* Go through the codec.conf and find the best codec...*/
@@ -1149,20 +1146,20 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 	if(mp_conf.video_codec) {
 	/* forced codec by name: */
 	    MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
-	    RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,NULL,-1,priv->libinput);
+	    sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,NULL,-1,priv->libinput);
 	} else {
 	    int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
 	    if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
 	    for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 		if(mp_conf.video_family) /* try first the preferred codec family:*/
-		    if(RND_RENAME3(mpcv_init)(sh_video,NULL,mp_conf.video_family,status,priv->libinput)==MPXP_Ok) break;
-		if(RND_RENAME3(mpcv_init)(sh_video,NULL,NULL,status,priv->libinput)==MPXP_Ok) break;
+		    if((sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,NULL,mp_conf.video_family,status,priv->libinput))) break;
+		if((sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,NULL,NULL,status,priv->libinput))) break;
 	    }
 	}
     }
     /* Use ffmpeg decoders as last hope */
-    if(!sh_video->inited) mpcv_ffmpeg_init(sh_video,priv->libinput);
+    if(!sh_video->inited) sh_video->decoder=mpcv_ffmpeg_init(sh_video,priv->libinput);
 #endif
 
     if(!sh_video->inited) {
@@ -1190,7 +1187,7 @@ static int mpxp_configure_audio(void) {
     sh_video_t* sh_video=priv->demuxer->video->sh;
     demux_stream_t *d_audio=priv->demuxer->audio;
     int rc=0;
-    const ao_info_t *info=ao_get_info();
+    const ao_info_t *info=ao_get_info(ao_data);
     MP_UNIT("setup_audio");
     MSG_V("AO: [%s] %iHz %s %s\n",
 	info->short_name,
@@ -1295,7 +1292,7 @@ static void mpxp_print_audio_status(void) {
 #ifdef USE_OSD
 static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
     priv_t*priv=mp_data->priv;
-    stream_t* stream=priv->demuxer->stream;
+    const stream_t* stream=priv->demuxer->stream;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     sh_video_t* sh_video=priv->demuxer->video->sh;
     int rc=0;
@@ -1329,7 +1326,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	    fflush(stdout);
 	}
 
-	if (priv->ao_inited && sh_audio) {
+	if (priv->ao_inited==MPXP_Ok && sh_audio) {
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=1;
 		while( !dec_ahead_can_aseek ) usleep(0);
@@ -1348,7 +1345,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	}
 
 	if(priv->osd_function==OSD_PAUSE) priv->osd_function=OSD_PLAY;
-	if (priv->ao_inited && sh_audio) {
+	if (priv->ao_inited==MPXP_Ok && sh_audio) {
 	    ao_resume(ao_data);	// resume audio
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=0;
@@ -1484,7 +1481,7 @@ For future:
       else      v_cont+=v;
       if(v_cont > 100) v_cont=100;
       if(v_cont < -100) v_cont = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_CONTRAST,v_cont)==MPXP_Ok){
+      if(mpcv_set_colors(sh_video->decoder,VO_EC_CONTRAST,v_cont)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1502,7 +1499,7 @@ For future:
       else     v_bright+=v;
       if(v_bright > 100) v_bright = 100;
       if(v_bright < -100) v_bright = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok){
+      if(mpcv_set_colors(sh_video->decoder,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1520,7 +1517,7 @@ For future:
       else      v_hue+=v;
       if(v_hue > 100) v_hue = 100;
       if(v_hue < -100) v_hue = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_HUE,v_hue)==MPXP_Ok){
+      if(mpcv_set_colors(sh_video->decoder,VO_EC_HUE,v_hue)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1538,7 +1535,7 @@ For future:
       else      v_saturation+=v;
       if(v_saturation > 100) v_saturation = 100;
       if(v_saturation < -100) v_saturation = -100;
-      if(mpcv_set_colors(sh_video,VO_EC_SATURATION,v_saturation)==MPXP_Ok){
+      if(mpcv_set_colors(sh_video->decoder,VO_EC_SATURATION,v_saturation)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1832,18 +1829,26 @@ play_next_file:
 	goto dump_file;
     }
 
-    if(!(ao_data=RND_RENAME5(ao_init)(0,ao_subdevice))) {
+    if(!(ao_data=RND_RENAME5(ao_init)(ao_subdevice))) {
 	MSG_ERR(MSGTR_CannotInitAO);
 	sh_audio=d_audio->sh=NULL;
     }
     if(ao_subdevice) mp_free(ao_subdevice);
+    priv->ao_inited=(RND_RENAME4(ao_register)(ao_data,mp_conf.audio_driver,0)!=NULL)?1:0;
+    if (priv->ao_inited!=MPXP_Ok){
+	MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
+	exit_player(MSGTR_Exit_error);
+    }
 
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");
-	if(RND_RENAME2(mpca_init)(sh_audio)!=MPXP_Ok){
-	    MSG_ERR(MSGTR_CouldntInitAudioCodec);
-	    sh_audio=d_audio->sh=NULL;
-	} else {
+	if(!sh_audio->decoder) {
+	    if(RND_RENAME2(mpca_init)(sh_audio)!=MPXP_Ok){
+		MSG_ERR(MSGTR_CouldntInitAudioCodec);
+		sh_audio=d_audio->sh=NULL;
+	    }
+	}
+	if(sh_audio) {
 	    MSG_V("AUDIO: srate=%d  chans=%d  bps=%d  sfmt=0x%X  ratio: %d->%d\n"
 	    ,sh_audio->rate,sh_audio->nch,afmt2bps(sh_audio->afmt)
 	    ,sh_audio->afmt,sh_audio->i_bps,sh_audio->af_bps);
@@ -1877,12 +1882,12 @@ play_next_file:
 	/* Auto quality option enabled*/
 	MPXP_Rc rc;
 	unsigned quality;
-	rc=mpcv_get_quality_max(sh_video,&quality);
+	rc=mpcv_get_quality_max(sh_video->decoder,&quality);
 	if(rc==MPXP_Ok) mp_data->output_quality=quality;
 	if(mp_conf.autoq>mp_data->output_quality) mp_conf.autoq=mp_data->output_quality;
 	else mp_data->output_quality=mp_conf.autoq;
 	MSG_V("AutoQ: setting quality to %d\n",mp_data->output_quality);
-	mpcv_set_quality(sh_video,mp_data->output_quality);
+	mpcv_set_quality(sh_video->decoder,mp_data->output_quality);
     }
 
     vf_showlist(sh_video->vfilter);
@@ -1925,7 +1930,7 @@ main:
 	if(mp_conf.verbose) MSG_V("Freeing %d unused audio chunks\n",d_audio->packs);
 	ds_free_packs(d_audio); // mp_free buffered chunks
 	d_audio->id=-2;         // do not read audio chunks
-	if(priv->ao_inited) uninit_player(INITED_AO); // close device
+	if(priv->ao_inited==MPXP_Ok) uninit_player(INITED_AO); // close device
     }
 
     if(!sh_video){
@@ -2112,7 +2117,7 @@ while(playtree_iter != NULL) {
 	if(input_state.after_dvdmenu) flg &=~(INITED_STREAM|INITED_DEMUXER);
 	uninit_player(flg&(~INITED_INPUT)); /* TODO: |(~INITED_AO)|(~INITED_VO) */
 	priv->vo_inited=0;
-	priv->ao_inited=0;
+	priv->ao_inited=MPXP_False;
 	eof = 0;
 	xp_core->audio->eof=0;
 	goto play_next_file;

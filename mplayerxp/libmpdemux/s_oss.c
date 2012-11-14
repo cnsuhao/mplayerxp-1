@@ -141,8 +141,7 @@ static int __FASTCALL__ oss_read(stream_t*stream,stream_packet_t*sp)
     oss_priv_t*p=stream->priv;
     sp->type=0;
     sp->len = TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,sp->len));
-    if(sp->len<=0) stream->_Errno=errno;
-    else p->spos+=sp->len;
+    if(!errno) p->spos+=sp->len;
     return sp->len;
 }
 
@@ -150,11 +149,11 @@ static off_t __FASTCALL__ oss_seek(stream_t*stream,off_t pos)
 {
     UNUSED(pos);
     oss_priv_t *p=stream->priv;
-    stream->_Errno=ENOSYS;
+    errno=ENOSYS;
     return p->spos;
 }
 
-static off_t __FASTCALL__ oss_tell(stream_t*stream)
+static off_t __FASTCALL__ oss_tell(const stream_t*stream)
 {
     oss_priv_t *p=stream->priv;
     return p->spos;
@@ -167,7 +166,7 @@ static void __FASTCALL__ oss_close(stream_t *stream)
     mp_free(stream->priv);
 }
 
-static MPXP_Rc __FASTCALL__ oss_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ oss_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     int rval;
     oss_priv_t *oss_priv = s->priv;

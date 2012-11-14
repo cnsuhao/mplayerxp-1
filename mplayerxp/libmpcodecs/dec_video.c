@@ -44,40 +44,48 @@ extern int v_cont;
 extern int v_hue;
 extern int v_saturation;
 
-const vd_functions_t* mpvdec=NULL;
+typedef struct priv_s {
+    sh_video_t* parent;
+    const vd_functions_t* mpvdec;
+}priv_t;
 
-MPXP_Rc mpcv_get_quality_max(sh_video_t *sh_video,unsigned *quality){
-    if(mpvdec){
-	MPXP_Rc ret=mpvdec->control(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
+MPXP_Rc mpcv_get_quality_max(priv_t *priv,unsigned *quality){
+    sh_video_t* sh_video = priv->parent;
+    if(priv->mpvdec){
+	MPXP_Rc ret=priv->mpvdec->control(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
 	if(ret>=MPXP_Ok) return ret;
     }
     return MPXP_False;
 }
 
-MPXP_Rc mpcv_set_quality(sh_video_t *sh_video,int quality){
-    if(mpvdec)
-	return mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
+MPXP_Rc mpcv_set_quality(priv_t *priv,int quality){
+    sh_video_t* sh_video = priv->parent;
+    if(priv->mpvdec)
+	return priv->mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
     return MPXP_False;
 }
 
-MPXP_Rc mpcv_set_colors(sh_video_t *sh_video,char *item,int value)
+MPXP_Rc mpcv_set_colors(priv_t *priv,char *item,int value)
 {
+    sh_video_t* sh_video = priv->parent;
     vf_instance_t* vf=sh_video->vfilter;
     vf_equalizer_t eq;
     eq.item=item;
     eq.value=value*10;
     if(vf->control(vf,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
-	if(mpvdec) return mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,item,(int)value);
+	if(priv->mpvdec) return priv->mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,item,(int)value);
     }
     return MPXP_False;
 }
 
-void mpcv_uninit(sh_video_t *sh_video){
-    if(!sh_video->inited) return;
-    MSG_V("uninit video: %s\n",sh_video->codec->driver_name);
+void mpcv_uninit(priv_t *priv){
+    sh_video_t* sh_video = priv->parent;
+    if(!sh_video->inited) { mp_free(priv); return; }
+    MSG_V("uninit video ...\n");
     if(sh_video->vfilter && sh_video->vfilter_inited==1) vf_uninit_filter_chain(sh_video->vfilter);
-    mpvdec->uninit(sh_video);
+    priv->mpvdec->uninit(sh_video);
     sh_video->inited=0;
+    mp_free(priv);
 }
 
 #include "libvo/video_out.h"
@@ -86,11 +94,12 @@ extern vo_data_t*vo_data;
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
 
-static void mpcv_print_codec_info(sh_video_t* sh_video) {
+static void mpcv_print_codec_info(const priv_t *priv) {
+    sh_video_t* sh_video = priv->parent;
     MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
 	,mp_conf.video_codec?"Forcing":"Selected"
 	,sh_video->codec->codec_name
-	,mpvdec->info->driver_name
+	,priv->mpvdec->info->driver_name
 	,sh_video->codec->dll_name
 	,sh_video->src_w
 	,sh_video->src_h
@@ -112,29 +121,35 @@ static void mpcv_print_codec_info(sh_video_t* sh_video) {
 #endif
 }
 
-MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
+priv_t * mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
+    priv_t* priv = mp_malloc(sizeof(priv_t));
+    priv->parent=sh_video;
+    sh_video->decoder=priv;
     /* Use ffmpeg's drivers  as last hope */
-    mpvdec=vfm_find_driver("ffmpeg");
-    if(mpvdec) {
-	if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+    priv->mpvdec=vfm_find_driver("ffmpeg");
+    if(priv->mpvdec) {
+	if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-	    return MPXP_False;
+	    return NULL;
 	}
     } else {
 	MSG_ERR("Cannot find ffmpeg video decoder\n");
-	return MPXP_False;
+	return NULL;
     }
-    mpcv_print_codec_info(sh_video);
-    return MPXP_Ok;
+    mpcv_print_codec_info(priv);
+    return priv;
 }
 
-MPXP_Rc RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
+priv_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
     int done=0;
     const video_probe_t* vprobe;
     sh_video->codec=NULL;
+    priv_t* priv = mp_malloc(sizeof(priv_t));
+    priv->parent=sh_video;
+    sh_video->decoder=priv;
     if(vfm) {
-	mpvdec=vfm_find_driver(vfm);
-	if(mpvdec) vprobe=mpvdec->probe(sh_video,sh_video->fourcc);
+	priv->mpvdec=vfm_find_driver(vfm);
+	if(priv->mpvdec) vprobe=priv->mpvdec->probe(sh_video,sh_video->fourcc);
     }
     else vprobe = vfm_driver_probe(sh_video);
     if(vprobe) {
@@ -145,13 +160,13 @@ MPXP_Rc RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const 
 	strcpy(sh_video->codec->driver_name,vprobe->driver);
 	strcpy(sh_video->codec->codec_name,sh_video->codec->dll_name);
 	memcpy(sh_video->codec->outfmt,vprobe->pix_fmt,sizeof(vprobe->pix_fmt));
-	mpvdec=vfm_find_driver(vfm);
+	priv->mpvdec=vfm_find_driver(vfm);
     }
     if(sh_video->codec) {
-	if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+	if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-	    mp_free(sh_video->codec);
-	    sh_video->codec=NULL;
+		mp_free(sh_video->codec);
+		sh_video->codec=NULL;
 	} else done=1;
     }
 #ifdef ENABLE_WIN32LOADER
@@ -193,12 +208,12 @@ MPXP_Rc RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const 
     }
 #endif
     if(done) {
-	mpcv_print_codec_info(sh_video);
+	mpcv_print_codec_info(priv);
 // memory leak here
 //	if(vprobe) { mp_free(sh_video->codec); sh_video->codec=NULL; }
-	return MPXP_Ok;
+	return priv;
     }
-    return MPXP_False;
+    return NULL;
 }
 
 void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
@@ -261,7 +276,8 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 
 extern vo_data_t* vo_data;
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
-int RND_RENAME4(mpcv_decode)(sh_video_t *sh_video,const enc_frame_t* frame){
+int RND_RENAME4(mpcv_decode)(priv_t *priv,const enc_frame_t* frame){
+    sh_video_t* sh_video = priv->parent;
     vf_instance_t* vf;
     mp_image_t *mpi=NULL;
     unsigned int t;
@@ -274,7 +290,7 @@ int RND_RENAME4(mpcv_decode)(sh_video_t *sh_video,const enc_frame_t* frame){
     vf->control(vf,VFCTRL_START_FRAME,NULL);
 
     sh_video->active_slices=0;
-    mpi=mpvdec->decode(sh_video, frame);
+    mpi=priv->mpvdec->decode(sh_video, frame);
     MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
     while(sh_video->active_slices!=0) usleep(0);
 /* ------------------------ frame decoded. -------------------- */
@@ -308,10 +324,11 @@ int RND_RENAME4(mpcv_decode)(sh_video_t *sh_video,const enc_frame_t* frame){
     return 1;
 }
 
-void mpcv_resync_stream(sh_video_t *sh_video)
+void mpcv_resync_stream(priv_t *priv)
 {
-  if(sh_video)
-  if(sh_video->inited && mpvdec) mpvdec->control(sh_video,VDCTRL_RESYNC_STREAM,NULL);
+    sh_video_t* sh_video = priv->parent;
+    if(sh_video)
+    if(sh_video->inited && priv->mpvdec) priv->mpvdec->control(sh_video,VDCTRL_RESYNC_STREAM,NULL);
 }
 
 #ifdef USE_SUB
@@ -375,4 +392,196 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 	MP_UNIT(NULL);
     }
   }
+}
+
+#include "libvo/video_out.h"
+
+extern vo_data_t* vo_data;
+extern const vd_functions_t* mpvdec; // FIXME!
+
+MPXP_Rc mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t* libinput){
+    priv_t* priv=(priv_t*)sh->decoder;
+    int i,j;
+    unsigned int out_fmt=0;
+    int screen_size_x=0;//SCREEN_SIZE_X;
+    int screen_size_y=0;//SCREEN_SIZE_Y;
+    vf_instance_t* vf=sh->vfilter,*sc=NULL;
+    int palette=0;
+
+    if(!(sh->src_w && sh->src_h))
+	MSG_WARN(
+	    "VDec: driver %s didn't set sh->src_w and sh->src_h, trying to workaround!\n"
+	    ,sh->codec->codec_name);
+    /* XXX: HACK, if sh->disp_* aren't set,
+     * but we have w and h, set them :: atmos */
+    if(!sh->src_w && w)
+	sh->src_w=w;
+    if(!sh->src_h && h)
+	sh->src_h=h;
+
+    MSG_V("VDec: vo config request - %d x %d\n",w,h);
+
+csp_again:
+    // check if libvo and codec has common outfmt (no conversion):
+    j=-1;
+    for(i=0;i<CODECS_MAX_OUTFMT;i++){
+	int flags;
+	out_fmt=sh->codec->outfmt[i];
+	if(out_fmt==0xFFFFFFFF||out_fmt==0x0) continue;
+	flags=vf_query_format(vf,out_fmt,w,h);
+	MSG_DBG2("vo_debug[step i=%d]: query(%s %ix%i) returned 0x%X for:\n",i,vo_format_name(out_fmt),w,h,flags);
+	if(mp_conf.verbose>1) if(mp_conf.verbose) vf_showlist(vf);
+	if((flags&VFCAP_CSP_SUPPORTED_BY_HW) || ((flags&VFCAP_CSP_SUPPORTED) && j<0)){
+	    // check (query) if codec really support this outfmt...
+	    sh->outfmtidx=j; // pass index to the control() function this way
+	    if(priv->mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
+		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",mpvdec->info->driver_name,vo_format_name(out_fmt));
+		continue;
+	    }
+	    j=i;
+	    /*vo_data->flags=flags;*/
+	    if(flags&VFCAP_CSP_SUPPORTED_BY_HW) break;
+	} else
+	if(!palette && !(vo_data->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
+	    sh->outfmtidx=j; // pass index to the control() function this way
+	    if(priv->mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
+		palette=1;
+	}
+    }
+    if(j<0){
+	// TODO: no match - we should use conversion...
+	if(strcmp(vf->info->name,"fmtcvt") && palette!=1){
+	    int ind;
+	    MSG_WARN("Can't find colorspace for: ");
+	    for(ind=0;ind<CODECS_MAX_OUTFMT;ind++) {
+		if(sh->codec->outfmt[ind]==0xFFFFFFFF||
+		    sh->codec->outfmt[ind]==0x0) break;
+		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
+	    }
+	    MSG_WARN("Trying -vf fmtcvt\n");
+	    sc=vf=RND_RENAME9(vf_open_filter)(vf,sh,"fmtcvt",NULL,libinput);
+	    goto csp_again;
+	} else
+	if(palette==1){
+	    MSG_V("vd: Trying -vf palette...\n");
+	    palette=-1;
+	    vf=RND_RENAME9(vf_open_filter)(vf,sh,"palette",NULL,libinput);
+	    goto csp_again;
+	} else {
+	// sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
+	     vf_instance_t* voi, *vp = NULL, *ve;
+	     // Remove the scale filter if we added it ourself
+	     if(vf == sc) {
+	       ve = vf;
+	       vf = vf->next;
+	       vf_uninit_filter(ve);
+	     }
+	     // Find the last filter (vf_vo)
+	     for(voi = vf ; voi->next ; voi = voi->next)
+	       vp = voi;
+	}
+	MSG_WARN(MSGTR_VOincompCodec);
+	sh->vfilter_inited=-1;
+	return MPXP_False;	// failed
+    }
+
+    out_fmt=sh->codec->outfmt[j];
+    sh->outfmtidx=j;
+    sh->vfilter=vf;
+
+    // autodetect flipping
+    if(vo_conf.flip==0){
+	vo_FLIP_UNSET(vo_data);
+	if(sh->codec->outflags[j]&CODECS_FLAG_FLIP)
+	    if(!(sh->codec->outflags[j]&CODECS_FLAG_NOFLIP))
+		vo_FLIP_SET(vo_data);
+    }
+    if(vo_data->flags&VFCAP_FLIPPED) vo_FLIP_REVERT(vo_data);
+    if(vo_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
+	// we need to flip, but no flipping filter avail.
+	sh->vfilter=vf=RND_RENAME9(vf_open_filter)(vf,sh,"flip",NULL,libinput);
+    }
+
+    // time to do aspect ratio corrections...
+
+    if(vo_conf.movie_aspect>-1.0) sh->aspect = vo_conf.movie_aspect; // cmdline overrides autodetect
+    if(vo_conf.opt_screen_size_x||vo_conf.opt_screen_size_y){
+	screen_size_x = vo_conf.opt_screen_size_x;
+	screen_size_y = vo_conf.opt_screen_size_y;
+	if(!vo_conf.vidmode){
+	    if(!screen_size_x) screen_size_x=1;
+	    if(!screen_size_y) screen_size_y=1;
+	    if(screen_size_x<=8) screen_size_x*=sh->src_w;
+	    if(screen_size_y<=8) screen_size_y*=sh->src_h;
+	}
+    } else {
+	// check source format aspect, calculate prescale ::atmos
+	screen_size_x=sh->src_w;
+	screen_size_y=sh->src_h;
+	if(vo_conf.screen_size_xy>=0.001){
+	    if(vo_conf.screen_size_xy<=8){
+	    // -xy means x+y scale
+		screen_size_x*=vo_conf.screen_size_xy;
+		screen_size_y*=vo_conf.screen_size_xy;
+	    } else {
+	    // -xy means forced width while keeping correct aspect
+		screen_size_x=vo_conf.screen_size_xy;
+		screen_size_y=vo_conf.screen_size_xy*sh->src_h/sh->src_w;
+	    }
+	}
+	if(sh->aspect>0.01){
+	    int _w;
+	    MSG_V("Movie-Aspect is %.2f:1 - prescaling to correct movie aspect.\n",sh->aspect);
+	    _w=(int)((float)screen_size_y*sh->aspect); _w+=_w%2; // round
+	    // we don't like horizontal downscale || user forced width:
+	    if(_w<screen_size_x || vo_conf.screen_size_xy>8){
+		screen_size_y=(int)((float)screen_size_x*(1.0/sh->aspect));
+		screen_size_y+=screen_size_y%2; // round
+		if(screen_size_y<sh->src_h) // Do not downscale verticaly
+		    screen_size_y=sh->src_h;
+	    } else screen_size_x=_w; // keep new width
+	} else {
+	    MSG_V("Movie-Aspect is undefined - no prescaling applied.\n");
+	}
+    }
+
+    MSG_V("vf->config(%dx%d->%dx%d,flags=0x%x,'%s',%s)\n",
+	sh->src_w,sh->src_h,
+	screen_size_x,screen_size_y,
+	vo_data->flags,
+	"MPlayerXP",vo_format_name(out_fmt));
+
+    MSG_DBG2("vf configuring: %s\n",vf->info->name);
+    if(vf->config(vf,sh->src_w,sh->src_h,
+		screen_size_x,screen_size_y,
+		vo_data->flags,
+		out_fmt)==0){
+		    MSG_WARN(MSGTR_CannotInitVO);
+		    sh->vfilter_inited=-1;
+		    return MPXP_False;
+    }
+    MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s')\n",
+	sh->src_w,sh->src_h,
+	screen_size_x,screen_size_y,
+	vo_data->flags,
+	vo_format_name(out_fmt));
+    return MPXP_True;
+}
+
+// mp_imgtype: buffering type, see mp_image.h
+// mp_imgflag: buffer requirements (read/write, preserve, stride limits), see mp_image.h
+// returns NULL or allocated mp_image_t*
+// Note: buffer allocation may be moved to mpcodecs_config_vo() later...
+mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h){
+    MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
+    mp_image_t* mpi=vf_get_new_image(sh->vfilter,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h,dae_curr_vdecoded(xp_core));
+    mpi->x=mpi->y=0;
+    if(mpi->xp_idx==XP_IDX_INVALID)
+	MSG_V("[mpcodecs_get_image] Incorrect mpi->xp_idx. Be ready for segfault!\n");
+    return mpi;
+}
+
+void mpcodecs_draw_slice(sh_video_t *sh, mp_image_t*mpi) {
+    struct vf_instance_s* vf = sh->vfilter;
+    vf->put_slice(vf,mpi);
 }

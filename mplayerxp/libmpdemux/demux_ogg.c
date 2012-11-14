@@ -1417,7 +1417,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
 	clear_sub = -1;
 	demux_ogg_add_packet(ds,os,ds->id,&op);
 	if(sh_audio)
-	  mpca_resync_stream(sh_audio);
+	  mpca_resync_stream(sh_audio->decoder);
 	return;
       }
      }
@@ -1457,7 +1457,7 @@ static void ogg_close(demuxer_t* demuxer) {
   mp_free(ogg_d);
 }
 
-static MPXP_Rc ogg_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc ogg_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

@@ -435,6 +435,7 @@ static void uninit(sh_video_t *sh){
 	mp_free(priv->ctx->extradata);
     mp_free(priv->ctx);
     mp_free(priv->lavc_picture);
+    if(priv->probe) { free(priv->probe->codec_dll); free(priv->probe); }
     mp_free(priv);
     if(ppContext) pp_free_context(ppContext);
     ppContext=NULL;

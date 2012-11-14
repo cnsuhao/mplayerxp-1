@@ -281,7 +281,7 @@ mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_imag
 //============================================================================
 
 // By default vf doesn't accept MPEGPES
-static int __FASTCALL__ vf_default_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ vf_default_query_format(const struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
   if(fmt == IMGFMT_MPEGPES) return 0;
   return 1;//vf_next_query_format(vf,fmt,w,h);
 }

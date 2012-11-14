@@ -81,7 +81,7 @@ typedef struct priv_s {
     uint32_t		gl_out_format,out_format;
 }priv_t;
 
-static const vo_info_t *get_info(vo_data_t*vo)
+static const vo_info_t *get_info(const vo_data_t*vo)
 {
     UNUSED(vo);
     return(&vo_info);
@@ -339,7 +339,7 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     return MPXP_Ok;
 }
 
-static void __FASTCALL__ gl_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
+static void __FASTCALL__ gl_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
 {
     priv_t*priv=(priv_t*)vo->priv;
     caps->caps =DRI_CAP_TEMP_VIDEO|
@@ -358,7 +358,7 @@ static void __FASTCALL__ gl_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t 
     caps->strides[3] = 0;
 }
 
-static void __FASTCALL__ gl_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
+static void __FASTCALL__ gl_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
 {
     priv_t*priv=(priv_t*)vo->priv;
     UNUSED(priv);

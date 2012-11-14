@@ -17,6 +17,9 @@ typedef struct sh_audio_s {
 // input format
     uint32_t		wtag;  // analogue of fourcc for sound
     unsigned		i_bps; // == bitrate  (compressed bytes/sec)
+
+    any_t*		decoder;
+
 // output format:
     float		timer;  // value of old a_frame
     unsigned		rate;  // sample rate
@@ -64,6 +67,9 @@ typedef struct sh_video_s {
 // input format
     uint32_t		fourcc;
     int			is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
+
+    any_t*		decoder;
+
 // output format:
     float		fps;
     int			chapter_change;

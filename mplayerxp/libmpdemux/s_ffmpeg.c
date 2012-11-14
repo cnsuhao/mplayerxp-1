@@ -24,7 +24,6 @@ static int __FASTCALL__ ffmpeg_read(stream_t *s, stream_packet_t*sp)
     ffmpeg_priv_t*p=s->priv;
     sp->len = ffurl_read_complete(p->ctx, sp->buf, sp->len);
     if(sp->len>0) p->spos += sp->len;
-    else	  s->_Errno=errno;
     return sp->len;
 }
 
@@ -32,19 +31,17 @@ static off_t __FASTCALL__ ffmpeg_seek(stream_t *s, off_t newpos)
 {
     ffmpeg_priv_t*p=s->priv;
     p->spos = newpos;
-    if ((p->spos = ffurl_seek(p->ctx, newpos, SEEK_SET)) < 0) {
-	s->_Errno=errno;
-    }
+    p->spos = ffurl_seek(p->ctx, newpos, SEEK_SET);
     return p->spos;
 }
 
-static off_t ffmpeg_tell(stream_t *s)
+static off_t ffmpeg_tell(const stream_t *s)
 {
     ffmpeg_priv_t*p=s->priv;
     return p->spos;
 }
 
-static MPXP_Rc __FASTCALL__ ffmpeg_ctrl(stream_t *s, unsigned cmd, any_t*arg)
+static MPXP_Rc __FASTCALL__ ffmpeg_ctrl(const stream_t *s, unsigned cmd, any_t*arg)
 {
     UNUSED(s);
     UNUSED(cmd);

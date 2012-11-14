@@ -72,12 +72,12 @@ typedef struct priv_s {
 
 static uint32_t (* __FASTCALL__ server_control)(vo_data_t*,uint32_t request, any_t*data);
 
-static int __FASTCALL__ vidix_get_video_eq(vo_data_t* vo,vo_videq_t *info);
-static int __FASTCALL__ vidix_set_video_eq(vo_data_t* vo,const vo_videq_t *info);
-static int __FASTCALL__ vidix_get_num_fx(vo_data_t* vo,unsigned *info);
-static int __FASTCALL__ vidix_get_oem_fx(vo_data_t* vo,vidix_oem_fx_t *info);
-static int __FASTCALL__ vidix_set_oem_fx(vo_data_t* vo,const vidix_oem_fx_t *info);
-static int __FASTCALL__ vidix_set_deint(vo_data_t* vo,const vidix_deinterlace_t *info);
+static int __FASTCALL__ vidix_get_video_eq(const vo_data_t* vo,vo_videq_t *info);
+static int __FASTCALL__ vidix_set_video_eq(const vo_data_t* vo,const vo_videq_t *info);
+static int __FASTCALL__ vidix_get_num_fx(const vo_data_t* vo,unsigned *info);
+static int __FASTCALL__ vidix_get_oem_fx(const vo_data_t* vo,vidix_oem_fx_t *info);
+static int __FASTCALL__ vidix_set_oem_fx(const vo_data_t* vo,const vidix_oem_fx_t *info);
+static int __FASTCALL__ vidix_set_deint(const vo_data_t* vo,const vidix_deinterlace_t *info);
 
 int vidix_start(vo_data_t* vo)
 {
@@ -155,7 +155,7 @@ void vidix_term(vo_data_t* vo)
     vdlFreeYUVS(priv->dstrides); priv->dstrides=NULL;
 }
 
-static void __FASTCALL__ vidix_copy_dma(vo_data_t* vo,unsigned idx,int sync_mode)
+static void __FASTCALL__ vidix_copy_dma(const vo_data_t* vo,unsigned idx,int sync_mode)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     int err,i;
@@ -203,7 +203,7 @@ void __FASTCALL__ vidix_select_frame(vo_data_t* vo,unsigned idx)
     else vdlPlaybackFrameSelect(priv->handler,idx);
 }
 
-uint32_t __FASTCALL__ vidix_query_fourcc(vo_data_t* vo,vo_query_fourcc_t* format)
+uint32_t __FASTCALL__ vidix_query_fourcc(const vo_data_t* vo,vo_query_fourcc_t* format)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     MSG_DBG2("query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
@@ -214,7 +214,7 @@ uint32_t __FASTCALL__ vidix_query_fourcc(vo_data_t* vo,vo_query_fourcc_t* format
     return priv->fourcc->depth == VID_DEPTH_NONE ? 0 : 0x02;
 }
 
-int __FASTCALL__ vidix_grkey_support(vo_data_t* vo)
+int __FASTCALL__ vidix_grkey_support(const vo_data_t* vo)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     int retval = priv->fourcc->flags & VID_CAP_COLORKEY;
@@ -222,19 +222,19 @@ int __FASTCALL__ vidix_grkey_support(vo_data_t* vo)
     return retval;
 }
 
-int __FASTCALL__ vidix_grkey_get(vo_data_t* vo,vidix_grkey_t *gr_key)
+int __FASTCALL__ vidix_grkey_get(const vo_data_t* vo,vidix_grkey_t *gr_key)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     return vdlGetGrKeys(priv->handler, gr_key);
 }
 
-int __FASTCALL__ vidix_grkey_set(vo_data_t* vo,const vidix_grkey_t *gr_key)
+int __FASTCALL__ vidix_grkey_set(const vo_data_t* vo,const vidix_grkey_t *gr_key)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     return vdlSetGrKeys(priv->handler, gr_key);
 }
 
-static int __FASTCALL__ vidix_get_video_eq(vo_data_t* vo,vo_videq_t *info)
+static int __FASTCALL__ vidix_get_video_eq(const vo_data_t* vo,vo_videq_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     int rval;
@@ -260,7 +260,7 @@ static int __FASTCALL__ vidix_get_video_eq(vo_data_t* vo,vo_videq_t *info)
     return rval;
 }
 
-static int __FASTCALL__ vidix_set_video_eq(vo_data_t* vo,const vo_videq_t *info)
+static int __FASTCALL__ vidix_set_video_eq(const vo_data_t* vo,const vo_videq_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     int rval;
@@ -287,28 +287,28 @@ static int __FASTCALL__ vidix_set_video_eq(vo_data_t* vo,const vo_videq_t *info)
     return rval;
 }
 
-static int __FASTCALL__ vidix_get_num_fx(vo_data_t* vo,unsigned *info)
+static int __FASTCALL__ vidix_get_num_fx(const vo_data_t* vo,unsigned *info)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     if(!priv->video_on) return EPERM;
     return vdlQueryNumOemEffects(priv->handler, info);
 }
 
-static int __FASTCALL__ vidix_get_oem_fx(vo_data_t* vo,vidix_oem_fx_t *info)
+static int __FASTCALL__ vidix_get_oem_fx(const vo_data_t* vo,vidix_oem_fx_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     if(!priv->video_on) return EPERM;
     return vdlGetOemEffect(priv->handler, info);
 }
 
-static int __FASTCALL__ vidix_set_oem_fx(vo_data_t* vo,const vidix_oem_fx_t *info)
+static int __FASTCALL__ vidix_set_oem_fx(const vo_data_t* vo,const vidix_oem_fx_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     if(!priv->video_on) return EPERM;
     return vdlSetOemEffect(priv->handler, info);
 }
 
-static int __FASTCALL__ vidix_set_deint(vo_data_t* vo,const vidix_deinterlace_t *info)
+static int __FASTCALL__ vidix_set_deint(const vo_data_t* vo,const vidix_deinterlace_t *info)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     if(!priv->video_on) return EPERM;
@@ -505,7 +505,7 @@ MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_h
     return MPXP_Ok;
 }
 
-static void __FASTCALL__ vidix_dri_get_surface_caps(vo_data_t* vo,dri_surface_cap_t *caps)
+static void __FASTCALL__ vidix_dri_get_surface_caps(const vo_data_t* vo,dri_surface_cap_t *caps)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     caps->caps = vo_conf.use_bm ? DRI_CAP_TEMP_VIDEO|DRI_CAP_BUSMASTERING : DRI_CAP_VIDEO_MMAPED;
@@ -529,7 +529,7 @@ static void __FASTCALL__ vidix_dri_get_surface_caps(vo_data_t* vo,dri_surface_ca
     }
 }
 
-static void __FASTCALL__ vidix_dri_get_surface(vo_data_t* vo,dri_surface_t *surf)
+static void __FASTCALL__ vidix_dri_get_surface(const vo_data_t* vo,dri_surface_t *surf)
 {
     priv_t*priv=(priv_t*)vo->priv3;
     if(vo_conf.use_bm) {

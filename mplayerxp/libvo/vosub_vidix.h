@@ -22,13 +22,13 @@ MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t*,unsigned src_width,unsigned src_heig
 int	 vidix_start(vo_data_t*);
 int	 vidix_stop(vo_data_t*);
 void     vidix_term(vo_data_t*);
-uint32_t __FASTCALL__ vidix_query_fourcc(vo_data_t*,vo_query_fourcc_t* fourcc);
+uint32_t __FASTCALL__ vidix_query_fourcc(const vo_data_t*,vo_query_fourcc_t* fourcc);
 void     __FASTCALL__ vidix_select_frame(vo_data_t*,unsigned idx);
 
 #include <vidix/vidix.h>
 /* graphic keys */
-int __FASTCALL__ vidix_grkey_support(vo_data_t*);
-int __FASTCALL__ vidix_grkey_get(vo_data_t*,vidix_grkey_t *gr_key);
-int __FASTCALL__ vidix_grkey_set(vo_data_t*,const vidix_grkey_t *gr_key);
+int __FASTCALL__ vidix_grkey_support(const vo_data_t*);
+int __FASTCALL__ vidix_grkey_get(const vo_data_t*,vidix_grkey_t *gr_key);
+int __FASTCALL__ vidix_grkey_set(const vo_data_t*,const vidix_grkey_t *gr_key);
 
 #endif

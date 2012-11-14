@@ -704,7 +704,7 @@ static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     if(sh_audio && !d_audio->eof){
       ds_free_packs_until_pts(d_audio,d_video->pts);
       ds_fill_buffer(d_audio);
-      mpca_resync_stream(sh_audio);
+      mpca_resync_stream(sh_audio->decoder);
     }
 }
 
@@ -713,7 +713,7 @@ static void asf_close(demuxer_t *demuxer)
     mp_free(demuxer->priv);
 }
 
-static MPXP_Rc asf_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc asf_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

@@ -88,7 +88,7 @@ const ad_functions_t* afm_find_driver(const char *name) {
 
 const audio_probe_t* afm_probe_driver(sh_audio_t *sh) {
     unsigned i;
-    audio_probe_t* rv;
+    const audio_probe_t* rv;
     for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
 	if((rv=mpcodecs_ad_drivers[i]->probe(sh,sh->wtag))!=NULL) return rv;
     }

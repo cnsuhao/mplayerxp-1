@@ -96,8 +96,6 @@ static const vo_functions_t* video_out_drivers[] =
 	NULL
 };
 
-static const vo_functions_t *video_out=NULL;
-
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -129,6 +127,7 @@ typedef struct dri_priv_s {
 }dri_priv_t;
 
 typedef struct vo_priv_s {
+    char			antiviral_hole[RND_CHAR8];
     uint32_t			srcFourcc,image_format,image_width,image_height;
     uint32_t			org_width,org_height;
     unsigned			ps_off[4]; /* offsets for y,u,v in panscan mode */
@@ -136,6 +135,7 @@ typedef struct vo_priv_s {
     pthread_mutex_t		surfaces_mutex;
     vo_format_desc		vod;
     dri_priv_t			dri;
+    const vo_functions_t *	video_out;
 }vo_priv_t;
 
 void vo_print_help(vo_data_t*vo)
@@ -152,21 +152,23 @@ void vo_print_help(vo_data_t*vo)
 
 const vo_functions_t *RND_RENAME5(vo_register)(vo_data_t*vo,const char *driver_name)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     unsigned i;
-    if(!driver_name) video_out=video_out_drivers[0];
+    if(!driver_name) priv->video_out=video_out_drivers[0];
     else
     for (i=0; video_out_drivers[i] != &video_out_null; i++){
 	const vo_info_t *info = video_out_drivers[i]->get_info (vo);
 	if(strcmp(info->short_name,driver_name) == 0){
-	    video_out = video_out_drivers[i];break;
+	    priv->video_out = video_out_drivers[i];break;
 	}
     }
-    return video_out;
+    return priv->video_out;
 }
 
 const vo_info_t* vo_get_info(vo_data_t*vo)
 {
-    return video_out->get_info(vo);
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    return priv->video_out->get_info(vo);
 }
 
 vo_data_t* __FASTCALL__ vo_preinit_structs( void )
@@ -187,10 +189,11 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
 
     vo->vo_priv=mp_mallocz(sizeof(vo_priv_t));
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    RND_RENAME0(rnd_fill)(priv->antiviral_hole,offsetof(vo_priv_t,srcFourcc)-offsetof(vo_priv_t,antiviral_hole));
     pthread_mutexattr_init(&attr);
     pthread_mutex_init(&priv->surfaces_mutex,&attr);
     priv->dri.num_xp_frames=1;
-    RND_RENAME0(rnd_fill)(vo->antiviral_hole,sizeof(vo->antiviral_hole));
+    RND_RENAME0(rnd_fill)(vo->antiviral_hole,offsetof(vo_data_t,mScreen)-offsetof(vo_data_t,antiviral_hole));
     return vo;
 }
 
@@ -199,7 +202,7 @@ MPXP_Rc __FASTCALL__ RND_RENAME6(vo_init)(vo_data_t*vo,const char *subdevice)
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_init(%s)\n",subdevice);
     priv->frame_counter=0;
-    return video_out->preinit(vo,subdevice);
+    return priv->video_out->preinit(vo,subdevice);
 }
 
 int __FASTCALL__ vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd)
@@ -276,12 +279,12 @@ static void __FASTCALL__ dri_config(vo_data_t*vo,uint32_t fourcc)
     if(!priv->dri.bpp) priv->dri.has_dri=0; /*unknown fourcc*/
     if(priv->dri.has_dri)
     {
-	video_out->control(vo,VOCTRL_GET_NUM_FRAMES,&priv->dri.num_xp_frames);
+	priv->video_out->control(vo,VOCTRL_GET_NUM_FRAMES,&priv->dri.num_xp_frames);
 	priv->dri.num_xp_frames=min(priv->dri.num_xp_frames,MAX_DRI_BUFFERS);
 	for(i=0;i<priv->dri.num_xp_frames;i++)
 	{
 	    priv->dri.surf[i].idx=i;
-	    video_out->control(vo,DRI_GET_SURFACE,&priv->dri.surf[i]);
+	    priv->video_out->control(vo,DRI_GET_SURFACE,&priv->dri.surf[i]);
 	}
     }
 }
@@ -378,7 +381,7 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
 	priv->dri.has_dri = 1;
-	video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv->dri.cap);
+	priv->video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv->dri.cap);
 	dri_config(vo,priv->dri.cap.fourcc);
 	/* ugly workaround of swapped BGR-fourccs. Should be removed in the future */
 	if(!priv->dri.has_dri)
@@ -407,7 +410,7 @@ MPXP_Rc __FASTCALL__ RND_RENAME7(vo_config)(vo_data_t*vo,uint32_t width, uint32_
     unsigned dest_fourcc,w,d_w,h,d_h;
     MSG_DBG3("dri_vo_dbg: vo_config\n");
     if(vo_inited) {
-	MSG_FATAL("!!!video_out internal fatal error: video_out is initialized more than once!!!\n");
+	MSG_FATAL("!!!priv->video_out internal fatal error: priv->video_out is initialized more than once!!!\n");
 	return MPXP_False;
     }
     vo_inited++;
@@ -422,13 +425,13 @@ MPXP_Rc __FASTCALL__ RND_RENAME7(vo_config)(vo_data_t*vo,uint32_t width, uint32_
 
     priv->dri.d_width = d_w;
     priv->dri.d_height = d_h;
-    MSG_V("video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
+    MSG_V("priv->video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
 	,w,h,d_w,d_h,fullscreen,title,vo_format_name(dest_fourcc));
-    retval = video_out->config(vo,w,h,d_w,d_h,fullscreen,title,dest_fourcc);
+    retval = priv->video_out->config(vo,w,h,d_w,d_h,fullscreen,title,dest_fourcc);
     priv->srcFourcc=format;
     if(retval == MPXP_Ok) {
 	int dri_retv;
-	dri_retv = video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv->dri.cap);
+	dri_retv = priv->video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv->dri.cap);
 	priv->image_format = format;
 	priv->image_width = w;
 	priv->image_height = h;
@@ -460,13 +463,14 @@ MPXP_Rc __FASTCALL__ RND_RENAME7(vo_config)(vo_data_t*vo,uint32_t width, uint32_
 /* if vo_driver doesn't support dri then it won't work with this logic */
 uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned src_w, unsigned src_h)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     uint32_t retval,dri_forced_fourcc;
     vo_query_fourcc_t qfourcc;
     MSG_DBG3("dri_vo_dbg: vo_query_format(%08lX)\n",*fourcc);
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
-    retval = video_out->control(vo,VOCTRL_QUERY_FORMAT,&qfourcc);
+    retval = priv->video_out->control(vo,VOCTRL_QUERY_FORMAT,&qfourcc);
     MSG_V("dri_vo: request for %s fourcc: %s\n",vo_format_name(*fourcc),retval?"OK":"False");
     dri_forced_fourcc = *fourcc;
     if(retval) retval = 0x3; /* supported without convertion */
@@ -475,8 +479,9 @@ uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned sr
 
 MPXP_Rc vo_reset(vo_data_t*vo)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_reset\n");
-    return video_out->control(vo,VOCTRL_RESET,NULL);
+    return priv->video_out->control(vo,VOCTRL_RESET,NULL);
 }
 
 MPXP_Rc vo_screenshot(vo_data_t*vo,unsigned idx )
@@ -490,14 +495,16 @@ MPXP_Rc vo_screenshot(vo_data_t*vo,unsigned idx )
 
 MPXP_Rc vo_pause(vo_data_t*vo)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_pause\n");
-    return video_out->control(vo,VOCTRL_PAUSE,0);
+    return priv->video_out->control(vo,VOCTRL_PAUSE,0);
 }
 
 MPXP_Rc vo_resume(vo_data_t*vo)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_resume\n");
-    return video_out->control(vo,VOCTRL_RESUME,0);
+    return priv->video_out->control(vo,VOCTRL_RESUME,0);
 }
 
 void vo_lock_surfaces(vo_data_t*vo) {
@@ -604,7 +611,7 @@ int vo_check_events(vo_data_t*vo)
     MSG_DBG3("dri_vo_dbg: vo_check_events\n");
     vrest.event_type = 0;
     vrest.adjust_size = adjust_size;
-    retval = video_out->control(vo,VOCTRL_CHECK_EVENTS,&vrest);
+    retval = priv->video_out->control(vo,VOCTRL_CHECK_EVENTS,&vrest);
     /* it's ok since accelerated drivers doesn't touch surfaces
        but there is only one driver (vo_x11) which changes surfaces
        on 'fullscreen' key */
@@ -624,7 +631,7 @@ MPXP_Rc vo_fullscreen(vo_data_t*vo)
     MPXP_Rc retval;
     MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
     etype = 0;
-    retval = video_out->control(vo,VOCTRL_FULLSCREEN,&etype);
+    retval = priv->video_out->control(vo,VOCTRL_FULLSCREEN,&etype);
     if(priv->dri.has_dri && retval == MPXP_True && (etype & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	dri_reconfig(vo,etype);
     if(retval == MPXP_True) priv->dri.flags ^= VOFLG_FS;
@@ -673,8 +680,9 @@ MPXP_Rc __FASTCALL__ RND_RENAME8(vo_draw_slice)(vo_data_t*vo,const mp_image_t *m
 
 void RND_RENAME9(vo_select_frame)(vo_data_t*vo,unsigned play_idx)
 {
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
-    video_out->select_frame(vo,play_idx);
+    priv->video_out->select_frame(vo,play_idx);
 }
 
 void vo_flush_page(vo_data_t*vo,unsigned decoder_idx)
@@ -683,7 +691,7 @@ void vo_flush_page(vo_data_t*vo,unsigned decoder_idx)
     MSG_DBG3("dri_vo_dbg: vo_flush_pages [idx=%u]\n",decoder_idx);
     priv->frame_counter++;
     if((priv->dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
-					video_out->control(vo,VOCTRL_FLUSH_PAGES,&decoder_idx);
+					priv->video_out->control(vo,VOCTRL_FLUSH_PAGES,&decoder_idx);
 }
 
 /* DRAW OSD */
@@ -886,7 +894,7 @@ void vo_uninit(vo_data_t*vo)
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_uninit\n");
     vo_inited--;
-    video_out->uninit(vo);
+    priv->video_out->uninit(vo);
     pthread_mutex_destroy(&priv->surfaces_mutex);
     mp_free(vo->vo_priv);
 }
@@ -894,7 +902,8 @@ void vo_uninit(vo_data_t*vo)
 MPXP_Rc __FASTCALL__ RND_RENAME0(vo_control)(vo_data_t*vo,uint32_t request, any_t*data)
 {
     uint32_t rval;
-    rval=video_out->control(vo,request,data);
+    vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
+    rval=priv->video_out->control(vo,request,data);
     MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
     return rval;
 }

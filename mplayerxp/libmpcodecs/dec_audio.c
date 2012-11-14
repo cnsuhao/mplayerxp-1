@@ -26,19 +26,23 @@
 /* used for ac3surround decoder - set using -channels option */
 af_cfg_t af_cfg; // Configuration for audio filters
 
-static const ad_functions_t* mpadec;
+typedef struct priv_s {
+    sh_audio_t* parent;
+    const ad_functions_t* mpadec;
+}priv_t;
 
-MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
+any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 {
     const char *afm,*ac;
     const audio_probe_t* aprobe=NULL;
-    mpadec=NULL;
+    priv_t* priv = mp_mallocz(sizeof(priv_t));
+    priv->parent=sh_audio;
     if(!sh_audio->codec) {
 	if(mp_conf.audio_family) {
 	    afm=mp_conf.audio_family;
 	    ac=afm;
-	    mpadec=afm_find_driver(afm);
-	    if(mpadec) aprobe=mpadec->probe(sh_audio,sh_audio->wtag);
+	    priv->mpadec=afm_find_driver(afm);
+	    if(priv->mpadec) aprobe=priv->mpadec->probe(sh_audio,sh_audio->wtag);
 	}
 	else aprobe = afm_probe_driver(sh_audio);
     }
@@ -51,16 +55,17 @@ MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 	strcpy(sh_audio->codec->driver_name,aprobe->driver);
 	strcpy(sh_audio->codec->codec_name,sh_audio->codec->dll_name);
 	memcpy(sh_audio->codec->outfmt,aprobe->sample_fmt,sizeof(aprobe->sample_fmt));
-	mpadec=afm_find_driver(afm);
+	priv->mpadec=afm_find_driver(afm);
     }
     else if(sh_audio->codec) {
 	afm=sh_audio->codec->driver_name;
 	ac=sh_audio->codec->codec_name;
-	mpadec=afm_find_driver(afm);
+	priv->mpadec=afm_find_driver(afm);
     }
-    if(!mpadec){
+    if(!priv->mpadec){
 	MSG_ERR(MSGTR_CODEC_BAD_AFAMILY,ac, afm);
-	return MPXP_False; // no such driver
+	mp_free(priv);
+	return NULL; // no such driver
     }
 
     /* reset in/out buffer size/pointer: */
@@ -83,9 +88,10 @@ MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
     sh_audio->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
     sh_audio->audio_in_minsize=0;
 
-    if(mpadec->preinit(sh_audio)!=MPXP_Ok) {
+    if(priv->mpadec->preinit(sh_audio)!=MPXP_Ok) {
 	MSG_ERR(MSGTR_CODEC_CANT_PREINITA);
-	return MPXP_False;
+	mp_free(priv);
+	return NULL;
     }
 
     /* allocate audio in buffer: */
@@ -106,22 +112,23 @@ MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
     sh_audio->a_buffer=mp_mallocz(sh_audio->a_buffer_size);
     if(!sh_audio->a_buffer) {
 	MSG_ERR(MSGTR_CantAllocAudioBuf);
-	return MPXP_False;
+	mp_free(priv);
+	return NULL;
     }
     sh_audio->a_buffer_len=0;
 
-    if(mpadec->init(sh_audio)!=MPXP_Ok){
+    if(priv->mpadec->init(sh_audio)!=MPXP_Ok){
 	MSG_WARN(MSGTR_CODEC_CANT_INITA);
-	mpca_uninit(sh_audio); /* mp_free buffers */
-	return MPXP_False;
+	mpca_uninit(priv); /* mp_free buffers */
+	return NULL;
     }
 
     sh_audio->inited=1;
 
     if(!sh_audio->nch || !sh_audio->rate) {
 	MSG_WARN(MSGTR_UnknownAudio);
-	mpca_uninit(sh_audio); /* mp_free buffers */
-	return MPXP_False;
+	mpca_uninit(priv); /* mp_free buffers */
+	return NULL;
     }
 
     if(!sh_audio->o_bps)
@@ -138,32 +145,35 @@ MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
     }
     MSG_OK("[AC] %s decoder: [%s] drv:%s.%s ratio %i->%i\n",mp_conf.audio_codec?"Forcing":"Selecting"
 	,ac
-	,mpadec->info->driver_name
+	,priv->mpadec->info->driver_name
 	,ac
 	,sh_audio->i_bps,sh_audio->o_bps);
     if(sh_audio->codec) { mp_free(sh_audio->codec); sh_audio->codec=NULL; }
-    return MPXP_Ok;
+    return priv;
 }
 
-void mpca_uninit(sh_audio_t *sh_audio)
+void mpca_uninit(any_t *opaque)
 {
-    if(!sh_audio) return;
-    if(sh_audio->afilter){
+    priv_t* priv = (priv_t*)opaque;
+    sh_audio_t* parent = priv->parent;
+    if(!parent) { mp_free(priv); return; }
+    if(priv->parent->afilter){
 	MSG_V("Uninit audio filters...\n");
-	af_uninit(sh_audio->afilter);
-	mp_free(sh_audio->afilter);
-	sh_audio->afilter=NULL;
+	af_uninit(parent->afilter);
+	mp_free(parent->afilter);
+	parent->afilter=NULL;
     }
-    if(sh_audio->a_buffer) mp_free(sh_audio->a_buffer);
-    sh_audio->a_buffer=NULL;
-    if(sh_audio->a_in_buffer) mp_free(sh_audio->a_in_buffer);
-    sh_audio->a_in_buffer=NULL;
-    if(!sh_audio->inited) return;
-    MSG_V("uninit audio: %s\n",sh_audio->codec->driver_name);
-    mpadec->uninit(sh_audio);
-    if(sh_audio->a_buffer) mp_free(sh_audio->a_buffer);
-    sh_audio->a_buffer=NULL;
-    sh_audio->inited=0;
+    if(parent->a_buffer) mp_free(parent->a_buffer);
+    parent->a_buffer=NULL;
+    if(parent->a_in_buffer) mp_free(parent->a_in_buffer);
+    parent->a_in_buffer=NULL;
+    if(!parent->inited) { mp_free(priv); return; }
+    MSG_V("uninit audio: ...\n");
+    priv->mpadec->uninit(parent);
+    if(parent->a_buffer) mp_free(parent->a_buffer);
+    parent->a_buffer=NULL;
+    parent->inited=0;
+    mp_free(priv);
 }
 
  /* Init audio filters */
@@ -283,8 +293,10 @@ MPXP_Rc mpca_reinit_filters(sh_audio_t *sh_audio,
 				out_minsize,out_maxsize);
 }
 
-unsigned RND_RENAME3(mpca_decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
+unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
 {
+    priv_t* priv = (priv_t*)opaque;
+    sh_audio_t* sh_audio = priv->parent;
     unsigned len;
     unsigned cp_size,cp_tile;
     mp_aframe_t  afd;  // filter input
@@ -310,7 +322,7 @@ unsigned RND_RENAME3(mpca_decode)(sh_audio_t *sh_audio,unsigned char *buf,unsign
     }
     if(sh_audio->af_bps>sh_audio->o_bps)
 	maxlen=min(maxlen,(long long int)buflen*sh_audio->o_bps/sh_audio->af_bps);
-    len=mpadec->decode(sh_audio,buf, minlen, maxlen,pts);
+    len=priv->mpadec->decode(sh_audio,buf, minlen, maxlen,pts);
     if(len>buflen) MSG_WARN(MSGTR_CODEC_BUF_OVERFLOW,sh_audio->codec->driver_name,len,buflen);
     MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
     if(len==0 || !sh_audio->afilter) return 0; // EOF?
@@ -347,20 +359,24 @@ unsigned RND_RENAME3(mpca_decode)(sh_audio_t *sh_audio,unsigned char *buf,unsign
 }
 
 /* Note: it is called once after seeking, to resync. */
-void mpca_resync_stream(sh_audio_t *sh_audio)
+void mpca_resync_stream(any_t *opaque)
 {
+    priv_t* priv = (priv_t*)opaque;
+    sh_audio_t* sh_audio = priv->parent;
     if(sh_audio) {
 	sh_audio->a_in_buffer_len=0; /* workaround */
-	if(sh_audio->inited && mpadec) mpadec->control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
+	if(sh_audio->inited && priv->mpadec) priv->mpadec->control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
     }
 }
 
 /* Note: it is called to skip (jump over) small amount (1/10 sec or 1 frame)
    of audio data - used to sync audio to video after seeking */
-void mpca_skip_frame(sh_audio_t *sh_audio)
+void mpca_skip_frame(any_t *opaque)
 {
+    priv_t* priv = (priv_t*)opaque;
+    sh_audio_t* sh_audio = priv->parent;
     MPXP_Rc rc=MPXP_True;
     if(sh_audio)
-    if(sh_audio->inited && mpadec) rc=mpadec->control(sh_audio,ADCTRL_SKIP_FRAME,NULL);
+    if(sh_audio->inited && priv->mpadec) rc=priv->mpadec->control(sh_audio,ADCTRL_SKIP_FRAME,NULL);
     if(rc!=MPXP_True) ds_fill_buffer(sh_audio->ds);
 }

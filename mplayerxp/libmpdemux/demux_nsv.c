@@ -340,7 +340,7 @@ static void nsv_close(demuxer_t* demuxer) {
 
 }
 
-static MPXP_Rc nsv_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc nsv_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

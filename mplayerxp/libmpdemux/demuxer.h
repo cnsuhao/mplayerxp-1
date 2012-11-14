@@ -187,7 +187,7 @@ typedef struct demuxer_driver_s
 			  * @param arg	optional arguments for thsis command
 			  * @return	one of DEMUX_* states
 			 **/
-    MPXP_Rc		(*control)(demuxer_t *d,int cmd,any_t*arg);
+    MPXP_Rc		(*control)(const demuxer_t *d,int cmd,any_t*arg);
 }demuxer_driver_t;
 
 demux_packet_t* new_demux_packet(int len);
@@ -208,11 +208,11 @@ void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t 
 int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds);
 int ds_fill_buffer(demux_stream_t *ds);
 
-inline static off_t ds_tell(demux_stream_t *ds){
+inline static off_t ds_tell(const demux_stream_t *ds){
   return (ds->dpos-ds->buffer_size)+ds->buffer_pos;
 }
 
-inline static int ds_tell_pts(demux_stream_t *ds){
+inline static int ds_tell_pts(const demux_stream_t *ds){
   return (ds->pts_bytes-ds->buffer_size)+ds->buffer_pos;
 }
 
@@ -274,12 +274,12 @@ enum {
     INFOT_MAX		=16
 };
 int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param);
-const char* demux_info_get(demuxer_t *demuxer, unsigned opt);
-int demux_info_print(demuxer_t *demuxer,const char *filename);
+const char* demux_info_get(const demuxer_t *demuxer, unsigned opt);
+int demux_info_print(const demuxer_t *demuxer,const char *filename);
 void demux_info_free(demuxer_t *demuxer);
 
-extern int demuxer_switch_audio(demuxer_t *, int id);
-extern int demuxer_switch_video(demuxer_t *, int id);
-extern int demuxer_switch_subtitle(demuxer_t *, int id);
+extern int demuxer_switch_audio(const demuxer_t *, int id);
+extern int demuxer_switch_video(const demuxer_t *, int id);
+extern int demuxer_switch_subtitle(const demuxer_t *, int id);
 
 #endif

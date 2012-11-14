@@ -32,13 +32,13 @@ static off_t __FASTCALL__ udp_seek(stream_t *s,off_t newpos)
     return newpos;
 }
 
-static off_t __FASTCALL__ udp_tell(stream_t *stream)
+static off_t __FASTCALL__ udp_tell(const stream_t *stream)
 {
     UNUSED(stream);
     return 0;
 }
 
-static MPXP_Rc __FASTCALL__ udp_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ udp_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     UNUSED(s);
     UNUSED(cmd);

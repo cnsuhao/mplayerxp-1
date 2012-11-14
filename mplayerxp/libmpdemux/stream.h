@@ -52,7 +52,6 @@ typedef struct stream_s {
     int eof;		/**< indicates EOF */
     int type;		/**< properties of the stream (see STREAMTYPE_ for detail) */
     int file_format;	/**< detected file format (by http:// protocol for example) */
-    int _Errno;		/**< keeps value of errno from low-level operations */
     unsigned int buf_pos; /**< position whitin of small cache */
     unsigned int buf_len; /**< length of small cache */
     unsigned char *buffer;/**< buffer of small cache */
@@ -186,7 +185,7 @@ typedef struct stream_driver_s
 		  * @param _this	points structure which identifies stream
 		  * @return		current offset from begin of stream
 		**/
-    off_t	(* __FASTCALL__ tell)(stream_t *_this);
+    off_t	(* __FASTCALL__ tell)(const stream_t *_this);
 
 		/** Closes stream
 		  * @param _this	points structure which identifies stream
@@ -198,7 +197,7 @@ typedef struct stream_driver_s
 		  * @param cmd		contains the command (for detail see SCTRL_* definitions)
 		  * @return		result of command processing
 		**/
-    MPXP_Rc	(* __FASTCALL__ control)(stream_t *_this,unsigned cmd,any_t*param);
+    MPXP_Rc	(* __FASTCALL__ control)(const stream_t *_this,unsigned cmd,any_t*param);
 }stream_driver_t;
 
 void print_stream_drivers(void);

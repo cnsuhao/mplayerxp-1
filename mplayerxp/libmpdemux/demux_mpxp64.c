@@ -848,7 +848,7 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	{
 		if(mp_conf.verbose) MSG_V("MPXPAV64_SEEK: newpos after sync %016llX\n",stream_tell(demuxer->stream));
 		mpxpav64_reset_prevs(demuxer);
-		mpca_resync_stream(demuxer->audio->sh);
+		mpca_resync_stream(((sh_audio_t*)demuxer->audio->sh)->decoder);
 	}
 	else
 	{
@@ -889,7 +889,7 @@ static void mpxpav64_close(demuxer_t *demuxer)
   mp_free(priv);
 }
 
-static MPXP_Rc mpxpav64_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc mpxpav64_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

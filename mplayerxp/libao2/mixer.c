@@ -8,7 +8,7 @@
 #include "mixer.h"
 #include "libao2/audio_out.h"
 
-void mixer_getvolume(ao_data_t* ao, float *l,float *r )
+void mixer_getvolume(const ao_data_t* ao, float *l,float *r )
 {
   ao_control_vol_t vol;
   *l=0; *r=0;
@@ -17,7 +17,7 @@ void mixer_getvolume(ao_data_t* ao, float *l,float *r )
   *l=vol.left;
 }
 
-void mixer_setvolume(ao_data_t* ao,float l,float r )
+void mixer_setvolume(const ao_data_t* ao,float l,float r )
 {
   ao_control_vol_t vol;
   vol.right=r; vol.left=l;
@@ -26,7 +26,7 @@ void mixer_setvolume(ao_data_t* ao,float l,float r )
 
 #define MIXER_CHANGE 3
 
-void mixer_incvolume(ao_data_t* ao)
+void mixer_incvolume(const ao_data_t* ao)
 {
  float mixer_l, mixer_r;
  mixer_getvolume(ao, &mixer_l,&mixer_r );
@@ -37,7 +37,7 @@ void mixer_incvolume(ao_data_t* ao)
  mixer_setvolume(ao, mixer_l,mixer_r );
 }
 
-void mixer_decvolume(ao_data_t* ao)
+void mixer_decvolume(const ao_data_t* ao)
 {
  float mixer_l, mixer_r;
  mixer_getvolume(ao, &mixer_l,&mixer_r );
@@ -48,7 +48,7 @@ void mixer_decvolume(ao_data_t* ao)
  mixer_setvolume(ao, mixer_l,mixer_r );
 }
 
-float mixer_getbothvolume(ao_data_t* ao)
+float mixer_getbothvolume(const ao_data_t* ao)
 {
  float mixer_l, mixer_r;
  mixer_getvolume(ao, &mixer_l,&mixer_r );
@@ -57,7 +57,7 @@ float mixer_getbothvolume(ao_data_t* ao)
 
 static int muted=0;
 static float mute_l,mute_r;
-void mixer_mute(ao_data_t* ao)
+void mixer_mute(const ao_data_t* ao)
 {
  if ( muted ) { mixer_setvolume(ao, mute_l,mute_r ); muted=0; }
   else

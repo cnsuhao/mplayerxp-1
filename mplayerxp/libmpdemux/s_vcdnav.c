@@ -236,7 +236,7 @@ static off_t __FASTCALL__ _vcdnav_seek(stream_t *stream,off_t pos)
     return p->lsn*sizeof(vcdsector_t);
 }
 
-static off_t __FASTCALL__ _vcdnav_tell(stream_t *stream)
+static off_t __FASTCALL__ _vcdnav_tell(const stream_t *stream)
 {
     vcd_priv_t *p=stream->priv;
     MSG_DBG2("vcdnav_tell: lsn=%i\n",p->lsn);
@@ -253,7 +253,7 @@ static void __FASTCALL__ _vcdnav_close(stream_t*stream)
     if(priv->segment) mp_free(priv->segment);
     mp_free(stream->priv);
 }
-static MPXP_Rc __FASTCALL__ _vcdnav_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ _vcdnav_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

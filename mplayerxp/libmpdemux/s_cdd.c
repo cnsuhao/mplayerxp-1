@@ -68,7 +68,7 @@ static off_t __FASTCALL__ cdd_seek(stream_t*stream,off_t pos)
     return pos;
 }
 
-static off_t __FASTCALL__ cdd_tell(stream_t*stream)
+static off_t __FASTCALL__ cdd_tell(const stream_t*stream)
 {
     return tell_cdda(stream);
 }
@@ -78,7 +78,7 @@ static void __FASTCALL__ cdd_close(stream_t*stream)
     close_cdda(stream);
 }
 
-static MPXP_Rc __FASTCALL__ cdd_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ cdd_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     cdda_priv *p=s->priv;
     switch(cmd) {

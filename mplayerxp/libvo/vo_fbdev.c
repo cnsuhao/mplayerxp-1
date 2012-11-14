@@ -1060,7 +1060,7 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t * forma
     return 0;
 }
 
-static const vo_info_t *get_info(vo_data_t*vo)
+static const vo_info_t *get_info(const vo_data_t*vo)
 {
     UNUSED(vo);
     return &vo_info;

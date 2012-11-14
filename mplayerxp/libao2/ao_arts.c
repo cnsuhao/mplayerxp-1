@@ -45,7 +45,7 @@ static const ao_info_t info =
 
 LIBAO_EXTERN(arts)
 
-static MPXP_Rc control(ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
 {
     UNUSED(ao);
     UNUSED(cmd);
@@ -143,7 +143,7 @@ static void uninit(ao_data_t* ao)
     arts_free();
 }
 
-static unsigned play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags)
+static unsigned play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
 {
     arts_stream_t stream=ao->priv;
     UNUSED(flags);
@@ -158,13 +158,13 @@ static void audio_pause(ao_data_t* ao)
 static void audio_resume(ao_data_t* ao) { UNUSED(ao); }
 static void reset(ao_data_t* ao) { UNUSED(ao); }
 
-static unsigned get_space(ao_data_t* ao)
+static unsigned get_space(const ao_data_t* ao)
 {
     arts_stream_t stream=ao->priv;
     return arts_stream_get(stream, ARTS_P_BUFFER_SPACE);
 }
 
-static float get_delay(ao_data_t* ao)
+static float get_delay(const ao_data_t* ao)
 {
     arts_stream_t stream=ao->priv;
     return ((float) (ao->buffersize - arts_stream_get(stream,

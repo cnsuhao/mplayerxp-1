@@ -297,7 +297,7 @@ static void bmp_close(demuxer_t* demuxer) {
 }
 #endif
 
-static MPXP_Rc bmp_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc bmp_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

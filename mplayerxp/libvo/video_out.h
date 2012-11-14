@@ -224,7 +224,7 @@ typedef struct vo_functions_s
 	/** Returns driver information.
 	 * @return	read-only pointer to a vo_info_t structure.
 	 **/
-	const vo_info_t* (* __FASTCALL__ get_info)(vo_data_t* vo);
+	const vo_info_t* (* __FASTCALL__ get_info)(const vo_data_t* vo);
 
 	/** Blit/Flip buffer to the screen. Must be called after each frame!
 	 * @param idex	index of frame to be selected as active frame

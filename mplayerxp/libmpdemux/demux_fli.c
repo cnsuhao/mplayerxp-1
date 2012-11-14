@@ -191,7 +191,7 @@ static void fli_close(demuxer_t* demuxer) {
   mp_free(frames);
 }
 
-static MPXP_Rc fli_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc fli_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

@@ -131,7 +131,7 @@ static int __FASTCALL__ fmt2alsa(int format)
 }
 
 /* to set/get/query special features/parameters */
-static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=ao->priv;
     int rval;
@@ -729,7 +729,7 @@ do { \
 #endif
 
 /* I/O error handler */
-static int __FASTCALL__ xrun(ao_data_t* ao,const char *str_mode)
+static int __FASTCALL__ xrun(const ao_data_t* ao,const char *str_mode)
 {
     priv_t*priv=ao->priv;
     int err;
@@ -760,10 +760,10 @@ static int __FASTCALL__ xrun(ao_data_t* ao,const char *str_mode)
     return 1; /* ok, data should be accepted again */
 }
 
-static unsigned __FASTCALL__ play_normal(ao_data_t* ao,any_t* data, unsigned len);
-static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,any_t* data, unsigned len);
+static unsigned __FASTCALL__ play_normal(ao_data_t* ao,const any_t* data, unsigned len);
+static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,const any_t* data, unsigned len);
 
-static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data, unsigned len, unsigned flags)
+static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data, unsigned len, unsigned flags)
 {
     unsigned result;
     UNUSED(flags);
@@ -780,7 +780,7 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data, unsigned len, unsig
     thanxs for marius <marius@rospot.com> for giving us the light ;)
 */
 
-static unsigned __FASTCALL__ play_normal(ao_data_t* ao,any_t* data, unsigned len)
+static unsigned __FASTCALL__ play_normal(ao_data_t* ao,const any_t* data, unsigned len)
 {
     priv_t*priv=ao->priv;
     //priv->bytes_per_sample is always 4 for 2 chn S16_LE
@@ -834,7 +834,7 @@ static unsigned __FASTCALL__ play_normal(ao_data_t* ao,any_t* data, unsigned len
  * 'An overview of the ALSA API' http://people.debian.org/~joshua/x66.html
  * and some help by Paul Davis <pbd@op.net> */
 
-static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,any_t* data, unsigned len)
+static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,const any_t* data, unsigned len)
 {
     priv_t*priv=ao->priv;
     snd_pcm_sframes_t commitres, frames_available;
@@ -944,7 +944,7 @@ typedef enum space_status_e {
     GET_SPACE_UNDEFINED
 }space_status;
 /* how many byes are mp_free in the buffer */
-static unsigned get_space(ao_data_t* ao)
+static unsigned get_space(const ao_data_t* ao)
 {
     priv_t*priv=ao->priv;
     snd_pcm_status_t *status;
@@ -1013,7 +1013,7 @@ static unsigned get_space(ao_data_t* ao)
 }
 
 /* delay in seconds between first and last sample in buffer */
-static float get_delay(ao_data_t* ao)
+static float get_delay(const ao_data_t* ao)
 {
     priv_t*priv=ao->priv;
     if (priv->handler) {

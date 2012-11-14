@@ -62,7 +62,6 @@ static int __FASTCALL__ file_read(stream_t*stream,stream_packet_t*sp)
     sp->type=0;
     sp->len = TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,sp->len));
     if(sp->len>0) p->spos += sp->len;
-    else	  stream->_Errno=errno;
     return sp->len;
 }
 
@@ -77,17 +76,16 @@ static off_t __FASTCALL__ file_seek(stream_t*stream,off_t pos)
 {
     file_priv_t*p=stream->priv;
     p->spos=TEMP_FAILURE_RETRY64(lseek(stream->fd,pos,SEEK_SET));
-    if(p->spos<0) stream->_Errno=errno;
     return p->spos;
 }
 
-static off_t __FASTCALL__ file_tell(stream_t*stream)
+static off_t __FASTCALL__ file_tell(const stream_t*stream)
 {
     file_priv_t*p=stream->priv;
     return p->spos;
 }
 
-static void __FASTCALL__ file_close(stream_t *stream)
+static void __FASTCALL__ file_close(const stream_t *stream)
 {
     int was_open = ((file_priv_t*)stream->priv)->was_open;
     if(was_open) close(stream->fd);

@@ -347,7 +347,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     return MPXP_Ok;
 }
 
-static const vo_info_t *get_info(vo_data_t*vo)
+static const vo_info_t *get_info(const vo_data_t*vo)
 {
     UNUSED(vo);
     return &vo_info;

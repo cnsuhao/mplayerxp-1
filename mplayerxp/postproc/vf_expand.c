@@ -111,7 +111,7 @@ static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t
     return vf_next_control(vf,request,data);
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(const struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
     return vf_next_query_format(vf->next,fmt,w,h);
 }
 

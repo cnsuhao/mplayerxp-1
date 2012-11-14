@@ -111,7 +111,7 @@ static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * fi
   return dvdnav_priv;
 }
 
-static void __FASTCALL__ dvdnav_stream_sleep(stream_t * stream, int seconds) {
+static void __FASTCALL__ dvdnav_stream_sleep(const stream_t * stream, int seconds) {
     dvdnav_priv_t *dvdnav_priv=stream->priv;
 
     if (!dvdnav_priv->started) return;
@@ -133,7 +133,7 @@ static void __FASTCALL__ dvdnav_stream_sleep(stream_t * stream, int seconds) {
     //if (dvdnav_priv->started) dvd_nav_still=1;
 }
 
-static int __FASTCALL__ dvdnav_stream_sleeping(stream_t * stream) {
+static int __FASTCALL__ dvdnav_stream_sleeping(const stream_t * stream) {
     dvdnav_priv_t *dvdnav_priv=stream->priv;
     unsigned int now;
 
@@ -155,7 +155,7 @@ static int __FASTCALL__ dvdnav_stream_sleeping(stream_t * stream) {
     return 0;
 }
 
-static unsigned int * __FASTCALL__ dvdnav_stream_get_palette(stream_t * stream) {
+static unsigned int * __FASTCALL__ dvdnav_stream_get_palette(const stream_t * stream) {
 #if 0 /* latest versions if libdvdnav don't provide such info */
   dvdnav_priv_t *dvdnav_priv=stream->priv;
   if (!dvdnav_priv) {
@@ -408,7 +408,7 @@ static off_t __FASTCALL__ __dvdnav_seek(stream_t *stream,off_t pos)
   return dvdnav_priv->cpos;
 }
 
-static off_t __FASTCALL__ __dvdnav_tell(stream_t *stream)
+static off_t __FASTCALL__ __dvdnav_tell(const stream_t *stream)
 {
   dvdnav_priv_t *dvdnav_priv=stream->priv;
   return (off_t)dvdnav_priv->cpos;
@@ -427,7 +427,7 @@ static void __FASTCALL__ __dvdnav_close(stream_t *stream)
  * \param stream: - stream pointer
  * \param hl    : - highlight struct pointer
  */
-static void mp_dvdnav_get_highlight (stream_t *stream, rect_highlight_t *hl) {
+static void mp_dvdnav_get_highlight (const stream_t *stream, rect_highlight_t *hl) {
   dvdnav_priv_t *priv = (dvdnav_priv_t *) stream->priv;
   int button;
   dvdnav_highlight_area_t ha;
@@ -444,7 +444,7 @@ static void mp_dvdnav_get_highlight (stream_t *stream, rect_highlight_t *hl) {
   hl->ey = ha.ey;
 }
 
-static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*sp)
+static void __FASTCALL__ dvdnav_event_handler(const stream_t* s,const stream_packet_t*sp)
 {
     demux_stream_t *d_audio=s->demuxer->audio;
     dvdnav_priv_t *priv=s->priv;
@@ -566,7 +566,7 @@ static void __FASTCALL__ dvdnav_event_handler(stream_t* s,const stream_packet_t*
     }
 }
 
-static void __FASTCALL__ dvdnav_cmd_handler(stream_t* s,unsigned cmd)
+static void __FASTCALL__ dvdnav_cmd_handler(const stream_t* s,unsigned cmd)
 {
     dvdnav_priv_t *dvdnav_priv=s->priv;
     int button;
@@ -608,7 +608,7 @@ static void __FASTCALL__ dvdnav_cmd_handler(stream_t* s,unsigned cmd)
     dvdnav_button_select(dvdnav_priv->dvdnav,pci,button);
 }
 
-static MPXP_Rc __FASTCALL__ __dvdnav_ctrl(stream_t *s,unsigned cmd,any_t*args)
+static MPXP_Rc __FASTCALL__ __dvdnav_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     dvdnav_priv_t *dvdnav_priv=s->priv;
     switch(cmd) {

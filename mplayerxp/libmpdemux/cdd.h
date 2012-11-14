@@ -72,9 +72,9 @@ cd_track_t* __FASTCALL__ cd_info_get_track(cd_info_t *cd_info, unsigned int trac
 
 MPXP_Rc __FASTCALL__	open_cdda(stream_t*,const char* dev,const char* track);
 MPXP_Rc __FASTCALL__	open_cddb(stream_t*,const char* dev,const char* track);
-int     __FASTCALL__	read_cdda(stream_t* s,char *buf,track_t* trackidx);
+int     __FASTCALL__	read_cdda(const stream_t* s,char *buf,track_t* trackidx);
 void    __FASTCALL__	seek_cdda(stream_t* s,off_t pos,track_t *trackidx);
-off_t   __FASTCALL__	tell_cdda(stream_t* s);
+off_t   __FASTCALL__	tell_cdda(const stream_t* s);
 void    __FASTCALL__	close_cdda(stream_t* s);
 void cdda_register_options(m_config_t* cfg);
 #endif // __CDD_H__

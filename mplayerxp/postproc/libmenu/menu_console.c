@@ -115,7 +115,7 @@ static m_option_t cfg_fields[] = {
 
 static void check_child(menu_t* menu);
 
-static void add_line(struct menu_priv_s* priv, char* l) {
+static void add_line(struct menu_priv_s* priv,const char* l) {
   char* eol = strchr(l,'\n');
 
   if(eol) {

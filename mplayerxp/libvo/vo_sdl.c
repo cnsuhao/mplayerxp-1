@@ -1100,7 +1100,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 	}
 }
 
-static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t* format)
+static uint32_t __FASTCALL__ query_format(const vo_data_t*vo,vo_query_fourcc_t* format)
 {
     priv_t *priv = vo->priv;
     if(sdl_forcegl) {
@@ -1133,7 +1133,7 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t* format
     return 0;
 }
 
-static const vo_info_t* get_info(vo_data_t*vo)
+static const vo_info_t* get_info(const vo_data_t*vo)
 {
     UNUSED(vo);
     return &vo_info;
@@ -1177,7 +1177,7 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-static void __FASTCALL__ sdl_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
+static void __FASTCALL__ sdl_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
 {
     priv_t *priv = vo->priv;
     caps->caps = DRI_CAP_TEMP_VIDEO | DRI_CAP_UPSCALER | DRI_CAP_DOWNSCALER |
@@ -1217,7 +1217,7 @@ static void __FASTCALL__ sdl_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t
     }
 }
 
-static void __FASTCALL__ sdl_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
+static void __FASTCALL__ sdl_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
 {
     priv_t *priv = vo->priv;
     if(priv->mode == YUV) {

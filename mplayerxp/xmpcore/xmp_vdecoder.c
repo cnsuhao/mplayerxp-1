@@ -209,15 +209,15 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 	unsigned distance = dae_get_decoder_outrun(xp_core->video);
 	int our_quality;
 	our_quality = mp_data->output_quality*distance/total;
-	if(drop_param) mpcv_set_quality(sh_video,0);
+	if(drop_param) mpcv_set_quality(sh_video->decoder,0);
 	else
-	if(mp_conf.autoq) mpcv_set_quality(sh_video,our_quality>0?our_quality:0);
+	if(mp_conf.autoq) mpcv_set_quality(sh_video->decoder,our_quality>0?our_quality:0);
     }
     frame->flags=drop_param;
-    blit_frame=RND_RENAME4(mpcv_decode)(sh_video,frame);
+    blit_frame=RND_RENAME4(mpcv_decode)(sh_video->decoder,frame);
 MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
     if(mp_data->output_quality) {
-	if(drop_param) mpcv_set_quality(sh_video,mp_data->output_quality);
+	if(drop_param) mpcv_set_quality(sh_video->decoder,mp_data->output_quality);
     }
     if(!blit_frame && drop_param) priv->dae->num_dropped_frames++;
     if(blit_frame) {

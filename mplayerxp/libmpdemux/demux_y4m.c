@@ -264,7 +264,7 @@ static void y4m_close(demuxer_t *demuxer)
     return;
 }
 
-static MPXP_Rc y4m_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc y4m_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

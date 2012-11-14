@@ -247,7 +247,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo, unsigned idx )
 
 //---------------------------------------------------------
 
-static const vo_info_t* get_info( vo_data_t* vo )
+static const vo_info_t* get_info(const vo_data_t* vo )
 {
     UNUSED(vo);
     return &vo_info;

@@ -267,7 +267,7 @@ int decode_audio_buffer(demux_stream_t *d_audio,unsigned len)
 
     for( l = 0, l2 = len, ret = 0; l < len && l2 >= audio_buffer.sh_audio->audio_out_minsize; ) {
 	float pts;
-	ret = RND_RENAME3(mpca_decode)( audio_buffer.sh_audio, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
+	ret = RND_RENAME3(mpca_decode)( audio_buffer.sh_audio->decoder, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
 	if( ret <= 0 )
 	    break;
 

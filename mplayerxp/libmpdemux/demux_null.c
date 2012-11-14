@@ -35,7 +35,7 @@ static void null_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void null_close(demuxer_t* demuxer) {}
 
-static MPXP_Rc null_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc null_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

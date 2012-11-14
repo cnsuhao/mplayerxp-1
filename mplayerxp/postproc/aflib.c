@@ -20,7 +20,7 @@
 #endif
 #include "aflib.h"
 
-extern uint32_t load24bit(any_t* data, int pos);
+extern uint32_t load24bit(const any_t* data, int pos);
 extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
 
 /* MMX optimized stugff */

@@ -83,7 +83,7 @@ typedef struct priv_s {
  *
  * If there is not enough room, the priv->buffer is filled up
  */
-static int write_buffer(ao_data_t* ao,unsigned char* data, int len) {
+static int write_buffer(ao_data_t* ao,const unsigned char* data, int len) {
     priv_t*priv=ao->priv;
   int _free = av_fifo_space(priv->buffer);
   if (len > _free) len = _free;
@@ -140,7 +140,7 @@ static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned n
 
 // end ring priv->buffer stuff
 
-static MPXP_Rc control(ao_data_t* ao,int cmd, long arg) {
+static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
@@ -359,7 +359,7 @@ static void audio_resume(ao_data_t* ao) {
   priv->paused = 0;
 }
 
-static unsigned get_space(ao_data_t* ao) {
+static unsigned get_space(const ao_data_t* ao) {
     priv_t*priv=ao->priv;
   return av_fifo_space(priv->buffer);
 }
@@ -367,14 +367,14 @@ static unsigned get_space(ao_data_t* ao) {
 /**
  * \brief write data into priv->buffer and reset priv->underrun flag
  */
-static unsigned play(ao_data_t* ao,any_t*data, unsigned len, unsigned flags) {
+static unsigned play(ao_data_t* ao,const any_t*data, unsigned len, unsigned flags) {
     priv_t*priv=ao->priv;
   priv->underrun = 0;
   UNUSED(flags);
   return write_buffer(ao,data, len);
 }
 
-static float get_delay(ao_data_t* ao) {
+static float get_delay(const ao_data_t* ao) {
     priv_t*priv=ao->priv;
   int buffered = av_fifo_size(priv->buffer); // could be less
   float in_jack = priv->latency;

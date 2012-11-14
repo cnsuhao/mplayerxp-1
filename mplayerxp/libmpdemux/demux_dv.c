@@ -232,7 +232,7 @@ static void dv_close(demuxer_t* demuxer)
   mp_free(frames);
 }
 
-static MPXP_Rc dv_control(demuxer_t *demuxer,int cmd, any_t*arg) {
+static MPXP_Rc dv_control(const demuxer_t *demuxer,int cmd, any_t*arg) {
     return MPXP_Unknown;
 }
 

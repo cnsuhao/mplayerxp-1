@@ -123,7 +123,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	    return af_test_output(af,(mp_aframe_t*)arg);
 	case AF_CONTROL_SHOWCONF: {
 	    char sbuf[256];
-	    const ao_info_t*info=ao_get_info();
+	    const ao_info_t*info=ao_get_info(ao_data);
 	    MSG_INFO("AO-CONF: [%s] %uHz nch=%u %s (%3.1f-kbit)\n"
 		,info->short_name,s->rate,s->nch,mpaf_fmt2str(s->format,sbuf,sizeof(sbuf))
 		,(s->rate*s->nch*(s->format&MPAF_BPS_MASK)*8)*0.001f);

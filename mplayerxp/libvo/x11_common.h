@@ -11,10 +11,10 @@
 MPXP_Rc __FASTCALL__ vo_x11_init(vo_data_t*vo);
 MPXP_Rc __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window);
 /* local data */
-int __FASTCALL__ vo_x11_Shmem_Flag(vo_data_t*vo);
-XImage* __FASTCALL__ vo_x11_Image(vo_data_t*vo,unsigned idx);
-uint8_t* __FASTCALL__ vo_x11_ImageData(vo_data_t*vo,unsigned idx);
-void __FASTCALL__ vo_x11_getMyXImage(vo_data_t*vo,unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h);
+int __FASTCALL__ vo_x11_Shmem_Flag(const vo_data_t*vo);
+XImage* __FASTCALL__ vo_x11_Image(const vo_data_t*vo,unsigned idx);
+uint8_t* __FASTCALL__ vo_x11_ImageData(const vo_data_t*vo,unsigned idx);
+void __FASTCALL__ vo_x11_getMyXImage(const vo_data_t*vo,unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h);
 void __FASTCALL__ vo_x11_freeMyXImage(vo_data_t*vo,unsigned idx);
 void __FASTCALL__ vo_x11_hidecursor ( Display* , Window );
 void __FASTCALL__ vo_x11_decoration(vo_data_t*vo,Display * vo_Display,Window w,int d );

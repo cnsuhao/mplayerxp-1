@@ -133,13 +133,13 @@ MPXP_Rc __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg);
 /* Calculate how long the output from the filters will be given the
    input length "len". The calculated length is >= the actual
    length */
-int __FASTCALL__ af_outputlen(af_stream_t* s, int len);
+int __FASTCALL__ af_outputlen(const af_stream_t* s, int len);
 
 /* Calculate how long the input to the filters should be to produce a
    certain output length, i.e. the return value of this function is
    the input length required to produce the output length "len". The
    calculated length is <= the actual length */
-int __FASTCALL__ af_inputlen(af_stream_t* s, int len);
+int __FASTCALL__ af_inputlen(const af_stream_t* s, int len);
 
 /* Calculate the total delay caused by the filters */
 double __FASTCALL__ af_calc_delay(af_stream_t* s);
@@ -153,7 +153,7 @@ int __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len);
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-unsigned __FASTCALL__ af_lencalc(frac_t mul, mp_aframe_t* data);
+unsigned __FASTCALL__ af_lencalc(frac_t mul,const mp_aframe_t* data);
 
 /* Helper function used to convert to gain value from dB. Returns
    MPXP_Ok if of and MPXP_Error if fail */
@@ -172,11 +172,11 @@ int __FASTCALL__ af_test_output(struct af_instance_s* af, mp_aframe_t* out);
 void af_help(void);
 
 /* returns 1 if first filter requires (or ao_driver supports) fmt */
-MPXP_Rc __FASTCALL__ af_query_fmt (af_stream_t* s,mpaf_format_e fmt);
+MPXP_Rc __FASTCALL__ af_query_fmt (const af_stream_t* s,mpaf_format_e fmt);
 /* returns 1 if first filter requires (or ao_driver supports) rate */
-MPXP_Rc __FASTCALL__ af_query_rate (af_stream_t* s,unsigned rate);
+MPXP_Rc __FASTCALL__ af_query_rate (const af_stream_t* s,unsigned rate);
 /* returns 1 if first filter requires (or ao_driver supports) nch */
-MPXP_Rc __FASTCALL__ af_query_channels (af_stream_t* s,unsigned nch);
+MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch);
 
 /* print out configuration of filter's chain */
 extern void af_showconf(af_instance_t *first);

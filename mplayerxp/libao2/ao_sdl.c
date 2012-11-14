@@ -48,7 +48,7 @@ typedef struct priv_s {
     int			buffered_bytes;
 }priv_t;
 
-static int __FASTCALL__ write_buffer(ao_data_t* ao,unsigned char* data,int len){
+static int __FASTCALL__ write_buffer(ao_data_t* ao,const unsigned char* data,int len){
     priv_t*priv=ao->priv;
   int len2=0;
   int x;
@@ -110,7 +110,7 @@ static void setenv(const char *name, const char *val, int _xx)
 #endif
 
 // to set/get/query special features/parameters
-static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
     priv_t*priv=ao->priv;
 	switch (cmd) {
 		case AOCONTROL_QUERY_FORMAT:
@@ -307,7 +307,7 @@ static void audio_resume(ao_data_t* ao)
 
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(ao_data_t* ao){
+static unsigned get_space(const ao_data_t* ao){
     priv_t*priv=ao->priv;
     return (NUM_BUFS-priv->full_buffers)*BUFFSIZE - priv->buf_write_pos;
 }
@@ -315,14 +315,14 @@ static unsigned get_space(ao_data_t* ao){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags)
+static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
 {
     UNUSED(flags);
     return write_buffer(ao,data, len);
 }
 
 // return: delay in seconds between first and last sample in priv->buffer
-static float get_delay(ao_data_t* ao){
+static float get_delay(const ao_data_t* ao){
     priv_t*priv=ao->priv;
     return (float)(priv->buffered_bytes + ao->buffersize)/(float)ao->bps;
 }

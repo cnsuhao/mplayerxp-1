@@ -169,7 +169,7 @@ static unsigned long psa(cdda_priv*p,unsigned long sector)
     return 0;
 }
 
-int __FASTCALL__ read_cdda(stream_t* s,char *buf,track_t *tr) {
+int __FASTCALL__ read_cdda(const stream_t* s,char *buf,track_t *tr) {
   cdda_priv* p = (cdda_priv*)s->priv;
   track_t i=255;
 
@@ -210,8 +210,8 @@ void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *tr) {
     p->sector=seeked_track;
 }
 
-off_t __FASTCALL__ tell_cdda(stream_t* s) {
-  cdda_priv* p = (cdda_priv*)s->priv;
+off_t __FASTCALL__ tell_cdda(const stream_t* s) {
+  const cdda_priv* p = (const cdda_priv*)s->priv;
   return p->sector*CDIO_CD_FRAMESIZE_RAW;
 }
 

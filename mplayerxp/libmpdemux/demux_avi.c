@@ -1509,7 +1509,7 @@ static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	    demux_read_data(d_audio,NULL,skip_audio_bytes);
 	    //d_audio->pts=0; // PTS is outdated because of the raw data skipping
 	  }
-	  mpca_resync_stream(sh_audio);
+	  mpca_resync_stream(sh_audio->decoder);
 
 //          sh_audio->timer=-skip_audio_secs;
 
@@ -1543,7 +1543,7 @@ static void avi_close(demuxer_t *demuxer)
   mp_free(priv);
 }
 
-static MPXP_Rc avi_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc avi_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

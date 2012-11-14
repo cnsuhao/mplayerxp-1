@@ -168,7 +168,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 
 static void smjpeg_close(demuxer_t *demuxer) {}
 
-static MPXP_Rc smjpeg_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc smjpeg_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

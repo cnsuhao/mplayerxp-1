@@ -507,7 +507,7 @@ static void pva_close(demuxer_t * demuxer)
     }
 }
 
-static MPXP_Rc pva_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc pva_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     return MPXP_Unknown;
 }

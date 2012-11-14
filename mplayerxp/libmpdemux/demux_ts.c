@@ -3011,8 +3011,6 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	return 0;
 }
 
-extern void mpca_skip_frame(sh_audio_t *sh_audio);
-
 static void reset_fifos(ts_priv_t* priv, int a, int v, int s)
 {
 	if(a)
@@ -3124,7 +3122,7 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 			a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 			if(d_video->pts > a_pts)
 			{
-				mpca_skip_frame(sh_audio);  // sync audio
+				mpca_skip_frame(sh_audio->decoder);  // sync audio
 				continue;
 			}
 		}
@@ -3179,7 +3177,7 @@ static int is_usable_program(ts_priv_t *priv, pmt_t *pmt)
 	return 0;
 }
 #endif
-static MPXP_Rc ts_control(demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc ts_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     ts_priv_t* priv = (ts_priv_t *)demuxer->priv;
 

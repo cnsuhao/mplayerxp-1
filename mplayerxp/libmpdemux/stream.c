@@ -158,7 +158,7 @@ int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
 	MSG_DBG3("nc_stream_read_cbuffer: Guess EOF\n");
 	s->eof=1;
 	s->buf_pos=s->buf_len=0;
-	if(s->_Errno) { MSG_WARN("nc_stream_read_cbuffer(drv:%s) error: %s\n",s->driver->mrl,strerror(s->_Errno)); s->_Errno=0; }
+	if(errno) { MSG_WARN("nc_stream_read_cbuffer(drv:%s) error: %s\n",s->driver->mrl,strerror(errno)); errno=0; }
 	return 0;
     }
     break;
@@ -185,7 +185,7 @@ int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos)
   {
     if(!s->driver) { s->eof=1; return 0; }
     s->pos = s->driver->seek(s,newpos);
-    if(s->_Errno) { MSG_WARN("nc_stream_seek(drv:%s) error: %s\n",s->driver->mrl,strerror(s->_Errno)); s->_Errno=0; }
+    if(errno) { MSG_WARN("nc_stream_seek(drv:%s) error: %s\n",s->driver->mrl,strerror(errno)); errno=0; }
   }
   MSG_DBG3("nc_stream_seek_long after: %llu\n",s->pos);
 
@@ -251,7 +251,7 @@ stream_t* __FASTCALL__ new_stream(int type){
 }
 
 void __FASTCALL__ free_stream(stream_t *s){
-  MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",s->driver->mrl,s->_Errno);
+  MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",s->driver->mrl,strerror(errno));
   if(s->cache_data) stream_disable_cache(s);
   if(s->driver) s->driver->close(s);
   mp_free(s->buffer);

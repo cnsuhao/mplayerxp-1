@@ -60,7 +60,7 @@ typedef struct priv_s {
     int16_t*	tmpbuf;
 }priv_t;
 
-static MPXP_Rc control(ao_data_t* ao,int cmd, long arg) {
+static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
   switch (cmd) {
     case AOCONTROL_GET_VOLUME:
@@ -184,7 +184,7 @@ static void uninit(ao_data_t* ao) {
   mp_free(ao->priv);
 }
 
-static void unqueue_buffers(ao_data_t* ao) {
+static void unqueue_buffers(const ao_data_t* ao) {
     priv_t*priv=ao->priv;
   ALint p;
   unsigned s;
@@ -228,7 +228,7 @@ static void audio_resume(ao_data_t* ao) {
   alSourcePlayv(ao->channels, priv->sources);
 }
 
-static unsigned get_space(ao_data_t* ao) {
+static unsigned get_space(const ao_data_t* ao) {
     priv_t*priv=ao->priv;
   ALint queued;
   unqueue_buffers(ao);
@@ -241,12 +241,12 @@ static unsigned get_space(ao_data_t* ao) {
 /**
  * \brief write data into buffer and reset underrun flag
  */
-static unsigned play(ao_data_t* ao,any_t*data, unsigned len, unsigned flags) {
+static unsigned play(ao_data_t* ao,const any_t*data, unsigned len, unsigned flags) {
     priv_t*priv=ao->priv;
   ALint state;
   unsigned i, j, k;
   unsigned ch;
-  int16_t *d = data;
+  const int16_t *d = data;
   UNUSED(flags);
   len /= ao->channels * CHUNK_SIZE;
   for (i = 0; i < len; i++) {
@@ -266,7 +266,7 @@ static unsigned play(ao_data_t* ao,any_t*data, unsigned len, unsigned flags) {
   return len * ao->channels * CHUNK_SIZE;
 }
 
-static float get_delay(ao_data_t* ao) {
+static float get_delay(const ao_data_t* ao) {
     priv_t*priv=ao->priv;
   ALint queued;
   unqueue_buffers(ao);

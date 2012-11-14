@@ -57,7 +57,6 @@ static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t*sp)
 	    sp->len=stream->streaming_ctrl->streaming_read(stream->fd,sp->buf,STREAM_BUFFER_SIZE, stream->streaming_ctrl);
     } else {
       sp->len=TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,STREAM_BUFFER_SIZE));
-      if(sp->len<=0) stream->_Errno=errno;
     }
     p->spos += sp->len;
     return sp->len;
@@ -78,7 +77,7 @@ static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
     return newpos;
 }
 
-static off_t __FASTCALL__ network_tell(stream_t *stream)
+static off_t __FASTCALL__ network_tell(const stream_t *stream)
 {
     network_priv_t *p=stream->priv;
     return p->spos;
@@ -91,7 +90,7 @@ static void __FASTCALL__ network_close(stream_t *stream)
     if(stream->fd>0) close(stream->fd);
 }
 
-static MPXP_Rc __FASTCALL__ network_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ network_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

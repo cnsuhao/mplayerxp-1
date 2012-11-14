@@ -18,14 +18,14 @@ static off_t __FASTCALL__ null_seek(stream_t*stream,off_t pos)
     return pos;
 }
 
-static off_t __FASTCALL__ null_tell(stream_t*stream)
+static off_t __FASTCALL__ null_tell(const stream_t*stream)
 {
     return 0;
 }
 
 static void __FASTCALL__ null_close(stream_t *stream) {}
 
-static MPXP_Rc __FASTCALL__ null_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ null_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

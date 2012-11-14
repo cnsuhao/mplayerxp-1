@@ -477,7 +477,7 @@ static void lavf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     av_seek_frame(priv->avfc, -1, priv->last_pts + seeka->secs*AV_TIME_BASE, seeka->secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
 }
 
-static MPXP_Rc lavf_control(demuxer_t *demuxer, int cmd, any_t*arg)
+static MPXP_Rc lavf_control(const demuxer_t *demuxer, int cmd, any_t*arg)
 {
     return MPXP_Unknown;
 }

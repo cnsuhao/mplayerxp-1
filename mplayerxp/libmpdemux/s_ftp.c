@@ -273,11 +273,7 @@ static off_t __FASTCALL__ ftp_seek(stream_t *s,off_t newpos) {
 
   if(p->spos==newpos) return p->spos;
   MSG_V("ftp seek: %llu bytes\n",newpos);
-  if(s->pos > s->end_pos) {
-    s->_Errno=errno;
-    return 0;
-  }
-
+  if(s->pos > s->end_pos) return 0;
 
   // Check to see if the server did not already terminate the transfer
   if(fd_can_read(p->handle, 0)) {
@@ -326,7 +322,7 @@ static off_t __FASTCALL__ ftp_seek(stream_t *s,off_t newpos) {
   return p->spos;
 }
 
-static off_t __FASTCALL__ ftp_tell(stream_t*stream)
+static off_t __FASTCALL__ ftp_tell(const stream_t*stream)
 {
     struct stream_priv_s*p=stream->priv;
     return p->spos;
@@ -474,7 +470,7 @@ static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char 
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ ftp_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ ftp_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);

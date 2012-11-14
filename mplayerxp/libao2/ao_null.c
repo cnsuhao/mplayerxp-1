@@ -75,7 +75,7 @@ static struct WaveHeader wavhdr = {
 	0, //le2me_32(0x7ffff000)
 };
 
-static void drain(ao_data_t* ao){
+static void drain(const ao_data_t* ao){
     priv_t*priv = (priv_t*)ao->priv;
     struct timeval now_tv;
     int temp, temp2;
@@ -97,7 +97,7 @@ static void drain(ao_data_t* ao){
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc __FASTCALL__ control(ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
@@ -206,7 +206,7 @@ static void audio_pause(ao_data_t* ao)
 static void audio_resume(ao_data_t* ao) { UNUSED(ao); }
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(ao_data_t* ao){
+static unsigned get_space(const ao_data_t* ao){
     priv_t*priv = (priv_t*)ao->priv;
     drain(ao);
     return priv->fast_mode?INT_MAX:ao->outburst - priv->buffer;
@@ -215,7 +215,7 @@ static unsigned get_space(ao_data_t* ao){
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data,unsigned len,unsigned flags)
+static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
 {
     priv_t*priv = (priv_t*)ao->priv;
     unsigned maxbursts = (ao->buffersize - priv->buffer) / ao->outburst;
@@ -234,7 +234,7 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,any_t* data,unsigned len,unsigne
 }
 
 // return: delay in seconds between first and last sample in priv->buffer
-static float get_delay(ao_data_t* ao){
+static float get_delay(const ao_data_t* ao){
     priv_t*priv = (priv_t*)ao->priv;
     drain(ao);
     return priv->fast_mode?0.0:(float) priv->buffer / (float) ao->bps;
