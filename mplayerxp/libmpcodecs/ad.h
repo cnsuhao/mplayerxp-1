@@ -54,6 +54,7 @@ typedef struct ad_functions_s
 } ad_functions_t;
 
 extern const ad_functions_t* afm_find_driver(const char *name);
+extern const audio_probe_t* afm_probe_driver(sh_audio_t* sh);
 #define FIX_APTS(sh_audio,pts,in_size) (sh_audio->i_bps?((float)(pts)+(float)(in_size)/(float)sh_audio->i_bps):((float)(pts)))
 
 #endif

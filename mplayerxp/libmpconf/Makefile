@@ -6,7 +6,10 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-SRCS  = cfgparser.c codec-cfg.c m_option.c m_property.c m_struct.c subopt-helper.c
+SRCS  = cfgparser.c m_option.c m_property.c m_struct.c subopt-helper.c
+ifeq ($(ENABLE_WIN32LOADER),yes)
+SRCS += codec-cfg.c
+endif
 
 OBJS	= $(SRCS:.c=.o)
 INCLUDE = -I. -I../

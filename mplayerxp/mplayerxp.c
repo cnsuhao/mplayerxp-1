@@ -231,7 +231,9 @@ static void mpxp_init_structs(void) {
 }
 
 static void mpxp_uninit_structs(void) {
+#ifdef ENABLE_WIN32LOADER
     free_codec_cfg();
+#endif
     mp_free(mp_data->bench);
     mp_free(mp_data->priv);
     mp_free(mp_data);
@@ -525,22 +527,27 @@ static void init_player( void )
 	exit(0);
     }
 
+#ifdef ENABLE_WIN32LOADER
     /* check codec.conf*/
-    if(!parse_codec_cfg(get_path("codecs.conf"))) {
-      if(!parse_codec_cfg(CONFDIR"/codecs.conf")) {
+    if(!parse_codec_cfg(get_path("win32codecs.conf"))) {
+      if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")) {
 	MSG_HINT(MSGTR_CopyCodecsConf);
 	mpxp_uninit_structs();
 	exit(0);
       }
     }
-
+#endif
     if(mp_conf.audio_codec && strcmp(mp_conf.audio_codec,"help")==0) {
+#ifdef ENABLE_WIN32LOADER
 	list_codecs(1);
+#endif
 	mpxp_uninit_structs();
 	exit(0);
     }
     if(mp_conf.video_codec && strcmp(mp_conf.video_codec,"help")==0) {
+#ifdef ENABLE_WIN32LOADER
 	list_codecs(0);
+#endif
 	mpxp_uninit_structs();
 	exit(0);
     }
@@ -565,9 +572,10 @@ void show_long_help(void) {
     af_help();
     vfm_help();
     afm_help();
+#ifdef ENABLE_WIN32LOADER
     /* check codec.conf*/
-    if(!parse_codec_cfg(get_path("codecs.conf"))){
-      if(!parse_codec_cfg(CONFDIR"/codecs.conf")){
+    if(!parse_codec_cfg(get_path("win32codecs.conf"))){
+      if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")){
 	MSG_HINT(MSGTR_CopyCodecsConf);
 	mpxp_uninit_structs();
 	exit(0);
@@ -575,6 +583,7 @@ void show_long_help(void) {
     }
     list_codecs(0);
     list_codecs(1);
+#endif
 }
 
 #ifdef USE_OSD
@@ -1076,32 +1085,37 @@ static void mpxp_find_acodec(void) {
     priv_t*priv=mp_data->priv;
     sh_audio_t* sh_audio=priv->demuxer->audio->sh;
     demux_stream_t *d_audio=priv->demuxer->audio;
-// Go through the codec.conf and find the best codec...
     sh_audio->codec=NULL;
-    if(mp_conf.audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,mp_conf.audio_family);
-    while(1) {
-	sh_audio->codec=find_codec(sh_audio->wtag,NULL,sh_audio->codec,1);
-	if(!sh_audio->codec) {
-	    if(mp_conf.audio_family) {
-		sh_audio->codec=NULL; /* re-search */
-		MSG_ERR(MSGTR_CantFindAfmtFallback);
-		mp_conf.audio_family=NULL;
-		continue;
-	    }
-	    break;
-	}
-	if(mp_conf.audio_codec && strcmp(sh_audio->codec->codec_name,mp_conf.audio_codec)) continue;
-	else if(mp_conf.audio_family && strcmp(sh_audio->codec->driver_name,mp_conf.audio_family)) continue;
-	if(afm_find_driver(sh_audio->codec->driver_name)) {
-	    MSG_V("%s audio codec: [%s] drv:%s (%s)\n",mp_conf.audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
-	    found=1;
-	    break;
-	}
-    }
+    found=RND_RENAME2(mpca_init)(sh_audio); // try auto-probe first
+#ifdef ENABLE_WIN32LOADER
     if(!found) {
-	sh_audio->codec=find_ffmpeg_audio(sh_audio);
-	if(sh_audio->codec) found=1;
+// Go through the codec.conf and find the best codec...
+	if(mp_conf.audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,mp_conf.audio_family);
+	while(1) {
+	    sh_audio->codec=find_codec(sh_audio->wtag,NULL,sh_audio->codec,1);
+	    if(!sh_audio->codec) {
+		if(mp_conf.audio_family) {
+		    sh_audio->codec=NULL; /* re-search */
+		    MSG_ERR(MSGTR_CantFindAfmtFallback);
+		    mp_conf.audio_family=NULL;
+		    continue;
+		}
+		break;
+	    }
+	    if(mp_conf.audio_codec && strcmp(sh_audio->codec->codec_name,mp_conf.audio_codec)) continue;
+	    else if(mp_conf.audio_family && strcmp(sh_audio->codec->driver_name,mp_conf.audio_family)) continue;
+	    if(afm_find_driver(sh_audio->codec->driver_name)) {
+		MSG_V("%s audio codec: [%s] drv:%s (%s)\n",mp_conf.audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
+		found=1;
+		break;
+	    }
+	}
+	if(!found) {
+	    sh_audio->codec=find_ffmpeg_audio(sh_audio);
+	    if(sh_audio->codec) found=1;
+	}
     }
+#endif
     if(!found) {
 	const char *fmt;
 	MSG_ERR(MSGTR_CantFindAudioCodec);
@@ -1110,41 +1124,46 @@ static void mpxp_find_acodec(void) {
 	    MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
 	else
 	    MSG_ERR(" 0x%08X!\n",sh_audio->wtag);
-	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("codecs.conf"));
+	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
 	sh_audio=d_audio->sh=NULL;
     }
 }
 
-static int mpxp_find_vcodec(void) {
+static MPXP_Rc mpxp_find_vcodec(void) {
     priv_t*priv=mp_data->priv;
     demux_stream_t *d_video=priv->demuxer->video;
     sh_video_t* sh_video=priv->demuxer->video->sh;
-    int rc=0;
+    MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
-    /* Go through the codec.conf and find the best codec...*/
     sh_video->inited=0;
-    vo_data->flags=0;
-    if(vo_conf.fullscreen)	vo_FS_SET(vo_data);
-    if(vo_conf.softzoom)	vo_ZOOM_SET(vo_data);
-    if(vo_conf.flip>0)		vo_FLIP_SET(vo_data);
-    if(vo_conf.vidmode)		vo_VM_SET(vo_data);
-    codecs_reset_selection(0);
-    if(mp_conf.video_codec) {
-    /* forced codec by name: */
-	MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
-	RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,NULL,-1,priv->libinput);
-    } else {
-	int status;
+    if(RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,priv->libinput)==MPXP_Ok) sh_video->inited=1;
+#ifdef ENABLE_WIN32LOADER
+    if(!sh_video->inited) {
+/* Go through the codec.conf and find the best codec...*/
+	vo_data->flags=0;
+	if(vo_conf.fullscreen)	vo_FS_SET(vo_data);
+	if(vo_conf.softzoom)	vo_ZOOM_SET(vo_data);
+	if(vo_conf.flip>0)	vo_FLIP_SET(vo_data);
+	if(vo_conf.vidmode)	vo_VM_SET(vo_data);
+	codecs_reset_selection(0);
+	if(mp_conf.video_codec) {
+	/* forced codec by name: */
+	    MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
+	    RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,NULL,-1,priv->libinput);
+	} else {
+	    int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
-	if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
-	for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
-	    if(mp_conf.video_family) /* try first the preferred codec family:*/
-		if(RND_RENAME3(mpcv_init)(sh_video,NULL,mp_conf.video_family,status,priv->libinput)==MPXP_Ok) break;
-	    if(RND_RENAME3(mpcv_init)(sh_video,NULL,NULL,status,priv->libinput)==MPXP_Ok) break;
+	    if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
+	    for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
+		if(mp_conf.video_family) /* try first the preferred codec family:*/
+		    if(RND_RENAME3(mpcv_init)(sh_video,NULL,mp_conf.video_family,status,priv->libinput)==MPXP_Ok) break;
+		if(RND_RENAME3(mpcv_init)(sh_video,NULL,NULL,status,priv->libinput)==MPXP_Ok) break;
+	    }
 	}
     }
     /* Use ffmpeg decoders as last hope */
     if(!sh_video->inited) mpcv_ffmpeg_init(sh_video,priv->libinput);
+#endif
 
     if(!sh_video->inited) {
 	const char *fmt;
@@ -1154,9 +1173,9 @@ static int mpxp_find_vcodec(void) {
 	    MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
 	else
 	    MSG_ERR(" 0x%08X!\n",sh_video->fourcc);
-	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("codecs.conf"));
+	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
 	sh_video = d_video->sh = NULL;
-	rc=-1;
+	rc=MPXP_False;
     } else  priv->inited_flags|=INITED_VCODEC;
 
     if(sh_video)
@@ -1690,7 +1709,6 @@ int main(int argc,char* argv[], char *envp[]){
     }
 
     mp_msg_init(mp_conf.verbose+MSGL_STATUS);
-
 //------ load global data first ------
     mpxp_init_osd();
 // ========== Init keyboard FIFO (connection to libvo) ============
@@ -1734,6 +1752,7 @@ play_next_file:
     MP_UNIT("open_stream");
     if(!input_state.after_dvdmenu) stream=RND_RENAME2(open_stream)(priv->libinput,filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
     if(!stream) { // error...
+	MSG_ERR("Can't open: %s\n",filename);
 	eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY);
 	goto goto_next_file;
     }
@@ -1806,6 +1825,7 @@ play_next_file:
     MP_UNIT("init_audio_codec");
 
     if(sh_audio) mpxp_find_acodec();
+    sh_audio=priv->demuxer->audio->sh;
 
     if(stream_dump_type>1) {
 	dump_mux_init(priv->demuxer,priv->libinput);
@@ -1845,7 +1865,8 @@ play_next_file:
 	sh_video->vfilter=RND_RENAME7(vf_init)(sh_video,priv->libinput);
 	sh_video->vfilter_inited=1;
     }
-    if((mpxp_find_vcodec())!=0) {
+    if((mpxp_find_vcodec())!=MPXP_Ok) {
+	sh_video=priv->demuxer->video->sh;
 	if(!sh_audio) goto goto_next_file;
 	goto main;
     }

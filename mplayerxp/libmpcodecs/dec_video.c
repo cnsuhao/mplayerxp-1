@@ -129,38 +129,73 @@ MPXP_Rc mpcv_ffmpeg_init(sh_video_t*sh_video,any_t* libinput) {
 }
 
 MPXP_Rc RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
+    int done=0;
+    const video_probe_t* vprobe;
     sh_video->codec=NULL;
-    MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
-    while((sh_video->codec=find_codec(sh_video->fourcc,
-	    sh_video->bih?((unsigned int*) &sh_video->bih->biCompression):NULL,
-	    sh_video->codec,0) )){
-	// ok we found one codec
-	if(sh_video->codec->flags&CODECS_FLAG_SELECTED) {
-	    MSG_DBG3("mpcv_init: %s already tried and failed\n",sh_video->codec->codec_name);
-	    continue;
-	}
-	if(codecname && strcmp(sh_video->codec->codec_name,codecname)) {
-	    MSG_DBG3("mpcv_init: %s != %s [-vc]\n",sh_video->codec->codec_name,codecname);
-	    continue;
-	}
-	if(vfm && strcmp(sh_video->codec->driver_name,vfm)!=0) {
-	    MSG_DBG3("mpcv_init: vfm doesn't match %s != %s\n",vfm,sh_video->codec->driver_name);
-	    continue; // vfm doesn't match
-	}
-	if(sh_video->codec->status<status) {
-	    MSG_DBG3("mpcv_init: %s too unstable\n",sh_video->codec->codec_name);
-	    continue;
-	}
-	sh_video->codec->flags|=CODECS_FLAG_SELECTED; // tagging it
-	// ok, it matches all rules, let's find the driver!
-	if(!(mpvdec=vfm_find_driver(sh_video->codec->driver_name))) continue;
-	else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
-	// it's available, let's try to init!
+    if(vfm) {
+	mpvdec=vfm_find_driver(vfm);
+	if(mpvdec) vprobe=mpvdec->probe(sh_video,sh_video->fourcc);
+    }
+    else vprobe = vfm_driver_probe(sh_video);
+    if(vprobe) {
+	vfm=vprobe->driver;
+	/* fake struct codecs_st*/
+	sh_video->codec=mp_malloc(sizeof(struct codecs_st));
+	strcpy(sh_video->codec->dll_name,vprobe->codec_dll);
+	strcpy(sh_video->codec->driver_name,vprobe->driver);
+	strcpy(sh_video->codec->codec_name,sh_video->codec->dll_name);
+	memcpy(sh_video->codec->outfmt,vprobe->pix_fmt,sizeof(vprobe->pix_fmt));
+	mpvdec=vfm_find_driver(vfm);
+    }
+    if(sh_video->codec) {
 	if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-	    continue; // try next...
+	    mp_free(sh_video->codec);
+	    sh_video->codec=NULL;
+	} else done=1;
+    }
+#ifdef ENABLE_WIN32LOADER
+    if(sh_video->codec) {
+	done=0;
+	MSG_DBG3("mpcv_init(%p, %s, %s, %i)\n",sh_video,codecname,vfm,status);
+	while((sh_video->codec=find_codec(sh_video->fourcc,
+		sh_video->bih?((unsigned int*) &sh_video->bih->biCompression):NULL,
+		sh_video->codec,0) )){
+	    // ok we found one codec
+	    if(sh_video->codec->flags&CODECS_FLAG_SELECTED) {
+		MSG_DBG3("mpcv_init: %s already tried and failed\n",sh_video->codec->codec_name);
+		continue;
+	    }
+	    if(codecname && strcmp(sh_video->codec->codec_name,codecname)) {
+		MSG_DBG3("mpcv_init: %s != %s [-vc]\n",sh_video->codec->codec_name,codecname);
+		continue;
+	    }
+	    if(vfm && strcmp(sh_video->codec->driver_name,vfm)!=0) {
+		MSG_DBG3("mpcv_init: vfm doesn't match %s != %s\n",vfm,sh_video->codec->driver_name);
+		continue; // vfm doesn't match
+	    }
+	    if(sh_video->codec->status<status) {
+		MSG_DBG3("mpcv_init: %s too unstable\n",sh_video->codec->codec_name);
+		continue;
+	    }
+	    sh_video->codec->flags|=CODECS_FLAG_SELECTED; // tagging it
+	    // ok, it matches all rules, let's find the driver!
+	    if(!(mpvdec=vfm_find_driver(sh_video->codec->driver_name))) continue;
+	    else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
+	    // it's available, let's try to init!
+	    if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+		MSG_ERR(MSGTR_CODEC_CANT_INITV);
+		continue; // try next...
+	    }
+	    done=1;
+	    break;
 	}
+    }
+#endif
+    if(done) {
 	mpcv_print_codec_info(sh_video);
+// memory leak here
+//	if(vprobe) { mp_free(sh_video->codec); sh_video->codec=NULL; }
 	return MPXP_Ok;
     }
     return MPXP_False;

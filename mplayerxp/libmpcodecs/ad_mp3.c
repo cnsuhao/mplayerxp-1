@@ -29,14 +29,14 @@ static const config_t options[] = {
 LIBAD_EXTERN(mp3)
 
 static const audio_probe_t probes[] = {
-    { "libmp3", "libmpg123", 0x50, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "libmp3", "libmpg123", 0x55, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "libmp3", "libmpg123", 0x55005354, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "libmp3", "libmpg123", 0x5000736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "libmp3", "libmpg123", 0x5500736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "libmp3", "libmpg123", FOURCC_TAG('.','M','P','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "libmp3", "libmpg123", FOURCC_TAG('L','A','M','E'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "libmp3", "libmpg123", FOURCC_TAG('M','P','3',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x50, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x55, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x55005354, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x5000736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x5500736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", FOURCC_TAG('.','M','P','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", FOURCC_TAG('L','A','M','E'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", FOURCC_TAG('M','P','3',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 

@@ -8,9 +8,13 @@
 #include <inttypes.h> /* for __WORDSIZE */
 #include "mp_config.h"
 
+#ifdef WORDS_BIGENDIAN
 #define FOURCC_TAG(ch0,ch1,ch2,ch3) (((uint32_t)(ch3)|((uint32_t)ch2<<8)|(uint32_t)ch1<<16)|((uint32_t)ch0<<24))
 #define TWOCC_TAG(ch0,ch1) ((uint16_t)ch0|((uint16_t)ch1)<<8)
-
+#else
+#define FOURCC_TAG(ch0,ch1,ch2,ch3) (((uint32_t)(ch0)|((uint32_t)ch1<<8)|(uint32_t)ch2<<16)|((uint32_t)ch3<<24))
+#define TWOCC_TAG(ch0,ch1) ((uint16_t)ch1|((uint16_t)ch0)<<8)
+#endif
 static inline uint32_t MAKE_FOURCC(uint8_t ch0,uint8_t ch1,uint8_t ch2,uint8_t ch3 ) {
     return  (uint32_t)ch3|
 	    ((uint32_t)ch2)<<8|

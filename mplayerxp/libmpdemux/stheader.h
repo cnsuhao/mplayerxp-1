@@ -70,7 +70,7 @@ typedef struct sh_video_s {
     unsigned		src_w,src_h;// source picture size (filled by fileformat parser)
 //  int coded_w,coded_h; // coded size (filled by video codec)
     float		aspect;
-    unsigned int	outfmtidx;
+    unsigned int	outfmtidx; // TODO: replace with out_fourcc
 /* vfilter chan */
     any_t*		vfilter;
     int			vfilter_inited;

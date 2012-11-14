@@ -20,8 +20,8 @@ static const config_t options[] = {
 LIBVD_EXTERN(nuv)
 
 static const video_probe_t probes[] = {
-    { "nuv", "nuv", FOURCC_TAG('N','U','V','1'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "nuv", "nuv", FOURCC_TAG('R','J','P','G'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "nuv", "nuv", FOURCC_TAG('N','U','V','1'), VCodecStatus_Working, {IMGFMT_I420}, {0, 0} },
+    { "nuv", "nuv", FOURCC_TAG('R','J','P','G'), VCodecStatus_Working, {IMGFMT_I420}, {0, 0} },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
 };
 

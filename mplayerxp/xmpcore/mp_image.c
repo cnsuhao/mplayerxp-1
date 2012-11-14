@@ -137,6 +137,7 @@ void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
 	return;
     }
     MSG_WARN("mp_image: Unknown out_fmt: 0x%X\n",out_fmt);
+    show_backtrace("outfmt",10);
     mpi->bpp=0;
 }
 

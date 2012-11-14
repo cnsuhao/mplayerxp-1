@@ -29,10 +29,10 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
     audio_probe_t* acodec = NULL;
     const char *what="AVCodecID";
     priv_t* priv=sh->context;
-    enum AVCodecID id = ff_codec_get_id(ff_codec_wav_tags,sh->wtag);
+    enum AVCodecID id = ff_codec_get_id(ff_codec_wav_tags,wtag);
     if (id <= 0) {
 	prn_err:
-	MSG_ERR("Cannot find %s for for '0x%X' tag! Try force -ac option\n"
+	MSG_ERR("Cannot find %s for '0x%X' tag! Try force -ac option\n"
 		,what
 		,sh->wtag);
 	return NULL;
@@ -177,6 +177,7 @@ void uninit(sh_audio_t *sh)
     avcodec_close(priv->lavc_ctx);
     if (priv->lavc_ctx->extradata) mp_free(priv->lavc_ctx->extradata);
     mp_free(priv->lavc_ctx);
+    if(priv->probe) { free(priv->probe->codec_dll); free(priv->probe); }
     mp_free(priv);
     sh->context=NULL;
 }

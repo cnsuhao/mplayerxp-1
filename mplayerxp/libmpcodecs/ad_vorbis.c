@@ -14,7 +14,7 @@ extern ao_data_t* ao_data;
 
 static const ad_info_t info = {
     "Ogg/Vorbis audio decoder",
-    "libvorbis",
+    "vorbis",
     "Felix Buenemann, A'rpi",
     "build-in"
 };

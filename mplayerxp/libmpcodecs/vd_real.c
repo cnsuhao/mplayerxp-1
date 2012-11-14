@@ -26,9 +26,9 @@ static const config_t options[] = {
 LIBVD_EXTERN(real)
 
 static const video_probe_t probes[] = {
-    { "realvideo", "drv2.so.6.0", FOURCC_TAG('R','V','2','0'), VCodecStatus_Problems, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "realvideo", "drvc.so",     FOURCC_TAG('R','V','3','0'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "realvideo", "drvc.so",     FOURCC_TAG('R','V','4','0'), VCodecStatus_Working, {FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "realvideo", "drv2.so.6.0", FOURCC_TAG('R','V','2','0'), VCodecStatus_Problems, {IMGFMT_I420}, {0, 0} },
+    { "realvideo", "drvc.so",     FOURCC_TAG('R','V','3','0'), VCodecStatus_Working, {IMGFMT_I420}, {0, 0} },
+    { "realvideo", "drvc.so",     FOURCC_TAG('R','V','4','0'), VCodecStatus_Working, {IMGFMT_I420}, {0, 0} },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
 };
 

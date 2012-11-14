@@ -91,6 +91,17 @@ const vd_functions_t* vfm_find_driver(const char *name) {
     return NULL;
 }
 
+const video_probe_t* vfm_driver_probe(sh_video_t *sh) {
+    unsigned i;
+    video_probe_t* probe;
+    for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++) {
+printf("probing %s\n",mpcodecs_vd_drivers[i]->info->driver_name);
+	if((probe=mpcodecs_vd_drivers[i]->probe(sh,sh->fourcc))!=NULL)
+	    return probe;
+    }
+    return NULL;
+}
+
 void vfm_help(void) {
     unsigned i;
     MSG_INFO("Available video codec families/drivers:\n");

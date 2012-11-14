@@ -51,7 +51,8 @@ typedef struct vd_functions_s
     mp_image_t*		(*__FASTCALL__ decode)(sh_video_t *sh,const enc_frame_t* frame);
 } vd_functions_t;
 
-const vd_functions_t* vfm_find_driver(const char *name);
+extern const vd_functions_t* vfm_find_driver(const char *name);
+extern const video_probe_t* vfm_driver_probe(sh_video_t *sh);
 
 enum {
     VDCTRL_QUERY_FORMAT		=3, /* test for availabilty of a format */

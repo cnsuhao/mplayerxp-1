@@ -30,8 +30,8 @@ LIBVD_EXTERN(theora)
 
 static const video_probe_t probes[] = {
 
-    { "theora", "libtheora", FOURCC_TAG('T','H','E','O'), VCodecStatus_Problems, {FOURCC_TAG('Y','V','1','2'),FOURCC_TAG('4','2','2','P'),FOURCC_TAG('4','4','4','P')}, {0, 0} },
-    { "theora", "libtheora", FOURCC_TAG('T','H','R','A'), VCodecStatus_Problems, {FOURCC_TAG('Y','V','1','2'),FOURCC_TAG('4','2','2','P'),FOURCC_TAG('4','4','4','P')}, {0, 0} },
+    { "theora", "libtheora", FOURCC_TAG('T','H','E','O'), VCodecStatus_Problems, {IMGFMT_YV12,IMGFMT_422P,IMGFMT_444P}, {0, 0} },
+    { "theora", "libtheora", FOURCC_TAG('T','H','R','A'), VCodecStatus_Problems, {IMGFMT_YV12,IMGFMT_422P,IMGFMT_444P}, {0, 0} },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
 };
 

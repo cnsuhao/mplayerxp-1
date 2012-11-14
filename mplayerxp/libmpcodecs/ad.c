@@ -86,6 +86,15 @@ const ad_functions_t* afm_find_driver(const char *name) {
     return NULL;
 }
 
+const audio_probe_t* afm_probe_driver(sh_audio_t *sh) {
+    unsigned i;
+    audio_probe_t* rv;
+    for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
+	if((rv=mpcodecs_ad_drivers[i]->probe(sh,sh->wtag))!=NULL) return rv;
+    }
+    return NULL;
+}
+
 void afm_help(void) {
   unsigned i;
   MSG_INFO("Available audio codec families/drivers:\n");

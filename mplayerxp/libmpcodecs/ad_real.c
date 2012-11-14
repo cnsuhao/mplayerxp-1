@@ -16,7 +16,7 @@
 #include "libao2/afmt.h"
 static const ad_info_t info = {
     "RealAudio decoder",
-    "realaud",
+    "realaudio",
     "A'rpi",
     "build-in"
 };

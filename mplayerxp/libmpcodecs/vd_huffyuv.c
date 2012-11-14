@@ -40,7 +40,7 @@ static const config_t options[] = {
 LIBVD_EXTERN(huffyuv)
 
 static const video_probe_t probes[] = {
-    { "huffyuv", "huffyuv", FOURCC_TAG('H','F','Y','U'), VCodecStatus_Working, {FOURCC_TAG('Y','U','Y','2'),FOURCC_TAG('B','G','R',32),FOURCC_TAG('B','G','R',24)}, {0, 0} },
+    { "huffyuv", "huffyuv", FOURCC_TAG('H','F','Y','U'), VCodecStatus_Working, {IMGFMT_YUY2,IMGFMT_BGR32,IMGFMT_BGR24}, {0, 0} },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
 };
 

@@ -30,9 +30,36 @@ static const ad_functions_t* mpadec;
 
 MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 {
-    mpadec=afm_find_driver(sh_audio->codec->driver_name);
+    const char *afm,*ac;
+    const audio_probe_t* aprobe=NULL;
+    mpadec=NULL;
+    if(!sh_audio->codec) {
+	if(mp_conf.audio_family) {
+	    afm=mp_conf.audio_family;
+	    ac=afm;
+	    mpadec=afm_find_driver(afm);
+	    if(mpadec) aprobe=mpadec->probe(sh_audio,sh_audio->wtag);
+	}
+	else aprobe = afm_probe_driver(sh_audio);
+    }
+    if(aprobe) {
+	afm=aprobe->driver;
+	ac=aprobe->codec_dll;
+	/* fake struct codecs_st*/
+	sh_audio->codec=mp_malloc(sizeof(struct codecs_st));
+	strcpy(sh_audio->codec->dll_name,aprobe->codec_dll);
+	strcpy(sh_audio->codec->driver_name,aprobe->driver);
+	strcpy(sh_audio->codec->codec_name,sh_audio->codec->dll_name);
+	memcpy(sh_audio->codec->outfmt,aprobe->sample_fmt,sizeof(aprobe->sample_fmt));
+	mpadec=afm_find_driver(afm);
+    }
+    else if(sh_audio->codec) {
+	afm=sh_audio->codec->driver_name;
+	ac=sh_audio->codec->codec_name;
+	mpadec=afm_find_driver(afm);
+    }
     if(!mpadec){
-	MSG_ERR(MSGTR_CODEC_BAD_AFAMILY,sh_audio->codec->codec_name, sh_audio->codec->driver_name);
+	MSG_ERR(MSGTR_CODEC_BAD_AFAMILY,ac, afm);
 	return MPXP_False; // no such driver
     }
 
@@ -110,10 +137,11 @@ MPXP_Rc RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 	xp_core->initial_apts_corr.need_correction=0;
     }
     MSG_OK("[AC] %s decoder: [%s] drv:%s.%s ratio %i->%i\n",mp_conf.audio_codec?"Forcing":"Selecting"
-	,sh_audio->codec->codec_name
+	,ac
 	,mpadec->info->driver_name
-	,sh_audio->codec->dll_name
+	,ac
 	,sh_audio->i_bps,sh_audio->o_bps);
+    if(sh_audio->codec) { mp_free(sh_audio->codec); sh_audio->codec=NULL; }
     return MPXP_Ok;
 }
 

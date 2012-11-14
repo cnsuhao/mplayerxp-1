@@ -37,13 +37,13 @@ static const config_t options[] = {
 LIBVD_EXTERN(divx4)
 
 static const video_probe_t probes[] = {
-    { "divx", "libdivx.so",FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','3'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','4'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','5'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','6'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
-    { "divx", "libdivx.so",FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {FOURCC_TAG('Y','V','1','2'), FOURCC_TAG('I','4','2','0')}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {0, 0} },
+    { "divx", "libdivx.so",FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {0, 0} },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { 0 }}
 };
 

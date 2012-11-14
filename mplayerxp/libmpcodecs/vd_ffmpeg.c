@@ -21,6 +21,7 @@
 #include "postproc/postprocess.h"
 #include "postproc/vf.h"
 #include "libvo/video_out.h"
+#include "osdep/bswap.h"
 
 static const vd_info_t info = {
     "FFmpeg's libavcodec codec family",
@@ -192,20 +193,29 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fcc) {
     unsigned char flag = CODECS_FLAG_NOFLIP;
     video_probe_t* vprobe = NULL;
     priv_t* priv=sh->context;
-    enum AVCodecID id = ff_codec_get_id(ff_codec_bmp_tags,fcc);
-    if (id <= 0) {
+    const char* what="AVCodecID";
+    if(!priv) priv=mp_mallocz(sizeof(priv_t));
+    sh->context = priv;
+    if(!vcodec_inited){
+//	avcodec_init();
+	avcodec_register_all();
+	vcodec_inited=1;
+    }
+    enum AVCodecID ff_id = ff_codec_get_id(ff_codec_bmp_tags,fcc);
+    if (ff_id == AV_CODEC_ID_NONE) {
 	const char *fourcc;
 	prn_err:
 	fourcc=&fcc;
-	MSG_ERR("Cannot find AVCodecID for for '%c%c%c%c' fourcc! Try force -vc option\n"
+	MSG_ERR("Cannot find %s for '%c%c%c%c' fourcc! Try force -vc option\n"
+		,what
 		,fourcc[0],fourcc[1],fourcc[2],fourcc[3]);
 	return NULL;
     }
-    AVCodec *codec=avcodec_find_decoder(id);
-    if(!codec) goto prn_err;
+    AVCodec *codec=avcodec_find_decoder(ff_id);
+    if(!codec) { what="AVCodec"; goto prn_err; }
     vprobe=mp_mallocz(sizeof(video_probe_t));
     vprobe->driver="ffmpeg";
-    vprobe->codec_dll=mp_strdup(avcodec_get_name(id));
+    vprobe->codec_dll=mp_strdup(avcodec_get_name(ff_id));
     if(codec->pix_fmts)
     for(i=0;i<CODECS_MAX_OUTFMT;i++) {
 	if(codec->pix_fmts[i]==-1) break;
@@ -233,7 +243,7 @@ static MPXP_Rc find_vdecoder(sh_video_t* sh) {
 extern unsigned xp_num_cpu;
 static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     unsigned avc_version=0;
-    priv_t *priv;
+    priv_t *priv = sh->context;
     int pp_flags;
     if(mp_conf.npp_options) pp2_init();
     if(!vcodec_inited){
@@ -241,7 +251,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	avcodec_register_all();
 	vcodec_inited=1;
     }
-    priv=mp_mallocz(sizeof(priv_t));
+    if(!priv) priv=mp_mallocz(sizeof(priv_t));
     sh->context = priv;
     priv->frame_number=-2;
     if(!sh->codec) if(find_vdecoder(sh)!=MPXP_False) {
