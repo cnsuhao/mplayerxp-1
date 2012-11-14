@@ -297,7 +297,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
 	if(!strcmp(filter_list[i]->name,name)) break;
     }
     vf=mp_mallocz(sizeof(vf_instance_t));
-    RND_RENAME0(rnd_fill)(vf->antiviral_hole,sizeof(vf->antiviral_hole));
+    RND_RENAME0(rnd_fill)(vf->antiviral_hole,offsetof(vf_instance_t,pin)-offsetof(vf_instance_t,antiviral_hole));
     vf->pin=VF_PIN;
     vf->info=filter_list[i];
     vf->next=next;

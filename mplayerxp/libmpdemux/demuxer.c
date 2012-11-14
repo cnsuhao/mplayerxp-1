@@ -115,7 +115,7 @@ int demux_aid_vid_mismatch = 0;
 
 demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
   demux_stream_t* ds=mp_malloc(sizeof(demux_stream_t));
-  RND_RENAME0(rnd_fill)(ds->antiviral_hole,sizeof(ds->antiviral_hole));
+  RND_RENAME0(rnd_fill)(ds->antiviral_hole,offsetof(struct demuxer_s,pin)-offsetof(struct demuxer_s,antiviral_hole));
   ds->pin=DS_PIN;
   ds->buffer_pos=ds->buffer_size=0;
   ds->buffer=NULL;
@@ -143,7 +143,7 @@ demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
 
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
   demuxer_t *d=mp_mallocz(sizeof(demuxer_t));
-  RND_RENAME0(rnd_fill)(d->antiviral_hole,sizeof(d->antiviral_hole));
+  RND_RENAME0(rnd_fill)(d->antiviral_hole,offsetof(demuxer_t,pin)-offsetof(demuxer_t,antiviral_hole));
   d->pin=DEMUX_PIN;
   d->stream=stream;
   d->movi_start=stream->start_pos;

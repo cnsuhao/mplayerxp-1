@@ -120,7 +120,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
     MSG_ERR(MSGTR_OutOfMemory);
     return NULL;
   }
-  RND_RENAME0(rnd_fill)(_new->antiviral_hole,sizeof(_new->antiviral_hole));
+  RND_RENAME0(rnd_fill)(_new->antiviral_hole,offsetof(af_instance_t,pin)-offsetof(af_instance_t,antiviral_hole));
   _new->pin=AF_PIN;
   _new->parent=s;
   // Check for commandline parameters

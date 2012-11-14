@@ -239,7 +239,7 @@ stream_t* __FASTCALL__ new_stream(int type){
   stream_t *s=mp_mallocz(sizeof(stream_t));
   if(s==NULL) return NULL;
 
-  RND_RENAME0(rnd_fill)(s->antiviral_hole,sizeof(s->antiviral_hole));
+  RND_RENAME0(rnd_fill)(s->antiviral_hole,offsetof(stream_t,pin)-offsetof(stream_t,antiviral_hole));
   s->pin=STREAM_PIN;
   s->fd=-1;
   s->type=type;
