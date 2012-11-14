@@ -12,7 +12,7 @@ include mp_config.mak
 TARGET_EXE = $(PROGNAME)
 # these subdirectories required installation due binaries within them
 SUBDIRS = libmpdemux libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input2 nls libvo xmpcore
-ifeq ($(TARGET_ARCH_X86),yes)
+ifeq ($(ENABLE_WIN32LOADER),yes)
 SUBDIRS+=loader
 endif
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
