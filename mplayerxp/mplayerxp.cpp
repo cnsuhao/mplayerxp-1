@@ -2158,7 +2158,7 @@ int main(int argc,char* argv[], char *envp[])
     try {
 	return MPlayerXP(argc,argv,envp);
     } catch(...) {
-	std::cout<<"Exception cathed in module: MPlayerXP"<<std::endl;
+	std::cout<<"Exception caught in module: MPlayerXP"<<std::endl;
     }
     return EXIT_FAILURE;
 }
