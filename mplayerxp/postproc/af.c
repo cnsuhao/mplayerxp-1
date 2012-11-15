@@ -120,7 +120,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,char* name)
     MSG_ERR(MSGTR_OutOfMemory);
     return NULL;
   }
-  RND_RENAME0(rnd_fill)(_new->antiviral_hole,offsetof(af_instance_t,pin)-offsetof(af_instance_t,antiviral_hole));
+  SECURE_NAME9(rnd_fill)(_new->antiviral_hole,offsetof(af_instance_t,pin)-offsetof(af_instance_t,antiviral_hole));
   _new->pin=AF_PIN;
   _new->parent=s;
   // Check for commandline parameters
@@ -655,7 +655,7 @@ af_stream_t *RND_RENAME6(af_new)(any_t*_parent)
     af_stream_t *rval;
     rval = mp_mallocz(sizeof(af_stream_t));
     rval->parent = _parent;
-    RND_RENAME0(rnd_fill)(rval->antiviral_hole,sizeof(rval->antiviral_hole));
+    SECURE_NAME9(rnd_fill)(rval->antiviral_hole,offsetof(af_stream_t,first)-offsetof(af_stream_t,antiviral_hole));
     return rval;
 }
 

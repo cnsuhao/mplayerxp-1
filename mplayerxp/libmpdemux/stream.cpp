@@ -103,7 +103,7 @@ stream_t* __FASTCALL__ RND_RENAME2(open_stream)(any_t*libinput,const char* filen
 		*file_format = stream->file_format;
 		stream->driver=sdrivers[i];
 		stream->event_handler=event_handler;
-		stream->buffer=mp_realloc(stream->buffer,stream->sector_size);
+		stream->buffer=(unsigned char*)mp_realloc(stream->buffer,stream->sector_size);
 		return stream;
 	    }
 	    MSG_V("False\n");
@@ -114,7 +114,7 @@ stream_t* __FASTCALL__ RND_RENAME2(open_stream)(any_t*libinput,const char* filen
 	*file_format = stream->file_format;
 	stream->driver=&file_stream;
 	stream->event_handler=event_handler;
-	stream->buffer=mp_realloc(stream->buffer,stream->sector_size);
+	stream->buffer=(unsigned char *)mp_realloc(stream->buffer,stream->sector_size);
 	return stream;
     }
     mp_free(stream->buffer);
@@ -126,7 +126,7 @@ void print_stream_drivers( void )
 {
     unsigned i;
     MSG_INFO("Available stream drivers:\n");
-    for(i=0;i<sdrivers[i];i++) {
+    for(i=0;sdrivers[i];i++) {
 	MSG_INFO(" %-10s %s\n",sdrivers[i]->mrl,sdrivers[i]->descr);
     }
 }
@@ -219,7 +219,7 @@ void __FASTCALL__ nc_stream_reset(stream_t *s){
 }
 
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
-  stream_t *s=mp_mallocz(sizeof(stream_t)+len);
+  stream_t *s=(stream_t*)mp_mallocz(sizeof(stream_t)+len);
   if(s==NULL) return NULL;
   s->fd=-1;
   s->pin=STREAM_PIN;
@@ -227,7 +227,7 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   s->buf_pos=0; s->buf_len=len;
   s->start_pos=0; s->end_pos=len;
   s->sector_size=1;
-  s->buffer=mp_malloc(len);
+  s->buffer=(unsigned char *)mp_malloc(len);
   if(s->buffer==NULL) { mp_free(s); return NULL; }
   stream_reset(s);
   s->pos=len;
@@ -236,15 +236,15 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
 }
 
 stream_t* __FASTCALL__ new_stream(int type){
-  stream_t *s=mp_mallocz(sizeof(stream_t));
+  stream_t *s=(stream_t*)mp_mallocz(sizeof(stream_t));
   if(s==NULL) return NULL;
 
-  RND_RENAME0(rnd_fill)(s->antiviral_hole,offsetof(stream_t,pin)-offsetof(stream_t,antiviral_hole));
+  SECURE_NAME9(rnd_fill)(s->antiviral_hole,offsetof(stream_t,pin)-offsetof(stream_t,antiviral_hole));
   s->pin=STREAM_PIN;
   s->fd=-1;
   s->type=type;
   s->sector_size=STREAM_BUFFER_SIZE;
-  s->buffer=mp_malloc(STREAM_BUFFER_SIZE);
+  s->buffer=(unsigned char*)mp_malloc(STREAM_BUFFER_SIZE);
   if(s->buffer==NULL) { mp_free(s); return NULL; }
   stream_reset(s);
   return s;
@@ -275,7 +275,7 @@ int __FASTCALL__ nc_stream_read_char(stream_t *s)
 
 int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
   int i,x,ilen,_total=total,got_len;
-  char *mem=_mem;
+  char *mem=reinterpret_cast<char *>(_mem);
   MSG_DBG3( "nc_stream_read  %u bytes from %llu\n",total,FILE_POS(s)+s->buf_pos);
   if(stream_eof(s)) return 0;
   x=s->buf_len-s->buf_pos;
@@ -320,7 +320,7 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
 	if(eof) break;
 	stat++;
     }
-    s->buffer=smem;
+    s->buffer=reinterpret_cast<unsigned char *>(smem);
     s->buf_len=0;
     s->buf_pos=0;
     ilen += rlen;
@@ -337,7 +337,6 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
   ilen=_total-ilen;
   if(stream_eof(s)) return got_len;
   while(ilen){
-    int x;
     if(s->buf_pos>=s->buf_len){
 	nc_stream_read_cbuffer(s);
 	if(s->buf_len<=0) return -1; // EOF

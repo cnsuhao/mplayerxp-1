@@ -216,7 +216,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     }
     frame->flags=drop_param;
     blit_frame=RND_RENAME4(mpcv_decode)(sh_video->decoder,frame);
-MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),in_size,v_pts);
+MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),frame->len,frame->pts);
     if(mp_data->output_quality) {
 	if(drop_param) mpcv_set_quality(sh_video->decoder,mp_data->output_quality);
     }
@@ -271,7 +271,7 @@ if(xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
 void sig_video_decode( void )
 {
     MSG_T("sig_video_decode\n");
-    mp_msg_flush();
+    mpxp_print_flush();
 
     xp_core->video->eof = 1;
     dae_decoded_mark_eof(xp_core->video);

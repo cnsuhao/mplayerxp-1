@@ -37,7 +37,7 @@ static void my_callback(int signo)
     if(i >= xp_core->num_threads ||
 	!pthread_equal(xp_core->mpxp_threads[i]->pth_id, _self)) i = 0; /* Use 0 as default handler */
 
-    mp_msg(MSGT_CPLAYER,MSGL_FATAL,__FILE__,__LINE__,"catching signal: %s in thread: %s (%i) in module: %s\n"
+    MSG_FATAL("catching signal: %s in thread: %s (%i) in module: %s\n"
 	,strsignal(signo)
 	,xp_core->mpxp_threads[i]->name
 	,i

@@ -90,7 +90,7 @@ DISABLED_LIST=(
     "gcov|compile gnu coverage information into PROGRAM",
     "profile|compile profiling information into PROGRAM",
     "static|build static libraries",
-    "gdb23|allow additional level of debug messages",
+    "dbg23|allow additional level of debug messages",
     "win32loader|build support for Win32 codecs",
     "random_name|generates pseudo random suffix of target"
 )
@@ -763,7 +763,7 @@ enabled largefiles	&& CFLAGS="$CFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 # (FIXME: 'echocheck "dynamic linking"' above and modify here accordingly)
 bsd && add_ldflags "-rdynamic"
 
-enabled gdb23 def_debug='#define MP_DEBUG 1' || def_debug='#undef MP_DEBUG'
+enabled dbg23 def_debug='#define MP_DEBUG 1' || def_debug='#undef MP_DEBUG'
 
 # Checking for VIDIX
 enabled vidix	&& require2 vidix vidix/vidixlib.h vdlAllocFourccS -lvidix
@@ -1072,16 +1072,16 @@ typedef void any_t;
 #define RND_NUMBER8 $rnd8
 #define RND_NUMBER9 $rnd9
 
-#define RND_STR0 "$srnd0"
-#define RND_STR1 "$srnd1"
-#define RND_STR2 "$srnd2"
-#define RND_STR3 "$srnd3"
-#define RND_STR4 "$srnd4"
-#define RND_STR5 "$srnd5"
-#define RND_STR6 "$srnd6"
-#define RND_STR7 "$srnd7"
-#define RND_STR8 "$srnd8"
-#define RND_STR9 "$srnd9"
+#define RND_STR0 "x$srnd0"
+#define RND_STR1 "x$srnd1"
+#define RND_STR2 "x$srnd2"
+#define RND_STR3 "x$srnd3"
+#define RND_STR4 "x$srnd4"
+#define RND_STR5 "x$srnd5"
+#define RND_STR6 "x$srnd6"
+#define RND_STR7 "x$srnd7"
+#define RND_STR8 "x$srnd8"
+#define RND_STR9 "x$srnd9"
 
 
 #define RND_RENAME0(a) a ## $frnd0
@@ -1094,6 +1094,17 @@ typedef void any_t;
 #define RND_RENAME7(a) a ## $frnd7
 #define RND_RENAME8(a) a ## $frnd8
 #define RND_RENAME9(a) a ## $frnd9
+
+#define SECURE_NAME0(a) x$srnd0
+#define SECURE_NAME1(a) x$srnd1
+#define SECURE_NAME2(a) x$srnd2
+#define SECURE_NAME3(a) x$srnd3
+#define SECURE_NAME4(a) x$srnd4
+#define SECURE_NAME5(a) x$srnd5
+#define SECURE_NAME6(a) x$srnd6
+#define SECURE_NAME7(a) x$srnd7
+#define SECURE_NAME8(a) x$srnd8
+#define SECURE_NAME9(a) x$srnd9
 
 #endif /* MPXP_CONFIG_H */
 EOF

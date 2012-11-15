@@ -37,31 +37,27 @@ static char *_2ansi(unsigned char attr)
     return priv->vtmp;
 }
 
-void mp_msg_init(int verbose)
+void mpxp_print_init(int verbose)
 {
-    pthread_mutexattr_t attr;
     unsigned i;
     int _color[8]={0,4,2,6,1,5,3,7};
-    mp_data->msg_priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->msg_priv);
+    priv_t*priv=new priv_t;
+    mp_data->msg_priv=priv;
     memcpy(priv->_color,_color,sizeof(_color));
-    pthread_mutexattr_init(&attr);
-    pthread_mutex_init(&priv->mp_msg_mutex,&attr);
-    pthread_mutexattr_destroy(&attr);
-    for(i=0;i<sizeof(hl)/sizeof(char);i++)
-	memcpy(priv->scol[i],_2ansi(hl[i]),sizeof(priv->scol[0]));
+    pthread_mutex_init(&priv->mp_msg_mutex,NULL);
+    for(i=0;i<sizeof(hl)/sizeof(char);i++) memcpy(priv->scol[i],_2ansi(hl[i]),sizeof(priv->scol[0]));
 }
 
-void mp_msg_uninit(void)
+void mpxp_print_uninit(void)
 {
     priv_t*priv=reinterpret_cast<priv_t*>(mp_data->msg_priv);
     if(isatty(fileno(stderr))) fprintf(stderr,priv->scol[8]);
-    mp_msg_flush();
+    mpxp_print_flush();
     pthread_mutex_destroy(&priv->mp_msg_mutex);
-    mp_free(priv);
+    delete priv;
 }
 
-const char * msg_prefix[] =
+static const char * msg_prefix[] =
 {
     "GLOBAL",
     "PLAYER",
@@ -85,23 +81,22 @@ const char * msg_prefix[] =
     "POSTPR"
 };
 
-int mp_msg_c( unsigned x, const char *format, ... ){
+int mpxp_printf( unsigned x, const char *format, ... ){
 /* TODO: more useful usage of module_id */
     int rc=0;
-    priv_t*priv=NULL;
-    va_list va;
-    char sbuf[0xFFFFF];
+    char sbuf[0xFFFF];
     unsigned ssize;
     unsigned level=(x>>28)&0xF;
     unsigned mod=x&0x0FFFFFFF;
     static int was_eol=1;
+    priv_t*priv=NULL;
     if(mp_data) priv=reinterpret_cast<priv_t*>(mp_data->msg_priv);
     if(level>mp_conf.verbose+MSGL_V-1) return 0; /* do not display */
     if((mod&mp_conf.msg_filter)==0) return 0; /* do not display */
     if(priv) {
-	pthread_mutex_lock(&priv->mp_msg_mutex);
-	if(isatty(fileno(stderr)))
-	    fprintf(stderr,priv->scol[level<9?level:8]);
+//	pthread_mutex_lock(&priv->mp_msg_mutex);
+	if(::isatty(::fileno(::stderr)))
+	    ::fprintf(::stderr,priv->scol[level<9?level:8]);
     }
     if(mp_conf.verbose>1 && was_eol)
     {
@@ -113,6 +108,7 @@ int mp_msg_c( unsigned x, const char *format, ... ){
 		smod = msg_prefix[mod_name];
 	fprintf(stderr,"%s: ",smod?smod:"UNKNOWN");
     }
+    va_list va;
     va_start(va, format);
     ssize=vsprintf(sbuf,format, va);
     va_end(va);
@@ -126,8 +122,8 @@ int mp_msg_c( unsigned x, const char *format, ... ){
     if(format[strlen(format)-1]=='\n') was_eol=1;
     else was_eol=0;
     fflush(stderr);
-    if(priv) pthread_mutex_unlock(&priv->mp_msg_mutex);
+//    if(priv) pthread_mutex_unlock(&priv->mp_msg_mutex);
     return rc;
 }
 
-void mp_msg_flush(void) { fflush(stderr); }
+void mpxp_print_flush(void) { fflush(stderr); }

@@ -86,11 +86,10 @@ struct mp_cmd_filter_st {
 };
 
 typedef struct priv_s {
+    char		antiviral_hole[RND_CHAR1];
     // These are the user defined binds
     mp_cmd_bind_t*	cmd_binds;
     mp_cmd_filter_t*	cmd_filters;
-
-    char		antiviral_hole[RND_CHAR1];
 
     mp_input_fd_t	key_fds[MP_MAX_KEY_FD];
     unsigned int	num_key_fd;
@@ -743,7 +742,7 @@ void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter func, any_t* ctx)
     filter->ctx = ctx;
     filter->next = priv->cmd_filters;
     priv->cmd_filters = filter;
-    RND_RENAME0(rnd_fill)(priv->antiviral_hole,sizeof(priv->antiviral_hole));
+    SECURE_NAME9(rnd_fill)(priv->antiviral_hole,offsetof(priv_t,cmd_binds)-offsetof(priv_t,antiviral_hole));
 }
 
 static char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {

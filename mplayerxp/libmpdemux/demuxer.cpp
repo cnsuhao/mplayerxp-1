@@ -1,5 +1,4 @@
 //=================== DEMUXER v2.5 =========================
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,11 +7,10 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
+extern "C" {
 #include "stream.h"
 #include "mp_config.h"
 #include "help_mp.h"
-#include "mplayerxp.h"
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
 #include "nls/nls.h"
@@ -25,6 +23,8 @@
 #include "libvo/sub.h"
 #include "libao2/afmt.h"
 #include "demux_msg.h"
+}
+#include "mplayerxp.h"
 
 extern demuxer_driver_t demux_aiff;
 extern demuxer_driver_t demux_rawaudio;
@@ -114,8 +114,8 @@ void free_demuxer_stream(demux_stream_t *ds){
 int demux_aid_vid_mismatch = 0;
 
 demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
-  demux_stream_t* ds=mp_malloc(sizeof(demux_stream_t));
-  RND_RENAME0(rnd_fill)(ds->antiviral_hole,offsetof(struct demuxer_s,pin)-offsetof(struct demuxer_s,antiviral_hole));
+  demux_stream_t* ds=(demux_stream_t*)mp_malloc(sizeof(demux_stream_t));
+  SECURE_NAME9(rnd_fill)(ds->antiviral_hole,offsetof(demux_stream_t,pin)-offsetof(demux_stream_t,antiviral_hole));
   ds->pin=DS_PIN;
   ds->buffer_pos=ds->buffer_size=0;
   ds->buffer=NULL;
@@ -142,8 +142,8 @@ demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
 }
 
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
-  demuxer_t *d=mp_mallocz(sizeof(demuxer_t));
-  RND_RENAME0(rnd_fill)(d->antiviral_hole,offsetof(demuxer_t,pin)-offsetof(demuxer_t,antiviral_hole));
+  demuxer_t *d=(demuxer_t*)mp_mallocz(sizeof(demuxer_t));
+  SECURE_NAME9(rnd_fill)(d->antiviral_hole,offsetof(demuxer_t,pin)-offsetof(demuxer_t,antiviral_hole));
   d->pin=DEMUX_PIN;
   d->stream=stream;
   d->movi_start=stream->start_pos;
@@ -170,7 +170,7 @@ sh_audio_t *get_sh_audio(demuxer_t *demuxer, int id)
 	return NULL;
     }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer->a_streams[id];
+    return reinterpret_cast<sh_audio_t*>(demuxer->a_streams[id]);
 }
 
 sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
@@ -185,7 +185,7 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
 	sh_audio_t *sh;
 	MSG_V("==> Found audio stream: %d\n",id);
 	demuxer->a_streams[id]=mp_calloc(1, sizeof(sh_audio_t));
-	sh = demuxer->a_streams[id];
+	sh = reinterpret_cast<sh_audio_t*>(demuxer->a_streams[id]);
 	// set some defaults
 	sh->afmt=bps2afmt(2); /* PCM */
 	sh->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
@@ -193,7 +193,7 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
     }
     ((sh_audio_t *)demuxer->a_streams[id])->aid = aid;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer->a_streams[id];
+    return reinterpret_cast<sh_audio_t*>(demuxer->a_streams[id]);
 }
 
 void free_sh_audio(sh_audio_t* sh){
@@ -202,7 +202,7 @@ void free_sh_audio(sh_audio_t* sh){
     mp_free(sh);
 }
 
-sh_video_t *get_sh_video(demuxer_t *demuxer, int id)
+sh_video_t* get_sh_video(demuxer_t *demuxer, int id)
 {
     if(id > MAX_V_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested video stream id overflow (%d > %d)\n",
@@ -210,7 +210,7 @@ sh_video_t *get_sh_video(demuxer_t *demuxer, int id)
 	return NULL;
     }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer->v_streams[id];
+    return reinterpret_cast<sh_video_t*>(demuxer->v_streams[id]);
 }
 
 sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
@@ -228,7 +228,7 @@ sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
     }
     ((sh_video_t *)demuxer->v_streams[id])->vid = vid;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer->v_streams[id];
+    return reinterpret_cast<sh_video_t*>(demuxer->v_streams[id]);
 }
 
 void free_sh_video(sh_video_t* sh){
@@ -246,8 +246,8 @@ void free_demuxer(demuxer_t *demuxer){
 	if(demuxer->driver) demuxer->driver->close(demuxer);
 
 	// mp_free streams:
-	for(i=0;i<MAX_A_STREAMS;i++) if(demuxer->a_streams[i]) free_sh_audio(demuxer->a_streams[i]);
-	for(i=0;i<MAX_V_STREAMS;i++) if(demuxer->v_streams[i]) free_sh_video(demuxer->v_streams[i]);
+	for(i=0;i<MAX_A_STREAMS;i++) if(demuxer->a_streams[i]) free_sh_audio(reinterpret_cast<sh_audio_t*>(demuxer->a_streams[i]));
+	for(i=0;i<MAX_V_STREAMS;i++) if(demuxer->v_streams[i]) free_sh_video(reinterpret_cast<sh_video_t*>(demuxer->v_streams[i]));
 	//if(sh_audio) free_sh_audio(sh_audio);
 	//if(sh_video) free_sh_video(sh_video);
 	// mp_free demuxers:
@@ -323,7 +323,7 @@ int ds_fill_buffer(demux_stream_t *ds){
     else
 	MSG_DBG3("ds_fill_buffer(unknown %p) called\n",ds);
   }
-    check_pin("demuxer",ds->pin,DS_PIN);
+  check_pin("demuxer",ds->pin,DS_PIN);
   while(1){
     if(ds->packs){
       demux_packet_t *p=ds->first;
@@ -548,9 +548,9 @@ static demuxer_t* demux_open_stream(stream_t *stream,int file_format,int audio_i
     i=0;
 again:
     for(;ddrivers[i]!=&demux_null;i++) {
+	MSG_V("Probing %s ... ",ddrivers[i]->name);
 	/* don't remove it from loop!!! (for initializing) */
 	demuxer = new_demuxer(stream,DEMUXER_TYPE_UNKNOWN,audio_id,video_id,dvdsub_id);
-	MSG_V("Probing %s ... ",ddrivers[i]->name);
 	stream_reset(demuxer->stream);
 	stream_seek(demuxer->stream,demuxer->stream->start_pos);
 	if(ddrivers[i]->probe(demuxer)==MPXP_Ok) {
@@ -592,7 +592,7 @@ static char* audio_stream = NULL;
 static char* sub_stream = NULL;
 static int demuxer_type = 0, audio_demuxer_type = 0, sub_demuxer_type = 0;
 
-demuxer_t* RND_RENAME1(demux_open)(stream_t *vs,int file_format,int audio_id,int video_id,int dvdsub_id){
+demuxer_t* demux_open(stream_t *vs,int file_format,int audio_id,int video_id,int dvdsub_id){
   stream_t *as = NULL,*ss = NULL;
   demuxer_t *vd,*ad = NULL,*sd = NULL;
   int afmt = 0,sfmt = 0;
@@ -644,8 +644,7 @@ demuxer_t* RND_RENAME1(demux_open)(stream_t *vs,int file_format,int audio_id,int
 int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
-    sh_audio_t *sh_audio=d_audio->sh;
-    sh_video_t *sh_video=d_video->sh;
+    sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 
     if(!(demuxer->stream->type&STREAMTYPE_SEEKABLE))
     {
@@ -752,7 +751,7 @@ static const config_t demux_opts[] = {
 };
 
 static const config_t demuxer_opts[] = {
-  { "demuxer", &demux_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Demuxer related options" },
+  { "demuxer", (any_t*)&demux_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Demuxer related options" },
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
@@ -796,9 +795,9 @@ int demuxer_switch_subtitle(const demuxer_t *demuxer, int id)
 }
 
 demux_packet_t* new_demux_packet(int len){
-  demux_packet_t* dp=mp_malloc(sizeof(demux_packet_t));
+  demux_packet_t* dp=(demux_packet_t*)mp_malloc(sizeof(demux_packet_t));
   dp->len=len;
-  dp->buffer=mp_malloc(len);
+  dp->buffer=(unsigned char *)mp_malloc(len);
   dp->next=NULL;
   dp->pts=0;
   dp->pos=0;

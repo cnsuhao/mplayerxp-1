@@ -3,8 +3,10 @@ include ../mp_config.mak
 
 LIBNAME = libosdep.a
 
-SRCS=aclib.c cpudetect.c getch2.c timer-lx.c timer.c shmem.c get_path.c mplib.c mp_malloc.c
+SRCS=aclib.c cpudetect.c getch2.c timer-lx.c timer.c shmem.c get_path.c
+CXXSRCS=mplib.cpp mp_malloc.cpp
 OBJS=$(SRCS:.c=.o)
+CXXOBJS=$(CXXSRCS:.cpp=.o)
 
 ifeq ($(TARGET_OS),LINUX_GNU)
 ifeq ($(TARGET_ARCH_X86),yes)
@@ -17,6 +19,7 @@ endif
 
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall
+CXXFLAGS  = $(OPTXXFLAGS) -I. -I.. -Wall
 
 .SUFFIXES: .c .o
 
@@ -24,9 +27,11 @@ CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(LIBNAME):     $(OBJS)
-	$(AR) r $(LIBNAME) $(OBJS)
+$(LIBNAME): $(CXXOBJS) $(OBJS)
+	$(AR) r $(LIBNAME) $(CXXOBJS) $(OBJS)
 
 all:    $(LIBNAME)
 
@@ -39,7 +44,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(CXXSRCS) $(SRCS) 1>.depend
 
 #
 # include dependency files if they exist

@@ -1,10 +1,6 @@
 /* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
 /* a very small replacement of ncurses library */
 
-/* Screen size. Initialized by load_termcap() and get_screen_size() */
-extern int screen_width;
-extern int screen_height;
-
 /* Get screen-size using IOCTL call. */
 extern void get_screen_size();
 

@@ -255,7 +255,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     }
 
-    MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-delay,v_pts,(a_pts-delay)-*v_pts);
+    MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-delay,v_pts,(a_pts-delay)-v_pts);
 
     if(delay_corrected && can_blit){
 	float AV_delay=0; /* average of A-V timestamp differences */
@@ -314,7 +314,7 @@ while(!priv->dae->eof){
 void sig_video_play( void )
 {
     MSG_T("sig_audio_play\n");
-    mp_msg_flush();
+    mpxp_print_flush();
 
     dec_ahead_can_aseek=1;
 

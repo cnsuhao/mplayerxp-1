@@ -29,11 +29,11 @@ endif
 ifeq ($(HAVE_LIBDV),yes)
 SRCS += demux_dv.c
 endif
-SRCS += cache2.c stream.c tvi_dummy.c tvi_v4l.c
+SRCS += cache2.c tvi_dummy.c tvi_v4l.c
 SRCS += tvi_bsdbt848.c frequencies.c mrl.c
 
-SRCS += demuxer_r.c mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
-SRCS += demux_avi.c demux_mov.c parse_mp4.c demux_mpg.c demux_viv.c demuxer.c
+SRCS += mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
+SRCS += demux_avi.c demux_mov.c parse_mp4.c demux_mpg.c demux_viv.c
 SRCS += parse_es.c demux_fli.c demux_ra.c demux_real.c demux_y4m.c yuv4mpeg.c yuv4mpeg_ratio.c
 SRCS += demux_nuv.c demux_film.c demux_roq.c demux_audio.c demux_demuxers.c
 SRCS += mpdemux.c demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
@@ -53,9 +53,13 @@ else
 SUBDIRS =
 endif
 
+CXXSRCS = demuxer.cpp demuxer_r.cpp stream.cpp
+
 OBJS	= $(SRCS:.c=.o)
+CXXOBJS	= $(CXXSRCS:.cpp=.o)
 INCLUDE = -I../
 CFLAGS  = $(OPTFLAGS) $(INCLUDE) -W -Wall
+CXXFLAGS  = $(OPTXXFLAGS) $(INCLUDE) -W -Wall
 
 .SUFFIXES: .c .o
 
@@ -68,9 +72,11 @@ $(SUBDIRS):
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(LIBNAME): $(SUBDIRS) $(OBJS)
-	$(AR) r $(LIBNAME) $(OBJS)
+$(LIBNAME): $(SUBDIRS) $(OBJS) $(CXXOBJS)
+	$(AR) r $(LIBNAME) $(OBJS) $(CXXOBJS)
 ifeq ($(HAVE_STREAMING),yes)
 	$(AR) r $(LIBNAME) \
 	$(wildcard freesdp/*.o) \
@@ -93,7 +99,7 @@ dep:    depend
 
 depend:
 	$(DO_MAKE)
-	$(CC) -MM $(CFLAGS) test.c $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) test.c $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

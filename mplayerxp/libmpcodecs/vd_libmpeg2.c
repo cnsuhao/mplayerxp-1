@@ -296,7 +296,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     _info=mpeg2_info(priv->mpeg2dec);
     mpi=NULL;
     buf=0;
-    MSG_DBG2("len=%u ***mpeg2_info***\n",len);
+    MSG_DBG2("len=%u ***mpeg2_info***\n",frame->len);
     while(1)
     {
 	state=mpeg2_parse(priv->mpeg2dec);

@@ -54,16 +54,16 @@ enum {
 };
 
 
-void mp_msg_init(int verbose);
-void mp_msg_uninit(void);
-void mp_msg_flush(void);
-int  mp_msg_c( unsigned x, const char *format, ... );
+void mpxp_print_init(int verbose);
+void mpxp_print_uninit(void);
+void mpxp_print_flush(void);
+int  mpxp_printf( unsigned x, const char *format, ... );
 
 #ifdef __GNUC__
-static inline int mp_msg_dummy(void) {return 0; }
-#define mp_msg(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mp_msg_c(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mp_msg_dummy()))
+static inline int mpxp_print_dummy(void) {return 0;}
+#define mpxp_print(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mpxp_print_dummy()))
 #else
-#define mp_msg(mod,lev, ... ) mp_msg_c(((lev&0xF)<<28)|(mod&0x0FFFFFFF),__VA_ARGS__)
+#define mpxp_print(mod,lev, ... ) mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),__VA_ARGS__)
 #endif
 
 #ifndef MSGT_CLASS
@@ -71,21 +71,21 @@ static inline int mp_msg_dummy(void) {return 0; }
 #endif
 
 #ifdef __va_arg_pack /* requires gcc-4.3.x */
-static __always_inline int MSG_INFO(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_INFO,args,__va_arg_pack ()); }
-static __always_inline int MSG_FATAL(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_FATAL,args,__va_arg_pack ()); }
-static __always_inline int MSG_WARN(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_WARN,args,__va_arg_pack ()); }
-static __always_inline int MSG_ERR(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_ERR,args,__va_arg_pack ()); }
-static __always_inline int MSG_V(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_V,args,__va_arg_pack ()); }
-static __always_inline int MSG_OK(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_OK,args,__va_arg_pack ()); }
-static __always_inline int MSG_HINT(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_HINT,args,__va_arg_pack ()); }
-static __always_inline int MSG_STATUS(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_STATUS,args,__va_arg_pack ()); }
+static __always_inline int MSG_INFO(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_INFO,args,__va_arg_pack ()); }
+static __always_inline int MSG_FATAL(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_FATAL,args,__va_arg_pack ()); }
+static __always_inline int MSG_WARN(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_WARN,args,__va_arg_pack ()); }
+static __always_inline int MSG_ERR(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_ERR,args,__va_arg_pack ()); }
+static __always_inline int MSG_V(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_V,args,__va_arg_pack ()); }
+static __always_inline int MSG_OK(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_OK,args,__va_arg_pack ()); }
+static __always_inline int MSG_HINT(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_HINT,args,__va_arg_pack ()); }
+static __always_inline int MSG_STATUS(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_STATUS,args,__va_arg_pack ()); }
 
 #ifdef MP_DEBUG
-static __always_inline int MSG_DBG2(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_DBG3,args,__va_arg_pack ()); }
-static __always_inline int MSG_DBG3(const char* args,...) { return mp_msg(MSGT_CLASS,MSGL_DBG4,args,__va_arg_pack ()); }
+static __always_inline int MSG_DBG2(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG3,args,__va_arg_pack ()); }
+static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG4,args,__va_arg_pack ()); }
 #else
-#define MSG_DBG2(args...)
-#define MSG_DBG3(args...)
+static __always_inline int MSG_DBG2(const char* args,...) { return 0; }
+static __always_inline int MSG_DBG3(const char* args,...) { return 0; }
 #endif
 
 #else // __va_arg_pack
@@ -99,20 +99,20 @@ static __always_inline int MSG_DBG3(const char* args,...) { return mp_msg(MSGT_C
 #undef MSG_DBG3
 #undef MSG_HINT
 #undef MSG_STATUS
-#define MSG_INFO(args...) mp_msg(MSGT_CLASS,MSGL_INFO,##args )
-#define MSG_FATAL(args...) mp_msg(MSGT_CLASS,MSGL_FATAL,##args )
-#define MSG_WARN(args...) mp_msg(MSGT_CLASS,MSGL_WARN,##args )
-#define MSG_ERR(args...) mp_msg(MSGT_CLASS,MSGL_ERR,##args )
-#define MSG_V(args...) mp_msg(MSGT_CLASS,MSGL_V,##args )
-#define MSG_OK(args...) mp_msg(MSGT_CLASS,MSGL_OK,##args )
-#define MSG_HINT(args...) mp_msg(MSGT_CLASS,MSGL_HINT,##args )
-#define MSG_STATUS(args...) mp_msg(MSGT_CLASS,MSGL_STATUS,##args )
+#define MSG_INFO(args...) mpxp_print(MSGT_CLASS,MSGL_INFO,##args )
+#define MSG_FATAL(args...) mpxp_print(MSGT_CLASS,MSGL_FATAL,##args )
+#define MSG_WARN(args...) mpxp_print(MSGT_CLASS,MSGL_WARN,##args )
+#define MSG_ERR(args...) mpxp_print(MSGT_CLASS,MSGL_ERR,##args )
+#define MSG_V(args...) mpxp_print(MSGT_CLASS,MSGL_V,##args )
+#define MSG_OK(args...) mpxp_print(MSGT_CLASS,MSGL_OK,##args )
+#define MSG_HINT(args...) mpxp_print(MSGT_CLASS,MSGL_HINT,##args )
+#define MSG_STATUS(args...) mpxp_print(MSGT_CLASS,MSGL_STATUS,##args )
 #ifdef MP_DEBUG
-#define MSG_DBG2(args...) mp_msg(MSGT_CLASS,MSGL_DBG2,##args )
-#define MSG_DBG3(args...) mp_msg(MSGT_CLASS,MSGL_DBG3,##args )
+#define MSG_DBG2(args...) mpxp_print(MSGT_CLASS,MSGL_DBG2,##args )
+#define MSG_DBG3(args...) mpxp_print(MSGT_CLASS,MSGL_DBG3,##args )
 #else
-#define MSG_DBG2(args...)
-#define MSG_DBG3(args...)
+#define MSG_DBG2(args...) mpxp_print_dummy();
+#define MSG_DBG3(args...) mpxp_print_dummy();
 #endif
 #endif // __va_arg_pack
 

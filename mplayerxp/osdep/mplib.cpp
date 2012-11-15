@@ -12,7 +12,7 @@
 
 volatile unsigned long long int my_profile_start,my_profile_end,my_profile_total;
 
-any_t* RND_RENAME0(rnd_fill)(any_t* buffer,size_t size)
+any_t* SECURE_NAME9(rnd_fill)(any_t* buffer,size_t size)
 {
     unsigned i;
     char ch;

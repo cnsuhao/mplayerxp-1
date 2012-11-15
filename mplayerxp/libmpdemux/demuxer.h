@@ -2,6 +2,11 @@
 #define __DEMUXER_H 1
 #include "stream.h"
 #include "xmpcore/xmp_enums.h"
+#include "libmpconf/cfgparser.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_PACK_BYTES (0x1024*0x1024*4)
 enum {
@@ -131,7 +136,7 @@ typedef struct demuxer_s {
 
     any_t*		priv;		/**< private data of demuxer's driver.*/
     any_t*		info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
-    struct demuxer_driver_s* driver;	/**< driver associated with this demuxer */
+    const struct demuxer_driver_s* driver;	/**< driver associated with this demuxer */
 } demuxer_t __attribute__ ((packed));
 
 enum {
@@ -156,7 +161,7 @@ typedef struct demuxer_driver_s
 {
     const char *	name;	/**< Name of driver ("Matroska MKV parser") */
     const char *	defext; /**< Default file extension for this movie type */
-    const any_t*	options;/**< Optional: MPlayerXP's option related */
+    const config_t*	options;/**< Optional: MPlayerXP's option related */
 			/** Probing stream.
 			  * @param d	_this demuxer
 			 **/
@@ -244,7 +249,6 @@ float ds_get_next_pts(demux_stream_t *ds);
 // This is defined here because demux_stream_t ins't defined in stream.h
 stream_t* __FASTCALL__ new_ds_stream(demux_stream_t *ds);
 
-demuxer_t* RND_RENAME1(demux_open)(stream_t *stream,int file_format,int aid,int vid,int sid);
 int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka);
 demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd);
 
@@ -281,5 +285,10 @@ void demux_info_free(demuxer_t *demuxer);
 extern int demuxer_switch_audio(const demuxer_t *, int id);
 extern int demuxer_switch_video(const demuxer_t *, int id);
 extern int demuxer_switch_subtitle(const demuxer_t *, int id);
+
+#ifdef __cplusplus
+}
+#endif
+demuxer_t* demux_open(stream_t *stream,int file_format,int aid,int vid,int sid);
 
 #endif

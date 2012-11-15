@@ -278,6 +278,7 @@ void xmp_uninit_engine( int force )
 }
 
 unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_routine_t routine,const char *name) {
+    unsigned stacksize=1000000;
     unsigned idx=xp_core->num_threads;
     int rc;
     if(idx>=MAX_MPXP_THREADS) return UINT_MAX;
@@ -290,6 +291,7 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
 	return rc;
     }
     pthread_attr_setscope(&attr,PTHREAD_SCOPE_SYSTEM);
+    pthread_attr_setstack(&attr,mp_malloc(stacksize),stacksize);
 #if 0
     /* requires root privelegies */
     pthread_attr_setschedpolicy(&attr,SCHED_FIFO);

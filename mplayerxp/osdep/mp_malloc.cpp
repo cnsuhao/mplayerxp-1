@@ -38,7 +38,7 @@ typedef struct priv_s {
     mp_slot_container_t		reallocs; /* suspect reallocs */
     mp_slot_container_t		frees;    /* suspect free */
 }priv_t;
-static priv_t* priv;
+static priv_t* priv=NULL;
 
 static any_t* prot_page_align(any_t *ptr) { return (any_t*)(((unsigned long)ptr)&(~(__VM_PAGE_SIZE__-1))); }
 static size_t app_fullsize(size_t size) {
@@ -49,7 +49,7 @@ static size_t app_fullsize(size_t size) {
     fullsize=npages*__VM_PAGE_SIZE__;
     return fullsize;
 }
-static any_t* prot_last_page(any_t* rp,size_t fullsize) { return rp+(fullsize-__VM_PAGE_SIZE__); }
+static any_t* prot_last_page(any_t* rp,size_t fullsize) { return reinterpret_cast<any_t*>(reinterpret_cast<long>(rp)+(fullsize-__VM_PAGE_SIZE__)); }
 static void __prot_print_slots(mp_slot_container_t* c) {
     size_t i;
     for(i=0;i<c->nslots;i++) {
@@ -79,12 +79,12 @@ static mp_slot_t*	prot_append_slot(mp_slot_container_t* c,any_t*ptr,size_t size)
     s=c->slots;
     if(!c->slots) {
 	c->size=16;
-	s=malloc(sizeof(mp_slot_t)*16);
+	s=(mp_slot_t*)malloc(sizeof(mp_slot_t)*16);
     }
     else {
 	if(c->nslots+1>c->size) {
 	    c->size+=16;
-	    s=realloc(c->slots,sizeof(mp_slot_t)*c->size);
+	    s=(mp_slot_t*)realloc(c->slots,sizeof(mp_slot_t)*c->size);
 	}
     }
     c->slots=s;
@@ -102,7 +102,7 @@ static void	prot_free_slot(mp_slot_container_t* c,any_t* ptr) {
 	c->nslots--;
 	if(c->nslots<c->size-16) {
 	    c->size-=16;
-	    c->slots=realloc(c->slots,sizeof(mp_slot_t)*c->size);
+	    c->slots=(mp_slot_t*)realloc(c->slots,sizeof(mp_slot_t)*c->size);
 	}
     } else printf("[prot_free_slot] Internal error! Can't find slot for address: %p\n",ptr);
 }
@@ -117,7 +117,7 @@ static any_t* __prot_malloc_append(size_t size) {
 	prot_append_slot(&priv->mallocs,rp,size);
 	// protect last page here
 	mprotect(prot_last_page(rp,fullsize),__VM_PAGE_SIZE__,MP_DENY_ALL);
-	rp+=fullsize-__VM_PAGE_SIZE__-size;
+	rp=reinterpret_cast<any_t*>(reinterpret_cast<long>(rp)+fullsize-__VM_PAGE_SIZE__-size);
     }
     return rp;
 }
@@ -135,7 +135,7 @@ typedef struct bt_cache_s {
     unsigned		num_entries;
 }bt_cache_t;
 
-static bt_cache_t*	init_bt_cache(void) { return calloc(1,sizeof(bt_cache_t)); }
+static bt_cache_t*	init_bt_cache(void) { return (bt_cache_t*)calloc(1,sizeof(bt_cache_t)); }
 
 static void		uninit_bt_cache(bt_cache_t* cache) {
     unsigned i;
@@ -151,8 +151,8 @@ static char* bt_find_cache(bt_cache_t* cache,any_t* ptr) {
 }
 
 static bt_cache_entry_t* bt_append_cache(bt_cache_t* cache,any_t* ptr,const char *str) {
-    if(!cache->entry)	cache->entry=malloc(sizeof(bt_cache_entry_t));
-    else		cache->entry=realloc(cache->entry,sizeof(bt_cache_entry_t)*(cache->num_entries+1));
+    if(!cache->entry)	cache->entry=(bt_cache_entry_t*)malloc(sizeof(bt_cache_entry_t));
+    else		cache->entry=(bt_cache_entry_t*)realloc(cache->entry,sizeof(bt_cache_entry_t)*(cache->num_entries+1));
     cache->entry[cache->num_entries].addr=ptr;
     cache->entry[cache->num_entries].str=strdup(str);
     cache->num_entries++;
@@ -252,7 +252,7 @@ static any_t* __prot_malloc_prepend(size_t size) {
 	prot_append_slot(&priv->mallocs,rp,size);
 	// protect last page here
 	mprotect(rp,__VM_PAGE_SIZE__,MP_DENY_ALL);
-	rp+=__VM_PAGE_SIZE__;
+	rp=reinterpret_cast<any_t*>(reinterpret_cast<long>(rp)+__VM_PAGE_SIZE__);
     }
     return rp;
 }
@@ -378,7 +378,7 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
 	char *s;
 	int printable=1;
 	MSG_INFO("address: %p size: %u dump: ",c->slots[i].page_ptr,c->slots[i].size);
-	s=c->slots[i].page_ptr;
+	s=reinterpret_cast<char *>(c->slots[i].page_ptr);
 	for(j=0;j<min(c->slots[i].size,20);j++) {
 	    if(!isprint(s[j])) {
 		printable=0;
@@ -399,7 +399,7 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
 void	mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
 {
     srand(time(0));
-    if(!priv) priv=malloc(sizeof(priv_t));
+    if(!priv) priv=(priv_t*)malloc(sizeof(priv_t));
     memset(priv,0,sizeof(priv_t));
     priv->argv0=argv0;
     priv->rnd_limit=rnd_limit;
@@ -509,7 +509,7 @@ char *	mp_strdup(const char *src) {
     char *rs=NULL;
     if(src) {
 	unsigned len=strlen(src);
-	rs=mp_malloc(len+1);
+	rs=(char *)mp_malloc(len+1);
 	if(rs) strcpy(rs,src);
     }
     return rs;
@@ -518,4 +518,30 @@ char *	mp_strdup(const char *src) {
 int __FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags)
 {
     return mprotect(addr,len,flags);
+}
+
+#include <new>
+
+any_t*	SECURE_NAME0(_mp_malloc)(size_t size) {
+    any_t* ptr;
+    ptr = mp_malloc(size);
+    if(!ptr) {
+	std::bad_alloc ba;
+	throw ba;
+    }
+    return ptr;
+}
+
+any_t*	SECURE_NAME1(_mp_mallocz)(size_t size) {
+    any_t* ptr;
+    ptr = mp_mallocz(size);
+    if(!ptr) {
+	std::bad_alloc ba;
+	throw ba;
+    }
+    return ptr;
+}
+
+void	SECURE_NAME2(_mp_free)(any_t* ptr) {
+    mp_free(ptr);
 }

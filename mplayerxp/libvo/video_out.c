@@ -189,11 +189,11 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
 
     vo->vo_priv=mp_mallocz(sizeof(vo_priv_t));
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
-    RND_RENAME0(rnd_fill)(priv->antiviral_hole,offsetof(vo_priv_t,srcFourcc)-offsetof(vo_priv_t,antiviral_hole));
+    SECURE_NAME9(rnd_fill)(priv->antiviral_hole,offsetof(vo_priv_t,srcFourcc)-offsetof(vo_priv_t,antiviral_hole));
     pthread_mutexattr_init(&attr);
     pthread_mutex_init(&priv->surfaces_mutex,&attr);
     priv->dri.num_xp_frames=1;
-    RND_RENAME0(rnd_fill)(vo->antiviral_hole,offsetof(vo_data_t,mScreen)-offsetof(vo_data_t,antiviral_hole));
+    SECURE_NAME9(rnd_fill)(vo->antiviral_hole,offsetof(vo_data_t,mScreen)-offsetof(vo_data_t,antiviral_hole));
     return vo;
 }
 

@@ -348,7 +348,7 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
     } else {
       /* XXX: samples already multiplied by channels! */
       MSG_DBG2("FAAD: Successfully decoded frame (%d Bytes)!\n",
-      sh->samplesize*NeAAC_finfo.samples);
+	afmt2bps(sh->afmt)*NeAAC_finfo.samples);
       memcpy(buf+len,NeAAC_sample_buffer, afmt2bps(sh->afmt)*NeAAC_finfo.samples);
       len += afmt2bps(sh->afmt)*NeAAC_finfo.samples;
     //printf("FAAD: buffer: %d bytes  consumed: %d \n", k, NeAAC_finfo.bytesconsumed);

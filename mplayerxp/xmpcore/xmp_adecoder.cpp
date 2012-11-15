@@ -509,7 +509,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 void sig_audio_decode( void )
 {
     MSG_T("sig_audio_decode\n");
-    mp_msg_flush();
+    mpxp_print_flush();
 
     dec_ahead_can_adseek=1;
 

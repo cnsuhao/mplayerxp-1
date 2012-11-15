@@ -285,7 +285,7 @@ any_t* audio_play_routine( any_t* arg )
 void sig_audio_play( void )
 {
     MSG_T("sig_audio_play\n");
-    mp_msg_flush();
+    mpxp_print_flush();
 
     dec_ahead_can_aseek=1;
 

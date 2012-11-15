@@ -199,10 +199,10 @@ any_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const 
 	    }
 	    sh_video->codec->flags|=CODECS_FLAG_SELECTED; // tagging it
 	    // ok, it matches all rules, let's find the driver!
-	    if(!(mpvdec=vfm_find_driver(sh_video->codec->driver_name))) continue;
-	    else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",mpcodecs_vd_drivers[i]->info->driver_name);
+	    if(!(priv->mpvdec=vfm_find_driver(sh_video->codec->driver_name))) continue;
+	    else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",priv->mpvdec->info->driver_name);
 	    // it's available, let's try to init!
-	    if(mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+	    if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 		MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		continue; // try next...
 	    }
@@ -249,13 +249,13 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	    for(j=0;j<num_slices;j+=smp_num_cpus) {
 #pragma omp parallel for shared(vf) private(i)
 		for(i=j;i<smp_num_cpus;i++) {
-		    MSG_DBG2("parallel: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
+		    MSG_DBG2("parallel: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h);
 		    vf->put_slice(vf,ampi[i]);
 		    free_mp_image(ampi[i]);
 		}
 	    }
 	    for(;j<num_slices;j++) {
-		MSG_DBG2("par_tail: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h);
+		MSG_DBG2("par_tail: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h);
 		vf->put_slice(vf,ampi[j]);
 		free_mp_image(ampi[j]);
 	    }
@@ -265,7 +265,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 	{
 	    /* execute slices instead of whole frame make faster multiple filters */
 	    for(i=0;i<num_slices;i++) {
-		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i -> [%i]\n",ampi[i].width,ampi[i].height,ampi[i].x,ampi[i].y,ampi[i].w,ampi[i].h,ampi[i].xp_idx);
+		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i -> [%i]\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h,ampi[i]->xp_idx);
 		vf->put_slice(vf,ampi[i]);
 		free_mp_image(ampi[i]);
 	    }
@@ -296,7 +296,7 @@ int RND_RENAME4(mpcv_decode)(any_t *opaque,const enc_frame_t* frame){
 
     sh_video->active_slices=0;
     mpi=priv->mpvdec->decode(sh_video, frame);
-    MSG_DBG2("decvideo: decoding video %u bytes\n",in_size);
+    MSG_DBG2("decvideo: decoding video %u bytes\n",frame->len);
     while(sh_video->active_slices!=0) usleep(0);
 /* ------------------------ frame decoded. -------------------- */
 

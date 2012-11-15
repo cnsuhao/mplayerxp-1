@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
-
+extern "C" {
 #include "stream.h"
 #include "demuxer.h"
 #include "stheader.h"
@@ -14,9 +14,9 @@
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "demux_msg.h"
-
+}
 enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float duration) {
-    enc_frame_t* frame=mp_mallocz(sizeof(enc_frame_t));
+    enc_frame_t* frame=(enc_frame_t*)mp_mallocz(sizeof(enc_frame_t));
     frame->type=type;
     frame->pts=pts;
     frame->duration=duration;

@@ -174,7 +174,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 
    sh_video->src_w = dv_decoder->width;
    sh_video->src_h = dv_decoder->height;
-   mp_msg(MSGT_DEMUXER,MSGL_V,"demux_open_rawdv() frame_size: %d w: %d h: %d dif_seq: %d system: %d\n",dv_decoder->frame_size,dv_decoder->width, dv_decoder->height,dv_decoder->num_dif_seqs,dv_decoder->system);
+   MSG_V("demux_open_rawdv() frame_size: %d w: %d h: %d dif_seq: %d system: %d\n",dv_decoder->frame_size,dv_decoder->width, dv_decoder->height,dv_decoder->num_dif_seqs,dv_decoder->system);
 
    sh_video->fps= (dv_decoder->system==e_dv_system_525_60?29.97:25);
 

@@ -228,7 +228,7 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
 static void sig_cache2( void )
 {
     MSG_V("cache2 segfault\n");
-    mp_msg_flush();
+    mpxp_print_flush();
     xmp_killall_threads(pthread_self());
     __exit_sighandler();
 }

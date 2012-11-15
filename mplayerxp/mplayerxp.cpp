@@ -1,4 +1,5 @@
 /* MplayerXP (C) 2000-2002. by A'rpi/ESP-team (C) 2002. by Nickols_K */
+#include <iostream>
 extern "C" {
 #include <ctype.h>
 #include <stdio.h>
@@ -77,6 +78,7 @@ extern "C" {
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 } // extern "C"
+#include "xmpcore/PointerProtector.h"
 #include "dump.h"
 /**************************************************************************
 	     Private data
@@ -144,15 +146,25 @@ typedef struct priv_s {
     any_t*	libinput;
 }priv_t;
 
+struct MPXPSecureKeys {
+public:
+    MPXPSecureKeys(unsigned _nkeys):nkeys(_nkeys) { keys = new unsigned [nkeys]; for(unsigned i=0;i<nkeys;i++) keys[i]=rand()%UINT_MAX; }
+    ~MPXPSecureKeys() { delete [] keys; }
+private:
+    unsigned	nkeys;
+    unsigned*	keys;
+};
+
 mp_conf_t mp_conf;
 static volatile char antiviral_hole2[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 mp_data_t* mp_data=NULL;
 xp_core_t* xp_core=NULL;
-
+static volatile char antiviral_hole3[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
+volatile MPXPSecureKeys* secure_keys;
 /**************************************************************************
 	     Decoding ahead
 **************************************************************************/
-static volatile char antiviral_hole3[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
+static volatile char antiviral_hole4[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
 
@@ -165,6 +177,7 @@ static int mpxp_init_antiviral_protection(int verbose)
     rc=mp_mprotect((any_t*)antiviral_hole1,sizeof(antiviral_hole1),MP_DENY_ALL);
     rc|=mp_mprotect((any_t*)antiviral_hole2,sizeof(antiviral_hole2),MP_DENY_ALL);
     rc|=mp_mprotect((any_t*)antiviral_hole3,sizeof(antiviral_hole3),MP_DENY_ALL);
+    rc|=mp_mprotect((any_t*)antiviral_hole4,sizeof(antiviral_hole4),MP_DENY_ALL);
     if(verbose) {
 	if(rc)
 	    MSG_ERR("*** Error! Cannot initialize antiviral protection: '%s' ***!\n",strerror(errno));
@@ -177,7 +190,7 @@ static int mpxp_init_antiviral_protection(int verbose)
 static MPXP_Rc mpxp_test_antiviral_protection(int* verbose)
 {
     if(*verbose) MSG_INFO("Your've specified test-av option!\nRight now MPlayerXP should make coredump!\n");
-    *verbose=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole3[0];
+    *verbose=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole3[0]|antiviral_hole4[0];
     MSG_ERR("Antiviral protection of MPlayerXP doesn't work!");
     return MPXP_Virus;
 }
@@ -193,12 +206,12 @@ static unsigned get_number_cpu(void) {
 }
 
 static void mpxp_init_structs(void) {
-    mp_data=(mp_data_t*)mp_mallocz(sizeof(mp_data_t));
+    mp_data=new(zeromem) mp_data_t;
     mp_data->seek_time=-1;
-    mp_data->bench=(time_usage_t*)mp_mallocz(sizeof(time_usage_t));
+    mp_data->bench=new(zeromem) time_usage_t;
     mp_data->use_pts_fix2=-1;
     mp_data->rtc_fd=-1;
-    mp_data->priv=mp_mallocz(sizeof(priv_t));
+    mp_data->priv=new(zeromem)priv_t;
     priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     priv->osd_function=OSD_PLAY;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
@@ -234,9 +247,9 @@ static void mpxp_uninit_structs(void) {
 #ifdef ENABLE_WIN32LOADER
     free_codec_cfg();
 #endif
-    mp_free(mp_data->bench);
-    mp_free(mp_data->priv);
-    mp_free(mp_data);
+    delete mp_data->bench;
+    delete reinterpret_cast<priv_t*>(mp_data->priv);
+    delete mp_data;
     if(vo_data) mp_free(vo_data);
     if(ao_data) mp_free(ao_data);
     mp_data=NULL;
@@ -349,9 +362,8 @@ void exit_player(const char* why){
     MP_UNIT("exit_player");
 
     if(why) MSG_HINT(MSGTR_Exiting,why);
-    MSG_DBG2("max framesize was %d bytes\n",max_framesize);
     if(mp_data->mconfig) m_config_free(mp_data->mconfig);
-    mp_msg_uninit();
+    mpxp_print_uninit();
     mpxp_uninit_structs();
     if(why) exit(0);
     return; /* Still try coredump!!!*/
@@ -1613,7 +1625,7 @@ For future:
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
-int main(int argc,char* argv[], char *envp[]){
+int MPlayerXP(int argc,char* argv[], char *envp[]){
     mpxp_init_antiviral_protection(1);
     int i;
     stream_t* stream=NULL;
@@ -1635,6 +1647,10 @@ int main(int argc,char* argv[], char *envp[]){
 //    mp_init_malloc(argv[0],1000,10,MPA_FLG_BOUNDS_CHECK);
 //    mp_init_malloc(argv[0],1000,10,MPA_FLG_BEFORE_CHECK);
 
+    // Yes, it really must be placed in stack or in very secret place
+    xmpcore::PointerProtector<MPXPSecureKeys> ptr_protector;
+    secure_keys=ptr_protector.protect(new MPXPSecureKeys(10));
+
     mpxp_init_structs();
     priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     vo_data=vo_preinit_structs();
@@ -1645,7 +1661,7 @@ int main(int argc,char* argv[], char *envp[]){
 
     mpxp_init_keyboard_fifo();
 
-    mp_msg_init(MSGL_STATUS);
+    mpxp_print_init(mp_conf.verbose+MSGL_STATUS);
     MSG_INFO("%s",banner_text);
   /* Test for cpu capabilities (and corresponding OS support) for optimizing */
 
@@ -1710,7 +1726,6 @@ int main(int argc,char* argv[], char *envp[]){
 	MSG_INFO("\n");
     }
 
-    mp_msg_init(mp_conf.verbose+MSGL_STATUS);
 //------ load global data first ------
     mpxp_init_osd();
 // ========== Init keyboard FIFO (connection to libvo) ============
@@ -1786,7 +1801,7 @@ play_next_file:
 
     MP_UNIT("demux_open");
 
-    if(!input_state.after_dvdmenu) priv->demuxer=RND_RENAME1(demux_open)(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id);
+    if(!input_state.after_dvdmenu) priv->demuxer=demux_open(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id);
     if(!priv->demuxer) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     priv->inited_flags|=INITED_DEMUXER;
     input_state.after_dvdmenu=0;
@@ -1997,7 +2012,7 @@ main:
 
     MSG_OK(MSGTR_StartPlaying);fflush(stdout);
 
-    mp_msg_flush();
+    mpxp_print_flush();
     while(!eof){
 	int in_pause=0;
 
@@ -2134,5 +2149,16 @@ while(playtree_iter != NULL) {
     exit_player(MSGTR_Exit_eof);
 
     mpxp_uninit_structs();
-    return 1;
+    delete ptr_protector.unprotect(secure_keys);
+    return EXIT_SUCCESS;
+}
+
+int main(int argc,char* argv[], char *envp[])
+{
+    try {
+	return MPlayerXP(argc,argv,envp);
+    } catch(...) {
+	std::cout<<"Exception cathed in module: MPlayerXP"<<std::endl;
+    }
+    return EXIT_FAILURE;
 }
