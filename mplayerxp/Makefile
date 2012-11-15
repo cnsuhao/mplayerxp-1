@@ -21,11 +21,9 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
-SRCS =  mp-opt-reg.c dump.c mp_msg.c
-XXSRCS = mplayerxp.cpp
+SRCS = mplayerxp.cpp mp-opt-reg.cpp dump.cpp mp_msg.cpp
 
-OBJS = $(SRCS:.c=.o)
-XXOBJS = $(XXSRCS:.cpp=.o)
+OBJS = $(SRCS:.cpp=.o)
 
 FF_LIBS = ../ffmpeg/libavcodec/libavcodec$(FF_SUFFIX).a \
 	  ../ffmpeg/libswscale/libswscale$(FF_SUFFIX).a \
@@ -51,7 +49,6 @@ ifeq ($(ENABLE_WIN32LOADER),yes)
 endif
 
 LIBS+= $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
-CFLAGS = $(OPTFLAGS) $(EXTRA_INC)
 CXXFLAGS = $(OPTXXFLAGS) $(EXTRA_INC)
 
 .SUFFIXES: .cpp .c .o
@@ -60,18 +57,15 @@ CXXFLAGS = $(OPTXXFLAGS) $(EXTRA_INC)
 
 all:	$(TARGET_EXE) $(SUBDIRS)
 
-.c.o:
-	$(CC) -c $(CFLAGS) -o $@ $<
-
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 .PHONY: subdirs $(MP_LIBS)
 subdirs: $(MP_LIBS)
 
-$(TARGET_EXE):	$(OBJS) $(XXOBJS) $(MP_LIBS)
+$(TARGET_EXE):	$(OBJS) $(MP_LIBS)
 	$(DO_MAKE_ALL)
-	$(CXX) -o $(TARGET_EXE) $(XXOBJS) $(OBJS)  $(LDFLAGS) $(LDXXFLAGS) $(LIBS)
+	$(CXX) -o $(TARGET_EXE) $(OBJS) $(LDFLAGS) $(LDXXFLAGS) $(LIBS)
 #-Xlinker --export-dynamic -Xlinker --gc-sections -Xlinker --sort-common
 $(SRCS): version.h
 
@@ -113,7 +107,7 @@ version.h:
 	$(MAKE) dep
 
 dep:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(SRCS) 1>.depend
 	$(DO_MAKE)
 
 #

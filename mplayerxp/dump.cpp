@@ -6,10 +6,9 @@
 #include <stdlib.h>
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
-
+extern "C"{
 #include "mp_config.h"
 
-#include "dump.h"
 #include "xmpcore/sig_hand.h"
 #include "help_mp.h"
 #include "input2/input.h"
@@ -19,6 +18,8 @@
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
+}
+#include "dump.h"
 
 static char *media=NULL,*port=NULL;
 
@@ -115,13 +116,13 @@ static int check_cmd(priv_t* priv)
 
 void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 {
-    sh_audio_t* sha=demuxer->audio->sh;
-    sh_video_t* shv=demuxer->video->sh;
+    sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
+    sh_video_t* shv=reinterpret_cast<sh_video_t*>(demuxer->video->sh);
     char stream_dump_name[1024];
     /* TODO copy it from demuxer */
     if(demuxer->priv) return;
     demuxer->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=demuxer->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(demuxer->priv);
     priv->libinput=libinput;
     /* describe other useless dumps */
     priv->mux_type=MUX_HAVE_AUDIO|MUX_HAVE_VIDEO|MUX_HAVE_SUBS;
@@ -154,7 +155,7 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 	priv->m_audio->source=sha;
 	priv->m_audio->codec=0;
 	if(!sha->wf) {
-	    sha->wf=mp_malloc(sizeof(WAVEFORMATEX));
+	    sha->wf=(WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
 	    sha->wf->nBlockAlign = 1; //mux_a->h.dwSampleSize;
 	    sha->wf->wFormatTag = sha->wtag;
 	    sha->wf->nChannels = sha->nch;
@@ -163,11 +164,11 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 	    sha->wf->wBitsPerSample = 16; // FIXME
 	    sha->wf->cbSize=0; // FIXME for l3codeca.acm
 	}
-	priv->m_audio->wf=mp_malloc(sha->wf->cbSize+sizeof(WAVEFORMATEX));
+	priv->m_audio->wf=(WAVEFORMATEX*)mp_malloc(sha->wf->cbSize+sizeof(WAVEFORMATEX));
 	memcpy(priv->m_audio->wf,sha->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
 	if(!sha->wf->cbSize && sha->codecdata_len) {
 	    priv->m_audio->wf->cbSize=sha->wf->cbSize=sha->codecdata_len;
-	    priv->m_audio->wf=mp_realloc(priv->m_audio->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
+	    priv->m_audio->wf=(WAVEFORMATEX*)mp_realloc(priv->m_audio->wf,sha->wf->cbSize+sizeof(WAVEFORMATEX));
 	    memcpy((char *)(priv->m_audio->wf+1),sha->codecdata,sha->codecdata_len);
 	}
 	if(!sha->i_bps) sha->i_bps=priv->m_audio->wf->nAvgBytesPerSec;
@@ -190,7 +191,7 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 	priv->m_video->h.dwRate=priv->m_video->h.dwScale*shv->fps;
 	priv->m_video->h.dwSuggestedBufferSize=shv->video.dwSuggestedBufferSize;
 	if(!shv->bih) {
-	    shv->bih=mp_malloc(sizeof(BITMAPINFOHEADER));
+	    shv->bih=(BITMAPINFOHEADER*)mp_malloc(sizeof(BITMAPINFOHEADER));
 	    shv->bih->biSize=sizeof(BITMAPINFOHEADER);
 	    shv->bih->biWidth=shv->src_w;
 	    shv->bih->biHeight=shv->src_h;
@@ -199,7 +200,7 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 	    shv->bih->biBitCount=24; // FIXME!!!
 	    shv->bih->biSizeImage=shv->bih->biWidth*shv->bih->biHeight*(shv->bih->biBitCount/8);
 	}
-	priv->m_video->bih=mp_malloc(shv->bih->biSize);
+	priv->m_video->bih=(BITMAPINFOHEADER*)mp_malloc(shv->bih->biSize);
 	memcpy(priv->m_video->bih,shv->bih,shv->bih->biSize);
 	priv->m_video->ImageDesc=shv->ImageDesc;
 	priv->m_video->aspect=shv->aspect;
@@ -219,11 +220,11 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 
 void dump_mux_close(demuxer_t *demuxer)
 {
-    priv_t* priv=demuxer->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(demuxer->priv);
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
-    sh_audio_t* sha=d_audio->sh;
-    sh_video_t* shv=d_video->sh;
+    sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(d_audio->sh);
+    sh_video_t* shv=reinterpret_cast<sh_video_t*>(d_video->sh);
     if(priv) {
 	MSG_DBG2("Closing dump: %X %f secs\n"
 	     "As video %X-%ix%i audio %X-%ix%ix%i\n"
@@ -279,12 +280,11 @@ void dump_mux_close(demuxer_t *demuxer)
 
 void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned play_n_frames)
 {
-  priv_t* priv=demuxer->priv;
-  demux_stream_t *d_audio=demuxer->audio;
-  demux_stream_t *d_video=demuxer->video;
-  demux_stream_t *d_sub=demuxer->sub;
-    sh_audio_t* sha=d_audio->sh;
-    sh_video_t* shv=d_video->sh;
+    priv_t* priv=reinterpret_cast<priv_t*>(demuxer->priv);
+    demux_stream_t *d_audio=demuxer->audio;
+    demux_stream_t *d_video=demuxer->video;
+    sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(d_audio->sh);
+    sh_video_t* shv=reinterpret_cast<sh_video_t*>(d_video->sh);
   float frame_time,a_duration;
   float mpeg_vtimer=HUGE,mpeg_atimer=HUGE;
   unsigned char* start=NULL;

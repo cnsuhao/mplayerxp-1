@@ -111,8 +111,8 @@ static void reorder_pts_in_mpeg(void) {
 
 any_t* xmp_video_decoder( any_t* arg )
 {
-    mpxp_thread_t* priv=(mpxp_thread_t*)arg;
-    sh_video_t* sh_video=(sh_video_t*)priv->dae->sh;
+    mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->dae->sh);
     demux_stream_t *d_video=sh_video->ds;
     demuxer_t* demuxer=d_video->demuxer;
     demux_stream_t* d_audio=demuxer->audio;

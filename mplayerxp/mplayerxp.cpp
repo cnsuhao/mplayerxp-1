@@ -66,7 +66,6 @@ extern "C" {
 #include "osdep/mm_accel.h"
 
 #include "input2/input.h"
-#include "dump.h"
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
 #include "libao2/mixer.h"
@@ -78,6 +77,7 @@ extern "C" {
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 } // extern "C"
+#include "dump.h"
 /**************************************************************************
 	     Private data
 **************************************************************************/
@@ -199,7 +199,7 @@ static void mpxp_init_structs(void) {
     mp_data->use_pts_fix2=-1;
     mp_data->rtc_fd=-1;
     mp_data->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     priv->osd_function=OSD_PLAY;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     memset(&x86,-1,sizeof(x86_features_t));
@@ -245,14 +245,14 @@ static void mpxp_uninit_structs(void) {
 }
 
 void uninit_player(unsigned int mask){
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     stream_t* stream=NULL;
     sh_audio_t* sh_audio=NULL;
     sh_video_t* sh_video=NULL;
     if(priv->demuxer) {
 	stream=priv->demuxer->stream;
-	sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
-	sh_video=(sh_video_t*)priv->demuxer->video->sh;
+	sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
+	sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     }
     fflush(stdout);
     fflush(stderr);
@@ -414,7 +414,7 @@ void parse_cfgfiles( m_config_t* conf )
 // The function return a new value for eof.
 static int libmpdemux_was_interrupted(int eof)
 {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     mp_cmd_t* cmd;
     if((cmd = mp_input_get_cmd(priv->libinput,0,0,0)) != NULL) {
 	switch(cmd->id) {
@@ -562,7 +562,7 @@ extern "C" void show_help(void) {
 }
 
 extern "C" void show_long_help(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     m_config_show_options(mp_data->mconfig);
     mp_input_print_binds(priv->libinput);
     print_stream_drivers();
@@ -591,7 +591,7 @@ extern "C" void show_long_help(void) {
 //================= Update OSD ====================
 void update_osd( float v_pts )
 {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     static char osd_text_buffer[64];
     static int osd_last_pts=-303;
 //================= Update OSD ====================
@@ -635,9 +635,9 @@ typedef struct osd_args_s {
 
 void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     demux_stream_t *d_dvdsub=priv->demuxer->sub;
     int seek_rval=1;
     xp_core->audio->eof=0;
@@ -706,8 +706,8 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 
 void mpxp_reset_vcache(void)
 {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     seek_args_t seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
     if(sh_video) mpxp_seek(NULL,&seek);
     return;
@@ -715,8 +715,8 @@ void mpxp_reset_vcache(void)
 
 void mpxp_resync_audio_stream(void)
 {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
     mpca_resync_stream(sh_audio->decoder);
 }
 
@@ -768,8 +768,8 @@ static void show_benchmark(void)
 
 static void show_benchmark_status(void)
 {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
     if(xmp_test_model(XMP_Run_AudioPlayback))
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
 			,sh_audio->timer-ao_get_delay(ao_data)
@@ -788,7 +788,7 @@ play_tree_iter_t* playtree_iter = NULL;
 
 static void mpxp_init_keyboard_fifo(void)
 {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
 #ifdef HAVE_TERMCAP
     load_termcap(NULL); // load key-codes
 #endif
@@ -799,7 +799,7 @@ static void mpxp_init_keyboard_fifo(void)
 }
 
 void mplayer_put_key(int code){
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     mp_cmd_t* cmd;
     cmd=mp_input_get_cmd_from_keys(priv->libinput,1,&code);
     mp_input_queue_cmd(priv->libinput,cmd);
@@ -838,7 +838,7 @@ static void mpxp_init_osd(void) {
 }
 
 static char * mpxp_init_output_subsystems(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     char* rs=NULL;
     unsigned i;
     // check video_out driver name:
@@ -883,7 +883,7 @@ static char * mpxp_init_output_subsystems(void) {
 }
 
 static int mpxp_init_vobsub(const char *filename) {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     int forced_subs_only=0;
     MP_UNIT("vobsub");
     if (mp_conf.vobsub_name){
@@ -912,7 +912,7 @@ static int mpxp_init_vobsub(const char *filename) {
 }
 
 static int mpxp_handle_playlist(const char *filename) {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     stream_t* stream=priv->demuxer->stream;
     int eof=0;
     play_tree_t* entry;
@@ -949,7 +949,7 @@ static int mpxp_handle_playlist(const char *filename) {
 
 static void mpxp_init_dvd_nls(void) {
 /* Add NLS support here */
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     stream_t* stream=priv->demuxer->stream;
     char *lang;
     if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
@@ -973,9 +973,9 @@ static void mpxp_init_dvd_nls(void) {
 }
 
 static void mpxp_print_stream_formats(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     int fmt;
     char *c;
     MSG_INFO("[Stream]:");
@@ -1002,14 +1002,14 @@ static void mpxp_print_stream_formats(void) {
 }
 
 static void mpxp_read_video_properties(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     demux_stream_t *d_video=priv->demuxer->video;
     MP_UNIT("video_read_properties");
     if(!video_read_properties(sh_video)) {
 	MSG_ERR("Video: can't read properties\n");
 	d_video->sh=NULL;
-	sh_video=(sh_video_t*)d_video->sh;
+	sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
     } else {
 	MSG_V("[V] filefmt:%d  fourcc:0x%X  size:%dx%d  fps:%5.2f  ftime:=%6.4f\n",
 	    priv->demuxer->file_format,sh_video->fourcc, sh_video->src_w,sh_video->src_h,
@@ -1023,14 +1023,14 @@ static void mpxp_read_video_properties(void) {
 	if(!sh_video->fps && !mp_conf.force_fps){
 	    MSG_ERR(MSGTR_FPSnotspecified);
 	    d_video->sh=NULL;
-	    sh_video=(sh_video_t*)d_video->sh;
+	    sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
 	}
     }
 }
 
 static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     stream_t* stream=priv->demuxer->stream;
     if (mp_conf.spudec_ifo) {
 	unsigned int palette[16], width, height;
@@ -1080,8 +1080,8 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
 static void mpxp_find_acodec(void) {
     int found=0;
     any_t* mpca=0;
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
     demux_stream_t *d_audio=priv->demuxer->audio;
     sh_audio->codec=NULL;
     mpca=RND_RENAME2(mpca_init)(sh_audio); // try auto-probe first
@@ -1125,14 +1125,14 @@ static void mpxp_find_acodec(void) {
 	    MSG_ERR(" 0x%08X!\n",sh_audio->wtag);
 	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
 	d_audio->sh=NULL;
-	sh_audio=(sh_audio_t*)d_audio->sh;
+	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     }
 }
 
 static MPXP_Rc mpxp_find_vcodec(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     demux_stream_t *d_video=priv->demuxer->video;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
     sh_video->inited=0;
@@ -1175,7 +1175,7 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 	    MSG_ERR(" 0x%08X!\n",sh_video->fourcc);
 	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
 	d_video->sh = NULL;
-	sh_video = (sh_video_t*)d_video->sh;
+	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
 	rc=MPXP_False;
     } else  priv->inited_flags|=INITED_VCODEC;
 
@@ -1186,9 +1186,9 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 }
 
 static int mpxp_configure_audio(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     demux_stream_t *d_audio=priv->demuxer->audio;
     int rc=0;
     const ao_info_t *info=ao_get_info(ao_data);
@@ -1233,7 +1233,7 @@ static int mpxp_configure_audio(void) {
 		    ao_data->channels,ao_data->format)) {
 	MSG_ERR("Can't configure audio device\n");
 	d_audio->sh=NULL;
-	sh_audio=(sh_audio_t*)d_audio->sh;
+	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	if(sh_video == NULL) rc=-1;
     } else {
 	priv->inited_flags|=INITED_AO;
@@ -1250,9 +1250,9 @@ static int mpxp_configure_audio(void) {
 }
 
 static void mpxp_run_ahead_engine(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     MP_UNIT("init_xp");
     if(sh_video && xp_core->num_v_buffs < 3) {/* we need at least 3 buffers to suppress screen judering */
 	MSG_FATAL("Not enough buffers for DECODING AHEAD!\nNeed %u buffers but exist only %u\n",3,xp_core->num_v_buffs);
@@ -1270,8 +1270,8 @@ static void mpxp_run_ahead_engine(void) {
 }
 
 static void mpxp_print_audio_status(void) {
-    priv_t*priv=(priv_t*)mp_data->priv;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
     /* PAINT audio OSD */
     unsigned ipts,rpts;
     unsigned char h,m,s,rh,rm,rs;
@@ -1296,10 +1296,10 @@ static void mpxp_print_audio_status(void) {
 
 #ifdef USE_OSD
 static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     const stream_t* stream=priv->demuxer->stream;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
-    sh_video_t* sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
     int rc=0;
     if(*osd_visible) {
 	if (!--(*osd_visible)) {
@@ -1373,7 +1373,7 @@ typedef struct input_state_s {
 }input_state_t;
 
 static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* state) {
-    priv_t*priv=(priv_t*)mp_data->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->priv);
     stream_t* stream=priv->demuxer->stream;
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
   int v_bright=0;
@@ -1806,8 +1806,8 @@ play_next_file:
     sh_audio_t* sh_audio;
     sh_video_t* sh_video;
 
-    sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
-    sh_video=(sh_video_t*)priv->demuxer->video->sh;
+    sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
+    sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
 
     mpxp_print_stream_formats();
 
@@ -1827,7 +1827,7 @@ play_next_file:
     MP_UNIT("init_audio_codec");
 
     if(sh_audio) mpxp_find_acodec();
-    sh_audio=(sh_audio_t*)priv->demuxer->audio->sh;
+    sh_audio=reinterpret_cast<sh_audio_t*>(priv->demuxer->audio->sh);
 
     if(stream_dump_type>1) {
 	dump_mux_init(priv->demuxer,priv->libinput);
@@ -1837,7 +1837,7 @@ play_next_file:
     if(!(ao_data=RND_RENAME5(ao_init)(ao_subdevice))) {
 	MSG_ERR(MSGTR_CannotInitAO);
 	d_audio->sh=NULL;
-	sh_audio=(sh_audio_t*)d_audio->sh;
+	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     }
     if(ao_subdevice) mp_free(ao_subdevice);
     priv->ao_inited=RND_RENAME4(ao_register)(ao_data,mp_conf.audio_driver,0);
@@ -1852,7 +1852,7 @@ play_next_file:
 	    if(RND_RENAME2(mpca_init)(sh_audio)==NULL){
 		MSG_ERR(MSGTR_CouldntInitAudioCodec);
 		d_audio->sh=NULL;
-		sh_audio=(sh_audio_t*)d_audio->sh;
+		sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	    }
 	}
 	if(sh_audio) {
@@ -1878,7 +1878,7 @@ play_next_file:
 	sh_video->vfilter_inited=1;
     }
     if((mpxp_find_vcodec())!=MPXP_Ok) {
-	sh_video=(sh_video_t*)priv->demuxer->video->sh;
+	sh_video=reinterpret_cast<sh_video_t*>(priv->demuxer->video->sh);
 	if(!sh_audio) goto goto_next_file;
 	goto main;
     }

@@ -378,9 +378,9 @@ int get_free_audio_buffer(void)
 volatile float dec_ahead_audio_delay;
 int xp_thread_decode_audio(demux_stream_t *d_audio)
 {
-    sh_audio_t* sh_audio=(sh_audio_t*)xp_core->audio->sh;
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(xp_core->audio->sh);
     sh_video_t* sh_video=NULL;
-    if(xp_core->video) sh_video=(sh_video_t*)xp_core->video->sh;
+    if(xp_core->video) sh_video=reinterpret_cast<sh_video_t*>(xp_core->video->sh);
     int free_buf, vbuf_size, pref_buf;
     unsigned len=0;
 
@@ -419,8 +419,8 @@ static volatile int dec_ahead_can_adseek=1;  /* It is safe to seek audio buffer 
 /* this routine decodes audio only */
 any_t* a_dec_ahead_routine( any_t* arg )
 {
-    mpxp_thread_t* priv=(mpxp_thread_t*)arg;
-    sh_audio_t* sh_audio=(sh_audio_t*)priv->dae->sh;
+    mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->dae->sh);
     demux_stream_t *d_audio=sh_audio->ds;
 
     int ret;
