@@ -58,7 +58,6 @@ extern "C" {
 #include "libao2/audio_out.h"
 #include "libao2/afmt.h"
 
-#include "osdep/getch2.h"
 #include "osdep/keycodes.h"
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
@@ -78,6 +77,7 @@ extern "C" {
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 } // extern "C"
+#include "osdep/getch2.h"
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
 /**************************************************************************
