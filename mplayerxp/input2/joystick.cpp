@@ -36,13 +36,13 @@ any_t* mp_input_joystick_open(const char* dev) {
     int l=0;
     int inited = 0;
     struct js_event ev;
-    priv_t* priv=mp_mallocz(sizeof(priv_t));
+    priv_t* priv=new(zeromem) priv_t;
 
     MSG_INFO("Opening joystick device %s\n",dev ? dev : JS_DEV);
 
     if((priv->fd=open(dev?dev:JS_DEV,O_RDONLY|O_NONBLOCK))<0) {
 	MSG_ERR("Can't open joystick device %s : %s\n",dev ? dev : JS_DEV,strerror(errno));
-	mp_free(priv);
+	delete priv;
 	return NULL;
     }
 
@@ -58,7 +58,7 @@ any_t* mp_input_joystick_open(const char* dev) {
 		}
 		MSG_ERR("Error while reading joystick device : %s\n",strerror(errno));
 		close(priv->fd);
-		mp_free(priv);
+		delete priv;
 		return NULL;
 	    }
 	    l += r;
@@ -77,7 +77,7 @@ any_t* mp_input_joystick_open(const char* dev) {
 void mp_input_joystick_close(any_t* ctx) {
     priv_t* priv = (priv_t*)ctx;
     close(priv->fd);
-    mp_free(priv);
+    delete priv;
 }
 
 int mp_input_joystick_read(any_t* ctx) {

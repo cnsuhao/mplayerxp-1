@@ -6,13 +6,13 @@
 #include "libmpconf/cfgparser.h"
 
 extern "C" {
-extern void mp_input_register_options(m_config_t* cfg);
 #ifdef HAVE_LIBCDIO
 extern void cdda_register_options(m_config_t* cfg);
 #endif
 extern void libmpcodecs_ad_register_options(m_config_t* cfg);
 extern void libmpcodecs_vd_register_options(m_config_t* cfg);
 }
+extern void mp_input_register_options(m_config_t* cfg);
 extern void libmpdemux_register_options(m_config_t* cfg);
 extern void demuxer_register_options(m_config_t* cfg);
 

@@ -1,4 +1,4 @@
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #ifdef HAVE_LIRC
 
@@ -11,8 +11,8 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-#include "../mp_msg.h"
-#include "../help_mp.h"
+#include "mp_msg.h"
+#include "help_mp.h"
 #include "input.h"
 #include "in_msg.h"
 

@@ -14,6 +14,18 @@
 extern "C" {
 #endif
 
+/* List of all modules which require protection by pin-code */
+enum {
+    Module_Stream=0,
+    Module_Demuxer,
+    Module_AudioDecoder,
+    Module_VideoDecoder,
+    Module_AudioFilters,
+    Module_VideoFilters,
+    Module_AudioOut,
+    Module_VideoOut
+};
+
 typedef struct mp_conf_s {
     int		has_video;
     int		has_audio;

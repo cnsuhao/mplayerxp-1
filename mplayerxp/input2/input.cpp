@@ -9,21 +9,18 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <ctype.h>
-
+extern "C" {
 #include "input.h"
 #include "mouse.h"
 #ifdef MP_DEBUG
 #include <assert.h>
 #endif
 #include "libmpdemux/stream.h"
-#include "osdep/getch2.h"
 #include "osdep/keycodes.h"
 #include "osdep/get_path.h"
 #include "osdep/timer.h"
 #include "osdep/mplib.h"
 #include "libmpconf/cfgparser.h"
-
-#include "joystick.h"
 
 #ifdef HAVE_LIRC
 #include "lirc.h"
@@ -34,6 +31,9 @@
 #endif
 
 #include "in_msg.h"
+}
+#include "joystick.h"
+#include "osdep/getch2.h"
 
 #ifndef MP_MAX_KEY_FD
 #define MP_MAX_KEY_FD 10
@@ -58,18 +58,21 @@ typedef void (*mp_close_func_t)(any_t* ctx); // These are used to close the driv
 
 typedef struct mp_cmd_bind {
     int		input[MP_MAX_KEY_DOWN+1];
-    char*	cmd;
+    const char*	cmd;
 } mp_cmd_bind_t;
 
 typedef struct mp_key_name {
     int		key;
-    char*	name;
+    const char*	name;
 } mp_key_name_t;
 
 
 typedef struct mp_input_fd {
     any_t*		opaque;
-    any_t*		read_func;
+    union {
+	mp_key_func_t	key_func;
+	mp_cmd_func_t	cmd_func;
+    }read;
     mp_close_func_t	close_func;
     int			flags;
     // This fields are for the cmd fds
@@ -414,7 +417,7 @@ static const mp_cmd_bind_t def_cmd_binds[] = {
   { { 0 }, NULL }
 };
 
-static char* config_file = "input.conf";
+static const char* config_file = "input.conf";
 
 // Callback to allow the menu filter to grab the incoming keys
 void (*mp_input_key_cb)(int code) = NULL;
@@ -433,31 +436,31 @@ static const config_t joystick_conf[] = {
 extern char *lirc_configfile;
 // Our command line options
 static const config_t input_conf[] = {
-  { "conf", &config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies alternative input.conf" },
-  { "ar-delay", &libinput_conf.ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "autorepeate a key delay in milliseconds (0 to disable)" },
-  { "ar-rate", &libinput_conf.ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "number of key-presses per second generating on autorepeat" },
-  { "keylist", &libinput_conf.print_key_list, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "prints all keys that can be bound to commands" },
-  { "cmdlist", &libinput_conf.print_cmd_list, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "prints all commands that can be bound to keys" },
-  { "file", &libinput_conf.in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifes file with commands (useful for FIFO)" },
+  { "conf", (any_t*)&config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies alternative input.conf" },
+  { "ar-delay", (any_t*)&libinput_conf.ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "autorepeate a key delay in milliseconds (0 to disable)" },
+  { "ar-rate", (any_t*)&libinput_conf.ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "number of key-presses per second generating on autorepeat" },
+  { "keylist", (any_t*)&libinput_conf.print_key_list, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "prints all keys that can be bound to commands" },
+  { "cmdlist", (any_t*)&libinput_conf.print_cmd_list, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "prints all commands that can be bound to keys" },
+  { "file", (any_t*)&libinput_conf.in_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifes file with commands (useful for FIFO)" },
 #ifdef HAVE_LIRC
-  { "lircconf", &lirc_configfile, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies a config.file for LIRC"},
+  { "lircconf", (any_t*)&lirc_configfile, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies a config.file for LIRC"},
 #endif
-  { "lirc", &libinput_conf.use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of lirc" },
-  { "nolirc", &libinput_conf.use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of lirc" },
-  { "lircc", &libinput_conf.use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of lirc daemon" },
-  { "nolircc", &libinput_conf.use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of lirc daemon" },
-  { "joystick", &joystick_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Joystick related options" },
+  { "lirc", (any_t*)&libinput_conf.use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of lirc" },
+  { "nolirc", (any_t*)&libinput_conf.use_lirc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of lirc" },
+  { "lircc", (any_t*)&libinput_conf.use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of lirc daemon" },
+  { "nolircc", (any_t*)&libinput_conf.use_lircc, CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of lirc daemon" },
+  { "joystick", (any_t*)&joystick_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Joystick related options" },
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t mp_input_opts[] = {
-  { "input", &input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Input specific options"},
+  { "input", (any_t*)&input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Input specific options"},
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static int mp_input_default_key_func(any_t* fd);
 static int mp_input_default_cmd_func(any_t* fd,char* buf, int l);
-static char* mp_input_get_key_name(any_t*,int key);
+static const char* mp_input_get_key_name(any_t*,int key);
 
 static MPXP_Rc mp_input_add_cmd_fd(any_t* handle,any_t* opaque, int sel, mp_cmd_func_t read_func, mp_close_func_t close_func) {
     priv_t* priv = (priv_t*)handle;
@@ -468,7 +471,7 @@ static MPXP_Rc mp_input_add_cmd_fd(any_t* handle,any_t* opaque, int sel, mp_cmd_
 
     memset(&priv->cmd_fds[priv->num_cmd_fd],0,sizeof(mp_input_fd_t));
     priv->cmd_fds[priv->num_cmd_fd].opaque = opaque;
-    priv->cmd_fds[priv->num_cmd_fd].read_func = read_func ? read_func : mp_input_default_cmd_func;
+    priv->cmd_fds[priv->num_cmd_fd].read.cmd_func = read_func ? read_func : mp_input_default_cmd_func;
     priv->cmd_fds[priv->num_cmd_fd].close_func = close_func;
     if(!sel) priv->cmd_fds[priv->num_cmd_fd].flags = MP_FD_NO_SELECT;
     priv->num_cmd_fd++;
@@ -512,7 +515,7 @@ static MPXP_Rc mp_input_add_key_fd(any_t* handle,any_t* opaque, int sel, mp_key_
 
     memset(&priv->key_fds[priv->num_key_fd],0,sizeof(mp_input_fd_t));
     priv->key_fds[priv->num_key_fd].opaque = opaque;
-    priv->key_fds[priv->num_key_fd].read_func = read_func ? read_func : mp_input_default_key_func;
+    priv->key_fds[priv->num_key_fd].read.key_func = read_func ? read_func : mp_input_default_key_func;
     priv->key_fds[priv->num_key_fd].close_func = close_func;
     if(!sel) priv->key_fds[priv->num_key_fd].flags |= MP_FD_NO_SELECT;
     priv->num_key_fd++;
@@ -520,28 +523,29 @@ static MPXP_Rc mp_input_add_key_fd(any_t* handle,any_t* opaque, int sel, mp_key_
     return MPXP_Ok;
 }
 
-mp_cmd_t* mp_input_parse_cmd(char* str) {
+mp_cmd_t* mp_input_parse_cmd(const char* _str) {
     int i,l;
     char *ptr,*e;
     mp_cmd_t *cmd;
     const mp_cmd_t *cmd_def;
+    char *str=mp_strdup(_str);
 
 #ifdef MP_DEBUG
     assert(str != NULL);
 #endif
-
-    for(ptr = str ; ptr[0] != '\0'  && ptr[0] != '\t' && ptr[0] != ' ' ; ptr++)
+    ptr=str;
+    for(; ptr[0] != '\0'  && ptr[0] != '\t' && ptr[0] != ' ' ; ptr++)
     /* NOTHING */;
     if(ptr[0] != '\0') l = ptr-str;
     else  l = strlen(str);
 
-    if(l == 0) return NULL;
+    if(l == 0) { delete str; return NULL; }
 
     for(i=0; mp_cmds[i].name != NULL; i++) {
 	if(strncasecmp(mp_cmds[i].name,str,l) == 0) break;
     }
 
-    if(mp_cmds[i].name == NULL) return NULL;
+    if(mp_cmds[i].name == NULL) { delete str; return NULL; }
 
     cmd_def = &mp_cmds[i];
 
@@ -620,6 +624,7 @@ mp_cmd_t* mp_input_parse_cmd(char* str) {
 	MSG_ERR("Got command '%s' but\n",str);
 	MSG_ERR("command %s require at least %d arguments, we found only %d so far\n",cmd_def->name,cmd_def->nargs,cmd->nargs);
 	mp_cmd_free(cmd);
+	delete str;
 	return NULL;
     }
     for( ; i < MP_CMD_MAX_ARGS && cmd_def->args[i].type != -1 ; i++) {
@@ -628,6 +633,7 @@ mp_cmd_t* mp_input_parse_cmd(char* str) {
 	    cmd->args[i].v.s = mp_strdup(cmd_def->args[i].v.s);
     }
     if(i < MP_CMD_MAX_ARGS) cmd->args[i].type = -1;
+    delete str;
     return cmd;
 }
 
@@ -639,13 +645,14 @@ static int mp_input_default_key_func(any_t* fd) {
     if(priv->in_file_fd == 0) { // stdin is handled by getch2
 	code = getch2(priv->tim);
 	if(code < 0) code = MP_INPUT_NOTHING;
-    } else
+    } else {
 	fcntl(priv->in_file_fd,F_SETFL,fcntl(priv->in_file_fd,F_GETFL)|O_NONBLOCK);
 	while(l < sizeof(int)) {
 	    r = read(priv->in_file_fd,(&code)+l,sizeof(int)-l);
 	    if(r <= 0) break;
 	    l +=r;
 	}
+    }
     return code;
 }
 
@@ -663,7 +670,7 @@ static int mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 
     // Get some data if needed/possible
     while( !(mp_fd->flags & MP_FD_GOT_CMD) && !(mp_fd->flags & MP_FD_EOF) && (mp_fd->size-mp_fd->pos>1)) {
-	int r = ((mp_cmd_func_t)mp_fd->read_func)(mp_fd->opaque,mp_fd->buffer+mp_fd->pos,mp_fd->size-1-mp_fd->pos);
+	int r = ((mp_cmd_func_t)mp_fd->read.cmd_func)(mp_fd->opaque,mp_fd->buffer+mp_fd->pos,mp_fd->size-1-mp_fd->pos);
 	// Error ?
 	if(r < 0) {
 	    switch(r) {
@@ -736,7 +743,7 @@ static int mp_input_default_cmd_func(any_t* fd,char* buf, int l) {
 
 void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter func, any_t* ctx) {
     priv_t* priv = (priv_t*)handle;
-    mp_cmd_filter_t* filter = mp_malloc(sizeof(mp_cmd_filter_t))/*, *prev*/;
+    mp_cmd_filter_t* filter = new(zeromem) mp_cmd_filter_t;
 
     filter->filter = func;
     filter->ctx = ctx;
@@ -745,7 +752,7 @@ void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter func, any_t* ctx)
     SECURE_NAME9(rnd_fill)(priv->antiviral_hole,offsetof(priv_t,cmd_binds)-offsetof(priv_t,antiviral_hole));
 }
 
-static char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {
+static const char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {
     int j;
 
     for(j = 0; binds[j].cmd != NULL; j++) {
@@ -768,7 +775,7 @@ static char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* k
 
 mp_cmd_t* mp_input_get_cmd_from_keys(any_t* handle,int n,int* keys) {
     priv_t* priv = (priv_t*)handle;
-    char* cmd = NULL;
+    const char* cmd = NULL;
     mp_cmd_t* ret;
 
     if(priv->cmd_binds) cmd = mp_input_find_bind_for_key(priv->cmd_binds,n,keys);
@@ -816,7 +823,7 @@ static int mp_input_read_key_code(any_t* handle,int tim) {
     for(i = 0; i < priv->num_key_fd; i++) {
 	int code = -1;
 	priv->tim = tim;
-	code = ((mp_key_func_t)priv->key_fds[i].read_func)(priv->key_fds[i].opaque);
+	code = ((mp_key_func_t)priv->key_fds[i].read.key_func)(priv->key_fds[i].opaque);
 	if(code >= 0) return code;
 
 	if(code == MP_INPUT_ERROR) MSG_ERR("Error on key input fd\n");
@@ -916,7 +923,8 @@ static mp_cmd_t* mp_input_read_keys(any_t*handle,int tim) {
 
 static mp_cmd_t* mp_input_read_cmds(any_t* handle) {
     priv_t* priv = (priv_t*)handle;
-    int i,n = 0,got_cmd = 0;
+    int n = 0,got_cmd = 0;
+    unsigned i;
     mp_cmd_t* ret;
     static int last_loop = 0;
 
@@ -1010,7 +1018,7 @@ void mp_cmd_free(mp_cmd_t* cmd) {
 //#endif
     if ( !cmd ) return;
 
-    if(cmd->name) mp_free(cmd->name);
+    if(cmd->name) delete cmd->name;
 
     for(i=0; i < MP_CMD_MAX_ARGS && cmd->args[i].type != -1; i++) {
 	if(cmd->args[i].type == MP_CMD_ARG_STRING && cmd->args[i].v.s != NULL)
@@ -1036,7 +1044,7 @@ static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd) {
     return ret;
 }
 
-static char* mp_input_get_key_name(any_t* handle,int key) {
+static const char* mp_input_get_key_name(any_t* handle,int key) {
     priv_t* priv = (priv_t*)handle;
     unsigned i;
 
@@ -1114,7 +1122,7 @@ static void mp_input_bind_keys(any_t* handle,int keys[MP_MAX_KEY_DOWN+1], char* 
 	memset(&priv->cmd_binds[i],0,2*sizeof(mp_cmd_bind_t));
 	_bind = &priv->cmd_binds[i];
     }
-    if(_bind->cmd) mp_free(_bind->cmd);
+    if(_bind->cmd) delete _bind->cmd;
     _bind->cmd = mp_strdup(cmd);
     memcpy(_bind->input,keys,(MP_MAX_KEY_DOWN+1)*sizeof(int));
 }
@@ -1122,14 +1130,14 @@ static void mp_input_bind_keys(any_t* handle,int keys[MP_MAX_KEY_DOWN+1], char* 
 static void mp_input_free_binds(mp_cmd_bind_t* binds) {
     int i;
     if(!binds) return;
-    for(i = 0; binds[i].cmd != NULL; i++) mp_free(binds[i].cmd);
+    for(i = 0; binds[i].cmd != NULL; i++) delete binds[i].cmd;
     mp_free(binds);
 }
 
 #define BS_MAX 256
 #define SPACE_CHAR " \n\r\t"
 
-static int mp_input_parse_config(any_t* handle,char *file) {
+static int mp_input_parse_config(any_t* handle,const char *file) {
     priv_t* priv = (priv_t*)handle;
     int fd;
     int bs = 0,r,eof = 0,comments = 0;
@@ -1270,7 +1278,7 @@ static int mp_input_parse_config(any_t* handle,char *file) {
 
 static void mp_input_init(any_t* handle) {
     priv_t* priv = (priv_t*)handle;
-    char* file;
+    const char* file;
 
     file = config_file[0] != '/' ? get_path(config_file) : config_file;
     if(!file) return;
@@ -1310,11 +1318,10 @@ static void mp_input_init(any_t* handle) {
 	    if(priv->in_file_fd >= 0) mp_input_add_cmd_fd(priv,priv,1,NULL,(mp_close_func_t)close);
 	    else MSG_ERR("Can't open %s: %s\n",libinput_conf.in_file,strerror(errno));
 	}
-    } else {
-	priv->in_file_fd = 0;
-	getch2_enable();  // prepare stdin for hotkeys...
-	mp_input_add_cmd_fd(priv,priv,1,NULL,(mp_close_func_t)close);
     }
+    priv->in_file_fd = 0;
+    getch2_enable();  // prepare stdin for hotkeys...
+    mp_input_add_key_fd(priv,priv,1,NULL,(mp_close_func_t)close);
 }
 
 static void mp_input_uninit(any_t* handle) {
@@ -1331,7 +1338,7 @@ static void mp_input_uninit(any_t* handle) {
 
     if(priv->cmd_binds) {
 	for(i=0;;i++) {
-	    if(priv->cmd_binds[i].cmd != NULL) mp_free(priv->cmd_binds[i].cmd);
+	    if(priv->cmd_binds[i].cmd != NULL) delete priv->cmd_binds[i].cmd;
 	    else break;
 	}
 	mp_free(priv->cmd_binds);
@@ -1341,8 +1348,7 @@ static void mp_input_uninit(any_t* handle) {
 }
 
 any_t* RND_RENAME0(mp_input_open)(void) {
-    priv_t* priv;
-    priv=mp_mallocz(sizeof(priv_t));
+    priv_t* priv=new(zeromem) priv_t;
     priv->ar_state=-1;
     priv->in_file_fd=-1;
     mp_input_init(priv);
@@ -1386,7 +1392,7 @@ void mp_input_print_binds(any_t*handle) {
 void mp_input_print_cmds(any_t*handle) {
     const mp_cmd_t *cmd;
     int i,j;
-    char* type;
+    const char* type;
 
     UNUSED(handle);
     MSG_INFO("List of available input commands:\n");
@@ -1421,7 +1427,7 @@ static int mp_input_print_cmd_list(any_t*handle) {
 MPXP_Rc mp_input_check_interrupt(any_t* handle,int tim) {
     priv_t* priv = (priv_t*)handle;
     mp_cmd_t* cmd;
-    if((cmd = mp_input_get_cmd(handle,tim,0,1)) == NULL) return 0;
+    if((cmd = mp_input_get_cmd(handle,tim,0,1)) == NULL) return MPXP_False;
     switch(cmd->id) {
 	case MP_CMD_QUIT:
 	case MP_CMD_SOFT_QUIT:

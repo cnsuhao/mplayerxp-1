@@ -1,7 +1,5 @@
 /* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
-
-#include "../mp_config.h"
-
+#include "mp_config.h"
 //#define HAVE_TERMCAP
 #define USE_IOCTL
 
@@ -25,10 +23,12 @@
 #define HAVE_TERMIOS
 #include <sys/termios.h>
 #endif
-
 #include <unistd.h>
+
 #include "osdep_msg.h"
 #include "keycodes.h"
+
+#include "getch2.h"
 
 #ifdef HAVE_TERMIOS
 static struct termios tio_orig;
@@ -74,7 +74,7 @@ char *p=tgetstr(id,&term_p);
 
 static int success=0;
 
-int load_termcap(char *termtype){
+int load_termcap(const char *termtype){
   if(!termtype) termtype=getenv("TERM");
   success=tgetent(term_buffer, termtype);
   if(success<0){ MSG_ERR("Could not access the 'termcap' data base.\n"); return 0; }
@@ -112,7 +112,7 @@ int load_termcap(char *termtype){
 
 #endif
 
-void get_screen_size(){
+static void get_screen_size(){
 #ifdef USE_IOCTL
   struct winsize ws;
   if (ioctl(0, TIOCGWINSZ, &ws) < 0 || !ws.ws_row || !ws.ws_col) return;

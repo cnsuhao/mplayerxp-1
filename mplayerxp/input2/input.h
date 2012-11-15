@@ -3,6 +3,9 @@
 #include "mp_config.h"
 #include "xmpcore/xmp_enums.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 // All commands id
 enum {
     MP_CMD_SEEK			=0,
@@ -118,7 +121,7 @@ typedef struct mp_cmd_arg {
 
 typedef struct mp_cmd {
     int			id;
-    char*		name;
+    const char*		name;
     int			nargs;
     mp_cmd_arg_t	args[MP_CMD_MAX_ARGS];
 } mp_cmd_t;
@@ -139,7 +142,7 @@ extern MPXP_Rc mp_input_queue_cmd(any_t* handle,mp_cmd_t* cmd);
 // If pause is true, the next input will always return a pause command.
 extern mp_cmd_t* mp_input_get_cmd(any_t*handle,int time, int paused, int peek_only);
 
-extern mp_cmd_t* mp_input_parse_cmd(char* str);
+extern mp_cmd_t* mp_input_parse_cmd(const char* str);
 
 /// These filter allow you to process the command before mplayer
 /// If a filter return a true value mp_input_get_cmd will return NULL
@@ -159,4 +162,7 @@ extern void mp_input_print_keys(any_t*handle);
 extern void mp_input_print_cmds(any_t*handle);
 
 extern void mp_input_print_binds(any_t*handle);
+#ifdef __cplusplus
+}
+#endif
 #endif
