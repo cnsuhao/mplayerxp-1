@@ -105,19 +105,20 @@ typedef struct time_usage_s {
     double total_start;
 }time_usage_t;
 
+struct MPXPSystem;
 /* non-configurable through command line stuff */
 typedef struct MPXPContext_s {
-    int		rtc_fd;
-    int		seek_time;
-    int		output_quality;
-    unsigned	mpxp_after_seek;
-    int		use_pts_fix2;
-    unsigned	mplayer_accel;
-    subtitle* 	subtitles;
-    m_config_t*	mconfig;
-    time_usage_t*bench;
-    any_t*	priv;
-    any_t*	msg_priv;
+    int			rtc_fd;
+    int			seek_time;
+    int			output_quality;
+    unsigned		mpxp_after_seek;
+    int			use_pts_fix2;
+    unsigned		mplayer_accel;
+    subtitle*		subtitles;
+    m_config_t*		mconfig;
+    time_usage_t*	bench;
+    struct MPXPSystem*	MPXPSys;
+    any_t*		msg_priv;
 }MPXPContext_t;
 extern MPXPContext_t* MPXPCtx;
 

@@ -60,8 +60,8 @@ void mpxp_print_flush(void);
 int  mpxp_printf( unsigned x, const char *format, ... );
 
 #ifdef __GNUC__
-static inline int mpxp_print_dummy(void) {return 0;}
-#define mpxp_print(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mpxp_print_dummy()))
+static inline int mpxp_print_dummy(const char* args,...) { UNUSED(args); return 0;}
+#define mpxp_print(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mpxp_print_dummy(args)))
 #else
 #define mpxp_print(mod,lev, ... ) mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),__VA_ARGS__)
 #endif
@@ -84,8 +84,8 @@ static __always_inline int MSG_STATUS(const char* args,...) { return mpxp_print(
 static __always_inline int MSG_DBG2(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG3,args,__va_arg_pack ()); }
 static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG4,args,__va_arg_pack ()); }
 #else
-static __always_inline int MSG_DBG2(const char* args,...) { return 0; }
-static __always_inline int MSG_DBG3(const char* args,...) { return 0; }
+static __always_inline int MSG_DBG2(const char* args,...) { return mpxp_print_dummy(args); }
+static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_dummy(args); }
 #endif
 
 #else // __va_arg_pack
