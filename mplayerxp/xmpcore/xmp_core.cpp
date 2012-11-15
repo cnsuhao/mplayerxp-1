@@ -21,10 +21,6 @@ extern "C" {
 #include "osdep/mplib.h"
 
 #include "xmp_core.h"
-#include "xmp_aplayer.h"
-#include "xmp_vplayer.h"
-#include "xmp_adecoder.h"
-#include "xmp_vdecoder.h"
 
 #include "mplayerxp.h"
 #include "libao2/audio_out.h"
@@ -35,6 +31,11 @@ extern "C" {
 #include "sig_hand.h"
 #include "osdep/timer.h"
 }
+#include "xmp_aplayer.h"
+#include "xmp_vplayer.h"
+#include "xmp_adecoder.h"
+#include "xmp_vdecoder.h"
+
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else

@@ -1,6 +1,5 @@
 extern "C" {
 #include "mplayerxp.h"
-#include "xmp_vplayer.h"
 #include "xmp_core.h"
 #include "help_mp.h"
 #include "mp_msg.h"
@@ -10,8 +9,10 @@ extern "C" {
 #include "libvo/video_out.h"
 #include "osdep/timer.h"
 #include "libmpdemux/demuxer.h"
-#include "xmp_adecoder.h"
 }
+#include "xmp_adecoder.h"
+#include "xmp_vplayer.h"
+
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <math.h>

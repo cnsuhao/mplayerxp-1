@@ -7,13 +7,13 @@ extern "C" {
 #include "mp_msg.h"
 #include "sig_hand.h"
 #include "xmp_core.h"
-#include "xmp_aplayer.h"
-#include "xmp_adecoder.h"
 #include "osdep/timer.h"
 #include "libmpcodecs/dec_audio.h"
 
 #include "libao2/audio_out.h"
 }
+#include "xmp_aplayer.h"
+#include "xmp_adecoder.h"
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else

@@ -3,11 +3,12 @@ extern "C" {
 #include "mp_msg.h"
 #include "sig_hand.h"
 #include "xmp_core.h"
-#include "xmp_adecoder.h"
-#include "xmp_vdecoder.h"
 #include "osdep/timer.h"
 #include "libmpcodecs/dec_video.h"
 }
+#include "xmp_adecoder.h"
+#include "xmp_vdecoder.h"
+
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <math.h>

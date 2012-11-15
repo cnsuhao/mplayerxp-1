@@ -71,12 +71,12 @@ extern "C" {
 #include "libao2/mixer.h"
 
 #include "xmpcore/xmp_core.h"
-#include "xmpcore/xmp_vplayer.h"
-#include "xmpcore/xmp_adecoder.h"
 
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 } // extern "C"
+#include "xmpcore/xmp_vplayer.h"
+#include "xmpcore/xmp_adecoder.h"
 #include "osdep/getch2.h"
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
