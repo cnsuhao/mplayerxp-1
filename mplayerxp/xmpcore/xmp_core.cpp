@@ -279,7 +279,7 @@ void xmp_uninit_engine( int force )
 }
 
 unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_routine_t routine,const char *name) {
-    unsigned stacksize=1000000;
+    unsigned stacksize=10485760; // 10MB per thread
     unsigned idx=xp_core->num_threads;
     int rc;
     if(idx>=MAX_MPXP_THREADS) return UINT_MAX;
