@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+extern "C" {
 #include "mp_config.h"
 #include "mplayerxp.h"
 #include "osdep/mplib.h"
@@ -11,7 +11,7 @@
 #include "osdep/fastmemcpy.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
-
+}
 void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
     mpi->flags&=~(MP_IMGFLAG_PLANAR|MP_IMGFLAG_YUV|MP_IMGFLAG_SWAPPED);
     mpi->imgfmt=out_fmt;
@@ -173,7 +173,7 @@ void mpi_alloc_planes(mp_image_t *mpi) {
     delta=0;
     // IF09 - allocate space for 4. plane delta info - unused
     if (mpi->imgfmt == IMGFMT_IF09) delta=mpi->chroma_width*mpi->chroma_height;
-    mpi->planes[0]=mp_memalign(64,size+delta);
+    mpi->planes[0]=(unsigned char *)mp_memalign(64,size+delta);
     if(delta) /* delta table, just for fun ;) */
 	mpi->planes[3]=mpi->planes[0]+2*(mpi->chroma_width*mpi->chroma_height);
     if(mpi->flags&MP_IMGFLAG_PLANAR){

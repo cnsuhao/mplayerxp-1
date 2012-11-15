@@ -1,9 +1,10 @@
+extern "C" {
 #include "mp_aframe.h"
 #include "osdep/mplib.h"
 #include "libao2/afmt.h"
 #include "loader/wine/mmreg.h"
 #include "mp_msg.h"
-
+}
 #include <string.h>
 #include <stdio.h>
 
@@ -12,33 +13,33 @@ enum { AFMT_AF_FLAGS=0x70000000 };
 /* Decodes the format from mplayer format to libaf format */
 mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned ifmt)
 {
-    int ofmt = 0;
+    mpaf_format_e ofmt = mpaf_format_e(0);
     // Check input ifmt
     switch(ifmt){
-	case AFMT_U8: ofmt = MPAF_LE|MPAF_US|1; break;
-	case AFMT_S8: ofmt = MPAF_LE|MPAF_SI|1; break;
-	case AFMT_S16_LE: ofmt = MPAF_LE|MPAF_SI|2; break;
-	case AFMT_S16_BE: ofmt = MPAF_BE|MPAF_SI|2; break;
-	case AFMT_U16_LE: ofmt = MPAF_LE|MPAF_US|2; break;
-	case AFMT_U16_BE: ofmt = MPAF_BE|MPAF_US|2; break;
-	case AFMT_S24_LE: ofmt = MPAF_LE|MPAF_SI|3; break;
-	case AFMT_S24_BE: ofmt = MPAF_BE|MPAF_SI|3; break;
-	case AFMT_U24_LE: ofmt = MPAF_LE|MPAF_US|3; break;
-	case AFMT_U24_BE: ofmt = MPAF_BE|MPAF_US|3; break;
-	case AFMT_S32_LE: ofmt = MPAF_LE|MPAF_SI|4; break;
-	case AFMT_S32_BE: ofmt = MPAF_BE|MPAF_SI|4; break;
-	case AFMT_U32_LE: ofmt = MPAF_LE|MPAF_US|4; break;
-	case AFMT_U32_BE: ofmt = MPAF_BE|MPAF_US|4; break;
-	case AFMT_FLOAT32:ofmt = MPAF_F |MPAF_NE|4; break;
+	case AFMT_U8: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|1); break;
+	case AFMT_S8: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|1); break;
+	case AFMT_S16_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|2); break;
+	case AFMT_S16_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_SI|2); break;
+	case AFMT_U16_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|2); break;
+	case AFMT_U16_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_US|2); break;
+	case AFMT_S24_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|3); break;
+	case AFMT_S24_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_SI|3); break;
+	case AFMT_U24_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|3); break;
+	case AFMT_U24_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_US|3); break;
+	case AFMT_S32_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|4); break;
+	case AFMT_S32_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_SI|4); break;
+	case AFMT_U32_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|4); break;
+	case AFMT_U32_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_US|4); break;
+	case AFMT_FLOAT32:ofmt = mpaf_format_e(MPAF_F |MPAF_NE|4); break;
 
-	case AFMT_IMA_ADPCM: ofmt = MPAF_IMA_ADPCM|1; break;
-	case AFMT_MU_LAW:    ofmt = MPAF_MU_LAW|1; break;
-	case AFMT_A_LAW:     ofmt = MPAF_A_LAW|1; break;
-	case AFMT_MPEG:      ofmt = MPAF_MPEG2|1; break;
-	case AFMT_AC3:       ofmt = MPAF_AC3|1; break;
+	case AFMT_IMA_ADPCM: ofmt = mpaf_format_e(MPAF_IMA_ADPCM|1); break;
+	case AFMT_MU_LAW:    ofmt = mpaf_format_e(MPAF_MU_LAW|1); break;
+	case AFMT_A_LAW:     ofmt = mpaf_format_e(MPAF_A_LAW|1); break;
+	case AFMT_MPEG:      ofmt = mpaf_format_e(MPAF_MPEG2|1); break;
+	case AFMT_AC3:       ofmt = mpaf_format_e(MPAF_AC3|1); break;
 	default:
 	    if ((ifmt & AFMT_AF_FLAGS) == AFMT_AF_FLAGS) {
-		ofmt = (ifmt&(~AFMT_AF_FLAGS))|2;
+		ofmt = mpaf_format_e((ifmt&(~AFMT_AF_FLAGS))|2);
 		break;
 	    }
 	    //This can not happen ....
@@ -57,18 +58,20 @@ unsigned __FASTCALL__ mpaf_format_encode(mpaf_format_e fmt)
 		if((fmt&MPAF_SIGN_MASK)==MPAF_SI){
 		    // signed int PCM:
 		    switch(fmt&MPAF_BPS_MASK){
-			case 1: return AFMT_S8;
-			case 2: return (fmt&MPAF_LE)?AFMT_S16_LE:AFMT_S16_BE;
-			case 3: return (fmt&MPAF_LE)?AFMT_S24_LE:AFMT_S24_BE;
-			case 4: return (fmt&MPAF_LE)?AFMT_S32_LE:AFMT_S32_BE;
+			case MPAF_BPS_1: return AFMT_S8;
+			default:
+			case MPAF_BPS_2: return (fmt&MPAF_LE)?AFMT_S16_LE:AFMT_S16_BE;
+			case MPAF_BPS_3: return (fmt&MPAF_LE)?AFMT_S24_LE:AFMT_S24_BE;
+			case MPAF_BPS_4: return (fmt&MPAF_LE)?AFMT_S32_LE:AFMT_S32_BE;
 		    }
 		} else {
 		    // unsigned int PCM:
 		    switch(fmt&MPAF_BPS_MASK){
-			case 1: return AFMT_U8;
-			case 2: return (fmt&MPAF_LE)?AFMT_U16_LE:AFMT_U16_BE;
-			case 3: return (fmt&MPAF_LE)?AFMT_U24_LE:AFMT_U24_BE;
-			case 4: return (fmt&MPAF_LE)?AFMT_U32_LE:AFMT_U32_BE;
+			case MPAF_BPS_1: return AFMT_U8;
+			default:
+			case MPAF_BPS_2: return (fmt&MPAF_LE)?AFMT_U16_LE:AFMT_U16_BE;
+			case MPAF_BPS_3: return (fmt&MPAF_LE)?AFMT_U24_LE:AFMT_U24_BE;
+			case MPAF_BPS_4: return (fmt&MPAF_LE)?AFMT_U32_LE:AFMT_U32_BE;
 		    }
 		}
 	    } else {
@@ -76,6 +79,7 @@ unsigned __FASTCALL__ mpaf_format_encode(mpaf_format_e fmt)
 		return AFMT_FLOAT32; // FIXME?
 	    }
 	    break;
+	default:
 	case MPAF_MU_LAW: return AFMT_MU_LAW;
 	case MPAF_A_LAW:  return AFMT_A_LAW;
 	case MPAF_MPEG2:  return AFMT_MPEG;
@@ -219,49 +223,49 @@ static const struct fmt_alias_s {
 // Convert from string to format
 mpaf_format_e mpaf_str2fmt(const char *str)
 {
-    unsigned i;
-    mpaf_format_e retval;
+    unsigned i,fmt;
     char val[3];
-    retval=0;
+    fmt=0;
     if(strlen(str)<3) goto bad_fmt;
     /* check for special cases */
-    if(strncmp(str,"float",5)==0 || strncmp(str,"FLOAT",5)==0) { retval |= MPAF_F; str = &str[4]; }
+    if(strncmp(str,"float",5)==0 || strncmp(str,"FLOAT",5)==0) { fmt |= MPAF_F; str = &str[4]; }
     else
-    if(str[0]=='S' || str[0]=='s') retval|=MPAF_SI;
+    if(str[0]=='S' || str[0]=='s') fmt|=MPAF_SI;
     else
-    if(str[0]=='U' || str[0]=='u') retval|=MPAF_US;
+    if(str[0]=='U' || str[0]=='u') fmt|=MPAF_US;
     else goto try_special;
     val[0]=str[1];
     val[1]=str[2];
     val[2]='\0';
-    if(strcmp(val,"08")==0) retval|=1;
+    if(strcmp(val,"08")==0) fmt|=1;
     else
-    if(strcmp(val,"16")==0) retval|=2;
+    if(strcmp(val,"16")==0) fmt|=2;
     else
-    if(strcmp(val,"24")==0) retval|=3;
+    if(strcmp(val,"24")==0) fmt|=3;
     else
-    if(strcmp(val,"32")==0) retval|=4;
+    if(strcmp(val,"32")==0) fmt|=4;
     else
-    if(strcmp(val,"64")==0) retval|=8;
+    if(strcmp(val,"64")==0) fmt|=8;
     else goto try_special;
     if(str[3]=='\0') {
 #ifdef WORDS_BIGENDIAN
-	retval|=MPAF_BE;
+	fmt|=MPAF_BE;
 #else
-	retval|=MPAF_LE;
+	fmt|=MPAF_LE;
 #endif
     }
-    else if(strcmp(&str[3],"LE")==0 || strcmp(&str[3],"le")==0) retval |= MPAF_LE;
-    else if(strcmp(&str[3],"BE")==0 || strcmp(&str[3],"be")==0) retval |= MPAF_BE;
+    else if(strcmp(&str[3],"LE")==0 || strcmp(&str[3],"le")==0) fmt |= MPAF_LE;
+    else if(strcmp(&str[3],"BE")==0 || strcmp(&str[3],"be")==0) fmt |= MPAF_BE;
     else goto try_special;
-    return retval;
+    return mpaf_format_e(fmt);
+
     try_special:
     for(i=0;i<sizeof(fmt_aliases)/sizeof(struct fmt_alias_s);i++) {
-	if(strcasecmp(str,fmt_aliases[i].name)==0) return (mpaf_format_e)(fmt_aliases[i].wtag<<16);
+	if(strcasecmp(str,fmt_aliases[i].name)==0) return mpaf_format_e(fmt_aliases[i].wtag<<16);
     }
     bad_fmt:
     MSG_ERR("[af_format] Bad value %s. Examples: S08LE U24BE S32 MP3 AC3\n",str);
-    return MPAF_BE;
+    return mpaf_format_e(MPAF_BE);
 }
 
 /* Convert format to str input str is a buffer for the

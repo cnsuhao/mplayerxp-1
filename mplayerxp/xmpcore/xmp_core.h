@@ -66,9 +66,17 @@ typedef enum xmp_model {
     XMP_Run_VideoDecoder	=0x00000020
 }xmp_model_e;
 #ifdef __cplusplus
-static inline xmp_model_e operator|(xmp_model_e a, xmp_model_e b) {
-    return static_cast<xmp_model_e>(static_cast<int>(a) | static_cast<int>(b));
 }
+extern "C++" {
+inline xmp_model_e operator~(xmp_model_e a) { return static_cast<xmp_model_e>(~static_cast<unsigned>(a)); }
+inline xmp_model_e operator|(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
+inline xmp_model_e operator&(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
+inline xmp_model_e operator^(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
+inline xmp_model_e operator|=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+inline xmp_model_e operator&=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+inline xmp_model_e operator^=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+}
+extern "C" {
 #endif
 
 typedef struct mpxp_thread_s {

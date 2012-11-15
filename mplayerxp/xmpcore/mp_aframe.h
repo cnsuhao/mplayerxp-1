@@ -12,6 +12,10 @@ extern "C" {
    resolution. */
 typedef enum mpaf_format_enum{
     MPAF_BPS_MASK	=0x00000FFFUL, /* byte per sample */
+    MPAF_BPS_1		=0x00000001UL,
+    MPAF_BPS_2		=0x00000002UL,
+    MPAF_BPS_3		=0x00000003UL,
+    MPAF_BPS_4		=0x00000004UL,
 // Endianess
     MPAF_BE		=0x00000000UL, // Big Endian
     MPAF_LE		=0x00001000UL, // Little Endian
@@ -39,6 +43,19 @@ typedef enum mpaf_format_enum{
     MPAF_AC3		=0x20000000UL, // Dolby Digital AC3
     MPAF_SPECIAL_MASK	=0xFFFF0000UL
 }mpaf_format_e;
+#ifdef __cplusplus
+}
+extern "C++" {
+inline mpaf_format_e operator~(mpaf_format_e a) { return static_cast<mpaf_format_e>(~static_cast<unsigned>(a)); }
+inline mpaf_format_e operator|(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
+inline mpaf_format_e operator&(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
+inline mpaf_format_e operator^(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
+inline mpaf_format_e operator|=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+inline mpaf_format_e operator&=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+inline mpaf_format_e operator^=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+}
+extern "C" {
+#endif
 
 /* Decodes the format from mplayer format to libaf format */
 extern mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned format);
