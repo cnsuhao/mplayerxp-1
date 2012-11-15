@@ -87,7 +87,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	default:
 	    DS_VideoDecoder_SetDestFmt(sh->context,out_fmt&255,0);    // RGB/BGR
     }
-    DS_SetAttr_DivX("Quality",mp_data->output_quality);
+    DS_SetAttr_DivX("Quality",MPXPCtx->output_quality);
     DS_VideoDecoder_StartInternal(sh->context);
     MSG_V("INFO: Win32/DShow init OK!\n");
     return MPXP_Ok;

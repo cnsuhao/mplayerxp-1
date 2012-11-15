@@ -106,7 +106,7 @@ typedef struct time_usage_s {
 }time_usage_t;
 
 /* non-configurable through command line stuff */
-typedef struct mp_data_s {
+typedef struct MPXPContext_s {
     int		rtc_fd;
     int		seek_time;
     int		output_quality;
@@ -118,8 +118,8 @@ typedef struct mp_data_s {
     time_usage_t*bench;
     any_t*	priv;
     any_t*	msg_priv;
-}mp_data_t;
-extern mp_data_t* mp_data;
+}MPXPContext_t;
+extern MPXPContext_t* MPXPCtx;
 
 extern void update_osd( float v_pts );
 

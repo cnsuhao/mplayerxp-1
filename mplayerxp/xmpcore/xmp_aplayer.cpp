@@ -71,12 +71,12 @@ while(sh_audio){
   MP_UNIT("play_audio");   // Leave AUDIO decoder module
   t=GetTimer()-t;
   tt = t*0.000001f;
-  mp_data->bench->audio+=tt;
+  MPXPCtx->bench->audio+=tt;
   if(mp_conf.benchmark)
   {
-    if(tt > mp_data->bench->max_audio) mp_data->bench->max_audio = tt;
-    if(tt < mp_data->bench->min_audio) mp_data->bench->min_audio = tt;
-    mp_data->bench->cur_audio=tt;
+    if(tt > MPXPCtx->bench->max_audio) MPXPCtx->bench->max_audio = tt;
+    if(tt < MPXPCtx->bench->min_audio) MPXPCtx->bench->min_audio = tt;
+    MPXPCtx->bench->cur_audio=tt;
   }
   if(playsize>sh_audio->a_buffer_len) playsize=sh_audio->a_buffer_len;
 
@@ -89,7 +89,7 @@ while(sh_audio){
       memcpy(sh_audio->a_buffer,&sh_audio->a_buffer[playsize],sh_audio->a_buffer_len);
       if(!mp_conf.av_sync_pts && xmp_test_model(XMP_Run_AudioPlayer))
 	  pthread_mutex_lock(&audio_timer_mutex);
-      if(mp_data->use_pts_fix2) {
+      if(MPXPCtx->use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
 	      sh_audio->a_pts_pos-=playsize;
 	      if(sh_audio->a_pts_pos > -ao_get_delay(ao_data)*sh_audio->af_bps) {

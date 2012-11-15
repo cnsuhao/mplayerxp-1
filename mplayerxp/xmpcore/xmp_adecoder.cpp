@@ -304,12 +304,12 @@ int decode_audio_buffer(demux_stream_t *d_audio,unsigned len)
     pthread_cond_signal( &audio_buffer.wait_buffer_cond );
 
     t=GetTimer()-t;
-    mp_data->bench->audio_decode+=t*0.000001f;
-    mp_data->bench->audio_decode-=mp_data->bench->audio_decode_correction;
+    MPXPCtx->bench->audio_decode+=t*0.000001f;
+    MPXPCtx->bench->audio_decode-=MPXPCtx->bench->audio_decode_correction;
     if(mp_conf.benchmark)
     {
-	if(t > mp_data->bench->max_audio_decode) mp_data->bench->max_audio_decode = t;
-	if(t < mp_data->bench->min_audio_decode) mp_data->bench->min_audio_decode = t;
+	if(t > MPXPCtx->bench->max_audio_decode) MPXPCtx->bench->max_audio_decode = t;
+	if(t < MPXPCtx->bench->min_audio_decode) MPXPCtx->bench->min_audio_decode = t;
     }
 
     pthread_mutex_unlock( &audio_buffer.head_mutex );

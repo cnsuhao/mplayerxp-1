@@ -29,10 +29,10 @@ static void __show_status_line(float a_pts,float v_pts,float delay,float AV_dela
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f %3d/%3d  %2d%% %2d%% %4.1f%% %d [frms: [%i]]\n",
 		a_pts-delay,v_pts,AV_delay
 		,xp_core->video->num_played_frames,xp_core->video->num_decoded_frames
-		,(v_pts>0.5)?(int)(100.0*mp_data->bench->video/(double)v_pts):0
-		,(v_pts>0.5)?(int)(100.0*mp_data->bench->vout/(double)v_pts):0
-		,(v_pts>0.5)?(100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)v_pts):0
-		,mp_data->output_quality
+		,(v_pts>0.5)?(int)(100.0*MPXPCtx->bench->video/(double)v_pts):0
+		,(v_pts>0.5)?(int)(100.0*MPXPCtx->bench->vout/(double)v_pts):0
+		,(v_pts>0.5)?(100.0*(MPXPCtx->bench->audio+MPXPCtx->bench->audio_decode)/(double)v_pts):0
+		,MPXPCtx->output_quality
 		,dae_curr_vplayed(xp_core)
 		);
     fflush(stdout);
@@ -47,26 +47,26 @@ static void show_status_line_no_apts(sh_audio_t* sh_audio,float v_pts) {
 	,a_pts-v_pts
 	,0.0
 	,xp_core->video->num_played_frames,xp_core->video->num_decoded_frames
-	,(v_pts>0.5)?(int)(100.0*mp_data->bench->video/(double)v_pts):0
-	,(v_pts>0.5)?(int)(100.0*mp_data->bench->vout/(double)v_pts):0
-	,(v_pts>0.5)?(100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)v_pts):0
-	,mp_data->output_quality
+	,(v_pts>0.5)?(int)(100.0*MPXPCtx->bench->video/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*MPXPCtx->bench->vout/(double)v_pts):0
+	,(v_pts>0.5)?(100.0*(MPXPCtx->bench->audio+MPXPCtx->bench->audio_decode)/(double)v_pts):0
+	,MPXPCtx->output_quality
 	);
     } else
 	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d\r"
 	,v_pts
 	,xp_core->video->num_played_frames
-	,(v_pts>0.5)?(int)(100.0*mp_data->bench->video/(double)v_pts):0
-	,(v_pts>0.5)?(int)(100.0*mp_data->bench->vout/(double)v_pts):0
-	,(v_pts>0.5)?(100.0*(mp_data->bench->audio+mp_data->bench->audio_decode)/(double)v_pts):0
-	,mp_data->output_quality
+	,(v_pts>0.5)?(int)(100.0*MPXPCtx->bench->video/(double)v_pts):0
+	,(v_pts>0.5)?(int)(100.0*MPXPCtx->bench->vout/(double)v_pts):0
+	,(v_pts>0.5)?(100.0*(MPXPCtx->bench->audio+MPXPCtx->bench->audio_decode)/(double)v_pts):0
+	,MPXPCtx->output_quality
 	);
     fflush(stdout);
 }
 
 static void vplayer_check_chapter_change(sh_audio_t* sh_audio,sh_video_t* sh_video,xmp_frame_t* shva_prev,float v_pts)
 {
-    if(mp_data->use_pts_fix2 && sh_audio) {
+    if(MPXPCtx->use_pts_fix2 && sh_audio) {
 	if(sh_video->chapter_change == -1) { /* First frame after seek */
 	    while(v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay(ao_data)==0.0)
 		usleep(0);		 /* Wait for audio to start play */
@@ -96,10 +96,10 @@ static float vplayer_compute_sleep_time(sh_audio_t* sh_audio,sh_video_t* sh_vide
 	   often ao_get_delay() never returns 0 :( */
 	if(xp_core->audio->eof && !get_delay_audio_buffer()) goto nosound_model;
 	if((!xp_core->audio->eof || ao_get_delay(ao_data)) &&
-	(!mp_data->use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
+	(!MPXPCtx->use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
 	    sleep_time=screen_pts-((sh_audio->timer-ao_get_delay(ao_data))
 				+(mp_conf.av_sync_pts?0:xp_core->initial_apts));
-	else if(mp_data->use_pts_fix2 && sh_audio->chapter_change)
+	else if(MPXPCtx->use_pts_fix2 && sh_audio->chapter_change)
 	    sleep_time=0;
 	else
 	    goto nosound_model;
@@ -192,7 +192,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	static int drop_message=0;
 	if(!drop_message && xp_core->video->num_slow_frames > 50) {
 		drop_message=1;
-		if(mp_data->mpxp_after_seek) mp_data->mpxp_after_seek--;
+		if(MPXPCtx->mpxp_after_seek) MPXPCtx->mpxp_after_seek--;
 		else			  MSG_WARN(MSGTR_SystemTooSlow);
 	}
 	MSG_D("\ndec_ahead_main: stalling: %i %i\n",dae_cuurr_vplayed(),dae_curr_decoded());
@@ -211,7 +211,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	sleep_time=vplayer_compute_sleep_time(sh_audio,sh_video,&shva_prev,v_pts);
 
 	if(!(vo_data->flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
-	    if(!vplayer_do_sleep(sh_audio,mp_data->rtc_fd,sleep_time)) return 0;
+	    if(!vplayer_do_sleep(sh_audio,MPXPCtx->rtc_fd,sleep_time)) return 0;
 	}
 
 	player_idx=dae_next_played(xp_core->video);
@@ -220,10 +220,10 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
 	t2=GetTimer()-t2;
 	tt = t2*0.000001f;
-	mp_data->bench->vout+=tt;
+	MPXPCtx->bench->vout+=tt;
 	if(mp_conf.benchmark) {
 	    /* we need compute draw_slice+change_frame here */
-	    mp_data->bench->cur_vout+=tt;
+	    MPXPCtx->bench->cur_vout+=tt;
 	}
     }
     MP_UNIT(NULL);

@@ -23,7 +23,7 @@ const char hl[9] = { 0xC, 0x4, 0xE, 0xA, 0xB, 0x7, 0x9, 0x3, 0x7 };
 
 static char *_2ansi(unsigned char attr)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->msg_priv);
+    priv_t*priv=reinterpret_cast<priv_t*>(MPXPCtx->msg_priv);
     int bg = _bg(attr);
     int bc = priv->_color[bg & 7];
 
@@ -42,7 +42,7 @@ void mpxp_print_init(int verbose)
     unsigned i;
     int _color[8]={0,4,2,6,1,5,3,7};
     priv_t*priv=new priv_t;
-    mp_data->msg_priv=priv;
+    MPXPCtx->msg_priv=priv;
     memcpy(priv->_color,_color,sizeof(_color));
     pthread_mutex_init(&priv->mp_msg_mutex,NULL);
     for(i=0;i<sizeof(hl)/sizeof(char);i++) memcpy(priv->scol[i],_2ansi(hl[i]),sizeof(priv->scol[0]));
@@ -50,7 +50,7 @@ void mpxp_print_init(int verbose)
 
 void mpxp_print_uninit(void)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(mp_data->msg_priv);
+    priv_t*priv=reinterpret_cast<priv_t*>(MPXPCtx->msg_priv);
     if(isatty(fileno(stderr))) fprintf(stderr,priv->scol[8]);
     mpxp_print_flush();
     pthread_mutex_destroy(&priv->mp_msg_mutex);
@@ -90,7 +90,7 @@ int mpxp_printf( unsigned x, const char *format, ... ){
     unsigned mod=x&0x0FFFFFFF;
     static int was_eol=1;
     priv_t*priv=NULL;
-    if(mp_data) priv=reinterpret_cast<priv_t*>(mp_data->msg_priv);
+    if(MPXPCtx) priv=reinterpret_cast<priv_t*>(MPXPCtx->msg_priv);
     if(level>mp_conf.verbose+MSGL_V-1) return 0; /* do not display */
     if((mod&mp_conf.msg_filter)==0) return 0; /* do not display */
     if(priv) {

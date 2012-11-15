@@ -445,7 +445,7 @@ static void __FASTCALL__ asx_parse_param(ASX_Parser_t* parser, char** attribs, p
     return;
   }
   val = asx_get_attrib("VALUE",attribs);
-  if(m_config_get_option(mp_data->mconfig,name) == NULL) {
+  if(m_config_get_option(MPXPCtx->mconfig,name) == NULL) {
     MSG_WARN("Found unknow param in asx: %s",name);
     if(val)
       MSG_WARN("=%s\n",val);

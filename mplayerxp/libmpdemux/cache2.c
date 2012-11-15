@@ -258,9 +258,9 @@ static any_t*cache2_routine(any_t*arg)
 	if(mp_conf.benchmark) {
 	    t2=GetTimer();t=t2-t;
 	    tt = t*0.000001f;
-	    mp_data->bench->c2+=tt;
-	    if(tt > mp_data->bench->max_c2) mp_data->bench->max_c2=tt;
-	    if(tt < mp_data->bench->min_c2) mp_data->bench->min_c2=tt;
+	    MPXPCtx->bench->c2+=tt;
+	    if(tt > MPXPCtx->bench->max_c2) MPXPCtx->bench->max_c2=tt;
+	    if(tt < MPXPCtx->bench->min_c2) MPXPCtx->bench->min_c2=tt;
 	}
 	if(!cfill) usleep(FILL_USLEEP_TIME); // idle
 	if(priv->state==Pth_Canceling) break;

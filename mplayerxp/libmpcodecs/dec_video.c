@@ -305,11 +305,11 @@ int RND_RENAME4(mpcv_decode)(any_t *opaque,const enc_frame_t* frame){
 
     t2=GetTimer();t=t2-t;
     tt = t*0.000001f;
-    mp_data->bench->video+=tt;
+    MPXPCtx->bench->video+=tt;
     if(mp_conf.benchmark || mp_conf.frame_dropping) {
-	if(tt > mp_data->bench->max_video) mp_data->bench->max_video=tt;
-	if(tt < mp_data->bench->min_video) mp_data->bench->min_video=tt;
-	mp_data->bench->cur_video=tt;
+	if(tt > MPXPCtx->bench->max_video) MPXPCtx->bench->max_video=tt;
+	if(tt < MPXPCtx->bench->min_video) MPXPCtx->bench->min_video=tt;
+	MPXPCtx->bench->cur_video=tt;
     }
 
     if(frame->flags) return 0;
@@ -318,12 +318,12 @@ int RND_RENAME4(mpcv_decode)(any_t *opaque,const enc_frame_t* frame){
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
-    mp_data->bench->vout+=tt;
+    MPXPCtx->bench->vout+=tt;
     if(mp_conf.benchmark || mp_conf.frame_dropping)
     {
-	if(tt > mp_data->bench->max_vout) mp_data->bench->max_vout = tt;
-	if(tt < mp_data->bench->min_vout) mp_data->bench->min_vout = tt;
-	mp_data->bench->cur_vout=tt;
+	if(tt > MPXPCtx->bench->max_vout) MPXPCtx->bench->max_vout = tt;
+	if(tt < MPXPCtx->bench->min_vout) MPXPCtx->bench->min_vout = tt;
+	MPXPCtx->bench->cur_vout=tt;
     }
 
     return 1;
@@ -345,12 +345,12 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
     demux_stream_t *d_dvdsub=sh_video->ds->demuxer->sub;
 #ifdef USE_SUB
   // find sub
-  if(mp_data->subtitles && v_pts>0){
+  if(MPXPCtx->subtitles && v_pts>0){
       float pts=v_pts;
       if(mp_conf.sub_fps==0) mp_conf.sub_fps=sh_video->fps;
       MP_UNIT("find_sub");
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-	 find_sub(mp_data->subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
+	 find_sub(MPXPCtx->subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
 	 sub_last_pts = pts;
       }
       MP_UNIT(NULL);
