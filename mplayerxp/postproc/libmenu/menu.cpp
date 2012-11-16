@@ -76,8 +76,8 @@ static int menu_parse_config(char* buffer) {
     name = asx_get_attrib("name",attribs);
     if(!name) {
       MSG_WARN("[libmenu] Menu definitions need a name attrib: %i\n",parser->line);
-      mp_free(element);
-      if(body) mp_free(body);
+      delete element;
+      if(body) delete body;
       asx_free_attribs(attribs);
       continue;
     }
@@ -91,7 +91,7 @@ static int menu_parse_config(char* buffer) {
     }
     // Got it : add this to our list
     if(minfo) {
-      menu_list = mp_realloc(menu_list,(menu_count+2)*sizeof(menu_def_t));
+      menu_list = (menu_def_t*)mp_realloc(menu_list,(menu_count+2)*sizeof(menu_def_t));
       menu_list[menu_count].name = name;
       menu_list[menu_count].type = minfo;
       menu_list[menu_count].cfg = m_struct_alloc(&minfo->priv_st);
@@ -107,11 +107,11 @@ static int menu_parse_config(char* buffer) {
       memset(&menu_list[menu_count],0,sizeof(menu_def_t));
     } else {
       MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element,parser->line);
-      mp_free(name);
-      if(body) mp_free(body);
+      delete name;
+      if(body) delete body;
     }
 
-    mp_free(element);
+    delete element;
     asx_free_attribs(attribs);
   }
 
@@ -134,18 +134,18 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file) {
     MSG_WARN("[libmenu] Can't open ConfigFile: %s\n",cfg_file);
     return 0;
   }
-  buffer = mp_malloc(bl);
+  buffer = new char [bl];
   while(1) {
     int r;
     if(bl - br < BUF_MIN) {
       if(bl >= BUF_MAX) {
 	MSG_WARN("[libmenu] ConfigFile is too big: %u\n",BUF_MAX/1024);
 	close(fd);
-	mp_free(buffer);
+	delete buffer;
 	return 0;
       }
       bl += BUF_STEP;
-      buffer = mp_realloc(buffer,bl);
+      buffer = (char *)mp_realloc(buffer,bl);
     }
     r = read(fd,buffer+br,bl-br);
     if(r == 0) break;
@@ -161,7 +161,7 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file) {
 
   menu_ctx = mpctx;
   f = menu_parse_config(buffer);
-  mp_free(buffer);
+  delete buffer;
   return f;
 }
 
@@ -169,11 +169,11 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file) {
 void menu_unint(void) {
   int i;
   for(i = 0 ; menu_list && menu_list[i].name ; i++) {
-    mp_free(menu_list[i].name);
+    delete menu_list[i].name;
     m_struct_free(&menu_list[i].type->priv_st,menu_list[i].cfg);
-    if(menu_list[i].args) mp_free(menu_list[i].args);
+    if(menu_list[i].args) delete menu_list[i].args;
   }
-  mp_free(menu_list);
+  delete menu_list;
   menu_count = 0;
 }
 
@@ -223,16 +223,16 @@ menu_t* menu_open(const char *name,any_t* libinput) {
     MSG_WARN("[libmenu] Menu not found: %s\n",name);
     return NULL;
   }
-  m = mp_calloc(1,sizeof(menu_t));
+  m = new(zeromem) menu_t;
   m->libinput = libinput;
   m->priv_st = &(menu_list[i].type->priv_st);
-  m->priv = m_struct_copy(m->priv_st,menu_list[i].cfg);
+  m->priv = (menu_priv_s*)m_struct_copy(m->priv_st,menu_list[i].cfg);
   m->ctx = menu_ctx;
   if(menu_list[i].type->mopen(m,menu_list[i].args))
     return m;
   if(m->priv)
     m_struct_free(m->priv_st,m->priv);
-  mp_free(m);
+  delete m;
   MSG_WARN("[libmenu] Menu init failed: %s\n",name);
   return NULL;
 }
@@ -252,7 +252,7 @@ void menu_close(menu_t* menu) {
     menu->close(menu);
   if(menu->priv)
     m_struct_free(menu->priv_st,menu->priv);
-  mp_free(menu);
+  delete menu;
 }
 
 void menu_read_key(menu_t* menu,int cmd) {
@@ -303,7 +303,7 @@ static inline int get_height(int c,int h){
     return h;
 }
 
-static void render_txt(char *txt)
+static void render_txt(const char *txt)
 {
 #warning FIXME: render_one_glyph is not implented yet!
 #if 0
@@ -341,7 +341,7 @@ static char *menu_fribidi(char *txt)
       buffer_size = FFMAX(1024,len+1);
       logical = mp_malloc(buffer_size);
       visual = mp_malloc(buffer_size);
-      outputstr = mp_malloc(buffer_size);
+      outputstr = new char [buffer_size];
     } else if (len+1 > buffer_size) {
       buffer_size = len+1;
       logical = mp_realloc(logical, buffer_size);
@@ -634,7 +634,7 @@ char* menu_text_get_next_line(char* txt, int max_width) {
 }
 
 
-void menu_draw_box(mp_image_t* mpi,unsigned char grey,unsigned char alpha, int x, int y, int w, int h) {
+void menu_draw_box(const mp_image_t* mpi,unsigned char grey,unsigned char alpha, int x, int y, int w, int h) {
   draw_alpha_f draw_alpha = get_draw_alpha(mpi->imgfmt);
   int g;
 
@@ -656,7 +656,7 @@ void menu_draw_box(mp_image_t* mpi,unsigned char grey,unsigned char alpha, int x
   {
     int finalize = vo_is_final(vo_data);
     int stride = (w+7)&(~7); // round to 8
-    char pic[stride*h],pic_alpha[stride*h];
+    unsigned char pic[stride*h],pic_alpha[stride*h];
     memset(pic,g,stride*h);
     memset(pic_alpha,alpha,stride*h);
     draw_alpha(w,h,pic,pic_alpha,stride,

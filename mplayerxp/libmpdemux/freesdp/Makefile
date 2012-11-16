@@ -1,18 +1,23 @@
 include ../../mp_config.mak
 
+CXXSRCS=parser.cpp
 SRCS = common.c \
-       errorlist.c  \
-       parser.c
+       errorlist.c
+
 OBJS=$(SRCS:.c=.o)
+CXXOBJS=$(CXXSRCS:.cpp=.o)
 
 CFLAGS  = $(OPTFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
+CXXFLAGS  = $(OPTXXFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
 
 .SUFFIXES: .c .o
 
-all:    $(OBJS)
+all:    $(OBJS) $(CXXOBJS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CC) -c $(CXXFLAGS) -o $@ $<
 
 clean:
 	rm -f *.o *.a *~
@@ -23,7 +28,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

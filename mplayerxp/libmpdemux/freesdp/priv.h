@@ -69,7 +69,7 @@ BEGIN_C_DECLS
  * Holds type of modifier and value. Also holds the literal bandwidth
  * modifier if unknown.
  **/
-  typedef struct
+typedef struct
 {
   fsdp_bw_modifier_type_t b_mod_type;
   unsigned long int b_value;

@@ -9,7 +9,7 @@
 char *get_path(const char *filename){
 	char *homedir;
 	char *buff;
-	static char *config_dir = "/."PROGNAME;
+	static const char *config_dir = "/."PROGNAME;
 	int len;
 
 	if ((homedir = getenv("HOME")) == NULL)

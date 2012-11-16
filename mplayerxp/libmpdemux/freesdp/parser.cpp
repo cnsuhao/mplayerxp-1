@@ -189,7 +189,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   if (dsc->emails_count > 0)
   {
     /* Then, build the array of emails */
-    dsc->emails = mp_calloc (j, sizeof (const char *));
+    dsc->emails = new(zeromem) const char *[j];
     for (j = 0; j < dsc->emails_count; j++)
     {
       sscanf (p, "e=%" MLFLENS "[^\r\n]", longfsdp_buf);
@@ -211,7 +211,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   dsc->phones_count = j;
   if (dsc->phones_count > 0)
   {
-    dsc->phones = mp_calloc (j, sizeof (const char *));
+    dsc->phones = new(zeromem) const char *[j];
     for (j = 0; j < dsc->phones_count; j++)
     {
       sscanf (p, "p=%" MLFLENS "[^\r\n]", longfsdp_buf);
@@ -251,8 +251,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   dsc->time_periods_count = j;
   if (dsc->time_periods_count == 0)
     return FSDPE_MISSING_TIME;
-  dsc->time_periods = mp_calloc (dsc->time_periods_count,
-			      sizeof (fsdp_time_period_t *));
+  dsc->time_periods = new(zeromem) fsdp_time_period_t*[dsc->time_periods_count];
   _index = 0;
   for (j = 0; j < dsc->time_periods_count; j++)
   {
@@ -263,7 +262,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       dsc->time_periods_count = j;
       return FSDPE_INVALID_TIME;
     }
-    dsc->time_periods[j] = mp_calloc (1, sizeof (fsdp_time_period_t));
+    dsc->time_periods[j] = new(zeromem) fsdp_time_period_t;
 
     /* convert from NTP to time_t time */
     if (wuint[0] != 0)
@@ -287,8 +286,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
     if (h > 0)
     {
       unsigned int _index2 = 0;
-      dsc->time_periods[j]->repeats =
-	mp_calloc (h, sizeof (fsdp_repeat_t *));
+      dsc->time_periods[j]->repeats =new(zeromem) fsdp_repeat_t*[h];
       for (h = 0; h < dsc->time_periods[j]->repeats_count; h++)
       {
 	/*
@@ -300,8 +298,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 		    fsdp_buf[0], fsdp_buf[1], longfsdp_buf) == 3)
 	{
 	  fsdp_repeat_t *repeat;
-	  dsc->time_periods[j]->repeats[h] =
-	    mp_calloc (1, sizeof (fsdp_repeat_t));
+	  dsc->time_periods[j]->repeats[h] =new(zeromem) fsdp_repeat_t;
 	  repeat = dsc->time_periods[j]->repeats[h];
 	  /* get interval, duration and list of offsets */
 	  result =
@@ -323,7 +320,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 		  i++;
 	      }
 	      repeat->offsets_count = k;
-	      repeat->offsets = mp_calloc (k, sizeof (time_t));
+	      repeat->offsets = new(zeromem) unsigned long[k];
 	      i = longfsdp_buf;
 	      for (k = 0;
 		   (k < repeat->offsets_count)
@@ -432,8 +429,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	if (NULL == dsc->a_sdplangs)
 	{
 	  dsc->a_sdplangs_count = 0;
-	  dsc->a_sdplangs =
-	    mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	  dsc->a_sdplangs =new(zeromem) char*[SDPLANGS_MAX_COUNT];
 	}
 	if (dsc->a_sdplangs_count < SDPLANGS_MAX_COUNT)
 	{
@@ -447,7 +443,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	if (NULL == dsc->a_langs)
 	{
 	  dsc->a_langs_count = 0;
-	  dsc->a_langs = mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	  dsc->a_langs = new(zeromem) char*[SDPLANGS_MAX_COUNT];
 	}
 	if (dsc->a_langs_count < SDPLANGS_MAX_COUNT)
 	{
@@ -460,8 +456,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	if (NULL == dsc->a_controls)
 	{
 	  dsc->a_controls_count = 0;
-	  dsc->a_controls =
-	    mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
+	  dsc->a_controls =new(zeromem) char*[SDPCONTROLS_MAX_COUNT];
 	}
 	if (dsc->a_controls_count < SDPCONTROLS_MAX_COUNT)
 	{
@@ -472,8 +467,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       }
       else if (!strncmp (fsdp_buf[0], "range", 5))
       {
-	if (dsc->a_range)
-	  mp_free (dsc->a_range);
+	if (dsc->a_range) delete dsc->a_range;
 	dsc->a_range = mp_strdup (fsdp_buf[1]);
       }
       else
@@ -486,9 +480,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	if (NULL == dsc->unidentified_attributes)
 	{
 	  dsc->unidentified_attributes_count = 0;
-	  dsc->unidentified_attributes =
-	    mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-		    sizeof (char *));
+	  dsc->unidentified_attributes =new(zeromem) char*[UNIDENTIFIED_ATTRIBUTES_MAX_COUNT];
 	}
 	if (dsc->unidentified_attributes_count <
 	    UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
@@ -520,9 +512,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	if (NULL == dsc->unidentified_attributes)
 	{
 	  dsc->unidentified_attributes_count = 0;
-	  dsc->unidentified_attributes =
-	    mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-		    sizeof (char *));
+	  dsc->unidentified_attributes =new(zeromem) char*[UNIDENTIFIED_ATTRIBUTES_MAX_COUNT];
 	}
 	if (dsc->unidentified_attributes_count <
 	    UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
@@ -573,8 +563,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
   }
   else
   {				/* dsc->media_announcements_count > 0 */
-    dsc->media_announcements =
-      mp_calloc (j, sizeof (fsdp_media_announcement_t *));
+    dsc->media_announcements =new(zeromem) fsdp_media_announcement_t*[j];
     for (j = 0; j < dsc->media_announcements_count; j++)
     {
       fsdp_media_announcement_t *media = NULL;
@@ -589,8 +578,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
       }
       else
       {
-	dsc->media_announcements[j] =
-	  mp_calloc (1, sizeof (fsdp_media_announcement_t));
+	dsc->media_announcements[j] =new(zeromem)fsdp_media_announcement_t;
 	media = dsc->media_announcements[j];
 	if (!strncmp (fsdp_buf[0], "audio", 5))
 	  media->media_type = FSDP_MEDIA_AUDIO;
@@ -644,7 +632,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	  }
 	  k++;		/* when there is no space left, count the last format */
 	  media->formats_count = k;
-	  media->formats = mp_calloc (k, sizeof (char *));
+	  media->formats = new(zeromem) char*[k];
 	  s = longfsdp_buf;
 	  for (k = 0; k < media->formats_count; k++)
 	  {
@@ -729,8 +717,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	    if (NULL == dsc->a_sdplangs)
 	    {
 	      media->a_sdplangs_count = 0;
-	      media->a_sdplangs =
-		mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	      media->a_sdplangs =new(zeromem) char*[SDPLANGS_MAX_COUNT];
 	    }
 	    if (media->a_sdplangs_count < SDPLANGS_MAX_COUNT)
 	    {
@@ -744,8 +731,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	    if (NULL == dsc->a_langs)
 	    {
 	      media->a_langs_count = 0;
-	      media->a_langs =
-		mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	      media->a_langs =new(zeromem) char*[SDPLANGS_MAX_COUNT];
 	    }
 	    if (media->a_langs_count < SDPLANGS_MAX_COUNT)
 	    {
@@ -759,8 +745,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	    if (NULL == media->a_controls)
 	    {
 	      media->a_controls_count = 0;
-	      media->a_controls =
-		mp_calloc (SDPCONTROLS_MAX_COUNT, sizeof (char *));
+	      media->a_controls =new(zeromem) char*[SDPCONTROLS_MAX_COUNT];
 	    }
 	    if (media->a_controls_count < SDPCONTROLS_MAX_COUNT)
 	    {
@@ -771,8 +756,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	  }
 	  else if (!strncmp (fsdp_buf[0], "range", 5))
 	  {
-	    if (media->a_range)
-	      mp_free (media->a_range);
+	    if (media->a_range) delete media->a_range;
 	    media->a_range = mp_strdup (fsdp_buf[1]);
 	  }
 	  else if (!strncmp (fsdp_buf[0], "framerate", 9))
@@ -782,8 +766,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	    if (NULL == media->a_fmtps)
 	    {
 	      media->a_fmtps_count = 0;
-	      media->a_fmtps =
-		mp_calloc (SDPLANGS_MAX_COUNT, sizeof (char *));
+	      media->a_fmtps =new(zeromem) char*[SDPLANGS_MAX_COUNT];
 	    }
 	    if (media->a_fmtps_count < SDPLANGS_MAX_COUNT)
 	    {
@@ -839,9 +822,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	    if (NULL == media->unidentified_attributes)
 	    {
 	      media->unidentified_attributes_count = 0;
-	      media->unidentified_attributes =
-		mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-			sizeof (char *));
+	      media->unidentified_attributes =new(zeromem) char*[UNIDENTIFIED_ATTRIBUTES_MAX_COUNT];
 	    }
 	    if (media->unidentified_attributes_count <
 		UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
@@ -873,9 +854,7 @@ fsdp_parse (const char *text_description, fsdp_description_t * dsc)
 	    if (NULL == media->unidentified_attributes)
 	    {
 	      media->unidentified_attributes_count = 0;
-	      media->unidentified_attributes =
-		mp_calloc (UNIDENTIFIED_ATTRIBUTES_MAX_COUNT,
-			sizeof (char *));
+	      media->unidentified_attributes =new(zeromem) char*[UNIDENTIFIED_ATTRIBUTES_MAX_COUNT];
 	    }
 	    if (media->unidentified_attributes_count <
 		UNIDENTIFIED_ATTRIBUTES_MAX_COUNT)
@@ -993,7 +972,7 @@ fsdp_parse_b (const char **p, fsdp_bw_modifier_t ** bw_modifiers,
     NEXT_LINE (lp);
     i++;
   }
-  *bw_modifiers = mp_calloc (i, sizeof (fsdp_bw_modifier_t));
+  *bw_modifiers = new(zeromem) fsdp_bw_modifier_t[i];
   *bw_modifiers_count = i;
 
   while (i > 0)
@@ -1076,7 +1055,7 @@ fsdp_parse_rtpmap (fsdp_rtpmap_t *** rtpmap, unsigned int *counter,
   if (0 == *counter)
   {
     *counter = 0;
-    *rtpmap = mp_calloc (MEDIA_RTPMAPS_MAX_COUNT, sizeof (fsdp_rtpmap_t *));
+    *rtpmap = new(zeromem) fsdp_rtpmap_t*[MEDIA_RTPMAPS_MAX_COUNT];
   }
   if (*counter < MEDIA_RTPMAPS_MAX_COUNT)
   {
@@ -1084,7 +1063,7 @@ fsdp_parse_rtpmap (fsdp_rtpmap_t *** rtpmap, unsigned int *counter,
     fsdp_rtpmap_t **map = *rtpmap;
     char fsdp_buf[MAXSHORTFIELDLEN];
     char longfsdp_buf[MAXLONGFIELDLEN];
-    map[c] = mp_calloc (1, sizeof (fsdp_rtpmap_t));
+    map[c] = new(zeromem) fsdp_rtpmap_t;
 
     /* a=rtpmap:<payload type> <encoding name>/<clock rate>[/<encoding
        parameters]> */

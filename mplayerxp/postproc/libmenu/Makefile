@@ -1,7 +1,8 @@
 include ../../mp_config.mak
 
-SRCS = menu.c \
-       menu_cmdlist.c  \
+CXXSRCS = menu.cpp
+
+SRCS = menu_cmdlist.c  \
        menu_pt.c \
        menu_list.c  \
        menu_filesel.c \
@@ -9,15 +10,19 @@ SRCS = menu.c \
        menu_console.c \
        menu_param.c 
 OBJS=$(SRCS:.c=.o)
+CXXOBJS=$(CXXSRCS:.cpp=.o)
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -I../.. $(EXTRA_INC) -Wall
+CXXFLAGS  = $(OPTXXFLAGS) -I. -I.. -I../.. $(EXTRA_INC) -Wall
 
 .SUFFIXES: .c .o
 
-all:  $(OBJS)
+all:  $(OBJS) $(CXXOBJS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 clean:
 	rm -f *.o *.a *~
@@ -28,7 +33,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

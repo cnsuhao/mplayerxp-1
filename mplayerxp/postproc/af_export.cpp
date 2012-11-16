@@ -54,7 +54,7 @@ typedef struct af_export_s
 */
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  af_export_t* s = af->setup;
+  af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
 
   switch (cmd){
   case AF_CONTROL_REINIT:{
@@ -63,7 +63,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 
     // Free previous buffers
     if (s->buf && s->buf[0])
-      mp_free(s->buf[0]);
+      delete s->buf[0];
 
     // unmap previous area
     if(s->mmap_area)
@@ -75,7 +75,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     // Accept only int16_t as input format (which sucks)
     af->data->rate   = ((mp_aframe_t*)arg)->rate;
     af->data->nch    = ((mp_aframe_t*)arg)->nch;
-    af->data->format = MPAF_SI|MPAF_NE|2;
+    af->data->format = MPAF_SI|MPAF_NE|MPAF_BPS_2;
 
     // If buffer length isn't set, set it to the default value
     if(s->sz == 0)
@@ -117,15 +117,15 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     msync(s->mmap_area, mapsize, MS_ASYNC);
 
     // Use test_output to return FALSE if necessary
-    return af_test_output(af, (mp_aframe_t*)arg);
+    return af_test_output(af, (mp_aframe_t*)arg)?MPXP_Ok:MPXP_False;
   }
   case AF_CONTROL_COMMAND_LINE:{
     int i=0;
-    char *str = arg;
+    char *str = reinterpret_cast<char*>(arg);
 
     if (!str){
       if(s->filename)
-	mp_free(s->filename);
+	delete s->filename;
 
       s->filename = get_path(SHARED_FILE);
       return MPXP_Ok;
@@ -135,9 +135,9 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
       i++;
 
     if(s->filename)
-      mp_free(s->filename);
+      delete s->filename;
 
-    s->filename = mp_calloc(i + 1, sizeof(char));
+    s->filename = new(zeromem) char[i + 1];
     memcpy(s->filename, str, i);
     s->filename[i] = 0;
 
@@ -166,14 +166,14 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 static void __FASTCALL__ uninit( struct af_instance_s* af )
 {
   if (af->data){
-    mp_free(af->data);
+    delete af->data;
     af->data = NULL;
   }
 
   if(af->setup){
-    af_export_t* s = af->setup;
+    af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
     if (s->buf && s->buf[0])
-      mp_free(s->buf[0]);
+      delete s->buf[0];
 
     // Free mmaped area
     if(s->mmap_area)
@@ -183,9 +183,9 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
       close(s->fd);
 
     if(s->filename)
-	mp_free(s->filename);
+	delete s->filename;
 
-    mp_free(af->setup);
+    delete af->setup;
     af->setup = NULL;
   }
 }
@@ -197,8 +197,8 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
 static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* data,int final)
 {
   mp_aframe_t*	c   = data;	     // Current working data
-  af_export_t*	s   = af->setup;     // Setup for this instance
-  int16_t*	a   = c->audio;	     // Incomming sound
+  af_export_t*	s   = reinterpret_cast<af_export_t*>(af->setup); // Setup for this instance
+  int16_t*	a   = reinterpret_cast<int16_t*>(c->audio);   // Incomming sound
   int		nch = c->nch;	     // Number of channels
   int		len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
   int		sz  = s->sz;         // buffer size (in samples)
@@ -209,7 +209,7 @@ static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* da
   // Fill all buffers
   for(ch = 0; ch < nch; ch++){
     int 	wi = s->wi;    	 // Reset write index
-    int16_t* 	b  = s->buf[ch]; // Current buffer
+    int16_t* 	b  = reinterpret_cast<int16_t*>(s->buf[ch]); // Current buffer
 
     // Copy data to export buffers
     for(i = ch; i < len; i += nch){
@@ -246,8 +246,8 @@ static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
   af->play    = play;
   af->mul.n   = 1;
   af->mul.d   = 1;
-  af->data    = mp_calloc(1, sizeof(mp_aframe_t));
-  af->setup   = mp_calloc(1, sizeof(af_export_t));
+  af->data    = new(zeromem) mp_aframe_t;
+  af->setup   = new(zeromem) af_export_t;
   if((af->data == NULL) || (af->setup == NULL))
     return MPXP_Error;
 
@@ -256,6 +256,7 @@ static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
   return MPXP_Ok;
 }
 
+extern const af_info_t af_info_export;
 // Description of this filter
 const af_info_t af_info_export = {
     "Sound export filter",
