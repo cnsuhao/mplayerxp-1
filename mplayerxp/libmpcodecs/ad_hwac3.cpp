@@ -200,7 +200,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     }
     if(a52_fillbuff(sh_audio,&pts)<0) {
 	MSG_ERR("A52 sync failed\n");
-	return 0;
+	return MPXP_False;
     }
  /*
   sh_audio->samplerate=ai.samplerate;   // SET by a52_fillbuff()
@@ -247,6 +247,6 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
   if(!sh_audio->a_in_buffer_len)
     if((int)(len=a52_fillbuff(sh_audio,pts))<0) return 0; /*EOF*/
   sh_audio->a_in_buffer_len=0;
-  len = ac3_iec958_build_burst(len, 0x01, 1, sh_audio->a_in_buffer, buf);
+  len = ac3_iec958_build_burst(len, 0x01, 1, (unsigned char *)sh_audio->a_in_buffer, buf);
   return len;
 }

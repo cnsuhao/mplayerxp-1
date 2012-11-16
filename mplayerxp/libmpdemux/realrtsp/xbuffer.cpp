@@ -32,7 +32,7 @@ typedef struct {
 
 
 any_t*xbuffer_init(int chunk_size) {
-  uint8_t *data=mp_calloc(1,chunk_size+XBUFFER_HEADER_SIZE);
+  uint8_t *data=new(zeromem) uint8_t[chunk_size+XBUFFER_HEADER_SIZE];
 
   xbuffer_header_t *header=(xbuffer_header_t*)data;
 
@@ -97,9 +97,9 @@ any_t*xbuffer_strcat(any_t*buf, char *data) {
     return NULL;
   }
 
-  buf = xbuffer_ensure_size(buf, strlen(buf)+strlen(data)+1);
+  buf = xbuffer_ensure_size(buf, strlen((char *)buf)+strlen(data)+1);
 
-  strcat(buf, data);
+  strcat((char *)buf, data);
 
   return buf;
 }

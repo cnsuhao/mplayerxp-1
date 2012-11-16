@@ -60,15 +60,15 @@ a52_state_t * a52_init (uint32_t mm_accel)
 {
     a52_state_t * state;
     int i;
-    char *opts;
+    const char *opts;
 
-    state = mp_malloc (sizeof (a52_state_t));
+    state = new a52_state_t;
     if (state == NULL)
 	return NULL;
 
-    state->samples = mp_memalign (16, 256 * 12 * sizeof (sample_t));
+    state->samples = (sample_t*)mp_memalign (16, 256 * 12 * sizeof (sample_t));
     if (state->samples == NULL) {
-	mp_free (state);
+	delete state;
 	return NULL;
     }
 
@@ -904,6 +904,6 @@ int a52_block (a52_state_t * state)
 
 void a52_free (a52_state_t * state)
 {
-    mp_free (state->samples);
-    mp_free (state);
+    delete state->samples;
+    delete state;
 }

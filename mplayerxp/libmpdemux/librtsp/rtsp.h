@@ -63,10 +63,10 @@ int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size);
 char* rtsp_search_answers(rtsp_t *s, const char *tag);
 void rtsp_add_to_payload(char **payload, const char *string);
 
-void rtsp_free_answers(rtsp_t *this);
+void rtsp_free_answers(rtsp_t *self);
 
-int      rtsp_read (rtsp_t *this, char *data, int len);
-void     rtsp_close (rtsp_t *this);
+int      rtsp_read (rtsp_t *self, char *data, int len);
+void     rtsp_close (rtsp_t *self);
 
 void  rtsp_set_session(rtsp_t *s, const char *id);
 char *rtsp_get_session(rtsp_t *s);
@@ -74,7 +74,7 @@ char *rtsp_get_session(rtsp_t *s);
 char *rtsp_get_mrl(rtsp_t *s);
 char *rtsp_get_param(rtsp_t *s, const char *param);
 
-/*int      rtsp_peek_header (rtsp_t *this, char *data); */
+/*int      rtsp_peek_header (rtsp_t *self, char *data); */
 
 void rtsp_schedule_field(rtsp_t *s, const char *string);
 void rtsp_unschedule_field(rtsp_t *s, const char *string);

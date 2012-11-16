@@ -19,9 +19,9 @@ static void __FASTCALL__  uninit(sh_audio_t *sh);
 static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...);
 static unsigned __FASTCALL__  decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 
-#define LIBAD_EXTERN(x) const ad_functions_t mpcodecs_ad_##x = {\
+#define LIBAD_EXTERN(x) extern const ad_functions_t mpcodecs_ad_##x = {\
 	&info,\
-	&options,\
+	options,\
 	probe, \
 	preinit,\
 	init,\

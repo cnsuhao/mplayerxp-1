@@ -26,6 +26,7 @@
  * adopted from joschkas real tools.
  *
  */
+#include <algorithm>
 
 #include <stdio.h>
 #include <string.h>
@@ -157,7 +158,7 @@ static int select_mlti_data(const char *mlti_chunk, int mlti_size, int selection
 #ifdef LOG
     printf("libreal: MLTI tag not detected, copying data\n");
 #endif
-    *out = xbuffer_copyin(*out, 0, mlti_chunk, mlti_size);
+    *out = (char *)xbuffer_copyin(*out, 0, mlti_chunk, mlti_size);
     return mlti_size;
   }
 
@@ -199,7 +200,7 @@ static int select_mlti_data(const char *mlti_chunk, int mlti_size, int selection
 #ifdef LOG
   hexdump(mlti_chunk+4, size);
 #endif
-  *out = xbuffer_copyin(*out, 0, mlti_chunk+4, size);
+  *out = (char *)xbuffer_copyin(*out, 0, mlti_chunk+4, size);
   return size;
 }
 
@@ -226,8 +227,8 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
 
   if (!desc) return NULL;
 
-  buf = xbuffer_init(2048);
-  header=mp_calloc(1,sizeof(rmff_header_t));
+  buf = (char *)xbuffer_init(2048);
+  header=new(zeromem) rmff_header_t;
 
   header->fileheader=rmff_new_fileheader(4+desc->stream_count);
   header->cont=rmff_new_cont(
@@ -236,7 +237,7 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
       desc->copyright,
       desc->abstract);
   header->data=rmff_new_dataheader(0,0);
-  header->streams=mp_calloc(1,sizeof(rmff_mdpr_t*)*(desc->stream_count+1));
+  header->streams=new(zeromem) rmff_mdpr_t*[desc->stream_count+1];
 #ifdef LOG
     printf("number of streams: %u\n", desc->stream_count);
 #endif
@@ -257,7 +258,7 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
       printf("asmrp rule match: %u for stream %u\n", rulematches[j], desc->stream[i]->stream_id);
 #endif
       sprintf(b,"stream=%u;rule=%u,", desc->stream[i]->stream_id, rulematches[j]);
-      *stream_rules = xbuffer_strcat(*stream_rules, b);
+      *stream_rules = (char *)xbuffer_strcat(*stream_rules, b);
     }
 
     if (!desc->stream[i]->mlti_data) {
@@ -280,10 +281,10 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
 	len,
 	buf);
 
-    duration=FFMAX(duration,desc->stream[i]->duration);
+    duration=std::max(duration,desc->stream[i]->duration);
     max_bit_rate+=desc->stream[i]->max_bit_rate;
     avg_bit_rate+=desc->stream[i]->avg_bit_rate;
-    max_packet_size=FFMAX(max_packet_size, desc->stream[i]->max_packet_size);
+    max_packet_size=std::max(max_packet_size, desc->stream[i]->max_packet_size);
     if (avg_packet_size)
       avg_packet_size=(avg_packet_size + desc->stream[i]->avg_packet_size) / 2;
     else
@@ -307,7 +308,7 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
       desc->flags);
 
   rmff_fix_header(header);
-  buf = xbuffer_free(buf);
+  buf = (char *)xbuffer_free(buf);
   sdpplin_free(desc);
 
   return header;
@@ -325,7 +326,7 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
   static uint32_t prev_ts = -1;
   static int prev_stream_number = -1;
 
-  n=rtsp_read_data(rtsp_session, header, 8);
+  n=rtsp_read_data(rtsp_session, (char *)header, 8);
   if (n<8) return 0;
   if (header[0] != 0x24)
   {
@@ -342,7 +343,7 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
     printf("got flags1: 0x%02x\n",flags1);
 #endif
     if(header[6] == 0x06) { // eof packet
-      rtsp_read_data(rtsp_session, header, 7); // Skip the rest of the eof packet
+      rtsp_read_data(rtsp_session, (char *)header, 7); // Skip the rest of the eof packet
       /* Some files have short auxiliary streams, we must ignore eof packets
        * for these streams to avoid premature eof.
        * Now the code declares eof only if the stream with id == 0 gets eof
@@ -356,13 +357,13 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
     header[0]=header[5];
     header[1]=header[6];
     header[2]=header[7];
-    n=rtsp_read_data(rtsp_session, header+3, 5);
+    n=rtsp_read_data(rtsp_session, (char *)(header+3), 5);
     if (n<5) return 0;
 #ifdef LOG
     printf("ignoring bytes:\n");
     hexdump(header, 8);
 #endif
-    n=rtsp_read_data(rtsp_session, header+4, 4);
+    n=rtsp_read_data(rtsp_session, (char *)(header+4), 4);
     if (n<4) return 0;
     flags1=header[4];
     size-=9;
@@ -370,7 +371,7 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
   flags2=header[7];
   // header[5..6] == frame number in stream
   unknown1=(header[5]<<16)+(header[6]<<8)+(header[7]);
-  n=rtsp_read_data(rtsp_session, header, 6);
+  n=rtsp_read_data(rtsp_session, (char *)header, 6);
   if (n<6) return 0;
   ts=AV_RB32(header);
 
@@ -393,7 +394,7 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
   }
   else
     ph.flags=0;
-  *buffer = xbuffer_ensure_size(*buffer, 12+size);
+  *buffer = (char *)xbuffer_ensure_size(*buffer, 12+size);
   if(rdt_rawdata) {
     n=rtsp_read_data(rtsp_session, *buffer, size-12);
     return (n <= 0) ? 0 : n;
@@ -441,7 +442,7 @@ rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidt
   char challenge2[64];
   char checksum[34];
   char *subscribe;
-  char *buf = xbuffer_init(256);
+  char *buf = (char *)xbuffer_init(256);
   char *mrl=rtsp_get_mrl(rtsp_session);
   unsigned int size;
   int status;
@@ -496,12 +497,12 @@ rtsp_send_describe:
       goto autherr;
     }
     authlen = strlen(username) + (password ? strlen(password) : 0) + 2;
-    authstr = mp_malloc(authlen);
+    authstr = new char [authlen];
     sprintf(authstr, "%s:%s", username, password ? password : "");
-    authfield = mp_malloc(authlen*2+22);
+    authfield = new char [authlen*2+22];
     strcpy(authfield, "Authorization: Basic ");
     b64_authlen = base64_encode(authstr, authlen, authfield+21, authlen*2);
-    mp_free(authstr);
+    delete authstr;
     if (b64_authlen < 0) {
       MSG_ERR("realrtsp: base64 output overflow, this should never happen\n");
       goto autherr;
@@ -511,8 +512,7 @@ rtsp_send_describe:
   }
 autherr:
 
-  if (authfield)
-     mp_free(authfield);
+  if (authfield) delete authfield;
 
   if ( status<200 || status>299 )
   {
@@ -522,7 +522,7 @@ autherr:
 	alert);
     }
     rtsp_send_ok(rtsp_session);
-    buf = xbuffer_free(buf);
+    buf = (char *)xbuffer_free(buf);
     return NULL;
   }
 
@@ -550,21 +550,21 @@ autherr:
   printf("real: Stream description size: %u\n", size);
 #endif
 
-  description=mp_malloc(size+1);
+  description=new char [size+1];
 
   if( rtsp_read_data(rtsp_session, description, size) <= 0) {
-    buf = xbuffer_free(buf);
+    buf = (char *)xbuffer_free(buf);
     return NULL;
   }
   description[size]=0;
 
   /* parse sdp (sdpplin) and create a header and a subscribe string */
-  subscribe = xbuffer_init(256);
+  subscribe = (char *)xbuffer_init(256);
   strcpy(subscribe, "Subscribe: ");
   h=real_parse_sdp(description, &subscribe, bandwidth);
   if (!h) {
-    subscribe = xbuffer_free(subscribe);
-    buf = xbuffer_free(buf);
+    subscribe = (char *)xbuffer_free(subscribe);
+    buf = (char *)xbuffer_free(buf);
     return NULL;
   }
   rmff_fix_header(h);
@@ -576,25 +576,25 @@ autherr:
 
   /* setup our streams */
   real_calc_response_and_checksum (challenge2, checksum, challenge1);
-  buf = xbuffer_ensure_size(buf, strlen(challenge2) + strlen(checksum) + 32);
+  buf = (char *)xbuffer_ensure_size(buf, strlen(challenge2) + strlen(checksum) + 32);
   sprintf(buf, "RealChallenge2: %s, sd=%s", challenge2, checksum);
   rtsp_schedule_field(rtsp_session, buf);
-  buf = xbuffer_ensure_size(buf, strlen(session_id) + 32);
+  buf = (char *)xbuffer_ensure_size(buf, strlen(session_id) + 32);
   sprintf(buf, "If-Match: %s", session_id);
   rtsp_schedule_field(rtsp_session, buf);
   rtsp_schedule_field(rtsp_session, "Transport: x-pn-tng/tcp;mode=play,rtp/avp/tcp;unicast;mode=play");
-  buf = xbuffer_ensure_size(buf, strlen(mrl) + 32);
+  buf = (char *)xbuffer_ensure_size(buf, strlen(mrl) + 32);
   sprintf(buf, "%s/streamid=0", mrl);
   rtsp_request_setup(rtsp_session,buf,NULL);
 
   /* Do setup for all the other streams we subscribed to */
   for (i = 1; i < h->prop->num_streams; i++) {
     rtsp_schedule_field(rtsp_session, "Transport: x-pn-tng/tcp;mode=play,rtp/avp/tcp;unicast;mode=play");
-    buf = xbuffer_ensure_size(buf, strlen(session_id) + 32);
+    buf = (char *)xbuffer_ensure_size(buf, strlen(session_id) + 32);
     sprintf(buf, "If-Match: %s", session_id);
     rtsp_schedule_field(rtsp_session, buf);
 
-    buf = xbuffer_ensure_size(buf, strlen(mrl) + 32);
+    buf = (char *)xbuffer_ensure_size(buf, strlen(mrl) + 32);
     sprintf(buf, "%s/streamid=%d", mrl, i);
     rtsp_request_setup(rtsp_session,buf,NULL);
   }
@@ -614,11 +614,11 @@ autherr:
     char *str;
     if ((str = rtsp_get_param(rtsp_session, "start"))) {
       convert_timestamp(str, &s_ss, &s_ms);
-      mp_free(str);
+      delete str;
     }
     if ((str = rtsp_get_param(rtsp_session, "end"))) {
       convert_timestamp(str, &e_ss, &e_ms);
-      mp_free(str);
+      delete str;
     }
     str = buf + sprintf(buf, s_ms ? "%s%d.%d-" : "%s%d-", "Range: npt=", s_ss, s_ms);
     if (e_ss || e_ms)
@@ -628,8 +628,8 @@ autherr:
   /* and finally send a play request */
   rtsp_request_play(rtsp_session,NULL);
 
-  subscribe = xbuffer_free(subscribe);
-  buf = xbuffer_free(buf);
+  subscribe = (char *)xbuffer_free(subscribe);
+  buf = (char *)xbuffer_free(buf);
   return h;
 }
 
@@ -638,8 +638,8 @@ init_real_rtsp_session (void)
 {
   struct real_rtsp_session_t *real_rtsp_session = NULL;
 
-  real_rtsp_session = mp_malloc (sizeof (struct real_rtsp_session_t));
-  real_rtsp_session->recv = xbuffer_init (BUF_SIZE);
+  real_rtsp_session = new struct real_rtsp_session_t;
+  real_rtsp_session->recv = (uint8_t*)xbuffer_init (BUF_SIZE);
   real_rtsp_session->rdteof = 0;
   real_rtsp_session->rdt_rawdata = 0;
 
@@ -653,5 +653,5 @@ free_real_rtsp_session (struct real_rtsp_session_t* real_session)
     return;
 
   xbuffer_free (real_session->recv);
-  mp_free (real_session);
+  delete real_session;
 }

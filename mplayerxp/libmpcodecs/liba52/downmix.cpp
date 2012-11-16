@@ -343,7 +343,8 @@ int a52_downmix_coeff (sample_t * coeff, int acmod, int output, sample_t level,
 #endif // CAN_COMPILE_X86_ASM
 
 
-static void (*mix2to1)(sample_t * dest, sample_t * src, sample_t bias);
+static void mix2to1_init(sample_t * dest, sample_t * src, sample_t bias);
+static void (*mix2to1)(sample_t * dest, sample_t * src, sample_t bias)=mix2to1_init;
 static void mix2to1_init(sample_t * dest, sample_t * src, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -359,9 +360,9 @@ static void mix2to1_init(sample_t * dest, sample_t * src, sample_t bias)
 	mix2to1 = mix2to1_c;
 	(*mix2to1)(dest,src,bias);
 }
-static void (*mix2to1)(sample_t * dest, sample_t * src, sample_t bias)=mix2to1_init;
 
-static void (*mix3to1)(sample_t * samples, sample_t bias);
+static void mix3to1_init (sample_t * samples, sample_t bias);
+static void (*mix3to1)(sample_t * samples, sample_t bias)=mix3to1_init;
 static void mix3to1_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -377,9 +378,9 @@ static void mix3to1_init (sample_t * samples, sample_t bias)
 	mix3to1 = mix3to1_c;
 	(*mix3to1)(samples,bias);
 }
-static void (*mix3to1)(sample_t * samples, sample_t bias)=mix3to1_init;
 
-static void (*mix4to1)(sample_t * samples, sample_t bias);
+static void mix4to1_init (sample_t * samples, sample_t bias);
+static void (*mix4to1)(sample_t * samples, sample_t bias)=mix4to1_init;
 static void mix4to1_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -395,9 +396,9 @@ static void mix4to1_init (sample_t * samples, sample_t bias)
 	mix4to1 = mix4to1_c;
 	(*mix4to1)(samples,bias);
 }
-static void (*mix4to1)(sample_t * samples, sample_t bias)=mix4to1_init;
 
-static void (*mix5to1)(sample_t * samples, sample_t bias);
+static void mix5to1_init (sample_t * samples, sample_t bias);
+static void (*mix5to1)(sample_t * samples, sample_t bias)=mix5to1_init;
 static void mix5to1_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -413,9 +414,9 @@ static void mix5to1_init (sample_t * samples, sample_t bias)
 	mix5to1 = mix5to1_c;
 	(*mix5to1)(samples,bias);
 }
-static void (*mix5to1)(sample_t * samples, sample_t bias)=mix5to1_init;
 
-static void (*mix3to2)(sample_t * samples, sample_t bias);
+static void mix3to2_init (sample_t * samples, sample_t bias);
+static void (*mix3to2)(sample_t * samples, sample_t bias)=mix3to2_init;
 static void mix3to2_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -431,9 +432,9 @@ static void mix3to2_init (sample_t * samples, sample_t bias)
 	mix3to2 = mix3to2_c;
 	(*mix3to2)(samples,bias);
 }
-static void (*mix3to2)(sample_t * samples, sample_t bias)=mix3to2_init;
 
-static void (*mix21to2)(sample_t * left, sample_t * right, sample_t bias);
+static void mix21to2_init (sample_t * left, sample_t * right, sample_t bias);
+static void (*mix21to2)(sample_t * left, sample_t * right, sample_t bias)=mix21to2_init;
 static void mix21to2_init (sample_t * left, sample_t * right, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -449,9 +450,9 @@ static void mix21to2_init (sample_t * left, sample_t * right, sample_t bias)
 	mix21to2 = mix21to2_c;
 	(*mix21to2)(left,right,bias);
 }
-static void (*mix21to2)(sample_t * left, sample_t * right, sample_t bias)=mix21to2_init;
 
-static void (*mix21toS)(sample_t * samples, sample_t bias);
+static void mix21toS_init (sample_t * samples, sample_t bias);
+static void (*mix21toS)(sample_t * samples, sample_t bias)=mix21toS_init;
 static void mix21toS_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -467,9 +468,9 @@ static void mix21toS_init (sample_t * samples, sample_t bias)
 	mix21toS = mix21toS_c;
 	(*mix21toS)(samples,bias);
 }
-static void (*mix21toS)(sample_t * samples, sample_t bias)=mix21toS_init;
 
-static void (*mix31to2)(sample_t * samples, sample_t bias);
+static void mix31to2_init (sample_t * samples, sample_t bias);
+static void (*mix31to2)(sample_t * samples, sample_t bias)=mix31to2_init;
 static void mix31to2_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -485,9 +486,9 @@ static void mix31to2_init (sample_t * samples, sample_t bias)
 	mix31to2 = mix31to2_c;
 	(*mix31to2)(samples,bias);
 }
-static void (*mix31to2)(sample_t * samples, sample_t bias)=mix31to2_init;
 
-static void (*mix31toS)(sample_t * samples, sample_t bias);
+static void mix31toS_init (sample_t * samples, sample_t bias);
+static void (*mix31toS)(sample_t * samples, sample_t bias)=mix31toS_init;
 static void mix31toS_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -503,10 +504,9 @@ static void mix31toS_init (sample_t * samples, sample_t bias)
 	mix31toS = mix31toS_c;
 	(*mix31toS)(samples,bias);
 }
-static void (*mix31toS)(sample_t * samples, sample_t bias)=mix31toS_init;
 
-
-static void (*mix22toS)(sample_t * samples, sample_t bias);
+static void mix22toS_init (sample_t * samples, sample_t bias);
+static void (*mix22toS)(sample_t * samples, sample_t bias)=mix22toS_init;
 static void mix22toS_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -522,9 +522,9 @@ static void mix22toS_init (sample_t * samples, sample_t bias)
 	mix22toS = mix22toS_c;
 	(*mix22toS)(samples,bias);
 }
-static void (*mix22toS)(sample_t * samples, sample_t bias)=mix22toS_init;
 
-static void (*mix32to2)(sample_t * samples, sample_t bias);
+static void mix32to2_init (sample_t * samples, sample_t bias);
+static void (*mix32to2)(sample_t * samples, sample_t bias)=mix32to2_init;
 static void mix32to2_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -540,9 +540,9 @@ static void mix32to2_init (sample_t * samples, sample_t bias)
 	mix32to2 = mix32to2_c;
 	(*mix32to2)(samples,bias);
 }
-static void (*mix32to2)(sample_t * samples, sample_t bias)=mix32to2_init;
 
-static void (*mix32toS)(sample_t * samples, sample_t bias);
+static void mix32toS_init (sample_t * samples, sample_t bias);
+static void (*mix32toS)(sample_t * samples, sample_t bias)=mix32toS_init;
 static void mix32toS_init (sample_t * samples, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -558,9 +558,9 @@ static void mix32toS_init (sample_t * samples, sample_t bias)
 	mix32toS = mix32toS_c;
 	(*mix32toS)(samples,bias);
 }
-static void (*mix32toS)(sample_t * samples, sample_t bias)=mix32toS_init;
 
-static void (*move2to1)(sample_t * src, sample_t * dest, sample_t bias);
+static void move2to1_init (sample_t * src, sample_t * dest, sample_t bias);
+static void (*move2to1)(sample_t * src, sample_t * dest, sample_t bias)=move2to1_init;
 static void move2to1_init (sample_t * src, sample_t * dest, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -576,7 +576,6 @@ static void move2to1_init (sample_t * src, sample_t * dest, sample_t bias)
 	move2to1 = move2to1_c;
 	(*move2to1)(src,dest,bias);
 }
-static void (*move2to1)(sample_t * src, sample_t * dest, sample_t bias)=move2to1_init;
 
 static void zero (sample_t * samples)
 {

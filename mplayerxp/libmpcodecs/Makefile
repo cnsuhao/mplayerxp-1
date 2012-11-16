@@ -6,6 +6,7 @@ DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 CXXSRCS=dec_video.cpp vd.cpp ad.cpp dec_audio.cpp
+CXXSRCS+=ad_a52.cpp ad_hwac3.cpp
 
 SRCS=vd_null.c \
      vd_ffmpeg.c \
@@ -18,11 +19,9 @@ SRCS=vd_null.c \
      ad_null.c \
      ad_ffmpeg.c \
      ad_mp3.c \
-     ad_hwac3.c \
      ad_pcm.c \
      ad_dvdpcm.c \
      ad_faad.c \
-     ad_a52.c \
      ad_dca.c \
      codecs_ld.c
 

@@ -69,7 +69,7 @@ int a52_fillbuff(sh_audio_t *sh_audio,float *pts){
     int sample_rate=0;
     int bit_rate=0;
     float apts=0.,null_pts;
-    priv_t *priv=sh_audio->context;
+    priv_t *priv=reinterpret_cast<priv_t*>(sh_audio->context);
 
     sh_audio->a_in_buffer_len=0;
     /* sync frame:*/
@@ -80,7 +80,7 @@ int a52_fillbuff(sh_audio_t *sh_audio,float *pts){
 	    sh_audio->a_in_buffer[sh_audio->a_in_buffer_len++]=c;
 	}
 	if(sh_audio->wtag!=0x2000) swab(sh_audio->a_in_buffer,sh_audio->a_in_buffer,8);
-	length = a52_syncinfo (sh_audio->a_in_buffer, &flags, &sample_rate, &bit_rate);
+	length = a52_syncinfo ((uint8_t*)sh_audio->a_in_buffer, &flags, &sample_rate, &bit_rate);
 	if(length>=7 && length<=MAX_AC3_FRAME) break; /* we're done.*/
 	/* bad file => resync*/
 	if(sh_audio->wtag!=0x2000) swab(sh_audio->a_in_buffer,sh_audio->a_in_buffer,8);
@@ -91,10 +91,10 @@ int a52_fillbuff(sh_audio_t *sh_audio,float *pts){
     MSG_DBG2("a52: len=%d  flags=0x%X  %d Hz %d bit/s\n",length,flags,sample_rate,bit_rate);
     sh_audio->rate=sample_rate;
     sh_audio->i_bps=bit_rate/8;
-    demux_read_data_r(sh_audio->ds,sh_audio->a_in_buffer+8,length-8,apts?&null_pts:&apts);
+    demux_read_data_r(sh_audio->ds,(uint8_t*)sh_audio->a_in_buffer+8,length-8,apts?&null_pts:&apts);
     if(sh_audio->wtag!=0x2000) swab(sh_audio->a_in_buffer+8,sh_audio->a_in_buffer+8,length-8);
     priv->last_pts=*pts=apts;
-    if(crc16_block(sh_audio->a_in_buffer+2,length-2)!=0)
+    if(crc16_block((uint8_t*)sh_audio->a_in_buffer+2,length-2)!=0)
 	MSG_STATUS("a52: CRC check failed!  \n");
     return length;
 }
@@ -102,9 +102,9 @@ int a52_fillbuff(sh_audio_t *sh_audio,float *pts){
 /* returns: number of available channels*/
 static int a52_printinfo(sh_audio_t *sh_audio){
     int flags, sample_rate, bit_rate;
-    char* mode="unknown";
+    const char* mode="unknown";
     int channels=0;
-    a52_syncinfo (sh_audio->a_in_buffer, &flags, &sample_rate, &bit_rate);
+    a52_syncinfo ((uint8_t*)sh_audio->a_in_buffer, &flags, &sample_rate, &bit_rate);
     switch(flags&A52_CHANNEL_MASK){
 	case A52_CHANNEL: mode="channel"; channels=2; break;
 	case A52_MONO: mode="mono"; channels=1; break;
@@ -138,9 +138,9 @@ MPXP_Rc preinit(sh_audio_t *sh)
 #define A52_FMT24 AFMT_S24_LE
 #endif
   sh->afmt=bps2afmt(2);
-  if(af_query_fmt(sh->afilter,AFMT_FLOAT32) == MPXP_Ok||
-     af_query_fmt(sh->afilter,A52_FMT32) == MPXP_Ok ||
-     af_query_fmt(sh->afilter,A52_FMT24) == MPXP_Ok) {
+  if(af_query_fmt(sh->afilter,mpaf_format_e(AFMT_FLOAT32)) == MPXP_Ok||
+     af_query_fmt(sh->afilter,mpaf_format_e(A52_FMT32)) == MPXP_Ok ||
+     af_query_fmt(sh->afilter,mpaf_format_e(A52_FMT24)) == MPXP_Ok) {
     sh->afmt=AFMT_FLOAT32;
   }
   sh->audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh->afmt)*256*6;
@@ -182,7 +182,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
 	/* test:*/
 	flags=mpxp_a52_flags|A52_ADJUST_LEVEL;
 	MSG_V("A52 flags before a52_frame: 0x%X\n",flags);
-	if (a52_frame (mpxp_a52_state, sh_audio->a_in_buffer, &flags, &level, bias)){
+	if (a52_frame (mpxp_a52_state, (uint8_t*)sh_audio->a_in_buffer, &flags, &level, bias)){
 	    MSG_ERR("a52: error decoding frame -> nosound\n");
 	    return MPXP_False;
 	}
@@ -233,12 +233,12 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
     unsigned len=0;
     UNUSED(minlen);
     UNUSED(maxlen);
-    priv_t *priv=sh_audio->context;
+    priv_t *priv=reinterpret_cast<priv_t*>(sh_audio->context);
     if(!sh_audio->a_in_buffer_len) {
 	if(a52_fillbuff(sh_audio,pts)<0) return len; /* EOF */
     } else *pts=priv->last_pts;
     sh_audio->a_in_buffer_len=0;
-    if (a52_frame (mpxp_a52_state, sh_audio->a_in_buffer, &flags, &level, bias)){
+    if (a52_frame (mpxp_a52_state, (uint8_t*)sh_audio->a_in_buffer, &flags, &level, bias)){
 	MSG_WARN("a52: error decoding frame\n");
 	return len;
     }

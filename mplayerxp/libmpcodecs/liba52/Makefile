@@ -1,9 +1,12 @@
 include ../../mp_config.mak
 
-SRCS    = crc.c bit_allocate.c bitstream.c downmix.c imdct.c parse.c resample.c
+CXXSRCS = parse.cpp bitstream.cpp imdct.cpp downmix.cpp bit_allocate.cpp crc.cpp resample.cpp
+SRCS    = 
 OBJS	= $(SRCS:.c=.o)
+CXXOBJS	= $(CXXSRCS:.cpp=.o)
 
 CFLAGS  = $(MLIB_INC) $(OPTFLAGS) -W -Wall
+CXXFLAGS  = $(MLIB_INC) $(OPTXXFLAGS) -W -Wall
 
 .SUFFIXES: .c .o
 
@@ -11,8 +14,10 @@ CFLAGS  = $(MLIB_INC) $(OPTFLAGS) -W -Wall
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CC) -c $(CXXFLAGS) -o $@ $<
 
-all:	$(OBJS)
+all:	$(OBJS) $(CXXOBJS)
 
 clean:
 	rm -f *.o *.a *~
@@ -23,7 +28,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

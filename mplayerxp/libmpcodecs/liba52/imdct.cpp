@@ -121,7 +121,8 @@ extern uint32_t a52_accel;
 
 #endif // CAN_COMPILE_X86_ASM
 
-static void (*ifft2_2) (complex_t * buf);
+static void ifft2_2_init (complex_t * buf);
+static void (*ifft2_2) (complex_t * buf)=ifft2_2_init;
 static void ifft2_2_init (complex_t * buf)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -141,9 +142,9 @@ static void ifft2_2_init (complex_t * buf)
 	ifft2_2 = ifft2_2_c;
 	(*ifft2_2)(buf);
 }
-static void (*ifft2_2) (complex_t * buf)=ifft2_2_init;
 
-static void (*ifft4) (complex_t * buf);
+static void ifft4_init (complex_t * buf);
+static void (*ifft4) (complex_t * buf)=ifft4_init;
 static void ifft4_init (complex_t * buf)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -163,7 +164,6 @@ static void ifft4_init (complex_t * buf)
 	ifft4 = ifft4_c;
 	(*ifft4)(buf);
 }
-static void (*ifft4) (complex_t * buf)=ifft4_init;
 
 /* the basic split-radix ifft butterfly */
 
@@ -298,7 +298,8 @@ static void ifft128_c (complex_t * buf)
     ifft_pass (buf, roots128 - 32, 32);
 }
 
-static void (*imdct_512) (sample_t * data, sample_t * delay, sample_t bias);
+static void imdct_512_init (sample_t * data, sample_t * delay, sample_t bias);
+static void (*imdct_512) (sample_t * data, sample_t * delay, sample_t bias)=imdct_512_init;
 static void imdct_512_init (sample_t * data, sample_t * delay, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -318,14 +319,14 @@ static void imdct_512_init (sample_t * data, sample_t * delay, sample_t bias)
 	imdct_512 = imdct_512_c;
 	(*imdct_512)(data,delay,bias);
 }
-static void (*imdct_512) (sample_t * data, sample_t * delay, sample_t bias)=imdct_512_init;
 
 void a52_imdct_512 (sample_t * data, sample_t * delay, sample_t bias)
 {
     (*imdct_512)(data,delay,bias);
 }
 
-static void (*imdct_256) (sample_t * data, sample_t * delay, sample_t bias);
+static void imdct_256_init (sample_t * data, sample_t * delay, sample_t bias);
+static void (*imdct_256) (sample_t * data, sample_t * delay, sample_t bias)=imdct_256_init;
 static void imdct_256_init (sample_t * data, sample_t * delay, sample_t bias)
 {
 #ifdef CAN_COMPILE_X86_ASM
@@ -345,7 +346,6 @@ static void imdct_256_init (sample_t * data, sample_t * delay, sample_t bias)
 	imdct_256 = imdct_256_c;
 	(*imdct_256)(data,delay,bias);
 }
-static void (*imdct_256) (sample_t * data, sample_t * delay, sample_t bias)=imdct_256_init;
 
 void a52_imdct_256 (sample_t * data, sample_t * delay, sample_t bias)
 {
@@ -363,11 +363,11 @@ static double besselI0 (double x)
     return bessel;
 }
 
-char * a52_imdct_init (void)
+const char * a52_imdct_init (void)
 {
     int i, k;
     double sum;
-    char *rval;
+    const char *rval;
 
     /* compute imdct window - kaiser-bessel derived window, alpha = 5.0 */
     sum = 0;

@@ -51,6 +51,9 @@ enum {
     A52_ADJUST_LEVEL=32
 };
 
+typedef int (*a52_resample_t) (float * _f, int16_t * s16);
+typedef int (*a52_resample32_t) (float * _f, float * s16);
+
 a52_state_t * a52_init (uint32_t mm_accel);
 sample_t * a52_samples (a52_state_t * state);
 extern int a52_syncinfo (uint8_t * buf, int * flags,
@@ -62,8 +65,9 @@ extern void a52_dynrng (a52_state_t * state,
 extern int a52_block (a52_state_t * state);
 extern void a52_free (a52_state_t * state);
 extern uint16_t crc16_block(uint8_t *data,uint32_t num_bytes);
-extern any_t* a52_resample_init_float(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
-extern any_t* a52_resample_init(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern a52_resample32_t a52_resample_init_float(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern a52_resample_t a52_resample_init(a52_state_t * state,uint32_t mm_accel,int flags,int chans);
+
 extern int (* a52_resample) (float * _f, int16_t * s16);
 extern int (* a52_resample32) (float * _f, float * s16);
 

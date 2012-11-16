@@ -16,14 +16,14 @@
 int (* a52_resample) (float * _f, int16_t * s16)=NULL;
 int (* a52_resample32) (float * _f, float * s16)=NULL;
 
-#include "resample_c.c"
+#include "resample_c.h"
 
 #ifdef CAN_COMPILE_MMX
-#include "resample_mmx.c"
+#include "resample_mmx.h"
 #endif
 
-any_t* a52_resample_init(a52_state_t * state,uint32_t mm_accel,int flags,int chans){
-any_t* tmp;
+a52_resample_t a52_resample_init(a52_state_t * state,uint32_t mm_accel,int flags,int chans){
+    a52_resample_t tmp;
 
 #ifdef CAN_COMPILE_MMX
     if(mm_accel&MM_ACCEL_X86_MMX){
@@ -47,8 +47,9 @@ any_t* tmp;
     return NULL;
 }
 
-any_t* a52_resample_init_float(a52_state_t * state,uint32_t mm_accel,int flags,int chans){
-any_t* tmp;
+a52_resample32_t a52_resample_init_float(a52_state_t * state,uint32_t mm_accel,int flags,int chans)
+{
+    a52_resample32_t tmp;
 
 #if 0 //#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     if(mm_accel&MM_ACCEL_X86_MMX){
@@ -63,7 +64,7 @@ any_t* tmp;
 
     tmp=a52_resample_f32(state,flags,chans);
     if(tmp){
-	if(a52_resample_f32==NULL) fprintf(stderr, "No accelerated resampler found\n");
+	if(a52_resample32==NULL) fprintf(stderr, "No accelerated resampler found\n");
 	a52_resample32=tmp;
 	return tmp;
     }
