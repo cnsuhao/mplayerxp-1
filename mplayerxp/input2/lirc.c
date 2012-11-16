@@ -11,7 +11,6 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-#include "mp_msg.h"
 #include "help_mp.h"
 #include "input.h"
 #include "in_msg.h"
@@ -24,13 +23,13 @@ typedef struct priv_s {
     char*	cmd_buf;
 }priv_t;
 
-any_t* mp_input_lirc_init(void) {
+any_t* mp_input_lirc_open(void) {
     priv_t* priv=mp_mallocz(sizeof(priv_t));
 
     MSG_INFO(MSGTR_SettingUpLIRC);
     if((priv->lirc_sock=lirc_init("mplayer",1))==-1){
 	MSG_ERR(MSGTR_LIRCopenfailed MSGTR_LIRCdisabled);
-	mo_free(priv);
+	mp_free(priv);
 	return NULL;
     }
 
@@ -44,7 +43,7 @@ any_t* mp_input_lirc_init(void) {
     return priv;
 }
 
-int mp_input_lirc_read(any_t* ctx,char* dest, int s) {
+int mp_input_lirc_read_cmd(any_t* ctx,char* dest, int s) {
     priv_t* priv = (priv_t*)ctx;
     fd_set fds;
     struct timeval tv;
@@ -56,7 +55,7 @@ int mp_input_lirc_read(any_t* ctx,char* dest, int s) {
 	int l = strlen(priv->cmd_buf), w = l > s ? s : l;
 	memcpy(dest,priv->cmd_buf,w);
 	l -= w;
-	if(l > 0) memmove(priv->cmd_buf,&cmd_buf[w],l+1);
+	if(l > 0) memmove(priv->cmd_buf,&priv->cmd_buf[w],l+1);
 	else {
 	    mp_free(priv->cmd_buf);
 	    priv->cmd_buf = NULL;
@@ -67,7 +66,7 @@ int mp_input_lirc_read(any_t* ctx,char* dest, int s) {
     FD_ZERO(&fds);
     FD_SET(priv->lirc_sock,&fds);
     memset(&tv,0,sizeof(tv));
-    while((r = select(fd+1,&fds,NULL,NULL,&tv)) <= 0) {
+    while((r = select(1,&fds,NULL,NULL,&tv)) <= 0) {
 	if(r < 0) {
 	    if(errno == EINTR) continue;
 	    MSG_ERR("Select error : %s\n",strerror(errno));
@@ -97,7 +96,7 @@ int mp_input_lirc_read(any_t* ctx,char* dest, int s) {
 
     if(r < 0) return MP_INPUT_DEAD;
     else if(priv->cmd_buf) // return the first command in the buffer
-	return mp_input_lirc_read(priv->lirc_sock,dest,s);
+	return mp_input_lirc_read_cmd(priv->lirc_sock,dest,s);
     else
 	return MP_INPUT_NOTHING;
 }

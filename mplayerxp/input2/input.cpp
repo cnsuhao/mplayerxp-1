@@ -1299,8 +1299,8 @@ static void mp_input_init(any_t* handle) {
 
 #ifdef HAVE_LIRC
     if(libinput_conf.use_lirc) {
-	any_t* lirc_fd = mp_input_lirc_init();
-	if(fd > 0) mp_input_add_cmd_fd(priv,lirc_fd,0,mp_input_lirc_read_cmd,mp_input_lirc_close);
+	any_t* lirc_fd = mp_input_lirc_open();
+	if(lirc_fd) mp_input_add_cmd_fd(priv,lirc_fd,0,mp_input_lirc_read_cmd,mp_input_lirc_close);
     }
 #endif
 
