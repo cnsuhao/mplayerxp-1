@@ -22,6 +22,8 @@ extern "C" {
 #include "osdep/mplib.h"
 #include "libmpconf/cfgparser.h"
 
+#include "in_msg.h"
+}
 #ifdef HAVE_LIRC
 #include "lirc.h"
 #endif
@@ -29,9 +31,6 @@ extern "C" {
 #ifdef HAVE_LIRCC
 #include <lirc/lircc.h>
 #endif
-
-#include "in_msg.h"
-}
 #include "joystick.h"
 #include "osdep/getch2.h"
 

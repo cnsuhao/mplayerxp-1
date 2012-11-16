@@ -24,12 +24,12 @@ typedef struct priv_s {
 }priv_t;
 
 any_t* mp_input_lirc_open(void) {
-    priv_t* priv=mp_mallocz(sizeof(priv_t));
+    priv_t* priv=new(zeromem) priv_t;
 
     MSG_INFO(MSGTR_SettingUpLIRC);
-    if((priv->lirc_sock=lirc_init("mplayer",1))==-1){
+    if((priv->lirc_sock=lirc_init(const_cast<char*>("mplayer"),1))==-1){
 	MSG_ERR(MSGTR_LIRCopenfailed MSGTR_LIRCdisabled);
-	mp_free(priv);
+	delete priv;
 	return NULL;
     }
 
@@ -37,7 +37,7 @@ any_t* mp_input_lirc_open(void) {
 	MSG_ERR(MSGTR_LIRCcfgerr MSGTR_LIRCdisabled,
 		lirc_configfile == NULL ? "~/.lircrc" : lirc_configfile);
 	lirc_deinit();
-	mp_free(priv);
+	delete priv;
 	return NULL;
     }
     return priv;
@@ -57,7 +57,7 @@ int mp_input_lirc_read_cmd(any_t* ctx,char* dest, int s) {
 	l -= w;
 	if(l > 0) memmove(priv->cmd_buf,&priv->cmd_buf[w],l+1);
 	else {
-	    mp_free(priv->cmd_buf);
+	    delete priv->cmd_buf;
 	    priv->cmd_buf = NULL;
 	}
 	return w;
@@ -86,17 +86,17 @@ int mp_input_lirc_read_cmd(any_t* ctx,char* dest, int s) {
     while((r = lirc_code2char(lirc_config,code,&c))==0 && c!=NULL) {
 	int l = strlen(c);
 	if(l <= 0) continue;
-	priv->cmd_buf = mp_realloc(priv->cmd_buf,cl+l+2);
+	priv->cmd_buf = (char *)mp_realloc(priv->cmd_buf,cl+l+2);
 	memcpy(&priv->cmd_buf[cl],c,l);
 	cl += l+1;
 	priv->cmd_buf[cl-1] = '\n';
 	priv->cmd_buf[cl] = '\0';
     }
-    mp_free(code);
+    delete code;
 
     if(r < 0) return MP_INPUT_DEAD;
     else if(priv->cmd_buf) // return the first command in the buffer
-	return mp_input_lirc_read_cmd(priv->lirc_sock,dest,s);
+	return mp_input_lirc_read_cmd(priv,dest,s);
     else
 	return MP_INPUT_NOTHING;
 }
@@ -104,12 +104,12 @@ int mp_input_lirc_read_cmd(any_t* ctx,char* dest, int s) {
 void mp_input_lirc_close(any_t* ctx) {
     priv_t* priv = (priv_t*)ctx;
     if(priv->cmd_buf) {
-	mp_free(priv->cmd_buf);
+	delete priv->cmd_buf;
 	priv->cmd_buf = NULL;
     }
     lirc_freeconfig(lirc_config);
     lirc_deinit();
-    mp_free(priv);
+    delete priv;
 }
 
 #endif
