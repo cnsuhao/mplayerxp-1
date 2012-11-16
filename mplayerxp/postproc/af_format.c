@@ -66,26 +66,29 @@ static MPXP_Rc __FASTCALL__ check_format(mpaf_format_e format)
     return MPXP_Ok;
 }
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_format_t* s = af->setup;
+    // Make sure this filter isn't redundant
+    if(af->data->format == arg->format)
+	return MPXP_Detach;
+    // Check for errors in configuraton
+    if((MPXP_Ok != check_format(arg->format)) ||
+	(MPXP_Ok != check_format(af->data->format)))
+	return MPXP_Error;
+    s->fmt = arg->format;
+    af->data->rate = arg->rate;
+    af->data->nch  = arg->nch;
+    af->mul.n      = af->data->format&MPAF_BPS_MASK;
+    af->mul.d      = arg->format&MPAF_BPS_MASK;
+    return MPXP_Ok;
+}
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
     af_format_t* s = af->setup;
     char buf1[256],buf2[256];
     switch(cmd){
-	case AF_CONTROL_REINIT:
-	    // Make sure this filter isn't redundant
-	    if(af->data->format == ((mp_aframe_t*)arg)->format)
-		return MPXP_Detach;
-	    // Check for errors in configuraton
-	    if((MPXP_Ok != check_format(((mp_aframe_t*)arg)->format)) ||
-		(MPXP_Ok != check_format(af->data->format)))
-		return MPXP_Error;
-	    s->fmt = ((mp_aframe_t*)arg)->format;
-	    af->data->rate = ((mp_aframe_t*)arg)->rate;
-	    af->data->nch  = ((mp_aframe_t*)arg)->nch;
-	    af->mul.n      = af->data->format&MPAF_BPS_MASK;
-	    af->mul.d      = ((mp_aframe_t*)arg)->format&MPAF_BPS_MASK;
-	    return MPXP_Ok;
 	case AF_CONTROL_SHOWCONF:
 	    MSG_INFO("[af_format] Changing sample format %s -> %s\n",
 		mpaf_fmt2str(s->fmt,buf1,255),
@@ -208,6 +211,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+    af->config=config;
     af->control=control;
     af->uninit=uninit;
     af->play=play;

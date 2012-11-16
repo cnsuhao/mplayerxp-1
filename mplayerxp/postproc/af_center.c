@@ -25,21 +25,23 @@ typedef struct af_center_s
 }af_center_t;
 
 // Initialization and runtime control
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_center_t* s   = af->setup;
+    // Sanity check
+    if(!arg) return MPXP_Error;
+
+    af->data->rate   = arg->rate;
+    af->data->nch    = max(s->ch+1,arg->nch);
+    af->data->format = MPAF_NE|MPAF_F|4;
+
+    return af_test_output(af,arg);
+}
 static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_center_t* s   = af->setup;
 
   switch(cmd){
-  case AF_CONTROL_REINIT:{
-    // Sanity check
-    if(!arg) return MPXP_Error;
-
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = max(s->ch+1,((mp_aframe_t*)arg)->nch);
-    af->data->format = MPAF_NE|MPAF_F|4;
-
-    return af_test_output(af,(mp_aframe_t*)arg);
-  }
   case AF_CONTROL_COMMAND_LINE:{
     int   ch=1;
     sscanf(arg,"%i", &ch);
@@ -93,6 +95,7 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 // Allocate memory and set function pointers
 static MPXP_Rc af_open(af_instance_t* af){
   af_center_t* s;
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

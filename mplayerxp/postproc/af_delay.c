@@ -32,28 +32,6 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   af_delay_t* s = af->setup;
 
   switch(cmd){
-  case AF_CONTROL_REINIT:{
-    unsigned i;
-
-    // Free prevous delay queues
-    for(i=0;i<af->data->nch;i++){
-      if(s->q[i])
-	mp_free(s->q[i]);
-    }
-
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch;
-    af->data->format = ((mp_aframe_t*)arg)->format;
-
-    // Allocate new delay queues
-    for(i=0;i<af->data->nch;i++){
-      s->q[i] = mp_calloc(L,af->data->format&MPAF_BPS_MASK);
-      if(NULL == s->q[i])
-	MSG_FATAL(MSGTR_OutOfMemory);
-    }
-
-    return control(af,AF_CONTROL_DELAY_LEN | AF_CONTROL_SET,s->d);
-  }
   case AF_CONTROL_COMMAND_LINE:{
     int n = 1;
     int i = 0;
@@ -93,6 +71,31 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   default: break;
   }
   return MPXP_Unknown;
+}
+
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_delay_t* s = af->setup;
+    unsigned i;
+
+    // Free prevous delay queues
+    for(i=0;i<af->data->nch;i++){
+      if(s->q[i])
+	mp_free(s->q[i]);
+    }
+
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch;
+    af->data->format = arg->format;
+
+    // Allocate new delay queues
+    for(i=0;i<af->data->nch;i++){
+      s->q[i] = mp_calloc(L,af->data->format&MPAF_BPS_MASK);
+      if(NULL == s->q[i])
+	MSG_FATAL(MSGTR_OutOfMemory);
+    }
+
+    return control(af,AF_CONTROL_DELAY_LEN | AF_CONTROL_SET,s->d);
 }
 
 // Deallocate memory
@@ -169,6 +172,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

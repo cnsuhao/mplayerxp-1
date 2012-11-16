@@ -18,15 +18,15 @@
 // Data for specific instances of this filter
 
 // Initialization and runtime control
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af->data->rate	= arg->rate;
+    af->data->nch	= arg->nch;
+    af->data->format	= MPAF_NE|MPAF_F|4;
+    return af_test_output(af,arg);
+}
 static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-    switch(cmd){
-	case AF_CONTROL_REINIT:
-	af->data->rate	= ((mp_aframe_t*)arg)->rate;
-	af->data->nch	= ((mp_aframe_t*)arg)->nch;
-	af->data->format= MPAF_NE|MPAF_F|4;
-	return af_test_output(af,(mp_aframe_t*)arg);
-    }
     return MPXP_Unknown;
 }
 
@@ -63,6 +63,7 @@ static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
 
 // Allocate memory and set function pointers
 static MPXP_Rc af_open(af_instance_t* af){
+    af->config	= config;
     af->control	= control;
     af->uninit	= uninit;
     af->play	= play;

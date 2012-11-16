@@ -74,21 +74,17 @@ static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
   b[1] = -1.0050;
 }
 
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
 {
-  af_equalizer_t* s   = (af_equalizer_t*)af->setup;
-
-  switch(cmd){
-  case AF_CONTROL_REINIT:{
+    af_equalizer_t* s   = (af_equalizer_t*)af->setup;
     unsigned k =0;
     float F[KM] = CF;
 
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch;
     af->data->format = MPAF_NE|MPAF_F|4;
 
     // Calculate number of active filters
@@ -108,7 +104,13 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     af->delay += 2000.0/((float)af->data->rate);
 
     return af_test_output(af,arg);
-  }
+}
+// Initialization and runtime control
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+{
+  af_equalizer_t* s   = (af_equalizer_t*)af->setup;
+
+  switch(cmd){
   case AF_CONTROL_SHOWCONF:
     {
 	unsigned k;
@@ -209,6 +211,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

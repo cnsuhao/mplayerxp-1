@@ -264,6 +264,38 @@ inline void update_ch(af_hrtf_t *s, real_t *in, const int k)
     s->ba_r[k] = in[4] + in[1] + in[3];
 }
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_hrtf_t *s = af->setup;
+    int test_output_res;
+    af->data->rate   = arg->rate;
+    if(af->data->rate != 48000) {
+	// automatic samplerate adjustment in the filter chain
+	// is not yet supported.
+	//MSG_ERR("[hrtf] ERROR: Sampling rate is not 48000 Hz (%d)!\n",
+	//	   af->data->rate);
+	//return MPXP_Error;
+
+	/* NK: Let use af_resample here */
+	af->data->rate = 48000;
+    }
+    af->data->nch    = arg->nch;
+    if(af->data->nch == 2) {
+	/* 2 channel input */
+	if(s->decode_mode != HRTF_MIX_MATRIX2CH) {
+	    /* Default behavior is stereo mixing. */
+	    s->decode_mode = HRTF_MIX_STEREO;
+	}
+    }
+    else if (af->data->nch < 5) af->data->nch = 5;
+    af->data->format = MPAF_F|MPAF_NE|4;
+    af->mul.n = 2;
+    af->mul.d = af->data->nch;
+    test_output_res = af_test_output(af,arg);
+    // after testing input set the real output format
+    af->data->nch = 2;
+    return test_output_res;
+}
 /* Initialization and runtime control */
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s *af, int cmd, any_t* arg)
 {
@@ -272,34 +304,6 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s *af, int cmd, any_t* ar
     char mode;
 
     switch(cmd) {
-    case AF_CONTROL_REINIT:
-	af->data->rate   = ((mp_aframe_t*)arg)->rate;
-	if(af->data->rate != 48000) {
-	    // automatic samplerate adjustment in the filter chain
-	    // is not yet supported.
-	    //MSG_ERR("[hrtf] ERROR: Sampling rate is not 48000 Hz (%d)!\n",
-	    //	   af->data->rate);
-	    //return MPXP_Error;
-
-	    /* NK: Let use af_resample here */
-	    af->data->rate = 48000;
-	}
-	af->data->nch    = ((mp_aframe_t*)arg)->nch;
-	    if(af->data->nch == 2) {
-		/* 2 channel input */
-		if(s->decode_mode != HRTF_MIX_MATRIX2CH) {
-		    /* Default behavior is stereo mixing. */
-		    s->decode_mode = HRTF_MIX_STEREO;
-		}
-	    }
-	    else if (af->data->nch < 5) af->data->nch = 5;
-	af->data->format = MPAF_F|MPAF_NE|4;
-	af->mul.n = 2;
-	af->mul.d = af->data->nch;
-	test_output_res = af_test_output(af, (mp_aframe_t*)arg);
-	// after testing input set the real output format
-	af->data->nch = 2;
-	return test_output_res;
     case AF_CONTROL_COMMAND_LINE:
 	sscanf((char*)arg, "%c", &mode);
 	switch(mode) {
@@ -571,6 +575,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af)
     af_hrtf_t *s;
     float fc;
 
+    af->config = config;
     af->control = control;
     af->uninit = uninit;
     af->play = play;

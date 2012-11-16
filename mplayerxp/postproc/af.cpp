@@ -264,7 +264,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
     in.audio=NULL;
     in.len=0;
 
-    rv = af->control(af,AF_CONTROL_REINIT,&in);
+    rv = af->config(af,&in);
     switch(rv){
     case MPXP_Ok:
       break;
@@ -279,7 +279,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 	  // Initialize channels filter
 	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(mp_aframe_t));
 	  else		  memcpy(&in,_new->prev->data,sizeof(mp_aframe_t));
-	  if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) return rv;
+	  if(MPXP_Ok != (rv = _new->config(_new,&in))) return rv;
 	}
 	// Insert rate filter
 	if((af->prev?af->prev->data->rate:s->input.rate) != in.rate){
@@ -288,13 +288,13 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 	  // Initialize channels filter
 	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(mp_aframe_t));
 	  else		  memcpy(&in,_new->prev->data,sizeof(mp_aframe_t));
-	  if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) {
+	  if(MPXP_Ok != (rv = _new->config(_new,&in))) {
 	    af_instance_t* af2 = af_prepend(s,af,"format");
 	    // Init the _new filter
 	    if(af2) {
 		if((MPXP_Ok != af2->control(af2,AF_CONTROL_FORMAT,&in.format))) return -1;
 		if(MPXP_Ok != af_reinit(s,af2)) return MPXP_Error;
-		rv = _new->control(_new,AF_CONTROL_REINIT,&in);
+		rv = _new->config(_new,&in);
 	    }
 	    return rv;
 	  }
@@ -306,7 +306,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 	  // Initialize format filter
 	  if(!_new->prev) memcpy(&in,&(s->input),sizeof(mp_aframe_t));
 	  else		  memcpy(&in,_new->prev->data,sizeof(mp_aframe_t));
-	  if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) return rv;
+	  if(MPXP_Ok != (rv = _new->config(_new,&in))) return rv;
 	}
 	if(!_new){ // Should _never_ happen
 	  MSG_ERR("[libaf] Unable to correct audio format. "

@@ -80,15 +80,12 @@ typedef struct af_surround_s
   int ri;	 // Read index for delay queue
 }af_surround_t;
 
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
 {
-  af_surround_t *s = af->setup;
-  switch(cmd){
-  case AF_CONTROL_REINIT:{
+    af_surround_t *s = af->setup;
     float fc;
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch*2;
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch*2;
     af->data->format = MPAF_F|MPAF_NE|4;
 
     if (af->data->nch != 4){
@@ -119,12 +116,14 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 //    printf("%i\n",s->wi);
     s->ri = 0;
 
-    if((af->data->format != ((mp_aframe_t*)arg)->format)) {
-	((mp_aframe_t*)arg)->format = af->data->format;
-	return MPXP_False;
-    }
+    if(af->data->format != arg->format) return MPXP_False;
     return MPXP_Ok;
-  }
+}
+// Initialization and runtime control
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+{
+  af_surround_t *s = af->setup;
+  switch(cmd){
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_surround] delay time %f\n",s->d);
     return MPXP_Ok;
@@ -250,6 +249,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 }
 
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;
@@ -266,10 +266,10 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
 
 const af_info_t af_info_surround =
 {
-	"Surround decoder filter",
-	"surround",
-	"Steve Davies <steve@daviesfam.org>",
-	"",
-	AF_FLAGS_NOT_REENTRANT,
-	af_open
+    "Surround decoder filter",
+    "surround",
+    "Steve Davies <steve@daviesfam.org>",
+    "",
+    AF_FLAGS_NOT_REENTRANT,
+    af_open
 };

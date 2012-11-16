@@ -33,6 +33,20 @@ typedef struct af_comp_s
   float	ratio[AF_NCH];		// Compression ratio
 }af_comp_t;
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_comp_t* s   = (af_comp_t*)af->setup;
+    // Sanity check
+    if(!arg) return MPXP_Error;
+
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch;
+    af->data->format = MPAF_F|MPAF_NE|4;
+
+    // Time constant set to 0.1s
+    //    s->alpha = (1.0/0.2)/(2.0*M_PI*(float)((mp_aframe_t*)arg)->rate);
+    return af_test_output(af,arg);
+}
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
@@ -40,17 +54,6 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   int i;
 
   switch(cmd){
-  case AF_CONTROL_REINIT:
-    // Sanity check
-    if(!arg) return MPXP_Error;
-
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch;
-    af->data->format = MPAF_F|MPAF_NE|4;
-
-    // Time constant set to 0.1s
-    //    s->alpha = (1.0/0.2)/(2.0*M_PI*(float)((mp_aframe_t*)arg)->rate);
-    return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_COMMAND_LINE:{
 /*     float v=-10.0; */
 /*     float vol[AF_NCH]; */
@@ -141,6 +144,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

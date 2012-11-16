@@ -236,13 +236,10 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
   return data;
 }
 
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
 {
-  af_scaletempo_t* s = af->setup;
-  switch(cmd){
-  case AF_CONTROL_REINIT:{
-    mp_aframe_t* data = (mp_aframe_t*)arg;
+    af_scaletempo_t* s = af->setup;
+    mp_aframe_t* data = arg;
     float srate = data->rate / 1000;
     int nch = data->nch;
     int bps;
@@ -342,7 +339,12 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	    (int)(s->bytes_queue / nch / bps));
 
     return af_test_output(af, (mp_aframe_t*)arg);
-  }
+}
+// Initialization and runtime control
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+{
+  af_scaletempo_t* s = af->setup;
+  switch(cmd){
   case AF_CONTROL_PLAYBACK_SPEED | AF_CONTROL_SET:{
     if (s->speed_tempo) {
       if (s->speed_pitch) {
@@ -438,6 +440,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 static MPXP_Rc __FASTCALL__ af_open(struct af_instance_s* af){
   af_scaletempo_t* s;
 
+  af->config    = config;
   af->control   = control;
   af->uninit    = uninit;
   af->play      = play;

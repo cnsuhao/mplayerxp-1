@@ -464,32 +464,33 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
     }
 }
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_crystality_t* s = af->setup;
+    unsigned i_bps,fmt;
+    // Sanity check
+    if(!arg) return MPXP_Error;
+    if(arg->nch!=2) return MPXP_Error;
+
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch;
+    af->data->format = MPAF_NE|MPAF_F|4;
+    init_crystality(s,af->data->rate);
+    i_bps=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->i_bps*8;
+    fmt=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->wtag;
+    if(fmt==0x55 || fmt==0x50) {/* MP3 */
+	((af_crystality_t *)af->setup)->hf_div=i_bps/6000;
+    }
+    else ((af_crystality_t *)af->setup)->hf_div=32;
+
+    return af_test_output(af,arg);
+}
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_crystality_t* s   = (af_crystality_t*)af->setup;
 
   switch(cmd){
-  case AF_CONTROL_REINIT:{
-    unsigned i_bps,fmt;
-    // Sanity check
-    if(!arg) return MPXP_Error;
-    if(((mp_aframe_t*)arg)->nch!=2) return MPXP_Error;
-
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch;
-    af->data->format = MPAF_NE|MPAF_F|4;
-    init_crystality(s,af->data->rate);
-    i_bps=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->i_bps*8;
-    fmt=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->wtag;
-    if(fmt==0x55 || fmt==0x50) /* MP3 */
-    {
-	((af_crystality_t *)af->setup)->hf_div=i_bps/6000;
-    }
-    else ((af_crystality_t *)af->setup)->hf_div=32;
-
-    return af_test_output(af,arg);
-  }
   case AF_CONTROL_COMMAND_LINE:{
     sscanf((char*)arg,"%d:%d:%d:%d:%d:%d:%d",
 	    &s->bext_level,
@@ -527,6 +528,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config = config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

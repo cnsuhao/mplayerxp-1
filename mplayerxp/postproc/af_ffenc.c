@@ -78,12 +78,9 @@ static uint32_t find_atag(const char *codec)
 	return 0;
 }
 
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
 {
-  af_ffenc_t *s=af->setup;
-  switch(cmd){
-  case AF_CONTROL_REINIT:
+    af_ffenc_t *s=af->setup;
     if(!s->acodec_inited){
       avcodec_register_all();
       s->acodec_inited=1;
@@ -100,23 +97,28 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     s->lavc_context=avcodec_alloc_context3(s->lavc_codec);
     /* put sample parameters */
     s->lavc_context->bit_rate = s->brate;
-    s->lavc_context->sample_rate = ((mp_aframe_t*)arg)->rate;
-    s->lavc_context->channels = ((mp_aframe_t*)arg)->nch;
+    s->lavc_context->sample_rate = arg->rate;
+    s->lavc_context->channels = arg->nch;
     s->lavc_context->sample_fmt = AV_SAMPLE_FMT_S16;
     /* af_open it */
     if (avcodec_open(s->lavc_context, s->lavc_codec) < 0) {
 	MSG_ERR("could not af_open codec %s with libavcodec\n",s->cname);
 	return MPXP_Error;
     }
-    s->frame_size = s->lavc_context->frame_size*((mp_aframe_t*)arg)->nch*2/*bps*/;
+    s->frame_size = s->lavc_context->frame_size*arg->nch*2/*bps*/;
     s->tail=mp_malloc(s->frame_size);
     /* correct in format */
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch;
     af->data->format = find_atag(s->cname)<<16;
-    ((mp_aframe_t*)arg)->format=MPAF_SI|MPAF_NE|2;
     MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
     return MPXP_Ok;
+}
+// Initialization and runtime control
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+{
+  af_ffenc_t *s=af->setup;
+  switch(cmd){
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_ffenc] in use [%s %u]\n",s->cname,s->brate);
     return MPXP_Ok;
@@ -206,6 +208,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

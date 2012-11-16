@@ -39,19 +39,16 @@ static mp_aframe_t* play_float(struct af_instance_s* af, mp_aframe_t* data,int f
 #endif
 
 // Initialization and runtime control
-static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
 {
-  af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup;
-
-  switch(cmd){
-  case AF_CONTROL_REINIT:{
+    af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
+    af->data->rate   = arg->rate;
     af->data->nch    = 1;
 #if 0
-    if (mpaf_testa((mp_aframe_t*)arg)->format,MPAF_NE | MPAF_F) {
+    if (mpaf_testa(arg->format,MPAF_NE | MPAF_F) {
 	af->data->format = MPAF_FLOAT_NE|4;
 	af->play = play_float;
     }// else
@@ -61,8 +58,13 @@ static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 	af->play = play_s16;
     }
 
-    return af_test_output(af,(mp_aframe_t*)arg);
-  }
+    return af_test_output(af,arg);
+}
+static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
+{
+  af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup;
+
+  switch(cmd){
   case AF_CONTROL_COMMAND_LINE:{
     float f1,f2;
     sscanf((char*)arg,"%f:%f", &f1,&f2);
@@ -145,6 +147,7 @@ static mp_aframe_t* play_float(struct af_instance_s* af, mp_aframe_t* data,int f
 
 // Allocate memory and set function pointers
 static MPXP_Rc af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play_s16;

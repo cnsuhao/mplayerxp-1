@@ -14,17 +14,21 @@ typedef struct s_lp
     unsigned fake_out;
 }af_lp_t;
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_lp_t* s   = (af_lp_t*)af->setup;
+    memcpy(af->data,arg,sizeof(mp_aframe_t));
+    s->fin=af->data->rate;
+    af->delay=(float)s->fake_out/af->data->rate;
+    af->data->rate=s->fake_out;
+    return MPXP_Ok;
+}
+
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_lp_t* s   = (af_lp_t*)af->setup;
   switch(cmd){
-  case AF_CONTROL_REINIT:
-    memcpy(af->data,(mp_aframe_t*)arg,sizeof(mp_aframe_t));
-    s->fin=af->data->rate;
-    af->delay=(float)s->fake_out/af->data->rate;
-    af->data->rate=s->fake_out;
-    return MPXP_Ok;
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_lp] in %u faked out %u\n",((af_lp_t*)af->setup)->fin,((af_lp_t*)af->setup)->fake_out);
     return MPXP_Ok;
@@ -70,6 +74,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

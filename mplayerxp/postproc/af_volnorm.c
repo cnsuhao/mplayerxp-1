@@ -68,28 +68,31 @@ typedef struct af_volume_s
     } mem[NSAMPLES];
 }af_volnorm_t;
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_volnorm_t* s   = (af_volnorm_t*)af->setup;
+    // Sanity check
+    if(!arg) return MPXP_Error;
+
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch;
+
+    if(!(mpaf_testa(arg->format,MPAF_F|MPAF_NE) ||
+	mpaf_testa(arg->format,MPAF_SI|MPAF_NE)))
+	return MPXP_Error;
+
+    if(mpaf_testa(arg->format,MPAF_F|MPAF_NE))
+	af->data->format = MPAF_F|MPAF_NE|4;
+    else
+	af->data->format = MPAF_SI|MPAF_NE|2;
+    return af_test_output(af,arg);
+}
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_volnorm_t* s   = (af_volnorm_t*)af->setup;
 
   switch(cmd){
-  case AF_CONTROL_REINIT:
-    // Sanity check
-    if(!arg) return MPXP_Error;
-
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch;
-
-    if(!(mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_F|MPAF_NE) ||
-	mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_SI|MPAF_NE)))
-	return MPXP_Error;
-
-    if(mpaf_testa(((mp_aframe_t*)arg)->format,MPAF_F|MPAF_NE))
-	af->data->format = MPAF_F|MPAF_NE|4;
-    else
-	af->data->format = MPAF_SI|MPAF_NE|2;
-    return af_test_output(af,(mp_aframe_t*)arg);
   case AF_CONTROL_SHOWCONF:
     MSG_INFO("[af_volnorm] using method %d\n",s->method);
     return MPXP_Ok;
@@ -315,6 +318,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   int i = 0;
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

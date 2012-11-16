@@ -52,12 +52,9 @@ typedef struct af_export_s
    cmd control command
    arg argument
 */
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const mp_aframe_t* arg)
 {
-  af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
-
-  switch (cmd){
-  case AF_CONTROL_REINIT:{
+    af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
     unsigned i=0;
     unsigned mapsize;
 
@@ -73,8 +70,8 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
       close(s->fd);
 
     // Accept only int16_t as input format (which sucks)
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = ((mp_aframe_t*)arg)->nch;
+    af->data->rate   = arg->rate;
+    af->data->nch    = arg->nch;
     af->data->format = MPAF_SI|MPAF_NE|MPAF_BPS_2;
 
     // If buffer length isn't set, set it to the default value
@@ -117,8 +114,13 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     msync(s->mmap_area, mapsize, MS_ASYNC);
 
     // Use test_output to return FALSE if necessary
-    return af_test_output(af, (mp_aframe_t*)arg)?MPXP_Ok:MPXP_False;
-  }
+    return af_test_output(af, arg);
+}
+static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+{
+  af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
+
+  switch (cmd){
   case AF_CONTROL_COMMAND_LINE:{
     int i=0;
     char *str = reinterpret_cast<char*>(arg);
@@ -241,6 +243,7 @@ static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* da
 */
 static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
 {
+  af->config  = config;
   af->control = control;
   af->uninit  = uninit;
   af->play    = play;

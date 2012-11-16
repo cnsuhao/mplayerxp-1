@@ -47,6 +47,7 @@ typedef struct af_instance_s {
     const af_info_t*	info;
     char		antiviral_hole[RND_CHAR6];
     unsigned		pin; // personal identification number
+    MPXP_Rc		(* __FASTCALL__ config)(struct af_instance_s* af, const mp_aframe_t* arg);
     MPXP_Rc		(* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
     void		(* __FASTCALL__ uninit)(struct af_instance_s* af);
     mp_aframe_t*	(* __FASTCALL__ play)(struct af_instance_s* af, mp_aframe_t* data,int final);
@@ -170,7 +171,7 @@ int __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, floa
 /* Helper function used to convert from sample time to ms */
 int __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate);
 /* Helper function for testing the output format */
-int __FASTCALL__ af_test_output(struct af_instance_s* af, mp_aframe_t* out);
+MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const mp_aframe_t* out);
 
 /** Print a list of all available audio filters */
 void af_help(void);

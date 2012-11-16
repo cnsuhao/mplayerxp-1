@@ -9,17 +9,16 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    memcpy(af->data,arg,sizeof(mp_aframe_t));
+    MSG_V("[dummy] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
+    return MPXP_Ok;
+}
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
 {
-  switch(cmd){
-  case AF_CONTROL_REINIT:
-    memcpy(af->data,(mp_aframe_t*)arg,sizeof(mp_aframe_t));
-    MSG_V("[dummy] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
-    return MPXP_Ok;
-  default: break;
-  }
-  return MPXP_Unknown;
+    return MPXP_Unknown;
 }
 
 // Deallocate memory
@@ -40,6 +39,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config = config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;

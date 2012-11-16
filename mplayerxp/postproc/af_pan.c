@@ -34,20 +34,6 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   af_pan_t* s = af->setup;
 
   switch(cmd){
-  case AF_CONTROL_REINIT:
-    // Sanity check
-    if(!arg) return MPXP_Error;
-
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->format = MPAF_F|MPAF_NE|4;
-    af->mul.n        = af->data->nch;
-    af->mul.d	     = ((mp_aframe_t*)arg)->nch;
-
-    if((af->data->format != ((mp_aframe_t*)arg)->format)) {
-	((mp_aframe_t*)arg)->format = af->data->format;
-	return MPXP_False;
-    }
-    return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->data->nch);
   case AF_CONTROL_COMMAND_LINE:{
     int   nch = 0;
     int   n = 0;
@@ -110,6 +96,21 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   return MPXP_Unknown;
 }
 
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+{
+    af_pan_t* s = af->setup;
+    // Sanity check
+    if(!arg) return MPXP_Error;
+
+    af->data->rate   = arg->rate;
+    af->data->format = MPAF_F|MPAF_NE|4;
+    af->mul.n        = af->data->nch;
+    af->mul.d	     = arg->nch;
+
+    if((af->data->format != arg->format)) return MPXP_False;
+    return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->data->nch);
+}
+
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
@@ -162,6 +163,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
+  af->config=config;
   af->control=control;
   af->uninit=uninit;
   af->play=play;
