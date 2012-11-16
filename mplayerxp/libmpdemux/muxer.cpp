@@ -18,7 +18,7 @@
 muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags)
 {
     muxer_packet_t* retval;
-    retval = mp_malloc(sizeof(muxer_packet_t));
+    retval = new muxer_packet_t;
     retval->data = mp_malloc(length);
     retval->pts=pts;
     memcpy(retval->data,data,length);
@@ -30,18 +30,18 @@ muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned f
 
 void free_muxer_packet(muxer_packet_t *packet)
 {
-    mp_free(packet->data);
-    mp_free(packet);
+    delete packet->data;
+    delete packet;
 }
 
 muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f){
-    muxer_t* muxer=mp_mallocz(sizeof(muxer_t));
+    muxer_t* muxer=new(zeromem) muxer_t;
     muxer->file = f;
 //    if(!strcmp(type,"lavf")) { if(!muxer_init_muxer_lavf(muxer,subtype)) { mp_free(muxer); muxer=NULL; }}
 //    else
     if(!strcmp(type,"mpxp")) muxer_init_muxer_mpxp64(muxer);
     else
     if(!strcmp(type,"raw")) muxer_init_muxer_raw(muxer);
-    else { mp_free(muxer); muxer=NULL; }
+    else { delete muxer; muxer=NULL; }
     return muxer;
 }

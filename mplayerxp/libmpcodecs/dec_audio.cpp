@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -33,9 +35,9 @@ typedef struct priv_s {
 
 any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 {
-    const char *afm,*ac;
+    const char *afm=NULL,*ac=NULL;
     const audio_probe_t* aprobe=NULL;
-    priv_t* priv = mp_mallocz(sizeof(priv_t));
+    priv_t* priv = new(zeromem) priv_t;
     priv->parent=sh_audio;
     if(!sh_audio->codec) {
 	if(mp_conf.audio_family) {
@@ -50,7 +52,7 @@ any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 	afm=aprobe->driver;
 	ac=aprobe->codec_dll;
 	/* fake struct codecs_st*/
-	sh_audio->codec=mp_malloc(sizeof(struct codecs_st));
+	sh_audio->codec=new(zeromem) struct codecs_st;
 	strcpy(sh_audio->codec->dll_name,aprobe->codec_dll);
 	strcpy(sh_audio->codec->driver_name,aprobe->driver);
 	strcpy(sh_audio->codec->codec_name,sh_audio->codec->dll_name);
@@ -64,7 +66,7 @@ any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
     }
     if(!priv->mpadec){
 	MSG_ERR(MSGTR_CODEC_BAD_AFAMILY,ac, afm);
-	mp_free(priv);
+	delete priv;
 	return NULL; // no such driver
     }
 
@@ -90,7 +92,7 @@ any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 
     if(priv->mpadec->preinit(sh_audio)!=MPXP_Ok) {
 	MSG_ERR(MSGTR_CODEC_CANT_PREINITA);
-	mp_free(priv);
+	delete priv;
 	return NULL;
     }
 
@@ -99,7 +101,7 @@ any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 	sh_audio->a_in_buffer_size=sh_audio->audio_in_minsize;
 	MSG_V("dec_audio: Allocating %d bytes for input buffer\n",
 	    sh_audio->a_in_buffer_size);
-	sh_audio->a_in_buffer=mp_mallocz(sh_audio->a_in_buffer_size);
+	sh_audio->a_in_buffer=new char [sh_audio->a_in_buffer_size];
 	sh_audio->a_in_buffer_len=0;
     }
 
@@ -109,10 +111,10 @@ any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
     MSG_V("dec_audio: Allocating %d + %d = %d bytes for output buffer\n",
 	sh_audio->audio_out_minsize,MAX_OUTBURST,sh_audio->a_buffer_size);
 
-    sh_audio->a_buffer=mp_mallocz(sh_audio->a_buffer_size);
+    sh_audio->a_buffer=new char [sh_audio->a_buffer_size];
     if(!sh_audio->a_buffer) {
 	MSG_ERR(MSGTR_CantAllocAudioBuf);
-	mp_free(priv);
+	delete priv;
 	return NULL;
     }
     sh_audio->a_buffer_len=0;
@@ -148,7 +150,7 @@ any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
 	,priv->mpadec->info->driver_name
 	,ac
 	,sh_audio->i_bps,sh_audio->o_bps);
-    if(sh_audio->codec) { mp_free(sh_audio->codec); sh_audio->codec=NULL; }
+    if(sh_audio->codec) { delete sh_audio->codec; sh_audio->codec=NULL; }
     return priv;
 }
 
@@ -156,24 +158,24 @@ void mpca_uninit(any_t *opaque)
 {
     priv_t* priv = (priv_t*)opaque;
     sh_audio_t* parent = priv->parent;
-    if(!parent) { mp_free(priv); return; }
+    if(!parent) { delete priv; return; }
     if(priv->parent->afilter){
 	MSG_V("Uninit audio filters...\n");
 	af_uninit(parent->afilter);
-	mp_free(parent->afilter);
+	delete parent->afilter;
 	parent->afilter=NULL;
     }
-    if(parent->a_buffer) mp_free(parent->a_buffer);
+    if(parent->a_buffer) delete parent->a_buffer;
     parent->a_buffer=NULL;
-    if(parent->a_in_buffer) mp_free(parent->a_in_buffer);
+    if(parent->a_in_buffer) delete parent->a_in_buffer;
     parent->a_in_buffer=NULL;
-    if(!parent->inited) { mp_free(priv); return; }
+    if(!parent->inited) { delete priv; return; }
     MSG_V("uninit audio: ...\n");
     priv->mpadec->uninit(parent);
-    if(parent->a_buffer) mp_free(parent->a_buffer);
+    if(parent->a_buffer) delete parent->a_buffer;
     parent->a_buffer=NULL;
     parent->inited=0;
-    mp_free(priv);
+    delete priv;
 }
 
  /* Init audio filters */
@@ -202,7 +204,7 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 
     // let's autoprobe it!
     if(MPXP_Ok != RND_RENAME7(af_init)(afs,0)){
-	mp_free(afs);
+	delete afs;
 	return MPXP_False; // failed :(
     }
 
@@ -217,7 +219,7 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 	mpaf_fmt2str(afs->output.format,strbuf,200),
 	sh_audio->af_bps);
 
-    sh_audio->afilter=(any_t*)afs;
+    sh_audio->afilter=afs;
     return MPXP_Ok;
 }
 
@@ -250,7 +252,7 @@ MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
     // let's autoprobe it!
     if(MPXP_Ok != RND_RENAME7(af_init)(afs,1)){
 	sh_audio->afilter=NULL;
-	mp_free(afs);
+	delete afs;
 	return MPXP_False; // failed :(
     }
 
@@ -266,11 +268,11 @@ MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
 	sh_audio->af_bps);
 
     sh_audio->a_buffer_size=out_maxsize;
-    sh_audio->a_buffer=mp_mallocz(sh_audio->a_buffer_size);
+    sh_audio->a_buffer=new char [sh_audio->a_buffer_size];
     sh_audio->a_buffer_len=0;
 
     af_showconf(afs->first);
-    sh_audio->afilter=(any_t*)afs;
+    sh_audio->afilter=afs;
     sh_audio->afilter_inited=1;
     return MPXP_Ok;
 }
@@ -284,7 +286,7 @@ MPXP_Rc mpca_reinit_filters(sh_audio_t *sh_audio,
     if(sh_audio->afilter){
 	MSG_V("Uninit audio filters...\n");
 	af_uninit(sh_audio->afilter);
-	mp_free(sh_audio->afilter);
+	delete sh_audio->afilter;
 	sh_audio->afilter=NULL;
     }
     return mpca_init_filters(sh_audio,in_samplerate,in_channels,
@@ -307,7 +309,7 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
 
     if(minlen>maxlen) MSG_WARN(MSGTR_CODEC_XP_INT_ERR,minlen,maxlen);
     if(sh_audio->af_buffer_len) {
-	cp_size=min(buflen,sh_audio->af_buffer_len);
+	cp_size=std::min(buflen,sh_audio->af_buffer_len);
 	memcpy(buf,sh_audio->af_buffer,cp_size);
 	*pts = sh_audio->af_pts;
 	cp_tile=sh_audio->af_buffer_len-cp_size;
@@ -321,7 +323,7 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
 	return cp_size;
     }
     if(sh_audio->af_bps>sh_audio->o_bps)
-	maxlen=min(maxlen,(long long int)buflen*sh_audio->o_bps/sh_audio->af_bps);
+	maxlen=std::min(maxlen,buflen*sh_audio->o_bps/sh_audio->af_bps);
     len=priv->mpadec->decode(sh_audio,buf, minlen, maxlen,pts);
     if(len>buflen) MSG_WARN(MSGTR_CODEC_BUF_OVERFLOW,sh_audio->codec->driver_name,len,buflen);
     MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
@@ -345,7 +347,7 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
 
     cp_size=pafd->len;
     if(buf != pafd->audio) {
-	cp_size=min(buflen,pafd->len);
+	cp_size=std::min(buflen,pafd->len);
 	memcpy(buf,pafd->audio,cp_size);
 	cp_tile=pafd->len-cp_size;
 	if(cp_tile) {

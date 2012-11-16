@@ -110,12 +110,12 @@ static af_instance_t* __FASTCALL__ af_get(const af_stream_t* s,const char* name)
 
 /*/ Function for creating a new filter of type name. The name may
   contain the commandline parameters for the filter */
-static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,char* name)
+static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
 {
-  char* cmdline = name;
+  char* cmdline = mp_strdup(name);
 
   // Allocate space for the new filter and reset all pointers
-  af_instance_t* _new=mp_mallocz(sizeof(af_instance_t));
+  af_instance_t* _new=new(zeromem) af_instance_t;
   if(!_new){
     MSG_ERR(MSGTR_OutOfMemory);
     return NULL;
@@ -128,7 +128,8 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,char* name)
 
   // Find filter from name
   if(NULL == (_new->info=af_find(name))) {
-    mp_free(_new);
+    delete _new;
+    delete cmdline;
     return NULL;
   }
   /* Make sure that the filter is not already in the list if it is
@@ -137,8 +138,9 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,char* name)
     if(af_get(s,name)){
       MSG_ERR("[libaf] There can only be one instance of"
 	     " the filter '%s' in each stream\n",name);
-      mp_free(_new);
-      return NULL;
+	delete _new;
+	delete cmdline;
+	return NULL;
     }
   }
 
@@ -148,14 +150,19 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,char* name)
   if(MPXP_Ok == _new->info->open(_new) &&
      MPXP_Error < _new->control(_new,AF_CONTROL_POST_CREATE,&s->cfg)){
     if(cmdline){
-      if(MPXP_Error<_new->control(_new,AF_CONTROL_COMMAND_LINE,cmdline))
+      if(MPXP_Error<_new->control(_new,AF_CONTROL_COMMAND_LINE,cmdline)) {
+	delete cmdline;
 	return _new;
+      }
     }
-    else
-      return _new;
+    else {
+	delete cmdline;
+        return _new;
+    }
   }
 
-  mp_free(_new);
+  delete cmdline;
+  delete _new;
   MSG_ERR("[libaf] Couldn't create or open audio filter '%s'\n", name);
   return NULL;
 }
@@ -163,51 +170,51 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,char* name)
 /* Create and insert a new filter of type name before the filter in the
    argument. This function can be called during runtime, the return
    value is the new filter */
-static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,char* name)
+static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,const char* name)
 {
-  // Create the new filter and make sure it is OK
-  af_instance_t* new=af_create(s,name);
+  // Create the _new filter and make sure it is OK
+  af_instance_t* _new=af_create(s,name);
   MSG_DBG2("af_prepend %s\n",name);
-  if(!new)
+  if(!_new)
     return NULL;
   // Update pointers
-  new->next=af;
+  _new->next=af;
   if(af){
-    new->prev=af->prev;
-    af->prev=new;
+    _new->prev=af->prev;
+    af->prev=_new;
   }
   else
-    s->last=new;
-  if(new->prev)
-    new->prev->next=new;
+    s->last=_new;
+  if(_new->prev)
+    _new->prev->next=_new;
   else
-    s->first=new;
-  return new;
+    s->first=_new;
+  return _new;
 }
 
-/* Create and insert a new filter of type name after the filter in the
+/* Create and insert a _new filter of type name after the filter in the
    argument. This function can be called during runtime, the return
-   value is the new filter */
-static af_instance_t* af_append(af_stream_t* s, af_instance_t* af,char* name)
+   value is the _new filter */
+static af_instance_t* af_append(af_stream_t* s, af_instance_t* af,const char* name)
 {
-  // Create the new filter and make sure it is OK
-  af_instance_t* new=af_create(s,name);
+  // Create the _new filter and make sure it is OK
+  af_instance_t* _new=af_create(s,name);
   MSG_DBG2("af_append %s\n",name);
-  if(!new)
+  if(!_new)
     return NULL;
   // Update pointers
-  new->prev=af;
+  _new->prev=af;
   if(af){
-    new->next=af->next;
-    af->next=new;
+    _new->next=af->next;
+    af->next=_new;
   }
   else
-    s->first=new;
-  if(new->next)
-    new->next->prev=new;
+    s->first=_new;
+  if(_new->next)
+    _new->next->prev=_new;
   else
-    s->last=new;
-  return new;
+    s->last=_new;
+  return _new;
 }
 
 // Uninit and remove the filter "af"
@@ -233,7 +240,7 @@ static void af_remove(af_stream_t* s, af_instance_t* af)
 
   // Uninitialize af and mp_free memory
   af->uninit(af);
-  mp_free(af);
+  delete af;
 }
 
 /* Reinitializes all filters downstream from the filter given in the
@@ -283,7 +290,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 	  else		  memcpy(&in,_new->prev->data,sizeof(mp_aframe_t));
 	  if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_REINIT,&in))) {
 	    af_instance_t* af2 = af_prepend(s,af,"format");
-	    // Init the new filter
+	    // Init the _new filter
 	    if(af2) {
 		if((MPXP_Ok != af2->control(af2,AF_CONTROL_FORMAT,&in.format))) return -1;
 		if(MPXP_Ok != af_reinit(s,af2)) return MPXP_Error;
@@ -345,7 +352,7 @@ void af_uninit(af_stream_t* s)
     af_remove(s,s->first);
 }
 
-/* Initialize the stream "s". This function creates a new filter list
+/* Initialize the stream "s". This function creates a _new filter list
    if necessary according to the values set in input and output. Input
    and output should contain the format of the current movie and the
    formate of the preferred output respectively. The function is
@@ -418,7 +425,7 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
 	    af = af_append(s,s->last,"resample");
 	}
       }
-      // Init the new filter
+      // Init the _new filter
       if(!af || (MPXP_Ok != af->control(af,AF_CONTROL_RESAMPLE_RATE,
 				      &(s->output.rate))))
 	return MPXP_False;
@@ -439,7 +446,7 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
 	af = af_prepend(s,s->last,"channels");
       else
 	af = af_append(s,s->last,"channels");
-      // Init the new filter
+      // Init the _new filter
       if(!af || (MPXP_Ok != af->control(af,AF_CONTROL_CHANNELS,&(s->output.nch))))
 	return MPXP_False;
       if(MPXP_Ok != af_reinit(s,af))
@@ -452,7 +459,7 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
 	af = af_append(s,s->last,"format");
       else
 	af = s->last;
-      // Init the new filter
+      // Init the _new filter
       if(!af ||(MPXP_Ok != af->control(af,AF_CONTROL_FORMAT,&s->output.format)))
 	return MPXP_False;
       if(MPXP_Ok != af_reinit(s,af))
@@ -478,27 +485,27 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
 
 /* Add filter during execution. This function adds the filter "name"
    to the stream s. The filter will be inserted somewhere nice in the
-   list of filters. The return value is a pointer to the new filter,
+   list of filters. The return value is a pointer to the _new filter,
    If the filter couldn't be added the return value is NULL. */
 static af_instance_t* af_add(af_stream_t* s,char* name){
-  af_instance_t* new;
+  af_instance_t* _new;
   // Sanity check
   if(!s || !s->first || !name)
     return NULL;
   // Insert the filter somwhere nice
   if(!strcmp(s->first->info->name,"format"))
-    new = af_append(s, s->first, name);
+    _new = af_append(s, s->first, name);
   else
-    new = af_prepend(s, s->first, name);
-  if(!new)
+    _new = af_prepend(s, s->first, name);
+  if(!_new)
     return NULL;
 
   // Reinitalize the filter list
   if(MPXP_Ok != af_reinit(s, s->first)){
-    mp_free(new);
+    delete _new;
     return NULL;
   }
-  return new;
+  return _new;
 }
 
 // Filter data chunk through the filters in the list
@@ -574,13 +581,13 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s)
    function should not be called directly */
 MPXP_Rc __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len)
 {
-    // Calculate new length
+    // Calculate _new length
     MSG_V("[libaf] Reallocating memory in module %s, "
-	 "old len = %i, new len = %i\n",af->info->name,af->data->len,len);
+	 "old len = %i, _new len = %i\n",af->info->name,af->data->len,len);
     // If there is a buffer mp_free it
-    if(af->data->audio) mp_free(af->data->audio);
-    // Create new buffer and check that it is OK
-    af->data->audio = mp_malloc(len);
+    if(af->data->audio) delete af->data->audio;
+    // Create _new buffer and check that it is OK
+    af->data->audio = new char [len];
     if(!af->data->audio){
 	MSG_FATAL(MSGTR_OutOfMemory);
 	return MPXP_Error;
@@ -592,14 +599,14 @@ MPXP_Rc __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len)
 
 // send control to all filters, starting with the last until
 // one responds with MPXP_Ok
-int __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
-  int res = MPXP_Unknown;
+MPXP_Rc __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
+  MPXP_Rc res = MPXP_Unknown;
   af_instance_t* filt = s->last;
   while (filt && res != MPXP_Ok) {
     res = filt->control(filt, cmd, arg);
     filt = filt->prev;
   }
-  return (res == MPXP_Ok);
+  return res;
 }
 
 MPXP_Rc __FASTCALL__ af_query_fmt (const af_stream_t* s,mpaf_format_e fmt)
@@ -653,7 +660,7 @@ void af_help (void) {
 af_stream_t *RND_RENAME6(af_new)(any_t*_parent)
 {
     af_stream_t *rval;
-    rval = mp_mallocz(sizeof(af_stream_t));
+    rval = new(zeromem) af_stream_t;
     rval->parent = _parent;
     SECURE_NAME9(rnd_fill)(rval->antiviral_hole,offsetof(af_stream_t,first)-offsetof(af_stream_t,antiviral_hole));
     return rval;

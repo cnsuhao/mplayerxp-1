@@ -8,9 +8,9 @@
 #include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
-extern "C" {
+
 #include "libmpcodecs/dec_audio.h"
-}
+
 #include "osdep/mplib.h"
 #include "osdep/timer.h"
 #include "xmp_core.h"

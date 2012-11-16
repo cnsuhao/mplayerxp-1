@@ -8,6 +8,10 @@
 #include "xmpcore/xmp_enums.h"
 #include "xmpcore/mp_aframe.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct af_instance_s;
 
 // Fraction, used to calculate buffer lengths
@@ -148,7 +152,7 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s);
 
 /* Helper function called by the macro with the same name only to be
    called from inside filters */
-int __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len);
+MPXP_Rc __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len);
 
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
@@ -188,16 +192,20 @@ static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, mp_aframe_t* d) {
     unsigned len=af_lencalc(a->mul,d);
     return ((unsigned)a->data->len < len)?af_resize_local_buffer(a,len):MPXP_Ok;
 }
+#ifdef __cplusplus
+}
+#endif
 
+#ifndef __cplusplus
 /* Some other useful macro definitions*/
 #ifndef min
 #define min(a,b)(((a)>(b))?(b):(a))
 #endif
 
-#ifndef __cplusplus
 #ifndef max
 #define max(a,b)(((a)>(b))?(a):(b))
 #endif
+
 #endif
 
 #ifndef clamp

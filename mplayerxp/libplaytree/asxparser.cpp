@@ -23,7 +23,7 @@ static void __FASTCALL__ asx_list_add(any_t* list_ptr,any_t* entry){
   if(list != NULL)
     for( ; list[c] != NULL; c++) ;
 
-  list = (any_t*)mp_realloc(list,sizeof(any_t*)*(c+2));
+  list = (any_t**)mp_realloc(list,sizeof(any_t*)*(c+2));
 
   list[c] = entry;
   list[c+1] = NULL;
@@ -47,7 +47,7 @@ static void __FASTCALL__ asx_list_remove(any_t* list_ptr,any_t* entry,ASX_FreeFu
   if(free_func != NULL) free_func(list[e]);
 
   if(c == 1) { // Only one entry, we drop all
-    mp_free(list);
+    delete list;
     *(any_t**)list_ptr = NULL;
     return;
   }
@@ -55,7 +55,7 @@ static void __FASTCALL__ asx_list_remove(any_t* list_ptr,any_t* entry,ASX_FreeFu
   if(c > e) // If c==e the memmove is not needed
     memmove(list+e,list+e+1,(c-e)*sizeof(any_t*));
 
-  list = (any_t*)mp_realloc(list,(c-1)*sizeof(any_t*));
+  list = (any_t**)mp_realloc(list,(c-1)*sizeof(any_t*));
   list[c-1] = NULL;
 
   *(any_t***)list_ptr = list;
@@ -85,8 +85,8 @@ char* __FASTCALL__ asx_get_attrib(const char* attrib,char** attribs) {
   return NULL;
 }
 
-int __FASTCALL__ asx_attrib_to_enum(const char* val,char** valid_vals) {
-  char** ptr;
+int __FASTCALL__ asx_attrib_to_enum(const char* val,const char** valid_vals) {
+  const char** ptr;
   int r = 0;
 
   if(valid_vals == NULL || val == NULL) return -2;
@@ -99,8 +99,9 @@ int __FASTCALL__ asx_attrib_to_enum(const char* val,char** valid_vals) {
 }
 
 static void __FASTCALL__ asx_warning_attrib_invalid(ASX_Parser_t* parser, char* elem, char* attrib,
-			   char** valid_vals,char* val) {
-  char *str,*vals,**ptr;
+			   const char** valid_vals,char* val) {
+  char *str,*vals;
+  const char **ptr;
   int len;
 
   if(valid_vals == NULL || valid_vals[0] == NULL) return;
@@ -110,7 +111,7 @@ static void __FASTCALL__ asx_warning_attrib_invalid(ASX_Parser_t* parser, char* 
     len += strlen(ptr[0]);
     len += ((ptr[1] == NULL) ? 4 : 2);
   }
-  str = vals = (char*)mp_malloc(len);
+  str = vals = new char[len];
   vals += sprintf(vals,"%s",valid_vals[0]);
   for(ptr = valid_vals + 1 ; ptr[0] != NULL ; ptr++) {
     if(ptr[1] == NULL)
@@ -120,12 +121,12 @@ static void __FASTCALL__ asx_warning_attrib_invalid(ASX_Parser_t* parser, char* 
   }
   MSG_ERR("at line %d : attribute %s of element %s is invalid (%s). Valid values are %s",
 	      parser->line,attrib,elem,val,str);
-  mp_free(str);
+  delete str;
 }
 
 static int __FASTCALL__ asx_get_yes_no_attrib(ASX_Parser_t* parser, char* element, char* attrib,char** attribs,int def) {
   char* val = asx_get_attrib(attrib,attribs);
-  char* valids[] = { "NO", "YES", NULL };
+  const char* valids[] = { "NO", "YES", NULL };
   int r;
 
   if(val == NULL) return def;
@@ -136,7 +137,7 @@ static int __FASTCALL__ asx_get_yes_no_attrib(ASX_Parser_t* parser, char* elemen
     r = def;
   }
 
-  mp_free(val);
+  delete val;
   return r;
 }
 
@@ -144,14 +145,14 @@ static int __FASTCALL__ asx_get_yes_no_attrib(ASX_Parser_t* parser, char* elemen
 #define asx_warning_body_parse_error(p,e) MSG_WARN("At line %d : error while parsing %s body",p->line,e)
 
 ASX_Parser_t* asx_parser_new(void) {
-    ASX_Parser_t* parser = mp_calloc(1,sizeof(ASX_Parser_t));
+    ASX_Parser_t* parser = new(zeromem) ASX_Parser_t;
     return parser;
 }
 
 void __FASTCALL__ asx_parser_free(ASX_Parser_t* parser) {
     if(!parser) return;
-    if(parser->ret_stack) mp_free(parser->ret_stack);
-    mp_free(parser);
+    if(parser->ret_stack) delete parser->ret_stack;
+    delete parser;
 }
 
 int __FASTCALL__ asx_parse_attribs(ASX_Parser_t* parser,char* buffer,char*** _attribs) {
@@ -173,24 +174,24 @@ int __FASTCALL__ asx_parse_attribs(ASX_Parser_t* parser,char* buffer,char*** _at
 		goto pa_end;
 	    }
 	}
-	attrib = (char*)mp_malloc(ptr2-ptr1+2);
+	attrib = new char[ptr2-ptr1+2];
 	strncpy(attrib,ptr1,ptr2-ptr1+1);
 	attrib[ptr2-ptr1+1] = '\0';
 
 	ptr1 = strchr(ptr3,'"');
 	if(ptr1 == NULL || ptr1[1] == '\0') {
 	    MSG_WARN("At line %d : can't find attribute %s value",parser->line,attrib);
-	    mp_free(attrib);
+	    delete attrib;
 	    break;
 	}
 	ptr1++;
 	ptr2 = strchr(ptr1,'"');
 	if (ptr2 == NULL) {
 	    MSG_WARN("At line %d : value of attribute %s isn't finished",parser->line,attrib);
-	    mp_free(attrib);
+	    delete attrib;
 	    break;
 	}
-	val = (char*)mp_malloc(ptr2-ptr1+1);
+	val = new char[ptr2-ptr1+1];
 	strncpy(val,ptr1,ptr2-ptr1);
 	val[ptr2-ptr1] = '\0';
 	n_attrib++;
@@ -248,7 +249,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
       if(parser->ret_stack_size > 0)
 	parser->ret_stack = (ASX_LineSave_t*)mp_realloc(parser->ret_stack,parser->ret_stack_size*sizeof(ASX_LineSave_t));
       else {
-	mp_free(parser->ret_stack);
+	delete parser->ret_stack;
 	parser->ret_stack = NULL;
       }
     }
@@ -301,14 +302,14 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
     if(ptr2[0] == '\n') parser->line++;
   }
 
-  element = (char*)mp_malloc(ptr2-ptr1+1);
+  element = new char[ptr2-ptr1+1];
   strncpy(element,ptr1,ptr2-ptr1);
   element[ptr2-ptr1] = '\0';
 
   for( ; isspace(*ptr2); ptr2++) { // Skip space
     if(ptr2[0] == '\0') {
       MSG_ERR("At line %d : EOB reached while parsing element start",parser->line);
-      mp_free(element);
+      delete element;
       return -1;
     }
     if(ptr2[0] == '\n') parser->line++;
@@ -322,13 +323,13 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
   }
   if(ptr3[0] == '\0' || ptr3[1] == '\0') { // End of file
     MSG_ERR("At line %d : EOB reached while parsing element start",parser->line);
-    mp_free(element);
+    delete element;
     return -1;
   }
 
   // Save attribs string
   if(ptr3-ptr2 > 0) {
-    attribs = (char*)mp_malloc(ptr3-ptr2+1);
+    attribs = new char[ptr3-ptr2+1];
     strncpy(attribs,ptr2,ptr3-ptr2);
     attribs[ptr3-ptr2] = '\0';
   }
@@ -338,8 +339,8 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
     for( ; isspace(*ptr3); ptr3++) { // Skip space on body begin
       if(*ptr3 == '\0') {
 	MSG_ERR("At line %d : EOB reached while parsing %s element body",parser->line,element);
-	mp_free(element);
-	if(attribs) mp_free(attribs);
+	delete element;
+	if(attribs) delete attribs;
 	return -1;
       }
       if(ptr3[0] == '\n') parser->line++;
@@ -366,8 +367,8 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
       }
       if(ptr4 == NULL || ptr4[1] == '\0') {
 	MSG_ERR("At line %d : EOB reached while parsing %s element body",parser->line,element);
-	mp_free(element);
-	if(attribs) mp_free(attribs);
+	delete element;
+	if(attribs) delete attribs;
 	return -1;
       }
       if(ptr4[1] != '/' && strncasecmp(element,ptr4+1,strlen(element)) == 0) {
@@ -387,7 +388,7 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
 	  //	    if(ptr4[0] == '\0') parser->line--;
 	  //}
 	  ptr4++;
-	  body = (char*)mp_malloc(ptr4-ptr3+1);
+	  body = new char[ptr4-ptr3+1];
 	  strncpy(body,ptr3,ptr4-ptr3);
 	  body[ptr4-ptr3] = '\0';
 	}
@@ -409,11 +410,11 @@ int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,char** _buffer,
   if(attribs) {
     parser->line = attrib_line;
     n_attrib = asx_parse_attribs(parser,attribs,_attribs);
-    mp_free(attribs);
+    delete attribs;
     if(n_attrib < 0) {
       MSG_WARN("At line %d : error while parsing element %s attributes",parser->line,element);
-      mp_free(element);
-      mp_free(body);
+      delete element;
+      delete body;
       return -1;
     }
   } else
@@ -466,10 +467,10 @@ static void __FASTCALL__ asx_parse_ref(ASX_Parser_t* parser, char** attribs, pla
   }
   // replace http my mmshttp to avoid infinite loops
   if (strncmp(href, "http://", 7) == 0) {
-    char *newref = mp_malloc(3 + strlen(href) + 1);
+    char *newref = new char [3 + strlen(href) + 1];
     strcpy(newref, "mms");
     strcpy(newref + 3, href);
-    mp_free(href);
+    delete href;
     href = newref;
   }
 
@@ -477,7 +478,7 @@ static void __FASTCALL__ asx_parse_ref(ASX_Parser_t* parser, char** attribs, pla
 
   MSG_V("Adding file %s to element entry\n",href);
 
-  mp_free(href);
+  delete href;
 
 }
 
@@ -542,7 +543,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entry(ASX_Parser_t* parser,char* buff
       nref++;
     } else
       MSG_DBG2("Ignoring element %s\n",element);
-    if(body) mp_free(body);
+    if(body) delete body;
     asx_free_attribs(attribs);
   }
 
@@ -568,7 +569,7 @@ static play_tree_t* __FASTCALL__ asx_parse_repeat(any_t*libinput,ASX_Parser_t* p
     repeat->loop = -1; // Infinit
   } else {
     repeat->loop = atoi(count);
-    mp_free(count);
+    delete count;
     if(repeat->loop == 0) repeat->loop = 1;
     MSG_DBG2("Setting element repeat loop to %d\n",repeat->loop);
   }
@@ -606,7 +607,7 @@ static play_tree_t* __FASTCALL__ asx_parse_repeat(any_t*libinput,ASX_Parser_t* p
        asx_parse_param(parser,attribs,repeat);
      } else
        MSG_DBG2("Ignoring element %s\n",element);
-    if(body) mp_free(body);
+    if(body) delete body;
      asx_free_attribs(attribs);
   }
 
@@ -643,7 +644,7 @@ play_tree_t* __FASTCALL__ asx_parser_build_tree(any_t*libinput,char* buffer,int 
   if(strcasecmp(element,"ASX") != 0) {
     MSG_ERR("first element isn't ASX, it's %s\n",element);
     asx_free_attribs(asx_attribs);
-    if(body) mp_free(body);
+    if(body) delete body;
     asx_parser_free(parser);
     return NULL;
   }
@@ -689,11 +690,11 @@ play_tree_t* __FASTCALL__ asx_parser_build_tree(any_t*libinput,char* buffer,int 
        }
      } else
        MSG_DBG2("Ignoring element %s\n",element);
-     if(body) mp_free(body);
+     if(body) delete body;
      asx_free_attribs(attribs);
   }
 
-  mp_free(asx_body);
+  delete asx_body;
   asx_free_attribs(asx_attribs);
   asx_parser_free(parser);
 

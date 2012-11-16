@@ -2,18 +2,18 @@ include ../mp_config.mak
 
 LIBNAME = libnls.a
 
-SRCS=recode.c
-OBJS=$(SRCS:.c=.o)
+SRCS=recode.cpp
+OBJS=$(SRCS:.cpp=.o)
 
-CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall
+CXXFLAGS  = $(OPTXXFLAGS) -I. -I.. -Wall
 # -I/usr/X11R6/include/
 
 .SUFFIXES: .c .o
 
 # .PHONY: all clean
 
-.c.o:
-	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 $(LIBNAME):     $(OBJS)
 	$(AR) r $(LIBNAME) $(OBJS)
@@ -29,7 +29,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(SRCS) 1>.depend
 
 #
 # include dependency files if they exist

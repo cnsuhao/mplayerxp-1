@@ -1,5 +1,9 @@
 #ifndef __M_PROPERTY_H_INCLUDED
 #define __M_PROPERTY_H_INCLUDED 1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /// \defgroup Properties
 ///
 /// Properties provide an interface to query and set the state of various

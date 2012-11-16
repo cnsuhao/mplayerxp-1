@@ -136,7 +136,7 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
     *((float*)save->opt->p) = save->param.as_float;
     break;
   case CONF_TYPE_STRING :
-    *((char**)save->opt->p) = save->param.as_pointer;
+    *((char**)save->opt->p) = reinterpret_cast<char*>(save->param.as_pointer);
     break;
   case CONF_TYPE_INCLUDE :
     if(config->cs_level > 0) {
@@ -144,15 +144,16 @@ static int m_config_revert_option(m_config_t* config, config_save_t* save) {
 	if(config->config_stack[i] == NULL) continue;
 	for(iter = config->config_stack[i]; iter != NULL && iter->opt != NULL ; iter++) {
 	  if(iter->opt == save->opt &&
-	     ((save->param.as_pointer == NULL || iter->param.as_pointer == NULL) || strcasecmp(save->param.as_pointer,iter->param.as_pointer) == 0) &&
+	     ((save->param.as_pointer == NULL || iter->param.as_pointer == NULL) || strcasecmp((const char *)save->param.as_pointer,(const char *)iter->param.as_pointer) == 0) &&
 	     (save->opt_name == NULL ||
 	      (iter->opt_name && strcasecmp(save->opt_name,iter->opt_name)))) break;
 	}
       }
     }
-    mp_free(save->param.as_pointer);
-    if(save->opt_name) mp_free(save->opt_name);
-    save->opt_name = save->param.as_pointer = NULL;
+    delete save->param.as_pointer;
+    if(save->opt_name) delete save->opt_name;
+    save->param.as_pointer = NULL;
+    save->opt_name = reinterpret_cast<char*>(save->param.as_pointer);
     if(i < 0) break;
     arg = iter->opt_name ? iter->opt_name : iter->opt->name;
     switch(iter->opt->type) {
@@ -206,7 +207,7 @@ int m_config_pop(m_config_t* config) {
       if (m_config_revert_option(config,&cs[i]) < 0)
 	ret = -1;
     }
-    mp_free(config->config_stack[config->cs_level]);
+    delete config->config_stack[config->cs_level];
   }
   config->config_stack = (config_save_t**)mp_realloc(config->config_stack ,sizeof(config_save_t*)*config->cs_level);
   config->cs_level--;
@@ -234,7 +235,7 @@ m_config_t* m_config_new(play_tree_t* pt,any_t*libinput) {
   config->config_stack = (config_save_t**)mp_calloc(1,sizeof(config_save_t*));
   if(config->config_stack == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(config_save_t*),strerror(errno));
-    mp_free(config);
+    delete config;
     return NULL;
   }
   SET_GLOBAL(config); // We always start with global options
@@ -244,8 +245,8 @@ m_config_t* m_config_new(play_tree_t* pt,any_t*libinput) {
 }
 
 static void m_config_add_dynamic(m_config_t *conf,any_t*ptr) {
-    if(!conf->dynasize) conf->dynamics = mp_malloc(sizeof(any_t*));
-    else		conf->dynamics = mp_realloc(conf->dynamics,(conf->dynasize+1)*sizeof(any_t*));
+    if(!conf->dynasize) conf->dynamics = (any_t**)mp_malloc(sizeof(any_t*));
+    else		conf->dynamics = (any_t**)mp_realloc(conf->dynamics,(conf->dynasize+1)*sizeof(any_t*));
     conf->dynamics[conf->dynasize] = ptr;
     conf->dynasize++;
 }
@@ -255,12 +256,12 @@ void m_config_free(m_config_t* config) {
 #ifdef MP_DEBUG
   assert(config != NULL);
 #endif
-  for(i=0;i<config->dynasize;i++) mp_free(config->dynamics[i]);
-  mp_free(config->dynamics);
+  for(i=0;i<config->dynasize;i++) delete config->dynamics[i];
+  delete config->dynamics;
   config->dynasize=0;
-  mp_free(config->opt_list);
-  mp_free(config->config_stack);
-  mp_free(config);
+  delete config->opt_list;
+  delete config->config_stack;
+  delete config;
 }
 
 
@@ -523,8 +524,8 @@ static int config_read_option(m_config_t *config,const config_t** conf_list,cons
 			if (param == NULL)
 				goto err_missing_param;
 
-			subparam = mp_malloc(strlen(param)+1);
-			subopt = mp_malloc(strlen(param)+1);
+			subparam = new char [strlen(param)+1];
+			subopt = new char [strlen(param)+1];
 			p = mp_strdup(param); // In case that param is a static string (cf man strtok)
 
 			subconf = conf[i].p;
@@ -562,9 +563,9 @@ static int config_read_option(m_config_t *config,const config_t** conf_list,cons
 			    token = strtok(NULL, (char *)&(":"));
 			}
 			config->sub_conf = NULL;
-			mp_free(subparam);
-			mp_free(subopt);
-			mp_free(p);
+			delete subparam;
+			delete subopt;
+			delete p;
 			ret = 1;
 			break;
 		    }
@@ -584,7 +585,7 @@ out:
 	  assert(dest != NULL);
 #endif
 	  if(config->sub_conf) {
-	    o = (char*)mp_malloc((strlen(config->sub_conf) + 1 + strlen(opt) + 1)*sizeof(char));
+	    o = new char [(strlen(config->sub_conf) + 1 + strlen(opt) + 1)];
 	    sprintf(o,"%s:%s",config->sub_conf,opt);
 	  } else
 	    o =mp_strdup(opt);
@@ -593,7 +594,7 @@ out:
 	    play_tree_set_param(dest,o,NULL);
 	  else if(ret > 0)
 	    play_tree_set_param(dest,o,param);
-	  mp_free(o);
+	  delete o;
 	  m_config_pop(config);
 	}
 	return ret;
@@ -606,7 +607,7 @@ err_missing_param:
 static const config_t* m_config_find_option(const config_t **list,const char *name);
 
 int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
-  char *e;
+  const char *e;
   const config_t **clist=config->opt_list;
 #ifdef MP_DEBUG
   assert(config != NULL);
@@ -624,17 +625,17 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
     do {
 	if(!(e = strchr(opt,'.'))) break;
 	if((e-opt)>0) {
-	    char* s = (char*)mp_malloc((e-opt+1)*sizeof(char));
+	    char* s = new char [e-opt+1];
 	    strncpy(s,opt,e-opt);
 	    s[e-opt] = '\0';
 	    MSG_DBG2("Treat %s as subconfig name\n",s);
 	    subconf = m_config_find_option(clist?clist:olist,s);
 	    clist=NULL;
-	    mp_free(s);
+	    delete s;
 	    MSG_DBG2("returned %p as subconfig name\n",subconf);
 	    if(!subconf) return ERR_NO_SUBCONF;
 	    if(subconf->type!=CONF_TYPE_SUBCONFIG) return ERR_NO_SUBCONF;
-	    olist[0] = subconf->p;
+	    olist[0] = reinterpret_cast<const config_t*>(subconf->p);
 	    opt = e+1;
 	    MSG_DBG2("switching next subconf=%s\n",subconf->name);
 	}
@@ -650,20 +651,20 @@ int m_config_set_option(m_config_t *config,const char *opt,const char *param) {
   if(e && e[1] != '\0') {
     int ret;
     const config_t* opt_list[] = { NULL, NULL };
-    char* s = (char*)mp_malloc((e-opt+1)*sizeof(char));
+    char* s = new char [e-opt+1];
     strncpy(s,opt,e-opt);
     s[e-opt] = '\0';
-    opt_list[0] = m_config_get_option_ptr(config,s);
+    opt_list[0] = (const config_t*)m_config_get_option_ptr(config,s);
     if(!opt_list[0]) {
       MSG_ERR("m_config_set_option %s=%s : no %s subconfig\n",opt,param,s);
-      mp_free(s);
+      delete s;
       return ERR_NOT_AN_OPTION;
     }
     e++;
     s = (char*)mp_realloc(s,strlen(e) + 1);
     strcpy(s,e);
     ret = config_read_option(config,opt_list,s,param);
-    mp_free(s);
+    delete s;
     return ret;
   }
 
@@ -706,7 +707,7 @@ MPXP_Rc m_config_parse_config_file(m_config_t *config,const char *conffile)
 	goto out;
     }
 
-    if ((line = (char *) mp_malloc(MAX_LINE_LEN + 1)) == NULL) {
+    if ((line = new char [MAX_LINE_LEN + 1]) == NULL) {
 	MSG_FATAL("\ncan't get memory for 'line': %s", strerror(errno));
 	ret = MPXP_False;
 	goto out;
@@ -714,7 +715,7 @@ MPXP_Rc m_config_parse_config_file(m_config_t *config,const char *conffile)
 
     if ((fp = fopen(conffile, "r")) == NULL) {
 	if (config->recursion_depth > 1) MSG_ERR(": %s\n", strerror(errno));
-	mp_free(line);
+	delete line;
 	ret = MPXP_Ok;
 	goto out;
     }
@@ -851,7 +852,7 @@ nextline:
 	;
     }
 
-    mp_free(line);
+    delete line;
     fclose(fp);
 out:
     --config->recursion_depth;
@@ -934,7 +935,7 @@ MPXP_Rc m_config_parse_command_line(m_config_t *config, int argc, char **argv, c
 	    item=opt;
 	    assign = strchr(opt,'=');
 	    if(assign) {
-		item = mp_malloc(assign-opt);
+		item = new char [assign-opt];
 		memcpy(item,opt,assign-opt);
 		item[assign-opt]='\0';
 		parm = mp_strdup(assign+1);
@@ -942,8 +943,8 @@ MPXP_Rc m_config_parse_command_line(m_config_t *config, int argc, char **argv, c
 	    tmp = m_config_set_option(config, item, parm);
 	    if(!tmp && assign) MSG_ERR("Option '%s' doesn't require arguments\n",item);
 	    if(assign) {
-		mp_free(item);
-		mp_free(parm);
+		delete item;
+		delete parm;
 	    }
 	    if(!tmp && assign) goto err_out;
 
@@ -1037,7 +1038,7 @@ static const config_t* m_config_find_option(const config_t **list,const char *na
 }
 
 const config_t* m_config_get_option(m_config_t const*config,const char* arg) {
-  char *e;
+  const char *e;
   const config_t **conf_list;
   const config_t* cl[] = { NULL, NULL };
 
@@ -1050,12 +1051,12 @@ const config_t* m_config_get_option(m_config_t const*config,const char* arg) {
 
   if(e) {
     char *s;
-    s = (char*)mp_malloc((e-arg+1)*sizeof(char));
+    s = new char [e-arg+1];
     strncpy(s,arg,e-arg);
     s[e-arg] = '\0';
     cl[0] = m_config_get_option(config,s);
     conf_list = cl;
-    mp_free(s);
+    delete s;
   } else
     conf_list = config->opt_list;
   return m_config_find_option(conf_list,arg);
@@ -1082,7 +1083,7 @@ int m_config_get_int (m_config_t const *config,const char* arg,int* err_ret) {
   assert(arg != NULL);
 #endif
 
-  ret = m_config_get_option_ptr(config,arg);
+  ret = (int*)m_config_get_option_ptr(config,arg);
   if(err_ret)
     *err_ret = 0;
   if(!ret) {
@@ -1101,7 +1102,7 @@ float m_config_get_float (m_config_t const *config,const char* arg,int* err_ret)
   assert(arg != NULL);
 #endif
 
-  ret = m_config_get_option_ptr(config,arg);
+  ret = (float*)m_config_get_option_ptr(config,arg);
   if(err_ret)
     *err_ret = 0;
   if(!ret) {
@@ -1252,13 +1253,13 @@ static void __m_config_show_options(unsigned ntabs,const char *pfx,const config_
 	    MSG_INFO("%s:\n",opts[i].help);
 	    pfxlen=strlen(opts[i].name)+1;
 	    if(pfx) pfxlen+=strlen(pfx);
-	    newpfx=mp_malloc(pfxlen+1);
+	    newpfx=new char [pfxlen+1];
 	    if(pfx) strcpy(newpfx,pfx);
 	    else    newpfx[0]='\0';
 	    strcat(newpfx,opts[i].name);
 	    strcat(newpfx,".");
 	    __m_config_show_options(ntabs+2,newpfx,(const config_t *)opts[i].p);
-	    mp_free(newpfx);
+	    delete newpfx;
 	}
 	else
 	if(opts[i].type<=CONF_TYPE_PRINT) {

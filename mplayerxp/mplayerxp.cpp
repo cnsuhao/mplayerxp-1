@@ -27,7 +27,7 @@
 #include "mplayerxp.h"
 #include "osdep/mplib.h"
 #include "xmpcore/sig_hand.h"
-extern "C" {
+
 #define UINT64_C __UINT64_C
 #include "postproc/swscale.h"
 #include "postproc/af.h"
@@ -68,7 +68,7 @@ extern "C" {
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
 #include "libao2/mixer.h"
-} // extern "C"
+
 #include "input2/input.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
@@ -582,7 +582,7 @@ static void init_player( void )
     }
 }
 
-extern "C" void show_help(void) {
+void show_help(void) {
     // no file/vcd/dvd -> show HELP:
     MSG_INFO("%s",help_text);
     print_stream_drivers();
@@ -590,7 +590,7 @@ extern "C" void show_help(void) {
 	     "Use --long-help option for full help\n");
 }
 
-extern "C" void show_long_help(void) {
+void show_long_help(void) {
     MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
     m_config_show_options(MPXPCtx->mconfig);
     mp_input_print_binds(MPXPSys->libinput());

@@ -69,7 +69,7 @@ char *nls_recode2screen_cp(const char *src_cp,const char *param,unsigned len)
 	if(errno) goto do_def;
 	inb=len;
 	outb=(len+1)*4;
-	obuff=mp_malloc(outb);
+	obuff=new char [outb];
 	ibuff=param;
 	ob=obuff;
 	ib=ibuff;
@@ -80,7 +80,7 @@ char *nls_recode2screen_cp(const char *src_cp,const char *param,unsigned len)
 	}
 	else
 	{
-	    mp_free(obuff);
+	    delete obuff;
 	    fprintf(stderr,"ICONV: Can't recode from %s to %s (%s)\n",src_cp,to_cp,strerror(errno));
 	    iconv_close(ic);
 	    goto do_def;
@@ -117,7 +117,7 @@ unsigned utf8_get_char(const char **str) {
   obuff=nls_recode2screen_cp("UTF8",strp,siz);
   *str = (const char *)strp+siz;
   c=*obuff;
-  mp_free(obuff);
+  delete obuff;
   return c;
 }
 
@@ -144,7 +144,7 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
 	if(errno) goto do_def;
 	inb=strlen(param)+1;
 	*outb=(strlen(param)+1)*4;
-	obuff=mp_malloc(*outb);
+	obuff=new char [*outb];
 	ibuff=param;
 	ob=obuff;
 	ib=ibuff;
@@ -155,7 +155,7 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
 	}
 	else
 	{
-	    mp_free(obuff);
+	    delete obuff;
 	    fprintf(stderr,"ICONV: Can't recode from %s to %s (%s)\n",src_cp,to_cp,strerror(errno));
 	    iconv_close(ic);
 	    goto do_def;

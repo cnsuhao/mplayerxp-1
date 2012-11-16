@@ -2,6 +2,9 @@
 #define __CODEC_CFG_H
 
 #include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum {
     CODECS_MAX_FOURCC	=128,
@@ -62,4 +65,7 @@ extern codecs_t* find_codec(unsigned int fourcc,unsigned int *fourccmap,const co
 extern void list_codecs(int audioflag);
 extern void codecs_reset_selection(int audioflag);
 extern void free_codec_cfg(void);
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -8,10 +8,10 @@
 #include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
-extern "C" {
+
 #include "libmpcodecs/dec_audio.h"
 #include "libao2/audio_out.h"
-}
+
 #include "osdep/timer.h"
 #include "xmp_core.h"
 #include "xmp_aplayer.h"

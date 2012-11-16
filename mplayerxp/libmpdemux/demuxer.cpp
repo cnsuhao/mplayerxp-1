@@ -12,13 +12,13 @@
 #include "help_mp.h"
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
-extern "C" {
+
 #include "nls/nls.h"
 
 #include "osdep/fastmemcpy.h"
 #include "libvo/sub.h"
 #include "libao2/afmt.h"
-}
+
 #include "demux_msg.h"
 #include "demuxer.h"
 #include "stream.h"

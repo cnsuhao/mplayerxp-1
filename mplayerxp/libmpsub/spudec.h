@@ -3,6 +3,9 @@
 
 #include "libvo/video_out.h"
 #include "libvo/sub.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int spu_alignment;
 extern int spu_aamode;
@@ -25,6 +28,9 @@ void __FASTCALL__ spudec_set_hw_spu(any_t*__self, vo_functions_t *hw_spu);
 int __FASTCALL__ spudec_changed(any_t*__self);
 void __FASTCALL__ spudec_calc_bbox(any_t*me, unsigned int dxs, unsigned int dys, unsigned int* bbox);
 void __FASTCALL__ spudec_set_forced_subs_only(any_t* const __self, const unsigned int flag);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

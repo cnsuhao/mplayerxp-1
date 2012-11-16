@@ -100,7 +100,7 @@ typedef struct ao_control_vol_s {
 } ao_control_vol_t;
 
 /* prototypes */
-extern char *		 __FASTCALL__ ao_format_name(int format);
+extern const char *	 __FASTCALL__ ao_format_name(int format);
 extern int		 __FASTCALL__ ao_format_bits(int format);
 
 extern void		ao_print_help( void );

@@ -4,7 +4,8 @@ include ../mp_config.mak
 LIBNAME = libao2.a
 
 # TODO: moveout ao_sdl.c so it's only used when SDL is detected
-SRCS= audio_out.c afmt.c ao_null.c ao_wav.c mixer.c
+CXXSRCS=audio_out.cpp  mixer.cpp afmt.cpp
+SRCS=ao_null.c ao_wav.c
 ifeq ($(HAVE_SDL),yes)
 SRCS+=ao_sdl.c
 endif
@@ -30,10 +31,11 @@ ifeq ($(HAVE_JACK),yes)
 SRCS+=ao_jack.c
 endif
 
-
 OBJS=$(SRCS:.c=.o)
+CXXOBJS=$(CXXSRCS:.cpp=.o)
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall
+CXXFLAGS  = $(OPTXXFLAGS) -I. -I.. -Wall
 
 .SUFFIXES: .c .o
 
@@ -41,9 +43,11 @@ CFLAGS  = $(OPTFLAGS) -I. -I.. -Wall
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(LIBNAME):     $(OBJS)
-	$(AR) r $(LIBNAME) $(OBJS)
+$(LIBNAME):     $(OBJS) $(CXXOBJS)
+	$(AR) r $(LIBNAME) $(OBJS) $(CXXOBJS)
 
 all:    $(LIBNAME)
 
@@ -56,7 +60,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

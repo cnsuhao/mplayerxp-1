@@ -35,6 +35,7 @@
 // ===================================================================
 vf_cfg_t vf_cfg; // Configuration for audio filters
 
+#define UINT64_C __UINT64_C
 #include "postproc/postprocess.h"
 #include "osdep/cpudetect.h"
 #include "vd_msg.h"
@@ -84,12 +85,12 @@ MPXP_Rc mpcv_set_colors(any_t *opaque,const char *item,int value)
 void mpcv_uninit(any_t *opaque){
     priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
-    if(!sh_video->inited) { mp_free(priv); return; }
+    if(!sh_video->inited) { delete priv; return; }
     MSG_V("uninit video ...\n");
     if(sh_video->vfilter && sh_video->vfilter_inited==1) vf_uninit_filter_chain(sh_video->vfilter);
     priv->mpvdec->uninit(sh_video);
     sh_video->inited=0;
-    mp_free(priv);
+    delete priv;
 }
 
 #include "libvo/video_out.h"
@@ -126,7 +127,7 @@ static void mpcv_print_codec_info(const priv_t *priv) {
 }
 
 any_t * mpcv_ffmpeg_init(sh_video_t* sh_video,any_t* libinput) {
-    priv_t* priv = mp_malloc(sizeof(priv_t));
+    priv_t* priv = new(zeromem) priv_t;
     priv->parent=sh_video;
     sh_video->decoder=priv;
     /* Use ffmpeg's drivers  as last hope */
@@ -148,7 +149,7 @@ any_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const 
     int done=0;
     const video_probe_t* vprobe;
     sh_video->codec=NULL;
-    priv_t* priv = mp_malloc(sizeof(priv_t));
+    priv_t* priv = new(zeromem) priv_t;
     priv->parent=sh_video;
     sh_video->decoder=priv;
     if(vfm) {
@@ -159,7 +160,7 @@ any_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const 
     if(vprobe) {
 	vfm=vprobe->driver;
 	/* fake struct codecs_st*/
-	sh_video->codec=mp_malloc(sizeof(struct codecs_st));
+	sh_video->codec=new(zeromem) struct codecs_st;
 	strcpy(sh_video->codec->dll_name,vprobe->codec_dll);
 	strcpy(sh_video->codec->driver_name,vprobe->driver);
 	strcpy(sh_video->codec->codec_name,sh_video->codec->dll_name);
@@ -169,7 +170,7 @@ any_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const 
     if(sh_video->codec) {
 	if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-		mp_free(sh_video->codec);
+		delete sh_video->codec;
 		sh_video->codec=NULL;
 	} else done=1;
     }
@@ -214,7 +215,7 @@ any_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const 
     if(done) {
 	mpcv_print_codec_info(priv);
 // memory leak here
-//	if(vprobe) { mp_free(sh_video->codec); sh_video->codec=NULL; }
+//	if(vprobe) { delete sh_video->codec; sh_video->codec=NULL; }
 	return priv;
     }
     return NULL;

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
-extern "C"{
+
 #include "mp_config.h"
 
 #include "xmpcore/sig_hand.h"
@@ -18,7 +18,7 @@ extern "C"{
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
-}
+
 #include "dump.h"
 
 static char *media=NULL,*port=NULL;

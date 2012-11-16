@@ -15,13 +15,13 @@
 #include <math.h>
 #include <sys/time.h>
 #include "mp_config.h"
-extern "C" {
+
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
-}
+
 #include "sig_hand.h"
 #define DA_PREFIX "DEC_AHEAD:"
 #define MSGT_CLASS MSGT_CPLAYER

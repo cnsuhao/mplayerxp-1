@@ -2,7 +2,14 @@
 #ifndef __IMG_FORMAT_H
 #define __IMG_FORMAT_H
 #include <inttypes.h>
-#include "../mp_config.h"
+#include <stdint.h>
+#include "mp_config.h"
+#include "libavutil/pixfmt.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* RGB/BGR Formats */
 enum {
     IMGFMT_RGB_MASK	=0xFFFFFF00,
@@ -151,8 +158,11 @@ typedef struct {
  * @return		string of format name
 **/
 const char * __FASTCALL__ vo_format_name(int format);
-int		pixfmt_from_fourcc(uint32_t fourcc);
-uint32_t	fourcc_from_pixfmt(int pixfmt);
+enum PixelFormat pixfmt_from_fourcc(uint32_t fourcc);
+uint32_t	fourcc_from_pixfmt(enum PixelFormat pixfmt);
 extern unsigned rgbfmt_depth(unsigned fmt);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

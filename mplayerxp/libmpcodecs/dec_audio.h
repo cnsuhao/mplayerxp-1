@@ -3,6 +3,9 @@
 #include "ad.h"
 #include "xmpcore/mp_aframe.h"
 #include "xmpcore/xmp_enums.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // dec_audio.c:
 extern const ad_functions_t* __FASTCALL__ mpca_find_driver(const char *name);
@@ -25,5 +28,8 @@ extern MPXP_Rc mpca_reinit_filters(sh_audio_t *sh_audio,
 	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
 	unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,
 	unsigned out_minsize, unsigned out_maxsize);
+#ifdef __cplusplus
+}
+#endif
 extern void afm_help(void);
 #endif

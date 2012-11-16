@@ -1,6 +1,9 @@
 #ifndef __NLS_NLS_H
 #define __NLS_NLS_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /** Returns pointer to screen's codepage
   * @return		pointer into environment.
 **/
@@ -25,4 +28,7 @@ extern char *nls_recode2screen_cp(const char *src_cp,const char *param,unsigned 
 extern char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *size);
 
 extern unsigned utf8_get_char(const char **str);
+#ifdef __cplusplus
+}
+#endif
 #endif

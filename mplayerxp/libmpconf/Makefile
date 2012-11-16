@@ -6,14 +6,17 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-SRCS  = cfgparser.c m_option.c m_property.c m_struct.c subopt-helper.c
+CXXSRCS=cfgparser.cpp
+SRCS  = m_option.c m_property.c m_struct.c subopt-helper.c
 ifeq ($(ENABLE_WIN32LOADER),yes)
 SRCS += codec-cfg.c
 endif
 
 OBJS	= $(SRCS:.c=.o)
+CXXOBJS	= $(CXXSRCS:.cpp=.o)
 INCLUDE = -I. -I../
 CFLAGS  = $(OPTFLAGS) $(INCLUDE) -W -Wall
+CXXFLAGS  = $(OPTXXFLAGS) $(INCLUDE) -W -Wall
 
 .SUFFIXES: .c .o
 
@@ -26,9 +29,11 @@ $(SUBDIRS):
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(LIBNAME): $(SUBDIRS) $(OBJS)
-	$(AR) r $(LIBNAME) $(OBJS)
+$(LIBNAME): $(SUBDIRS) $(OBJS) $(CXXOBJS)
+	$(AR) r $(LIBNAME) $(OBJS) $(CXXOBJS)
 
 clean:
 	$(DO_MAKE)
@@ -42,7 +47,7 @@ dep:    depend
 
 depend:
 	$(DO_MAKE)
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

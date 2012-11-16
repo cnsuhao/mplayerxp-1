@@ -1,6 +1,6 @@
-extern "C" {
+
 #include "libmpcodecs/dec_video.h"
-}
+
 #include "sig_hand.h"
 #include "mp_msg.h"
 #include "mplayerxp.h"

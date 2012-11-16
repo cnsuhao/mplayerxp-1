@@ -44,7 +44,7 @@ ifeq ($(HAVE_LIBVORBIS),yes)
 SRCS += demux_ogg.c
 endif
 
-SRCS += muxer.c mux_mpxp64.c mux_raw.c
+SRCS += mux_mpxp64.c mux_raw.c
 #SRCS+= mux_lavf.c
 ifeq ($(HAVE_STREAMING),yes)
 SUBDIRS = freesdp librtsp realrtsp
@@ -54,6 +54,7 @@ SUBDIRS =
 endif
 
 CXXSRCS = demuxer.cpp demuxer_r.cpp stream.cpp cache2.cpp
+CXXSRCS+= muxer.cpp
 
 OBJS	= $(SRCS:.c=.o)
 CXXOBJS	= $(CXXSRCS:.cpp=.o)

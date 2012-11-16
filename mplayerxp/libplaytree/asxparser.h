@@ -3,6 +3,9 @@
 
 #include "osdep/mplib.h"
 #include "playtree.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _ASX_Parser_t ASX_Parser_t;
 
@@ -46,5 +49,8 @@ typedef void (* __FASTCALL__ ASX_FreeFunc)(any_t* arg);
 extern void __FASTCALL__ asx_list_free(any_t* list_ptr,ASX_FreeFunc free_func);
 
 static inline void asx_free_attribs(any_t*a) { asx_list_free(&a,mp_free); }
+#ifdef __cplusplus
+}
+#endif
 
 #endif

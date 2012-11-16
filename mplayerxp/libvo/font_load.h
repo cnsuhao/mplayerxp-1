@@ -1,10 +1,6 @@
 #ifndef __FONT_LOAD_H
 #define __FONT_LOAD_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct {
     unsigned char *bmp;
     unsigned char *pal;
@@ -28,8 +24,5 @@ typedef struct {
 
 raw_file* load_raw(const char *name,int verbose);
 font_desc_t* read_font_desc(const char* fname,float factor,int verbose);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

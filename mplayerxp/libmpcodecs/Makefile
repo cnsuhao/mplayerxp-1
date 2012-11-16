@@ -5,9 +5,9 @@ SUBDIRS = libnuppelvideo liba52 libdca
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-SRCS=dec_video.c \
-     vd.c \
-     vd_null.c \
+CXXSRCS=dec_video.cpp vd.cpp ad.cpp dec_audio.cpp
+
+SRCS=vd_null.c \
      vd_ffmpeg.c \
      vd_raw.c \
      vd_nuv.c \
@@ -15,8 +15,6 @@ SRCS=dec_video.c \
      vd_xvid.c \
      vd_mpegpes.c \
      vd_huffyuv.c \
-     ad.c \
-     dec_audio.c \
      ad_null.c \
      ad_ffmpeg.c \
      ad_mp3.c \
@@ -57,8 +55,10 @@ SRCS+=vd_dshow.c \
 endif
 
 OBJS=$(SRCS:.c=.o)
+CXXOBJS=$(CXXSRCS:.cpp=.o)
 
 CFLAGS = $(OPTFLAGS) -I. -I.. -Wall
+CXXFLAGS = $(OPTXXFLAGS) -I. -I.. -Wall
 
 .SUFFIXES: .c .o
 
@@ -71,9 +71,11 @@ $(SUBDIRS):
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(LIBNAME): $(SUBDIRS) $(OBJS) 
-	$(AR) r $(LIBNAME) $(OBJS) \
+$(LIBNAME): $(SUBDIRS) $(OBJS) $(CXXOBJS)
+	$(AR) r $(LIBNAME) $(OBJS) $(CXXOBJS) \
 	$(wildcard libnuppelvideo/*.o) \
 	$(wildcard liba52/*.o) \
 	$(wildcard libdca/*.o)
@@ -91,7 +93,7 @@ dep:    depend
 
 depend:
 	$(DO_MAKE)
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

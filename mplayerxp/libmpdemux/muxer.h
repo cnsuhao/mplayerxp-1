@@ -81,8 +81,14 @@ muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f);
 #define muxer_write_header(muxer,info) if(muxer->cont_write_header) muxer->cont_write_header(muxer,info)
 #define muxer_write_index(muxer) if(muxer->cont_write_index) muxer->cont_write_index(muxer)
 #define muxer_fix_parameters(muxer) if(muxer->fix_parameters) muxer->fix_parameters(muxer)
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void muxer_init_muxer_raw(muxer_t *);
 extern void muxer_init_muxer_mpxp64(muxer_t *);
 extern int  muxer_init_muxer_lavf(muxer_t *,const char *);
+#ifdef __cplusplus
+}
+#endif
+
 #endif

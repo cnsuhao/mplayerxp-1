@@ -25,6 +25,7 @@
 
 #include "screenshot.h"
 #include "img_format.h"
+#define UINT64_C __UINT64_C
 #include "postproc/swscale.h"
 #include "postproc/vf_scale.h"
 #include "osdep/mplib.h"
@@ -56,7 +57,7 @@ static struct pngdata create_png (char * fname)
 
     if (!png.png_ptr) {
        MSG_V("PNG Failed to init png pointer\n");
-       png.status = ERROR;
+       png.status = pngdata::ERROR;
        return png;
     }
 
@@ -64,7 +65,7 @@ static struct pngdata create_png (char * fname)
        MSG_V("PNG Failed to init png infopointer\n");
        png_destroy_write_struct(&png.png_ptr,
 	 (png_infopp)NULL);
-       png.status = ERROR;
+       png.status = pngdata::ERROR;
        return png;
     }
 
@@ -72,14 +73,14 @@ static struct pngdata create_png (char * fname)
 	MSG_V("PNG Internal error!\n");
 	png_destroy_write_struct(&png.png_ptr, &png.info_ptr);
 	fclose(png.fp);
-	png.status = ERROR;
+	png.status = pngdata::ERROR;
 	return png;
     }
 
     png.fp = fopen (fname, "wb");
     if (png.fp == NULL) {
 	MSG_ERR("\nPNG Error opening %s for writing!\n", strerror(errno));
-	png.status = ERROR;
+	png.status = pngdata::ERROR;
 	return png;
     }
 
@@ -101,7 +102,7 @@ static struct pngdata create_png (char * fname)
 	png_set_bgr(png.png_ptr);
     }
 
-    png.status = OK;
+    png.status = pngdata::OK;
     return png;
 
 }
@@ -176,7 +177,7 @@ static void write_bmp(const char *fname,unsigned w,unsigned h,uint8_t *data)
 }
 #endif
 
-MPXP_Rc gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint32_t fourcc,unsigned w,unsigned h)
+MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *strides,uint32_t fourcc,unsigned w,unsigned h)
 {
     unsigned k;
     char buf[256];
@@ -185,7 +186,8 @@ MPXP_Rc gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint
 #endif
     uint8_t *image_data=NULL;
     uint8_t *dst[3];
-    unsigned dstStride[3],bpp = 24;
+    int dstStride[3];
+    unsigned bpp = 24;
     struct SwsContext * sws = NULL;
 
 
@@ -202,7 +204,7 @@ MPXP_Rc gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint
     }
     sshot.image_width = w;
     sshot.image_height = h;
-    if(!(image_data = mp_malloc(sshot.image_width*sshot.image_height*3)))
+    if(!(image_data = new uint8_t[sshot.image_width*sshot.image_height*3]))
     {
 	MSG_ERR("vo_png: Can't allocate temporary buffer\n");
 	return MPXP_False;
@@ -229,7 +231,7 @@ MPXP_Rc gr_screenshot(const char *fname,uint8_t *planes[],unsigned *strides,uint
     dst[0]=image_data;
     dst[1]=
     dst[2]=0;
-    sws_scale(sws,planes,strides,0,h,dst,dstStride);
+    sws_scale(sws,planes,reinterpret_cast<const int*>(strides),0,h,dst,dstStride);
 #ifdef HAVE_PNG
     snprintf (buf, 100, "%s.png", fname);
 #else

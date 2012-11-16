@@ -9,7 +9,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <ctype.h>
-extern "C" {
+
 #include "input.h"
 #include "mouse.h"
 #ifdef MP_DEBUG
@@ -23,7 +23,7 @@ extern "C" {
 #include "libmpconf/cfgparser.h"
 
 #include "in_msg.h"
-}
+
 #ifdef HAVE_LIRC
 #include "lirc.h"
 #endif

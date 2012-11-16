@@ -5,6 +5,10 @@
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct vf_instance_s;
 struct vf_priv_s;
 
@@ -24,7 +28,7 @@ typedef struct vf_info_s {
 } vf_info_t;
 
 typedef struct vf_image_context_s {
-    mp_image_t* static_planes[2];
+    unsigned char* static_planes[2];
     int static_idx;
 } vf_image_context_t;
 
@@ -32,6 +36,9 @@ enum {
     VF_PIN=RND_NUMBER7+RND_CHAR7
 };
 
+typedef int (* __FASTCALL__ vf_config_fun_t)(struct vf_instance_s* vf,
+	int width, int height, int d_width, int d_height,
+	unsigned int flags, unsigned int outfmt);
 typedef struct vf_instance_s {
     const vf_info_t* info;
     char		antiviral_hole[RND_CHAR5];
@@ -81,7 +88,7 @@ typedef struct vf_cfg_s{
 
 typedef struct vf_seteq_s
 {
-    char *item;
+    const char *item;
     int value;
 } vf_equalizer_t;
 
@@ -135,5 +142,8 @@ void vf_help();
 void __FASTCALL__ vf_uninit_filter(vf_instance_t* vf);
 void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf);
 void __FASTCALL__ vf_showlist(vf_instance_t* vf);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

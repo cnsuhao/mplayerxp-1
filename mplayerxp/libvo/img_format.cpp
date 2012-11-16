@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <limits.h>
 #include "img_format.h"
-#include "libavutil/avutil.h"
 
 const char * __FASTCALL__ vo_format_name(int format)
 {
@@ -82,7 +82,7 @@ const char * __FASTCALL__ vo_format_name(int format)
 }
 
 typedef struct s_pix_fourcc{
-    int pix_fmt;
+    PixelFormat pix_fmt;
     uint32_t fourcc;
 }pix_fourcc;
 static pix_fourcc pfcc[] =
@@ -138,24 +138,22 @@ static pix_fourcc pfcc[] =
     { PIX_FMT_BGR32_1, IMGFMT_BGRA } ///< Packed RGB 8:8:8, 32bpp, (msb)8B 8G 8R 8A(lsb), in cpu endianness
 };
 
-int		pixfmt_from_fourcc(uint32_t fourcc)
+PixelFormat	pixfmt_from_fourcc(uint32_t fourcc)
 {
     unsigned i;
-    for(i=0;i<sizeof(pfcc)/sizeof(pix_fourcc);i++)
-    {
+    for(i=0;i<sizeof(pfcc)/sizeof(pix_fourcc);i++) {
 	if(fourcc==pfcc[i].fourcc) return pfcc[i].pix_fmt;
     }
-    return -1;
+    return PIX_FMT_NONE;
 }
 
-uint32_t	fourcc_from_pixfmt(int pixfmt)
+uint32_t	fourcc_from_pixfmt(enum PixelFormat pixfmt)
 {
     unsigned i;
-    for(i=0;i<sizeof(pfcc)/sizeof(pix_fourcc);i++)
-    {
+    for(i=0;i<sizeof(pfcc)/sizeof(pix_fourcc);i++) {
 	if(pixfmt==pfcc[i].pix_fmt) return pfcc[i].fourcc;
     }
-    return -1;
+    return UINT_MAX;
 }
 
 unsigned rgbfmt_depth(unsigned fmt)

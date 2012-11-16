@@ -5,12 +5,12 @@
 #include <string.h>
 #include <inttypes.h>
 #include <pthread.h>
-extern "C" {
+
 #include "mp_config.h"
 #include "nls/nls.h"
 #include "mp_msg.h"
 #include "osdep/mplib.h"
-}
+
 #define _bg(x) ((x) >> 4)
 #define _fg(x) ((x) & 0x0f)
 typedef struct priv_s {

@@ -21,8 +21,10 @@
 
 #ifndef SWSCALE_H
 #define SWSCALE_H
-
-#include "libswscale/swscale.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "libswscale/swscale.h" // unfortunatelly
 
 extern int sws_init(void);
 extern void sws_uninit(void);
@@ -39,5 +41,7 @@ extern void palette8torgb16(const uint8_t *src, uint8_t *dst, long num_pixels, c
 extern void palette8tobgr16(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
 extern void palette8torgb15(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
 extern void palette8tobgr15(const uint8_t *src, uint8_t *dst, long num_pixels, const uint8_t *palette);
-
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -23,7 +23,10 @@
 
 #include "xmpcore/xmp_core.h"
 #include "spudec.h"
+extern "C" {
+#define UINT64_C __UINT64_C
 #include "postproc/swscale.h"
+}
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_SPUDEC
 #include "mp_msg.h"
@@ -97,31 +100,30 @@ typedef struct {
   unsigned int is_forced_sub;         /* true if current subtitle is a forced subtitle */
 } spudec_handle_t;
 
-static void __FASTCALL__ spudec_queue_packet(spudec_handle_t *this, packet_t *packet)
+static void __FASTCALL__ spudec_queue_packet(spudec_handle_t *self, packet_t *packet)
 {
-  if (this->queue_head == NULL)
-    this->queue_head = packet;
+  if (self->queue_head == NULL)
+    self->queue_head = packet;
   else
-    this->queue_tail->next = packet;
-  this->queue_tail = packet;
+    self->queue_tail->next = packet;
+  self->queue_tail = packet;
 }
 
-static packet_t __FASTCALL__ *spudec_dequeue_packet(spudec_handle_t *this)
+static packet_t __FASTCALL__ *spudec_dequeue_packet(spudec_handle_t *self)
 {
-  packet_t *retval = this->queue_head;
+  packet_t *retval = self->queue_head;
 
-  this->queue_head = retval->next;
-  if (this->queue_head == NULL)
-    this->queue_tail = NULL;
+  self->queue_head = retval->next;
+  if (self->queue_head == NULL)
+    self->queue_tail = NULL;
 
   return retval;
 }
 
 static void __FASTCALL__ spudec_free_packet(packet_t *packet)
 {
-  if (packet->packet != NULL)
-    mp_free(packet->packet);
-  mp_free(packet);
+  if (packet->packet != NULL) delete packet->packet;
+  delete packet;
 }
 
 static inline unsigned int __FASTCALL__ get_be16(const unsigned char *p)
@@ -173,104 +175,104 @@ static inline int __FASTCALL__ mkalpha(int i)
 }
 
 /* Cut the sub to visible part */
-static inline void __FASTCALL__ spudec_cut_image(spudec_handle_t *this)
+static inline void __FASTCALL__ spudec_cut_image(spudec_handle_t *self)
 {
   unsigned int fy, ly;
   unsigned int first_y, last_y;
   unsigned char *image;
   unsigned char *aimage;
 
-  if (this->stride == 0 || this->height == 0) {
+  if (self->stride == 0 || self->height == 0) {
     return;
   }
 
-  for (fy = 0; fy < this->image_size && !this->aimage[fy]; fy++);
-  for (ly = this->stride * this->height-1; ly && !this->aimage[ly]; ly--);
-  first_y = fy / this->stride;
-  last_y = ly / this->stride;
+  for (fy = 0; fy < self->image_size && !self->aimage[fy]; fy++);
+  for (ly = self->stride * self->height-1; ly && !self->aimage[ly]; ly--);
+  first_y = fy / self->stride;
+  last_y = ly / self->stride;
   //printf("first_y: %d, last_y: %d\n", first_y, last_y);
-  this->start_row += first_y;
+  self->start_row += first_y;
 
-  // Some subtitles trigger this condition
+  // Some subtitles trigger self condition
   if (last_y + 1 > first_y ) {
-	  this->height = last_y - first_y +1;
+	  self->height = last_y - first_y +1;
   } else {
-	  this->height = 0;
-	  this->image_size = 0;
+	  self->height = 0;
+	  self->image_size = 0;
 	  return;
   }
 
-//  printf("new h %d new start %d (sz %d st %d)---\n\n", this->height, this->start_row, this->image_size, this->stride);
+//  printf("new h %d new start %d (sz %d st %d)---\n\n", self->height, self->start_row, self->image_size, self->stride);
 
-  image = mp_malloc(2 * this->stride * this->height);
+  image = new unsigned char [2 * self->stride * self->height];
   if(image){
-    this->image_size = this->stride * this->height;
-    aimage = image + this->image_size;
-    memcpy(image, this->image + this->stride * first_y, this->image_size);
-    memcpy(aimage, this->aimage + this->stride * first_y, this->image_size);
-    mp_free(this->image);
-    this->image = image;
-    this->aimage = aimage;
+    self->image_size = self->stride * self->height;
+    aimage = image + self->image_size;
+    memcpy(image, self->image + self->stride * first_y, self->image_size);
+    memcpy(aimage, self->aimage + self->stride * first_y, self->image_size);
+    delete self->image;
+    self->image = image;
+    self->aimage = aimage;
   } else {
-    MSG_FATAL("Fatal: update_spu: mp_malloc requested %d bytes\n", 2 * this->stride * this->height);
+    MSG_FATAL("Fatal: update_spu: mp_malloc requested %d bytes\n", 2 * self->stride * self->height);
   }
 }
 
-static void __FASTCALL__ spudec_process_data(spudec_handle_t *this, packet_t *packet)
+static void __FASTCALL__ spudec_process_data(spudec_handle_t *self, packet_t *packet)
 {
   unsigned int cmap[4], alpha[4];
   unsigned int i, x, y;
 
-  this->scaled_frame_width = 0;
-  this->scaled_frame_height = 0;
-  this->start_col = packet->start_col;
-  this->end_col = packet->end_col;
-  this->start_row = packet->start_row;
-  this->end_row = packet->end_row;
-  this->height = packet->height;
-  this->width = packet->width;
-  this->stride = packet->stride;
+  self->scaled_frame_width = 0;
+  self->scaled_frame_height = 0;
+  self->start_col = packet->start_col;
+  self->end_col = packet->end_col;
+  self->start_row = packet->start_row;
+  self->end_row = packet->end_row;
+  self->height = packet->height;
+  self->width = packet->width;
+  self->stride = packet->stride;
   for (i = 0; i < 4; ++i) {
     alpha[i] = mkalpha(packet->alpha[i]);
     if (alpha[i] == 0)
       cmap[i] = 0;
-    else if (this->custom){
-      cmap[i] = ((this->cuspal[i] >> 16) & 0xff);
+    else if (self->custom){
+      cmap[i] = ((self->cuspal[i] >> 16) & 0xff);
       if (cmap[i] + alpha[i] > 255)
 	cmap[i] = 256 - alpha[i];
     }
     else {
-      cmap[i] = ((this->global_palette[packet->palette[i]] >> 16) & 0xff);
+      cmap[i] = ((self->global_palette[packet->palette[i]] >> 16) & 0xff);
       if (cmap[i] + alpha[i] > 255)
 	cmap[i] = 256 - alpha[i];
     }
   }
 
-  if (this->image_size < this->stride * this->height) {
-    if (this->image != NULL) {
-      mp_free(this->image);
-      this->image_size = 0;
+  if (self->image_size < self->stride * self->height) {
+    if (self->image != NULL) {
+      delete self->image;
+      self->image_size = 0;
     }
-    this->image = mp_malloc(2 * this->stride * this->height);
-    if (this->image) {
-      this->image_size = this->stride * this->height;
-      this->aimage = this->image + this->image_size;
+    self->image = new unsigned char [2 * self->stride * self->height];
+    if (self->image) {
+      self->image_size = self->stride * self->height;
+      self->aimage = self->image + self->image_size;
     }
   }
-  if (this->image == NULL)
+  if (self->image == NULL)
     return;
 
   /* Kludge: draw_alpha needs width multiple of 8. */
-  if (this->width < this->stride)
-    for (y = 0; y < this->height; ++y)
-      memset(this->aimage + y * this->stride + this->width, 0, this->stride - this->width);
+  if (self->width < self->stride)
+    for (y = 0; y < self->height; ++y)
+      memset(self->aimage + y * self->stride + self->width, 0, self->stride - self->width);
 
   i = packet->current_nibble[1];
   x = 0;
   y = 0;
   while (packet->current_nibble[0] < i
 	 && packet->current_nibble[1] / 2 < packet->control_start
-	 && y < this->height) {
+	 && y < self->height) {
     unsigned int len, color;
     unsigned int rle = 0;
     rle = get_nibble(packet);
@@ -281,25 +283,25 @@ static void __FASTCALL__ spudec_process_data(spudec_handle_t *this, packet_t *pa
 	if (rle < 0x040) {
 	  rle = (rle << 4) | get_nibble(packet);
 	  if (rle < 0x0004)
-	    rle |= ((this->width - x) << 2);
+	    rle |= ((self->width - x) << 2);
 	}
       }
     }
     color = 3 - (rle & 0x3);
     len = rle >> 2;
-    if (len > this->width - x || len == 0)
-      len = this->width - x;
+    if (len > self->width - x || len == 0)
+      len = self->width - x;
     /* FIXME have to use palette and alpha map*/
-    memset(this->image + y * this->stride + x, cmap[color], len);
-    memset(this->aimage + y * this->stride + x, alpha[color], len);
+    memset(self->image + y * self->stride + x, cmap[color], len);
+    memset(self->aimage + y * self->stride + x, alpha[color], len);
     x += len;
-    if (x >= this->width) {
+    if (x >= self->width) {
       next_line(packet);
       x = 0;
       ++y;
     }
   }
-  spudec_cut_image(this);
+  spudec_cut_image(self);
 }
 
 
@@ -310,7 +312,7 @@ gray scale values to each color.
   I tested it with four streams and even got something readable. Half of the
 times I got black characters with white around and half the reverse.
 */
-static void __FASTCALL__ compute_palette(spudec_handle_t *this, packet_t *packet)
+static void __FASTCALL__ compute_palette(spudec_handle_t *self, packet_t *packet)
 {
   int used[16],i,cused,start,step,color;
 
@@ -325,21 +327,21 @@ static void __FASTCALL__ compute_palette(spudec_handle_t *this, packet_t *packet
     start = 0x80;
     step = 0;
   } else {
-    start = this->font_start_level;
-    step = (0xF0-this->font_start_level)/(cused-1);
+    start = self->font_start_level;
+    step = (0xF0-self->font_start_level)/(cused-1);
   }
   memset(used, 0, sizeof(used));
   for (i=0; i<4; i++) {
     color = packet->palette[i];
     if (packet->alpha[i] && !used[color]) { /* not assigned? */
        used[color] = 1;
-       this->global_palette[color] = start<<16;
+       self->global_palette[color] = start<<16;
        start += step;
     }
   }
 }
 
-static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned int pts100)
+static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned int pts100)
 {
   int a,b; /* Temporary vars */
   unsigned int date, type;
@@ -359,15 +361,15 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
   unsigned int height = 0;
   unsigned int stride = 0;
 
-  control_start = get_be16(this->packet + 2);
+  control_start = get_be16(self->packet + 2);
   next_off = control_start;
   while (start_off != next_off) {
     start_off = next_off;
-    date = get_be16(this->packet + start_off) * 1024;
-    next_off = get_be16(this->packet + start_off + 2);
+    date = get_be16(self->packet + start_off) * 1024;
+    next_off = get_be16(self->packet + start_off + 2);
     MSG_DBG2( "date=%d\n", date);
     off = start_off + 4;
-    for (type = this->packet[off++]; type != 0xff; type = this->packet[off++]) {
+    for (type = self->packet[off++]; type != 0xff; type = self->packet[off++]) {
       MSG_DBG2( "cmd=%d  ",type);
       switch(type) {
       case 0x00:
@@ -377,7 +379,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
 	start_pts = pts100 + date;
 	end_pts = UINT_MAX;
 	display = 1;
-	this->is_forced_sub=~0; // current subtitle is forced
+	self->is_forced_sub=~0; // current subtitle is forced
 	break;
       case 0x01:
 	/* Start display */
@@ -385,7 +387,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
 	start_pts = pts100 + date;
 	end_pts = UINT_MAX;
 	display = 1;
-	this->is_forced_sub=0;
+	self->is_forced_sub=0;
 	break;
       case 0x02:
 	/* Stop display */
@@ -394,28 +396,28 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
 	break;
       case 0x03:
 	/* Palette */
-	this->palette[0] = this->packet[off] >> 4;
-	this->palette[1] = this->packet[off] & 0xf;
-	this->palette[2] = this->packet[off + 1] >> 4;
-	this->palette[3] = this->packet[off + 1] & 0xf;
+	self->palette[0] = self->packet[off] >> 4;
+	self->palette[1] = self->packet[off] & 0xf;
+	self->palette[2] = self->packet[off + 1] >> 4;
+	self->palette[3] = self->packet[off + 1] & 0xf;
 	MSG_DBG2("Palette %d, %d, %d, %d\n",
-	       this->palette[0], this->palette[1], this->palette[2], this->palette[3]);
+	       self->palette[0], self->palette[1], self->palette[2], self->palette[3]);
 	off+=2;
 	break;
       case 0x04:
 	/* Alpha */
-	this->alpha[0] = this->packet[off] >> 4;
-	this->alpha[1] = this->packet[off] & 0xf;
-	this->alpha[2] = this->packet[off + 1] >> 4;
-	this->alpha[3] = this->packet[off + 1] & 0xf;
+	self->alpha[0] = self->packet[off] >> 4;
+	self->alpha[1] = self->packet[off] & 0xf;
+	self->alpha[2] = self->packet[off + 1] >> 4;
+	self->alpha[3] = self->packet[off + 1] & 0xf;
 	MSG_DBG2("Alpha %d, %d, %d, %d\n",
-	       this->alpha[0], this->alpha[1], this->alpha[2], this->alpha[3]);
+	       self->alpha[0], self->alpha[1], self->alpha[2], self->alpha[3]);
 	off+=2;
 	break;
       case 0x05:
 	/* Co-ords */
-	a = get_be24(this->packet + off);
-	b = get_be24(this->packet + off + 3);
+	a = get_be24(self->packet + off);
+	b = get_be24(self->packet + off + 3);
 	start_col = a >> 12;
 	end_col = a & 0xfff;
 	width = (end_col < start_col) ? 0 : end_col - start_col + 1;
@@ -430,8 +432,8 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
 	break;
       case 0x06:
 	/* Graphic lines */
-	current_nibble[0] = 2 * get_be16(this->packet + off);
-	current_nibble[1] = 2 * get_be16(this->packet + off + 2);
+	current_nibble[0] = 2 * get_be16(self->packet + off);
+	current_nibble[1] = 2 * get_be16(self->packet + off + 2);
 	MSG_DBG2("Graphic offset 1: %d  offset 2: %d\n",
 	       current_nibble[0] / 2, current_nibble[1] / 2);
 	off+=4;
@@ -449,11 +451,11 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
     }
   next_control:
     if (display) {
-      packet_t *packet = mp_calloc(1, sizeof(packet_t));
+      packet_t *packet = new(zeromem) packet_t;
       int i;
       packet->start_pts = start_pts;
       if (end_pts == UINT_MAX && start_off != next_off) {
-	start_pts = pts100 + get_be16(this->packet + next_off) * 1024;
+	start_pts = pts100 + get_be16(self->packet + next_off) * 1024;
 	packet->end_pts = start_pts - 1;
       } else packet->end_pts = end_pts;
       packet->current_nibble[0] = current_nibble[0];
@@ -467,38 +469,38 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *this, unsigned 
       packet->stride = stride;
       packet->control_start = control_start;
       for (i=0; i<4; i++) {
-	packet->alpha[i] = this->alpha[i];
-	packet->palette[i] = this->palette[i];
+	packet->alpha[i] = self->alpha[i];
+	packet->palette[i] = self->palette[i];
       }
-      packet->packet = mp_malloc(this->packet_size);
-      memcpy(packet->packet, this->packet, this->packet_size);
-      spudec_queue_packet(this, packet);
+      packet->packet = new unsigned char [self->packet_size];
+      memcpy(packet->packet, self->packet, self->packet_size);
+      spudec_queue_packet(self, packet);
     }
   }
 }
 
-static void __FASTCALL__ spudec_decode(spudec_handle_t *this, unsigned int pts100)
+static void __FASTCALL__ spudec_decode(spudec_handle_t *self, unsigned int pts100)
 {
-  if(this->hw_spu) {
+  if(self->hw_spu) {
     vo_mpegpes_t packet = { NULL, 0, 0x20, 0 };
-    packet.data = this->packet;
-    packet.size = this->packet_size;
+    packet.data = self->packet;
+    packet.size = self->packet_size;
     packet.timestamp = pts100;
-//    this->hw_spu->draw_frame((uint8_t**)&pkg);
+//    self->hw_spu->draw_frame((uint8_t**)&pkg);
   } else
-    spudec_process_control(this, pts100);
+    spudec_process_control(self, pts100);
 }
 
-int __FASTCALL__ spudec_changed(any_t* this)
+int __FASTCALL__ spudec_changed(any_t* self)
 {
-    spudec_handle_t * spu = (spudec_handle_t*)this;
+    spudec_handle_t * spu = (spudec_handle_t*)self;
     return (spu->spu_changed || spu->now_pts > spu->end_pts);
 }
 
-void __FASTCALL__ spudec_assemble(any_t*this, unsigned char *packet, unsigned int len, unsigned int pts100)
+void __FASTCALL__ spudec_assemble(any_t*self, unsigned char *packet, unsigned int len, unsigned int pts100)
 {
-  spudec_handle_t *spu = (spudec_handle_t*)this;
-//  spudec_heartbeat(this, pts100);
+  spudec_handle_t *spu = (spudec_handle_t*)self;
+//  spudec_heartbeat(self, pts100);
   if (len < 2) {
       MSG_WARN("SPUasm: packet too short\n");
       return;
@@ -508,9 +510,8 @@ void __FASTCALL__ spudec_assemble(any_t*this, unsigned char *packet, unsigned in
     unsigned int len2 = get_be16(packet);
     // Start new fragment
     if (spu->packet_reserve < len2) {
-      if (spu->packet != NULL)
-	mp_free(spu->packet);
-      spu->packet = mp_malloc(len2);
+      if (spu->packet != NULL) delete spu->packet;
+      spu->packet = new unsigned char [len2];
       spu->packet_reserve = spu->packet != NULL ? len2 : 0;
     }
     if (spu->packet != NULL) {
@@ -569,9 +570,9 @@ void __FASTCALL__ spudec_assemble(any_t*this, unsigned char *packet, unsigned in
 #endif
 }
 
-void __FASTCALL__ spudec_reset(any_t*this)	// called after seek
+void __FASTCALL__ spudec_reset(any_t*self)	// called after seek
 {
-  spudec_handle_t *spu = (spudec_handle_t*)this;
+  spudec_handle_t *spu = (spudec_handle_t*)self;
   while (spu->queue_head)
     spudec_free_packet(spudec_dequeue_packet(spu));
   spu->now_pts = 0;
@@ -579,15 +580,15 @@ void __FASTCALL__ spudec_reset(any_t*this)	// called after seek
   spu->packet_size = spu->packet_offset = 0;
 }
 
-void __FASTCALL__ spudec_now_pts(any_t*this, unsigned int pts100)
+void __FASTCALL__ spudec_now_pts(any_t*self, unsigned int pts100)
 {
-  spudec_handle_t *spu = (spudec_handle_t*) this;
+  spudec_handle_t *spu = (spudec_handle_t*) self;
   spu->now_pts = pts100;
 }
 
-void __FASTCALL__ spudec_heartbeat(any_t*this, unsigned int pts100)
+void __FASTCALL__ spudec_heartbeat(any_t*self, unsigned int pts100)
 {
-  spudec_handle_t *spu = (spudec_handle_t*) this;
+  spudec_handle_t *spu = (spudec_handle_t*) self;
   spu->now_pts = pts100;
 
   while (spu->queue_head != NULL && pts100 >= spu->queue_head->start_pts) {
@@ -602,25 +603,25 @@ void __FASTCALL__ spudec_heartbeat(any_t*this, unsigned int pts100)
   }
 }
 
-int __FASTCALL__ spudec_visible(any_t*this){
-    spudec_handle_t *spu = (spudec_handle_t *)this;
+int __FASTCALL__ spudec_visible(any_t*self){
+    spudec_handle_t *spu = (spudec_handle_t *)self;
     int ret=(spu->start_pts <= spu->now_pts &&
 	     spu->now_pts < spu->end_pts &&
 	     spu->height > 0);
     return ret;
 }
 
-void __FASTCALL__ spudec_set_forced_subs_only(any_t* const this, const unsigned int flag)
+void __FASTCALL__ spudec_set_forced_subs_only(any_t* const self, const unsigned int flag)
 {
-  if(this){
-      ((spudec_handle_t *)this)->forced_subs_only=flag;
+  if(self){
+      ((spudec_handle_t *)self)->forced_subs_only=flag;
       MSG_DBG2("SPU: Display only forced subs now %s\n", flag ? "enabled": "disabled");
   }
 }
 
-void __FASTCALL__ spudec_draw(any_t*this, draw_osd_f draw_alpha,any_t*vo)
+void __FASTCALL__ spudec_draw(any_t*self, draw_osd_f draw_alpha,any_t*vo)
 {
-    spudec_handle_t *spu = (spudec_handle_t *)this;
+    spudec_handle_t *spu = (spudec_handle_t *)self;
     if (spu->start_pts <= spu->now_pts && spu->now_pts < spu->end_pts && spu->image)
     {
 	draw_alpha(vo,dae_curr_vdecoded(xp_core),spu->start_col, spu->start_row, spu->width, spu->height,
@@ -799,10 +800,10 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 	spu->scaled_stride = (spu->scaled_width + 7) & ~7;
 	if (spu->scaled_image_size < spu->scaled_stride * spu->scaled_height) {
 	  if (spu->scaled_image) {
-	    mp_free(spu->scaled_image);
+	    delete spu->scaled_image;
 	    spu->scaled_image_size = 0;
 	  }
-	  spu->scaled_image = mp_malloc(2 * spu->scaled_stride * spu->scaled_height);
+	  spu->scaled_image = new unsigned char [2 * spu->scaled_stride * spu->scaled_height];
 	  if (spu->scaled_image) {
 	    spu->scaled_image_size = spu->scaled_stride * spu->scaled_height;
 	    spu->scaled_aimage = spu->scaled_image + spu->scaled_image_size;
@@ -820,8 +821,8 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 		  spu->image, spu->aimage, spu->width, spu->height, spu->stride);
 	  break;
 	  case 3:
-	  table_x = mp_calloc(spu->scaled_width, sizeof(scale_pixel));
-	  table_y = mp_calloc(spu->scaled_height, sizeof(scale_pixel));
+	  table_x = new(zeromem) scale_pixel[spu->scaled_width];
+	  table_y = new(zeromem) scale_pixel[spu->scaled_height];
 	  if (!table_x || !table_y) {
 	    MSG_FATAL("Fatal: spudec_draw_scaled: mp_calloc failed\n");
 	  }
@@ -830,8 +831,8 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 	  for (y = 0; y < spu->scaled_height; y++)
 	    for (x = 0; x < spu->scaled_width; x++)
 	      scale_image(x, y, table_x, table_y, spu);
-	  mp_free(table_x);
-	  mp_free(table_y);
+	  delete table_x;
+	  delete table_y;
 	  break;
 	  case 0:
 	  /* no antialiasing */
@@ -894,7 +895,7 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 	       unscaled_x and unscaled_x + 0x100 / scalex
 
 	       The original rectangular region that the scaled pixel
-	       represents is cut in 9 rectangular areas like this:
+	       represents is cut in 9 rectangular areas like self:
 
 	       +---+-----------------+---+
 	       | 1 |        2        | 3 |
@@ -1098,9 +1099,9 @@ nothing_to_do:
   }
 }
 
-void __FASTCALL__ spudec_update_palette(any_t* this,const unsigned int *palette)
+void __FASTCALL__ spudec_update_palette(any_t* self,const unsigned int *palette)
 {
-  spudec_handle_t *spu = (spudec_handle_t *) this;
+  spudec_handle_t *spu = (spudec_handle_t *) self;
   if (spu && palette) {
     memcpy(spu->global_palette, palette, sizeof(spu->global_palette));
 //    if(spu->hw_spu)
@@ -1108,9 +1109,9 @@ void __FASTCALL__ spudec_update_palette(any_t* this,const unsigned int *palette)
   }
 }
 
-void __FASTCALL__ spudec_set_font_factor(any_t*this, double factor)
+void __FASTCALL__ spudec_set_font_factor(any_t*self, double factor)
 {
-  spudec_handle_t *spu = (spudec_handle_t *) this;
+  spudec_handle_t *spu = (spudec_handle_t *) self;
   spu->font_start_level = (int)(0xF0-(0xE0*factor));
 }
 
@@ -1122,35 +1123,35 @@ any_t* __FASTCALL__ spudec_new_scaled(unsigned int *palette, unsigned int frame_
 /* get palette custom color, width, height from .idx file */
 any_t* __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int *cuspal, unsigned int custom, unsigned int frame_width, unsigned int frame_height)
 {
-  spudec_handle_t *this = mp_calloc(1, sizeof(spudec_handle_t));
-  if (this){
-    //(fprintf(stderr,"VobSub Custom Palette: %d,%d,%d,%d", this->cuspal[0], this->cuspal[1], this->cuspal[2],this->cuspal[3]);
-    this->packet = NULL;
-    this->image = NULL;
-    this->scaled_image = NULL;
+  spudec_handle_t *self = new(zeromem) spudec_handle_t;
+  if (self){
+    //(fprintf(stderr,"VobSub Custom Palette: %d,%d,%d,%d", self->cuspal[0], self->cuspal[1], self->cuspal[2],self->cuspal[3]);
+    self->packet = NULL;
+    self->image = NULL;
+    self->scaled_image = NULL;
     /* XXX Although the video frame is some size, the SPU frame is
        always maximum size i.e. 720 wide and 576 or 480 high */
-    this->orig_frame_width = 720;
-    this->orig_frame_height = (frame_height == 480 || frame_height == 240) ? 480 : 576;
-    this->custom = custom;
+    self->orig_frame_width = 720;
+    self->orig_frame_height = (frame_height == 480 || frame_height == 240) ? 480 : 576;
+    self->custom = custom;
     // set up palette:
-    this->auto_palette = 1;
+    self->auto_palette = 1;
     if (palette){
-      memcpy(this->global_palette, palette, sizeof(this->global_palette));
-      this->auto_palette = 0;
+      memcpy(self->global_palette, palette, sizeof(self->global_palette));
+      self->auto_palette = 0;
     }
-    this->custom = custom;
+    self->custom = custom;
     if (custom && cuspal) {
-      memcpy(this->cuspal, cuspal, sizeof(this->cuspal));
-      this->auto_palette = 0;
+      memcpy(self->cuspal, cuspal, sizeof(self->cuspal));
+      self->auto_palette = 0;
     }
     // forced subtitles default: show all subtitles
-    this->forced_subs_only=0;
-    this->is_forced_sub=0;
+    self->forced_subs_only=0;
+    self->is_forced_sub=0;
   }
   else
     MSG_FATAL("FATAL: spudec_init: mp_calloc");
-  return this;
+  return self;
 }
 
 any_t* __FASTCALL__ spudec_new(unsigned int *palette)
@@ -1158,25 +1159,22 @@ any_t* __FASTCALL__ spudec_new(unsigned int *palette)
     return spudec_new_scaled(palette, 0, 0);
 }
 
-void __FASTCALL__ spudec_free(any_t*this)
+void __FASTCALL__ spudec_free(any_t*self)
 {
-  spudec_handle_t *spu = (spudec_handle_t*)this;
+  spudec_handle_t *spu = (spudec_handle_t*)self;
   if (spu) {
     while (spu->queue_head)
       spudec_free_packet(spudec_dequeue_packet(spu));
-    if (spu->packet)
-      mp_free(spu->packet);
-    if (spu->scaled_image)
-	mp_free(spu->scaled_image);
-    if (spu->image)
-      mp_free(spu->image);
-    mp_free(spu);
+    if (spu->packet) delete spu->packet;
+    if (spu->scaled_image) delete spu->scaled_image;
+    if (spu->image) delete spu->image;
+    delete spu;
   }
 }
 
-void __FASTCALL__ spudec_set_hw_spu(any_t*this, vo_functions_t *hw_spu)
+void __FASTCALL__ spudec_set_hw_spu(any_t*self, vo_functions_t *hw_spu)
 {
-  spudec_handle_t *spu = (spudec_handle_t*)this;
+  spudec_handle_t *spu = (spudec_handle_t*)self;
   if (!spu)
     return;
   spu->hw_spu = hw_spu;

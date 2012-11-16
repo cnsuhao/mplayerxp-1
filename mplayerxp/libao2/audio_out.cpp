@@ -71,7 +71,7 @@ typedef struct priv_s {
     const ao_functions_t*	audio_out;
 }priv_t;
 
-char * __FASTCALL__ ao_format_name(int format)
+const char * __FASTCALL__ ao_format_name(int format)
 {
     switch (format)
     {
@@ -187,7 +187,7 @@ void ao_print_help( void )
 
 MPXP_Rc __FASTCALL__ RND_RENAME4(ao_register)(ao_data_t* ao,const char *driver_name,unsigned flags)
 {
-    priv_t* priv=ao->opaque;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
     unsigned i;
     if(!driver_name)
 	priv->audio_out=audio_out_drivers[0];
@@ -204,19 +204,19 @@ MPXP_Rc __FASTCALL__ RND_RENAME4(ao_register)(ao_data_t* ao,const char *driver_n
 
 const ao_info_t* ao_get_info( const ao_data_t* ao )
 {
-    priv_t* priv=ao->opaque;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
     return priv->audio_out->info;
 }
 
 ao_data_t* __FASTCALL__ RND_RENAME5(ao_init)(const char *subdevice)
 {
     ao_data_t* ao;
-    ao=mp_mallocz(sizeof(ao_data_t));
+    ao=new(zeromem) ao_data_t;
     if(subdevice) ao->subdevice=mp_strdup(subdevice);
     ao->outburst=OUTBURST;
     ao->buffersize=-1;
     ao->opaque=mp_malloc(sizeof(priv_t));
-    priv_t* priv=ao->opaque;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
     SECURE_NAME9(rnd_fill)(priv->antiviral_hole,sizeof(priv_t));
     SECURE_NAME9(rnd_fill)(ao->antiviral_hole,offsetof(ao_data_t,samplerate)-offsetof(ao_data_t,antiviral_hole));
     priv->audio_out=NULL;
@@ -225,24 +225,24 @@ ao_data_t* __FASTCALL__ RND_RENAME5(ao_init)(const char *subdevice)
 
 MPXP_Rc __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
 {
-    priv_t* priv=ao->opaque;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
     return priv->audio_out->configure(ao,rate,channels,format);
 }
 
 void ao_uninit(ao_data_t*ao)
 {
-    priv_t* priv=ao->opaque;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
     priv->audio_out->uninit(ao);
-    if(ao->subdevice) mp_free(ao->subdevice);
-    mp_free(priv);
-    mp_free(ao);
+    if(ao->subdevice) delete ao->subdevice;
+    delete priv;
+    delete ao;
     ao=NULL;
 }
 
 void ao_reset(ao_data_t*ao)
 {
     if(ao) {
-	priv_t* priv=ao->opaque;
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
 	priv->audio_out->reset(ao);
     }
 }
@@ -250,7 +250,7 @@ void ao_reset(ao_data_t*ao)
 unsigned ao_get_space(const ao_data_t*ao)
 {
     if(ao) {
-	priv_t* priv=ao->opaque;
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
 	return priv->audio_out->get_space(ao);
     }
     return 0;
@@ -259,7 +259,7 @@ unsigned ao_get_space(const ao_data_t*ao)
 float ao_get_delay(const ao_data_t*ao)
 {
     if(ao) {
-	priv_t* priv=ao->opaque;
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
 	return priv->audio_out->get_delay(ao);
     }
     return 0;
@@ -268,7 +268,7 @@ float ao_get_delay(const ao_data_t*ao)
 unsigned __FASTCALL__ RND_RENAME6(ao_play)(ao_data_t*ao,const any_t* data,unsigned len,unsigned flags)
 {
     if(ao) {
-	priv_t* priv=ao->opaque;
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
 	return priv->audio_out->play(ao,data,len,flags);
     } return 0;
 }
@@ -276,7 +276,7 @@ unsigned __FASTCALL__ RND_RENAME6(ao_play)(ao_data_t*ao,const any_t* data,unsign
 void ao_pause(ao_data_t*ao)
 {
     if(ao) {
-	priv_t* priv=ao->opaque;
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
 	priv->audio_out->pause(ao);
     }
 }
@@ -284,7 +284,7 @@ void ao_pause(ao_data_t*ao)
 void ao_resume(ao_data_t*ao)
 {
     if(ao) {
-	priv_t* priv=ao->opaque;
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
 	priv->audio_out->resume(ao);
     }
 }
@@ -292,7 +292,7 @@ void ao_resume(ao_data_t*ao)
 MPXP_Rc __FASTCALL__ RND_RENAME7(ao_control)(const ao_data_t*ao,int cmd,long arg)
 {
     if(ao) {
-	priv_t* priv=ao->opaque;
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
 	return priv->audio_out->control(ao,cmd,arg);
     }
     return MPXP_Error;

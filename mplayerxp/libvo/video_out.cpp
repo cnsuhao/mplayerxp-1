@@ -3,7 +3,7 @@
  *
  * Copyright (C) Aaron Holtzman - June 2000
  *
- *  mpeg2dec is mp_free software; you can redistribute it and/or modify
+ *  mpeg2dec is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2, or (at your option)
  *  any later version.
@@ -18,8 +18,10 @@
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
+#include <algorithm>
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,6 +32,7 @@
 #include "video_out.h"
 
 #include "osdep/shmem.h"
+#define UINT64_C __UINT64_C
 #include "postproc/swscale.h"
 #include "postproc/vf.h"
 #include "xmpcore/xmp_core.h"
@@ -96,13 +99,6 @@ static const vo_functions_t* video_out_drivers[] =
 	NULL
 };
 
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
-
 /* fullscreen:
  * bit 0 (0x01) means fullscreen (-fs)
  * bit 1 (0x02) means mode switching (-vm)
@@ -136,6 +132,7 @@ typedef struct vo_priv_s {
     vo_format_desc		vod;
     dri_priv_t			dri;
     const vo_functions_t *	video_out;
+    draw_alpha_f		draw_alpha;
 }vo_priv_t;
 
 void vo_print_help(vo_data_t*vo)
@@ -182,12 +179,12 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     vo_conf.xp_buffs=64;
     vo_conf.WinID=-1;
 
-    vo=mp_mallocz(sizeof(vo_data_t));
+    vo=new(zeromem) vo_data_t;
     vo->window = None;
     vo->osd_progbar_type=-1;
     vo->osd_progbar_value=100;   // 0..256
 
-    vo->vo_priv=mp_mallocz(sizeof(vo_priv_t));
+    vo->vo_priv=new(zeromem) vo_priv_t;
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     SECURE_NAME9(rnd_fill)(priv->antiviral_hole,offsetof(vo_priv_t,srcFourcc)-offsetof(vo_priv_t,antiviral_hole));
     pthread_mutexattr_init(&attr);
@@ -280,7 +277,7 @@ static void __FASTCALL__ dri_config(vo_data_t*vo,uint32_t fourcc)
     if(priv->dri.has_dri)
     {
 	priv->video_out->control(vo,VOCTRL_GET_NUM_FRAMES,&priv->dri.num_xp_frames);
-	priv->dri.num_xp_frames=min(priv->dri.num_xp_frames,MAX_DRI_BUFFERS);
+	priv->dri.num_xp_frames=std::min(priv->dri.num_xp_frames,unsigned(MAX_DRI_BUFFERS));
 	for(i=0;i<priv->dri.num_xp_frames;i++)
 	{
 	    priv->dri.surf[i].idx=i;
@@ -333,8 +330,8 @@ static void __FASTCALL__ dri_tune(vo_data_t*vo,unsigned width,unsigned height)
     {
 	unsigned long y_off,u_off,v_off;
 	y_off = (unsigned long)priv->dri.surf[0].planes[0];
-	u_off = (unsigned long)min(priv->dri.surf[0].planes[1],priv->dri.surf[0].planes[2]);
-	v_off = (unsigned long)max(priv->dri.surf[0].planes[1],priv->dri.surf[0].planes[2]);
+	u_off = (unsigned long)std::min(priv->dri.surf[0].planes[1],priv->dri.surf[0].planes[2]);
+	v_off = (unsigned long)std::max(priv->dri.surf[0].planes[1],priv->dri.surf[0].planes[2]);
 	priv->dri.off[0] = priv->dri.cap.y*priv->dri.cap.strides[0]+priv->dri.cap.x;
 	if(priv->dri.bpp==12) /*YV12 series*/
 	{
@@ -490,7 +487,7 @@ MPXP_Rc vo_screenshot(vo_data_t*vo,unsigned idx )
     char buf[256];
     MSG_DBG3("dri_vo_dbg: vo_screenshot\n");
     sprintf(buf,"%llu",priv->frame_counter);
-    return gr_screenshot(buf,priv->dri.surf[idx].planes,priv->dri.cap.strides,priv->dri.cap.fourcc,priv->dri.cap.width,priv->dri.cap.height);
+    return gr_screenshot(buf,const_cast<const uint8_t**>(priv->dri.surf[idx].planes),priv->dri.cap.strides,priv->dri.cap.fourcc,priv->dri.cap.width,priv->dri.cap.height);
 }
 
 MPXP_Rc vo_pause(vo_data_t*vo)
@@ -764,9 +761,10 @@ static void __FASTCALL__ clear_rect_yuy2(vo_data_t*vo,unsigned _y0,unsigned h,ui
   }
 }
 
-static void __FASTCALL__ dri_remove_osd(any_t*vo,unsigned idx,int x0,int _y0, int w,int h)
+static void __FASTCALL__ dri_remove_osd(any_t*_vo,unsigned idx,int x0,int _y0, int w,int h)
 {
-    vo_priv_t* priv=(vo_priv_t*)((vo_data_t*)vo)->vo_priv;
+    vo_data_t* vo=reinterpret_cast<vo_data_t*>(_vo);
+    vo_priv_t* priv=reinterpret_cast<vo_priv_t*>(vo->vo_priv);
     if(x0+w<=priv->dri.cap.width&&_y0+h<=priv->dri.cap.height)
     switch(priv->dri.cap.fourcc)
     {
@@ -816,7 +814,6 @@ static void __FASTCALL__ dri_remove_osd(any_t*vo,unsigned idx,int x0,int _y0, in
     }
 }
 
-static draw_alpha_f draw_alpha=NULL;
 static draw_alpha_f __FASTCALL__ get_draw_alpha(uint32_t fmt) {
   MSG_DBG2("get_draw_alpha(%s)\n",vo_format_name(fmt));
   switch(fmt) {
@@ -851,13 +848,13 @@ static draw_alpha_f __FASTCALL__ get_draw_alpha(uint32_t fmt) {
 
 static void __FASTCALL__ dri_draw_osd(any_t*vo,unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
 {
-    vo_priv_t* priv=(vo_priv_t*)((vo_data_t*)vo)->vo_priv;
-    int finalize=vo_is_final(vo);
+    vo_priv_t* priv=reinterpret_cast<vo_priv_t*>(reinterpret_cast<vo_data_t*>(vo)->vo_priv);
+    int finalize=vo_is_final(reinterpret_cast<vo_data_t*>(vo));
     if(x0+w<=priv->dri.cap.width&&_y0+h<=priv->dri.cap.height)
     {
-	if(!draw_alpha) draw_alpha=get_draw_alpha(priv->dri.cap.fourcc);
-	if(draw_alpha)
-	    (*draw_alpha)(w,h,src,srca,stride,
+	if(!priv->draw_alpha) priv->draw_alpha=get_draw_alpha(priv->dri.cap.fourcc);
+	if(priv->draw_alpha)
+	    (*priv->draw_alpha)(w,h,src,srca,stride,
 			    priv->dri.surf[idx].planes[0]+priv->dri.cap.strides[0]*_y0+x0*((priv->dri.bpp+7)/8),
 			    priv->dri.cap.strides[0],finalize);
     }
@@ -896,12 +893,12 @@ void vo_uninit(vo_data_t*vo)
     vo_inited--;
     priv->video_out->uninit(vo);
     pthread_mutex_destroy(&priv->surfaces_mutex);
-    mp_free(vo->vo_priv);
+    delete priv;
 }
 
 MPXP_Rc __FASTCALL__ RND_RENAME0(vo_control)(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    uint32_t rval;
+    MPXP_Rc rval;
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     rval=priv->video_out->control(vo,request,data);
     MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);

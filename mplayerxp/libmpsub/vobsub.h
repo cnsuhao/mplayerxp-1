@@ -2,6 +2,9 @@
 #define MPLAYER_VOBSUB_H
 
 #include "libmpdemux/demuxer.h" // for seek_args_t
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern any_t*  __FASTCALL__ vobsub_open(const char *subname, const char *const ifo, const int force, any_t** spu);
 extern void __FASTCALL__ vobsub_close(any_t*__self);
@@ -15,4 +18,8 @@ extern void __FASTCALL__ vobsub_seek(any_t* vob,const seek_args_t* seek);
 /// Convert palette value in idx file to yuv.
 extern unsigned int vobsub_palette_to_yuv(unsigned int pal);
 extern unsigned int vobsub_rgb_to_yuv(unsigned int rgb);
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* MPLAYER_VOBSUB_H */

@@ -1,10 +1,9 @@
-extern "C" {
 #include "mp_aframe.h"
 #include "osdep/mplib.h"
 #include "libao2/afmt.h"
 #include "loader/wine/mmreg.h"
 #include "mp_msg.h"
-}
+
 #include <string.h>
 #include <stdio.h>
 

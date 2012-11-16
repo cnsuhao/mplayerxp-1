@@ -1,5 +1,9 @@
 #ifndef MPXP_MENU_H
 #define MPXP_MENU_H 1
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct menu_priv_s;
 typedef struct  menu_s menu_t;
 
@@ -78,4 +82,7 @@ void menu_draw_text_full(mp_image_t* mpi,char* txt,
 			 int vspace, int warp, int align, int anchor);
 
 void menu_draw_box(mp_image_t* mpi, unsigned char grey, unsigned char alpha, int x, int y, int w, int h);
+#ifdef __cplusplus
+}
+#endif
 #endif

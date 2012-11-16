@@ -1,9 +1,9 @@
-
 include ../mp_config.mak
 
 LIBNAME = libvo.a
 
-SRCS=aspect.c osd.c font_load.c video_out.c vo_null.c img_format.c sub.c screenshot.c
+CXXSRCS=video_out.cpp font_load.cpp img_format.cpp screenshot.cpp
+SRCS=aspect.c osd.c vo_null.c sub.c 
 ifeq ($(HAVE_SDL),yes)
 SRCS+=vo_sdl.c
 endif
@@ -33,11 +33,15 @@ SRCS += vosub_vidix.c
 endif
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -DMPG12PLAY -Wall -W
+CXXFLAGS  = $(OPTXXFLAGS) -I. -I.. -DMPG12PLAY -Wall -W
+
 ifeq ($(CONFIG_VIDIX),yes)
 CFLAGS += -DVIDIX_PATH='"$(LIBDIR)/vidix/"'
+CXXFLAGS += -DVIDIX_PATH='"$(LIBDIR)/vidix/"'
 endif
 
 OBJS=$(SRCS:.c=.o)
+CXXOBJS=$(CXXSRCS:.cpp=.o)
 
 .SUFFIXES: .c .o
 
@@ -45,9 +49,11 @@ OBJS=$(SRCS:.c=.o)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-$(LIBNAME):     $(OBJS)
-	$(AR) r $(LIBNAME) $(OBJS)
+$(LIBNAME):     $(OBJS) $(CXXOBJS)
+	$(AR) r $(LIBNAME) $(OBJS) $(CXXOBJS)
 
 all:    $(LIBNAME)
 
@@ -60,7 +66,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

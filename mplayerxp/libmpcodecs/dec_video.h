@@ -4,6 +4,9 @@
 #include "libmpdemux/demuxer_r.h"
 #include "libmpdemux/stream.h"
 #include "libmpdemux/stheader.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // dec_video.c:
 extern any_t*	__FASTCALL__ RND_RENAME3(mpcv_init)(sh_video_t *sh_video, const char *codec_name,const char *family,int status,any_t*libinput);
@@ -17,4 +20,7 @@ extern MPXP_Rc	__FASTCALL__ mpcv_set_colors(any_t *handle,const char *item,int v
 extern void	__FASTCALL__ mpcv_resync_stream(any_t *handle);
 
 extern void vfm_help(void);
+#ifdef __cplusplus
+}
+#endif
 #endif

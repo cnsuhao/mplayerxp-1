@@ -189,7 +189,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	    if(mpi->flags&MP_IMGFLAG_ALLOCATED){
 		if(mpi->width<w2 || mpi->height<h){
 		    // need to re-allocate buffer memory:
-		    mp_free(mpi->planes[0]);
+		    delete mpi->planes[0];
 		    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
 		    MSG_DBG2("vf.c: have to REALLOCATE buffer memory :(\n");
 		}
@@ -281,7 +281,7 @@ mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_imag
 //============================================================================
 
 // By default vf doesn't accept MPEGPES
-static int __FASTCALL__ vf_default_query_format(const struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ vf_default_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
   if(fmt == IMGFMT_MPEGPES) return 0;
   return 1;//vf_next_query_format(vf,fmt,w,h);
 }
@@ -296,7 +296,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
 	}
 	if(!strcmp(filter_list[i]->name,name)) break;
     }
-    vf=mp_mallocz(sizeof(vf_instance_t));
+    vf=new(zeromem) vf_instance_t;
     SECURE_NAME9(rnd_fill)(vf->antiviral_hole,offsetof(vf_instance_t,pin)-offsetof(vf_instance_t,antiviral_hole));
     vf->pin=VF_PIN;
     vf->info=filter_list[i];
@@ -315,7 +315,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
     vf->libinput=libinput;
     if(next) next->prev=vf;
     if(vf->info->open(vf,(char*)args)==MPXP_Ok) return vf; // Success!
-    mp_free(vf);
+    delete vf;
     MSG_ERR("Can't open video filter: %s\n",name);
     return NULL;
 }
@@ -409,7 +409,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
     return vf->next->config(vf->next,width,height,d_width,d_height,voflags,outfmt);
 }
 
-int __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data){
+MPXP_Rc __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data){
     return vf->next->control(vf->next,request,data);
 }
 
@@ -448,7 +448,7 @@ void __FASTCALL__ vf_uninit_filter(vf_instance_t* vf){
     if(vf->uninit) vf->uninit(vf);
     if(vf->imgctx.static_planes[0]) free(vf->imgctx.static_planes[0]);
     if(vf->imgctx.static_planes[1]) free(vf->imgctx.static_planes[1]);
-    mp_free(vf);
+    delete vf;
 }
 
 void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf){
@@ -543,7 +543,7 @@ unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
 
 static int __FASTCALL__ dummy_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt,any_t*tune){
+	unsigned int voflags, unsigned int outfmt){
     return 1;
 }
 
@@ -623,7 +623,7 @@ void __FASTCALL__ RND_RENAME8(vf_reinit_vo)(unsigned w,unsigned h,unsigned fmt,i
 	vf_scaler=RND_RENAME9(vf_open_filter)(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput);
 	if(vf_scaler)
 	{
-	    any_t*sfnc;
+	    vf_config_fun_t sfnc;
 	    sfnc=vf_scaler->next->config;
 	    vf_scaler->next->config=dummy_config;
 	    if(vf_scaler->config(vf_scaler,sw,sh,
