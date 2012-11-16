@@ -1,15 +1,14 @@
-extern "C" {
-#include "mplayerxp.h"
-#include "xmp_core.h"
 #include "help_mp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
-
+extern "C" {
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
+}
 #include "osdep/timer.h"
 #include "libmpdemux/demuxer.h"
-}
+#include "mplayerxp.h"
+#include "xmp_core.h"
 #include "xmp_adecoder.h"
 #include "xmp_vplayer.h"
 

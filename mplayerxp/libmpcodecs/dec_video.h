@@ -1,6 +1,9 @@
 #ifndef DEC_VIDEO_H_INCLUDED
 #define DEC_VIDEO_H_INCLUDED 1
 #include "xmpcore/xmp_enums.h"
+#include "libmpdemux/demuxer_r.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/stheader.h"
 
 // dec_video.c:
 extern any_t*	__FASTCALL__ RND_RENAME3(mpcv_init)(sh_video_t *sh_video, const char *codec_name,const char *family,int status,any_t*libinput);

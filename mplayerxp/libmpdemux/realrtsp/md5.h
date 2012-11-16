@@ -59,8 +59,10 @@
 #  define AV_WL16(p, d) AV_WN16(p, d)
 # endif
 
+#ifndef __cplusplus
 #ifndef max
 #define max(a,b) ((a)>(b)?(a):(b))
+#endif
 #endif
 #define FFMAX max
 

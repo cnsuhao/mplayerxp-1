@@ -1,6 +1,10 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int InitTimer(void);
 unsigned int GetTimer(void);
 unsigned int GetTimerMS(void);
@@ -15,5 +19,9 @@ int usec_sleep(int usec_delay);
 typedef void timer_callback( void );
 extern unsigned set_timer_callback(unsigned ms,timer_callback func);
 extern void restore_timer(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

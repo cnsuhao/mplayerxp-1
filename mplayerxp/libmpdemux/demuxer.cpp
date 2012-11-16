@@ -7,24 +7,24 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-extern "C" {
-#include "stream.h"
+
 #include "mp_config.h"
 #include "help_mp.h"
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
+extern "C" {
 #include "nls/nls.h"
 
-#include "demuxer.h"
-#include "stheader.h"
-
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "libvo/sub.h"
 #include "libao2/afmt.h"
-#include "demux_msg.h"
 }
+#include "demux_msg.h"
+#include "demuxer.h"
+#include "stream.h"
+#include "stheader.h"
 #include "mplayerxp.h"
+#include "osdep/mplib.h"
 
 extern demuxer_driver_t demux_aiff;
 extern demuxer_driver_t demux_rawaudio;

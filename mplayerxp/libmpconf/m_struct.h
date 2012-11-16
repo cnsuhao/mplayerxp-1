@@ -1,6 +1,10 @@
 #ifndef M_STRUCT_H
 #define M_STRUCT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// \defgroup OptionsStruct Options struct
 /// \ingroup Options
 /// An API to manipulate structs using m_option.
@@ -101,5 +105,9 @@ const struct m_option*
 m_struct_get_field(const m_struct_t* st,const char* f);
 
 ///@}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* M_STRUCT_H */

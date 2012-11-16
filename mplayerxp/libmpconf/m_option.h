@@ -1,6 +1,10 @@
 #ifndef M_OPTION_H
 #define M_OPTION_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// \defgroup Options
 /// m_option allows to parse, print and copy data of various types.
 /// It is the base of the \ref OptionsStruct, \ref Config and
@@ -395,5 +399,8 @@ m_option_free(const m_option_t* opt,any_t* dst) {
 }
 
 /*@}*/
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* M_OPTION_H */

@@ -1,17 +1,19 @@
+#include <algorithm>
+
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <pthread.h>
 #include <math.h>
-extern "C" {
+
 #include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
-#include "xmp_core.h"
-#include "osdep/timer.h"
+extern "C" {
 #include "libmpcodecs/dec_audio.h"
-
 #include "libao2/audio_out.h"
 }
+#include "osdep/timer.h"
+#include "xmp_core.h"
 #include "xmp_aplayer.h"
 #include "xmp_adecoder.h"
 #ifdef ENABLE_DEC_AHEAD_DEBUG
@@ -143,9 +145,9 @@ any_t* audio_play_routine( any_t* arg )
     int samples, collect_samples;
     float audio_buff_max, audio_buff_norm, audio_buff_min, audio_buff_alert;
 
-    audio_buff_alert = max(XP_MIN_TIMESLICE, min(MIN_AUDIO_TIME,MAX_AUDIO_TIME/4));
-    audio_buff_max = max(audio_buff_alert, min(MAX_AUDIO_TIME-XP_MIN_TIMESLICE, audio_buff_alert*4));
-    audio_buff_min = min(audio_buff_max, audio_buff_alert*2);
+    audio_buff_alert = std::max(float(XP_MIN_TIMESLICE), std::min(float(MIN_AUDIO_TIME),MAX_AUDIO_TIME/4));
+    audio_buff_max = std::max(audio_buff_alert, std::min(float(MAX_AUDIO_TIME-XP_MIN_TIMESLICE), audio_buff_alert*4));
+    audio_buff_min = std::min(audio_buff_max, audio_buff_alert*2);
     audio_buff_norm = (audio_buff_max + audio_buff_min) / 2;
 
     MSG_DBG2("alert %f, min %f, norm %f, max %f \n", audio_buff_alert, audio_buff_min, audio_buff_norm, audio_buff_max );

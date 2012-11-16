@@ -9,15 +9,11 @@
 
 #include <inttypes.h>
 #include <pthread.h>
-#include "libmpdemux/stream.h"
-#include "libmpdemux/demuxer.h"
-#include "libmpdemux/stheader.h"
 #include "libmpdemux/demuxer_r.h"
+#include "libmpdemux/stream.h"
+#include "libmpdemux/stheader.h"
 #include "libvo/video_out.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 enum xp_modes { XP_NA=0, XP_UniCore, XP_DualCore, XP_TripleCore, XP_MultiCore };
 
 typedef struct xmp_frame_s
@@ -65,9 +61,8 @@ typedef enum xmp_model {
     XMP_Run_AudioDecoder	=0x00000010,
     XMP_Run_VideoDecoder	=0x00000020
 }xmp_model_e;
+
 #ifdef __cplusplus
-}
-extern "C++" {
 inline xmp_model_e operator~(xmp_model_e a) { return static_cast<xmp_model_e>(~static_cast<unsigned>(a)); }
 inline xmp_model_e operator|(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
 inline xmp_model_e operator&(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
@@ -75,10 +70,7 @@ inline xmp_model_e operator^(xmp_model_e a, xmp_model_e b) { return static_cast<
 inline xmp_model_e operator|=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
 inline xmp_model_e operator&=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
 inline xmp_model_e operator^=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
-}
-extern "C" {
 #endif
-
 typedef struct mpxp_thread_s {
     unsigned		p_idx;
     const char*		name;
@@ -163,7 +155,13 @@ static inline unsigned dae_prev_vdecoded(const xp_core_t* xpc) { return dae_prev
 static inline unsigned dae_next_vplayed(const xp_core_t* xpc) { return dae_next_played(xpc->video); }
 static inline unsigned dae_next_vdecoded(const xp_core_t* xpc) { return dae_next_decoded(xpc->video); }
 
-extern xmp_frame_t dae_played_frame(const dec_ahead_engine_t* it);
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern xmp_frame_t dae_played_frame(const dec_ahead_engine_t* it); // used in ao_wav.c
+#ifdef __cplusplus
+}
+#endif
 extern xmp_frame_t dae_decoded_frame(const dec_ahead_engine_t* it);
 extern xmp_frame_t dae_next_played_frame(const dec_ahead_engine_t* it);
 extern xmp_frame_t dae_next_decoded_frame(const dec_ahead_engine_t* it);
@@ -207,7 +205,4 @@ extern int audio_play_in_sleep;
 
 /* Audio stuff */
 extern volatile float dec_ahead_audio_delay;
-#ifdef __cplusplus
-}
-#endif
 #endif

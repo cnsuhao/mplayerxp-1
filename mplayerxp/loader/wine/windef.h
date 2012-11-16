@@ -575,6 +575,7 @@ typedef LRESULT CALLBACK (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 #endif  /* 1 */
 
 /* min and max macros */
+#ifndef __cplusplus
 #define __max(a,b) (((a) > (b)) ? (a) : (b))
 #define __min(a,b) (((a) < (b)) ? (a) : (b))
 #ifndef max
@@ -582,6 +583,7 @@ typedef LRESULT CALLBACK (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 #endif
 #ifndef min
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
+#endif
 #endif
 
 #ifndef _MAX_PATH

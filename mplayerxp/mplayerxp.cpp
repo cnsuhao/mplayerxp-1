@@ -1,6 +1,6 @@
 /* MplayerXP (C) 2000-2002. by A'rpi/ESP-team (C) 2002. by Nickols_K */
+#include <algorithm>
 #include <iostream>
-extern "C" {
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,9 +24,10 @@ extern "C" {
 
 #include "version.h"
 #include "mp_config.h"
-#include "xmpcore/sig_hand.h"
 #include "mplayerxp.h"
 #include "osdep/mplib.h"
+#include "xmpcore/sig_hand.h"
+extern "C" {
 #define UINT64_C __UINT64_C
 #include "postproc/swscale.h"
 #include "postproc/af.h"
@@ -59,24 +60,22 @@ extern "C" {
 #include "libao2/afmt.h"
 
 #include "osdep/keycodes.h"
-#include "osdep/timer.h"
 #include "osdep/shmem.h"
 #include "osdep/get_path.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 
-#include "input2/input.h"
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
 #include "libao2/mixer.h"
-
-#include "xmpcore/xmp_core.h"
-
+} // extern "C"
+#include "input2/input.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
-} // extern "C"
+#include "xmpcore/xmp_core.h"
 #include "xmpcore/xmp_vplayer.h"
 #include "xmpcore/xmp_adecoder.h"
+#include "osdep/timer.h"
 #include "osdep/getch2.h"
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
@@ -141,9 +140,9 @@ struct MPXPSystem {
 
 	void		uninit_player(unsigned int mask);
 	demuxer_t*	demuxer() const { return _demuxer; }
-	demuxer_t*	set_demuxer(demuxer_t* _d) { uninit_demuxer(); _demuxer=_d; if(_d) inited_flags|=INITED_DEMUXER; return _demuxer; }
+	demuxer_t*	assign_demuxer(demuxer_t* _d) { uninit_demuxer(); _demuxer=_d; if(_d) inited_flags|=INITED_DEMUXER; return _demuxer; }
 	any_t*		libinput() const { return _libinput; }
-	any_t*		set_libinput(any_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
+	any_t*		assign_libinput(any_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
 	void		uninit_demuxer();
 	void		uninit_input();
 
@@ -824,7 +823,7 @@ static void mpxp_init_keyboard_fifo(void)
 #endif
     /* Init input system */
     MP_UNIT("init_input");
-    MPXPSys->set_libinput(RND_RENAME0(mp_input_open)());
+    MPXPSys->assign_libinput(RND_RENAME0(mp_input_open)());
 }
 
 void mplayer_put_key(int code){
@@ -984,7 +983,7 @@ static void mpxp_init_dvd_nls(void) {
     if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
     MP_UNIT("dvd lang->id");
     if(mp_conf.audio_lang) {
-	lang=(char *)mp_malloc(max(strlen(mp_conf.audio_lang)+1,4));
+	lang=(char *)mp_malloc(std::max(strlen(mp_conf.audio_lang)+1,size_t(4)));
 	strcpy(lang,mp_conf.audio_lang);
 	if(mp_conf.audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
 	    mp_conf.audio_id=*(int *)lang;
@@ -992,7 +991,7 @@ static void mpxp_init_dvd_nls(void) {
 	mp_free(lang);
     }
     if(mp_conf.dvdsub_lang) {
-	lang=(char *)mp_malloc(max(strlen(mp_conf.dvdsub_lang)+1,4));
+	lang=(char *)mp_malloc(std::max(strlen(mp_conf.dvdsub_lang)+1,size_t(4)));
 	strcpy(lang,mp_conf.dvdsub_lang);
 	if(mp_conf.dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
 	    mp_conf.dvdsub_id=*(int *)lang;
@@ -1828,7 +1827,7 @@ play_next_file:
 
     MP_UNIT("demux_open");
 
-    if(!input_state.after_dvdmenu) MPXPSys->set_demuxer(demux_open(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
+    if(!input_state.after_dvdmenu) MPXPSys->assign_demuxer(demux_open(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
     if(!MPXPSys->demuxer()) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     input_state.after_dvdmenu=0;
 

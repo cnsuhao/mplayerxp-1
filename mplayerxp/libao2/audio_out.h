@@ -2,6 +2,10 @@
 #define __AUDIO_OUT_H 1
 #include "mp_config.h"
 #include "xmpcore/xmp_enums.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /** Text description of AO-driver */
 typedef struct ao_info_s
 {
@@ -112,4 +116,9 @@ extern float		__FASTCALL__ ao_get_delay(const ao_data_t* priv);
 extern void		__FASTCALL__ ao_pause(ao_data_t* priv);
 extern void		__FASTCALL__ ao_resume(ao_data_t* priv);
 extern MPXP_Rc	__FASTCALL__ RND_RENAME7(ao_control)(const ao_data_t* priv,int cmd,long arg);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

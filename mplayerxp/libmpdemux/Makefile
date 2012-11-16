@@ -29,7 +29,7 @@ endif
 ifeq ($(HAVE_LIBDV),yes)
 SRCS += demux_dv.c
 endif
-SRCS += cache2.c tvi_dummy.c tvi_v4l.c
+SRCS += tvi_dummy.c tvi_v4l.c
 SRCS += tvi_bsdbt848.c frequencies.c mrl.c
 
 SRCS += mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
@@ -53,7 +53,7 @@ else
 SUBDIRS =
 endif
 
-CXXSRCS = demuxer.cpp demuxer_r.cpp stream.cpp
+CXXSRCS = demuxer.cpp demuxer_r.cpp stream.cpp cache2.cpp
 
 OBJS	= $(SRCS:.c=.o)
 CXXOBJS	= $(CXXSRCS:.cpp=.o)

@@ -46,6 +46,8 @@ typedef void (* __FASTCALL__ stream_callback)(struct stream_s *s,const stream_pa
 enum {
     STREAM_PIN=RND_NUMBER2+RND_CHAR3
 };
+
+struct cache_vars_s;
 /** Stream description */
 typedef struct stream_s {
     char		antiviral_hole[RND_CHAR3];
@@ -62,7 +64,7 @@ typedef struct stream_s {
     off_t end_pos;	/**< real end of stream (media may be not fully filled) */
     unsigned sector_size; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
     struct demuxer_s* demuxer; /* parent demuxer */
-    any_t* cache_data;	/**< large cache */
+    struct cache_vars_s* cache_data;	/**< large cache */
     any_t* priv;	/**< private data used by stream driver */
     float stream_pts;	/**< PTS correction for idiotics DVD's discontinuities */
 #ifdef HAVE_STREAMING

@@ -23,6 +23,10 @@
 #include "xmpcore/mp_image.h"
 #include "xmpcore/xmp_enums.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     VO_EVENT_EXPOSE=1,
     VO_EVENT_RESIZE=2,
@@ -280,4 +284,9 @@ typedef struct s_vo_format_desc
     unsigned y_mul[4],y_div[4];
 }vo_format_desc;
 extern int	__FASTCALL__	vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

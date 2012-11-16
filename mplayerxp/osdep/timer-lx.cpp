@@ -12,6 +12,7 @@
 #include <linux/rtc.h>
 #endif
 #include <fcntl.h>
+#include "timer.h"
 #include "osdep_msg.h"
 
 

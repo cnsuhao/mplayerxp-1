@@ -4,6 +4,7 @@
    Author: Nickols_K
    Note: Threaded engine to decode frames ahead
 */
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,24 +14,22 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 #include <sys/time.h>
-extern "C" {
 #include "mp_config.h"
-#define DA_PREFIX "DEC_AHEAD:"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mp_msg.h"
-#include "osdep/mplib.h"
-
-#include "xmp_core.h"
-
-#include "mplayerxp.h"
+extern "C" {
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
-#include "sig_hand.h"
-#include "osdep/timer.h"
 }
+#include "sig_hand.h"
+#define DA_PREFIX "DEC_AHEAD:"
+#define MSGT_CLASS MSGT_CPLAYER
+#include "mp_msg.h"
+#include "osdep/timer.h"
+#include "osdep/mplib.h"
+#include "mplayerxp.h"
+#include "xmp_core.h"
 #include "xmp_aplayer.h"
 #include "xmp_vplayer.h"
 #include "xmp_adecoder.h"
@@ -245,12 +244,14 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
     }
     if(sha) {
 	if(xmp_test_model(XMP_Run_AudioPlayer)) {
-	    int asize;
+	    unsigned asize;
 	    unsigned o_bps;
 	    unsigned min_reserv;
 	    o_bps=sha->afilter_inited?sha->af_bps:sha->o_bps;
-	    if(xp_core->video)	asize = max(3*sha->audio_out_minsize,max(3*MAX_OUTBURST,o_bps*xp_core->num_v_buffs/shv->fps))+MIN_BUFFER_RESERV;
-	    else			asize = o_bps*xp_core->num_a_buffs;
+	    if(xp_core->video)	asize = std::max(unsigned(3*sha->audio_out_minsize),
+						 unsigned(std::max( unsigned(3*MAX_OUTBURST),
+								    unsigned(o_bps*xp_core->num_v_buffs/shv->fps))))+MIN_BUFFER_RESERV;
+	    else		asize = o_bps*xp_core->num_a_buffs;
 	    /* FIXME: get better indices from asize/real_audio_packet_size */
 	    min_reserv = sha->audio_out_minsize;
 	    if (o_bps > sha->o_bps)

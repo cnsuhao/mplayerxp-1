@@ -3,8 +3,8 @@ include ../mp_config.mak
 
 LIBNAME = libosdep.a
 
-SRCS=aclib.c cpudetect.c  timer-lx.c timer.c shmem.c get_path.c
-CXXSRCS=mplib.cpp mp_malloc.cpp getch2.cpp
+SRCS=aclib.c cpudetect.c shmem.c get_path.c
+CXXSRCS=mplib.cpp mp_malloc.cpp getch2.cpp timer-lx.cpp timer.cpp
 OBJS=$(SRCS:.c=.o)
 CXXOBJS=$(CXXSRCS:.cpp=.o)
 

@@ -194,8 +194,10 @@ static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, mp_aframe_t* d) {
 #define min(a,b)(((a)>(b))?(b):(a))
 #endif
 
+#ifndef __cplusplus
 #ifndef max
 #define max(a,b)(((a)>(b))?(a):(b))
+#endif
 #endif
 
 #ifndef clamp

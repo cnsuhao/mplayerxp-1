@@ -41,7 +41,7 @@ typedef struct cache_packet_s
     pthread_mutex_t cp_mutex;
 }cache_packet_t;
 
-typedef struct {
+typedef struct cache_vars_s {
   unsigned first;	/* index of the first packet */
   unsigned last;	/* index of the last packet */
   unsigned buffer_size; /* size of the allocated buffer memory (for statistic only) */
@@ -187,15 +187,14 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 
 static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
   pthread_mutex_t tmpl=PTHREAD_MUTEX_INITIALIZER;
-  cache_vars_t* c=mp_mallocz(sizeof(cache_vars_t));
+  cache_vars_t* c=new(zeromem) cache_vars_t;
   char *pmem;
   unsigned i,num;
   c->npackets=num=size/sector;
   /* collection of all c2_packets in continuous memory area minimizes cache pollution
      and speedups cache as C+D=3.27% instead of 4.77% */
-  i=sizeof(cache_packet_t)*num;
-  c->packets=mp_mallocz(i);
-  c->mem=mp_malloc(num*sector);
+  c->packets=new(zeromem) cache_packet_t[num];
+  c->mem=new char [num*sector];
   if(!c->packets || !c->mem)
   {
     MSG_ERR(MSGTR_OutOfMemory);
@@ -213,8 +212,7 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
     pmem += sector;
   }
   if(mp_conf.verbose>1)
-  for(i=0;i<num;i++)
-  {
+  for(i=0;i<num;i++) {
     MSG_DBG2("sizeof(c)=%u c=%i c->sp.buf=%p\n",sizeof(cache_packet_t),i,c->packets[i].sp.buf);
   }
   c->buffer_size=num*sector;
@@ -241,7 +239,7 @@ static void stream_unlink_cache(int force)
 
 static any_t*cache2_routine(any_t*arg)
 {
-    mpxp_thread_t* priv=arg;
+    mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
 
     double tt;
     unsigned int t=0;
@@ -289,7 +287,7 @@ int stream_enable_cache(stream_t *stream,any_t* libinput,int size,int _min,int p
 
   unsigned rc;
   if((rc=xmp_register_thread(NULL,sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return 0;
-  c->pth=&xp_core->mpxp_threads[rc];
+  c->pth=xp_core->mpxp_threads[rc];
   // wait until cache is filled at least prefill_init %
   MSG_V("CACHE_PRE_INIT: %lld [%lld] %lld  pre:%d  eof:%d SS=%u \n",
 	START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),_min,c->eof,ss);
@@ -513,7 +511,6 @@ static int __FASTCALL__ c2_stream_read(cache_vars_t* c,char* _mem,int total){
   CACHE2_PACKET_UNLOCK(cur);
   if(mp_conf.verbose>2)
   {
-    int i;
     MSG_DBG2( "c2_stream_read  got %u bytes ",total);
     for(i=0;i<min(8,total);i++) MSG_DBG2("%02X ",(int)((unsigned char)_mem[i]));
     MSG_DBG2("\n");
@@ -572,7 +569,7 @@ static void __FASTCALL__ c2_stream_set_eof(cache_vars_t*c,int eof)
 */
 int __FASTCALL__ stream_read(stream_t *s,any_t* _mem,int total)
 {
-    char *mem = _mem;
+    char *mem = reinterpret_cast<char*>(_mem);
     if(s->cache_data)	return c2_stream_read(s->cache_data,mem,total);
     else		return nc_stream_read(s,mem,total);
 }
@@ -597,7 +594,7 @@ int __FASTCALL__ stream_read_char(stream_t *s)
 {
     if(s->cache_data)
     {
-	unsigned char retval;
+	char retval;
 	c2_stream_read(s->cache_data,&retval,1);
 	return stream_eof(s)?-256:retval;
     }

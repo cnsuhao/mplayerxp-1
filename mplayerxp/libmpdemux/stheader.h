@@ -2,6 +2,9 @@
 #define __ST_HEADER_H 1
 
 // Stream headers:
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "loader/wine/mmreg.h"
 #include "loader/wine/avifmt.h"
@@ -102,6 +105,9 @@ void free_sh_video(sh_video_t *sh);
 
 int video_read_properties(sh_video_t *sh_video);
 int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,unsigned char** start,int force_fps);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

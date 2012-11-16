@@ -1,16 +1,19 @@
+#include <algorithm>
+
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <math.h>
-extern "C" {
+
 #include "mplayerxp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
-#include "xmp_core.h"
-#include "osdep/mplib.h"
-#include "osdep/timer.h"
+extern "C" {
 #include "libmpcodecs/dec_audio.h"
 }
+#include "osdep/mplib.h"
+#include "osdep/timer.h"
+#include "xmp_core.h"
 #include "xmp_adecoder.h"
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
@@ -160,9 +163,9 @@ int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, unsigned minlen
 	    continue;
 	}
 
-	l = min( (int)(maxlen - len), audio_buffer.head - audio_buffer.tail );
+	l = std::min( (int)(maxlen - len), audio_buffer.head - audio_buffer.tail );
 	if(l<0) {
-	    l = min( maxlen - len, audio_buffer.len - audio_buffer.tail );
+	    l = std::min( maxlen - len, audio_buffer.len - audio_buffer.tail );
 	    if( l == 0 ) {
 		if( audio_buffer.head != audio_buffer.tail )
 		    audio_buffer.tail = 0;
@@ -240,7 +243,7 @@ int decode_audio_buffer(demux_stream_t *d_audio,unsigned len)
 	}
 	audio_buffer.len = audio_buffer.head;
 	audio_buffer.head = 0;
-	len = min( len, audio_buffer.tail - audio_buffer.head - audio_buffer.min_reserv);
+	len = std::min(len, unsigned(audio_buffer.tail - audio_buffer.head - audio_buffer.min_reserv));
 	if( len < audio_buffer.sh_audio->audio_out_minsize ) {
 	    pthread_mutex_unlock( &audio_buffer.head_mutex );
 	    return 0;
@@ -249,7 +252,7 @@ int decode_audio_buffer(demux_stream_t *d_audio,unsigned len)
 
     blen = audio_buffer.size - audio_buffer.head;
     if( (l = (blen - audio_buffer.min_reserv)) < len ) {
-	len = max(l,audio_buffer.sh_audio->audio_out_minsize);
+	len = std::max(unsigned(l),audio_buffer.sh_audio->audio_out_minsize);
     }
 
     if( (l = (audio_buffer.tail - audio_buffer.head)) > 0 ) {
@@ -404,13 +407,13 @@ int xp_thread_decode_audio(demux_stream_t *d_audio)
 	pref_buf = vbuf_size / sh_video->fps * sh_audio->af_bps;
 	pref_buf -= len;
 	if( pref_buf > 0 ) {
-	    len = min( pref_buf, free_buf );
+	    len = std::min( pref_buf, free_buf );
 	    if( len > sh_audio->audio_out_minsize ) {
 		return decode_audio_buffer(d_audio,len);
 	    }
 	}
     } else
-	return decode_audio_buffer(d_audio,min(free_buf,MAX_OUTBURST));
+	return decode_audio_buffer(d_audio,std::min(free_buf,MAX_OUTBURST));
 
     return 0;
 }

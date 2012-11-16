@@ -3,6 +3,10 @@
 
 #include "mp_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * \file subopt-helper.h
  *
@@ -45,5 +49,9 @@ int int_pos( int * i );
 
 int strargcmp(strarg_t *arg, const char *str);
 int strargcasecmp(strarg_t *arg, char *str);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPLAYER_SUBOPT_HELPER_H */
