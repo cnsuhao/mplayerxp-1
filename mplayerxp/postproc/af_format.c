@@ -113,51 +113,76 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
     if(af->setup) mp_free(af->setup);
 }
 
+static void print_fmts(const char *pfx,const mp_aframe_t* in,const mp_aframe_t*out) {
+    char buff[4096],buff2[4096];
+    MSG_INFO("%s in_fmt=%s[len=%i] -> out_fmt=%s[len=%i]\n"
+    ,pfx
+    ,mpaf_fmt2str(in->format,buff,sizeof(buff))
+    ,in->len
+    ,mpaf_fmt2str(out->format,buff2,sizeof(buff2))
+    ,out->len);
+}
+
 static mp_aframe_t* change_endian(const mp_aframe_t* in) {
     mp_aframe_t* out;
     out=new_mp_aframe_genome(in);
     mp_alloc_aframe(out);
     endian(in,out);
+    out->format^=MPAF_LE;
     return out;
 }
 
-static mp_aframe_t* convert_audio(const struct af_instance_s* af,const mp_aframe_t*in) {
-    mp_aframe_t* out,*tmp;
+static mp_aframe_t* convert_audio_f(const struct af_instance_s* af,const mp_aframe_t*in) {
+    mp_aframe_t* out;
     out=new_mp_aframe_genome(in);
     out->len=af_lencalc(af->mul,in);
     mp_alloc_aframe(out);
 
+print_fmts("convert_audio_f",in,out);
     if(in->format&MPAF_F) {
+	out->format=af->conf.format;
+print_fmts("convert_audio_f1.5",in,out);
 	float2int(in, out);
-	if((out->format&MPAF_SIGN_MASK) == MPAF_US) si2us(out, out);
-    } else {
-	// Input is INT
-	if((out->format&(MPAF_SPECIAL_MASK|MPAF_POINT_MASK))==MPAF_F){
-	    if((in->format&(MPAF_SIGN_MASK))==MPAF_US) us2si(in, out);
-	    int2float(out, out);
-	}
-	else {
-	    if((in->format&MPAF_BPS_MASK) != (out->format&MPAF_BPS_MASK)) {
-		// Change BPS
-		tmp=new_mp_aframe_genome(in);
-		mp_alloc_aframe(tmp);
-		if((in->format&(MPAF_SIGN_MASK))==MPAF_SI) si2us(in, tmp);
-		else tmp = (mp_aframe_t*)in;
-		change_bps(tmp, out); // works with US only for now
-		if(tmp!=in) free_mp_aframe(tmp);
-		if((out->format&(MPAF_SIGN_MASK))==MPAF_SI) us2si(in, out);
-	    } else if((in->format&MPAF_SIGN_MASK)!=(out->format&MPAF_SIGN_MASK)) {
-		// Change signed/unsigned
-		if((in->format&MPAF_SIGN_MASK) == MPAF_US)
-		    us2si(in, out);
-		else
-		    si2us(in, out);
-	    } else {
-		// should never happens: bypass
-		memcpy(out->audio,in->audio,in->len);
-	    }
-	}
     }
+    if((out->format&(MPAF_SPECIAL_MASK|MPAF_POINT_MASK))==MPAF_F) {
+	int2float(in, out);
+	out->format=MPAF_PCM|MPAF_NE|MPAF_F|4;
+    }
+print_fmts("convert_audio_f2",in,out);
+    return out;
+}
+
+static mp_aframe_t* convert_audio_i(const struct af_instance_s* af,const mp_aframe_t*in) {
+    mp_aframe_t* out;
+    out=new_mp_aframe_genome(in);
+    out->len=af_lencalc(af->mul,in);
+    mp_alloc_aframe(out);
+    out->format=af->conf.format;
+print_fmts("convert_audio_pre",in,out);
+    change_bps(in, out); // works with US only for now
+print_fmts("convert_audio_i",in,out);
+    return out;
+}
+
+static mp_aframe_t* convert_si2us(const mp_aframe_t*in) {
+    mp_aframe_t* out;
+    out=new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
+    out->format|=MPAF_US;
+print_fmts("convert_si2us_pre",in,out);
+    si2us(in, out);
+print_fmts("convert_si2us",in,out);
+    return out;
+}
+
+static mp_aframe_t* convert_us2si(const mp_aframe_t*in) {
+    mp_aframe_t* out;
+    out=new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
+    out->format&=~MPAF_US;
+print_fmts("convert_us2si_pre",in,out);
+    us2si(in, out);
+print_fmts("convert_us2si",in,out);
     return out;
 }
 
@@ -165,18 +190,22 @@ static mp_aframe_t* convert_audio(const struct af_instance_s* af,const mp_aframe
 static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, const mp_aframe_t* in)
 {
     mp_aframe_t*out,*tmp;
-    out=new_mp_aframe_genome(in);
-    out->len=af_lencalc(af->mul,in);
-    mp_alloc_aframe(out);
     tmp=NULL;
     // Change to cpu native endian format
-    if((in->format&MPAF_END_MASK)!=MPAF_NE)
-	tmp=change_endian(in);
-    else
-	tmp=(mp_aframe_t*)in;
+    if((in->format&MPAF_END_MASK)!=MPAF_NE)	tmp=change_endian(in);
+    else					tmp=(mp_aframe_t*)in;
 
     // Conversion table
-    out=convert_audio(af,tmp);
+    if(in->format&MPAF_F||af->conf.format&MPAF_F) out=convert_audio_f(af,tmp);
+    else {
+	if(!(in->format&MPAF_US)) out=convert_si2us(tmp);
+	else out = tmp;
+	out=convert_audio_i(af,tmp);
+	if(tmp!=in) free_mp_aframe(tmp);
+	tmp=out;
+	if(!(af->conf.format&MPAF_SI)) out=convert_us2si(tmp);
+	if(tmp!=out) free_mp_aframe(tmp);
+    }
     if(tmp!=in) free_mp_aframe(tmp);
     tmp=out;
 
@@ -185,7 +214,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, const mp_aframe_
 	out=change_endian(tmp);
 	free_mp_aframe(tmp);
     }
-
+    out->format=af->conf.format;
     return out;
 }
 
@@ -240,14 +269,14 @@ void store24bit(any_t* data, int pos, uint32_t expanded_value) {
 // Function implementations used by play
 static void endian(const mp_aframe_t* in, mp_aframe_t* out)
 {
-    unsigned i;
+    unsigned i,nsamples=in->len/in->format&MPAF_BPS_MASK;
     switch(in->format&MPAF_BPS_MASK){
 	case 2:
-	    for(i=0;i<in->len;i++) ((uint16_t*)out->audio)[i]=bswap_16(((uint16_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((uint16_t*)out->audio)[i]=bswap_16(((uint16_t*)in->audio)[i]);
 	    break;
 	case 3:{
 	    register uint8_t s;
-	    for(i=0;i<in->len;i++){
+	    for(i=0;i<nsamples;i++){
 		s=((uint8_t*)in->audio)[3*i];
 		((uint8_t*)out->audio)[3*i]=((uint8_t*)in->audio)[3*i+2];
 		if (in->audio != out->audio) ((uint8_t*)out->audio)[3*i+1]=((uint8_t*)in->audio)[3*i+1];
@@ -256,45 +285,45 @@ static void endian(const mp_aframe_t* in, mp_aframe_t* out)
 	    break;
 	}
 	case 4:
-	    for(i=0;i<in->len;i++) ((uint32_t*)out->audio)[i]=bswap_32(((uint32_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((uint32_t*)out->audio)[i]=bswap_32(((uint32_t*)in->audio)[i]);
 	    break;
     }
 }
 
 static void si2us(const mp_aframe_t* in, mp_aframe_t* out)
 {
-    unsigned i;
+    unsigned i,nsamples=in->len/in->format&MPAF_BPS_MASK;
     switch(in->format&MPAF_BPS_MASK) {
 	case 1:
-	    for(i=0;i<in->len;i++) ((uint8_t*)out->audio)[i]=(uint8_t)(SCHAR_MAX+((int)((int8_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((uint8_t*)out->audio)[i]=(uint8_t)(SCHAR_MAX+((int)((int8_t*)in->audio)[i]));
 	    break;
 	case 2:
-	    for(i=0;i<in->len;i++) ((uint16_t*)out->audio)[i]=(uint16_t)(SHRT_MAX+((int)((int16_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((uint16_t*)out->audio)[i]=(uint16_t)(SHRT_MAX+((int)((int16_t*)in->audio)[i]));
 	    break;
 	case 3:
-	    for(i=0;i<in->len;i++) store24bit(out->audio, i, (uint32_t)(INT_MAX+(int32_t)load24bit(in->audio, i)));
+	    for(i=0;i<nsamples;i++) store24bit(out->audio, i, (uint32_t)(INT_MAX+(int32_t)load24bit(in->audio, i)));
 	    break;
 	case 4:
-	    for(i=0;i<in->len;i++) ((uint32_t*)out->audio)[i]=(uint32_t)(INT_MAX+((int32_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((uint32_t*)out->audio)[i]=(uint32_t)(INT_MAX+((int32_t*)in->audio)[i]);
 	    break;
     }
 }
 
 static void us2si(const mp_aframe_t* in, mp_aframe_t* out)
 {
-    unsigned i;
+    unsigned i,nsamples=in->len/in->format&MPAF_BPS_MASK;
     switch(in->format&MPAF_BPS_MASK){
 	case 1:
-	    for(i=0;i<in->len;i++) ((int8_t*)out->audio)[i]=(int8_t)(SCHAR_MIN+((int)((uint8_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((int8_t*)out->audio)[i]=(int8_t)(SCHAR_MIN+((int)((uint8_t*)in->audio)[i]));
 	    break;
 	case 2:
-	    for(i=0;i<in->len;i++) ((int16_t*)out->audio)[i]=(int16_t)(SHRT_MIN+((int)((uint16_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((int16_t*)out->audio)[i]=(int16_t)(SHRT_MIN+((int)((uint16_t*)in->audio)[i]));
 	    break;
 	case 3:
-	    for(i=0;i<in->len;i++) store24bit(out->audio, i, (int32_t)(INT_MIN+(uint32_t)load24bit(in->audio, i)));
+	    for(i=0;i<nsamples;i++) store24bit(out->audio, i, (int32_t)(INT_MIN+(uint32_t)load24bit(in->audio, i)));
 	    break;
 	case 4:
-	    for(i=0;i<in->len;i++) ((int32_t*)out->audio)[i]=(int32_t)(INT_MIN+((uint32_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((int32_t*)out->audio)[i]=(int32_t)(INT_MIN+((uint32_t*)in->audio)[i]);
 	    break;
     }
 }

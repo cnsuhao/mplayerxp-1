@@ -346,17 +346,16 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
 	pafd->format,len, pafd->len, minlen, maxlen, buflen);
 
     cp_size=pafd->len;
-    if(buf != pafd->audio) {
-	cp_size=std::min(buflen,pafd->len);
-	memcpy(buf,pafd->audio,cp_size);
-	cp_tile=pafd->len-cp_size;
-	if(cp_tile) {
-	    sh_audio->af_buffer=&((char *)pafd->audio)[cp_size];
-	    sh_audio->af_buffer_len=cp_tile;
-	    sh_audio->af_pts = *pts+(float)cp_size/(float)sh_audio->af_bps;
-	    MSG_DBG2("decaudio: afilter->cache %i bytes %f pts\n",cp_tile,*pts);
-	} else sh_audio->af_buffer_len=0;
-    }
+    cp_size=std::min(buflen,pafd->len);
+    memcpy(buf,pafd->audio,cp_size);
+    cp_tile=pafd->len-cp_size;
+    if(cp_tile) {
+	sh_audio->af_buffer=&((char *)pafd->audio)[cp_size];
+	sh_audio->af_buffer_len=cp_tile;
+	sh_audio->af_pts = *pts+(float)cp_size/(float)sh_audio->af_bps;
+	MSG_DBG2("decaudio: afilter->cache %i bytes %f pts\n",cp_tile,*pts);
+    } else sh_audio->af_buffer_len=0;
+    free_mp_aframe(pafd);
     return cp_size;
 }
 
