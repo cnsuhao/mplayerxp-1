@@ -166,6 +166,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
     if(rc<0)	MSG_ERR("%i=swr_convert\n",rc);
     else	out->len=rc*out->nch*(out->format&MPAF_BPS_MASK);
 
+    out->rate = af->conf.rate;
     return out;
 }
 

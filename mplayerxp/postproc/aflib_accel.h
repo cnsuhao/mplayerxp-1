@@ -64,12 +64,12 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, i
     for(;i<mm_insamples;i+=vec_insamples){
 	__ivec outd,itmp[2];
 	if(_ivec_aligned(in_data)) {
-	    itmp[0] = _ivec_loada(&in_data[i*2]);
-	    itmp[1] = _ivec_loada(&in_data[i*2+(_ivec_size())/sizeof(int16_t)]);
+	    itmp[0] = _ivec_loada(&in_data[i]);
+	    itmp[1] = _ivec_loada(&in_data[i+vec_insamples/2]);
 	}
 	else {
-	    itmp[0] = _ivec_loadu(&in_data[i*2]);
-	    itmp[1] = _ivec_loadu(&in_data[i*2+(_ivec_size())/sizeof(int16_t)]);
+	    itmp[0] = _ivec_loadu(&in_data[i]);
+	    itmp[1] = _ivec_loadu(&in_data[i+vec_insamples/2]);
 	}
 	outd     = _ivec_scale_s8_from_s16(itmp[0],itmp[1]);
 	if(final)
@@ -113,10 +113,10 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, 
 	tmp[0]= _ivec_scale_u32_from_u16(ind,&tmp[1]);
 	if(final) {
 	    _ivec_stream(&out_data[i],tmp[0]);
-	    _ivec_stream(&out_data[(i+_ivec_size())/sizeof(int32_t)],tmp[1]);
+	    _ivec_stream(&out_data[i+vec_insamples/2],tmp[1]);
 	} else {
 	    _ivec_storea(&out_data[i],tmp[0]);
-	    _ivec_storea(&out_data[(i+_ivec_size())/sizeof(int32_t)],tmp[1]);
+	    _ivec_storea(&out_data[i+vec_insamples/2],tmp[1]);
 	}
     }
     if(final) _ivec_sfence();
@@ -149,11 +149,11 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, 
     {
 	__ivec ind[2],tmp;
 	if(_ivec_aligned(in_data)) {
-	    ind[0]=_ivec_loada(&in_data[i*2]);
-	    ind[1]=_ivec_loada(&in_data[i*2+(_ivec_size())/sizeof(int32_t)]);
+	    ind[0]=_ivec_loada(&in_data[i]);
+	    ind[1]=_ivec_loada(&in_data[i+(_ivec_size())/sizeof(int32_t)]);
 	} else {
-	    ind[0]=_ivec_loadu(&in_data[i*2]);
-	    ind[1]=_ivec_loadu(&in_data[i*2+(_ivec_size())/sizeof(int32_t)]);
+	    ind[0]=_ivec_loadu(&in_data[i]);
+	    ind[1]=_ivec_loadu(&in_data[i+(_ivec_size())/sizeof(int32_t)]);
 	}
 	tmp   = _ivec_scale_s16_from_s32(ind[0],ind[1]);
 	if(final)
@@ -468,7 +468,7 @@ static void __FASTCALL__ PVECTOR_RENAME(int2float)(const mp_aframe_t* in, mp_afr
     case 2:
 #ifdef HAVE_INT_PVECTOR
 	{
-	int32_t __attribute__((aligned(64))) itmp[in->len];
+	int32_t __attribute__((aligned(64))) itmp[in->len*2];
 	PVECTOR_RENAME(int16_to_int32)(reinterpret_cast<int16_t*>(in->audio), itmp, in->len, 0);
 	PVECTOR_RENAME(int32_to_float)(itmp, reinterpret_cast<float*>(out->audio),in->len*2,out->flags&MP_AFLG_FINALIZED);
 	}

@@ -264,7 +264,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 
     // Set output data
     out->len = (in->len*af->mul.n)/af->mul.d;
-    out->nch = in->nch;
+    out->nch = af->conf.nch;
 
     return out;
 }
