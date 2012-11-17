@@ -12,7 +12,7 @@
 #define BLOCK_SIZE 4096
 #define CONFUSION_FACTOR 0
 
-#define PVECTOR_ACCEL_H "aclib_template.c"
+#define PVECTOR_ACCEL_H "aclib_template.h"
 #include "pvector/pvector_inc.h"
 
 /*

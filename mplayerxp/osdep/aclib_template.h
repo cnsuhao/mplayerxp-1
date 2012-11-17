@@ -58,8 +58,8 @@ __asm__ __volatile__(\
 #define FAST_MEMORY_COPY(to,from, len)\
 {\
     any_t*retval;\
-    const unsigned char *cfrom=from;\
-    unsigned char *tto=to;\
+    const unsigned char *cfrom=(const unsigned char *)from;\
+    unsigned char *tto=(unsigned char *)to;\
     const unsigned block_size = _ivec_size()*8;\
     __ivec iarr[8];\
     size_t i;\

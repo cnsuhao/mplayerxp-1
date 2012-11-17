@@ -25,8 +25,8 @@ static inline any_t* stream_copy_pic(any_t* dst, const any_t* src, int bytesPerL
 		for(i=0; i<height; i++)
 		{
 			stream_copy(dst, src, bytesPerLine);
-			src+= srcStride;
-			dst+= dstStride;
+			src=(char *)src+ srcStride;
+			dst=(char *)dst+ dstStride;
 		}
 	}
 
@@ -44,8 +44,8 @@ static inline any_t* memcpy_pic(any_t* dst, const any_t* src, int bytesPerLine, 
 		for(i=0; i<height; i++)
 		{
 			memcpy(dst, src, bytesPerLine);
-			src+= srcStride;
-			dst+= dstStride;
+			src=(char *)src+ srcStride;
+			dst=(char *)dst+ dstStride;
 		}
 	}
 
