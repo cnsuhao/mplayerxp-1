@@ -75,12 +75,6 @@ static inline void show_backtrace(const char *why,unsigned num_calls) {
     print_backtrace(why,stack,ncalls);
 }
 
-static inline any_t* get_caller_address(void) {
-    any_t*	stack[2];
-    unsigned	ncalls;
-    ncalls=backtrace(stack,2);
-    return stack[1];
-}
 extern any_t*	__FASTCALL__ SECURE_NAME0(_mp_malloc)(size_t size);
 extern any_t*	__FASTCALL__ SECURE_NAME1(_mp_mallocz)(size_t size);
 extern void	__FASTCALL__ SECURE_NAME2(_mp_free)(any_t* ptr);
@@ -99,6 +93,8 @@ extern "C++" {
     inline any_t *operator new[](size_t size,const std::nothrow_t&) { return mp_malloc(size); }
     inline void   operator delete(any_t* p) { SECURE_NAME2(_mp_free)(p); }
     inline void   operator delete[](any_t* p) { SECURE_NAME2(_mp_free)(p); }
+
+    extern any_t* get_caller_address(unsigned num_caller=0);
 }
 #endif
 

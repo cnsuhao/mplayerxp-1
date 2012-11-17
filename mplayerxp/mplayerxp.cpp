@@ -207,9 +207,8 @@ static MPXP_Rc mpxp_test_antiviral_protection(int* verbose)
     return MPXP_Virus;
 }
 
-static volatile void __attribute__ ((noinline)) mpxp_test_backtrace(void) {
-    any_t* caller = get_caller_address();
-    goto *caller;
+static void __attribute__ ((noinline)) mpxp_test_backtrace(void) {
+    goto *(reinterpret_cast<any_t*>(get_caller_address()));
     kill(getpid(), SIGILL);
 }
 
@@ -2026,6 +2025,8 @@ main:
     /* display clip info */
     demux_info_print(MPXPSys->demuxer(),filename);
 
+// TODO: rewrite test backtrace in .asm
+//    mpxp_test_backtrace();
     mpxp_run_ahead_engine();
 
     fflush(stdout);
@@ -2038,6 +2039,8 @@ main:
 
     if(sh_video) dae_wait_decoder_outrun(xp_core->video);
 
+// TODO: rewrite test backtrace in .asm
+//    mpxp_test_backtrace();
     if(xmp_run_players()!=0) exit_player("Can't run xp players!\n");
     MSG_OK("Using the next %i threads:\n",xp_core->num_threads);
     unsigned idx;

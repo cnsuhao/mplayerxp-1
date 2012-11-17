@@ -22,3 +22,9 @@ any_t* SECURE_NAME9(rnd_fill)(any_t* buffer,size_t size)
     }
     return buffer;
 }
+
+any_t* get_caller_address(unsigned num_caller) {
+    any_t*	stack[3+num_caller];
+    backtrace(stack,3+num_caller);
+    return stack[2+num_caller];
+}
