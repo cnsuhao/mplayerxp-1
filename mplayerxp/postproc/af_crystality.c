@@ -200,11 +200,10 @@ static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *setup,const mp_aframe_t
 {
   unsigned x,i,datasize;
   float _left, _right, dif, difh, leftc, rightc, left[4], right[4];
-  float *dataptr;
   float lt, rt;
   mp_aframe_t* out = new_mp_aframe_genome(in);
   mp_alloc_aframe(out);
-  memcpy(out->audio,in->audio,out->len);
+  float *inptr,*outptr;
 
 #if 0
   float lsine,rsine;
@@ -215,14 +214,16 @@ static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *setup,const mp_aframe_t
   bufPos[0] = 1 + BUF_SIZE - DELAY1;
   bufPos[1] = 1 + BUF_SIZE - DELAY1 - DELAY2;
   bufPos[2] = 1 + BUF_SIZE - DELAY1 - DELAY2 - DELAY3;
-  dataptr = out->audio;
+
+  inptr = in->audio;
+  outptr = out->audio;
   datasize= out->len;
 
   for (x = 0; x < datasize; x += 8) {
 
     // ************ load sample **********
-    left[0] = dataptr[0];
-    right[0] = dataptr[1];
+    left[0] = inptr[0];
+    right[0] = inptr[1];
 
     // ************ calc 4 echos **********
     for(i=0;i<3;i++)
@@ -292,9 +293,10 @@ static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *setup,const mp_aframe_t
     right0p = right[0];
 
     // ************ store sample **********
-    dataptr[0] = _left; //clamp(_left,-1.0,1.0);
-    dataptr[1] = _right;//clamp(_right,-1.0,1.0);
-    dataptr += 2;
+    outptr[0] = _left; //clamp(_left,-1.0,1.0);
+    outptr[1] = _right;//clamp(_right,-1.0,1.0);
+    inptr += 2;
+    outptr += 2;
    }
    return out;
 }
@@ -397,11 +399,10 @@ static struct Interpolation bandext_amplitude;
 /*
  * exact bandwidth extender ("exciter") routine
  */
-static mp_aframe_t* __FASTCALL__ bandext(af_crystality_t *setup,const mp_aframe_t*in)
+static mp_aframe_t* __FASTCALL__ bandext(const af_crystality_t *setup,const mp_aframe_t*in)
 {
     unsigned x,i,datasize;
     float _left, _right;
-    float *dataptr=NULL;
     static float lprev[4], rprev[4];
     float left[5], right[5];
     static float lamplUp, lamplDown;
@@ -410,16 +411,17 @@ static mp_aframe_t* __FASTCALL__ bandext(af_crystality_t *setup,const mp_aframe_
     float tmp;
     mp_aframe_t* out=new_mp_aframe_genome(in);
     mp_alloc_aframe(out);
-    memcpy(out->audio,in->audio,out->len);
+    float *inptr,*outptr;
 
-    dataptr = out->audio;
+    inptr = in->audio;
+    outptr = out->audio;
     datasize= out->len;
 
     for (x = 0; x < datasize; x += 8) {
 
 	// ************ load sample **********
-	left[0] = dataptr[0];
-	right[0] = dataptr[1];
+	left[0] = inptr[0];
+	right[0] = inptr[1];
 
 #if 0
 	_left=lowpass(&setup->lp_bass[0],left[0]);
@@ -467,9 +469,10 @@ static mp_aframe_t* __FASTCALL__ bandext(af_crystality_t *setup,const mp_aframe_
 	    rprev[i]=right[i];
 	}
 	// ************ END highpass filter part 2 **********
-	dataptr[0] = _left;//clamp(_left,-1.0,+1.0);
-	dataptr[1] = _right;//clamp(_right,-1.0,+1.0);
-	dataptr += 2;
+	outptr[0] = _left;//clamp(_left,-1.0,+1.0);
+	outptr[1] = _right;//clamp(_right,-1.0,+1.0);
+	inptr += 2;
+	outptr += 2;
     }
     return out;
 }
@@ -528,9 +531,11 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
     mp_aframe_t* out,*tmp;
+
     tmp=echo3d(af->setup,in);
     out=bandext(af->setup,tmp);
     free_mp_aframe(tmp);
+
     return out;
 }
 
