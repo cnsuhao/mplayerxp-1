@@ -21,7 +21,6 @@ TODO for mplayerxp:
 - use c++ instead of plain c
 - use libavfilter instead of some af_* vf_*
 - test frame-dropping
-- replace suspect codecs.conf with built-in database [ mpcX-probe]
 - remove all #define with values (they maybe intercepted in other .h files)
 - add anti-viral protection for QOS("Query of Service")
   to not be a virus' servant [code_walker, gotoist ?]

@@ -327,15 +327,17 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
     MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
     if(len==0 || !sh_audio->afilter) return 0; // EOF?
     // run the filters:
-    mp_aframe_t  afd;  // filter input
+    mp_aframe_t*  afd;  // filter input
     mp_aframe_t* pafd; // filter output
-    memset(&afd,0,sizeof(mp_aframe_t));
-    afd.audio=buf;
-    afd.len=len;
-    afd.rate=sh_audio->rate;
-    afd.nch=sh_audio->nch;
-    afd.format=mpaf_format_decode(sh_audio->afmt);
-    pafd=RND_RENAME8(af_play)(sh_audio->afilter,&afd);
+    afd=new_mp_aframe(	sh_audio->rate,
+			sh_audio->nch,
+			mpaf_format_decode(sh_audio->afmt)
+			,0); // xp_idx
+    afd->audio=buf;
+    afd->len=len;
+    pafd=RND_RENAME8(af_play)(sh_audio->afilter,afd);
+    afd->audio=NULL; // fake no buffer
+    free_mp_aframe(afd);
 
     if(!pafd) {
 	MSG_V("decaudio: filter error\n");
