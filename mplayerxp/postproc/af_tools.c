@@ -67,19 +67,17 @@ MPXP_Rc __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate)
 }
 
 /* Helper function for testing the output format */
-MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const mp_aframe_t* out)
+MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const af_conf_t* out)
 {
-  if((af->data->format != out->format) ||
-     (af->data->rate   != out->rate)   ||
-     (af->data->nch    != out->nch)){
+  if((af->conf.format != out->format) ||
+     (af->conf.rate   != out->rate)   ||
+     (af->conf.nch    != out->nch)){
 #if 0
-    MSG_DBG2("af_test_out %i!=%i || %i!=%i || %i!=%i || %i!=%i\n",
-    af->data->format,out->format,
-    af->data->bps,out->bps,
-    af->data->rate,out->rate,
-    af->data->nch,out->nch);
+    MSG_DBG2("af_test_out %i!=%i || %i!=%i || %i!=%i\n",
+    af->conf.format,out->format,
+    af->conf.rate,out->rate,
+    af->conf.nch,out->nch);
 #endif
-    memcpy(out,af->data,sizeof(mp_aframe_t));
     return MPXP_False;
   }
   return MPXP_Ok;

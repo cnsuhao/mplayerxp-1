@@ -47,7 +47,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   }
   case AF_CONTROL_DELAY_LEN | AF_CONTROL_SET:{
     int i;
-    if(MPXP_Ok != af_from_ms(AF_NCH, arg, s->wi, af->data->rate, 0.0, 1000.0))
+    if(MPXP_Ok != af_from_ms(AF_NCH, arg, s->wi, af->conf.rate, 0.0, 1000.0))
       return MPXP_Error;
     s->ri = 0;
     for(i=0;i<AF_NCH;i++){
@@ -66,35 +66,30 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
       else
 	s->wi[i] = s->wi[i] - s->ri;
     }
-    return af_to_ms(AF_NCH, s->wi, arg, af->data->rate);
+    return af_to_ms(AF_NCH, s->wi, arg, af->conf.rate);
   }
   default: break;
   }
   return MPXP_Unknown;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_delay_t* s = af->setup;
     unsigned i;
 
     // Free prevous delay queues
-    for(i=0;i<af->data->nch;i++){
-      if(s->q[i])
-	mp_free(s->q[i]);
-    }
+    for(i=0;i<af->conf.nch;i++) if(s->q[i]) mp_free(s->q[i]);
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = arg->format;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = arg->format;
 
     // Allocate new delay queues
-    for(i=0;i<af->data->nch;i++){
-      s->q[i] = mp_calloc(L,af->data->format&MPAF_BPS_MASK);
-      if(NULL == s->q[i])
-	MSG_FATAL(MSGTR_OutOfMemory);
+    for(i=0;i<af->conf.nch;i++){
+	s->q[i] = mp_calloc(L,af->conf.format&MPAF_BPS_MASK);
+	if(NULL == s->q[i]) MSG_FATAL(MSGTR_OutOfMemory);
     }
-
     return control(af,AF_CONTROL_DELAY_LEN | AF_CONTROL_SET,s->d);
 }
 
@@ -102,8 +97,6 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   int i;
-  if(af->data)
-    mp_free(af->data);
   for(i=0;i<AF_NCH;i++)
     if(((af_delay_t*)(af->setup))->q[i])
       mp_free(((af_delay_t*)(af->setup))->q[i]);
@@ -112,78 +105,80 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-  mp_aframe_t*   	c   = data;	 // Current working data
-  af_delay_t*  	s   = af->setup; // Setup for this instance
-  int 		nch = c->nch;	 // Number of channels
-  int		len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
-  int		ri  = 0;
-  int 		ch,i;
-  for(ch=0;ch<nch;ch++){
-    switch(c->format&MPAF_BPS_MASK){
-    case 1:{
-      int8_t* a = c->audio;
-      int8_t* q = s->q[ch];
-      int wi = s->wi[ch];
-      ri = s->ri;
-      for(i=ch;i<len;i+=nch){
-	q[wi] = a[i];
-	a[i]  = q[ri];
-	UPDATEQI(wi);
-	UPDATEQI(ri);
-      }
-      s->wi[ch] = wi;
-      break;
+    mp_aframe_t* c=new_mp_aframe_genome(in);
+    mp_alloc_aframe(c);
+    memcpy(c->audio,in->audio,c->len);
+
+    af_delay_t*	s   = af->setup; // Setup for this instance
+    int 	nch = c->nch;	 // Number of channels
+    int		len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
+    int		ri  = 0;
+    int 	ch,i;
+
+    for(ch=0;ch<nch;ch++){
+	switch(c->format&MPAF_BPS_MASK){
+	case 1:{
+	    int8_t* a = c->audio;
+	    int8_t* q = s->q[ch];
+	    int wi = s->wi[ch];
+	    ri = s->ri;
+	    for(i=ch;i<len;i+=nch){
+		q[wi] = a[i];
+		a[i]  = q[ri];
+		UPDATEQI(wi);
+		UPDATEQI(ri);
+	    }
+	    s->wi[ch] = wi;
+	    break;
+	}
+	case 2:{
+	    int16_t* a = c->audio;
+	    int16_t* q = s->q[ch];
+	    int wi = s->wi[ch];
+	    ri = s->ri;
+	    for(i=ch;i<len;i+=nch){
+		q[wi] = a[i];
+		a[i]  = q[ri];
+		UPDATEQI(wi);
+		UPDATEQI(ri);
+	    }
+	    s->wi[ch] = wi;
+	    break;
+	}
+	case 4:{
+	    int32_t* a = c->audio;
+	    int32_t* q = s->q[ch];
+	    int wi = s->wi[ch];
+	    ri = s->ri;
+	    for(i=ch;i<len;i+=nch){
+		q[wi] = a[i];
+		a[i]  = q[ri];
+		UPDATEQI(wi);
+		UPDATEQI(ri);
+	    }
+	    s->wi[ch] = wi;
+	    break;
+	}
     }
-    case 2:{
-      int16_t* a = c->audio;
-      int16_t* q = s->q[ch];
-      int wi = s->wi[ch];
-      ri = s->ri;
-      for(i=ch;i<len;i+=nch){
-	q[wi] = a[i];
-	a[i]  = q[ri];
-	UPDATEQI(wi);
-	UPDATEQI(ri);
-      }
-      s->wi[ch] = wi;
-      break;
     }
-    case 4:{
-      int32_t* a = c->audio;
-      int32_t* q = s->q[ch];
-      int wi = s->wi[ch];
-      ri = s->ri;
-      for(i=ch;i<len;i+=nch){
-	q[wi] = a[i];
-	a[i]  = q[ri];
-	UPDATEQI(wi);
-	UPDATEQI(ri);
-      }
-      s->wi[ch] = wi;
-      break;
-    }
-    }
-  }
-  s->ri = ri;
-  return c;
+    s->ri = ri;
+    return c;
 }
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-  af->config=config;
-  af->control=control;
-  af->uninit=uninit;
-  af->play=play;
-  af->mul.n=1;
-  af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
-  af->setup=mp_calloc(1,sizeof(af_delay_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+    af->config=config;
+    af->control=control;
+    af->uninit=uninit;
+    af->play=play;
+    af->mul.n=1;
+    af->mul.d=1;
+    af->setup=mp_calloc(1,sizeof(af_delay_t));
+    if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
-  return MPXP_Ok;
+    return MPXP_Ok;
 }
 
 // Description of this filter

@@ -25,15 +25,15 @@ typedef struct af_center_s
 }af_center_t;
 
 // Initialization and runtime control
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_center_t* s   = af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = max(s->ch+1,arg->nch);
-    af->data->format = MPAF_NE|MPAF_F|4;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = max(s->ch+1,arg->nch);
+    af->conf.format = MPAF_NE|MPAF_F|4;
 
     return af_test_output(af,arg);
 }
@@ -66,30 +66,29 @@ static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 // Deallocate memory
 static void uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+    if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
-  mp_aframe_t*    c   = data;	 // Current working data
-  af_center_t*  s   = af->setup; // Setup for this instance
-  float*   	a   = c->audio;	 // Audio data
-  int		len = c->len/4;	 // Number of samples in current audio block
-  int		nch = c->nch;	 // Number of channels
-  int		ch  = s->ch;	 // Channel in which to insert the center audio
-  register int  i;
+    mp_aframe_t*c   = ind;	// Current working data
+    af_center_t*s   = af->setup;// Setup for this instance
+    float*	a   = c->audio;	// Audio data
+    unsigned	len = c->len/4;	// Number of samples in current audio block
+    unsigned	nch = c->nch;	// Number of channels
+    unsigned	ch  = s->ch;	// Channel in which to insert the center audio
+    unsigned	i;
+    mp_aframe_t*outd= new_mp_aframe_genome(ind);
+    mp_alloc_aframe(outd);
 
-  // Run filter
-  for(i=0;i<len;i+=nch){
-    // Average left and right
-    a[i+ch] = (a[i]/2) + (a[i+1]/2);
-  }
+    // Run filter
+    for(i=0;i<len;i+=nch){
+	// Average left and right
+	((float*)outd->audio)[i+ch] = (a[i]/2) + (a[i+1]/2);
+    }
 
-  return c;
+    return outd;
 }
 
 // Allocate memory and set function pointers
@@ -101,10 +100,8 @@ static MPXP_Rc af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=s=mp_calloc(1,sizeof(af_center_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   // Set default values
   s->ch = 1;  	 // Channel nr 2
     check_pin("afilter",af->pin,AF_PIN);

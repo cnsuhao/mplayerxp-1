@@ -20,11 +20,14 @@
 #endif
 #include "aflib.h"
 
+extern "C" {
 extern uint32_t load24bit(const any_t* data, int pos);
 extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
-
-/* MMX optimized stugff */
-#include <limits.h>
+}
+/* MMX optimized stuff */
+#include <stdio.h>
+#include <stdint.h>
+#include <limits>
 #include "mp_config.h"
 #include "osdep/cpudetect.h"
 
@@ -664,7 +667,7 @@ void __FASTCALL__ bandp_init(bandp_t *bp, unsigned center, unsigned width, unsig
 	bp->prev = bp->pprev = 0.0;
 }
 
-static void __FASTCALL__ init_change_bps(const any_t* in, any_t* out, unsigned len, unsigned inbps, unsigned outbps,int final)
+static void __FASTCALL__ init_change_bps(const mp_aframe_t* in, mp_aframe_t* out)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) change_bps = change_bps_AVX;
@@ -689,11 +692,11 @@ static void __FASTCALL__ init_change_bps(const any_t* in, any_t* out, unsigned l
 #endif
 #endif /* __x86_64__ */
 	change_bps = change_bps_c;
-	(*change_bps)(in,out,len,inbps,outbps,final);
+	(*change_bps)(in,out);
 }
-void (* __FASTCALL__ change_bps)(const any_t* in, any_t* out, unsigned len, unsigned inbps, unsigned outbps,int final)=init_change_bps;
+void (* __FASTCALL__ change_bps)(const mp_aframe_t* in, mp_aframe_t* out)=init_change_bps;
 
-static void __FASTCALL__ init_float2int(const any_t* in, any_t* out, int len, int bps,int final)
+static void __FASTCALL__ init_float2int(const mp_aframe_t* in, mp_aframe_t* out)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) float2int = float2int_AVX;
@@ -726,11 +729,11 @@ static void __FASTCALL__ init_float2int(const any_t* in, any_t* out, int len, in
 #endif
 #endif /*__x86_64__*/
 	float2int = float2int_c;
-	(*float2int)(in,out,len,bps,final);
+	(*float2int)(in,out);
 }
-void (* __FASTCALL__ float2int)(const any_t* in, any_t* out, int len, int bps,int final)=init_float2int;
+void (* __FASTCALL__ float2int)(const mp_aframe_t* in, mp_aframe_t* out)=init_float2int;
 
-static void __FASTCALL__ init_int2float(const any_t* in, any_t* out, int len, int bps,int final)
+static void __FASTCALL__ init_int2float(const mp_aframe_t* in, mp_aframe_t* out)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) int2float = int2float_AVX;
@@ -763,9 +766,9 @@ static void __FASTCALL__ init_int2float(const any_t* in, any_t* out, int len, in
 #endif
 #endif /*__x86_64__*/
 	int2float = int2float_c;
-	(*int2float)(in,out,len,bps,final);
+	(*int2float)(in,out);
 }
-void (* __FASTCALL__ int2float)(const any_t* in, any_t* out, int len, int bps,int final)=init_int2float;
+void (* __FASTCALL__ int2float)(const mp_aframe_t* in, mp_aframe_t* out)=init_int2float;
 
 
 static int32_t __FASTCALL__ FIR_i16_init(const int16_t *x,const int16_t *w)

@@ -78,15 +78,14 @@ static uint32_t find_atag(const char *codec)
 	return 0;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_ffenc_t *s=af->setup;
-    if(!s->acodec_inited){
-      avcodec_register_all();
-      s->acodec_inited=1;
+    if(!s->acodec_inited) {
+	avcodec_register_all();
+	s->acodec_inited=1;
     }
-    if(strcmp(s->cname,"help")==0)
-    {
+    if(strcmp(s->cname,"help")==0) {
 	print_encoders();
 	return MPXP_Error;
     }
@@ -108,10 +107,11 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
     s->frame_size = s->lavc_context->frame_size*arg->nch*2/*bps*/;
     s->tail=mp_malloc(s->frame_size);
     /* correct in format */
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = find_atag(s->cname)<<16;
-    MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = find_atag(s->cname)<<16;
+    MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n"
+	,af->conf.rate,af->conf.nch,af->conf.format);
     return MPXP_Ok;
 }
 // Initialization and runtime control
@@ -144,66 +144,56 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  af_ffenc_t *s=af->setup;
-  avcodec_close(s->lavc_context);
-  if(s->lavc_context)
-    mp_free(s->lavc_context);
-  mp_free(s->tail);
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+    af_ffenc_t *s=af->setup;
+    avcodec_close(s->lavc_context);
+    if(s->lavc_context) mp_free(s->lavc_context);
+    mp_free(s->tail);
+    if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-  unsigned tlen,ilen,olen,delta;
-  af_ffenc_t *s=af->setup;
-  mp_aframe_t*   	 in = data;
-  mp_aframe_t*   	 out = af->data;
-  uint8_t *inp,*outp;
+    unsigned tlen,ilen,olen,delta;
+    af_ffenc_t *s=af->setup;
+    uint8_t *inp,*outp;
+    mp_aframe_t* out = new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
 
-  ilen=tlen=in->len;
-  if(out->len<tlen) if(out->audio) mp_free(out->audio);
-  // Create new buffer and check that it is OK
-  out->audio = mp_malloc(tlen);
-  MSG_DBG2("ff_encoding %u bytes frame_size=%u tail=%lu\n",tlen,s->frame_size,s->tail_size);
-  if(out->audio) {
-    out->len=0;
-    inp=in->audio;
-    outp=out->audio;
-    if(s->tail_size && s->tail_size+ilen>=s->frame_size)
-    {
-	delta=s->frame_size-s->tail_size;
-	memcpy(&s->tail[s->tail_size],inp,delta);
-	ilen-=delta;
-	olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)s->tail);
-	MSG_DBG2("encoding tail %u bytes + %u stream => %u compressed\n",s->tail_size,delta,olen);
-	inp+=delta;
-	out->len += olen;
-	outp+=olen;
-	tlen-=olen;
-	s->tail_size=0;
+    ilen=tlen=in->len;
+    if(out->audio) {
+	out->len=0;
+	inp=in->audio;
+	outp=out->audio;
+	if(s->tail_size && s->tail_size+ilen>=s->frame_size) {
+	    delta=s->frame_size-s->tail_size;
+	    memcpy(&s->tail[s->tail_size],inp,delta);
+	    ilen-=delta;
+	    olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)s->tail);
+	    MSG_DBG2("encoding tail %u bytes + %u stream => %u compressed\n",s->tail_size,delta,olen);
+	    inp+=delta;
+	    out->len += olen;
+	    outp+=olen;
+	    tlen-=olen;
+	    s->tail_size=0;
+	}
+	while(ilen>=s->frame_size) {
+	    olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)inp);
+	    MSG_DBG2("encoding [out %p %lu in %p %lu]=>%u compressed\n",outp,tlen,inp,ilen,olen);
+	    out->len += olen;
+	    inp+=s->frame_size;
+	    ilen-=s->frame_size;
+	    tlen-=olen;
+	    outp+=olen;
+	}
+	delta=ilen;
+	if(delta) {
+	    MSG_DBG2("encoding append tail %lu bytes to %u existed\n",delta,s->tail_size);
+	    memcpy(&s->tail[s->tail_size],inp,delta);
+	    s->tail_size+=delta;
+	}
     }
-    while(ilen>=s->frame_size) {
-      olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)inp);
-      MSG_DBG2("encoding [out %p %lu in %p %lu]=>%u compressed\n",outp,tlen,inp,ilen,olen);
-      out->len += olen;
-      inp+=s->frame_size;
-      ilen-=s->frame_size;
-      tlen-=olen;
-      outp+=olen;
-    }
-    delta=ilen;
-    if(delta)
-    {
-	MSG_DBG2("encoding append tail %lu bytes to %u existed\n",delta,s->tail_size);
-	memcpy(&s->tail[s->tail_size],inp,delta);
-	s->tail_size+=delta;
-    }
-  }
-  return out;
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -214,9 +204,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->data=mp_malloc(sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_ffenc_t));
-  if(af->data == NULL) return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

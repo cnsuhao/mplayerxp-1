@@ -264,12 +264,12 @@ inline void update_ch(af_hrtf_t *s, real_t *in, const int k)
     s->ba_r[k] = in[4] + in[1] + in[3];
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_hrtf_t *s = af->setup;
     int test_output_res;
-    af->data->rate   = arg->rate;
-    if(af->data->rate != 48000) {
+    af->conf.rate   = arg->rate;
+    if(af->conf.rate != 48000) {
 	// automatic samplerate adjustment in the filter chain
 	// is not yet supported.
 	//MSG_ERR("[hrtf] ERROR: Sampling rate is not 48000 Hz (%d)!\n",
@@ -277,30 +277,29 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
 	//return MPXP_Error;
 
 	/* NK: Let use af_resample here */
-	af->data->rate = 48000;
+	af->conf.rate = 48000;
     }
-    af->data->nch    = arg->nch;
-    if(af->data->nch == 2) {
+    af->conf.nch    = arg->nch;
+    if(af->conf.nch == 2) {
 	/* 2 channel input */
 	if(s->decode_mode != HRTF_MIX_MATRIX2CH) {
 	    /* Default behavior is stereo mixing. */
 	    s->decode_mode = HRTF_MIX_STEREO;
 	}
     }
-    else if (af->data->nch < 5) af->data->nch = 5;
-    af->data->format = MPAF_F|MPAF_NE|4;
+    else if (af->conf.nch < 5) af->conf.nch = 5;
+    af->conf.format = MPAF_F|MPAF_NE|4;
     af->mul.n = 2;
-    af->mul.d = af->data->nch;
+    af->mul.d = af->conf.nch;
     test_output_res = af_test_output(af,arg);
     // after testing input set the real output format
-    af->data->nch = 2;
+    af->conf.nch = 2;
     return test_output_res;
 }
 /* Initialization and runtime control */
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s *af, int cmd, any_t* arg)
 {
     af_hrtf_t *s = af->setup;
-    int test_output_res;
     char mode;
 
     switch(cmd) {
@@ -373,8 +372,6 @@ static void __FASTCALL__ uninit(struct af_instance_s *af)
 	if(s->fwrbuf_rr) mp_free(s->fwrbuf_rr);
 	mp_free(af->setup);
     }
-    if(af->data)
-	mp_free(af->data);
 }
 
 /* Filter data through filter
@@ -388,19 +385,19 @@ frequencies).
 2. A bass compensation is introduced to ensure that 0-200 Hz are not
 damped (without any real 3D acoustical image, however).
 */
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af, mp_aframe_t *data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af,const mp_aframe_t *ind)
 {
-    af_hrtf_t *s = af->setup;
-    real_t *in = data->audio; // Input audio data
-    real_t *out = NULL; // Output audio data
-    real_t *end = in + data->len / sizeof(real_t); // Loop end
-    float common, left, right, diff, left_b, right_b;
-    const int dblen = s->dlbuflen, hlen = s->hrflen, blen = s->basslen;
+    af_hrtf_t*	s = af->setup;
+    real_t*	in = ind->audio; // Input audio data
+    real_t*	out = NULL; // Output audio data
+    real_t*	end = in + ind->len / sizeof(real_t); // Loop end
+    float	common, left, right, diff, left_b, right_b;
+    const int	dblen = s->dlbuflen, hlen = s->hrflen, blen = s->basslen;
+    mp_aframe_t*outd=new_mp_aframe_genome(ind);
+    outd->len=af_lencalc(af->mul,ind);
+    mp_alloc_aframe(outd);
 
-    if(MPXP_Ok != RESIZE_LOCAL_BUFFER(af, data))
-	return NULL;
-
-    out = af->data->audio;
+    out = outd->audio;
 
     /* MPlayer's 5 channel layout (notation for the variable):
      *
@@ -502,7 +499,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af, mp_aframe_t *dat
 	left  += (1 - BASSCROSS) * left_b  + BASSCROSS * right_b;
 	right += (1 - BASSCROSS) * right_b + BASSCROSS * left_b;
 	/* Also mix the LFE channel (if available) */
-	if(data->nch >= 6) {
+	if(ind->nch >= 6) {
 	    left  += in[5] * M3_01DB;
 	    right += in[5] * M3_01DB;
 	}
@@ -532,19 +529,13 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af, mp_aframe_t *dat
 	}
 
 	/* Next sample... */
-	in = &in[data->nch];
-	out = &out[af->data->nch];
+	in = &in[ind->nch];
+	out = &out[af->conf.nch];
 	(s->cyc_pos)--;
 	if(s->cyc_pos < 0)
 	    s->cyc_pos += dblen;
     }
-
-    /* Set output data */
-    data->audio = af->data->audio;
-    data->len   = (data->len * af->mul.n) / af->mul.d;
-    data->nch   = 2;
-
-    return data;
+    return outd;
 }
 
 static int __FASTCALL__ allocate(af_hrtf_t *s)
@@ -581,13 +572,10 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af)
     af->play = play;
     af->mul.n = 1;
     af->mul.d = 1;
-    af->data = mp_calloc(1, sizeof(mp_aframe_t));
     af->setup = mp_calloc(1, sizeof(af_hrtf_t));
-    if((af->data == NULL) || (af->setup == NULL))
-	return MPXP_Error;
+    if(af->setup == NULL) return MPXP_Error;
 
     s = af->setup;
-
     s->dlbuflen = DELAYBUFLEN;
     s->hrflen = HRTFFILTLEN;
     s->basslen = BASSFILTLEN;
@@ -622,9 +610,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af)
 	MSG_ERR("[hrtf] Memory allocation error.\n");
 	return MPXP_Error;
     }
-    fc = 2.0 * BASSFILTFREQ / (float)af->data->rate;
-    if(design_fir(s->basslen, s->ba_ir, &fc, LP | KAISER, 4 * M_PI) ==
-       -1) {
+    fc = 2.0 * BASSFILTFREQ / (float)af->conf.rate;
+    if(design_fir(s->basslen, s->ba_ir, &fc, LP | KAISER, 4 * M_PI) == -1) {
 	MSG_ERR("[hrtf] Unable to design low-pass "
 	       "filter.\n");
 	return MPXP_Error;

@@ -1,22 +1,26 @@
 /* DSP acceleration routines */
 #include "pvector/pvector.h"
 
-static void __FASTCALL__ PVECTOR_RENAME(int8_to_int16)(const int8_t* in_data, int16_t* out_data, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int8_to_int16)(const int8_t* in_data, int16_t* out_data, unsigned inlen, int final)
 {
+    unsigned i,insamples = inlen/sizeof(int8_t);
 #ifdef HAVE_INT_PVECTOR
-    unsigned len_mm;
+    unsigned len_mm,mm_insamples,vec_insamples;
+    len_mm=inlen&(~(_ivec_size()-1));
+    mm_insamples=len_mm/sizeof(int8_t);
+    vec_insamples=_ivec_size()/sizeof(int8_t);
+#else
+    UNUSED(final);
 #endif
-    unsigned i;
     i = 0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
-    for(;i<len;i++) {
+    for(;i<insamples;i++) {
 	((uint16_t*)out_data)[i]=((uint16_t)((const uint8_t*)in_data)[i])<<8;
 	if(_ivec_aligned(out_data)) break;
     }
     if((len_mm-i)>=_ivec_size())
-    for(;i<len_mm;i+=_ivec_size()){
+    for(;i<mm_insamples;i+=vec_insamples){
 	__ivec ind,itmp[2];
 	if(_ivec_aligned(in_data))
 	    ind = _ivec_loada(&((const uint8_t *)in_data)[i]);
@@ -34,26 +38,30 @@ static void __FASTCALL__ PVECTOR_RENAME(int8_to_int16)(const int8_t* in_data, in
     _ivec_empty();
     if(final) _ivec_sfence();
 #endif
-	for(;i<len;i++)
+	for(;i<insamples;i++)
 	  ((uint16_t*)out_data)[i]=((uint16_t)((const uint8_t*)in_data)[i])<<8;
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, int8_t* out_data, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, int8_t* out_data, unsigned inlen, int final)
 {
+    unsigned i,insamples = inlen/sizeof(int16_t);
 #ifdef HAVE_INT_PVECTOR
-    unsigned len_mm;
+    unsigned len_mm,mm_insamples,vec_insamples;
+    len_mm=inlen&(~(_ivec_size()-1));
+    mm_insamples=len_mm/sizeof(int16_t);
+    vec_insamples=_ivec_size()/sizeof(int16_t);
+#else
+    UNUSED(final);
 #endif
-    unsigned i;
     i = 0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
-    for(;i<len;i++) {
+    for(;i<insamples;i++) {
 	((uint8_t*)out_data)[i]=(uint8_t)((((const uint16_t*)in_data)[i])>>8);
 	if(_ivec_aligned(out_data)) break;
     }
     if((len_mm-i)>=_ivec_size())
-    for(;i<len_mm;i+=_ivec_size()){
+    for(;i<mm_insamples;i+=vec_insamples){
 	__ivec outd,itmp[2];
 	if(_ivec_aligned(in_data)) {
 	    itmp[0] = _ivec_loada(&((const uint16_t*)in_data)[i]);
@@ -72,26 +80,30 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int8)(const int16_t* in_data, i
     _ivec_empty();
     if(final) _ivec_sfence();
 #endif
-    for(;i<len;i++)
+    for(;i<insamples;i++)
 	((uint8_t*)out_data)[i]=(uint8_t)((((const uint16_t*)in_data)[i])>>8);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, int32_t* out_data, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, int32_t* out_data, unsigned inlen, int final)
 {
+    unsigned i,insamples = inlen/sizeof(int16_t);
 #ifdef HAVE_INT_PVECTOR
-    unsigned len_mm;
+    unsigned len_mm,mm_insamples,vec_insamples;
+    len_mm=inlen&(~(_ivec_size()-1));
+    mm_insamples=len_mm/sizeof(int16_t);
+    vec_insamples=_ivec_size()/sizeof(int16_t);
+#else
+    UNUSED(final);
 #endif
-    unsigned i;
     i=0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
-    for(;i<len;i++){
+    for(;i<insamples;i++){
 	((uint32_t*)out_data)[i]=((uint32_t)((const uint16_t*)in_data)[i])<<16;
 	if(_ivec_aligned(out_data)) break;
     }
     if((len_mm-i)>=_ivec_size())
-    for(;i<len_mm;i+=_ivec_size())
+    for(;i<mm_insamples;i+=vec_insamples)
     {
 	__ivec ind,tmp[2];
 	if(_ivec_aligned(in_data))
@@ -110,26 +122,30 @@ static void __FASTCALL__ PVECTOR_RENAME(int16_to_int32)(const int16_t* in_data, 
     if(final) _ivec_sfence();
     _ivec_empty();
 #endif
-    for(;i<len;i++)
+    for(;i<insamples;i++)
 	((uint32_t*)out_data)[i]=((uint32_t)((const uint16_t*)in_data)[i])<<16;
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, int16_t* out_data, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, int16_t* out_data, unsigned inlen, int final)
 {
+    unsigned i,insamples = inlen/sizeof(int32_t);
 #ifdef HAVE_INT_PVECTOR
-    unsigned len_mm;
+    unsigned len_mm,mm_insamples,vec_insamples;
+    len_mm=inlen&(~(_ivec_size()-1));
+    mm_insamples=len_mm/sizeof(int32_t);
+    vec_insamples=_ivec_size()/sizeof(int32_t);
+#else
+    UNUSED(final);
 #endif
-    unsigned i;
     i=0;
 #ifdef HAVE_INT_PVECTOR
-    len_mm=len&(~(_ivec_size()-1));
     if(!_ivec_aligned(out_data))
-    for(;i<len;i++){
+    for(;i<insamples;i++){
 	((uint16_t*)out_data)[i]=(uint16_t)((((const uint32_t*)in_data)[i])>>16);
 	if(_ivec_aligned(out_data)) break;
     }
     if((len_mm-i)>=_ivec_size())
-    for(;i<len_mm;i+=_ivec_size())
+    for(;i<mm_insamples;i+=vec_insamples)
     {
 	__ivec ind[2],tmp;
 	if(_ivec_aligned(in_data)) {
@@ -148,91 +164,87 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, 
     if(final) _ivec_sfence();
     _ivec_empty();
 #endif
-    for(;i<len;i++)
+    for(;i<insamples;i++)
 	((uint16_t*)out_data)[i]=(uint16_t)((((const uint32_t*)in_data)[i])>>16);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const any_t* in_data, any_t* out_data, unsigned len, unsigned inbps, unsigned outbps,int final)
+static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const mp_aframe_t* in, mp_aframe_t* out)
 {
-  unsigned i;
+    unsigned i,bps=in->format&MPAF_BPS_MASK,outbps=out->format&MPAF_BPS_MASK;
   // Change the number of bits
-    switch(inbps){
-    case 1:
-      switch(outbps){
-      case 2:
-	PVECTOR_RENAME(int8_to_int16)(in_data,out_data,len,final);
-	break;
-      case 3:
-	for(i=0;i<len;i++)
-	  ((uint8_t*)out_data)[3*i]=
-	  ((uint8_t*)out_data)[3*i+1]=0;
-	  ((uint8_t*)out_data)[3*i+2]=(((uint8_t*)in_data)[i]);
-	break;
-      case 4:
-	i=0;
-	for(;i<len;i++)
-	  ((uint32_t*)out_data)[i]=((uint32_t)((uint8_t*)in_data)[i])<<24;
-	break;
-      }
-      break;
-    case 2:
-      switch(outbps){
-      case 1:
-	PVECTOR_RENAME(int16_to_int8)(in_data,out_data,len,final);
-	break;
-      case 3:
-	for(i=0;i<len;i++)
-	  ((uint8_t*)out_data)[3*i]=0;
-	  ((uint8_t*)out_data)[3*i+1]=(((uint8_t*)in_data)[2*i]);
-	  ((uint8_t*)out_data)[3*i+2]=(((uint8_t*)in_data)[2*i+1]);
-	break;
-      case 4:
-	PVECTOR_RENAME(int16_to_int32)(in_data,out_data,len,final);
-	break;
-      }
-      break;
-    case 3:
-      switch(outbps){
-      case 1:
-	for(i=0;i<len;i++)
-	  ((uint8_t*)out_data)[i]=(((uint8_t*)in_data)[3*i]);
-	break;
-      case 2:
-	for(i=0;i<len;i++)
-	{
-	  ((uint8_t*)out_data)[2*i]=(uint8_t)(((uint8_t*)in_data)[3*i+1]);
-	  ((uint8_t*)out_data)[2*i+1]=(uint8_t)(((uint8_t*)in_data)[3*i+2]);
+    switch(bps){
+	case 1:
+	switch(outbps){
+	    case 2:
+		PVECTOR_RENAME(int8_to_int16)(reinterpret_cast<int8_t*>(in->audio),reinterpret_cast<int16_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		break;
+	    case 3:
+		for(i=0;i<in->len;i++) {
+		    ((uint8_t*)out->audio)[3*i]=
+		    ((uint8_t*)out->audio)[3*i+1]=0;
+		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in->audio)[i]);
+		}
+		break;
+	    case 4:
+		for(i=0;i<in->len;i++) ((uint32_t*)out->audio)[i]=((uint32_t)((uint8_t*)in->audio)[i])<<24;
+		break;
 	}
 	break;
-      case 4:
-	for(i=0;i<len;i++)
-	{
-	  ((uint8_t*)out_data)[4*i+1]=((uint8_t*)in_data)[3*i];
-	  ((uint8_t*)out_data)[4*i+2]=((uint8_t*)in_data)[3*i+1];
-	  ((uint8_t*)out_data)[4*i+3]=((uint8_t*)in_data)[3*i+2];
-	  ((uint8_t*)out_data)[4*i]=0;
+	case 2:
+	switch(outbps){
+	    case 1:
+		PVECTOR_RENAME(int16_to_int8)(reinterpret_cast<int16_t*>(in->audio),reinterpret_cast<int8_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		break;
+	    case 3:
+		for(i=0;i<in->len;i++) {
+		    ((uint8_t*)out->audio)[3*i]=0;
+		    ((uint8_t*)out->audio)[3*i+1]=(((uint8_t*)in->audio)[2*i]);
+		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in->audio)[2*i+1]);
+		}
+		break;
+	    case 4:
+		PVECTOR_RENAME(int16_to_int32)(reinterpret_cast<int16_t*>(in->audio),reinterpret_cast<int32_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		break;
 	}
 	break;
-      }
-      break;
-    case 4:
-      switch(outbps){
-      case 1:
-	i=0;
-	for(;i<len;i++)
-	  ((uint8_t*)out_data)[i]=(uint8_t)((((uint32_t*)in_data)[i])>>24);
+	case 3:
+	switch(outbps){
+	    case 1:
+		for(i=0;i<in->len;i++) ((uint8_t*)out->audio)[i]=(((uint8_t*)in->audio)[3*i]);
+		break;
+	    case 2:
+		for(i=0;i<in->len;i++) {
+		    ((uint8_t*)out->audio)[2*i]=(uint8_t)(((uint8_t*)in->audio)[3*i+1]);
+		    ((uint8_t*)out->audio)[2*i+1]=(uint8_t)(((uint8_t*)in->audio)[3*i+2]);
+		}
+		break;
+	    case 4:
+		for(i=0;i<in->len;i++) {
+		    ((uint8_t*)out->audio)[4*i+1]=((uint8_t*)in->audio)[3*i];
+		    ((uint8_t*)out->audio)[4*i+2]=((uint8_t*)in->audio)[3*i+1];
+		    ((uint8_t*)out->audio)[4*i+3]=((uint8_t*)in->audio)[3*i+2];
+		    ((uint8_t*)out->audio)[4*i]=0;
+		}
+		break;
+	}
 	break;
-      case 2:
-	PVECTOR_RENAME(int32_to_int16)(in_data,out_data,len,final);
+	case 4:
+	switch(outbps){
+	    case 1:
+		for(i=0;i<in->len;i++) ((uint8_t*)out->audio)[i]=(uint8_t)((((uint32_t*)in->audio)[i])>>24);
+		break;
+	    case 2:
+		PVECTOR_RENAME(int32_to_int16)(reinterpret_cast<int32_t*>(in->audio),reinterpret_cast<int16_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		break;
+	    case 3:
+		for(i=0;i<in->len;i++) {
+		    ((uint8_t*)out->audio)[3*i]=(((uint8_t*)in->audio)[4*i+1]);
+		    ((uint8_t*)out->audio)[3*i+1]=(((uint8_t*)in->audio)[4*i+2]);
+		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in->audio)[4*i+3]);
+		}
+	    break;
+	}
 	break;
-      case 3:
-	for(i=0;i<len;i++)
-	  ((uint8_t*)out_data)[3*i]=(((uint8_t*)in_data)[4*i+1]);
-	  ((uint8_t*)out_data)[3*i+1]=(((uint8_t*)in_data)[4*i+2]);
-	  ((uint8_t*)out_data)[3*i+2]=(((uint8_t*)in_data)[4*i+3]);
-	break;
-      }
-      break;
     }
 }
 
@@ -311,32 +323,37 @@ static int32_t __FASTCALL__ PVECTOR_RENAME(FIR_i16)(const int16_t *x,const int16
 #endif
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t* out, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t* out, unsigned inlen, int final)
 {
-    register unsigned i;
     float ftmp;
+    unsigned i,insamples = inlen/sizeof(float);
 #ifdef HAVE_F32_PVECTOR
-    unsigned len_mm;
-  __f32vec int_max,plus1,minus1;
+    __f32vec int_max,plus1,minus1;
+    unsigned len_mm,mm_insamples,vec_insamples;
+    len_mm=inlen&(~(_f32vec_size()-1));
+    mm_insamples=len_mm/sizeof(float);
+    vec_insamples=_f32vec_size()/sizeof(float);
+#else
+    UNUSED(final);
 #endif
     i=0;
 #ifdef HAVE_F32_PVECTOR
-    int_max = _f32vec_broadcast(INT32_MAX-1);
+    int_max = _f32vec_broadcast(std::numeric_limits<int32_t>::max()-1);
     /* SSE float2int engine doesn't have SATURATION functionality.
        So CLAMP volume on 0.0002% here. */
     plus1 = _f32vec_broadcast(+0.999998);
     minus1= _f32vec_broadcast(-0.999998);
-    if(!_f32vec_aligned(out))
-    for(;i<len;i++) {
+    if(!_ivec_aligned(out))
+    for(;i<insamples;i++) {
       ftmp=((const float*)in)[i];
       SATURATE(ftmp,-0.999998,+0.999998);
-      ((int32_t*)out)[i]=(int32_t)lrintf((INT_MAX-1)*ftmp);
-      if(_f32vec_aligned(out)) break;
+      ((int32_t*)out)[i]=(int32_t)lrintf((std::numeric_limits<int32_t>::max()-1)*ftmp);
+      if(_ivec_aligned(out)) break;
     }
     _ivec_empty();
-    len_mm=len&(~(_f32vec_size()-1));
+    len_mm=inlen&(~(_f32vec_size()-1));
     if((len_mm-i)>=_f32vec_size()/sizeof(float))
-    for(;i<len_mm;i+=_f32vec_size()/sizeof(float)) {
+    for(;i<mm_insamples;i+=vec_insamples) {
 	__f32vec tmp;
 	if(_f32vec_aligned(in))
 	    tmp = _f32vec_loada(&((const float*)in)[i]);
@@ -352,30 +369,37 @@ static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t
     if(final) _ivec_sfence();
     _ivec_empty();
 #endif
-    for(;i<len;i++) {
+    for(;i<insamples;i++) {
       ftmp=((const float*)in)[i];
       SATURATE(ftmp,-0.999998,+0.999998);
-      ((int32_t*)out)[i]=(int32_t)lrintf((INT32_MAX-1)*ftmp);
+      ((int32_t*)out)[i]=(int32_t)lrintf((std::numeric_limits<int32_t>::max()-1)*ftmp);
     }
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(const int32_t* in, float* out, unsigned len, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(const int32_t* in, float* out, unsigned inlen, int final)
 {
-#ifdef HAVE_F32_PVECTOR
-    __f32vec rev_imax = _f32vec_broadcast(1.0/INT_MAX);
+    unsigned i,insamples = inlen/sizeof(int32_t);
+#ifdef HAVE_INT_PVECTOR
+    unsigned len_mm,mm_insamples,vec_insamples;
+    len_mm=inlen&(~(_ivec_size()-1));
+    mm_insamples=len_mm/sizeof(int32_t);
+    vec_insamples=_ivec_size()/sizeof(int32_t);
+    __f32vec rev_imax = _f32vec_broadcast(1.0/std::numeric_limits<int32_t>::max());
+#else
+    UNUSED(final);
 #endif
-  register unsigned i=0;
+    i=0;
 #ifdef HAVE_F32_PVECTOR
     if(!_f32vec_aligned(out))
-    for(;i<len;i++) {
-      ((float*)out)[i]=(1.0/INT_MAX)*((float)((const int32_t*)in)[i]);
+    for(;i<insamples;i++) {
+      ((float*)out)[i]=(1.0/std::numeric_limits<int32_t>::max())*((float)((const int32_t*)in)[i]);
       if(_f32vec_aligned(out)) break;
     }
     _ivec_empty();
-    if((len-i)>=_f32vec_size())
-    for(;i<len;i+=_f32vec_size()/sizeof(float)) {
+    if((len_mm-i)>=_f32vec_size())
+    for(;i<mm_insamples;i+=vec_insamples) {
 	__f32vec tmp;
-	if(_f32vec_aligned(in))
+	if(_ivec_aligned(in))
 	    tmp = _f32vec_from_s32a(&((const int32_t*)in)[i]);
 	else
 	    tmp = _f32vec_from_s32u(&((const int32_t*)in)[i]);
@@ -388,90 +412,91 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(const int32_t* in, float
     if(final) _ivec_sfence();
     _ivec_empty();
 #endif
-    for(;i<len;i++)
-      ((float*)out)[i]=(1.0/INT_MAX)*((float)((const int32_t*)in)[i]);
+    for(;i<insamples;i++)
+      ((float*)out)[i]=(1.0/std::numeric_limits<int32_t>::max())*((float)((const int32_t*)in)[i]);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(float2int)(const any_t* in, any_t* out, int len, int bps,int final)
+static void __FASTCALL__ PVECTOR_RENAME(float2int)(const mp_aframe_t* in, mp_aframe_t* out)
 {
-  float ftmp;
-  register int i;
-  switch(bps){
-  case(1):
-    for(i=0;i<len;i++) {
-      ftmp=((float*)in)[i];
-      SATURATE(ftmp,-1.0,+1.0);
-      ((int8_t*)out)[i]=(int8_t)lrintf(SCHAR_MAX*ftmp);
-    }
-    break;
-  case(2):
+    float ftmp;
+    unsigned i,bps=out->format&MPAF_BPS_MASK;
+    switch(bps){
+	case 1:
+	for(i=0;i<in->len;i++) {
+	    ftmp=((float*)in->audio)[i];
+	    SATURATE(ftmp,-1.0,+1.0);
+	    ((int8_t*)out->audio)[i]=(int8_t)lrintf(std::numeric_limits<int16_t>::max()*ftmp);
+	}
+	break;
+	case 2:
 #ifdef HAVE_INT_PVECTOR
-    {
-	int32_t __attribute__((aligned(64))) itmp[len];
-	/* unfortunatelly there is now universal way for convertion on perfectly different chips */
-	PVECTOR_RENAME(float_to_int32)(in, itmp, len, 0);
-	PVECTOR_RENAME(int32_to_int16)(itmp, out, len, final);
-    }
+	{
+	    int32_t __attribute__((aligned(64))) itmp[in->len];
+	    /* unfortunatelly there is now universal way for convertion on perfectly different chips */
+	    PVECTOR_RENAME(float_to_int32)(reinterpret_cast<float*>(in->audio), itmp, in->len, 0);
+	    PVECTOR_RENAME(int32_to_int16)(itmp, reinterpret_cast<int16_t*>(out->audio), in->len, out->flags&MP_AFLG_FINALIZED);
+	}
 #else
-    for(i=0;i<len;i++) {
-      ftmp=((float*)in)[i];
-      SATURATE(ftmp,-1.0,+1.0);
-      ((int16_t*)out)[i]=(int16_t)lrintf(SHRT_MAX*ftmp);
-    }
+	    for(i=0;i<in->len;i++) {
+		ftmp=((float*)in->audio)[i];
+		SATURATE(ftmp,-1.0,+1.0);
+		((int16_t*)out->audio)[i]=(int16_t)lrintf(std::numeric_limits<int16_t>::max()*ftmp);
+	    }
 #endif
-    break;
-  case(3):
-    for(i=0;i<len;i++) {
-      ftmp=((float*)in)[i];
-      SATURATE(ftmp,-1.0,+1.0);
-      store24bit(out, i, (int32_t)lrintf((INT_MAX-1)*ftmp));
+	    break;
+	case 3:
+	    for(i=0;i<in->len;i++) {
+		ftmp=((float*)in->audio)[i];
+		SATURATE(ftmp,-1.0,+1.0);
+		store24bit(out->audio, i, (int32_t)lrintf((std::numeric_limits<int32_t>::max()-1)*ftmp));
+	    }
+	    break;
+	case 4:
+	    PVECTOR_RENAME(float_to_int32)(reinterpret_cast<float*>(in->audio), reinterpret_cast<int32_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+	    break;
     }
-    break;
-  case(4):
-    PVECTOR_RENAME(float_to_int32)(in, out, len, final);
-    break;
-  }
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int2float)(const any_t* in, any_t* out, int len, int bps, int final)
+static void __FASTCALL__ PVECTOR_RENAME(int2float)(const mp_aframe_t* in, mp_aframe_t* out)
 {
-  register int i;
-  switch(bps){
-  case(1):
-    for(i=0;i<len;i++)
-      ((float*)out)[i]=(1.0/SCHAR_MAX)*((float)((int8_t*)in)[i]);
-    break;
-  case(2):
+    unsigned i,bps=in->format&MPAF_BPS_MASK;
+    switch(bps){
+    case 1:
+	for(i=0;i<in->len;i++)
+	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int16_t>::max())*((float)((int8_t*)in->audio)[i]);
+	break;
+    case 2:
 #ifdef HAVE_INT_PVECTOR
-    {
-	int32_t __attribute__((aligned(64))) itmp[len];
-	PVECTOR_RENAME(int16_to_int32)(in, itmp, len, 0);
-	PVECTOR_RENAME(int32_to_float)(itmp, out, len, final);
-    }
+	{
+	int32_t __attribute__((aligned(64))) itmp[in->len];
+	PVECTOR_RENAME(int16_to_int32)(reinterpret_cast<int16_t*>(in->audio), itmp, in->len, 0);
+	PVECTOR_RENAME(int32_to_float)(itmp, reinterpret_cast<float*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+	}
 #else
-    for(i=0;i<len;i++)
-      ((float*)out)[i]=(1.0/SHRT_MAX)*((float)((int16_t*)in)[i]);
+	for(i=0;i<in->len;i++)
+	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int16_t>::max())*((float)((int16_t*)in->audio)[i]);
 #endif
-    break;
-  case(3):
-    for(i=0;i<len;i++)
-      ((float*)out)[i]=(1.0/INT_MAX)*((float)((int32_t)load24bit(in, i)));
-    break;
-  case(4):
-    PVECTOR_RENAME(int32_to_float)(in,out,len,final);
-    break;
-  }
+	break;
+    case 3:
+	for(i=0;i<in->len;i++)
+	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int32_t>::max())*((float)((int32_t)load24bit(in->audio, i)));
+	break;
+    case 4:
+	PVECTOR_RENAME(int32_to_float)(reinterpret_cast<int32_t*>(in->audio),reinterpret_cast<float*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+	break;
+    }
 }
 
-static float __FASTCALL__ PVECTOR_RENAME(FIR_f32)(const float *x,const float *w)
-{
 #if defined ( OPTIMIZE_SSE )
-/* GCC supports nested functions */
-inline __m128 _my_hadd_ps( __m128 a, __m128 b) {
+static inline __m128 PVECTOR_RENAME(_my_hadd_ps)( __m128 a, __m128 b) {
     __m128 tempA = _mm_shuffle_ps(a,b, _MM_SHUFFLE(2,0,2,0));
     __m128 tempB = _mm_shuffle_ps(a,b, _MM_SHUFFLE(3,1,3,1));
     return _mm_add_ps( tempB, tempA);
 }
+#endif
+static float __FASTCALL__ PVECTOR_RENAME(FIR_f32)(const float *x,const float *w)
+{
+#if defined ( OPTIMIZE_SSE )
     __m128 xmm[4];
     float rval;
     xmm[0] = _mm_loadu_ps(&w[0]);
@@ -491,8 +516,8 @@ inline __m128 _my_hadd_ps( __m128 a, __m128 b) {
     xmm[0] = _mm_hadd_ps(xmm[0],xmm[0]);
     xmm[0] = _mm_hadd_ps(xmm[0],xmm[0]);
 #else
-    xmm[0] = _my_hadd_ps(xmm[0],xmm[0]);
-    xmm[0] = _my_hadd_ps(xmm[0],xmm[0]);
+    xmm[0] = PVECTOR_RENAME(_my_hadd_ps)(xmm[0],xmm[0]);
+    xmm[0] = PVECTOR_RENAME(_my_hadd_ps)(xmm[0],xmm[0]);
 #endif
     _mm_store_ss(&rval,xmm[0]);
     return rval;

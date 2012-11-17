@@ -110,14 +110,14 @@ typedef struct af_ao2_s{
 }af_ao2_t;
 
 // Initialization and runtime control
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const af_conf_t* arg)
 {
     af_ao2_t* s = af->setup;
     /* Sanity check */
     if(!arg) return MPXP_Error;
-    s->rate = af->data->rate = find_best_rate(arg->rate);
-    s->nch = af->data->nch  = find_best_ch(arg->nch);
-    s->format = af->data->format = mpaf_format_decode(find_best_fmt(mpaf_format_encode(arg->format)));
+    s->rate = af->conf.rate = find_best_rate(arg->rate);
+    s->nch = af->conf.nch  = find_best_ch(arg->nch);
+    s->format = af->conf.format = mpaf_format_decode(find_best_fmt(mpaf_format_encode(arg->format)));
     return af_test_output(af,arg);
 }
 
@@ -141,12 +141,11 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-    if(af->data) mp_free(af->data);
     if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* data)
 {
   // Do something necessary to get rid of annoying warning during compile
     if(!af) MSG_ERR("EEEK: Argument af == NULL in af_dummy.c play().");
@@ -161,9 +160,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.d=1;
     af->mul.n=1;
-    af->data=mp_malloc(sizeof(mp_aframe_t));
     af->setup=mp_calloc(1,sizeof(af_ao2_t));
-    if((af->data == NULL) || (af->setup == NULL)) return MPXP_Error;
+    if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }

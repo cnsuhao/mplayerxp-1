@@ -69,50 +69,49 @@ typedef struct af_resample_s {
     unsigned ifmt;
 } af_resample_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_resample_t* s   = (af_resample_t*)af->setup;
     enum AVSampleFormat avfmt;
     uint64_t		nch;
-    mp_aframe_t*	n   = arg; // New configuration
     int			rv  = MPXP_Ok;
 
     if(s->ctx) { swr_free(&s->ctx); s->ctx=NULL; }
     // Make sure this filter isn't redundant
-    if((af->data->rate == n->rate) || (af->data->rate == 0)) {
+    if((af->conf.rate == arg->rate) || (af->conf.rate == 0)) {
 	MSG_V("[af_resample] detach due: %i -> %i Hz\n",
-		af->data->rate,n->rate);
+		af->conf.rate,arg->rate);
 	return MPXP_Detach;
     }
-    avfmt=get_sample_format(n->format);
-    nch=get_ch_layout(n->nch);
+    avfmt=get_sample_format(arg->format);
+    nch=get_ch_layout(arg->nch);
     if(avfmt==AV_SAMPLE_FMT_NONE) rv=MPXP_Error;
     if(nch==0) rv=MPXP_Error;
     if(rv!=MPXP_Ok) {
 	char buff[256];
 	MSG_V("[af_resample] doesn't work with '%s' x %i\n"
-	,mpaf_fmt2str(n->format,buff,sizeof(buff))
-	,n->nch);
+	,mpaf_fmt2str(arg->format,buff,sizeof(buff))
+	,arg->nch);
     }
     s->ctx = swr_alloc_set_opts(NULL,
-			      nch, avfmt,af->data->rate,
-			      nch, avfmt,n->rate,
+			      nch, avfmt,af->conf.rate,
+			      nch, avfmt,arg->rate,
 			      0, NULL);
     if(swr_init(s->ctx)<0) {
 	MSG_ERR("[af_resample] Cannot init swr_init\n");
 	rv=MPXP_Error;
     }
 
-    af->data->format = n->format;
-    af->data->nch = n->nch;
+    af->conf.format = arg->format;
+    af->conf.nch = arg->nch;
 
-    s->irate=n->rate;
-    s->inch=n->nch;
-    s->ifmt=n->format;
+    s->irate=arg->rate;
+    s->inch=arg->nch;
+    s->ifmt=arg->format;
     // Set multiplier and delay
     af->delay = (double)swr_get_delay(s->ctx,1000);
-    af->mul.n = af->data->rate;
-    af->mul.d = n->rate;
+    af->mul.n = af->conf.rate;
+    af->mul.d = arg->rate;
     return rv;
 }
 // Initialization and runtime control
@@ -121,7 +120,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     af_resample_t* s   = (af_resample_t*)af->setup;
     switch(cmd){
 	case AF_CONTROL_SHOWCONF:
-	    MSG_INFO("[af_resample] New filter designed (%i -> %i Hz)\n", s->irate,af->data->rate);
+	    MSG_INFO("[af_resample] New filter designed (%i -> %i Hz)\n", s->irate,af->conf.rate);
 	    return MPXP_Ok;
 	case AF_CONTROL_COMMAND_LINE:{
 	    int rate=0;
@@ -130,7 +129,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	}
 	case AF_CONTROL_POST_CREATE: return MPXP_Ok;
 	case AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET: {
-	    af->data->rate = ((int*)arg)[0];
+	    af->conf.rate = ((int*)arg)[0];
 	    return MPXP_Ok;
 	}
 	default: break;
@@ -142,34 +141,32 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
     af_resample_t* s = (af_resample_t*)af->setup;
-    if(af->data) {
-	if(af->data->audio) mp_free(af->data->audio);
-	mp_free(af->data);
-    }
     if(s->ctx) swr_free(&s->ctx);
     s->ctx=NULL;
+    mp_free(s);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
     int rc;
-    mp_aframe_t*	c = data; // Current working data
+    mp_aframe_t* out = new_mp_aframe_genome(in);
+    out->len=af_lencalc(af->mul,in);
+    mp_alloc_aframe(out);
+
     af_resample_t*	s = (af_resample_t*)af->setup;
 
-    if (MPXP_Ok != RESIZE_LOCAL_BUFFER(af, data)) return NULL;
-    mp_aframe_t*	l = af->data; // Local data
-    uint8_t*		ain[SWR_CH_MAX];
-    const uint8_t*	aout[SWR_CH_MAX];
+    const uint8_t*	ain[SWR_CH_MAX];
+    uint8_t*		aout[SWR_CH_MAX];
 
-    aout[0]=l->audio;
-    ain[0]=c->audio;
+    aout[0]=out->audio;
+    ain[0]=in->audio;
 
-    rc=swr_convert(s->ctx,aout,l->len/(l->nch*(l->format&MPAF_BPS_MASK)),ain,c->len/(c->nch*(c->format&MPAF_BPS_MASK)));
+    rc=swr_convert(s->ctx,aout,out->len/(out->nch*(out->format&MPAF_BPS_MASK)),ain,in->len/(in->nch*(in->format&MPAF_BPS_MASK)));
     if(rc<0)	MSG_ERR("%i=swr_convert\n",rc);
-    else	l->len=rc*l->nch*(l->format&MPAF_BPS_MASK);
+    else	out->len=rc*out->nch*(out->format&MPAF_BPS_MASK);
 
-    return l;
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -180,9 +177,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.n=1;
     af->mul.d=1;
-    af->data=mp_calloc(1,sizeof(mp_aframe_t));
     af->setup=mp_calloc(1,sizeof(af_resample_t));
-    if(af->data == NULL || af->setup == NULL) return MPXP_Error;
+    if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }

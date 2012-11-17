@@ -23,11 +23,11 @@ typedef struct af_channels_s{
 }af_channels_t;
 
 // Local function for copying data
-static void __FASTCALL__ copy(any_t* in, any_t* out, int ins, int inos,int outs, int outos, int len, int bps)
+static void __FASTCALL__ af_copy(const any_t* in, any_t* out, int ins, int inos,int outs, int outos, int len, int bps)
 {
   switch(bps){
   case 1:{
-    int8_t* tin  = (int8_t*)in;
+    const int8_t* tin  = (const int8_t*)in;
     int8_t* tout = (int8_t*)out;
     tin  += inos;
     tout += outos;
@@ -40,7 +40,7 @@ static void __FASTCALL__ copy(any_t* in, any_t* out, int ins, int inos,int outs,
     break;
   }
   case 2:{
-    int16_t* tin  = (int16_t*)in;
+    const int16_t* tin  = (const int16_t*)in;
     int16_t* tout = (int16_t*)out;
     tin  += inos;
     tout += outos;
@@ -53,7 +53,7 @@ static void __FASTCALL__ copy(any_t* in, any_t* out, int ins, int inos,int outs,
     break;
   }
   case 3:{
-    int8_t* tin  = (int8_t*)in;
+    const int8_t* tin  = (const int8_t*)in;
     int8_t* tout = (int8_t*)out;
     tin  += 3 * inos;
     tout += 3 * outos;
@@ -68,7 +68,7 @@ static void __FASTCALL__ copy(any_t* in, any_t* out, int ins, int inos,int outs,
     break;
   }
   case 4:{
-    int32_t* tin  = (int32_t*)in;
+    const int32_t* tin  = (const int32_t*)in;
     int32_t* tout = (int32_t*)out;
     tin  += inos;
     tout += outos;
@@ -81,7 +81,7 @@ static void __FASTCALL__ copy(any_t* in, any_t* out, int ins, int inos,int outs,
     break;
   }
   case 8:{
-    int64_t* tin  = (int64_t*)in;
+    const int64_t* tin  = (const int64_t*)in;
     int64_t* tout = (int64_t*)out;
     tin  += inos;
     tout += outos;
@@ -118,38 +118,38 @@ static int __FASTCALL__ check_routes(af_channels_t* s, int nin, int nout)
   return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_channels_t* s = af->setup;
     // Set default channel assignment
     if(!s->router){
       int i;
       // Make sure this filter isn't redundant
-      if(af->data->nch == ((mp_aframe_t*)arg)->nch)
+      if(af->conf.nch == arg->nch)
 	return MPXP_Detach;
 
       // If mono: fake stereo
-      if(((mp_aframe_t*)arg)->nch == 1){
-	s->nr = min(af->data->nch,2);
+      if(arg->nch == 1){
+	s->nr = min(af->conf.nch,2);
 	for(i=0;i<s->nr;i++){
 	  s->route[i][FR] = 0;
 	  s->route[i][TO] = i;
 	}
       }
       else{
-	s->nr = min(af->data->nch, ((mp_aframe_t*)arg)->nch);
+	s->nr = min(af->conf.nch, arg->nch);
 	for(i=0;i<s->nr;i++){
 	  s->route[i][FR] = i;
 	  s->route[i][TO] = i;
 	}
       }
     }
-    s->ich=((mp_aframe_t*)arg)->nch;
-    af->data->rate	= ((mp_aframe_t*)arg)->rate;
-    af->data->format	= ((mp_aframe_t*)arg)->format;
-    af->mul.n		= af->data->nch;
-    af->mul.d		= ((mp_aframe_t*)arg)->nch;
-    return check_routes(s,((mp_aframe_t*)arg)->nch,af->data->nch);
+    s->ich=arg->nch;
+    af->conf.rate	= arg->rate;
+    af->conf.format	= arg->format;
+    af->mul.n		= af->conf.nch;
+    af->mul.d		= arg->nch;
+    return check_routes(s,arg->nch,af->conf.nch);
 }
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
@@ -157,7 +157,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   af_channels_t* s = af->setup;
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_channels] Changing channels %d -> %d\n",s->ich,af->data->nch);
+    MSG_INFO("[af_channels] Changing channels %d -> %d\n",s->ich,af->conf.nch);
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     int nch = 0;
@@ -199,13 +199,13 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
       return MPXP_Error;
     }
 
-    af->data->nch=((int*)arg)[0];
+    af->conf.nch=((int*)arg)[0];
     if(!s->router)
       MSG_V("[channels] Changing number of channels"
-	     " to %i\n",af->data->nch);
+	     " to %i\n",af->conf.nch);
     return MPXP_Ok;
   case AF_CONTROL_CHANNELS | AF_CONTROL_GET:
-    *(int*)arg = af->data->nch;
+    *(int*)arg = af->conf.nch;
     return MPXP_Ok;
   case AF_CONTROL_CHANNELS_ROUTING | AF_CONTROL_SET:{
     int ch = ((af_control_ext_t*)arg)->ch;
@@ -240,37 +240,33 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->setup)
-    mp_free(af->setup);
-  if(af->data)
-    mp_free(af->data);
+  if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-  mp_aframe_t*   	 c = data;			// Current working data
-  af_channels_t* s = af->setup;
-  int 		 i;
+    af_channels_t*s = af->setup;
+    int		i;
 
-  if(MPXP_Ok != RESIZE_LOCAL_BUFFER(af,data))
-    return NULL;
-  mp_aframe_t*   	 l = af->data;	 		// Local data
+    mp_aframe_t*out;
+    out=new_mp_aframe_genome(in);
+    out->len=af_lencalc(af->mul,in);
+    mp_alloc_aframe(out);
 
-  // Reset unused channels
-  memset(l->audio,0,(c->len*af->mul.n)/af->mul.d);
+    // Reset unused channels
+    memset(out->audio,0,(in->len*af->mul.n)/af->mul.d);
 
-  if(MPXP_Ok == check_routes(s,c->nch,l->nch))
-    for(i=0;i<s->nr;i++)
-      copy(c->audio,l->audio,c->nch,s->route[i][FR],
-	   l->nch,s->route[i][TO],c->len,c->format&MPAF_BPS_MASK);
+    if(MPXP_Ok == check_routes(s,in->nch,out->nch))
+	for(i=0;i<s->nr;i++)
+	    af_copy(in->audio,out->audio,in->nch,s->route[i][FR],
+		out->nch,s->route[i][TO],in->len,in->format&MPAF_BPS_MASK);
 
-  // Set output data
-  c->audio = l->audio;
-  c->len   = (c->len*af->mul.n)/af->mul.d;
-  c->nch   = l->nch;
+    // Set output data
+    out->len = (in->len*af->mul.n)/af->mul.d;
+    out->nch = in->nch;
 
-  return c;
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -281,10 +277,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_channels_t));
-  if((af->data == NULL) || (af->setup == NULL))
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

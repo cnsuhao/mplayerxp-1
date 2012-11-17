@@ -88,80 +88,77 @@ static void __FASTCALL__ init_echo3d(af_crystality_t *s,unsigned rate)
  * quite nice echo
  */
 
-static void __FASTCALL__ echo3d(af_crystality_t *s,float *data, unsigned datasize)
+static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *s,const mp_aframe_t* in)
 {
-  unsigned x,i;
-  float _left, _right, dif, leftc, rightc, left[4], right[4];
-  float *dataptr;
-  float lt, rt;
-  unsigned weight[2][3] = { { 9, 8, 8 }, { 11, 9, 10 }};
+    unsigned x,i;
+    float _left, _right, dif, leftc, rightc, left[4], right[4];
+    float *inptr,*outptr;
+    float lt, rt;
+    unsigned weight[2][3] = { { 9, 8, 8 }, { 11, 9, 10 }};
+    mp_aframe_t* out = new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
 
-  s->_bufPos = s->buf_size - 1;
-  s->bufPos[0] = 1 + s->buf_size - DELAY1;
-  s->bufPos[1] = 1 + s->buf_size - DELAY1 - DELAY2;
-  s->bufPos[2] = 1 + s->buf_size - DELAY1 - DELAY2 - DELAY3;
-  dataptr = data;
+    s->_bufPos = s->buf_size - 1;
+    s->bufPos[0] = 1 + s->buf_size - DELAY1;
+    s->bufPos[1] = 1 + s->buf_size - DELAY1 - DELAY2;
+    s->bufPos[2] = 1 + s->buf_size - DELAY1 - DELAY2 - DELAY3;
+    inptr = in->audio;
+    outptr = in->audio;
 
-  for (x = 0; x < datasize; x += 8) {
+    for (x = 0; x < in->len; x += 8) {
+	// ************ load sample **********
+	left[0] = inptr[0];
+	right[0] = inptr[1];
 
-    // ************ load sample **********
-    left[0] = dataptr[0];
-    right[0] = dataptr[1];
-
-    leftc = rightc = 0;
-    // ************ calc echos **********
-    for(i=0;i<(unsigned)s->echos;i++)
-    {
-	dif = (left[i] - right[i]);
-	// ************ slightly expand stereo for direct input **********
-	left[i] += dif;
-	right[i] -= dif;
-	left[i] *= 0.5;
-	right[i] *= 0.5;
-	// ************ compute echo  **********
-	left[i+1] = s->buf[s->bufPos[i]++];
-	if (s->bufPos[i] == s->buf_size) s->bufPos[i] = 0;
-	right[i+1] = s->buf[s->bufPos[i]++];
-	if (s->bufPos[i] == s->buf_size) s->bufPos[i] = 0;
-	leftc += left[i]/weight[0][i];
-	rightc += right[i]/weight[1][i];
+	leftc = rightc = 0;
+	// ************ calc echos **********
+	for(i=0;i<(unsigned)s->echos;i++) {
+	    dif = (left[i] - right[i]);
+	    // ************ slightly expand stereo for direct input **********
+	    left[i] += dif;
+	    right[i] -= dif;
+	    left[i] *= 0.5;
+	    right[i] *= 0.5;
+	    // ************ compute echo  **********
+	    left[i+1] = s->buf[s->bufPos[i]++];
+	    if (s->bufPos[i] == s->buf_size) s->bufPos[i] = 0;
+	    right[i+1] = s->buf[s->bufPos[i]++];
+	    if (s->bufPos[i] == s->buf_size) s->bufPos[i] = 0;
+	    leftc += left[i]/weight[0][i];
+	    rightc += right[i]/weight[1][i];
+	}
+	// ************ mix reverb with (near to) direct input **********
+	_left = s->left0p + leftc * s->echo_sfactor / 16;
+	_right = s->right0p + rightc * s->echo_sfactor / 16;
+	/* do not reverb high frequencies (filter) */
+	lt=(lowpass(&s->lp_reverb[0],leftc+left[0]/2)*s->feedback_sfactor)/256;
+	rt=(lowpass(&s->lp_reverb[1],rightc+right[0]/2)*s->feedback_sfactor)/256;;
+	s->buf[s->_bufPos++] = lt;
+	if (s->_bufPos == s->buf_size) s->_bufPos = 0;
+	s->buf[s->_bufPos++] = rt;
+	if (s->_bufPos == s->buf_size) s->_bufPos = 0;
+	s->left0p = left[0];
+	s->right0p = right[0];
+	// ************ store sample **********
+	outptr[0] = clamp(_left,INT_MIN,INT_MAX);
+	outptr[1] = clamp(_right,INT_MIN,INT_MAX);
+	inptr += 2;
+	outptr += 2;
     }
-
-    // ************ mix reverb with (near to) direct input **********
-    _left = s->left0p + leftc * s->echo_sfactor / 16;
-    _right = s->right0p + rightc * s->echo_sfactor / 16;
-
-    /* do not reverb high frequencies (filter) */
-    lt=(lowpass(&s->lp_reverb[0],leftc+left[0]/2)*s->feedback_sfactor)/256;
-    rt=(lowpass(&s->lp_reverb[1],rightc+right[0]/2)*s->feedback_sfactor)/256;;
-
-    s->buf[s->_bufPos++] = lt;
-    if (s->_bufPos == s->buf_size) s->_bufPos = 0;
-    s->buf[s->_bufPos++] = rt;
-    if (s->_bufPos == s->buf_size) s->_bufPos = 0;
-
-    s->left0p = left[0];
-    s->right0p = right[0];
-
-    // ************ store sample **********
-    dataptr[0] = clamp(_left,INT_MIN,INT_MAX);
-    dataptr[1] = clamp(_right,INT_MIN,INT_MAX);
-    dataptr += 2;
-
-   }
+    return out;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_crystality_t* s   = (af_crystality_t*)af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
     if(arg->nch!=2) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = MPAF_NE|MPAF_F|4;
-    init_echo3d(s,af->data->rate);
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = MPAF_NE|MPAF_F|4;
+    init_echo3d(s,af->conf.rate);
 
     return af_test_output(af,arg);
 }
@@ -187,20 +184,14 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(((af_crystality_t *)af->setup)->buf) mp_free(((af_crystality_t *)af->setup)->buf);
-  if(af->setup)
-    mp_free(af->setup);
+    if(((af_crystality_t *)af->setup)->buf) mp_free(((af_crystality_t *)af->setup)->buf);
+    if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-    mp_aframe_t* c = data; /* Current working data */
-
-    echo3d(af->setup,(float*)c->audio, c->len);
-    return c;
+    return echo3d(af->setup,in);
 }
 
 // Allocate memory and set function pointers
@@ -211,10 +202,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_crystality_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   set_defaults(af->setup);
   init_echo3d(af->setup,44100);
     check_pin("afilter",af->pin,AF_PIN);

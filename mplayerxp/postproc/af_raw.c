@@ -57,12 +57,12 @@ typedef struct af_raw_s
    cmd control command
    arg argument
 */
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_raw_t* s = af->setup;
     char *pt;
     // Accepts any streams
-    memcpy(af->data,arg,sizeof(mp_aframe_t));
+    memcpy(&af->conf,arg,sizeof(af_conf_t));
     if(!s->fd) { /* reenterability */
 	if(!(s->fd=fopen(s->filename,"wb")))
 	    MSG_ERR("Can't open %s\n",s->filename);
@@ -71,7 +71,7 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
 	if(pt) if(strcmp(pt+1,"wav")==0) s->wav_mode=1;
 	if(s->wav_mode && s->fd)
 	{
-	    uint16_t fmt=af->data->format>>16;
+	    uint16_t fmt=af->conf.format>>16;
 	    if(!fmt) fmt=0x01; /* pcm */
 	    s->wavhdr.riff=le2me_32(WAV_ID_RIFF);
 	    s->wavhdr.file_length = le2me_32(0x7ffff000) + sizeof(struct WaveHeader) - 8;
@@ -79,19 +79,20 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
 	    s->wavhdr.fmt=le2me_32(WAV_ID_FMT);
 	    s->wavhdr.fmt_length=le2me_32(16);
 	    s->wavhdr.fmt_tag = le2me_16(fmt);
-	    s->wavhdr.channels = le2me_16(af->data->nch);
-	    s->wavhdr.sample_rate = le2me_32(af->data->rate);
-	    s->wavhdr.bytes_per_second = le2me_32((af->data->format&MPAF_BPS_MASK)*af->data->rate*af->data->nch);
-	    s->wavhdr.block_align = le2me_16(af->data->nch*(af->data->format&MPAF_BPS_MASK));
-	    s->wavhdr.bits = le2me_16((af->data->format&MPAF_BPS_MASK)*8);
+	    s->wavhdr.channels = le2me_16(af->conf.nch);
+	    s->wavhdr.sample_rate = le2me_32(af->conf.rate);
+	    s->wavhdr.bytes_per_second = le2me_32((af->conf.format&MPAF_BPS_MASK)*af->conf.rate*af->conf.nch);
+	    s->wavhdr.block_align = le2me_16(af->conf.nch*(af->conf.format&MPAF_BPS_MASK));
+	    s->wavhdr.bits = le2me_16((af->conf.format&MPAF_BPS_MASK)*8);
 	    s->wavhdr.data=le2me_32(WAV_ID_DATA);
 	    s->wavhdr.data_length=le2me_32(0x7ffff000);
 	    fwrite(&s->wavhdr,sizeof(struct WaveHeader),1,s->fd);
 	    s->wavhdr.file_length=s->wavhdr.data_length=0;
 	}
     }
-    MSG_V("[af_raw] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n",af->data->rate,af->data->nch,af->data->format);
-    af->data->format=MPAF_SI|MPAF_NE|2; // fake! fixme !!!
+    MSG_V("[af_raw] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n"
+	,af->conf.rate,af->conf.nch,af->conf.format);
+    af->conf.format=MPAF_SI|MPAF_NE|2; // fake! fixme !!!
     return MPXP_Ok;
 }
 
@@ -116,14 +117,8 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 static void __FASTCALL__ uninit( struct af_instance_s* af )
 {
   af_raw_t* s = af->setup;
-  if (af->data){
-    mp_free(af->data);
-    af->data = NULL;
-  }
-
-  if(s){
-    if(s->fd)
-    {
+  if(s) {
+    if(s->fd) {
 	off_t pos = ftello(s->fd);
 	if(s->wav_mode){ /* Write wave header */
 	    fseeko(s->fd, 0, SEEK_SET);
@@ -146,13 +141,13 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
    af audio filter instance
    data audio data
 */
-static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af,const mp_aframe_t* ind)
 {
   af_raw_t* 	s   = af->setup;     // Setup for this instance
-  if(s->fd) fwrite(data->audio,data->len,1,s->fd);
-  s->wavhdr.data_length += data->len;
+  if(s->fd) fwrite(ind->audio,ind->len,1,s->fd);
+  s->wavhdr.data_length += ind->len;
   // We don't modify data, just export it
-  return data;
+  return ind;
 }
 
 /* Allocate memory and set function pointers
@@ -167,10 +162,8 @@ static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
   af->play    = play;
   af->mul.n   = 1;
   af->mul.d   = 1;
-  af->data    = mp_calloc(1, sizeof(mp_aframe_t));
   af->setup   = mp_calloc(1, sizeof(af_raw_t));
-  if((af->data == NULL) || (af->setup == NULL))
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
 
   ((af_raw_t *)af->setup)->filename = "1.wav";
     check_pin("afilter",af->pin,AF_PIN);

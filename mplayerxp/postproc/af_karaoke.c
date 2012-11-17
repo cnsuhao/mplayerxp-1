@@ -18,47 +18,51 @@
 // Data for specific instances of this filter
 
 // Initialization and runtime control
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
-    af->data->rate	= arg->rate;
-    af->data->nch	= arg->nch;
-    af->data->format	= MPAF_NE|MPAF_F|4;
+    af->conf.rate	= arg->rate;
+    af->conf.nch	= arg->nch;
+    af->conf.format	= MPAF_NE|MPAF_F|4;
     return af_test_output(af,arg);
 }
 static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 {
+    UNUSED(af);
+    UNUSED(cmd);
+    UNUSED(arg);
     return MPXP_Unknown;
 }
 
 // Deallocate memory
 static void uninit(struct af_instance_s* af)
 {
-	if(af->data)
-		mp_free(af->data);
+    UNUSED(af);
 }
 
 // Filter data through filter
-static mp_aframe_t* play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
-	mp_aframe_t*	c	= data;		 // Current working data
-	float*		a	= c->audio;	 // Audio data
-	int			len	= c->len/4;	 // Number of samples in current audio block
-	int			nch	= c->nch;	 // Number of channels
-	register int  i;
+    const mp_aframe_t*c	= ind;		 // Current working data
+    float*	in	= c->audio;	 // Audio data
+    unsigned	len	= c->len/4;	 // Number of samples in current audio block
+    unsigned	nch	= c->nch;	 // Number of channels
+    unsigned	i;
+    mp_aframe_t* outd = new_mp_aframe_genome(ind);
+    mp_alloc_aframe(outd);
+    float*	out	= outd->audio;	 // Audio data
+    UNUSED(af);
+    /*
+	FIXME1 add a low band pass filter to avoid suppressing
+	centered bass/drums
+	FIXME2 better calculated* attenuation factor
+    */
 
-	/*
-		FIXME1 add a low band pass filter to avoid suppressing
-		centered bass/drums
-		FIXME2 better calculated* attenuation factor
-	*/
+    for(i=0;i<len;i+=nch) {
+	out[i]  = (in[i] - in[i+1]) * 0.7;
+	out[i+1]=out[i];
+    }
 
-	for(i=0;i<len;i+=nch)
-	{
-		a[i] = (a[i] - a[i+1]) * 0.7;
-		a[i+1]=a[i];
-	}
-
-	return c;
+    return outd;
 }
 
 // Allocate memory and set function pointers
@@ -69,11 +73,6 @@ static MPXP_Rc af_open(af_instance_t* af){
     af->play	= play;
     af->mul.n	= 1;
     af->mul.d	= 1;
-    af->data	= mp_calloc(1,sizeof(mp_aframe_t));
-
-    if(af->data == NULL)
-	return MPXP_Error;
-
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }

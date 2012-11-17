@@ -82,7 +82,7 @@ typedef struct af_scaletempo_s
   short   speed_pitch;
 } af_scaletempo_t;
 
-static int fill_queue(struct af_instance_s* af, mp_aframe_t* data, int offset)
+static int fill_queue(struct af_instance_s* af,const mp_aframe_t* data, int offset)
 {
   af_scaletempo_t* s = af->setup;
   int bytes_in = data->len - offset;
@@ -167,82 +167,68 @@ static void output_overlap_float(af_scaletempo_t* s, int8_t* buf_out,
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
-{
-  af_scaletempo_t* s = af->setup;
-  int offset_in;
-  unsigned max_bytes_out;
-  int8_t* pout;
-
-  if (s->scale == 1.0) {
-    return data;
-  }
-
-  // RESIZE_LOCAL_BUFFER - can't use macro
-  max_bytes_out = ((int)(data->len / s->bytes_stride_scaled) + 1) * s->bytes_stride;
-  if (max_bytes_out > af->data->len) {
-    MSG_V("[libaf] Reallocating memory in module %s, "
-	  "old len = %i, new len = %i\n",af->info->name,af->data->len,max_bytes_out);
-    af->data->audio = mp_realloc(af->data->audio, max_bytes_out);
-    if (!af->data->audio) {
-      MSG_FATAL("[libaf] Could not allocate memory\n");
-      return NULL;
-    }
-    af->data->len = max_bytes_out;
-  }
-
-  offset_in = fill_queue(af, data, 0);
-  pout = af->data->audio;
-  while (s->bytes_queued >= s->bytes_queue) {
-    int ti;
-    float tf;
-    int bytes_off = 0;
-
-    // output stride
-    if (s->output_overlap) {
-      if (s->best_overlap_offset)
-	bytes_off = s->best_overlap_offset(s);
-      s->output_overlap(s, pout, bytes_off);
-    }
-    if(final)
-    stream_copy(pout + s->bytes_overlap,
-	   s->buf_queue + bytes_off + s->bytes_overlap,
-	   s->bytes_standing);
-    else
-    memcpy(pout + s->bytes_overlap,
-	   s->buf_queue + bytes_off + s->bytes_overlap,
-	   s->bytes_standing);
-    pout += s->bytes_stride;
-
-    // input stride
-    memcpy(s->buf_overlap,
-	   s->buf_queue + bytes_off + s->bytes_stride,
-	   s->bytes_overlap);
-    tf = s->frames_stride_scaled + s->frames_stride_error;
-    ti = (int)tf;
-    s->frames_stride_error = tf - ti;
-    s->bytes_to_slide = ti * s->bytes_per_frame;
-
-    offset_in += fill_queue(af, data, offset_in);
-  }
-
-  // This filter can have a negative delay when scale > 1:
-  // output corresponding to some length of input can be decided and written
-  // after receiving only a part of that input.
-  af->delay = s->bytes_queued - s->bytes_to_slide;
-
-  data->audio = af->data->audio;
-  data->len   = pout - (int8_t *)af->data->audio;
-  return data;
-}
-
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
     af_scaletempo_t* s = af->setup;
-    mp_aframe_t* data = arg;
-    float srate = data->rate / 1000;
-    int nch = data->nch;
-    int bps;
+    unsigned	offset_in;
+    int8_t*	pout;
+
+    if (s->scale == 1.0) return ind;
+
+    mp_aframe_t* out = new_mp_aframe_genome(ind);
+    out->len = ((int)(ind->len/s->bytes_stride_scaled)+1)*s->bytes_stride;
+    mp_alloc_aframe(out);
+
+    offset_in = fill_queue(af, ind, 0);
+    pout = out->audio;
+    while (s->bytes_queued >= s->bytes_queue) {
+	int ti;
+	float tf;
+	int bytes_off = 0;
+
+	// output stride
+	if (s->output_overlap) {
+	    if (s->best_overlap_offset)
+		bytes_off = s->best_overlap_offset(s);
+	    s->output_overlap(s, pout, bytes_off);
+	}
+	if(out->flags&MP_AFLG_FINALIZED)
+	stream_copy(pout + s->bytes_overlap,
+	   s->buf_queue + bytes_off + s->bytes_overlap,
+	   s->bytes_standing);
+	else
+	memcpy(pout + s->bytes_overlap,
+	   s->buf_queue + bytes_off + s->bytes_overlap,
+	   s->bytes_standing);
+	pout += s->bytes_stride;
+
+	// input stride
+	memcpy(s->buf_overlap,
+	   s->buf_queue + bytes_off + s->bytes_stride,
+	   s->bytes_overlap);
+	tf = s->frames_stride_scaled + s->frames_stride_error;
+	ti = (int)tf;
+	s->frames_stride_error = tf - ti;
+	s->bytes_to_slide = ti * s->bytes_per_frame;
+
+	offset_in += fill_queue(af, ind, offset_in);
+    }
+
+    // This filter can have a negative delay when scale > 1:
+    // output corresponding to some length of input can be decided and written
+    // after receiving only a part of that input.
+    af->delay = s->bytes_queued - s->bytes_to_slide;
+
+    out->len  = pout - (int8_t *)out->audio;
+    return out;
+}
+
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
+{
+    af_scaletempo_t* s = af->setup;
+    float srate = arg->rate / 1000;
+    int nch = arg->nch;
+    int bps = arg->format&MPAF_BPS_MASK;
     int frames_stride, frames_overlap;
     int i, j;
 
@@ -252,13 +238,13 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
     if (s->scale == 1.0) {
       if (s->speed_tempo && s->speed_pitch)
 	return MPXP_Detach;
-      memcpy(af->data, data, sizeof(mp_aframe_t));
-      return af_test_output(af, data);
+      memcpy(&af->conf, arg, sizeof(af_conf_t));
+      return af_test_output(af, arg);
     }
 
-    af->data->rate = data->rate;
-    af->data->nch  = data->nch;
-    af->data->format = MPAF_NE|MPAF_F|4;
+    af->conf.rate = arg->rate;
+    af->conf.nch  = arg->nch;
+    af->conf.format = MPAF_NE|MPAF_F|4;
 
     frames_stride           = srate * s->ms_stride;
     s->bytes_stride         = frames_stride * bps * nch;
@@ -338,7 +324,7 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
 	    s->frames_search,
 	    (int)(s->bytes_queue / nch / bps));
 
-    return af_test_output(af, (mp_aframe_t*)arg);
+    return af_test_output(af,arg);
 }
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
@@ -426,8 +412,6 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   af_scaletempo_t* s = af->setup;
-  mp_free(af->data->audio);
-  mp_free(af->data);
   mp_free(s->buf_queue);
   mp_free(s->buf_overlap);
   mp_free(s->buf_pre_corr);
@@ -446,10 +430,8 @@ static MPXP_Rc __FASTCALL__ af_open(struct af_instance_s* af){
   af->play      = play;
   af->mul.d     = 1;
   af->mul.n     = 1;
-  af->data      = mp_calloc(1,sizeof(mp_aframe_t));
   af->setup     = mp_calloc(1,sizeof(af_scaletempo_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
 
   s = af->setup;
   s->scale = s->speed = s->scale_nominal = 1.0;

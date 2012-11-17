@@ -49,24 +49,24 @@ typedef struct af_volume_s
   int fast;			// Use fix-point volume control
 }af_volume_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_volume_t* s   = (af_volume_t*)af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
 
     if(s->fast && !mpaf_testa(arg->format,MPAF_F|MPAF_NE))
-	af->data->format = MPAF_SI|MPAF_NE|2;
+	af->conf.format = MPAF_SI|MPAF_NE|2;
     else {
       // Cutoff set to 10Hz for forgetting factor
-      float x = 2.0*M_PI*15.0/(float)af->data->rate;
+      float x = 2.0*M_PI*15.0/(float)af->conf.rate;
       float t = 2.0-cos(x);
       s->time = 1.0 - (t - sqrt(t*t - 1));
       MSG_DBG2("[volume] Forgetting factor = %0.5f\n",s->time);
-      af->data->format = MPAF_F|MPAF_NE|4;
+      af->conf.format = MPAF_F|MPAF_NE|4;
     }
     return af_test_output(af,arg);
 }
@@ -130,76 +130,67 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
   if(af->setup)
     mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-  mp_aframe_t*    c   = data;			// Current working data
-  af_volume_t*  s   = (af_volume_t*)af->setup; 	// Setup for this instance
-  int           ch  = 0;			// Channel counter
-  register int	nch = c->nch;			// Number of channels
-  register int  i   = 0;
+    af_volume_t*s = (af_volume_t*)af->setup;	// Setup for this instance
+    unsigned ch = 0;				// Channel counter
+    unsigned nch = in->nch;			// Number of channels
+    unsigned i = 0;
 
-  // Basic operation volume control only (used on slow machines)
-  if(af->data->format == (MPAF_SI | MPAF_NE)){
-    int16_t*    a   = (int16_t*)c->audio;	// Audio data
-    int         len = c->len/2;			// Number of samples
-    for(ch = 0; ch < nch ; ch++){
-      if(s->enable[ch]){
-	register int vol = (int)(255.0 * s->level[ch]);
-	for(i=ch;i<len;i+=nch){
-	  register int x = (a[i] * vol) >> 8;
-	  a[i]=clamp(x,SHRT_MIN,SHRT_MAX);
+    mp_aframe_t* out = new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
+
+    // Basic operation volume control only (used on slow machines)
+    if(af->conf.format == (MPAF_SI | MPAF_NE)){
+	int16_t* _out = (int16_t*)out->audio;	// Audio data
+	int16_t* _in  = (int16_t*)in->audio;	// Audio data
+	unsigned len = in->len/2;			// Number of samples
+	for(ch = 0; ch < nch ; ch++){
+	    if(s->enable[ch]){
+		register int vol = (int)(255.0 * s->level[ch]);
+		for(i=ch;i<len;i+=nch) {
+		    register int x = (_in[i] * vol) >> 8;
+		    _out[i]=clamp(x,SHRT_MIN,SHRT_MAX);
+		}
+	    }
 	}
-      }
-    }
-  }
-  // Machine is fast and data is floating point
-  else if(af->data->format == (MPAF_F | MPAF_NE)){
-    float*   	a   	= (float*)c->audio;	// Audio data
-    int       	len 	= c->len/4;		// Number of samples
-    for(ch = 0; ch < nch ; ch++){
-      // Volume control (fader)
-      if(s->enable[ch]){
-	float	t   = 1.0 - s->time;
-	for(i=ch;i<len;i+=nch){
-	  register float x 	= a[i];
-	  register float _pow 	= x*x;
-	  // Check maximum power value
-	  if(_pow > s->max[ch])
-	    s->max[ch] = _pow;
-	  // Set volume
-	  x *= s->level[ch];
-	  // Peak meter
-	  _pow 	= x*x;
-	  if(_pow > s->pow[ch])
-	    s->pow[ch] = _pow;
-	  else
-	    s->pow[ch] = t*s->pow[ch] + _pow*s->time; // LP filter
-	  /* Soft clipping, the sound of a dream, thanks to Jon Wattes
-	     post to Musicdsp.org */
-	  if(s->soft){
-	    if (x >=  M_PI/2)
-	      x = 1.0;
-	    else if(x <= -M_PI/2)
-	      x = -1.0;
-	    else
-	      x = sin(x);
-	  }
-	  // Hard clipping
-	  else
-	    x=clamp(x,-1.0,1.0);
-	  a[i] = x;
+    } else { // Machine is fast and data is floating point
+	float* _out = (float*)out->audio;
+	float* _in  = (float*)in->audio;
+	unsigned len = in->len/4;	// Number of samples
+	for(ch = 0; ch < nch ; ch++){
+	    // Volume control (fader)
+	    if(s->enable[ch]){
+		float t = 1.0 - s->time;
+		for(i=ch;i<len;i+=nch){
+		    register float x	= _in[i];
+		    register float _pow	= x*x;
+		    // Check maximum power value
+		    if(_pow > s->max[ch]) s->max[ch] = _pow;
+		    x *= s->level[ch]; // Set volume
+		    _pow 	= x*x; // Peak meter
+		    if(_pow > s->pow[ch]) s->pow[ch] = _pow;
+		    else s->pow[ch] = t*s->pow[ch] + _pow*s->time; // LP filter
+		    /* Soft clipping, the sound of a dream, thanks to Jon Wattes
+			post to Musicdsp.org */
+		    if(s->soft){
+			if (x >=  M_PI/2) x = 1.0;
+			else if(x <= -M_PI/2) x = -1.0;
+			else x = sin(x);
+		    } else {// Hard clipping
+			x=clamp(x,-1.0,1.0);
+		    }
+		    _out[i] = x;
+		}
+	    }
 	}
-      }
     }
-  }
-  return c;
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -211,10 +202,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_volume_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   // Enable volume control and set initial volume to 0dB.
   for(i=0;i<AF_NCH;i++){
     ((af_volume_t*)af->setup)->enable[i] = 1;

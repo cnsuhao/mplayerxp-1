@@ -74,7 +74,7 @@ PVECTOR_RENAME(sfence)(void)
 #define _ivec_sfence PVECTOR_RENAME(sfence)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(prefetch)(void  const *__P)
+PVECTOR_RENAME(prefetch)(any_t const *__P)
 {
 #ifdef OPTIMIZE_MMX2
     _mm_prefetch(__P, _MM_HINT_T0);
@@ -84,7 +84,7 @@ PVECTOR_RENAME(prefetch)(void  const *__P)
 #define _ivec_prefetch PVECTOR_RENAME(prefetch)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(prefetchw)(void  const *__P)
+PVECTOR_RENAME(prefetchw)(any_t const *__P)
 {
 #ifdef OPTIMIZE_MMX2
     _mm_prefetch(__P, _MM_HINT_NTA);
@@ -94,12 +94,12 @@ PVECTOR_RENAME(prefetchw)(void  const *__P)
 #define _ivec_prefetchw PVECTOR_RENAME(prefetchw)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(loadu)(void const *__P)
+PVECTOR_RENAME(loadu)(any_t const *__P)
 {
 #ifdef OPTIMIZE_SSE3
-    return _mm_lddqu_si128(__P);
+    return _mm_lddqu_si128((__m128i*)__P);
 #elif defined OPTIMIZE_SSE2
-    return (__ivec)_mm_loadu_si128(__P);
+    return (__ivec)_mm_loadu_si128((__m128i*)__P);
 #else
     return *(__ivec const *)__P;
 #endif
@@ -108,10 +108,10 @@ PVECTOR_RENAME(loadu)(void const *__P)
 #define _ivec_loadu PVECTOR_RENAME(loadu)
 
 extern __inline __ivec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(loada)(void const *__P)
+PVECTOR_RENAME(loada)(any_t const *__P)
 {
 #ifdef OPTIMIZE_SSE2
-    return (__ivec)_mm_load_si128(__P);
+    return (__ivec)_mm_load_si128((__m128i*)__P);
 #else
     return *(__ivec const *)__P;
 #endif
@@ -123,7 +123,7 @@ extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(storeu)(any_t*__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
-    _mm_storeu_si128(__P,src);
+    _mm_storeu_si128((__m128i*)__P,src);
 #else
     *(__ivec *)__P = src;
 #endif
@@ -135,7 +135,7 @@ extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(storea)(any_t*__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
-    _mm_store_si128(__P,src);
+    _mm_store_si128((__m128i*)__P,src);
 #else
     *(__ivec *)__P = src;
 #endif
@@ -147,7 +147,7 @@ extern __inline void __attribute__((__gnu_inline__, __always_inline__))
 PVECTOR_RENAME(stream)(any_t*__P, __ivec src)
 {
 #ifdef OPTIMIZE_SSE2
-    _mm_stream_si128(__P,src);
+    _mm_stream_si128((__m128i*)__P,src);
 #elif defined( OPTIMIZE_MMX2 )
     _mm_stream_pi(__P,src);
 #else

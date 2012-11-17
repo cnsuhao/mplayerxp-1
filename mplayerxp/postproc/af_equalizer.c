@@ -74,7 +74,7 @@ static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
   b[1] = -1.0050;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_equalizer_t* s   = (af_equalizer_t*)af->setup;
     unsigned k =0;
@@ -83,14 +83,13 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = MPAF_NE|MPAF_F|4;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = MPAF_NE|MPAF_F|4;
 
     // Calculate number of active filters
     s->K=KM;
-    while(F[s->K-1] > (float)af->data->rate/2.2)
-      s->K--;
+    while(F[s->K-1] > (float)af->conf.rate/2.2) s->K--;
 
     if(s->K != KM)
       MSG_INFO("[equalizer] Limiting the number of filters to"
@@ -98,10 +97,10 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
 
     // Generate filter taps
     for(k=0;k<s->K;k++)
-      bp2(s->a[k],s->b[k],F[k]/((float)af->data->rate),Q);
+      bp2(s->a[k],s->b[k],F[k]/((float)af->conf.rate),Q);
 
     // Calculate how much this plugin adds to the overall time delay
-    af->delay += 2000.0/((float)af->data->rate);
+    af->delay += 2000.0/((float)af->conf.rate);
 
     return af_test_output(af,arg);
 }
@@ -164,49 +163,47 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+  if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
-  mp_aframe_t*       c 	= data;			    	// Current working data
-  af_equalizer_t*  s 	= (af_equalizer_t*)af->setup; 	// Setup
-  uint32_t  	   ci  	= af->data->nch; 	    	// Index for channels
-  uint32_t	   nch 	= af->data->nch;   	    	// Number of channels
+    af_equalizer_t*	s	= (af_equalizer_t*)af->setup; 	// Setup
+    uint32_t		ci	= af->conf.nch;		// Index for channels
+    uint32_t		nch	= af->conf.nch;		// Number of channels
+    mp_aframe_t* outd = new_mp_aframe_genome(ind);
+    mp_alloc_aframe(outd);
 
-  while(ci--){
-    float*	g   = s->g[ci];      // Gain factor
-    float*	in  = ((float*)c->audio)+ci;
-    float*	out = ((float*)c->audio)+ci;
-    float* 	end = in + c->len/4; // Block loop end
+    while(ci--){
+	float*	g   = s->g[ci];      // Gain factor
+	float*	in  = ((float*)ind->audio)+ci;
+	float*	out = ((float*)outd->audio)+ci;
+	float*	end = in + ind->len/4; // Block loop end
 
-    while(in < end){
-      register uint32_t	k  = 0;		// Frequency band index
-      register float 	yt = *in; 	// Current input sample
-      in+=nch;
+	while(in < end){
+	    uint32_t	k  = 0;		// Frequency band index
+	    float	yt = *in;	// Current input sample
+	    in+=nch;
 
-      // Run the filters
-      for(;k<s->K;k++){
-	// Pointer to circular buffer wq
-	register float* wq = s->wq[ci][k];
-	// Calculate output from AR part of current filter
-	register float w=yt*s->b[k][0] + wq[0]*s->a[k][0] + wq[1]*s->a[k][1];
-	// Calculate output form MA part of current filter
-	yt+=(w + wq[1]*s->b[k][1])*g[k];
-	// Update circular buffer
-	wq[1] = wq[0];
-	wq[0] = w;
-      }
-      // Calculate output
-      *out=yt;
-      out+=nch;
+	    // Run the filters
+	    for(;k<s->K;k++){
+		// Pointer to circular buffer wq
+		float* wq = s->wq[ci][k];
+		// Calculate output from AR part of current filter
+		float w=yt*s->b[k][0] + wq[0]*s->a[k][0] + wq[1]*s->a[k][1];
+		// Calculate output form MA part of current filter
+		yt+=(w + wq[1]*s->b[k][1])*g[k];
+		// Update circular buffer
+		wq[1] = wq[0];
+		wq[0] = w;
+	    }
+	    // Calculate output
+	    *out=yt;
+	    out+=nch;
+	}
     }
-  }
-  return c;
+    return outd;
 }
 
 // Allocate memory and set function pointers
@@ -217,10 +214,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_equalizer_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

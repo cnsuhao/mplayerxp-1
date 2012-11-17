@@ -33,15 +33,14 @@ typedef struct af_gate_s
   float	range[AF_NCH];		// Range level [dB]
 }af_gate_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
-    af_gate_t* s   = (af_gate_t*)af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = MPAF_F|MPAF_NE|4;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = MPAF_F|MPAF_NE|4;
 
     // Time constant set to 0.1s
     //    s->alpha = (1.0/0.2)/(2.0*M_PI*(float)((mp_aframe_t*)arg)->rate);
@@ -80,13 +79,13 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
   case AF_CONTROL_GATE_THRESH | AF_CONTROL_GET:
     return af_to_dB(AF_NCH,s->tresh,(float*)arg,10.0);
   case AF_CONTROL_GATE_ATTACK | AF_CONTROL_SET:
-    return af_from_ms(AF_NCH,(float*)arg,s->attack,af->data->rate,500.0,0.1);
+    return af_from_ms(AF_NCH,(float*)arg,s->attack,af->conf.rate,500.0,0.1);
   case AF_CONTROL_GATE_ATTACK | AF_CONTROL_GET:
-    return af_to_ms(AF_NCH,s->attack,(float*)arg,af->data->rate);
+    return af_to_ms(AF_NCH,s->attack,(float*)arg,af->conf.rate);
   case AF_CONTROL_GATE_RELEASE | AF_CONTROL_SET:
-    return af_from_ms(AF_NCH,(float*)arg,s->release,af->data->rate,3000.0,10.0);
+    return af_from_ms(AF_NCH,(float*)arg,s->release,af->conf.rate,3000.0,10.0);
   case AF_CONTROL_GATE_RELEASE | AF_CONTROL_GET:
-    return af_to_ms(AF_NCH,s->release,(float*)arg,af->data->rate);
+    return af_to_ms(AF_NCH,s->release,(float*)arg,af->conf.rate);
   case AF_CONTROL_GATE_RANGE | AF_CONTROL_SET:
     return af_from_dB(AF_NCH,(float*)arg,s->range,20.0,100.0,0.0);
   case AF_CONTROL_GATE_RANGE | AF_CONTROL_GET:
@@ -99,44 +98,42 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+  if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-  mp_aframe_t*    c   = data;			// Current working data
-  af_gate_t*  	s   = (af_gate_t*)af->setup; 	// Setup for this instance
-  float*   	a   = (float*)c->audio;		// Audio data
-  int       	len = c->len/4;			// Number of samples
-  int           ch  = 0;			// Channel counter
-  register int	nch = c->nch;			// Number of channels
-  register int  i   = 0;
+    const mp_aframe_t*c = in;			// Current working data
+    af_gate_t*	s   = (af_gate_t*)af->setup; 	// Setup for this instance
+    unsigned	len = c->len/4;			// Number of samples
+    unsigned	ch  = 0;			// Channel counter
+    unsigned	nch = c->nch;			// Number of channels
+    unsigned	i   = 0;
 
+    mp_aframe_t* out = new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
 
-  // Noise gate
-  for(ch = 0; ch < nch ; ch++){
-    if(s->enable[ch]){
-      float	t   = 1.0 - s->time[ch];
-      for(i=ch;i<len;i+=nch){
-	register float x 	= a[i];
-	register float _pow 	= x*x;
-	s->pow[ch] = t*s->pow[ch] +
-	  _pow*s->time[ch]; // LP filter
-	if(_pow < s->pow[ch]){
-	  ;
+    float* _in = (float*)c->audio;		// Audio data
+    float* _out = (float*)out->audio;		// Audio data
+    // Noise gate
+    for(ch = 0; ch < nch ; ch++){
+	if(s->enable[ch]){
+	    float	t   = 1.0 - s->time[ch];
+	    for(i=ch;i<len;i+=nch){
+		float x		= _in[i];
+		float _pow	= x*x;
+		s->pow[ch] = t*s->pow[ch] + _pow*s->time[ch]; // LP filter
+		if(_pow < s->pow[ch]){
+		;
+		} else {
+		;
+		}
+		_out[i] = x;
+	    }
 	}
-	else{
-	  ;
-	}
-	a[i] = x;
-      }
     }
-  }
-  return c;
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -147,10 +144,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_gate_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

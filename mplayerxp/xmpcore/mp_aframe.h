@@ -35,8 +35,6 @@ typedef enum mpaf_format_enum{
     MPAF_POINT_MASK	=0x00004000UL,
 // Special flags refering to non pcm data
     MPAF_PCM		=0x00010000UL, //
-    MPAF_A_LAW		=0x00060000UL, //
-    MPAF_MU_LAW		=0x00070000UL, //
     MPAF_IMA_ADPCM	=0x00110000UL, // Same as 16 bit signed int
     MPAF_MPEG2		=0x00500000UL, // MPEG1 layer2 audio
     MPAF_MPEG3		=0x00550000UL, // MPEG1 layer3 audio
@@ -66,6 +64,10 @@ extern mpaf_format_e __FASTCALL__ mpaf_str2fmt(const char *str);
 static inline int mpaf_test(mpaf_format_e f,unsigned bits) { return f&bits; }
 static inline int mpaf_testa(mpaf_format_e f,unsigned bits) { return (f&bits)==bits; }
 
+enum {
+    MP_AFLG_FINALIZED		=0x80000000
+};
+
 typedef struct mp_audio_frame_s {
     unsigned		flags; /* currently unused */
     float		pts;   /* PTS if this frame */
@@ -79,6 +81,8 @@ typedef struct mp_audio_frame_s {
 }mp_aframe_t;
 
 extern mp_aframe_t*	new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx);
+extern mp_aframe_t*	new_mp_aframe_genome(const mp_aframe_t* in);
+extern void		mp_alloc_aframe(mp_aframe_t* it);
 extern int		free_mp_aframe(mp_aframe_t* mpaf);
 #ifdef __cplusplus
 }

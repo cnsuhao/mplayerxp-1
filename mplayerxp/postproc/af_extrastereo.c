@@ -27,18 +27,17 @@ typedef struct af_extrastereo_s
     float mul;
 }af_extrastereo_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
-    af_extrastereo_t* s   = (af_extrastereo_t*)af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
     if(!mpaf_testa(arg->format,MPAF_SI|MPAF_NE) || (arg->nch != 2))
        return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = 2;
-    af->data->format = MPAF_SI|MPAF_NE|2;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = 2;
+    af->conf.format = MPAF_SI|MPAF_NE|2;
 
     return af_test_output(af,arg);
 }
@@ -71,33 +70,31 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+    if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
-  af_extrastereo_t *s = af->setup;
-  register int i = 0;
-  int16_t *a = (int16_t*)data->audio;	// Audio data
-  int len = data->len/2;		// Number of samples
-  int avg, l, r;
+    af_extrastereo_t *s = af->setup;
+    unsigned	i = 0;
+    int16_t*	a = (int16_t*)ind->audio;	// Audio data
+    unsigned	len = ind->len/2;		// Number of samples
+    int		avg, l, r;
+    mp_aframe_t*outd = new_mp_aframe_genome(ind);
+    mp_alloc_aframe(outd);
 
-  for (i = 0; i < len; i+=2)
-  {
-    avg = (a[i] + a[i + 1]) / 2;
+    for (i = 0; i < len; i+=2) {
+	avg = (a[i] + a[i + 1]) / 2;
 
-    l = avg + (int)(s->mul * (a[i] - avg));
-    r = avg + (int)(s->mul * (a[i + 1] - avg));
+	l = avg + (int)(s->mul * (a[i] - avg));
+	r = avg + (int)(s->mul * (a[i + 1] - avg));
 
-    a[i] = clamp(l, SHRT_MIN, SHRT_MAX);
-    a[i + 1] = clamp(r, SHRT_MIN, SHRT_MAX);
+	((int16_t*)outd->audio)[i] = clamp(l, SHRT_MIN, SHRT_MAX);
+	((int16_t*)outd->audio)[i + 1] = clamp(r, SHRT_MIN, SHRT_MAX);
   }
 
-  return data;
+  return outd;
 }
 
 // Allocate memory and set function pointers
@@ -108,10 +105,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_extrastereo_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   ((af_extrastereo_t*)af->setup)->mul = 2.5;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

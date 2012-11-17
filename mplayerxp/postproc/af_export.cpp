@@ -38,7 +38,7 @@
 typedef struct af_export_s
 {
   unsigned long long  count; // Used for sync
-  any_t* buf[AF_NCH]; 	// Buffers for storing the data before it is exported
+  uint8_t* buf[AF_NCH]; 	// Buffers for storing the data before it is exported
   int 	sz;	      	// Size of buffer in samples
   int 	wi;  		// Write index
   int	fd;           	// File descriptor to shared memory area
@@ -52,7 +52,7 @@ typedef struct af_export_s
    cmd control command
    arg argument
 */
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af, const af_conf_t* arg)
 {
     af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
     unsigned i=0;
@@ -64,26 +64,26 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const mp_aframe_t* 
 
     // unmap previous area
     if(s->mmap_area)
-      munmap(s->mmap_area, SIZE_HEADER + ((af->data->format&MPAF_BPS_MASK)*s->sz*af->data->nch));
+      munmap(s->mmap_area, SIZE_HEADER + ((af->conf.format&MPAF_BPS_MASK)*s->sz*af->conf.nch));
     // close previous file descriptor
     if(s->fd)
       close(s->fd);
 
     // Accept only int16_t as input format (which sucks)
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = MPAF_SI|MPAF_NE|MPAF_BPS_2;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = MPAF_SI|MPAF_NE|MPAF_BPS_2;
 
     // If buffer length isn't set, set it to the default value
     if(s->sz == 0)
       s->sz = DEF_SZ;
 
     // Allocate new buffers (as one continuous block)
-    s->buf[0] = mp_calloc(s->sz*af->data->nch, af->data->format&MPAF_BPS_MASK);
+    s->buf[0] = new(zeromem) uint8_t[s->sz*af->conf.nch*af->conf.format&MPAF_BPS_MASK];
     if(NULL == s->buf[0])
       MSG_FATAL(MSGTR_OutOfMemory);
-    for(i = 1; i < af->data->nch; i++)
-      s->buf[i] = s->buf[0] + i*s->sz*(af->data->format&MPAF_BPS_MASK);
+    for(i = 1; i < af->conf.nch; i++)
+      s->buf[i] = s->buf[0] + i*s->sz*(af->conf.format&MPAF_BPS_MASK);
 
     // Init memory mapping
     s->fd = open(s->filename, O_RDWR | O_CREAT | O_TRUNC, 0640);
@@ -93,7 +93,7 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const mp_aframe_t* 
 	     s->filename);
 
     // header + buffer
-    mapsize = (SIZE_HEADER + ((af->data->format&MPAF_BPS_MASK) * s->sz * af->data->nch));
+    mapsize = (SIZE_HEADER + ((af->conf.format&MPAF_BPS_MASK) * s->sz * af->conf.nch));
 
     // grow file to needed size
     for(i = 0; i < mapsize; i++){
@@ -109,8 +109,8 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const mp_aframe_t* 
 	   s->filename, s->mmap_area);
 
     // Initialize header
-    *((int*)s->mmap_area) = af->data->nch;
-    *((int*)s->mmap_area + 1) = s->sz * (af->data->format&MPAF_BPS_MASK) * af->data->nch;
+    *((int*)s->mmap_area) = af->conf.nch;
+    *((int*)s->mmap_area + 1) = s->sz * (af->conf.format&MPAF_BPS_MASK) * af->conf.nch;
     msync(s->mmap_area, mapsize, MS_ASYNC);
 
     // Use test_output to return FALSE if necessary
@@ -167,11 +167,6 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 */
 static void __FASTCALL__ uninit( struct af_instance_s* af )
 {
-  if (af->data){
-    delete af->data;
-    af->data = NULL;
-  }
-
   if(af->setup){
     af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
     if (s->buf && s->buf[0])
@@ -187,7 +182,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
     if(s->filename)
 	delete s->filename;
 
-    delete af->setup;
+    delete s;
     af->setup = NULL;
   }
 }
@@ -196,45 +191,43 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
    af audio filter instance
    data audio data
 */
-static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af,const mp_aframe_t* data)
 {
-  mp_aframe_t*	c   = data;	     // Current working data
-  af_export_t*	s   = reinterpret_cast<af_export_t*>(af->setup); // Setup for this instance
-  int16_t*	a   = reinterpret_cast<int16_t*>(c->audio);   // Incomming sound
-  int		nch = c->nch;	     // Number of channels
-  int		len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
-  int		sz  = s->sz;         // buffer size (in samples)
-  int		flag = 0;	     // Set to 1 if buffer is filled
+    const mp_aframe_t*c   = data; // Current working data
+    af_export_t*s   = reinterpret_cast<af_export_t*>(af->setup); // Setup for this instance
+    int16_t*	a   = reinterpret_cast<int16_t*>(c->audio);   // Incomming sound
+    unsigned	nch = c->nch;  // Number of channels
+    unsigned	len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
+    unsigned	sz  = s->sz; // buffer size (in samples)
+    unsigned	flag = 0; // Set to 1 if buffer is filled
 
-  int		ch, i;
+    unsigned	ch, i;
 
-  // Fill all buffers
-  for(ch = 0; ch < nch; ch++){
-    int 	wi = s->wi;    	 // Reset write index
-    int16_t* 	b  = reinterpret_cast<int16_t*>(s->buf[ch]); // Current buffer
+    // Fill all buffers
+    for(ch = 0; ch < nch; ch++){
+	unsigned	wi = s->wi;    	 // Reset write index
+	int16_t*	b  = reinterpret_cast<int16_t*>(s->buf[ch]); // Current buffer
 
-    // Copy data to export buffers
-    for(i = ch; i < len; i += nch){
-      b[wi++] = a[i];
-      if(wi >= sz){ // Don't write outside the end of the buffer
-	flag = 1;
-	break;
-      }
+	// Copy data to export buffers
+	for(i = ch; i < len; i += nch){
+	    b[wi++] = a[i];
+	    if(wi >= sz){ // Don't write outside the end of the buffer
+		flag = 1;
+		break;
+	    }
+	}
+	s->wi = wi % s->sz;
     }
-    s->wi = wi % s->sz;
-  }
 
-  // Export buffer to mmaped area
-  if(flag){
-    // update buffer in mapped area
-	stream_copy(s->mmap_area + SIZE_HEADER, s->buf[0], sz * (c->format&MPAF_BPS_MASK) * nch);
-    s->count++; // increment counter (to sync)
-	stream_copy(s->mmap_area + SIZE_HEADER - sizeof(s->count),
-		&(s->count), sizeof(s->count));
-  }
-
-  // We don't modify data, just export it
-  return data;
+    // Export buffer to mmaped area
+    if(flag){
+	// update buffer in mapped area
+	stream_copy(reinterpret_cast<char*>(s->mmap_area) + SIZE_HEADER, s->buf[0], sz * (c->format&MPAF_BPS_MASK) * nch);
+	s->count++; // increment counter (to sync)
+	stream_copy(reinterpret_cast<char*>(s->mmap_area) + SIZE_HEADER - sizeof(s->count), &(s->count), sizeof(s->count));
+    }
+    // We don't modify data, just export it
+    return const_cast<mp_aframe_t*>(data);
 }
 
 /* Allocate memory and set function pointers
@@ -243,16 +236,14 @@ static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af, mp_aframe_t* da
 */
 static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
 {
-  af->config  = config;
+  af->config  = af_config;
   af->control = control;
   af->uninit  = uninit;
   af->play    = play;
   af->mul.n   = 1;
   af->mul.d   = 1;
-  af->data    = new(zeromem) mp_aframe_t;
   af->setup   = new(zeromem) af_export_t;
-  if((af->data == NULL) || (af->setup == NULL))
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
 
   ((af_export_t *)af->setup)->filename = get_path(SHARED_FILE);
     check_pin("afilter",af->pin,AF_PIN);

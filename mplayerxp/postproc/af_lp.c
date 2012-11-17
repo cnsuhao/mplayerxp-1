@@ -14,13 +14,13 @@ typedef struct s_lp
     unsigned fake_out;
 }af_lp_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_lp_t* s   = (af_lp_t*)af->setup;
-    memcpy(af->data,arg,sizeof(mp_aframe_t));
-    s->fin=af->data->rate;
-    af->delay=(float)s->fake_out/af->data->rate;
-    af->data->rate=s->fake_out;
+    memcpy(&af->conf,arg,sizeof(af_conf_t));
+    s->fin=af->conf.rate;
+    af->delay=(float)s->fake_out/af->conf.rate;
+    af->conf.rate=s->fake_out;
     return MPXP_Ok;
 }
 
@@ -41,13 +41,13 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	     s->fake_out);
       return MPXP_Error;
     }
-    s->fin=af->data->rate;
-    af->delay=(float)s->fake_out/af->data->rate;
-    af->data->rate=s->fake_out;
+    s->fin=af->conf.rate;
+    af->delay=(float)s->fake_out/af->conf.rate;
+    af->conf.rate=s->fake_out;
     return MPXP_Ok;
   }
   case AF_CONTROL_POST_CREATE:
-    s->fin=s->fake_out=af->data->rate;
+    s->fin=s->fake_out=af->conf.rate;
     return MPXP_Ok;
   default: break;
   }
@@ -57,19 +57,15 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+    if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* data)
 {
-  // Do something necessary to get rid of annoying warning during compile
-  if(!af)
-    MSG_ERR("EEEK: Argument af == NULL in af_lp.c play().");
-  return data;
+    // Do something necessary to get rid of annoying warning during compile
+    if(!af) MSG_ERR("EEEK: Argument af == NULL in af_lp.c play().");
+    return data;
 }
 
 // Allocate memory and set function pointers
@@ -80,10 +76,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->data=mp_malloc(sizeof(mp_aframe_t));
   af->setup=mp_malloc(sizeof(af_lp_t));
-  if(af->data == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

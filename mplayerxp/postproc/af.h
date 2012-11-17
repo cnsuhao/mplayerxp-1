@@ -42,17 +42,24 @@ enum {
     AF_PIN=RND_NUMBER6+RND_CHAR6
 };
 
+typedef struct af_conf_s {
+    /*------ stream description ----------*/
+    unsigned		rate;  /* rate of audio */
+    unsigned		nch;   /* number of channels */
+    mpaf_format_e	format;/* PCM format of audio */
+}af_conf_t;
+
 // Linked list of audio filters
 typedef struct af_instance_s {
     const af_info_t*	info;
     char		antiviral_hole[RND_CHAR6];
     unsigned		pin; // personal identification number
-    MPXP_Rc		(* __FASTCALL__ config)(struct af_instance_s* af, const mp_aframe_t* arg);
+    MPXP_Rc		(* __FASTCALL__ config)(struct af_instance_s* af, const af_conf_t* arg);
     MPXP_Rc		(* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
     void		(* __FASTCALL__ uninit)(struct af_instance_s* af);
-    mp_aframe_t*	(* __FASTCALL__ play)(struct af_instance_s* af, mp_aframe_t* data,int final);
+    mp_aframe_t*	(* __FASTCALL__ play)(struct af_instance_s* af,const mp_aframe_t* data);
     any_t*		setup; // setup data for this specific instance and filter
-    mp_aframe_t*	data; // configuration for outgoing data stream
+    af_conf_t		conf; // configuration for outgoing data stream
     struct af_instance_s* next;
     struct af_instance_s* prev;
     any_t*		parent;
@@ -93,16 +100,16 @@ typedef struct af_cfg_s{
 // Current audio stream
 typedef struct af_stream_s
 {
-  char			antiviral_hole[RND_CHAR7];
-  // The first and last filter in the list
-  af_instance_t* first;
-  af_instance_t* last;
-  // Storage for input and output data formats
-  mp_aframe_t input;
-  mp_aframe_t output;
-  // Configuration for this stream
-  af_cfg_t cfg;
-  any_t*parent;
+    char		antiviral_hole[RND_CHAR7];
+    // The first and last filter in the list
+    af_instance_t*	first;
+    af_instance_t*	last;
+    // Storage for input and output data formats
+    af_conf_t		input;
+    af_conf_t		output;
+    // Configuration for this stream
+    af_cfg_t		cfg;
+    any_t*		parent;
 }af_stream_t;
 
 
@@ -128,7 +135,7 @@ MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output);
 void af_uninit(af_stream_t* s);
 
 // Filter data chunk through the filters in the list
-mp_aframe_t* __FASTCALL__ RND_RENAME8(af_play)(af_stream_t* s, mp_aframe_t* data);
+mp_aframe_t* __FASTCALL__ RND_RENAME8(af_play)(af_stream_t* s,const mp_aframe_t* data);
 
 // send control to all filters, starting with the last until
 // one accepts the command with MPXP_Ok.
@@ -151,10 +158,6 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s);
 
 // Helper functions and macros used inside the audio filters
 
-/* Helper function called by the macro with the same name only to be
-   called from inside filters */
-MPXP_Rc __FASTCALL__ af_resize_local_buffer(af_instance_t* af,unsigned len);
-
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
@@ -171,7 +174,7 @@ int __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, floa
 /* Helper function used to convert from sample time to ms */
 int __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate);
 /* Helper function for testing the output format */
-MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const mp_aframe_t* out);
+MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const af_conf_t* out);
 
 /** Print a list of all available audio filters */
 void af_help(void);
@@ -186,13 +189,6 @@ MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch);
 /* print out configuration of filter's chain */
 extern void af_showconf(af_instance_t *first);
 
-/* Memory reallocation macro: if a local buffer is used (i.e. if the
-   filter doesn't operate on the incoming buffer this macro must be
-   called to ensure the buffer is big enough. */
-static inline int RESIZE_LOCAL_BUFFER(af_instance_t* a, mp_aframe_t* d) {
-    unsigned len=af_lencalc(a->mul,d);
-    return ((unsigned)a->data->len < len)?af_resize_local_buffer(a,len):MPXP_Ok;
-}
 #ifdef __cplusplus
 }
 #endif

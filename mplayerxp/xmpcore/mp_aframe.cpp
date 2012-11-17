@@ -32,8 +32,6 @@ mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned ifmt)
 	case AFMT_FLOAT32:ofmt = mpaf_format_e(MPAF_F |MPAF_NE|4); break;
 
 	case AFMT_IMA_ADPCM: ofmt = mpaf_format_e(MPAF_IMA_ADPCM|1); break;
-	case AFMT_MU_LAW:    ofmt = mpaf_format_e(MPAF_MU_LAW|1); break;
-	case AFMT_A_LAW:     ofmt = mpaf_format_e(MPAF_A_LAW|1); break;
 	case AFMT_MPEG:      ofmt = mpaf_format_e(MPAF_MPEG2|1); break;
 	case AFMT_AC3:       ofmt = mpaf_format_e(MPAF_AC3|1); break;
 	default:
@@ -79,8 +77,6 @@ unsigned __FASTCALL__ mpaf_format_encode(mpaf_format_e fmt)
 	    }
 	    break;
 	default:
-	case MPAF_MU_LAW: return AFMT_MU_LAW;
-	case MPAF_A_LAW:  return AFMT_A_LAW;
 	case MPAF_MPEG2:  return AFMT_MPEG;
 	case MPAF_AC3:    return AFMT_AC3;
 	case MPAF_IMA_ADPCM: return AFMT_IMA_ADPCM;
@@ -95,8 +91,6 @@ static const struct fmt_alias_s {
     { "adpcm", WAVE_FORMAT_ADPCM },
     { "vselp", WAVE_FORMAT_VSELP },
     { "cvsd",  WAVE_FORMAT_IBM_CVSD },
-    { "alaw",  WAVE_FORMAT_ALAW },
-    { "mulaw", WAVE_FORMAT_MULAW },
     { "dts",   WAVE_FORMAT_DTS },
     { "oki_adpcm", WAVE_FORMAT_OKI_ADPCM },
     { "dvi_adpcm", WAVE_FORMAT_DVI_ADPCM },
@@ -302,7 +296,7 @@ char* mpaf_fmt2str(mpaf_format_e format, char* str, size_t size)
 
 
 mp_aframe_t* new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx) {
-    mp_aframe_t*  mpaf = (mp_aframe_t*)mp_mallocz(sizeof(mp_aframe_t));
+    mp_aframe_t*  mpaf = new(zeromem) mp_aframe_t;
     if(!mpaf) return NULL;
     mpaf->rate = rate;
     mpaf->nch = nch;
@@ -313,7 +307,16 @@ mp_aframe_t* new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsig
 
 int free_mp_aframe(mp_aframe_t* mpaf) {
     if(!mpaf) return 0;
-    if(mpaf->audio) mp_free(mpaf->audio);
-    mp_free(mpaf);
+    if(mpaf->audio) delete mpaf->audio;
+    delete mpaf;
     return 1;
 }
+
+mp_aframe_t* new_mp_aframe_genome(const mp_aframe_t* in) {
+    mp_aframe_t* out = new(zeromem) mp_aframe_t;
+    memcpy(out,in,sizeof(mp_aframe_t));
+    out->audio = NULL;
+    return out;
+}
+
+void mp_alloc_aframe(mp_aframe_t* it) { it->audio = mp_malloc(it->len); }

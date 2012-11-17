@@ -26,15 +26,14 @@ typedef struct af_dyn_s
     float gain;
 }af_dyn_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
-    af_dyn_t* s   = (af_dyn_t*)af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = MPAF_F|MPAF_NE|4;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = MPAF_F|MPAF_NE|4;
 
     return af_test_output(af,arg);
 }
@@ -59,35 +58,36 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+    if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
-  register unsigned i = 0;
-  float *in = (float*)data->audio;	// Audio data
-  af_dyn_t *s=af->setup;
-  unsigned nsamples = data->len/4;		// Number of samples
-  float d,l;
-  int sign;
-  for(i = 0; i < nsamples; i++) {
+    unsigned	i = 0;
+    float*	in = (float*)ind->audio;// Audio data
+    af_dyn_t*	s=af->setup;
+    unsigned	nsamples = ind->len/4;	// Number of samples
+    float	d,l;
+    int sign;
+    mp_aframe_t*outd= new_mp_aframe_genome(ind);
+    mp_alloc_aframe(outd);
+    float*	out = (float*)outd->audio;// Audio data
+
+    for(i = 0; i < nsamples; i++) {
 	d = *in;
 	if (d == 0.0) l = 0;
 	else {
-		if (d < 0.0) {
-			d *= -1.0;
-			sign = -1;
-		} else	sign = 1;
-		l = pow(s->gain, log10(d))*sign;
+	    if (d < 0.0) {
+		d *= -1.0;
+		sign = -1;
+	    } else	sign = 1;
+	    l = pow(s->gain, log10(d))*sign;
 	}
-	*in++ = l;
-  }
+	*out++ = l;
+    }
 
-  return data;
+    return outd;
 }
 
 // Allocate memory and set function pointers
@@ -98,9 +98,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_dyn_t));
-  if(af->data == NULL || af->setup==NULL) return MPXP_Error;
+  if(af->setup==NULL) return MPXP_Error;
   ((af_dyn_t *)(af->setup))->gain=8.;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

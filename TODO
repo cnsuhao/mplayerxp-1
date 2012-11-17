@@ -11,6 +11,7 @@ TODO for mplayerxp:
 		license=check_pin(Module_VideoDecoder,pin);
 		...
      vd_ffmpeg: init(sh_video_t *sh,any_t* libinput,uint32_t license) {
+		    check_license(Module_VideoDecoder,license);
 		    ...
 		    PointerProtector lavc_guard(license);
 		    priv->lavc_ctx = lavc_guard.protect(avcodec_alloc_context3(priv->codec));

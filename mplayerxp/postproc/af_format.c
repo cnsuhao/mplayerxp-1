@@ -28,22 +28,17 @@
 /* Functions used by play to convert the input audio to the correct
    format */
 
-/* The below includes retrives functions for converting to and from
-   ulaw and alaw */
-#include "af_format_ulaw.c"
-#include "af_format_alaw.c"
-
 typedef struct af_format_s
 {
   mpaf_format_e fmt;
 }af_format_t;
 
 // Switch endianess
-static void endian(any_t* in, any_t* out, int len, int bps,int final);
+static void endian(const mp_aframe_t* in, mp_aframe_t* out);
 // From singed to unsigned
-static void si2us(any_t* in, any_t* out, int len, int bps,int final);
+static void si2us(const mp_aframe_t* in, mp_aframe_t* out);
 // From unsinged to signed
-static void us2si(any_t* in, any_t* out, int len, int bps,int final);
+static void us2si(const mp_aframe_t* in, mp_aframe_t* out);
 
 // Helper functions to check sanity for input arguments
 
@@ -66,20 +61,19 @@ static MPXP_Rc __FASTCALL__ check_format(mpaf_format_e format)
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_format_t* s = af->setup;
     // Make sure this filter isn't redundant
-    if(af->data->format == arg->format)
-	return MPXP_Detach;
+    if(af->conf.format == arg->format) return MPXP_Detach;
     // Check for errors in configuraton
     if((MPXP_Ok != check_format(arg->format)) ||
-	(MPXP_Ok != check_format(af->data->format)))
+	(MPXP_Ok != check_format(af->conf.format)))
 	return MPXP_Error;
     s->fmt = arg->format;
-    af->data->rate = arg->rate;
-    af->data->nch  = arg->nch;
-    af->mul.n      = af->data->format&MPAF_BPS_MASK;
+    af->conf.rate  = arg->rate;
+    af->conf.nch   = arg->nch;
+    af->mul.n      = af->conf.format&MPAF_BPS_MASK;
     af->mul.d      = arg->format&MPAF_BPS_MASK;
     return MPXP_Ok;
 }
@@ -92,7 +86,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	case AF_CONTROL_SHOWCONF:
 	    MSG_INFO("[af_format] Changing sample format %s -> %s\n",
 		mpaf_fmt2str(s->fmt,buf1,255),
-		mpaf_fmt2str(af->data->format,buf2,255));
+		mpaf_fmt2str(af->conf.format,buf2,255));
 	    return MPXP_Ok;
 	case AF_CONTROL_COMMAND_LINE:{
 	    int format = MPAF_NE;
@@ -106,7 +100,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	    // Reinit must be called after this function has been called
 	    // Check for errors in configuraton
 	    if(MPXP_Ok != check_format(*(int*)arg)) return MPXP_Error;
-	    af->data->format = *(int*)arg;
+	    af->conf.format = *(int*)arg;
 	    return MPXP_Ok;
 	default: break;
     }
@@ -116,97 +110,83 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-    if(af->data) mp_free(af->data);
     if(af->setup) mp_free(af->setup);
 }
 
-// Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
-{
-    mp_aframe_t*c   = data;	// Current working data
-    int		len = c->len/(c->format&MPAF_BPS_MASK); // Lenght in samples of current audio block
+static mp_aframe_t* change_endian(const mp_aframe_t* in) {
+    mp_aframe_t* out;
+    out=new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
+    endian(in,out);
+    return out;
+}
 
-    if(MPXP_Ok != RESIZE_LOCAL_BUFFER(af,data)) return NULL;
-    mp_aframe_t*   l   = af->data;	// Local data
+static mp_aframe_t* convert_audio(const struct af_instance_s* af,const mp_aframe_t*in) {
+    mp_aframe_t* out,*tmp;
+    out=new_mp_aframe_genome(in);
+    out->len=af_lencalc(af->mul,in);
+    mp_alloc_aframe(out);
 
-    // Change to cpu native endian format
-    if((c->format&MPAF_END_MASK)!=MPAF_NE)
-	endian(c->audio,c->audio,len,c->format&MPAF_BPS_MASK,final);
-    // Conversion table
-    if((c->format&MPAF_SPECIAL_MASK)==(MPAF_MU_LAW|MPAF_A_LAW))
-    switch(c->format&MPAF_SPECIAL_MASK){
-	case MPAF_MU_LAW:
-	    from_ulaw(c->audio, l->audio, len,l->format&MPAF_BPS_MASK, l->format&MPAF_POINT_MASK);
-	    if(MPAF_A_LAW == (l->format&MPAF_SPECIAL_MASK))
-		to_ulaw(l->audio, l->audio, len, 1, MPAF_SI);
-	    else if((l->format&MPAF_SIGN_MASK) == MPAF_US) {
-		si2us(l->audio,l->audio,len,l->format&MPAF_BPS_MASK,final);
-	    }
-	    break;
-	case MPAF_A_LAW:
-	    from_alaw(c->audio, l->audio, len,l->format&MPAF_BPS_MASK, l->format&MPAF_POINT_MASK);
-	    if(MPAF_A_LAW == (l->format&MPAF_SPECIAL_MASK))
-		to_alaw(l->audio, l->audio, len, 1, MPAF_SI);
-	    else if((l->format&MPAF_SIGN_MASK) == MPAF_US) {
-		si2us(l->audio,l->audio,len,l->format&MPAF_BPS_MASK,final);
-	    }
-	    break;
-	default: break; // Bote: here not mp3/ac3 decoders
-    }
-    else if(c->format&MPAF_F) {
-	switch(l->format&MPAF_SPECIAL_MASK){
-	    case MPAF_MU_LAW:
-		to_ulaw(c->audio, l->audio, len,c->format&MPAF_BPS_MASK, c->format&MPAF_POINT_MASK);
-		break;
-	    case MPAF_A_LAW:
-		to_alaw(c->audio, l->audio, len,c->format&MPAF_BPS_MASK, c->format&MPAF_POINT_MASK);
-		break;
-	    default:
-		if((l->format&MPAF_SIGN_MASK) == MPAF_US) {
-		    float2int(c->audio, l->audio, len,l->format&MPAF_BPS_MASK,0);
-		    si2us(l->audio,l->audio,len,l->format&MPAF_BPS_MASK,final);
-		} else
-		    float2int(c->audio, l->audio, len, l->format&MPAF_BPS_MASK,final);
-		break;
+    if(in->format&MPAF_F) {
+	float2int(in, out);
+	if((out->format&MPAF_SIGN_MASK) == MPAF_US) si2us(out, out);
+    } else {
+	// Input is INT
+	if((out->format&(MPAF_SPECIAL_MASK|MPAF_POINT_MASK))==MPAF_F){
+	    if((in->format&(MPAF_SIGN_MASK))==MPAF_US) us2si(in, out);
+	    int2float(out, out);
 	}
-    }
-    else {// Input must be int
-	// Change signed/unsigned
-	if((c->format&MPAF_SIGN_MASK) != (l->format&MPAF_SIGN_MASK)){
-	    if((c->format&MPAF_SIGN_MASK) == MPAF_US)
-	    us2si(c->audio,c->audio,len,c->format&MPAF_BPS_MASK,final);
-	else
-	    si2us(c->audio,c->audio,len,c->format&MPAF_BPS_MASK,final);
-	}
-	// Convert to special formats
-	switch(l->format&(MPAF_SPECIAL_MASK|MPAF_POINT_MASK)){
-	    case MPAF_MU_LAW:
-		to_ulaw(c->audio, l->audio, len, c->format&MPAF_BPS_MASK, c->format&MPAF_POINT_MASK);
-		break;
-	    case MPAF_A_LAW:
-		to_alaw(c->audio, l->audio, len, c->format&MPAF_BPS_MASK, c->format&MPAF_POINT_MASK);
-		break;
-	    case MPAF_F:
-		int2float(c->audio, l->audio, len, c->format&MPAF_BPS_MASK,final);
-		break;
-	    default:
-		// Change the number of bits
-		if((c->format&MPAF_BPS_MASK) != (l->format&MPAF_BPS_MASK))
-		    change_bps(c->audio,l->audio,len,c->format&MPAF_BPS_MASK,l->format&MPAF_BPS_MASK,final);
+	else {
+	    if((in->format&MPAF_BPS_MASK) != (out->format&MPAF_BPS_MASK)) {
+		// Change BPS
+		tmp=new_mp_aframe_genome(in);
+		mp_alloc_aframe(tmp);
+		if((in->format&(MPAF_SIGN_MASK))==MPAF_SI) si2us(in, tmp);
+		else tmp = (mp_aframe_t*)in;
+		change_bps(tmp, out); // works with US only for now
+		if(tmp!=in) free_mp_aframe(tmp);
+		if((out->format&(MPAF_SIGN_MASK))==MPAF_SI) us2si(in, out);
+	    } else if((in->format&MPAF_SIGN_MASK)!=(out->format&MPAF_SIGN_MASK)) {
+		// Change signed/unsigned
+		if((in->format&MPAF_SIGN_MASK) == MPAF_US)
+		    us2si(in, out);
 		else
-		    l->audio=c->audio;
-		break;
+		    si2us(in, out);
+	    } else {
+		// should never happens: bypass
+		memcpy(out->audio,in->audio,in->len);
+	    }
 	}
     }
+    return out;
+}
+
+// Filter data through filter
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, const mp_aframe_t* in)
+{
+    mp_aframe_t*out,*tmp;
+    out=new_mp_aframe_genome(in);
+    out->len=af_lencalc(af->mul,in);
+    mp_alloc_aframe(out);
+    tmp=NULL;
+    // Change to cpu native endian format
+    if((in->format&MPAF_END_MASK)!=MPAF_NE)
+	tmp=change_endian(in);
+    else
+	tmp=(mp_aframe_t*)in;
+
+    // Conversion table
+    out=convert_audio(af,tmp);
+    if(tmp!=in) free_mp_aframe(tmp);
+    tmp=out;
 
     // Switch from cpu native endian to the correct endianess
-    if((l->format&MPAF_END_MASK)!=MPAF_NE)
-	endian(l->audio,l->audio,len,l->format&MPAF_BPS_MASK,final);
-    // Set output data
-    c->audio  = l->audio;
-    c->len    = len*(l->format&MPAF_BPS_MASK);
-    c->format = l->format;
-    return c;
+    if((out->format&MPAF_END_MASK)!=MPAF_NE) {
+	out=change_endian(tmp);
+	free_mp_aframe(tmp);
+    }
+
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -217,9 +197,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.n=1;
     af->mul.d=1;
-    af->data=mp_calloc(1,sizeof(mp_aframe_t));
     af->setup=mp_calloc(1,sizeof(af_format_t));
-    if(af->data == NULL) return MPXP_Error;
+    if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }
@@ -259,63 +238,63 @@ void store24bit(any_t* data, int pos, uint32_t expanded_value) {
 }
 
 // Function implementations used by play
-static void endian(any_t* in, any_t* out, int len, int bps,int final)
+static void endian(const mp_aframe_t* in, mp_aframe_t* out)
 {
-    register int i;
-    switch(bps){
+    unsigned i;
+    switch(in->format&MPAF_BPS_MASK){
 	case 2:
-	    for(i=0;i<len;i++) ((uint16_t*)out)[i]=bswap_16(((uint16_t*)in)[i]);
+	    for(i=0;i<in->len;i++) ((uint16_t*)out->audio)[i]=bswap_16(((uint16_t*)in->audio)[i]);
 	    break;
 	case 3:{
 	    register uint8_t s;
-	    for(i=0;i<len;i++){
-		s=((uint8_t*)in)[3*i];
-		((uint8_t*)out)[3*i]=((uint8_t*)in)[3*i+2];
-		if (in != out) ((uint8_t*)out)[3*i+1]=((uint8_t*)in)[3*i+1];
-		((uint8_t*)out)[3*i+2]=s;
+	    for(i=0;i<in->len;i++){
+		s=((uint8_t*)in->audio)[3*i];
+		((uint8_t*)out->audio)[3*i]=((uint8_t*)in->audio)[3*i+2];
+		if (in->audio != out->audio) ((uint8_t*)out->audio)[3*i+1]=((uint8_t*)in->audio)[3*i+1];
+		((uint8_t*)out->audio)[3*i+2]=s;
 	    }
 	    break;
 	}
 	case 4:
-	    for(i=0;i<len;i++) ((uint32_t*)out)[i]=bswap_32(((uint32_t*)in)[i]);
+	    for(i=0;i<in->len;i++) ((uint32_t*)out->audio)[i]=bswap_32(((uint32_t*)in->audio)[i]);
 	    break;
     }
 }
 
-static void si2us(any_t* in, any_t* out, int len, int bps,int final)
+static void si2us(const mp_aframe_t* in, mp_aframe_t* out)
 {
-    register int i;
-    switch(bps) {
+    unsigned i;
+    switch(in->format&MPAF_BPS_MASK) {
 	case 1:
-	    for(i=0;i<len;i++) ((uint8_t*)out)[i]=(uint8_t)(SCHAR_MAX+((int)((int8_t*)in)[i]));
+	    for(i=0;i<in->len;i++) ((uint8_t*)out->audio)[i]=(uint8_t)(SCHAR_MAX+((int)((int8_t*)in->audio)[i]));
 	    break;
 	case 2:
-	    for(i=0;i<len;i++) ((uint16_t*)out)[i]=(uint16_t)(SHRT_MAX+((int)((int16_t*)in)[i]));
+	    for(i=0;i<in->len;i++) ((uint16_t*)out->audio)[i]=(uint16_t)(SHRT_MAX+((int)((int16_t*)in->audio)[i]));
 	    break;
 	case 3:
-	    for(i=0;i<len;i++) store24bit(out, i, (uint32_t)(INT_MAX+(int32_t)load24bit(in, i)));
+	    for(i=0;i<in->len;i++) store24bit(out->audio, i, (uint32_t)(INT_MAX+(int32_t)load24bit(in->audio, i)));
 	    break;
 	case 4:
-	    for(i=0;i<len;i++) ((uint32_t*)out)[i]=(uint32_t)(INT_MAX+((int32_t*)in)[i]);
+	    for(i=0;i<in->len;i++) ((uint32_t*)out->audio)[i]=(uint32_t)(INT_MAX+((int32_t*)in->audio)[i]);
 	    break;
     }
 }
 
-static void us2si(any_t* in, any_t* out, int len, int bps,int final)
+static void us2si(const mp_aframe_t* in, mp_aframe_t* out)
 {
-    register int i;
-    switch(bps){
+    unsigned i;
+    switch(in->format&MPAF_BPS_MASK){
 	case 1:
-	    for(i=0;i<len;i++) ((int8_t*)out)[i]=(int8_t)(SCHAR_MIN+((int)((uint8_t*)in)[i]));
+	    for(i=0;i<in->len;i++) ((int8_t*)out->audio)[i]=(int8_t)(SCHAR_MIN+((int)((uint8_t*)in->audio)[i]));
 	    break;
 	case 2:
-	    for(i=0;i<len;i++) ((int16_t*)out)[i]=(int16_t)(SHRT_MIN+((int)((uint16_t*)in)[i]));
+	    for(i=0;i<in->len;i++) ((int16_t*)out->audio)[i]=(int16_t)(SHRT_MIN+((int)((uint16_t*)in->audio)[i]));
 	    break;
 	case 3:
-	    for(i=0;i<len;i++) store24bit(out, i, (int32_t)(INT_MIN+(uint32_t)load24bit(in, i)));
+	    for(i=0;i<in->len;i++) store24bit(out->audio, i, (int32_t)(INT_MIN+(uint32_t)load24bit(in->audio, i)));
 	    break;
 	case 4:
-	    for(i=0;i<len;i++) ((int32_t*)out)[i]=(int32_t)(INT_MIN+((uint32_t*)in)[i]);
+	    for(i=0;i<in->len;i++) ((int32_t*)out->audio)[i]=(int32_t)(INT_MIN+((uint32_t*)in->audio)[i]);
 	    break;
     }
 }

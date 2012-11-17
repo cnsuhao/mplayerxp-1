@@ -80,20 +80,20 @@ typedef struct af_surround_s
   int ri;	 // Read index for delay queue
 }af_surround_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_surround_t *s = af->setup;
     float fc;
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch*2;
-    af->data->format = MPAF_F|MPAF_NE|4;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch*2;
+    af->conf.format = MPAF_F|MPAF_NE|4;
 
-    if (af->data->nch != 4){
+    if (af->conf.nch != 4){
       MSG_ERR("[surround] Only stereo input is supported.\n");
       return MPXP_Detach;
     }
     // Surround filer coefficients
-    fc = 2.0 * 7000.0/(float)af->data->rate;
+    fc = 2.0 * 7000.0/(float)af->conf.rate;
     if (-1 == design_fir(L, s->w, &fc, LP|HAMMING, 0)){
       MSG_ERR("[surround] Unable to design low-pass filter.\n");
       return MPXP_Error;
@@ -105,18 +105,18 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
     if(s->dr)
       mp_free(s->dr);
     // Allocate new delay queues
-    s->dl = mp_calloc(LD,af->data->format&MPAF_BPS_MASK);
-    s->dr = mp_calloc(LD,af->data->format&MPAF_BPS_MASK);
+    s->dl = mp_calloc(LD,af->conf.format&MPAF_BPS_MASK);
+    s->dr = mp_calloc(LD,af->conf.format&MPAF_BPS_MASK);
     if((NULL == s->dl) || (NULL == s->dr))
       MSG_FATAL(MSGTR_OutOfMemory);
 
     // Initialize delay queue index
-    if(MPXP_Ok != af_from_ms(1, &s->d, &s->wi, af->data->rate, 0.0, 1000.0))
+    if(MPXP_Ok != af_from_ms(1, &s->d, &s->wi, af->conf.rate, 0.0, 1000.0))
       return MPXP_Error;
 //    printf("%i\n",s->wi);
     s->ri = 0;
 
-    if(af->data->format != arg->format) return MPXP_False;
+    if(af->conf.format != arg->format) return MPXP_False;
     return MPXP_Ok;
 }
 // Initialization and runtime control
@@ -146,12 +146,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data->audio)
-    mp_free(af->data->audio);
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+  if(af->setup) mp_free(af->setup);
 }
 
 // The beginnings of an active matrix...
@@ -166,22 +161,23 @@ static float steering_matrix[][12] = {
 //static int amp_L = 0, amp_R = 0, amp_C = 0, amp_S = 0;
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final){
-  af_surround_t* s   = (af_surround_t*)af->setup;
-  float*	 m   = steering_matrix[0];
-  float*     	 in  = data->audio; 	// Input audio data
-  float*     	 out = NULL;		// Output audio data
-  float*	 end = in + data->len / sizeof(float); // Loop end
-  int 		 i   = s->i;	// Filter queue index
-  int 		 ri  = s->ri;	// Read index for delay queue
-  int 		 wi  = s->wi;	// Write index for delay queue
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind){
+    af_surround_t*s   = (af_surround_t*)af->setup;
+    float*	m   = steering_matrix[0];
+    float*	in  = ind->audio; 	// Input audio data
+    float*	out = NULL;		// Output audio data
+    float*	end = in + ind->len / sizeof(float); // Loop end
+    int		i   = s->i;	// Filter queue index
+    int		ri  = s->ri;	// Read index for delay queue
+    int		wi  = s->wi;	// Write index for delay queue
 
-  if (MPXP_Ok != RESIZE_LOCAL_BUFFER(af, data))
-    return NULL;
+    mp_aframe_t* outd = new_mp_aframe_genome(ind);
+    outd->len=af_lencalc(af->mul,ind);
+    mp_alloc_aframe(outd);
 
-  out = af->data->audio;
+    out = outd->audio;
 
-  while(in < end){
+    while(in < end){
     /* Dominance:
        abs(in[0])  abs(in[1]);
        abs(in[0]+in[1])  abs(in[0]-in[1]);
@@ -201,51 +197,45 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* dat
        6dB (/2). This keeps the overall balance, but guarantees no
        overflow. */
 
-    // Output front left and right
-    out[0] = m[0]*in[0] + m[1]*in[1];
-    out[1] = m[2]*in[0] + m[3]*in[1];
+	// Output front left and right
+	out[0] = m[0]*in[0] + m[1]*in[1];
+	out[1] = m[2]*in[0] + m[3]*in[1];
 
-    // Low-pass output @ 7kHz
-    s->dl[wi]=FIR((&s->lq[i]), s->w);
+	// Low-pass output @ 7kHz
+	s->dl[wi]=FIR((&s->lq[i]), s->w);
 
-    // Delay output by d ms
-    out[2] = s->dl[ri];
+	// Delay output by d ms
+	out[2] = s->dl[ri];
 
 #ifdef SPLITREAR
-    // Low-pass output @ 7kHz
-    s->dr[wi]=FIR((&s->rq[i]), s->w);
+	// Low-pass output @ 7kHz
+	s->dr[wi]=FIR((&s->rq[i]), s->w);
 
-    // Delay output by d ms
-    out[3] = s->dr[ri];
+	// Delay output by d ms
+	out[3] = s->dr[ri];
 #else
-    out[3] = -out[2];
+	out[3] = -out[2];
 #endif
 
-    // Update delay queues indexes
-    UPDATEQI(ri);
-    UPDATEQI(wi);
+	// Update delay queues indexes
+	UPDATEQI(ri);
+	UPDATEQI(wi);
 
-    // Calculate and save surround in circular queue
+	// Calculate and save surround in circular queue
 #ifdef SPLITREAR
-    ADDQUE(i, s->rq, s->lq, m[6]*in[0]+m[7]*in[1], m[8]*in[0]+m[9]*in[1]);
+	ADDQUE(i, s->rq, s->lq, m[6]*in[0]+m[7]*in[1], m[8]*in[0]+m[9]*in[1]);
 #else
-    ADDQUE(i, s->lq, m[4]*in[0]+m[5]*in[1]);
+	ADDQUE(i, s->lq, m[4]*in[0]+m[5]*in[1]);
 #endif
+	// Next sample...
+	in = &in[ind->nch];
+	out = &out[outd->nch];
+    }
 
-    // Next sample...
-    in = &in[data->nch];
-    out = &out[af->data->nch];
-  }
+    // Save indexes
+    s->i  = i; s->ri = ri; s->wi = wi;
 
-  // Save indexes
-  s->i  = i; s->ri = ri; s->wi = wi;
-
-  // Set output data
-  data->audio = af->data->audio;
-  data->len   = (data->len*af->mul.n)/af->mul.d;
-  data->nch   = af->data->nch;
-
-  return data;
+    return outd;
 }
 
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
@@ -255,10 +245,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=2;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_surround_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   ((af_surround_t*)af->setup)->d = 20;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

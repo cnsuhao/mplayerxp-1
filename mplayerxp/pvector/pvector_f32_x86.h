@@ -45,7 +45,7 @@ PVECTOR_RENAME(f32vec_size)()
 #define _f32vec_size PVECTOR_RENAME(f32vec_size)
 
 extern __inline int  __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32vec_aligned)(const any_t* p) { return (((long)p)&(_f32vec_size()-1))==0; }
+PVECTOR_RENAME(f32vec_aligned)(float const* p) { return (((long)p)&(_f32vec_size()-1))==0; }
 #undef _f32vec_aligned
 #define _f32vec_aligned PVECTOR_RENAME(f32vec_aligned)
 
@@ -148,12 +148,12 @@ PVECTOR_RENAME(f32_broadcast)(float f32)
 #define _f32vec_broadcast PVECTOR_RENAME(f32_broadcast)
 
 extern __inline __f32vec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_from_s32u)(void const * src)
+PVECTOR_RENAME(f32_from_s32u)(int32_t const * src)
 {
 #ifdef OPTIMIZE_AVX
-    return _mm256_cvtepi32_ps(_mm256_loadu_si256(src));
+    return _mm256_cvtepi32_ps(_mm256_loadu_si256((__m256i*)src));
 #elif defined( OPTIMIZE_SSE2 )
-    return _mm_cvtepi32_ps(_mm_loadu_si128(src));
+    return _mm_cvtepi32_ps(_mm_loadu_si128((__m128i*)src));
 #elif defined( OPTIMIZE_SSE )
     __m128 tmp=_mm_setzero_ps();
     tmp = _mm_cvtpi32_ps(tmp,*(__m64 const *)((char const *)src+8));
@@ -167,12 +167,12 @@ PVECTOR_RENAME(f32_from_s32u)(void const * src)
 #define _f32vec_from_s32u PVECTOR_RENAME(f32_from_s32u)
 
 extern __inline __f32vec __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_from_s32a)(void const * src)
+PVECTOR_RENAME(f32_from_s32a)(int32_t const * src)
 {
 #ifdef OPTIMIZE_AVX
-    return _mm256_cvtepi32_ps(_mm256_load_si256(src));
+    return _mm256_cvtepi32_ps(_mm256_load_si256((__m256i*)src));
 #elif defined( OPTIMIZE_SSE2 )
-    return _mm_cvtepi32_ps(_mm_load_si128(src));
+    return _mm_cvtepi32_ps(_mm_load_si128((__m128i*)src));
 #elif defined( OPTIMIZE_SSE )
     __m128 tmp=_mm_setzero_ps();
     tmp = _mm_cvtpi32_ps(tmp,*(__m64 const *)((char const *)src+8));
@@ -186,12 +186,12 @@ PVECTOR_RENAME(f32_from_s32a)(void const * src)
 #define _f32vec_from_s32a PVECTOR_RENAME(f32_from_s32a)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_to_s32u)(any_t*dst,__f32vec src)
+PVECTOR_RENAME(f32_to_s32u)(int32_t*dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
-    _mm256_storeu_si256(dst,_mm256_cvtps_epi32(src));
+    _mm256_storeu_si256((__m256i*)dst,_mm256_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE2 )
-    _mm_storeu_si128(dst,_mm_cvtps_epi32(src));
+    _mm_storeu_si128((__m128i*)dst,_mm_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE )
     __m128 tmp;
     *(__m64 *)dst = _mm_cvtps_pi32(src);
@@ -206,12 +206,12 @@ PVECTOR_RENAME(f32_to_s32u)(any_t*dst,__f32vec src)
 
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_to_s32a)(any_t*dst,__f32vec src)
+PVECTOR_RENAME(f32_to_s32a)(int32_t*dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
-    _mm256_store_si256(dst,_mm256_cvtps_epi32(src));
+    _mm256_store_si256((__m256i*)dst,_mm256_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE2 )
-    _mm_store_si128(dst,_mm_cvtps_epi32(src));
+    _mm_store_si128((__m128i*)dst,_mm_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE )
     __m128 tmp=_mm_setzero_ps();
     *(__m64 *)dst = _mm_cvtps_pi32(src);
@@ -225,12 +225,12 @@ PVECTOR_RENAME(f32_to_s32a)(any_t*dst,__f32vec src)
 #define _f32vec_to_s32a PVECTOR_RENAME(f32_to_s32a)
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__))
-PVECTOR_RENAME(f32_to_s32_stream)(any_t*dst,__f32vec src)
+PVECTOR_RENAME(f32_to_s32_stream)(int32_t*dst,__f32vec src)
 {
 #ifdef OPTIMIZE_AVX
-    _mm256_stream_si256(dst,_mm256_cvtps_epi32(src));
+    _mm256_stream_si256((__m256i*)dst,_mm256_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE2 )
-    _mm_stream_si128(dst,_mm_cvtps_epi32(src));
+    _mm_stream_si128((__m128i*)dst,_mm_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE )
     __m128 tmp=_mm_setzero_ps();
     _mm_stream_pi(dst,_mm_cvtps_pi32(src));

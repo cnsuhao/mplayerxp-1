@@ -301,8 +301,6 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
     sh_audio_t* sh_audio = priv->parent;
     unsigned len;
     unsigned cp_size,cp_tile;
-    mp_aframe_t  afd;  // filter input
-    mp_aframe_t* pafd; // filter output
 
     if(!sh_audio->inited) return 0; // no codec
     MSG_DBG3("mpca_decode(%p,%p,%i,%i,%i,%p)\n",sh_audio,buf,minlen,maxlen,buflen,pts);
@@ -329,6 +327,8 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
     MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
     if(len==0 || !sh_audio->afilter) return 0; // EOF?
     // run the filters:
+    mp_aframe_t  afd;  // filter input
+    mp_aframe_t* pafd; // filter output
     memset(&afd,0,sizeof(mp_aframe_t));
     afd.audio=buf;
     afd.len=len;

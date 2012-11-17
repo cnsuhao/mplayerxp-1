@@ -196,13 +196,15 @@ static float left0p = 0, right0p = 0;
 static float buf[BUF_SIZE];
 static unsigned _bufPos = BUF_SIZE - 1;
 static unsigned bufPos[3];
-static void __FASTCALL__ echo3d(af_crystality_t *setup,float *data, unsigned datasize)
+static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *setup,const mp_aframe_t* in)
 {
-  unsigned x,i;
+  unsigned x,i,datasize;
   float _left, _right, dif, difh, leftc, rightc, left[4], right[4];
   float *dataptr;
   float lt, rt;
-
+  mp_aframe_t* out = new_mp_aframe_genome(in);
+  mp_alloc_aframe(out);
+  memcpy(out->audio,in->audio,out->len);
 
 #if 0
   float lsine,rsine;
@@ -213,7 +215,8 @@ static void __FASTCALL__ echo3d(af_crystality_t *setup,float *data, unsigned dat
   bufPos[0] = 1 + BUF_SIZE - DELAY1;
   bufPos[1] = 1 + BUF_SIZE - DELAY1 - DELAY2;
   bufPos[2] = 1 + BUF_SIZE - DELAY1 - DELAY2 - DELAY3;
-  dataptr = data;
+  dataptr = out->audio;
+  datasize= out->len;
 
   for (x = 0; x < datasize; x += 8) {
 
@@ -293,6 +296,7 @@ static void __FASTCALL__ echo3d(af_crystality_t *setup,float *data, unsigned dat
     dataptr[1] = _right;//clamp(_right,-1.0,1.0);
     dataptr += 2;
    }
+   return out;
 }
 
 /*
@@ -393,18 +397,23 @@ static struct Interpolation bandext_amplitude;
 /*
  * exact bandwidth extender ("exciter") routine
  */
-static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsigned datasize)
+static mp_aframe_t* __FASTCALL__ bandext(af_crystality_t *setup,const mp_aframe_t*in)
 {
-
-    unsigned x,i;
+    unsigned x,i,datasize;
     float _left, _right;
-    float *dataptr = data;
+    float *dataptr=NULL;
     static float lprev[4], rprev[4];
     float left[5], right[5];
     static float lamplUp, lamplDown;
     static float ramplUp, ramplDown;
     float lampl, rampl;
     float tmp;
+    mp_aframe_t* out=new_mp_aframe_genome(in);
+    mp_alloc_aframe(out);
+    memcpy(out->audio,in->audio,out->len);
+
+    dataptr = out->audio;
+    datasize= out->len;
 
     for (x = 0; x < datasize; x += 8) {
 
@@ -462,9 +471,10 @@ static void __FASTCALL__ bandext(af_crystality_t *setup,float *data, const unsig
 	dataptr[1] = _right;//clamp(_right,-1.0,+1.0);
 	dataptr += 2;
     }
+    return out;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_crystality_t* s = af->setup;
     unsigned i_bps,fmt;
@@ -472,10 +482,10 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* a
     if(!arg) return MPXP_Error;
     if(arg->nch!=2) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
-    af->data->format = MPAF_NE|MPAF_F|4;
-    init_crystality(s,af->data->rate);
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
+    af->conf.format = MPAF_NE|MPAF_F|4;
+    init_crystality(s,af->conf.rate);
     i_bps=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->i_bps*8;
     fmt=((sh_audio_t *)((af_stream_t *)af->parent)->parent)->wtag;
     if(fmt==0x55 || fmt==0x50) {/* MP3 */
@@ -511,19 +521,17 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+  if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-    mp_aframe_t* c = data; /* Current working data */
-    echo3d(af->setup,(float*)c->audio, c->len);
-    bandext(af->setup,(float*)c->audio, c->len);
-    return c;
+    mp_aframe_t* out,*tmp;
+    tmp=echo3d(af->setup,in);
+    out=bandext(af->setup,tmp);
+    free_mp_aframe(tmp);
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -534,10 +542,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_crystality_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   set_defaults(af->setup);
   init_crystality(af->setup,44100);
   left0p = right0p = 0;

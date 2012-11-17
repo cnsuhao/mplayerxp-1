@@ -12,6 +12,10 @@
 #define	_AFLIB_H	1
 
 #include "mp_config.h"
+#include "xmpcore/mp_aframe.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* Implementation of routines used for DSP */
 
 /* Size of floating point type used in routines */
@@ -145,15 +149,28 @@ static inline float bandpass(bandp_t *_this,float sample)
     return fret;
 }
 
+/*4th order IIR Butterworth filter */
+static inline float IIR(float in,const float *w,float *q) {
+    float h0 = q[0];
+    float h1 = q[1];
+    float hn = in-h0*w[0]-h1*w[1];
+    q[1]=h0;
+    q[0]=hn;
+    return hn+h0*w[2]+h1*w[3];
+}
+
 /* some mmx_optimized stuff */
-extern void (* __FASTCALL__ change_bps)(const any_t* in, any_t* out, unsigned len, unsigned inbps, unsigned outbps,int final);
-extern void (* __FASTCALL__ float2int)(const any_t* in, any_t* out, int len, int bps,int final);
-extern void (* __FASTCALL__ int2float)(const any_t* in, any_t* out, int len, int bps,int final);
+extern void (* __FASTCALL__ change_bps)(const mp_aframe_t* in, mp_aframe_t* out);
+extern void (* __FASTCALL__ float2int)(const mp_aframe_t* in, mp_aframe_t* out);
+extern void (* __FASTCALL__ int2float)(const mp_aframe_t* in, mp_aframe_t* out);
 extern int32_t (* __FASTCALL__ FIR_i16)(const int16_t *x,const int16_t *w);
 extern float (* __FASTCALL__ FIR_f32)(const float *x,const float *w);
 
 #ifndef SATURATE
 #define SATURATE(x,_min,_max) {if((x)<(_min)) (x)=(_min); else if((x)>(_max)) (x)=(_max);}
+#endif
+#ifdef __cplusplus
+}
 #endif
 
 #endif

@@ -25,7 +25,7 @@
 // Data for specific instances of this filter
 typedef struct af_pan_s
 {
-  float level[AF_NCH][AF_NCH];	// Gain level for each channel
+    float level[AF_NCH][AF_NCH];	// Gain level for each channel
 }af_pan_t;
 
 // Initialization and runtime control
@@ -86,79 +86,67 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	     " between 1 and %i. Current value is %i\n",AF_NCH,((int*)arg)[0]);
       return MPXP_Error;
     }
-    af->data->nch=((int*)arg)[0];
+    af->conf.nch=((int*)arg)[0];
     return MPXP_Ok;
   case AF_CONTROL_PAN_NOUT | AF_CONTROL_GET:
-    *(int*)arg = af->data->nch;
+    *(int*)arg = af->conf.nch;
     return MPXP_Ok;
   default: break;
   }
   return MPXP_Unknown;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
-    af_pan_t* s = af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->format = MPAF_F|MPAF_NE|4;
-    af->mul.n        = af->data->nch;
-    af->mul.d	     = arg->nch;
+    af->conf.rate   = arg->rate;
+    af->conf.format = MPAF_F|MPAF_NE|4;
+    af->mul.n       = af->conf.nch;
+    af->mul.d       = arg->nch;
 
-    if((af->data->format != arg->format)) return MPXP_False;
-    return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->data->nch);
+    if((af->conf.format != arg->format)) return MPXP_False;
+    return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->conf.nch);
 }
 
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data->audio)
-    mp_free(af->data->audio);
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+  if(af->setup) mp_free(af->setup);
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
-  mp_aframe_t*    c    = data;		// Current working data
-  mp_aframe_t*	l    = af->data;	// Local data
-  af_pan_t*  	s    = af->setup; 	// Setup for this instance
-  float*   	in   = c->audio;	// Input audio data
-  float*   	out  = NULL;		// Output audio data
-  float*	end  = in+c->len/4; 	// End of loop
-  int		nchi = c->nch;		// Number of input channels
-  int		ncho = l->nch;		// Number of output channels
-  register int  j,k;
+    const mp_aframe_t*c= ind;		// Current working data
+    af_pan_t*	s    = af->setup; 	// Setup for this instance
+    float*	in   = c->audio;	// Input audio data
+    float*	out  = NULL;		// Output audio data
+    float*	end  = in+c->len/4; 	// End of loop
+    unsigned	nchi = c->nch;		// Number of input channels
+    unsigned	ncho = af->conf.nch;	// Number of output channels
+    unsigned	j,k;
 
-  if(MPXP_Ok != RESIZE_LOCAL_BUFFER(af,data))
-    return NULL;
+    mp_aframe_t* outd = new_mp_aframe_genome(ind);
+    outd->len = af_lencalc(af->mul,ind);
+    mp_alloc_aframe(outd);
 
-  out = l->audio;
-  // Execute panning
-  // FIXME: Too slow
-  while(in < end){
-    for(j=0;j<ncho;j++){
-      register float  x   = 0.0;
-      register float* tin = in;
-      for(k=0;k<nchi;k++)
-	x += tin[k] * s->level[j][k];
-      out[j] = x;
+    out = outd->audio;
+    // Execute panning
+    // FIXME: Too slow
+    while(in < end){
+	for(j=0;j<ncho;j++){
+	    float  x   = 0.0;
+	    float* tin = in;
+	    for(k=0;k<nchi;k++) x += tin[k] * s->level[j][k];
+	    out[j] = x;
+	}
+	out+= ncho;
+	in+= nchi;
     }
-    out+= ncho;
-    in+= nchi;
-  }
 
-  // Set output data
-  c->audio = l->audio;
-  c->len   = (c->len*af->mul.n)/af->mul.d;
-  c->nch   = l->nch;
-
-  return c;
+    return outd;
 }
 
 // Allocate memory and set function pointers
@@ -169,10 +157,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_pan_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   // Set initial pan to pass-through.
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

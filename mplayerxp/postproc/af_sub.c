@@ -51,24 +51,24 @@ typedef struct af_sub_s
   unsigned ch;		// Channel number which to insert the filtered data
 }af_sub_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_sub_t* s   = af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = ((mp_aframe_t*)arg)->rate;
-    af->data->nch    = max(s->ch+1,((mp_aframe_t*)arg)->nch);
-    af->data->format = MPAF_F|MPAF_NE|4;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = max(s->ch+1,arg->nch);
+    af->conf.format = MPAF_F|MPAF_NE|4;
 
     // Design low-pass filter
     s->k = 1.0;
     if((-1 == szxform(sp[0].a, sp[0].b, Q, s->fc,
-       (float)af->data->rate, &s->k, s->w[0])) ||
+       (float)af->conf.rate, &s->k, s->w[0])) ||
        (-1 == szxform(sp[1].a, sp[1].b, Q, s->fc,
-       (float)af->data->rate, &s->k, s->w[1])))
+       (float)af->conf.rate, &s->k, s->w[1])))
       return MPXP_Error;
-    return af_test_output(af,(mp_aframe_t*)arg);
+    return af_test_output(af,arg);
 }
 // Initialization and runtime control
 static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
@@ -120,43 +120,32 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+  if(af->setup) mp_free(af->setup);
 }
-
-#ifndef IIR
-#define IIR(in,w,q,out) { \
-  float h0 = (q)[0]; \
-  float h1 = (q)[1]; \
-  float hn = (in) - h0 * (w)[0] - h1 * (w)[1];  \
-  out = hn + h0 * (w)[2] + h1 * (w)[3];	 \
-  (q)[1] = h0; \
-  (q)[0] = hn; \
-}
-#endif
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
 {
-  mp_aframe_t*    c   = data;	 // Current working data
-  af_sub_t*  	s   = af->setup; // Setup for this instance
-  float*   	a   = c->audio;	 // Audio data
-  int		len = c->len/4;	 // Number of samples in current audio block
-  int		nch = c->nch;	 // Number of channels
-  int		ch  = s->ch;	 // Channel in which to insert the sub audio
-  register int  i;
+    af_sub_t*	s   = af->setup; // Setup for this instance
+    float*	in  = ind->audio;// Audio data
+    unsigned	len = ind->len/4;// Number of samples in current audio block
+    unsigned	nch = ind->nch;	 // Number of channels
+    unsigned	ch  = s->ch;	 // Channel in which to insert the sub audio
+    unsigned	i;
 
-  // Run filter
-  for(i=0;i<len;i+=nch){
-    // Average left and right
-    register float x = 0.5 * (a[i] + a[i+1]);
-    IIR(x * s->k, s->w[0], s->q[0], x);
-    IIR(x , s->w[1], s->q[1], a[i+ch]);
-  }
+    mp_aframe_t* outd = new_mp_aframe_genome(ind);
+    mp_alloc_aframe(outd);
+    float*	out = outd->audio;	 // Audio data
 
-  return c;
+    // Run filter
+    for(i=0;i<len;i+=nch){
+	// Average left and right
+	float x = 0.5 * (in[i] + in[i+1]);
+	x=IIR(x*s->k,s->w[0],s->q[0]);
+	out[i+ch]=IIR(x,s->w[1],s->q[1]);
+    }
+
+  return outd;
 }
 
 // Allocate memory and set function pointers
@@ -168,10 +157,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=s=mp_calloc(1,sizeof(af_sub_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
   // Set default values
   s->ch = 5;  	 // Channel nr 6
   s->fc = 60; 	 // Cutoff frequency 60Hz

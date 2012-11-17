@@ -68,23 +68,22 @@ typedef struct af_volume_s
     } mem[NSAMPLES];
 }af_volnorm_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const mp_aframe_t* arg)
+static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
 {
-    af_volnorm_t* s   = (af_volnorm_t*)af->setup;
     // Sanity check
     if(!arg) return MPXP_Error;
 
-    af->data->rate   = arg->rate;
-    af->data->nch    = arg->nch;
+    af->conf.rate   = arg->rate;
+    af->conf.nch    = arg->nch;
 
     if(!(mpaf_testa(arg->format,MPAF_F|MPAF_NE) ||
 	mpaf_testa(arg->format,MPAF_SI|MPAF_NE)))
 	return MPXP_Error;
 
     if(mpaf_testa(arg->format,MPAF_F|MPAF_NE))
-	af->data->format = MPAF_F|MPAF_NE|4;
+	af->conf.format = MPAF_F|MPAF_NE|4;
     else
-	af->data->format = MPAF_SI|MPAF_NE|2;
+	af->conf.format = MPAF_SI|MPAF_NE|2;
     return af_test_output(af,arg);
 }
 // Initialization and runtime control
@@ -112,207 +111,196 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->data)
-    mp_free(af->data);
-  if(af->setup)
-    mp_free(af->setup);
+    if(af->setup) mp_free(af->setup);
 }
 
-static void __FASTCALL__ method1_int16(af_volnorm_t *s, mp_aframe_t *c,int final)
+static mp_aframe_t* __FASTCALL__ method1_int16(af_volnorm_t *s,const mp_aframe_t *c)
 {
-  register int i = 0;
-  int16_t *data = (int16_t*)c->audio;	// Audio data
-  int len = c->len/2;		// Number of samples
-  float curavg = 0.0, newavg, neededmul;
-  int tmp;
+    unsigned i = 0;
+    int16_t *data = (int16_t*)c->audio;	// Audio data
+    unsigned len = c->len/2;		// Number of samples
+    float curavg = 0.0, newavg, neededmul;
+    int tmp;
+    mp_aframe_t* out = new_mp_aframe_genome(c);
+    mp_alloc_aframe(out);
 
-  for (i = 0; i < len; i++)
-  {
-    tmp = data[i];
-    curavg += tmp * tmp;
-  }
-  curavg = sqrt(curavg / (float) len);
+    for (i = 0; i < len; i++) {
+	tmp = data[i];
+	curavg += tmp * tmp;
+    }
+    curavg = sqrt(curavg / (float) len);
 
-  // Evaluate an adequate 'mul' coefficient based on previous state, current
-  // samples level, etc
+    // Evaluate an adequate 'mul' coefficient based on previous state, current
+    // samples level, etc
 
-  if (curavg > SIL_S16)
-  {
-    neededmul = MID_S16 / (curavg * s->mul);
-    s->mul = (1.0 - SMOOTH_MUL) * s->mul + SMOOTH_MUL * neededmul;
+    if (curavg > SIL_S16) {
+	neededmul = MID_S16 / (curavg * s->mul);
+	s->mul = (1.0 - SMOOTH_MUL) * s->mul + SMOOTH_MUL * neededmul;
 
-    // clamp the mul coefficient
-    s->mul = clamp(s->mul, MUL_MIN, MUL_MAX);
-  }
-
-  // Scale & clamp the samples
-  for (i = 0; i < len; i++)
-  {
-    tmp = s->mul * data[i];
-    tmp = clamp(tmp, SHRT_MIN, SHRT_MAX);
-    data[i] = tmp;
-  }
-
-  // Evaulation of newavg (not 100% accurate because of values clamping)
-  newavg = s->mul * curavg;
-
-  // Stores computed values for future smoothing
-  s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
-}
-
-static void __FASTCALL__ method1_float(af_volnorm_t *s, mp_aframe_t *c,int final)
-{
-  register int i = 0;
-  float *data = (float*)c->audio;	// Audio data
-  int len = c->len/4;		// Number of samples
-  float curavg = 0.0, newavg, neededmul, tmp;
-
-  for (i = 0; i < len; i++)
-  {
-    tmp = data[i];
-    curavg += tmp * tmp;
-  }
-  curavg = sqrt(curavg / (float) len);
-
-  // Evaluate an adequate 'mul' coefficient based on previous state, current
-  // samples level, etc
-
-  if (curavg > SIL_FLOAT) // FIXME
-  {
-    neededmul = MID_FLOAT / (curavg * s->mul);
-    s->mul = (1.0 - SMOOTH_MUL) * s->mul + SMOOTH_MUL * neededmul;
-
-    // clamp the mul coefficient
-    s->mul = clamp(s->mul, MUL_MIN, MUL_MAX);
-  }
-
-  // Scale & clamp the samples
-  for (i = 0; i < len; i++)
-    data[i] *= s->mul;
-
-  // Evaulation of newavg (not 100% accurate because of values clamping)
-  newavg = s->mul * curavg;
-
-  // Stores computed values for future smoothing
-  s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
-}
-
-static void __FASTCALL__ method2_int16(af_volnorm_t *s, mp_aframe_t *c,int final)
-{
-  register int i = 0;
-  int16_t *data = (int16_t*)c->audio;	// Audio data
-  int len = c->len/2;		// Number of samples
-  float curavg = 0.0, newavg, avg = 0.0;
-  int tmp, totallen = 0;
-
-  for (i = 0; i < len; i++)
-  {
-    tmp = data[i];
-    curavg += tmp * tmp;
-  }
-  curavg = sqrt(curavg / (float) len);
-
-  // Evaluate an adequate 'mul' coefficient based on previous state, current
-  // samples level, etc
-  for (i = 0; i < NSAMPLES; i++)
-  {
-    avg += s->mem[i].avg * (float)s->mem[i].len;
-    totallen += s->mem[i].len;
-  }
-
-  if (totallen > MIN_SAMPLE_SIZE)
-  {
-    avg /= (float)totallen;
-    if (avg >= SIL_S16)
-    {
-	s->mul = MID_S16 / avg;
+	// clamp the mul coefficient
 	s->mul = clamp(s->mul, MUL_MIN, MUL_MAX);
     }
-  }
 
-  // Scale & clamp the samples
-  for (i = 0; i < len; i++)
-  {
-    tmp = s->mul * data[i];
-    tmp = clamp(tmp, SHRT_MIN, SHRT_MAX);
-    data[i] = tmp;
-  }
+    // Scale & clamp the samples
+    for (i = 0; i < len; i++) {
+	tmp = s->mul * data[i];
+	tmp = clamp(tmp, SHRT_MIN, SHRT_MAX);
+	((int16_t *)out->audio)[i] = tmp;
+    }
 
-  // Evaulation of newavg (not 100% accurate because of values clamping)
-  newavg = s->mul * curavg;
+    // Evaulation of newavg (not 100% accurate because of values clamping)
+    newavg = s->mul * curavg;
 
-  // Stores computed values for future smoothing
-  s->mem[s->idx].len = len;
-  s->mem[s->idx].avg = newavg;
-  s->idx = (s->idx + 1) % NSAMPLES;
+    // Stores computed values for future smoothing
+    s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
+    return out;
 }
 
-static void __FASTCALL__ method2_float(af_volnorm_t *s, mp_aframe_t *c,int final)
+static mp_aframe_t* __FASTCALL__ method1_float(af_volnorm_t *s,const mp_aframe_t *c)
 {
-  register int i = 0;
-  float *data = (float*)c->audio;	// Audio data
-  int len = c->len/4;		// Number of samples
-  float curavg = 0.0, newavg, avg = 0.0, tmp;
-  int totallen = 0;
+    unsigned	i = 0;
+    float*	data = (float*)c->audio;	// Audio data
+    unsigned	len = c->len/4;		// Number of samples
+    float	curavg = 0.0, newavg, neededmul, tmp;
+    mp_aframe_t*out = new_mp_aframe_genome(c);
+    mp_alloc_aframe(out);
 
-  for (i = 0; i < len; i++)
-  {
-    tmp = data[i];
-    curavg += tmp * tmp;
-  }
-  curavg = sqrt(curavg / (float) len);
+    for (i = 0; i < len; i++) {
+	tmp = data[i];
+	curavg += tmp * tmp;
+    }
+    curavg = sqrt(curavg / (float) len);
 
-  // Evaluate an adequate 'mul' coefficient based on previous state, current
-  // samples level, etc
-  for (i = 0; i < NSAMPLES; i++)
-  {
-    avg += s->mem[i].avg * (float)s->mem[i].len;
-    totallen += s->mem[i].len;
-  }
+    // Evaluate an adequate 'mul' coefficient based on previous state, current
+    // samples level, etc
 
-  if (totallen > MIN_SAMPLE_SIZE)
-  {
-    avg /= (float)totallen;
-    if (avg >= SIL_FLOAT)
-    {
-	s->mul = MID_FLOAT / avg;
+    if (curavg > SIL_FLOAT) {// FIXME
+	neededmul = MID_FLOAT / (curavg * s->mul);
+	s->mul = (1.0 - SMOOTH_MUL) * s->mul + SMOOTH_MUL * neededmul;
+
+	// clamp the mul coefficient
 	s->mul = clamp(s->mul, MUL_MIN, MUL_MAX);
     }
-  }
 
-  // Scale & clamp the samples
-  for (i = 0; i < len; i++)
-    data[i] *= s->mul;
+    // Scale & clamp the samples
+    for (i = 0; i < len; i++)
+	((float*)out->audio)[i] = data[i] * s->mul;
 
-  // Evaulation of newavg (not 100% accurate because of values clamping)
-  newavg = s->mul * curavg;
+    // Evaulation of newavg (not 100% accurate because of values clamping)
+    newavg = s->mul * curavg;
 
-  // Stores computed values for future smoothing
-  s->mem[s->idx].len = len;
-  s->mem[s->idx].avg = newavg;
-  s->idx = (s->idx + 1) % NSAMPLES;
+    // Stores computed values for future smoothing
+    s->lastavg = (1.0 - SMOOTH_LASTAVG) * s->lastavg + SMOOTH_LASTAVG * newavg;
+    return out;
+}
+
+static mp_aframe_t* __FASTCALL__ method2_int16(af_volnorm_t *s,const mp_aframe_t *c)
+{
+    unsigned	i = 0;
+    int16_t*	data = (int16_t*)c->audio;	// Audio data
+    unsigned	len = c->len/2;		// Number of samples
+    float	curavg = 0.0, newavg, avg = 0.0;
+    int		tmp, totallen = 0;
+    mp_aframe_t*out = new_mp_aframe_genome(c);
+    mp_alloc_aframe(out);
+
+    for (i = 0; i < len; i++) {
+	tmp = data[i];
+	curavg += tmp * tmp;
+    }
+    curavg = sqrt(curavg / (float) len);
+
+    // Evaluate an adequate 'mul' coefficient based on previous state, current
+    // samples level, etc
+    for (i = 0; i < NSAMPLES; i++) {
+	avg += s->mem[i].avg * (float)s->mem[i].len;
+	totallen += s->mem[i].len;
+    }
+
+    if (totallen > MIN_SAMPLE_SIZE) {
+	avg /= (float)totallen;
+	if (avg >= SIL_S16) {
+	    s->mul = MID_S16 / avg;
+	    s->mul = clamp(s->mul, MUL_MIN, MUL_MAX);
+	}
+    }
+
+    // Scale & clamp the samples
+    for (i = 0; i < len; i++) {
+	tmp = s->mul * data[i];
+	tmp = clamp(tmp, SHRT_MIN, SHRT_MAX);
+	((int16_t*)out->audio)[i] = tmp;
+    }
+
+    // Evaulation of newavg (not 100% accurate because of values clamping)
+    newavg = s->mul * curavg;
+
+    // Stores computed values for future smoothing
+    s->mem[s->idx].len = len;
+    s->mem[s->idx].avg = newavg;
+    s->idx = (s->idx + 1) % NSAMPLES;
+    return out;
+}
+
+static mp_aframe_t* __FASTCALL__ method2_float(af_volnorm_t *s,const mp_aframe_t *c)
+{
+    unsigned	i = 0;
+    float*	data = (float*)c->audio;	// Audio data
+    unsigned	len = c->len/4;		// Number of samples
+    float	curavg = 0.0, newavg, avg = 0.0, tmp;
+    unsigned	totallen = 0;
+    mp_aframe_t*out = new_mp_aframe_genome(c);
+    mp_alloc_aframe(out);
+
+    for (i = 0; i < len; i++) {
+	tmp = data[i];
+	curavg += tmp * tmp;
+    }
+    curavg = sqrt(curavg / (float) len);
+
+    // Evaluate an adequate 'mul' coefficient based on previous state, current
+    // samples level, etc
+    for (i = 0; i < NSAMPLES; i++) {
+	avg += s->mem[i].avg * (float)s->mem[i].len;
+	totallen += s->mem[i].len;
+    }
+
+    if (totallen > MIN_SAMPLE_SIZE) {
+	avg /= (float)totallen;
+	if (avg >= SIL_FLOAT) {
+	    s->mul = MID_FLOAT / avg;
+	    s->mul = clamp(s->mul, MUL_MIN, MUL_MAX);
+	}
+    }
+
+    // Scale & clamp the samples
+    for (i = 0; i < len; i++) ((float*)out->audio)[i] = data[i] * s->mul;
+
+    // Evaulation of newavg (not 100% accurate because of values clamping)
+     newavg = s->mul * curavg;
+
+    // Stores computed values for future smoothing
+    s->mem[s->idx].len = len;
+    s->mem[s->idx].avg = newavg;
+    s->idx = (s->idx + 1) % NSAMPLES;
+    return out;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, mp_aframe_t* data,int final)
+static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
 {
-  af_volnorm_t *s = af->setup;
+    af_volnorm_t *s = af->setup;
+    mp_aframe_t* out;
 
-  if(af->data->format == (MPAF_SI | MPAF_NE))
-  {
-    if (s->method)
-	method2_int16(s, data,final);
-    else
-	method1_int16(s, data,final);
-  }
-  else if(af->data->format == (MPAF_F | MPAF_NE))
-  {
-    if (s->method)
-	method2_float(s, data,final);
-    else
-	method1_float(s, data,final);
-  }
-  return data;
+    if(af->conf.format == (MPAF_SI | MPAF_NE)) {
+	if (s->method)	out=method2_int16(s, in);
+	else		out=method1_int16(s, in);
+    }
+    else {
+	if (s->method)	out=method2_float(s, in);
+	else		out=method1_float(s, in);
+    }
+    return out;
 }
 
 // Allocate memory and set function pointers
@@ -324,16 +312,13 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->data=mp_calloc(1,sizeof(mp_aframe_t));
   af->setup=mp_calloc(1,sizeof(af_volnorm_t));
-  if(af->data == NULL || af->setup == NULL)
-    return MPXP_Error;
+  if(af->setup == NULL) return MPXP_Error;
 
   ((af_volnorm_t*)af->setup)->mul = MUL_INIT;
   ((af_volnorm_t*)af->setup)->lastavg = MID_S16;
   ((af_volnorm_t*)af->setup)->idx = 0;
-  for (i = 0; i < NSAMPLES; i++)
-  {
+  for (i = 0; i < NSAMPLES; i++) {
      ((af_volnorm_t*)af->setup)->mem[i].len = 0;
      ((af_volnorm_t*)af->setup)->mem[i].avg = 0;
   }
