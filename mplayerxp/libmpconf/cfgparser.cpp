@@ -928,6 +928,7 @@ MPXP_Rc m_config_parse_command_line(m_config_t *config, int argc, char **argv, c
 	if ((no_more_opts == 0) && (*opt == '-') && (*(opt+1) != 0)) /* option */ {
 	    /* remove leading '-' */
 	    char *assign,*item,*parm;
+	    unsigned sz;
 	    opt++;
 
 	    MSG_DBG2( "this_option: %s\n", opt);
@@ -935,9 +936,10 @@ MPXP_Rc m_config_parse_command_line(m_config_t *config, int argc, char **argv, c
 	    item=opt;
 	    assign = strchr(opt,'=');
 	    if(assign) {
-		item = new char [assign-opt];
-		memcpy(item,opt,assign-opt);
-		item[assign-opt]='\0';
+		sz=assign-opt;
+		item = new char [sz+1];
+		memcpy(item,opt,sz);
+		item[sz]='\0';
 		parm = mp_strdup(assign+1);
 	    }
 	    tmp = m_config_set_option(config, item, parm);
