@@ -117,18 +117,6 @@ enum {
     AF_CONTROL_VOLUME_LEVEL	=0x00000C00|AF_CONTROL_FILTER_SPECIFIC, // Set volume level, arg is a float* with the volume for all the channels
     AF_CONTROL_VOLUME_PROBE	=0x00000D00|AF_CONTROL_FILTER_SPECIFIC, // Probed power level for all channels, arg is a float*
     AF_CONTROL_VOLUME_PROBE_MAX	=0x00000E00|AF_CONTROL_FILTER_SPECIFIC, // Maximum probed power level for all channels, arg is a float*
-// Compressor/expander
-    AF_CONTROL_COMP_ON_OFF	=0x00000F00|AF_CONTROL_FILTER_SPECIFIC, // Turn compressor/expander on and off
-    AF_CONTROL_COMP_THRESH	=0x00001000|AF_CONTROL_FILTER_SPECIFIC, // Compression/expansion threshold [dB]
-    AF_CONTROL_COMP_ATTACK	=0x00001100|AF_CONTROL_FILTER_SPECIFIC, // Compression/expansion attack time [ms]
-    AF_CONTROL_COMP_RELEASE	=0x00001200|AF_CONTROL_FILTER_SPECIFIC, // Compression/expansion release time [ms]
-    AF_CONTROL_COMP_RATIO	=0x00001300|AF_CONTROL_FILTER_SPECIFIC, // Compression/expansion gain level [dB]
-// Noise gate
-    AF_CONTROL_GATE_ON_OFF	=0x00001400|AF_CONTROL_FILTER_SPECIFIC, // Turn noise gate on an off
-    AF_CONTROL_GATE_THRESH	=0x00001500|AF_CONTROL_FILTER_SPECIFIC, // Noise gate threshold [dB]
-    AF_CONTROL_GATE_ATTACK	=0x00001600|AF_CONTROL_FILTER_SPECIFIC, // Noise gate attack time [ms]
-    AF_CONTROL_GATE_RELEASE	=0x00001700|AF_CONTROL_FILTER_SPECIFIC, // Noise gate release time [ms]
-    AF_CONTROL_GATE_RANGE	=0x00001800|AF_CONTROL_FILTER_SPECIFIC, // Noise gate release range level [dB]
 // Pan
     AF_CONTROL_PAN_LEVEL	=0x00001900|AF_CONTROL_FILTER_SPECIFIC, // Pan levels, arg is a control_ext with a float*
     AF_CONTROL_PAN_NOUT		=0x00001A00|AF_CONTROL_FILTER_SPECIFIC, // Number of outputs from pan, arg is int*

@@ -12,7 +12,6 @@ SRCS=postprocess.c swscale.c
 SRCS+=af_ao2.c \
       af_center.c \
       af_channels.c \
-      af_comp.c \
       af_crystality.c \
       af_delay.c \
       af_dummy.c \
@@ -22,7 +21,6 @@ SRCS+=af_ao2.c \
       af_extrastereo.c \
       af_ffenc.c \
       af_format.c \
-      af_gate.c \
       af_hrtf.c \
       af_karaoke.c \
       af_lp.c \

@@ -15,7 +15,6 @@ extern ao_data_t* ao_data;
 extern const af_info_t af_info_ao;
 extern const af_info_t af_info_center;
 extern const af_info_t af_info_channels;
-extern const af_info_t af_info_comp;
 extern const af_info_t af_info_crystality;
 extern const af_info_t af_info_dummy;
 extern const af_info_t af_info_delay;
@@ -25,28 +24,26 @@ extern const af_info_t af_info_equalizer;
 extern const af_info_t af_info_eq;
 extern const af_info_t af_info_export;
 extern const af_info_t af_info_extrastereo;
+extern const af_info_t af_info_ffenc;
 extern const af_info_t af_info_format;
-extern const af_info_t af_info_gate;
 extern const af_info_t af_info_hrtf;
+extern const af_info_t af_info_karaoke;
 extern const af_info_t af_info_lp;
 extern const af_info_t af_info_resample;
 extern const af_info_t af_info_pan;
+extern const af_info_t af_info_raw;
 extern const af_info_t af_info_sub;
+extern const af_info_t af_info_scaletempo;
+extern const af_info_t af_info_sinesuppress;
 extern const af_info_t af_info_surround;
 extern const af_info_t af_info_volnorm;
 extern const af_info_t af_info_volume;
-extern const af_info_t af_info_ffenc;
-extern const af_info_t af_info_raw;
-extern const af_info_t af_info_karaoke;
-extern const af_info_t af_info_sinesuppress;
-extern const af_info_t af_info_scaletempo;
 extern const af_info_t af_info_null;
 
 static const af_info_t* filter_list[]={
    &af_info_ao,
    &af_info_center,
    &af_info_channels,
-   &af_info_comp,
    &af_info_crystality,
    &af_info_dummy,
    &af_info_delay,
@@ -58,21 +55,20 @@ static const af_info_t* filter_list[]={
    &af_info_export,
 #endif
    &af_info_extrastereo,
+   &af_info_ffenc,
    &af_info_format,
-   &af_info_gate,
    &af_info_hrtf,
    &af_info_karaoke,
    &af_info_lp,
    &af_info_pan,
+   &af_info_raw,
    &af_info_resample,
+   &af_info_scaletempo,
    &af_info_sinesuppress,
    &af_info_sub,
    &af_info_surround,
    &af_info_volnorm,
    &af_info_volume,
-   &af_info_ffenc,
-   &af_info_scaletempo,
-   &af_info_raw,
    &af_info_null,
    NULL
 };
