@@ -35,7 +35,7 @@ static const config_t xpcore_config[]={
 	{"speed", &mp_conf.playbackspeed_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0.01, 100.0, "sets playback speed factor"},
 	{"benchmark", &mp_conf.benchmark, CONF_TYPE_FLAG, 0, 0, 1, "performs benchmarking to estimate performance of MPlayerXP"},
 	{"test-av", &mp_conf.test_av, CONF_TYPE_FLAG, 0, 0, 1, "test antiviral protection of MPlayerXP"},
-	{"malloc-debug", &mp_conf.malloc_debug, CONF_TYPE_FLAG, 0, 0, 1, "debugs malloc() calls in MPlayerXP"},
+	{"malloc-debug", &mp_conf.malloc_debug, CONF_TYPE_INT, CONF_RANGE, 0, 3, "debugs malloc() calls in MPlayerXP"},
 	{"max-trace", &mp_conf.max_trace, CONF_TYPE_INT, CONF_RANGE, 1, 1024, "maximal number of backtrace stack"},
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };

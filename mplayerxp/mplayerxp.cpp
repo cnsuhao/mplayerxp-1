@@ -1650,6 +1650,30 @@ For future:
   }
   return eof;
 }
+
+static void mpxp_config_malloc(int argc,char *argv[])
+{
+    int i,level;
+    mp_conf.malloc_debug=0;
+    mp_malloc_e flg=MPA_FLG_RANDOMIZER;
+    for(i=0;i<argc;i++) {
+	if(strncmp(argv[i],"-core.malloc-debug",18)==0) {
+	    char *p;
+	    if((p=strchr(argv[i],'='))!=NULL) {
+		mp_conf.malloc_debug=atoi(p+1);
+	    }
+	    switch(mp_conf.malloc_debug) {
+		default:
+		case 0: flg=MPA_FLG_RANDOMIZER; break;
+		case 1: flg=MPA_FLG_BOUNDS_CHECK; break;
+		case 2: flg=MPA_FLG_BEFORE_CHECK; break;
+		case 3: flg=MPA_FLG_BACKTRACE; break;
+	    }
+	    break;
+	}
+    }
+    mp_init_malloc(argv[0],1000,10,flg);
+}
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
@@ -1669,11 +1693,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 
-    mp_conf.malloc_debug=0;
-    for(i=0;i<argc;i++) if(strcmp(argv[i],"-core.malloc-debug")==0) { mp_conf.malloc_debug=1; break; }
-    mp_init_malloc(argv[0],1000,10,mp_conf.malloc_debug?MPA_FLG_BACKTRACE:MPA_FLG_RANDOMIZER);
-//    mp_init_malloc(argv[0],1000,10,MPA_FLG_BOUNDS_CHECK);
-//    mp_init_malloc(argv[0],1000,10,MPA_FLG_BEFORE_CHECK);
+    mpxp_config_malloc(argc,argv);
 
     // Yes, it really must be placed in stack or in very secret place
     xmpcore::PointerProtector<MPXPSecureKeys> ptr_protector;
