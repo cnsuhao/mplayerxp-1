@@ -207,6 +207,12 @@ static MPXP_Rc mpxp_test_antiviral_protection(int* verbose)
     return MPXP_Virus;
 }
 
+static volatile void __attribute__ ((noinline)) mpxp_test_backtrace(void) {
+    any_t* caller = get_caller_address();
+    goto *caller;
+    kill(getpid(), SIGILL);
+}
+
 unsigned xp_num_cpu;
 static unsigned get_number_cpu(void) {
 #ifdef _OPENMP
@@ -1679,6 +1685,7 @@ static void mpxp_config_malloc(int argc,char *argv[])
 \******************************************/
 int MPlayerXP(int argc,char* argv[], char *envp[]){
     mpxp_init_antiviral_protection(1);
+    mpxp_test_backtrace();
     int i;
     stream_t* stream=NULL;
     int stream_dump_type=0;
