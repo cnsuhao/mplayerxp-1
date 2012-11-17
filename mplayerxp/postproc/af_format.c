@@ -115,7 +115,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 
 static void print_fmts(const char *pfx,const mp_aframe_t* in,const mp_aframe_t*out) {
     char buff[4096],buff2[4096];
-    MSG_INFO("%s in_fmt=%s[len=%i] -> out_fmt=%s[len=%i]\n"
+    MSG_V("%s in_fmt=%s[len=%i] -> out_fmt=%s[len=%i]\n"
     ,pfx
     ,mpaf_fmt2str(in->format,buff,sizeof(buff))
     ,in->len
