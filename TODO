@@ -1,5 +1,22 @@
 TODO for mplayerxp:
 
+- use licences for anti-viral protection.
+  Idea:
+   Each pointer on context of driver must be crypted to make context substitution
+   more than visible. Example:
+     dec_video: mpvc_init(...,uint32_t pin) {
+		...
+		if(vd_driver->id!=RND_VDRIVER_ID) exit(0); // minimal test
+		...
+		license=check_pin(Module_VideoDecoder,pin);
+		...
+     vd_ffmpeg: init(sh_video_t *sh,any_t* libinput,uint32_t license) {
+		    ...
+		    PointerProtector lavc_guard(license);
+		    priv->lavc_ctx = lavc_guard.protect(avcodec_alloc_context3(priv->codec));
+		    ...
+		    if(avcodec_open2(lavc_guard.unprotect(priv->ctx),priv->codec,NULL)<0){
+		    ...
 - use c++ instead of plain c
 - use libavfilter instead of some af_* vf_*
 - test frame-dropping
