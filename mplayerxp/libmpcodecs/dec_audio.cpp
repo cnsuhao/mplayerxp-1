@@ -188,12 +188,12 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
     // input format: same as codec's output format:
     afs->input.rate   = in_samplerate;
     afs->input.nch    = in_channels;
-    afs->input.format = mpaf_format_decode(in_format);
+    afs->input.format = afmt2mpaf(in_format);
 
     // output format: same as ao driver's input format (if missing, fallback to input)
     afs->output.rate   = *out_samplerate ? *out_samplerate : afs->input.rate;
     afs->output.nch    = *out_channels ? *out_channels : afs->input.nch;
-    if(*out_format)	afs->output.format = mpaf_format_decode(*out_format);
+    if(*out_format)	afs->output.format = afmt2mpaf(*out_format);
     else		afs->output.format = afs->input.format;
 
     // filter config:
@@ -210,7 +210,7 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 
     *out_samplerate=afs->output.rate;
     *out_channels=afs->output.nch;
-    *out_format=mpaf_format_encode(afs->output.format);
+    *out_format=mpaf2afmt(afs->output.format);
 
     sh_audio->af_bps = afs->output.rate*afs->output.nch*(afs->output.format&MPAF_BPS_MASK);
 
@@ -235,19 +235,19 @@ MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
     // input format: same as codec's output format:
     afs->input.rate   = in_samplerate;
     afs->input.nch    = in_channels;
-    afs->input.format = mpaf_format_decode(in_format);
+    afs->input.format = afmt2mpaf(in_format);
 
     // output format: same as ao driver's input format (if missing, fallback to input)
     afs->output.rate   = out_samplerate ? out_samplerate : afs->input.rate;
     afs->output.nch    = out_channels ? out_channels : afs->input.nch;
-    afs->output.format = mpaf_format_decode(out_format ? out_format : afs->input.format);
+    afs->output.format = afmt2mpaf(out_format ? out_format : afs->input.format);
 
     // filter config:
     memcpy(&afs->cfg,&af_cfg,sizeof(af_cfg_t));
 
     MSG_V("Building audio filter chain for %dHz/%dch/%dbit (%s) -> %dHz/%dch/%dbit (%s)...\n",
-	afs->input.rate,afs->input.nch,(afs->input.format&MPAF_BPS_MASK)*8,ao_format_name(mpaf_format_encode(afs->input.format)),
-	afs->output.rate,afs->output.nch,(afs->output.format&MPAF_BPS_MASK)*8,ao_format_name(mpaf_format_encode(afs->output.format)));
+	afs->input.rate,afs->input.nch,(afs->input.format&MPAF_BPS_MASK)*8,ao_format_name(mpaf2afmt(afs->input.format)),
+	afs->output.rate,afs->output.nch,(afs->output.format&MPAF_BPS_MASK)*8,ao_format_name(mpaf2afmt(afs->output.format)));
 
     // let's autoprobe it!
     if(MPXP_Ok != RND_RENAME7(af_init)(afs,1)){
@@ -331,7 +331,7 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
     mp_aframe_t* pafd; // filter output
     afd=new_mp_aframe(	sh_audio->rate,
 			sh_audio->nch,
-			mpaf_format_decode(sh_audio->afmt)
+			afmt2mpaf(sh_audio->afmt)
 			,0); // xp_idx
     afd->audio=buf;
     afd->len=len;

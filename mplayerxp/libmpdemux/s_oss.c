@@ -99,7 +99,7 @@ static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char 
 	afd.rate=oss_priv->samplerate;
 	afd.nch=oss_priv->nchannels;
 	afd.format=oss_priv->sampleformat;
-	oss_fmt=mpaf_format_encode(oss_priv->sampleformat);
+	oss_fmt=mpaf2afmt(oss_priv->sampleformat);
 	tmp=oss_fmt;
 	if(ioctl(stream->fd, SNDCTL_DSP_SETFMT, &oss_fmt)<0)
 	    MSG_ERR("[s_oss] Can't set format %s (will use %s)\n",ao_format_name(tmp),ao_format_name(oss_fmt));

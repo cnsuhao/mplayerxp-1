@@ -117,7 +117,7 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const af_conf_t* ar
     if(!arg) return MPXP_Error;
     s->rate = af->conf.rate = find_best_rate(arg->rate);
     s->nch = af->conf.nch  = find_best_ch(arg->nch);
-    s->format = af->conf.format = mpaf_format_decode(find_best_fmt(mpaf_format_encode(arg->format)));
+    s->format = af->conf.format = afmt2mpaf(find_best_fmt(mpaf2afmt(arg->format)));
     return af_test_output(af,arg);
 }
 

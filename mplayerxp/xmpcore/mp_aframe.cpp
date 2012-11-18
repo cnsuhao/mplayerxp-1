@@ -10,7 +10,7 @@
 enum { AFMT_AF_FLAGS=0x70000000 };
 
 /* Decodes the format from mplayer format to libaf format */
-mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned ifmt)
+mpaf_format_e __FASTCALL__ afmt2mpaf(unsigned ifmt)
 {
     mpaf_format_e ofmt = mpaf_format_e(0);
     // Check input ifmt
@@ -47,7 +47,7 @@ mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned ifmt)
 }
 
 /* Encodes the format from libaf format to mplayer (OSS) format */
-unsigned __FASTCALL__ mpaf_format_encode(mpaf_format_e fmt)
+unsigned __FASTCALL__ mpaf2afmt(mpaf_format_e fmt)
 {
     switch(fmt&MPAF_SPECIAL_MASK) {
 	case 0: // PCM:

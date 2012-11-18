@@ -109,7 +109,7 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg
     /* correct in format */
     af->conf.rate   = arg->rate;
     af->conf.nch    = arg->nch;
-    af->conf.format = mpaf_format_decode(find_atag(s->cname)<<16);
+    af->conf.format = afmt2mpaf(find_atag(s->cname)<<16);
     MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n"
 	,af->conf.rate,af->conf.nch,af->conf.format);
     return MPXP_Ok;

@@ -217,9 +217,9 @@ static MPXP_Rc init(sh_audio_t *sh)
 #endif
     /* Set the maximal quality */
     /* This is useful for expesive audio cards */
-    if(af_query_fmt(sh->afilter,mpaf_format_decode(AFMT_FLOAT32)) == MPXP_Ok ||
-	af_query_fmt(sh->afilter,mpaf_format_decode(NeAAC_FMT32)) == MPXP_Ok ||
-	af_query_fmt(sh->afilter,mpaf_format_decode(NeAAC_FMT24)) == MPXP_Ok) {
+    if(af_query_fmt(sh->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok ||
+	af_query_fmt(sh->afilter,afmt2mpaf(NeAAC_FMT32)) == MPXP_Ok ||
+	af_query_fmt(sh->afilter,afmt2mpaf(NeAAC_FMT24)) == MPXP_Ok) {
 	    sh->afmt=AFMT_FLOAT32;
 	    NeAAC_conf->outputFormat=FAAD_FMT_FLOAT;
     } else {

@@ -137,9 +137,9 @@ MPXP_Rc preinit(sh_audio_t *sh)
 #define DCA_FMT24 AFMT_S24_LE
 #endif
     sh->afmt=bps2afmt(2);
-    if(	af_query_fmt(sh->afilter,mpaf_format_decode(AFMT_FLOAT32)) == MPXP_Ok||
-	af_query_fmt(sh->afilter,mpaf_format_decode(DCA_FMT32)) == MPXP_Ok ||
-	af_query_fmt(sh->afilter,mpaf_format_decode(DCA_FMT24)) == MPXP_Ok)
+    if(	af_query_fmt(sh->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok||
+	af_query_fmt(sh->afilter,afmt2mpaf(DCA_FMT32)) == MPXP_Ok ||
+	af_query_fmt(sh->afilter,afmt2mpaf(DCA_FMT24)) == MPXP_Ok)
     {
 	sh->afmt=AFMT_FLOAT32;
     }

@@ -56,8 +56,8 @@ extern "C" {
 #endif
 
 /* Decodes the format from mplayer format to libaf format */
-extern mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned format);
-extern unsigned __FASTCALL__      mpaf_format_encode(mpaf_format_e fmt);
+extern mpaf_format_e __FASTCALL__ afmt2mpaf(unsigned format);
+extern unsigned __FASTCALL__      mpaf2afmt(mpaf_format_e fmt);
 extern char* __FASTCALL__         mpaf_fmt2str(mpaf_format_e format, char* str, size_t size);
 extern mpaf_format_e __FASTCALL__ mpaf_str2fmt(const char *str);
 
