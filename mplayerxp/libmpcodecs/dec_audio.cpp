@@ -337,7 +337,6 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
     afd->len=len;
     pafd=RND_RENAME8(af_play)(sh_audio->afilter,afd);
     afd->audio=NULL; // fake no buffer
-    free_mp_aframe(afd);
 
     if(!pafd) {
 	MSG_V("decaudio: filter error\n");
@@ -357,7 +356,8 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
 	sh_audio->af_pts = *pts+(float)cp_size/(float)sh_audio->af_bps;
 	MSG_DBG2("decaudio: afilter->cache %i bytes %f pts\n",cp_tile,*pts);
     } else sh_audio->af_buffer_len=0;
-    free_mp_aframe(pafd);
+    if(pafd!=afd) free_mp_aframe(pafd);
+    free_mp_aframe(afd);
     return cp_size;
 }
 
