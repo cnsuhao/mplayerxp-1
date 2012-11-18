@@ -288,9 +288,12 @@ test -z "$libdir" && libdir="."
 fi
 
 srcdir=`pwd`
+cd ..
+topdir=`pwd`
+cd $srcdir
+
 #checking for pkg-config
 test $($pkg_config --version 2>/dev/null) || die "no pkg-config found"
-
 #############################################################################
 enabled profile && disable fastcall
 print_config __USE mp_config.h mp_config.mak fastcall
@@ -1117,6 +1120,31 @@ cat > help_mp.h << EOF
 #include "nls/help_mp-en.h"
 EOF
 
+echo "Creating mp_conf_lavc.h"
+cat > mp_conf_lavc.h << EOF
+#ifndef __MP_CONF_LAVC_H_INCLUDED__
+#define __MP_CONF_LAVC_H_INCLUDED__ 1
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define UINT64_C __UINT64_C
+#define FF_API_OLD_DECODE_AUDIO 1
+#include "$srcdir/../ffmpeg/libavcodec/avcodec.h"
+#include "$srcdir/../ffmpeg/libpostproc/postprocess.h"
+#include "$srcdir/../ffmpeg/libswscale/swscale.h"
+#include "$srcdir/../ffmpeg/libswscale/rgb2rgb.h"
+#include "$srcdir/../ffmpeg/libavutil/audioconvert.h"
+#include "$srcdir/../ffmpeg/libswresample/swresample.h"
+#include "$srcdir/../ffmpeg/libavformat/riff.h"
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+EOF
 #############################################################################
 
 #FIXME: add something like "Optimizing for: i686 mmx mmx2 sse"

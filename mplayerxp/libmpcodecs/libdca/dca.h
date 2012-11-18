@@ -62,6 +62,9 @@ enum {
     DCA_ADJUST_LEVEL=0x100
 };
 
+typedef int (* dca_resample_t) (float * _f, int16_t * s16);
+typedef int (* dca_resample32_t) (float * _f, float * s16);
+
 extern dca_state_t * dca_init (uint32_t mm_accel);
 extern int dca_syncinfo (dca_state_t *state, uint8_t * buf, int * flags,
 		  int * sample_rate, int * bit_rate, int *frame_length);
@@ -73,8 +76,8 @@ extern int dca_blocks_num (dca_state_t * state);
 extern int dca_block (dca_state_t * state);
 extern sample_t * dca_samples (dca_state_t * state);
 extern void dca_free (dca_state_t * state);
-extern any_t* dca_resample_init(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
-extern any_t* dca_resample_init_float(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern dca_resample_t dca_resample_init(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
+extern dca_resample32_t dca_resample_init_float(dca_state_t * state,uint32_t mm_accel,int flags,int chans);
 extern int (*dca_resample) (float * _f, int16_t * s16);
 extern int (*dca_resample32) (float * _f, float * s16);
 

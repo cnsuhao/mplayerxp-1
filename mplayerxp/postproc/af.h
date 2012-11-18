@@ -8,10 +8,6 @@
 #include "xmpcore/xmp_enums.h"
 #include "xmpcore/mp_aframe.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct af_instance_s;
 
 // Fraction, used to calculate buffer lengths
@@ -165,14 +161,14 @@ unsigned __FASTCALL__ af_lencalc(frac_t mul,const mp_aframe_t* data);
 
 /* Helper function used to convert to gain value from dB. Returns
    MPXP_Ok if of and MPXP_Error if fail */
-int __FASTCALL__ af_from_dB(int n, float* in, float* out, float k, float mi, float ma);
+MPXP_Rc __FASTCALL__ af_from_dB(int n, float* in, float* out, float k, float mi, float ma);
 /* Helper function used to convert from gain value to dB. Returns
    MPXP_Ok if of and MPXP_Error if fail */
-int __FASTCALL__ af_to_dB(int n, float* in, float* out, float k);
+MPXP_Rc __FASTCALL__ af_to_dB(int n, float* in, float* out, float k);
 /* Helper function used to convert from ms to sample time*/
-int __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, float ma);
+MPXP_Rc __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, float ma);
 /* Helper function used to convert from sample time to ms */
-int __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate);
+MPXP_Rc __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate);
 /* Helper function for testing the output format */
 MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const af_conf_t* out);
 
@@ -188,10 +184,6 @@ MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch);
 
 /* print out configuration of filter's chain */
 extern void af_showconf(af_instance_t *first);
-
-#ifdef __cplusplus
-}
-#endif
 
 #ifndef __cplusplus
 /* Some other useful macro definitions*/

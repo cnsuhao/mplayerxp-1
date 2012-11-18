@@ -5,10 +5,6 @@
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct vf_instance_s;
 struct vf_priv_s;
 
@@ -142,8 +138,5 @@ void vf_help();
 void __FASTCALL__ vf_uninit_filter(vf_instance_t* vf);
 void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf);
 void __FASTCALL__ vf_showlist(vf_instance_t* vf);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

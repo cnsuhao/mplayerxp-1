@@ -1,14 +1,14 @@
 include ../../mp_config.mak
 
-CXXSRCS = menu.cpp
-
-SRCS = menu_cmdlist.c  \
-       menu_pt.c \
-       menu_list.c  \
-       menu_filesel.c \
-       menu_txt.c \
-       menu_console.c \
-       menu_param.c 
+SRCS=
+CXXSRCS = menu.cpp \
+       menu_cmdlist.cpp \
+       menu_pt.cpp \
+       menu_list.cpp  \
+       menu_filesel.cpp \
+       menu_txt.cpp \
+       menu_console.cpp \
+       menu_param.cpp
 OBJS=$(SRCS:.c=.o)
 CXXOBJS=$(CXXSRCS:.cpp=.o)
 

@@ -6,41 +6,70 @@ SUBDIRS = libmenu
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-CXXSRCS=af.cpp aflib.cpp af_export.cpp vf.cpp
+CXXSRCS=af.cpp aflib.cpp vf.cpp  postprocess.cpp swscale.cpp
 
-SRCS=postprocess.c swscale.c
-SRCS+=af_ao2.c \
-      af_channels.c \
-      af_crystality.c \
-      af_delay.c \
-      af_dyn.c \
-      af_echo3d.c \
-      af_equalizer.c \
-      af_extrastereo.c \
-      af_ffenc.c \
-      af_format.c \
-      af_hrtf.c \
-      af_karaoke.c \
-      af_lp.c \
-      af_null.c \
-      af_pan.c \
-      af_raw.c \
-      af_resample.c \
-      af_scaletempo.c \
-      af_sinesuppress.c \
-      af_sub.c \
-      af_surround.c \
-      af_tools.c \
-      af_volnorm.c \
-      af_volume.c
+CXXSRCS+=af_ao2.cpp \
+      af_channels.cpp \
+      af_crystality.cpp \
+      af_delay.cpp \
+      af_dyn.cpp \
+      af_echo3d.cpp \
+      af_equalizer.cpp \
+      af_export.cpp \
+      af_extrastereo.cpp \
+      af_ffenc.cpp \
+      af_format.cpp \
+      af_hrtf.cpp \
+      af_karaoke.cpp \
+      af_lp.cpp \
+      af_null.cpp \
+      af_pan.cpp \
+      af_raw.cpp \
+      af_resample.cpp \
+      af_scaletempo.cpp \
+      af_sinesuppress.cpp \
+      af_sub.cpp \
+      af_surround.cpp \
+      af_tools.cpp \
+      af_volnorm.cpp \
+      af_volume.cpp
 
-SRCS+=vf_vo.c vf_expand.c vf_flip.c vf_format.c vf_yuy2.c vf_rgb2bgr.c
-SRCS+=vf_rotate.c vf_mirror.c vf_palette.c vf_test.c vf_noise.c vf_yvu9.c
-SRCS+=vf_rectangle.c vf_eq.c vf_dint.c vf_1bpp.c vf_unsharp.c vf_swapuv.c
-SRCS+=vf_il.c vf_smartblur.c vf_perspective.c vf_down3dright.c vf_denoise3d.c
-SRCS+=vf_aspect.c vf_softpulldown.c vf_delogo.c vf_yuvcsp.c vf_pp.c vf_scale.c
-SRCS+=vf_panscan.c vf_raw.c vf_ow.c vf_2xsai.c vf_framestep.c vf_menu.c
-SRCS+=vf_null.c
+CXXSRCS+=vf_1bpp.cpp \
+      vf_2xsai.cpp \
+      vf_aspect.cpp \
+      vf_delogo.cpp \
+      vf_denoise3d.cpp \
+      vf_dint.cpp \
+      vf_down3dright.cpp \
+      vf_eq.cpp \
+      vf_expand.cpp \
+      vf_flip.cpp \
+      vf_format.cpp \
+      vf_framestep.cpp \
+      vf_il.cpp \
+      vf_menu.cpp \
+      vf_mirror.cpp \
+      vf_noise.cpp \
+      vf_null.cpp \
+      vf_ow.cpp \
+      vf_palette.cpp \
+      vf_panscan.cpp \
+      vf_perspective.cpp \
+      vf_pp.cpp \
+      vf_raw.cpp \
+      vf_rectangle.cpp \
+      vf_rgb2bgr.cpp \
+      vf_rotate.cpp \
+      vf_scale.cpp \
+      vf_smartblur.cpp \
+      vf_softpulldown.cpp \
+      vf_swapuv.cpp \
+      vf_test.cpp \
+      vf_unsharp.cpp \
+      vf_vo.cpp \
+      vf_yuvcsp.cpp \
+      vf_yuy2.cpp \
+      vf_yvu9.cpp
 
 OBJS=$(SRCS:.c=.o)
 CXXOBJS=$(CXXSRCS:.cpp=.o)

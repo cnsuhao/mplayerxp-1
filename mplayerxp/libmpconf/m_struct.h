@@ -1,10 +1,6 @@
 #ifndef M_STRUCT_H
 #define M_STRUCT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /// \defgroup OptionsStruct Options struct
 /// \ingroup Options
 /// An API to manipulate structs using m_option.
@@ -71,7 +67,7 @@ m_struct_alloc(const m_struct_t* st);
  *  \return 0 on error, 1 on success.
  */
 int
-m_struct_set(const m_struct_t* st, any_t* obj, char* field, char* param);
+m_struct_set(const m_struct_t* st, any_t* obj,const char* field, char* param);
 
 /// Reset a field (or all if field == NULL) to defaults.
 /** \param st Struct definition.
@@ -105,9 +101,4 @@ const struct m_option*
 m_struct_get_field(const m_struct_t* st,const char* f);
 
 ///@}
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* M_STRUCT_H */

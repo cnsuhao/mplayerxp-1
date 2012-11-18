@@ -10,7 +10,7 @@ struct list_entry {
   list_entry_t* prev;
   list_entry_t* next;
 
-  char* txt;
+  const char* txt;
   char hide;
 };
 
@@ -24,7 +24,7 @@ typedef struct menu_priv_s {
   list_entry_t* current;
   int count;
 
-  char* title;
+  const char* title;
   int x,y;
   int w,h;
   int vspace, minb;
@@ -52,7 +52,7 @@ extern const menu_list_priv_t menu_list_priv_dflt;
   NULL, \
   0, \
 \
-  "MPlayer", \
+  "MPlayerXP", \
   -1,-1, \
   0,0, \
   5, 3, \

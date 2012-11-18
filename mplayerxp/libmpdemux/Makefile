@@ -6,11 +6,13 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
+CXXSRCS=
 SRCS  = s_file.c s_ffmpeg.c s_null.c
 ifeq ($(HAVE_LIBCDIO_CDDA),yes)
-SRCS += s_cdd.c cdda.c
+SRCS += s_cdd.c
+CXXSRCS += cdda.cpp
 ifeq ($(HAVE_STREAMING),yes)
-SRCS += cddb.c
+CXXSRCS += cddb.cpp
 endif
 endif
 ifeq ($(USE_DVDNAV),yes)
@@ -36,7 +38,7 @@ SRCS += mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
 SRCS += demux_avi.c demux_mov.c parse_mp4.c demux_mpg.c demux_viv.c
 SRCS += parse_es.c demux_fli.c demux_ra.c demux_real.c demux_y4m.c yuv4mpeg.c yuv4mpeg_ratio.c
 SRCS += demux_nuv.c demux_film.c demux_roq.c demux_audio.c demux_demuxers.c
-SRCS += mpdemux.c demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
+SRCS += demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
 SRCS += demux_pva.c demux_rawvideo.c demux_smjpeg.c demux_ts.c demux_ty.c demux_nsv.c
 SRCS += demux_mkv.c demux_mpxp64.c sub_cc.c sub_ty.c
 SRCS += demux_lavf.c demux_null.c
@@ -53,7 +55,7 @@ else
 SUBDIRS =
 endif
 
-CXXSRCS = demuxer.cpp demuxer_r.cpp stream.cpp cache2.cpp
+CXXSRCS+= demuxer.cpp demuxer_r.cpp stream.cpp cache2.cpp mpdemux.cpp
 CXXSRCS+= muxer.cpp
 
 OBJS	= $(SRCS:.c=.o)

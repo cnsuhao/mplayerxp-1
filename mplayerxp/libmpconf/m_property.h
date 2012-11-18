@@ -1,9 +1,6 @@
 #ifndef __M_PROPERTY_H_INCLUDED
 #define __M_PROPERTY_H_INCLUDED 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 /// \defgroup Properties
 ///
 /// Properties provide an interface to query and set the state of various
@@ -172,9 +169,6 @@ int m_property_string_ro(m_option_t* prop,int action,any_t* arg, char* str);
 int m_property_bitrate(m_option_t* prop,int action,any_t* arg,int rate);
 
 ///@}
-#ifdef __cplusplus
-}
-#endif
 
 ///@}
 #endif

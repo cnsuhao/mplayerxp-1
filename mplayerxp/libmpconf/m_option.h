@@ -1,10 +1,6 @@
 #ifndef M_OPTION_H
 #define M_OPTION_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /// \defgroup Options
 /// m_option allows to parse, print and copy data of various types.
 /// It is the base of the \ref OptionsStruct, \ref Config and
@@ -65,7 +61,7 @@ typedef struct {
 
 /// The data type used by \ref m_option_type_obj_settings_list.
 typedef struct m_obj_settings {
-    char* name; /// Type of the object.
+    const char* name; /// Type of the object.
     char** attribs; /// NULL terminated array of parameter/value pairs.
 } m_obj_settings_t;
 
@@ -145,8 +141,8 @@ extern const m_obj_params_t m_span_params_def;
 
 /// Option type description
 struct m_option_type {
-    char* name;
-    char* comments; /// Syntax description, etc
+    const char* name;
+    const char* comments; /// Syntax description, etc
     unsigned int size; /// Size needed for the data.
     unsigned int flags; /// See \ref OptionTypeFlags.
 
@@ -399,8 +395,4 @@ m_option_free(const m_option_t* opt,any_t* dst) {
 }
 
 /*@}*/
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* M_OPTION_H */

@@ -15,21 +15,21 @@ mpaf_format_e __FASTCALL__ mpaf_format_decode(unsigned ifmt)
     mpaf_format_e ofmt = mpaf_format_e(0);
     // Check input ifmt
     switch(ifmt){
-	case AFMT_U8: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|1); break;
-	case AFMT_S8: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|1); break;
-	case AFMT_S16_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|2); break;
-	case AFMT_S16_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_SI|2); break;
-	case AFMT_U16_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|2); break;
-	case AFMT_U16_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_US|2); break;
-	case AFMT_S24_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|3); break;
-	case AFMT_S24_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_SI|3); break;
-	case AFMT_U24_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|3); break;
-	case AFMT_U24_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_US|3); break;
-	case AFMT_S32_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_SI|4); break;
-	case AFMT_S32_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_SI|4); break;
-	case AFMT_U32_LE: ofmt = mpaf_format_e(MPAF_LE|MPAF_US|4); break;
-	case AFMT_U32_BE: ofmt = mpaf_format_e(MPAF_BE|MPAF_US|4); break;
-	case AFMT_FLOAT32:ofmt = mpaf_format_e(MPAF_F |MPAF_NE|4); break;
+	case AFMT_U8: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_US|1); break;
+	case AFMT_S8: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_SI|1); break;
+	case AFMT_S16_LE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_SI|2); break;
+	case AFMT_S16_BE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_BE|MPAF_SI|2); break;
+	case AFMT_U16_LE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_US|2); break;
+	case AFMT_U16_BE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_BE|MPAF_US|2); break;
+	case AFMT_S24_LE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_SI|3); break;
+	case AFMT_S24_BE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_BE|MPAF_SI|3); break;
+	case AFMT_U24_LE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_US|3); break;
+	case AFMT_U24_BE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_BE|MPAF_US|3); break;
+	case AFMT_S32_LE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_SI|4); break;
+	case AFMT_S32_BE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_BE|MPAF_SI|4); break;
+	case AFMT_U32_LE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_LE|MPAF_US|4); break;
+	case AFMT_U32_BE: ofmt = mpaf_format_e(MPAF_PCM|MPAF_BE|MPAF_US|4); break;
+	case AFMT_FLOAT32:ofmt = mpaf_format_e(MPAF_PCM|MPAF_F |MPAF_NE|4); break;
 
 	case AFMT_IMA_ADPCM: ofmt = mpaf_format_e(MPAF_IMA_ADPCM|1); break;
 	case AFMT_MPEG:      ofmt = mpaf_format_e(MPAF_MPEG2|1); break;

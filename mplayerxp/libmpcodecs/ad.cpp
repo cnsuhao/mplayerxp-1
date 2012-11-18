@@ -90,6 +90,7 @@ const audio_probe_t* afm_probe_driver(sh_audio_t *sh) {
     unsigned i;
     const audio_probe_t* rv;
     for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
+	MSG_V("Probing: %s\n",mpcodecs_ad_drivers[i]->info->driver_name);
 	if((rv=mpcodecs_ad_drivers[i]->probe(sh,sh->wtag))!=NULL) return rv;
     }
     return NULL;

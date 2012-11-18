@@ -13,9 +13,6 @@
 
 #include "mp_config.h"
 #include "xmpcore/mp_aframe.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 /* Implementation of routines used for DSP */
 
 /* Size of floating point type used in routines */
@@ -169,8 +166,4 @@ extern float (* __FASTCALL__ FIR_f32)(const float *x,const float *w);
 #ifndef SATURATE
 #define SATURATE(x,_min,_max) {if((x)<(_min)) (x)=(_min); else if((x)>(_max)) (x)=(_max);}
 #endif
-#ifdef __cplusplus
-}
-#endif
-
 #endif

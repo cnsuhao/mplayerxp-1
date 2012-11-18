@@ -1259,7 +1259,7 @@ static int mpxp_configure_audio(void) {
     ao_data->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate;
     ao_data->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
     ao_data->format=sh_audio->afmt;
-#if 1
+
     if(mpca_preinit_filters(sh_audio,
 	    // input:
 	    (int)(sh_audio->rate),
@@ -1273,7 +1273,7 @@ static int mpxp_configure_audio(void) {
 		ao_format_name(ao_data->format),ao_data->format
 		,sh_audio->audio_out_minsize);
     }
-#endif
+
     if(MPXP_Ok!=ao_configure(ao_data,mp_conf.force_srate?mp_conf.force_srate:ao_data->samplerate,
 		    ao_data->channels,ao_data->format)) {
 	MSG_ERR("Can't configure audio device\n");

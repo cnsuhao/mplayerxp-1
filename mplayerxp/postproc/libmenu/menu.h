@@ -1,8 +1,5 @@
 #ifndef MPXP_MENU_H
 #define MPXP_MENU_H 1
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct menu_priv_s;
 typedef struct  menu_s menu_t;
@@ -69,20 +66,17 @@ enum {
     MENU_TEXT_HMASK	=(MENU_TEXT_LEFT|MENU_TEXT_HCENTER|MENU_TEXT_RIGHT),
     MENU_TEXT_CENTER	=(MENU_TEXT_VCENTER|MENU_TEXT_HCENTER)
 };
-void menu_draw_text(mp_image_t* mpi, char* txt, int x, int y);
-int menu_text_length(char* txt);
-int menu_text_num_lines(char* txt, int max_width);
+void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y);
+int menu_text_length(const char* txt);
+int menu_text_num_lines(const char* txt, int max_width);
 
-void menu_text_size(char* txt,int max_width,
+void menu_text_size(const char* txt,int max_width,
 		    int vspace, int warp,
 		    int* _w, int* _h);
 
-void menu_draw_text_full(mp_image_t* mpi,char* txt,
+void menu_draw_text_full(mp_image_t* mpi,const char* txt,
 			 int x, int y,int w, int h,
 			 int vspace, int warp, int align, int anchor);
 
 void menu_draw_box(const mp_image_t* mpi, unsigned char grey, unsigned char alpha, int x, int y, int w, int h);
-#ifdef __cplusplus
-}
-#endif
 #endif

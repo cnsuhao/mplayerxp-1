@@ -1,9 +1,6 @@
 #ifndef __PLAYTREE_H
 #define __PLAYTREE_H
 #include "libmpdemux/stream.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 enum {
     PLAY_TREE_ITER_ERROR=0,
@@ -213,8 +210,5 @@ static inline void pt_iter_add_gui_file(play_tree_iter_t* iter,const char* path,
 void pt_iter_goto_head(play_tree_iter_t* iter);
 
 ///@}
-#ifdef __cplusplus
-}
-#endif
 
 #endif

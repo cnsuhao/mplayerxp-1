@@ -250,9 +250,8 @@ static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
   return MPXP_Ok;
 }
 
-extern const af_info_t af_info_export;
 // Description of this filter
-const af_info_t af_info_export = {
+extern const af_info_t af_info_export = {
     "Sound export filter",
     "export",
     "Anders; Gustavo Sverzut Barbieri <gustavo.barbieri@ic.unicamp.br>",

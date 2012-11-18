@@ -5,9 +5,6 @@
 #define __CFG_PARSER_H 1
 #include "xmpcore/xmp_enums.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 /* config types */
 enum {
     CONF_TYPE_FLAG	=0,
@@ -168,8 +165,5 @@ int m_config_set_float(m_config_t *config,const char* arg,float val);
   * @return		the option value or -1 on error
 **/
 float m_config_get_float (m_config_t const *config,const char* arg,int* err_ret);
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __CONFIG_H */

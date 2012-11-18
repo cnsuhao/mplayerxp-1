@@ -6,8 +6,8 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-CXXSRCS = asxparser.cpp
-SRCS  = playtree.c playtreeparser.c
+CXXSRCS = asxparser.cpp playtree.cpp playtreeparser.cpp
+SRCS  =
 
 OBJS	= $(SRCS:.c=.o)
 CXXOBJS	= $(CXXSRCS:.cpp=.o)

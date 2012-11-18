@@ -99,7 +99,7 @@ distclean:
 	$(DO_MAKE)
 	-rm -f *~ $(TARGET_EXE) $(OBJS)
 	-rm -f *.o *.a .depend configure.log
-	-rm -f mp_config.h mp_config.mak version.h
+	-rm -f mp_config.h mp_config.mak mp_conf_lavc.h version.h
 	-rm -f cpuinfo help_mp.h
 
 version.h:

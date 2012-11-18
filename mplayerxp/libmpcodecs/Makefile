@@ -8,8 +8,9 @@ DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 CXXSRCS=dec_video.cpp vd.cpp ad.cpp dec_audio.cpp
 CXXSRCS+=ad_a52.cpp ad_hwac3.cpp
 
+CXXSRCS+=vd_ffmpeg.cpp ad_dca.cpp ad_faad.cpp ad_ffmpeg.cpp
+
 SRCS=vd_null.c \
-     vd_ffmpeg.c \
      vd_raw.c \
      vd_nuv.c \
      vd_libmpeg2.c \
@@ -17,12 +18,9 @@ SRCS=vd_null.c \
      vd_mpegpes.c \
      vd_huffyuv.c \
      ad_null.c \
-     ad_ffmpeg.c \
      ad_mp3.c \
      ad_pcm.c \
      ad_dvdpcm.c \
-     ad_faad.c \
-     ad_dca.c \
      codecs_ld.c
 
 ifeq ($(ENABLE_GPL_ONLY),no)

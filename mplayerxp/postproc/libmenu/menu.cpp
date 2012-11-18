@@ -56,7 +56,7 @@ static menu_def_t* menu_list = NULL;
 static int menu_count = 0;
 
 
-static int menu_parse_config(char* buffer) {
+static int menu_parse_config(const char* buffer) {
   char *element,*body, **attribs, *name;
   menu_info_t* minfo = NULL;
   int r,i;
@@ -361,7 +361,7 @@ static char *menu_fribidi(char *txt)
 }
 #endif
 
-void menu_draw_text(mp_image_t* mpi,char* txt, int x, int y) {
+void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
   draw_alpha_f draw_alpha = get_draw_alpha(mpi->imgfmt);
   int font;
   int finalize=vo_is_final(vo_data);
@@ -390,7 +390,7 @@ void menu_draw_text(mp_image_t* mpi,char* txt, int x, int y) {
 
 }
 
-void menu_draw_text_full(mp_image_t* mpi,char* txt,
+void menu_draw_text_full(mp_image_t* mpi,const char* txt,
 			 int x, int y,int w, int h,
 			 int vspace, int warp, int align, int anchor) {
   int need_w,need_h;
@@ -483,7 +483,7 @@ void menu_draw_text_full(mp_image_t* mpi,char* txt,
       return;
 
   while(sy < ymax && *txt) {
-    char* line_end = NULL;
+    const char* line_end = NULL;
     int n;
 
     if(txt[0] == '\n') { // New line
@@ -569,7 +569,7 @@ void menu_draw_text_full(mp_image_t* mpi,char* txt,
   }
 }
 
-int menu_text_length(char* txt) {
+int menu_text_length(const char* txt) {
   int l = 0;
   render_txt(txt);
   while (*txt) {
@@ -579,7 +579,7 @@ int menu_text_length(char* txt) {
   return l - vo_data->font->charspace;
 }
 
-void menu_text_size(char* txt,int max_width, int vspace, int warp, int* _w, int* _h) {
+void menu_text_size(const char* txt,int max_width, int vspace, int warp, int* _w, int* _h) {
   int l = 1, i = 0;
   int w = 0;
 
@@ -601,7 +601,7 @@ void menu_text_size(char* txt,int max_width, int vspace, int warp, int* _w, int*
 }
 
 
-int menu_text_num_lines(char* txt, int max_width) {
+int menu_text_num_lines(const char* txt, int max_width) {
   int l = 1, i = 0;
   render_txt(txt);
   while (*txt) {

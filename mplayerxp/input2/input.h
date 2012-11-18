@@ -3,9 +3,6 @@
 #include "mp_config.h"
 #include "xmpcore/xmp_enums.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 // All commands id
 enum {
     MP_CMD_SEEK			=0,
@@ -155,13 +152,15 @@ extern void mp_cmd_free(mp_cmd_t* cmd);
 extern any_t* RND_RENAME0(mp_input_open)(void);
 extern void   mp_input_close(any_t* handle);
 
-// Interruptible usleep:  (used by libmpdemux)
-extern MPXP_Rc mp_input_check_interrupt(any_t* handle,int time);
-
 extern void mp_input_print_keys(any_t*handle);
 extern void mp_input_print_cmds(any_t*handle);
 
 extern void mp_input_print_binds(any_t*handle);
+#ifdef __cplusplus
+extern "C" {
+#endif
+// Interruptible usleep:  (used by libmpdemux)
+extern MPXP_Rc mp_input_check_interrupt(any_t* handle,int time);
 #ifdef __cplusplus
 }
 #endif

@@ -1,18 +1,18 @@
 include ../../mp_config.mak
 
-SRCS    = bitstream.c downmix.c parse.c resample.c
-OBJS	= $(SRCS:.c=.o)
+CXXSRCS = bitstream.cpp downmix.cpp parse.cpp resample.cpp
+CXXOBJS	= $(CXXSRCS:.cpp=.o)
 
-CFLAGS  = $(MLIB_INC) $(OPTFLAGS) -W -Wall
+CXXFLAGS  = $(MLIB_INC) $(OPTXXFLAGS) -W -Wall
 
-.SUFFIXES: .c .o
+.SUFFIXES: .cpp .o
 
 # .PHONY: all clean
 
-.c.o:
-	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-all:	$(OBJS)
+all:	$(CXXOBJS)
 
 clean:
 	rm -f *.o *.a *~
@@ -23,7 +23,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist
