@@ -15,12 +15,11 @@
 #include "audio_out_internal.h"
 #include "ao_msg.h"
 
-static ao_info_t info =
-{
-	"Null audio output",
-	"null",
-	"Tobias Diedrich",
-	""
+static ao_info_t info = {
+    "Null audio output",
+    "null",
+    "Tobias Diedrich",
+    ""
 };
 
 LIBAO_EXTERN(null)
@@ -59,20 +58,20 @@ struct WaveHeader
 
 /* init with default values */
 static struct WaveHeader wavhdr = {
-	WAV_ID_RIFF,
-	/* same conventions than in sox/wav.c/wavwritehdr() */
-	0, //le2me_32(0x7ffff024),
-	WAV_ID_WAVE,
-	WAV_ID_FMT,
-	16,
-	WAV_ID_PCM,
-	2,
-	44100,
-	192000,
-	4,
-	16,
-	WAV_ID_DATA,
-	0, //le2me_32(0x7ffff000)
+    WAV_ID_RIFF,
+    /* same conventions than in sox/wav.c/wavwritehdr() */
+    0, //le2me_32(0x7ffff024),
+    WAV_ID_WAVE,
+    WAV_ID_FMT,
+    16,
+    WAV_ID_PCM,
+    2,
+    44100,
+    192000,
+    4,
+    16,
+    WAV_ID_DATA,
+    0, //le2me_32(0x7ffff000)
 };
 
 static void drain(const ao_data_t* ao){

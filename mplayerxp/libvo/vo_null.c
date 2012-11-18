@@ -1,7 +1,7 @@
 /*
  *  video_out_null.c
  *
- *	Copyright (C) Aaron Holtzman - June 2000
+ *  Copyright (C) Aaron Holtzman - June 2000
  *
  *  This file is part of mpeg2dec, a mp_free MPEG-2 video stream decoder.
  *
@@ -40,12 +40,11 @@
 
 LIBVO_EXTERN(null)
 
-static vo_info_t vo_info =
-{
-	"Null video output",
-	"null",
-	"Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",
-	""
+static vo_info_t vo_info = {
+    "Null video output",
+    "null",
+    "Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",
+    ""
 };
 
 typedef struct priv_s {
@@ -226,7 +225,7 @@ static int __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t*priv=(priv_t*)vo->priv;
-  switch (request) {
+    switch (request) {
     case VOCTRL_QUERY_FORMAT:
 	return null_query_format(data);
     case VOCTRL_GET_NUM_FRAMES:
