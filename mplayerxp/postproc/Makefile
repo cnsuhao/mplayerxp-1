@@ -10,11 +10,9 @@ CXXSRCS=af.cpp aflib.cpp af_export.cpp vf.cpp
 
 SRCS=postprocess.c swscale.c
 SRCS+=af_ao2.c \
-      af_center.c \
       af_channels.c \
       af_crystality.c \
       af_delay.c \
-      af_dummy.c \
       af_dyn.c \
       af_echo3d.c \
       af_equalizer.c \

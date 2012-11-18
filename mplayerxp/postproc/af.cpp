@@ -13,10 +13,8 @@ extern ao_data_t* ao_data;
 
 // Static list of filters
 extern const af_info_t af_info_ao;
-extern const af_info_t af_info_center;
 extern const af_info_t af_info_channels;
 extern const af_info_t af_info_crystality;
-extern const af_info_t af_info_dummy;
 extern const af_info_t af_info_delay;
 extern const af_info_t af_info_dyn;
 extern const af_info_t af_info_echo3d;
@@ -42,10 +40,8 @@ extern const af_info_t af_info_null;
 
 static const af_info_t* filter_list[]={
    &af_info_ao,
-   &af_info_center,
    &af_info_channels,
    &af_info_crystality,
-   &af_info_dummy,
    &af_info_delay,
    &af_info_dyn,
    &af_info_echo3d,
