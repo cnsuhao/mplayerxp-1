@@ -25,8 +25,7 @@
 
 #include "screenshot.h"
 #include "img_format.h"
-#define UINT64_C __UINT64_C
-#include "postproc/swscale.h"
+#include "mp_conf_lavc.h"
 #include "postproc/vf_scale.h"
 #include "osdep/mplib.h"
 #include "vo_msg.h"

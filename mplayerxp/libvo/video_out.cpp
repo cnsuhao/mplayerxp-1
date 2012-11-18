@@ -32,8 +32,7 @@
 #include "video_out.h"
 
 #include "osdep/shmem.h"
-#define UINT64_C __UINT64_C
-#include "postproc/swscale.h"
+#include "mp_conf_lavc.h"
 #include "postproc/vf.h"
 #include "xmpcore/xmp_core.h"
 #include "osdep/mplib.h"

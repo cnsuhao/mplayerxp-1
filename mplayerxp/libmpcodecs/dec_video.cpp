@@ -32,13 +32,12 @@
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 
-// ===================================================================
-vf_cfg_t vf_cfg; // Configuration for audio filters
-
-#define UINT64_C __UINT64_C
-#include "postproc/postprocess.h"
+#include "mp_conf_lavc.h"
 #include "osdep/cpudetect.h"
 #include "vd_msg.h"
+
+// ===================================================================
+vf_cfg_t vf_cfg; // Configuration for audio filters
 
 extern int v_bright;
 extern int v_cont;

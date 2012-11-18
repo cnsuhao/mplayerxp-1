@@ -28,7 +28,6 @@
 #include "osdep/mplib.h"
 #include "xmpcore/sig_hand.h"
 
-#define UINT64_C __UINT64_C
 #include "postproc/swscale.h"
 #include "postproc/af.h"
 #include "postproc/vf.h"

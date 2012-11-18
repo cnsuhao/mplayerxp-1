@@ -23,10 +23,7 @@
 
 #include "xmpcore/xmp_core.h"
 #include "spudec.h"
-extern "C" {
-#define UINT64_C __UINT64_C
-#include "postproc/swscale.h"
-}
+#include "mp_conf_lavc.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_SPUDEC
 #include "mp_msg.h"
