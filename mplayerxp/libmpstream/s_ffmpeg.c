@@ -2,9 +2,7 @@
 #include "mplayerxp.h"
 
 #include <dlfcn.h>
-#include "libavformat/avformat.h"
-#include "libavformat/avio.h"
-#include "libavformat/url.h"
+#include "mp_conf_lavc.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/mplib.h"
 #include "stream.h"

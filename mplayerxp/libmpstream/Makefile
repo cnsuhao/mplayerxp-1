@@ -28,15 +28,12 @@ endif
 ifeq ($(USE_LIBVCD),yes)
 SRCS += s_vcdnav.c
 endif
-SRCS += tvi_dummy.c tvi_v4l.c
-SRCS += tvi_bsdbt848.c frequencies.c mrl.c
+SRCS += mrl.c
 
-#SRCS+= mux_lavf.c
+SUBDIRS = tvi
 ifeq ($(HAVE_STREAMING),yes)
-SUBDIRS = freesdp librtsp realrtsp
+SUBDIRS += freesdp librtsp realrtsp
 SRCS += asf_streaming.c asf_mmst_streaming.c cookies.c http.c network.c rtp.c pnm.c s_ftp.c s_udp.c s_rtsp.c s_network.c tcp.c udp.c
-else
-SUBDIRS =
 endif
 
 CXXSRCS+= stream.cpp cache2.cpp
@@ -65,6 +62,7 @@ $(LIBNAME): $(SUBDIRS) $(OBJS) $(CXXOBJS)
 	$(AR) r $(LIBNAME) $(OBJS) $(CXXOBJS)
 ifeq ($(HAVE_STREAMING),yes)
 	$(AR) r $(LIBNAME) \
+	$(wildcard tvi/*.o) \
 	$(wildcard freesdp/*.o) \
 	$(wildcard librtsp/*.o) \
 	$(wildcard realrtsp/*.o)

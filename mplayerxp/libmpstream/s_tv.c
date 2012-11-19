@@ -55,7 +55,8 @@ static const mrl_config_t tvopts_conf[]={
 	{NULL, NULL, 0, 0, 0 }
 };
 
-#include "tv.h"
+#include "tvi/tv.h"
+#include "tvi/frequencies.h"
 #include "stream_msg.h"
 #include "help_mp.h"
 
@@ -68,9 +69,6 @@ static const mrl_config_t tvopts_conf[]={
 #include "osdep/fastmemcpy.h"
 #include "libao2/audio_out.h"
 
-#include "tv.h"
-
-#include "frequencies.h"
 #include "stream_msg.h"
 
 /* ================== DEMUX_TV ===================== */
