@@ -1145,6 +1145,8 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#undef FFMAX
+#undef FFMIN
 #endif
 #endif
 EOF

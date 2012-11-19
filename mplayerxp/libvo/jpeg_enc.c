@@ -33,10 +33,7 @@
 #endif
 /* We need this #define because we need ../libavcodec/common.h to #define
  * be2me_32, otherwise the linker will complain that it doesn't exist */
-#define HAVE_AV_CONFIG_H
-#include "../libmpcodecs/interface/ffmpeg/avcodec.h"
-//#include "../libavcodec/dsputil.h"
-//#include "../libavcodec/mpegvideo.h"
+#include "mp_conf_lavc.h"
 
 #include "jpeg_enc.h"
 #include "vo_msg.h"

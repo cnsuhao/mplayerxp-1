@@ -30,6 +30,7 @@
  * samples from last stride with correlated samples of current input
  *
  */
+#include <algorithm>
 
 #include <stdlib.h>
 #include <string.h>
@@ -39,9 +40,6 @@
 #include "af.h"
 #include "osdep/mplib.h"
 #include "pp_msg.h"
-
-#define FFMAX(a,b) ((a) > (b) ? (a) : (b))
-#define FFMIN(a,b) ((a) > (b) ? (b) : (a))
 
 // Data for specific instances of this filter
 typedef struct af_scaletempo_s
@@ -99,7 +97,7 @@ static int fill_queue(struct af_instance_s* af,const mp_aframe_t* data, int offs
     } else {
       int bytes_skip;
       s->bytes_to_slide -= s->bytes_queued;
-      bytes_skip = FFMIN(s->bytes_to_slide, bytes_in);
+      bytes_skip = std::min(s->bytes_to_slide, bytes_in);
       s->bytes_queued = 0;
       s->bytes_to_slide -= bytes_skip;
       offset += bytes_skip;
@@ -108,7 +106,7 @@ static int fill_queue(struct af_instance_s* af,const mp_aframe_t* data, int offs
   }
 
   if (bytes_in > 0) {
-    int bytes_copy = FFMIN(s->bytes_queue - s->bytes_queued, bytes_in);
+    int bytes_copy = std::min(s->bytes_queue - s->bytes_queued, bytes_in);
     memcpy(s->buf_queue + s->bytes_queued,
 	   (int8_t*)data->audio + offset,
 	   bytes_copy);

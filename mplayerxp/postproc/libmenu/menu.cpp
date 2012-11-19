@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "mp_config.h"
 #include "help_mp.h"
 
@@ -337,7 +339,7 @@ static char *menu_fribidi(char *txt)
       fribidi_set_mirroring (1);
       fribidi_set_reorder_nsm (0);
       char_set_num = fribidi_parse_charset("UTF-8");
-      buffer_size = FFMAX(1024,len+1);
+      buffer_size = std::max(1024,len+1);
       logical = mp_malloc(buffer_size);
       visual = mp_malloc(buffer_size);
       outputstr = new char [buffer_size];
