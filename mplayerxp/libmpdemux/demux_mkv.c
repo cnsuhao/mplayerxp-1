@@ -14,7 +14,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "matroska.h"

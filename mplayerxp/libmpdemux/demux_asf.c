@@ -8,7 +8,7 @@
 #include "help_mp.h"
 #include "osdep/bswap.h"
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "asf.h"
 #include "demuxer.h"
 #include "stheader.h"

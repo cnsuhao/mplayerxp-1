@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpconf/cfgparser.h"
 
 extern "C" {

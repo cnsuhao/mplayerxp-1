@@ -12,7 +12,7 @@
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
 
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "libao2/afmt.h"

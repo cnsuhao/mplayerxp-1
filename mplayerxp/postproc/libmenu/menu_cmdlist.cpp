@@ -11,7 +11,6 @@
 
 #include "libmpconf/m_option.h"
 #include "libmpconf/m_struct.h"
-#include "libmpdemux/stream.h"
 #include "libplaytree/asxparser.h"
 #include "menu.h"
 #include "menu_list.h"

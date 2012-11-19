@@ -9,7 +9,7 @@
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
 
-#include "libmpdemux/mrl.h"
+#include "libmpstream/mrl.h"
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"

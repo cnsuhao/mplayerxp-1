@@ -36,7 +36,6 @@
 #include <assert.h>
 #endif
 
-#include "libmpdemux/stream.h"
 #include "cfgparser.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CFGPARSER

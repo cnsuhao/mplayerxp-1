@@ -233,11 +233,11 @@ PVECTOR_RENAME(f32_to_s32_stream)(int32_t*dst,__f32vec src)
     _mm_stream_si128((__m128i*)dst,_mm_cvtps_epi32(src));
 #elif defined( OPTIMIZE_SSE )
     __m128 tmp=_mm_setzero_ps();
-    _mm_stream_pi(dst,_mm_cvtps_pi32(src));
+    _mm_stream_pi((__m64*)dst,_mm_cvtps_pi32(src));
     tmp = _mm_movehl_ps (tmp, src);
-    _mm_stream_pi(&((char *)dst)[8],_mm_cvtps_pi32(tmp));
+    _mm_stream_pi((__m64*)&((char *)dst)[8],_mm_cvtps_pi32(tmp));
 #else
-    _mm_stream_pi(dst,_m_pf2id(src));
+    _mm_stream_pi((__m64*)dst,_m_pf2id(src));
 #endif
 }
 #undef _f32vec_to_s32_stream

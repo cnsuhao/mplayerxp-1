@@ -15,7 +15,7 @@
 #include "osdep/shmem.h"
 #include "osdep/mplib.h"
 
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/parse_es.h"
 #include "libmpdemux/stheader.h"

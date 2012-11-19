@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include "mp_config.h"
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "help_mp.h"

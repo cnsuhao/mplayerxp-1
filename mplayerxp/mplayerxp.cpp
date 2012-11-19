@@ -34,7 +34,7 @@
 #define HELP_MP_DEFINE_STATIC
 #include "help_mp.h"
 
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "libmpdemux/parse_es.h"

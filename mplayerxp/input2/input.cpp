@@ -15,7 +15,6 @@
 #ifdef MP_DEBUG
 #include <assert.h>
 #endif
-#include "libmpdemux/stream.h"
 #include "osdep/keycodes.h"
 #include "osdep/get_path.h"
 #include "osdep/timer.h"

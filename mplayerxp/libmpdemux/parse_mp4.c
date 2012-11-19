@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 #include "parse_mp4.h"
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 

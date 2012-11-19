@@ -2,7 +2,6 @@
 #define __PLAYTREEPARSER_H
 
 #include "playtree.h"
-#include "libmpdemux/stream.h"
 
 typedef struct play_tree_parser {
   stream_t* stream;

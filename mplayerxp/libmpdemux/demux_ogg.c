@@ -15,7 +15,7 @@
 #include "mplayerxp.h"
 #include "osdep/bswap.h"
 #include "help_mp.h"
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "aviprint.h"

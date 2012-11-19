@@ -28,7 +28,7 @@
 #define __YUV4MPEG_H__
 
 #include <stdlib.h>
-#include "stream.h"
+#include "libmpstream/stream.h"
 
 
 /************************************************************************

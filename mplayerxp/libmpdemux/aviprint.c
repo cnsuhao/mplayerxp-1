@@ -5,7 +5,7 @@
 
 #include "../mp_config.h"
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "aviprint.h"
 #include "demux_msg.h"

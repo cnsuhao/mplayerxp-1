@@ -21,7 +21,7 @@
 
 #include "demux_msg.h"
 #include "demuxer.h"
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "stheader.h"
 #include "mplayerxp.h"
 #include "osdep/mplib.h"

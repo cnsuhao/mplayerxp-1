@@ -12,10 +12,9 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "libmpdemux/stream.h"
 #include "cfgparser.h"
 #include "m_option.h"
-#include "libmpdemux/url.h"
+#include "libmpstream/url.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"

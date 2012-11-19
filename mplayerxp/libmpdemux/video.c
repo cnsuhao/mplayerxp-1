@@ -10,7 +10,7 @@
 #include "sub_cc.h"
 #include "osdep/mplib.h"
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "parse_es.h"

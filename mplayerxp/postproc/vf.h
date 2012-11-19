@@ -1,7 +1,7 @@
 #ifndef __VF_H
 #define __VF_H 1
 #include "xmpcore/xmp_enums.h"
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 

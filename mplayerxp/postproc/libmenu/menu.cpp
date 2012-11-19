@@ -11,7 +11,6 @@
 #include "libvo/font_load.h"
 #include "libvo/sub.h"
 #include "osdep/keycodes.h"
-#include "libmpdemux/stream.h"
 #include "libplaytree/asxparser.h"
 #include "nls/nls.h"
 

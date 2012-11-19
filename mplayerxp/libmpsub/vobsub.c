@@ -16,7 +16,7 @@
 
 #include "mp_config.h"
 #include "mplayerxp.h"
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "osdep/mplib.h"
 #include "vobsub.h"
 #include "spudec.h"

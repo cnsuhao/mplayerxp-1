@@ -10,7 +10,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 #include "libmpdemux/demuxer_r.h"
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/stheader.h"
 #include "libvo/video_out.h"
 

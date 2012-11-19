@@ -13,7 +13,6 @@
 #include "mp_config.h"
 #include "help_mp.h"
 
-#include "libmpdemux/stream.h"
 #include "libmpconf/m_struct.h"
 #include "libmpconf/m_option.h"
 #include "libmpconf/cfgparser.h"

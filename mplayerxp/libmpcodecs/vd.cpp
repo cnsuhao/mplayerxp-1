@@ -10,7 +10,7 @@
 
 #include "libvo/img_format.h"
 
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "osdep/mplib.h"

@@ -3,36 +3,15 @@ LIBNAME = libmpdemux.a
 
 include ../mp_config.mak
 
+SUBDIRS =
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 CXXSRCS=
-SRCS  = s_file.c s_ffmpeg.c s_null.c
-ifeq ($(HAVE_LIBCDIO_CDDA),yes)
-SRCS += s_cdd.c
-CXXSRCS += cdda.cpp
-ifeq ($(HAVE_STREAMING),yes)
-CXXSRCS += cddb.cpp
-endif
-endif
-ifeq ($(USE_DVDNAV),yes)
-SRCS += s_dvdnav.c
-endif
-ifeq ($(USE_DVDREAD),yes)
-SRCS += s_dvdread.c
-endif
-SRCS  += s_tv.c  url.c
-ifeq ($(USE_OSS_AUDIO),yes)
-SRCS += s_oss.c
-endif
-ifeq ($(USE_LIBVCD),yes)
-SRCS += s_vcdnav.c
-endif
+SRCS=
 ifeq ($(HAVE_LIBDV),yes)
 SRCS += demux_dv.c
 endif
-SRCS += tvi_dummy.c tvi_v4l.c
-SRCS += tvi_bsdbt848.c frequencies.c mrl.c
 
 SRCS += mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
 SRCS += demux_avi.c demux_mov.c parse_mp4.c demux_mpg.c demux_viv.c
@@ -48,14 +27,8 @@ endif
 
 SRCS += mux_mpxp64.c mux_raw.c
 #SRCS+= mux_lavf.c
-ifeq ($(HAVE_STREAMING),yes)
-SUBDIRS = freesdp librtsp realrtsp
-SRCS += asf_streaming.c asf_mmst_streaming.c cookies.c http.c network.c rtp.c pnm.c s_ftp.c s_udp.c s_rtsp.c s_network.c tcp.c udp.c
-else
-SUBDIRS =
-endif
 
-CXXSRCS+= demuxer.cpp demuxer_r.cpp stream.cpp cache2.cpp mpdemux.cpp
+CXXSRCS+= demuxer.cpp demuxer_r.cpp mpdemux.cpp
 CXXSRCS+= muxer.cpp
 
 OBJS	= $(SRCS:.c=.o)

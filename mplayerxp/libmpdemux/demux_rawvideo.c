@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"

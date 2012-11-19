@@ -3,8 +3,7 @@
 #endif
 #include "libmpconf/codec-cfg.h"
 
-#include "libmpdemux/stream.h"
-#include "libmpdemux/demuxer.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer_r.h"
 #include "libmpdemux/stheader.h"
 

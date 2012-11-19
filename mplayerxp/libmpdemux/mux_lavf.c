@@ -12,7 +12,7 @@
 #include "aviheader.h"
 
 #include "muxer.h"
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "libavformat/avformat.h"

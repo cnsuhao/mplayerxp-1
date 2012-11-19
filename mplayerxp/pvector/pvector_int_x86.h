@@ -149,7 +149,7 @@ PVECTOR_RENAME(stream)(any_t*__P, __ivec src)
 #ifdef OPTIMIZE_SSE2
     _mm_stream_si128((__m128i*)__P,src);
 #elif defined( OPTIMIZE_MMX2 )
-    _mm_stream_pi(__P,src);
+    _mm_stream_pi((__m64*)__P,src);
 #else
     *(__ivec *)__P = src;
 #endif

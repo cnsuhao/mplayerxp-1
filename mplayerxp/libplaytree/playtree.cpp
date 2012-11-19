@@ -9,7 +9,7 @@
 #ifdef MP_DEBUG
 #include <assert.h>
 #endif
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "playtree.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE

@@ -10,7 +10,7 @@
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "libmpconf/codec-cfg.h"

@@ -26,7 +26,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include "mp_config.h"
 #include "help_mp.h"
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "osdep/bswap.h"

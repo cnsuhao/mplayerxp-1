@@ -1,6 +1,6 @@
 #ifndef __DEMUXER_H
 #define __DEMUXER_H 1
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "xmpcore/xmp_enums.h"
 #include "libmpconf/cfgparser.h"
 

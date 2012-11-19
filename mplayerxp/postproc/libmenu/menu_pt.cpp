@@ -13,7 +13,6 @@
 #include "menu.h"
 #include "menu_list.h"
 
-#include "libmpdemux/stream.h"
 #include "libplaytree/playtree.h"
 #include "input2/input.h"
 #include "pp_msg.h"

@@ -12,7 +12,6 @@
 #include "osd.h"
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
-#include "libmpdemux/stream.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_OSD
 #include "mp_msg.h"

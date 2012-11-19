@@ -21,7 +21,7 @@
 
 #include "osdep/bswap.h"
 #include "osdep/mplib.h"
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"

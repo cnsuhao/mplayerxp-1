@@ -3,7 +3,7 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demuxer_r.h"

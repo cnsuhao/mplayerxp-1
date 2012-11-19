@@ -30,7 +30,7 @@
 #include "mp_config.h"
 #include "mplayerxp.h"
 #include "help_mp.h"
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "parse_es.h"
 #include "stheader.h"

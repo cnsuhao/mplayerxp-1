@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 
-#include "stream.h"
+#include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 

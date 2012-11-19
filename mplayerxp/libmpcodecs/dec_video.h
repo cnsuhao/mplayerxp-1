@@ -2,7 +2,7 @@
 #define DEC_VIDEO_H_INCLUDED 1
 #include "xmpcore/xmp_enums.h"
 #include "libmpdemux/demuxer_r.h"
-#include "libmpdemux/stream.h"
+#include "libmpstream/stream.h"
 #include "libmpdemux/stheader.h"
 #ifdef __cplusplus
 extern "C" {

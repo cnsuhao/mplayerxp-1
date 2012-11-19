@@ -1139,6 +1139,9 @@ extern "C" {
 #include "$srcdir/../ffmpeg/libavutil/audioconvert.h"
 #include "$srcdir/../ffmpeg/libswresample/swresample.h"
 #include "$srcdir/../ffmpeg/libavformat/riff.h"
+#include "$srcdir/../ffmpeg/libavformat/avformat.h"
+#include "$srcdir/../ffmpeg/libavformat/avio.h"
+#include "$srcdir/../ffmpeg/libavformat/url.h"
 
 #ifdef __cplusplus
 }

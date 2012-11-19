@@ -14,7 +14,7 @@
 #include "input2/input.h"
 #include "mplayerxp.h"
 #include "libmpdemux/muxer.h"
-#include "libmpdemux/mrl.h"
+#include "libmpstream/mrl.h"
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
