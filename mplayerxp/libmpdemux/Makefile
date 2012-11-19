@@ -60,9 +60,6 @@ ifeq ($(HAVE_STREAMING),yes)
 	$(wildcard realrtsp/*.o)
 endif
 
-test:	$(LIBNAME) test.c
-	$(CC) $(CFLAGS) test.c ../mp_msg.c ../linux/shmem.c -o test -L. -lmpdemux -ldvdread -lz -lpthread
-
 clean:
 	$(DO_MAKE)
 	rm -f *.o *.a *~
@@ -75,7 +72,7 @@ dep:    depend
 
 depend:
 	$(DO_MAKE)
-	$(CC) -MM $(CFLAGS) test.c $(SRCS) $(CXXSRCS) 1>.depend
+	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist
