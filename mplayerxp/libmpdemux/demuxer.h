@@ -4,10 +4,6 @@
 #include "xmpcore/xmp_enums.h"
 #include "libmpconf/cfgparser.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define MAX_PACK_BYTES (0x1024*0x1024*4)
 enum {
     DEMUXER_TYPE_UNKNOWN=0,
@@ -286,9 +282,6 @@ extern int demuxer_switch_audio(const demuxer_t *, int id);
 extern int demuxer_switch_video(const demuxer_t *, int id);
 extern int demuxer_switch_subtitle(const demuxer_t *, int id);
 
-#ifdef __cplusplus
-}
-#endif
 demuxer_t* demux_open(stream_t *stream,int file_format,int aid,int vid,int sid);
 
 #endif

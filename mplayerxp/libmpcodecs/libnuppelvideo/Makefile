@@ -1,19 +1,17 @@
 include ../../mp_config.mak
 
-SRCS = RTjpegN.c \
-       minilzo.c  \
-       nuppelvideo.c
+CXXSRCS = RTjpegN.cpp minilzo.cpp nuppelvideo.cpp
 
-OBJS=$(SRCS:.c=.o)
+CXXOBJS=$(CXXSRCS:.cpp=.o)
 
-CFLAGS  = $(OPTFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
+CXXFLAGS  = $(OPTXXFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
 
-.SUFFIXES: .c .o
+.SUFFIXES: .cpp .o
 
-all: $(OBJS)
+all: $(CXXOBJS)
 
-.c.o:
-	$(CC) -c $(CFLAGS) -o $@ $<
+.cpp.o:
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 clean:
 	rm -f *.o *.a *~
@@ -24,7 +22,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

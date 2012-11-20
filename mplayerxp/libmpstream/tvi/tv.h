@@ -12,31 +12,32 @@ typedef struct tvi_info_s
     const char *comment;
 } tvi_info_t;
 
+struct priv_s;
 typedef struct tvi_functions_s
 {
-    int (*init)();
-    int (*uninit)();
-    int (*control)();
-    int (*start)();
-    double (*grab_video_frame)();
+    int (*init)(struct priv_s *priv);
+    int (*uninit)(struct priv_s *priv);
+    int (*control)(struct priv_s *priv, int cmd, any_t*arg);
+    int (*start)(struct priv_s *priv);
+    double (*grab_video_frame)(struct priv_s *priv,unsigned char *buffer, int len);
 #ifdef HAVE_TV_BSDBT848
-    double (*grabimmediate_video_frame)();
+    double (*grabimmediate_video_frame)(struct priv_s *priv,unsigned char *buffer, int len);
 #endif
-    int (*get_video_framesize)();
-    double (*grab_audio_frame)();
-    int (*get_audio_framesize)();
+    int (*get_video_framesize)(struct priv_s *priv);
+    double (*grab_audio_frame)(struct priv_s *priv,unsigned char *buffer, int len);
+    int (*get_audio_framesize)(struct priv_s *priv);
 } tvi_functions_t;
 
 typedef struct tvi_handle_s {
-    tvi_info_t		*info;
-    tvi_functions_t	*functions;
-    any_t*priv;
+    const tvi_info_t	*info;
+    const tvi_functions_t*functions;
+    any_t*		priv;
     int 		seq;
 
     /* specific */
     int			norm;
     int			chanlist;
-    struct CHANLIST	*chanlist_s;
+    const struct CHANLIST*chanlist_s;
     int			channel;
 } tvi_handle_t;
 

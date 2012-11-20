@@ -10,6 +10,9 @@
 #include "windef.h"
 #include "pe_image.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     BYTE type;
@@ -145,5 +148,8 @@ extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 
 /* resource.c */
 extern INT       WINAPI AccessResource(HMODULE,HRSRC);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_MODULE_H */

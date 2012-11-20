@@ -4,9 +4,6 @@
 #include "libmpconf/cfgparser.h"
 #include "xmpcore/xmp_enums.h"
 #include "dec_video.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 enum {
     Video_MaxOutFmt	=16,
@@ -14,9 +11,17 @@ enum {
 
 // Outfmt flags:
 typedef enum {
+    VideoFlag_None		=0x00000000,
     VideoFlag_Flip		=0x00000001,
     VideoFlag_YUVHack		=0x00000002
 }video_flags_e;
+inline video_flags_e operator~(video_flags_e a) { return static_cast<video_flags_e>(~static_cast<unsigned>(a)); }
+inline video_flags_e operator|(video_flags_e a, video_flags_e b) { return static_cast<video_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
+inline video_flags_e operator&(video_flags_e a, video_flags_e b) { return static_cast<video_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
+inline video_flags_e operator^(video_flags_e a, video_flags_e b) { return static_cast<video_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
+inline video_flags_e operator|=(video_flags_e a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+inline video_flags_e operator&=(video_flags_e a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+inline video_flags_e operator^=(video_flags_e a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
 typedef enum {
     VCodecStatus_Working	=3,
@@ -69,8 +74,5 @@ MPXP_Rc		__FASTCALL__ mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t* li
 mp_image_t*	__FASTCALL__ mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h);
 void		__FASTCALL__ mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
 void		__FASTCALL__ mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -6,7 +6,7 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-CXXSRCS=
+CXXSRCS=s_tv.cpp
 SRCS  = s_file.c s_ffmpeg.c s_null.c
 ifeq ($(HAVE_LIBCDIO_CDDA),yes)
 SRCS += s_cdd.c
@@ -21,7 +21,7 @@ endif
 ifeq ($(USE_DVDREAD),yes)
 SRCS += s_dvdread.c
 endif
-SRCS  += s_tv.c  url.c
+SRCS  += url.c
 ifeq ($(USE_OSS_AUDIO),yes)
 SRCS += s_oss.c
 endif

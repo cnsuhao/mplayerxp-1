@@ -89,6 +89,15 @@ static inline void le2me_avistdindex_entry(avistdindex_entry*h)  {
     h->dwOffset = le2me_32(h->dwOffset);
     h->dwSize = le2me_32(h->dwSize);
 }
+static inline void le2me_avistdindex_chunk(avistdindex_chunk*h)  {
+    h->fcc = le2me_32(h->fcc);
+    h->dwSize = le2me_32(h->dwSize);
+    h->wLongsPerEntry = le2me_16(h->LongsPerEntry);
+    h->nEntriesInUse = le2me_32(nEntriesInUse);
+    h->dwChunkId = le2me_32(h->dwChunkId);
+    h->qwBaseOffset = le2me_64(h->qwBaseOffset);
+}
+
 static inline void le2me_VideoPropHeader(VideoPropHeader*h) {
     h->VideoFormatToken = le2me_32(h->VideoFormatToken);
     h->VideoStandard = le2me_32(h->VideoStandard);
@@ -119,6 +128,7 @@ static inline void le2me_WAVEFORMATEX(WAVEFORMATEX*h){ UNUSED(h); }
 static inline void le2me_AVIINDEXENTRY(AVIINDEXENTRY*h){ UNUSED(h); }
 static inline void le2me_avisuperindex_chunk(avisuperindex_chunk*h){ UNUSED(h); }
 static inline void le2me_avistdindex_entry(avistdindex_entry*h){ UNUSED(h); }
+static inline void le2me_avistdindex_chunk(avistdindex_chunk*h){UNUSED(h); }
 static inline void le2me_VideoPropHeader(VideoPropHeader*h){ UNUSED(h); }
 static inline void le2me_VIDEO_FIELD_DESC(VIDEO_FIELD_DESC*h){ UNUSED(h); }
 #endif

@@ -33,8 +33,6 @@
  *   the full LZO package can be found at
  *   http://wildsau.idv.uni-linz.ac.at/mfx/lzo.html
  */
-
-
 #ifndef __MINILZO_H
 #define __MINILZO_H
 
@@ -49,11 +47,6 @@
 
 #if !defined(LZO_VERSION) || (LZO_VERSION != MINILZO_VERSION)
 #  error "version mismatch in header files"
-#endif
-
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 
@@ -87,11 +80,6 @@ LZO_EXTERN(int)
 lzo1x_decompress_safe   ( const lzo_byte *src, lzo_uint  src_len,
 				lzo_byte *dst, lzo_uint *dst_len,
 				lzo_voidp wrkmem /* NOT USED */ );
-
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif /* already included */
 

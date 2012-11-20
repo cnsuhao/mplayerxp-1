@@ -7,10 +7,6 @@
 #include "demuxer.h"
 #include "stheader.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef enum enc_frame_type {
     AudioFrame=RND_NUMBER0,
     VideoFrame=RND_NUMBER1
@@ -42,8 +38,5 @@ extern void vobsub_seek_r(any_t* vobhandle,const seek_args_t* seeka);
 extern int demuxer_switch_audio_r(demuxer_t *, int id);
 extern int demuxer_switch_video_r(demuxer_t *, int id);
 extern int demuxer_switch_subtitle_r(demuxer_t *, int id);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

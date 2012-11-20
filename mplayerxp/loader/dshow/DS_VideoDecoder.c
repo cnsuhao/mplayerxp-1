@@ -881,7 +881,7 @@ int DS_VideoDecoder_SetValue(DS_VideoDecoder *this, const char* name, int value)
 vim: vi* sux.
 */
 
-int DS_SetAttr_DivX(char* attribute, int value){
+int DS_SetAttr_DivX(const char* attribute, int value){
     int result, status, newkey;
 	if(strcasecmp(attribute, "Quality")==0){
 	    char* keyname="SOFTWARE\\Microsoft\\Scrunch";

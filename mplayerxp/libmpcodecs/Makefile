@@ -8,47 +8,50 @@ DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 CXXSRCS=dec_video.cpp vd.cpp ad.cpp dec_audio.cpp
 CXXSRCS+=ad_a52.cpp ad_hwac3.cpp
 
-CXXSRCS+=vd_ffmpeg.cpp ad_dca.cpp ad_faad.cpp ad_ffmpeg.cpp
 
-SRCS=vd_null.c \
-     vd_raw.c \
-     vd_nuv.c \
-     vd_libmpeg2.c \
-     vd_xvid.c \
-     vd_mpegpes.c \
-     vd_huffyuv.c \
-     ad_null.c \
-     ad_mp3.c \
-     ad_pcm.c \
-     ad_dvdpcm.c \
-     codecs_ld.c
+CXXSRCS+=vd_ffmpeg.cpp \
+     vd_null.cpp \
+     vd_nuv.cpp \
+     vd_raw.cpp \
+     vd_libmpeg2.cpp \
+     vd_xvid.cpp \
+     vd_mpegpes.cpp \
+     vd_huffyuv.cpp \
+     ad_dca.cpp \
+     ad_faad.cpp \
+     ad_ffmpeg.cpp \
+     ad_null.cpp \
+     ad_mp3.cpp \
+     ad_pcm.cpp \
+     ad_dvdpcm.cpp \
+     codecs_ld.cpp
 
 ifeq ($(ENABLE_GPL_ONLY),no)
-SRCS+=vd_divx4.c \
-     ad_real.c \
-     vd_real.c \
-     vd_xanim.c
+CXXSRCS+=vd_divx4.cpp \
+     ad_real.cpp \
+     vd_real.cpp \
+     vd_xanim.cpp
 endif
 ifeq ($(HAVE_LIBVORBIS),yes)
-SRCS+=ad_vorbis.c
+CXXSRCS+=ad_vorbis.cpp
 endif
 ifeq ($(HAVE_LIBTHEORA),yes)
-SRCS+=vd_theora.c
+CXXSRCS+=vd_theora.cpp
 endif
 ifeq ($(HAVE_LIBDV),yes)
-SRCS+= ad_libdv.c vd_libdv.c
+CXXSRCS+= ad_libdv.cpp vd_libdv.cpp
 endif
 
 ifeq ($(ENABLE_WIN32LOADER),yes)
-SRCS+=vd_dshow.c \
-      vd_vfw.c \
-      vd_dmo.c \
-      vd_qtvideo.c \
-      ad_dshow.c \
-      ad_acm.c \
-      ad_dmo.c \
-      ad_qtaudio.c \
-      ad_twin.c
+CXXSRCS+=vd_dshow.cpp \
+      vd_vfw.cpp \
+      vd_dmo.cpp \
+      vd_qtvideo.cpp \
+      ad_dshow.cpp \
+      ad_acm.cpp \
+      ad_dmo.cpp \
+      ad_qtaudio.cpp \
+      ad_twin.cpp
 endif
 
 OBJS=$(SRCS:.c=.o)
@@ -90,7 +93,7 @@ dep:    depend
 
 depend:
 	$(DO_MAKE)
-	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

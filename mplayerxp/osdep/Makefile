@@ -10,7 +10,7 @@ CXXOBJS=$(CXXSRCS:.cpp=.o)
 
 ifeq ($(TARGET_OS),LINUX_GNU)
 ifeq ($(TARGET_ARCH_X86),yes)
-SRCS += lrmi.c vbelib.c
+CXXSRCS += lrmi.cpp vbelib.cpp
 endif
 ifeq ($(TARGET_ARCH_X86_64),yes)
 # asm-x86_64/vm86.h does not exist in the x86_64 architecture
@@ -44,7 +44,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(CXXSRCS) $(SRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(CXXSRCS) $(SRCS) 1>.depend
 
 #
 # include dependency files if they exist

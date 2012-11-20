@@ -651,12 +651,12 @@ static inline void dump_ImageDescription(any_t* xxx){
     printf("=========================================================\n");
 }
 
-static inline void dump_Rect(char* title,Rect *r){
+static inline void dump_Rect(const char* title,Rect *r){
     printf("%s: %d;%d - %d;%d\n",title,
 	(int)r->top,(int)r->left,(int)r->bottom,(int)r->right);
 }
 
-static inline void dump_MatrixRecord(char* title, MatrixRecord *m){
+static inline void dump_MatrixRecord(const char* title, MatrixRecord *m){
     printf("%s: [%d %d %d][%d %d %d][%d %d %d]\n",title,
 	m->matrix[0][0],m->matrix[0][1],m->matrix[0][2],
 	m->matrix[1][0],m->matrix[1][1],m->matrix[1][2],
@@ -664,7 +664,7 @@ static inline void dump_MatrixRecord(char* title, MatrixRecord *m){
 }
 
 static inline void dump_PixMap(any_t* xxx){
-    PixMap *p=xxx;
+    PixMap *p=(PixMap*)xxx;
     printf("=============== PixMap at %p ==================\n",xxx);
     printf("base=%p  stride=%d\n",p->baseAddr, p->rowBytes);
     dump_Rect("bounds",&p->bounds);
@@ -679,7 +679,7 @@ static inline void dump_PixMap(any_t* xxx){
 }
 
 static inline void dump_CodecCapabilities(any_t* xxx){
-    CodecCapabilities* cc=xxx;
+    CodecCapabilities* cc=(CodecCapabilities*)xxx;
     if(!xxx) return;
     printf("=============== CodecCapabilities at %p =================\n",xxx);
     printf("flags=0x%X  flags2=0x%X\n",cc->flags,cc->flags2);
@@ -691,7 +691,7 @@ static inline void dump_CodecCapabilities(any_t* xxx){
 }
 
 static inline void dump_CodecDecompressParams(any_t* xxx){
-    CodecDecompressParams* cd=xxx;
+    CodecDecompressParams* cd=(CodecDecompressParams*)xxx;
     ImageDescription **idh;
     unsigned i;
     if(!xxx) return;

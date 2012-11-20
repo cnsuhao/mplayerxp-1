@@ -11,7 +11,7 @@
 #ifndef _GENRES_H
 #define _GENRES_H
 
-static char *genres[] = {
+static const char *genres[] = {
 "Blues",					/* 0 */
 "Classic Rock",				/* 1 */
 "Country",					/* 2 */

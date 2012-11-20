@@ -42,11 +42,6 @@
 #endif
 #include <limits.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 /***********************************************************************
 // LZO requires a conforming <limits.h>
 ************************************************************************/
@@ -378,10 +373,6 @@ LZO_EXTERN(unsigned) __lzo_align_gap(const lzo_voidp _ptr, lzo_uint _size);
 /* deprecated - only for backward compatibility */
 #define LZO_ALIGN(_ptr,_size) LZO_PTR_ALIGN_UP(_ptr,_size)
 
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif /* already included */
 

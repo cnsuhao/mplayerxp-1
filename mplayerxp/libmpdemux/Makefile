@@ -1,4 +1,3 @@
-
 LIBNAME = libmpdemux.a
 
 include ../mp_config.mak
@@ -10,22 +9,44 @@ DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 CXXSRCS=
 SRCS=
 ifeq ($(HAVE_LIBDV),yes)
-SRCS += demux_dv.c
+CXXSRCS += demux_dv.cpp
 endif
 
-SRCS += mp3_hdr.c video.c mpeg_hdr.c aviprint.c demux_asf.c
-SRCS += demux_avi.c demux_mov.c parse_mp4.c demux_mpg.c demux_viv.c
-SRCS += parse_es.c demux_fli.c demux_ra.c demux_real.c demux_y4m.c yuv4mpeg.c yuv4mpeg_ratio.c
-SRCS += demux_nuv.c demux_film.c demux_roq.c demux_audio.c demux_demuxers.c
-SRCS += demux_bmp.c demux_rawaudio.c demux_aiff.c demux_vqf.c
-SRCS += demux_pva.c demux_rawvideo.c demux_smjpeg.c demux_ts.c demux_ty.c demux_nsv.c
-SRCS += demux_mkv.c demux_mpxp64.c sub_cc.c sub_ty.c
-SRCS += demux_lavf.c demux_null.c
+CXXSRCS += mp3_hdr.cpp video.cpp mpeg_hdr.cpp aviprint.cpp parse_mp4.cpp parse_es.cpp
+CXXSRCS += yuv4mpeg.cpp yuv4mpeg_ratio.cpp sub_cc.cpp sub_ty.cpp
+CXXSRCS += demux_aiff.cpp \
+           demux_asf.cpp \
+           demux_audio.cpp \
+           demux_avi.cpp \
+           demux_bmp.cpp \
+           demux_demuxers.cpp \
+           demux_film.cpp \
+           demux_fli.cpp \
+           demux_lavf.cpp \
+           demux_mkv.cpp \
+           demux_mov.cpp \
+           demux_mpg.cpp \
+           demux_mpxp64.cpp \
+           demux_nsv.cpp \
+           demux_null.cpp \
+           demux_nuv.cpp \
+           demux_pva.cpp \
+           demux_ra.cpp \
+           demux_rawaudio.cpp \
+           demux_rawvideo.cpp \
+           demux_real.cpp \
+           demux_roq.cpp \
+           demux_smjpeg.cpp \
+           demux_ts.cpp \
+           demux_ty.cpp \
+           demux_viv.cpp \
+           demux_vqf.cpp \
+           demux_y4m.cpp
 ifeq ($(HAVE_LIBVORBIS),yes)
-SRCS += demux_ogg.c
+CXXSRCS += demux_ogg.cpp
 endif
 
-SRCS += mux_mpxp64.c mux_raw.c
+CXXSRCS += mux_mpxp64.cpp mux_raw.cpp
 #SRCS+= mux_lavf.c
 
 CXXSRCS+= demuxer.cpp demuxer_r.cpp mpdemux.cpp
@@ -72,7 +93,7 @@ dep:    depend
 
 depend:
 	$(DO_MAKE)
-	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

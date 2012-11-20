@@ -7,9 +7,6 @@
 #include "libmpconf/cfgparser.h"
 #include "xmpcore/xmp_enums.h"
 #include "libao2/afmt.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef struct ad_info_s
 {
@@ -59,8 +56,5 @@ typedef struct ad_functions_s
 extern const ad_functions_t* afm_find_driver(const char *name);
 extern const audio_probe_t* afm_probe_driver(sh_audio_t* sh);
 #define FIX_APTS(sh_audio,pts,in_size) (sh_audio->i_bps?((float)(pts)+(float)(in_size)/(float)sh_audio->i_bps):((float)(pts)))
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -49,7 +49,7 @@ static inline uint32_t bswap_32(uint32_t x) {
 }
 
 static inline uint64_t bswap_64(uint64_t x) {
-  register union { __extension__ unsigned long long int __ll;
+  union { __extension__ unsigned long long int __ll;
 	  unsigned long int __l[2]; } __x;
   asm("xchgl	%0,%1":
       "=r"(__x.__l[0]),"=r"(__x.__l[1]):

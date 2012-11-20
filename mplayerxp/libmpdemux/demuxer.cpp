@@ -26,34 +26,34 @@
 #include "mplayerxp.h"
 #include "osdep/mplib.h"
 
-extern demuxer_driver_t demux_aiff;
-extern demuxer_driver_t demux_rawaudio;
-extern demuxer_driver_t demux_rawvideo;
-extern demuxer_driver_t demux_avi;
-extern demuxer_driver_t demux_y4m;
-extern demuxer_driver_t demux_asf;
-extern demuxer_driver_t demux_nuv;
-extern demuxer_driver_t demux_nsv;
-extern demuxer_driver_t demux_mov;
-extern demuxer_driver_t demux_mkv;
-extern demuxer_driver_t demux_vivo;
-extern demuxer_driver_t demux_ra;
-extern demuxer_driver_t demux_real;
-extern demuxer_driver_t demux_fli;
-extern demuxer_driver_t demux_film;
-extern demuxer_driver_t demux_roq;
-extern demuxer_driver_t demux_bmp;
-extern demuxer_driver_t demux_ogg;
-extern demuxer_driver_t demux_pva;
-extern demuxer_driver_t demux_smjpeg;
-extern demuxer_driver_t demux_vqf;
-extern demuxer_driver_t demux_mpxpav64;
-extern demuxer_driver_t demux_mpgps;
-extern demuxer_driver_t demux_mpgts;
-extern demuxer_driver_t demux_ty;
-extern demuxer_driver_t demux_audio;
-extern demuxer_driver_t demux_lavf;
-extern demuxer_driver_t demux_null;
+extern const demuxer_driver_t demux_aiff;
+extern const demuxer_driver_t demux_rawaudio;
+extern const demuxer_driver_t demux_rawvideo;
+extern const demuxer_driver_t demux_avi;
+extern const demuxer_driver_t demux_y4m;
+extern const demuxer_driver_t demux_asf;
+extern const demuxer_driver_t demux_nuv;
+extern const demuxer_driver_t demux_nsv;
+extern const demuxer_driver_t demux_mov;
+extern const demuxer_driver_t demux_mkv;
+extern const demuxer_driver_t demux_vivo;
+extern const demuxer_driver_t demux_ra;
+extern const demuxer_driver_t demux_real;
+extern const demuxer_driver_t demux_fli;
+extern const demuxer_driver_t demux_film;
+extern const demuxer_driver_t demux_roq;
+extern const demuxer_driver_t demux_bmp;
+extern const demuxer_driver_t demux_ogg;
+extern const demuxer_driver_t demux_pva;
+extern const demuxer_driver_t demux_smjpeg;
+extern const demuxer_driver_t demux_vqf;
+extern const demuxer_driver_t demux_mpxpav64;
+extern const demuxer_driver_t demux_mpgps;
+extern const demuxer_driver_t demux_mpgts;
+extern const demuxer_driver_t demux_ty;
+extern const demuxer_driver_t demux_audio;
+extern const demuxer_driver_t demux_lavf;
+extern const demuxer_driver_t demux_null;
 
 static const demuxer_driver_t *ddrivers[] =
 {
