@@ -28,7 +28,7 @@
 
 /* Maximal length of line of a subtitle */
 #define LINE_LEN 1000
-#define ERR ((any_t*) -1)
+#define ERR ((subtitle*) -1)
 
 static float mpsub_position=0;
 
@@ -154,8 +154,8 @@ static const char * __FASTCALL__ sub_readtext(const char *source, char **dest) {
 	p++,len++;
     }
 
-    *dest= (char *)mp_malloc (len+1);
-    if (!dest) {return ERR;}
+    *dest= new char [len+1];
+    if (!dest) {return (const char*)ERR;}
 
     strncpy(*dest, source, len);
     (*dest)[len]=0;
@@ -186,7 +186,7 @@ static subtitle * __FASTCALL__ sub_read_line_microdvd(FILE *fd,subtitle *current
 
     next=p, i=0;
     while ((next =sub_readtext (next, &(current->text[i])))) {
-	if (current->text[i]==ERR) {return ERR;}
+	if (current->text[i]==(char*)ERR) {return ERR;}
 	i++;
 	if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
     }
@@ -278,7 +278,7 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current)
 			//
 			next = p,i=0;
 			while ((next =sub_readtext (next, &(current->text[i])))) {
-				if (current->text[i]==ERR) {return ERR;}
+				if (current->text[i]==(char*)ERR) {return ERR;}
 				i++;
 				if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
 			}
@@ -318,7 +318,7 @@ static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
 	// TODO: I don't know what kind of convention is here for marking multiline subs, maybe <br/> like in xml?
 	next = strstr(line,"<clear/>")+8;i=0;
 	while ((next =sub_readtext (next, &(current->text[i])))) {
-		if (current->text[i]==ERR) {return ERR;}
+		if (current->text[i]==(char*)ERR) {return ERR;}
 		i++;
 		if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
 	}
@@ -514,7 +514,7 @@ static iconv_t icdsc;
 
 void	subcp_open (void)
 {
-	char *tocp = "UTF-8";
+	const char *tocp = "UTF-8";
 	icdsc = (iconv_t)(-1);
 	if (sub_data.cp){
 		if ((icdsc = iconv_open (tocp, sub_data.cp)) != (iconv_t)(-1)){
@@ -667,7 +667,7 @@ subtitle* sub_read_file (const char *filename, float fps) {
 	subtitle *sub;
 	if(sub_num>=n_max){
 	    n_max+=16;
-	    first=mp_realloc(first,n_max*sizeof(subtitle));
+	    first=(subtitle*)mp_realloc(first,n_max*sizeof(subtitle));
 	}
 	sub = &first[sub_num];
 	memset(sub, '\0', sizeof(subtitle));
@@ -733,7 +733,8 @@ char * sub_filename(const char* path,const char * fname )
 {
  char * sub_name1;
  char * sub_name2;
- char * aviptr1, * aviptr2, * tmp;
+ char * aviptr1, * aviptr2;
+ const char * tmp;
  unsigned i,j;
  FILE * f;
  int pos=0;
@@ -741,14 +742,14 @@ char * sub_filename(const char* path,const char * fname )
 
  if ( fname == NULL ) return NULL;
 
- sub_name1=strrchr(fname,'.');
+ sub_name1=(char *)strrchr(fname,'.');
  if (!sub_name1) return NULL;
  pos=sub_name1-fname;
 
- sub_name1=mp_malloc(strlen(fname)+8);
+ sub_name1=new char [strlen(fname)+8];
  strcpy(sub_name1,fname);
 
- sub_name2=mp_malloc (strlen(path) + strlen(fname) + 8);
+ sub_name2=new char [strlen(path) + strlen(fname) + 8];
  if ((tmp=strrchr(fname,'/')))
 	 sprintf (sub_name2, "%s%s", path, tmp+1);
  else

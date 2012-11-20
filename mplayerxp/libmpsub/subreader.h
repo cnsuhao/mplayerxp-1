@@ -1,10 +1,6 @@
 #ifndef __MPLAYER_SUBREADER_H
 #define __MPLAYER_SUBREADER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern int sub_uses_time;
 extern int sub_errs;
 extern int sub_num;         // number of subtitle structs
@@ -47,8 +43,5 @@ extern void subcp_open (void);
 extern void subcp_close (void);
 extern subtitle* subcp_recode (subtitle *sub);
 extern subtitle* subcp_recode1 (subtitle *sub);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

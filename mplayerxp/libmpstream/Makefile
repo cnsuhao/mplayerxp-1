@@ -7,16 +7,16 @@ DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 CXXSRCS=s_tv.cpp
-SRCS  = s_file.c s_ffmpeg.c s_null.c
+CXXSRCS+= s_file.cpp s_ffmpeg.cpp s_null.cpp
 ifeq ($(HAVE_LIBCDIO_CDDA),yes)
-SRCS += s_cdd.c
+CXXSRCS += s_cdd.cpp
 CXXSRCS += cdda.cpp
 ifeq ($(HAVE_STREAMING),yes)
 CXXSRCS += cddb.cpp
 endif
 endif
 ifeq ($(USE_DVDNAV),yes)
-SRCS += s_dvdnav.c
+CXXSRCS += s_dvdnav.cpp
 endif
 ifeq ($(USE_DVDREAD),yes)
 SRCS += s_dvdread.c

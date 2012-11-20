@@ -3,7 +3,7 @@
 */
 #include "stream.h"
 
-static MPXP_Rc __FASTCALL__ null_open(stream_t *stream,const char *filename,unsigned flags) {
+static MPXP_Rc __FASTCALL__ null_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);
     return MPXP_False;
 }
@@ -32,7 +32,7 @@ static MPXP_Rc __FASTCALL__ null_ctrl(const stream_t *s,unsigned cmd,any_t*args)
     return MPXP_Unknown;
 }
 
-const stream_driver_t null_stream =
+extern const stream_driver_t null_stream =
 {
     "null://",
     "not a driver",

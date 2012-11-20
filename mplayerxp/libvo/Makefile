@@ -2,8 +2,8 @@ include ../mp_config.mak
 
 LIBNAME = libvo.a
 
-CXXSRCS=video_out.cpp font_load.cpp img_format.cpp screenshot.cpp
-SRCS=aspect.c osd.c vo_null.c sub.c 
+CXXSRCS=video_out.cpp font_load.cpp img_format.cpp screenshot.cpp sub.cpp osd.cpp
+SRCS=aspect.c vo_null.c
 ifeq ($(HAVE_SDL),yes)
 SRCS+=vo_sdl.c
 endif

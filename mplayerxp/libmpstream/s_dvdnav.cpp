@@ -57,11 +57,11 @@ static int dvd_nav_still=0;            /* are we on a still picture? */
 static int dvd_nav_skip_opening=0;     /* skip opening stalls? */
 
 static void __FASTCALL__ dvdnav_stream_ignore_timers(stream_t * stream, int ignore) {
-  dvdnav_priv_t *dvdnav_priv=stream->priv;
+  dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
   dvdnav_priv->ignore_timers=ignore;
 }
 
-static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * filename) {
+static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,const char * filename) {
   const char * title_str;
   dvdnav_priv_t *dvdnav_priv;
 
@@ -94,7 +94,7 @@ static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * fi
   if(1)	//from vlc: if not used dvdnav from cvs will fail
   {
     int len, event;
-    char buf[2048];
+    uint8_t buf[2048];
 
     dvdnav_get_next_block(dvdnav_priv->dvdnav,buf,&event,&len);
     dvdnav_sector_search(dvdnav_priv->dvdnav, 0, SEEK_SET);
@@ -112,7 +112,7 @@ static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,char * fi
 }
 
 static void __FASTCALL__ dvdnav_stream_sleep(const stream_t * stream, int seconds) {
-    dvdnav_priv_t *dvdnav_priv=stream->priv;
+    dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
 
     if (!dvdnav_priv->started) return;
 
@@ -134,7 +134,7 @@ static void __FASTCALL__ dvdnav_stream_sleep(const stream_t * stream, int second
 }
 
 static int __FASTCALL__ dvdnav_stream_sleeping(const stream_t * stream) {
-    dvdnav_priv_t *dvdnav_priv=stream->priv;
+    dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
     unsigned int now;
 
     if (!dvdnav_priv) return 0;
@@ -222,7 +222,7 @@ static MPXP_Rc __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const 
     if(dvd_device) mp_free(dvd_device);
     ((dvdnav_priv_t *)stream->priv)->started=1;
     if(mp_conf.s_cache_size) {
-	tevent = mp_malloc(sizeof(dvdnav_event_t));
+	tevent = new(zeromem) dvdnav_event_t;
 	if(tevent)
 	    if((tevent->details=mp_malloc(DVD_BLOCK_SIZE))==NULL) {
 		mp_free(tevent);
@@ -254,7 +254,7 @@ static MPXP_Rc __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const 
 }
 
 static void __FASTCALL__ dvdnav_stream_read(stream_t * stream, dvdnav_event_t*de) {
-  dvdnav_priv_t *dvdnav_priv=stream->priv;
+  dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
   int event = DVDNAV_NOP;
   int done;
 
@@ -272,7 +272,7 @@ static void __FASTCALL__ dvdnav_stream_read(stream_t * stream, dvdnav_event_t*de
   done=0;
   while(!done)
   {
-    if (dvdnav_get_next_block(dvdnav_priv->dvdnav,de->details,&event,&de->len)!=DVDNAV_STATUS_OK)
+    if (dvdnav_get_next_block(dvdnav_priv->dvdnav,reinterpret_cast<uint8_t*>(de->details),&event,&de->len)!=DVDNAV_STATUS_OK)
     {
 	MSG_ERR( "Error getting next block from DVD (%s)\n",dvdnav_err_to_string(dvdnav_priv->dvdnav) );
 	de->len=-1;
@@ -382,7 +382,7 @@ static int __FASTCALL__ __dvdnav_read(stream_t *stream,stream_packet_t *sp)
 
 static off_t __FASTCALL__ __dvdnav_seek(stream_t *stream,off_t pos)
 {
-  dvdnav_priv_t *dvdnav_priv=stream->priv;
+  dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
   uint32_t newpos=0;
   uint32_t length=1;
   uint32_t sector;
@@ -410,13 +410,13 @@ static off_t __FASTCALL__ __dvdnav_seek(stream_t *stream,off_t pos)
 
 static off_t __FASTCALL__ __dvdnav_tell(const stream_t *stream)
 {
-  dvdnav_priv_t *dvdnav_priv=stream->priv;
+  dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
   return (off_t)dvdnav_priv->cpos;
 }
 
 static void __FASTCALL__ __dvdnav_close(stream_t *stream)
 {
-  dvdnav_priv_t *dvdnav_priv=stream->priv;
+  dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
   dvdnav_close(dvdnav_priv->dvdnav);
   mp_free(dvdnav_priv);
   if(tevent) { mp_free(tevent->details); mp_free(tevent); }
@@ -428,7 +428,7 @@ static void __FASTCALL__ __dvdnav_close(stream_t *stream)
  * \param hl    : - highlight struct pointer
  */
 static void mp_dvdnav_get_highlight (const stream_t *stream, rect_highlight_t *hl) {
-  dvdnav_priv_t *priv = (dvdnav_priv_t *) stream->priv;
+  dvdnav_priv_t *priv = reinterpret_cast<dvdnav_priv_t*>(stream->priv);
   int button;
   dvdnav_highlight_area_t ha;
   pci_t *pnavpci = NULL;
@@ -447,7 +447,7 @@ static void mp_dvdnav_get_highlight (const stream_t *stream, rect_highlight_t *h
 static void __FASTCALL__ dvdnav_event_handler(const stream_t* s,const stream_packet_t*sp)
 {
     demux_stream_t *d_audio=s->demuxer->audio;
-    dvdnav_priv_t *priv=s->priv;
+    dvdnav_priv_t *priv=reinterpret_cast<dvdnav_priv_t*>(s->priv);
     switch(sp->type) {
 	    case DVDNAV_BLOCK_OK: /* be silent about this one */
 				break;
@@ -462,7 +462,7 @@ static void __FASTCALL__ dvdnav_event_handler(const stream_t* s,const stream_pac
 				pnavpci = dvdnav_get_current_nav_pci (priv->dvdnav);
 				if (!pnavpci)   return;
 
-				dvdnav_get_current_highlight (priv->dvdnav, &(priv->hlev.buttonN));
+				dvdnav_get_current_highlight (priv->dvdnav, reinterpret_cast<int32_t*>(&(priv->hlev.buttonN)));
 				priv->hlev.display = display_mode; /* show */
 
 				if (priv->hlev.buttonN > 0 && pnavpci->hli.hl_gi.btn_ns > 0 && priv->hlev.display) {
@@ -568,7 +568,7 @@ static void __FASTCALL__ dvdnav_event_handler(const stream_t* s,const stream_pac
 
 static void __FASTCALL__ dvdnav_cmd_handler(const stream_t* s,unsigned cmd)
 {
-    dvdnav_priv_t *dvdnav_priv=s->priv;
+    dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(s->priv);
     int button;
     pci_t *pci = dvdnav_get_current_nav_pci(dvdnav_priv->dvdnav);
     switch (cmd) {
@@ -610,12 +610,12 @@ static void __FASTCALL__ dvdnav_cmd_handler(const stream_t* s,unsigned cmd)
 
 static MPXP_Rc __FASTCALL__ __dvdnav_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
-    dvdnav_priv_t *dvdnav_priv=s->priv;
+    dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(s->priv);
     switch(cmd) {
 	case SCTRL_TXT_GET_STREAM_NAME: {
 	    const char *title_str;
 	    if (dvdnav_get_title_string(dvdnav_priv->dvdnav,&title_str)==DVDNAV_STATUS_OK) {
-		strncpy(args,title_str,256);
+		strncpy(reinterpret_cast<char*>(args),title_str,256);
 		((char *)args)[255]=0;
 		return MPXP_Ok;
 	    }
@@ -629,16 +629,16 @@ static MPXP_Rc __FASTCALL__ __dvdnav_ctrl(const stream_t *s,unsigned cmd,any_t*a
 	}
 	break;
 	case SCTRL_VID_GET_HILIGHT: {
-	    mp_dvdnav_get_highlight (s,args);
+	    mp_dvdnav_get_highlight (s,reinterpret_cast<rect_highlight_t*>(args));
 	    return MPXP_Ok;
 	}
 	case SCRTL_EVT_HANDLE: {
-	    dvdnav_event_handler(s,args);
+	    dvdnav_event_handler(s,reinterpret_cast<stream_packet_t*>(args));
 	    return MPXP_Ok;
 	}
 	break;
 	case SCRTL_MPXP_CMD: {
-	    dvdnav_cmd_handler(s,(unsigned)args);
+	    dvdnav_cmd_handler(s,(long)args);
 	    return MPXP_Ok;
 	}
 	default: break;
@@ -646,7 +646,7 @@ static MPXP_Rc __FASTCALL__ __dvdnav_ctrl(const stream_t *s,unsigned cmd,any_t*a
     return MPXP_False;
 }
 
-const stream_driver_t dvdnav_stream=
+extern const stream_driver_t dvdnav_stream=
 {
     "dvdnav://",
     "reads multimedia stream with using of libdvdnav library",

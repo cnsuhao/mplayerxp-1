@@ -279,8 +279,8 @@ static void __FASTCALL__ vo_draw_text_progbar(any_t*v,unsigned idx,mp_osd_obj_t*
 // vo_draw_text_sub(int dxs,int dys,void (*draw_alpha)(int x0,int y0, int w,int h, unsigned char* src, unsigned char *srca, int stride))
 
 static void __FASTCALL__ vo_update_text_sub(any_t*v,mp_osd_obj_t* obj,int dxs,int dys){
-    vo_data_t* vo=(vo_data_t*)v;
-    unsigned char *t;
+    vo_data_t* vo=reinterpret_cast<vo_data_t*>(v);
+    char *t;
     int c,i,j,l,font;
     int len;
     int k,lastk=0;
@@ -410,7 +410,7 @@ static void __FASTCALL__ vo_draw_text_sub(any_t*v,unsigned idx,mp_osd_obj_t* obj
 }
 
 mp_osd_obj_t* __FASTCALL__ new_osd_obj(int type){
-    mp_osd_obj_t* osd=mp_mallocz(sizeof(mp_osd_obj_t));
+    mp_osd_obj_t* osd=new(zeromem) mp_osd_obj_t;
     osd->next=vo_osd_list;
     vo_osd_list=osd;
     osd->type=type;

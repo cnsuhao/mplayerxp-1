@@ -3,10 +3,6 @@
 #include <cdio/cdda.h>
 #include "libmpconf/cfgparser.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct {
 	char cddb_hello[1024];
 	unsigned long disc_id;
@@ -80,7 +76,4 @@ void    __FASTCALL__	seek_cdda(stream_t* s,off_t pos,track_t *trackidx);
 off_t   __FASTCALL__	tell_cdda(const stream_t* s);
 void    __FASTCALL__	close_cdda(stream_t* s);
 void cdda_register_options(m_config_t* cfg);
-#ifdef __cplusplus
-}
-#endif
 #endif // __CDD_H__

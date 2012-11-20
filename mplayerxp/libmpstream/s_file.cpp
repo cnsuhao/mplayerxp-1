@@ -44,7 +44,7 @@ static MPXP_Rc __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ stdin_open(stream_t *stream,const char *filename,unsigned flags) {
+static MPXP_Rc __FASTCALL__ stdin_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);
     return file_open(NULL,stream,"-",flags);
 }
@@ -58,7 +58,7 @@ static int __FASTCALL__ file_read(stream_t*stream,stream_packet_t*sp)
 /*
     Should we repeate read() again on these errno: `EAGAIN', `EIO' ???
 */
-    file_priv_t*p=stream->priv;
+    file_priv_t*p=reinterpret_cast<file_priv_t*>(stream->priv);
     sp->type=0;
     sp->len = TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,sp->len));
     if(sp->len>0) p->spos += sp->len;
@@ -74,32 +74,32 @@ static int __FASTCALL__ file_read(stream_t*stream,stream_packet_t*sp)
 
 static off_t __FASTCALL__ file_seek(stream_t*stream,off_t pos)
 {
-    file_priv_t*p=stream->priv;
+    file_priv_t*p=reinterpret_cast<file_priv_t*>(stream->priv);
     p->spos=TEMP_FAILURE_RETRY64(lseek(stream->fd,pos,SEEK_SET));
     return p->spos;
 }
 
 static off_t __FASTCALL__ file_tell(const stream_t*stream)
 {
-    file_priv_t*p=stream->priv;
+    file_priv_t*p=reinterpret_cast<file_priv_t*>(stream->priv);
     return p->spos;
 }
 
-static void __FASTCALL__ file_close(const stream_t *stream)
+static void __FASTCALL__ file_close(stream_t *stream)
 {
-    int was_open = ((file_priv_t*)stream->priv)->was_open;
+    int was_open = reinterpret_cast<file_priv_t*>(stream->priv)->was_open;
     if(was_open) close(stream->fd);
     mp_free(stream->priv);
 }
 
-static MPXP_Rc __FASTCALL__ file_ctrl(stream_t *s,unsigned cmd,any_t*args) {
+static MPXP_Rc __FASTCALL__ file_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
     return MPXP_Unknown;
 }
 
-const stream_driver_t stdin_stream =
+extern const stream_driver_t stdin_stream =
 {
     "stdin://",
     "reads multimedia stream from standard input",
@@ -111,7 +111,7 @@ const stream_driver_t stdin_stream =
     file_ctrl
 };
 
-const stream_driver_t file_stream =
+extern const stream_driver_t file_stream =
 {
     "file://",
     "reads multimedia stream from regular file",

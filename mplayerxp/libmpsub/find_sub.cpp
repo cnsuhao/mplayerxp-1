@@ -22,7 +22,7 @@ static unsigned long nosub_range_end=ULONG_MAX;
 
 void find_sub(subtitle* subtitles,unsigned long key,any_t*vo_data){
     int i,j;
-    vo_data_t*vo=vo_data;
+    vo_data_t*vo=reinterpret_cast<vo_data_t*>(vo_data);
 
     if ( !subtitles ) return;
 

@@ -20,7 +20,7 @@ static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const cha
 {
     const char *param;
     char *device;
-    int retval;
+    MPXP_Rc retval;
     UNUSED(libinput);
     UNUSED(flags);
     stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
@@ -40,7 +40,7 @@ static MPXP_Rc __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const cha
 {
     const char *param;
     char *device;
-    int retval;
+    MPXP_Rc retval;
     UNUSED(flags);
     stream->type=STREAMTYPE_RAWAUDIO|STREAMTYPE_SEEKABLE;
     stream->sector_size=CD_FRAMESIZE_RAW;
@@ -80,7 +80,7 @@ static void __FASTCALL__ cdd_close(stream_t*stream)
 
 static MPXP_Rc __FASTCALL__ cdd_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
-    cdda_priv *p=s->priv;
+    cdda_priv *p=reinterpret_cast<cdda_priv*>(s->priv);
     switch(cmd) {
 	case SCTRL_TXT_GET_STREAM_NAME: {
 	    if(track_idx!=255)
@@ -107,7 +107,7 @@ static MPXP_Rc __FASTCALL__ cdd_ctrl(const stream_t *s,unsigned cmd,any_t*args)
     return MPXP_False;
 }
 
-const stream_driver_t cdda_stream=
+extern const stream_driver_t cdda_stream=
 {
     "cdda://",
     "reads multimedia stream directly from Digital Audio Compact Disc [CD-DA]",
@@ -119,7 +119,7 @@ const stream_driver_t cdda_stream=
     cdd_ctrl
 };
 
-const stream_driver_t cddb_stream=
+extern const stream_driver_t cddb_stream=
 {
     "cddb://",
     "reads multimedia stream from CD-DA but tracks names from CDDB servers",

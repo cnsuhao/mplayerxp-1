@@ -155,7 +155,6 @@ static inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) 
     return MPXP_Ok;
 }
 
-extern void mp_register_options(m_config_t* cfg);
 extern void mpxp_resync_audio_stream(void);
 extern void mpxp_reset_vcache(void);
 extern void __exit_sighandler(void);
@@ -165,4 +164,6 @@ extern void mplayer_put_key(int code);
 #ifdef __cplusplus
 }
 #endif
+
+extern void mp_register_options(m_config_t* cfg);
 #endif

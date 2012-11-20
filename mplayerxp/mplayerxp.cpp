@@ -180,8 +180,6 @@ ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
 
 /**************************************************************************/
-extern void mp_register_options(m_config_t* cfg);
-
 static int mpxp_init_antiviral_protection(int verbose)
 {
     int rc;

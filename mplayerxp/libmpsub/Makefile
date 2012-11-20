@@ -6,8 +6,8 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-SRCS  =  find_sub.c subreader.c vobsub.c
-CXXSRCS= spudec.cpp
+SRCS  =
+CXXSRCS= spudec.cpp find_sub.cpp subreader.cpp vobsub.cpp
 
 OBJS	= $(SRCS:.c=.o)
 CXXOBJS	= $(CXXSRCS:.cpp=.o)
