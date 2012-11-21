@@ -49,7 +49,7 @@ typedef struct priv_s {
 }priv_t;
 
 static int __FASTCALL__ write_buffer(ao_data_t* ao,const unsigned char* data,int len){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   int len2=0;
   int x;
   while(len>0){
@@ -70,7 +70,7 @@ static int __FASTCALL__ write_buffer(ao_data_t* ao,const unsigned char* data,int
 }
 
 static int __FASTCALL__ read_buffer(ao_data_t* ao,unsigned char* data,int len){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   int len2=0;
   int x;
   while(len>0){
@@ -111,7 +111,7 @@ static void setenv(const char *name, const char *val, int _xx)
 
 // to set/get/query special features/parameters
 static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
 	switch (cmd) {
 		case AOCONTROL_QUERY_FORMAT:
 		case AOCONTROL_QUERY_CHANNELS:
@@ -132,12 +132,12 @@ static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
 			return MPXP_Ok;
 		}
 	}
-	return -1;
+	return MPXP_Unknown;
 }
 
 // SDL Callback function
 static void outputaudio(any_t* ao, Uint8 *stream, int len) {
-    read_buffer(ao,stream, len);
+    read_buffer(reinterpret_cast<ao_data_t*>(ao),stream, len);
 }
 
 // open & setup audio device
@@ -146,8 +146,9 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 {
     unsigned i;
     UNUSED(flags);
-    ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=ao->priv;
+    priv_t*priv;
+    priv=new(zeromem) priv_t;
+    ao->priv=priv;
     priv->volume=127;
     /* Allocate ring-priv->buffer memory */
     for(i=0;i<NUM_BUFS;i++) priv->buffer[i]=(unsigned char *) mp_malloc(BUFFSIZE);
@@ -271,23 +272,23 @@ static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned chann
 
 // close audio device
 static void uninit(ao_data_t* ao){
-	MSG_V("SDL: Audio Subsystem shutting down!\n");
-	SDL_CloseAudio();
-	SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	mp_free(ao->priv);
+    MSG_V("SDL: Audio Subsystem shutting down!\n");
+    SDL_CloseAudio();
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    mp_free(ao->priv);
 }
 
 // stop playing and empty buffers (for seeking/pause)
 static void reset(ao_data_t* ao){
-    priv_t*priv=ao->priv;
-	/* Reset ring-priv->buffer state */
-	priv->buf_read=0;
-	priv->buf_write=0;
-	priv->buf_read_pos=0;
-	priv->buf_write_pos=0;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    /* Reset ring-priv->buffer state */
+    priv->buf_read=0;
+    priv->buf_write=0;
+    priv->buf_read_pos=0;
+    priv->buf_write_pos=0;
 
-	priv->full_buffers=0;
-	priv->buffered_bytes=0;
+    priv->full_buffers=0;
+    priv->buffered_bytes=0;
 
 }
 
@@ -308,7 +309,7 @@ static void audio_resume(ao_data_t* ao)
 
 // return: how many bytes can be played without blocking
 static unsigned get_space(const ao_data_t* ao){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     return (NUM_BUFS-priv->full_buffers)*BUFFSIZE - priv->buf_write_pos;
 }
 
@@ -318,11 +319,11 @@ static unsigned get_space(const ao_data_t* ao){
 static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
 {
     UNUSED(flags);
-    return write_buffer(ao,data, len);
+    return write_buffer(ao,reinterpret_cast<const unsigned char*>(data), len);
 }
 
 // return: delay in seconds between first and last sample in priv->buffer
 static float get_delay(const ao_data_t* ao){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     return (float)(priv->buffered_bytes + ao->buffersize)/(float)ao->bps;
 }

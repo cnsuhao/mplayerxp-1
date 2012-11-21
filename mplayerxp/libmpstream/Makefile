@@ -23,7 +23,7 @@ SRCS += s_dvdread.c
 endif
 SRCS  += url.c
 ifeq ($(USE_OSS_AUDIO),yes)
-SRCS += s_oss.c
+CXXSRCS += s_oss.cpp
 endif
 ifeq ($(USE_LIBVCD),yes)
 SRCS += s_vcdnav.c

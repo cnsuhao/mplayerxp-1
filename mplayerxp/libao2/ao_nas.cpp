@@ -239,7 +239,7 @@ static int nas_empty_event_queue(priv_t *priv)
 
 static any_t*nas_event_thread_start(any_t*data)
 {
-    priv_t *priv = data;
+    priv_t *priv = reinterpret_cast<priv_t*>(data);
 
     do {
 	MSG_DBG2(
@@ -271,7 +271,7 @@ static AuBool nas_error_handler(AuServer* aud, AuErrorEvent* ev)
 static AuBool nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHandlerRec *hnd)
 {
 	AuElementNotifyEvent *event = (AuElementNotifyEvent *) ev;
-	priv_t *priv = hnd->data;
+	priv_t *priv = reinterpret_cast<priv_t*>(hnd->data);
 
 	MSG_DBG2("ao_nas: event_handler(): type %s kind %s state %s->%s reason %s numbytes %d expect_underrun %d\n",
 		nas_event_type(event->type),
@@ -368,10 +368,10 @@ static unsigned int nas_aformat_to_auformat(unsigned int *format)
 // to set/get/query special features/parameters
 static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
 {
-    priv_t*priv=ao->priv;
-	AuElementParameters aep;
-	AuStatus as;
-	int retval = MPXP_Unknown;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    AuElementParameters aep;
+    AuStatus as;
+    MPXP_Rc retval = MPXP_Unknown;
 
 	ao_control_vol_t *vol = (ao_control_vol_t *)arg;
 
@@ -414,7 +414,9 @@ static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
 
 static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
-    ao->priv=mp_mallocz(sizeof(priv_t));
+    priv_t* priv;
+    priv=new(zeromem) priv_t;
+    ao->priv=priv;
     UNUSED(flags);
     return MPXP_Ok;
 }
@@ -422,10 +424,9 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 // return: 1=success 0=fail
 static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     AuElement elms[3];
     AuStatus as;
-    char str[256];
     unsigned char auformat = nas_aformat_to_auformat(&format);
     unsigned bytes_per_sample = channels * AuSizeofFormat(auformat);
     unsigned buffer_size;
@@ -438,8 +439,7 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
     ao->bps = rate * bytes_per_sample;
     buffer_size = ao->bps; /* buffer 1 second */
 
-    MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
-		mpaf_fmt2str(format,str,256));
+    MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,afmt2str(format));
 
     /*
      * round up to multiple of NAS_FRAG_SIZE
@@ -449,9 +449,9 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
     ao->buffersize = buffer_size*3;
 
     priv->client_buffer_size = buffer_size*2;
-    priv->client_buffer = mp_malloc(priv->client_buffer_size);
+    priv->client_buffer = new char [priv->client_buffer_size];
     priv->server_buffer_size = buffer_size;
-    priv->server_buffer = mp_malloc(priv->server_buffer_size);
+    priv->server_buffer = new char [priv->server_buffer_size];
 
     if (!bytes_per_sample) {
 	MSG_ERR("ao_nas: init(): Zero bytes per sample -> nosound\n");
@@ -519,7 +519,7 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
 // close audio device
 static void uninit(ao_data_t* ao){
 
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     MSG_DBG3("ao_nas: uninit()\n");
 
     priv->expect_underrun = 1;
@@ -535,7 +535,7 @@ static void uninit(ao_data_t* ao){
 
 // stop playing and empty buffers (for seeking/pause)
 static void reset(ao_data_t* ao){
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
 	AuStatus as;
 
 	MSG_DBG3("ao_nas: reset()\n");
@@ -554,7 +554,7 @@ static void reset(ao_data_t* ao){
 // stop playing, keep buffers (for pause)
 static void audio_pause(ao_data_t* ao)
 {
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
 	AuStatus as;
 	MSG_DBG3("ao_nas: audio_pause()\n");
 
@@ -564,7 +564,7 @@ static void audio_pause(ao_data_t* ao)
 // resume playing, after audio_pause()
 static void audio_resume(ao_data_t* ao)
 {
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
 	AuStatus as;
 
 	MSG_DBG3("ao_nas: audio_resume()\n");
@@ -579,7 +579,7 @@ static void audio_resume(ao_data_t* ao)
 // return: how many bytes can be played without blocking
 static unsigned get_space(const ao_data_t* ao)
 {
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
 	unsigned result;
 
 	MSG_DBG3("ao_nas: get_space()\n");
@@ -596,7 +596,7 @@ static unsigned get_space(const ao_data_t* ao)
 // return: number of bytes played
 static unsigned play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
 {
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
 	unsigned written, maxbursts = 0, playbursts = 0;
 	AuStatus as;
 	UNUSED(flags);
@@ -640,16 +640,16 @@ static unsigned play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags
 // return: delay in seconds between first and last sample in buffer
 static float get_delay(const ao_data_t* ao)
 {
-    priv_t* priv=ao->priv;
-	float result;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
+    float result;
 
-	MSG_DBG3( "ao_nas: get_delay()\n");
+    MSG_DBG3( "ao_nas: get_delay()\n");
 
-	pthread_mutex_lock(&priv->buffer_mutex);
-	result = ((float)(priv->client_buffer_used +
-			  priv->server_buffer_used)) /
+    pthread_mutex_lock(&priv->buffer_mutex);
+    result = ((float)(priv->client_buffer_used +
+		  priv->server_buffer_used)) /
 		 (float)ao->bps;
-	pthread_mutex_unlock(&priv->buffer_mutex);
+    pthread_mutex_unlock(&priv->buffer_mutex);
 
-	return result;
+    return result;
 }

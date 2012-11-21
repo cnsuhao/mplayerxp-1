@@ -4,9 +4,6 @@
 #include "mp_config.h"
 #include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 /* The sample format system is based on bitmasks. The
    format definition only refers to the storage format not the
    resolution. */
@@ -41,9 +38,7 @@ typedef enum mpaf_format_enum{
     MPAF_AC3		=0x20000000UL, // Dolby Digital AC3
     MPAF_SPECIAL_MASK	=0xFFFF0000UL
 }mpaf_format_e;
-#ifdef __cplusplus
-}
-extern "C++" {
+
 inline mpaf_format_e operator~(mpaf_format_e a) { return static_cast<mpaf_format_e>(~static_cast<unsigned>(a)); }
 inline mpaf_format_e operator|(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
 inline mpaf_format_e operator&(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
@@ -51,9 +46,6 @@ inline mpaf_format_e operator^(mpaf_format_e a, mpaf_format_e b) { return static
 inline mpaf_format_e operator|=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
 inline mpaf_format_e operator&=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
 inline mpaf_format_e operator^=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
-}
-extern "C" {
-#endif
 
 /* Decodes the format from mplayer format to libaf format */
 extern mpaf_format_e __FASTCALL__ afmt2mpaf(unsigned format);
@@ -84,7 +76,4 @@ extern mp_aframe_t*	new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e forma
 extern mp_aframe_t*	new_mp_aframe_genome(const mp_aframe_t* in);
 extern void		mp_alloc_aframe(mp_aframe_t* it);
 extern int		free_mp_aframe(mp_aframe_t* mpaf);
-#ifdef __cplusplus
-}
-#endif
 #endif

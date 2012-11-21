@@ -46,13 +46,8 @@
 
 #	define AFMT_FLOAT32		0x00100000
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+extern const char*__FASTCALL__ afmt2str(unsigned fmt);
 extern unsigned __FASTCALL__ afmt2bps(unsigned fmt);
 extern unsigned __FASTCALL__ bps2afmt(unsigned bps); /**< very approximate prediction */
-#ifdef __cplusplus
-}
-#endif
 
 #endif

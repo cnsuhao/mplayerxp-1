@@ -95,7 +95,7 @@ typedef struct priv_s {
  */
 static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     esd_player_info_t *esd_pi;
     esd_info_t        *esd_i;
     time_t	       now;
@@ -163,8 +163,9 @@ static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
  */
 static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
-    ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=ao->priv;
+    priv_t*priv;
+    ao->priv=new(zeromem) priv_t;
+    ao->priv=priv;
     priv->fd=priv->play_fd=-1;
     char *server = ao->subdevice;  /* NULL for localhost */
     UNUSED(flags);
@@ -180,7 +181,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 
 static MPXP_Rc configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     char *server = ao->subdevice;  /* NULL for localhost */
     esd_format_t esd_fmt;
     int bytes_per_sample;
@@ -299,7 +300,7 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsign
  */
 static void uninit(ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     if (priv->play_fd >= 0) {
 	esd_close(priv->play_fd);
 	priv->play_fd = -1;
@@ -325,7 +326,7 @@ static void uninit(ao_data_t* ao)
  */
 static unsigned play(ao_data_t* ao,const any_t* data, unsigned len, unsigned flags)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     unsigned offs;
     unsigned nwritten;
     int nsamples;
@@ -390,7 +391,7 @@ static void audio_pause(ao_data_t* ao)
  */
 static void audio_resume(ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     /*
      * not possible with priv->
      *
@@ -409,7 +410,7 @@ static void audio_resume(ao_data_t* ao)
 static void reset(ao_data_t* ao)
 {
 #ifdef	__svr4__
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     /* throw away data buffered in the esd connection */
     if (ioctl(priv->play_fd, I_FLUSH, FLUSHW))
 	perror("I_FLUSH");
@@ -424,7 +425,7 @@ static void reset(ao_data_t* ao)
  */
 static unsigned get_space(const ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     struct timeval tmout;
     fd_set wfds;
     float current_delay;
@@ -469,7 +470,7 @@ static unsigned get_space(const ao_data_t* ao)
  */
 static float get_delay(const ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     struct timeval now;
     double buffered_samples_time;
     double play_time;

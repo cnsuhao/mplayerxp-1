@@ -65,7 +65,7 @@ static const mrl_config_t alsaconf[]={
 #define BUFFERTIME // else SET_CHUNK_SIZE
 #undef USE_POLL
 
-static int __FASTCALL__ fmt2alsa(int format)
+static snd_pcm_format_t __FASTCALL__ fmt2alsa(unsigned format)
 {
     switch (format)
     {
@@ -133,12 +133,12 @@ static int __FASTCALL__ fmt2alsa(int format)
 /* to set/get/query special features/parameters */
 static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd, long arg)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int rval;
     switch(cmd) {
 	case AOCONTROL_QUERY_FORMAT:
 	    rval=fmt2alsa(arg);
-	    return snd_pcm_hw_params_test_format(priv->handler, priv->hwparams,rval)==0?
+	    return snd_pcm_hw_params_test_format(priv->handler, priv->hwparams,snd_pcm_format_t(rval))==0?
 		    MPXP_True:MPXP_False;
 	case AOCONTROL_QUERY_CHANNELS:
 	    rval=arg;
@@ -160,7 +160,7 @@ static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd, long arg)
 	    snd_mixer_selem_id_t *sid;
 
 	    const char *mix_name = "PCM";
-	    char *card = "default";
+	    const char *card = "default";
 
 	    long pmin, pmax;
 	    long get_vol, set_vol;
@@ -216,16 +216,16 @@ static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd, long arg)
 		else if (set_vol > pmax) set_vol = pmax;
 
 		//setting channels
-		if ((err = snd_mixer_selem_set_playback_volume(elem, 0, set_vol)) < 0) {
+		if ((err = snd_mixer_selem_set_playback_volume(elem, snd_mixer_selem_channel_id_t(0), set_vol)) < 0) {
 		    MSG_ERR("alsa-control: error setting left channel, %s",snd_strerror(err));
 		    return MPXP_Error;
 		}
-		if ((err = snd_mixer_selem_set_playback_volume(elem, 1, set_vol)) < 0) {
+		if ((err = snd_mixer_selem_set_playback_volume(elem, snd_mixer_selem_channel_id_t(1), set_vol)) < 0) {
 		    MSG_ERR("alsa-control: error setting right channel, %s",snd_strerror(err));
 		    return MPXP_Error;
 		}
 	    } else {
-		snd_mixer_selem_get_playback_volume(elem, 0, &get_vol);
+		snd_mixer_selem_get_playback_volume(elem, snd_mixer_selem_channel_id_t(0), &get_vol);
 		calc_vol = get_vol;
 		calc_vol = rintf(calc_vol * f_multi);
 
@@ -282,17 +282,17 @@ static void __FASTCALL__ show_caps(unsigned device)
 	}
 	MSG_INFO("    AO-INFO: List of access type: ");
 	for(i=0;i<SND_PCM_ACCESS_LAST;i++)
-	    if(!snd_pcm_hw_params_test_access(pcm,hw_params,i))
-		MSG_INFO("%s ",snd_pcm_access_name(i));
+	    if(!snd_pcm_hw_params_test_access(pcm,hw_params,snd_pcm_access_t(i)))
+		MSG_INFO("%s ",snd_pcm_access_name(snd_pcm_access_t(i)));
 	MSG_INFO("\n");
 	MSG_INFO("    AO-INFO: List of supported formats: ");
 	for(i=0;i<SND_PCM_FORMAT_LAST;i++)
-	    if(!snd_pcm_hw_params_test_format(pcm,hw_params,i))
-		MSG_INFO("%s ",snd_pcm_format_name(i));
+	    if(!snd_pcm_hw_params_test_format(pcm,hw_params,snd_pcm_format_t(i)))
+		MSG_INFO("%s ",snd_pcm_format_name(snd_pcm_format_t(i)));
 	MSG_INFO("\n");
 	MSG_INFO("    AO-INFO: List of supported channels: ");
 	for(i=0;i<64;i++)
-	    if(!snd_pcm_hw_params_test_format(pcm,hw_params,i))
+	    if(!snd_pcm_hw_params_test_format(pcm,hw_params,snd_pcm_format_t(i)))
 		MSG_INFO("%u ",i);
 	MSG_INFO("\n");
 	snd_pcm_hw_params_get_rate_min(hw_params,&rmin,&err);
@@ -315,13 +315,14 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
     int err;
     int cards = -1;
     snd_pcm_info_t *alsa_info;
-    char *str_block_mode;
+    const char *str_block_mode;
     char *alsa_dev=NULL;
     char *alsa_port=NULL;
     char alsa_device[ALSA_DEVICE_SIZE];
     UNUSED(flags);
-    ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=ao->priv;
+    priv_t*priv;
+    priv=new(zeromem) priv_t;
+    ao->priv=priv;
     priv->first=1;
 
     priv->handler = NULL;
@@ -430,7 +431,7 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 	}
     MSG_DBG2("snd_pcm_hw_params_any()\n");
       if (priv_conf.mmap) {
-	snd_pcm_access_mask_t *mask = alloca(snd_pcm_access_mask_sizeof());
+	snd_pcm_access_mask_t *mask = (snd_pcm_access_mask_t*)alloca(snd_pcm_access_mask_sizeof());
 	snd_pcm_access_mask_none(mask);
 	snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_INTERLEAVED);
 	snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_NONINTERLEAVED);
@@ -451,7 +452,7 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
 
 static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int err,i;
     size_t chunk_size=0,chunk_bytes,bits_per_sample,bits_per_frame;
     snd_pcm_uframes_t dummy;
@@ -505,8 +506,8 @@ static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned ch
 		 snd_strerror(err));
 	MSG_HINT("Please try one of: ");
 	for(i=0;i<SND_PCM_FORMAT_LAST;i++)
-	    if (!(snd_pcm_hw_params_test_format(priv->handler, priv->hwparams, i)))
-		MSG_HINT("%s ",snd_pcm_format_name(i));
+	    if (!(snd_pcm_hw_params_test_format(priv->handler, priv->hwparams, snd_pcm_format_t(i))))
+		MSG_HINT("%s ",snd_pcm_format_name(snd_pcm_format_t(i)));
 	MSG_HINT("\n");
 	return MPXP_False;
     }
@@ -629,7 +630,7 @@ static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate_hz,unsigned ch
 static void uninit(ao_data_t* ao)
 {
     int err;
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     if(!priv->handler) {
 	MSG_ERR("alsa-uninit: no handler defined!\n");
 	mp_free(priv);
@@ -659,7 +660,7 @@ static void uninit(ao_data_t* ao)
 
 static void audio_pause(ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int err;
 
     if (!priv_conf.noblock) {
@@ -676,7 +677,7 @@ static void audio_pause(ao_data_t* ao)
 
 static void audio_resume(ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int err;
 
     if ((err = snd_pcm_prepare(priv->handler)) < 0) {
@@ -688,7 +689,7 @@ static void audio_resume(ao_data_t* ao)
 /* stop playing and empty buffers (for seeking/pause) */
 static void reset(ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int err;
 
     if ((err = snd_pcm_drop(priv->handler)) < 0) {
@@ -731,7 +732,7 @@ do { \
 /* I/O error handler */
 static int __FASTCALL__ xrun(const ao_data_t* ao,const char *str_mode)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int err;
     snd_pcm_status_t *status;
 
@@ -782,7 +783,7 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data, unsigned len,
 
 static unsigned __FASTCALL__ play_normal(ao_data_t* ao,const any_t* data, unsigned len)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     //priv->bytes_per_sample is always 4 for 2 chn S16_LE
     unsigned num_frames = len / priv->bytes_per_sample;
     char *output_samples = (char *)data;
@@ -836,7 +837,7 @@ static unsigned __FASTCALL__ play_normal(ao_data_t* ao,const any_t* data, unsign
 
 static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,const any_t* data, unsigned len)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     snd_pcm_sframes_t commitres, frames_available;
     snd_pcm_uframes_t frames_transmit, size, offset;
     const snd_pcm_channel_area_t *area;
@@ -946,7 +947,7 @@ typedef enum space_status_e {
 /* how many byes are mp_free in the buffer */
 static unsigned get_space(const ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     snd_pcm_status_t *status;
     int ret,st;
     space_status e_status=GET_SPACE_UNDEFINED;
@@ -1015,7 +1016,7 @@ static unsigned get_space(const ao_data_t* ao)
 /* delay in seconds between first and last sample in buffer */
 static float get_delay(const ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     if (priv->handler) {
 	snd_pcm_status_t *status;
 	int r;

@@ -36,20 +36,20 @@ typedef struct oss_priv_s
 
 static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
-    const char *args;
+    char *args;
     char *oss_device,*comma;
     oss_priv_t *oss_priv;
     unsigned tmp,param;
     int err;
     UNUSED(flags);
     UNUSED(libinput);
-    if(!(stream->priv = mp_malloc(sizeof(oss_priv_t)))) return MPXP_False;
-    oss_priv=stream->priv;
+    if(!(oss_priv = new(zeromem) oss_priv_t)) return MPXP_False;
+    stream->priv=oss_priv;
     if(strcmp(filename,"help") == 0) {
 	MSG_HINT("Usage: oss://<@device>#<channels>,<samplerate>,<sampleformat>\n");
 	return MPXP_False;
     }
-    args=mrl_parse_line(filename,NULL,NULL,&oss_device,NULL);
+    args=mp_strdup(mrl_parse_line(filename,NULL,NULL,&oss_device,NULL));
     comma=strchr(args,',');
     if(comma) *comma=0;
     oss_priv->nchannels=args[0]?atoi(args):2;
@@ -64,10 +64,10 @@ static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char 
 	oss_priv->sampleformat=mpaf_str2fmt(args);
     else {
 	/* Default to S16_NE */
-	oss_priv->sampleformat=MPAF_NE|MPAF_SI|MPAF_I|2;
+	oss_priv->sampleformat=MPAF_NE|MPAF_SI|MPAF_I|MPAF_BPS_2;
     }
     stream->fd = open(oss_device?oss_device:PATH_DEV_DSP,O_RDONLY);
-    if(stream->fd<0) { mp_free(stream->priv); return MPXP_False; }
+    if(stream->fd<0) { delete oss_priv; delete args; return MPXP_False; }
     ioctl(stream->fd, SNDCTL_DSP_RESET, NULL);
 //    ioctl(stream->fd, SNDCTL_DSP_SYNC, NULL);
     stream->type = STREAMTYPE_STREAM|STREAMTYPE_RAWAUDIO;
@@ -126,6 +126,7 @@ static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char 
     }
     MSG_DBG2("[o_oss] Correct blocksize as %u\n",stream->sector_size);
     check_pin("stream",stream->pin,STREAM_PIN);
+    delete args;
     return MPXP_Ok;
 }
 
@@ -138,7 +139,7 @@ static int __FASTCALL__ oss_read(stream_t*stream,stream_packet_t*sp)
 /*
     Should we repeate read() again on these errno: `EAGAIN', `EIO' ???
 */
-    oss_priv_t*p=stream->priv;
+    oss_priv_t*p=reinterpret_cast<oss_priv_t*>(stream->priv);
     sp->type=0;
     sp->len = TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,sp->len));
     if(!errno) p->spos+=sp->len;
@@ -148,14 +149,14 @@ static int __FASTCALL__ oss_read(stream_t*stream,stream_packet_t*sp)
 static off_t __FASTCALL__ oss_seek(stream_t*stream,off_t pos)
 {
     UNUSED(pos);
-    oss_priv_t *p=stream->priv;
+    oss_priv_t *p=reinterpret_cast<oss_priv_t*>(stream->priv);
     errno=ENOSYS;
     return p->spos;
 }
 
 static off_t __FASTCALL__ oss_tell(const stream_t*stream)
 {
-    oss_priv_t *p=stream->priv;
+    oss_priv_t *p=reinterpret_cast<oss_priv_t*>(stream->priv);
     return p->spos;
 }
 
@@ -169,7 +170,7 @@ static void __FASTCALL__ oss_close(stream_t *stream)
 static MPXP_Rc __FASTCALL__ oss_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     int rval;
-    oss_priv_t *oss_priv = s->priv;
+    oss_priv_t *oss_priv = reinterpret_cast<oss_priv_t*>(s->priv);
     if(args) *(int *)args=0;
     switch(cmd) {
 	case SCTRL_AUD_GET_CHANNELS:
@@ -265,7 +266,7 @@ static MPXP_Rc __FASTCALL__ oss_ctrl(const stream_t *s,unsigned cmd,any_t*args)
     return MPXP_Unknown;
 }
 
-const stream_driver_t oss_stream =
+extern const stream_driver_t oss_stream =
 {
     "oss://",
     "reads multimedia stream from OSS audio capturing interface",

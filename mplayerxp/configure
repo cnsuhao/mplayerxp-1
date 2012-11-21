@@ -1136,6 +1136,7 @@ extern "C" {
 #include "$srcdir/../ffmpeg/libpostproc/postprocess.h"
 #include "$srcdir/../ffmpeg/libswscale/swscale.h"
 #include "$srcdir/../ffmpeg/libswscale/rgb2rgb.h"
+#include "$srcdir/../ffmpeg/libavutil/fifo.h"
 #include "$srcdir/../ffmpeg/libavutil/audioconvert.h"
 #include "$srcdir/../ffmpeg/libswresample/swresample.h"
 #include "$srcdir/../ffmpeg/libavformat/riff.h"

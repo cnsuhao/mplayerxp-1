@@ -36,7 +36,7 @@
 #include "osdep/mplib.h"
 #include "ao_msg.h"
 
-#include "libavutil/fifo.h"
+#include "mp_conf_lavc.h"
 #include <jack/jack.h>
 
 static const ao_info_t info =
@@ -84,10 +84,10 @@ typedef struct priv_s {
  * If there is not enough room, the priv->buffer is filled up
  */
 static int write_buffer(ao_data_t* ao,const unsigned char* data, int len) {
-    priv_t*priv=ao->priv;
-  int _free = av_fifo_space(priv->buffer);
-  if (len > _free) len = _free;
-  return av_fifo_generic_write(priv->buffer, data, len, NULL);
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    int _free = av_fifo_space(priv->buffer);
+    if (len > _free) len = _free;
+    return av_fifo_generic_write(priv->buffer, const_cast<unsigned char *>(data), len, NULL);
 }
 
 static void silence(float **bufs, int cnt, int num_bufs);
@@ -99,9 +99,9 @@ struct deinterleave {
   int pos;
 };
 
-static void deinterleave(any_t*_info, any_t*src, int len) {
-  struct deinterleave *di = _info;
-  float *s = src;
+static void deinterleave_data(any_t*_info, any_t*src, int len) {
+  struct deinterleave *di = reinterpret_cast<struct deinterleave*>(_info);
+  float *s = reinterpret_cast<float*>(src);
   int i;
   len /= sizeof(float);
   for (i = 0; i < len; i++) {
@@ -127,14 +127,14 @@ static void deinterleave(any_t*_info, any_t*src, int len) {
  * with silence.
  */
 static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned num_bufs) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   struct deinterleave di = {bufs, num_bufs, 0, 0};
   unsigned buffered = av_fifo_size(priv->buffer);
   if (cnt * sizeof(float) * num_bufs > buffered) {
     silence(bufs, cnt, num_bufs);
     cnt = buffered / sizeof(float) / num_bufs;
   }
-  av_fifo_generic_read(priv->buffer, &di, cnt * num_bufs * sizeof(float), deinterleave);
+  av_fifo_generic_read(priv->buffer, &di, cnt * num_bufs * sizeof(float), deinterleave_data);
   return cnt;
 }
 
@@ -167,12 +167,13 @@ static void silence(float **bufs, int cnt, int num_bufs) {
  *
  * Write silence into priv->buffers if priv->paused or an priv->underrun occured
  */
-static int outputaudio(jack_nframes_t nframes, any_t* ao) {
-    priv_t*priv=((ao_data_t*)ao)->priv;
+static int outputaudio(jack_nframes_t nframes, any_t* _ao) {
+    ao_data_t* ao=reinterpret_cast<ao_data_t*>(_ao);
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   float *bufs[MAX_CHANS];
   unsigned i;
   for (i = 0; i < priv->num_ports; i++)
-    bufs[i] = jack_port_get_buffer(priv->ports[i], nframes);
+    bufs[i] = (float*)jack_port_get_buffer(priv->ports[i], nframes);
   if (priv->paused || priv->underrun)
     silence(bufs, nframes, priv->num_ports);
   else
@@ -213,13 +214,15 @@ static void print_help (void)
 }
 #endif
 static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
-    ao->priv=mp_mallocz(sizeof(priv_t));
+    priv_t* priv;
+    priv=new(zeromem) priv_t;
+    ao->priv=priv;
     UNUSED(flags);
     return MPXP_Ok;
 }
 
 static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     const char **matching_ports = NULL;
     char *port_name = NULL;
     char *client_name = NULL;
@@ -249,11 +252,11 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
 	goto err_out;
     }
     if (!client_name) {
-	client_name = mp_malloc(40);
+	client_name = new char [40];
 	sprintf(client_name, "MPlayerXP [%d]", getpid());
     }
     if (!autostart)
-	open_options |= JackNoStartServer;
+	open_options = jack_options_t(open_options|JackNoStartServer);
     priv->client = jack_client_open(client_name, open_options, NULL);
     if (!priv->client) {
 	MSG_FATAL("[JACK] cannot open server\n");
@@ -308,13 +311,13 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
     ao->outburst = CHUNK_SIZE;
     mp_free(matching_ports);
     mp_free(port_name);
-    mp_free(client_name);
+    delete client_name;
     return MPXP_Ok;
 
 err_out:
     mp_free(matching_ports);
     mp_free(port_name);
-    mp_free(client_name);
+    delete client_name;
     if (priv->client) jack_client_close(priv->client);
     av_fifo_free(priv->buffer);
     priv->buffer = NULL;
@@ -323,7 +326,7 @@ err_out:
 
 // close audio device
 static void uninit(ao_data_t* ao) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   // HACK, make sure jack doesn't loop-output dirty priv->buffers
   reset(ao);
   usec_sleep(100 * 1000);
@@ -337,52 +340,52 @@ static void uninit(ao_data_t* ao) {
  * \brief stop playing and empty priv->buffers (for seeking/pause)
  */
 static void reset(ao_data_t* ao) {
-    priv_t*priv=ao->priv;
-  priv->paused = 1;
-  av_fifo_reset(priv->buffer);
-  priv->paused = 0;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    priv->paused = 1;
+    av_fifo_reset(priv->buffer);
+    priv->paused = 0;
 }
 
 /**
  * \brief stop playing, keep priv->buffers (for pause)
  */
 static void audio_pause(ao_data_t* ao) {
-    priv_t*priv=ao->priv;
-  priv->paused = 1;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    priv->paused = 1;
 }
 
 /**
  * \brief resume playing, after audio_pause()
  */
 static void audio_resume(ao_data_t* ao) {
-    priv_t*priv=ao->priv;
-  priv->paused = 0;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    priv->paused = 0;
 }
 
 static unsigned get_space(const ao_data_t* ao) {
-    priv_t*priv=ao->priv;
-  return av_fifo_space(priv->buffer);
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    return av_fifo_space(priv->buffer);
 }
 
 /**
  * \brief write data into priv->buffer and reset priv->underrun flag
  */
 static unsigned play(ao_data_t* ao,const any_t*data, unsigned len, unsigned flags) {
-    priv_t*priv=ao->priv;
-  priv->underrun = 0;
-  UNUSED(flags);
-  return write_buffer(ao,data, len);
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    priv->underrun = 0;
+    UNUSED(flags);
+    return write_buffer(ao,reinterpret_cast<const unsigned char*>(data), len);
 }
 
 static float get_delay(const ao_data_t* ao) {
-    priv_t*priv=ao->priv;
-  int buffered = av_fifo_size(priv->buffer); // could be less
-  float in_jack = priv->latency;
-  if (priv->estimate && priv->callback_interval > 0) {
-    float elapsed = (float)GetTimer() / 1000000.0 - priv->callback_time;
-    in_jack += priv->callback_interval - elapsed;
-    if (in_jack < 0) in_jack = 0;
-  }
-  return (float)buffered / (float)ao->bps + in_jack;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+    int buffered = av_fifo_size(priv->buffer); // could be less
+    float in_jack = priv->latency;
+    if (priv->estimate && priv->callback_interval > 0) {
+	float elapsed = (float)GetTimer() / 1000000.0 - priv->callback_time;
+	in_jack += priv->callback_interval - elapsed;
+	if (in_jack < 0) in_jack = 0;
+    }
+    return (float)buffered / (float)ao->bps + in_jack;
 }
 

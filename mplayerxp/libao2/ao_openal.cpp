@@ -93,8 +93,9 @@ static void print_help(void) {
 #endif
 static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 {
-    ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=ao->priv;
+    priv_t*priv;
+    priv=new(zeromem) priv_t;
+    ao->priv=priv;
     UNUSED(flags);
     priv->alc_dev = alcOpenDevice(NULL);
     if (!priv->alc_dev) {
@@ -106,7 +107,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 
 static MPXP_Rc configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned format)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     ALCcontext *ctx = NULL;
     float position[3] = {0, 0, 0};
     float direction[6] = {0, 0, 1, 0, -1, 0};
@@ -156,7 +157,7 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigne
     ao->bps = channels * rate * 2;
     ao->buffersize = CHUNK_SIZE * NUM_BUF;
     ao->outburst = channels * CHUNK_SIZE;
-    priv->tmpbuf = mp_malloc(CHUNK_SIZE);
+    priv->tmpbuf = new int16_t[CHUNK_SIZE];
     return MPXP_Ok;
 err_out:
     return MPXP_False;
@@ -167,7 +168,7 @@ static void uninit(ao_data_t* ao) {
   int immed=0;
   ALCcontext *ctx = alcGetCurrentContext();
   ALCdevice *dev = alcGetContextsDevice(ctx);
-  priv_t*priv=ao->priv;
+  priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   mp_free(priv->tmpbuf);
   if (!immed) {
     ALint state;
@@ -185,7 +186,7 @@ static void uninit(ao_data_t* ao) {
 }
 
 static void unqueue_buffers(const ao_data_t* ao) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   ALint p;
   unsigned s;
   for (s = 0;  s < ao->channels; s++) {
@@ -207,7 +208,7 @@ static void unqueue_buffers(const ao_data_t* ao) {
  * \brief stop playing and empty priv->buffers (for seeking/pause)
  */
 static void reset(ao_data_t* ao) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   alSourceStopv(ao->channels, priv->sources);
   unqueue_buffers(ao);
 }
@@ -216,7 +217,7 @@ static void reset(ao_data_t* ao) {
  * \brief stop playing, keep priv->buffers (for pause)
  */
 static void audio_pause(ao_data_t* ao) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   alSourcePausev(ao->channels, priv->sources);
 }
 
@@ -224,12 +225,12 @@ static void audio_pause(ao_data_t* ao) {
  * \brief resume playing, after audio_pause()
  */
 static void audio_resume(ao_data_t* ao) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   alSourcePlayv(ao->channels, priv->sources);
 }
 
 static unsigned get_space(const ao_data_t* ao) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   ALint queued;
   unqueue_buffers(ao);
   alGetSourcei(priv->sources[0], AL_BUFFERS_QUEUED, &queued);
@@ -242,11 +243,11 @@ static unsigned get_space(const ao_data_t* ao) {
  * \brief write data into buffer and reset underrun flag
  */
 static unsigned play(ao_data_t* ao,const any_t*data, unsigned len, unsigned flags) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   ALint state;
   unsigned i, j, k;
   unsigned ch;
-  const int16_t *d = data;
+  const int16_t *d = reinterpret_cast<const int16_t*>(data);
   UNUSED(flags);
   len /= ao->channels * CHUNK_SIZE;
   for (i = 0; i < len; i++) {
@@ -267,7 +268,7 @@ static unsigned play(ao_data_t* ao,const any_t*data, unsigned len, unsigned flag
 }
 
 static float get_delay(const ao_data_t* ao) {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   ALint queued;
   unqueue_buffers(ao);
   alGetSourcei(priv->sources[0], AL_BUFFERS_QUEUED, &queued);

@@ -91,7 +91,7 @@ static MPXP_Rc control(const ao_data_t* ao,int cmd,long arg){
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
-    return -1;
+    return MPXP_False;
 }
 
 // open & setup audio device
@@ -99,16 +99,16 @@ static MPXP_Rc control(const ao_data_t* ao,int cmd,long arg){
 static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
     // set defaults
     UNUSED(flags);
-    ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t* priv=ao->priv;
+    priv_t* priv;
+    priv=new(zeromem) priv_t;
+    ao->priv=priv;
     priv->pcm_waveheader=1;
     return MPXP_Ok;
 }
 
 static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     unsigned bits;
-    char str[256];
 
     if(ao->subdevice)	priv->out_filename = ao->subdevice;
     else		priv->out_filename = mp_strdup("mpxp_adump.wav");
@@ -162,7 +162,7 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
 		,priv->out_filename
 		,rate
 		,(channels > 1) ? "Stereo" : "Mono"
-		,mpaf_fmt2str(format,str,sizeof(str)));
+		,afmt2str(format));
 
     priv->fp = fopen(priv->out_filename, "wb");
     if(priv->fp) {
@@ -177,7 +177,7 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
 
 // close audio device
 static void uninit(ao_data_t* ao){
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     if(priv->pcm_waveheader){ /* Rewrite wave header */
 	int broken_seek = 0;
 #ifdef __MINGW32__
@@ -223,7 +223,7 @@ static void audio_resume(ao_data_t* ao)
 // return: how many bytes can be played without blocking
 extern vo_data_t* vo_data;
 static unsigned get_space(const ao_data_t* ao){
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     float pts=dae_played_frame(xp_core->video).v_pts;
     if(pts)
 	return ao->pts < pts + priv->fast * 30000 ? ao->outburst : 0;
@@ -234,7 +234,7 @@ static unsigned get_space(const ao_data_t* ao){
 // it should round it down to outburst*n
 // return: number of bytes played
 static unsigned play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags){
-    priv_t* priv=ao->priv;
+    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     UNUSED(flags);
     fwrite(data,len,1,priv->fp);
     if(priv->pcm_waveheader)

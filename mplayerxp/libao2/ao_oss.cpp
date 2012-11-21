@@ -43,7 +43,7 @@ const char *oss_mixer_device = PATH_DEV_MIXER;
 
 // to set/get/query special features/parameters
 static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int rval;
     switch(cmd){
 	case AOCONTROL_SET_DEVICE:
@@ -133,7 +133,7 @@ static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
 
 static void show_fmts(ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   int rval;
   rval=0;
   if (ioctl (priv->fd, SNDCTL_DSP_GETFMTS, &rval) != -1)
@@ -165,7 +165,7 @@ static void show_fmts(ao_data_t* ao)
 
 static void show_caps(ao_data_t* ao)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   int rval;
 #ifdef __linux__
   priv->fd=open(priv->dsp, O_WRONLY | O_NONBLOCK);
@@ -197,10 +197,11 @@ static void show_caps(ao_data_t* ao)
 // open & setup audio device
 // return: 1=success 0=fail
 static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags){
-    char *mixer_channels [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
+    const char *mixer_channels [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
     UNUSED(flags);
-    ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=ao->priv;
+    priv_t*priv;
+    priv=new(zeromem) priv_t;
+    ao->priv=priv;
     priv->dsp=PATH_DEV_DSP;
     priv->mixer_channel=SOUND_MIXER_PCM;
     priv->fd=-1;
@@ -242,7 +243,7 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags){
 
 static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
     ao_format_name(format));
 
@@ -343,7 +344,7 @@ ac3_retry:
 
 // close audio device
 static void uninit(ao_data_t* ao){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     if(priv->fd == -1) return;
 #ifdef SNDCTL_DSP_RESET
     ioctl(priv->fd, SNDCTL_DSP_RESET, NULL);
@@ -355,7 +356,7 @@ static void uninit(ao_data_t* ao){
 
 // stop playing and empty buffers (for seeking/pause)
 static void reset(ao_data_t* ao){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     uninit(ao);
     priv->fd=open(priv->dsp, O_WRONLY);
     if(priv->fd < 0){
@@ -394,7 +395,7 @@ static void audio_resume(ao_data_t* ao)
 
 // return: how many bytes can be played without blocking
 static unsigned get_space(const ao_data_t* ao){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   unsigned playsize=ao->outburst;
 
 #ifdef SNDCTL_DSP_GETOSPACE
@@ -426,7 +427,7 @@ static unsigned get_space(const ao_data_t* ao){
 // it should round it down to outburst*n
 // return: number of bytes played
 static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     UNUSED(flags);
     len/=ao->outburst;
     len=write(priv->fd,data,len*ao->outburst);
@@ -435,7 +436,7 @@ static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data,unsigned len,u
 
 // return: delay in seconds between first and last sample in buffer
 static float get_delay(const ao_data_t* ao){
-    priv_t*priv=ao->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
   int ierr;
   /* Calculate how many bytes/second is sent out */
   if(priv->delay_method==2){
