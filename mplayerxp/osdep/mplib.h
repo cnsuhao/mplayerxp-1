@@ -77,7 +77,8 @@ static inline void show_backtrace(const char *why,unsigned num_calls) {
 
 extern any_t*	__FASTCALL__ SECURE_NAME0(_mp_malloc)(size_t size);
 extern any_t*	__FASTCALL__ SECURE_NAME1(_mp_mallocz)(size_t size);
-extern void	__FASTCALL__ SECURE_NAME2(_mp_free)(any_t* ptr);
+extern any_t*	__FASTCALL__ SECURE_NAME2(_mp_memalign)(size_t boundary,size_t size);
+extern void	__FASTCALL__ SECURE_NAME3(_mp_free)(any_t* ptr);
 extern any_t*	__FASTCALL__ SECURE_NAME9(rnd_fill)(any_t* buffer,size_t size);
 #ifdef __cplusplus
 }
@@ -85,14 +86,17 @@ extern any_t*	__FASTCALL__ SECURE_NAME9(rnd_fill)(any_t* buffer,size_t size);
 extern "C++" {
 #include <new>
     enum zeromemory_t{ zeromem=0 };
+    enum alignedmemory_t{ alignmem=0 };
     inline any_t *operator new(size_t size) { return SECURE_NAME0(_mp_malloc)(size); }
     inline any_t *operator new(size_t size,const zeromemory_t&) { return SECURE_NAME1(_mp_mallocz)(size); }
+    inline any_t *operator new(size_t size,const alignedmemory_t&,size_t boundary) { return SECURE_NAME2(_mp_memalign)(boundary,size); }
     inline any_t *operator new(size_t size,const std::nothrow_t&) { return mp_malloc(size); }
     inline any_t *operator new[](size_t size) { return SECURE_NAME0(_mp_malloc)(size); }
     inline any_t *operator new[](size_t size,const zeromemory_t&) { return SECURE_NAME1(_mp_mallocz)(size); }
+    inline any_t *operator new[](size_t size,const alignedmemory_t&,size_t boundary) { return SECURE_NAME2(_mp_memalign)(boundary,size); }
     inline any_t *operator new[](size_t size,const std::nothrow_t&) { return mp_malloc(size); }
-    inline void   operator delete(any_t* p) { SECURE_NAME2(_mp_free)(p); }
-    inline void   operator delete[](any_t* p) { SECURE_NAME2(_mp_free)(p); }
+    inline void   operator delete(any_t* p) { SECURE_NAME3(_mp_free)(p); }
+    inline void   operator delete[](any_t* p) { SECURE_NAME3(_mp_free)(p); }
 
     extern any_t* get_caller_address(unsigned num_caller=0);
 }
