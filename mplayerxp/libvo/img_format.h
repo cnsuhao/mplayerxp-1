@@ -4,11 +4,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include "mp_config.h"
-#include "libavutil/pixfmt.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "mp_conf_lavc.h"
 
 /* RGB/BGR Formats */
 enum {
@@ -161,8 +157,5 @@ const char * __FASTCALL__ vo_format_name(int format);
 enum PixelFormat pixfmt_from_fourcc(uint32_t fourcc);
 uint32_t	fourcc_from_pixfmt(enum PixelFormat pixfmt);
 extern unsigned rgbfmt_depth(unsigned fmt);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

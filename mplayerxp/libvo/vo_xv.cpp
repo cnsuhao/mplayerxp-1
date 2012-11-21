@@ -11,6 +11,7 @@
  * fullscreen support by Pontscho
  * double buffering support by A'rpi
  */
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,7 +84,7 @@ typedef struct priv_s {
 
 static int __FASTCALL__ xv_reset_video_eq(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
     XvAttribute *attributes;
     int howmany,xv_atomka;
@@ -104,7 +105,7 @@ static int __FASTCALL__ xv_reset_video_eq(vo_data_t*vo)
 
 static int __FASTCALL__ xv_set_video_eq(vo_data_t*vo,const vo_videq_t *info)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
     XvAttribute *attributes;
     int howmany, xv_min,xv_max,xv_atomka;
@@ -167,7 +168,7 @@ static int __FASTCALL__ xv_set_video_eq(vo_data_t*vo,const vo_videq_t *info)
 
 static int __FASTCALL__ xv_get_video_eq(vo_data_t*vo, vo_videq_t *info)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
     XvAttribute *attributes;
     int howmany, xv_min,xv_max,xv_atomka;
@@ -263,9 +264,9 @@ static void set_gamma_correction( vo_data_t*vo )
  */
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
 // int screen;
-    char *hello = (title == NULL) ? "Xv render" : title;
+    const char *hello = (title == NULL) ? "Xv render" : title;
 // char *name = ":0.0";
     XSizeHints hint;
     XVisualInfo vinfo;
@@ -403,9 +404,9 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 
 	    set_gamma_correction(vo);
 
-	    XGetGeometry( vo->mDisplay,vo->window,&priv->mRoot,&priv->drwX,&priv->drwY,&priv->drwWidth,&priv->drwHeight,&priv->drwBorderWidth,&priv->drwDepth );
+	    XGetGeometry( vo->mDisplay,vo->window,&priv->mRoot,reinterpret_cast<int*>(&priv->drwX),reinterpret_cast<int*>(&priv->drwY),&priv->drwWidth,&priv->drwHeight,&priv->drwBorderWidth,&priv->drwDepth );
 	    priv->drwX=0; priv->drwY=0;
-	    XTranslateCoordinates( vo->mDisplay,vo->window,priv->mRoot,0,0,&priv->drwcX,&priv->drwcY,&priv->mRoot );
+	    XTranslateCoordinates( vo->mDisplay,vo->window,priv->mRoot,0,0,reinterpret_cast<int*>(&priv->drwcX),reinterpret_cast<int*>(&priv->drwcY),&priv->mRoot );
 	    MSG_V( "[xv] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",priv->drwcX,priv->drwcY,priv->drwX,priv->drwY,priv->drwWidth,priv->drwHeight );
 
 	    aspect(&priv->dwidth,&priv->dheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
@@ -437,7 +438,7 @@ static const vo_info_t * get_info(const vo_data_t*vo)
 
 static void __FASTCALL__ allocate_xvimage(vo_data_t*vo,int foo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
  /*
   * allocate XvImages.  FIXME: no error checking, without
   * mit-shm this will bomb...
@@ -458,7 +459,7 @@ static void __FASTCALL__ allocate_xvimage(vo_data_t*vo,int foo)
 
 static void __FASTCALL__ deallocate_xvimage(vo_data_t*vo,int foo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     XShmDetach( vo->mDisplay,&priv->Shminfo[foo] );
     shmdt( priv->Shminfo[foo].shmaddr );
     XFlush( vo->mDisplay );
@@ -466,14 +467,14 @@ static void __FASTCALL__ deallocate_xvimage(vo_data_t*vo,int foo)
     return;
 }
 
-static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
+static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_size)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     uint32_t e=vo_x11_check_events(vo,vo->mDisplay,adjust_size);
     if(e&VO_EVENT_RESIZE) {
-	XGetGeometry( vo->mDisplay,vo->window,&priv->mRoot,&priv->drwX,&priv->drwY,&priv->drwWidth,&priv->drwHeight,&priv->drwBorderWidth,&priv->drwDepth );
+	XGetGeometry( vo->mDisplay,vo->window,&priv->mRoot,reinterpret_cast<int*>(&priv->drwX),reinterpret_cast<int*>(&priv->drwY),&priv->drwWidth,&priv->drwHeight,&priv->drwBorderWidth,&priv->drwDepth );
 	priv->drwX=0; priv->drwY=0;
-	XTranslateCoordinates( vo->mDisplay,vo->window,priv->mRoot,0,0,&priv->drwcX,&priv->drwcY,&priv->mRoot );
+	XTranslateCoordinates( vo->mDisplay,vo->window,priv->mRoot,0,0,reinterpret_cast<int*>(&priv->drwcX),reinterpret_cast<int*>(&priv->drwcY),&priv->mRoot );
 	MSG_V( "[xv-resize] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",priv->drwcX,priv->drwcY,priv->drwX,priv->drwY,priv->drwWidth,priv->drwHeight );
 
 	aspect(&priv->dwidth,&priv->dheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
@@ -497,7 +498,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjus
 
 static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     priv->expose_idx=idx;
     XvShmPutImage(vo->mDisplay, priv->port, vo->window, vo->gc, priv->image[idx],
 	0, 0,  priv->image_width, priv->image_height,
@@ -508,18 +509,18 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
     return;
 }
 
-static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t* format)
+static MPXP_Rc __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t* format)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
     XvPortID xv_p;
-    if (vo_x11_init(vo)!=MPXP_Ok) return 0;
+    if (vo_x11_init(vo)!=MPXP_Ok) return MPXP_False;
     priv->port = 0;
     if (Success == XvQueryExtension(vo->mDisplay,&priv->ver,&priv->rel,&priv->req,&priv->ev,&priv->err)) {
 	/* check for Xvideo support */
 	if (Success != XvQueryAdaptors(vo->mDisplay,DefaultRootWindow(vo->mDisplay), &priv->adaptors,&priv->ai)) {
 	    MSG_ERR("Xv: XvQueryAdaptors failed");
-	    return -1;
+	    return MPXP_False;
 	}
 	/* check priv->adaptors */
 	for (i = 0; i < priv->adaptors && priv->port == 0; i++) {
@@ -538,19 +539,19 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t* format
 	    priv->fo = XvListImageFormats(vo->mDisplay, priv->port, (int*)&priv->formats);
 	    priv->format=0;
 	    for(i = 0; i < priv->formats; i++) {
-		if(priv->fo[i].id == (int)format->fourcc) return 1;
-		if(priv->fo[i].id == FOURCC_RGBA32 && format->fourcc == IMGFMT_BGR32) return 1;
-		if(priv->fo[i].id == FOURCC_RGB16 && format->fourcc == IMGFMT_BGR16) return 1;
+		if(priv->fo[i].id == (int)format->fourcc) { format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
+		if(priv->fo[i].id == FOURCC_RGBA32 && format->fourcc == IMGFMT_BGR32) { format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
+		if(priv->fo[i].id == FOURCC_RGB16 && format->fourcc == IMGFMT_BGR16) { format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
 	    }
 	    if (!priv->format) priv->port = 0;
 	}
     }
-    return 0;
+    return MPXP_False;
 }
 
 static void uninit(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
     saver_on(vo,vo->mDisplay); // screen saver back on
     for( i=0;i<priv->num_buffers;i++ ) deallocate_xvimage(vo,i);
@@ -563,8 +564,9 @@ static void uninit(vo_data_t*vo)
 
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv;
+    priv=new(zeromem) priv_t;
+    vo->priv=priv;
     priv->num_buffers=1;
     if(arg) {
 	MSG_ERR("vo_xv: Unknown subdevice: %s\n",arg);
@@ -573,16 +575,9 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     return MPXP_Ok;
 }
 
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-
 static void __FASTCALL__ xv_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i,n;
     caps->caps = DRI_CAP_TEMP_VIDEO | DRI_CAP_UPSCALER | DRI_CAP_DOWNSCALER |
 		DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
@@ -593,7 +588,7 @@ static void __FASTCALL__ xv_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t 
     caps->y=0;
     caps->w=priv->image_width;
     caps->h=priv->image_height;
-    n=priv->image[0]?min(4,priv->image[0]->num_planes):1;
+    n=priv->image[0]?std::min(4,priv->image[0]->num_planes):1;
     if(priv->image[0]) {
 	for(i=0;i<n;i++)
 	    caps->strides[i] = priv->image[0]->pitches[i];
@@ -610,15 +605,15 @@ static void __FASTCALL__ xv_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t 
 
 static void __FASTCALL__ xv_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i,n;
-    n=min(4,priv->image[0]->num_planes);
+    n=std::min(4,priv->image[0]->num_planes);
     for(i=0;i<n;i++)
-	surf->planes[i] = priv->image[surf->idx]->data + priv->image[surf->idx]->offsets[i];
+	surf->planes[i] = reinterpret_cast<uint8_t*>(priv->image[surf->idx]->data) + priv->image[surf->idx]->offsets[i];
     for(;i<4;i++)
 	surf->planes[i] = 0;
     {
-	any_t* tp;
+	uint8_t* tp;
 	tp = surf->planes[2];
 	surf->planes[2] = surf->planes[1];
 	surf->planes[1] = tp;
@@ -627,7 +622,7 @@ static void __FASTCALL__ xv_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
   switch (request) {
   case VOCTRL_QUERY_FORMAT:
     return query_format(vo,(vo_query_fourcc_t*)data);
@@ -644,16 +639,16 @@ static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	*(uint32_t *)data = priv->num_buffers;
 	return MPXP_True;
   case DRI_GET_SURFACE_CAPS:
-	xv_dri_get_surface_caps(vo,data);
+	xv_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
 	return MPXP_True;
   case DRI_GET_SURFACE:
-	xv_dri_get_surface(vo,data);
+	xv_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
 	return MPXP_True;
   case VOCTRL_SET_EQUALIZER:
-	if(!xv_set_video_eq(vo,data)) return MPXP_True;
+	if(!xv_set_video_eq(vo,reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
   case VOCTRL_GET_EQUALIZER:
-	if(xv_get_video_eq(vo,data)) return MPXP_True;
+	if(xv_get_video_eq(vo,reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
   }
   return MPXP_NA;

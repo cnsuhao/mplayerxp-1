@@ -234,7 +234,7 @@ static uint32_t check_events(vo_data_t* vo)
 
 static void __FASTCALL__ select_frame(vo_data_t*vo, unsigned idx )
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
 #ifdef HAVE_DGA2
     XDGASetViewport (vo->mDisplay, XDefaultScreen(vo->mDisplay),
 		    0, priv->dbf_y_offset[idx],
@@ -255,12 +255,12 @@ static const vo_info_t* get_info(const vo_data_t* vo )
 
 //---------------------------------------------------------
 
-static uint32_t __FASTCALL__ query_format(vo_data_t*vo, vo_query_fourcc_t *fourcc )
+static MPXP_Rc __FASTCALL__ query_format(vo_data_t*vo, vo_query_fourcc_t *fourcc )
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
 #ifdef HAVE_DGA2
     XDGAMode *modelines;
-    unsigned  modecount;
+    int modecount;
 #endif
     Display  *qdisp;
 
@@ -270,13 +270,13 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo, vo_query_fourcc_t *fourc
     if(dga_depths_init == 0) {
 	if((qdisp = XOpenDisplay(0))==NULL) {
 	    MSG_ERR( "vo_dga: Can't open display!\n");
-	    return 0;
+	    return MPXP_False;
 	}
 	priv->udf_screenw = vo_conf.screenwidth;
 	priv->udf_screenh = vo_conf.screenheight;
 	if(vo_x11_init(vo)!=MPXP_Ok){
 	    MSG_ERR( "vo_dga: vo_x11_init() failed!\n");
-	    return 1;
+	    return MPXP_False;
 	}
 	priv->XServer_mode = vd_ValidateMode(vo->depthonscreen);
 
@@ -330,21 +330,22 @@ static uint32_t __FASTCALL__ query_format(vo_data_t*vo, vo_query_fourcc_t *fourc
 	    MSG_V( "\n");
 	}
     }
+    fourcc->flags=VOCAP_NA;
     switch(fourcc->fourcc) {
-	case IMGFMT_BGR15: return vo_dga_modes[1].vdm_supported != 0;
-	case IMGFMT_BGR16: return vo_dga_modes[2].vdm_supported != 0;
-	case IMGFMT_BGR24: return vo_dga_modes[3].vdm_supported != 0;
-	case IMGFMT_BGR32: return vo_dga_modes[4].vdm_supported != 0;
+	case IMGFMT_BGR15: if(vo_dga_modes[1].vdm_supported != 0) fourcc->flags=VOCAP_SUPPORTED; break;
+	case IMGFMT_BGR16: if(vo_dga_modes[2].vdm_supported != 0) fourcc->flags=VOCAP_SUPPORTED; break;
+	case IMGFMT_BGR24: if(vo_dga_modes[3].vdm_supported != 0) fourcc->flags=VOCAP_SUPPORTED; break;
+	case IMGFMT_BGR32: if(vo_dga_modes[4].vdm_supported != 0) fourcc->flags=VOCAP_SUPPORTED; break;
 	default: break;
     }
-    return 0;
+    return MPXP_Ok;
 }
 
 //---------------------------------------------------------
 
 static void uninit(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
 #ifdef HAVE_DGA2
     XDGADevice *dgadevice;
 #endif
@@ -414,9 +415,10 @@ static int __FASTCALL__ check_res( int num, int x, int y, int bpp,
 #ifdef HAVE_DGA2
 static int __FASTCALL__ dga2_find_best_mode(vo_data_t*vo,unsigned wanted_width,unsigned wanted_height)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     XDGAMode *modelines=NULL;
-    unsigned i,modecount,mVBI=100000, mMaxY=0,mX=VO_DGA_INVALID_RES, mY=VO_DGA_INVALID_RES,j=0;
+    unsigned i,j=0;
+    int mVBI=100000, mMaxY=0,mX=VO_DGA_INVALID_RES, mY=VO_DGA_INVALID_RES,modecount;
     int dga_modenum;
 
     modelines=XDGAQueryModes(vo->mDisplay, XDefaultScreen(vo->mDisplay),&modecount);
@@ -431,7 +433,7 @@ static int __FASTCALL__ dga2_find_best_mode(vo_data_t*vo,unsigned wanted_width,u
 
     MSG_V("vo_dga: DGA 2.0 available! Can switch resolution AND depth!\n");
 
-    for (i=0; i<modecount; i++) {
+    for (i=0; i<unsigned(modecount); i++) {
 	MSG_V("vo_dga: Trying hardware mode (%s) %ux%u@(depth %2d, bitspp %2d) *%3.2fHz [stride=%u]\n"
 		,modelines[i].name
 		,modelines[i].viewportWidth
@@ -478,9 +480,9 @@ static int __FASTCALL__ dga2_find_best_mode(vo_data_t*vo,unsigned wanted_width,u
 
 static int __FASTCALL__ dga2_select_mode(vo_data_t*vo, int dga_modenum )
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     XDGADevice *dgadevice;
-    unsigned bank, ram_size;
+    int bank, ram_size;
     if (!XDGAOpenFramebuffer(vo->mDisplay, XDefaultScreen(vo->mDisplay))){
 	MSG_ERR( "vo_dga: Framebuffer mapping failed!!!\n");
 	XCloseDisplay(vo->mDisplay);
@@ -493,7 +495,8 @@ static int __FASTCALL__ dga2_select_mode(vo_data_t*vo, int dga_modenum )
 	XFree(dgadevice);
     }
     else XF86DGAGetVideo (vo->mDisplay, XDefaultScreen(vo->mDisplay),
-		   (char **)&priv->base, &priv->width, &bank, &ram_size);
+		   (char **)&priv->base, reinterpret_cast<int*>(&priv->width),
+		   &bank, &ram_size);
     XDGASetViewport (vo->mDisplay, XDefaultScreen(vo->mDisplay), 0, 0, XDGAFlipRetrace);
     return 0;
 }
@@ -502,7 +505,7 @@ static int __FASTCALL__ dga2_select_mode(vo_data_t*vo, int dga_modenum )
 #ifdef HAVE_XF86VM
 static int __FASTCALL__ xf86vm_find_best_mode(vo_data_t*vo,unsigned wanted_width,unsigned wanted_height)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned vm_event, vm_error;
     unsigned vm_ver, vm_rev;
     int i, j=0, have_vm=0;
@@ -569,12 +572,12 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,uint32_t height,
 		      uint32_t d_width,uint32_t d_height,
 		      uint32_t flags,char *title,uint32_t format)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned wanted_width, wanted_height;
     int dga_modenum;
-    int bank;
-    unsigned dest_frame_size,ram_size,freq;
-    unsigned mX,mY;
+    int bank,ram_size;
+    unsigned dest_frame_size,freq;
+    int mX,mY;
 
     UNUSED(title);
     if( priv->is_running ) return MPXP_False;
@@ -651,7 +654,8 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo, uint32_t width,uint32_t height,
 #endif
   /* for both DGA1 and DGA2 we need to know ram_size */
     XF86DGAGetVideo (vo->mDisplay, XDefaultScreen(vo->mDisplay),
-			(char **)&priv->base, &priv->vp_width, &bank, &ram_size);
+			(char **)&priv->base, reinterpret_cast<int*>(&priv->vp_width),
+			&bank, &ram_size);
 
     XF86DGAGetViewPortSize(vo->mDisplay,DefaultScreen(vo->mDisplay),&mX,&mY);
     priv->vp_width = mX;
@@ -748,15 +752,16 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 	MSG_V( "vo_dga: Unknown subdevice: %s\n",arg);
 	return MPXP_False;
     }
-    vo->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv;
+    priv=new(zeromem) priv_t;
+    vo->priv=priv;
     priv->num_buffers=1;
     return MPXP_Ok;
 }
 
 static void __FASTCALL__ dga_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     caps->caps = DRI_CAP_VIDEO_MMAPED;
     caps->fourcc=priv->dstFourcc;
     caps->width=priv->vp_width;
@@ -773,7 +778,7 @@ static void __FASTCALL__ dga_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t
 
 static void __FASTCALL__ dga_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     surf->planes[0] = priv->base + priv->dbf_mem_offset[surf->idx];
     surf->planes[1] = 0;
     surf->planes[2] = 0;
@@ -782,7 +787,7 @@ static void __FASTCALL__ dga_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     switch (request) {
 	case VOCTRL_QUERY_FORMAT:
 	    return query_format(vo,(vo_query_fourcc_t*)data);
@@ -794,10 +799,10 @@ static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	    *(uint32_t *)data = priv->num_buffers;
 	    return MPXP_True;
 	case DRI_GET_SURFACE_CAPS:
-	    dga_dri_get_surface_caps(vo,data);
+	    dga_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
 	    return MPXP_True;
 	case DRI_GET_SURFACE:
-	    dga_dri_get_surface(vo,data);
+	    dga_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
 	    return MPXP_True;
     }
     return MPXP_NA;

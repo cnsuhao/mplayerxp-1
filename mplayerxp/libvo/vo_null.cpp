@@ -109,11 +109,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     }
     for(i=0;i<priv->num_frames;i++) {
 	if(!priv->bm_buffs[i])
-#ifdef HAVE_MEMALIGN
-	    priv->bm_buffs[i] = mp_memalign(getpagesize(),priv->frame_size);
-#else
-	    priv->bm_buffs[i] = mp_malloc(priv->frame_size);
-#endif
+	    priv->bm_buffs[i] = new(alignmem,getpagesize()) uint8_t[priv->frame_size];
 	if(!(priv->bm_buffs[i])) {
 		MSG_ERR("Can't allocate memory for busmastering\n");
 		return MPXP_False;
@@ -177,7 +173,7 @@ static void __FASTCALL__ null_dri_get_surface(const vo_data_t*vo,dri_surface_t *
     surf->planes[3] = 0;
 }
 
-static int __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
+static MPXP_Rc __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
     /* we must avoid compressed-fourcc here */
     switch(format->fourcc) {
     case IMGFMT_444P16_LE:
@@ -224,18 +220,18 @@ static int __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     switch (request) {
     case VOCTRL_QUERY_FORMAT:
-	return null_query_format(data);
+	return null_query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
     case VOCTRL_GET_NUM_FRAMES:
 	*(uint32_t *)data = priv->num_frames;
 	return MPXP_True;
     case DRI_GET_SURFACE_CAPS:
-	null_dri_get_surface_caps(vo,data);
+	null_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
 	return MPXP_True;
     case DRI_GET_SURFACE:
-	null_dri_get_surface(vo,data);
+	null_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
 	return MPXP_True;
     case VOCTRL_FLUSH_PAGES:
 	return MPXP_True;

@@ -51,18 +51,18 @@ vo_conf_t vo_conf;
 //
 // Externally visible list of all vo drivers
 //
-extern vo_functions_t video_out_x11;
-extern vo_functions_t video_out_xv;
-extern vo_functions_t video_out_dga;
-extern vo_functions_t video_out_sdl;
-extern vo_functions_t video_out_null;
-extern vo_functions_t video_out_pgm;
-extern vo_functions_t video_out_md5;
-extern vo_functions_t video_out_fbdev;
-extern vo_functions_t video_out_png;
-extern vo_functions_t video_out_opengl;
+extern const vo_functions_t video_out_x11;
+extern const vo_functions_t video_out_xv;
+extern const vo_functions_t video_out_dga;
+extern const vo_functions_t video_out_sdl;
+extern const vo_functions_t video_out_null;
+extern const vo_functions_t video_out_pgm;
+extern const vo_functions_t video_out_md5;
+extern const vo_functions_t video_out_fbdev;
+extern const vo_functions_t video_out_png;
+extern const vo_functions_t video_out_opengl;
 #ifdef HAVE_VESA
-extern vo_functions_t video_out_vesa;
+extern const vo_functions_t video_out_vesa;
 #endif
 
 static const vo_functions_t* video_out_drivers[] =
@@ -454,17 +454,18 @@ MPXP_Rc __FASTCALL__ RND_RENAME7(vo_config)(vo_data_t*vo,uint32_t width, uint32_
 uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned src_w, unsigned src_h)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
-    uint32_t retval,dri_forced_fourcc;
+    uint32_t dri_forced_fourcc;
+    MPXP_Rc retval;
     vo_query_fourcc_t qfourcc;
     MSG_DBG3("dri_vo_dbg: vo_query_format(%08lX)\n",*fourcc);
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
-    retval = priv->video_out->control(vo,VOCTRL_QUERY_FORMAT,&qfourcc);
-    MSG_V("dri_vo: request for %s fourcc: %s\n",vo_format_name(*fourcc),retval?"OK":"False");
+    if(priv->video_out->control(vo,VOCTRL_QUERY_FORMAT,&qfourcc)==MPXP_False)
+	qfourcc.flags=VOCAP_NA;
+    MSG_V("dri_vo: request for %s fourcc: %i\n",vo_format_name(*fourcc),qfourcc.flags);
     dri_forced_fourcc = *fourcc;
-    if(retval) retval = 0x3; /* supported without convertion */
-    return retval;
+    return qfourcc.flags;
 }
 
 MPXP_Rc vo_reset(vo_data_t*vo)

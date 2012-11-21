@@ -95,7 +95,8 @@ static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request,any_t*
 
 static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
     dri_surface_cap_t dcaps;
-    int rflags,flags=vo_query_format(vo_data,&fmt,w,h);
+    int rflags;
+    uint32_t flags=vo_query_format(vo_data,&fmt,w,h);
     MSG_DBG2("[vf_vo] %i=query_format(%s)\n",flags,vo_format_name(fmt));
     rflags=0;
     UNUSED(vf);

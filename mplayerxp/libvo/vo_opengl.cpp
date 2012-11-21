@@ -64,7 +64,7 @@ static const vo_info_t vo_info =
   ""
 };
 
-const LIBVO_EXTERN(opengl)
+LIBVO_EXTERN(opengl)
 
 typedef struct priv_s {
     uint32_t		image_width;
@@ -100,7 +100,7 @@ static XVisualInfo *get_visual_info(Display *dpy, Window win)
 
 static void gl_init_fb(vo_data_t*vo,unsigned x,unsigned y,unsigned d_width,unsigned d_height)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     float sx = (GLfloat) (d_width-x) / (GLfloat)priv->image_width;
     float sy = (GLfloat) (d_height-y) / (GLfloat)priv->image_height;
 
@@ -136,7 +136,7 @@ static void gl_init_fb(vo_data_t*vo,unsigned x,unsigned y,unsigned d_width,unsig
 }
 
 static void resize(vo_data_t*vo,int x,int y){
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     MSG_V("[gl] Resize: %dx%d\n",x,y);
     if (vo_conf.WinID >= 0) {
 	unsigned top = 0, left = 0, w = x, h = y;
@@ -155,9 +155,9 @@ static void resize(vo_data_t*vo,int x,int y){
  */
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     int is_bgr;
-    char *hello = (title == NULL) ? "Glx render" : title;
+    const char *hello = (title == NULL) ? "Glx render" : title;
     XSizeHints hint;
 
     XGCValues xgcv;
@@ -240,7 +240,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	    MSG_ERR("[vo_oengl]: Can't create GLX context\n");
 	    return MPXP_False;
 	}
-	if (!glXMakeCurrent(vo->mDisplay, vo->window, priv->glx_context)) {
+	if (!glXMakeCurrent(vo->mDisplay, vo->window, reinterpret_cast<__GLXcontextRec*>(priv->glx_context))) {
 	    MSG_ERR("[vo_oengl]: Can't make GLX context current\n");
 	    return MPXP_False;
 	}
@@ -273,7 +273,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     return MPXP_Ok;
 }
 
-static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
+static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_size)
 {
     int e=vo_x11_check_events(vo,vo->mDisplay,adjust_size);
     if(e&VO_EVENT_RESIZE) resize(vo,vo->dest.w,vo->dest.h);
@@ -282,7 +282,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjus
 
 static void __FASTCALL__ gl_display_Image(vo_data_t*vo,XImage *myximage )
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     glDrawPixels(priv->image_width,
 		priv->image_height,
 		priv->out_mode,
@@ -291,7 +291,7 @@ static void __FASTCALL__ gl_display_Image(vo_data_t*vo,XImage *myximage )
 }
 
 static void select_frame(vo_data_t*vo,unsigned idx) {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
 
     gl_display_Image(vo,vo_x11_Image(vo,idx));
     if (priv->num_buffers>1) glXSwapBuffers(vo->mDisplay, vo->window);
@@ -299,27 +299,27 @@ static void select_frame(vo_data_t*vo,unsigned idx) {
     return;
 }
 
-static uint32_t __FASTCALL__ query_format( vo_query_fourcc_t* format )
+static MPXP_Rc __FASTCALL__ query_format( vo_query_fourcc_t* format )
 {
     MSG_DBG2("vo_opengl: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
     if((IMGFMT_IS_BGR(format->fourcc)||IMGFMT_IS_RGB(format->fourcc))&&rgbfmt_depth(format->fourcc)<48) {
 	MSG_DBG2("vo_opengl: OK\n");
-	return  VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP |
-		VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN;
+	format->flags=VOCAP_SUPPORTED | VOCAP_HWSCALER | VOCAP_FLIP;
+	return MPXP_Ok;
     }
     MSG_DBG2("vo_opengl: FALSE\n");
-    return 0;
+    return MPXP_False;
 }
 
 
 static void uninit(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
 //  if (!vo_config_count) return;
     glFinish();
     glXMakeCurrent(vo->mDisplay, None, NULL);
-    glXDestroyContext(vo->mDisplay, priv->glx_context);
+    glXDestroyContext(vo->mDisplay, reinterpret_cast<__GLXcontextRec*>(priv->glx_context));
     for(i=0;i<priv->num_buffers;i++)  vo_x11_freeMyXImage(vo,i);
     saver_on(vo,vo->mDisplay); // screen saver back on
 #ifdef HAVE_XF86VM
@@ -331,7 +331,7 @@ static void uninit(vo_data_t*vo)
 
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=mp_mallocz(sizeof(priv_t));
+    vo->priv=new(zeromem) priv_t;
     priv_t*priv=(priv_t*)vo->priv;
     priv->num_buffers=1;
     UNUSED(arg);
@@ -341,7 +341,7 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 
 static void __FASTCALL__ gl_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     caps->caps =DRI_CAP_TEMP_VIDEO|
 		DRI_CAP_HORZSCALER|DRI_CAP_VERTSCALER|
 		DRI_CAP_DOWNSCALER|DRI_CAP_UPSCALER;
@@ -360,7 +360,7 @@ static void __FASTCALL__ gl_dri_get_surface_caps(const vo_data_t*vo,dri_surface_
 
 static void __FASTCALL__ gl_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     UNUSED(priv);
     surf->planes[0] = vo_x11_ImageData(vo,surf->idx);
     surf->planes[1] = 0;
@@ -370,7 +370,7 @@ static void __FASTCALL__ gl_dri_get_surface(const vo_data_t*vo,dri_surface_t *su
 
 static MPXP_Rc control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     switch (request) {
 	case VOCTRL_QUERY_FORMAT:
 	    return query_format((vo_query_fourcc_t*)data);
@@ -382,10 +382,10 @@ static MPXP_Rc control(vo_data_t*vo,uint32_t request, any_t*data)
 	    *(uint32_t *)data = priv->num_buffers;
 	    return MPXP_True;
 	case DRI_GET_SURFACE_CAPS:
-	    gl_dri_get_surface_caps(vo,data);
+	    gl_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
 	    return MPXP_True;
 	case DRI_GET_SURFACE:
-	    gl_dri_get_surface(vo,data);
+	    gl_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
 	    return MPXP_True;
 	case VOCTRL_CHECK_EVENTS: {
 	    vo_resize_t * vrest = (vo_resize_t *)data;

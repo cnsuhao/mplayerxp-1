@@ -3,30 +3,30 @@ include ../mp_config.mak
 LIBNAME = libvo.a
 
 CXXSRCS=video_out.cpp font_load.cpp img_format.cpp screenshot.cpp sub.cpp osd.cpp
-SRCS=aspect.c vo_null.c
+CXXSRCS+=aspect.cpp vo_null.cpp
 ifeq ($(HAVE_SDL),yes)
-SRCS+=vo_sdl.c
+CXXSRCS+=vo_sdl.cpp
 endif
 ifeq ($(HAVE_OPENGL),yes)
-SRCS+=vo_opengl.c
+CXXSRCS+=vo_opengl.cpp
 endif
 ifeq ($(HAVE_X11),yes)
-SRCS+=vo_x11.c x11_common.c
+CXXSRCS+=vo_x11.cpp x11_common.cpp
 endif
 ifeq ($(HAVE_XV),yes)
-SRCS+=vo_xv.c
+CXXSRCS+=vo_xv.cpp
 endif
 ifeq ($(HAVE_DGA),yes)
-SRCS+=vo_dga.c
+CXXSRCS+=vo_dga.cpp
 endif
 ifeq ($(HAVE_FBDEV),yes)
-SRCS+=vo_fbdev.c
+CXXSRCS+=vo_fbdev.cpp
 endif
 ifeq ($(HAVE_VESA),yes)
-SRCS += vo_vesa.c
+CXXSRCS += vo_vesa.cpp
 endif
 ifeq ($(CONFIG_VIDIX),yes)
-SRCS += vosub_vidix.c
+CXXSRCS += vosub_vidix.cpp
 endif
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -DMPG12PLAY -Wall -W
@@ -63,7 +63,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

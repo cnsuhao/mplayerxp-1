@@ -23,10 +23,6 @@
 #include "xmpcore/mp_image.h"
 #include "xmpcore/xmp_enums.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum {
     VO_EVENT_EXPOSE=1,
     VO_EVENT_RESIZE=2,
@@ -68,14 +64,22 @@ typedef struct vo_info_s
     const char *comment;	/**< any additional comments */
 } vo_info_t;
 
+enum {
+    VOCAP_NA=0x00,
+    VOCAP_SUPPORTED=0x01,
+    VOCAP_HWSCALER=0x02,
+    VOCAP_FLIP=0x04
+};
 /** Request for supported FOURCC by VO-driver */
 typedef struct vo_query_fourcc_s
 {
     uint32_t	fourcc;	/**< Fourcc of decoded image */
     unsigned	w,h;	/**< Width and height of decoded image */
+    unsigned	flags;  /**< Flags for this fourcc VOCAP_*  */
 }vo_query_fourcc_t;
 
 /** Notification event when windowed output has been resized (as data of VOCTRL_CHECK_EVENT) */
+typedef int (*__FASTCALL__ vo_adjust_size_t)(any_t*,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
 typedef struct vo_resize_s
 {
     uint32_t	event_type; /**< X11 event type */
@@ -87,7 +91,7 @@ typedef struct vo_resize_s
      * @param nh	storage for new height to be stored current window width
      * @return	0 if fail  !0 if success
     **/
-    int		(*__FASTCALL__ adjust_size)(any_t*,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
+    vo_adjust_size_t adjust_size;
 }vo_resize_t;
 
 /** Named video equalizer */
@@ -195,6 +199,8 @@ static inline void vo_FLIP_SET(vo_data_t*vo)   { vo->flags|=VOFLAG_FLIPPING; }
 static inline void vo_FLIP_UNSET(vo_data_t*vo) { vo->flags&=~VOFLAG_FLIPPING; }
 static inline void vo_FLIP_REVERT(vo_data_t*vo){ vo->flags^=VOFLAG_FLIPPING; }
 
+typedef MPXP_Rc (* __FASTCALL__ vo_control_t)(vo_data_t* vo,uint32_t request, any_t*data);
+typedef void (* __FASTCALL__ vo_select_frame_t)(vo_data_t* vo,unsigned idx);
 /** VO-driver interface */
 typedef struct vo_functions_s
 {
@@ -223,7 +229,7 @@ typedef struct vo_functions_s
 	 * @param data		data associated with command
 	 * @return		MPXP_True if success MPXP_False VO_ERROR MPXP_NA otherwise
 	 **/
-	MPXP_Rc (* __FASTCALL__ control)(vo_data_t* vo,uint32_t request, any_t*data);
+	vo_control_t control;
 
 	/** Returns driver information.
 	 * @return	read-only pointer to a vo_info_t structure.
@@ -233,7 +239,7 @@ typedef struct vo_functions_s
 	/** Blit/Flip buffer to the screen. Must be called after each frame!
 	 * @param idex	index of frame to be selected as active frame
 	 **/
-	void (* __FASTCALL__ select_frame)(vo_data_t* vo,unsigned idx);
+	vo_select_frame_t select_frame;
 
 	/** Closes driver. Should restore the original state of the system.
 	 **/
@@ -253,7 +259,7 @@ extern MPXP_Rc  __FASTCALL__ RND_RENAME6(vo_init)(vo_data_t* vo,const char *subd
 extern MPXP_Rc  __FASTCALL__ RND_RENAME7(vo_config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 				  uint32_t d_height, uint32_t fullscreen, char *title,
 				  uint32_t format);
-extern uint32_t	 __FASTCALL__ vo_query_format(vo_data_t* vo,uint32_t* fourcc,unsigned src_w,unsigned src_h);
+extern uint32_t	__FASTCALL__ vo_query_format(vo_data_t* vo,uint32_t* fourcc,unsigned src_w,unsigned src_h);
 extern MPXP_Rc		vo_reset(vo_data_t* vo);
 extern MPXP_Rc		vo_fullscreen(vo_data_t* vo);
 extern MPXP_Rc		vo_screenshot(vo_data_t* vo,unsigned idx );
@@ -284,9 +290,5 @@ typedef struct s_vo_format_desc
     unsigned y_mul[4],y_div[4];
 }vo_format_desc;
 extern int	__FASTCALL__	vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

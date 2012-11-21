@@ -89,7 +89,7 @@
  *     to update this all the time (CVS info on http://mplayer.sourceforge.net)
  *
  */
-
+#include <algorithm>
 /* define to force software-surface (video surface stored in system memory)*/
 #undef SDL_NOHWSURFACE
 
@@ -153,9 +153,6 @@ static vo_info_t vo_info =
 
 #include <SDL/SDL.h>
 
-#ifdef CONFIG_VIDIX
-static const char *vidix_name = NULL;
-#endif
 
 #if	defined(sun) && defined(__svr4__)
 /* setenv is missing on solaris */
@@ -227,7 +224,7 @@ typedef struct priv_s {
     int		X; /* is X running (0/1) */
     int		XWidth, XHeight; /* X11 Resolution */
     int		width, height; /* original image dimensions */
-    int		dstwidth, dstheight; /* destination dimensions */
+    unsigned	dstwidth, dstheight; /* destination dimensions */
     int		y; /* Draw image at coordinate y on the SDL surfaces */
     int		y_screen_top, y_screen_bottom; /* The image is displayed between those y coordinates in priv->surface */
     int		osd_has_changed; /* 1 if the OSD has changed otherwise 0 */
@@ -236,6 +233,10 @@ typedef struct priv_s {
        dirty_off_frame[1] is the corresponding thing for OSD contents drawn below the image
     */
     SDL_Rect	dirty_off_frame[2];
+#ifdef CONFIG_VIDIX
+    const char *	vidix_name;
+    vidix_server_t*	vidix_server;
+#endif
 }priv_t;
 
 static void __FASTCALL__ erase_area_4(int x_start, int width, int height, int pitch, uint32_t color, uint8_t* pixels);
@@ -273,9 +274,9 @@ static inline int findArrayEnd (SDL_Rect **array)
  *   returns : 0 on success, -1 on failure
  **/
 
-static int sdl_open ( vo_data_t*vo )
+static MPXP_Rc sdl_open ( vo_data_t*vo )
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     const SDL_VideoInfo *vidInfo = NULL;
     /*static int opened = 0;
 	if (opened)
@@ -284,8 +285,9 @@ static int sdl_open ( vo_data_t*vo )
     MSG_DBG3("SDL: Opening Plugin\n");
 #ifdef CONFIG_VIDIX
     if(memcmp(sdl_subdevice,"vidix",5) == 0) {
-	vidix_name = &sdl_subdevice[5]; /* vidix_name will be valid within init() */
-	if(vidix_preinit(vo,vidix_name,&video_out_sdl)!=MPXP_Ok) return -1;
+	priv->vidix_name = &sdl_subdevice[5]; /* vidix_name will be valid within init() */
+	if(!(priv->vidix_server=vidix_preinit(vo,priv->vidix_name,&video_out_sdl)))
+	    return MPXP_False;
 	strcpy(priv->driver,"vidix");
     } else {
 #endif
@@ -310,7 +312,7 @@ static int sdl_open ( vo_data_t*vo )
     if (!SDL_WasInit(SDL_INIT_VIDEO)) {
 	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE)) {
 	    MSG_ERR("SDL: Initializing of SDL failed: %s.\n", SDL_GetError());
-	    return -1;
+	    return MPXP_False;
 	}
     }
 
@@ -355,7 +357,7 @@ static int sdl_open ( vo_data_t*vo )
 	priv->sdlflags &= ~SDL_HWSURFACE;
 	if ((!SDL_ListModes (vidInfo->vfmt, priv->sdlflags)) && (!priv->fullmodes)) {
 	    MSG_ERR("SDL: Couldn't get any acceptable SDL Mode for output.\n");
-	    return -1;
+	    return MPXP_False;
 	}
     }
    /* YUV overlays need at least 16-bit color depth, but the
@@ -387,7 +389,7 @@ static int sdl_open ( vo_data_t*vo )
 #endif
 
     /* Success! */
-    return 0;
+    return MPXP_Ok;
 }
 
 
@@ -400,10 +402,10 @@ static int sdl_open ( vo_data_t*vo )
 
 static int sdl_close (vo_data_t*vo)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     unsigned i,n;
 #ifdef CONFIG_VIDIX
-    if(vidix_name) vidix_term(vo);
+    if(priv->vidix_name) vidix_term(vo);
 #endif
     n=priv->num_buffs;
     for(i=0;i<n;i++) {
@@ -430,7 +432,7 @@ static int sdl_close (vo_data_t*vo)
 /* Set video mode. Not fullscreen */
 static MPXP_Rc __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, int bpp, uint32_t sdlflags)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     SDL_Surface* newsurface;
     MPXP_Rc retval=MPXP_False;
     newsurface = SDL_SetVideoMode(width, height, bpp, sdlflags);
@@ -454,7 +456,7 @@ static MPXP_Rc __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, i
 }
 
 static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     SDL_Surface *newsurface = NULL;
     int screen_surface_w, screen_surface_h;
     MPXP_Rc retval=MPXP_False;
@@ -524,7 +526,7 @@ static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 //static int sdl_setup (int width, int height)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     MPXP_Rc retval;
 
     if(sdl_forcegl) priv->mode = GL;
@@ -687,12 +689,12 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 
 static MPXP_Rc setup_surfaces( vo_data_t*vo )
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
     MPXP_Rc retval;
     priv->num_buffs=vo_conf.xp_buffs;
 #ifdef CONFIG_VIDIX
-    if(!vidix_name) {
+    if(!priv->vidix_name) {
 #endif
     for(i=0;i<priv->num_buffs;i++) {
 	retval = setup_surface(vo,i);
@@ -705,7 +707,7 @@ static MPXP_Rc setup_surfaces( vo_data_t*vo )
 			priv->dstwidth,priv->dstheight,priv->format,priv->bpp,
 			priv->XWidth,priv->XHeight) != MPXP_Ok) {
 	    MSG_ERR("vo_sdl: Can't initialize VIDIX driver\n");
-	    vidix_name = NULL;
+	    priv->vidix_name = NULL;
 	    return MPXP_False;
 	} else MSG_V("vo_sdl: Using VIDIX\n");
 	if(vidix_start(vo)!=0) return MPXP_False;
@@ -721,7 +723,7 @@ static MPXP_Rc setup_surfaces( vo_data_t*vo )
  */
 static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     float v_scale = ((float) priv->dstheight) / priv->height;
     int surfwidth, surfheight;
     surfwidth = priv->width;
@@ -811,11 +813,11 @@ static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
  **/
 
 #define shift_key (event.key.keysym.mod==(KMOD_LSHIFT||KMOD_RSHIFT))
-static uint32_t __FASTCALL__ check_events (vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
+static uint32_t __FASTCALL__ check_events (vo_data_t*vo,vo_adjust_size_t adjust_size)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     SDL_Event event;
-    SDLKey keypressed = 0;
+    SDLKey keypressed = SDLKey(0);
     static int firstcheck = 0;
     uint32_t retval;
 
@@ -825,7 +827,7 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,int (* __FASTCALL__ adju
 	switch (event.type) {
 	    /* capture window resize events */
 	    case SDL_VIDEORESIZE:
-		(*adjust_size)(priv->windowsize.w,priv->windowsize.h,&event.resize.w, &event.resize.h);
+		(*adjust_size)(vo,priv->windowsize.w,priv->windowsize.h,reinterpret_cast<unsigned*>(&event.resize.w), reinterpret_cast<unsigned*>(&event.resize.h));
 		if(set_video_mode(vo,event.resize.w, event.resize.h,
 				  priv->bpp, priv->sdlflags)!=0)
 				  exit(EXIT_FAILURE);
@@ -884,13 +886,13 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,int (* __FASTCALL__ adju
 #ifdef HAVE_X11
 		    aspect(&priv->dstwidth, &priv->dstheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
 #endif
-		    if (priv->surface->w != priv->dstwidth || priv->surface->h != priv->dstheight) {
+		    if (unsigned(priv->surface->w) != priv->dstwidth || unsigned(priv->surface->h) != priv->dstheight) {
 			if(set_video_mode(vo,priv->dstwidth, priv->dstheight, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
 			priv->windowsize.w = priv->surface->w;
 			priv->windowsize.h = priv->surface->h;
 			MSG_V("SDL: Normal size\n");
 			retval |= VO_EVENT_RESIZE;
-		    } else if (priv->surface->w != priv->dstwidth * 2 || priv->surface->h != priv->dstheight * 2) {
+		    } else if (unsigned(priv->surface->w) != priv->dstwidth * 2 || unsigned(priv->surface->h) != priv->dstheight * 2) {
 			if(set_video_mode(vo,priv->dstwidth * 2, priv->dstheight * 2, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
 			priv->windowsize.w = priv->surface->w;
 			priv->windowsize.h = priv->surface->h;
@@ -957,7 +959,7 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,int (* __FASTCALL__ adju
 */
 static void __FASTCALL__ erase_rectangle(vo_data_t*vo,unsigned idx,int x, int y, int w, int h)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
 
     switch(priv->format) {
 	case IMGFMT_YV12:
@@ -1064,7 +1066,13 @@ static void __FASTCALL__ erase_area_1(int x_start, int width, int height, int pi
 
 static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 {
-	priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+#ifdef CONFIG_VIDIX
+    if(priv->vidix_server) {
+	priv->vidix_server->select_frame(vo,idx);
+	return;
+    }
+#endif
 
 	if(priv->mode == YUV) {
 		/* blit to the YUV overlay */
@@ -1100,16 +1108,17 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 	}
 }
 
-static uint32_t __FASTCALL__ query_format(const vo_data_t*vo,vo_query_fourcc_t* format)
+static MPXP_Rc __FASTCALL__ query_format(const vo_data_t*vo,vo_query_fourcc_t* format)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     if(sdl_forcegl) {
 	if (IMGFMT_IS_BGR(format->fourcc)) {
 	    if  (rgbfmt_depth(format->fourcc) == (unsigned)priv->bpp &&
 		((unsigned)priv->bpp==16 || (unsigned)priv->bpp == 32))
-							return 0x1|0x2|0x4;
+			format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
+			return MPXP_Ok;
 	}
-	return 0;
+	return MPXP_False;
     }
     else
     switch(format->fourcc){
@@ -1119,7 +1128,6 @@ static uint32_t __FASTCALL__ query_format(const vo_data_t*vo,vo_query_fourcc_t* 
     case IMGFMT_YUY2:
     case IMGFMT_UYVY:
     case IMGFMT_YVYU:
-	return 0x6; // hw supported & osd
     case IMGFMT_RGB15:
     case IMGFMT_BGR15:
     case IMGFMT_RGB16:
@@ -1128,9 +1136,10 @@ static uint32_t __FASTCALL__ query_format(const vo_data_t*vo,vo_query_fourcc_t* 
     case IMGFMT_BGR24:
     case IMGFMT_RGB32:
     case IMGFMT_BGR32:
-	return 0x5; // hw supported w/conversion & osd
+	format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
+	return MPXP_Ok; // hw supported w/conversion & osd
     }
-    return 0;
+    return MPXP_False;
 }
 
 static const vo_info_t* get_info(const vo_data_t*vo)
@@ -1148,15 +1157,16 @@ static void uninit(vo_data_t*vo)
 #endif
     sdl_close(vo);
 #ifdef CONFIG_VIDIX
-    priv_t *priv = vo->priv;
     vidix_term(vo);
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    delete priv->vidix_server;
 #endif
-    mp_free(vo->priv);
+    delete vo->priv;
 }
 
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    priv_t *priv = mp_mallocz(sizeof(priv_t));
+    priv_t *priv = new(zeromem) priv_t;
     vo->priv=priv;
     priv->num_buffs = 1;
     priv->surface = NULL;
@@ -1165,21 +1175,12 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     if(vo_x11_init(vo)!=MPXP_Ok) return MPXP_False; // Can't open X11
     saver_off(vo,vo->mDisplay);
 #endif
-    if (sdl_open(vo) != 0)
-	return MPXP_False;
-    return MPXP_Ok;
+    return sdl_open(vo);
 }
-
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
 
 static void __FASTCALL__ sdl_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     caps->caps = DRI_CAP_TEMP_VIDEO | DRI_CAP_UPSCALER | DRI_CAP_DOWNSCALER |
 		 DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
     caps->fourcc = priv->format;
@@ -1192,7 +1193,7 @@ static void __FASTCALL__ sdl_dri_get_surface_caps(const vo_data_t*vo,dri_surface
 	    int i,n;
 	    caps->width=priv->overlay[0]->w;
 	    caps->height=priv->overlay[0]->h;
-	    n = min(4,priv->overlay[0]->planes);
+	    n = std::min(4,priv->overlay[0]->planes);
 	    for(i=0;i<n;i++)
 		caps->strides[i] = priv->overlay[0]->pitches[i];
 	    for(;i<4;i++)
@@ -1219,22 +1220,22 @@ static void __FASTCALL__ sdl_dri_get_surface_caps(const vo_data_t*vo,dri_surface
 
 static void __FASTCALL__ sdl_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
     if(priv->mode == YUV) {
 	int i,n;
-	n = min(4,priv->overlay[surf->idx]->planes);
+	n = std::min(4,priv->overlay[surf->idx]->planes);
 	for(i=0;i<n;i++)
 		surf->planes[i] = priv->overlay[surf->idx]->pixels[i];
 	for(;i<4;i++)
 		surf->planes[i] = 0;
 	if(priv->format == IMGFMT_YV12) {
-	    any_t* tp;
+	    uint8_t* tp;
 	    tp = surf->planes[2];
 	    surf->planes[2] = surf->planes[1];
 	    surf->planes[1] = tp;
 	}
     } else {
-	surf->planes[0] = priv->rgbsurface[surf->idx]->pixels;
+	surf->planes[0] = reinterpret_cast<uint8_t*>(priv->rgbsurface[surf->idx]->pixels);
 	surf->planes[1] = 0;
 	surf->planes[2] = 0;
 	surf->planes[3] = 0;
@@ -1243,7 +1244,11 @@ static void __FASTCALL__ sdl_dri_get_surface(const vo_data_t*vo,dri_surface_t *s
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-  priv_t *priv = vo->priv;
+    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+#ifdef CONFIG_VIDIX
+    if(priv->vidix_server)
+	if(priv->vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
+#endif
   switch (request) {
     case VOCTRL_QUERY_FORMAT:
 	return query_format(vo,(vo_query_fourcc_t*)data);
@@ -1251,10 +1256,10 @@ static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	*(uint32_t *)data = priv->num_buffs;
 	return MPXP_True;
     case DRI_GET_SURFACE_CAPS:
-	sdl_dri_get_surface_caps(vo,data);
+	sdl_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
 	return MPXP_True;
     case DRI_GET_SURFACE:
-	sdl_dri_get_surface(vo,data);
+	sdl_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
 	return MPXP_True;
     case VOCTRL_CHECK_EVENTS: {
 	vo_resize_t * vrest = (vo_resize_t *)data;

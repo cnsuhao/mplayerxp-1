@@ -31,7 +31,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx);
 static void __FASTCALL__ uninit(vo_data_t*vo);
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *);
 
-#define LIBVO_EXTERN(x) vo_functions_t video_out_##x =\
+#define LIBVO_EXTERN(x) extern const vo_functions_t video_out_##x =\
 {\
 	preinit,\
 	config,\

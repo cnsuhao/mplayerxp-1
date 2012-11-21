@@ -51,10 +51,6 @@ static vo_info_t vo_info = {
     ""
 };
 
-#ifdef CONFIG_VIDIX
-/* Name of VIDIX driver */
-static const char *vidix_name = NULL;
-#endif
 /******************************
 *	fb.modes support      *
 ******************************/
@@ -141,22 +137,27 @@ typedef struct priv_s {
     int			last_row;
     int			fs;
     MPXP_Rc		pre_init_err;
+#ifdef CONFIG_VIDIX
+/* Name of VIDIX driver */
+    const char*		vidix_name;
+    vidix_server_t*	vidix_server;
+#endif
 }priv_t;
 
 typedef struct priv_conf_s {
 /* command line/config file options */
-    char *		dev_name;
-    char *		mode_cfgfile;
-    char *		mode_name;
-    char *		monitor_hfreq_str;
-    char *		monitor_vfreq_str;
-    char *		monitor_dotclock_str;
+    char*		dev_name;
+    const char*		mode_cfgfile;
+    char*		mode_name;
+    const char*		monitor_hfreq_str;
+    const char*		monitor_vfreq_str;
+    const char*		monitor_dotclock_str;
 }priv_conf_t;
 static priv_conf_t priv_conf;
 
 static int __FASTCALL__ get_token(vo_data_t*vo,int num)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     static int read_nextline = 1;
     static int line_pos;
     int i;
@@ -207,9 +208,9 @@ out_eol:
 static fb_mode_t *fb_modes = NULL;
 static int nr_modes = 0;
 
-static int __FASTCALL__ parse_fbmode_cfg(vo_data_t*vo,char *cfgfile)
+static int __FASTCALL__ parse_fbmode_cfg(vo_data_t*vo,const char *cfgfile)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
 #define CHECK_IN_MODE_DEF\
 	do {\
 	if (!in_mode_def) {\
@@ -376,7 +377,7 @@ err_out_not_valid:
     goto err_out_print_linenum;
 }
 
-static fb_mode_t * __FASTCALL__ find_mode_by_name(char *name)
+static fb_mode_t * __FASTCALL__ find_mode_by_name(const char *name)
 {
     int i;
 
@@ -540,10 +541,10 @@ static void __FASTCALL__ fb_mode2fb_vinfo(fb_mode_t *m, struct fb_var_screeninfo
     v->vmode = m->vmode;
 }
 
-static range_t * __FASTCALL__ str2range(char *s)
+static range_t * __FASTCALL__ str2range(const char *s)
 {
     float tmp_min, tmp_max;
-    char *endptr = s;	// to start the loop
+    const char *endptr = s;	// to start the loop
     range_t *r = NULL;
     int i;
 
@@ -554,7 +555,7 @@ static range_t * __FASTCALL__ str2range(char *s)
 	    MSG_ERR("can't mp_realloc 'r'\n");
 	    return NULL;
 	}
-	tmp_min = strtod(s, &endptr);
+	tmp_min = strtod(s, const_cast<char**>(&endptr));
 	if (*endptr == 'k' || *endptr == 'K') {
 	    tmp_min *= 1000.0;
 	    endptr++;
@@ -563,7 +564,7 @@ static range_t * __FASTCALL__ str2range(char *s)
 	    endptr++;
 	}
 	if (*endptr == '-') {
-	    tmp_max = strtod(endptr + 1, &endptr);
+	    tmp_max = strtod(endptr + 1, const_cast<char**>(&endptr));
 	    if (*endptr == 'k' || *endptr == 'K') {
 		tmp_max *= 1000.0;
 		endptr++;
@@ -613,7 +614,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     cols = (rcols > gcols ? rcols : gcols);
     cols = (cols > bcols ? cols : bcols);
 
-    red = mp_malloc(cols * sizeof(red[0]));
+    red = new uint16_t [cols];
     if(!red) {
 	MSG_ERR("Can't allocate red palette with %d entries.\n", cols);
 	return NULL;
@@ -621,7 +622,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     for(i=0; i< rcols; i++)
 	red[i] = (65535/(rcols-1)) * i;
 
-    green = mp_malloc(cols * sizeof(green[0]));
+    green = new uint16_t[cols];
     if(!green) {
 	MSG_ERR("Can't allocate green palette with %d entries.\n", cols);
 	mp_free(red);
@@ -630,7 +631,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     for(i=0; i< gcols; i++)
 	green[i] = (65535/(gcols-1)) * i;
 
-    blue = mp_malloc(cols * sizeof(blue[0]));
+    blue = new uint16_t[cols];
     if(!blue) {
 	MSG_ERR("Can't allocate blue palette with %d entries.\n", cols);
 	mp_free(red);
@@ -640,7 +641,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     for(i=0; i< bcols; i++)
 	blue[i] = (65535/(bcols-1)) * i;
 
-    cmap = mp_malloc(sizeof(struct fb_cmap));
+    cmap = new struct fb_cmap;
     if(!cmap) {
 	MSG_ERR("Can't allocate color map\n");
 	mp_free(red);
@@ -668,15 +669,15 @@ static const mrl_config_t fbconf[]=
     { NULL, NULL, 0, 0, 0 },
 };
 
-static uint32_t __FASTCALL__ parseSubDevice(const char *sd)
+static uint32_t __FASTCALL__ parseSubDevice(priv_t* priv,const char *sd)
 {
     const char *param;
 #ifdef CONFIG_VIDIX
-    if(memcmp(sd,"vidix",5) == 0) vidix_name = &sd[5]; /* vidix_name will be valid within init() */
+    if(memcmp(sd,"vidix",5) == 0) priv->vidix_name = &sd[5]; /* vidix_name will be valid within init() */
     else
 #endif
     {
-	param=mrl_parse_line(sd,NULL,NULL,priv_conf.dev_name,priv_conf.mode_name);
+	param=mrl_parse_line(sd,NULL,NULL,&priv_conf.dev_name,&priv_conf.mode_name);
 	mrl_parse_params(param,fbconf);
     }
     return 0;
@@ -684,7 +685,7 @@ static uint32_t __FASTCALL__ parseSubDevice(const char *sd)
 
 static MPXP_Rc fb_preinit(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     static int fb_preinit_done = 0;
     static MPXP_Rc fb_works = MPXP_Ok;
 
@@ -744,7 +745,7 @@ err_out:
 
 static void lots_of_printf(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     MSG_V(FBDEV "var info:\n");
     MSG_V(FBDEV "xres: %u\n", priv->vinfo.xres);
     MSG_V(FBDEV "yres: %u\n", priv->vinfo.yres);
@@ -812,7 +813,7 @@ static void lots_of_printf(vo_data_t*vo)
 
 static void __FASTCALL__ vt_set_textarea(vo_data_t*vo,int u, int l)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     /* how can I determine the font height?
      * just use 16 for now
      */
@@ -829,11 +830,12 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 		uint32_t d_height, uint32_t fullscreen, char *title,
 		uint32_t format)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     struct fb_cmap *cmap;
     unsigned x_offset,y_offset,i;
 
     UNUSED(title);
+    UNUSED(fullscreen);
     priv->srcFourcc = format;
     if((int)priv->pre_init_err == MPXP_Error) {
 	MSG_ERR(FBDEV "Internal fatal error: init() was called before preinit()\n");
@@ -994,12 +996,12 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     else y_offset = 0;
 
 #ifdef CONFIG_VIDIX
-    if(vidix_name) {
+    if(priv->vidix_name) {
 	if(vidix_init(vo,width,height,x_offset,y_offset,priv->out_width,
 		    priv->out_height,format,priv->bpp,
 		    priv->xres,priv->yres) != MPXP_Ok) {
 			MSG_ERR(FBDEV "Can't initialize VIDIX driver\n");
-			vidix_name = NULL;
+			priv->vidix_name = NULL;
 			vidix_term(vo);
 			return MPXP_False;
 	} else MSG_V(FBDEV "Using VIDIX\n");
@@ -1047,17 +1049,18 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     return MPXP_Ok;
 }
 
-static uint32_t __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t * format)
+static MPXP_Rc __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t * format)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    format->flags=VOCAP_NA;
     switch(format->fourcc) {
-	case IMGFMT_BGR15: return priv->bpp == 15;
-	case IMGFMT_BGR16: return priv->bpp == 16;
-	case IMGFMT_BGR24: return priv->bpp == 24;
-	case IMGFMT_BGR32: return priv->bpp == 32;
+	case IMGFMT_BGR15: if(priv->bpp == 15) format->flags=VOCAP_SUPPORTED; break;
+	case IMGFMT_BGR16: if(priv->bpp == 16) format->flags=VOCAP_SUPPORTED; break;
+	case IMGFMT_BGR24: if(priv->bpp == 24) format->flags=VOCAP_SUPPORTED; break;
+	case IMGFMT_BGR32: if(priv->bpp == 32) format->flags=VOCAP_SUPPORTED; break;
 	default: break;
     }
-    return 0;
+    return MPXP_Ok;
 }
 
 static const vo_info_t *get_info(const vo_data_t*vo)
@@ -1068,7 +1071,13 @@ static const vo_info_t *get_info(const vo_data_t*vo)
 
 static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+#ifdef CONFIG_VIDIX
+    if(priv->vidix_server) {
+	priv->vidix_server->select_frame(vo,idx);
+	return;
+    }
+#endif
     unsigned i, out_offset = 0, in_offset = 0;
 
     for (i = 0; i < priv->out_height; i++) {
@@ -1081,7 +1090,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 
 static void uninit(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     unsigned i;
     MSG_V(FBDEV "uninit\n");
     if (priv->cmap_changed) {
@@ -1105,21 +1114,26 @@ static void uninit(vo_data_t*vo)
     close(priv->dev_fd);
     if(priv->frame_buffer) munmap(priv->frame_buffer, priv->size);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) vidix_term(vo);
+    if(priv->vidix_name) vidix_term(vo);
+    delete priv->vidix_server;
 #endif
-    mp_free(vo->priv);
+    delete vo->priv;
 }
 
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    vo->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv;
+    priv=new(zeromem) priv_t;
+    vo->priv=priv;
     priv_conf.mode_cfgfile = "/etc/priv->modes";
     priv->vt_doit = 1;
     priv->pre_init_err = MPXP_Ok;
-    if(arg) parseSubDevice(arg);
+    if(arg) parseSubDevice(priv,arg);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) priv->pre_init_err = vidix_preinit(vo,vidix_name,&video_out_fbdev);
+    if(priv->vidix_name) {
+	if(!(priv->vidix_server=vidix_preinit(vo,priv->vidix_name,&video_out_fbdev)))
+	    priv->pre_init_err=MPXP_False;
+    }
     MSG_DBG2("vo_subdevice: initialization returns: %i\n",priv->pre_init_err);
 #endif
     if(priv->pre_init_err) priv->pre_init_err=fb_preinit(vo);
@@ -1128,7 +1142,7 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 
 static void __FASTCALL__ fbdev_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     caps->caps = DRI_CAP_TEMP_VIDEO;
     caps->fourcc = priv->dstFourcc;
     caps->width=priv->out_width;
@@ -1145,7 +1159,7 @@ static void __FASTCALL__ fbdev_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap
 
 static void __FASTCALL__ fbdev_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
     surf->planes[0] = priv->next_frame[surf->idx];
     surf->planes[1] = 0;
     surf->planes[2] = 0;
@@ -1154,7 +1168,11 @@ static void __FASTCALL__ fbdev_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+#ifdef CONFIG_VIDIX
+    if(priv->vidix_server)
+	if(priv->vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
+#endif
     switch (request) {
 	case VOCTRL_QUERY_FORMAT:
 	    return query_format(vo,(vo_query_fourcc_t*)data);
@@ -1162,10 +1180,10 @@ static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	    *(uint32_t *)data = priv->total_fr;
 	    return MPXP_True;
 	case DRI_GET_SURFACE_CAPS:
-	    fbdev_dri_get_surface_caps(vo,data);
+	    fbdev_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
 	    return MPXP_True;
 	case DRI_GET_SURFACE:
-	    fbdev_dri_get_surface(vo,data);
+	    fbdev_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
 	    return MPXP_True;
     }
     return MPXP_NA;

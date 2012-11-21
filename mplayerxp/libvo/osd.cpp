@@ -23,7 +23,7 @@ static const unsigned long long mask24lh  __attribute__((used)) __attribute__((a
 static const unsigned long long mask24hl  __attribute__((used)) __attribute__((aligned(8))) = 0x0000FFFFFFFFFFFFULL;
 #endif
 
-#define PVECTOR_ACCEL_H "osd_template.c"
+#define PVECTOR_ACCEL_H "osd_template.h"
 #include "pvector/pvector_inc.h"
 
 #ifdef FAST_OSD_TABLE

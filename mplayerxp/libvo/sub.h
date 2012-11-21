@@ -3,10 +3,6 @@
 #include <inttypes.h>
 #include "osd.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct mp_osd_bbox_s {
     int x1,y1,x2,y2;
 } mp_osd_bbox_t;
@@ -104,8 +100,5 @@ int __FASTCALL__ vo_update_osd(any_t*vo,int dxs,int dys);
 int __FASTCALL__ vo_osd_changed(int new_value);
 int __FASTCALL__ get_osd_height(any_t* vo,int c,int h);
 void __FASTCALL__ osd_set_nav_box (uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey);
-#ifdef __cplusplus
-}
-#endif
 
 #endif

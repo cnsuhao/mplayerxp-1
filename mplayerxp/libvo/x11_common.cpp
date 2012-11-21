@@ -92,7 +92,7 @@ XImage* __FASTCALL__ vo_x11_Image(const vo_data_t*vo,unsigned idx)
 
 uint8_t* __FASTCALL__ vo_x11_ImageData(const vo_data_t*vo,unsigned idx)
 {
-    return vo_x11_Image(vo,idx)->data;
+    return (uint8_t*)vo_x11_Image(vo,idx)->data;
 }
 
 void __FASTCALL__ vo_x11_getMyXImage(const vo_data_t*vo,unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h)
@@ -208,7 +208,7 @@ static int __FASTCALL__ vo_find_depth_from_visuals(Display *dpy, int screen, Vis
   int bestvisual_depth = -1;
 
   visual_tmpl.screen = screen;
-  visual_tmpl.class = TrueColor;
+  visual_tmpl.c_class = TrueColor;
   visuals = XGetVisualInfo(dpy,
 			   VisualScreenMask | VisualClassMask, &visual_tmpl,
 			   &nvisuals);
@@ -601,10 +601,10 @@ void __FASTCALL__ vo_x11_decoration(vo_data_t*vo,Display * vo_Display,Window w,i
     }
 }
 
-void __FASTCALL__ vo_x11_classhint( Display * display,Window window,char *name ){
+void __FASTCALL__ vo_x11_classhint( Display * display,Window window,const char *name ){
 	    XClassHint wmClass;
-	    wmClass.res_name = name;
-	    wmClass.res_class = "MPlayerXP";
+	    wmClass.res_name = const_cast<char*>(name);
+	    wmClass.res_class = const_cast<char*>("MPlayerXP");
 	    XSetClassHint(display,window,&wmClass);
 }
 
@@ -665,7 +665,7 @@ static const char * __FASTCALL__ evt_name(unsigned num)
     else			return "Unknown";
 }
 
-uint32_t __FASTCALL__ vo_x11_check_events(vo_data_t*vo,Display *mydisplay,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh))
+uint32_t __FASTCALL__ vo_x11_check_events(vo_data_t*vo,Display *mydisplay,vo_adjust_size_t adjust_size)
 {
     uint32_t ret=0;
     XEvent         Event;
@@ -684,18 +684,20 @@ uint32_t __FASTCALL__ vo_x11_check_events(vo_data_t*vo,Display *mydisplay,int (*
 	    case ConfigureNotify:
 		nw = Event.xconfigure.width;
 		nh = Event.xconfigure.height;
-		if(adjust_size) adj_ret = (*adjust_size)(vo->dest.w,vo->dest.h,&nw,&nh);
+		if(adjust_size) adj_ret = (*adjust_size)(vo,vo->dest.w,vo->dest.h,&nw,&nh);
 		ow = vo->dest.w;
 		oh = vo->dest.h;
 		vo->dest.w=nw;
 		vo->dest.h=nh;
 		Window root;
+		int ifoo;
 		unsigned foo;
 		Window win;
-		XGetGeometry(mydisplay, vo->window, &root, &foo, &foo,
+		XGetGeometry(mydisplay, vo->window, &root, &ifoo, &ifoo,
 			&foo/*width*/, &foo/*height*/, &foo, &foo);
 		XTranslateCoordinates(mydisplay, vo->window, root, 0, 0,
-			&vo->dest.x, &vo->dest.y, &win);
+			reinterpret_cast<int*>(&vo->dest.x),
+			reinterpret_cast<int*>(&vo->dest.y), &win);
 		if(adjust_size && ow != vo->dest.w && oh != vo->dest.h && adj_ret) {
 		    XResizeWindow( vo->mDisplay,vo->window,vo->dest.w,vo->dest.h );
 		    XSync( vo->mDisplay,True);
@@ -740,8 +742,9 @@ void __FASTCALL__ vo_x11_sizehint(vo_data_t*vo, int x, int y, int width, int hei
 
 void __FASTCALL__ vo_x11_calcpos(vo_data_t*vo,XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags )
 {
+    UNUSED(flags);
 #ifdef HAVE_XF86VM
-    unsigned int modeline_width, modeline_height;
+    int modeline_width, modeline_height;
     static uint32_t vm_width;
     static uint32_t vm_height;
 #endif

@@ -18,10 +18,10 @@ void __FASTCALL__ vo_x11_getMyXImage(const vo_data_t*vo,unsigned idx,Visual *vis
 void __FASTCALL__ vo_x11_freeMyXImage(vo_data_t*vo,unsigned idx);
 void __FASTCALL__ vo_x11_hidecursor ( Display* , Window );
 void __FASTCALL__ vo_x11_decoration(vo_data_t*vo,Display * vo_Display,Window w,int d );
-void __FASTCALL__ vo_x11_classhint( Display * display,Window window,char *name );
+void __FASTCALL__ vo_x11_classhint( Display * display,Window window,const char *name );
 void __FASTCALL__ vo_x11_sizehint(vo_data_t*vo,int x, int y, int width, int height );
 void __FASTCALL__ vo_x11_calcpos(vo_data_t*vo,XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags );
-uint32_t __FASTCALL__ vo_x11_check_events(vo_data_t*vo,Display *mydisplay,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh));
+uint32_t __FASTCALL__ vo_x11_check_events(vo_data_t*vo,Display *mydisplay,vo_adjust_size_t adjust_size);
 void __FASTCALL__ vo_x11_fullscreen(vo_data_t*vo);
 #endif
 
