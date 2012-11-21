@@ -26,7 +26,7 @@ ifeq ($(USE_OSS_AUDIO),yes)
 CXXSRCS += s_oss.cpp
 endif
 ifeq ($(USE_LIBVCD),yes)
-SRCS += s_vcdnav.c
+CXXSRCS += s_vcdnav.cpp
 endif
 CXXSRCS += mrl.cpp
 

@@ -1,7 +1,7 @@
 /*
     s_vcdnav - libVCD's stream interface (based on xine's input plugin)
 */
-#include "../mp_config.h"
+#include "mp_config.h"
 #ifdef USE_LIBVCD
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +9,7 @@
 #include "stream.h"
 #include "stream_msg.h"
 
-#include <libvcd/info.h>
+#include <libvcd/inf.h>
 #include <libvcd/logging.h>
 #include "osdep/mplib.h"
 #include "mrl.h"
@@ -73,7 +73,7 @@ static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const c
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
     if(param) vcd_track=atoi(param);
-    priv=stream->priv=mp_calloc(1,sizeof(vcd_priv_t));
+    stream->priv=priv=new(zeromem) vcd_priv_t;
 //    vcdinfo_init(priv->fd);
     if(mp_conf.verbose>1) vcd_loglevel_default=VCD_LOG_DEBUG;
     else if(mp_conf.verbose) vcd_loglevel_default=VCD_LOG_INFO;
@@ -81,10 +81,10 @@ static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const c
     if(!priv->fd) {
 	dev=DEFAULT_CDROM_DEVICE;
 	open_rc=vcdinfo_open(&priv->fd,device?&device:&dev,DRIVER_UNKNOWN,NULL);
-	mp_free(device);
+	delete device;
 	if(!priv->fd) {
 	    MSG_ERR("Can't open stream\n");
-	    mp_free(priv);
+	    delete priv;
 	    _cdio_detect_media(device?device:dev);
 	    return MPXP_False;
 	}
@@ -93,7 +93,7 @@ static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const c
     if(vcdinfo_read_psd(priv->fd)) vcdinfo_visit_lot (priv->fd, false);
     MSG_DBG2("VCDNAV geometry:\n");
     if((priv->ntracks=vcdinfo_get_num_tracks(priv->fd))>0) {
-	priv->track=mp_calloc(priv->ntracks,sizeof(vcd_item_info_t));
+	priv->track=new(zeromem) vcd_item_info_t[priv->ntracks];
 	for(i=0;i<priv->ntracks;i++) {
 	    priv->track[i].size=vcdinfo_get_track_sect_count(priv->fd,i+1);
 	    priv->track[i].start_LSN=vcdinfo_get_track_lsn(priv->fd,i+1);
@@ -103,7 +103,7 @@ static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const c
 	priv->total=priv->track[i-1].size;
     }
     if((priv->nentries=vcdinfo_get_num_entries(priv->fd))>0) {
-	priv->entry=mp_calloc(priv->nentries,sizeof(vcd_item_info_t));
+	priv->entry=new(zeromem) vcd_item_info_t [priv->nentries];
 	for(i=0;i<priv->nentries;i++) {
 	    priv->entry[i].size=vcdinfo_get_entry_sect_count(priv->fd,i);
 	    priv->entry[i].start_LSN=vcdinfo_get_entry_lsn(priv->fd,i);
@@ -111,7 +111,7 @@ static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const c
 	}
     }
     if((priv->nsegments=vcdinfo_get_num_segments(priv->fd))>0) {
-	priv->segment=mp_calloc(priv->nsegments,sizeof(vcd_item_info_t));
+	priv->segment=new(zeromem) vcd_item_info_t[priv->nsegments];
 	for(i=0;i<priv->nsegments;i++) {
 	    priv->segment[i].size=vcdinfo_get_seg_sector_count(priv->fd,i);
 	    priv->segment[i].start_LSN=vcdinfo_get_seg_lsn(priv->fd,i);
@@ -138,7 +138,7 @@ static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const c
     stream->start_pos=priv->start*sizeof(vcdsector_t);
     stream->end_pos=(priv->start+priv->total)*sizeof(vcdsector_t);
     MSG_DBG2("vcdnav_open start=%i end=%i ssize=%i\n",priv->lsn,priv->total,stream->sector_size);
-//    check_pin("stream",stream->pin,STREAM_PIN);
+    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 
@@ -161,7 +161,7 @@ static void __FASTCALL__ _vcdnav_inc_lsn(vcd_priv_t *p)
 
 static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp)
 {
-    vcd_priv_t *p=stream->priv;
+    vcd_priv_t *p=reinterpret_cast<vcd_priv_t*>(stream->priv);
     CdIo *img=vcdinfo_get_cd_image(p->fd);
     MSG_DBG2("vcdnav_read: lsn=%i total=%i\n",p->lsn,p->total);
     if(sp) sp->type=0;
@@ -223,7 +223,7 @@ static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp)
 
 static off_t __FASTCALL__ _vcdnav_seek(stream_t *stream,off_t pos)
 {
-    vcd_priv_t *p=stream->priv;
+    vcd_priv_t *p=reinterpret_cast<vcd_priv_t*>(stream->priv);
     lsn_t oldlsn=p->lsn;
     CdIo *img = vcdinfo_get_cd_image(p->fd);
     p->lsn=pos/sizeof(vcdsector_t);
@@ -238,14 +238,14 @@ static off_t __FASTCALL__ _vcdnav_seek(stream_t *stream,off_t pos)
 
 static off_t __FASTCALL__ _vcdnav_tell(const stream_t *stream)
 {
-    vcd_priv_t *p=stream->priv;
+    vcd_priv_t *p=reinterpret_cast<vcd_priv_t*>(stream->priv);
     MSG_DBG2("vcdnav_tell: lsn=%i\n",p->lsn);
     return p->lsn*sizeof(vcdsector_t);
 }
 
 static void __FASTCALL__ _vcdnav_close(stream_t*stream)
 {
-    vcd_priv_t*priv=stream->priv;
+    vcd_priv_t*priv=reinterpret_cast<vcd_priv_t*>(stream->priv);
     MSG_DBG2("vcdnav_close\n");
     vcdinfo_close(((vcd_priv_t *)stream->priv)->fd);
     if(priv->track) mp_free(priv->track);
@@ -260,7 +260,7 @@ static MPXP_Rc __FASTCALL__ _vcdnav_ctrl(const stream_t *s,unsigned cmd,any_t*ar
     return MPXP_Unknown;
 }
 
-const stream_driver_t vcdnav_stream=
+extern const stream_driver_t vcdnav_stream=
 {
     "vcdnav://",
     "reads multimedia stream from libVCD's interface",
