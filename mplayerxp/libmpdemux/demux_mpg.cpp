@@ -41,6 +41,7 @@
 
 #define MPGPES_BAD_PTS -1
 
+typedef int (*alt_demuxer_t)(demuxer_t *demux,demux_stream_t *__ds);
 typedef struct mpg_demuxer {
   float last_pts;
   float final_pts;
@@ -49,7 +50,7 @@ typedef struct mpg_demuxer {
   int num_a_streams;
   int a_stream_ids[MAX_A_STREAMS];
   int last_sub_pts;
-  int use_es;
+  alt_demuxer_t alt_demuxer;
 } mpg_demuxer_t;
 
 static struct mpg_stat_s {
@@ -436,7 +437,7 @@ static int mpges_demux(demuxer_t *demux,demux_stream_t *__ds){
 
 static int mpgps_demux(demuxer_t *demux,demux_stream_t *__ds){
     mpg_demuxer_t* mpg_d = reinterpret_cast<mpg_demuxer_t*>(demux->priv);
-    if(mpg_d->use_es) mpges_demux(demux,__ds);
+    if(mpg_d->alt_demuxer) return mpg_d->alt_demuxer(demux,__ds);
     unsigned int head=0;
     int skipped=0;
     int max_packs=256; // 512kbyte
@@ -753,7 +754,7 @@ static MPXP_Rc mpgps_probe(demuxer_t*demuxer)
 	if( demuxer->file_format==DEMUXER_TYPE_MPEG_ES ||
 	    demuxer->file_format==DEMUXER_TYPE_MPEG4_ES ||
 	    demuxer->file_format==DEMUXER_TYPE_H264_ES){ /* little hack, see above! */
-		mpg_d->use_es=1;
+		mpg_d->alt_demuxer=mpges_demux;
 		if(!demuxer->v_streams[0]) new_sh_video(demuxer,0);
 		if(demuxer->video->id==-1) demuxer->video->id=0;
 		demuxer->video->sh=demuxer->v_streams[0];

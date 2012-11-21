@@ -19,7 +19,7 @@
 #include "aviprint.h"
 #include "demux_msg.h"
 
-
+typedef int (*alt_demuxer_t)(demuxer_t *demux,demux_stream_t *__ds);
 typedef struct {
   // index stuff:
   AVIINDEXENTRY* idx;
@@ -46,6 +46,7 @@ typedef struct {
   unsigned int suidx_size;
   int nini;
   int is_odml;
+  alt_demuxer_t alt_demuxer;
 } avi_priv_t;
 
 #define MAX_PACKS 4096
@@ -904,16 +905,8 @@ static int avi_read_nini(demuxer_t *demux,demux_stream_t* ds);
 
 int force_ni=0;     // force non-interleaved AVI parsing
 static int avi_demux(demuxer_t *demux,demux_stream_t *__ds){
-    if(force_ni==2){  // distance > 1MB
-	MSG_INFO(MSGTR_NI_Message,force_ni==1?MSGTR_NI_Forced:MSGTR_NI_Detected);
-	pts_from_bps=1; // force BPS sync!
-	return avi_read_nini(demux,__ds);
-    }
-    if(force_ni) {
-	pts_from_bps=1; // force BPS sync!
-	return avi_read_ni(demux,__ds);
-    }
     avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demux->priv);
+    if(priv->alt_demuxer) return priv->alt_demuxer(demux,__ds);
     unsigned int id=0;
     unsigned int len;
     int ret=0;
@@ -991,12 +984,12 @@ do{
 	MSG_WARN("\nBadly interleaved .AVI detected - switching to -ni mode...\n");
 	if(priv->idx_size>0){
 	    // has index
-	    force_ni=2;
+	    priv->alt_demuxer = avi_read_ni;
 	    priv->nini=1;
 	    --priv->idx_pos; // hack
 	} else {
 	    // no index
-	    force_ni=2;
+	    priv->alt_demuxer = avi_read_nini;
 	    priv->nini=1;
 	    priv->idx_pos=demux->filepos; // hack
 	}
