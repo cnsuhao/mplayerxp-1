@@ -51,7 +51,7 @@ static MPXP_Rc __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const 
 
 static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t*sp)
 {
-    network_priv_t *p=stream->priv;
+    network_priv_t *p=reinterpret_cast<network_priv_s*>(stream->priv);
     sp->type=0;
     if( stream->streaming_ctrl!=NULL ) {
 	    sp->len=stream->streaming_ctrl->streaming_read(stream->fd,sp->buf,STREAM_BUFFER_SIZE, stream->streaming_ctrl);
@@ -65,7 +65,7 @@ static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t*sp)
 static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
 {
     off_t newpos=0;
-    network_priv_t *p=stream->priv;
+    network_priv_t *p=reinterpret_cast<network_priv_s*>(stream->priv);
     if( stream->streaming_ctrl!=NULL ) {
       newpos=stream->streaming_ctrl->streaming_seek( stream->fd, pos, stream->streaming_ctrl );
       if( newpos<0 ) {
@@ -79,13 +79,13 @@ static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
 
 static off_t __FASTCALL__ network_tell(const stream_t *stream)
 {
-    network_priv_t *p=stream->priv;
+    network_priv_t *p=reinterpret_cast<network_priv_s*>(stream->priv);
     return p->spos;
 }
 
 static void __FASTCALL__ network_close(stream_t *stream)
 {
-    mp_free(((network_priv_t *)stream->priv)->url);
+    mp_free(reinterpret_cast<network_priv_s*>(stream->priv)->url);
     mp_free(stream->priv);
     if(stream->fd>0) close(stream->fd);
 }
@@ -97,7 +97,7 @@ static MPXP_Rc __FASTCALL__ network_ctrl(const stream_t *s,unsigned cmd,any_t*ar
     return MPXP_Unknown;
 }
 
-const stream_driver_t network_stream =
+extern const stream_driver_t network_stream =
 {
     "inet:",
     "reads multimedia stream from any known network protocol. Example: inet:http://myserver.com",

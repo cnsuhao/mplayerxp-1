@@ -138,7 +138,7 @@ static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const c
     stream->start_pos=priv->start*sizeof(vcdsector_t);
     stream->end_pos=(priv->start+priv->total)*sizeof(vcdsector_t);
     MSG_DBG2("vcdnav_open start=%i end=%i ssize=%i\n",priv->lsn,priv->total,stream->sector_size);
-    check_pin("stream",stream->pin,STREAM_PIN);
+//    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
 

@@ -4,6 +4,7 @@
  *
  * by Dave Lambley <mplayer@davel.me.uk>
  */
+#include <limits>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +49,7 @@ static char *col_dup(const char *src)
     while (src[length] > 31)
 	length++;
 
-    dst = mp_malloc(length + 1);
+    dst = new char [length + 1];
     strncpy(dst, src, length);
     dst[length] = 0;
 
@@ -114,7 +115,7 @@ static char *load_file(const char *filename, off_t * length)
 	return NULL;
     }
 
-    if (*length > SIZE_MAX - 1) {
+    if (unsigned(*length) > std::numeric_limits<size_t>::max() - 1) {
 	MSG_V("File too big, could not mp_malloc.");
 	close(fd);
 	return NULL;
@@ -122,7 +123,7 @@ static char *load_file(const char *filename, off_t * length)
 
     lseek(fd, SEEK_SET, 0);
 
-    if (!(buffer = mp_malloc(*length + 1))) {
+    if (!(buffer = new char [*length + 1])) {
 	MSG_V("Could not mp_malloc.");
 	close(fd);
 	return NULL;
@@ -157,15 +158,15 @@ static struct cookie_list_type *load_cookies_from(const char *filename,
     while (*ptr > 0) {
 	char *cols[7];
 	if (parse_line(&ptr, cols)) {
-	    struct cookie_list_type *new;
-	    new = mp_malloc(sizeof(cookie_list_t));
-	    new->name = col_dup(cols[5]);
-	    new->value = col_dup(cols[6]);
-	    new->path = col_dup(cols[2]);
-	    new->domain = col_dup(cols[0]);
-	    new->secure = (*(cols[3]) == 't') || (*(cols[3]) == 'T');
-	    new->next = list;
-	    list = new;
+	    struct cookie_list_type *newc;
+	    newc = new cookie_list_t;
+	    newc->name = col_dup(cols[5]);
+	    newc->value = col_dup(cols[6]);
+	    newc->path = col_dup(cols[2]);
+	    newc->domain = col_dup(cols[0]);
+	    newc->secure = (*(cols[3]) == 't') || (*(cols[3]) == 'T');
+	    newc->next = list;
+	    list = newc;
 	}
     }
     return list;
@@ -189,7 +190,7 @@ static struct cookie_list_type *load_cookies(void)
 	return list;
 
 
-    buf = mp_malloc(strlen(homedir) + sizeof("/.mozilla/default") + 1);
+    buf = new char [strlen(homedir) + sizeof("/.mozilla/default") + 1];
     sprintf(buf, "%s/.mozilla/default", homedir);
     dir = opendir(buf);
     mp_free(buf);
@@ -197,9 +198,9 @@ static struct cookie_list_type *load_cookies(void)
     if (dir) {
 	while ((ent = readdir(dir)) != NULL) {
 	    if ((ent->d_name)[0] != '.') {
-		buf = mp_malloc(strlen(getenv("HOME")) +
+		buf = new char [strlen(getenv("HOME")) +
 			     sizeof("/.mozilla/default/") +
-			     strlen(ent->d_name) + sizeof("cookies.txt") + 1);
+			     strlen(ent->d_name) + sizeof("cookies.txt") + 1];
 		sprintf(buf, "%s/.mozilla/default/%s/cookies.txt",
 			 getenv("HOME"), ent->d_name);
 		list = load_cookies_from(buf, list);
@@ -209,7 +210,7 @@ static struct cookie_list_type *load_cookies(void)
 	closedir(dir);
     }
 
-    buf = mp_malloc(strlen(homedir) + sizeof("/.netscape/cookies.txt") + 1);
+    buf = new char [strlen(homedir) + sizeof("/.netscape/cookies.txt") + 1];
     sprintf(buf, "%s/.netscape/cookies.txt", homedir);
     list = load_cookies_from(buf, list);
     mp_free(buf);
@@ -225,7 +226,7 @@ cookies_set(HTTP_header_t * http_hdr, const char *domain, const char *url)
     struct cookie_list_type *cookies[MAX_COOKIES];
     struct cookie_list_type *list, *start;
     int i;
-    char *path;
+    const char *path;
     char *buf;
 
     path = strchr(url, '/');
@@ -270,8 +271,8 @@ cookies_set(HTTP_header_t * http_hdr, const char *domain, const char *url)
     for (i = 0; i < found_cookies; i++) {
 	char *nbuf;
 
-	nbuf = mp_malloc(strlen(buf) + strlen(" ") + strlen(cookies[i]->name) +
-		    strlen("=") + strlen(cookies[i]->value) + strlen(";") + 1);
+	nbuf = new char [strlen(buf) + strlen(" ") + strlen(cookies[i]->name) +
+		    strlen("=") + strlen(cookies[i]->value) + strlen(";") + 1];
 	sprintf(nbuf, "%s %s=%s;", buf, cookies[i]->name,
 		 cookies[i]->value);
 	mp_free(buf);

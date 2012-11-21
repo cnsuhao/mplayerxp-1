@@ -117,11 +117,3 @@ float SleepTime(int rtc_fd,int softsleep,float time_frame)
     return time_frame;
 }
 
-#if 0
-void main(){
-  float t=0;
-  InitTimer();
-  while(1){ t+=GetRelativeTime();printf("time= %10.6f\r",t);fflush(stdout); }
-}
-#endif
-

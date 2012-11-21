@@ -48,7 +48,7 @@ typedef struct streaming_control {
 struct stream_s;
 extern void fixup_network_stream_cache(struct stream_s *s);
 extern int streaming_start(any_t* libinput,struct stream_s *stream, int *demuxer_type, URL_t *url);
-extern int streaming_bufferize( streaming_ctrl_t *streaming_ctrl, char *buffer, int size);
+extern int streaming_bufferize( streaming_ctrl_t *streaming_ctrl,unsigned char *buffer, int size);
 extern streaming_ctrl_t *streaming_ctrl_new(any_t* libinput);
 extern void streaming_ctrl_free( streaming_ctrl_t *streaming_ctrl );
 extern URL_t* check4proxies( URL_t *url );

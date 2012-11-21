@@ -156,12 +156,6 @@ extern void mp_input_print_keys(any_t*handle);
 extern void mp_input_print_cmds(any_t*handle);
 
 extern void mp_input_print_binds(any_t*handle);
-#ifdef __cplusplus
-extern "C" {
-#endif
 // Interruptible usleep:  (used by libmpdemux)
 extern MPXP_Rc mp_input_check_interrupt(any_t* handle,int time);
-#ifdef __cplusplus
-}
-#endif
 #endif

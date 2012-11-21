@@ -1,3 +1,5 @@
+#include <limits>
+
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -19,7 +21,7 @@
 #include "libmpdemux/asf.h"
 
 #include "stream.h"
-
+#include "asf_streaming.h"
 #include "network.h"
 #include "stream_msg.h"
 #include "osdep/mplib.h"
@@ -50,7 +52,6 @@
 // 		In MPlayer case since HTTP support is more reliable,
 // 		we are doing HTTP first then we try MMST if HTTP fail.
 static int asf_http_streaming_start(any_t*,stream_t *stream, int *demuxer_type );
-int asf_mmst_streaming_start(stream_t *stream );
 
 /*
  ASF streaming support several network protocol.
@@ -100,7 +101,7 @@ int asf_streaming_start(any_t* libinput, stream_t *stream, int *demuxer_type) {
     if (!strncasecmp(proto, "mmst", 4) || !strncasecmp(proto, "mms", 3))
     {
 		MSG_V("Trying ASF/TCP...\n");
-		fd = asf_mmst_streaming_start( stream );
+		fd = asf_mmst_streaming_start(libinput, stream );
 		stream->streaming_ctrl->url->port = port;
 		if( fd>-1 ) return fd;
 		MSG_V("  ===> ASF/TCP failed\n");
@@ -123,7 +124,7 @@ int asf_streaming_start(any_t* libinput, stream_t *stream, int *demuxer_type) {
 	return -1;
 }
 
-int
+static int
 asf_streaming(ASF_stream_chunck_t *stream_chunck, int *drop_packet ) {
 	if( drop_packet!=NULL ) *drop_packet = 0;
 
@@ -227,7 +228,7 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
 	  }
 
 	  // audit: do not overflow buffer_size
-	  if (size > SIZE_MAX - buffer_size) return -1;
+	  if (size > std::numeric_limits<size_t>::max() - buffer_size) return -1;
 	  buffer = (char*) mp_malloc(size+buffer_size);
 	  if(buffer == NULL) {
 	    MSG_FATAL("Error can't allocate %d bytes buffer\n",size+buffer_size);
@@ -323,8 +324,8 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
   }
 
   // always allocate to avoid lots of ifs later
-  v_rates = mp_calloc(asf_ctrl->n_video, sizeof(int));
-  a_rates = mp_calloc(asf_ctrl->n_audio, sizeof(int));
+  v_rates =new(zeromem) int [asf_ctrl->n_video];
+  a_rates =new(zeromem) int [asf_ctrl->n_audio];
 
   pos = find_asf_guid(buffer, asf_stream_group_guid, start, size);
   if (pos >= 0) {
@@ -440,7 +441,7 @@ len_err_out:
   return -1;
 }
 
-int
+static int
 asf_http_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *streaming_ctrl ) {
   static ASF_stream_chunck_t chunk;
   int read,chunk_size = 0;
@@ -516,7 +517,7 @@ asf_http_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *strea
   return read;
 }
 
-int
+static int
 asf_http_streaming_seek( int fd, off_t pos, streaming_ctrl_t *streaming_ctrl ) {
 	return -1;
 	// to shut up gcc warning
@@ -525,7 +526,7 @@ asf_http_streaming_seek( int fd, off_t pos, streaming_ctrl_t *streaming_ctrl ) {
 	streaming_ctrl=NULL;
 }
 
-int
+static int
 asf_header_check( HTTP_header_t *http_hdr ) {
 	ASF_obj_header_t *objh;
 	if( http_hdr==NULL ) return -1;
@@ -536,7 +537,7 @@ asf_header_check( HTTP_header_t *http_hdr ) {
 	return -1;
 }
 
-int
+static ASF_StreamType_e
 asf_http_streaming_type(char *content_type, char *features, HTTP_header_t *http_hdr ) {
 	if( content_type==NULL ) return ASF_Unknown_e;
 	if( 	!strcasecmp(content_type, "application/octet-stream") ||
@@ -589,7 +590,7 @@ asf_http_streaming_type(char *content_type, char *features, HTTP_header_t *http_
 	return ASF_Unknown_e;
 }
 
-HTTP_header_t *
+static HTTP_header_t *
 asf_http_request(streaming_ctrl_t *streaming_ctrl) {
 	HTTP_header_t *http_hdr;
 	URL_t *url = NULL;
@@ -688,7 +689,7 @@ asf_http_request(streaming_ctrl_t *streaming_ctrl) {
 	return http_hdr;
 }
 
-int
+static int
 asf_http_parse_response(asf_http_streaming_ctrl_t *asf_http_ctrl, HTTP_header_t *http_hdr ) {
 	char *content_type, *pragma;
 	char features[64] = "\0";

@@ -155,13 +155,7 @@ static inline unsigned dae_prev_vdecoded(const xp_core_t* xpc) { return dae_prev
 static inline unsigned dae_next_vplayed(const xp_core_t* xpc) { return dae_next_played(xpc->video); }
 static inline unsigned dae_next_vdecoded(const xp_core_t* xpc) { return dae_next_decoded(xpc->video); }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 extern xmp_frame_t dae_played_frame(const dec_ahead_engine_t* it); // used in ao_wav.c
-#ifdef __cplusplus
-}
-#endif
 extern xmp_frame_t dae_decoded_frame(const dec_ahead_engine_t* it);
 extern xmp_frame_t dae_next_played_frame(const dec_ahead_engine_t* it);
 extern xmp_frame_t dae_next_decoded_frame(const dec_ahead_engine_t* it);

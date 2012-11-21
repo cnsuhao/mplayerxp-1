@@ -3,6 +3,7 @@
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
  * (C) 2001, MPlayer team.
  */
+#include <limits>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,9 +13,6 @@
 #include "url.h"
 #include "stream_msg.h"
 #include "osdep/mplib.h"
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t)-1)
-#endif
 
 HTTP_header_t *
 http_new_header() {
@@ -52,7 +50,7 @@ int
 http_response_append( HTTP_header_t *http_hdr, char *response, int length ) {
 	if( http_hdr==NULL || response==NULL || length<0 ) return -1;
 
-	if( (unsigned)length > SIZE_MAX - http_hdr->buffer_size - 1) {
+	if( (unsigned)length > std::numeric_limits<size_t>::max() - http_hdr->buffer_size - 1) {
 		MSG_FATAL("Bad size in memory (re)allocation\n");
 		return -1;
 	}
@@ -167,7 +165,7 @@ http_response_parse( HTTP_header_t *http_hdr ) {
 
 	if( pos_hdr_sep+hdr_sep_len<http_hdr->buffer_size ) {
 		// Response has data!
-		http_hdr->body = http_hdr->buffer+pos_hdr_sep+hdr_sep_len;
+		http_hdr->body = (unsigned char*)http_hdr->buffer+pos_hdr_sep+hdr_sep_len;
 		http_hdr->body_size = http_hdr->buffer_size-(pos_hdr_sep+hdr_sep_len);
 	}
 

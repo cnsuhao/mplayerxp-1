@@ -21,19 +21,20 @@ endif
 ifeq ($(USE_DVDREAD),yes)
 SRCS += s_dvdread.c
 endif
-SRCS  += url.c
+CXXSRCS  += url.cpp
 ifeq ($(USE_OSS_AUDIO),yes)
 CXXSRCS += s_oss.cpp
 endif
 ifeq ($(USE_LIBVCD),yes)
 SRCS += s_vcdnav.c
 endif
-SRCS += mrl.c
+CXXSRCS += mrl.cpp
 
 SUBDIRS = tvi
 ifeq ($(HAVE_STREAMING),yes)
 SUBDIRS += freesdp librtsp realrtsp
-SRCS += asf_streaming.c asf_mmst_streaming.c cookies.c http.c network.c rtp.c pnm.c s_ftp.c s_udp.c s_rtsp.c s_network.c tcp.c udp.c
+CXXSRCS += asf_streaming.cpp asf_mmst_streaming.cpp s_ftp.cpp s_udp.cpp s_network.cpp
+CXXSRCS+=s_rtsp.cpp network.cpp http.cpp cookies.cpp rtp.cpp pnm.cpp tcp.cpp udp.cpp
 endif
 
 CXXSRCS+= stream.cpp cache2.cpp

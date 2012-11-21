@@ -10,10 +10,6 @@
 #include "libmpconf/cfgparser.h"
 #include "libmpsub/subreader.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* List of all modules which require protection by pin-code */
 enum {
     Module_Stream=0,
@@ -160,10 +156,6 @@ extern void mpxp_reset_vcache(void);
 extern void __exit_sighandler(void);
 
 extern void mplayer_put_key(int code);
-
-#ifdef __cplusplus
-}
-#endif
 
 extern void mp_register_options(m_config_t* cfg);
 #endif

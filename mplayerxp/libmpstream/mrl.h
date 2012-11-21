@@ -6,7 +6,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 /** Parses line which contains MRL and splits it on components.
   * @param line		source line to be parsed
   * @param user		buffer which will contain username if present (maybe NULL)
@@ -59,5 +58,4 @@ extern const char *	mrl_parse_params(const char *param,const mrl_config_t * args
 #ifdef __cplusplus
 }
 #endif
-
 #endif

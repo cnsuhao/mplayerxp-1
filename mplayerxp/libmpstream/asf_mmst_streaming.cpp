@@ -61,7 +61,7 @@ static int seq_num;
 static int num_stream_ids;
 static int stream_ids[MAX_STREAMS];
 
-static int get_data (int s, char *buf, size_t count);
+static int get_data (int s,unsigned char *buf, size_t count);
 
 static void put_32 (command_t *cmd, uint32_t value)
 {
@@ -90,7 +90,7 @@ static uint32_t get_32 (unsigned char *cmd, int offset)
 
 static void send_command (int s, int command, uint32_t switches,
 			  uint32_t extra, int length,
-			  char *data)
+			  unsigned char *data)
 {
   command_t  cmd;
   int        len8;
@@ -126,7 +126,7 @@ static void send_command (int s, int command, uint32_t switches,
 static iconv_t url_conv;
 #endif
 
-static void string_utf16(char *dest, char *src, int len)
+static void string_utf16(unsigned char *dest,const char *src, int len)
 {
     int i;
 #ifdef USE_ICONV
@@ -159,7 +159,7 @@ static void string_utf16(char *dest, char *src, int len)
 
 static void get_answer (int s)
 {
-  char  data[BUF_SIZE];
+  unsigned char data[BUF_SIZE];
   int   command = 0x1b;
 
   while (command == 0x1b) {
@@ -178,7 +178,7 @@ static void get_answer (int s)
   }
 }
 
-static int get_data (int s, char *buf, size_t count)
+static int get_data (int s,unsigned char *buf, size_t count)
 {
   ssize_t  len;
   size_t total = 0;
@@ -254,9 +254,9 @@ static int get_header (int s, uint8_t *header, streaming_ctrl_t *streaming_ctrl)
 
       int32_t packet_len;
       int command;
-      char data[BUF_SIZE];
+      unsigned char data[BUF_SIZE];
 
-      if (!get_data (s, (char*)&packet_len, 4)) {
+      if (!get_data (s, (unsigned char*)&packet_len, 4)) {
 	MSG_ERR ("packet_len read failed\n");
 	return 0;
       }
@@ -365,7 +365,7 @@ static int interp_header (uint8_t *header, int header_len)
 
 static int get_media_packet (int s, int padding, streaming_ctrl_t *stream_ctrl) {
   unsigned char  pre_header[8];
-  char           data[BUF_SIZE];
+  unsigned char  data[BUF_SIZE];
 
   if (!get_data (s, pre_header, 8)) {
     MSG_ERR ("pre-header read failed\n");
@@ -401,7 +401,7 @@ static int get_media_packet (int s, int padding, streaming_ctrl_t *stream_ctrl) 
     int32_t packet_len;
     int command;
 
-    if (!get_data (s, (char*)&packet_len, 4)) {
+    if (!get_data (s, (unsigned char*)&packet_len, 4)) {
       MSG_ERR ("packet_len read failed\n");
       return 0;
     }
@@ -494,7 +494,7 @@ static int asf_mmst_streaming_seek( int fd, off_t pos, streaming_ctrl_t *streami
 int asf_mmst_streaming_start(any_t* libinput,stream_t *stream)
 {
   char                 str[1024];
-  char                 data[BUF_SIZE];
+  unsigned char        data[BUF_SIZE];
   uint8_t              asf_header[HDR_BUF_SIZE];
   int                  asf_header_len;
   int                  len, i, packet_length;
@@ -513,7 +513,7 @@ int asf_mmst_streaming_start(any_t* libinput,stream_t *stream)
   /* mmst filename are not url_escaped by MS MediaPlayer and are expected as
    * "plain text" by the server, so need to decode it here
    */
-  unescpath=mp_malloc(strlen(path)+1);
+  unescpath=new char [strlen(path)+1];
   if (!unescpath) {
 	MSG_FATAL("Memory allocation failed!\n");
 	return -1;

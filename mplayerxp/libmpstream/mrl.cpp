@@ -28,7 +28,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(user)
 	{
 	    ssize=endp-line+1;
-	    *user=mp_malloc(ssize);
+	    *user=new char [ssize];
 	    memcpy(*user,line,ssize-1);
 	    (*user)[ssize-1]='\0';
 	}
@@ -42,7 +42,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(pass)
 	{
 	    ssize=endp-line+1;
-	    *pass=mp_malloc(ssize);
+	    *pass=new char [ssize];
 	    memcpy(*pass,line,ssize-1);
 	    (*pass)[ssize-1]='\0';
 	}
@@ -55,7 +55,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(ms)
 	{
 	    ssize=endp-line+1;
-	    *ms=mp_malloc(ssize);
+	    *ms=new char [ssize];
 	    memcpy(*ms,line,ssize-1);
 	    (*ms)[ssize-1]='\0';
 	}
@@ -69,7 +69,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
 	if(port)
 	{
 	    ssize=endp-line+1;
-	    *port=mp_malloc(ssize);
+	    *port=new char [ssize];
 	    memcpy(*port,line,ssize-1);
 	    (*port)[ssize-1]='\0';
 	}
@@ -129,7 +129,7 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 		break;
 		case MRL_TYPE_STRING:
 		{
-		    char *p=args[i].value;
+		    char *p=reinterpret_cast<char*>(args[i].value);
 		    p=value;
 		    break;
 		}
@@ -159,11 +159,11 @@ const char * mrl_parse_params(const char *param, const mrl_config_t * args)
 	    if(!endp) endp=endl;
 	    ssize=sep-param-1;
 	    if(arg) mp_free(arg);
-	    arg=mp_malloc(ssize+1);
+	    arg=new char [ssize+1];
 	    memcpy(arg,param,ssize);
 	    arg[ssize]='\0';
 	    ssize=endp-sep;
-	    value=mp_malloc(ssize+1);
+	    value=new char [ssize+1];
 	    memcpy(value,sep,ssize);
 	    value[ssize]='\0';
 	    mrl_store_args(arg,value,args);

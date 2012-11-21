@@ -28,7 +28,7 @@ typedef struct {
 	char *field_search;
 	HTTP_field_t *field_search_pos;
 	// Body variables
-	char *body;
+	unsigned char *body;
 	size_t body_size;
 	char *buffer;
 	size_t buffer_size;

@@ -7,9 +7,6 @@
 #include "mp_config.h"
 #include "xmpcore/xmp_enums.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 enum {
     STREAM_BUFFER_SIZE	=4096,
     VCD_SECTOR_SIZE	=2352,
@@ -222,7 +219,4 @@ typedef struct stream_info_st {
 		 * too. Otherwise options are only parsed from the
 		 * options string given to open_stream_plugin */
 } stream_info_t;
-#ifdef __cplusplus
-}
-#endif
 #endif // __STREAM_H

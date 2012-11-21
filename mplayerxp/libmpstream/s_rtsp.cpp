@@ -28,7 +28,7 @@
 
 static int __FASTCALL__ rtsp_stream_read(stream_t *s,stream_packet_t*sp)
 {
-  return rtsp_session_read (s->streaming_ctrl->data, sp->buf, sp->len);
+  return rtsp_session_read (reinterpret_cast<rtsp_session_t*>(s->streaming_ctrl->data), sp->buf, sp->len);
 }
 
 static off_t __FASTCALL__ rtsp_seek(stream_t *s,off_t newpos)
@@ -96,8 +96,8 @@ static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
     if (file[0] == '/')
       file++;
 
-    mrl = mp_malloc (strlen (stream->streaming_ctrl->url->hostname)
-		  + strlen (file) + 16);
+    mrl = new char [strlen (stream->streaming_ctrl->url->hostname)
+		  + strlen (file) + 16];
 
     sprintf (mrl, "rtsp://%s:%i/%s",
 	     stream->streaming_ctrl->url->hostname, port, file);
@@ -164,7 +164,7 @@ static MPXP_Rc __FASTCALL__ rtsp_open (any_t* libinput,stream_t *stream,const ch
 }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
-const stream_driver_t rtsp_stream =
+extern const stream_driver_t rtsp_stream =
 {
     "rtsp",
     "reads multimedia stream from Real Time Streaming Protocol (RTSP)",

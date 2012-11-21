@@ -29,7 +29,7 @@
 #include "libmpdemux/demuxer.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpdemux/mpdemux.h"
-#include "../help_mp.h"
+#include "help_mp.h"
 
 #include "tcp.h"
 #include "network.h"
@@ -57,8 +57,8 @@ char *network_useragent=NULL;
 int   network_prefer_ipv4 = 1;
 int   network_ipv4_only_proxy = 0;
 
-static struct {
-	char *mime_type;
+static const struct {
+	const char *mime_type;
 	int demuxer_type;
 } mime_type_table[] = {
 	// MP3 streaming, some MP3 streaming server answer with audio/mpeg
@@ -147,7 +147,7 @@ check4proxies( URL_t *url ) {
 
 			MSG_V("Using HTTP proxy: %s\n", proxy_url->url );
 			len = strlen( proxy_url->hostname ) + strlen( url->url ) + 20;	// 20 = http_proxy:// + port
-			new_url = mp_malloc( len+1 );
+			new_url = new char [len+1];
 			if( new_url==NULL ) {
 				MSG_FATAL(MSGTR_OutOfMemory);
 				return url_out;
@@ -562,7 +562,7 @@ err_out:
 }
 
 int
-streaming_bufferize( streaming_ctrl_t *streaming_ctrl, char *buffer, int size) {
+streaming_bufferize( streaming_ctrl_t *streaming_ctrl,unsigned char *buffer, int size) {
 //printf("streaming_bufferize\n");
 	streaming_ctrl->buffer = (char*)mp_malloc(size);
 	if( streaming_ctrl->buffer==NULL ) {
@@ -709,7 +709,7 @@ void fixup_network_stream_cache(stream_t *stream) {
 
 int
 pnm_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl ) {
-	return pnm_read(stream_ctrl->data, buffer, size);
+	return pnm_read(reinterpret_cast<pnm_t*>(stream_ctrl->data), buffer, size);
 }
 
 

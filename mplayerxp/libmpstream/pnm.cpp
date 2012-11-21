@@ -142,11 +142,11 @@ const unsigned char pnm_data_header[]={
 #define PNA_CLIENT_STRING    0x63
 #define PNA_PATH_REQUEST     0x52
 
-const unsigned char pnm_challenge[] = "0990f6b4508b51e801bd6da011ad7b56";
-const unsigned char pnm_timestamp[] = "[15/06/1999:22:22:49 00:00]";
-const unsigned char pnm_guid[]      = "3eac2411-83d5-11d2-f3ea-d7c3a51aa8b0";
-const unsigned char pnm_response[]  = "97715a899cbe41cee00dd434851535bf";
-const unsigned char client_string[] = "WinNT_4.0_6.0.6.45_plus32_MP60_en-US_686l";
+const char pnm_challenge[] = "0990f6b4508b51e801bd6da011ad7b56";
+const char pnm_timestamp[] = "[15/06/1999:22:22:49 00:00]";
+const char pnm_guid[]      = "3eac2411-83d5-11d2-f3ea-d7c3a51aa8b0";
+const char pnm_response[]  = "97715a899cbe41cee00dd434851535bf";
+const char client_string[] = "WinNT_4.0_6.0.6.45_plus32_MP60_en-US_686l";
 
 #define PNM_HEADER_SIZE 11
 const unsigned char pnm_header[] = {
@@ -427,7 +427,7 @@ static int pnm_write_chunk(uint16_t chunk_id, uint16_t length,
  */
 
 static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
-
+  UNUSED(bandwidth);
   uint16_t i16;
   int c=PNM_HEADER_SIZE;
   char fixme[]={0,1};
@@ -436,7 +436,7 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   c+=pnm_write_chunk(PNA_CLIENT_CHALLANGE,strlen(pnm_challenge),
 	  pnm_challenge,&p->buffer[c]);
   c+=pnm_write_chunk(PNA_CLIENT_CAPS,PNM_CLIENT_CAPS_SIZE,
-	  pnm_client_caps,&p->buffer[c]);
+	  reinterpret_cast<const char*>(pnm_client_caps),&p->buffer[c]);
   c+=pnm_write_chunk(0x0a,0,NULL,&p->buffer[c]);
   c+=pnm_write_chunk(0x0c,0,NULL,&p->buffer[c]);
   c+=pnm_write_chunk(0x0d,0,NULL,&p->buffer[c]);
@@ -455,7 +455,7 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   c+=pnm_write_chunk(PNA_GUID,strlen(pnm_guid),
 	  pnm_guid,&p->buffer[c]);
   c+=pnm_write_chunk(PNA_TWENTYFOUR,PNM_TWENTYFOUR_SIZE,
-	  pnm_twentyfour,&p->buffer[c]);
+	  reinterpret_cast<char*>(pnm_twentyfour),&p->buffer[c]);
 
   /* data after chunks */
   memcpy(&p->buffer[c],after_chunks,after_chunks_length);
@@ -512,7 +512,7 @@ static void pnm_send_response(pnm_t *p, const char *response) {
 static int pnm_get_headers(pnm_t *p, int *need_response) {
 
   uint32_t chunk_type;
-  uint8_t  *ptr=p->header;
+  char     *ptr=reinterpret_cast<char*>(p->header);
   uint8_t  *prop_hdr=NULL;
   int      chunk_size,size=0;
   int      nr;
@@ -540,7 +540,7 @@ static int pnm_get_headers(pnm_t *p, int *need_response) {
     if (chunk_type == RMF_TAG)
       chunk_size=0;
     if (chunk_type == PROP_TAG)
-	prop_hdr=ptr;
+	prop_hdr=reinterpret_cast<uint8_t*>(ptr);
     size+=chunk_size;
     ptr+=chunk_size;
   }
@@ -773,7 +773,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
 // pnm_t *pnm_connect(const char *mrl) {
 pnm_t *pnm_connect(int fd,const char *path) {
 
-  pnm_t *p=mp_malloc(sizeof(pnm_t));
+  pnm_t *p=new pnm_t;
   int need_response=0;
 
   p->path=mp_strdup(path);
@@ -786,8 +786,7 @@ pnm_t *pnm_connect(int fd,const char *path) {
     mp_free(p);
     return NULL;
   }
-  if (need_response)
-    pnm_send_response(p, pnm_response);
+  if (need_response) pnm_send_response(p, pnm_response);
   p->ts_last[0]=0;
   p->ts_last[1]=0;
 
@@ -800,12 +799,12 @@ pnm_t *pnm_connect(int fd,const char *path) {
   return p;
 }
 
-int pnm_read (pnm_t *this, char *data, int len) {
+int pnm_read (pnm_t *self, char *data, int len) {
 
   int to_copy=len;
   char *dest=data;
-  char *source=this->recv + this->recv_read;
-  int fill=this->recv_size - this->recv_read;
+  char *source=reinterpret_cast<char*>(self->recv) + self->recv_read;
+  int fill=self->recv_size - self->recv_read;
 
   if (len < 0) return 0;
   while (to_copy > fill) {
@@ -813,20 +812,20 @@ int pnm_read (pnm_t *this, char *data, int len) {
     memcpy(dest, source, fill);
     to_copy -= fill;
     dest += fill;
-    this->recv_read=0;
+    self->recv_read=0;
 
-    if (!pnm_get_stream_chunk (this)) {
+    if (!pnm_get_stream_chunk (self)) {
 #ifdef LOG
       printf ("input_pnm: %d of %d bytes provided\n", len-to_copy, len);
 #endif
       return len-to_copy;
     }
-    source = this->recv;
-    fill = this->recv_size - this->recv_read;
+    source = reinterpret_cast<char*>(self->recv);
+    fill = self->recv_size - self->recv_read;
   }
 
   memcpy(dest, source, to_copy);
-  this->recv_read += to_copy;
+  self->recv_read += to_copy;
 
 #ifdef LOG
   printf ("input_pnm: %d bytes provided\n", len);
@@ -835,10 +834,10 @@ int pnm_read (pnm_t *this, char *data, int len) {
   return len;
 }
 
-int pnm_peek_header (pnm_t *this, char *data) {
+int pnm_peek_header (pnm_t *self, char *data) {
 
-  memcpy (data, this->header, this->header_len);
-  return this->header_len;
+  memcpy (data, self->header, self->header_len);
+  return self->header_len;
 }
 
 void pnm_close(pnm_t *p) {
