@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,10 +22,6 @@
 #include "stream.h"
 #include "libmpdemux/demuxer.h"
 #include "stream_msg.h"
-
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
 
 #ifdef HAVE_LIBCDIO_CDDA
 extern const stream_driver_t cdda_stream;
@@ -281,7 +279,7 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
   x=s->buf_len-s->buf_pos;
   if(x>0)
   {
-    ilen=min(_total,x);
+    ilen=std::min(_total,x);
     memcpy(mem,&s->buffer[s->buf_pos],ilen);
     MSG_DBG3("nc_stream_read:  copy prefetched %u bytes\n",ilen);
     s->buf_pos+=ilen;
@@ -312,10 +310,10 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
 	s->buffer=(unsigned char *)mem;
 	s->buf_len=rlen;
 	nc_stream_read_cbuffer(s);
-	mem += min(rlen,(int)s->buf_len);
+	mem += std::min(rlen,(int)s->buf_len);
 	tile=s->buf_len-rlen;
-	rlen -= min(rlen,(int)s->buf_len);
-	got_len += min(rlen,(int)s->buf_len);
+	rlen -= std::min(rlen,(int)s->buf_len);
+	got_len += std::min(rlen,(int)s->buf_len);
 	eof=stream_eof(s);
 	if(eof) break;
 	stat++;
@@ -330,8 +328,8 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
 	/* should never happen. Store data back to native cache! */
 	MSG_DBG3("nc_stream_read:  we have tile %u bytes\n",tile);
 	s->buf_pos=0;
-	memcpy(s->buffer,&mem[s->buf_len-tile],min(STREAM_BUFFER_SIZE,tile));
-	s->buf_len=min(STREAM_BUFFER_SIZE,tile);
+	memcpy(s->buffer,&mem[s->buf_len-tile],std::min(int(STREAM_BUFFER_SIZE),tile));
+	s->buf_len=std::min(int(STREAM_BUFFER_SIZE),tile);
     }
   }
   ilen=_total-ilen;
@@ -349,7 +347,7 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
     mem+=x; ilen-=x;
   }
   MSG_DBG3( "nc_stream_read  got %u bytes ",total);
-  for(i=0;i<min(8,total);i++) MSG_DBG3("%02X ",(int)((unsigned char)mem[i]));
+  for(i=0;i<std::min(8,total);i++) MSG_DBG3("%02X ",(int)((unsigned char)mem[i]));
   MSG_DBG3("\n");
   return total;
 }

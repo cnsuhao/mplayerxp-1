@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -367,11 +369,11 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	if (sh->bih->biSize-sizeof(BITMAPINFOHEADER))
 	    /* Palette size in biSize */
 	    memcpy(priv->ctx->palctrl->palette, sh->bih+1,
-		   min(sh->bih->biSize-sizeof(BITMAPINFOHEADER), AVPALETTE_SIZE));
+		   std::min(sh->bih->biSize-sizeof(BITMAPINFOHEADER), AVPALETTE_SIZE));
 	else
 	    /* Palette size in biClrUsed */
 	    memcpy(priv->ctx->palctrl->palette, sh->bih+1,
-		   min(sh->bih->biClrUsed * 4, AVPALETTE_SIZE));
+		   std::min(sh->bih->biClrUsed * 4, AVPALETTE_SIZE));
 	}
 #endif
     if(sh->bih)

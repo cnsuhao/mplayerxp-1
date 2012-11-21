@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,13 +37,6 @@
 #include "osdep/fastmemcpy.h"
 #include "osdep/mplib.h"
 #include "pp_msg.h"
-
-#ifndef MIN
-#define        MIN(a,b) (((a)<(b))?(a):(b))
-#endif
-#ifndef MAX
-#define        MAX(a,b) (((a)>(b))?(a):(b))
-#endif
 
 //===========================================================================//
 
@@ -297,8 +291,8 @@ static void __FASTCALL__ parse( FilterParam *fp,const char* args ) {
     fp->msizeY = ( z && z+1<max ) ? atoi( pos=z+1 ) : fp->msizeX;
 
     // min/max & odd
-    fp->msizeX = 1 | MIN( MAX( fp->msizeX, MIN_MATRIX_SIZE ), MAX_MATRIX_SIZE );
-    fp->msizeY = 1 | MIN( MAX( fp->msizeY, MIN_MATRIX_SIZE ), MAX_MATRIX_SIZE );
+    fp->msizeX = 1 | std::min( std::max( fp->msizeX, MIN_MATRIX_SIZE ), MAX_MATRIX_SIZE );
+    fp->msizeY = 1 | std::min( std::max( fp->msizeY, MIN_MATRIX_SIZE ), MAX_MATRIX_SIZE );
 
     // parse amount
     pos = strchr( pos+1, ':' );

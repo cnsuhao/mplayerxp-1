@@ -13,6 +13,8 @@
 #include "libvo/sub.h"
 #include "input2/input.h"
 #include "mplayerxp.h"
+#include <algorithm>
+
 #include "stream_msg.h"
 
 #include <dvdnav/dvdnav.h>
@@ -22,13 +24,6 @@
 #include "osdep/mplib.h"
 #include "mrl.h"
 #define DVD_BLOCK_SIZE 2048
-
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
 
 extern vo_data_t* vo_data;
 
@@ -470,10 +465,10 @@ static void __FASTCALL__ dvdnav_event_handler(const stream_t* s,const stream_pac
 					btni_t *btni = &(pnavpci->hli.btnit[btnum]);
 
 					if (priv->hlev.buttonN == (unsigned)btnum + 1) {
-					    priv->hlev.sx = min (btni->x_start, btni->x_end);
-					    priv->hlev.ex = max (btni->x_start, btni->x_end);
-					    priv->hlev.sy = min (btni->y_start, btni->y_end);
-					    priv->hlev.ey = max (btni->y_start, btni->y_end);
+					    priv->hlev.sx = std::min (btni->x_start, btni->x_end);
+					    priv->hlev.ex = std::max (btni->x_start, btni->x_end);
+					    priv->hlev.sy = std::min (btni->y_start, btni->y_end);
+					    priv->hlev.ey = std::max (btni->y_start, btni->y_end);
 
 					    priv->hlev.palette = (btni->btn_coln == 0) ? 0 :
 							pnavpci->hli.btn_colit.btn_coli[btni->btn_coln - 1][0];

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "../mp_config.h"
 // based on libmpeg2/header.c by Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
 #include <inttypes.h>
@@ -213,10 +215,6 @@ int mp4_header_process_vop(mp_mpeg_header_t * picture, unsigned char * buffer)
   return n;
 }
 
-#ifndef min
-#define min(a, b) ((a) <= (b) ? (a) : (b))
-#endif
-
 static unsigned int read_golomb(unsigned char *buffer, unsigned int *init)
 {
   unsigned int x, v = 0, v2 = 0, m, len = 0, n = *init;
@@ -227,7 +225,7 @@ static unsigned int read_golomb(unsigned char *buffer, unsigned int *init)
   x = len + n;
   while(n < x)
   {
-    m = min(x - n, 8);
+    m = std::min(x - n, unsigned(8));
     v |= getbits(buffer, n, m);
     n += m;
     if(x - n > 8)

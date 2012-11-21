@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "mp_config.h"
 
 #define READ_USLEEP_TIME 10000
@@ -25,10 +27,6 @@
 #include "libmpdemux/mpdemux.h"
 #include "mplayerxp.h"
 #include "stream_msg.h"
-
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
 
 #define CPF_EMPTY	0x00000001UL
 #define CPF_EOF		0x80000000UL
@@ -512,7 +510,7 @@ static int __FASTCALL__ c2_stream_read(cache_vars_t* c,char* _mem,int total){
   if(mp_conf.verbose>2)
   {
     MSG_DBG2( "c2_stream_read  got %u bytes ",total);
-    for(i=0;i<min(8,total);i++) MSG_DBG2("%02X ",(int)((unsigned char)_mem[i]));
+    for(i=0;i<std::min(8,total);i++) MSG_DBG2("%02X ",(int)((unsigned char)_mem[i]));
     MSG_DBG2("\n");
   }
   return total;

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "mp_config.h"
 #include "mplib.h"
 #define MSGT_CLASS MSGT_OSDEP
@@ -223,7 +225,6 @@ static void __prot_free_append(any_t*ptr) {
     prot_free_slot(&priv->mallocs,page_ptr);
 }
 
-#define min(a,b) ((a)<(b)?(a):(b))
 static any_t* __prot_realloc_append(any_t*ptr,size_t size) {
     any_t* rp;
     if((rp=__prot_malloc_append(size))!=NULL && ptr) {
@@ -234,7 +235,7 @@ static any_t* __prot_realloc_append(any_t*ptr,size_t size) {
 	    __print_backtrace(10);
 	    kill(getpid(), SIGILL);
 	}
-	memcpy(rp,ptr,min(slot->size,size));
+	memcpy(rp,ptr,std::min(slot->size,size));
 	__prot_free_append(ptr);
     }
     return rp;
@@ -283,7 +284,7 @@ static any_t* __prot_realloc_prepend(any_t*ptr,size_t size) {
 	    __print_backtrace(10);
 	    kill(getpid(), SIGILL);
 	}
-	memcpy(rp,ptr,min(slot->size,size));
+	memcpy(rp,ptr,std::min(slot->size,size));
 	__prot_free_prepend(ptr);
     }
     return rp;
@@ -379,14 +380,14 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
 	int printable=1;
 	MSG_INFO("address: %p size: %u dump: ",c->slots[i].page_ptr,c->slots[i].size);
 	s=reinterpret_cast<char *>(c->slots[i].page_ptr);
-	for(j=0;j<min(c->slots[i].size,20);j++) {
+	for(j=0;j<std::min(c->slots[i].size,size_t(20));j++) {
 	    if(!isprint(s[j])) {
 		printable=0;
 		break;
 	    }
 	}
 	if(printable) MSG_INFO("%20s",s);
-	else for(j=0;j<min(c->slots[i].size,10);j++) {
+	else for(j=0;j<std::min(c->slots[i].size,size_t(10));j++) {
 	    MSG_INFO("%02X ",(unsigned char)s[j]);
 	}
 	MSG_INFO("\n");
