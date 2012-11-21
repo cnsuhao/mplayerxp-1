@@ -113,7 +113,7 @@ typedef struct af_stream_s
 // Export functions
 */
 
-af_stream_t *RND_RENAME6(af_new)(any_t*_parent);
+af_stream_t *af_new(any_t*_parent);
 
 /* Initialize the stream "s". This function creates a new filter list
    if necessary according to the values set in input and output. Input
@@ -125,13 +125,13 @@ af_stream_t *RND_RENAME6(af_new)(any_t*_parent);
    format given in "s", otherwise the output format in the last filter
    will be copied "s". The return value is 0 if success and -1 if
    failure */
-MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output);
+MPXP_Rc af_init(af_stream_t* s, int force_output);
 
 // Uninit and remove all filters
 void af_uninit(af_stream_t* s);
 
 // Filter data chunk through the filters in the list
-mp_aframe_t* __FASTCALL__ RND_RENAME8(af_play)(af_stream_t* s,const mp_aframe_t* data);
+mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s,const mp_aframe_t* data);
 
 // send control to all filters, starting with the last until
 // one accepts the command with MPXP_Ok.

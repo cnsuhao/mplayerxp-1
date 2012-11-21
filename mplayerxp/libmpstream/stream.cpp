@@ -85,7 +85,7 @@ static const stream_driver_t *sdrivers[] =
     NULL
 };
 
-stream_t* __FASTCALL__ RND_RENAME2(open_stream)(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler)
+stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler)
 {
     unsigned i,done;
     unsigned mrl_len;
@@ -237,7 +237,7 @@ stream_t* __FASTCALL__ new_stream(int type){
   stream_t *s=(stream_t*)mp_mallocz(sizeof(stream_t));
   if(s==NULL) return NULL;
 
-  SECURE_NAME9(rnd_fill)(s->antiviral_hole,offsetof(stream_t,pin)-offsetof(stream_t,antiviral_hole));
+  rnd_fill(s->antiviral_hole,offsetof(stream_t,pin)-offsetof(stream_t,antiviral_hole));
   s->pin=STREAM_PIN;
   s->fd=-1;
   s->type=type;

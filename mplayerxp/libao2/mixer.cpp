@@ -12,7 +12,7 @@ void mixer_getvolume(const ao_data_t* ao, float *l,float *r )
 {
   ao_control_vol_t vol;
   *l=0; *r=0;
-  if(MPXP_Ok != RND_RENAME7(ao_control)(ao,AOCONTROL_GET_VOLUME,(long)&vol)) return;
+  if(MPXP_Ok != ao_control(ao,AOCONTROL_GET_VOLUME,(long)&vol)) return;
   *r=vol.right;
   *l=vol.left;
 }
@@ -21,7 +21,7 @@ void mixer_setvolume(const ao_data_t* ao,float l,float r )
 {
   ao_control_vol_t vol;
   vol.right=r; vol.left=l;
-  RND_RENAME7(ao_control)(ao,AOCONTROL_SET_VOLUME,(long)&vol);
+  ao_control(ao,AOCONTROL_SET_VOLUME,(long)&vol);
 }
 
 #define MIXER_CHANGE 3

@@ -185,7 +185,7 @@ void ao_print_help( void )
     MSG_INFO("\n");
 }
 
-MPXP_Rc __FASTCALL__ RND_RENAME4(ao_register)(ao_data_t* ao,const char *driver_name,unsigned flags)
+MPXP_Rc __FASTCALL__ ao_register(ao_data_t* ao,const char *driver_name,unsigned flags)
 {
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
     unsigned i;
@@ -208,7 +208,7 @@ const ao_info_t* ao_get_info( const ao_data_t* ao )
     return priv->audio_out->info;
 }
 
-ao_data_t* __FASTCALL__ RND_RENAME5(ao_init)(const char *subdevice)
+ao_data_t* __FASTCALL__ ao_init(const char *subdevice)
 {
     ao_data_t* ao;
     ao=new(zeromem) ao_data_t;
@@ -217,8 +217,8 @@ ao_data_t* __FASTCALL__ RND_RENAME5(ao_init)(const char *subdevice)
     ao->buffersize=-1;
     ao->opaque=mp_malloc(sizeof(priv_t));
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    SECURE_NAME9(rnd_fill)(priv->antiviral_hole,sizeof(priv_t));
-    SECURE_NAME9(rnd_fill)(ao->antiviral_hole,offsetof(ao_data_t,samplerate)-offsetof(ao_data_t,antiviral_hole));
+    rnd_fill(priv->antiviral_hole,sizeof(priv_t));
+    rnd_fill(ao->antiviral_hole,offsetof(ao_data_t,samplerate)-offsetof(ao_data_t,antiviral_hole));
     priv->audio_out=NULL;
     return ao;
 }
@@ -265,7 +265,7 @@ float ao_get_delay(const ao_data_t*ao)
     return 0;
 }
 
-unsigned __FASTCALL__ RND_RENAME6(ao_play)(ao_data_t*ao,const any_t* data,unsigned len,unsigned flags)
+unsigned __FASTCALL__ ao_play(ao_data_t*ao,const any_t* data,unsigned len,unsigned flags)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
@@ -289,7 +289,7 @@ void ao_resume(ao_data_t*ao)
     }
 }
 
-MPXP_Rc __FASTCALL__ RND_RENAME7(ao_control)(const ao_data_t*ao,int cmd,long arg)
+MPXP_Rc __FASTCALL__ ao_control(const ao_data_t*ao,int cmd,long arg)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);

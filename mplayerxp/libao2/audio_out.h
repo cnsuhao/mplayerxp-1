@@ -101,17 +101,17 @@ extern const char *	 __FASTCALL__ ao_format_name(int format);
 extern int		 __FASTCALL__ ao_format_bits(int format);
 
 extern void		ao_print_help( void );
-extern MPXP_Rc	__FASTCALL__ RND_RENAME4(ao_register)(ao_data_t* ao,const char *driver_name,unsigned flags);
+extern MPXP_Rc	__FASTCALL__ ao_register(ao_data_t* ao,const char *driver_name,unsigned flags);
 extern const ao_info_t*	ao_get_info( const ao_data_t* ao );
-extern ao_data_t*	__FASTCALL__ RND_RENAME5(ao_init)(const char *subdevice);
+extern ao_data_t*	__FASTCALL__ ao_init(const char *subdevice);
 extern MPXP_Rc		__FASTCALL__ ao_configure(ao_data_t* priv,unsigned rate,unsigned channels,unsigned format);
 extern void		__FASTCALL__ ao_uninit(ao_data_t* priv);
 extern void		__FASTCALL__ ao_reset(ao_data_t* priv);
 extern unsigned		__FASTCALL__ ao_get_space(const ao_data_t* priv);
-extern unsigned		__FASTCALL__ RND_RENAME6(ao_play)(ao_data_t* priv,const any_t* data,unsigned len,unsigned flags);
+extern unsigned		__FASTCALL__ ao_play(ao_data_t* priv,const any_t* data,unsigned len,unsigned flags);
 extern float		__FASTCALL__ ao_get_delay(const ao_data_t* priv);
 extern void		__FASTCALL__ ao_pause(ao_data_t* priv);
 extern void		__FASTCALL__ ao_resume(ao_data_t* priv);
-extern MPXP_Rc	__FASTCALL__ RND_RENAME7(ao_control)(const ao_data_t* priv,int cmd,long arg);
+extern MPXP_Rc	__FASTCALL__ ao_control(const ao_data_t* priv,int cmd,long arg);
 
 #endif

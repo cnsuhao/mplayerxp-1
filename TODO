@@ -18,7 +18,6 @@ TODO for mplayerxp:
 		    ...
 		    if(avcodec_open2(lavc_guard.unprotect(priv->ctx),priv->codec,NULL)<0){
 		    ...
-- use c++ instead of plain c
 - use libavfilter instead of some af_* vf_*
 - test frame-dropping
 - remove all #define with values (they maybe intercepted in other .h files)

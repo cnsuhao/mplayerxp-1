@@ -33,7 +33,7 @@ typedef struct priv_s {
     const ad_functions_t* mpadec;
 }priv_t;
 
-any_t* RND_RENAME2(mpca_init)(sh_audio_t *sh_audio)
+any_t* mpca_init(sh_audio_t *sh_audio)
 {
     const char *afm=NULL,*ac=NULL;
     const audio_probe_t* aprobe=NULL;
@@ -183,7 +183,7 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 	unsigned in_samplerate, unsigned in_channels, unsigned in_format,
 	unsigned* out_samplerate, unsigned* out_channels, unsigned* out_format){
     char strbuf[200];
-    af_stream_t* afs=RND_RENAME6(af_new)(sh_audio);
+    af_stream_t* afs=af_new(sh_audio);
 
     // input format: same as codec's output format:
     afs->input.rate   = in_samplerate;
@@ -203,7 +203,7 @@ MPXP_Rc mpca_preinit_filters(sh_audio_t *sh_audio,
 	afs->input.rate,afs->input.nch,(afs->input.format&MPAF_BPS_MASK)*8);
 
     // let's autoprobe it!
-    if(MPXP_Ok != RND_RENAME7(af_init)(afs,0)){
+    if(MPXP_Ok != af_init(afs,0)){
 	delete afs;
 	return MPXP_False; // failed :(
     }
@@ -230,7 +230,7 @@ MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
 	unsigned out_minsize, unsigned out_maxsize){
     char strbuf[200];
     af_stream_t* afs=sh_audio->afilter;
-    if(!afs) afs = RND_RENAME6(af_new)(sh_audio);
+    if(!afs) afs = af_new(sh_audio);
 
     // input format: same as codec's output format:
     afs->input.rate   = in_samplerate;
@@ -250,7 +250,7 @@ MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
 	afs->output.rate,afs->output.nch,(afs->output.format&MPAF_BPS_MASK)*8,ao_format_name(mpaf2afmt(afs->output.format)));
 
     // let's autoprobe it!
-    if(MPXP_Ok != RND_RENAME7(af_init)(afs,1)){
+    if(MPXP_Ok != af_init(afs,1)){
 	sh_audio->afilter=NULL;
 	delete afs;
 	return MPXP_False; // failed :(
@@ -295,7 +295,7 @@ MPXP_Rc mpca_reinit_filters(sh_audio_t *sh_audio,
 				out_minsize,out_maxsize);
 }
 
-unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
+unsigned mpca_decode(any_t *opaque,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
 {
     priv_t* priv = (priv_t*)opaque;
     sh_audio_t* sh_audio = priv->parent;
@@ -335,7 +335,7 @@ unsigned RND_RENAME3(mpca_decode)(any_t *opaque,unsigned char *buf,unsigned minl
 			,0); // xp_idx
     afd->audio=buf;
     afd->len=len;
-    pafd=RND_RENAME8(af_play)(sh_audio->afilter,afd);
+    pafd=af_play(sh_audio->afilter,afd);
     afd->audio=NULL; // fake no buffer
 
     if(!pafd) {

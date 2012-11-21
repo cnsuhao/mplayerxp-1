@@ -115,7 +115,7 @@ int demux_aid_vid_mismatch = 0;
 
 demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
   demux_stream_t* ds=(demux_stream_t*)mp_malloc(sizeof(demux_stream_t));
-  SECURE_NAME9(rnd_fill)(ds->antiviral_hole,offsetof(demux_stream_t,pin)-offsetof(demux_stream_t,antiviral_hole));
+  rnd_fill(ds->antiviral_hole,offsetof(demux_stream_t,pin)-offsetof(demux_stream_t,antiviral_hole));
   ds->pin=DS_PIN;
   ds->buffer_pos=ds->buffer_size=0;
   ds->buffer=NULL;
@@ -143,7 +143,7 @@ demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
 
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
   demuxer_t *d=(demuxer_t*)mp_mallocz(sizeof(demuxer_t));
-  SECURE_NAME9(rnd_fill)(d->antiviral_hole,offsetof(demuxer_t,pin)-offsetof(demuxer_t,antiviral_hole));
+  rnd_fill(d->antiviral_hole,offsetof(demuxer_t,pin)-offsetof(demuxer_t,antiviral_hole));
   d->pin=DEMUX_PIN;
   d->stream=stream;
   d->movi_start=stream->start_pos;
@@ -602,14 +602,14 @@ demuxer_t* demux_open(stream_t *vs,int file_format,int audio_id,int video_id,int
 #endif
 
   if(audio_stream) {
-    as = RND_RENAME2(open_stream)(libinput,audio_stream,&afmt,NULL);
+    as = open_stream(libinput,audio_stream,&afmt,NULL);
     if(!as) {
       MSG_ERR("Can't open audio stream: %s\n",audio_stream);
       return NULL;
     }
   }
   if(sub_stream) {
-    ss = RND_RENAME2(open_stream)(libinput,sub_stream,&sfmt,NULL);
+    ss = open_stream(libinput,sub_stream,&sfmt,NULL);
     if(!ss) {
       MSG_ERR("Can't open subtitles stream: %s\n",sub_stream);
       return NULL;

@@ -500,7 +500,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entryref(any_t* libinput,ASX_Parser_t
     asx_warning_attrib_required(parser,"ENTRYREF" ,"HREF" );
     return NULL;
   }
-  stream=RND_RENAME2(open_stream)(libinput,href,&f,NULL);
+  stream=open_stream(libinput,href,&f,NULL);
   if(!stream) {
     MSG_WARN("Can't open playlist %s\n",href);
     return NULL;

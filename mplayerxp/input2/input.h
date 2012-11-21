@@ -149,7 +149,7 @@ extern void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter, any_t* ct
 extern void mp_cmd_free(mp_cmd_t* cmd);
 
 // When you create a new driver you should add it in this 2 functions.
-extern any_t* RND_RENAME0(mp_input_open)(void);
+extern any_t* mp_input_open(void);
 extern void   mp_input_close(any_t* handle);
 
 extern void mp_input_print_keys(any_t*handle);

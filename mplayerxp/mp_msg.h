@@ -3,9 +3,6 @@
 
 #include "mplayerxp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 // verbosity elevel:
 
 // stuff from level MSGL_FATAL-MSGL_HINT should be translated.
@@ -117,7 +114,4 @@ static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_du
 #endif
 #endif // __va_arg_pack
 
-#ifdef __cplusplus
-}
-#endif
 #endif // __MP_MSG_H

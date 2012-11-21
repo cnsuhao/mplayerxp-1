@@ -112,7 +112,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
     MSG_ERR(MSGTR_OutOfMemory);
     return NULL;
   }
-  SECURE_NAME9(rnd_fill)(_new->antiviral_hole,offsetof(af_instance_t,pin)-offsetof(af_instance_t,antiviral_hole));
+  rnd_fill(_new->antiviral_hole,offsetof(af_instance_t,pin)-offsetof(af_instance_t,antiviral_hole));
   _new->pin=AF_PIN;
   _new->parent=s;
   // Check for commandline parameters
@@ -345,7 +345,7 @@ void af_uninit(af_stream_t* s)
    format given in "s", otherwise the output fromat in the last filter
    will be copied "s". The return value is 0 if success and -1 if
    failure */
-MPXP_Rc RND_RENAME7(af_init)(af_stream_t* s, int force_output)
+MPXP_Rc af_init(af_stream_t* s, int force_output)
 {
   char *af_name,*af_next;
   // Sanity check
@@ -488,7 +488,7 @@ static af_instance_t* af_add(af_stream_t* s,char* name){
 }
 
 // Filter data chunk through the filters in the list
-mp_aframe_t* __FASTCALL__ RND_RENAME8(af_play)(af_stream_t* s,const mp_aframe_t* data)
+mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s,const mp_aframe_t* data)
 {
     mp_aframe_t* in = const_cast<mp_aframe_t*>(data);
     mp_aframe_t* out;
@@ -576,7 +576,7 @@ MPXP_Rc __FASTCALL__ af_query_fmt (const af_stream_t* s,mpaf_format_e fmt)
 {
     af_instance_t* filt = s?s->first:NULL;
     const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return RND_RENAME7(ao_control)(ao_data,AOCONTROL_QUERY_FORMAT,fmt);
+    if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_FORMAT,fmt);
     else if(afmt2mpaf(fmt)==filt->conf.format) return MPXP_True;
     return MPXP_False;
 }
@@ -585,7 +585,7 @@ MPXP_Rc __FASTCALL__ af_query_rate (const af_stream_t* s,unsigned rate)
 {
     af_instance_t* filt = s?s->first:NULL;
     const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return RND_RENAME7(ao_control)(ao_data,AOCONTROL_QUERY_RATE,rate);
+    if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_RATE,rate);
     else if(rate==filt->conf.rate) return MPXP_True;
     return MPXP_False;
 }
@@ -594,7 +594,7 @@ MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch)
 {
     af_instance_t* filt = s?s->first:NULL;
     const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return RND_RENAME7(ao_control)(ao_data,AOCONTROL_QUERY_CHANNELS,nch);
+    if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,nch);
     else if(nch==filt->conf.nch) return MPXP_True;
     return MPXP_False;
 }
@@ -612,12 +612,12 @@ void af_help (void) {
     MSG_INFO("\n");
 }
 
-af_stream_t *RND_RENAME6(af_new)(any_t*_parent)
+af_stream_t *af_new(any_t*_parent)
 {
     af_stream_t *rval;
     rval = new(zeromem) af_stream_t;
     rval->parent = _parent;
-    SECURE_NAME9(rnd_fill)(rval->antiviral_hole,offsetof(af_stream_t,first)-offsetof(af_stream_t,antiviral_hole));
+    rnd_fill(rval->antiviral_hole,offsetof(af_stream_t,first)-offsetof(af_stream_t,antiviral_hole));
     return rval;
 }
 

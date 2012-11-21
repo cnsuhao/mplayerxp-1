@@ -3,9 +3,6 @@
 #define __MPXP_MRL_H 1
 
 #include "mp_config.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 /** Parses line which contains MRL and splits it on components.
   * @param line		source line to be parsed
   * @param user		buffer which will contain username if present (maybe NULL)
@@ -55,7 +52,4 @@ typedef struct mrl_config
   * @see		mrl_parse_line
 **/
 extern const char *	mrl_parse_params(const char *param,const mrl_config_t * args);
-#ifdef __cplusplus
-}
-#endif
 #endif

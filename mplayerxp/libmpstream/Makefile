@@ -19,7 +19,7 @@ ifeq ($(USE_DVDNAV),yes)
 CXXSRCS += s_dvdnav.cpp
 endif
 ifeq ($(USE_DVDREAD),yes)
-SRCS += s_dvdread.c
+CXXSRCS += s_dvdread.cpp
 endif
 CXXSRCS  += url.cpp
 ifeq ($(USE_OSS_AUDIO),yes)

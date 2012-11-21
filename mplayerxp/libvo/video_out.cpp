@@ -140,7 +140,7 @@ void vo_print_help(vo_data_t*vo)
     MSG_INFO("\n");
 }
 
-const vo_functions_t *RND_RENAME5(vo_register)(vo_data_t*vo,const char *driver_name)
+const vo_functions_t* vo_register(vo_data_t*vo,const char *driver_name)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     unsigned i;
@@ -179,15 +179,15 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
 
     vo->vo_priv=new(zeromem) vo_priv_t;
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
-    SECURE_NAME9(rnd_fill)(priv->antiviral_hole,offsetof(vo_priv_t,srcFourcc)-offsetof(vo_priv_t,antiviral_hole));
+    rnd_fill(priv->antiviral_hole,offsetof(vo_priv_t,srcFourcc)-offsetof(vo_priv_t,antiviral_hole));
     pthread_mutexattr_init(&attr);
     pthread_mutex_init(&priv->surfaces_mutex,&attr);
     priv->dri.num_xp_frames=1;
-    SECURE_NAME9(rnd_fill)(vo->antiviral_hole,offsetof(vo_data_t,mScreen)-offsetof(vo_data_t,antiviral_hole));
+    rnd_fill(vo->antiviral_hole,offsetof(vo_data_t,mScreen)-offsetof(vo_data_t,antiviral_hole));
     return vo;
 }
 
-MPXP_Rc __FASTCALL__ RND_RENAME6(vo_init)(vo_data_t*vo,const char *subdevice)
+MPXP_Rc __FASTCALL__ vo_init(vo_data_t*vo,const char *subdevice)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG3("dri_vo_dbg: vo_init(%s)\n",subdevice);
@@ -385,13 +385,13 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 	if((event & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	{
 	    xp_core->in_resize=1;
-	    RND_RENAME8(vf_reinit_vo)(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,1);
+	    vf_reinit_vo(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,1);
 	}
-	RND_RENAME8(vf_reinit_vo)(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,0);
+	vf_reinit_vo(priv->dri.cap.w,priv->dri.cap.h,priv->dri.cap.fourcc,0);
 }
 
 static int vo_inited=0;
-MPXP_Rc __FASTCALL__ RND_RENAME7(vo_config)(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
+MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		   uint32_t d_height, uint32_t fullscreen, char *title,
 		   uint32_t format)
 {
@@ -634,7 +634,7 @@ unsigned __FASTCALL__ vo_get_num_frames(vo_data_t*vo) {
     return priv->dri.num_xp_frames;
 }
 
-MPXP_Rc __FASTCALL__ RND_RENAME8(vo_draw_slice)(vo_data_t*vo,const mp_image_t *mpi)
+MPXP_Rc __FASTCALL__ vo_draw_slice(vo_data_t*vo,const mp_image_t *mpi)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     unsigned i,_w[4],_h[4],x,y;
@@ -669,7 +669,7 @@ MPXP_Rc __FASTCALL__ RND_RENAME8(vo_draw_slice)(vo_data_t*vo,const mp_image_t *m
     return MPXP_False;
 }
 
-void RND_RENAME9(vo_select_frame)(vo_data_t*vo,unsigned play_idx)
+void vo_select_frame(vo_data_t*vo,unsigned play_idx)
 {
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;
     MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
@@ -890,7 +890,7 @@ void vo_uninit(vo_data_t*vo)
     delete priv;
 }
 
-MPXP_Rc __FASTCALL__ RND_RENAME0(vo_control)(vo_data_t*vo,uint32_t request, any_t*data)
+MPXP_Rc __FASTCALL__ vo_control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     MPXP_Rc rval;
     vo_priv_t* priv=(vo_priv_t*)vo->vo_priv;

@@ -297,7 +297,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
 	if(!strcmp(filter_list[i]->name,name)) break;
     }
     vf=new(zeromem) vf_instance_t;
-    SECURE_NAME9(rnd_fill)(vf->antiviral_hole,offsetof(vf_instance_t,pin)-offsetof(vf_instance_t,antiviral_hole));
+    rnd_fill(vf->antiviral_hole,offsetof(vf_instance_t,pin)-offsetof(vf_instance_t,antiviral_hole));
     vf->pin=VF_PIN;
     vf->info=filter_list[i];
     vf->next=next;
@@ -320,7 +320,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
     return NULL;
 }
 
-vf_instance_t* __FASTCALL__ RND_RENAME9(vf_open_filter)(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t*libinput){
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t*libinput){
     if(strcmp(name,"vo")) {
 	MSG_V("Open video filter: [%s]\n", name);
     }
@@ -345,7 +345,7 @@ unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,un
     if(best) return best; // bingo, they have common csp!
     // ok, then try with scale:
     if(vf->info == &vf_info_scale) return 0; // avoid infinite recursion!
-    vf=RND_RENAME9(vf_open_filter)(vf,vf->sh,"fmtcvt",NULL,vf->libinput);
+    vf=vf_open_filter(vf,vf->sh,"fmtcvt",NULL,vf->libinput);
     if(!vf) return 0; // failed to init "scale"
     // try the preferred csp first:
     if(preferred && vf->query_format(vf,preferred,w,h)) best=preferred; else
@@ -386,7 +386,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
 	// let's insert the 'scale' filter, it does the job for us:
 	vf_instance_t* vf2;
 	if(vf->next->info==&vf_info_scale) return 0; // scale->scale
-	vf2=RND_RENAME9(vf_open_filter)(vf->next,vf->sh,"scale",NULL,vf->libinput);
+	vf2=vf_open_filter(vf->next,vf->sh,"scale",NULL,vf->libinput);
 	if(!vf2) return 0; // shouldn't happen!
 	vf->next=vf2;
 	flags=vf_next_query_format(vf->next,outfmt,d_width,d_height);
@@ -400,7 +400,7 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
     if(miss&VFCAP_ACCEPT_STRIDE){
 	// vf requires stride support but vf->next doesn't support it!
 	// let's insert the 'expand' filter, it does the job for us:
-	vf_instance_t* vf2=RND_RENAME9(vf_open_filter)(vf->next,vf->sh,"expand",NULL,vf->libinput);
+	vf_instance_t* vf2=vf_open_filter(vf->next,vf->sh,"expand",NULL,vf->libinput);
 	if(!vf2) return 0; // shouldn't happen!
 	vf->next=vf2;
     }
@@ -471,13 +471,13 @@ void vf_help(){
 
 extern vf_cfg_t vf_cfg;
 static sh_video_t *sh_video;
-vf_instance_t* __FASTCALL__ RND_RENAME7(vf_init)(sh_video_t *sh,any_t* libinput)
+vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh,any_t* libinput)
 {
     char *vf_last=NULL,*vf_name=vf_cfg.list;
     char *arg;
     vf_instance_t* vfi=NULL,*vfi_prev=NULL,*vfi_first;
     sh_video=sh;
-    vfi=RND_RENAME9(vf_open_filter)(NULL,sh,"vo",NULL,libinput);
+    vfi=vf_open_filter(NULL,sh,"vo",NULL,libinput);
     vfi_prev=vfi;
     if(vf_name)
     while(vf_name!=vf_last){
@@ -561,7 +561,7 @@ static void vf_report_chain(void)
 	_this=_this->next;
     }
 }
-void __FASTCALL__ RND_RENAME8(vf_reinit_vo)(unsigned w,unsigned h,unsigned fmt,int reset_cache)
+void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cache)
 {
     vf_instance_t *vf_scaler=NULL;
     vf_instance_t* _saved=NULL;
@@ -620,7 +620,7 @@ void __FASTCALL__ RND_RENAME8(vf_reinit_vo)(unsigned w,unsigned h,unsigned fmt,i
     {
 	MSG_V("vf_reinit->config %i %i %s=> %i %i %s\n",sw,sh,vo_format_name(sfourcc),w,h,vo_format_name(fmt));
 	_saved=_this->prev;
-	vf_scaler=RND_RENAME9(vf_open_filter)(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput);
+	vf_scaler=vf_open_filter(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput);
 	if(vf_scaler)
 	{
 	    vf_config_fun_t sfnc;

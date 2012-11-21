@@ -60,7 +60,7 @@ while(sh_audio){
 	  ret=read_audio_buffer(sh_audio,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			      playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       } else {
-	  ret=RND_RENAME3(mpca_decode)(sh_audio->decoder,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
+	  ret=mpca_decode(sh_audio->decoder,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			   playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
     if(ret>0) sh_audio->a_buffer_len+=ret;
@@ -84,7 +84,7 @@ while(sh_audio){
 
   if(xmp_test_model(XMP_Run_AudioPlayer)) dec_ahead_audio_delay=ao_get_delay(ao_data);
 
-  playsize=RND_RENAME6(ao_play)(ao_data,sh_audio->a_buffer,playsize,0);
+  playsize=ao_play(ao_data,sh_audio->a_buffer,playsize,0);
 
   if(playsize>0){
       sh_audio->a_buffer_len-=playsize;

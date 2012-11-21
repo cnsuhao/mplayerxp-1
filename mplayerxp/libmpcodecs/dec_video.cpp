@@ -144,7 +144,7 @@ any_t * mpcv_ffmpeg_init(sh_video_t* sh_video,any_t* libinput) {
     return priv;
 }
 
-any_t * RND_RENAME3(mpcv_init)(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
+any_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
     int done=0;
     const video_probe_t* vprobe;
     sh_video->codec=NULL;
@@ -280,7 +280,7 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
 
 extern vo_data_t* vo_data;
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
-int RND_RENAME4(mpcv_decode)(any_t *opaque,const enc_frame_t* frame){
+int mpcv_decode(any_t *opaque,const enc_frame_t* frame){
     priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     vf_instance_t* vf;
@@ -465,13 +465,13 @@ csp_again:
 		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
 	    }
 	    MSG_WARN("Trying -vf fmtcvt\n");
-	    sc=vf=RND_RENAME9(vf_open_filter)(vf,sh,"fmtcvt",NULL,libinput);
+	    sc=vf=vf_open_filter(vf,sh,"fmtcvt",NULL,libinput);
 	    goto csp_again;
 	} else
 	if(palette==1){
 	    MSG_V("vd: Trying -vf palette...\n");
 	    palette=-1;
-	    vf=RND_RENAME9(vf_open_filter)(vf,sh,"palette",NULL,libinput);
+	    vf=vf_open_filter(vf,sh,"palette",NULL,libinput);
 	    goto csp_again;
 	} else {
 	// sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
@@ -505,7 +505,7 @@ csp_again:
     if(vo_data->flags&VFCAP_FLIPPED) vo_FLIP_REVERT(vo_data);
     if(vo_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
-	sh->vfilter=vf=RND_RENAME9(vf_open_filter)(vf,sh,"flip",NULL,libinput);
+	sh->vfilter=vf=vf_open_filter(vf,sh,"flip",NULL,libinput);
     }
 
     // time to do aspect ratio corrections...

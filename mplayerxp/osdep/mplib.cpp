@@ -12,7 +12,7 @@
 
 volatile unsigned long long int my_profile_start,my_profile_end,my_profile_total;
 
-any_t* SECURE_NAME9(rnd_fill)(any_t* buffer,size_t size)
+any_t* rnd_fill(any_t* buffer,size_t size)
 {
     unsigned i;
     char ch;
@@ -28,3 +28,4 @@ any_t* get_caller_address(unsigned num_caller) {
     backtrace(stack,3+num_caller);
     return stack[2+num_caller];
 }
+

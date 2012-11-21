@@ -1,9 +1,15 @@
 /*
     s_dvdread - DVDREAD stream interface
 */
+#include <limits>
 
 #include "mp_config.h"
 #include "mplayerxp.h"
+
+/* fake stdint */
+#define UINT8_MAX std::numeric_limits<uint8_t>::max()
+#define UINT16_MAX std::numeric_limits<uint16_t>::max()
+#define INT32_MAX std::numeric_limits<int32_t>::max()
 #ifdef USE_DVDREAD
 #include <stdlib.h>
 #include <string.h>
@@ -115,14 +121,14 @@ static int __FASTCALL__ dvd_number_of_subs(stream_t *stream)
 {
   dvd_priv_t *d;
   if (!stream) return -1;
-  d = stream->priv;
+  d = reinterpret_cast<dvd_priv_t*>(stream->priv);
   if (!d) return -1;
   return d->nr_of_subtitles;
 }
 
-static int __FASTCALL__ dvd_aid_from_lang(stream_t *stream, unsigned char* lang){
-dvd_priv_t *d=stream->priv;
-int code,i;
+static int __FASTCALL__ dvd_aid_from_lang(const stream_t *stream, const char* lang){
+    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    int code,i;
   while(lang && strlen(lang)>=2){
     code=lang[1]|(lang[0]<<8);
     for(i=0;i<d->nr_of_channels;i++){
@@ -138,9 +144,9 @@ int code,i;
   return -1;
 }
 
-static int __FASTCALL__ dvd_sid_from_lang(stream_t *stream, unsigned char* lang){
-dvd_priv_t *d=stream->priv;
-int code,i;
+static int __FASTCALL__ dvd_sid_from_lang(const stream_t *stream, const char* lang){
+    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    int code,i;
   while(lang && strlen(lang)>=2){
     code=lang[1]|(lang[0]<<8);
     for(i=0;i<d->nr_of_subtitles;i++){
@@ -160,7 +166,7 @@ static int __FASTCALL__ dvd_lang_from_sid(stream_t *stream, int id)
 {
   dvd_priv_t *d;
   if (!stream) return 0;
-  d = stream->priv;
+  d = reinterpret_cast<dvd_priv_t*>(stream->priv);
   if (!d) return 0;
   if (id >= d->nr_of_subtitles) return 0;
   return d->subtitles[id].language;
@@ -601,6 +607,7 @@ static void __FASTCALL__ dvd_close(dvd_priv_t *d) {
 
 static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
+    UNUSED(flags);
     int dvd_title,last_title=-1;
     const char *args;
     char *dvd_device,*tilde,*comma,*par;
@@ -708,7 +715,7 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
     --dvd_angle; // remap 1.. -> 0..
 
     // store data
-    d=mp_mallocz(sizeof(dvd_priv_t));
+    d=new(zeromem) dvd_priv_t;
     d->dvd=dvd;
     d->title=0;
     d->vmg_file=vmg_file;
@@ -732,7 +739,7 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
 	stream->end_pos=(off_t)(d->cur_pgc->cell_playback[d->last_cell-1].last_sector)*2048;
     MSG_V("DVD start=%d end=%d  \n",d->cur_pack,d->cur_pgc->cell_playback[d->last_cell-1].last_sector);
     dvd_next_title(d,dvd_title);
-    stream->priv=(any_t*)d;
+    stream->priv= d;
     stream->type = STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM;
     stream->sector_size=2048;
     d->spos=0;
@@ -742,8 +749,8 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
 
 static int __FASTCALL__ __dvdread_read(stream_t *stream,stream_packet_t *sp)
 {
-    dvd_priv_t *d=(dvd_priv_t *)stream->priv;
-    off_t pos=dvd_read_sector(stream,stream->priv,sp->buf);
+    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    off_t pos=dvd_read_sector(stream,d,reinterpret_cast<unsigned char*>(sp->buf));
     sp->type=0;
     if(pos>=0){
 	sp->len=2048; // full sector
@@ -754,28 +761,29 @@ static int __FASTCALL__ __dvdread_read(stream_t *stream,stream_packet_t *sp)
 
 static off_t __FASTCALL__ __dvdread_seek(stream_t *stream,off_t newpos)
 {
-    dvd_priv_t *d=(dvd_priv_t *)stream->priv;
+    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
     off_t pos=newpos/2048;
-    dvd_seek(stream,stream->priv,pos);
+    dvd_seek(stream,d,pos);
     d->spos=pos*2048;
     return d->spos;
 }
 
 static off_t __FASTCALL__ __dvdread_tell(const stream_t *stream)
 {
-    dvd_priv_t *d = (dvd_priv_t *)stream->priv;
+    dvd_priv_t *d = reinterpret_cast<dvd_priv_t*>(stream->priv);
     return d->spos;
 }
 
 static void __FASTCALL__ __dvdread_close(stream_t *stream)
 {
-    dvd_close(stream->priv);
-    mp_free(stream->priv);
+    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    dvd_close(d);
+    delete d;
 }
 
-static unsigned int * __FASTCALL__ dvdread_stream_get_palette(stream_t *stream)
+static unsigned int * __FASTCALL__ dvdread_stream_get_palette(const stream_t *stream)
 {
-  dvd_priv_t *d=(dvd_priv_t *)stream->priv;
+  dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
   if(d)
     if(d->cur_pgc)
 	return d->cur_pgc->palette;
@@ -784,7 +792,6 @@ static unsigned int * __FASTCALL__ dvdread_stream_get_palette(stream_t *stream)
 
 static MPXP_Rc __FASTCALL__ __dvdread_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
-    dvd_priv_t *dvd_priv=s->priv;
     switch(cmd) {
 	case SCTRL_VID_GET_PALETTE: {
 	    unsigned* pal;
@@ -795,14 +802,14 @@ static MPXP_Rc __FASTCALL__ __dvdread_ctrl(const stream_t *s,unsigned cmd,any_t*
 	break;
 	case SCTRL_LNG_GET_AID: {
 	    int aid;
-	    aid=dvd_aid_from_lang(s,args);
+	    aid=dvd_aid_from_lang(s,reinterpret_cast<char*>(args));
 	    *((int *)args)=aid;
 	    return MPXP_Ok;
 	}
 	break;
 	case SCTRL_LNG_GET_SID: {
 	    int aid;
-	    aid=dvd_sid_from_lang(s,args);
+	    aid=dvd_sid_from_lang(s,reinterpret_cast<char*>(args));
 	    *((int *)args)=aid;
 	    return MPXP_Ok;
 	}
@@ -812,7 +819,7 @@ static MPXP_Rc __FASTCALL__ __dvdread_ctrl(const stream_t *s,unsigned cmd,any_t*
     return MPXP_False;
 }
 
-const stream_driver_t dvdread_stream =
+extern const stream_driver_t dvdread_stream =
 {
     "dvdread://",
     "reads multimedia stream using low-level libdvdread access",

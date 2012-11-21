@@ -747,7 +747,7 @@ void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter func, any_t* ctx)
     filter->ctx = ctx;
     filter->next = priv->cmd_filters;
     priv->cmd_filters = filter;
-    SECURE_NAME9(rnd_fill)(priv->antiviral_hole,offsetof(priv_t,cmd_binds)-offsetof(priv_t,antiviral_hole));
+    rnd_fill(priv->antiviral_hole,offsetof(priv_t,cmd_binds)-offsetof(priv_t,antiviral_hole));
 }
 
 static const char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {
@@ -1345,7 +1345,7 @@ static void mp_input_uninit(any_t* handle) {
     if(priv->in_file_fd==0) getch2_disable();
 }
 
-any_t* RND_RENAME0(mp_input_open)(void) {
+any_t* mp_input_open(void) {
     priv_t* priv=new(zeromem) priv_t;
     priv->ar_state=-1;
     priv->in_file_fd=-1;

@@ -365,7 +365,7 @@ play_tree_t* parse_playlist_file(any_t*libinput,const char* file) {
 
   MSG_V("Parsing playlist file %s...\n",file);
   ff=0;
-  stream = RND_RENAME2(open_stream)(libinput,file,&ff,NULL);
+  stream = open_stream(libinput,file,&ff,NULL);
   stream->type|=STREAMTYPE_TEXT;
   ret = parse_playtree(libinput,stream);
   free_stream(stream);

@@ -134,7 +134,7 @@ enum {
 
 struct MPXPSystem {
     public:
-	MPXPSystem():inited_flags(0) { SECURE_NAME9(rnd_fill)(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
+	MPXPSystem():inited_flags(0) { rnd_fill(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
 	~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);
@@ -825,7 +825,7 @@ static void mpxp_init_keyboard_fifo(void)
 #endif
     /* Init input system */
     MP_UNIT("init_input");
-    MPXPSys->assign_libinput(RND_RENAME0(mp_input_open)());
+    MPXPSys->assign_libinput(mp_input_open());
 }
 
 void mplayer_put_key(int code){
@@ -883,14 +883,14 @@ static char * mpxp_init_output_subsystems(void) {
 	    }
 	}
     MP_UNIT("vo_register");
-    MPXPSys->vo_inited = (RND_RENAME5(vo_register)(vo_data,mp_conf.video_driver)!=NULL)?1:0;
+    MPXPSys->vo_inited = (vo_register(vo_data,mp_conf.video_driver)!=NULL)?1:0;
 
     if(!MPXPSys->vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
 	exit_player(MSGTR_Exit_error);
     }
     MP_UNIT("vo_init");
-    if(RND_RENAME6(vo_init)(vo_data,vo_conf.subdevice)!=MPXP_Ok) {
+    if(vo_init(vo_data,vo_conf.subdevice)!=MPXP_Ok) {
 	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
 	exit_player(MSGTR_Exit_error);
     }
@@ -1114,7 +1114,7 @@ static void mpxp_find_acodec(const char *ao_subdevice) {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
     demux_stream_t *d_audio=MPXPSys->demuxer()->audio;
     sh_audio->codec=NULL;
-    mpca=RND_RENAME2(mpca_init)(sh_audio); // try auto-probe first
+    mpca=mpca_init(sh_audio); // try auto-probe first
     if(mpca) { sh_audio->decoder=mpca; found=1; }
 #ifdef ENABLE_WIN32LOADER
     if(!found) {
@@ -1157,13 +1157,13 @@ static void mpxp_find_acodec(const char *ao_subdevice) {
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     } else {
-	if(!(ao_data=RND_RENAME5(ao_init)(ao_subdevice))) {
+	if(!(ao_data=ao_init(ao_subdevice))) {
 	    MSG_ERR(MSGTR_CannotInitAO);
 	    d_audio->sh=NULL;
 	    sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	}
 	if(ao_subdevice) delete ao_subdevice;
-	MPXPSys->ao_inited=RND_RENAME4(ao_register)(ao_data,mp_conf.audio_driver,0);
+	MPXPSys->ao_inited=ao_register(ao_data,mp_conf.audio_driver,0);
 	if (MPXPSys->ao_inited!=MPXP_Ok){
 	    MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
 	    exit_player(MSGTR_Exit_error);
@@ -1178,7 +1178,7 @@ static MPXP_Rc mpxp_find_vcodec(void) {
     MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
     sh_video->inited=0;
-    if((sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,MPXPSys->libinput()))) sh_video->inited=1;
+    if((sh_video->decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,MPXPSys->libinput()))) sh_video->inited=1;
 #ifdef ENABLE_WIN32LOADER
     if(!sh_video->inited) {
 /* Go through the codec.conf and find the best codec...*/
@@ -1191,15 +1191,15 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 	if(mp_conf.video_codec) {
 	/* forced codec by name: */
 	    MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
-	    sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,mp_conf.video_codec,NULL,-1,MPXPSys->libinput());
+	    sh_video->decoder=mpcv_init(sh_video,mp_conf.video_codec,NULL,-1,MPXPSys->libinput());
 	} else {
 	    int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
 	    if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
 	    for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 		if(mp_conf.video_family) /* try first the preferred codec family:*/
-		    if((sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,NULL,mp_conf.video_family,status,MPXPSys->libinput()))) break;
-		if((sh_video->decoder=RND_RENAME3(mpcv_init)(sh_video,NULL,NULL,status,MPXPSys->libinput()))) break;
+		    if((sh_video->decoder=mpcv_init(sh_video,NULL,mp_conf.video_family,status,MPXPSys->libinput()))) break;
+		if((sh_video->decoder=mpcv_init(sh_video,NULL,NULL,status,MPXPSys->libinput()))) break;
 	    }
 	}
     }
@@ -1816,7 +1816,7 @@ play_next_file:
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
     MP_UNIT("open_stream");
-    if(!input_state.after_dvdmenu) stream=RND_RENAME2(open_stream)(MPXPSys->libinput(),filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
+    if(!input_state.after_dvdmenu) stream=open_stream(MPXPSys->libinput(),filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
     if(!stream) { // error...
 	MSG_ERR("Can't open: %s\n",filename);
 	eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY);
@@ -1900,7 +1900,7 @@ play_next_file:
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");
 	if(!sh_audio->decoder) {
-	    if(RND_RENAME2(mpca_init)(sh_audio)==NULL){
+	    if(mpca_init(sh_audio)==NULL){
 		MSG_ERR(MSGTR_CouldntInitAudioCodec);
 		d_audio->sh=NULL;
 		sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
@@ -1925,7 +1925,7 @@ play_next_file:
 
     MP_UNIT("init_video_filters");
     if(sh_video->vfilter_inited<=0) {
-	sh_video->vfilter=RND_RENAME7(vf_init)(sh_video,MPXPSys->libinput());
+	sh_video->vfilter=vf_init(sh_video,MPXPSys->libinput());
 	sh_video->vfilter_inited=1;
     }
     if((mpxp_find_vcodec())!=MPXP_Ok) {
