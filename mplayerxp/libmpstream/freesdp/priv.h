@@ -62,7 +62,6 @@ enum {
 
 /* Private routines declarations */
 
-BEGIN_C_DECLS
 /**
  * @short bandwidth modifier
  *
@@ -267,5 +266,4 @@ enum {
     SDPCONTROLS_MAX_COUNT=10,
     UNIDENTIFIED_ATTRIBUTES_MAX_COUNT=5
 };
-END_C_DECLS
 #endif /* FSDP_PRIV_H */

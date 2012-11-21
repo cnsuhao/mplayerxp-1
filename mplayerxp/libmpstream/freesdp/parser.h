@@ -32,7 +32,6 @@
 
 #include "common.h"
 
-BEGIN_C_DECLS
 /**
  * @defgroup parser FreeSDP Parsing Module
  *
@@ -724,5 +723,4 @@ const char *fsdp_get_media_unidentified_attribute (const
 
 	  /** @} *//* closes parser group */
 
-END_C_DECLS
 #endif /* FSDP_PARSER_H */

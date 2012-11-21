@@ -110,7 +110,7 @@ rtp_session_new (void)
 {
   struct rtp_rtsp_session_t *st = NULL;
 
-  st = mp_malloc (sizeof (struct rtp_rtsp_session_t));
+  st = new struct rtp_rtsp_session_t;
 
   st->rtp_socket = -1;
   st->rtcp_socket = -1;

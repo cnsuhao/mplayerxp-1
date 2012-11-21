@@ -1,8 +1,7 @@
 include ../../mp_config.mak
 
-CXXSRCS=rtsp.cpp
-SRCS = rtsp_rtp.c  \
-       rtsp_session.c
+CXXSRCS=rtsp.cpp rtsp_rtp.cpp rtsp_session.cpp
+SRCS = 
 OBJS=$(SRCS:.c=.o)
 CXXOBJS=$(CXXSRCS:.cpp=.o)
 
@@ -27,7 +26,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

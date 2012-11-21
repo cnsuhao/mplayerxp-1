@@ -28,19 +28,9 @@
 
 #include "mp_config.h"
 
-/* Macros to avoid name mangling when compiling with a C++ compiler */
-#ifdef __cplusplus
-#  define BEGIN_C_DECLS extern "C" {
-#  define END_C_DECLS   }
-#else /* !__cplusplus */
-#  define BEGIN_C_DECLS
-#  define END_C_DECLS
-#endif /* __cplusplus */
-
 #include <sys/time.h>
 #include <time.h>
 
-BEGIN_C_DECLS
 /**
  * @defgroup common FreeSDP Common Facilities
  *
@@ -350,5 +340,4 @@ const char *fsdp_strerror (fsdp_error_t err_no);
 
        /*@}*//* closes addtogroup common */
 
-END_C_DECLS
 #endif /* FSDP_COMMON_H */

@@ -124,7 +124,7 @@ void av_md5_init(AVMD5 *ctx){
     ctx->ABCD[3] = 0x67452301;
 }
 
-void av_md5_update(AVMD5 *ctx, const uint8_t *src, const int len){
+void av_md5_update(AVMD5 *ctx, const char *src, const int len){
     int i, j;
 
     j= ctx->len & 63;

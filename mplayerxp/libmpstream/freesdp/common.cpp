@@ -26,6 +26,8 @@
  * This file implements the routines that operate over data structures
  * that are used in both the parse and formatting modules.
  **/
+#include "mplayerxp.h"
+#include "osdep/mplib.h"
 
 #include "priv.h"
 #include "common.h"
@@ -41,7 +43,7 @@ safe_free (any_t*ptr)
 fsdp_description_t *
 fsdp_description_new (void)
 {
-  fsdp_description_t *result = mp_malloc (sizeof (fsdp_description_t));
+  fsdp_description_t *result = new fsdp_description_t;
 
   result->version = 0;
   result->o_username = result->o_session_id =

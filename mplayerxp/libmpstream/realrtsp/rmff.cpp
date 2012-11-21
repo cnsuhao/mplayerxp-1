@@ -258,7 +258,7 @@ void rmff_dump_pheader(rmff_pheader_t *h, char *data) {
 
 static rmff_fileheader_t *rmff_scan_fileheader(const char *data) {
 
-  rmff_fileheader_t *fileheader=mp_malloc(sizeof(rmff_fileheader_t));
+  rmff_fileheader_t *fileheader=new rmff_fileheader_t;
 
   fileheader->object_id=AV_RB32(data);
   fileheader->size=AV_RB32(&data[4]);
@@ -276,7 +276,7 @@ static rmff_fileheader_t *rmff_scan_fileheader(const char *data) {
 
 static rmff_prop_t *rmff_scan_prop(const char *data) {
 
-  rmff_prop_t *prop=mp_malloc(sizeof(rmff_prop_t));
+  rmff_prop_t *prop=new rmff_prop_t;
 
   prop->object_id=AV_RB32(data);
   prop->size=AV_RB32(&data[4]);
@@ -303,7 +303,7 @@ static rmff_prop_t *rmff_scan_prop(const char *data) {
 
 static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
 
-  rmff_mdpr_t *mdpr=mp_malloc(sizeof(rmff_mdpr_t));
+  rmff_mdpr_t *mdpr=new rmff_mdpr_t;
 
   mdpr->object_id=AV_RB32(data);
   mdpr->size=AV_RB32(&data[4]);
@@ -323,17 +323,17 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
   mdpr->duration=AV_RB32(&data[36]);
 
   mdpr->stream_name_size=data[40];
-  mdpr->stream_name=mp_malloc(mdpr->stream_name_size+1);
+  mdpr->stream_name=new char [mdpr->stream_name_size+1];
   memcpy(mdpr->stream_name, &data[41], mdpr->stream_name_size);
   mdpr->stream_name[mdpr->stream_name_size]=0;
 
   mdpr->mime_type_size=data[41+mdpr->stream_name_size];
-  mdpr->mime_type=mp_malloc(mdpr->mime_type_size+1);
+  mdpr->mime_type=new char [mdpr->mime_type_size+1];
   memcpy(mdpr->mime_type, &data[42+mdpr->stream_name_size], mdpr->mime_type_size);
   mdpr->mime_type[mdpr->mime_type_size]=0;
 
   mdpr->type_specific_len=AV_RB32(&data[42+mdpr->stream_name_size+mdpr->mime_type_size]);
-  mdpr->type_specific_data=mp_malloc(mdpr->type_specific_len);
+  mdpr->type_specific_data=new char [mdpr->type_specific_len];
   memcpy(mdpr->type_specific_data,
       &data[46+mdpr->stream_name_size+mdpr->mime_type_size], mdpr->type_specific_len);
 
@@ -342,7 +342,7 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
 
 static rmff_cont_t *rmff_scan_cont(const char *data) {
 
-  rmff_cont_t *cont=mp_malloc(sizeof(rmff_cont_t));
+  rmff_cont_t *cont=new rmff_cont_t;
   int pos;
 
   cont->object_id=AV_RB32(data);
@@ -354,22 +354,22 @@ static rmff_cont_t *rmff_scan_cont(const char *data) {
       cont->object_version);
   }
   cont->title_len=AV_RB16(&data[10]);
-  cont->title=mp_malloc(cont->title_len+1);
+  cont->title=new char [cont->title_len+1];
   memcpy(cont->title, &data[12], cont->title_len);
   cont->title[cont->title_len]=0;
   pos=cont->title_len+12;
   cont->author_len=AV_RB16(&data[pos]);
-  cont->author=mp_malloc(cont->author_len+1);
+  cont->author=new char [cont->author_len+1];
   memcpy(cont->author, &data[pos+2], cont->author_len);
   cont->author[cont->author_len]=0;
   pos=pos+2+cont->author_len;
   cont->copyright_len=AV_RB16(&data[pos]);
-  cont->copyright=mp_malloc(cont->copyright_len+1);
+  cont->copyright=new char [cont->copyright_len+1];
   memcpy(cont->copyright, &data[pos+2], cont->copyright_len);
   cont->copyright[cont->copyright_len]=0;
   pos=pos+2+cont->copyright_len;
   cont->comment_len=AV_RB16(&data[pos]);
-  cont->comment=mp_malloc(cont->comment_len+1);
+  cont->comment=new char [cont->comment_len+1];
   memcpy(cont->comment, &data[pos+2], cont->comment_len);
   cont->comment[cont->comment_len]=0;
 
@@ -378,7 +378,7 @@ static rmff_cont_t *rmff_scan_cont(const char *data) {
 
 static rmff_data_t *rmff_scan_dataheader(const char *data) {
 
-  rmff_data_t *dh=mp_malloc(sizeof(rmff_data_t));
+  rmff_data_t *dh=new rmff_data_t;
 
   dh->object_id=AV_RB32(data);
   dh->size=AV_RB32(&data[4]);
@@ -396,7 +396,7 @@ static rmff_data_t *rmff_scan_dataheader(const char *data) {
 
 rmff_header_t *rmff_scan_header(const char *data) {
 
-	rmff_header_t *header=mp_malloc(sizeof(rmff_header_t));
+	rmff_header_t *header=new rmff_header_t;
 	rmff_mdpr_t   *mdpr=NULL;
 	int           chunk_size;
 	uint32_t      chunk_type;
@@ -418,7 +418,7 @@ rmff_header_t *rmff_scan_header(const char *data) {
   header->fileheader=rmff_scan_fileheader(ptr);
   ptr += header->fileheader->size;
 
-	header->streams=mp_malloc(sizeof(rmff_mdpr_t*)*(header->fileheader->num_headers));
+	header->streams=new rmff_mdpr_t*[header->fileheader->num_headers];
   for (i=0; i<header->fileheader->num_headers; i++) {
     header->streams[i]=NULL;
   }
@@ -466,13 +466,13 @@ rmff_header_t *rmff_scan_header(const char *data) {
 rmff_header_t *rmff_scan_header_stream(int fd) {
 
   rmff_header_t *header;
-  char *buf=xbuffer_init(1024);
+  char *buf=(char*)xbuffer_init(1024);
   int index=0;
   uint32_t chunk_type;
   uint32_t chunk_size;
 
   do {
-    buf = xbuffer_ensure_size(buf, index+8);
+    buf = (char*)xbuffer_ensure_size(buf, index+8);
     recv(fd, buf+index, 8, 0);
     chunk_type=AV_RB32(buf+index); index+=4;
     chunk_size=AV_RB32(buf+index); index+=4;
@@ -484,7 +484,7 @@ rmff_header_t *rmff_scan_header_stream(int fd) {
       case CONT_TAG:
       case RMF_TAG:
       case PROP_TAG:
-	buf = xbuffer_ensure_size(buf, index+chunk_size-8);
+	buf = (char*)xbuffer_ensure_size(buf, index+chunk_size-8);
 	recv(fd, buf+index, (chunk_size-8), 0);
 	index+=(chunk_size-8);
 	break;
@@ -514,7 +514,7 @@ void rmff_scan_pheader(rmff_pheader_t *h, char *data) {
 
 rmff_fileheader_t *rmff_new_fileheader(uint32_t num_headers) {
 
-  rmff_fileheader_t *fileheader=mp_malloc(sizeof(rmff_fileheader_t));
+  rmff_fileheader_t *fileheader=new rmff_fileheader_t;
 
   fileheader->object_id=RMF_TAG;
   fileheader->size=18;
@@ -538,7 +538,7 @@ rmff_prop_t *rmff_new_prop (
     uint16_t num_streams,
     uint16_t flags ) {
 
-  rmff_prop_t *prop=mp_malloc(sizeof(rmff_prop_t));
+  rmff_prop_t *prop=new rmff_prop_t;
 
   prop->object_id=PROP_TAG;
   prop->size=50;
@@ -573,7 +573,7 @@ rmff_mdpr_t *rmff_new_mdpr(
       uint32_t   type_specific_len,
       const char *type_specific_data ) {
 
-  rmff_mdpr_t *mdpr=mp_malloc(sizeof(rmff_mdpr_t));
+  rmff_mdpr_t *mdpr=new rmff_mdpr_t;
 
   mdpr->object_id=MDPR_TAG;
   mdpr->object_version=0;
@@ -597,7 +597,7 @@ rmff_mdpr_t *rmff_new_mdpr(
     mdpr->mime_type_size=strlen(mime_type);
   }
   mdpr->type_specific_len=type_specific_len;
-  mdpr->type_specific_data=mp_malloc(type_specific_len);
+  mdpr->type_specific_data=new char [type_specific_len];
   memcpy(mdpr->type_specific_data,type_specific_data,type_specific_len);
   mdpr->mlti_data=NULL;
 
@@ -608,7 +608,7 @@ rmff_mdpr_t *rmff_new_mdpr(
 
 rmff_cont_t *rmff_new_cont(const char *title, const char *author, const char *copyright, const char *comment) {
 
-  rmff_cont_t *cont=mp_malloc(sizeof(rmff_cont_t));
+  rmff_cont_t *cont=new rmff_cont_t;
 
   cont->object_id=CONT_TAG;
   cont->object_version=0;
@@ -646,7 +646,7 @@ rmff_cont_t *rmff_new_cont(const char *title, const char *author, const char *co
 
 rmff_data_t *rmff_new_dataheader(uint32_t num_packets, uint32_t next_data_header) {
 
-  rmff_data_t *data=mp_malloc(sizeof(rmff_data_t));
+  rmff_data_t *data=new rmff_data_t;
 
   data->object_id=DATA_TAG;
   data->size=18;
@@ -778,7 +778,7 @@ void rmff_fix_header(rmff_header_t *h) {
 #ifdef LOG
     printf("rmff_fix_header: no DATA chunk, creating one\n");
 #endif
-    h->data=mp_malloc(sizeof(rmff_data_t));
+    h->data=new rmff_data_t;
     h->data->object_id=DATA_TAG;
     h->data->object_version=0;
     h->data->size=34;
@@ -792,7 +792,7 @@ void rmff_fix_header(rmff_header_t *h) {
 #ifdef LOG
     printf("rmff_fix_header: no fileheader, creating one");
 #endif
-    h->fileheader=mp_malloc(sizeof(rmff_fileheader_t));
+    h->fileheader=new rmff_fileheader_t;
     h->fileheader->object_id=RMF_TAG;
     h->fileheader->size=34;
     h->fileheader->object_version=0;

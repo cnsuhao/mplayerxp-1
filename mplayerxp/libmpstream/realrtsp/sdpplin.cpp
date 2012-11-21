@@ -81,7 +81,7 @@ static char *b64_decode(const char *in, char *out, int *size)
       a[i] = (char) c;
       b[i] = (char) dtable[c];
     }
-    out = xbuffer_ensure_size(out, k+4);
+    out = (char*)xbuffer_ensure_size(out, k+4);
     out[k++] = (b[0] << 2) | (b[1] >> 4);
     out[k++] = (b[1] << 4) | (b[2] >> 2);
     out[k++] = (b[2] << 6) | b[3];
@@ -118,7 +118,7 @@ static int filter(const char *in, const char *filter, char **out) {
     if(in[flen]=='"') flen++;
     if(in[len-1]==13) len--;
     if(in[len-1]=='"') len--;
-    *out = xbuffer_copyin(*out, 0, in+flen, len-flen+1);
+    *out = (char*)xbuffer_copyin(*out, 0, in+flen, len-flen+1);
     (*out)[len-flen]=0;
 
     return len-flen;
@@ -128,9 +128,9 @@ static int filter(const char *in, const char *filter, char **out) {
 }
 static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
-  sdpplin_stream_t *desc=mp_calloc(1,sizeof(sdpplin_stream_t));
-  char      *buf=xbuffer_init(32);
-  char      *decoded=xbuffer_init(32);
+  sdpplin_stream_t *desc=new(zeromem) sdpplin_stream_t;
+  char      *buf=(char*)xbuffer_init(32);
+  char      *decoded=(char*)xbuffer_init(32);
   int       handled;
   int       got_mimetype;
 
@@ -216,7 +216,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
     if(filter(*data,"a=OpaqueData:buffer;",&buf)) {
       decoded = b64_decode(buf, decoded, &(desc->mlti_data_size));
-      desc->mlti_data=mp_malloc(desc->mlti_data_size);
+      desc->mlti_data=new char [desc->mlti_data_size];
       memcpy(desc->mlti_data, decoded, desc->mlti_data_size);
       handled=1;
       *data=nl(*data);
@@ -258,9 +258,9 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
 
 sdpplin_t *sdpplin_parse(char *data) {
 
-  sdpplin_t        *desc=mp_calloc(1,sizeof(sdpplin_t));
-  char             *buf=xbuffer_init(32);
-  char             *decoded=xbuffer_init(32);
+  sdpplin_t        *desc=new(zeromem) sdpplin_t;
+  char             *buf=(char*)xbuffer_init(32);
+  char             *decoded=(char*)xbuffer_init(32);
   int              handled;
   int              len;
 
@@ -292,7 +292,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 	MSG_V("sdpplin: got 'm=', but 'a=StreamCount' is still unknown.\n");
 	if (stream->stream_id == 0) {
 	  desc->stream_count=1;
-	  desc->stream=mp_malloc(sizeof(sdpplin_stream_t*));
+	  desc->stream=new sdpplin_stream_t*;
 	  desc->stream[0]=stream;
 	} else {
 	  MSG_ERR("sdpplin: got 'm=', but 'a=StreamCount' is still unknown and stream_id != 0. Broken sdp?\n");
@@ -332,7 +332,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 
     if(filter(data,"a=StreamCount:integer;",&buf)) {
       desc->stream_count=(unsigned int)atoi(buf);
-      desc->stream=mp_malloc(sizeof(sdpplin_stream_t*)*desc->stream_count);
+      desc->stream=new sdpplin_stream_t*[desc->stream_count];
       handled=1;
       data=nl(data);
     }

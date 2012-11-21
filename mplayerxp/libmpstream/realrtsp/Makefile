@@ -2,11 +2,8 @@ include ../../mp_config.mak
 
 LIBNAME = librealrtsp.a
 
-CXXSRCS= real.cpp xbuffer.cpp
-SRCS = asmrp.c \
-       md5.c \
-       rmff.c \
-       sdpplin.c
+CXXSRCS= real.cpp xbuffer.cpp asmrp.cpp md5.cpp rmff.cpp sdpplin.cpp
+SRCS =
 OBJS=$(SRCS:.c=.o)
 CXXOBJS=$(CXXSRCS:.cpp=.o)
 
@@ -31,7 +28,7 @@ distclean:
 dep:    depend
 
 depend:
-	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
+	$(CXX) -MM $(CXXFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #
 # include dependency files if they exist

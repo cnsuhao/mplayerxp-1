@@ -84,7 +84,7 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
   char *mrl_line = NULL;
   rmff_header_t *h;
 
-  rtsp_session = mp_malloc (sizeof (rtsp_session_t));
+  rtsp_session = new rtsp_session_t;
   rtsp_session->s = NULL;
   rtsp_session->real_session = NULL;
   rtsp_session->rtp_session = NULL;
@@ -163,9 +163,9 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
       }
 
     rtsp_session->real_session->recv =
-      xbuffer_copyin (rtsp_session->real_session->recv, 0,
-		      rtsp_session->real_session->header,
-		      rtsp_session->real_session->header_len);
+      (uint8_t*)xbuffer_copyin (rtsp_session->real_session->recv, 0,
+			rtsp_session->real_session->header,
+			rtsp_session->real_session->header_len);
 
     rtsp_session->real_session->recv_size =
       rtsp_session->real_session->header_len;
@@ -173,10 +173,10 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
     rtsp_session->real_session->recv_read = 0;
   } else /* not a Real server : try RTP instead */
   {
-    char *public = NULL;
+    char *publics = NULL;
 
     /* look for the Public: field in response to RTSP OPTIONS */
-    if (!(public = rtsp_search_answers (rtsp_session->s, RTSP_OPTIONS_PUBLIC)))
+    if (!(publics = rtsp_search_answers (rtsp_session->s, RTSP_OPTIONS_PUBLIC)))
     {
       rtsp_close (rtsp_session->s);
       mp_free (server);
@@ -186,10 +186,10 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
     }
 
     /* check for minimalistic RTSP RFC compliance */
-    if (!strstr (public, RTSP_METHOD_DESCRIBE)
-	|| !strstr (public, RTSP_METHOD_SETUP)
-	|| !strstr (public, RTSP_METHOD_PLAY)
-	|| !strstr (public, RTSP_METHOD_TEARDOWN))
+    if (!strstr (publics, RTSP_METHOD_DESCRIBE)
+	|| !strstr (publics, RTSP_METHOD_SETUP)
+	|| !strstr (publics, RTSP_METHOD_PLAY)
+	|| !strstr (publics, RTSP_METHOD_TEARDOWN))
     {
       MSG_ERR("Remote server does not meet minimal RTSP 1.0 compliance.\n");
       rtsp_close (rtsp_session->s);
@@ -217,35 +217,35 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
   return rtsp_session;
 }
 
-int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
+int rtsp_session_read (rtsp_session_t *self, char *data, int len) {
 
-  if (this->real_session) {
+  if (self->real_session) {
   int to_copy=len;
   char *dest=data;
   char *source =
-    (char *) (this->real_session->recv + this->real_session->recv_read);
-  int fill = this->real_session->recv_size - this->real_session->recv_read;
+    (char *) (self->real_session->recv + self->real_session->recv_read);
+  int fill = self->real_session->recv_size - self->real_session->recv_read;
 
-  if(this->real_session->rdteof)
+  if(self->real_session->rdteof)
     return -1;
   if (len < 0) return 0;
-  if (this->real_session->recv_size < 0) return -1;
+  if (self->real_session->recv_size < 0) return -1;
   while (to_copy > fill) {
 
     memcpy(dest, source, fill);
     to_copy -= fill;
     dest += fill;
-    this->real_session->recv_read = 0;
-    this->real_session->recv_size =
-      real_get_rdt_chunk (this->s, (char **)&(this->real_session->recv), this->real_session->rdt_rawdata);
-    if (this->real_session->recv_size < 0) {
-      this->real_session->rdteof = 1;
-      this->real_session->recv_size = 0;
+    self->real_session->recv_read = 0;
+    self->real_session->recv_size =
+      real_get_rdt_chunk (self->s, (char **)&(self->real_session->recv), self->real_session->rdt_rawdata);
+    if (self->real_session->recv_size < 0) {
+      self->real_session->rdteof = 1;
+      self->real_session->recv_size = 0;
     }
-    source = (char *) this->real_session->recv;
-    fill = this->real_session->recv_size;
+    source = (char *) self->real_session->recv;
+    fill = self->real_session->recv_size;
 
-    if (this->real_session->recv_size == 0) {
+    if (self->real_session->recv_size == 0) {
 #ifdef LOG
       MSG_INFO("librtsp: %d of %d bytes provided\n", len-to_copy, len);
 #endif
@@ -254,7 +254,7 @@ int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
   }
 
   memcpy(dest, source, to_copy);
-  this->real_session->recv_read += to_copy;
+  self->real_session->recv_read += to_copy;
 
 #ifdef LOG
   MSG_INFO("librtsp: %d bytes provided\n", len);
@@ -262,16 +262,16 @@ int rtsp_session_read (rtsp_session_t *this, char *data, int len) {
 
   return len;
   }
-  else if (this->rtp_session)
+  else if (self->rtp_session)
   {
     int l = 0;
 
-    l = read_rtp_from_server (this->rtp_session->rtp_socket, data, len);
+    l = read_rtp_from_server (self->rtp_session->rtp_socket, data, len);
     /* send RTSP and RTCP keepalive  */
-    rtcp_send_rr (this->s, this->rtp_session);
+    rtcp_send_rr (self->s, self->rtp_session);
 
     if (l == 0)
-      rtsp_session_end (this);
+      rtsp_session_end (self);
 
     return l;
   }
