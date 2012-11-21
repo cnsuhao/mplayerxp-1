@@ -44,6 +44,10 @@
 
 #include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
 #include "video_out_internal.h"
+#ifdef CONFIG_VIDIX
+#include "vosub_vidix.h"
+#include <vidix/vidixlib.h>
+#endif
 #include "dri_vo.h"
 #include "xmpcore/mp_image.h"
 #include "vo_msg.h"
@@ -51,7 +55,11 @@ LIBVO_EXTERN( x11 )
 
 static vo_info_t vo_info =
 {
-	"X11 ( XImage/Shm )",
+	"X11 ( XImage/Shm )"
+#ifdef CONFIG_VIDIX
+	" (with x11:vidix subdevice)"
+#endif
+	,
 	"x11",
 	"Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",
 	""
@@ -80,7 +88,31 @@ typedef struct priv_s {
     int			baseAspect; // 1<<16 based fixed point aspect, so that the aspect stays correct during resizing
 /* xp related variables */
     unsigned		num_buffers; // 1 - default
+#ifdef CONFIG_VIDIX
+    const char *	vidix_name;
+#endif
+    uint32_t		subdev_flags;
 }priv_t;
+
+#ifdef CONFIG_VIDIX
+static void resize_vidix(vo_data_t* vo) {
+    priv_t* priv=(priv_t*)vo->priv;
+    XWindowAttributes xwa;
+    XGetWindowAttributes(vo->mDisplay, vo->window, &xwa);
+    vidix_stop(vo);
+    if (vidix_init(vo,priv->image_width, priv->image_height, xwa.x, xwa.y,
+	    xwa.width, xwa.height, priv->in_format, vo->depthonscreen,
+	    vo_conf.screenwidth, vo_conf.screenheight) != MPXP_Ok)
+    {
+	MSG_FATAL( "Can't initialize VIDIX driver: %s: %s\n",
+	    priv->vidix_name, strerror(errno));
+	vidix_term(vo);
+	uninit(vo);
+	exit(1); /* !!! */
+    }
+    if(vidix_start(vo)!=0) { uninit(vo); exit(1); }
+}
+#endif
 
 static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjust_size)(unsigned cw,unsigned ch,unsigned *w,unsigned *h))
 {
@@ -100,13 +132,18 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,int (* __FASTCALL__ adjus
 	XClearWindow(vo->mDisplay, vo->window);
 	priv->image_width= (newW+7)&(~7);
 	priv->image_height= newH;
-	vo_lock_surfaces(vo);
-	for(idx=0;idx<priv->num_buffers;idx++)
+#ifdef CONFIG_VIDIX
+	if(priv->vidix_name) resize_vidix(vo);
+	else
+#endif
 	{
-	    vo_x11_freeMyXImage(vo,idx);
-	    vo_x11_getMyXImage(vo,idx,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
+	    vo_lock_surfaces(vo);
+	    for(idx=0;idx<priv->num_buffers;idx++) {
+		vo_x11_freeMyXImage(vo,idx);
+		vo_x11_getMyXImage(vo,idx,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
+	    }
+	    vo_unlock_surfaces(vo);
 	}
-	vo_unlock_surfaces(vo);
    }
    return ret;
 }
@@ -211,8 +248,14 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
 	XSetInputFocus(vo->mDisplay, vo->window, RevertToNone, CurrentTime);
     }
 #endif
+#ifdef CONFIG_VIDIX
+    if(!priv->vidix_name)
+#endif
     for(i=0;i<priv->num_buffers;i++) vo_x11_getMyXImage(vo,i,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
 
+#ifdef CONFIG_VIDIX
+    if(!priv->vidix_name) {
+#endif
     XImage* ximg=vo_x11_Image(vo,0);
     switch ((priv->bpp=ximg->bits_per_pixel)){
 	case 24: priv->out_format= IMGFMT_BGR24; break;
@@ -246,6 +289,41 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     if(priv->mode==MODE_BGR) {
 	MSG_ERR("BGR not supported, please contact the developers\n");
 	return MPXP_False;
+    }
+#endif
+#ifdef CONFIG_VIDIX
+    }
+#endif
+#ifdef CONFIG_VIDIX
+    if(priv->vidix_name) {
+	XWindowAttributes xwa;
+	XGetWindowAttributes(vo->mDisplay, vo->window, &xwa);
+	if(vidix_init(vo,priv->image_width,priv->image_height,xwa.x,xwa.y,
+			xwa.width,xwa.height,
+			priv->in_format,priv->depth,
+			vo_conf.screenwidth,vo_conf.screenheight) != MPXP_Ok) {
+	    MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
+	    priv->vidix_name = NULL;
+	    return MPXP_False;
+	} else MSG_V("vo_vesa: Using VIDIX\n");
+	if(vidix_start(vo)!=0) return MPXP_False;
+	vo_query_fourcc_t qfourcc;
+	qfourcc.fourcc=priv->in_format;
+	qfourcc.w=width;
+	qfourcc.h=height;
+	vidix_query_fourcc(vo,&qfourcc);
+	if (vidix_grkey_support(vo)) {
+	    vidix_grkey_t *gr_key;
+	    gr_key = vdlAllocGrKeyS();
+	    vidix_grkey_get(vo,gr_key);
+	    gr_key->key_op = KEYS_PUT;
+	    gr_key->ckey.op = CKEY_TRUE;
+	    gr_key->ckey.red = 255;
+	    gr_key->ckey.green = 0;
+	    gr_key->ckey.blue = 255;
+	    vidix_grkey_set(vo,gr_key);
+	    vdlFreeGrKeyS(gr_key);
+	}
     }
 #endif
     saver_off(vo,vo->mDisplay);
@@ -311,6 +389,9 @@ static void uninit(vo_data_t*vo)
 {
     unsigned i;
     priv_t* priv=(priv_t*)vo->priv;
+#ifdef CONFIG_VIDIX
+    if(priv->vidix_name) vidix_term(vo);
+#endif
     for(i=0;i<priv->num_buffers;i++)  vo_x11_freeMyXImage(vo,i);
     saver_on(vo,vo->mDisplay); // screen saver back on
 
@@ -321,17 +402,31 @@ static void uninit(vo_data_t*vo)
     mp_free(vo->priv);
 }
 
+static uint32_t __FASTCALL__ parseSubDevice(vo_data_t*vo,const char *sd)
+{
+    priv_t*priv=(priv_t*)vo->priv;
+    uint32_t flags;
+    flags = 0;
+#ifdef CONFIG_VIDIX
+    if(memcmp(sd,"vidix",5) == 0) priv->vidix_name = &sd[5]; /* priv->vidix_name will be valid within init() */
+#endif
+    else { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); return 0xFFFFFFFFUL; }
+    return flags;
+}
+
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
+    MPXP_Rc vidix_err=MPXP_Ok;
     vo->priv=mp_mallocz(sizeof(priv_t));
     priv_t* priv=(priv_t*)vo->priv;
     priv->num_buffers=1;
-    if(arg) {
-	MSG_ERR("vo_x11: Unknown subdevice: %s\n",arg);
-	return MPXP_False;
-    }
+    priv->subdev_flags = 0xFFFFFFFEUL;
+    if(arg) priv->subdev_flags = parseSubDevice(vo,arg);
+#ifdef CONFIG_VIDIX
+    if(priv->vidix_name) vidix_err = vidix_preinit(vo,priv->vidix_name,&video_out_x11);
+#endif
     if(vo_x11_init(vo)!=MPXP_Ok) return MPXP_False; // Can't open X11
-    return MPXP_Ok;
+    return vidix_err;
 }
 
 static void __FASTCALL__ x11_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
@@ -363,27 +458,30 @@ static void __FASTCALL__ x11_dri_get_surface(const vo_data_t*vo,dri_surface_t *s
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     priv_t* priv=(priv_t*)vo->priv;
-  switch (request) {
-  case VOCTRL_QUERY_FORMAT:
-    return query_format(vo,(vo_query_fourcc_t*)data);
-  case VOCTRL_CHECK_EVENTS:
-    {
-     vo_resize_t * vrest = (vo_resize_t *)data;
-     vrest->event_type = check_events(vo,vrest->adjust_size);
-     return MPXP_True;
+    switch (request) {
+	case VOCTRL_CHECK_EVENTS: {
+	    vo_resize_t * vrest = (vo_resize_t *)data;
+	    vrest->event_type = check_events(vo,vrest->adjust_size);
+	    return MPXP_True;
+	}
+	case VOCTRL_FULLSCREEN:
+	    vo_x11_fullscreen(vo);
+#ifdef CONFIG_VIDIX
+	    if(priv->vidix_name) resize_vidix(vo);
+#endif
+	    return MPXP_True;
+	// all cases below are substituted by vidix
+	case VOCTRL_QUERY_FORMAT:
+	    return query_format(vo,(vo_query_fourcc_t*)data);
+	case VOCTRL_GET_NUM_FRAMES:
+	    *(uint32_t *)data = priv->num_buffers;
+	    return MPXP_True;
+	case DRI_GET_SURFACE_CAPS:
+	    x11_dri_get_surface_caps(vo,data);
+	    return MPXP_True;
+	case DRI_GET_SURFACE:
+	    x11_dri_get_surface(vo,data);
+	    return MPXP_True;
     }
-  case VOCTRL_FULLSCREEN:
-    vo_x11_fullscreen(vo);
-    return MPXP_True;
-  case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = priv->num_buffers;
-	return MPXP_True;
-  case DRI_GET_SURFACE_CAPS:
-	x11_dri_get_surface_caps(vo,data);
-	return MPXP_True;
-  case DRI_GET_SURFACE:
-	x11_dri_get_surface(vo,data);
-	return MPXP_True;
-  }
-  return MPXP_NA;
+    return MPXP_NA;
 }

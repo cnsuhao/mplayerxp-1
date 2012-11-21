@@ -64,9 +64,6 @@ extern vo_functions_t video_out_opengl;
 #ifdef HAVE_VESA
 extern vo_functions_t video_out_vesa;
 #endif
-#ifdef CONFIG_VIDIX
-extern vo_functions_t video_out_xvidix;
-#endif
 
 static const vo_functions_t* video_out_drivers[] =
 {
@@ -75,9 +72,6 @@ static const vo_functions_t* video_out_drivers[] =
 #endif
 #ifdef HAVE_OPENGL
 	&video_out_opengl,
-#endif
-#if defined(CONFIG_VIDIX) && defined(HAVE_X11)
-	&video_out_xvidix,
 #endif
 #ifdef HAVE_DGA
 	&video_out_dga,

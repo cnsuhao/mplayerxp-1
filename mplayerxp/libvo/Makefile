@@ -12,9 +12,6 @@ SRCS+=vo_opengl.c
 endif
 ifeq ($(HAVE_X11),yes)
 SRCS+=vo_x11.c x11_common.c
-ifeq ($(CONFIG_VIDIX),yes)
-SRCS+=vo_xvidix.c
-endif
 endif
 ifeq ($(HAVE_XV),yes)
 SRCS+=vo_xv.c
