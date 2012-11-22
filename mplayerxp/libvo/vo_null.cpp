@@ -34,7 +34,7 @@
 #include "video_out_internal.h"
 #include "dri_vo.h"
 #ifdef CONFIG_VIDIX
-#include <vidix/vidixlib.h>
+#include <vidix/vidix.h>
 #endif
 #include "vo_msg.h"
 

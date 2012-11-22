@@ -13,6 +13,8 @@ Version x.x.x
   libefence but with extended functionality.
 * Upgrade ffmpeg upto ffmpeg-1.0.0. Now MPlayerXP finds codecs within of
   libavcodec even they are unlisted in codecs.conf
+* Project was rewritten in C++
+* Use vidix v1.5 with C++ support
 
 Version 0.7.96
 

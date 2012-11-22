@@ -47,7 +47,7 @@
 #include "video_out.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
-#include <vidix/vidixlib.h>
+#include <vidix/vidix.h>
 #endif
 #include "dri_vo.h"
 #include "xmpcore/mp_image.h"
@@ -310,16 +310,14 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
 	} else MSG_V("vo_vesa: Using VIDIX\n");
 	if(vidix_start(vo)!=0) return MPXP_False;
 	if (vidix_grkey_support(vo)) {
-	    vidix_grkey_t *gr_key;
-	    gr_key = vdlAllocGrKeyS();
-	    vidix_grkey_get(vo,gr_key);
-	    gr_key->key_op = KEYS_PUT;
-	    gr_key->ckey.op = CKEY_TRUE;
-	    gr_key->ckey.red = 255;
-	    gr_key->ckey.green = 0;
-	    gr_key->ckey.blue = 255;
-	    vidix_grkey_set(vo,gr_key);
-	    vdlFreeGrKeyS(gr_key);
+	    vidix_grkey_t gr_key;
+	    vidix_grkey_get(vo,&gr_key);
+	    gr_key.key_op = KEYS_PUT;
+	    gr_key.ckey.op = CKEY_TRUE;
+	    gr_key.ckey.red = 255;
+	    gr_key.ckey.green = 0;
+	    gr_key.ckey.blue = 255;
+	    vidix_grkey_set(vo,&gr_key);
 	}
     }
 #endif
@@ -411,8 +409,9 @@ static uint32_t __FASTCALL__ parseSubDevice(vo_data_t*vo,const char *sd)
     flags = 0;
 #ifdef CONFIG_VIDIX
     if(memcmp(sd,"vidix",5) == 0) priv->vidix_name = &sd[5]; /* priv->vidix_name will be valid within init() */
+    else
 #endif
-    else { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); return 0xFFFFFFFFUL; }
+    { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); return 0xFFFFFFFFUL; }
     return flags;
 }
 

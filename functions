@@ -290,12 +290,20 @@ add_cflags(){
     append CFLAGS "$@"
 }
 
+add_cxxflags(){
+    append CXXFLAGS "$@"
+}
+
 add_asflags(){
     append ASFLAGS "$@"
 }
 
 add_ldflags(){
     append LDFLAGS "$@"
+}
+
+add_ldxxflags(){
+    append LDXXFLAGS "$@"
 }
 
 add_extralibs(){
@@ -312,6 +320,13 @@ check_cc(){
     cat >$TMPC
     log_file $TMPC
     check_cmd $cc $CFLAGS "$@" -c -o $TMPO $TMPC
+}
+
+check_cxx(){
+    log check_cxx "$@"
+    cat >$TMPC
+    log_file $TMPC
+    check_cmd $cxx $CXXFLAGS "$@" -c -o $TMPO $TMPC
 }
 
 check_cpp(){
@@ -344,9 +359,22 @@ check_ld(){
     check_cmd $cc $LDFLAGS -o $TMPE $TMPO $extralibs "$@"
 }
 
+check_ldxx(){
+    log check_ld "$@"
+    check_cxx || return
+    check_cmd $cxx $LDFLAGS $LDXXFLAGS -o $TMPE $TMPO $extralibs "$@"
+}
+
 test_cflags(){
     log check_cflags "$@"
     check_cc "$@" <<EOF && return 0 || return 1
+int x;
+EOF
+}
+
+test_cxxflags(){
+    log check_cxxflags "$@"
+    check_cxx "$@" <<EOF && return 0 || return 1
 int x;
 EOF
 }
@@ -355,10 +383,24 @@ check_cflags(){
     test_cflags "$@" && add_cflags "$@"
 }
 
+check_cxxflags(){
+    test_cxxflags "$@" && add_cxxflags "$@"
+}
+
 is_in_cflags(){
     value=$1
     shift
     for var in $CFLAGS; do
+        tmp=$(trim `echo $var | cut -d '=' -f 1`)
+        [ $tmp = $value ] && return 0
+    done
+    return 1
+}
+
+is_in_cxxflags(){
+    value=$1
+    shift
+    for var in $CXXFLAGS; do
         tmp=$(trim `echo $var | cut -d '=' -f 1`)
         [ $tmp = $value ] && return 0
     done
@@ -376,6 +418,10 @@ EOF
 
 check_ldflags(){
     test_ldflags "$@" && add_ldflags "$@"
+}
+
+check_ldxxflags(){
+    test_ldxxflags "$@" && add_ldxxflags "$@"
 }
 
 check_header(){
@@ -509,6 +555,30 @@ EOF
     enabled $func && return 0 || return 1
 }
 
+check_class2(){
+    echocheck "$2"
+    log check_class2 "$@"
+    headers=$1
+    class=$2
+    shift 2
+    disable $class
+    incs=""
+    for hdr in $headers; do
+        incs="$incs
+#include <$hdr>"
+    done
+    check_ldxx "$@" <<EOF && enable $class
+$incs
+class $class;
+int main(void){
+    return 0;
+}
+EOF
+    enabled $class && answer="yes" || answer="no"
+    echores $answer
+    enabled $class && return 0 || return 1
+}
+
 check_lfunc2(){
     echocheck "$2"
     log check_lfunc2 "$@"
@@ -598,6 +668,18 @@ check_lib3(){
     shift 3
     temp_extralibs "$@"
     check_func3 "$defs" "$headers" $func && add_extralibs "$@"
+    err=$?
+    restore_flags
+    return $err
+}
+
+check_libxx2(){
+    log check_libxx2 "$@"
+    headers="$1"
+    class="$2"
+    shift 2
+    temp_extralibs "$@"
+    check_class2 "$headers" $class && add_extralibs "$@"
     err=$?
     restore_flags
     return $err
@@ -811,6 +893,19 @@ require3(){
     echores $answer
 }
 
+xxrequire2(){
+    echocheck "$1"
+    name="$1"
+    headers="$2"
+    class="$3"
+    shift 3
+    disable $name
+    check_libxx2 "$headers" $class "$@" && enable $name
+    answer="no"
+    enabled $name && answer="yes"
+    echores $answer
+}
+
 lrequire(){
     echocheck "$1"
     name="$1"
@@ -881,6 +976,19 @@ cc_check() {
   cat "$TMPC" >> "$TMPLOG"
   echo >> "$TMPLOG"
   ( check_cmd $cc $CFLAGS $inc_extra $ld_static $ld_extra "$TMPC" -o "$TMPO" "$@" ) >> "$TMPLOG" 2>&1
+  TMP="$?"
+  echo >> "$TMPLOG"
+  echo "ldd $TMPO" >> "$TMPLOG"
+  ( ldd "$TMPO" ) >> "$TMPLOG" 2>&1
+  echo >> "$TMPLOG"
+  return "$TMP"
+}
+
+cxx_check() {
+  echo >> "$TMPLOG"
+  cat "$TMPC" >> "$TMPLOG"
+  echo >> "$TMPLOG"
+  ( check_cmd $cxx $CXXFLAGS $inc_extra $ld_static $ld_extra "$TMPC" -o "$TMPO" "$@" ) >> "$TMPLOG" 2>&1
   TMP="$?"
   echo >> "$TMPLOG"
   echo "ldd $TMPO" >> "$TMPLOG"

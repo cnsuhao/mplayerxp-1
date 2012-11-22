@@ -769,7 +769,7 @@ bsd && add_ldflags "-rdynamic"
 enabled dbg23 def_debug='#define MP_DEBUG 1' || def_debug='#undef MP_DEBUG'
 
 # Checking for VIDIX
-enabled vidix	&& require2 vidix vidix/vidixlib.h vdlAllocFourccS -lvidix
+enabled vidix	&& xxrequire2 vidix "vidix/vidix.h vidix/vidixlibxx.h" Vidix -lvidixxx
 print_config CONFIG_ mp_config.h mp_config.mak vidix
 enabled x11	&& enabled vidix	&& vomodules="vidix $vomodules" || novomodules="vidix $novomodules"
 
