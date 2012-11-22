@@ -616,7 +616,7 @@ MPXP_Rc __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window)
 	XDestroyWindow(display, window);
     XCloseDisplay(display);
     vo->depthonscreen = 0;
-    mp_free(vo->priv2);
+    delete vo->priv2;
     return MPXP_Ok;
 }
 
@@ -909,7 +909,7 @@ void __FASTCALL__ vo_vm_close(vo_data_t*vo,Display *dpy)
 	int i, modecount;
 	int screen; screen=DefaultScreen( dpy );
 
-	mp_free(priv->vidmodes); priv->vidmodes=NULL;
+	delete priv->vidmodes; priv->vidmodes=NULL;
 	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
 	for (i=0; i<modecount; i++)
 	    if ((priv->vidmodes[i]->hdisplay == vo_conf.screenwidth) && (priv->vidmodes[i]->vdisplay == vo_conf.screenheight)) {
@@ -918,7 +918,7 @@ void __FASTCALL__ vo_vm_close(vo_data_t*vo,Display *dpy)
 	    }
 	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
 	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
-	mp_free(priv->vidmodes);
+	delete priv->vidmodes;
     }
 }
 #endif

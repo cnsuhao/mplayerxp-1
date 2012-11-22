@@ -649,10 +649,10 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
     dvd = DVDOpen(dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
     if( !dvd ) {
 	MSG_ERR(MSGTR_CantOpenDVD,dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
-	if(dvd_device) mp_free(dvd_device);
+	if(dvd_device) delete dvd_device;
 	return MPXP_False;
     }
-    if(dvd_device) mp_free(dvd_device);
+    if(dvd_device) delete dvd_device;
     MSG_V(MSGTR_DVDwait);
 
     /**
@@ -725,7 +725,7 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
     d->last_title=last_title;
 
     if(!dvd_next_title(d,dvd_title)) {
-	mp_free(d);
+	delete d;
 	ifoClose( vmg_file );
 	DVDClose( dvd );
 	return MPXP_False;

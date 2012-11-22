@@ -290,7 +290,7 @@ parse_pls(play_tree_parser_t* p) {
       MSG_DBG2("Adding entry %s\n",entries[num].file);
       entry = play_tree_new();
       play_tree_add_file(entry,entries[num].file);
-      mp_free(entries[num].file);
+      delete entries[num].file;
       if(list)
 	play_tree_append_entry(list,entry);
       else
@@ -298,15 +298,15 @@ parse_pls(play_tree_parser_t* p) {
     }
     if(entries[num].title) {
       // When we have info in playtree we add this info
-      mp_free(entries[num].title);
+      delete entries[num].title;
     }
     if(entries[num].length) {
       // When we have info in playtree we add this info
-      mp_free(entries[num].length);
+      delete entries[num].length;
     }
   }
 
-  mp_free(entries);
+  delete entries;
 
   entry = play_tree_new();
   play_tree_set_child(entry,list);
@@ -395,9 +395,9 @@ play_tree_parser_free(play_tree_parser_t* p) {
   assert(p != NULL);
 #endif
 
-  if(p->buffer) mp_free(p->buffer);
-  if(p->line) mp_free(p->line);
-  mp_free(p);
+  if(p->buffer) delete p->buffer;
+  if(p->line) delete p->line;
+  delete p;
 }
 
 play_tree_t*

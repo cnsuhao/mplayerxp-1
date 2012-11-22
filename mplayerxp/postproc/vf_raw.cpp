@@ -52,14 +52,14 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
     fclose(vf->priv->out);
-    mp_free(vf->priv);
+    delete vf->priv;
 }
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config=vf_config;
     vf->put_slice=put_slice;
     vf->uninit=uninit;
     vf->priv=new(zeromem) struct vf_priv_s;
-    if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { mp_free(vf->priv); return MPXP_False; }
+    if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { delete vf->priv; return MPXP_False; }
     check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }

@@ -85,8 +85,8 @@ static off_t __FASTCALL__ network_tell(const stream_t *stream)
 
 static void __FASTCALL__ network_close(stream_t *stream)
 {
-    mp_free(reinterpret_cast<network_priv_s*>(stream->priv)->url);
-    mp_free(stream->priv);
+    delete reinterpret_cast<network_priv_s*>(stream->priv)->url;
+    delete stream->priv;
     if(stream->fd>0) close(stream->fd);
 }
 

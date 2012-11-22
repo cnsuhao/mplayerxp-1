@@ -47,8 +47,8 @@ void xmp_init(void) {
 }
 
 void xmp_uninit(void) {
-    mp_free(xp_core->mpxp_threads[0]);
-    mp_free(xp_core);
+    delete xp_core->mpxp_threads[0];
+    delete xp_core;
     xp_core=NULL;
 }
 
@@ -79,7 +79,7 @@ void xmp_killall_threads(pthread_t _self)
 	    xp_core->mpxp_threads[i]->pth_id != xp_core->main_pth_id) {
 		pthread_kill(xp_core->mpxp_threads[i]->pth_id,SIGKILL);
 	    print_stopped_thread(i);
-	    mp_free(xp_core->mpxp_threads[i]);
+	    delete xp_core->mpxp_threads[i];
 	    xp_core->mpxp_threads[i]=NULL;
 	}
     }
@@ -101,7 +101,7 @@ void dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh)
     dae_reset(it);
 }
 
-void dae_uninit(dec_ahead_engine_t* it) { mp_free(it->frame); it->frame=NULL; }
+void dae_uninit(dec_ahead_engine_t* it) { delete it->frame; it->frame=NULL; }
 
 /* returns 1 - on success 0 - if busy */
 int dae_try_inc_played(dec_ahead_engine_t* it) {
@@ -353,7 +353,7 @@ void xmp_stop_threads(int force)
 	    while(xp_core->mpxp_threads[i]->state==Pth_Canceling) usleep(0);
 	}
 	print_stopped_thread(i);
-	mp_free(xp_core->mpxp_threads[i]);
+	delete xp_core->mpxp_threads[i];
 	xp_core->mpxp_threads[i]=NULL;
     }
 }

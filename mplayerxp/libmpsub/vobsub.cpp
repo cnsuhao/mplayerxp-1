@@ -102,7 +102,7 @@ static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 		close(fd);
 	}
 	else {
-	    mp_free(res);
+	    delete res;
 	    close(fd);
 	}
     }
@@ -113,11 +113,11 @@ static void __FASTCALL__ mpeg_free(mpeg_t *mpeg)
 {
     int fd;
     if (mpeg->packet)
-	mp_free(mpeg->packet);
+	delete mpeg->packet;
     fd = mpeg->stream->fd;
     free_stream(mpeg->stream);
     close(fd);
-    mp_free(mpeg);
+    delete mpeg;
 }
 
 static int __FASTCALL__ mpeg_eof(mpeg_t *mpeg)
@@ -239,7 +239,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	    mpeg->packet_size = len - ((unsigned int) mpeg_tell(mpeg) - idx);
 	    if (mpeg->packet_reserve < mpeg->packet_size) {
 		if (mpeg->packet)
-		    mp_free(mpeg->packet);
+		    delete mpeg->packet;
 		mpeg->packet = new unsigned char [mpeg->packet_size];
 		if (mpeg->packet)
 		    mpeg->packet_reserve = mpeg->packet_size;
@@ -314,7 +314,7 @@ static void __FASTCALL__ packet_construct(packet_t *pkt)
 static void __FASTCALL__ packet_destroy(packet_t *pkt)
 {
     if (pkt->data)
-	mp_free(pkt->data);
+	delete pkt->data;
 }
 
 static void __FASTCALL__ packet_queue_construct(packet_queue_t *queue)
@@ -331,7 +331,7 @@ static void __FASTCALL__ packet_queue_destroy(packet_queue_t *queue)
     if (queue->packets) {
 	while (queue->packets_size--)
 	    packet_destroy(queue->packets + queue->packets_size);
-	mp_free(queue->packets);
+	delete queue->packets;
     }
     return;
 }
@@ -444,7 +444,7 @@ static int __FASTCALL__ vobsub_add_id(vobsub_t *vob, const char *id, size_t idle
 	return -1;
     if (id && idlen) {
 	if (vob->spu_streams[_index].id)
-	    mp_free(vob->spu_streams[_index].id);
+	    delete vob->spu_streams[_index].id;
 	vob->spu_streams[_index].id = new char [idlen + 1];
 	if (vob->spu_streams[_index].id == NULL) {
 	    MSG_ERR("vobsub_add_id: mp_malloc failure");
@@ -743,7 +743,7 @@ static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, FILE *fd)
 	line_size = __getline(&line, &line_reserve, fd);
 	if (line_size < 0) {
 	    if (line)
-		mp_free(line);
+		delete line;
 	    break;
 	}
 	if (*line == 0 || *line == '\r' || *line == '\n' || *line == '#')
@@ -880,8 +880,8 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 		if(force)
 		  MSG_ERR("VobSub: Can't open IDX file\n");
 		else {
-		  mp_free(buf);
-		  mp_free(vob);
+		  delete buf;
+		  delete vob;
 		  return NULL;
 		}
 	    } else {
@@ -904,8 +904,8 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 		MSG_ERR("VobSub: Can't open SUB file\n");
 	      else {
 
-		mp_free(buf);
-		mp_free(vob);
+		delete buf;
+		delete vob;
 		return NULL;
 	      }
 	    } else {
@@ -961,7 +961,7 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 		    vob->spu_streams[vob->spu_streams_current].current_index = 0;
 		mpeg_free(mpg);
 	    }
-	    mp_free(buf);
+	    delete buf;
 	}
     }
     return vob;
@@ -973,9 +973,9 @@ void __FASTCALL__ vobsub_close(any_t*self)
     if (vob->spu_streams) {
 	while (vob->spu_streams_size--)
 	    packet_queue_destroy(vob->spu_streams + vob->spu_streams_size);
-	mp_free(vob->spu_streams);
+	delete vob->spu_streams;
     }
-    mp_free(vob);
+    delete vob;
 }
 
 void __FASTCALL__ vobsub_reset(any_t*vobhandle)

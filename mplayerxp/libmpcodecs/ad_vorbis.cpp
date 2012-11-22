@@ -74,7 +74,7 @@ static MPXP_Rc init(sh_audio_t *sh)
     /// Header
     if(vorbis_synthesis_headerin(&priv->vi,&vc,&op) <0) {
 	MSG_ERR("OggVorbis: initial (identification) header broken!\n");
-	mp_free(priv);
+	delete priv;
 	return MPXP_False;
     }
     op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
@@ -82,14 +82,14 @@ static MPXP_Rc init(sh_audio_t *sh)
     /// Comments
     if(vorbis_synthesis_headerin(&priv->vi,&vc,&op) <0) {
 	MSG_ERR("OggVorbis: comment header broken!\n");
-	mp_free(priv);
+	delete priv;
 	return MPXP_False;
     }
     op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
     //// Codebook
     if(vorbis_synthesis_headerin(&priv->vi,&vc,&op)<0) {
 	MSG_WARN("OggVorbis: codebook header broken!\n");
-	mp_free(priv);
+	delete priv;
 	return MPXP_False;
     } else { /// Print the infos
 	char **ptr=vc.user_comments;
@@ -131,7 +131,7 @@ static MPXP_Rc init(sh_audio_t *sh)
 
 static void uninit(sh_audio_t *sh)
 {
-    mp_free(sh->context);
+    delete sh->context;
 }
 
 static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)

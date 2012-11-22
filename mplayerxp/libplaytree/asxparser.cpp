@@ -68,7 +68,7 @@ void __FASTCALL__ asx_list_free(any_t* list_ptr,ASX_FreeFunc free_func) {
     for( ; *ptr != NULL ; ptr++)
       free_func(*ptr);
   }
-  mp_free(*(any_t**)list_ptr);
+  delete *(any_t**)list_ptr;
   *(any_t**)list_ptr = NULL;
 }
 

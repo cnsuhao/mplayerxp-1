@@ -196,7 +196,7 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
   if(!c->packets || !c->mem)
   {
     MSG_ERR(MSGTR_OutOfMemory);
-    mp_free(c);
+    delete c;
     return 0;
   }
   pmem = c->mem;
@@ -316,9 +316,9 @@ void stream_disable_cache(stream_t *st)
 	c->pth->state=Pth_Canceling;
 	while(c->pth->state==Pth_Canceling && !was_killed) usleep(0);
     }
-    mp_free(c->packets);
-    mp_free(c->mem);
-    mp_free(c);
+    delete c->packets;
+    delete c->mem;
+    delete c;
   }
 }
 

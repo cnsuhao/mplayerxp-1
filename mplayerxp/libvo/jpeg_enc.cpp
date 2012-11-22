@@ -258,7 +258,7 @@ jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize,
 
 	j->s = mp_malloc(sizeof(MpegEncContext));
 	if (j->s == NULL) {
-		mp_free(j);
+		delete j;
 		return NULL;
 	}
 
@@ -306,14 +306,14 @@ jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize,
 	}
 
 	if (mjpeg_init(j->s) < 0) {
-		mp_free(j->s);
-		mp_free(j);
+		delete j->s;
+		delete j;
 		return NULL;
 	}
 
 	if (MPV_common_init(j->s) < 0) {
-		mp_free(j->s);
-		mp_free(j);
+		delete j->s;
+		delete j;
 		return NULL;
 	}
 
@@ -445,7 +445,7 @@ int jpeg_enc_frame(jpeg_enc_t *j, unsigned char *y_data,
 
 void jpeg_enc_uninit(jpeg_enc_t *j) {
 	mjpeg_close(j->s);
-	mp_free(j->s);
-	mp_free(j);
+	delete j->s;
+	delete j;
 }
 

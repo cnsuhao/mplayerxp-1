@@ -561,12 +561,12 @@ subtitle* subcp_recode (subtitle *sub)
 		}
 		*op='\0' ;
 		strcpy (ot, icbuffer);
-		mp_free (sub->text[l]);
+		delete sub->text[l];
 		sub->text[l] = ot;
 	}
 	if (l){
 		for (l = sub->lines; l;)
-			mp_free (sub->text[--l]);
+			delete sub->text[--l];
 		return ERR;
 	}
 	return sub;
@@ -690,7 +690,7 @@ subtitle* sub_read_file (const char *filename, float fps) {
     else 	  MSG_DBG2 (".\n");
 
     if(sub_num<=0){
-	mp_free(first);
+	delete first;
 	return NULL;
     }
 
@@ -774,8 +774,8 @@ char * sub_filename(const char* path,const char * fname )
    }
   }
  }
- mp_free(sub_name1);
- mp_free(sub_name2);
+ delete sub_name1;
+ delete sub_name2;
  return NULL;
 }
 
@@ -855,7 +855,7 @@ void sub_free( subtitle * subs )
 
  sub_num=0;
  sub_errs=0;
- for ( i=0;i<subs->lines;i++ ) mp_free( subs->text[i] );
- mp_free( subs );
+ for ( i=0;i<subs->lines;i++ ) delete subs->text[i] ;
+ delete subs ;
  subs=NULL;
 }

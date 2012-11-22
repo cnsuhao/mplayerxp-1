@@ -42,7 +42,7 @@ static int __FASTCALL__ kd_config(struct vf_instance_s* vf,
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
-	mp_free(vf->priv);
+	delete vf->priv;
 }
 
 static inline int IsRGB(mp_image_t *mpi)

@@ -115,7 +115,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->setup) mp_free(af->setup);
+  if(af->setup) delete af->setup;
 }
 
 // Filter data through filter

@@ -520,7 +520,7 @@ int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	if( i<0 ) return -1;
 
 	if( cddb_data->cache_dir!=NULL ) {
-		mp_free(cddb_data->cache_dir);
+		delete cddb_data->cache_dir;
 	}
 	return 0;
 }
@@ -583,16 +583,16 @@ cd_info_t* __FASTCALL__ cd_info_new() {
 void __FASTCALL__ cd_info_free(cd_info_t *cd_info) {
 	cd_track_t *cd_track, *cd_track_next;
 	if( cd_info==NULL ) return;
-	if( cd_info->artist!=NULL ) mp_free(cd_info->artist);
-	if( cd_info->album!=NULL ) mp_free(cd_info->album);
-	if( cd_info->genre!=NULL ) mp_free(cd_info->genre);
+	if( cd_info->artist!=NULL ) delete cd_info->artist;
+	if( cd_info->album!=NULL ) delete cd_info->album;
+	if( cd_info->genre!=NULL ) delete cd_info->genre;
 
 	cd_track_next = cd_info->first;
 	while( cd_track_next!=NULL ) {
 		cd_track = cd_track_next;
 		cd_track_next = cd_track->next;
-		if( cd_track->name!=NULL ) mp_free(cd_track->name);
-		mp_free(cd_track);
+		if( cd_track->name!=NULL ) delete cd_track->name;
+		delete cd_track;
 	}
 }
 
@@ -609,7 +609,7 @@ cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name,
 	cd_track->name = (char*)mp_malloc(strlen(track_name)+1);
 	if( cd_track->name==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
-		mp_free(cd_track);
+		delete cd_track;
 		return NULL;
 	}
 	strcpy(cd_track->name, track_name);
@@ -787,7 +787,7 @@ MPXP_Rc __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *tra
     ret = cddb_resolve(stream->streaming_ctrl->libinput,&xmcd_file);
     if( ret==MPXP_False ) {
 	cd_info = cddb_parse_xmcd(xmcd_file);
-	mp_free(xmcd_file);
+	delete xmcd_file;
 	cd_info_debug( cd_info );
     }
     ret = open_cdda(stream, dev, track);

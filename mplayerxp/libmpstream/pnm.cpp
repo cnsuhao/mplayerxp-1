@@ -782,8 +782,8 @@ pnm_t *pnm_connect(int fd,const char *path) {
   pnm_send_request(p,pnm_available_bandwidths[10]);
   if (!pnm_get_headers(p, &need_response)) {
     printf ("input_pnm: failed to set up stream\n");
-    mp_free(p->path);
-    mp_free(p);
+    delete p->path;
+    delete p;
     return NULL;
   }
   if (need_response) pnm_send_response(p, pnm_response);
@@ -843,7 +843,7 @@ int pnm_peek_header (pnm_t *self, char *data) {
 void pnm_close(pnm_t *p) {
 
   if (p->s >= 0) closesocket(p->s);
-  mp_free(p->path);
-  mp_free(p);
+  delete p->path;
+  delete p;
 }
 

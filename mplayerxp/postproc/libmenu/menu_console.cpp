@@ -129,7 +129,7 @@ static void add_line(struct menu_priv_s* priv,const char* l) {
   }
 
   if(priv->num_lines >= priv->buf_lines && priv->lines[priv->last_line])
-    mp_free(priv->lines[priv->last_line]);
+    delete priv->lines[priv->last_line];
   else
     priv->num_lines++;
 
@@ -348,8 +348,8 @@ static void enter_cmd(menu_t* menu) {
       for(i = mpriv->history ; i->prev ; i = i->prev)
 	/**/;
       i->next->prev = NULL;
-      mp_free(i->buffer);
-      mp_free(i);
+      delete i->buffer;
+      delete i;
     } else
       mpriv->history_size++;
     h = new(zeromem) history_t;

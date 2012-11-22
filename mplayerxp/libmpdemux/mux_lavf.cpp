@@ -41,9 +41,9 @@ static void mpxp_free(any_t*ptr)
     /* XXX: this test should not be needed on most libcs */
     if (ptr)
 #ifdef MEMALIGN_HACK
-	mp_free(ptr - ((char*)ptr)[-1]);
+	delete ptr - ((char*)ptr)[-1];
 #else
-	mp_free(ptr);
+	delete ptr;
 #endif
 }
 
@@ -127,7 +127,7 @@ static muxer_stream_t* lavf_new_stream(muxer_t *muxer, int type)
 	spriv = (muxer_stream_priv_t*) mp_calloc(1, sizeof(muxer_stream_priv_t));
 	if(!spriv)
 	{
-		mp_free(stream);
+		delete stream;
 		return NULL;
 	}
 	stream->priv = spriv;
@@ -411,6 +411,6 @@ int muxer_init_muxer_lavf(muxer_t *muxer,const char *subtype)
 	return 1;
 
 fail:
-	mp_free(priv);
+	delete priv;
 	return 0;
 }

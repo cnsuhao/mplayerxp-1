@@ -37,7 +37,7 @@ void free_muxer_packet(muxer_packet_t *packet)
 muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f){
     muxer_t* muxer=new(zeromem) muxer_t;
     muxer->file = f;
-//    if(!strcmp(type,"lavf")) { if(!muxer_init_muxer_lavf(muxer,subtype)) { mp_free(muxer); muxer=NULL; }}
+//    if(!strcmp(type,"lavf")) { if(!muxer_init_muxer_lavf(muxer,subtype)) { delete muxer; muxer=NULL; }}
 //    else
     if(!strcmp(type,"mpxp")) muxer_init_muxer_mpxp64(muxer);
     else

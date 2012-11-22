@@ -16,7 +16,7 @@
 
 //#define MP4_DUMPATOM
 
-#define freereturn(a,b) mp_free(a); return b
+#define freereturn(a,b) delete a; return b
 
 int mp4_read_descr_len(stream_t *s) {
   uint8_t b;
@@ -144,9 +144,9 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
 /* cleanup all mem occupied by mp4_parse_esds */
 void mp4_free_esds(esds_t *esds) {
   if(esds->decoderConfigLen)
-    mp_free(esds->decoderConfig);
+    delete esds->decoderConfig;
   if(esds->SLConfigLen)
-    mp_free(esds->SLConfig);
+    delete esds->SLConfig;
 }
 
 #undef freereturn

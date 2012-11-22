@@ -98,7 +98,7 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 		case MRL_TYPE_PRINT:
 			MSG_INFO("%s", (char *)args[i].value);
 		default:
-			mp_free(value);
+			delete value;
 			break;
 		case MRL_TYPE_BOOL:
 			if(strcasecmp(value,"on")==0 ||
@@ -107,12 +107,12 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 			    *((int *)args[i].value)=args[i].max;
 			else
 			    *((int *)args[i].value)=args[i].min;
-			mp_free(value);
+			delete value;
 			break;
 		case MRL_TYPE_INT:
 		{
 		    int result=atoi(value);
-		    mp_free(value);
+		    delete value;
 		    if(result < args[i].min) result=args[i].min;
 		    if(result > args[i].max) result=args[i].max;
 		    *((int *)args[i].value)=result;
@@ -121,7 +121,7 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 		case MRL_TYPE_FLOAT:
 		{
 		    int result=atof(value);
-		    mp_free(value);
+		    delete value;
 		    if(result < args[i].min) result=args[i].min;
 		    if(result > args[i].max) result=args[i].max;
 		    *((float *)args[i].value)=result;
@@ -158,7 +158,7 @@ const char * mrl_parse_params(const char *param, const mrl_config_t * args)
 	    endp=strchr(sep,MRL_ARG_SEP);
 	    if(!endp) endp=endl;
 	    ssize=sep-param-1;
-	    if(arg) mp_free(arg);
+	    if(arg) delete arg;
 	    arg=new char [ssize+1];
 	    memcpy(arg,param,ssize);
 	    arg[ssize]='\0';
@@ -173,7 +173,7 @@ const char * mrl_parse_params(const char *param, const mrl_config_t * args)
 	param=endp+1;
 	if(endp==endl) { param--; break; }
     }
-    if(arg) mp_free(arg);
-    if(value) mp_free(value);
+    if(arg) delete arg;
+    if(value) delete value;
     return param;
 }

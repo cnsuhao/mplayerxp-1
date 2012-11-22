@@ -446,7 +446,7 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     if (xacodec_query(xacodec_driver, &codec_hdr) == 0)
 	return(0);
 
-//    mp_free(codec_hdr.anim_hdr);
+//    delete codec_hdr.anim_hdr;
 
     xacodec_driver->decinfo = new(zeromem) XA_DEC_INFO;
     if (xacodec_driver->decinfo == NULL) {
@@ -584,8 +584,8 @@ int xacodec_exit(void)
 	}
     dlclose(xacodec_driver->file_handler);
     if (xacodec_driver->decinfo != NULL)
-	mp_free(xacodec_driver->decinfo);
-    mp_free(xacodec_driver);
+	delete xacodec_driver->decinfo;
+    delete xacodec_driver;
     return(TRUE);
 }
 

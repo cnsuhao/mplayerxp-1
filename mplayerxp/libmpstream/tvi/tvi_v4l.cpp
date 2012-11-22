@@ -398,9 +398,9 @@ static int init(struct priv_s *priv)
 
 malloc_failed:
     if (priv->channels)
-	mp_free(priv->channels);
+	delete priv->channels;
     if (priv->buf)
-	mp_free(priv->buf);
+	delete priv->buf;
 err:
     if (priv->video_fd != -1)
 	close(priv->video_fd);

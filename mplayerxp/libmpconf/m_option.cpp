@@ -366,7 +366,7 @@ static int parse_str(const m_option_t* opt,const char *name, char *param, any_t*
 
   if(dst) {
     if(VAL(dst))
-      mp_free(VAL(dst));
+      delete VAL(dst);
     VAL(dst) = mp_strdup(param);
   }
 
@@ -384,7 +384,7 @@ static void copy_str(const m_option_t* opt,any_t* dst, any_t* src) {
   UNUSED(opt);
   if(dst && src) {
 #ifndef NO_FREE
-    if(VAL(dst)) mp_free(VAL(dst)); //FIXME!!!
+    if(VAL(dst)) delete VAL(dst); //FIXME!!!
 #endif
     VAL(dst) = VAL(src) ? mp_strdup(VAL(src)) : NULL;
   }
@@ -393,7 +393,7 @@ static void copy_str(const m_option_t* opt,any_t* dst, any_t* src) {
 static void free_str(any_t* src) {
   if(src && VAL(src)){
 #ifndef NO_FREE
-    mp_free(VAL(src)); //FIXME!!!
+    delete VAL(src); //FIXME!!!
 #endif
     VAL(src) = NULL;
   }
@@ -434,8 +434,8 @@ static void free_str_list(any_t* dst) {
 // FIXME!!!
 #ifndef NO_FREE
   for(i = 0 ; d[i] != NULL ; i++)
-    mp_free(d[i]);
-  mp_free(d);
+    delete d[i];
+  delete d;
 #endif
   VAL(dst) = NULL;
 }
@@ -458,7 +458,7 @@ static int str_list_add(char** add, int n,any_t* dst,int pre) {
   } else
     memcpy(&lst[ln],add,(n+1)*sizeof(char*));
 
-  mp_free(add);
+  delete add;
 
   VAL(dst) = lst;
 
@@ -481,23 +481,23 @@ static int str_list_del(char** del, int n,any_t* dst) {
     idx = strtol(del[i], &ep, 0);
     if(*ep) {
       MSG_ERR("Invalid index: %s\n",del[i]);
-      mp_free(del[i]);
+      delete del[i];
       continue;
     }
-    mp_free(del[i]);
+    delete del[i];
     if(idx < 0 || idx >= ln) {
       MSG_ERR("Index %ld is out of range.\n",idx);
       continue;
     } else if(!lst[idx])
       continue;
-    mp_free(lst[idx]);
+    delete lst[idx];
     lst[idx] = NULL;
     s--;
   }
-  mp_free(del);
+  delete del;
 
   if(s == 0) {
-    if(lst) mp_free(lst);
+    if(lst) delete lst;
     VAL(dst) = NULL;
     return 1;
   }
@@ -510,7 +510,7 @@ static int str_list_del(char** del, int n,any_t* dst) {
   }
   d[s] = NULL;
 
-  if(lst) mp_free(lst);
+  if(lst) delete lst;
   VAL(dst) = d;
 
   return 1;
@@ -599,7 +599,7 @@ static int parse_str_list(const m_option_t* opt,const char *name, char *param, a
     n++;
   }
   res[n] = NULL;
-  mp_free(str);
+  delete str;
 
   switch(op) {
   case OP_ADD:
@@ -654,12 +654,12 @@ static char* print_str_list(const m_option_t* opt, any_t* src) {
   for(i = 0 ; lst[i] ; i++) {
     if(last) {
       ret = dup_printf("%s,%s",last,lst[i]);
-      mp_free(last);
+      delete last;
     } else
       ret = mp_strdup(lst[i]);
     last = ret;
   }
-  if(last && last != ret) mp_free(last);
+  if(last && last != ret) delete last;
   return ret;
 }
 
@@ -844,8 +844,8 @@ static int parse_subconf(const m_option_t* opt,const char *name, char *param, an
 	}
     }
 
-  mp_free(subparam);
-  mp_free(subopt);
+  delete subparam;
+  delete subopt;
   if(dst)
     VAL(dst) = lst;
 
@@ -1354,12 +1354,12 @@ static int parse_obj_params(const m_option_t* opt,const char *name,
 
   // We need the object desc
   if(!p) {
-    mp_free(cpy);
+    delete cpy;
     return M_OPT_INVALID;
   }
   desc = p->desc;
   r = get_obj_params(name,desc->name,cpy,desc,p->separator,dst ? &opts : NULL);
-  mp_free(cpy);
+  delete cpy;
   if(r < 0)
     return r;
   if(!dst)
@@ -1607,7 +1607,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
     if(!ptr) {
       r = parse_obj_settings(name,last_ptr,mobjl,dst ? &res : NULL,n);
       if(r < 0) {
-	mp_free(str);
+	delete str;
 	return r;
       }
       n++;
@@ -1616,13 +1616,13 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
     ptr[0] = '\0';
     r = parse_obj_settings(name,last_ptr,mobjl,dst ? &res : NULL,n);
     if(r < 0) {
-      mp_free(str);
+      delete str;
       return r;
     }
     ptr++;
     n++;
   }
-  mp_free(str);
+  delete str;
   if(n == 0)
     return M_OPT_INVALID;
 
@@ -1638,7 +1638,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
       res = (m_obj_settings_t*)mp_realloc(res,(qsize+n+1)*sizeof(m_obj_settings_t));
       memcpy(&res[n],queue,(qsize+1)*sizeof(m_obj_settings_t));
       n += qsize;
-      mp_free(queue);
+      delete queue;
     }
     if(head) {
       int hsize;
@@ -1646,7 +1646,7 @@ static int parse_obj_settings_list(const m_option_t* opt,const char *name,
 	/* NOP */;
       head = (m_obj_settings_t*)mp_realloc(head,(hsize+n+1)*sizeof(m_obj_settings_t));
       memcpy(&head[hsize],res,(n+1)*sizeof(m_obj_settings_t));
-      mp_free(res);
+      delete res;
       res = head;
     }
     VAL(dst) = res;
@@ -1666,7 +1666,7 @@ static void free_obj_settings_list(any_t* dst) {
     delete d[n].name;
     free_str_list(&(d[n].attribs));
   }
-  mp_free(d);
+  delete d;
 #endif
   VAL(dst) = NULL;
 }
@@ -1967,7 +1967,7 @@ static int parse_custom_url(const m_option_t* opt,const char *name,
 	  }
 	  r = m_struct_set(desc,dst,"filename",fname);
 	  if(fname != ptr2+1)
-	    mp_free(fname);
+	    delete fname;
 	  if(r < 0) {
 	    MSG_ERR("Option %s: Error while setting filename.\n",name);
 	    return r;

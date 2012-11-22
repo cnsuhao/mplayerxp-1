@@ -236,7 +236,7 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
 	  }
 	  if( chunk_buffer!=NULL ) {
 		memcpy( buffer, chunk_buffer, buffer_size );
-		mp_free( chunk_buffer );
+		delete chunk_buffer ;
 	  }
 	  chunk_buffer = buffer;
 	  buffer += buffer_size;
@@ -370,7 +370,7 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
 			}
 		}
   }
-  mp_free(buffer);
+  delete buffer;
 
   // automatic stream selection based on bandwidth
   if (bw == 0) bw = INT_MAX;
@@ -400,8 +400,8 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
   // find best audio stream
   a_idx = max_idx(asf_ctrl->n_audio, a_rates, bw - v_rate);
 
-  mp_free(v_rates);
-  mp_free(a_rates);
+  delete v_rates;
+  delete a_rates;
 
   if (a_idx < 0 && v_idx < 0) {
     MSG_FATAL( "bandwidth too small, "
@@ -435,9 +435,9 @@ asf_streaming_parse_header(int fd, streaming_ctrl_t* streaming_ctrl) {
 
 len_err_out:
   MSG_FATAL( "Invalid length in ASF header!\n");
-  if (buffer) mp_free(buffer);
-  if (v_rates) mp_free(v_rates);
-  if (a_rates) mp_free(a_rates);
+  if (buffer) delete buffer;
+  if (v_rates) delete v_rates;
+  if (a_rates) delete a_rates;
   return -1;
 }
 

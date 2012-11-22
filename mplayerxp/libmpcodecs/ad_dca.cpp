@@ -203,7 +203,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
 
 void uninit(sh_audio_t *sh)
 {
-    mp_free(sh->context);
+    delete sh->context;
 }
 
 MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)

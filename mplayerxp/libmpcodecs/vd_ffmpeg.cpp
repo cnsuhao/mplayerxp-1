@@ -434,11 +434,11 @@ static void uninit(sh_video_t *sh){
     if (avcodec_close(priv->ctx) < 0)
 	MSG_ERR( MSGTR_CantCloseCodec);
     if (priv->ctx->extradata_size)
-	mp_free(priv->ctx->extradata);
-    mp_free(priv->ctx);
-    mp_free(priv->lavc_picture);
+	delete priv->ctx->extradata;
+    delete priv->ctx;
+    delete priv->lavc_picture;
     if(priv->probe) { delete priv->probe->codec_dll; delete priv->probe; }
-    mp_free(priv);
+    delete priv;
     if(ppContext) pp_free_context(ppContext);
     ppContext=NULL;
     pp2_uninit();
@@ -549,7 +549,7 @@ static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
     }
 
     if(mpi) {
-	if(mpi->bpp == 8 && mpi->planes[1]) mp_free(mpi->planes[1]);
+	if(mpi->bpp == 8 && mpi->planes[1]) delete mpi->planes[1];
 	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK) free_mp_image(mpi);
     }
 

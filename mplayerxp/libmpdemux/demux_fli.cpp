@@ -100,8 +100,8 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   {
     MSG_ERR("Bad/unknown magic number (%04x)\n",
 	magic_number);
-    mp_free(header);
-    mp_free(frames);
+    delete header;
+    delete frames;
     return(NULL);
   }
 
@@ -184,11 +184,11 @@ static void fli_close(demuxer_t* demuxer) {
     return;
 
   if(frames->filepos)
-    mp_free(frames->filepos);
+    delete frames->filepos;
   if(frames->frame_size)
-    mp_free(frames->frame_size);
+    delete frames->frame_size;
 
-  mp_free(frames);
+  delete frames;
 }
 
 static MPXP_Rc fli_control(const demuxer_t *demuxer,int cmd,any_t*args)

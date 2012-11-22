@@ -164,7 +164,7 @@ static void __FASTCALL__ oss_close(stream_t *stream)
 {
     ioctl(stream->fd, SNDCTL_DSP_RESET, NULL);
     close(stream->fd);
-    mp_free(stream->priv);
+    delete stream->priv;
 }
 
 static MPXP_Rc __FASTCALL__ oss_ctrl(const stream_t *s,unsigned cmd,any_t*args)

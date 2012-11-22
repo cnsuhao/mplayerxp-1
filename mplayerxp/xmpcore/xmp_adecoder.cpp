@@ -63,7 +63,7 @@ int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sha )
     if( !(audio_buffer.buffer = (unsigned char*)mp_malloc(size)) )
 	return ENOMEM;
     if( !(audio_buffer.indices = (audio_buffer_index_t*)mp_malloc(indices*sizeof(audio_buffer_index_t))) ) {
-	mp_free(audio_buffer.buffer);
+	delete audio_buffer.buffer;
 	audio_buffer.buffer=NULL;
 	return ENOMEM;
     }
@@ -125,11 +125,11 @@ void uninit_audio_buffer(void)
     pthread_cond_destroy( &audio_buffer.wait_buffer_cond );
 
     if( audio_buffer.buffer )
-	mp_free( audio_buffer.buffer );
+	delete audio_buffer.buffer ;
     audio_buffer.buffer = NULL;
 
     if( audio_buffer.indices )
-	mp_free( audio_buffer.indices );
+	delete audio_buffer.indices ;
     audio_buffer.indices = NULL;
     /* audio_buffer.sh_audio = ?; */
 }

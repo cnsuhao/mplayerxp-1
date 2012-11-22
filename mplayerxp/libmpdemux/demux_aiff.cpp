@@ -213,7 +213,7 @@ static void aiff_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void aiff_close(demuxer_t* demuxer)
 {
-    mp_free(demuxer->priv);
+    delete demuxer->priv;
 }
 
 static MPXP_Rc aiff_control(const demuxer_t *demuxer,int cmd,any_t*args)

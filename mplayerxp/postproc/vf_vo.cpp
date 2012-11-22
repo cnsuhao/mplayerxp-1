@@ -136,7 +136,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 }
 
 static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
-    mp_free( vf->priv );
+    delete vf->priv ;
     vf->priv = NULL;
 }
 

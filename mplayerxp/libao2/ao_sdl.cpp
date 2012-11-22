@@ -275,7 +275,7 @@ static void uninit(ao_data_t* ao){
     MSG_V("SDL: Audio Subsystem shutting down!\n");
     SDL_CloseAudio();
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
-    mp_free(ao->priv);
+    delete ao->priv;
 }
 
 // stop playing and empty buffers (for seeking/pause)

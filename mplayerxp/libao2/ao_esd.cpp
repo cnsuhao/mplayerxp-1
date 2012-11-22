@@ -315,7 +315,7 @@ static void uninit(ao_data_t* ao)
 	esd_close(priv->fd);
 	priv->fd = -1;
     }
-    mp_free(priv);
+    delete priv;
 }
 
 

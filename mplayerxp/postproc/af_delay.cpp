@@ -79,7 +79,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     unsigned i;
 
     // Free prevous delay queues
-    for(i=0;i<af->conf.nch;i++) if(s->q[i]) mp_free(s->q[i]);
+    for(i=0;i<af->conf.nch;i++) if(s->q[i]) delete s->q[i];
 
     af->conf.rate   = arg->rate;
     af->conf.nch    = arg->nch;
@@ -99,9 +99,9 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
   int i;
   for(i=0;i<AF_NCH;i++)
     if(((af_delay_t*)(af->setup))->q[i])
-      mp_free(((af_delay_t*)(af->setup))->q[i]);
+      delete ((af_delay_t*)(af->setup))->q[i];
   if(af->setup)
-    mp_free(af->setup);
+    delete af->setup;
 }
 
 // Filter data through filter

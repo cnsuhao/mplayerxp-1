@@ -130,17 +130,17 @@ static MPXP_Rc asf_probe(demuxer_t *demuxer){
   le2me_ASF_header_t(&apriv->asfh);	// swap to machine endian
   if(memcmp(asf2hdrguid,apriv->asfh.objh.guid,16)==0){
     MSG_ERR("ASF_check: found ASF v2 guid!\nCurrently is not supported - please report!\n");
-    mp_free(demuxer->priv);
+    delete demuxer->priv;
     return MPXP_False; // not ASF guid
   }
   if(memcmp(asfhdrguid,apriv->asfh.objh.guid,16)){
     MSG_V("ASF_check: not ASF guid!\n");
-    mp_free(demuxer->priv);
+    delete demuxer->priv;
     return MPXP_False; // not ASF guid
   }
   if(apriv->asfh.cno>256){
     MSG_V("ASF_check: invalid subchunks_no %d\n",(int) apriv->asfh.cno);
-    mp_free(demuxer->priv);
+    delete demuxer->priv;
     return MPXP_False; // invalid header???
   }
   demuxer->file_format=DEMUXER_TYPE_ASF;
@@ -275,7 +275,7 @@ while(!stream_eof(demuxer->stream)){
 	  demux_info_add(demuxer, INFOT_RATING, string);
 	}
 	MSG_V("\n");
-	mp_free(string);
+	delete string;
       break;
     }
     case ASF_GUID_PREFIX_stream_group: {
@@ -287,7 +287,7 @@ while(!stream_eof(demuxer->stream)){
 	object = (char*)mp_malloc(apriv->objh.size);
 	if( object==NULL ) {
 	  MSG_ERR("Memory allocation failed\n");
-	  mp_free(demuxer->priv);
+	  delete demuxer->priv;
 	  return NULL;
 	}
 	stream_read( demuxer->stream, object, apriv->objh.size );
@@ -310,7 +310,7 @@ while(!stream_eof(demuxer->stream)){
 	  streams[2*i+1] = max_bitrate;
 	}
 	MSG_V("============ ASF Stream group == END ===\n");
-	mp_free( object );
+	delete object ;
       break;
     }
   } // switch GUID
@@ -341,7 +341,7 @@ if(streams) {
       best_audio = id;
     }
   }
-  mp_free(streams);
+  delete streams;
 }
 
 MSG_V("ASF: %d audio and %d video streams found\n",audio_streams,video_streams);
@@ -350,7 +350,7 @@ else if(best_audio > 0 && demuxer->audio->id == -1) demuxer->audio->id=best_audi
 if(!video_streams){
     if(!audio_streams){
 	MSG_ERR("ASF: no audio or video headers found - broken file?\n");
-	mp_free(demuxer->priv);
+	delete demuxer->priv;
 	return NULL;
     }
     demuxer->video->id=-2; // audio-only
@@ -407,7 +407,7 @@ static void asf_descrambling(asf_priv_t *apriv, unsigned char *src,int len){
 	s2+=apriv->asf_scrambling_h*apriv->asf_scrambling_w*apriv->asf_scrambling_b;
   }
   memcpy(src,dst,i);
-  mp_free(dst);
+  delete dst;
 }
 
 
@@ -710,7 +710,7 @@ static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void asf_close(demuxer_t *demuxer)
 {
-    mp_free(demuxer->priv);
+    delete demuxer->priv;
 }
 
 static MPXP_Rc asf_control(const demuxer_t *demuxer,int cmd,any_t*args)

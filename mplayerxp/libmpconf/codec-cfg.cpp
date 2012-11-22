@@ -276,7 +276,7 @@ static int validate_codec(codecs_t *c)
 
     if (i < strlen(tmp_name)) {
 	MSG_ERR("\ncodec(%s) name is not valid!\n", c->codec_name);
-	mp_free(tmp_name);
+	delete tmp_name;
 	return 0;
     }
 
@@ -284,7 +284,7 @@ static int validate_codec(codecs_t *c)
 	strncpy(c->s_info,c->codec_name,sizeof(c->s_info));
 	c->s_info[sizeof(c->s_info)-1]=0;
     }
-    mp_free(tmp_name);
+    delete tmp_name;
     return 1;
 }
 
@@ -388,8 +388,8 @@ static int nr_vcodecs = 0;
 static int nr_acodecs = 0;
 
 void free_codec_cfg(void) {
-    if(video_codecs) mp_free(video_codecs);
-    if(audio_codecs) mp_free(audio_codecs);
+    if(video_codecs) delete video_codecs;
+    if(audio_codecs) delete audio_codecs;
 }
 
 int parse_codec_cfg(const char *cfgfile)
@@ -403,10 +403,10 @@ int parse_codec_cfg(const char *cfgfile)
 	int tmp, i;
 
 	// in case we call it secont time
-	if(video_codecs!=NULL)mp_free(video_codecs);
+	if(video_codecs!=NULL)delete video_codecs;
 	else video_codecs=NULL;
 
-	if(audio_codecs!=NULL)mp_free(audio_codecs);
+	if(audio_codecs!=NULL)delete audio_codecs;
 	else audio_codecs=NULL;
 
 	nr_vcodecs = 0;
@@ -617,7 +617,7 @@ int parse_codec_cfg(const char *cfgfile)
     if(video_codecs) video_codecs[nr_vcodecs].codec_name[0] = '\0';
     if(audio_codecs) audio_codecs[nr_acodecs].codec_name[0] = '\0';
 out:
-    mp_free(line);
+    delete line;
     line=NULL;
     fclose(fp);
     return 1;
@@ -629,13 +629,13 @@ err_out_print_linenum:
 	PRINT_LINENUM;
 err_out:
 	if (audio_codecs)
-		mp_free(audio_codecs);
+		delete audio_codecs;
 	if (video_codecs)
-		mp_free(video_codecs);
+		delete video_codecs;
 	video_codecs=NULL;
 	audio_codecs=NULL;
 
-	mp_free(line);
+	delete line;
 	line=NULL;
 	fclose(fp);
 	return 0;

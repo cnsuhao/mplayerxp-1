@@ -394,13 +394,13 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 	if(!vf->priv) return;
 
-	if(vf->priv->chromaParam.noise) mp_free(vf->priv->chromaParam.noise);
+	if(vf->priv->chromaParam.noise) delete vf->priv->chromaParam.noise;
 	vf->priv->chromaParam.noise= NULL;
 
-	if(vf->priv->lumaParam.noise) mp_free(vf->priv->lumaParam.noise);
+	if(vf->priv->lumaParam.noise) delete vf->priv->lumaParam.noise;
 	vf->priv->lumaParam.noise= NULL;
 
-	mp_free(vf->priv);
+	delete vf->priv;
 	vf->priv=NULL;
 }
 

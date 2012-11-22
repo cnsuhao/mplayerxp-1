@@ -95,9 +95,9 @@ static void read_key(menu_t* menu,int c){
 
 static void free_entry(list_entry_t* entry) {
   if(entry->ok)
-    mp_free(entry->ok);
+    delete entry->ok;
   if(entry->cancel)
-    mp_free(entry->cancel);
+    delete entry->cancel;
   delete entry->p.txt;
   delete entry;
 }
@@ -128,8 +128,8 @@ static int parse_args(menu_t* menu,const char* args) {
     name = asx_get_attrib("name",attribs);
     if(!name) {
       MSG_WARN("[libmenu] ListMenu entry definitions need a name: %i\n",parser->line);
-      mp_free(element);
-      if(body) mp_free(body);
+      delete element;
+      if(body) delete body;
       asx_free_attribs(attribs);
       continue;
     }
@@ -141,8 +141,8 @@ static int parse_args(menu_t* menu,const char* args) {
     m->right = asx_get_attrib("right",attribs);
     menu_list_add_entry(menu,m);
 
-    mp_free(element);
-    if(body) mp_free(body);
+    delete element;
+    if(body) delete body;
     asx_free_attribs(attribs);
   }
 }

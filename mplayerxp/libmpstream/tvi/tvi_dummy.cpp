@@ -136,7 +136,7 @@ tvi_handle_t *new_handle()
     h->priv = (struct priv_s *)mp_mallocz(sizeof(struct priv_s));
     if (!h->priv)
     {
-	mp_free(h);
+	delete h;
 	return(NULL);
     }
     h->info = &info;
@@ -153,7 +153,7 @@ void free_handle(tvi_handle_t *h)
 {
     if (h) {
 	if (h->priv)
-	    mp_free(h->priv);
-	mp_free(h);
+	    delete h->priv;
+	delete h;
     }
 }

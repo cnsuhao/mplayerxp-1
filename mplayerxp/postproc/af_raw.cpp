@@ -132,7 +132,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
 	s->fd=NULL;
     }
     if(s->filename) delete s->filename;
-    mp_free(af->setup);
+    delete af->setup;
     af->setup = NULL;
   }
 }

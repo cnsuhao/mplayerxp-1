@@ -429,7 +429,7 @@ static void mpxpav64_read_fcnt(demuxer_t* demuxer,unsigned fsize)
 	    stream_read(s,str,len);
 	    sub_data.cp=nls_get_screen_cp();
 	    demux_info_add(demuxer,infot,nls_recode2screen_cp(codepage,str,len));
-	    mp_free(str);
+	    delete str;
 	}
 	else stream_skip(s,len);
     }
@@ -483,7 +483,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
 		{
 		    MSG_ERR("Size of FPRP(%u) != %u\n",fsize,sizeof(mpxpav64FileProperties_t));
 		    open_failed:
-		    mp_free(priv);
+		    delete priv;
 		    return NULL;
 		}
 		stream_read(s,(char *)&priv->fprop,sizeof(mpxpav64FileProperties_t));
@@ -885,8 +885,8 @@ static void mpxpav64_close(demuxer_t *demuxer)
   unsigned i;
   mpxpav64_priv_t* priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
   if(!priv) return;
-  for(i=0;i<MAX_AV_STREAMS;i++) if(priv->idx[i]!=NULL) mp_free(priv->idx[i]);
-  mp_free(priv);
+  for(i=0;i<MAX_AV_STREAMS;i++) if(priv->idx[i]!=NULL) delete priv->idx[i];
+  delete priv;
 }
 
 static MPXP_Rc mpxpav64_control(const demuxer_t *demuxer,int cmd,any_t*args)

@@ -633,21 +633,21 @@ static void uninit(ao_data_t* ao)
     priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     if(!priv->handler) {
 	MSG_ERR("alsa-uninit: no handler defined!\n");
-	mp_free(priv);
+	delete priv;
 	return;
     }
 
     if (!priv_conf.noblock) {
 	if ((err = snd_pcm_drain(priv->handler)) < 0) {
 	    MSG_ERR("alsa-uninit: pcm drain error: %s\n", snd_strerror(err));
-	    mp_free(priv);
+	    delete priv;
 	    return;
 	}
     }
 
     if ((err = snd_pcm_close(priv->handler)) < 0) {
 	MSG_ERR("alsa-uninit: pcm close error: %s\n", snd_strerror(err));
-	mp_free(priv);
+	delete priv;
 	return;
     } else {
 	priv->handler = NULL;
@@ -655,7 +655,7 @@ static void uninit(ao_data_t* ao)
     }
     snd_pcm_hw_params_free(priv->hwparams);
     snd_pcm_sw_params_free(priv->swparams);
-    mp_free(priv);
+    delete priv;
 }
 
 static void audio_pause(ao_data_t* ao)
@@ -930,7 +930,7 @@ static unsigned __FASTCALL__ play_mmap(ao_data_t* ao,const any_t* data, unsigned
     if ((int)result < 0) result = 0;
 
 #ifdef USE_POLL
-    mp_free(ufds);
+    delete ufds;
 #endif
 
     return result;

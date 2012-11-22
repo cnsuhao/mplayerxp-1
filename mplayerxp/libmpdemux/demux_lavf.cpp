@@ -181,7 +181,7 @@ static MPXP_Rc lavf_probe(demuxer_t *demuxer){
     else av_log_set_level(AV_LOG_INFO);
 
     if(stream_read(demuxer->stream, buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE) {
-	mp_free(demuxer->priv);
+	delete demuxer->priv;
 	return MPXP_False;
     }
     avpd.filename= "xxx";
@@ -204,7 +204,7 @@ static MPXP_Rc lavf_probe(demuxer_t *demuxer){
     priv->avif= av_probe_input_format(&avpd, 1);
     if(!priv->avif){
 	MSG_V("LAVF_check: file format not recognized!\n");
-	mp_free(demuxer->priv);
+	delete demuxer->priv;
 	return MPXP_False;
     }else
 	MSG_V("LAVF_check: %s\n", priv->avif->long_name);
@@ -489,7 +489,7 @@ static void lavf_close(demuxer_t *demuxer)
 	    avformat_close_input(&priv->avfc);
 	}
 	av_freep(&priv->pb);
-	mp_free(priv); demuxer->priv= NULL;
+	delete priv; demuxer->priv= NULL;
     }
 }
 

@@ -146,9 +146,9 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
     af_ffenc_t *s=reinterpret_cast<af_ffenc_t*>(af->setup);
     avcodec_close(s->lavc_context);
-    if(s->lavc_context) mp_free(s->lavc_context);
-    mp_free(s->tail);
-    if(af->setup) mp_free(af->setup);
+    if(s->lavc_context) delete s->lavc_context;
+    delete s->tail;
+    if(af->setup) delete af->setup;
 }
 
 // Filter data through filter

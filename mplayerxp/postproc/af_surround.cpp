@@ -101,9 +101,9 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg
 
     // Free previous delay queues
     if(s->dl)
-      mp_free(s->dl);
+      delete s->dl;
     if(s->dr)
-      mp_free(s->dr);
+      delete s->dr;
     // Allocate new delay queues
     s->dl = (float*)mp_calloc(LD,af->conf.format&MPAF_BPS_MASK);
     s->dr = (float*)mp_calloc(LD,af->conf.format&MPAF_BPS_MASK);
@@ -146,7 +146,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-  if(af->setup) mp_free(af->setup);
+  if(af->setup) delete af->setup;
 }
 
 // The beginnings of an active matrix...

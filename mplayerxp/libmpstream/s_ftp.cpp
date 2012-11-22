@@ -343,9 +343,9 @@ static void __FASTCALL__ ftp_close(stream_t *s) {
   FtpSendCmd("QUIT",p,NULL);
 
   if(p->handle) closesocket(p->handle);
-  if(p->buf) mp_free(p->buf);
+  if(p->buf) delete p->buf;
 
-  mp_free(p);
+  delete p;
 }
 
 static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
@@ -361,7 +361,7 @@ static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char 
   strcpy(uname,"ftp://");
   strcat(uname,filename);
   if(!(url=url_new(uname))) goto bad_url;
-  mp_free(uname);
+  delete uname;
 //  url = check4proxies (rurl);
   if(!(url->hostname && url->file)) {
     bad_url:

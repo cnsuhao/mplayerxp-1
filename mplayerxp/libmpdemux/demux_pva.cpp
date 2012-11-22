@@ -502,7 +502,7 @@ static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
 static void pva_close(demuxer_t * demuxer)
 {
     if(demuxer->priv) {
-	mp_free(demuxer->priv);
+	delete demuxer->priv;
 	demuxer->priv=NULL;
     }
 }

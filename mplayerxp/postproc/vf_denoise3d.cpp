@@ -49,10 +49,10 @@ struct vf_priv_s {
 /***************************************************************************/
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
-	if(vf->priv->Line){mp_free(vf->priv->Line);vf->priv->Line=NULL;}
-	if(vf->priv->Frame[0]){mp_free(vf->priv->Frame[0]);vf->priv->Frame[0]=NULL;}
-	if(vf->priv->Frame[1]){mp_free(vf->priv->Frame[1]);vf->priv->Frame[1]=NULL;}
-	if(vf->priv->Frame[2]){mp_free(vf->priv->Frame[2]);vf->priv->Frame[2]=NULL;}
+	if(vf->priv->Line){delete vf->priv->Line;vf->priv->Line=NULL;}
+	if(vf->priv->Frame[0]){delete vf->priv->Frame[0];vf->priv->Frame[0]=NULL;}
+	if(vf->priv->Frame[1]){delete vf->priv->Frame[1];vf->priv->Frame[1]=NULL;}
+	if(vf->priv->Frame[2]){delete vf->priv->Frame[2];vf->priv->Frame[2]=NULL;}
 }
 
 static int __FASTCALL__ vf_config(struct vf_instance_s* vf,

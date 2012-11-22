@@ -248,10 +248,10 @@ static void __FASTCALL__ _vcdnav_close(stream_t*stream)
     vcd_priv_t*priv=reinterpret_cast<vcd_priv_t*>(stream->priv);
     MSG_DBG2("vcdnav_close\n");
     vcdinfo_close(((vcd_priv_t *)stream->priv)->fd);
-    if(priv->track) mp_free(priv->track);
-    if(priv->entry) mp_free(priv->entry);
-    if(priv->segment) mp_free(priv->segment);
-    mp_free(stream->priv);
+    if(priv->track) delete priv->track;
+    if(priv->entry) delete priv->entry;
+    if(priv->segment) delete priv->segment;
+    delete stream->priv;
 }
 static MPXP_Rc __FASTCALL__ _vcdnav_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);

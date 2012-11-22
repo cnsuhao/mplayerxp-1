@@ -435,8 +435,8 @@ static int __FASTCALL__ query_format (vf_instance_t *vf, unsigned fmt,unsigned w
 static void __FASTCALL__ uninit (vf_instance_t *vf)
 {
   if (vf->priv != NULL) {
-    mp_free (vf->priv->buf[0]);
-    mp_free (vf->priv);
+    delete vf->priv->buf[0];
+    delete vf->priv;
   }
 }
 

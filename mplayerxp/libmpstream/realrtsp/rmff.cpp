@@ -412,7 +412,7 @@ rmff_header_t *rmff_scan_header(const char *data) {
   if (chunk_type != RMF_TAG)
   {
     MSG_ERR("rmff: not an real media file header (.RMF tag not found).\n");
-    mp_free(header);
+    delete header;
     return NULL;
   }
   header->fileheader=rmff_scan_fileheader(ptr);
@@ -850,29 +850,29 @@ void rmff_free_header(rmff_header_t *h) {
 
   if (!h) return;
 
-  if (h->fileheader) mp_free(h->fileheader);
-  if (h->prop) mp_free(h->prop);
-  if (h->data) mp_free(h->data);
+  if (h->fileheader) delete h->fileheader;
+  if (h->prop) delete h->prop;
+  if (h->data) delete h->data;
   if (h->cont)
   {
-    mp_free(h->cont->title);
-    mp_free(h->cont->author);
-    mp_free(h->cont->copyright);
-    mp_free(h->cont->comment);
-    mp_free(h->cont);
+    delete h->cont->title;
+    delete h->cont->author;
+    delete h->cont->copyright;
+    delete h->cont->comment;
+    delete h->cont;
   }
   if (h->streams)
   {
     rmff_mdpr_t **s=h->streams;
 
     while(*s) {
-      mp_free((*s)->stream_name);
-      mp_free((*s)->mime_type);
-      mp_free((*s)->type_specific_data);
-      mp_free(*s);
+      delete (*s)->stream_name;
+      delete (*s)->mime_type;
+      delete (*s)->type_specific_data;
+      delete *s;
       s++;
     }
-    mp_free(h->streams);
+    delete h->streams;
   }
-  mp_free(h);
+  delete h;
 }

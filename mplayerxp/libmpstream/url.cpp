@@ -37,7 +37,7 @@ URL_t *url_redirect(URL_t **url, const char *redir) {
     if (tmp) tmp[1] = 0;
     strcat(newurl, redir);
     res = url_new(newurl);
-    mp_free(newurl);
+    delete newurl;
   } else
     res = url_new(redir);
   url_free(u);
@@ -217,10 +217,10 @@ url_new(const char* url) {
 		strcpy(Curl->file, "/");
 	}
 
-	mp_free(escfilename);
+	delete escfilename;
 	return Curl;
 err_out:
-	if (escfilename) mp_free(escfilename);
+	if (escfilename) delete escfilename;
 	if (Curl) url_free(Curl);
 	return NULL;
 }
@@ -228,13 +228,13 @@ err_out:
 void
 url_free(URL_t* url) {
 	if(!url) return;
-	if(url->url) mp_free(url->url);
-	if(url->protocol) mp_free(url->protocol);
-	if(url->hostname) mp_free(url->hostname);
-	if(url->file) mp_free(url->file);
-	if(url->username) mp_free(url->username);
-	if(url->password) mp_free(url->password);
-	mp_free(url);
+	if(url->url) delete url->url;
+	if(url->protocol) delete url->protocol;
+	if(url->hostname) delete url->hostname;
+	if(url->file) delete url->file;
+	if(url->username) delete url->username;
+	if(url->password) delete url->password;
+	delete url;
 }
 
 

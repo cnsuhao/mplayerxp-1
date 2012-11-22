@@ -120,7 +120,7 @@ static void mpxpav64_put_unicode(FILE *f, const char *tag)
     char *str=nls_recode_from_screen_cp("UTF-16LE",tag,&len);
     mpxpav64_put16(f,len);
     fwrite(str,len,1,f);
-    mp_free(str);
+    delete str;
 }
 
 static void mpxpav64_put_frcc_unicode(FILE *f, const char *frcc,const char *tag)
@@ -617,7 +617,7 @@ static void mpxpav64_write_index(muxer_t *muxer)
 		mpxpav64_write_index_32(muxer->streams[i]);
 	    else
 		mpxpav64_write_index_64(muxer->streams[i]);
-	    mp_free(((priv_mpxpav64_stream_t *)muxer->streams[i]->priv)->idx);
+	    delete ((priv_mpxpav64_stream_t *)muxer->streams[i]->priv)->idx;
 	    ((priv_mpxpav64_stream_t *)muxer->streams[i]->priv)->idx=NULL;
 	}
     }

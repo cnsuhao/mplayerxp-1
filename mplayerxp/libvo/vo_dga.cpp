@@ -380,7 +380,7 @@ static void uninit(vo_data_t*vo)
 #endif
 	XCloseDisplay(vo->mDisplay);
     }
-    mp_free(vo->priv);
+    delete vo->priv;
 }
 
 /*----------------------------------------------------------*/

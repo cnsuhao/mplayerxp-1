@@ -268,7 +268,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 static void uninit(sh_video_t *sh){
     priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
     mpeg2_close(priv->mpeg2dec);
-    mp_free(priv);
+    delete priv;
     dlclose(dll_handle);
 }
 

@@ -127,7 +127,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
-    mp_free(vf->priv);
+    delete vf->priv;
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)

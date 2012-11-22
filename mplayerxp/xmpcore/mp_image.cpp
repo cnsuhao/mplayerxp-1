@@ -153,9 +153,9 @@ void free_mp_image(mp_image_t* mpi){
     if(!mpi) return;
     if(mpi->flags&MP_IMGFLAG_ALLOCATED){
 	/* becouse we allocate the whole image in once */
-	if(mpi->planes[0]) mp_free(mpi->planes[0]);
+	if(mpi->planes[0]) delete mpi->planes[0];
     }
-    mp_free(mpi);
+    delete mpi;
 }
 
 mp_image_t* alloc_mpi(unsigned w, unsigned h, unsigned int fmt,unsigned xp_idx) {

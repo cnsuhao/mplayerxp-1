@@ -242,7 +242,7 @@ static MPXP_Rc __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
     st_priv->root = st_priv->current = menu_open(args,vf->libinput);
     st_priv->libinput=vf->libinput;
     if(!st_priv->current) {
-      mp_free(st_priv);
+      delete st_priv;
       st_priv = NULL;
       return MPXP_False;
     }

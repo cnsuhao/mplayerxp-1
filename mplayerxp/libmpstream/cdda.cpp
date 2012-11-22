@@ -86,7 +86,7 @@ MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
 
     if(!priv->cd) {
 	MSG_ERR("Can't open cdda device: %s\n",dev);
-	mp_free(priv);
+	delete priv;
 	return MPXP_False;
     }
 
@@ -95,7 +95,7 @@ MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
     if(cdio_cddap_open(priv->cd) != 0) {
 	MSG_ERR("Can't open disc\n");
 	cdda_close(priv->cd);
-	mp_free(priv);
+	delete priv;
 	return MPXP_False;
     }
 
@@ -218,7 +218,7 @@ off_t __FASTCALL__ tell_cdda(const stream_t* s) {
 void __FASTCALL__ close_cdda(stream_t* s) {
   cdda_priv* p = (cdda_priv*)s->priv;
   cdio_cddap_close(p->cd);
-  mp_free(p);
+  delete p;
 }
 
 #endif

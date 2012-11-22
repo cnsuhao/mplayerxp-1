@@ -49,7 +49,7 @@ any_t*xbuffer_free(any_t*buf) {
     return NULL;
   }
 
-  mp_free(((uint8_t*)buf)-XBUFFER_HEADER_SIZE);
+  mp_free (((uint8_t*)buf)-XBUFFER_HEADER_SIZE);
 
   return NULL;
 }

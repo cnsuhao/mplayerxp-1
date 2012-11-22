@@ -132,7 +132,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   if(af->setup)
-    mp_free(af->setup);
+    delete af->setup;
 }
 
 // Filter data through filter

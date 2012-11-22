@@ -155,7 +155,7 @@ MPXP_Rc preinit(sh_audio_t *sh_audio)
 void uninit(sh_audio_t *sh)
 {
   close_acm_audio_codec(sh);
-  mp_free(sh->context);
+  delete sh->context;
 }
 
 MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)

@@ -24,8 +24,8 @@ enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float du
     return frame;
 }
 void free_enc_frame(enc_frame_t* frame) {
-    if(frame->data && frame->type!=VideoFrame) mp_free(frame->data);
-    mp_free(frame);
+    if(frame->data && frame->type!=VideoFrame) delete frame->data;
+    delete frame;
 }
 
 pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;

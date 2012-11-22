@@ -326,7 +326,7 @@ static void uninit(vo_data_t*vo)
     vo_vm_close(vo,vo->mDisplay);
 #endif
     vo_x11_uninit(vo,vo->mDisplay, vo->window);
-    mp_free(vo->priv);
+    delete vo->priv;
 }
 
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)

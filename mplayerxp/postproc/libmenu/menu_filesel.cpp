@@ -176,8 +176,8 @@ static void free_extensions(char **extensions){
   if (extensions) {
     char **l = extensions;
     while (*l)
-      mp_free (*l++);
-    mp_free (extensions);
+      delete *l++;
+    delete extensions;
   }
 }
 
@@ -196,7 +196,7 @@ static int open_dir(menu_t* menu,char* args) {
   menu_list_init(menu);
 
   if(mpriv->dir)
-    mp_free(mpriv->dir);
+    delete mpriv->dir;
   mpriv->dir = mp_strdup(args);
   if(mpriv->p.title && mpriv->p.title != mpriv->title && mpriv->p.title != cfg_dflt.p.title)
     delete mpriv->p.title;
@@ -286,9 +286,9 @@ bailout:
     }else{
       MSG_ERR("[libmenu] Malloc error: %s\n", strerror(errno));
     }
-    mp_free(namelist[n]);
+    delete namelist[n];
   }
-  mp_free(namelist);
+  delete namelist;
 
   return 1;
 }
@@ -313,7 +313,7 @@ static void read_cmd(menu_t* menu,int cmd) {
 	str = replace_path(mpriv->dir_action,filename);
 	c = mp_input_parse_cmd(str);
 	if(str != mpriv->dir_action)
-	  mp_free(str);
+	  delete str;
       } else { // Default action : open this dirctory ourself
 	int l = strlen(mpriv->dir);
 	char *slash =  NULL, *p = NULL;
@@ -337,7 +337,7 @@ static void read_cmd(menu_t* menu,int cmd) {
 	  MSG_ERR("[libmenu] Can't open directory: %s\n",p);
 	  menu->cl = 1;
 	}
-	mp_free(p);
+	delete p;
       }
     } else { // Files
       int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
@@ -347,7 +347,7 @@ static void read_cmd(menu_t* menu,int cmd) {
       str = replace_path(mpriv->file_action,filename);
       c = mp_input_parse_cmd(str);
       if(str != mpriv->file_action)
-	mp_free(str);
+	delete str;
     }
     if(c) {
       mp_input_queue_cmd(menu->libinput,c);
@@ -363,7 +363,7 @@ static void read_cmd(menu_t* menu,int cmd) {
     str = replace_path(action, filename);
     mp_input_queue_cmd(menu->libinput,mp_input_parse_cmd(str));
     if(str != action)
-      mp_free(str);
+      delete str;
   } break;
   default:
     menu_list_read_cmd(menu,cmd);
@@ -388,7 +388,7 @@ static void read_key(menu_t* menu,int c){
 
 static void clos(menu_t* menu) {
   menu_list_uninit(menu,free_entry);
-  mp_free(mpriv->dir);
+  delete mpriv->dir;
 }
 
 static int open_fs(menu_t* menu,const char* args) {
@@ -416,7 +416,7 @@ static int open_fs(menu_t* menu,const char* args) {
 	    path[st.st_size] = '\0';
 	  }
 	  else {
-	    mp_free(path);
+	    delete path;
 	    path = NULL;
 	  }
 	}
@@ -444,7 +444,7 @@ static int open_fs(menu_t* menu,const char* args) {
     r = open_dir(menu,path);
 
   if (freepath)
-    mp_free(freepath);
+    delete freepath;
 
   return r;
 }

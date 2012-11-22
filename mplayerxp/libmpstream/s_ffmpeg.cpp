@@ -51,7 +51,7 @@ static void __FASTCALL__ ffmpeg_close(stream_t *stream)
 {
     ffmpeg_priv_t*p=reinterpret_cast<ffmpeg_priv_t*>(stream->priv);
     ffurl_close(p->ctx);
-    mp_free(p);
+    delete p;
 }
 
 static const char prefix[] = "ffmpeg://";

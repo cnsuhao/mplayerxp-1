@@ -113,7 +113,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 
     if (failed) {
 	if (priv) {
-	    mp_free (priv);
+	    delete priv;
 	    sh->context = NULL;
 	}
 	return MPXP_False;
@@ -137,7 +137,7 @@ static void uninit(sh_video_t *sh)
     priv_t *priv = (priv_t *)sh->context;
     if (priv) {
 	theora_clear (&priv->st);
-	mp_free (priv);
+	delete priv;
     }
 }
 

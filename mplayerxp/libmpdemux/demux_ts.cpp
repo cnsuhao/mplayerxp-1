@@ -808,7 +808,7 @@ static off_t ts_detect_streams(demuxer_t *demuxer, tsdemux_init_t *param)
 	{
 		if(pes_priv1[i].buf != NULL)
 		{
-			mp_free(pes_priv1[i].buf);
+			delete pes_priv1[i].buf;
 			pes_priv1[i].buf = NULL;
 			pes_priv1[i].pos = 0;
 		}
@@ -1049,22 +1049,22 @@ static void ts_close(demuxer_t * demuxer)
 	if(priv)
 	{
 		if(priv->pat.section.buffer)
-			mp_free(priv->pat.section.buffer);
+			delete priv->pat.section.buffer;
 		if(priv->pat.progs)
-			mp_free(priv->pat.progs);
+			delete priv->pat.progs;
 
 		if(priv->pmt)
 		{
 			for(i = 0; i < priv->pmt_cnt; i++)
 			{
 				if(priv->pmt[i].section.buffer)
-					mp_free(priv->pmt[i].section.buffer);
+					delete priv->pmt[i].section.buffer;
 				if(priv->pmt[i].es)
-					mp_free(priv->pmt[i].es);
+					delete priv->pmt[i].es;
 			}
-			mp_free(priv->pmt);
+			delete priv->pmt;
 		}
-		mp_free(priv);
+		delete priv;
 	}
 	demuxer->priv=NULL;
 }

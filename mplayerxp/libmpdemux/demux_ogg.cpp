@@ -474,7 +474,7 @@ static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vor
       index = demux_ogg_sub_reverse_id(d, id);
       if (index >= 0) {
 	// in case of malicious files with more than one lang per track:
-	if (ogg_d->text_langs[index]) mp_free(ogg_d->text_langs[index]);
+	if (ogg_d->text_langs[index]) delete ogg_d->text_langs[index];
 	ogg_d->text_langs[index] = mp_strdup(val);
       }
       // check for -slang if subs are uninitialized yet
@@ -1202,7 +1202,7 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
   while((np = ogg_sync_pageout(&ogg_d->sync,&ogg_d->page)) <= 0 ) {
     if(np < 0) {
       MSG_ERR("AVI Ogg error : Can't init using first stream packets\n");
-      mp_free(ogg_d);
+      delete ogg_d;
       goto fallback;
     }
     // Add some data
@@ -1446,18 +1446,18 @@ static void ogg_close(demuxer_t* demuxer) {
   {
     for (i = 0; i < ogg_d->num_sub; i++)
       ogg_stream_clear(&ogg_d->subs[i].stream);
-    mp_free(ogg_d->subs);
+    delete ogg_d->subs;
   }
   if(ogg_d->syncpoints)
-    mp_free(ogg_d->syncpoints);
+    delete ogg_d->syncpoints;
   if (ogg_d->text_ids)
-    mp_free(ogg_d->text_ids);
+    delete ogg_d->text_ids;
   if (ogg_d->text_langs) {
     for (i = 0; i < ogg_d->n_text; i++)
-      if (ogg_d->text_langs[i]) mp_free(ogg_d->text_langs[i]);
-    mp_free(ogg_d->text_langs);
+      if (ogg_d->text_langs[i]) delete ogg_d->text_langs[i];
+    delete ogg_d->text_langs;
   }
-  mp_free(ogg_d);
+  delete ogg_d;
 }
 
 static MPXP_Rc ogg_control(const demuxer_t *demuxer,int cmd,any_t*args)

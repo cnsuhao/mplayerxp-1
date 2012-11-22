@@ -172,10 +172,10 @@ void uninit(sh_audio_t *sh)
 {
     priv_t* priv=reinterpret_cast<priv_t*>(sh->context);
     avcodec_close(priv->lavc_ctx);
-    if (priv->lavc_ctx->extradata) mp_free(priv->lavc_ctx->extradata);
-    mp_free(priv->lavc_ctx);
+    if (priv->lavc_ctx->extradata) delete priv->lavc_ctx->extradata;
+    delete priv->lavc_ctx;
     if(priv->probe) { delete priv->probe->codec_dll; delete priv->probe; }
-    mp_free(priv);
+    delete priv;
     sh->context=NULL;
 }
 

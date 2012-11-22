@@ -85,7 +85,7 @@ dca_state_t * dca_init (uint32_t mm_accel)
 
     state->samples = (sample_t *) mp_memalign (16, 256 * 12 * sizeof (sample_t));
     if (state->samples == NULL) {
-	mp_free (state);
+	delete state;
 	return NULL;
     }
 
@@ -1294,6 +1294,6 @@ void dca_dynrng (dca_state_t * state,
 
 void dca_free (dca_state_t * state)
 {
-    mp_free (state->samples);
-    mp_free (state);
+    delete state->samples;
+    delete state;
 }

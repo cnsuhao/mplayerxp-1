@@ -143,7 +143,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
     af_resample_t* s = (af_resample_t*)af->setup;
     if(s->ctx) swr_free(&s->ctx);
     s->ctx=NULL;
-    mp_free(s);
+    delete s;
 }
 
 // Filter data through filter

@@ -239,11 +239,11 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
     }
 
     if (buf)
-	mp_free(buf);
+	delete buf;
     if (opt)
-	mp_free(opt);
+	delete opt;
     if (param)
-	mp_free(param);
+	delete param;
 }
 
 static MPXP_Rc vivo_probe(demuxer_t* demuxer){
@@ -735,14 +735,14 @@ static void vivo_close(demuxer_t *demuxer)
 
     if (priv) {
 	if (priv->title)
-	    mp_free(priv->title);
+	    delete priv->title;
 	if (priv->author)
-	    mp_free(priv->author);
+	    delete priv->author;
 	if (priv->copyright)
-	    mp_free(priv->copyright);
+	    delete priv->copyright;
 	if (priv->producer)
-	   mp_free(priv->producer);
-	mp_free(priv);
+	   delete priv->producer;
+	delete priv;
     }
     return;
 }

@@ -198,8 +198,8 @@ static void uninit(ao_data_t* ao){
     }
     fclose(priv->fp);
     if (priv->out_filename)
-	mp_free(priv->out_filename);
-    mp_free(priv);
+	delete priv->out_filename;
+    delete priv;
 }
 
 // stop playing and empty buffers (for seeking/pause)

@@ -132,7 +132,7 @@ static void vesa_term( vo_data_t*vo )
     if((err=vbeRestoreState(priv->init_state)) != VBE_OK) PRINT_VBE_ERR("vbeRestoreState",err);
     if((err=vbeSetMode(priv->init_mode,NULL)) != VBE_OK) PRINT_VBE_ERR("vbeSetMode",err);
     if(HAS_DGA()) vbeUnmapVideoBuffer((unsigned long)priv->win.ptr,priv->win.high);
-    if(priv->dga_buffer && !HAS_DGA()) mp_free(priv->dga_buffer);
+    if(priv->dga_buffer && !HAS_DGA()) delete priv->dga_buffer;
     vbeDestroy();
 }
 

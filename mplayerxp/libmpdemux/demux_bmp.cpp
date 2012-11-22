@@ -293,7 +293,7 @@ static void bmp_close(demuxer_t* demuxer) {
 
   if(!bmp_image)
     return;
-  mp_free(bmp_image);
+  delete bmp_image;
 }
 #endif
 

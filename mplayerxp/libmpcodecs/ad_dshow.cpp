@@ -42,7 +42,7 @@ MPXP_Rc preinit(sh_audio_t *sh_audio)
     sh_audio->context=priv;
     if(!(priv->ds_adec=DS_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf))) {
 	MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
-	mp_free(sh_audio->context);
+	delete sh_audio->context;
 	return MPXP_False;
     }
     sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
@@ -59,7 +59,7 @@ void uninit(sh_audio_t *sh)
 {
     priv_t* priv = reinterpret_cast<priv_t*>(sh->context);
     DS_AudioDecoder_Destroy(priv->ds_adec);
-    mp_free(priv);
+    delete priv;
 }
 
 MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)

@@ -111,7 +111,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-    if(af->setup) mp_free(af->setup);
+    if(af->setup) delete af->setup;
 }
 
 static mp_aframe_t* __FASTCALL__ method1_int16(af_volnorm_t *s,const mp_aframe_t *c)

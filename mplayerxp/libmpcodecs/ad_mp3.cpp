@@ -312,7 +312,7 @@ MPXP_Rc init(sh_audio_t *sh)
 	mpg123_close(priv->mh);
 	mpg123_delete(priv->mh);
 	mpg123_exit();
-	mp_free(priv);
+	delete priv;
 	return MPXP_False;
     }
     mpg123_getformat(priv->mh, &rate, &nch, &enc);
@@ -349,7 +349,7 @@ void uninit(sh_audio_t *sh)
     mpg123_close(priv->mh);
     mpg123_delete(priv->mh);
     mpg123_exit();
-    mp_free(priv);
+    delete priv;
     dlclose(dll_handle);
 }
 

@@ -239,10 +239,10 @@ static void __FASTCALL__ sab_freeBuffers(FilterParam *f){
 	if(f->preFilterContext) sws_freeContext(f->preFilterContext);
 	f->preFilterContext=NULL;
 
-	if(f->preFilterBuf) mp_free(f->preFilterBuf);
+	if(f->preFilterBuf) delete f->preFilterBuf;
 	f->preFilterBuf=NULL;
 
-	if(f->distCoeff) mp_free(f->distCoeff);
+	if(f->distCoeff) delete f->distCoeff;
 	f->distCoeff=NULL;
 }
 
@@ -377,7 +377,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 	    vf->priv->freeBuffers(&vf->priv->luma);
 	    vf->priv->freeBuffers(&vf->priv->chroma);
 	}
-	mp_free(vf->priv);
+	delete vf->priv;
 	vf->priv=NULL;
 }
 

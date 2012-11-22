@@ -132,8 +132,8 @@ rtp_session_free (struct rtp_rtsp_session_t *st)
     close (st->rtcp_socket);
 
   if (st->control_url)
-    mp_free (st->control_url);
-  mp_free (st);
+    delete st->control_url;
+  delete st;
 }
 
 static void
@@ -174,20 +174,20 @@ parse_port (const char *line, const char *param,
     }
     else
     {
-      mp_free (line_copy);
+      delete line_copy;
       return 0;
     }
   }
   else
   {
-    mp_free (line_copy);
+    delete line_copy;
     return 0;
   }
 
   *rtp_port = atoi (parse1 + strlen (param));
   *rtcp_port = atoi (parse2 + 1);
 
-  mp_free (line_copy);
+  delete line_copy;
 
   return 1;
 }
@@ -205,14 +205,14 @@ parse_destination (const char *line)
   parse1 = strstr (line_copy, RTSP_SETUP_DESTINATION);
   if (!parse1)
   {
-    mp_free (line_copy);
+    delete line_copy;
     return NULL;
   }
 
   parse2 = strstr (parse1, ";");
   if (!parse2)
   {
-    mp_free (line_copy);
+    delete line_copy;
     return NULL;
   }
 
@@ -220,7 +220,7 @@ parse_destination (const char *line)
     - strlen (RTSP_SETUP_DESTINATION) + 1;
   dest = (char *) mp_malloc (len + 1);
   snprintf (dest, len, parse1 + strlen (RTSP_SETUP_DESTINATION));
-  mp_free (line_copy);
+  delete line_copy;
 
   return dest;
 }
@@ -450,7 +450,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   sdp = (char *) mp_malloc (content_length + 1);
   if (rtsp_read_data (rtsp_session, sdp, content_length) <= 0)
   {
-    mp_free (sdp);
+    delete sdp;
     return NULL;
   }
   sdp[content_length] = 0;
@@ -460,12 +460,12 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   result = fsdp_parse (sdp, dsc);
   if (result != FSDPE_OK)
   {
-    mp_free (sdp);
+    delete sdp;
     fsdp_description_delete (dsc);
     return NULL;
   }
   MSG_V("SDP:\n%s\n", sdp);
-  mp_free (sdp);
+  delete sdp;
 
   /* 4. check for number of media streams: only one is supported */
   if (fsdp_get_media_count (dsc) != 1)
@@ -586,7 +586,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   rtp_session = rtp_session_new ();
   if (!rtp_session)
   {
-    mp_free (server_addr);
+    delete server_addr;
     fsdp_description_delete (dsc);
     return NULL;
   }
@@ -597,7 +597,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   fsdp_description_delete (dsc);
   if (!rtp_session->control_url)
   {
-    mp_free (server_addr);
+    delete server_addr;
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -624,7 +624,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
 
   if (statut < 200 || statut > 299)
   {
-    mp_free (server_addr);
+    delete server_addr;
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -634,7 +634,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   answer = rtsp_search_answers (rtsp_session, RTSP_TRANSPORT);
   if (!answer)
   {
-    mp_free (server_addr);
+    delete server_addr;
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -662,7 +662,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
     destination = parse_destination (answer);
   if (!destination)
     destination = mp_strdup (server_addr);
-  mp_free (server_addr);
+  delete server_addr;
 
   MSG_V("RTSP Destination: %s\n"
 	"Client RTP port : %d\n"
@@ -680,7 +680,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   statut = rtsp_request_play (rtsp_session, NULL);
   if (statut < 200 || statut > 299)
   {
-    mp_free (destination);
+    delete destination;
     rtp_session_free (rtp_session);
     return NULL;
   }
@@ -689,7 +689,7 @@ rtp_setup_and_play (rtsp_t *rtsp_session)
   rtp_sock = rtp_connect (destination, client_rtp_port);
   rtcp_sock = rtcp_connect (client_rtcp_port, server_rtcp_port, destination);
   rtp_session_set_fd (rtp_session, rtp_sock, rtcp_sock);
-  mp_free (destination);
+  delete destination;
 
   MSG_V("RTP Sock : %d\nRTCP Sock : %d\n",rtp_session->rtp_socket, rtp_session->rtcp_socket);
 

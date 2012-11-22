@@ -487,7 +487,7 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 	  /* dunno what, but we shoudl ignore it */
 	  break;
 	default:
-	  if(no==0){ mp_free(priv); return MPXP_False;} // first chunk is bad!
+	  if(no==0){ delete priv; return MPXP_False;} // first chunk is bad!
 	  id = BE_32(id);
 	  MSG_V("MOV: unknown chunk: %.4s %d\n",&id,(int)len);
 	}
@@ -501,7 +501,7 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 	demuxer->file_format=DEMUXER_TYPE_MOV;
 	return MPXP_Ok;
     }
-    mp_free(priv);
+    delete priv;
 
     if ((flags==5) || (flags==7)) // reference & header sent
     {
@@ -1236,7 +1236,7 @@ quit_vorbis_block:
 		  sh->bih=(BITMAPINFOHEADER*)mp_mallocz(sizeof(BITMAPINFOHEADER) + trak->stream_header_len);
 		  sh->bih->biSize=40  + trak->stream_header_len;
 		  memcpy(((unsigned char *)sh->bih)+40,  trak->stream_header, trak->stream_header_len);
-		  mp_free (trak->stream_header);
+		  delete trak->stream_header;
 		  trak->stream_header_len = 0;
 		  trak->stream_header = NULL;
 		 } else {
@@ -1342,8 +1342,8 @@ quit_vorbis_block:
 	       lschunks(demuxer,level+1,moov_sz,NULL); // parse uncompr. 'moov'
 	       //free_stream(demuxer->stream);
 	      demuxer->stream=backup;
-	      mp_free(cmov_buf);
-	      mp_free(moov_buf);
+	      delete cmov_buf;
+	      delete moov_buf;
 	      break;
 	}
 #endif
@@ -1537,7 +1537,7 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
       str[_len] = 0;
       MSG_V( "MOV: %*sHandler header: %.4s/%.4s (%.4s) %s\n", level, "",
 	     &type, &subtype, &manufact, str);
-      mp_free(str);
+      delete str;
       switch(bswap_32(type)) {
 	case MOV_FOURCC('m','h','l','r'):
 	  trak->media_handler = bswap_32(subtype);
@@ -1987,7 +1987,7 @@ if(trak->pos==0 && trak->stream_header_len>0){
     dp->pos=stream_tell(demuxer->stream)-trak->stream_header_len;
     x=stream_read(demuxer->stream,dp->buffer+trak->stream_header_len,x);
     resize_demux_packet(dp,x+trak->stream_header_len);
-    mp_free(trak->stream_header);
+    delete trak->stream_header;
     trak->stream_header = NULL;
     trak->stream_header_len = 0;
     dp->pts=pts;
@@ -2073,20 +2073,20 @@ static void mov_close(demuxer_t *demuxer)
   for (i = 0; i < MOV_MAX_TRACKS; i++) {
     mov_track_t *track = priv->tracks[i];
     if (track) {
-      mp_free(track->tkdata);
-      mp_free(track->stdata);
-      mp_free(track->stream_header);
-      mp_free(track->samples);
-      mp_free(track->chunks);
-      mp_free(track->chunkmap);
-      mp_free(track->durmap);
-      mp_free(track->keyframes);
-      mp_free(track->editlist);
-      mp_free(track->desc);
-      mp_free(track);
+      delete track->tkdata;
+      delete track->stdata;
+      delete track->stream_header;
+      delete track->samples;
+      delete track->chunks;
+      delete track->chunkmap;
+      delete track->durmap;
+      delete track->keyframes;
+      delete track->editlist;
+      delete track->desc;
+      delete track;
     }
   }
-  mp_free(priv);
+  delete priv;
 }
 
 static MPXP_Rc mov_control(const demuxer_t *demuxer,int cmd,any_t*args)

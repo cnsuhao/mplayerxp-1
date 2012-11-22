@@ -512,7 +512,7 @@ got_audio:
 		    dp->flags=DP_NONKEYFRAME;
 		    ds_add_packet(ds, dp);
 		}
-		mp_free(sub_packet_lengths);
+		delete sub_packet_lengths;
 		return 1;
 	    }
 	    dp = new_demux_packet(len);
@@ -875,7 +875,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_NAME, buf);
-		    mp_free(buf);
+		    delete buf;
 		}
 
 		len = stream_read_word(demuxer->stream);
@@ -885,7 +885,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_AUTHOR, buf);
-		    mp_free(buf);
+		    delete buf;
 		}
 
 		len = stream_read_word(demuxer->stream);
@@ -895,7 +895,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_COPYRIGHT, buf);
-		    mp_free(buf);
+		    delete buf;
 		}
 
 		len = stream_read_word(demuxer->stream);
@@ -905,7 +905,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
 		    demux_info_add(demuxer, INFOT_COMMENTS, buf);
-		    mp_free(buf);
+		    delete buf;
 		}
 		break;
 	    }
@@ -992,21 +992,21 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		      stream_read(demuxer->stream, buft, i);
 		      buft[i] = 0;
 		      demux_info_add(demuxer, INFOT_NAME, buft);
-		      mp_free(buft);
+		      delete buft;
 		    }
 		    if ((i = stream_read_char(demuxer->stream)) != 0) {
 		      buft = new char [i+1];
 		      stream_read(demuxer->stream, buft, i);
 		      buft[i] = 0;
 		      demux_info_add(demuxer, INFOT_AUTHOR, buft);
-		      mp_free(buft);
+		      delete buft;
 		    }
 		    if ((i = stream_read_char(demuxer->stream)) != 0) {
 		      buft = new char [i+1];
 		      stream_read(demuxer->stream, buft, i);
 		      buft[i] = 0;
 		      demux_info_add(demuxer, INFOT_COPYRIGHT, buft);
-		      mp_free(buft);
+		      delete buft;
 		    }
 		    if ((i = stream_read_char(demuxer->stream)) != 0)
 		      MSG_WARN("Last header byte is not zero!\n");
@@ -1488,8 +1488,8 @@ static void real_close(demuxer_t *demuxer)
     if (priv){
 	for(i=0; i<MAX_STREAMS; i++)
 	    if(priv->index_table[i])
-		mp_free(priv->index_table[i]);
-	mp_free(priv);
+		delete priv->index_table[i];
+	delete priv;
     }
 
     return;

@@ -166,28 +166,28 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_NAME, buf);
-		mp_free(buf);
+		delete buf;
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
 		buf = new char [i+1];
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_AUTHOR, buf);
-		mp_free(buf);
+		delete buf;
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
 		buf = new char [i+1];
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_COPYRIGHT, buf);
-		mp_free(buf);
+		delete buf;
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
 		buf = new char [i+1];
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
 		demux_info_add(demuxer, INFOT_COMMENTS, buf);
-		mp_free(buf);
+		delete buf;
 	}
 
 	if (ra_priv->version == 3) {
@@ -278,7 +278,7 @@ static void ra_close(demuxer_t *demuxer)
 {
     ra_priv_t* ra_priv = reinterpret_cast<ra_priv_t*>(demuxer->priv);
     if (ra_priv)
-	mp_free(ra_priv);
+	delete ra_priv;
     return;
 }
 

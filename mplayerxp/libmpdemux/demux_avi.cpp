@@ -394,7 +394,7 @@ while(1){
 		sh_video->aspect = GET_AVI_ASPECT(vprp->dwFrameAspectRatio);
 	}
 	if(mp_conf.verbose>=1) print_vprp(vprp);
-	mp_free(vprp);
+	delete vprp;
 	break;
     }
     case mmioFOURCC('d', 'm', 'l', 'h'): {
@@ -497,7 +497,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
     AVIINDEXENTRY *idx;
 
 
-    if (priv->idx_size) mp_free(priv->idx);
+    if (priv->idx_size) delete priv->idx;
     priv->idx_size = 0;
     priv->idx_offset = 0;
     priv->idx = NULL;
@@ -606,11 +606,11 @@ freeout:
     cx = &priv->suidx[0];
     do {
 	for (j=0;j<cx->nEntriesInUse;j++)
-	    if (cx->stdidx[j].nEntriesInUse) mp_free(cx->stdidx[j].aIndex);
-	mp_free(cx->stdidx);
+	    if (cx->stdidx[j].nEntriesInUse) delete cx->stdidx[j].aIndex;
+	delete cx->stdidx;
 
     } while (cx++ != &priv->suidx[priv->suidx_size-1]);
-    mp_free(priv->suidx);
+    delete priv->suidx;
 
 }
 /* Read a saved index file */
@@ -643,7 +643,7 @@ if (index_file_load) {
     fread(idx, sizeof(AVIINDEXENTRY), 1, fp);
     if (feof(fp)) {
       MSG_ERR(MSGTR_MPDEMUX_AVIHDR_PrematureEOF, index_file_load);
-      mp_free(priv->idx);
+      delete priv->idx;
       priv->idx_size = 0;
       goto gen_index;
     }
@@ -1533,8 +1533,8 @@ static void avi_close(demuxer_t *demuxer)
 
   if(!priv) return;
 
-  if(priv->idx_size > 0) mp_free(priv->idx);
-  mp_free(priv);
+  if(priv->idx_size > 0) delete priv->idx;
+  delete priv;
 }
 
 static MPXP_Rc avi_control(const demuxer_t *demuxer,int cmd,any_t*args)

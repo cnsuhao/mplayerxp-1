@@ -52,7 +52,7 @@ any_t*__builtin_new(unsigned long size) {
 
 /* required for cook's uninit: */
 void __builtin_delete(any_t* ize) {
-    mp_free(ize);
+    delete ize;
 }
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
@@ -99,7 +99,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     priv_t *priv;
     sh->context=priv=new(zeromem) priv_t;
     if(!(handle = dlopen (sh->codec->dll_name, RTLD_LAZY))) {
-	mp_free(sh->context);
+	delete sh->context;
 	return MPXP_False;
     }
 
@@ -117,7 +117,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     if(!raCloseCodec || !raDecode || !raFreeDecoder ||
 	!raGetFlavorProperty || !(raOpenCodec2||raOpenCodec) || !raSetFlavor ||
 	!raInitDecoder){
-	    mp_free(sh->context);
+	    delete sh->context;
 	    return MPXP_False;
     }
 
@@ -134,7 +134,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     path[strlen(path)+1]=0;
 
     if(raSetDLLAccessPath)
-	raSetDLLAccessPath(uint32_t(path));
+	raSetDLLAccessPath(long(path));
 
     if(raOpenCodec2) {
 	strcat(cpath,"/");
@@ -143,7 +143,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     else result=raOpenCodec(&priv->internal);
     if(result){
 	MSG_WARN("Decoder open failed, error code: 0x%X\n",result);
-	mp_free(sh->context);
+	delete sh->context;
 	return MPXP_False;
     }
 
@@ -164,7 +164,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     result=raInitDecoder(priv->internal,&init_data);
     if(result){
 	MSG_WARN("Decoder init failed, error code: 0x%X\n",result);
-	mp_free(sh->context);
+	delete sh->context;
 	return MPXP_False;
     }
 
@@ -176,7 +176,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     result=raSetFlavor(priv->internal,((short*)(sh->wf+1))[2]);
     if(result){
 	MSG_WARN("Decoder flavor setup failed, error code: 0x%X\n",result);
-	mp_free(sh->context);
+	delete sh->context;
 	return MPXP_False;
     }
 
@@ -208,9 +208,9 @@ static MPXP_Rc init(sh_audio_t *sh_audio){
 static void uninit(sh_audio_t *sh){
     // uninit the decoder etc...
     priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
-    if (raFreeDecoder) raFreeDecoder(uint32_t(priv->internal));
-    if (raCloseCodec) raCloseCodec(uint32_t(priv->internal));
-    mp_free(sh->context);
+    if (raFreeDecoder) raFreeDecoder(long(priv->internal));
+    if (raCloseCodec) raCloseCodec(long(priv->internal));
+    delete sh->context;
 }
 
 static const unsigned char sipr_swaps[38][2]={

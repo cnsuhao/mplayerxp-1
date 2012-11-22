@@ -273,12 +273,12 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 
     for(j=0; j<4; j++){
 	for(i=0; i<16; i++){
-	    mp_free(vf->priv->plane[i][j]);
+	    delete vf->priv->plane[i][j];
 	    vf->priv->plane[i][j]= NULL;
 	}
     }
 
-    mp_free(vf->priv);
+    delete vf->priv;
     vf->priv=NULL;
 }
 

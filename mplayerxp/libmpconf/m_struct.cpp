@@ -99,7 +99,7 @@ m_struct_free(const m_struct_t* st, any_t* obj) {
 
   for(i = 0 ; st->fields[i].name ; i++)
     m_option_free(&st->fields[i],M_ST_MB_P(obj,st->fields[i].p));
-  mp_free(obj);
+  delete obj;
 }
 
 any_t*

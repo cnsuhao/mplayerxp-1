@@ -500,7 +500,7 @@ static void ty_AddXDSToDisplay( const char *format, ... )
 
    if ( ty_XDS_Display[ ty_XDSAddLine ] != 0 )
    {
-      mp_free( ty_XDS_Display[ ty_XDSAddLine ] );
+      delete ty_XDS_Display[ ty_XDSAddLine ] ;
       ty_XDS_Display[ ty_XDSAddLine ] = 0;
    }
 
@@ -531,7 +531,7 @@ static void ty_DisplayXDSInfo(void)
 	 // Right Justify the XDS Stuff
 	 memcpy( &( ty_OSD1.text[ 0 ][ TY_CC_MAX_X - size - 1 ] ),
 	    ty_XDS_Display[ index ], size );
-	 mp_free( ty_XDS_Display[ index ] );
+	 delete ty_XDS_Display[ index ] ;
 	 ty_XDS_Display[ index ] = 0;
 	 ty_XDSDisplayCount = 0;
 	 tyOSDUpdate = 1;

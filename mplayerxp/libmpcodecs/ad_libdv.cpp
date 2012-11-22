@@ -87,7 +87,7 @@ static void uninit(sh_audio_t *sh_audio)
     unsigned i;
     UNUSED(sh_audio);
     for (i=0; i < 4; i++)
-	mp_free(priv->audioBuffers[i]);
+	delete priv->audioBuffers[i];
 }
 
 static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)

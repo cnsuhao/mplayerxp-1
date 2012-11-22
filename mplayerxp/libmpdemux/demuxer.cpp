@@ -107,7 +107,7 @@ void libmpdemux_register_options(m_config_t* cfg)
 void free_demuxer_stream(demux_stream_t *ds){
     if(ds) {
 	ds_free_packs(ds);
-	mp_free(ds);
+	delete ds;
     }
 }
 
@@ -198,8 +198,8 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
 
 void free_sh_audio(sh_audio_t* sh){
     MSG_V("DEMUXER: freeing sh_audio at %p  \n",sh);
-    if(sh->wf) mp_free(sh->wf);
-    mp_free(sh);
+    if(sh->wf) delete sh->wf;
+    delete sh;
 }
 
 sh_video_t* get_sh_video(demuxer_t *demuxer, int id)
@@ -233,8 +233,8 @@ sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
 
 void free_sh_video(sh_video_t* sh){
     MSG_V("DEMUXER: freeing sh_video at %p  \n",sh);
-    if(sh->bih) mp_free(sh->bih);
-    mp_free(sh);
+    if(sh->bih) delete sh->bih;
+    delete sh;
 }
 
 void free_demuxer(demuxer_t *demuxer){
@@ -255,7 +255,7 @@ void free_demuxer(demuxer_t *demuxer){
 	FREE_DEMUXER_STREAM(demuxer->video);
 	FREE_DEMUXER_STREAM(demuxer->sub);
 	demux_info_free(demuxer);
-	mp_free(demuxer);
+	delete demuxer;
     }
 }
 
@@ -309,7 +309,7 @@ int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds){
 //     1 = succesfull
 int ds_fill_buffer(demux_stream_t *ds){
   demuxer_t *demux=ds->demuxer;
-  if(ds->buffer) mp_free(ds->buffer);
+  if(ds->buffer) delete ds->buffer;
 /*  ds_free_packs(ds); */
   if(mp_conf.verbose>2) {
     if(ds==demux->audio)
@@ -401,14 +401,14 @@ void ds_free_packs(demux_stream_t *ds){
   }
   if(ds->asf_packet){
     // mp_free unfinished .asf fragments:
-    mp_free(ds->asf_packet->buffer);
-    mp_free(ds->asf_packet);
+    delete ds->asf_packet->buffer;
+    delete ds->asf_packet;
     ds->asf_packet=NULL;
   }
   ds->first=ds->last=NULL;
   ds->packs=0; // !!!!!
   ds->bytes=0;
-  if(ds->current) mp_free(ds->current);
+  if(ds->current) delete ds->current;
   ds->current=NULL;
   ds->buffer=NULL;
   ds->buffer_pos=ds->buffer_size;
@@ -431,8 +431,8 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
   {
     if(ds->asf_packet){
 	// mp_free unfinished .asf fragments:
-	mp_free(ds->asf_packet->buffer);
-	mp_free(ds->asf_packet);
+	delete ds->asf_packet->buffer;
+	delete ds->asf_packet;
 	ds->asf_packet=NULL;
     }
     ds->first=ds->last=NULL;
@@ -447,7 +447,7 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
     ds->bytes-=bytes;
     ds->pts=dp->pts;
   }
-  if(ds->current) mp_free(ds->current);
+  if(ds->current) delete ds->current;
   ds->current=NULL;
   ds->buffer=NULL;
   ds->buffer_pos=ds->buffer_size;
@@ -706,7 +706,7 @@ int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param)
     if(((demuxer_info_t *)demuxer->info)->id[opt])
     {
 	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],((demuxer_info_t *)demuxer->info)->id[opt]);
-	mp_free(((demuxer_info_t *)demuxer->info)->id[opt]);
+	delete ((demuxer_info_t *)demuxer->info)->id[opt];
     }
     ((demuxer_info_t *)demuxer->info)->id[opt]=nls_recode2screen_cp(sub_data.cp,param,strlen(param));
     return 1;
@@ -729,8 +729,8 @@ void demux_info_free(demuxer_t* demuxer)
     {
 	for(i=0;i<INFOT_MAX;i++)
 	    if(((demuxer_info_t *)demuxer->info)->id[i])
-		mp_free(((demuxer_info_t *)demuxer->info)->id[i]);
-	mp_free(demuxer->info);
+		delete ((demuxer_info_t *)demuxer->info)->id[i];
+	delete demuxer->info;
     }
 }
 
@@ -806,8 +806,8 @@ demux_packet_t* new_demux_packet(int len){
 }
 
 void free_demux_packet(demux_packet_t* dp){
-  mp_free(dp->buffer);
-  mp_free(dp);
+  delete dp->buffer;
+  delete dp;
 }
 
 void resize_demux_packet(demux_packet_t* dp, int len)
@@ -821,7 +821,7 @@ void resize_demux_packet(demux_packet_t* dp, int len)
     }
     else
     {
-	if(dp->buffer) mp_free(dp->buffer);
+	if(dp->buffer) delete dp->buffer;
 	dp->buffer=NULL;
     }
     dp->len=len;

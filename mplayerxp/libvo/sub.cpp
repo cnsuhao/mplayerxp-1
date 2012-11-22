@@ -55,8 +55,8 @@ static void alloc_buf(mp_osd_obj_t* obj)
     len = obj->stride*(obj->bbox.y2-obj->bbox.y1);
     if (obj->allocated<len) {
 	obj->allocated = len;
-	mp_free(obj->bitmap_buffer);
-	mp_free(obj->alpha_buffer);
+	delete obj->bitmap_buffer;
+	delete obj->alpha_buffer;
 	obj->bitmap_buffer = (unsigned char *)mp_memalign(16, len);
 	obj->alpha_buffer = (unsigned char *)mp_memalign(16, len);
     }
@@ -421,7 +421,7 @@ void free_osd_list(void){
     mp_osd_obj_t* obj=vo_osd_list;
     while(obj){
 	mp_osd_obj_t* next=obj->next;
-	mp_free(obj);
+	delete obj;
 	obj=next;
     }
     vo_osd_list=NULL;

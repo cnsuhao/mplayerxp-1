@@ -116,7 +116,7 @@ int mpxp_printf( unsigned x, const char *format, ... ){
 	char *obuf;
 	obuf=nls_recode2screen_cp("UTF-8",sbuf,ssize);
 	rc=fputs(obuf,stderr);
-	mp_free(obuf);
+	delete obuf;
     }
     else rc=fputs(sbuf,stderr);
     if(format[strlen(format)-1]=='\n') was_eol=1;

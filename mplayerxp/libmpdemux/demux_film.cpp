@@ -226,7 +226,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
   if (chunk_type != CHUNK_FILM)
   {
     MSG_ERR( "Not a FILM file\n");
-    mp_free(film_data);
+    delete film_data;
     return NULL;
   }
 
@@ -431,8 +431,8 @@ static void film_close(demuxer_t* demuxer) {
   if(!film_data)
     return;
   if(film_data->chunks)
-    mp_free(film_data->chunks);
-  mp_free(film_data);
+    delete film_data->chunks;
+  delete film_data;
 
 }
 

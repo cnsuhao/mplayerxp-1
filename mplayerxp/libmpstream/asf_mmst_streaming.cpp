@@ -473,7 +473,7 @@ static int asf_mmst_streaming_read( int fd, char *buffer, int size, streaming_ct
 	  memcpy( buffer, (stream_ctrl->buffer)+(stream_ctrl->buffer_pos), len );
 	  stream_ctrl->buffer_pos += len;
 	  if( stream_ctrl->buffer_pos>=stream_ctrl->buffer_size ) {
-		  mp_free( stream_ctrl->buffer );
+		  delete stream_ctrl->buffer ;
 		  stream_ctrl->buffer = NULL;
 		  stream_ctrl->buffer_size = 0;
 		  stream_ctrl->buffer_pos = 0;
@@ -526,7 +526,7 @@ int asf_mmst_streaming_start(any_t* libinput,stream_t *stream)
   }
   s = tcp_connect2Server(libinput, url1->hostname, url1->port, 0);
   if( s<0 ) {
-	  mp_free(path);
+	  delete path;
 	  return s;
   }
   MSG_INFO ("connected\n");
@@ -575,7 +575,7 @@ int asf_mmst_streaming_start(any_t* libinput,stream_t *stream)
   string_utf16 (&data[8], path, strlen(path));
   memset (data, 0, 8);
   send_command (s, 5, 0, 0, strlen(path)*2+10, data);
-  mp_free(path);
+  delete path;
 
   get_answer (s);
 

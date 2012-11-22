@@ -271,7 +271,7 @@ void dump_mux_close(demuxer_t *demuxer)
 	fseeko(priv->mux_file,0,SEEK_SET);
 	muxer_write_header(priv->muxer,demuxer);
 	fclose(priv->mux_file);
-	mp_free(demuxer->priv);
+	delete demuxer->priv;
 	demuxer->priv=NULL;
     }
     MSG_INFO(MSGTR_CoreDumped);

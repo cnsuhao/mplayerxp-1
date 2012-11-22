@@ -184,8 +184,8 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 // Deallocate memory
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
-    if(((af_crystality_t *)af->setup)->buf) mp_free(((af_crystality_t *)af->setup)->buf);
-    if(af->setup) mp_free(af->setup);
+    if(((af_crystality_t *)af->setup)->buf) delete ((af_crystality_t *)af->setup)->buf;
+    if(af->setup) delete af->setup;
 }
 
 // Filter data through filter

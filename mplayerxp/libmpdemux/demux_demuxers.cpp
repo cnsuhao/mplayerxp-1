@@ -94,7 +94,7 @@ static void demux_close_demuxers(demuxer_t* demuxer) {
   if(priv->sd && priv->sd != priv->vd && priv->sd != priv->ad)
     FREE_DEMUXER(priv->sd);
 
-  mp_free(priv);
+  delete priv;
   demux_info_free(demuxer);
-  mp_free(demuxer);
+  delete demuxer;
 }

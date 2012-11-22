@@ -264,8 +264,8 @@ static void mpxp_uninit_structs(void) {
     delete MPXPCtx->bench;
     delete MPXPCtx->MPXPSys;
     delete MPXPCtx;
-    if(vo_data) mp_free(vo_data);
-    if(ao_data) mp_free(ao_data);
+    if(vo_data) delete vo_data;
+    if(ao_data) delete ao_data;
     MPXPCtx=NULL;
     xmp_uninit();
     mp_uninit_malloc(mp_conf.verbose);
@@ -423,7 +423,7 @@ void parse_cfgfiles( m_config_t* conf )
 	MSG_WARN(MSGTR_NoHomeDir);
     } else {
 	mkdir(conffile, 0777);
-	mp_free(conffile);
+	delete conffile;
 	if ((conffile = get_path("config")) == NULL) {
 	    MSG_ERR(MSGTR_GetpathProblem);
 	    conffile=(char*)mp_malloc(strlen("config")+1);
@@ -436,7 +436,7 @@ void parse_cfgfiles( m_config_t* conf )
 	    close(conffile_fd);
 	}
 	if (m_config_parse_config_file(conf, conffile) != MPXP_Ok) exit(1);
-	mp_free(conffile);
+	delete conffile;
     }
 }
 
@@ -931,7 +931,7 @@ static int mpxp_init_vobsub(const char *filename) {
       char *buf = (char *)mp_mallocz((strlen(filename)-3) * sizeof(char));
       strncpy(buf, filename, strlen(filename)-4);
       vo_data->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&vo_data->spudec);
-      mp_free(buf);
+      delete buf;
     }
     if(vo_data->vobsub)
     {
@@ -990,7 +990,7 @@ static void mpxp_init_dvd_nls(void) {
 	if(mp_conf.audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
 	    mp_conf.audio_id=*(int *)lang;
 	}
-	mp_free(lang);
+	delete lang;
     }
     if(mp_conf.dvdsub_lang) {
 	lang=(char *)mp_malloc(std::max(strlen(mp_conf.dvdsub_lang)+1,size_t(4)));
@@ -998,7 +998,7 @@ static void mpxp_init_dvd_nls(void) {
 	if(mp_conf.dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
 	    mp_conf.dvdsub_id=*(int *)lang;
 	}
-	mp_free(lang);
+	delete lang;
     }
 }
 

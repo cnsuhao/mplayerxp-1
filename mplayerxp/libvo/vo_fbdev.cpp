@@ -356,7 +356,7 @@ static int __FASTCALL__ parse_fbmode_cfg(vo_data_t*vo,const char *cfgfile)
     if (!validate_mode(mode)) goto err_out_not_valid;
 out:
     MSG_DBG2("%d modes\n", nr_modes);
-    mp_free(priv->line);
+    delete priv->line;
     fclose(priv->fp);
     return nr_modes;
 err_out_parse_error:
@@ -365,12 +365,12 @@ err_out_print_linenum:
     PRINT_LINENUM;
 err_out:
     if (fb_modes) {
-	mp_free(fb_modes);
+	delete fb_modes;
 	fb_modes = NULL;
     }
     nr_modes = 0;
-    mp_free(priv->line);
-    mp_free(priv->fp);
+    delete priv->line;
+    delete priv->fp;
     return -2;
 err_out_not_valid:
     MSG_ERR("previous mode is not correct");
@@ -585,7 +585,7 @@ static range_t * __FASTCALL__ str2range(const char *s)
     r[i].min = r[i].max = -1;
     return r;
 out_err:
-    if (r) mp_free(r);
+    if (r) delete r;
     return NULL;
 }
 
@@ -625,7 +625,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     green = new uint16_t[cols];
     if(!green) {
 	MSG_ERR("Can't allocate green palette with %d entries.\n", cols);
-	mp_free(red);
+	delete red;
 	return NULL;
     }
     for(i=0; i< gcols; i++)
@@ -634,8 +634,8 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     blue = new uint16_t[cols];
     if(!blue) {
 	MSG_ERR("Can't allocate blue palette with %d entries.\n", cols);
-	mp_free(red);
-	mp_free(green);
+	delete red;
+	delete green;
 	return NULL;
     }
     for(i=0; i< bcols; i++)
@@ -644,9 +644,9 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
     cmap = new struct fb_cmap;
     if(!cmap) {
 	MSG_ERR("Can't allocate color map\n");
-	mp_free(red);
-	mp_free(green);
-	mp_free(blue);
+	delete red;
+	delete green;
+	delete blue;
 	return NULL;
     }
     cmap->start = 0;
@@ -963,10 +963,10 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 		return MPXP_False;
 	    }
 	    priv->cmap_changed = 1;
-	    mp_free(cmap->red);
-	    mp_free(cmap->green);
-	    mp_free(cmap->blue);
-	    mp_free(cmap);
+	    delete cmap->red;
+	    delete cmap->green;
+	    delete cmap->blue;
+	    delete cmap;
 	    break;
 	default:
 	    MSG_ERR(FBDEV "visual: %d not yet supported\n",priv->finfo.visual);
@@ -1098,7 +1098,7 @@ static void uninit(vo_data_t*vo)
 		MSG_ERR(FBDEV "Can't restore original cmap\n");
 	priv->cmap_changed = 0;
     }
-    for(i=0;i<priv->total_fr;i++) mp_free(priv->next_frame[i]);
+    for(i=0;i<priv->total_fr;i++) delete priv->next_frame[i];
     if (ioctl(priv->dev_fd, FBIOGET_VSCREENINFO, &priv->vinfo))
 	MSG_ERR(FBDEV "ioctl FBIOGET_VSCREENINFO: %s\n", strerror(errno));
     priv->orig_vinfo.xoffset = priv->vinfo.xoffset;

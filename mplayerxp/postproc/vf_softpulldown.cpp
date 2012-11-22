@@ -140,7 +140,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 {
 	MSG_INFO( "softpulldown: %lld frames in, %lld frames out\n", vf->priv->in, vf->priv->out);
-	mp_free(vf->priv);
+	delete vf->priv;
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)

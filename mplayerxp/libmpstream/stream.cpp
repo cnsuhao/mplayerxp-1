@@ -115,8 +115,8 @@ stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file
 	stream->buffer=(unsigned char *)mp_realloc(stream->buffer,stream->sector_size);
 	return stream;
     }
-    mp_free(stream->buffer);
-    mp_free(stream);
+    delete stream->buffer;
+    delete stream;
     return NULL;
 }
 
@@ -226,7 +226,7 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   s->start_pos=0; s->end_pos=len;
   s->sector_size=1;
   s->buffer=(unsigned char *)mp_malloc(len);
-  if(s->buffer==NULL) { mp_free(s); return NULL; }
+  if(s->buffer==NULL) { delete s; return NULL; }
   stream_reset(s);
   s->pos=len;
   memcpy(s->buffer,data,len);
@@ -243,7 +243,7 @@ stream_t* __FASTCALL__ new_stream(int type){
   s->type=type;
   s->sector_size=STREAM_BUFFER_SIZE;
   s->buffer=(unsigned char*)mp_malloc(STREAM_BUFFER_SIZE);
-  if(s->buffer==NULL) { mp_free(s); return NULL; }
+  if(s->buffer==NULL) { delete s; return NULL; }
   stream_reset(s);
   return s;
 }
@@ -252,8 +252,8 @@ void __FASTCALL__ free_stream(stream_t *s){
   MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",s->driver->mrl,strerror(errno));
   if(s->cache_data) stream_disable_cache(s);
   if(s->driver) s->driver->close(s);
-  mp_free(s->buffer);
-  mp_free(s);
+  delete s->buffer;
+  delete s;
 }
 
 stream_t* __FASTCALL__ new_ds_stream(demux_stream_t *ds) {

@@ -83,7 +83,7 @@ static MPXP_Rc control(struct af_instance_s* af, int cmd, any_t* arg)
 // Deallocate memory
 static void uninit(struct af_instance_s* af)
 {
-    if(af->setup) mp_free(af->setup);
+    if(af->setup) delete af->setup;
 }
 
 // Filter data through filter

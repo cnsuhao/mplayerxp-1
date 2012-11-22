@@ -252,7 +252,7 @@ static void uninit(sh_video_t *sh){
     priv_t*p=reinterpret_cast<priv_t*>(sh->context);
     p->decoder(p->pHandle, DEC_OPT_RELEASE, 0, 0);
     dlclose(dll_handle);
-    mp_free(p);
+    delete p;
 }
 
 // decode a frame

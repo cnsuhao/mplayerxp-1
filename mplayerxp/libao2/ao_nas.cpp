@@ -528,9 +528,9 @@ static void uninit(ao_data_t* ao){
     pthread_join(priv->event_thread, NULL);
     AuCloseServer(priv->aud);
     priv->aud = 0;
-    mp_free(priv->client_buffer);
-    mp_free(priv->server_buffer);
-    mp_free(priv);
+    delete priv->client_buffer;
+    delete priv->server_buffer;
+    delete priv;
 }
 
 // stop playing and empty buffers (for seeking/pause)

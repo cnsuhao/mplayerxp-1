@@ -116,7 +116,7 @@ static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
       closesocket (fd);
     }
 
-    mp_free (mrl);
+    delete mrl;
     temp--;
   } while ((redirected != 0) && (temp > 0));
 

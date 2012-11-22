@@ -116,9 +116,9 @@ static void asmrp_dispose (asmrp_t *p) {
   int i;
 
   for (i=0; i<p->sym_tab_num; i++)
-    mp_free (p->sym_tab[i].id);
+    delete p->sym_tab[i].id;
 
-  mp_free (p);
+  delete p;
 }
 
 static void asmrp_getch (asmrp_t *p) {

@@ -169,7 +169,7 @@ static void uninit(ao_data_t* ao) {
   ALCcontext *ctx = alcGetCurrentContext();
   ALCdevice *dev = alcGetContextsDevice(ctx);
   priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-  mp_free(priv->tmpbuf);
+  delete priv->tmpbuf;
   if (!immed) {
     ALint state;
     alGetSourcei(priv->sources[0], AL_SOURCE_STATE, &state);
@@ -182,7 +182,7 @@ static void uninit(ao_data_t* ao) {
   alcMakeContextCurrent(NULL);
   alcDestroyContext(ctx);
   alcCloseDevice(dev);
-  mp_free(ao->priv);
+  delete ao->priv;
 }
 
 static void unqueue_buffers(const ao_data_t* ao) {

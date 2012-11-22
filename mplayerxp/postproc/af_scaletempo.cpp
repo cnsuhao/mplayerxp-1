@@ -410,12 +410,12 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 static void __FASTCALL__ uninit(struct af_instance_s* af)
 {
   af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
-  mp_free(s->buf_queue);
-  mp_free(s->buf_overlap);
-  mp_free(s->buf_pre_corr);
-  mp_free(s->table_blend);
-  mp_free(s->table_window);
-  mp_free(af->setup);
+  delete s->buf_queue;
+  delete s->buf_overlap;
+  delete s->buf_pre_corr;
+  delete s->table_blend;
+  delete s->table_window;
+  delete af->setup;
 }
 
 // Allocate memory and set function pointers

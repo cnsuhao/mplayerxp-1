@@ -324,7 +324,7 @@ ac3_retry:
 	    write(priv->fd,data,ao->outburst);
 	    ao->buffersize+=ao->outburst;
 	}
-	mp_free(data);
+	delete data;
 	if(ao->buffersize==0){
 	    MSG_ERR("\n   *** OSS-CONF: Your audio driver DOES NOT support select()  ***\n"
 		    "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mp_config.h !\n\n");
@@ -351,7 +351,7 @@ static void uninit(ao_data_t* ao){
 #endif
     close(priv->fd);
     priv->fd = -1;
-    mp_free(ao->priv);
+    delete ao->priv;
 }
 
 // stop playing and empty buffers (for seeking/pause)

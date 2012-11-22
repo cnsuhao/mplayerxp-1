@@ -96,7 +96,7 @@ void GetCpuCaps( CpuCaps *caps)
 
 		tmpstr=GetCpuFriendlyName(regs, regs2);
 		MSG_V("CPU: %s ",tmpstr);
-		mp_free(tmpstr);
+		delete tmpstr;
 
 		caps->cpuType=(regs2[0] >> 8)&0xf;
 		if(caps->cpuType==0xf){

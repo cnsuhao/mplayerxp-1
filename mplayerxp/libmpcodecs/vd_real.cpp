@@ -84,7 +84,7 @@ any_t*__builtin_vec_new(unsigned long size) {
 }
 
 void __builtin_vec_delete(any_t*mem) {
-    mp_free(mem);
+    delete mem;
 }
 
 void __pure_virtual(void)

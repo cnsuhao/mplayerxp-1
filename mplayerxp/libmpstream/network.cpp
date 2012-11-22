@@ -107,9 +107,9 @@ streaming_ctrl_t * streaming_ctrl_new(any_t*libinput) {
 void streaming_ctrl_free( streaming_ctrl_t *streaming_ctrl ) {
 	if( streaming_ctrl==NULL ) return;
 	if( streaming_ctrl->url ) url_free( streaming_ctrl->url );
-	if( streaming_ctrl->buffer ) mp_free( streaming_ctrl->buffer );
-	if( streaming_ctrl->data ) mp_free( streaming_ctrl->data );
-	mp_free( streaming_ctrl );
+	if( streaming_ctrl->buffer ) delete streaming_ctrl->buffer ;
+	if( streaming_ctrl->data ) delete streaming_ctrl->data ;
+	delete streaming_ctrl ;
 }
 
 URL_t*
@@ -159,7 +159,7 @@ check4proxies( URL_t *url ) {
 			}
 			url_free( url_out );
 			url_out = tmp_url;
-			mp_free( new_url );
+			delete new_url ;
 			url_free( proxy_url );
 		}
 	}
@@ -283,11 +283,11 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 	}
 	if( *auth_retry>0 ) {
 		if( url->username ) {
-			mp_free( url->username );
+			delete url->username ;
 			url->username = NULL;
 		}
 		if( url->password ) {
-			mp_free( url->password );
+			delete url->password ;
 			url->password = NULL;
 		}
 	}
@@ -586,7 +586,7 @@ nop_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctr
 		stream_ctrl->buffer_pos += len;
 //printf("buffer_pos = %d\n", stream_ctrl->buffer_pos );
 		if( stream_ctrl->buffer_pos>=stream_ctrl->buffer_size ) {
-			mp_free( stream_ctrl->buffer );
+			delete stream_ctrl->buffer ;
 			stream_ctrl->buffer = NULL;
 			stream_ctrl->buffer_size = 0;
 			stream_ctrl->buffer_pos = 0;
@@ -779,7 +779,7 @@ realrtsp_streaming_start( stream_t *stream ) {
 			closesocket(fd);
 		}
 
-		mp_free(mrl);
+		delete mrl;
 		temp--;
 
 	} while( (redirected != 0) && (temp > 0) );

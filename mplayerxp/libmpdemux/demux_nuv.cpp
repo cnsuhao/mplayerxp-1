@@ -317,9 +317,9 @@ static void nuv_close(demuxer_t* demuxer) {
   for(pos = priv->index_list ; pos != NULL ; ) {
     nuv_position_t* p = pos;
     pos = pos->next;
-    mp_free(p);
+    delete p;
   }
-  mp_free(priv);
+  delete priv;
 }
 
 static MPXP_Rc nuv_control(const demuxer_t *demuxer,int cmd,any_t*args)

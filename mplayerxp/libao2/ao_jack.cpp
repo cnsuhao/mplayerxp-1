@@ -309,14 +309,14 @@ static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
     ao->bps = channels * rate * sizeof(float);
     ao->buffersize = CHUNK_SIZE * NUM_CHUNKS;
     ao->outburst = CHUNK_SIZE;
-    mp_free(matching_ports);
-    mp_free(port_name);
+    delete matching_ports;
+    delete port_name;
     delete client_name;
     return MPXP_Ok;
 
 err_out:
-    mp_free(matching_ports);
-    mp_free(port_name);
+    delete matching_ports;
+    delete port_name;
     delete client_name;
     if (priv->client) jack_client_close(priv->client);
     av_fifo_free(priv->buffer);
@@ -333,7 +333,7 @@ static void uninit(ao_data_t* ao) {
   jack_client_close(priv->client);
   av_fifo_free(priv->buffer);
   priv->buffer = NULL;
-  mp_free(priv);
+  delete priv;
 }
 
 /**

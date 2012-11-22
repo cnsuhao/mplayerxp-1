@@ -49,15 +49,15 @@ play_tree_free(play_tree_t* pt, int childs) {
   for(iter = pt->child ; iter != NULL ; iter = iter->next)
     iter->parent = NULL;
 
-  //if(pt->params) mp_free(pt->params);
+  //if(pt->params) delete pt->params;
   if(pt->files) {
     int i;
     for(i = 0 ; pt->files[i] != NULL ; i++)
-      mp_free(pt->files[i]);
-    mp_free(pt->files);
+      delete pt->files[i];
+    delete pt->files;
   }
 
-  mp_free(pt);
+  delete pt;
 }
 
 void
@@ -306,7 +306,7 @@ play_tree_remove_file(play_tree_t* pt,const char* file) {
   assert(n > f);
 #endif
 
-  mp_free(pt->files[f]);
+  delete pt->files[f];
 
   if(n > 1) {
     memmove(&pt->files[f],&pt->files[f+1],(n-f)*sizeof(char*));
@@ -316,7 +316,7 @@ play_tree_remove_file(play_tree_t* pt,const char* file) {
       return -1;
     }
   } else {
-    mp_free(pt->files);
+    delete pt->files;
     pt->files = NULL;
   }
 
@@ -339,7 +339,7 @@ void play_tree_set_param(play_tree_t* pt,const char* name,const char* val) {
   }
 
   if(ni > 0) {
-    if(pt->params[n].value != NULL) mp_free(pt->params[n].value);
+    if(pt->params[n].value != NULL) delete pt->params[n].value;
     pt->params[n].value = val != NULL ? mp_strdup(val) : NULL;
     return;
   }
@@ -374,8 +374,8 @@ int play_tree_unset_param(play_tree_t* pt,const char* name) {
   if(ni < 0)
     return 0;
 
-  if(pt->params[ni].name) mp_free(pt->params[ni].name);
-  if(pt->params[ni].value) mp_free(pt->params[ni].value);
+  if(pt->params[ni].name) delete pt->params[ni].name;
+  if(pt->params[ni].value) delete pt->params[ni].value;
 
   if(n > 1) {
     memmove(&pt->params[ni],&pt->params[ni+1],(n-ni)*sizeof(play_tree_param_t));
@@ -385,7 +385,7 @@ int play_tree_unset_param(play_tree_t* pt,const char* name) {
       return -1;
     }
   } else {
-    mp_free(pt->params);
+    delete pt->params;
     pt->params = NULL;
   }
 
@@ -503,10 +503,10 @@ play_tree_iter_free(play_tree_iter_t* iter) {
 #ifdef MP_DEBUG
     assert(iter->stack_size > 0);
 #endif
-    mp_free(iter->status_stack);
+    delete iter->status_stack;
   }
 
-  mp_free(iter);
+  delete iter;
 }
 
 static play_tree_t*
@@ -700,7 +700,7 @@ play_tree_iter_up_step(play_tree_iter_t* iter, int d,int with_nodes) {
   if(iter->stack_size > 0)
     iter->status_stack = (int*)mp_realloc(iter->status_stack,iter->stack_size*sizeof(int));
   else {
-    mp_free(iter->status_stack);
+    delete iter->status_stack;
     iter->status_stack = NULL;
   }
   if(iter->stack_size > 0 && iter->status_stack == NULL) {
@@ -817,7 +817,7 @@ play_tree_iter_get_file(play_tree_iter_t* iter, int d) {
 	  strncpy(s,entry,val-e);
 	  s[val-e] = '\0';
 	}
-	mp_free(val);
+	delete val;
 	return playtree_ret_filename;
       } else {
 	if(iter->config)
@@ -882,7 +882,7 @@ play_tree_iter_t* play_tree_iter_new_copy(play_tree_iter_t const* old) {
     iter->status_stack = (int*)mp_malloc(old->stack_size * sizeof(int));
     if(iter->status_stack == NULL) {
       MSG_ERR("Can't allocate %d bytes of memory\n",old->stack_size * sizeof(int));
-      mp_free(iter);
+      delete iter;
       return NULL;
     }
     memcpy(iter->status_stack,old->status_stack,iter->stack_size*sizeof(int));
@@ -919,7 +919,7 @@ void pt_iter_destroy(play_tree_iter_t** iter)
 {
   if (iter && *iter)
   {
-    mp_free(*iter);
+    delete *iter;
     iter=NULL;
   }
 }
@@ -996,7 +996,7 @@ void pt_add_gui_file(play_tree_t** ppt,const char* path,const char* file)
     strcat(wholename, "/");
     strcat(wholename, file);
     pt_add_file(ppt, wholename);
-    mp_free(wholename); // As pt_add_file strdups it anyway!
+    delete wholename; // As pt_add_file strdups it anyway!
   }
 }
 

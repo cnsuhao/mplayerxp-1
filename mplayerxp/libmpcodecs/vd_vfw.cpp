@@ -266,8 +266,8 @@ static void uninit(sh_video_t *sh)
 {
     priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
     vfw_close_video_codec(sh);
-    mp_free(priv->o_bih);
-    mp_free(sh->context);
+    delete priv->o_bih;
+    delete sh->context;
 }
 
 // decode a frame

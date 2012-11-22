@@ -230,7 +230,7 @@ static void dv_close(demuxer_t* demuxer)
 
    if(frames==0)
       return;
-  mp_free(frames);
+  delete frames;
 }
 
 static MPXP_Rc dv_control(const demuxer_t *demuxer,int cmd, any_t*arg) {

@@ -486,7 +486,7 @@ static void mp_input_rm_cmd_fd(any_t* handle,any_t* fd) {
     }
     if(i == priv->num_cmd_fd) return;
     if(priv->cmd_fds[i].close_func) priv->cmd_fds[i].close_func(priv->cmd_fds[i].opaque);
-    if(priv->cmd_fds[i].buffer)     mp_free(priv->cmd_fds[i].buffer);
+    if(priv->cmd_fds[i].buffer)     delete priv->cmd_fds[i].buffer;
     if(i + 1 < priv->num_cmd_fd)    memmove(&priv->cmd_fds[i],&priv->cmd_fds[i+1],(priv->num_cmd_fd-i-1)*sizeof(mp_input_fd_t));
     priv->num_cmd_fd--;
 }
@@ -948,7 +948,7 @@ static mp_cmd_t* mp_input_read_cmds(any_t* handle) {
 	    continue;
 	}
 	ret = mp_input_parse_cmd(cmd);
-	mp_free(cmd);
+	delete cmd;
 	if(!ret) continue;
 	last_loop = i;
 	return ret;
@@ -1020,9 +1020,9 @@ void mp_cmd_free(mp_cmd_t* cmd) {
 
     for(i=0; i < MP_CMD_MAX_ARGS && cmd->args[i].type != -1; i++) {
 	if(cmd->args[i].type == MP_CMD_ARG_STRING && cmd->args[i].v.s != NULL)
-	    mp_free(cmd->args[i].v.s);
+	    delete cmd->args[i].v.s;
     }
-    mp_free(cmd);
+    delete cmd;
 }
 
 static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd) {
@@ -1129,7 +1129,7 @@ static void mp_input_free_binds(mp_cmd_bind_t* binds) {
     int i;
     if(!binds) return;
     for(i = 0; binds[i].cmd != NULL; i++) delete binds[i].cmd;
-    mp_free(binds);
+    delete binds;
 }
 
 #define BS_MAX 256
@@ -1339,7 +1339,7 @@ static void mp_input_uninit(any_t* handle) {
 	    if(priv->cmd_binds[i].cmd != NULL) delete priv->cmd_binds[i].cmd;
 	    else break;
 	}
-	mp_free(priv->cmd_binds);
+	delete priv->cmd_binds;
 	priv->cmd_binds=NULL;
     }
     if(priv->in_file_fd==0) getch2_disable();
@@ -1357,7 +1357,7 @@ any_t* mp_input_open(void) {
 
 void mp_input_close(any_t* handle) {
     mp_input_uninit(handle);
-    mp_free(handle);
+    delete handle;
 }
 
 void mp_input_register_options(m_config_t* cfg) {

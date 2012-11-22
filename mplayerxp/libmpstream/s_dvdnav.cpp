@@ -67,19 +67,19 @@ static dvdnav_priv_t * __FASTCALL__ new_dvdnav_stream(stream_t *stream,const cha
     return NULL;
 
   if (!(dvdnav_priv->filename=mp_strdup(filename))) {
-    mp_free(dvdnav_priv);
+    delete dvdnav_priv;
     return NULL;
   }
 
   if(dvdnav_open(&(dvdnav_priv->dvdnav),dvdnav_priv->filename)!=DVDNAV_STATUS_OK)
   {
-    mp_free(dvdnav_priv->filename);
-    mp_free(dvdnav_priv);
+    delete dvdnav_priv->filename;
+    delete dvdnav_priv;
     return NULL;
   }
 
   if (!dvdnav_priv->dvdnav) {
-    mp_free(dvdnav_priv);
+    delete dvdnav_priv;
     return NULL;
   }
 
@@ -209,18 +209,18 @@ static MPXP_Rc __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const 
 	    else
 		goto dvd_ok;
 	}
-	mp_free(stream->priv);
-	if(dvd_device) mp_free(dvd_device);
+	delete stream->priv;
+	if(dvd_device) delete dvd_device;
 	return MPXP_False;
     }
     dvd_ok:
-    if(dvd_device) mp_free(dvd_device);
+    if(dvd_device) delete dvd_device;
     ((dvdnav_priv_t *)stream->priv)->started=1;
     if(mp_conf.s_cache_size) {
 	tevent = new(zeromem) dvdnav_event_t;
 	if(tevent)
 	    if((tevent->details=mp_malloc(DVD_BLOCK_SIZE))==NULL) {
-		mp_free(tevent);
+		delete tevent;
 		tevent=NULL;
 	    }
     }
@@ -413,8 +413,8 @@ static void __FASTCALL__ __dvdnav_close(stream_t *stream)
 {
   dvdnav_priv_t *dvdnav_priv=reinterpret_cast<dvdnav_priv_t*>(stream->priv);
   dvdnav_close(dvdnav_priv->dvdnav);
-  mp_free(dvdnav_priv);
-  if(tevent) { mp_free(tevent->details); mp_free(tevent); }
+  delete dvdnav_priv;
+  if(tevent) { delete tevent->details; delete tevent; }
 }
 
 /**

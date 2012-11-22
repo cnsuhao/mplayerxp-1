@@ -338,7 +338,7 @@ static void nsv_close(demuxer_t* demuxer) {
 
     if(!priv)
 	return;
-    mp_free(priv);
+    delete priv;
 
 }
 

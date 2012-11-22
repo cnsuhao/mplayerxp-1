@@ -273,7 +273,7 @@ static void uninit(sh_audio_t *sh)
 {
     MSG_V("FAAD: Closing decoder!\n");
     NeAACDecClose(NeAAC_hdec);
-    mp_free(sh->context);
+    delete sh->context;
 }
 
 static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)

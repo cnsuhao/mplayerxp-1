@@ -28,21 +28,21 @@ void
 http_free( HTTP_header_t *http_hdr ) {
 	HTTP_field_t *field, *field2free;
 	if( http_hdr==NULL ) return;
-	if( http_hdr->protocol!=NULL ) mp_free( http_hdr->protocol );
-	if( http_hdr->uri!=NULL ) mp_free( http_hdr->uri );
-	if( http_hdr->reason_phrase!=NULL ) mp_free( http_hdr->reason_phrase );
-	if( http_hdr->field_search!=NULL ) mp_free( http_hdr->field_search );
-	if( http_hdr->method!=NULL ) mp_free( http_hdr->method );
-	if( http_hdr->buffer!=NULL ) mp_free( http_hdr->buffer );
+	if( http_hdr->protocol!=NULL ) delete http_hdr->protocol ;
+	if( http_hdr->uri!=NULL ) delete http_hdr->uri ;
+	if( http_hdr->reason_phrase!=NULL ) delete http_hdr->reason_phrase ;
+	if( http_hdr->field_search!=NULL ) delete http_hdr->field_search ;
+	if( http_hdr->method!=NULL ) delete http_hdr->method ;
+	if( http_hdr->buffer!=NULL ) delete http_hdr->buffer ;
 	field = http_hdr->first_field;
 	while( field!=NULL ) {
 		field2free = field;
 		if (field->field_name)
-		  mp_free(field->field_name);
+		  delete field->field_name;
 		field = field->next;
-		mp_free( field2free );
+		delete field2free ;
 	}
-	mp_free( http_hdr );
+	delete http_hdr ;
 	http_hdr = NULL;
 }
 
@@ -161,7 +161,7 @@ http_response_parse( HTTP_header_t *http_hdr ) {
 		hdr_ptr = ptr+((*ptr=='\r')?2:1);
 	} while( hdr_ptr<(http_hdr->buffer+pos_hdr_sep) );
 
-	if( field!=NULL ) mp_free( field );
+	if( field!=NULL ) delete field ;
 
 	if( pos_hdr_sep+hdr_sep_len<http_hdr->buffer_size ) {
 		// Response has data!
@@ -208,7 +208,7 @@ http_build_request( HTTP_header_t *http_hdr ) {
 	}
 	// Free the buffer if it was previously used
 	if( http_hdr->buffer!=NULL ) {
-		mp_free( http_hdr->buffer );
+		delete http_hdr->buffer ;
 		http_hdr->buffer = NULL;
 	}
 	http_hdr->buffer = (char*)mp_malloc(len+1);
@@ -234,7 +234,7 @@ http_build_request( HTTP_header_t *http_hdr ) {
 		memcpy( ptr, http_hdr->body, http_hdr->body_size );
 	}
 
-	if( uri ) mp_free( uri );
+	if( uri ) delete uri ;
 	return http_hdr->buffer;
 }
 
@@ -286,7 +286,7 @@ http_set_field( HTTP_header_t *http_hdr, const char *field_name ) {
 	new_field->field_name = (char*)mp_malloc(strlen(field_name)+1);
 	if( new_field->field_name==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
-		mp_free(new_field);
+		delete new_field;
 		return;
 	}
 	strcpy( new_field->field_name, field_name );
@@ -370,9 +370,9 @@ http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, co
 	res = 0;
 
 out:
-	mp_free( usr_pass );
-	mp_free( b64_usr_pass );
-	mp_free( auth );
+	delete usr_pass ;
+	delete b64_usr_pass ;
+	delete auth ;
 
 	return res;
 }

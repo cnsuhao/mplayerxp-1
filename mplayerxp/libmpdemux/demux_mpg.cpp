@@ -807,7 +807,7 @@ static demuxer_t* mpgps_open(demuxer_t*demuxer)
 static void mpgps_close(demuxer_t*demuxer)
 {
     mpg_demuxer_t* mpg_d = reinterpret_cast<mpg_demuxer_t*>(demuxer->priv);
-    if (mpg_d) mp_free(mpg_d);
+    if (mpg_d) delete mpg_d;
 }
 
 static MPXP_Rc mpgps_control(const demuxer_t *demuxer,int cmd,any_t*arg)

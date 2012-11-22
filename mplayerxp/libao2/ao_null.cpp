@@ -185,7 +185,7 @@ static void uninit(ao_data_t* ao){
 	fwrite(&wavhdr,sizeof(wavhdr),1,priv->fd);
     }
     if(priv->fd) fclose(priv->fd);
-    mp_free(priv);
+    delete priv;
 }
 
 // stop playing and empty priv->buffers (for seeking/pause)

@@ -359,6 +359,6 @@ int h264_parse_sps(mp_mpeg_header_t * picture, unsigned char * buf, int len)
   if(getbits(buf, n++, 1))
     n = h264_parse_vui(picture, buf, n);
 
-  mp_free(dest);
+  delete dest;
   return n;
 }

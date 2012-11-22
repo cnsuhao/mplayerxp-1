@@ -349,10 +349,10 @@ static void uninit(sh_video_t *sh)
 {
     if (sh->context) {
 	if (((priv_t*)&sh->context)->abovebuf1)
-	    mp_free(((priv_t*)sh->context)->abovebuf1);
+	    delete ((priv_t*)sh->context)->abovebuf1;
 	if (((priv_t*)&sh->context)->abovebuf2)
-	    mp_free(((priv_t*)sh->context)->abovebuf2);
-	mp_free(sh->context);
+	    delete ((priv_t*)sh->context)->abovebuf2;
+	delete sh->context;
     }
 }
 

@@ -139,7 +139,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
   } else
   {
     printf("sdpplin: no m= found.\n");
-    mp_free(desc);
+    delete desc;
     xbuffer_free(buf);
     return NULL;
   }
@@ -287,7 +287,7 @@ sdpplin_t *sdpplin_parse(char *data) {
       {
       MSG_ERR("sdpplin: bad stream_id %d (must be >= 0, < %d). Broken sdp?\n",
 	stream->stream_id, desc->stream_count);
-      mp_free(stream);
+      delete stream;
       } else {
 	MSG_V("sdpplin: got 'm=', but 'a=StreamCount' is still unknown.\n");
 	if (stream->stream_id == 0) {
@@ -296,7 +296,7 @@ sdpplin_t *sdpplin_parse(char *data) {
 	  desc->stream[0]=stream;
 	} else {
 	  MSG_ERR("sdpplin: got 'm=', but 'a=StreamCount' is still unknown and stream_id != 0. Broken sdp?\n");
-	  mp_free(stream);
+	  delete stream;
 	}
       }
       continue;
@@ -370,28 +370,28 @@ void sdpplin_free(sdpplin_t *description) {
   for (i = 0; i < description->stream_count; i++) {
     if (description->stream[i]) {
       if (description->stream[i]->stream_name)
-	mp_free(description->stream[i]->stream_name);
+	delete description->stream[i]->stream_name;
       if (description->stream[i]->mime_type)
-	mp_free(description->stream[i]->mime_type);
+	delete description->stream[i]->mime_type;
       if (description->stream[i]->mlti_data)
-	mp_free(description->stream[i]->mlti_data);
+	delete description->stream[i]->mlti_data;
       if (description->stream[i]->asm_rule_book)
-	mp_free(description->stream[i]->asm_rule_book);
-      mp_free(description->stream[i]);
+	delete description->stream[i]->asm_rule_book;
+      delete description->stream[i];
     }
   }
 
   if(description->stream_count)
-    mp_free(description->stream);
+    delete description->stream;
   if (description->title)
-    mp_free(description->title);
+    delete description->title;
   if (description->author)
-    mp_free(description->author);
+    delete description->author;
   if (description->copyright)
-    mp_free(description->copyright);
+    delete description->copyright;
   if (description->abstract)
-    mp_free(description->abstract);
+    delete description->abstract;
 
-  mp_free(description);
+  delete description;
 }
 

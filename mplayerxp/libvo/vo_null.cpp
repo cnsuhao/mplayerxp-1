@@ -129,10 +129,10 @@ static void uninit(vo_data_t*vo)
     priv_t*priv=(priv_t*)vo->priv;
     size_t i;
     for(i=0;i<priv->num_frames;i++) {
-	mp_free(priv->bm_buffs[i]);
+	delete priv->bm_buffs[i];
 	priv->bm_buffs[i]=NULL;
     }
-    mp_free(priv);
+    delete priv;
 }
 
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)

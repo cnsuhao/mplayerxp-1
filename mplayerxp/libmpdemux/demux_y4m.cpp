@@ -260,8 +260,8 @@ static void y4m_close(demuxer_t *demuxer)
       return;
     if (!priv->is_older)
 	y4m_fini_stream_info(((y4m_priv_t*)demuxer->priv)->si);
-    mp_free(((y4m_priv_t*)demuxer->priv)->si);
-    mp_free(demuxer->priv);
+    delete ((y4m_priv_t*)demuxer->priv)->si;
+    delete demuxer->priv;
     return;
 }
 

@@ -130,7 +130,7 @@ static char *load_file(const char *filename, off_t * length)
     }
 
     if (read(fd, buffer, *length) != *length) {
-	mp_free(buffer);
+	delete buffer;
 	MSG_V("Read is behaving funny.");
 	close(fd);
 	return NULL;
@@ -193,7 +193,7 @@ static struct cookie_list_type *load_cookies(void)
     buf = new char [strlen(homedir) + sizeof("/.mozilla/default") + 1];
     sprintf(buf, "%s/.mozilla/default", homedir);
     dir = opendir(buf);
-    mp_free(buf);
+    delete buf;
 
     if (dir) {
 	while ((ent = readdir(dir)) != NULL) {
@@ -204,7 +204,7 @@ static struct cookie_list_type *load_cookies(void)
 		sprintf(buf, "%s/.mozilla/default/%s/cookies.txt",
 			 getenv("HOME"), ent->d_name);
 		list = load_cookies_from(buf, list);
-		mp_free(buf);
+		delete buf;
 	    }
 	}
 	closedir(dir);
@@ -213,7 +213,7 @@ static struct cookie_list_type *load_cookies(void)
     buf = new char [strlen(homedir) + sizeof("/.netscape/cookies.txt") + 1];
     sprintf(buf, "%s/.netscape/cookies.txt", homedir);
     list = load_cookies_from(buf, list);
-    mp_free(buf);
+    delete buf;
 
     return list;
 }
@@ -275,12 +275,12 @@ cookies_set(HTTP_header_t * http_hdr, const char *domain, const char *url)
 		    strlen("=") + strlen(cookies[i]->value) + strlen(";") + 1];
 	sprintf(nbuf, "%s %s=%s;", buf, cookies[i]->name,
 		 cookies[i]->value);
-	mp_free(buf);
+	delete buf;
 	buf = nbuf;
     }
 
     if (found_cookies)
 	http_set_field(http_hdr, buf);
     else
-	mp_free(buf);
+	delete buf;
 }

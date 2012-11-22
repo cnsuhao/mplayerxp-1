@@ -1770,7 +1770,7 @@ static void audio_close(demuxer_t* demuxer) {
 
   if(!priv)
     return;
-  mp_free(priv);
+  delete priv;
 }
 
 static MPXP_Rc audio_control(const demuxer_t *demuxer,int cmd,any_t*args)

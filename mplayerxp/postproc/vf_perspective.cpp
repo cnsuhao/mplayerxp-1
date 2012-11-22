@@ -128,10 +128,10 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 	if(!vf->priv) return;
 
-	if(vf->priv->pv) mp_free(vf->priv->pv);
+	if(vf->priv->pv) delete vf->priv->pv;
 	vf->priv->pv= NULL;
 
-	mp_free(vf->priv);
+	delete vf->priv;
 	vf->priv=NULL;
 }
 

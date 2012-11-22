@@ -332,7 +332,7 @@ MPXP_Rc preinit(sh_audio_t *sh_audio)
 void uninit(sh_audio_t *sh)
 {
     close_vqf_audio_codec(sh);
-    mp_free(sh->context);
+    delete sh->context;
     FreeLibrary(vqf_dll);
 }
 

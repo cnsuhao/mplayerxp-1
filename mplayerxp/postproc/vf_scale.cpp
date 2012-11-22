@@ -240,7 +240,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     vf->priv->fmt=best;
 
     if(vf->priv->palette){
-	mp_free(vf->priv->palette);
+	delete vf->priv->palette;
 	vf->priv->palette=NULL;
     }
     switch(best) {
@@ -501,8 +501,8 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 static void __FASTCALL__ uninit(struct vf_instance_s *vf){
     if(vf->priv->ctx) sws_freeContext(vf->priv->ctx);
     if(vf->priv->ctx2) sws_freeContext(vf->priv->ctx2);
-    if(vf->priv->palette) mp_free(vf->priv->palette);
-    mp_free(vf->priv);
+    if(vf->priv->palette) delete vf->priv->palette;
+    delete vf->priv;
     firstTime=1;
 }
 

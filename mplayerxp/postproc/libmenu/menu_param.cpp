@@ -138,7 +138,7 @@ static int parse_args(menu_t* menu,const char* args) {
     txt = asx_get_attrib("txt",attribs);
     if(!(name || txt)) {
       MSG_WARN("[libmenu] PrefMenu entry definitions need: %i\n",parser->line);
-      if(txt) mp_free(txt), txt = NULL;
+      if(txt) { delete txt; txt = NULL; }
       goto next_element;
     }
     m = new(zeromem) struct list_entry_s;
@@ -151,9 +151,9 @@ static int parse_args(menu_t* menu,const char* args) {
     menu_list_add_entry(menu,m);
 
   next_element:
-    mp_free(element);
-    if(body) mp_free(body);
-    if(name) mp_free(name);
+    delete element;
+    if(body) delete body;
+    if(name) delete name;
     asx_free_attribs(attribs);
   }
 }

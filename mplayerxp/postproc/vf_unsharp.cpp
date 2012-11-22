@@ -250,16 +250,16 @@ static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
 
     fp = &vf->priv->lumaParam;
     for( z=0; z<sizeof(fp->SC)/sizeof(fp->SC[0]); z++ ) {
-	if( fp->SC[z] ) mp_free( fp->SC[z] );
+	if( fp->SC[z] ) delete fp->SC[z] ;
 	fp->SC[z] = NULL;
     }
     fp = &vf->priv->chromaParam;
     for( z=0; z<sizeof(fp->SC)/sizeof(fp->SC[0]); z++ ) {
-	if( fp->SC[z] ) mp_free( fp->SC[z] );
+	if( fp->SC[z] ) delete fp->SC[z] ;
 	fp->SC[z] = NULL;
     }
 
-    mp_free( vf->priv );
+    delete vf->priv ;
     vf->priv = NULL;
 }
 

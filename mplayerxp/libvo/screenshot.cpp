@@ -255,7 +255,7 @@ MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *
 #else
     write_bmp(buf,w,h,image_data);
 #endif
-    if(image_data){ mp_free(image_data);image_data=NULL;}
+    if(image_data){ delete image_data;image_data=NULL;}
     if(sws) sws_freeContext(sws);
     return MPXP_Ok;
 }

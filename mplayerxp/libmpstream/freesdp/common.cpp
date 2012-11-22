@@ -37,7 +37,7 @@ static void
 safe_free (any_t*ptr)
 {
   if (ptr)
-    mp_free (ptr);
+    delete ptr;
 }
 
 fsdp_description_t *

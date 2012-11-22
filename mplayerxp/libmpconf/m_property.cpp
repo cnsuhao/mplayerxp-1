@@ -69,12 +69,12 @@ int m_property_do(m_option_t* prop_list, const char* name,
 	    return r;
 	val = mp_calloc(1,opt->type->size);
 	if((r = do_action(prop_list,name,M_PROPERTY_GET,val,ctx)) <= 0) {
-	    mp_free(val);
+	    delete val;
 	    return r;
 	}
 	if(!arg) return M_PROPERTY_ERROR;
 	str = m_option_print(opt,val);
-	mp_free(val);
+	delete val;
 	*(char**)arg = str == (char*)-1 ? NULL : str;
 	return str != (char*)-1;
     case M_PROPERTY_PARSE:
@@ -88,12 +88,12 @@ int m_property_do(m_option_t* prop_list, const char* name,
 	if(!arg) return M_PROPERTY_ERROR;
 	val = mp_calloc(1,opt->type->size);
 	if((r = m_option_parse(opt,opt->name,(char *)arg,val,M_CONFIG_FILE)) <= 0) {
-	    mp_free(val);
+	    delete val;
 	    return r;
 	}
 	r = do_action(prop_list,name,M_PROPERTY_SET,val,ctx);
 	m_option_free(opt,val);
-	mp_free(val);
+	delete val;
 	return r;
     }
     return do_action(prop_list,name,action,arg,ctx);

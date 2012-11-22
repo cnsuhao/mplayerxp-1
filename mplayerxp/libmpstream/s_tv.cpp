@@ -599,7 +599,7 @@ static off_t __FASTCALL__ _tv_tell(const stream_t *stream)
 
 static void __FASTCALL__ _tv_close(stream_t*stream)
 {
-    mp_free(stream->priv);
+    delete stream->priv;
 }
 
 static void __FASTCALL__ _tv_cmd_handler(const stream_t *s,unsigned cmd)
