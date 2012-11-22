@@ -35,14 +35,6 @@
 #include "bitstream.h"
 #include "tables.h"
 
-#ifdef HAVE_MEMALIGN
-/* some systems have mp_memalign() but no declaration for it */
-any_t* mp_memalign (size_t align, size_t size);
-#else
-/* assume mp_malloc alignment is sufficient */
-#define mp_memalign(align,size) mp_malloc (size)
-#endif
-
 typedef struct {
     sample_t q1[2];
     sample_t q2[2];
@@ -66,7 +58,7 @@ a52_state_t * a52_init (uint32_t mm_accel)
     if (state == NULL)
 	return NULL;
 
-    state->samples = (sample_t*)mp_memalign (16, 256 * 12 * sizeof (sample_t));
+    state->samples = new(alignmem,16) sample_t[256 * 12];
     if (state->samples == NULL) {
 	delete state;
 	return NULL;

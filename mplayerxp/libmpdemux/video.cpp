@@ -143,7 +143,7 @@ switch(video_codec){
       }
    }
    MSG_V("OK!\n");
-   if(!videobuffer) videobuffer=(unsigned char*)mp_memalign(8,VIDEOBUFFER_SIZE);
+   if(!videobuffer) videobuffer=new(alignmem,8) unsigned char[VIDEOBUFFER_SIZE];
    if(!videobuffer){
      MSG_ERR(MSGTR_ShMemAllocFail);
      return 0;
@@ -232,7 +232,7 @@ switch(video_codec){
       }
    }
    MSG_V("OK!\n");
-   if(!videobuffer) videobuffer=(unsigned char*)mp_memalign(8,VIDEOBUFFER_SIZE);
+   if(!videobuffer) videobuffer=new(alignmem,8) unsigned char[VIDEOBUFFER_SIZE];
    if(!videobuffer){
      MSG_ERR(MSGTR_ShMemAllocFail);
      return 0;
@@ -289,7 +289,7 @@ switch(video_codec){
 //   sh_video=d_video->sh;sh_video->ds=d_video;
 //   mpeg2_init();
    // ========= Read & process sequence header & extension ============
-   if(!videobuffer) videobuffer=(unsigned char*)mp_memalign(8,VIDEOBUFFER_SIZE);
+   if(!videobuffer) videobuffer=new(alignmem,8) unsigned char[VIDEOBUFFER_SIZE];
    if(!videobuffer){
      MSG_ERR(MSGTR_ShMemAllocFail);
      return 0;

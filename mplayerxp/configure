@@ -274,6 +274,35 @@ if cygwin ; then
 prefix="."
 fi
 
+echocheck "whether the $cxx compiler works"
+cat > $TMPC << EOF
+#include <stdlib.h>
+#include <malloc.h>
+#include <new>
+
+typedef void any_t;
+enum alignedmemory_t{ alignmem=0 };
+inline any_t* operator new(size_t size,const alignedmemory_t&,size_t boundary) {
+    return memalign(boundary,size);
+}
+inline any_t* operator new[](size_t size,const alignedmemory_t&,size_t boundary) {
+    return memalign(boundary,size);
+}
+inline void operator delete(any_t* p) { free(p); }
+
+namespace mpxp {
+    inline int funci(int i) { return i+2; }
+}
+
+using namespace mpxp;
+int main(void) {
+    char* cstr=new(alignmem,8) char [20];
+    delete cstr;
+    return funci(2);
+}
+EOF
+cxx_check || die "no"
+
 echocheck "Program name"
 prog_alias=$program_transform_name
 prog_alias="$program_prefix$prog_alias$program_suffix"
@@ -412,16 +441,6 @@ disabled winsock2	&& require3 af_inet6 "sys/socket.h netinet/in.h" AF_INET6 sock
 print_config HAVE_ mp_config.h mp_config.mak af_inet6
 fi
 
-check_func2 malloc.h malloc
-freebsd		&& disable malloc
-print_config HAVE_ mp_config.h mp_config.mak malloc
-if enabled malloc; then
-check_func2 malloc.h memalign
-print_config HAVE_ mp_config.h mp_config.mak memalign
-fi
-check_func2 alloca.h alloca
-print_config HAVE_ mp_config.h mp_config.mak alloca
-
 # find if .align arg is power-of-two or not
 echocheck ".align is power-of-two"
 cat > $TMPC << EOF
@@ -521,6 +540,17 @@ enabled pthread	&& break
 done
 disabled pthread	&& die "Lib pthread not found. (needed by xp mode)"
 print_config HAVE_ mp_config.h mp_config.mak pthread
+
+check_func2 malloc.h malloc
+disabled malloc		&& die "malloc is not supported by your system"
+print_config HAVE_ mp_config.h mp_config.mak malloc
+
+check_func2 malloc.h memalign
+disabled memalign	&& die "memalign is not supported by your system"
+print_config HAVE_ mp_config.h mp_config.mak memalign
+
+check_func2 alloca.h alloca
+print_config HAVE_ mp_config.h mp_config.mak alloca
 
 require2 sys_soundcard_h sys/soundcard.h SNDCARD_SB
 print_config HAVE_ mp_config.h mp_config.mak sys_soundcard_h
@@ -950,11 +980,6 @@ $def_debug
 
 /* set up audio OUTBURST. Do not change this! */
 #define OUTBURST 512
-
-/* memalign is mapped to malloc if unsupported */
-#ifndef HAVE_MEMALIGN
-# define memalign(a,b) malloc(b)
-#endif
 
 /* ASMALIGN */
 $def_asmalign

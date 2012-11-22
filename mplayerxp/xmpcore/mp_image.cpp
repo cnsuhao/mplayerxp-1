@@ -172,7 +172,7 @@ void mpi_alloc_planes(mp_image_t *mpi) {
     delta=0;
     // IF09 - allocate space for 4. plane delta info - unused
     if (mpi->imgfmt == IMGFMT_IF09) delta=mpi->chroma_width*mpi->chroma_height;
-    mpi->planes[0]=(unsigned char *)mp_memalign(64,size+delta);
+    mpi->planes[0]=new(alignmem,64) unsigned char[size+delta];
     if(delta) /* delta table, just for fun ;) */
 	mpi->planes[3]=mpi->planes[0]+2*(mpi->chroma_width*mpi->chroma_height);
     if(mpi->flags&MP_IMGFLAG_PLANAR){

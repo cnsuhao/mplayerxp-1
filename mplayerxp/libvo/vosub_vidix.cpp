@@ -397,7 +397,6 @@ MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_h
     MSG_V("using %d buffers\n", priv.vidix.playback.num_frames);
     /* configure busmastering */
     if(vo_conf.use_bm) {
-#ifdef HAVE_MEMALIGN
 	if(priv.vidix.cap.flags & FLAG_DMA) {
 	    int psize = getpagesize();
 	    priv.bm_locked=1;
@@ -418,9 +417,6 @@ MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_h
 	    priv.bm_total_frames=priv.bm_slow_frames=0;
 	}
 	else
-#else
-	    MSG_ERR("Won't configure bus mastering: your system doesn't support mp_memalign()\n");
-#endif
 	MSG_ERR("Can not configure bus mastering: your driver is not DMA capable\n");
 	vo_conf.use_bm = 0;
     }

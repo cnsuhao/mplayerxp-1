@@ -195,7 +195,7 @@ static int __FASTCALL__ sab_allocStuff(FilterParam *f, int width, int height){
 	SwsVector *vec;
 	SwsFilter swsF;
 	int i,x,y;
-	f->preFilterBuf= (uint8_t*)mp_memalign(8, stride*height);
+	f->preFilterBuf=new(alignmem,8) uint8_t[stride*height];
 	f->preFilterStride= stride;
 
 	vec = sws_getGaussianVec(f->preFilterRadius, f->quality);
@@ -219,7 +219,7 @@ static int __FASTCALL__ sab_allocStuff(FilterParam *f, int width, int height){
 	vec = sws_getGaussianVec(f->radius, f->quality);
 	f->distWidth= vec->length;
 	f->distStride= (vec->length+7)&~7;
-	f->distCoeff= (int32_t*)mp_memalign(8, f->distWidth*f->distStride*sizeof(int32_t));
+	f->distCoeff=new(alignmem,8) int32_t[f->distWidth*f->distStride];
 
 	for(y=0; y<vec->length; y++){
 		for(x=0; x<vec->length; x++){

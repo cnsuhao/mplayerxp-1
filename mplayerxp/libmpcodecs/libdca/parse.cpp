@@ -48,14 +48,6 @@
 
 /* #define LOG_DEBUG */
 
-#if defined(HAVE_MEMALIGN) && !defined(__cplusplus)
-/* some systems have mp_memalign() but no declaration for it */
-any_t* mp_memalign (size_t align, size_t size);
-#else
-/* assume mp_malloc alignment is sufficient */
-#define mp_memalign(align,size) mp_malloc (size)
-#endif
-
 //#define LOG_DEBUG 1
 
 static int decode_blockcode (int code, int levels, int *values);
@@ -83,7 +75,7 @@ dca_state_t * dca_init (uint32_t mm_accel)
 
     memset (state, 0, sizeof(dca_state_t));
 
-    state->samples = (sample_t *) mp_memalign (16, 256 * 12 * sizeof (sample_t));
+    state->samples = new(alignmem,16) sample_t[256 * 12];
     if (state->samples == NULL) {
 	delete state;
 	return NULL;

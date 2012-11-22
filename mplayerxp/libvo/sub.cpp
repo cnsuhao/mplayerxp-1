@@ -57,8 +57,8 @@ static void alloc_buf(mp_osd_obj_t* obj)
 	obj->allocated = len;
 	delete obj->bitmap_buffer;
 	delete obj->alpha_buffer;
-	obj->bitmap_buffer = (unsigned char *)mp_memalign(16, len);
-	obj->alpha_buffer = (unsigned char *)mp_memalign(16, len);
+	obj->bitmap_buffer = new(alignmem,16) unsigned char[len];
+	obj->alpha_buffer = new(alignmem,16) unsigned char[len];
     }
     memset(obj->bitmap_buffer, sub_data.bg_color, len);
     memset(obj->alpha_buffer, sub_data.bg_alpha, len);

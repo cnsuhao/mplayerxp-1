@@ -161,14 +161,14 @@ static int __FASTCALL__ vf_config( struct vf_instance_s* vf,
     stepsX = fp->msizeX/2;
     stepsY = fp->msizeY/2;
     for( z=0; z<2*stepsY; z++ )
-	fp->SC[z] = (uint32_t*)mp_memalign( 16, sizeof(*(fp->SC[z])) * (width+2*stepsX) );
+	fp->SC[z] = new(alignmem,16) uint32_t[width+2*stepsX];
 
     fp = &vf->priv->chromaParam;
     memset( fp->SC, 0, sizeof( fp->SC ) );
     stepsX = fp->msizeX/2;
     stepsY = fp->msizeY/2;
     for( z=0; z<2*stepsY; z++ )
-	fp->SC[z] = (uint32_t*)mp_memalign( 16, sizeof(*(fp->SC[z])) * (width+2*stepsX) );
+	fp->SC[z] = new(alignmem,16) uint32_t[width+2*stepsX];
 
     return vf_next_config( vf, width, height, d_width, d_height, flags, outfmt);
 }

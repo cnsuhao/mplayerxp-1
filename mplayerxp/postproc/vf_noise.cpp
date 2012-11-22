@@ -74,7 +74,7 @@ static int8_t * __FASTCALL__ initNoise(FilterParam *fp){
 	int uniform= fp->uniform;
 	int averaged= fp->averaged;
 	int pattern= fp->pattern;
-	int8_t *noise= (int8_t*)mp_memalign(16, MAX_NOISE*sizeof(int8_t));
+	int8_t *noise=new(alignmem,16) int8_t[MAX_NOISE];
 	int i, j;
 
 	srand(123457);
