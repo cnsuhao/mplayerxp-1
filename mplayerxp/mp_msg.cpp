@@ -13,6 +13,7 @@
 
 using namespace mpxp;
 
+namespace mpxp {
 #define _bg(x) ((x) >> 4)
 #define _fg(x) ((x) & 0x0f)
 typedef struct priv_s {
@@ -129,3 +130,4 @@ int mpxp_printf( unsigned x, const char *format, ... ){
 }
 
 void mpxp_print_flush(void) { fflush(stderr); }
+} //namespace mpxp

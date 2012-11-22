@@ -3,11 +3,13 @@
 
 #include "mplayerxp.h"
 
-// verbosity elevel:
-
-// stuff from level MSGL_FATAL-MSGL_HINT should be translated.
-
 /* TODO: more highlighted levels */
+#ifndef MSGT_CLASS
+#define MSGT_CLASS MSGT_CPLAYER
+#endif
+
+namespace mpxp {
+
 enum {
     MSGL_FATAL	=0U, /* will exit/abort			LightRed */
     MSGL_ERR	=1U, /* continues			Red */
@@ -51,33 +53,40 @@ enum {
     MSGT_MASK		=0x0FFFFFFF
 };
 
+    void mpxp_print_init(int verbose);
+    void mpxp_print_uninit(void);
+    void mpxp_print_flush(void);
+    int  mpxp_printf( unsigned x, const char *format, ... );
 
-void mpxp_print_init(int verbose);
-void mpxp_print_uninit(void);
-void mpxp_print_flush(void);
-int  mpxp_printf( unsigned x, const char *format, ... );
-
-#ifdef __GNUC__
-static inline int mpxp_print_dummy(const char* args,...) { UNUSED(args); return 0;}
-#define mpxp_print(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mpxp_print_dummy(args)))
-#else
-#define mpxp_print(mod,lev, ... ) mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),__VA_ARGS__)
-#endif
-
-#ifndef MSGT_CLASS
-#define MSGT_CLASS MSGT_CPLAYER
-#endif
+    static inline int mpxp_print_dummy(const char* args,...) {
+	UNUSED(args); return 0;
+    }
 
 #ifdef __va_arg_pack /* requires gcc-4.3.x */
-static __always_inline int MSG_INFO(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_INFO,args,__va_arg_pack ()); }
-static __always_inline int MSG_FATAL(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_FATAL,args,__va_arg_pack ()); }
-static __always_inline int MSG_WARN(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_WARN,args,__va_arg_pack ()); }
-static __always_inline int MSG_ERR(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_ERR,args,__va_arg_pack ()); }
-static __always_inline int MSG_V(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_V,args,__va_arg_pack ()); }
-static __always_inline int MSG_OK(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_OK,args,__va_arg_pack ()); }
-static __always_inline int MSG_HINT(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_HINT,args,__va_arg_pack ()); }
-static __always_inline int MSG_STATUS(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_STATUS,args,__va_arg_pack ()); }
-
+static __always_inline int MSG_INFO(const char* args,...) {
+    return mpxp_printf((MSGL_INFO<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+static __always_inline int MSG_FATAL(const char* args,...) {
+    return mpxp_printf((MSGL_FATAL<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+static __always_inline int MSG_WARN(const char* args,...) {
+    return mpxp_printf((MSGL_WARN<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+static __always_inline int MSG_ERR(const char* args,...) {
+    return mpxp_printf((MSGL_ERR<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+static __always_inline int MSG_OK(const char* args,...) {
+    return mpxp_printf((MSGL_OK<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+static __always_inline int MSG_HINT(const char* args,...) {
+    return mpxp_printf((MSGL_HINT<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+static __always_inline int MSG_STATUS(const char* args,...) {
+    return mpxp_printf((MSGL_STATUS<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+static __always_inline int MSG_V(const char* args,...) {
+    return mpxp_printf((MSGL_V<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
 #ifdef MP_DEBUG
 static __always_inline int MSG_DBG2(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG3,args,__va_arg_pack ()); }
 static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG4,args,__va_arg_pack ()); }
@@ -85,8 +94,13 @@ static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print(MS
 static __always_inline int MSG_DBG2(const char* args,...) { return mpxp_print_dummy(args); }
 static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_dummy(args); }
 #endif
-
 #else // __va_arg_pack
+#ifdef __GNUC__
+#define mpxp_print(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mpxp_print_dummy(args)))
+#else
+#undef mpxp_print
+#define mpxp_print(mod,lev, ... ) mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),__VA_ARGS__)
+#endif
 #undef MSG_INFO
 #undef MSG_FATAL
 #undef MSG_WARN
@@ -113,5 +127,6 @@ static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_du
 #define MSG_DBG3(args...) mpxp_print_dummy();
 #endif
 #endif // __va_arg_pack
+} // namespace mpxp
 
 #endif // __MP_MSG_H
