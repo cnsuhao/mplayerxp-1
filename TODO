@@ -1,5 +1,9 @@
 TODO for mplayerxp:
 
+- Problem: it seems that demuxer doesn't differ bitmap-based subtitles from
+  Closed Caption (plain ascii-text) ones. Because of this some demuxer's
+  parser call video-driver directly to render subtitle on screen that breaks
+  security issues and re-enterability of module-based architecture.
 - use licences for anti-viral protection.
   Idea:
    Each pointer on context of driver must be crypted to make context substitution
