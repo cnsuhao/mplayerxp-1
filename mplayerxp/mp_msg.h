@@ -58,41 +58,50 @@ enum {
     void mpxp_print_flush(void);
     int  mpxp_printf( unsigned x, const char *format, ... );
 
-    static inline int mpxp_print_dummy(const char* args,...) {
+    inline int mpxp_print_dummy(const char* args,...) {
 	UNUSED(args); return 0;
     }
 
 #ifdef __va_arg_pack /* requires gcc-4.3.x */
-static __always_inline int MSG_INFO(const char* args,...) {
+__always_inline int MSG_INFO(const char* args,...) {
     return mpxp_printf((MSGL_INFO<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-static __always_inline int MSG_FATAL(const char* args,...) {
+__always_inline int MSG_FATAL(const char* args,...) {
     return mpxp_printf((MSGL_FATAL<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-static __always_inline int MSG_WARN(const char* args,...) {
+__always_inline int MSG_WARN(const char* args,...) {
     return mpxp_printf((MSGL_WARN<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-static __always_inline int MSG_ERR(const char* args,...) {
+__always_inline int MSG_ERR(const char* args,...) {
     return mpxp_printf((MSGL_ERR<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-static __always_inline int MSG_OK(const char* args,...) {
+__always_inline int MSG_OK(const char* args,...) {
     return mpxp_printf((MSGL_OK<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-static __always_inline int MSG_HINT(const char* args,...) {
+__always_inline int MSG_HINT(const char* args,...) {
     return mpxp_printf((MSGL_HINT<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-static __always_inline int MSG_STATUS(const char* args,...) {
+__always_inline int MSG_STATUS(const char* args,...) {
     return mpxp_printf((MSGL_STATUS<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-static __always_inline int MSG_V(const char* args,...) {
+__always_inline int MSG_V(const char* args,...) {
     return mpxp_printf((MSGL_V<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
 #ifdef MP_DEBUG
-static __always_inline int MSG_DBG2(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG3,args,__va_arg_pack ()); }
-static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print(MSGT_CLASS,MSGL_DBG4,args,__va_arg_pack ()); }
+__always_inline int MSG_DBG2(const char* args,...) {
+    return mpxp_printf((MSGL_DBG2<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+__always_inline int MSG_DBG3(const char* args,...) {
+    return mpxp_printf((MSGL_DBG3<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+__always_inline int MSG_DBG4(const char* args,...) {
+    return mpxp_printf((MSGL_DBG4<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+}
+
 #else
-static __always_inline int MSG_DBG2(const char* args,...) { return mpxp_print_dummy(args); }
-static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_dummy(args); }
+__always_inline int MSG_DBG2(const char* args,...) { return mpxp_print_dummy(args); }
+__always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_dummy(args); }
+__always_inline int MSG_DBG4(const char* args,...) { return mpxp_print_dummy(args); }
 #endif
 #else // __va_arg_pack
 #ifdef __GNUC__
@@ -122,9 +131,11 @@ static __always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_du
 #ifdef MP_DEBUG
 #define MSG_DBG2(args...) mpxp_print(MSGT_CLASS,MSGL_DBG2,##args )
 #define MSG_DBG3(args...) mpxp_print(MSGT_CLASS,MSGL_DBG3,##args )
+#define MSG_DBG4(args...) mpxp_print(MSGT_CLASS,MSGL_DBG4,##args )
 #else
 #define MSG_DBG2(args...) mpxp_print_dummy();
 #define MSG_DBG3(args...) mpxp_print_dummy();
+#define MSG_DBG4(args...) mpxp_print_dummy();
 #endif
 #endif // __va_arg_pack
 } // namespace mpxp
