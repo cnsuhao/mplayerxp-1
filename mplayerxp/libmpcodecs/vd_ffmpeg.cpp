@@ -221,7 +221,7 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fcc) {
     vprobe->driver="ffmpeg";
     vprobe->codec_dll=mp_strdup(avcodec_get_name(ff_id));
     if(codec->pix_fmts)
-    for(i=0;i<CODECS_MAX_OUTFMT;i++) {
+    for(i=0;i<Video_MaxOutFmt;i++) {
 	if(codec->pix_fmts[i]==-1) break;
 	vprobe->pix_fmt[i]=avcodec_pix_fmt_to_codec_tag(codec->pix_fmts[i]);
 	vprobe->flags[i]=video_flags_e(flag);
