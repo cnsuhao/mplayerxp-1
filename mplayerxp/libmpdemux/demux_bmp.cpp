@@ -17,12 +17,14 @@
 
 #include "libvo/img_format.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "demux_msg.h"
+
+using namespace mpxp;
 
 #ifdef HAVE_SDL_IMAGE
 #include <SDL/SDL_image.h>
 
-using namespace mpxp;
 
 static int demux_rw_seek(struct SDL_RWops *context, int offset, int whence)
 {
@@ -205,12 +207,12 @@ typedef struct {
 } bmp_image_t;
 
 // Check if a file is a BMP file depending on whether starts with 'BM'
-static int bmp_probe(demuxer_t *demuxer)
+static MPXP_Rc bmp_probe(demuxer_t *demuxer)
 {
   if (stream_read_word(demuxer->stream) == (('B' << 8) | 'M'))
-    return 1;
+    return MPXP_Ok;
   else
-    return 0;
+    return MPXP_False;
 }
 
 // return value:
@@ -218,7 +220,7 @@ static int bmp_probe(demuxer_t *demuxer)
 //     1 = successfully read a packet
 static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 {
-  bmp_image_t *bmp_image = (bmp_image_t *)demuxer->priv;
+  bmp_image_t *bmp_image = reinterpret_cast<bmp_image_t*>(demuxer->priv);
 
   stream_reset(demuxer->stream);
   stream_seek(demuxer->stream, bmp_image->image_offset);
@@ -271,7 +273,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
     sh_video->bih->biClrUsed * 4);
 
   // load the data
-  bmp_image = (bmp_image_t *)mp_malloc(sizeof(bmp_image_t));
+  bmp_image = new(zeromem) bmp_image_t;
   bmp_image->image_size = filesize - data_offset;
   bmp_image->image_offset = data_offset;
 
@@ -291,7 +293,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
 }
 
 static void bmp_close(demuxer_t* demuxer) {
-  bmp_image_t *bmp_image = demuxer->priv;
+  bmp_image_t *bmp_image = reinterpret_cast<bmp_image_t*>(demuxer->priv);
 
   if(!bmp_image)
     return;

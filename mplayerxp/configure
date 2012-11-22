@@ -199,7 +199,6 @@ for ac_option do
     else
       test "${optval}" = "no" && action=disable
     fi
-    echo "$action ${thing}"
     $action ${thing}
     ;;
 
@@ -642,8 +641,8 @@ print_config HAVE_ mp_config.h mp_config.mak dga2
 enabled dga2	&& enable dga
 disabled dga2	&& require2 dga "X11/Xlib.h X11/extensions/xf86dga.h" XF86DGASetViewPort -lXxf86dga
 print_config HAVE_ mp_config.h mp_config.mak dga
-enabled dga	&& vomodules="dga $vomodules" || novomodules="dga $novomodules"
 fi
+enabled dga	&& vomodules="dga $vomodules" || novomodules="dga $novomodules"
 
 enabled fbdev	&& require2 fbdev "sys/ioctl.h linux/fb.h" ioctl
 print_config HAVE_ mp_config.h mp_config.mak fbdev
@@ -679,7 +678,7 @@ enabled vesa	&& vomodules="vesa $vomodules" || novomodules="vesa $novomodules"
 # VIDEO + AUDIO #
 #################
 
-check_pkg sdl sdl
+enabled sdl && check_pkg sdl sdl
 enabled sdl && require2 sdl SDL/SDL.h SDL_CreateYUVOverlay
 print_config HAVE_ mp_config.h mp_config.mak sdl
 if enabled sdl; then
