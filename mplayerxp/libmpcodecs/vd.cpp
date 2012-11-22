@@ -18,6 +18,8 @@
 #include "postproc/vf.h"
 #include "vd_msg.h"
 
+using namespace mpxp;
+
 extern const vd_functions_t mpcodecs_vd_null;
 extern const vd_functions_t mpcodecs_vd_ffmpeg;
 extern const vd_functions_t mpcodecs_vd_dshow;

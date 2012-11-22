@@ -21,13 +21,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "../../mp_config.h"
+#include "mp_config.h"
 
 #include <inttypes.h>
 
 #include "a52.h"
 #include "a52_internal.h"
 #include "bitstream.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #define BUFFER_SIZE 4096
 

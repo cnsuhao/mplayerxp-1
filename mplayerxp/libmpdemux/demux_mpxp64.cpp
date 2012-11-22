@@ -27,6 +27,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define MAX_AV_STREAMS MAX_V_STREAMS+MAX_A_STREAMS+MAX_S_STREAMS
 
 typedef struct {

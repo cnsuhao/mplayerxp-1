@@ -15,6 +15,8 @@
 #include "af.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 // Data for specific instances of this filter
 
 // Initialization and runtime control

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #define OSD_SUPPORT
 
 #include <stdio.h>
@@ -19,8 +21,7 @@
 #endif
 #include "pp_msg.h"
 
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
+using namespace mpxp;
 
 struct vf_priv_s {
     unsigned org_w;
@@ -99,8 +100,8 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     if(	(sy+sh < dy) || (sy>dy+dh) ||
 	(sx+sw < dx) || (sx>dx+dw)) return 1; /* nothing todo */
     /* In hope that mpi->x === 0 */
-    cw=MIN(sw,dw);
-    ch=MIN(sh,dh);
+    cw=std::min(sw,dw);
+    ch=std::min(sh,dh);
     dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
 	    cw,ch,mpi->xp_idx);

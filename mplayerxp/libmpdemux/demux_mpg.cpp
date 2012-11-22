@@ -24,6 +24,9 @@
 #include "libmpcodecs/dec_audio.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
+
+using namespace mpxp;
+
 //#define MAX_PS_PACKETSIZE 2048
 #define MAX_PS_PACKETSIZE (224*1024)
 

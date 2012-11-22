@@ -19,6 +19,8 @@
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 #define BUF_STEP 1024
 
 #define WHITES " \n\r\t"

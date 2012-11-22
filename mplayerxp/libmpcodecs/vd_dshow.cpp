@@ -13,6 +13,9 @@
 #include "loader/dshow/DS_VideoDecoder.h"
 #include "codecs_ld.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 static const vd_info_t info = {
     "Win32/DirectShow video codecs",

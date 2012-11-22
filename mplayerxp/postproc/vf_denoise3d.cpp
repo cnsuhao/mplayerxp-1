@@ -31,6 +31,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define PARAM1_DEFAULT 4.0
 #define PARAM2_DEFAULT 3.0
 #define PARAM3_DEFAULT 6.0

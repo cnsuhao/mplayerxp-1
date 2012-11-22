@@ -21,6 +21,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */
 #define WAV_ID_WAVE 0x45564157 /* "WAVE" */
 #define WAV_ID_FMT  0x20746d66 /* "fmt " */

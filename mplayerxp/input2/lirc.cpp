@@ -15,6 +15,8 @@
 #include "input.h"
 #include "in_msg.h"
 
+using namespace mpxp;
+
 static struct lirc_config *lirc_config;
 char *lirc_configfile;
 

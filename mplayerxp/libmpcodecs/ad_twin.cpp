@@ -13,6 +13,8 @@
 
 #include "help_mp.h"
 
+using namespace mpxp;
+
 static const ad_info_t info = {
     "TWinVQ decoder",
     "vqf",

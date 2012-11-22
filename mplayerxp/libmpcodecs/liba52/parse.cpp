@@ -35,6 +35,8 @@
 #include "bitstream.h"
 #include "tables.h"
 
+using namespace mpxp;
+
 typedef struct {
     sample_t q1[2];
     sample_t q2[2];

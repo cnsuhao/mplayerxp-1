@@ -17,6 +17,8 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 #define ROUND(x) ((int)((x)<0 ? (x)-0.5 : (x)+0.5))
 
 static int do_action(m_option_t* prop_list, const char* name,

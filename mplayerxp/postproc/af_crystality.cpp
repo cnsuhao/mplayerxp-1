@@ -69,6 +69,8 @@ and high-freqs and try to restore FR as:
 #include "libmpdemux/stheader.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define SAMPLE_MAX 1.
 
 //#define SAMPLE_MAX 1.0 /* for float32 */

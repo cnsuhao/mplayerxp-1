@@ -16,6 +16,9 @@
 #include "aviprint.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
+
+using namespace mpxp;
+
 /*
  * Load 16/32-bit values in little endian byte order
  * from an unaligned address

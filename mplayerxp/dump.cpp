@@ -18,8 +18,9 @@
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
-
 #include "dump.h"
+
+using namespace mpxp;
 
 static char *media=NULL,*port=NULL;
 

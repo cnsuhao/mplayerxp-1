@@ -7,6 +7,9 @@
 #include "mp_config.h"
 #include "mixer.h"
 #include "libao2/audio_out.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 void mixer_getvolume(const ao_data_t* ao, float *l,float *r )
 {

@@ -9,8 +9,11 @@
 #include "swscale.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
+#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PP
 #include "mp_msg.h"
+
+using namespace mpxp;
 
 /**
  * Convert the palette to the same packet 32-bit format as the palette

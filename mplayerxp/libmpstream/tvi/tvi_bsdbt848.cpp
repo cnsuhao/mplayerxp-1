@@ -11,6 +11,9 @@
 */
 
 #include "mp_config.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #if defined(USE_TV) && defined(HAVE_TV_BSDBT848)
 

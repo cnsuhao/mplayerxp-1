@@ -4,6 +4,9 @@
 #include "mp_config.h"
 #include "vd_internal.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 static const vd_info_t info = {
     "MPEG 1/2 Video passthrough",

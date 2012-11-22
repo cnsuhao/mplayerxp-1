@@ -10,9 +10,11 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
+#include "osdep/mplib.h"
 #include "mp_conf_lavc.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
 //===========================================================================//
 
 static int __FASTCALL__ vf_config(struct vf_instance_s* vf,

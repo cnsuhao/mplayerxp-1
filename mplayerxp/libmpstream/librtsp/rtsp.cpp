@@ -56,7 +56,9 @@
 #include "rtsp_session.h"
 #include "osdep/timer.h"
 #include "osdep/mplib.h"
-#include "../stream_msg.h"
+#include "stream_msg.h"
+
+using namespace mpxp;
 
 /*
 #define LOG

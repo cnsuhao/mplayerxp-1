@@ -2,6 +2,9 @@
     s_null - not a driver.
 */
 #include "stream.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 static MPXP_Rc __FASTCALL__ null_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);

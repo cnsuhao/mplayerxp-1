@@ -26,6 +26,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 static MPXP_Rc smjpeg_probe(demuxer_t* demuxer){
     int orig_pos = stream_tell(demuxer->stream);
     char buf[8];

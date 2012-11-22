@@ -43,6 +43,8 @@
 #include "loader/qtx/qtxsdk/components.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 enum {
     LZO_INPUT_DEPLETED=1,
     LZO_OUTPUT_FULL=2,

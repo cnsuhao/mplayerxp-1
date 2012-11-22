@@ -26,6 +26,8 @@
 #define MSGT_CLASS MSGT_SUBREADER
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 /* Maximal length of line of a subtitle */
 #define LINE_LEN 1000
 #define ERR ((subtitle*) -1)

@@ -15,6 +15,8 @@
 #include "cdd.h"
 #include "mrl.h"
 
+using namespace mpxp;
+
 static track_t track_idx=255;
 static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {

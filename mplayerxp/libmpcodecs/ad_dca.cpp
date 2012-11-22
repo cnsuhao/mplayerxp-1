@@ -21,6 +21,8 @@
 #include "postproc/af.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define MAX_AC5_FRAME 4096
 
 dca_state_t* mpxp_dca_state;

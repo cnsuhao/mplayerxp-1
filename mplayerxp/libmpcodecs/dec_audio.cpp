@@ -25,6 +25,8 @@
 #include "osdep/mplib.h"
 #include "ad_msg.h"
 
+using namespace mpxp;
+
 /* used for ac3surround decoder - set using -channels option */
 af_cfg_t af_cfg; // Configuration for audio filters
 

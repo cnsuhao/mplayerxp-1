@@ -9,6 +9,7 @@
 
 #include "libvo/img_format.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
@@ -18,6 +19,8 @@
 #include "libmpdemux/stheader.h"
 
 #include "vd_internal.h"
+
+using namespace mpxp;
 
 static const vd_info_t info = {
     "Raw DV Video Decoder",

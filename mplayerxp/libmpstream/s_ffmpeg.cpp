@@ -8,6 +8,8 @@
 #include "stream.h"
 #include "stream_msg.h"
 
+using namespace mpxp;
+
 typedef struct ffmpeg_priv_s
 {
     URLContext *ctx;

@@ -12,6 +12,8 @@
 #include "ad_internal.h"
 #include "ad_msg.h"
 
+using namespace mpxp;
+
 static const ad_info_t info = {
     "Win32/DMO decoders",
     "dmo",

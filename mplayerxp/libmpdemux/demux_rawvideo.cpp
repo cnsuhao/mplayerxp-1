@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <string.h>
 
-
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
@@ -13,6 +12,8 @@
 
 #include "libvo/img_format.h"
 #include "demux_msg.h"
+
+using namespace mpxp;
 
 typedef struct priv_s {
     int		use_rawvideo;

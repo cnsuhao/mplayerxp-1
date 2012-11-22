@@ -16,6 +16,8 @@
 #include "osdep/keycodes.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define IMPL 1
 #include "menu_list.h"
 

@@ -22,6 +22,8 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
 /* A dummy function to make the backtrace more interesting. */

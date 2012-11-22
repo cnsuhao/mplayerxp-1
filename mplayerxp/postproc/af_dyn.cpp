@@ -21,6 +21,8 @@
 #include "af.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef struct af_dyn_s
 {
     float gain;

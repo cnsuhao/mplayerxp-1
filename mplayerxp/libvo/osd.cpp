@@ -17,6 +17,8 @@
 #include "osd.h"
 #include "vo_msg.h"
 
+using namespace mpxp;
+
 #if defined(__MMX__)
 static const uint64_t bFF __attribute__((used))  __attribute__((aligned(8))) = 0xFFFFFFFFFFFFFFFFULL;
 static const unsigned long long mask24lh  __attribute__((used)) __attribute__((aligned(8))) = 0xFFFF000000000000ULL;

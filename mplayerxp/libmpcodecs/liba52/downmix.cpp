@@ -30,6 +30,9 @@
 #include "a52_internal.h"
 #include "osdep/mm_accel.h"
 #include "osdep/cpudetect.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #define CONVERT(acmod,output) (((output) << 3) + (acmod))
 

@@ -24,6 +24,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define RTSP_DEFAULT_PORT 554
 
 static int __FASTCALL__ rtsp_stream_read(stream_t *s,stream_packet_t*sp)

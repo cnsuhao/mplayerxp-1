@@ -15,6 +15,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 /* HRTF filter coefficients and adjustable parameters */
 #include "af_hrtf.h"
 

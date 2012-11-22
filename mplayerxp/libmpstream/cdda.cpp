@@ -13,6 +13,9 @@
 #include "cdio/cdtext.h"
 #include "cdd.h"
 #include "stream_msg.h"
+
+using namespace mpxp;
+
 static int speed = -1;
 static int search_overlap = -1;
 static int no_skip = 0;

@@ -9,6 +9,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 extern ao_data_t* ao_data;
 
 // Static list of filters

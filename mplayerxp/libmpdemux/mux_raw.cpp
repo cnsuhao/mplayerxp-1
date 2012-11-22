@@ -23,6 +23,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef struct priv_raw_stream_s
 {
     uint32_t	ckid; // chunk id (00dc 01wb etc)

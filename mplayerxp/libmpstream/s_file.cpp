@@ -15,6 +15,8 @@
 #include "stream.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef struct file_priv_s
 {
     int was_open;

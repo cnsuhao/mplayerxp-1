@@ -14,7 +14,10 @@
 #include "loader/ldt_keeper.h"
 #endif
 #include "codecs_ld.h"
+#include "osdep/mplib.h"
 #include "vd_msg.h"
+
+using namespace mpxp;
 
 static const vd_info_t info = {
     "Quicktime Video decoder",

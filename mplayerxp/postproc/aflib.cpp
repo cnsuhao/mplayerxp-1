@@ -29,6 +29,9 @@ extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
 #include <limits>
 #include "mp_config.h"
 #include "osdep/cpudetect.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #define PVECTOR_ACCEL_H "aflib_accel.h"
 #include "pvector/pvector_inc.h"

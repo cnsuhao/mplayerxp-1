@@ -35,6 +35,8 @@
 #include "xmp_adecoder.h"
 #include "xmp_vdecoder.h"
 
+using namespace mpxp;
+
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else

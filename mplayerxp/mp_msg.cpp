@@ -11,6 +11,8 @@
 #include "mp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define _bg(x) ((x) >> 4)
 #define _fg(x) ((x) & 0x0f)
 typedef struct priv_s {

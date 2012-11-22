@@ -19,6 +19,8 @@
 #include "aviprint.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 typedef int (*alt_demuxer_t)(demuxer_t *demux,demux_stream_t *__ds);
 typedef struct {
   // index stuff:

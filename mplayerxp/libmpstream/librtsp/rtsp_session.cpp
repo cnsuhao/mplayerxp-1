@@ -57,6 +57,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 /*
 #define LOG
 */

@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "ad_internal.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 static const ad_info_t info = {
     "Null audio decoder",

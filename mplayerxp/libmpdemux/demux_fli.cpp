@@ -19,6 +19,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef struct _fli_frames_t {
   int num_frames;
   int current_frame;

@@ -15,6 +15,8 @@
 #include "postprocess.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 struct vf_priv_s {
     int pp;
     pp_mode *ppMode[PP_QUALITY_MAX+1];

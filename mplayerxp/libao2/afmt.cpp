@@ -1,4 +1,7 @@
 #include "afmt.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 const char* afmt2str(unsigned fmt) {
     const char* rs = "AFMT_Unknown";

@@ -17,6 +17,8 @@
 #include "mplayerxp.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
 #endif

@@ -23,6 +23,7 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
 
 struct nuv_signature
 {

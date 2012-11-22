@@ -46,6 +46,8 @@
 #include "sub.h"
 #include "vo_msg.h"
 
+using namespace mpxp;
+
 vo_conf_t vo_conf;
 
 //

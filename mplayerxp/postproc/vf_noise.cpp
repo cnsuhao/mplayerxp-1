@@ -32,6 +32,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define MAX_NOISE 4096
 #define MAX_SHIFT 1024
 #define MAX_RES (MAX_NOISE-MAX_SHIFT)

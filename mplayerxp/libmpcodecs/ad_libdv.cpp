@@ -17,8 +17,11 @@
 #include "libmpdemux/stheader.h"
 #include "libao2/afmt.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 
 #include "ad_internal.h"
+
+using namespace mpxp;
 
 static const ad_info_t info = {
     "Raw DV Audio Decoder",

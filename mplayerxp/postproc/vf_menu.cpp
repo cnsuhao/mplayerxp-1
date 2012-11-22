@@ -21,6 +21,7 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
 
 static struct vf_priv_s* st_priv = NULL;
 

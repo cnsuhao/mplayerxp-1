@@ -24,6 +24,8 @@
 #include "osdep/mplib.h"
 #include "osdep/bswap.h"
 
+using namespace mpxp;
+
 static const vd_info_t info = {
     "DivX4Linux lib (divx4/5 mode)",
     "divx4",

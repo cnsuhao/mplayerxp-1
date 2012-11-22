@@ -11,6 +11,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 struct vf_priv_s {
     unsigned int fmt;
 };

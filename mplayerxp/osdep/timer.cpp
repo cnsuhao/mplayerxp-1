@@ -4,6 +4,9 @@
 #include <stddef.h>
 
 #include "timer.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 static timer_callback *user_func = NULL;
 static struct itimerval otimer;

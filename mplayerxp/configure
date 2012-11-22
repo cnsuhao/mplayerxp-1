@@ -577,7 +577,6 @@ echo "#define I18N_LANGUAGE \"$linguas\"" >>mp_config.h
 
 enabled gpl_only && disable win32loader
 
-enable win32loader
 if win32 || ! x86_32 ; then
 disable win32loader
 fi

@@ -1,6 +1,9 @@
 #include <math.h>
 #include <string.h>
 #include <af.h>
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 /* Convert to gain value from dB. Returns MPXP_Ok if of and MPXP_Error if
    fail */

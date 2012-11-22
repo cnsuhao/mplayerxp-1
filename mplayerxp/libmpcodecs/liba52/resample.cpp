@@ -12,6 +12,9 @@
 #include "osdep/mm_accel.h"
 #include "osdep/mangle.h"
 #include "osdep/cpudetect.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 int (* a52_resample) (float * _f, int16_t * s16)=NULL;
 int (* a52_resample32) (float * _f, float * s16)=NULL;

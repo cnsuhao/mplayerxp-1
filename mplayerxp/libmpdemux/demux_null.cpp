@@ -7,6 +7,9 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 static const config_t demux_null_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}

@@ -26,6 +26,7 @@
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
 
+using namespace mpxp;
 
 #ifndef MP_DEBUG
   #define NDEBUG

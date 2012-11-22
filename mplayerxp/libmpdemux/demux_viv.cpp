@@ -21,6 +21,8 @@
 #include "libmpconf/cfgparser.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 /* parameters ! */
 static int vivo_param_version = -1;
 static char *vivo_param_acodec = NULL;

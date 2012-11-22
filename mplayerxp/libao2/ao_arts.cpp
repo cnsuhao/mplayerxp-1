@@ -30,6 +30,8 @@
 #include "afmt.h"
 #include "ao_msg.h"
 
+using namespace mpxp;
+
 /* Feel mp_free to experiment with the following values: */
 #define ARTS_PACKETS 10 /* Number of audio packets */
 #define ARTS_PACKET_SIZE_LOG2 11 /* Log2 of audio packet size */

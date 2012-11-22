@@ -45,6 +45,9 @@
 #include "dri_vo.h"
 #include "help_mp.h"
 #include "vo_msg.h"
+
+using namespace mpxp;
+
 LIBVO_EXTERN(vesa)
 
 static vo_info_t vo_info =

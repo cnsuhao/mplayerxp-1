@@ -12,6 +12,8 @@
 #include "libao2/afmt.h"
 #include "help_mp.h"
 
+using namespace mpxp;
+
 static const ad_info_t info = {
     "Win32/ACM decoders",
     "acm",

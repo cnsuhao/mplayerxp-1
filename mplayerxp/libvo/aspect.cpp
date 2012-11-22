@@ -7,6 +7,9 @@
 #include <stdio.h>
 #endif
 #include "vo_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 float monitor_aspect=0;
 

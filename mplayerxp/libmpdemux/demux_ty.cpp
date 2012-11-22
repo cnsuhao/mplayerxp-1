@@ -49,6 +49,7 @@
 #include "osdep/mplib.h"
 #include "libmpcodecs/dec_audio.h"
 
+using namespace mpxp;
 
 #define AV_RB24(x)  ((((uint8_t*)(x))[0] << 16) | \
 		     (((uint8_t*)(x))[1] <<  8) | \

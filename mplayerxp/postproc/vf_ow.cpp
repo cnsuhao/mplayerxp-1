@@ -38,6 +38,8 @@
 #include "vf.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 //===========================================================================//
 static const uint8_t  __attribute__((aligned(8))) dither[8][8]={
 {  0,  48,  12,  60,   3,  51,  15,  63, },

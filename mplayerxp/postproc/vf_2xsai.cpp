@@ -7,8 +7,11 @@
 
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
+#include "osdep/mplib.h"
 #include "vf.h"
 #include "pp_msg.h"
+
+using namespace mpxp;
 
 //===========================================================================//
 

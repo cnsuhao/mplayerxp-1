@@ -26,6 +26,8 @@
 #include "mplayerxp.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 extern const demuxer_driver_t demux_aiff;
 extern const demuxer_driver_t demux_rawaudio;
 extern const demuxer_driver_t demux_rawvideo;

@@ -14,7 +14,7 @@
 #include "mp_config.h"
 #include "osdep/mplib.h"
 
-//#include "fastmemcpy.h"
+using namespace mpxp;
 
 #include "nuppelvideo.h"
 #include "RTjpegN.h"

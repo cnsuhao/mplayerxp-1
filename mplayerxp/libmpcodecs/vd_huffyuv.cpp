@@ -27,6 +27,8 @@
 #include "osdep/mplib.h"
 #include "osdep/bswap.h"
 
+using namespace mpxp;
+
 static const vd_info_t info = {
     "HuffYUV Video decoder",
     "huffyuv",

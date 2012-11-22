@@ -1,10 +1,10 @@
-
 #include "libmpcodecs/dec_video.h"
 
 #include "sig_hand.h"
 #include "mp_msg.h"
 #include "mplayerxp.h"
 #include "osdep/timer.h"
+#include "osdep/mplib.h"
 #include "xmp_core.h"
 #include "xmp_adecoder.h"
 #include "xmp_vdecoder.h"
@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <math.h>
+
+using namespace mpxp;
 
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )

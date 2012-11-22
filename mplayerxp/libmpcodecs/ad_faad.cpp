@@ -23,6 +23,8 @@
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
 
+using namespace mpxp;
+
 static const ad_info_t info = {
     "AAC (MPEG2/4 Advanced Audio Coding)",
     "faad",

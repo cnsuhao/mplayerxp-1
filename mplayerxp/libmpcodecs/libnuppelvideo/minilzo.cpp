@@ -57,6 +57,9 @@
 #include <stdio.h>
 
 #include "osdep/cpudetect.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #ifndef __LZO_CONF_H
 #define __LZO_CONF_H

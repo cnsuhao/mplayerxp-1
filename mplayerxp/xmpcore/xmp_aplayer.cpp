@@ -13,9 +13,13 @@
 #include "libao2/audio_out.h"
 
 #include "osdep/timer.h"
+#include "osdep/mplib.h"
 #include "xmp_core.h"
 #include "xmp_aplayer.h"
 #include "xmp_adecoder.h"
+
+using namespace mpxp;
+
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else

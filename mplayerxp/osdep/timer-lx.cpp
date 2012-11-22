@@ -7,14 +7,16 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#include "../mp_config.h"
+#include "mp_config.h"
 #ifdef HAVE_RTC
 #include <linux/rtc.h>
 #endif
 #include <fcntl.h>
 #include "timer.h"
 #include "osdep_msg.h"
+#include "osdep/mplib.h"
 
+using namespace mpxp;
 
 int usec_sleep(int usec_delay)
 {

@@ -8,6 +8,8 @@
 #include "afmt.h"
 #include "ao_msg.h"
 
+using namespace mpxp;
+
 extern const ao_functions_t audio_out_wav;
 extern const ao_functions_t audio_out_null;
 #ifdef USE_OSS_AUDIO

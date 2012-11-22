@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+using namespace mpxp;
+
 #ifndef JOY_AXIS_DELTA
 #define JOY_AXIS_DELTA 500
 #endif

@@ -14,6 +14,9 @@
 #include "osdep/mplib.h"
 #include "osdep/bswap.h"
 #include "libao2/afmt.h"
+
+using namespace mpxp;
+
 static const ad_info_t info = {
     "RealAudio decoder",
     "realaudio",

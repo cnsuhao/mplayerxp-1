@@ -14,6 +14,8 @@
 #include "loader/wine/driver.h"
 #include "libmpdemux/aviprint.h"
 
+using namespace mpxp;
+
 static const vd_info_t info_vfw = {
     "Win32/VfW video codecs",
     "vfw",

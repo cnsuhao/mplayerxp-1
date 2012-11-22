@@ -4,6 +4,8 @@
 #include "osdep/mplib.h"
 #include "playtree.h"
 
+using namespace mpxp;
+
 typedef struct _ASX_Parser_t ASX_Parser_t;
 
 typedef struct {

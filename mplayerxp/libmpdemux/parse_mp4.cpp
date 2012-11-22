@@ -14,7 +14,7 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
-//#define MP4_DUMPATOM
+using namespace mpxp;
 
 #define freereturn(a,b) delete a; return b
 

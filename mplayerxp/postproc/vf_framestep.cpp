@@ -61,6 +61,8 @@
 #include "vf.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 /* Uncomment if you want to print some info on the format */
 // #define DUMP_FORMAT_DATA
 

@@ -32,6 +32,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef struct priv_mpxpav64_stream_s
 {
     /* statistics */

@@ -15,6 +15,8 @@
 #include "muxer.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags)
 {
     muxer_packet_t* retval;

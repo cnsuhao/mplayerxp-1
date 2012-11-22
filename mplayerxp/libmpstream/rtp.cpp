@@ -25,12 +25,15 @@
 #endif
 #include <errno.h>
 #include "stream.h"
+#include "osdep/mplib.h"
 
 /* MPEG-2 TS RTP stack */
 
 #define DEBUG        1
 #include "rtp.h"
 #include "stream_msg.h"
+
+using namespace mpxp;
 
 // RTP reorder routines
 // Also handling of repeated UDP packets (a bug of ExtremeNetworks switches firmware)

@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace mpxp;
+
 enum { AFMT_AF_FLAGS=0x70000000 };
 
 /* Decodes the format from mplayer format to libaf format */

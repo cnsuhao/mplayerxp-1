@@ -26,6 +26,8 @@
 #include "vd_internal.h"
 #include "codecs_ld.h"
 
+using namespace mpxp;
+
 static const vd_info_t info = {
     "XAnim codecs",
     "xanim",

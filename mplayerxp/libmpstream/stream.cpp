@@ -23,6 +23,8 @@
 #include "libmpdemux/demuxer.h"
 #include "stream_msg.h"
 
+using namespace mpxp;
+
 #ifdef HAVE_LIBCDIO_CDDA
 extern const stream_driver_t cdda_stream;
 extern const stream_driver_t cddb_stream;

@@ -21,6 +21,7 @@
 #include "xbuffer.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
 
 typedef struct {
   uint32_t size;

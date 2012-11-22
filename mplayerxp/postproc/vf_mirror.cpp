@@ -14,6 +14,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize);
 struct vf_priv_s {
     unsigned dw,dh;

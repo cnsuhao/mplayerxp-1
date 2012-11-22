@@ -21,6 +21,8 @@
 #include "osdep/mplib.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 typedef struct {
     int framenum;
     y4m_stream_info_t* si;

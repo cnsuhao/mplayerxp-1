@@ -13,6 +13,8 @@
 #include "osdep/mplib.h"
 #include "aviprint.h"
 
+using namespace mpxp;
+
 int use_rawaudio = 0;
 static int channels = 2;
 static int samplerate = 44100;

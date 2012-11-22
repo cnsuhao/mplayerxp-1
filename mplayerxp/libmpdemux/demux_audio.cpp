@@ -21,6 +21,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define RAW_MP1 1
 #define RAW_MP2 2
 #define RAW_MP3 3

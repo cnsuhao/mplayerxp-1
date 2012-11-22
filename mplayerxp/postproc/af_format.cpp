@@ -18,6 +18,8 @@
 #include "loader/wine/mmreg.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 // Integer to float conversion through lrintf()
 #ifdef HAVE_LRINTF
 #define __USE_ISOC99 1

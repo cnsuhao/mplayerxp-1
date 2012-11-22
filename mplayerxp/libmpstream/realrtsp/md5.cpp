@@ -30,9 +30,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "mp_config.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include <string.h>
 #include "md5.h"
+
+using namespace mpxp;
 
 typedef struct AVMD5{
     uint64_t len;

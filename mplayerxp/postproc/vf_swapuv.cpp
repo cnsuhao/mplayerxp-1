@@ -31,7 +31,7 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
-
+using namespace mpxp;
 //===========================================================================//
 
 static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){

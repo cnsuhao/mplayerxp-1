@@ -6,6 +6,7 @@
 #include "libvo/video_out.h"
 
 #include "osdep/timer.h"
+#include "osdep/mplib.h"
 #include "libmpdemux/demuxer.h"
 #include "mplayerxp.h"
 #include "xmp_core.h"
@@ -15,6 +16,8 @@
 #include <stdio.h>
 #include <unistd.h> // for usleep()
 #include <math.h>
+
+using namespace mpxp;
 
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )

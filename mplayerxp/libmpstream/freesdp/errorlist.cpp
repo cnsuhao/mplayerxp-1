@@ -28,6 +28,9 @@
 #define FSDP_ERRORLIST_C
 
 #include "common.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 const char *fsdp_error_t_s[] = {
   "No error",/** FSDPE_OK **/

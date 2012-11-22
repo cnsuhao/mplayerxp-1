@@ -27,6 +27,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define MENU_KEEP_PATH "/tmp/mp_current_path"
 
 int file_filter=0;

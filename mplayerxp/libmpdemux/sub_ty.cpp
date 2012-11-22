@@ -22,6 +22,8 @@
 #include "osdep/mplib.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 extern vo_data_t* vo_data;
 
 extern int sub_justify;

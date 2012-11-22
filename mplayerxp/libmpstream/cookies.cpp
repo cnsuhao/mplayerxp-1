@@ -21,6 +21,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define MAX_COOKIES 20
 
 char *cookies_file = NULL;

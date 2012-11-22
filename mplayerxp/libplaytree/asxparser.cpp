@@ -14,6 +14,8 @@
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 ////// List utils
 
 static void __FASTCALL__ asx_list_add(any_t* list_ptr,any_t* entry){

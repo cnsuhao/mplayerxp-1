@@ -10,6 +10,8 @@
 #include "osdep/mplib.h"
 #include "osdep/bswap.h"
 
+using namespace mpxp;
+
 extern ao_data_t* ao_data;
 
 static const ad_info_t info = {

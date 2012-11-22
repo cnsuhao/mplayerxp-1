@@ -12,6 +12,8 @@
 #include "osdep/mplib.h"
 #include "vo_msg.h"
 
+using namespace mpxp;
+
 raw_file* load_raw(const char *name,int verbose){
     int bpp;
     raw_file* raw=new raw_file;

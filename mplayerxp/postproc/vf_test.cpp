@@ -15,6 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,14 +32,11 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
 //===========================================================================//
 
 #include <inttypes.h>
 #include <math.h>
-
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define ABS(a,b) ((a) > 0 ? (a) : -(a))
 
 #define WIDTH 512
 #define HEIGHT 512
@@ -254,7 +252,7 @@ static void __FASTCALL__ drawCbp(uint8_t *dst[3], int stride[3], int cbp, int am
 
 static void __FASTCALL__ dc1Test(uint8_t *dst, int stride, int w, int h, int off)
 {
-	const int step= MAX(256/(w*h/256), 1);
+	const int step= std::max(256/(w*h/256), 1);
 	int y;
 	int color=off;
 	for(y=0; y<h; y+=16)

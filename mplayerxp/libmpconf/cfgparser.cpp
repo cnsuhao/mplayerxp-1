@@ -18,6 +18,8 @@
 #include "mp_config.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define COMMAND_LINE		0
 #define CONFIG_FILE		1
 

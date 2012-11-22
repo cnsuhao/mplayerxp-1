@@ -13,6 +13,8 @@
 #include "libvo/sub.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 struct vf_priv_s {
 	int state;
 	long long in;

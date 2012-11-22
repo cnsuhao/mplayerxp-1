@@ -22,6 +22,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 struct list_entry_s {
   struct list_entry p;
 

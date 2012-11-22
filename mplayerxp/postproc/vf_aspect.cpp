@@ -11,6 +11,8 @@
 #include "vf.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 struct vf_priv_s {
 	int w, h;
 	float aspect;

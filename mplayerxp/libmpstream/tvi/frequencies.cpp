@@ -2,6 +2,9 @@
 #include <sys/time.h>
 
 #include "frequencies.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 /* --------------------------------------------------------------------- */
 

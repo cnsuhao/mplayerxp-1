@@ -32,6 +32,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define SUB_PIXEL_BITS 8
 #define SUB_PIXELS (1<<SUB_PIXEL_BITS)
 #define COEFF_BITS 11

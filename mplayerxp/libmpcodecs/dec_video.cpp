@@ -36,6 +36,8 @@
 #include "osdep/cpudetect.h"
 #include "vd_msg.h"
 
+using namespace mpxp;
+
 // ===================================================================
 vf_cfg_t vf_cfg; // Configuration for audio filters
 

@@ -3,7 +3,10 @@
 #include <unistd.h>
 #include "ad_internal.h"
 #include "osdep/bswap.h"
+#include "osdep/mplib.h"
 #include "libao2/afmt.h"
+
+using namespace mpxp;
 
 static const ad_info_t info = {
     "Uncompressed DVD/VOB LPCM audio decoder",

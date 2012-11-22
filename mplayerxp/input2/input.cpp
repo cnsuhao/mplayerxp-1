@@ -33,6 +33,8 @@
 #include "joystick.h"
 #include "osdep/getch2.h"
 
+using namespace mpxp;
+
 #ifndef MP_MAX_KEY_FD
 #define MP_MAX_KEY_FD 10
 #endif

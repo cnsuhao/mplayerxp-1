@@ -34,6 +34,8 @@
 #include "md5.h"
 #include "stream_msg.h"
 
+using namespace mpxp;
+
 /*
 #define LOG
 */

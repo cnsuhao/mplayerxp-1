@@ -29,6 +29,8 @@
 #endif
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define LUT16
 
 /* Per channel parameters */

@@ -22,6 +22,8 @@
 #include "libao2/afmt.h"
 #include "mrl.h"
 
+using namespace mpxp;
+
 /* some default values */
 static int tv_param_audiorate = 44100;
 static int tv_param_noaudio = 0;

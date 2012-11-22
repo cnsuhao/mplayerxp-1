@@ -22,7 +22,6 @@
 #include <math.h>
 #include <dlfcn.h>
 
-
 #include "mp_config.h"
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
@@ -55,6 +54,8 @@
 #include "osdep/mplib.h"
 #include "postproc/vfcap.h"
 #include "vo_msg.h"
+
+using namespace mpxp;
 
 static const vo_info_t vo_info =
 {

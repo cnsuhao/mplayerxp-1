@@ -21,6 +21,8 @@
 #include "osdep/mplib.h"
 #include "ao_msg.h"
 
+using namespace mpxp;
+
 static ao_info_t info = {
     "SDLlib audio output",
     "sdl",

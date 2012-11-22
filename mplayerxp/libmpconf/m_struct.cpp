@@ -13,6 +13,8 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 const m_option_t*
 m_struct_get_field(const m_struct_t* st,const char* f) {
   int i;

@@ -15,6 +15,8 @@
 #include "xmpcore/xmp_core.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float duration) {
     enc_frame_t* frame=(enc_frame_t*)mp_mallocz(sizeof(enc_frame_t));
     frame->type=type;

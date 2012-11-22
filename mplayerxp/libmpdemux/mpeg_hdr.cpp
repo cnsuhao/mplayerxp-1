@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 // based on libmpeg2/header.c by Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
 #include <inttypes.h>
 #include <stdio.h>
@@ -9,6 +9,7 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
 
 static int frameratecode2framerate[16] = {
   0,

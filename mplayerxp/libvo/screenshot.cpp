@@ -30,6 +30,8 @@
 #include "osdep/mplib.h"
 #include "vo_msg.h"
 
+using namespace mpxp;
+
 #define RGB 0
 #define BGR 1
 typedef struct sshot_priv_s {

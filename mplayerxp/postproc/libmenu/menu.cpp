@@ -25,6 +25,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 extern vo_data_t* vo_data;
 
 extern menu_info_t menu_info_cmdlist;

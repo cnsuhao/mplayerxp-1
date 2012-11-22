@@ -4,6 +4,9 @@
 #include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPUDETECT
 #include "mp_msg.h"
+
+using namespace mpxp;
+
 CpuCaps gCpuCaps;
 
 #include <stdlib.h>

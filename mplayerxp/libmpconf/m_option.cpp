@@ -19,6 +19,8 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 // Don't mp_free for 'production' atm
 #ifndef MP_DEBUG
 //#define NO_FREE

@@ -48,6 +48,9 @@
 #include "version.h"
 #include "network.h"
 #include "stream_msg.h"
+
+using namespace mpxp;
+
 #define DEFAULT_FREEDB_SERVER	"freedb.freedb.org"
 #define DEFAULT_CACHE_DIR	"/.cddb/"
 

@@ -20,6 +20,8 @@
 #include "aviprint.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 #define FOURCC_DOTRA mmioFOURCC('.','r','a', 0xfd)
 #define FOURCC_144 mmioFOURCC('1','4','_','4')
 #define FOURCC_288 mmioFOURCC('2','8','_','8')

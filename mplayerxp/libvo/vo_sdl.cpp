@@ -133,6 +133,9 @@
 #include "vosub_vidix.h"
 #endif
 #include "vo_msg.h"
+
+using namespace mpxp;
+
 LIBVO_EXTERN(sdl)
 
 int sdl_noxv;

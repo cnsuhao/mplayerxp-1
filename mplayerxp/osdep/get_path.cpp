@@ -6,6 +6,8 @@
 #include "osdep_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 char *get_path(const char *filename){
 	char *homedir;
 	char *buff;

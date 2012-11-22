@@ -13,6 +13,9 @@
 #include "libmpdemux/stheader.h"
 #include "ad.h"
 #include "ad_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 /* Missed vorbis, mad, dshow */
 

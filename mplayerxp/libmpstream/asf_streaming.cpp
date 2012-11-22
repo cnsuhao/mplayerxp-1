@@ -26,6 +26,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 #define	ASF_LOAD_GUID_PREFIX(guid)	(*(uint32_t *)(guid))
 #else

@@ -78,6 +78,8 @@
 #include "osdep/getch2.h"
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
+
+using namespace mpxp;
 /**************************************************************************
 	     Private data
 **************************************************************************/

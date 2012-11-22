@@ -47,6 +47,8 @@
 #include "freesdp/parser.h"
 #include "stream_msg.h"
 
+using namespace mpxp;
+
 #define RTSP_DEFAULT_PORT 31336
 #define MAX_LENGTH 256
 

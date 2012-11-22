@@ -25,6 +25,11 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#include "mp_config.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
+
 static const uint16_t crc_lut[256] =
 {
 	0x0000,0x8005,0x800f,0x000a,0x801b,0x001e,0x0014,0x8011,

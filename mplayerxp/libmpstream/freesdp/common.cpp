@@ -31,7 +31,8 @@
 
 #include "priv.h"
 #include "common.h"
-#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 static void
 safe_free (any_t*ptr)

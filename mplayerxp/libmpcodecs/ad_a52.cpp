@@ -11,6 +11,8 @@
 #include "mplayerxp.h"
 #include "help_mp.h"
 #include "osdep/cpudetect.h"
+#include "osdep/bswap.h"
+#include "osdep/mplib.h"
 
 #include "osdep/mm_accel.h"
 #include "mplayerxp.h"
@@ -18,6 +20,8 @@
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
+
+using namespace mpxp;
 
 typedef struct priv_s {
     float last_pts;
@@ -28,9 +32,6 @@ typedef struct priv_s {
 a52_state_t* mpxp_a52_state;
 uint32_t mpxp_a52_accel=0;
 uint32_t mpxp_a52_flags=0;
-
-#include "osdep/bswap.h"
-#include "osdep/mplib.h"
 
 static const ad_info_t info =
 {

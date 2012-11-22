@@ -21,6 +21,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 uint64_t layouts[]={
     0,
     AV_CH_LAYOUT_MONO,

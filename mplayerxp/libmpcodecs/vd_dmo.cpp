@@ -10,9 +10,12 @@
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
+#include "osdep/mplib.h"
 
 #include "loader/dmo/DMO_VideoDecoder.h"
 #include "vd_msg.h"
+
+using namespace mpxp;
 
 static const vd_info_t info = {
     "Win32/DMO video codecs",

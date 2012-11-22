@@ -10,6 +10,8 @@
 #include <stdio.h>
 #endif
 
+using namespace mpxp;
+
 const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port)
 {
     unsigned ssize;

@@ -26,9 +26,12 @@
 #include <unistd.h>
 
 #include "osdep_msg.h"
+#include "osdep/mplib.h"
 #include "keycodes.h"
 
 #include "getch2.h"
+
+using namespace mpxp;
 
 #ifdef HAVE_TERMIOS
 static struct termios tio_orig;

@@ -15,6 +15,8 @@
 #include <time.h>
 #include <unistd.h>
 
+namespace mpxp {
+
 typedef struct mp_slot_s {
     any_t*	page_ptr;
     size_t	size;
@@ -521,6 +523,9 @@ int __FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags)
     return mprotect(addr,len,flags);
 }
 
+} // namespace mpxp
+
+using namespace mpxp;
 #include <new>
 
 any_t*	SECURE_NAME0(_mp_malloc)(size_t size) {

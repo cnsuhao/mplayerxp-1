@@ -15,6 +15,8 @@
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 static int
 play_tree_is_valid(play_tree_t* pt);
 

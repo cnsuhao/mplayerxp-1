@@ -38,6 +38,7 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
 //===========================================================================//
 
 #define MIN_MATRIX_SIZE 3

@@ -28,6 +28,8 @@
 #include "mplayerxp.h"
 #include "stream_msg.h"
 
+using namespace mpxp;
+
 #define CPF_EMPTY	0x00000001UL
 #define CPF_EOF		0x80000000UL
 #define CPF_DONE	0x40000000UL /* special case for dvd packets to exclude them from sending again */

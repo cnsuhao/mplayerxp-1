@@ -20,6 +20,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 extern vo_data_t* vo_data;
 
 struct menu_priv_s {

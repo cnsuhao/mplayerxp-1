@@ -10,6 +10,8 @@
 #include "af.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 extern ao_data_t* ao_data;
 
 static unsigned rates[] =

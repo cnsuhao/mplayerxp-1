@@ -36,6 +36,8 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include "libao2/afmt.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 #define MKTAG(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))
 
 #define MAX_STREAMS 32

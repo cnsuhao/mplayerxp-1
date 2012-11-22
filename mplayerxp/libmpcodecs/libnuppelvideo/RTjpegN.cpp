@@ -29,6 +29,8 @@
 #include "mp_config.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 //#define SHOWBLOCK 1
 #define BETTERCOMPRESSION 1
 

@@ -13,6 +13,8 @@
 #include "osdep/mplib.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 static unsigned long cvt_extended(const char * buf)
 {
     unsigned long mantissa,last=0;

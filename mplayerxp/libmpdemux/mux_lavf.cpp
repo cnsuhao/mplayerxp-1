@@ -20,6 +20,8 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 extern unsigned int codec_get_wav_tag(int id);
 
 typedef struct {

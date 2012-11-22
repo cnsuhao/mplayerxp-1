@@ -13,6 +13,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define L 65536
 
 #define UPDATEQI(qi) qi=(qi+1)&(L-1)

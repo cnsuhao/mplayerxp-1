@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include "libmpstream/stream.h"
 #include "libmpconf/cfgparser.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #ifdef HAVE_LIBCDIO
 extern void cdda_register_options(m_config_t* cfg);

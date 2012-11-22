@@ -30,6 +30,8 @@
 #include "libmpstream/mrl.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 static ao_info_t info =
 {
     "ALSA-1.x audio output",

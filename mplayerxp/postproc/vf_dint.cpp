@@ -12,6 +12,8 @@
 #include "vf.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 struct vf_priv_s {
   float sense; // first parameter
   float level; // second parameter

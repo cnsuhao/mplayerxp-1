@@ -30,6 +30,8 @@
 #define MSGT_CLASS MSGT_SPUDEC
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 /* Valid values for spu_aamode:
    0: none (fastest, most ugly)
    1: approximate

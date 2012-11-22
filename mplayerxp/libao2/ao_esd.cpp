@@ -55,6 +55,7 @@
 #include "ao_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
 
 #define ESD_RESAMPLES 0
 #define ESD_DEBUG 0

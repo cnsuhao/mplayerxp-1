@@ -38,6 +38,8 @@
 #include "libmpstream/mrl.h"
 #include "vo_msg.h"
 
+using namespace mpxp;
+
 LIBVO_EXTERN(fbdev)
 
 static vo_info_t vo_info = {

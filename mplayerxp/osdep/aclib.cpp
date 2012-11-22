@@ -4,6 +4,9 @@
 #include "mplayerxp.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #if defined(USE_FASTMEMCPY)
 #include "fastmemcpy.h"

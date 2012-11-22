@@ -25,6 +25,8 @@
 #include "libvo/video_out.h"
 #include "osdep/bswap.h"
 
+using namespace mpxp;
+
 static const vd_info_t info = {
     "FFmpeg's libavcodec codec family",
     "ffmpeg",

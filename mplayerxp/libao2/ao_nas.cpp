@@ -62,6 +62,8 @@
 #include "afmt.h"
 #include "ao_msg.h"
 
+using namespace mpxp;
+
 /* NAS_FRAG_SIZE must be a power-of-two value */
 #define NAS_FRAG_SIZE 4096
 

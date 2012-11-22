@@ -39,6 +39,8 @@
 #include "mp_conf_lavc.h"
 #include <jack/jack.h>
 
+using namespace mpxp;
+
 static const ao_info_t info =
 {
   "JACK audio output",

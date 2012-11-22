@@ -23,6 +23,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 struct stream_priv_s {
     const char* user;
     const char* pass;

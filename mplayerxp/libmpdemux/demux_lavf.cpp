@@ -33,6 +33,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define PROBE_BUF_SIZE 2048
 
 #define BIO_BUFFER_SIZE 32768

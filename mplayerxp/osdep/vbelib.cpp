@@ -19,10 +19,12 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "../mplayerxp.h"
+#include "mplayerxp.h"
 #include "cpudetect.h"
 #include "osdep_msg.h"
+#include "osdep/mplib.h"
 
+using namespace mpxp;
 
 static struct VesaProtModeInterface vbe_pm_info;
 static struct VesaModeInfoBlock curr_mode_info;

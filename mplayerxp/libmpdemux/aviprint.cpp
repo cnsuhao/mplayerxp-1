@@ -3,12 +3,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "aviprint.h"
 #include "demux_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 extern int avi_stream_id(unsigned int id);
 

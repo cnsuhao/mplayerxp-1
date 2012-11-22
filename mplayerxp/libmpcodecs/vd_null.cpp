@@ -2,8 +2,10 @@
 #include <stdlib.h>
 
 #include "mp_config.h"
-
+#include "osdep/mplib.h"
 #include "vd_internal.h"
+
+using namespace mpxp;
 
 static const vd_info_t info = {
     "Null video decoder",

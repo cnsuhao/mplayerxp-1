@@ -25,6 +25,8 @@
 #include <dvdread/nav_read.h>
 #include "mrl.h"
 
+using namespace mpxp;
+
 #undef DVDREAD_VERSION
 #define	DVDREAD_VERSION(maj,min,micro)	((maj)*10000 + (min)*100 + (micro))
 

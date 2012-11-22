@@ -52,6 +52,9 @@
 #include "dri_vo.h"
 #include "xmpcore/mp_image.h"
 #include "vo_msg.h"
+
+using namespace mpxp;
+
 LIBVO_EXTERN( x11 )
 
 static vo_info_t vo_info =

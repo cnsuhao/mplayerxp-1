@@ -36,6 +36,8 @@
 #include "parserpriv.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 /**
  * \brief find the start of the next line
  * \param c pointer to current position in string

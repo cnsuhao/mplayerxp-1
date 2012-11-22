@@ -22,8 +22,6 @@
  * http://www.ece.purdue.edu/~bouman/grad-labs/lab8/pdf/lab.pdf
  */
 
-
-
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +35,9 @@
 
 #include "jpeg_enc.h"
 #include "vo_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 /* zr_mjpeg_encode_mb needs access to these tables for the black & white
  * option */

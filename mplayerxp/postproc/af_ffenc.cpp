@@ -10,6 +10,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)
 
 // Data for specific instances of this filter

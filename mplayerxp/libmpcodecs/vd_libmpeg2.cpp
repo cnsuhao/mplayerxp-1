@@ -20,6 +20,8 @@
 #include "osdep/mplib.h"
 #include "osdep/bswap.h"
 
+using namespace mpxp;
+
 static const vd_info_t info = {
     "libmpeg2 MPEG 1/2 Video decoder",
     "libmpeg2",

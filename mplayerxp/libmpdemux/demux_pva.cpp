@@ -37,6 +37,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 /*
  * #defines below taken from PVA spec (see URL above)
  */

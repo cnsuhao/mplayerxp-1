@@ -37,6 +37,7 @@
 #include "xmpcore/mp_image.h"
 #include "vo_msg.h"
 
+using namespace mpxp;
 using namespace vidix;
 
 #define NUM_FRAMES MAX_DRI_BUFFERS /* Temporary: driver will overwrite it */

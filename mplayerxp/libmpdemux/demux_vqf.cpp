@@ -15,6 +15,8 @@
 #include "osdep/mplib.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 #define	KEYWORD_BYTES	4
 #define	VERSION_BYTES	8
 #define ELEM_BYTES      sizeof(unsigned long)

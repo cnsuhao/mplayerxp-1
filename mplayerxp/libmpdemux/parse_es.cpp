@@ -4,13 +4,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../mp_config.h"
+#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "parse_es.h"
 #include "demux_msg.h"
+
+using namespace mpxp;
 
 //static unsigned char videobuffer[MAX_VIDEO_PACKET_SIZE];
 unsigned char* videobuffer=NULL;

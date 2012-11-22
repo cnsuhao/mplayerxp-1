@@ -23,6 +23,8 @@
 #define MSGT_CLASS MSGT_VOBSUB
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 #ifdef HAVE_GETLINE
 extern ssize_t getline(char **, size_t *, FILE *);
 #else

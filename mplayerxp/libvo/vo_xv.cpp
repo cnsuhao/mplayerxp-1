@@ -24,6 +24,8 @@
 #include "video_out.h"
 #include "video_out_internal.h"
 
+using namespace mpxp;
+
 LIBVO_EXTERN(xv)
 
 #include <X11/Xlib.h>

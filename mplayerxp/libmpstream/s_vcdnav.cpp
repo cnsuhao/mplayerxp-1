@@ -15,6 +15,8 @@
 #include "mrl.h"
 #include "help_mp.h"
 
+using namespace mpxp;
+
 typedef struct {
     uint8_t subheader	[CDIO_CD_SUBHEADER_SIZE];
     uint8_t data	[M2F2_SECTOR_SIZE];

@@ -7,6 +7,9 @@
 #include "stheader.h"
 #include "demux_msg.h"
 #include "osdep/mplib.h"
+
+using namespace mpxp;
+
 typedef struct dd_priv {
   demuxer_t* vd;
   demuxer_t* ad;

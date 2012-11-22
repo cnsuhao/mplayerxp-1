@@ -18,6 +18,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 static inline const char* mp_basename(const char *s) {
     return strrchr((s),'/')==NULL?(const char*)(s):(strrchr((s),'/')+1);
 }

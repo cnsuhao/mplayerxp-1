@@ -17,6 +17,8 @@
 #include "mp_conf_lavc.h""
 #include "codecs_ld.h"
 
+using namespace mpxp;
+
 typedef struct priv_s {
     AVCodecContext *lavc_ctx;
     audio_probe_t*  probe;

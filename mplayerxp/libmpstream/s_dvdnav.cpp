@@ -23,6 +23,8 @@
 #include "osdep/timer.h"
 #include "osdep/mplib.h"
 #include "mrl.h"
+
+using namespace mpxp;
 #define DVD_BLOCK_SIZE 2048
 
 extern vo_data_t* vo_data;

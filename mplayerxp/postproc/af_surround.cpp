@@ -45,6 +45,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define L  32    // Length of fir filter
 #define LD 65536 // Length of delay buffer
 

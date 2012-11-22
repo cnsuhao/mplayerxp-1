@@ -14,6 +14,8 @@
 #include "nls_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 /*
  *We have to proceed with the POSIX methods of looking to `LANG'.
   On some systems this can be done by the `setlocale' function itself.

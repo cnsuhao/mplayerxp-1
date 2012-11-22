@@ -28,6 +28,8 @@
 #include "pp_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef struct history_st history_t;
 
 struct history_st {

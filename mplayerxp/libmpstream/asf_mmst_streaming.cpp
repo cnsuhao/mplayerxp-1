@@ -46,6 +46,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define BUF_SIZE 102400
 #define HDR_BUF_SIZE 8192
 #define MAX_STREAMS 20

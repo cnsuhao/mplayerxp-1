@@ -28,6 +28,9 @@ Original location: http://cvs.debian.org/lrmi/
 #include "lrmi.h"
 #include "cpudetect.h"
 #include "osdep_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #define REAL_MEM_BASE 	((any_t*)0x10000)
 #define REAL_MEM_SIZE 	0x10000

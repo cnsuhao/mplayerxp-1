@@ -38,6 +38,8 @@
 #endif
 #include "vo_msg.h"
 
+using namespace mpxp;
+
 LIBVO_EXTERN(null)
 
 static vo_info_t vo_info = {

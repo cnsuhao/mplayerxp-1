@@ -26,6 +26,8 @@
 #define MSGT_CLASS MSGT_CODECCFG
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 #define MAX_NR_TOKEN	16
 
 #define MAX_LINE_LEN	1000

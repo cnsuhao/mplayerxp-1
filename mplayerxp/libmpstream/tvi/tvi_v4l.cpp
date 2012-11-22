@@ -10,6 +10,9 @@
 */
 
 #include "mp_config.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #if defined(USE_TV) && defined(HAVE_TV_V4L)
 
@@ -27,10 +30,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../libao2/afmt.h"
-#include "../libao2/audio_out.h"
-#include "../libvo/img_format.h"
-#include "../libvo/fastmemcpy.h"
+#include "libao2/afmt.h"
+#include "libao2/audio_out.h"
+#include "libvo/img_format.h"
+#include "libvo/fastmemcpy.h"
 
 #include "tv.h"
 #include "stream_msg.h"

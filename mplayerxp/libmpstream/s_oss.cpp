@@ -1,7 +1,7 @@
 /*
     s_oss - stream interface for oss capturing.
 */
-#include "../mp_config.h"
+#include "mp_config.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +25,7 @@
 #include "mrl.h"
 #include "stream_msg.h"
 
+using namespace mpxp;
 
 typedef struct oss_priv_s
 {

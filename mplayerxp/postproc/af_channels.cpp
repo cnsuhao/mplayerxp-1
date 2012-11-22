@@ -14,6 +14,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 #define FR 0
 #define TO 1
 

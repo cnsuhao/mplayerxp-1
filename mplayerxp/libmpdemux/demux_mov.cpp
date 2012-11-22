@@ -50,6 +50,8 @@
 #include <fcntl.h>
 #endif
 
+using namespace mpxp;
+
 #define BE_16(x) be2me_16(x)
 #define BE_32(x) be2me_32(x)
 

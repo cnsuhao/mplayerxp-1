@@ -18,6 +18,8 @@
 #include "mplayerxp.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 /* biCompression constant */
 #define BI_RGB        0L
 

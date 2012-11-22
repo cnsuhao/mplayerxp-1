@@ -46,6 +46,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 /* Variables for the command line option -user, -passwd & -bandwidth */
 char *network_username=NULL;
 char *network_password=NULL;

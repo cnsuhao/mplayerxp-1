@@ -136,21 +136,23 @@ extern pthread_mutex_t audio_timer_mutex;
 
 extern void exit_player(const char* why);
 
-static inline void escape_player(const char* why,unsigned num_calls) {
-    show_backtrace(why,num_calls);
-    exit_player(why);
-}
+namespace mpxp {;
 
-static inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) {
-    if(pin1!=pin2) {
-	char msg[4096];
-	strcpy(msg,"Found incorrect PIN in module: ");
-	strcat(msg,module);
-	escape_player(msg,mp_conf.max_trace);
+    static inline void escape_player(const char* why,unsigned num_calls) {
+	show_backtrace(why,num_calls);
+	exit_player(why);
     }
-    return MPXP_Ok;
-}
 
+    static inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) {
+	if(pin1!=pin2) {
+	    char msg[4096];
+	    strcpy(msg,"Found incorrect PIN in module: ");
+	    strcat(msg,module);
+	    escape_player(msg,mp_conf.max_trace);
+	}
+	return MPXP_Ok;
+    }
+}
 extern void mpxp_resync_audio_stream(void);
 extern void mpxp_reset_vcache(void);
 extern void __exit_sighandler(void);

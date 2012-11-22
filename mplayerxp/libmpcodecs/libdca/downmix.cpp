@@ -28,8 +28,11 @@
 #include <inttypes.h>
 
 #include "osdep/cpudetect.h"
+#include "osdep/mplib.h"
 #include "dca.h"
 #include "dca_internal.h"
+
+using namespace mpxp;
 
 #define CONVERT(acmod,output) (((output) << DCA_CHANNEL_BITS) + (acmod))
 

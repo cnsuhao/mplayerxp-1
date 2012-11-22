@@ -27,6 +27,7 @@
 #include "libvo/sub.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
 
 #define CC_MAX_LINE_LENGTH 64
 

@@ -6,7 +6,7 @@
  *   Sun Apr  6 02:26:26 MET DST 1997
  */
 
-#include "../mp_config.h"
+#include "mp_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +29,11 @@
 #include <sys/shm.h>
 #endif
 
-#include "../help_mp.h"
+#include "help_mp.h"
 #include "osdep_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
 #define MAP_ANON MAP_ANONYMOUS

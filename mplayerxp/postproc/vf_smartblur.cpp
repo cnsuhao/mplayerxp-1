@@ -37,6 +37,8 @@
 #include "vf_scale.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 //===========================================================================//
 
 typedef struct FilterParam{

@@ -41,6 +41,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 // Data for specific instances of this filter
 typedef struct af_scaletempo_s
 {

@@ -14,6 +14,8 @@
 #include "stream_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 HTTP_header_t *
 http_new_header() {
 	HTTP_header_t *http_hdr;

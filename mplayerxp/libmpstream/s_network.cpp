@@ -18,6 +18,8 @@
 #include "url.h"
 #include "network.h"
 
+using namespace mpxp;
+
 extern int stream_open_mf(char * filename,stream_t * stream);
 
 typedef struct network_priv_s

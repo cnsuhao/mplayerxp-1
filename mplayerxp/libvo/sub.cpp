@@ -16,6 +16,8 @@
 #define MSGT_CLASS MSGT_OSD
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 static const char * __sub_osd_names[]={
     "Seekbar",
     "Play",

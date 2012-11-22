@@ -48,6 +48,8 @@
 #include "pnm.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
 	(((long)(unsigned char)(ch3)       ) | \
 	( (long)(unsigned char)(ch2) << 8  ) | \

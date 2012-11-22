@@ -9,6 +9,8 @@
 #include "loader/dshow/DS_AudioDecoder.h"
 #include "codecs_ld.h"
 
+using namespace mpxp;
+
 static const ad_info_t info = {
     "Win32/DirectShow decoders",
     "dshow",

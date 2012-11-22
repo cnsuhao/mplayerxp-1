@@ -23,6 +23,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 typedef struct {
     float   v_pts;
     int video_pack_no;

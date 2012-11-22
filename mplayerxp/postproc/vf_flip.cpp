@@ -24,9 +24,12 @@
 #include "pp_msg.h"
 
 #include "xmpcore/mp_image.h"
+#include "osdep/mplib.h"
 #include "vf.h"
 
 #include "libvo/video_out.h"
+
+using namespace mpxp;
 
 //===========================================================================//
 

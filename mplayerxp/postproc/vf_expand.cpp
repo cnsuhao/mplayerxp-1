@@ -20,7 +20,7 @@
 #endif
 #include "pp_msg.h"
 
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
+using namespace mpxp;
 
 extern vo_data_t* vo_data;
 

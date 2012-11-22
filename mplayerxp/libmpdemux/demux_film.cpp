@@ -26,6 +26,8 @@
 #include "stheader.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 // chunk types found in a FILM file
 #define CHUNK_FILM mmioFOURCC('F', 'I', 'L', 'M')
 #define CHUNK_FDSC mmioFOURCC('F', 'D', 'S', 'C')

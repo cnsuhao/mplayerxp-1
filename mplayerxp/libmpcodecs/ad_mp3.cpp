@@ -15,6 +15,8 @@
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
 
+using namespace mpxp;
+
 static const ad_info_t info = {
     "MPEG layer-123",
     "mp3lib",

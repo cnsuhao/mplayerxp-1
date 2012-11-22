@@ -33,6 +33,9 @@
 
 #include "tcp.h"
 #include "stream_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 /* IPv6 options */
 extern int   network_prefer_ipv4;

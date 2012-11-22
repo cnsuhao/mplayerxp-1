@@ -22,6 +22,8 @@
 #ifdef HAVE_SDL_IMAGE
 #include <SDL/SDL_image.h>
 
+using namespace mpxp;
+
 static int demux_rw_seek(struct SDL_RWops *context, int offset, int whence)
 {
     unsigned long newpos=-1;

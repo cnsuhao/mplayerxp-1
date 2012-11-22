@@ -40,6 +40,8 @@
 #include <windows.h>
 #endif
 
+using namespace mpxp;
+
 static const ao_info_t info =
 {
     "RAW WAVE file writer audio output",

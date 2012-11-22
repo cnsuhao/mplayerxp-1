@@ -15,6 +15,8 @@
 #include "osdep/mplib.h"
 #include "osdep/bswap.h"
 
+using namespace mpxp;
+
 static const vd_info_t info = {
    "Theora/VP3 video decoder",
    "theora",

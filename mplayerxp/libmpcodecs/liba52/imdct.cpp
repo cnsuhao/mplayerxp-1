@@ -36,6 +36,9 @@
 #include "a52.h"
 #include "a52_internal.h"
 #include "osdep/mm_accel.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 typedef struct complex_s {
     sample_t real;

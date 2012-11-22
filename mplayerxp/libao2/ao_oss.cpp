@@ -19,6 +19,8 @@
 #include "audio_out_internal.h"
 #include "ao_msg.h"
 
+using namespace mpxp;
+
 static ao_info_t info =
 {
 	"OSS/ioctl audio output",

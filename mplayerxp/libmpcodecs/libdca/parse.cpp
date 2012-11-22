@@ -46,7 +46,7 @@
 #include "tables_fir.h"
 #include "tables_vq.h"
 
-/* #define LOG_DEBUG */
+using namespace mpxp;
 
 //#define LOG_DEBUG 1
 

@@ -37,6 +37,8 @@
 #include "osdep/mplib.h"
 #include "ao_msg.h"
 
+using namespace mpxp;
+
 static const ao_info_t info =
 {
   "OpenAL audio output",

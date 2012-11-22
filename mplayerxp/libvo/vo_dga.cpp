@@ -42,6 +42,8 @@ LIBVO_EXTERN( dga )
 #include "dri_vo.h"
 #include "vo_msg.h"
 
+using namespace mpxp;
+
 static vo_info_t vo_info =
 {
 #ifdef HAVE_DGA2

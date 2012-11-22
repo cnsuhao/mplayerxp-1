@@ -44,6 +44,8 @@
 extern int XShmGetEventBase( Display* );
 #endif
 
+using namespace mpxp;
+
 /*
  * If SCAN_VISUALS is defined, vo_x11_init() scans all available TrueColor
  * visuals for the 'best' visual for MPlayer video display.  Note that

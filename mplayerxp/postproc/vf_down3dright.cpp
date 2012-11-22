@@ -15,6 +15,8 @@
 #include "postproc/swscale.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 struct vf_priv_s {
 	int skipline;
 	int scalew;

@@ -29,6 +29,8 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 // Q value for low-pass filter
 #define Q 1.0
 

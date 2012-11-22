@@ -45,9 +45,10 @@
 //#endif
 //#include "libavutil/intreadwrite.h"
 #include "md5.h"
-#include "../http.h"
-#include "../stream_msg.h"
+#include "http.h"
+#include "stream_msg.h"
 
+using namespace mpxp;
 
 /*
 #define LOG

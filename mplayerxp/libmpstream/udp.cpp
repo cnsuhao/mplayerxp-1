@@ -42,6 +42,9 @@
 #include "url.h"
 #include "udp.h"
 #include "stream_msg.h"
+#include "osdep/mplib.h"
+
+using namespace mpxp;
 
 int reuse_socket=0;
 

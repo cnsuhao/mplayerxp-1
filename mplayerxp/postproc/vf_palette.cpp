@@ -13,6 +13,7 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
 //===========================================================================//
 
 // commented out 16 and 15 bit output support, because the conversion

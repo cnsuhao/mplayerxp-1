@@ -36,6 +36,8 @@
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
 
+using namespace mpxp;
+
 #define DV_PAL_FRAME_SIZE  144000
 #define DV_NTSC_FRAME_SIZE 122000
 

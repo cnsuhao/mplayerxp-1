@@ -32,6 +32,8 @@
 #include "aflib.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define DELAY1 35000
 #define DELAY2 21000
 #define DELAY3 14000

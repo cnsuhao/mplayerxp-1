@@ -11,6 +11,8 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
+using namespace mpxp;
+
 void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
     mpi->flags&=~(MP_IMGFLAG_PLANAR|MP_IMGFLAG_YUV|MP_IMGFLAG_SWAPPED);
     mpi->imgfmt=out_fmt;

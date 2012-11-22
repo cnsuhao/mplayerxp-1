@@ -28,6 +28,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define BLOCK_SIZE 4096
 #define FOURCC_VORBIS mmioFOURCC('v', 'r', 'b', 's')
 #define FOURCC_THEORA mmioFOURCC('t', 'h', 'e', 'o')

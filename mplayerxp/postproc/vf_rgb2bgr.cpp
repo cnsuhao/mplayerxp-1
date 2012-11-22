@@ -14,6 +14,8 @@
 #include "mp_conf_lavc.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 //===========================================================================//
 
 struct vf_priv_s {

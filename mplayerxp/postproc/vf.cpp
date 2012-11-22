@@ -17,6 +17,8 @@
 #include "libmpconf/codec-cfg.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
+
 extern vo_data_t* vo_data;
 
 extern const vf_info_t vf_info_1bpp;

@@ -31,6 +31,7 @@
 #include "osdep/mplib.h"
 #include "pp_msg.h"
 
+using namespace mpxp;
 
 //===========================================================================//
 

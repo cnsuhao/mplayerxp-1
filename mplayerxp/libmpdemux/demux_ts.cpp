@@ -41,6 +41,8 @@
 #include "mpeg_hdr.h"
 #include "demux_msg.h"
 
+using namespace mpxp;
+
 #define TS_PH_PACKET_SIZE 192
 #define TS_FEC_PACKET_SIZE 204
 #define TS_PACKET_SIZE 188

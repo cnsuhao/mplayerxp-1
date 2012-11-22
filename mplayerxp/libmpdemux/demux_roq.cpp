@@ -21,6 +21,8 @@
 #include "demux_msg.h"
 #include "osdep/mplib.h"
 
+using namespace mpxp;
+
 #define RoQ_INFO           0x1001
 #define RoQ_QUAD_CODEBOOK  0x1002
 #define RoQ_QUAD_VQ        0x1011
