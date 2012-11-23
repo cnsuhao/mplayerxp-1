@@ -92,7 +92,8 @@ DISABLED_LIST=(
     "static|build static libraries",
     "dbg23|allow additional level of debug messages",
     "win32loader|build support for Win32 codecs",
-    "random_name|generates pseudo random suffix of target"
+    "random_name|generates pseudo random suffix of target",
+    "im_sure_that_must_have_streaming| the key to unlock streaming"
 )
 
 AUTOCONF_LIST=(
@@ -407,6 +408,7 @@ print_config HAVE_ mp_config.h mp_config.mak nanosleep
 check_func2 execinfo.h backtrace
 print_config HAVE_ mp_config.h mp_config.mak backtrace
 
+disabled im_sure_that_must_have_streaming && disable streaming
 disable inet_pton
 if enabled streaming ; then
 disable socklib
@@ -431,6 +433,7 @@ fi #enabled streaming
 
 disabled inet_pton	&& disable streaming
 print_config HAVE_ mp_config.h mp_config.mak streaming
+enabled streaming	&& inputmodules="streaming $inputmodules" || noinputmodules="streaming $noinputmodules"
 
 disabled streaming	&& disable af_inet6
 

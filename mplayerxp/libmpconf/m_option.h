@@ -89,12 +89,13 @@ typedef struct {
  */
 extern const m_option_type_t m_option_type_obj_presets;
 
+#ifdef HAVE_STREAMING
 /// Parse an URL into a struct.
 /** The option priv field (\ref m_option::priv) must point to a
  *  \ref m_struct_st describing which fields of the URL must be used.
  */
 extern const m_option_type_t m_option_type_custom_url;
-
+#endif
 /// Extra definition needed for \ref m_option_type_obj_params options.
 typedef struct {
     const struct m_struct_st* desc; /// Field descriptions.
@@ -130,7 +131,9 @@ extern const m_obj_params_t m_span_params_def;
 #define MCONF_TYPE_SPAN		(&m_option_type_span)
 #define MCONF_TYPE_OBJ_SETTINGS_LIST (&m_option_type_obj_settings_list)
 #define MCONF_TYPE_OBJ_PRESETS	(&m_option_type_obj_presets)
+#ifdef HAVE_STREAMING
 #define MCONF_TYPE_CUSTOM_URL	(&m_option_type_custom_url)
+#endif
 #define MCONF_TYPE_OBJ_PARAMS	(&m_option_type_obj_params)
 #define MCONF_TYPE_TIME		(&m_option_type_time)
 #define MCONF_TYPE_TIME_SIZE	(&m_option_type_time_size)

@@ -1785,6 +1785,7 @@ extern const m_option_type_t m_option_type_obj_presets = {
   NULL
 };
 
+#ifdef HAVE_STREAMING
 static int parse_custom_url(const m_option_t* opt,const char *name,
 			    char *url, any_t* dst, int src) {
   int pos1, pos2, r, v6addr = 0;
@@ -1965,7 +1966,7 @@ static int parse_custom_url(const m_option_t* opt,const char *name,
 	  char* fname = ptr2+1;
 	  if(l > 1) {
 	    fname = new char [l];
-	    url_unescape_string(fname,ptr2+1);
+	    url2string(fname,ptr2+1);
 	  }
 	  r = m_struct_set(desc,dst,"filename",fname);
 	  if(fname != ptr2+1)
@@ -1994,3 +1995,4 @@ extern const m_option_type_t m_option_type_custom_url = {
   NULL,
   NULL
 };
+#endif

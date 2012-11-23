@@ -40,6 +40,7 @@ static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const cha
 
 static MPXP_Rc __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
+#ifdef HAVE_STREAMING
     const char *param;
     char *device;
     MPXP_Rc retval;
@@ -55,6 +56,9 @@ static MPXP_Rc __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const cha
     if(device) delete device;
     check_pin("stream",stream->pin,STREAM_PIN);
     return retval;
+#else
+    return MPXP_False;
+#endif
 }
 
 static int __FASTCALL__ cdd_read(stream_t*stream,stream_packet_t*sp)

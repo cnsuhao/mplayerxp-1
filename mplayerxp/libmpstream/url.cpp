@@ -4,6 +4,7 @@
  * (C) 2001, MPlayer team.
  *
  */
+#include <limits>
 
 #include <string.h>
 #include <stdlib.h>
@@ -19,10 +20,7 @@
 
 using namespace mpxp;
 
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t)-1)
-#endif
-
+namespace mpxp {
 URL_t *url_redirect(URL_t **url, const char *redir) {
   URL_t *u = *url;
   URL_t *res;
@@ -57,7 +55,7 @@ url_new(const char* url) {
 
 	if( url==NULL ) return NULL;
 
-	if (strlen(url) > (SIZE_MAX / 3 - 1)) {
+	if (strlen(url) > (std::numeric_limits<size_t>::max() / 3 - 1)) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
 	}
@@ -77,7 +75,7 @@ url_new(const char* url) {
 	// Initialisation of the URL container members
 	memset( Curl, 0, sizeof(URL_t) );
 
-	url_escape_string(escfilename,url);
+	string2url(escfilename,url);
 
 	// Copy the url in the URL container
 	Curl->url = mp_strdup(escfilename);
@@ -243,7 +241,7 @@ url_free(URL_t* url) {
 /* Replace escape sequences in an URL (or a part of an URL) */
 /* works like strcpy(), but without return argument */
 void
-url_unescape_string(char *outbuf, const char *inbuf)
+url2string(char *outbuf, const char *inbuf)
 {
 	unsigned char c,c1,c2;
 	int i,len=strlen(inbuf);
@@ -313,7 +311,7 @@ url_escape_string_part(char *outbuf, const char *inbuf) {
 /* Replace specific characters in the URL string by an escape sequence */
 /* works like strcpy(), but without return argument */
 void
-url_escape_string(char *outbuf, const char *_inbuf) {
+string2url(char *outbuf, const char *_inbuf) {
     char* inbuf=mp_strdup(_inbuf);
     int i = 0,j,len = strlen(inbuf);
     char* tmp,*in;
@@ -361,7 +359,7 @@ url_escape_string(char *outbuf, const char *_inbuf) {
 
 		if(!unesc) unesc = new char [len+1];
 		// unescape first to avoid escaping escape
-		url_unescape_string(unesc,in);
+		url2string(unesc,in);
 		// then escape, including mark and other reserved chars
 		// that can come from escape sequences
 		url_escape_string_part(outbuf,unesc);
@@ -402,3 +400,4 @@ url_debug(const URL_t *url) {
 	}
 }
 #endif //__URL_DEBUG
+} // namespace mpxp

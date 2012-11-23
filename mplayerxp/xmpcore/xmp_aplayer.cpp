@@ -4,6 +4,7 @@
 #include <unistd.h> // for usleep()
 #include <pthread.h>
 #include <math.h>
+#include <sys/time.h>
 
 #include "mplayerxp.h"
 #include "mp_msg.h"

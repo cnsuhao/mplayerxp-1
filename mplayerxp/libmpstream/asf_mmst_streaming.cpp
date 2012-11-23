@@ -520,7 +520,7 @@ int asf_mmst_streaming_start(any_t* libinput,stream_t *stream)
 	MSG_FATAL("Memory allocation failed!\n");
 	return -1;
   }
-  url_unescape_string(unescpath,path);
+  url2string(unescpath,path);
   path=unescpath;
 
   if( url1->port==0 ) {
