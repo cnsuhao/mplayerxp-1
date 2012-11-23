@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* This file contains reenterable interface to demuxer */
 #include <stdlib.h>
 #define __USE_ISOC99 1 /* for lrint */
@@ -9,13 +12,10 @@
 #include "demuxer_r.h"
 #include "libmpsub/vobsub.h"
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float duration) {
     enc_frame_t* frame=(enc_frame_t*)mp_mallocz(sizeof(enc_frame_t));

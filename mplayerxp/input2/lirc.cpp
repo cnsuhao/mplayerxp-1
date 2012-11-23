@@ -1,4 +1,6 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #ifdef HAVE_LIRC
 
@@ -14,8 +16,6 @@
 #include "help_mp.h"
 #include "input.h"
 #include "in_msg.h"
-
-using namespace mpxp;
 
 static struct lirc_config *lirc_config;
 char *lirc_configfile;

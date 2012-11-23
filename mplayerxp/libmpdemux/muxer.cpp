@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,17 +8,12 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "version.h"
 
 #include "loader/wine/mmreg.h"
 #include "loader/wine/avifmt.h"
 #include "loader/wine/vfw.h"
-
 #include "muxer.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags)
 {

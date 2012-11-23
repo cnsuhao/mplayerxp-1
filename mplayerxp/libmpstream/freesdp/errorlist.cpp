@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   This file is part of FreeSDP
   Copyright (C) 2001, 2002 Federico Montesino Pouzols <fedemp@suidzer0.org>
@@ -28,9 +31,6 @@
 #define FSDP_ERRORLIST_C
 
 #include "common.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 const char *fsdp_error_t_s[] = {
   "No error",/** FSDPE_OK **/

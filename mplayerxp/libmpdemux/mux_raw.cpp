@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,25 +8,15 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "version.h"
-
-//#include "stream.h"
-//#include "demuxer.h"
-//#include "stheader.h"
 
 #include "loader/wine/mmreg.h"
 #include "loader/wine/avifmt.h"
 #include "loader/wine/vfw.h"
 #include "osdep/bswap.h"
-
 #include "muxer.h"
 #include "aviheader.h"
-
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct priv_raw_stream_s
 {

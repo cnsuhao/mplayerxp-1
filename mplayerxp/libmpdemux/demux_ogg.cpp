@@ -1,6 +1,7 @@
-#include <algorithm>
-
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+#include <algorithm>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,15 +27,10 @@
 #include "libvo/video_out.h"
 #include "libao2/afmt.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define BLOCK_SIZE 4096
 #define FOURCC_VORBIS mmioFOURCC('v', 'r', 'b', 's')
 #define FOURCC_THEORA mmioFOURCC('t', 'h', 'e', 'o')
-
-extern vo_data_t* vo_data;
 
 /// Vorbis decoder context : we need the vorbis_info for vorbis timestamping
 /// Shall we put this struct def in a common header ?

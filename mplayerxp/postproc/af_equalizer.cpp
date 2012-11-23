@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*=============================================================================
 //
 //  This software has been released under the terms of the GNU General Public
@@ -22,10 +25,7 @@
 #include <math.h>
 
 #include "af.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define L   	2      // Storage for filter taps
 #define KM  	10     // Max number of bands

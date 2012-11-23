@@ -1,10 +1,12 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "mplayerxp.h"
@@ -22,10 +24,7 @@
 #include "libmpdemux/demuxer_r.h"
 #include "postproc/af.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "ad_msg.h"
-
-using namespace mpxp;
 
 /* used for ac3surround decoder - set using -channels option */
 af_cfg_t af_cfg; // Configuration for audio filters

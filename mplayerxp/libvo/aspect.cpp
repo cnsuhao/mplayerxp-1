@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* Stuff for correct aspect scaling. */
 #include "aspect.h"
 
@@ -7,9 +10,6 @@
 #include <stdio.h>
 #endif
 #include "vo_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 float monitor_aspect=0;
 

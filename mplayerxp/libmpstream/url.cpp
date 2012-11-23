@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * URL Helper
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
@@ -16,9 +19,6 @@
 #include "help_mp.h"
 #include "stream_msg.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 namespace mpxp {
 URL_t *url_redirect(URL_t **url, const char *redir) {

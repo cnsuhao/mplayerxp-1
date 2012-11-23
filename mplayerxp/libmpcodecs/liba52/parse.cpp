@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * parse.c
  * Copyright (C) 2000-2002 Michel Lespinasse <walken@zoy.org>
@@ -21,21 +24,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "mp_config.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 
-#include "osdep/mplib.h"
-
 #include "a52.h"
 #include "a52_internal.h"
 #include "bitstream.h"
 #include "tables.h"
-
-using namespace mpxp;
 
 typedef struct {
     sample_t q1[2];

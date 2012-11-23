@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -5,14 +8,10 @@
 
 #include "codecs_ld.h"
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "help_mp.h"
-#include "osdep/mplib.h"
 #include "ad_internal.h"
 #include "ad_msg.h"
-
-using namespace mpxp;
 
 static const ad_info_t info = {
     "Win32/DMO decoders",

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*  vosub_vidix.c
  *
  *	Copyright (C) Nickols_K <nickols_k@mail.ru> - 2002
@@ -20,9 +23,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
 
 #include <vidix/vidix.h>
 #include <vidix/vidixlibxx.h>
@@ -37,7 +38,6 @@
 #include "xmpcore/mp_image.h"
 #include "vo_msg.h"
 
-using namespace mpxp;
 using namespace vidix;
 
 #define NUM_FRAMES MAX_DRI_BUFFERS /* Temporary: driver will overwrite it */

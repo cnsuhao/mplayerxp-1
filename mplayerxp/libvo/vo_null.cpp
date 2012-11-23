@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *  video_out_null.c
  *
@@ -20,8 +23,6 @@
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#include "mp_config.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,7 +30,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include "osdep/mplib.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "dri_vo.h"
@@ -37,8 +37,6 @@
 #include <vidix/vidix.h>
 #endif
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 LIBVO_EXTERN(null)
 

@@ -1,3 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+#include <stdio.h>
+#include <unistd.h> // for usleep()
+#include <math.h>
+
 #include "help_mp.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
@@ -6,27 +13,20 @@
 #include "libvo/video_out.h"
 
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 #include "libmpdemux/demuxer.h"
 #include "mplayerxp.h"
 #include "xmp_core.h"
 #include "xmp_adecoder.h"
 #include "xmp_vplayer.h"
 
-#include <stdio.h>
-#include <unistd.h> // for usleep()
-#include <math.h>
-
-using namespace mpxp;
+float max_pts_correction=0;
+namespace mpxp {
 
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else
 #define MSG_T(args...)
 #endif
-
-extern ao_data_t* ao_data;
-extern vo_data_t* vo_data;
 
 static void __show_status_line(float a_pts,float v_pts,float delay,float AV_delay) {
     MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f %3d/%3d  %2d%% %2d%% %4.1f%% %d [frms: [%i]]\n",
@@ -147,7 +147,6 @@ static int vplayer_do_sleep(sh_audio_t* sh_audio,int rtc_fd,float sleep_time)
     return 1;
 }
 
-float max_pts_correction=0;
 static int mpxp_play_video(demuxer_t* demuxer,sh_audio_t* sh_audio,sh_video_t*sh_video)
 {
     demux_stream_t *d_audio=demuxer->audio;
@@ -315,3 +314,5 @@ void sig_video_play( void )
     xmp_killall_threads(pthread_self());
     __exit_sighandler();
 }
+
+} // namespace mpxp

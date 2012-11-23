@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * Copyright (C) 2006 Michael Niedermayer (michaelni@gmx.at)
  * Copyright (C) 2003-2005 by Christopher R. Hertel (crh@ubiqx.mn.org)
@@ -29,14 +32,10 @@
  * License along with FFmpeg; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-
-#include "mp_config.h"
-#include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include <string.h>
-#include "md5.h"
 
-using namespace mpxp;
+#include "osdep/bswap.h"
+#include "md5.h"
 
 typedef struct AVMD5{
     uint64_t len;

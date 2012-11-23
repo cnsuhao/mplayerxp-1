@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -10,7 +13,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpconf/m_struct.h"
@@ -25,9 +27,6 @@
 #include "input2/input.h"
 #include "osdep/keycodes.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define MENU_KEEP_PATH "/tmp/mp_current_path"
 

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*     Real parser & demuxer
 
     (C) Alex Beregszaszi <alex@naxine.org>
@@ -23,20 +26,16 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "aviprint.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libao2/afmt.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 #define MKTAG(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))
 

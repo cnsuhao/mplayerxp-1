@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * tivo@wingert.org, February 2003
  *
@@ -35,7 +38,6 @@
 #include <time.h>
 #include <stdarg.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "osdep/bswap.h"
 #include "help_mp.h"
@@ -46,10 +48,7 @@
 #include "stheader.h"
 #include "sub_cc.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
 #include "libmpcodecs/dec_audio.h"
-
-using namespace mpxp;
 
 #define AV_RB24(x)  ((((uint8_t*)(x))[0] << 16) | \
 		     (((uint8_t*)(x))[1] <<  8) | \

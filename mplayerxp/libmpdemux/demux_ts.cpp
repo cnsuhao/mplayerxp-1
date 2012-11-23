@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * Demultiplexer for MPEG2 Transport Streams.
  *
@@ -27,7 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "help_mp.h"
 #include "libmpstream/stream.h"
@@ -35,13 +37,11 @@
 #include "parse_es.h"
 #include "stheader.h"
 #include "libmpcodecs/dec_audio.h"
-#include "osdep/mplib.h"
 
 #include "osdep/bswap.h"
 #include "mpeg_hdr.h"
 #include "demux_msg.h"
 
-using namespace mpxp;
 
 #define TS_PH_PACKET_SIZE 192
 #define TS_FEC_PACKET_SIZE 204

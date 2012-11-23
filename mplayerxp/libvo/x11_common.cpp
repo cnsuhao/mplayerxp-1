@@ -1,12 +1,13 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
-#ifdef HAVE_X11
 
+#ifdef HAVE_X11
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -43,8 +44,6 @@
 /* since it doesn't seem to be defined on some platforms */
 extern int XShmGetEventBase( Display* );
 #endif
-
-using namespace mpxp;
 
 /*
  * If SCAN_VISUALS is defined, vo_x11_init() scans all available TrueColor

@@ -1,7 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_vcdnav - libVCD's stream interface (based on xine's input plugin)
 */
-#include "mp_config.h"
 #ifdef USE_LIBVCD
 #include <stdlib.h>
 #include <string.h>
@@ -11,11 +13,8 @@
 
 #include <libvcd/inf.h>
 #include <libvcd/logging.h>
-#include "osdep/mplib.h"
 #include "mrl.h"
 #include "help_mp.h"
-
-using namespace mpxp;
 
 typedef struct {
     uint8_t subheader	[CDIO_CD_SUBHEADER_SIZE];

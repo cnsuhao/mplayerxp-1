@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,9 +8,8 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <limits.h>
-#include "mp_config.h"
-#include "help_mp.h"
 
+#include "help_mp.h"
 #include "osdep/bswap.h"
 #include "aviheader.h"
 
@@ -19,8 +21,6 @@
 #include "libavformat/riff.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 extern unsigned int codec_get_wav_tag(int id);
 

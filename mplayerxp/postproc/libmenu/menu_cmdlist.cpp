@@ -1,4 +1,7 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -20,9 +23,6 @@
 #include "input2/input.h"
 #include "version.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 struct list_entry_s {
   struct list_entry p;

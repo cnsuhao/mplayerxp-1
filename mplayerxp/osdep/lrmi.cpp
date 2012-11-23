@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
 Linux Real Mode Interface - A library of DPMI-like functions for Linux.
 
@@ -28,9 +31,6 @@ Original location: http://cvs.debian.org/lrmi/
 #include "lrmi.h"
 #include "cpudetect.h"
 #include "osdep_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define REAL_MEM_BASE 	((any_t*)0x10000)
 #define REAL_MEM_SIZE 	0x10000
@@ -53,6 +53,7 @@ using namespace mpxp;
 #define VIF_MASK X86_EFLAGS_VIF
 #endif
 
+namespace mpxp {
 struct mem_block
 	{
 	unsigned int size : 20;
@@ -955,4 +956,4 @@ LRMI_int(int i, struct LRMI_regs *r)
 
 	return vret;
 	}
-
+} // namespace mpxp

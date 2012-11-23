@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* Audio filter that adds and removes channels, according to the
    command line parameter channels. It is stupid and can only add
    silence or copy channels not mix or filter.
@@ -11,10 +14,7 @@
 #include <inttypes.h>
 
 #include "af.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define FR 0
 #define TO 1

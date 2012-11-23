@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /**
  * \file subopt-helper.c
  *
@@ -22,11 +25,8 @@
 #include <assert.h>
 
 #include "subopt-helper.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 #ifndef MP_DEBUG
   #define NDEBUG

@@ -1,4 +1,6 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include "mplayerxp.h"
 
 #include <stdio.h>
@@ -9,12 +11,9 @@
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
-#include "osdep/mplib.h"
 #include "loader/wine/vfw.h"
 #include "loader/wine/driver.h"
 #include "libmpdemux/aviprint.h"
-
-using namespace mpxp;
 
 static const vd_info_t info_vfw = {
     "Win32/VfW video codecs",

@@ -1,5 +1,7 @@
-
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include "help_mp.h"
 
 #include <stdio.h>
@@ -18,10 +20,7 @@
 #include "input2/input.h"
 #include "libmpconf/m_struct.h"
 #include "libmenu/menu.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 static struct vf_priv_s* st_priv = NULL;
 

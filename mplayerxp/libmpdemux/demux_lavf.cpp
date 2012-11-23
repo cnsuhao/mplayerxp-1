@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Copyright (C) 2004 Michael Niedermayer <michaelni@gmx.at>
 
@@ -18,7 +21,6 @@
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include <stdlib.h>
-#include "mp_config.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
@@ -31,9 +33,6 @@
 #include "aviprint.h"
 #include "libao2/afmt.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define PROBE_BUF_SIZE 2048
 

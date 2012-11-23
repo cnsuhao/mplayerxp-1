@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -18,7 +21,6 @@
 #include "osdep/keycodes.h"
 #include "osdep/get_path.h"
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 #include "libmpconf/cfgparser.h"
 
 #include "in_msg.h"
@@ -32,8 +34,6 @@
 #endif
 #include "joystick.h"
 #include "osdep/getch2.h"
-
-using namespace mpxp;
 
 #ifndef MP_MAX_KEY_FD
 #define MP_MAX_KEY_FD 10

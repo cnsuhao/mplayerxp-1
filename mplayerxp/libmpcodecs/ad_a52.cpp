@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #define __USE_XOPEN 1
@@ -7,12 +10,10 @@
 #include "ad_internal.h"
 #include "codecs_ld.h"
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "help_mp.h"
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 
 #include "osdep/mm_accel.h"
 #include "mplayerxp.h"
@@ -20,8 +21,6 @@
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
-
-using namespace mpxp;
 
 typedef struct priv_s {
     float last_pts;

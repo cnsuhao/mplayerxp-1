@@ -1,8 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libvo/img_format.h"
@@ -16,15 +18,10 @@
 #include "libplaytree/playtree.h"
 #include "input2/input.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 static inline const char* mp_basename(const char *s) {
     return strrchr((s),'/')==NULL?(const char*)(s):(strrchr((s),'/')+1);
 }
-
-extern play_tree_iter_t* playtree_iter;
 
 struct list_entry_s {
   struct list_entry p;

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -6,16 +9,12 @@
 
 #include <theora/theora.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "codecs_ld.h"
 
 #include "vd_internal.h"
 #include "vd_msg.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
    "Theora/VP3 video decoder",

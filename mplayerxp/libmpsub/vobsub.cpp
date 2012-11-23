@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * Some code freely inspired from VobSub <URL:http://vobsub.edensrising.com>,
  * with kind permission from Gabest <gabest@freemail.hu>
@@ -14,16 +17,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "libmpstream/stream.h"
-#include "osdep/mplib.h"
 #include "vobsub.h"
 #include "spudec.h"
 #define MSGT_CLASS MSGT_VOBSUB
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 #ifdef HAVE_GETLINE
 extern ssize_t getline(char **, size_t *, FILE *);

@@ -1,10 +1,12 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*  AVI file parser for DEMUXER v2.9  by A'rpi/ESP-team */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
@@ -12,14 +14,11 @@
 #include "stheader.h"
 
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "aviheader.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libmpconf/cfgparser.h"
 #include "aviprint.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 typedef int (*alt_demuxer_t)(demuxer_t *demux,demux_stream_t *__ds);
 typedef struct {

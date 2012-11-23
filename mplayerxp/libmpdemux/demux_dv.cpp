@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * raw DV file parser
  * copyright (c) 2002 Alexander Neundorf <neundorf@kde.org>
@@ -25,18 +28,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
-#include "demux_msg.h"
-
-#include "libmpstream/stream.h"
-#include "demuxer.h"
-#include "stheader.h"
-#include "osdep/mplib.h"
-
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
 
-using namespace mpxp;
+#include "demux_msg.h"
+#include "libmpstream/stream.h"
+#include "demuxer.h"
+#include "stheader.h"
 
 #define DV_PAL_FRAME_SIZE  144000
 #define DV_NTSC_FRAME_SIZE 122000

@@ -1,21 +1,21 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_cdd - cdda & cddb streams interface
 */
-#include "mp_config.h"
 #include "mplayerxp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
-#include "osdep/mplib.h"
 #include "stream_msg.h"
 
 #ifdef HAVE_LIBCDIO
 #include "cdd.h"
 #include "mrl.h"
 
-using namespace mpxp;
 
 static track_t track_idx=255;
 static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)

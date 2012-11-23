@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*=============================================================================
 //
 //  This software has been released under the terms of the GNU General Public
@@ -18,10 +21,7 @@
 #include <limits.h>
 
 #include "af.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 // Methods:
 // 1: uses a 1 value memory and coefficients new=a*old+b*cur (with a+b=1)

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    Decoding ahead
    Licence: GPL v2
@@ -14,7 +17,7 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 #include <sys/time.h>
-#include "mp_config.h"
+#include "xmp_core.h"
 
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
@@ -27,15 +30,27 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 #include "mplayerxp.h"
-#include "xmp_core.h"
 #include "xmp_aplayer.h"
 #include "xmp_vplayer.h"
 #include "xmp_adecoder.h"
 #include "xmp_vdecoder.h"
 
-using namespace mpxp;
+pthread_mutex_t audio_play_mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t audio_play_cond=PTHREAD_COND_INITIALIZER;
+
+pthread_mutex_t audio_decode_mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t audio_decode_cond=PTHREAD_COND_INITIALIZER;
+
+volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
+/* To let audio decoder thread sleep as long as player */
+struct timespec audio_play_timeout;
+int audio_play_in_sleep=0;
+
+/* Min audio buffer to keep mp_free, used to tell differ between full and empty buffer */
+#define MIN_BUFFER_RESERV 8
+
+namespace mpxp {
 
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
@@ -196,21 +211,6 @@ void dae_decoded_mark_eof(dec_ahead_engine_t* it) {
     unsigned idx=it->decoder_idx;
     it->frame[idx].v_pts=HUGE_VALF;
 }
-
-pthread_mutex_t audio_play_mutex=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t audio_play_cond=PTHREAD_COND_INITIALIZER;
-
-pthread_mutex_t audio_decode_mutex=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t audio_decode_cond=PTHREAD_COND_INITIALIZER;
-
-volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
-
-/* To let audio decoder thread sleep as long as player */
-struct timespec audio_play_timeout;
-int audio_play_in_sleep=0;
-
-/* Min audio buffer to keep mp_free, used to tell differ between full and empty buffer */
-#define MIN_BUFFER_RESERV 8
 
 static xmp_model_e xmp_engine_compute_model(sh_video_t *shv, sh_audio_t *sha) {
     xmp_model_e rc;
@@ -387,3 +387,5 @@ void xmp_restart_threads(int xp_id)
 	while(xp_core->mpxp_threads[i]->state==Pth_ASleep) usleep(0);
     }
 }
+
+} // namespace

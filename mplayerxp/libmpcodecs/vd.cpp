@@ -1,8 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "xmpcore/xmp_core.h"
@@ -13,12 +15,9 @@
 #include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
-#include "osdep/mplib.h"
 #include "vd.h"
 #include "postproc/vf.h"
 #include "vd_msg.h"
-
-using namespace mpxp;
 
 extern const vd_functions_t mpcodecs_vd_null;
 extern const vd_functions_t mpcodecs_vd_lavc;

@@ -1,9 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <limits.h>
 #include "img_format.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 const char * __FASTCALL__ vo_format_name(int format)
 {

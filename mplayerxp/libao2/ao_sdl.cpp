@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * ao_sdl.c - libao2 SDLlib Audio Output Driver for MPlayer
  *
@@ -13,16 +16,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <SDL/SDL.h>
 
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "afmt.h"
-#include <SDL/SDL.h>
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "ao_msg.h"
-
-using namespace mpxp;
 
 static ao_info_t info = {
     "SDLlib audio output",

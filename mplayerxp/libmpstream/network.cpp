@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * Network layer for MPlayer
  * by Bertrand BAUDET <bertrand_baudet@yahoo.com>
@@ -15,7 +18,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "asf_streaming.h"
 #ifndef HAVE_WINSOCK2
@@ -44,9 +46,6 @@
 #endif
 #include "version.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /* Variables for the command line option -user, -passwd & -bandwidth */
 char *network_username=NULL;

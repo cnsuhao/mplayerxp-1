@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
 #define OSD_SUPPORT
@@ -6,22 +9,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
-
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 
 #ifdef OSD_SUPPORT
 #include "libvo/sub.h"
 #include "libvo/osd.h"
 #endif
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 struct vf_priv_s {
     unsigned org_w;

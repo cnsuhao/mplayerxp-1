@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,16 +13,12 @@
 #include <errno.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "mixer.h"
-#include "osdep/mplib.h"
 
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "ao_msg.h"
-
-using namespace mpxp;
 
 static ao_info_t info =
 {

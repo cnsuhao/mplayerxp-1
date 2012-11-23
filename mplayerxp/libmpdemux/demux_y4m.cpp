@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   Y4M file parser by Rik Snel (using yuv4mpeg*.[ch] from
   mjpeg.sourceforge.net) (derived from demux_viv.c)
@@ -10,7 +13,6 @@
 #include <unistd.h>
 #include <string.h> /* strtok */
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "yuv4mpeg.h"
 
@@ -18,10 +20,7 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 typedef struct {
     int framenum;

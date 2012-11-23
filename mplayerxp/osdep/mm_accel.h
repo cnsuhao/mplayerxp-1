@@ -24,17 +24,17 @@
 #ifndef MM_ACCEL_H
 #define MM_ACCEL_H
 
+namespace mpxp {
 /* generic accelerations */
-enum {
-    MM_ACCEL_MLIB		=0x00000001,
+    enum {
+	MM_ACCEL_MLIB		=0x00000001,
 /* x86 accelerations */
-    MM_ACCEL_X86_MMX		=0x80000000,
-    MM_ACCEL_X86_3DNOW		=0x40000000,
-    MM_ACCEL_X86_3DNOWEXT	=0x08000000,
-    MM_ACCEL_X86_MMXEXT		=0x20000000,
-    MM_ACCEL_X86_SSE		=0x10000000
-};
-
-uint32_t mm_accel (void);
-
+	MM_ACCEL_X86_MMX	=0x80000000,
+	MM_ACCEL_X86_3DNOW	=0x40000000,
+	MM_ACCEL_X86_3DNOWEXT	=0x08000000,
+	MM_ACCEL_X86_MMXEXT	=0x20000000,
+	MM_ACCEL_X86_SSE	=0x10000000
+    };
+    uint32_t mm_accel (void);
+} // namespace mpxp
 #endif /* MM_ACCEL_H */

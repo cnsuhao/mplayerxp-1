@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * PCM audio output driver
  *
@@ -17,9 +20,6 @@
  * with MPlayer; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
-#include "mp_config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +31,6 @@
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "libvo/video_out.h"
-#include "osdep/mplib.h"
 #include "help_mp.h"
 #include "ao_msg.h"
 
@@ -39,8 +38,6 @@
 // for GetFileType to detect pipes
 #include <windows.h>
 #endif
-
-using namespace mpxp;
 
 static const ao_info_t info =
 {

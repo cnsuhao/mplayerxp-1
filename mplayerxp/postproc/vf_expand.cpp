@@ -1,17 +1,17 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #define OSD_SUPPORT
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
-
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 
 #ifdef OSD_SUPPORT
 #include "libvo/video_out.h"
@@ -19,10 +19,7 @@
 #include "libvo/osd.h"
 #endif
 #include "pp_msg.h"
-
-using namespace mpxp;
-
-extern vo_data_t* vo_data;
+#include "mplayerxp.h" // vo_data
 
 struct vf_priv_s {
     int up_h,dn_h;

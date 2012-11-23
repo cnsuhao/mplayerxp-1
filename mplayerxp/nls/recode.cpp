@@ -1,4 +1,7 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,9 +15,6 @@
 #endif
 #include "nls.h"
 #include "nls_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /*
  *We have to proceed with the POSIX methods of looking to `LANG'.

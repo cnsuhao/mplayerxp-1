@@ -1,8 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "xmpcore/xmp_core.h"
 #include "mplayerxp.h"
 #include "help_mp.h"
@@ -13,13 +15,9 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "libmpconf/codec-cfg.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
-
-extern vo_data_t* vo_data;
+#include "mplayerxp.h" // vo_data
 
 extern const vf_info_t vf_info_1bpp;
 extern const vf_info_t vf_info_2xsai;

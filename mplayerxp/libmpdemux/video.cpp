@@ -1,6 +1,8 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 // read vmpideo frame
 
-#include "../mp_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +10,6 @@
 
 #include "help_mp.h"
 #include "sub_cc.h"
-#include "osdep/mplib.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
@@ -18,7 +19,6 @@
 #include "mplayerxp.h"
 #include "demux_msg.h"
 
-using namespace mpxp;
 
 /* biCompression constant */
 #define BI_RGB        0L

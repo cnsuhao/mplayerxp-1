@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * bit_allocate.c
  * Copyright (C) 2000-2002 Michel Lespinasse <walken@zoy.org>
@@ -20,16 +23,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#include "mp_config.h"
-
 #include <inttypes.h>
 
 #include "a52.h"
 #include "a52_internal.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 static int hthtab[3][50] = {
     {0x730, 0x730, 0x7c0, 0x800, 0x820, 0x840, 0x850, 0x850, 0x860, 0x860,

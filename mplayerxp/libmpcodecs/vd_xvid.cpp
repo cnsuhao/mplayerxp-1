@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    Xvid codec - is successor of odivx
 */
@@ -7,7 +10,6 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
@@ -15,10 +17,7 @@
 #include "vd_internal.h"
 #include "codecs_ld.h"
 #include "libvo/video_out.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "XviD MPEG4 codec ",

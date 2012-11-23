@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* SPUdec.c
    Skeleton of function spudec_process_controll() is from xine sources.
    Further works:
@@ -13,8 +16,6 @@
  */
 #include <algorithm>
 
-#include "mp_config.h"
-
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -26,11 +27,8 @@
 #include "xmpcore/xmp_core.h"
 #include "spudec.h"
 #include "mp_conf_lavc.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_SPUDEC
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 /* Valid values for spu_aamode:
    0: none (fastest, most ugly)

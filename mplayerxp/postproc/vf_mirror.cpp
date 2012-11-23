@@ -1,9 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-
-#include "mp_config.h"
 
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
@@ -12,9 +13,6 @@
 #include "osdep/fastmemcpy.h"
 #include "postproc/swscale.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize);
 struct vf_priv_s {

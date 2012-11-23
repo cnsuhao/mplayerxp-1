@@ -1,8 +1,7 @@
 #include "mp_config.h"
-#include "vf.h"
 #include "osdep/mplib.h"
-
 using namespace mpxp;
+#include "vf.h"
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     return MPXP_False;

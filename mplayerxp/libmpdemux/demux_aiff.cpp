@@ -1,19 +1,18 @@
 #include "mp_config.h"
-
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
-#include "osdep/bswap.h"
 
+#include "osdep/bswap.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libao2/afmt.h"
-#include "osdep/mplib.h"
 #include "demux_msg.h"
 
-using namespace mpxp;
 
 static unsigned long cvt_extended(const char * buf)
 {

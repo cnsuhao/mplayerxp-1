@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * This file is part of MPlayer.
  *
@@ -20,16 +23,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "pp_msg.h"
 
 #include "xmpcore/mp_image.h"
-#include "osdep/mplib.h"
 #include "vf.h"
 
 #include "libvo/video_out.h"
-
-using namespace mpxp;
 
 //===========================================================================//
 

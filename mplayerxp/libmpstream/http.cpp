@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * HTTP Helper
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
@@ -12,9 +15,6 @@
 #include "http.h"
 #include "url.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 HTTP_header_t *
 http_new_header() {

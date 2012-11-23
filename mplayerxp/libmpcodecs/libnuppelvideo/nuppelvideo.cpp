@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * NuppelVideo 0.05 file parser
  * for MPlayer
@@ -10,11 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "mp_config.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #include "nuppelvideo.h"
 #include "RTjpegN.h"

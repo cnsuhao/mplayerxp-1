@@ -1,6 +1,7 @@
-#include <algorithm>
-
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+#include <algorithm>
 
 #define READ_USLEEP_TIME 10000
 #define FILL_USLEEP_TIME 50000
@@ -22,13 +23,10 @@
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "help_mp.h"
 #include "libmpdemux/mpdemux.h"
 #include "mplayerxp.h"
 #include "stream_msg.h"
-
-using namespace mpxp;
 
 #define CPF_EMPTY	0x00000001UL
 #define CPF_EOF		0x80000000UL

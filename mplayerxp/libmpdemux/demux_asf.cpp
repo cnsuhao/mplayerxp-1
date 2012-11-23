@@ -1,10 +1,12 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*  ASF file parser for DEMUXER v0.3  by A'rpi/ESP-team and Nickols_K */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "osdep/bswap.h"
 
@@ -15,9 +17,6 @@
 #include "libmpcodecs/dec_audio.h"
 #include "aviprint.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /*
  * Load 16/32-bit values in little endian byte order

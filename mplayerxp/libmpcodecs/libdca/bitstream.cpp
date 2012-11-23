@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * bitstream.c
  * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
@@ -21,17 +24,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#include "mp_config.h"
-
 #include <inttypes.h>
 
 #include "dca.h"
 #include "dca_internal.h"
 #include "bitstream.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define BUFFER_SIZE 4096
 

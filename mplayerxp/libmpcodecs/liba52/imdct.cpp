@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * imdct.c
  * Copyright (C) 2000-2002 Michel Lespinasse <walken@zoy.org>
@@ -23,9 +26,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#include "mp_config.h"
-
 #include <math.h>
 #include <stdio.h>
 #ifndef M_PI
@@ -36,9 +36,6 @@
 #include "a52.h"
 #include "a52_internal.h"
 #include "osdep/mm_accel.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct complex_s {
     sample_t real;

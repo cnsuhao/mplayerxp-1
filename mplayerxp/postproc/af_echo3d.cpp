@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*=============================================================================
 //
 //  This software has been released under the terms of the GNU General Public
@@ -30,9 +33,6 @@
 #include "mplayerxp.h"
 #include "af.h"
 #include "aflib.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define DELAY1 35000
 #define DELAY2 21000

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -6,12 +9,8 @@
 #include <inttypes.h>
 #include <pthread.h>
 
-#include "mp_config.h"
 #include "nls/nls.h"
 #include "mp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 namespace mpxp {
 #define _bg(x) ((x) >> 4)

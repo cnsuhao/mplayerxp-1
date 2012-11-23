@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #define __USE_GNU 1
@@ -8,16 +11,12 @@
 #include "libao2/afmt.h"
 #include "ad_internal.h"
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "libmpconf/codec-cfg.h"
 
 #include "mp_conf_lavc.h""
 #include "codecs_ld.h"
-
-using namespace mpxp;
 
 typedef struct priv_s {
     AVCodecContext *lavc_ctx;

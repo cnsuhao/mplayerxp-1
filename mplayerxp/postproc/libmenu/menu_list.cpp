@@ -1,9 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
-#include "mp_config.h"
 
 #include "libvo/img_format.h"
 #include "libvo/sub.h"
@@ -14,16 +15,13 @@
 
 #include "libvo/video_out.h"
 #include "osdep/keycodes.h"
-#include "osdep/mplib.h"
 
-using namespace mpxp;
+#include "mplayerxp.h" // vo_data
 
 #define IMPL 1
 #include "menu_list.h"
 
 #define mpriv (menu->priv)
-
-extern vo_data_t* vo_data;
 
 void menu_list_draw(menu_t* menu,mp_image_t* mpi) {
   int x = mpriv->x;

@@ -1,21 +1,20 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
-
-using namespace mpxp;
 
 static const ad_info_t info = {
     "MPEG layer-123",

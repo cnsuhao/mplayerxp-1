@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * native Matroska demuxer
  * Written by Aurelien Jacobs <aurel@gnuage.org>
@@ -7,8 +10,6 @@
  */
 #include <algorithm>
 #include <limits>
-
-#include "mp_config.h"
 
 #define __STDC_FORMAT_MACROS
 #include <stdlib.h>
@@ -37,13 +38,10 @@
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/libnuppelvideo/minilzo.h"
 #include "libao2/afmt.h"
-#include "osdep/mplib.h"
 #include "demux_msg.h"
 
 #include "loader/qtx/qtxsdk/components.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 enum {
     LZO_INPUT_DEPLETED=1,

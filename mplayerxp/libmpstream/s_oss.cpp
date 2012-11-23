@@ -1,7 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_oss - stream interface for oss capturing.
 */
-#include "mp_config.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,12 +22,10 @@
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "loader/wine/mmreg.h"
-#include "osdep/mplib.h"
 #include "stream.h"
 #include "mrl.h"
 #include "stream_msg.h"
 
-using namespace mpxp;
 
 typedef struct oss_priv_s
 {

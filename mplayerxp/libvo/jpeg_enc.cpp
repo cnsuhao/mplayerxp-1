@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* Straightforward (to be) optimized JPEG encoder for the YUV422 format
  * based on mjpeg code from ffmpeg.
  *
@@ -25,7 +28,6 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "mp_config.h"
 #ifdef USE_FASTMEMCPY
 #include "fastmemcpy.h"
 #endif
@@ -35,9 +37,6 @@
 
 #include "jpeg_enc.h"
 #include "vo_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /* zr_mjpeg_encode_mb needs access to these tables for the black & white
  * option */

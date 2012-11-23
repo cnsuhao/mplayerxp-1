@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     dump.c - stream dumper
 */
@@ -7,20 +10,17 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "mp_config.h"
-
 #include "xmpcore/sig_hand.h"
 #include "help_mp.h"
 #include "input2/input.h"
 #include "mplayerxp.h"
 #include "libmpdemux/muxer.h"
 #include "libmpstream/mrl.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
 #include "dump.h"
 
-using namespace mpxp;
+namespace mpxp {
 
 static char *media=NULL,*port=NULL;
 
@@ -462,3 +462,5 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
   ,priv->m_audio?priv->m_audio->wf->nChannels:-1
   ,priv->asize);
 }
+
+} // namespace mpxp

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *  yuv4mpeg_ratio.c:  Functions for dealing with y4m_ratio_t datatype.
  *
@@ -20,15 +23,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-
-#include "mp_config.h"
-
 #include <string.h>
+
 #include "yuv4mpeg.h"
 #include "yuv4mpeg_intern.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /* useful list of standard framerates */
 const y4m_ratio_t y4m_fps_UNKNOWN    = Y4M_FPS_UNKNOWN;

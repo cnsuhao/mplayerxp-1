@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * NAS audio output driver
  *
@@ -53,16 +56,11 @@
 #include <limits.h>
 #include <audio/audiolib.h>
 
-#include "mp_config.h"
-
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "postproc/af.h"
-#include "osdep/mplib.h"
 #include "afmt.h"
 #include "ao_msg.h"
-
-using namespace mpxp;
 
 /* NAS_FRAG_SIZE must be a power-of-two value */
 #define NAS_FRAG_SIZE 4096

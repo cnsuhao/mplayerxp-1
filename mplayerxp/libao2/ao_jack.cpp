@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * JACK audio output driver for MPlayer
  *
@@ -26,20 +29,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "mp_config.h"
-
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "postproc/af.h"
 #include "afmt.h"
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 #include "ao_msg.h"
 
 #include "mp_conf_lavc.h"
 #include <jack/jack.h>
-
-using namespace mpxp;
 
 static const ao_info_t info =
 {

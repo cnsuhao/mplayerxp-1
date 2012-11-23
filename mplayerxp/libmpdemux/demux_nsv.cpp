@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 /*
  * Nullsoft Streaming Video demuxer
@@ -15,15 +18,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct {
     float   v_pts;

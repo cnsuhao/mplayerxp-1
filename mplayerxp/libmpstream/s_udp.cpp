@@ -1,4 +1,6 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,9 +22,6 @@
 #include "udp.h"
 #include "url.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 static int __FASTCALL__ udp_read(stream_t *s,stream_packet_t*sp)
 {

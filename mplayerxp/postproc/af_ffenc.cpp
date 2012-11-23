@@ -1,16 +1,15 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
-#include "mp_config.h"
 #include "mp_conf_lavc.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/fastmemcpy.h"
 #include "af.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)
 

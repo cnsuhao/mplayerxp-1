@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Copyright (C) 2002 Michael Niedermayer <michaelni@gmx.at>
 
@@ -22,17 +25,13 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "mp_config.h"
 #include "osdep/cpudetect.h"
 
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define MAX_NOISE 4096
 #define MAX_SHIFT 1024

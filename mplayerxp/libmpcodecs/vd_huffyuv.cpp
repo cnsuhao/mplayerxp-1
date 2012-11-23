@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *
  * HuffYUV Decoder for Mplayer
@@ -20,14 +23,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mp_config.h"
-
 #include "vd_internal.h"
 #include "help_mp.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "HuffYUV Video decoder",

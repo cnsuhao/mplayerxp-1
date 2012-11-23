@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Copyright (C) 2002 Michael Niedermayer <michaelni@gmx.at>
 
@@ -22,16 +25,11 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include "mp_config.h"
-
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 //===========================================================================//
 
 static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){

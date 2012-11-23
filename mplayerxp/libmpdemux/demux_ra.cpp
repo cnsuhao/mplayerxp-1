@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Realaudio demuxer for MPlayer
 		(c) 2003 Roberto Togni
@@ -8,19 +11,15 @@
 #include <limits.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "libao2/afmt.h"
 #include "aviprint.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 #define FOURCC_DOTRA mmioFOURCC('.','r','a', 0xfd)
 #define FOURCC_144 mmioFOURCC('1','4','_','4')

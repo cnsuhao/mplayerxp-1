@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *   shmem.c - Shared memory allocation
  *
@@ -5,9 +8,6 @@
  *   Oliver Fromme  <oliver.fromme@heim3.tu-clausthal.de>
  *   Sun Apr  6 02:26:26 MET DST 1997
  */
-
-#include "mp_config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,9 +31,6 @@
 
 #include "help_mp.h"
 #include "osdep_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
 #define MAP_ANON MAP_ANONYMOUS

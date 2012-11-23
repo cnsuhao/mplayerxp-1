@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     MPG/VOB file parser for DEMUXER v2.5  by A'rpi/ESP-team
     Some code was borrowed from ffmpeg project by Nick.
@@ -11,9 +14,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "osdep/bswap.h"
-#include "mp_config.h"
 #include "help_mp.h"
+#include "osdep/bswap.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
@@ -23,9 +25,6 @@
 
 #include "libmpcodecs/dec_audio.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 //#define MAX_PS_PACKETSIZE 2048
 #define MAX_PS_PACKETSIZE (224*1024)

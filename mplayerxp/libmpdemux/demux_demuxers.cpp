@@ -1,14 +1,13 @@
 #include "mp_config.h"
-
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct dd_priv {
   demuxer_t* vd;

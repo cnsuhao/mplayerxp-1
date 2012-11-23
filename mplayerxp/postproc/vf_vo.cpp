@@ -1,8 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "mp_config.h"
 
 #include "xmpcore/mp_image.h"
 #include "vf.h"
@@ -10,11 +11,7 @@
 #include "libvo/video_out.h"
 #include "libvo/dri_vo.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
-
-extern vo_data_t* vo_data;
+#include "mplayerxp.h" // vo_data
 
 //===========================================================================//
 struct vf_priv_s {

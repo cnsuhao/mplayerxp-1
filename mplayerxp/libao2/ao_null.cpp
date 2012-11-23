@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,17 +8,13 @@
 #include <limits.h>
 #include <sys/time.h>
 
-#include "mp_config.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 
 #include "libmpstream/mrl.h"
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "ao_msg.h"
-
-using namespace mpxp;
 
 static ao_info_t info = {
     "Null audio output",

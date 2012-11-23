@@ -1,4 +1,6 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -13,7 +15,6 @@
 
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
-#include "osdep/mplib.h"
 
 #include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
@@ -35,8 +36,6 @@
 #include "mp_conf_lavc.h"
 #include "osdep/cpudetect.h"
 #include "vd_msg.h"
-
-using namespace mpxp;
 
 // ===================================================================
 vf_cfg_t vf_cfg; // Configuration for audio filters
@@ -95,7 +94,6 @@ void mpcv_uninit(any_t *opaque){
 }
 
 #include "libvo/video_out.h"
-extern vo_data_t*vo_data;
 #define MPDEC_THREAD_COND (VF_FLAGS_THREADS|VF_FLAGS_SLICES)
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
@@ -280,7 +278,6 @@ void mpcodecs_draw_image(sh_video_t* sh,mp_image_t *mpi)
   }
 }
 
-extern vo_data_t* vo_data;
 static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned idx);
 int mpcv_decode(any_t *opaque,const enc_frame_t* frame){
     priv_t* priv=(priv_t*)opaque;
@@ -404,9 +401,6 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 
 #include "libvo/video_out.h"
 
-extern vo_data_t* vo_data;
-extern const vd_functions_t* mpvdec; // FIXME!
-
 MPXP_Rc mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t* libinput){
     priv_t* priv=(priv_t*)sh->decoder;
     int i,j;
@@ -443,7 +437,7 @@ csp_again:
 	    // check (query) if codec really support this outfmt...
 	    sh->outfmtidx=j; // pass index to the control() function this way
 	    if(priv->mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
-		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",mpvdec->info->driver_name,vo_format_name(out_fmt));
+		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",priv->mpvdec->info->driver_name,vo_format_name(out_fmt));
 		continue;
 	    }
 	    j=i;

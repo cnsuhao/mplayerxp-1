@@ -1,9 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 
-#include "mp_config.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 //----------------------- mp3 audio frame header parser -----------------------
 

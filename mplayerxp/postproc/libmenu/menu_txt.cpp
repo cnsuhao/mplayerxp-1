@@ -1,5 +1,7 @@
-
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -18,11 +20,7 @@
 #include "libvo/video_out.h"
 #include "osdep/keycodes.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
-
-extern vo_data_t* vo_data;
+#include "mplayerxp.h" // vo_data
 
 struct menu_priv_s {
   char** lines;

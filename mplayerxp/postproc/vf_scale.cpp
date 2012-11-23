@@ -1,9 +1,11 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 
-#include "mp_config.h"
 #include "osdep/cpudetect.h"
 
 #include "libvo/img_format.h"
@@ -12,13 +14,10 @@
 
 #include "libvo/video_out.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "swscale.h"
 #include "libavutil/log.h"
 #include "vf_scale.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 struct vf_priv_s {
     int w,h,ofmt;

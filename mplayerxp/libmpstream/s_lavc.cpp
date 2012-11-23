@@ -1,14 +1,14 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include "mplayerxp.h"
 
 #include <dlfcn.h>
 #include "mp_conf_lavc.h"
 #include "libmpcodecs/codecs_ld.h"
-#include "osdep/mplib.h"
 #include "stream.h"
 #include "stream_msg.h"
 
-using namespace mpxp;
 
 typedef struct lavc_priv_s
 {

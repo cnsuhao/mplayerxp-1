@@ -1,21 +1,19 @@
-#include <algorithm>
-
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+#include <algorithm>
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "osdep/bswap.h"
 
+#include "osdep/bswap.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libao2/afmt.h"
-#include "osdep/mplib.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 #define	KEYWORD_BYTES	4
 #define	VERSION_BYTES	8

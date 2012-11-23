@@ -1,6 +1,8 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -23,11 +25,8 @@
 #include "libmpconf/m_struct.h"
 #include "menu.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
 
-using namespace mpxp;
-
-extern vo_data_t* vo_data;
+#include "mplayerxp.h" // vo_data
 
 extern menu_info_t menu_info_cmdlist;
 extern menu_info_t menu_info_pt;

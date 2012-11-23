@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     (C)2002 Charles R. Henrich (henrich@msu.edu)
     *BSD (hopefully, requires working driver!) BrookTree capture support.
@@ -9,12 +12,6 @@
     v1.0    Feb 19 2002   First Release, need to add support for changing
 			    audio parameters.
 */
-
-#include "mp_config.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
-
 #if defined(USE_TV) && defined(HAVE_TV_BSDBT848)
 
 #define RINGSIZE 8

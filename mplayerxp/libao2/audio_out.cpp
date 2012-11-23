@@ -1,14 +1,13 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "mp_config.h"
-#include "osdep/mplib.h"
 #include "audio_out.h"
 #include "afmt.h"
 #include "ao_msg.h"
-
-using namespace mpxp;
 
 extern const ao_functions_t audio_out_wav;
 extern const ao_functions_t audio_out_null;

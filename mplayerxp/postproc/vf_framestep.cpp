@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * vf_fstep.c - filter to ouput only 1 every n frame, or only the I (key)
  *              frame
@@ -51,17 +54,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "osdep/cpudetect.h"
 
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
-#include "osdep/mplib.h"
 #include "vf.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 /* Uncomment if you want to print some info on the format */
 // #define DUMP_FORMAT_DATA

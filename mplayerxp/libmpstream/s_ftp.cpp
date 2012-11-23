@@ -1,5 +1,6 @@
 #include "mp_config.h"
-
+#include "osdep/mplib.h"
+using namespace mpxp;
 #define __STDC_FORMAT_MACROS
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,9 +22,6 @@
 #include "tcp.h"
 #include "url.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 struct stream_priv_s {
     const char* user;

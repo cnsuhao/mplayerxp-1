@@ -1,12 +1,12 @@
 #include "mp_config.h"
-
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "libmpstream/stream.h"
 #include "libmpconf/cfgparser.h"
-#include "osdep/mplib.h"
 
-using namespace mpxp;
 
 #ifdef HAVE_LIBCDIO
 extern void cdda_register_options(m_config_t* cfg);
@@ -17,6 +17,7 @@ extern void mp_input_register_options(m_config_t* cfg);
 extern void libmpdemux_register_options(m_config_t* cfg);
 extern void demuxer_register_options(m_config_t* cfg);
 
+namespace mpxp {
 void mp_register_options(m_config_t* cfg)
 {
   mp_input_register_options(cfg);
@@ -28,3 +29,5 @@ void mp_register_options(m_config_t* cfg)
   libmpcodecs_ad_register_options(cfg);
   libmpcodecs_vd_register_options(cfg);
 }
+
+} // namespace mpxp

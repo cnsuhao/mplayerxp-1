@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * aRts (KDE analogue Real-Time synthesizer) audio output driver for MPlayerXP
  *
@@ -23,14 +26,11 @@
 #include <artsc.h>
 #include <stdio.h>
 
-#include "mp_config.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "postproc/af.h"
 #include "afmt.h"
 #include "ao_msg.h"
-
-using namespace mpxp;
 
 /* Feel mp_free to experiment with the following values: */
 #define ARTS_PACKETS 10 /* Number of audio packets */

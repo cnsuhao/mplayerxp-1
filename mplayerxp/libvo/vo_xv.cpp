@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * vo_xv.c, X11 Xv interface
  *
@@ -17,14 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
-#include "osdep/mplib.h"
 #include "video_out.h"
 #include "video_out_internal.h"
-
-using namespace mpxp;
 
 LIBVO_EXTERN(xv)
 

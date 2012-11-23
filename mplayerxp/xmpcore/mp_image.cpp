@@ -1,18 +1,18 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
 #include "libvo/img_format.h"
 #include "mp_image.h"
 #include "osdep/fastmemcpy.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
-using namespace mpxp;
-
+namespace mpxp {
 void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
     mpi->flags&=~(MP_IMGFLAG_PLANAR|MP_IMGFLAG_YUV|MP_IMGFLAG_SWAPPED);
     mpi->imgfmt=out_fmt;
@@ -220,3 +220,5 @@ void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned h
     dmpi->xp_idx = mpi->xp_idx;
     dmpi->flags&=~MP_IMGFLAG_ALLOCATED;
 }
+
+} // namespace mpxp

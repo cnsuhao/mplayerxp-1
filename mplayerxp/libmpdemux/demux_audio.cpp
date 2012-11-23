@@ -1,27 +1,26 @@
-#include <algorithm>
-
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+#include <algorithm>
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
+#include <string.h>
+#ifdef MP_DEBUG
+#include <assert.h>
+#endif
+
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "genres.h"
-#include <limits.h>
 #include "libmpcodecs/dec_audio.h"
 #include "libao2/afmt.h"
 #include "aviprint.h"
 #include "osdep/bswap.h"
 #include "mp3_hdr.h"
-#include <string.h>
-#ifdef MP_DEBUG
-#include <assert.h>
-#endif
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define RAW_MP1 1
 #define RAW_MP2 2

@@ -1,15 +1,14 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
-#include "mp_config.h"
 #include "help_mp.h"
-#include "osdep/mplib.h"
 #include "loader/dshow/DS_AudioDecoder.h"
 #include "codecs_ld.h"
-
-using namespace mpxp;
 
 static const ad_info_t info = {
     "Win32/DirectShow decoders",

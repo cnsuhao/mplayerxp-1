@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * This file was ported to MPlayer from xine CVS real.c,v 1.8 2003/03/30 17:11:50
  */
@@ -31,24 +34,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "real.h"
 #include "asmrp.h"
 #include "sdpplin.h"
 #include "xbuffer.h"
-//#if USE_LIBAVUTIL_SO
-//#include "ffmpeg/md5.h"
-//#else
-//#endif
-//#include "libavutil/intreadwrite.h"
 #include "md5.h"
 #include "http.h"
 #include "stream_msg.h"
-
-using namespace mpxp;
 
 /*
 #define LOG

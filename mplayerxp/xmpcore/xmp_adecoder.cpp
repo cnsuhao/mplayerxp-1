@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
 #include <errno.h>
@@ -12,13 +15,13 @@
 
 #include "libmpcodecs/dec_audio.h"
 
-#include "osdep/mplib.h"
 #include "osdep/timer.h"
 #include "xmp_core.h"
 #include "xmp_adecoder.h"
 
-using namespace mpxp;
-
+/* Audio stuff */
+volatile float dec_ahead_audio_delay;
+namespace mpxp {
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
 #else
@@ -380,9 +383,6 @@ int get_free_audio_buffer(void)
     return len;
 }
 
-
-/* Audio stuff */
-volatile float dec_ahead_audio_delay;
 int xp_thread_decode_audio(demux_stream_t *d_audio)
 {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(xp_core->audio->sh);
@@ -525,3 +525,5 @@ void sig_audio_decode( void )
     xmp_killall_threads(pthread_self());
     __exit_sighandler();
 }
+
+} // namespace mpxp

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 // Most of this was written by mbm@linux.com and released on the GPL2 License.
 //
 // Modifications and SEVERE cleanup of the code was done by
@@ -13,18 +16,12 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "help_mp.h"
 
 #include "sub_cc.h"
 #include "libvo/video_out.h"
-#include "osdep/mplib.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
-
-extern vo_data_t* vo_data;
 
 extern int sub_justify;
 

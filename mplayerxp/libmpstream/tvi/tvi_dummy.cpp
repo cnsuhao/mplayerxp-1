@@ -1,12 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Only a sample!
 */
-
-#include "mp_config.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
-
 #ifdef USE_TV
 
 #include <stdio.h>

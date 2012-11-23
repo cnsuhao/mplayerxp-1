@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     (c)2006 MPlayer / Reynaldo H. Verdejo Pinochet
 	Based on code by Alex Beregszaszi for his 'center' filter
@@ -13,9 +16,6 @@
 
 #include "mplayerxp.h"
 #include "af.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 // Data for specific instances of this filter
 

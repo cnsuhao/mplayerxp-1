@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * command line and config file parser
  * by Szabolcs Berecz <szabi@inf.elte.hu>
@@ -15,10 +18,6 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#include "mp_config.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define COMMAND_LINE		0
 #define CONFIG_FILE		1
@@ -38,8 +37,8 @@ using namespace mpxp;
 #include <assert.h>
 #endif
 
+#include "mplayerxp.h"
 #include "cfgparser.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CFGPARSER
 #include "mp_msg.h"
 
@@ -860,8 +859,6 @@ out:
     return ret;
 }
 
-extern void show_help(void);
-extern void show_long_help(void);
 MPXP_Rc m_config_parse_command_line(m_config_t *config, int argc, char **argv, char **envp)
 {
     int i;

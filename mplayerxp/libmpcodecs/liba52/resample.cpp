@@ -1,10 +1,12 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 // a52_resample_init should find the requested converter (from type flags ->
 // given number of channels) and set up some function pointers...
 
 // a52_resample() should do the conversion.
 
-#include "mp_config.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include "a52.h"
@@ -12,9 +14,6 @@
 #include "osdep/mm_accel.h"
 #include "osdep/mangle.h"
 #include "osdep/cpudetect.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 int (* a52_resample) (float * _f, int16_t * s16)=NULL;
 int (* a52_resample32) (float * _f, float * s16)=NULL;

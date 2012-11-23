@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   This file is part of FreeSDP
   Copyright (C) 2001,2002,2003 Federico Montesino Pouzols <fedemp@suidzer0.org>
@@ -27,12 +30,8 @@
  * that are used in both the parse and formatting modules.
  **/
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
-
 #include "priv.h"
 #include "common.h"
-
-using namespace mpxp;
 
 static void
 safe_free (any_t*ptr)

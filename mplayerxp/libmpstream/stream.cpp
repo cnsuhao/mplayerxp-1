@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
 #include <errno.h>
@@ -12,18 +15,15 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "help_mp.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 
 #include "stream.h"
 #include "libmpdemux/demuxer.h"
 #include "stream_msg.h"
 
-using namespace mpxp;
 
 #ifdef HAVE_LIBCDIO_CDDA
 extern const stream_driver_t cdda_stream;

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * screenshot.c, Portable Network Graphics Renderer for Mplayer
  *
@@ -13,7 +16,6 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #ifdef HAVE_PNG
 #ifdef HAVE_LIBPNG_PNG
@@ -27,10 +29,7 @@
 #include "img_format.h"
 #include "mp_conf_lavc.h"
 #include "postproc/vf_scale.h"
-#include "osdep/mplib.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 #define RGB 0
 #define BGR 1

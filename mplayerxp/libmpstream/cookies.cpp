@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * HTTP Cookies
  * Reads Netscape and Mozilla cookies.txt files
@@ -19,9 +22,6 @@
 #include "cookies.h"
 #include "http.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define MAX_COOKIES 20
 

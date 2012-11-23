@@ -1,13 +1,12 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
-#include "mp_config.h"
 #include "libnuppelvideo/nuppelvideo.h"
 #include "vd_internal.h"
 #include "codecs_ld.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "NuppelVideo decoder",

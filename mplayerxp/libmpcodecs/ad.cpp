@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    ad.c - audio decoder interface
 */
@@ -6,16 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
-
 #include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "ad.h"
 #include "ad_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /* Missed vorbis, mad, dshow */
 

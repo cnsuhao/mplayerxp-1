@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    This file contains implementation of VESA library which is based on
    LRMI (Linux real-mode interface).
@@ -22,9 +25,8 @@
 #include "mplayerxp.h"
 #include "cpudetect.h"
 #include "osdep_msg.h"
-#include "osdep/mplib.h"
 
-using namespace mpxp;
+namespace mpxp {
 
 static struct VesaProtModeInterface vbe_pm_info;
 static struct VesaModeInfoBlock curr_mode_info;
@@ -723,3 +725,5 @@ void vbeUnmapVideoBuffer(unsigned long linear_addr,unsigned long size)
   MSG_DBG2("vbelib: vbeUnmapVideoBuffer(%08lX,%08lX)\n",linear_addr,size);
   munmap((any_t*)linear_addr,size);
 }
+
+} // namespace mpxp

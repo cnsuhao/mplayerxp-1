@@ -1,9 +1,10 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #ifdef HAVE_JOYSTICK
 #include "joystick.h"
 #include "input.h"
-#include "osdep/mplib.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,8 +14,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
-using namespace mpxp;
 
 #ifndef JOY_AXIS_DELTA
 #define JOY_AXIS_DELTA 500

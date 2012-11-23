@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
 	FLI file parser for the MPlayer program
 	by Mike Melanson
@@ -10,16 +13,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct _fli_frames_t {
   int num_frames;

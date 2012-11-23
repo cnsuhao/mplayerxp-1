@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <limits>
 
 #include <stdio.h>
@@ -7,7 +10,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close
@@ -24,9 +26,6 @@
 #include "asf_streaming.h"
 #include "network.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 #define	ASF_LOAD_GUID_PREFIX(guid)	(*(uint32_t *)(guid))

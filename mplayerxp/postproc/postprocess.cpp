@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     wrapper to call postprocess from libavcodec.so
 */
@@ -6,15 +9,11 @@
 #include <inttypes.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "mp_config.h"
 #include "postprocess.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PP
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 pp_context *pp2_get_context(int width, int height, int flags)
 {

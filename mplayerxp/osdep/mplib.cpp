@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *  my_profile.c
  *
@@ -7,8 +10,6 @@
  *  of GNU General Public licence v2.
  */
 #include <stdlib.h>
-#include "mp_config.h"
-#include "mplib.h"
 
 namespace mpxp {
 

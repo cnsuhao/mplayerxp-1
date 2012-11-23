@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *  Copyright (C) 2006 Benjamin Zores
  *   based on the Freebox patch for xine by Vincent Mussard
@@ -26,9 +29,7 @@
 #include <sys/types.h>
 #include <inttypes.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>
@@ -46,8 +47,6 @@
 #include "freesdp/common.h"
 #include "freesdp/parser.h"
 #include "stream_msg.h"
-
-using namespace mpxp;
 
 #define RTSP_DEFAULT_PORT 31336
 #define MAX_LENGTH 256

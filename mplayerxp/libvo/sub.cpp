@@ -1,4 +1,6 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,11 +14,8 @@
 #include "osd.h"
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_OSD
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 static const char * __sub_osd_names[]={
     "Seekbar",

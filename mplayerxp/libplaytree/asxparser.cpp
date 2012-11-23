@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,11 +13,8 @@
 #include "asxparser.h"
 #include "libmpconf/cfgparser.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 ////// List utils
 

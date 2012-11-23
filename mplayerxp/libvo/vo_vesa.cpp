@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *  video_out_vesa.c
  *
@@ -17,8 +20,6 @@
 */
 #include <algorithm>
 
-#include "mp_config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +38,6 @@
 #include "sub.h"
 #include "osdep/vbelib.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "aspect.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
@@ -45,8 +45,6 @@
 #include "dri_vo.h"
 #include "help_mp.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 LIBVO_EXTERN(vesa)
 

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  SMJPEG file parser by Alex Beregszaszi
 
@@ -16,7 +19,6 @@
 #include <unistd.h>
 #include <string.h> /* strtok */
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
@@ -24,9 +26,6 @@
 #include "stheader.h"
 #include "osdep/bswap.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 static MPXP_Rc smjpeg_probe(demuxer_t* demuxer){
     int orig_pos = stream_tell(demuxer->stream);

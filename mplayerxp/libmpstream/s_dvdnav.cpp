@@ -1,7 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_dvdnav - DVDNAV's stream interface
 */
-#include "mp_config.h"
 #ifdef USE_DVDNAV
 #include <stdlib.h>
 #include <string.h>
@@ -21,13 +23,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 #include "mrl.h"
 
-using namespace mpxp;
 #define DVD_BLOCK_SIZE 2048
-
-extern vo_data_t* vo_data;
 
 typedef struct {
   dvdnav_t *       dvdnav;              /* handle to libdvdnav stuff */

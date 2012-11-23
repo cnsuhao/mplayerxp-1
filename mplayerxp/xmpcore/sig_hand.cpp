@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   MplayerXP's Signal handling
 */
@@ -13,19 +16,17 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "mp_msg.h"
 #include "sig_hand.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
-using namespace mpxp;
-
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
+
+namespace mpxp {
 /* A dummy function to make the backtrace more interesting. */
 static void dump_trace (void) {
     show_backtrace("Obtained %zd stack frames.\n",mp_conf.max_trace);
@@ -83,3 +84,5 @@ void init_signal_handling( void )
   }
 #endif
 }
+
+} // namespace mpxp

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_tv - TV stream interface
     --------------------------
@@ -10,19 +13,14 @@
     Feb 19, 2002: Significant rewrites by Charles R. Henrich (henrich@msu.edu)
 				to add support for audio, and bktr *BSD support.
 */
-
-#include "mp_config.h"
 #include "mplayerxp.h"
 #ifdef USE_TV
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
 #include "input2/input.h"
-#include "osdep/mplib.h"
 #include "libao2/afmt.h"
 #include "mrl.h"
-
-using namespace mpxp;
 
 /* some default values */
 static int tv_param_audiorate = 44100;

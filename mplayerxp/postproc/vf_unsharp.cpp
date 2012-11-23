@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Copyright (C) 2002 Rémi Guyomarch <rguyom@pobox.com>
 
@@ -24,7 +27,6 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "mp_config.h"
 #include "osdep/cpudetect.h"
 
 #ifdef USE_SETLOCALE
@@ -35,10 +37,8 @@
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
 
-using namespace mpxp;
 //===========================================================================//
 
 #define MIN_MATRIX_SIZE 3

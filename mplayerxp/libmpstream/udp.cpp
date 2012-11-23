@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *  Copyright (C) 2006 Benjamin Zores
  *   Network helpers for UDP connections (originally borrowed from rtp.c).
@@ -16,9 +19,6 @@
  *  along with this program; if not, write to the Free Software Foundation,
  *  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-
-#include "../mp_config.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -42,9 +42,6 @@
 #include "url.h"
 #include "udp.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 int reuse_socket=0;
 

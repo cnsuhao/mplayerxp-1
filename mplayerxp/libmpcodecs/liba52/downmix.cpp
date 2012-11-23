@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * downmix.c
  * Copyright (C) 2000-2002 Michel Lespinasse <walken@zoy.org>
@@ -20,9 +23,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#include "mp_config.h"
-
 #include <string.h>
 #include <inttypes.h>
 
@@ -30,9 +30,6 @@
 #include "a52_internal.h"
 #include "osdep/mm_accel.h"
 #include "osdep/cpudetect.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define CONVERT(acmod,output) (((output) << 3) + (acmod))
 

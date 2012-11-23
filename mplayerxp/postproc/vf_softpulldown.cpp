@@ -1,19 +1,17 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "mp_config.h"
 
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "libvo/sub.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 struct vf_priv_s {
 	int state;

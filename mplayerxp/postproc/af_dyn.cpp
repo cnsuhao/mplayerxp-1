@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*=============================================================================
 //
 //  This software has been released under the terms of the GNU General Public
@@ -19,9 +22,6 @@
 
 #include "mplayerxp.h"
 #include "af.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct af_dyn_s
 {

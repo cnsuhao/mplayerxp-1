@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   ao_alsa9 - ALSA-0.9.x output plugin for MPlayer
 
@@ -17,7 +20,6 @@
 #include <string.h>
 #include <sys/poll.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #define ALSA_PCM_NEW_SW_PARAMS_API
@@ -28,9 +30,6 @@
 #include "afmt.h"
 #include "ao_msg.h"
 #include "libmpstream/mrl.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 static ao_info_t info =
 {

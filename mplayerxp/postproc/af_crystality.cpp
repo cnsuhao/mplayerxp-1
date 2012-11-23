@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*=============================================================================
 //
 //  This software has been released under the terms of the GNU General Public
@@ -67,9 +70,6 @@ and high-freqs and try to restore FR as:
 #include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define SAMPLE_MAX 1.
 

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* MplayerXP (C) 2000-2002. by A'rpi/ESP-team (C) 2002. by Nickols_K */
 #include <algorithm>
 #include <iostream>
@@ -23,9 +26,7 @@
 #include <fcntl.h>
 
 #include "version.h"
-#include "mp_config.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
 #include "xmpcore/sig_hand.h"
 
 #include "postproc/swscale.h"
@@ -79,7 +80,7 @@
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
 
-using namespace mpxp;
+namespace mpxp {
 /**************************************************************************
 	     Private data
 **************************************************************************/
@@ -103,11 +104,12 @@ typedef struct x86_features_s {
 }x86_features_t;
 static x86_features_t x86;
 #endif
+}
+#include "cfg-mplayerxp.h"
 /**************************************************************************
 	     Config file
 **************************************************************************/
-#include "cfg-mplayerxp.h"
-
+namespace mpxp {
 enum {
     INITED_VO		=0x00000001,
     INITED_AO		=0x00000002,
@@ -180,7 +182,6 @@ volatile MPXPSecureKeys* secure_keys;
 static volatile char antiviral_hole4[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 ao_data_t* ao_data=NULL;
 vo_data_t* vo_data=NULL;
-
 /**************************************************************************/
 static int mpxp_init_antiviral_protection(int verbose)
 {
@@ -212,7 +213,7 @@ static void __attribute__ ((noinline)) mpxp_test_backtrace(void) {
 }
 
 unsigned xp_num_cpu;
-static unsigned get_number_cpu(void) {
+unsigned get_number_cpu(void) {
 #ifdef _OPENMP
     return omp_get_num_procs();
 #else
@@ -1701,7 +1702,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     mpxp_config_malloc(argc,argv);
 
     // Yes, it really must be placed in stack or in very secret place
-    xmpcore::PointerProtector<MPXPSecureKeys> ptr_protector;
+    PointerProtector<MPXPSecureKeys> ptr_protector;
     secure_keys=ptr_protector.protect(new MPXPSecureKeys(10));
 
     mpxp_init_structs();
@@ -2192,6 +2193,7 @@ while(playtree_iter != NULL) {
     delete ptr_protector.unprotect(secure_keys);
     return EXIT_SUCCESS;
 }
+} // namespace mpxp
 
 int main(int argc,char* argv[], char *envp[])
 {

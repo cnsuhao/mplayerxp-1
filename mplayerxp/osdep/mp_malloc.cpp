@@ -1,7 +1,8 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
-#include "mp_config.h"
-#include "mplib.h"
 #define MSGT_CLASS MSGT_OSDEP
 #include "mp_msg.h"
 

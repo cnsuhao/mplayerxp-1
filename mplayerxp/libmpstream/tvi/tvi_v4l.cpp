@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   Video 4 Linux input
 
@@ -8,12 +11,6 @@
 
   CODE IS UNDER DEVELOPMENT, NO FEATURE REQUESTS PLEASE!
 */
-
-#include "mp_config.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
-
 #if defined(USE_TV) && defined(HAVE_TV_V4L)
 
 #include <stdio.h>

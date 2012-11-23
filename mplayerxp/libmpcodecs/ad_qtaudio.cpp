@@ -1,16 +1,17 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <dlfcn.h>
-#include "mp_config.h"
 
 #include "ad_internal.h"
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "mplayerxp.h"
 #include "libao2/afmt.h"
-#include "osdep/mplib.h"
 #ifdef WIN32_LOADER
 #include "loader/ldt_keeper.h"
 #endif
@@ -18,8 +19,6 @@
 #ifdef MACOSX
 #include <QuickTime/QuickTimeComponents.h>
 #endif
-
-using namespace mpxp;
 
 static const ad_info_t info =  {
     "QuickTime Audio Decoder",

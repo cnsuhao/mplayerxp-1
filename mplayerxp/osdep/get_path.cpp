@@ -1,13 +1,13 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "osdep_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
-
+namespace mpxp {
 char *get_path(const char *filename){
 	char *homedir;
 	char *buff;
@@ -30,3 +30,4 @@ char *get_path(const char *filename){
 	MSG_V("get_path('%s') -> '%s'\n",filename,buff);
 	return buff;
 }
+}// namespace mpxp

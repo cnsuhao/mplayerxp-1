@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #define DISP
 /*
  * video_out_dga.c, X11 interface
@@ -20,7 +23,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "video_out.h"
 #include "video_out_internal.h"
@@ -38,11 +40,8 @@ LIBVO_EXTERN( dga )
 
 #include "x11_common.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "dri_vo.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 static vo_info_t vo_info =
 {

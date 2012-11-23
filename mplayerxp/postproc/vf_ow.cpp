@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Copyright (C) 2007 Michael Niedermayer <michaelni@gmx.at>
 
@@ -30,15 +33,10 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "mp_config.h"
-
 #include "libvo/img_format.h"
-#include "osdep/mplib.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 //===========================================================================//
 static const uint8_t  __attribute__((aligned(8))) dither[8][8]={

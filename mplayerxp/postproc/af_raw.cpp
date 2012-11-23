@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   This audio filter exports the incoming signal to raw or RIFF WAVE file
   TODO: add length + pts to export into sockets
@@ -8,7 +11,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include "mp_config.h"
 
 #include "osdep/bswap.h"
 #include <sys/types.h>
@@ -18,10 +20,7 @@
 #include "af.h"
 #include "help_mp.h"
 #include "osdep/get_path.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */
 #define WAV_ID_WAVE 0x45564157 /* "WAVE" */

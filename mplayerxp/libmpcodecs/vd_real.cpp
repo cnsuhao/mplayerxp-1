@@ -1,7 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include "mp_config.h"
 
 #include <dlfcn.h>
 
@@ -9,10 +11,7 @@
 #include "codecs_ld.h"
 #include "vd_internal.h"
 #include "vd_msg.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "RealPlayer video codecs",

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,9 +8,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
-#include "osdep/mplib.h"
 
 #include <libdv/dv.h>
 #include <libdv/dv_types.h>
@@ -17,11 +18,7 @@
 #include "libmpdemux/stheader.h"
 #include "libao2/afmt.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
-
 #include "ad_internal.h"
-
-using namespace mpxp;
 
 static const ad_info_t info = {
     "Raw DV Audio Decoder",

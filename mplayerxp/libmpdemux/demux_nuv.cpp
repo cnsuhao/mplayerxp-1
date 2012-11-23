@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * NuppelVideo 0.05 file parser
  * for MPlayer
@@ -14,16 +17,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "nuppelvideo.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 struct nuv_signature
 {

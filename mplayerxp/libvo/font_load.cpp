@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,14 +8,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "mp_config.h"
 #include "font_load.h"
 #include "sub.h"
 #include "osdep/get_path.h"
-#include "osdep/mplib.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 raw_file* load_raw(const char *name,int verbose){
     int bpp;

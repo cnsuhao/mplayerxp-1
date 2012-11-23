@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_file - stream interface for file i/o.
 */
@@ -13,9 +16,6 @@
 
 #include "mplayerxp.h"
 #include "stream.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct file_priv_s
 {

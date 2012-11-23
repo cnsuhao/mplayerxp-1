@@ -1,13 +1,15 @@
-#include "mp_aframe.h"
+#include "mp_config.h"
 #include "osdep/mplib.h"
+using namespace mpxp;
+#include <string.h>
+#include <stdio.h>
+
+#include "mp_aframe.h"
 #include "libao2/afmt.h"
 #include "loader/wine/mmreg.h"
 #include "mp_msg.h"
 
-#include <string.h>
-#include <stdio.h>
-
-using namespace mpxp;
+namespace mpxp {
 
 enum { AFMT_AF_FLAGS=0x70000000 };
 
@@ -322,3 +324,5 @@ mp_aframe_t* new_mp_aframe_genome(const mp_aframe_t* in) {
 }
 
 void mp_alloc_aframe(mp_aframe_t* it) { it->audio = mp_malloc(it->len); }
+
+} // namespace mpxp

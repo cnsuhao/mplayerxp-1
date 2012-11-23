@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *    crc.c
  *
@@ -24,11 +27,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
-
-#include "mp_config.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 static const uint16_t crc_lut[256] =
 {

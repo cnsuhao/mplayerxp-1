@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* The name speaks for itself this filter is a dummy and will not blow
    up regardless of what you do with it. */
 #include <stdio.h>
@@ -5,14 +8,9 @@
 #include <string.h>
 #include "libao2/audio_out.h"
 #include "libao2/afmt.h"
-#include "osdep/mplib.h"
 
 #include "af.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
-
-extern ao_data_t* ao_data;
 
 static unsigned rates[] =
 { 4000, 5512, 8000, 9600, 11025, 16000, 19200, 22050, 24000, 32000, 38400, 44100, 48000, 64000, 76800, 88200, 96000, 128000, 153600, 176400, 192000 };

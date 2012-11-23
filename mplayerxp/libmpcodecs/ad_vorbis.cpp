@@ -1,18 +1,15 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
-#include "mp_config.h"
 #include "codecs_ld.h"
 #include "ad_internal.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
-
-extern ao_data_t* ao_data;
 
 static const ad_info_t info = {
     "Ogg/Vorbis audio decoder",

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   This file is part of FreeSDP
   Copyright (C) 2001,2002,2003 Federico Montesino Pouzols <fedemp@altern.org>
@@ -34,9 +37,6 @@
  **/
 
 #include "parserpriv.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /**
  * \brief find the start of the next line

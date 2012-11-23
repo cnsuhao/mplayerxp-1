@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    HACKING notes:
    first time it was OpenDivx project by Mayo (unsupported by mplayerxp)
@@ -12,7 +15,6 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
@@ -21,10 +23,7 @@
 #include "vd.h"
 #include "codecs_ld.h"
 #include "libvo/video_out.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "DivX4Linux lib (divx4/5 mode)",

@@ -1,21 +1,18 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 //**************************************************************************//
 //             .SUB
 //**************************************************************************//
-
-#include "mp_config.h"
-
 #ifdef USE_OSD
 
 #include <stdio.h>
 #include <limits.h>
 #include "libvo/video_out.h"
 #include "libvo/sub.h"
-#include "osdep/mplib.h"
 #include "subreader.h"
 #define MSGT_CLASS MSGT_FINDSUB
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 static int current_sub=0;
 

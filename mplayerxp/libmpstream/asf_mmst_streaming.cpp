@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 // mmst implementation taken from the xine-mms plugin made by majormms (http://geocities.com/majormms/)
 //
 // ported to mplayer by Abhijeet Phatak <abhijeetphatak@yahoo.com>
@@ -14,9 +17,7 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
-
 #include "tcp.h"
 #include "url.h"
 #include "libmpdemux/asf.h"
@@ -44,9 +45,6 @@
 #endif
 #endif
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define BUF_SIZE 102400
 #define HDR_BUF_SIZE 8192

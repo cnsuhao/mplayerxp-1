@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
 #include <ctype.h>
@@ -6,7 +9,6 @@
 #include <assert.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #ifdef HAVE_GOMP
@@ -16,7 +18,6 @@
 #include "help_mp.h"
 
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
@@ -24,8 +25,6 @@
 #include "postproc/vf.h"
 #include "libvo/video_out.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "lavc codec family",
@@ -244,7 +243,6 @@ static MPXP_Rc find_vdecoder(sh_video_t* sh) {
     return MPXP_False;
 }
 
-extern unsigned xp_num_cpu;
 static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     unsigned avc_version=0;
     priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
@@ -390,7 +388,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(priv->lavc_codec->capabilities&CODEC_CAP_DR1) priv->cap_dr1=1;
     priv->ctx->flags|= CODEC_FLAG_EMU_EDGE;
 
-    if(lavc_param_threads < 0) lavc_param_threads = xp_num_cpu;
+    if(lavc_param_threads < 0) lavc_param_threads = get_number_cpu();
     if(lavc_param_threads > 1) {
 	priv->ctx->thread_count = lavc_param_threads;
 	MSG_STATUS("Using %i threads in lavc\n",lavc_param_threads);

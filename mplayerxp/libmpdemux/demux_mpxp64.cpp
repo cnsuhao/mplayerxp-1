@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   MPlayerXP's design. MPXPAV64 format.
 */
@@ -8,7 +11,6 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
@@ -25,9 +27,6 @@
 #include "aviprint.h"
 #include "mpxpav64.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define MAX_AV_STREAMS MAX_V_STREAMS+MAX_A_STREAMS+MAX_S_STREAMS
 

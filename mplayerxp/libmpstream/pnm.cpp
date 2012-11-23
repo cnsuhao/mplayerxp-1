@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * Copyright (C) 2000-2002 the xine project
  *
@@ -34,7 +37,6 @@
 #include <sys/time.h>
 #include <inttypes.h>
 
-#include "mp_config.h"
 #include "osdep/bswap.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close
@@ -46,9 +48,6 @@
 #endif
 
 #include "pnm.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
 	(((long)(unsigned char)(ch3)       ) | \

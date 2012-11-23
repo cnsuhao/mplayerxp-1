@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Copyright (C) 2002 Michael Niedermayer <michaelni@gmx.at>
 
@@ -22,8 +25,6 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include "mp_config.h"
-
 #ifdef USE_SETLOCALE
 #include <locale.h>
 #endif
@@ -32,12 +33,9 @@
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "postproc/swscale.h"
 #include "vf_scale.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 //===========================================================================//
 

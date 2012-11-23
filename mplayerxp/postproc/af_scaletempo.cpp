@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * scaletempo audio filter
  * Copyright (c) 2007 Robert Juliano
@@ -38,10 +41,7 @@
 #include "osdep/fastmemcpy.h"
 
 #include "af.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 // Data for specific instances of this filter
 typedef struct af_scaletempo_s

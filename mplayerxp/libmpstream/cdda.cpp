@@ -1,11 +1,12 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include "mplayerxp.h"
 
 #ifdef HAVE_LIBCDIO
 
 #include "stream.h"
 #include "libmpconf/cfgparser.h"
-#include "osdep/mplib.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,8 +14,6 @@
 #include "cdio/cdtext.h"
 #include "cdd.h"
 #include "stream_msg.h"
-
-using namespace mpxp;
 
 static int speed = -1;
 static int search_overlap = -1;

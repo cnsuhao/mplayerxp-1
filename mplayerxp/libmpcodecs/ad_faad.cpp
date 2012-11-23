@@ -1,10 +1,11 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* ad_faad.c - MPlayer AAC decoder using libfaad2
  * This file is part of MPlayer, see http://mplayerhq.hu/ for info.
  * (c)2002 by Felix Buenemann <atmosfear at users.sourceforge.net>
  * File licensed under the GPL, see http://www.fsf.org/ for more info.
  */
-#include "mp_config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,17 +14,13 @@
 #include "help_mp.h"
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
-#include "mp_config.h"
 #include "ad_internal.h"
 #include "mplayerxp.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
-#include "osdep/mplib.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
 #include "postproc/af.h"
-
-using namespace mpxp;
 
 static const ad_info_t info = {
     "AAC (MPEG2/4 Advanced Audio Coding)",

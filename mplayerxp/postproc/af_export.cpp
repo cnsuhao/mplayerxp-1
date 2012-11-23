@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* This audio filter exports the incomming signal to other processes
    using memory mapping. Memory mapped area contains a header:
       int nch,
@@ -12,7 +15,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include "mp_config.h"
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/types.h>
@@ -25,10 +27,7 @@
 #include "help_mp.h"
 #include "osdep/get_path.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define DEF_SZ 512 // default buffer size (in samples)
 #define SHARED_FILE "mplayer-af_export" /* default file name

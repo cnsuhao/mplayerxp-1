@@ -2,7 +2,7 @@
 #define CPUDETECT_H
 
 #include "mplayerxp.h"
-
+namespace mpxp {
 #ifdef ARCH_X86_64
 #  define REGa    rax
 #  define REGb    rbx
@@ -31,14 +31,14 @@
 #  define REG_BP "ebp"
 #endif
 
-enum {
-    CPUTYPE_I386=3,
-    CPUTYPE_I486=4,
-    CPUTYPE_I586=5,
-    CPUTYPE_I686=6
-};
+    enum {
+	CPUTYPE_I386=3,
+	CPUTYPE_I486=4,
+	CPUTYPE_I586=5,
+	CPUTYPE_I686=6
+    };
 
-typedef struct cpucaps_s {
+    typedef struct cpucaps_s {
 	int cpuType;
 	int cpuStepping;
 	int hasMMX;
@@ -56,14 +56,14 @@ typedef struct cpucaps_s {
 	int hasAVX;
 	int isX86;
 	unsigned cl_size; /* size of cache line */
-} CpuCaps;
+    } CpuCaps;
 
-extern CpuCaps gCpuCaps;
+    extern CpuCaps gCpuCaps;
 
-void GetCpuCaps(CpuCaps *caps);
+    void GetCpuCaps(CpuCaps *caps);
 
-/* returned value is mp_malloc()'ed so mp_free() it after use */
-char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]);
-
+    /* returned value is mp_malloc()'ed so mp_free() it after use */
+    char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]);
+} // namespace mpxp
 #endif /* !CPUDETECT_H */
 

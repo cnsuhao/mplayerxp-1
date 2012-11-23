@@ -1,10 +1,11 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
+
 #include "input2/input.h"
 #include "mpdemux.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 int mpdemux_check_interrupt(any_t* libinput,int _time) {
   mp_cmd_t* cmd;

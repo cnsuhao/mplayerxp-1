@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * This file was ported to MPlayer from xine CVS rtsp_session.c,v 1.9 2003/02/11 16:20:40
  */
@@ -29,7 +32,6 @@
  */
 
 #include <sys/types.h>
-#include "mp_config.h"
 #include "mplayerxp.h"
 #ifndef HAVE_WINSOCK2
 #include <sys/socket.h>
@@ -55,9 +57,6 @@
 #include "realrtsp/asmrp.h"
 #include "realrtsp/xbuffer.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /*
 #define LOG

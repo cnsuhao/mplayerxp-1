@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * vf_eq2.c
  *
@@ -15,21 +18,17 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "mp_config.h"
 #include "osdep/cpudetect.h"
 
 #include "libvo/img_format.h"
 #include "libvo/video_out.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
-#include "osdep/mplib.h"
 
 #ifdef USE_SETLOCALE
 #include <locale.h>
 #endif
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define LUT16
 

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    RTjpeg (C) Justin Schoeman 1998 (justin@suntiger.ee.up.ac.za)
 
@@ -26,10 +29,6 @@
 #include <string.h>
 
 #include "RTjpegN.h"
-#include "mp_config.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 //#define SHOWBLOCK 1
 #define BETTERCOMPRESSION 1

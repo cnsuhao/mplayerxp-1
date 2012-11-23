@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* Imported from the dvbstream-0.2 project
  *
  * Modified for use with MPlayer, for details see the changelog at
@@ -13,7 +16,6 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#include "mp_config.h"
 #ifndef HAVE_WINSOCK2
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -25,15 +27,12 @@
 #endif
 #include <errno.h>
 #include "stream.h"
-#include "osdep/mplib.h"
 
 /* MPEG-2 TS RTP stack */
 
 #define DEBUG        1
 #include "rtp.h"
 #include "stream_msg.h"
-
-using namespace mpxp;
 
 // RTP reorder routines
 // Also handling of repeated UDP packets (a bug of ExtremeNetworks switches firmware)

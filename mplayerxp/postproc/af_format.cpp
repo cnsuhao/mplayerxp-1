@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* This audio output filter changes the format of a data block. Valid
    formats are: AFMT_U8, AFMT_S8, AFMT_S16_LE, AFMT_S16_BE
    AFMT_U16_LE, AFMT_U16_BE, AFMT_S32_LE and AFMT_S32_BE.
@@ -13,12 +16,9 @@
 
 #include "af.h"
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "aflib.h"
 #include "loader/wine/mmreg.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 // Integer to float conversion through lrintf()
 #ifdef HAVE_LRINTF

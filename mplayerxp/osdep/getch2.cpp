@@ -1,5 +1,7 @@
-/* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+/* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
 //#define HAVE_TERMCAP
 #define USE_IOCTL
 
@@ -26,13 +28,23 @@
 #include <unistd.h>
 
 #include "osdep_msg.h"
-#include "osdep/mplib.h"
 #include "keycodes.h"
 
 #include "getch2.h"
 
-using namespace mpxp;
+#ifdef HAVE_TERMCAP
 
+#if 0
+#include <termcap.h>
+#else
+  extern int tgetent (char *BUFFER, char *TERMTYPE);
+  extern int tgetnum (char *NAME);
+  extern int tgetflag (char *NAME);
+  extern char *tgetstr (char *NAME, char **AREA);
+#endif
+#endif
+
+namespace mpxp {
 #ifdef HAVE_TERMIOS
 static struct termios tio_orig;
 #endif
@@ -51,15 +63,6 @@ static keycode_st getch2_keys[MAX_KEYS];
 static int getch2_key_db=0;
 
 #ifdef HAVE_TERMCAP
-
-#if 0
-#include <termcap.h>
-#else
-  extern int tgetent (char *BUFFER, char *TERMTYPE);
-  extern int tgetnum (char *NAME);
-  extern int tgetflag (char *NAME);
-  extern char *tgetstr (char *NAME, char **AREA);
-#endif
 
 static char term_buffer[4096];
 static char term_buffer2[4096];
@@ -252,3 +255,4 @@ void getch2_disable(){
     getch2_status=0;
 }
 
+} // namespace mpxp

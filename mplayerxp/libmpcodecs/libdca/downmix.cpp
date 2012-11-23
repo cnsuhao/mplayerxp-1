@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * downmix.c
  * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
@@ -21,18 +24,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#include "mp_config.h"
-
 #include <string.h>
 #include <inttypes.h>
 
 #include "osdep/cpudetect.h"
-#include "osdep/mplib.h"
 #include "dca.h"
 #include "dca_internal.h"
-
-using namespace mpxp;
 
 #define CONVERT(acmod,output) (((output) << DCA_CHANNEL_BITS) + (acmod))
 

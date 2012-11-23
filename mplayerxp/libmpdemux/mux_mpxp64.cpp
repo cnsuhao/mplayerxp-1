@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   MPlayerXP's design. MPXPAV64 format.
 */
@@ -11,8 +14,8 @@
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "mp_config.h"
 #include "version.h"
+
 #include "nls/nls.h"
 
 #include "loader/wine/mmreg.h"
@@ -30,9 +33,6 @@
 
 #include "mpxpav64.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct priv_mpxpav64_stream_s
 {

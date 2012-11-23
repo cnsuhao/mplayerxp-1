@@ -1,4 +1,6 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,9 +24,6 @@
 #include "librtsp/rtsp.h"
 #include "librtsp/rtsp_session.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define RTSP_DEFAULT_PORT 554
 

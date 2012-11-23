@@ -1,4 +1,7 @@
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include "help_mp.h"
 
 #include <stdlib.h>
@@ -26,9 +29,6 @@
 #include "input2/input.h"
 #include "osdep/timer.h"
 #include "pp_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 typedef struct history_st history_t;
 

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    This is an libaf filter to do simple decoding of matrixed surround
    sound.  This will provide a (basic) surround-sound effect from
@@ -42,10 +45,7 @@
 #include "af.h"
 #include "aflib.h"
 #include "help_mp.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define L  32    // Length of fir filter
 #define LD 65536 // Length of delay buffer

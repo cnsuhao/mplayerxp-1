@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* The name speaks for itself this filter is a dummy and will not blow
    up regardless of what you do with it. */
 #include <stdio.h>
@@ -5,10 +8,7 @@
 #include <string.h>
 
 #include "af.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 typedef struct s_lp
 {

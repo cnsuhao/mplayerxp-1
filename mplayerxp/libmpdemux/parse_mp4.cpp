@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* parse_mp4.c - MP4 file format parser code
  * This file is part of MPlayer, see http://mplayerhq.hu/ for info.
  * (c)2002 by Felix Buenemann <atmosfear at users.sourceforge.net>
@@ -7,14 +10,11 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-
 #include <stdlib.h>
+
 #include "parse_mp4.h"
 #include "libmpstream/stream.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define freereturn(a,b) delete a; return b
 

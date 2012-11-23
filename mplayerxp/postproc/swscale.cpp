@@ -1,19 +1,18 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /* SW scaler wrapper */
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "mp_config.h"
 #include "osdep/bswap.h"
 #include "swscale.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PP
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 /**
  * Convert the palette to the same packet 32-bit format as the palette

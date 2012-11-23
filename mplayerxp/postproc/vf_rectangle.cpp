@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,10 +8,7 @@
 #include "vf.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 struct vf_priv_s {
     int x, y, w, h;

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  *  yuv4mpeg.c:  Functions for reading and writing "new" YUV4MPEG streams
  *
@@ -21,19 +24,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  */
-
-#include "mp_config.h"
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "yuv4mpeg.h"
 #include "demux_msg.h"
-#include "osdep/mplib.h"
 #include "yuv4mpeg_intern.h"
-
-using namespace mpxp;
 
 /* quick test of two ratios for equality (i.e. identical components) */
 #define Y4M_RATIO_EQL(a,b) ( ((a).n == (b).n) && ((a).d == (b).d) )

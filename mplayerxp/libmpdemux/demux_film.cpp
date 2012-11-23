@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     FILM file parser for the MPlayer program
       by Mike Melanson
@@ -16,17 +19,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
-
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 // chunk types found in a FILM file
 #define CHUNK_FILM mmioFOURCC('F', 'I', 'L', 'M')

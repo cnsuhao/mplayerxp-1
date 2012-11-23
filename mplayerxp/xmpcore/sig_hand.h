@@ -7,12 +7,13 @@
 #include <sys/types.h>
 #include "xmpcore/xmp_core.h"
 
-static inline void __MP_UNIT(unsigned id,const char *name)  { xp_core->mpxp_threads[id]->unit=name; }
-static inline void MP_UNIT(const char *name) { xp_core->mpxp_threads[main_id]->unit=name; }
+namespace mpxp {
+    inline void __MP_UNIT(unsigned id,const char *name)  { xp_core->mpxp_threads[id]->unit=name; }
+    inline void MP_UNIT(const char *name) { xp_core->mpxp_threads[main_id]->unit=name; }
 
-extern void init_signal_handling( void );
-extern void uninit_signal_handling( int xp_id );
-
+    void init_signal_handling( void );
+    void uninit_signal_handling( int xp_id );
+} // namespace
 #endif
 
 

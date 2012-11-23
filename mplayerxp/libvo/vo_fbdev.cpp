@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * Video driver for Framebuffer device
  * by Szabolcs Berecz <szabi@inf.elte.hu>
@@ -22,12 +25,10 @@
 #include <sys/kd.h>
 #include <linux/fb.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "sub.h"
 #ifdef CONFIG_VIDIX
 #include "vosub_vidix.h"
@@ -37,8 +38,6 @@
 #include "dri_vo.h"
 #include "libmpstream/mrl.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 LIBVO_EXTERN(fbdev)
 

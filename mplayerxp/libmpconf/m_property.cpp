@@ -1,8 +1,9 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 /// \file
 /// \ingroup Properties
-
-#include "mp_config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,11 +14,8 @@
 #include "m_option.h"
 #include "m_property.h"
 #include "help_mp.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 #define ROUND(x) ((int)((x)<0 ? (x)-0.5 : (x)+0.5))
 

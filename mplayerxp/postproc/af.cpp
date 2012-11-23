@@ -1,17 +1,14 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "af.h"
 #include "help_mp.h"
 #include "libao2/audio_out.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
-
-extern ao_data_t* ao_data;
 
 // Static list of filters
 extern const af_info_t af_info_ao;

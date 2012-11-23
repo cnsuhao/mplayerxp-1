@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
    Generic alpha renderers for all YUV modes and RGB depths.
    These are "reference implementations", should be optimized later (MMX, etc)
@@ -7,17 +10,12 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#include "mp_config.h"
-//#define ENABLE_PROFILE
 #include <inttypes.h>
 #include "osdep/cpudetect.h"
 #include "osdep/mangle.h"
-#include "osdep/mplib.h"
 #include "mplayerxp.h"
 #include "osd.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 #if defined(__MMX__)
 static const uint64_t bFF __attribute__((used))  __attribute__((aligned(8))) = 0xFFFFFFFFFFFFFFFFULL;

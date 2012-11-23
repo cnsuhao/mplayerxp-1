@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   xacodec.c -- XAnim Video Codec DLL support
 
@@ -21,12 +24,8 @@
 #include "libvo/img_format.h"
 #include "osdep/timer.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
-#include "mp_config.h"
 #include "vd_internal.h"
 #include "codecs_ld.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "XAnim codecs",

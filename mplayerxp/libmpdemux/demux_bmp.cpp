@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     BMP file parser for the MPlayer program
     by Mike Melanson
@@ -8,7 +11,6 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
@@ -17,10 +19,7 @@
 
 #include "libvo/img_format.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "demux_msg.h"
-
-using namespace mpxp;
 
 #ifdef HAVE_SDL_IMAGE
 #include <SDL/SDL_image.h>

@@ -1,16 +1,17 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
+
 #include "mrl.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
 
 #undef TEST_MRL
 
 #ifdef TEST_MRL
 #include <stdio.h>
 #endif
-
-using namespace mpxp;
 
 const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port)
 {

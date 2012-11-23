@@ -1,8 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #define __STDC_FORMAT_MACROS
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
@@ -14,10 +16,7 @@
 #include "loader/ldt_keeper.h"
 #endif
 #include "codecs_ld.h"
-#include "osdep/mplib.h"
 #include "vd_msg.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "Quicktime Video decoder",

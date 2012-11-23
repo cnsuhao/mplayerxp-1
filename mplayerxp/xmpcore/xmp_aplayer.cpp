@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <algorithm>
 
 #include <stdio.h>
@@ -14,12 +17,10 @@
 #include "libao2/audio_out.h"
 
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 #include "xmp_core.h"
 #include "xmp_aplayer.h"
 #include "xmp_adecoder.h"
 
-using namespace mpxp;
 
 #ifdef ENABLE_DEC_AHEAD_DEBUG
 #define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
@@ -31,7 +32,7 @@ using namespace mpxp;
 #define NOTHING_PLAYED (-1.0)
 #define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
 
-extern ao_data_t*ao_data;
+namespace mpxp {
 
 static int decore_audio(demux_stream_t *d_audio,sh_audio_t* sh_audio,sh_video_t*sh_video)
 {
@@ -131,8 +132,6 @@ while(sh_audio){
  return eof;
 }
 
-
-extern ao_data_t* ao_data;
 any_t* audio_play_routine( any_t* arg )
 {
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
@@ -301,3 +300,5 @@ void sig_audio_play( void )
     xmp_killall_threads(pthread_self());
     __exit_sighandler();
 }
+
+} // namespace mpxp

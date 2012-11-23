@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * This file was ported to MPlayer from xine CVS sdpplin.c,v 1.1 2002/12/24 01:30:22
  */
@@ -26,15 +29,11 @@
  *
  */
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "librtsp/rtsp.h"
 #include "sdpplin.h"
 #include "xbuffer.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 /*
 #define LOG

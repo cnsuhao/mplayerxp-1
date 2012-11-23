@@ -1,9 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_network - network stream inetrface
 */
-#include "mp_config.h"
 #ifdef HAVE_STREAMING
-
 #include <errno.h>
 #include <stdlib.h>
 #ifndef __USE_GNU
@@ -13,12 +14,10 @@
 #include "stream.h"
 #include "help_mp.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
 
 #include "url.h"
 #include "network.h"
 
-using namespace mpxp;
 
 extern int stream_open_mf(char * filename,stream_t * stream);
 

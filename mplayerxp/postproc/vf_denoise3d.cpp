@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     Copyright (C) 2003 Daniel Moreno <comac@comac.darktech.org>
 
@@ -22,16 +25,11 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "mp_config.h"
-
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "pp_msg.h"
-
-using namespace mpxp;
 
 #define PARAM1_DEFAULT 4.0
 #define PARAM2_DEFAULT 3.0

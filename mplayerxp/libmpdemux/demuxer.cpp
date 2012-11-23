@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 //=================== DEMUXER v2.5 =========================
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
@@ -24,9 +26,6 @@
 #include "libmpstream/stream.h"
 #include "stheader.h"
 #include "mplayerxp.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 extern const demuxer_driver_t demux_aiff;
 extern const demuxer_driver_t demux_rawaudio;

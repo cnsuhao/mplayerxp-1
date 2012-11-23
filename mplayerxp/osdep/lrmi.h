@@ -15,9 +15,8 @@ Original location: http://cvs.debian.org/lrmi/
 #define LRMI_H
 
 #include "mp_config.h"
-
-struct LRMI_regs
-	{
+namespace mpxp {
+    struct LRMI_regs {
 	unsigned int edi;
 	unsigned int esi;
 	unsigned int ebp;
@@ -35,8 +34,7 @@ struct LRMI_regs
 	unsigned short int cs;
 	unsigned short int sp;
 	unsigned short int ss;
-	};
-
+    };
 
 #ifndef LRMI_PREFIX
 #define LRMI_PREFIX LRMI_
@@ -51,38 +49,33 @@ struct LRMI_regs
  returns 1 if sucessful, 0 for failure
 */
 #define LRMI_init LRMI_MAKENAME(init)
-int
-LRMI_init(void);
+    int LRMI_init(void);
 
 /*
  Simulate a 16 bit far call
  returns 1 if sucessful, 0 for failure
 */
 #define LRMI_call LRMI_MAKENAME(call)
-int
-LRMI_call(struct LRMI_regs *r);
+    int LRMI_call(struct LRMI_regs *r);
 
 /*
  Simulate a 16 bit interrupt
  returns 1 if sucessful, 0 for failure
 */
 #define LRMI_int LRMI_MAKENAME(int)
-int
-LRMI_int(int interrupt, struct LRMI_regs *r);
+    int LRMI_int(int interrupt, struct LRMI_regs *r);
 
 /*
  Allocate real mode memory
  The returned block is paragraph (16 byte) aligned
 */
 #define LRMI_alloc_real LRMI_MAKENAME(alloc_real)
-any_t*
-LRMI_alloc_real(int size);
+    any_t* LRMI_alloc_real(int size);
 
 /*
  Free real mode memory
 */
 #define LRMI_free_real LRMI_MAKENAME(free_real)
-void
-LRMI_free_real(any_t*m);
-
+    void LRMI_free_real(any_t*m);
+} // namespace mpxp
 #endif

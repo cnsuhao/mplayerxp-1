@@ -1,5 +1,7 @@
-
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,11 +17,8 @@
 #include "asxparser.h"
 #include "playtree.h"
 #include "playtreeparser.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 #define BUF_STEP 1024
 

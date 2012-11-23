@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  we still need that:
  benchmarks:
@@ -10,17 +13,13 @@
 #include <stdlib.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "vd_internal.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 #include "postproc/postprocess.h"
 #include "codecs_ld.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
-
-using namespace mpxp;
 
 static const vd_info_t info = {
     "libmpeg2 MPEG 1/2 Video decoder",

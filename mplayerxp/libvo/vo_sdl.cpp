@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*  vo_sdl.c
  *
  *  (was video_out_sdl.c from OMS project/mpeg2dec -> http://linuxvideo.org)
@@ -107,14 +110,12 @@
 #include <inttypes.h>
 #include <errno.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 
 #include "video_out.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "sub.h"
 #include "aspect.h"
 
@@ -133,8 +134,6 @@
 #include "vosub_vidix.h"
 #endif
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 LIBVO_EXTERN(sdl)
 

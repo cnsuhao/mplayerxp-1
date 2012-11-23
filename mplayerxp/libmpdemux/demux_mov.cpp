@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
   QuickTime MOV file parser by A'rpi
   additional work by Atmos
@@ -24,7 +27,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mp_config.h"
 #include "help_mp.h"
 
 #include "libmpstream/stream.h"
@@ -32,7 +34,6 @@
 #include "stheader.h"
 
 #include "osdep/bswap.h"
-#include "osdep/mplib.h"
 
 #include "qtpalette.h"
 #include "parse_mp4.h" // .MP4 specific stuff
@@ -44,13 +45,10 @@
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif
-
 // inclusion of fcntl.h cause cygwin gcc crash
 #ifndef __CYGWIN__
 #include <fcntl.h>
 #endif
-
-using namespace mpxp;
 
 #define BE_16(x) be2me_16(x)
 #define BE_32(x) be2me_32(x)

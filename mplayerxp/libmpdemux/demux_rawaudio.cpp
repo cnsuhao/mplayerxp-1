@@ -1,5 +1,6 @@
 #include "mp_config.h"
-
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -10,10 +11,7 @@
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libao2/afmt.h"
-#include "osdep/mplib.h"
 #include "aviprint.h"
-
-using namespace mpxp;
 
 int use_rawaudio = 0;
 static int channels = 2;

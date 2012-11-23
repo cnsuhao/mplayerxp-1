@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * codec.conf parser
  * by Szabolcs Berecz <szabi@inf.elte.hu>
@@ -22,11 +25,8 @@
 #include "loader/wine/avifmt.h"
 #include "libvo/img_format.h"
 #include "codec-cfg.h"
-#include "osdep/mplib.h"
 #define MSGT_CLASS MSGT_CODECCFG
 #include "mp_msg.h"
-
-using namespace mpxp;
 
 #define MAX_NR_TOKEN	16
 

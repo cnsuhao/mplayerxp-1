@@ -1,5 +1,8 @@
-#define DISP
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
+#define DISP
 /*
  * video_out_x11.c,X11 interface
  *
@@ -21,12 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#ifdef HAVE_XF86VM
-#include <X11/extensions/xf86vmode.h>
-#endif
 #include <errno.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 #include "aspect.h"
@@ -34,12 +33,13 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
+#ifdef HAVE_XF86VM
+#include <X11/extensions/xf86vmode.h>
+#endif
 
 #include "x11_common.h"
 
 #include "osdep/fastmemcpy.h"
-#include "osdep/mplib.h"
 #include "sub.h"
 
 #include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
@@ -52,8 +52,6 @@
 #include "dri_vo.h"
 #include "xmpcore/mp_image.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 LIBVO_EXTERN( x11 )
 

@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * OpenAL audio output driver for MPlayerXP
  *
@@ -19,9 +22,6 @@
  * along with MPlayer; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-
-#include "mp_config.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,10 +34,7 @@
 #include "postproc/af.h"
 #include "afmt.h"
 #include "osdep/timer.h"
-#include "osdep/mplib.h"
 #include "ao_msg.h"
-
-using namespace mpxp;
 
 static const ao_info_t info =
 {

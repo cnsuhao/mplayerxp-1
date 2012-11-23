@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * video_out.c,
  *
@@ -28,14 +31,12 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "mp_config.h"
 #include "video_out.h"
 
 #include "osdep/shmem.h"
 #include "mp_conf_lavc.h"
 #include "postproc/vf.h"
 #include "xmpcore/xmp_core.h"
-#include "osdep/mplib.h"
 #include "mplayerxp.h"
 #include "osdep/fastmemcpy.h"
 #include "img_format.h"
@@ -45,8 +46,6 @@
 #include "osd.h"
 #include "sub.h"
 #include "vo_msg.h"
-
-using namespace mpxp;
 
 vo_conf_t vo_conf;
 

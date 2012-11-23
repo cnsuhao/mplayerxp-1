@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * sub_cc.c - Decoder for Closed Captions
  *
@@ -17,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
 #include "sub_cc.h"
 
@@ -25,9 +27,6 @@
 
 #include "libvo/video_out.h"
 #include "libvo/sub.h"
-#include "osdep/mplib.h"
-
-using namespace mpxp;
 
 #define CC_MAX_LINE_LENGTH 64
 
@@ -149,7 +148,6 @@ static void swap_buffers(void)
 	bb=foo;
 }
 
-extern vo_data_t* vo_data;
 static void display_buffer(const subtitle * buf)
 {
 	vo_data->sub=buf;

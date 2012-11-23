@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * CDDB HTTP protocol
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
@@ -11,8 +14,6 @@
  *	 Code release under GPL
  *
  */
-
-#include "mp_config.h"
 #include "mplayerxp.h"
 
 #if defined(HAVE_LIBCDIO) && defined(HAVE_STREAMING)
@@ -44,12 +45,9 @@
 
 
 #include "cdd.h"
-#include "osdep/mplib.h"
 #include "version.h"
 #include "network.h"
 #include "stream_msg.h"
-
-using namespace mpxp;
 
 #define DEFAULT_FREEDB_SERVER	"freedb.freedb.org"
 #define DEFAULT_CACHE_DIR	"/.cddb/"

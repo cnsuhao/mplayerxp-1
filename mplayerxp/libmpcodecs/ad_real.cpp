@@ -1,9 +1,10 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "mp_config.h"
 
 #include <stddef.h>
 #include <dlfcn.h>
@@ -11,11 +12,8 @@
 #include "ad_internal.h"
 #include "codecs_ld.h"
 #include "ad_msg.h"
-#include "osdep/mplib.h"
 #include "osdep/bswap.h"
 #include "libao2/afmt.h"
-
-using namespace mpxp;
 
 static const ad_info_t info = {
     "RealAudio decoder",

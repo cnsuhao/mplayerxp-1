@@ -1,11 +1,12 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
     s_dvdread - DVDREAD stream interface
 */
 #include <limits>
 
-#include "mp_config.h"
 #include "mplayerxp.h"
-
 /* fake stdint */
 #define UINT8_MAX std::numeric_limits<uint8_t>::max()
 #define UINT16_MAX std::numeric_limits<uint16_t>::max()
@@ -17,15 +18,12 @@
 #include "stream.h"
 #include "help_mp.h"
 #include "stream_msg.h"
-#include "osdep/mplib.h"
 
 #include <dvdread/dvd_reader.h>
 #include <dvdread/ifo_types.h>
 #include <dvdread/ifo_read.h>
 #include <dvdread/nav_read.h>
 #include "mrl.h"
-
-using namespace mpxp;
 
 #undef DVDREAD_VERSION
 #define	DVDREAD_VERSION(maj,min,micro)	((maj)*10000 + (min)*100 + (micro))

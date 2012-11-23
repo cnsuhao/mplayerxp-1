@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * parse.c
  * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
@@ -19,17 +22,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#include "mp_config.h"
-
 #include <stdio.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
-
-#include "osdep/mplib.h"
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795029
@@ -45,8 +43,6 @@
 #include "tables_adpcm.h"
 #include "tables_fir.h"
 #include "tables_vq.h"
-
-using namespace mpxp;
 
 //#define LOG_DEBUG 1
 
