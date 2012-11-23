@@ -213,16 +213,10 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     }
 #endif
 
-    if ( vo_conf.WinID>=0 ){
-	vo->window = vo_conf.WinID ? ((Window)vo_conf.WinID) : RootWindow( vo->mDisplay,vo->mScreen );
-	XUnmapWindow( vo->mDisplay,vo->window );
-	XChangeWindowAttributes( vo->mDisplay,vo->window,xswamask,&xswa );
-    } else {
-	vo->window=XCreateWindow( vo->mDisplay,RootWindow( vo->mDisplay,vo->mScreen ),
+    vo->window=XCreateWindow( vo->mDisplay,RootWindow( vo->mDisplay,vo->mScreen ),
 				hint.x,hint.y,
 				hint.width,hint.height,
 				xswa.border_pixel,priv->depth,CopyFromParent,priv->vinfo.visual,xswamask,&xswa );
-    }
     vo_x11_classhint( vo->mDisplay,vo->window,"vo_x11" );
     vo_x11_hidecursor(vo->mDisplay,vo->window);
     if ( vo_FS(vo) ) vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
@@ -232,7 +226,6 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
 #ifdef HAVE_XINERAMA
     vo_x11_xinerama_move(vo,vo->mDisplay,vo->window,&hint);
 #endif
-    if(vo_conf.WinID!=0)
     do { XNextEvent( vo->mDisplay,&xev ); } while ( xev.type != MapNotify || xev.xmap.event != vo->window );
     XSelectInput( vo->mDisplay,vo->window,NoEventMask );
 
@@ -241,8 +234,9 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     vo->gc=XCreateGC( vo->mDisplay,vo->window,0L,&xgcv );
 
     /* we cannot grab mouse events on root window :( */
-    XSelectInput( vo->mDisplay,vo->window,StructureNotifyMask | KeyPressMask |
-	((vo_conf.WinID==0)?0:(ButtonPressMask | ButtonReleaseMask | PointerMotionMask)) );
+    XSelectInput(vo->mDisplay,vo->window,
+		StructureNotifyMask | KeyPressMask |
+		ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 
 #ifdef HAVE_XF86VM
     if ( vo_VM(vo) ) {

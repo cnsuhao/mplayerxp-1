@@ -131,7 +131,6 @@ typedef struct vo_conf_s {
     char *		subdevice; // currently unused
     char*		mDisplayName;
 
-    int			WinID; /* output window id */
     int			vsync;
 
     unsigned		xp_buffs; /**< contains number of buffers for decoding ahead */

@@ -244,19 +244,10 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
     if(xmp_test_model(XMP_Run_AudioPlayer))
 	delay += get_delay_audio_buffer();
 
-    if(pts_from_bps){
-	unsigned int samples=(sh_audio->audio.dwSampleSize)?
-	  ((ds_tell(d_audio)-sh_audio->a_in_buffer_len)/sh_audio->audio.dwSampleSize) :
-	  (d_audio->pack_no); // <- used for VBR audio
-	samples+=sh_audio->audio.dwStart; // offset
-	a_pts=samples*(float)sh_audio->audio.dwScale/(float)sh_audio->audio.dwRate;
-      delay_corrected=1;
-    } else {
-	// PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
-	a_pts=d_audio->pts;
-	if(!delay_corrected) if(a_pts) delay_corrected=1;
-	a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-    }
+    // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
+    a_pts=d_audio->pts;
+    if(!delay_corrected) if(a_pts) delay_corrected=1;
+    a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 
     MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-delay,v_pts,(a_pts-delay)-v_pts);
 

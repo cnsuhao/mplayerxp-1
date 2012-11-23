@@ -172,7 +172,6 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     vo_conf.movie_aspect=-1.0;
     vo_conf.flip=-1;
     vo_conf.xp_buffs=64;
-    vo_conf.WinID=-1;
 
     vo=new(zeromem) vo_data_t;
     vo->window = None;

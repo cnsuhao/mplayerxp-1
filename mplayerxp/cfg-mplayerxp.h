@@ -170,8 +170,6 @@ static const config_t subtitle_config[]={
 #ifdef HAVE_X11
 static const config_t x11_config[]={
 	{"display", &vo_conf.mDisplayName, CONF_TYPE_STRING, 0, 0, 0, "specifies the hostname and display number of the X server"},
-	{"wid", &vo_conf.WinID, CONF_TYPE_INT, 0, 0, 0, "tells MPlayerXP to use existing X11 window (for using MPlayerXP as plugin)"},
-	{"rootwin", &vo_conf.WinID, CONF_TYPE_FLAG, 0, -1, 0, "render movie in the root window (desktop background)"},
 #ifdef HAVE_XINERAMA
 	{"xinerama", &mp_conf.xinerama_screen, CONF_TYPE_INT, CONF_RANGE, 0, 32, "tells MPlayerXP the display for movie playback"},
 #endif

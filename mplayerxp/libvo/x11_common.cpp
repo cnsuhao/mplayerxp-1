@@ -184,8 +184,6 @@ void __FASTCALL__ vo_x11_hidecursor ( Display *disp, Window win )
 	Colormap colormap;
 	static char bm_no_data[] = { 0,0,0,0, 0,0,0,0  };
 
-	if(vo_conf.WinID==0) return;	// do not hide, if we're playing at rootwin
-
 	colormap = DefaultColormap(disp,DefaultScreen(disp));
 	XAllocNamedColor(disp,colormap,"black",&black,&dummy);
 	bm_no = XCreateBitmapFromData(disp, win, bm_no_data, 8,8);
@@ -614,8 +612,7 @@ MPXP_Rc __FASTCALL__ vo_x11_uninit(vo_data_t*vo,Display *display, Window window)
 {
     XSetErrorHandler(NULL);
     /* and -wid is set */
-    if (!(vo_conf.WinID > 0))
-	XDestroyWindow(display, window);
+    XDestroyWindow(display, window);
     XCloseDisplay(display);
     vo->depthonscreen = 0;
     delete vo->priv2;

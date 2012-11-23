@@ -545,7 +545,6 @@ static demuxer_t* demux_open_stream(stream_t *stream,int file_format,int audio_i
     unsigned i;
     demuxer_t *demuxer=NULL,*new_demux=NULL;
 
-    pts_from_bps=0;
     demux_aid_vid_mismatch = 0;
     i=0;
 again:

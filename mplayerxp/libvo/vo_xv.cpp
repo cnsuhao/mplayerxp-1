@@ -306,21 +306,16 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     xswa.border_pixel     = 0;
     xswamask = CWBackPixel | CWBorderPixel;
 
-    if ( vo_conf.WinID>=0 ){
-	vo->window = vo_conf.WinID ? ((Window)vo_conf.WinID) : RootWindow(vo->mDisplay,vo->mScreen);
-	XUnmapWindow( vo->mDisplay,vo->window );
-	XChangeWindowAttributes( vo->mDisplay,vo->window,xswamask,&xswa );
-    } else
-	vo->window = XCreateWindow( vo->mDisplay, RootWindow(vo->mDisplay,vo->mScreen),
-				    hint.x, hint.y, hint.width, hint.height,
-				    0, priv->depth,CopyFromParent,vinfo.visual,xswamask,&xswa);
+    vo->window = XCreateWindow( vo->mDisplay, RootWindow(vo->mDisplay,vo->mScreen),
+				hint.x, hint.y, hint.width, hint.height,
+				0, priv->depth,CopyFromParent,vinfo.visual,xswamask,&xswa);
 
     vo_x11_classhint( vo->mDisplay,vo->window,"xv" );
     vo_x11_hidecursor(vo->mDisplay,vo->window);
 
-    XSelectInput(vo->mDisplay, vo->window, StructureNotifyMask | KeyPressMask |
-	((vo_conf.WinID==0) ? 0 : (PointerMotionMask
-		| ButtonPressMask | ButtonReleaseMask)));
+    XSelectInput(vo->mDisplay, vo->window,
+		StructureNotifyMask | KeyPressMask |
+		PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
     XSetStandardProperties(vo->mDisplay, vo->window, hello, hello, None, NULL, 0, &hint);
     if ( vo_FS(vo) ) vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
     XMapWindow(vo->mDisplay, vo->window);

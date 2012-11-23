@@ -2003,8 +2003,6 @@ main:
 
     if(!sh_audio && !sh_video) exit_player("Nothing to do");
 
-    if(MPXPSys->demuxer()->file_format!=DEMUXER_TYPE_AVI) pts_from_bps=0; // it must be 0 for mpeg/asf!
-
     if(mp_conf.force_fps && sh_video) {
 	sh_video->fps=mp_conf.force_fps;
 	MSG_INFO(MSGTR_FPSforced,sh_video->fps,1.0f/sh_video->fps);

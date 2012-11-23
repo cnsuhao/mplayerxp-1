@@ -753,9 +753,6 @@ skip_chunk:
 }
 #undef MIN
 
-// PTS:  0=interleaved  1=BPS-based
-int pts_from_bps=1;
-
 // Select ds from ID
 static demux_stream_t* demux_avi_select_stream(demuxer_t *demux,unsigned int id){
   int stream_id=avi_stream_id(id);
@@ -856,12 +853,7 @@ static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned in
 	  } else
 		priv->pts_corr_bytes+=len;
       }
-      if(pts_from_bps){
-	  pts = priv->audio_block_no *
-	    (float)((sh_audio_t*)demux->audio->sh)->audio.dwScale /
-	    (float)((sh_audio_t*)demux->audio->sh)->audio.dwRate;
-      } else
-	  pts=priv->avi_audio_pts; //+priv->pts_correction;
+      pts=priv->avi_audio_pts; //+priv->pts_correction;
       priv->avi_audio_pts=0;
       // update blockcount:
       priv->audio_block_no+=priv->audio_block_size ?
@@ -905,7 +897,6 @@ static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned in
 static int avi_read_ni(demuxer_t *demux,demux_stream_t* ds);
 static int avi_read_nini(demuxer_t *demux,demux_stream_t* ds);
 
-int force_ni=0;     // force non-interleaved AVI parsing
 static int avi_demux(demuxer_t *demux,demux_stream_t *__ds){
     avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demux->priv);
     if(priv->alt_demuxer) return priv->alt_demuxer(demux,__ds);
@@ -1128,13 +1119,6 @@ do{
   return 1;
 }
 
-//extern int audio_id;
-//extern int video_id;
-//extern int index_mode;  // -1=untouched  0=don't use index  1=use (geneate) index
-//extern int force_ni;
-//extern int pts_from_bps;
-
-// AVI demuxer parameters:
 int index_mode=-1;  // -1=untouched  0=don't use index  1=use (geneate) index
 extern demuxer_t* init_avi_with_ogg(demuxer_t* demuxer);
 extern demuxer_driver_t demux_ogg;
@@ -1211,19 +1195,8 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
       if(a_pos==-1){
 	MSG_ERR("AVI_NI: " MSGTR_MissingAudioStream);
 	sh_audio=NULL;
-      } else {
-	if(abs(a_pos-v_pos)>0x100000) force_ni=2;
-      }
-  } else {
-      // no index
-      if(force_ni){
-	  MSG_V(MSGTR_UsingNINI);
-	  priv->idx_pos_a=
-	  priv->idx_pos_v=demuxer->movi_start;
-	  priv->nini=1;
-      }
-      demuxer->flags &= ~DEMUXF_SEEKABLE;
-  }
+    }
+  } else demuxer->flags &= ~DEMUXF_SEEKABLE;
   if(!ds_fill_buffer(d_video)){
     MSG_ERR("AVI: " MSGTR_MissingVideoStreamBug);
     return NULL;
@@ -1545,8 +1518,6 @@ static MPXP_Rc avi_control(const demuxer_t *demuxer,int cmd,any_t*args)
 }
 
 static const config_t avi_options[] = {
-    {"ni", &force_ni, CONF_TYPE_FLAG, 0, 0, 1, "force usage of non-interleaved AVI parser"},
-    {"noni", &force_ni, CONF_TYPE_FLAG, 0, 1, 0, "disables usage of non-interleaved AVI parser"},
     {"noidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 0, "disables INDEXES for AVI's demuxing"},
     {"idx", &index_mode, CONF_TYPE_FLAG, 0, -1, 1, "builds internal INDEXES of incomplete AVIs"},
     {"forceidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 2, "forces rebuilding of INDEXES for broken AVIs"},
