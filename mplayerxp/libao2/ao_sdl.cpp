@@ -9,6 +9,7 @@
  * Thanks to Arpi for nice ringbuffer-code!
  *
  */
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,8 +57,7 @@ static int __FASTCALL__ write_buffer(ao_data_t* ao,const unsigned char* data,int
   int x;
   while(len>0){
     if(priv->full_buffers==NUM_BUFS) break;
-    x=BUFFSIZE-priv->buf_write_pos;
-    if(x>len) x=len;
+    x=std::min(unsigned(len),BUFFSIZE-priv->buf_write_pos);
     memcpy(priv->buffer[priv->buf_write]+priv->buf_write_pos,data+len2,x);
     len2+=x; len-=x;
     priv->buffered_bytes+=x; priv->buf_write_pos+=x;
@@ -77,8 +77,7 @@ static int __FASTCALL__ read_buffer(ao_data_t* ao,unsigned char* data,int len){
   int x;
   while(len>0){
     if(priv->full_buffers==0) break; // no more data buffered!
-    x=BUFFSIZE-priv->buf_read_pos;
-    if(x>len) x=len;
+    x=std::min(unsigned(len),BUFFSIZE-priv->buf_read_pos);
     memcpy(data+len2,priv->buffer[priv->buf_read]+priv->buf_read_pos,x);
     SDL_MixAudio(data+len2, data+len2, x, priv->volume);
     len2+=x; len-=x;

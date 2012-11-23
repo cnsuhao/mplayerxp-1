@@ -795,6 +795,7 @@ enabled largefiles	&& CFLAGS="$CFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 bsd && add_ldflags "-rdynamic"
 
 enabled dbg23 def_debug='#define MP_DEBUG 1' || def_debug='#undef MP_DEBUG'
+enabled dbg23 && check_cflags "-fbounds-check"
 
 # Checking for VIDIX
 enabled vidix	&& xxrequire2 vidix "vidix/vidix.h vidix/vidixlibxx.h" Vidix -lvidixxx
