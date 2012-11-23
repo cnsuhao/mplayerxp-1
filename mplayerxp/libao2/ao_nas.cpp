@@ -246,7 +246,7 @@ static any_t*nas_event_thread_start(any_t*data)
 	       "ao_nas: event thread heartbeat (state=%s)\n",
 	       nas_state(priv->state));
 	nas_empty_event_queue(priv);
-	usleep(1000);
+	yield_timeslice();
     } while (!priv->stop_thread);
 
     return NULL;
@@ -523,7 +523,7 @@ static void uninit(ao_data_t* ao){
     MSG_DBG3("ao_nas: uninit()\n");
 
     priv->expect_underrun = 1;
-    while (priv->state != AuStateStop) usleep(1000);
+    while (priv->state != AuStateStop) yield_timeslice();
     priv->stop_thread = 1;
     pthread_join(priv->event_thread, NULL);
     AuCloseServer(priv->aud);
@@ -547,7 +547,7 @@ static void reset(ao_data_t* ao){
 		AuStopFlow(priv->aud, priv->flow, &as);
 		if (as != AuSuccess)
 			nas_print_error(priv->aud, "reset(): AuStopFlow", as);
-		usleep(1000);
+		yield_timeslice();
 	}
 }
 

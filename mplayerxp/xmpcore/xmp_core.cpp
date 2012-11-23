@@ -167,7 +167,7 @@ unsigned dae_get_decoder_outrun(const dec_ahead_engine_t* it) {
 void dae_wait_decoder_outrun(const dec_ahead_engine_t* it) {
     if(it) {
 	do {
-	    usleep(0);
+	    yield_timeslice();
 	}while(dae_get_decoder_outrun(it) < xp_core->num_v_buffs/2);
     }
 }
@@ -321,11 +321,11 @@ int xmp_run_decoders( void )
     unsigned rc;
     if(xp_core->audio && xmp_test_model(XMP_Run_AudioDecoder)) {
 	if((rc=xmp_register_thread(xp_core->audio,sig_audio_decode,a_dec_ahead_routine,"audio decoder"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
+	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
     if(xp_core->video && xmp_test_model(XMP_Run_VideoDecoder|XMP_Run_VA_Decoder)) {
 	if((rc=xmp_register_thread(xp_core->video,sig_video_decode,xmp_video_decoder,"video+audio decoders"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
+	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
     return 0;
 }
@@ -335,11 +335,11 @@ int xmp_run_players(void)
     unsigned rc;
     if(xp_core->audio && xmp_test_model(XMP_Run_AudioPlayer|XMP_Run_AudioPlayback)) {
 	if((rc=xmp_register_thread(xp_core->audio,sig_audio_play,audio_play_routine,"audio player"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
+	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
     if(xp_core->video && xmp_test_model(XMP_Run_VideoPlayer)) {
 	if((rc=xmp_register_thread(xp_core->video,sig_video_play,xmp_video_player,"video player"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) usleep(0);
+	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
     return 0;
 }
@@ -352,7 +352,7 @@ void xmp_stop_threads(int force)
 	if(force) pthread_kill(xp_core->mpxp_threads[i]->pth_id,SIGKILL);
 	else {
 	    xp_core->mpxp_threads[i]->state=Pth_Canceling;
-	    while(xp_core->mpxp_threads[i]->state==Pth_Canceling) usleep(0);
+	    while(xp_core->mpxp_threads[i]->state==Pth_Canceling) yield_timeslice();
 	}
 	print_stopped_thread(i);
 	delete xp_core->mpxp_threads[i];
@@ -366,7 +366,7 @@ void xmp_halt_threads(int is_reset_vcache)
     unsigned i;
     for(i=1;i<xp_core->num_threads;i++) {
 	xp_core->mpxp_threads[i]->state=Pth_Sleep;
-	while(xp_core->mpxp_threads[i]->state==Pth_Sleep) usleep(0);
+	while(xp_core->mpxp_threads[i]->state==Pth_Sleep) yield_timeslice();
     }
 }
 
@@ -384,7 +384,7 @@ void xmp_restart_threads(int xp_id)
     unsigned i;
     for(i=1;i<xp_core->num_threads;i++) {
 	xp_core->mpxp_threads[i]->state=Pth_Run;
-	while(xp_core->mpxp_threads[i]->state==Pth_ASleep) usleep(0);
+	while(xp_core->mpxp_threads[i]->state==Pth_ASleep) yield_timeslice();
     }
 }
 

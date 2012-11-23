@@ -4,7 +4,6 @@ using namespace mpxp;
 #include <algorithm>
 
 #include <stdio.h>
-#include <unistd.h> // for usleep()
 #include <pthread.h>
 #include <math.h>
 #include <sys/time.h>
@@ -171,7 +170,7 @@ any_t* audio_play_routine( any_t* arg )
     while(priv->state!=Pth_Canceling) {
 	if(priv->state==Pth_Sleep) {
 	    priv->state=Pth_ASleep;
-	    while(priv->state==Pth_ASleep) usleep(0);
+	    while(priv->state==Pth_ASleep) yield_timeslice();
 	    continue;
 	}
 	__MP_UNIT(priv->p_idx,"audio decore_audio");

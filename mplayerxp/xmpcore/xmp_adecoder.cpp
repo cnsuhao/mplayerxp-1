@@ -5,7 +5,6 @@ using namespace mpxp;
 
 #include <errno.h>
 #include <stdio.h>
-#include <unistd.h> // for usleep()
 #include <math.h>
 #include <sys/time.h>
 
@@ -101,7 +100,7 @@ void uninit_audio_buffer(void)
 	int loops = 10;
 	pthread_cond_broadcast( &audio_buffer.wait_buffer_cond );
 	while( audio_buffer.blocked_readers > 0 && loops > 0 ) {
-	    usleep(1);
+	    yield_timeslice();
 	    loops--;
 	}
 	if( audio_buffer.blocked_readers > 0 )
@@ -446,7 +445,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
     while(priv->state!=Pth_Canceling) {
 	if(priv->state==Pth_Sleep) {
 	    priv->state=Pth_ASleep;
-	    while(priv->state==Pth_ASleep) usleep(0);
+	    while(priv->state==Pth_ASleep) yield_timeslice();
 	    continue;
 	}
 	__MP_UNIT(priv->p_idx,"decode audio");
@@ -486,7 +485,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 		}
 		pthread_cond_timedwait( &audio_decode_cond, &audio_decode_mutex, &timeout );
 	    } else
-		usleep(1);
+		yield_timeslice();
 	}
 	UNLOCK_AUDIO_DECODE();
 

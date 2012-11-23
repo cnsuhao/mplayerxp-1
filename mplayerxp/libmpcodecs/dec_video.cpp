@@ -296,7 +296,7 @@ int mpcv_decode(any_t *opaque,const enc_frame_t* frame){
     sh_video->active_slices=0;
     mpi=priv->mpvdec->decode(sh_video, frame);
     MSG_DBG2("decvideo: decoding video %u bytes\n",frame->len);
-    while(sh_video->active_slices!=0) usleep(0);
+    while(sh_video->active_slices!=0) yield_timeslice();
 /* ------------------------ frame decoded. -------------------- */
 
     if(!mpi) return 0; // error / skipped frame

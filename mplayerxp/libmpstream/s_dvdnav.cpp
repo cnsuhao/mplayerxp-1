@@ -275,13 +275,13 @@ static void __FASTCALL__ dvdnav_stream_read(stream_t * stream, dvdnav_event_t*de
     if(event == DVDNAV_STILL_FRAME)
     {
 	dvdnav_still_skip(dvdnav_priv->dvdnav); /* don't let dvdnav stall on this image */
-	while (dvdnav_stream_sleeping(stream)) usleep(1000); /* 1ms */
+	while (dvdnav_stream_sleeping(stream)) yield_timeslice(); /* 10ms */
     }
 #ifdef DVDNAV_WAIT
     else
     if(event == DVDNAV_WAIT)
     {
-	usleep(1000);
+	yield_timeslice();
 	dvdnav_wait_skip(dvdnav_priv->dvdnav); /* don't let dvdnav stall on this image */
     }
 #endif
@@ -382,15 +382,14 @@ static off_t __FASTCALL__ __dvdnav_seek(stream_t *stream,off_t pos)
   uint32_t length=1;
   uint32_t sector;
 
-  if (pos==0)
-  {
+  if (pos==0) {
 	dvdnav_priv->started=0;
 	dvdnav_priv->cpos=0;
 	return 0;
   }
   sector=pos/DVD_BLOCK_SIZE;
   dvdnav_sector_search(dvdnav_priv->dvdnav,sector,SEEK_SET);
-  usleep(0); /* wait for HOP_CHANNEL event */
+  yield_timeslice(); /* wait for HOP_CHANNEL event */
   dvdnav_get_position(dvdnav_priv->dvdnav, &newpos, &length);
   if(newpos > sector) newpos=sector;
   dvdnav_priv->cpos = (newpos)*2048;
@@ -486,7 +485,7 @@ static void __FASTCALL__ dvdnav_event_handler(const stream_t* s,const stream_pac
 		const dvdnav_still_event_t *still_event = (const dvdnav_still_event_t*)(sp->buf);
 		    MSG_DBG2( "######## DVDNAV Event: Still Frame: %d sec(s)\n", still_event->length );
 			while (dvdnav_stream_sleeping(s)) {
-		    usleep(1000); /* 1ms */
+		    yield_timeslice();
 		}
 		dvdnav_stream_sleep(s,still_event->length);
 		break;

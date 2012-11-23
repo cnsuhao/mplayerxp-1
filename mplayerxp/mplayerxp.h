@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 #include "mp_config.h"
 #include "osdep/mplib.h"
 #include "xmpcore/xmp_enums.h"
@@ -146,13 +147,15 @@ namespace mpxp {;
 
     void exit_player(const char* why);
 
+    /* 10 ms or 10'000 microsecs is optimal time for thread sleeping */
+    inline int yield_timeslice() { return usleep(10000); }
 
-    static inline void escape_player(const char* why,unsigned num_calls) {
+    inline void escape_player(const char* why,unsigned num_calls) {
 	show_backtrace(why,num_calls);
 	exit_player(why);
     }
 
-    static inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) {
+    inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) {
 	if(pin1!=pin2) {
 	    char msg[4096];
 	    strcpy(msg,"Found incorrect PIN in module: ");

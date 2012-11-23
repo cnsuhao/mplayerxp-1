@@ -360,7 +360,7 @@ static int __FASTCALL__ c2_stream_seek_long(cache_vars_t* c,off_t pos){
 
   MSG_DBG2("CACHE2_SEEK: %lli,%lli,%lli <> %lli\n",START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),pos);
   if(pos<0/* || pos>END_FILEPOS(c)*/) { c->eof=1; return 0; }
-  while(c->in_fill) usleep(0);
+  while(c->in_fill) yield_timeslice();
   CACHE2_LOCK(c);
   if(c->eof) c2_stream_reset(c);
   C2_ASSERT(pos < c->stream->start_pos);

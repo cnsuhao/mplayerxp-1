@@ -2,7 +2,6 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
-#include <unistd.h> // for usleep()
 #include <math.h>
 
 #include "libmpcodecs/dec_video.h"
@@ -152,7 +151,7 @@ while(!priv->dae->eof){
     if(priv->state==Pth_Sleep) {
 pt_sleep:
 	priv->state=Pth_ASleep;
-	while(priv->state==Pth_ASleep) usleep(0);
+	while(priv->state==Pth_ASleep) yield_timeslice();
 	if(xp_core->bad_pts) mpeg_timer=HUGE;
 	continue;
     }
@@ -204,7 +203,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
 {
     int i,delay; /* sleeping 200 ms is far enough for 25 fps */
     delay=xp_n_frame_to_drop?0:20;
-    for(i=0;i<delay;i++) usleep(0);
+    for(i=0;i<delay;i++) yield_timeslice();
 }
 #endif
     if(xp_n_frame_to_drop)	drop_param=mp_conf.frame_dropping;
@@ -254,7 +253,7 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),frame->len,frame->pts
 	    xp_thread_decode_audio(d_audio);
 	    __MP_UNIT(priv->p_idx,"dec_ahead 5");
 	}
-	usleep(1);
+	yield_timeslice();
     }
     free_enc_frame(frame);
 /*------------------------ frame decoded. --------------------*/
@@ -263,7 +262,7 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),frame->len,frame->pts
 if(xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
     while(!xp_core->audio->eof && priv->state!=Pth_Canceling && priv->state!=Pth_Sleep) {
 	__MP_UNIT(priv->p_idx,"decode audio");
-	if(!xp_thread_decode_audio(d_audio)) usleep(1);
+	if(!xp_thread_decode_audio(d_audio)) yield_timeslice();
 	__MP_UNIT(priv->p_idx,NULL);
     }
 }

@@ -1379,14 +1379,14 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	if (MPXPSys->ao_inited==MPXP_Ok && sh_audio) {
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=1;
-		while( !dec_ahead_can_aseek ) usleep(0);
+		while( !dec_ahead_can_aseek ) yield_timeslice();
 	    }
 	    ao_pause(ao_data);	// pause audio, keep data if possible
 	}
 
 	while( (cmd = mp_input_get_cmd(MPXPSys->libinput(),20,1,1)) == NULL) {
 	    if(sh_video && MPXPSys->vo_inited) vo_check_events(vo_data);
-	    usleep(20000);
+	    yield_timeslice();
 	}
 
 	if (cmd && cmd->id == MP_CMD_PAUSE) {

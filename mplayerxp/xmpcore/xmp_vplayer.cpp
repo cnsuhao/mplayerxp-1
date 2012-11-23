@@ -2,7 +2,6 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
-#include <unistd.h> // for usleep()
 #include <math.h>
 
 #include "help_mp.h"
@@ -72,7 +71,7 @@ static void vplayer_check_chapter_change(sh_audio_t* sh_audio,sh_video_t* sh_vid
     if(MPXPCtx->use_pts_fix2 && sh_audio) {
 	if(sh_video->chapter_change == -1) { /* First frame after seek */
 	    while(v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay(ao_data)==0.0)
-		usleep(0);		 /* Wait for audio to start play */
+		yield_timeslice();	 /* Wait for audio to start play */
 	    if(sh_audio->timer > 2.0 && v_pts < 1.0) {
 		MSG_V("Video chapter change detected\n");
 		sh_video->chapter_change=1;
@@ -138,8 +137,7 @@ static int vplayer_do_sleep(sh_audio_t* sh_audio,int rtc_fd,float sleep_time)
     }
 
     while(sleep_time>XP_MIN_TIMESLICE) {
-	/* mp_free cpu for threads */
-	usleep(1);
+	yield_timeslice();
 	sleep_time-=GetRelativeTime();
     }
     MP_UNIT("sleep_usleep");
@@ -201,7 +199,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	/* Don't burn CPU here! With using of v_pts for A-V sync we will enter
 	   xp_decore_video without any delay (like while(1);)
 	   Sleeping for 10 ms doesn't matter with frame dropping */
-	usleep(0);
+	yield_timeslice();
     } else {
 	unsigned int t2=GetTimer();
 	double tt;
@@ -291,7 +289,7 @@ while(!priv->dae->eof){
     if(priv->state==Pth_Canceling) break;
     if(priv->state==Pth_Sleep) {
 	priv->state=Pth_ASleep;
-	while(priv->state==Pth_ASleep) usleep(0);
+	while(priv->state==Pth_ASleep) yield_timeslice();
 	continue;
     }
     __MP_UNIT(priv->p_idx,"play video");

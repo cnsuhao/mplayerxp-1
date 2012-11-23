@@ -156,7 +156,7 @@ static void __FASTCALL__ vidix_copy_dma(const vo_data_t* vo,unsigned idx,int syn
     i=5;
     if(!sync_mode)
 	while(dma_busy && i) {
-	    usleep(0);
+	    yield_timeslice();
 	    dma_busy = priv.vidix.dma_status();
 	    i--;
 	}
