@@ -25,7 +25,7 @@ SRCS = mplayerxp.cpp mp-opt-reg.cpp dump.cpp mp_msg.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
-FF_LIBS = ../lavc/libavcodec/libavcodec$(LAVC_SUFFIX).a \
+LAVC_LIBS=../lavc/libavcodec/libavcodec$(LAVC_SUFFIX).a \
 	  ../lavc/libswscale/libswscale$(LAVC_SUFFIX).a \
 	  ../lavc/libswresample/libswresample$(LAVC_SUFFIX).a \
 	  ../lavc/libpostproc/libpostproc$(LAVC_SUFFIX).a \
@@ -49,7 +49,7 @@ ifeq ($(ENABLE_WIN32LOADER),yes)
 	  MP_LIBS += loader/libloader.a
 endif
 
-LIBS+= $(MP_LIBS) $(FF_LIBS) $(EXTRALIBS) -lm
+LIBS+= $(MP_LIBS) $(LAVC_LIBS) $(EXTRALIBS) -lm
 CXXFLAGS = $(OPTXXFLAGS) $(EXTRA_INC)
 
 .SUFFIXES: .cpp .c .o
