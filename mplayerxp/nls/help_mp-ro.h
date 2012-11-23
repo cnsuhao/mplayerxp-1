@@ -149,7 +149,7 @@ static char help_text[]=
 #define MSGTR_NoDShowSupport "MPlayerXP a fost compilat FĂRĂ suport directshow!\n"
 #define MSGTR_NoWfvSupport "Suport pentru codec-urile win32 dezactivat, sau nedisponibil pe platformele ne-x86!\n"
 #define MSGTR_NoDivx4Support "MPlayerXP a fost compilat FĂRĂ suport DivX4Linux (libdivxdecore.so)!\n"
-#define MSGTR_NoLAVCsupport "MPlayerXP a fost compilat FĂRĂ suport ffmpeg/libavcodec!\n"
+#define MSGTR_NoLAVCsupport "MPlayerXP a fost compilat FĂRĂ suport lavc/libavcodec!\n"
 #define MSGTR_NoACMSupport "Codec-ul audio Win32/ACM dezactivat, sau nedisponibil pe procesoare ne-x86 -> fortare fara sunet :(\n"
 #define MSGTR_NoDShowAudio "Compilat fără suport DirectShow -> forţare fără sunet :(\n"
 #define MSGTR_NoOggVorbis "Codec-ul audio OggVorbis dezactivat -> forţare fără sunet :(\n"

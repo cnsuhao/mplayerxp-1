@@ -127,19 +127,19 @@ static void mpcv_print_codec_info(const priv_t *priv) {
 #endif
 }
 
-any_t * mpcv_ffmpeg_init(sh_video_t* sh_video,any_t* libinput) {
+any_t * mpcv_lavc_init(sh_video_t* sh_video,any_t* libinput) {
     priv_t* priv = new(zeromem) priv_t;
     priv->parent=sh_video;
     sh_video->decoder=priv;
-    /* Use ffmpeg's drivers  as last hope */
-    priv->mpvdec=vfm_find_driver("ffmpeg");
+    /* Use lavc's drivers  as last hope */
+    priv->mpvdec=vfm_find_driver("lavc");
     if(priv->mpvdec) {
 	if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 	    return NULL;
 	}
     } else {
-	MSG_ERR("Cannot find ffmpeg video decoder\n");
+	MSG_ERR("Cannot find lavc video decoder\n");
 	return NULL;
     }
     mpcv_print_codec_info(priv);

@@ -360,30 +360,30 @@ echores   $extralibs
 add_cflags "-I$srcdir"
 
 
-disable ffmpeg
-# Checking for FFMPEG
-test -f "../ffmpeg/libavcodec/avcodec.h" && enable ffmpeg
-disabled ffmpeg && die "**FATAL**: local copy of ffmpeg doesn't exist!"
-add_cflags "-I$srcdir/../ffmpeg"
-print_config HAVE_ mp_config.h mp_config.mak ffmpeg
-# Configuring external ffmpeg stuff
-ffmpeg_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample"
+disable lavc
+# Checking for LAVC
+test -f "../lavc/libavcodec/avcodec.h" && enable lavc
+disabled lavc && die "**FATAL**: local copy of lavc doesn't exist!"
+add_cflags "-I$srcdir/../lavc"
+print_config HAVE_ mp_config.h mp_config.mak lavc
+# Configuring external lavc stuff
+lavc_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample"
 if test -n $host ; then
 _arch=$host_arch
 x86_32 && _arch="i686"
 x86_64 && _arch="x86_64"
-x86_32 && ff_libsuffix="32"
-x86_64 && ff_libsuffix="64"
-ffmpeg_args="--arch=$_arch --build-suffix=$ff_libsuffix $ffmpeg_args"
+x86_32 && lavc_libsuffix="32"
+x86_64 && lavc_libsuffix="64"
+lavc_args="--arch=$_arch --build-suffix=$lavc_libsuffix $lavc_args"
 fi
-test "$debug" != "0" && ffmpeg_args="$ffmpeg_args --enable-debug=$debug"
-enabled $profile  && ffmpeg_args="$ffmpeg_args --enable-profile"
-if test -f "../ffmpeg/libavcodec/libavcodec$ff_libsuffix.a"; then
-echocheck "ffmpeg was already configured for $_arch"
+test "$debug" != "0" && lavc_args="$lavc_args --enable-debug=$debug"
+enabled $profile  && lavc_args="$lavc_args --enable-profile"
+if test -f "../lavc/libavcodec/libavcodec$lavc_libsuffix.a"; then
+echocheck "lavc was already configured for $_arch"
 else
-echocheck "configuring ffmpeg stuff: --cc=\"$cc\" $ffmpeg_args"
-cd ../ffmpeg
-$(LC_ALL=C ./configure --cc="$cc" $ffmpeg_args)
+echocheck "configuring lavc stuff: --cc=\"$cc\" $lavc_args"
+cd ../lavc
+$(LC_ALL=C ./configure --cc="$cc" $lavc_args)
 cd $srcdir
 fi
 echores "done"
@@ -905,7 +905,7 @@ CONFDIR = $confdir
 LIBDIR = $libdir
 DESTDIR = $DESTDIR
 PROGNAME = $prog_alias
-FF_SUFFIX=$ff_libsuffix
+LAVC_SUFFIX=$lavc_libsuffix
 AR = ar
 CC = $cc
 CXX = $cxx
@@ -1159,17 +1159,17 @@ extern "C" {
 
 #define UINT64_C __UINT64_C
 #define FF_API_OLD_DECODE_AUDIO 1
-#include "$srcdir/../ffmpeg/libavcodec/avcodec.h"
-#include "$srcdir/../ffmpeg/libpostproc/postprocess.h"
-#include "$srcdir/../ffmpeg/libswscale/swscale.h"
-#include "$srcdir/../ffmpeg/libswscale/rgb2rgb.h"
-#include "$srcdir/../ffmpeg/libavutil/fifo.h"
-#include "$srcdir/../ffmpeg/libavutil/audioconvert.h"
-#include "$srcdir/../ffmpeg/libswresample/swresample.h"
-#include "$srcdir/../ffmpeg/libavformat/riff.h"
-#include "$srcdir/../ffmpeg/libavformat/avformat.h"
-#include "$srcdir/../ffmpeg/libavformat/avio.h"
-#include "$srcdir/../ffmpeg/libavformat/url.h"
+#include "$srcdir/../lavc/libavcodec/avcodec.h"
+#include "$srcdir/../lavc/libpostproc/postprocess.h"
+#include "$srcdir/../lavc/libswscale/swscale.h"
+#include "$srcdir/../lavc/libswscale/rgb2rgb.h"
+#include "$srcdir/../lavc/libavutil/fifo.h"
+#include "$srcdir/../lavc/libavutil/audioconvert.h"
+#include "$srcdir/../lavc/libswresample/swresample.h"
+#include "$srcdir/../lavc/libavformat/riff.h"
+#include "$srcdir/../lavc/libavformat/avformat.h"
+#include "$srcdir/../lavc/libavformat/avio.h"
+#include "$srcdir/../lavc/libavformat/url.h"
 
 #ifdef __cplusplus
 }

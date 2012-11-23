@@ -48,7 +48,7 @@ extern const stream_driver_t oss_stream;
 #ifdef USE_LIBVCD
 extern const stream_driver_t vcdnav_stream;
 #endif
-extern const stream_driver_t ffmpeg_stream;
+extern const stream_driver_t lavc_stream;
 extern const stream_driver_t stdin_stream;
 extern const stream_driver_t file_stream;
 extern const stream_driver_t null_stream;
@@ -80,7 +80,7 @@ static const stream_driver_t *sdrivers[] =
     &ftp_stream,
     &network_stream,
 #endif
-    &ffmpeg_stream,
+    &lavc_stream,
     &stdin_stream,
     &file_stream,
     &null_stream,

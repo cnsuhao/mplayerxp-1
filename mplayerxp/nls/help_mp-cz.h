@@ -154,7 +154,7 @@ static char help_text[]=
 #define MSGTR_NoDShowSupport "MPlayerXP byl přeložen BEZ podpory directshow!\n"
 #define MSGTR_NoWfvSupport "Podpora pro kodeky win32 neaktivní nebo nedostupná mimo platformy x86!\n"
 #define MSGTR_NoDivx4Support "MPlayerXP byl přeložen BEZ podpory DivX4Linux (libdivxdecore.so)!\n"
-#define MSGTR_NoLAVCsupport "MPlayerXP byl přeložen BEZ podpory ffmpeg/libavcodec!\n"
+#define MSGTR_NoLAVCsupport "MPlayerXP byl přeložen BEZ podpory lavc/libavcodec!\n"
 #define MSGTR_NoACMSupport "Win32/ACM audio kodek neaktivní nebo nedostupný mimo platformy x86 -> vynuceno beze zvuku :(\n"
 #define MSGTR_NoDShowAudio "Přeloženo BEZ podpory DirectShow -> vynuceno beze zvuku :(\n"
 #define MSGTR_NoOggVorbis "OggVorbis audio kodek neaktivní -> vynuceno beze zvuku :(\n"

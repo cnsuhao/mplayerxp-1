@@ -12,7 +12,7 @@ extern unsigned __FASTCALL__ mpca_decode(any_t *handle,unsigned char *buf,unsign
 extern void __FASTCALL__ mpca_resync_stream(any_t *handle);
 extern void __FASTCALL__ mpca_skip_frame(any_t *handle);
 struct codecs_st;
-extern struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t*);
+extern struct codecs_st* __FASTCALL__ find_lavc_audio(sh_audio_t*);
 
 extern MPXP_Rc mpca_init_filters(sh_audio_t *sh_audio,
 	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,

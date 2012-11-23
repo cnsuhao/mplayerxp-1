@@ -152,7 +152,7 @@ static char help_text[]=
 #define MSGTR_NoDShowSupport "MPlayerXP blev kompileret uden directshow support!\n"
 #define MSGTR_NoWfvSupport "Support for win32 codecs slået fra, eller er ikke tilråde på ikke-x86 platforme!\n"
 #define MSGTR_NoDivx4Support "MPlayerXP blev kompileret UDEN DivX4Linux (libdivxdecore.so) support!\n"
-#define MSGTR_NoLAVCsupport "MPlayerXP was kompileret UDEN ffmpeg/libavcodec support!\n"
+#define MSGTR_NoLAVCsupport "MPlayerXP was kompileret UDEN lavc/libavcodec support!\n"
 #define MSGTR_NoACMSupport "Win32/ACM lyd codec slået fra, eller ikke tilråde på ikke-x86 CPU -> ingen lyd tvunget :(\n"
 #define MSGTR_NoDShowAudio "Kompileret uden DirectShow support -> tvunget ingen lyd :(\n"
 #define MSGTR_NoOggVorbis "OggVorbis lyd codec slået fra -> tvunget ingen lyd :(\n"

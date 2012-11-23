@@ -1,5 +1,5 @@
 INSTALLABLE_SUBDIRS = mplayerxp etc DOCS
-SUBDIRS = ffmpeg $(INSTALLABLE_SUBDIRS)
+SUBDIRS = lavc $(INSTALLABLE_SUBDIRS)
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_IMAKE = @ for i in $(INSTALLABLE_SUBDIRS); do $(MAKE) -C $$i $@ || exit; done

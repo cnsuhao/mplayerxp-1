@@ -55,7 +55,7 @@ static const char help_text[]=
 " Откажитесь от OSD двойным нажатием клавиши 'O' [5-15%]\n"\
 " Также попытайтесь уменьшить число буферов упреждающего декодирования: '-core.da_buffs'\n"\
 "*******************************************************************************\n"\
-"На многопроцессорных машинах также может помочь: -ffmpeg.slices=0\n"
+"На многопроцессорных машинах также может помочь: -lavc.slices=0\n"
 
 // mplayer.c:
 
@@ -190,7 +190,7 @@ static const char help_text[]=
 #define MSGTR_NoDShowSupport "MPlayerXP был скомпилён БЕЗ поддержки directshow!\n"
 #define MSGTR_NoWfvSupport "Поддержка для win32 кодеков запрещена или недоступна на не-x86 платформах!\n"
 #define MSGTR_NoDivx4Support "MPlayerXP был скомпилён БЕЗ поддержки DivX4Linux (libdivxdecore.so)!\n"
-#define MSGTR_NoLAVCsupport "MPlayerXP был скомпилён БЕЗ поддержки ffmpeg/libavcodec!\n"
+#define MSGTR_NoLAVCsupport "MPlayerXP был скомпилён БЕЗ поддержки lavc/libavcodec!\n"
 #define MSGTR_NoACMSupport "Win32/ACM аудио кодек запрещён, или недоступен на не-x86 ЦПУ -> блокируйте звук :(\n"
 #define MSGTR_NoDShowAudio "Скомпилён без поддержки DirectShow -> блокируйте звук :(\n"
 #define MSGTR_NoOggVorbis "OggVorbis аудио кодек запрещён -> блокируйте звук :(\n"

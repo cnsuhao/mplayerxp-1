@@ -21,7 +21,7 @@
 using namespace mpxp;
 
 extern const vd_functions_t mpcodecs_vd_null;
-extern const vd_functions_t mpcodecs_vd_ffmpeg;
+extern const vd_functions_t mpcodecs_vd_lavc;
 extern const vd_functions_t mpcodecs_vd_dshow;
 extern const vd_functions_t mpcodecs_vd_vfw;
 extern const vd_functions_t mpcodecs_vd_vfwex;
@@ -68,7 +68,7 @@ static const vd_functions_t* mpcodecs_vd_drivers[] = {
 #ifdef HAVE_LIBDV
     &mpcodecs_vd_libdv,
 #endif
-    &mpcodecs_vd_ffmpeg,
+    &mpcodecs_vd_lavc,
     &mpcodecs_vd_null,
     NULL
 };

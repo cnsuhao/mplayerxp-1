@@ -63,7 +63,7 @@ static const char help_text[]=
 " Try disable OSD by pressing 'O' key twice [5-15%]\n"\
 "Also try to decrease the number of buffers for decoding ahead: '-core.da_buffs'\n"\
 "*******************************************************************************\n"\
-"On SMP -ffmpeg.slices=0 may help too\n"
+"On SMP -lavc.slices=0 may help too\n"
 #endif
 
 #ifndef MSGTR_Exiting
@@ -425,7 +425,7 @@ static const char help_text[]=
 #define MSGTR_NoDivx4Support "MPlayerXP was compiled WITHOUT DivX4Linux (libdivxdecore.so) support!\n"
 #endif
 #ifndef MSGTR_NoLAVCsupport
-#define MSGTR_NoLAVCsupport "MPlayerXP was compiled WITHOUT ffmpeg/libavcodec support!\n"
+#define MSGTR_NoLAVCsupport "MPlayerXP was compiled WITHOUT lavc/libavcodec support!\n"
 #endif
 #ifndef MSGTR_NoACMSupport
 #define MSGTR_NoACMSupport "Win32/ACM audio codec disabled, or unavailable on non-x86 CPU -> force nosound :(\n"

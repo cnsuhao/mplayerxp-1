@@ -150,7 +150,7 @@ static char help_text[]=
 #define MSGTR_NoDShowSupport "Az MPlayerXP DirectShow támogatás NÉLKÜL lett fordítva!\n"
 #define MSGTR_NoWfvSupport "A win32-es kodekek támogatása ki van kapcsolva, vagy nem létezik nem-x86-on!\n"
 #define MSGTR_NoDivx4Support "Az MPlayerXP DivX4Linux támogatás (libdivxdecore.so) NÉLKÜL lett fordítva!\n"
-#define MSGTR_NoLAVCsupport "Az MPlayerXP ffmpeg/libavcodec támogatás NÉLKÜL lett fordítva!\n"
+#define MSGTR_NoLAVCsupport "Az MPlayerXP lavc/libavcodec támogatás NÉLKÜL lett fordítva!\n"
 #define MSGTR_NoACMSupport "Win32/ACM hang kodek támogatás ki van kapcsolva, vagy nem létezik nem-x86 CPU-n -> hang kikapcsolva :(\n"
 #define MSGTR_NoDShowAudio "DirectShow támogatás nincs lefordítva -> hang kikapcsolva :(\n"
 #define MSGTR_NoOggVorbis "OggVorbis hang kodek kikapcsolva -> hang kikapcsolva :(\n"

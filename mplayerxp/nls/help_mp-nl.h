@@ -150,7 +150,7 @@ static char help_text[]=
 #define MSGTR_NoDShowSupport "MPlayerXP werd gecompileerd ZONDER directshow ondersteuning!\n"
 #define MSGTR_NoWfvSupport "Ondersteuning voor win32 codecs uitgeschakeld, of niet beschikbaar op niet-x86 platformen!\n"
 #define MSGTR_NoDivx4Support "MPlayerXP werd gecompileerd ZONDER DivX4Linux (libdivxdecore.so) ondersteuning!\n"
-#define MSGTR_NoLAVCsupport "MPlayerXP werd gecompileerd ZONDER ffmpeg/libavcodec ondersteuning!\n"
+#define MSGTR_NoLAVCsupport "MPlayerXP werd gecompileerd ZONDER lavc/libavcodec ondersteuning!\n"
 #define MSGTR_NoACMSupport "Win32/ACM audio codec uitgeschakeld, of niet beschikbaar op niet-x86 CPU -> forceer nosound :(\n"
 #define MSGTR_NoDShowAudio "Gecompileerd zonder DirectShow ondersteuning -> forceer nosound :(\n"
 #define MSGTR_NoOggVorbis "OggVorbis audio codec uigeschakeld -> forceer nosound :(\n"

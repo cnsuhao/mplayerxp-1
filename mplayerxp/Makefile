@@ -25,12 +25,12 @@ SRCS = mplayerxp.cpp mp-opt-reg.cpp dump.cpp mp_msg.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
-FF_LIBS = ../ffmpeg/libavcodec/libavcodec$(FF_SUFFIX).a \
-	  ../ffmpeg/libswscale/libswscale$(FF_SUFFIX).a \
-	  ../ffmpeg/libswresample/libswresample$(FF_SUFFIX).a \
-	  ../ffmpeg/libpostproc/libpostproc$(FF_SUFFIX).a \
-	  ../ffmpeg/libavformat/libavformat$(FF_SUFFIX).a \
-	  ../ffmpeg/libavutil/libavutil$(FF_SUFFIX).a
+FF_LIBS = ../lavc/libavcodec/libavcodec$(LAVC_SUFFIX).a \
+	  ../lavc/libswscale/libswscale$(LAVC_SUFFIX).a \
+	  ../lavc/libswresample/libswresample$(LAVC_SUFFIX).a \
+	  ../lavc/libpostproc/libpostproc$(LAVC_SUFFIX).a \
+	  ../lavc/libavformat/libavformat$(LAVC_SUFFIX).a \
+	  ../lavc/libavutil/libavutil$(LAVC_SUFFIX).a
 
 MP_LIBS = libmpstream/libmpstream.a \
 	  libmpdemux/libmpdemux.a \

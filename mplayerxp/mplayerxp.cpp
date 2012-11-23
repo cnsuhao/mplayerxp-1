@@ -1142,7 +1142,7 @@ static void mpxp_find_acodec(const char *ao_subdevice) {
 	    }
 	}
 	if(!found) {
-	    sh_audio->codec=find_ffmpeg_audio(sh_audio);
+	    sh_audio->codec=find_lavc_audio(sh_audio);
 	    if(sh_audio->codec) found=1;
 	}
     }
@@ -1205,8 +1205,8 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 	    }
 	}
     }
-    /* Use ffmpeg decoders as last hope */
-    if(!sh_video->inited) sh_video->decoder=mpcv_ffmpeg_init(sh_video,MPXPSys->libinput());
+    /* Use lavc decoders as last hope */
+    if(!sh_video->inited) sh_video->decoder=mpcv_lavc_init(sh_video,MPXPSys->libinput());
 #endif
 
     if(!sh_video->inited) {

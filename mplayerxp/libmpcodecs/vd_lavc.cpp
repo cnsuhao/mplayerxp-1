@@ -28,8 +28,8 @@
 using namespace mpxp;
 
 static const vd_info_t info = {
-    "FFmpeg's libavcodec codec family",
-    "ffmpeg",
+    "lavc codec family",
+    "lavc",
     "A'rpi",
     "build-in"
 };
@@ -52,31 +52,31 @@ static char *lavc_avopt = NULL;
 
 static int enable_ffslices=1;
 static const config_t ff_options[] = {
-    {"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, "enables slice-based method of frame rendering in ffmpeg decoder"},
-    {"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, "disables slice-based method of frame rendering in ffmpeg decoder"},
-    {"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error resilience for ffmpeg decoders"},
-    {"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies idct algorithm for ffmpeg decoders"},
-    {"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error concealment for ffmpeg decoders"},
-    {"vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, "specifies vstat for ffmpeg decoders"},
-    {"debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies debug level for ffmpeg decoders"},
-    {"vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies visualize motion vectors (MVs) for ffmpeg decoders"},
-    {"st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping top lines for ffmpeg decoders"},
-    {"sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping bottom lines for ffmpeg decoders"},
-    {"lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, "specifies decoding at 1= 1/2, 2=1/4, 3=1/8 resolutions for ffmpeg decoders"},
-    {"skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of loop filters for ffmpeg decoders"},
-    {"skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of IDCT filters for ffmpeg decoders"},
-    {"skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, "indicates frame skipping for ffmpeg decoders"},
-    {"threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, "specifies number of threads for ffmpeg decoders"},
-    {"o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, "specifies additional option for ffmpeg decoders"},
+    {"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, "enables slice-based method of frame rendering in lavc decoder"},
+    {"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, "disables slice-based method of frame rendering in lavc decoder"},
+    {"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error resilience for lavc decoders"},
+    {"idct", &lavc_param_idct_algo, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies idct algorithm for lavc decoders"},
+    {"ec", &lavc_param_error_concealment, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error concealment for lavc decoders"},
+    {"vstats", &lavc_param_vstats, CONF_TYPE_FLAG, 0, 0, 1, "specifies vstat for lavc decoders"},
+    {"debug", &lavc_param_debug, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies debug level for lavc decoders"},
+    {"vismv", &lavc_param_vismv, CONF_TYPE_INT, CONF_RANGE, 0, 9999999, "specifies visualize motion vectors (MVs) for lavc decoders"},
+    {"st", &lavc_param_skip_top, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping top lines for lavc decoders"},
+    {"sb", &lavc_param_skip_bottom, CONF_TYPE_INT, CONF_RANGE, 0, 999, "specifies skipping bottom lines for lavc decoders"},
+    {"lowres", &lavc_param_lowres_str, CONF_TYPE_STRING, 0, 0, 0, "specifies decoding at 1= 1/2, 2=1/4, 3=1/8 resolutions for lavc decoders"},
+    {"skiploopfilter", &lavc_param_skip_loop_filter_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of loop filters for lavc decoders"},
+    {"skipidct", &lavc_param_skip_idct_str, CONF_TYPE_STRING, 0, 0, 0, "specifies skipping of IDCT filters for lavc decoders"},
+    {"skipframe", &lavc_param_skip_frame_str, CONF_TYPE_STRING, 0, 0, 0, "indicates frame skipping for lavc decoders"},
+    {"threads", &lavc_param_threads, CONF_TYPE_INT, CONF_RANGE, 1, 8, "specifies number of threads for lavc decoders"},
+    {"o", &lavc_avopt, CONF_TYPE_STRING, 0, 0, 0, "specifies additional option for lavc decoders"},
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t options[] = {
-    {"ffmpeg", (any_t*)&ff_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "FFMPEG specific options"},
+    {"lavc", (any_t*)&ff_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "lavc specific options"},
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-LIBVD_EXTERN(ffmpeg)
+LIBVD_EXTERN(lavc)
 
 #include "libavcodec/avcodec.h"
 #include "libavformat/riff.h"
@@ -120,7 +120,7 @@ static enum AVDiscard str2AVDiscard(char *str) {
     return AVDISCARD_DEFAULT;
 }
 
-/* stupid workaround for current version of ffmpeg */
+/* stupid workaround for current version of lavc */
 const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
     0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -149,17 +149,17 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 		avctx->get_format &&
 		avctx->codec->pix_fmts)
 			avctx->pix_fmt = avctx->get_format(avctx, avctx->codec->pix_fmts);
-	    MSG_DBG2("[vd_ffmpeg QUERY_FORMAT for %c%c%c%c] pixfmt = %X\n"
+	    MSG_DBG2("[vd_lavc QUERY_FORMAT for %c%c%c%c] pixfmt = %X\n"
 		,((char *)&format)[0],((char *)&format)[1],((char *)&format)[2],((char *)&format)[3]
 		,avctx->pix_fmt);
 	    if(avctx->codec->pix_fmts) {
 	    unsigned i;
-		MSG_DBG2("[vd_ffmpeg]avctx->codec->pix_fmts:");
+		MSG_DBG2("[vd_lavc]avctx->codec->pix_fmts:");
 		for(i=0;;i++) { MSG_DBG2(" %X",avctx->codec->pix_fmts[i]); if(avctx->codec->pix_fmts[i]==-1) break; }
 		MSG_DBG2("\n");
 	    }
 	    else
-		MSG_DBG2("[vd_ffmpeg]avctx->codec->pix_fmts doesn't exist\n");
+		MSG_DBG2("[vd_lavc]avctx->codec->pix_fmts doesn't exist\n");
 	    out_fourcc = fourcc_from_pixfmt(avctx->pix_fmt);
 	    if(out_fourcc==format) return MPXP_True;
 	// possible conversions:
@@ -218,7 +218,7 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fcc) {
     AVCodec *codec=avcodec_find_decoder(ff_id);
     if(!codec) { what="AVCodec"; goto prn_err; }
     vprobe=new(zeromem) video_probe_t;
-    vprobe->driver="ffmpeg";
+    vprobe->driver="lavc";
     vprobe->codec_dll=mp_strdup(avcodec_get_name(ff_id));
     if(codec->pix_fmts)
     for(i=0;i<Video_MaxOutFmt;i++) {
@@ -259,7 +259,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     sh->context = priv;
     priv->frame_number=-2;
     if(!sh->codec) if(find_vdecoder(sh)!=MPXP_False) {
-	MSG_ERR("Can't find ffmpeg decoder\n");
+	MSG_ERR("Can't find lavc decoder\n");
 	return MPXP_False;
     }
     priv->lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
@@ -393,7 +393,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(lavc_param_threads < 0) lavc_param_threads = xp_num_cpu;
     if(lavc_param_threads > 1) {
 	priv->ctx->thread_count = lavc_param_threads;
-	MSG_STATUS("Using %i threads in FFMPEG\n",lavc_param_threads);
+	MSG_STATUS("Using %i threads in lavc\n",lavc_param_threads);
     }
     /* open it */
     if (avcodec_open2(priv->ctx, priv->lavc_codec, NULL) < 0) {
@@ -682,7 +682,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
        priv->use_slices && mpi->flags&MP_IMGFLAG_DIRECT)
 		priv->use_dr1=1;
     if(has_b_frames) {
-	MSG_V("Disable slice-based rendering in FFMPEG due possible B-frames in video-stream\n");
+	MSG_V("Disable slice-based rendering in lavc due possible B-frames in video-stream\n");
 	priv->use_slices=0;
     }
     if(priv->use_slices) priv->use_dr1=0;
@@ -724,9 +724,9 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     else priv->ctx->draw_horiz_band=NULL; /* skip draw_slice on framedropping */
     if(!priv->hello_printed) {
 	if(priv->use_slices)
-	    MSG_STATUS("Use slice-based rendering in FFMPEG\n");
+	    MSG_STATUS("Use slice-based rendering in lavc\n");
 	else if (priv->use_dr1)
-	    MSG_STATUS("Use DR1 rendering in FFMPEG\n");
+	    MSG_STATUS("Use DR1 rendering in lavc\n");
 	else
 	priv->hello_printed=1;
     }
@@ -743,7 +743,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 	if(mpi) free_mp_image(mpi);
 	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w,sh->src_h);
 	if(!mpi){	// temporary!
-	    MSG_ERR("couldn't allocate image for ffmpeg codec\n");
+	    MSG_ERR("couldn't allocate image for lavc codec\n");
 	    return NULL;
 	}
 	mpi->planes[0]=priv->lavc_picture->data[0];

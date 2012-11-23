@@ -6,7 +6,7 @@ include ../mp_config.mak
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-CXXSRCS=  s_ffmpeg.cpp s_file.cpp s_null.cpp s_tv.cpp
+CXXSRCS=  s_file.cpp s_lavc.cpp s_null.cpp s_tv.cpp
 CXXSRCS+= cache2.cpp mrl.cpp stream.cpp url.cpp
 ifeq ($(HAVE_LIBCDIO_CDDA),yes)
 CXXSRCS += s_cdd.cpp

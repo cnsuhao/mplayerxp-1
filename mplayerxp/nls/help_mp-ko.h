@@ -154,7 +154,7 @@ static char help_text[]=
 #define MSGTR_NoDShowSupport "MPlayerXP가 directshow 지원없이 컴파일되었습니다!\n"
 #define MSGTR_NoWfvSupport "win32 코덱 지원이 불가능하거나, 비 x86플랫폼에서는 사용할 수 없습니다!\n"
 #define MSGTR_NoDivx4Support "MPlayerXP가 DivX4Linux (libdivxdecore.so) 지원없이 컴파일되었습니다!\n"
-#define MSGTR_NoLAVCsupport "MPlayerXP가 ffmpeg/libavcodec 지원없이 컴파일되었습니다!\n"
+#define MSGTR_NoLAVCsupport "MPlayerXP가 lavc/libavcodec 지원없이 컴파일되었습니다!\n"
 #define MSGTR_NoACMSupport "Win32/ACM 오디오 코덱이 불가능하거나, 비 x86 CPU에서는 사용할 수 없습니다. -> 소리없음 :(\n"
 #define MSGTR_NoDShowAudio "DirectShow 지원없이 컴파일되었습니다. -> 소리없음 :(\n"
 #define MSGTR_NoOggVorbis "OggVorbis 오디오 코덱이 불가능합니다. -> f소리없음 :(\n"

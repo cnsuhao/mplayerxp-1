@@ -9,7 +9,7 @@ CXXSRCS=dec_video.cpp vd.cpp ad.cpp dec_audio.cpp
 CXXSRCS+=ad_a52.cpp ad_hwac3.cpp
 
 
-CXXSRCS+=vd_ffmpeg.cpp \
+CXXSRCS+=vd_lavc.cpp \
      vd_null.cpp \
      vd_nuv.cpp \
      vd_raw.cpp \
@@ -19,7 +19,7 @@ CXXSRCS+=vd_ffmpeg.cpp \
      vd_huffyuv.cpp \
      ad_dca.cpp \
      ad_faad.cpp \
-     ad_ffmpeg.cpp \
+     ad_lavc.cpp \
      ad_null.cpp \
      ad_mp3.cpp \
      ad_pcm.cpp \

@@ -48,7 +48,7 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
 
     acodec=new(zeromem) audio_probe_t;
     acodec->codec_dll=mp_strdup(avcodec_get_name(id));
-    acodec->driver="ffmpeg";
+    acodec->driver="lavc";
     acodec->wtag=wtag;
     if(codec->sample_fmts)
     for(i=0;i<Audio_MaxOutSample;i++) {
@@ -59,7 +59,7 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
     return acodec;
 }
 
-struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
+struct codecs_st* __FASTCALL__ find_lavc_audio(sh_audio_t* sh) {
     const audio_probe_t* aprobe=probe(sh,sh->wtag);
     struct codecs_st* acodec = NULL;
     if(aprobe) {
@@ -77,8 +77,8 @@ struct codecs_st* __FASTCALL__ find_ffmpeg_audio(sh_audio_t* sh) {
 #endif
 
 static const ad_info_t info = {
-    "FFmpeg/libavcodec audio decoders",
-    "ffmpeg",
+    "lavc audio decoders",
+    "lavc",
     "Nickols_K",
     "build-in"
 };
@@ -87,7 +87,7 @@ static const config_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-LIBAD_EXTERN(ffmpeg)
+LIBAD_EXTERN(lavc)
 
 MPXP_Rc preinit(sh_audio_t *sh)
 {
@@ -101,7 +101,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     float pts;
     AVCodec *lavc_codec=NULL;
     priv_t* priv=reinterpret_cast<priv_t*>(sh_audio->context);
-    MSG_V("FFmpeg's libavcodec audio codec\n");
+    MSG_V("LAVC audio codec\n");
     if(!priv){
 	priv=new(zeromem) priv_t;
 	sh_audio->context=priv;
