@@ -1,5 +1,7 @@
 TODO for mplayerxp:
 
+- Move vo_data and ao_data into private of vf_vo and af_ao2 or into
+  MPXPCtx at least.
 - Problem: it seems that demuxer doesn't differ bitmap-based subtitles from
   Closed Caption (plain ascii-text) ones. Because of this some demuxer's
   parser call video-driver directly to render subtitle on screen that breaks

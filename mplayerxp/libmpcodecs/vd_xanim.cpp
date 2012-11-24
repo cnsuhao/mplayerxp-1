@@ -897,7 +897,7 @@ static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
 // init driver
 static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(xacodec_init_video(sh,sh->codec->outfmt[sh->outfmtidx]))
-	return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput);
+	return mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput);
     return MPXP_False;
 }
 

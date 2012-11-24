@@ -425,7 +425,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	}
 	if(pp_flags) ppContext=pp2_get_context(sh->src_w,sh->src_h,pp_flags);
     }
-    return mpcodecs_config_vo(sh,sh->src_w,sh->src_h,libinput);
+    return mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput);
 }
 
 // uninit driver

@@ -401,7 +401,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 
 #include "libvo/video_out.h"
 
-MPXP_Rc mpcodecs_config_vo(sh_video_t *sh, int w, int h, any_t* libinput){
+MPXP_Rc mpcodecs_config_vf(sh_video_t *sh, int w, int h, any_t* libinput){
     priv_t* priv=(priv_t*)sh->decoder;
     int i,j;
     unsigned int out_fmt=0;
@@ -573,7 +573,7 @@ csp_again:
 // mp_imgtype: buffering type, see mp_image.h
 // mp_imgflag: buffer requirements (read/write, preserve, stride limits), see mp_image.h
 // returns NULL or allocated mp_image_t*
-// Note: buffer allocation may be moved to mpcodecs_config_vo() later...
+// Note: buffer allocation may be moved to mpcodecs_config_vf() later...
 mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h){
     MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
     mp_image_t* mpi=vf_get_new_image(sh->vfilter,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h,dae_curr_vdecoded(xp_core));

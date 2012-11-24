@@ -5,11 +5,12 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "ad_internal.h"
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "osdep/bswap.h"
+#include "postproc/af.h"
 
 static const ad_info_t info = {
     "Ogg/Vorbis audio decoder",
@@ -113,7 +114,9 @@ static MPXP_Rc init(sh_audio_t *sh)
 #define OGG_FMT16 AFMT_S16_LE
 #endif
     sh->afmt=OGG_FMT16;
-    if(ao_control(ao_data,AOCONTROL_QUERY_FORMAT,OGG_FMT32) == MPXP_Ok) {
+    if(af_query_fmt(sh->afilter,mpaf_format_e(AFMT_FLOAT32)) == MPXP_Ok||
+	af_query_fmt(sh->afilter,mpaf_format_e(OGG_FMT32)) == MPXP_Ok ||
+	af_query_fmt(sh->afilter,mpaf_format_e(OGG_FMT24)) == MPXP_Ok) {
 	sh->afmt=OGG_FMT32;
     }
     // assume 128kbit if bitrate not specified in the header
