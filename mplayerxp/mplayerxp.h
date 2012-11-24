@@ -28,7 +28,10 @@ namespace mpxp {;
 	Module_MPContext
     };
 
-    typedef struct mp_conf_s {
+    struct MP_Config {
+	MP_Config();
+	~MP_Config() {}
+
 	int		has_video;
 	int		has_audio;
 	int		has_dvdsub;
@@ -92,8 +95,8 @@ namespace mpxp {;
 	int		z_compression;
 	int		xinerama_screen;
 	float		monitor_pixel_aspect;
-    }mp_conf_t;
-    extern mp_conf_t mp_conf;
+    };
+    extern MP_Config mp_conf;
 
     /* Benchmarking */
     typedef struct time_usage_s {
@@ -121,7 +124,10 @@ namespace mpxp {;
 
     struct MPXPSystem;
     /* non-configurable through command line stuff */
-    typedef struct MPXPContext_s {
+    struct MPXPContext {
+	MPXPContext();
+	~MPXPContext() {}
+
 	int			rtc_fd;
 	int			seek_time;
 	int			output_quality;
@@ -133,8 +139,8 @@ namespace mpxp {;
 	time_usage_t*		bench;
 	struct MPXPSystem*	MPXPSys;
 	any_t*			msg_priv;
-    }MPXPContext_t;
-    extern MPXPContext_t* MPXPCtx;
+    };
+    extern MPXPContext* MPXPCtx;
 
     unsigned get_number_cpu(void);
     void show_help(void);

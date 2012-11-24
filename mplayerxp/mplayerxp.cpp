@@ -138,7 +138,7 @@ enum {
 
 struct MPXPSystem {
     public:
-	MPXPSystem():inited_flags(0) { rnd_fill(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
+	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY) { rnd_fill(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
 	~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);
@@ -170,9 +170,44 @@ private:
     unsigned*	keys;
 };
 
-mp_conf_t mp_conf;
+MP_Config::MP_Config() {
+    memset(&has_video,0,reinterpret_cast<long>(&monitor_pixel_aspect)-reinterpret_cast<long>(&has_video));
+    xp=get_number_cpu();
+    audio_id=-1;
+    video_id=-1;
+    dvdsub_id=-1;
+    vobsub_id=-1;
+    audio_lang=I18N_LANGUAGE;
+    dvdsub_lang=I18N_LANGUAGE;
+    av_sync_pts=-1;
+    frame_reorder=1;
+    av_force_pts_fix2=-1;
+    loop_times=-1;
+    play_n_frames=-1;
+    font_factor=0.75;
+    sub_auto=1;
+    has_audio=1;
+    has_video=1;
+    has_dvdsub=1;
+    osd_level=2;
+    playbackspeed_factor=1.0;
+    ao_channels=2;
+    monitor_pixel_aspect=1;
+    msg_filter=0xFFFFFFFF;
+    max_trace=10;
+}
+MP_Config mp_conf;
+
+MPXPContext::MPXPContext() {
+    seek_time=-1;
+    bench=new(zeromem) time_usage_t;
+    use_pts_fix2=-1;
+    rtc_fd=-1;
+    MPXPSys=new(zeromem)MPXPSystem;
+}
+
 static volatile char antiviral_hole2[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
-MPXPContext_t* MPXPCtx=NULL;
+MPXPContext* MPXPCtx=NULL;
 xp_core_t* xp_core=NULL;
 static volatile char antiviral_hole3[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 volatile MPXPSecureKeys* secure_keys;
@@ -223,41 +258,10 @@ unsigned get_number_cpu(void) {
 }
 
 static void mpxp_init_structs(void) {
-    MPXPCtx=new(zeromem) MPXPContext_t;
-    MPXPCtx->seek_time=-1;
-    MPXPCtx->bench=new(zeromem) time_usage_t;
-    MPXPCtx->use_pts_fix2=-1;
-    MPXPCtx->rtc_fd=-1;
-    MPXPCtx->MPXPSys=new(zeromem)MPXPSystem;
-    MPXPSystem* MPXPSys=MPXPCtx->MPXPSys;
-    MPXPSys->osd_function=OSD_PLAY;
+    MPXPCtx=new(zeromem) MPXPContext;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     memset(&x86,-1,sizeof(x86_features_t));
 #endif
-    memset(&mp_conf,0,sizeof(mp_conf_t));
-    mp_conf.xp=get_number_cpu();
-    mp_conf.audio_id=-1;
-    mp_conf.video_id=-1;
-    mp_conf.dvdsub_id=-1;
-    mp_conf.vobsub_id=-1;
-    mp_conf.audio_lang=I18N_LANGUAGE;
-    mp_conf.dvdsub_lang=I18N_LANGUAGE;
-    mp_conf.av_sync_pts=-1;
-    mp_conf.frame_reorder=1;
-    mp_conf.av_force_pts_fix2=-1;
-    mp_conf.loop_times=-1;
-    mp_conf.play_n_frames=-1;
-    mp_conf.font_factor=0.75;
-    mp_conf.sub_auto=1;
-    mp_conf.has_audio=1;
-    mp_conf.has_video=1;
-    mp_conf.has_dvdsub=1;
-    mp_conf.osd_level=2;
-    mp_conf.playbackspeed_factor=1.0;
-    mp_conf.ao_channels=2;
-    mp_conf.monitor_pixel_aspect=1;
-    mp_conf.msg_filter=0xFFFFFFFF;
-    mp_conf.max_trace=10;
 }
 
 static void mpxp_uninit_structs(void) {

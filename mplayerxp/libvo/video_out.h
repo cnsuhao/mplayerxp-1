@@ -10,6 +10,9 @@
 #define __VIDEO_OUT_H 1
 
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
 #include <inttypes.h>
 #include <stdarg.h>
 
@@ -127,7 +130,10 @@ struct vo_rect2 {
     int left, right, top, bottom, width, height;
 };
 
-typedef struct vo_conf_s {
+struct VO_Config {
+    VO_Config();
+    ~VO_Config() {}
+
     char *		subdevice; // currently unused
     char*		mDisplayName;
 
@@ -152,8 +158,14 @@ typedef struct vo_conf_s {
     int			softzoom;
     int			flip;
     unsigned		dbpp;
-}vo_conf_t;
-extern vo_conf_t vo_conf;
+};
+extern VO_Config vo_conf;
+
+class video_private : public Opaque {
+    public:
+	video_private() {}
+	virtual ~video_private() {}
+};
 
 typedef struct vo_data_s {
     Display*		mDisplay;
@@ -169,10 +181,10 @@ typedef struct vo_data_s {
 // requested resolution/bpp:  (-x -y -bpp options)
     vo_rect_t		dest;
 
-    any_t*		vo_priv;/* private data of vo structure */
-    any_t*		priv;	/* private data of video driver */
-    any_t*		priv2;	/* private data of X11 commons */
-    any_t*		priv3;	/* private data of vidix commons */
+    video_private*	vo_priv;/* private data of vo structure */
+    video_private*	priv;	/* private data of video driver */
+    video_private*	priv2;	/* private data of X11 commons */
+    video_private*	priv3;	/* private data of vidix commons */
 
     /* subtitle support */
     char*		osd_text;

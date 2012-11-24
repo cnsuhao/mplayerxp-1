@@ -47,13 +47,16 @@ static vo_info_t vo_info = {
     ""
 };
 
-typedef struct priv_s {
+struct null_priv_t :public video_private {
+    null_priv_t() {}
+    virtual ~null_priv_t() {}
+
     uint32_t	image_width, image_height,frame_size,fourcc;
     uint8_t *	bm_buffs[MAX_DRI_BUFFERS];
     uint32_t	num_frames;
     uint32_t	pitch_y,pitch_u,pitch_v;
     uint32_t	offset_y,offset_u,offset_v;
-}priv_t;
+};
 
 static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 {
@@ -63,54 +66,54 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t fullscreen, char *title, uint32_t format)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
     unsigned awidth;
     size_t i;
-    priv->image_width = width;
-    priv->image_height = height;
-    priv->num_frames = vo_conf.xp_buffs;
-    priv->fourcc=format;
+    priv.image_width = width;
+    priv.image_height = height;
+    priv.num_frames = vo_conf.xp_buffs;
+    priv.fourcc=format;
     UNUSED(d_width);
     UNUSED(d_height);
     UNUSED(fullscreen);
     UNUSED(title);
-    priv->pitch_y=priv->pitch_u=priv->pitch_v=1;
-    priv->offset_y=priv->offset_u=priv->offset_v=0;
+    priv.pitch_y=priv.pitch_u=priv.pitch_v=1;
+    priv.offset_y=priv.offset_u=priv.offset_v=0;
     switch(format) {
     case IMGFMT_Y800:
-		awidth = (width + (priv->pitch_y-1)) & ~(priv->pitch_y-1);
-		priv->frame_size = awidth*height;
+		awidth = (width + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
+		priv.frame_size = awidth*height;
 		break;
     case IMGFMT_YVU9:
     case IMGFMT_IF09:
-		awidth = (width + (priv->pitch_y-1)) & ~(priv->pitch_y-1);
-		priv->frame_size = awidth*(height+height/8);
-		priv->offset_u=awidth*height;
-		priv->offset_v=awidth*height/16;
+		awidth = (width + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
+		priv.frame_size = awidth*(height+height/8);
+		priv.offset_u=awidth*height;
+		priv.offset_v=awidth*height/16;
 		break;
     case IMGFMT_I420:
     case IMGFMT_YV12:
     case IMGFMT_IYUV:
-		awidth = (width + (priv->pitch_y-1)) & ~(priv->pitch_y-1);
-		priv->frame_size = awidth*(height+height/2);
-		priv->offset_u=awidth*height;
-		priv->offset_v=awidth*height/4;
+		awidth = (width + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
+		priv.frame_size = awidth*(height+height/2);
+		priv.offset_u=awidth*height;
+		priv.offset_v=awidth*height/4;
 		break;
     case IMGFMT_RGB32:
     case IMGFMT_BGR32:
-		awidth = (width*4 + (priv->pitch_y-1)) & ~(priv->pitch_y-1);
-		priv->frame_size = awidth*height;
+		awidth = (width*4 + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
+		priv.frame_size = awidth*height;
 		break;
     /* YUY2 YVYU, RGB15, RGB16 */
     default:
-		awidth = (width*2 + (priv->pitch_y-1)) & ~(priv->pitch_y-1);
-		priv->frame_size = awidth*height;
+		awidth = (width*2 + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
+		priv.frame_size = awidth*height;
 		break;
     }
-    for(i=0;i<priv->num_frames;i++) {
-	if(!priv->bm_buffs[i])
-	    priv->bm_buffs[i] = new(alignmem,getpagesize()) uint8_t[priv->frame_size];
-	if(!(priv->bm_buffs[i])) {
+    for(i=0;i<priv.num_frames;i++) {
+	if(!priv.bm_buffs[i])
+	    priv.bm_buffs[i] = new(alignmem,getpagesize()) uint8_t[priv.frame_size];
+	if(!(priv.bm_buffs[i])) {
 		MSG_ERR("Can't allocate memory for busmastering\n");
 		return MPXP_False;
 	}
@@ -126,7 +129,7 @@ static const vo_info_t* get_info(const vo_data_t*vo)
 
 static void uninit(vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    null_priv_t*priv=static_cast<null_priv_t*>(vo->priv);
     size_t i;
     for(i=0;i<priv->num_frames;i++) {
 	delete priv->bm_buffs[i];
@@ -141,35 +144,37 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 	MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
 	return MPXP_False;
     }
-    vo->priv=mp_mallocz(sizeof(priv_t));
+    null_priv_t*priv;
+    priv=new(zeromem) null_priv_t;
+    vo->priv=priv;
     return MPXP_Ok;
 }
 
 static void __FASTCALL__ null_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t*priv=(priv_t*)vo->priv;
+    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
     caps->caps =DRI_CAP_TEMP_VIDEO |
 		DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER |
 		DRI_CAP_DOWNSCALER | DRI_CAP_UPSCALER;
-    caps->fourcc = priv->fourcc;
-    caps->width=priv->image_width;
-    caps->height=priv->image_height;
+    caps->fourcc = priv.fourcc;
+    caps->width=priv.image_width;
+    caps->height=priv.image_height;
     /* in case of vidix movie fit surface */
     caps->x = caps->y=0;
     caps->w=caps->width;
     caps->h=caps->height;
-    caps->strides[0] = priv->pitch_y;
-    caps->strides[1] = priv->pitch_v;
-    caps->strides[2] = priv->pitch_u;
+    caps->strides[0] = priv.pitch_y;
+    caps->strides[1] = priv.pitch_v;
+    caps->strides[2] = priv.pitch_u;
     caps->strides[3] = 0;
 }
 
 static void __FASTCALL__ null_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t*priv=(priv_t*)vo->priv;
-    surf->planes[0] = priv->bm_buffs[surf->idx] + priv->offset_y;
-    surf->planes[1] = priv->bm_buffs[surf->idx] + priv->offset_v;
-    surf->planes[2] = priv->bm_buffs[surf->idx] + priv->offset_u;
+    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
+    surf->planes[0] = priv.bm_buffs[surf->idx] + priv.offset_y;
+    surf->planes[1] = priv.bm_buffs[surf->idx] + priv.offset_v;
+    surf->planes[2] = priv.bm_buffs[surf->idx] + priv.offset_u;
     surf->planes[3] = 0;
 }
 
@@ -220,12 +225,12 @@ static MPXP_Rc __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
     switch (request) {
     case VOCTRL_QUERY_FORMAT:
 	return null_query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
     case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = priv->num_frames;
+	*(uint32_t *)data = priv.num_frames;
 	return MPXP_True;
     case DRI_GET_SURFACE_CAPS:
 	null_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));

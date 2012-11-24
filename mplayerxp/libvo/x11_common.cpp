@@ -53,7 +53,10 @@ extern int XShmGetEventBase( Display* );
  */
 #define	SCAN_VISUALS
 
-typedef struct priv_s {
+struct x11s_priv_t : public video_private {
+    x11s_priv_t() {}
+    virtual ~x11s_priv_t() {}
+
     int			mLocalDisplay;
     Window		mRootWin;
 
@@ -77,18 +80,18 @@ typedef struct priv_s {
     XF86VidModeModeInfo **vidmodes;
     XF86VidModeModeLine	modeline;
 #endif
-}priv_t;
+};
 
 int __FASTCALL__ vo_x11_Shmem_Flag(const vo_data_t*vo)
 {
-    priv_t*priv=(priv_t*)vo->priv2;
-    return priv->Shmem_Flag;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
+    return priv.Shmem_Flag;
 }
 
 XImage* __FASTCALL__ vo_x11_Image(const vo_data_t*vo,unsigned idx)
 {
-    priv_t*priv=(priv_t*)vo->priv2;
-    return priv->myximage[idx];
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
+    return priv.myximage[idx];
 }
 
 uint8_t* __FASTCALL__ vo_x11_ImageData(const vo_data_t*vo,unsigned idx)
@@ -98,50 +101,50 @@ uint8_t* __FASTCALL__ vo_x11_ImageData(const vo_data_t*vo,unsigned idx)
 
 void __FASTCALL__ vo_x11_getMyXImage(const vo_data_t*vo,unsigned idx,Visual *visual,unsigned depth,unsigned w,unsigned h)
 {
-    priv_t*priv=(priv_t*)vo->priv2;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
 #ifdef HAVE_SHM
-    if ( priv->mLocalDisplay && XShmQueryExtension( vo->mDisplay )) priv->Shmem_Flag=1;
+    if ( priv.mLocalDisplay && XShmQueryExtension( vo->mDisplay )) priv.Shmem_Flag=1;
     else {
-	priv->Shmem_Flag=0;
+	priv.Shmem_Flag=0;
 	MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
     }
-    if ( priv->Shmem_Flag ) {
-	priv->CompletionType=XShmGetEventBase( vo->mDisplay ) + ShmCompletion;
-	priv->myximage[idx]=XShmCreateImage( vo->mDisplay,visual,depth,ZPixmap,NULL,&priv->Shminfo[idx],w,h);
-	if ( priv->myximage[idx] == NULL ) {
-	    if ( priv->myximage[idx] != NULL ) XDestroyImage( priv->myximage[idx] );
+    if ( priv.Shmem_Flag ) {
+	priv.CompletionType=XShmGetEventBase( vo->mDisplay ) + ShmCompletion;
+	priv.myximage[idx]=XShmCreateImage( vo->mDisplay,visual,depth,ZPixmap,NULL,&priv.Shminfo[idx],w,h);
+	if ( priv.myximage[idx] == NULL ) {
+	    if ( priv.myximage[idx] != NULL ) XDestroyImage( priv.myximage[idx] );
 	    MSG_V( "Shared memory error,disabling ( Ximage error )\n" );
 	    goto shmemerror;
 	}
-	priv->Shminfo[idx].shmid=shmget( IPC_PRIVATE,
-		priv->myximage[idx]->bytes_per_line * priv->myximage[idx]->height,IPC_CREAT|0777);
-	if ( priv->Shminfo[idx].shmid < 0 ) {
-	    XDestroyImage( priv->myximage[idx] );
+	priv.Shminfo[idx].shmid=shmget( IPC_PRIVATE,
+		priv.myximage[idx]->bytes_per_line * priv.myximage[idx]->height,IPC_CREAT|0777);
+	if ( priv.Shminfo[idx].shmid < 0 ) {
+	    XDestroyImage( priv.myximage[idx] );
 	    MSG_V( "%s\n",strerror( errno ) );
 	    MSG_V( "Shared memory error,disabling ( seg id error )\n" );
 	    goto shmemerror;
 	}
-	priv->Shminfo[idx].shmaddr=( char * ) shmat( priv->Shminfo[idx].shmid,0,0 );
+	priv.Shminfo[idx].shmaddr=( char * ) shmat( priv.Shminfo[idx].shmid,0,0 );
 
-	if ( priv->Shminfo[idx].shmaddr == ( ( char * ) -1 ) ) {
-	    XDestroyImage( priv->myximage[idx] );
-	    if ( priv->Shminfo[idx].shmaddr != ( ( char * ) -1 ) ) shmdt( priv->Shminfo[idx].shmaddr );
+	if ( priv.Shminfo[idx].shmaddr == ( ( char * ) -1 ) ) {
+	    XDestroyImage( priv.myximage[idx] );
+	    if ( priv.Shminfo[idx].shmaddr != ( ( char * ) -1 ) ) shmdt( priv.Shminfo[idx].shmaddr );
 	    MSG_V( "Shared memory error,disabling ( address error )\n" );
 	    goto shmemerror;
 	}
-	priv->myximage[idx]->data=priv->Shminfo[idx].shmaddr;
-	priv->Shminfo[idx].readOnly=False;
-	XShmAttach( vo->mDisplay,&priv->Shminfo[idx] );
+	priv.myximage[idx]->data=priv.Shminfo[idx].shmaddr;
+	priv.Shminfo[idx].readOnly=False;
+	XShmAttach( vo->mDisplay,&priv.Shminfo[idx] );
 
 	XSync( vo->mDisplay,False );
 
-	if ( priv->gXErrorFlag ) {
-	    XDestroyImage( priv->myximage[idx] );
-	    shmdt( priv->Shminfo[idx].shmaddr );
+	if ( priv.gXErrorFlag ) {
+	    XDestroyImage( priv.myximage[idx] );
+	    shmdt( priv.Shminfo[idx].shmaddr );
 	    MSG_V( "Shared memory error,disabling.\n" );
-	    priv->gXErrorFlag=0;
+	    priv.gXErrorFlag=0;
 	    goto shmemerror;
-	} else shmctl( priv->Shminfo[idx].shmid,IPC_RMID,0 );
+	} else shmctl( priv.Shminfo[idx].shmid,IPC_RMID,0 );
 	static int firstTime=1;
 	if (firstTime) {
 	    MSG_V( "Sharing memory.\n" );
@@ -149,9 +152,9 @@ void __FASTCALL__ vo_x11_getMyXImage(const vo_data_t*vo,unsigned idx,Visual *vis
 	}
     } else {
 	shmemerror:
-	priv->Shmem_Flag=0;
+	priv.Shmem_Flag=0;
 #endif
-	priv->myximage[idx]=XGetImage( vo->mDisplay,vo->window,0,0,
+	priv.myximage[idx]=XGetImage( vo->mDisplay,vo->window,0,0,
 				w,h,AllPlanes,ZPixmap );
 #ifdef HAVE_SHM
     }
@@ -160,18 +163,18 @@ void __FASTCALL__ vo_x11_getMyXImage(const vo_data_t*vo,unsigned idx,Visual *vis
 
 void __FASTCALL__ vo_x11_freeMyXImage(vo_data_t*vo,unsigned idx)
 {
-    priv_t*priv=(priv_t*)vo->priv2;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
 #ifdef HAVE_SHM
-    if ( priv->Shmem_Flag ) {
-	XShmDetach( vo->mDisplay,&priv->Shminfo[idx] );
-	XDestroyImage( priv->myximage[idx] );
-	shmdt( priv->Shminfo[idx].shmaddr );
+    if ( priv.Shmem_Flag ) {
+	XShmDetach( vo->mDisplay,&priv.Shminfo[idx] );
+	XDestroyImage( priv.myximage[idx] );
+	shmdt( priv.Shminfo[idx].shmaddr );
     } else
 #endif
     {
-	XDestroyImage( priv->myximage[idx] );
+	XDestroyImage( priv.myximage[idx] );
     }
-    priv->myximage[idx]=NULL;
+    priv.myximage[idx]=NULL;
 }
 
 
@@ -270,9 +273,9 @@ MPXP_Rc vo_x11_init(vo_data_t*vo)
 
     if(vo->depthonscreen) return MPXP_Ok; // already called
 
-    vo->priv2=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=(priv_t*)vo->priv2;
-    priv->CompletionType=-1;
+    x11s_priv_t& priv=*new(zeromem) x11s_priv_t;
+    vo->priv2=&priv;
+    priv.CompletionType=-1;
 
     XSetErrorHandler(x11_errorhandler);
 
@@ -292,7 +295,7 @@ MPXP_Rc vo_x11_init(vo_data_t*vo)
 	return MPXP_False;
     }
     vo->mScreen=DefaultScreen( vo->mDisplay );     // Screen ID.
-    priv->mRootWin=RootWindow( vo->mDisplay,vo->mScreen );// Root window ID.
+    priv.mRootWin=RootWindow( vo->mDisplay,vo->mScreen );// Root window ID.
 
 #ifdef HAVE_XINERAMA
     if(XineramaIsActive(vo->mDisplay)) {
@@ -305,8 +308,8 @@ MPXP_Rc vo_x11_init(vo_data_t*vo)
 	    vo_conf.screenwidth=screens[mp_conf.xinerama_screen].width;
 	if (! vo_conf.screenheight)
 	    vo_conf.screenheight=screens[mp_conf.xinerama_screen].height;
-	priv->xinerama_x = screens[mp_conf.xinerama_screen].x_org;
-	priv->xinerama_y = screens[mp_conf.xinerama_screen].y_org;
+	priv.xinerama_x = screens[mp_conf.xinerama_screen].x_org;
+	priv.xinerama_y = screens[mp_conf.xinerama_screen].y_org;
 
 	XFree(screens);
     } else
@@ -314,9 +317,9 @@ MPXP_Rc vo_x11_init(vo_data_t*vo)
 #ifdef HAVE_XF86VM
     {
 	int clock;
-	XF86VidModeGetModeLine( vo->mDisplay,vo->mScreen,&clock ,&priv->modeline );
-	if ( !vo_conf.screenwidth )  vo_conf.screenwidth=priv->modeline.hdisplay;
-	if ( !vo_conf.screenheight ) vo_conf.screenheight=priv->modeline.vdisplay;
+	XF86VidModeGetModeLine( vo->mDisplay,vo->mScreen,&clock ,&priv.modeline );
+	if ( !vo_conf.screenwidth )  vo_conf.screenwidth=priv.modeline.hdisplay;
+	if ( !vo_conf.screenheight ) vo_conf.screenheight=priv.modeline.vdisplay;
     }
 #endif
     if (! vo_conf.screenwidth)
@@ -324,7 +327,7 @@ MPXP_Rc vo_x11_init(vo_data_t*vo)
     if (! vo_conf.screenheight)
 	vo_conf.screenheight=DisplayHeight( vo->mDisplay,vo->mScreen );
     // get color depth (from root window, or the best visual):
-    XGetWindowAttributes(vo->mDisplay, priv->mRootWin, &attribs);
+    XGetWindowAttributes(vo->mDisplay, priv.mRootWin, &attribs);
     depth=attribs.depth;
 
 #ifdef	SCAN_VISUALS
@@ -337,7 +340,7 @@ MPXP_Rc vo_x11_init(vo_data_t*vo)
 			  0, NULL, 1, 1, 8, 1);
     } else
 #endif
-	mXImage=XGetImage( vo->mDisplay,priv->mRootWin,0,0,1,1,AllPlanes,ZPixmap );
+	mXImage=XGetImage( vo->mDisplay,priv.mRootWin,0,0,1,1,AllPlanes,ZPixmap );
 
     vo->depthonscreen = depth;	// display depth on screen
 
@@ -369,11 +372,11 @@ MPXP_Rc vo_x11_init(vo_data_t*vo)
 		dispName += 4;
     else if ( strncmp(dispName, "localhost:", 10) == 0)
 		dispName += 9;
-    if (*dispName==':') priv->mLocalDisplay=1; else priv->mLocalDisplay=0;
+    if (*dispName==':') priv.mLocalDisplay=1; else priv.mLocalDisplay=0;
     MSG_V("vo: X11 running at %dx%d with depth %d and %d bits/pixel (\"%s\" => %s display)\n",
 	vo_conf.screenwidth,vo_conf.screenheight,
 	depth, vo->depthonscreen,
-	dispName,priv->mLocalDisplay?"local":"remote");
+	dispName,priv.mLocalDisplay?"local":"remote");
 
     return MPXP_Ok;
 }
@@ -771,16 +774,16 @@ void __FASTCALL__ vo_x11_calcpos(vo_data_t*vo,XSizeHints* hint, unsigned d_width
 
 void vo_x11_fullscreen(vo_data_t*vo )
 {
-    priv_t*priv=(priv_t*)vo->priv2;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
     XUnmapWindow( vo->mDisplay,vo->window );
     if ( !vo_FS(vo) ) {
 	vo_FS_SET(vo);
-	priv->prev=vo->dest;
+	priv.prev=vo->dest;
 	vo->dest.x=0;  vo->dest.y=0; vo->dest.w=vo_conf.screenwidth; vo->dest.h=vo_conf.screenheight;
 	vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
     } else {
 	vo_FS_UNSET(vo);
-	vo->dest=priv->prev;
+	vo->dest=priv.prev;
 	vo_x11_decoration(vo,vo->mDisplay,vo->window,1 );
     }
     vo_x11_sizehint(vo,vo->dest.x,vo->dest.y,vo->dest.w,vo->dest.h );
@@ -791,10 +794,10 @@ void vo_x11_fullscreen(vo_data_t*vo )
 
 void __FASTCALL__ saver_on(vo_data_t*vo,Display *mDisplay) {
 
-    priv_t*priv=(priv_t*)vo->priv2;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
 #ifdef HAVE_XDPMS
     int nothing;
-    if (priv->dpms_disabled) {
+    if (priv.dpms_disabled) {
 	if (DPMSQueryExtension(mDisplay, &nothing, &nothing)) {
 	    if (!DPMSEnable(mDisplay)) {  // restoring power saving settings
 		MSG_WARN("DPMS not available?\n");
@@ -813,17 +816,17 @@ void __FASTCALL__ saver_on(vo_data_t*vo,Display *mDisplay) {
     }
 #endif
 
-    if (priv->timeout_save) {
+    if (priv.timeout_save) {
 	int dummy, interval, prefer_blank, allow_exp;
 	XGetScreenSaver(mDisplay, &dummy, &interval, &prefer_blank, &allow_exp);
-	XSetScreenSaver(mDisplay, priv->timeout_save, interval, prefer_blank, allow_exp);
-	XGetScreenSaver(mDisplay, &priv->timeout_save, &interval, &prefer_blank, &allow_exp);
+	XSetScreenSaver(mDisplay, priv.timeout_save, interval, prefer_blank, allow_exp);
+	XGetScreenSaver(mDisplay, &priv.timeout_save, &interval, &prefer_blank, &allow_exp);
     }
 }
 
 void __FASTCALL__ saver_off(vo_data_t*vo,Display *mDisplay) {
 
-    priv_t*priv=(priv_t*)vo->priv2;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
     int interval, prefer_blank, allow_exp;
 #ifdef HAVE_XDPMS
     int nothing;
@@ -835,14 +838,14 @@ void __FASTCALL__ saver_off(vo_data_t*vo,Display *mDisplay) {
 	if (onoff) {
 	    Status stat;
 	    MSG_V ("Disabling DPMS\n");
-	    priv->dpms_disabled=1;
+	    priv.dpms_disabled=1;
 	    stat = DPMSDisable(mDisplay);  // monitor powersave off
 	    MSG_V ("stat: %d\n", stat);
 	}
     }
 #endif
-    XGetScreenSaver(mDisplay, &priv->timeout_save, &interval, &prefer_blank, &allow_exp);
-    if (priv->timeout_save) // turning off screensaver
+    XGetScreenSaver(mDisplay, &priv.timeout_save, &interval, &prefer_blank, &allow_exp);
+    if (priv.timeout_save) // turning off screensaver
 	XSetScreenSaver(mDisplay, 0, interval, prefer_blank, allow_exp);
 }
 
@@ -851,16 +854,16 @@ void __FASTCALL__ saver_off(vo_data_t*vo,Display *mDisplay) {
 #ifdef HAVE_XINERAMA
 void __FASTCALL__ vo_x11_xinerama_move(vo_data_t*vo,Display *dsp, Window w,const XSizeHints*hint)
 {
-    priv_t*priv=(priv_t*)vo->priv2;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
     if(XineramaIsActive(dsp))
-	XMoveWindow(dsp,w,priv->xinerama_x+hint->x,priv->xinerama_y+hint->y);
+	XMoveWindow(dsp,w,priv.xinerama_x+hint->x,priv.xinerama_y+hint->y);
 }
 #endif
 
 #ifdef HAVE_XF86VM
 void __FASTCALL__ vo_vm_switch(vo_data_t*vo,uint32_t X, uint32_t Y, int* modeline_width, int* modeline_height)
 {
-    priv_t*priv=(priv_t*)vo->priv2;
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
     int vm_event, vm_error;
     int vm_ver, vm_rev;
     int i,j,have_vm=0;
@@ -875,25 +878,25 @@ void __FASTCALL__ vo_vm_switch(vo_data_t*vo,uint32_t X, uint32_t Y, int* modelin
       MSG_WARN("XF86VidMode Extenstion not available.\n");
 
     if (have_vm) {
-      if (priv->vidmodes==NULL)
-	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
+      if (priv.vidmodes==NULL)
+	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv.vidmodes);
       j=0;
-      *modeline_width=priv->vidmodes[0]->hdisplay;
-      *modeline_height=priv->vidmodes[0]->vdisplay;
+      *modeline_width=priv.vidmodes[0]->hdisplay;
+      *modeline_height=priv.vidmodes[0]->vdisplay;
 
       for (i=1; i<modecount; i++)
-	if ((priv->vidmodes[i]->hdisplay >= X) && (priv->vidmodes[i]->vdisplay >= Y))
-	  if ( (priv->vidmodes[i]->hdisplay <= *modeline_width ) && (priv->vidmodes[i]->vdisplay <= *modeline_height) )
+	if ((priv.vidmodes[i]->hdisplay >= X) && (priv.vidmodes[i]->vdisplay >= Y))
+	  if ( (priv.vidmodes[i]->hdisplay <= *modeline_width ) && (priv.vidmodes[i]->vdisplay <= *modeline_height) )
 	    {
-	      *modeline_width=priv->vidmodes[i]->hdisplay;
-	      *modeline_height=priv->vidmodes[i]->vdisplay;
+	      *modeline_width=priv.vidmodes[i]->hdisplay;
+	      *modeline_height=priv.vidmodes[i]->vdisplay;
 	      j=i;
 	    }
 
       MSG_V("XF86VM: Selected video mode %dx%d for image size %dx%d.\n",*modeline_width, *modeline_height, X, Y);
       XF86VidModeLockModeSwitch(vo->mDisplay,vo->mScreen,0);
-      XF86VidModeSwitchToMode(vo->mDisplay,vo->mScreen,priv->vidmodes[j]);
-      XF86VidModeSwitchToMode(vo->mDisplay,vo->mScreen,priv->vidmodes[j]);
+      XF86VidModeSwitchToMode(vo->mDisplay,vo->mScreen,priv.vidmodes[j]);
+      XF86VidModeSwitchToMode(vo->mDisplay,vo->mScreen,priv.vidmodes[j]);
       X=(vo_conf.screenwidth-*modeline_width)/2;
       Y=(vo_conf.screenheight-*modeline_height)/2;
       XF86VidModeSetViewPort(vo->mDisplay,vo->mScreen,X,Y);
@@ -902,21 +905,21 @@ void __FASTCALL__ vo_vm_switch(vo_data_t*vo,uint32_t X, uint32_t Y, int* modelin
 
 void __FASTCALL__ vo_vm_close(vo_data_t*vo,Display *dpy)
 {
-    priv_t*priv=(priv_t*)vo->priv2;
-    if (priv->vidmodes!=NULL) {
+    x11s_priv_t& priv = *static_cast<x11s_priv_t*>(vo->priv2);
+    if (priv.vidmodes!=NULL) {
 	int i, modecount;
 	int screen; screen=DefaultScreen( dpy );
 
-	delete priv->vidmodes; priv->vidmodes=NULL;
-	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv->vidmodes);
+	delete priv.vidmodes; priv.vidmodes=NULL;
+	XF86VidModeGetAllModeLines(vo->mDisplay,vo->mScreen,&modecount,&priv.vidmodes);
 	for (i=0; i<modecount; i++)
-	    if ((priv->vidmodes[i]->hdisplay == vo_conf.screenwidth) && (priv->vidmodes[i]->vdisplay == vo_conf.screenheight)) {
+	    if ((priv.vidmodes[i]->hdisplay == vo_conf.screenwidth) && (priv.vidmodes[i]->vdisplay == vo_conf.screenheight)) {
 		MSG_V("\nReturning to original mode %dx%d\n", vo_conf.screenwidth, vo_conf.screenheight);
 		break;
 	    }
-	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
-	XF86VidModeSwitchToMode(dpy,screen,priv->vidmodes[i]);
-	delete priv->vidmodes;
+	XF86VidModeSwitchToMode(dpy,screen,priv.vidmodes[i]);
+	XF86VidModeSwitchToMode(dpy,screen,priv.vidmodes[i]);
+	delete priv.vidmodes;
     }
 }
 #endif

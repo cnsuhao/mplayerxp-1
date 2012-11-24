@@ -209,7 +209,10 @@ typedef enum {
 }sdl_mode_e;
 
 /** Private SDL Data structure **/
-typedef struct priv_s {
+struct sdl_priv_t : public video_private {
+    sdl_priv_t();
+    virtual ~sdl_priv_t() {}
+
     char	driver[8]; /* output driver used by sdl */
     SDL_Surface*surface; /* SDL display surface */
     SDL_Surface*rgbsurface[MAX_DRI_BUFFERS]; /* SDL RGB surface */
@@ -239,7 +242,12 @@ typedef struct priv_s {
     const char *	vidix_name;
     vidix_server_t*	vidix_server;
 #endif
-}priv_t;
+};
+
+sdl_priv_t::sdl_priv_t() {
+    num_buffs = 1;
+    surface = NULL;
+}
 
 static void __FASTCALL__ erase_area_4(int x_start, int width, int height, int pitch, uint32_t color, uint8_t* pixels);
 static void __FASTCALL__ erase_area_1(int x_start, int width, int height, int pitch, uint8_t color, uint8_t* pixels);
@@ -278,7 +286,7 @@ static inline int findArrayEnd (SDL_Rect **array)
 
 static MPXP_Rc sdl_open ( vo_data_t*vo )
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     const SDL_VideoInfo *vidInfo = NULL;
     /*static int opened = 0;
 	if (opened)
@@ -287,10 +295,10 @@ static MPXP_Rc sdl_open ( vo_data_t*vo )
     MSG_DBG3("SDL: Opening Plugin\n");
 #ifdef CONFIG_VIDIX
     if(memcmp(sdl_subdevice,"vidix",5) == 0) {
-	priv->vidix_name = &sdl_subdevice[5]; /* vidix_name will be valid within init() */
-	if(!(priv->vidix_server=vidix_preinit(vo,priv->vidix_name,&video_out_sdl)))
+	priv.vidix_name = &sdl_subdevice[5]; /* vidix_name will be valid within init() */
+	if(!(priv.vidix_server=vidix_preinit(vo,priv.vidix_name,&video_out_sdl)))
 	    return MPXP_False;
-	strcpy(priv->driver,"vidix");
+	strcpy(priv.driver,"vidix");
     } else {
 #endif
 	if(sdl_subdevice[0]) setenv("SDL_VIDEODRIVER", sdl_subdevice, 1);
@@ -305,10 +313,10 @@ static MPXP_Rc sdl_open ( vo_data_t*vo )
 #endif
 
     /* default to no fullscreen mode, we'll set this as soon we have the avail. modes */
-    priv->fullmode = -2;
+    priv.fullmode = -2;
 
-    priv->fullmodes = NULL;
-    priv->bpp = 0;
+    priv.fullmodes = NULL;
+    priv.bpp = 0;
 
     /* initialize the SDL Video system */
     if (!SDL_WasInit(SDL_INIT_VIDEO)) {
@@ -321,21 +329,21 @@ static MPXP_Rc sdl_open ( vo_data_t*vo )
 #ifdef CONFIG_VIDIX
     if(memcmp(sdl_subdevice,"vidix",5) != 0)
 #endif
-    SDL_VideoDriverName(priv->driver, 8);
-    MSG_OK("SDL: Using driver: %s\n", priv->driver);
+    SDL_VideoDriverName(priv.driver, 8);
+    MSG_OK("SDL: Using driver: %s\n", priv.driver);
     /* other default values */
 #ifdef SDL_NOHWSURFACE
     MSG_V("SDL: using software-surface\n");
-    priv->sdlflags = SDL_SWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_ANYFORMAT;
-    priv->sdlfullflags = SDL_SWSURFACE|SDL_FULLSCREEN|SDL_DOUBLEBUF|SDL_ASYNCBLIT|SDL_ANYFORMAT;
+    priv.sdlflags = SDL_SWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_ANYFORMAT;
+    priv.sdlfullflags = SDL_SWSURFACE|SDL_FULLSCREEN|SDL_DOUBLEBUF|SDL_ASYNCBLIT|SDL_ANYFORMAT;
 #else
     MSG_V("SDL: using hardware-surface\n");
-    priv->sdlflags = SDL_HWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_HWACCEL/*|SDL_ANYFORMAT*/;
-    priv->sdlfullflags = SDL_HWSURFACE|SDL_FULLSCREEN|SDL_DOUBLEBUF|SDL_ASYNCBLIT|SDL_HWACCEL/*|SDL_ANYFORMAT*/;
+    priv.sdlflags = SDL_HWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_HWACCEL/*|SDL_ANYFORMAT*/;
+    priv.sdlfullflags = SDL_HWSURFACE|SDL_FULLSCREEN|SDL_DOUBLEBUF|SDL_ASYNCBLIT|SDL_HWACCEL/*|SDL_ANYFORMAT*/;
 #endif
     if(sdl_forcegl) {
-	priv->sdlflags |= SDL_OPENGL|SDL_OPENGLBLIT|SDL_ANYFORMAT;
-	priv->sdlfullflags |= SDL_OPENGL|SDL_OPENGLBLIT|SDL_ANYFORMAT;
+	priv.sdlflags |= SDL_OPENGL|SDL_OPENGLBLIT|SDL_ANYFORMAT;
+	priv.sdlfullflags |= SDL_OPENGL|SDL_OPENGLBLIT|SDL_ANYFORMAT;
     }
     /* Setup Keyrepeats (500/30 are defaults) */
     SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, 100 /*SDL_DEFAULT_REPEAT_INTERVAL*/);
@@ -344,20 +352,20 @@ static MPXP_Rc sdl_open ( vo_data_t*vo )
     vidInfo = SDL_GetVideoInfo ();
 
     /* collect all fullscreen & hardware modes available */
-    if (!(priv->fullmodes = SDL_ListModes (vidInfo->vfmt, priv->sdlfullflags))) {
+    if (!(priv.fullmodes = SDL_ListModes (vidInfo->vfmt, priv.sdlfullflags))) {
 	/* non hardware accelerated fullscreen modes */
-	priv->sdlfullflags &= ~SDL_HWSURFACE;
-	priv->fullmodes = SDL_ListModes (vidInfo->vfmt, priv->sdlfullflags);
+	priv.sdlfullflags &= ~SDL_HWSURFACE;
+	priv.fullmodes = SDL_ListModes (vidInfo->vfmt, priv.sdlfullflags);
     }
 
     /* test for normal resizeable & windowed hardware accellerated surfaces */
-    if (!SDL_ListModes (vidInfo->vfmt, priv->sdlflags)) {
+    if (!SDL_ListModes (vidInfo->vfmt, priv.sdlflags)) {
 	/* test for NON hardware accelerated resizeable surfaces - poor you.
 	 * That's all we have. If this fails there's nothing left.
 	 * Theoretically there could be Fullscreenmodes left - we ignore this for now.
 	 */
-	priv->sdlflags &= ~SDL_HWSURFACE;
-	if ((!SDL_ListModes (vidInfo->vfmt, priv->sdlflags)) && (!priv->fullmodes)) {
+	priv.sdlflags &= ~SDL_HWSURFACE;
+	if ((!SDL_ListModes (vidInfo->vfmt, priv.sdlflags)) && (!priv.fullmodes)) {
 	    MSG_ERR("SDL: Couldn't get any acceptable SDL Mode for output.\n");
 	    return MPXP_False;
 	}
@@ -367,15 +375,15 @@ static MPXP_Rc sdl_open ( vo_data_t*vo )
     * 8-bits, for example. So, if the display is less than 16-bits,
     * we'll force the BPP to 16, and pray that SDL can emulate for us.
     */
-    priv->bpp = vidInfo->vfmt->BitsPerPixel;
-    if (priv->mode == YUV && priv->bpp < 16) {
+    priv.bpp = vidInfo->vfmt->BitsPerPixel;
+    if (priv.mode == YUV && priv.bpp < 16) {
 	MSG_V("SDL: Your SDL display target wants to be at a color "
 		"depth of (%d), but we need it to be at least 16 "
 		"bits, so we need to emulate 16-bit color. This is "
 		"going to slow things down; you might want to "
 		"increase your display's color depth, if possible.\n",
-		priv->bpp);
-	priv->bpp = 16;
+		priv.bpp);
+	priv.bpp = 16;
     }
 
     /* We don't want those in our event queue.
@@ -404,22 +412,22 @@ static MPXP_Rc sdl_open ( vo_data_t*vo )
 
 static int sdl_close (vo_data_t*vo)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     unsigned i,n;
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_name) vidix_term(vo);
+    if(priv.vidix_name) vidix_term(vo);
 #endif
-    n=priv->num_buffs;
+    n=priv.num_buffs;
     for(i=0;i<n;i++) {
 	/* Cleanup YUV Overlay structure */
-	if (priv->overlay[i])
-	    SDL_FreeYUVOverlay(priv->overlay[i]);
+	if (priv.overlay[i])
+	    SDL_FreeYUVOverlay(priv.overlay[i]);
 	/* Free RGB Surface */
-	if (priv->rgbsurface[i])
-	    SDL_FreeSurface(priv->rgbsurface[i]);
+	if (priv.rgbsurface[i])
+	    SDL_FreeSurface(priv.rgbsurface[i]);
     }
     /* Free our blitting surface */
-    if (priv->surface) SDL_FreeSurface(priv->surface);
+    if (priv.surface) SDL_FreeSurface(priv.surface);
 
     /* DONT attempt to mp_free the fullscreen modes array. SDL_Quit* does this for us */
     /* Cleanup SDL */
@@ -434,20 +442,20 @@ static int sdl_close (vo_data_t*vo)
 /* Set video mode. Not fullscreen */
 static MPXP_Rc __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, int bpp, uint32_t sdlflags)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     SDL_Surface* newsurface;
     MPXP_Rc retval=MPXP_False;
     newsurface = SDL_SetVideoMode(width, height, bpp, sdlflags);
 
     if(newsurface) {
 	vo_lock_surfaces(vo);
-	/* priv->surface will be NULL the first time this function is called. */
-	if(priv->surface)
-	    SDL_FreeSurface(priv->surface);
+	/* priv.surface will be NULL the first time this function is called. */
+	if(priv.surface)
+	    SDL_FreeSurface(priv.surface);
 
-	priv->surface = newsurface;
-	priv->dstwidth = width;
-	priv->dstheight = height;
+	priv.surface = newsurface;
+	priv.dstwidth = width;
+	priv.dstheight = height;
 
 	retval = setup_surfaces(vo);
 	vo_unlock_surfaces(vo);
@@ -458,55 +466,55 @@ static MPXP_Rc __FASTCALL__ set_video_mode(vo_data_t*vo,int width, int height, i
 }
 
 static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     SDL_Surface *newsurface = NULL;
     int screen_surface_w, screen_surface_h;
     MPXP_Rc retval=MPXP_False;
 
     /* if we haven't set a fullmode yet, default to the lowest res fullmode first */
     /* But select a mode where the full video enter */
-    if(priv->X && priv->fulltype & FS) {
-	screen_surface_w = priv->XWidth;
-	screen_surface_h = priv->XHeight;
+    if(priv.X && priv.fulltype & FS) {
+	screen_surface_w = priv.XWidth;
+	screen_surface_h = priv.XHeight;
     }
     else if (mode < 0) {
 	int i;
 	mode = 0; // Default to the biggest mode avaible
-	for(i = findArrayEnd(priv->fullmodes) - 1; i >=0; i--) {
-	    if( (priv->fullmodes[i]->w >= priv->dstwidth) &&
-		      (priv->fullmodes[i]->h >= priv->dstheight) ) {
+	for(i = findArrayEnd(priv.fullmodes) - 1; i >=0; i--) {
+	    if( (priv.fullmodes[i]->w >= priv.dstwidth) &&
+		      (priv.fullmodes[i]->h >= priv.dstheight) ) {
 		    mode = i;
 		    break;
 	    }
 	}
-	priv->fullmode = mode;
-	screen_surface_h = priv->fullmodes[mode]->h;
-	screen_surface_w = priv->fullmodes[mode]->w;
+	priv.fullmode = mode;
+	screen_surface_h = priv.fullmodes[mode]->h;
+	screen_surface_w = priv.fullmodes[mode]->w;
     } else {
-	screen_surface_h = priv->fullmodes[mode]->h;
-	screen_surface_w = priv->fullmodes[mode]->w;
+	screen_surface_h = priv.fullmodes[mode]->h;
+	screen_surface_w = priv.fullmodes[mode]->w;
     }
     aspect_save_screenres(screen_surface_w, screen_surface_h);
 
     /* calculate new video size/aspect */
-    if(priv->mode == YUV) {
-	if(priv->fulltype&FS) aspect_save_screenres(priv->XWidth, priv->XHeight);
-	aspect(&priv->dstwidth, &priv->dstheight, A_ZOOM);
+    if(priv.mode == YUV) {
+	if(priv.fulltype&FS) aspect_save_screenres(priv.XWidth, priv.XHeight);
+	aspect(&priv.dstwidth, &priv.dstheight, A_ZOOM);
     }
 
     /* try to change to given fullscreenmode */
-    newsurface = SDL_SetVideoMode(  priv->dstwidth, screen_surface_h, priv->bpp,
-					priv->sdlfullflags);
+    newsurface = SDL_SetVideoMode(  priv.dstwidth, screen_surface_h, priv.bpp,
+					priv.sdlfullflags);
 
     /* if creation of new surface was successfull, save it and hide mouse cursor */
     if(newsurface) {
 	vo_lock_surfaces(vo);
-	if (priv->surface) SDL_FreeSurface(priv->surface);
-	priv->surface = newsurface;
+	if (priv.surface) SDL_FreeSurface(priv.surface);
+	priv.surface = newsurface;
 	SDL_ShowCursor(0);
-	SDL_SRF_LOCK(priv->surface, -1)
-	SDL_FillRect(priv->surface, NULL, 0);
-	SDL_SRF_UNLOCK(priv->surface)
+	SDL_SRF_LOCK(priv.surface, -1)
+	SDL_FillRect(priv.surface, NULL, 0);
+	SDL_SRF_UNLOCK(priv.surface)
 	retval = setup_surfaces(vo);
 	vo_unlock_surfaces(vo);
     } else
@@ -528,10 +536,10 @@ static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 //static int sdl_setup (int width, int height)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     MPXP_Rc retval;
 
-    if(sdl_forcegl) priv->mode = GL;
+    if(sdl_forcegl) priv.mode = GL;
     else
     switch(format){
 	case IMGFMT_I420:
@@ -540,19 +548,19 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	case IMGFMT_YUY2:
 	case IMGFMT_UYVY:
 	case IMGFMT_YVYU:
-	    priv->mode = YUV;
+	    priv.mode = YUV;
 	    break;
 	case IMGFMT_BGR15:
 	case IMGFMT_BGR16:
 	case IMGFMT_BGR24:
 	case IMGFMT_BGR32:
-	    priv->mode = BGR;
+	    priv.mode = BGR;
 	    break;
 	case IMGFMT_RGB15:
 	case IMGFMT_RGB16:
 	case IMGFMT_RGB24:
 	case IMGFMT_RGB32:
-	    priv->mode = RGB;
+	    priv.mode = RGB;
 	    break;
 	default:
 	    MSG_ERR("SDL: Unsupported image format (0x%X)\n",format);
@@ -562,12 +570,12 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     MSG_V("SDL: Using 0x%X (%s) image format\n", format,
 	vo_format_name(format));
 
-    if(priv->mode != YUV) {
-	priv->sdlflags |= SDL_ANYFORMAT;
-	priv->sdlfullflags |= SDL_ANYFORMAT;
+    if(priv.mode != YUV) {
+	priv.sdlflags |= SDL_ANYFORMAT;
+	priv.sdlfullflags |= SDL_ANYFORMAT;
     }
     /* SDL can only scale YUV data */
-    if(priv->mode == RGB || priv->mode == BGR) {
+    if(priv.mode == RGB || priv.mode == BGR) {
 	d_width = width;
 	d_height = height;
     }
@@ -575,18 +583,18 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     aspect_save_prescale(d_width ? d_width : width, d_height ? d_height : height);
 
     /* Save the original Image size */
-    priv->X = 0;
-    priv->width  = width;
-    priv->height = height;
-    priv->dstwidth  = d_width ? d_width : width;
-    priv->dstheight = d_height ? d_height : height;
+    priv.X = 0;
+    priv.width  = width;
+    priv.height = height;
+    priv.dstwidth  = d_width ? d_width : width;
+    priv.dstheight = d_height ? d_height : height;
 
-    priv->format = format;
+    priv.format = format;
 
     /* Set output window title */
     SDL_WM_SetCaption (".: MPlayerXP : F = Fullscreen/Windowed : C = Cycle Fullscreen Resolutions :.", title);
 
-    if(priv->mode == GL) {
+    if(priv.mode == GL) {
 	switch(format){
 	    case IMGFMT_BGR15:
 	    case IMGFMT_RGB15:
@@ -634,12 +642,12 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	}
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
     }
-    if(priv->X) {
-	aspect_save_screenres(priv->XWidth,priv->XHeight);
-	aspect(&priv->dstwidth,&priv->dstheight,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
+    if(priv.X) {
+	aspect_save_screenres(priv.XWidth,priv.XHeight);
+	aspect(&priv.dstwidth,&priv.dstheight,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
     }
-    priv->windowsize.w = priv->dstwidth;
-    priv->windowsize.h = priv->dstheight;
+    priv.windowsize.w = priv.dstwidth;
+    priv.windowsize.h = priv.dstheight;
 
     /* bit 0 (0x01) means fullscreen (-fs)
      * bit 1 (0x02) means mode switching (-vm)
@@ -648,41 +656,41 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
      */
     if(flags&FLIP) {
 	MSG_V("SDL: using flipped video (only with RGB/BGR/packed YUV)\n");
-	priv->flip = 1;
+	priv.flip = 1;
     }
     if(flags&FS) {
 	MSG_V("SDL: setting zoomed fullscreen without modeswitching\n");
 	MSG_V("SDL: Info - please use -vm or -zoom to switch to best resolution.\n");
-	priv->fulltype = FS;
-	retval = set_fullmode(vo,priv->fullmode);
+	priv.fulltype = FS;
+	retval = set_fullmode(vo,priv.fullmode);
 	if(retval!=MPXP_Ok) return retval;
     } else if(flags&VM) {
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
-	priv->fulltype = VM;
-	set_fullmode(vo,priv->fullmode);
+	priv.fulltype = VM;
+	set_fullmode(vo,priv.fullmode);
     } else if(flags&ZOOM) {
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
-	priv->fulltype = ZOOM;
-	retval = set_fullmode(vo,priv->fullmode);
+	priv.fulltype = ZOOM;
+	retval = set_fullmode(vo,priv.fullmode);
 	if(retval!=MPXP_Ok) return retval;
     } else {
-	if((strcmp(priv->driver, "x11") == 0)
-	    ||(strcmp(priv->driver, "windib") == 0)
-	    ||(strcmp(priv->driver, "directx") == 0)
-	    ||((strcmp(priv->driver, "aalib") == 0)
-	    && priv->X)) {
+	if((strcmp(priv.driver, "x11") == 0)
+	    ||(strcmp(priv.driver, "windib") == 0)
+	    ||(strcmp(priv.driver, "directx") == 0)
+	    ||((strcmp(priv.driver, "aalib") == 0)
+	    && priv.X)) {
 		MSG_V("SDL: setting windowed mode\n");
-		retval = set_video_mode(vo,priv->dstwidth, priv->dstheight, priv->bpp, priv->sdlflags);
+		retval = set_video_mode(vo,priv.dstwidth, priv.dstheight, priv.bpp, priv.sdlflags);
 		if(retval!=MPXP_Ok) return retval;
 	    } else {
 		MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
-		priv->fulltype = ZOOM;
-		retval = set_fullmode(vo,priv->fullmode);
+		priv.fulltype = ZOOM;
+		retval = set_fullmode(vo,priv.fullmode);
 		if(retval!=MPXP_Ok) return retval;
 	    }
     }
 
-    if(!priv->surface) { // cannot SetVideoMode
+    if(!priv.surface) { // cannot SetVideoMode
 	MSG_ERR("SDL: failed to set video mode: %s\n", SDL_GetError());
 	return MPXP_False;
     }
@@ -691,25 +699,25 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 
 static MPXP_Rc setup_surfaces( vo_data_t*vo )
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     unsigned i;
     MPXP_Rc retval;
-    priv->num_buffs=vo_conf.xp_buffs;
+    priv.num_buffs=vo_conf.xp_buffs;
 #ifdef CONFIG_VIDIX
-    if(!priv->vidix_name) {
+    if(!priv.vidix_name) {
 #endif
-    for(i=0;i<priv->num_buffs;i++) {
+    for(i=0;i<priv.num_buffs;i++) {
 	retval = setup_surface(vo,i);
 	if(retval!=MPXP_Ok) return retval;
     }
 #ifdef CONFIG_VIDIX
     }
     else {
-	if(vidix_init(vo,priv->width,priv->height,0,priv->y,
-			priv->dstwidth,priv->dstheight,priv->format,priv->bpp,
-			priv->XWidth,priv->XHeight) != MPXP_Ok) {
+	if(vidix_init(vo,priv.width,priv.height,0,priv.y,
+			priv.dstwidth,priv.dstheight,priv.format,priv.bpp,
+			priv.XWidth,priv.XHeight) != MPXP_Ok) {
 	    MSG_ERR("vo_sdl: Can't initialize VIDIX driver\n");
-	    priv->vidix_name = NULL;
+	    priv.vidix_name = NULL;
 	    return MPXP_False;
 	} else MSG_V("vo_sdl: Using VIDIX\n");
 	if(vidix_start(vo)!=0) return MPXP_False;
@@ -718,89 +726,89 @@ static MPXP_Rc setup_surfaces( vo_data_t*vo )
     return MPXP_Ok;
 }
 
-/* Free priv->rgbsurface or priv->overlay if they are != NULL.
- * Setup priv->rgbsurface or priv->overlay depending on source format.
+/* Free priv.rgbsurface or priv.overlay if they are != NULL.
+ * Setup priv.rgbsurface or priv.overlay depending on source format.
  * The size of the created surface or overlay depends on the size of
- * priv->surface, priv->width, priv->height, priv->dstwidth and priv->dstheight.
+ * priv.surface, priv.width, priv.height, priv.dstwidth and priv.dstheight.
  */
 static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
-    float v_scale = ((float) priv->dstheight) / priv->height;
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
+    float v_scale = ((float) priv.dstheight) / priv.height;
     int surfwidth, surfheight;
-    surfwidth = priv->width;
-    surfheight = priv->height + (priv->surface->h - priv->dstheight) / v_scale;
+    surfwidth = priv.width;
+    surfheight = priv.height + (priv.surface->h - priv.dstheight) / v_scale;
     surfheight&= ~1;
     /* Place the image in the middle of the screen */
-    priv->y = (surfheight - priv->height) / 2;
-    priv->y_screen_top = priv->y * v_scale;
-    priv->y_screen_bottom = priv->y_screen_top + priv->dstheight;
+    priv.y = (surfheight - priv.height) / 2;
+    priv.y_screen_top = priv.y * v_scale;
+    priv.y_screen_bottom = priv.y_screen_top + priv.dstheight;
 
-    priv->dirty_off_frame[0].x = -1;
-    priv->dirty_off_frame[0].y = -1;
-    priv->dirty_off_frame[1].x = -1;
-    priv->dirty_off_frame[1].y = -1;
+    priv.dirty_off_frame[0].x = -1;
+    priv.dirty_off_frame[0].y = -1;
+    priv.dirty_off_frame[1].x = -1;
+    priv.dirty_off_frame[1].y = -1;
 
     /* Make sure the entire screen is updated */
     vo_osd_changed(1);
 
-    if(priv->rgbsurface[idx])
-	SDL_FreeSurface(priv->rgbsurface[idx]);
-    else if(priv->overlay[idx])
-	SDL_FreeYUVOverlay(priv->overlay[idx]);
+    if(priv.rgbsurface[idx])
+	SDL_FreeSurface(priv.rgbsurface[idx]);
+    else if(priv.overlay[idx])
+	SDL_FreeYUVOverlay(priv.overlay[idx]);
 
-    priv->rgbsurface[idx] = NULL;
-    priv->overlay[idx] = NULL;
+    priv.rgbsurface[idx] = NULL;
+    priv.overlay[idx] = NULL;
 
-    switch(priv->format) {
+    switch(priv.format) {
 	/* Initialize and create the RGB Surface used for video out in BGR/RGB mode */
 	//SDL_Surface *SDL_CreateRGBSurface(Uint32 flags, int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
-	//	SDL_SWSURFACE,SDL_HWSURFACE,SDL_SRCCOLORKEY, priv->flags?	guess: exchange Rmask and Bmask for BGR<->RGB
+	//	SDL_SWSURFACE,SDL_HWSURFACE,SDL_SRCCOLORKEY, priv.flags?	guess: exchange Rmask and Bmask for BGR<->RGB
 	// 32 bit: a:ff000000 r:ff000 g:ff00 b:ff
 	// 24 bit: r:ff0000 g:ff00 b:ff
 	// 16 bit: r:1111100000000000b g:0000011111100000b b:0000000000011111b
 	// 15 bit: r:111110000000000b g:000001111100000b b:000000000011111b
 	// FIXME: colorkey detect based on bpp, FIXME static bpp value, FIXME alpha value correct?
 	case IMGFMT_RGB15:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 15, 31, 992, 31744, 0);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 15, 31, 992, 31744, 0);
 	    break;
 	case IMGFMT_BGR15:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 15, 31744, 992, 31, 0);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 15, 31744, 992, 31, 0);
 	    break;
 	case IMGFMT_RGB16:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 16, 31, 2016, 63488, 0);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 16, 31, 2016, 63488, 0);
 	    break;
 	case IMGFMT_BGR16:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 16, 63488, 2016, 31, 0);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 16, 63488, 2016, 31, 0);
 	    break;
 	case IMGFMT_RGB24:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
 	    break;
 	case IMGFMT_BGR24:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 24, 0xFF0000, 0x00FF00, 0x0000FF, 0);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 24, 0xFF0000, 0x00FF00, 0x0000FF, 0);
 	    break;
 	case IMGFMT_RGB32:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0/*0xFF000000*/);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0/*0xFF000000*/);
 	    break;
 	case IMGFMT_BGR32:
-	    priv->rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0/*0xFF000000*/);
+	    priv.rgbsurface[idx] = SDL_CreateRGBSurface (SDL_SRCCOLORKEY, surfwidth, surfheight, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0/*0xFF000000*/);
 	    break;
 	default:
 	    /* Initialize and create the YUV Overlay used for video out */
-	    if (!(priv->overlay[idx] = SDL_CreateYUVOverlay (surfwidth, surfheight, priv->format==IMGFMT_I420?IMGFMT_IYUV:priv->format, priv->surface))) {
+	    if (!(priv.overlay[idx] = SDL_CreateYUVOverlay (surfwidth, surfheight, priv.format==IMGFMT_I420?IMGFMT_IYUV:priv.format, priv.surface))) {
 		MSG_ERR ("SDL: Couldn't create a YUV overlay: %s\n", SDL_GetError());
 		return MPXP_False;
 	    }
     }
-    if(priv->mode != YUV && priv->mode != GL) {
-	if(!priv->rgbsurface[idx]) {
+    if(priv.mode != YUV && priv.mode != GL) {
+	if(!priv.rgbsurface[idx]) {
 	    MSG_ERR ("SDL: Couldn't create a RGB surface: %s\n", SDL_GetError());
 	    return MPXP_False;
 	}
 
-	if((priv->format&0xFF) != priv->bpp)
+	if((priv.format&0xFF) != priv.bpp)
 	    MSG_WARN("SDL: using depth/colorspace conversion, this will slow things"
-		   "down (%ibpp -> %ibpp).\n", priv->format&0xFF, priv->bpp);
+		   "down (%ibpp -> %ibpp).\n", priv.format&0xFF, priv.bpp);
     }
     erase_rectangle(vo,idx,0, 0, surfwidth, surfheight);
 
@@ -817,7 +825,7 @@ static MPXP_Rc __FASTCALL__ setup_surface(vo_data_t*vo,unsigned idx)
 #define shift_key (event.key.keysym.mod==(KMOD_LSHIFT||KMOD_RSHIFT))
 static uint32_t __FASTCALL__ check_events (vo_data_t*vo,vo_adjust_size_t adjust_size)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     SDL_Event event;
     SDLKey keypressed = SDLKey(0);
     static int firstcheck = 0;
@@ -829,14 +837,14 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,vo_adjust_size_t adjust_
 	switch (event.type) {
 	    /* capture window resize events */
 	    case SDL_VIDEORESIZE:
-		(*adjust_size)(vo,priv->windowsize.w,priv->windowsize.h,reinterpret_cast<unsigned*>(&event.resize.w), reinterpret_cast<unsigned*>(&event.resize.h));
+		(*adjust_size)(vo,priv.windowsize.w,priv.windowsize.h,reinterpret_cast<unsigned*>(&event.resize.w), reinterpret_cast<unsigned*>(&event.resize.h));
 		if(set_video_mode(vo,event.resize.w, event.resize.h,
-				  priv->bpp, priv->sdlflags)!=0)
+				  priv.bpp, priv.sdlflags)!=0)
 				  exit(EXIT_FAILURE);
 
 		/* save video extents, to restore them after going fullscreen */
-		priv->windowsize.w = priv->surface->w;
-		priv->windowsize.h = priv->surface->h;
+		priv.windowsize.w = priv.surface->w;
+		priv.windowsize.h = priv.surface->h;
 		MSG_DBG3("SDL: Window resize\n");
 		retval = VO_EVENT_RESIZE;
 		break;
@@ -877,27 +885,27 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,vo_adjust_size_t adjust_
 		MSG_V("SDL: Key pressed: '%i'\n", keypressed);
 
 		/* c key pressed. c cycles through available fullscreenmodes, if we have some */
-		if ( ((keypressed == SDLK_c)) && (priv->fullmodes) ) {
+		if ( ((keypressed == SDLK_c)) && (priv.fullmodes) ) {
 		    /* select next fullscreen mode */
-		    priv->fullmode++;
-		    if (priv->fullmode > (findArrayEnd(priv->fullmodes) - 1)) priv->fullmode = 0;
-		    if(set_fullmode(vo,priv->fullmode)!=0) exit(EXIT_FAILURE);
+		    priv.fullmode++;
+		    if (priv.fullmode > (findArrayEnd(priv.fullmodes) - 1)) priv.fullmode = 0;
+		    if(set_fullmode(vo,priv.fullmode)!=0) exit(EXIT_FAILURE);
 		    MSG_V("SDL: Set next available fullscreen mode.\n");
 		    retval = VO_EVENT_RESIZE;
 		} else if ( keypressed == SDLK_n ) {
 #ifdef HAVE_X11
-		    aspect(&priv->dstwidth, &priv->dstheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
+		    aspect(&priv.dstwidth, &priv.dstheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
 #endif
-		    if (unsigned(priv->surface->w) != priv->dstwidth || unsigned(priv->surface->h) != priv->dstheight) {
-			if(set_video_mode(vo,priv->dstwidth, priv->dstheight, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
-			priv->windowsize.w = priv->surface->w;
-			priv->windowsize.h = priv->surface->h;
+		    if (unsigned(priv.surface->w) != priv.dstwidth || unsigned(priv.surface->h) != priv.dstheight) {
+			if(set_video_mode(vo,priv.dstwidth, priv.dstheight, priv.bpp, priv.sdlflags)!=0) exit(EXIT_FAILURE);
+			priv.windowsize.w = priv.surface->w;
+			priv.windowsize.h = priv.surface->h;
 			MSG_V("SDL: Normal size\n");
 			retval |= VO_EVENT_RESIZE;
-		    } else if (unsigned(priv->surface->w) != priv->dstwidth * 2 || unsigned(priv->surface->h) != priv->dstheight * 2) {
-			if(set_video_mode(vo,priv->dstwidth * 2, priv->dstheight * 2, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
-			priv->windowsize.w = priv->surface->w;
-			priv->windowsize.h = priv->surface->h;
+		    } else if (unsigned(priv.surface->w) != priv.dstwidth * 2 || unsigned(priv.surface->h) != priv.dstheight * 2) {
+			if(set_video_mode(vo,priv.dstwidth * 2, priv.dstheight * 2, priv.bpp, priv.sdlflags)!=0) exit(EXIT_FAILURE);
+			priv.windowsize.w = priv.surface->w;
+			priv.windowsize.h = priv.surface->h;
 			MSG_V("SDL: Double size\n");
 			retval |= VO_EVENT_RESIZE;
 		    }
@@ -961,9 +969,9 @@ static uint32_t __FASTCALL__ check_events (vo_data_t*vo,vo_adjust_size_t adjust_
 */
 static void __FASTCALL__ erase_rectangle(vo_data_t*vo,unsigned idx,int x, int y, int w, int h)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
 
-    switch(priv->format) {
+    switch(priv.format) {
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
 	case IMGFMT_IYUV:
@@ -972,9 +980,9 @@ static void __FASTCALL__ erase_rectangle(vo_data_t*vo,unsigned idx,int x, int y,
 
 	    /* Erase Y plane */
 	    erase_area_1(x, w, h,
-			priv->overlay[idx]->pitches[0], 0,
-			priv->overlay[idx]->pixels[0] +
-			priv->overlay[idx]->pitches[0]*y);
+			priv.overlay[idx]->pitches[0], 0,
+			priv.overlay[idx]->pixels[0] +
+			priv.overlay[idx]->pitches[0]*y);
 	    /* Erase U and V planes */
 	    w /= 2;
 	    x /= 2;
@@ -982,14 +990,14 @@ static void __FASTCALL__ erase_rectangle(vo_data_t*vo,unsigned idx,int x, int y,
 	    y /= 2;
 
 	    erase_area_1(x, w, h,
-			priv->overlay[idx]->pitches[1], 128,
-			priv->overlay[idx]->pixels[1] +
-			priv->overlay[idx]->pitches[1]*y);
+			priv.overlay[idx]->pitches[1], 128,
+			priv.overlay[idx]->pixels[1] +
+			priv.overlay[idx]->pitches[1]*y);
 
 	    erase_area_1(x, w, h,
-			priv->overlay[idx]->pitches[2], 128,
-			priv->overlay[idx]->pixels[2] +
-			priv->overlay[idx]->pitches[2]*y);
+			priv.overlay[idx]->pitches[2], 128,
+			priv.overlay[idx]->pixels[2] +
+			priv.overlay[idx]->pitches[2]*y);
 	    SDL_OVR_UNLOCK(idx)
 	    break;
 	}
@@ -1003,11 +1011,11 @@ static void __FASTCALL__ erase_rectangle(vo_data_t*vo,unsigned idx,int x, int y,
 
 	    SDL_OVR_LOCK(idx)
 	    erase_area_4(x*2, w*2, h,
-			priv->overlay[idx]->pitches[0],
-			priv->format == IMGFMT_UYVY ? *((uint32_t*) uyvy_black):
+			priv.overlay[idx]->pitches[0],
+			priv.format == IMGFMT_UYVY ? *((uint32_t*) uyvy_black):
 			(*(uint32_t*) yuy2_black),
-			priv->overlay[idx]->pixels[0] +
-			priv->overlay[idx]->pitches[0]*y);
+			priv.overlay[idx]->pixels[0] +
+			priv.overlay[idx]->pitches[0]*y);
 	    SDL_OVR_UNLOCK(idx)
 	    break;
 	}
@@ -1024,9 +1032,9 @@ static void __FASTCALL__ erase_rectangle(vo_data_t*vo,unsigned idx,int x, int y,
 	    rect.w = w; rect.h = h;
 	    rect.x = x; rect.y = y;
 
-	    SDL_SRF_LOCK(priv->rgbsurface[idx], (void) 0)
-	    SDL_FillRect(priv->rgbsurface[idx], &rect, 0);
-	    SDL_SRF_UNLOCK(priv->rgbsurface[idx])
+	    SDL_SRF_LOCK(priv.rgbsurface[idx], (void) 0)
+	    SDL_FillRect(priv.rgbsurface[idx], &rect, 0);
+	    SDL_SRF_UNLOCK(priv.rgbsurface[idx])
 	    break;
 	}
     }
@@ -1068,55 +1076,55 @@ static void __FASTCALL__ erase_area_1(int x_start, int width, int height, int pi
 
 static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_server) {
-	priv->vidix_server->select_frame(vo,idx);
+    if(priv.vidix_server) {
+	priv.vidix_server->select_frame(vo,idx);
 	return;
     }
 #endif
 
-	if(priv->mode == YUV) {
+	if(priv.mode == YUV) {
 		/* blit to the YUV overlay */
-		SDL_DisplayYUVOverlay (priv->overlay[idx], &priv->surface->clip_rect);
+		SDL_DisplayYUVOverlay (priv.overlay[idx], &priv.surface->clip_rect);
 
 		/* check if we have a double buffered surface and flip() if we do. */
-		if ( priv->surface->flags & SDL_DOUBLEBUF )
-			SDL_Flip(priv->surface);
+		if ( priv.surface->flags & SDL_DOUBLEBUF )
+			SDL_Flip(priv.surface);
 
-		//SDL_LockYUVOverlay (priv->overlay); // removed because unused!?
+		//SDL_LockYUVOverlay (priv.overlay); // removed because unused!?
 	} else {
 	    /* blit to the RGB surface */
-	    if(SDL_BlitSurface (priv->rgbsurface[idx], NULL, priv->surface, NULL))
+	    if(SDL_BlitSurface (priv.rgbsurface[idx], NULL, priv.surface, NULL))
 			MSG_ERR("SDL: Blit failed: %s\n", SDL_GetError());
 
 	    /* update screen */
 	    if(sdl_forcegl)
-		SDL_UpdateRects(priv->surface, 1, &priv->surface->clip_rect);
+		SDL_UpdateRects(priv.surface, 1, &priv.surface->clip_rect);
 	    else
 	    {
-		if(priv->osd_has_changed) {
-		    priv->osd_has_changed = 0;
-		    SDL_UpdateRects(priv->surface, 1, &priv->surface->clip_rect);
+		if(priv.osd_has_changed) {
+		    priv.osd_has_changed = 0;
+		    SDL_UpdateRects(priv.surface, 1, &priv.surface->clip_rect);
 		}
 		else
-		    SDL_UpdateRect(priv->surface, 0, priv->y_screen_top,
-				priv->surface->clip_rect.w, priv->y_screen_bottom);
+		    SDL_UpdateRect(priv.surface, 0, priv.y_screen_top,
+				priv.surface->clip_rect.w, priv.y_screen_bottom);
 	    }
 	    /* check if we have a double buffered surface and flip() if we do. */
 	    if(sdl_forcegl) SDL_GL_SwapBuffers();
 	    else
-	    if(priv->surface->flags & SDL_DOUBLEBUF ) SDL_Flip(priv->surface);
+	    if(priv.surface->flags & SDL_DOUBLEBUF ) SDL_Flip(priv.surface);
 	}
 }
 
 static MPXP_Rc __FASTCALL__ query_format(const vo_data_t*vo,vo_query_fourcc_t* format)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     if(sdl_forcegl) {
 	if (IMGFMT_IS_BGR(format->fourcc)) {
-	    if  (rgbfmt_depth(format->fourcc) == (unsigned)priv->bpp &&
-		((unsigned)priv->bpp==16 || (unsigned)priv->bpp == 32))
+	    if  (rgbfmt_depth(format->fourcc) == (unsigned)priv.bpp &&
+		((unsigned)priv.bpp==16 || (unsigned)priv.bpp == 32))
 			format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
 			return MPXP_Ok;
 	}
@@ -1160,18 +1168,16 @@ static void uninit(vo_data_t*vo)
     sdl_close(vo);
 #ifdef CONFIG_VIDIX
     vidix_term(vo);
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
-    delete priv->vidix_server;
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
+    delete priv.vidix_server;
 #endif
     delete vo->priv;
 }
 
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
-    priv_t *priv = new(zeromem) priv_t;
+    sdl_priv_t *priv = new(zeromem) sdl_priv_t;
     vo->priv=priv;
-    priv->num_buffs = 1;
-    priv->surface = NULL;
     if(arg) strcpy(sdl_subdevice,arg);
 #ifdef HAVE_X11
     if(vo_x11_init(vo)!=MPXP_Ok) return MPXP_False; // Can't open X11
@@ -1182,25 +1188,25 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 
 static void __FASTCALL__ sdl_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
     caps->caps = DRI_CAP_TEMP_VIDEO | DRI_CAP_UPSCALER | DRI_CAP_DOWNSCALER |
 		 DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
-    caps->fourcc = priv->format;
+    caps->fourcc = priv.format;
     caps->x=0;
-    caps->y=priv->y;
-    caps->w=priv->width;
-    caps->h=priv->height;
-    if(priv->mode == YUV) {
-	if(priv->overlay[0]) {
+    caps->y=priv.y;
+    caps->w=priv.width;
+    caps->h=priv.height;
+    if(priv.mode == YUV) {
+	if(priv.overlay[0]) {
 	    int i,n;
-	    caps->width=priv->overlay[0]->w;
-	    caps->height=priv->overlay[0]->h;
-	    n = std::min(4,priv->overlay[0]->planes);
+	    caps->width=priv.overlay[0]->w;
+	    caps->height=priv.overlay[0]->h;
+	    n = std::min(4,priv.overlay[0]->planes);
 	    for(i=0;i<n;i++)
-		caps->strides[i] = priv->overlay[0]->pitches[i];
+		caps->strides[i] = priv.overlay[0]->pitches[i];
 	    for(;i<4;i++)
 		caps->strides[i] = 0;
-	    if(priv->format == IMGFMT_YV12) {
+	    if(priv.format == IMGFMT_YV12) {
 		unsigned ts;
 		ts = caps->strides[2];
 		caps->strides[2] = caps->strides[1];
@@ -1209,10 +1215,10 @@ static void __FASTCALL__ sdl_dri_get_surface_caps(const vo_data_t*vo,dri_surface
 	}
     }
     else {
-	if(priv->rgbsurface[0]) {
-	    caps->width=priv->rgbsurface[0]->w;
-	    caps->height=priv->rgbsurface[0]->h;
-	    caps->strides[0] = priv->rgbsurface[0]->pitch;
+	if(priv.rgbsurface[0]) {
+	    caps->width=priv.rgbsurface[0]->w;
+	    caps->height=priv.rgbsurface[0]->h;
+	    caps->strides[0] = priv.rgbsurface[0]->pitch;
 	    caps->strides[1] = 0;
 	    caps->strides[2] = 0;
 	    caps->strides[3] = 0;
@@ -1222,22 +1228,22 @@ static void __FASTCALL__ sdl_dri_get_surface_caps(const vo_data_t*vo,dri_surface
 
 static void __FASTCALL__ sdl_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
-    if(priv->mode == YUV) {
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
+    if(priv.mode == YUV) {
 	int i,n;
-	n = std::min(4,priv->overlay[surf->idx]->planes);
+	n = std::min(4,priv.overlay[surf->idx]->planes);
 	for(i=0;i<n;i++)
-		surf->planes[i] = priv->overlay[surf->idx]->pixels[i];
+		surf->planes[i] = priv.overlay[surf->idx]->pixels[i];
 	for(;i<4;i++)
 		surf->planes[i] = 0;
-	if(priv->format == IMGFMT_YV12) {
+	if(priv.format == IMGFMT_YV12) {
 	    uint8_t* tp;
 	    tp = surf->planes[2];
 	    surf->planes[2] = surf->planes[1];
 	    surf->planes[1] = tp;
 	}
     } else {
-	surf->planes[0] = reinterpret_cast<uint8_t*>(priv->rgbsurface[surf->idx]->pixels);
+	surf->planes[0] = reinterpret_cast<uint8_t*>(priv.rgbsurface[surf->idx]->pixels);
 	surf->planes[1] = 0;
 	surf->planes[2] = 0;
 	surf->planes[3] = 0;
@@ -1246,16 +1252,16 @@ static void __FASTCALL__ sdl_dri_get_surface(const vo_data_t*vo,dri_surface_t *s
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t *priv = reinterpret_cast<priv_t*>(vo->priv);
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_server)
-	if(priv->vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
+    if(priv.vidix_server)
+	if(priv.vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
 #endif
   switch (request) {
     case VOCTRL_QUERY_FORMAT:
 	return query_format(vo,(vo_query_fourcc_t*)data);
     case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = priv->num_buffs;
+	*(uint32_t *)data = priv.num_buffs;
 	return MPXP_True;
     case DRI_GET_SURFACE_CAPS:
 	sdl_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
@@ -1269,12 +1275,12 @@ static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	return MPXP_True;
     }
     case VOCTRL_FULLSCREEN:
-	if (priv->surface->flags & SDL_FULLSCREEN) {
-	    if(set_video_mode(vo,priv->windowsize.w, priv->windowsize.h, priv->bpp, priv->sdlflags)!=0) exit(EXIT_FAILURE);
+	if (priv.surface->flags & SDL_FULLSCREEN) {
+	    if(set_video_mode(vo,priv.windowsize.w, priv.windowsize.h, priv.bpp, priv.sdlflags)!=0) exit(EXIT_FAILURE);
 	    SDL_ShowCursor(1);
 	    MSG_V("SDL: Windowed mode\n");
-	} else if (priv->fullmodes) {
-	    if(set_fullmode(vo,priv->fullmode)!=0) exit(EXIT_FAILURE);
+	} else if (priv.fullmodes) {
+	    if(set_fullmode(vo,priv.fullmode)!=0) exit(EXIT_FAILURE);
 	    MSG_V("SDL: Set fullscreen mode\n");
 	}
 	*(uint32_t *)data = VO_EVENT_RESIZE;

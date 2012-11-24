@@ -72,6 +72,12 @@ namespace mpxp {
     }
     any_t*	__FASTCALL__ rnd_fill(any_t* buffer,size_t size);
     any_t* get_caller_address(unsigned num_caller=0);
+
+    class Opaque {
+	public:
+	    Opaque() {}
+	    virtual ~Opaque() {}
+    };
 } // namespace mpxp
 
 /* Note: it seems that compiler cannot distinguish which version of operators

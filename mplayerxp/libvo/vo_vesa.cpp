@@ -74,7 +74,10 @@ struct win_frame
 
 static void (* __FASTCALL__ cpy_blk_fnc)(vo_data_t*,unsigned long,uint8_t *,unsigned long) = NULL;
 
-typedef struct priv_s {
+struct priv_t : public video_private {
+    priv_t();
+    virtual ~priv_t() {}
+
     uint32_t		srcW,srcH,srcBpp,srcFourcc; /* source image description */
     uint32_t		dstBpp,dstW,dstH,dstFourcc; /* destinition image description */
 
@@ -96,9 +99,13 @@ typedef struct priv_s {
     vidix_server_t*	vidix_server;
 #endif
     uint32_t		subdev_flags;
-}priv_t;
+};
 
-#define HAS_DGA()  (priv->win.idx == -1)
+priv_t::priv_t() {
+    subdev_flags = 0xFFFFFFFEUL;
+}
+
+#define HAS_DGA()  (priv.win.idx == -1)
 #define MOVIE_MODE (MODE_ATTR_COLOR | MODE_ATTR_GRAPHICS)
 #define FRAME_MODE (MODE_WIN_RELOCATABLE | MODE_WIN_WRITEABLE)
 
@@ -125,58 +132,58 @@ static const char * __FASTCALL__ vbeErrToStr(int err)
 
 static void vesa_term( vo_data_t*vo )
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     int err;
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_name) vidix_term(vo);
+    if(priv.vidix_name) vidix_term(vo);
 #endif
-    if((err=vbeRestoreState(priv->init_state)) != VBE_OK) PRINT_VBE_ERR("vbeRestoreState",err);
-    if((err=vbeSetMode(priv->init_mode,NULL)) != VBE_OK) PRINT_VBE_ERR("vbeSetMode",err);
-    if(HAS_DGA()) vbeUnmapVideoBuffer((unsigned long)priv->win.ptr,priv->win.high);
-    if(priv->dga_buffer && !HAS_DGA()) delete priv->dga_buffer;
+    if((err=vbeRestoreState(priv.init_state)) != VBE_OK) PRINT_VBE_ERR("vbeRestoreState",err);
+    if((err=vbeSetMode(priv.init_mode,NULL)) != VBE_OK) PRINT_VBE_ERR("vbeSetMode",err);
+    if(HAS_DGA()) vbeUnmapVideoBuffer((unsigned long)priv.win.ptr,priv.win.high);
+    if(priv.dga_buffer && !HAS_DGA()) delete priv.dga_buffer;
     vbeDestroy();
 }
 
-#define VALID_WIN_FRAME(offset) (offset >= priv->win.low && offset < priv->win.high)
-#define VIDEO_PTR(offset) (priv->win.ptr + offset - priv->win.low)
+#define VALID_WIN_FRAME(offset) (offset >= priv.win.low && offset < priv.win.high)
+#define VIDEO_PTR(offset) (priv.win.ptr + offset - priv.win.low)
 
 static inline void __vbeSwitchBank(vo_data_t* vo,unsigned long offset)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     unsigned long gran;
     unsigned new_offset;
     int err;
-    gran = priv->vmode_info.WinGranularity*1024;
+    gran = priv.vmode_info.WinGranularity*1024;
     new_offset = offset / gran;
     if(HAS_DGA()) { err = -1; goto show_err; }
-    if((err=vbeSetWindow(priv->win.idx,new_offset)) != VBE_OK) {
+    if((err=vbeSetWindow(priv.win.idx,new_offset)) != VBE_OK) {
 	show_err:
 	vesa_term(vo);
 	PRINT_VBE_ERR("vbeSetWindow",err);
 	MSG_FATAL("vo_vesa: Fatal error occured! Can't continue\n");
 	exit(-1);
     }
-    priv->win.low = new_offset * gran;
-    priv->win.high = priv->win.low + priv->vmode_info.WinSize*1024;
+    priv.win.low = new_offset * gran;
+    priv.win.high = priv.win.low + priv.vmode_info.WinSize*1024;
 }
 
 static void __FASTCALL__ __vbeSetPixel(vo_data_t*vo,int x, int y, int r, int g, int b)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
-    int x_res = priv->vmode_info.XResolution;
-    int y_res = priv->vmode_info.YResolution;
-    int shift_r = priv->vmode_info.RedFieldPosition;
-    int shift_g = priv->vmode_info.GreenFieldPosition;
-    int shift_b = priv->vmode_info.BlueFieldPosition;
-    int pixel_size = (priv->dstBpp+7)/8;
-    int bpl = priv->vmode_info.BytesPerScanLine;
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
+    int x_res = priv.vmode_info.XResolution;
+    int y_res = priv.vmode_info.YResolution;
+    int shift_r = priv.vmode_info.RedFieldPosition;
+    int shift_g = priv.vmode_info.GreenFieldPosition;
+    int shift_b = priv.vmode_info.BlueFieldPosition;
+    int pixel_size = (priv.dstBpp+7)/8;
+    int bpl = priv.vmode_info.BytesPerScanLine;
     int color;
     unsigned offset;
 
     if (x < 0 || x >= x_res || y < 0 || y >= y_res)	return;
-    r >>= 8 - priv->vmode_info.RedMaskSize;
-    g >>= 8 - priv->vmode_info.GreenMaskSize;
-    b >>= 8 - priv->vmode_info.BlueMaskSize;
+    r >>= 8 - priv.vmode_info.RedMaskSize;
+    g >>= 8 - priv.vmode_info.GreenMaskSize;
+    b >>= 8 - priv.vmode_info.BlueMaskSize;
     color = (r << shift_r) | (g << shift_g) | (b << shift_b);
     offset = y * bpl + (x * pixel_size);
     if(!VALID_WIN_FRAME(offset)) __vbeSwitchBank(vo,offset);
@@ -189,17 +196,17 @@ static void __FASTCALL__ __vbeSetPixel(vo_data_t*vo,int x, int y, int r, int g, 
 */
 static void __FASTCALL__ __vbeCopyBlockFast(vo_data_t*vo,unsigned long offset,uint8_t *image,unsigned long size)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
-    memcpy(&priv->win.ptr[offset],image,size);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
+    memcpy(&priv.win.ptr[offset],image,size);
 }
 
 static void __FASTCALL__ __vbeCopyBlock(vo_data_t*vo,unsigned long offset,uint8_t *image,unsigned long size)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     unsigned long delta,src_idx = 0;
     while(size) {
 	if(!VALID_WIN_FRAME(offset)) __vbeSwitchBank(vo,offset);
-	delta = std::min(size,priv->win.high - offset);
+	delta = std::min(size,priv.win.high - offset);
 	memcpy(VIDEO_PTR(offset),&image[src_idx],delta);
 	src_idx += delta;
 	offset += delta;
@@ -212,24 +219,24 @@ static void __FASTCALL__ __vbeCopyBlock(vo_data_t*vo,unsigned long offset,uint8_
   memory.
 */
 
-#define PIXEL_SIZE() ((priv->dstBpp+7)/8)
-#define SCREEN_LINE_SIZE(pixel_size) (priv->vmode_info.XResolution*(pixel_size) )
-#define IMAGE_LINE_SIZE(pixel_size) (priv->dstW*(pixel_size))
+#define PIXEL_SIZE() ((priv.dstBpp+7)/8)
+#define SCREEN_LINE_SIZE(pixel_size) (priv.vmode_info.XResolution*(pixel_size) )
+#define IMAGE_LINE_SIZE(pixel_size) (priv.dstW*(pixel_size))
 
 static void __FASTCALL__ __vbeCopyData(vo_data_t*vo,uint8_t *image)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     unsigned long i,j,image_offset,offset;
     unsigned pixel_size,image_line_size,screen_line_size,x_shift;
     pixel_size = PIXEL_SIZE();
     screen_line_size = SCREEN_LINE_SIZE(pixel_size);
     image_line_size = IMAGE_LINE_SIZE(pixel_size);
-    if(priv->dstW == priv->vmode_info.XResolution) {
+    if(priv.dstW == priv.vmode_info.XResolution) {
 	/* Special case for zooming */
-	(*cpy_blk_fnc)(vo,priv->y_offset*screen_line_size,image,image_line_size*priv->dstH);
+	(*cpy_blk_fnc)(vo,priv.y_offset*screen_line_size,image,image_line_size*priv.dstH);
     } else {
-	x_shift = priv->x_offset*pixel_size;
-	for(j=0,i=priv->y_offset;j<priv->dstH;i++,j++) {
+	x_shift = priv.x_offset*pixel_size;
+	for(j=0,i=priv.y_offset;j<priv.dstH;i++,j++) {
 	    offset = i*screen_line_size+x_shift;
 	    image_offset = j*image_line_size;
 	    (*cpy_blk_fnc)(vo,offset,&image[image_offset],image_line_size);
@@ -239,24 +246,24 @@ static void __FASTCALL__ __vbeCopyData(vo_data_t*vo,uint8_t *image)
 
 static void __FASTCALL__ select_frame(vo_data_t* vo,unsigned idx)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_server) {
-	priv->vidix_server->select_frame(vo,idx);
+    if(priv.vidix_server) {
+	priv.vidix_server->select_frame(vo,idx);
 	return;
     }
 #endif
     MSG_DBG3("vo_vesa: select_frame was called\n");
-    if(!HAS_DGA()) __vbeCopyData(vo,priv->dga_buffer);
+    if(!HAS_DGA()) __vbeCopyData(vo,priv.dga_buffer);
     else {
 	int err;
-	if((err=vbeSetDisplayStart(priv->multi_buff[idx],vo_conf.vsync)) != VBE_OK) {
+	if((err=vbeSetDisplayStart(priv.multi_buff[idx],vo_conf.vsync)) != VBE_OK) {
 	    vesa_term(vo);
 	    PRINT_VBE_ERR("vbeSetDisplayStart",err);
 	    MSG_FATAL("vo_vesa: Fatal error occured! Can't continue\n");
 	    exit(EXIT_FAILURE);
 	}
-	priv->win.ptr = priv->dga_buffer = priv->video_base + priv->multi_buff[(idx+1)%priv->multi_size];
+	priv.win.ptr = priv.dga_buffer = priv.video_base + priv.multi_buff[(idx+1)%priv.multi_size];
     }
 }
 
@@ -264,7 +271,7 @@ static void __FASTCALL__ select_frame(vo_data_t* vo,unsigned idx)
 #define SUBDEV_FORCEDGA  0x00000002UL
 static uint32_t __FASTCALL__ parseSubDevice(vo_data_t*vo,const char *sd)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     uint32_t flags;
     flags = 0;
     if(strcmp(sd,"nodga") == 0) { flags |= SUBDEV_NODGA; flags &= ~(SUBDEV_FORCEDGA); }
@@ -272,7 +279,7 @@ static uint32_t __FASTCALL__ parseSubDevice(vo_data_t*vo,const char *sd)
     if(strcmp(sd,"dga") == 0)   { flags &= ~(SUBDEV_NODGA); flags |= SUBDEV_FORCEDGA; }
 #ifdef CONFIG_VIDIX
     else
-    if(memcmp(sd,"vidix",5) == 0) priv->vidix_name = &sd[5]; /* priv->vidix_name will be valid within init() */
+    if(memcmp(sd,"vidix",5) == 0) priv.vidix_name = &sd[5]; /* priv.vidix_name will be valid within init() */
 #endif
     else { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); return 0xFFFFFFFFUL; }
     return flags;
@@ -313,9 +320,9 @@ static MPXP_Rc __FASTCALL__ query_format(vo_query_fourcc_t* format)
 
 static void paintBkGnd( vo_data_t*vo )
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
-    int x_res = priv->vmode_info.XResolution;
-    int y_res = priv->vmode_info.YResolution;
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
+    int x_res = priv.vmode_info.XResolution;
+    int y_res = priv.vmode_info.YResolution;
     int x, y;
 
     for (y = 0; y < y_res; ++y) {
@@ -337,9 +344,9 @@ static void paintBkGnd( vo_data_t*vo )
 
 static void clear_screen( vo_data_t*vo )
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
-    int x_res = priv->vmode_info.XResolution;
-    int y_res = priv->vmode_info.YResolution;
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
+    int x_res = priv.vmode_info.XResolution;
+    int y_res = priv.vmode_info.YResolution;
     int x, y;
 
     for (y = 0; y < y_res; ++y)
@@ -349,12 +356,12 @@ static void clear_screen( vo_data_t*vo )
 
 static void clear_screen_fast( vo_data_t*vo )
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
-    int x_res = priv->vmode_info.XResolution;
-    int y_res = priv->vmode_info.YResolution;
-    int Bpp = (priv->vmode_info.BitsPerPixel+7)/8;
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
+    int x_res = priv.vmode_info.XResolution;
+    int y_res = priv.vmode_info.YResolution;
+    int Bpp = (priv.vmode_info.BitsPerPixel+7)/8;
 
-    memset(priv->dga_buffer,0,x_res*y_res*Bpp);
+    memset(priv.dga_buffer,0,x_res*y_res*Bpp);
 }
 
 static const char * __FASTCALL__ model2str(unsigned char type)
@@ -376,16 +383,16 @@ static const char * __FASTCALL__ model2str(unsigned char type)
 
 static unsigned __FASTCALL__ fillMultiBuffer(vo_data_t*vo,unsigned long vsize, unsigned nbuffs )
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     unsigned long screen_size, offset;
     unsigned total,i;
-    screen_size = priv->vmode_info.XResolution*priv->vmode_info.YResolution*((priv->dstBpp+7)/8);
+    screen_size = priv.vmode_info.XResolution*priv.vmode_info.YResolution*((priv.dstBpp+7)/8);
     if(screen_size%64) screen_size=((screen_size/64)*64)+64;
     total = vsize / screen_size;
     i = 0;
     offset = 0;
     total = std::min(total,nbuffs);
-    while(i < total) { priv->multi_buff[i++] = offset; offset += screen_size; }
+    while(i < total) { priv.multi_buff[i++] = offset; offset += screen_size; }
     if(!i)
 	MSG_ERR("vo_vesa: Your have too small size of video memory for this mode:\n"
 		"vo_vesa: Requires: %08lX exists: %08lX\n", screen_size, vsize);
@@ -401,7 +408,7 @@ static unsigned __FASTCALL__ fillMultiBuffer(vo_data_t*vo,unsigned long vsize, u
  */
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     struct VbeInfoBlock vib;
     struct VesaModeInfoBlock vmib;
     size_t i,num_modes;
@@ -410,14 +417,14 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     unsigned bpp,best_x = UINT_MAX,best_y=UINT_MAX,best_mode_idx = UINT_MAX;
     int err,fs_mode,use_scaler=0;
 
-    priv->srcW = priv->dstW = width;
-    priv->srcH = priv->dstH = height;
+    priv.srcW = priv.dstW = width;
+    priv.srcH = priv.dstH = height;
     fs_mode = 0;
-    if(priv->subdev_flags == 0xFFFFFFFEUL) {
+    if(priv.subdev_flags == 0xFFFFFFFEUL) {
 	MSG_ERR("vo_vesa: detected internal fatal error: init is called before preinit\n");
 	return MPXP_False;
     }
-    if(priv->subdev_flags == 0xFFFFFFFFUL) return MPXP_False;
+    if(priv.subdev_flags == 0xFFFFFFFFUL) return MPXP_False;
     if(flags & 0x8) {
 	MSG_WARN("vo_vesa: switch -flip is not supported\n");
     }
@@ -475,27 +482,27 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	case IMGFMT_RGB32: bpp = 32; break;
 	default:	   bpp = 16; break;
     }
-    priv->srcBpp = bpp;
-    priv->srcFourcc = format;
+    priv.srcBpp = bpp;
+    priv.srcFourcc = format;
     if(vo_conf.dbpp) bpp = vo_conf.dbpp;
     switch(bpp) {
 	case 8:
-	    priv->dstFourcc = IMGFMT_BGR8;
+	    priv.dstFourcc = IMGFMT_BGR8;
 	    break;
 	case 15:
-	    priv->dstFourcc = IMGFMT_BGR15;
+	    priv.dstFourcc = IMGFMT_BGR15;
 	    break;
 	case 16:
-	    priv->dstFourcc = IMGFMT_BGR16;
+	    priv.dstFourcc = IMGFMT_BGR16;
 	    break;
 	case 24:
-	    priv->dstFourcc = IMGFMT_BGR24;
+	    priv.dstFourcc = IMGFMT_BGR24;
 	    break;
 	case 32:
-	    priv->dstFourcc = IMGFMT_BGR32;
+	    priv.dstFourcc = IMGFMT_BGR32;
 	    break;
 	default:
-	    priv->dstFourcc = IMGFMT_BGR16;
+	    priv.dstFourcc = IMGFMT_BGR16;
 	    break;
     }
     if(mp_conf.verbose) {
@@ -510,13 +517,13 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     }
     mode_ptr = vib.VideoModePtr;
     if(use_scaler) {
-	priv->dstW = d_width;
-	priv->dstH = d_height;
+	priv.dstW = d_width;
+	priv.dstH = d_height;
     }
     if(vo_conf.screenwidth) w = vo_conf.screenwidth;
-    else w = std::max(priv->dstW,width);
+    else w = std::max(priv.dstW,width);
     if(vo_conf.screenheight) h = vo_conf.screenheight;
-    else h = std::max(priv->dstH,height);
+    else h = std::max(priv.dstH,height);
     for(i=0;i < num_modes;i++) {
 	if((err=vbeGetModeInfo(mode_ptr[i],&vmib)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeGetModeInfo",err);
@@ -550,112 +557,112 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	}
     }
     if(best_mode_idx != UINT_MAX) {
-	priv->video_mode = vib.VideoModePtr[best_mode_idx];
+	priv.video_mode = vib.VideoModePtr[best_mode_idx];
 	fflush(stdout);
-	if((err=vbeGetMode(&priv->init_mode)) != VBE_OK) {
+	if((err=vbeGetMode(&priv.init_mode)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeGetMode",err);
 	    return MPXP_False;
 	}
-	MSG_V("vo_vesa: Initial video mode: %x\n",priv->init_mode);
-	if((err=vbeGetModeInfo(priv->video_mode,&priv->vmode_info)) != VBE_OK) {
+	MSG_V("vo_vesa: Initial video mode: %x\n",priv.init_mode);
+	if((err=vbeGetModeInfo(priv.video_mode,&priv.vmode_info)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeGetModeInfo",err);
 	    return MPXP_False;
 	}
-	priv->dstBpp = priv->vmode_info.BitsPerPixel;
+	priv.dstBpp = priv.vmode_info.BitsPerPixel;
 	MSG_V("vo_vesa: Using VESA mode (%u) = %x [%ux%u@%u]\n"
-		,best_mode_idx,priv->video_mode,priv->vmode_info.XResolution
-		,priv->vmode_info.YResolution,priv->dstBpp);
-	if(priv->subdev_flags & SUBDEV_NODGA) priv->vmode_info.PhysBasePtr = 0;
+		,best_mode_idx,priv.video_mode,priv.vmode_info.XResolution
+		,priv.vmode_info.YResolution,priv.dstBpp);
+	if(priv.subdev_flags & SUBDEV_NODGA) priv.vmode_info.PhysBasePtr = 0;
 	if(use_scaler || fs_mode) {
 	    /* software scale */
 	    if(use_scaler > 1) {
 		aspect_save_orig(width,height);
 		aspect_save_prescale(d_width,d_height);
-		aspect_save_screenres(priv->vmode_info.XResolution,priv->vmode_info.YResolution);
-		aspect(&priv->dstW,&priv->dstH,A_ZOOM);
+		aspect_save_screenres(priv.vmode_info.XResolution,priv.vmode_info.YResolution);
+		aspect(&priv.dstW,&priv.dstH,A_ZOOM);
 	    } else if(fs_mode) {
-		priv->dstW = priv->vmode_info.XResolution;
-		priv->dstH = priv->vmode_info.YResolution;
+		priv.dstW = priv.vmode_info.XResolution;
+		priv.dstH = priv.vmode_info.YResolution;
 	    }
 	    use_scaler = 1;
 	}
-	if((priv->vmode_info.WinAAttributes & FRAME_MODE) == FRAME_MODE)
-	    priv->win.idx = 0; /* frame A */
-	else if((priv->vmode_info.WinBAttributes & FRAME_MODE) == FRAME_MODE)
-	    priv->win.idx = 1; /* frame B */
-	else priv->win.idx = -2;
+	if((priv.vmode_info.WinAAttributes & FRAME_MODE) == FRAME_MODE)
+	    priv.win.idx = 0; /* frame A */
+	else if((priv.vmode_info.WinBAttributes & FRAME_MODE) == FRAME_MODE)
+	    priv.win.idx = 1; /* frame B */
+	else priv.win.idx = -2;
 	/* Try use DGA instead */
-	if(priv->vmode_info.PhysBasePtr && vib.TotalMemory && (priv->vmode_info.ModeAttributes & MODE_ATTR_LINEAR)) {
+	if(priv.vmode_info.PhysBasePtr && vib.TotalMemory && (priv.vmode_info.ModeAttributes & MODE_ATTR_LINEAR)) {
 	    any_t*lfb;
 	    unsigned long vsize;
 	    vsize = vib.TotalMemory*64*1024;
-	    lfb = vbeMapVideoBuffer(priv->vmode_info.PhysBasePtr,vsize);
+	    lfb = vbeMapVideoBuffer(priv.vmode_info.PhysBasePtr,vsize);
 	    if(lfb == NULL) MSG_WARN("vo_vesa: Can't use DGA. Force bank switching mode. :(\n");
 	    else {
-		priv->video_base = priv->win.ptr = reinterpret_cast<uint8_t*>(lfb);
-		priv->win.low = 0UL;
-		priv->win.high = vsize;
-		priv->win.idx = -1; /* HAS_DGA() is on */
-		priv->video_mode |= VESA_MODE_USE_LINEAR;
+		priv.video_base = priv.win.ptr = reinterpret_cast<uint8_t*>(lfb);
+		priv.win.low = 0UL;
+		priv.win.high = vsize;
+		priv.win.idx = -1; /* HAS_DGA() is on */
+		priv.video_mode |= VESA_MODE_USE_LINEAR;
 		MSG_V("vo_vesa: Using DGA (physical resources: %08lXh, %08lXh)"
-		     ,priv->vmode_info.PhysBasePtr
+		     ,priv.vmode_info.PhysBasePtr
 		     ,vsize);
 		MSG_V(" at %08lXh",(unsigned long)lfb);
 		MSG_V("\n");
-		if(!(priv->multi_size = fillMultiBuffer(vo,vsize,vo_conf.xp_buffs))) return MPXP_False;
-		if(priv->multi_size < 2) MSG_ERR("vo_vesa: Can't use double buffering: not enough video memory\n");
-		else MSG_V("vo_vesa: using %u buffers for multi buffering\n",priv->multi_size);
+		if(!(priv.multi_size = fillMultiBuffer(vo,vsize,vo_conf.xp_buffs))) return MPXP_False;
+		if(priv.multi_size < 2) MSG_ERR("vo_vesa: Can't use double buffering: not enough video memory\n");
+		else MSG_V("vo_vesa: using %u buffers for multi buffering\n",priv.multi_size);
 	    }
 	}
-	if(priv->win.idx == -2) {
+	if(priv.win.idx == -2) {
 	   MSG_ERR("vo_vesa: Can't find neither DGA nor relocatable window's frame.\n");
 	   return MPXP_False;
 	}
 	if(!HAS_DGA()) {
-	    if(priv->subdev_flags & SUBDEV_FORCEDGA) {
+	    if(priv.subdev_flags & SUBDEV_FORCEDGA) {
 		MSG_ERR("vo_vesa: you've forced DGA. Exiting\n");
 		return MPXP_False;
 	    }
-	    if(!(win_seg = priv->win.idx == 0 ? priv->vmode_info.WinASegment:priv->vmode_info.WinBSegment)) {
+	    if(!(win_seg = priv.win.idx == 0 ? priv.vmode_info.WinASegment:priv.vmode_info.WinBSegment)) {
 		MSG_ERR("vo_vesa: Can't find valid window address\n");
 		return MPXP_False;
 	    }
-	    priv->win.ptr = (uint8_t*)PhysToVirtSO(win_seg,0);
-	    priv->win.low = 0L;
-	    priv->win.high= priv->vmode_info.WinSize*1024;
+	    priv.win.ptr = (uint8_t*)PhysToVirtSO(win_seg,0);
+	    priv.win.low = 0L;
+	    priv.win.high= priv.vmode_info.WinSize*1024;
 	    MSG_V("vo_vesa: Using bank switching mode (physical resources: %08lXh, %08lXh)\n"
-		 ,(unsigned long)priv->win.ptr,(unsigned long)priv->win.high);
+		 ,(unsigned long)priv.win.ptr,(unsigned long)priv.win.high);
 	}
-	if(priv->vmode_info.XResolution > priv->dstW) priv->x_offset = (priv->vmode_info.XResolution - priv->dstW) / 2;
-	else priv->x_offset = 0;
-	if(priv->vmode_info.YResolution > priv->dstH)
-	    priv->y_offset = (priv->vmode_info.YResolution - priv->dstH) / 2;
-	else priv->y_offset = 0;
-	    MSG_V("vo_vesa: image: %ux%u screen = %ux%u priv->x_offset = %u priv->y_offset = %u\n"
-		,priv->dstW,priv->dstH
-		,priv->vmode_info.XResolution,priv->vmode_info.YResolution
-		,priv->x_offset,priv->y_offset);
+	if(priv.vmode_info.XResolution > priv.dstW) priv.x_offset = (priv.vmode_info.XResolution - priv.dstW) / 2;
+	else priv.x_offset = 0;
+	if(priv.vmode_info.YResolution > priv.dstH)
+	    priv.y_offset = (priv.vmode_info.YResolution - priv.dstH) / 2;
+	else priv.y_offset = 0;
+	    MSG_V("vo_vesa: image: %ux%u screen = %ux%u priv.x_offset = %u priv.y_offset = %u\n"
+		,priv.dstW,priv.dstH
+		,priv.vmode_info.XResolution,priv.vmode_info.YResolution
+		,priv.x_offset,priv.y_offset);
 	if(HAS_DGA()) {
-	    priv->dga_buffer = priv->win.ptr; /* Trickly ;) */
+	    priv.dga_buffer = priv.win.ptr; /* Trickly ;) */
 	    cpy_blk_fnc = __vbeCopyBlockFast;
 	} else {
 	    cpy_blk_fnc = __vbeCopyBlock;
 #ifdef CONFIG_VIDIX
-	    if(!priv->vidix_name)
+	    if(!priv.vidix_name)
 #endif
 	    {
-		if(!(priv->dga_buffer = new(alignmem,64) uint8_t[priv->vmode_info.XResolution*priv->vmode_info.YResolution*priv->dstBpp])) {
+		if(!(priv.dga_buffer = new(alignmem,64) uint8_t[priv.vmode_info.XResolution*priv.vmode_info.YResolution*priv.dstBpp])) {
 		    MSG_ERR("vo_vesa: Can't allocate temporary buffer\n");
 		    return MPXP_False;
 		}
-		MSG_V("vo_vesa: dga emulator was allocated = %p\n",priv->dga_buffer);
+		MSG_V("vo_vesa: dga emulator was allocated = %p\n",priv.dga_buffer);
 	    }
 	}
-	if((err=vbeSaveState(&priv->init_state)) != VBE_OK) {
+	if((err=vbeSaveState(&priv.init_state)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeSaveState",err);
 	    return MPXP_False;
 	}
-	if((err=vbeSetMode(priv->video_mode,NULL)) != VBE_OK) {
+	if((err=vbeSetMode(priv.video_mode,NULL)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeSetMode",err);
 	    return MPXP_False;
 	}
@@ -663,12 +670,12 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	/* Below 'return MPXP_False' is impossible */
 	MSG_V("vo_vesa: Graphics mode was activated\n");
 #ifdef CONFIG_VIDIX
-	if(priv->vidix_name) {
-	    if(vidix_init(vo,width,height,priv->x_offset,priv->y_offset,priv->dstW,
-			priv->dstH,format,priv->dstBpp,
-			priv->vmode_info.XResolution,priv->vmode_info.YResolution) != MPXP_Ok) {
+	if(priv.vidix_name) {
+	    if(vidix_init(vo,width,height,priv.x_offset,priv.y_offset,priv.dstW,
+			priv.dstH,format,priv.dstBpp,
+			priv.vmode_info.XResolution,priv.vmode_info.YResolution) != MPXP_Ok) {
 		MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
-		priv->vidix_name = NULL;
+		priv.vidix_name = NULL;
 		vesa_term(vo);
 		return MPXP_False;
 	    } else MSG_V("vo_vesa: Using VIDIX\n");
@@ -684,8 +691,8 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
     }
     MSG_V("vo_vesa: VESA initialization complete\n");
     if(HAS_DGA()) {
-	for(i=0;i<priv->multi_size;i++) {
-	    priv->win.ptr = priv->dga_buffer = priv->video_base + priv->multi_buff[i];
+	for(i=0;i<priv.multi_size;i++) {
+	    priv.win.ptr = priv.dga_buffer = priv.video_base + priv.multi_buff[i];
 	    if(mp_conf.verbose>1) paintBkGnd(vo);
 	    else	  clear_screen_fast(vo);
 	}
@@ -693,7 +700,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	int x;
 	if(mp_conf.verbose>1) paintBkGnd(vo);
 	else clear_screen(vo);
-	x = (priv->vmode_info.XResolution/priv->vmode_info.XCharSize)/2-strlen(title)/2;
+	x = (priv.vmode_info.XResolution/priv.vmode_info.XCharSize)/2-strlen(title)/2;
 	if(x < 0) x = 0;
 	vbeWriteString(x,0,7,title);
     }
@@ -723,10 +730,8 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     MPXP_Rc pre_init_err = MPXP_Ok;
     MSG_DBG2("vo_vesa: preinit(%s) was called\n",arg);
     MSG_DBG3("vo_vesa: subdevice %s is being initialized\n",arg);
-    priv_t*priv;
-    priv=new(zeromem) priv_t;
+    priv_t*priv=new(zeromem) priv_t;
     vo->priv=priv;
-    priv->subdev_flags = 0xFFFFFFFEUL;
     if(arg) priv->subdev_flags = parseSubDevice(vo,arg);
 #ifdef CONFIG_VIDIX
     if(priv->vidix_name) {
@@ -742,16 +747,16 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 
 static void __FASTCALL__ vesa_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
     caps->caps = HAS_DGA() ? DRI_CAP_VIDEO_MMAPED : DRI_CAP_TEMP_VIDEO;
-    caps->fourcc = priv->dstFourcc;
-    caps->width=HAS_DGA()?priv->vmode_info.XResolution:priv->dstW;
-    caps->height=HAS_DGA()?priv->vmode_info.YResolution:priv->dstH;
-    caps->x=priv->x_offset;
-    caps->y=priv->y_offset;
-    caps->w=priv->dstW;
-    caps->h=priv->dstH;
-    caps->strides[0] = (HAS_DGA()?priv->vmode_info.XResolution:priv->dstW)*((priv->dstBpp+7)/8);
+    caps->fourcc = priv.dstFourcc;
+    caps->width=HAS_DGA()?priv.vmode_info.XResolution:priv.dstW;
+    caps->height=HAS_DGA()?priv.vmode_info.YResolution:priv.dstH;
+    caps->x=priv.x_offset;
+    caps->y=priv.y_offset;
+    caps->w=priv.dstW;
+    caps->h=priv.dstH;
+    caps->strides[0] = (HAS_DGA()?priv.vmode_info.XResolution:priv.dstW)*((priv.dstBpp+7)/8);
     caps->strides[1] = 0;
     caps->strides[2] = 0;
     caps->strides[3] = 0;
@@ -759,8 +764,8 @@ static void __FASTCALL__ vesa_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_
 
 static void __FASTCALL__ vesa_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
-    surf->planes[0] = HAS_DGA()?priv->video_base + priv->multi_buff[surf->idx]:priv->dga_buffer;
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
+    surf->planes[0] = HAS_DGA()?priv.video_base + priv.multi_buff[surf->idx]:priv.dga_buffer;
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
@@ -768,16 +773,16 @@ static void __FASTCALL__ vesa_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    priv_t& priv = *static_cast<priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_server)
-	if(priv->vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
+    if(priv.vidix_server)
+	if(priv.vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
 #endif
     switch (request) {
 	case VOCTRL_QUERY_FORMAT:
 	    return query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
 	case VOCTRL_GET_NUM_FRAMES:
-	    *(uint32_t *)data = priv->multi_size;
+	    *(uint32_t *)data = priv.multi_size;
 	    return MPXP_True;
 	case DRI_GET_SURFACE_CAPS:
 	    vesa_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));

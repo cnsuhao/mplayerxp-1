@@ -76,7 +76,10 @@ static vo_info_t vo_info =
 static void __FASTCALL__ Display_Image (vo_data_t*vo, XImage * myximage );
 
 /*** X11 related variables ***/
-typedef struct priv_s {
+struct x11_priv_t : public video_private {
+    x11_priv_t();
+    virtual ~x11_priv_t() {}
+
     uint32_t		image_width;
     uint32_t		image_height;
     uint32_t		in_format;
@@ -95,20 +98,25 @@ typedef struct priv_s {
     vidix_server_t*	vidix_server;
 #endif
     uint32_t		subdev_flags;
-}priv_t;
+};
+
+x11_priv_t::x11_priv_t() {
+    num_buffers=1;
+    subdev_flags = 0xFFFFFFFEUL;
+}
 
 #ifdef CONFIG_VIDIX
 static void resize_vidix(vo_data_t* vo) {
-    priv_t* priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     XWindowAttributes xwa;
     XGetWindowAttributes(vo->mDisplay, vo->window, &xwa);
     vidix_stop(vo);
-    if (vidix_init(vo,priv->image_width, priv->image_height, xwa.x, xwa.y,
-	    xwa.width, xwa.height, priv->in_format, vo->depthonscreen,
+    if (vidix_init(vo,priv.image_width, priv.image_height, xwa.x, xwa.y,
+	    xwa.width, xwa.height, priv.in_format, vo->depthonscreen,
 	    vo_conf.screenwidth, vo_conf.screenheight) != MPXP_Ok)
     {
 	MSG_FATAL( "Can't initialize VIDIX driver: %s: %s\n",
-	    priv->vidix_name, strerror(errno));
+	    priv.vidix_name, strerror(errno));
 	vidix_term(vo);
 	uninit(vo);
 	exit(1); /* !!! */
@@ -119,7 +127,7 @@ static void resize_vidix(vo_data_t* vo) {
 
 static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_size)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     uint32_t ret = vo_x11_check_events(vo,vo->mDisplay,adjust_size);
 
    /* clear the old window */
@@ -129,21 +137,21 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_s
 	unsigned newW= vo->dest.w;
 	unsigned newH= vo->dest.h;
 	int newAspect= (newW*(1<<16) + (newH>>1))/newH;
-	if(newAspect>priv->baseAspect) newW= (newH*priv->baseAspect + (1<<15))>>16;
-	else                 newH= ((newW<<16) + (priv->baseAspect>>1)) /priv->baseAspect;
+	if(newAspect>priv.baseAspect) newW= (newH*priv.baseAspect + (1<<15))>>16;
+	else                 newH= ((newW<<16) + (priv.baseAspect>>1)) /priv.baseAspect;
 	XSetBackground(vo->mDisplay, vo->gc, 0);
 	XClearWindow(vo->mDisplay, vo->window);
-	priv->image_width= (newW+7)&(~7);
-	priv->image_height= newH;
+	priv.image_width= (newW+7)&(~7);
+	priv.image_height= newH;
 #ifdef CONFIG_VIDIX
-	if(priv->vidix_name) resize_vidix(vo);
+	if(priv.vidix_name) resize_vidix(vo);
 	else
 #endif
 	{
 	    vo_lock_surfaces(vo);
-	    for(idx=0;idx<priv->num_buffers;idx++) {
+	    for(idx=0;idx<priv.num_buffers;idx++) {
 		vo_x11_freeMyXImage(vo,idx);
-		vo_x11_getMyXImage(vo,idx,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
+		vo_x11_getMyXImage(vo,idx,priv.vinfo.visual,priv.depth,priv.image_width,priv.image_height);
 	    }
 	    vo_unlock_surfaces(vo);
 	}
@@ -153,7 +161,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_s
 
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     // int interval, prefer_blank, allow_exp, nothing;
     unsigned int fg,bg;
     XSizeHints hint;
@@ -164,20 +172,20 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     unsigned long xswamask;
     unsigned i;
 
-    priv->num_buffers=vo_conf.xp_buffs;
+    priv.num_buffers=vo_conf.xp_buffs;
 
     if (!title)
 	title = mp_strdup("MPlayerXP X11 (XImage/Shm) render");
 
-    priv->in_format=format;
+    priv.in_format=format;
 
-    XGetWindowAttributes( vo->mDisplay,DefaultRootWindow( vo->mDisplay ),&priv->attribs );
-    priv->depth=priv->attribs.depth;
+    XGetWindowAttributes( vo->mDisplay,DefaultRootWindow( vo->mDisplay ),&priv.attribs );
+    priv.depth=priv.attribs.depth;
 
-    if ( priv->depth != 15 && priv->depth != 16 && priv->depth != 24 && priv->depth != 32 ) priv->depth=24;
-    XMatchVisualInfo( vo->mDisplay,vo->mScreen,priv->depth,TrueColor,&priv->vinfo );
+    if ( priv.depth != 15 && priv.depth != 16 && priv.depth != 24 && priv.depth != 32 ) priv.depth=24;
+    XMatchVisualInfo( vo->mDisplay,vo->mScreen,priv.depth,TrueColor,&priv.vinfo );
 
-    priv->baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
+    priv.baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
 
     aspect_save_orig(width,height);
     aspect_save_prescale(d_width,d_height);
@@ -193,11 +201,11 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     vo->dest.w=hint.width;
     vo->dest.h=hint.height;
 
-    priv->image_width=d_width;
-    priv->image_height=d_height;
+    priv.image_width=d_width;
+    priv.image_height=d_height;
 
     theCmap  =XCreateColormap( vo->mDisplay,RootWindow( vo->mDisplay,vo->mScreen ),
-    priv->vinfo.visual,AllocNone );
+    priv.vinfo.visual,AllocNone );
 
     xswa.background_pixel=0;
     xswa.border_pixel=0;
@@ -214,7 +222,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     vo->window=XCreateWindow( vo->mDisplay,RootWindow( vo->mDisplay,vo->mScreen ),
 				hint.x,hint.y,
 				hint.width,hint.height,
-				xswa.border_pixel,priv->depth,CopyFromParent,priv->vinfo.visual,xswamask,&xswa );
+				xswa.border_pixel,priv.depth,CopyFromParent,priv.vinfo.visual,xswamask,&xswa );
     vo_x11_classhint( vo->mDisplay,vo->window,"vo_x11" );
     vo_x11_hidecursor(vo->mDisplay,vo->window);
     if ( vo_FS(vo) ) vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
@@ -246,44 +254,44 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     }
 #endif
 #ifdef CONFIG_VIDIX
-    if(!priv->vidix_name)
+    if(!priv.vidix_name)
 #endif
-    for(i=0;i<priv->num_buffers;i++) vo_x11_getMyXImage(vo,i,priv->vinfo.visual,priv->depth,priv->image_width,priv->image_height);
+    for(i=0;i<priv.num_buffers;i++) vo_x11_getMyXImage(vo,i,priv.vinfo.visual,priv.depth,priv.image_width,priv.image_height);
 
 #ifdef CONFIG_VIDIX
-    if(!priv->vidix_name) {
+    if(!priv.vidix_name) {
 #endif
     XImage* ximg=vo_x11_Image(vo,0);
-    switch ((priv->bpp=ximg->bits_per_pixel)){
-	case 24: priv->out_format= IMGFMT_BGR24; break;
-	case 32: priv->out_format= IMGFMT_BGR32; break;
-	case 15: priv->out_format= IMGFMT_BGR15; break;
-	case 16: priv->out_format= IMGFMT_BGR16; break;
+    switch ((priv.bpp=ximg->bits_per_pixel)){
+	case 24: priv.out_format= IMGFMT_BGR24; break;
+	case 32: priv.out_format= IMGFMT_BGR32; break;
+	case 15: priv.out_format= IMGFMT_BGR15; break;
+	case 16: priv.out_format= IMGFMT_BGR16; break;
 	default: break;
     }
 
     /* If we have blue in the lowest bit then obviously RGB */
-    priv->mode=( ( ximg->blue_mask & 0x01 ) != 0 ) ? MODE_RGB : MODE_BGR;
+    priv.mode=( ( ximg->blue_mask & 0x01 ) != 0 ) ? MODE_RGB : MODE_BGR;
 #ifdef WORDS_BIGENDIAN
     if ( ximg->byte_order != MSBFirst )
 #else
     if ( ximg->byte_order != LSBFirst )
 #endif
     {
-	priv->mode=( ( ximg->blue_mask & 0x01 ) != 0 ) ? MODE_BGR : MODE_RGB;
+	priv.mode=( ( ximg->blue_mask & 0x01 ) != 0 ) ? MODE_BGR : MODE_RGB;
     }
 
 #ifdef WORDS_BIGENDIAN
-    if(priv->mode==MODE_BGR && priv->bpp!=32) {
-	MSG_ERR("BGR%d not supported, please contact the developers\n", priv->bpp);
+    if(priv.mode==MODE_BGR && priv.bpp!=32) {
+	MSG_ERR("BGR%d not supported, please contact the developers\n", priv.bpp);
 	return MPXP_False;
     }
-    if(priv->mode==MODE_RGB && priv->bpp==32) {
+    if(priv.mode==MODE_RGB && priv.bpp==32) {
 	MSG_ERR("RGB32 not supported on big-endian systems, please contact the developers\n");
 	return MPXP_False;
     }
 #else
-    if(priv->mode==MODE_BGR) {
+    if(priv.mode==MODE_BGR) {
 	MSG_ERR("BGR not supported, please contact the developers\n");
 	return MPXP_False;
     }
@@ -292,15 +300,15 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,u
     }
 #endif
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_name) {
+    if(priv.vidix_name) {
 	XWindowAttributes xwa;
 	XGetWindowAttributes(vo->mDisplay, vo->window, &xwa);
-	if(vidix_init(vo,priv->image_width,priv->image_height,xwa.x,xwa.y,
+	if(vidix_init(vo,priv.image_width,priv.image_height,xwa.x,xwa.y,
 			xwa.width,xwa.height,
-			priv->in_format,priv->depth,
+			priv.in_format,priv.depth,
 			vo_conf.screenwidth,vo_conf.screenheight) != MPXP_Ok) {
 	    MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
-	    priv->vidix_name = NULL;
+	    priv.vidix_name = NULL;
 	    return MPXP_False;
 	} else MSG_V("vo_vesa: Using VIDIX\n");
 	if(vidix_start(vo)!=0) return MPXP_False;
@@ -348,15 +356,15 @@ static void __FASTCALL__ Display_Image(vo_data_t*vo,XImage *myximage )
 }
 
 static void __FASTCALL__ select_frame(vo_data_t*vo, unsigned idx ){
-    priv_t* priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_server) {
-	priv->vidix_server->select_frame(vo,idx);
+    if(priv.vidix_server) {
+	priv.vidix_server->select_frame(vo,idx);
 	return;
     }
 #endif
     Display_Image(vo,vo_x11_Image(vo,idx));
-    if (priv->num_buffers>1) XFlush(vo->mDisplay);
+    if (priv.num_buffers>1) XFlush(vo->mDisplay);
     else XSync(vo->mDisplay, False);
     return;
 }
@@ -382,12 +390,12 @@ static MPXP_Rc __FASTCALL__ query_format(vo_query_fourcc_t* format )
 static void uninit(vo_data_t*vo)
 {
     unsigned i;
-    priv_t* priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_name) vidix_term(vo);
-    delete priv->vidix_server;
+    if(priv.vidix_name) vidix_term(vo);
+    delete priv.vidix_server;
 #endif
-    for(i=0;i<priv->num_buffers;i++)  vo_x11_freeMyXImage(vo,i);
+    for(i=0;i<priv.num_buffers;i++)  vo_x11_freeMyXImage(vo,i);
     saver_on(vo,vo->mDisplay); // screen saver back on
 
 #ifdef HAVE_XF86VM
@@ -399,11 +407,11 @@ static void uninit(vo_data_t*vo)
 
 static uint32_t __FASTCALL__ parseSubDevice(vo_data_t*vo,const char *sd)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     uint32_t flags;
     flags = 0;
 #ifdef CONFIG_VIDIX
-    if(memcmp(sd,"vidix",5) == 0) priv->vidix_name = &sd[5]; /* priv->vidix_name will be valid within init() */
+    if(memcmp(sd,"vidix",5) == 0) priv.vidix_name = &sd[5]; /* priv.vidix_name will be valid within init() */
     else
 #endif
     { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); return 0xFFFFFFFFUL; }
@@ -413,11 +421,9 @@ static uint32_t __FASTCALL__ parseSubDevice(vo_data_t*vo,const char *sd)
 static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 {
     MPXP_Rc vidix_err=MPXP_Ok;
-    priv_t* priv;
-    priv=new(zeromem) priv_t;
+    x11_priv_t* priv;
+    priv=new(zeromem) x11_priv_t;
     vo->priv=priv;
-    priv->num_buffers=1;
-    priv->subdev_flags = 0xFFFFFFFEUL;
     if(arg) priv->subdev_flags = parseSubDevice(vo,arg);
 #ifdef CONFIG_VIDIX
     if(priv->vidix_name) {
@@ -431,16 +437,16 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 
 static void __FASTCALL__ x11_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     caps->caps = DRI_CAP_TEMP_VIDEO;
-    caps->fourcc = priv->out_format;
-    caps->width=priv->image_width;
-    caps->height=priv->image_height;
+    caps->fourcc = priv.out_format;
+    caps->width=priv.image_width;
+    caps->height=priv.image_height;
     caps->x=0;
     caps->y=0;
-    caps->w=priv->image_width;
-    caps->h=priv->image_height;
-    caps->strides[0] = priv->image_width*((priv->bpp+7)/8);
+    caps->w=priv.image_width;
+    caps->h=priv.image_height;
+    caps->strides[0] = priv.image_width*((priv.bpp+7)/8);
     caps->strides[1] = 0;
     caps->strides[2] = 0;
     caps->strides[3] = 0;
@@ -457,31 +463,31 @@ static void __FASTCALL__ x11_dri_get_surface(const vo_data_t*vo,dri_surface_t *s
 
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(vo->priv);
+    x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX
-    if(priv->vidix_server)
-	if(priv->vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
+    if(priv.vidix_server)
+	if(priv.vidix_server->control(vo,request,data)==MPXP_Ok) return MPXP_Ok;
 #endif
     switch (request) {
 	case VOCTRL_CHECK_EVENTS: {
 	    vo_resize_t* vrest = reinterpret_cast<vo_resize_t*>(data);
 	    vrest->event_type = check_events(vo,vrest->adjust_size);
 #ifdef CONFIG_VIDIX
-	    if(priv->vidix_name) resize_vidix(vo);
+	    if(priv.vidix_name) resize_vidix(vo);
 #endif
 	    return MPXP_True;
 	}
 	case VOCTRL_FULLSCREEN:
 	    vo_x11_fullscreen(vo);
 #ifdef CONFIG_VIDIX
-	    if(priv->vidix_name) resize_vidix(vo);
+	    if(priv.vidix_name) resize_vidix(vo);
 #endif
 	    return MPXP_True;
 	// all cases below are substituted by vidix
 	case VOCTRL_QUERY_FORMAT:
 	    return query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
 	case VOCTRL_GET_NUM_FRAMES:
-	    *(uint32_t *)data = priv->num_buffers;
+	    *(uint32_t *)data = priv.num_buffers;
 	    return MPXP_True;
 	case DRI_GET_SURFACE_CAPS:
 	    x11_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
