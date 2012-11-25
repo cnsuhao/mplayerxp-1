@@ -34,7 +34,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt);
 }
 
-static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t*data)
+static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t*data)
 {
     const int *const tmp = reinterpret_cast<int*>(data);
     switch(request){
@@ -160,8 +160,8 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t* mpi){
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {
-    vf->config = vf_config;
-    vf->control = control;
+    vf->config_vf = vf_config;
+    vf->control_vf = control_vf;
     vf->put_slice = put_slice;
     vf->priv = new(zeromem) struct vf_priv_s;
     vf->priv->x = -1;

@@ -40,7 +40,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi);
 
 void vf_menu_pause_update(struct vf_instance_s* vf) {
   if(pause_mpi) {
-    vf->control(vf,VFCTRL_START_FRAME,NULL);
+    vf->control_vf(vf,VFCTRL_START_FRAME,NULL);
     put_slice(vf,pause_mpi);
   }
 }
@@ -250,7 +250,7 @@ static MPXP_Rc __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
     mp_input_add_cmd_filter(vf->libinput,(mp_input_cmd_filter)cmd_filter,(any_t*)st_priv);
   }
 
-  vf->config = vf_config;
+  vf->config_vf = vf_config;
   vf->query_format=query_format;
   vf->put_slice = put_slice;
   vf->get_image = get_image;

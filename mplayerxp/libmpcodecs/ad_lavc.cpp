@@ -180,7 +180,7 @@ void uninit(sh_audio_t *sh)
     sh->context=NULL;
 }
 
-MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
     priv_t* priv = reinterpret_cast<priv_t*>(sh->context);

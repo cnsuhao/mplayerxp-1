@@ -391,7 +391,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,dmpi);
 }
 
-static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
     int *table;
     int *inv_table;
     int r;
@@ -508,10 +508,10 @@ static void __FASTCALL__ uninit(struct vf_instance_s *vf){
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
-    vf->config=vf_config;
+    vf->config_vf=vf_config;
     vf->put_slice=put_frame;
     vf->query_format=query_format;
-    vf->control= control;
+    vf->control_vf= control_vf;
     vf->uninit=uninit;
     vf->print_conf=print_conf;
     if(!vf->priv) {

@@ -59,7 +59,7 @@ typedef struct priv_s {
     int16_t*	tmpbuf;
 }priv_t;
 
-static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg) {
+static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
   switch (cmd) {
     case AOCONTROL_GET_VOLUME:
@@ -104,7 +104,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
     return MPXP_Ok;
 }
 
-static MPXP_Rc configure(ao_data_t* ao,unsigned rate, unsigned channels, unsigned format)
+static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate, unsigned channels, unsigned format)
 {
     priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     ALCcontext *ctx = NULL;

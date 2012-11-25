@@ -15,7 +15,7 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag);
 static MPXP_Rc __FASTCALL__ init(sh_audio_t *sh);
 static MPXP_Rc __FASTCALL__  preinit(sh_audio_t *sh);
 static void __FASTCALL__  uninit(sh_audio_t *sh);
-static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...);
+static MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...);
 static unsigned __FASTCALL__  decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 
 #define LIBAD_EXTERN(x) extern const ad_functions_t mpcodecs_ad_##x = {\
@@ -25,7 +25,7 @@ static unsigned __FASTCALL__  decode(sh_audio_t *sh_audio,unsigned char *buf,uns
 	preinit,\
 	init,\
 	uninit,\
-	control,\
+	control_ad,\
 	decode\
 };
 

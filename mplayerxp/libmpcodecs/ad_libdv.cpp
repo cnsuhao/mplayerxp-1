@@ -90,7 +90,7 @@ static void uninit(sh_audio_t *sh_audio)
 	delete priv->audioBuffers[i];
 }
 
-static MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+static MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     // TODO!!!
     UNUSED(sh);

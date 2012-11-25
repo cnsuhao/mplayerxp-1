@@ -27,8 +27,8 @@ typedef struct af_delay_s
   float	d[AF_NCH];   	// Delay [ms]
 }af_delay_t;
 
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_delay_t* s = reinterpret_cast<af_delay_t*>(af->setup);
 
@@ -91,7 +91,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
 	s->q[i] = mp_calloc(L,af->conf.format&MPAF_BPS_MASK);
 	if(NULL == s->q[i]) MSG_FATAL(MSGTR_OutOfMemory);
     }
-    return control(af,AF_CONTROL_DELAY_LEN | AF_CONTROL_SET,s->d);
+    return control_af(af,AF_CONTROL_DELAY_LEN | AF_CONTROL_SET,s->d);
 }
 
 // Deallocate memory
@@ -171,8 +171,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-    af->config=af_config;
-    af->control=control;
+    af->config_af=af_config;
+    af->control_af=control_af;
     af->uninit=uninit;
     af->play=play;
     af->mul.n=1;

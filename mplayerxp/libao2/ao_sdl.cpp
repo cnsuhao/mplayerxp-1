@@ -111,7 +111,7 @@ static void setenv(const char *name, const char *val, int _xx)
 #endif
 
 // to set/get/query special features/parameters
-static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control_ao(const ao_data_t* ao,int cmd,long arg){
     priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
 	switch (cmd) {
 		case AOCONTROL_QUERY_FORMAT:
@@ -160,7 +160,7 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags)
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
     /* SDL Audio Specifications */
     SDL_AudioSpec aspec, obtained;

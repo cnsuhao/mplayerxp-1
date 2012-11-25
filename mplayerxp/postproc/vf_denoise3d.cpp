@@ -323,7 +323,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     double Param1, Param2, Param3, Param4;
     int e;
 
-    vf->config=vf_config;
+    vf->config_vf=vf_config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
     vf->uninit=uninit;

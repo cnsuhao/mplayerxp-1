@@ -366,7 +366,7 @@ static unsigned int nas_aformat_to_auformat(unsigned int *format)
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
 {
     priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     AuElementParameters aep;
@@ -402,7 +402,7 @@ static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
 		AuSetElementParameters(priv->aud, 1, &aep, &as);
 		if (as != AuSuccess) {
 			nas_print_error(priv->aud,
-					"control(): AuSetElementParameters", as);
+					"control_ao(): AuSetElementParameters", as);
 			retval = MPXP_Error;
 		} else retval = MPXP_Ok;
 		break;
@@ -422,7 +422,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
 }
 // open & setup audio device
 // return: 1=success 0=fail
-static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
     priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     AuElement elms[3];

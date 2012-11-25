@@ -109,8 +109,8 @@ typedef struct af_ao2_s{
     mpaf_format_e	format;
 }af_ao2_t;
 
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const af_conf_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af, const af_conf_t* arg)
 {
     af_ao2_t* s = reinterpret_cast<af_ao2_t*>(af->setup);
     /* Sanity check */
@@ -121,7 +121,7 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af, const af_conf_t* ar
     return af_test_output(af,arg);
 }
 
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
     af_ao2_t* s = reinterpret_cast<af_ao2_t*>(af->setup);
     UNUSED(arg);
@@ -155,8 +155,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-    af->config=config;
-    af->control=control;
+    af->config_af=config_af;
+    af->control_af=control_af;
     af->uninit=uninit;
     af->play=play;
     af->mul.d=1;

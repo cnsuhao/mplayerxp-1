@@ -50,8 +50,8 @@ typedef struct af_instance_s {
     const af_info_t*	info;
     char		antiviral_hole[RND_CHAR6];
     unsigned		pin; // personal identification number
-    MPXP_Rc		(* __FASTCALL__ config)(struct af_instance_s* af, const af_conf_t* arg);
-    MPXP_Rc		(* __FASTCALL__ control)(struct af_instance_s* af, int cmd, any_t* arg);
+    MPXP_Rc		(* __FASTCALL__ config_af)(struct af_instance_s* af, const af_conf_t* arg);
+    MPXP_Rc		(* __FASTCALL__ control_af)(struct af_instance_s* af, int cmd, any_t* arg);
     void		(* __FASTCALL__ uninit)(struct af_instance_s* af);
     mp_aframe_t*	(* __FASTCALL__ play)(struct af_instance_s* af,const mp_aframe_t* data);
     any_t*		setup; // setup data for this specific instance and filter

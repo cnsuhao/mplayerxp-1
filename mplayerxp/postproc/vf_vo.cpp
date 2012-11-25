@@ -72,7 +72,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return 1;
 }
 
-static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request,any_t* data)
+static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request,any_t* data)
 {
     UNUSED(vf);
     MSG_DBG2("vf_control: %u\n",request);
@@ -88,7 +88,7 @@ static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request,any_t*
 	return vo_control(vo_data,VOCTRL_GET_EQUALIZER, eq);
     }
     }
-    // return video_out->control(request,data);
+    // return video_out->control_vf(request,data);
     return MPXP_Unknown;
 }
 
@@ -143,8 +143,8 @@ static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     UNUSED(args);
-    vf->config=vf_config;
-    vf->control=control;
+    vf->config_vf=vf_config;
+    vf->control_vf=control_vf;
     vf->uninit=uninit;
     vf->print_conf=print_conf;
     vf->query_format=query_format;

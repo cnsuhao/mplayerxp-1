@@ -55,7 +55,7 @@ typedef struct vd_functions_s
     const video_probe_t*(*__FASTCALL__ probe)(sh_video_t *sh,uint32_t fourcc);
     MPXP_Rc		(*__FASTCALL__ init)(sh_video_t *sh,any_t* libinput);
     void		(*__FASTCALL__ uninit)(sh_video_t *sh);
-    MPXP_Rc		(* control)(sh_video_t *sh,int cmd,any_t* arg, ...);
+    MPXP_Rc		(*control_vd)(sh_video_t *sh,int cmd,any_t* arg, ...);
     mp_image_t*		(*__FASTCALL__ decode)(sh_video_t *sh,const enc_frame_t* frame);
 } vd_functions_t;
 

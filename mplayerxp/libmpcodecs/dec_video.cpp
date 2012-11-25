@@ -54,7 +54,7 @@ MPXP_Rc mpcv_get_quality_max(any_t *opaque,unsigned *quality){
     priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     if(priv->mpvdec){
-	MPXP_Rc ret=priv->mpvdec->control(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
+	MPXP_Rc ret=priv->mpvdec->control_vd(sh_video,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
 	if(ret>=MPXP_Ok) return ret;
     }
     return MPXP_False;
@@ -64,7 +64,7 @@ MPXP_Rc mpcv_set_quality(any_t *opaque,int quality){
     priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     if(priv->mpvdec)
-	return priv->mpvdec->control(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
+	return priv->mpvdec->control_vd(sh_video,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
     return MPXP_False;
 }
 
@@ -76,8 +76,8 @@ MPXP_Rc mpcv_set_colors(any_t *opaque,const char *item,int value)
     vf_equalizer_t eq;
     eq.item=item;
     eq.value=value*10;
-    if(vf->control(vf,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
-	if(priv->mpvdec) return priv->mpvdec->control(sh_video,VDCTRL_SET_EQUALIZER,(any_t*)item,(int)value);
+    if(vf->control_vf(vf,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
+	if(priv->mpvdec) return priv->mpvdec->control_vd(sh_video,VDCTRL_SET_EQUALIZER,(any_t*)item,(int)value);
     }
     return MPXP_False;
 }
@@ -291,7 +291,7 @@ int mpcv_decode(any_t *opaque,const enc_frame_t* frame){
     vf=sh_video->vfilter;
 
     t=GetTimer();
-    vf->control(vf,VFCTRL_START_FRAME,NULL);
+    vf->control_vf(vf,VFCTRL_START_FRAME,NULL);
 
     sh_video->active_slices=0;
     mpi=priv->mpvdec->decode(sh_video, frame);
@@ -333,7 +333,7 @@ void mpcv_resync_stream(any_t *opaque)
     priv_t* priv=(priv_t*)opaque;
     sh_video_t* sh_video = priv->parent;
     if(sh_video)
-    if(sh_video->inited && priv->mpvdec) priv->mpvdec->control(sh_video,VDCTRL_RESYNC_STREAM,NULL);
+    if(sh_video->inited && priv->mpvdec) priv->mpvdec->control_vd(sh_video,VDCTRL_RESYNC_STREAM,NULL);
 }
 
 #ifdef USE_SUB
@@ -436,7 +436,7 @@ csp_again:
 	if((flags&VFCAP_CSP_SUPPORTED_BY_HW) || ((flags&VFCAP_CSP_SUPPORTED) && j<0)){
 	    // check (query) if codec really support this outfmt...
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(priv->mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
+	    if(priv->mpvdec->control_vd(sh,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
 		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",priv->mpvdec->info->driver_name,vo_format_name(out_fmt));
 		continue;
 	    }
@@ -446,7 +446,7 @@ csp_again:
 	} else
 	if(!palette && !(vo_data->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(priv->mpvdec->control(sh,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
+	    if(priv->mpvdec->control_vd(sh,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
 		palette=1;
 	}
     }
@@ -554,7 +554,7 @@ csp_again:
 	"MPlayerXP",vo_format_name(out_fmt));
 
     MSG_DBG2("vf configuring: %s\n",vf->info->name);
-    if(vf->config(vf,sh->src_w,sh->src_h,
+    if(vf->config_vf(vf,sh->src_w,sh->src_h,
 		screen_size_x,screen_size_y,
 		vo_data->flags,
 		out_fmt)==0){

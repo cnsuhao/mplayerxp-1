@@ -86,7 +86,7 @@ typedef struct priv_s {
 /* init with default values */
 
 // to set/get/query special features/parameters
-static MPXP_Rc control(const ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc control_ao(const ao_data_t* ao,int cmd,long arg){
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
@@ -105,7 +105,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
     return MPXP_Ok;
 }
 
-static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
+static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
     priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     unsigned bits;
 

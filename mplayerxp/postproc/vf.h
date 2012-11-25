@@ -40,10 +40,10 @@ typedef struct vf_instance_s {
     char		antiviral_hole[RND_CHAR5];
     unsigned		pin; // personal identification number
     // funcs:
-    int (* __FASTCALL__ config)(struct vf_instance_s* vf,
+    int (* __FASTCALL__ config_vf)(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt);
-    MPXP_Rc (* __FASTCALL__ control)(struct vf_instance_s* vf,
+    MPXP_Rc (* __FASTCALL__ control_vf)(struct vf_instance_s* vf,
 	int request, any_t* data);
     int (* __FASTCALL__ query_format)(struct vf_instance_s* vf,
 	unsigned int fmt,unsigned w,unsigned h);

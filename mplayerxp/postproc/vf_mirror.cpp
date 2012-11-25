@@ -124,7 +124,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     int dir;
-    vf->config=vf_config;
+    vf->config_vf=vf_config;
     vf->put_slice=put_slice;
     vf->priv=new(zeromem) struct vf_priv_s;
     dir=1;

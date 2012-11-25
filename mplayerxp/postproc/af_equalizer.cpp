@@ -76,7 +76,7 @@ static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
   b[1] = -1.0050;
 }
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_equalizer_t* s   = (af_equalizer_t*)af->setup;
     unsigned k =0;
@@ -106,8 +106,8 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg
 
     return af_test_output(af,arg);
 }
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_equalizer_t* s   = (af_equalizer_t*)af->setup;
 
@@ -212,8 +212,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-  af->config=config;
-  af->control=control;
+  af->config_af=config_af;
+  af->control_af=control_af;
   af->uninit=uninit;
   af->play=play;
   af->mul.n=1;

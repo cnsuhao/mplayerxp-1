@@ -116,8 +116,8 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     af->mul.d = arg->rate;
     return rv;
 }
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
     af_resample_t* s   = (af_resample_t*)af->setup;
     switch(cmd){
@@ -127,7 +127,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	case AF_CONTROL_COMMAND_LINE:{
 	    int rate=0;
 	    sscanf((char*)arg,"%i", &rate);
-	    return af->control(af,AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET, &rate);
+	    return af->control_af(af,AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET, &rate);
 	}
 	case AF_CONTROL_POST_CREATE: return MPXP_Ok;
 	case AF_CONTROL_RESAMPLE_RATE | AF_CONTROL_SET: {
@@ -174,8 +174,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-    af->config=af_config;
-    af->control=control;
+    af->config_af=af_config;
+    af->control_af=control_af;
     af->uninit=uninit;
     af->play=play;
     af->mul.n=1;

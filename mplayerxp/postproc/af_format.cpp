@@ -246,8 +246,8 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     af->mul.d      = arg->format&MPAF_BPS_MASK;
     return build_cvt_chain(af,arg);
 }
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
     char buf1[256],buf2[256];
@@ -261,7 +261,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 	    int format = MPAF_NE;
 	    // Convert string to format
 	    format = mpaf_str2fmt((char *)arg);
-	    if((MPXP_Ok != af->control(af,AF_CONTROL_FORMAT | AF_CONTROL_SET,&format)))
+	    if((MPXP_Ok != af->control_af(af,AF_CONTROL_FORMAT | AF_CONTROL_SET,&format)))
 		return MPXP_Error;
 	    return MPXP_Ok;
 	}
@@ -305,8 +305,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, const mp_aframe_
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-    af->config=af_config;
-    af->control=control;
+    af->config_af=af_config;
+    af->control_af=control_af;
     af->uninit=uninit;
     af->play=play;
     af->mul.n=1;

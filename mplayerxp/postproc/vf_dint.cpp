@@ -440,7 +440,7 @@ static int __FASTCALL__ put_slice (struct vf_instance_s* vf, mp_image_t *mpi)
 static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
     int e;
     float a,b;
-    vf->config = vf_config;
+    vf->config_vf = vf_config;
     vf->put_slice = put_slice;
     vf->print_conf = print_conf;
 //    vf->default_reqs=VFCAP_ACCEPT_STRIDE;
@@ -468,7 +468,7 @@ static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
 	    vf->priv->thresh=a;
 	    vf->priv->map=b;
 	    vf->uninit=uninit;
-	    vf->config=kd_config;
+	    vf->config_vf=kd_config;
 	    vf->put_slice = kd_put_slice;
 	    vf->query_format=kd_query_format;
 	}

@@ -511,7 +511,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t* priv = reinterpret_cast<priv_t*>(sh->context);
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:

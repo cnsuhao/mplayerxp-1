@@ -68,7 +68,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_QUERY_MAX_PP_LEVEL:
 	*reinterpret_cast<unsigned int*>(data)=PP_QUALITY_MAX;
@@ -142,8 +142,8 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     int hex_mode=0;
 
     vf->query_format=query_format;
-    vf->control=control;
-    vf->config=vf_config;
+    vf->control_vf=control_vf;
+    vf->config_vf=vf_config;
     vf->get_image=get_image;
     vf->put_slice=put_slice;
     vf->uninit=uninit;

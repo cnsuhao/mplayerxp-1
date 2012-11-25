@@ -47,7 +47,7 @@ static const ao_info_t info =
 
 LIBAO_EXTERN(arts)
 
-static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg)
+static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
 {
     UNUSED(ao);
     UNUSED(cmd);
@@ -70,7 +70,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
     arts_stream_t stream;
     unsigned frag_spec,samplesize;

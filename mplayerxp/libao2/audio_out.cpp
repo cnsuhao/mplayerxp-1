@@ -227,7 +227,7 @@ ao_data_t* __FASTCALL__ ao_init(const char *subdevice)
 MPXP_Rc __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
 {
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    return priv->audio_out->configure(ao,rate,channels,format);
+    return priv->audio_out->config_ao(ao,rate,channels,format);
 }
 
 void ao_uninit(ao_data_t*ao)
@@ -294,7 +294,7 @@ MPXP_Rc __FASTCALL__ ao_control(const ao_data_t*ao,int cmd,long arg)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->audio_out->control(ao,cmd,arg);
+	return priv->audio_out->control_ao(ao,cmd,arg);
     }
     return MPXP_Error;
 }

@@ -28,7 +28,7 @@ typedef struct af_dyn_s
     float gain;
 }af_dyn_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
 {
     // Sanity check
     if(!arg) return MPXP_Error;
@@ -41,8 +41,8 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg
 }
 
 // Data for specific instances of this filter
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_dyn_t* s   = (af_dyn_t*)af->setup;
   switch(cmd){
@@ -94,8 +94,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-  af->config=config;
-  af->control=control;
+  af->config_af=config_af;
+  af->control_af=control_af;
   af->uninit=uninit;
   af->play=play;
   af->mul.n=1;

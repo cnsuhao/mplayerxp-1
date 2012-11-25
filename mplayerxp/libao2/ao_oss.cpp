@@ -43,7 +43,7 @@ typedef struct priv_s {
 const char *oss_mixer_device = PATH_DEV_MIXER;
 
 // to set/get/query special features/parameters
-static MPXP_Rc __FASTCALL__ control(const ao_data_t* ao,int cmd,long arg){
+static MPXP_Rc __FASTCALL__ control_ao(const ao_data_t* ao,int cmd,long arg){
     priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     int rval;
     switch(cmd){
@@ -242,7 +242,7 @@ static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags){
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
+static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
 {
     priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     MSG_V("ao2: %d Hz  %d chans  %s\n",rate,channels,
@@ -265,7 +265,7 @@ ac3_retry:
 #endif
 	    goto ac3_retry;
 	} else {
-	    MSG_ERR("OSS-CONF: Can't configure for: %s\n",ao_format_name(format));
+	    MSG_ERR("OSS-CONF: Can't config_ao for: %s\n",ao_format_name(format));
 	    show_fmts(ao);
 	    ao->format=format;
 	    return MPXP_False;

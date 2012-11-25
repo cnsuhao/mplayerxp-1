@@ -354,7 +354,7 @@ void uninit(sh_audio_t *sh)
     dlclose(dll_handle);
 }
 
-MPXP_Rc control(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
 {
     UNUSED(sh);
     UNUSED(cmd);
@@ -375,7 +375,7 @@ unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxle
 	int retval=-1;
 	while(retval<0) {
 	    retval = MP3_DecodeFrame(buf,-1,pts);
-	    if(retval<0) control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
+	    if(retval<0) control_ad(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
 	}
 	return retval;
 	***************************

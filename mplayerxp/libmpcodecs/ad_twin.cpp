@@ -336,7 +336,7 @@ void uninit(sh_audio_t *sh)
     FreeLibrary(vqf_dll);
 }
 
-MPXP_Rc control(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 {
     int skip;
     UNUSED(arg);

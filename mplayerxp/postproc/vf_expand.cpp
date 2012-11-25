@@ -99,7 +99,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_START_FRAME:
 	vf->priv->new_frame=1;
@@ -113,8 +113,8 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
-    vf->config=vf_config;
-    vf->control=control;
+    vf->config_vf=vf_config;
+    vf->control_vf=control_vf;
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     if(!vf->priv) vf->priv=new(zeromem) struct vf_priv_s;

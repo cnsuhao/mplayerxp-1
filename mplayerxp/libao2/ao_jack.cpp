@@ -140,7 +140,7 @@ static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned n
 
 // end ring priv->buffer stuff
 
-static MPXP_Rc control(const ao_data_t* ao,int cmd, long arg) {
+static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg) {
     UNUSED(ao);
     UNUSED(cmd);
     UNUSED(arg);
@@ -221,7 +221,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
     return MPXP_Ok;
 }
 
-static MPXP_Rc configure(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format) {
+static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format) {
     priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     const char **matching_ports = NULL;
     char *port_name = NULL;

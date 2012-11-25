@@ -48,7 +48,7 @@ typedef struct af_control_info_s{
 
 
 /*********************************************
-// Extended control used with arguments that operates on only one
+// Extended control_af used with arguments that operates on only one
 // channel at the time
 */
 typedef struct af_control_ext_s{
@@ -60,7 +60,7 @@ typedef struct af_control_ext_s{
 // Control parameters
 */
 
-/* The control system is divided into 3 levels
+/* The control_af system is divided into 3 levels
    mandatory calls 	 - all filters must answer to all of these
    optional calls  	 - are optional
    filter specific calls - applies only to some filters
@@ -98,7 +98,7 @@ enum {
 enum {
     AF_CONTROL_SET		=0x00000000, // Set argument
     AF_CONTROL_GET		=0x00000001, // Get argument
-    AF_CONTROL_INFO		=0x00000002, // Get info about the control, i.e fill in everything except argument
+    AF_CONTROL_INFO		=0x00000002, // Get info about the control_af, i.e fill in everything except argument
 // Resample
     AF_CONTROL_RESAMPLE_RATE	=0x00000100|AF_CONTROL_FILTER_SPECIFIC, // Set output rate in resample
     AF_CONTROL_RESAMPLE_SLOPPY	=0x00000200|AF_CONTROL_FILTER_SPECIFIC, // Enable sloppy resampling
@@ -112,7 +112,7 @@ enum {
     AF_CONTROL_CHANNELS_NR	=0x00000800|AF_CONTROL_FILTER_SPECIFIC, // Set nuber of channel routing pairs, arg is int*
     AF_CONTROL_CHANNELS_ROUTER	=0x00000900|AF_CONTROL_FILTER_SPECIFIC, // Set make af_channels into a router
 // Volume
-    AF_CONTROL_VOLUME_ON_OFF	=0x00000A00|AF_CONTROL_FILTER_SPECIFIC, // Turn volume control on and off, arg is int*
+    AF_CONTROL_VOLUME_ON_OFF	=0x00000A00|AF_CONTROL_FILTER_SPECIFIC, // Turn volume control_af on and off, arg is int*
     AF_CONTROL_VOLUME_SOFTCLIP	=0x00000B00|AF_CONTROL_FILTER_SPECIFIC, // Turn soft clipping of the volume on and off, arg is binary
     AF_CONTROL_VOLUME_LEVEL	=0x00000C00|AF_CONTROL_FILTER_SPECIFIC, // Set volume level, arg is a float* with the volume for all the channels
     AF_CONTROL_VOLUME_PROBE	=0x00000D00|AF_CONTROL_FILTER_SPECIFIC, // Probed power level for all channels, arg is a float*

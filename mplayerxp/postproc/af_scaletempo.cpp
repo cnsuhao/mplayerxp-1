@@ -326,8 +326,8 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
 
     return af_test_output(af,arg);
 }
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
   switch(cmd){
@@ -424,8 +424,8 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 static MPXP_Rc __FASTCALL__ af_open(struct af_instance_s* af){
   af_scaletempo_t* s;
 
-  af->config    = af_config;
-  af->control   = control;
+  af->config_af    = af_config;
+  af->control_af   = control_af;
   af->uninit    = uninit;
   af->play      = play;
   af->mul.d     = 1;

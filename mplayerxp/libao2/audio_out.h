@@ -38,7 +38,7 @@ typedef struct ao_functions_s
      * @param arg	argument associated with command
      * @return	MPXP_Ok if success MPXP_False MPXP_Error MPXP_NA otherwise
      **/
-    MPXP_Rc (* __FASTCALL__ control)(const ao_data_t*,int cmd,long arg);
+    MPXP_Rc (* __FASTCALL__ control_ao)(const ao_data_t*,int cmd,long arg);
 
     /** Preinitializes driver
      * @param flag	currently unused
@@ -52,7 +52,7 @@ typedef struct ao_functions_s
      * @param format	specifies format of audio samples (see AFMT_* for detail)
      * @return		1 on successful configuration, 0 on error.
      **/
-    MPXP_Rc (* __FASTCALL__ configure)(ao_data_t*,unsigned rate,unsigned channels,unsigned format);
+    MPXP_Rc (* __FASTCALL__ config_ao)(ao_data_t*,unsigned rate,unsigned channels,unsigned format);
 
     /** Closes driver. Should restore the original state of the system.
      **/

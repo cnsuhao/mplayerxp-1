@@ -364,7 +364,7 @@ static void __FASTCALL__ set_saturation (vf_eq2_t *eq2, double s)
   print_values (eq2);
 }
 
-static MPXP_Rc __FASTCALL__ control (vf_instance_t *vf, int request, any_t*data)
+static MPXP_Rc __FASTCALL__ control_vf (vf_instance_t *vf, int request, any_t*data)
 {
   vf_equalizer_t *eq;
 
@@ -447,7 +447,7 @@ static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
   vf_eq2_t *eq2;
   double   par[8];
 
-  vf->control = control;
+  vf->control_vf = control_vf;
   vf->query_format = query_format;
   vf->put_slice = put_slice;
   vf->uninit = uninit;

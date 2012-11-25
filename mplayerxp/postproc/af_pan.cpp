@@ -30,8 +30,8 @@ typedef struct af_pan_s
     float level[AF_NCH][AF_NCH];	// Gain level for each channel
 }af_pan_t;
 
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_pan_t* s = reinterpret_cast<af_pan_t*>(af->setup);
 
@@ -43,7 +43,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     int   j,k;
     // Read number of outputs
     sscanf((char*)arg,"%i%n", &nch,&n);
-    if(MPXP_Ok != control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &nch))
+    if(MPXP_Ok != control_af(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &nch))
       return MPXP_Error;
 
     // Read pan values
@@ -111,7 +111,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     af->mul.d       = arg->nch;
 
     if((af->conf.format != arg->format)) return MPXP_False;
-    return control(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->conf.nch);
+    return control_af(af,AF_CONTROL_PAN_NOUT | AF_CONTROL_SET, &af->conf.nch);
 }
 
 // Deallocate memory
@@ -155,8 +155,8 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
-  af->config=af_config;
-  af->control=control;
+  af->config_af=af_config;
+  af->control_af=control_af;
   af->uninit=uninit;
   af->play=play;
   af->mul.n=1;

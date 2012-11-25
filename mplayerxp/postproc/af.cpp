@@ -139,9 +139,9 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
 
   // Initialize the new filter
   if(MPXP_Ok == _new->info->open(_new) &&
-     MPXP_Error < _new->control(_new,AF_CONTROL_POST_CREATE,&s->cfg)){
+     MPXP_Error < _new->control_af(_new,AF_CONTROL_POST_CREATE,&s->cfg)){
     if(cmdline){
-      if(MPXP_Error<_new->control(_new,AF_CONTROL_COMMAND_LINE,cmdline)) {
+      if(MPXP_Error<_new->control_af(_new,AF_CONTROL_COMMAND_LINE,cmdline)) {
 	delete cmdline;
 	return _new;
       }
@@ -217,7 +217,7 @@ static void af_remove(af_stream_t* s, af_instance_t* af)
   MSG_V("[libaf] Removing filter %s \n",af->info->name);
 
   // Notify filter before changing anything
-  af->control(af,AF_CONTROL_PRE_DESTROY,0);
+  af->control_af(af,AF_CONTROL_PRE_DESTROY,0);
 
   // Detach pointers
   if(af->prev)
@@ -250,7 +250,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 	if(!af->prev)	memcpy(&in,&(s->input),sizeof(af_conf_t));
 	else		memcpy(&in,&af->prev->conf,sizeof(af_conf_t));
 
-	rv = af->config(af,&in);
+	rv = af->config_af(af,&in);
 	memcpy(&in,&af->conf,sizeof(af_conf_t));
 	switch(rv){
 	    case MPXP_Ok: break;
@@ -261,26 +261,26 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 		    // Insert channels filter
 		    if((af->prev?af->prev->conf.nch:s->input.nch) != in.nch){
 			if(NULL == (_new = af_prepend(s,af,"channels"))) return MPXP_Error;
-			if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_CHANNELS,&in.nch))) return rv;
+			if(MPXP_Ok != (rv = _new->control_af(_new,AF_CONTROL_CHANNELS,&in.nch))) return rv;
 			// Initialize channels filter
 			if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_conf_t));
 			else		memcpy(&in,&_new->prev->conf,sizeof(af_conf_t));
-			if(MPXP_Ok != (rv = _new->config(_new,&in))) return rv;
+			if(MPXP_Ok != (rv = _new->config_af(_new,&in))) return rv;
 		    }
 		    // Insert rate filter
 		    if((af->prev?af->prev->conf.rate:s->input.rate) != in.rate){
 			if(NULL == (_new = af_prepend(s,af,"resample"))) return MPXP_Error;
-			if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate))) return rv;
+			if(MPXP_Ok != (rv = _new->control_af(_new,AF_CONTROL_RESAMPLE_RATE,&in.rate))) return rv;
 			// Initialize channels filter
 			if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_conf_t));
 			else		memcpy(&in,&_new->prev->conf,sizeof(af_conf_t));
-			if(MPXP_Ok != (rv = _new->config(_new,&in))) {
+			if(MPXP_Ok != (rv = _new->config_af(_new,&in))) {
 			    af_instance_t* af2 = af_prepend(s,af,"format");
 			    // Init the _new filter
 			    if(af2) {
-				if((MPXP_Ok != af2->control(af2,AF_CONTROL_FORMAT,&in.format))) return -1;
+				if((MPXP_Ok != af2->control_af(af2,AF_CONTROL_FORMAT,&in.format))) return -1;
 				if(MPXP_Ok != af_reinit(s,af2)) return MPXP_Error;
-				rv = _new->config(_new,&in);
+				rv = _new->config_af(_new,&in);
 			    }
 			    return rv;
 			}
@@ -288,11 +288,11 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 		    // Insert format filter
 		    if(((af->prev?af->prev->conf.format:s->input.format) != in.format)) {
 			if(NULL == (_new = af_prepend(s,af,"format"))) return MPXP_Error;
-			if(MPXP_Ok != (rv = _new->control(_new,AF_CONTROL_FORMAT,&in.format))) return rv;
+			if(MPXP_Ok != (rv = _new->control_af(_new,AF_CONTROL_FORMAT,&in.format))) return rv;
 			// Initialize format filter
 			if(!_new->prev) memcpy(&in,&(s->input),sizeof(af_conf_t));
 			else		memcpy(&in,&_new->prev->conf,sizeof(af_conf_t));
-			if(MPXP_Ok != (rv = _new->config(_new,&in))) return rv;
+			if(MPXP_Ok != (rv = _new->config_af(_new,&in))) return rv;
 		    }
 		    if(!_new){ // Should _never_ happen
 			MSG_ERR("[libaf] Unable to correct audio format. "
@@ -404,14 +404,14 @@ MPXP_Rc af_init(af_stream_t* s, int force_output)
 	}
       }
       // Init the _new filter
-      if(!af || (MPXP_Ok != af->control(af,AF_CONTROL_RESAMPLE_RATE,
+      if(!af || (MPXP_Ok != af->control_af(af,AF_CONTROL_RESAMPLE_RATE,
 				      &(s->output.rate))))
 	return MPXP_False;
       // Use lin int if the user wants fast
       if ((AF_INIT_TYPE_MASK & s->cfg.force) == AF_INIT_FAST) {
 	char args[32];
 	sprintf(args, "%d:0:0", s->output.rate);
-	af->control(af, AF_CONTROL_COMMAND_LINE, args);
+	af->control_af(af, AF_CONTROL_COMMAND_LINE, args);
       }
       if(MPXP_Ok != af_reinit(s,af))
 	return MPXP_False;
@@ -425,7 +425,7 @@ MPXP_Rc af_init(af_stream_t* s, int force_output)
       else
 	af = af_append(s,s->last,"channels");
       // Init the _new filter
-      if(!af || (MPXP_Ok != af->control(af,AF_CONTROL_CHANNELS,&(s->output.nch))))
+      if(!af || (MPXP_Ok != af->control_af(af,AF_CONTROL_CHANNELS,&(s->output.nch))))
 	return MPXP_False;
       if(MPXP_Ok != af_reinit(s,af))
 	return MPXP_False;
@@ -438,7 +438,7 @@ MPXP_Rc af_init(af_stream_t* s, int force_output)
       else
 	af = s->last;
       // Init the _new filter
-      if(!af ||(MPXP_Ok != af->control(af,AF_CONTROL_FORMAT,&s->output.format)))
+      if(!af ||(MPXP_Ok != af->control_af(af,AF_CONTROL_FORMAT,&s->output.format)))
 	return MPXP_False;
       if(MPXP_Ok != af_reinit(s,af))
 	return MPXP_False;
@@ -559,13 +559,13 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s)
   return delay;
 }
 
-// send control to all filters, starting with the last until
+// send control_af to all filters, starting with the last until
 // one responds with MPXP_Ok
 MPXP_Rc __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
   MPXP_Rc res = MPXP_Unknown;
   af_instance_t* filt = s->last;
   while (filt && res != MPXP_Ok) {
-    res = filt->control(filt, cmd, arg);
+    res = filt->control_af(filt, cmd, arg);
     filt = filt->prev;
   }
   return res;
@@ -629,7 +629,7 @@ void af_showconf(af_instance_t *first)
     check_pin("afilter",af->pin,AF_PIN);
     do{
 	MSG_INFO("  ");
-	if(af->control(af,AF_CONTROL_SHOWCONF,NULL)!=MPXP_Ok)
+	if(af->control_af(af,AF_CONTROL_SHOWCONF,NULL)!=MPXP_Ok)
 	    MSG_INFO("[af_%s %s]\n",af->info->name,af->info->info);
 	af=af->next;
     }while(af);

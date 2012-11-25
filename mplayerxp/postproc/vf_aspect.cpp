@@ -42,7 +42,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
-	vf->config = vf_config;
+	vf->config_vf = vf_config;
 	vf->put_slice = vf_next_put_slice;
 	//vf->default_caps = 0;
 	vf->priv = new(zeromem) struct vf_priv_s;

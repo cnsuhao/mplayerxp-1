@@ -133,7 +133,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
-    vf->config=vf_config;
+    vf->config_vf=vf_config;
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     vf->uninit=uninit;

@@ -73,7 +73,7 @@ static uint32_t get_format(const char *args)
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
-    vf->config=vf_config;
+    vf->config_vf=vf_config;
     vf->default_caps=0;
     if(!vf->priv) {
       vf->priv=new(zeromem) struct vf_priv_s;
@@ -91,7 +91,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
 static MPXP_Rc __FASTCALL__ vf_no_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_noformat;
-    vf->config=vf_config;
+    vf->config_vf=vf_config;
     vf->default_caps=0;
     if(!vf->priv) {
       vf->priv=new(zeromem) struct vf_priv_s;

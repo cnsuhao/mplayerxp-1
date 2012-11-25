@@ -302,8 +302,8 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
     vf->info=filter_list[i];
     vf->next=next;
     vf->prev=NULL;
-    vf->config=vf_next_config;
-    vf->control=vf_next_control;
+    vf->config_vf=vf_next_config;
+    vf->control_vf=vf_next_control;
     vf->query_format=vf_default_query_format;
     vf->put_slice=vf_next_put_slice;
     vf->default_caps=VFCAP_ACCEPT_STRIDE;
@@ -406,11 +406,11 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
     }
     vf_showlist(vf);
     check_pin("vfilter",vf->pin,VF_PIN);
-    return vf->next->config(vf->next,width,height,d_width,d_height,voflags,outfmt);
+    return vf->next->config_vf(vf->next,width,height,d_width,d_height,voflags,outfmt);
 }
 
 MPXP_Rc __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data){
-    return vf->next->control(vf->next,request,data);
+    return vf->next->control_vf(vf->next,request,data);
 }
 
 int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned width,unsigned height){
@@ -618,22 +618,22 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
     if(w==sw && h==sh && fmt==sfourcc); /* nothing todo */
     else
     {
-	MSG_V("vf_reinit->config %i %i %s=> %i %i %s\n",sw,sh,vo_format_name(sfourcc),w,h,vo_format_name(fmt));
+	MSG_V("vf_reinit->config_vf %i %i %s=> %i %i %s\n",sw,sh,vo_format_name(sfourcc),w,h,vo_format_name(fmt));
 	_saved=_this->prev;
 	vf_scaler=vf_open_filter(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput);
 	if(vf_scaler)
 	{
 	    vf_config_fun_t sfnc;
-	    sfnc=vf_scaler->next->config;
-	    vf_scaler->next->config=dummy_config;
-	    if(vf_scaler->config(vf_scaler,sw,sh,
+	    sfnc=vf_scaler->next->config_vf;
+	    vf_scaler->next->config_vf=dummy_config;
+	    if(vf_scaler->config_vf(vf_scaler,sw,sh,
 				w,h,
 				VOFLAG_SWSCALE,
 				sfourcc)==0){
 		MSG_WARN(MSGTR_CannotInitVO);
 		vf_scaler=NULL;
 	    }
-	    if(vf_scaler) vf_scaler->next->config=sfnc;
+	    if(vf_scaler) vf_scaler->next->config_vf=sfnc;
 	}
 	if(vf_scaler)
 	{

@@ -49,10 +49,10 @@ typedef struct af_volume_s
   float level[AF_NCH];		// Gain level for each channel
   float time;			// Forgetting factor for power estimate
   int soft;			// Enable/disable soft clipping
-  int fast;			// Use fix-point volume control
+  int fast;			// Use fix-point volume control_af
 }af_volume_t;
 
-static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
 {
     af_volume_t* s   = (af_volume_t*)af->setup;
     // Sanity check
@@ -73,8 +73,8 @@ static MPXP_Rc __FASTCALL__ config(struct af_instance_s* af,const af_conf_t* arg
     }
     return af_test_output(af,arg);
 }
-// Initialization and runtime control
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+// Initialization and runtime control_af
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_volume_t* s   = (af_volume_t*)af->setup;
 
@@ -88,7 +88,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
     int   i;
     sscanf((char*)arg,"%f:%i", &v, &s->soft);
     for(i=0;i<AF_NCH;i++) vol[i]=v;
-    return control(af,AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET, vol);
+    return control_af(af,AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET, vol);
   }
   case AF_CONTROL_POST_CREATE:
     s->fast = ((((af_cfg_t*)arg)->force & AF_INIT_FORMAT_MASK) ==
@@ -148,7 +148,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
     mp_aframe_t* out = new_mp_aframe_genome(in);
     mp_alloc_aframe(out);
 
-    // Basic operation volume control only (used on slow machines)
+    // Basic operation volume control_af only (used on slow machines)
     if(af->conf.format == (MPAF_SI | MPAF_NE)){
 	int16_t* _out = (int16_t*)out->audio;	// Audio data
 	int16_t* _in  = (int16_t*)in->audio;	// Audio data
@@ -167,7 +167,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 	float* _in  = (float*)in->audio;
 	unsigned len = in->len/4;	// Number of samples
 	for(ch = 0; ch < nch ; ch++){
-	    // Volume control (fader)
+	    // Volume control_af (fader)
 	    if(s->enable[ch]){
 		float t = 1.0 - s->time;
 		for(i=ch;i<len;i+=nch){
@@ -199,15 +199,15 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 // Allocate memory and set function pointers
 static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   int i = 0;
-  af->config=config;
-  af->control=control;
+  af->config_af=config_af;
+  af->control_af=control_af;
   af->uninit=uninit;
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
   af->setup=mp_calloc(1,sizeof(af_volume_t));
   if(af->setup == NULL) return MPXP_Error;
-  // Enable volume control and set initial volume to 0dB.
+  // Enable volume control_af and set initial volume to 0dB.
   for(i=0;i<AF_NCH;i++){
     ((af_volume_t*)af->setup)->enable[i] = 1;
     ((af_volume_t*)af->setup)->level[i]  = 1.0;
@@ -218,7 +218,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
 
 // Description of this filter
 extern const af_info_t af_info_volume = {
-    "Volume control audio filter",
+    "Volume control_af audio filter",
     "volume",
     "Anders",
     "",

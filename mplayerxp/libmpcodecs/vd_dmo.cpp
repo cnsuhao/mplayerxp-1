@@ -30,7 +30,7 @@ LIBVD_EXTERN(dmo)
 static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) { return NULL; }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     switch(cmd){
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||

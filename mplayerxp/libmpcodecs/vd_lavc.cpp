@@ -128,7 +128,7 @@ const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
 };
 
 /* to set/get/query special features/parameters */
-static MPXP_Rc control(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     priv_t *ctx = reinterpret_cast<priv_t*>(sh->context);
     uint32_t out_fourcc;
     AVCodecContext *avctx = ctx->ctx;

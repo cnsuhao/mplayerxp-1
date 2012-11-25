@@ -369,7 +369,7 @@ void mpca_resync_stream(any_t *opaque)
     sh_audio_t* sh_audio = priv->parent;
     if(sh_audio) {
 	sh_audio->a_in_buffer_len=0; /* workaround */
-	if(sh_audio->inited && priv->mpadec) priv->mpadec->control(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
+	if(sh_audio->inited && priv->mpadec) priv->mpadec->control_ad(sh_audio,ADCTRL_RESYNC_STREAM,NULL);
     }
 }
 
@@ -381,6 +381,6 @@ void mpca_skip_frame(any_t *opaque)
     sh_audio_t* sh_audio = priv->parent;
     MPXP_Rc rc=MPXP_True;
     if(sh_audio)
-    if(sh_audio->inited && priv->mpadec) rc=priv->mpadec->control(sh_audio,ADCTRL_SKIP_FRAME,NULL);
+    if(sh_audio->inited && priv->mpadec) rc=priv->mpadec->control_ad(sh_audio,ADCTRL_SKIP_FRAME,NULL);
     if(rc!=MPXP_True) ds_fill_buffer(sh_audio->ds);
 }

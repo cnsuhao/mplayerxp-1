@@ -48,9 +48,9 @@ typedef struct af_export_s
 } af_export_t;
 
 
-/* Initialization and runtime control
+/* Initialization and runtime control_af
    af audio filter instance
-   cmd control command
+   cmd control_af command
    arg argument
 */
 static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af, const af_conf_t* arg)
@@ -117,7 +117,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af, const af_conf_t*
     // Use test_output to return FALSE if necessary
     return af_test_output(af, arg);
 }
-static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
 {
   af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
 
@@ -146,7 +146,7 @@ static MPXP_Rc __FASTCALL__ control(struct af_instance_s* af, int cmd, any_t* ar
 
     sscanf(str + i + 1, "%d", &(s->sz));
 
-    return af->control(af, AF_CONTROL_EXPORT_SZ | AF_CONTROL_SET, &s->sz);
+    return af->control_af(af, AF_CONTROL_EXPORT_SZ | AF_CONTROL_SET, &s->sz);
   }
   case AF_CONTROL_EXPORT_SZ | AF_CONTROL_SET:
     s->sz = * (int *) arg;
@@ -237,8 +237,8 @@ static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af,const mp_aframe_
 */
 static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
 {
-  af->config  = af_config;
-  af->control = control;
+  af->config_af  = af_config;
+  af->control_af = control_af;
   af->uninit  = uninit;
   af->play    = play;
   af->mul.n   = 1;

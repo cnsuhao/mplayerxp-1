@@ -185,7 +185,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 }
 
 
-static MPXP_Rc __FASTCALL__ control(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
     return vf_next_control(vf,request,data);
 }
 
@@ -194,8 +194,8 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
-    vf->config=vf_config;
-    vf->control=control;
+    vf->config_vf=vf_config;
+    vf->control_vf=control_vf;
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     vf->print_conf=print_conf;
@@ -252,8 +252,8 @@ static int __FASTCALL__ crop_config(struct vf_instance_s* vf,
 }
 
 static MPXP_Rc __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args){
-    vf->config=crop_config;
-    vf->control=control;
+    vf->config_vf=crop_config;
+    vf->control_vf=control_vf;
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     vf->print_conf=print_conf;
