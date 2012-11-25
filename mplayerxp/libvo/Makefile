@@ -11,13 +11,10 @@ ifeq ($(HAVE_OPENGL),yes)
 CXXSRCS+=vo_opengl.cpp
 endif
 ifeq ($(HAVE_X11),yes)
-CXXSRCS+=vo_x11.cpp x11_common.cpp
+CXXSRCS+=vo_x11.cpp x11_system.cpp
 endif
 ifeq ($(HAVE_XV),yes)
 CXXSRCS+=vo_xv.cpp
-endif
-ifeq ($(HAVE_DGA),yes)
-CXXSRCS+=vo_dga.cpp
 endif
 ifeq ($(HAVE_FBDEV),yes)
 CXXSRCS+=vo_fbdev.cpp

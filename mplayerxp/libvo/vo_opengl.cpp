@@ -41,11 +41,8 @@ using namespace mpxp;
 #include <GL/gl.h>
 #include "w32_common.h"
 #else
-#include <GL/gl.h>
 #include <X11/Xlib.h>
-#include <GL/glx.h>
-#include <GL/glut.h>
-#include "x11_common.h"
+#include "x11_system.h"
 #endif
 
 #include "aspect.h"
@@ -80,8 +77,10 @@ struct ogl_priv_t : public video_private {
     unsigned		depth,bpp,out_mode;
 
     unsigned		num_buffers; // 1 - default
-    any_t*		glx_context;
     uint32_t		gl_out_format,out_format;
+#ifdef HAVE_X11
+    GLX_System*		glx;
+#endif
 };
 
 ogl_priv_t::ogl_priv_t() {
@@ -92,17 +91,6 @@ static const vo_info_t *get_info(const vo_data_t*vo)
 {
     UNUSED(vo);
     return(&vo_info);
-}
-
-static XVisualInfo *get_visual_info(Display *dpy, Window win)
-{
-    XWindowAttributes wattr;
-    XVisualInfo vi_template;
-    int dummy;
-
-    XGetWindowAttributes(dpy, win, &wattr);
-    vi_template.visualid = XVisualIDFromVisual(wattr.visual);
-    return XGetVisualInfo(dpy, VisualIDMask, &vi_template, &dummy);
 }
 
 static void gl_init_fb(vo_data_t*vo,unsigned x,unsigned y,unsigned d_width,unsigned d_height)
@@ -143,7 +131,6 @@ static void gl_init_fb(vo_data_t*vo,unsigned x,unsigned y,unsigned d_width,unsig
 }
 
 static void resize(vo_data_t*vo,int x,int y){
-    ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
     MSG_V("[gl] Resize: %dx%d\n",x,y);
     gl_init_fb(vo, 0, 0, x, y );
     glClear(GL_COLOR_BUFFER_BIT);
@@ -155,13 +142,10 @@ static void resize(vo_data_t*vo,int x,int y){
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
+    GLX_System& glx = *priv.glx;
     int is_bgr;
-    const char *hello = (title == NULL) ? "Glx render" : title;
     XSizeHints hint;
-
-    XGCValues xgcv;
-    XSetWindowAttributes xswa;
-    unsigned long xswamask,i;
+    unsigned i;
 
     aspect_save_orig(width,height);
     aspect_save_prescale(d_width,d_height);
@@ -176,76 +160,47 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
     aspect(&d_width,&d_height,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
-    vo_x11_calcpos(vo,&hint,d_width,d_height,flags);
-    hint.flags = PPosition | PSize;
+    glx.calcpos(vo,&hint,d_width,d_height,flags);
 
+    hint.flags = PPosition | PSize;
     priv.dwidth=d_width; priv.dheight=d_height; //XXX: what are the copy vars used for?
 
-    XGetWindowAttributes(vo->mDisplay, DefaultRootWindow(vo->mDisplay), &priv.attribs);
-    priv.depth=priv.attribs.depth;
-    if (priv.depth != 15 && priv.depth != 16 && priv.depth != 24 && priv.depth != 32) priv.depth = 24;
-    XMatchVisualInfo(vo->mDisplay, vo->mScreen, priv.depth, TrueColor, &priv.vinfo);
+    priv.depth=glx.depth();
 
-    xswa.background_pixel = 0;
-    xswa.border_pixel     = 0;
-    xswamask = CWBackPixel | CWBorderPixel;
+    if (priv.depth != 15 && priv.depth != 16 && priv.depth != 24 && priv.depth != 32)
+	priv.depth = 24;
+    glx.match_visual( &priv.vinfo);
 
-    vo->window = XCreateWindow( vo->mDisplay, RootWindow(vo->mDisplay,vo->mScreen),
-				hint.x, hint.y, hint.width, hint.height,
-				0, priv.depth,CopyFromParent,priv.vinfo.visual,xswamask,&xswa);
+    glx.create_window(hint,priv.vinfo.visual,vo_VM(vo),priv.depth,title);
 
-    vo_x11_classhint( vo->mDisplay,vo->window,"opengl" );
-    vo_x11_hidecursor(vo->mDisplay,vo->window);
+    glx.classhint("opengl");
+    glx.hidecursor();
 
-    XSelectInput(vo->mDisplay, vo->window,
-		StructureNotifyMask | KeyPressMask | PointerMotionMask |
-		ButtonPressMask | ButtonReleaseMask );
-    XSetStandardProperties(vo->mDisplay, vo->window, hello, hello, None, NULL, 0, &hint);
-    if ( vo_FS(vo) ) vo_x11_decoration(vo, vo->mDisplay,vo->window,0 );
-    XMapWindow(vo->mDisplay, vo->window);
-#ifdef HAVE_XINERAMA
-    vo_x11_xinerama_move(vo,vo->mDisplay,vo->window,&hint);
-#endif
-    vo->gc = XCreateGC(vo->mDisplay, vo->window, 0L, &xgcv);
-    XFlush(vo->mDisplay);
-    XSync(vo->mDisplay, False);
-#ifdef HAVE_XF86VM
-    if ( vo_VM(vo) ) {
-	/* Grab the mouse pointer in our window */
-	XGrabPointer(   vo->mDisplay, vo->window, True, 0,
-			GrabModeAsync, GrabModeAsync,
-			vo->window, None, CurrentTime);
-	XSetInputFocus(vo->mDisplay, vo->window, RevertToNone, CurrentTime);
-    }
-#endif
+    if ( vo_FS(vo) ) glx.decoration(0);
+
+    /* we cannot grab mouse events on root window :( */
+    glx.select_input(StructureNotifyMask | KeyPressMask |
+		    ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 #ifdef GL_WIN32
     if (!vo_w32_config(d_width, d_height, flags)) return MPXP_False;
 #else
     {
 	XVisualInfo *vi;
-	vi = get_visual_info(vo->mDisplay, vo->window);
+	vi = glx.get_visual();
 	if (vi == NULL) {
 	    MSG_ERR("[vo_oengl]: Can't get XVisualInfo\n");
 	    return MPXP_False;
 	}
-	priv.glx_context = glXCreateContext(vo->mDisplay, vi, NULL, True);
+	glx.create_context(vi);
 	XFree(vi);
-	if (priv.glx_context == NULL) {
-	    MSG_ERR("[vo_oengl]: Can't create GLX context\n");
-	    return MPXP_False;
-	}
-	if (!glXMakeCurrent(vo->mDisplay, vo->window, reinterpret_cast<__GLXcontextRec*>(priv.glx_context))) {
-	    MSG_ERR("[vo_oengl]: Can't make GLX context current\n");
-	    return MPXP_False;
-	}
     }
 #endif
     gl_init_fb(vo,0,0,d_width,d_height);
     /* allocate multibuffers */
-    for(i=0;i<priv.num_buffers;i++) vo_x11_getMyXImage(vo,i,priv.vinfo.visual,priv.depth,priv.image_width,priv.image_height);
+    for(i=0;i<priv.num_buffers;i++) glx.getMyXImage(i,priv.vinfo.visual,priv.depth,priv.image_width,priv.image_height);
 
     priv.out_mode=GL_RGB;
-    XImage *ximg=vo_x11_Image(vo,0);
+    XImage *ximg=glx.Image(0);
     is_bgr=(ximg->blue_mask&0x01)!=0;
     switch ((priv.bpp=ximg->bits_per_pixel)){
 	case 32:priv.out_mode=GL_RGBA;
@@ -263,13 +218,14 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 		break;
 	default: break;
     }
-    saver_off(vo,vo->mDisplay);
     return MPXP_Ok;
 }
 
 static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_size)
 {
-    int e=vo_x11_check_events(vo,vo->mDisplay,adjust_size);
+    ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
+    GLX_System& glx = *priv.glx;
+    int e=glx.check_events(vo,adjust_size);
     if(e&VO_EVENT_RESIZE) resize(vo,vo->dest.w,vo->dest.h);
     return e|VO_EVENT_FORCE_UPDATE;
 }
@@ -286,9 +242,10 @@ static void __FASTCALL__ gl_display_Image(vo_data_t*vo,XImage *myximage )
 
 static void select_frame(vo_data_t*vo,unsigned idx) {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
+    GLX_System& glx = *priv.glx;
 
-    gl_display_Image(vo,vo_x11_Image(vo,idx));
-    if (priv.num_buffers>1) glXSwapBuffers(vo->mDisplay, vo->window);
+    gl_display_Image(vo,glx.Image(idx));
+    if (priv.num_buffers>1) glx.swap_buffers();
     glFlush();
     return;
 }
@@ -309,17 +266,16 @@ static MPXP_Rc __FASTCALL__ query_format( vo_query_fourcc_t* format )
 static void uninit(vo_data_t*vo)
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
+    GLX_System& glx = *priv.glx;
     unsigned i;
 //  if (!vo_config_count) return;
     glFinish();
-    glXMakeCurrent(vo->mDisplay, None, NULL);
-    glXDestroyContext(vo->mDisplay, reinterpret_cast<__GLXcontextRec*>(priv.glx_context));
-    for(i=0;i<priv.num_buffers;i++)  vo_x11_freeMyXImage(vo,i);
-    saver_on(vo,vo->mDisplay); // screen saver back on
+    glx.destroy_context();
+    for(i=0;i<priv.num_buffers;i++)  glx.freeMyXImage(i);
+    glx.saver_on(); // screen saver back on
 #ifdef HAVE_XF86VM
-    vo_vm_close(vo,vo->mDisplay);
+    glx.vm_close();
 #endif
-    vo_x11_uninit(vo,vo->mDisplay, vo->window);
     delete vo->priv;
 }
 
@@ -329,7 +285,8 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     priv=new(zeromem) ogl_priv_t;
     vo->priv=priv;
     UNUSED(arg);
-    if (vo_x11_init(vo)!=MPXP_Ok) return MPXP_False;
+    priv->glx=new(zeromem) GLX_System(vo_conf.mDisplayName);
+    priv->glx->saver_off();
     return MPXP_Ok;
 }
 
@@ -355,8 +312,8 @@ static void __FASTCALL__ gl_dri_get_surface_caps(const vo_data_t*vo,dri_surface_
 static void __FASTCALL__ gl_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
-    UNUSED(priv);
-    surf->planes[0] = vo_x11_ImageData(vo,surf->idx);
+    GLX_System& glx = *priv.glx;
+    surf->planes[0] = glx.ImageData(surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;

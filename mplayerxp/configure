@@ -67,7 +67,6 @@ ENABLED_LIST=(
     "jpg|build with JPEG for screenshots|http://www.ijg.org",
     "png|build with PNG for screenshots|http://www.libpng.org/pub/png/libpng.html",
     "opengl|build with OpenGL video output|http://mesa3d.org",
-    "dga|build with DGA video output|http://www.x.org",
     "vesa|build with VESA video output",
     "vidix|build with VIDIX video output|http://vidix.sourceforge.net",
     "xdpms|build with X11 DPMS support|http://www.x.org",
@@ -638,14 +637,6 @@ enabled xf86vm	&& require2 xf86vm "X11/Xlib.h X11/extensions/xf86vmode.h" XF86Vi
 print_config HAVE_ mp_config.h mp_config.mak xf86vm
 
 disabled x11	&& disable dga
-if enabled dga ; then
-require2 dga2 "X11/Xlib.h X11/extensions/xf86dga.h" XDGASetViewport -lXxf86dga
-print_config HAVE_ mp_config.h mp_config.mak dga2
-enabled dga2	&& enable dga
-disabled dga2	&& require2 dga "X11/Xlib.h X11/extensions/xf86dga.h" XF86DGASetViewPort -lXxf86dga
-print_config HAVE_ mp_config.h mp_config.mak dga
-fi
-enabled dga	&& vomodules="dga $vomodules" || novomodules="dga $novomodules"
 
 enabled fbdev	&& require2 fbdev "sys/ioctl.h linux/fb.h" ioctl
 print_config HAVE_ mp_config.h mp_config.mak fbdev

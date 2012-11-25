@@ -29,10 +29,9 @@ LIBVO_EXTERN(xv)
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/XShm.h>
 #include <errno.h>
 
-#include "x11_common.h"
+#include "x11_system.h"
 
 #include "osdep/fastmemcpy.h"
 #include "sub.h"
@@ -40,11 +39,6 @@ LIBVO_EXTERN(xv)
 #include "dri_vo.h"
 #include "xmpcore/mp_image.h"
 
-#include <X11/extensions/Xv.h>
-#include <X11/extensions/Xvlib.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <X11/extensions/XShm.h>
 #include "vo_msg.h"
 
 static vo_info_t vo_info =
@@ -70,194 +64,46 @@ struct xv_priv_t : public video_private {
     uint32_t		image_format;
     unsigned		depth;
 
-    XWindowAttributes	attribs;
-    XvAdaptorInfo*	ai;
-    XvImageFormatValues*fo;
-
-    unsigned int	ver,rel,req,ev,err;
     unsigned int	formats, adaptors, port, format, bpp;
 
     unsigned		expose_idx,num_buffers; // 1 - default
-    XvImage*		image[MAX_DRI_BUFFERS];
-    XShmSegmentInfo	Shminfo[MAX_DRI_BUFFERS];
+    unsigned		dwidth,dheight;
 
-    Window		mRoot;
-    uint32_t		drwX,drwY,drwWidth,drwHeight,drwBorderWidth,drwDepth;
-    uint32_t		drwcX,drwcY,dwidth,dheight;
+    Xv_System*		xv;
 };
 
 xv_priv_t::xv_priv_t() {
     num_buffers=1;
 }
 
-static int __FASTCALL__ xv_reset_video_eq(vo_data_t*vo)
-{
-    xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
-    unsigned i;
-    XvAttribute *attributes;
-    int howmany,xv_atomka;
-    static int was_reset = 0;
- /* get available attributes */
-    attributes = XvQueryPortAttributes(vo->mDisplay, priv.port, &howmany);
-    /* first pass try reset */
-    for (i = 0; (int)i < howmany && attributes; i++) {
-	if (attributes[i].flags & XvSettable && !strcmp(attributes[i].name,"XV_SET_DEFAULTS")) {
-	    was_reset = 1;
-	    MSG_DBG2("vo_xv: reset gamma correction\n");
-	    xv_atomka = XInternAtom(vo->mDisplay, attributes[i].name, True);
-	    XvSetPortAttribute(vo->mDisplay, priv.port, xv_atomka, attributes[i].max_value);
-	}
-    }
-    return was_reset;
-}
-
-static int __FASTCALL__ xv_set_video_eq(vo_data_t*vo,const vo_videq_t *info)
-{
-    xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
-    unsigned i;
-    XvAttribute *attributes;
-    int howmany, xv_min,xv_max,xv_atomka;
- /* get available attributes */
-    attributes = XvQueryPortAttributes(vo->mDisplay, priv.port, &howmany);
-    for (i = 0; (int)i < howmany && attributes; i++) {
-	if (attributes[i].flags & XvSettable) {
-	    xv_min = attributes[i].min_value;
-	    xv_max = attributes[i].max_value;
-	    xv_atomka = XInternAtom(vo->mDisplay, attributes[i].name, True);
-	    /* since we have SET_DEFAULTS first in our list, we can check if it's available
-	    then trigger it if it's ok so that the other values are at default upon query */
-	    if (xv_atomka != None) {
-		int port_value,port_min,port_max,port_mid,has_value=0;
-		if(!strcmp(attributes[i].name,"XV_BRIGHTNESS") && !strcmp(info->name,VO_EC_BRIGHTNESS)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_SATURATION") && !strcmp(info->name,VO_EC_SATURATION)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_CONTRAST") && !strcmp(info->name,VO_EC_CONTRAST)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else
-#if 0
-/*  We may safely skip this parameter since NVidia driver has default == min
-    for XV_HUE but not mid. IMHO it's meaningless against RGB. */
-		    if(!strcmp(attributes[i].name,"XV_HUE") && !strcmp(info->name,VO_EC_HUE))
-		    {
-			has_value=1;
-			port_value = info->value;
-		    }
-		    else
-#endif
-		    /* Note: since 22.01.2002 GATOS supports these attrs for radeons (NK) */
-		    if(!strcmp(attributes[i].name,"XV_RED_INTENSITY") && !strcmp(info->name,VO_EC_RED_INTENSITY)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_GREEN_INTENSITY") && !strcmp(info->name,VO_EC_GREEN_INTENSITY)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_BLUE_INTENSITY") && !strcmp(info->name,VO_EC_BLUE_INTENSITY)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else continue;
-		if(has_value) {
-		    port_min = xv_min;
-		    port_max = xv_max;
-		    port_mid = (port_min + port_max) / 2;
-		    port_value = port_mid + (port_value * (port_max - port_min)) / 2000;
-		    MSG_DBG2("vo_xv: set gamma %s to %i (min %i max %i mid %i)\n",attributes[i].name,port_value,port_min,port_max,port_mid);
-		    XvSetPortAttribute(vo->mDisplay, priv.port, xv_atomka, port_value);
-		    return 0;
-		}
-	    }
-	}
-    }
-    return 1;
-}
-
-static int __FASTCALL__ xv_get_video_eq(vo_data_t*vo, vo_videq_t *info)
-{
-    xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
-    unsigned i;
-    XvAttribute *attributes;
-    int howmany, xv_min,xv_max,xv_atomka;
-/* get available attributes */
-    attributes = XvQueryPortAttributes(vo->mDisplay, priv.port, &howmany);
-    for (i = 0; (int)i < howmany && attributes; i++) {
-	if (attributes[i].flags & XvGettable) {
-	    xv_min = attributes[i].min_value;
-	    xv_max = attributes[i].max_value;
-	    xv_atomka = XInternAtom(vo->mDisplay, attributes[i].name, True);
-/* since we have SET_DEFAULTS first in our list, we can check if it's available
-   then trigger it if it's ok so that the other values are at default upon query */
-	    if (xv_atomka != None) {
-		int port_value,port_min,port_max,port_mid,has_value=0;;
-		XvGetPortAttribute(vo->mDisplay, priv.port, xv_atomka, &port_value);
-		MSG_DBG2("vo_xv: get: %s = %i\n",attributes[i].name,port_value);
-
-		port_min = xv_min;
-		port_max = xv_max;
-		port_mid = (port_min + port_max) / 2;
-		port_value = ((port_value - port_mid)*2000)/(port_max-port_min);
-
-		MSG_DBG2("vo_xv: assume: %s = %i\n",attributes[i].name,port_value);
-
-		if(!strcmp(attributes[i].name,"XV_BRIGHTNESS") && !strcmp(info->name,VO_EC_BRIGHTNESS)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_SATURATION") && !strcmp(info->name,VO_EC_SATURATION)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_CONTRAST") && !strcmp(info->name,VO_EC_CONTRAST)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_HUE") && !strcmp(info->name,VO_EC_HUE)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_RED_INTENSITY") && !strcmp(info->name,VO_EC_RED_INTENSITY)) {
-		    /* Note: since 22.01.2002 GATOS supports these attrs for radeons (NK) */
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_GREEN_INTENSITY") && !strcmp(info->name,VO_EC_GREEN_INTENSITY)) {
-		    has_value=1;
-		    port_value = info->value;
-		} else if(!strcmp(attributes[i].name,"XV_BLUE_INTENSITY") && !strcmp(info->name,VO_EC_BLUE_INTENSITY)) {
-		    has_value=1;
-		    port_value = info->value;
-		}
-		else continue;
-		if(has_value) return 1;
-	    }
-	}
-    }
-    return 0;
-}
-
 static void set_gamma_correction( vo_data_t*vo )
 {
-  vo_videq_t info;
-  /* try all */
-  xv_reset_video_eq(vo);
-  info.name=VO_EC_BRIGHTNESS;
-  info.value=vo_conf.gamma.brightness;
-  xv_set_video_eq(vo,&info);
-  info.name=VO_EC_CONTRAST;
-  info.value=vo_conf.gamma.contrast;
-  xv_set_video_eq(vo,&info);
-  info.name=VO_EC_SATURATION;
-  info.value=vo_conf.gamma.saturation;
-  xv_set_video_eq(vo,&info);
-  info.name=VO_EC_HUE;
-  info.value=vo_conf.gamma.hue;
-  xv_set_video_eq(vo,&info);
-  info.name=VO_EC_RED_INTENSITY;
-  info.value=vo_conf.gamma.red_intensity;
-  xv_set_video_eq(vo,&info);
-  info.name=VO_EC_GREEN_INTENSITY;
-  info.value=vo_conf.gamma.green_intensity;
-  xv_set_video_eq(vo,&info);
-  info.name=VO_EC_BLUE_INTENSITY;
-  info.value=vo_conf.gamma.blue_intensity;
-  xv_set_video_eq(vo,&info);
+    xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
+    Xv_System& xv = *priv.xv;
+    vo_videq_t info;
+    /* try all */
+    xv.reset_video_eq();
+    info.name=VO_EC_BRIGHTNESS;
+    info.value=vo_conf.gamma.brightness;
+    xv.set_video_eq(&info);
+    info.name=VO_EC_CONTRAST;
+    info.value=vo_conf.gamma.contrast;
+    xv.set_video_eq(&info);
+    info.name=VO_EC_SATURATION;
+    info.value=vo_conf.gamma.saturation;
+    xv.set_video_eq(&info);
+    info.name=VO_EC_HUE;
+    info.value=vo_conf.gamma.hue;
+    xv.set_video_eq(&info);
+    info.name=VO_EC_RED_INTENSITY;
+    info.value=vo_conf.gamma.red_intensity;
+    xv.set_video_eq(&info);
+    info.name=VO_EC_GREEN_INTENSITY;
+    info.value=vo_conf.gamma.green_intensity;
+    xv.set_video_eq(&info);
+    info.name=VO_EC_BLUE_INTENSITY;
+    info.value=vo_conf.gamma.blue_intensity;
+    xv.set_video_eq(&info);
 }
 
 /* unofficial gatos extensions */
@@ -273,16 +119,12 @@ static void set_gamma_correction( vo_data_t*vo )
 static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
-// int screen;
-    const char *hello = (title == NULL) ? "Xv render" : title;
-// char *name = ":0.0";
-    XSizeHints hint;
-    XVisualInfo vinfo;
-    XvPortID xv_p;
+    Xv_System& xv = *priv.xv;
 
-    XGCValues xgcv;
-    XSetWindowAttributes xswa;
-    unsigned long xswamask,i;
+    XVisualInfo vinfo;
+    XSizeHints hint;
+
+    unsigned i;
 
     aspect_save_orig(width,height);
     aspect_save_prescale(d_width,d_height);
@@ -295,137 +137,63 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 
     priv.num_buffers=vo_conf.xp_buffs;
 
-    aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
+    priv.depth=xv.depth();
+    if ( priv.depth != 15 && priv.depth != 16 && priv.depth != 24 && priv.depth != 32 )
+	priv.depth=24;
+    xv.match_visual( &vinfo );
 
+    aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
     aspect(&d_width,&d_height,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
 
-    vo_x11_calcpos(vo,&hint,d_width,d_height,flags);
+    xv.calcpos(vo,&hint,d_width,d_height,flags);
     hint.flags = PPosition | PSize;
 
     priv.dwidth=d_width; priv.dheight=d_height; //XXX: what are the copy vars used for?
-    XGetWindowAttributes(vo->mDisplay, DefaultRootWindow(vo->mDisplay), &priv.attribs);
-    priv.depth=priv.attribs.depth;
-    if (priv.depth != 15 && priv.depth != 16 && priv.depth != 24 && priv.depth != 32) priv.depth = 24;
-    XMatchVisualInfo(vo->mDisplay, vo->mScreen, priv.depth, TrueColor, &vinfo);
 
-    xswa.background_pixel = 0;
-    xswa.border_pixel     = 0;
-    xswamask = CWBackPixel | CWBorderPixel;
+    xv.create_window(hint,vinfo.visual,vo_VM(vo),priv.depth,title);
+    xv.classhint("vo_x11");
+    xv.hidecursor();
+    if ( vo_FS(vo) ) xv.decoration(0);
 
-    vo->window = XCreateWindow( vo->mDisplay, RootWindow(vo->mDisplay,vo->mScreen),
-				hint.x, hint.y, hint.width, hint.height,
-				0, priv.depth,CopyFromParent,vinfo.visual,xswamask,&xswa);
+    /* we cannot grab mouse events on root window :( */
+    xv.select_input(StructureNotifyMask | KeyPressMask |
+		    ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 
-    vo_x11_classhint( vo->mDisplay,vo->window,"xv" );
-    vo_x11_hidecursor(vo->mDisplay,vo->window);
-
-    XSelectInput(vo->mDisplay, vo->window,
-		StructureNotifyMask | KeyPressMask |
-		PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
-    XSetStandardProperties(vo->mDisplay, vo->window, hello, hello, None, NULL, 0, &hint);
-    if ( vo_FS(vo) ) vo_x11_decoration(vo,vo->mDisplay,vo->window,0 );
-    XMapWindow(vo->mDisplay, vo->window);
-#ifdef HAVE_XINERAMA
-    vo_x11_xinerama_move(vo,vo->mDisplay,vo->window,&hint);
-#endif
-    vo->gc = XCreateGC(vo->mDisplay, vo->window, 0L, &xgcv);
-    XFlush(vo->mDisplay);
-    XSync(vo->mDisplay, False);
-#ifdef HAVE_XF86VM
-    if ( vo_VM(vo) ) {
-	/* Grab the mouse pointer in our window */
-	XGrabPointer(vo->mDisplay, vo->window, True, 0,
-			GrabModeAsync, GrabModeAsync,
-			vo->window, None, CurrentTime);
-	XSetInputFocus(vo->mDisplay, vo->window, RevertToNone, CurrentTime);
-    }
-#endif
-
-    priv.port = 0;
-    if (Success == XvQueryExtension(vo->mDisplay,&priv.ver,&priv.rel,&priv.req,&priv.ev,&priv.err)) {
-	/* check for Xvideo support */
-	if (Success != XvQueryAdaptors(vo->mDisplay,DefaultRootWindow(vo->mDisplay), &priv.adaptors,&priv.ai)) {
-	    MSG_ERR("Xv: XvQueryAdaptors failed");
-	    return MPXP_False;
-	}
-	/* check priv.adaptors */
-	for (i = 0; i < priv.adaptors && priv.port == 0; i++) {
-	    if ((priv.ai[i].type & XvInputMask) && (priv.ai[i].type & XvImageMask))
-	    for (xv_p = priv.ai[i].base_id; xv_p < priv.ai[i].base_id+priv.ai[i].num_ports; ++xv_p) {
-		if (!XvGrabPort(vo->mDisplay, xv_p, CurrentTime)) {
-		    priv.port = xv_p;
-		    break;
-		} else {
-		    MSG_ERR("Xv: could not grab port %i\n", (int)xv_p);
-		}
-	    }
-	}
-	/* check image priv.formats */
-	if (priv.port != 0) {
-	    priv.fo = XvListImageFormats(vo->mDisplay, priv.port, (int*)&priv.formats);
-	    priv.format=0;
-	    if(format==IMGFMT_BGR32) format=FOURCC_RGBA32;
-	    if(format==IMGFMT_BGR16) format=FOURCC_RGB16;
-	    for(i = 0; i < priv.formats; i++) {
-		MSG_V("Xvideo image format: 0x%x (%4.4s) %s\n", priv.fo[i].id,(char*)&priv.fo[i].id, (priv.fo[i].format == XvPacked) ? "packed" : "planar");
-		if (priv.fo[i].id == (int)format) priv.format = priv.fo[i].id;
-	    }
-	    if (!priv.format) priv.port = 0;
+    priv.format = xv.query_port(format);
+    if(priv.format) {
+	switch (priv.format){
+	    case IMGFMT_IF09:
+	    case IMGFMT_YVU9:
+		priv.bpp=9;
+		break;
+	    case IMGFMT_YV12:
+	    case IMGFMT_I420:
+	    case IMGFMT_IYUV:
+		priv.bpp=12;
+		break;
+	    case IMGFMT_YUY2:
+	    case IMGFMT_YVYU:
+		priv.bpp=16;
+		break;
+	    case IMGFMT_UYVY:
+		priv.bpp=16;
+		break;
+	    case IMGFMT_RGB32:
+		priv.bpp=32;
+		break;
+	    case IMGFMT_RGB16:
+		priv.bpp=16;
+		break;
+	    default:
+		priv.bpp = 16;
 	}
 
-	if (priv.port != 0) {
-	    MSG_V( "using Xvideo port %d for hw scaling\n",priv.port );
+	for(i=0;i<priv.num_buffers;++i) allocate_xvimage(vo,i);
 
-	    switch (priv.format){
-		case IMGFMT_IF09:
-		case IMGFMT_YVU9:
-			priv.bpp=9;
-			break;
-		case IMGFMT_YV12:
-		case IMGFMT_I420:
-		case IMGFMT_IYUV:
-			priv.bpp=12;
-			break;
-		case IMGFMT_YUY2:
-		case IMGFMT_YVYU:
-			priv.bpp=16;
-			break;
-		case IMGFMT_UYVY:
-			priv.bpp=16;
-			break;
-		case FOURCC_RGBA32:
-			priv.bpp=32;
-			break;
-		case FOURCC_RGB16:
-			priv.bpp=16;
-			break;
-		default:
-			priv.bpp = 16;
-	    }
+	set_gamma_correction(vo);
 
-	    for(i=0;i<priv.num_buffers;++i) allocate_xvimage(vo,i);
-
-	    set_gamma_correction(vo);
-
-	    XGetGeometry( vo->mDisplay,vo->window,&priv.mRoot,reinterpret_cast<int*>(&priv.drwX),reinterpret_cast<int*>(&priv.drwY),&priv.drwWidth,&priv.drwHeight,&priv.drwBorderWidth,&priv.drwDepth );
-	    priv.drwX=0; priv.drwY=0;
-	    XTranslateCoordinates( vo->mDisplay,vo->window,priv.mRoot,0,0,reinterpret_cast<int*>(&priv.drwcX),reinterpret_cast<int*>(&priv.drwcY),&priv.mRoot );
-	    MSG_V( "[xv] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",priv.drwcX,priv.drwcY,priv.drwX,priv.drwY,priv.drwWidth,priv.drwHeight );
-
-	    aspect(&priv.dwidth,&priv.dheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
-	    if ( vo_FS(vo) ) {
-		aspect(&priv.dwidth,&priv.dheight,A_ZOOM);
-		priv.drwX=( vo_conf.screenwidth - (priv.dwidth > vo_conf.screenwidth?vo_conf.screenwidth:priv.dwidth) ) / 2;
-		priv.drwcX+=priv.drwX;
-		priv.drwY=( vo_conf.screenheight - (priv.dheight > vo_conf.screenheight?vo_conf.screenheight:priv.dheight) ) / 2;
-		priv.drwcY+=priv.drwY;
-		priv.drwWidth=(priv.dwidth > vo_conf.screenwidth?vo_conf.screenwidth:priv.dwidth);
-		priv.drwHeight=(priv.dheight > vo_conf.screenheight?vo_conf.screenheight:priv.dheight);
-		MSG_V( "[xv-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",priv.drwcX,priv.drwcY,priv.drwX,priv.drwY,priv.drwWidth,priv.drwHeight );
-	    }
-	    saver_off(vo,vo->mDisplay);  // turning off screen saver
-	    return MPXP_Ok;
-	}
+	aspect(&priv.dwidth,&priv.dheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
+	return MPXP_Ok;
     }
 
     MSG_FATAL("Sorry, Xv not supported by this X11 version/driver\n");
@@ -439,62 +207,45 @@ static const vo_info_t * get_info(const vo_data_t*vo)
     return &vo_info;
 }
 
-static void __FASTCALL__ allocate_xvimage(vo_data_t*vo,int foo)
+static void __FASTCALL__ allocate_xvimage(vo_data_t*vo,int idx)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
- /*
-  * allocate XvImages.  FIXME: no error checking, without
-  * mit-shm this will bomb...
-  */
-    priv.image[foo] = XvShmCreateImage(vo->mDisplay, priv.port, priv.format, 0, priv.image_width, priv.image_height, &priv.Shminfo[foo]);
-
-    priv.Shminfo[foo].shmid    = shmget(IPC_PRIVATE, priv.image[foo]->data_size, IPC_CREAT | 0777);
-    priv.Shminfo[foo].shmaddr  = (char *) shmat(priv.Shminfo[foo].shmid, 0, 0);
-    priv.Shminfo[foo].readOnly = False;
-
-    priv.image[foo]->data = priv.Shminfo[foo].shmaddr;
-    XShmAttach(vo->mDisplay, &priv.Shminfo[foo]);
-    XSync(vo->mDisplay, False);
-    shmctl(priv.Shminfo[foo].shmid, IPC_RMID, 0);
-    memset(priv.image[foo]->data,128,priv.image[foo]->data_size);
+    Xv_System& xv = *priv.xv;
+    xv.getMyXImage(idx,NULL,priv.format,priv.image_width,priv.image_height);
     return;
 }
 
-static void __FASTCALL__ deallocate_xvimage(vo_data_t*vo,int foo)
+static void __FASTCALL__ deallocate_xvimage(vo_data_t*vo,int idx)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
-    XShmDetach( vo->mDisplay,&priv.Shminfo[foo] );
-    shmdt( priv.Shminfo[foo].shmaddr );
-    XFlush( vo->mDisplay );
-    XSync(vo->mDisplay, False);
+    Xv_System& xv = *priv.xv;
+    xv.freeMyXImage(idx);
+    xv.flush();
+    xv.sync(False);
     return;
 }
 
 static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_size)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
-    uint32_t e=vo_x11_check_events(vo,vo->mDisplay,adjust_size);
+    Xv_System& xv = *priv.xv;
+    uint32_t e=xv.check_events(vo,adjust_size);
     if(e&VO_EVENT_RESIZE) {
-	XGetGeometry( vo->mDisplay,vo->window,&priv.mRoot,reinterpret_cast<int*>(&priv.drwX),reinterpret_cast<int*>(&priv.drwY),&priv.drwWidth,&priv.drwHeight,&priv.drwBorderWidth,&priv.drwDepth );
-	priv.drwX=0; priv.drwY=0;
-	XTranslateCoordinates( vo->mDisplay,vo->window,priv.mRoot,0,0,reinterpret_cast<int*>(&priv.drwcX),reinterpret_cast<int*>(&priv.drwcY),&priv.mRoot );
-	MSG_V( "[xv-resize] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",priv.drwcX,priv.drwcY,priv.drwX,priv.drwY,priv.drwWidth,priv.drwHeight );
+	vo_rect_t winc;
+	xv.get_win_coord(&winc);
+	MSG_V( "[xv-resize] dx: %d dy: %d dw: %d dh: %d\n",
+		winc.x,winc.y,winc.w,winc.h);
 
 	aspect(&priv.dwidth,&priv.dheight,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
-	if ( vo_FS(vo) ) {
-	    aspect(&priv.dwidth,&priv.dheight,A_ZOOM);
-	    priv.drwX=( vo_conf.screenwidth - (priv.dwidth > vo_conf.screenwidth?vo_conf.screenwidth:priv.dwidth) ) / 2;
-	    priv.drwcX+=priv.drwX;
-	    priv.drwY=( vo_conf.screenheight - (priv.dheight > vo_conf.screenheight?vo_conf.screenheight:priv.dheight) ) / 2;
-	    priv.drwcY+=priv.drwY;
-	    priv.drwWidth=(priv.dwidth > vo_conf.screenwidth?vo_conf.screenwidth:priv.dwidth);
-	    priv.drwHeight=(priv.dheight > vo_conf.screenheight?vo_conf.screenheight:priv.dheight);
-	    MSG_V( "[xv-fs] dcx: %d dcy: %d dx: %d dy: %d dw: %d dh: %d\n",priv.drwcX,priv.drwcY,priv.drwX,priv.drwY,priv.drwWidth,priv.drwHeight );
-	}
     }
     if ( e & VO_EVENT_EXPOSE ) {
-	XvShmPutImage(vo->mDisplay, priv.port, vo->window, vo->gc, priv.image[priv.expose_idx], 0, 0,  priv.image_width, priv.image_height, priv.drwX, priv.drwY, 1, 1, False);
-	XvShmPutImage(vo->mDisplay, priv.port, vo->window, vo->gc, priv.image[priv.expose_idx], 0, 0,  priv.image_width, priv.image_height, priv.drwX,priv.drwY,priv.drwWidth,(vo_FS(vo)?priv.drwHeight - 1:priv.drwHeight), False);
+	vo_rect_t r,r2;
+	xv.get_win_coord(&r);
+	r2=r;
+	r.w=r.h=1;
+	xv.put_image(xv.ImageXv(priv.expose_idx),r);
+	if(vo_FS(vo)) r2.h--;
+	xv.put_image(xv.ImageXv(priv.expose_idx),r2);
     }
     return e|VO_EVENT_FORCE_UPDATE;
 }
@@ -502,66 +253,36 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_s
 static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
+    Xv_System& xv = *priv.xv;
+    vo_rect_t r;
+    xv.get_win_coord(&r);
+    if(vo_FS(vo)) r.h--;
+    xv.put_image(xv.ImageXv(idx),r);
     priv.expose_idx=idx;
-    XvShmPutImage(vo->mDisplay, priv.port, vo->window, vo->gc, priv.image[idx],
-	0, 0,  priv.image_width, priv.image_height,
-	priv.drwX,priv.drwY,priv.drwWidth,(vo_FS(vo)?priv.drwHeight - 1:priv.drwHeight),
-	False);
-    if (priv.num_buffers>1) XFlush(vo->mDisplay);
-    else XSync(vo->mDisplay, False);
+    if (priv.num_buffers>1) xv.flush();
+    else xv.sync(False);
     return;
 }
 
 static MPXP_Rc __FASTCALL__ query_format(vo_data_t*vo,vo_query_fourcc_t* format)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
-    unsigned i;
-    XvPortID xv_p;
-    if (vo_x11_init(vo)!=MPXP_Ok) return MPXP_False;
-    priv.port = 0;
-    if (Success == XvQueryExtension(vo->mDisplay,&priv.ver,&priv.rel,&priv.req,&priv.ev,&priv.err)) {
-	/* check for Xvideo support */
-	if (Success != XvQueryAdaptors(vo->mDisplay,DefaultRootWindow(vo->mDisplay), &priv.adaptors,&priv.ai)) {
-	    MSG_ERR("Xv: XvQueryAdaptors failed");
-	    return MPXP_False;
-	}
-	/* check priv.adaptors */
-	for (i = 0; i < priv.adaptors && priv.port == 0; i++) {
-	    if ((priv.ai[i].type & XvInputMask) && (priv.ai[i].type & XvImageMask))
-		for (xv_p = priv.ai[i].base_id; xv_p < priv.ai[i].base_id+priv.ai[i].num_ports; ++xv_p) {
-		    if (!XvGrabPort(vo->mDisplay, xv_p, CurrentTime)) {
-			priv.port = xv_p;
-			break;
-		    } else {
-			MSG_ERR("Xv: could not grab port %i\n", (int)xv_p);
-		    }
-		}
-	}
-	/* check image priv.formats */
-	if (priv.port != 0) {
-	    priv.fo = XvListImageFormats(vo->mDisplay, priv.port, (int*)&priv.formats);
-	    priv.format=0;
-	    for(i = 0; i < priv.formats; i++) {
-		if(priv.fo[i].id == (int)format->fourcc) { format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
-		if(priv.fo[i].id == FOURCC_RGBA32 && format->fourcc == IMGFMT_BGR32) { format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
-		if(priv.fo[i].id == FOURCC_RGB16 && format->fourcc == IMGFMT_BGR16) { format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
-	    }
-	    if (!priv.format) priv.port = 0;
-	}
-    }
+    Xv_System& xv = *priv.xv;
+    priv.format=xv.query_port(format->fourcc);
+    if(priv.format) { format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
     return MPXP_False;
 }
 
 static void uninit(vo_data_t*vo)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
+    Xv_System& xv = *priv.xv;
     unsigned i;
-    saver_on(vo,vo->mDisplay); // screen saver back on
+    xv.saver_on(); // screen saver back on
     for( i=0;i<priv.num_buffers;i++ ) deallocate_xvimage(vo,i);
 #ifdef HAVE_XF86VM
-    vo_vm_close(vo,vo->mDisplay);
+    xv.vm_close();
 #endif
-    vo_x11_uninit(vo,vo->mDisplay, vo->window);
     delete vo->priv;
 }
 
@@ -574,12 +295,15 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
 	MSG_ERR("vo_xv: Unknown subdevice: %s\n",arg);
 	return MPXP_False;
     }
+    priv->xv=new(zeromem) Xv_System(vo_conf.mDisplayName);
+    priv->xv->saver_off();
     return MPXP_Ok;
 }
 
 static void __FASTCALL__ xv_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t *caps)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
+    Xv_System& xv = *priv.xv;
     unsigned i,n;
     caps->caps = DRI_CAP_TEMP_VIDEO | DRI_CAP_UPSCALER | DRI_CAP_DOWNSCALER |
 		DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
@@ -590,28 +314,23 @@ static void __FASTCALL__ xv_dri_get_surface_caps(vo_data_t*vo,dri_surface_cap_t 
     caps->y=0;
     caps->w=priv.image_width;
     caps->h=priv.image_height;
-    n=priv.image[0]?std::min(4,priv.image[0]->num_planes):1;
-    if(priv.image[0]) {
-	for(i=0;i<n;i++)
-	    caps->strides[i] = priv.image[0]->pitches[i];
-    }
-    for(;i<4;i++)
-	caps->strides[i] = 0;
-    {
-	unsigned ts;
-	ts = caps->strides[2];
-	caps->strides[2] = caps->strides[1];
-	caps->strides[1] = ts;
-    }
+    n=std::min(4,xv.ImageXv(0)->num_planes);
+    for(i=0;i<n;i++)
+	caps->strides[i] = xv.ImageXv(0)->pitches[i];
+    unsigned ts;
+    ts = caps->strides[2];
+    caps->strides[2] = caps->strides[1];
+    caps->strides[1] = ts;
 }
 
 static void __FASTCALL__ xv_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
+    Xv_System& xv = *priv.xv;
     unsigned i,n;
-    n=std::min(4,priv.image[0]->num_planes);
+    n=std::min(4,xv.ImageXv(0)->num_planes);
     for(i=0;i<n;i++)
-	surf->planes[i] = reinterpret_cast<uint8_t*>(priv.image[surf->idx]->data) + priv.image[surf->idx]->offsets[i];
+	surf->planes[i] = xv.ImageData(surf->idx) + xv.ImageXv(surf->idx)->offsets[i];
     for(;i<4;i++)
 	surf->planes[i] = 0;
     {
@@ -625,11 +344,12 @@ static void __FASTCALL__ xv_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
 static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
+    Xv_System& xv = *priv.xv;
   switch (request) {
   case VOCTRL_QUERY_FORMAT:
     return query_format(vo,(vo_query_fourcc_t*)data);
   case VOCTRL_FULLSCREEN:
-    vo_x11_fullscreen(vo);
+    xv.fullscreen(vo);
     return MPXP_True;
   case VOCTRL_CHECK_EVENTS:
     {
@@ -647,10 +367,10 @@ static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
 	xv_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
 	return MPXP_True;
   case VOCTRL_SET_EQUALIZER:
-	if(!xv_set_video_eq(vo,reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	if(!xv.set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
   case VOCTRL_GET_EQUALIZER:
-	if(xv_get_video_eq(vo,reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	if(xv.get_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
   }
   return MPXP_NA;

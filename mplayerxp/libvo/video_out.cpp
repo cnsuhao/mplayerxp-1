@@ -61,17 +61,11 @@ VO_Config vo_conf;
 //
 extern const vo_functions_t video_out_x11;
 extern const vo_functions_t video_out_xv;
-extern const vo_functions_t video_out_dga;
 extern const vo_functions_t video_out_sdl;
 extern const vo_functions_t video_out_null;
-extern const vo_functions_t video_out_pgm;
-extern const vo_functions_t video_out_md5;
 extern const vo_functions_t video_out_fbdev;
-extern const vo_functions_t video_out_png;
 extern const vo_functions_t video_out_opengl;
-#ifdef HAVE_VESA
 extern const vo_functions_t video_out_vesa;
-#endif
 
 static const vo_functions_t* video_out_drivers[] =
 {
@@ -80,9 +74,6 @@ static const vo_functions_t* video_out_drivers[] =
 #endif
 #ifdef HAVE_OPENGL
 	&video_out_opengl,
-#endif
-#ifdef HAVE_DGA
-	&video_out_dga,
 #endif
 #ifdef HAVE_X11
 	&video_out_x11,
@@ -190,14 +181,13 @@ vo_data_t* __FASTCALL__ vo_preinit_structs( void )
     vo_data_t* vo;
 
     vo=new(zeromem) vo_data_t;
-    vo->window = None;
     vo->osd_progbar_type=-1;
     vo->osd_progbar_value=100;   // 0..256
 
     vo_priv_t* priv;
     priv=new(zeromem) vo_priv_t;
     vo->vo_priv=priv;
-    rnd_fill(vo->antiviral_hole,offsetof(vo_data_t,mScreen)-offsetof(vo_data_t,antiviral_hole));
+    rnd_fill(vo->antiviral_hole,offsetof(vo_data_t,flags)-offsetof(vo_data_t,antiviral_hole));
     return vo;
 }
 

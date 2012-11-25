@@ -168,22 +168,15 @@ class video_private : public Opaque {
 };
 
 typedef struct vo_data_s {
-    Display*		mDisplay;
     char		antiviral_hole[RND_CHAR4];
-    int			mScreen;
-    Window		window;
-    GC			gc;
 
     int			flags;
-// correct resolution/bpp on screen:  (should be autodetected by vo_x11_init())
-    unsigned		depthonscreen;
 
 // requested resolution/bpp:  (-x -y -bpp options)
     vo_rect_t		dest;
 
     video_private*	vo_priv;/* private data of vo structure */
     video_private*	priv;	/* private data of video driver */
-    video_private*	priv2;	/* private data of X11 commons */
     video_private*	priv3;	/* private data of vidix commons */
 
     /* subtitle support */

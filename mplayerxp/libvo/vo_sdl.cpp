@@ -121,7 +121,7 @@ using namespace mpxp;
 
 #ifdef HAVE_X11
 #include <X11/Xlib.h>
-#include "x11_common.h"
+#include "x11_system.h"
 #endif
 
 #include "input2/input.h"
@@ -241,6 +241,9 @@ struct sdl_priv_t : public video_private {
 #ifdef CONFIG_VIDIX
     const char *	vidix_name;
     vidix_server_t*	vidix_server;
+#endif
+#ifdef HAVE_X11
+    X11_System*		x11;
 #endif
 };
 
@@ -1161,15 +1164,17 @@ static const vo_info_t* get_info(const vo_data_t*vo)
 
 static void uninit(vo_data_t*vo)
 {
+    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
+    X11_System& x11 = *priv.x11;
 #ifdef HAVE_X11
-    saver_on(vo,vo->mDisplay);
-    vo_x11_uninit(vo,vo->mDisplay, vo->window);
+    x11.saver_on();
 #endif
     sdl_close(vo);
 #ifdef CONFIG_VIDIX
-    vidix_term(vo);
-    sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
-    delete priv.vidix_server;
+    if(priv.vidix_name) {
+	vidix_term(vo);
+	delete priv.vidix_server;
+    }
 #endif
     delete vo->priv;
 }
@@ -1180,8 +1185,8 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
     vo->priv=priv;
     if(arg) strcpy(sdl_subdevice,arg);
 #ifdef HAVE_X11
-    if(vo_x11_init(vo)!=MPXP_Ok) return MPXP_False; // Can't open X11
-    saver_off(vo,vo->mDisplay);
+    priv->x11=new(zeromem) X11_System(vo_conf.mDisplayName);
+    priv->x11->saver_off();
 #endif
     return sdl_open(vo);
 }
