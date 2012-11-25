@@ -35,12 +35,12 @@ static int x11_errorhandler(::Display *display,::XErrorEvent *event)
     char msg[256];
 
     ::XGetErrorText(display, event->error_code, (char *)&msg, sizeof(msg));
-    MSG_ERR("X11 error: %s\n", msg);
+    MSG_ERR("X11_System: %s\n", msg);
     MSG_V("Type: %x, display: %x, resourceid: %x, serial: %lx\n",
 	    event->type, event->display, event->resourceid, event->serial);
     MSG_V("Error code: %x, request code: %x, minor code: %x\n",
 	    event->error_code, event->request_code, event->minor_code);
-    exit_player("X11 error");
+    escape_player("X11_System error",mp_conf.max_trace);
     return 0;
 }
 
@@ -68,7 +68,7 @@ X11_System::X11_System(const char* DisplayName) {
 
     if(!(mDisplay=::XOpenDisplay(dispName))) {
 	MSG_ERR( "X11_System: couldn't open the X11 display: '%s'!\n",dispName );
-	exit_player("X11 error");
+	exit_player("X11_System error");
     }
     mScreen=DefaultScreen( mDisplay );
     mRootWin=RootWindow( mDisplay,mScreen );// Root window ID.

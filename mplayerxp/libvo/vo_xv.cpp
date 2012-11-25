@@ -116,7 +116,7 @@ static void set_gamma_correction( vo_data_t*vo )
  * connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
     Xv_System& xv = *priv.xv;
@@ -342,7 +342,7 @@ static void __FASTCALL__ xv_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
     }
 }
 
-static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static MPXP_Rc __FASTCALL__ control_vo(vo_data_t*vo,uint32_t request, any_t*data)
 {
     xv_priv_t& priv = *static_cast<xv_priv_t*>(vo->priv);
     Xv_System& xv = *priv.xv;

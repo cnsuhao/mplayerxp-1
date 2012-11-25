@@ -208,7 +208,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_s
    return ret;
 }
 
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format)
 {
     x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     X11_System& x11 = *priv.x11;
@@ -404,7 +404,7 @@ static void __FASTCALL__ x11_dri_get_surface(const vo_data_t*vo,dri_surface_t *s
     surf->planes[3] = 0;
 }
 
-static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static MPXP_Rc __FASTCALL__ control_vo(vo_data_t*vo,uint32_t request, any_t*data)
 {
     x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     X11_System& x11 = *priv.x11;

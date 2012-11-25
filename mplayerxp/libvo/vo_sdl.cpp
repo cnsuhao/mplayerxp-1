@@ -536,7 +536,7 @@ static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
  *   returns : non-zero on success, zero on error.
  **/
 
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 //static int sdl_setup (int width, int height)
 {
     sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
@@ -1256,7 +1256,7 @@ static void __FASTCALL__ sdl_dri_get_surface(const vo_data_t*vo,dri_surface_t *s
     }
 }
 
-static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static MPXP_Rc __FASTCALL__ control_vo(vo_data_t*vo,uint32_t request, any_t*data)
 {
     sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX

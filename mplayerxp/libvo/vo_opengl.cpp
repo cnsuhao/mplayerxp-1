@@ -139,7 +139,7 @@ static void resize(vo_data_t*vo,int x,int y){
 /* connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
     GLX_System& glx = *priv.glx;
@@ -192,7 +192,7 @@ static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height,
 	    return MPXP_False;
 	}
 	glx.create_context(vi);
-	XFree(vi);
+	::XFree(vi);
     }
 #endif
     gl_init_fb(vo,0,0,d_width,d_height);
@@ -320,7 +320,7 @@ static void __FASTCALL__ gl_dri_get_surface(const vo_data_t*vo,dri_surface_t *su
     surf->planes[3] = 0;
 }
 
-static MPXP_Rc control(vo_data_t*vo,uint32_t request, any_t*data)
+static MPXP_Rc control_vo(vo_data_t*vo,uint32_t request, any_t*data)
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
     switch (request) {

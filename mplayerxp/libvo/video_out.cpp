@@ -273,12 +273,12 @@ static void __FASTCALL__ dri_config(vo_data_t*vo,uint32_t fourcc)
     if(!priv.dri.bpp) priv.dri.has_dri=0; /*unknown fourcc*/
     if(priv.dri.has_dri)
     {
-	priv.video_out->control(vo,VOCTRL_GET_NUM_FRAMES,&priv.dri.num_xp_frames);
+	priv.video_out->control_vo(vo,VOCTRL_GET_NUM_FRAMES,&priv.dri.num_xp_frames);
 	priv.dri.num_xp_frames=std::min(priv.dri.num_xp_frames,unsigned(MAX_DRI_BUFFERS));
 	for(i=0;i<priv.dri.num_xp_frames;i++)
 	{
 	    priv.dri.surf[i].idx=i;
-	    priv.video_out->control(vo,DRI_GET_SURFACE,&priv.dri.surf[i]);
+	    priv.video_out->control_vo(vo,DRI_GET_SURFACE,&priv.dri.surf[i]);
 	}
     }
 }
@@ -375,7 +375,7 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
 	priv.dri.has_dri = 1;
-	priv.video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv.dri.cap);
+	priv.video_out->control_vo(vo,DRI_GET_SURFACE_CAPS,&priv.dri.cap);
 	dri_config(vo,priv.dri.cap.fourcc);
 	/* ugly workaround of swapped BGR-fourccs. Should be removed in the future */
 	if(!priv.dri.has_dri)
@@ -421,11 +421,11 @@ MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uin
     priv.dri.d_height = d_h;
     MSG_V("priv.video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
 	,w,h,d_w,d_h,fullscreen,title,vo_format_name(dest_fourcc));
-    retval = priv.video_out->config(vo,w,h,d_w,d_h,fullscreen,title,dest_fourcc);
+    retval = priv.video_out->config_vo(vo,w,h,d_w,d_h,fullscreen,title,dest_fourcc);
     priv.srcFourcc=format;
     if(retval == MPXP_Ok) {
 	int dri_retv;
-	dri_retv = priv.video_out->control(vo,DRI_GET_SURFACE_CAPS,&priv.dri.cap);
+	dri_retv = priv.video_out->control_vo(vo,DRI_GET_SURFACE_CAPS,&priv.dri.cap);
 	priv.image_format = format;
 	priv.image_width = w;
 	priv.image_height = h;
@@ -465,7 +465,7 @@ uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned sr
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
-    if(priv.video_out->control(vo,VOCTRL_QUERY_FORMAT,&qfourcc)==MPXP_False)
+    if(priv.video_out->control_vo(vo,VOCTRL_QUERY_FORMAT,&qfourcc)==MPXP_False)
 	qfourcc.flags=VOCAP_NA;
     MSG_V("dri_vo: request for %s fourcc: %i\n",vo_format_name(*fourcc),qfourcc.flags);
     dri_forced_fourcc = *fourcc;
@@ -476,7 +476,7 @@ MPXP_Rc vo_reset(vo_data_t*vo)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_reset\n");
-    return priv.video_out->control(vo,VOCTRL_RESET,NULL);
+    return priv.video_out->control_vo(vo,VOCTRL_RESET,NULL);
 }
 
 MPXP_Rc vo_screenshot(vo_data_t*vo,unsigned idx )
@@ -492,14 +492,14 @@ MPXP_Rc vo_pause(vo_data_t*vo)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_pause\n");
-    return priv.video_out->control(vo,VOCTRL_PAUSE,0);
+    return priv.video_out->control_vo(vo,VOCTRL_PAUSE,0);
 }
 
 MPXP_Rc vo_resume(vo_data_t*vo)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_resume\n");
-    return priv.video_out->control(vo,VOCTRL_RESUME,0);
+    return priv.video_out->control_vo(vo,VOCTRL_RESUME,0);
 }
 
 void vo_lock_surfaces(vo_data_t*vo) {
@@ -606,7 +606,7 @@ int vo_check_events(vo_data_t*vo)
     MSG_DBG3("dri_vo_dbg: vo_check_events\n");
     vrest.event_type = 0;
     vrest.adjust_size = adjust_size;
-    retval = priv.video_out->control(vo,VOCTRL_CHECK_EVENTS,&vrest);
+    retval = priv.video_out->control_vo(vo,VOCTRL_CHECK_EVENTS,&vrest);
     /* it's ok since accelerated drivers doesn't touch surfaces
        but there is only one driver (vo_x11) which changes surfaces
        on 'fullscreen' key */
@@ -626,7 +626,7 @@ MPXP_Rc vo_fullscreen(vo_data_t*vo)
     MPXP_Rc retval;
     MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
     etype = 0;
-    retval = priv.video_out->control(vo,VOCTRL_FULLSCREEN,&etype);
+    retval = priv.video_out->control_vo(vo,VOCTRL_FULLSCREEN,&etype);
     if(priv.dri.has_dri && retval == MPXP_True && (etype & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	dri_reconfig(vo,etype);
     if(retval == MPXP_True) priv.dri.flags ^= VOFLG_FS;
@@ -686,7 +686,7 @@ void vo_flush_page(vo_data_t*vo,unsigned decoder_idx)
     MSG_DBG3("dri_vo_dbg: vo_flush_pages [idx=%u]\n",decoder_idx);
     priv.frame_counter++;
     if((priv.dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
-					priv.video_out->control(vo,VOCTRL_FLUSH_PAGES,&decoder_idx);
+					priv.video_out->control_vo(vo,VOCTRL_FLUSH_PAGES,&decoder_idx);
 }
 
 /* DRAW OSD */
@@ -897,7 +897,7 @@ MPXP_Rc __FASTCALL__ vo_control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     MPXP_Rc rval;
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
-    rval=priv.video_out->control(vo,request,data);
+    rval=priv.video_out->control_vo(vo,request,data);
     MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
     return rval;
 }

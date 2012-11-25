@@ -22,8 +22,8 @@
  */
 #ifndef __VIDEO_OUT_INTERNAL_H
 #define __VIDEO_OUT_INTERNAL_H 1
-static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data);
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
+static MPXP_Rc __FASTCALL__ control_vo(vo_data_t*vo,uint32_t request, any_t*data);
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		     uint32_t d_height, uint32_t fullscreen, char *title,
 		     uint32_t format);
 static const vo_info_t* __FASTCALL__ get_info(const vo_data_t*vo);
@@ -34,8 +34,8 @@ static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *);
 #define LIBVO_EXTERN(x) extern const vo_functions_t video_out_##x =\
 {\
 	preinit,\
-	config,\
-	control,\
+	config_vo,\
+	control_vo,\
 	get_info,\
 	select_frame,\
 	uninit\

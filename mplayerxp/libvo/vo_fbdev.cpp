@@ -840,7 +840,7 @@ static void __FASTCALL__ vt_set_textarea(vo_data_t*vo,int u, int l)
     fflush(priv.vt_fp);
 }
 
-static MPXP_Rc __FASTCALL__ config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
 		uint32_t d_height, uint32_t fullscreen, char *title,
 		uint32_t format)
 {
@@ -1176,7 +1176,7 @@ static void __FASTCALL__ fbdev_dri_get_surface(vo_data_t*vo,dri_surface_t *surf)
     surf->planes[3] = 0;
 }
 
-static MPXP_Rc __FASTCALL__ control(vo_data_t*vo,uint32_t request, any_t*data)
+static MPXP_Rc __FASTCALL__ control_vo(vo_data_t*vo,uint32_t request, any_t*data)
 {
     fbdev_priv_t& priv = *static_cast<fbdev_priv_t*>(vo->priv);
 #ifdef CONFIG_VIDIX

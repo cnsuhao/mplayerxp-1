@@ -224,7 +224,7 @@ typedef struct vo_functions_s
 	 * @param format	fourcc of source image
 	 * @return		zero on successful initialization, non-zero on error.
 	 **/
-	MPXP_Rc (* __FASTCALL__ config)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
+	MPXP_Rc (* __FASTCALL__ config_vo)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
 			 uint32_t d_height, uint32_t fullscreen, char *title,
 			 uint32_t format);
 
@@ -233,7 +233,7 @@ typedef struct vo_functions_s
 	 * @param data		data associated with command
 	 * @return		MPXP_True if success MPXP_False VO_ERROR MPXP_NA otherwise
 	 **/
-	vo_control_t control;
+	vo_control_t control_vo;
 
 	/** Returns driver information.
 	 * @return	read-only pointer to a vo_info_t structure.
