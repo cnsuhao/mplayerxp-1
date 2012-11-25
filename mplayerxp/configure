@@ -61,8 +61,6 @@ ENABLED_LIST=(
     "libcdio|build with libcdio support|http://www.gnu.org/software/libcdio/index.html",
     "x11|build with X11 video ouput|http://www.x.org",
     "xv|build with Xv video output|http://www.x.org",
-    "sdl|build with SDL video and audio output|http://www.libsdl.org",
-    "sdl_image|build with SDL_image for screenshots|http://www.libsdl.org/projects/SDL_image",
     "fbdev|build with FBDev video ouput",
     "jpg|build with JPEG for screenshots|http://www.ijg.org",
     "png|build with PNG for screenshots|http://www.libpng.org/pub/png/libpng.html",
@@ -92,6 +90,8 @@ DISABLED_LIST=(
     "dbg23|allow additional level of debug messages",
     "win32loader|build support for Win32 codecs",
     "random_name|generates pseudo random suffix of target",
+    "sdl|build with SDL video and audio output|http://www.libsdl.org",
+    "sdl_image|build with SDL_image for screenshots|http://www.libsdl.org/projects/SDL_image",
     "im_sure_that_must_have_streaming| the key to unlock streaming"
 )
 
