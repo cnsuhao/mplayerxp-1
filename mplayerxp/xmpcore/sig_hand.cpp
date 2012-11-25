@@ -23,15 +23,15 @@ using namespace mpxp;
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mp_msg.h"
 
-#ifdef HAVE_BACKTRACE
 #include <execinfo.h>
 
 namespace mpxp {
 /* A dummy function to make the backtrace more interesting. */
 static void dump_trace (void) {
     show_backtrace("Obtained %zd stack frames.\n",mp_conf.max_trace);
+    MSG_HINT("\nFor source lines you may also print in (gdb): list *0xADDRESS\n");
 }
-#endif
+
 static void my_callback(int signo)
 {
     int i;
@@ -45,11 +45,10 @@ static void my_callback(int signo)
 	,xp_core->mpxp_threads[i]->name
 	,i
 	,xp_core->mpxp_threads[i]->unit);
-#ifdef HAVE_BACKTRACE
     dump_trace();
-#endif
+#ifdef NDEBUG
     xp_core->mpxp_threads[i]->sigfunc();
-
+#endif
     signal(signo,SIG_DFL); /* try coredump*/
 
     return;
@@ -57,7 +56,6 @@ static void my_callback(int signo)
 
 void init_signal_handling( void )
 {
-#ifdef MP_DEBUG
   /*========= Catch terminate signals: ================*/
   /* terminate requests:*/
   signal(SIGTERM,my_callback); /* kill*/
@@ -72,16 +70,13 @@ void init_signal_handling( void )
   signal(SIGILL,my_callback);  /* illegal instruction */
   signal(SIGFPE,my_callback);  /* floating point exc. */
   signal(SIGABRT,my_callback); /* abort() */
-#endif
-#ifdef RLIMIT_CORE
-  {
+#ifndef NDEBUG
     /* on many systems default coresize is 0.
        Enable any coresize here. */
     struct rlimit rl;
     getrlimit(RLIMIT_CORE,&rl);
     rl.rlim_cur = rl.rlim_max;
     setrlimit(RLIMIT_CORE,&rl);
-  }
 #endif
 }
 
