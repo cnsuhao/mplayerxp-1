@@ -1176,6 +1176,7 @@ static void uninit(vo_data_t*vo)
 	delete priv.vidix_server;
     }
 #endif
+    delete &x11;
     delete vo->priv;
 }
 

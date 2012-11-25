@@ -283,6 +283,7 @@ static void uninit(vo_data_t*vo)
 #ifdef HAVE_XF86VM
     xv.vm_close();
 #endif
+    delete &xv;
     delete vo->priv;
 }
 
