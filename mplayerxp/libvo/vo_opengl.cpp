@@ -184,16 +184,7 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
 #ifdef GL_WIN32
     if (!vo_w32_config(d_width, d_height, flags)) return MPXP_False;
 #else
-    {
-	XVisualInfo *vi;
-	vi = glx.get_visual();
-	if (vi == NULL) {
-	    MSG_ERR("[vo_oengl]: Can't get XVisualInfo\n");
-	    return MPXP_False;
-	}
-	glx.create_context(vi);
-	::XFree(vi);
-    }
+    glx.create_context(&priv.vinfo);
 #endif
     gl_init_fb(vo,0,0,d_width,d_height);
     /* allocate multibuffers */
