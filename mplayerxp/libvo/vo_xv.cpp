@@ -347,7 +347,7 @@ MPXP_Rc Xv_VO_Interface::ctrl(uint32_t request, any_t*data)
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) Xv_VO_Interface(args); }
-extern const vo_info_t xv_info =
+extern const vo_info_t xv_vo_info =
 {
 	"X11/Xv",
 	"xv",

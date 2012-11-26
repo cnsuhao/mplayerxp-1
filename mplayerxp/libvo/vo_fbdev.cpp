@@ -1192,7 +1192,7 @@ MPXP_Rc FBDev_VO_Interface::ctrl(uint32_t request, any_t*data)
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) FBDev_VO_Interface(args); }
-extern const vo_info_t fbdev_info = {
+extern const vo_info_t fbdev_vo_info = {
     "Framebuffer Device"
 #ifdef CONFIG_VIDIX
     " (with fbdev:vidix subdevice)"

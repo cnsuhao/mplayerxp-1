@@ -232,7 +232,7 @@ MPXP_Rc Null_VO_Interface::ctrl(uint32_t request, any_t*data)
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) Null_VO_Interface(args); }
-extern const vo_info_t null_info = {
+extern const vo_info_t null_vo_info = {
     "Null video output",
     "null",
     "Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",

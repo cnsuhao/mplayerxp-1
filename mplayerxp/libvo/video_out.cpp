@@ -60,35 +60,35 @@ VO_Config vo_conf;
 //
 // Externally visible list of all vo drivers
 //
-extern const vo_info_t x11_info;
-extern const vo_info_t xv_info;
-extern const vo_info_t sdl_info;
-extern const vo_info_t null_info;
-extern const vo_info_t fbdev_info;
-extern const vo_info_t opengl_info;
-extern const vo_info_t vesa_info;
+extern const vo_info_t x11_vo_info;
+extern const vo_info_t xv_vo_info;
+extern const vo_info_t sdl_vo_info;
+extern const vo_info_t null_vo_info;
+extern const vo_info_t fbdev_vo_info;
+extern const vo_info_t opengl_vo_info;
+extern const vo_info_t vesa_vo_info;
 
 static const vo_info_t* vo_infos[] =
 {
 #ifdef HAVE_XV
-	&xv_info,
+	&xv_vo_info,
 #endif
 #ifdef HAVE_OPENGL
-	&opengl_info,
+	&opengl_vo_info,
 #endif
 #ifdef HAVE_X11
-	&x11_info,
+	&x11_vo_info,
 #endif
 #ifdef HAVE_SDL
-	&sdl_info,
+	&sdl_vo_info,
 #endif
 #ifdef HAVE_VESA
-	&vesa_info,
+	&vesa_vo_info,
 #endif
 #ifdef HAVE_FBDEV
-	&fbdev_info,
+	&fbdev_vo_info,
 #endif
-	&null_info,
+	&null_vo_info,
 	NULL
 };
 
@@ -164,7 +164,7 @@ MPXP_Rc vo_register(vo_data_t*vo,const char *driver_name)
     unsigned i;
     if(!driver_name) priv.video_out=vo_infos[0];
     else
-    for (i=0; vo_infos[i] != &null_info; i++){
+    for (i=0; vo_infos[i] != &null_vo_info; i++){
 	const vo_info_t *info = vo_infos[i];
 	if(strcmp(info->short_name,driver_name) == 0){
 	    priv.video_out = vo_infos[i];

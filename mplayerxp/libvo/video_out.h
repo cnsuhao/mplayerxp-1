@@ -161,7 +161,6 @@ typedef struct vo_data_s {
     int			flags;
 
     video_private*	vo_priv;/* private data of vo structure */
-    video_private*	priv;	/* private data of video driver */
 
     /* subtitle support */
     char*		osd_text;

@@ -419,7 +419,7 @@ MPXP_Rc X11_VO_Interface::ctrl(uint32_t request, any_t*data)
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) X11_VO_Interface(args); }
-extern const vo_info_t x11_info =
+extern const vo_info_t x11_vo_info =
 {
 	"X11 ( XImage/Shm )"
 #ifdef CONFIG_VIDIX

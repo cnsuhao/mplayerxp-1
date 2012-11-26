@@ -789,7 +789,7 @@ MPXP_Rc VESA_VO_Interface::ctrl(uint32_t request, any_t*data)
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) VESA_VO_Interface(args); }
-extern const vo_info_t vesa_info =
+extern const vo_info_t vesa_vo_info =
 {
 	"VESA VBE 2.0 video output"
 #ifdef CONFIG_VIDIX

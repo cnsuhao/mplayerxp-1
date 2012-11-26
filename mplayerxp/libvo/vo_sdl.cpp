@@ -1284,7 +1284,7 @@ MPXP_Rc SDL_VO_Interface::ctrl(uint32_t request, any_t*data)
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) SDL_VO_Interface(args); }
-extern const vo_info_t sdl_info =
+extern const vo_info_t sdl_vo_info =
 {
     "SDL YUV/RGB/BGR renderer (SDL v1.1.7+ !)"
 #ifdef CONFIG_VIDIX
