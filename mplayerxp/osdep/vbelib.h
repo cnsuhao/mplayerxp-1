@@ -219,7 +219,7 @@ namespace mpxp {
     int vbeGetProtModeInfo(struct VesaProtModeInterface *);
 
     /* Standard VGA stuff */
-    int vbeWriteString(int x, int y, int attr, char *str);
+    int vbeWriteString(int x, int y, int attr,const char *str);
 
     /* Misc stuff (For portability only) */
     any_t* vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size);

@@ -219,7 +219,7 @@ static int check_wrd(const unsigned short *str)
   return ffff_found;
 }
 
-static void print_str(unsigned char *str)
+static void print_str(const char *str)
 {
   size_t i;
   fflush(stdout);
@@ -259,7 +259,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
     fpdata.off = (unsigned long)(data->OemStringPtr) & 0xffff;
     data->OemStringPtr = (char*)PhysToVirt(fpdata);
     if(!check_str(reinterpret_cast<unsigned char*>(data->OemStringPtr))) data->OemStringPtr = NULL;
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
       MSG_DBG2("vbelib:  OemStringPtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemStringPtr);
@@ -275,7 +275,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
 	data->VideoModePtr = NULL;
 	retval = VBE_BROKEN_BIOS;
     }
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
       MSG_DBG2("vbelib:  VideoModePtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->VideoModePtr);
@@ -287,7 +287,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
     fpdata.off = (unsigned long)(data->OemVendorNamePtr) & 0xffff;
     data->OemVendorNamePtr = (char *)PhysToVirt(fpdata);
     if(!check_str(reinterpret_cast<unsigned char*>(data->OemVendorNamePtr))) data->OemVendorNamePtr = NULL;
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
       MSG_DBG2("vbelib:  OemVendorNamePtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemVendorNamePtr);
@@ -299,7 +299,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
     fpdata.off = (unsigned long)(data->OemProductNamePtr) & 0xffff;
     data->OemProductNamePtr = (char*)PhysToVirt(fpdata);
     if(!check_str(reinterpret_cast<unsigned char*>(data->OemProductNamePtr))) data->OemProductNamePtr = NULL;
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
       MSG_DBG2("vbelib:  OemProductNamePtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemProductNamePtr);
@@ -311,7 +311,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
     fpdata.off = (unsigned long)(data->OemProductRevPtr) & 0xffff;
     data->OemProductRevPtr = (char*)PhysToVirt(fpdata);
     if(!check_str(reinterpret_cast<unsigned char*>(data->OemProductRevPtr))) data->OemProductRevPtr = NULL;
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
       MSG_DBG2("vbelib:  OemProductRevPtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemProductRevPtr);
@@ -655,17 +655,17 @@ int vbeGetProtModeInfo(struct VesaProtModeInterface *pm_info)
     rm_info = (realVesaProtModeInterface*)PhysToVirtSO(r.es,info_offset);
     pm_info->SetWindowCall   = (void (*)())PhysToVirtSO(r.es,info_offset+rm_info->SetWindowCall);
     if(!is_addr_valid(reinterpret_cast<any_t*>(pm_info->SetWindowCall))) retval = VBE_BROKEN_BIOS;
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     MSG_DBG2("vbelib:  SetWindowCall=%04X:%04X => %p\n",r.es,info_offset+rm_info->SetWindowCall,pm_info->SetWindowCall);
 #endif
     pm_info->SetDisplayStart = (void(*)())PhysToVirtSO(r.es,info_offset+rm_info->SetDisplayStart);
     if(!is_addr_valid(reinterpret_cast<any_t*>(pm_info->SetDisplayStart))) retval = VBE_BROKEN_BIOS;
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     MSG_DBG2("vbelib:  SetDisplayStart=%04X:%04X => %p\n",r.es,info_offset+rm_info->SetDisplayStart,pm_info->SetDisplayStart);
 #endif
     pm_info->SetPaletteData  = (void(*)())PhysToVirtSO(r.es,info_offset+rm_info->SetPaletteData);
     if(!is_addr_valid(reinterpret_cast<any_t*>(pm_info->SetPaletteData))) retval = VBE_BROKEN_BIOS;
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     MSG_DBG2("vbelib:  SetPaletteData=%04X:%04X => %p\n",r.es,info_offset+rm_info->SetPaletteData,pm_info->SetPaletteData);
 #endif
     pm_info->iopl_ports  = (unsigned short*)PhysToVirtSO(r.es,info_offset+rm_info->iopl_ports);
@@ -676,7 +676,7 @@ int vbeGetProtModeInfo(struct VesaProtModeInterface *pm_info)
 	pm_info->iopl_ports = NULL;
 /*	retval = VBE_BROKEN_BIOS; <- It's for broken BIOSes only */
     }
-#ifdef HAVE_mp_conf.verbose_VAR
+#ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
       MSG_DBG2("vbelib:  iopl_ports=%04X:%04X => %p\n",r.es,info_offset+rm_info->iopl_ports,pm_info->iopl_ports);
@@ -688,7 +688,7 @@ int vbeGetProtModeInfo(struct VesaProtModeInterface *pm_info)
   return retval;
 }
 /* --------- Standard VGA stuff -------------- */
-int vbeWriteString(int x, int y, int attr, char *str)
+int vbeWriteString(int x, int y, int attr,const char *str)
 {
   struct LRMI_regs r;
   any_t*rm_space = NULL;

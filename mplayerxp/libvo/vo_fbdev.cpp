@@ -841,7 +841,7 @@ static void __FASTCALL__ vt_set_textarea(vo_data_t*vo,int u, int l)
 }
 
 static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
-		uint32_t d_height, uint32_t fullscreen, char *title,
+		uint32_t d_height, const char *title,
 		uint32_t format)
 {
     fbdev_priv_t& priv = *static_cast<fbdev_priv_t*>(vo->priv);
@@ -849,7 +849,6 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
     unsigned x_offset,y_offset,i;
 
     UNUSED(title);
-    UNUSED(fullscreen);
     priv.srcFourcc = format;
     if((int)priv.pre_init_err == MPXP_Error) {
 	MSG_ERR(FBDEV "Internal fatal error: init() was called before preinit()\n");

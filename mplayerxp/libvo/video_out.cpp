@@ -396,7 +396,7 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 
 static int vo_inited=0;
 MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width,
-		   uint32_t d_height, uint32_t fullscreen, char *title,
+		   uint32_t d_height, uint32_t fullscreen, const char *title,
 		   uint32_t format)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
@@ -408,6 +408,7 @@ MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uin
 	return MPXP_False;
     }
     vo_inited++;
+    vo->flags=fullscreen;
     dest_fourcc = format;
     priv.org_width = width;
     priv.org_height = height;
@@ -421,7 +422,7 @@ MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uin
     priv.dri.d_height = d_h;
     MSG_V("priv.video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
 	,w,h,d_w,d_h,fullscreen,title,vo_format_name(dest_fourcc));
-    retval = priv.video_out->config_vo(vo,w,h,d_w,d_h,fullscreen,title,dest_fourcc);
+    retval = priv.video_out->config_vo(vo,w,h,d_w,d_h,title,dest_fourcc);
     priv.srcFourcc=format;
     if(retval == MPXP_Ok) {
 	int dri_retv;

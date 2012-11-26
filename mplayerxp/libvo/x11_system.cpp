@@ -235,6 +235,7 @@ void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
 	::XSetInputFocus(mDisplay, window, RevertToNone, CurrentTime);
     }
 #endif
+    get_win_coord(&curr);
 }
 
 void X11_System::select_input(long mask) const
@@ -658,7 +659,7 @@ static const char * __FASTCALL__ evt_name(unsigned num)
     else			return "Unknown";
 }
 
-uint32_t X11_System::check_events(vo_data_t*vo,vo_adjust_size_t adjust_size) const
+uint32_t X11_System::check_events(vo_adjust_size_t adjust_size,vo_data_t*opaque)
 {
     uint32_t ret=0;
     XEvent         Event;
@@ -677,11 +678,11 @@ uint32_t X11_System::check_events(vo_data_t*vo,vo_adjust_size_t adjust_size) con
 	    case ConfigureNotify:
 		nw = Event.xconfigure.width;
 		nh = Event.xconfigure.height;
-		if(adjust_size) adj_ret = (*adjust_size)(vo,vo->dest.w,vo->dest.h,&nw,&nh);
-		ow = vo->dest.w;
-		oh = vo->dest.h;
-		vo->dest.w=nw;
-		vo->dest.h=nh;
+		if(adjust_size) adj_ret = (*adjust_size)(opaque,curr.w,curr.h,&nw,&nh);
+		ow = curr.w;
+		oh = curr.h;
+		curr.w=nw;
+		curr.h=nh;
 		Window root;
 		int ifoo;
 		unsigned foo;
@@ -689,13 +690,13 @@ uint32_t X11_System::check_events(vo_data_t*vo,vo_adjust_size_t adjust_size) con
 		::XGetGeometry(mDisplay, window, &root, &ifoo, &ifoo,
 			&foo/*width*/, &foo/*height*/, &foo, &foo);
 		::XTranslateCoordinates(mDisplay, window, root, 0, 0,
-			reinterpret_cast<int*>(&vo->dest.x),
-			reinterpret_cast<int*>(&vo->dest.y), &win);
-		if(adjust_size && ow != vo->dest.w && oh != vo->dest.h && adj_ret) {
-		    ::XResizeWindow( mDisplay,window,vo->dest.w,vo->dest.h );
+			reinterpret_cast<int*>(&curr.x),
+			reinterpret_cast<int*>(&curr.y), &win);
+		if(adjust_size && ow != curr.w && oh != curr.h && adj_ret) {
+		    ::XResizeWindow( mDisplay,window,curr.w,curr.h );
 		    ::XSync( mDisplay,True);
 		}
-		MSG_V("X11 Window %dx%d-%dx%d\n", vo->dest.x, vo->dest.y, vo->dest.w, vo->dest.h);
+		MSG_V("X11 Window %dx%d-%dx%d\n", curr.x, curr.y, curr.w, curr.h);
 		ret|=VO_EVENT_RESIZE;
 		break;
 	    case KeyPress: {
@@ -737,9 +738,8 @@ void X11_System::sizehint(int x, int y, int width, int height) const
     ::XSetWMNormalHints( mDisplay,window,&hint );
 }
 
-void X11_System::calcpos(const vo_data_t*vo,XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags )
+void X11_System::calcpos(XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags)
 {
-    UNUSED(flags);
 #ifdef HAVE_XF86VM
     int modeline_width, modeline_height;
     static uint32_t vm_width;
@@ -750,7 +750,7 @@ void X11_System::calcpos(const vo_data_t*vo,XSizeHints* hint, unsigned d_width, 
     hint->width=d_width;
     hint->height=d_height;
 #ifdef HAVE_XF86VM
-    if ( vo_VM(vo) ) {
+    if ( flags & VOFLAG_MODESWITCHING ) {
 	vm_width=d_width; vm_height=d_height;
 	vm_switch(vm_width, vm_height,&modeline_width, &modeline_height);
 	hint->x=(vo_conf.screenwidth-modeline_width)/2;
@@ -760,7 +760,7 @@ void X11_System::calcpos(const vo_data_t*vo,XSizeHints* hint, unsigned d_width, 
     }
     else
 #endif
-    if ( vo_FS(vo) ) {
+    if ( flags & VOFLAG_FULLSCREEN ) {
       hint->width=vo_conf.screenwidth;
       hint->height=vo_conf.screenheight;
       hint->x=0;
@@ -768,23 +768,23 @@ void X11_System::calcpos(const vo_data_t*vo,XSizeHints* hint, unsigned d_width, 
     }
 }
 
-void X11_System::fullscreen(vo_data_t*vo)
+int X11_System::fullscreen()
 {
+    int is_fs=(curr.w==vo_conf.screenwidth && curr.h==vo_conf.screenheight);
     ::XUnmapWindow( mDisplay,window );
-    if ( !vo_FS(vo) ) {
-	vo_FS_SET(vo);
-	prev=vo->dest;
-	vo->dest.x=0;  vo->dest.y=0; vo->dest.w=vo_conf.screenwidth; vo->dest.h=vo_conf.screenheight;
+    if ( !is_fs ) {
+	prev=curr;
+	curr.x=0; curr.y=0; curr.w=vo_conf.screenwidth; curr.h=vo_conf.screenheight;
 	decoration(0);
     } else {
-	vo_FS_UNSET(vo);
-	vo->dest=prev;
+	curr=prev;
 	decoration(1);
     }
-    sizehint(vo->dest.x,vo->dest.y,vo->dest.w,vo->dest.h );
-    ::XMoveResizeWindow( mDisplay,window,vo->dest.x,vo->dest.y,vo->dest.w,vo->dest.h );
+    sizehint(curr.x,curr.y,curr.w,curr.h );
+    ::XMoveResizeWindow( mDisplay,window,curr.x,curr.y,curr.w,curr.h );
     ::XMapWindow( mDisplay,window );
     ::XSync( mDisplay,False );
+    return !is_fs;
 }
 
 void X11_System::saver_on()
@@ -1213,6 +1213,7 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
 	::XSetInputFocus(get_display(), window, RevertToNone, CurrentTime);
     }
 #endif
+    get_win_coord(&curr);
 }
 #endif
 

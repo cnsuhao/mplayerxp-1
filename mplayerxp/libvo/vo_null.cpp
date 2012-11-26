@@ -64,7 +64,7 @@ static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
     UNUSED(idx);
 }
 
-static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t fullscreen, char *title, uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,const char *title, uint32_t format)
 {
     null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
     unsigned awidth;
@@ -75,7 +75,6 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
     priv.fourcc=format;
     UNUSED(d_width);
     UNUSED(d_height);
-    UNUSED(fullscreen);
     UNUSED(title);
     priv.pitch_y=priv.pitch_u=priv.pitch_v=1;
     priv.offset_y=priv.offset_u=priv.offset_v=0;

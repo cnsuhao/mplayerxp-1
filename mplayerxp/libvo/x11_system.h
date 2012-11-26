@@ -55,9 +55,9 @@ class X11_System {
 	void		decoration(int d);
 	void		classhint(const char *name) const;
 	void		sizehint(int x, int y, int width, int height) const;
-	void		calcpos(const vo_data_t* vo,XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags);
-	uint32_t	check_events(vo_data_t* vo,vo_adjust_size_t adjust_size) const;
-	void		fullscreen(vo_data_t* vo);
+	void		calcpos(XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags);
+	uint32_t	check_events(vo_adjust_size_t adjust_size,vo_data_t* opaque);
+	int		fullscreen();
 
 	void		saver_off();
 	void		saver_on();
@@ -74,6 +74,7 @@ class X11_System {
 	::GC		get_gc() const {return gc; }
 
 	::Window	window;
+	vo_rect_t	prev,curr;
 #ifdef HAVE_SHM
 	::XShmSegmentInfo Shminfo[MAX_DRI_BUFFERS];
 	int		gXErrorFlag;
@@ -91,7 +92,6 @@ class X11_System {
 
 	int		dpms_disabled;
 	int		timeout_save;
-	vo_rect_t	prev;
 
 	int		_Shmem_Flag;
 	::XImage*	myximage[MAX_DRI_BUFFERS];

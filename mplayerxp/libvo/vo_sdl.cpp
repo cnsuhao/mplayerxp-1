@@ -536,7 +536,7 @@ static MPXP_Rc __FASTCALL__ set_fullmode (vo_data_t*vo,int mode) {
  *   returns : non-zero on success, zero on error.
  **/
 
-static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, const char *title, uint32_t format)
 //static int sdl_setup (int width, int height)
 {
     sdl_priv_t& priv = *static_cast<sdl_priv_t*>(vo->priv);
@@ -647,7 +647,7 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
     }
     if(priv.X) {
 	aspect_save_screenres(priv.XWidth,priv.XHeight);
-	aspect(&priv.dstwidth,&priv.dstheight,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
+	aspect(&priv.dstwidth,&priv.dstheight,vo->flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
     }
     priv.windowsize.w = priv.dstwidth;
     priv.windowsize.h = priv.dstheight;
@@ -657,21 +657,21 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
      * bit 2 (0x04) enables software scaling (-zoom)
      * bit 3 (0x08) enables flipping (-flip)
      */
-    if(flags&FLIP) {
+    if(vo->flags&FLIP) {
 	MSG_V("SDL: using flipped video (only with RGB/BGR/packed YUV)\n");
 	priv.flip = 1;
     }
-    if(flags&FS) {
+    if(vo->flags&FS) {
 	MSG_V("SDL: setting zoomed fullscreen without modeswitching\n");
 	MSG_V("SDL: Info - please use -vm or -zoom to switch to best resolution.\n");
 	priv.fulltype = FS;
 	retval = set_fullmode(vo,priv.fullmode);
 	if(retval!=MPXP_Ok) return retval;
-    } else if(flags&VM) {
+    } else if(vo->flags&VM) {
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
 	priv.fulltype = VM;
 	set_fullmode(vo,priv.fullmode);
-    } else if(flags&ZOOM) {
+    } else if(vo->flags&ZOOM) {
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
 	priv.fulltype = ZOOM;
 	retval = set_fullmode(vo,priv.fullmode);

@@ -172,9 +172,6 @@ typedef struct vo_data_s {
 
     int			flags;
 
-// requested resolution/bpp:  (-x -y -bpp options)
-    vo_rect_t		dest;
-
     video_private*	vo_priv;/* private data of vo structure */
     video_private*	priv;	/* private data of video driver */
     video_private*	priv3;	/* private data of vidix commons */
@@ -224,9 +221,9 @@ typedef struct vo_functions_s
 	 * @param format	fourcc of source image
 	 * @return		zero on successful initialization, non-zero on error.
 	 **/
-	MPXP_Rc (* __FASTCALL__ config_vo)(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
-			 uint32_t d_height, uint32_t fullscreen, char *title,
-			 uint32_t format);
+	MPXP_Rc (* __FASTCALL__ config_vo)(vo_data_t* vo,
+			 uint32_t width, uint32_t height, uint32_t d_width,
+			 uint32_t d_height,const char *title, uint32_t format);
 
 	/** Control interface
 	 * @param request	command. See VOCTRL_** for detail
@@ -261,7 +258,7 @@ extern const vo_functions_t * vo_register(vo_data_t* vo,const char *driver_name)
 extern const vo_info_t*	vo_get_info(vo_data_t* vo);
 extern MPXP_Rc  __FASTCALL__ vo_init(vo_data_t* vo,const char *subdevice_name);
 extern MPXP_Rc  __FASTCALL__ vo_config(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,
-				  uint32_t d_height, uint32_t fullscreen, char *title,
+				  uint32_t d_height, uint32_t fullscreen,const char *title,
 				  uint32_t format);
 extern uint32_t	__FASTCALL__ vo_query_format(vo_data_t* vo,uint32_t* fourcc,unsigned src_w,unsigned src_h);
 extern MPXP_Rc		vo_reset(vo_data_t* vo);

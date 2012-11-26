@@ -180,13 +180,15 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_s
 {
     x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     X11_System& x11 = *priv.x11;
-    uint32_t ret = x11.check_events(vo,adjust_size);
+    uint32_t ret = x11.check_events(adjust_size,vo);
 
     /* clear the old window */
     if (ret & VO_EVENT_RESIZE) {
 	unsigned idx;
-	unsigned newW= vo->dest.w;
-	unsigned newH= vo->dest.h;
+	vo_rect_t r;
+	x11.get_win_coord(&r);
+	unsigned newW= r.w;
+	unsigned newH= r.h;
 	int newAspect= (newW*(1<<16) + (newH>>1))/newH;
 	if(newAspect>priv.baseAspect) newW= (newH*priv.baseAspect + (1<<15))>>16;
 	else                 newH= ((newW<<16) + (priv.baseAspect>>1)) /priv.baseAspect;
@@ -208,7 +210,7 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_s
    return ret;
 }
 
-static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,uint32_t flags,char *title,uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,const char *title,uint32_t format)
 {
     x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     X11_System& x11 = *priv.x11;
@@ -236,10 +238,8 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width,uint32_t heigh
 
     aspect(&d_width,&d_height,vo_FS(vo)?A_ZOOM:A_NOZOOM);
 
-    x11.calcpos(vo,&hint,d_width,d_height,flags);
+    x11.calcpos(&hint,d_width,d_height,vo->flags);
     hint.flags=PPosition | PSize;
-    vo->dest.w=hint.width;
-    vo->dest.h=hint.height;
 
     priv.image_width=d_width;
     priv.image_height=d_height;
@@ -339,9 +339,10 @@ static void __FASTCALL__ Display_Image(vo_data_t*vo,XImage *myximage )
     x11_priv_t& priv = *static_cast<x11_priv_t*>(vo->priv);
     X11_System& x11 = *priv.x11;
     vo_rect_t r;
+    x11.get_win_coord(&r);
     r.x=r.y=0;
-    r.w=(vo->dest.w-myximage->width)/2;
-    r.h=(vo->dest.h-myximage->height)/2;
+    r.w=(r.w-myximage->width)/2;
+    r.h=(r.h-myximage->height)/2;
     x11.put_image(myximage,r);
 }
 
@@ -422,7 +423,8 @@ static MPXP_Rc __FASTCALL__ control_vo(vo_data_t*vo,uint32_t request, any_t*data
 	    return MPXP_True;
 	}
 	case VOCTRL_FULLSCREEN:
-	    x11.fullscreen(vo);
+	    if(x11.fullscreen()) vo_FS_SET(vo);
+	    else		 vo_FS_UNSET(vo);
 #ifdef CONFIG_VIDIX
 	    if(priv.vidix_name) resize_vidix(vo);
 #endif

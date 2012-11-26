@@ -139,7 +139,7 @@ static void resize(vo_data_t*vo,int x,int y){
 /* connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, uint32_t flags, char *title, uint32_t format)
+static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height, const char *title, uint32_t format)
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
     GLX_System& glx = *priv.glx;
@@ -154,13 +154,11 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
     priv.image_width = width;
     priv.image_format=format;
 
-    if ( vo_FS(vo) ) { vo->dest.w=d_width; vo->dest.h=d_height; }
-
     priv.num_buffers=vo_conf.xp_buffs;
 
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
     aspect(&d_width,&d_height,vo_ZOOM(vo)?A_ZOOM:A_NOZOOM);
-    glx.calcpos(vo,&hint,d_width,d_height,flags);
+    glx.calcpos(&hint,d_width,d_height,vo->flags);
 
     hint.flags = PPosition | PSize;
     priv.dwidth=d_width; priv.dheight=d_height; //XXX: what are the copy vars used for?
@@ -215,8 +213,10 @@ static uint32_t __FASTCALL__ check_events(vo_data_t*vo,vo_adjust_size_t adjust_s
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
     GLX_System& glx = *priv.glx;
-    int e=glx.check_events(vo,adjust_size);
-    if(e&VO_EVENT_RESIZE) resize(vo,vo->dest.w,vo->dest.h);
+    int e=glx.check_events(adjust_size,vo);
+    vo_rect_t r;
+    glx.get_win_coord(&r);
+    if(e&VO_EVENT_RESIZE) resize(vo,r.w,r.h);
     return e|VO_EVENT_FORCE_UPDATE;
 }
 
@@ -312,12 +312,15 @@ static void __FASTCALL__ gl_dri_get_surface(const vo_data_t*vo,dri_surface_t *su
 static MPXP_Rc control_vo(vo_data_t*vo,uint32_t request, any_t*data)
 {
     ogl_priv_t& priv = *static_cast<ogl_priv_t*>(vo->priv);
+    GLX_System& glx = *priv.glx;
     switch (request) {
 	case VOCTRL_QUERY_FORMAT:
 	    return query_format((vo_query_fourcc_t*)data);
 	case VOCTRL_FULLSCREEN:
 	    vo_fullscreen(vo);
-	    resize(vo,vo->dest.w, vo->dest.h);
+	    vo_rect_t r;
+	    glx.get_win_coord(&r);
+	    resize(vo,r.w,r.h);
 	    return MPXP_True;
 	case VOCTRL_GET_NUM_FRAMES:
 	    *(uint32_t *)data = priv.num_buffers;
