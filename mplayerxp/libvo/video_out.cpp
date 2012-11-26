@@ -32,6 +32,7 @@ using namespace mpxp;
 #include <sys/mman.h>
 
 #include "video_out.h"
+#include "video_out_internal.h"
 
 #include "osdep/shmem.h"
 #include "mp_conf_lavc.h"
@@ -59,35 +60,35 @@ VO_Config vo_conf;
 //
 // Externally visible list of all vo drivers
 //
-extern const vo_functions_t video_out_x11;
-extern const vo_functions_t video_out_xv;
-extern const vo_functions_t video_out_sdl;
-extern const vo_functions_t video_out_null;
-extern const vo_functions_t video_out_fbdev;
-extern const vo_functions_t video_out_opengl;
-extern const vo_functions_t video_out_vesa;
+extern const vo_info_t x11_info;
+extern const vo_info_t xv_info;
+extern const vo_info_t sdl_info;
+extern const vo_info_t null_info;
+extern const vo_info_t fbdev_info;
+extern const vo_info_t opengl_info;
+extern const vo_info_t vesa_info;
 
-static const vo_functions_t* video_out_drivers[] =
+static const vo_info_t* vo_infos[] =
 {
 #ifdef HAVE_XV
-	&video_out_xv,
+	&xv_info,
 #endif
 #ifdef HAVE_OPENGL
-	&video_out_opengl,
+	&opengl_info,
 #endif
 #ifdef HAVE_X11
-	&video_out_x11,
+	&x11_info,
 #endif
 #ifdef HAVE_SDL
-	&video_out_sdl,
+	&sdl_info,
 #endif
 #ifdef HAVE_VESA
-	&video_out_vesa,
+	&vesa_info,
 #endif
 #ifdef HAVE_FBDEV
-	&video_out_fbdev,
+	&fbdev_info,
 #endif
-	&video_out_null,
+	&null_info,
 	NULL
 };
 
@@ -126,7 +127,8 @@ struct vo_priv_t : public video_private {
     pthread_mutex_t		surfaces_mutex;
     vo_format_desc		vod;
     dri_priv_t			dri;
-    const vo_functions_t *	video_out;
+    const vo_info_t*		video_out;
+    class VO_Interface*		vo_iface;
     draw_alpha_f		draw_alpha;
 };
 
@@ -140,40 +142,42 @@ vo_priv_t::vo_priv_t() {
 
 vo_priv_t::~vo_priv_t() {
     pthread_mutex_destroy(&surfaces_mutex);
+    delete vo_iface;
 }
 
 void vo_print_help(vo_data_t*vo)
 {
+    UNUSED(vo);
     unsigned i;
     MSG_INFO("Available video output drivers:\n");
     i=0;
-    while (video_out_drivers[i]) {
-	const vo_info_t *info = video_out_drivers[i++]->get_info (vo);
+    while (vo_infos[i]) {
+	const vo_info_t *info = vo_infos[i++];
 	MSG_INFO("\t%s\t%s\n", info->short_name, info->name);
     }
     MSG_INFO("\n");
 }
 
-const vo_functions_t* vo_register(vo_data_t*vo,const char *driver_name)
+MPXP_Rc vo_register(vo_data_t*vo,const char *driver_name)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     unsigned i;
-    if(!driver_name) priv.video_out=video_out_drivers[0];
+    if(!driver_name) priv.video_out=vo_infos[0];
     else
-    for (i=0; video_out_drivers[i] != &video_out_null; i++){
-	const vo_info_t *info = video_out_drivers[i]->get_info (vo);
+    for (i=0; vo_infos[i] != &null_info; i++){
+	const vo_info_t *info = vo_infos[i];
 	if(strcmp(info->short_name,driver_name) == 0){
-	    priv.video_out = video_out_drivers[i];
+	    priv.video_out = vo_infos[i];
 	    break;
 	}
     }
-    return priv.video_out;
+    return priv.video_out?MPXP_Ok:MPXP_False;
 }
 
 const vo_info_t* vo_get_info(vo_data_t*vo)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
-    return priv.video_out->get_info(vo);
+    return priv.video_out;
 }
 
 vo_data_t* __FASTCALL__ vo_preinit_structs( void )
@@ -196,7 +200,8 @@ MPXP_Rc __FASTCALL__ vo_init(vo_data_t*vo,const char *subdevice)
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_init(%s)\n",subdevice);
     priv.frame_counter=0;
-    return priv.video_out->preinit(vo,subdevice);
+    priv.vo_iface=priv.video_out->query_interface(subdevice);
+    return priv.vo_iface?MPXP_Ok:MPXP_False;
 }
 
 int __FASTCALL__ vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd)
@@ -273,12 +278,12 @@ static void __FASTCALL__ dri_config(vo_data_t*vo,uint32_t fourcc)
     if(!priv.dri.bpp) priv.dri.has_dri=0; /*unknown fourcc*/
     if(priv.dri.has_dri)
     {
-	priv.video_out->control_vo(vo,VOCTRL_GET_NUM_FRAMES,&priv.dri.num_xp_frames);
+	priv.vo_iface->ctrl(VOCTRL_GET_NUM_FRAMES,&priv.dri.num_xp_frames);
 	priv.dri.num_xp_frames=std::min(priv.dri.num_xp_frames,unsigned(MAX_DRI_BUFFERS));
 	for(i=0;i<priv.dri.num_xp_frames;i++)
 	{
 	    priv.dri.surf[i].idx=i;
-	    priv.video_out->control_vo(vo,DRI_GET_SURFACE,&priv.dri.surf[i]);
+	    priv.vo_iface->ctrl(DRI_GET_SURFACE,&priv.dri.surf[i]);
 	}
     }
 }
@@ -375,7 +380,7 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
 	priv.dri.has_dri = 1;
-	priv.video_out->control_vo(vo,DRI_GET_SURFACE_CAPS,&priv.dri.cap);
+	priv.vo_iface->ctrl(DRI_GET_SURFACE_CAPS,&priv.dri.cap);
 	dri_config(vo,priv.dri.cap.fourcc);
 	/* ugly workaround of swapped BGR-fourccs. Should be removed in the future */
 	if(!priv.dri.has_dri)
@@ -422,11 +427,11 @@ MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uin
     priv.dri.d_height = d_h;
     MSG_V("priv.video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
 	,w,h,d_w,d_h,fullscreen,title,vo_format_name(dest_fourcc));
-    retval = priv.video_out->config_vo(vo,w,h,d_w,d_h,title,dest_fourcc);
+    retval = priv.vo_iface->configure(w,h,d_w,d_h,fullscreen,title,dest_fourcc);
     priv.srcFourcc=format;
     if(retval == MPXP_Ok) {
 	int dri_retv;
-	dri_retv = priv.video_out->control_vo(vo,DRI_GET_SURFACE_CAPS,&priv.dri.cap);
+	dri_retv = priv.vo_iface->ctrl(DRI_GET_SURFACE_CAPS,&priv.dri.cap);
 	priv.image_format = format;
 	priv.image_width = w;
 	priv.image_height = h;
@@ -460,13 +465,12 @@ uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned sr
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     uint32_t dri_forced_fourcc;
-    MPXP_Rc retval;
     vo_query_fourcc_t qfourcc;
     MSG_DBG3("dri_vo_dbg: vo_query_format(%08lX)\n",*fourcc);
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
-    if(priv.video_out->control_vo(vo,VOCTRL_QUERY_FORMAT,&qfourcc)==MPXP_False)
+    if(priv.vo_iface->ctrl(VOCTRL_QUERY_FORMAT,&qfourcc)==MPXP_False)
 	qfourcc.flags=VOCAP_NA;
     MSG_V("dri_vo: request for %s fourcc: %i\n",vo_format_name(*fourcc),qfourcc.flags);
     dri_forced_fourcc = *fourcc;
@@ -477,7 +481,7 @@ MPXP_Rc vo_reset(vo_data_t*vo)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_reset\n");
-    return priv.video_out->control_vo(vo,VOCTRL_RESET,NULL);
+    return priv.vo_iface->ctrl(VOCTRL_RESET,NULL);
 }
 
 MPXP_Rc vo_screenshot(vo_data_t*vo,unsigned idx )
@@ -493,14 +497,14 @@ MPXP_Rc vo_pause(vo_data_t*vo)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_pause\n");
-    return priv.video_out->control_vo(vo,VOCTRL_PAUSE,0);
+    return priv.vo_iface->ctrl(VOCTRL_PAUSE,0);
 }
 
 MPXP_Rc vo_resume(vo_data_t*vo)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_resume\n");
-    return priv.video_out->control_vo(vo,VOCTRL_RESUME,0);
+    return priv.vo_iface->ctrl(VOCTRL_RESUME,0);
 }
 
 void vo_lock_surfaces(vo_data_t*vo) {
@@ -572,7 +576,7 @@ MPXP_Rc __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi)
     else return MPXP_False;
 }
 
-static int __FASTCALL__ adjust_size(any_t*vo,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh)
+static int __FASTCALL__ adjust_size(const any_t*vo,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(((vo_data_t*)vo)->vo_priv);
     MSG_DBG3("dri_vo_dbg: adjust_size was called %u %u %u %u\n",cw,ch,*nw,*nh);
@@ -606,8 +610,9 @@ int vo_check_events(vo_data_t*vo)
     vo_resize_t vrest;
     MSG_DBG3("dri_vo_dbg: vo_check_events\n");
     vrest.event_type = 0;
+    vrest.vo = vo;
     vrest.adjust_size = adjust_size;
-    retval = priv.video_out->control_vo(vo,VOCTRL_CHECK_EVENTS,&vrest);
+    retval = priv.vo_iface->ctrl(VOCTRL_CHECK_EVENTS,&vrest);
     /* it's ok since accelerated drivers doesn't touch surfaces
        but there is only one driver (vo_x11) which changes surfaces
        on 'fullscreen' key */
@@ -627,7 +632,7 @@ MPXP_Rc vo_fullscreen(vo_data_t*vo)
     MPXP_Rc retval;
     MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
     etype = 0;
-    retval = priv.video_out->control_vo(vo,VOCTRL_FULLSCREEN,&etype);
+    retval = priv.vo_iface->ctrl(VOCTRL_FULLSCREEN,&etype);
     if(priv.dri.has_dri && retval == MPXP_True && (etype & VO_EVENT_RESIZE) == VO_EVENT_RESIZE)
 	dri_reconfig(vo,etype);
     if(retval == MPXP_True) priv.dri.flags ^= VOFLG_FS;
@@ -678,7 +683,7 @@ void vo_select_frame(vo_data_t*vo,unsigned play_idx)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
-    priv.video_out->select_frame(vo,play_idx);
+    priv.vo_iface->select_frame(play_idx);
 }
 
 void vo_flush_page(vo_data_t*vo,unsigned decoder_idx)
@@ -687,7 +692,7 @@ void vo_flush_page(vo_data_t*vo,unsigned decoder_idx)
     MSG_DBG3("dri_vo_dbg: vo_flush_pages [idx=%u]\n",decoder_idx);
     priv.frame_counter++;
     if((priv.dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
-					priv.video_out->control_vo(vo,VOCTRL_FLUSH_PAGES,&decoder_idx);
+					priv.vo_iface->ctrl(VOCTRL_FLUSH_PAGES,&decoder_idx);
 }
 
 /* DRAW OSD */
@@ -890,7 +895,6 @@ void vo_uninit(vo_data_t*vo)
     vo_priv_t* priv=static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_uninit\n");
     vo_inited--;
-    priv->video_out->uninit(vo);
     delete priv;
 }
 
@@ -898,7 +902,7 @@ MPXP_Rc __FASTCALL__ vo_control(vo_data_t*vo,uint32_t request, any_t*data)
 {
     MPXP_Rc rval;
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
-    rval=priv.video_out->control_vo(vo,request,data);
+    rval=priv.vo_iface->ctrl(request,data);
     MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
     return rval;
 }

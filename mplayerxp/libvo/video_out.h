@@ -59,13 +59,16 @@ enum {
 };
 
 /** Text description of VO-driver */
-typedef struct vo_info_s
+class VO_Interface;
+typedef VO_Interface* (*query_interface_t)(const char* args);
+struct vo_info_t
 {
-    const char *name;	/**< driver name ("Matrox Millennium G200/G400") */
-    const char *short_name; /**< short name (for config strings) ("mga") */
-    const char *author;	/**< author ("Aaron Holtzman <aholtzma@ess.engr.uvic.ca>") */
-    const char *comment;	/**< any additional comments */
-} vo_info_t;
+    const char* name;	/**< driver name ("Matrox Millennium G200/G400") */
+    const char* short_name; /**< short name (for config strings) ("mga") */
+    const char* author;	/**< author ("Aaron Holtzman <aholtzma@ess.engr.uvic.ca>") */
+    const char* comment;/**< any additional comments */
+    query_interface_t query_interface;
+};
 
 enum {
     VOCAP_NA=0x00,
@@ -81,21 +84,6 @@ typedef struct vo_query_fourcc_s
     unsigned	flags;  /**< Flags for this fourcc VOCAP_*  */
 }vo_query_fourcc_t;
 
-/** Notification event when windowed output has been resized (as data of VOCTRL_CHECK_EVENT) */
-typedef int (*__FASTCALL__ vo_adjust_size_t)(any_t*,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
-typedef struct vo_resize_s
-{
-    uint32_t	event_type; /**< X11 event type */
-
-    /** callback to adjust size of window keeping aspect ratio
- * @param cw	current window width
-     * @param ch	current window height
-     * @param nw	storage for new width to be stored current window width
-     * @param nh	storage for new height to be stored current window width
-     * @return	0 if fail  !0 if success
-    **/
-    vo_adjust_size_t adjust_size;
-}vo_resize_t;
 
 /** Named video equalizer */
 typedef struct vo_videq_s
@@ -174,7 +162,6 @@ typedef struct vo_data_s {
 
     video_private*	vo_priv;/* private data of vo structure */
     video_private*	priv;	/* private data of video driver */
-    video_private*	priv3;	/* private data of vidix commons */
 
     /* subtitle support */
     char*		osd_text;
@@ -200,53 +187,22 @@ static inline void vo_FLIP_SET(vo_data_t*vo)   { vo->flags|=VOFLAG_FLIPPING; }
 static inline void vo_FLIP_UNSET(vo_data_t*vo) { vo->flags&=~VOFLAG_FLIPPING; }
 static inline void vo_FLIP_REVERT(vo_data_t*vo){ vo->flags^=VOFLAG_FLIPPING; }
 
-typedef MPXP_Rc (* __FASTCALL__ vo_control_t)(vo_data_t* vo,uint32_t request, any_t*data);
-typedef void (* __FASTCALL__ vo_select_frame_t)(vo_data_t* vo,unsigned idx);
-/** VO-driver interface */
-typedef struct vo_functions_s
+/** Notification event when windowed output has been resized (as data of VOCTRL_CHECK_EVENT) */
+typedef int (*__FASTCALL__ vo_adjust_size_t)(const any_t*,unsigned cw,unsigned ch,unsigned *nw,unsigned *nh);
+typedef struct vo_resize_s
 {
-	/** Preinitializes driver (real INITIALIZATION)
-	 * @param arg	currently it's vo_subdevice
-	 * @return	MPXP_Ok on successful initialization.
-	**/
-	MPXP_Rc (* __FASTCALL__ preinit)(vo_data_t* vo,const char *arg);
+    uint32_t		event_type; /**< X11 event type */
 
-	/** Initializes (means CONFIGURE) the display driver.
-	 * @param width		width of source image
-	 * @param height	height of source image
-	 * @param d_width	width of destinition image (may require prescaling)
-	 * @param d_height	height of destinition image (may require prescaling)
-	 * @param fullscreen	flags (see VOFLAG_XXX for detail)
-	 * @param title		window title, if available
-	 * @param format	fourcc of source image
-	 * @return		zero on successful initialization, non-zero on error.
-	 **/
-	MPXP_Rc (* __FASTCALL__ config_vo)(vo_data_t* vo,
-			 uint32_t width, uint32_t height, uint32_t d_width,
-			 uint32_t d_height,const char *title, uint32_t format);
-
-	/** Control interface
-	 * @param request	command. See VOCTRL_** for detail
-	 * @param data		data associated with command
-	 * @return		MPXP_True if success MPXP_False VO_ERROR MPXP_NA otherwise
-	 **/
-	vo_control_t control_vo;
-
-	/** Returns driver information.
-	 * @return	read-only pointer to a vo_info_t structure.
-	 **/
-	const vo_info_t* (* __FASTCALL__ get_info)(const vo_data_t* vo);
-
-	/** Blit/Flip buffer to the screen. Must be called after each frame!
-	 * @param idex	index of frame to be selected as active frame
-	 **/
-	vo_select_frame_t select_frame;
-
-	/** Closes driver. Should restore the original state of the system.
-	 **/
-	void (* __FASTCALL__ uninit)(vo_data_t* vo);
-
-} vo_functions_t;
+    /** callback to adjust size of window keeping aspect ratio
+ * @param cw	current window width
+     * @param ch	current window height
+     * @param nw	storage for new width to be stored current window width
+     * @param nh	storage for new height to be stored current window width
+     * @return	0 if fail  !0 if success
+    **/
+    vo_data_t*		vo;
+    vo_adjust_size_t	adjust_size;
+}vo_resize_t;
 
 /******************************************************
 * High level VO functions to provide some abstraction *
@@ -254,7 +210,7 @@ typedef struct vo_functions_s
 \*****************************************************/
 extern vo_data_t*	 __FASTCALL__ vo_preinit_structs( void );
 extern void		vo_print_help(vo_data_t*);
-extern const vo_functions_t * vo_register(vo_data_t* vo,const char *driver_name);
+extern MPXP_Rc		vo_register(vo_data_t* vo,const char *driver_name);
 extern const vo_info_t*	vo_get_info(vo_data_t* vo);
 extern MPXP_Rc  __FASTCALL__ vo_init(vo_data_t* vo,const char *subdevice_name);
 extern MPXP_Rc  __FASTCALL__ vo_config(vo_data_t* vo,uint32_t width, uint32_t height, uint32_t d_width,

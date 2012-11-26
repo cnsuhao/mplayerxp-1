@@ -89,7 +89,6 @@ typedef struct {
   unsigned char *scaled_aimage;
   int auto_palette; /* 1 if we lack a palette and must use an heuristic. */
   int font_start_level;  /* Darkest value used for the computed font */
-  vo_functions_t *hw_spu;
   int spu_changed;
   unsigned int forced_subs_only;     /* flag: 0=display all subtitle, !0 display only forced subtitles */
   unsigned int is_forced_sub;         /* true if current subtitle is a forced subtitle */
@@ -476,13 +475,6 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned 
 
 static void __FASTCALL__ spudec_decode(spudec_handle_t *self, unsigned int pts100)
 {
-  if(self->hw_spu) {
-    vo_mpegpes_t packet = { NULL, 0, 0x20, 0 };
-    packet.data = self->packet;
-    packet.size = self->packet_size;
-    packet.timestamp = pts100;
-//    self->hw_spu->draw_frame((uint8_t**)&pkg);
-  } else
     spudec_process_control(self, pts100);
 }
 
@@ -1099,8 +1091,6 @@ void __FASTCALL__ spudec_update_palette(any_t* self,const unsigned int *palette)
   spudec_handle_t *spu = (spudec_handle_t *) self;
   if (spu && palette) {
     memcpy(spu->global_palette, palette, sizeof(spu->global_palette));
-//    if(spu->hw_spu)
-//      spu->hw_spu->control(VOCTRL_SET_SPU_PALETTE,spu->global_palette);
   }
 }
 
@@ -1165,13 +1155,4 @@ void __FASTCALL__ spudec_free(any_t*self)
     if (spu->image) delete spu->image;
     delete spu;
   }
-}
-
-void __FASTCALL__ spudec_set_hw_spu(any_t*self, vo_functions_t *hw_spu)
-{
-  spudec_handle_t *spu = (spudec_handle_t*)self;
-  if (!spu)
-    return;
-  spu->hw_spu = hw_spu;
-//  hw_spu->control(VOCTRL_SET_SPU_PALETTE,spu->global_palette);
 }

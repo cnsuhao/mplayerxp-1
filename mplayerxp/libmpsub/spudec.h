@@ -21,7 +21,6 @@ void __FASTCALL__ spudec_free(any_t*__self);
 void __FASTCALL__ spudec_reset(any_t*__self);	// called after seek
 int __FASTCALL__ spudec_visible(any_t*__self); // check if spu is visible
 void __FASTCALL__ spudec_set_font_factor(any_t*__self, double factor); // sets the equivalent to ffactor
-void __FASTCALL__ spudec_set_hw_spu(any_t*__self, vo_functions_t *hw_spu);
 int __FASTCALL__ spudec_changed(any_t*__self);
 void __FASTCALL__ spudec_calc_bbox(any_t*me, unsigned int dxs, unsigned int dys, unsigned int* bbox);
 void __FASTCALL__ spudec_set_forced_subs_only(any_t* const __self, const unsigned int flag);

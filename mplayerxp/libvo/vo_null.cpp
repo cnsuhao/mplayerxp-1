@@ -38,81 +38,86 @@ using namespace mpxp;
 #endif
 #include "vo_msg.h"
 
-LIBVO_EXTERN(null)
+class Null_VO_Interface : public VO_Interface {
+    public:
+	Null_VO_Interface(const char* args);
+	virtual ~Null_VO_Interface();
 
-static vo_info_t vo_info = {
-    "Null video output",
-    "null",
-    "Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",
-    ""
+	virtual MPXP_Rc	configure(uint32_t width,
+				uint32_t height,
+				uint32_t d_width,
+				uint32_t d_height,
+				unsigned flags,
+				const char *title,
+				uint32_t format);
+	virtual void	select_frame(unsigned idx);
+	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
+    private:
+	void		dri_get_surface_caps(dri_surface_cap_t *caps) const;
+	void		dri_get_surface(dri_surface_t *surf) const;
+	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
+
+	uint32_t	image_width, image_height,frame_size,fourcc;
+	uint8_t *	bm_buffs[MAX_DRI_BUFFERS];
+	uint32_t	num_frames;
+	uint32_t	pitch_y,pitch_u,pitch_v;
+	uint32_t	offset_y,offset_u,offset_v;
 };
 
-struct null_priv_t :public video_private {
-    null_priv_t() {}
-    virtual ~null_priv_t() {}
-
-    uint32_t	image_width, image_height,frame_size,fourcc;
-    uint8_t *	bm_buffs[MAX_DRI_BUFFERS];
-    uint32_t	num_frames;
-    uint32_t	pitch_y,pitch_u,pitch_v;
-    uint32_t	offset_y,offset_u,offset_v;
-};
-
-static void __FASTCALL__ select_frame(vo_data_t*vo,unsigned idx)
+void Null_VO_Interface::select_frame(unsigned idx)
 {
-    UNUSED(vo);
     UNUSED(idx);
 }
 
-static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,const char *title, uint32_t format)
+MPXP_Rc Null_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned flags,const char *title, uint32_t format)
 {
-    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
     unsigned awidth;
     size_t i;
-    priv.image_width = width;
-    priv.image_height = height;
-    priv.num_frames = vo_conf.xp_buffs;
-    priv.fourcc=format;
+    image_width = width;
+    image_height = height;
+    num_frames = vo_conf.xp_buffs;
+    fourcc=format;
     UNUSED(d_width);
     UNUSED(d_height);
     UNUSED(title);
-    priv.pitch_y=priv.pitch_u=priv.pitch_v=1;
-    priv.offset_y=priv.offset_u=priv.offset_v=0;
+    UNUSED(flags);
+    pitch_y=pitch_u=pitch_v=1;
+    offset_y=offset_u=offset_v=0;
     switch(format) {
     case IMGFMT_Y800:
-		awidth = (width + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
-		priv.frame_size = awidth*height;
+		awidth = (width + (pitch_y-1)) & ~(pitch_y-1);
+		frame_size = awidth*height;
 		break;
     case IMGFMT_YVU9:
     case IMGFMT_IF09:
-		awidth = (width + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
-		priv.frame_size = awidth*(height+height/8);
-		priv.offset_u=awidth*height;
-		priv.offset_v=awidth*height/16;
+		awidth = (width + (pitch_y-1)) & ~(pitch_y-1);
+		frame_size = awidth*(height+height/8);
+		offset_u=awidth*height;
+		offset_v=awidth*height/16;
 		break;
     case IMGFMT_I420:
     case IMGFMT_YV12:
     case IMGFMT_IYUV:
-		awidth = (width + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
-		priv.frame_size = awidth*(height+height/2);
-		priv.offset_u=awidth*height;
-		priv.offset_v=awidth*height/4;
+		awidth = (width + (pitch_y-1)) & ~(pitch_y-1);
+		frame_size = awidth*(height+height/2);
+		offset_u=awidth*height;
+		offset_v=awidth*height/4;
 		break;
     case IMGFMT_RGB32:
     case IMGFMT_BGR32:
-		awidth = (width*4 + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
-		priv.frame_size = awidth*height;
+		awidth = (width*4 + (pitch_y-1)) & ~(pitch_y-1);
+		frame_size = awidth*height;
 		break;
     /* YUY2 YVYU, RGB15, RGB16 */
     default:
-		awidth = (width*2 + (priv.pitch_y-1)) & ~(priv.pitch_y-1);
-		priv.frame_size = awidth*height;
+		awidth = (width*2 + (pitch_y-1)) & ~(pitch_y-1);
+		frame_size = awidth*height;
 		break;
     }
-    for(i=0;i<priv.num_frames;i++) {
-	if(!priv.bm_buffs[i])
-	    priv.bm_buffs[i] = new(alignmem,getpagesize()) uint8_t[priv.frame_size];
-	if(!(priv.bm_buffs[i])) {
+    for(i=0;i<num_frames;i++) {
+	if(!bm_buffs[i])
+	    bm_buffs[i] = new(alignmem,getpagesize()) uint8_t[frame_size];
+	if(!(bm_buffs[i])) {
 		MSG_ERR("Can't allocate memory for busmastering\n");
 		return MPXP_False;
 	}
@@ -120,64 +125,48 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
     return MPXP_Ok;
 }
 
-static const vo_info_t* get_info(const vo_data_t*vo)
+Null_VO_Interface::~Null_VO_Interface()
 {
-    UNUSED(vo);
-    return &vo_info;
-}
-
-static void uninit(vo_data_t*vo)
-{
-    null_priv_t*priv=static_cast<null_priv_t*>(vo->priv);
     size_t i;
-    for(i=0;i<priv->num_frames;i++) {
-	delete priv->bm_buffs[i];
-	priv->bm_buffs[i]=NULL;
+    for(i=0;i<num_frames;i++) {
+	delete bm_buffs[i];
+	bm_buffs[i]=NULL;
     }
-    delete priv;
 }
 
-static MPXP_Rc __FASTCALL__ preinit(vo_data_t*vo,const char *arg)
+Null_VO_Interface::Null_VO_Interface(const char *arg)
+		:VO_Interface(arg)
 {
-    if(arg) {
-	MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
-	return MPXP_False;
-    }
-    null_priv_t*priv;
-    priv=new(zeromem) null_priv_t;
-    vo->priv=priv;
-    return MPXP_Ok;
+    if(arg) MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
 }
 
-static void __FASTCALL__ null_dri_get_surface_caps(const vo_data_t*vo,dri_surface_cap_t *caps)
+void Null_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
 {
-    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
     caps->caps =DRI_CAP_TEMP_VIDEO |
 		DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER |
 		DRI_CAP_DOWNSCALER | DRI_CAP_UPSCALER;
-    caps->fourcc = priv.fourcc;
-    caps->width=priv.image_width;
-    caps->height=priv.image_height;
+    caps->fourcc = fourcc;
+    caps->width=image_width;
+    caps->height=image_height;
     /* in case of vidix movie fit surface */
     caps->x = caps->y=0;
     caps->w=caps->width;
     caps->h=caps->height;
-    caps->strides[0] = priv.pitch_y;
-    caps->strides[1] = priv.pitch_v;
-    caps->strides[2] = priv.pitch_u;
+    caps->strides[0] = pitch_y;
+    caps->strides[1] = pitch_v;
+    caps->strides[2] = pitch_u;
     caps->strides[3] = 0;
 }
 
-static void __FASTCALL__ null_dri_get_surface(const vo_data_t*vo,dri_surface_t *surf)
+void Null_VO_Interface::dri_get_surface(dri_surface_t *surf) const
 {
-    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
-    surf->planes[0] = priv.bm_buffs[surf->idx] + priv.offset_y;
-    surf->planes[1] = priv.bm_buffs[surf->idx] + priv.offset_v;
-    surf->planes[2] = priv.bm_buffs[surf->idx] + priv.offset_u;
+    surf->planes[0] = bm_buffs[surf->idx] + offset_y;
+    surf->planes[1] = bm_buffs[surf->idx] + offset_v;
+    surf->planes[2] = bm_buffs[surf->idx] + offset_u;
     surf->planes[3] = 0;
 }
 
-static MPXP_Rc __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
+MPXP_Rc Null_VO_Interface::query_format(vo_query_fourcc_t* format) const {
     /* we must avoid compressed-fourcc here */
     switch(format->fourcc) {
     case IMGFMT_444P16_LE:
@@ -222,23 +211,31 @@ static MPXP_Rc __FASTCALL__ null_query_format(vo_query_fourcc_t* format) {
     return MPXP_False;
 }
 
-static MPXP_Rc __FASTCALL__ control_vo(vo_data_t*vo,uint32_t request, any_t*data)
+MPXP_Rc Null_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
-    null_priv_t&priv=*static_cast<null_priv_t*>(vo->priv);
     switch (request) {
     case VOCTRL_QUERY_FORMAT:
-	return null_query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
+	return query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
     case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = priv.num_frames;
+	*(uint32_t *)data = num_frames;
 	return MPXP_True;
     case DRI_GET_SURFACE_CAPS:
-	null_dri_get_surface_caps(vo,reinterpret_cast<dri_surface_cap_t*>(data));
+	dri_get_surface_caps(reinterpret_cast<dri_surface_cap_t*>(data));
 	return MPXP_True;
     case DRI_GET_SURFACE:
-	null_dri_get_surface(vo,reinterpret_cast<dri_surface_t*>(data));
+	dri_get_surface(reinterpret_cast<dri_surface_t*>(data));
 	return MPXP_True;
     case VOCTRL_FLUSH_PAGES:
 	return MPXP_True;
   }
   return MPXP_NA;
 }
+
+static VO_Interface* query_interface(const char* args) { return new(zeromem) Null_VO_Interface(args); }
+extern const vo_info_t null_info = {
+    "Null video output",
+    "null",
+    "Aaron Holtzman <aholtzma@ess.engr.uvic.ca>",
+    "",
+    query_interface
+};

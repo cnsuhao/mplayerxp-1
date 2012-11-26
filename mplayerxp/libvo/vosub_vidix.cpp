@@ -25,42 +25,14 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 
-#include <vidix/vidix.h>
-#include <vidix/vidixlibxx.h>
-
-#include "video_out.h"
 #include "vosub_vidix.h"
 #include "osdep/fastmemcpy.h"
 #include "osd.h"
 #include "sub.h"
-#include "video_out.h"
-#include "dri_vo.h"
 #include "xmpcore/mp_image.h"
 #include "vo_msg.h"
 
 using namespace vidix;
-
-#define NUM_FRAMES MAX_DRI_BUFFERS /* Temporary: driver will overwrite it */
-
-struct vidix_priv_t : public video_private {
-    vidix_priv_t(Vidix& it) : vidix(it) {}
-    virtual ~vidix_priv_t() {}
-
-    unsigned		image_Bpp,image_height,image_width,src_format,forced_fourcc;
-
-    Vidix&		vidix;
-    uint8_t *		mem;
-    int			video_on;
-
-    const vo_functions_t*vo_server;
-
-    int			inited;
-
-/* bus mastering */
-    int			bm_locked; /* requires root privelegies */
-    uint8_t *		bm_buffs[NUM_FRAMES];
-    unsigned		bm_total_frames,bm_slow_frames;
-};
 
 static int __FASTCALL__ vidix_get_video_eq(const vo_data_t* vo,vo_videq_t *info);
 static int __FASTCALL__ vidix_set_video_eq(const vo_data_t* vo,const vo_videq_t *info);
@@ -69,9 +41,9 @@ static int __FASTCALL__ vidix_get_oem_fx(const vo_data_t* vo,vidix_oem_fx_t *inf
 static int __FASTCALL__ vidix_set_oem_fx(const vo_data_t* vo,const vidix_oem_fx_t *info);
 static int __FASTCALL__ vidix_set_deint(const vo_data_t* vo,const vidix_deinterlace_t *info);
 
-int vidix_start(vo_data_t* vo)
+int vidix_start(vidix_priv_t* _priv)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     int err;
     if((err=priv.vidix.playback_on())!=0) {
 	MSG_FATAL("Can't start playback: %s\n",strerror(err));
@@ -109,9 +81,9 @@ int vidix_start(vo_data_t* vo)
     return 0;
 }
 
-int vidix_stop(vo_data_t* vo)
+int vidix_stop(vidix_priv_t* _priv)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     int err;
     if((err=priv.vidix.playback_off())!=0) {
 	MSG_ERR("Can't stop playback: %s\n",strerror(err));
@@ -121,13 +93,13 @@ int vidix_stop(vo_data_t* vo)
     return 0;
 }
 
-void vidix_term(vo_data_t* vo)
+void vidix_term(vidix_priv_t* _priv)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     size_t i;
     priv.inited=0;
     MSG_DBG2("vidix_term() was called\n");
-    vidix_stop(vo);
+    vidix_stop(_priv);
     if(vo_conf.use_bm) {
 	for(i=0;i<vo_conf.xp_buffs;i++) {
 	    if(priv.bm_locked) munlock(priv.bm_buffs[i],priv.vidix.playback.frame_size);
@@ -140,9 +112,9 @@ void vidix_term(vo_data_t* vo)
     }
 }
 
-static void __FASTCALL__ vidix_copy_dma(const vo_data_t* vo,unsigned idx,int sync_mode)
+static void __FASTCALL__ vidix_copy_dma(vidix_priv_t* _priv,unsigned idx,int sync_mode)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     int err,i;
     int dma_busy;
     MSG_DBG2("vidix_copy_dma(%u,%i) was called\n",idx,sync_mode);
@@ -184,17 +156,17 @@ static void __FASTCALL__ vidix_copy_dma(const vo_data_t* vo,unsigned idx,int syn
     }
 }
 
-static void __FASTCALL__ vidix_select_frame(vo_data_t* vo,unsigned idx)
+static void __FASTCALL__ vidix_select_frame(vidix_priv_t* _priv,unsigned idx)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     MSG_DBG2("vidix_select_frame() was called\n");
-    if(vo_conf.use_bm == 1) vidix_copy_dma(vo,idx,0);
+    if(vo_conf.use_bm == 1) vidix_copy_dma(_priv,idx,0);
     else priv.vidix.frame_select(idx);
 }
 
-static MPXP_Rc __FASTCALL__ vidix_query_fourcc(const vo_data_t* vo,vo_query_fourcc_t* format)
+static MPXP_Rc __FASTCALL__ vidix_query_fourcc(vidix_priv_t* _priv,vo_query_fourcc_t* format)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     MSG_DBG2("query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
     priv.vidix.fourcc.fourcc = format->fourcc;
     priv.vidix.fourcc.srcw = format->w;
@@ -204,33 +176,33 @@ static MPXP_Rc __FASTCALL__ vidix_query_fourcc(const vo_data_t* vo,vo_query_four
     return MPXP_Ok;
 }
 
-int __FASTCALL__ vidix_grkey_support(const vo_data_t* vo)
+int __FASTCALL__ vidix_grkey_support(vidix_priv_t* _priv)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     int retval = priv.vidix.fourcc.flags & VID_CAP_COLORKEY;
     MSG_DBG2("query_grkey_support: %i\n",retval);
     return retval;
 }
 
-int __FASTCALL__ vidix_grkey_get(const vo_data_t* vo,vidix_grkey_t *gr_key)
+int __FASTCALL__ vidix_grkey_get(vidix_priv_t* _priv,vidix_grkey_t *gr_key)
 {
     int rc;
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     rc=priv.vidix.get_gr_keys();
     *gr_key=priv.vidix.grkey;
     return rc;
 }
 
-int __FASTCALL__ vidix_grkey_set(const vo_data_t* vo,const vidix_grkey_t *gr_key)
+int __FASTCALL__ vidix_grkey_set(vidix_priv_t* _priv,const vidix_grkey_t *gr_key)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     priv.vidix.grkey=*gr_key;
     return priv.vidix.set_gr_keys();
 }
 
-static int __FASTCALL__ vidix_get_video_eq(const vo_data_t* vo,vo_videq_t *info)
+static int __FASTCALL__ vidix_get_video_eq(vidix_priv_t* _priv,vo_videq_t *info)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     int rval;
     if(!priv.video_on) return EPERM;
     rval = priv.vidix.get_eq();
@@ -253,9 +225,9 @@ static int __FASTCALL__ vidix_get_video_eq(const vo_data_t* vo,vo_videq_t *info)
     return rval;
 }
 
-static int __FASTCALL__ vidix_set_video_eq(const vo_data_t* vo,const vo_videq_t *info)
+static int __FASTCALL__ vidix_set_video_eq(vidix_priv_t* _priv,const vo_videq_t *info)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     int rval;
     if(!priv.video_on) return EPERM;
     rval = priv.vidix.get_eq();
@@ -279,34 +251,34 @@ static int __FASTCALL__ vidix_set_video_eq(const vo_data_t* vo,const vo_videq_t 
     return rval;
 }
 
-static int __FASTCALL__ vidix_get_num_fx(const vo_data_t* vo,unsigned *info)
+static int __FASTCALL__ vidix_get_num_fx(vidix_priv_t* _priv,unsigned *info)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     if(!priv.video_on) return EPERM;
     return priv.vidix.num_oemfx(*info);
 }
 
-static int __FASTCALL__ vidix_get_oem_fx(const vo_data_t* vo,vidix_oem_fx_t *info)
+static int __FASTCALL__ vidix_get_oem_fx(vidix_priv_t* _priv,vidix_oem_fx_t *info)
 {
     int rc;
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     if(!priv.video_on) return EPERM;
     rc=priv.vidix.get_oemfx();
     *info = priv.vidix.oemfx;
     return rc;
 }
 
-static int __FASTCALL__ vidix_set_oem_fx(const vo_data_t* vo,const vidix_oem_fx_t *info)
+static int __FASTCALL__ vidix_set_oem_fx(vidix_priv_t* _priv,const vidix_oem_fx_t *info)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     if(!priv.video_on) return EPERM;
     priv.vidix.oemfx=*info;
     return priv.vidix.set_oemfx();
 }
 
-static int __FASTCALL__ vidix_set_deint(const vo_data_t* vo,const vidix_deinterlace_t *info)
+static int __FASTCALL__ vidix_set_deint(vidix_priv_t* _priv,const vidix_deinterlace_t *info)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     if(!priv.video_on) return EPERM;
     priv.vidix.deint=*info;
     return priv.vidix.set_deint();
@@ -318,12 +290,12 @@ int mlock(const any_t*addr,size_t len) { return ENOSYS; }
 int munlock(const any_t*addr,size_t len) { return ENOSYS; }
 #endif
 
-MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_height,
+MPXP_Rc  __FASTCALL__ vidix_init(vidix_priv_t* _priv,unsigned src_width,unsigned src_height,
 		   unsigned x_org,unsigned y_org,unsigned dst_width,
 		   unsigned dst_height,unsigned format,unsigned dest_bpp,
 		   unsigned vid_w,unsigned vid_h)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     size_t i;
     int err;
     static int video_clean=0;
@@ -484,9 +456,9 @@ MPXP_Rc  __FASTCALL__ vidix_init(vo_data_t* vo,unsigned src_width,unsigned src_h
     return MPXP_Ok;
 }
 
-static void __FASTCALL__ vidix_dri_get_surface_caps(const vo_data_t* vo,dri_surface_cap_t *caps)
+static void __FASTCALL__ vidix_dri_get_surface_caps(vidix_priv_t* _priv,dri_surface_cap_t *caps)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     caps->caps = vo_conf.use_bm ? DRI_CAP_TEMP_VIDEO|DRI_CAP_BUSMASTERING : DRI_CAP_VIDEO_MMAPED;
     caps->caps |= DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
     if((priv.vidix.cap.flags & FLAG_DOWNSCALER) == FLAG_DOWNSCALER)
@@ -506,9 +478,9 @@ static void __FASTCALL__ vidix_dri_get_surface_caps(const vo_data_t* vo,dri_surf
     caps->strides[3] = 0;
 }
 
-static void __FASTCALL__ vidix_dri_get_surface(const vo_data_t* vo,dri_surface_t *surf)
+static void __FASTCALL__ vidix_dri_get_surface(vidix_priv_t* _priv,dri_surface_t *surf)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     if(vo_conf.use_bm) {
 	surf->planes[0] = priv.bm_buffs[surf->idx] + priv.vidix.playback.offset.y;
 	surf->planes[1] = priv.bm_buffs[surf->idx] + priv.vidix.playback.offset.v;
@@ -521,37 +493,36 @@ static void __FASTCALL__ vidix_dri_get_surface(const vo_data_t* vo,dri_surface_t
     surf->planes[3] = 0;
 }
 
-MPXP_Rc __FASTCALL__ vidix_control(vo_data_t* vo,uint32_t request, any_t*data)
+MPXP_Rc __FASTCALL__ vidix_control(vidix_priv_t* _priv,uint32_t request, any_t*data)
 {
-    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(vo->priv3);
+    vidix_priv_t& priv=*static_cast<vidix_priv_t*>(_priv);
     switch (request) {
 	case VOCTRL_QUERY_FORMAT:
-	    return vidix_query_fourcc(vo,static_cast<vo_query_fourcc_t*>(data));
+	    return vidix_query_fourcc(_priv,static_cast<vo_query_fourcc_t*>(data));
 	case VOCTRL_GET_NUM_FRAMES:
 	    *(uint32_t *)data = (vo_conf.use_bm == 1) ? vo_conf.xp_buffs : priv.vidix.playback.num_frames;
 	    return MPXP_True;
 	case DRI_GET_SURFACE_CAPS:
-	    vidix_dri_get_surface_caps(vo,static_cast<dri_surface_cap_t*>(data));
+	    vidix_dri_get_surface_caps(_priv,static_cast<dri_surface_cap_t*>(data));
 	    return MPXP_True;
 	case DRI_GET_SURFACE:
-	    vidix_dri_get_surface(vo,static_cast<dri_surface_t*>(data));
+	    vidix_dri_get_surface(_priv,static_cast<dri_surface_t*>(data));
 	    return MPXP_True;
 	case VOCTRL_FLUSH_PAGES:
-	    if(vo_conf.use_bm > 1) vidix_copy_dma(vo,*(uint32_t *)data,1);
+	    if(vo_conf.use_bm > 1) vidix_copy_dma(_priv,*(uint32_t *)data,1);
 	    return MPXP_True;
 	case VOCTRL_GET_EQUALIZER:
-	    if(!vidix_get_video_eq(vo,static_cast<vo_videq_t*>(data))) return MPXP_True;
+	    if(!vidix_get_video_eq(_priv,static_cast<vo_videq_t*>(data))) return MPXP_True;
 	    else return MPXP_False;
 	case VOCTRL_SET_EQUALIZER:
-	    if(!vidix_set_video_eq(vo,static_cast<vo_videq_t*>(data))) return MPXP_True;
+	    if(!vidix_set_video_eq(_priv,static_cast<vo_videq_t*>(data))) return MPXP_True;
 	    else return MPXP_False;
     }
     return MPXP_NA;
 }
 
-vidix_server_t* __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,const any_t*_server)
+vidix_priv_t* __FASTCALL__ vidix_preinit(const char *drvname)
 {
-    const vo_functions_t* server=static_cast<const vo_functions_t*>(_server);
     int err;
     static int reent=0;
     MSG_DBG2("vidix_preinit(%s) was called\n",drvname);
@@ -559,7 +530,6 @@ vidix_server_t* __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,cons
 			TYPE_OUTPUT,
 			mp_conf.verbose);
     vidix_priv_t& priv=*new(zeromem) vidix_priv_t(_vidix);
-    vo->priv3=&priv;
     if(priv.vidix.version() != VIDIX_VERSION) {
 	MSG_FATAL("You have wrong version of VIDIX library\n");
 	delete &priv;
@@ -580,8 +550,12 @@ vidix_server_t* __FASTCALL__ vidix_preinit(vo_data_t*vo,const char *drvname,cons
     if(!reent) {
 	reent=1;
     }
-    priv.vo_server = static_cast<const vo_functions_t*>(server);
     priv.inited=1;
+    return &priv;
+}
+
+vidix_server_t* __FASTCALL__ vidix_get_server(vidix_priv_t* _priv) {
+    UNUSED(_priv);
     /* we are able to tune up this stuff depend on fourcc format */
     vidix_server_t* rs = new vidix_server_t;
     rs->control=vidix_control;
