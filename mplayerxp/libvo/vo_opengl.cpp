@@ -167,11 +167,16 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
 
     priv.depth=glx.depth();
 
-    if (priv.depth != 15 && priv.depth != 16 && priv.depth != 24 && priv.depth != 32)
-	priv.depth = 24;
-    glx.match_visual( &priv.vinfo);
+    XVisualInfo* vis=glx.get_visual();
+    priv.vinfo=*vis;
 
-    glx.create_window(hint,priv.vinfo.visual,vo_VM(vo),priv.depth,title);
+#ifdef GL_WIN32
+    if (!vo_w32_config(d_width, d_height, flags)) return MPXP_False;
+#endif
+
+    glx.create_window(hint,&priv.vinfo,vo_VM(vo),priv.depth,title);
+
+    gl_init_fb(vo,0,0,d_width,d_height);
 
     glx.classhint("opengl");
     glx.hidecursor();
@@ -181,12 +186,6 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
     /* we cannot grab mouse events on root window :( */
     glx.select_input(StructureNotifyMask | KeyPressMask |
 		    ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
-#ifdef GL_WIN32
-    if (!vo_w32_config(d_width, d_height, flags)) return MPXP_False;
-#else
-    glx.create_context(&priv.vinfo);
-#endif
-    gl_init_fb(vo,0,0,d_width,d_height);
     /* allocate multibuffers */
     for(i=0;i<priv.num_buffers;i++) glx.getMyXImage(i,priv.vinfo.visual,priv.depth,priv.image_width,priv.image_height);
 
@@ -261,7 +260,6 @@ static void uninit(vo_data_t*vo)
     unsigned i;
 //  if (!vo_config_count) return;
     glFinish();
-    glx.destroy_context();
     for(i=0;i<priv.num_buffers;i++)  glx.freeMyXImage(i);
     glx.saver_on(); // screen saver back on
 #ifdef HAVE_XF86VM

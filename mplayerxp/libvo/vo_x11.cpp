@@ -244,7 +244,7 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width,uint32_t heigh
     priv.image_width=d_width;
     priv.image_height=d_height;
 
-    x11.create_window(hint,priv.vinfo.visual,vo_VM(vo),priv.depth,title);
+    x11.create_window(hint,&priv.vinfo,vo_VM(vo),priv.depth,title);
 
     x11.classhint("vo_x11");
     x11.hidecursor();

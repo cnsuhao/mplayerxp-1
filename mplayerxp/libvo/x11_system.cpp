@@ -186,7 +186,7 @@ XVisualInfo* X11_System::get_visual() const
     return ::XGetVisualInfo(mDisplay, VisualIDMask, &vi_template, &dummy);
 }
 
-void X11_System::create_window(const XSizeHints& hint,Visual* visual,int is_vm,unsigned dpth,const char*title)
+void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,unsigned dpth,const char*title)
 {
     Colormap theCmap;
     XSetWindowAttributes xswa;
@@ -195,12 +195,12 @@ void X11_System::create_window(const XSizeHints& hint,Visual* visual,int is_vm,u
     unsigned xswamask;
 
     theCmap  =::XCreateColormap( mDisplay,RootWindow( mDisplay,mScreen ),
-				visual,AllocNone);
+				vi->visual,AllocNone);
 
     xswa.background_pixel=0;
     xswa.border_pixel=0;
     xswa.colormap=theCmap;
-    xswamask=CWBackPixel | CWBorderPixel | CWColormap;
+    xswamask=CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
 #ifdef HAVE_XF86VM
     if ( is_vm ) {
@@ -212,15 +212,16 @@ void X11_System::create_window(const XSizeHints& hint,Visual* visual,int is_vm,u
     window=::XCreateWindow( mDisplay,RootWindow( mDisplay,mScreen ),
 				hint.x,hint.y,
 				hint.width,hint.height,
-				xswa.border_pixel,dpth,CopyFromParent,visual,xswamask,&xswa );
+				xswa.border_pixel,dpth,
+				CopyFromParent,vi->visual,xswamask,&xswa );
+    ::XMapWindow( mDisplay,window );
     XSizeHints hn = hint;
     ::XSetStandardProperties( mDisplay,window,title,title,None,NULL,0,&hn );
-    ::XMapWindow( mDisplay,window );
 #ifdef HAVE_XINERAMA
     xinerama_move(&hn);
 #endif
     select_input( StructureNotifyMask );
-    do { ::XNextEvent( mDisplay,&xev ); } while ( xev.type != MapNotify || xev.xmap.event != window );
+    do { ::XNextEvent(mDisplay, &xev); } while ( xev.type != MapNotify || xev.xmap.event != window );
     select_input( NoEventMask );
     flush();
     sync( False );
@@ -982,7 +983,7 @@ void Xv_System::freeMyXImage(unsigned idx) {
 }
 
 void Xv_System::put_image(XvImage*image,const vo_rect_t& r) const {
-    XvShmPutImage(get_display(), port, get_window(), get_gc(), image,
+    XvShmPutImage(get_display(), port, window, get_gc(), image,
 	0, 0,  image->width, image->height,
 	r.x,r.y,r.w,r.h,False);
 }
@@ -1129,27 +1130,89 @@ int Xv_System::reset_video_eq() const
 
 #ifdef HAVE_OPENGL
 GLX_System::GLX_System(const char* DisplayName)
-	    :X11_System(DisplayName) {}
-GLX_System::~GLX_System() {}
-
-void GLX_System::create_context(XVisualInfo* vi) {
-    ctx=::glXCreateContext(get_display(), vi, NULL, True);
-    if (ctx == NULL) {
-	MSG_ERR("[GLX_System]: Can't create GLX context\n");
-	exit_player("vo error");
-    }
-    ::glXMakeCurrent(get_display(), get_window(), NULL);
+	    :X11_System(DisplayName)
+{
+    static int visual_attribs[] = {
+	GLX_RGBA,
+	GLX_DOUBLEBUFFER, /*In case single buffering is not supported*/
+	GLX_DEPTH_SIZE, 16, /* Needs to support a 32 bit depth buffer */
+	GLX_RED_SIZE, 1,
+	GLX_GREEN_SIZE, 1,
+	GLX_BLUE_SIZE, 1,
+	None
+    };
+    /* get an appropriate visual */
+    vis = glXChooseVisual(get_display(), DefaultScreen(get_display()), visual_attribs);
+    const char *extensions = glXQueryExtensionsString(get_display(), DefaultScreen(get_display()));
+    MSG_V("GLX extensions: %s\n",extensions);
 }
 
-void GLX_System::destroy_context() const
-{
+GLX_System::~GLX_System() {
     ::glXMakeCurrent(get_display(), None, NULL);
     ::glXDestroyContext(get_display(),ctx);
 }
 
 void GLX_System::swap_buffers() const
 {
-    ::glXSwapBuffers(get_display(), get_window());
+    ::glXSwapBuffers(get_display(), window);
+}
+
+void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,unsigned dpth,const char*title)
+{
+    Colormap theCmap;
+    XSetWindowAttributes xswa;
+    unsigned xswamask;
+
+    ctx=::glXCreateContext(get_display(), vi, NULL, GL_TRUE);
+    if (ctx == NULL) {
+	MSG_ERR("[GLX_System]: Can't create GLX context\n");
+	exit_player("vo error");
+    }
+
+    theCmap  =::XCreateColormap( get_display(),RootWindow( get_display(),vi->screen),
+				vi->visual,AllocNone);
+
+    xswa.border_pixel=0;
+    xswa.colormap=theCmap;
+    xswa.event_mask =	ExposureMask|
+			VisibilityChangeMask|
+			KeyPressMask|
+			KeyReleaseMask|
+			ButtonPressMask|
+			ButtonReleaseMask|
+			PointerMotionMask|
+			StructureNotifyMask|
+			SubstructureNotifyMask|
+			FocusChangeMask;
+    xswamask=CWBorderPixel | CWColormap | CWEventMask;
+
+#ifdef HAVE_XF86VM
+    if ( is_vm ) {
+	xswa.override_redirect=True;
+	xswamask|=CWOverrideRedirect;
+    }
+#endif
+
+    window=::XCreateWindow( get_display(),RootWindow( get_display(),vi->screen),
+				hint.x,hint.y,
+				hint.width,hint.height,
+				0,dpth,InputOutput,vi->visual,xswamask,&xswa );
+    XSizeHints hn = hint;
+    ::XSetStandardProperties( get_display(),window,title,title,None,NULL,0,&hn );
+
+    ::glXMakeCurrent(get_display(), window, ctx);
+
+    ::XMapWindow( get_display(),window );
+
+#ifdef HAVE_XF86VM
+    if ( is_vm ) {
+	/* Grab the mouse pointer in our window */
+	::XGrabPointer(get_display(), window, True, 0,
+		   GrabModeAsync, GrabModeAsync,
+		   window, None, CurrentTime);
+	::XSetInputFocus(get_display(), window, RevertToNone, CurrentTime);
+    }
+#endif
 }
 #endif
 

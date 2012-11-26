@@ -150,7 +150,7 @@ static MPXP_Rc __FASTCALL__ config_vo(vo_data_t*vo,uint32_t width, uint32_t heig
 
     priv.dwidth=d_width; priv.dheight=d_height; //XXX: what are the copy vars used for?
 
-    xv.create_window(hint,vinfo.visual,vo_VM(vo),priv.depth,title);
+    xv.create_window(hint,&vinfo,vo_VM(vo),priv.depth,title);
     xv.classhint("vo_x11");
     xv.hidecursor();
     if ( vo_FS(vo) ) xv.decoration(0);
