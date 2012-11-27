@@ -128,7 +128,7 @@ struct vo_priv_t : public video_private {
     dri_priv_t			dri;
     const vo_info_t*		video_out;
     class VO_Interface*		vo_iface;
-    draw_alpha_f		draw_alpha;
+    OSD_Render*			draw_alpha;
 };
 
 vo_priv_t::vo_priv_t() {
@@ -137,6 +137,7 @@ vo_priv_t::vo_priv_t() {
 }
 
 vo_priv_t::~vo_priv_t() {
+    if(draw_alpha) delete draw_alpha;
     delete vo_iface;
 }
 
@@ -809,50 +810,18 @@ static void __FASTCALL__ dri_remove_osd(any_t*_vo,unsigned idx,int x0,int _y0, i
     }
 }
 
-static draw_alpha_f __FASTCALL__ get_draw_alpha(uint32_t fmt) {
-  MSG_DBG2("get_draw_alpha(%s)\n",vo_format_name(fmt));
-  switch(fmt) {
-  case IMGFMT_BGR15:
-  case IMGFMT_RGB15:
-    return vo_draw_alpha_rgb15_ptr;
-  case IMGFMT_BGR16:
-  case IMGFMT_RGB16:
-    return vo_draw_alpha_rgb16_ptr;
-  case IMGFMT_BGR24:
-  case IMGFMT_RGB24:
-    return vo_draw_alpha_rgb24_ptr;
-  case IMGFMT_BGR32:
-  case IMGFMT_RGB32:
-    return vo_draw_alpha_rgb32_ptr;
-  case IMGFMT_YV12:
-  case IMGFMT_I420:
-  case IMGFMT_IYUV:
-  case IMGFMT_YVU9:
-  case IMGFMT_IF09:
-  case IMGFMT_Y800:
-  case IMGFMT_Y8:
-    return vo_draw_alpha_yv12_ptr;
-  case IMGFMT_YUY2:
-    return vo_draw_alpha_yuy2_ptr;
-  case IMGFMT_UYVY:
-    return vo_draw_alpha_uyvy_ptr;
-  }
-
-  return NULL;
-}
-
 static void __FASTCALL__ dri_draw_osd(any_t*vo,unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(reinterpret_cast<vo_data_t*>(vo)->vo_priv);
     int finalize=vo_is_final(reinterpret_cast<vo_data_t*>(vo));
     if(x0+w<=priv.dri.cap.width&&_y0+h<=priv.dri.cap.height)
     {
-	if(!priv.draw_alpha) priv.draw_alpha=get_draw_alpha(priv.dri.cap.fourcc);
+	if(!priv.draw_alpha) priv.draw_alpha=new(zeromem) OSD_Render(priv.dri.cap.fourcc);
 	if(priv.draw_alpha) {
 	    dri_surface_t surf;
 	    surf.idx=idx;
 	    priv.vo_iface->get_surface(&surf);
-	    (*priv.draw_alpha)(w,h,src,srca,stride,
+	    priv.draw_alpha->render(w,h,src,srca,stride,
 			    surf.planes[0]+priv.dri.cap.strides[0]*_y0+x0*((priv.dri.bpp+7)/8),
 			    priv.dri.cap.strides[0],finalize);
 	}

@@ -34,7 +34,6 @@ static const char * __sub_osd_names[]={
 static const char * __sub_osd_names_short[] ={ "", "|>", "||", "[]", "<<" , ">>", "", "", "", "", "", ""};
 static int vo_osd_changed_status = 0;
 static rect_highlight_t nav_hl;
-static int draw_alpha_init_flag=0;
 static mp_osd_obj_t* vo_osd_list=NULL;
 
 sub_data_t sub_data = { NULL, 0, 0, 100, 0, 0 };
@@ -501,10 +500,6 @@ int __FASTCALL__ vo_update_osd(any_t*v,int dxs,int dys){
 }
 
 void vo_init_osd(void){
-    if(!draw_alpha_init_flag){
-	draw_alpha_init_flag=1;
-	vo_draw_alpha_init();
-    }
     if(vo_osd_list) free_osd_list();
     // temp hack, should be moved to mplayer/mencoder later
     new_osd_obj(OSDTYPE_OSD);

@@ -266,37 +266,6 @@ void menu_read_key(menu_t* menu,int cmd) {
 
 ///////////////////////////// Helpers ////////////////////////////////////
 
-inline static draw_alpha_f get_draw_alpha(uint32_t fmt) {
-  switch(fmt) {
-  case IMGFMT_BGR15:
-  case IMGFMT_RGB15:
-    return vo_draw_alpha_rgb15_ptr;
-  case IMGFMT_BGR16:
-  case IMGFMT_RGB16:
-    return vo_draw_alpha_rgb16_ptr;
-  case IMGFMT_BGR24:
-  case IMGFMT_RGB24:
-    return vo_draw_alpha_rgb24_ptr;
-  case IMGFMT_BGR32:
-  case IMGFMT_RGB32:
-    return vo_draw_alpha_rgb32_ptr;
-  case IMGFMT_YV12:
-  case IMGFMT_I420:
-  case IMGFMT_IYUV:
-  case IMGFMT_YVU9:
-  case IMGFMT_IF09:
-  case IMGFMT_Y800:
-  case IMGFMT_Y8:
-    return vo_draw_alpha_yv12_ptr;
-  case IMGFMT_UYVY:
-    return vo_draw_alpha_uyvy_ptr;
-  case IMGFMT_YUY2:
-    return vo_draw_alpha_yuy2_ptr;
-  }
-
-  return NULL;
-}
-
 // return the real height of a char:
 static inline int get_height(int c,int h){
     int font;
@@ -364,14 +333,9 @@ static char *menu_fribidi(char *txt)
 #endif
 
 void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
-  draw_alpha_f draw_alpha = get_draw_alpha(mpi->imgfmt);
+  OSD_Render& draw_alpha = *new(zeromem) OSD_Render(mpi->imgfmt);
   int font;
   int finalize=vo_is_final(vo_data);
-
-  if(!draw_alpha) {
-    MSG_WARN("[libmenu] Unsupported output format\n");
-    return;
-  }
 
 #ifdef USE_FRIBIDI
   txt = menu_fribidi(txt);
@@ -381,7 +345,7 @@ void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
   while (*txt) {
     int c=utf8_get_char((const char**)&txt);
     if ((font=vo_data->font->font[c])>=0 && (x + vo_data->font->width[c] <= mpi->w) && (y + vo_data->font->pic_a[font]->h <= mpi->h))
-      draw_alpha(vo_data->font->width[c], vo_data->font->pic_a[font]->h,
+      draw_alpha.render(vo_data->font->width[c], vo_data->font->pic_a[font]->h,
 		 vo_data->font->pic_b[font]->bmp+vo_data->font->start[c],
 		 vo_data->font->pic_a[font]->bmp+vo_data->font->start[c],
 		 vo_data->font->pic_a[font]->w,
@@ -401,12 +365,7 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
   int ll = 0;
   int font;
   int finalize=vo_is_final(vo_data);
-  draw_alpha_f draw_alpha = get_draw_alpha(mpi->imgfmt);
-
-  if(!draw_alpha) {
-    MSG_WARN("[libmenu] Unsupported output format\n");
-    return;
-  }
+  OSD_Render& draw_alpha = *new(zeromem) OSD_Render(mpi->imgfmt);
 
 #ifdef USE_FRIBIDI
   txt = menu_fribidi(txt);
@@ -552,7 +511,7 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
       if(font >= 0) {
 	int cs = (vo_data->font->pic_a[font]->h - vo_data->font->height) / 2;
 	if ((sx + vo_data->font->width[c] < xmax)  &&  (sy + vo_data->font->height < ymax) )
-	  draw_alpha(vo_data->font->width[c], vo_data->font->height,
+	  draw_alpha.render(vo_data->font->width[c], vo_data->font->height,
 		     vo_data->font->pic_b[font]->bmp+vo_data->font->start[c] +
 		     cs * vo_data->font->pic_a[font]->w,
 		     vo_data->font->pic_a[font]->bmp+vo_data->font->start[c] +
@@ -637,13 +596,8 @@ char* menu_text_get_next_line(char* txt, int max_width) {
 
 
 void menu_draw_box(const mp_image_t* mpi,unsigned char grey,unsigned char alpha, int x, int y, int w, int h) {
-  draw_alpha_f draw_alpha = get_draw_alpha(mpi->imgfmt);
+  OSD_Render& draw_alpha = *new(zeromem) OSD_Render(mpi->imgfmt);
   int g;
-
-  if(!draw_alpha) {
-    MSG_WARN("[libmenu] Unsupported output format\n");
-    return;
-  }
 
   if(x > mpi->w || y > mpi->h) return;
 
@@ -661,7 +615,7 @@ void menu_draw_box(const mp_image_t* mpi,unsigned char grey,unsigned char alpha,
     unsigned char pic[stride*h],pic_alpha[stride*h];
     memset(pic,g,stride*h);
     memset(pic_alpha,alpha,stride*h);
-    draw_alpha(w,h,pic,pic_alpha,stride,
+    draw_alpha.render(w,h,pic,pic_alpha,stride,
 	       mpi->planes[0] + y * mpi->stride[0] + x * (mpi->bpp>>3),
 	       mpi->stride[0],finalize);
   }

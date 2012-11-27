@@ -95,18 +95,68 @@ static void __FASTCALL__ vo_draw_alpha_rgb16_c(int w,int h, const unsigned char*
 }
 
 static void __FASTCALL__ vo_draw_alpha_uyvy_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
-    (*vo_draw_alpha_yuy2_ptr)(w,h,src,srca,srcstride,dstbase+1,dststride,finalize);
+    vo_draw_alpha_yuy2_c(w,h,src,srca,srcstride,dstbase+1,dststride,finalize);
 }
 
-draw_alpha_f vo_draw_alpha_yv12_ptr=NULL;
-draw_alpha_f vo_draw_alpha_yuy2_ptr=NULL;
-draw_alpha_f vo_draw_alpha_rgb24_ptr=NULL;
-draw_alpha_f vo_draw_alpha_rgb32_ptr=NULL;
-draw_alpha_f vo_draw_alpha_uyvy_ptr=vo_draw_alpha_uyvy_c;
-draw_alpha_f vo_draw_alpha_rgb15_ptr=vo_draw_alpha_rgb15_c;
-draw_alpha_f vo_draw_alpha_rgb16_ptr=vo_draw_alpha_rgb16_c;
+static void __FASTCALL__ vo_draw_alpha_null(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
+    UNUSED(w);
+    UNUSED(h);
+    UNUSED(src);
+    UNUSED(srca);
+    UNUSED(srcstride);
+    UNUSED(dstbase);
+    UNUSED(dststride);
+    UNUSED(finalize);
+}
 
-void vo_draw_alpha_init( void ){
+void OSD_Render::render(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize)
+{
+    (*draw_alpha_ptr)(w,h,src,srca,srcstride,dstbase,dststride,finalize);
+}
+
+void OSD_Render::get_draw_alpha(unsigned fmt) {
+    MSG_DBG2("get_draw_alpha(%s)\n",vo_format_name(fmt));
+    switch(fmt) {
+    case IMGFMT_BGR15:
+    case IMGFMT_RGB15:
+	draw_alpha_ptr=draw_alpha_rgb15_ptr;
+	break;
+    case IMGFMT_BGR16:
+    case IMGFMT_RGB16:
+	draw_alpha_ptr=draw_alpha_rgb16_ptr;
+	break;
+    case IMGFMT_BGR24:
+    case IMGFMT_RGB24:
+	draw_alpha_ptr=draw_alpha_rgb24_ptr;
+	break;
+    case IMGFMT_BGR32:
+    case IMGFMT_RGB32:
+	draw_alpha_ptr=draw_alpha_rgb32_ptr;
+	break;
+    case IMGFMT_YV12:
+    case IMGFMT_I420:
+    case IMGFMT_IYUV:
+    case IMGFMT_YVU9:
+    case IMGFMT_IF09:
+    case IMGFMT_Y800:
+    case IMGFMT_Y8:
+	draw_alpha_ptr=draw_alpha_yv12_ptr;
+	break;
+    case IMGFMT_YUY2:
+	draw_alpha_ptr=draw_alpha_yuy2_ptr;
+	break;
+    case IMGFMT_UYVY:
+	draw_alpha_ptr=draw_alpha_uyvy_ptr;
+	break;
+    default:
+	MSG_ERR("draw alpha for %s fourcc not implemented yet!",vo_format_name(fmt));
+	draw_alpha_ptr=vo_draw_alpha_null;
+	break;
+    }
+}
+
+OSD_Render::OSD_Render(unsigned fourcc)
+{
 #ifdef FAST_OSD_TABLE
     int i;
     for(i=0;i<256;i++){
@@ -120,10 +170,10 @@ void vo_draw_alpha_init( void ){
 if(gCpuCaps.hasSSE41)
 {
 	MSG_V("Using SSE4 Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_AVX;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_AVX;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_AVX;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_AVX;
+	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_AVX;
+	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_AVX;
+	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_AVX;
+	draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_AVX;
 }
 else
 #endif
@@ -131,10 +181,10 @@ else
 if(gCpuCaps.hasSSE41)
 {
 	MSG_V("Using SSE4 Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE4;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE4;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE4;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE4;
+	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE4;
+	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE4;
+	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE4;
+	draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE4;
 }
 else
 #endif
@@ -142,10 +192,10 @@ else
 if(gCpuCaps.hasSSSE3)
 {
 	MSG_V("Using SSSE3 Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSSE3;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSSE3;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSSE3;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSSE3;
+	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSSE3;
+	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSSE3;
+	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSSE3;
+	draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSSE3;
 }
 else
 #endif
@@ -153,10 +203,10 @@ else
 if(gCpuCaps.hasSSE3)
 {
 	MSG_V("Using SSE3 Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE3;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE3;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE3;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE3;
+	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE3;
+	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE3;
+	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE3;
+	draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE3;
 }
 else
 #endif
@@ -164,10 +214,10 @@ else
 if(gCpuCaps.hasSSE2)
 {
 	MSG_V("Using SSE2 Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE2;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE2;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE2;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE2;
+	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE2;
+	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE2;
+	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE2;
+	draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE2;
 }
 else
 #endif
@@ -176,10 +226,10 @@ else
 if(gCpuCaps.hasMMX2)
 {
 	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE;
+	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE;
+	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE;
+	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE;
+	draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_SSE;
 }
 else
 #endif
@@ -187,19 +237,25 @@ else
 //if(gCpuCaps.hasMMX)
 //{
 //	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
-//	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX;
-//	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX;
-//	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX;
-//	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_MMX;
+//	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX;
+//	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX;
+//	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX;
+//	draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_MMX;
 //}
 //else
 //#endif
 #endif
 {
-	MSG_V("Using generic OnScreenDisplay\n");
-	vo_draw_alpha_yv12_ptr=vo_draw_alpha_yv12_c;
-	vo_draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_c;
-	vo_draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_c;
-	vo_draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_c;
+    MSG_V("Using generic OnScreenDisplay\n");
+    draw_alpha_yv12_ptr=vo_draw_alpha_yv12_c;
+    draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_c;
+    draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_c;
+    draw_alpha_rgb32_ptr=vo_draw_alpha_rgb32_c;
 }
+    draw_alpha_uyvy_ptr=vo_draw_alpha_uyvy_c;
+    draw_alpha_rgb15_ptr=vo_draw_alpha_rgb15_c;
+    draw_alpha_rgb16_ptr=vo_draw_alpha_rgb16_c;
+    get_draw_alpha(fourcc);
 }
+
+OSD_Render::~OSD_Render(){}
