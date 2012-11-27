@@ -44,7 +44,7 @@ using namespace mpxp;
 #include "screenshot.h"
 #include "osdep/bswap.h"
 #include "dri_vo.h"
-#include "osd.h"
+#include "osd_render.h"
 #include "sub.h"
 #include "vo_msg.h"
 

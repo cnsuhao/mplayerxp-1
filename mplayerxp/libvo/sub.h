@@ -1,7 +1,7 @@
 #ifndef __MPLAYER_SUB_H
 #define __MPLAYER_SUB_H
 #include <inttypes.h>
-#include "osd.h"
+#include "osd_render.h"
 
 typedef struct mp_osd_bbox_s {
     int x1,y1,x2,y2;

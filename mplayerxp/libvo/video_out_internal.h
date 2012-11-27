@@ -52,6 +52,4 @@ class VO_Interface : public Opaque {
 	virtual MPXP_Rc ctrl(uint32_t request, any_t*data) = 0;
 };
 
-#include "osd.h"
-
 #endif

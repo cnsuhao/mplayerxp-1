@@ -17,7 +17,6 @@ using namespace mpxp;
 
 #ifdef OSD_SUPPORT
 #include "libvo/sub.h"
-#include "libvo/osd.h"
 #endif
 #include "pp_msg.h"
 

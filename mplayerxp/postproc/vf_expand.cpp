@@ -16,7 +16,6 @@ using namespace mpxp;
 #ifdef OSD_SUPPORT
 #include "libvo/video_out.h"
 #include "libvo/sub.h"
-#include "libvo/osd.h"
 #endif
 #include "pp_msg.h"
 #include "mplayerxp.h" // vo_data

@@ -11,7 +11,6 @@ using namespace mpxp;
 #include "video_out.h"
 #include "font_load.h"
 #include "sub.h"
-#include "osd.h"
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 #define MSGT_CLASS MSGT_OSD

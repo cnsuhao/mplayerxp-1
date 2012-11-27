@@ -34,7 +34,6 @@ using namespace mpxp;
 #include "vidix_system.h"
 #endif
 #include "aspect.h"
-#include "osd.h"
 #include "dri_vo.h"
 #include "libmpstream/mrl.h"
 #include "vo_msg.h"

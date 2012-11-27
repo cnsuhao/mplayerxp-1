@@ -11,7 +11,7 @@ using namespace mpxp;
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "libvo/osd.h"
+#include "libvo/osd_render.h"
 #include "libvo/font_load.h"
 #include "libvo/sub.h"
 #include "osdep/keycodes.h"
