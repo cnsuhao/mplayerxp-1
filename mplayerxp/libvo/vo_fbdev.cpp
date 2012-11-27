@@ -120,11 +120,13 @@ class FBDev_VO_Interface : public VO_Interface {
 				const char *title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual MPXP_Rc	flush_page(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
 	virtual void	get_surface(dri_surface_t *surf) const;
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
+	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	MPXP_Rc		fb_preinit();
@@ -1178,16 +1180,29 @@ unsigned FBDev_VO_Interface::get_num_frames() const {
     return total_fr;
 }
 
-MPXP_Rc FBDev_VO_Interface::ctrl(uint32_t request, any_t*data)
-{
-    switch(request) {
-	case VOCTRL_FLUSH_PAGES:
+MPXP_Rc FBDev_VO_Interface::flush_page(unsigned idx) {
 #ifdef CONFIG_VIDIX
-	    if(vidix) vidix->flush_page(*(unsigned*)data);
-	    return MPXP_Ok;
+    if(vidix) return vidix->flush_page(idx);
 #endif
-	default: break;
+    return MPXP_False;
+}
+
+uint32_t FBDev_VO_Interface::check_events(const vo_resize_t* vr) {
+    UNUSED(vr);
+    return 0;
+}
+
+MPXP_Rc FBDev_VO_Interface::ctrl(uint32_t request, any_t*data) {
+#ifdef CONFIG_VIDIX
+    switch (request) {
+	case VOCTRL_SET_EQUALIZER:
+	    if(!vidix->set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	    return MPXP_False;
+	case VOCTRL_GET_EQUALIZER:
+	    if(vidix->get_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	    return MPXP_False;
     }
+#endif
     return MPXP_NA;
 }
 

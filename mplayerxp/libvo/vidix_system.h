@@ -36,7 +36,7 @@ struct Vidix_System : public video_private {
 	int		start();
 	int		stop();
 	MPXP_Rc		select_frame(unsigned idx);
-	void		flush_page(unsigned idx);
+	MPXP_Rc		flush_page(unsigned idx);
 
 	MPXP_Rc		query_fourcc(vo_query_fourcc_t* format);
 	void		get_surface_caps(dri_surface_cap_t *caps) const;

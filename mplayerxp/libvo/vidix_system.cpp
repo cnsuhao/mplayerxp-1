@@ -501,6 +501,7 @@ void Vidix_System::get_surface(dri_surface_t *surf) const
 
 unsigned Vidix_System::get_num_frames() const { return (vo_conf.use_bm==1)?vo_conf.xp_buffs:vidix.playback.num_frames; }
 
-void Vidix_System::flush_page(unsigned idx) {
+MPXP_Rc Vidix_System::flush_page(unsigned idx) {
     if(vo_conf.use_bm > 1) copy_dma(idx,1);
+    return MPXP_Ok;
 }

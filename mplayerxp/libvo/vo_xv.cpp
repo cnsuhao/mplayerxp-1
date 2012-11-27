@@ -58,13 +58,13 @@ class Xv_VO_Interface : public VO_Interface {
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
+	virtual MPXP_Rc	toggle_fullscreen();
+	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	void		allocate_xvimage(int idx) const;
 	void		deallocate_xvimage(int idx) const;
 	void		set_gamma_correction( ) const;
-	uint32_t	check_events(const vo_resize_t*);
-
 
 	uint32_t	image_width;
 	uint32_t	image_height;
@@ -320,21 +320,18 @@ void Xv_VO_Interface::get_surface(dri_surface_t *surf) const
 
 unsigned Xv_VO_Interface::get_num_frames() const { return num_buffers; }
 
+MPXP_Rc Xv_VO_Interface::toggle_fullscreen() {
+    xv.fullscreen();
+    return MPXP_True;
+}
+
 MPXP_Rc Xv_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
   switch (request) {
-  case VOCTRL_FULLSCREEN:
-	xv.fullscreen();
-	return MPXP_True;
-  case VOCTRL_CHECK_EVENTS: {
-	vo_resize_t* vrest = (vo_resize_t *)data;
-	vrest->event_type = check_events(vrest);
-	return MPXP_True;
-    }
-  case VOCTRL_SET_EQUALIZER:
+    case VOCTRL_SET_EQUALIZER:
 	if(!xv.set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
-  case VOCTRL_GET_EQUALIZER:
+    case VOCTRL_GET_EQUALIZER:
 	if(xv.get_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
   }

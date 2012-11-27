@@ -56,6 +56,7 @@ class Null_VO_Interface : public VO_Interface {
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
+	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 
@@ -216,13 +217,13 @@ MPXP_Rc Null_VO_Interface::query_format(vo_query_fourcc_t* format) const {
     return MPXP_False;
 }
 
-MPXP_Rc Null_VO_Interface::ctrl(uint32_t request, any_t*data)
-{
-    switch (request) {
-    case VOCTRL_FLUSH_PAGES:
-	return MPXP_True;
-  }
-  return MPXP_NA;
+uint32_t Null_VO_Interface::check_events(const vo_resize_t* vr) {
+    UNUSED(vr);
+    return 0;
+}
+
+MPXP_Rc Null_VO_Interface::ctrl(uint32_t request, any_t*data) {
+    return MPXP_NA;
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) Null_VO_Interface(args); }

@@ -207,11 +207,14 @@ class SDL_VO_Interface : public VO_Interface {
 				const char *title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual MPXP_Rc	flush_page(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
 	virtual void	get_surface(dri_surface_t *surf) const;
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
+	virtual MPXP_Rc	toggle_fullscreen();
+	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	void		sdl_open ( );
@@ -221,7 +224,6 @@ class SDL_VO_Interface : public VO_Interface {
 	MPXP_Rc		setup_surfaces();
 	MPXP_Rc		setup_surface(unsigned idx);
 	void		erase_rectangle(unsigned idx,int x, int y, int w, int h);
-	uint32_t	check_events(const vo_resize_t*);
 	void		lock_surfaces();
 	void		unlock_surfaces();
 	const char*	parse_sub_device(const char *sd) const;
@@ -1137,22 +1139,22 @@ MPXP_Rc SDL_VO_Interface::select_frame(unsigned idx)
     return MPXP_Ok;
 }
 
-MPXP_Rc SDL_VO_Interface::query_format(vo_query_fourcc_t* format) const
+MPXP_Rc SDL_VO_Interface::query_format(vo_query_fourcc_t* fmt) const
 {
 #ifdef CONFIG_VIDIX
-    if(vidix) return vidix->query_fourcc(format);
+    if(vidix) return vidix->query_fourcc(fmt);
 #endif
     if(sdl_forcegl) {
-	if (IMGFMT_IS_BGR(format->fourcc)) {
-	    if  (rgbfmt_depth(format->fourcc) == (unsigned)bpp &&
+	if (IMGFMT_IS_BGR(fmt->fourcc)) {
+	    if  (rgbfmt_depth(fmt->fourcc) == (unsigned)bpp &&
 		((unsigned)bpp==16 || (unsigned)bpp == 32))
-			format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
+			fmt->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
 			return MPXP_Ok;
 	}
 	return MPXP_False;
     }
     else
-    switch(format->fourcc){
+    switch(fmt->fourcc){
     case IMGFMT_YV12:
     case IMGFMT_I420:
     case IMGFMT_IYUV:
@@ -1167,7 +1169,7 @@ MPXP_Rc SDL_VO_Interface::query_format(vo_query_fourcc_t* format) const
     case IMGFMT_BGR24:
     case IMGFMT_RGB32:
     case IMGFMT_BGR32:
-	format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
+	fmt->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
 	return MPXP_Ok; // hw supported w/conversion & osd
     }
     return MPXP_False;
@@ -1248,32 +1250,38 @@ unsigned SDL_VO_Interface::get_num_frames() const {
     return num_buffs;
 }
 
+MPXP_Rc SDL_VO_Interface::flush_page(unsigned idx) {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->flush_page(idx);
+#endif
+    return MPXP_False;
+}
+
+MPXP_Rc SDL_VO_Interface::toggle_fullscreen() {
+    if (surface->flags & SDL_FULLSCREEN) {
+	if(set_video_mode(windowsize.w, windowsize.h, bpp, sdlflags)!=0) exit_player("SDL set fullscreen");
+	SDL_ShowCursor(1);
+	MSG_V("SDL: Windowed mode\n");
+    } else if (fullmodes) {
+	if(set_fullmode(fullmode)!=0) exit_player("SDL set fullmode");
+	MSG_V("SDL: Set fullscreen mode\n");
+    }
+    return MPXP_True;
+}
+
 MPXP_Rc SDL_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
-  switch (request) {
-    case VOCTRL_CHECK_EVENTS: {
-	vo_resize_t * vrest = (vo_resize_t *)data;
-	vrest->event_type = check_events(vrest);
-	return MPXP_True;
-    }
-    case VOCTRL_FULLSCREEN:
-	if (surface->flags & SDL_FULLSCREEN) {
-	    if(set_video_mode(windowsize.w, windowsize.h, bpp, sdlflags)!=0) exit_player("SDL set fullscreen");
-	    SDL_ShowCursor(1);
-	    MSG_V("SDL: Windowed mode\n");
-	} else if (fullmodes) {
-	    if(set_fullmode(fullmode)!=0) exit_player("SDL set fullmode");
-	    MSG_V("SDL: Set fullscreen mode\n");
-	}
-	*(uint32_t *)data = VO_EVENT_RESIZE;
-	return MPXP_True;
-    case VOCTRL_FLUSH_PAGES:
 #ifdef CONFIG_VIDIX
-	if(vidix) vidix->flush_page(*(unsigned*)data);
-	return MPXP_Ok;
+    switch (request) {
+	case VOCTRL_SET_EQUALIZER:
+	    if(!vidix->set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	    return MPXP_False;
+	case VOCTRL_GET_EQUALIZER:
+	    if(vidix->get_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	    return MPXP_False;
+    }
 #endif
-  }
-  return MPXP_NA;
+    return MPXP_NA;
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) SDL_VO_Interface(args); }

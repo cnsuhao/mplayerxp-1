@@ -28,33 +28,22 @@ using namespace mpxp;
 #include "xmpcore/xmp_enums.h"
 
 enum {
-    VO_EVENT_EXPOSE=1,
-    VO_EVENT_RESIZE=2,
-    VO_EVENT_KEYPRESS=4,
+    VO_EVENT_EXPOSE	=1,
+    VO_EVENT_RESIZE	=2,
+    VO_EVENT_KEYPRESS	=4,
     VO_EVENT_FORCE_UPDATE=0x80000000
 };
 
 enum {
-    VOCTRL_UNUSED0=1,
-    VOCTRL_RESET=3,		/**< Signal a device reset seek */
-    VOCTRL_FULLSCREEN=4,	/**< Signal to switch window to fullscreen. Must affect window only (not surfaces) */
-    VOCTRL_UNUSED=5,
-    VOCTRL_PAUSE=6,		/**< Notification to stop a device (for dxr3) */
-    VOCTRL_RESUME=7,		/**< Notification to start/resume playback after pause (for dxr3) */
-    VOCTRL_UNUSED2=8,
-    VOCTRL_CHECK_EVENTS=9,	/**< Notification that user performs key pressing. Takes (vo_resize_t *)&vrest as arg. Must return at least VO_EVENT_RESIZE */
-    VOCTRL_UNUSED3=12,
-    VOCTRL_FLUSH_PAGES=13,	/**< Flush pages of frame from RAM into video memory (bus mastering) */
-    VOCTRL_UNUSED4=14,
-    VOCTRL_SET_EQUALIZER=1000,	/**< Set video equalizer */
-    VOCTRL_GET_EQUALIZER=1001	/**< Get video equalizer */
+    VOCTRL_SET_EQUALIZER=1,	/**< Set video equalizer */
+    VOCTRL_GET_EQUALIZER	/**< Get video equalizer */
 };
 
 enum {
-    VOFLAG_FULLSCREEN=0x01,	/**< User wants to have fullscreen playback */
+    VOFLAG_FULLSCREEN	=0x01,	/**< User wants to have fullscreen playback */
     VOFLAG_MODESWITCHING=0x02,	/**< User enables to find the best video mode */
-    VOFLAG_SWSCALE=0x04,	/**< Obsolete. User enables slow Software scaler */
-    VOFLAG_FLIPPING=0x08	/**< User enables page flipping (doublebuffering / XP mode) */
+    VOFLAG_SWSCALE	=0x04,	/**< Obsolete. User enables slow Software scaler */
+    VOFLAG_FLIPPING	=0x08	/**< User enables page flipping (doublebuffering / XP mode) */
 };
 
 /** Text description of VO-driver */

@@ -64,16 +64,18 @@ class X11_VO_Interface : public VO_Interface {
 				const char *title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual MPXP_Rc	flush_page(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
 	virtual void	get_surface(dri_surface_t *surf) const;
 	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
+	virtual MPXP_Rc	toggle_fullscreen();
+	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	const char*	parse_sub_device(const char *sd);
 	void		resize(int x,int y) const;
-	uint32_t	check_events(const vo_resize_t*);
 	void		display_image(XImage * myximage) const;
 
 
@@ -387,29 +389,32 @@ unsigned X11_VO_Interface::get_num_frames() const {
     return num_buffers;
 }
 
-MPXP_Rc X11_VO_Interface::ctrl(uint32_t request, any_t*data)
-{
+MPXP_Rc X11_VO_Interface::flush_page(unsigned idx) {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->flush_page(idx);
+#endif
+    return MPXP_False;
+}
+
+MPXP_Rc X11_VO_Interface::toggle_fullscreen() {
+    x11.fullscreen();
+#ifdef CONFIG_VIDIX
+    if(vidix) resize_vidix();
+#endif
+    return MPXP_True;
+}
+
+MPXP_Rc X11_VO_Interface::ctrl(uint32_t request, any_t*data) {
+#ifdef CONFIG_VIDIX
     switch (request) {
-	case VOCTRL_CHECK_EVENTS: {
-	    vo_resize_t* vrest = reinterpret_cast<vo_resize_t*>(data);
-	    vrest->event_type = check_events(vrest);
-#ifdef CONFIG_VIDIX
-	    if(vidix) resize_vidix();
-#endif
-	    return MPXP_True;
-	}
-	case VOCTRL_FULLSCREEN:
-	    x11.fullscreen();
-#ifdef CONFIG_VIDIX
-	    if(vidix) resize_vidix();
-#endif
-	    return MPXP_True;
-	case VOCTRL_FLUSH_PAGES:
-#ifdef CONFIG_VIDIX
-	    if(vidix) vidix->flush_page(*(unsigned*)data);
-	    return MPXP_Ok;
-#endif
+	case VOCTRL_SET_EQUALIZER:
+	    if(!vidix->set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	    return MPXP_False;
+	case VOCTRL_GET_EQUALIZER:
+	    if(vidix->get_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	    return MPXP_False;
     }
+#endif
     return MPXP_NA;
 }
 

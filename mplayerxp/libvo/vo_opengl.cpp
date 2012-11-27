@@ -71,11 +71,12 @@ class OpenGL_VO_Interface : public VO_Interface {
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
+	virtual MPXP_Rc	toggle_fullscreen();
+	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	void		gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height) const;
 	void		resize(int x,int y) const;
-	uint32_t	check_events(const vo_resize_t*) const;
 	void		gl_display_Image(XImage *myximage) const;
 
 
@@ -223,7 +224,7 @@ MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t
     return MPXP_Ok;
 }
 
-uint32_t OpenGL_VO_Interface::check_events(const vo_resize_t* vrest) const
+uint32_t OpenGL_VO_Interface::check_events(const vo_resize_t* vrest)
 {
     int e=glx.check_events(vrest->adjust_size,vrest->vo);
     vo_rect_t r;
@@ -289,21 +290,15 @@ void OpenGL_VO_Interface::get_surface(dri_surface_t *surf) const
 
 unsigned OpenGL_VO_Interface::get_num_frames() const { return num_buffers; }
 
-MPXP_Rc OpenGL_VO_Interface::ctrl(uint32_t request, any_t*data)
-{
-    switch (request) {
-	case VOCTRL_FULLSCREEN:
-	    glx.fullscreen();
-	    vo_rect_t r;
-	    glx.get_win_coord(&r);
-	    resize(r.w,r.h);
-	    return MPXP_True;
-	case VOCTRL_CHECK_EVENTS: {
-	    vo_resize_t* vrest = (vo_resize_t *)data;
-	    vrest->event_type = check_events(vrest);
-	    return MPXP_True;
-	}
-    }
+MPXP_Rc OpenGL_VO_Interface::toggle_fullscreen() {
+    glx.fullscreen();
+    vo_rect_t r;
+    glx.get_win_coord(&r);
+    resize(r.w,r.h);
+    return MPXP_True;
+}
+
+MPXP_Rc OpenGL_VO_Interface::ctrl(uint32_t request, any_t*data) {
     return MPXP_NA;
 }
 
