@@ -597,7 +597,7 @@ MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
 		aspect_save_orig(width,height);
 		aspect_save_prescale(d_width,d_height);
 		aspect_save_screenres(vmode_info.XResolution,vmode_info.YResolution);
-		aspect(&dstW,&dstH,A_ZOOM);
+		aspect(&dstW,&dstH,A_NOZOOM);
 	    } else if(fs_mode) {
 		dstW = vmode_info.XResolution;
 		dstH = vmode_info.YResolution;

@@ -1047,7 +1047,7 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 	aspect_save_orig(width,height);
 	aspect_save_prescale(d_width,d_height);
 	aspect_save_screenres(xres,yres);
-	aspect(&out_width,&out_height,A_ZOOM);
+	aspect(&out_width,&out_height,A_NOZOOM);
     } else if(flags&VOFLAG_FULLSCREEN) {
 	out_width = xres;
 	out_height = yres;

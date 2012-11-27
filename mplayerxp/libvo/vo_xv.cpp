@@ -165,7 +165,7 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
     xv.match_visual( &vinfo );
 
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
-    aspect(&d_width,&d_height,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
+    aspect(&d_width,&d_height,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
 
     xv.calcpos(&hint,d_width,d_height,flags);
     hint.flags = PPosition | PSize;
@@ -214,7 +214,7 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 
 	set_gamma_correction();
 
-	aspect(&dwidth,&dheight,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
+	aspect(&dwidth,&dheight,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
 	return MPXP_Ok;
     }
 
@@ -246,7 +246,7 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
 	MSG_V( "[xv-resize] dx: %d dy: %d dw: %d dh: %d\n",
 		winc.x,winc.y,winc.w,winc.h);
 
-	aspect(&dwidth,&dheight,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
+	aspect(&dwidth,&dheight,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
     }
     if ( e & VO_EVENT_EXPOSE ) {
 	vo_rect_t r,r2;
@@ -321,7 +321,7 @@ void Xv_VO_Interface::get_surface(dri_surface_t *surf)
 unsigned Xv_VO_Interface::get_num_frames() const { return num_buffers; }
 
 MPXP_Rc Xv_VO_Interface::toggle_fullscreen() {
-    xv.fullscreen();
+    xv.fullscreen(flags);
     return MPXP_True;
 }
 

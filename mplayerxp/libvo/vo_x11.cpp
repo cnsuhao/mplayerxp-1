@@ -219,9 +219,6 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
     flags=_flags;
     num_buffers=vo_conf.xp_buffs;
 
-    if (!title)
-	title = mp_strdup("MPlayerXP X11 (XImage/Shm) render");
-
     in_format=format;
 
     depth=x11.depth();
@@ -235,7 +232,7 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
     aspect_save_prescale(d_width,d_height);
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
 
-    aspect(&d_width,&d_height,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
+    aspect(&d_width,&d_height,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
 
     x11.calcpos(&hint,d_width,d_height,flags);
     hint.flags=PPosition | PSize;
@@ -415,7 +412,7 @@ unsigned X11_VO_Interface::get_num_frames() const {
 }
 
 MPXP_Rc X11_VO_Interface::toggle_fullscreen() {
-    x11.fullscreen();
+    x11.fullscreen(flags);
 #ifdef CONFIG_VIDIX
     if(vidix) resize_vidix();
 #endif

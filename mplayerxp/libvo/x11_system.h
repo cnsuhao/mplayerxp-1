@@ -57,7 +57,7 @@ class X11_System {
 	void		sizehint(int x, int y, int width, int height) const;
 	void		calcpos(XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags);
 	uint32_t	check_events(vo_adjust_size_t adjust_size,vo_data_t* opaque);
-	int		fullscreen();
+	int		fullscreen(unsigned& flags);
 
 	void		saver_off();
 	void		saver_on();

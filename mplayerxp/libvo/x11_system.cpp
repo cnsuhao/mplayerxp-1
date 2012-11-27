@@ -774,9 +774,9 @@ void X11_System::calcpos(XSizeHints* hint, unsigned d_width, unsigned d_height, 
     }
 }
 
-int X11_System::fullscreen()
+int X11_System::fullscreen(unsigned& flags)
 {
-    int is_fs=(curr.w==vo_conf.screenwidth && curr.h==vo_conf.screenheight);
+    int is_fs=flags&VOFLAG_FULLSCREEN;
     ::XUnmapWindow( mDisplay,window );
     if ( !is_fs ) {
 	prev=curr;
@@ -790,6 +790,7 @@ int X11_System::fullscreen()
     ::XMoveResizeWindow( mDisplay,window,curr.x,curr.y,curr.w,curr.h );
     ::XMapWindow( mDisplay,window );
     ::XSync( mDisplay,False );
+    flags^=VOFLAG_FULLSCREEN;
     return !is_fs;
 }
 

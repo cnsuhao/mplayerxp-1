@@ -104,7 +104,6 @@ OpenGL_VO_Interface::OpenGL_VO_Interface(const char *arg)
 
 OpenGL_VO_Interface::~OpenGL_VO_Interface() {
     unsigned i;
-//  if (!vo_config_count) return;
     glFinish();
     for(i=0;i<num_buffers;i++) glx.freeMyXImage(i);
     glx.saver_on(); // screen saver back on
@@ -176,7 +175,7 @@ MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t
     num_buffers=vo_conf.xp_buffs;
 
     aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
-    aspect(&d_width,&d_height,flags&VOFLAG_SWSCALE?A_ZOOM:A_NOZOOM);
+    aspect(&d_width,&d_height,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
     glx.calcpos(&hint,d_width,d_height,flags);
 
     hint.flags = PPosition | PSize;
@@ -291,7 +290,7 @@ void OpenGL_VO_Interface::get_surface(dri_surface_t *surf)
 unsigned OpenGL_VO_Interface::get_num_frames() const { return num_buffers; }
 
 MPXP_Rc OpenGL_VO_Interface::toggle_fullscreen() {
-    glx.fullscreen();
+    glx.fullscreen(flags);
     vo_rect_t r;
     glx.get_win_coord(r);
     resize(r.w,r.h);

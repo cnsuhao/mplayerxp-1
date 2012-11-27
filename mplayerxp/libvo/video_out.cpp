@@ -51,6 +51,7 @@ using namespace mpxp;
 VO_Config::VO_Config() {
     memset(&subdevice,0,reinterpret_cast<long>(&dbpp) - reinterpret_cast<long>(&subdevice));
     movie_aspect=-1.0;
+    softzoom=1;
     flip=-1;
     xp_buffs=64;
     dbpp=0;
