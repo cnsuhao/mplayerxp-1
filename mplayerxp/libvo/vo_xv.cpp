@@ -66,6 +66,7 @@ class Xv_VO_Interface : public VO_Interface {
 	void		deallocate_xvimage(int idx) const;
 	void		set_gamma_correction( ) const;
 
+	Aspect&		aspect;
 	uint32_t	image_width;
 	uint32_t	image_height;
 	uint32_t	image_format;
@@ -74,7 +75,6 @@ class Xv_VO_Interface : public VO_Interface {
 	unsigned int	formats, adaptors, port, format, bpp;
 
 	unsigned	expose_idx,num_buffers; // 1 - default
-	unsigned	dwidth,dheight;
 
 	Xv_System&	xv;
 };
@@ -85,6 +85,7 @@ int XShmGetEventBase(Display*);
 
 Xv_VO_Interface::Xv_VO_Interface(const char *arg)
 		:VO_Interface(arg),
+		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
 		xv(*new(zeromem) Xv_System(vo_conf.mDisplayName))
 {
     num_buffers=1;
@@ -150,8 +151,8 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 
     flags=_flags;
 
-    aspect_save_orig(width,height);
-    aspect_save_prescale(d_width,d_height);
+    aspect.save(width,height,d_width,d_height,vo_conf.screenwidth,vo_conf.screenheight);
+    aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
     image_height = height;
     image_width = width;
@@ -164,13 +165,8 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 	depth=24;
     xv.match_visual( &vinfo );
 
-    aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
-    aspect(&d_width,&d_height,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
-
     xv.calcpos(&hint,d_width,d_height,flags);
     hint.flags = PPosition | PSize;
-
-    dwidth=d_width; dheight=d_height; //XXX: what are the copy vars used for?
 
     xv.create_window(hint,&vinfo,flags&VOFLAG_MODESWITCHING,depth,title);
     xv.classhint("vo_x11");
@@ -214,7 +210,6 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 
 	set_gamma_correction();
 
-	aspect(&dwidth,&dheight,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
 	return MPXP_Ok;
     }
 
@@ -245,8 +240,6 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
 	xv.get_win_coord(winc);
 	MSG_V( "[xv-resize] dx: %d dy: %d dw: %d dh: %d\n",
 		winc.x,winc.y,winc.w,winc.h);
-
-	aspect(&dwidth,&dheight,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
     }
     if ( e & VO_EVENT_EXPOSE ) {
 	vo_rect_t r,r2;

@@ -80,6 +80,7 @@ class X11_VO_Interface : public VO_Interface {
 	void		lock_surfaces();
 	void		unlock_surfaces();
 
+	Aspect&		aspect;
 	uint32_t	image_width;
 	uint32_t	image_height;
 	uint32_t	in_format;
@@ -127,6 +128,7 @@ const char* X11_VO_Interface::parse_sub_device(const char *sd)
 
 X11_VO_Interface::X11_VO_Interface(const char *arg)
 		:VO_Interface(arg),
+		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
 		x11(*new(zeromem) X11_System(vo_conf.mDisplayName))
 {
     const char* vidix_name=NULL;
@@ -228,11 +230,8 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 
     baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
 
-    aspect_save_orig(width,height);
-    aspect_save_prescale(d_width,d_height);
-    aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
-
-    aspect(&d_width,&d_height,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
+    aspect.save(width,height,d_width,d_height,vo_conf.screenwidth,vo_conf.screenheight);
+    aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
     x11.calcpos(&hint,d_width,d_height,flags);
     hint.flags=PPosition | PSize;

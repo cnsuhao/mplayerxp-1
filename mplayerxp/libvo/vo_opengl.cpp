@@ -79,7 +79,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 	void		resize(int x,int y) const;
 	void		gl_display_Image(XImage *myximage) const;
 
-
+	Aspect&			aspect;
 	uint32_t		image_width;
 	uint32_t		image_height;
 	uint32_t		image_format;
@@ -96,6 +96,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 
 OpenGL_VO_Interface::OpenGL_VO_Interface(const char *arg)
 			    :VO_Interface(arg),
+			    aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
 			    glx(*new(zeromem) GLX_System(vo_conf.mDisplayName))
 {
     num_buffers=1;
@@ -165,17 +166,15 @@ MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t
 
     flags=_flags;
 
-    aspect_save_orig(width,height);
-    aspect_save_prescale(d_width,d_height);
+    aspect.save(width,height,d_width,d_height,vo_conf.screenwidth,vo_conf.screenheight);
+    aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
-    image_height = height;
+    image_height= height;
     image_width = width;
-    image_format=format;
+    image_format= format;
 
     num_buffers=vo_conf.xp_buffs;
 
-    aspect_save_screenres(vo_conf.screenwidth,vo_conf.screenheight);
-    aspect(&d_width,&d_height,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
     glx.calcpos(&hint,d_width,d_height,flags);
 
     hint.flags = PPosition | PSize;

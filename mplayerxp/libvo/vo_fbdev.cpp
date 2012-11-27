@@ -135,6 +135,7 @@ class FBDev_VO_Interface : public VO_Interface {
 	void		vt_set_textarea(int u, int l);
 	void		lots_of_printf() const;
 
+	Aspect&		aspect;
 	FILE *		fp;
 	int		line_num;
 	char *		line;
@@ -291,7 +292,8 @@ FBDev_VO_Interface::~FBDev_VO_Interface()
 }
 
 FBDev_VO_Interface::FBDev_VO_Interface(const char *arg)
-		    :VO_Interface(arg)
+		    :VO_Interface(arg),
+		    aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 {
     const char *vidix_name=NULL;
     if(arg) vidix_name=parse_sub_device(arg);
@@ -1043,10 +1045,8 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     out_width=width;
     out_height=height;
     if(flags&VOFLAG_SWSCALE) {
-	aspect_save_orig(width,height);
-	aspect_save_prescale(d_width,d_height);
-	aspect_save_screenres(xres,yres);
-	aspect(&out_width,&out_height,A_NOZOOM);
+	aspect.save(width,height,d_width,d_height,xres,yres);
+	aspect.calc(out_width,out_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
     } else if(flags&VOFLAG_FULLSCREEN) {
 	out_width = xres;
 	out_height = yres;

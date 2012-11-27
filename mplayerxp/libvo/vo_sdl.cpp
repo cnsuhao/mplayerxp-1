@@ -203,6 +203,7 @@ class SDL_VO_Interface : public VO_Interface {
 	char		sdl_subdevice[100];
 	char		driver[8]; /* output driver used by sdl */
 	unsigned	flags;
+	Aspect&		aspect;
 	SDL_Surface*	surface; /* SDL display surface */
 	SDL_Surface*	rgbsurface[MAX_DRI_BUFFERS]; /* SDL RGB surface */
 	SDL_Overlay*	overlay[MAX_DRI_BUFFERS]; /* SDL YUV overlay */
@@ -263,7 +264,8 @@ SDL_VO_Interface::~SDL_VO_Interface()
 }
 
 SDL_VO_Interface::SDL_VO_Interface(const char *arg)
-		:VO_Interface(arg)
+		:VO_Interface(arg),
+		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 #ifdef HAVE_X11
 		,x11(*new(zeromem) X11_System(vo_conf.mDisplayName))
 #endif
@@ -504,12 +506,12 @@ MPXP_Rc SDL_VO_Interface::set_fullmode (int _mode) {
 	screen_surface_h = fullmodes[_mode]->h;
 	screen_surface_w = fullmodes[_mode]->w;
     }
-    aspect_save_screenres(screen_surface_w, screen_surface_h);
+    aspect.save_screen(screen_surface_w, screen_surface_h);
 
     /* calculate new video size/aspect */
     if(mode == YUV) {
-	if(fulltype&VOFLAG_FULLSCREEN) aspect_save_screenres(XWidth, XHeight);
-	aspect(&dstwidth, &dstheight, A_NOZOOM);
+	if(fulltype&VOFLAG_FULLSCREEN) aspect.save_screen(XWidth, XHeight);
+	aspect.calc(dstwidth, dstheight, Aspect::NOZOOM);
     }
 
     /* try to change to given fullscreenmode */
@@ -587,8 +589,7 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 	d_width = _width;
 	d_height = _height;
     }
-    aspect_save_orig(_width,_height);
-    aspect_save_prescale(d_width ? d_width : _width, d_height ? d_height : _height);
+    aspect.save_image(_width,_height,d_width,d_height);
 
     /* Save the original Image size */
     X = 0;
@@ -651,8 +652,8 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
     }
     if(X) {
-	aspect_save_screenres(XWidth,XHeight);
-	aspect(&dstwidth,&dstheight,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
+	aspect.save_screen(XWidth,XHeight);
+	aspect.calc(dstwidth,dstheight,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
     }
     windowsize.w = dstwidth;
     windowsize.h = dstheight;
@@ -893,7 +894,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		    retval = VO_EVENT_RESIZE;
 		} else if ( keypressed == SDLK_n ) {
 #ifdef HAVE_X11
-		    aspect(&dstwidth, &dstheight,flags&VOFLAG_FULLSCREEN?A_ZOOM:A_NOZOOM);
+		    aspect.calc(dstwidth, dstheight,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 #endif
 		    if (unsigned(surface->w) != dstwidth || unsigned(surface->h) != dstheight) {
 			if(set_video_mode(dstwidth, dstheight, bpp, sdlflags)!=0) exit_player("SDL set video mode");
