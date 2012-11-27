@@ -210,8 +210,6 @@ extern MPXP_Rc		vo_screenshot(vo_data_t* vo,unsigned idx );
 extern MPXP_Rc		vo_pause(vo_data_t* vo);
 extern MPXP_Rc		vo_resume(vo_data_t* vo);
 
-extern void		vo_lock_surfaces(vo_data_t* vo);
-extern void		vo_unlock_surfaces(vo_data_t* vo);
 extern MPXP_Rc	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi);
 extern MPXP_Rc	 __FASTCALL__ vo_get_surface_caps(vo_data_t* vo,dri_surface_cap_t*);
 

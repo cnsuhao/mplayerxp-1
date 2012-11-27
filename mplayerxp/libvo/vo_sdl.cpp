@@ -158,35 +158,6 @@ static void setenv(const char *name, const char *val, int _xx)
 }
 #endif
 
-
-#define FS 0x01
-#define VM 0x02
-#define ZOOM 0x04
-#define FLIP 0x08
-
-#ifdef SDL_ENABLE_LOCKS
-#define	SDL_OVR_LOCK(x)        if (SDL_LockYUVOverlay (priv->overlay[x])) { \
-				MSG_V("SDL: Couldn't lock YUV overlay\n"); \
-				return x; \
-			    }
-#define SDL_OVR_UNLOCK(x)      SDL_UnlockYUVOverlay (priv->overlay[x]);
-
-#define SDL_SRF_LOCK(srf, x)   if(SDL_MUSTLOCK(srf)) { \
-				if(SDL_LockSurface (srf)) { \
-					MSG_V("SDL: Couldn't lock RGB surface\n"); \
-					return x; \
-				} \
-			    }
-
-#define SDL_SRF_UNLOCK(srf) if(SDL_MUSTLOCK(srf)) \
-				SDL_UnlockSurface (srf);
-#else
-#define SDL_OVR_LOCK(x)
-#define SDL_OVR_UNLOCK(x)
-#define SDL_SRF_LOCK(srf, x)
-#define SDL_SRF_UNLOCK(srf)
-#endif
-
 typedef enum {
     YUV=0,
     RGB,
@@ -209,7 +180,7 @@ class SDL_VO_Interface : public VO_Interface {
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual MPXP_Rc	flush_page(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
-	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual void	get_surface(dri_surface_t *surf);
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
@@ -512,7 +483,7 @@ MPXP_Rc SDL_VO_Interface::set_fullmode (int _mode) {
 
     /* if we haven't set a fullmode yet, default to the lowest res fullmode first */
     /* But select a mode where the full video enter */
-    if(X && fulltype & FS) {
+    if(X && fulltype & VOFLAG_FULLSCREEN) {
 	screen_surface_w = XWidth;
 	screen_surface_h = XHeight;
     }
@@ -537,7 +508,7 @@ MPXP_Rc SDL_VO_Interface::set_fullmode (int _mode) {
 
     /* calculate new video size/aspect */
     if(mode == YUV) {
-	if(fulltype&FS) aspect_save_screenres(XWidth, XHeight);
+	if(fulltype&VOFLAG_FULLSCREEN) aspect_save_screenres(XWidth, XHeight);
 	aspect(&dstwidth, &dstheight, A_ZOOM);
     }
 
@@ -551,9 +522,7 @@ MPXP_Rc SDL_VO_Interface::set_fullmode (int _mode) {
 	if (surface) SDL_FreeSurface(surface);
 	surface = newsurface;
 	SDL_ShowCursor(0);
-	SDL_SRF_LOCK(surface, -1)
 	SDL_FillRect(surface, NULL, 0);
-	SDL_SRF_UNLOCK(surface)
 	retval = setup_surfaces();
 	unlock_surfaces();
     } else
@@ -693,23 +662,23 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
      * bit 2 (0x04) enables software scaling (-zoom)
      * bit 3 (0x08) enables flipping (-flip)
      */
-    if(flags&FLIP) {
+    if(flags&VOFLAG_FLIPPING) {
 	MSG_V("SDL: using flipped video (only with RGB/BGR/packed YUV)\n");
 	flip = 1;
     }
-    if(flags&FS) {
+    if(flags&VOFLAG_FULLSCREEN) {
 	MSG_V("SDL: setting zoomed fullscreen without modeswitching\n");
 	MSG_V("SDL: Info - please use -vm or -zoom to switch to best resolution.\n");
-	fulltype = FS;
+	fulltype = VOFLAG_FULLSCREEN;
 	retval = set_fullmode(fullmode);
 	if(retval!=MPXP_Ok) return retval;
-    } else if(flags&VM) {
+    } else if(flags&VOFLAG_MODESWITCHING) {
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
-	fulltype = VM;
+	fulltype = VOFLAG_MODESWITCHING;
 	set_fullmode(fullmode);
-    } else if(flags&ZOOM) {
+    } else if(flags&VOFLAG_SWSCALE) {
 	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
-	fulltype = ZOOM;
+	fulltype = VOFLAG_SWSCALE;
 	retval = set_fullmode(fullmode);
 	if(retval!=MPXP_Ok) return retval;
     } else {
@@ -723,7 +692,7 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 		if(retval!=MPXP_Ok) return retval;
 	    } else {
 		MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
-		fulltype = ZOOM;
+		fulltype = VOFLAG_SWSCALE;
 		retval = set_fullmode(fullmode);
 		if(retval!=MPXP_Ok) return retval;
 	    }
@@ -1004,8 +973,6 @@ void SDL_VO_Interface::erase_rectangle(unsigned idx,int x, int _y, int w, int h)
 	case IMGFMT_I420:
 	case IMGFMT_IYUV:
 	{
-	    SDL_OVR_LOCK(idx)
-
 	    /* Erase Y plane */
 	    erase_area_1(x, w, h,
 			overlay[idx]->pitches[0], 0,
@@ -1026,7 +993,6 @@ void SDL_VO_Interface::erase_rectangle(unsigned idx,int x, int _y, int w, int h)
 			overlay[idx]->pitches[2], 128,
 			overlay[idx]->pixels[2] +
 			overlay[idx]->pitches[2]*_y);
-	    SDL_OVR_UNLOCK(idx)
 	    break;
 	}
 	case IMGFMT_YUY2:
@@ -1036,15 +1002,12 @@ void SDL_VO_Interface::erase_rectangle(unsigned idx,int x, int _y, int w, int h)
 	    /* yuy2 and yvyu represent black the same way */
 	    uint8_t yuy2_black[] = {16, 128, 16, 128};
 	    uint8_t uyvy_black[] = {128, 16, 128, 16};
-
-	    SDL_OVR_LOCK(idx)
 	    erase_area_4(x*2, w*2, h,
 			overlay[idx]->pitches[0],
 			format == IMGFMT_UYVY ? *((uint32_t*) uyvy_black):
 			(*(uint32_t*) yuy2_black),
 			overlay[idx]->pixels[0] +
 			overlay[idx]->pitches[0]*_y);
-	    SDL_OVR_UNLOCK(idx)
 	    break;
 	}
 	case IMGFMT_RGB15:
@@ -1060,9 +1023,7 @@ void SDL_VO_Interface::erase_rectangle(unsigned idx,int x, int _y, int w, int h)
 	    rect.w = w; rect.h = h;
 	    rect.x = x; rect.y = _y;
 
-	    SDL_SRF_LOCK(rgbsurface[idx], (void) 0)
 	    SDL_FillRect(rgbsurface[idx], &rect, 0);
-	    SDL_SRF_UNLOCK(rgbsurface[idx])
 	    break;
 	}
     }
@@ -1217,11 +1178,12 @@ void SDL_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
     }
 }
 
-void SDL_VO_Interface::get_surface(dri_surface_t *surf) const
+void SDL_VO_Interface::get_surface(dri_surface_t *surf)
 {
 #ifdef CONFIG_VIDIX
     if(vidix) return vidix->get_surface(surf);
 #endif
+    lock_surfaces();
     if(mode == YUV) {
 	int i,n;
 	n = std::min(4,overlay[surf->idx]->planes);
@@ -1241,6 +1203,7 @@ void SDL_VO_Interface::get_surface(dri_surface_t *surf) const
 	surf->planes[2] = 0;
 	surf->planes[3] = 0;
     }
+    unlock_surfaces();
 }
 
 unsigned SDL_VO_Interface::get_num_frames() const {

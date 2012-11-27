@@ -107,7 +107,6 @@ typedef struct dri_priv_s {
     int			has_dri;
     unsigned		bpp;
     dri_surface_cap_t	cap;
-    dri_surface_t	surf[MAX_DRI_BUFFERS];
     unsigned		num_xp_frames;
     int			dr,planes_eq,is_planar,accel;
     unsigned		sstride;
@@ -124,7 +123,6 @@ struct vo_priv_t : public video_private {
     uint32_t			org_width,org_height;
     unsigned			ps_off[4]; /* offsets for y,u,v in panscan mode */
     unsigned long long int	frame_counter;
-    pthread_mutex_t		surfaces_mutex;
     vo_format_desc		vod;
     dri_priv_t			dri;
     const vo_info_t*		video_out;
@@ -133,15 +131,11 @@ struct vo_priv_t : public video_private {
 };
 
 vo_priv_t::vo_priv_t() {
-    pthread_mutexattr_t attr;
     rnd_fill(antiviral_hole,reinterpret_cast<long>(&srcFourcc)-reinterpret_cast<long>(antiviral_hole));
-    pthread_mutexattr_init(&attr);
-    pthread_mutex_init(&surfaces_mutex,&attr);
     dri.num_xp_frames=1;
 }
 
 vo_priv_t::~vo_priv_t() {
-    pthread_mutex_destroy(&surfaces_mutex);
     delete vo_iface;
 }
 
@@ -272,19 +266,12 @@ int __FASTCALL__ vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd)
 static void __FASTCALL__ dri_config(vo_data_t*vo,uint32_t fourcc)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
-    unsigned i;
     priv.dri.is_planar = vo_describe_fourcc(fourcc,&priv.vod);
     priv.dri.bpp=priv.vod.bpp;
     if(!priv.dri.bpp) priv.dri.has_dri=0; /*unknown fourcc*/
-    if(priv.dri.has_dri)
-    {
+    if(priv.dri.has_dri) {
 	priv.dri.num_xp_frames=priv.vo_iface->get_num_frames();
 	priv.dri.num_xp_frames=std::min(priv.dri.num_xp_frames,unsigned(MAX_DRI_BUFFERS));
-	for(i=0;i<priv.dri.num_xp_frames;i++)
-	{
-	    priv.dri.surf[i].idx=i;
-	    priv.vo_iface->get_surface(&priv.dri.surf[i]);
-	}
     }
 }
 
@@ -323,17 +310,19 @@ static void __FASTCALL__ dri_tune(vo_data_t*vo,unsigned width,unsigned height)
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     priv.dri.sstride=priv.dri.is_planar?width:width*((priv.dri.bpp+7)/8);
     priv.dri.off[0] = priv.dri.off[1] = priv.dri.off[2] = priv.dri.off[3] = 0;
-    if(!priv.dri.is_planar)
-    {
+    if(!priv.dri.is_planar) {
 	priv.dri.planes_eq = priv.dri.sstride == priv.dri.cap.strides[0];
 	priv.dri.off[0] = priv.dri.cap.y*priv.dri.cap.strides[0]+priv.dri.cap.x*((priv.dri.bpp+7)/8);
     }
     else
     {
 	unsigned long y_off,u_off,v_off;
-	y_off = (unsigned long)priv.dri.surf[0].planes[0];
-	u_off = (unsigned long)std::min(priv.dri.surf[0].planes[1],priv.dri.surf[0].planes[2]);
-	v_off = (unsigned long)std::max(priv.dri.surf[0].planes[1],priv.dri.surf[0].planes[2]);
+	dri_surface_t surf;
+	surf.idx=0;
+	priv.vo_iface->get_surface(&surf);
+	y_off = (unsigned long)surf.planes[0];
+	u_off = (unsigned long)std::min(surf.planes[1],surf.planes[2]);
+	v_off = (unsigned long)std::max(surf.planes[1],surf.planes[2]);
 	priv.dri.off[0] = priv.dri.cap.y*priv.dri.cap.strides[0]+priv.dri.cap.x;
 	if(priv.dri.bpp==12) /*YV12 series*/
 	{
@@ -487,7 +476,10 @@ MPXP_Rc vo_screenshot(vo_data_t*vo,unsigned idx )
     char buf[256];
     MSG_DBG3("dri_vo_dbg: vo_screenshot\n");
     sprintf(buf,"%llu",priv.frame_counter);
-    return gr_screenshot(buf,const_cast<const uint8_t**>(priv.dri.surf[idx].planes),priv.dri.cap.strides,priv.dri.cap.fourcc,priv.dri.cap.width,priv.dri.cap.height);
+    dri_surface_t surf;
+    surf.idx=idx;
+    priv.vo_iface->get_surface(&surf);
+    return gr_screenshot(buf,const_cast<const uint8_t**>(surf.planes),priv.dri.cap.strides,priv.dri.cap.fourcc,priv.dri.cap.width,priv.dri.cap.height);
 }
 
 MPXP_Rc vo_pause(vo_data_t*vo)
@@ -502,15 +494,6 @@ MPXP_Rc vo_resume(vo_data_t*vo)
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_resume\n");
     return priv.vo_iface->resume();
-}
-
-void vo_lock_surfaces(vo_data_t*vo) {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
-    pthread_mutex_lock(&priv.surfaces_mutex);
-}
-void vo_unlock_surfaces(vo_data_t*vo) {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
-    pthread_mutex_unlock(&priv.surfaces_mutex);
 }
 
 MPXP_Rc __FASTCALL__ vo_get_surface_caps(vo_data_t* vo,dri_surface_cap_t*caps) {
@@ -561,15 +544,16 @@ MPXP_Rc __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi)
 	/* it seems that surfaces are equal */
 	if((((mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && width_less_stride) || priv.dri.planes_eq) && priv.dri.dr)
 	{
-	    vo_lock_surfaces(vo);
-	    mpi->planes[0]=priv.dri.surf[mpi->xp_idx].planes[0]+priv.dri.off[0];
-	    mpi->planes[1]=priv.dri.surf[mpi->xp_idx].planes[1]+priv.dri.off[1];
-	    mpi->planes[2]=priv.dri.surf[mpi->xp_idx].planes[2]+priv.dri.off[2];
+	    dri_surface_t surf;
+	    surf.idx=mpi->xp_idx;
+	    priv.vo_iface->get_surface(&surf);
+	    mpi->planes[0]=surf.planes[0]+priv.dri.off[0];
+	    mpi->planes[1]=surf.planes[1]+priv.dri.off[1];
+	    mpi->planes[2]=surf.planes[2]+priv.dri.off[2];
 	    mpi->stride[0]=priv.dri.cap.strides[0];
 	    mpi->stride[1]=priv.dri.cap.strides[1];
 	    mpi->stride[2]=priv.dri.cap.strides[2];
 	    mpi->flags|=MP_IMGFLAG_DIRECT;
-	    vo_unlock_surfaces(vo);
 	    MSG_DBG2("dri_vo_dbg: vo_get_surface OK\n");
 	    return MPXP_True;
 	}
@@ -655,8 +639,11 @@ MPXP_Rc __FASTCALL__ vo_draw_slice(vo_data_t*vo,const mp_image_t *mpi)
 	int dstStride[4];
 	int finalize=vo_is_final(vo);
 	unsigned idx = mpi->xp_idx;
+	dri_surface_t surf;
+	surf.idx=idx;
+	priv.vo_iface->get_surface(&surf);
 	for(i=0;i<4;i++) {
-	    dst[i]=priv.dri.surf[idx].planes[i]+priv.dri.off[i];
+	    dst[i]=surf.planes[i]+priv.dri.off[i];
 	    dstStride[i]=priv.dri.cap.strides[i];
 	    dst[i]+=((mpi->y*dstStride[i])*priv.vod.y_mul[i])/priv.vod.y_div[i];
 	    dst[i]+=(mpi->x*priv.vod.x_mul[i])/priv.vod.x_div[i];
@@ -769,6 +756,9 @@ static void __FASTCALL__ dri_remove_osd(any_t*_vo,unsigned idx,int x0,int _y0, i
 {
     vo_data_t* vo=reinterpret_cast<vo_data_t*>(_vo);
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
+    dri_surface_t surf;
+    surf.idx=idx;
+    priv.vo_iface->get_surface(&surf);
     if(x0+w<=priv.dri.cap.width&&_y0+h<=priv.dri.cap.height)
     switch(priv.dri.cap.fourcc)
     {
@@ -780,39 +770,39 @@ static void __FASTCALL__ dri_remove_osd(any_t*_vo,unsigned idx,int x0,int _y0, i
 	case IMGFMT_BGR24:
 	case IMGFMT_RGB32:
 	case IMGFMT_BGR32:
-		clear_rect_rgb(vo,_y0,h,priv.dri.surf[idx].planes[0]+_y0*priv.dri.cap.strides[0]+x0*((priv.dri.bpp+7)/8),
+		clear_rect_rgb(vo,_y0,h,surf.planes[0]+_y0*priv.dri.cap.strides[0]+x0*((priv.dri.bpp+7)/8),
 			    w*(priv.dri.bpp+7)/8,priv.dri.cap.strides[0]);
 		break;
 	case IMGFMT_YVYU:
 	case IMGFMT_YUY2:
-		clear_rect_yuy2(vo,_y0,h,priv.dri.surf[idx].planes[0]+_y0*priv.dri.cap.strides[0]+x0*2,
+		clear_rect_yuy2(vo,_y0,h,surf.planes[0]+_y0*priv.dri.cap.strides[0]+x0*2,
 			    w*2,priv.dri.cap.strides[0]);
 		break;
 	case IMGFMT_UYVY:
-		clear_rect_yuy2(vo,_y0,h,priv.dri.surf[idx].planes[0]+_y0*priv.dri.cap.strides[0]+x0*2+1,
+		clear_rect_yuy2(vo,_y0,h,surf.planes[0]+_y0*priv.dri.cap.strides[0]+x0*2+1,
 			    w*2,priv.dri.cap.strides[0]);
 		break;
 	case IMGFMT_Y800:
-		clear_rect(vo,_y0,h,priv.dri.surf[idx].planes[0]+_y0*priv.dri.cap.strides[0]+x0,
+		clear_rect(vo,_y0,h,surf.planes[0]+_y0*priv.dri.cap.strides[0]+x0,
 			    w,priv.dri.cap.strides[0],0x10);
 		break;
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
 	case IMGFMT_IYUV:
-		clear_rect(vo,_y0,h,priv.dri.surf[idx].planes[0]+_y0*priv.dri.cap.strides[0]+x0,
+		clear_rect(vo,_y0,h,surf.planes[0]+_y0*priv.dri.cap.strides[0]+x0,
 			    w,priv.dri.cap.strides[0],0x10);
-		clear_rect2(vo,_y0/2,h/2,priv.dri.surf[idx].planes[1]+_y0/2*priv.dri.cap.strides[1]+x0/2,
+		clear_rect2(vo,_y0/2,h/2,surf.planes[1]+_y0/2*priv.dri.cap.strides[1]+x0/2,
 			    w/2,priv.dri.cap.strides[1],0x80);
-		clear_rect2(vo,_y0/2,h/2,priv.dri.surf[idx].planes[2]+_y0/2*priv.dri.cap.strides[2]+x0/2,
+		clear_rect2(vo,_y0/2,h/2,surf.planes[2]+_y0/2*priv.dri.cap.strides[2]+x0/2,
 			    w/2,priv.dri.cap.strides[2],0x80);
 		break;
 	case IMGFMT_YVU9:
 	case IMGFMT_IF09:
-		clear_rect(vo,_y0,h,priv.dri.surf[idx].planes[0]+_y0*priv.dri.cap.strides[0]+x0,
+		clear_rect(vo,_y0,h,surf.planes[0]+_y0*priv.dri.cap.strides[0]+x0,
 			    w,priv.dri.cap.strides[0],0x10);
-		clear_rect4(vo,_y0/4,h/4,priv.dri.surf[idx].planes[1]+_y0/4*priv.dri.cap.strides[1]+x0/4,
+		clear_rect4(vo,_y0/4,h/4,surf.planes[1]+_y0/4*priv.dri.cap.strides[1]+x0/4,
 			    w/4,priv.dri.cap.strides[1],0x80);
-		clear_rect4(vo,_y0/4,h/4,priv.dri.surf[idx].planes[2]+_y0/4*priv.dri.cap.strides[2]+x0/4,
+		clear_rect4(vo,_y0/4,h/4,surf.planes[2]+_y0/4*priv.dri.cap.strides[2]+x0/4,
 			    w/4,priv.dri.cap.strides[2],0x80);
 		break;
     }
@@ -857,10 +847,14 @@ static void __FASTCALL__ dri_draw_osd(any_t*vo,unsigned idx,int x0,int _y0, int 
     if(x0+w<=priv.dri.cap.width&&_y0+h<=priv.dri.cap.height)
     {
 	if(!priv.draw_alpha) priv.draw_alpha=get_draw_alpha(priv.dri.cap.fourcc);
-	if(priv.draw_alpha)
+	if(priv.draw_alpha) {
+	    dri_surface_t surf;
+	    surf.idx=idx;
+	    priv.vo_iface->get_surface(&surf);
 	    (*priv.draw_alpha)(w,h,src,srca,stride,
-			    priv.dri.surf[idx].planes[0]+priv.dri.cap.strides[0]*_y0+x0*((priv.dri.bpp+7)/8),
+			    surf.planes[0]+priv.dri.cap.strides[0]*_y0+x0*((priv.dri.bpp+7)/8),
 			    priv.dri.cap.strides[0],finalize);
+	}
     }
 }
 

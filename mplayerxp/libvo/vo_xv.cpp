@@ -54,7 +54,7 @@ class Xv_VO_Interface : public VO_Interface {
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
-	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual void	get_surface(dri_surface_t *surf);
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
@@ -302,7 +302,7 @@ void Xv_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[1] = ts;
 }
 
-void Xv_VO_Interface::get_surface(dri_surface_t *surf) const
+void Xv_VO_Interface::get_surface(dri_surface_t *surf)
 {
     unsigned i,n;
     n=std::min(4,xv.ImageXv(0)->num_planes);

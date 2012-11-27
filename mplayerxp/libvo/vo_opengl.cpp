@@ -67,7 +67,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
-	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual void	get_surface(dri_surface_t *surf);
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
@@ -280,7 +280,7 @@ void OpenGL_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[3] = 0;
 }
 
-void OpenGL_VO_Interface::get_surface(dri_surface_t *surf) const
+void OpenGL_VO_Interface::get_surface(dri_surface_t *surf)
 {
     surf->planes[0] = glx.ImageData(surf->idx);
     surf->planes[1] = 0;

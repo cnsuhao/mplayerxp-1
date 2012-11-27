@@ -73,7 +73,7 @@ class VESA_VO_Interface : public VO_Interface {
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual MPXP_Rc	flush_page(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
-	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual void	get_surface(dri_surface_t *surf);
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
@@ -760,7 +760,7 @@ void VESA_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[3] = 0;
 }
 
-void VESA_VO_Interface::get_surface(dri_surface_t *surf) const
+void VESA_VO_Interface::get_surface(dri_surface_t *surf)
 {
 #ifdef CONFIG_VIDIX
     if(vidix) return vidix->get_surface(surf);

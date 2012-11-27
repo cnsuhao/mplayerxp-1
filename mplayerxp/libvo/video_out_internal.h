@@ -37,15 +37,15 @@ class VO_Interface : public Opaque {
 				const char *title,
 				uint32_t format) = 0;
 	virtual MPXP_Rc	select_frame(unsigned idx) = 0;
-	virtual MPXP_Rc	flush_page(unsigned idx) { return MPXP_False; }
-	virtual MPXP_Rc	toggle_fullscreen() { return MPXP_False; }
-	virtual MPXP_Rc	reset() { return MPXP_True; }
-	virtual MPXP_Rc	pause() { return MPXP_True; }
-	virtual MPXP_Rc	resume() { return MPXP_True; }
+	virtual MPXP_Rc	flush_page(unsigned idx) { UNUSED(idx); return MPXP_NA; }
+	virtual MPXP_Rc	toggle_fullscreen() { return MPXP_NA; }
+	virtual MPXP_Rc	reset() { return MPXP_NA; }
+	virtual MPXP_Rc	pause() { return MPXP_NA; }
+	virtual MPXP_Rc	resume() { return MPXP_NA; }
 
 	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const = 0;
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const = 0;
-	virtual void	get_surface(dri_surface_t *surf) const = 0;
+	virtual void	get_surface(dri_surface_t *surf) = 0;
 	virtual unsigned get_num_frames() const = 0;
 
 	virtual uint32_t check_events(const vo_resize_t*) = 0;

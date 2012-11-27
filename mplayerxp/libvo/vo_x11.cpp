@@ -66,7 +66,7 @@ class X11_VO_Interface : public VO_Interface {
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual MPXP_Rc	flush_page(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
-	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual void	get_surface(dri_surface_t *surf);
 	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
 	virtual unsigned get_num_frames() const;
 
@@ -77,7 +77,8 @@ class X11_VO_Interface : public VO_Interface {
 	const char*	parse_sub_device(const char *sd);
 	void		resize(int x,int y) const;
 	void		display_image(XImage * myximage) const;
-
+	void		lock_surfaces();
+	void		unlock_surfaces();
 
 	uint32_t	image_width;
 	uint32_t	image_height;
@@ -97,7 +98,17 @@ class X11_VO_Interface : public VO_Interface {
 #endif
 	uint32_t	subdev_flags;
 	X11_System&	x11;
+
+	pthread_mutex_t	surfaces_mutex;
 };
+
+void X11_VO_Interface::lock_surfaces() {
+    pthread_mutex_lock(&surfaces_mutex);
+}
+
+void X11_VO_Interface::unlock_surfaces() {
+    pthread_mutex_unlock(&surfaces_mutex);
+}
 
 #ifdef HAVE_SHM
 #include <sys/ipc.h>
@@ -120,6 +131,9 @@ X11_VO_Interface::X11_VO_Interface(const char *arg)
 {
     const char* vidix_name=NULL;
     num_buffers=1;
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutex_init(&surfaces_mutex,&attr);
 
     if(arg) vidix_name = parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
@@ -142,10 +156,10 @@ X11_VO_Interface::~X11_VO_Interface()
 #endif
     for(i=0;i<num_buffers;i++)  x11.freeMyXImage(i);
     x11.saver_on(); // screen saver back on
-
 #ifdef HAVE_XF86VM
     x11.vm_close();
 #endif
+    pthread_mutex_destroy(&surfaces_mutex);
 }
 
 #ifdef CONFIG_VIDIX
@@ -186,12 +200,12 @@ uint32_t X11_VO_Interface::check_events(const vo_resize_t*vrest)
 	else
 #endif
 	{
-	    vo_lock_surfaces(vrest->vo);
+	    lock_surfaces();
 	    for(idx=0;idx<num_buffers;idx++) {
 		x11.freeMyXImage(idx);
 		x11.getMyXImage(idx,vinfo.visual,depth,image_width,image_height);
 	    }
-	    vo_unlock_surfaces(vrest->vo);
+	    unlock_surfaces();
 	}
    }
    return ret;
@@ -326,9 +340,11 @@ MPXP_Rc X11_VO_Interface::select_frame( unsigned idx ){
 #ifdef CONFIG_VIDIX
     if(vidix) return vidix->select_frame(idx);
 #endif
+    lock_surfaces();
     display_image(x11.Image(idx));
     if (num_buffers>1) x11.flush();
     else x11.sync(False);
+    unlock_surfaces();
     return MPXP_Ok;
 }
 
@@ -371,22 +387,17 @@ void X11_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[3] = 0;
 }
 
-void X11_VO_Interface::get_surface(dri_surface_t *surf) const
+void X11_VO_Interface::get_surface(dri_surface_t *surf)
 {
 #ifdef CONFIG_VIDIX
     if(vidix) return vidix->get_surface(surf);
 #endif
+    lock_surfaces();
     surf->planes[0] = x11.ImageData(surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
-}
-
-unsigned X11_VO_Interface::get_num_frames() const {
-#ifdef CONFIG_VIDIX
-    if(vidix) return vidix->get_num_frames();
-#endif
-    return num_buffers;
+    unlock_surfaces();
 }
 
 MPXP_Rc X11_VO_Interface::flush_page(unsigned idx) {
@@ -394,6 +405,13 @@ MPXP_Rc X11_VO_Interface::flush_page(unsigned idx) {
     if(vidix) return vidix->flush_page(idx);
 #endif
     return MPXP_False;
+}
+
+unsigned X11_VO_Interface::get_num_frames() const {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_num_frames();
+#endif
+    return num_buffers;
 }
 
 MPXP_Rc X11_VO_Interface::toggle_fullscreen() {
