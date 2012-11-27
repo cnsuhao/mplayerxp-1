@@ -160,14 +160,19 @@ X11_System::~X11_System() {
     ::XCloseDisplay(mDisplay);
 }
 
-void X11_System::get_win_coord(vo_rect_t* r) const
+void X11_System::get_win_coord(vo_rect_t& r) const
+{
+    r = curr;
+}
+
+void X11_System::update_win_coord()
 {
     XWindowAttributes xwa;
     ::XGetWindowAttributes(mDisplay, window, &xwa);
-    r->x = xwa.x;
-    r->y = xwa.y;
-    r->w = xwa.width;
-    r->h = xwa.height;
+    curr.x = xwa.x;
+    curr.y = xwa.y;
+    curr.w = xwa.width;
+    curr.h = xwa.height;
 }
 
 void X11_System::match_visual(XVisualInfo* vinfo) const
@@ -235,7 +240,7 @@ void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
 	::XSetInputFocus(mDisplay, window, RevertToNone, CurrentTime);
     }
 #endif
-    get_win_coord(&curr);
+    update_win_coord();
 }
 
 void X11_System::select_input(long mask) const
@@ -695,9 +700,10 @@ uint32_t X11_System::check_events(vo_adjust_size_t adjust_size,vo_data_t*opaque)
 		if(adjust_size && ow != curr.w && oh != curr.h && adj_ret) {
 		    ::XResizeWindow( mDisplay,window,curr.w,curr.h );
 		    ::XSync( mDisplay,True);
+		    update_win_coord();
+		    MSG_V("X11 Window %dx%d-%dx%d\n", curr.x, curr.y, curr.w, curr.h);
+		    ret|=VO_EVENT_RESIZE;
 		}
-		MSG_V("X11 Window %dx%d-%dx%d\n", curr.x, curr.y, curr.w, curr.h);
-		ret|=VO_EVENT_RESIZE;
 		break;
 	    case KeyPress: {
 		int key;
@@ -1213,7 +1219,7 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
 	::XSetInputFocus(get_display(), window, RevertToNone, CurrentTime);
     }
 #endif
-    get_win_coord(&curr);
+    update_win_coord();
 }
 #endif
 

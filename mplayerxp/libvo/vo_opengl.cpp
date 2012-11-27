@@ -228,7 +228,7 @@ uint32_t OpenGL_VO_Interface::check_events(const vo_resize_t* vrest)
 {
     int e=glx.check_events(vrest->adjust_size,vrest->vo);
     vo_rect_t r;
-    glx.get_win_coord(&r);
+    glx.get_win_coord(r);
     if(e&VO_EVENT_RESIZE) resize(r.w,r.h);
     return e|VO_EVENT_FORCE_UPDATE;
 }
@@ -293,7 +293,7 @@ unsigned OpenGL_VO_Interface::get_num_frames() const { return num_buffers; }
 MPXP_Rc OpenGL_VO_Interface::toggle_fullscreen() {
     glx.fullscreen();
     vo_rect_t r;
-    glx.get_win_coord(&r);
+    glx.get_win_coord(r);
     resize(r.w,r.h);
     return MPXP_True;
 }

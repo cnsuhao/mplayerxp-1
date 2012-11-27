@@ -38,7 +38,7 @@ class X11_System {
 	void		match_visual(XVisualInfo*) const;
 	virtual XVisualInfo* get_visual() const;
 	virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,int is_vm,unsigned depth,const char*title);
-	void		get_win_coord(vo_rect_t*) const;
+	void		get_win_coord(vo_rect_t&) const;
 	void		select_input(long mask) const;
 	unsigned	depth() const { return _depth; }
 	void		flush() const;
@@ -72,6 +72,7 @@ class X11_System {
 	::Display*	get_display() const { return mDisplay; }
 	int		get_screen() const { return mScreen; }
 	::GC		get_gc() const {return gc; }
+	void		update_win_coord();
 
 	::Window	window;
 	vo_rect_t	prev,curr;

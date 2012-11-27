@@ -242,7 +242,7 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
     uint32_t e=xv.check_events(vrest->adjust_size,vrest->vo);
     if(e&VO_EVENT_RESIZE) {
 	vo_rect_t winc;
-	xv.get_win_coord(&winc);
+	xv.get_win_coord(winc);
 	MSG_V( "[xv-resize] dx: %d dy: %d dw: %d dh: %d\n",
 		winc.x,winc.y,winc.w,winc.h);
 
@@ -250,7 +250,7 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
     }
     if ( e & VO_EVENT_EXPOSE ) {
 	vo_rect_t r,r2;
-	xv.get_win_coord(&r);
+	xv.get_win_coord(r);
 	r2=r;
 	r.w=r.h=1;
 	xv.put_image(xv.ImageXv(expose_idx),r);
@@ -263,7 +263,7 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
 MPXP_Rc Xv_VO_Interface::select_frame(unsigned idx)
 {
     vo_rect_t r;
-    xv.get_win_coord(&r);
+    xv.get_win_coord(r);
     if(flags&VOFLAG_FULLSCREEN) r.h--;
     xv.put_image(xv.ImageXv(idx),r);
     expose_idx=idx;

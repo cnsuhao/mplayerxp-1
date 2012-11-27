@@ -165,7 +165,7 @@ X11_VO_Interface::~X11_VO_Interface()
 #ifdef CONFIG_VIDIX
 void X11_VO_Interface::resize_vidix() const {
     vo_rect_t winc;
-    x11.get_win_coord(&winc);
+    x11.get_win_coord(winc);
     vidix->stop();
     if (vidix->configure(image_width, image_height, winc.x, winc.y,
 	    winc.w, winc.h, in_format, x11.depth(),
@@ -187,7 +187,7 @@ uint32_t X11_VO_Interface::check_events(const vo_resize_t*vrest)
     if (ret & VO_EVENT_RESIZE) {
 	unsigned idx;
 	vo_rect_t r;
-	x11.get_win_coord(&r);
+	x11.get_win_coord(r);
 	unsigned newW= r.w;
 	unsigned newH= r.h;
 	int newAspect=		(newW*(1<<16) + (newH>>1))/newH;
@@ -302,7 +302,7 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 #ifdef CONFIG_VIDIX
     if(vidix) {
 	vo_rect_t winc;
-	x11.get_win_coord(&winc);
+	x11.get_win_coord(winc);
 	if(vidix->configure(image_width,image_height,winc.x,winc.y,
 			winc.w,winc.h,
 			in_format,x11.depth(),
@@ -329,7 +329,7 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 void X11_VO_Interface::display_image(XImage *myximage ) const
 {
     vo_rect_t r;
-    x11.get_win_coord(&r);
+    x11.get_win_coord(r);
     r.x=r.y=0;
     r.w=(r.w-myximage->width)/2;
     r.h=(r.h-myximage->height)/2;
