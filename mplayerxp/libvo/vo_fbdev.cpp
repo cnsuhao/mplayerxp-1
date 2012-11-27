@@ -31,7 +31,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "sub.h"
 #ifdef CONFIG_VIDIX
-#include "vosub_vidix.h"
+#include "vidix_system.h"
 #endif
 #include "aspect.h"
 #include "osd.h"
@@ -119,19 +119,20 @@ class FBDev_VO_Interface : public VO_Interface {
 				unsigned flags,
 				const char *title,
 				uint32_t format);
-	virtual void	select_frame(unsigned idx);
+	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
+	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
+	virtual unsigned get_num_frames() const;
+
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	MPXP_Rc		fb_preinit();
-	uint32_t	parse_sub_device(const char *sd);
+	const char*	parse_sub_device(const char *sd);
 	int		parse_fbmode_cfg(const char *cfgfile);
 	int		get_token(int num);
 	void		vt_set_textarea(int u, int l);
 	void		lots_of_printf() const;
-
-	void		dri_get_surface_caps(dri_surface_cap_t *caps) const;
-	void		dri_get_surface(dri_surface_t *surf) const;
-	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
 
 	FILE *		fp;
 	int		line_num;
@@ -179,26 +180,24 @@ class FBDev_VO_Interface : public VO_Interface {
 	MPXP_Rc		pre_init_err;
 #ifdef CONFIG_VIDIX
 /* Name of VIDIX driver */
-	const char*	vidix_name;
-	vidix_server_t*	vidix_server;
-	vidix_priv_t*	vidix;
+	Vidix_System*	vidix;
 #endif
 	int		fb_preinit_done;
 	MPXP_Rc		fb_works;
 };
 
-uint32_t FBDev_VO_Interface::parse_sub_device(const char *sd)
+const char* FBDev_VO_Interface::parse_sub_device(const char *sd)
 {
     const char *param;
 #ifdef CONFIG_VIDIX
-    if(memcmp(sd,"vidix",5) == 0) vidix_name = &sd[5]; /* vidix_name will be valid within init() */
+    if(memcmp(sd,"vidix",5) == 0) return &sd[5]; /* vidix_name will be valid within init() */
     else
 #endif
     {
 	param=mrl_parse_line(sd,NULL,NULL,&priv_conf.dev_name,&priv_conf.mode_name);
 	mrl_parse_params(param,fbconf);
     }
-    return 0;
+    return NULL;
 }
 
 MPXP_Rc FBDev_VO_Interface::fb_preinit()
@@ -286,20 +285,18 @@ FBDev_VO_Interface::~FBDev_VO_Interface()
     close(dev_fd);
     if(frame_buffer) munmap(frame_buffer,size);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) vidix_term(vidix);
-    delete vidix_server;
-    delete vidix;
+    if(vidix) delete vidix;
 #endif
 }
 
 FBDev_VO_Interface::FBDev_VO_Interface(const char *arg)
 		    :VO_Interface(arg)
 {
-    if(arg) parse_sub_device(arg);
+    const char *vidix_name=NULL;
+    if(arg) vidix_name=parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
     if(vidix_name) {
-	vidix=vidix_preinit(vidix_name);
-	if(!(vidix_server=vidix_get_server(vidix))) {
+	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
 	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
 	    exit_player("Vidix error");
 	}
@@ -1061,13 +1058,11 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     else y_offset = 0;
 
 #ifdef CONFIG_VIDIX
-    if(vidix_name) {
-	if(vidix_init(vidix,width,height,x_offset,y_offset,out_width,
+    if(vidix) {
+	if(vidix->configure(width,height,x_offset,y_offset,out_width,
 		    out_height,format,bpp,
 		    xres,yres) != MPXP_Ok) {
 			MSG_ERR(FBDEV "Can't initialize VIDIX driver\n");
-			vidix_name = NULL;
-			vidix_term(vidix);
 			return MPXP_False;
 	} else MSG_V(FBDEV "Using VIDIX\n");
 	if ((frame_buffer = (uint8_t *) mmap(0, size, PROT_READ | PROT_WRITE,
@@ -1076,7 +1071,7 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 	    return MPXP_False;
 	}
 	memset(frame_buffer, 0, line_len * yres);
-	if(vidix_start(vidix)!=0) { vidix_term(vidix); return MPXP_False; }
+	if(vidix->start()!=0) return MPXP_False;
     } else
 #endif
     {
@@ -1116,6 +1111,9 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 
 MPXP_Rc FBDev_VO_Interface::query_format(vo_query_fourcc_t * format) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->query_fourcc(format);
+#endif
     format->flags=VOCAP_NA;
     switch(format->fourcc) {
 	case IMGFMT_BGR15: if(bpp == 15) format->flags=VOCAP_SUPPORTED; break;
@@ -1127,13 +1125,10 @@ MPXP_Rc FBDev_VO_Interface::query_format(vo_query_fourcc_t * format) const
     return MPXP_Ok;
 }
 
-void FBDev_VO_Interface::select_frame(unsigned idx)
+MPXP_Rc FBDev_VO_Interface::select_frame(unsigned idx)
 {
 #ifdef CONFIG_VIDIX
-    if(vidix_server) {
-	vidix_server->select_frame(vidix,idx);
-	return;
-    }
+    if(vidix) return vidix->select_frame(idx);
 #endif
     unsigned i, out_offset = 0, in_offset = 0;
 
@@ -1143,10 +1138,14 @@ void FBDev_VO_Interface::select_frame(unsigned idx)
 	out_offset += line_len;
 	in_offset += out_width * pixel_size;
     }
+    return MPXP_Ok;
 }
 
-void FBDev_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
+void FBDev_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_surface_caps(caps);
+#endif
     caps->caps = DRI_CAP_TEMP_VIDEO;
     caps->fourcc = dstFourcc;
     caps->width=out_width;
@@ -1161,32 +1160,33 @@ void FBDev_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[3] = 0;
 }
 
-void FBDev_VO_Interface::dri_get_surface(dri_surface_t *surf) const
+void FBDev_VO_Interface::get_surface(dri_surface_t *surf) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_surface(surf);
+#endif
     surf->planes[0] = next_frame[surf->idx];
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
 }
 
+unsigned FBDev_VO_Interface::get_num_frames() const {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_num_frames();
+#endif
+    return total_fr;
+}
+
 MPXP_Rc FBDev_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
+    switch(request) {
+	case VOCTRL_FLUSH_PAGES:
 #ifdef CONFIG_VIDIX
-    if(vidix_server)
-	if(vidix_server->control(vidix,request,data)==MPXP_Ok) return MPXP_Ok;
+	    if(vidix) vidix->flush_page(*(unsigned*)data);
+	    return MPXP_Ok;
 #endif
-    switch (request) {
-	case VOCTRL_QUERY_FORMAT:
-	    return query_format((vo_query_fourcc_t*)data);
-	case VOCTRL_GET_NUM_FRAMES:
-	    *(uint32_t *)data = total_fr;
-	    return MPXP_True;
-	case DRI_GET_SURFACE_CAPS:
-	    dri_get_surface_caps(reinterpret_cast<dri_surface_cap_t*>(data));
-	    return MPXP_True;
-	case DRI_GET_SURFACE:
-	    dri_get_surface(reinterpret_cast<dri_surface_t*>(data));
-	    return MPXP_True;
+	default: break;
     }
     return MPXP_NA;
 }

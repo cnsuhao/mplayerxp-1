@@ -23,7 +23,7 @@ ifeq ($(HAVE_VESA),yes)
 CXXSRCS += vo_vesa.cpp
 endif
 ifeq ($(CONFIG_VIDIX),yes)
-CXXSRCS += vosub_vidix.cpp
+CXXSRCS += vidix_system.cpp
 endif
 
 CFLAGS  = $(OPTFLAGS) -I. -I.. -DMPG12PLAY -Wall -W

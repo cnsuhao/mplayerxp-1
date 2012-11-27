@@ -278,12 +278,12 @@ static void __FASTCALL__ dri_config(vo_data_t*vo,uint32_t fourcc)
     if(!priv.dri.bpp) priv.dri.has_dri=0; /*unknown fourcc*/
     if(priv.dri.has_dri)
     {
-	priv.vo_iface->ctrl(VOCTRL_GET_NUM_FRAMES,&priv.dri.num_xp_frames);
+	priv.dri.num_xp_frames=priv.vo_iface->get_num_frames();
 	priv.dri.num_xp_frames=std::min(priv.dri.num_xp_frames,unsigned(MAX_DRI_BUFFERS));
 	for(i=0;i<priv.dri.num_xp_frames;i++)
 	{
 	    priv.dri.surf[i].idx=i;
-	    priv.vo_iface->ctrl(DRI_GET_SURFACE,&priv.dri.surf[i]);
+	    priv.vo_iface->get_surface(&priv.dri.surf[i]);
 	}
     }
 }
@@ -380,7 +380,7 @@ static void __FASTCALL__ dri_reconfig(vo_data_t*vo,uint32_t event )
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
 	priv.dri.has_dri = 1;
-	priv.vo_iface->ctrl(DRI_GET_SURFACE_CAPS,&priv.dri.cap);
+	priv.vo_iface->get_surface_caps(&priv.dri.cap);
 	dri_config(vo,priv.dri.cap.fourcc);
 	/* ugly workaround of swapped BGR-fourccs. Should be removed in the future */
 	if(!priv.dri.has_dri)
@@ -430,13 +430,12 @@ MPXP_Rc __FASTCALL__ vo_config(vo_data_t*vo,uint32_t width, uint32_t height, uin
     retval = priv.vo_iface->configure(w,h,d_w,d_h,fullscreen,title,dest_fourcc);
     priv.srcFourcc=format;
     if(retval == MPXP_Ok) {
-	int dri_retv;
-	dri_retv = priv.vo_iface->ctrl(DRI_GET_SURFACE_CAPS,&priv.dri.cap);
+	priv.vo_iface->get_surface_caps(&priv.dri.cap);
 	priv.image_format = format;
 	priv.image_width = w;
 	priv.image_height = h;
 	ps_tune(vo,priv.image_width,priv.org_height);
-	if(dri_retv == MPXP_True) dri_reconfig(vo,0);
+	dri_reconfig(vo,0);
 	MSG_V("dri_vo_caps: driver does %s support DRI\n",priv.dri.has_dri?"":"not");
 	MSG_V("dri_vo_caps: caps=%08X fourcc=%08X(%s) x,y,w,h(%u %u %u %u)\n"
 	      "dri_vo_caps: width_height(%u %u) strides(%u %u %u %u) priv.dri.bpp=%u\n"
@@ -470,7 +469,7 @@ uint32_t __FASTCALL__ vo_query_format(vo_data_t*vo,uint32_t* fourcc, unsigned sr
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
-    if(priv.vo_iface->ctrl(VOCTRL_QUERY_FORMAT,&qfourcc)==MPXP_False)
+    if(priv.vo_iface->query_format(&qfourcc)==MPXP_False)
 	qfourcc.flags=VOCAP_NA;
     MSG_V("dri_vo: request for %s fourcc: %i\n",vo_format_name(*fourcc),qfourcc.flags);
     dri_forced_fourcc = *fourcc;
@@ -514,6 +513,12 @@ void vo_lock_surfaces(vo_data_t*vo) {
 void vo_unlock_surfaces(vo_data_t*vo) {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
     pthread_mutex_unlock(&priv.surfaces_mutex);
+}
+
+MPXP_Rc __FASTCALL__ vo_get_surface_caps(vo_data_t* vo,dri_surface_cap_t*caps) {
+    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo->vo_priv);
+    priv.vo_iface->get_surface_caps(caps);
+    return MPXP_Ok;
 }
 
 MPXP_Rc __FASTCALL__ vo_get_surface(vo_data_t*vo,mp_image_t* mpi)

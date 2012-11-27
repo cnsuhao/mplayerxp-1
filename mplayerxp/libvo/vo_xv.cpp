@@ -52,7 +52,12 @@ class Xv_VO_Interface : public VO_Interface {
 				unsigned flags,
 				const char *title,
 				uint32_t format);
-	virtual void	select_frame(unsigned idx);
+	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
+	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
+	virtual unsigned get_num_frames() const;
+
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	void		allocate_xvimage(int idx) const;
@@ -60,9 +65,6 @@ class Xv_VO_Interface : public VO_Interface {
 	void		set_gamma_correction( ) const;
 	uint32_t	check_events(const vo_resize_t*);
 
-	void		dri_get_surface_caps(dri_surface_cap_t *caps) const;
-	void		dri_get_surface(dri_surface_t *surf) const;
-	MPXP_Rc		query_format(vo_query_fourcc_t* format);
 
 	uint32_t	image_width;
 	uint32_t	image_height;
@@ -258,7 +260,7 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
     return e|VO_EVENT_FORCE_UPDATE;
 }
 
-void Xv_VO_Interface::select_frame(unsigned idx)
+MPXP_Rc Xv_VO_Interface::select_frame(unsigned idx)
 {
     vo_rect_t r;
     xv.get_win_coord(&r);
@@ -267,17 +269,19 @@ void Xv_VO_Interface::select_frame(unsigned idx)
     expose_idx=idx;
     if (num_buffers>1) xv.flush();
     else xv.sync(False);
-    return;
+    return MPXP_Ok;
 }
 
-MPXP_Rc Xv_VO_Interface::query_format(vo_query_fourcc_t* _format)
+MPXP_Rc Xv_VO_Interface::query_format(vo_query_fourcc_t* _format) const
 {
-    format=xv.query_port(_format->fourcc);
-    if(format) { _format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER; return MPXP_Ok; }
+    if(xv.query_port(_format->fourcc)) {
+	_format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
+	return MPXP_Ok;
+    }
     return MPXP_False;
 }
 
-void Xv_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
+void Xv_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
 {
     unsigned i,n;
     caps->caps = DRI_CAP_TEMP_VIDEO | DRI_CAP_UPSCALER | DRI_CAP_DOWNSCALER |
@@ -298,7 +302,7 @@ void Xv_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[1] = ts;
 }
 
-void Xv_VO_Interface::dri_get_surface(dri_surface_t *surf) const
+void Xv_VO_Interface::get_surface(dri_surface_t *surf) const
 {
     unsigned i,n;
     n=std::min(4,xv.ImageXv(0)->num_planes);
@@ -314,11 +318,11 @@ void Xv_VO_Interface::dri_get_surface(dri_surface_t *surf) const
     }
 }
 
+unsigned Xv_VO_Interface::get_num_frames() const { return num_buffers; }
+
 MPXP_Rc Xv_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
   switch (request) {
-  case VOCTRL_QUERY_FORMAT:
-	return query_format((vo_query_fourcc_t*)data);
   case VOCTRL_FULLSCREEN:
 	xv.fullscreen();
 	return MPXP_True;
@@ -327,15 +331,6 @@ MPXP_Rc Xv_VO_Interface::ctrl(uint32_t request, any_t*data)
 	vrest->event_type = check_events(vrest);
 	return MPXP_True;
     }
-  case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = num_buffers;
-	return MPXP_True;
-  case DRI_GET_SURFACE_CAPS:
-	dri_get_surface_caps(reinterpret_cast<dri_surface_cap_t*>(data));
-	return MPXP_True;
-  case DRI_GET_SURFACE:
-	dri_get_surface(reinterpret_cast<dri_surface_t*>(data));
-	return MPXP_True;
   case VOCTRL_SET_EQUALIZER:
 	if(!xv.set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;

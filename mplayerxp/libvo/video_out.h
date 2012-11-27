@@ -19,6 +19,7 @@ using namespace mpxp;
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include "dri_vo.h"
 #include "font_load.h"
 #include "sub.h"
 #include "libmpsub/subreader.h"
@@ -35,7 +36,6 @@ enum {
 
 enum {
     VOCTRL_UNUSED0=1,
-    VOCTRL_QUERY_FORMAT=2,	/**< Query direct FOURCC support. Takes a pointer to uint32_t fourcc */
     VOCTRL_RESET=3,		/**< Signal a device reset seek */
     VOCTRL_FULLSCREEN=4,	/**< Signal to switch window to fullscreen. Must affect window only (not surfaces) */
     VOCTRL_UNUSED=5,
@@ -43,7 +43,6 @@ enum {
     VOCTRL_RESUME=7,		/**< Notification to start/resume playback after pause (for dxr3) */
     VOCTRL_UNUSED2=8,
     VOCTRL_CHECK_EVENTS=9,	/**< Notification that user performs key pressing. Takes (vo_resize_t *)&vrest as arg. Must return at least VO_EVENT_RESIZE */
-    VOCTRL_GET_NUM_FRAMES=10,	/**< Query total number of allocated frames (multibuffering) */
     VOCTRL_UNUSED3=12,
     VOCTRL_FLUSH_PAGES=13,	/**< Flush pages of frame from RAM into video memory (bus mastering) */
     VOCTRL_UNUSED4=14,
@@ -225,6 +224,7 @@ extern MPXP_Rc		vo_resume(vo_data_t* vo);
 extern void		vo_lock_surfaces(vo_data_t* vo);
 extern void		vo_unlock_surfaces(vo_data_t* vo);
 extern MPXP_Rc	 __FASTCALL__ vo_get_surface(vo_data_t* vo,mp_image_t* mpi);
+extern MPXP_Rc	 __FASTCALL__ vo_get_surface_caps(vo_data_t* vo,dri_surface_cap_t*);
 
 extern int		vo_check_events(vo_data_t* vo);
 extern unsigned	 __FASTCALL__ vo_get_num_frames(vo_data_t* vo);

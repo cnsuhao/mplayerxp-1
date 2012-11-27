@@ -65,7 +65,12 @@ class OpenGL_VO_Interface : public VO_Interface {
 				unsigned flags,
 				const char *title,
 				uint32_t format);
-	virtual void	select_frame(unsigned idx);
+	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
+	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
+	virtual unsigned get_num_frames() const;
+
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	void		gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height) const;
@@ -73,9 +78,6 @@ class OpenGL_VO_Interface : public VO_Interface {
 	uint32_t	check_events(const vo_resize_t*) const;
 	void		gl_display_Image(XImage *myximage) const;
 
-	void		dri_get_surface_caps(dri_surface_cap_t *caps) const;
-	void		dri_get_surface(dri_surface_t *surf) const;
-	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
 
 	uint32_t		image_width;
 	uint32_t		image_height;
@@ -239,11 +241,11 @@ void OpenGL_VO_Interface::gl_display_Image(XImage *myximage) const
 		myximage->data);
 }
 
-void OpenGL_VO_Interface::select_frame(unsigned idx) {
+MPXP_Rc OpenGL_VO_Interface::select_frame(unsigned idx) {
     gl_display_Image(glx.Image(idx));
     if (num_buffers>1) glx.swap_buffers();
     glFlush();
-    return;
+    return MPXP_Ok;
 }
 
 MPXP_Rc OpenGL_VO_Interface::query_format( vo_query_fourcc_t* format ) const
@@ -259,7 +261,7 @@ MPXP_Rc OpenGL_VO_Interface::query_format( vo_query_fourcc_t* format ) const
 }
 
 
-void OpenGL_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
+void OpenGL_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
 {
     caps->caps =DRI_CAP_TEMP_VIDEO|
 		DRI_CAP_HORZSCALER|DRI_CAP_VERTSCALER|
@@ -277,7 +279,7 @@ void OpenGL_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[3] = 0;
 }
 
-void OpenGL_VO_Interface::dri_get_surface(dri_surface_t *surf) const
+void OpenGL_VO_Interface::get_surface(dri_surface_t *surf) const
 {
     surf->planes[0] = glx.ImageData(surf->idx);
     surf->planes[1] = 0;
@@ -285,25 +287,16 @@ void OpenGL_VO_Interface::dri_get_surface(dri_surface_t *surf) const
     surf->planes[3] = 0;
 }
 
+unsigned OpenGL_VO_Interface::get_num_frames() const { return num_buffers; }
+
 MPXP_Rc OpenGL_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
     switch (request) {
-	case VOCTRL_QUERY_FORMAT:
-	    return query_format((vo_query_fourcc_t*)data);
 	case VOCTRL_FULLSCREEN:
 	    glx.fullscreen();
 	    vo_rect_t r;
 	    glx.get_win_coord(&r);
 	    resize(r.w,r.h);
-	    return MPXP_True;
-	case VOCTRL_GET_NUM_FRAMES:
-	    *(uint32_t *)data = num_buffers;
-	    return MPXP_True;
-	case DRI_GET_SURFACE_CAPS:
-	    dri_get_surface_caps(reinterpret_cast<dri_surface_cap_t*>(data));
-	    return MPXP_True;
-	case DRI_GET_SURFACE:
-	    dri_get_surface(reinterpret_cast<dri_surface_t*>(data));
 	    return MPXP_True;
 	case VOCTRL_CHECK_EVENTS: {
 	    vo_resize_t* vrest = (vo_resize_t *)data;

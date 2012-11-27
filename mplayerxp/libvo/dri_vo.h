@@ -40,9 +40,4 @@ typedef struct dri_surface_s
     unsigned idx;		/**< app->drv:specify number of surface (0 default for single buffering) */
     uint8_t* planes[4];		/**< drv->app:specify planes (include alpha channel) */
 }dri_surface_t;
-
-enum {
-    DRI_GET_SURFACE_CAPS=16, /**< Query capabilties of surfaces. We assume that all surfaces have the same capabilities */
-    DRI_GET_SURFACE	=17, /**< Query surface by index */
-};
 #endif

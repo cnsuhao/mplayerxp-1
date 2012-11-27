@@ -132,7 +132,7 @@ using namespace mpxp;
 #include "video_out_internal.h"
 #include "xmpcore/mp_image.h"
 #ifdef CONFIG_VIDIX
-#include "vosub_vidix.h"
+#include "vidix_system.h"
 #endif
 #include "vo_msg.h"
 
@@ -206,7 +206,12 @@ class SDL_VO_Interface : public VO_Interface {
 				unsigned flags,
 				const char *title,
 				uint32_t format);
-	virtual void	select_frame(unsigned idx);
+	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
+	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
+	virtual unsigned get_num_frames() const;
+
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	void		sdl_open ( );
@@ -219,10 +224,8 @@ class SDL_VO_Interface : public VO_Interface {
 	uint32_t	check_events(const vo_resize_t*);
 	void		lock_surfaces();
 	void		unlock_surfaces();
+	const char*	parse_sub_device(const char *sd) const;
 
-	void		dri_get_surface_caps(dri_surface_cap_t *caps) const;
-	void		dri_get_surface(dri_surface_t *surf) const;
-	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
 
 	char		sdl_subdevice[100];
 	char		driver[8]; /* output driver used by sdl */
@@ -249,9 +252,7 @@ class SDL_VO_Interface : public VO_Interface {
 	uint32_t	format; /* source image format (YUV/RGB/...) */
 	SDL_Rect	dirty_off_frame[2];
 #ifdef CONFIG_VIDIX
-	const char *	vidix_name;
-	vidix_server_t*	vidix_server;
-	vidix_priv_t*	vidix;
+	Vidix_System*	vidix;
 #endif
 #ifdef HAVE_X11
 	X11_System&	x11;
@@ -268,6 +269,13 @@ void SDL_VO_Interface::unlock_surfaces() {
 }
 
 /** Private SDL Data structure **/
+const char* SDL_VO_Interface::parse_sub_device(const char *sd) const
+{
+#ifdef CONFIG_VIDIX
+    if(memcmp(sd,"vidix",5) == 0) return &sd[5]; /* vidix_name will be valid within init() */
+#endif
+    return NULL;
+}
 
 SDL_VO_Interface::~SDL_VO_Interface()
 {
@@ -277,10 +285,7 @@ SDL_VO_Interface::~SDL_VO_Interface()
     sdl_close();
     pthread_mutex_destroy(&surfaces_mutex);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) {
-	vidix_term(vidix);
-	delete vidix_server;
-    }
+    if(vidix) delete vidix;
 #endif
 }
 
@@ -290,10 +295,20 @@ SDL_VO_Interface::SDL_VO_Interface(const char *arg)
 		,x11(*new(zeromem) X11_System(vo_conf.mDisplayName))
 #endif
 {
+    const char* vidix_name=NULL;
     num_buffs = 1;
     surface = NULL;
     sdl_subdevice[0]='\0';
     if(arg) strcpy(sdl_subdevice,arg);
+    if(arg) vidix_name = parse_sub_device(arg);
+#ifdef CONFIG_VIDIX
+    if(vidix_name) {
+	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
+	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
+	    exit_player("Vidix error");
+	}
+    }
+#endif
 #ifdef HAVE_X11
     x11.saver_off();
 #endif
@@ -336,27 +351,13 @@ void SDL_VO_Interface::sdl_open( )
 {
     const SDL_VideoInfo *vidInfo = NULL;
     MSG_DBG3("SDL: Opening Plugin\n");
-#ifdef CONFIG_VIDIX
-    if(memcmp(sdl_subdevice,"vidix",5) == 0) {
-	vidix_name = &sdl_subdevice[5]; /* vidix_name will be valid within init() */
-	vidix=vidix_preinit(vidix_name);
-	if(!(vidix_server=vidix_get_server(vidix))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
-	    exit_player("Vidix error");
-	    strcpy(driver,"vidix");
-	}
-    } else {
-#endif
-	if(sdl_subdevice[0]) setenv("SDL_VIDEODRIVER", sdl_subdevice, 1);
+    if(sdl_subdevice[0]) setenv("SDL_VIDEODRIVER", sdl_subdevice, 1);
 
-	/* does the user want SDL to try and force Xv */
-	if(sdl_forcexv)	setenv("SDL_VIDEO_X11_NODIRECTCOLOR", "1", 1);
+    /* does the user want SDL to try and force Xv */
+    if(sdl_forcexv)	setenv("SDL_VIDEO_X11_NODIRECTCOLOR", "1", 1);
 
-	/* does the user want to disable Xv and use software scaling instead */
-	if(sdl_noxv) setenv("SDL_VIDEO_YUV_HWACCEL", "0", 1);
-#ifdef CONFIG_VIDIX
-    }
-#endif
+    /* does the user want to disable Xv and use software scaling instead */
+    if(sdl_noxv) setenv("SDL_VIDEO_YUV_HWACCEL", "0", 1);
 
     /* default to no fullscreen mode, we'll set this as soon we have the avail. modes */
     fullmode = -2;
@@ -457,9 +458,6 @@ void SDL_VO_Interface::sdl_open( )
 void SDL_VO_Interface::sdl_close ()
 {
     unsigned i,n;
-#ifdef CONFIG_VIDIX
-    if(vidix_name) vidix_term(vidix);
-#endif
     n=num_buffs;
     for(i=0;i<n;i++) {
 	/* Cleanup YUV Overlay structure */
@@ -742,25 +740,20 @@ MPXP_Rc SDL_VO_Interface::setup_surfaces( )
     MPXP_Rc retval;
     num_buffs=vo_conf.xp_buffs;
 #ifdef CONFIG_VIDIX
-    if(!vidix_name) {
+    if(vidix) {
+	if(vidix->configure(width,height,0,y,
+			dstwidth,dstheight,format,bpp,
+			XWidth,XHeight) != MPXP_Ok) {
+	    MSG_ERR("vo_sdl: Can't initialize VIDIX driver\n");
+	    return MPXP_False;
+	} else MSG_V("vo_sdl: Using VIDIX\n");
+	if(vidix->start()!=0) return MPXP_False;
+    } else
 #endif
     for(i=0;i<num_buffs;i++) {
 	retval = setup_surface(i);
 	if(retval!=MPXP_Ok) return retval;
     }
-#ifdef CONFIG_VIDIX
-    }
-    else {
-	if(vidix_init(vidix,width,height,0,y,
-			dstwidth,dstheight,format,bpp,
-			XWidth,XHeight) != MPXP_Ok) {
-	    MSG_ERR("vo_sdl: Can't initialize VIDIX driver\n");
-	    vidix_name = NULL;
-	    return MPXP_False;
-	} else MSG_V("vo_sdl: Using VIDIX\n");
-	if(vidix_start(vidix)!=0) return MPXP_False;
-    }
-#endif
     return MPXP_Ok;
 }
 
@@ -1107,51 +1100,48 @@ static void __FASTCALL__ erase_area_1(int x_start, int width, int height, int pi
  *  returns : doesn't return
  **/
 
-void SDL_VO_Interface::select_frame(unsigned idx)
+MPXP_Rc SDL_VO_Interface::select_frame(unsigned idx)
 {
 #ifdef CONFIG_VIDIX
-    if(vidix_server) {
-	vidix_server->select_frame(vidix,idx);
-	return;
-    }
+    if(vidix) return vidix->select_frame(idx);
 #endif
 
-	if(mode == YUV) {
-		/* blit to the YUV overlay */
-		SDL_DisplayYUVOverlay (overlay[idx], &surface->clip_rect);
+    if(mode == YUV) {
+	/* blit to the YUV overlay */
+	SDL_DisplayYUVOverlay (overlay[idx], &surface->clip_rect);
 
-		/* check if we have a double buffered surface and flip() if we do. */
-		if ( surface->flags & SDL_DOUBLEBUF )
-			SDL_Flip(surface);
+	/* check if we have a double buffered surface and flip() if we do. */
+	if ( surface->flags & SDL_DOUBLEBUF )
+		SDL_Flip(surface);
 
-		//SDL_LockYUVOverlay (overlay); // removed because unused!?
-	} else {
-	    /* blit to the RGB surface */
-	    if(SDL_BlitSurface (rgbsurface[idx], NULL, surface, NULL))
-			MSG_ERR("SDL: Blit failed: %s\n", SDL_GetError());
+	//SDL_LockYUVOverlay (overlay); // removed because unused!?
+    } else {
+	/* blit to the RGB surface */
+	if(SDL_BlitSurface (rgbsurface[idx], NULL, surface, NULL))
+	    MSG_ERR("SDL: Blit failed: %s\n", SDL_GetError());
 
-	    /* update screen */
-	    if(sdl_forcegl)
+	/* update screen */
+	if(sdl_forcegl) SDL_UpdateRects(surface, 1, &surface->clip_rect);
+	else {
+	    if(osd_has_changed) {
+		osd_has_changed = 0;
 		SDL_UpdateRects(surface, 1, &surface->clip_rect);
-	    else
-	    {
-		if(osd_has_changed) {
-		    osd_has_changed = 0;
-		    SDL_UpdateRects(surface, 1, &surface->clip_rect);
-		}
-		else
-		    SDL_UpdateRect(surface, 0, y_screen_top,
+	    } else
+		SDL_UpdateRect(surface, 0, y_screen_top,
 				surface->clip_rect.w, y_screen_bottom);
-	    }
-	    /* check if we have a double buffered surface and flip() if we do. */
-	    if(sdl_forcegl) SDL_GL_SwapBuffers();
-	    else
-	    if(surface->flags & SDL_DOUBLEBUF ) SDL_Flip(surface);
 	}
+	/* check if we have a double buffered surface and flip() if we do. */
+	if(sdl_forcegl) SDL_GL_SwapBuffers();
+	else if(surface->flags & SDL_DOUBLEBUF ) SDL_Flip(surface);
+    }
+    return MPXP_Ok;
 }
 
 MPXP_Rc SDL_VO_Interface::query_format(vo_query_fourcc_t* format) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->query_fourcc(format);
+#endif
     if(sdl_forcegl) {
 	if (IMGFMT_IS_BGR(format->fourcc)) {
 	    if  (rgbfmt_depth(format->fourcc) == (unsigned)bpp &&
@@ -1183,8 +1173,11 @@ MPXP_Rc SDL_VO_Interface::query_format(vo_query_fourcc_t* format) const
     return MPXP_False;
 }
 
-void SDL_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
+void SDL_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_surface_caps(caps);
+#endif
     caps->caps = DRI_CAP_TEMP_VIDEO | DRI_CAP_UPSCALER | DRI_CAP_DOWNSCALER |
 		 DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER;
     caps->fourcc = format;
@@ -1222,8 +1215,11 @@ void SDL_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
     }
 }
 
-void SDL_VO_Interface::dri_get_surface(dri_surface_t *surf) const
+void SDL_VO_Interface::get_surface(dri_surface_t *surf) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_surface(surf);
+#endif
     if(mode == YUV) {
 	int i,n;
 	n = std::min(4,overlay[surf->idx]->planes);
@@ -1245,24 +1241,16 @@ void SDL_VO_Interface::dri_get_surface(dri_surface_t *surf) const
     }
 }
 
+unsigned SDL_VO_Interface::get_num_frames() const {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_num_frames();
+#endif
+    return num_buffs;
+}
+
 MPXP_Rc SDL_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
-#ifdef CONFIG_VIDIX
-    if(vidix_server)
-	if(vidix_server->control(vidix,request,data)==MPXP_Ok) return MPXP_Ok;
-#endif
   switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-	return query_format((vo_query_fourcc_t*)data);
-    case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = num_buffs;
-	return MPXP_True;
-    case DRI_GET_SURFACE_CAPS:
-	dri_get_surface_caps(reinterpret_cast<dri_surface_cap_t*>(data));
-	return MPXP_True;
-    case DRI_GET_SURFACE:
-	dri_get_surface(reinterpret_cast<dri_surface_t*>(data));
-	return MPXP_True;
     case VOCTRL_CHECK_EVENTS: {
 	vo_resize_t * vrest = (vo_resize_t *)data;
 	vrest->event_type = check_events(vrest);
@@ -1279,6 +1267,11 @@ MPXP_Rc SDL_VO_Interface::ctrl(uint32_t request, any_t*data)
 	}
 	*(uint32_t *)data = VO_EVENT_RESIZE;
 	return MPXP_True;
+    case VOCTRL_FLUSH_PAGES:
+#ifdef CONFIG_VIDIX
+	if(vidix) vidix->flush_page(*(unsigned*)data);
+	return MPXP_Ok;
+#endif
   }
   return MPXP_NA;
 }

@@ -22,6 +22,7 @@
  */
 #ifndef __VIDEO_OUT_INTERNAL_H
 #define __VIDEO_OUT_INTERNAL_H 1
+#include "dri_vo.h"
 
 class VO_Interface : public Opaque {
     public:
@@ -35,7 +36,13 @@ class VO_Interface : public Opaque {
 				unsigned flags,
 				const char *title,
 				uint32_t format) = 0;
-	virtual void select_frame(unsigned idx) = 0;
+	virtual MPXP_Rc	select_frame(unsigned idx) = 0;
+
+	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const = 0;
+	virtual void	get_surface_caps(dri_surface_cap_t *caps) const = 0;
+	virtual void	get_surface(dri_surface_t *surf) const = 0;
+	virtual unsigned get_num_frames() const = 0;
+
 	virtual MPXP_Rc ctrl(uint32_t request, any_t*data) = 0;
 };
 

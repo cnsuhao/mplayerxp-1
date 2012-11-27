@@ -50,12 +50,14 @@ class Null_VO_Interface : public VO_Interface {
 				unsigned flags,
 				const char *title,
 				uint32_t format);
-	virtual void	select_frame(unsigned idx);
+	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
+	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
+	virtual unsigned get_num_frames() const;
+
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
-	void		dri_get_surface_caps(dri_surface_cap_t *caps) const;
-	void		dri_get_surface(dri_surface_t *surf) const;
-	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
 
 	uint32_t	image_width, image_height,frame_size,fourcc;
 	uint8_t *	bm_buffs[MAX_DRI_BUFFERS];
@@ -64,9 +66,10 @@ class Null_VO_Interface : public VO_Interface {
 	uint32_t	offset_y,offset_u,offset_v;
 };
 
-void Null_VO_Interface::select_frame(unsigned idx)
+MPXP_Rc Null_VO_Interface::select_frame(unsigned idx)
 {
     UNUSED(idx);
+    return MPXP_Ok;
 }
 
 MPXP_Rc Null_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned flags,const char *title, uint32_t format)
@@ -140,7 +143,7 @@ Null_VO_Interface::Null_VO_Interface(const char *arg)
     if(arg) MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
 }
 
-void Null_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
+void Null_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
 {
     caps->caps =DRI_CAP_TEMP_VIDEO |
 		DRI_CAP_HORZSCALER | DRI_CAP_VERTSCALER |
@@ -158,13 +161,15 @@ void Null_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[3] = 0;
 }
 
-void Null_VO_Interface::dri_get_surface(dri_surface_t *surf) const
+void Null_VO_Interface::get_surface(dri_surface_t *surf) const
 {
     surf->planes[0] = bm_buffs[surf->idx] + offset_y;
     surf->planes[1] = bm_buffs[surf->idx] + offset_v;
     surf->planes[2] = bm_buffs[surf->idx] + offset_u;
     surf->planes[3] = 0;
 }
+
+unsigned Null_VO_Interface::get_num_frames() const { return num_frames; }
 
 MPXP_Rc Null_VO_Interface::query_format(vo_query_fourcc_t* format) const {
     /* we must avoid compressed-fourcc here */
@@ -214,17 +219,6 @@ MPXP_Rc Null_VO_Interface::query_format(vo_query_fourcc_t* format) const {
 MPXP_Rc Null_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
     switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-	return query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
-    case VOCTRL_GET_NUM_FRAMES:
-	*(uint32_t *)data = num_frames;
-	return MPXP_True;
-    case DRI_GET_SURFACE_CAPS:
-	dri_get_surface_caps(reinterpret_cast<dri_surface_cap_t*>(data));
-	return MPXP_True;
-    case DRI_GET_SURFACE:
-	dri_get_surface(reinterpret_cast<dri_surface_t*>(data));
-	return MPXP_True;
     case VOCTRL_FLUSH_PAGES:
 	return MPXP_True;
   }

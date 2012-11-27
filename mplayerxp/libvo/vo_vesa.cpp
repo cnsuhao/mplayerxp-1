@@ -40,7 +40,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "aspect.h"
 #ifdef CONFIG_VIDIX
-#include "vosub_vidix.h"
+#include "vidix_system.h"
 #endif
 #include "dri_vo.h"
 #include "help_mp.h"
@@ -70,10 +70,15 @@ class VESA_VO_Interface : public VO_Interface {
 				unsigned flags,
 				const char *title,
 				uint32_t format);
-	virtual void	select_frame(unsigned idx);
+	virtual MPXP_Rc	select_frame(unsigned idx);
+	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
+	virtual void	get_surface(dri_surface_t *surf) const;
+	virtual MPXP_Rc	query_format(vo_query_fourcc_t* format) const;
+	virtual unsigned get_num_frames() const;
+
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
-	uint32_t	parse_sub_device(const char *sd);
+	const char*	parse_sub_device(const char *sd);
 	int		has_dga() const { return win.idx == -1; }
 	int		valid_win_frame(unsigned long offset) const { return offset >= win.low && offset < win.high; }
 	any_t*		video_ptr(unsigned long offset) const { return win.ptr + offset - win.low; }
@@ -93,9 +98,6 @@ class VESA_VO_Interface : public VO_Interface {
 
 	void		vesa_term();
 
-	void		dri_get_surface_caps(dri_surface_cap_t *caps) const;
-	void		dri_get_surface(dri_surface_t *surf) const;
-	MPXP_Rc		query_format(vo_query_fourcc_t* format) const;
 
 	void		(VESA_VO_Interface::*cpy_blk_fnc)(unsigned long,uint8_t *,unsigned long);
 
@@ -116,9 +118,7 @@ class VESA_VO_Interface : public VO_Interface {
 	uint8_t		multi_size; /* total number of buffers */
 /* Linux Video Overlay */
 #ifdef CONFIG_VIDIX
-	const char *	vidix_name;
-	vidix_server_t*	vidix_server;
-	vidix_priv_t*	vidix;
+	Vidix_System*	vidix;
 #endif
 	uint32_t	subdev_flags;
 };
@@ -152,23 +152,23 @@ VESA_VO_Interface::~VESA_VO_Interface()
     vesa_term();
     MSG_DBG3("vo_vesa: uninit was called\n");
 #ifdef CONFIG_VIDIX
-    delete vidix_server;
+    if(vidix) delete vidix;
 #endif
 }
 
 VESA_VO_Interface::VESA_VO_Interface(const char *arg)
 		:VO_Interface(arg)
 {
+    const char* vidix_name=NULL;
     MPXP_Rc pre_init_err = MPXP_Ok;
     subdev_flags = 0xFFFFFFFEUL;
     cpy_blk_fnc=NULL;
     MSG_DBG2("vo_vesa: preinit(%s) was called\n",arg);
     MSG_DBG3("vo_vesa: subdevice %s is being initialized\n",arg);
-    if(arg) subdev_flags = parse_sub_device(arg);
+    if(arg) vidix_name = parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
     if(vidix_name) {
-	vidix=vidix_preinit(vidix_name);
-	if(!(vidix_server=vidix_get_server(vidix))) {
+	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
 	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
 	    exit_player("Vidix error");
 	}
@@ -189,9 +189,6 @@ VESA_VO_Interface::VESA_VO_Interface(const char *arg)
 void VESA_VO_Interface::vesa_term()
 {
     int err;
-#ifdef CONFIG_VIDIX
-    if(vidix_name) vidix_term(vidix);
-#endif
     if((err=vbeRestoreState(init_state)) != VBE_OK) PRINT_VBE_ERR("vbeRestoreState",err);
     if((err=vbeSetMode(init_mode,NULL)) != VBE_OK) PRINT_VBE_ERR("vbeSetMode",err);
     if(has_dga()) vbeUnmapVideoBuffer((unsigned long)win.ptr,win.high);
@@ -286,13 +283,10 @@ void VESA_VO_Interface::__vbeCopyData(uint8_t *image)
     }
 }
 
-void VESA_VO_Interface::select_frame(unsigned idx)
+MPXP_Rc VESA_VO_Interface::select_frame(unsigned idx)
 {
 #ifdef CONFIG_VIDIX
-    if(vidix_server) {
-	vidix_server->select_frame(vidix,idx);
-	return;
-    }
+    if(vidix) return vidix->select_frame(idx);
 #endif
     MSG_DBG3("vo_vesa: select_frame was called\n");
     if(!has_dga()) __vbeCopyData(dga_buffer);
@@ -306,23 +300,23 @@ void VESA_VO_Interface::select_frame(unsigned idx)
 	}
 	win.ptr = dga_buffer = video_base + multi_buff[(idx+1)%multi_size];
     }
+    return MPXP_Ok;
 }
 
 #define SUBDEV_NODGA     0x00000001UL
 #define SUBDEV_FORCEDGA  0x00000002UL
-uint32_t VESA_VO_Interface::parse_sub_device(const char *sd)
+const char* VESA_VO_Interface::parse_sub_device(const char *sd)
 {
-    uint32_t flags;
-    flags = 0;
-    if(strcmp(sd,"nodga") == 0) { flags |= SUBDEV_NODGA; flags &= ~(SUBDEV_FORCEDGA); }
+    subdev_flags = 0;
+    if(strcmp(sd,"nodga") == 0) { subdev_flags |= SUBDEV_NODGA; subdev_flags &= ~(SUBDEV_FORCEDGA); }
     else
-    if(strcmp(sd,"dga") == 0)   { flags &= ~(SUBDEV_NODGA); flags |= SUBDEV_FORCEDGA; }
+    if(strcmp(sd,"dga") == 0)   { subdev_flags &= ~(SUBDEV_NODGA); subdev_flags |= SUBDEV_FORCEDGA; }
 #ifdef CONFIG_VIDIX
     else
-    if(memcmp(sd,"vidix",5) == 0) vidix_name = &sd[5]; /* priv.vidix_name will be valid within init() */
+    if(memcmp(sd,"vidix",5) == 0) return &sd[5]; /* priv.vidix_name will be valid within init() */
 #endif
-    else { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); return 0xFFFFFFFFUL; }
-    return flags;
+    else { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); subdev_flags = 0xFFFFFFFFUL; }
+    return NULL;
 }
 
 static int __FASTCALL__ check_depth(unsigned bpp)
@@ -344,19 +338,6 @@ static int __FASTCALL__ check_depth(unsigned bpp)
     return VOCAP_NA;
 }
 
-MPXP_Rc VESA_VO_Interface::query_format(vo_query_fourcc_t* format) const
-{
-    MSG_DBG3("vo_vesa: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
-    switch(format->fourcc) {
-	case IMGFMT_BGR8: format->flags=check_depth(8); break;
-	case IMGFMT_BGR15: format->flags=check_depth(15); break;
-	case IMGFMT_BGR16: format->flags=check_depth(16); break;
-	case IMGFMT_BGR24: format->flags=check_depth(24); break;
-	case IMGFMT_BGR32: format->flags=check_depth(32); break;
-	default: break;
-    }
-    return MPXP_Ok;
-}
 
 void VESA_VO_Interface::paintBkGnd()
 {
@@ -683,7 +664,7 @@ MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
 	} else {
 	    cpy_blk_fnc = &VESA_VO_Interface::__vbeCopyBlock;
 #ifdef CONFIG_VIDIX
-	    if(!vidix_name)
+	    if(!vidix)
 #endif
 	    {
 		if(!(dga_buffer = new(alignmem,64) uint8_t[vmode_info.XResolution*vmode_info.YResolution*dstBpp])) {
@@ -705,16 +686,15 @@ MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
 	/* Below 'return MPXP_False' is impossible */
 	MSG_V("vo_vesa: Graphics mode was activated\n");
 #ifdef CONFIG_VIDIX
-	if(vidix_name) {
-	    if(vidix_init(vidix,width,height,x_offset,y_offset,dstW,
+	if(vidix) {
+	    if(vidix->configure(width,height,x_offset,y_offset,dstW,
 			dstH,format,dstBpp,
 			vmode_info.XResolution,vmode_info.YResolution) != MPXP_Ok) {
 		MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
-		vidix_name = NULL;
 		vesa_term();
 		return MPXP_False;
 	    } else MSG_V("vo_vesa: Using VIDIX\n");
-	    if(vidix_start(vidix)!=0) {
+	    if(vidix->start()!=0) {
 		vesa_term();
 		return MPXP_False;
 	    }
@@ -742,8 +722,28 @@ MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
     return MPXP_Ok;
 }
 
-void VESA_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
+MPXP_Rc VESA_VO_Interface::query_format(vo_query_fourcc_t* format) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->query_fourcc(format);
+#endif
+    MSG_DBG3("vo_vesa: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
+    switch(format->fourcc) {
+	case IMGFMT_BGR8: format->flags=check_depth(8); break;
+	case IMGFMT_BGR15: format->flags=check_depth(15); break;
+	case IMGFMT_BGR16: format->flags=check_depth(16); break;
+	case IMGFMT_BGR24: format->flags=check_depth(24); break;
+	case IMGFMT_BGR32: format->flags=check_depth(32); break;
+	default: break;
+    }
+    return MPXP_Ok;
+}
+
+void VESA_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
+{
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_surface_caps(caps);
+#endif
     caps->caps = has_dga() ? DRI_CAP_VIDEO_MMAPED : DRI_CAP_TEMP_VIDEO;
     caps->fourcc = dstFourcc;
     caps->width=has_dga()?vmode_info.XResolution:dstW;
@@ -758,32 +758,33 @@ void VESA_VO_Interface::dri_get_surface_caps(dri_surface_cap_t *caps) const
     caps->strides[3] = 0;
 }
 
-void VESA_VO_Interface::dri_get_surface(dri_surface_t *surf) const
+void VESA_VO_Interface::get_surface(dri_surface_t *surf) const
 {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_surface(surf);
+#endif
     surf->planes[0] = has_dga()?video_base + multi_buff[surf->idx]:dga_buffer;
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
 }
 
+unsigned VESA_VO_Interface::get_num_frames() const {
+#ifdef CONFIG_VIDIX
+    if(vidix) return vidix->get_num_frames();
+#endif
+    return multi_size;
+}
+
 MPXP_Rc VESA_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
+    switch(request) {
+	case VOCTRL_FLUSH_PAGES:
 #ifdef CONFIG_VIDIX
-    if(vidix_server)
-	if(vidix_server->control(vidix,request,data)==MPXP_Ok) return MPXP_Ok;
+	    if(vidix) vidix->flush_page(*(unsigned*)data);
+	    return MPXP_Ok;
 #endif
-    switch (request) {
-	case VOCTRL_QUERY_FORMAT:
-	    return query_format(reinterpret_cast<vo_query_fourcc_t*>(data));
-	case VOCTRL_GET_NUM_FRAMES:
-	    *(uint32_t *)data = multi_size;
-	    return MPXP_True;
-	case DRI_GET_SURFACE_CAPS:
-	    dri_get_surface_caps(reinterpret_cast<dri_surface_cap_t*>(data));
-	    return MPXP_True;
-	case DRI_GET_SURFACE:
-	    dri_get_surface(reinterpret_cast<dri_surface_t*>(data));
-	    return MPXP_True;
+	default: break;
     }
     return MPXP_NA;
 }

@@ -100,7 +100,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     rflags=0;
     UNUSED(vf);
     if(flags) {
-	vo_control(vo_data,DRI_GET_SURFACE_CAPS,&dcaps);
+	vo_get_surface_caps(vo_data,&dcaps);
 	if(dcaps.caps&DRI_CAP_UPSCALER) rflags |=VFCAP_HWSCALE_UP;
 	if(dcaps.caps&DRI_CAP_DOWNSCALER) rflags |=VFCAP_HWSCALE_DOWN;
 	if(rflags&(VFCAP_HWSCALE_UP|VFCAP_HWSCALE_DOWN)) rflags |= VFCAP_SWSCALE;
