@@ -40,14 +40,25 @@ struct _nuv_position_t
 	nuv_position_t* next;
 };
 
-typedef struct _nuv_info_t
-{
+struct nuv_priv_t : public Opaque {
+    public:
+	nuv_priv_t() {}
+	virtual ~nuv_priv_t();
+
 	int current_audio_frame;
 	int current_video_frame;
 	nuv_position_t *index_list;
 	nuv_position_t *current_position;
-} nuv_priv_t;
+};
 
+nuv_priv_t::~nuv_priv_t() {
+    nuv_position_t* pos;
+    for(pos = index_list ; pos != NULL ; ) {
+	nuv_position_t* p = pos;
+	pos = pos->next;
+	delete p;
+    }
+}
 
 /**
  * Seek to a position relative to the current position, indicated in time.
@@ -55,7 +66,7 @@ typedef struct _nuv_info_t
 static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 {
 #define MAX_TIME 1000000
-	nuv_priv_t* priv = reinterpret_cast<nuv_priv_t*>(demuxer->priv);
+	nuv_priv_t* priv = static_cast<nuv_priv_t*>(demuxer->priv);
 	struct rtframeheader rtjpeg_frameheader;
 	off_t orig_pos;
 	off_t curr_pos;
@@ -145,7 +156,7 @@ static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
 {
 	struct rtframeheader rtjpeg_frameheader;
 	off_t orig_pos;
-	nuv_priv_t* priv = reinterpret_cast<nuv_priv_t*>(demuxer->priv);
+	nuv_priv_t* priv = static_cast<nuv_priv_t*>(demuxer->priv);
 	int want_audio = (demuxer->audio)&&(demuxer->audio->id!=-2);
 
 	demuxer->filepos = orig_pos = stream_tell ( demuxer->stream );
@@ -310,15 +321,8 @@ static MPXP_Rc nuv_probe ( demuxer_t* demuxer )
 }
 
 static void nuv_close(demuxer_t* demuxer) {
-  nuv_priv_t* priv = reinterpret_cast<nuv_priv_t*>(demuxer->priv);
-  nuv_position_t* pos;
-  if(!priv)
-    return;
-  for(pos = priv->index_list ; pos != NULL ; ) {
-    nuv_position_t* p = pos;
-    pos = pos->next;
-    delete p;
-  }
+  nuv_priv_t* priv = static_cast<nuv_priv_t*>(demuxer->priv);
+  if(!priv) return;
   delete priv;
 }
 

@@ -31,10 +31,10 @@ CXXSRCS += demux_aiff.cpp \
            demux_null.cpp \
            demux_nuv.cpp \
            demux_pva.cpp \
-           demux_ra.cpp \
            demux_rawaudio.cpp \
            demux_rawvideo.cpp \
            demux_real.cpp \
+           demux_realaud.cpp \
            demux_roq.cpp \
            demux_smjpeg.cpp \
            demux_ts.cpp \

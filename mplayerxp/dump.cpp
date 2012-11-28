@@ -74,19 +74,23 @@ void dump_stream(stream_t *stream)
 #define MUX_HAVE_AUDIO 0x01
 #define MUX_HAVE_VIDEO 0x02
 #define MUX_HAVE_SUBS  0x04
-typedef struct priv_s {
-    int		my_use_pts;
-    FILE*	mux_file;
-    muxer_t*	muxer;
-    muxer_stream_t *m_audio,*m_video,*m_subs;
-    unsigned	decoded_frameno;
-    unsigned	a_frameno;
-    int		mux_type;
-    uint64_t	vsize,asize,ssize;
-    float	timer_corr; /* use common time-base */
-    float	vtimer;
-    any_t*	libinput;
-}priv_t;
+struct dump_priv_t : public Opaque {
+    public:
+	dump_priv_t() {}
+	virtual ~dump_priv_t() {}
+
+	int		my_use_pts;
+	FILE*		mux_file;
+	muxer_t*	muxer;
+	muxer_stream_t *m_audio,*m_video,*m_subs;
+	unsigned	decoded_frameno;
+	unsigned	a_frameno;
+	int		mux_type;
+	uint64_t	vsize,asize,ssize;
+	float		timer_corr; /* use common time-base */
+	float		vtimer;
+	any_t*		libinput;
+};
 
 void __FASTCALL__ dump_stream_event_handler(struct stream_s *s,const stream_packet_t*sp)
 {
@@ -96,7 +100,7 @@ void __FASTCALL__ dump_stream_event_handler(struct stream_s *s,const stream_pack
     returns: 0 - nothing interested
 	    -1 - quit
 */
-static int check_cmd(priv_t* priv)
+static int check_cmd(dump_priv_t* priv)
 {
   mp_cmd_t* cmd;
   int retval;
@@ -122,8 +126,8 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
     char stream_dump_name[1024];
     /* TODO copy it from demuxer */
     if(demuxer->priv) return;
-    demuxer->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv=reinterpret_cast<priv_t*>(demuxer->priv);
+    dump_priv_t*priv=new(zeromem) dump_priv_t;
+    demuxer->priv=priv;
     priv->libinput=libinput;
     /* describe other useless dumps */
     priv->mux_type=MUX_HAVE_AUDIO|MUX_HAVE_VIDEO|MUX_HAVE_SUBS;
@@ -221,7 +225,7 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 
 void dump_mux_close(demuxer_t *demuxer)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(demuxer->priv);
+    dump_priv_t* priv=static_cast<dump_priv_t*>(demuxer->priv);
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(d_audio->sh);
@@ -281,7 +285,7 @@ void dump_mux_close(demuxer_t *demuxer)
 
 void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned play_n_frames)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(demuxer->priv);
+    dump_priv_t* priv=static_cast<dump_priv_t*>(demuxer->priv);
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(d_audio->sh);

@@ -50,8 +50,8 @@ using namespace mpxp;
 #include <fcntl.h>
 #endif
 
-#define BE_16(x) be2me_16(x)
-#define BE_32(x) be2me_32(x)
+inline uint16_t BE_16(uint16_t x) { return be2me_16(x); }
+inline uint32_t BE_32(uint32_t x) { return be2me_32(x); }
 
 #define char2short(x,y)	BE_16(*((uint16_t *)&(((unsigned char *)(x))[(y)])))
 #define char2int(x,y) 	BE_32(*((uint32_t *)&(((unsigned char *)(x))[(y)])))
@@ -286,19 +286,42 @@ static void mov_build_index(mov_track_t* trak,int timescale){
 #define MOV_MAX_TRACKS 256
 #define MOV_MAX_SUBLEN 1024
 
-typedef struct {
-    off_t moov_start;
-    off_t moov_end;
-    off_t mdat_start;
-    off_t mdat_end;
-    int track_db;
-    mov_track_t* tracks[MOV_MAX_TRACKS];
-    int timescale; // movie timescale
-    int duration;  // movie duration (in movie timescale units)
+struct mov_priv_t : public Opaque {
+    public:
+	mov_priv_t() {};
+	virtual ~mov_priv_t();
+
+	off_t moov_start;
+	off_t moov_end;
+	off_t mdat_start;
+	off_t mdat_end;
+	int track_db;
+	mov_track_t* tracks[MOV_MAX_TRACKS];
+	int timescale; // movie timescale
+	int duration;  // movie duration (in movie timescale units)
 /* ---- mov (!!! ALWAYS 0 !!!) ----- */
-    unsigned int	ss_mul;	/**< compression ratio for packet descriptor */
-    unsigned int	ss_div;	/**< compression ratio for packet descriptor */
-} mov_priv_t;
+	unsigned int	ss_mul;	/**< compression ratio for packet descriptor */
+	unsigned int	ss_div;	/**< compression ratio for packet descriptor */
+};
+
+mov_priv_t::~mov_priv_t() {
+    for (unsigned i = 0; i < MOV_MAX_TRACKS; i++) {
+	mov_track_t *track = tracks[i];
+	if (track) {
+	    delete track->tkdata;
+	    delete track->stdata;
+	    delete track->stream_header;
+	    delete track->samples;
+	    delete track->chunks;
+	    delete track->chunkmap;
+	    delete track->durmap;
+	    delete track->keyframes;
+	    delete track->editlist;
+	    delete track->desc;
+	    delete track;
+	}
+    }
+}
 
 #define MOV_FOURCC(a,b,c,d) ((a<<24)|(b<<16)|(c<<8)|(d))
 
@@ -575,7 +598,7 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
 			   off_t pos, off_t len, mov_track_t* trak);
 
 static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak){
-    mov_priv_t* priv=reinterpret_cast<mov_priv_t*>(demuxer->priv);
+    mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     while(1){
 	off_t pos;
 	off_t len;
@@ -1772,7 +1795,7 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
 }
 
 static demuxer_t* mov_open(demuxer_t* demuxer){
-    mov_priv_t* priv=reinterpret_cast<mov_priv_t*>(demuxer->priv);
+    mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     int t_no;
     int best_a_id=-1, best_a_len=0;
     int best_v_id=-1, best_v_len=0;
@@ -1908,7 +1931,7 @@ static mov_track_t *stream_track(mov_priv_t *priv, demux_stream_t *ds) {
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
 static int mov_demux(demuxer_t *demuxer,demux_stream_t* ds){
-    mov_priv_t* priv=reinterpret_cast<mov_priv_t*>(demuxer->priv);
+    mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     mov_track_t* trak=NULL;
     float pts;
     int x;
@@ -2039,7 +2062,7 @@ return pts;
 }
 
 static void mov_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-    mov_priv_t* priv=reinterpret_cast<mov_priv_t*>(demuxer->priv);
+    mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     demux_stream_t* ds;
     mov_track_t* trak;
 
@@ -2066,27 +2089,9 @@ static void mov_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
 static void mov_close(demuxer_t *demuxer)
 {
-  mov_priv_t* priv = reinterpret_cast<mov_priv_t*>(demuxer->priv);
-  int i;
-  if (!priv)
-    return;
-  for (i = 0; i < MOV_MAX_TRACKS; i++) {
-    mov_track_t *track = priv->tracks[i];
-    if (track) {
-      delete track->tkdata;
-      delete track->stdata;
-      delete track->stream_header;
-      delete track->samples;
-      delete track->chunks;
-      delete track->chunkmap;
-      delete track->durmap;
-      delete track->keyframes;
-      delete track->editlist;
-      delete track->desc;
-      delete track;
-    }
-  }
-  delete priv;
+    mov_priv_t* priv = static_cast<mov_priv_t*>(demuxer->priv);
+    if (!priv) return;
+    delete priv;
 }
 
 static MPXP_Rc mov_control(const demuxer_t *demuxer,int cmd,any_t*args)

@@ -3,6 +3,8 @@
 using namespace mpxp;
 /*  AVI file parser for DEMUXER v2.9  by A'rpi/ESP-team */
 
+#include <algorithm>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,38 +23,45 @@ using namespace mpxp;
 #include "demux_msg.h"
 
 typedef int (*alt_demuxer_t)(demuxer_t *demux,demux_stream_t *__ds);
-typedef struct {
-  // index stuff:
-  AVIINDEXENTRY* idx;
-  int idx_size;
-  off_t idx_pos;
-  off_t idx_pos_a;
-  off_t idx_pos_v;
-  off_t idx_offset;  // ennyit kell hozzaadni az index offset ertekekhez
-  // bps-based PTS stuff:
-  int video_pack_no;
-  int audio_block_size;
-  off_t audio_block_no;
-  // interleaved PTS stuff:
-  int skip_video_frames;
-  int audio_streams;
-  float avi_audio_pts;
-  float avi_video_pts;
-  float pts_correction;
-  unsigned int pts_corr_bytes;
-  unsigned char pts_corrected;
-  unsigned char pts_has_video;
-  unsigned int numberofframes;
-  avisuperindex_chunk *suidx;
-  unsigned int suidx_size;
-  int nini;
-  int is_odml;
-  alt_demuxer_t alt_demuxer;
-} avi_priv_t;
+struct avi_priv_t : public Opaque {
+    public:
+	avi_priv_t() {}
+	virtual ~avi_priv_t();
+
+	// index stuff:
+	AVIINDEXENTRY* idx;
+	int idx_size;
+	off_t idx_pos;
+	off_t idx_pos_a;
+	off_t idx_pos_v;
+	off_t idx_offset;  // ennyit kell hozzaadni az index offset ertekekhez
+	// bps-based PTS stuff:
+	int video_pack_no;
+	int audio_block_size;
+	off_t audio_block_no;
+	// interleaved PTS stuff:
+	int skip_video_frames;
+	int audio_streams;
+	float avi_audio_pts;
+	float avi_video_pts;
+	float pts_correction;
+	unsigned int pts_corr_bytes;
+	unsigned char pts_corrected;
+	unsigned char pts_has_video;
+	unsigned int numberofframes;
+	avisuperindex_chunk *suidx;
+	unsigned int suidx_size;
+	int nini;
+	int is_odml;
+	alt_demuxer_t alt_demuxer;
+};
+
+avi_priv_t::~avi_priv_t() {
+    if(idx_size > 0) delete idx;
+}
 
 #define MAX_PACKS 4096
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define AVI_IDX_OFFSET(x) ((((uint64_t)(x)->dwFlags&0xffff0000)<<16)+(x)->dwChunkOffset)
+inline uint64_t avi_idx_offset(AVIINDEXENTRY* x) { return  ((x->dwFlags&0xffff0000)<<16)+x->dwChunkOffset; }
 
 static int odml_get_vstream_id(int id, unsigned char res[])
 {
@@ -70,8 +79,8 @@ static int odml_get_vstream_id(int id, unsigned char res[])
 }
 
 static int avi_idx_cmp(const any_t*elem1,const any_t*elem2) {
-  register off_t a = AVI_IDX_OFFSET((AVIINDEXENTRY *)elem1);
-  register off_t b = AVI_IDX_OFFSET((AVIINDEXENTRY *)elem2);
+  register off_t a = avi_idx_offset((AVIINDEXENTRY *)elem1);
+  register off_t b = avi_idx_offset((AVIINDEXENTRY *)elem2);
   return (a > b) - (b > a);
 }
 
@@ -116,7 +125,7 @@ sh_video_t *sh_video=NULL;
 int stream_id=-1;
 int idxfix_videostream=0;
 int idxfix_divx=0;
-avi_priv_t* priv=reinterpret_cast<avi_priv_t*>(demuxer->priv);
+avi_priv_t* priv=static_cast<avi_priv_t*>(demuxer->priv);
 off_t list_end=0;
 
 //---- AVI header:
@@ -240,17 +249,17 @@ while(1){
     case mmioFOURCC('I','D','I','T'): hdr="Digitization Time";break;
 
     case ckidAVIMAINHDR:          // read 'avih'
-      stream_read(demuxer->stream,(char*) &avih,MIN(size2,sizeof(avih)));
+      stream_read(demuxer->stream,(char*) &avih,std::min((unsigned long)size2,sizeof(avih)));
       le2me_MainAVIHeader(&avih); // swap to machine endian
-      chunksize-=MIN(size2,sizeof(avih));
+      chunksize-=std::min((unsigned long)size2,sizeof(avih));
       demuxer->movi_length=avih.dwTotalFrames;
       if(mp_conf.verbose) print_avih(&avih); else print_avih_flags(&avih);
       break;
     case ckidSTREAMHEADER: {      // read 'strh'
       AVIStreamHeader h;
-      stream_read(demuxer->stream,(char*) &h,MIN(size2,sizeof(h)));
+      stream_read(demuxer->stream,(char*) &h,std::min((unsigned long)size2,sizeof(h)));
       le2me_AVIStreamHeader(&h);  // swap to machine endian
-      chunksize-=MIN(size2,sizeof(h));
+      chunksize-=std::min((unsigned long)size2,sizeof(h));
       ++stream_id;
       if(h.fccType==mmioFOURCC('i','a','v','s')){
 	MSG_FATAL("DVDS chunk found!!! Still is not suupported\n");
@@ -587,7 +596,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 	    if (!(idx->dwFlags & AVIIF_KEYFRAME) && idx->ckid == db) break;
 	}
 	if (i<priv->idx_size && db) {
-	    stream_seek(demuxer->stream, AVI_IDX_OFFSET(idx));
+	    stream_seek(demuxer->stream, avi_idx_offset(idx));
 	    id = stream_read_dword_le(demuxer->stream);
 	    if (id && id != db) // index fcc and real fcc differ? fix it.
 		for (idx = &((AVIINDEXENTRY *)priv->idx)[0], i=0; i<priv->idx_size; i++, idx++){
@@ -767,7 +776,7 @@ static demux_stream_t* demux_avi_select_stream(demuxer_t *demux,unsigned int id)
   if(stream_id==demux->audio->id){
       if(!demux->audio->sh){
 	sh_audio_t* sh;
-	avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demux->priv);
+	avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
 	demux->audio->sh=sh=reinterpret_cast<sh_audio_t*>(demux->a_streams[stream_id]);
 	MSG_V("Auto-selected AVI audio ID = %d\n",demux->audio->id);
 	if(sh->wf){
@@ -831,7 +840,7 @@ static int choose_chunk_len(unsigned int len1,unsigned int len2){
 }
 
 static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned int id,unsigned int len,int idxpos,int flags){
-  avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demux->priv);
+  avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
   int skip;
   float pts=0;
 
@@ -897,7 +906,7 @@ static int avi_read_ni(demuxer_t *demux,demux_stream_t* ds);
 static int avi_read_nini(demuxer_t *demux,demux_stream_t* ds);
 
 static int avi_demux(demuxer_t *demux,demux_stream_t *__ds){
-    avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demux->priv);
+    avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
     if(priv->alt_demuxer) return priv->alt_demuxer(demux,__ds);
     unsigned int id=0;
     unsigned int len;
@@ -923,7 +932,7 @@ do{
       continue; // skip this chunk
     }
 
-    pos = (off_t)priv->idx_offset+AVI_IDX_OFFSET(idx);
+    pos = (off_t)priv->idx_offset+avi_idx_offset(idx);
     if((pos<demux->movi_start || pos>=demux->movi_end) && (demux->movi_end>demux->movi_start) && (demux->flags & DEMUXF_SEEKABLE)){
       MSG_V("ChunkOffset out of range!   idx=0x%X  \n",pos);
       continue;
@@ -999,7 +1008,7 @@ do{
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
 static int avi_read_ni(demuxer_t *demux,demux_stream_t* ds){
-avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demux->priv);
+avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
 unsigned int id=0;
 unsigned int len;
 int ret=0;
@@ -1069,7 +1078,7 @@ do{
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
 static int avi_read_nini(demuxer_t *demux,demux_stream_t* ds){
-avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demux->priv);
+avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
 unsigned int id=0;
 unsigned int len;
 int ret=0;
@@ -1177,7 +1186,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
       for(i=0;i<priv->idx_size;i++){
 	AVIINDEXENTRY* idx=&((AVIINDEXENTRY *)priv->idx)[i];
 	demux_stream_t* ds=demux_avi_select_stream(demuxer,idx->ckid);
-	off_t pos = priv->idx_offset + AVI_IDX_OFFSET(idx);
+	off_t pos = priv->idx_offset + avi_idx_offset(idx);
 	if(a_pos==-1 && ds==demuxer->audio){
 	  a_pos=pos;
 	  if(v_pos!=-1) break;
@@ -1300,7 +1309,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
 }
 
 static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-    avi_priv_t *priv=reinterpret_cast<avi_priv_t*>(demuxer->priv);
+    avi_priv_t *priv=static_cast<avi_priv_t*>(demuxer->priv);
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
@@ -1480,9 +1489,7 @@ static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	    //d_audio->pts=0; // PTS is outdated because of the raw data skipping
 	  }
 	  mpca_resync_stream(sh_audio->decoder);
-
 //          sh_audio->timer=-skip_audio_secs;
-
       }
 	d_video->pts=priv->avi_video_pts; // OSD
 }
@@ -1503,11 +1510,10 @@ static MPXP_Rc avi_probe(demuxer_t *demuxer)
 
 static void avi_close(demuxer_t *demuxer)
 {
-  avi_priv_t* priv=reinterpret_cast<avi_priv_t*>(demuxer->priv);
+  avi_priv_t* priv=static_cast<avi_priv_t*>(demuxer->priv);
 
   if(!priv) return;
 
-  if(priv->idx_size > 0) delete priv->idx;
   delete priv;
 }
 

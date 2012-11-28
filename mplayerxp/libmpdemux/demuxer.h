@@ -100,6 +100,7 @@ enum {
     DEMUX_PIN=RND_NUMBER2+RND_CHAR2
 };
 
+struct demuxer_info_t;
 typedef struct demuxer_s {
     char		antiviral_hole[RND_CHAR3];
     unsigned		pin;		/**< personal identification number */
@@ -118,8 +119,8 @@ typedef struct demuxer_s {
     unsigned		file_format;	/**< file format: DEMUXER_TYPE_*(mpeg/avi/asf). Will be replaced with properties in the further versions */
     int			synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
 
-    any_t*		priv;		/**< private data of demuxer's driver.*/
-    any_t*		info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
+    Opaque*		priv;		/**< private data of demuxer's driver.*/
+    demuxer_info_t*	info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
     const struct demuxer_driver_s* driver;	/**< driver associated with this demuxer */
 } demuxer_t __attribute__ ((packed));
 

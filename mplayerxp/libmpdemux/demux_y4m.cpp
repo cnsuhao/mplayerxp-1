@@ -22,11 +22,21 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "demux_msg.h"
 
-typedef struct {
-    int framenum;
-    y4m_stream_info_t* si;
-    int is_older;
-} y4m_priv_t;
+struct y4m_priv_t : public Opaque {
+    public:
+	y4m_priv_t() {}
+	virtual ~y4m_priv_t();
+
+	int framenum;
+	y4m_stream_info_t* si;
+	int is_older;
+};
+
+y4m_priv_t::~y4m_priv_t() {
+    if (!is_older)
+	y4m_fini_stream_info(si);
+    delete si;
+}
 
 static MPXP_Rc y4m_probe(demuxer_t* demuxer){
     int orig_pos = stream_tell(demuxer->stream);
@@ -68,7 +78,7 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
     UNUSED(__ds);
   demux_stream_t *ds=demux->video;
   Demux_Packet *dp;
-  y4m_priv_t *priv=reinterpret_cast<y4m_priv_t*>(demux->priv);
+  y4m_priv_t *priv=static_cast<y4m_priv_t*>(demux->priv);
   y4m_frame_info_t fi;
   unsigned char *buf[3];
   int err, size;
@@ -120,7 +130,7 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
 }
 
 static demuxer_t* y4m_open(demuxer_t* demuxer){
-    y4m_priv_t* priv = reinterpret_cast<y4m_priv_t*>(demuxer->priv);
+    y4m_priv_t* priv = static_cast<y4m_priv_t*>(demuxer->priv);
     y4m_ratio_t ratio;
     sh_video_t* sh=new_sh_video(demuxer,0);
     int err;
@@ -230,7 +240,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 
 static void y4m_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
     sh_video_t* sh = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
-    y4m_priv_t* priv = reinterpret_cast<y4m_priv_t*>(demuxer->priv);
+    y4m_priv_t* priv = static_cast<y4m_priv_t*>(demuxer->priv);
     int rel_seek_frames = sh->fps*seeka->secs;
     int size = 3*sh->src_w*sh->src_h/2;
     off_t curr_pos = stream_tell(demuxer->stream);
@@ -255,14 +265,10 @@ static void y4m_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
 
 static void y4m_close(demuxer_t *demuxer)
 {
-    y4m_priv_t* priv = reinterpret_cast<y4m_priv_t*>(demuxer->priv);
+    y4m_priv_t* priv = static_cast<y4m_priv_t*>(demuxer->priv);
 
-    if(!priv)
-      return;
-    if (!priv->is_older)
-	y4m_fini_stream_info(((y4m_priv_t*)demuxer->priv)->si);
-    delete ((y4m_priv_t*)demuxer->priv)->si;
-    delete demuxer->priv;
+    if(!priv) return;
+    delete priv;
     return;
 }
 

@@ -47,44 +47,54 @@ typedef struct {
     int		packetno;
 } real_index_table_t;
 
-typedef struct {
-    /* for seeking */
-    int		index_chunk_offset;
-    real_index_table_t *index_table[MAX_STREAMS];
-    int		index_table_size[MAX_STREAMS];
-    int		index_malloc_size[MAX_STREAMS];
-    int		data_chunk_offset;
-    int		num_of_packets;
-    int		current_packet;
+struct real_priv_t : public Opaque {
+    public:
+	real_priv_t() {}
+	virtual ~real_priv_t();
 
-    int		audio_need_keyframe;
-    int		video_after_seek;
+	/* for seeking */
+	int		index_chunk_offset;
+	real_index_table_t *index_table[MAX_STREAMS];
+	int		index_table_size[MAX_STREAMS];
+	int		index_malloc_size[MAX_STREAMS];
+	int		data_chunk_offset;
+	int		num_of_packets;
+	int		current_packet;
 
-    int		current_apacket;
-    int		current_vpacket;
+	int		audio_need_keyframe;
+	int		video_after_seek;
 
-    // timestamp correction:
-    int		kf_base;// timestamp of the prev. video keyframe
-    int		kf_pts;	// timestamp of next video keyframe
-    float	v_pts;  // previous video timestamp
-    float	a_pts;
-    unsigned long	duration;
+	int		current_apacket;
+	int		current_vpacket;
 
-    /**
-     * Used to demux multirate files
-     */
-    int is_multirate; ///< != 0 for multirate files
-    int str_data_offset[MAX_STREAMS]; ///< Data chunk offset for every audio/video stream
-    int audio_curpos; ///< Current file position for audio demuxing
-    int video_curpos; ///< Current file position for video demuxing
-    int a_num_of_packets; ///< Number of audio packets
-    int v_num_of_packets; ///< Number of video packets
-    int a_idx_ptr; ///< Audio index position pointer
-    int v_idx_ptr; ///< Video index position pointer
-    int a_bitrate; ///< Audio bitrate
-    int v_bitrate; ///< Video bitrate
-    int stream_switch; ///< Flag used to switch audio/video demuxing
-} real_priv_t;
+	// timestamp correction:
+	int		kf_base;// timestamp of the prev. video keyframe
+	int		kf_pts;	// timestamp of next video keyframe
+	float	v_pts;  // previous video timestamp
+	float	a_pts;
+	unsigned long	duration;
+
+	/**
+	* Used to demux multirate files
+	*/
+	int is_multirate; ///< != 0 for multirate files
+	int str_data_offset[MAX_STREAMS]; ///< Data chunk offset for every audio/video stream
+	int audio_curpos; ///< Current file position for audio demuxing
+	int video_curpos; ///< Current file position for video demuxing
+	int a_num_of_packets; ///< Number of audio packets
+	int v_num_of_packets; ///< Number of video packets
+	int a_idx_ptr; ///< Audio index position pointer
+	int v_idx_ptr; ///< Video index position pointer
+	int a_bitrate; ///< Audio bitrate
+	int v_bitrate; ///< Video bitrate
+	int stream_switch; ///< Flag used to switch audio/video demuxing
+};
+
+real_priv_t::~real_priv_t() {
+    for(unsigned i=0; i<MAX_STREAMS; i++)
+	if(index_table[i])
+	    delete index_table[i];
+}
 
 /* originally from FFmpeg */
 static void get_str(int isbyte, demuxer_t *demuxer, char *buf, int buf_size)
@@ -119,7 +129,7 @@ static void skip_str(int isbyte, demuxer_t *demuxer)
 
 static void dump_index(demuxer_t *demuxer, int stream_id)
 {
-    real_priv_t *priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+    real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     real_index_table_t *index;
     int i, entries;
 
@@ -139,7 +149,7 @@ static void dump_index(demuxer_t *demuxer, int stream_id)
 
 static int parse_index_chunk(demuxer_t *demuxer)
 {
-    real_priv_t *priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+    real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     int origpos = stream_tell(demuxer->stream);
     int next_header_pos = priv->index_chunk_offset;
     int i, entries, stream_id;
@@ -216,7 +226,7 @@ static void add_index_item(demuxer_t *demuxer, int stream_id, int timestamp, int
 {
   if ((unsigned)stream_id < MAX_STREAMS)
   {
-    real_priv_t *priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+    real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     real_index_table_t *index;
     if (priv->index_table_size[stream_id] >= priv->index_malloc_size[stream_id])
     {
@@ -283,7 +293,7 @@ static void add_index_segment(demuxer_t *demuxer, int seek_stream_id, int seek_t
 
 static int generate_index(demuxer_t *demuxer)
 {
-  real_priv_t *priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+  real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
   int origpos = stream_tell(demuxer->stream);
   int data_pos = priv->data_chunk_offset-10;
   int i;
@@ -396,7 +406,7 @@ typedef struct dp_hdr_s {
 //     1 = successfully read a packet
 static int real_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 {
-    real_priv_t *priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+    real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     demux_stream_t *ds = NULL;
     float pts;
     int len;
@@ -793,7 +803,7 @@ discard:
 
 static demuxer_t* real_open(demuxer_t* demuxer)
 {
-    real_priv_t* priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+    real_priv_t* priv = static_cast<real_priv_t*>(demuxer->priv);
     int num_of_headers;
     int a_streams=0;
     int v_streams=0;
@@ -1483,23 +1493,16 @@ header_end:
 
 static void real_close(demuxer_t *demuxer)
 {
-    int i;
-    real_priv_t* priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+    real_priv_t* priv = static_cast<real_priv_t*>(demuxer->priv);
 
-    if (priv){
-	for(i=0; i<MAX_STREAMS; i++)
-	    if(priv->index_table[i])
-		delete priv->index_table[i];
-	delete priv;
-    }
-
+    if (priv) delete priv;
     return;
 }
 
 /* please upload RV10 samples WITH INDEX CHUNK */
 static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 {
-    real_priv_t *priv = reinterpret_cast<real_priv_t*>(demuxer->priv);
+    real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     demux_stream_t *d_audio = demuxer->audio;
     demux_stream_t *d_video = demuxer->video;
     sh_audio_t *sh_audio = reinterpret_cast<sh_audio_t*>(d_audio->sh);

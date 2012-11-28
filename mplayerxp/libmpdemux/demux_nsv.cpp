@@ -24,13 +24,17 @@ using namespace mpxp;
 #include "stheader.h"
 #include "demux_msg.h"
 
-typedef struct {
-    float   v_pts;
-    int video_pack_no;
-    unsigned int a_format;
-    unsigned int v_format;
-    unsigned char fps;
-} nsv_priv_t;
+struct nsv_priv_t : public Opaque {
+    public:
+	nsv_priv_t() {}
+	virtual ~nsv_priv_t() {}
+
+	float		v_pts;
+	int		video_pack_no;
+	unsigned int	a_format;
+	unsigned int	v_format;
+	unsigned char	fps;
+};
 
 /**
  * Seeking still to be implemented
@@ -55,7 +59,7 @@ static int nsv_demux ( demuxer_t *demuxer,demux_stream_t* __ds )
     sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
     sh_audio_t *sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
 
-    nsv_priv_t * priv = reinterpret_cast<nsv_priv_t*>(demuxer->priv);
+    nsv_priv_t * priv = static_cast<nsv_priv_t*>(demuxer->priv);
 
     // if the audio/video chunk has no new header the first 2 bytes will be discarded 0xBEEF
     // or rather 0xEF 0xBE
@@ -335,7 +339,7 @@ static MPXP_Rc nsv_probe ( demuxer_t* demuxer )
 }
 
 static void nsv_close(demuxer_t* demuxer) {
-    nsv_priv_t* priv = reinterpret_cast<nsv_priv_t*>(demuxer->priv);
+    nsv_priv_t* priv = static_cast<nsv_priv_t*>(demuxer->priv);
 
     if(!priv)
 	return;

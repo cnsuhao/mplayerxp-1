@@ -20,15 +20,24 @@ using namespace mpxp;
 #include "stheader.h"
 #include "demux_msg.h"
 
-typedef struct _fli_frames_t {
-  int num_frames;
-  int current_frame;
-  off_t *filepos;
-  unsigned int *frame_size;
-} fli_frames_t;
+struct fli_frames_t : public Opaque {
+    public:
+	fli_frames_t() {}
+	virtual ~fli_frames_t();
+
+	int num_frames;
+	int current_frame;
+	off_t *filepos;
+	unsigned int *frame_size;
+};
+
+fli_frames_t::~fli_frames_t() {
+    if(filepos) delete filepos;
+    if(frame_size) delete frame_size;
+}
 
 static void fli_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-  fli_frames_t *frames = reinterpret_cast<fli_frames_t*>(demuxer->priv);
+  fli_frames_t *frames = static_cast<fli_frames_t*>(demuxer->priv);
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
   int newpos=(seeka->flags&DEMUX_SEEK_SET)?0:frames->current_frame;
   newpos+=seeka->secs*(seeka->flags&DEMUX_SEEK_PERCENTS?frames->num_frames:sh_video->fps);
@@ -41,7 +50,7 @@ static void fli_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
 static int fli_demux(demuxer_t *demuxer,demux_stream_t *__ds){
-  fli_frames_t *frames = reinterpret_cast<fli_frames_t*>(demuxer->priv);
+  fli_frames_t *frames = static_cast<fli_frames_t*>(demuxer->priv);
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
 
   // see if the end has been reached
@@ -77,7 +86,7 @@ static MPXP_Rc fli_probe(demuxer_t* demuxer){
 
 static demuxer_t* fli_open(demuxer_t* demuxer){
   sh_video_t *sh_video = NULL;
-  fli_frames_t *frames = (fli_frames_t *)mp_malloc(sizeof(fli_frames_t));
+  fli_frames_t *frames = new(zeromem) fli_frames_t;
   int frame_number;
   int speed;
   unsigned int frame_size;
@@ -88,7 +97,7 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   stream_reset(demuxer->stream);
   stream_seek(demuxer->stream, 0);
 
-  header = (unsigned char*)mp_malloc(sizeof(BITMAPINFOHEADER) + 128);
+  header = new unsigned char[sizeof(BITMAPINFOHEADER) + 128];
   stream_read(demuxer->stream, header + sizeof(BITMAPINFOHEADER), 128);
   stream_seek(demuxer->stream, 0);
 
@@ -103,7 +112,7 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
 	magic_number);
     delete header;
     delete frames;
-    return(NULL);
+    return NULL;
   }
 
   // fetch the number of frames
@@ -179,17 +188,11 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
 }
 
 static void fli_close(demuxer_t* demuxer) {
-  fli_frames_t *frames = reinterpret_cast<fli_frames_t*>(demuxer->priv);
+    fli_frames_t *frames = static_cast<fli_frames_t*>(demuxer->priv);
 
-  if(!frames)
-    return;
+    if(!frames) return;
 
-  if(frames->filepos)
-    delete frames->filepos;
-  if(frames->frame_size)
-    delete frames->frame_size;
-
-  delete frames;
+    delete frames;
 }
 
 static MPXP_Rc fli_control(const demuxer_t *demuxer,int cmd,any_t*args)

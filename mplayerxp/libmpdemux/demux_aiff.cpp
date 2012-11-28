@@ -30,10 +30,14 @@ static unsigned long cvt_extended(const char * buf)
 }
 
 
-typedef struct priv_s
+struct priv_t : public Opaque
 {
-    int verc;
-}priv_t;
+    public:
+	priv_t() {}
+	virtual ~priv_t() {}
+
+	int verc;
+};
 
 static MPXP_Rc aiff_probe(demuxer_t* demuxer)
 {

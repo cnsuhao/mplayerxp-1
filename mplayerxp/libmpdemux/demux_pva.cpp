@@ -56,7 +56,11 @@ typedef struct {
 } pva_payload_t;
 
 
-typedef struct {
+struct pva_priv_t : public Opaque {
+    public:
+	pva_priv_t() {}
+	virtual ~pva_priv_t() {}
+
 	float last_audio_pts;
 	float last_video_pts;
 #ifdef PVA_NEW_PREBYTES_CODE
@@ -66,14 +70,13 @@ typedef struct {
 #endif
 	uint8_t just_synced;
 	uint8_t synced_stream_id;
-} pva_priv_t;
-
+};
 
 static int pva_sync(demuxer_t * demuxer)
 {
 	uint8_t buffer[5]={0,0,0,0,0};
 	int count;
-	pva_priv_t * priv = (pva_priv_t *) demuxer->priv;
+	pva_priv_t* priv = static_cast<pva_priv_t*>(demuxer->priv);
 
 
 	 /* This function is used to find the next nearest PVA packet start after a seek, since a PVA file
@@ -126,10 +129,10 @@ static MPXP_Rc pva_probe(demuxer_t * demuxer)
 
 static demuxer_t* pva_open (demuxer_t * demuxer)
 {
-    sh_video_t *sh_video = new_sh_video(demuxer,0);
-    sh_audio_t *sh_audio = new_sh_audio(demuxer,0);
+    sh_video_t* sh_video = new_sh_video(demuxer,0);
+    sh_audio_t* sh_audio = new_sh_audio(demuxer,0);
 
-    pva_priv_t * priv;
+    pva_priv_t* priv;
 
     stream_reset(demuxer->stream);
     stream_seek(demuxer->stream,0);
@@ -186,7 +189,7 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 {
 	uint8_t done=0;
 	Demux_Packet * dp;
-	pva_priv_t * priv=reinterpret_cast<pva_priv_t*>(demux->priv);
+	pva_priv_t* priv=static_cast<pva_priv_t*>(demux->priv);
 	pva_payload_t current_payload;
 
 	while(!done)
@@ -275,7 +278,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 #ifndef PVA_NEW_PREBYTES_CODE
 	Demux_Packet * dp; 	//hack to deliver the preBytes (see PVA doc)
 #endif
-	pva_priv_t * priv=(pva_priv_t *) d->priv;
+	pva_priv_t* priv=static_cast<pva_priv_t*>(d->priv);
 
 
 	if(d==NULL)
@@ -462,7 +465,7 @@ static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
 {
 	int total_bitrate=0;
 	off_t dest_offset;
-	pva_priv_t * priv=reinterpret_cast<pva_priv_t*>(demuxer->priv);
+	pva_priv_t* priv=static_cast<pva_priv_t*>(demuxer->priv);
 
 	total_bitrate=((sh_audio_t *)demuxer->audio->sh)->i_bps;// + ((sh_video_t *)demuxer->video->sh)->i_bps;
 
@@ -491,8 +494,6 @@ static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
 	priv->last_audio_pts=-1;
 
 }
-
-
 
 static void pva_close(demuxer_t * demuxer)
 {

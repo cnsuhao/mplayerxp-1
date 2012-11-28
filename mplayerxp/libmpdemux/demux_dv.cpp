@@ -39,14 +39,18 @@ using namespace mpxp;
 #define DV_PAL_FRAME_SIZE  144000
 #define DV_NTSC_FRAME_SIZE 122000
 
-typedef struct
+struct rawdv_frames_t : public Opaque
 {
-   int current_frame;
-   int frame_size;
-   off_t current_filepos;
-   int frame_number;
-   dv_decoder_t *decoder;
-} rawdv_frames_t;
+    public:
+	rawdv_frames_t() {}
+	virtual ~rawdv_frames_t() {};
+
+	int current_frame;
+	int frame_size;
+	off_t current_filepos;
+	int frame_number;
+	dv_decoder_t *decoder;
+};
 
 static void dv_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 {
@@ -100,7 +104,7 @@ static MPXP_Rc dv_probe(demuxer_t *demuxer)
 //     1 = successfully read a packet
 static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
 {
-   rawdv_frames_t *frames = (rawdv_frames_t *)demuxer->priv;
+   rawdv_frames_t *frames = static_cast<rawdv_frames_t*>(demuxer->priv);
    sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
    int bytes_read=0;
 //   fprintf(stderr,"demux_rawdv_fill_buffer() seek to %qu, size: %d\n",frames->current_filepos,frames->frame_size);
@@ -225,11 +229,10 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 
 static void dv_close(demuxer_t* demuxer)
 {
-   rawdv_frames_t *frames = (rawdv_frames_t *)demuxer->priv;
+    rawdv_frames_t *frames = static_cast<rawdv_frames_t*>(demuxer->priv);
 
-   if(frames==0)
-      return;
-  delete frames;
+    if(frames==0) return;
+    delete frames;
 }
 
 static MPXP_Rc dv_control(const demuxer_t *demuxer,int cmd, any_t*arg) {

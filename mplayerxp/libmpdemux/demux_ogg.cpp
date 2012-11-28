@@ -120,24 +120,45 @@ typedef struct ogg_stream {
   int id;
 } ogg_stream_t;
 
-typedef struct ogg_demuxer {
-  /// Physical stream state
-  ogg_sync_state sync;
-  /// Current page
-  ogg_page page;
-  /// Logical streams
-  ogg_stream_t *subs;
-  int num_sub;
-  ogg_syncpoint_t* syncpoints;
-  int num_syncpoint;
-  off_t pos, last_size;
-  int64_t final_granulepos;
+struct ogg_demuxer_t : public Opaque {
+    public:
+	ogg_demuxer_t() {}
+	virtual ~ogg_demuxer_t();
 
-  /* Used for subtitle switching. */
-  int n_text;
-  int *text_ids;
-  char **text_langs;
-} ogg_demuxer_t;
+	/// Physical stream state
+	ogg_sync_state sync;
+	/// Current page
+	ogg_page page;
+	/// Logical streams
+	ogg_stream_t *subs;
+	int num_sub;
+	ogg_syncpoint_t* syncpoints;
+	int num_syncpoint;
+	off_t pos, last_size;
+	int64_t final_granulepos;
+
+	/* Used for subtitle switching. */
+	int n_text;
+	int *text_ids;
+	char **text_langs;
+};
+
+ogg_demuxer_t::~ogg_demuxer_t() {
+    unsigned i;
+    ogg_sync_clear(&sync);
+    if(subs) {
+	for (i = 0; i < num_sub; i++)
+	    ogg_stream_clear(&subs[i].stream);
+	delete subs;
+    }
+    if(syncpoints) delete syncpoints;
+    if (text_ids) delete text_ids;
+    if (text_langs) {
+	for (i = 0; i < n_text; i++)
+	    if (text_langs[i]) delete text_langs[i];
+	delete text_langs;
+    }
+}
 
 #define NUM_VORBIS_HDR_PACKETS 3
 
@@ -170,8 +191,8 @@ static MPXP_Rc ogg_probe(demuxer_t *demuxer)
 }
 
 static inline uint16_t get_uint16(uint16_t* val) { return le2me_16(*val); }
-static inline uint16_t get_uint32(uint32_t* val) { return le2me_32(*val); }
-static inline uint16_t get_uint64(uint64_t* val) { return le2me_64(*val); }
+static inline uint32_t get_uint32(uint32_t* val) { return le2me_32(*val); }
+static inline uint64_t get_uint64(uint64_t* val) { return le2me_64(*val); }
 #if 0
 static
 uint16_t get_uint16 (const any_t*buf)
@@ -439,7 +460,7 @@ static int demux_ogg_check_lang(const char *clang,const char *langlist)
  *  \param id The ogg track number of the subtitle track.
  */
 static int demux_ogg_sub_reverse_id(demuxer_t *demuxer, int id) {
-  ogg_demuxer_t *ogg_d = (ogg_demuxer_t *)demuxer->priv;
+  ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   int i;
   for (i = 0; i < ogg_d->n_text; i++)
     if (ogg_d->text_ids[i] == id) return i;
@@ -453,7 +474,7 @@ static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vor
   char *val=NULL;
   char **cmt = vc->user_comments;
   int index;
-  ogg_demuxer_t *ogg_d = (ogg_demuxer_t *)d->priv;
+  ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(d->priv);
 
   while(*cmt)
   {
@@ -576,7 +597,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
 /// if -forceidx build a table of all syncpoints to make seeking easier
 /// otherwise try to get at least the final_granulepos
 static void demux_ogg_scan_stream(demuxer_t* demuxer) {
-  ogg_demuxer_t* ogg_d = reinterpret_cast<ogg_demuxer_t*>(demuxer->priv);
+  ogg_demuxer_t* ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   stream_t *s = demuxer->stream;
   ogg_sync_state* sync = &ogg_d->sync;
   ogg_page* page= &ogg_d->page;
@@ -701,7 +722,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
   should be returned.
 */
 static int demux_ogg_num_subs(demuxer_t *demuxer) {
-  ogg_demuxer_t *ogg_d = (ogg_demuxer_t *)demuxer->priv;
+  ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   return ogg_d->n_text;
 }
 
@@ -715,7 +736,7 @@ static int demux_ogg_num_subs(demuxer_t *demuxer) {
   track.
 */
 static int demux_ogg_sub_id(demuxer_t *demuxer, int index) {
-  ogg_demuxer_t *ogg_d = (ogg_demuxer_t *)demuxer->priv;
+  ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   return (index < 0) ? index : (index >= ogg_d->n_text) ? -1 : ogg_d->text_ids[index];
 }
 
@@ -724,7 +745,7 @@ static int demux_ogg_sub_id(demuxer_t *demuxer, int index) {
  *  \param index The subtitle number.
  */
 char *demux_ogg_sub_lang(demuxer_t *demuxer, int index) {
-  ogg_demuxer_t *ogg_d = (ogg_demuxer_t *)demuxer->priv;
+  ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   return (index < 0) ? NULL : (index >= ogg_d->n_text) ? NULL : ogg_d->text_langs[index];
 }
 
@@ -750,7 +771,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
   clear_sub = -1;
   s = demuxer->stream;
 
-  ogg_d = (ogg_demuxer_t*)mp_calloc(1,sizeof(ogg_demuxer_t));
+  ogg_d = new(zeromem) ogg_demuxer_t;
   sync = &ogg_d->sync;
   page = &ogg_d->page;
 
@@ -1085,7 +1106,7 @@ static int ogg_demux(demuxer_t *d,demux_stream_t *__ds) {
   int np = 0, id=0;
 
   s = d->stream;
-  ogg_d = reinterpret_cast<ogg_demuxer_t*>(d->priv);
+  ogg_d = static_cast<ogg_demuxer_t*>(d->priv);
   sync = &ogg_d->sync;
   page = &ogg_d->page;
 
@@ -1188,9 +1209,9 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
   }
 
   // Build the ogg demuxer private datas
-  ogg_d = (ogg_demuxer_t*)mp_calloc(1,sizeof(ogg_demuxer_t));
+  ogg_d = new(zeromem) ogg_demuxer_t;
   ogg_d->num_sub = 1;
-  ogg_d->subs = (ogg_stream_t*)mp_malloc(sizeof(ogg_stream_t));
+  ogg_d->subs = new(zeromem) ogg_stream_t;
   ogg_d->subs[0].vorbis = 1;
 
    // Init the ogg physical stream
@@ -1252,7 +1273,7 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
 }
 
 static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
-  ogg_demuxer_t* ogg_d = reinterpret_cast<ogg_demuxer_t*>(demuxer->priv);
+  ogg_demuxer_t* ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   ogg_sync_state* sync = &ogg_d->sync;
   ogg_page* page= &ogg_d->page;
   ogg_stream_state* oss;
@@ -1429,32 +1450,14 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
 }
 
 static void ogg_close(demuxer_t* demuxer) {
-  ogg_demuxer_t* ogg_d = reinterpret_cast<ogg_demuxer_t*>(demuxer->priv);
-  int i;
+  ogg_demuxer_t* ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
 
-  if(!ogg_d)
-    return;
+  if(!ogg_d) return;
 
 #ifdef USE_ICONV
   subcp_close();
 #endif
 
-  ogg_sync_clear(&ogg_d->sync);
-  if(ogg_d->subs)
-  {
-    for (i = 0; i < ogg_d->num_sub; i++)
-      ogg_stream_clear(&ogg_d->subs[i].stream);
-    delete ogg_d->subs;
-  }
-  if(ogg_d->syncpoints)
-    delete ogg_d->syncpoints;
-  if (ogg_d->text_ids)
-    delete ogg_d->text_ids;
-  if (ogg_d->text_langs) {
-    for (i = 0; i < ogg_d->n_text; i++)
-      if (ogg_d->text_langs[i]) delete ogg_d->text_langs[i];
-    delete ogg_d->text_langs;
-  }
   delete ogg_d;
 }
 

@@ -82,32 +82,30 @@ int sub_justify;
 
 typedef struct
 {
-   off_t startOffset;
-   off_t fileSize;
-   int   chunks;
+    off_t startOffset;
+    off_t fileSize;
+    int   chunks;
 } tmf_fileParts;
 
 #define MAX_TMF_PARTS 16
 
-typedef struct
-{
-   int             whichChunk;
+struct TiVoInfo : public Opaque {
+    public:
+	TiVoInfo() {}
+	virtual ~TiVoInfo() {}
 
-   unsigned char   lastAudio[ MAX_AUDIO_BUFFER ];
-   int             lastAudioEnd;
-
-   int             tivoType;           // 1 = SA, 2 = DTiVo
-
-   int64_t        lastAudioPTS;
-   int64_t        lastVideoPTS;
-
-   off_t           size;
-   int             readHeader;
-
-   int             tmf;
-   tmf_fileParts   tmfparts[ MAX_TMF_PARTS ];
-   int             tmf_totalparts;
-} TiVoInfo;
+	int		whichChunk;
+	unsigned char	lastAudio[ MAX_AUDIO_BUFFER ];
+	int		lastAudioEnd;
+	int		tivoType;           // 1 = SA, 2 = DTiVo
+	int64_t		lastAudioPTS;
+	int64_t		lastVideoPTS;
+	off_t		size;
+	int		readHeader;
+	int		tmf;
+	tmf_fileParts	tmfparts[ MAX_TMF_PARTS ];
+	int		tmf_totalparts;
+};
 
 off_t vstream_streamsize( );
 void ty_ClearOSD( int start );
@@ -354,7 +352,7 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
 
    int              aid;
 
-   TiVoInfo         *tivo = reinterpret_cast<TiVoInfo*>(demux->priv);
+   TiVoInfo         *tivo = static_cast<TiVoInfo*>(demux->priv);
 #if 0
    if ( demux->stream->type == STREAMTYPE_DVD )
       return 0;
@@ -753,7 +751,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
    sh_audio_t     *sh_audio = reinterpret_cast<sh_audio_t*>(d_audio->sh);
    off_t          newpos;
    off_t          res;
-   TiVoInfo       *tivo = reinterpret_cast<TiVoInfo*>(demuxer->priv);
+   TiVoInfo       *tivo = static_cast<TiVoInfo*>(demuxer->priv);
 
    MSG_DBG3( "ty:Seeking to %7.1f\n", seeka->secs );
 
@@ -837,7 +835,7 @@ static MPXP_Rc ty_control(const demuxer_t *demuxer,int cmd, any_t*arg )
 
 static void ty_close( demuxer_t *demux )
 {
-    TiVoInfo* tivo = reinterpret_cast<TiVoInfo*>(demux->priv);
+    TiVoInfo* tivo = static_cast<TiVoInfo*>(demux->priv);
 
     delete tivo;
     sub_justify = 0;

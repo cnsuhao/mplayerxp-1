@@ -33,26 +33,33 @@ using namespace mpxp;
 
 typedef struct _film_chunk_t
 {
-  off_t chunk_offset;
-  int chunk_size;
-  unsigned int syncinfo1;
-  unsigned int syncinfo2;
+    off_t chunk_offset;
+    int chunk_size;
+    unsigned int syncinfo1;
+    unsigned int syncinfo2;
 
-  float pts;
+    float pts;
 } film_chunk_t;
 
-typedef struct _film_data_t
-{
-  unsigned int total_chunks;
-  unsigned int current_chunk;
-  film_chunk_t *chunks;
-  unsigned int chunks_per_second;
-  unsigned int film_version;
-} film_data_t;
+struct film_data_t : public Opaque {
+    public:
+	film_data_t() {}
+	virtual ~film_data_t();
+
+	unsigned int total_chunks;
+	unsigned int current_chunk;
+	film_chunk_t *chunks;
+	unsigned int chunks_per_second;
+	unsigned int film_version;
+};
+
+film_data_t::~film_data_t() {
+  if(chunks) delete chunks;
+}
 
 static void film_seek(demuxer_t *demuxer, const seek_args_t* seeka)
 {
-  film_data_t *film_data = (film_data_t *)demuxer->priv;
+  film_data_t *film_data = static_cast<film_data_t*>(demuxer->priv);
   int new_current_chunk=(seeka->flags&DEMUX_SEEK_SET)?0:film_data->current_chunk;
 
   new_current_chunk += seeka->secs *(seeka->flags&DEMUX_SEEK_PERCENTS?film_data->total_chunks:film_data->chunks_per_second);
@@ -90,7 +97,7 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   int cvid_size;
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
   sh_audio_t *sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
-  film_data_t *film_data = (film_data_t *)demuxer->priv;
+  film_data_t *film_data = static_cast<film_data_t*>(demuxer->priv);
   film_chunk_t film_chunk;
   int length_fix_bytes;
   Demux_Packet* dp;
@@ -210,7 +217,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
   int counting_chunks;
   unsigned int total_audio_bytes = 0;
 
-  film_data = (film_data_t *)mp_malloc(sizeof(film_data_t));
+  film_data = new(zeromem) film_data_t;
   film_data->total_chunks = 0;
   film_data->current_chunk = 0;
   film_data->chunks = NULL;
@@ -426,14 +433,10 @@ static demuxer_t* film_open(demuxer_t* demuxer)
 }
 
 static void film_close(demuxer_t* demuxer) {
-  film_data_t *film_data = reinterpret_cast<film_data_t*>(demuxer->priv);
+    film_data_t *film_data = reinterpret_cast<film_data_t*>(demuxer->priv);
 
-  if(!film_data)
-    return;
-  if(film_data->chunks)
-    delete film_data->chunks;
-  delete film_data;
-
+    if(!film_data) return;
+    delete film_data;
 }
 
 static MPXP_Rc film_control(const demuxer_t *demuxer,int cmd,any_t*args)

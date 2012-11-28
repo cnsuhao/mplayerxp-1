@@ -27,8 +27,11 @@ using namespace mpxp;
 #define FOURCC_DNET mmioFOURCC('d','n','e','t')
 #define FOURCC_LPCJ mmioFOURCC('l','p','c','J')
 
+struct realaud_priv_t : public Opaque {
+    public:
+	realaud_priv_t() {}
+	virtual ~realaud_priv_t() {}
 
-typedef struct {
 	unsigned short version;
 	unsigned int dotranum;
 	unsigned int data_size;
@@ -41,11 +44,9 @@ typedef struct {
 	unsigned short sub_packet_size;
 	char genr[4];
 	float last_pts;
-} ra_priv_t;
+};
 
-
-
-static MPXP_Rc ra_probe(demuxer_t* demuxer)
+static MPXP_Rc realaud_probe(demuxer_t* demuxer)
 {
     unsigned int chunk_id;
 
@@ -60,9 +61,9 @@ static MPXP_Rc ra_probe(demuxer_t* demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int ra_demux(demuxer_t *demuxer,demux_stream_t *__ds)
+static int realaud_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 {
-	ra_priv_t *ra_priv = reinterpret_cast<ra_priv_t*>(demuxer->priv);
+	realaud_priv_t *realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
 	int len;
 	demux_stream_t *ds = demuxer->audio;
 	sh_audio_t *sh = reinterpret_cast<sh_audio_t*>(ds->sh);
@@ -82,10 +83,10 @@ static int ra_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 
 	if(sh->i_bps)
 	{
-	    ra_priv->last_pts = ra_priv->last_pts < 0 ? 0 : ra_priv->last_pts + len/(float)sh->i_bps;
-	    ds->pts = ra_priv->last_pts - (ds_tell_pts(demuxer->audio)-sh->a_in_buffer_len)/(float)sh->i_bps;
+	    realaud_priv->last_pts = realaud_priv->last_pts < 0 ? 0 : realaud_priv->last_pts + len/(float)sh->i_bps;
+	    ds->pts = realaud_priv->last_pts - (ds_tell_pts(demuxer->audio)-sh->a_in_buffer_len)/(float)sh->i_bps;
 	}
-	else dp->pts = demuxer->filepos / ra_priv->data_size;
+	else dp->pts = demuxer->filepos / realaud_priv->data_size;
 	dp->pos = demuxer->filepos;
 	dp->flags = DP_NONKEYFRAME;
 	ds_add_packet(ds, dp);
@@ -93,50 +94,50 @@ static int ra_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	return 1;
 }
 
-static demuxer_t * ra_open(demuxer_t* demuxer)
+static demuxer_t * realaud_open(demuxer_t* demuxer)
 {
-    ra_priv_t* ra_priv = reinterpret_cast<ra_priv_t*>(demuxer->priv);
+    realaud_priv_t* realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
     sh_audio_t *sh;
     int i;
     char *buf;
 
-    if ((ra_priv = (ra_priv_t *)mp_mallocz(sizeof(ra_priv_t))) == NULL) {
+    if ((realaud_priv = (realaud_priv_t *)mp_mallocz(sizeof(realaud_priv_t))) == NULL) {
 	MSG_ERR(MSGTR_OutOfMemory);
 	return 0;
     }
 
-	demuxer->priv = ra_priv;
+	demuxer->priv = realaud_priv;
 	sh = new_sh_audio(demuxer, 0);
 	demuxer->audio->id = 0;
 	sh->ds=demuxer->audio;
 	demuxer->audio->sh = sh;
 
-	ra_priv->version = stream_read_word(demuxer->stream);
-	MSG_V("[RealAudio] File version: %d\n", ra_priv->version);
-	if ((ra_priv->version < 3) || (ra_priv->version > 4)) {
+	realaud_priv->version = stream_read_word(demuxer->stream);
+	MSG_V("[RealAudio] File version: %d\n", realaud_priv->version);
+	if ((realaud_priv->version < 3) || (realaud_priv->version > 4)) {
 		MSG_WARN("[RealAudio] ra version %d is not supported yet, please "
-			"contact MPlayer developers\n", ra_priv->version);
+			"contact MPlayer developers\n", realaud_priv->version);
 		return 0;
 	}
-	if (ra_priv->version == 3) {
-		ra_priv->hdr_size = stream_read_word(demuxer->stream);
+	if (realaud_priv->version == 3) {
+		realaud_priv->hdr_size = stream_read_word(demuxer->stream);
 		stream_skip(demuxer->stream, 10);
-		ra_priv->data_size = stream_read_dword(demuxer->stream);
+		realaud_priv->data_size = stream_read_dword(demuxer->stream);
 	} else {
 		stream_skip(demuxer->stream, 2);
-		ra_priv->dotranum = stream_read_dword(demuxer->stream);
-		ra_priv->data_size = stream_read_dword(demuxer->stream);
-		ra_priv->version2 = stream_read_word(demuxer->stream);
-		ra_priv->hdr_size = stream_read_dword(demuxer->stream);
-		ra_priv->codec_flavor = stream_read_word(demuxer->stream);
-		ra_priv->coded_framesize = stream_read_dword(demuxer->stream);
+		realaud_priv->dotranum = stream_read_dword(demuxer->stream);
+		realaud_priv->data_size = stream_read_dword(demuxer->stream);
+		realaud_priv->version2 = stream_read_word(demuxer->stream);
+		realaud_priv->hdr_size = stream_read_dword(demuxer->stream);
+		realaud_priv->codec_flavor = stream_read_word(demuxer->stream);
+		realaud_priv->coded_framesize = stream_read_dword(demuxer->stream);
 		stream_skip(demuxer->stream, 4); // data size?
 		stream_skip(demuxer->stream, 8);
-		ra_priv->sub_packet_h = stream_read_word(demuxer->stream);
-		ra_priv->frame_size = stream_read_word(demuxer->stream);
-		MSG_V("[RealAudio] Frame size: %d\n", ra_priv->frame_size);
-		ra_priv->sub_packet_size = stream_read_word(demuxer->stream);
-		MSG_V("[RealAudio] Sub packet size: %d\n", ra_priv->sub_packet_size);
+		realaud_priv->sub_packet_h = stream_read_word(demuxer->stream);
+		realaud_priv->frame_size = stream_read_word(demuxer->stream);
+		MSG_V("[RealAudio] Frame size: %d\n", realaud_priv->frame_size);
+		realaud_priv->sub_packet_size = stream_read_word(demuxer->stream);
+		MSG_V("[RealAudio] Sub packet size: %d\n", realaud_priv->sub_packet_size);
 		stream_skip(demuxer->stream, 2);
 		sh->rate = stream_read_word(demuxer->stream);
 		stream_skip(demuxer->stream, 2);
@@ -145,7 +146,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		MSG_V("[RealAudio] %d channel, %d bit, %dHz\n", sh->nch,
 			afmt2bps(sh->afmt), sh->rate);
 		i = stream_read_char(demuxer->stream);
-		*((unsigned int *)(ra_priv->genr)) = stream_read_dword(demuxer->stream);
+		*((unsigned int *)(realaud_priv->genr)) = stream_read_dword(demuxer->stream);
 		if (i != 4) {
 			MSG_WARN("[RealAudio] Genr size is not 4 (%d), please report to "
 				"MPlayer developers\n", i);
@@ -190,8 +191,8 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		delete buf;
 	}
 
-	if (ra_priv->version == 3) {
-	    if(ra_priv->hdr_size + 8 > stream_tell(demuxer->stream)) {
+	if (realaud_priv->version == 3) {
+	    if(realaud_priv->hdr_size + 8 > stream_tell(demuxer->stream)) {
 		stream_skip(demuxer->stream, 1);
 		i = stream_read_char(demuxer->stream);
 		sh->wtag = stream_read_dword_le(demuxer->stream);
@@ -210,7 +211,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		sh->nch = 1;
 		sh->afmt = bps2afmt(2);
 		sh->rate = 8000;
-		ra_priv->frame_size = 240;
+		realaud_priv->frame_size = 240;
 		sh->wtag = FOURCC_144;
 	    } else {
 		// If a stream does not have fourcc, let's assume it's 14.4
@@ -219,7 +220,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 		sh->nch = 1;
 		sh->afmt = bps2afmt(2);
 		sh->rate = 8000;
-		ra_priv->frame_size = 240;
+		realaud_priv->frame_size = 240;
 		sh->wtag = FOURCC_144;
 	    }
 	}
@@ -230,7 +231,7 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 	sh->wf->wBitsPerSample = afmt2bps(sh->afmt);
 	sh->wf->nSamplesPerSec = sh->rate;
 	sh->wf->nAvgBytesPerSec = sh->rate*afmt2bps(sh->afmt);
-	sh->wf->nBlockAlign = ra_priv->frame_size;
+	sh->wf->nBlockAlign = realaud_priv->frame_size;
 	sh->wf->cbSize = 0;
 	sh->wf->wFormatTag = sh->wtag;
 
@@ -250,9 +251,9 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 			    sh->wf->cbSize = 10/*+codecdata_length*/;
 			    sh->wf = (WAVEFORMATEX*)mp_realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
 			    ((short*)(sh->wf+1))[0]=0;
-			    ((short*)(sh->wf+1))[1]=ra_priv->sub_packet_h;
-			    ((short*)(sh->wf+1))[2]=ra_priv->codec_flavor;
-			    ((short*)(sh->wf+1))[3]=ra_priv->coded_framesize;
+			    ((short*)(sh->wf+1))[1]=realaud_priv->sub_packet_h;
+			    ((short*)(sh->wf+1))[2]=realaud_priv->codec_flavor;
+			    ((short*)(sh->wf+1))[3]=realaud_priv->coded_framesize;
 			    ((short*)(sh->wf+1))[4]=0;
 			break;
 		case FOURCC_DNET: /* direct support */
@@ -274,11 +275,11 @@ static demuxer_t * ra_open(demuxer_t* demuxer)
 
 
 
-static void ra_close(demuxer_t *demuxer)
+static void realaud_close(demuxer_t *demuxer)
 {
-    ra_priv_t* ra_priv = reinterpret_cast<ra_priv_t*>(demuxer->priv);
-    if (ra_priv)
-	delete ra_priv;
+    realaud_priv_t* realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
+    if (realaud_priv)
+	delete realaud_priv;
     return;
 }
 
@@ -299,7 +300,7 @@ int demux_seek_ra(demuxer_t *demuxer,const seek_args_t* seeka)
 }
 #endif
 
-static MPXP_Rc ra_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc realaud_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);
@@ -312,10 +313,10 @@ extern const demuxer_driver_t demux_ra =
     "Real audio parser",
     ".ra",
     NULL,
-    ra_probe,
-    ra_open,
-    ra_demux,
+    realaud_probe,
+    realaud_open,
+    realaud_demux,
     NULL,
-    ra_close,
-    ra_control
+    realaud_close,
+    realaud_control
 };

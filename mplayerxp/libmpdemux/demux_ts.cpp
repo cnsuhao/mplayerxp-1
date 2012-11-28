@@ -224,6 +224,15 @@ typedef struct {
 } TS_stream_info;
 
 typedef struct {
+	es_stream_type_t type;
+	ts_section_t section;
+} TS_pids_t;
+
+struct ts_priv_t : public Opaque {
+    public:
+	ts_priv_t() {}
+	virtual ~ts_priv_t();
+
 	MpegTSContext ts;
 	int last_pid;
 	av_fifo_t fifo[3];	//0 for audio, 1 for video, 2 for subs
@@ -237,15 +246,22 @@ typedef struct {
 	int last_vid;
 	char packet[TS_FEC_PACKET_SIZE];
 	TS_stream_info vstr, astr;
-} ts_priv_t;
+};
 
-typedef struct {
-	es_stream_type_t type;
-	ts_section_t section;
-} TS_pids_t;
+ts_priv_t::~ts_priv_t() {
+    if(pat.section.buffer) delete pat.section.buffer;
+    if(pat.progs) delete pat.progs;
+    if(pmt) {
+	for(unsigned i = 0; i < pmt_cnt; i++) {
+	    if(pmt[i].section.buffer) delete pmt[i].section.buffer;
+	    if(pmt[i].es) delete pmt[i].es;
+	}
+	delete pmt;
+    }
+}
 
-#define IS_AUDIO(x) (((x) == AUDIO_MP2) || ((x) == AUDIO_A52) || ((x) == AUDIO_LPCM_BE) || ((x) == AUDIO_AAC))
-#define IS_VIDEO(x) (((x) == VIDEO_MPEG1) || ((x) == VIDEO_MPEG2) || ((x) == VIDEO_MPEG4) || ((x) == VIDEO_H264) || ((x) == VIDEO_AVC))
+inline int IS_AUDIO(unsigned x) { return ((x==AUDIO_MP2)||(x==AUDIO_A52)||(x==AUDIO_LPCM_BE)||(x==AUDIO_AAC)); }
+inline int IS_VIDEO(unsigned x) { return ((x==VIDEO_MPEG1)||(x==VIDEO_MPEG2)||(x==VIDEO_MPEG4)||(x==VIDEO_H264)||(x==VIDEO_AVC)); }
 
 static int ts_parse(demuxer_t *demuxer, ES_stream_t *es, unsigned char *packet, int probe);
 
@@ -290,7 +306,7 @@ static int parse_avc_sps(uint8_t *buf, int len, int *w, int *h);
 static void ts_add_stream(demuxer_t * demuxer, ES_stream_t *es)
 {
 	int i;
-	ts_priv_t *priv = (ts_priv_t*) demuxer->priv;
+	ts_priv_t *priv = static_cast<ts_priv_t*>(demuxer->priv);
 
 	if(priv->ts.streams[es->pid].sh)
 		return;
@@ -614,7 +630,7 @@ static off_t ts_detect_streams(demuxer_t *demuxer, tsdemux_init_t *param)
 	off_t pos=0, ret = 0, init_pos, end_pos;
 	ES_stream_t es;
 	unsigned char tmp[TS_FEC_PACKET_SIZE];
-	ts_priv_t *priv = (ts_priv_t*) demuxer->priv;
+	ts_priv_t *priv = static_cast<ts_priv_t*>(demuxer->priv);
 	struct {
 		char *buf;
 		int pos;
@@ -919,7 +935,7 @@ static demuxer_t *ts_open(demuxer_t * demuxer)
 	sh_audio_t *sh_audio;
 	off_t start_pos;
 	tsdemux_init_t params;
-	ts_priv_t * priv = (ts_priv_t*) demuxer->priv;
+	ts_priv_t * priv = static_cast<ts_priv_t*>(demuxer->priv);
 
 	MSG_INFO( "DEMUX OPEN, AUDIO_ID: %d, VIDEO_ID: %d, SUBTITLE_ID: %d,\n",
 		demuxer->audio->id, demuxer->video->id, demuxer->sub->id);
@@ -1045,30 +1061,10 @@ static demuxer_t *ts_open(demuxer_t * demuxer)
 
 static void ts_close(demuxer_t * demuxer)
 {
-	uint16_t i;
-	ts_priv_t *priv = (ts_priv_t*) demuxer->priv;
+    ts_priv_t *priv = static_cast<ts_priv_t*>(demuxer->priv);
 
-	if(priv)
-	{
-		if(priv->pat.section.buffer)
-			delete priv->pat.section.buffer;
-		if(priv->pat.progs)
-			delete priv->pat.progs;
-
-		if(priv->pmt)
-		{
-			for(i = 0; i < priv->pmt_cnt; i++)
-			{
-				if(priv->pmt[i].section.buffer)
-					delete priv->pmt[i].section.buffer;
-				if(priv->pmt[i].es)
-					delete priv->pmt[i].es;
-			}
-			delete priv->pmt;
-		}
-		delete priv;
-	}
-	demuxer->priv=NULL;
+    if(priv) delete priv;
+    demuxer->priv=NULL;
 }
 
 
@@ -2548,7 +2544,7 @@ static int fill_packet(demuxer_t *demuxer, demux_stream_t *ds, Demux_Packet **dp
 
 			if(dur > 0 && ds == demuxer->video)
 			{
-				ts_priv_t * priv = (ts_priv_t*) demuxer->priv;
+				ts_priv_t * priv = static_cast<ts_priv_t*>(demuxer->priv);
 				if(dur > 1)	//otherwise it may be unreliable
 					priv->vbitrate = (uint32_t) ((float) si->size / dur);
 			}
@@ -2590,7 +2586,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	uint8_t done = 0;
 	int buf_size, is_start, pid, base;
 	int len, cc, cc_ok, afc, retv = 0, is_video, is_audio, is_sub;
-	ts_priv_t * priv = (ts_priv_t*) demuxer->priv;
+	ts_priv_t * priv = static_cast<ts_priv_t*>(demuxer->priv);
 	stream_t *stream = demuxer->stream;
 	unsigned char *p;
 	demux_stream_t *ds = NULL;
@@ -3059,13 +3055,13 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 	demux_stream_t *d_sub=demuxer->sub;
 	sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	sh_video_t *sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
-	ts_priv_t * priv = reinterpret_cast<ts_priv_t*>(demuxer->priv);
+	ts_priv_t * priv = static_cast<ts_priv_t*>(demuxer->priv);
 	int i, video_stats;
 	off_t newpos;
 
 	//================= seek in MPEG-TS ==========================
 
-	ts_dump_streams(reinterpret_cast<ts_priv_t*>(demuxer->priv));
+	ts_dump_streams(static_cast<ts_priv_t*>(demuxer->priv));
 	reset_fifos(priv, sh_audio != NULL, sh_video != NULL, demuxer->sub->id > 0);
 
 
@@ -3154,7 +3150,7 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 static int ts_demux(demuxer_t * demuxer,demux_stream_t *__ds)
 {
     ES_stream_t es;
-    ts_priv_t *priv = reinterpret_cast<ts_priv_t*>(demuxer->priv);
+    ts_priv_t *priv = static_cast<ts_priv_t*>(demuxer->priv);
     UNUSED(__ds);
 
     return -ts_parse(demuxer, &es, reinterpret_cast<unsigned char*>(priv->packet), 0);
@@ -3185,7 +3181,7 @@ static int is_usable_program(ts_priv_t *priv, pmt_t *pmt)
 #endif
 static MPXP_Rc ts_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
-    ts_priv_t* priv = (ts_priv_t *)demuxer->priv;
+    ts_priv_t* priv = static_cast<ts_priv_t*>(demuxer->priv);
 
     switch(cmd) {
 	case DEMUX_CMD_SWITCH_AUDIO:

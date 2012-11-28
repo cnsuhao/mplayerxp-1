@@ -14,16 +14,17 @@ using namespace mpxp;
 #include "libvo/img_format.h"
 #include "demux_msg.h"
 
-typedef struct priv_s {
-    int		use_rawvideo;
-    int		format;
-    int		size_id;
-    int		width;
-    int		height;
-    float	fps;
-    int		imgsize;
-}priv_t;
-static priv_t priv;
+struct rawvideo_conf_t {
+    public:
+	int	use_rawvideo;
+	int	format;
+	int	size_id;
+	int	width;
+	int	height;
+	float	fps;
+	int	imgsize;
+};
+static rawvideo_conf_t priv;
 
 static const config_t demux_rawvideo_opts[] = {
   { "on", &priv.use_rawvideo, CONF_TYPE_FLAG, 0,0, 1, "forces treating stream as raw-vidio" },

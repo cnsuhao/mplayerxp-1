@@ -199,10 +199,14 @@ static void bmp_close(demuxer_t* demuxer)
 
 #else
 
-typedef struct {
-  int image_size;
-  int image_offset;
-} bmp_image_t;
+struct bmp_image_t : public Opaque {
+    public:
+	bmp_image_t() {}
+	virtual ~bmp_image_t() {}
+
+	int image_size;
+	int image_offset;
+};
 
 // Check if a file is a BMP file depending on whether starts with 'BM'
 static MPXP_Rc bmp_probe(demuxer_t *demuxer)
@@ -218,7 +222,7 @@ static MPXP_Rc bmp_probe(demuxer_t *demuxer)
 //     1 = successfully read a packet
 static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 {
-  bmp_image_t *bmp_image = reinterpret_cast<bmp_image_t*>(demuxer->priv);
+  bmp_image_t *bmp_image = static_cast<bmp_image_t*>(demuxer->priv);
 
   stream_reset(demuxer->stream);
   stream_seek(demuxer->stream, bmp_image->image_offset);
@@ -291,7 +295,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
 }
 
 static void bmp_close(demuxer_t* demuxer) {
-  bmp_image_t *bmp_image = reinterpret_cast<bmp_image_t*>(demuxer->priv);
+  bmp_image_t *bmp_image = static_cast<bmp_image_t*>(demuxer->priv);
 
   if(!bmp_image)
     return;

@@ -91,9 +91,9 @@ static const demuxer_driver_t *ddrivers[] =
     NULL
 };
 
-typedef struct demuxer_info_st {
+struct demuxer_info_t {
     char *id[INFOT_MAX];
-} demuxer_info_t;
+};
 
 void libmpdemux_register_options(m_config_t* cfg)
 {
@@ -157,7 +157,7 @@ demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
   d->video=new_demuxer_stream(d,v_id);
   d->sub=new_demuxer_stream(d,s_id);
   d->file_format=type;
-  d->info=mp_mallocz(sizeof(demuxer_info_t));
+  d->info=new(zeromem) demuxer_info_t;
   stream_reset(stream);
   stream_seek(stream,stream->start_pos);
   return d;
@@ -691,12 +691,12 @@ int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param)
     }
     opt--;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    if(((demuxer_info_t *)demuxer->info)->id[opt])
+    if(demuxer->info->id[opt])
     {
-	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],((demuxer_info_t *)demuxer->info)->id[opt]);
-	delete ((demuxer_info_t *)demuxer->info)->id[opt];
+	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],demuxer->info->id[opt]);
+	delete demuxer->info->id[opt];
     }
-    ((demuxer_info_t *)demuxer->info)->id[opt]=nls_recode2screen_cp(sub_data.cp,param,strlen(param));
+    demuxer->info->id[opt]=nls_recode2screen_cp(sub_data.cp,param,strlen(param));
     return 1;
 }
 
@@ -705,8 +705,8 @@ int demux_info_print(const demuxer_t *demuxer,const char *filename)
     unsigned i;
     MSG_HINT(" CLIP INFO (%s):\n",filename);
     for(i=0;i<INFOT_MAX;i++)
-	if(((demuxer_info_t *)demuxer->info)->id[i])
-	    MSG_HINT("   %s: %s\n",info_names[i],((demuxer_info_t *)demuxer->info)->id[i]);
+	if(demuxer->info->id[i])
+	    MSG_HINT("   %s: %s\n",info_names[i],demuxer->info->id[i]);
     return 0;
 }
 
@@ -715,7 +715,7 @@ void demux_info_free(demuxer_t* demuxer)
     unsigned i;
     if(demuxer->info)
     {
-	demuxer_info_t*dinfo = reinterpret_cast<demuxer_info_t*>(demuxer->info);
+	demuxer_info_t*dinfo = demuxer->info;
 	for(i=0;i<INFOT_MAX;i++)
 	    if(dinfo->id[i])
 		delete dinfo->id[i];
@@ -725,7 +725,7 @@ void demux_info_free(demuxer_t* demuxer)
 
 const char* demux_info_get(const demuxer_t *demuxer, unsigned opt) {
     if(!opt || opt > INFOT_MAX) return NULL;
-    return ((demuxer_info_t *)demuxer->info)->id[opt-1];
+    return demuxer->info->id[opt-1];
 }
 
 /******************* Options stuff **********************/

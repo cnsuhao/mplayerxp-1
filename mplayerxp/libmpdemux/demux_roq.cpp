@@ -41,14 +41,17 @@ typedef struct roq_chunk_t
   int running_audio_sample_count;  // for an audio chunk
 } roq_chunk_t;
 
-typedef struct roq_data_t
-{
-  int total_chunks;
-  int current_chunk;
-  int total_video_chunks;
-  int total_audio_sample_count;
-  roq_chunk_t *chunks;
-} roq_data_t;
+struct roq_data_t : public Opaque {
+    public:
+	roq_data_t() {}
+	virtual ~roq_data_t() {}
+
+	int total_chunks;
+	int current_chunk;
+	int total_video_chunks;
+	int total_audio_sample_count;
+	roq_chunk_t *chunks;
+};
 
 // Check if a stream qualifies as a RoQ file based on the magic numbers
 // at the start of the file:
@@ -71,7 +74,7 @@ static MPXP_Rc roq_probe(demuxer_t *demuxer)
 static int roq_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 {
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
-  roq_data_t *roq_data = reinterpret_cast<roq_data_t*>(demuxer->priv);
+  roq_data_t *roq_data = static_cast<roq_data_t*>(demuxer->priv);
   roq_chunk_t roq_chunk;
 
   if (roq_data->current_chunk >= roq_data->total_chunks)
@@ -246,7 +249,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
 }
 
 static void roq_close(demuxer_t* demuxer) {
-  roq_data_t *roq_data = reinterpret_cast<roq_data_t*>(demuxer->priv);
+  roq_data_t *roq_data = static_cast<roq_data_t*>(demuxer->priv);
 
   if(!roq_data) return;
   delete roq_data;

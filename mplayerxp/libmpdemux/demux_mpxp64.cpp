@@ -30,20 +30,24 @@ using namespace mpxp;
 
 #define MAX_AV_STREAMS MAX_V_STREAMS+MAX_A_STREAMS+MAX_S_STREAMS
 
-typedef struct {
-  unsigned nstreams;
-  mpxpav64FileProperties_t fprop;
-  mpxpav64StreamProperties_t sprop[MAX_AV_STREAMS];
-  uint64_t data_off[MAX_AV_STREAMS];
-  // deltas
-  float prev_pts[MAX_AV_STREAMS];
-  float prev_xpts[MAX_AV_STREAMS];
-  uint64_t prev_size[MAX_AV_STREAMS];
-  uint32_t prev_id;
-  // index stuff:
-  any_t* idx[MAX_AV_STREAMS];
-  unsigned idx_size[MAX_AV_STREAMS];
-} mpxpav64_priv_t;
+struct mpxpav64_priv_t : public Opaque {
+    public:
+	mpxpav64_priv_t() {}
+	virtual ~mpxpav64_priv_t() {}
+
+	unsigned nstreams;
+	mpxpav64FileProperties_t fprop;
+	mpxpav64StreamProperties_t sprop[MAX_AV_STREAMS];
+	uint64_t data_off[MAX_AV_STREAMS];
+	// deltas
+	float prev_pts[MAX_AV_STREAMS];
+	float prev_xpts[MAX_AV_STREAMS];
+	uint64_t prev_size[MAX_AV_STREAMS];
+	uint32_t prev_id;
+	// index stuff:
+	any_t* idx[MAX_AV_STREAMS];
+	unsigned idx_size[MAX_AV_STREAMS];
+};
 
 #define le2me_ImageDesc(h) {						\
     (h)->idSize = le2me_32((h)->idSize);				\
@@ -67,29 +71,6 @@ typedef struct {
 }
 
 #define MAX_PACKS 4096
-#define MIN(a,b) (((a)<(b))?(a):(b))
-
-#if 0
-/*
-According to :
-"MPEG Extension to AVI File Format "Editable MPEG FileFormat"
-Draft Version 1.1 of 5/13/94"
-*/
-static float avi_aspects[]=
-{
-  1.0000, 0.6735, 0.7031, 0.7615, 0.8055, 0.8437, 0.8935,
-  0.9375, 0.9815, 1.0255, 1.0695, 1.1250, 1.1575, 1.2015
-};
-
-static float get_avi_aspect(unsigned char id)
-{
-    if(id>0&&id<15)
-    {
-	return avi_aspects[id-1];
-    }
-    else return 1.0;
-}
-#endif
 
 static void print_FileProp(mpxpav64FileProperties_t *fp)
 {
@@ -159,7 +140,7 @@ static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_of
 {
     uint64_t i,fpos,iid;
     stream_t *s=demuxer->stream;
-    mpxpav64_priv_t *priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
+    mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     unsigned sid;
     int is_valid;
     fpos=stream_tell(s);
@@ -202,7 +183,7 @@ static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_of
 }
 
 static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
-    mpxpav64_priv_t *priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
+    mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     stream_t *s=demuxer->stream;
     uint32_t fourcc,fsize;
     int have_bih=0;
@@ -327,7 +308,7 @@ static int mpxpav64_read_st64a(demuxer_t *demuxer,unsigned hsize,unsigned id){
 
 static int mpxpav64_read_st64(demuxer_t *demuxer,unsigned hsize,unsigned id){
     stream_t *s=demuxer->stream;
-    mpxpav64_priv_t *priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
+    mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     uint64_t idx_off;
     uint32_t fourcc,hoff;
     hoff=stream_tell(s);
@@ -379,7 +360,7 @@ static int mpxpav64_read_st64(demuxer_t *demuxer,unsigned hsize,unsigned id){
 #ifdef USE_ICONV
 static void mpxpav64_read_fcnt(demuxer_t* demuxer,unsigned fsize)
 {
-    mpxpav64_priv_t *priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
+    mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     stream_t *s=demuxer->stream;
     int64_t hoff;
     const char * codepage;
@@ -439,7 +420,7 @@ static void mpxpav64_read_fcnt(demuxer_t* demuxer,unsigned fsize)
 
 static void mpxpav64_reset_prevs(demuxer_t *demuxer)
 {
-    mpxpav64_priv_t* priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
+    mpxpav64_priv_t* priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     unsigned i;
     MSG_DBG2("mpxpav64_reset_prevs()\n");
     for(i=0;i<MAX_AV_STREAMS;i++)
@@ -468,7 +449,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
 
     // priv struct:
     priv=new(zeromem) mpxpav64_priv_t;
-    demuxer->priv=(any_t*)priv;
+    demuxer->priv=priv;
     demuxer->video->id=-1;
     demuxer->audio->id=-1;
     mpxpav64_reset_prevs(demuxer);
@@ -597,7 +578,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 /* DATx|stn|size|pts|stream data of size32 */
 static int mpxpav64_demux(demuxer_t *demux,demux_stream_t *__ds){
     stream_t* s=demux->stream;
-    mpxpav64_priv_t *priv=reinterpret_cast<mpxpav64_priv_t*>(demux->priv);
+    mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demux->priv);
     uint8_t flg;
     char p[8];
     uint64_t len;
@@ -793,7 +774,7 @@ static int mpxpav64_sync(demuxer_t *demuxer)
 
 #define USE_INDEXES 1
 static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-    mpxpav64_priv_t *priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
+    mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     float brate=priv->fprop.AveBitrate;
     off_t rel_seek_bytes=(seeka->flags&DEMUX_SEEK_PERCENTS)?
 	(seeka->secs*(demuxer->movi_end-demuxer->movi_start)):
@@ -883,7 +864,7 @@ static MPXP_Rc mpxpav64_probe(demuxer_t *demuxer)
 static void mpxpav64_close(demuxer_t *demuxer)
 {
   unsigned i;
-  mpxpav64_priv_t* priv=reinterpret_cast<mpxpav64_priv_t*>(demuxer->priv);
+  mpxpav64_priv_t* priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
   if(!priv) return;
   for(i=0;i<MAX_AV_STREAMS;i++) if(priv->idx[i]!=NULL) delete priv->idx[i];
   delete priv;

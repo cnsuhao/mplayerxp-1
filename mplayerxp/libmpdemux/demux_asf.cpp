@@ -43,20 +43,24 @@ enum {
     ASF_GUID_PREFIX_stream_group	=0x7bf875ce
 };
 
-typedef struct asf_priv_s
+struct asf_priv_t : public Opaque
 {
- ASF_header_t asfh;
- ASF_obj_header_t objh;
- ASF_file_header_t fileh;
- ASF_stream_header_t streamh;
- ASF_content_description_t contenth;
- int asf_scrambling_h;
- int asf_scrambling_w;
- int asf_scrambling_b;
- int asf_packetsize;
- double asf_packetrate;
- int asf_movielength;
-}asf_priv_t;
+    public:
+	asf_priv_t() {}
+	virtual ~asf_priv_t() {}
+
+	ASF_header_t asfh;
+	ASF_obj_header_t objh;
+	ASF_file_header_t fileh;
+	ASF_stream_header_t streamh;
+	ASF_content_description_t contenth;
+	int asf_scrambling_h;
+	int asf_scrambling_w;
+	int asf_scrambling_b;
+	int asf_packetsize;
+	double asf_packetrate;
+	int asf_movielength;
+};
 
 // the variable string is modify in this function
 void pack_asf_string(char* string, int length) {
@@ -119,7 +123,7 @@ static const char* asf_chunk_type(const uint8_t* guid) {
 static MPXP_Rc asf_probe(demuxer_t *demuxer){
   const unsigned char asfhdrguid[16]= {0x30,0x26,0xB2,0x75,0x8E,0x66,0xCF,0x11,0xA6,0xD9,0x00,0xAA,0x00,0x62,0xCE,0x6C};
   const unsigned char asf2hdrguid[16]={0xD1,0x29,0xE2,0xD6,0xDA,0x35,0xD1,0x11,0x90,0x34,0x00,0xA0,0xC9,0x03,0x49,0xBE};
-  asf_priv_t *apriv;
+  asf_priv_t* apriv;
   demuxer->priv=apriv=new(zeromem) asf_priv_t;
   apriv->asf_scrambling_h=1;
   apriv->asf_scrambling_w=1;
@@ -157,7 +161,7 @@ static demuxer_t* asf_open(demuxer_t *demuxer){
   uint16_t stream_count=0;
   int best_video = -1;
   int best_audio = -1;
-  asf_priv_t *apriv=reinterpret_cast<asf_priv_t*>(demuxer->priv);
+  asf_priv_t *apriv=static_cast<asf_priv_t*>(demuxer->priv);
 
 while(!stream_eof(demuxer->stream)){
   int pos,endpos;
@@ -415,7 +419,7 @@ static void asf_descrambling(asf_priv_t *apriv, unsigned char *src,int len){
 
 static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,int seq,unsigned long time,unsigned short dur,int offs,int keyframe){
   demux_stream_t *ds=NULL;
-  asf_priv_t *apriv=reinterpret_cast<asf_priv_t*>(demux->priv);
+  asf_priv_t *apriv=static_cast<asf_priv_t*>(demux->priv);
 
   MSG_DBG3("demux_asf.read_packet: id=%d seq=%d len=%d time=%u dur=%u offs=%i key=%i\n",id,seq,len,time,dur,offs,keyframe);
 
@@ -495,7 +499,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 //     1 = successfully read a packet
 static int asf_demux(demuxer_t *demux,demux_stream_t *ds){
 stream_t *stream=demux->stream;
-asf_priv_t *apriv=reinterpret_cast<asf_priv_t*>(demux->priv);
+asf_priv_t *apriv=static_cast<asf_priv_t*>(demux->priv);
 int done=0;
 while(!done)
 {
@@ -685,7 +689,7 @@ return 0;
 static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     demux_stream_t *d_audio=demuxer->audio;
     demux_stream_t *d_video=demuxer->video;
-    asf_priv_t *apriv=reinterpret_cast<asf_priv_t*>(demuxer->priv);
+    asf_priv_t *apriv=static_cast<asf_priv_t*>(demuxer->priv);
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 
   /*================= seek in ASF ==========================*/

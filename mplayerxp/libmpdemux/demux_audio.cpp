@@ -35,20 +35,24 @@ using namespace mpxp;
 
 #define HDR_SIZE 4
 
-typedef struct da_priv {
-  int frmt;
-  float last_pts,pts_per_packet,length;
-  uint32_t dword;
-  int pos;
-  /* Xing's VBR specific extensions */
-  int	   is_xing;
-  unsigned nframes;
-  unsigned nbytes;
-  int	   scale;
-  unsigned srate;
-  int	   lsf;
-  unsigned char	toc[100]; /* like AVI's indexes */
-} da_priv_t;
+struct da_priv_t : public Opaque {
+    public:
+	da_priv_t() {}
+	virtual ~da_priv_t() {}
+
+	int	frmt;
+	float	last_pts,pts_per_packet,length;
+	uint32_t dword;
+	int	pos;
+	/* Xing's VBR specific extensions */
+	int	is_xing;
+	unsigned nframes;
+	unsigned nbytes;
+	int	scale;
+	unsigned srate;
+	int	lsf;
+	unsigned char	toc[100]; /* like AVI's indexes */
+};
 
 static int hr_mp3_seek = 0;
 
@@ -874,7 +878,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   assert(demuxer->stream != NULL);
 #endif
 
-  priv = (da_priv_t*)mp_mallocz(sizeof(da_priv_t));
+  priv = new(zeromem) da_priv_t;
   s = demuxer->stream;
   stream_reset(s);
   stream_seek(s,s->start_pos);
@@ -1398,7 +1402,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 #endif
   sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   demux = demuxer;
-  priv = reinterpret_cast<da_priv_t*>(demux->priv);
+  priv = static_cast<da_priv_t*>(demux->priv);
   s = demux->stream;
 
   seof=stream_eof(s);
@@ -1571,7 +1575,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 static void high_res_mp3_seek(demuxer_t *demuxer,float _time) {
   uint8_t hdr[4];
   int len,nf;
-  da_priv_t* priv = reinterpret_cast<da_priv_t*>(demuxer->priv);
+  da_priv_t* priv = static_cast<da_priv_t*>(demuxer->priv);
   sh_audio_t* sh = (sh_audio_t*)demuxer->audio->sh;
 
   nf = _time*sh->rate/1152;
@@ -1593,7 +1597,7 @@ static void high_res_ac3_seek(demuxer_t *demuxer,float _time) {
   uint8_t hdr[8];
   int len,nf;
   unsigned tmp;
-  da_priv_t* priv = reinterpret_cast<da_priv_t*>(demuxer->priv);
+  da_priv_t* priv = static_cast<da_priv_t*>(demuxer->priv);
   sh_audio_t* sh = (sh_audio_t*)demuxer->audio->sh;
 
   nf = _time*sh->rate/1152;
@@ -1615,7 +1619,7 @@ static void high_res_ddca_seek(demuxer_t *demuxer,float _time) {
   uint8_t hdr[12];
   int len,nf;
   unsigned tmp;
-  da_priv_t* priv = reinterpret_cast<da_priv_t*>(demuxer->priv);
+  da_priv_t* priv = static_cast<da_priv_t*>(demuxer->priv);
   sh_audio_t* sh = (sh_audio_t*)demuxer->audio->sh;
 
   nf = _time*sh->rate/1152;
@@ -1642,7 +1646,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 
   if(!(sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh))) return;
   s = demuxer->stream;
-  priv = reinterpret_cast<da_priv_t*>(demuxer->priv);
+  priv = static_cast<da_priv_t*>(demuxer->priv);
   if(priv->frmt==RAW_MUSEPACK)
   {
     s = demuxer->stream;
@@ -1763,11 +1767,10 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 }
 
 static void audio_close(demuxer_t* demuxer) {
-  da_priv_t* priv = reinterpret_cast<da_priv_t*>(demuxer->priv);
+    da_priv_t* priv = static_cast<da_priv_t*>(demuxer->priv);
 
-  if(!priv)
-    return;
-  delete priv;
+    if(!priv) return;
+    delete priv;
 }
 
 static MPXP_Rc audio_control(const demuxer_t *demuxer,int cmd,any_t*args)

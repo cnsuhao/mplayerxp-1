@@ -38,15 +38,27 @@ using namespace mpxp;
 
 #define BIO_BUFFER_SIZE 32768
 
-typedef struct lavf_priv_t{
-    AVInputFormat *avif;
-    AVFormatContext *avfc;
-    AVIOContext *pb;
-    uint8_t buffer[BIO_BUFFER_SIZE];
-    int audio_streams;
-    int video_streams;
-    int64_t last_pts;
-}lavf_priv_t;
+struct lavf_priv_t : public Opaque {
+    public:
+	lavf_priv_t() {}
+	virtual ~lavf_priv_t();
+
+	AVInputFormat *avif;
+	AVFormatContext *avfc;
+	AVIOContext *pb;
+	uint8_t buffer[BIO_BUFFER_SIZE];
+	int audio_streams;
+	int video_streams;
+	int64_t last_pts;
+};
+
+lavf_priv_t::~lavf_priv_t() {
+    if(avfc) {
+	av_freep(&avfc->key);
+	avformat_close_input(&avfc);
+    }
+    av_freep(&pb);
+}
 
 static char *opt_format;
 static char *opt_cryptokey;
@@ -173,8 +185,8 @@ static MPXP_Rc lavf_probe(demuxer_t *demuxer){
     AVProbeData avpd;
     uint8_t buf[PROBE_BUF_SIZE];
     lavf_priv_t *priv;
-    if(!demuxer->priv) demuxer->priv=new(zeromem) lavf_priv_t;
-    priv= reinterpret_cast<lavf_priv_t*>(demuxer->priv);
+    priv=new(zeromem) lavf_priv_t;
+    demuxer->priv=priv;
 
     av_register_all();
     if(mp_conf.verbose>1) av_log_set_level(AV_LOG_DEBUG);
@@ -216,7 +228,7 @@ static MPXP_Rc lavf_probe(demuxer_t *demuxer){
 
 static demuxer_t* lavf_open(demuxer_t *demuxer){
     AVFormatContext *avfc;
-    lavf_priv_t *priv= reinterpret_cast<lavf_priv_t*>(demuxer->priv);
+    lavf_priv_t *priv= static_cast<lavf_priv_t*>(demuxer->priv);
     unsigned j;
     int err,i,g;
     char mp_filename[256]="mpxp:";
@@ -402,7 +414,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 
 static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
     UNUSED(dsds);
-    lavf_priv_t *priv= reinterpret_cast<lavf_priv_t*>(demux->priv);
+    lavf_priv_t *priv= static_cast<lavf_priv_t*>(demux->priv);
     AVPacket pkt;
     Demux_Packet *dp;
     demux_stream_t *ds;
@@ -440,20 +452,9 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 	return 1;
     }
 
-    if(0/*pkt.destruct == av_destruct_packet*/){
-	//ok kids, dont try this at home :)
-	dp=new(zeromem) Demux_Packet(pkt.size);
-	dp->len=pkt.size;
-	dp->next=NULL;
-//        dp->refcount=1;
-//        dp->master=NULL;
-	dp->buffer=pkt.data;
-	pkt.destruct= NULL;
-    }else{
-	dp=new(zeromem) Demux_Packet(pkt.size);
-	memcpy(dp->buffer, pkt.data, pkt.size);
-	av_free_packet(&pkt);
-    }
+    dp=new(zeromem) Demux_Packet(pkt.size);
+    memcpy(dp->buffer, pkt.data, pkt.size);
+    av_free_packet(&pkt);
 
     if(pkt.pts != AV_NOPTS_VALUE){
 	dp->pts=pkt.pts * av_q2d(priv->avfc->streams[id]->time_base);
@@ -467,7 +468,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 }
 
 static void lavf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-    lavf_priv_t *priv = reinterpret_cast<lavf_priv_t*>(demuxer->priv);
+    lavf_priv_t *priv = static_cast<lavf_priv_t*>(demuxer->priv);
     MSG_DBG2("lavf_demux(%p, %f, %d)\n", demuxer, seeka->secs, seeka->flags);
 
     av_seek_frame(priv->avfc, -1, priv->last_pts + seeka->secs*AV_TIME_BASE, seeka->secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
@@ -483,14 +484,10 @@ static MPXP_Rc lavf_control(const demuxer_t *demuxer, int cmd, any_t*arg)
 
 static void lavf_close(demuxer_t *demuxer)
 {
-    lavf_priv_t* priv = reinterpret_cast<lavf_priv_t*>(demuxer->priv);
+    lavf_priv_t* priv = static_cast<lavf_priv_t*>(demuxer->priv);
     if (priv){
-	if(priv->avfc) {
-	    av_freep(&priv->avfc->key);
-	    avformat_close_input(&priv->avfc);
-	}
-	av_freep(&priv->pb);
-	delete priv; demuxer->priv= NULL;
+	delete priv;
+	demuxer->priv=NULL;
     }
 }
 

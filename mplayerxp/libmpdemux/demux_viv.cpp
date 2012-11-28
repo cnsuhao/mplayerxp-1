@@ -22,15 +22,31 @@ using namespace mpxp;
 #include "libmpconf/cfgparser.h"
 
 /* parameters ! */
-static int vivo_param_version = -1;
-static char *vivo_param_acodec = NULL;
-static int vivo_param_abitrate = -1;
-static int vivo_param_samplerate = -1;
-static int vivo_param_bytesperblock = -1;
-static int vivo_param_width = -1;
-static int vivo_param_height = -1;
-static int vivo_param_vformat = -1;
+struct vivo_param : public Opaque {
+    public:
+	vivo_param();
+	virtual ~vivo_param() {}
 
+	int version;
+	char *acodec;
+	int abitrate;
+	int samplerate;
+	int bytesperblock;
+	int width;
+	int height;
+	int vformat;
+};
+vivo_param::vivo_param() {
+    version = -1;
+    acodec = NULL;
+    abitrate = -1;
+    samplerate = -1;
+    bytesperblock = -1;
+    width = -1;
+    height = -1;
+    vformat = -1;
+}
+static vivo_param vivo_param;
 /* VIVO audio standards from vivog723.acm:
 
     G.723:
@@ -55,46 +71,56 @@ static int vivo_param_vformat = -1;
 #define VIVO_AUDIO_G723 1
 #define VIVO_AUDIO_SIREN 2
 
-typedef struct {
-    /* generic */
-    char	version;
-    int		supported;
-    /* info */
-    char	*title;
-    char	*author;
-    char	*copyright;
-    char	*producer;
-    /* video */
-    float	fps;
-    int		width;
-    int		height;
-    int		disp_width;
-    int		disp_height;
-    /* audio */
-    int		audio_codec;
-    int		audio_bitrate;
-    int		audio_samplerate;
-    int		audio_bytesperblock;
-} vivo_priv_t;
+struct vivo_priv_t : public Opaque {
+    public:
+	vivo_priv_t() {}
+	virtual ~vivo_priv_t();
 
+	/* generic */
+	char	version;
+	int	supported;
+	/* info */
+	char	*title;
+	char	*author;
+	char	*copyright;
+	char	*producer;
+	/* video */
+	float	fps;
+	int	width;
+	int	height;
+	int	disp_width;
+	int	disp_height;
+	/* audio */
+	int	audio_codec;
+	int	audio_bitrate;
+	int	audio_samplerate;
+	int	audio_bytesperblock;
+};
+
+vivo_priv_t::~vivo_priv_t() {
+    if (title) delete title;
+    if (author) delete author;
+    if (copyright) delete copyright;
+    if (producer) delete producer;
+}
 
 static const config_t vivoopts_conf[]={
-	{"version", &vivo_param_version, CONF_TYPE_INT, 0, 0, 0, "forces version of VIVO stream"},
-	/* audio options */
-	{"acodec", &vivo_param_acodec, CONF_TYPE_STRING, 0, 0, 0, "specifies audio-codec of VIVO stream"},
-	{"abitrate", &vivo_param_abitrate, CONF_TYPE_INT, 0, 0, 0, "specifies audio bitrate of VIVO stream"},
-	{"samplerate", &vivo_param_samplerate, CONF_TYPE_INT, 0, 0, 0, "specifies audio samplerate of VIVO stream"},
-	{"bytesperblock", &vivo_param_bytesperblock, CONF_TYPE_INT, 0, 0, 0, "specifies number of bytes per audio-block in VIVO stream"},
-	/* video options */
-	{"width", &vivo_param_width, CONF_TYPE_INT, 0, 0, 0, "specifies width of video in VIVO stream" },
-	{"height", &vivo_param_height, CONF_TYPE_INT, 0, 0, 0, "specifies height of video in VIVO stream"},
-	{"vformat", &vivo_param_vformat, CONF_TYPE_INT, 0, 0, 0, "specifies video-codec of VIVO stream"},
-	{NULL, NULL, 0, 0, 0, 0, NULL}
+    {"version", &vivo_param.version, CONF_TYPE_INT, 0, 0, 0, "forces version of VIVO stream"},
+    /* audio options */
+    {"acodec", &vivo_param.acodec, CONF_TYPE_STRING, 0, 0, 0, "specifies audio-codec of VIVO stream"},
+    {"abitrate", &vivo_param.abitrate, CONF_TYPE_INT, 0, 0, 0, "specifies audio bitrate of VIVO stream"},
+    {"samplerate", &vivo_param.samplerate, CONF_TYPE_INT, 0, 0, 0, "specifies audio samplerate of VIVO stream"},
+    {"bytesperblock", &vivo_param.bytesperblock, CONF_TYPE_INT, 0, 0, 0, "specifies number of bytes per audio-block in VIVO stream"},
+    /* video options */
+    {"width", &vivo_param.width, CONF_TYPE_INT, 0, 0, 0, "specifies width of video in VIVO stream" },
+    {"height", &vivo_param.height, CONF_TYPE_INT, 0, 0, 0, "specifies height of video in VIVO stream"},
+    {"vformat", &vivo_param.vformat, CONF_TYPE_INT, 0, 0, 0, "specifies video-codec of VIVO stream"},
+    {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const config_t vivo_conf[] = {
-  { "vivo", (any_t*)&vivoopts_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Vivo specific options"},
-  { NULL,NULL, 0, 0, 0, 0, NULL}
+    { "vivo", (any_t*)&vivoopts_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Vivo specific options"},
+    { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
 /* parse all possible extra headers */
@@ -103,7 +129,7 @@ static const config_t vivo_conf[] = {
 
 static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 {
-    vivo_priv_t* priv = reinterpret_cast<vivo_priv_t*>(demux->priv);
+    vivo_priv_t* priv = static_cast<vivo_priv_t*>(demux->priv);
     char *buf;
     int i;
     char *token;
@@ -547,7 +573,7 @@ static int h263_decode_picture_header(unsigned char *b_ptr)
 }
 
 static demuxer_t* vivo_open(demuxer_t* demuxer){
-    vivo_priv_t* priv=reinterpret_cast<vivo_priv_t*>(demuxer->priv);
+    vivo_priv_t* priv=static_cast<vivo_priv_t*>(demuxer->priv);
 
   if(!ds_fill_buffer(demuxer->video)){
     MSG_ERR("VIVO: " MSGTR_MissingVideoStreamBug);
@@ -558,8 +584,8 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 
   h263_decode_picture_header(demuxer->video->buffer);
 
-  if (vivo_param_version != -1)
-    priv->version = '0' + vivo_param_version;
+  if (vivo_param.version != -1)
+    priv->version = '0' + vivo_param.version;
 
 {		sh_video_t* sh=new_sh_video(demuxer,0);
 
@@ -578,16 +604,16 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		priv->disp_width = priv->width;
 		priv->disp_height = priv->height;
 
-		if (vivo_param_width != -1)
-		    priv->disp_width = priv->width = vivo_param_width;
+		if (vivo_param.width != -1)
+		    priv->disp_width = priv->width = vivo_param.width;
 
-		if (vivo_param_height != -1)
-		    priv->disp_height = priv->height = vivo_param_height;
+		if (vivo_param.height != -1)
+		    priv->disp_height = priv->height = vivo_param.height;
 
-		if (vivo_param_vformat != -1)
+		if (vivo_param.vformat != -1)
 		{
-		    priv->disp_width = priv->width = h263_format[vivo_param_vformat][0];
-		    priv->disp_height = priv->height = h263_format[vivo_param_vformat][1];
+		    priv->disp_width = priv->width = h263_format[vivo_param.vformat][0];
+		    priv->disp_height = priv->height = h263_format[vivo_param.vformat][1];
 		}
 
 		if (priv->disp_width)
@@ -643,11 +669,11 @@ if (demuxer->audio->id >= -1){
 		    else
 			priv->audio_codec = VIVO_AUDIO_G723;
 		}
-		if (vivo_param_acodec != NULL)
+		if (vivo_param.acodec != NULL)
 		{
-		    if (!strcasecmp(vivo_param_acodec, "g723"))
+		    if (!strcasecmp(vivo_param.acodec, "g723"))
 			priv->audio_codec = VIVO_AUDIO_G723;
-		    if (!strcasecmp(vivo_param_acodec, "siren"))
+		    if (!strcasecmp(vivo_param.acodec, "siren"))
 			priv->audio_codec = VIVO_AUDIO_SIREN;
 		}
 
@@ -685,8 +711,8 @@ if (demuxer->audio->id >= -1){
 		    if (priv->audio_codec == VIVO_AUDIO_G723)
 			sh->wf->nSamplesPerSec = 8000;
 		}
-		if (vivo_param_samplerate != -1)
-		    sh->wf->nSamplesPerSec = vivo_param_samplerate;
+		if (vivo_param.samplerate != -1)
+		    sh->wf->nSamplesPerSec = vivo_param.samplerate;
 
 		/* Set audio bitrate */
 		if (priv->audio_bitrate) /* got from header */
@@ -698,8 +724,8 @@ if (demuxer->audio->id >= -1){
 		    if (priv->audio_codec == VIVO_AUDIO_G723)
 			sh->wf->nAvgBytesPerSec = 800;
 		}
-		if (vivo_param_abitrate != -1)
-		    sh->wf->nAvgBytesPerSec = vivo_param_abitrate;
+		if (vivo_param.abitrate != -1)
+		    sh->wf->nAvgBytesPerSec = vivo_param.abitrate;
 		audio_rate=sh->wf->nAvgBytesPerSec;
 
 		if (!priv->audio_bytesperblock)
@@ -711,8 +737,8 @@ if (demuxer->audio->id >= -1){
 		}
 		else
 		    sh->wf->nBlockAlign = priv->audio_bytesperblock;
-		if (vivo_param_bytesperblock != -1)
-		    sh->wf->nBlockAlign = vivo_param_bytesperblock;
+		if (vivo_param.bytesperblock != -1)
+		    sh->wf->nBlockAlign = vivo_param.bytesperblock;
 
 		/* insert as stream */
 		demuxer->audio->sh=sh;
@@ -728,19 +754,9 @@ nosound:
 
 static void vivo_close(demuxer_t *demuxer)
 {
-    vivo_priv_t* priv=reinterpret_cast<vivo_priv_t*>(demuxer->priv);
+    vivo_priv_t* priv=static_cast<vivo_priv_t*>(demuxer->priv);
 
-    if (priv) {
-	if (priv->title)
-	    delete priv->title;
-	if (priv->author)
-	    delete priv->author;
-	if (priv->copyright)
-	    delete priv->copyright;
-	if (priv->producer)
-	   delete priv->producer;
-	delete priv;
-    }
+    if (priv) delete priv;
     return;
 }
 
