@@ -402,7 +402,6 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 	Demux_Packet* dp=ds->asf_packet;
 	dp->resize(dp->len+len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
-	dp->len+=len;
     }
     else
     {

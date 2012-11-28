@@ -246,6 +246,7 @@ stream_t* __FASTCALL__ new_stream(int type){
   s->sector_size=STREAM_BUFFER_SIZE;
   s->buffer=new unsigned char [STREAM_BUFFER_SIZE];
   if(s->buffer==NULL) { delete s; return NULL; }
+  s->buf_len=STREAM_BUFFER_SIZE;
   stream_reset(s);
   return s;
 }

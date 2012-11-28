@@ -399,7 +399,6 @@ void ds_free_packs(demux_stream_t *ds){
   }
   if(ds->asf_packet){
     // mp_free unfinished .asf fragments:
-    delete ds->asf_packet->buffer;
     delete ds->asf_packet;
     ds->asf_packet=NULL;
   }
@@ -429,7 +428,6 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
   {
     if(ds->asf_packet){
 	// mp_free unfinished .asf fragments:
-	delete ds->asf_packet->buffer;
 	delete ds->asf_packet;
 	ds->asf_packet=NULL;
     }

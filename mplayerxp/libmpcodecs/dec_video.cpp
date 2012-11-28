@@ -166,7 +166,7 @@ any_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,in
 	memcpy(sh_video->codec->outfmt,vprobe->pix_fmt,sizeof(vprobe->pix_fmt));
 	priv->mpvdec=vfm_find_driver(vfm);
     }
-    if(sh_video->codec) {
+    if(priv->mpvdec) {
 	if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		delete sh_video->codec;
