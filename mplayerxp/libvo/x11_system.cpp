@@ -44,7 +44,7 @@ static int x11_errorhandler(::Display *display,::XErrorEvent *event)
     return 0;
 }
 
-X11_System::X11_System(const char* DisplayName)
+X11_System::X11_System(const char* DisplayName,int xinerama_screen)
 	    :screenwidth(0),
 	     screenheight(0)
 {
@@ -82,11 +82,11 @@ X11_System::X11_System(const char* DisplayName)
 	int num_screens;
 
 	screens = ::XineramaQueryScreens(mDisplay, &num_screens);
-	if(vo_conf.xinerama_screen >= num_screens) vo_conf.xinerama_screen = 0;
-	screenwidth=screens[vo_conf.xinerama_screen].width;
-	screenheight=screens[vo_conf.xinerama_screen].height;
-	xinerama_x = screens[vo_conf.xinerama_screen].x_org;
-	xinerama_y = screens[vo_conf.xinerama_screen].y_org;
+	if(xinerama_screen >= num_screens) xinerama_screen = 0;
+	screenwidth=screens[xinerama_screen].width;
+	screenheight=screens[xinerama_screen].height;
+	xinerama_x = screens[xinerama_screen].x_org;
+	xinerama_y = screens[xinerama_screen].y_org;
 
 	::XFree(screens);
     } else
@@ -194,7 +194,7 @@ XVisualInfo* X11_System::get_visual() const
     return ::XGetVisualInfo(mDisplay, VisualIDMask, &vi_template, &dummy);
 }
 
-void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,unsigned dpth,const char*title)
+void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned flags,unsigned dpth,const char*title)
 {
     Colormap theCmap;
     XSetWindowAttributes xswa;
@@ -211,7 +211,7 @@ void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
     xswamask=CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
 #ifdef HAVE_XF86VM
-    if ( is_vm ) {
+    if ( flags&VOFLAG_MODESWITCHING ) {
 	xswa.override_redirect=True;
 	xswamask|=CWOverrideRedirect;
     }
@@ -235,7 +235,7 @@ void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
     sync( False );
     gc=::XCreateGC( mDisplay,window,0L,&xgcv );
 #ifdef HAVE_XF86VM
-    if ( is_vm ) {
+    if ( flags&VOFLAG_MODESWITCHING ) {
 	/* Grab the mouse pointer in our window */
 	::XGrabPointer(mDisplay, window, True, 0,
 		   GrabModeAsync, GrabModeAsync,
@@ -244,6 +244,12 @@ void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
     }
 #endif
     update_win_coord();
+    hidecursor();
+    decoration((flags&VOFLAG_FULLSCREEN)?0:1);
+    classhint("vo_x11");
+    /* we cannot grab mouse events on root window :( */
+    select_input(StructureNotifyMask | KeyPressMask |
+		ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 }
 
 void X11_System::select_input(long mask) const
@@ -923,8 +929,8 @@ void X11_System::vm_close()
 
 #ifdef HAVE_XV
 #include "img_format.h"
-Xv_System::Xv_System(const char* DisplayName)
-	    :X11_System(DisplayName) {}
+Xv_System::Xv_System(const char* DisplayName,int xinerama_screen)
+	    :X11_System(DisplayName,xinerama_screen) {}
 Xv_System::~Xv_System() {}
 
 unsigned Xv_System::query_port(uint32_t format)
@@ -1139,8 +1145,8 @@ int Xv_System::reset_video_eq() const
 #endif
 
 #ifdef HAVE_OPENGL
-GLX_System::GLX_System(const char* DisplayName)
-	    :X11_System(DisplayName)
+GLX_System::GLX_System(const char* DisplayName,int xinerama_screen)
+	    :X11_System(DisplayName,xinerama_screen)
 {
     static int visual_attribs[] = {
 	GLX_RGBA,
@@ -1167,7 +1173,7 @@ void GLX_System::swap_buffers() const
     ::glXSwapBuffers(get_display(), window);
 }
 
-void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,unsigned dpth,const char*title)
+void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned flags,unsigned dpth,const char*title)
 {
     Colormap theCmap;
     XSetWindowAttributes xswa;
@@ -1197,7 +1203,7 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
     xswamask=CWBorderPixel | CWColormap | CWEventMask;
 
 #ifdef HAVE_XF86VM
-    if ( is_vm ) {
+    if ( flags&VOFLAG_MODESWITCHING ) {
 	xswa.override_redirect=True;
 	xswamask|=CWOverrideRedirect;
     }
@@ -1215,7 +1221,7 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
     ::XMapWindow( get_display(),window );
 
 #ifdef HAVE_XF86VM
-    if ( is_vm ) {
+    if ( flags&VOFLAG_MODESWITCHING ) {
 	/* Grab the mouse pointer in our window */
 	::XGrabPointer(get_display(), window, True, 0,
 		   GrabModeAsync, GrabModeAsync,
@@ -1224,6 +1230,12 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,int is_vm,
     }
 #endif
     update_win_coord();
+    hidecursor();
+    decoration((flags&VOFLAG_FULLSCREEN)?0:1);
+    classhint("vo_opengl");
+    /* we cannot grab mouse events on root window :( */
+    select_input(StructureNotifyMask | KeyPressMask |
+		ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 }
 #endif
 

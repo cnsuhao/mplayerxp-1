@@ -32,14 +32,14 @@ typedef struct {
 
 class X11_System {
     public:
-	X11_System(const char* DisplayName);
+	X11_System(const char* DisplayName,int ximerama_screen);
 	virtual ~X11_System();
 
 	unsigned	screen_width() const;
 	unsigned	screen_height() const;
 	void		match_visual(XVisualInfo*) const;
 	virtual XVisualInfo* get_visual() const;
-	virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,int is_vm,unsigned depth,const char*title);
+	virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,unsigned flags,unsigned depth,const char*title);
 	void		get_win_coord(vo_rect_t&) const;
 	void		select_input(long mask) const;
 	unsigned	depth() const { return _depth; }
@@ -53,9 +53,6 @@ class X11_System {
 	virtual void	freeMyXImage(unsigned idx);
 	void		put_image(XImage*,const vo_rect_t&) const;
 
-	void		hidecursor () const;
-	void		decoration(int d);
-	void		classhint(const char *name) const;
 	void		sizehint(int x, int y, int width, int height) const;
 	void		calcpos(XSizeHints* hint, unsigned d_width, unsigned d_height, unsigned flags);
 	uint32_t	check_events(vo_adjust_size_t adjust_size,vo_data_t* opaque);
@@ -75,6 +72,9 @@ class X11_System {
 	int		get_screen() const { return mScreen; }
 	::GC		get_gc() const {return gc; }
 	void		update_win_coord();
+	void		hidecursor () const;
+	void		decoration(int d);
+	void		classhint(const char *name) const;
 
 	::Window	window;
 	vo_rect_t	prev,curr;
@@ -119,7 +119,7 @@ class X11_System {
 #include <sys/shm.h>
 class Xv_System : public X11_System {
     public:
-	Xv_System(const char* DisplayName);
+	Xv_System(const char* DisplayName,int ximerama_screen);
 	virtual ~Xv_System();
 
 	unsigned	query_port(uint32_t fourcc);
@@ -148,10 +148,10 @@ class Xv_System : public X11_System {
 #include <GL/glut.h>
 class GLX_System : public X11_System {
     public:
-	GLX_System(const char* DisplayName);
+	GLX_System(const char* DisplayName,int ximerama_screen);
 	virtual ~GLX_System();
 
-	virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,int is_vm,unsigned depth,const char*title);
+	virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,unsigned flags,unsigned depth,const char*title);
 
 	void	swap_buffers() const;
 	virtual XVisualInfo* get_visual() const { return vis; }

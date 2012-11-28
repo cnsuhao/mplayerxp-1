@@ -86,7 +86,7 @@ int XShmGetEventBase(Display*);
 Xv_VO_Interface::Xv_VO_Interface(const char *arg)
 		:VO_Interface(arg),
 		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-		xv(*new(zeromem) Xv_System(vo_conf.mDisplayName))
+		xv(*new(zeromem) Xv_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
     num_buffers=1;
     if(arg) {
@@ -168,14 +168,7 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
     xv.calcpos(&hint,d_width,d_height,flags);
     hint.flags = PPosition | PSize;
 
-    xv.create_window(hint,&vinfo,flags&VOFLAG_MODESWITCHING,depth,title);
-    xv.classhint("vo_x11");
-    xv.hidecursor();
-    if ( flags&VOFLAG_FULLSCREEN ) xv.decoration(0);
-
-    /* we cannot grab mouse events on root window :( */
-    xv.select_input(StructureNotifyMask | KeyPressMask |
-		    ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+    xv.create_window(hint,&vinfo,flags,depth,title);
 
     format = xv.query_port(_format);
     if(format) {

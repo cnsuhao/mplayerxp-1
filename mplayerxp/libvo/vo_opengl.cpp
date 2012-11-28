@@ -97,7 +97,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 OpenGL_VO_Interface::OpenGL_VO_Interface(const char *arg)
 			    :VO_Interface(arg),
 			    aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-			    glx(*new(zeromem) GLX_System(vo_conf.mDisplayName))
+			    glx(*new(zeromem) GLX_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
     num_buffers=1;
     glx.saver_off();
@@ -185,18 +185,10 @@ MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t
     XVisualInfo* vis=glx.get_visual();
     vinfo=*vis;
 
-    glx.create_window(hint,&vinfo,flags&VOFLAG_MODESWITCHING,depth,title);
+    glx.create_window(hint,&vinfo,flags,depth,title);
 
     gl_init_fb(0,0,d_width,d_height);
 
-    glx.classhint("opengl");
-    glx.hidecursor();
-
-    if ( flags&VOFLAG_FULLSCREEN ) glx.decoration(0);
-
-    /* we cannot grab mouse events on root window :( */
-    glx.select_input(StructureNotifyMask | KeyPressMask |
-		    ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
     /* allocate multibuffers */
     for(i=0;i<num_buffers;i++) glx.getMyXImage(i,vinfo.visual,depth,image_width,image_height);
 

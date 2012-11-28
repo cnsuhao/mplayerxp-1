@@ -129,7 +129,7 @@ const char* X11_VO_Interface::parse_sub_device(const char *sd)
 X11_VO_Interface::X11_VO_Interface(const char *arg)
 		:VO_Interface(arg),
 		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-		x11(*new(zeromem) X11_System(vo_conf.mDisplayName))
+		x11(*new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
     const char* vidix_name=NULL;
     num_buffers=1;
@@ -239,15 +239,7 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
     image_width=d_width;
     image_height=d_height;
 
-    x11.create_window(hint,&vinfo,flags&VOFLAG_MODESWITCHING,depth,title);
-
-    x11.classhint("vo_x11");
-    x11.hidecursor();
-    if ( flags&VOFLAG_FULLSCREEN ) x11.decoration(0);
-
-    /* we cannot grab mouse events on root window :( */
-    x11.select_input(StructureNotifyMask | KeyPressMask |
-		    ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+    x11.create_window(hint,&vinfo,flags,depth,title);
 
 #ifdef CONFIG_VIDIX
     if(!vidix)
