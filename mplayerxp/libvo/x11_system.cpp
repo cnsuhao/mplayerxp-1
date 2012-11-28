@@ -146,6 +146,8 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
     else if ( strncmp(dispName, "localhost:", 10) == 0) dispName += 9;
     if (*dispName==':')	mLocalDisplay=1;
     else		mLocalDisplay=0;
+    XA_NET_WM_STATE=::XInternAtom(mDisplay,"_NET_WM_STATE",0 );
+    XA_NET_WM_STATE_FULLSCREEN=::XInternAtom(mDisplay,"_NET_WM_STATE_FULLSCREEN",0 );
     MSG_OK("X11_System: running  %dx%d with depth %d bits/pixel (\"%s\" => %s display)\n",
 	screenwidth,screenheight,
 	_depth,
@@ -246,6 +248,7 @@ void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned f
     update_win_coord();
     hidecursor();
     decoration((flags&VOFLAG_FULLSCREEN)?0:1);
+    if(flags&VOFLAG_FULLSCREEN) wmspec_change_state (1,XA_NET_WM_STATE_FULLSCREEN, None );
     classhint("vo_x11");
     /* we cannot grab mouse events on root window :( */
     select_input(StructureNotifyMask | KeyPressMask |
@@ -597,15 +600,7 @@ static void __FASTCALL__ vo_x11_putkey(int key){
 // Note: always d==0 !
 void X11_System::decoration(int d)
 {
-    if(vo_conf.fsmode&1){
-	XSetWindowAttributes attr;
-	attr.override_redirect = True;
-	::XChangeWindowAttributes(mDisplay, window, CWOverrideRedirect, &attr);
-    }
-
-    if(vo_conf.fsmode&8){
-	::XSetTransientForHint (mDisplay, window, RootWindow(mDisplay,mScreen));
-    }
+    ::XSetTransientForHint (mDisplay, window, RootWindow(mDisplay,mScreen));
 
     MotifHints=::XInternAtom(mDisplay,"_MOTIF_WM_HINTS",0 );
     if ( MotifHints != None ) {
@@ -615,9 +610,9 @@ void X11_System::decoration(int d)
 	    MotifWmHints.functions=MWM_FUNC_MOVE | MWM_FUNC_CLOSE | MWM_FUNC_MINIMIZE | MWM_FUNC_MAXIMIZE;
 	    d=MWM_DECOR_ALL;
 	}
-	MotifWmHints.decorations=d|((vo_conf.fsmode&2)?MWM_DECOR_MENU:0);
+	MotifWmHints.decorations=d;
 	::XChangeProperty( mDisplay,window,MotifHints,MotifHints,32,
-			PropModeReplace,(unsigned char *)&MotifWmHints,(vo_conf.fsmode&4)?4:5 );
+			PropModeReplace,(unsigned char *)&MotifWmHints,sizeof (MotifWmHints)/sizeof(long));
     }
 }
 
@@ -783,6 +778,33 @@ void X11_System::calcpos(XSizeHints* hint, unsigned d_width, unsigned d_height, 
     }
 }
 
+enum {
+    _NET_WM_STATE_REMOVE=0,	/* remove/unset property */
+    _NET_WM_STATE_ADD=1,	/* add/set property */
+    _NET_WM_STATE_TOGGLE=2	/* toggle property  */
+};
+
+void X11_System::wmspec_change_state (int add, Atom state1, Atom state2) const
+{
+  XClientMessageEvent xclient;
+
+  memset (&xclient, 0, sizeof (xclient));
+  xclient.type = ClientMessage;
+  xclient.window = window;
+  xclient.message_type = XA_NET_WM_STATE;
+  xclient.format = 32;
+  xclient.data.l[0] = add ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+  xclient.data.l[1] = state1;
+  xclient.data.l[2] = state2;
+  xclient.data.l[3] = 0;
+  xclient.data.l[4] = 0;
+
+  XSendEvent (mDisplay, mRootWin, False,
+	      SubstructureRedirectMask | SubstructureNotifyMask,
+	      (XEvent *)&xclient);
+}
+
+
 int X11_System::fullscreen(unsigned& flags)
 {
     int is_fs=flags&VOFLAG_FULLSCREEN;
@@ -791,10 +813,13 @@ int X11_System::fullscreen(unsigned& flags)
 	prev=curr;
 	curr.x=0; curr.y=0; curr.w=screenwidth; curr.h=screenheight;
 	decoration(0);
+	wmspec_change_state (1,XA_NET_WM_STATE_FULLSCREEN, None );
     } else {
 	curr=prev;
 	decoration(1);
+	wmspec_change_state (0,XA_NET_WM_STATE_FULLSCREEN, None );
     }
+
     sizehint(curr.x,curr.y,curr.w,curr.h );
     ::XMoveResizeWindow( mDisplay,window,curr.x,curr.y,curr.w,curr.h );
     ::XMapWindow( mDisplay,window );

@@ -85,6 +85,7 @@ class X11_System {
 #endif
     private:
 	int		find_depth_from_visuals(Visual **visual_return) const;
+	void		wmspec_change_state (int add,Atom state1,Atom state2) const;
 
 	::Display*	mDisplay;
 	int		mScreen,mLocalDisplay;
@@ -109,6 +110,8 @@ class X11_System {
 #endif
 	MotifWmHints_t	MotifWmHints;
 	Atom		MotifHints;
+	Atom		XA_NET_WM_STATE;
+	Atom		XA_NET_WM_STATE_FULLSCREEN;
 };
 
 #ifdef HAVE_XV
