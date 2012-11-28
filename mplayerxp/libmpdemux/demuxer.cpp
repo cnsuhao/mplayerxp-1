@@ -502,6 +502,13 @@ float ds_get_next_pts(demux_stream_t *ds) {
 }
 
 // ====================================================================
+struct demux_conf {
+    char* audio_stream;
+    char* sub_stream;
+    int demuxer_type, audio_demuxer_type, sub_demuxer_type;
+};
+static demux_conf demux_conf;
+
 const struct s_stream_txt_ids
 {
     unsigned demuxer_id;
@@ -572,10 +579,6 @@ again:
     return demuxer;
 }
 
-static char* audio_stream = NULL;
-static char* sub_stream = NULL;
-static int demuxer_type = 0, audio_demuxer_type = 0, sub_demuxer_type = 0;
-
 demuxer_t* demux_open(stream_t *vs,int file_format,int audio_id,int video_id,int dvdsub_id){
   stream_t *as = NULL,*ss = NULL;
   demuxer_t *vd,*ad = NULL,*sd = NULL;
@@ -585,35 +588,35 @@ demuxer_t* demux_open(stream_t *vs,int file_format,int audio_id,int video_id,int
     libinput=vs->streaming_strl->libinput;
 #endif
 
-  if(audio_stream) {
-    as = open_stream(libinput,audio_stream,&afmt,NULL);
+  if(demux_conf.audio_stream) {
+    as = open_stream(libinput,demux_conf.audio_stream,&afmt,NULL);
     if(!as) {
-      MSG_ERR("Can't open audio stream: %s\n",audio_stream);
+      MSG_ERR("Can't open audio stream: %s\n",demux_conf.audio_stream);
       return NULL;
     }
   }
-  if(sub_stream) {
-    ss = open_stream(libinput,sub_stream,&sfmt,NULL);
+  if(demux_conf.sub_stream) {
+    ss = open_stream(libinput,demux_conf.sub_stream,&sfmt,NULL);
     if(!ss) {
-      MSG_ERR("Can't open subtitles stream: %s\n",sub_stream);
+      MSG_ERR("Can't open subtitles stream: %s\n",demux_conf.sub_stream);
       return NULL;
     }
   }
 
-  vd = demux_open_stream(vs,demuxer_type ? demuxer_type : file_format,audio_stream ? -2 : audio_id,video_id, sub_stream ? -2 : dvdsub_id);
+  vd = demux_open_stream(vs,demux_conf.demuxer_type ? demux_conf.demuxer_type : file_format,demux_conf.audio_stream ? -2 : audio_id,video_id, demux_conf.sub_stream ? -2 : dvdsub_id);
   if(!vd)
     return NULL;
   if(as) {
-    ad = demux_open_stream(as,audio_demuxer_type ? audio_demuxer_type : afmt,audio_id,-2,-2);
+    ad = demux_open_stream(as,demux_conf.audio_demuxer_type ? demux_conf.audio_demuxer_type : afmt,audio_id,-2,-2);
     if(!ad)
-      MSG_WARN("Failed to open audio demuxer: %s\n",audio_stream);
+      MSG_WARN("Failed to open audio demuxer: %s\n",demux_conf.audio_stream);
     else if(ad->audio->sh && ((sh_audio_t*)ad->audio->sh)->wtag == 0x55) // MP3
       m_config_set_flag(MPXPCtx->mconfig,"mp3.hr-seek",1); // Enable high res seeking
   }
   if(ss) {
-    sd = demux_open_stream(ss,sub_demuxer_type ? sub_demuxer_type : sfmt,-2,-2,dvdsub_id);
+    sd = demux_open_stream(ss,demux_conf.sub_demuxer_type ? demux_conf.sub_demuxer_type : sfmt,-2,-2,dvdsub_id);
     if(!sd)
-      MSG_WARN("Failed to open subtitles demuxer: %s\n",sub_stream);
+      MSG_WARN("Failed to open subtitles demuxer: %s\n",demux_conf.sub_stream);
   }
 
   if(ad && sd)
@@ -727,11 +730,11 @@ const char* demux_info_get(const demuxer_t *demuxer, unsigned opt) {
 /******************* Options stuff **********************/
 
 static const config_t demux_opts[] = {
-  { "audiofile", &audio_stream, CONF_TYPE_STRING, 0, 0, 0, "forces reading of audio-stream from other file" },
-  { "subfile", &sub_stream, CONF_TYPE_STRING, 0, 0, 0, "forces reading of subtitles from other file" },
-  { "type", &demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, "forces demuxer by given number" },
-  { "audio", &audio_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, "forces using of audio-demuxer" },
-  { "sub", &sub_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, "forces using of subtitle-demuxer" },
+  { "audiofile", &demux_conf.audio_stream, CONF_TYPE_STRING, 0, 0, 0, "forces reading of audio-stream from other file" },
+  { "subfile", &demux_conf.sub_stream, CONF_TYPE_STRING, 0, 0, 0, "forces reading of subtitles from other file" },
+  { "type", &demux_conf.demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, "forces demuxer by given number" },
+  { "audio", &demux_conf.audio_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, "forces using of audio-demuxer" },
+  { "sub", &demux_conf.sub_demuxer_type, CONF_TYPE_INT, CONF_RANGE, 1, DEMUXER_TYPE_MAX, "forces using of subtitle-demuxer" },
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
