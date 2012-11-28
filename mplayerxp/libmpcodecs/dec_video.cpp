@@ -146,7 +146,7 @@ any_t * mpcv_lavc_init(sh_video_t* sh_video,any_t* libinput) {
 
 any_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
     int done=0;
-    const video_probe_t* vprobe;
+    const video_probe_t* vprobe=NULL;
     sh_video->codec=NULL;
     priv_t* priv = new(zeromem) priv_t;
     priv->parent=sh_video;
