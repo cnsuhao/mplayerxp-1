@@ -395,7 +395,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       } else {
 	// append data to it!
 	Demux_Packet* dp=ds->asf_packet;
-	dp->buffer=(unsigned char *)mp_realloc(dp->buffer,dp->len+len);
+	dp->resize(dp->len+len);
 	//memcpy(dp->buffer+dp->len,data,len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
 	MSG_DBG3("data appended! %d+%d\n",dp->len,len);

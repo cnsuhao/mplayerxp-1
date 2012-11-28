@@ -19,10 +19,8 @@ Demux_Packet::~Demux_Packet(){
 void Demux_Packet::resize(unsigned newlen)
 {
     if(len!=newlen) {
-	if(newlen) {
-	    buffer=(unsigned char *)mp_realloc(buffer,newlen+8);
-	    memset(buffer+newlen,0,8);
-	} else {
+	if(newlen) buffer=(unsigned char *)mp_realloc(buffer,newlen);
+	else {
 	    if(buffer) delete buffer;
 	    buffer=NULL;
 	}

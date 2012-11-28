@@ -457,7 +457,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 	// append data to it!
 	Demux_Packet* dp=ds->asf_packet;
 	if(dp->len!=offs && offs!=-1) MSG_V("warning! fragment.len=%d BUT next fragment offset=%d  \n",dp->len,offs);
-	dp->buffer=(unsigned char*)mp_realloc(dp->buffer,dp->len+len);
+	dp->resize(dp->len+len);
 	stream_seek(demux->stream,dataoff);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
 	MSG_DBG3("data appended! %d+%d\n",dp->len,len);

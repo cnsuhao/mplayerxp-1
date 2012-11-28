@@ -396,7 +396,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     if(pts==MPGPES_BAD_PTS && ds->asf_packet)
     {
 	Demux_Packet* dp=ds->asf_packet;
-	dp->buffer=(unsigned char *)mp_realloc(dp->buffer,dp->len+len);
+	dp->resize(dp->len+len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
 	dp->len+=len;
     }

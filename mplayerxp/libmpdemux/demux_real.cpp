@@ -655,7 +655,7 @@ got_video:
 			    // increase buffer size, this should not happen!
 			    MSG_WARN("chunktab buffer too small!!!!!\n");
 			    dp->len=dp_hdr->chunktab+8*(4+dp_hdr->chunks);
-			    dp->buffer=(unsigned char *)mp_realloc(dp->buffer,dp->len);
+			    dp->resize(dp->len);
 			    // re-calc pointers:
 			    dp_hdr=(dp_hdr_t*)dp->buffer;
 			    dp_data=dp->buffer+sizeof(dp_hdr_t);
