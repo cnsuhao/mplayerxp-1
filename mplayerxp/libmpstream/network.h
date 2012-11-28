@@ -45,9 +45,9 @@ typedef struct streaming_control {
     any_t* libinput;   /**< provides possibility to inperrupt network streams */
 } streaming_ctrl_t;
 
-struct stream_s;
-extern void fixup_network_stream_cache(struct stream_s *s);
-extern int streaming_start(any_t* libinput,struct stream_s *stream, int *demuxer_type, URL_t *url);
+struct stream_t;
+extern void fixup_network_stream_cache(stream_t *s);
+extern int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *url);
 extern int streaming_bufferize( streaming_ctrl_t *streaming_ctrl,unsigned char *buffer, int size);
 extern streaming_ctrl_t *streaming_ctrl_new(any_t* libinput);
 extern void streaming_ctrl_free( streaming_ctrl_t *streaming_ctrl );

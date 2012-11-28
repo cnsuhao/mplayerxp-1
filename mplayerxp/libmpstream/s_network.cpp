@@ -21,11 +21,18 @@ using namespace mpxp;
 
 extern int stream_open_mf(char * filename,stream_t * stream);
 
-typedef struct network_priv_s
-{
-    URL_t *url;
-    off_t  spos;
-}network_priv_t;
+struct network_priv_t : public Opaque {
+    public:
+	network_priv_t() {}
+	virtual ~network_priv_t();
+
+	URL_t *url;
+	off_t  spos;
+};
+
+network_priv_t::~network_priv_t() {
+    delete url;
+}
 
 static MPXP_Rc __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
@@ -39,9 +46,11 @@ static MPXP_Rc __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const 
 	    return MPXP_False;
 	}
 	MSG_INFO(MSGTR_ConnToServer, url->hostname);
-	stream->priv=mp_malloc(sizeof(network_priv_t));
-	((network_priv_t*)stream->priv)->url = url;
-	((network_priv_t*)stream->priv)->spos = 0;
+	network_priv_t* priv;
+	priv=new(zeromem) network_priv_t;
+	stream->priv=priv;
+	priv->url = url;
+	priv->spos = 0;
 	stream->type = STREAMTYPE_STREAM;
 	stream->sector_size=STREAM_BUFFER_SIZE;
 	return MPXP_Ok;
@@ -52,7 +61,7 @@ static MPXP_Rc __FASTCALL__ network_open(any_t* libinput,stream_t *stream,const 
 
 static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t*sp)
 {
-    network_priv_t *p=reinterpret_cast<network_priv_s*>(stream->priv);
+    network_priv_t *p=static_cast<network_priv_t*>(stream->priv);
     sp->type=0;
     if( stream->streaming_ctrl!=NULL ) {
 	    sp->len=stream->streaming_ctrl->streaming_read(stream->fd,sp->buf,STREAM_BUFFER_SIZE, stream->streaming_ctrl);
@@ -66,7 +75,7 @@ static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t*sp)
 static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
 {
     off_t newpos=0;
-    network_priv_t *p=reinterpret_cast<network_priv_s*>(stream->priv);
+    network_priv_t *p=static_cast<network_priv_t*>(stream->priv);
     if( stream->streaming_ctrl!=NULL ) {
       newpos=stream->streaming_ctrl->streaming_seek( stream->fd, pos, stream->streaming_ctrl );
       if( newpos<0 ) {
@@ -80,13 +89,12 @@ static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
 
 static off_t __FASTCALL__ network_tell(const stream_t *stream)
 {
-    network_priv_t *p=reinterpret_cast<network_priv_s*>(stream->priv);
+    network_priv_t *p=static_cast<network_priv_t*>(stream->priv);
     return p->spos;
 }
 
 static void __FASTCALL__ network_close(stream_t *stream)
 {
-    delete reinterpret_cast<network_priv_s*>(stream->priv)->url;
     delete stream->priv;
     if(stream->fd>0) close(stream->fd);
 }

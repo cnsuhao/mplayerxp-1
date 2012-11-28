@@ -27,13 +27,16 @@ using namespace mpxp;
 #include "stream_msg.h"
 
 
-typedef struct oss_priv_s
-{
-    unsigned nchannels; /* 1,2,6 */
-    unsigned samplerate; /* 32000, 44100, 48000 */
-    mpaf_format_e sampleformat; /* S32_LE, S16_BE, ... */
-    off_t spos;
-}oss_priv_t;
+struct oss_priv_t : public Opaque {
+    public:
+	oss_priv_t() {}
+	virtual ~oss_priv_t() {}
+
+	unsigned nchannels; /* 1,2,6 */
+	unsigned samplerate; /* 32000, 44100, 48000 */
+	mpaf_format_e sampleformat; /* S32_LE, S16_BE, ... */
+	off_t spos;
+};
 
 static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
@@ -140,7 +143,7 @@ static int __FASTCALL__ oss_read(stream_t*stream,stream_packet_t*sp)
 /*
     Should we repeate read() again on these errno: `EAGAIN', `EIO' ???
 */
-    oss_priv_t*p=reinterpret_cast<oss_priv_t*>(stream->priv);
+    oss_priv_t*p=static_cast<oss_priv_t*>(stream->priv);
     sp->type=0;
     sp->len = TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,sp->len));
     if(!errno) p->spos+=sp->len;
@@ -150,14 +153,14 @@ static int __FASTCALL__ oss_read(stream_t*stream,stream_packet_t*sp)
 static off_t __FASTCALL__ oss_seek(stream_t*stream,off_t pos)
 {
     UNUSED(pos);
-    oss_priv_t *p=reinterpret_cast<oss_priv_t*>(stream->priv);
+    oss_priv_t *p=static_cast<oss_priv_t*>(stream->priv);
     errno=ENOSYS;
     return p->spos;
 }
 
 static off_t __FASTCALL__ oss_tell(const stream_t*stream)
 {
-    oss_priv_t *p=reinterpret_cast<oss_priv_t*>(stream->priv);
+    oss_priv_t *p=static_cast<oss_priv_t*>(stream->priv);
     return p->spos;
 }
 
@@ -171,7 +174,7 @@ static void __FASTCALL__ oss_close(stream_t *stream)
 static MPXP_Rc __FASTCALL__ oss_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
     int rval;
-    oss_priv_t *oss_priv = reinterpret_cast<oss_priv_t*>(s->priv);
+    oss_priv_t *oss_priv = static_cast<oss_priv_t*>(s->priv);
     if(args) *(int *)args=0;
     switch(cmd) {
 	case SCTRL_AUD_GET_CHANNELS:

@@ -41,42 +41,46 @@ using namespace mpxp;
 #endif
 
 typedef struct {
- int id; // 0 - 31 mpeg; 128 - 159 ac3; 160 - 191 pcm
- int language;
- int type;
- int channels;
+    int id; // 0 - 31 mpeg; 128 - 159 ac3; 160 - 191 pcm
+    int language;
+    int type;
+    int channels;
 } stream_language_t;
 
-typedef struct {
-  dvd_reader_t *dvd;
-  dvd_file_t *title;
-  ifo_handle_t *vmg_file;
-  tt_srpt_t *tt_srpt;
-  ifo_handle_t *vts_file;
-  vts_ptt_srpt_t *vts_ptt_srpt;
-  pgc_t *cur_pgc;
-  /* title sets */
-  unsigned first_title,cur_title,last_title;
-//
-  int cur_cell;
-  int last_cell;
-  int cur_pack;
-  int cell_last_pack;
-// Navi:
-  int packs_left;
-  dsi_t dsi_pack;
-  pci_t pci_pack;
-  int angle_seek;
-  float vobu_s_pts,vobu_e_pts;
-// audio datas
-  int nr_of_channels;
-  stream_language_t audio_streams[32];
-// subtitles
-  int nr_of_subtitles;
-  stream_language_t subtitles[32];
+struct dvd_priv_t : public Opaque {
+    public:
+	dvd_priv_t() {}
+	virtual ~dvd_priv_t() {}
 
-  off_t  spos;
-} dvd_priv_t;
+	dvd_reader_t *dvd;
+	dvd_file_t *title;
+	ifo_handle_t *vmg_file;
+	tt_srpt_t *tt_srpt;
+	ifo_handle_t *vts_file;
+	vts_ptt_srpt_t *vts_ptt_srpt;
+	pgc_t *cur_pgc;
+	/* title sets */
+	unsigned first_title,cur_title,last_title;
+	//
+	int cur_cell;
+	int last_cell;
+	int cur_pack;
+	int cell_last_pack;
+	// Navi:
+	int packs_left;
+	dsi_t dsi_pack;
+	pci_t pci_pack;
+	int angle_seek;
+	float vobu_s_pts,vobu_e_pts;
+	// audio datas
+	int nr_of_channels;
+	stream_language_t audio_streams[32];
+	// subtitles
+	int nr_of_subtitles;
+	stream_language_t subtitles[32];
+
+	off_t  spos;
+};
 
 static int dvd_chapter=1;
 static int dvd_last_chapter=0;
@@ -121,13 +125,13 @@ static int __FASTCALL__ dvd_number_of_subs(stream_t *stream)
 {
   dvd_priv_t *d;
   if (!stream) return -1;
-  d = reinterpret_cast<dvd_priv_t*>(stream->priv);
+  d = static_cast<dvd_priv_t*>(stream->priv);
   if (!d) return -1;
   return d->nr_of_subtitles;
 }
 
 static int __FASTCALL__ dvd_aid_from_lang(const stream_t *stream, const char* lang){
-    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    dvd_priv_t *d=static_cast<dvd_priv_t*>(stream->priv);
     int code,i;
   while(lang && strlen(lang)>=2){
     code=lang[1]|(lang[0]<<8);
@@ -145,7 +149,7 @@ static int __FASTCALL__ dvd_aid_from_lang(const stream_t *stream, const char* la
 }
 
 static int __FASTCALL__ dvd_sid_from_lang(const stream_t *stream, const char* lang){
-    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    dvd_priv_t *d=static_cast<dvd_priv_t*>(stream->priv);
     int code,i;
   while(lang && strlen(lang)>=2){
     code=lang[1]|(lang[0]<<8);
@@ -166,7 +170,7 @@ static int __FASTCALL__ dvd_lang_from_sid(stream_t *stream, int id)
 {
   dvd_priv_t *d;
   if (!stream) return 0;
-  d = reinterpret_cast<dvd_priv_t*>(stream->priv);
+  d = static_cast<dvd_priv_t*>(stream->priv);
   if (!d) return 0;
   if (id >= d->nr_of_subtitles) return 0;
   return d->subtitles[id].language;
@@ -749,7 +753,7 @@ static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const
 
 static int __FASTCALL__ __dvdread_read(stream_t *stream,stream_packet_t *sp)
 {
-    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    dvd_priv_t *d=static_cast<dvd_priv_t*>(stream->priv);
     off_t pos=dvd_read_sector(stream,d,reinterpret_cast<unsigned char*>(sp->buf));
     sp->type=0;
     if(pos>=0){
@@ -761,7 +765,7 @@ static int __FASTCALL__ __dvdread_read(stream_t *stream,stream_packet_t *sp)
 
 static off_t __FASTCALL__ __dvdread_seek(stream_t *stream,off_t newpos)
 {
-    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    dvd_priv_t *d=static_cast<dvd_priv_t*>(stream->priv);
     off_t pos=newpos/2048;
     dvd_seek(stream,d,pos);
     d->spos=pos*2048;
@@ -770,20 +774,20 @@ static off_t __FASTCALL__ __dvdread_seek(stream_t *stream,off_t newpos)
 
 static off_t __FASTCALL__ __dvdread_tell(const stream_t *stream)
 {
-    dvd_priv_t *d = reinterpret_cast<dvd_priv_t*>(stream->priv);
+    dvd_priv_t *d = static_cast<dvd_priv_t*>(stream->priv);
     return d->spos;
 }
 
 static void __FASTCALL__ __dvdread_close(stream_t *stream)
 {
-    dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+    dvd_priv_t *d=static_cast<dvd_priv_t*>(stream->priv);
     dvd_close(d);
     delete d;
 }
 
 static unsigned int * __FASTCALL__ dvdread_stream_get_palette(const stream_t *stream)
 {
-  dvd_priv_t *d=reinterpret_cast<dvd_priv_t*>(stream->priv);
+  dvd_priv_t *d=static_cast<dvd_priv_t*>(stream->priv);
   if(d)
     if(d->cur_pgc)
 	return d->cur_pgc->palette;

@@ -23,27 +23,37 @@ typedef struct {
 } vcdsector_t;
 
 typedef struct {
-  lsn_t  start_LSN; /* LSN where play item starts */
-  size_t size;      /* size in sector units of play item. */
+    lsn_t  start_LSN; /* LSN where play item starts */
+    size_t size;      /* size in sector units of play item. */
 } vcd_item_info_t;
 
-typedef struct vcd_priv_s
-{
-    vcdinfo_obj_t* fd;
-    unsigned ntracks;
-    vcd_item_info_t *track;
-    unsigned nentries;
-    vcd_item_info_t *entry;
-    unsigned nsegments;
-    vcd_item_info_t *segment;
-    unsigned nlids;
-    lsn_t    start;
-    lsn_t    lsn;
-    unsigned total;
-    /* cache */
-    vcdsector_t vcd_sector;
-    lsn_t	vcd_sector_lsn;
-}vcd_priv_t;
+struct vcd_priv_t : public Opaque {
+    public:
+	vcd_priv_t() {}
+	virtual ~vcd_priv_t();
+
+	vcdinfo_obj_t* fd;
+	unsigned ntracks;
+	vcd_item_info_t *track;
+	unsigned nentries;
+	vcd_item_info_t *entry;
+	unsigned nsegments;
+	vcd_item_info_t *segment;
+	unsigned nlids;
+	lsn_t    start;
+	lsn_t    lsn;
+	unsigned total;
+	/* cache */
+	vcdsector_t vcd_sector;
+	lsn_t	vcd_sector_lsn;
+};
+
+vcd_priv_t::~vcd_priv_t() {
+    vcdinfo_close(fd);
+    if(track) delete track;
+    if(entry) delete entry;
+    if(segment) delete segment;
+}
 
 static void __FASTCALL__ _cdio_detect_media(char *device)
 {
@@ -162,7 +172,7 @@ static void __FASTCALL__ _vcdnav_inc_lsn(vcd_priv_t *p)
 
 static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp)
 {
-    vcd_priv_t *p=reinterpret_cast<vcd_priv_t*>(stream->priv);
+    vcd_priv_t *p=static_cast<vcd_priv_t*>(stream->priv);
     CdIo *img=vcdinfo_get_cd_image(p->fd);
     MSG_DBG2("vcdnav_read: lsn=%i total=%i\n",p->lsn,p->total);
     if(sp) sp->type=0;
@@ -224,7 +234,7 @@ static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp)
 
 static off_t __FASTCALL__ _vcdnav_seek(stream_t *stream,off_t pos)
 {
-    vcd_priv_t *p=reinterpret_cast<vcd_priv_t*>(stream->priv);
+    vcd_priv_t *p=static_cast<vcd_priv_t*>(stream->priv);
     lsn_t oldlsn=p->lsn;
     CdIo *img = vcdinfo_get_cd_image(p->fd);
     p->lsn=pos/sizeof(vcdsector_t);
@@ -239,20 +249,16 @@ static off_t __FASTCALL__ _vcdnav_seek(stream_t *stream,off_t pos)
 
 static off_t __FASTCALL__ _vcdnav_tell(const stream_t *stream)
 {
-    vcd_priv_t *p=reinterpret_cast<vcd_priv_t*>(stream->priv);
+    vcd_priv_t *p=static_cast<vcd_priv_t*>(stream->priv);
     MSG_DBG2("vcdnav_tell: lsn=%i\n",p->lsn);
     return p->lsn*sizeof(vcdsector_t);
 }
 
 static void __FASTCALL__ _vcdnav_close(stream_t*stream)
 {
-    vcd_priv_t*priv=reinterpret_cast<vcd_priv_t*>(stream->priv);
+    vcd_priv_t*priv=static_cast<vcd_priv_t*>(stream->priv);
     MSG_DBG2("vcdnav_close\n");
-    vcdinfo_close(((vcd_priv_t *)stream->priv)->fd);
-    if(priv->track) delete priv->track;
-    if(priv->entry) delete priv->entry;
-    if(priv->segment) delete priv->segment;
-    delete stream->priv;
+    delete priv;
 }
 static MPXP_Rc __FASTCALL__ _vcdnav_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
     UNUSED(s);

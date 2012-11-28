@@ -53,7 +53,11 @@ typedef struct my_track_s {
 	lsn_t end_sector;
 }my_track_t;
 
-typedef struct {
+struct cdda_priv : public Opaque {
+    public:
+	cdda_priv();
+	virtual ~cdda_priv();
+
 	cdrom_drive_t* cd;
 	my_track_t tracks[256]; /* hope that's enough */
 	unsigned min;
@@ -62,7 +66,7 @@ typedef struct {
 	lsn_t sector;
 	lsn_t start_sector;
 	lsn_t end_sector;
-} cdda_priv;
+};
 
 cd_info_t*  __FASTCALL__ cd_info_new();
 void	    __FASTCALL__ cd_info_free(cd_info_t *cd_info);

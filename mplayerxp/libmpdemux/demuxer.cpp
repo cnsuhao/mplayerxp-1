@@ -114,9 +114,9 @@ void free_demuxer_stream(demux_stream_t *ds){
 
 int demux_aid_vid_mismatch = 0;
 
-demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
-  demux_stream_t* ds=(demux_stream_t*)mp_malloc(sizeof(demux_stream_t));
-  rnd_fill(ds->antiviral_hole,offsetof(demux_stream_t,pin)-offsetof(demux_stream_t,antiviral_hole));
+demux_stream_t* new_demuxer_stream(demuxer_t *demuxer,int id){
+  demux_stream_t* ds=new(zeromem) demux_stream_t;
+  rnd_fill(ds->antiviral_hole,reinterpret_cast<long>(&ds->pin)-reinterpret_cast<long>(&ds->antiviral_hole));
   ds->pin=DS_PIN;
   ds->buffer_pos=ds->buffer_size=0;
   ds->buffer=NULL;
@@ -143,8 +143,8 @@ demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id){
 }
 
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id){
-  demuxer_t *d=(demuxer_t*)mp_mallocz(sizeof(demuxer_t));
-  rnd_fill(d->antiviral_hole,offsetof(demuxer_t,pin)-offsetof(demuxer_t,antiviral_hole));
+  demuxer_t *d=new(zeromem) demuxer_t;
+  rnd_fill(d->antiviral_hole,reinterpret_cast<long>(&d->pin)-reinterpret_cast<long>(&d->antiviral_hole));
   d->pin=DEMUX_PIN;
   d->stream=stream;
   d->movi_start=stream->start_pos;
@@ -246,15 +246,13 @@ void free_demuxer(demuxer_t *demuxer){
 
 	if(demuxer->driver) demuxer->driver->close(demuxer);
 
-	// mp_free streams:
+	// free streams:
 	for(i=0;i<MAX_A_STREAMS;i++) if(demuxer->a_streams[i]) free_sh_audio(reinterpret_cast<sh_audio_t*>(demuxer->a_streams[i]));
 	for(i=0;i<MAX_V_STREAMS;i++) if(demuxer->v_streams[i]) free_sh_video(reinterpret_cast<sh_video_t*>(demuxer->v_streams[i]));
-	//if(sh_audio) free_sh_audio(sh_audio);
-	//if(sh_video) free_sh_video(sh_video);
-	// mp_free demuxers:
-	FREE_DEMUXER_STREAM(demuxer->audio);
-	FREE_DEMUXER_STREAM(demuxer->video);
-	FREE_DEMUXER_STREAM(demuxer->sub);
+	// free demuxers:
+	free_demuxer_stream(demuxer->audio); demuxer->audio=NULL;
+	free_demuxer_stream(demuxer->video); demuxer->video=NULL;
+	free_demuxer_stream(demuxer->sub); demuxer->sub=NULL;
 	demux_info_free(demuxer);
 	delete demuxer;
     }
@@ -547,11 +545,11 @@ again:
 	    break;
 	}
 	MSG_V("False\n");
-	FREE_DEMUXER(demuxer);
+	free_demuxer(demuxer); demuxer=NULL;
     }
     if(!demuxer || !demuxer->driver) {
 	MSG_ERR(MSGTR_FormatNotRecognized);
-	FREE_DEMUXER(demuxer);
+	if(demuxer) { free_demuxer(demuxer); demuxer=NULL; }
 	return NULL;
     }
 

@@ -23,20 +23,33 @@ using namespace mpxp;
 #include "url.h"
 #include "stream_msg.h"
 
-struct stream_priv_s {
-    const char* user;
-    const char* pass;
-    const char* host;
-    int port;
-    const char* filename;
-    URL_t *url;
+struct ftp_priv_t;
+static int __FASTCALL__ FtpSendCmd(const char *cmd,ftp_priv_t *nControl,char* rsp);
 
-    char *cput,*cget;
-    int handle;
-    int cavail,cleft;
-    char *buf;
-    off_t spos;
+struct ftp_priv_t : public Opaque {
+    public:
+	ftp_priv_t() {}
+	virtual ~ftp_priv_t();
+
+	const char* user;
+	const char* pass;
+	const char* host;
+	int port;
+	const char* filename;
+	URL_t *url;
+
+	char *cput,*cget;
+	int handle;
+	int cavail,cleft;
+	char *buf;
+	off_t spos;
 };
+
+ftp_priv_t::~ftp_priv_t() {
+    FtpSendCmd("QUIT",this,NULL);
+    if(handle) closesocket(handle);
+    if(buf) delete buf;
+}
 
 #define BUFSIZE 8192
 
@@ -63,7 +76,7 @@ static int __FASTCALL__ fd_can_read(int fd,int timeout) {
  *
  * return -1 on error or bytecount
  */
-static int __FASTCALL__ readline(char *buf,int max,struct stream_priv_s *ctl)
+static int __FASTCALL__ readline(char *buf,int max,ftp_priv_t *ctl)
 {
     int x,retval = 0;
     char *end,*bp=buf;
@@ -133,7 +146,7 @@ static int __FASTCALL__ readline(char *buf,int max,struct stream_priv_s *ctl)
  * return 0 if first char doesn't match
  * return 1 if first char matches
  */
-static int __FASTCALL__ readresp(struct stream_priv_s* ctl,char* rsp)
+static int __FASTCALL__ readresp(ftp_priv_t* ctl,char* rsp)
 {
     static char response[256];
     char match[5];
@@ -163,7 +176,7 @@ static int __FASTCALL__ readresp(struct stream_priv_s* ctl,char* rsp)
 }
 
 
-static int __FASTCALL__ FtpSendCmd(const char *cmd, struct stream_priv_s *nControl,char* rsp)
+static int __FASTCALL__ FtpSendCmd(const char *cmd,ftp_priv_t *nControl,char* rsp)
 {
   int l = strlen(cmd);
   int hascrlf = cmd[l - 2] == '\r' && cmd[l - 1] == '\n';
@@ -188,7 +201,7 @@ static int __FASTCALL__ FtpSendCmd(const char *cmd, struct stream_priv_s *nContr
     return FtpSendCmd("\r\n", nControl, rsp);
 }
 
-static int __FASTCALL__ FtpOpenPort(any_t* libinput,struct stream_priv_s* p) {
+static int __FASTCALL__ FtpOpenPort(any_t* libinput,ftp_priv_t* p) {
   int resp,fd;
   char rsp_txt[256];
   char* par,str[128];
@@ -219,7 +232,7 @@ static int __FASTCALL__ FtpOpenPort(any_t* libinput,struct stream_priv_s* p) {
 }
 
 static int __FASTCALL__ FtpOpenData(stream_t* s,size_t newpos) {
-  struct stream_priv_s* p = reinterpret_cast<struct stream_priv_s*>(s->priv);
+  ftp_priv_t* p = static_cast<ftp_priv_t*>(s->priv);
   int resp;
   char str[256],rsp_txt[256];
 
@@ -263,12 +276,12 @@ static int __FASTCALL__ ftp_read(stream_t *s,stream_packet_t*sp){
   }
   MSG_V("ftp read: %u bytes\n",sp->len);
   r = recv(s->fd,sp->buf,sp->len,0);
-  ((struct stream_priv_s *)s->priv)->spos+=r;
+  (static_cast<ftp_priv_t *>(s->priv))->spos+=r;
   return (r <= 0) ? -1 : r;
 }
 
 static off_t __FASTCALL__ ftp_seek(stream_t *s,off_t newpos) {
-  struct stream_priv_s* p = reinterpret_cast<struct stream_priv_s*>(s->priv);
+  ftp_priv_t* p = static_cast<ftp_priv_t*>(s->priv);
   int resp;
   char rsp_txt[256];
 
@@ -325,33 +338,25 @@ static off_t __FASTCALL__ ftp_seek(stream_t *s,off_t newpos) {
 
 static off_t __FASTCALL__ ftp_tell(const stream_t*stream)
 {
-    struct stream_priv_s*p=reinterpret_cast<struct stream_priv_s*>(stream->priv);
+    ftp_priv_t*p=static_cast<ftp_priv_t*>(stream->priv);
     return p->spos;
 }
 
 
 static void __FASTCALL__ ftp_close(stream_t *s) {
-  struct stream_priv_s* p = reinterpret_cast<struct stream_priv_s*>(s->priv);
-
-  if(!p) return;
-
-  if(s->fd > 0) {
-    closesocket(s->fd);
-    s->fd = 0;
-  }
-
-  FtpSendCmd("QUIT",p,NULL);
-
-  if(p->handle) closesocket(p->handle);
-  if(p->buf) delete p->buf;
-
-  delete p;
+    ftp_priv_t* p = static_cast<ftp_priv_t*>(s->priv);
+    if(s->fd > 0) {
+	closesocket(s->fd);
+	s->fd = 0;
+    }
+    if(!p) return;
+    delete p;
 }
 
 static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
   int len = 0,resp;
-  struct stream_priv_s* p;
+  ftp_priv_t* p;
   URL_t* url;
   char str[256],rsp_txt[256];
   char *uname;
@@ -368,7 +373,7 @@ static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char 
     MSG_ERR("[ftp] Bad url\n");
     return MPXP_False;
   }
-  stream->priv=p=new(zeromem) struct stream_priv_s;
+  stream->priv=p=new(zeromem) ftp_priv_t;
   p->user=url->username?url->username:"anonymous";
   p->pass=url->password?url->password:"no@spam";
   p->host=url->hostname;

@@ -758,7 +758,7 @@ void mpxp_resync_audio_stream(void)
     mpca_resync_stream(sh_audio->decoder);
 }
 
-static void __FASTCALL__ mpxp_stream_event_handler(struct stream_s *s,const stream_packet_t *sp)
+static void __FASTCALL__ mpxp_stream_event_handler(stream_t *s,const stream_packet_t *sp)
 {
     s->driver->control(s,SCRTL_EVT_HANDLE,(any_t*)sp);
 }

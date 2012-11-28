@@ -92,7 +92,7 @@ struct dump_priv_t : public Opaque {
 	any_t*		libinput;
 };
 
-void __FASTCALL__ dump_stream_event_handler(struct stream_s *s,const stream_packet_t*sp)
+void __FASTCALL__ dump_stream_event_handler(stream_t *s,const stream_packet_t*sp)
 {
 }
 

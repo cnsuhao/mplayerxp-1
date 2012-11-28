@@ -86,7 +86,7 @@ static void __FASTCALL__ cdd_close(stream_t*stream)
 
 static MPXP_Rc __FASTCALL__ cdd_ctrl(const stream_t *s,unsigned cmd,any_t*args)
 {
-    cdda_priv *p=reinterpret_cast<cdda_priv*>(s->priv);
+    cdda_priv *p=static_cast<cdda_priv*>(s->priv);
     switch(cmd) {
 	case SCTRL_TXT_GET_STREAM_NAME: {
 	    if(track_idx!=255)

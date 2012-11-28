@@ -9,19 +9,25 @@ using namespace mpxp;
 #include "stream.h"
 #include "stream_msg.h"
 
+struct lavc_priv_t : public Opaque {
+    public:
+	lavc_priv_t() {}
+	virtual ~lavc_priv_t();
 
-typedef struct lavc_priv_s
-{
-    URLContext *ctx;
-    off_t spos;
-}lavc_priv_t;
+	URLContext *ctx;
+	off_t spos;
+};
+
+lavc_priv_t::~lavc_priv_t() {
+    if(ctx) ffurl_close(ctx);
+}
 
 static int lavc_int_cb(any_t*op) { return 0; } /* non interrupt blicking */
 static AVIOInterruptCB int_cb = { lavc_int_cb, NULL };
 
 static int __FASTCALL__ lavc_read(stream_t *s, stream_packet_t*sp)
 {
-    lavc_priv_t*p=reinterpret_cast<lavc_priv_t*>(s->priv);
+    lavc_priv_t*p=static_cast<lavc_priv_t*>(s->priv);
     sp->len = ffurl_read_complete(p->ctx, reinterpret_cast<unsigned char*>(sp->buf), sp->len);
     if(sp->len>0) p->spos += sp->len;
     return sp->len;
@@ -29,7 +35,7 @@ static int __FASTCALL__ lavc_read(stream_t *s, stream_packet_t*sp)
 
 static off_t __FASTCALL__ lavc_seek(stream_t *s, off_t newpos)
 {
-    lavc_priv_t*p=reinterpret_cast<lavc_priv_t*>(s->priv);
+    lavc_priv_t*p=static_cast<lavc_priv_t*>(s->priv);
     p->spos = newpos;
     p->spos = ffurl_seek(p->ctx, newpos, SEEK_SET);
     return p->spos;
@@ -37,7 +43,7 @@ static off_t __FASTCALL__ lavc_seek(stream_t *s, off_t newpos)
 
 static off_t lavc_tell(const stream_t *s)
 {
-    lavc_priv_t*p=reinterpret_cast<lavc_priv_t*>(s->priv);
+    lavc_priv_t*p=static_cast<lavc_priv_t*>(s->priv);
     return p->spos;
 }
 
@@ -51,8 +57,7 @@ static MPXP_Rc __FASTCALL__ lavc_ctrl(const stream_t *s, unsigned cmd, any_t*arg
 
 static void __FASTCALL__ lavc_close(stream_t *stream)
 {
-    lavc_priv_t*p=reinterpret_cast<lavc_priv_t*>(stream->priv);
-    ffurl_close(p->ctx);
+    lavc_priv_t*p=static_cast<lavc_priv_t*>(stream->priv);
     delete p;
 }
 

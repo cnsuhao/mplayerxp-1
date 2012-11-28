@@ -10,6 +10,6 @@ namespace mpxp {
     void dump_mux_init(demuxer_t *demuxer,any_t*libinput);
     void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned play_n_frames);
     void dump_mux_close(demuxer_t *demuxer);
-    void __FASTCALL__ dump_stream_event_handler(struct stream_s *s,const stream_packet_t*sp);
+    void __FASTCALL__ dump_stream_event_handler(stream_t *s,const stream_packet_t*sp);
 } //namespace
 #endif

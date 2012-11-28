@@ -28,18 +28,22 @@ typedef struct tvi_functions_s
     int (*get_audio_framesize)(struct priv_s *priv);
 } tvi_functions_t;
 
-typedef struct tvi_handle_s {
-    const tvi_info_t	*info;
-    const tvi_functions_t*functions;
-    any_t*		priv;
-    int 		seq;
+struct tvi_handle_t : public Opaque {
+    public:
+	tvi_handle_t() {}
+	virtual ~tvi_handle_t() {}
+
+	const tvi_info_t	*info;
+	const tvi_functions_t*functions;
+	any_t*		priv;
+	int 		seq;
 
     /* specific */
-    int			norm;
-    int			chanlist;
-    const struct CHANLIST*chanlist_s;
-    int			channel;
-} tvi_handle_t;
+	int		norm;
+	int		chanlist;
+	const struct CHANLIST*chanlist_s;
+	int		channel;
+};
 
 enum {
     TVI_CONTROL_FALSE	=0,

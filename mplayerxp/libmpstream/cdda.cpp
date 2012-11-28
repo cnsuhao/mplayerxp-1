@@ -82,7 +82,7 @@ MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
     unsigned char arr[256];
     int st_inited;
 
-    priv = (cdda_priv*)mp_mallocz(sizeof(cdda_priv));
+    priv = new(zeromem) cdda_priv;
 
     priv->cd = cdio_cddap_identify(dev,mp_conf.verbose?1:0,NULL);
 
@@ -172,7 +172,7 @@ static unsigned long psa(cdda_priv*p,unsigned long sector)
 }
 
 int __FASTCALL__ read_cdda(const stream_t* s,char *buf,track_t *tr) {
-  cdda_priv* p = (cdda_priv*)s->priv;
+  cdda_priv* p = static_cast<cdda_priv*>(s->priv);
   track_t i=255;
 
   if(cdio_cddap_read(p->cd, buf, p->sector, 1)==0) {
@@ -196,7 +196,7 @@ int __FASTCALL__ read_cdda(const stream_t* s,char *buf,track_t *tr) {
 }
 
 void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *tr) {
-    cdda_priv* p = (cdda_priv*)s->priv;
+    cdda_priv* p = static_cast<cdda_priv*>(s->priv);
     long sec;
     long seeked_track=0;
     track_t j=255;
@@ -213,14 +213,18 @@ void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *tr) {
 }
 
 off_t __FASTCALL__ tell_cdda(const stream_t* s) {
-  const cdda_priv* p = (const cdda_priv*)s->priv;
+  const cdda_priv* p = static_cast<const cdda_priv*>(s->priv);
   return p->sector*CDIO_CD_FRAMESIZE_RAW;
 }
 
 void __FASTCALL__ close_cdda(stream_t* s) {
-  cdda_priv* p = (cdda_priv*)s->priv;
-  cdio_cddap_close(p->cd);
+  cdda_priv* p = static_cast<cdda_priv*>(s->priv);
   delete p;
+}
+
+cdda_priv::cdda_priv() {}
+cdda_priv::~cdda_priv() {
+    cdio_cddap_close(cd);
 }
 
 #endif

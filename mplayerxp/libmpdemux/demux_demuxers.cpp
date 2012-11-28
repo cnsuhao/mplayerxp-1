@@ -20,9 +20,9 @@ struct dd_priv_t : public Opaque {
 };
 
 dd_priv_t::~dd_priv_t() {
-    if(vd) FREE_DEMUXER(vd);
-    if(ad && ad != vd) FREE_DEMUXER(ad);
-    if(sd && sd != vd && sd != ad) FREE_DEMUXER(sd);
+    if(vd) { free_demuxer(vd); vd=NULL; }
+    if(ad && ad != vd) { free_demuxer(ad); ad=NULL; }
+    if(sd && sd != vd && sd != ad) { free_demuxer(sd); sd=NULL; }
 }
 
 demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd) {

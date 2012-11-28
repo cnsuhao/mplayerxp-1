@@ -23,36 +23,61 @@ using namespace mpxp;
 #include "mrl.h"
 
 /* some default values */
-static int tv_param_audiorate = 44100;
-static int tv_param_noaudio = 0;
+struct tv_param : public Opaque {
+    public:
+	tv_param();
+	virtual ~tv_param() {}
+
+	int audiorate;
+	int noaudio;
 #ifdef HAVE_TV_BSDBT848
-static int tv_param_immediate = 0;
+	int immediate;
 #endif
-static const char *tv_param_freq = NULL;
-static const char *tv_param_channel = NULL;
-static const char *tv_param_norm = "pal";
-static const char *tv_param_chanlist = "europe-east";
-static const char *tv_param_device = NULL;
-static const char *tv_param_driver = "dummy";
-static int tv_param_width = -1;
-static int tv_param_height = -1;
-static int tv_param_input = 0; /* used in v4l and bttv */
-static const char *tv_param_outfmt = "yv12";
-static float tv_param_fps = -1.0;
+	const char *freq;
+	const char *channel;
+	const char *norm;
+	const char *chanlist;
+	const char *device;
+	const char *driver;
+	int width;
+	int height;
+	int input; /* used in v4l and bttv */
+	const char *outfmt;
+	float fps;
+};
+static tv_param tv_param;
+tv_param::tv_param() {
+    audiorate = 44100;
+    noaudio = 0;
+#ifdef HAVE_TV_BSDBT848
+    immediate = 0;
+#endif
+    freq = NULL;
+    channel = NULL;
+    norm = "pal";
+    chanlist = "europe-east";
+    device = NULL;
+    driver = "dummy";
+    width = -1;
+    height = -1;
+    input = 0; /* used in v4l and bttv */
+    outfmt = "yv12";
+    fps = -1.0;
+}
 
 static const mrl_config_t tvopts_conf[]={
-	{"driver", &tv_param_driver, MRL_TYPE_STRING, 0, 0 },
-	{"device", &tv_param_device, MRL_TYPE_STRING, 0, 0 },
-	{"freq", &tv_param_freq, MRL_TYPE_STRING, 0, 0 },
-	{"channel", &tv_param_channel, MRL_TYPE_STRING, 0, 0 },
-	{"chanlist", &tv_param_chanlist, MRL_TYPE_STRING, 0, 0 },
-	{"norm", &tv_param_norm, MRL_TYPE_STRING, 0, 0 },
-	{"width", &tv_param_width, MRL_TYPE_INT, 0, 4096 },
-	{"height", &tv_param_height, MRL_TYPE_INT, 0, 4096 },
-	{"input", &tv_param_input, MRL_TYPE_INT, 0, 20 },
-	{"outfmt", &tv_param_outfmt, MRL_TYPE_STRING, 0, 0 },
-	{"fps", &tv_param_fps, MRL_TYPE_FLOAT, 0, 100.0 },
-	{NULL, NULL, 0, 0, 0 }
+    {"driver", &tv_param.driver, MRL_TYPE_STRING, 0, 0 },
+    {"device", &tv_param.device, MRL_TYPE_STRING, 0, 0 },
+    {"freq", &tv_param.freq, MRL_TYPE_STRING, 0, 0 },
+    {"channel", &tv_param.channel, MRL_TYPE_STRING, 0, 0 },
+    {"chanlist", &tv_param.chanlist, MRL_TYPE_STRING, 0, 0 },
+    {"norm", &tv_param.norm, MRL_TYPE_STRING, 0, 0 },
+    {"width", &tv_param.width, MRL_TYPE_INT, 0, 4096 },
+    {"height", &tv_param.height, MRL_TYPE_INT, 0, 4096 },
+    {"input", &tv_param.input, MRL_TYPE_INT, 0, 20 },
+    {"outfmt", &tv_param.outfmt, MRL_TYPE_STRING, 0, 0 },
+    {"fps", &tv_param.fps, MRL_TYPE_FLOAT, 0, 100.0 },
+    {NULL, NULL, 0, 0, 0 }
 };
 
 #include "tvi/tv.h"
@@ -88,7 +113,7 @@ int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, demux_stream_t *ds, tvi_
 
     /* ================== ADD AUDIO PACKET =================== */
 
-    if (ds==demux->audio && tv_param_noaudio == 0 &&
+    if (ds==demux->audio && tv_param.noaudio == 0 &&
 	tvh->functions->control(reinterpret_cast<priv_s*>(tvh->priv),
 				TVI_CONTROL_IS_AUDIO, 0) == TVI_CONTROL_TRUE)
 	{
@@ -126,66 +151,66 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 	return 0;
     }
 
-    if (!strcasecmp(tv_param_outfmt, "yv12"))
+    if (!strcasecmp(tv_param.outfmt, "yv12"))
 	picture_format = IMGFMT_YV12;
-    else if (!strcasecmp(tv_param_outfmt, "i420"))
+    else if (!strcasecmp(tv_param.outfmt, "i420"))
 	picture_format = IMGFMT_I420;
-    else if (!strcasecmp(tv_param_outfmt, "uyvy"))
+    else if (!strcasecmp(tv_param.outfmt, "uyvy"))
 	picture_format = IMGFMT_UYVY;
-    else if (!strcasecmp(tv_param_outfmt, "yuy2"))
+    else if (!strcasecmp(tv_param.outfmt, "yuy2"))
 	picture_format = IMGFMT_YUY2;
-    else if (!strcasecmp(tv_param_outfmt, "rgb32"))
+    else if (!strcasecmp(tv_param.outfmt, "rgb32"))
 	picture_format = IMGFMT_RGB32;
-    else if (!strcasecmp(tv_param_outfmt, "rgb24"))
+    else if (!strcasecmp(tv_param.outfmt, "rgb24"))
 	picture_format = IMGFMT_RGB24;
-    else if (!strcasecmp(tv_param_outfmt, "rgb16"))
+    else if (!strcasecmp(tv_param.outfmt, "rgb16"))
 	picture_format = IMGFMT_RGB16;
-    else if (!strcasecmp(tv_param_outfmt, "rgb15"))
+    else if (!strcasecmp(tv_param.outfmt, "rgb15"))
 	picture_format = IMGFMT_RGB15;
     else
     {
-	MSG_ERR( "Unknown format given: %s\n", tv_param_outfmt);
+	MSG_ERR( "Unknown format given: %s\n", tv_param.outfmt);
 	MSG_V( "Using default: Planar YV12\n");
 	picture_format = IMGFMT_YV12;
     }
     funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_SET_FORMAT, &picture_format);
 
     /* set width */
-    if (tv_param_width != -1)
+    if (tv_param.width != -1)
     {
-	if (funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_CHK_WIDTH, &tv_param_width) == TVI_CONTROL_TRUE)
-	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_SET_WIDTH, &tv_param_width);
+	if (funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_CHK_WIDTH, &tv_param.width) == TVI_CONTROL_TRUE)
+	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_SET_WIDTH, &tv_param.width);
 	else
 	{
-	    MSG_ERR( "Unable set requested width: %d\n", tv_param_width);
-	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_GET_WIDTH, &tv_param_width);
+	    MSG_ERR( "Unable set requested width: %d\n", tv_param.width);
+	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_GET_WIDTH, &tv_param.width);
 	}
     }
 
     /* set height */
-    if (tv_param_height != -1)
+    if (tv_param.height != -1)
     {
-	if (funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_CHK_HEIGHT, &tv_param_height) == TVI_CONTROL_TRUE)
-	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_SET_HEIGHT, &tv_param_height);
+	if (funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_CHK_HEIGHT, &tv_param.height) == TVI_CONTROL_TRUE)
+	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_SET_HEIGHT, &tv_param.height);
 	else
 	{
-	    MSG_ERR( "Unable set requested height: %d\n", tv_param_height);
-	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_GET_HEIGHT, &tv_param_height);
+	    MSG_ERR( "Unable set requested height: %d\n", tv_param.height);
+	    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_GET_HEIGHT, &tv_param.height);
 	}
     }
 
     /* set some params got from cmdline */
-    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_SPC_SET_INPUT, &tv_param_input);
+    funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_SPC_SET_INPUT, &tv_param.input);
 
     /* select video norm */
-    if (!strcasecmp(tv_param_norm, "pal"))
+    if (!strcasecmp(tv_param.norm, "pal"))
 	tvh->norm = TV_NORM_PAL;
-    else if (!strcasecmp(tv_param_norm, "ntsc"))
+    else if (!strcasecmp(tv_param.norm, "ntsc"))
 	tvh->norm = TV_NORM_NTSC;
-    else if (!strcasecmp(tv_param_norm, "secam"))
+    else if (!strcasecmp(tv_param.norm, "secam"))
 	tvh->norm = TV_NORM_SECAM;
 
-    MSG_V( "Selected norm: %s\n", tv_param_norm);
+    MSG_V( "Selected norm: %s\n", tv_param.norm);
     funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_TUN_SET_NORM, &tvh->norm);
 
     if (funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_IS_TUNER, 0) != TVI_CONTROL_TRUE)
@@ -197,7 +222,7 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
     /* select channel list */
     for (i = 0; chanlists[i].name != NULL; i++)
     {
-	if (!strcasecmp(chanlists[i].name, tv_param_chanlist))
+	if (!strcasecmp(chanlists[i].name, tv_param.chanlist))
 	{
 	    tvh->chanlist = i;
 	    tvh->chanlist_s = chanlists[i].list;
@@ -207,21 +232,21 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 
     if (tvh->chanlist == -1)
 	MSG_WARN( "Unable to find selected channel list! (%s)\n",
-	    tv_param_chanlist);
+	    tv_param.chanlist);
     else
 	MSG_V( "Selected channel list: %s (including %d channels)\n",
 	    chanlists[tvh->chanlist].name, chanlists[tvh->chanlist].count);
 
-    if (tv_param_freq && tv_param_channel)
+    if (tv_param.freq && tv_param.channel)
     {
 	MSG_WARN( "You can't set frequency and channel simultanly!\n");
 	goto done;
     }
 
     /* we need to set frequency */
-    if (tv_param_freq)
+    if (tv_param.freq)
     {
-	unsigned long freq = atof(tv_param_freq)*16;
+	unsigned long freq = atof(tv_param.freq)*16;
 
 	/* set freq in MHz */
 	funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_TUN_SET_FREQ, &freq);
@@ -231,15 +256,15 @@ int __FASTCALL__ stream_open_tv(stream_t *stream, tvi_handle_t *tvh)
 	    freq, (float)freq/16);
     }
 
-    if (tv_param_channel)
+    if (tv_param.channel)
     {
 	struct CHANLIST cl;
 
-	MSG_V( "Requested channel: %s\n", tv_param_channel);
+	MSG_V( "Requested channel: %s\n", tv_param.channel);
 	for (i = 0; i < chanlists[tvh->chanlist].count; i++)
 	{
 	    cl = tvh->chanlist_s[i];
-	    if (!strcasecmp(cl.name, tv_param_channel))
+	    if (!strcasecmp(cl.name, tv_param.channel))
 	    {
 		tvh->channel = i;
 		MSG_V( "Selected channel: %s (freq: %.3f)\n",
@@ -278,17 +303,17 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 	else sh_video->fps = tmp;
     }
 
-    if (tv_param_fps != -1.0f)
-	sh_video->fps = tv_param_fps;
+    if (tv_param.fps != -1.0f)
+	sh_video->fps = tv_param.fps;
 
     MSG_V("fps: %f, frametime: %f\n", sh_video->fps, 1.0f/sh_video->fps);
 
 #ifdef HAVE_TV_BSDBT848
     /* If playback only mode, go to immediate mode, fail silently */
-    if(tv_param_immediate == 1)
+    if(tv_param.immediate == 1)
 	{
 	funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_IMMEDIATE, 0);
-	tv_param_noaudio = 1;
+	tv_param.noaudio = 1;
 	}
 #endif
 
@@ -308,7 +333,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 
     /* here comes audio init */
 
-    if (tv_param_noaudio == 0 && funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_IS_AUDIO, 0) == TVI_CONTROL_TRUE)
+    if (tv_param.noaudio == 0 && funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_IS_AUDIO, 0) == TVI_CONTROL_TRUE)
     {
 	int audio_format;
 	int sh_audio_format;
@@ -316,7 +341,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 	/* yeah, audio is present */
 
 	funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_AUD_SET_SAMPLERATE,
-				  &tv_param_audiorate);
+				  &tv_param.audiorate);
 
 	if (funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_AUD_GET_FORMAT, &audio_format) != TVI_CONTROL_TRUE)
 	    goto no_audio;
@@ -384,18 +409,18 @@ extern tvi_handle_t *tvi_init_dummy(const char *device);
 extern tvi_handle_t *tvi_init_v4l(const char *device);
 tvi_handle_t * __FASTCALL__ tv_begin(void)
 {
-    if (!strcmp(tv_param_driver, "dummy"))
-	return (tvi_handle_t *)tvi_init_dummy(tv_param_device);
+    if (!strcmp(tv_param.driver, "dummy"))
+	return (tvi_handle_t *)tvi_init_dummy(tv_param.device);
 #ifdef HAVE_TV_V4L
-    if (!strcmp(tv_param_driver, "v4l"))
-	return (tvi_handle_t *)tvi_init_v4l(tv_param_device);
+    if (!strcmp(tv_param.driver, "v4l"))
+	return (tvi_handle_t *)tvi_init_v4l(tv_param.device);
 #endif
 #ifdef HAVE_TV_BSDBT848
-    if (!strcmp(tv_param_driver, "bsdbt848"))
-	return (tvi_handle_t *)tvi_init_bsdbt848(tv_param_device);
+    if (!strcmp(tv_param.driver, "bsdbt848"))
+	return (tvi_handle_t *)tvi_init_bsdbt848(tv_param.device);
 #endif
 
-    MSG_ERR( "No such driver: %s\n", tv_param_driver);
+    MSG_ERR( "No such driver: %s\n", tv_param.driver);
     return(NULL);
 }
 
@@ -501,7 +526,7 @@ int __FASTCALL__ tv_set_freq(tvi_handle_t *tvh, unsigned long freq)
 {
     if (tvh->functions->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_IS_TUNER, 0) == TVI_CONTROL_TRUE)
     {
-//	unsigned long freq = atof(tv_param_freq)*16;
+//	unsigned long freq = atof(tv_param.freq)*16;
 
 	/* set freq in MHz */
 	tvh->functions->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_TUN_SET_FREQ, &freq);

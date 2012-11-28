@@ -5,6 +5,8 @@
 #include <sys/types.h>
 
 #include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 #include "xmpcore/xmp_enums.h"
 
 enum {
@@ -37,39 +39,44 @@ typedef struct {
     int len;	/**< length of buffer */
 }stream_packet_t;
 
-struct stream_s;
-typedef void (* __FASTCALL__ stream_callback)(struct stream_s *s,const stream_packet_t *);
+struct stream_t;
+typedef void (* __FASTCALL__ stream_callback)(stream_t *s,const stream_packet_t*);
 
 enum {
     STREAM_PIN=RND_NUMBER2+RND_CHAR3
 };
 
 struct cache_vars_s;
+struct demuxer_t;
 /** Stream description */
-typedef struct stream_s {
-    char		antiviral_hole[RND_CHAR3];
-    unsigned		pin;		/**< personal identification number */
-    int fd;		/**< file handler */
-    off_t pos;		/**< SOF offset from begin of stream */
-    int eof;		/**< indicates EOF */
-    int type;		/**< properties of the stream (see STREAMTYPE_ for detail) */
-    int file_format;	/**< detected file format (by http:// protocol for example) */
-    unsigned int buf_pos; /**< position whitin of small cache */
-    unsigned int buf_len; /**< length of small cache */
-    unsigned char *buffer;/**< buffer of small cache */
-    off_t start_pos;	/**< real start of stream (without internet's headers) */
-    off_t end_pos;	/**< real end of stream (media may be not fully filled) */
-    unsigned sector_size; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
-    struct demuxer_s* demuxer; /* parent demuxer */
-    struct cache_vars_s* cache_data;	/**< large cache */
-    any_t* priv;	/**< private data used by stream driver */
-    float stream_pts;	/**< PTS correction for idiotics DVD's discontinuities */
+struct stream_t : public Opaque {
+    public:
+	stream_t() {}
+	virtual ~stream_t() {}
+
+	char		antiviral_hole[RND_CHAR3];
+	unsigned	pin;		/**< personal identification number */
+	int		fd;		/**< file handler */
+	off_t		pos;		/**< SOF offset from begin of stream */
+	int		eof;		/**< indicates EOF */
+	int		type;		/**< properties of the stream (see STREAMTYPE_ for detail) */
+	int		file_format;	/**< detected file format (by http:// protocol for example) */
+	unsigned int	buf_pos; /**< position whitin of small cache */
+	unsigned int	buf_len; /**< length of small cache */
+	unsigned char*	buffer;/**< buffer of small cache */
+	off_t		start_pos;	/**< real start of stream (without internet's headers) */
+	off_t		end_pos;	/**< real end of stream (media may be not fully filled) */
+	unsigned	sector_size; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
+	demuxer_t*	demuxer; /* parent demuxer */
+	struct cache_vars_s* cache_data;	/**< large cache */
+	Opaque*		priv;	/**< private data used by stream driver */
+	float		stream_pts;	/**< PTS correction for idiotics DVD's discontinuities */
 #ifdef HAVE_STREAMING
-    streaming_ctrl_t *streaming_ctrl; /**< callback for internet streaming control */
+	streaming_ctrl_t*streaming_ctrl; /**< callback for internet streaming control */
 #endif
-    const struct stream_driver_s *driver; /**< low-level stream driver */
-    stream_callback event_handler;  /**< callback for streams which provide events */
-} stream_t __attribute__ ((packed));
+	const struct stream_driver_s *driver; /**< low-level stream driver */
+	stream_callback	event_handler;  /**< callback for streams which provide events */
+} __attribute__ ((packed));
 
 int stream_enable_cache(stream_t *stream,any_t* libinput,int size,int min,int prefill);
 void stream_disable_cache(stream_t *stream);

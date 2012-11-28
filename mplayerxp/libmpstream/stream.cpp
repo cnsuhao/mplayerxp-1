@@ -219,7 +219,7 @@ void __FASTCALL__ nc_stream_reset(stream_t *s){
 }
 
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
-  stream_t *s=(stream_t*)mp_mallocz(sizeof(stream_t)+len);
+  stream_t *s=new(zeromem) stream_t;
   if(s==NULL) return NULL;
   s->fd=-1;
   s->pin=STREAM_PIN;
@@ -227,7 +227,7 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   s->buf_pos=0; s->buf_len=len;
   s->start_pos=0; s->end_pos=len;
   s->sector_size=1;
-  s->buffer=(unsigned char *)mp_malloc(len);
+  s->buffer=new unsigned char [len];
   if(s->buffer==NULL) { delete s; return NULL; }
   stream_reset(s);
   s->pos=len;
@@ -236,15 +236,15 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
 }
 
 stream_t* __FASTCALL__ new_stream(int type){
-  stream_t *s=(stream_t*)mp_mallocz(sizeof(stream_t));
+  stream_t *s=new(zeromem) stream_t;
   if(s==NULL) return NULL;
 
-  rnd_fill(s->antiviral_hole,offsetof(stream_t,pin)-offsetof(stream_t,antiviral_hole));
+  rnd_fill(s->antiviral_hole,reinterpret_cast<long>(&s->pin)-reinterpret_cast<long>(&s->antiviral_hole));
   s->pin=STREAM_PIN;
   s->fd=-1;
   s->type=type;
   s->sector_size=STREAM_BUFFER_SIZE;
-  s->buffer=(unsigned char*)mp_malloc(STREAM_BUFFER_SIZE);
+  s->buffer=new unsigned char [STREAM_BUFFER_SIZE];
   if(s->buffer==NULL) { delete s; return NULL; }
   stream_reset(s);
   return s;
