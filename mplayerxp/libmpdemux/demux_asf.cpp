@@ -455,7 +455,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 	ds->asf_packet=NULL;
       } else {
 	// append data to it!
-	demux_packet_t* dp=ds->asf_packet;
+	Demux_Packet* dp=ds->asf_packet;
 	if(dp->len!=offs && offs!=-1) MSG_V("warning! fragment.len=%d BUT next fragment offset=%d  \n",dp->len,offs);
 	dp->buffer=(unsigned char*)mp_realloc(dp->buffer,dp->len+len);
 	stream_seek(demux->stream,dataoff);
@@ -467,21 +467,21 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
       }
     }
     // create new packet:
-    { demux_packet_t* dp;
+    { 
       if(offs>0){
 	MSG_V("warning!  broken fragment or incomplete seeking, %d bytes missing  \n",offs);
 	return 0;
       }
-      dp=new_demux_packet(len);
+      Demux_Packet& dp=*new(zeromem) Demux_Packet(len);
       stream_seek(demux->stream,dataoff);
-      len=stream_read(demux->stream,dp->buffer,len);
-      resize_demux_packet(dp,len);
-      dp->pts=time*0.001f;
-      dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
-      dp->pos=demux->filepos;
-      ds->asf_packet=dp;
+      len=stream_read(demux->stream,dp.buffer,len);
+      dp.resize(len);
+      dp.pts=time*0.001f;
+      dp.flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
+      dp.pos=demux->filepos;
+      ds->asf_packet=&dp;
       ds->asf_seq=seq;
-      MSG_DBG2("ASF: reading %s PTS %u %f %i\n",ds==demux->audio?"audio":"video",time,dp->pts,keyframe);
+      MSG_DBG2("ASF: reading %s PTS %u %f %i\n",ds==demux->audio?"audio":"video",time,dp.pts,keyframe);
       // we are ready now.
       return 1;
     }
@@ -717,6 +717,9 @@ static void asf_close(demuxer_t *demuxer)
 
 static MPXP_Rc asf_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
+    UNUSED(demuxer);
+    UNUSED(cmd);
+    UNUSED(args);
     return MPXP_Unknown;
 }
 

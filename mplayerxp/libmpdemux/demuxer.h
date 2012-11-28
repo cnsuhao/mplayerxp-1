@@ -53,14 +53,21 @@ enum {
     DP_KEYFRAME		=0x00000001UL
 };
 /** Describes demuxer's packet */
-typedef struct demux_packet_st {
-    int			len;	/**< length of packet's data */
-    float		pts;	/**< Presentation Time-Stamp (PTS) of data */
-    off_t		pos;	/**< Position in index (AVI) or file (MPG) */
-    unsigned char*	buffer; /**< buffer of packet's data */
-    int			flags;	/**< 1 - indicates keyframe, 0 - regular frame */
-    struct demux_packet_st* next; /**< pointer to the next packet in chain */
-} demux_packet_t;
+class Demux_Packet : public Opaque {
+    public:
+	Demux_Packet(unsigned len);
+	virtual ~Demux_Packet();
+
+	void resize(unsigned newlen);
+	Demux_Packet* clone() const;
+
+	unsigned	len;	/**< length of packet's data */
+	float		pts;	/**< Presentation Time-Stamp (PTS) of data */
+	off_t		pos;	/**< Position in index (AVI) or file (MPG) */
+	unsigned char*	buffer; /**< buffer of packet's data */
+	unsigned	flags;	/**< 1 - indicates keyframe, 0 - regular frame */
+	Demux_Packet*	next; /**< pointer to the next packet in chain */
+};
 
 /** Describes interface to stream associated with this demuxer */
 enum {
@@ -84,12 +91,12 @@ typedef struct demux_stream_s {
 /*---------------*/
     int			packs;		/**< number of packets in buffer */
     int			bytes;		/**< total bytes of packets in buffer */
-    demux_packet_t*	first;		/**< read to current buffer from here */
-    demux_packet_t*	last;		/**< append new packets from input stream to here */
-    demux_packet_t*	current;	/**< needed for refcounting of the buffer */
+    Demux_Packet*	first;		/**< read to current buffer from here */
+    Demux_Packet*	last;		/**< append new packets from input stream to here */
+    Demux_Packet*	current;	/**< needed for refcounting of the buffer */
     struct demuxer_s*	demuxer;	/**< parent demuxer structure (stream handler) */
 /* ---- asf ----- */
-    demux_packet_t*	asf_packet;	/**< read asf fragments here */
+    Demux_Packet*	asf_packet;	/**< read asf fragments here */
     int			asf_seq;	/**< sequence id associated with asf_packet */
 /*---------------*/
     any_t*		sh;		/**< Stream header associated with this stream (@see st_header.h for detail) */
@@ -191,11 +198,6 @@ typedef struct demuxer_driver_s
     MPXP_Rc		(*control)(const demuxer_t *d,int cmd,any_t*arg);
 }demuxer_driver_t;
 
-demux_packet_t* new_demux_packet(int len);
-void free_demux_packet(demux_packet_t* dp);
-void resize_demux_packet(demux_packet_t* dp, int len);
-
-demux_packet_t* clone_demux_packet(demux_packet_t* pack);
 demux_stream_t* new_demuxer_stream(struct demuxer_s *demuxer,int id);
 demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id);
 void free_demuxer_stream(demux_stream_t *ds);
@@ -203,7 +205,7 @@ void free_demuxer_stream(demux_stream_t *ds);
 void free_demuxer(demuxer_t *demuxer);
 #define FREE_DEMUXER(d) { free_demuxer(d); d=NULL; }
 
-void ds_add_packet(demux_stream_t *ds,demux_packet_t* dp);
+void ds_add_packet(demux_stream_t *ds,Demux_Packet* dp);
 void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,int flags);
 
 int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds);

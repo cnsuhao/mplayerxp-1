@@ -507,7 +507,7 @@ static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vor
 // return 1 if the packet was added, 0 otherwise
 static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_packet* pack) {
   demuxer_t* d = ds->demuxer;
-  demux_packet_t* dp;
+  Demux_Packet* dp;
   unsigned char* data;
   float pts = 0;
   int flags = 0;
@@ -563,7 +563,7 @@ static int demux_ogg_add_packet(demux_stream_t* ds,ogg_stream_t* os,int id,ogg_p
     clear_sub = -1;
   }
   /// Send the packet
-  dp = new_demux_packet(pack->bytes-(data-pack->packet));
+  dp = new(zeromem) Demux_Packet(pack->bytes-(data-pack->packet));
   memcpy(dp->buffer,data,pack->bytes-(data-pack->packet));
   dp->pts = pts;
   dp->flags = flags?DP_KEYFRAME:DP_NONKEYFRAME;
@@ -1166,7 +1166,7 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
   ogg_demuxer_t *ogg_d;
   stream_t* s;
   uint32_t hdrsizes[3];
-  demux_packet_t *dp;
+  Demux_Packet *dp;
   sh_audio_t *sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int np;
   unsigned char *p = NULL,*buf;
@@ -1221,15 +1221,15 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
 
   /// Add the header packets in the ogg demuxer audio stream
   // Initial header
-  dp = new_demux_packet(hdrsizes[0]);
+  dp = new(zeromem) Demux_Packet(hdrsizes[0]);
   memcpy(dp->buffer,((unsigned char*)sh_audio->wf)+22+sizeof(WAVEFORMATEX)+3*sizeof(uint32_t),hdrsizes[0]);
   ds_add_packet(od->audio,dp);
   /// Comments
-  dp = new_demux_packet(hdrsizes[1]);
+  dp = new(zeromem) Demux_Packet(hdrsizes[1]);
   memcpy(dp->buffer,((unsigned char*)sh_audio->wf)+22+sizeof(WAVEFORMATEX)+3*sizeof(uint32_t)+hdrsizes[0],hdrsizes[1]);
   ds_add_packet(od->audio,dp);
   /// Code book
-  dp = new_demux_packet(hdrsizes[2]);
+  dp = new(zeromem) Demux_Packet(hdrsizes[2]);
   memcpy(dp->buffer,((unsigned char*)sh_audio->wf)+22+sizeof(WAVEFORMATEX)+3*sizeof(uint32_t)+hdrsizes[0]+hdrsizes[1],hdrsizes[2]);
   ds_add_packet(od->audio,dp);
 

@@ -67,7 +67,6 @@ static int ra_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	demux_stream_t *ds = demuxer->audio;
 	sh_audio_t *sh = reinterpret_cast<sh_audio_t*>(ds->sh);
 	WAVEFORMATEX *wf = sh->wf;
-	demux_packet_t *dp;
 
 	if (stream_eof(demuxer->stream)) return 0;
 
@@ -77,9 +76,9 @@ static int ra_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	len = wf->nBlockAlign;
 	demuxer->filepos = stream_tell(demuxer->stream);
 
-	dp = new_demux_packet(len);
+	Demux_Packet *dp = new(zeromem) Demux_Packet(len);
 	len=stream_read(demuxer->stream, dp->buffer, len);
-	resize_demux_packet(dp,len);
+	dp->resize(len);
 
 	if(sh->i_bps)
 	{

@@ -101,7 +101,6 @@ static MPXP_Rc dv_probe(demuxer_t *demuxer)
 static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
 {
    rawdv_frames_t *frames = (rawdv_frames_t *)demuxer->priv;
-   demux_packet_t* dp_video=NULL;
    sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
    int bytes_read=0;
 //   fprintf(stderr,"demux_rawdv_fill_buffer() seek to %qu, size: %d\n",frames->current_filepos,frames->frame_size);
@@ -110,7 +109,7 @@ static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
    // seem to do it, even though it takes a file offset as a parameter
    stream_seek(demuxer->stream, frames->current_filepos);
 
-   dp_video=new_demux_packet(frames->frame_size);
+   Demux_Packet* dp_video=new(zeromem) Demux_Packet(frames->frame_size);
    bytes_read=stream_read(demuxer->stream,dp_video->buffer,frames->frame_size);
    if (bytes_read<frames->frame_size)
       return 0;
@@ -120,7 +119,7 @@ static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
 
    if (demuxer->audio && demuxer->audio->id>=-1)
    {
-      demux_packet_t* dp_audio=clone_demux_packet(dp_video);
+      Demux_Packet* dp_audio=dp_video->clone();
       ds_add_packet(demuxer->audio,dp_audio);
    }
    ds_add_packet(demuxer->video,dp_video);

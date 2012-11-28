@@ -404,7 +404,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
     UNUSED(dsds);
     lavf_priv_t *priv= reinterpret_cast<lavf_priv_t*>(demux->priv);
     AVPacket pkt;
-    demux_packet_t *dp;
+    Demux_Packet *dp;
     demux_stream_t *ds;
     int id;
     MSG_DBG2("lavf_demux()\n");
@@ -442,7 +442,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 
     if(0/*pkt.destruct == av_destruct_packet*/){
 	//ok kids, dont try this at home :)
-	dp=(demux_packet_t*)mp_malloc(sizeof(demux_packet_t));
+	dp=new(zeromem) Demux_Packet(pkt.size);
 	dp->len=pkt.size;
 	dp->next=NULL;
 //        dp->refcount=1;
@@ -450,7 +450,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 	dp->buffer=pkt.data;
 	pkt.destruct= NULL;
     }else{
-	dp=new_demux_packet(pkt.size);
+	dp=new(zeromem) Demux_Packet(pkt.size);
 	memcpy(dp->buffer, pkt.data, pkt.size);
 	av_free_packet(&pkt);
     }

@@ -395,19 +395,18 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     }
     if(pts==MPGPES_BAD_PTS && ds->asf_packet)
     {
-	demux_packet_t* dp=ds->asf_packet;
+	Demux_Packet* dp=ds->asf_packet;
 	dp->buffer=(unsigned char *)mp_realloc(dp->buffer,dp->len+len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
 	dp->len+=len;
     }
     else
     {
-	demux_packet_t* dp;
 	sh_video_t *sh;
 	if(ds->asf_packet) ds_add_packet(ds,ds->asf_packet);
-	dp=new_demux_packet(len);
+	Demux_Packet* dp=new(zeromem) Demux_Packet(len);
 	len=stream_read(demux->stream,dp->buffer,len);
-	resize_demux_packet(dp,len);
+	dp->resize(len);
 	dp->pts=pts/90000.0f;
 	if(ds==demux->video)	sh=(sh_video_t *)ds->sh;
 	else			sh=NULL;

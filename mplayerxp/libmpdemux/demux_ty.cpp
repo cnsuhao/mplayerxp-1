@@ -293,7 +293,7 @@ static void demux_ty_AddToAudioBuffer( TiVoInfo *tivo, unsigned char *buffer,
 static void demux_ty_CopyToDemuxPacket( demux_stream_t *ds,
        unsigned char *buffer, int size, off_t pos, int64_t pts )
 {
-   demux_packet_t *dp = new_demux_packet( size );
+   Demux_Packet *dp = new(zeromem) Demux_Packet( size );
    memcpy( dp->buffer, buffer, size );
    if (pts != -1)
    dp->pts = pts / 90000.0;

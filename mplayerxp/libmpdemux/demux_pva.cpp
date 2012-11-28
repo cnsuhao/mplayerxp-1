@@ -185,7 +185,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload);
 static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 {
 	uint8_t done=0;
-	demux_packet_t * dp;
+	Demux_Packet * dp;
 	pva_priv_t * priv=reinterpret_cast<pva_priv_t*>(demux->priv);
 	pva_payload_t current_payload;
 
@@ -219,18 +219,15 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 					priv->last_video_pts=current_payload.pts;
 					//MSG_DBG2("demux_pva: Video PTS=%llu , delivered %f\n",current_payload.pts,priv->last_video_pts);
 				}
-				if(done)
-				{
+				if(done) {
 					int l;
-					dp=new_demux_packet(current_payload.size);
+					dp=new(zeromem) Demux_Packet(current_payload.size);
 					dp->pts=priv->last_video_pts;
 					dp->flags=DP_NONKEYFRAME;
 					l=stream_read(demux->stream,dp->buffer,current_payload.size);
-					resize_demux_packet(dp,l);
+					dp->resize(l);
 					ds_add_packet(demux->video,dp);
-				}
-				else
-				{
+				} else {
 					//printf("Skipping %u video bytes\n",current_payload.size);
 					stream_skip(demux->stream,current_payload.size);
 				}
@@ -251,19 +248,16 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 					priv->last_audio_pts=current_payload.pts;
 				}
 				if(demux->audio->id!=0) done=0;
-				if(done)
-				{
+				if(done) {
 					int l;
-					dp=new_demux_packet(current_payload.size);
+					dp=new(zeromem) Demux_Packet(current_payload.size);
 					dp->pts=priv->last_audio_pts;
 					if(current_payload.offset != stream_tell(demux->stream))
 						stream_seek(demux->stream,current_payload.offset);
 					l=stream_read(demux->stream,dp->buffer,current_payload.size);
-					resize_demux_packet(dp,l);
+					dp->resize(l);
 					ds_add_packet(demux->audio,dp);
-				}
-				else
-				{
+				} else {
 					stream_skip(demux->stream,current_payload.size);
 				}
 				break;
@@ -279,7 +273,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 	off_t next_offset,pva_payload_start;
 	unsigned char buffer[256];
 #ifndef PVA_NEW_PREBYTES_CODE
-	demux_packet_t * dp; 	//hack to deliver the preBytes (see PVA doc)
+	Demux_Packet * dp; 	//hack to deliver the preBytes (see PVA doc)
 #endif
 	pva_priv_t * priv=(pva_priv_t *) d->priv;
 

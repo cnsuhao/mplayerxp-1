@@ -575,11 +575,10 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
     }
     if(ds){
 	off_t pos=0LL;
-	demux_packet_t* dp;
-	dp=new_demux_packet(len);
+	Demux_Packet* dp=new(zeromem) Demux_Packet(len);
 	if(mp_conf.verbose>1) pos=stream_tell(s);
 	len=stream_read(s,dp->buffer,len);
-	resize_demux_packet(dp,len);
+	dp->resize(len);
 	dp->pts=pts;
 	dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
 	dp->pos=demux->filepos;
@@ -892,6 +891,9 @@ static void mpxpav64_close(demuxer_t *demuxer)
 
 static MPXP_Rc mpxpav64_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
+    UNUSED(demuxer);
+    UNUSED(cmd);
+    UNUSED(args);
     return MPXP_Unknown;
 }
 

@@ -799,9 +799,9 @@ void X11_System::wmspec_change_state (int add, Atom state1, Atom state2) const
   xclient.data.l[3] = 0;
   xclient.data.l[4] = 0;
 
-  XSendEvent (mDisplay, mRootWin, False,
-	      SubstructureRedirectMask | SubstructureNotifyMask,
-	      (XEvent *)&xclient);
+  ::XSendEvent(	mDisplay, mRootWin, False,
+		SubstructureRedirectMask | SubstructureNotifyMask,
+		(XEvent *)&xclient);
 }
 
 

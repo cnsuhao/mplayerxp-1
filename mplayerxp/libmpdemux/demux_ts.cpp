@@ -122,7 +122,7 @@ typedef struct MpegTSContext {
 
 typedef struct {
 	demux_stream_t *ds;
-	demux_packet_t *pack;
+	Demux_Packet *pack;
 	int offset, buffer_size;
 } av_fifo_t;
 
@@ -1510,7 +1510,7 @@ static void ts_dump_streams(ts_priv_t *priv)
 	{
 		if((priv->fifo[i].pack != NULL) && (priv->fifo[i].offset != 0))
 		{
-			resize_demux_packet(priv->fifo[i].pack, priv->fifo[i].offset);
+			priv->fifo[i].pack->resize(priv->fifo[i].offset);
 			ds_add_packet(priv->fifo[i].ds, priv->fifo[i].pack);
 			priv->fifo[i].offset = 0;
 			priv->fifo[i].pack = NULL;
@@ -2519,14 +2519,14 @@ static inline uint8_t *pid_lang_from_pmt(ts_priv_t *priv, int pid)
 }
 
 
-static int fill_packet(demuxer_t *demuxer, demux_stream_t *ds, demux_packet_t **dp, int *dp_offset, TS_stream_info *si)
+static int fill_packet(demuxer_t *demuxer, demux_stream_t *ds, Demux_Packet **dp, int *dp_offset, TS_stream_info *si)
 {
 	int ret = 0;
 
 	if((*dp != NULL) && (*dp_offset > 0))
 	{
 		ret = *dp_offset;
-		resize_demux_packet(*dp, ret);	//shrinked to the right size
+		(*dp)->resize(ret);	//shrinked to the right size
 		ds_add_packet(ds, *dp);
 		MSG_DBG2( "ADDED %d  bytes to %s fifo, PTS=%f\n", ret, (ds == demuxer->audio ? "audio" : (ds == demuxer->video ? "video" : "sub")), (*dp)->pts);
 		if(si)
@@ -2594,7 +2594,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	stream_t *stream = demuxer->stream;
 	unsigned char *p;
 	demux_stream_t *ds = NULL;
-	demux_packet_t **dp = NULL;
+	Demux_Packet **dp = NULL;
 	int *dp_offset = 0, *buffer_size = 0;
 	int32_t progid=0, pid_type, bad, ts_error;
 	int junk = 0, rap_flag = 0;
@@ -2607,7 +2607,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	{
 		bad = ts_error = 0;
 		ds = (demux_stream_t*) NULL;
-		dp = (demux_packet_t **) NULL;
+		dp = (Demux_Packet **) NULL;
 		dp_offset = buffer_size = NULL;
 		rap_flag = 0;
 		mp4_dec = NULL;
@@ -2823,7 +2823,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 			{
 				if(*buffer_size > MAX_PACK_BYTES)
 					*buffer_size = MAX_PACK_BYTES;
-				*dp = new_demux_packet(*buffer_size);	//es->size
+				*dp = new(zeromem) Demux_Packet(*buffer_size);	//es->size
 				*dp_offset = 0;
 				if(! *dp)
 				{
@@ -2844,7 +2844,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 			if(*dp_offset + buf_size > *buffer_size)
 			{
 				*buffer_size = *dp_offset + buf_size + TS_FEC_PACKET_SIZE;
-				resize_demux_packet(*dp, *buffer_size);
+				(*dp)->resize(*buffer_size);
 			}
 			p = &((*dp)->buffer[*dp_offset]);
 		}
@@ -3022,7 +3022,7 @@ static void reset_fifos(ts_priv_t* priv, int a, int v, int s)
 	{
 		if(priv->fifo[0].pack != NULL)
 		{
-			free_demux_packet(priv->fifo[0].pack);
+			delete priv->fifo[0].pack;
 			priv->fifo[0].pack = NULL;
 		}
 		priv->fifo[0].offset = 0;
@@ -3032,7 +3032,7 @@ static void reset_fifos(ts_priv_t* priv, int a, int v, int s)
 	{
 		if(priv->fifo[1].pack != NULL)
 		{
-			free_demux_packet(priv->fifo[1].pack);
+			delete priv->fifo[1].pack;
 			priv->fifo[1].pack = NULL;
 		}
 		priv->fifo[1].offset = 0;
@@ -3042,7 +3042,7 @@ static void reset_fifos(ts_priv_t* priv, int a, int v, int s)
 	{
 		if(priv->fifo[2].pack != NULL)
 		{
-			free_demux_packet(priv->fifo[2].pack);
+			delete priv->fifo[2].pack;
 			priv->fifo[2].pack = NULL;
 		}
 		priv->fifo[2].offset = 0;

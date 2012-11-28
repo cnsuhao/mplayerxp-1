@@ -67,7 +67,7 @@ static MPXP_Rc y4m_probe(demuxer_t* demuxer){
 static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
     UNUSED(__ds);
   demux_stream_t *ds=demux->video;
-  demux_packet_t *dp;
+  Demux_Packet *dp;
   y4m_priv_t *priv=reinterpret_cast<y4m_priv_t*>(demux->priv);
   y4m_frame_info_t fi;
   unsigned char *buf[3];
@@ -77,7 +77,7 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
 
   size = ((sh_video_t*)ds->sh)->src_w*((sh_video_t*)ds->sh)->src_h;
 
-  dp = new_demux_packet(3*size/2);
+  dp = new(zeromem) Demux_Packet(3*size/2);
 
   /* swap U and V components */
   buf[0] = dp->buffer;

@@ -99,10 +99,9 @@ static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   unsigned npal_colors;
   int fake_24;
   uint8_t *dst,*src;
-  demux_packet_t* dp;
   npal_colors = img->format->palette ? img->format->palette->ncolors : 0;
   fake_24 = img->format->BitsPerPixel == 8 && npal_colors > 0;
-  dp = new_demux_packet(fake_24 ? len*3 : len);
+  Demux_Packet* dp = new(zeromem) Demux_Packet(fake_24 ? len*3 : len);
   dst = dp->buffer;
   src =reinterpret_cast<uint8_t*>(img->pixels);
   if(fake_24)
@@ -302,6 +301,9 @@ static void bmp_close(demuxer_t* demuxer) {
 
 static MPXP_Rc bmp_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
+    UNUSED(demuxer);
+    UNUSED(cmd);
+    UNUSED(args);
     return MPXP_Unknown;
 }
 

@@ -405,7 +405,7 @@ static int real_demux(demuxer_t *demuxer,demux_stream_t *__ds)
     int flags;
     int version;
     int reserved;
-    demux_packet_t *dp;
+    Demux_Packet *dp;
 
   while(1){
 
@@ -504,9 +504,9 @@ got_audio:
 		    sub_packet_lengths[i] = stream_read_word(demuxer->stream);
 		for (i = 0; i < sub_packets; i++) {
 		    int l;
-		    demux_packet_t *dp = new_demux_packet(sub_packet_lengths[i]);
+		    Demux_Packet *dp = new(zeromem) Demux_Packet(sub_packet_lengths[i]);
 		    l=stream_read(demuxer->stream, dp->buffer, sub_packet_lengths[i]);
-		    resize_demux_packet(dp,l);
+		    dp->resize(l);
 		    dp->pts = pts;
 		    priv->a_pts = pts;
 		    dp->pos = demuxer->filepos;
@@ -516,9 +516,9 @@ got_audio:
 		delete sub_packet_lengths;
 		return 1;
 	    }
-	    dp = new_demux_packet(len);
+	    dp = new(zeromem) Demux_Packet(len);
 	    len=stream_read(demuxer->stream, dp->buffer, len);
-	    resize_demux_packet(dp,len);
+	    dp->resize(len);
 	    if (priv->audio_need_keyframe == 1) {
 		dp->pts = 0;
 		priv->audio_need_keyframe = 0;
@@ -556,7 +556,7 @@ got_video:
 	    // we need a more complicated, 2nd level demuxing, as the video
 	    // frames are stored fragmented in the video chunks :(
 	    sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(ds->sh);
-	    demux_packet_t *dp;
+	    Demux_Packet *dp;
 	    int vpkg_header, vpkg_length, vpkg_offset;
 	    int vpkg_seqnum=-1;
 	    int vpkg_subseq=0;
@@ -697,7 +697,7 @@ got_video:
 		    }
 		}
 		// create new packet!
-		dp = new_demux_packet(sizeof(dp_hdr_t)+vpkg_length+8*(1+2*(vpkg_header&0x3F)));
+		dp = new(zeromem) Demux_Packet(sizeof(dp_hdr_t)+vpkg_length+8*(1+2*(vpkg_header&0x3F)));
 		// the timestamp seems to be in milliseconds
 		dp->pts = 0; // timestamp/1000.0f; //timestamp=0;
 		dp->pos = demuxer->filepos;

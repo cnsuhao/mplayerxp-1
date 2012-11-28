@@ -260,9 +260,46 @@ void free_demuxer(demuxer_t *demuxer){
     }
 }
 
+Demux_Packet::Demux_Packet(unsigned _len)
+	    :pts(0),
+	    pos(0),
+	    flags(0),
+	    next(NULL)
+{
+  len=_len;
+  buffer=new unsigned char [len];
+}
 
-void ds_add_packet(demux_stream_t *ds,demux_packet_t* dp){
-//    demux_packet_t* dp=new_demux_packet(len);
+Demux_Packet::~Demux_Packet(){
+    if(buffer) delete buffer;
+}
+
+void Demux_Packet::resize(unsigned newlen)
+{
+    if(len!=newlen) {
+	if(newlen) {
+	    buffer=(unsigned char *)mp_realloc(buffer,newlen+8);
+	    memset(buffer+newlen,0,8);
+	} else {
+	    if(buffer) delete buffer;
+	    buffer=NULL;
+	}
+	len=newlen;
+    }
+}
+
+Demux_Packet* Demux_Packet::clone() const {
+  Demux_Packet* dp=new Demux_Packet(len);
+  dp->pts=pts;
+  dp->pos=pos;
+  dp->flags=flags;
+  dp->next=next;
+  memcpy(dp->buffer,buffer,len);
+  return dp;
+}
+
+void ds_add_packet(demux_stream_t *ds,Demux_Packet* dp){
+//    Demux_Packet* dp=new_demux_packet(len);
 //    stream_read(stream,dp->buffer,len);
 //    dp->pts=pts; //(float)pts/90000.0f;
 //    dp->pos=pos;
@@ -289,9 +326,9 @@ void ds_add_packet(demux_stream_t *ds,demux_packet_t* dp){
 }
 
 void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,int flags){
-    demux_packet_t* dp=new_demux_packet(len);
+    Demux_Packet* dp=new(zeromem) Demux_Packet(len);
     len=stream_read(stream,dp->buffer,len);
-    resize_demux_packet(dp,len);
+    dp->resize(len);
     dp->pts=pts; //(float)pts/90000.0f;
     dp->pos=pos;
     dp->flags=flags;
@@ -327,7 +364,7 @@ int ds_fill_buffer(demux_stream_t *ds){
   check_pin("demuxer",ds->pin,DS_PIN);
   while(1){
     if(ds->packs){
-      demux_packet_t *p=ds->first;
+      Demux_Packet *p=ds->first;
       // copy useful data:
       ds->buffer=p->buffer;
       ds->buffer_pos=0;
@@ -394,10 +431,10 @@ return bytes;
 }
 
 void ds_free_packs(demux_stream_t *ds){
-  demux_packet_t *dp=ds->first;
+  Demux_Packet *dp=ds->first;
   while(dp){
-    demux_packet_t *dn=dp->next;
-    free_demux_packet(dp);
+    Demux_Packet *dn=dp->next;
+    delete dp;
     dp=dn;
   }
   if(ds->asf_packet){
@@ -417,15 +454,15 @@ void ds_free_packs(demux_stream_t *ds){
 }
 
 void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
-  demux_packet_t *dp=ds->first;
+  Demux_Packet *dp=ds->first;
   unsigned packs,bytes;
   packs=bytes=0;
   while(dp){
-    demux_packet_t *dn=dp->next;
+    Demux_Packet *dn=dp->next;
     if(dp->pts >= pts) break;
     packs++;
     bytes+=dp->len;
-    free_demux_packet(dp);
+    delete dp;
     dp=dn;
   }
   if(!dp)
@@ -453,17 +490,6 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
   ds->buffer=NULL;
   ds->buffer_pos=ds->buffer_size;
   ds->pts_bytes=0;
-}
-
-demux_packet_t* clone_demux_packet(demux_packet_t* pack){
-  demux_packet_t* dp=(demux_packet_t*)mp_malloc(sizeof(demux_packet_t));
-//  while(pack->master) pack=pack->master; // find the master
-  memcpy(dp,pack,sizeof(demux_packet_t));
-//  dp->next=NULL;
-//  dp->refcount=0;
-//  dp->master=pack;
-//  pack->refcount++;
-  return dp;
 }
 
 int ds_get_packet(demux_stream_t *ds,unsigned char **start){
@@ -727,10 +753,11 @@ void demux_info_free(demuxer_t* demuxer)
     unsigned i;
     if(demuxer->info)
     {
+	demuxer_info_t*dinfo = reinterpret_cast<demuxer_info_t*>(demuxer->info);
 	for(i=0;i<INFOT_MAX;i++)
-	    if(((demuxer_info_t *)demuxer->info)->id[i])
-		delete ((demuxer_info_t *)demuxer->info)->id[i];
-	delete demuxer->info;
+	    if(dinfo->id[i])
+		delete dinfo->id[i];
+	delete dinfo;
     }
 }
 
@@ -794,36 +821,3 @@ int demuxer_switch_subtitle(const demuxer_t *demuxer, int id)
     return id;
 }
 
-demux_packet_t* new_demux_packet(int len){
-  demux_packet_t* dp=(demux_packet_t*)mp_malloc(sizeof(demux_packet_t));
-  dp->len=len;
-  dp->buffer=(unsigned char *)mp_malloc(len);
-  dp->next=NULL;
-  dp->pts=0;
-  dp->pos=0;
-  dp->flags=0;
-  return dp;
-}
-
-void free_demux_packet(demux_packet_t* dp){
-  delete dp->buffer;
-  delete dp;
-}
-
-void resize_demux_packet(demux_packet_t* dp, int len)
-{
-  if(dp->len!=len)
-  {
-    if(len)
-    {
-	dp->buffer=(unsigned char *)mp_realloc(dp->buffer,len+8);
-	memset(dp->buffer+len,0,8);
-    }
-    else
-    {
-	if(dp->buffer) delete dp->buffer;
-	dp->buffer=NULL;
-    }
-    dp->len=len;
-  }
-}

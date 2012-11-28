@@ -79,17 +79,16 @@ static int rawaudio_demux(demuxer_t* demuxer, demux_stream_t *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
   off_t spos = stream_tell(demuxer->stream);
-  demux_packet_t*  dp;
 
   if(stream_eof(demuxer->stream)) return 0;
 
-  dp = new_demux_packet(l);
+  Demux_Packet* dp = new(zeromem) Demux_Packet(l);
   dp->pts = spos / (float)(sh_audio->wf->nAvgBytesPerSec);
   dp->pos = spos;
   dp->flags=DP_NONKEYFRAME;
 
   l=stream_read(demuxer->stream,dp->buffer,l);
-  resize_demux_packet(dp,l);
+  dp->resize(l);
   ds_add_packet(ds,dp);
 
   return 1;

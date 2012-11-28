@@ -394,7 +394,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
 	ds->asf_packet=NULL;
       } else {
 	// append data to it!
-	demux_packet_t* dp=ds->asf_packet;
+	Demux_Packet* dp=ds->asf_packet;
 	dp->buffer=(unsigned char *)mp_realloc(dp->buffer,dp->len+len);
 	//memcpy(dp->buffer+dp->len,data,len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
@@ -406,11 +406,10 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       }
     }
     // create new packet:
-    { demux_packet_t* dp;
-      dp=new_demux_packet(len);
+      Demux_Packet* dp=new(zeromem) Demux_Packet(len);
       //memcpy(dp->buffer,data,len);
       len=stream_read(demux->stream,dp->buffer,len);
-      resize_demux_packet(dp,len);
+      dp->resize(len);
       dp->pts=audio_rate?((float)audio_pos/(float)audio_rate):0;
       dp->flags=DP_NONKEYFRAME;
       dp->pos=demux->filepos;
@@ -418,8 +417,6 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       ds->asf_seq=seq;
       // we are ready now.
       return 1;
-    }
-
 }
 
 static const short h263_format[8][2] = {
