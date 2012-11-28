@@ -291,7 +291,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 	break; }
     }
 
-    if(!vo_conf.opt_screen_size_x && !vo_conf.opt_screen_size_y && !(vo_conf.screen_size_xy >= 0.001)){
+    if(!vo_conf.image_width && !vo_conf.image_height && !(vo_conf.image_zoom >= 0.001)){
 	// Compute new d_width and d_height, preserving aspect
 	// while ensuring that both are >= output size in pixels.
 	if (vf->priv->h * d_width > vf->priv->w * d_height) {

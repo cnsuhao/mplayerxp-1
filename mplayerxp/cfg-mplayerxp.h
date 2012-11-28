@@ -140,7 +140,6 @@ static const config_t avsync_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-
 static const config_t subtitle_config[]={
 	{"on", &mp_conf.has_dvdsub, CONF_TYPE_FLAG, 0, 0, 1, "enables subtitle-steam playback"},
 	{"off", &mp_conf.has_dvdsub, CONF_TYPE_FLAG, 0, 1, 0, "disables subtitle-stream playback"},
@@ -171,7 +170,7 @@ static const config_t subtitle_config[]={
 static const config_t x11_config[]={
 	{"display", &vo_conf.mDisplayName, CONF_TYPE_STRING, 0, 0, 0, "specifies the hostname and display number of the X server"},
 #ifdef HAVE_XINERAMA
-	{"xinerama", &mp_conf.xinerama_screen, CONF_TYPE_INT, CONF_RANGE, 0, 32, "tells MPlayerXP the display for movie playback"},
+	{"xinerama", &vo_conf.xinerama_screen, CONF_TYPE_INT, CONF_RANGE, 0, 32, "tells MPlayerXP the display for movie playback"},
 #endif
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
@@ -191,11 +190,9 @@ static const config_t audio_config[]={
 static const config_t video_config[]={
 	{"on", &mp_conf.has_video, CONF_TYPE_FLAG, 0, 0, 1, "enables video-steam playback"},
 	{"off", &mp_conf.has_video, CONF_TYPE_FLAG, 0, 1, 0, "disables video-stream playback"},
-	{"width", &vo_conf.opt_screen_size_x, CONF_TYPE_INT, CONF_RANGE, 0, 4096, "scale output image to width (if driver supports)"},
-	{"height", &vo_conf.opt_screen_size_y, CONF_TYPE_INT, CONF_RANGE, 0, 4096, "scale output image to height (if driver supports)"},
-	{"zoom", &vo_conf.screen_size_xy, CONF_TYPE_FLOAT, CONF_RANGE, 0, 4096, "scale output image by given factor"},
-	{"screenw", &vo_conf.screenwidth, CONF_TYPE_INT, CONF_RANGE, 0, 4096, "specifies the horizontal resolution of the screen (if supported)"},
-	{"screenh", &vo_conf.screenheight, CONF_TYPE_INT, CONF_RANGE, 0, 4096, "specifies the vertical resolution of the screen (if supported)"},
+	{"width", &vo_conf.image_width, CONF_TYPE_INT, CONF_RANGE, 0, 4096, "scale output image to width (if driver supports)"},
+	{"height", &vo_conf.image_height, CONF_TYPE_INT, CONF_RANGE, 0, 4096, "scale output image to height (if driver supports)"},
+	{"zoom", &vo_conf.image_zoom, CONF_TYPE_FLOAT, CONF_RANGE, 0, 4096, "scale output image by given factor"},
 	{"aspect", &vo_conf.movie_aspect, CONF_TYPE_FLOAT, CONF_RANGE, 0.2, 3.0, "sets aspect-ratio of movies (autodetect)"},
 	{"noaspect", &vo_conf.movie_aspect, CONF_TYPE_FLAG, 0, 0, 0, "unsets aspect-ratio of movies"},
 	{"aspect-ratio", &vo_conf.softzoom, CONF_TYPE_FLAG, 0, 0, 1, "keeps aspect-ratio of the movie during window resize"},

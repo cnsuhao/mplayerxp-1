@@ -93,7 +93,6 @@ namespace mpxp {;
 	const char*	npp_options;
 	unsigned	ao_channels;
 	int		z_compression;
-	int		xinerama_screen;
 	float		monitor_pixel_aspect;
     };
     extern MP_Config mp_conf;

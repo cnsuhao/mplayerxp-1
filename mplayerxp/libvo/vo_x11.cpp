@@ -171,7 +171,7 @@ void X11_VO_Interface::resize_vidix() const {
     vidix->stop();
     if (vidix->configure(image_width, image_height, winc.x, winc.y,
 	    winc.w, winc.h, in_format, x11.depth(),
-	    vo_conf.screenwidth, vo_conf.screenheight) != MPXP_Ok)
+	    x11.screen_width(), x11.screen_height()) != MPXP_Ok)
     {
 	MSG_FATAL( "Can't initialize VIDIX: %s\n",strerror(errno));
 	delete vidix;
@@ -230,7 +230,7 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 
     baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
 
-    aspect.save(width,height,d_width,d_height,vo_conf.screenwidth,vo_conf.screenheight);
+    aspect.save(width,height,d_width,d_height,x11.screen_width(),x11.screen_height());
     aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
     x11.calcpos(&hint,d_width,d_height,flags);
@@ -302,7 +302,7 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 	if(vidix->configure(image_width,image_height,winc.x,winc.y,
 			winc.w,winc.h,
 			in_format,x11.depth(),
-			vo_conf.screenwidth,vo_conf.screenheight) != MPXP_Ok) {
+			x11.screen_width(),x11.screen_height()) != MPXP_Ok) {
 	    MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
 	    return MPXP_False;
 	} else MSG_V("vo_vesa: Using VIDIX\n");

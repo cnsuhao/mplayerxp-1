@@ -507,9 +507,9 @@ csp_again:
     // time to do aspect ratio corrections...
 
     if(vo_conf.movie_aspect>-1.0) sh->aspect = vo_conf.movie_aspect; // cmdline overrides autodetect
-    if(vo_conf.opt_screen_size_x||vo_conf.opt_screen_size_y){
-	screen_size_x = vo_conf.opt_screen_size_x;
-	screen_size_y = vo_conf.opt_screen_size_y;
+    if(vo_conf.image_width||vo_conf.image_height){
+	screen_size_x = vo_conf.image_width;
+	screen_size_y = vo_conf.image_height;
 	if(!vo_conf.vidmode){
 	    if(!screen_size_x) screen_size_x=1;
 	    if(!screen_size_y) screen_size_y=1;
@@ -520,15 +520,15 @@ csp_again:
 	// check source format aspect, calculate prescale ::atmos
 	screen_size_x=sh->src_w;
 	screen_size_y=sh->src_h;
-	if(vo_conf.screen_size_xy>=0.001){
-	    if(vo_conf.screen_size_xy<=8){
+	if(vo_conf.image_zoom>=0.001){
+	    if(vo_conf.image_zoom<=8){
 	    // -xy means x+y scale
-		screen_size_x*=vo_conf.screen_size_xy;
-		screen_size_y*=vo_conf.screen_size_xy;
+		screen_size_x*=vo_conf.image_zoom;
+		screen_size_y*=vo_conf.image_zoom;
 	    } else {
 	    // -xy means forced width while keeping correct aspect
-		screen_size_x=vo_conf.screen_size_xy;
-		screen_size_y=vo_conf.screen_size_xy*sh->src_h/sh->src_w;
+		screen_size_x=vo_conf.image_zoom;
+		screen_size_y=vo_conf.image_zoom*sh->src_h/sh->src_w;
 	    }
 	}
 	if(sh->aspect>0.01){
@@ -536,7 +536,7 @@ csp_again:
 	    MSG_V("Movie-Aspect is %.2f:1 - prescaling to correct movie aspect.\n",sh->aspect);
 	    _w=(int)((float)screen_size_y*sh->aspect); _w+=_w%2; // round
 	    // we don't like horizontal downscale || user forced width:
-	    if(_w<screen_size_x || vo_conf.screen_size_xy>8){
+	    if(_w<screen_size_x || vo_conf.image_zoom>8){
 		screen_size_y=(int)((float)screen_size_x*(1.0/sh->aspect));
 		screen_size_y+=screen_size_y%2; // round
 		if(screen_size_y<sh->src_h) // Do not downscale verticaly

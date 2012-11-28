@@ -55,6 +55,7 @@ VO_Config::VO_Config() {
     flip=-1;
     xp_buffs=64;
     dbpp=0;
+    xinerama_screen=0;
 }
 VO_Config vo_conf;
 

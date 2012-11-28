@@ -151,7 +151,7 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 
     flags=_flags;
 
-    aspect.save(width,height,d_width,d_height,vo_conf.screenwidth,vo_conf.screenheight);
+    aspect.save(width,height,d_width,d_height,xv.screen_width(),xv.screen_height());
     aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
     image_height = height;

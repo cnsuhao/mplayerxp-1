@@ -44,7 +44,10 @@ static int x11_errorhandler(::Display *display,::XErrorEvent *event)
     return 0;
 }
 
-X11_System::X11_System(const char* DisplayName) {
+X11_System::X11_System(const char* DisplayName)
+	    :screenwidth(0),
+	     screenheight(0)
+{
     unsigned bpp;
     unsigned int mask;
 // char    * DisplayName = ":0.0";
@@ -79,13 +82,11 @@ X11_System::X11_System(const char* DisplayName) {
 	int num_screens;
 
 	screens = ::XineramaQueryScreens(mDisplay, &num_screens);
-	if(mp_conf.xinerama_screen >= num_screens) mp_conf.xinerama_screen = 0;
-	if (! vo_conf.screenwidth)
-	    vo_conf.screenwidth=screens[mp_conf.xinerama_screen].width;
-	if (! vo_conf.screenheight)
-	    vo_conf.screenheight=screens[mp_conf.xinerama_screen].height;
-	xinerama_x = screens[mp_conf.xinerama_screen].x_org;
-	xinerama_y = screens[mp_conf.xinerama_screen].y_org;
+	if(vo_conf.xinerama_screen >= num_screens) vo_conf.xinerama_screen = 0;
+	screenwidth=screens[vo_conf.xinerama_screen].width;
+	screenheight=screens[vo_conf.xinerama_screen].height;
+	xinerama_x = screens[vo_conf.xinerama_screen].x_org;
+	xinerama_y = screens[vo_conf.xinerama_screen].y_org;
 
 	::XFree(screens);
     } else
@@ -94,15 +95,13 @@ X11_System::X11_System(const char* DisplayName) {
     {
 	int clock;
 	::XF86VidModeGetModeLine( mDisplay,mScreen,&clock ,&modeline );
-	if ( !vo_conf.screenwidth )  vo_conf.screenwidth=modeline.hdisplay;
-	if ( !vo_conf.screenheight ) vo_conf.screenheight=modeline.vdisplay;
+	if(!screenwidth) screenwidth=modeline.hdisplay;
+	if(!screenheight) screenheight=modeline.vdisplay;
     }
 #endif
 
-    if (! vo_conf.screenwidth)
-	vo_conf.screenwidth=DisplayWidth( mDisplay,mScreen );
-    if (! vo_conf.screenheight)
-	vo_conf.screenheight=DisplayHeight( mDisplay,mScreen );
+    if(!screenwidth) screenwidth=DisplayWidth( mDisplay,mScreen );
+    if(!screenheight) screenheight=DisplayHeight( mDisplay,mScreen );
 
     // get color depth (from root window, or the best visual):
     ::XGetWindowAttributes(mDisplay, mRootWin, &attribs);
@@ -148,7 +147,7 @@ X11_System::X11_System(const char* DisplayName) {
     if (*dispName==':')	mLocalDisplay=1;
     else		mLocalDisplay=0;
     MSG_OK("X11_System: running  %dx%d with depth %d bits/pixel (\"%s\" => %s display)\n",
-	vo_conf.screenwidth,vo_conf.screenheight,
+	screenwidth,screenheight,
 	_depth,
 	dispName,mLocalDisplay?"local":"remote");
 }
@@ -160,10 +159,14 @@ X11_System::~X11_System() {
     ::XCloseDisplay(mDisplay);
 }
 
+unsigned X11_System::screen_width() const { return screenwidth; }
+unsigned X11_System::screen_height() const { return screenheight; }
+
 void X11_System::get_win_coord(vo_rect_t& r) const
 {
     r = curr;
 }
+
 
 void X11_System::update_win_coord()
 {
@@ -751,24 +754,24 @@ void X11_System::calcpos(XSizeHints* hint, unsigned d_width, unsigned d_height, 
     static uint32_t vm_width;
     static uint32_t vm_height;
 #endif
-    hint->x=(vo_conf.screenwidth-d_width)/2;
-    hint->y=(vo_conf.screenheight-d_height)/2;
+    hint->x=(screenwidth-d_width)/2;
+    hint->y=(screenheight-d_height)/2;
     hint->width=d_width;
     hint->height=d_height;
 #ifdef HAVE_XF86VM
     if ( flags & VOFLAG_MODESWITCHING ) {
 	vm_width=d_width; vm_height=d_height;
 	vm_switch(vm_width, vm_height,&modeline_width, &modeline_height);
-	hint->x=(vo_conf.screenwidth-modeline_width)/2;
-	hint->y=(vo_conf.screenheight-modeline_height)/2;
+	hint->x=(screenwidth-modeline_width)/2;
+	hint->y=(screenheight-modeline_height)/2;
 	hint->width=modeline_width;
 	hint->height=modeline_height;
     }
     else
 #endif
     if ( flags & VOFLAG_FULLSCREEN ) {
-      hint->width=vo_conf.screenwidth;
-      hint->height=vo_conf.screenheight;
+      hint->width=screenwidth;
+      hint->height=screenheight;
       hint->x=0;
       hint->y=0;
     }
@@ -780,7 +783,7 @@ int X11_System::fullscreen(unsigned& flags)
     ::XUnmapWindow( mDisplay,window );
     if ( !is_fs ) {
 	prev=curr;
-	curr.x=0; curr.y=0; curr.w=vo_conf.screenwidth; curr.h=vo_conf.screenheight;
+	curr.x=0; curr.y=0; curr.w=screenwidth; curr.h=screenheight;
 	decoration(0);
     } else {
 	curr=prev;
@@ -893,8 +896,8 @@ void X11_System::vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int* mod
 	MSG_V("XF86VM: Selected video mode %dx%d for image size %dx%d.\n",*modeline_width, *modeline_height, X, Y);
 	::XF86VidModeLockModeSwitch(mDisplay,mScreen,0);
 	::XF86VidModeSwitchToMode(mDisplay,mScreen,vidmodes[j]);
-	X=(vo_conf.screenwidth-*modeline_width)/2;
-	Y=(vo_conf.screenheight-*modeline_height)/2;
+	X=(screenwidth-*modeline_width)/2;
+	Y=(screenheight-*modeline_height)/2;
 	::XF86VidModeSetViewPort(mDisplay,mScreen,X,Y);
     }
 }
@@ -908,8 +911,8 @@ void X11_System::vm_close()
 	vidmodes=NULL;
 	::XF86VidModeGetAllModeLines(mDisplay,mScreen,&modecount,&vidmodes);
 	for (i=0; i<modecount; i++)
-	    if ((vidmodes[i]->hdisplay == vo_conf.screenwidth) && (vidmodes[i]->vdisplay == vo_conf.screenheight)) {
-		MSG_V("\nReturning to original mode %dx%d\n", vo_conf.screenwidth, vo_conf.screenheight);
+	    if ((vidmodes[i]->hdisplay == screenwidth) && (vidmodes[i]->vdisplay == screenheight)) {
+		MSG_V("\nReturning to original mode %dx%d\n", screenwidth, screenheight);
 		break;
 	    }
 	::XF86VidModeSwitchToMode(mDisplay,mScreen,vidmodes[i]);

@@ -112,6 +112,7 @@ struct VO_Config {
 
     char *		subdevice; // currently unused
     char*		mDisplayName;
+    int			xinerama_screen;
 
     int			vsync;
 
@@ -120,13 +121,10 @@ struct VO_Config {
 
     vo_gamma_t		gamma;
 
-    unsigned		screenwidth;
-    unsigned		screenheight;
+    int			image_width; //opt_screen_size_x
+    int			image_height; //opt_screen_size_y
+    float		image_zoom; //screen_size_xy
 
-    int			opt_screen_size_x;
-    int			opt_screen_size_y;
-
-    float		screen_size_xy;
     float		movie_aspect;
     int			fsmode;
     int			vidmode;

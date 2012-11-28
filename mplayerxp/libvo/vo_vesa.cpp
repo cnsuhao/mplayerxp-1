@@ -540,10 +540,8 @@ MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
 	dstW = d_width;
 	dstH = d_height;
     }
-    if(vo_conf.screenwidth) w = vo_conf.screenwidth;
-    else w = std::max(dstW,width);
-    if(vo_conf.screenheight) h = vo_conf.screenheight;
-    else h = std::max(dstH,height);
+    w = std::max(dstW,width);
+    h = std::max(dstH,height);
     for(i=0;i < num_modes;i++) {
 	if((err=vbeGetModeInfo(mode_ptr[i],&vmib)) != VBE_OK) {
 	    PRINT_VBE_ERR("vbeGetModeInfo",err);

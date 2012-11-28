@@ -35,6 +35,8 @@ class X11_System {
 	X11_System(const char* DisplayName);
 	virtual ~X11_System();
 
+	unsigned	screen_width() const;
+	unsigned	screen_height() const;
 	void		match_visual(XVisualInfo*) const;
 	virtual XVisualInfo* get_visual() const;
 	virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,int is_vm,unsigned depth,const char*title);
@@ -90,6 +92,7 @@ class X11_System {
 	::GC		gc;
 
 	unsigned	_depth;
+	unsigned	screenwidth,screenheight;
 
 	int		dpms_disabled;
 	int		timeout_save;
