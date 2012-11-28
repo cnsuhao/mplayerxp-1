@@ -166,27 +166,33 @@ static bt_cache_entry_t* bt_append_cache(bt_cache_t* cache,any_t* ptr,const char
     return &cache->entry[cache->num_entries-1];
 }
 
-static char * addr2line(bt_cache_t* cache,any_t*ptr) {
+static char* exec_addr2line(any_t*ptr, char* result,unsigned len) {
+    unsigned i;
+    char ch,cmd[4096];
+    sprintf(cmd,"addr2line -s -e %s %p\n",priv->argv0,ptr);
+    FILE* in=popen(cmd,"r");
+    if(!in) return NULL;
+    i=0;
+    while(1) {
+	ch=fgetc(in);
+	if(feof(in)) break;
+	if(ch=='\n') break;
+	result[i++]=ch;
+	if(i>=len-1) break;
+    }
+    result[i]='\0';
+    pclose(in);
+    return result;
+}
+
+static char* addr2line(bt_cache_t* cache,any_t*ptr) {
     char *rs;
     if(priv->argv0) {
 	bt_cache_entry_t* centry;
-	unsigned i;
-	char cmd[4096],result[4096];
-	char ch;
+	char result[4096];
 	if((rs=bt_find_cache(cache,ptr))!=NULL) return rs;
-	sprintf(cmd,"addr2line -s -e %s %p\n",priv->argv0,ptr);
-	FILE* in=popen(cmd,"r");
-	if(!in) return NULL;
-	i=0;
-	while(1) {
-	    ch=fgetc(in);
-	    if(feof(in)) break;
-	    if(ch=='\n') break;
-	    result[i++]=ch;
-	    if(i>=sizeof(result)-1) break;
-	}
-	result[i]='\0';
-	pclose(in);
+	rs=exec_addr2line(ptr,result,sizeof(result));
+	if(!rs) return NULL;
 	centry=bt_append_cache(cache,ptr,result);
 	return centry->str;
     }
@@ -206,13 +212,12 @@ static __always_inline void __print_backtrace(unsigned num) {
 }
 
 void print_backtrace(const char *why,any_t** stack,unsigned num) {
-    bt_cache_t* cache=init_bt_cache();
+    char result[4096];
     unsigned	i;
     MSG_INFO(why?why:"*** Backtrace for suspect call ***\n");
     for(i=0;i<num;i++) {
-	MSG_INFO("    %p -> %s\n",stack[i],addr2line(cache,stack[i]));
+	MSG_INFO("    %p -> %s\n",stack[i],exec_addr2line(stack[i],result,sizeof(result)));
     }
-    uninit_bt_cache(cache);
 }
 
 static void __prot_free_append(any_t*ptr) {
