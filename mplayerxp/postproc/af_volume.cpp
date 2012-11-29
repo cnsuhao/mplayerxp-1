@@ -186,7 +186,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
 			else if(x <= -M_PI/2) x = -1.0;
 			else x = sin(x);
 		    } else {// Hard clipping
-			x=clamp(x,-1.0,1.0);
+			x=clamp(x,-1.0f,1.0f);
 		    }
 		    _out[i] = x;
 		}

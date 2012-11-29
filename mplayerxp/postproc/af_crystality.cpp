@@ -71,7 +71,7 @@ and high-freqs and try to restore FR as:
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 
-#define SAMPLE_MAX 1.
+#define SAMPLE_MAX 1.0f
 
 //#define SAMPLE_MAX 1.0 /* for float32 */
 
@@ -388,11 +388,11 @@ static inline void __FASTCALL__ interpolate(struct Interpolation *s, float l, fl
 inline float __FASTCALL__ calc_scalefactor(float a, float e){
     float x;
 
-    a=clamp(a,0,SAMPLE_MAX/4);
-    e=clamp(e,0,SAMPLE_MAX/4);
+    a=clamp(a,0.f,SAMPLE_MAX/4);
+    e=clamp(e,0.f,SAMPLE_MAX/4);
 //    return (e + a) /2;
     x = ((e+500/SAMPLE_MAX) * 4096 )/ (a + 300/SAMPLE_MAX) + e;
-    return clamp(x,0,SAMPLE_MAX/2);
+    return clamp(x,0.f,SAMPLE_MAX/2);
 }
 
 static struct Interpolation bandext_energy;

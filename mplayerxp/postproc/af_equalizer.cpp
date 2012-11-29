@@ -50,8 +50,8 @@ using namespace mpxp;
 #define CF  	{31.25,62.5,125,250,500,1000,2000,4000,8000,16000}
 
 // Maximum and minimum gain for the bands
-#define G_MAX	+12.0
-#define G_MIN	-12.0
+#define G_MAX	+12.0f
+#define G_MIN	-12.0f
 
 // Data for specific instances of this filter
 typedef struct af_equalizer_s

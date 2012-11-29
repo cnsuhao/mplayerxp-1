@@ -194,7 +194,6 @@ MPXP_Rc Video_Output::init(const char *driver_name) const
 	priv.vo_iface=priv.video_out->query_interface(subdev);
     }
     if(drv_name) delete drv_name;
-    if(subdev) delete subdev;
     return priv.vo_iface?MPXP_Ok:MPXP_False;
 }
 

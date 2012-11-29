@@ -40,8 +40,8 @@ using namespace mpxp;
 // mul is the value by which the samples are scaled
 // and has to be in [MUL_MIN, MUL_MAX]
 #define MUL_INIT 1.0
-#define MUL_MIN 0.1
-#define MUL_MAX 5.0
+#define MUL_MIN 0.1f
+#define MUL_MAX 5.0f
 // "Ideal" level
 #define MID_S16 (SHRT_MAX * 0.25)
 #define MID_FLOAT (INT_MAX * 0.25)

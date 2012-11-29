@@ -1,8 +1,6 @@
 #ifndef X11_COMMON_H
 #define X11_COMMON_H
 
-#ifdef HAVE_X11
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #ifdef HAVE_SHM
@@ -163,7 +161,7 @@ namespace mpxp {
 	    GLXContext		ctx;
 	    XVisualInfo*	vis;
 };
-#endif
+#endif // HAVE_OPENGL
+
 } //namespace mpxp
-#endif
 #endif

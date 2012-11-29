@@ -142,8 +142,8 @@ static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *s,const mp_aframe_t* in
 	s->left0p = left[0];
 	s->right0p = right[0];
 	// ************ store sample **********
-	outptr[0] = clamp(_left,INT_MIN,INT_MAX);
-	outptr[1] = clamp(_right,INT_MIN,INT_MAX);
+	outptr[0] = clamp(_left,float(INT_MIN),float(INT_MAX));
+	outptr[1] = clamp(_right,float(INT_MIN),float(INT_MAX));
 	inptr += 2;
 	outptr += 2;
     }

@@ -185,30 +185,18 @@ MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch);
 /* print out configuration of filter's chain */
 extern void af_showconf(af_instance_t *first);
 
-#ifndef __cplusplus
-/* Some other useful macro definitions*/
-#ifndef min
-#define min(a,b)(((a)>(b))?(b):(a))
-#endif
+template <class T> const T& clamp ( const T& a, const T& min, const T& max ) {
+  return (a>max)?max:((a<min)?min:a);
+}
 
-#ifndef max
-#define max(a,b)(((a)>(b))?(a):(b))
-#endif
+template <class T> int sign ( const T& a ) {
+  return (a>0)?1:-1;
+}
 
-#endif
+template <class T> const T& lrnd ( const T& a, const T& b ) {
+  return a>=0.0?a+0.5:a-0.5;
+}
 
-#ifndef clamp
-#define clamp(a,min,max) (((a)>(max))?(max):(((a)<(min))?(min):(a)))
-#endif
-
-#ifndef sign
-#define sign(a) (((a)>0)?(1):(-1))
-#endif
-
-#ifndef lrnd
-#define lrnd(a,b) ((b)((a)>=0.0?(a)+0.5:(a)-0.5))
-#endif
-
-#endif /* __aop_h__ */
+#endif /* __AF_H__ */
 
 

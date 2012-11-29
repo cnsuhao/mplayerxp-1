@@ -53,7 +53,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
     s->ri = 0;
     for(i=0;i<AF_NCH;i++){
       MSG_DBG2("[delay] Channel %i delayed by %0.3fms\n",
-	     i,clamp(s->d[i],0.0,1000.0));
+	     i,clamp(s->d[i],0.0f,1000.0f));
       MSG_DBG2("[delay] Channel %i delayed by %i samples\n",
 	     i,s->wi[i]);
     }

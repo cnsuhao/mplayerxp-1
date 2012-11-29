@@ -51,7 +51,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
     j = 0; k = 0;
     while((*cp == ':') && (k < AF_NCH)){
       sscanf(cp, ":%f%n" , &s->level[k][j], &n);
-      s->level[k][j] = clamp(s->level[k][j],0.0,1.0);
+      s->level[k][j] = clamp(s->level[k][j],0.0f,1.0f);
       MSG_V("[pan] Pan level from channel %i to"
 	     " channel %i = %f\n",j,k,s->level[k][j]);
       cp =&cp[n];
@@ -69,7 +69,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
     int ch = ce->ch;
     float* level = reinterpret_cast<float*>(ce->arg);
     for(i=0;i<AF_NCH;i++)
-      s->level[ch][i] = clamp(level[i],0.0,1.0);
+      s->level[ch][i] = clamp(level[i],0.0f,1.0f);
     return MPXP_Ok;
   }
   case AF_CONTROL_PAN_LEVEL | AF_CONTROL_GET:{
