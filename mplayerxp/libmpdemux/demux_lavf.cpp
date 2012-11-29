@@ -454,7 +454,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
     }
 
     dp=new(zeromem) Demuxer_Packet(pkt.size);
-    memcpy(dp->buffer, pkt.data, pkt.size);
+    memcpy(dp->buffer(), pkt.data, pkt.size);
     av_free_packet(&pkt);
 
     if(pkt.pts != AV_NOPTS_VALUE){

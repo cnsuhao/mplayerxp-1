@@ -46,7 +46,7 @@ struct mpxpav64_priv_t : public Opaque {
 	uint64_t prev_size[MAX_AV_STREAMS];
 	uint32_t prev_id;
 	// index stuff:
-	any_t* idx[MAX_AV_STREAMS];
+	uint64_t* idx[MAX_AV_STREAMS];
 	unsigned idx_size[MAX_AV_STREAMS];
 };
 
@@ -157,9 +157,9 @@ static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_of
 	{
 	    is_valid=1;
 	    priv->idx_size[id]=iid>>2; /* 32-bit in file */
-	    priv->idx[id]=mp_malloc(priv->idx_size[id]<<3); /* 64-bit in memory */
+	    priv->idx[id]=new uint64_t [priv->idx_size[id]]; /* 64-bit in memory */
 	    for(i=0;i<priv->idx_size[id];i++)
-		((uint64_t *)priv->idx[id])[i]=stream_read_dword_le(s);
+		priv->idx[id][i]=stream_read_dword_le(s);
 	}
 	else MSG_ERR("Index offset doesn't match to stream %u != %u\n",sid,id);
     }
@@ -172,9 +172,9 @@ static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_of
 	{
 	    is_valid=1;
 	    priv->idx_size[id]=iid>>3;
-	    priv->idx[id]=mp_malloc(priv->idx_size[id]<<3);
+	    priv->idx[id]=new uint64_t [priv->idx_size[id]];
 	    for(i=0;i<priv->idx_size[id];i++)
-		((uint64_t *)priv->idx[id])[i]=stream_read_qword_le(s);
+		priv->idx[id][i]=stream_read_qword_le(s);
 	}
 	else MSG_ERR("Index offset doesn't match to stream %u != %u\n",sid,id);
     }
@@ -559,7 +559,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 	off_t pos=0LL;
 	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
 	if(mp_conf.verbose>1) pos=stream_tell(s);
-	len=stream_read(s,dp->buffer,len);
+	len=stream_read(s,dp->buffer(),len);
 	dp->resize(len);
 	dp->pts=pts;
 	dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
@@ -798,9 +798,9 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	    {
 		for(i=0;i<n;i++)
 		{
-		    if(newpos<=((uint64_t*)priv->idx[demuxer->video->id])[i])
+		    if(newpos<=priv->idx[demuxer->video->id][i])
 		    {
-			newpos=((uint64_t*)priv->idx[demuxer->video->id])[i];
+			newpos=priv->idx[demuxer->video->id][i];
 			break;
 		    }
 		}
@@ -809,9 +809,9 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	    {
 		for(i=n-1;i;i--)
 		{
-		    if(newpos>=((uint64_t*)priv->idx[demuxer->video->id])[i])
+		    if(newpos>=priv->idx[demuxer->video->id][i])
 		    {
-			newpos=((uint64_t*)priv->idx[demuxer->video->id])[i];
+			newpos=priv->idx[demuxer->video->id][i];
 			break;
 		    }
 		}

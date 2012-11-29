@@ -516,7 +516,7 @@ got_audio:
 		for (i = 0; i < sub_packets; i++) {
 		    int l;
 		    Demuxer_Packet *dp = new(zeromem) Demuxer_Packet(sub_packet_lengths[i]);
-		    l=stream_read(demuxer->stream, dp->buffer, sub_packet_lengths[i]);
+		    l=stream_read(demuxer->stream, dp->buffer(), sub_packet_lengths[i]);
 		    dp->resize(l);
 		    dp->pts = pts;
 		    priv->a_pts = pts;
@@ -528,7 +528,7 @@ got_audio:
 		return 1;
 	    }
 	    dp = new(zeromem) Demuxer_Packet(len);
-	    len=stream_read(demuxer->stream, dp->buffer, len);
+	    len=stream_read(demuxer->stream, dp->buffer(), len);
 	    dp->resize(len);
 	    if (priv->audio_need_keyframe == 1) {
 		dp->pts = 0;
@@ -537,7 +537,7 @@ got_audio:
 		dp->pts = pts;
 	    priv->a_pts=pts;
 	    dp->pos = demuxer->filepos;
-	    dp->flags = (flags & 0x2) ? 0x10 : 0;
+	    dp->flags = (flags & 0x2) ? DP_KEYFRAME : DP_NONKEYFRAME;
 	    ds_add_packet(ds, dp);
 	}
 // we will not use audio index if we use -idx and have a video
@@ -640,14 +640,14 @@ got_video:
 
 		if(ds->asf_packet){
 		    dp=ds->asf_packet;
-		    dp_hdr=(dp_hdr_t*)dp->buffer;
-		    dp_data=dp->buffer+sizeof(dp_hdr_t);
-		    extra=(uint32_t*)(dp->buffer+dp_hdr->chunktab);
+		    dp_hdr=(dp_hdr_t*)dp->buffer();
+		    dp_data=dp->buffer()+sizeof(dp_hdr_t);
+		    extra=(uint32_t*)(dp->buffer()+dp_hdr->chunktab);
 		    MSG_DBG2("we have an incomplete packet (oldseq=%d new=%d)\n",ds->asf_seq,vpkg_seqnum);
 		    // we have an incomplete packet:
 		    if(ds->asf_seq!=vpkg_seqnum){
 			// this fragment is for new packet, close the old one
-			MSG_DBG2("closing probably incomplete packet, len: %d  \n",dp->len);
+			MSG_DBG2("closing probably incomplete packet, len: %d  \n",dp->length());
 			if(priv->video_after_seek){
 			    dp->pts=timestamp;
 				priv->kf_base = 0;
@@ -662,22 +662,21 @@ got_video:
 			// append data to it!
 			++dp_hdr->chunks;
 			MSG_DBG2("[chunks=%d  subseq=%d]\n",dp_hdr->chunks,vpkg_subseq);
-			if(dp_hdr->chunktab+8*(1+dp_hdr->chunks)>dp->len){
+			if(dp_hdr->chunktab+8*(1+dp_hdr->chunks)>dp->length()){
 			    // increase buffer size, this should not happen!
 			    MSG_WARN("chunktab buffer too small!!!!!\n");
-			    dp->len=dp_hdr->chunktab+8*(4+dp_hdr->chunks);
-			    dp->resize(dp->len);
+			    dp->resize(dp_hdr->chunktab+8*(4+dp_hdr->chunks));
 			    // re-calc pointers:
-			    dp_hdr=(dp_hdr_t*)dp->buffer;
-			    dp_data=dp->buffer+sizeof(dp_hdr_t);
-			    extra=(uint32_t*)(dp->buffer+dp_hdr->chunktab);
+			    dp_hdr=(dp_hdr_t*)dp->buffer();
+			    dp_data=dp->buffer()+sizeof(dp_hdr_t);
+			    extra=(uint32_t*)(dp->buffer()+dp_hdr->chunktab);
 			}
 			extra[2*dp_hdr->chunks+0]=1;
 			extra[2*dp_hdr->chunks+1]=dp_hdr->len;
 			if(0x80==(vpkg_header&0xc0)){
 			    // last fragment!
 			    if(dp_hdr->len!=vpkg_length-vpkg_offset)
-				MSG_V("warning! assembled.len=%d  frag.len=%d  total.len=%d  \n",dp->len,vpkg_offset,vpkg_length-vpkg_offset);
+				MSG_V("warning! assembled.len=%d  frag.len=%d  total.len=%d  \n",dp->length(),vpkg_offset,vpkg_length-vpkg_offset);
 			    stream_read(demuxer->stream, dp_data+dp_hdr->len, vpkg_offset);
 			    if((dp_data[dp_hdr->len]&0x20) && (sh_video->fourcc==0x30335652)) --dp_hdr->chunks; else
 			    dp_hdr->len+=vpkg_offset;
@@ -699,7 +698,7 @@ got_video:
 			}
 			// non-last fragment:
 			if(dp_hdr->len!=vpkg_offset)
-			    MSG_V("warning! assembled.len=%d  offset=%d  frag.len=%d  total.len=%d  \n",dp->len,vpkg_offset,len,vpkg_length);
+			    MSG_V("warning! assembled.len=%d  offset=%d  frag.len=%d  total.len=%d  \n",dp->length(),vpkg_offset,len,vpkg_length);
 			    stream_read(demuxer->stream, dp_data+dp_hdr->len, len);
 			if((dp_data[dp_hdr->len]&0x20) && (sh_video->fourcc==0x30335652)) --dp_hdr->chunks; else
 			dp_hdr->len+=len;
@@ -714,12 +713,12 @@ got_video:
 		dp->pos = demuxer->filepos;
 		dp->flags = (flags & 0x2) ? DP_KEYFRAME : DP_NONKEYFRAME;
 		ds->asf_seq = vpkg_seqnum;
-		dp_hdr=(dp_hdr_t*)dp->buffer;
+		dp_hdr=(dp_hdr_t*)dp->buffer();
 		dp_hdr->chunks=0;
 		dp_hdr->timestamp=timestamp;
 		dp_hdr->chunktab=sizeof(dp_hdr_t)+vpkg_length;
-		dp_data=dp->buffer+sizeof(dp_hdr_t);
-		extra=(uint32_t*)(dp->buffer+dp_hdr->chunktab);
+		dp_data=dp->buffer()+sizeof(dp_hdr_t);
+		extra=(uint32_t*)(dp->buffer()+dp_hdr->chunktab);
 		extra[0]=1; extra[1]=0; // offset of the first chunk
 		if(0x00==(vpkg_header&0xc0)){
 		    // first fragment:

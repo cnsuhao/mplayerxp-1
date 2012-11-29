@@ -91,9 +91,9 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
   dp = new(zeromem) Demuxer_Packet(3*size/2);
 
   /* swap U and V components */
-  buf[0] = dp->buffer;
-  buf[1] = dp->buffer + 5*size/4;
-  buf[2] = dp->buffer + size;
+  buf[0] = dp->buffer();
+  buf[1] = dp->buffer() + 5*size/4;
+  buf[2] = dp->buffer() + size;
 
   if (priv->is_older)
   {

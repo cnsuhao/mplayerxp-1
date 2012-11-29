@@ -840,7 +840,7 @@ static int choose_chunk_len(unsigned int len1,unsigned int len2){
     return (len1<len2)? len1 : len2;
 }
 
-static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned int id,unsigned int len,int idxpos,int flags){
+static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned int id,unsigned int len,int idxpos,dp_flags_e flags){
   avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
   int skip;
   float pts=0;
@@ -915,7 +915,7 @@ static int avi_demux(demuxer_t *demux,demux_stream_t *__ds){
     demux_stream_t *ds;
 
 do{
-  int flags=DP_KEYFRAME;
+  dp_flags_e flags=DP_KEYFRAME;
   AVIINDEXENTRY *idx=NULL;
   if(priv->idx_size>0 && priv->idx_pos<priv->idx_size){
     off_t pos;
@@ -1015,7 +1015,7 @@ unsigned int len;
 int ret=0;
 
 do{
-  int flags=DP_KEYFRAME;
+  dp_flags_e flags=DP_KEYFRAME;
   AVIINDEXENTRY *idx=NULL;
   int idx_pos=0;
   demux->filepos=stream_tell(demux->stream);

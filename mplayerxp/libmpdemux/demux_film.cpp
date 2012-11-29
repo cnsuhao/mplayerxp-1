@@ -119,7 +119,7 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   {
    if(demuxer->audio->id>=-1){   // audio not disabled
     dp = new(zeromem) Demuxer_Packet(film_chunk.chunk_size);
-    if (stream_read(demuxer->stream, dp->buffer, film_chunk.chunk_size) !=
+    if (stream_read(demuxer->stream, dp->buffer(), film_chunk.chunk_size) !=
       film_chunk.chunk_size) return 0;
     dp->pts = film_chunk.pts;
     dp->pos = film_chunk.chunk_offset;
@@ -130,13 +130,13 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
     //  16-bit: big-endian -> little-endian
     if (sh_audio->wf->wBitsPerSample == 8)
       for (i = 0; i < film_chunk.chunk_size; i++)
-	dp->buffer[i] += 128;
+	dp->buffer()[i] += 128;
     else
       for (i = 0; i < film_chunk.chunk_size; i += 2)
       {
-	byte_swap = dp->buffer[i];
-	dp->buffer[i] = dp->buffer[i + 1];
-	dp->buffer[i + 1] = byte_swap;
+	byte_swap = dp->buffer()[i];
+	dp->buffer()[i] = dp->buffer()[i + 1];
+	dp->buffer()[i + 1] = byte_swap;
       }
 
     // append packet to DS stream
@@ -157,24 +157,24 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
       dp = new(zeromem) Demuxer_Packet(film_chunk.chunk_size - length_fix_bytes);
 
       // these CVID data chunks have a few extra bytes; skip them
-      if (stream_read(demuxer->stream, dp->buffer, 10) != 10)
+      if (stream_read(demuxer->stream, dp->buffer(), 10) != 10)
 	return 0;
       stream_skip(demuxer->stream, length_fix_bytes);
 
-      if (stream_read(demuxer->stream, dp->buffer + 10,
+      if (stream_read(demuxer->stream, dp->buffer() + 10,
 	film_chunk.chunk_size - (10 + length_fix_bytes)) !=
 	(film_chunk.chunk_size - (10 + length_fix_bytes)))
 	return 0;
 
       dp->pts = film_chunk.pts;
       dp->pos = film_chunk.chunk_offset;
-      dp->flags = (film_chunk.syncinfo1 & 0x80000000) ? 1 : 0;
+      dp->flags = (film_chunk.syncinfo1 & 0x80000000) ? DP_KEYFRAME : DP_NONKEYFRAME;
 
       // fix the CVID chunk size
       cvid_size = film_chunk.chunk_size - length_fix_bytes;
-      dp->buffer[1] = (cvid_size >> 16) & 0xFF;
-      dp->buffer[2] = (cvid_size >>  8) & 0xFF;
-      dp->buffer[3] = (cvid_size >>  0) & 0xFF;
+      dp->buffer()[1] = (cvid_size >> 16) & 0xFF;
+      dp->buffer()[2] = (cvid_size >>  8) & 0xFF;
+      dp->buffer()[3] = (cvid_size >>  0) & 0xFF;
 
       // append packet to DS stream
       ds_add_packet(demuxer->video, dp);

@@ -2,39 +2,42 @@
 #include "osdep/fastmemcpy.h"
 #include <string.h>
 
-Demuxer_Packet::Demuxer_Packet(unsigned _len)
-	    :pts(0),
+namespace mpxp {
+Demuxer_Packet::Demuxer_Packet(unsigned len)
+	    :type(Demuxer_Packet::Generic),
+	    pts(0),
 	    pos(0),
-	    flags(0),
+	    flags(DP_NONKEYFRAME),
+	    lang_id(0),
 	    next(NULL)
 {
-  len=_len;
-  buffer=new unsigned char [len];
+  _len=len;
+  _buf=new uint8_t [_len];
 }
 
 Demuxer_Packet::~Demuxer_Packet(){
-    if(buffer) delete buffer;
+    if(_buf) delete _buf;
 }
 
 void Demuxer_Packet::resize(unsigned newlen)
 {
-    if(len!=newlen) {
-	if(newlen) buffer=(unsigned char *)mp_realloc(buffer,newlen);
+    if(_len!=newlen) {
+	if(newlen) _buf=(uint8_t *)mp_realloc(_buf,newlen);
 	else {
-	    if(buffer) delete buffer;
-	    buffer=NULL;
+	    if(_buf) delete _buf;
+	    _buf=NULL;
 	}
-	len=newlen;
+	_len=newlen;
     }
 }
 
 Demuxer_Packet* Demuxer_Packet::clone() const {
-  Demuxer_Packet* dp=new Demuxer_Packet(len);
+  Demuxer_Packet* dp=new Demuxer_Packet(_len);
   dp->pts=pts;
   dp->pos=pos;
   dp->flags=flags;
   dp->next=next;
-  memcpy(dp->buffer,buffer,len);
+  memcpy(dp->buffer(),_buf,_len);
   return dp;
 }
-
+} // namespace mpxp

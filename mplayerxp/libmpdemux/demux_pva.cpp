@@ -228,7 +228,7 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 					dp=new(zeromem) Demuxer_Packet(current_payload.size);
 					dp->pts=priv->last_video_pts;
 					dp->flags=DP_NONKEYFRAME;
-					l=stream_read(demux->stream,dp->buffer,current_payload.size);
+					l=stream_read(demux->stream,dp->buffer(),current_payload.size);
 					dp->resize(l);
 					ds_add_packet(demux->video,dp);
 				} else {
@@ -258,7 +258,7 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 					dp->pts=priv->last_audio_pts;
 					if(current_payload.offset != stream_tell(demux->stream))
 						stream_seek(demux->stream,current_payload.offset);
-					l=stream_read(demux->stream,dp->buffer,current_payload.size);
+					l=stream_read(demux->stream,dp->buffer(),current_payload.size);
 					dp->resize(l);
 					ds_add_packet(demux->audio,dp);
 				} else {

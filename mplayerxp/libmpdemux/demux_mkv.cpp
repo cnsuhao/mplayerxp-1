@@ -2640,15 +2640,15 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
 	  ptr[2] != 'a' || ptr[3] != 'C')
 	{
 	  dp = new(zeromem) Demuxer_Packet (4);
-	  memcpy (dp->buffer, "fLaC", 4);
+	  memcpy (dp->buffer(), "fLaC", 4);
 	}
       else
 	{
 	  dp = new(zeromem) Demuxer_Packet (size);
-	  memcpy (dp->buffer, ptr, size);
+	  memcpy (dp->buffer(), ptr, size);
 	}
       dp->pts = 0;
-      dp->flags = 0;
+      dp->flags = DP_NONKEYFRAME;
       ds_add_packet (demuxer->audio, dp);
     }
   else if (track->a_formattag == mmioFOURCC('W', 'V', 'P', 'K'))
@@ -3202,7 +3202,7 @@ handle_subtitles(demuxer_t *demuxer, mkv_track_t *track, char *block,
   sub_data.utf8 = 1;
   size -= ptr1 - block;
   dp = new(zeromem) Demuxer_Packet(size);
-  memcpy(dp->buffer, ptr1, size);
+  memcpy(dp->buffer(), ptr1, size);
   dp->pts = timecode / 1000.0f;
 #if 0
   dp->endpts = (timecode + block_duration) / 1000.0f;
@@ -3284,9 +3284,9 @@ handle_realvideo (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
   chunks = *buffer++;
   isize = --size - (chunks+1)*8;
   dp = new(zeromem) Demuxer_Packet (REALHEADER_SIZE + size);
-  memcpy (dp->buffer + REALHEADER_SIZE, buffer + (chunks+1)*8, isize);
+  memcpy (dp->buffer() + REALHEADER_SIZE, buffer + (chunks+1)*8, isize);
 #ifdef WORDS_BIGENDIAN
-  p = (uint8_t *)(dp->buffer + REALHEADER_SIZE + isize);
+  p = (uint8_t *)(dp->buffer() + REALHEADER_SIZE + isize);
   for (i = 0; i<(chunks+1)*8; i+=4) {
     p[i] = *((uint8_t *)buffer+i+3);
     p[i+1] = *((uint8_t *)buffer+i+2);
@@ -3294,10 +3294,10 @@ handle_realvideo (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
     p[i+3] = *((uint8_t *)buffer+i);
   }
 #else
-  memcpy (dp->buffer + REALHEADER_SIZE + isize, buffer, (chunks+1)*8);
+  memcpy (dp->buffer() + REALHEADER_SIZE + isize, buffer, (chunks+1)*8);
 #endif
 
-  hdr = (uint32_t *)dp->buffer;
+  hdr = reinterpret_cast<uint32_t*>(dp->buffer());
   *hdr++ = chunks;                 // number of chunks
   *hdr++ = timestamp;              // timestamp from packet header
   *hdr++ = isize;                  // length of actual data
@@ -3310,10 +3310,10 @@ handle_realvideo (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
       track->rv_kf_pts = timestamp;
     }
   else
-    dp->pts = real_fix_timestamp (track, dp->buffer + REALHEADER_SIZE,
+    dp->pts = real_fix_timestamp (track, dp->buffer() + REALHEADER_SIZE,
 				  timestamp);
   dp->pos = demuxer->filepos;
-  dp->flags = block_bref ? 0 : 0x10;
+  dp->flags = block_bref ? DP_NONKEYFRAME : DP_KEYFRAME;
 
   ds_add_packet(demuxer->video, dp);
 }
@@ -3391,17 +3391,17 @@ handle_realaudio (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 	   for (x = 0; x < sph*w/apk_usize; x++)
 	     {
 	       dp = new(zeromem) Demuxer_Packet(apk_usize);
-	       memcpy(dp->buffer, track->audio_buf + x * apk_usize, apk_usize);
+	       memcpy(dp->buffer(), track->audio_buf + x * apk_usize, apk_usize);
 	       /* Put timestamp only on packets that correspond to original audio packets in file */
 	       dp->pts = (x * apk_usize % w) ? 0 : track->audio_timestamp[x * apk_usize / w];
 	       dp->pos = track->audio_filepos; // all equal
-	       dp->flags = x ? 0 : 0x10; // Mark first packet as keyframe
+	       dp->flags = x ? DP_NONKEYFRAME : DP_KEYFRAME; // Mark first packet as keyframe
 	       ds_add_packet(demuxer->audio, dp);
 	     }
 	}
    } else { // Not a codec that require reordering
   dp = new(zeromem) Demuxer_Packet (size);
-  memcpy(dp->buffer, buffer, size);
+  memcpy(dp->buffer(), buffer, size);
   if (track->ra_pts == mkv_d->last_pts && !mkv_d->a_skip_to_keyframe)
     dp->pts = 0;
   else
@@ -3409,7 +3409,7 @@ handle_realaudio (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
   track->ra_pts = mkv_d->last_pts;
 
   dp->pos = demuxer->filepos;
-  dp->flags = block_bref ? 0 : 0x10;
+  dp->flags = block_bref ? DP_NONKEYFRAME : DP_KEYFRAME;
   ds_add_packet (demuxer->audio, dp);
   }
 }
@@ -3484,7 +3484,7 @@ handle_video_bframes (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
   Demuxer_Packet *dp;
 
   dp = new(zeromem) Demuxer_Packet (size);
-  memcpy(dp->buffer, buffer, size);
+  memcpy(dp->buffer(), buffer, size);
   dp->pos = demuxer->filepos;
   dp->pts = mkv_d->last_pts;
   if ((track->num_cached_dps > 0) && (dp->pts < track->max_pts))
@@ -3492,7 +3492,7 @@ handle_video_bframes (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
   if (block_fref == 0)          /* I or P frame */
     flush_cached_dps (demuxer, track);
   if (block_bref != 0)          /* I frame, don't cache it */
-    dp->flags = 0x10;
+    dp->flags = DP_KEYFRAME;
   if ((track->num_cached_dps + 1) > track->num_allocated_dps)
     {
       track->cached_dps = (Demuxer_Packet **)
@@ -3641,10 +3641,10 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
 	      modified = demux_mkv_decode (track, block, &buffer, &size, 1);
 	      if (buffer) {
 		  dp = new(zeromem) Demuxer_Packet (size);
-		  memcpy (dp->buffer, buffer, size);
+		  memcpy (dp->buffer(), buffer, size);
 		  if (modified)
 		    delete buffer;
-		  dp->flags = (block_bref == 0 && block_fref == 0) ? 0x10 : 0;
+		  dp->flags = (block_bref == 0 && block_fref == 0) ? DP_KEYFRAME : DP_NONKEYFRAME;
 		  /* If default_duration is 0, assume no pts value is known
 		   * for packets after the first one (rather than all pts
 		   * values being the same) */

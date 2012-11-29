@@ -115,12 +115,12 @@ static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
    stream_seek(demuxer->stream, frames->current_filepos);
 
    Demuxer_Packet* dp_video=new(zeromem) Demuxer_Packet(frames->frame_size);
-   bytes_read=stream_read(demuxer->stream,dp_video->buffer,frames->frame_size);
+   bytes_read=stream_read(demuxer->stream,dp_video->buffer(),frames->frame_size);
    if (bytes_read<frames->frame_size)
       return 0;
    dp_video->pts=frames->current_frame/sh_video->fps;
    dp_video->pos=frames->current_filepos;
-   dp_video->flags=0;
+   dp_video->flags=DP_NONKEYFRAME;
 
    if (demuxer->audio && demuxer->audio->id>=-1)
    {

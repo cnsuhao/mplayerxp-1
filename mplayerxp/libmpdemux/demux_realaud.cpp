@@ -79,7 +79,7 @@ static int realaud_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	demuxer->filepos = stream_tell(demuxer->stream);
 
 	Demuxer_Packet *dp = new(zeromem) Demuxer_Packet(len);
-	len=stream_read(demuxer->stream, dp->buffer, len);
+	len=stream_read(demuxer->stream, dp->buffer(), len);
 	dp->resize(len);
 
 	if(sh->i_bps)

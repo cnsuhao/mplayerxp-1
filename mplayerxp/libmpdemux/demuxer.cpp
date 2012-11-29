@@ -264,9 +264,9 @@ void ds_add_packet(demux_stream_t *ds,Demuxer_Packet* dp){
 //    dp->pts=pts; //(float)pts/90000.0f;
 //    dp->pos=pos;
     // append packet to DS stream:
-    if(dp->len>0) {
+    if(dp->length()>0) {
 	++ds->packs;
-	ds->bytes+=dp->len;
+	ds->bytes+=dp->length();
 	if(ds->last) {
 	    // next packet in stream
 	    ds->last->next=dp;
@@ -277,17 +277,17 @@ void ds_add_packet(demux_stream_t *ds,Demuxer_Packet* dp){
 	}
 	MSG_DBG2("DEMUX: Append packet to %s, len=%d  pts=%5.3f  pos=%u  [packs: A=%d V=%d]\n",
 	    (ds==ds->demuxer->audio)?"d_audio":"d_video",
-	    dp->len,dp->pts,(unsigned int)dp->pos,ds->demuxer->audio->packs,ds->demuxer->video->packs);
+	    dp->length(),dp->pts,(unsigned int)dp->pos,ds->demuxer->audio->packs,ds->demuxer->video->packs);
     }
     else
 	MSG_DBG2("DEMUX: Skip packet for %s, len=%d  pts=%5.3f  pos=%u  [packs: A=%d V=%d]\n",
 	    (ds==ds->demuxer->audio)?"d_audio":"d_video",
-	    dp->len,dp->pts,(unsigned int)dp->pos,ds->demuxer->audio->packs,ds->demuxer->video->packs);
+	    dp->length(),dp->pts,(unsigned int)dp->pos,ds->demuxer->audio->packs,ds->demuxer->video->packs);
 }
 
-void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,int flags){
+void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,dp_flags_e flags){
     Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
-    len=stream_read(stream,dp->buffer,len);
+    len=stream_read(stream,dp->buffer(),len);
     dp->resize(len);
     dp->pts=pts; //(float)pts/90000.0f;
     dp->pos=pos;
@@ -326,20 +326,20 @@ int ds_fill_buffer(demux_stream_t *ds){
     if(ds->packs){
       Demuxer_Packet *p=ds->first;
       // copy useful data:
-      ds->buffer=p->buffer;
+      ds->buffer=p->buffer();
       ds->buffer_pos=0;
-      ds->buffer_size=p->len;
+      ds->buffer_size=p->length();
       ds->pos=p->pos;
-      ds->dpos+=p->len; // !!!
+      ds->dpos+=p->length(); // !!!
       ++ds->pack_no;
       if(p->pts){
 	ds->pts=p->pts;
 	ds->pts_bytes=0;
       }
-      ds->pts_bytes+=p->len; // !!!
+      ds->pts_bytes+=p->length(); // !!!
       ds->flags=p->flags;
       // mp_free packet:
-      ds->bytes-=p->len;
+      ds->bytes-=p->length();
       ds->current=p;
       ds->first=p->next;
       if(!ds->first) ds->last=NULL;
@@ -420,7 +420,7 @@ void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
     Demuxer_Packet *dn=dp->next;
     if(dp->pts >= pts) break;
     packs++;
-    bytes+=dp->len;
+    bytes+=dp->length();
     delete dp;
     dp=dn;
   }

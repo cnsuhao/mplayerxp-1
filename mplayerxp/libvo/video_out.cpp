@@ -129,7 +129,7 @@ struct vo_priv_t : public video_private {
     dri_priv_t			dri;
     const vo_info_t*		video_out;
     class VO_Interface*		vo_iface;
-    OSD_Render*			draw_alpha;
+    const OSD_Render*			draw_alpha;
 };
 
 vo_priv_t::vo_priv_t() {

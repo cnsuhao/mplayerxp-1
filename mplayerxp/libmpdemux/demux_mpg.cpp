@@ -401,20 +401,20 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     if(pts==MPGPES_BAD_PTS && ds->asf_packet)
     {
 	Demuxer_Packet* dp=ds->asf_packet;
-	dp->resize(dp->len+len);
-	stream_read(demux->stream,dp->buffer+dp->len,len);
+	dp->resize(dp->length()+len);
+	stream_read(demux->stream,dp->buffer()+dp->length(),len);
     }
     else
     {
 	sh_video_t *sh;
 	if(ds->asf_packet) ds_add_packet(ds,ds->asf_packet);
 	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
-	len=stream_read(demux->stream,dp->buffer,len);
+	len=stream_read(demux->stream,dp->buffer(),len);
 	dp->resize(len);
 	dp->pts=pts/90000.0f;
 	if(ds==demux->video)	sh=(sh_video_t *)ds->sh;
 	else			sh=NULL;
-	dp->flags=sh?is_mpg_keyframe(sh->fourcc,id,dp->buffer):DP_NONKEYFRAME;
+	dp->flags=sh?is_mpg_keyframe(sh->fourcc,id,dp->buffer())?DP_KEYFRAME:DP_NONKEYFRAME:DP_NONKEYFRAME;
 	dp->pos=demux->filepos;
 	ds->asf_packet=dp;
 	if (ds==ds->demuxer->sub) {

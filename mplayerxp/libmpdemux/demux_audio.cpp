@@ -1448,9 +1448,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	if(len>4)
 	{
 	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
-	    memcpy(dp->buffer,hdr,4);
-	    len=stream_read(s,dp->buffer + 4,len-4);
+	    memcpy(dp->buffer(),hdr,4);
 	    dp->resize(len+4);
+	    len=stream_read(s,dp->buffer() + 4,len-4);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
 	    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
@@ -1477,9 +1477,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	if(len>8)
 	{
 	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
-	    memcpy(dp->buffer,hdr,8);
-	    len=stream_read(s,dp->buffer+8,len-8);
+	    memcpy(dp->buffer(),hdr,8);
 	    dp->resize(len+8);
+	    len=stream_read(s,dp->buffer()+8,len-8);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
 	    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
@@ -1506,9 +1506,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	if(len>16)
 	{
 	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
-	    memcpy(dp->buffer,hdr,16);
-	    len=stream_read(s,dp->buffer+16,len-16);
 	    dp->resize(len+16);
+	    memcpy(dp->buffer(),hdr,16);
+	    len=stream_read(s,dp->buffer()+16,len-16);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
 	    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
@@ -1523,7 +1523,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
   case RAW_WAV : {
     int l = sh_audio->wf->nAvgBytesPerSec;
     Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
-    l=stream_read(s,dp->buffer,l);
+    l=stream_read(s,dp->buffer(),l);
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
     dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
@@ -1534,7 +1534,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
   case RAW_VOC : {
     int l = 65536;
     Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
-    l=stream_read(s,dp->buffer,l);
+    l=stream_read(s,dp->buffer(),l);
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
     dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
@@ -1553,10 +1553,10 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     bit_len = mpc_get_bits(priv, s, 20);
     Demuxer_Packet* dp=new(zeromem) Demuxer_Packet((bit_len + 7) / 8);
     for (l = 0; l < (bit_len / 8); l++)
-	dp->buffer[l] = mpc_get_bits(priv, s, 8);
+	dp->buffer()[l] = mpc_get_bits(priv, s, 8);
     bit_len %= 8;
     if (bit_len)
-	dp->buffer[l] = mpc_get_bits(priv, s, bit_len) << (8 - bit_len);
+	dp->buffer()[l] = mpc_get_bits(priv, s, bit_len) << (8 - bit_len);
     if (priv->last_pts < 0)
 	priv->last_pts = 0;
     else

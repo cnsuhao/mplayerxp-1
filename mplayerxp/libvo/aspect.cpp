@@ -11,6 +11,8 @@ using namespace mpxp;
 #endif
 #include "vo_msg.h"
 
+namespace mpxp {
+
 Aspect::Aspect(float mon_pix_aspect) { monitor_pixel_aspect = mon_pix_aspect; }
 Aspect::~Aspect() { }
 
@@ -88,4 +90,4 @@ void Aspect::calc(uint32_t& srcw, uint32_t& srch, zoom_e zoom) {
     MSG_DBG2("aspect(3) wh: %dx%d (org: %dx%d)\n",srcw,srch,prew,preh);
 #endif
 }
-
+} // namesapce mpxp

@@ -26,6 +26,7 @@ static const unsigned long long mask24hl  __attribute__((used)) __attribute__((a
 #define PVECTOR_ACCEL_H "osd_render_template.h"
 #include "pvector/pvector_inc.h"
 
+namespace mpxp {
 #ifdef FAST_OSD_TABLE
 static unsigned short fast_osd_15bpp_table[256];
 static unsigned short fast_osd_16bpp_table[256];
@@ -109,7 +110,7 @@ static void __FASTCALL__ vo_draw_alpha_null(int w,int h, const unsigned char* sr
     UNUSED(finalize);
 }
 
-void OSD_Render::render(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize)
+void OSD_Render::render(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize) const
 {
     (*draw_alpha_ptr)(w,h,src,srca,srcstride,dstbase,dststride,finalize);
 }
@@ -259,3 +260,4 @@ else
 }
 
 OSD_Render::~OSD_Render(){}
+} // namesapce mpxp

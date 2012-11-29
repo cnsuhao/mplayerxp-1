@@ -293,11 +293,11 @@ static void demux_ty_CopyToDemuxPacket( demux_stream_t *ds,
        unsigned char *buffer, int size, off_t pos, int64_t pts )
 {
    Demuxer_Packet *dp = new(zeromem) Demuxer_Packet( size );
-   memcpy( dp->buffer, buffer, size );
+   memcpy( dp->buffer(), buffer, size );
    if (pts != -1)
    dp->pts = pts / 90000.0;
    dp->pos = pos;
-   dp->flags = 0;
+   dp->flags = DP_NONKEYFRAME;
    ds_add_packet( ds, dp );
 }
 

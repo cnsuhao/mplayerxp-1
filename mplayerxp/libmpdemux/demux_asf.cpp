@@ -455,18 +455,17 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 	// closed segment, finalize packet:
 		if(ds==demux->audio)
 		  if(apriv->asf_scrambling_h>1 && apriv->asf_scrambling_w>1)
-		    asf_descrambling(apriv,ds->asf_packet->buffer,ds->asf_packet->len);
+		    asf_descrambling(apriv,ds->asf_packet->buffer(),ds->asf_packet->length());
 	ds_add_packet(ds,ds->asf_packet);
 	ds->asf_packet=NULL;
       } else {
 	// append data to it!
 	Demuxer_Packet* dp=ds->asf_packet;
-	if(dp->len!=offs && offs!=-1) MSG_V("warning! fragment.len=%d BUT next fragment offset=%d  \n",dp->len,offs);
-	dp->resize(dp->len+len);
+	if(dp->length()!=unsigned(offs) && offs!=-1) MSG_V("warning! fragment.len=%d BUT next fragment offset=%d  \n",dp->length(),offs);
+	dp->resize(dp->length()+len);
 	stream_seek(demux->stream,dataoff);
-	stream_read(demux->stream,dp->buffer+dp->len,len);
-	MSG_DBG3("data appended! %d+%d\n",dp->len,len);
-	dp->len+=len;
+	stream_read(demux->stream,dp->buffer()+dp->length(),len);
+	MSG_DBG3("data appended! %d+%d\n",dp->length(),len);
 	// we are ready now.
 	return 1;
       }
@@ -477,16 +476,16 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 	MSG_V("warning!  broken fragment or incomplete seeking, %d bytes missing  \n",offs);
 	return 0;
       }
-      Demuxer_Packet& dp=*new(zeromem) Demuxer_Packet(len);
+      Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
       stream_seek(demux->stream,dataoff);
-      len=stream_read(demux->stream,dp.buffer,len);
-      dp.resize(len);
-      dp.pts=time*0.001f;
-      dp.flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
-      dp.pos=demux->filepos;
-      ds->asf_packet=&dp;
+      len=stream_read(demux->stream,dp->buffer(),len);
+      dp->resize(len);
+      dp->pts=time*0.001f;
+      dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
+      dp->pos=demux->filepos;
+      ds->asf_packet=dp;
       ds->asf_seq=seq;
-      MSG_DBG2("ASF: reading %s PTS %u %f %i\n",ds==demux->audio?"audio":"video",time,dp.pts,keyframe);
+      MSG_DBG2("ASF: reading %s PTS %u %f %i\n",ds==demux->audio?"audio":"video",time,dp->pts,keyframe);
       // we are ready now.
       return 1;
     }

@@ -202,7 +202,7 @@ static int vqf_demux(demuxer_t* demuxer, demux_stream_t *ds) {
   dp->pos = spos;
   dp->flags = DP_NONKEYFRAME;
 
-  l=stream_read(demuxer->stream,dp->buffer,l);
+  l=stream_read(demuxer->stream,dp->buffer(),l);
   dp->resize(l);
   ds_add_packet(ds,dp);
 

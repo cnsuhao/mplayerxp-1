@@ -158,7 +158,7 @@ void free_demuxer_stream(demux_stream_t *ds);
 void free_demuxer(demuxer_t *demuxer);
 
 void ds_add_packet(demux_stream_t *ds,Demuxer_Packet* dp);
-void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,int flags);
+void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,dp_flags_e flags);
 
 int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds);
 int ds_fill_buffer(demux_stream_t *ds);

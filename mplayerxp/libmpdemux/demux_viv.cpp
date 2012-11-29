@@ -422,11 +422,10 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       } else {
 	// append data to it!
 	Demuxer_Packet* dp=ds->asf_packet;
-	dp->resize(dp->len+len);
+	dp->resize(dp->length()+len);
 	//memcpy(dp->buffer+dp->len,data,len);
-	stream_read(demux->stream,dp->buffer+dp->len,len);
-	MSG_DBG3("data appended! %d+%d\n",dp->len,len);
-	dp->len+=len;
+	stream_read(demux->stream,dp->buffer()+dp->length(),len);
+	MSG_DBG3("data appended! %d+%d\n",dp->length(),len);
 	// we are ready now.
 	if((c&0xF0)==0x20) --ds->asf_seq; // hack!
 	return 1;
@@ -435,7 +434,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
     // create new packet:
       Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
       //memcpy(dp->buffer,data,len);
-      len=stream_read(demux->stream,dp->buffer,len);
+      len=stream_read(demux->stream,dp->buffer(),len);
       dp->resize(len);
       dp->pts=audio_rate?((float)audio_pos/(float)audio_rate):0;
       dp->flags=DP_NONKEYFRAME;

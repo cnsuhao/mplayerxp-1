@@ -2843,7 +2843,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 				*buffer_size = *dp_offset + buf_size + TS_FEC_PACKET_SIZE;
 				(*dp)->resize(*buffer_size);
 			}
-			p = &((*dp)->buffer[*dp_offset]);
+			p = &((*dp)->buffer()[*dp_offset]);
 		}
 
 		len = stream_read(stream, p, buf_size);
@@ -2945,7 +2945,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 
 				memmove(p, es->start, es->size);
 				*dp_offset += es->size;
-				(*dp)->flags = 0;
+				(*dp)->flags = DP_NONKEYFRAME;
 				(*dp)->pos = stream_tell(demuxer->stream);
 				(*dp)->pts = es->pts;
 

@@ -121,7 +121,7 @@ int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, demux_stream_t *ds, tvi_
 	len = tvh->functions->get_audio_framesize(reinterpret_cast<priv_s*>(tvh->priv));
 
 	dp=new(zeromem) Demuxer_Packet(len);
-	dp->pts=tvh->functions->grab_audio_frame(reinterpret_cast<priv_s*>(tvh->priv), dp->buffer,len);
+	dp->pts=tvh->functions->grab_audio_frame(reinterpret_cast<priv_s*>(tvh->priv), dp->buffer(),len);
 	ds_add_packet(demux->audio,dp);
 	}
 
@@ -132,7 +132,7 @@ int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, demux_stream_t *ds, tvi_
 	{
 	len = tvh->functions->get_video_framesize(reinterpret_cast<priv_s*>(tvh->priv));
 	dp=new(zeromem) Demuxer_Packet(len);
-	dp->pts=tvh->functions->grab_video_frame(reinterpret_cast<priv_s*>(tvh->priv), dp->buffer, len);
+	dp->pts=tvh->functions->grab_video_frame(reinterpret_cast<priv_s*>(tvh->priv), dp->buffer(), len);
 	ds_add_packet(demux->video,dp);
 	 }
 
