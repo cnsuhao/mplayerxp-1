@@ -15,6 +15,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "loader/qtx/qtxsdk/components.h"
 #include "nls/nls.h"
@@ -556,7 +557,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
     }
     if(ds){
 	off_t pos=0LL;
-	Demux_Packet* dp=new(zeromem) Demux_Packet(len);
+	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
 	if(mp_conf.verbose>1) pos=stream_tell(s);
 	len=stream_read(s,dp->buffer,len);
 	dp->resize(len);

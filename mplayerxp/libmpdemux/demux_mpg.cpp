@@ -19,6 +19,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "parse_es.h"
 #include "stheader.h"
 #include "mp3_hdr.h"
@@ -399,7 +400,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     }
     if(pts==MPGPES_BAD_PTS && ds->asf_packet)
     {
-	Demux_Packet* dp=ds->asf_packet;
+	Demuxer_Packet* dp=ds->asf_packet;
 	dp->resize(dp->len+len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
     }
@@ -407,7 +408,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     {
 	sh_video_t *sh;
 	if(ds->asf_packet) ds_add_packet(ds,ds->asf_packet);
-	Demux_Packet* dp=new(zeromem) Demux_Packet(len);
+	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
 	len=stream_read(demux->stream,dp->buffer,len);
 	dp->resize(len);
 	dp->pts=pts/90000.0f;

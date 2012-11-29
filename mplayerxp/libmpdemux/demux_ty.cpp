@@ -44,6 +44,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "parse_es.h"
 #include "stheader.h"
 #include "sub_cc.h"
@@ -291,7 +292,7 @@ static void demux_ty_AddToAudioBuffer( TiVoInfo *tivo, unsigned char *buffer,
 static void demux_ty_CopyToDemuxPacket( demux_stream_t *ds,
        unsigned char *buffer, int size, off_t pos, int64_t pts )
 {
-   Demux_Packet *dp = new(zeromem) Demux_Packet( size );
+   Demuxer_Packet *dp = new(zeromem) Demuxer_Packet( size );
    memcpy( dp->buffer, buffer, size );
    if (pts != -1)
    dp->pts = pts / 90000.0;

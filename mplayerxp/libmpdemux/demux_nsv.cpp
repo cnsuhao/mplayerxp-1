@@ -21,6 +21,7 @@ using namespace mpxp;
 #include "help_mp.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "demux_msg.h"
 

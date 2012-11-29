@@ -21,6 +21,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 
 #include "stream.h"
+#include "stream_internal.h"
 #include "libmpdemux/demuxer.h"
 #include "stream_msg.h"
 
@@ -395,3 +396,6 @@ int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len){
   return 1;
 }
 
+MPXP_Rc __FASTCALL__ nc_stream_control(const stream_t *s,unsigned cmd,any_t*param) {
+    return s->driver->control(s,cmd,param);
+}

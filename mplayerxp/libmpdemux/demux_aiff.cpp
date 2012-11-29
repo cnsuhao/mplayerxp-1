@@ -7,6 +7,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
@@ -191,7 +192,7 @@ static int aiff_demux(demuxer_t* demuxer, demux_stream_t *ds) {
   if(stream_eof(demuxer->stream))
     return 0;
 
-  Demux_Packet* dp = new(zeromem) Demux_Packet(l);
+  Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(l);
   dp->pts = spos / (float)(sh_audio->wf->nAvgBytesPerSec);
   dp->pos = spos;
   dp->flags = DP_NONKEYFRAME;

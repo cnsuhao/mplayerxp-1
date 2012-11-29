@@ -2,7 +2,7 @@
 #include "osdep/fastmemcpy.h"
 #include <string.h>
 
-Demux_Packet::Demux_Packet(unsigned _len)
+Demuxer_Packet::Demuxer_Packet(unsigned _len)
 	    :pts(0),
 	    pos(0),
 	    flags(0),
@@ -12,11 +12,11 @@ Demux_Packet::Demux_Packet(unsigned _len)
   buffer=new unsigned char [len];
 }
 
-Demux_Packet::~Demux_Packet(){
+Demuxer_Packet::~Demuxer_Packet(){
     if(buffer) delete buffer;
 }
 
-void Demux_Packet::resize(unsigned newlen)
+void Demuxer_Packet::resize(unsigned newlen)
 {
     if(len!=newlen) {
 	if(newlen) buffer=(unsigned char *)mp_realloc(buffer,newlen);
@@ -28,8 +28,8 @@ void Demux_Packet::resize(unsigned newlen)
     }
 }
 
-Demux_Packet* Demux_Packet::clone() const {
-  Demux_Packet* dp=new Demux_Packet(len);
+Demuxer_Packet* Demuxer_Packet::clone() const {
+  Demuxer_Packet* dp=new Demuxer_Packet(len);
   dp->pts=pts;
   dp->pos=pos;
   dp->flags=flags;

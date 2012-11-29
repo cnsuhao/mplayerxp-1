@@ -77,12 +77,12 @@ struct demux_stream_t : public Opaque {
 /*---------------*/
 	int		packs;		/**< number of packets in buffer */
 	int		bytes;		/**< total bytes of packets in buffer */
-	Demux_Packet*	first;		/**< read to current buffer from here */
-	Demux_Packet*	last;		/**< append new packets from input stream to here */
-	Demux_Packet*	current;	/**< needed for refcounting of the buffer */
+	Demuxer_Packet*	first;		/**< read to current buffer from here */
+	Demuxer_Packet*	last;		/**< append new packets from input stream to here */
+	Demuxer_Packet*	current;	/**< needed for refcounting of the buffer */
 	demuxer_t*	demuxer;	/**< parent demuxer structure (stream handler) */
 /* ---- asf ----- */
-	Demux_Packet*	asf_packet;	/**< read asf fragments here */
+	Demuxer_Packet*	asf_packet;	/**< read asf fragments here */
 	int		asf_seq;	/**< sequence id associated with asf_packet */
 /*---------------*/
 	any_t*		sh;		/**< Stream header associated with this stream (@see st_header.h for detail) */
@@ -106,6 +106,7 @@ enum {
 };
 
 struct demuxer_info_t;
+struct demuxer_driver_t;
 struct demuxer_t : public Opaque {
     public:
 	demuxer_t() {}
@@ -130,7 +131,7 @@ struct demuxer_t : public Opaque {
 
 	Opaque*		priv;		/**< private data of demuxer's driver.*/
 	demuxer_info_t*	info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
-	const struct demuxer_driver_s* driver;	/**< driver associated with this demuxer */
+	const demuxer_driver_t* driver;	/**< driver associated with this demuxer */
 } __attribute__ ((packed));
 
 enum {
@@ -150,52 +151,13 @@ enum {
     DEMUX_CMD_SWITCH_VIDEO	=2,
     DEMUX_CMD_SWITCH_SUBS	=3
 };
-/** Demuxer's driver interface */
-typedef struct demuxer_driver_s
-{
-    const char*		short_name; /**< for forcing through comand line */
-    const char*		name;	/**< Name of driver ("Matroska MKV parser") */
-    const char*		defext; /**< Default file extension for this movie type */
-    const config_t*	options;/**< Optional: MPlayerXP's option related */
-			/** Probing stream.
-			  * @param d	_this demuxer
-			 **/
-    MPXP_Rc		(*probe)(demuxer_t *d);
-			/** Opens stream.
-			  * @param d	_this demxuer
-			 **/
-    demuxer_t*		(*open)(demuxer_t *d);
-			/** Reads and demuxes stream.
-			 * @param d	_this demuxer
-			 * @param ds	pointer to stream associated with demuxer
-			 * @return	0 - EOF or no stream found; 1 - if packet was successfully readed */
-    int			(*demux)(demuxer_t *d,demux_stream_t *ds);
-			/** Seeks within of stream.
-			 * @param d 		_thid demuxer
-			 * @param rel_seek_secs	position in seconds from begin of stream
-			 * @param flags		0x01 - seek from start else seek_cur, 0x02 - rel_seek_secs indicates pos in percents/100 else in seconds
-			 * @note		this function is optional and maybe NULL
-			**/
-    void		(*seek)(demuxer_t *d,const seek_args_t* seeka);
-			/** Closes driver
-			  * @param d	_this demuxer
-			 **/
-    void		(*close)(demuxer_t *d);
-			/** Control interface to demuxer
-			  * @param d	_this demuxer
-			  * @param cmd	command to be execute (one of DEMUX_CMD_*)
-			  * @param arg	optional arguments for thsis command
-			  * @return	one of DEMUX_* states
-			 **/
-    MPXP_Rc		(*control)(const demuxer_t *d,int cmd,any_t*arg);
-}demuxer_driver_t;
 
 demux_stream_t* new_demuxer_stream(demuxer_t *demuxer,int id);
 demuxer_t* new_demuxer(stream_t *stream,int a_id,int v_id,int s_id);
 void free_demuxer_stream(demux_stream_t *ds);
 void free_demuxer(demuxer_t *demuxer);
 
-void ds_add_packet(demux_stream_t *ds,Demux_Packet* dp);
+void ds_add_packet(demux_stream_t *ds,Demuxer_Packet* dp);
 void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,int flags);
 
 int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds);

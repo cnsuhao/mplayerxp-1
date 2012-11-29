@@ -13,6 +13,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "genres.h"
 #include "libmpcodecs/dec_audio.h"
@@ -1446,7 +1447,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	  return 0;
 	if(len>4)
 	{
-	    Demux_Packet* dp = new(zeromem) Demux_Packet(len);
+	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
 	    memcpy(dp->buffer,hdr,4);
 	    len=stream_read(s,dp->buffer + 4,len-4);
 	    dp->resize(len+4);
@@ -1475,7 +1476,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	  return 0;
 	if(len>8)
 	{
-	    Demux_Packet* dp = new(zeromem) Demux_Packet(len);
+	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
 	    memcpy(dp->buffer,hdr,8);
 	    len=stream_read(s,dp->buffer+8,len-8);
 	    dp->resize(len+8);
@@ -1504,7 +1505,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	  return 0;
 	if(len>16)
 	{
-	    Demux_Packet* dp = new(zeromem) Demux_Packet(len);
+	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
 	    memcpy(dp->buffer,hdr,16);
 	    len=stream_read(s,dp->buffer+16,len-16);
 	    dp->resize(len+16);
@@ -1521,7 +1522,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
   case RAW_SND_AU:
   case RAW_WAV : {
     int l = sh_audio->wf->nAvgBytesPerSec;
-    Demux_Packet* dp =new(zeromem) Demux_Packet(l);
+    Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
     l=stream_read(s,dp->buffer,l);
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
@@ -1532,7 +1533,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
   }
   case RAW_VOC : {
     int l = 65536;
-    Demux_Packet* dp =new(zeromem) Demux_Packet(l);
+    Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
     l=stream_read(s,dp->buffer,l);
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
@@ -1550,7 +1551,7 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     if (s->eof) return 0;
 
     bit_len = mpc_get_bits(priv, s, 20);
-    Demux_Packet* dp=new(zeromem) Demux_Packet((bit_len + 7) / 8);
+    Demuxer_Packet* dp=new(zeromem) Demuxer_Packet((bit_len + 7) / 8);
     for (l = 0; l < (bit_len / 8); l++)
 	dp->buffer[l] = mpc_get_bits(priv, s, 8);
     bit_len %= 8;

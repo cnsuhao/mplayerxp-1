@@ -9,6 +9,7 @@ using namespace mpxp;
 #include <string.h>
 #include <stdio.h>
 #include "stream.h"
+#include "stream_internal.h"
 #include "stream_msg.h"
 
 #include <libvcd/inf.h>

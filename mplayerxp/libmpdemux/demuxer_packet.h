@@ -11,20 +11,20 @@ enum {
 };
 
 /** Describes demuxer's packet */
-class Demux_Packet : public Opaque {
+class Demuxer_Packet : public Opaque {
     public:
-	Demux_Packet(unsigned len);
-	virtual ~Demux_Packet();
+	Demuxer_Packet(unsigned len);
+	virtual ~Demuxer_Packet();
 
 	void resize(unsigned newlen);
-	Demux_Packet* clone() const;
+	Demuxer_Packet* clone() const;
 
 	unsigned	len;	/**< length of packet's data */
 	float		pts;	/**< Presentation Time-Stamp (PTS) of data */
 	off_t		pos;	/**< Position in index (AVI) or file (MPG) */
 	unsigned char*	buffer; /**< buffer of packet's data */
 	unsigned	flags;	/**< 1 - indicates keyframe, 0 - regular frame */
-	Demux_Packet*	next; /**< pointer to the next packet in chain */
+	Demuxer_Packet*	next; /**< pointer to the next packet in chain */
 };
 
 #endif

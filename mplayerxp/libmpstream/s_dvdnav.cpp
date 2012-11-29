@@ -9,6 +9,7 @@ using namespace mpxp;
 #include <string.h>
 #include <math.h>
 #include "stream.h"
+#include "stream_internal.h"
 #include "help_mp.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpsub/spudec.h"

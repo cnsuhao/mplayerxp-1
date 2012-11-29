@@ -33,6 +33,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 
 #include "osdep/bswap.h"
@@ -188,7 +189,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload);
 static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 {
 	uint8_t done=0;
-	Demux_Packet * dp;
+	Demuxer_Packet * dp;
 	pva_priv_t* priv=static_cast<pva_priv_t*>(demux->priv);
 	pva_payload_t current_payload;
 
@@ -224,7 +225,7 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 				}
 				if(done) {
 					int l;
-					dp=new(zeromem) Demux_Packet(current_payload.size);
+					dp=new(zeromem) Demuxer_Packet(current_payload.size);
 					dp->pts=priv->last_video_pts;
 					dp->flags=DP_NONKEYFRAME;
 					l=stream_read(demux->stream,dp->buffer,current_payload.size);
@@ -253,7 +254,7 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 				if(demux->audio->id!=0) done=0;
 				if(done) {
 					int l;
-					dp=new(zeromem) Demux_Packet(current_payload.size);
+					dp=new(zeromem) Demuxer_Packet(current_payload.size);
 					dp->pts=priv->last_audio_pts;
 					if(current_payload.offset != stream_tell(demux->stream))
 						stream_seek(demux->stream,current_payload.offset);
@@ -276,7 +277,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 	off_t next_offset,pva_payload_start;
 	unsigned char buffer[256];
 #ifndef PVA_NEW_PREBYTES_CODE
-	Demux_Packet * dp; 	//hack to deliver the preBytes (see PVA doc)
+	Demuxer_Packet * dp; 	//hack to deliver the preBytes (see PVA doc)
 #endif
 	pva_priv_t* priv=static_cast<pva_priv_t*>(d->priv);
 

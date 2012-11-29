@@ -23,6 +23,7 @@ using namespace mpxp;
 #include "libao2/audio_out.h"
 #include "loader/wine/mmreg.h"
 #include "stream.h"
+#include "stream_internal.h"
 #include "mrl.h"
 #include "stream_msg.h"
 

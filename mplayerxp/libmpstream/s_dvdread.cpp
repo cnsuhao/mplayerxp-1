@@ -16,6 +16,7 @@ using namespace mpxp;
 #include <string.h>
 #include <ctype.h>
 #include "stream.h"
+#include "stream_internal.h"
 #include "help_mp.h"
 #include "stream_msg.h"
 

@@ -15,6 +15,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 
 #include "libvo/img_format.h"
@@ -101,7 +102,7 @@ static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   uint8_t *dst,*src;
   npal_colors = img->format->palette ? img->format->palette->ncolors : 0;
   fake_24 = img->format->BitsPerPixel == 8 && npal_colors > 0;
-  Demux_Packet* dp = new(zeromem) Demux_Packet(fake_24 ? len*3 : len);
+  Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(fake_24 ? len*3 : len);
   dst = dp->buffer;
   src =reinterpret_cast<uint8_t*>(img->pixels);
   if(fake_24)

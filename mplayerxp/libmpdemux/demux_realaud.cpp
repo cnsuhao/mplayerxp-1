@@ -15,6 +15,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
 #include "libao2/afmt.h"
@@ -77,7 +78,7 @@ static int realaud_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	len = wf->nBlockAlign;
 	demuxer->filepos = stream_tell(demuxer->stream);
 
-	Demux_Packet *dp = new(zeromem) Demux_Packet(len);
+	Demuxer_Packet *dp = new(zeromem) Demuxer_Packet(len);
 	len=stream_read(demuxer->stream, dp->buffer, len);
 	dp->resize(len);
 

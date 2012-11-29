@@ -7,6 +7,7 @@ using namespace mpxp;
 #include "mp_conf_lavc.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "stream.h"
+#include "stream_internal.h"
 #include "stream_msg.h"
 
 struct lavc_priv_t : public Opaque {

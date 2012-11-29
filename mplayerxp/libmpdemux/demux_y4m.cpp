@@ -18,6 +18,7 @@ using namespace mpxp;
 
 //#include "stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
 #include "demux_msg.h"
@@ -77,7 +78,7 @@ static MPXP_Rc y4m_probe(demuxer_t* demuxer){
 static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
     UNUSED(__ds);
   demux_stream_t *ds=demux->video;
-  Demux_Packet *dp;
+  Demuxer_Packet *dp;
   y4m_priv_t *priv=static_cast<y4m_priv_t*>(demux->priv);
   y4m_frame_info_t fi;
   unsigned char *buf[3];
@@ -87,7 +88,7 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
 
   size = ((sh_video_t*)ds->sh)->src_w*((sh_video_t*)ds->sh)->src_h;
 
-  dp = new(zeromem) Demux_Packet(3*size/2);
+  dp = new(zeromem) Demuxer_Packet(3*size/2);
 
   /* swap U and V components */
   buf[0] = dp->buffer;

@@ -12,6 +12,7 @@ using namespace mpxp;
 #endif
 #include <unistd.h>
 #include "stream.h"
+#include "stream_internal.h"
 #include "help_mp.h"
 #include "stream_msg.h"
 

@@ -18,6 +18,7 @@ using namespace mpxp;
 #include <pthread.h>
 
 #include "stream.h"
+#include "stream_internal.h"
 #include "xmpcore/sig_hand.h"
 #include "osdep/timer.h"
 #include "osdep/cpudetect.h"
@@ -152,7 +153,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 		MSG_DBG2("%02X ",(int)(unsigned char)c->packets[cidx].sp.buf[i]);
 	}
     MSG_DBG2("\n");
-    if(c->stream->driver->control(c->stream,SCTRL_EOF,NULL)==MPXP_Ok) legacy_eof=1;
+    if(stream_control(c->stream,SCTRL_EOF,NULL)==MPXP_Ok) legacy_eof=1;
     else	legacy_eof=0;
     if(c->packets[cidx].sp.len < 0 || (c->packets[cidx].sp.len == 0 && c->packets[cidx].sp.type == 0) || legacy_eof || seek_eof) {
 	/* EOF */
@@ -617,6 +618,10 @@ int __FASTCALL__ stream_skip(stream_t *s,off_t len)
     else		return nc_stream_skip(s,len);
 }
 
+MPXP_Rc __FASTCALL__ stream_control(const stream_t *s,unsigned cmd,any_t*param)
+{
+    return nc_stream_control(s,cmd,param);
+}
 
 void __FASTCALL__ stream_reset(stream_t *s)
 {

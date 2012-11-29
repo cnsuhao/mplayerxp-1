@@ -16,6 +16,7 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 #include "stream.h"
+#include "stream_internal.h"
 #include "stream_msg.h"
 
 struct file_priv_t : public Opaque {

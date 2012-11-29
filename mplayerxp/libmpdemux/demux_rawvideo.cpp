@@ -8,6 +8,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 
@@ -80,10 +81,10 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
   case 7: priv.width=1408;priv.height=1152;break;
   case 8: priv.width=352; priv.height=240; break;
   }
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_WIDTH,&priv.width);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_HEIGHT,&priv.height);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_FORMAT,&priv.format);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_VID_GET_FPS,&priv.fps);
+  stream_control(demuxer->stream,SCTRL_VID_GET_WIDTH,&priv.width);
+  stream_control(demuxer->stream,SCTRL_VID_GET_HEIGHT,&priv.height);
+  stream_control(demuxer->stream,SCTRL_VID_GET_FORMAT,&priv.format);
+  stream_control(demuxer->stream,SCTRL_VID_GET_FPS,&priv.fps);
 
   if(!priv.width || !priv.height){
       MSG_ERR("rawvideo: width or height not specified!\n");

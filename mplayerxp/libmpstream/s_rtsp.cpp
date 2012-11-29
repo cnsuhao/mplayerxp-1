@@ -18,6 +18,7 @@ using namespace mpxp;
 #endif
 
 #include "stream.h"
+#include "stream_internal.h"
 #include "help_mp.h"
 #include "url.h"
 #include "tcp.h"

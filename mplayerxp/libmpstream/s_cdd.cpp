@@ -10,6 +10,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 #include "stream.h"
+#include "stream_internal.h"
 #include "stream_msg.h"
 
 #ifdef HAVE_LIBCDIO

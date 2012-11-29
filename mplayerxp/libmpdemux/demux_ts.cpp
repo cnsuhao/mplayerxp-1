@@ -34,6 +34,7 @@ using namespace mpxp;
 #include "help_mp.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "parse_es.h"
 #include "stheader.h"
 #include "libmpcodecs/dec_audio.h"
@@ -122,7 +123,7 @@ typedef struct MpegTSContext {
 
 typedef struct {
 	demux_stream_t *ds;
-	Demux_Packet *pack;
+	Demuxer_Packet *pack;
 	int offset, buffer_size;
 } av_fifo_t;
 
@@ -2515,7 +2516,7 @@ static inline uint8_t *pid_lang_from_pmt(ts_priv_t *priv, int pid)
 }
 
 
-static int fill_packet(demuxer_t *demuxer, demux_stream_t *ds, Demux_Packet **dp, int *dp_offset, TS_stream_info *si)
+static int fill_packet(demuxer_t *demuxer, demux_stream_t *ds, Demuxer_Packet **dp, int *dp_offset, TS_stream_info *si)
 {
 	int ret = 0;
 
@@ -2590,7 +2591,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	stream_t *stream = demuxer->stream;
 	unsigned char *p;
 	demux_stream_t *ds = NULL;
-	Demux_Packet **dp = NULL;
+	Demuxer_Packet **dp = NULL;
 	int *dp_offset = 0, *buffer_size = 0;
 	int32_t progid=0, pid_type, bad, ts_error;
 	int junk = 0, rap_flag = 0;
@@ -2603,7 +2604,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	{
 		bad = ts_error = 0;
 		ds = (demux_stream_t*) NULL;
-		dp = (Demux_Packet **) NULL;
+		dp = (Demuxer_Packet **) NULL;
 		dp_offset = buffer_size = NULL;
 		rap_flag = 0;
 		mp4_dec = NULL;
@@ -2819,7 +2820,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 			{
 				if(*buffer_size > MAX_PACK_BYTES)
 					*buffer_size = MAX_PACK_BYTES;
-				*dp = new(zeromem) Demux_Packet(*buffer_size);	//es->size
+				*dp = new(zeromem) Demuxer_Packet(*buffer_size);	//es->size
 				*dp_offset = 0;
 				if(! *dp)
 				{

@@ -16,6 +16,7 @@ using namespace mpxp;
 #include "help_mp.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
 #include "demux_msg.h"
@@ -420,7 +421,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
 	ds->asf_packet=NULL;
       } else {
 	// append data to it!
-	Demux_Packet* dp=ds->asf_packet;
+	Demuxer_Packet* dp=ds->asf_packet;
 	dp->resize(dp->len+len);
 	//memcpy(dp->buffer+dp->len,data,len);
 	stream_read(demux->stream,dp->buffer+dp->len,len);
@@ -432,7 +433,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
       }
     }
     // create new packet:
-      Demux_Packet* dp=new(zeromem) Demux_Packet(len);
+      Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
       //memcpy(dp->buffer,data,len);
       len=stream_read(demux->stream,dp->buffer,len);
       dp->resize(len);

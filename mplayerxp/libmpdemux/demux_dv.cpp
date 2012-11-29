@@ -34,6 +34,7 @@ using namespace mpxp;
 #include "demux_msg.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 
 #define DV_PAL_FRAME_SIZE  144000
@@ -113,7 +114,7 @@ static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
    // seem to do it, even though it takes a file offset as a parameter
    stream_seek(demuxer->stream, frames->current_filepos);
 
-   Demux_Packet* dp_video=new(zeromem) Demux_Packet(frames->frame_size);
+   Demuxer_Packet* dp_video=new(zeromem) Demuxer_Packet(frames->frame_size);
    bytes_read=stream_read(demuxer->stream,dp_video->buffer,frames->frame_size);
    if (bytes_read<frames->frame_size)
       return 0;
@@ -123,7 +124,7 @@ static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
 
    if (demuxer->audio && demuxer->audio->id>=-1)
    {
-      Demux_Packet* dp_audio=dp_video->clone();
+      Demuxer_Packet* dp_audio=dp_video->clone();
       ds_add_packet(demuxer->audio,dp_audio);
    }
    ds_add_packet(demuxer->video,dp_video);

@@ -23,6 +23,7 @@ using namespace mpxp;
 
 #include "demux_msg.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "libmpstream/stream.h"
 #include "stheader.h"
 #include "mplayerxp.h"
@@ -257,8 +258,8 @@ void free_demuxer(demuxer_t *demuxer){
     }
 }
 
-void ds_add_packet(demux_stream_t *ds,Demux_Packet* dp){
-//    Demux_Packet* dp=new_demux_packet(len);
+void ds_add_packet(demux_stream_t *ds,Demuxer_Packet* dp){
+//    Demuxer_Packet* dp=new_demux_packet(len);
 //    stream_read(stream,dp->buffer,len);
 //    dp->pts=pts; //(float)pts/90000.0f;
 //    dp->pos=pos;
@@ -285,7 +286,7 @@ void ds_add_packet(demux_stream_t *ds,Demux_Packet* dp){
 }
 
 void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,int flags){
-    Demux_Packet* dp=new(zeromem) Demux_Packet(len);
+    Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
     len=stream_read(stream,dp->buffer,len);
     dp->resize(len);
     dp->pts=pts; //(float)pts/90000.0f;
@@ -323,7 +324,7 @@ int ds_fill_buffer(demux_stream_t *ds){
   check_pin("demuxer",ds->pin,DS_PIN);
   while(1){
     if(ds->packs){
-      Demux_Packet *p=ds->first;
+      Demuxer_Packet *p=ds->first;
       // copy useful data:
       ds->buffer=p->buffer;
       ds->buffer_pos=0;
@@ -390,9 +391,9 @@ return bytes;
 }
 
 void ds_free_packs(demux_stream_t *ds){
-  Demux_Packet *dp=ds->first;
+  Demuxer_Packet *dp=ds->first;
   while(dp){
-    Demux_Packet *dn=dp->next;
+    Demuxer_Packet *dn=dp->next;
     delete dp;
     dp=dn;
   }
@@ -412,11 +413,11 @@ void ds_free_packs(demux_stream_t *ds){
 }
 
 void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
-  Demux_Packet *dp=ds->first;
+  Demuxer_Packet *dp=ds->first;
   unsigned packs,bytes;
   packs=bytes=0;
   while(dp){
-    Demux_Packet *dn=dp->next;
+    Demuxer_Packet *dn=dp->next;
     if(dp->pts >= pts) break;
     packs++;
     bytes+=dp->len;
@@ -597,10 +598,8 @@ force_driver:
     for(i=0;i<sizeof(stream_txt_ids)/sizeof(struct s_stream_txt_ids);i++)
     if(!demux_info_get(demuxer,stream_txt_ids[i].demuxer_id)) {
 	char stream_name[256];
-	if(demuxer->stream->driver->control) {
-	    if(demuxer->stream->driver->control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
+	if(stream_control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
 		demux_info_add(demuxer,stream_txt_ids[i].demuxer_id,stream_name);
-	    }
 	}
     }
     stream->demuxer=demuxer;

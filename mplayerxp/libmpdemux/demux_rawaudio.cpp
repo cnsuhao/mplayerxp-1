@@ -7,6 +7,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
@@ -47,10 +48,10 @@ static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
 
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_CHANNELS,&channels);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_SAMPLERATE,&samplerate);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_SAMPLESIZE,&samplesize);
-  demuxer->stream->driver->control(demuxer->stream,SCTRL_AUD_GET_FORMAT,&wtag);
+  stream_control(demuxer->stream,SCTRL_AUD_GET_CHANNELS,&channels);
+  stream_control(demuxer->stream,SCTRL_AUD_GET_SAMPLERATE,&samplerate);
+  stream_control(demuxer->stream,SCTRL_AUD_GET_SAMPLESIZE,&samplesize);
+  stream_control(demuxer->stream,SCTRL_AUD_GET_FORMAT,&wtag);
   sh_audio = new_sh_audio(demuxer,0);
   sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = sh_audio->wtag = wtag;
@@ -82,7 +83,7 @@ static int rawaudio_demux(demuxer_t* demuxer, demux_stream_t *ds) {
 
   if(stream_eof(demuxer->stream)) return 0;
 
-  Demux_Packet* dp = new(zeromem) Demux_Packet(l);
+  Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(l);
   dp->pts = spos / (float)(sh_audio->wf->nAvgBytesPerSec);
   dp->pos = spos;
   dp->flags=DP_NONKEYFRAME;

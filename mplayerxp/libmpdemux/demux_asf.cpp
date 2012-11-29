@@ -13,6 +13,7 @@ using namespace mpxp;
 #include "libmpstream/stream.h"
 #include "asf.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "libmpcodecs/dec_audio.h"
 #include "aviprint.h"
@@ -459,7 +460,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 	ds->asf_packet=NULL;
       } else {
 	// append data to it!
-	Demux_Packet* dp=ds->asf_packet;
+	Demuxer_Packet* dp=ds->asf_packet;
 	if(dp->len!=offs && offs!=-1) MSG_V("warning! fragment.len=%d BUT next fragment offset=%d  \n",dp->len,offs);
 	dp->resize(dp->len+len);
 	stream_seek(demux->stream,dataoff);
@@ -476,7 +477,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 	MSG_V("warning!  broken fragment or incomplete seeking, %d bytes missing  \n",offs);
 	return 0;
       }
-      Demux_Packet& dp=*new(zeromem) Demux_Packet(len);
+      Demuxer_Packet& dp=*new(zeromem) Demuxer_Packet(len);
       stream_seek(demux->stream,dataoff);
       len=stream_read(demux->stream,dp.buffer,len);
       dp.resize(len);

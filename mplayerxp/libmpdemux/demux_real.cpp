@@ -30,6 +30,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
 #include "aviprint.h"
@@ -415,7 +416,7 @@ static int real_demux(demuxer_t *demuxer,demux_stream_t *__ds)
     int flags;
     int version;
     int reserved;
-    Demux_Packet *dp;
+    Demuxer_Packet *dp;
 
   while(1){
 
@@ -514,7 +515,7 @@ got_audio:
 		    sub_packet_lengths[i] = stream_read_word(demuxer->stream);
 		for (i = 0; i < sub_packets; i++) {
 		    int l;
-		    Demux_Packet *dp = new(zeromem) Demux_Packet(sub_packet_lengths[i]);
+		    Demuxer_Packet *dp = new(zeromem) Demuxer_Packet(sub_packet_lengths[i]);
 		    l=stream_read(demuxer->stream, dp->buffer, sub_packet_lengths[i]);
 		    dp->resize(l);
 		    dp->pts = pts;
@@ -526,7 +527,7 @@ got_audio:
 		delete sub_packet_lengths;
 		return 1;
 	    }
-	    dp = new(zeromem) Demux_Packet(len);
+	    dp = new(zeromem) Demuxer_Packet(len);
 	    len=stream_read(demuxer->stream, dp->buffer, len);
 	    dp->resize(len);
 	    if (priv->audio_need_keyframe == 1) {
@@ -566,7 +567,7 @@ got_video:
 	    // we need a more complicated, 2nd level demuxing, as the video
 	    // frames are stored fragmented in the video chunks :(
 	    sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(ds->sh);
-	    Demux_Packet *dp;
+	    Demuxer_Packet *dp;
 	    int vpkg_header, vpkg_length, vpkg_offset;
 	    int vpkg_seqnum=-1;
 	    int vpkg_subseq=0;
@@ -707,7 +708,7 @@ got_video:
 		    }
 		}
 		// create new packet!
-		dp = new(zeromem) Demux_Packet(sizeof(dp_hdr_t)+vpkg_length+8*(1+2*(vpkg_header&0x3F)));
+		dp = new(zeromem) Demuxer_Packet(sizeof(dp_hdr_t)+vpkg_length+8*(1+2*(vpkg_header&0x3F)));
 		// the timestamp seems to be in milliseconds
 		dp->pts = 0; // timestamp/1000.0f; //timestamp=0;
 		dp->pos = demuxer->filepos;

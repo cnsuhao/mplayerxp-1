@@ -26,6 +26,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "matroska.h"
 
@@ -534,7 +535,7 @@ typedef struct mkv_track
      in display order (the timecodes, not the frames themselves!). In this
      case demux packets have to be cached with the help of these variables. */
   int reorder_timecodes;
-  Demux_Packet **cached_dps;
+  Demuxer_Packet **cached_dps;
   int num_cached_dps, num_allocated_dps;
   float max_pts;
 
@@ -2349,7 +2350,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
   sh_audio_t *sh_a = new_sh_audio_aid(demuxer, track->tnum, aid);
-  Demux_Packet *dp;
+  Demuxer_Packet *dp;
   if(!sh_a) return 1;
   mkv_d->audio_tracks[mkv_d->last_aid] = track->tnum;
 
@@ -2638,12 +2639,12 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
       if (size < 4 || ptr[0] != 'f' || ptr[1] != 'L' ||
 	  ptr[2] != 'a' || ptr[3] != 'C')
 	{
-	  dp = new(zeromem) Demux_Packet (4);
+	  dp = new(zeromem) Demuxer_Packet (4);
 	  memcpy (dp->buffer, "fLaC", 4);
 	}
       else
 	{
-	  dp = new(zeromem) Demux_Packet (size);
+	  dp = new(zeromem) Demuxer_Packet (size);
 	  memcpy (dp->buffer, ptr, size);
 	}
       dp->pts = 0;
@@ -3170,7 +3171,7 @@ static void
 handle_subtitles(demuxer_t *demuxer, mkv_track_t *track, char *block,
 		 int64_t size, uint64_t block_duration, uint64_t timecode)
 {
-  Demux_Packet *dp;
+  Demuxer_Packet *dp;
   char *ptr1;
   int i;
 
@@ -3200,7 +3201,7 @@ handle_subtitles(demuxer_t *demuxer, mkv_track_t *track, char *block,
 
   sub_data.utf8 = 1;
   size -= ptr1 - block;
-  dp = new(zeromem) Demux_Packet(size);
+  dp = new(zeromem) Demuxer_Packet(size);
   memcpy(dp->buffer, ptr1, size);
   dp->pts = timecode / 1000.0f;
 #if 0
@@ -3270,7 +3271,7 @@ handle_realvideo (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 		  uint32_t size, int block_bref)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  Demux_Packet *dp;
+  Demuxer_Packet *dp;
   uint32_t timestamp = mkv_d->last_pts * 1000;
   uint32_t *hdr;
   uint8_t chunks;
@@ -3282,7 +3283,7 @@ handle_realvideo (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 
   chunks = *buffer++;
   isize = --size - (chunks+1)*8;
-  dp = new(zeromem) Demux_Packet (REALHEADER_SIZE + size);
+  dp = new(zeromem) Demuxer_Packet (REALHEADER_SIZE + size);
   memcpy (dp->buffer + REALHEADER_SIZE, buffer + (chunks+1)*8, isize);
 #ifdef WORDS_BIGENDIAN
   p = (uint8_t *)(dp->buffer + REALHEADER_SIZE + isize);
@@ -3327,7 +3328,7 @@ handle_realaudio (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
   int cfs = track->coded_framesize;
   int w = track->audiopk_size;
   int spc = track->sub_packet_cnt;
-  Demux_Packet *dp;
+  Demuxer_Packet *dp;
   int x;
 
   if ((track->a_formattag == mmioFOURCC('2', '8', '_', '8')) ||
@@ -3389,7 +3390,7 @@ handle_realaudio (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 	   // Release all the audio packets
 	   for (x = 0; x < sph*w/apk_usize; x++)
 	     {
-	       dp = new(zeromem) Demux_Packet(apk_usize);
+	       dp = new(zeromem) Demuxer_Packet(apk_usize);
 	       memcpy(dp->buffer, track->audio_buf + x * apk_usize, apk_usize);
 	       /* Put timestamp only on packets that correspond to original audio packets in file */
 	       dp->pts = (x * apk_usize % w) ? 0 : track->audio_timestamp[x * apk_usize / w];
@@ -3399,7 +3400,7 @@ handle_realaudio (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 	     }
 	}
    } else { // Not a codec that require reordering
-  dp = new(zeromem) Demux_Packet (size);
+  dp = new(zeromem) Demuxer_Packet (size);
   memcpy(dp->buffer, buffer, size);
   if (track->ra_pts == mkv_d->last_pts && !mkv_d->a_skip_to_keyframe)
     dp->pts = 0;
@@ -3480,9 +3481,9 @@ handle_video_bframes (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 		      uint32_t size, int block_bref, int block_fref)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  Demux_Packet *dp;
+  Demuxer_Packet *dp;
 
-  dp = new(zeromem) Demux_Packet (size);
+  dp = new(zeromem) Demuxer_Packet (size);
   memcpy(dp->buffer, buffer, size);
   dp->pos = demuxer->filepos;
   dp->pts = mkv_d->last_pts;
@@ -3494,9 +3495,9 @@ handle_video_bframes (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
     dp->flags = 0x10;
   if ((track->num_cached_dps + 1) > track->num_allocated_dps)
     {
-      track->cached_dps = (Demux_Packet **)
+      track->cached_dps = (Demuxer_Packet **)
 	mp_realloc(track->cached_dps, (track->num_cached_dps + 10) *
-		sizeof(Demux_Packet *));
+		sizeof(Demuxer_Packet *));
       track->num_allocated_dps += 10;
     }
   track->cached_dps[track->num_cached_dps] = dp;
@@ -3635,11 +3636,11 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
 	    {
 	      int modified;
 	      unsigned size = lace_size[i];
-	      Demux_Packet *dp;
+	      Demuxer_Packet *dp;
 	      uint8_t *buffer;
 	      modified = demux_mkv_decode (track, block, &buffer, &size, 1);
 	      if (buffer) {
-		  dp = new(zeromem) Demux_Packet (size);
+		  dp = new(zeromem) Demuxer_Packet (size);
 		  memcpy (dp->buffer, buffer, size);
 		  if (modified)
 		    delete buffer;

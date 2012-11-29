@@ -23,6 +23,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "demux_msg.h"
 
@@ -100,7 +101,7 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   film_data_t *film_data = static_cast<film_data_t*>(demuxer->priv);
   film_chunk_t film_chunk;
   int length_fix_bytes;
-  Demux_Packet* dp;
+  Demuxer_Packet* dp;
 
   // see if the end has been reached
   if (film_data->current_chunk >= film_data->total_chunks)
@@ -117,7 +118,7 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   if (film_chunk.syncinfo1 == 0xFFFFFFFF)
   {
    if(demuxer->audio->id>=-1){   // audio not disabled
-    dp = new(zeromem) Demux_Packet(film_chunk.chunk_size);
+    dp = new(zeromem) Demuxer_Packet(film_chunk.chunk_size);
     if (stream_read(demuxer->stream, dp->buffer, film_chunk.chunk_size) !=
       film_chunk.chunk_size) return 0;
     dp->pts = film_chunk.pts;
@@ -153,7 +154,7 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	length_fix_bytes = 6;
 
       // account for the fix bytes when allocating the buffer
-      dp = new(zeromem) Demux_Packet(film_chunk.chunk_size - length_fix_bytes);
+      dp = new(zeromem) Demuxer_Packet(film_chunk.chunk_size - length_fix_bytes);
 
       // these CVID data chunks have a few extra bytes; skip them
       if (stream_read(demuxer->stream, dp->buffer, 10) != 10)

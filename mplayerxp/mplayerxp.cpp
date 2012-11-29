@@ -760,7 +760,7 @@ void mpxp_resync_audio_stream(void)
 
 static void __FASTCALL__ mpxp_stream_event_handler(stream_t *s,const stream_packet_t *sp)
 {
-    s->driver->control(s,SCRTL_EVT_HANDLE,(any_t*)sp);
+    stream_control(s,SCRTL_EVT_HANDLE,(any_t*)sp);
 }
 
 static void init_benchmark(void)
@@ -994,7 +994,7 @@ static void mpxp_init_dvd_nls(void) {
     if(mp_conf.audio_lang) {
 	lang=(char *)mp_malloc(std::max(strlen(mp_conf.audio_lang)+1,size_t(4)));
 	strcpy(lang,mp_conf.audio_lang);
-	if(mp_conf.audio_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
+	if(mp_conf.audio_id==-1 && stream_control(stream,SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
 	    mp_conf.audio_id=*(int *)lang;
 	}
 	delete lang;
@@ -1002,7 +1002,7 @@ static void mpxp_init_dvd_nls(void) {
     if(mp_conf.dvdsub_lang) {
 	lang=(char *)mp_malloc(std::max(strlen(mp_conf.dvdsub_lang)+1,size_t(4)));
 	strcpy(lang,mp_conf.dvdsub_lang);
-	if(mp_conf.dvdsub_id==-1 && stream->driver->control(stream,SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
+	if(mp_conf.dvdsub_id==-1 && stream_control(stream,SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
 	    mp_conf.dvdsub_id=*(int *)lang;
 	}
 	delete lang;
@@ -1079,7 +1079,7 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
     if (vo_data->spudec==NULL) {
 	unsigned *pal;
 	MP_UNIT("spudec_init");
-	if(stream->driver->control(stream,SCTRL_VID_GET_PALETTE,&pal)==MPXP_Ok)
+	if(stream_control(stream,SCTRL_VID_GET_PALETTE,&pal)==MPXP_Ok)
 	    vo_data->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
     }
 
@@ -1361,7 +1361,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
     }
     if(MPXPSys->osd_function==OSD_DVDMENU) {
 	rect_highlight_t hl;
-	if(stream->driver->control(stream,SCTRL_VID_GET_HILIGHT,&hl)==MPXP_Ok) {
+	if(stream_control(stream,SCTRL_VID_GET_HILIGHT,&hl)==MPXP_Ok) {
 	    osd_set_nav_box (hl.sx, hl.sy, hl.ex, hl.ey);
 	    MSG_V("Set nav box: %i %i %i %i\n",hl.sx, hl.sy, hl.ex, hl.ey);
 	    vo_osd_changed (OSDTYPE_DVDNAV);
@@ -1615,10 +1615,10 @@ For future:
 	else	  cmd->id=MP_CMD_TV_STEP_CHANNEL_DOWN;
     case MP_CMD_TV_STEP_NORM:
     case MP_CMD_TV_STEP_CHANNEL_LIST:
-	stream->driver->control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->id);
+	stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->id);
 	break;
     case MP_CMD_DVDNAV:
-      if(stream->driver->control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
+      if(stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
 	if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
 //		seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
 //		seek->secs = 0.;

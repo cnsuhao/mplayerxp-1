@@ -5,6 +5,7 @@ using namespace mpxp;
     s_null - not a driver.
 */
 #include "stream.h"
+#include "stream_internal.h"
 
 static MPXP_Rc __FASTCALL__ null_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);

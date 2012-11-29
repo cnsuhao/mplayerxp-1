@@ -31,6 +31,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 
 #include "osdep/bswap.h"
@@ -2005,7 +2006,7 @@ if(trak->samplesize){
 }
 if(trak->pos==0 && trak->stream_header_len>0){
     // we have to append the stream header...
-    Demux_Packet* dp=new(zeromem) Demux_Packet(x+trak->stream_header_len);
+    Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(x+trak->stream_header_len);
     memcpy(dp->buffer,trak->stream_header,trak->stream_header_len);
     dp->pos=stream_tell(demuxer->stream)-trak->stream_header_len;
     x=stream_read(demuxer->stream,dp->buffer+trak->stream_header_len,x);

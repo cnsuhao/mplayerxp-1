@@ -24,6 +24,7 @@ using namespace mpxp;
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
+#include "demuxer_internal.h"
 #include "stheader.h"
 #include "help_mp.h"
 
@@ -416,7 +417,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
     UNUSED(dsds);
     lavf_priv_t *priv= static_cast<lavf_priv_t*>(demux->priv);
     AVPacket pkt;
-    Demux_Packet *dp;
+    Demuxer_Packet *dp;
     demux_stream_t *ds;
     int id;
     MSG_DBG2("lavf_demux()\n");
@@ -452,7 +453,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
 	return 1;
     }
 
-    dp=new(zeromem) Demux_Packet(pkt.size);
+    dp=new(zeromem) Demuxer_Packet(pkt.size);
     memcpy(dp->buffer, pkt.data, pkt.size);
     av_free_packet(&pkt);
 
