@@ -879,26 +879,11 @@ static char * mpxp_init_output_subsystems(void) {
     char* rs=NULL;
     unsigned i;
     // check video_out driver name:
-    if (mp_conf.video_driver)
-	if ((i=strcspn(mp_conf.video_driver, ":")) > 0) {
-	    size_t i2 = strlen(mp_conf.video_driver);
-	    if (mp_conf.video_driver[i] == ':') {
-		vo_conf.subdevice = (char *)mp_malloc(i2-i);
-		if (vo_conf.subdevice != NULL)
-		    strncpy(vo_conf.subdevice, (char *)(mp_conf.video_driver+i+1), i2-i);
-		mp_conf.video_driver[i] = '\0';
-	    }
-	}
-    MP_UNIT("vo_register");
-    MPXPSys->vo_inited = (vo_data->_register(mp_conf.video_driver)!=NULL)?1:0;
+    MP_UNIT("vo_init");
+    MPXPSys->vo_inited = (vo_data->init(mp_conf.video_driver)!=NULL)?1:0;
 
     if(!MPXPSys->vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
-	exit_player(MSGTR_Exit_error);
-    }
-    MP_UNIT("vo_init");
-    if(vo_data->init(vo_conf.subdevice)!=MPXP_Ok) {
-	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
 	exit_player(MSGTR_Exit_error);
     }
 

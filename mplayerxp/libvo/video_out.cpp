@@ -51,7 +51,6 @@ using namespace mpxp;
 namespace mpxp{
 
 VO_Config::VO_Config() {
-    memset(&subdevice,0,reinterpret_cast<long>(&dbpp) - reinterpret_cast<long>(&subdevice));
     movie_aspect=-1.0;
     softzoom=1;
     flip=-1;
@@ -164,34 +163,38 @@ void Video_Output::print_help() const
     MSG_INFO("\n");
 }
 
-MPXP_Rc Video_Output::_register(const char *driver_name) const
-{
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
-    unsigned i;
-    if(!driver_name) priv.video_out=vo_infos[0];
-    else
-    for (i=0; vo_infos[i] != &null_vo_info; i++){
-	const vo_info_t *info = vo_infos[i];
-	if(strcmp(info->short_name,driver_name) == 0){
-	    priv.video_out = vo_infos[i];
-	    break;
-	}
-    }
-    return priv.video_out?MPXP_Ok:MPXP_False;
-}
-
 const vo_info_t* Video_Output::get_info() const
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
     return priv.video_out;
 }
 
-MPXP_Rc Video_Output::init(const char *subdevice) const
+MPXP_Rc Video_Output::init(const char *driver_name) const
 {
+    char* drv_name = NULL;
+    char * subdev = NULL;
+    if(driver_name) {
+	drv_name=mp_strdup(driver_name);
+	subdev = strchr(drv_name,':');
+	if(subdev) { *subdev='\0'; subdev++; }
+    }
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_init(%s)\n",subdevice);
+    unsigned i;
+    if(!drv_name) priv.video_out=vo_infos[0];
+    else
+    for (i=0; vo_infos[i] != &null_vo_info; i++){
+	const vo_info_t *info = vo_infos[i];
+	if(strcmp(info->short_name,drv_name) == 0){
+	    priv.video_out = vo_infos[i];
+	    break;
+	}
+    }
     priv.frame_counter=0;
-    priv.vo_iface=priv.video_out->query_interface(subdevice);
+    if(priv.video_out) {
+	priv.vo_iface=priv.video_out->query_interface(subdev);
+    }
+    if(drv_name) delete drv_name;
+    if(subdev) delete subdev;
     return priv.vo_iface?MPXP_Ok:MPXP_False;
 }
 

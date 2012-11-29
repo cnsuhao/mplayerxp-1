@@ -116,7 +116,6 @@ namespace mpxp {
 	VO_Config();
 	~VO_Config() {}
 
-	char *		subdevice; // currently unused
 	char*		mDisplayName;
 	int		xinerama_screen;
 
@@ -166,37 +165,36 @@ namespace mpxp {
 	    void	FLIP_UNSET()	{ flags&=~VOFLAG_FLIPPING; }
 	    void	FLIP_REVERT()	{ flags^=VOFLAG_FLIPPING; }
 
-	    MPXP_Rc	init(const char *subdevice_name) const;
-	    void	print_help() const;
-	    MPXP_Rc	_register(const char *driver_name) const;
-	    const vo_info_t* get_info() const;
-	    MPXP_Rc	configure(uint32_t width, uint32_t height, uint32_t d_width,
+	    virtual MPXP_Rc	init(const char *driver_name) const;
+	    virtual void	print_help() const;
+	    virtual const vo_info_t* get_info() const;
+	    virtual MPXP_Rc	configure(uint32_t width, uint32_t height, uint32_t d_width,
 				  uint32_t d_height, vo_flags_e fullscreen,const char *title,
 				  uint32_t format);
-	    uint32_t	query_format(uint32_t* fourcc,unsigned src_w,unsigned src_h) const;
+	    virtual uint32_t	query_format(uint32_t* fourcc,unsigned src_w,unsigned src_h) const;
 
-	    MPXP_Rc	reset() const;
-	    MPXP_Rc	fullscreen() const;
-	    MPXP_Rc	screenshot(unsigned idx) const;
-	    MPXP_Rc	pause() const;
-	    MPXP_Rc	resume() const;
+	    virtual MPXP_Rc	reset() const;
+	    virtual MPXP_Rc	fullscreen() const;
+	    virtual MPXP_Rc	screenshot(unsigned idx) const;
+	    virtual MPXP_Rc	pause() const;
+	    virtual MPXP_Rc	resume() const;
 
-	    MPXP_Rc	get_surface(mp_image_t* mpi) const;
-	    MPXP_Rc	get_surface_caps(dri_surface_cap_t*) const;
+	    virtual MPXP_Rc	get_surface(mp_image_t* mpi) const;
+	    virtual MPXP_Rc	get_surface_caps(dri_surface_cap_t*) const;
 
-	    int		check_events() const;
-	    unsigned	get_num_frames() const;
-	    MPXP_Rc	draw_slice(const mp_image_t *mpi) const;
-	    void	select_frame(unsigned idx) const;
-	    void	flush_page(unsigned decoder_idx) const;
-	    void	draw_osd(unsigned idx) const;
-	    void	draw_spudec_direct(unsigned idx) const;
-	    MPXP_Rc	ctrl(uint32_t request, any_t*data) const;
-	    int		is_final() const;
+	    virtual int		check_events() const;
+	    virtual unsigned	get_num_frames() const;
+	    virtual MPXP_Rc	draw_slice(const mp_image_t *mpi) const;
+	    virtual void	select_frame(unsigned idx) const;
+	    virtual void	flush_page(unsigned decoder_idx) const;
+	    virtual void	draw_osd(unsigned idx) const;
+	    virtual void	draw_spudec_direct(unsigned idx) const;
+	    virtual MPXP_Rc	ctrl(uint32_t request, any_t*data) const;
+	    virtual int		is_final() const;
 
-	    int		adjust_size(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh) const;
-	    void	dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h) const;
-	    void	dri_draw_osd(unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride) const;
+	    virtual int		adjust_size(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh) const;
+	    virtual void	dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h) const;
+	    virtual void	dri_draw_osd(unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride) const;
 
 	    char		antiviral_hole[RND_CHAR4];
 	    vo_flags_e		flags;
