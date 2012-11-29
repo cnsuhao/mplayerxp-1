@@ -313,7 +313,7 @@ int mpcv_decode(any_t *opaque,const enc_frame_t* frame){
 
     if(frame->flags) return 0;
     update_subtitle(sh_video,frame->pts,mpi->xp_idx);
-    vo_flush_page(vo_data,dae_curr_vdecoded(xp_core));
+    vo_data->flush_page(dae_curr_vdecoded(xp_core));
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
@@ -375,7 +375,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
     MP_UNIT("spudec");
     spudec_now_pts(vo_data->spudec,90000*v_pts);
     if(spudec_visible(vo_data->spudec)) {
-	vo_draw_spudec_direct(vo_data,xp_idx);
+	vo_data->draw_spudec_direct(xp_idx);
     } else {
 	spudec_heartbeat(vo_data->spudec,90000*v_pts);
 	if (vo_data->vobsub) {
@@ -393,7 +393,7 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 	    }
 	}
 	/* detect wether the sub has changed or not */
-	if(spudec_changed(vo_data->spudec)) vo_draw_spudec_direct(vo_data,xp_idx);
+	if(spudec_changed(vo_data->spudec)) vo_data->draw_spudec_direct(xp_idx);
 	MP_UNIT(NULL);
     }
   }
@@ -493,13 +493,13 @@ csp_again:
 
     // autodetect flipping
     if(vo_conf.flip==0){
-	vo_FLIP_UNSET(vo_data);
+	vo_data->FLIP_UNSET();
 	if(sh->codec->outflags[j]&CODECS_FLAG_FLIP)
 	    if(!(sh->codec->outflags[j]&CODECS_FLAG_NOFLIP))
-		vo_FLIP_SET(vo_data);
+		vo_data->FLIP_SET();
     }
-    if(vo_data->flags&VFCAP_FLIPPED) vo_FLIP_REVERT(vo_data);
-    if(vo_FLIP(vo_data) && !(vo_data->flags&VFCAP_FLIP)){
+    if(vo_data->flags&VFCAP_FLIPPED) vo_data->FLIP_REVERT();
+    if(vo_data->FLIP() && !(vo_data->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
 	sh->vfilter=vf=vf_open_filter(vf,sh,"flip",NULL,libinput);
     }
@@ -539,7 +539,7 @@ csp_again:
 	    if(_w<screen_size_x || vo_conf.image_zoom>8){
 		screen_size_y=(int)((float)screen_size_x*(1.0/sh->aspect));
 		screen_size_y+=screen_size_y%2; // round
-		if(screen_size_y<sh->src_h) // Do not downscale verticaly
+		if(unsigned(screen_size_y)<sh->src_h) // Do not downscale verticaly
 		    screen_size_y=sh->src_h;
 	    } else screen_size_x=_w; // keep new width
 	} else {

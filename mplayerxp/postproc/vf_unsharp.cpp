@@ -150,7 +150,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 
 static int __FASTCALL__ vf_config( struct vf_instance_s* vf,
 		   int width, int height, int d_width, int d_height,
-		   unsigned int flags, unsigned int outfmt) {
+		   vo_flags_e flags, unsigned int outfmt) {
 
     int z, stepsX, stepsY;
     FilterParam *fp;

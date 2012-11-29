@@ -1,6 +1,11 @@
 #ifndef __MPLAYER_SUBREADER_H
 #define __MPLAYER_SUBREADER_H
 
+namespace mpxp {
+    class Video_Output;
+}
+using namespace mpxp;
+
 extern int sub_uses_time;
 extern int sub_errs;
 extern int sub_num;         // number of subtitle structs
@@ -37,7 +42,7 @@ extern char * sub_filename(const char *path,const char *fname);
 extern void list_sub_file(subtitle* subs);
 extern void dump_mpsub(subtitle* subs, float fps);
 extern void sub_free(subtitle* subs );
-extern void find_sub(subtitle* subtitles,unsigned long key,any_t*vo_data);
+extern void find_sub(subtitle* subtitles,unsigned long key,Video_Output*vo_data);
 
 extern void subcp_open (void);
 extern void subcp_close (void);

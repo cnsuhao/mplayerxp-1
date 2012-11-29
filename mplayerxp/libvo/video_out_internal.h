@@ -24,6 +24,7 @@
 #define __VIDEO_OUT_INTERNAL_H 1
 #include "dri_vo.h"
 
+namespace mpxp {
 class VO_Interface : public Opaque {
     public:
 	VO_Interface(const char *args) { UNUSED(args); };
@@ -51,5 +52,5 @@ class VO_Interface : public Opaque {
 	virtual uint32_t check_events(const vo_resize_t*) = 0;
 	virtual MPXP_Rc ctrl(uint32_t request, any_t*data) = 0;
 };
-
+} // namespace
 #endif

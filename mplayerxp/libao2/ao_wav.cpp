@@ -220,7 +220,6 @@ static void audio_resume(ao_data_t* ao)
 }
 
 // return: how many bytes can be played without blocking
-extern vo_data_t* vo_data;
 static unsigned get_space(const ao_data_t* ao){
     priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
     float pts=dae_played_frame(xp_core->video).v_pts;

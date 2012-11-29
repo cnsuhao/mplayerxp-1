@@ -606,7 +606,7 @@ void __FASTCALL__ spudec_set_forced_subs_only(any_t* const self, const unsigned 
   }
 }
 
-void __FASTCALL__ spudec_draw(any_t*self, draw_osd_f draw_alpha,any_t*vo)
+void __FASTCALL__ spudec_draw(any_t*self, draw_osd_f draw_alpha,const Video_Output*vo)
 {
     spudec_handle_t *spu = (spudec_handle_t *)self;
     if (spu->start_pts <= spu->now_pts && spu->now_pts < spu->end_pts && spu->image)
@@ -750,7 +750,7 @@ void  __FASTCALL__ sws_spu_image(unsigned char *d1, unsigned char *d2, int dw, i
 	sws_freeContext(ctx);
 }
 
-void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dys, draw_osd_f draw_alpha,any_t*vo)
+void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dys, draw_osd_f draw_alpha,const Video_Output*vo)
 {
   spudec_handle_t *spu = (spudec_handle_t *)me;
   scale_pixel *table_x;

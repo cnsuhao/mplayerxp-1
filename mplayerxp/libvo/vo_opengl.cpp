@@ -52,7 +52,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "postproc/vfcap.h"
 #include "vo_msg.h"
-
+namespace mpxp {
 class OpenGL_VO_Interface : public VO_Interface {
     public:
 	OpenGL_VO_Interface(const char* args);
@@ -301,3 +301,4 @@ extern const vo_info_t opengl_vo_info =
   "",
   query_interface
 };
+} //namespace

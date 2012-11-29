@@ -115,6 +115,7 @@ using namespace mpxp;
 #include "xmpcore/xmp_core.h"
 
 #include "video_out.h"
+#include "video_out_internal.h"
 
 #include "osdep/fastmemcpy.h"
 #include "sub.h"
@@ -128,8 +129,6 @@ using namespace mpxp;
 #include "input2/input.h"
 #include "input2/mouse.h"
 #include "osdep/keycodes.h"
-#include "dri_vo.h"
-#include "video_out_internal.h"
 #include "xmpcore/mp_image.h"
 #ifdef CONFIG_VIDIX
 #include "vidix_system.h"
@@ -142,6 +141,7 @@ int sdl_forcegl;
 
 #include <SDL/SDL.h>
 
+namespace mpxp {
 #if	defined(sun) && defined(__svr4__)
 /* setenv is missing on solaris */
 static void setenv(const char *name, const char *val, int _xx)
@@ -1249,8 +1249,7 @@ MPXP_Rc SDL_VO_Interface::ctrl(uint32_t request, any_t*data)
 }
 
 static VO_Interface* query_interface(const char* args) { return new(zeromem) SDL_VO_Interface(args); }
-extern const vo_info_t sdl_vo_info =
-{
+extern const vo_info_t sdl_vo_info = {
     "SDL YUV/RGB/BGR renderer (SDL v1.1.7+ !)"
 #ifdef CONFIG_VIDIX
     " (with sdl:vidix subdevice)"
@@ -1261,3 +1260,4 @@ extern const vo_info_t sdl_vo_info =
     "",
     query_interface
 };
+} //namespace

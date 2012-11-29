@@ -216,7 +216,7 @@ volatile MPXPSecureKeys* secure_keys;
 **************************************************************************/
 static volatile char antiviral_hole4[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 ao_data_t* ao_data=NULL;
-vo_data_t* vo_data=NULL;
+Video_Output* vo_data=NULL;
 /**************************************************************************/
 static int mpxp_init_antiviral_protection(int verbose)
 {
@@ -338,7 +338,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_VO){
 	inited_flags&=~INITED_VO;
 	MP_UNIT("uninit_vo");
-	vo_uninit(vo_data);
+	delete vo_data;
 	vo_data=NULL;
     }
 
@@ -535,7 +535,7 @@ static void get_mmx_optimizations( void )
 static void init_player( void )
 {
     if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0) {
-	vo_print_help(vo_data);
+	vo_data->print_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
@@ -604,7 +604,7 @@ void show_long_help(void) {
     m_config_show_options(MPXPCtx->mconfig);
     mp_input_print_binds(MPXPSys->libinput());
     print_stream_drivers();
-    vo_print_help(vo_data);
+    vo_data->print_help();
     ao_print_help();
     vf_help();
     af_help();
@@ -700,7 +700,7 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 	if(sh_video){
 	    MP_UNIT("seek_video_reset");
 	    mpcv_resync_stream(sh_video->decoder);
-	    vo_reset(vo_data);
+	    vo_data->reset();
 	    sh_video->chapter_change=-1;
 	}
 
@@ -890,14 +890,14 @@ static char * mpxp_init_output_subsystems(void) {
 	    }
 	}
     MP_UNIT("vo_register");
-    MPXPSys->vo_inited = (vo_register(vo_data,mp_conf.video_driver)!=NULL)?1:0;
+    MPXPSys->vo_inited = (vo_data->_register(mp_conf.video_driver)!=NULL)?1:0;
 
     if(!MPXPSys->vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
 	exit_player(MSGTR_Exit_error);
     }
     MP_UNIT("vo_init");
-    if(vo_init(vo_data,vo_conf.subdevice)!=MPXP_Ok) {
+    if(vo_data->init(vo_conf.subdevice)!=MPXP_Ok) {
 	MSG_FATAL("Error opening/initializing the selected video_out (-vo) device!\n");
 	exit_player(MSGTR_Exit_error);
     }
@@ -1185,12 +1185,12 @@ static MPXP_Rc mpxp_find_vcodec(void) {
     MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
     sh_video->inited=0;
-    vo_data->flags=0;
+    vo_data->flags=VOFLAG_NONE;
     /* configure flags */
-    if(vo_conf.fullscreen)	vo_FS_SET(vo_data);
-    if(vo_conf.softzoom)	vo_ZOOM_SET(vo_data);
-    if(vo_conf.flip>0)	vo_FLIP_SET(vo_data);
-    if(vo_conf.vidmode)	vo_VM_SET(vo_data);
+    if(vo_conf.fullscreen)	vo_data->FS_SET();
+    if(vo_conf.softzoom)	vo_data->ZOOM_SET();
+    if(vo_conf.flip>0)		vo_data->FLIP_SET();
+    if(vo_conf.vidmode)		vo_data->VM_SET();
     if((sh_video->decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,MPXPSys->libinput()))) sh_video->inited=1;
 #ifdef ENABLE_WIN32LOADER
     if(!sh_video->inited) {
@@ -1374,7 +1374,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 		*in_pause = 1;
 		return -1;
 	    }
-	    vo_pause(vo_data);
+	    vo_data->pause();
 	}
 	if(mp_conf.verbose) {
 	    MSG_STATUS("\n------ PAUSED -------\r");
@@ -1390,7 +1390,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	}
 
 	while( (cmd = mp_input_get_cmd(MPXPSys->libinput(),20,1,1)) == NULL) {
-	    if(sh_video && MPXPSys->vo_inited) vo_check_events(vo_data);
+	    if(sh_video && MPXPSys->vo_inited) vo_data->check_events();
 	    yield_timeslice();
 	}
 
@@ -1408,7 +1408,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	    }
 	}
 	if (MPXPSys->vo_inited && sh_video)
-	    vo_resume(vo_data);	// resume video
+	    vo_data->resume();	// resume video
 	*in_pause=0;
 	(void)GetRelativeTime();	// keep TF around FT in next cycle
     }
@@ -1637,10 +1637,10 @@ For future:
       }
       break;
     case MP_CMD_VO_FULLSCREEN:
-	vo_fullscreen(vo_data);
+	vo_data->fullscreen();
 	break;
     case MP_CMD_VO_SCREENSHOT:
-	vo_screenshot(vo_data,dae_curr_vplayed(xp_core));
+	vo_data->screenshot(dae_curr_vplayed(xp_core));
 	break;
     case MP_CMD_SUB_POS:
     {
@@ -1712,7 +1712,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     mpxp_init_structs();
     MPXPSystem* MPXPSys=MPXPCtx->MPXPSys;
-    vo_data=vo_preinit_structs();
+    vo_data=new(zeromem) Video_Output;
     init_signal_handling();
 
     xmp_init();
@@ -1942,7 +1942,7 @@ play_next_file:
 	goto main;
     }
 
-    xp_core->num_v_buffs=vo_get_num_frames(vo_data); /* that really known after init_vcodecs */
+    xp_core->num_v_buffs=vo_data->get_num_frames(); /* that really known after init_vcodecs */
 
     if(mp_conf.autoq>0){
 	/* Auto quality option enabled*/
@@ -2072,7 +2072,7 @@ main:
 	    else mpxp_print_audio_status();
 	}
 	usleep(250000);
-	if(sh_video) vo_check_events(vo_data);
+	if(sh_video) vo_data->check_events();
 #ifdef USE_OSD
 	while((mpxp_paint_osd(&osd.visible,&in_pause))!=0);
 #endif

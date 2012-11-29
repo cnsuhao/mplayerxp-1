@@ -27,7 +27,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt){
+	vo_flags_e voflags, unsigned int outfmt){
     int flags=
 	  (gCpuCaps.hasMMX   ? PP_CPU_CAPS_MMX   : 0)
 	| (gCpuCaps.hasMMX2  ? PP_CPU_CAPS_MMX2  : 0)

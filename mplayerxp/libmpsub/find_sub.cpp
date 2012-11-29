@@ -20,9 +20,8 @@ static int current_sub=0;
 static unsigned long nosub_range_start=ULONG_MAX;
 static unsigned long nosub_range_end=ULONG_MAX;
 
-void find_sub(subtitle* subtitles,unsigned long key,any_t*vo_data){
+void find_sub(subtitle* subtitles,unsigned long key,Video_Output*vo){
     int i,j;
-    vo_data_t*vo=reinterpret_cast<vo_data_t*>(vo_data);
 
     if ( !subtitles ) return;
 

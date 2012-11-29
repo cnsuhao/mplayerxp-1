@@ -29,7 +29,7 @@ using namespace mpxp;
 /* since it doesn't seem to be defined on some platforms */
 extern int XShmGetEventBase( Display* );
 #endif
-
+namespace mpxp {
 static int x11_errorhandler(::Display *display,::XErrorEvent *event)
 {
     char msg[256];
@@ -668,7 +668,7 @@ static const char * __FASTCALL__ evt_name(unsigned num)
     else			return "Unknown";
 }
 
-uint32_t X11_System::check_events(vo_adjust_size_t adjust_size,vo_data_t*opaque)
+uint32_t X11_System::check_events(vo_adjust_size_t adjust_size,const Video_Output*opaque)
 {
     uint32_t ret=0;
     XEvent         Event;
@@ -1263,5 +1263,5 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned f
 		ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 }
 #endif
-
+} //namespace
 #endif

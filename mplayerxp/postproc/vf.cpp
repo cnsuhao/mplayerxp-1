@@ -375,7 +375,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src){
 
 int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt){
+	vo_flags_e voflags, unsigned int outfmt){
     int miss;
     int flags=vf_next_query_format(vf,outfmt,d_width,d_height);
     vf->dw=width;
@@ -543,7 +543,7 @@ unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
 
 static int __FASTCALL__ dummy_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int voflags, unsigned int outfmt){
+	vo_flags_e voflags, unsigned int outfmt){
     return 1;
 }
 
@@ -645,7 +645,7 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
 	    _this->dh=h;
 	    _this->dfourcc=fmt;
 	    if(reset_cache) mpxp_reset_vcache();
-	    vo_reset(vo_data);
+	    vo_data->reset();
 	}
     }
     _this=sh_video->vfilter;

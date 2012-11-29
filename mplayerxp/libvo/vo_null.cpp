@@ -38,6 +38,7 @@ using namespace mpxp;
 #endif
 #include "vo_msg.h"
 
+namespace mpxp {
 class Null_VO_Interface : public VO_Interface {
     public:
 	Null_VO_Interface(const char* args);
@@ -234,3 +235,4 @@ extern const vo_info_t null_vo_info = {
     "",
     query_interface
 };
+} //namespace

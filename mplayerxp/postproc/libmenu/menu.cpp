@@ -335,7 +335,7 @@ static char *menu_fribidi(char *txt)
 void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
   const OSD_Render& draw_alpha = *new(zeromem) OSD_Render(mpi->imgfmt);
   int font;
-  int finalize=vo_is_final(vo_data);
+  int finalize=vo_data->is_final();
 
 #ifdef USE_FRIBIDI
   txt = menu_fribidi(txt);
@@ -364,7 +364,7 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
   int sx, xmin, xmax, xmid, xrmin;
   int ll = 0;
   int font;
-  int finalize=vo_is_final(vo_data);
+  int finalize=vo_data->is_final();
   const OSD_Render& draw_alpha = *new(zeromem) OSD_Render(mpi->imgfmt);
 
 #ifdef USE_FRIBIDI
@@ -610,7 +610,7 @@ void menu_draw_box(const mp_image_t* mpi,unsigned char grey,unsigned char alpha,
   if(g < 1) g = 1;
 
   {
-    int finalize = vo_is_final(vo_data);
+    int finalize = vo_data->is_final();
     int stride = (w+7)&(~7); // round to 8
     unsigned char pic[stride*h],pic_alpha[stride*h];
     memset(pic,g,stride*h);

@@ -57,7 +57,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 
 static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt){
+	vo_flags_e flags, unsigned int outfmt){
 
 	uninit(vf);
 	vf->priv->Line = reinterpret_cast<unsigned char*>(new int [width]);

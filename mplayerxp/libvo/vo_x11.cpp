@@ -51,6 +51,7 @@ using namespace mpxp;
 #include "xmpcore/mp_image.h"
 #include "vo_msg.h"
 
+namespace mpxp {
 class X11_VO_Interface : public VO_Interface {
     public:
 	X11_VO_Interface(const char* args);
@@ -437,3 +438,4 @@ extern const vo_info_t x11_vo_info =
 	"",
 	query_interface
 };
+} //namespace

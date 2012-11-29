@@ -16,6 +16,8 @@ using namespace mpxp;
 #define MSGT_CLASS MSGT_OSD
 #include "mp_msg.h"
 
+namespace mpxp {
+
 static const char * __sub_osd_names[]={
     "Seekbar",
     "Play",
@@ -64,7 +66,7 @@ static void alloc_buf(mp_osd_obj_t* obj)
 }
 
 // renders the buffer
-static void vo_draw_text_from_buffer(any_t*vo,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
+static void vo_draw_text_from_buffer(const Video_Output*vo,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
     if (obj->allocated > 0) {
 	draw_alpha(vo,idx,
 		   obj->bbox.x1,obj->bbox.y1,
@@ -97,22 +99,20 @@ static void vo_update_nav (mp_osd_obj_t *obj, int dxs, int dys) {
 }
 
 // return the real height of a char:
-inline static int __FASTCALL__ get_height(vo_data_t*vo,int c,int h){
+inline static int __FASTCALL__ get_height(const Video_Output*vo,int c,int h){
     int font;
     if ((font=vo->font->font[c])>=0)
 	if(h<vo->font->pic_a[font]->h) h=vo->font->pic_a[font]->h;
     return h;
 }
 
-int __FASTCALL__ get_osd_height(any_t*v,int c,int h)
+int __FASTCALL__ get_osd_height(const Video_Output*vo,int c,int h)
 {
-    vo_data_t* vo=(vo_data_t*)v;
     return vo->font?get_height(vo,c,h):0;
 }
 
-static void __FASTCALL__ vo_update_text_osd(any_t*v,mp_osd_obj_t* obj,int dxs,int dys){
-    vo_data_t* vo=(vo_data_t*)v;
-    unsigned char *cp=(unsigned char *)vo->osd_text;
+static void __FASTCALL__ vo_update_text_osd(const Video_Output*vo,mp_osd_obj_t* obj,int dxs,int dys){
+    const unsigned char *cp=(const unsigned char *)vo->osd_text;
     int x=20;
     int h=0;
 
@@ -133,9 +133,8 @@ static void __FASTCALL__ vo_update_text_osd(any_t*v,mp_osd_obj_t* obj,int dxs,in
 
 }
 
-static void __FASTCALL__ vo_draw_text_osd(any_t*v,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
-    vo_data_t* vo=(vo_data_t*)v;
-    unsigned char *cp=(unsigned char *)vo->osd_text;
+static void __FASTCALL__ vo_draw_text_osd(const Video_Output*vo,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
+    const unsigned char *cp=(const unsigned char *)vo->osd_text;
     int font;
     int x=obj->x;
 
@@ -161,8 +160,7 @@ static void __FASTCALL__ vo_draw_text_osd(any_t*v,unsigned idx,mp_osd_obj_t* obj
 //
 //  the above schema is rescalled to n=elems bars
 
-static void __FASTCALL__ vo_update_text_progbar(any_t*v,mp_osd_obj_t* obj,int dxs,int dys){
-    vo_data_t* vo=(vo_data_t*)v;
+static void __FASTCALL__ vo_update_text_progbar(const Video_Output*vo,mp_osd_obj_t* obj,int dxs,int dys){
     obj->flags|=OSDFLAG_CHANGED|OSDFLAG_VISIBLE;
 
     if(vo->osd_progbar_type<0 || !vo->font){
@@ -193,8 +191,7 @@ static void __FASTCALL__ vo_update_text_progbar(any_t*v,mp_osd_obj_t* obj,int dx
 
 }
 
-static void __FASTCALL__ vo_draw_text_progbar(any_t*v,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
-    vo_data_t* vo=(vo_data_t*)v;
+static void __FASTCALL__ vo_draw_text_progbar(const Video_Output*vo,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
     unsigned char *s;
     unsigned char *sa;
     int i,w,h,st,mark;
@@ -277,8 +274,7 @@ static void __FASTCALL__ vo_draw_text_progbar(any_t*v,unsigned idx,mp_osd_obj_t*
 
 // vo_draw_text_sub(int dxs,int dys,void (*draw_alpha)(int x0,int y0, int w,int h, unsigned char* src, unsigned char *srca, int stride))
 
-static void __FASTCALL__ vo_update_text_sub(any_t*v,mp_osd_obj_t* obj,int dxs,int dys){
-    vo_data_t* vo=reinterpret_cast<vo_data_t*>(v);
+static void __FASTCALL__ vo_update_text_sub(const Video_Output*vo,mp_osd_obj_t* obj,int dxs,int dys){
     char *t;
     int c,i,j,l,font;
     int len;
@@ -385,8 +381,7 @@ static void __FASTCALL__ vo_update_text_sub(any_t*v,mp_osd_obj_t* obj,int dxs,in
 
 }
 
-static void __FASTCALL__ vo_draw_text_sub(any_t*v,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
-    vo_data_t* vo=(vo_data_t*)v;
+static void __FASTCALL__ vo_draw_text_sub(const Video_Output*vo,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
     int i,j,c,x,l,font;
     int y=obj->y;
 
@@ -426,8 +421,7 @@ void free_osd_list(void){
     vo_osd_list=NULL;
 }
 
-int __FASTCALL__ vo_update_osd(any_t*v,int dxs,int dys){
-    vo_data_t* vo=(vo_data_t*)v;
+int __FASTCALL__ vo_update_osd(const Video_Output*vo,int dxs,int dys){
     mp_osd_obj_t* obj=vo_osd_list;
     int chg=0;
     while(obj){
@@ -509,10 +503,9 @@ void vo_init_osd(void){
     new_osd_obj(OSDTYPE_DVDNAV);
 }
 
-void __FASTCALL__ vo_remove_text(any_t*v,unsigned idx,int dxs,int dys,clear_osd_f f_remove){
-    vo_data_t* vo=(vo_data_t*)v;
+void __FASTCALL__ vo_remove_text(const Video_Output*vo,unsigned idx,int dxs,int dys,clear_osd_f f_remove){
     mp_osd_obj_t* obj=vo_osd_list;
-    vo_update_osd(v,dxs,dys);
+    vo_update_osd(vo,dxs,dys);
     while(obj){
       if(((obj->flags&OSDFLAG_CHANGED) || (obj->flags&OSDFLAG_VISIBLE) ||
 	  (obj->cleared_frames>=0)) &&
@@ -520,7 +513,6 @@ void __FASTCALL__ vo_remove_text(any_t*v,unsigned idx,int dxs,int dys,clear_osd_
 	  int w=obj->old_bbox.x2-obj->old_bbox.x1;
 	  int h=obj->old_bbox.y2-obj->old_bbox.y1;
 	  if(w>0 && h>0){
-	      vo->osd_changed_flag=obj->flags&OSDFLAG_CHANGED;	// temp hack
 	      f_remove(vo,idx,obj->old_bbox.x1,obj->old_bbox.y1,w,h);
 	  }
 //	  obj->flags&=~OSDFLAG_OLD_BBOX;
@@ -534,27 +526,24 @@ void __FASTCALL__ vo_remove_text(any_t*v,unsigned idx,int dxs,int dys,clear_osd_
     }
 }
 
-void __FASTCALL__ vo_draw_spudec(any_t*v,unsigned idx,int dxs,int dys,draw_osd_f draw_alpha){
+void __FASTCALL__ vo_draw_spudec(const Video_Output*vo,unsigned idx,int dxs,int dys,draw_osd_f draw_alpha){
     UNUSED(idx);
-    vo_data_t*vo=(vo_data_t*)v;
-    spudec_draw_scaled(vo->spudec, dxs, dys, draw_alpha,v); // FIXME
+    spudec_draw_scaled(vo->spudec, dxs, dys, draw_alpha,vo); // FIXME
 }
 
-void __FASTCALL__ vo_draw_text(any_t*v,unsigned idx,int dxs,int dys,draw_osd_f draw_alpha){
-    vo_data_t* vo=(vo_data_t*)v;
+void __FASTCALL__ vo_draw_text(const Video_Output*vo,unsigned idx,int dxs,int dys,draw_osd_f draw_alpha){
     mp_osd_obj_t* obj=vo_osd_list;
-    vo_update_osd(v,dxs,dys);
+    vo_update_osd(vo,dxs,dys);
 
     while(obj){
       if(obj->flags&OSDFLAG_VISIBLE){
 	obj->cleared_frames=0;
-	vo->osd_changed_flag=obj->flags&OSDFLAG_CHANGED;	// temp hack
 	switch(obj->type){
 	case OSDTYPE_SPU:
-	    spudec_draw_scaled(vo->spudec, dxs, dys, draw_alpha,v); // FIXME
+	    spudec_draw_scaled(vo->spudec, dxs, dys, draw_alpha,vo); // FIXME
 	    break;
 	case OSDTYPE_VOBSUB:
-	    if(vo->spudec) spudec_draw_scaled(vo->spudec, dxs, dys, draw_alpha,v);  // FIXME
+	    if(vo->spudec) spudec_draw_scaled(vo->spudec, dxs, dys, draw_alpha,vo);  // FIXME
 	    break;
 	case OSDTYPE_OSD:
 	    vo_draw_text_osd(vo,idx,obj,draw_alpha);
@@ -607,3 +596,4 @@ int __FASTCALL__ vo_osd_check_range_update(int x1,int y1,int x2,int y2){
     }
     return 0;
 }
+} // namespace mpxp

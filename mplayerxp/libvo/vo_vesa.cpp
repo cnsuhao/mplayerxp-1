@@ -46,8 +46,8 @@ using namespace mpxp;
 #include "help_mp.h"
 #include "vo_msg.h"
 
+namespace mpxp {
 /* driver data */
-
 struct win_frame
 {
   uint8_t   *ptr;   /* pointer to window's frame memory */
@@ -816,3 +816,4 @@ extern const vo_info_t vesa_vo_info =
 	"Requires ROOT privileges",
 	query_interface
 };
+} //namespace

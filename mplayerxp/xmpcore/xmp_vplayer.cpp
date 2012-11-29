@@ -183,7 +183,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
 	MP_UNIT("draw_osd");
 	update_osd(shva.v_pts);
-	vo_draw_osd(vo_data,dae_next_played(xp_core->video));
+	vo_data->draw_osd(dae_next_played(xp_core->video));
 #endif
     }
     MP_UNIT("change_frame2");
@@ -215,7 +215,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	}
 
 	player_idx=dae_next_played(xp_core->video);
-	vo_select_frame(vo_data,player_idx);
+	vo_data->select_frame(player_idx);
 	dae_inc_played(xp_core->video);
 	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
 	t2=GetTimer()-t2;

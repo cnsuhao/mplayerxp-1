@@ -106,7 +106,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 
 static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 		  int width, int height, int d_width, int d_height,
-		  unsigned int flags, unsigned int outfmt)
+		  vo_flags_e flags, unsigned int outfmt)
 {
 	/* FIXME - also support UYVY output? */
 	return vf_next_config(vf, width * vf->priv->scalew,

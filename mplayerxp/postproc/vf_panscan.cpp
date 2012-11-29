@@ -32,7 +32,7 @@ struct vf_priv_s {
 
 static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt){
+	vo_flags_e flags, unsigned int outfmt){
     unsigned w,h,d_w,d_h;
     vf->priv->org_w=width;
     vf->priv->org_h=height;
@@ -218,7 +218,7 @@ extern const vf_info_t vf_info_panscan = {
 //===========================================================================//
 static int __FASTCALL__ crop_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt){
+	vo_flags_e flags, unsigned int outfmt){
     unsigned w,h,d_w,d_h;
     vf->priv->org_w=width;
     vf->priv->org_h=height;

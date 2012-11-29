@@ -4,6 +4,7 @@
 #include "libmpstream/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
+#include "libvo/video_out.h" // for vo_flags_e
 
 struct vf_instance_s;
 struct vf_priv_s;
@@ -34,7 +35,7 @@ enum {
 
 typedef int (* __FASTCALL__ vf_config_fun_t)(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt);
+	vo_flags_e flags, unsigned int outfmt);
 typedef struct vf_instance_s {
     const vf_info_t* info;
     char		antiviral_hole[RND_CHAR5];
@@ -42,7 +43,7 @@ typedef struct vf_instance_s {
     // funcs:
     int (* __FASTCALL__ config_vf)(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt);
+	vo_flags_e flags, unsigned int outfmt);
     MPXP_Rc (* __FASTCALL__ control_vf)(struct vf_instance_s* vf,
 	int request, any_t* data);
     int (* __FASTCALL__ query_format)(struct vf_instance_s* vf,
@@ -123,7 +124,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src);
 // default wrappers:
 int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt);
+	vo_flags_e flags, unsigned int outfmt);
 MPXP_Rc __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data);
 int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h);
 int __FASTCALL__ vf_next_put_slice(struct vf_instance_s* vf,mp_image_t *mpi);

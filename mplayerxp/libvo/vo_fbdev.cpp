@@ -38,6 +38,7 @@ using namespace mpxp;
 #include "libmpstream/mrl.h"
 #include "vo_msg.h"
 
+namespace mpxp {
 #define PRINT_LINENUM //MSG_DBG2(" at line %d\n", line_num)
 
 #define MAX_NR_TOKEN	16
@@ -1217,3 +1218,4 @@ extern const vo_info_t fbdev_vo_info = {
     "",
     query_interface
 };
+} //namespace

@@ -17,7 +17,7 @@ using namespace mpxp;
 
 static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 	int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt){
+	vo_flags_e flags, unsigned int outfmt){
 
     if(vf_next_query_format(vf,IMGFMT_YV12,d_width,d_height)<=0){
 	MSG_ERR("yv12 isn't supported by next filter/vo :(\n");

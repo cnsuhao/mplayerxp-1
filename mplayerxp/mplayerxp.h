@@ -179,6 +179,6 @@ namespace mpxp {;
 
     extern play_tree_iter_t* playtree_iter;
     extern ao_data_t* ao_data;
-    extern vo_data_t* vo_data;
+    extern Video_Output* vo_data;
 }
 #endif
