@@ -20,7 +20,7 @@ using namespace mpxp;
 #endif
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
     unsigned org_w;
     unsigned org_h;
     unsigned ps_x,ps_y,ps_w,ps_h;
@@ -30,7 +30,7 @@ struct vf_priv_s {
 
 //===========================================================================//
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     unsigned w,h,d_w,d_h;
@@ -84,7 +84,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 }
 
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 
     mp_image_t *dmpi;
     unsigned sx,sy,sw,sh;
@@ -175,7 +175,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,dmpi);
 }
 
-static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
+static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
     MSG_INFO("[vf_panscan]: cropping [%dx%d] -> [%dx%d] [%s]\n",
 	vf->priv->org_w,vf->priv->org_h,
@@ -184,11 +184,11 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 }
 
 
-static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t* data){
     return vf_next_control(vf,request,data);
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     return vf_next_query_format(vf->next,fmt,w,h);
 }
 
@@ -198,7 +198,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     vf->print_conf=print_conf;
-    if(!vf->priv) vf->priv=new(zeromem) struct vf_priv_s;
+    if(!vf->priv) vf->priv=new(zeromem) vf_priv_t;
     vf->priv->panscan=0;
     if(args) sscanf(args,"%f",&vf->priv->panscan);
     if(vf->priv->panscan<=0.) return MPXP_False;
@@ -216,7 +216,7 @@ extern const vf_info_t vf_info_panscan = {
 };
 
 //===========================================================================//
-static int __FASTCALL__ crop_config(struct vf_instance_s* vf,
+static int __FASTCALL__ crop_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     unsigned w,h,d_w,d_h;
@@ -256,7 +256,7 @@ static MPXP_Rc __FASTCALL__ vf_crop_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
     vf->put_slice=put_slice;
     vf->print_conf=print_conf;
-    if(!vf->priv) vf->priv=new(zeromem) struct vf_priv_s;
+    if(!vf->priv) vf->priv=new(zeromem) vf_priv_t;
     vf->priv->ps_x=
     vf->priv->ps_y=
     vf->priv->ps_w=

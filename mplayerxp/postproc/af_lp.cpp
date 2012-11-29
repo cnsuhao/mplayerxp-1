@@ -10,13 +10,12 @@ using namespace mpxp;
 #include "af.h"
 #include "pp_msg.h"
 
-typedef struct s_lp
-{
+struct af_lp_t {
     unsigned fin;
     unsigned fake_out;
-}af_lp_t;
+};
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_lp_t* s   = (af_lp_t*)af->setup;
     memcpy(&af->conf,arg,sizeof(af_conf_t));
@@ -27,7 +26,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
 }
 
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_lp_t* s   = (af_lp_t*)af->setup;
   switch(cmd){
@@ -57,13 +56,13 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
     if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* data)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* data)
 {
     // Do something necessary to get rid of annoying warning during compile
     if(!af) MSG_ERR("EEEK: Argument af == NULL in af_lp.c play().");

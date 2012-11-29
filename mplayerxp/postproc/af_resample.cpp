@@ -64,14 +64,14 @@ static enum AVSampleFormat get_sample_format(mpaf_format_e fmt) {
 }
 
 // local data
-typedef struct af_resample_s {
+struct af_resample_t {
     struct SwrContext* ctx;
     unsigned irate;
     unsigned inch;
     unsigned ifmt;
-} af_resample_t;
+};
 
-static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 {
     af_resample_t* s   = (af_resample_t*)af->setup;
     enum AVSampleFormat avfmt;
@@ -117,7 +117,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     return rv;
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
     af_resample_t* s   = (af_resample_t*)af->setup;
     switch(cmd){
@@ -140,7 +140,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
     af_resample_t* s = (af_resample_t*)af->setup;
     if(s->ctx) swr_free(&s->ctx);
@@ -149,7 +149,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 {
     int rc;
     mp_aframe_t* out = new_mp_aframe_genome(in);

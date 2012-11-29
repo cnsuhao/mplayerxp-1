@@ -15,7 +15,7 @@ using namespace mpxp;
 #include "pp_msg.h"
 
 typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize);
-struct vf_priv_s {
+struct vf_priv_t {
     unsigned dw,dh;
     int dir;
     mirror_f method;
@@ -87,7 +87,7 @@ static void __FASTCALL__ mirror_x(unsigned char* dst,unsigned char* src,unsigned
 }
 
 //===========================================================================//
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     vf->priv->dw=width;
@@ -95,7 +95,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
     int finalize;
     // hope we'll get DR buffer:
@@ -126,7 +126,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     int dir;
     vf->config_vf=vf_config;
     vf->put_slice=put_slice;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
     dir=1;
     if(args)  dir=args[0]=='x'?1:args[0]=='y'?0:-1;
     if(dir==-1) {

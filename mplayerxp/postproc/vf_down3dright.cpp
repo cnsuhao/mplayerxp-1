@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "postproc/swscale.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
 	int skipline;
 	int scalew;
 	int scaleh;
@@ -24,7 +24,7 @@ struct vf_priv_s {
 
 static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 		    unsigned int dststride[3], unsigned int srcstride[3],
-		    int w, int h, struct vf_priv_s* p,int finalize)
+		    int w, int h, vf_priv_t* p,int finalize)
 {
 	int k;
 
@@ -87,7 +87,7 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 	}
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
 {
 	mp_image_t *dmpi;
 	int finalize;
@@ -104,7 +104,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 	return vf_next_put_slice(vf,dmpi);
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 		  int width, int height, int d_width, int d_height,
 		  vo_flags_e flags, unsigned int outfmt)
 {
@@ -114,7 +114,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 }
 
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h)
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h)
 {
     /* FIXME - really any YUV 4:2:0 input format should work */
     switch (fmt) {
@@ -126,7 +126,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf)
+static void __FASTCALL__ uninit(vf_instance_t* vf)
 {
     delete vf->priv;
 }
@@ -138,7 +138,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
     vf->put_slice=put_slice;
     vf->uninit=uninit;
 
-    vf->priv = new(zeromem) struct vf_priv_s;
+    vf->priv = new(zeromem) vf_priv_t;
     vf->priv->skipline = 0;
     vf->priv->scalew = 1;
     vf->priv->scaleh = 2;

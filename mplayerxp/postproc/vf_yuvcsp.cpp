@@ -11,13 +11,13 @@ using namespace mpxp;
 #include "vf.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
     int csp;
 };
 
 //===========================================================================//
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt);
@@ -31,7 +31,7 @@ static inline int clamp_c(int x){
     return (x > 240) ? 240 : (x < 16) ? 16 : x;
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     unsigned i,j,y,x;
     uint8_t *y_in, *cb_in, *cr_in;
     uint8_t *y_out, *cb_out, *cr_out;
@@ -66,11 +66,11 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf){
+static void __FASTCALL__ uninit(vf_instance_t* vf){
 	delete vf->priv;
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     switch(fmt){
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
@@ -86,7 +86,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->put_slice=put_slice;
 //    vf->uninit=uninit;
     vf->query_format=query_format;
-//    vf->priv=mp_calloc(1, sizeof(struct vf_priv_s));
+//    vf->priv=mp_calloc(1, sizeof(vf_priv_t));
 //    if (args)
 //	vf->priv->csp = atoi(args);
     check_pin("vfilter",vf->pin,VF_PIN);

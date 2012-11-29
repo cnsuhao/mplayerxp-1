@@ -38,7 +38,7 @@ using namespace mpxp;
 
 //===========================================================================//
 
-struct vf_priv_s {
+struct vf_priv_t {
 	double ref[4][2];
 	int32_t coeff[1<<SUB_PIXEL_BITS][4];
 	int32_t (*pv)[2];
@@ -49,7 +49,7 @@ struct vf_priv_s {
 
 /***************************************************************************/
 
-static void __FASTCALL__ initPv(struct vf_priv_s *priv, int W, int H){
+static void __FASTCALL__ initPv(vf_priv_t *priv, int W, int H){
 	double a,b,c,d,e,f,g,h,D;
 	double (*ref)[2]= priv->ref;
 	int x,y;
@@ -98,7 +98,7 @@ static double __FASTCALL__ getCoeff(double d){
 	return coeff;
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 	int i, j;
@@ -125,7 +125,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf){
+static void __FASTCALL__ uninit(vf_instance_t* vf){
 	if(!vf->priv) return;
 
 	if(vf->priv->pv) delete vf->priv->pv;
@@ -135,9 +135,9 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 	vf->priv=NULL;
 }
 
-static inline void resampleCubic(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, struct vf_priv_s *privParam, int xShift, int yShift){
+static inline void resampleCubic(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, vf_priv_t *privParam, int xShift, int yShift){
 	int x, y;
-	struct vf_priv_s priv= *privParam;
+	vf_priv_t priv= *privParam;
 
 	for(y=0; y<h; y++){
 		for(x=0; x<w; x++){
@@ -197,9 +197,9 @@ static inline void resampleCubic(uint8_t *dst, uint8_t *src, int w, int h, int d
 }
 
 static inline void resampleLinear(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride,
-				  struct vf_priv_s *privParam, int xShift, int yShift){
+				  vf_priv_t *privParam, int xShift, int yShift){
 	int x, y;
-	struct vf_priv_s priv= *privParam;
+	vf_priv_t priv= *privParam;
 
 	for(y=0; y<h; y++){
 		for(x=0; x<w; x++){
@@ -254,7 +254,7 @@ static inline void resampleLinear(uint8_t *dst, uint8_t *src, int w, int h, int 
 	}
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 
@@ -311,7 +311,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
 	switch(fmt)
 	{
 	case IMGFMT_YV12:
@@ -333,7 +333,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->put_slice=put_slice;
 	vf->query_format=query_format;
 	vf->uninit=uninit;
-	vf->priv=new(zeromem) struct vf_priv_s;
+	vf->priv=new(zeromem) vf_priv_t;
 
 	if(args==NULL) return MPXP_False;
 

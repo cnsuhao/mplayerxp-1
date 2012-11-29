@@ -36,7 +36,7 @@ using namespace mpxp;
 #define SIZE_HEADER (2 * sizeof(int) + sizeof(unsigned long long))
 
 // Data for specific instances of this filter
-typedef struct af_export_s
+struct af_export_t
 {
   unsigned long long  count; // Used for sync
   uint8_t* buf[AF_NCH]; 	// Buffers for storing the data before it is exported
@@ -45,15 +45,14 @@ typedef struct af_export_s
   int	fd;           	// File descriptor to shared memory area
   char* filename;      	// File to export data
   any_t* mmap_area;     	// MMap shared area
-} af_export_t;
-
+};
 
 /* Initialization and runtime control_af
    af audio filter instance
    cmd control_af command
    arg argument
 */
-static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af, const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af, const af_conf_t* arg)
 {
     af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
     unsigned i=0;
@@ -117,7 +116,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af, const af_conf_t*
     // Use test_output to return FALSE if necessary
     return af_test_output(af, arg);
 }
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
 
@@ -166,7 +165,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 /* Free allocated memory and clean up other stuff too.
    af audio filter instance
 */
-static void __FASTCALL__ uninit( struct af_instance_s* af )
+static void __FASTCALL__ uninit( af_instance_t* af )
 {
   if(af->setup){
     af_export_t* s = reinterpret_cast<af_export_t*>(af->setup);
@@ -192,7 +191,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
    af audio filter instance
    data audio data
 */
-static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af,const mp_aframe_t* data)
+static mp_aframe_t* __FASTCALL__ play( af_instance_t* af,const mp_aframe_t* data)
 {
     const mp_aframe_t*c   = data; // Current working data
     af_export_t*s   = reinterpret_cast<af_export_t*>(af->setup); // Setup for this instance

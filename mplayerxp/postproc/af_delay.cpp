@@ -19,16 +19,16 @@ using namespace mpxp;
 #define UPDATEQI(qi) qi=(qi+1)&(L-1)
 
 // Data for specific instances of this filter
-typedef struct af_delay_s
+struct af_delay_t
 {
   any_t* q[AF_NCH];   	// Circular queues used for delaying audio signal
   int 	wi[AF_NCH];  	// Write index
   int 	ri;		// Read index
   float	d[AF_NCH];   	// Delay [ms]
-}af_delay_t;
+};
 
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_delay_t* s = reinterpret_cast<af_delay_t*>(af->setup);
 
@@ -74,7 +74,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
   return MPXP_Unknown;
 }
 
-static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 {
     af_delay_t* s = reinterpret_cast<af_delay_t*>(af->setup);
     unsigned i;
@@ -95,7 +95,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   int i;
   for(i=0;i<AF_NCH;i++)
@@ -106,7 +106,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 {
     mp_aframe_t* c=new_mp_aframe_genome(in);
     mp_alloc_aframe(c);

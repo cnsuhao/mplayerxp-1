@@ -66,7 +66,7 @@ using namespace mpxp;
 // #define DUMP_FORMAT_DATA
 
 /* Private data */
-struct vf_priv_s {
+struct vf_priv_t {
     /* Current frame */
     int  frame_cur;
     /* Frame output step, 0 = all */
@@ -76,10 +76,10 @@ struct vf_priv_s {
 };
 
 /* Filter handler */
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
 {
     mp_image_t        *dmpi;
-    struct vf_priv_s  *priv;
+    vf_priv_t  *priv;
     int               skip;
 
     priv = vf->priv;
@@ -131,7 +131,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
     return 0;
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf)
+static void __FASTCALL__ uninit(vf_instance_t* vf)
 {
     /* Free private data */
     delete vf->priv;
@@ -140,12 +140,12 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 /* Main entry funct for the filter */
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
-    struct vf_priv_s *p;
+    vf_priv_t *p;
 
     vf->put_slice = put_slice;
     vf->uninit = uninit;
     vf->default_reqs = VFCAP_ACCEPT_STRIDE;
-    vf->priv = p = new(zeromem) struct vf_priv_s;
+    vf->priv = p = new(zeromem) vf_priv_t;
     if (p == NULL) return MPXP_False;
 
     if (args != NULL) {

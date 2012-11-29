@@ -40,7 +40,7 @@ using namespace mpxp;
 #define WIDTH 512
 #define HEIGHT 512
 
-struct vf_priv_s {
+struct vf_priv_t {
     unsigned int fmt;
     int frame_num;
 };
@@ -105,7 +105,7 @@ static void __FASTCALL__ rgb_put_pixel(uint8_t *buf, int x, int y, int stride, i
     }
 }
 
-static int __FASTCALL__ rgb_config(struct vf_instance_s* vf,
+static int __FASTCALL__ rgb_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     vf->priv->fmt=rgb_getfmt(outfmt);
@@ -113,7 +113,7 @@ static int __FASTCALL__ rgb_config(struct vf_instance_s* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt);
 }
 
-static int __FASTCALL__ rgb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ rgb_put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
     int x, y;
 
@@ -138,7 +138,7 @@ static int __FASTCALL__ rgb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
     return vf_next_put_slice(vf,dmpi);
 }
 
-static int __FASTCALL__ rgb_query_format(struct vf_instance_s* vf, unsigned int outfmt,unsigned w,unsigned h){
+static int __FASTCALL__ rgb_query_format(vf_instance_t* vf, unsigned int outfmt,unsigned w,unsigned h){
     unsigned int fmt=rgb_getfmt(outfmt);
     if(!fmt) return 0;
     return vf_next_query_format(vf,fmt,w,h) & (~VFCAP_CSP_SUPPORTED_BY_HW);
@@ -146,7 +146,7 @@ static int __FASTCALL__ rgb_query_format(struct vf_instance_s* vf, unsigned int 
 
 //===========================================================================//
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 
@@ -368,7 +368,7 @@ static void __FASTCALL__ ring2Test(uint8_t *dst, int stride, int off)
 	}
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
     int frame= vf->priv->frame_num;
 
@@ -406,7 +406,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     UNUSED(fmt);
     return vf_next_query_format(vf,IMGFMT_YV12,w,h) & (~VFCAP_CSP_SUPPORTED_BY_HW);
 }
@@ -416,7 +416,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config_vf=vf_config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
     method='!';
     if(args) {
 	sscanf(args,"%c",&method);

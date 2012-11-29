@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "pp_msg.h"
 #include "mplayerxp.h" // vo_data
 
-struct vf_priv_s {
+struct vf_priv_t {
     int up_h,dn_h;
     unsigned w,h;
     int new_frame;
@@ -28,7 +28,7 @@ struct vf_priv_s {
 
 //===========================================================================//
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     unsigned h,dh;
@@ -41,7 +41,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return vf_next_config(vf,width,h,d_width,dh,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     int finalize;
     mp_image_t *dmpi;
     if(vf->priv->new_frame)
@@ -98,7 +98,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_START_FRAME:
 	vf->priv->new_frame=1;
@@ -107,7 +107,7 @@ static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, an
     return vf_next_control(vf,request,data);
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     return vf_next_query_format(vf->next,fmt,w,h);
 }
 
@@ -116,7 +116,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->control_vf=control_vf;
     vf->query_format=query_format;
     vf->put_slice=put_slice;
-    if(!vf->priv) vf->priv=new(zeromem) struct vf_priv_s;
+    if(!vf->priv) vf->priv=new(zeromem) vf_priv_t;
     if(args) sscanf(args,"%d:%d",&vf->priv->up_h,&vf->priv->dn_h);
     else     vf->priv->up_h=vf->priv->dn_h=-1;
     check_pin("vfilter",vf->pin,VF_PIN);

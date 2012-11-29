@@ -13,7 +13,7 @@ extern "C" {
 #endif
 #include "xmpcore/mp_image.h"
 
-struct af_stream_s;
+struct af_stream_t;
 typedef struct sh_audio_s {
     int			aid;
     demux_stream_t*	ds;
@@ -42,7 +42,7 @@ typedef struct sh_audio_s {
     unsigned		a_buffer_size;
 
 /* filter buffer */
-    struct af_stream_s*	afilter;
+    af_stream_t*	afilter;
     int			afilter_inited;
     unsigned		af_bps; // == samplerate*samplesize*channels   (after filters bytes/sec)
     char*		af_buffer;
@@ -63,7 +63,7 @@ typedef struct sh_audio_s {
     unsigned char*	codecdata;
     unsigned		codecdata_len;
 } sh_audio_t;
-struct vf_instance_s;
+struct vf_instance_t;
 typedef struct sh_video_s {
     int			vid;
     demux_stream_t*	ds;
@@ -83,7 +83,7 @@ typedef struct sh_video_s {
     float		aspect;
     unsigned int	outfmtidx; // TODO: replace with out_fourcc
 /* vfilter chan */
-    struct vf_instance_s*vfilter;
+    vf_instance_t*	vfilter;
     int			vfilter_inited;
     int			vf_flags;
     unsigned		active_slices; // used in dec_video+vd_ffmpeg only!!!

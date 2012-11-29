@@ -6,8 +6,8 @@
 #include "libmpdemux/stheader.h"
 #include "libvo/video_out.h" // for vo_flags_e
 
-struct vf_instance_s;
-struct vf_priv_s;
+struct vf_instance_t;
+struct vf_priv_t;
 
 enum {
     VF_FLAGS_THREADS	=0x00000001UL, /**< Thread safe plugin (requires to be applied within of threads) */
@@ -15,79 +15,79 @@ enum {
     VF_FLAGS_SLICES	=0x00000004UL /**< really can draw slices (requires to be applied on SMP etc) */
 };
 
-typedef struct vf_info_s {
+struct vf_info_t {
     const char *info;
     const char *name;
     const char *author;
     const char *comment;
     const unsigned flags;
-    MPXP_Rc (* __FASTCALL__ open)(struct vf_instance_s* vf,const char* args);
-} vf_info_t;
+    MPXP_Rc (* __FASTCALL__ open)(vf_instance_t* vf,const char* args);
+};
 
-typedef struct vf_image_context_s {
+struct vf_image_context_t {
     unsigned char* static_planes[2];
     int static_idx;
-} vf_image_context_t;
+};
 
 enum {
     VF_PIN=RND_NUMBER7+RND_CHAR7
 };
 
-typedef int (* __FASTCALL__ vf_config_fun_t)(struct vf_instance_s* vf,
+typedef int (* __FASTCALL__ vf_config_fun_t)(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt);
-typedef struct vf_instance_s {
-    const vf_info_t* info;
+struct vf_instance_t {
+    const vf_info_t*	info;
     char		antiviral_hole[RND_CHAR5];
     unsigned		pin; // personal identification number
     // funcs:
-    int (* __FASTCALL__ config_vf)(struct vf_instance_s* vf,
+    int (* __FASTCALL__ config_vf)(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt);
-    MPXP_Rc (* __FASTCALL__ control_vf)(struct vf_instance_s* vf,
+    MPXP_Rc (* __FASTCALL__ control_vf)(vf_instance_t* vf,
 	int request, any_t* data);
-    int (* __FASTCALL__ query_format)(struct vf_instance_s* vf,
+    int (* __FASTCALL__ query_format)(vf_instance_t* vf,
 	unsigned int fmt,unsigned w,unsigned h);
-    void (* __FASTCALL__ get_image)(struct vf_instance_s* vf,
+    void (* __FASTCALL__ get_image)(vf_instance_t* vf,
 	mp_image_t *mpi);
-    int (* __FASTCALL__ put_slice)(struct vf_instance_s* vf,
+    int (* __FASTCALL__ put_slice)(vf_instance_t* vf,
 	mp_image_t *mpi);
-    void (* __FASTCALL__ start_slice)(struct vf_instance_s* vf,
+    void (* __FASTCALL__ start_slice)(vf_instance_t* vf,
 	mp_image_t *mpi);
-    void (* __FASTCALL__ uninit)(struct vf_instance_s* vf);
+    void (* __FASTCALL__ uninit)(vf_instance_t* vf);
     // optional: maybe NULL
-    void (* __FASTCALL__ print_conf)(struct vf_instance_s* vf);
+    void (* __FASTCALL__ print_conf)(vf_instance_t* vf);
     // caps:
     unsigned int default_caps; // used by default query_format()
     unsigned int default_reqs; // used by default config()
     // data:
     vf_image_context_t imgctx;
-    struct vf_instance_s* next;
-    struct vf_instance_s* prev;
+    vf_instance_t* next;
+    vf_instance_t* prev;
     mp_image_t *dmpi;
-    struct vf_priv_s* priv;
+    vf_priv_t* priv;
     sh_video_t *sh;
     /* configuration for outgoing stream */
     unsigned dw,dh,dfourcc;
     /* event handler*/
     any_t*	libinput;
-} vf_instance_t __attribute__ ((packed));
+}__attribute__ ((packed));
 
 // Configuration switches
-typedef struct vf_cfg_s{
+struct vf_cfg_t{
   int force;	// Initialization type
   char* list;	/* list of names of filters that are added to filter
 		   list during first initialization of stream */
-}vf_cfg_t;
+};
 
 // control codes:
 #include "mpc_info.h"
 
-typedef struct vf_seteq_s
+struct vf_equalizer_t
 {
     const char *item;
     int value;
-} vf_equalizer_t;
+};
 
 enum {
     VFCTRL_QUERY_MAX_PP_LEVEL	=4, /* test for postprocessing support (max level) */
@@ -122,12 +122,12 @@ unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,un
 void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src);
 
 // default wrappers:
-int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
+int __FASTCALL__ vf_next_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt);
-MPXP_Rc __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data);
-int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h);
-int __FASTCALL__ vf_next_put_slice(struct vf_instance_s* vf,mp_image_t *mpi);
+MPXP_Rc __FASTCALL__ vf_next_control(vf_instance_t* vf, int request, any_t* data);
+int __FASTCALL__ vf_next_query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h);
+int __FASTCALL__ vf_next_put_slice(vf_instance_t* vf,mp_image_t *mpi);
 
 vf_instance_t* __FASTCALL__ append_filters(vf_instance_t* last);
 

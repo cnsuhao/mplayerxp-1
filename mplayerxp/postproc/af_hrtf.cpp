@@ -22,7 +22,7 @@ using namespace mpxp;
 
 typedef float real_t;
 
-typedef struct af_hrtf_s {
+struct af_hrtf_t {
     /* Lengths */
     int dlbuflen, hrflen, basslen;
     /* L, C, R, Ls, Rs channels */
@@ -56,7 +56,7 @@ typedef struct af_hrtf_s {
     float adapt_lrprr_gain, adapt_lrmrr_gain;
     /* Cyclic position on the ring buffer */
     int cyc_pos;
-} af_hrtf_t;
+};
 
 /* Convolution on a ring buffer
  *    nx:	length of the ring buffer
@@ -266,7 +266,7 @@ inline void update_ch(af_hrtf_t *s, real_t *in, const int k)
     s->ba_r[k] = in[4] + in[1] + in[3];
 }
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_hrtf_t *s = reinterpret_cast<af_hrtf_t*>(af->setup);
     MPXP_Rc test_output_res;
@@ -299,7 +299,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return test_output_res;
 }
 /* Initialization and runtime control_af */
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s *af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t *af, int cmd, any_t* arg)
 {
     af_hrtf_t *s = reinterpret_cast<af_hrtf_t*>(af->setup);
     char mode;
@@ -354,7 +354,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s *af, int cmd, any_t*
 }
 
 /* Deallocate memory */
-static void __FASTCALL__ uninit(struct af_instance_s *af)
+static void __FASTCALL__ uninit(af_instance_t *af)
 {
     if(af->setup) {
 	af_hrtf_t *s = reinterpret_cast<af_hrtf_t*>(af->setup);
@@ -387,7 +387,7 @@ frequencies).
 2. A bass compensation is introduced to ensure that 0-200 Hz are not
 damped (without any real 3D acoustical image, however).
 */
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s *af,const mp_aframe_t *ind)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t *af,const mp_aframe_t *ind)
 {
     af_hrtf_t*	s = reinterpret_cast<af_hrtf_t*>(af->setup);
     real_t*	in = reinterpret_cast<real_t*>(ind->audio); // Input audio data

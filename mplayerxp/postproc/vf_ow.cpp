@@ -51,7 +51,7 @@ static const uint8_t  __attribute__((aligned(8))) dither[8][8]={
 };
 //FIXME the above is duplicated in many filters
 
-struct vf_priv_s {
+struct vf_priv_t {
     float strength[2];
     float delta;
     int mode;
@@ -159,7 +159,7 @@ static void __FASTCALL__ compose2D2(float *dst, float *src[4], float *temp[2], i
     compose2D(dst    , temp[0], temp[1], 1, stride, step  , x, y, w, h);
 }
 
-static void __FASTCALL__ filter(struct vf_priv_s *p, uint8_t *dst, uint8_t *src, int dst_stride, int src_stride, int stx, int sty, int width, int height, int is_luma){
+static void __FASTCALL__ filter(vf_priv_t *p, uint8_t *dst, uint8_t *src, int dst_stride, int src_stride, int stx, int sty, int width, int height, int is_luma){
     int x,y, i, j;
 //    double sum=0;
     double s= p->strength[!is_luma];
@@ -204,7 +204,7 @@ static void __FASTCALL__ filter(struct vf_priv_s *p, uint8_t *dst, uint8_t *src,
 //    printf("%f\n", sum/height/width);
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height, vo_flags_e flags, unsigned int outfmt){
+static int __FASTCALL__ vf_config(vf_instance_t* vf, int width, int height, int d_width, int d_height, vo_flags_e flags, unsigned int outfmt){
     int h= (height+15)&(~15);
     int i,j;
 
@@ -216,7 +216,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf, int width, int heigh
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
     if(mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
     // ok, we can do pp in-place (or pp disabled):
     vf->dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
@@ -233,7 +233,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     mpi->flags|=MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
 
     if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
@@ -267,7 +267,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,dmpi);
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf){
+static void __FASTCALL__ uninit(vf_instance_t* vf){
     int i,j;
     if(!vf->priv) return;
 
@@ -283,7 +283,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 }
 
 //===========================================================================//
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     switch(fmt){
 	case IMGFMT_YVU9:
 	case IMGFMT_IF09:
@@ -308,7 +308,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->get_image=get_image;
     vf->query_format=query_format;
     vf->uninit=uninit;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
 
     vf->priv->depth= 8;
     vf->priv->strength[0]= 1.0;

@@ -8,14 +8,14 @@
 #include "xmpcore/xmp_enums.h"
 #include "xmpcore/mp_aframe.h"
 
-struct af_instance_s;
+struct af_instance_t;
 
 // Fraction, used to calculate buffer lengths
-typedef struct frac_s
+struct frac_t
 {
   int n; // Numerator
   int d; // Denominator
-} frac_t;
+};
 
 // Flags used for defining the behavior of an audio filter
 enum {
@@ -24,45 +24,45 @@ enum {
 };
 /* Audio filter information not specific for current instance, but for
    a specific filter */
-typedef struct af_info_s
+struct af_info_t
 {
   const char *info;
   const char *name;
   const char *author;
   const char *comment;
   const unsigned flags;
-  MPXP_Rc (* __FASTCALL__ open)(struct af_instance_s* vf);
-} af_info_t;
+  MPXP_Rc (* __FASTCALL__ open)(af_instance_t* vf);
+};
 
 enum {
     AF_PIN=RND_NUMBER6+RND_CHAR6
 };
 
-typedef struct af_conf_s {
+struct af_conf_t {
     /*------ stream description ----------*/
     unsigned		rate;  /* rate of audio */
     unsigned		nch;   /* number of channels */
     mpaf_format_e	format;/* PCM format of audio */
-}af_conf_t;
+};
 
 // Linked list of audio filters
-typedef struct af_instance_s {
+struct af_instance_t {
     const af_info_t*	info;
     char		antiviral_hole[RND_CHAR6];
     unsigned		pin; // personal identification number
-    MPXP_Rc		(* __FASTCALL__ config_af)(struct af_instance_s* af, const af_conf_t* arg);
-    MPXP_Rc		(* __FASTCALL__ control_af)(struct af_instance_s* af, int cmd, any_t* arg);
-    void		(* __FASTCALL__ uninit)(struct af_instance_s* af);
-    mp_aframe_t*	(* __FASTCALL__ play)(struct af_instance_s* af,const mp_aframe_t* data);
+    MPXP_Rc		(* __FASTCALL__ config_af)(af_instance_t* af, const af_conf_t* arg);
+    MPXP_Rc		(* __FASTCALL__ control_af)(af_instance_t* af, int cmd, any_t* arg);
+    void		(* __FASTCALL__ uninit)(af_instance_t* af);
+    mp_aframe_t*	(* __FASTCALL__ play)(af_instance_t* af,const mp_aframe_t* data);
     any_t*		setup; // setup data for this specific instance and filter
     af_conf_t		conf; // configuration for outgoing data stream
-    struct af_instance_s* next;
-    struct af_instance_s* prev;
+    af_instance_t*	next;
+    af_instance_t*	prev;
     any_t*		parent;
     double		delay; // Delay caused by the filter [ms]
     frac_t		mul; /* length multiplier: how much does this instance change
 				the length of the buffer. */
-}af_instance_t __attribute__ ((packed));
+}__attribute__ ((packed));
 
 // Initialization flags
 extern int* af_cpu_speed;
@@ -87,14 +87,14 @@ static inline int AF_INIT_TYPE(void) { return (af_cpu_speed?*af_cpu_speed:AF_INI
 #endif
 
 // Configuration switches
-typedef struct af_cfg_s{
+struct af_cfg_t{
   int force;	// Initialization type
   char* list;	/* list of names of filters that are added to filter
 		   list during first initialization of stream */
-}af_cfg_t;
+};
 
 // Current audio stream
-typedef struct af_stream_s
+struct af_stream_t
 {
     char		antiviral_hole[RND_CHAR7];
     // The first and last filter in the list
@@ -106,7 +106,7 @@ typedef struct af_stream_s
     // Configuration for this stream
     af_cfg_t		cfg;
     any_t*		parent;
-}af_stream_t;
+};
 
 
 /*********************************************
@@ -170,7 +170,7 @@ MPXP_Rc __FASTCALL__ af_from_ms(int n, float* in, int* out, int rate, float mi, 
 /* Helper function used to convert from sample time to ms */
 MPXP_Rc __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate);
 /* Helper function for testing the output format */
-MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const af_conf_t* out);
+MPXP_Rc __FASTCALL__ af_test_output(af_instance_t* af,const af_conf_t* out);
 
 /** Print a list of all available audio filters */
 void af_help(void);

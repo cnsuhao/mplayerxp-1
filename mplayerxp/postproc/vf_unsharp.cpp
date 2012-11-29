@@ -44,13 +44,13 @@ using namespace mpxp;
 #define MIN_MATRIX_SIZE 3
 #define MAX_MATRIX_SIZE 63
 
-typedef struct FilterParam {
+struct FilterParam {
     int msizeX, msizeY;
     double amount;
     uint32_t *SC[MAX_MATRIX_SIZE-1];
-} FilterParam;
+};
 
-struct vf_priv_s {
+struct vf_priv_t {
     FilterParam lumaParam;
     FilterParam chromaParam;
     unsigned int outfmt;
@@ -135,7 +135,7 @@ static void __FASTCALL__ unsharp( uint8_t *dst, uint8_t *src, int dstStride, int
 
 //===========================================================================//
 
-static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
+static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
     FilterParam *fpc,*fpl;
     const char *effectc,*effectl;
@@ -148,7 +148,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 		,fpl->msizeX, fpl->msizeY, fpl->amount, effectl);
 }
 
-static int __FASTCALL__ vf_config( struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config( vf_instance_t* vf,
 		   int width, int height, int d_width, int d_height,
 		   vo_flags_e flags, unsigned int outfmt) {
 
@@ -176,7 +176,7 @@ static int __FASTCALL__ vf_config( struct vf_instance_s* vf,
 
 //===========================================================================//
 
-static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi ) {
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi ) {
     if( mpi->flags & MP_IMGFLAG_PRESERVE )
 	return; // don't change
     if( mpi->imgfmt!=vf->priv->outfmt )
@@ -195,7 +195,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi ) {
     mpi->flags |= MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice( struct vf_instance_s* vf, mp_image_t *mpi ) {
+static int __FASTCALL__ put_slice( vf_instance_t* vf, mp_image_t *mpi ) {
     int finalize;
     mp_image_t *dmpi;
 
@@ -243,7 +243,7 @@ static int __FASTCALL__ put_slice( struct vf_instance_s* vf, mp_image_t *mpi ) {
     return vf_next_put_slice( vf, dmpi );
 }
 
-static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
+static void __FASTCALL__ uninit( vf_instance_t* vf ) {
     unsigned int z;
     FilterParam *fp;
 
@@ -266,7 +266,7 @@ static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h) {
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h) {
     switch(fmt) {
     case IMGFMT_YV12:
     case IMGFMT_I420:
@@ -322,7 +322,7 @@ static MPXP_Rc __FASTCALL__ vf_open( vf_instance_t *vf,const char* args ) {
     vf->query_format = query_format;
     vf->uninit       = uninit;
     vf->print_conf   = print_conf;
-    vf->priv         = new(zeromem) struct vf_priv_s;
+    vf->priv         = new(zeromem) vf_priv_t;
 
     if( args ) {
 	const char *args2 = strchr( args, 'l' );

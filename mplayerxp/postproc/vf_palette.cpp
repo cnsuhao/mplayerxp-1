@@ -35,7 +35,7 @@ static unsigned int rgb_list[]={
 
 static unsigned int gray_pal[256];
 
-static unsigned int __FASTCALL__ find_best(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static unsigned int __FASTCALL__ find_best(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     unsigned int best=0;
     int ret;
     unsigned int* p;
@@ -54,12 +54,12 @@ static unsigned int __FASTCALL__ find_best(struct vf_instance_s* vf, unsigned in
 
 //===========================================================================//
 
-struct vf_priv_s {
+struct vf_priv_t {
     unsigned int fmt;
     int pal_msg;
 };
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     if (!vf->priv->fmt)
@@ -73,7 +73,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
@@ -157,7 +157,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     int best=find_best(vf,fmt,w,h);
     if(!best) return 0; // no match
     return vf_next_query_format(vf->next,best,w,h);
@@ -168,7 +168,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config_vf=vf_config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
     for(i=0;i<256;i++) gray_pal[i]=0x01010101*i;
     if (args) {
 	if (!strcasecmp(args,"rgb15")) vf->priv->fmt=IMGFMT_RGB15; else

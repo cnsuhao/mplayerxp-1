@@ -22,30 +22,30 @@ using namespace mpxp;
 #include "libmenu/menu.h"
 #include "pp_msg.h"
 
-static struct vf_priv_s* st_priv = NULL;
+static vf_priv_t* st_priv = NULL;
 
 static mp_image_t* pause_mpi = NULL;
 static int go2pause = 0;
 /// if nonzero display menu at startup
 int attribute_used menu_startup = 0;
 
-struct vf_priv_s {
+struct vf_priv_t {
   menu_t* root;
   menu_t* current;
   int passthrough;
   any_t*  libinput;
 };
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi);
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi);
 
-void vf_menu_pause_update(struct vf_instance_s* vf) {
+void vf_menu_pause_update(vf_instance_t* vf) {
   if(pause_mpi) {
     vf->control_vf(vf,VFCTRL_START_FRAME,NULL);
     put_slice(vf,pause_mpi);
   }
 }
 
-static void __FASTCALL__ set_menu(struct vf_priv_s * priv,const char *name)
+static void __FASTCALL__ set_menu(vf_priv_t * priv,const char *name)
 {
 	const char* menu = name;
 	menu_t* l = priv->current;
@@ -60,7 +60,7 @@ static void __FASTCALL__ set_menu(struct vf_priv_s * priv,const char *name)
 	}
 }
 
-static int cmd_filter(mp_cmd_t* cmd, int paused, struct vf_priv_s * priv)
+static int cmd_filter(mp_cmd_t* cmd, int paused, vf_priv_t * priv)
 {
   switch(cmd->id) {
     case MP_CMD_PAUSE :
@@ -121,7 +121,7 @@ static int cmd_filter(mp_cmd_t* cmd, int paused, struct vf_priv_s * priv)
   return 0;
 }
 
-static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
   mp_image_t *dmpi;
 
   if(mpi->type == MP_IMGTYPE_TEMP && (!(mpi->flags&MP_IMGFLAG_PRESERVE)) ) {
@@ -138,7 +138,7 @@ static void key_cb(int code) {
   menu_read_key(st_priv->current,code);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
   mp_image_t *dmpi = NULL;
 
   if (vf->priv->passthrough) {
@@ -219,7 +219,7 @@ static void __FASTCALL__ uninit(vf_instance_t *vf) {
      }
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf, int width, int height, int d_width, int d_height,
+static int __FASTCALL__ vf_config(vf_instance_t* vf, int width, int height, int d_width, int d_height,
 		  vo_flags_e flags, unsigned int outfmt) {
 #ifdef HAVE_FREETYPE
   // here is the right place to get screen dimensions
@@ -232,13 +232,13 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf, int width, int heigh
   return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
   return vf_next_query_format(vf,fmt,w,h);
 }
 
 static MPXP_Rc __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
   if(!st_priv) {
-    st_priv = new(zeromem) struct vf_priv_s;
+    st_priv = new(zeromem) vf_priv_t;
     st_priv->root = st_priv->current = menu_open(args,vf->libinput);
     st_priv->libinput=vf->libinput;
     if(!st_priv->current) {

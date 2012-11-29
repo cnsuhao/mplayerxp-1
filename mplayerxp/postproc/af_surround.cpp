@@ -69,7 +69,7 @@ using namespace mpxp;
 #define UPDATEQI(qi) qi=(qi+1)&(LD-1)
 
 // instance data
-typedef struct af_surround_s
+struct af_surround_t
 {
   float lq[2*L]; // Circular queue for filtering left rear channel
   float rq[2*L]; // Circular queue for filtering right rear channel
@@ -80,9 +80,9 @@ typedef struct af_surround_s
   int i;       	 // Position in circular buffer
   int wi;	 // Write index for delay queue
   int ri;	 // Read index for delay queue
-}af_surround_t;
+};
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_surround_t *s = reinterpret_cast<af_surround_t*>(af->setup);
     float fc;
@@ -122,7 +122,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return MPXP_Ok;
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_surround_t *s = reinterpret_cast<af_surround_t*>(af->setup);
   switch(cmd){
@@ -146,7 +146,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   if(af->setup) delete af->setup;
 }
@@ -163,7 +163,7 @@ static float steering_matrix[][12] = {
 //static int amp_L = 0, amp_R = 0, amp_C = 0, amp_S = 0;
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind){
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind){
     af_surround_t*s   = (af_surround_t*)af->setup;
     float*	m   = steering_matrix[0];
     float*	in  = reinterpret_cast<float*>(ind->audio);	// Input audio data

@@ -281,7 +281,7 @@ mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_imag
 //============================================================================
 
 // By default vf doesn't accept MPEGPES
-static int __FASTCALL__ vf_default_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ vf_default_query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
   if(fmt == IMGFMT_MPEGPES) return 0;
   return 1;//vf_next_query_format(vf,fmt,w,h);
 }
@@ -373,7 +373,7 @@ void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src){
     }
 }
 
-int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
+int __FASTCALL__ vf_next_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e voflags, unsigned int outfmt){
     int miss;
@@ -409,11 +409,11 @@ int __FASTCALL__ vf_next_config(struct vf_instance_s* vf,
     return vf->next->config_vf(vf->next,width,height,d_width,d_height,voflags,outfmt);
 }
 
-MPXP_Rc __FASTCALL__ vf_next_control(struct vf_instance_s* vf, int request, any_t* data){
+MPXP_Rc __FASTCALL__ vf_next_control(vf_instance_t* vf, int request, any_t* data){
     return vf->next->control_vf(vf->next,request,data);
 }
 
-int __FASTCALL__ vf_next_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned width,unsigned height){
+int __FASTCALL__ vf_next_query_format(vf_instance_t* vf, unsigned int fmt,unsigned width,unsigned height){
     int flags=vf->next?vf->next->query_format(vf->next,fmt,width,height):(int)vf->default_caps;
     if(flags) flags|=vf->default_caps;
     check_pin("vfilter",vf->pin,VF_PIN);
@@ -429,7 +429,7 @@ int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned wi
     return vf->query_format(vf,fmt,width,height);
 }
 
-int __FASTCALL__ vf_next_put_slice(struct vf_instance_s* vf,mp_image_t *mpi){
+int __FASTCALL__ vf_next_put_slice(vf_instance_t* vf,mp_image_t *mpi){
     int rc;
     rc = vf->next->put_slice(vf->next,mpi);
     free_mp_image(mpi);
@@ -541,7 +541,7 @@ unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
   return flags;
 }
 
-static int __FASTCALL__ dummy_config(struct vf_instance_s* vf,
+static int __FASTCALL__ dummy_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e voflags, unsigned int outfmt){
     return 1;

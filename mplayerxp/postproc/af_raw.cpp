@@ -45,20 +45,20 @@ struct WaveHeader
 };
 
 // Data for specific instances of this filter
-typedef struct af_raw_s
+struct af_raw_t
 {
   char* filename;	// File to export data
   int wav_mode;
   struct WaveHeader wavhdr;
   FILE *fd;
-} af_raw_t;
+};
 
 /* Initialization and runtime control_af
    af audio filter instance
    cmd control_af command
    arg argument
 */
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_raw_t* s = reinterpret_cast<af_raw_t*>(af->setup);
     char *pt;
@@ -97,7 +97,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_raw_t* s = reinterpret_cast<af_raw_t*>(af->setup);
 
@@ -115,7 +115,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 /* Free allocated memory and clean up other stuff too.
    af audio filter instance
 */
-static void __FASTCALL__ uninit( struct af_instance_s* af )
+static void __FASTCALL__ uninit( af_instance_t* af )
 {
   af_raw_t* s = reinterpret_cast<af_raw_t*>(af->setup);
   if(s) {
@@ -142,7 +142,7 @@ static void __FASTCALL__ uninit( struct af_instance_s* af )
    af audio filter instance
    data audio data
 */
-static mp_aframe_t* __FASTCALL__ play( struct af_instance_s* af,const mp_aframe_t* ind)
+static mp_aframe_t* __FASTCALL__ play( af_instance_t* af,const mp_aframe_t* ind)
 {
   af_raw_t*	s   = reinterpret_cast<af_raw_t*>(af->setup); // Setup for this instance
   if(s->fd) fwrite(ind->audio,ind->len,1,s->fd);

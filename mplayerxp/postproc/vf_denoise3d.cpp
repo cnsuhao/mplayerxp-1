@@ -38,7 +38,7 @@ using namespace mpxp;
 
 //===========================================================================//
 
-struct vf_priv_s {
+struct vf_priv_t {
 	int Coefs[4][512*16];
 	unsigned char *Line;
 	unsigned short *Frame[3];
@@ -47,7 +47,7 @@ struct vf_priv_s {
 
 
 /***************************************************************************/
-static void __FASTCALL__ uninit(struct vf_instance_s* vf)
+static void __FASTCALL__ uninit(vf_instance_t* vf)
 {
 	if(vf->priv->Line){delete vf->priv->Line;vf->priv->Line=NULL;}
 	if(vf->priv->Frame[0]){delete vf->priv->Frame[0];vf->priv->Frame[0]=NULL;}
@@ -55,7 +55,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 	if(vf->priv->Frame[2]){delete vf->priv->Frame[2];vf->priv->Frame[2]=NULL;}
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 
@@ -176,7 +176,7 @@ static void __FASTCALL__ hqDeNoise(unsigned char *Frame,        // mpi->planes[x
     }
 }
 
-static int __FASTCALL__ hq_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ hq_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 	int W = mpi->w, H = mpi->h;
@@ -222,7 +222,7 @@ static int __FASTCALL__ hq_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	return vf_next_put_slice(vf,dmpi);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 	int W = mpi->w, H = mpi->h;
@@ -270,7 +270,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
 	switch(fmt)
 	{
 	case IMGFMT_YV12:
@@ -327,7 +327,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->put_slice=put_slice;
     vf->query_format=query_format;
     vf->uninit=uninit;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
 
     e=0;
     if (args) {

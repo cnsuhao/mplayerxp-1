@@ -19,12 +19,12 @@ using namespace mpxp;
 #define FR 0
 #define TO 1
 
-typedef struct af_channels_s{
+struct af_channels_t{
   int route[AF_NCH][2];
   int nr;
   int router;
   int ich;
-}af_channels_t;
+};
 
 // Local function for copying data
 static void __FASTCALL__ af_copy(const any_t* in, any_t* out, int ins, int inos,int outs, int outos, int len, int bps)
@@ -122,7 +122,7 @@ static MPXP_Rc __FASTCALL__ check_routes(af_channels_t* s, int nin, int nout)
   return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_channels_t* s = reinterpret_cast<af_channels_t*>(af->setup);
     // Set default channel assignment
@@ -156,7 +156,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return check_routes(s,arg->nch,af->conf.nch);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_channels_t* s = reinterpret_cast<af_channels_t*>(af->setup);
   switch(cmd){
@@ -244,13 +244,13 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 {
     af_channels_t*s = reinterpret_cast<af_channels_t*>(af->setup);
     int		i;

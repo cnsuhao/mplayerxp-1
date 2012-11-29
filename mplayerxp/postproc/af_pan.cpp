@@ -25,13 +25,13 @@ using namespace mpxp;
 #include "pp_msg.h"
 
 // Data for specific instances of this filter
-typedef struct af_pan_s
+struct af_pan_t
 {
     float level[AF_NCH][AF_NCH];	// Gain level for each channel
-}af_pan_t;
+};
 
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_pan_t* s = reinterpret_cast<af_pan_t*>(af->setup);
 
@@ -100,7 +100,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
   return MPXP_Unknown;
 }
 
-static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 {
     // Sanity check
     if(!arg) return MPXP_Error;
@@ -115,13 +115,13 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
 {
     const mp_aframe_t*c= ind;		// Current working data
     af_pan_t*	s    = reinterpret_cast<af_pan_t*>(af->setup);	// Setup for this instance

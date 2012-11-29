@@ -31,11 +31,11 @@ using namespace mpxp;
 /* Functions used by play to convert the input audio to the correct
    format */
 typedef mp_aframe_t* (*convert_audio_t)(const af_instance_t* af,const mp_aframe_t* in);
-typedef struct af_format_s
+struct af_format_t
 {
   mpaf_format_e fmt;
   std::vector<convert_audio_t> cvt_chain;
-}af_format_t;
+};
 
 // Switch endianess
 static void endian(const mp_aframe_t* in, mp_aframe_t* out);
@@ -142,7 +142,7 @@ static void print_fmts(const char *pfx,const mp_aframe_t* in,const mp_aframe_t*o
     ,out->len);
 }
 
-static mp_aframe_t* change_endian(const struct af_instance_s* af,const mp_aframe_t* in) {
+static mp_aframe_t* change_endian(const af_instance_t* af,const mp_aframe_t* in) {
     mp_aframe_t* out;
     out=new_mp_aframe_genome(in);
     mp_alloc_aframe(out);
@@ -151,7 +151,7 @@ static mp_aframe_t* change_endian(const struct af_instance_s* af,const mp_aframe
     return out;
 }
 
-static mp_aframe_t* convert_audio_f(const struct af_instance_s* af,const mp_aframe_t*in) {
+static mp_aframe_t* convert_audio_f(const af_instance_t* af,const mp_aframe_t*in) {
     mp_aframe_t* out;
     out=new_mp_aframe_genome(in);
     out->len=af_lencalc(af->mul,in);
@@ -168,7 +168,7 @@ static mp_aframe_t* convert_audio_f(const struct af_instance_s* af,const mp_afra
     return out;
 }
 
-static mp_aframe_t* convert_audio_i(const struct af_instance_s* af,const mp_aframe_t*in) {
+static mp_aframe_t* convert_audio_i(const af_instance_t* af,const mp_aframe_t*in) {
     mp_aframe_t* out;
     out=new_mp_aframe_genome(in);
     out->len=af_lencalc(af->mul,in);
@@ -178,7 +178,7 @@ static mp_aframe_t* convert_audio_i(const struct af_instance_s* af,const mp_afra
     return out;
 }
 
-static mp_aframe_t* convert_si2us(const struct af_instance_s* af,const mp_aframe_t*in) {
+static mp_aframe_t* convert_si2us(const af_instance_t* af,const mp_aframe_t*in) {
     mp_aframe_t* out;
     out=new_mp_aframe_genome(in);
     mp_alloc_aframe(out);
@@ -187,7 +187,7 @@ static mp_aframe_t* convert_si2us(const struct af_instance_s* af,const mp_aframe
     return out;
 }
 
-static mp_aframe_t* convert_us2si(const struct af_instance_s* af,const mp_aframe_t*in) {
+static mp_aframe_t* convert_us2si(const af_instance_t* af,const mp_aframe_t*in) {
     mp_aframe_t* out;
     out=new_mp_aframe_genome(in);
     mp_alloc_aframe(out);
@@ -196,7 +196,7 @@ static mp_aframe_t* convert_us2si(const struct af_instance_s* af,const mp_aframe
     return out;
 }
 
-static MPXP_Rc build_cvt_chain(struct af_instance_s* af,const af_conf_t* in) {
+static MPXP_Rc build_cvt_chain(af_instance_t* af,const af_conf_t* in) {
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
 
     s->cvt_chain.clear();
@@ -230,7 +230,7 @@ static MPXP_Rc __FASTCALL__ check_format(mpaf_format_e format)
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 {
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
     // Make sure this filter isn't redundant
@@ -247,7 +247,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     return build_cvt_chain(af,arg);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
     char buf1[256],buf2[256];
@@ -277,7 +277,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
     if(af->setup) {
 	af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
@@ -287,7 +287,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af, const mp_aframe_t* data)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af, const mp_aframe_t* data)
 {
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
     mp_aframe_t* out=NULL,* in=const_cast<mp_aframe_t*>(data);

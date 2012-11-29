@@ -19,7 +19,7 @@ using namespace mpxp;
 #include "vf_scale.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
     int w,h,ofmt;
     int sw,sh,sfmt;
     int v_chr_drop;
@@ -115,21 +115,21 @@ static unsigned int __FASTCALL__ find_best_out(vf_instance_t *vf,unsigned w,unsi
     return best;
 }
 
-static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
+static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
     MSG_INFO("[vf_scale]: in[%dx%d,%s] -> out[%dx%d,%s]\n",
 	vf->priv->sw,vf->priv->sh,vo_format_name(vf->priv->sfmt),
 	vf->priv->w,vf->priv->h,vo_format_name(vf->priv->ofmt));
 }
 
-static void __FASTCALL__ print_conf_fmtcvt(struct vf_instance_s* vf)
+static void __FASTCALL__ print_conf_fmtcvt(vf_instance_t* vf)
 {
     MSG_INFO("[vf_fmtcvt]: video[%dx%d] in[%s] -> out[%s]\n",
 	vf->priv->sw,vf->priv->sh,vo_format_name(vf->priv->sfmt),
 	vo_format_name(vf->priv->ofmt));
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     unsigned int best=find_best_out(vf,d_width,d_height);
@@ -327,7 +327,7 @@ static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2,
     }
 }
 
-static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_frame(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;//=mpi->priv;
     const uint8_t *planes[4];
     int stride[4];
@@ -349,7 +349,7 @@ static int __FASTCALL__ put_frame(struct vf_instance_s* vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,dmpi);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;//=mpi->priv;
     const uint8_t *planes[4];
     uint8_t* dplanes[4];
@@ -391,7 +391,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,dmpi);
 }
 
-static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t* data){
     int *table;
     int *inv_table;
     int r;
@@ -454,7 +454,7 @@ static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, an
 
 //  supported Input formats: YV12, I420, IYUV, YUY2, UYVY, BGR32, BGR24, BGR16, BGR15, RGB32, RGB24, Y8, Y800
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     MSG_DBG3("vf_scale: query_format(%p, %X(%s), %u, %u\n",vf,fmt,vo_format_name(fmt),w,h);
     switch(fmt){
     case IMGFMT_YV12:
@@ -499,7 +499,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;	// nomatching in-fmt
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s *vf){
+static void __FASTCALL__ uninit(vf_instance_t *vf){
     if(vf->priv->ctx) sws_freeContext(vf->priv->ctx);
     if(vf->priv->ctx2) sws_freeContext(vf->priv->ctx2);
     if(vf->priv->palette) delete vf->priv->palette;
@@ -515,7 +515,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->uninit=uninit;
     vf->print_conf=print_conf;
     if(!vf->priv) {
-	vf->priv=new(zeromem) struct vf_priv_s;
+	vf->priv=new(zeromem) vf_priv_t;
 	// TODO: parse args ->
 	vf->priv->w=
 	vf->priv->h=-1;

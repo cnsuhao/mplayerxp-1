@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "pp_msg.h"
 //===========================================================================//
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 
@@ -30,7 +30,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YUY2);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
@@ -52,7 +52,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     switch(fmt){
     case IMGFMT_YV12:
     case IMGFMT_I420:

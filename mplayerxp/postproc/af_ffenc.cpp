@@ -14,7 +14,7 @@ using namespace mpxp;
 #define MIN_LIBAVCODEC_VERSION_INT	((51<<16)+(0<<8)+0)
 
 // Data for specific instances of this filter
-typedef struct af_ffenc_s
+struct af_ffenc_t
 {
     char cname[256];
     unsigned brate;
@@ -24,7 +24,7 @@ typedef struct af_ffenc_s
     unsigned frame_size;
     uint8_t *tail;
     unsigned tail_size;
-}af_ffenc_t;
+};
 
 static void print_encoders(void)
 {
@@ -79,7 +79,7 @@ static uint32_t find_atag(const char *codec)
 	return 0;
 }
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_ffenc_t *s=reinterpret_cast<af_ffenc_t*>(af->setup);
     if(!s->acodec_inited) {
@@ -116,7 +116,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return MPXP_Ok;
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_ffenc_t *s=reinterpret_cast<af_ffenc_t*>(af->setup);
   switch(cmd){
@@ -143,7 +143,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
     af_ffenc_t *s=reinterpret_cast<af_ffenc_t*>(af->setup);
     avcodec_close(s->lavc_context);
@@ -153,7 +153,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 {
     unsigned tlen,ilen,olen,delta;
     af_ffenc_t *s=reinterpret_cast<af_ffenc_t*>(af->setup);

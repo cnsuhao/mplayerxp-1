@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "libvo/sub.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
 	int state;
 	long long in;
 	long long out;
@@ -37,7 +37,7 @@ static inline any_t*my_memcpy_pic(any_t* dst, any_t* src, int bytesPerLine, int 
 	return retval;
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
 {
 	mp_image_t *dmpi;
 	int ret = 0,finalize;
@@ -130,14 +130,14 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi)
 	return ret;
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt)
 {
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf)
+static void __FASTCALL__ uninit(vf_instance_t* vf)
 {
 	MSG_INFO( "softpulldown: %lld frames in, %lld frames out\n", vf->priv->in, vf->priv->out);
 	delete vf->priv;
@@ -145,12 +145,12 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf)
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 {
-    struct vf_priv_s *p;
+    vf_priv_t *p;
     vf->config_vf = vf_config;
     vf->put_slice = put_slice;
     vf->uninit = uninit;
     vf->default_reqs = VFCAP_ACCEPT_STRIDE;
-    vf->priv = p = new(zeromem) struct vf_priv_s;
+    vf->priv = p = new(zeromem) vf_priv_t;
     vf->priv->state = 0;
     check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;

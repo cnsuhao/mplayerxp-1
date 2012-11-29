@@ -54,7 +54,7 @@ using namespace mpxp;
 #define G_MIN	-12.0f
 
 // Data for specific instances of this filter
-typedef struct af_equalizer_s
+struct af_equalizer_t
 {
   float		a[KM][L];	// A weights
   float		b[KM][L];		// B weights
@@ -62,7 +62,7 @@ typedef struct af_equalizer_s
   float		g[AF_NCH][KM];		// Gain factor for each channel and band
   unsigned	K;			// Number of used eq bands
   unsigned	channels;	// Number of channels
-} af_equalizer_t;
+};
 
 // 2nd order Band-pass Filter design
 static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
@@ -76,7 +76,7 @@ static void __FASTCALL__ bp2(float* a, float* b, float fc, float q){
   b[1] = -1.0050;
 }
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_equalizer_t* s   = (af_equalizer_t*)af->setup;
     unsigned k =0;
@@ -107,7 +107,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return af_test_output(af,arg);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_equalizer_t* s   = (af_equalizer_t*)af->setup;
 
@@ -165,13 +165,13 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
 {
     af_equalizer_t*	s	= (af_equalizer_t*)af->setup; 	// Setup
     uint32_t		ci	= af->conf.nch;		// Index for channels

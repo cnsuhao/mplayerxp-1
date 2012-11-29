@@ -32,7 +32,7 @@ enum {
     AF_CONTROL_PROP_MASK	=(0xF<<5)
 };
 
-typedef struct af_control_info_s{
+struct af_control_info_t{
   unsigned	def;	// Control enumrification
   const char*	name;	// Name of argument
   const char*	info;	// Description of what it does
@@ -44,17 +44,16 @@ typedef struct af_control_info_s{
   size_t	sz;	// Size of argument in bytes
   unsigned	ch;	// Channel number (for future use)
   any_t*	arg;	// Data (for future use)
-}af_control_info_t;
-
+};
 
 /*********************************************
 // Extended control_af used with arguments that operates on only one
 // channel at the time
 */
-typedef struct af_control_ext_s{
+struct af_control_ext_t{
   any_t*	arg;	// Argument
   unsigned	ch;	// Chanel number
-}af_control_ext_t;
+};
 
 /*********************************************
 // Control parameters
@@ -137,12 +136,12 @@ enum { AF_NCH=8 };
 /* Equalizer plugin header file defines struct used for setting or
    getting the gain of a specific channel and frequency */
 
-typedef struct equalizer_s
+struct equalizer_t
 {
   float		gain;	// Gain in dB  -15 - 15
   unsigned	channel;// Channel number 0 - 5
   int		band;	// Frequency band 0 - 9
-}equalizer_t;
+};
 
 /* The different frequency bands are:
 nr.    	center frequency

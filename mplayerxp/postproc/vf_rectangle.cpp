@@ -10,11 +10,11 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
     int x, y, w, h;
 };
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
        int width, int height, int d_width, int d_height,
        vo_flags_e flags, unsigned int outfmt)
 {
@@ -34,7 +34,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt);
 }
 
-static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t*data)
+static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t*data)
 {
     const int *const tmp = reinterpret_cast<int*>(data);
     switch(request){
@@ -63,7 +63,7 @@ static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, an
     }
     return vf_next_control(vf, request, data);
 }
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t* mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t* mpi){
     mp_image_t* dmpi;
     int finalize;
     unsigned int bpp = mpi->bpp / 8;
@@ -163,7 +163,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {
     vf->config_vf = vf_config;
     vf->control_vf = control_vf;
     vf->put_slice = put_slice;
-    vf->priv = new(zeromem) struct vf_priv_s;
+    vf->priv = new(zeromem) vf_priv_t;
     vf->priv->x = -1;
     vf->priv->y = -1;
     vf->priv->w = -1;

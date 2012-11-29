@@ -70,7 +70,7 @@ MPXP_Rc __FASTCALL__ af_to_ms(int n, int* in, float* out, int rate)
 }
 
 /* Helper function for testing the output format */
-MPXP_Rc __FASTCALL__ af_test_output(struct af_instance_s* af,const af_conf_t* out)
+MPXP_Rc __FASTCALL__ af_test_output(af_instance_t* af,const af_conf_t* out)
 {
   if((af->conf.format != out->format) ||
      (af->conf.rate   != out->rate)   ||

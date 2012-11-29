@@ -584,6 +584,6 @@ mp_image_t* mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,in
 }
 
 void mpcodecs_draw_slice(sh_video_t *sh, mp_image_t*mpi) {
-    struct vf_instance_s* vf = sh->vfilter;
+    vf_instance_t* vf = sh->vfilter;
     vf->put_slice(vf,mpi);
 }

@@ -44,7 +44,7 @@ using namespace mpxp;
 #include "pp_msg.h"
 
 // Data for specific instances of this filter
-typedef struct af_scaletempo_s
+struct af_scaletempo_t
 {
   // stride
   float   scale;
@@ -65,13 +65,13 @@ typedef struct af_scaletempo_s
   int     bytes_standing;
   int8_t* buf_overlap;
   int8_t* table_blend;
-  void    (*output_overlap)(struct af_scaletempo_s* s, int8_t* out_buf, int bytes_off);
+  void    (*output_overlap)(af_scaletempo_t* s, int8_t* out_buf, int bytes_off);
   // best overlap
   int     frames_search;
   int     num_channels;
   int8_t* buf_pre_corr;
   int8_t* table_window;
-  int     (*best_overlap_offset)(struct af_scaletempo_s* s);
+  int     (*best_overlap_offset)(af_scaletempo_t* s);
   short   shift_corr;
   // command line
   float   scale_nominal;
@@ -80,9 +80,9 @@ typedef struct af_scaletempo_s
   float   ms_search;
   short   speed_tempo;
   short   speed_pitch;
-} af_scaletempo_t;
+};
 
-static int fill_queue(struct af_instance_s* af,const mp_aframe_t* data, int offset)
+static int fill_queue(af_instance_t* af,const mp_aframe_t* data, int offset)
 {
   af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
   int bytes_in = data->len - offset;
@@ -167,7 +167,7 @@ static void output_overlap_float(af_scaletempo_t* s, int8_t* buf_out,
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
 {
     af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
     unsigned	offset_in;
@@ -223,7 +223,7 @@ static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t
     return out;
 }
 
-static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 {
     af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
     float srate = arg->rate / 1000;
@@ -327,7 +327,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     return af_test_output(af,arg);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
   switch(cmd){
@@ -409,7 +409,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
   delete s->buf_queue;
@@ -421,7 +421,7 @@ static void __FASTCALL__ uninit(struct af_instance_s* af)
 }
 
 // Allocate memory and set function pointers
-static MPXP_Rc __FASTCALL__ af_open(struct af_instance_s* af){
+static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af_scaletempo_t* s;
 
   af->config_af    = af_config;

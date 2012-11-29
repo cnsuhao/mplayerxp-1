@@ -16,7 +16,7 @@ using namespace mpxp;
 
 //===========================================================================//
 
-struct vf_priv_s {
+struct vf_priv_t {
     unsigned int fmt;
     int forced;
 };
@@ -38,7 +38,7 @@ static unsigned int __FASTCALL__ getfmt(unsigned int outfmt,int forced){
     return 0;
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     vf->priv->fmt=getfmt(outfmt,vf->priv->forced);
@@ -47,7 +47,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
 
 #define rgb32tobgr32(a,b,c) shuffle_bytes_3210(a,b,c)
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
@@ -80,7 +80,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int outfmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int outfmt,unsigned w,unsigned h){
     unsigned int fmt=getfmt(outfmt,vf->priv->forced);
     if(!fmt) return 0;
     return vf_next_query_format(vf,fmt,w,h) & (~VFCAP_CSP_SUPPORTED_BY_HW);
@@ -90,7 +90,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config_vf=vf_config;
     vf->put_slice=put_slice;
     vf->query_format=query_format;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
     vf->priv->forced=args && !strcasecmp(args,"swap");
     check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;

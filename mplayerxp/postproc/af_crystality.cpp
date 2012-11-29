@@ -79,7 +79,7 @@ and high-freqs and try to restore FR as:
 /*#define SAMPLE_MAX 2147483647 - for S32LE */
 
 /* Data for specific instances of this filter */
-typedef struct af_crystality_s
+struct af_crystality_t
 {
     int bext_level;
     int echo_level;
@@ -102,7 +102,7 @@ typedef struct af_crystality_s
     lowp_t lp_reverb[2];
     lowp_t lp_bass[2];
     float hf_div;
-} af_crystality_t;
+};
 
 static void __FASTCALL__ set_defaults(af_crystality_t *s)
 {
@@ -479,7 +479,7 @@ static mp_aframe_t* __FASTCALL__ bandext(const af_crystality_t *setup,const mp_a
     return out;
 }
 
-static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 {
     af_crystality_t* s = reinterpret_cast<af_crystality_t*>(af->setup);
     unsigned i_bps,fmt;
@@ -501,7 +501,7 @@ static MPXP_Rc __FASTCALL__ af_config(struct af_instance_s* af,const af_conf_t* 
     return af_test_output(af,arg);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_crystality_t* s   = (af_crystality_t*)af->setup;
 
@@ -524,13 +524,13 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 {
     af_crystality_t* s = reinterpret_cast<af_crystality_t*>(af->setup);
     mp_aframe_t* out,*tmp;

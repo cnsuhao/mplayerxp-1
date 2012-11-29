@@ -32,14 +32,14 @@ using namespace mpxp;
 
 //===========================================================================//
 
-static int __FASTCALL__ vf_config(struct vf_instance_s *vf,
+static int __FASTCALL__ vf_config(vf_instance_t *vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     flags&=~VOFLAG_FLIPPING; // remove the FLIP flag
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s *vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t *vf, mp_image_t *mpi){
     if(mpi->flags&MP_IMGFLAG_DIRECT){
 	// we've used DR, so we're ready...
 	if(!(mpi->flags&MP_IMGFLAG_PLANAR))
@@ -66,7 +66,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s *vf, mp_image_t *mpi){
     return vf_next_put_slice(vf,vf->dmpi);
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     return vf_next_query_format(vf,fmt,w,h);
 }
 

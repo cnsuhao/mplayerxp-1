@@ -33,12 +33,12 @@ using namespace mpxp;
 
 //===========================================================================//
 
-typedef struct FilterParam{
+struct FilterParam{
 	int interleave;
 	int swap;
-}FilterParam;
+};
 
-struct vf_priv_s {
+struct vf_priv_t {
 	FilterParam lumaParam;
 	FilterParam chromaParam;
 };
@@ -89,7 +89,7 @@ static void __FASTCALL__ interleave(uint8_t *dst, uint8_t *src, int w, int h, in
 	}
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int w,finalize;
 	FilterParam *luma  = &vf->priv->lumaParam;
 	FilterParam *chroma= &vf->priv->chromaParam;
@@ -137,7 +137,7 @@ static void __FASTCALL__ parse(FilterParam *fp,const char* args){
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
     vf->put_slice=put_slice;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
 
     if(args) {
 	const char *arg2= strchr(args,':');

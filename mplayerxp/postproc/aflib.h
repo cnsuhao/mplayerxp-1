@@ -86,10 +86,10 @@ extern int __FASTCALL__ szxform(_ftype_t* a, _ftype_t* b, _ftype_t Q, _ftype_t f
 	      !
 ---------------
 */
-typedef struct highpstuff {
+struct highp_t {
 	double	A, B;
 	float	previ, prevo;
-} highp_t;
+};
 
 /* Private data for Lowpass effect
 --------------
@@ -97,10 +97,10 @@ typedef struct highpstuff {
 	     !
 	     --------------
 */
-typedef struct lowpstuff {
+struct lowp_t {
 	double	A, B, C;
 	float	prev, pprev;
-} lowp_t;
+};
 
 /* Private data for Bandpass effect
      ---------
@@ -108,12 +108,12 @@ typedef struct lowpstuff {
      !       !
 ------       -------
 */
-typedef struct bandstuff {
+struct bandp_t {
 	double	A, B, C;
 	double	prev, pprev;
 	int	noise;
 	/* 50 bytes of data, 52 bytes long for allocation purposes. */
-} bandp_t;
+};
 
 extern void __FASTCALL__ lowp_init(lowp_t *lp, unsigned center, unsigned rate);
 extern void __FASTCALL__ highp_init(highp_t *hp, unsigned center, unsigned rate);

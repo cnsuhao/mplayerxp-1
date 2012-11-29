@@ -58,11 +58,10 @@ static unsigned __FASTCALL__ find_best_ch(unsigned ich)
     return 2;
 }
 
-typedef struct fmt_cvs_s
-{
+struct fmt_cvt_t {
     unsigned base_fourcc;
     unsigned cvt_fourcc[20];
-}fmt_cvt_t;
+};
 
 static fmt_cvt_t cvt_list[] =
 {
@@ -103,14 +102,14 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
     return AFMT_S16_LE;
 }
 
-typedef struct af_ao2_s{
+struct af_ao2_t{
     unsigned		rate;
     unsigned		nch;
     mpaf_format_e	format;
-}af_ao2_t;
+};
 
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af, const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af, const af_conf_t* arg)
 {
     af_ao2_t* s = reinterpret_cast<af_ao2_t*>(af->setup);
     /* Sanity check */
@@ -121,7 +120,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af, const af_conf_t*
     return af_test_output(af,arg);
 }
 
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
     af_ao2_t* s = reinterpret_cast<af_ao2_t*>(af->setup);
     UNUSED(arg);
@@ -140,13 +139,13 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
     if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* data)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* data)
 {
   // Do something necessary to get rid of annoying warning during compile
     if(!af) MSG_ERR("EEEK: Argument af == NULL in af_dummy.c play().");

@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "postprocess.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
     int pp;
     pp_mode *ppMode[PP_QUALITY_MAX+1];
     any_t*context;
@@ -25,7 +25,7 @@ struct vf_priv_s {
 
 //===========================================================================//
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e voflags, unsigned int outfmt){
     int flags=
@@ -46,7 +46,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return vf_next_config(vf,width,height,d_width,d_height,voflags,outfmt);
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf){
+static void __FASTCALL__ uninit(vf_instance_t* vf){
     int i;
     for(i=0; i<=PP_QUALITY_MAX; i++){
 	if(vf->priv->ppMode[i])
@@ -55,7 +55,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
     if(vf->priv->context) pp_free_context(vf->priv->context);
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     switch(fmt){
     case IMGFMT_YV12:
     case IMGFMT_I420:
@@ -68,7 +68,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return 0;
 }
 
-static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, any_t* data){
+static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t* data){
     switch(request){
     case VFCTRL_QUERY_MAX_PP_LEVEL:
 	*reinterpret_cast<unsigned int*>(data)=PP_QUALITY_MAX;
@@ -80,7 +80,7 @@ static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request, an
     return vf_next_control(vf,request,data);
 }
 
-static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
     if(vf->priv->pp&0xFFFF) return; // non-local filters enabled
     if((mpi->type==MP_IMGTYPE_IPB || vf->priv->pp) &&
 	mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
@@ -100,7 +100,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     mpi->flags|=MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
 	// no DR, so get a new image! hope we'll get DR buffer:
 	vf->dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
@@ -148,7 +148,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->put_slice=put_slice;
     vf->uninit=uninit;
     vf->default_caps=VFCAP_ACCEPT_STRIDE|VFCAP_POSTPROC;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
     vf->priv->context=NULL;
 
     // check csp:

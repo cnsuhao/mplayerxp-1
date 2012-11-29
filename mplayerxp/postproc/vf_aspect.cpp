@@ -11,12 +11,12 @@ using namespace mpxp;
 #include "vf.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
 	int w, h;
 	float aspect;
 };
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt)
 {
@@ -45,7 +45,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 	vf->config_vf = vf_config;
 	vf->put_slice = vf_next_put_slice;
 	//vf->default_caps = 0;
-	vf->priv = new(zeromem) struct vf_priv_s;
+	vf->priv = new(zeromem) vf_priv_t;
 	vf->priv->aspect = 4.0/3.0;
 	if (args) {
 		if (strcmp(args,"dvb") == 0) vf->priv->aspect = 768.;

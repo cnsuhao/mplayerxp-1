@@ -41,7 +41,7 @@ using namespace mpxp;
 #include "pp_msg.h"
 
 // Data for specific instances of this filter
-typedef struct af_volume_s
+struct af_volume_t
 {
   int   enable[AF_NCH];		// Enable/disable / channel
   float	pow[AF_NCH];		// Estimated power level [dB]
@@ -50,9 +50,9 @@ typedef struct af_volume_s
   float time;			// Forgetting factor for power estimate
   int soft;			// Enable/disable soft clipping
   int fast;			// Use fix-point volume control_af
-}af_volume_t;
+};
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_volume_t* s   = (af_volume_t*)af->setup;
     // Sanity check
@@ -74,7 +74,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return af_test_output(af,arg);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_volume_t* s   = (af_volume_t*)af->setup;
 
@@ -131,14 +131,14 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   if(af->setup)
     delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 {
     af_volume_t*s = (af_volume_t*)af->setup;	// Setup for this instance
     unsigned ch = 0;				// Channel counter

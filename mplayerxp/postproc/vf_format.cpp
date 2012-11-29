@@ -11,26 +11,26 @@ using namespace mpxp;
 #include "vf.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
     unsigned int fmt;
 };
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     MSG_DBG2("[vf_format] request for %s limited by %s\n",vo_format_name(fmt),vo_format_name(vf->priv->fmt));
     if(fmt==vf->priv->fmt)
 	return vf_next_query_format(vf,fmt,w,h);
     return 0;
 }
 
-static int __FASTCALL__ query_noformat(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_noformat(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     MSG_DBG2("[vf_noformat] request for %s limited by %s\n",vo_format_name(fmt),vo_format_name(vf->priv->fmt));
     if(fmt!=vf->priv->fmt)
 	return vf_next_query_format(vf,fmt,w,h);
     return 0;
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
@@ -76,7 +76,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config_vf=vf_config;
     vf->default_caps=0;
     if(!vf->priv) {
-      vf->priv=new(zeromem) struct vf_priv_s;
+      vf->priv=new(zeromem) vf_priv_t;
       vf->priv->fmt=IMGFMT_YUY2;
     }
     if(args){
@@ -94,7 +94,7 @@ static MPXP_Rc __FASTCALL__ vf_no_open(vf_instance_t *vf,const char* args){
     vf->config_vf=vf_config;
     vf->default_caps=0;
     if(!vf->priv) {
-      vf->priv=new(zeromem) struct vf_priv_s;
+      vf->priv=new(zeromem) vf_priv_t;
       vf->priv->fmt=IMGFMT_YUY2;
     }
     if(args){

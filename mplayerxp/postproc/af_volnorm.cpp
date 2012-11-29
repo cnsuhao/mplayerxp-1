@@ -56,7 +56,7 @@ using namespace mpxp;
 #define SMOOTH_LASTAVG 0.06
 
 // Data for specific instances of this filter
-typedef struct af_volume_s
+struct af_volnorm_t
 {
     int method; // method used
     float mul;
@@ -68,9 +68,9 @@ typedef struct af_volume_s
 	float avg; // average level of the sample
 	int len; // sample size (weight)
     } mem[NSAMPLES];
-}af_volnorm_t;
+};
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     // Sanity check
     if(!arg) return MPXP_Error;
@@ -89,7 +89,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return af_test_output(af,arg);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_volnorm_t* s   = (af_volnorm_t*)af->setup;
 
@@ -111,7 +111,7 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
     if(af->setup) delete af->setup;
 }
@@ -289,7 +289,7 @@ static mp_aframe_t* __FASTCALL__ method2_float(af_volnorm_t *s,const mp_aframe_t
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* in)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 {
     af_volnorm_t *s = reinterpret_cast<af_volnorm_t*>(af->setup);
     mp_aframe_t* out;

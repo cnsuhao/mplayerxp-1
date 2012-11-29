@@ -1,7 +1,7 @@
 #ifndef MP_CODEC_INFO_T
 #define MP_CODEC_INFO_T
 
-typedef struct mp_codec_info_s
+struct mp_codec_info_t
 {
 	/* codec long name ("Autodesk FLI/FLC Animation decoder" */
 	const char *name;
@@ -13,6 +13,6 @@ typedef struct mp_codec_info_s
 	const char *author;
 	/* any additional comments */
 	const char *comment;
-} mp_codec_info_t;
+};
 
 #endif

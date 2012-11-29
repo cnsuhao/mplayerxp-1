@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "vf.h"
 #include "pp_msg.h"
 
-struct vf_priv_s {
+struct vf_priv_t {
   float sense; // first parameter
   float level; // second parameter
   unsigned int imgfmt;
@@ -33,7 +33,7 @@ struct vf_priv_s {
 /***************************************************************************/
 
 
-static int __FASTCALL__ kd_config(struct vf_instance_s* vf,
+static int __FASTCALL__ kd_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 
@@ -41,7 +41,7 @@ static int __FASTCALL__ kd_config(struct vf_instance_s* vf,
 }
 
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf)
+static void __FASTCALL__ uninit(vf_instance_t* vf)
 {
 	delete vf->priv;
 }
@@ -60,7 +60,7 @@ static inline int IsYUY2(mp_image_t *mpi)
 #define PLANAR_U 1
 #define PLANAR_V 2
 
-static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 	int W = mpi->w, H = mpi->h;
@@ -275,7 +275,7 @@ static int __FASTCALL__ kd_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ kd_query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ kd_query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
 	switch(fmt)
 	{
 	case IMGFMT_YV12:
@@ -286,7 +286,7 @@ static int __FASTCALL__ kd_query_format(struct vf_instance_s* vf, unsigned int f
 	return 0;
 }
 
-static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
+static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
     MSG_INFO("Drop-interlaced: %dx%d diff %d / level %u\n",
 	   vf->priv->pmpi->width, vf->priv->pmpi->height,
@@ -294,7 +294,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 }
 #define MAXROWSIZE 1200
 
-static int __FASTCALL__ vf_config (struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config (vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt)
 {
@@ -328,7 +328,7 @@ static int __FASTCALL__ vf_config (struct vf_instance_s* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice (struct vf_instance_s* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice (vf_instance_t* vf, mp_image_t *mpi)
 {
     char rrow0[MAXROWSIZE];
     char rrow1[MAXROWSIZE];
@@ -444,7 +444,7 @@ static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){
     vf->put_slice = put_slice;
     vf->print_conf = print_conf;
 //    vf->default_reqs=VFCAP_ACCEPT_STRIDE;
-    vf->priv = new(zeromem) struct vf_priv_s;
+    vf->priv = new(zeromem) vf_priv_t;
     vf->priv->sense = 0.1;
     vf->priv->level = 0.15;
     vf->priv->pmpi = NULL;

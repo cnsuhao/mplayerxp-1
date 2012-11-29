@@ -45,7 +45,7 @@ static inline void __FASTCALL__ lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int l
 static void (* __FASTCALL__ lineNoise)(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift)= lineNoise_C;
 static void (* __FASTCALL__ lineNoiseAvg)(uint8_t *dst, uint8_t *src, int len, int8_t **shift)= lineNoiseAvg_C;
 
-typedef struct FilterParam{
+struct FilterParam{
 	int strength;
 	int uniform;
 	int temporal;
@@ -55,9 +55,9 @@ typedef struct FilterParam{
 	int shiftptr;
 	int8_t *noise;
 	int8_t *prev_shift[MAX_RES][3];
-}FilterParam;
+};
 
-struct vf_priv_s {
+struct vf_priv_t {
 	FilterParam lumaParam;
 	FilterParam chromaParam;
 	unsigned int outfmt;
@@ -317,14 +317,14 @@ static void __FASTCALL__ noise(uint8_t *dst, uint8_t *src, int dstStride, int sr
 	if (fp->shiftptr == 3) fp->shiftptr = 0;
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
     if(mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
     if(mpi->imgfmt!=vf->priv->outfmt) return; // colorspace differ
     // ok, we can do pp in-place (or pp disabled):
@@ -341,7 +341,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf, mp_image_t *mpi){
     mpi->flags|=MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int finalize;
 	mp_image_t *dmpi;
 
@@ -392,7 +392,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 	return vf_next_put_slice(vf,dmpi);
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf){
+static void __FASTCALL__ uninit(vf_instance_t* vf){
 	if(!vf->priv) return;
 
 	if(vf->priv->chromaParam.noise) delete vf->priv->chromaParam.noise;
@@ -407,7 +407,7 @@ static void __FASTCALL__ uninit(struct vf_instance_s* vf){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
 	switch(fmt)
 	{
 	case IMGFMT_YV12:
@@ -455,7 +455,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->get_image=get_image;
     vf->query_format=query_format;
     vf->uninit=uninit;
-    vf->priv=new(zeromem) struct vf_priv_s;
+    vf->priv=new(zeromem) vf_priv_t;
     if(args) {
 	const char *arg2= strchr(args,':');
 	if(arg2) parse(&vf->priv->chromaParam, arg2+1);

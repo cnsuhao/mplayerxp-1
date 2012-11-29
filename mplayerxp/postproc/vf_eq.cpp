@@ -33,7 +33,7 @@ using namespace mpxp;
 #define LUT16
 
 /* Per channel parameters */
-typedef struct eq2_param_t {
+struct eq2_param_t {
   unsigned char lut[256];
 #ifdef LUT16
   uint16_t lut16[256*256];
@@ -47,9 +47,9 @@ void (* __FASTCALL__ adjust) (struct eq2_param_t *par, unsigned char *dst, unsig
   double        b;
   double        g;
   double        w;
-} eq2_param_t;
+};
 
-typedef struct vf_priv_s {
+typedef struct vf_priv_t {
   eq2_param_t param[3];
 
   double        contrast;
@@ -65,7 +65,7 @@ typedef struct vf_priv_s {
   unsigned      buf_w[3];
   unsigned      buf_h[3];
   unsigned char *buf[3];
-} vf_eq2_t;
+}vf_eq2_t;
 
 
 static void __FASTCALL__ create_lut (eq2_param_t *par)

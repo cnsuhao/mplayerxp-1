@@ -35,26 +35,26 @@ using namespace mpxp;
 #define Q 1.0
 
 // Analog domain biquad section
-typedef struct{
+struct biquad_t{
   float a[3];		// Numerator coefficients
   float b[3];		// Denominator coefficients
-} biquad_t;
+};
 
 // S-parameters for designing 4th order Butterworth filter
 static biquad_t sp[2] = {{{1.0,0.0,0.0},{1.0,0.765367,1.0}},
 			 {{1.0,0.0,0.0},{1.0,1.847759,1.0}}};
 
 // Data for specific instances of this filter
-typedef struct af_sub_s
+struct af_sub_t
 {
   float w[2][4];	// Filter taps for low-pass filter
   float q[2][2];	// Circular queues
   float	fc;		// Cutoff frequency [Hz] for low-pass filter
   float k;		// Filter gain;
   unsigned ch;		// Channel number which to insert the filtered data
-}af_sub_t;
+};
 
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     af_sub_t* s   = reinterpret_cast<af_sub_t*>(af->setup);
     // Sanity check
@@ -74,7 +74,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
     return af_test_output(af,arg);
 }
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_sub_t* s   = reinterpret_cast<af_sub_t*>(af->setup);
 
@@ -121,13 +121,13 @@ static MPXP_Rc __FASTCALL__ control_af(struct af_instance_s* af, int cmd, any_t*
 }
 
 // Deallocate memory
-static void __FASTCALL__ uninit(struct af_instance_s* af)
+static void __FASTCALL__ uninit(af_instance_t* af)
 {
   if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(struct af_instance_s* af,const mp_aframe_t* ind)
+static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
 {
     af_sub_t*	s   = reinterpret_cast<af_sub_t*>(af->setup); // Setup for this instance
     float*	in  = reinterpret_cast<float*>(ind->audio);// Audio data

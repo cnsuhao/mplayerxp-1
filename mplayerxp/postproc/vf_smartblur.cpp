@@ -39,7 +39,7 @@ using namespace mpxp;
 
 //===========================================================================//
 
-typedef struct FilterParam{
+struct FilterParam{
 	float radius;
 	float strength;
 	float preFilterRadius;
@@ -54,9 +54,9 @@ typedef struct FilterParam{
 	int distStride;
 	int *distCoeff;
 	int colorDiffCoeff[512];
-}FilterParam;
+};
 
-struct vf_priv_s {
+struct vf_priv_t {
 	FilterParam luma;
 	FilterParam chroma;
 	int (* __FASTCALL__ allocStuff)(FilterParam *f, int width, int height);
@@ -165,7 +165,7 @@ static void __FASTCALL__ vBlur(uint8_t *dst, uint8_t *src, int w, int h, int dst
 	}
 }
 
-static int __FASTCALL__ bb_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ bb_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 
@@ -314,7 +314,7 @@ if((x/32)&1){
 	}
 }
 
-static int __FASTCALL__ sab_put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ sab_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 
@@ -348,7 +348,7 @@ static int __FASTCALL__ allocStuff(FilterParam *f, int width, int height){
 	return 0;
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 
@@ -369,7 +369,7 @@ static void __FASTCALL__ freeBuffers(FilterParam *f){
 	f->filterContext=NULL;
 }
 
-static void __FASTCALL__ uninit(struct vf_instance_s* vf){
+static void __FASTCALL__ uninit(vf_instance_t* vf){
 	if(!vf->priv) return;
 
 	if(vf->priv->freeBuffers)
@@ -438,7 +438,7 @@ static inline void blur(uint8_t *dst, uint8_t *src, int w, int h, int dstStride,
 	}
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int cw= mpi->w >> mpi->chroma_x_shift;
 	int ch= mpi->h >> mpi->chroma_y_shift;
 
@@ -468,7 +468,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
 
 //===========================================================================//
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
 	switch(fmt)
 	{
 	case IMGFMT_YV12:
@@ -490,7 +490,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->put_slice=put_slice;
 	vf->query_format=query_format;
 	vf->uninit=uninit;
-	vf->priv=new(zeromem) struct vf_priv_s;
+	vf->priv=new(zeromem) vf_priv_t;
 
 	if(args==NULL) return MPXP_False;
 

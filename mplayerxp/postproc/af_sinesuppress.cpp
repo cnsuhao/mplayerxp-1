@@ -25,7 +25,7 @@ using namespace mpxp;
 #include "pp_msg.h"
 
 // Data for specific instances of this filter
-typedef struct af_sinesuppress_s
+struct af_sinesuppress_t
 {
     double freq;
     double decay;
@@ -33,15 +33,15 @@ typedef struct af_sinesuppress_s
     double imag;
     double ref;
     double pos;
-}af_sinesuppress_t;
+};
 
-static mp_aframe_t* play_s16(struct af_instance_s* af,const mp_aframe_t* data);
+static mp_aframe_t* play_s16(af_instance_t* af,const mp_aframe_t* data);
 #if 0
-static mp_aframe_t* play_float(struct af_instance_s* af,const mp_aframe_t* data);
+static mp_aframe_t* play_float(af_instance_t* af,const mp_aframe_t* data);
 #endif
 
 // Initialization and runtime control_af
-static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* arg)
+static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 {
     // Sanity check
     if(!arg) return MPXP_Error;
@@ -61,7 +61,7 @@ static MPXP_Rc __FASTCALL__ config_af(struct af_instance_s* af,const af_conf_t* 
 
     return af_test_output(af,arg);
 }
-static MPXP_Rc control_af(struct af_instance_s* af, int cmd, any_t* arg)
+static MPXP_Rc control_af(af_instance_t* af, int cmd, any_t* arg)
 {
   af_sinesuppress_t* s   = (af_sinesuppress_t*)af->setup;
 
@@ -83,13 +83,13 @@ static MPXP_Rc control_af(struct af_instance_s* af, int cmd, any_t* arg)
 }
 
 // Deallocate memory
-static void uninit(struct af_instance_s* af)
+static void uninit(af_instance_t* af)
 {
     if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* play_s16(struct af_instance_s* af,const mp_aframe_t* ind)
+static mp_aframe_t* play_s16(af_instance_t* af,const mp_aframe_t* ind)
 {
     af_sinesuppress_t *s = reinterpret_cast<af_sinesuppress_t*>(af->setup);
     unsigned	i = 0;
@@ -122,7 +122,7 @@ static mp_aframe_t* play_s16(struct af_instance_s* af,const mp_aframe_t* ind)
 }
 
 #if 0
-static mp_aframe_t* play_float(struct af_instance_s* af,const mp_aframe_t* ind)
+static mp_aframe_t* play_float(af_instance_t* af,const mp_aframe_t* ind)
 {
     af_sinesuppress_t *s = af->setup;
     unsigned	i = 0;

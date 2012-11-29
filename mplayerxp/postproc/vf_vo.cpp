@@ -14,16 +14,16 @@ using namespace mpxp;
 #include "mplayerxp.h" // vo_data
 
 //===========================================================================//
-struct vf_priv_s {
+struct vf_priv_t {
     int is_planar;
     int sw,sh,dw,dh,sflg;
     int ofmt;
     vo_format_desc vd;
 };
 static int vo_config_count;
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h); /* forward declaration */
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h); /* forward declaration */
 
-static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
+static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
     const vo_info_t *info = vo_data->get_info();
     MSG_INFO("VO-CONF: [%s] %dx%d => %dx%d %s %s%s%s%s\n",info->short_name,
@@ -40,7 +40,7 @@ static void __FASTCALL__ print_conf(struct vf_instance_s* vf)
 	MSG_V("VO: Comment: %s\n", info->comment);
 }
 
-static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
+static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
 
@@ -72,7 +72,7 @@ static int __FASTCALL__ vf_config(struct vf_instance_s* vf,
     return 1;
 }
 
-static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request,any_t* data)
+static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request,any_t* data)
 {
     UNUSED(vf);
     MSG_DBG2("vf_control: %u\n",request);
@@ -92,7 +92,7 @@ static MPXP_Rc __FASTCALL__ control_vf(struct vf_instance_s* vf, int request,any
     return MPXP_Unknown;
 }
 
-static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,unsigned w,unsigned h){
+static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     dri_surface_cap_t dcaps;
     int rflags;
     uint32_t flags=vo_data->query_format(&fmt,w,h);
@@ -111,7 +111,7 @@ static int __FASTCALL__ query_format(struct vf_instance_s* vf, unsigned int fmt,
     return rflags;
 }
 
-static void __FASTCALL__ get_image(struct vf_instance_s* vf,
+static void __FASTCALL__ get_image(vf_instance_t* vf,
 	mp_image_t *mpi){
     MPXP_Rc retval;
     UNUSED(vf);
@@ -125,7 +125,7 @@ static void __FASTCALL__ get_image(struct vf_instance_s* vf,
     MSG_DBG2("vf_vo_get_image was called failed\n");
 }
 
-static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
   if(!vo_config_count) return 0; // vo not configured?
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
 	MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
@@ -134,7 +134,7 @@ static int __FASTCALL__ put_slice(struct vf_instance_s* vf, mp_image_t *mpi){
   return 1;
 }
 
-static void __FASTCALL__ uninit( struct vf_instance_s* vf ) {
+static void __FASTCALL__ uninit( vf_instance_t* vf ) {
     delete vf->priv ;
     vf->priv = NULL;
 }
@@ -150,7 +150,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->query_format=query_format;
     vf->get_image=get_image;
     vf->put_slice=put_slice;
-    vf->priv = new(zeromem) struct vf_priv_s;
+    vf->priv = new(zeromem) vf_priv_t;
     check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }
