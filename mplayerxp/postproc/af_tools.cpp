@@ -4,6 +4,7 @@ using namespace mpxp;
 #include <math.h>
 #include <string.h>
 #include "af.h"
+#include "af_internal.h"
 
 /* Convert to gain value from dB. Returns MPXP_Ok if of and MPXP_Error if
    fail */

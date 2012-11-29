@@ -25,6 +25,7 @@ using namespace mpxp;
 #include <math.h>
 
 #include "af.h"
+#include "af_internal.h"
 #include "pp_msg.h"
 
 #define L   	2      // Storage for filter taps

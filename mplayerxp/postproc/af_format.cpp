@@ -15,6 +15,7 @@ using namespace mpxp;
 #include <limits.h>
 
 #include "af.h"
+#include "af_internal.h"
 #include "osdep/bswap.h"
 #include "aflib.h"
 #include "loader/wine/mmreg.h"

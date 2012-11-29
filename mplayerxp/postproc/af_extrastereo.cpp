@@ -21,6 +21,7 @@ using namespace mpxp;
 #include <limits.h>
 
 #include "af.h"
+#include "af_internal.h"
 #include "pp_msg.h"
 
 // Data for specific instances of this filter

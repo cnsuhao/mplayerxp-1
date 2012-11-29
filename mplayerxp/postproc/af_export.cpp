@@ -24,6 +24,7 @@ using namespace mpxp;
 #include <fcntl.h>
 
 #include "af.h"
+#include "af_internal.h"
 #include "help_mp.h"
 #include "osdep/get_path.h"
 #include "osdep/fastmemcpy.h"

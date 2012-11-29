@@ -16,6 +16,7 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 #include "af.h"
+#include "af_internal.h"
 
 // Data for specific instances of this filter
 

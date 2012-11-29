@@ -21,6 +21,7 @@ using namespace mpxp;
 #include "mp_conf_lavc.h"
 
 #include "af.h"
+#include "af_internal.h"
 #include "pp_msg.h"
 
 uint64_t layouts[]={

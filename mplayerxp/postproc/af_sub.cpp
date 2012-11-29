@@ -28,6 +28,7 @@ using namespace mpxp;
 #include <inttypes.h>
 
 #include "af.h"
+#include "af_internal.h"
 #include "aflib.h"
 #include "pp_msg.h"
 

@@ -14,6 +14,7 @@ using namespace mpxp;
 #include <inttypes.h>
 
 #include "af.h"
+#include "af_internal.h"
 #include "pp_msg.h"
 
 #define FR 0

@@ -10,6 +10,7 @@ using namespace mpxp;
 #include "libao2/afmt.h"
 
 #include "af.h"
+#include "af_internal.h"
 #include "pp_msg.h"
 
 static unsigned rates[] =

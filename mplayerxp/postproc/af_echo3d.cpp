@@ -32,6 +32,7 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 #include "af.h"
+#include "af_internal.h"
 #include "aflib.h"
 
 #define DELAY1 35000

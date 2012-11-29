@@ -41,6 +41,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 
 #include "af.h"
+#include "af_internal.h"
 #include "pp_msg.h"
 
 // Data for specific instances of this filter

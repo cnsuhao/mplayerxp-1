@@ -2,6 +2,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include "af.h"
+#include "af_internal.h"
 
 // Allocate memory and set function pointers
 static MPXP_Rc af_open(af_instance_t* af){

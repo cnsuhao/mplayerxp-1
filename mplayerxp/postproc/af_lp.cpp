@@ -8,6 +8,7 @@ using namespace mpxp;
 #include <string.h>
 
 #include "af.h"
+#include "af_internal.h"
 #include "pp_msg.h"
 
 struct af_lp_t {

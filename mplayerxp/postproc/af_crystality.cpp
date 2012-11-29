@@ -65,6 +65,7 @@ and high-freqs and try to restore FR as:
 
 #include "mplayerxp.h"
 #include "af.h"
+#include "af_internal.h"
 #include "aflib.h"
 
 #include "libmpstream/stream.h"
