@@ -1238,7 +1238,8 @@ demuxer_t* init_avi_with_ogg(demuxer_t* demuxer) {
 
   // Create the ds_stream and the ogg demuxer
   s = new_ds_stream(demuxer->audio);
-  od = new_demuxer(s,DEMUXER_TYPE_OGG,0,-2,-2);
+  od = new_demuxer(s,0,-2,-2);
+  od->file_format=DEMUXER_TYPE_OGG;
 
   /// Add the header packets in the ogg demuxer audio stream
   // Initial header
@@ -1471,6 +1472,7 @@ static MPXP_Rc ogg_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_ogg =
 {
+    "ogg",
     "OGG/Vorbis parser",
     ".ogg",
     NULL,

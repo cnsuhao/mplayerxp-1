@@ -1858,7 +1858,7 @@ play_next_file:
 
     MP_UNIT("demux_open");
 
-    if(!input_state.after_dvdmenu) MPXPSys->assign_demuxer(demux_open(stream,file_format,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
+    if(!input_state.after_dvdmenu) MPXPSys->assign_demuxer(demux_open(stream,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
     if(!MPXPSys->demuxer()) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     input_state.after_dvdmenu=0;
 

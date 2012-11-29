@@ -1292,7 +1292,8 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
        stream_t* s;
        demuxer_t  *od;
        s = new_ds_stream(demuxer->audio);
-       od = new_demuxer(s,DEMUXER_TYPE_OGG,-1,-2,-2);
+       od = new_demuxer(s,-1,-2,-2);
+       od->file_format=DEMUXER_TYPE_OGG;
        demux_ogg.probe(od);
        if(!demux_ogg.open(od)) {
 	 MSG_ERR("Can't open OGG demuxer\n");
@@ -1536,6 +1537,7 @@ static const config_t avi_opts[] = {
 
 extern const demuxer_driver_t demux_avi =
 {
+    "avi",
     "AVI - Audio Video Interleaved parser",
     ".avi",
     avi_opts,

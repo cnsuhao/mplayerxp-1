@@ -152,6 +152,7 @@ static MPXP_Rc rawvideo_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_rawvideo =
 {
+    "rawvideo",
     "RAW video parser",
     ".rawvideo",
     rawvideo_conf,

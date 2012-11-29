@@ -880,6 +880,7 @@ static MPXP_Rc mpxpav64_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_mpxpav64 =
 {
+    "mpxpav64",
     "MPXPAV64 - MPlayerXP's AudioVideo64 parser",
     ".mpxp",
     NULL,

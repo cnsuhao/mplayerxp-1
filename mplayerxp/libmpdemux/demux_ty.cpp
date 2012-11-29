@@ -875,6 +875,7 @@ static demuxer_t* ty_open(demuxer_t* demuxer)
 /* "Christopher R. Wingert" */
 extern const demuxer_driver_t demux_ty =
 {
+    "tivo",
     "TiVo demuxer",
     ".tivo",
     NULL,

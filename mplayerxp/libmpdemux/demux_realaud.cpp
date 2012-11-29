@@ -308,8 +308,9 @@ static MPXP_Rc realaud_control(const demuxer_t *demuxer,int cmd,any_t*args)
     return MPXP_Unknown;
 }
 
-extern const demuxer_driver_t demux_ra =
+extern const demuxer_driver_t demux_realaud =
 {
+    "realaud",
     "Real audio parser",
     ".ra",
     NULL,

@@ -1798,6 +1798,7 @@ static const config_t audio_opts[] = {
 
 extern const demuxer_driver_t demux_audio =
 {
+    "audio",
     "WAV/MP3 parser",
     ".wav",
     audio_opts,

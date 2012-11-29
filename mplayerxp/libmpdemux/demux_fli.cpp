@@ -202,6 +202,7 @@ static MPXP_Rc fli_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_fli =
 {
+    "fli",
     "FLI parser",
     ".fli",
     NULL,

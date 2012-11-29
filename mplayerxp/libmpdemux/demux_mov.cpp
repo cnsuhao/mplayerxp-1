@@ -2104,6 +2104,7 @@ static MPXP_Rc mov_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_mov =
 {
+    "mov",
     "QuickTime MOV parser",
     ".mov",
     NULL,

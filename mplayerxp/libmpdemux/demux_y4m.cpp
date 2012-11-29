@@ -282,6 +282,7 @@ static MPXP_Rc y4m_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_y4m =
 {
+    "y4m",
     "YUV4MPEG2 parser",
     ".y4m",
     NULL,

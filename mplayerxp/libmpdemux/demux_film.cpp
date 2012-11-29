@@ -449,6 +449,7 @@ static MPXP_Rc film_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_film =
 {
+    "film",
     "FILM (a.k.a. CPK) parser",
     ".cpk",
     NULL,

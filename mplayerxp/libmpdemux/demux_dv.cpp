@@ -240,6 +240,7 @@ static MPXP_Rc dv_control(const demuxer_t *demuxer,int cmd, any_t*arg) {
 }
 
 extern const demuxer_driver_t demux_dv = {
+  "dv",
   "DV video: IEC 61834 and SMPTE 314M",
   ".dv",
   NULL, // no options

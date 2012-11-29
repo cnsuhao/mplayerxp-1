@@ -3293,6 +3293,7 @@ static MPXP_Rc ts_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_mpgts =
 {
+    "ts",
     "MPEG2 Transport Streams parser",
     ".mts",
     NULL,

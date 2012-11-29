@@ -153,8 +153,9 @@ enum {
 /** Demuxer's driver interface */
 typedef struct demuxer_driver_s
 {
-    const char *	name;	/**< Name of driver ("Matroska MKV parser") */
-    const char *	defext; /**< Default file extension for this movie type */
+    const char*		short_name; /**< for forcing through comand line */
+    const char*		name;	/**< Name of driver ("Matroska MKV parser") */
+    const char*		defext; /**< Default file extension for this movie type */
     const config_t*	options;/**< Optional: MPlayerXP's option related */
 			/** Probing stream.
 			  * @param d	_this demuxer
@@ -190,7 +191,7 @@ typedef struct demuxer_driver_s
 }demuxer_driver_t;
 
 demux_stream_t* new_demuxer_stream(demuxer_t *demuxer,int id);
-demuxer_t* new_demuxer(stream_t *stream,int type,int a_id,int v_id,int s_id);
+demuxer_t* new_demuxer(stream_t *stream,int a_id,int v_id,int s_id);
 void free_demuxer_stream(demux_stream_t *ds);
 void free_demuxer(demuxer_t *demuxer);
 
@@ -271,6 +272,6 @@ extern int demuxer_switch_audio(const demuxer_t *, int id);
 extern int demuxer_switch_video(const demuxer_t *, int id);
 extern int demuxer_switch_subtitle(const demuxer_t *, int id);
 
-demuxer_t* demux_open(stream_t *stream,int file_format,int aid,int vid,int sid);
+demuxer_t* demux_open(stream_t *stream,int aid,int vid,int sid);
 
 #endif

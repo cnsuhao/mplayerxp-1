@@ -854,6 +854,7 @@ static MPXP_Rc mpgps_control(const demuxer_t *demuxer,int cmd,any_t*arg)
 
 extern const demuxer_driver_t demux_mpgps =
 {
+    "mpg",
     "MPG/VOB PS (Packet stream) parser",
     ".mpg",
     NULL,

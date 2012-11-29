@@ -4058,6 +4058,7 @@ demux_mkv_get_audio_lang(demuxer_t *demuxer, int track_num, char *lang,
 
 extern const demuxer_driver_t demux_mkv =
 {
+    "mkv",
     "Matroska MKV parser",
     ".mkv",
     NULL,

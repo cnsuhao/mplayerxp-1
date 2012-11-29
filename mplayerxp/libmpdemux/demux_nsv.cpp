@@ -357,6 +357,7 @@ static MPXP_Rc nsv_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_nsv =
 {
+    "nsv",
     "Nullsoft Streaming Video demuxer",
     ".nsv",
     NULL,

@@ -493,6 +493,7 @@ static void lavf_close(demuxer_t *demuxer)
 
 extern const demuxer_driver_t demux_lavf =
 {
+    "lavf",
     "libavformat - supports many formats, requires libavformat",
     ".xxx",
     lavfdopts_conf,

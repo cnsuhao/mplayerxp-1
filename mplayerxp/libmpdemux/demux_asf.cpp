@@ -729,6 +729,7 @@ static MPXP_Rc asf_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_asf =
 {
+    "asf",
     "ASF - Advanced stream format v1 parser",
     ".asf",
     NULL,

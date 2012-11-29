@@ -336,6 +336,7 @@ static MPXP_Rc nuv_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_nuv =
 {
+    "nuv",
     "NuppelVideo 0.05 parser",
     ".nuv",
     NULL,

@@ -232,6 +232,7 @@ static MPXP_Rc vqf_control(const demuxer_t *demuxer,int cmd,any_t*args)
 
 extern const demuxer_driver_t demux_vqf =
 {
+    "vqf",
     "TwinVQ - Transform-domain Weighted Interleave Vector Quantization",
     ".vqf",
     NULL,
