@@ -578,7 +578,7 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	ds_fill_buffer(d_video);
 	if(sh_audio){
 	  ds_fill_buffer(d_audio);
-	  mpca_resync_stream(sh_audio->decoder);
+//	  mpca_resync_stream(sh_audio->decoder);
 	}
 
 	while(1){
@@ -587,7 +587,7 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	    float a_pts=d_audio->pts;
 	    a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    if(d_video->pts>a_pts){
-	      mpca_skip_frame(sh_audio->decoder);  // sync audio
+//	      mpca_skip_frame(sh_audio->decoder);  // sync audio
 	      continue;
 	    }
 	  }

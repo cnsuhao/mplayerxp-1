@@ -824,16 +824,12 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     if(newpos<(uint64_t)demuxer->movi_start) newpos=demuxer->movi_start;
     if(newpos>(uint64_t)demuxer->movi_end) goto cant_seek;
     stream_seek(demuxer->stream,newpos);
-    if(!has_idx)
-    {
-	if(mpxpav64_sync(demuxer))
-	{
+    if(!has_idx) {
+	if(mpxpav64_sync(demuxer)) {
 		if(mp_conf.verbose) MSG_V("MPXPAV64_SEEK: newpos after sync %016llX\n",stream_tell(demuxer->stream));
 		mpxpav64_reset_prevs(demuxer);
-		mpca_resync_stream(((sh_audio_t*)demuxer->audio->sh)->decoder);
 	}
-	else
-	{
+	else {
 		cant_seek:
 		MSG_WARN("MPXPAV64_SEEK: can't find CLUSTER0\n");
 		stream_seek(demuxer->stream,cpos);

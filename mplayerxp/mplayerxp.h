@@ -121,6 +121,10 @@ namespace mpxp {;
 	double total_start;
     }time_usage_t;
 
+    struct audio_processing_t {
+	any_t*		decoder;
+    };
+
     struct MPXPSystem;
     /* non-configurable through command line stuff */
     struct MPXPContext {
@@ -138,6 +142,7 @@ namespace mpxp {;
 	time_usage_t*		bench;
 	struct MPXPSystem*	MPXPSys;
 	any_t*			msg_priv;
+	audio_processing_t&	audio;
     };
     extern MPXPContext* MPXPCtx;
 

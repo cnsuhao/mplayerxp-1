@@ -1589,8 +1589,6 @@ static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 	stream_seek(demuxer->stream, next_offset);
 
     real_demux(demuxer,NULL);
-    if (sh_audio)
-	mpca_resync_stream(sh_audio->decoder);
     return;
 }
 

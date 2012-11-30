@@ -198,7 +198,9 @@ MP_Config::MP_Config() {
 }
 MP_Config mp_conf;
 
-MPXPContext::MPXPContext() {
+MPXPContext::MPXPContext()
+	    :audio(*new(zeromem) audio_processing_t)
+{
     seek_time=-1;
     bench=new(zeromem) time_usage_t;
     use_pts_fix2=-1;
@@ -345,7 +347,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_ACODEC){
 	inited_flags&=~INITED_ACODEC;
 	MP_UNIT("uninit_acodec");
-	mpca_uninit(sh_audio->decoder);
+	mpca_uninit(MPXPCtx->audio.decoder);
 	sh_audio=NULL;
     }
 
@@ -706,7 +708,7 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 
 	if(sh_audio){
 	    MP_UNIT("seek_audio_reset");
-	    mpca_resync_stream(sh_audio->decoder);
+	    mpca_resync_stream(MPXPCtx->audio.decoder);
 	    ao_reset(ao_data); // stop audio, throwing away buffered data
 	}
 
@@ -753,9 +755,7 @@ void mpxp_reset_vcache(void)
 
 void mpxp_resync_audio_stream(void)
 {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    mpca_resync_stream(sh_audio->decoder);
+    mpca_resync_stream(MPXPCtx->audio.decoder);
 }
 
 static void __FASTCALL__ mpxp_stream_event_handler(stream_t *s,const stream_packet_t *sp)
@@ -1107,7 +1107,7 @@ static void mpxp_find_acodec(const char *ao_subdevice) {
     demux_stream_t *d_audio=MPXPSys->demuxer()->audio;
     sh_audio->codec=NULL;
     mpca=mpca_init(sh_audio); // try auto-probe first
-    if(mpca) { sh_audio->decoder=mpca; found=1; }
+    if(mpca) { MPXPCtx->audio.decoder=mpca; found=1; }
 #ifdef ENABLE_WIN32LOADER
     if(!found) {
 // Go through the codec.conf and find the best codec...
@@ -1648,7 +1648,7 @@ For future:
 
 static void mpxp_config_malloc(int argc,char *argv[])
 {
-    int i,level;
+    int i;
     mp_conf.malloc_debug=0;
     mp_malloc_e flg=MPA_FLG_RANDOMIZER;
     for(i=0;i<argc;i++) {
@@ -1890,10 +1890,11 @@ play_next_file:
 	goto dump_file;
     }
 
+    /* is it non duplicate block fro find_acodec() ??? */
     if(sh_audio){
 	MSG_V("Initializing audio codec...\n");
-	if(!sh_audio->decoder) {
-	    if(mpca_init(sh_audio)==NULL){
+	if(!MPXPCtx->audio.decoder) {
+	    if((MPXPCtx->audio.decoder=mpca_init(sh_audio))==NULL){
 		MSG_ERR(MSGTR_CouldntInitAudioCodec);
 		d_audio->sh=NULL;
 		sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);

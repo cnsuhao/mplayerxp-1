@@ -23,8 +23,6 @@ typedef struct sh_audio_s {
     uint32_t		wtag;  // analogue of fourcc for sound
     unsigned		i_bps; // == bitrate  (compressed bytes/sec)
 
-    any_t*		decoder;
-
 // output format:
     float		timer;  // value of old a_frame
     unsigned		rate;  // sample rate

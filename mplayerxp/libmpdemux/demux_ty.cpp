@@ -805,7 +805,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
 	   (float)sh_audio->i_bps;
 	if( d_video->pts > a_pts )
 	{
-	   mpca_skip_frame( sh_audio->decoder);  // sync audio
+//	   mpca_skip_frame( sh_audio->decoder);  // sync audio
 	   continue;
 	}
      }

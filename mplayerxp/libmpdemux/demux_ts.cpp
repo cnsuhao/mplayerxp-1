@@ -3116,19 +3116,15 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 		ds_fill_buffer(d_audio);
 	}
 
-	while(sh_video != NULL)
-	{
-		if(sh_audio && !d_audio->eof && d_video->pts && d_audio->pts)
-		{
+	while(sh_video != NULL) {
+		if(sh_audio && !d_audio->eof && d_video->pts && d_audio->pts) {
 			float a_pts=d_audio->pts;
 			a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
-			if(d_video->pts > a_pts)
-			{
-				mpca_skip_frame(sh_audio->decoder);  // sync audio
+			if(d_video->pts > a_pts) {
+//				mpca_skip_frame( sh_audio->decoder);  // sync audio
 				continue;
 			}
 		}
-
 
 		i = sync_video_packet(d_video);
 		if((sh_video->fourcc == VIDEO_MPEG1) || (sh_video->fourcc == VIDEO_MPEG2))
