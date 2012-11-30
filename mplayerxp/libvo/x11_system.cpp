@@ -338,6 +338,7 @@ void X11_System::getMyXImage(unsigned idx,Visual *visual,unsigned _dpth,unsigned
 
 void X11_System::freeMyXImage(unsigned idx)
 {
+    if(!myximage[idx]) return;
 #ifdef HAVE_SHM
     if ( _Shmem_Flag ) {
 	::XShmDetach( mDisplay,&Shminfo[idx] );
