@@ -63,7 +63,7 @@ static MPXP_Rc smjpeg_probe(demuxer_t* demuxer){
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int smjpeg_demux(demuxer_t *demux,demux_stream_t *__ds)
+static int smjpeg_demux(demuxer_t *demux,Demuxer_Stream *__ds)
 {
     int dtype, dsize, dpts;
 
@@ -77,11 +77,11 @@ static int smjpeg_demux(demuxer_t *demux,demux_stream_t *__ds)
     {
 	case mmioFOURCC('s','n','d','D'):
 	    /* fixme, but no decoder implemented yet */
-	    ds_read_packet(demux->audio, demux->stream, dsize,
+	    demux->audio->read_packet(demux->stream, dsize,
 		(float)dpts/1000.0, demux->filepos, DP_NONKEYFRAME);
 	    break;
 	case mmioFOURCC('v','i','d','D'):
-	    ds_read_packet(demux->video, demux->stream, dsize,
+	    demux->video->read_packet(demux->stream, dsize,
 		(float)dpts/1000.0, demux->filepos, DP_NONKEYFRAME);
 	    break;
 	case mmioFOURCC('D','O','N','E'):

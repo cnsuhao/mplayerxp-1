@@ -50,7 +50,7 @@ static void fli_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int fli_demux(demuxer_t *demuxer,demux_stream_t *__ds){
+static int fli_demux(demuxer_t *demuxer,Demuxer_Stream *__ds){
   fli_frames_t *frames = static_cast<fli_frames_t*>(demuxer->priv);
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
 
@@ -62,12 +62,11 @@ static int fli_demux(demuxer_t *demuxer,demux_stream_t *__ds){
   // first, position the file properly since ds_read_packet() doesn't
   // seem to do it, even though it takes a file offset as a parameter
   stream_seek(demuxer->stream, frames->filepos[frames->current_frame]);
-  ds_read_packet(demuxer->video,
-    demuxer->stream,
-    frames->frame_size[frames->current_frame],
-    frames->current_frame/sh_video->fps,
-    frames->filepos[frames->current_frame],
-    DP_NONKEYFRAME /* what flags? -> demuxer.h (alex) */
+  demuxer->video->read_packet(demuxer->stream,
+			    frames->frame_size[frames->current_frame],
+			    frames->current_frame/sh_video->fps,
+			    frames->filepos[frames->current_frame],
+			    DP_NONKEYFRAME /* what flags? -> demuxer.h (alex) */
   );
 
   // get the next frame ready
@@ -198,6 +197,9 @@ static void fli_close(demuxer_t* demuxer) {
 
 static MPXP_Rc fli_control(const demuxer_t *demuxer,int cmd,any_t*args)
 {
+    UNUSED(demuxer);
+    UNUSED(cmd);
+    UNUSED(args);
     return MPXP_Unknown;
 }
 

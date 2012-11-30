@@ -34,13 +34,13 @@ pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;
 #define LOCK_DEMUXER() { pthread_mutex_lock(&demuxer_mutex); }
 #define UNLOCK_DEMUXER() { pthread_mutex_unlock(&demuxer_mutex); }
 
-static float get_ds_stream_pts(demux_stream_t *ds,int nbytes)
+static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
 {
     float retval;
     demuxer_t*demuxer=ds->demuxer;
     xp_core->initial_apts_corr.need_correction=0;
     MSG_DBG2("initial_apts from: stream_pts=%f pts_bytes=%u got_bytes=%u i_bps=%u\n"
-    ,ds->pts,ds_tell_pts(ds),nbytes,((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
+    ,ds->pts,ds->tell_pts(),nbytes,((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
     /* FIXUP AUDIO PTS*/
     if((demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 	demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
@@ -61,11 +61,11 @@ static float get_ds_stream_pts(demux_stream_t *ds,int nbytes)
 	if(!ds->eof) ds->prev_pts=ds->pts+ds->pts_corr;
     }
     if(((sh_audio_t*)ds->demuxer->audio->sh)->i_bps)
-	retval = ds->pts+ds->pts_corr+((float)(ds_tell_pts(ds)-nbytes))/(float)(((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
+	retval = ds->pts+ds->pts_corr+((float)(ds->tell_pts()-nbytes))/(float)(((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
     else
     {
 	xp_core->initial_apts_corr.need_correction=1;
-	xp_core->initial_apts_corr.pts_bytes=ds_tell_pts(ds);
+	xp_core->initial_apts_corr.pts_bytes=ds->tell_pts();
 	xp_core->initial_apts_corr.nbytes=nbytes;
 	retval = ds->pts;
     }
@@ -73,7 +73,7 @@ static float get_ds_stream_pts(demux_stream_t *ds,int nbytes)
     return retval;
 }
 
-int demux_getc_r(demux_stream_t *ds,float *pts)
+int demux_getc_r(Demuxer_Stream *ds,float *pts)
 {
     int retval;
     unsigned int t=0;
@@ -81,7 +81,7 @@ int demux_getc_r(demux_stream_t *ds,float *pts)
     double tt;
     LOCK_DEMUXER();
     if(mp_conf.benchmark) t=GetTimer();
-    retval = demux_getc(ds);
+    retval = ds->getch();
     *pts=get_ds_stream_pts(ds,1);
     if(xp_core->initial_apts == HUGE) xp_core->initial_apts=*pts;
     if(mp_conf.benchmark)
@@ -124,7 +124,7 @@ enc_frame_t* video_read_frame_r(sh_video_t* sh_video,int force_fps)
     return frame;
 }
 
-int demux_read_data_r(demux_stream_t *ds,unsigned char* mem,int len,float *pts)
+int demux_read_data_r(Demuxer_Stream *ds,unsigned char* mem,int len,float *pts)
 {
     int retval;
     unsigned int t=0;
@@ -132,7 +132,7 @@ int demux_read_data_r(demux_stream_t *ds,unsigned char* mem,int len,float *pts)
     double tt;
     LOCK_DEMUXER();
     if(mp_conf.benchmark) t=GetTimer();
-    retval = demux_read_data(ds,mem,len);
+    retval = ds->read_data(mem,len);
     *pts=get_ds_stream_pts(ds,retval);
     if(xp_core->initial_apts == HUGE) xp_core->initial_apts=*pts;
     if(mp_conf.benchmark)
@@ -148,7 +148,7 @@ int demux_read_data_r(demux_stream_t *ds,unsigned char* mem,int len,float *pts)
     return retval;
 }
 
-int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts)
+int ds_get_packet_r(Demuxer_Stream *ds,unsigned char **start,float *pts)
 {
     int retval;
     unsigned int t=0;
@@ -156,7 +156,7 @@ int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts)
     double tt;
     LOCK_DEMUXER();
     if(mp_conf.benchmark) t=GetTimer();
-    retval = ds_get_packet(ds,start);
+    retval = ds->get_packet(start);
     *pts=get_ds_stream_pts(ds,retval);
     if(xp_core->initial_apts == HUGE) xp_core->initial_apts=*pts;
     if(mp_conf.benchmark)
@@ -172,10 +172,10 @@ int ds_get_packet_r(demux_stream_t *ds,unsigned char **start,float *pts)
     return retval;
 }
 
-int ds_get_packet_sub_r(demux_stream_t *ds,unsigned char **start) {
+int ds_get_packet_sub_r(Demuxer_Stream *ds,unsigned char **start) {
     int rc;
     LOCK_DEMUXER();
-    rc=ds_get_packet_sub(ds,start);
+    rc=ds->get_packet_sub(start);
     UNLOCK_DEMUXER();
     return rc;
 }

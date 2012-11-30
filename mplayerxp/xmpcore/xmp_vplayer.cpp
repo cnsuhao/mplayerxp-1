@@ -147,7 +147,7 @@ static int vplayer_do_sleep(sh_audio_t* sh_audio,int rtc_fd,float sleep_time)
 
 static int mpxp_play_video(demuxer_t* demuxer,sh_audio_t* sh_audio,sh_video_t*sh_video)
 {
-    demux_stream_t *d_audio=demuxer->audio;
+    Demuxer_Stream *d_audio=demuxer->audio;
     float v_pts=0;
     float sleep_time=0;
     int can_blit=0;
@@ -274,7 +274,7 @@ any_t* xmp_video_player( any_t* arg )
 {
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->dae->sh);
-    demux_stream_t *d_video=sh_video->ds;
+    Demuxer_Stream *d_video=sh_video->ds;
     demuxer_t *demuxer=d_video->demuxer;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
 

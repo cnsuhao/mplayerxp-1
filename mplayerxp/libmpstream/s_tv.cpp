@@ -105,7 +105,7 @@ static const mrl_config_t tvopts_conf[]={
 */
 /* fill demux->video and demux->audio */
 
-int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, demux_stream_t *ds, tvi_handle_t *tvh)
+int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, Demuxer_Stream *ds, tvi_handle_t *tvh)
 {
     Demuxer_Packet* dp;
     u_int len;
@@ -122,7 +122,7 @@ int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, demux_stream_t *ds, tvi_
 
 	dp=new(zeromem) Demuxer_Packet(len);
 	dp->pts=tvh->functions->grab_audio_frame(reinterpret_cast<priv_s*>(tvh->priv), dp->buffer(),len);
-	ds_add_packet(demux->audio,dp);
+	demux->audio->add_packet(dp);
 	}
 
     /* ================== ADD VIDEO PACKET =================== */
@@ -133,7 +133,7 @@ int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, demux_stream_t *ds, tvi_
 	len = tvh->functions->get_video_framesize(reinterpret_cast<priv_s*>(tvh->priv));
 	dp=new(zeromem) Demuxer_Packet(len);
 	dp->pts=tvh->functions->grab_video_frame(reinterpret_cast<priv_s*>(tvh->priv), dp->buffer(), len);
-	ds_add_packet(demux->video,dp);
+	demux->video->add_packet(dp);
 	 }
 
     return 1;

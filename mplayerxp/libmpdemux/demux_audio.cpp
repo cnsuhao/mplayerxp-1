@@ -1394,7 +1394,7 @@ static uint32_t mpc_get_bits(da_priv_t* priv, stream_t* s, int bits) {
   return out & mask;
 }
 
-static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
+static int audio_demux(demuxer_t *demuxer,Demuxer_Stream *ds) {
   sh_audio_t* sh_audio;
   demuxer_t* demux;
   da_priv_t* priv;
@@ -1456,9 +1456,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	    dp->resize(len+4);
 	    len=stream_read(s,dp->buffer() + 4,len-4);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
-	    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+	    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
-	    ds_add_packet(ds,dp);
+	    ds->add_packet(dp);
 	}
 	else stream_skip(s,len);
 	return 1;
@@ -1485,9 +1485,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	    dp->resize(len+8);
 	    len=stream_read(s,dp->buffer()+8,len-8);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
-	    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+	    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
-	    ds_add_packet(ds,dp);
+	    ds->add_packet(dp);
 	}
 	else stream_skip(s,len);
 	return 1;
@@ -1514,9 +1514,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	    memcpy(dp->buffer(),hdr,16);
 	    len=stream_read(s,dp->buffer()+16,len-16);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
-	    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+	    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
-	    ds_add_packet(ds,dp);
+	    ds->add_packet(dp);
 	}
 	else stream_skip(s,len);
 	return 1;
@@ -1530,9 +1530,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     l=stream_read(s,dp->buffer(),l);
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
-    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     dp->flags=DP_NONKEYFRAME;
-    ds_add_packet(ds,dp);
+    ds->add_packet(dp);
     return 1;
   }
   case RAW_VOC : {
@@ -1541,9 +1541,9 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
     l=stream_read(s,dp->buffer(),l);
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
-    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     dp->flags=DP_NONKEYFRAME;
-    ds_add_packet(ds,dp);
+    ds->add_packet(dp);
     return 1;
   }
   case RAW_MUSEPACK: {
@@ -1565,10 +1565,10 @@ static int audio_demux(demuxer_t *demuxer,demux_stream_t *ds) {
 	priv->last_pts = 0;
     else
 	priv->last_pts += priv->pts_per_packet;
-    dp->pts = priv->last_pts - (ds_tell_pts(demux->audio) -
+    dp->pts = priv->last_pts - (demux->audio->tell_pts() -
 	      sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     dp->flags=DP_NONKEYFRAME;
-    ds_add_packet(ds, dp);
+    ds->add_packet(dp);
     return 1;
   }
   default:
@@ -1701,7 +1701,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
     if(len > 0)
       high_res_mp3_seek(demuxer,len);
-    sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+    sh_audio->timer = priv->last_pts - (demuxer->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     return;
   }
 
@@ -1715,7 +1715,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     pos = demuxer->movi_start;
 
   priv->last_pts = (pos-demuxer->movi_start)/(float)sh_audio->i_bps;
-  sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+  sh_audio->timer = priv->last_pts - (demuxer->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 
   frmt=priv->frmt;
   if(frmt==RAW_WAV)
@@ -1737,7 +1737,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
     if(len > 0)
       high_res_ac3_seek(demuxer,len);
-    sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+    sh_audio->timer = priv->last_pts - (demuxer->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     return;
   }
   case RAW_DCA: {
@@ -1749,7 +1749,7 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
     if(len > 0)
       high_res_ddca_seek(demuxer,len);
-    sh_audio->timer = priv->last_pts - (ds_tell_pts(demuxer->audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+    sh_audio->timer = priv->last_pts - (demuxer->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
     return;
   }
   case RAW_VOC:

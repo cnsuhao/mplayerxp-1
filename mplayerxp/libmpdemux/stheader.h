@@ -12,6 +12,7 @@ extern "C" {
 }
 #endif
 #include "xmpcore/mp_image.h"
+#include "demuxer_stream.h"
 
 struct standard_header : public Opaque {
     public:
@@ -19,7 +20,7 @@ struct standard_header : public Opaque {
 	virtual ~standard_header() {}
 
     int			id;
-    demux_stream_t*	ds;
+    Demuxer_Stream*	ds;
     struct codecs_st*	codec;
     int			inited;
 };

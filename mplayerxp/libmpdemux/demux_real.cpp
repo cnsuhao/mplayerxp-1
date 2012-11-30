@@ -405,10 +405,10 @@ typedef struct dp_hdr_s {
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int real_demux(demuxer_t *demuxer,demux_stream_t *__ds)
+static int real_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
 {
     real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
-    demux_stream_t *ds = NULL;
+    Demuxer_Stream *ds = NULL;
     float pts;
     int len;
     int timestamp;
@@ -522,7 +522,7 @@ got_audio:
 		    priv->a_pts = pts;
 		    dp->pos = demuxer->filepos;
 		    dp->flags=DP_NONKEYFRAME;
-		    ds_add_packet(ds, dp);
+		    ds->add_packet(dp);
 		}
 		delete sub_packet_lengths;
 		return 1;
@@ -538,7 +538,7 @@ got_audio:
 	    priv->a_pts=pts;
 	    dp->pos = demuxer->filepos;
 	    dp->flags = (flags & 0x2) ? DP_KEYFRAME : DP_NONKEYFRAME;
-	    ds_add_packet(ds, dp);
+	    ds->add_packet(dp);
 	}
 // we will not use audio index if we use -idx and have a video
 	if(!demuxer->video->sh && index_mode == 2 && (unsigned)demuxer->audio->id < MAX_STREAMS)
@@ -656,7 +656,7 @@ got_video:
 			} else
 			dp->pts=(dp_hdr->len<3)?0:
 			    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->fourcc);
-			ds_add_packet(ds,dp);
+			ds->add_packet(dp);
 			ds->asf_packet=NULL;
 		    } else {
 			// append data to it!
@@ -691,7 +691,7 @@ got_video:
 			    } else
 			    dp->pts=(dp_hdr->len<3)?0:
 				real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->fourcc);
-			    ds_add_packet(ds,dp);
+			    ds->add_packet(dp);
 			    ds->asf_packet=NULL;
 			    // continue parsing
 			    continue;
@@ -748,7 +748,7 @@ got_video:
 		} else
 		dp->pts=(dp_hdr->len<3)?0:
 		    real_fix_timestamp(priv,dp_data,dp_hdr->timestamp,sh_video->fourcc);
-		ds_add_packet(ds,dp);
+		ds->add_packet(dp);
 
 	    } // while(len>0)
 
@@ -1470,13 +1470,13 @@ header_end:
     // detect streams:
     if(demuxer->video->id==-1 && v_streams>0){
 	// find the valid video stream:
-	if(!ds_fill_buffer(demuxer->video)){
+	if(!demuxer->video->fill_buffer()){
 	  MSG_INFO("RM: " MSGTR_MissingVideoStream);
 	}
     }
     if(demuxer->audio->id==-1 && a_streams>0){
 	// find the valid audio stream:
-	if(!ds_fill_buffer(demuxer->audio)){
+	if(!demuxer->audio->fill_buffer()){
 	  MSG_INFO("RM: " MSGTR_MissingAudioStream);
 	}
     }
@@ -1503,8 +1503,8 @@ static void real_close(demuxer_t *demuxer)
 static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 {
     real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
-    demux_stream_t *d_audio = demuxer->audio;
-    demux_stream_t *d_video = demuxer->video;
+    Demuxer_Stream *d_audio = demuxer->audio;
+    Demuxer_Stream *d_video = demuxer->video;
     sh_audio_t *sh_audio = reinterpret_cast<sh_audio_t*>(d_audio->sh);
     sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
     int vid = d_video->id, aid = d_audio->id;

@@ -103,7 +103,7 @@ static MPXP_Rc dv_probe(demuxer_t *demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
+static int dv_demux(demuxer_t *demuxer, Demuxer_Stream *ds)
 {
    rawdv_frames_t *frames = static_cast<rawdv_frames_t*>(demuxer->priv);
    sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
@@ -125,9 +125,9 @@ static int dv_demux(demuxer_t *demuxer, demux_stream_t *ds)
    if (demuxer->audio && demuxer->audio->id>=-1)
    {
       Demuxer_Packet* dp_audio=dp_video->clone();
-      ds_add_packet(demuxer->audio,dp_audio);
+      demuxer->audio->add_packet(dp_audio);
    }
-   ds_add_packet(demuxer->video,dp_video);
+   demuxer->video->add_packet(dp_video);
    // get the next frame ready
    frames->current_filepos+=frames->frame_size;
    frames->current_frame++;

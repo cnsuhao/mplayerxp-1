@@ -28,7 +28,7 @@ static demuxer_t* null_open(demuxer_t* demuxer) {
     return NULL;
 }
 
-static int null_demux(demuxer_t* demuxer, demux_stream_t *ds) {
+static int null_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
     return 0;
 }
 

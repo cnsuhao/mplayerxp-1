@@ -145,7 +145,7 @@ int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
     sp.type=0;
     sp.len=s->sector_size;
     sp.buf=(char *)s->buffer;
-    if(s->type==STREAMTYPE_DS) len = demux_read_data((demux_stream_t*)s->priv,s->buffer,s->sector_size);
+    if(s->type==STREAMTYPE_DS) len = reinterpret_cast<Demuxer_Stream*>(s->priv)->read_data(s->buffer,s->sector_size);
     else { if(!s->driver) { s->eof=1; return 0; } len = s->driver->read(s,&sp); }
     if(sp.type)
     {
@@ -260,7 +260,7 @@ void __FASTCALL__ free_stream(stream_t *s){
   delete s;
 }
 
-stream_t* __FASTCALL__ new_ds_stream(demux_stream_t *ds) {
+stream_t* __FASTCALL__ new_ds_stream(Demuxer_Stream *ds) {
     stream_t* s = new_stream(STREAMTYPE_DS);
     s->driver=ds->demuxer->stream->driver;
     s->priv = ds;

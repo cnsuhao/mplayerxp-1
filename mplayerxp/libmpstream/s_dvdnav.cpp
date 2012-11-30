@@ -448,7 +448,7 @@ static void mp_dvdnav_get_highlight (const stream_t *stream, rect_highlight_t *h
 
 static void __FASTCALL__ dvdnav_event_handler(const stream_t* s,const stream_packet_t*sp)
 {
-    demux_stream_t *d_audio=s->demuxer->audio;
+    Demuxer_Stream *d_audio=s->demuxer->audio;
     dvdnav_priv_t *priv=static_cast<dvdnav_priv_t*>(s->priv);
     switch(sp->type) {
 	    case DVDNAV_BLOCK_OK: /* be silent about this one */

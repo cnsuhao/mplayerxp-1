@@ -20,7 +20,7 @@ struct demuxer_driver_t
 			 * @param d	_this demuxer
 			 * @param ds	pointer to stream associated with demuxer
 			 * @return	0 - EOF or no stream found; 1 - if packet was successfully readed */
-    int			(*demux)(demuxer_t *d,demux_stream_t *ds);
+    int			(*demux)(demuxer_t *d,Demuxer_Stream *ds);
 			/** Seeks within of stream.
 			 * @param d 		_thid demuxer
 			 * @param rel_seek_secs	position in seconds from begin of stream

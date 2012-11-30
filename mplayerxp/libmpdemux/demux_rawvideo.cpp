@@ -120,12 +120,12 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
     return demuxer;
 }
 
-static int rawvideo_demux(demuxer_t* demuxer, demux_stream_t *ds) {
+static int rawvideo_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
 
   if(stream_eof(demuxer->stream)) return 0;
   if(ds!=demuxer->video) return 0;
 
-  ds_read_packet(ds,demuxer->stream,priv.imgsize,0,stream_tell(demuxer->stream),DP_KEYFRAME);
+  ds->read_packet(demuxer->stream,priv.imgsize,0,stream_tell(demuxer->stream),DP_KEYFRAME);
 
   return 1;
 }

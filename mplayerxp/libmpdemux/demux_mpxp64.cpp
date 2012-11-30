@@ -528,7 +528,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
 
 static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float pts,int keyframe)
 {
-    demux_stream_t *ds=NULL;
+    Demuxer_Stream *ds=NULL;
     stream_t* s=demux->stream;
 
     if(demux->video->id==-1)
@@ -565,7 +565,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 	dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
 	dp->pos=demux->filepos;
 	MSG_DBG2("MPXPAV64: reading %llu of %s PTS %f %skeyframe at %016llX\n",len,ds==demux->audio?"audio":"video",dp->pts,keyframe?"":"non",pos);
-	ds_add_packet(ds,dp);
+	ds->add_packet(dp);
 	return 1;
     }
     else
@@ -577,7 +577,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 }
 
 /* DATx|stn|size|pts|stream data of size32 */
-static int mpxpav64_demux(demuxer_t *demux,demux_stream_t *__ds){
+static int mpxpav64_demux(demuxer_t *demux,Demuxer_Stream *__ds){
     stream_t* s=demux->stream;
     mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demux->priv);
     uint8_t flg;

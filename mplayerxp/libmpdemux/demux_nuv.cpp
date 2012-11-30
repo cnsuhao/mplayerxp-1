@@ -153,7 +153,7 @@ static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 }
 
 
-static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
+static int nuv_demux( demuxer_t *demuxer, Demuxer_Stream *__ds )
 {
 	struct rtframeheader rtjpeg_frameheader;
 	off_t orig_pos;
@@ -187,7 +187,7 @@ static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
 	    }
 	    /* put RTjpeg tables, Video info to video buffer */
 	    stream_seek ( demuxer->stream, orig_pos );
-	    ds_read_packet ( demuxer->video, demuxer->stream, rtjpeg_frameheader.packetlength + 12,
+	    demuxer->video->read_packet ( demuxer->stream, rtjpeg_frameheader.packetlength + 12,
 		    rtjpeg_frameheader.timecode*0.001, orig_pos, DP_NONKEYFRAME);
 
 
@@ -199,7 +199,7 @@ static int nuv_demux( demuxer_t *demuxer, demux_stream_t *__ds )
 	    priv->current_audio_frame++;
 	    if (want_audio) {
 	    /* put Audio to audio buffer */
-		ds_read_packet ( demuxer->audio, demuxer->stream, rtjpeg_frameheader.packetlength,
+		demuxer->audio->read_packet ( demuxer->stream, rtjpeg_frameheader.packetlength,
 			rtjpeg_frameheader.timecode*0.001, orig_pos + 12, DP_NONKEYFRAME);
 	    } else {
 	      /* skip audio block */

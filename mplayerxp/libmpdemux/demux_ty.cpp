@@ -289,7 +289,7 @@ static void demux_ty_AddToAudioBuffer( TiVoInfo *tivo, unsigned char *buffer,
       MSG_ERR("ty:WARNING - Would have blown my audio buffer\n" );
 }
 
-static void demux_ty_CopyToDemuxPacket( demux_stream_t *ds,
+static void demux_ty_CopyToDemuxPacket( Demuxer_Stream *ds,
        unsigned char *buffer, int size, off_t pos, int64_t pts )
 {
    Demuxer_Packet *dp = new(zeromem) Demuxer_Packet( size );
@@ -298,7 +298,7 @@ static void demux_ty_CopyToDemuxPacket( demux_stream_t *ds,
    dp->pts = pts / 90000.0;
    dp->pos = pos;
    dp->flags = DP_NONKEYFRAME;
-   ds_add_packet( ds, dp );
+   ds->add_packet(dp);
 }
 
 static int demux_ty_FindESHeader( uint8_t nal,
@@ -336,7 +336,7 @@ static void demux_ty_FindESPacket( uint8_t nal,
 #define AUDIO_NAL 0xc0
 #define AC3_NAL 0xbd
 
-static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
+static int ty_demux( demuxer_t *demux, Demuxer_Stream *dsds )
 {
    int              invalidType = 0;
    int              errorHeader = 0;
@@ -509,7 +509,7 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
    if( demux->video->id == -1 ) demux->video->id = aid;
    if( demux->video->id == aid )
    {
-      demux_stream_t *ds = demux->video;
+      Demuxer_Stream *ds = demux->video;
       if( !ds->sh ) ds->sh = demux->v_streams[ aid ];
    }
 
@@ -579,7 +579,7 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
 	       if( !demux->a_streams[ aid ] ) new_sh_audio( demux, aid );
 	       if( demux->audio->id == aid )
 	       {
-		  demux_stream_t *ds = demux->audio;
+		  Demuxer_Stream *ds = demux->audio;
 		  if( !ds->sh ) {
 		    sh_audio_t* sh_a;
 		    ds->sh = demux->a_streams[ aid ];
@@ -747,8 +747,8 @@ static int ty_demux( demuxer_t *demux, demux_stream_t *dsds )
 
 static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
 {
-   demux_stream_t *d_audio = demuxer->audio;
-   demux_stream_t *d_video = demuxer->video;
+   Demuxer_Stream *d_audio = demuxer->audio;
+   Demuxer_Stream *d_video = demuxer->video;
    sh_audio_t     *sh_audio = reinterpret_cast<sh_audio_t*>(d_audio->sh);
    off_t          newpos;
    off_t          res;
@@ -791,9 +791,9 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
    // re-sync video:
    videobuf_code_len = 0; // reset ES stream buffer
 
-   ds_fill_buffer( d_video );
+   d_video->fill_buffer();
    if( sh_audio )
-     ds_fill_buffer( d_audio );
+     d_audio->fill_buffer();
 
    while( 1 )
    {
@@ -801,7 +801,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
      if( sh_audio && !d_audio->eof && d_video->pts && d_audio->pts )
      {
 	float a_pts = d_audio->pts;
-	a_pts += ( ds_tell_pts( d_audio ) - sh_audio->a_in_buffer_len ) /
+	a_pts += ( d_audio->tell_pts() - sh_audio->a_in_buffer_len ) /
 	   (float)sh_audio->i_bps;
 	if( d_video->pts > a_pts )
 	{
@@ -823,7 +823,7 @@ static MPXP_Rc ty_control(const demuxer_t *demuxer,int cmd, any_t*arg )
     UNUSED(cmd);
     UNUSED(arg);
 #if 0
-    demux_stream_t *d_video = demuxer->video;
+    Demuxer_Stream *d_video = demuxer->video;
     sh_video_t     *sh_video = d_video->sh;
     switch(cmd) {
 	case DEMUX_CMD_GET_TIME_LENGTH: return MPXP_NA;
@@ -847,7 +847,7 @@ static MPXP_Rc ty_probe(demuxer_t* demuxer)
 {
   TiVoInfo *tivo = new(zeromem) TiVoInfo;
   demuxer->priv = tivo;
-  return ds_fill_buffer(demuxer->video) ? MPXP_Ok : MPXP_False;
+  return demuxer->video->fill_buffer() ? MPXP_Ok : MPXP_False;
 }
 
 
@@ -860,7 +860,7 @@ static demuxer_t* ty_open(demuxer_t* demuxer)
     sh_video->ds=demuxer->video;
 
     if(demuxer->audio->id!=-2) {
-	if(!ds_fill_buffer(demuxer->audio)){
+	if(!demuxer->audio->fill_buffer()){
 	    MSG_V("MPEG: Missing Audio Stream\n");
 	    demuxer->audio->sh=NULL;
 	} else {

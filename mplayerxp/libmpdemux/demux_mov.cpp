@@ -453,8 +453,7 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 		      //stream_read(demuxer->stream,s,slen);
 
 		      //FIXME: also store type & data_rate ?
-		      ds_read_packet(demuxer->video,
-			demuxer->stream,
+		      demuxer->video->read_packet(demuxer->stream,
 			slen,
 			0,
 			stream_tell(demuxer->stream),
@@ -1922,7 +1921,7 @@ static demuxer_t* mov_open(demuxer_t* demuxer){
  * \return the mov track info structure belonging to the stream,
  *          NULL if not found
  */
-static mov_track_t *stream_track(mov_priv_t *priv, demux_stream_t *ds) {
+static mov_track_t *stream_track(mov_priv_t *priv, Demuxer_Stream *ds) {
   if (ds && (ds->id >= 0) && (ds->id < priv->track_db))
     return priv->tracks[ds->id];
   return NULL;
@@ -1931,7 +1930,7 @@ static mov_track_t *stream_track(mov_priv_t *priv, demux_stream_t *ds) {
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int mov_demux(demuxer_t *demuxer,demux_stream_t* ds){
+static int mov_demux(demuxer_t *demuxer,Demuxer_Stream* ds){
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     mov_track_t* trak=NULL;
     float pts;
@@ -2016,9 +2015,9 @@ if(trak->pos==0 && trak->stream_header_len>0){
     trak->stream_header_len = 0;
     dp->pts=pts;
     dp->flags=DP_NONKEYFRAME;
-    ds_add_packet(ds,dp);
+    ds->add_packet(dp);
 } else
-    ds_read_packet(ds,demuxer->stream,x,pts,pos,DP_NONKEYFRAME);
+    ds->read_packet(demuxer->stream,x,pts,pos,DP_NONKEYFRAME);
 
     ++trak->pos;
     return 1;
@@ -2064,7 +2063,7 @@ return pts;
 
 static void mov_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
-    demux_stream_t* ds;
+    Demuxer_Stream* ds;
     mov_track_t* trak;
 
     ds=demuxer->video;

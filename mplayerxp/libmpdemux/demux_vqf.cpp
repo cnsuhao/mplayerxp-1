@@ -188,7 +188,7 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
     return demuxer;
 }
 
-static int vqf_demux(demuxer_t* demuxer, demux_stream_t *ds) {
+static int vqf_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
   off_t spos = stream_tell(demuxer->stream);
@@ -204,7 +204,7 @@ static int vqf_demux(demuxer_t* demuxer, demux_stream_t *ds) {
 
   l=stream_read(demuxer->stream,dp->buffer(),l);
   dp->resize(l);
-  ds_add_packet(ds,dp);
+  ds->add_packet(dp);
 
   return 1;
 }

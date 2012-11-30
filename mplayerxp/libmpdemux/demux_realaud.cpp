@@ -62,11 +62,11 @@ static MPXP_Rc realaud_probe(demuxer_t* demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int realaud_demux(demuxer_t *demuxer,demux_stream_t *__ds)
+static int realaud_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
 {
 	realaud_priv_t *realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
 	int len;
-	demux_stream_t *ds = demuxer->audio;
+	Demuxer_Stream *ds = demuxer->audio;
 	sh_audio_t *sh = reinterpret_cast<sh_audio_t*>(ds->sh);
 	WAVEFORMATEX *wf = sh->wf;
 
@@ -85,12 +85,12 @@ static int realaud_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	if(sh->i_bps)
 	{
 	    realaud_priv->last_pts = realaud_priv->last_pts < 0 ? 0 : realaud_priv->last_pts + len/(float)sh->i_bps;
-	    ds->pts = realaud_priv->last_pts - (ds_tell_pts(demuxer->audio)-sh->a_in_buffer_len)/(float)sh->i_bps;
+	    ds->pts = realaud_priv->last_pts - (demuxer->audio->tell_pts()-sh->a_in_buffer_len)/(float)sh->i_bps;
 	}
 	else dp->pts = demuxer->filepos / realaud_priv->data_size;
 	dp->pos = demuxer->filepos;
 	dp->flags = DP_NONKEYFRAME;
-	ds_add_packet(ds, dp);
+	ds->add_packet(dp);
 
 	return 1;
 }
@@ -268,7 +268,7 @@ static demuxer_t * realaud_open(demuxer_t* demuxer)
 	/* disable seeking */
 	demuxer->flags &= ~DEMUXF_SEEKABLE;
 
-	if(!ds_fill_buffer(demuxer->audio))
+	if(!demuxer->audio->fill_buffer())
 		MSG_WARN("[RealAudio] No data.\n");
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
@@ -290,7 +290,7 @@ static void realaud_close(demuxer_t *demuxer)
 int demux_seek_ra(demuxer_t *demuxer,const seek_args_t* seeka)
 {
     real_priv_t *priv = demuxer->priv;
-    demux_stream_t *d_audio = demuxer->audio;
+    Demuxer_Stream *d_audio = demuxer->audio;
     sh_audio_t *sh_audio = d_audio->sh;
     int aid = d_audio->id;
     int next_offset = 0;

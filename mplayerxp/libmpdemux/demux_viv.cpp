@@ -337,8 +337,8 @@ static int audio_rate=0;
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
-  demux_stream_t *ds=NULL;
+static int vivo_demux(demuxer_t *demux,Demuxer_Stream *__ds){
+  Demuxer_Stream *ds=NULL;
   int c;
   int len=0;
   int seq;
@@ -417,7 +417,7 @@ static int vivo_demux(demuxer_t *demux,demux_stream_t *__ds){
     if(ds->asf_packet){
       if(ds->asf_seq!=seq){
 	// closed segment, finalize packet:
-	ds_add_packet(ds,ds->asf_packet);
+	ds->add_packet(ds->asf_packet);
 	ds->asf_packet=NULL;
       } else {
 	// append data to it!
@@ -575,7 +575,7 @@ static int h263_decode_picture_header(unsigned char *b_ptr)
 static demuxer_t* vivo_open(demuxer_t* demuxer){
     vivo_priv_t* priv=static_cast<vivo_priv_t*>(demuxer->priv);
 
-  if(!ds_fill_buffer(demuxer->video)){
+  if(!demuxer->video->fill_buffer()){
     MSG_ERR("VIVO: " MSGTR_MissingVideoStreamBug);
     return NULL;
   }
@@ -656,7 +656,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 
 /* AUDIO init */
 if (demuxer->audio->id >= -1){
-  if(!ds_fill_buffer(demuxer->audio)){
+  if(!demuxer->audio->fill_buffer()){
     MSG_ERR("VIVO: " MSGTR_MissingAudioStream);
   } else
 {		sh_audio_t* sh=new_sh_audio(demuxer,1);

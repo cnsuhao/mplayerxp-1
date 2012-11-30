@@ -72,7 +72,7 @@ static MPXP_Rc roq_probe(demuxer_t *demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int roq_demux(demuxer_t *demuxer,demux_stream_t *__ds)
+static int roq_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
 {
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
   roq_data_t *roq_data = static_cast<roq_data_t*>(demuxer->priv);
@@ -87,11 +87,11 @@ static int roq_demux(demuxer_t *demuxer,demux_stream_t *__ds)
   stream_seek(demuxer->stream, roq_chunk.chunk_offset);
 
   if (roq_chunk.chunk_type == CHUNK_TYPE_AUDIO)
-    ds_read_packet(demuxer->audio, demuxer->stream, roq_chunk.chunk_size,
+    demuxer->audio->read_packet(demuxer->stream, roq_chunk.chunk_size,
       0,
       roq_chunk.chunk_offset, DP_NONKEYFRAME);
   else
-    ds_read_packet(demuxer->video, demuxer->stream, roq_chunk.chunk_size,
+    demuxer->video->read_packet(demuxer->stream, roq_chunk.chunk_size,
       roq_chunk.video_chunk_number / sh_video->fps,
       roq_chunk.chunk_offset, DP_NONKEYFRAME);
 

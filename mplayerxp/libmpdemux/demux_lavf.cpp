@@ -413,12 +413,12 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
     return demuxer;
 }
 
-static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
+static int lavf_demux(demuxer_t *demux, Demuxer_Stream *dsds){
     UNUSED(dsds);
     lavf_priv_t *priv= static_cast<lavf_priv_t*>(demux->priv);
     AVPacket pkt;
     Demuxer_Packet *dp;
-    demux_stream_t *ds;
+    Demuxer_Stream *ds;
     int id;
     MSG_DBG2("lavf_demux()\n");
 
@@ -464,7 +464,7 @@ static int lavf_demux(demuxer_t *demux, demux_stream_t *dsds){
     dp->pos=demux->filepos;
     dp->flags= (pkt.flags&AV_PKT_FLAG_KEY)?DP_KEYFRAME:DP_NONKEYFRAME;
     // append packet to DS stream:
-    ds_add_packet(ds,dp);
+    ds->add_packet(dp);
     return 1;
 }
 

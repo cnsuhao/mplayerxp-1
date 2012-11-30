@@ -710,7 +710,7 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
-    demux_stream_t *d_dvdsub=_demuxer->sub;
+    Demuxer_Stream *d_dvdsub=_demuxer->sub;
     int seek_rval=1;
     xp_core->audio->eof=0;
     if(_seek->secs || _seek->flags&DEMUX_SEEK_SET) {
@@ -1051,7 +1051,7 @@ void MPXPSystem::print_stream_formats() const {
 
 void MPXPSystem::read_video_properties() const {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
-    demux_stream_t *d_video=_demuxer->video;
+    Demuxer_Stream *d_video=_demuxer->video;
     MP_UNIT("video_read_properties");
     if(!video_read_properties(sh_video)) {
 	MSG_ERR("Video: can't read properties\n");
@@ -1127,7 +1127,7 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
     int found=0;
     any_t* mpca=0;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
-    demux_stream_t *d_audio=_demuxer->audio;
+    Demuxer_Stream *d_audio=_demuxer->audio;
     sh_audio->codec=NULL;
     mpca=mpca_init(sh_audio); // try auto-probe first
     if(mpca) { MPXPCtx->audio.decoder=mpca; found=1; }
@@ -1187,7 +1187,7 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 }
 
 MPXP_Rc MPXPSystem::find_vcodec(void) {
-    demux_stream_t *d_video=_demuxer->video;
+    Demuxer_Stream *d_video=_demuxer->video;
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
@@ -1245,7 +1245,7 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
 int MPXPSystem::configure_audio() {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
-    demux_stream_t *d_audio=_demuxer->audio;
+    Demuxer_Stream *d_audio=_demuxer->audio;
     int rc=0;
     const ao_info_t *info=ao_get_info(ao_data);
     MP_UNIT("setup_audio");
@@ -1844,9 +1844,9 @@ play_next_file:
     if(!MPXPSys.demuxer()) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     input_state.after_dvdmenu=0;
 
-    demux_stream_t *d_video;
-    demux_stream_t *d_audio;
-    demux_stream_t *d_dvdsub;
+    Demuxer_Stream *d_video;
+    Demuxer_Stream *d_audio;
+    Demuxer_Stream *d_dvdsub;
     d_audio=MPXPSys.demuxer()->audio;
     d_video=MPXPSys.demuxer()->video;
     d_dvdsub=MPXPSys.demuxer()->sub;
@@ -1977,7 +1977,7 @@ main:
     } else {
 	MSG_INFO(MSGTR_NoSound);
 	if(mp_conf.verbose) MSG_V("Freeing %d unused audio chunks\n",d_audio->packs);
-	ds_free_packs(d_audio); // mp_free buffered chunks
+	d_audio->free_packs(); // mp_free buffered chunks
 	d_audio->id=-2;         // do not read audio chunks
 	if(MPXPSys.ao_inited==MPXP_Ok) MPXPSys.uninit_player(INITED_AO); // close device
     }
@@ -1985,7 +1985,7 @@ main:
     if(!sh_video){
 	MSG_INFO("Video: no video!!!\n");
 	if(mp_conf.verbose) MSG_V("Freeing %d unused video chunks\n",d_video->packs);
-	ds_free_packs(d_video);
+	d_video->free_packs();
 	d_video->id=-2;
 	if(MPXPSys.vo_inited) MPXPSys.uninit_player(INITED_VO);
     }

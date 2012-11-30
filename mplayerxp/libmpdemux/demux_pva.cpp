@@ -186,7 +186,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload);
 
 // 0 = EOF or no stream found
 // 1 = successfully read a packet
-static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
+static int pva_demux(demuxer_t * demux,Demuxer_Stream *__ds)
 {
 	uint8_t done=0;
 	Demuxer_Packet * dp;
@@ -230,7 +230,7 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 					dp->flags=DP_NONKEYFRAME;
 					l=stream_read(demux->stream,dp->buffer(),current_payload.size);
 					dp->resize(l);
-					ds_add_packet(demux->video,dp);
+					demux->video->add_packet(dp);
 				} else {
 					//printf("Skipping %u video bytes\n",current_payload.size);
 					stream_skip(demux->stream,current_payload.size);
@@ -260,7 +260,7 @@ static int pva_demux(demuxer_t * demux,demux_stream_t *__ds)
 						stream_seek(demux->stream,current_payload.offset);
 					l=stream_read(demux->stream,dp->buffer(),current_payload.size);
 					dp->resize(l);
-					ds_add_packet(demux->audio,dp);
+					demux->audio->add_packet(dp);
 				} else {
 					stream_skip(demux->stream,current_payload.size);
 				}

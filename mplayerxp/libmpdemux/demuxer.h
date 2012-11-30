@@ -4,6 +4,7 @@
 #include "xmpcore/xmp_enums.h"
 #include "libmpconf/cfgparser.h"
 #include "demuxer_packet.h"
+#include "demuxer_stream.h"
 
 #define MAX_PACK_BYTES (0x1024*0x1024*4)
 enum {
@@ -55,43 +56,6 @@ enum {
     DS_PIN=RND_NUMBER1+RND_CHAR1
 };
 
-struct demuxer_t;
-struct demux_stream_t : public Opaque {
-    public:
-	demux_stream_t() {}
-	virtual ~demux_stream_t() {}
-
-	int		id;		/**< stream ID  (for multiple audio/video streams) */
-	char		antiviral_hole[RND_CHAR2];
-	unsigned	pin;		/**< personal identification number */
-	int		buffer_pos;	/**< current buffer position */
-	int		buffer_size;	/**< current buffer size */
-	unsigned char*	buffer;		/**< current buffer */
-	float		pts;		/**< current buffer's PTS */
-	int		pts_bytes;	/**< number of bytes read after last pts stamp */
-	int		eof;		/**< end of demuxed stream? (true if all buffer empty) */
-	off_t		pos;		/**< position in the input stream (file) */
-	off_t		dpos;		/**< position in the demuxed stream */
-	int		pack_no;	/**< serial number of packet */
-	int		flags;		/**< flags of current packet (keyframe etc) */
-/*---------------*/
-	int		packs;		/**< number of packets in buffer */
-	int		bytes;		/**< total bytes of packets in buffer */
-	Demuxer_Packet*	first;		/**< read to current buffer from here */
-	Demuxer_Packet*	last;		/**< append new packets from input stream to here */
-	Demuxer_Packet*	current;	/**< needed for refcounting of the buffer */
-	demuxer_t*	demuxer;	/**< parent demuxer structure (stream handler) */
-/* ---- asf ----- */
-	Demuxer_Packet*	asf_packet;	/**< read asf fragments here */
-	int		asf_seq;	/**< sequence id associated with asf_packet */
-/*---------------*/
-	any_t*		sh;		/**< Stream header associated with this stream (@see st_header.h for detail) */
-/*---------------*/
-	float		prev_pts;	/**< PTS of previous packet (DVD's PTS correction) */
-	float		pts_corr;	/**< PTS correction (DVD's PTS correction) */
-	int		pts_flags;	/**< PTS flags like trigger for correction applying (DVD's PTS correction) */
-} __attribute__ ((packed));
-
 enum {
     MAX_A_STREAMS	=256,
     MAX_V_STREAMS	=256,
@@ -115,9 +79,9 @@ struct demuxer_t : public Opaque {
 	char		antiviral_hole[RND_CHAR3];
 	unsigned	pin;		/**< personal identification number */
 	stream_t*	stream;		/**< stream for movie reading */
-	demux_stream_t*	audio;		/**< audio buffer/demuxer */
-	demux_stream_t*	video;		/**< video buffer/demuxer */
-	demux_stream_t*	sub;		/**< DVD's subtitle buffer/demuxer */
+	Demuxer_Stream*	audio;		/**< audio buffer/demuxer */
+	Demuxer_Stream*	video;		/**< video buffer/demuxer */
+	Demuxer_Stream*	sub;		/**< DVD's subtitle buffer/demuxer */
 	any_t*		a_streams[MAX_A_STREAMS]; /**< audio streams (sh_audio_t) for multilanguage movies */
 	any_t*		v_streams[MAX_V_STREAMS]; /**< video streams (sh_video_t) for multipicture movies  */
 	char		s_streams[MAX_S_STREAMS]; /**< DVD's subtitles (flag) streams for multilanguage movies */
@@ -152,59 +116,19 @@ enum {
     DEMUX_CMD_SWITCH_SUBS	=3
 };
 
-demux_stream_t* new_demuxer_stream(demuxer_t *demuxer,int id);
 demuxer_t* new_demuxer(stream_t *stream,int a_id,int v_id,int s_id);
-void free_demuxer_stream(demux_stream_t *ds);
 void free_demuxer(demuxer_t *demuxer);
 
-void ds_add_packet(demux_stream_t *ds,Demuxer_Packet* dp);
-void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,dp_flags_e flags);
-
-int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds);
-int ds_fill_buffer(demux_stream_t *ds);
-
-inline static off_t ds_tell(const demux_stream_t *ds){
-  return (ds->dpos-ds->buffer_size)+ds->buffer_pos;
-}
-
-inline static int ds_tell_pts(const demux_stream_t *ds){
-  return (ds->pts_bytes-ds->buffer_size)+ds->buffer_pos;
-}
-
-int demux_read_data(demux_stream_t *ds,unsigned char* mem,int len);
-
-#if 1
-static inline int demux_getc(demux_stream_t *ds){
-    return
-	(ds->buffer_pos<ds->buffer_size) ? ds->buffer[ds->buffer_pos++]:
-	((!ds_fill_buffer(ds))? (-1) : ds->buffer[ds->buffer_pos++]);
-}
-#else
-inline static int demux_getc(demux_stream_t *ds){
-  if(ds->buffer_pos>=ds->buffer_size){
-    if(!ds_fill_buffer(ds)){
-      return -1; // EOF
-    }
-  }
-  return ds->buffer[ds->buffer_pos++];
-}
-#endif
-
-void ds_free_packs(demux_stream_t *ds);
-void ds_free_packs_until_pts(demux_stream_t *ds,float pts);
-int ds_get_packet(demux_stream_t *ds,unsigned char **start);
-int ds_get_packet_sub(demux_stream_t *ds,unsigned char **start);
-float ds_get_next_pts(demux_stream_t *ds);
+int demux_fill_buffer(demuxer_t *demux,Demuxer_Stream *ds);
 
 // This is defined here because demux_stream_t ins't defined in stream.h
-stream_t* __FASTCALL__ new_ds_stream(demux_stream_t *ds);
+stream_t* __FASTCALL__ new_ds_stream(Demuxer_Stream *ds);
 
 int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka);
 demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd);
 
 /* AVI demuxer params: */
 extern int index_mode;  /**< -1=untouched  0=don't use index  1=use (geneate) index */
-extern int demux_aid_vid_mismatch;
 enum {
     INFOT_NULL		=0,
     INFOT_AUTHOR	=1,

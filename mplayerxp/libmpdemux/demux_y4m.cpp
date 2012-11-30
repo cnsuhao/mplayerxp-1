@@ -75,9 +75,9 @@ static MPXP_Rc y4m_probe(demuxer_t* demuxer){
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
+static int y4m_demux(demuxer_t *demux,Demuxer_Stream *__ds) {
     UNUSED(__ds);
-  demux_stream_t *ds=demux->video;
+  Demuxer_Stream *ds=demux->video;
   Demuxer_Packet *dp;
   y4m_priv_t *priv=static_cast<y4m_priv_t*>(demux->priv);
   y4m_frame_info_t fi;
@@ -125,7 +125,7 @@ static int y4m_demux(demuxer_t *demux,demux_stream_t *__ds) {
   priv->framenum++;
   dp->pos=demux->filepos;
   dp->flags=DP_KEYFRAME; // every frame is keyframe
-  ds_add_packet(ds, dp);
+  ds->add_packet(dp);
 
   return 1;
 }

@@ -23,7 +23,7 @@ using namespace mpxp;
 #include "aviprint.h"
 #include "demux_msg.h"
 
-typedef int (*alt_demuxer_t)(demuxer_t *demux,demux_stream_t *__ds);
+typedef int (*alt_demuxer_t)(demuxer_t *demux,Demuxer_Stream *__ds);
 struct avi_priv_t : public Opaque {
     public:
 	avi_priv_t() {}
@@ -763,7 +763,7 @@ skip_chunk:
 #undef MIN
 
 // Select ds from ID
-static demux_stream_t* demux_avi_select_stream(demuxer_t *demux,unsigned int id){
+static Demuxer_Stream* demux_avi_select_stream(demuxer_t *demux,unsigned int id){
   int stream_id=avi_stream_id(id);
 
   if(demux->video->id==-1)
@@ -840,7 +840,7 @@ static int choose_chunk_len(unsigned int len1,unsigned int len2){
     return (len1<len2)? len1 : len2;
 }
 
-static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned int id,unsigned int len,int idxpos,dp_flags_e flags){
+static int demux_avi_read_packet(demuxer_t *demux,Demuxer_Stream *ds,unsigned int id,unsigned int len,int idxpos,dp_flags_e flags){
   avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
   int skip;
   float pts=0;
@@ -893,7 +893,7 @@ static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned in
 
   if(ds){
     MSG_DBG2("DEMUX_AVI: Read %d data bytes from packet %04X\n",len,id);
-    ds_read_packet(ds,demux->stream,len,pts,idxpos,flags);
+    ds->read_packet(demux->stream,len,pts,idxpos,flags);
     skip-=len;
   }
   if(skip){
@@ -903,16 +903,16 @@ static int demux_avi_read_packet(demuxer_t *demux,demux_stream_t *ds,unsigned in
   return ds?1:0;
 }
 
-static int avi_read_ni(demuxer_t *demux,demux_stream_t* ds);
-static int avi_read_nini(demuxer_t *demux,demux_stream_t* ds);
+static int avi_read_ni(demuxer_t *demux,Demuxer_Stream* ds);
+static int avi_read_nini(demuxer_t *demux,Demuxer_Stream* ds);
 
-static int avi_demux(demuxer_t *demux,demux_stream_t *__ds){
+static int avi_demux(demuxer_t *demux,Demuxer_Stream *__ds){
     avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
     if(priv->alt_demuxer) return priv->alt_demuxer(demux,__ds);
     unsigned int id=0;
     unsigned int len;
     int ret=0;
-    demux_stream_t *ds;
+    Demuxer_Stream *ds;
 
 do{
   dp_flags_e flags=DP_KEYFRAME;
@@ -1008,7 +1008,7 @@ do{
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int avi_read_ni(demuxer_t *demux,demux_stream_t* ds){
+static int avi_read_ni(demuxer_t *demux,Demuxer_Stream* ds){
 avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
 unsigned int id=0;
 unsigned int len;
@@ -1078,7 +1078,7 @@ do{
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int avi_read_nini(demuxer_t *demux,demux_stream_t* ds){
+static int avi_read_nini(demuxer_t *demux,Demuxer_Stream* ds){
 avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
 unsigned int id=0;
 unsigned int len;
@@ -1132,8 +1132,8 @@ int index_mode=-1;  // -1=untouched  0=don't use index  1=use (geneate) index
 extern demuxer_t* init_avi_with_ogg(demuxer_t* demuxer);
 extern demuxer_driver_t demux_ogg;
 static demuxer_t* avi_open(demuxer_t* demuxer){
-    demux_stream_t *d_audio=demuxer->audio;
-    demux_stream_t *d_video=demuxer->video;
+    Demuxer_Stream *d_audio=demuxer->audio;
+    Demuxer_Stream *d_video=demuxer->video;
     sh_audio_t *sh_audio=NULL;
     sh_video_t *sh_video=NULL;
     avi_priv_t* priv=new(zeromem) avi_priv_t;
@@ -1186,7 +1186,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
       off_t v_pos=-1;
       for(i=0;i<priv->idx_size;i++){
 	AVIINDEXENTRY* idx=&((AVIINDEXENTRY *)priv->idx)[i];
-	demux_stream_t* ds=demux_avi_select_stream(demuxer,idx->ckid);
+	Demuxer_Stream* ds=demux_avi_select_stream(demuxer,idx->ckid);
 	off_t pos = priv->idx_offset + avi_idx_offset(idx);
 	if(a_pos==-1 && ds==demuxer->audio){
 	  a_pos=pos;
@@ -1206,7 +1206,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
 	sh_audio=NULL;
     }
   } else demuxer->flags &= ~DEMUXF_SEEKABLE;
-  if(!ds_fill_buffer(d_video)){
+  if(!d_video->fill_buffer()){
     MSG_ERR("AVI: " MSGTR_MissingVideoStreamBug);
     return NULL;
   }
@@ -1214,7 +1214,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
   sh_video->ds=d_video;
   if(d_audio->id!=-2){
     MSG_V("AVI: Searching for audio stream (id:%d)\n",d_audio->id);
-    if(!priv->audio_streams || !ds_fill_buffer(d_audio)){
+    if(!priv->audio_streams || !d_audio->fill_buffer()){
       MSG_V("AVI: " MSGTR_MissingAudioStream);
       sh_audio=NULL;
     } else {
@@ -1312,8 +1312,8 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
 
 static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     avi_priv_t *priv=static_cast<avi_priv_t*>(demuxer->priv);
-    demux_stream_t *d_audio=demuxer->audio;
-    demux_stream_t *d_video=demuxer->video;
+    Demuxer_Stream *d_audio=demuxer->audio;
+    Demuxer_Stream *d_video=demuxer->video;
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     sh_video_t *sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
     float skip_audio_secs=0;
@@ -1487,7 +1487,7 @@ static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	    (int)priv->skip_video_frames,skip_audio_bytes,skip_audio_secs);
 
 	  if(skip_audio_bytes){
-	    demux_read_data(d_audio,NULL,skip_audio_bytes);
+	    d_audio->read_data(NULL,skip_audio_bytes);
 	    //d_audio->pts=0; // PTS is outdated because of the raw data skipping
 	  }
       }

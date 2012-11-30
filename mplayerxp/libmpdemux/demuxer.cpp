@@ -106,43 +106,6 @@ void libmpdemux_register_options(m_config_t* cfg)
     }
 }
 
-void free_demuxer_stream(demux_stream_t *ds){
-    if(ds) {
-	ds_free_packs(ds);
-	delete ds;
-    }
-}
-
-int demux_aid_vid_mismatch = 0;
-
-demux_stream_t* new_demuxer_stream(demuxer_t *demuxer,int id){
-  demux_stream_t* ds=new(zeromem) demux_stream_t;
-  rnd_fill(ds->antiviral_hole,reinterpret_cast<long>(&ds->pin)-reinterpret_cast<long>(&ds->antiviral_hole));
-  ds->pin=DS_PIN;
-  ds->buffer_pos=ds->buffer_size=0;
-  ds->buffer=NULL;
-  ds->pts=0;
-  ds->pts_bytes=0;
-  ds->eof=0;
-  ds->pos=0;
-  ds->dpos=0;
-  ds->pack_no=0;
-//---------------
-  ds->packs=0;
-  ds->bytes=0;
-  ds->first=ds->last=ds->current=NULL;
-  ds->id=id;
-  ds->demuxer=demuxer;
-//----------------
-  ds->asf_seq=-1;
-  ds->asf_packet=NULL;
-//----------------
-  ds->sh=NULL;
-  ds->pts_flags=0;
-  ds->prev_pts=ds->pts_corr=0;
-  return ds;
-}
-
 demuxer_t* new_demuxer(stream_t *stream,int a_id,int v_id,int s_id){
   demuxer_t *d=new(zeromem) demuxer_t;
   rnd_fill(d->antiviral_hole,reinterpret_cast<long>(&d->pin)-reinterpret_cast<long>(&d->antiviral_hole));
@@ -154,9 +117,9 @@ demuxer_t* new_demuxer(stream_t *stream,int a_id,int v_id,int s_id){
   d->flags|=DEMUXF_SEEKABLE;
   d->synced=0;
   d->filepos=0;
-  d->audio=new_demuxer_stream(d,a_id);
-  d->video=new_demuxer_stream(d,v_id);
-  d->sub=new_demuxer_stream(d,s_id);
+  d->audio=new(zeromem) Demuxer_Stream(d,a_id);
+  d->video=new(zeromem) Demuxer_Stream(d,v_id);
+  d->sub=new(zeromem) Demuxer_Stream(d,s_id);
   d->info=new(zeromem) demuxer_info_t;
   stream_reset(stream);
   stream_seek(stream,stream->start_pos);
@@ -250,255 +213,17 @@ void free_demuxer(demuxer_t *demuxer){
 	for(i=0;i<MAX_A_STREAMS;i++) if(demuxer->a_streams[i]) free_sh_audio(reinterpret_cast<sh_audio_t*>(demuxer->a_streams[i]));
 	for(i=0;i<MAX_V_STREAMS;i++) if(demuxer->v_streams[i]) free_sh_video(reinterpret_cast<sh_video_t*>(demuxer->v_streams[i]));
 	// free demuxers:
-	free_demuxer_stream(demuxer->audio); demuxer->audio=NULL;
-	free_demuxer_stream(demuxer->video); demuxer->video=NULL;
-	free_demuxer_stream(demuxer->sub); demuxer->sub=NULL;
+	delete demuxer->audio; demuxer->audio=NULL;
+	delete demuxer->video; demuxer->video=NULL;
+	delete demuxer->sub; demuxer->sub=NULL;
 	demux_info_free(demuxer);
 	delete demuxer;
     }
 }
 
-void ds_add_packet(demux_stream_t *ds,Demuxer_Packet* dp){
-//    Demuxer_Packet* dp=new_demux_packet(len);
-//    stream_read(stream,dp->buffer,len);
-//    dp->pts=pts; //(float)pts/90000.0f;
-//    dp->pos=pos;
-    // append packet to DS stream:
-    if(dp->length()>0) {
-	++ds->packs;
-	ds->bytes+=dp->length();
-	if(ds->last) {
-	    // next packet in stream
-	    ds->last->next=dp;
-	    ds->last=dp;
-	} else {
-	    // first packet in stream
-	    ds->first=ds->last=dp;
-	}
-	MSG_DBG2("DEMUX: Append packet to %s, len=%d  pts=%5.3f  pos=%u  [packs: A=%d V=%d]\n",
-	    (ds==ds->demuxer->audio)?"d_audio":"d_video",
-	    dp->length(),dp->pts,(unsigned int)dp->pos,ds->demuxer->audio->packs,ds->demuxer->video->packs);
-    }
-    else
-	MSG_DBG2("DEMUX: Skip packet for %s, len=%d  pts=%5.3f  pos=%u  [packs: A=%d V=%d]\n",
-	    (ds==ds->demuxer->audio)?"d_audio":"d_video",
-	    dp->length(),dp->pts,(unsigned int)dp->pos,ds->demuxer->audio->packs,ds->demuxer->video->packs);
-}
-
-void ds_read_packet(demux_stream_t *ds,stream_t *stream,int len,float pts,off_t pos,dp_flags_e flags){
-    Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
-    len=stream_read(stream,dp->buffer(),len);
-    dp->resize(len);
-    dp->pts=pts; //(float)pts/90000.0f;
-    dp->pos=pos;
-    dp->flags=flags;
-    // append packet to DS stream:
-    ds_add_packet(ds,dp);
-    MSG_DBG2("ds_read_packet(%s,%u,%f,%llu,%i)\n",ds==ds->demuxer->video?"video":"audio",len,pts,pos,flags);
-}
-
-int demux_fill_buffer(demuxer_t *demux,demux_stream_t *ds){
+int demux_fill_buffer(demuxer_t *demux,Demuxer_Stream *ds){
     /* Note: parameter 'ds' can be NULL! */
     return demux->driver->demux(demux,ds);
-}
-
-// return value:
-//     0 = EOF
-//     1 = succesfull
-int ds_fill_buffer(demux_stream_t *ds){
-  demuxer_t *demux=ds->demuxer;
-  if(ds->buffer) delete ds->buffer;
-/*  ds_free_packs(ds); */
-  if(mp_conf.verbose>2) {
-    if(ds==demux->audio)
-	MSG_DBG3("ds_fill_buffer(d_audio) called\n");
-    else
-    if(ds==demux->video)
-	MSG_DBG3("ds_fill_buffer(d_video) called\n");
-    else
-    if(ds==demux->sub)
-	MSG_DBG3("ds_fill_buffer(d_sub) called\n");
-    else
-	MSG_DBG3("ds_fill_buffer(unknown %p) called\n",ds);
-  }
-  check_pin("demuxer",ds->pin,DS_PIN);
-  while(1){
-    if(ds->packs){
-      Demuxer_Packet *p=ds->first;
-      // copy useful data:
-      ds->buffer=p->buffer();
-      ds->buffer_pos=0;
-      ds->buffer_size=p->length();
-      ds->pos=p->pos;
-      ds->dpos+=p->length(); // !!!
-      ++ds->pack_no;
-      if(p->pts){
-	ds->pts=p->pts;
-	ds->pts_bytes=0;
-      }
-      ds->pts_bytes+=p->length(); // !!!
-      ds->flags=p->flags;
-      // mp_free packet:
-      ds->bytes-=p->length();
-      ds->current=p;
-      ds->first=p->next;
-      if(!ds->first) ds->last=NULL;
-      --ds->packs;
-      return 1; //ds->buffer_size;
-    }
-    if(demux->audio->bytes>=MAX_PACK_BYTES){
-      MSG_ERR(MSGTR_TooManyAudioInBuffer,demux->audio->packs,demux->audio->bytes);
-      MSG_HINT(MSGTR_MaybeNI);
-      break;
-    }
-    if(demux->video->bytes>=MAX_PACK_BYTES){
-      MSG_ERR(MSGTR_TooManyVideoInBuffer,demux->video->packs,demux->video->bytes);
-      MSG_HINT(MSGTR_MaybeNI);
-      break;
-    }
-    if(!demux->driver){
-       MSG_DBG2("ds_fill_buffer: demux->driver==NULL failed\n");
-       break; // EOF
-    }
-    if(!demux->driver->demux(demux,ds)){
-       MSG_DBG2("ds_fill_buffer: demux->driver->demux() failed\n");
-       break; // EOF
-    }
-  }
-  ds->buffer_pos=ds->buffer_size=0;
-  ds->buffer=NULL;
-  ds->current=NULL;
-  MSG_V("ds_fill_buffer: EOF reached (stream: %s)  \n",ds==demux->audio?"audio":"video");
-  ds->eof=1;
-  return 0;
-}
-
-int demux_read_data(demux_stream_t *ds,unsigned char* mem,int len){
-int x;
-int bytes=0;
-while(len>0){
-  x=ds->buffer_size-ds->buffer_pos;
-  if(x==0){
-    if(!ds_fill_buffer(ds)) return bytes;
-  } else {
-    if(x>len) x=len;
-    if(x<0) return bytes; /* BAD!!! sometime happens. Broken stream, driver, gcc ??? */
-    if(mem) memcpy(mem+bytes,&ds->buffer[ds->buffer_pos],x);
-    bytes+=x;len-=x;ds->buffer_pos+=x;
-  }
-}
-return bytes;
-}
-
-void ds_free_packs(demux_stream_t *ds){
-  Demuxer_Packet *dp=ds->first;
-  while(dp){
-    Demuxer_Packet *dn=dp->next;
-    delete dp;
-    dp=dn;
-  }
-  if(ds->asf_packet){
-    // mp_free unfinished .asf fragments:
-    delete ds->asf_packet;
-    ds->asf_packet=NULL;
-  }
-  ds->first=ds->last=NULL;
-  ds->packs=0; // !!!!!
-  ds->bytes=0;
-  if(ds->current) delete ds->current;
-  ds->current=NULL;
-  ds->buffer=NULL;
-  ds->buffer_pos=ds->buffer_size;
-  ds->pts=0; ds->pts_bytes=0;
-}
-
-void ds_free_packs_until_pts(demux_stream_t *ds,float pts){
-  Demuxer_Packet *dp=ds->first;
-  unsigned packs,bytes;
-  packs=bytes=0;
-  while(dp){
-    Demuxer_Packet *dn=dp->next;
-    if(dp->pts >= pts) break;
-    packs++;
-    bytes+=dp->length();
-    delete dp;
-    dp=dn;
-  }
-  if(!dp)
-  {
-    if(ds->asf_packet){
-	// mp_free unfinished .asf fragments:
-	delete ds->asf_packet;
-	ds->asf_packet=NULL;
-    }
-    ds->first=ds->last=NULL;
-    ds->packs=0; // !!!!!
-    ds->bytes=0;
-    ds->pts=0;
-  }
-  else
-  {
-    ds->first=dp;
-    ds->packs-=packs;
-    ds->bytes-=bytes;
-    ds->pts=dp->pts;
-  }
-  if(ds->current) delete ds->current;
-  ds->current=NULL;
-  ds->buffer=NULL;
-  ds->buffer_pos=ds->buffer_size;
-  ds->pts_bytes=0;
-}
-
-int ds_get_packet(demux_stream_t *ds,unsigned char **start){
-    while(1){
-	int len;
-	if(ds->buffer_pos>=ds->buffer_size){
-	  if(!ds_fill_buffer(ds)){
-	    // EOF
-	    *start = NULL;
-	    return -1;
-	  }
-	}
-	len=ds->buffer_size-ds->buffer_pos;
-	*start = &ds->buffer[ds->buffer_pos];
-	ds->buffer_pos+=len;
-	return len;
-    }
-}
-
-int ds_get_packet_sub(demux_stream_t *ds,unsigned char **start){
-    while(1){
-	int len;
-	if(ds->buffer_pos>=ds->buffer_size){
-	  *start = NULL;
-	  if(!ds->packs) return -1; // no sub
-	  if(!ds_fill_buffer(ds)) return -1; // EOF
-	}
-	len=ds->buffer_size-ds->buffer_pos;
-	*start = &ds->buffer[ds->buffer_pos];
-	ds->buffer_pos+=len;
-	return len;
-    }
-}
-
-float ds_get_next_pts(demux_stream_t *ds) {
-  demuxer_t* demux = ds->demuxer;
-  while(!ds->first) {
-    if(demux->audio->bytes>=MAX_PACK_BYTES){
-      MSG_ERR(MSGTR_TooManyAudioInBuffer,demux->audio->packs,demux->audio->bytes);
-      MSG_HINT(MSGTR_MaybeNI);
-      return -1;
-    }
-    if(demux->video->bytes>=MAX_PACK_BYTES){
-      MSG_ERR(MSGTR_TooManyVideoInBuffer,demux->video->packs,demux->video->bytes);
-      MSG_HINT(MSGTR_MaybeNI);
-      return -1;
-    }
-    if(!demux_fill_buffer(demux,ds))
-      return -1;
-  }
-  return ds->first->pts;
 }
 
 // ====================================================================
@@ -543,7 +268,6 @@ static demuxer_t* demux_open_stream(stream_t *stream,int audio_id,int video_id,i
     unsigned i;
     demuxer_t *demuxer=NULL,*new_demux=NULL;
 
-    demux_aid_vid_mismatch = 0;
     i=0;
     if(demux_conf.type) {
 	const demuxer_driver_t* drv;
@@ -656,8 +380,8 @@ demuxer_t* demux_open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
 }
 
 int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-    demux_stream_t *d_audio=demuxer->audio;
-    demux_stream_t *d_video=demuxer->video;
+    Demuxer_Stream* d_audio=demuxer->audio;
+    Demuxer_Stream* d_video=demuxer->video;
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 
     if(!(demuxer->stream->type&STREAMTYPE_SEEKABLE))
@@ -672,8 +396,8 @@ int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
 
     // clear demux buffers:
-    if(sh_audio){ ds_free_packs(d_audio);sh_audio->a_buffer_len=0;}
-    ds_free_packs(d_video);
+    if(sh_audio) { d_audio->free_packs(); sh_audio->a_buffer_len=0;}
+    d_video->free_packs();
 
     stream_set_eof(demuxer->stream,0); // clear eof flag
     demuxer->video->eof=0;

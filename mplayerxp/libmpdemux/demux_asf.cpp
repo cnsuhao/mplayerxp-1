@@ -364,12 +364,12 @@ if(!video_streams){
 } else if (best_video > 0 && demuxer->video->id == -1) demuxer->video->id = best_video;
 
 {
-  demux_stream_t *d_video=demuxer->video;
-  demux_stream_t *d_audio=demuxer->audio;
+  Demuxer_Stream *d_video=demuxer->video;
+  Demuxer_Stream *d_audio=demuxer->audio;
   stream_reset(demuxer->stream);
   stream_seek(demuxer->stream,demuxer->movi_start);
   if(d_video->id != -2) {
-    if(!ds_fill_buffer(d_video)){
+    if(!d_video->fill_buffer()){
       MSG_WARN("ASF: " MSGTR_MissingVideoStream);
       demuxer->video->sh=NULL;
     } else {
@@ -385,7 +385,7 @@ if(!video_streams){
   }
   if(d_audio->id!=-2){
     MSG_V("ASF: Searching for audio stream (id:%d)\n",d_audio->id);
-    if(!ds_fill_buffer(d_audio)){
+    if(!d_audio->fill_buffer()){
 	MSG_WARN("ASF: " MSGTR_MissingAudioStream);
 	demuxer->audio->sh=NULL;
     } else {
@@ -419,7 +419,7 @@ static void asf_descrambling(asf_priv_t *apriv, unsigned char *src,int len){
 
 
 static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,int seq,unsigned long time,unsigned short dur,int offs,int keyframe){
-  demux_stream_t *ds=NULL;
+  Demuxer_Stream *ds=NULL;
   asf_priv_t *apriv=static_cast<asf_priv_t*>(demux->priv);
 
   MSG_DBG3("demux_asf.read_packet: id=%d seq=%d len=%d time=%u dur=%u offs=%i key=%i\n",id,seq,len,time,dur,offs,keyframe);
@@ -456,7 +456,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 		if(ds==demux->audio)
 		  if(apriv->asf_scrambling_h>1 && apriv->asf_scrambling_w>1)
 		    asf_descrambling(apriv,ds->asf_packet->buffer(),ds->asf_packet->length());
-	ds_add_packet(ds,ds->asf_packet);
+	ds->add_packet(ds->asf_packet);
 	ds->asf_packet=NULL;
       } else {
 	// append data to it!
@@ -497,7 +497,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int asf_demux(demuxer_t *demux,demux_stream_t *ds){
+static int asf_demux(demuxer_t *demux,Demuxer_Stream *ds){
 stream_t *stream=demux->stream;
 asf_priv_t *apriv=static_cast<asf_priv_t*>(demux->priv);
 int done=0;
@@ -687,8 +687,8 @@ return 0;
 
 
 static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-    demux_stream_t *d_audio=demuxer->audio;
-    demux_stream_t *d_video=demuxer->video;
+    Demuxer_Stream *d_audio=demuxer->audio;
+    Demuxer_Stream *d_video=demuxer->video;
     asf_priv_t *apriv=static_cast<asf_priv_t*>(demuxer->priv);
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 
@@ -704,12 +704,12 @@ static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     stream_seek(demuxer->stream,newpos);
 
     /*!!! FIXME: this loop is too long sometime !!!*/
-    while(ds_fill_buffer(d_video))
+    while(d_video->fill_buffer())
 	if(d_video->flags&1) break; /* found a keyframe! */
 
     if(sh_audio && !d_audio->eof){
-      ds_free_packs_until_pts(d_audio,d_video->pts);
-      ds_fill_buffer(d_audio);
+      d_audio->free_packs_until_pts(d_video->pts);
+      d_audio->fill_buffer();
     }
 }
 

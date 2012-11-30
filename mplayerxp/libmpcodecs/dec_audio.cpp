@@ -382,5 +382,5 @@ void mpca_skip_frame(any_t *opaque)
     MPXP_Rc rc=MPXP_True;
     if(sh_audio)
     if(sh_audio->inited && priv->mpadec) rc=priv->mpadec->control_ad(sh_audio,ADCTRL_SKIP_FRAME,NULL);
-    if(rc!=MPXP_True) ds_fill_buffer(sh_audio->ds);
+    if(rc!=MPXP_True) sh_audio->ds->fill_buffer();
 }

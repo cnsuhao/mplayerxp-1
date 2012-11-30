@@ -44,7 +44,7 @@ using namespace mpxp;
 
 #define MPGPES_BAD_PTS -1
 
-typedef int (*alt_demuxer_t)(demuxer_t *demux,demux_stream_t *__ds);
+typedef int (*alt_demuxer_t)(demuxer_t *demux,Demuxer_Stream *__ds);
 struct mpg_demuxer_t : public Opaque {
     public:
 	mpg_demuxer_t() {}
@@ -197,7 +197,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
   unsigned char c=0;
   int pts=MPGPES_BAD_PTS;
   unsigned int dts=0;
-  demux_stream_t *ds=NULL;
+  Demuxer_Stream *ds=NULL;
   mpg_demuxer_t *priv = static_cast<mpg_demuxer_t*>(demux->priv);
 
   MSG_DBG3("demux_read_packet: %X\n",id);
@@ -407,7 +407,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
     else
     {
 	sh_video_t *sh;
-	if(ds->asf_packet) ds_add_packet(ds,ds->asf_packet);
+	if(ds->asf_packet) ds->add_packet(ds->asf_packet);
 	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
 	len=stream_read(demux->stream,dp->buffer(),len);
 	dp->resize(len);
@@ -419,7 +419,7 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
 	ds->asf_packet=dp;
 	if (ds==ds->demuxer->sub) {
 	    // Add sub packets at ones
-	    ds_add_packet(ds,ds->asf_packet);
+	    ds->add_packet(ds->asf_packet);
 	    ds->asf_packet=NULL;
 	}
     }
@@ -432,15 +432,15 @@ static int demux_mpg_read_packet(demuxer_t *demux,int id){
   return 0;
 }
 
-static int mpges_demux(demuxer_t *demux,demux_stream_t *__ds){
+static int mpges_demux(demuxer_t *demux,Demuxer_Stream *__ds){
   /* Elementary video stream */
   if(stream_eof(demux->stream)) return 0;
   demux->filepos=stream_tell(demux->stream);
-  ds_read_packet(demux->video,demux->stream,STREAM_BUFFER_SIZE,0,demux->filepos,DP_NONKEYFRAME);
+  demux->video->read_packet(demux->stream,STREAM_BUFFER_SIZE,0,demux->filepos,DP_NONKEYFRAME);
   return 1;
 }
 
-static int mpgps_demux(demuxer_t *demux,demux_stream_t *__ds){
+static int mpgps_demux(demuxer_t *demux,Demuxer_Stream *__ds){
     mpg_demuxer_t* mpg_d = static_cast<mpg_demuxer_t*>(demux->priv);
     if(mpg_d->alt_demuxer) return mpg_d->alt_demuxer(demux,__ds);
     unsigned int head=0;
@@ -544,8 +544,8 @@ do{
 }
 
 static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
-    demux_stream_t *d_audio=demuxer->audio;
-    demux_stream_t *d_video=demuxer->video;
+    Demuxer_Stream *d_audio=demuxer->audio;
+    Demuxer_Stream *d_video=demuxer->video;
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     sh_video_t *sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
 
@@ -575,9 +575,9 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	// re-sync video:
 	videobuf_code_len=0; // reset ES stream buffer
 
-	ds_fill_buffer(d_video);
+	d_video->fill_buffer();
 	if(sh_audio){
-	  ds_fill_buffer(d_audio);
+	  d_audio->fill_buffer();
 //	  mpca_resync_stream(sh_audio->decoder);
 	}
 
@@ -585,7 +585,7 @@ static void mpgps_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 	  int i;
 	  if(sh_audio && !d_audio->eof && d_video->pts && d_audio->pts){
 	    float a_pts=d_audio->pts;
-	    a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+	    a_pts+=(d_audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    if(d_video->pts>a_pts){
 //	      mpca_skip_frame(sh_audio->decoder);  // sync audio
 	      continue;
@@ -797,7 +797,7 @@ static demuxer_t* mpgps_open(demuxer_t*demuxer)
     mpg_d->num_a_streams = 0;
 
     if(demuxer->audio->id!=-2) {
-	if(!ds_fill_buffer(demuxer->audio)){
+	if(!demuxer->audio->fill_buffer()){
 	    MSG_WARN("MPEG: " MSGTR_MissingAudioStream);
 	    demuxer->audio->sh=NULL;
 	} else {
@@ -821,7 +821,7 @@ static MPXP_Rc mpgps_control(const demuxer_t *demuxer,int cmd,any_t*arg)
     switch(cmd) {
 	case DEMUX_CMD_SWITCH_AUDIO:
 	    if (mpg_d && mpg_d->num_a_streams > 1 && demuxer->audio && demuxer->audio->sh) {
-		demux_stream_t *d_audio = demuxer->audio;
+		Demuxer_Stream *d_audio = demuxer->audio;
 		sh_audio_t *sh_audio = reinterpret_cast<sh_audio_t*>(d_audio->sh);
 		sh_audio_t *sh_a=NULL;
 		int i;
@@ -844,7 +844,7 @@ static MPXP_Rc mpgps_control(const demuxer_t *demuxer,int cmd,any_t*arg)
 		if (i < mpg_d->num_a_streams && d_audio->id != mpg_d->a_stream_ids[i]) {
 		    d_audio->id = mpg_d->a_stream_ids[i];
 		    d_audio->sh = sh_a;
-		    ds_free_packs(d_audio);
+		    d_audio->free_packs();
 		}
 	    }
 	    *((int*)arg) = demuxer->audio->id;

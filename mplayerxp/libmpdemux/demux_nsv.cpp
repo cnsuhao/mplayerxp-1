@@ -48,7 +48,7 @@ static void nsv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 }
 
 
-static int nsv_demux ( demuxer_t *demuxer,demux_stream_t* __ds )
+static int nsv_demux ( demuxer_t *demuxer,Demuxer_Stream* __ds )
 {
     unsigned char hdr[17];
     // for the extra data
@@ -119,9 +119,9 @@ static int nsv_demux ( demuxer_t *demuxer,demux_stream_t* __ds )
     // video frame is empty otherwise the stream will fasten up
     if(sh_video) {
 	if( (hdr[2]&0x0f) != 0x0 )
-	    ds_read_packet(demuxer->video,demuxer->stream,videolen,priv->v_pts,demuxer->filepos-i_aux,DP_NONKEYFRAME);
+	    demuxer->video->read_packet(demuxer->stream,videolen,priv->v_pts,demuxer->filepos-i_aux,DP_NONKEYFRAME);
 	else
-	    ds_read_packet(demuxer->video,demuxer->stream,videolen,priv->v_pts,demuxer->filepos,DP_NONKEYFRAME);
+	    demuxer->video->read_packet(demuxer->stream,videolen,priv->v_pts,demuxer->filepos,DP_NONKEYFRAME);
     }
     else
 	stream_skip(demuxer->stream,videolen);
@@ -131,7 +131,7 @@ static int nsv_demux ( demuxer_t *demuxer,demux_stream_t* __ds )
     // we need to return an empty packet when the
     // audio frame is empty otherwise the stream will fasten up
     if(sh_audio) {
-	ds_read_packet(demuxer->audio,demuxer->stream,audiolen,priv->v_pts,demuxer->filepos+videolen,DP_NONKEYFRAME);
+	demuxer->audio->read_packet(demuxer->stream,audiolen,priv->v_pts,demuxer->filepos+videolen,DP_NONKEYFRAME);
     }
     else
 	stream_skip(demuxer->stream,audiolen);

@@ -91,8 +91,9 @@ MSG_V("  (flags = %X)  actual new chunk = %d (syncinfo1 = %08X)\n",
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
+static int film_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
 {
+  UNUSED(__ds);
   int i;
   unsigned char byte_swap;
   int cvid_size;
@@ -140,7 +141,7 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
       }
 
     // append packet to DS stream
-    ds_add_packet(demuxer->audio, dp);
+    demuxer->audio->add_packet(dp);
    }
   }
   else
@@ -177,13 +178,14 @@ static int film_demux(demuxer_t *demuxer,demux_stream_t *__ds)
       dp->buffer()[3] = (cvid_size >>  0) & 0xFF;
 
       // append packet to DS stream
-      ds_add_packet(demuxer->video, dp);
+      demuxer->video->add_packet(dp);
     }
     else
     {
-      ds_read_packet(demuxer->video, demuxer->stream, film_chunk.chunk_size,
-	film_chunk.pts,
-	film_chunk.chunk_offset, (film_chunk.syncinfo1 & 0x80000000) ? DP_KEYFRAME : DP_NONKEYFRAME);
+      demuxer->video->read_packet(demuxer->stream, film_chunk.chunk_size,
+				film_chunk.pts,
+				film_chunk.chunk_offset,
+				(film_chunk.syncinfo1 & 0x80000000) ? DP_KEYFRAME : DP_NONKEYFRAME);
     }
   }
   film_data->current_chunk++;

@@ -52,7 +52,7 @@ demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd) {
     return ret;
 }
 
-static int demux_demuxers_fill_buffer(demuxer_t *demux,demux_stream_t *ds) {
+static int demux_demuxers_fill_buffer(demuxer_t *demux,Demuxer_Stream *ds) {
   dd_priv_t* priv=static_cast<dd_priv_t*>(demux->priv);
 
   if(ds->demuxer == priv->vd)
@@ -85,7 +85,7 @@ static void demux_demuxers_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
     demux_seek(priv->ad,&seek_p);
     // In case the demuxer don't set pts
     if(!demuxer->audio->pts)
-      demuxer->audio->pts = pos-((ds_tell_pts(demuxer->audio)-sh->a_in_buffer_len)/(float)sh->i_bps);
+      demuxer->audio->pts = pos-((demuxer->audio->tell_pts()-sh->a_in_buffer_len)/(float)sh->i_bps);
     if(sh->timer)
       sh->timer = 0;
   }

@@ -2649,7 +2649,7 @@ demux_mkv_open_audio (demuxer_t *demuxer, mkv_track_t *track, int aid)
 	}
       dp->pts = 0;
       dp->flags = DP_NONKEYFRAME;
-      ds_add_packet (demuxer->audio, dp);
+      demuxer->audio->add_packet(dp);
     }
   else if (track->a_formattag == mmioFOURCC('W', 'V', 'P', 'K'))
     {  /* do nothing, still works */  }
@@ -3207,7 +3207,7 @@ handle_subtitles(demuxer_t *demuxer, mkv_track_t *track, char *block,
 #if 0
   dp->endpts = (timecode + block_duration) / 1000.0f;
 #endif
-  ds_add_packet(demuxer->sub, dp);
+  demuxer->sub->add_packet(dp);
 }
 
 // Taken from demux_real.c. Thanks to the original developpers :)
@@ -3315,7 +3315,7 @@ handle_realvideo (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
   dp->pos = demuxer->filepos;
   dp->flags = block_bref ? DP_NONKEYFRAME : DP_KEYFRAME;
 
-  ds_add_packet(demuxer->video, dp);
+  demuxer->video->add_packet(dp);
 }
 
 static void
@@ -3396,7 +3396,7 @@ handle_realaudio (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 	       dp->pts = (x * apk_usize % w) ? 0 : track->audio_timestamp[x * apk_usize / w];
 	       dp->pos = track->audio_filepos; // all equal
 	       dp->flags = x ? DP_NONKEYFRAME : DP_KEYFRAME; // Mark first packet as keyframe
-	       ds_add_packet(demuxer->audio, dp);
+	       demuxer->audio->add_packet(dp);
 	     }
 	}
    } else { // Not a codec that require reordering
@@ -3410,7 +3410,7 @@ handle_realaudio (demuxer_t *demuxer, mkv_track_t *track, uint8_t *buffer,
 
   dp->pos = demuxer->filepos;
   dp->flags = block_bref ? DP_NONKEYFRAME : DP_KEYFRAME;
-  ds_add_packet (demuxer->audio, dp);
+  demuxer->audio->add_packet (dp);
   }
 }
 
@@ -3452,7 +3452,7 @@ flush_cached_dps (demuxer_t *demuxer, mkv_track_t *track)
   } while (!ok);
 
   for (i = 0; i < track->num_cached_dps; i++)
-    ds_add_packet (demuxer->video, track->cached_dps[i]);
+    demuxer->video->add_packet (track->cached_dps[i]);
   track->num_cached_dps = 0;
 }
 
@@ -3512,7 +3512,7 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
   mkv_track_t *track = NULL;
-  demux_stream_t *ds = NULL;
+  Demuxer_Stream *ds = NULL;
   uint64_t old_length;
   int64_t tc;
   uint32_t *lace_size;
@@ -3650,7 +3650,7 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
 		   * values being the same) */
 		  if (i == 0 || track->default_duration)
 		  dp->pts = mkv_d->last_pts + i * track->default_duration;
-		  ds_add_packet (ds, dp);
+		  ds->add_packet (dp);
 		}
 	    }
 	  block += lace_size[i];
@@ -3672,7 +3672,7 @@ handle_block (demuxer_t *demuxer, uint8_t *block, uint64_t length,
   return 0;
 }
 
-static int mkv_demux (demuxer_t *demuxer, demux_stream_t *ds)
+static int mkv_demux (demuxer_t *demuxer, Demuxer_Stream *ds)
 {
   UNUSED(ds);
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
@@ -4007,7 +4007,7 @@ static MPXP_Rc mkv_control (const demuxer_t *demuxer, int cmd, any_t*arg)
 		    if (track) {
 			demuxer->audio->id = track->tnum;
 			sh = reinterpret_cast<sh_audio_t*>(demuxer->a_streams[demuxer->audio->id]);
-			ds_free_packs(demuxer->audio);
+			demuxer->audio->free_packs();
 		    }
 		}
 		*(int*)arg = sh->id;

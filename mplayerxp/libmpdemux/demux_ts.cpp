@@ -122,7 +122,7 @@ typedef struct MpegTSContext {
 
 
 typedef struct {
-	demux_stream_t *ds;
+	Demuxer_Stream *ds;
 	Demuxer_Packet *pack;
 	int offset, buffer_size;
 } av_fifo_t;
@@ -1508,7 +1508,7 @@ static void ts_dump_streams(ts_priv_t *priv)
 		if((priv->fifo[i].pack != NULL) && (priv->fifo[i].offset != 0))
 		{
 			priv->fifo[i].pack->resize(priv->fifo[i].offset);
-			ds_add_packet(priv->fifo[i].ds, priv->fifo[i].pack);
+			priv->fifo[i].ds->add_packet(priv->fifo[i].pack);
 			priv->fifo[i].offset = 0;
 			priv->fifo[i].pack = NULL;
 		}
@@ -2516,7 +2516,7 @@ static inline uint8_t *pid_lang_from_pmt(ts_priv_t *priv, int pid)
 }
 
 
-static int fill_packet(demuxer_t *demuxer, demux_stream_t *ds, Demuxer_Packet **dp, int *dp_offset, TS_stream_info *si)
+static int fill_packet(demuxer_t *demuxer, Demuxer_Stream *ds, Demuxer_Packet **dp, int *dp_offset, TS_stream_info *si)
 {
 	int ret = 0;
 
@@ -2524,7 +2524,7 @@ static int fill_packet(demuxer_t *demuxer, demux_stream_t *ds, Demuxer_Packet **
 	{
 		ret = *dp_offset;
 		(*dp)->resize(ret);	//shrinked to the right size
-		ds_add_packet(ds, *dp);
+		ds->add_packet(*dp);
 		MSG_DBG2( "ADDED %d  bytes to %s fifo, PTS=%f\n", ret, (ds == demuxer->audio ? "audio" : (ds == demuxer->video ? "video" : "sub")), (*dp)->pts);
 		if(si)
 		{
@@ -2590,7 +2590,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	ts_priv_t * priv = static_cast<ts_priv_t*>(demuxer->priv);
 	stream_t *stream = demuxer->stream;
 	unsigned char *p;
-	demux_stream_t *ds = NULL;
+	Demuxer_Stream *ds = NULL;
 	Demuxer_Packet **dp = NULL;
 	int *dp_offset = 0, *buffer_size = 0;
 	int32_t progid=0, pid_type, bad, ts_error;
@@ -2603,7 +2603,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 	while(! done)
 	{
 		bad = ts_error = 0;
-		ds = (demux_stream_t*) NULL;
+		ds = (Demuxer_Stream*) NULL;
 		dp = (Demuxer_Packet **) NULL;
 		dp_offset = buffer_size = NULL;
 		rap_flag = 0;
@@ -3046,14 +3046,14 @@ static void reset_fifos(ts_priv_t* priv, int a, int v, int s)
 	}
 }
 extern int videobuf_code_len;
-extern int sync_video_packet(demux_stream_t *);
-extern int skip_video_packet(demux_stream_t *);
+extern int sync_video_packet(Demuxer_Stream *);
+extern int skip_video_packet(Demuxer_Stream *);
 
 static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 {
-	demux_stream_t *d_audio=demuxer->audio;
-	demux_stream_t *d_video=demuxer->video;
-	demux_stream_t *d_sub=demuxer->sub;
+	Demuxer_Stream *d_audio=demuxer->audio;
+	Demuxer_Stream *d_video=demuxer->video;
+	Demuxer_Stream *d_sub=demuxer->sub;
 	sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	sh_video_t *sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
 	ts_priv_t * priv = static_cast<ts_priv_t*>(demuxer->priv);
@@ -3067,11 +3067,11 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 
 
 	if(sh_audio != NULL)
-		ds_free_packs(d_audio);
+		d_audio->free_packs();
 	if(sh_video != NULL)
-		ds_free_packs(d_video);
+		d_video->free_packs();
 	if(demuxer->sub->id > 0)
-		ds_free_packs(d_sub);
+		d_sub->free_packs();
 
 
 	video_stats = (sh_video != NULL);
@@ -3109,17 +3109,17 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 	videobuf_code_len = 0;
 
 	if(sh_video != NULL)
-		ds_fill_buffer(d_video);
+		d_video->fill_buffer();
 
 	if(sh_audio != NULL)
 	{
-		ds_fill_buffer(d_audio);
+		d_audio->fill_buffer();
 	}
 
 	while(sh_video != NULL) {
 		if(sh_audio && !d_audio->eof && d_video->pts && d_audio->pts) {
 			float a_pts=d_audio->pts;
-			a_pts+=(ds_tell_pts(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+			a_pts+=(d_audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 			if(d_video->pts > a_pts) {
 //				mpca_skip_frame( sh_audio->decoder);  // sync audio
 				continue;
@@ -3144,7 +3144,7 @@ static void ts_seek(demuxer_t *demuxer,const seek_args_t* seeka)
 	}
 }
 
-static int ts_demux(demuxer_t * demuxer,demux_stream_t *__ds)
+static int ts_demux(demuxer_t * demuxer,Demuxer_Stream *__ds)
 {
     ES_stream_t es;
     ts_priv_t *priv = static_cast<ts_priv_t*>(demuxer->priv);
@@ -3186,7 +3186,7 @@ static MPXP_Rc ts_control(const demuxer_t *demuxer,int cmd,any_t*args)
 	    any_t*sh = NULL;
 	    int i, n;
 	    int reftype, areset = 0, vreset = 0;
-	    demux_stream_t *ds;
+	    Demuxer_Stream *ds;
 	    if(cmd == DEMUX_CMD_SWITCH_VIDEO) {
 		reftype = TYPE_VIDEO;
 		ds = demuxer->video;
@@ -3201,7 +3201,7 @@ static MPXP_Rc ts_control(const demuxer_t *demuxer,int cmd,any_t*args)
 		reset_fifos(priv, areset, vreset, 0);
 		ds->id = -2;
 		ds->sh = NULL;
-		ds_free_packs(ds);
+		ds->free_packs();
 		*((int*)args) = ds->id;
 		return MPXP_Ok;
 	    }
@@ -3231,7 +3231,7 @@ static MPXP_Rc ts_control(const demuxer_t *demuxer,int cmd,any_t*args)
 		    reset_fifos(priv, areset, vreset, 0);
 		ds->id = priv->ts.streams[i].id;
 		ds->sh = sh;
-		ds_free_packs(ds);
+		ds->free_packs();
 		MSG_V("\r\ndemux_ts, switched to audio pid %d, id: %d, sh: %p\r\n", i, ds->id, sh);
 	    }
 	    *((int*)args) = ds->id;

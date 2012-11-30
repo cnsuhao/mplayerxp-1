@@ -33,7 +33,7 @@ using namespace mpxp;
 
 namespace mpxp {
 
-static int decore_audio(demux_stream_t *d_audio,sh_audio_t* sh_audio,sh_video_t*sh_video)
+static int decore_audio(Demuxer_Stream *d_audio,sh_audio_t* sh_audio,sh_video_t*sh_video)
 {
     int eof = 0;
 /*========================== PLAY AUDIO ============================*/
@@ -135,7 +135,7 @@ any_t* audio_play_routine( any_t* arg )
 {
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->dae->sh);
-    demux_stream_t *d_audio=sh_audio->ds;
+    Demuxer_Stream *d_audio=sh_audio->ds;
     demuxer_t *demuxer=d_audio->demuxer;
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(demuxer->video->sh);
 

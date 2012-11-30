@@ -93,8 +93,9 @@ static MPXP_Rc bmp_probe(demuxer_t *demuxer)
     return img ? MPXP_Ok : MPXP_False;
 }
 
-static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
+static int bmp_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
 {
+  UNUSED(__ds);
   unsigned lsize=((img->format->BitsPerPixel+7)/8)*img->w;
   unsigned j,len=lsize*img->h;
   unsigned npal_colors;
@@ -134,7 +135,7 @@ static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 	src+=img->pitch;
     }
   }
-  ds_add_packet(demuxer->video,dp);
+  demuxer->video->add_packet(dp);
 /* return value:
      0 = EOF or no stream found
      1 = successfully read a packet */
@@ -144,8 +145,6 @@ static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
 static demuxer_t* bmp_open(demuxer_t* demuxer)
 {
   sh_video_t *sh_video = NULL;
-  unsigned int filesize;
-  unsigned int data_offset;
   unsigned npal_colors;
   // create a new video stream header
   sh_video = new_sh_video(demuxer, 0);
@@ -194,6 +193,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
 
 static void bmp_close(demuxer_t* demuxer)
 {
+    UNUSED(demuxer);
     if(img) SDL_FreeSurface(img);
     demux_rw_close_stream(&my_rw);
 }
@@ -221,7 +221,7 @@ static MPXP_Rc bmp_probe(demuxer_t *demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int bmp_demux(demuxer_t *demuxer,demux_stream_t *__ds)
+static int bmp_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
 {
   bmp_image_t *bmp_image = static_cast<bmp_image_t*>(demuxer->priv);
 

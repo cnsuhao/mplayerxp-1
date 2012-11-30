@@ -230,7 +230,7 @@ float get_delay_audio_buffer(void)
     return (float)delay / (float)audio_buffer.sh_audio->af_bps;
 }
 
-int decode_audio_buffer(demux_stream_t *d_audio,unsigned len)
+int decode_audio_buffer(Demuxer_Stream *d_audio,unsigned len)
 {
     int ret, blen, l, l2;
     int next_idx;
@@ -382,7 +382,7 @@ int get_free_audio_buffer(void)
     return len;
 }
 
-int xp_thread_decode_audio(demux_stream_t *d_audio)
+int xp_thread_decode_audio(Demuxer_Stream *d_audio)
 {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(xp_core->audio->sh);
     sh_video_t* sh_video=NULL;
@@ -427,7 +427,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 {
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->dae->sh);
-    demux_stream_t *d_audio=sh_audio->ds;
+    Demuxer_Stream *d_audio=sh_audio->ds;
 
     int ret;
     struct timeval now;

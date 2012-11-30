@@ -10,6 +10,6 @@ namespace mpxp {
 
     any_t*	a_dec_ahead_routine( any_t* arg );
     void	sig_audio_decode( void );
-    int		xp_thread_decode_audio(demux_stream_t *d_audio);
+    int		xp_thread_decode_audio(Demuxer_Stream *d_audio);
 } // namespace
 #endif

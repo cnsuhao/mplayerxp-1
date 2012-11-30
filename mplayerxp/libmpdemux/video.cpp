@@ -52,7 +52,7 @@ static float mpeg_framerates[]=
 };
 #endif
 int video_read_properties(sh_video_t *sh_video){
-demux_stream_t *d_video=sh_video->ds;
+Demuxer_Stream *d_video=sh_video->ds;
 
 enum {
 	VIDEO_MPEG12,
@@ -395,7 +395,7 @@ static void process_userdata(const unsigned char* buf,int len){
 }
 
 int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,unsigned char** start,int force_fps){
-    demux_stream_t *d_video=sh_video->ds;
+    Demuxer_Stream *d_video=sh_video->ds;
     demuxer_t *demuxer=d_video->demuxer;
     float frame_time=1;
     float pts1=d_video->pts;
@@ -515,7 +515,7 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	videobuf_len=0;
   } else {
     /* frame-based file formats: (AVI,ASF,MOV) */
-    in_size=ds_get_packet(d_video,start);
+    in_size=d_video->get_packet(start);
     if(in_size<0) return -1; // EOF
   }
 
@@ -539,7 +539,7 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
       case DEMUXER_TYPE_VIVO:
       case DEMUXER_TYPE_ASF: {
 	/* .ASF files has no fixed FPS - just frame durations! */
-	float next_pts = ds_get_next_pts(d_video);
+	float next_pts = d_video->get_next_pts();
 	float d= next_pts > 0 ? next_pts - d_video->pts : d_video->pts-pts1;
 	if(d>=0){
 	  if(d>0)

@@ -226,8 +226,8 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
 void dump_mux_close(demuxer_t *demuxer)
 {
     dump_priv_t* priv=static_cast<dump_priv_t*>(demuxer->priv);
-    demux_stream_t *d_audio=demuxer->audio;
-    demux_stream_t *d_video=demuxer->video;
+    Demuxer_Stream *d_audio=demuxer->audio;
+    Demuxer_Stream *d_video=demuxer->video;
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     sh_video_t* shv=reinterpret_cast<sh_video_t*>(d_video->sh);
     if(priv) {
@@ -286,8 +286,8 @@ void dump_mux_close(demuxer_t *demuxer)
 void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned play_n_frames)
 {
     dump_priv_t* priv=static_cast<dump_priv_t*>(demuxer->priv);
-    demux_stream_t *d_audio=demuxer->audio;
-    demux_stream_t *d_video=demuxer->video;
+    Demuxer_Stream *d_audio=demuxer->audio;
+    Demuxer_Stream *d_video=demuxer->video;
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     sh_video_t* shv=reinterpret_cast<sh_video_t*>(d_video->sh);
   float frame_time,a_duration;
@@ -452,7 +452,7 @@ void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned pl
   {
     if(sha) priv->timer_corr+=d_audio->pts;
     if(priv->m_audio->wf->nAvgBytesPerSec)
-	    priv->timer_corr+=((float)ds_tell_pts(d_audio))/((float)priv->m_audio->wf->nAvgBytesPerSec);
+	    priv->timer_corr+=((float)d_audio->tell_pts())/((float)priv->m_audio->wf->nAvgBytesPerSec);
   }
   MSG_STATUS("Done %u frames (video(%X-%ix%i): %llu bytes audio(%X-%ix%ix%i): %llu bytes)\n"
   ,priv->decoded_frameno
