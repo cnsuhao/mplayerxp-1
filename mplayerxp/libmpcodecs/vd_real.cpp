@@ -165,7 +165,7 @@ struct rv_init_t {
 } rv_init_t;
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     //unsigned int out_fmt;
     int result;
     // we export codec id and sub-id from demuxer in bitmapinfohdr:
@@ -180,7 +180,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
     if(!load_syms(sh->codec->dll_name)) return MPXP_False;
 
     // only I420 supported
-    if(!mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput)) return MPXP_False;
+    if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;
     // init codec:
     sh->context=NULL;
     result=(*rvyuv_init)(&init_data, &sh->context);

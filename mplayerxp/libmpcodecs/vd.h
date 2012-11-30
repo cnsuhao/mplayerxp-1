@@ -53,7 +53,7 @@ typedef struct vd_functions_s
     const vd_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
     const video_probe_t*(*__FASTCALL__ probe)(sh_video_t *sh,uint32_t fourcc);
-    MPXP_Rc		(*__FASTCALL__ init)(sh_video_t *sh,any_t* libinput);
+    MPXP_Rc		(*__FASTCALL__ init)(sh_video_t *sh,any_t*opaque);
     void		(*__FASTCALL__ uninit)(sh_video_t *sh);
     MPXP_Rc		(*control_vd)(sh_video_t *sh,int cmd,any_t* arg, ...);
     mp_image_t*		(*__FASTCALL__ decode)(sh_video_t *sh,const enc_frame_t* frame);
@@ -70,7 +70,7 @@ enum {
     VDCTRL_RESYNC_STREAM	=7 /* resync video stream if needed */
 };
 // callbacks:
-MPXP_Rc		__FASTCALL__ mpcodecs_config_vf(sh_video_t *sh, int w, int h, any_t* libinput);
+MPXP_Rc		__FASTCALL__ mpcodecs_config_vf(any_t *opaque, int w, int h);
 mp_image_t*	__FASTCALL__ mpcodecs_get_image(sh_video_t *sh, int mp_imgtype, int mp_imgflag,int w, int h);
 void		__FASTCALL__ mpcodecs_draw_slice(sh_video_t* sh, mp_image_t*);
 void		__FASTCALL__ mpcodecs_draw_image(sh_video_t* sh, mp_image_t *mpi);

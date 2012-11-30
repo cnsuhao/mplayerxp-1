@@ -88,7 +88,7 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     // set format fourcc for raw RGB:
     if(sh->fourcc==0){
 	switch(sh->bih->biBitCount){
@@ -101,7 +101,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	    MSG_WARN("RAW: depth %d not supported\n",sh->bih->biBitCount);
 	}
     }
-    return mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput);
+    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver

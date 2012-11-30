@@ -27,9 +27,9 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     UNUSED(sh);
-    UNUSED(libinput);
+    UNUSED(opaque);
     return MPXP_Ok;
 }
 

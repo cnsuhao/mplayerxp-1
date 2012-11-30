@@ -209,12 +209,12 @@ static int load_lib( const char *libname )
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     DecInit dinit;
     priv_t*p;
     int bits=12;
     if(!load_lib("libdivx"SLIBSUFFIX)) return MPXP_False;
-    if(!(mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput))) return MPXP_False;
+    if(!(mpcodecs_config_vf(opaque,sh->src_w,sh->src_h))) return MPXP_False;
     switch(sh->codec->outfmt[sh->outfmtidx]){
 	case IMGFMT_YV12:
 	case IMGFMT_I420:

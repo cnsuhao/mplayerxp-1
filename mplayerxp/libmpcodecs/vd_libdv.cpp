@@ -78,10 +78,10 @@ dv_decoder_t* init_global_rawdv_decoder(void)
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput)
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque)
 {
     sh->context = (any_t*)init_global_rawdv_decoder();
-    return mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput);
+    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver

@@ -257,12 +257,12 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     priv_t *priv;
     if(!load_lib("libmpeg2"SLIBSUFFIX)) return MPXP_False;
     sh->context=priv=new(zeromem) priv_t;
     if(!(priv->mpeg2dec=mpeg2_init(MPXPCtx->mplayer_accel))) return MPXP_False;
-    return mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput);
+    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver

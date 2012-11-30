@@ -125,6 +125,10 @@ namespace mpxp {;
 	any_t*		decoder;
     };
 
+    struct video_processing_t {
+	any_t*		decoder;
+    };
+
     struct MPXPSystem;
     /* non-configurable through command line stuff */
     struct MPXPContext :public Opaque {
@@ -143,6 +147,7 @@ namespace mpxp {;
 	struct MPXPSystem*	MPXPSys;
 	any_t*			msg_priv;
 	audio_processing_t&	audio;
+	video_processing_t&	video;
     };
     extern MPXPContext* MPXPCtx;
 

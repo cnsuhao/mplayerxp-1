@@ -243,7 +243,7 @@ static MPXP_Rc find_vdecoder(sh_video_t* sh) {
     return MPXP_False;
 }
 
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     unsigned avc_version=0;
     priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
     int pp_flags;
@@ -425,7 +425,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	}
 	if(pp_flags) ppContext=pp2_get_context(sh->src_w,sh->src_h,pp_flags);
     }
-    return mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput);
+    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver

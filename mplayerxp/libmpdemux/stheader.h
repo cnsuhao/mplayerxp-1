@@ -83,8 +83,6 @@ struct sh_video_t : public standard_header {
     uint32_t		fourcc;
     int			is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
 
-    any_t*		decoder;
-
 // output format:
     float		fps;
     int			chapter_change;

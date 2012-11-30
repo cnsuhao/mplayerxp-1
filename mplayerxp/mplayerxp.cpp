@@ -199,7 +199,8 @@ MP_Config::MP_Config() {
 MP_Config mp_conf;
 
 MPXPContext::MPXPContext()
-	    :audio(*new(zeromem) audio_processing_t)
+	    :audio(*new(zeromem) audio_processing_t),
+	    video(*new(zeromem) video_processing_t)
 {
     seek_time=-1;
     bench=new(zeromem) time_usage_t;
@@ -333,7 +334,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_VCODEC){
 	inited_flags&=~INITED_VCODEC;
 	MP_UNIT("uninit_vcodec");
-	mpcv_uninit(sh_video->decoder);
+	mpcv_uninit(MPXPCtx->video.decoder);
 	sh_video=NULL;
     }
 
@@ -701,7 +702,7 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 
 	if(sh_video){
 	    MP_UNIT("seek_video_reset");
-	    mpcv_resync_stream(sh_video->decoder);
+	    mpcv_resync_stream(MPXPCtx->video.decoder);
 	    vo_data->reset();
 	    sh_video->chapter_change=-1;
 	}
@@ -1176,7 +1177,7 @@ static MPXP_Rc mpxp_find_vcodec(void) {
     if(vo_conf.softzoom)	vo_data->ZOOM_SET();
     if(vo_conf.flip>0)		vo_data->FLIP_SET();
     if(vo_conf.vidmode)		vo_data->VM_SET();
-    if((sh_video->decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,MPXPSys->libinput()))) sh_video->inited=1;
+    if((MPXPCtx->video.decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,MPXPSys->libinput()))) sh_video->inited=1;
 #ifdef ENABLE_WIN32LOADER
     if(!sh_video->inited) {
 /* Go through the codec.conf and find the best codec...*/
@@ -1197,7 +1198,7 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 	}
     }
     /* Use lavc decoders as last hope */
-    if(!sh_video->inited) sh_video->decoder=mpcv_lavc_init(sh_video,MPXPSys->libinput());
+    if(!sh_video->inited) MPXPCtx->video.decoder=mpcv_lavc_init(sh_video,MPXPSys->libinput());
 #endif
 
     if(!sh_video->inited) {
@@ -1521,7 +1522,7 @@ For future:
       else      v_cont+=v;
       if(v_cont > 100) v_cont=100;
       if(v_cont < -100) v_cont = -100;
-      if(mpcv_set_colors(sh_video->decoder,VO_EC_CONTRAST,v_cont)==MPXP_Ok){
+      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_CONTRAST,v_cont)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1539,7 +1540,7 @@ For future:
       else     v_bright+=v;
       if(v_bright > 100) v_bright = 100;
       if(v_bright < -100) v_bright = -100;
-      if(mpcv_set_colors(sh_video->decoder,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok){
+      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1557,7 +1558,7 @@ For future:
       else      v_hue+=v;
       if(v_hue > 100) v_hue = 100;
       if(v_hue < -100) v_hue = -100;
-      if(mpcv_set_colors(sh_video->decoder,VO_EC_HUE,v_hue)==MPXP_Ok){
+      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_HUE,v_hue)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1575,7 +1576,7 @@ For future:
       else      v_saturation+=v;
       if(v_saturation > 100) v_saturation = 100;
       if(v_saturation < -100) v_saturation = -100;
-      if(mpcv_set_colors(sh_video->decoder,VO_EC_SATURATION,v_saturation)==MPXP_Ok){
+      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_SATURATION,v_saturation)==MPXP_Ok){
 #ifdef USE_OSD
 	if(mp_conf.osd_level){
 	  osd->visible=sh_video->fps; // 1 sec
@@ -1934,12 +1935,12 @@ play_next_file:
 	/* Auto quality option enabled*/
 	MPXP_Rc rc;
 	unsigned quality;
-	rc=mpcv_get_quality_max(sh_video->decoder,&quality);
+	rc=mpcv_get_quality_max(MPXPCtx->video.decoder,&quality);
 	if(rc==MPXP_Ok) MPXPCtx->output_quality=quality;
 	if(mp_conf.autoq>MPXPCtx->output_quality) mp_conf.autoq=MPXPCtx->output_quality;
 	else MPXPCtx->output_quality=mp_conf.autoq;
 	MSG_V("AutoQ: setting quality to %d\n",MPXPCtx->output_quality);
-	mpcv_set_quality(sh_video->decoder,MPXPCtx->output_quality);
+	mpcv_set_quality(MPXPCtx->video.decoder,MPXPCtx->output_quality);
     }
 
     vf_showlist(reinterpret_cast<vf_instance_t*>(sh_video->vfilter));

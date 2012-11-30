@@ -66,7 +66,7 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     unsigned int out_fmt;
     if(!(sh->context=DS_VideoDecoder_Open(sh->codec->dll_name,&sh->codec->guid, sh->bih, 0, 0))){
 	MSG_ERR(MSGTR_MissingDLLcodec,sh->codec->dll_name);
@@ -74,7 +74,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	MSG_HINT("package from:  ftp://mplayerhq.hu/MPlayer/releases/w32codec.zip  !\n");
 	return MPXP_False;
     }
-    if(!mpcodecs_config_vf(sh,sh->src_w,sh->src_h,libinput)) return MPXP_False;
+    if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;
     out_fmt=sh->codec->outfmt[sh->outfmtidx];
     switch(out_fmt){
 	case IMGFMT_YUY2:

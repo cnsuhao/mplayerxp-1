@@ -48,6 +48,7 @@ extern int v_saturation;
 typedef struct priv_s {
     sh_video_t* parent;
     const vd_functions_t* mpvdec;
+    any_t* libinput;
 }priv_t;
 
 MPXP_Rc mpcv_get_quality_max(any_t *opaque,unsigned *quality){
@@ -128,11 +129,11 @@ static void mpcv_print_codec_info(const priv_t *priv) {
 any_t * mpcv_lavc_init(sh_video_t* sh_video,any_t* libinput) {
     priv_t* priv = new(zeromem) priv_t;
     priv->parent=sh_video;
-    sh_video->decoder=priv;
+    priv->libinput=libinput;
     /* Use lavc's drivers  as last hope */
     priv->mpvdec=vfm_find_driver("lavc");
     if(priv->mpvdec) {
-	if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+	if(priv->mpvdec->init(sh_video,priv)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 	    return NULL;
 	}
@@ -150,7 +151,7 @@ any_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,in
     sh_video->codec=NULL;
     priv_t* priv = new(zeromem) priv_t;
     priv->parent=sh_video;
-    sh_video->decoder=priv;
+    priv->libinput=libinput;
     if(vfm) {
 	priv->mpvdec=vfm_find_driver(vfm);
 	if(priv->mpvdec) vprobe=priv->mpvdec->probe(sh_video,sh_video->fourcc);
@@ -167,7 +168,7 @@ any_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,in
 	priv->mpvdec=vfm_find_driver(vfm);
     }
     if(priv->mpvdec) {
-	if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+	if(priv->mpvdec->init(sh_video,priv)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		delete sh_video->codec;
 		sh_video->codec=NULL;
@@ -202,7 +203,7 @@ any_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,in
 	    if(!(priv->mpvdec=vfm_find_driver(sh_video->codec->driver_name))) continue;
 	    else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",priv->mpvdec->info->driver_name);
 	    // it's available, let's try to init!
-	    if(priv->mpvdec->init(sh_video,libinput)!=MPXP_Ok){
+	    if(priv->mpvdec->init(sh_video,priv)!=MPXP_Ok){
 		MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		continue; // try next...
 	    }
@@ -401,12 +402,13 @@ static void update_subtitle(sh_video_t *sh_video,float v_pts,unsigned xp_idx)
 
 #include "libvo/video_out.h"
 
-MPXP_Rc mpcodecs_config_vf(sh_video_t *sh, int w, int h, any_t* libinput){
-    priv_t* priv=(priv_t*)sh->decoder;
+MPXP_Rc mpcodecs_config_vf(any_t *opaque, int w, int h){
+    priv_t* priv=reinterpret_cast<priv_t*>(opaque);
     int i,j;
     unsigned int out_fmt=0;
     int screen_size_x=0;//SCREEN_SIZE_X;
     int screen_size_y=0;//SCREEN_SIZE_Y;
+    sh_video_t* sh = priv->parent;
     vf_instance_t* vf=sh->vfilter,*sc=NULL;
     int palette=0;
 
@@ -461,13 +463,13 @@ csp_again:
 		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
 	    }
 	    MSG_WARN("Trying -vf fmtcvt\n");
-	    sc=vf=vf_open_filter(vf,sh,"fmtcvt",NULL,libinput);
+	    sc=vf=vf_open_filter(vf,sh,"fmtcvt",NULL,priv->libinput);
 	    goto csp_again;
 	} else
 	if(palette==1){
 	    MSG_V("vd: Trying -vf palette...\n");
 	    palette=-1;
-	    vf=vf_open_filter(vf,sh,"palette",NULL,libinput);
+	    vf=vf_open_filter(vf,sh,"palette",NULL,priv->libinput);
 	    goto csp_again;
 	} else {
 	// sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
@@ -501,7 +503,7 @@ csp_again:
     if(vo_data->flags&VFCAP_FLIPPED) vo_data->FLIP_REVERT();
     if(vo_data->FLIP() && !(vo_data->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
-	sh->vfilter=vf=vf_open_filter(vf,sh,"flip",NULL,libinput);
+	sh->vfilter=vf=vf_open_filter(vf,sh,"flip",NULL,priv->libinput);
     }
 
     // time to do aspect ratio corrections...

@@ -315,7 +315,7 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 }
 #endif
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
+static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     xvid_gbl_info_t xvid_gbl_info;
     xvid_gbl_init_t xvid_ini;
     xvid_dec_create_t dec_p;
@@ -434,7 +434,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* libinput){
 	    priv->img_type = MP_IMGTYPE_TEMP;
 	    break;
     }
-    return mpcodecs_config_vf(sh, sh->src_w, sh->src_h,libinput);
+    return mpcodecs_config_vf(opaque, sh->src_w, sh->src_h);
 }
 
 // uninit driver
