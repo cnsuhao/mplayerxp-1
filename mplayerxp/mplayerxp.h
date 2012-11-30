@@ -133,7 +133,7 @@ namespace mpxp {;
     /* non-configurable through command line stuff */
     struct MPXPContext :public Opaque {
 	MPXPContext();
-	virtual ~MPXPContext() {}
+	virtual ~MPXPContext();
 
 	int			rtc_fd;
 	int			seek_time;
@@ -144,7 +144,7 @@ namespace mpxp {;
 	subtitle*		subtitles;
 	m_config_t*		mconfig;
 	time_usage_t*		bench;
-	struct MPXPSystem*	MPXPSys;
+	MPXPSystem&		MPXPSys;
 	any_t*			msg_priv;
 	audio_processing_t&	audio;
 	video_processing_t&	video;

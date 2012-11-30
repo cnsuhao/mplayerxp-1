@@ -136,18 +136,54 @@ enum {
     PT_UP_PREV		=-3
 };
 
+struct osd_args_t {
+    int		visible;
+    int		info_factor;
+};
+
+struct input_state_t {
+    int		need_repaint;
+    int		after_dvdmenu;
+    int		next_file;
+};
+
 struct MPXPSystem {
     public:
 	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY) { rnd_fill(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
-	~MPXPSystem() {}
+	virtual ~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);
 	demuxer_t*	demuxer() const { return _demuxer; }
 	demuxer_t*	assign_demuxer(demuxer_t* _d) { uninit_demuxer(); _demuxer=_d; if(_d) inited_flags|=INITED_DEMUXER; return _demuxer; }
 	any_t*		libinput() const { return _libinput; }
-	any_t*		assign_libinput(any_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
 	void		uninit_demuxer();
 	void		uninit_input();
+
+	int 		libmpdemux_was_interrupted(int eof) const;
+	void		seek(osd_args_t *osd,const seek_args_t* seek) const;
+	void		init_keyboard_fifo();
+	char*		init_output_subsystems();
+	int		init_vobsub(const char *filename);
+	void		init_dvd_nls() const;
+
+	int		handle_playlist(const char *filename) const;
+
+	void		print_stream_formats() const;
+	void		print_audio_status() const;
+	void		read_video_properties() const;
+	void		read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type);
+
+	void		find_acodec(const char *ao_subdevice);
+	int		configure_audio();
+
+	MPXP_Rc		find_vcodec();
+
+	void		run_ahead_engine();
+
+#ifdef USE_OSD
+	int		paint_osd(int* osd_visible,int* in_pause);
+#endif
+	int		handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* state);
 
 	unsigned	inited_flags;
 	int		vo_inited;
@@ -156,6 +192,7 @@ struct MPXPSystem {
 	int		osd_function;
 	play_tree_t*	playtree;
     private:
+	any_t*		assign_libinput(any_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
 	char		antiviral_hole[RND_CHAR0];
 	demuxer_t*	_demuxer;
 	any_t*		_libinput;
@@ -199,15 +236,17 @@ MP_Config::MP_Config() {
 MP_Config mp_conf;
 
 MPXPContext::MPXPContext()
-	    :audio(*new(zeromem) audio_processing_t),
+	    :MPXPSys(*new(zeromem)MPXPSystem),
+	    audio(*new(zeromem) audio_processing_t),
 	    video(*new(zeromem) video_processing_t)
 {
     seek_time=-1;
     bench=new(zeromem) time_usage_t;
     use_pts_fix2=-1;
     rtc_fd=-1;
-    MPXPSys=new(zeromem)MPXPSystem;
 }
+
+MPXPContext::~MPXPContext() { delete bench; }
 
 static volatile char antiviral_hole2[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 MPXPContext* MPXPCtx=NULL;
@@ -271,8 +310,6 @@ static void mpxp_uninit_structs(void) {
 #ifdef ENABLE_WIN32LOADER
     free_codec_cfg();
 #endif
-    delete MPXPCtx->bench;
-    delete MPXPCtx->MPXPSys;
     delete MPXPCtx;
     if(vo_data) delete vo_data;
     if(ao_data) delete ao_data;
@@ -386,7 +423,7 @@ void exit_player(const char* why){
 
     fflush(stdout);
     fflush(stderr);
-    MPXPCtx->MPXPSys->uninit_player(INITED_ALL);
+    MPXPCtx->MPXPSys.uninit_player(INITED_ALL);
 
     MP_UNIT("exit_player");
 
@@ -453,11 +490,10 @@ void parse_cfgfiles( m_config_t* conf )
 // When libmpdemux perform a blocking operation (network connection or cache filling)
 // if the operation fail we use this function to check if it was interrupted by the user.
 // The function return a new value for eof.
-static int libmpdemux_was_interrupted(int eof)
+int MPXPSystem::libmpdemux_was_interrupted(int eof) const
 {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
     mp_cmd_t* cmd;
-    if((cmd = mp_input_get_cmd(MPXPSys->libinput(),0,0,0)) != NULL) {
+    if((cmd = mp_input_get_cmd(_libinput,0,0,0)) != NULL) {
 	switch(cmd->id) {
 	    case MP_CMD_QUIT:
 	    case MP_CMD_SOFT_QUIT: // should never happen
@@ -603,9 +639,9 @@ void show_help(void) {
 }
 
 void show_long_help(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
+    MPXPSystem& MPXPSys=MPXPCtx->MPXPSys;
     m_config_show_options(MPXPCtx->mconfig);
-    mp_input_print_binds(MPXPSys->libinput());
+    mp_input_print_binds(MPXPSys.libinput());
     print_stream_drivers();
     vo_data->print_help();
     ao_print_help();
@@ -632,30 +668,30 @@ void show_long_help(void) {
 //================= Update OSD ====================
 void update_osd( float v_pts )
 {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
+    MPXPSystem& MPXPSys=MPXPCtx->MPXPSys;
     static char osd_text_buffer[64];
     static int osd_last_pts=-303;
 //================= Update OSD ====================
   if(mp_conf.osd_level>=2){
-      int pts=(mp_conf.osd_level==3&&MPXPSys->demuxer()->movi_length!=UINT_MAX)?MPXPSys->demuxer()->movi_length-v_pts:v_pts;
-      int addon=(mp_conf.osd_level==3&&MPXPSys->demuxer()->movi_length!=UINT_MAX)?-1:1;
+      int pts=(mp_conf.osd_level==3&&MPXPSys.demuxer()->movi_length!=UINT_MAX)?MPXPSys.demuxer()->movi_length-v_pts:v_pts;
+      int addon=(mp_conf.osd_level==3&&MPXPSys.demuxer()->movi_length!=UINT_MAX)?-1:1;
       char osd_text_tmp[64];
       if(pts==osd_last_pts-addon)
       {
-	if(mp_conf.osd_level==3&&MPXPSys->demuxer()->movi_length!=UINT_MAX) ++pts;
+	if(mp_conf.osd_level==3&&MPXPSys.demuxer()->movi_length!=UINT_MAX) ++pts;
 	else --pts;
       }
       else osd_last_pts=pts;
       vo_data->osd_text=osd_text_buffer;
-      if (MPXPSys->osd_show_framedrop) {
+      if (MPXPSys.osd_show_framedrop) {
 	  sprintf(osd_text_tmp, "Framedrop: %s",mp_conf.frame_dropping>1?"hard":mp_conf.frame_dropping?"vo":"none");
-	  MPXPSys->osd_show_framedrop--;
+	  MPXPSys.osd_show_framedrop--;
       } else
 #ifdef ENABLE_DEC_AHEAD_DEBUG
-	  if(mp_conf.verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys->osd_function,pts/3600,(pts/60)%60,pts%60);
-	  else sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys->osd_function,pts/3600,(pts/60)%60,pts%60);
+	  if(mp_conf.verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys.osd_function,pts/3600,(pts/60)%60,pts%60);
+	  else sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys.osd_function,pts/3600,(pts/60)%60,pts%60);
 #else
-	  sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys->osd_function,pts/3600,(pts/60)%60,pts%60);
+	  sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys.osd_function,pts/3600,(pts/60)%60,pts%60);
 #endif
       if(strcmp(vo_data->osd_text, osd_text_tmp)) {
 	      strcpy(vo_data->osd_text, osd_text_tmp);
@@ -669,21 +705,16 @@ void update_osd( float v_pts )
   }
 }
 #endif
-typedef struct osd_args_s {
-    int		visible;
-    int		info_factor;
-}osd_args_t;
 
-void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
+void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
-    demux_stream_t *d_dvdsub=MPXPSys->demuxer()->sub;
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
+    demux_stream_t *d_dvdsub=_demuxer->sub;
     int seek_rval=1;
     xp_core->audio->eof=0;
-    if(seek->secs || seek->flags&DEMUX_SEEK_SET) {
-	seek_rval=demux_seek_r(MPXPSys->demuxer(),seek);
+    if(_seek->secs || _seek->flags&DEMUX_SEEK_SET) {
+	seek_rval=demux_seek_r(_demuxer,_seek);
 	MPXPCtx->mpxp_after_seek=25; /* 1 sec delay */
     }
     if(seek_rval){
@@ -715,17 +746,17 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 
 	if (vo_data->vobsub) {
 	    MP_UNIT("seek_vobsub_reset");
-	    vobsub_seek_r(vo_data->vobsub, seek);
+	    vobsub_seek_r(vo_data->vobsub, _seek);
 	}
 
 #ifdef USE_OSD
 	// Set OSD:
 	if(mp_conf.osd_level){
-	    int len=((MPXPSys->demuxer()->movi_end-MPXPSys->demuxer()->movi_start)>>8);
+	    int len=((_demuxer->movi_end-_demuxer->movi_start)>>8);
 	    if (len>0){
 		if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25;
 		vo_data->osd_progbar_type=0;
-		vo_data->osd_progbar_value=(MPXPSys->demuxer()->filepos-MPXPSys->demuxer()->movi_start)/len;
+		vo_data->osd_progbar_value=(_demuxer->filepos-_demuxer->movi_start)/len;
 		vo_osd_changed(OSDTYPE_PROGBAR);
 	    }
 	}
@@ -747,10 +778,10 @@ void mpxp_seek( osd_args_t *osd,const seek_args_t* seek)
 
 void mpxp_reset_vcache(void)
 {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
-    seek_args_t seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
-    if(sh_video) mpxp_seek(NULL,&seek);
+    MPXPSystem& MPXPSys=MPXPCtx->MPXPSys;
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys.demuxer()->video->sh);
+    seek_args_t _seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
+    if(sh_video) MPXPSys.seek(NULL,&_seek);
     return;
 }
 
@@ -807,8 +838,8 @@ static void show_benchmark(void)
 
 static void show_benchmark_status(void)
 {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
+    MPXPSystem& MPXPSys=MPXPCtx->MPXPSys;
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
     if(xmp_test_model(XMP_Run_AudioPlayback))
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
 			,sh_audio->timer-ao_get_delay(ao_data)
@@ -825,22 +856,21 @@ static void show_benchmark_status(void)
 // for multifile support:
 play_tree_iter_t* playtree_iter = NULL;
 
-static void mpxp_init_keyboard_fifo(void)
+void MPXPSystem::init_keyboard_fifo()
 {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
 #ifdef HAVE_TERMCAP
     load_termcap(NULL); // load key-codes
 #endif
     /* Init input system */
     MP_UNIT("init_input");
-    MPXPSys->assign_libinput(mp_input_open());
+    assign_libinput(mp_input_open());
 }
 
 void mplayer_put_key(int code){
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
+    MPXPSystem& MPXPSys=MPXPCtx->MPXPSys;
     mp_cmd_t* cmd;
-    cmd=mp_input_get_cmd_from_keys(MPXPSys->libinput(),1,&code);
-    mp_input_queue_cmd(MPXPSys->libinput(),cmd);
+    cmd=mp_input_get_cmd_from_keys(MPXPSys.libinput(),1,&code);
+    mp_input_queue_cmd(MPXPSys.libinput(),cmd);
 }
 
 
@@ -875,15 +905,14 @@ static void mpxp_init_osd(void) {
     vo_init_osd();
 }
 
-static char * mpxp_init_output_subsystems(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
+char* MPXPSystem::init_output_subsystems() {
     char* rs=NULL;
     unsigned i;
     // check video_out driver name:
     MP_UNIT("vo_init");
-    MPXPSys->vo_inited = (vo_data->init(mp_conf.video_driver)!=NULL)?1:0;
+    vo_inited = (vo_data->init(mp_conf.video_driver)!=NULL)?1:0;
 
-    if(!MPXPSys->vo_inited){
+    if(!vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
 	exit_player(MSGTR_Exit_error);
     }
@@ -897,7 +926,7 @@ static char * mpxp_init_output_subsystems(void) {
 
 	    if (mp_conf.audio_driver[i] == ':')
 	    {
-		rs = (char *)mp_malloc(i2-i);
+		rs = new char [i2-i];
 		if (rs != NULL)  strncpy(rs, (char *)(mp_conf.audio_driver+i+1), i2-i);
 		mp_conf.audio_driver[i] = '\0';
 	    }
@@ -905,8 +934,7 @@ static char * mpxp_init_output_subsystems(void) {
     return rs;
 }
 
-static int mpxp_init_vobsub(const char *filename) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
+int MPXPSystem::init_vobsub(const char *filename) {
     int forced_subs_only=0;
     MP_UNIT("vobsub");
     if (mp_conf.vobsub_name){
@@ -914,14 +942,14 @@ static int mpxp_init_vobsub(const char *filename) {
       if(vo_data->vobsub==NULL)
 	MSG_ERR(MSGTR_CantLoadSub,mp_conf.vobsub_name);
       else {
-	MPXPSys->inited_flags|=INITED_VOBSUB;
+	inited_flags|=INITED_VOBSUB;
 	vobsub_set_from_lang(vo_data->vobsub, mp_conf.dvdsub_lang);
 	// check if vobsub requested only to display forced subtitles
 	forced_subs_only=vobsub_get_forced_subs_flag(vo_data->vobsub);
       }
     }else if(mp_conf.sub_auto && filename && (strlen(filename)>=5)){
       /* try to autodetect vobsub from movie filename ::atmos */
-      char *buf = (char *)mp_mallocz((strlen(filename)-3) * sizeof(char));
+      char *buf = new(zeromem) char[strlen(filename)-3];
       strncpy(buf, filename, strlen(filename)-4);
       vo_data->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&vo_data->spudec);
       delete buf;
@@ -929,20 +957,19 @@ static int mpxp_init_vobsub(const char *filename) {
     if(vo_data->vobsub)
     {
       mp_conf.sub_auto=0; // don't do autosub for textsubs if vobsub found
-      MPXPSys->inited_flags|=INITED_VOBSUB;
+      inited_flags|=INITED_VOBSUB;
     }
     return forced_subs_only;
 }
 
-static int mpxp_handle_playlist(const char *filename) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    stream_t* stream=MPXPSys->demuxer()->stream;
+int MPXPSystem::handle_playlist(const char *filename) const {
+    stream_t* stream=_demuxer->stream;
     int eof=0;
     play_tree_t* entry;
     // Handle playlist
     MP_UNIT("handle_playlist");
     MSG_V("Parsing playlist %s...\n",filename);
-    entry = parse_playtree(MPXPSys->libinput(),stream);
+    entry = parse_playtree(_libinput,stream);
     if(!entry) {
       entry = playtree_iter->tree;
       if(play_tree_iter_step(playtree_iter,1,0) != PLAY_TREE_ITER_ENTRY) {
@@ -970,15 +997,14 @@ static int mpxp_handle_playlist(const char *filename) {
     return eof;
 }
 
-static void mpxp_init_dvd_nls(void) {
+void MPXPSystem::init_dvd_nls() const {
 /* Add NLS support here */
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    stream_t* stream=MPXPSys->demuxer()->stream;
+    stream_t* stream=_demuxer->stream;
     char *lang;
     if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
     MP_UNIT("dvd lang->id");
     if(mp_conf.audio_lang) {
-	lang=(char *)mp_malloc(std::max(strlen(mp_conf.audio_lang)+1,size_t(4)));
+	lang=new char [std::max(strlen(mp_conf.audio_lang)+1,size_t(4))];
 	strcpy(lang,mp_conf.audio_lang);
 	if(mp_conf.audio_id==-1 && stream_control(stream,SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
 	    mp_conf.audio_id=*(int *)lang;
@@ -986,7 +1012,7 @@ static void mpxp_init_dvd_nls(void) {
 	delete lang;
     }
     if(mp_conf.dvdsub_lang) {
-	lang=(char *)mp_malloc(std::max(strlen(mp_conf.dvdsub_lang)+1,size_t(4)));
+	lang=new char [std::max(strlen(mp_conf.dvdsub_lang)+1,size_t(4))];
 	strcpy(lang,mp_conf.dvdsub_lang);
 	if(mp_conf.dvdsub_id==-1 && stream_control(stream,SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
 	    mp_conf.dvdsub_id=*(int *)lang;
@@ -995,10 +1021,9 @@ static void mpxp_init_dvd_nls(void) {
     }
 }
 
-static void mpxp_print_stream_formats(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
+void MPXPSystem::print_stream_formats() const {
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int fmt;
     char *c;
     MSG_INFO("[Stream]:");
@@ -1024,10 +1049,9 @@ static void mpxp_print_stream_formats(void) {
     MSG_INFO("\n");
 }
 
-static void mpxp_read_video_properties(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
-    demux_stream_t *d_video=MPXPSys->demuxer()->video;
+void MPXPSystem::read_video_properties() const {
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
+    demux_stream_t *d_video=_demuxer->video;
     MP_UNIT("video_read_properties");
     if(!video_read_properties(sh_video)) {
 	MSG_ERR("Video: can't read properties\n");
@@ -1035,7 +1059,7 @@ static void mpxp_read_video_properties(void) {
 	sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
     } else {
 	MSG_V("[V] filefmt:%d  fourcc:0x%X  size:%dx%d  fps:%5.2f  ftime:=%6.4f\n",
-	    MPXPSys->demuxer()->file_format,sh_video->fourcc, sh_video->src_w,sh_video->src_h,
+	    _demuxer->file_format,sh_video->fourcc, sh_video->src_w,sh_video->src_h,
 	    sh_video->fps,1/sh_video->fps
 	    );
     /* need to set fps here for output encoders to pick it up in their init */
@@ -1051,10 +1075,9 @@ static void mpxp_read_video_properties(void) {
     }
 }
 
-static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
-    stream_t* stream=MPXPSys->demuxer()->stream;
+void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
+    stream_t* stream=_demuxer->stream;
     if (mp_conf.spudec_ifo) {
 	unsigned int palette[16], width, height;
 	MP_UNIT("spudec_init_vobsub");
@@ -1076,7 +1099,7 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
     }
 
     if (vo_data->spudec!=NULL) {
-	MPXPSys->inited_flags|=INITED_SPUDEC;
+	inited_flags|=INITED_SPUDEC;
 	// Apply current settings for forced subs
 	spudec_set_forced_subs_only(vo_data->spudec,forced_subs_only);
     }
@@ -1094,18 +1117,17 @@ static void mpxp_read_subtitles(const char *filename,int forced_subs_only,int st
 				      : "default.sub", sh_video->fps );
     }
     if(MPXPCtx->subtitles) {
-	MPXPSys->inited_flags|=INITED_SUBTITLE;
+	inited_flags|=INITED_SUBTITLE;
 	if(stream_dump_type>1) list_sub_file(MPXPCtx->subtitles);
     }
 #endif
 }
 
-static void mpxp_find_acodec(const char *ao_subdevice) {
+void MPXPSystem::find_acodec(const char *ao_subdevice) {
     int found=0;
     any_t* mpca=0;
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    demux_stream_t *d_audio=MPXPSys->demuxer()->audio;
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
+    demux_stream_t *d_audio=_demuxer->audio;
     sh_audio->codec=NULL;
     mpca=mpca_init(sh_audio); // try auto-probe first
     if(mpca) { MPXPCtx->audio.decoder=mpca; found=1; }
@@ -1156,18 +1178,17 @@ static void mpxp_find_acodec(const char *ao_subdevice) {
 	    sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	}
 	if(ao_subdevice) delete ao_subdevice;
-	MPXPSys->ao_inited=ao_register(ao_data,mp_conf.audio_driver,0);
-	if (MPXPSys->ao_inited!=MPXP_Ok){
+	ao_inited=ao_register(ao_data,mp_conf.audio_driver,0);
+	if (ao_inited!=MPXP_Ok){
 	    MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
 	    exit_player(MSGTR_Exit_error);
 	}
     }
 }
 
-static MPXP_Rc mpxp_find_vcodec(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    demux_stream_t *d_video=MPXPSys->demuxer()->video;
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
+MPXP_Rc MPXPSystem::find_vcodec(void) {
+    demux_stream_t *d_video=_demuxer->video;
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
     sh_video->inited=0;
@@ -1177,7 +1198,7 @@ static MPXP_Rc mpxp_find_vcodec(void) {
     if(vo_conf.softzoom)	vo_data->ZOOM_SET();
     if(vo_conf.flip>0)		vo_data->FLIP_SET();
     if(vo_conf.vidmode)		vo_data->VM_SET();
-    if((MPXPCtx->video.decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,MPXPSys->libinput()))) sh_video->inited=1;
+    if((MPXPCtx->video.decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,_libinput))) sh_video->inited=1;
 #ifdef ENABLE_WIN32LOADER
     if(!sh_video->inited) {
 /* Go through the codec.conf and find the best codec...*/
@@ -1185,20 +1206,20 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 	if(mp_conf.video_codec) {
 	/* forced codec by name: */
 	    MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
-	    sh_video->decoder=mpcv_init(sh_video,mp_conf.video_codec,NULL,-1,MPXPSys->libinput());
+	    sh_video->decoder=mpcv_init(sh_video,mp_conf.video_codec,NULL,-1,_libinput);
 	} else {
 	    int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
 	    if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
 	    for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 		if(mp_conf.video_family) /* try first the preferred codec family:*/
-		    if((sh_video->decoder=mpcv_init(sh_video,NULL,mp_conf.video_family,status,MPXPSys->libinput()))) break;
-		if((sh_video->decoder=mpcv_init(sh_video,NULL,NULL,status,MPXPSys->libinput()))) break;
+		    if((sh_video->decoder=mpcv_init(sh_video,NULL,mp_conf.video_family,status,_libinput))) break;
+		if((sh_video->decoder=mpcv_init(sh_video,NULL,NULL,status,_libinput))) break;
 	    }
 	}
     }
     /* Use lavc decoders as last hope */
-    if(!sh_video->inited) MPXPCtx->video.decoder=mpcv_lavc_init(sh_video,MPXPSys->libinput());
+    if(!sh_video->inited) MPXPCtx->video.decoder=mpcv_lavc_init(sh_video,_libinput);
 #endif
 
     if(!sh_video->inited) {
@@ -1213,7 +1234,7 @@ static MPXP_Rc mpxp_find_vcodec(void) {
 	d_video->sh = NULL;
 	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
 	rc=MPXP_False;
-    } else  MPXPSys->inited_flags|=INITED_VCODEC;
+    } else  inited_flags|=INITED_VCODEC;
 
     if(sh_video)
     MSG_V("%s video codec: [%s] vfm:%s (%s)\n",
@@ -1221,11 +1242,10 @@ static MPXP_Rc mpxp_find_vcodec(void) {
     return rc;
 }
 
-static int mpxp_configure_audio(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
-    demux_stream_t *d_audio=MPXPSys->demuxer()->audio;
+int MPXPSystem::configure_audio() {
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
+    demux_stream_t *d_audio=_demuxer->audio;
     int rc=0;
     const ao_info_t *info=ao_get_info(ao_data);
     MP_UNIT("setup_audio");
@@ -1272,7 +1292,7 @@ static int mpxp_configure_audio(void) {
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	if(sh_video == NULL) rc=-1;
     } else {
-	MPXPSys->inited_flags|=INITED_AO;
+	inited_flags|=INITED_AO;
 	MP_UNIT("af_init");
 	if(mpca_init_filters(sh_audio,
 	    sh_audio->rate,
@@ -1285,10 +1305,9 @@ static int mpxp_configure_audio(void) {
     return rc;
 }
 
-static void mpxp_run_ahead_engine(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
+void MPXPSystem::run_ahead_engine() {
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     MP_UNIT("init_xp");
     if(sh_video && xp_core->num_v_buffs < 3) {/* we need at least 3 buffers to suppress screen judering */
 	MSG_FATAL("Not enough buffers for DECODING AHEAD!\nNeed %u buffers but exist only %u\n",3,xp_core->num_v_buffs);
@@ -1302,22 +1321,21 @@ static void mpxp_run_ahead_engine(void) {
     else 		MSG_OK("Using DECODING AHEAD mplayer's core with %u audio buffers\n",xp_core->num_a_buffs);
 /* reset counters */
     if(sh_video) xp_core->video->num_dropped_frames=0;
-    MPXPSys->inited_flags|=INITED_XMP;
+    inited_flags|=INITED_XMP;
 }
 
-static void mpxp_print_audio_status(void) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
+void MPXPSystem::print_audio_status() const {
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     /* PAINT audio OSD */
     unsigned ipts,rpts;
     unsigned char h,m,s,rh,rm,rs;
     static char ph=0,pm=0,ps=0;
     ipts=(unsigned)(sh_audio->timer-ao_get_delay(ao_data));
-    rpts=MPXPSys->demuxer()->movi_length-ipts;
+    rpts=_demuxer->movi_length-ipts;
     h = ipts/3600;
     m = (ipts/60)%60;
     s = ipts%60;
-    if(MPXPSys->demuxer()->movi_length!=UINT_MAX) {
+    if(_demuxer->movi_length!=UINT_MAX) {
 	rh = rpts/3600;
 	rm = (rpts/60)%60;
 	rs = rpts%60;
@@ -1331,21 +1349,20 @@ static void mpxp_print_audio_status(void) {
 }
 
 #ifdef USE_OSD
-static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    const stream_t* stream=MPXPSys->demuxer()->stream;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
+int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
+    const stream_t* stream=_demuxer->stream;
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int rc=0;
     if(*osd_visible) {
 	if (!--(*osd_visible)) {
 	    vo_data->osd_progbar_type=-1; // disable
 	    vo_osd_changed(OSDTYPE_PROGBAR);
-	    if (!((MPXPSys->osd_function == OSD_PAUSE)||(MPXPSys->osd_function==OSD_DVDMENU)))
-		MPXPSys->osd_function = OSD_PLAY;
+	    if (!((osd_function == OSD_PAUSE)||(osd_function==OSD_DVDMENU)))
+		osd_function = OSD_PLAY;
 	}
     }
-    if(MPXPSys->osd_function==OSD_DVDMENU) {
+    if(osd_function==OSD_DVDMENU) {
 	rect_highlight_t hl;
 	if(stream_control(stream,SCTRL_VID_GET_HILIGHT,&hl)==MPXP_Ok) {
 	    osd_set_nav_box (hl.sx, hl.sy, hl.ex, hl.ey);
@@ -1353,9 +1370,9 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	    vo_osd_changed (OSDTYPE_DVDNAV);
 	}
     }
-    if(MPXPSys->osd_function==OSD_PAUSE||MPXPSys->osd_function==OSD_DVDMENU) {
+    if(osd_function==OSD_PAUSE||osd_function==OSD_DVDMENU) {
 	mp_cmd_t* cmd;
-	if (MPXPSys->vo_inited && sh_video) {
+	if (vo_inited && sh_video) {
 	    if(mp_conf.osd_level>1 && !*in_pause) {
 		*in_pause = 1;
 		return -1;
@@ -1367,7 +1384,7 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	    fflush(stdout);
 	}
 
-	if (MPXPSys->ao_inited==MPXP_Ok && sh_audio) {
+	if (ao_inited==MPXP_Ok && sh_audio) {
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=1;
 		while( !dec_ahead_can_aseek ) yield_timeslice();
@@ -1375,25 +1392,25 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 	    ao_pause(ao_data);	// pause audio, keep data if possible
 	}
 
-	while( (cmd = mp_input_get_cmd(MPXPSys->libinput(),20,1,1)) == NULL) {
-	    if(sh_video && MPXPSys->vo_inited) vo_data->check_events();
+	while( (cmd = mp_input_get_cmd(_libinput,20,1,1)) == NULL) {
+	    if(sh_video && vo_inited) vo_data->check_events();
 	    yield_timeslice();
 	}
 
 	if (cmd && cmd->id == MP_CMD_PAUSE) {
-	    cmd = mp_input_get_cmd(MPXPSys->libinput(),0,1,0);
+	    cmd = mp_input_get_cmd(_libinput,0,1,0);
 	    mp_cmd_free(cmd);
 	}
 
-	if(MPXPSys->osd_function==OSD_PAUSE) MPXPSys->osd_function=OSD_PLAY;
-	if (MPXPSys->ao_inited==MPXP_Ok && sh_audio) {
+	if(osd_function==OSD_PAUSE) osd_function=OSD_PLAY;
+	if (ao_inited==MPXP_Ok && sh_audio) {
 	    ao_resume(ao_data);	// resume audio
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
 	    }
 	}
-	if (MPXPSys->vo_inited && sh_video)
+	if (vo_inited && sh_video)
 	    vo_data->resume();	// resume video
 	*in_pause=0;
 	(void)GetRelativeTime();	// keep TF around FT in next cycle
@@ -1402,249 +1419,228 @@ static int mpxp_paint_osd(int* osd_visible,int* in_pause) {
 }
 #endif
 
-typedef struct input_state_s {
-    int		need_repaint;
-    int		after_dvdmenu;
-    int		next_file;
-}input_state_t;
-
-static int mpxp_handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* state) {
-    MPXPSystem*MPXPSys=MPXPCtx->MPXPSys;
-    stream_t* stream=MPXPSys->demuxer()->stream;
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
-  int v_bright=0;
-  int v_cont=0;
-  int v_hue=0;
-  int v_saturation=0;
+int MPXPSystem::handle_input(seek_args_t* _seek,osd_args_t* osd,input_state_t* state) {
+    stream_t* stream=_demuxer->stream;
+    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
+    int v_bright=0;
+    int v_cont=0;
+    int v_hue=0;
+    int v_saturation=0;
 /*
 For future:
   int v_red_intensity=0;
   int v_green_intensity=0;
   int v_blue_intensity=0;
 */
-  int eof=0;
-  mp_cmd_t* cmd;
-  while( (cmd = mp_input_get_cmd(MPXPSys->libinput(),0,0,0)) != NULL) {
-    switch(cmd->id) {
-    case MP_CMD_SEEK : {
-      int v,i_abs;
-      v = cmd->args[0].v.i;
-      i_abs = (cmd->nargs > 1) ? cmd->args[1].v.i : 0;
-      if(i_abs) {
-	seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
-	if(sh_video) MPXPSys->osd_function= (v > dae_played_frame(xp_core->video).v_pts) ? OSD_FFW : OSD_REW;
-	seek->secs = v/100.;
-      }
-      else {
-	seek->flags = DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
-	if(sh_video) MPXPSys->osd_function= (v > 0) ? OSD_FFW : OSD_REW;
-	seek->secs+= v;
-      }
-    } break;
-    case MP_CMD_SPEED_INCR :
-    case MP_CMD_SPEED_MULT :
-    case MP_CMD_SPEED_SET :
-	MSG_WARN("Speed adjusting is not implemented yet!\n");
-	break;
-    case MP_CMD_SWITCH_AUDIO :
-	MSG_INFO("ID_AUDIO_TRACK=%i\n",demuxer_switch_audio_r(MPXPSys->demuxer(), MPXPSys->demuxer()->audio->id+1));
-	break;
-    case MP_CMD_SWITCH_VIDEO :
-	MSG_INFO("ID_VIDEO_TRACK=%i\n",demuxer_switch_video_r(MPXPSys->demuxer(), MPXPSys->demuxer()->video->id+1));
-	break;
-    case MP_CMD_SWITCH_SUB :
-	MSG_INFO("ID_SUB_TRACK=%i\n",demuxer_switch_subtitle_r(MPXPSys->demuxer(), MPXPSys->demuxer()->sub->id+1));
-	break;
-    case MP_CMD_FRAME_STEP :
-    case MP_CMD_PAUSE : {
-      MPXPSys->osd_function=OSD_PAUSE;
-    } break;
-    case MP_CMD_SOFT_QUIT : {
-      exit_player(MSGTR_Exit_quit);
-      break;
-    }
-    case MP_CMD_QUIT : {
-      exit_player(MSGTR_Exit_quit);
-    }
-    case MP_CMD_PLAY_TREE_STEP : {
-      int n = cmd->args[0].v.i > 0 ? 1 : -1;
-      play_tree_iter_t* it = play_tree_iter_new_copy(playtree_iter);
+    int eof=0;
+    mp_cmd_t* cmd;
+    while( (cmd = mp_input_get_cmd(_libinput,0,0,0)) != NULL) {
+	switch(cmd->id) {
+	    case MP_CMD_SEEK : {
+		int v,i_abs;
+		v = cmd->args[0].v.i;
+		i_abs = (cmd->nargs > 1) ? cmd->args[1].v.i : 0;
+		if(i_abs) {
+		    _seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
+		    if(sh_video) osd_function= (v > dae_played_frame(xp_core->video).v_pts) ? OSD_FFW : OSD_REW;
+		    _seek->secs = v/100.;
+		} else {
+		    _seek->flags = DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
+		    if(sh_video) osd_function= (v > 0) ? OSD_FFW : OSD_REW;
+		    _seek->secs+= v;
+		}
+	    } break;
+	    case MP_CMD_SPEED_INCR :
+	    case MP_CMD_SPEED_MULT :
+	    case MP_CMD_SPEED_SET :
+		MSG_WARN("Speed adjusting is not implemented yet!\n");
+		break;
+	    case MP_CMD_SWITCH_AUDIO :
+		MSG_INFO("ID_AUDIO_TRACK=%i\n",demuxer_switch_audio_r(_demuxer, _demuxer->audio->id+1));
+		break;
+	    case MP_CMD_SWITCH_VIDEO :
+		MSG_INFO("ID_VIDEO_TRACK=%i\n",demuxer_switch_video_r(_demuxer, _demuxer->video->id+1));
+		break;
+	    case MP_CMD_SWITCH_SUB :
+		MSG_INFO("ID_SUB_TRACK=%i\n",demuxer_switch_subtitle_r(_demuxer, _demuxer->sub->id+1));
+		break;
+	    case MP_CMD_FRAME_STEP :
+	    case MP_CMD_PAUSE :
+		osd_function=OSD_PAUSE;
+		break;
+	    case MP_CMD_SOFT_QUIT :
+		exit_player(MSGTR_Exit_quit);
+	    case MP_CMD_QUIT :
+		 exit_player(MSGTR_Exit_quit);
+	    case MP_CMD_PLAY_TREE_STEP : {
+		int n = cmd->args[0].v.i > 0 ? 1 : -1;
+		play_tree_iter_t* it = play_tree_iter_new_copy(playtree_iter);
 
-      if(play_tree_iter_step(it,n,0) == PLAY_TREE_ITER_ENTRY)
-	eof = (n > 0) ? PT_NEXT_ENTRY : PT_PREV_ENTRY;
-      play_tree_iter_free(it);
-    } break;
-    case MP_CMD_PLAY_TREE_UP_STEP : {
-      int n = cmd->args[0].v.i > 0 ? 1 : -1;
-      play_tree_iter_t* it = play_tree_iter_new_copy(playtree_iter);
-      if(play_tree_iter_up_step(it,n,0) == PLAY_TREE_ITER_ENTRY)
-	eof = (n > 0) ? PT_UP_NEXT : PT_UP_PREV;
-      play_tree_iter_free(it);
-    } break;
-    case MP_CMD_PLAY_ALT_SRC_STEP : {
-      if(playtree_iter->num_files > 1) {
-	int v = cmd->args[0].v.i;
-	if(v > 0 && playtree_iter->file < playtree_iter->num_files)
-	  eof = PT_NEXT_SRC;
-	else if(v < 0 && playtree_iter->file > 1)
-	  eof = PT_PREV_SRC;
-      }
-    } break;
-    case MP_CMD_OSD :
-      if(sh_video) {
-	int v = cmd->args[0].v.i;
-	if(v < 0)
-	  mp_conf.osd_level=(mp_conf.osd_level+1)%4;
-	else
-	  mp_conf.osd_level= v > 3 ? 3 : v;
-      } break;
-    case MP_CMD_MUTE:
-      mixer_mute(ao_data);
-      break;
-    case MP_CMD_VOLUME :  {
-      int v = cmd->args[0].v.i;
-      if(v > 0)
-	mixer_incvolume(ao_data);
-      else
-	mixer_decvolume(ao_data);
+		if(play_tree_iter_step(it,n,0) == PLAY_TREE_ITER_ENTRY)
+		    eof = (n > 0) ? PT_NEXT_ENTRY : PT_PREV_ENTRY;
+		play_tree_iter_free(it);
+	    } break;
+	    case MP_CMD_PLAY_TREE_UP_STEP : {
+		int n = cmd->args[0].v.i > 0 ? 1 : -1;
+		play_tree_iter_t* it = play_tree_iter_new_copy(playtree_iter);
+		if(play_tree_iter_up_step(it,n,0) == PLAY_TREE_ITER_ENTRY)
+		    eof = (n > 0) ? PT_UP_NEXT : PT_UP_PREV;
+		play_tree_iter_free(it);
+	    } break;
+	    case MP_CMD_PLAY_ALT_SRC_STEP :
+		if(playtree_iter->num_files > 1) {
+		    int v = cmd->args[0].v.i;
+		    if(v > 0 && playtree_iter->file < playtree_iter->num_files)
+			eof = PT_NEXT_SRC;
+		    else if(v < 0 && playtree_iter->file > 1)
+			eof = PT_PREV_SRC;
+		}
+		break;
+	    case MP_CMD_OSD :
+		if(sh_video) {
+		    int v = cmd->args[0].v.i;
+		    if(v < 0)	mp_conf.osd_level=(mp_conf.osd_level+1)%4;
+		    else	mp_conf.osd_level= v > 3 ? 3 : v;
+		}
+		break;
+	    case MP_CMD_MUTE:
+		mixer_mute(ao_data);
+		break;
+	    case MP_CMD_VOLUME :  {
+		int v = cmd->args[0].v.i;
+		if(v > 0)	mixer_incvolume(ao_data);
+		else		mixer_decvolume(ao_data);
 #ifdef USE_OSD
-      if(mp_conf.osd_level){
-	osd->visible=sh_video->fps; // 1 sec
-	vo_data->osd_progbar_type=OSD_VOLUME;
-	vo_data->osd_progbar_value=(mixer_getbothvolume(ao_data)*256.0)/100.0;
-	vo_osd_changed(OSDTYPE_PROGBAR);
-      }
+		if(mp_conf.osd_level){
+		    osd->visible=sh_video->fps; // 1 sec
+		    vo_data->osd_progbar_type=OSD_VOLUME;
+		    vo_data->osd_progbar_value=(mixer_getbothvolume(ao_data)*256.0)/100.0;
+		    vo_osd_changed(OSDTYPE_PROGBAR);
+		}
 #endif
-    } break;
-    case MP_CMD_CONTRAST :  {
-      int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
-      if(i_abs) v_cont=v;
-      else      v_cont+=v;
-      if(v_cont > 100) v_cont=100;
-      if(v_cont < -100) v_cont = -100;
-      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_CONTRAST,v_cont)==MPXP_Ok){
+	    } break;
+	    case MP_CMD_CONTRAST :  {
+		int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
+		if(i_abs)	v_cont=v;
+		else		v_cont+=v;
+		if(v_cont > 100) v_cont=100;
+		if(v_cont < -100) v_cont = -100;
+		if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_CONTRAST,v_cont)==MPXP_Ok) {
 #ifdef USE_OSD
-	if(mp_conf.osd_level){
-	  osd->visible=sh_video->fps; // 1 sec
-	  vo_data->osd_progbar_type=OSD_CONTRAST;
-	  vo_data->osd_progbar_value=((v_cont)<<8)/100;
-	  vo_data->osd_progbar_value = ((v_cont+100)<<8)/200;
-	  vo_osd_changed(OSDTYPE_PROGBAR);
-	}
+		    if(mp_conf.osd_level){
+			osd->visible=sh_video->fps; // 1 sec
+			vo_data->osd_progbar_type=OSD_CONTRAST;
+			vo_data->osd_progbar_value=((v_cont)<<8)/100;
+			vo_data->osd_progbar_value = ((v_cont+100)<<8)/200;
+			vo_osd_changed(OSDTYPE_PROGBAR);
+		    }
 #endif
-      }
-    } break;
-    case MP_CMD_BRIGHTNESS :  {
-      int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
-      if(i_abs)v_bright=v;
-      else     v_bright+=v;
-      if(v_bright > 100) v_bright = 100;
-      if(v_bright < -100) v_bright = -100;
-      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok){
+		}
+	    } break;
+	    case MP_CMD_BRIGHTNESS :  {
+		int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
+		if(i_abs)	v_bright=v;
+		else		v_bright+=v;
+		if(v_bright > 100) v_bright = 100;
+		if(v_bright < -100) v_bright = -100;
+		if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok) {
 #ifdef USE_OSD
-	if(mp_conf.osd_level){
-	  osd->visible=sh_video->fps; // 1 sec
-	  vo_data->osd_progbar_type=OSD_BRIGHTNESS;
-	  vo_data->osd_progbar_value=((v_bright)<<8)/100;
-	  vo_data->osd_progbar_value = ((v_bright+100)<<8)/200;
-	  vo_osd_changed(OSDTYPE_PROGBAR);
-	}
+		    if(mp_conf.osd_level){
+			osd->visible=sh_video->fps; // 1 sec
+			vo_data->osd_progbar_type=OSD_BRIGHTNESS;
+			vo_data->osd_progbar_value=((v_bright)<<8)/100;
+			vo_data->osd_progbar_value = ((v_bright+100)<<8)/200;
+			vo_osd_changed(OSDTYPE_PROGBAR);
+		    }
 #endif
-      }
-    } break;
-    case MP_CMD_HUE :  {
-      int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
-      if(i_abs) v_hue=v;
-      else      v_hue+=v;
-      if(v_hue > 100) v_hue = 100;
-      if(v_hue < -100) v_hue = -100;
-      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_HUE,v_hue)==MPXP_Ok){
+		}
+	    } break;
+	    case MP_CMD_HUE :  {
+		int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
+		if(i_abs)	v_hue=v;
+		else		v_hue+=v;
+		if(v_hue > 100) v_hue = 100;
+		if(v_hue < -100) v_hue = -100;
+		if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_HUE,v_hue)==MPXP_Ok) {
 #ifdef USE_OSD
-	if(mp_conf.osd_level){
-	  osd->visible=sh_video->fps; // 1 sec
-	  vo_data->osd_progbar_type=OSD_HUE;
-	  vo_data->osd_progbar_value=((v_hue)<<8)/100;
-	  vo_data->osd_progbar_value = ((v_hue+100)<<8)/200;
-	  vo_osd_changed(OSDTYPE_PROGBAR);
-	}
+		    if(mp_conf.osd_level){
+			osd->visible=sh_video->fps; // 1 sec
+			vo_data->osd_progbar_type=OSD_HUE;
+			vo_data->osd_progbar_value=((v_hue)<<8)/100;
+			vo_data->osd_progbar_value = ((v_hue+100)<<8)/200;
+			vo_osd_changed(OSDTYPE_PROGBAR);
+		    }
 #endif
-      }
-    } break;
-    case MP_CMD_SATURATION :  {
-      int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
-      if(i_abs) v_saturation=v;
-      else      v_saturation+=v;
-      if(v_saturation > 100) v_saturation = 100;
-      if(v_saturation < -100) v_saturation = -100;
-      if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_SATURATION,v_saturation)==MPXP_Ok){
+		}
+	    } break;
+	    case MP_CMD_SATURATION :  {
+		int v = cmd->args[0].v.i, i_abs = cmd->args[1].v.i;
+		if(i_abs)	v_saturation=v;
+		else		v_saturation+=v;
+		if(v_saturation > 100) v_saturation = 100;
+		if(v_saturation < -100) v_saturation = -100;
+		if(mpcv_set_colors(MPXPCtx->video.decoder,VO_EC_SATURATION,v_saturation)==MPXP_Ok) {
 #ifdef USE_OSD
-	if(mp_conf.osd_level){
-	  osd->visible=sh_video->fps; // 1 sec
-	  vo_data->osd_progbar_type=OSD_SATURATION;
-	  vo_data->osd_progbar_value=((v_saturation)<<8)/100;
-	  vo_data->osd_progbar_value = ((v_saturation+100)<<8)/200;
-	  vo_osd_changed(OSDTYPE_PROGBAR);
-	}
+		    if(mp_conf.osd_level){
+			osd->visible=sh_video->fps; // 1 sec
+			vo_data->osd_progbar_type=OSD_SATURATION;
+			vo_data->osd_progbar_value=((v_saturation)<<8)/100;
+			vo_data->osd_progbar_value = ((v_saturation+100)<<8)/200;
+			vo_osd_changed(OSDTYPE_PROGBAR);
+		    }
 #endif
-      }
-    } break;
-    case MP_CMD_FRAMEDROPPING :  {
-      int v = cmd->args[0].v.i;
-      if(v < 0)
-	mp_conf.frame_dropping = (mp_conf.frame_dropping+1)%3;
-      else
-	mp_conf.frame_dropping = v > 2 ? 2 : v;
-      MPXPSys->osd_show_framedrop = osd->info_factor;
-    } break;
-    case MP_CMD_TV_STEP_CHANNEL:
-	if(cmd->args[0].v.i > 0) cmd->id=MP_CMD_TV_STEP_CHANNEL_UP;
-	else	  cmd->id=MP_CMD_TV_STEP_CHANNEL_DOWN;
-    case MP_CMD_TV_STEP_NORM:
-    case MP_CMD_TV_STEP_CHANNEL_LIST:
-	stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->id);
-	break;
-    case MP_CMD_DVDNAV:
-      if(stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
-	if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
-//		seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
-//		seek->secs = 0.;
-		stream->type|=STREAMTYPE_MENU;
-		state->need_repaint=1;
-	}
-	MPXPSys->osd_function=OSD_DVDMENU;
-	if(cmd->args[0].v.i==MP_CMD_DVDNAV_SELECT) {
-		MPXPSys->osd_function=0;
-		state->need_repaint=1;
-		state->after_dvdmenu=1;
-		state->next_file=1;
-		return eof;
-//		goto goto_next_file; /* menu may have different size against of movie */
-	}
-      }
-      break;
-    case MP_CMD_VO_FULLSCREEN:
-	vo_data->fullscreen();
-	break;
-    case MP_CMD_VO_SCREENSHOT:
-	vo_data->screenshot(dae_curr_vplayed(xp_core));
-	break;
-    case MP_CMD_SUB_POS:
-    {
-	int v;
-	v = cmd->args[0].v.i;
+		}
+	    } break;
+	    case MP_CMD_FRAMEDROPPING : {
+		int v = cmd->args[0].v.i;
+		if(v < 0)	mp_conf.frame_dropping = (mp_conf.frame_dropping+1)%3;
+		else		mp_conf.frame_dropping = v > 2 ? 2 : v;
+		osd_show_framedrop = osd->info_factor;
+	    } break;
+	    case MP_CMD_TV_STEP_CHANNEL:
+		if(cmd->args[0].v.i > 0)cmd->id=MP_CMD_TV_STEP_CHANNEL_UP;
+		else			cmd->id=MP_CMD_TV_STEP_CHANNEL_DOWN;
+	    case MP_CMD_TV_STEP_NORM:
+	    case MP_CMD_TV_STEP_CHANNEL_LIST:
+		stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->id);
+		break;
+	    case MP_CMD_DVDNAV:
+		if(stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
+		    if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
+			    stream->type|=STREAMTYPE_MENU;
+			    state->need_repaint=1;
+		    }
+		    osd_function=OSD_DVDMENU;
+		    if(cmd->args[0].v.i==MP_CMD_DVDNAV_SELECT) {
+			osd_function=0;
+			state->need_repaint=1;
+			state->after_dvdmenu=1;
+			state->next_file=1;
+			return eof;
+		    }
+		}
+		break;
+	    case MP_CMD_VO_FULLSCREEN:
+		vo_data->fullscreen();
+		break;
+	    case MP_CMD_VO_SCREENSHOT:
+		vo_data->screenshot(dae_curr_vplayed(xp_core));
+		break;
+	    case MP_CMD_SUB_POS: {
+		int v;
+		v = cmd->args[0].v.i;
 
-	sub_data.pos+=v;
-	if(sub_data.pos >100) sub_data.pos=100;
-	if(sub_data.pos <0) sub_data.pos=0;
-	vo_osd_changed(OSDTYPE_SUBTITLE);
-    }	break;
-    default : {
-      MSG_ERR("Received unknow cmd %s\n",cmd->name);
+		sub_data.pos+=v;
+		if(sub_data.pos >100) sub_data.pos=100;
+		if(sub_data.pos <0) sub_data.pos=0;
+		vo_osd_changed(OSDTYPE_SUBTITLE);
+	    } break;
+	    default :
+		MSG_ERR("Received unknow cmd %s\n",cmd->name);
+	}
+	mp_cmd_free(cmd);
     }
-    }
-    mp_cmd_free(cmd);
-  }
-  return eof;
+    return eof;
 }
 
 static void mpxp_config_malloc(int argc,char *argv[])
@@ -1697,22 +1693,22 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     secure_keys=ptr_protector.protect(new MPXPSecureKeys(10));
 
     mpxp_init_structs();
-    MPXPSystem* MPXPSys=MPXPCtx->MPXPSys;
+    MPXPSystem& MPXPSys=MPXPCtx->MPXPSys;
     vo_data=new(zeromem) Video_Output;
     init_signal_handling();
 
     xmp_init();
     xmp_register_main(exit_sighandler);
 
-    mpxp_init_keyboard_fifo();
+    MPXPSys.init_keyboard_fifo();
 
     mpxp_print_init(mp_conf.verbose+MSGL_STATUS);
     MSG_INFO("%s",banner_text);
   /* Test for cpu capabilities (and corresponding OS support) for optimizing */
 
-    MPXPSys->playtree = play_tree_new();
+    MPXPSys.playtree = play_tree_new();
 
-    MPXPCtx->mconfig = m_config_new(MPXPSys->playtree,MPXPSys->libinput());
+    MPXPCtx->mconfig = m_config_new(MPXPSys.playtree,MPXPSys.libinput());
     m_config_register_options(MPXPCtx->mconfig,mplayer_opts);
     // TODO : add something to let modules register their options
     mp_register_options(MPXPCtx->mconfig);
@@ -1740,12 +1736,12 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
 	exit_player(MSGTR_Exit_quit);
     }
-    if(mp_conf.shuffle_playback) MPXPSys->playtree->flags|=PLAY_TREE_RND;
-    else			 MPXPSys->playtree->flags&=~PLAY_TREE_RND;
+    if(mp_conf.shuffle_playback) MPXPSys.playtree->flags|=PLAY_TREE_RND;
+    else			 MPXPSys.playtree->flags&=~PLAY_TREE_RND;
 
-    MPXPSys->playtree = play_tree_cleanup(MPXPSys->playtree);
-    if(MPXPSys->playtree) {
-      playtree_iter = play_tree_iter_new(MPXPSys->playtree,MPXPCtx->mconfig);
+    MPXPSys.playtree = play_tree_cleanup(MPXPSys.playtree);
+    if(MPXPSys.playtree) {
+      playtree_iter = play_tree_iter_new(MPXPSys.playtree,MPXPCtx->mconfig);
       if(playtree_iter) {
 	if(play_tree_iter_step(playtree_iter,0,0) != PLAY_TREE_ITER_ENTRY) {
 	  play_tree_iter_free(playtree_iter);
@@ -1781,24 +1777,24 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 // ******************* Now, let's see the per-file stuff ********************
 play_next_file:
 
-    ao_subdevice=mpxp_init_output_subsystems();
+    ao_subdevice=MPXPSys.init_output_subsystems();
     if(filename) MSG_OK(MSGTR_Playing, filename);
 
-    forced_subs_only=mpxp_init_vobsub(filename);
+    forced_subs_only=MPXPSys.init_vobsub(filename);
 
     MP_UNIT("mplayer");
-    if(!input_state.after_dvdmenu && MPXPSys->demuxer()) {
-	free_stream(MPXPSys->demuxer()->stream);
-	MPXPSys->demuxer()->stream=NULL;
-	MPXPSys->inited_flags&=~INITED_STREAM;
-	MPXPSys->uninit_demuxer();
+    if(!input_state.after_dvdmenu && MPXPSys.demuxer()) {
+	free_stream(MPXPSys.demuxer()->stream);
+	MPXPSys.demuxer()->stream=NULL;
+	MPXPSys.inited_flags&=~INITED_STREAM;
+	MPXPSys.uninit_demuxer();
     }
-    if(MPXPSys->demuxer()) {
-	MPXPSys->demuxer()->audio=NULL;
-	MPXPSys->demuxer()->video=NULL;
-	MPXPSys->demuxer()->sub=NULL;
-	MPXPSys->demuxer()->audio->sh=NULL;
-	MPXPSys->demuxer()->video->sh=NULL;
+    if(MPXPSys.demuxer()) {
+	MPXPSys.demuxer()->audio=NULL;
+	MPXPSys.demuxer()->video=NULL;
+	MPXPSys.demuxer()->sub=NULL;
+	MPXPSys.demuxer()->audio->sh=NULL;
+	MPXPSys.demuxer()->video->sh=NULL;
     }
 //============ Open & Sync STREAM --- fork cache2 ====================
     stream_dump_type=0;
@@ -1810,16 +1806,16 @@ play_next_file:
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
     MP_UNIT("open_stream");
-    if(!input_state.after_dvdmenu) stream=open_stream(MPXPSys->libinput(),filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
+    if(!input_state.after_dvdmenu) stream=open_stream(MPXPSys.libinput(),filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
     if(!stream) { // error...
 	MSG_ERR("Can't open: %s\n",filename);
-	eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY);
+	eof = MPXPSys.libmpdemux_was_interrupted(PT_NEXT_ENTRY);
 	goto goto_next_file;
     }
-    MPXPSys->inited_flags|=INITED_STREAM;
+    MPXPSys.inited_flags|=INITED_STREAM;
 
     if(stream->type & STREAMTYPE_TEXT) {
-	eof=mpxp_handle_playlist(filename);
+	eof=MPXPSys.handle_playlist(filename);
 	goto goto_next_file;
     }
 
@@ -1828,14 +1824,14 @@ play_next_file:
     // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
     if(mp_conf.s_cache_size && !stream_dump_type){
 	MP_UNIT("enable_cache");
-	if(!stream_enable_cache(stream,MPXPSys->libinput(),mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
-	    if((eof = libmpdemux_was_interrupted(PT_NEXT_ENTRY))) goto goto_next_file;
+	if(!stream_enable_cache(stream,MPXPSys.libinput(),mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
+	    if((eof = MPXPSys.libmpdemux_was_interrupted(PT_NEXT_ENTRY))) goto goto_next_file;
     }
 
     // DUMP STREAMS:
     if(stream_dump_type==1) dump_stream(stream);
 
-//============ Open MPXPSys->demuxer()S --- DETECT file type =======================
+//============ Open MPXPSys.demuxer()S --- DETECT file type =======================
     if(mp_conf.playbackspeed_factor!=1.0) mp_conf.has_audio=0;
     xp_core->initial_apts=HUGE;
     if(!mp_conf.has_audio) mp_conf.audio_id=-2;  // do NOT read audio packets...
@@ -1844,31 +1840,31 @@ play_next_file:
 
     MP_UNIT("demux_open");
 
-    if(!input_state.after_dvdmenu) MPXPSys->assign_demuxer(demux_open(stream,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
-    if(!MPXPSys->demuxer()) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
+    if(!input_state.after_dvdmenu) MPXPSys.assign_demuxer(demux_open(stream,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
+    if(!MPXPSys.demuxer()) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     input_state.after_dvdmenu=0;
 
     demux_stream_t *d_video;
     demux_stream_t *d_audio;
     demux_stream_t *d_dvdsub;
-    d_audio=MPXPSys->demuxer()->audio;
-    d_video=MPXPSys->demuxer()->video;
-    d_dvdsub=MPXPSys->demuxer()->sub;
+    d_audio=MPXPSys.demuxer()->audio;
+    d_video=MPXPSys.demuxer()->video;
+    d_dvdsub=MPXPSys.demuxer()->sub;
 
 /* Add NLS support here */
-    mpxp_init_dvd_nls();
+    MPXPSys.init_dvd_nls();
 
     if(mp_conf.seek_to_byte) stream_skip(stream,mp_conf.seek_to_byte);
 
     sh_audio_t* sh_audio;
     sh_video_t* sh_video;
 
-    sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
-    sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
+    sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
+    sh_video=reinterpret_cast<sh_video_t*>(MPXPSys.demuxer()->video->sh);
 
-    mpxp_print_stream_formats();
+    MPXPSys.print_stream_formats();
 
-    if(sh_video) mpxp_read_video_properties();
+    if(sh_video) MPXPSys.read_video_properties();
 
     fflush(stdout);
 
@@ -1878,16 +1874,16 @@ play_next_file:
     }
 
 //================== Read SUBTITLES (DVD & TEXT) ==========================
-    if(sh_video) mpxp_read_subtitles(filename,forced_subs_only,stream_dump_type);
+    if(sh_video) MPXPSys.read_subtitles(filename,forced_subs_only,stream_dump_type);
 
 //================== Init AUDIO (codec) ==========================
     MP_UNIT("init_audio_codec");
 
-    if(sh_audio) mpxp_find_acodec(ao_subdevice);
-    sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys->demuxer()->audio->sh);
+    if(sh_audio) MPXPSys.find_acodec(ao_subdevice);
+    sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
 
     if(stream_dump_type>1) {
-	dump_mux_init(MPXPSys->demuxer(),MPXPSys->libinput());
+	dump_mux_init(MPXPSys.demuxer(),MPXPSys.libinput());
 	goto dump_file;
     }
 
@@ -1908,11 +1904,11 @@ play_next_file:
 	}
     }
 
-    if(sh_audio)   MPXPSys->inited_flags|=INITED_ACODEC;
+    if(sh_audio)   MPXPSys.inited_flags|=INITED_ACODEC;
 
     if(stream_dump_type>1) {
 	dump_file:
-	dump_mux(MPXPSys->demuxer(),mp_conf.av_sync_pts,mp_conf.seek_to_sec,mp_conf.play_n_frames);
+	dump_mux(MPXPSys.demuxer(),mp_conf.av_sync_pts,mp_conf.seek_to_sec,mp_conf.play_n_frames);
 	goto goto_next_file;
     }
 /*================== Init VIDEO (codec & libvo) ==========================*/
@@ -1920,11 +1916,11 @@ play_next_file:
 
     MP_UNIT("init_video_filters");
     if(sh_video->vfilter_inited<=0) {
-	sh_video->vfilter=vf_init(sh_video,MPXPSys->libinput());
+	sh_video->vfilter=vf_init(sh_video,MPXPSys.libinput());
 	sh_video->vfilter_inited=1;
     }
-    if((mpxp_find_vcodec())!=MPXP_Ok) {
-	sh_video=reinterpret_cast<sh_video_t*>(MPXPSys->demuxer()->video->sh);
+    if((MPXPSys.find_vcodec())!=MPXP_Ok) {
+	sh_video=reinterpret_cast<sh_video_t*>(MPXPSys.demuxer()->video->sh);
 	if(!sh_audio) goto goto_next_file;
 	goto main;
     }
@@ -1946,7 +1942,7 @@ play_next_file:
     vf_showlist(reinterpret_cast<vf_instance_t*>(sh_video->vfilter));
 // ========== Init display (sh_video->src_w*sh_video->src_h/out_fmt) ============
 
-    MPXPSys->inited_flags|=INITED_VO;
+    MPXPSys.inited_flags|=INITED_VO;
     MSG_V("INFO: Video OUT driver init OK!\n");
     MP_UNIT("init_libvo");
     fflush(stdout);
@@ -1958,7 +1954,7 @@ main:
 
 //================ SETUP AUDIO ==========================
 
-    if(sh_audio) if((mpxp_configure_audio())!=0) goto goto_next_file;
+    if(sh_audio) if((MPXPSys.configure_audio())!=0) goto goto_next_file;
 
     MP_UNIT("av_init");
 
@@ -1983,7 +1979,7 @@ main:
 	if(mp_conf.verbose) MSG_V("Freeing %d unused audio chunks\n",d_audio->packs);
 	ds_free_packs(d_audio); // mp_free buffered chunks
 	d_audio->id=-2;         // do not read audio chunks
-	if(MPXPSys->ao_inited==MPXP_Ok) MPXPSys->uninit_player(INITED_AO); // close device
+	if(MPXPSys.ao_inited==MPXP_Ok) MPXPSys.uninit_player(INITED_AO); // close device
     }
 
     if(!sh_video){
@@ -1991,7 +1987,7 @@ main:
 	if(mp_conf.verbose) MSG_V("Freeing %d unused video chunks\n",d_video->packs);
 	ds_free_packs(d_video);
 	d_video->id=-2;
-	if(MPXPSys->vo_inited) MPXPSys->uninit_player(INITED_VO);
+	if(MPXPSys.vo_inited) MPXPSys.uninit_player(INITED_VO);
     }
 
     if(!sh_audio && !sh_video) exit_player("Nothing to do");
@@ -2013,11 +2009,11 @@ main:
     if(mp_conf.benchmark) init_benchmark();
 
     /* display clip info */
-    demux_info_print(MPXPSys->demuxer(),filename);
+    demux_info_print(MPXPSys.demuxer(),filename);
 
 // TODO: rewrite test backtrace in .asm
 //    mpxp_test_backtrace();
-    mpxp_run_ahead_engine();
+    MPXPSys.run_ahead_engine();
 
     fflush(stdout);
     fflush(stderr);
@@ -2056,18 +2052,18 @@ main:
 	if(sh_video) eof|=dae_played_eof(xp_core->video);
 	if(!sh_video) {
 	    if(mp_conf.benchmark && mp_conf.verbose) show_benchmark_status();
-	    else mpxp_print_audio_status();
+	    else MPXPSys.print_audio_status();
 	}
 	usleep(250000);
 	if(sh_video) vo_data->check_events();
 #ifdef USE_OSD
-	while((mpxp_paint_osd(&osd.visible,&in_pause))!=0);
+	while((MPXPSys.paint_osd(&osd.visible,&in_pause))!=0);
 #endif
 
 //================= Keyboard events, SEEKing ====================
 
 	memset(&input_state,0,sizeof(input_state_t));
-	eof=mpxp_handle_input(&seek_args,&osd,&input_state);
+	eof=MPXPSys.handle_input(&seek_args,&osd,&input_state);
 	if(input_state.next_file) goto goto_next_file;
 
 	if (mp_conf.seek_to_sec) {
@@ -2105,7 +2101,7 @@ main:
 		seek_args.secs -= (xp_core->bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
 	    }
 
-	    mpxp_seek(&osd,&seek_args);
+	    MPXPSys.seek(&osd,&seek_args);
 
 	    xp_core->audio->eof=0;
 	    seek_args.secs=0;
@@ -2126,59 +2122,58 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 
     if(mp_conf.benchmark) show_benchmark();
 
-if(playtree_iter != NULL && !input_state.after_dvdmenu) {
-if(eof == PT_NEXT_ENTRY || eof == PT_PREV_ENTRY) {
-  eof = eof == PT_NEXT_ENTRY ? 1 : -1;
-  if(play_tree_iter_step(playtree_iter,eof,0) == PLAY_TREE_ITER_ENTRY) {
-    MPXPSys->uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO));
-    eof = 1;
-  } else {
-    play_tree_iter_free(playtree_iter);
-    playtree_iter = NULL;
-  }
-} else if (eof == PT_UP_NEXT || eof == PT_UP_PREV) {
-  eof = eof == PT_UP_NEXT ? 1 : -1;
-  if(play_tree_iter_up_step(playtree_iter,eof,0) == PLAY_TREE_ITER_ENTRY) {
-    MPXPSys->uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO));
-    eof = 1;
-  } else {
-    play_tree_iter_free(playtree_iter);
-    playtree_iter = NULL;
-  }
-}else { // NEXT PREV SRC
-     MPXPSys->uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO+INITED_DEMUXER));
-     eof = eof == PT_PREV_SRC ? -1 : 1;
-}
-}
-    MPXPSys->uninit_player(INITED_VO);
+    if(playtree_iter != NULL && !input_state.after_dvdmenu) {
+	if(eof == PT_NEXT_ENTRY || eof == PT_PREV_ENTRY) {
+	    eof = eof == PT_NEXT_ENTRY ? 1 : -1;
+	    if(play_tree_iter_step(playtree_iter,eof,0) == PLAY_TREE_ITER_ENTRY) {
+		MPXPSys.uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO));
+		eof = 1;
+	    } else {
+		play_tree_iter_free(playtree_iter);
+		playtree_iter = NULL;
+	    }
+	} else if (eof == PT_UP_NEXT || eof == PT_UP_PREV) {
+	    eof = eof == PT_UP_NEXT ? 1 : -1;
+	    if(play_tree_iter_up_step(playtree_iter,eof,0) == PLAY_TREE_ITER_ENTRY) {
+		MPXPSys.uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO));
+		eof = 1;
+	    } else {
+		play_tree_iter_free(playtree_iter);
+		playtree_iter = NULL;
+	    }
+	} else { // NEXT PREV SRC
+	    MPXPSys.uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO+INITED_DEMUXER));
+	    eof = eof == PT_PREV_SRC ? -1 : 1;
+	}
+    }
+    MPXPSys.uninit_player(INITED_VO);
 
     if(eof == 0) eof = 1;
 
-if(!input_state.after_dvdmenu)
-while(playtree_iter != NULL) {
-  filename = play_tree_iter_get_file(playtree_iter,eof);
-  if(filename == NULL) {
-    if( play_tree_iter_step(playtree_iter,eof,0) != PLAY_TREE_ITER_ENTRY) {
-      play_tree_iter_free(playtree_iter);
-      playtree_iter = NULL;
-    };
-  } else
-    break;
-}
+    if(!input_state.after_dvdmenu)
+	while(playtree_iter != NULL) {
+	    filename = play_tree_iter_get_file(playtree_iter,eof);
+	    if(filename == NULL) {
+		if( play_tree_iter_step(playtree_iter,eof,0) != PLAY_TREE_ITER_ENTRY) {
+		    play_tree_iter_free(playtree_iter);
+		    playtree_iter = NULL;
+		}
+	    } else break;
+	}
 
     if( playtree_iter != NULL ){
 	int flg;
 	flg=INITED_ALL;
 	if(input_state.after_dvdmenu) flg &=~(INITED_STREAM|INITED_DEMUXER);
-	MPXPSys->uninit_player(flg&(~INITED_INPUT)); /* TODO: |(~INITED_AO)|(~INITED_VO) */
-	MPXPSys->vo_inited=0;
-	MPXPSys->ao_inited=MPXP_False;
+	MPXPSys.uninit_player(flg&(~INITED_INPUT)); /* TODO: |(~INITED_AO)|(~INITED_VO) */
+	MPXPSys.vo_inited=0;
+	MPXPSys.ao_inited=MPXP_False;
 	eof = 0;
 	xp_core->audio->eof=0;
 	goto play_next_file;
     }
 
-    if(stream_dump_type>1) dump_mux_close(MPXPSys->demuxer());
+    if(stream_dump_type>1) dump_mux_close(MPXPSys.demuxer());
     exit_player(MSGTR_Exit_eof);
 
     mpxp_uninit_structs();
