@@ -1976,7 +1976,6 @@ main:
 	sh_audio->a_pts=HUGE;
     } else {
 	MSG_INFO(MSGTR_NoSound);
-	if(mp_conf.verbose) MSG_V("Freeing %d unused audio chunks\n",d_audio->packs);
 	d_audio->free_packs(); // mp_free buffered chunks
 	d_audio->id=-2;         // do not read audio chunks
 	if(MPXPSys.ao_inited==MPXP_Ok) MPXPSys.uninit_player(INITED_AO); // close device
@@ -1984,7 +1983,6 @@ main:
 
     if(!sh_video){
 	MSG_INFO("Video: no video!!!\n");
-	if(mp_conf.verbose) MSG_V("Freeing %d unused video chunks\n",d_video->packs);
 	d_video->free_packs();
 	d_video->id=-2;
 	if(MPXPSys.vo_inited) MPXPSys.uninit_player(INITED_VO);

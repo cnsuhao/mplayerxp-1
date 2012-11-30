@@ -482,10 +482,10 @@ static unsigned int x_get_bits(int n){
 #define skip_bits1(xxx) x_get_bits(1)
 
 /* most is hardcoded. should extend to handle all h263 streams */
-static int h263_decode_picture_header(unsigned char *b_ptr)
+static int h263_decode_picture_header(const unsigned char *b_ptr)
 {
 //    int i;
-
+    const unsigned char *buffer;
     buffer=b_ptr;
     bufptr=bitcnt=buf=0;
 
@@ -582,7 +582,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 
     audio_pos=0;
 
-  h263_decode_picture_header(demuxer->video->buffer);
+  h263_decode_picture_header(demuxer->video->buffer());
 
   if (vivo_param.version != -1)
     priv->version = '0' + vivo_param.version;

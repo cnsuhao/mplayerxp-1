@@ -119,13 +119,13 @@ switch(video_codec){
 	/* demuxer pos saving is required for libavcodec mpeg decoder as it's
 	   reading the mpeg header self! */
 
-	saved_pos = d_video->buffer_pos;
+//	saved_pos = d_video->buffer_pos;
 	saved_type = d_video->demuxer->file_format;
 
 	d_video->demuxer->file_format = DEMUXER_TYPE_MPEG_ES;
 	video_read_properties(sh_video);
 	d_video->demuxer->file_format = saved_type;
-	d_video->buffer_pos = saved_pos;
+//	d_video->buffer_pos = saved_pos;
 //	goto mpeg_header_parser;
     }
 #endif

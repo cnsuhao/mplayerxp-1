@@ -15,7 +15,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "libmpconf/codec-cfg.h"
 
-#include "mp_conf_lavc.h""
+#include "mp_conf_lavc.h"
 #include "codecs_ld.h"
 
 typedef struct priv_s {
@@ -213,7 +213,7 @@ unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned
 	if(y<0){ MSG_V("lavc_audio: error\n");break; }
 	if(y<x)
 	{
-	    sh_audio->ds->buffer_pos+=y-x;  // put back data (HACK!)
+	    sh_audio->ds->buffer_roll_back(x-y);  // put back data (HACK!)
 	    if(sh_audio->wtag==mmioFOURCC('d','n','e','t'))
 		swab(start+y,start+y,(x-y)&~(1));
 	}

@@ -981,7 +981,7 @@ do{
   }
   ds=demux_avi_select_stream(demux,id);
   if(ds)
-    if(ds->packs+1>=MAX_PACKS || ds->bytes+len>=MAX_PACK_BYTES){
+    if(ds->packs()+1>=MAX_PACKS || ds->bytes()+len>=MAX_PACK_BYTES){
 	/* this packet will cause a buffer overflow, switch to -ni mode!!! */
 	MSG_WARN("\nBadly interleaved .AVI detected - switching to -ni mode...\n");
 	if(priv->idx_size>0){
