@@ -192,7 +192,7 @@ sh_audio_t* new_sh_audio_aid(demuxer_t *demuxer,int id,int aid){
 	sh->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
 	  MSG_V("ID_AUDIO_ID=%d\n", aid);
     }
-    ((sh_audio_t *)demuxer->a_streams[id])->aid = aid;
+    ((sh_audio_t *)demuxer->a_streams[id])->id = aid;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return reinterpret_cast<sh_audio_t*>(demuxer->a_streams[id]);
 }
@@ -227,7 +227,7 @@ sh_video_t* new_sh_video_vid(demuxer_t *demuxer,int id,int vid){
 	demuxer->v_streams[id]=mp_calloc(1, sizeof(sh_video_t));
 	  MSG_V("ID_VIDEO_ID=%d\n", vid);
     }
-    ((sh_video_t *)demuxer->v_streams[id])->vid = vid;
+    ((sh_video_t *)demuxer->v_streams[id])->id = vid;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return reinterpret_cast<sh_video_t*>(demuxer->v_streams[id]);
 }

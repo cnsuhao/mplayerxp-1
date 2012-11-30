@@ -4001,8 +4001,8 @@ static MPXP_Rc mkv_control (const demuxer_t *demuxer, int cmd, any_t*arg)
 	    if (demuxer->audio && demuxer->audio->sh) {
 		sh_audio_t *sh = reinterpret_cast<sh_audio_t*>(demuxer->a_streams[demuxer->audio->id]);
 		int aid = *(int*)arg;
-		if (aid < 0) aid = (sh->aid + 1) % mkv_d->last_aid;
-		if (aid != sh->aid) {
+		if (aid < 0) aid = (sh->id + 1) % mkv_d->last_aid;
+		if (aid != sh->id) {
 		    mkv_track_t *track = demux_mkv_find_track_by_num (mkv_d, aid, MATROSKA_TRACK_AUDIO);
 		    if (track) {
 			demuxer->audio->id = track->tnum;
@@ -4010,7 +4010,7 @@ static MPXP_Rc mkv_control (const demuxer_t *demuxer, int cmd, any_t*arg)
 			ds_free_packs(demuxer->audio);
 		    }
 		}
-		*(int*)arg = sh->aid;
+		*(int*)arg = sh->id;
 	    } else *(int*)arg = -2;
 	    return MPXP_Ok;
 	default: return MPXP_Unknown;

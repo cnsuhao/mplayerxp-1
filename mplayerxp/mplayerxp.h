@@ -127,9 +127,9 @@ namespace mpxp {;
 
     struct MPXPSystem;
     /* non-configurable through command line stuff */
-    struct MPXPContext {
+    struct MPXPContext :public Opaque {
 	MPXPContext();
-	~MPXPContext() {}
+	virtual ~MPXPContext() {}
 
 	int			rtc_fd;
 	int			seek_time;

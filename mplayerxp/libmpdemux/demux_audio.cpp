@@ -1013,6 +1013,8 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
   }
   sh_audio = new_sh_audio(demuxer,0);
   MSG_DBG2("mp3_header off: st_pos=%lu n=%lu HDR_SIZE=%u\n",st_pos,n,HDR_SIZE);
+  demuxer->movi_start = stream_tell(s);
+  demuxer->movi_end = s->end_pos;
   switch(frmt) {
   case RAW_FLAC:
   {
@@ -1110,6 +1112,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     sh_audio->i_bps=mp3_brate;
     sh_audio->rate=mp3_samplerate;
     sh_audio->nch=mp3_channels;
+    demuxer->movi_start-=4;
     if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
     break;
   case RAW_MP3:
@@ -1117,6 +1120,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     sh_audio->i_bps=mp3_brate;
     sh_audio->rate=mp3_samplerate;
     sh_audio->nch=mp3_channels;
+    demuxer->movi_start-=4;
     if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
     break;
   case RAW_AC3:

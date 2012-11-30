@@ -13,12 +13,23 @@ extern "C" {
 #endif
 #include "xmpcore/mp_image.h"
 
-struct af_stream_t;
-typedef struct sh_audio_s {
-    int			aid;
+struct standard_header : public Opaque {
+    public:
+	standard_header() {}
+	virtual ~standard_header() {}
+
+    int			id;
     demux_stream_t*	ds;
     struct codecs_st*	codec;
     int			inited;
+};
+
+struct af_stream_t;
+struct sh_audio_t : public standard_header  {
+    public:
+	sh_audio_t() {}
+	virtual ~sh_audio_t() {}
+
 // input format
     uint32_t		wtag;  // analogue of fourcc for sound
     unsigned		i_bps; // == bitrate  (compressed bytes/sec)
@@ -60,13 +71,14 @@ typedef struct sh_audio_s {
     any_t*		context; // codec-specific stuff (usually HANDLE or struct pointer)
     unsigned char*	codecdata;
     unsigned		codecdata_len;
-} sh_audio_t;
+};
+
 struct vf_instance_t;
-typedef struct sh_video_s {
-    int			vid;
-    demux_stream_t*	ds;
-    struct codecs_st*	codec;
-    int			inited;
+struct sh_video_t : public standard_header {
+    public:
+	sh_video_t() {}
+	virtual ~sh_video_t() {}
+
 // input format
     uint32_t		fourcc;
     int			is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
@@ -92,7 +104,7 @@ typedef struct sh_video_s {
     BITMAPINFOHEADER*	bih;   // in format
     any_t* context;	// codec-specific stuff (usually HANDLE or struct pointer)
     any_t* ImageDesc;	// for quicktime codecs
-} sh_video_t;
+};
 
 sh_audio_t* get_sh_audio(demuxer_t *demuxer,int id);
 sh_video_t* get_sh_video(demuxer_t *demuxer,int id);
