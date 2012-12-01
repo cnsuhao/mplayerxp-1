@@ -65,7 +65,7 @@ while(sh_audio){
 	  ret=read_audio_buffer(sh_audio,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			      playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       } else {
-	  ret=mpca_decode(mpxp_context().audio.decoder,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
+	  ret=mpca_decode(mpxp_context().audio().decoder,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			   playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
     if(ret>0) sh_audio->a_buffer_len+=ret;

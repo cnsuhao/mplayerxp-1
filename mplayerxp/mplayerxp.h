@@ -132,22 +132,27 @@ namespace mpxp {;
     struct MPXPSystem;
     /* non-configurable through command line stuff */
     struct MPXPContext :public Opaque {
-	MPXPContext();
-	virtual ~MPXPContext();
+	public:
+	    MPXPContext();
+	    virtual ~MPXPContext();
 
-	int			rtc_fd;
-	int			seek_time;
-	int			output_quality;
-	unsigned		mpxp_after_seek;
-	int			use_pts_fix2;
-	unsigned		mplayer_accel;
-	subtitle*		subtitles;
-	m_config_t*		mconfig;
-	time_usage_t*		bench;
-	MPXPSystem&		MPXPSys;
-	any_t*			msg_priv;
-	audio_processing_t&	audio;
-	video_processing_t&	video;
+	    audio_processing_t& audio() const { return *_audio; }
+	    video_processing_t& video() const { return *_video; }
+
+	    int			rtc_fd;
+	    int			seek_time;
+	    int			output_quality;
+	    unsigned		mpxp_after_seek;
+	    int			use_pts_fix2;
+	    unsigned		mplayer_accel;
+	    subtitle*		subtitles;
+	    m_config_t*		mconfig;
+	    time_usage_t*	bench;
+	    MPXPSystem&		MPXPSys;
+	    any_t*		msg_priv;
+	private:
+	    LocalPtr<audio_processing_t> _audio;
+	    LocalPtr<video_processing_t> _video;
     };
 
     MPXPContext& mpxp_context();
