@@ -156,7 +156,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     float pts;
     int flags=0;
     /* Dolby AC3 audio:*/
-    mpxp_dca_accel = MPXPCtx->mplayer_accel;
+    mpxp_dca_accel = mpxp_context().mplayer_accel;
     mpxp_dca_state = dca_init(mpxp_dca_accel);
     if (mpxp_dca_state == NULL) {
 	MSG_ERR("dca init failed\n");

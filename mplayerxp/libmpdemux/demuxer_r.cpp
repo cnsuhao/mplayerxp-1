@@ -88,10 +88,10 @@ int demux_getc_r(Demuxer_Stream *ds,float *pts)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	MPXPCtx->bench->demux+=tt;
-	MPXPCtx->bench->audio_decode_correction=tt;
-	if(tt > MPXPCtx->bench->max_demux) MPXPCtx->bench->max_demux=tt;
-	if(tt < MPXPCtx->bench->min_demux) MPXPCtx->bench->min_demux=tt;
+	mpxp_context().bench->demux+=tt;
+	mpxp_context().bench->audio_decode_correction=tt;
+	if(tt > mpxp_context().bench->max_demux) mpxp_context().bench->max_demux=tt;
+	if(tt < mpxp_context().bench->min_demux) mpxp_context().bench->min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;
@@ -116,9 +116,9 @@ enc_frame_t* video_read_frame_r(sh_video_t* sh_video,int force_fps)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	MPXPCtx->bench->demux+=tt;
-	if(tt > MPXPCtx->bench->max_demux) MPXPCtx->bench->max_demux=tt;
-	if(tt < MPXPCtx->bench->min_demux) MPXPCtx->bench->min_demux=tt;
+	mpxp_context().bench->demux+=tt;
+	if(tt > mpxp_context().bench->max_demux) mpxp_context().bench->max_demux=tt;
+	if(tt < mpxp_context().bench->min_demux) mpxp_context().bench->min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return frame;
@@ -139,10 +139,10 @@ int demux_read_data_r(Demuxer_Stream *ds,unsigned char* mem,int len,float *pts)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	MPXPCtx->bench->demux+=tt;
-	MPXPCtx->bench->audio_decode_correction=tt;
-	if(tt > MPXPCtx->bench->max_demux) MPXPCtx->bench->max_demux=tt;
-	if(tt < MPXPCtx->bench->min_demux) MPXPCtx->bench->min_demux=tt;
+	mpxp_context().bench->demux+=tt;
+	mpxp_context().bench->audio_decode_correction=tt;
+	if(tt > mpxp_context().bench->max_demux) mpxp_context().bench->max_demux=tt;
+	if(tt < mpxp_context().bench->min_demux) mpxp_context().bench->min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;
@@ -163,10 +163,10 @@ int ds_get_packet_r(Demuxer_Stream *ds,unsigned char **start,float *pts)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	MPXPCtx->bench->demux+=tt;
-	MPXPCtx->bench->audio_decode_correction=tt;
-	if(tt > MPXPCtx->bench->max_demux) MPXPCtx->bench->max_demux=tt;
-	if(tt < MPXPCtx->bench->min_demux) MPXPCtx->bench->min_demux=tt;
+	mpxp_context().bench->demux+=tt;
+	mpxp_context().bench->audio_decode_correction=tt;
+	if(tt > mpxp_context().bench->max_demux) mpxp_context().bench->max_demux=tt;
+	if(tt < mpxp_context().bench->min_demux) mpxp_context().bench->min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;
@@ -194,9 +194,9 @@ int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
     {
 	t2=GetTimer();t=t2-t;
 	tt = t*0.000001f;
-	MPXPCtx->bench->demux+=tt;
-	if(tt > MPXPCtx->bench->max_demux) MPXPCtx->bench->max_demux=tt;
-	if(tt < MPXPCtx->bench->min_demux) MPXPCtx->bench->min_demux=tt;
+	mpxp_context().bench->demux+=tt;
+	if(tt > mpxp_context().bench->max_demux) mpxp_context().bench->max_demux=tt;
+	if(tt < mpxp_context().bench->min_demux) mpxp_context().bench->min_demux=tt;
     }
     UNLOCK_DEMUXER();
     return retval;

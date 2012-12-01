@@ -65,7 +65,7 @@ while(sh_audio){
 	  ret=read_audio_buffer(sh_audio,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			      playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       } else {
-	  ret=mpca_decode(MPXPCtx->audio.decoder,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
+	  ret=mpca_decode(mpxp_context().audio.decoder,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			   playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
       }
     if(ret>0) sh_audio->a_buffer_len+=ret;
@@ -78,12 +78,12 @@ while(sh_audio){
   MP_UNIT("play_audio");   // Leave AUDIO decoder module
   t=GetTimer()-t;
   tt = t*0.000001f;
-  MPXPCtx->bench->audio+=tt;
+  mpxp_context().bench->audio+=tt;
   if(mp_conf.benchmark)
   {
-    if(tt > MPXPCtx->bench->max_audio) MPXPCtx->bench->max_audio = tt;
-    if(tt < MPXPCtx->bench->min_audio) MPXPCtx->bench->min_audio = tt;
-    MPXPCtx->bench->cur_audio=tt;
+    if(tt > mpxp_context().bench->max_audio) mpxp_context().bench->max_audio = tt;
+    if(tt < mpxp_context().bench->min_audio) mpxp_context().bench->min_audio = tt;
+    mpxp_context().bench->cur_audio=tt;
   }
   if(playsize>sh_audio->a_buffer_len) playsize=sh_audio->a_buffer_len;
 
@@ -96,7 +96,7 @@ while(sh_audio){
       memcpy(sh_audio->a_buffer,&sh_audio->a_buffer[playsize],sh_audio->a_buffer_len);
       if(!mp_conf.av_sync_pts && xmp_test_model(XMP_Run_AudioPlayer))
 	  pthread_mutex_lock(&audio_timer_mutex);
-      if(MPXPCtx->use_pts_fix2) {
+      if(mpxp_context().use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
 	      sh_audio->a_pts_pos-=playsize;
 	      if(sh_audio->a_pts_pos > -ao_get_delay(ao_data)*sh_audio->af_bps) {

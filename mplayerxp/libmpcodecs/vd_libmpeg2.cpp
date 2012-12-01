@@ -261,7 +261,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     priv_t *priv;
     if(!load_lib("libmpeg2"SLIBSUFFIX)) return MPXP_False;
     sh->context=priv=new(zeromem) priv_t;
-    if(!(priv->mpeg2dec=mpeg2_init(MPXPCtx->mplayer_accel))) return MPXP_False;
+    if(!(priv->mpeg2dec=mpeg2_init(mpxp_context().mplayer_accel))) return MPXP_False;
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 

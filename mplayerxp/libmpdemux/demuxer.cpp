@@ -362,7 +362,7 @@ demuxer_t* demux_open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
     if(!ad)
       MSG_WARN("Failed to open audio demuxer: %s\n",demux_conf.audio_stream);
     else if(ad->audio->sh && ((sh_audio_t*)ad->audio->sh)->wtag == 0x55) // MP3
-      m_config_set_flag(MPXPCtx->mconfig,"mp3.hr-seek",1); // Enable high res seeking
+      m_config_set_flag(mpxp_context().mconfig,"mp3.hr-seek",1); // Enable high res seeking
   }
   if(ss) {
     sd = demux_open_stream(ss,-2,-2,dvdsub_id);

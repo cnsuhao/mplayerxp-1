@@ -44,7 +44,7 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
     float screen_pts=dae_played_frame(xp_core->video).v_pts-(mp_conf.av_sync_pts?0:xp_core->initial_apts);
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
-    max_frame_delay = MPXPCtx->bench->max_video+MPXPCtx->bench->max_vout;
+    max_frame_delay = mpxp_context().bench->max_video+mpxp_context().bench->max_vout;
 
     /*
 	TODO:
@@ -138,7 +138,7 @@ any_t* xmp_video_decoder( any_t* arg )
     if(!xmp_test_model(XMP_Run_VA_Decoder) && xp_core->audio)
 	priv->name = "video decoder";
     drop_barrier=(float)(xp_core->num_v_buffs/2)*(1/sh_video->fps);
-    if(mp_conf.av_sync_pts == -1 && !MPXPCtx->use_pts_fix2)
+    if(mp_conf.av_sync_pts == -1 && !mpxp_context().use_pts_fix2)
 	xp_core->bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
@@ -190,7 +190,7 @@ pt_sleep:
 	int cur_time;
 	cur_time = GetTimerMS();
 	/* Ugly solution: disable frame dropping right after seeking! */
-	if(cur_time - MPXPCtx->seek_time > (xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
+	if(cur_time - mpxp_context().seek_time > (xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
     if(!finite(frame->pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",frame->pts);
     if(frame->type!=VideoFrame) escape_player("VideoDecoder doesn't parse non video frames",mp_conf.max_trace);
@@ -209,20 +209,20 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     if(xp_n_frame_to_drop)	drop_param=mp_conf.frame_dropping;
     else			drop_param=0;
     /* decode: */
-    if(MPXPCtx->output_quality) {
+    if(mpxp_context().output_quality) {
 	unsigned total = xp_core->num_v_buffs/2;
 	unsigned distance = dae_get_decoder_outrun(xp_core->video);
 	int our_quality;
-	our_quality = MPXPCtx->output_quality*distance/total;
-	if(drop_param) mpcv_set_quality(MPXPCtx->video.decoder,0);
+	our_quality = mpxp_context().output_quality*distance/total;
+	if(drop_param) mpcv_set_quality(mpxp_context().video.decoder,0);
 	else
-	if(mp_conf.autoq) mpcv_set_quality(MPXPCtx->video.decoder,our_quality>0?our_quality:0);
+	if(mp_conf.autoq) mpcv_set_quality(mpxp_context().video.decoder,our_quality>0?our_quality:0);
     }
     frame->flags=drop_param;
-    blit_frame=mpcv_decode(MPXPCtx->video.decoder,frame);
+    blit_frame=mpcv_decode(mpxp_context().video.decoder,frame);
 MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),frame->len,frame->pts);
-    if(MPXPCtx->output_quality) {
-	if(drop_param) mpcv_set_quality(MPXPCtx->video.decoder,MPXPCtx->output_quality);
+    if(mpxp_context().output_quality) {
+	if(drop_param) mpcv_set_quality(mpxp_context().video.decoder,mpxp_context().output_quality);
     }
     if(!blit_frame && drop_param) priv->dae->num_dropped_frames++;
     if(blit_frame) {

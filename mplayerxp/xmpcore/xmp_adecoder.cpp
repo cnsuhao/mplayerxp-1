@@ -276,7 +276,7 @@ int decode_audio_buffer(Demuxer_Stream *d_audio,unsigned len)
 
     for( l = 0, l2 = len, ret = 0; l < len && l2 >= audio_buffer.sh_audio->audio_out_minsize; ) {
 	float pts;
-	ret = mpca_decode(MPXPCtx->audio.decoder, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
+	ret = mpca_decode(mpxp_context().audio.decoder, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
 	if( ret <= 0 )
 	    break;
 
@@ -313,12 +313,12 @@ int decode_audio_buffer(Demuxer_Stream *d_audio,unsigned len)
     pthread_cond_signal( &audio_buffer.wait_buffer_cond );
 
     t=GetTimer()-t;
-    MPXPCtx->bench->audio_decode+=t*0.000001f;
-    MPXPCtx->bench->audio_decode-=MPXPCtx->bench->audio_decode_correction;
+    mpxp_context().bench->audio_decode+=t*0.000001f;
+    mpxp_context().bench->audio_decode-=mpxp_context().bench->audio_decode_correction;
     if(mp_conf.benchmark)
     {
-	if(t > MPXPCtx->bench->max_audio_decode) MPXPCtx->bench->max_audio_decode = t;
-	if(t < MPXPCtx->bench->min_audio_decode) MPXPCtx->bench->min_audio_decode = t;
+	if(t > mpxp_context().bench->max_audio_decode) mpxp_context().bench->max_audio_decode = t;
+	if(t < mpxp_context().bench->min_audio_decode) mpxp_context().bench->min_audio_decode = t;
     }
 
     pthread_mutex_unlock( &audio_buffer.head_mutex );

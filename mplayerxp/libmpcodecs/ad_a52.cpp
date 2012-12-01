@@ -155,7 +155,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     float pts;
     int flags=0;
     /* Dolby AC3 audio:*/
-    mpxp_a52_accel = MPXPCtx->mplayer_accel;
+    mpxp_a52_accel = mpxp_context().mplayer_accel;
     mpxp_a52_state=a52_init (mpxp_a52_accel);
     if (mpxp_a52_state == NULL) {
 	MSG_ERR("A52 init failed\n");

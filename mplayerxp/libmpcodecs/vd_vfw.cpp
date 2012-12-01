@@ -173,7 +173,7 @@ static MPXP_Rc init_vfw_video_codec(sh_video_t *sh_video){
 
 //  avi_header.our_in_buffer=mp_malloc(avi_header.video.dwSuggestedBufferSize); // FIXME!!!!
 
-    ICSendMessage(priv->hic, ICM_USER+80, (long)(&MPXPCtx->output_quality), 0);
+    ICSendMessage(priv->hic, ICM_USER+80, (long)(&mpxp_context().output_quality), 0);
 
   // don't do this palette mess always, it makes div3 dll crashing...
     if(sh_video->codec->outfmt[sh_video->outfmtidx]==IMGFMT_BGR8){

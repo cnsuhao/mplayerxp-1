@@ -149,7 +149,8 @@ namespace mpxp {;
 	audio_processing_t&	audio;
 	video_processing_t&	video;
     };
-    extern MPXPContext* MPXPCtx;
+
+    MPXPContext& mpxp_context();
 
     unsigned get_number_cpu(void);
     void show_help(void);

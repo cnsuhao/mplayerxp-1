@@ -193,7 +193,7 @@ static MPXP_Rc init(sh_audio_t *sh)
     float pts;
     int NeAAC_init;
     NeAACDecConfigurationPtr NeAAC_conf;
-    if(!(NeAAC_hdec = NeAACDecOpen(MPXPCtx->mplayer_accel))) {
+    if(!(NeAAC_hdec = NeAACDecOpen(mpxp_context().mplayer_accel))) {
 	MSG_WARN("FAAD: Failed to open the decoder!\n"); // XXX: deal with cleanup!
 	return MPXP_False;
     }
