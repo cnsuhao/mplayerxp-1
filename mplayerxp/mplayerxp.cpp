@@ -1917,11 +1917,6 @@ play_next_file:
 /*================== Init VIDEO (codec & libvo) ==========================*/
     if(!sh_video) goto main;
 
-    MP_UNIT("init_video_filters");
-    if(sh_video->vfilter_inited<=0) {
-	sh_video->vfilter=vf_init(sh_video,MPXPSys.libinput());
-	sh_video->vfilter_inited=1;
-    }
     if((MPXPSys.find_vcodec())!=MPXP_Ok) {
 	sh_video=reinterpret_cast<sh_video_t*>(MPXPSys.demuxer()->video->sh);
 	if(!sh_audio) goto goto_next_file;
@@ -1942,7 +1937,6 @@ play_next_file:
 	mpcv_set_quality(mpxp_context().video().decoder,mpxp_context().output_quality);
     }
 
-    vf_showlist(reinterpret_cast<vf_instance_t*>(sh_video->vfilter));
 // ========== Init display (sh_video->src_w*sh_video->src_h/out_fmt) ============
 
     MPXPSys.inited_flags|=INITED_VO;

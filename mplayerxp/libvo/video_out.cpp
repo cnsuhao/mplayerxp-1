@@ -36,7 +36,6 @@ using namespace mpxp;
 
 #include "osdep/shmem.h"
 #include "mp_conf_lavc.h"
-#include "postproc/vf.h"
 #include "xmpcore/xmp_core.h"
 #include "mplayerxp.h"
 #include "osdep/fastmemcpy.h"
@@ -46,6 +45,7 @@ using namespace mpxp;
 #include "dri_vo.h"
 #include "osd_render.h"
 #include "sub.h"
+#include "postproc/vf.h"
 #include "vo_msg.h"
 
 namespace mpxp{
@@ -121,6 +121,7 @@ struct vo_priv_t : public video_private {
     const vo_info_t*		video_out;
     class VO_Interface*		vo_iface;
     const OSD_Render*		draw_alpha;
+    vf_stream_t*		parent;
 };
 
 vo_priv_t::vo_priv_t() {
@@ -305,16 +306,17 @@ void Video_Output::dri_reconfig(int is_resize ) const
     /* TODO: smart analizer of scaling possibilities of vo_driver */
     if(is_resize) {
 	xp_core->in_resize=1;
-	vf_reinit_vo(priv.dri.cap.w,priv.dri.cap.h,priv.dri.cap.fourcc,1);
+	vf_reinit_vo(priv.parent,priv.dri.cap.w,priv.dri.cap.h,priv.dri.cap.fourcc,1);
     }
-    vf_reinit_vo(priv.dri.cap.w,priv.dri.cap.h,priv.dri.cap.fourcc,0);
+    vf_reinit_vo(priv.parent,priv.dri.cap.w,priv.dri.cap.h,priv.dri.cap.fourcc,0);
 }
 
-MPXP_Rc Video_Output::configure(uint32_t width, uint32_t height, uint32_t d_width,
+MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, uint32_t d_width,
 		   uint32_t d_height, vo_flags_e _fullscreen, const char *title,
 		   uint32_t format)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    priv.parent=s;
     MPXP_Rc retval;
     unsigned dest_fourcc,w,d_w,h,d_h;
     MSG_DBG3("dri_vo_dbg: vo_config\n");

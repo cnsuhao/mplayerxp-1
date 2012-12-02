@@ -60,6 +60,7 @@ using namespace mpxp;
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 #include "pp_msg.h"
 
 /* Uncomment if you want to print some info on the format */

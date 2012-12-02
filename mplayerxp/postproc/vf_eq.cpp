@@ -24,6 +24,7 @@ using namespace mpxp;
 #include "libvo/video_out.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 
 #ifdef USE_SETLOCALE
 #include <locale.h>

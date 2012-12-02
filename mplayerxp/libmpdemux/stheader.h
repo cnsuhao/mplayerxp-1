@@ -74,7 +74,10 @@ struct sh_audio_t : public standard_header  {
     unsigned		codecdata_len;
 };
 
-struct vf_instance_t;
+namespace mpxp {
+    struct vf_stream_t;
+}
+
 struct sh_video_t : public standard_header {
     public:
 	sh_video_t() {}
@@ -92,7 +95,7 @@ struct sh_video_t : public standard_header {
     float		aspect;
     unsigned int	outfmtidx; // TODO: replace with out_fourcc
 /* vfilter chan */
-    vf_instance_t*	vfilter;
+    vf_stream_t*	vfilter;
     int			vfilter_inited;
     int			vf_flags;
     unsigned		active_slices; // used in dec_video+vd_ffmpeg only!!!

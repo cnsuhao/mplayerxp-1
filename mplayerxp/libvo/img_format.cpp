@@ -1,6 +1,7 @@
 #include "mp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
+#include <ctype.h>
 #include <stdio.h>
 #include <limits.h>
 #include "img_format.h"
@@ -80,7 +81,11 @@ const char * __FASTCALL__ vo_format_name(int format)
 	case IMGFMT_XVMC_MOCO_MPEG2: return("MPEG1/2 Motion Compensation");
 	case IMGFMT_XVMC_IDCT_MPEG2: return("MPEG1/2 Motion Compensation and IDCT");
     }
-    snprintf(unknow_format,20,"Unknown 0x%04x",format);
+    char *p=reinterpret_cast<char *>(&format);
+    if(isprint(p[0])&&isprint(p[1])&&isprint(p[2])&&isprint(p[4]))
+	snprintf(unknow_format,20,"Unknown %c%c%c%c",p[0],p[1],p[2],p[3]);
+    else
+	snprintf(unknow_format,20,"Unknown 0x%04x",format);
     return unknow_format;
 }
 

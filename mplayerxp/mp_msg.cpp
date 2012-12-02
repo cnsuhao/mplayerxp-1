@@ -86,7 +86,7 @@ static const char * msg_prefix[] =
 int mpxp_printf( unsigned x, const char *format, ... ){
 /* TODO: more useful usage of module_id */
     int rc=0;
-    char sbuf[0xFFFF];
+    char* sbuf=new char[0xFFFFF];
     unsigned ssize;
     unsigned level=(x>>28)&0xF;
     unsigned mod=x&0x0FFFFFFF;
@@ -125,6 +125,7 @@ int mpxp_printf( unsigned x, const char *format, ... ){
     else was_eol=0;
     fflush(stderr);
 //    if(priv) pthread_mutex_unlock(&priv->mp_msg_mutex);
+    delete sbuf;
     return rc;
 }
 

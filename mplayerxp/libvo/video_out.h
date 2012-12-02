@@ -146,6 +146,7 @@ namespace mpxp {
 	    virtual ~video_private() {}
     };
 
+    struct vf_stream_t;
     class Video_Output {
 	public:
 	    Video_Output();
@@ -168,7 +169,7 @@ namespace mpxp {
 	    virtual MPXP_Rc	init(const char *driver_name) const;
 	    virtual void	print_help() const;
 	    virtual const vo_info_t* get_info() const;
-	    virtual MPXP_Rc	configure(uint32_t width, uint32_t height, uint32_t d_width,
+	    virtual MPXP_Rc	configure(vf_stream_t* parent,uint32_t width, uint32_t height, uint32_t d_width,
 				  uint32_t d_height, vo_flags_e fullscreen,const char *title,
 				  uint32_t format);
 	    virtual uint32_t	query_format(uint32_t* fourcc,unsigned src_w,unsigned src_h) const;

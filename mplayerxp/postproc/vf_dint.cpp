@@ -11,6 +11,7 @@ using namespace mpxp;
 #include "xmpcore/mp_image.h"
 #include "libvo/img_format.h"
 #include "vf.h"
+#include "vf_internal.h"
 #include "pp_msg.h"
 
 struct vf_priv_t {

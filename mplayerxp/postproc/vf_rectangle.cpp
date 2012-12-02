@@ -6,6 +6,7 @@ using namespace mpxp;
 #include <string.h>
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 
 #include "osdep/fastmemcpy.h"
 #include "pp_msg.h"

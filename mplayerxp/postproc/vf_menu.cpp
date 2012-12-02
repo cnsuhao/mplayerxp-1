@@ -13,6 +13,7 @@ using namespace mpxp;
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 
 #include "osdep/fastmemcpy.h"
 #include "libvo/video_out.h"

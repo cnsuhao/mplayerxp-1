@@ -30,6 +30,7 @@ using namespace mpxp;
 #include "libvo/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 #include "osdep/fastmemcpy.h"
 #include "pp_msg.h"
 
@@ -463,7 +464,8 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     }
 
     // check csp:
-    vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,IMGFMT_YV12,1,1);
+    vf_conf_t conf = { 1, 1, IMGFMT_YV12 };
+    vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,&conf);
     if(!vf->priv->outfmt) {
 	uninit(vf);
 	return MPXP_False; // no csp match :(

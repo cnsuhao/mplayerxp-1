@@ -13,6 +13,7 @@ using namespace mpxp;
 #include "libvo/video_out.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 
 #include "osdep/fastmemcpy.h"
 #include "libmpconf/codec-cfg.h"
@@ -282,11 +283,14 @@ mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_imag
 
 // By default vf doesn't accept MPEGPES
 static int __FASTCALL__ vf_default_query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
-  if(fmt == IMGFMT_MPEGPES) return 0;
-  return 1;//vf_next_query_format(vf,fmt,w,h);
+    UNUSED(vf);
+    UNUSED(w);
+    UNUSED(h);
+    if(fmt == IMGFMT_MPEGPES) return 0;
+    return 1;//vf_next_query_format(vf,fmt,w,h);
 }
 
-static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t* libinput){
+static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char *name,const char *args,any_t* libinput,const vf_conf_t* conf){
     vf_instance_t* vf;
     int i;
     for(i=0;;i++){
@@ -308,10 +312,9 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
     vf->put_slice=vf_next_put_slice;
     vf->default_caps=VFCAP_ACCEPT_STRIDE;
     vf->default_reqs=0;
-    vf->sh=sh;
-    vf->dw=sh->src_w;
-    vf->dh=sh->src_h;
-    vf->dfourcc=sh->fourcc;
+    vf->conf.w=conf->w;
+    vf->conf.h=conf->h;
+    vf->conf.fourcc=conf->fourcc;
     vf->libinput=libinput;
     if(next) next->prev=vf;
     if(vf->info->open(vf,(char*)args)==MPXP_Ok) return vf; // Success!
@@ -320,23 +323,22 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,sh_video_t
     return NULL;
 }
 
-vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,sh_video_t *sh,const char *name,const char *args,any_t*libinput){
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,any_t*libinput,const vf_conf_t* conf){
     if(strcmp(name,"vo")) {
-	MSG_V("Open video filter: [%s]\n", name);
+	MSG_V("Open video filter: [%s] <%ux%u %s>\n", name,conf->w,conf->h,vo_format_name(conf->fourcc));
     }
     if(next) check_pin("vfilter",next->pin,VF_PIN);
-    return vf_open_plugin(next,sh,name,args,libinput);
+    return vf_open_plugin(next,name,args,libinput,conf);
 }
 
 //============================================================================
-
-unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,unsigned int preferred,unsigned w,unsigned h){
+unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,const vf_conf_t* conf){
     vf_instance_t* vf=*vfp;
     unsigned int* p;
     unsigned int best=0;
     int ret;
     if((p=list)) while(*p){
-	ret=vf->query_format(vf,*p,w,h);
+	ret=vf->query_format(vf,*p,conf->w,conf->h);
 	MSG_V("[%s] query(%s) -> %d\n",vf->info->name,vo_format_name(*p),ret&3);
 	if(ret&2){ best=*p; break;} // no conversion -> bingo!
 	if(ret&1 && !best) best=*p; // best with conversion
@@ -345,13 +347,14 @@ unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,un
     if(best) return best; // bingo, they have common csp!
     // ok, then try with scale:
     if(vf->info == &vf_info_scale) return 0; // avoid infinite recursion!
-    vf=vf_open_filter(vf,vf->sh,"fmtcvt",NULL,vf->libinput);
+    vf=vf_open_filter(vf,"fmtcvt",NULL,vf->libinput,conf);
     if(!vf) return 0; // failed to init "scale"
     // try the preferred csp first:
-    if(preferred && vf->query_format(vf,preferred,w,h)) best=preferred; else
+    if(conf->fourcc && vf->query_format(vf,conf->fourcc,conf->w,conf->h)) best=conf->fourcc;
+    else
     // try the list again, now with "scaler" :
     if((p=list)) while(*p){
-	ret=vf->query_format(vf,*p,w,h);
+	ret=vf->query_format(vf,*p,conf->w,conf->h);
 	MSG_V("[%s] query(%s) -> %d\n",vf->info->name,vo_format_name(*p),ret&3);
 	if(ret&2){ best=*p; break;} // no conversion -> bingo!
 	if(ret&1 && !best) best=*p; // best with conversion
@@ -378,15 +381,12 @@ int __FASTCALL__ vf_next_config(vf_instance_t* vf,
 	vo_flags_e voflags, unsigned int outfmt){
     int miss;
     int flags=vf_next_query_format(vf,outfmt,d_width,d_height);
-    vf->dw=width;
-    vf->dh=height;
-    vf->dfourcc=outfmt;
     if(!flags){
 	// hmm. colorspace mismatch!!!
 	// let's insert the 'scale' filter, it does the job for us:
 	vf_instance_t* vf2;
 	if(vf->next->info==&vf_info_scale) return 0; // scale->scale
-	vf2=vf_open_filter(vf->next,vf->sh,"scale",NULL,vf->libinput);
+	vf2=vf_open_filter(vf->next,"scale",NULL,vf->libinput,&vf->conf);
 	if(!vf2) return 0; // shouldn't happen!
 	vf->next=vf2;
 	flags=vf_next_query_format(vf->next,outfmt,d_width,d_height);
@@ -400,7 +400,7 @@ int __FASTCALL__ vf_next_config(vf_instance_t* vf,
     if(miss&VFCAP_ACCEPT_STRIDE){
 	// vf requires stride support but vf->next doesn't support it!
 	// let's insert the 'expand' filter, it does the job for us:
-	vf_instance_t* vf2=vf_open_filter(vf->next,vf->sh,"expand",NULL,vf->libinput);
+	vf_instance_t* vf2=vf_open_filter(vf->next,"expand",NULL,vf->libinput,&vf->conf);
 	if(!vf2) return 0; // shouldn't happen!
 	vf->next=vf2;
     }
@@ -422,9 +422,6 @@ int __FASTCALL__ vf_next_query_format(vf_instance_t* vf, unsigned int fmt,unsign
 
 int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned width,unsigned height)
 {
-    vf->dw=width;
-    vf->dh=height;
-    vf->dfourcc=fmt;
     check_pin("vfilter",vf->pin,VF_PIN);
     return vf->query_format(vf,fmt,width,height);
 }
@@ -459,25 +456,14 @@ void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf){
     }
 }
 
-void vf_help(){
-    int i=0;
-    MSG_INFO( "Available video filters:\n");
-    while(filter_list[i]){
-	MSG_INFO("\t%-10s: %s\n",filter_list[i]->name,filter_list[i]->info);
-	i++;
-    }
-    MSG_INFO("\n");
-}
-
 extern vf_cfg_t vf_cfg;
-static sh_video_t *sh_video;
-vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh,any_t* libinput)
+vf_instance_t* __FASTCALL__ vf_init_filter(any_t* libinput,const vf_conf_t* conf)
 {
     char *vf_last=NULL,*vf_name=vf_cfg.list;
     char *arg;
     vf_instance_t* vfi=NULL,*vfi_prev=NULL,*vfi_first;
-    sh_video=sh;
-    vfi=vf_open_filter(NULL,sh,"vo",NULL,libinput);
+//    sh_video=sh;
+    vfi=vf_open_filter(NULL,"vo",NULL,libinput,conf);
     vfi_prev=vfi;
     if(vf_name)
     while(vf_name!=vf_last){
@@ -487,7 +473,7 @@ vf_instance_t* __FASTCALL__ vf_init(sh_video_t *sh,any_t* libinput)
 	arg=strchr(vf_last,'=');
 	if(arg) { *arg=0; arg++; }
 	MSG_V("Attach filter %s\n",vf_last);
-	vfi=vf_open_plugin(vfi,sh,vf_last,arg,libinput);
+	vfi=vf_open_plugin(vfi,vf_last,arg,libinput,conf);
 	if(!vfi) vfi=vfi_prev;
 	vfi_prev=vfi;
     }
@@ -524,7 +510,7 @@ void __FASTCALL__ vf_showlist(vf_instance_t*vfi)
 	if(next->print_conf) next->print_conf(next);
 	else
 	    MSG_INFO("[vf_%s] %s [%dx%d,%s] \n",next->info->name,next->info->info,
-			next->dw,next->dh,vo_format_name(next->dfourcc));
+			next->conf.w,next->conf.h,vo_format_name(next->conf.fourcc));
 	next=next->next;
   }while(next);
 }
@@ -544,31 +530,45 @@ unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
 static int __FASTCALL__ dummy_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e voflags, unsigned int outfmt){
+    UNUSED(vf);
+    UNUSED(width);
+    UNUSED(height);
+    UNUSED(d_width);
+    UNUSED(d_height);
+    UNUSED(voflags);
+    UNUSED(outfmt);
     return 1;
 }
 
-static void vf_report_chain(void)
+static void vf_report_chain(vf_instance_t* first)
 {
-    vf_instance_t *_this=sh_video->vfilter;
-    MSG_V("sh_video: %ix%i@%s\n",sh_video->src_w,sh_video->src_h,vo_format_name(sh_video->codec->outfmt[sh_video->outfmtidx]));
+    vf_instance_t *_this=first;
+    MSG_V("vf->first: %ix%i@%s\n",first->conf.w,first->conf.h,vo_format_name(first->conf.fourcc));
     while(1)
     {
 	if(!_this) break;
-	MSG_V("%s[%ux%i@%s](%s, %s)\n"
-	,_this->info->name
-	,_this->dw,_this->dh,vo_format_name(_this->dfourcc)
-	,_this->prev?_this->prev->info->name:"NULL",_this->next?_this->next->info->name:"NULL");
+	MSG_V("[%ux%i@%s](%s<-%s->%s)\n"
+	    ,_this->conf.w
+	    ,_this->conf.h
+	    ,vo_format_name(_this->conf.fourcc)
+	    ,_this->prev?_this->prev->info->name:"NULL"
+	    ,_this->info->name
+	    ,_this->next?_this->next->info->name:"NULL");
 	_this=_this->next;
     }
 }
-void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cache)
+vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigned h,unsigned fmt,int reset_cache)
 {
     vf_instance_t *vf_scaler=NULL;
     vf_instance_t* _saved=NULL;
-    vf_instance_t* _this=sh_video->vfilter;
+    vf_instance_t* _this=first;
+    vf_instance_t* _first=first;
     unsigned sw,sh,sfourcc;
-    MSG_V("Call vf_reinit_vo %ix%i@%s\n",w,h,vo_format_name(fmt));
-    _this=sh_video->vfilter;
+    MSG_V("Call vf_reinit_vo <%s: %ix%i@%s> -> <vo: %ix%i@%s>\n"
+	,_first->info->name
+	,_first->conf.w,_first->conf.h,vo_format_name(_first->conf.fourcc)
+	,w,h,vo_format_name(fmt));
+    _this=first;
     _saved=NULL;
     while(1)
     {
@@ -577,7 +577,7 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
 	_saved=_this;
 	_this=_this->next;
     }
-    vf_report_chain();
+    vf_report_chain(_first);
     _this=_saved->prev;
     if(_this)
     if(strcmp(_this->info->name,"fmtcvt")==0 || strcmp(_this->info->name,"scale")==0)
@@ -586,13 +586,13 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
 	MSG_V("Unlinking 'fmtcvt'\n");
 	i=_this->prev;
 	if(i) i->next=_this->next;
-	else sh_video->vfilter=_this->next;
+	else first=_this->next;
 	_this->next->prev=i;
 	vf_uninit_filter(_this);
-	vf_report_chain();
+	vf_report_chain(_this);
     }
     /* _this == vo */
-    _this=sh_video->vfilter;
+    _this=first;
     _saved=NULL;
     while(1)
     {
@@ -603,24 +603,24 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
     _this=_saved;
     if(_this->prev)
     {
-	sw=_this->prev->dw;
-	sh=_this->prev->dh;
-	sfourcc=_this->prev->dfourcc;
+	sw=_this->prev->conf.w;
+	sh=_this->prev->conf.h;
+	sfourcc=_this->prev->conf.fourcc;
 	MSG_V("Using(%s) %ix%i@%s\n",_this->prev->info->name,sw,sh,vo_format_name(sfourcc));
     }
     else
     {
-	sw=sh_video->src_w;
-	sh=sh_video->src_h;
-	sfourcc=sh_video->codec->outfmt[sh_video->outfmtidx];
-	MSG_V("Using(sh_video) %ix%i@%s\n",sw,sh,vo_format_name(sfourcc));
+	sw=_first->conf.w;
+	sh=_first->conf.h;
+	sfourcc=_first->conf.fourcc;
+	MSG_V("Using(first:%s) %ix%i@%s\n",first->info->name,sw,sh,vo_format_name(sfourcc));
     }
     if(w==sw && h==sh && fmt==sfourcc); /* nothing todo */
     else
     {
 	MSG_V("vf_reinit->config_vf %i %i %s=> %i %i %s\n",sw,sh,vo_format_name(sfourcc),w,h,vo_format_name(fmt));
 	_saved=_this->prev;
-	vf_scaler=vf_open_filter(_this,sh_video,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput);
+	vf_scaler=vf_open_filter(_this,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput,&_first->conf);
 	if(vf_scaler)
 	{
 	    vf_config_fun_t sfnc;
@@ -640,14 +640,115 @@ void __FASTCALL__ vf_reinit_vo(unsigned w,unsigned h,unsigned fmt,int reset_cach
 	    MSG_V("Insert scaler before '%s' after '%s'\n",_this->info->name,_saved?_saved->info->name:"NULL");
 	    vf_scaler->prev=_saved;
 	    if(_saved)	_saved->next=vf_scaler;
-	    else	sh_video->vfilter=vf_scaler;
-	    _this->dw=w;
-	    _this->dh=h;
-	    _this->dfourcc=fmt;
+	    else	first=vf_scaler;
+	    _this->conf.w=w;
+	    _this->conf.h=h;
+	    _this->conf.fourcc=fmt;
 	    if(reset_cache) mpxp_reset_vcache();
 	    vo_data->reset();
 	}
     }
-    _this=sh_video->vfilter;
-    vf_report_chain();
+    _this=first;
+    vf_report_chain(_this);
+    return _this;
 }
+
+vf_instance_t* __FASTCALL__ vf_first(const vf_instance_t* it) {
+    vf_instance_t* curr = const_cast<vf_instance_t*>(it);
+    while(curr->prev) curr=curr->prev;
+    return curr;
+}
+
+vf_instance_t* __FASTCALL__ vf_last(const vf_instance_t* it) {
+    vf_instance_t* curr = const_cast<vf_instance_t*>(it);
+    while(curr->next) curr=curr->next;
+    return curr;
+}
+/*----------------------------------------*/
+namespace mpxp {
+
+void vf_help(){
+    int i=0;
+    MSG_INFO( "Available video filters:\n");
+    while(filter_list[i]){
+	MSG_INFO("\t%-10s: %s\n",filter_list[i]->name,filter_list[i]->info);
+	i++;
+    }
+    MSG_INFO("\n");
+}
+
+vf_stream_t* vf_init(any_t* libinput,const vf_conf_t* conf) {
+    vf_stream_t* s = new(zeromem) vf_stream_t;
+    s->libinput=libinput;
+    s->first=vf_init_filter(libinput,conf);
+    s->first->parent=s;
+    return s;
+}
+
+void vf_uninit(vf_stream_t* s) { vf_uninit_filter_chain(s->first); delete s; }
+
+void __FASTCALL__ vf_reinit_vo(vf_stream_t* s,unsigned w,unsigned h,unsigned fmt,int reset_cache) {
+    vf_instance_t* first=s->first;
+    MSG_V("[stream: vf_reinit_vo]: %p\n",first);
+    if(first) s->first=vf_reinit_vo(first,w,h,fmt,reset_cache);
+}
+
+void __FASTCALL__ vf_showlist(vf_stream_t* s) { vf_showlist(s->first); }
+
+int __FASTCALL__ vf_query_flags(vf_stream_t* s) {
+    vf_instance_t* first=s->first;
+    return vf_query_flags(first);
+}
+
+int __FASTCALL__ vf_config(vf_stream_t* s,
+			int width, int height, int d_width, int d_height,
+			vo_flags_e flags, unsigned int outfmt) {
+    vf_instance_t* first=s->first;
+    return first->config_vf(first,width,height,d_width,d_height,flags,outfmt);
+}
+int __FASTCALL__ vf_query_format(vf_stream_t* s,unsigned int fmt,unsigned w,unsigned h) {
+    vf_instance_t* first=s->first;
+    return first->query_format(first,fmt,w,h);
+}
+void __FASTCALL__ vf_get_image(vf_stream_t* s,mp_image_t *mpi) {
+    vf_instance_t* first=s->first;
+    return first->get_image(first,mpi);
+}
+int __FASTCALL__ vf_put_slice(vf_stream_t* s,mp_image_t *mpi) {
+    vf_instance_t* first=s->first;
+    return first->put_slice(first,mpi);
+}
+void __FASTCALL__ vf_start_slice(vf_stream_t* s,mp_image_t *mpi) {
+    vf_instance_t* first=s->first;
+    return first->start_slice(first,mpi);
+}
+
+MPXP_Rc __FASTCALL__ vf_control(vf_stream_t* s,int request, any_t* data) {
+    vf_instance_t* first=s->first;
+    return first->control_vf(first,request,data);
+}
+
+mp_image_t* __FASTCALL__ vf_get_new_image(vf_stream_t* s, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx) {
+    vf_instance_t* first=s->first;
+    return vf_get_new_image(first,outfmt,mp_imgtype,mp_imgflag,w,h,idx);
+}
+
+void __FASTCALL__ vf_prepend_filter(vf_stream_t* s,const char *name,const vf_conf_t* conf,const char *args) {
+    vf_instance_t* first=s->first;
+    s->first=vf_open_filter(first,name,args,s->libinput,conf);
+    s->first->parent=s;
+}
+
+void __FASTCALL__ vf_remove_first(vf_stream_t* s) {
+    vf_instance_t* first=s->first;
+    if(first->next) {
+	s->first=first->next;
+	vf_uninit_filter(first);
+    }
+}
+
+const char * __FASTCALL__ vf_get_first_name(vf_stream_t* s) {
+    vf_instance_t* first=s->first;
+    return first->info->name;
+}
+} // namespace mpxp

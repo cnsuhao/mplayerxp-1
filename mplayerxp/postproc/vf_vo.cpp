@@ -7,6 +7,7 @@ using namespace mpxp;
 
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 #include "vfcap.h"
 #include "libvo/video_out.h"
 #include "libvo/dri_vo.h"
@@ -50,9 +51,9 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	return 0;
     }
 
-    vf->dw=width;
-    vf->dh=height;
-    vf->dfourcc=outfmt;
+    vf->conf.w=width;
+    vf->conf.h=height;
+    vf->conf.fourcc=outfmt;
     vf->priv->ofmt=outfmt;
     vf->priv->sw=width;
     vf->priv->sh=height;
@@ -62,12 +63,12 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps=query_format(vf,outfmt,d_width,d_height);// & VFCAP_ACCEPT_STRIDE;
 
-    if(MPXP_Ok!=vo_data->configure(width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
+    if(MPXP_Ok!=vo_data->configure(vf->parent,width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
 	return 0;
     vf->priv->is_planar=vo_describe_fourcc(outfmt,&vf->priv->vd);
-    vf->dw=d_width;
-    vf->dh=d_height;
-    vf->dfourcc=outfmt;
+    vf->conf.w=d_width;
+    vf->conf.h=d_height;
+    vf->conf.fourcc=outfmt;
     ++vo_config_count;
     return 1;
 }
@@ -127,7 +128,7 @@ static void __FASTCALL__ get_image(vf_instance_t* vf,
 
 static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
   if(!vo_config_count) return 0; // vo not configured?
-  if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf->sh->vfilter==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
+  if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf_first(vf)==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
 	MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
 	vo_data->draw_slice(mpi);
   }

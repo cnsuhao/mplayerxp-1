@@ -27,6 +27,7 @@ using namespace mpxp;
 
 #include "xmpcore/mp_image.h"
 #include "vf.h"
+#include "vf_internal.h"
 
 #include "libvo/video_out.h"
 
