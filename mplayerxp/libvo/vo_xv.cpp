@@ -66,7 +66,7 @@ class Xv_VO_Interface : public VO_Interface {
 	void		deallocate_xvimage(int idx) const;
 	void		set_gamma_correction( ) const;
 
-	Aspect&		aspect;
+	LocalPtr<Aspect>aspect;
 	uint32_t	image_width;
 	uint32_t	image_height;
 	uint32_t	image_format;
@@ -76,7 +76,7 @@ class Xv_VO_Interface : public VO_Interface {
 
 	unsigned	expose_idx,num_buffers; // 1 - default
 
-	Xv_System&	xv;
+	LocalPtr<Xv_System>	xv;
 };
 
 /* since it doesn't seem to be defined on some platforms */
@@ -85,8 +85,8 @@ int XShmGetEventBase(Display*);
 
 Xv_VO_Interface::Xv_VO_Interface(const char *arg)
 		:VO_Interface(arg),
-		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-		xv(*new(zeromem) Xv_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
+		xv(new(zeromem) Xv_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
     num_buffers=1;
     if(arg) {
@@ -98,10 +98,10 @@ Xv_VO_Interface::Xv_VO_Interface(const char *arg)
 Xv_VO_Interface::~Xv_VO_Interface()
 {
     unsigned i;
-    xv.saver_on(); // screen saver back on
+    xv->saver_on(); // screen saver back on
     for(i=0;i<num_buffers;i++ ) deallocate_xvimage(i);
 #ifdef HAVE_XF86VM
-    xv.vm_close();
+    xv->vm_close();
 #endif
 }
 
@@ -109,28 +109,28 @@ void Xv_VO_Interface::set_gamma_correction( ) const
 {
     vo_videq_t info;
     /* try all */
-    xv.reset_video_eq();
+    xv->reset_video_eq();
     info.name=VO_EC_BRIGHTNESS;
     info.value=vo_conf.gamma.brightness;
-    xv.set_video_eq(&info);
+    xv->set_video_eq(&info);
     info.name=VO_EC_CONTRAST;
     info.value=vo_conf.gamma.contrast;
-    xv.set_video_eq(&info);
+    xv->set_video_eq(&info);
     info.name=VO_EC_SATURATION;
     info.value=vo_conf.gamma.saturation;
-    xv.set_video_eq(&info);
+    xv->set_video_eq(&info);
     info.name=VO_EC_HUE;
     info.value=vo_conf.gamma.hue;
-    xv.set_video_eq(&info);
+    xv->set_video_eq(&info);
     info.name=VO_EC_RED_INTENSITY;
     info.value=vo_conf.gamma.red_intensity;
-    xv.set_video_eq(&info);
+    xv->set_video_eq(&info);
     info.name=VO_EC_GREEN_INTENSITY;
     info.value=vo_conf.gamma.green_intensity;
-    xv.set_video_eq(&info);
+    xv->set_video_eq(&info);
     info.name=VO_EC_BLUE_INTENSITY;
     info.value=vo_conf.gamma.blue_intensity;
-    xv.set_video_eq(&info);
+    xv->set_video_eq(&info);
 }
 
 /* unofficial gatos extensions */
@@ -151,8 +151,8 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 
     flags=_flags;
 
-    aspect.save(width,height,d_width,d_height,xv.screen_width(),xv.screen_height());
-    aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
+    aspect->save(width,height,d_width,d_height,xv->screen_width(),xv->screen_height());
+    aspect->calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
     image_height = height;
     image_width = width;
@@ -160,17 +160,17 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 
     num_buffers=vo_conf.xp_buffs;
 
-    depth=xv.depth();
+    depth=xv->depth();
     if ( depth != 15 && depth != 16 && depth != 24 && depth != 32 )
 	depth=24;
-    xv.match_visual( &vinfo );
+    xv->match_visual( &vinfo );
 
-    xv.calcpos(&hint,d_width,d_height,flags);
+    xv->calcpos(&hint,d_width,d_height,flags);
     hint.flags = PPosition | PSize;
 
-    xv.create_window(hint,&vinfo,flags,depth,title);
+    xv->create_window(hint,&vinfo,flags,depth,title);
 
-    format = xv.query_port(_format);
+    format = xv->query_port(_format);
     if(format) {
 	switch (format){
 	    case IMGFMT_IF09:
@@ -213,35 +213,35 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 
 void Xv_VO_Interface::allocate_xvimage(int idx) const
 {
-    xv.getMyXImage(idx,NULL,format,image_width,image_height);
+    xv->getMyXImage(idx,NULL,format,image_width,image_height);
     return;
 }
 
 void Xv_VO_Interface::deallocate_xvimage(int idx) const
 {
-    xv.freeMyXImage(idx);
-    xv.flush();
-    xv.sync(False);
+    xv->freeMyXImage(idx);
+    xv->flush();
+    xv->sync(False);
     return;
 }
 
 uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
 {
-    uint32_t e=xv.check_events(vrest->adjust_size,vrest->vo);
+    uint32_t e=xv->check_events(vrest->adjust_size,vrest->vo);
     if(e&VO_EVENT_RESIZE) {
 	vo_rect_t winc;
-	xv.get_win_coord(winc);
+	xv->get_win_coord(winc);
 	MSG_V( "[xv-resize] dx: %d dy: %d dw: %d dh: %d\n",
 		winc.x,winc.y,winc.w,winc.h);
     }
     if ( e & VO_EVENT_EXPOSE ) {
 	vo_rect_t r,r2;
-	xv.get_win_coord(r);
+	xv->get_win_coord(r);
 	r2=r;
 	r.w=r.h=1;
-	xv.put_image(xv.ImageXv(expose_idx),r);
+	xv->put_image(xv->ImageXv(expose_idx),r);
 	if(flags&VOFLAG_FULLSCREEN) r2.h--;
-	xv.put_image(xv.ImageXv(expose_idx),r2);
+	xv->put_image(xv->ImageXv(expose_idx),r2);
     }
     return e|VO_EVENT_FORCE_UPDATE;
 }
@@ -249,18 +249,18 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
 MPXP_Rc Xv_VO_Interface::select_frame(unsigned idx)
 {
     vo_rect_t r;
-    xv.get_win_coord(r);
+    xv->get_win_coord(r);
     if(flags&VOFLAG_FULLSCREEN) r.h--;
-    xv.put_image(xv.ImageXv(idx),r);
+    xv->put_image(xv->ImageXv(idx),r);
     expose_idx=idx;
-    if (num_buffers>1) xv.flush();
-    else xv.sync(False);
+    if (num_buffers>1) xv->flush();
+    else xv->sync(False);
     return MPXP_Ok;
 }
 
 MPXP_Rc Xv_VO_Interface::query_format(vo_query_fourcc_t* _format) const
 {
-    if(xv.query_port(_format->fourcc)) {
+    if(xv->query_port(_format->fourcc)) {
 	_format->flags=VOCAP_SUPPORTED|VOCAP_HWSCALER;
 	return MPXP_Ok;
     }
@@ -279,9 +279,9 @@ void Xv_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
     caps->y=0;
     caps->w=image_width;
     caps->h=image_height;
-    n=std::min(4,xv.ImageXv(0)->num_planes);
+    n=std::min(4,xv->ImageXv(0)->num_planes);
     for(i=0;i<n;i++)
-	caps->strides[i] = xv.ImageXv(0)->pitches[i];
+	caps->strides[i] = xv->ImageXv(0)->pitches[i];
     unsigned ts;
     ts = caps->strides[2];
     caps->strides[2] = caps->strides[1];
@@ -291,9 +291,9 @@ void Xv_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
 void Xv_VO_Interface::get_surface(dri_surface_t *surf)
 {
     unsigned i,n;
-    n=std::min(4,xv.ImageXv(0)->num_planes);
+    n=std::min(4,xv->ImageXv(0)->num_planes);
     for(i=0;i<n;i++)
-	surf->planes[i] = xv.ImageData(surf->idx) + xv.ImageXv(surf->idx)->offsets[i];
+	surf->planes[i] = xv->ImageData(surf->idx) + xv->ImageXv(surf->idx)->offsets[i];
     for(;i<4;i++)
 	surf->planes[i] = 0;
     {
@@ -307,7 +307,7 @@ void Xv_VO_Interface::get_surface(dri_surface_t *surf)
 unsigned Xv_VO_Interface::get_num_frames() const { return num_buffers; }
 
 MPXP_Rc Xv_VO_Interface::toggle_fullscreen() {
-    xv.fullscreen(flags);
+    xv->fullscreen(flags);
     return MPXP_True;
 }
 
@@ -315,10 +315,10 @@ MPXP_Rc Xv_VO_Interface::ctrl(uint32_t request, any_t*data)
 {
   switch (request) {
     case VOCTRL_SET_EQUALIZER:
-	if(!xv.set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	if(!xv->set_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
     case VOCTRL_GET_EQUALIZER:
-	if(xv.get_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
+	if(xv->get_video_eq(reinterpret_cast<vo_videq_t*>(data))) return MPXP_True;
 	return MPXP_False;
   }
   return MPXP_NA;

@@ -79,7 +79,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 	void		resize(int x,int y) const;
 	void		gl_display_Image(XImage *myximage) const;
 
-	Aspect&			aspect;
+	LocalPtr<Aspect>	aspect;
 	uint32_t		image_width;
 	uint32_t		image_height;
 	uint32_t		image_format;
@@ -91,25 +91,25 @@ class OpenGL_VO_Interface : public VO_Interface {
 
 	unsigned		num_buffers; // 1 - default
 	uint32_t		gl_out_format,out_format;
-	GLX_System&		glx;
+	LocalPtr<GLX_System>	glx;
 };
 
 OpenGL_VO_Interface::OpenGL_VO_Interface(const char *arg)
 			    :VO_Interface(arg),
-			    aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-			    glx(*new(zeromem) GLX_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+			    aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
+			    glx(new(zeromem) GLX_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
     num_buffers=1;
-    glx.saver_off();
+    glx->saver_off();
 }
 
 OpenGL_VO_Interface::~OpenGL_VO_Interface() {
     unsigned i;
     glFinish();
-    for(i=0;i<num_buffers;i++) glx.freeMyXImage(i);
-    glx.saver_on(); // screen saver back on
+    for(i=0;i<num_buffers;i++) glx->freeMyXImage(i);
+    glx->saver_on(); // screen saver back on
 #ifdef HAVE_XF86VM
-    glx.vm_close();
+    glx->vm_close();
 #endif
 }
 
@@ -166,8 +166,8 @@ MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t
 
     flags=_flags;
 
-    aspect.save(width,height,d_width,d_height,glx.screen_width(),glx.screen_height());
-    aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
+    aspect->save(width,height,d_width,d_height,glx->screen_width(),glx->screen_height());
+    aspect->calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
     image_height= height;
     image_width = width;
@@ -175,25 +175,25 @@ MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t
 
     num_buffers=vo_conf.xp_buffs;
 
-    glx.calcpos(&hint,d_width,d_height,flags);
+    glx->calcpos(&hint,d_width,d_height,flags);
 
     hint.flags = PPosition | PSize;
     dwidth=d_width; dheight=d_height; //XXX: what are the copy vars used for?
 
-    depth=glx.depth();
+    depth=glx->depth();
 
-    XVisualInfo* vis=glx.get_visual();
+    XVisualInfo* vis=glx->get_visual();
     vinfo=*vis;
 
-    glx.create_window(hint,&vinfo,flags,depth,title);
+    glx->create_window(hint,&vinfo,flags,depth,title);
 
     gl_init_fb(0,0,d_width,d_height);
 
     /* allocate multibuffers */
-    for(i=0;i<num_buffers;i++) glx.getMyXImage(i,vinfo.visual,depth,image_width,image_height);
+    for(i=0;i<num_buffers;i++) glx->getMyXImage(i,vinfo.visual,depth,image_width,image_height);
 
     out_mode=GL_RGB;
-    XImage *ximg=glx.Image(0);
+    XImage *ximg=glx->Image(0);
     is_bgr=(ximg->blue_mask&0x01)!=0;
     switch ((bpp=ximg->bits_per_pixel)){
 	case 32:out_mode=GL_RGBA;
@@ -216,9 +216,9 @@ MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t
 
 uint32_t OpenGL_VO_Interface::check_events(const vo_resize_t* vrest)
 {
-    int e=glx.check_events(vrest->adjust_size,vrest->vo);
+    int e=glx->check_events(vrest->adjust_size,vrest->vo);
     vo_rect_t r;
-    glx.get_win_coord(r);
+    glx->get_win_coord(r);
     if(e&VO_EVENT_RESIZE) resize(r.w,r.h);
     return e|VO_EVENT_FORCE_UPDATE;
 }
@@ -233,8 +233,8 @@ void OpenGL_VO_Interface::gl_display_Image(XImage *myximage) const
 }
 
 MPXP_Rc OpenGL_VO_Interface::select_frame(unsigned idx) {
-    gl_display_Image(glx.Image(idx));
-    if (num_buffers>1) glx.swap_buffers();
+    gl_display_Image(glx->Image(idx));
+    if (num_buffers>1) glx->swap_buffers();
     glFlush();
     return MPXP_Ok;
 }
@@ -272,7 +272,7 @@ void OpenGL_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
 
 void OpenGL_VO_Interface::get_surface(dri_surface_t *surf)
 {
-    surf->planes[0] = glx.ImageData(surf->idx);
+    surf->planes[0] = glx->ImageData(surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
@@ -281,9 +281,9 @@ void OpenGL_VO_Interface::get_surface(dri_surface_t *surf)
 unsigned OpenGL_VO_Interface::get_num_frames() const { return num_buffers; }
 
 MPXP_Rc OpenGL_VO_Interface::toggle_fullscreen() {
-    glx.fullscreen(flags);
+    glx->fullscreen(flags);
     vo_rect_t r;
-    glx.get_win_coord(r);
+    glx->get_win_coord(r);
     resize(r.w,r.h);
     return MPXP_True;
 }

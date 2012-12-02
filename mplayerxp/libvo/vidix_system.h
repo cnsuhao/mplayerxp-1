@@ -58,7 +58,7 @@ struct Vidix_System : public video_private {
 
 	unsigned	image_Bpp,image_height,image_width,src_format,forced_fourcc;
 
-	Vidix&		vidix;
+	LocalPtr<Vidix>	vidix;
 	uint8_t *	mem;
 	int		video_on;
 

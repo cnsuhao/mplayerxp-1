@@ -203,7 +203,7 @@ class SDL_VO_Interface : public VO_Interface {
 	char		sdl_subdevice[100];
 	char		driver[8]; /* output driver used by sdl */
 	unsigned	flags;
-	Aspect&		aspect;
+	LocalPtr<Aspect>aspect;
 	SDL_Surface*	surface; /* SDL display surface */
 	SDL_Surface*	rgbsurface[MAX_DRI_BUFFERS]; /* SDL RGB surface */
 	SDL_Overlay*	overlay[MAX_DRI_BUFFERS]; /* SDL YUV overlay */
@@ -229,7 +229,7 @@ class SDL_VO_Interface : public VO_Interface {
 	Vidix_System*	vidix;
 #endif
 #ifdef HAVE_X11
-	X11_System&	x11;
+	LocalPtr<X11_System>	x11;
 #endif
 	pthread_mutex_t	surfaces_mutex;
 };
@@ -254,7 +254,7 @@ const char* SDL_VO_Interface::parse_sub_device(const char *sd) const
 SDL_VO_Interface::~SDL_VO_Interface()
 {
 #ifdef HAVE_X11
-    x11.saver_on();
+    x11->saver_on();
 #endif
     sdl_close();
     pthread_mutex_destroy(&surfaces_mutex);
@@ -265,9 +265,9 @@ SDL_VO_Interface::~SDL_VO_Interface()
 
 SDL_VO_Interface::SDL_VO_Interface(const char *arg)
 		:VO_Interface(arg),
-		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
+		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 #ifdef HAVE_X11
-		,x11(*new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+		,x11(new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 #endif
 {
     const char* vidix_name=NULL;
@@ -285,7 +285,7 @@ SDL_VO_Interface::SDL_VO_Interface(const char *arg)
     }
 #endif
 #ifdef HAVE_X11
-    x11.saver_off();
+    x11->saver_off();
 #endif
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -422,7 +422,6 @@ void SDL_VO_Interface::sdl_open( )
     /* Success! */
 }
 
-
 /**
  * Close SDL, Cleanups, Free Memory
  *
@@ -506,12 +505,12 @@ MPXP_Rc SDL_VO_Interface::set_fullmode (int _mode) {
 	screen_surface_h = fullmodes[_mode]->h;
 	screen_surface_w = fullmodes[_mode]->w;
     }
-    aspect.save_screen(screen_surface_w, screen_surface_h);
+    aspect->save_screen(screen_surface_w, screen_surface_h);
 
     /* calculate new video size/aspect */
     if(mode == YUV) {
-	if(fulltype&VOFLAG_FULLSCREEN) aspect.save_screen(XWidth, XHeight);
-	aspect.calc(dstwidth, dstheight, Aspect::NOZOOM);
+	if(fulltype&VOFLAG_FULLSCREEN) aspect->save_screen(XWidth, XHeight);
+	aspect->calc(dstwidth, dstheight, Aspect::NOZOOM);
     }
 
     /* try to change to given fullscreenmode */
@@ -589,7 +588,7 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 	d_width = _width;
 	d_height = _height;
     }
-    aspect.save_image(_width,_height,d_width,d_height);
+    aspect->save_image(_width,_height,d_width,d_height);
 
     /* Save the original Image size */
     X = 0;
@@ -652,8 +651,8 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
     }
     if(X) {
-	aspect.save_screen(XWidth,XHeight);
-	aspect.calc(dstwidth,dstheight,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
+	aspect->save_screen(XWidth,XHeight);
+	aspect->calc(dstwidth,dstheight,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
     }
     windowsize.w = dstwidth;
     windowsize.h = dstheight;
@@ -894,7 +893,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		    retval = VO_EVENT_RESIZE;
 		} else if ( keypressed == SDLK_n ) {
 #ifdef HAVE_X11
-		    aspect.calc(dstwidth, dstheight,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
+		    aspect->calc(dstwidth, dstheight,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 #endif
 		    if (unsigned(surface->w) != dstwidth || unsigned(surface->h) != dstheight) {
 			if(set_video_mode(dstwidth, dstheight, bpp, sdlflags)!=0) exit_player("SDL set video mode");

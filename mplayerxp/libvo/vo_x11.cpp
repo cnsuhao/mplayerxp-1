@@ -81,7 +81,7 @@ class X11_VO_Interface : public VO_Interface {
 	void		lock_surfaces();
 	void		unlock_surfaces();
 
-	Aspect&		aspect;
+	LocalPtr<Aspect>	aspect;
 	uint32_t	image_width;
 	uint32_t	image_height;
 	uint32_t	in_format;
@@ -99,7 +99,7 @@ class X11_VO_Interface : public VO_Interface {
 	void		resize_vidix() const;
 #endif
 	uint32_t	subdev_flags;
-	X11_System&	x11;
+	LocalPtr<X11_System>	x11;
 
 	pthread_mutex_t	surfaces_mutex;
 };
@@ -129,8 +129,8 @@ const char* X11_VO_Interface::parse_sub_device(const char *sd)
 
 X11_VO_Interface::X11_VO_Interface(const char *arg)
 		:VO_Interface(arg),
-		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-		x11(*new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
+		x11(new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
     const char* vidix_name=NULL;
     num_buffers=1;
@@ -148,7 +148,7 @@ MSG_INFO("args=%s vidix-name=%s\n",arg,vidix_name);
 	}
     }
 #endif
-    x11.saver_off();
+    x11->saver_off();
 }
 
 X11_VO_Interface::~X11_VO_Interface()
@@ -157,10 +157,10 @@ X11_VO_Interface::~X11_VO_Interface()
 #ifdef CONFIG_VIDIX
     if(vidix) delete vidix;
 #endif
-    for(i=0;i<num_buffers;i++)  x11.freeMyXImage(i);
-    x11.saver_on(); // screen saver back on
+    for(i=0;i<num_buffers;i++)  x11->freeMyXImage(i);
+    x11->saver_on(); // screen saver back on
 #ifdef HAVE_XF86VM
-    x11.vm_close();
+    x11->vm_close();
 #endif
     pthread_mutex_destroy(&surfaces_mutex);
 }
@@ -168,11 +168,11 @@ X11_VO_Interface::~X11_VO_Interface()
 #ifdef CONFIG_VIDIX
 void X11_VO_Interface::resize_vidix() const {
     vo_rect_t winc;
-    x11.get_win_coord(winc);
+    x11->get_win_coord(winc);
     vidix->stop();
     if (vidix->configure(image_width, image_height, winc.x, winc.y,
-	    winc.w, winc.h, in_format, x11.depth(),
-	    x11.screen_width(), x11.screen_height()) != MPXP_Ok)
+	    winc.w, winc.h, in_format, x11->depth(),
+	    x11->screen_width(), x11->screen_height()) != MPXP_Ok)
     {
 	MSG_FATAL( "Can't initialize VIDIX: %s\n",strerror(errno));
 	delete vidix;
@@ -184,13 +184,13 @@ void X11_VO_Interface::resize_vidix() const {
 
 uint32_t X11_VO_Interface::check_events(const vo_resize_t*vrest)
 {
-    uint32_t ret = x11.check_events(vrest->adjust_size,vrest->vo);
+    uint32_t ret = x11->check_events(vrest->adjust_size,vrest->vo);
 
     /* clear the old window */
     if (ret & VO_EVENT_RESIZE) {
 	unsigned idx;
 	vo_rect_t r;
-	x11.get_win_coord(r);
+	x11->get_win_coord(r);
 	unsigned newW= r.w;
 	unsigned newH= r.h;
 	int newAspect=		(newW*(1<<16) + (newH>>1))/newH;
@@ -205,8 +205,8 @@ uint32_t X11_VO_Interface::check_events(const vo_resize_t*vrest)
 	{
 	    lock_surfaces();
 	    for(idx=0;idx<num_buffers;idx++) {
-		x11.freeMyXImage(idx);
-		x11.getMyXImage(idx,vinfo.visual,depth,image_width,image_height);
+		x11->freeMyXImage(idx);
+		x11->getMyXImage(idx,vinfo.visual,depth,image_width,image_height);
 	    }
 	    unlock_surfaces();
 	}
@@ -224,33 +224,33 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 
     in_format=format;
 
-    depth=x11.depth();
+    depth=x11->depth();
     if ( depth != 15 && depth != 16 && depth != 24 && depth != 32 )
 	depth=24;
-    x11.match_visual( &vinfo );
+    x11->match_visual( &vinfo );
 
     baseAspect= ((1<<16)*d_width + d_height/2)/d_height;
 
-    aspect.save(width,height,d_width,d_height,x11.screen_width(),x11.screen_height());
-    aspect.calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
+    aspect->save(width,height,d_width,d_height,x11->screen_width(),x11->screen_height());
+    aspect->calc(d_width,d_height,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 
-    x11.calcpos(&hint,d_width,d_height,flags);
+    x11->calcpos(&hint,d_width,d_height,flags);
     hint.flags=PPosition | PSize;
 
     image_width=d_width;
     image_height=d_height;
 
-    x11.create_window(hint,&vinfo,flags,depth,title);
+    x11->create_window(hint,&vinfo,flags,depth,title);
 
 #ifdef CONFIG_VIDIX
     if(!vidix)
 #endif
-    for(i=0;i<num_buffers;i++) x11.getMyXImage(i,vinfo.visual,depth,image_width,image_height);
+    for(i=0;i<num_buffers;i++) x11->getMyXImage(i,vinfo.visual,depth,image_width,image_height);
 
 #ifdef CONFIG_VIDIX
     if(!vidix) {
 #endif
-    XImage* ximg=x11.Image(0);
+    XImage* ximg=x11->Image(0);
     switch ((bpp=ximg->bits_per_pixel)){
 	case 24: out_format= IMGFMT_BGR24; break;
 	case 32: out_format= IMGFMT_BGR32; break;
@@ -291,11 +291,11 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 #ifdef CONFIG_VIDIX
     if(vidix) {
 	vo_rect_t winc;
-	x11.get_win_coord(winc);
+	x11->get_win_coord(winc);
 	if(vidix->configure(image_width,image_height,winc.x,winc.y,
 			winc.w,winc.h,
-			in_format,x11.depth(),
-			x11.screen_width(),x11.screen_height()) != MPXP_Ok) {
+			in_format,x11->depth(),
+			x11->screen_width(),x11->screen_height()) != MPXP_Ok) {
 	    MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
 	    return MPXP_False;
 	} else MSG_V("vo_vesa: Using VIDIX\n");
@@ -318,11 +318,11 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 void X11_VO_Interface::display_image(XImage *myximage ) const
 {
     vo_rect_t r;
-    x11.get_win_coord(r);
+    x11->get_win_coord(r);
     r.x=r.y=0;
     r.w=(r.w-myximage->width)/2;
     r.h=(r.h-myximage->height)/2;
-    x11.put_image(myximage,r);
+    x11->put_image(myximage,r);
 }
 
 MPXP_Rc X11_VO_Interface::select_frame( unsigned idx ){
@@ -330,9 +330,9 @@ MPXP_Rc X11_VO_Interface::select_frame( unsigned idx ){
     if(vidix) return vidix->select_frame(idx);
 #endif
     lock_surfaces();
-    display_image(x11.Image(idx));
-    if (num_buffers>1) x11.flush();
-    else x11.sync(False);
+    display_image(x11->Image(idx));
+    if (num_buffers>1) x11->flush();
+    else x11->sync(False);
     unlock_surfaces();
     return MPXP_Ok;
 }
@@ -382,7 +382,7 @@ void X11_VO_Interface::get_surface(dri_surface_t *surf)
     if(vidix) return vidix->get_surface(surf);
 #endif
     lock_surfaces();
-    surf->planes[0] = x11.ImageData(surf->idx);
+    surf->planes[0] = x11->ImageData(surf->idx);
     surf->planes[1] = 0;
     surf->planes[2] = 0;
     surf->planes[3] = 0;
@@ -404,7 +404,7 @@ unsigned X11_VO_Interface::get_num_frames() const {
 }
 
 MPXP_Rc X11_VO_Interface::toggle_fullscreen() {
-    x11.fullscreen(flags);
+    x11->fullscreen(flags);
 #ifdef CONFIG_VIDIX
     if(vidix) resize_vidix();
 #endif

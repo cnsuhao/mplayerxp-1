@@ -103,7 +103,7 @@ class VESA_VO_Interface : public VO_Interface {
 
 	void		(VESA_VO_Interface::*cpy_blk_fnc)(unsigned long,uint8_t *,unsigned long);
 
-	Aspect&		aspect;
+	LocalPtr<Aspect>aspect;
 	uint32_t	srcW,srcH,srcBpp,srcFourcc; /* source image description */
 	uint32_t	dstBpp,dstW,dstH,dstFourcc; /* destinition image description */
 
@@ -161,7 +161,7 @@ VESA_VO_Interface::~VESA_VO_Interface()
 
 VESA_VO_Interface::VESA_VO_Interface(const char *arg)
 		:VO_Interface(arg),
-		aspect(*new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
+		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 {
     const char* vidix_name=NULL;
     MPXP_Rc pre_init_err = MPXP_Ok;
