@@ -108,7 +108,7 @@ void libmpdemux_register_options(m_config_t* cfg)
 
 demuxer_t* new_demuxer(stream_t *stream,int a_id,int v_id,int s_id){
   demuxer_t *d=new(zeromem) demuxer_t;
-  rnd_fill(d->antiviral_hole,reinterpret_cast<long>(&d->pin)-reinterpret_cast<long>(&d->antiviral_hole));
+  fill_false_pointers(d->antiviral_hole,reinterpret_cast<long>(&d->pin)-reinterpret_cast<long>(&d->antiviral_hole));
   d->pin=DEMUX_PIN;
   d->stream=stream;
   d->movi_start=stream->start_pos;

@@ -136,8 +136,8 @@ namespace mpxp {;
 	    MPXPContext();
 	    virtual ~MPXPContext();
 
-	    audio_processing_t& audio() const { return *_audio; }
-	    video_processing_t& video() const { return *_video; }
+	    virtual audio_processing_t& audio() const { return *_audio; }
+	    virtual video_processing_t& video() const { return *_video; }
 
 	    int			rtc_fd;
 	    int			seek_time;

@@ -125,7 +125,7 @@ struct vo_priv_t : public video_private {
 };
 
 vo_priv_t::vo_priv_t() {
-    rnd_fill(antiviral_hole,reinterpret_cast<long>(&srcFourcc)-reinterpret_cast<long>(antiviral_hole));
+    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&srcFourcc)-reinterpret_cast<long>(antiviral_hole));
     dri.num_xp_frames=1;
 }
 
@@ -142,7 +142,7 @@ Video_Output::Video_Output() {
     vo_priv_t* priv;
     priv=new(zeromem) vo_priv_t;
     vo_priv=priv;
-    rnd_fill(antiviral_hole,reinterpret_cast<long>(&flags)-reinterpret_cast<long>(&antiviral_hole));
+    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&flags)-reinterpret_cast<long>(&antiviral_hole));
 }
 
 Video_Output::~Video_Output() {

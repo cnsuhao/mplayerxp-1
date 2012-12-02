@@ -218,8 +218,7 @@ ao_data_t* __FASTCALL__ ao_init(const char *subdevice)
     ao->buffersize=-1;
     ao->opaque=mp_malloc(sizeof(priv_t));
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    rnd_fill(priv->antiviral_hole,sizeof(priv_t));
-    rnd_fill(ao->antiviral_hole,offsetof(ao_data_t,samplerate)-offsetof(ao_data_t,antiviral_hole));
+    fill_false_pointers(ao->antiviral_hole,offsetof(ao_data_t,samplerate)-offsetof(ao_data_t,antiviral_hole));
     priv->audio_out=NULL;
     return ao;
 }

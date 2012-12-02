@@ -240,7 +240,7 @@ stream_t* __FASTCALL__ new_stream(int type){
   stream_t *s=new(zeromem) stream_t;
   if(s==NULL) return NULL;
 
-  rnd_fill(s->antiviral_hole,reinterpret_cast<long>(&s->pin)-reinterpret_cast<long>(&s->antiviral_hole));
+  fill_false_pointers(s->antiviral_hole,reinterpret_cast<long>(&s->pin)-reinterpret_cast<long>(&s->antiviral_hole));
   s->pin=STREAM_PIN;
   s->fd=-1;
   s->type=type;

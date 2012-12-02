@@ -149,7 +149,7 @@ struct input_state_t {
 
 struct MPXPSystem {
     public:
-	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY) { rnd_fill(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
+	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY) { fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
 	virtual ~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);

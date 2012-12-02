@@ -15,7 +15,7 @@ Demuxer_Stream::~Demuxer_Stream(){
 
 Demuxer_Stream::Demuxer_Stream(demuxer_t *_demuxer,int _id)
 {
-    rnd_fill(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
+    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
     pin=DS_PIN;
     _buffer_pos=_buffer_size=0;
     _buffer=NULL;

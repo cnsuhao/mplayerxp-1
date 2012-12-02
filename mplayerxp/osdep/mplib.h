@@ -71,6 +71,7 @@ namespace mpxp {
 	print_backtrace(why,stack,ncalls);
     }
     any_t*	__FASTCALL__ rnd_fill(any_t* buffer,size_t size);
+    any_t*	__FASTCALL__ fill_false_pointers(any_t* buffer,size_t size);
     any_t* get_caller_address(unsigned num_caller=0);
 
     template <typename T> class LocalPtr {
