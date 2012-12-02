@@ -10,6 +10,7 @@ using namespace mpxp;
  *  of GNU General Public licence v2.
  */
 #include <stdlib.h>
+#include <string.h>
 
 namespace mpxp {
 
@@ -37,11 +38,7 @@ any_t* fill_false_pointers(any_t* buffer,size_t size)
 	filler=(reinterpret_cast<long>(buffer)&hi_mask)|lo_mask;
 	((long *)buffer)[i]=filler;
     }
-    char ch;
-    for(i=psize;i<size;i++) {
-	ch=rand()%255;
-	((char *)buffer)[i]=ch;
-    }
+    memset(&((char *)buffer)[psize],0,size-psize);
     return buffer;
 }
 
