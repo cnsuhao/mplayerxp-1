@@ -1128,7 +1128,7 @@ void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int st
 
 void MPXPSystem::find_acodec(const char *ao_subdevice) {
     int found=0;
-    any_t* mpca=0;
+    audio_decoder_t* mpca=0;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     Demuxer_Stream *d_audio=_demuxer->audio;
     sh_audio->codec=NULL;
@@ -1274,7 +1274,7 @@ int MPXPSystem::configure_audio() {
     ao_data->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
     ao_data->format=sh_audio->afmt;
 
-    if(mpca_preinit_filters(sh_audio,
+    if(mpca_preinit_filters(mpxp_context().audio().decoder,
 	    // input:
 	    (int)(sh_audio->rate),
 	    sh_audio->nch, sh_audio->afmt,
@@ -1297,7 +1297,7 @@ int MPXPSystem::configure_audio() {
     } else {
 	inited_flags|=INITED_AO;
 	MP_UNIT("af_init");
-	if(mpca_init_filters(sh_audio,
+	if(mpca_init_filters(mpxp_context().audio().decoder,
 	    sh_audio->rate,
 	    sh_audio->nch, mpaf_format_e(sh_audio->afmt),
 	    ao_data->samplerate, ao_data->channels, mpaf_format_e(ao_data->format),

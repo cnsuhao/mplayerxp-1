@@ -18,9 +18,10 @@ using namespace mpxp;
 
 #define IEC61937_DATA_TYPE_AC3 1
 
-typedef struct priv_s {
+struct ad_private_t {
+    sh_audio_t* sh;
     float last_pts;
-}priv_t;
+};
 
 struct hwac3info {
     unsigned bitrate, framesize, samplerate, bsmod;
@@ -142,7 +143,7 @@ typedef struct a52_state_s a52_state_t;
 extern a52_state_t *mpxp_a52_state;
 extern uint32_t mpxp_a52_accel;
 extern uint32_t mpxp_a52_flags;
-int a52_fillbuff(sh_audio_t *sh_audio,float *pts);
+int a52_fillbuff(ad_private_t *sh_audio,float *pts);
 
 static const ad_info_t info = {
     "AC3/DTS pass-through S/PDIF",
@@ -170,8 +171,9 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) {
     unsigned i;
+    UNUSED(ctx);
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
 	    return &probes[i];
@@ -179,19 +181,20 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
 }
 
 
-MPXP_Rc preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh)
 {
     /* Dolby AC3 audio: */
-    mpcodecs_ad_a52.preinit(sh);
+    ad_private_t* ctx=mpcodecs_ad_a52.preinit(sh);
     sh->audio_out_minsize=4*256*6;
     sh->audio_in_minsize=3840;
     sh->nch=2;
     sh->afmt=AFMT_AC3;
-    return MPXP_Ok;
+    return ctx;
 }
 
-MPXP_Rc init(sh_audio_t *sh_audio)
+MPXP_Rc init(ad_private_t *ctx)
 {
+    sh_audio_t* sh_audio = ctx->sh;
     /* Dolby AC3 passthrough:*/
     float pts;
     mpxp_a52_state=a52_init (mpxp_a52_accel); /* doesn't require mmx optimzation */
@@ -199,7 +202,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
 	MSG_ERR("A52 init failed\n");
 	return MPXP_False;
     }
-    if(a52_fillbuff(sh_audio,&pts)<0) {
+    if(a52_fillbuff(ctx,&pts)<0) {
 	MSG_ERR("A52 sync failed\n");
 	return MPXP_False;
     }
@@ -217,13 +220,14 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     return MPXP_Ok;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *ctx)
 {
-    mpcodecs_ad_a52.uninit(sh);
+    mpcodecs_ad_a52.uninit(ctx);
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *ctx,int cmd,any_t* arg, ...)
 {
+    sh_audio_t* sh = ctx->sh;
     UNUSED(arg);
     switch(cmd) {
 	case ADCTRL_RESYNC_STREAM:
@@ -231,7 +235,7 @@ MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
 	    return MPXP_True;
 	case ADCTRL_SKIP_FRAME: {
 	    float pts;
-	    a52_fillbuff(sh,&pts); // skip AC3 frame
+	    a52_fillbuff(ctx,&pts); // skip AC3 frame
 	    return MPXP_True;
 	}
 	default:
@@ -240,13 +244,14 @@ MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
+    sh_audio_t* sh_audio = ctx->sh;
   unsigned len=0;
   UNUSED(minlen);
   UNUSED(maxlen);
   if(!sh_audio->a_in_buffer_len)
-    if((int)(len=a52_fillbuff(sh_audio,pts))<0) return 0; /*EOF*/
+    if((int)(len=a52_fillbuff(ctx,pts))<0) return 0; /*EOF*/
   sh_audio->a_in_buffer_len=0;
   len = ac3_iec958_build_burst(len, 0x01, 1, (unsigned char *)sh_audio->a_in_buffer, buf);
   return len;

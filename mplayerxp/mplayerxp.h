@@ -13,7 +13,9 @@
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
 
-namespace mpxp {;
+struct audio_decoder_t;
+struct video_decoder_t;
+namespace mpxp {
     /* List of all modules which require protection by pin-code */
     enum {
 	Module_Stream=0,
@@ -122,11 +124,11 @@ namespace mpxp {;
     }time_usage_t;
 
     struct audio_processing_t {
-	any_t*		decoder;
+	audio_decoder_t*	decoder;
     };
 
     struct video_processing_t {
-	any_t*		decoder;
+	video_decoder_t*	decoder;
     };
 
     struct MPXPSystem;

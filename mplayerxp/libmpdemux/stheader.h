@@ -69,7 +69,6 @@ struct sh_audio_t : public standard_header  {
     unsigned		audio_in_minsize;
     unsigned		audio_out_minsize;
 // other codecs:
-    any_t*		context; // codec-specific stuff (usually HANDLE or struct pointer)
     unsigned char*	codecdata;
     unsigned		codecdata_len;
 };
@@ -104,7 +103,6 @@ struct sh_video_t : public standard_header {
 // win32 codec stuff:
     AVIStreamHeader	video;
     BITMAPINFOHEADER*	bih;   // in format
-    any_t* context;	// codec-specific stuff (usually HANDLE or struct pointer)
     any_t* ImageDesc;	// for quicktime codecs
 };
 

@@ -26,6 +26,12 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(real)
 
+struct vd_private_t {
+    any_t* handle;
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+
 static const video_probe_t probes[] = {
     { "realvideo", "drv2.so.6.0", FOURCC_TAG('R','V','2','0'), VCodecStatus_Problems, {IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
     { "realvideo", "drvc.so",     FOURCC_TAG('R','V','3','0'), VCodecStatus_Working, {IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
@@ -33,7 +39,8 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) {
+    UNUSED(p);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -96,7 +103,8 @@ void __pure_virtual(void)
 
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
+    UNUSED(p);
     switch(cmd){
 //    case VDCTRL_QUERY_MAX_PP_LEVEL:
 //	    *((unsigned*)arg)=9;
@@ -164,8 +172,16 @@ struct rv_init_t {
     int format;
 } rv_init_t;
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *p,video_decoder_t* opaque){
+    sh_video_t* sh = p->sh;
+    p->parent = opaque;
     //unsigned int out_fmt;
     int result;
     // we export codec id and sub-id from demuxer in bitmapinfohdr:
@@ -182,8 +198,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     // only I420 supported
     if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;
     // init codec:
-    sh->context=NULL;
-    result=(*rvyuv_init)(&init_data, &sh->context);
+    result=(*rvyuv_init)(&init_data, &p->handle);
     if (result){
 	MSG_ERR("Couldn't open RealVideo codec, error code: 0x%X  \n",result);
 	return MPXP_False;
@@ -193,22 +208,25 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 	uint32_t cmsg24[4]={sh->src_w,sh->src_h,sh->src_w,sh->src_h};
 	/* FIXME: Broken for 64-bit pointers */
 	cmsg_data_t cmsg_data={0x24,1+(extrahdr[1]&7), &cmsg24[0]};
-	(*rvyuv_custom_message)(&cmsg_data,sh->context);
+	(*rvyuv_custom_message)(&cmsg_data,p->handle);
     }
     MSG_V("INFO: RealVideo codec init OK!\n");
     return MPXP_Ok;
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-    if(rvyuv_free) rvyuv_free(sh->context);
+static void uninit(vd_private_t *p){
+    sh_video_t* sh = p->sh;
+    if(rvyuv_free) rvyuv_free(p->handle);
     if(rv_handle) dlclose(rv_handle);
     rv_handle=NULL;
     if(!sh) __pure_virtual();
+    delete p;
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
+    sh_video_t* sh = p->sh;
     mp_image_t* mpi;
     unsigned long result;
     const dp_hdr_t* dp_hdr=(const dp_hdr_t*)frame->data;
@@ -227,12 +245,12 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 
     if(frame->len<=0 || frame->flags&2) return NULL; // skipped frame || hardframedrop
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
+    mpi=mpcodecs_get_image(p->parent, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
 		sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     result=(*rvyuv_transform)(const_cast<char *>(dp_data), reinterpret_cast<char*>(mpi->planes[0]), &transform_in,
-	transform_out, sh->context);
+	transform_out, p->handle);
 
     return (result?NULL:mpi);
 }

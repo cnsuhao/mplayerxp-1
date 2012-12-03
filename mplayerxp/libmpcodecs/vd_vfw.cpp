@@ -41,14 +41,16 @@ LIBVD_EXTERN(vfw)
 LIBVD_EXTERN(vfwex)
 #undef info
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) { return NULL; }
-
-typedef struct priv_s {
+struct vd_private_t {
     BITMAPINFOHEADER *o_bih; /* out format */
     HIC hic;
     int ex;
     unsigned char *palette;
-}priv_t;
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) { return NULL; }
 
 static void set_csp(BITMAPINFOHEADER *o_bih,unsigned int outfmt){
     int yuv = 0;
@@ -108,11 +110,11 @@ static void set_csp(BITMAPINFOHEADER *o_bih,unsigned int outfmt){
 }
 
 #define IC_FCCTYPE	sh_video->codec->dll_name
-static MPXP_Rc init_vfw_video_codec(sh_video_t *sh_video){
+static MPXP_Rc init_vfw_video_codec(vd_private_t *priv){
     HRESULT ret;
     int temp_len;
     int ex;
-    priv_t *priv = reinterpret_cast<priv_t*>(sh_video->context);
+    sh_video_t* sh_video = priv->sh;
 
     ex = priv->ex;
     MSG_V("======= Win32 (VFW) VIDEO Codec init =======\n");
@@ -189,16 +191,15 @@ static MPXP_Rc init_vfw_video_codec(sh_video_t *sh_video){
     return MPXP_Ok;
 }
 
-static int vfw_set_postproc(sh_video_t* sh_video,int quality){
+static int vfw_set_postproc(vd_private_t* priv,int quality){
     // Works only with opendivx/divx4 based DLL
-    priv_t *priv=reinterpret_cast<priv_t*>(sh_video->context);
     return ICSendMessage(priv->hic, ICM_USER+80, (long)(&quality), 0);
 }
 
-static MPXP_Rc vfw_close_video_codec(sh_video_t *sh_video)
+static MPXP_Rc vfw_close_video_codec(vd_private_t *priv)
 {
     HRESULT ret;
-    priv_t *priv=reinterpret_cast<priv_t*>(sh_video->context);
+    sh_video_t* sh_video = priv->sh;
 
     ret = priv->ex ? ICDecompressEndEx(priv->hic):ICDecompressEnd(priv->hic);
     if (ret) {
@@ -215,14 +216,14 @@ static MPXP_Rc vfw_close_video_codec(sh_video_t *sh_video)
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
-    priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
+static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
+    sh_video_t* sh = priv->sh;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=9;
 	    return MPXP_Ok;
 	case VDCTRL_SET_PP_LEVEL:
-	    vfw_set_postproc(sh,10*(*((int*)arg)));
+	    vfw_set_postproc(priv,10*(*((int*)arg)));
 	    return MPXP_Ok;
 	// FIXME: make this optional...
 	case VDCTRL_QUERY_FORMAT: {
@@ -245,41 +246,46 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
-    priv_t *priv;
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+    sh_video_t* sh = priv->sh;
+    priv->parent = opaque;
     int vfw_ex;
     if(strcmp(sh->codec->driver_name,"vfwex") == 0) vfw_ex=1;
     else					    vfw_ex=0;
-    if(!(priv = new(zeromem) priv_t)) {
+    if(!(priv = new(zeromem) vd_private_t)) {
 	MSG_ERR(MSGTR_OutOfMemory);
 	return MPXP_False;
     }
-    sh->context = priv;
     priv->ex = vfw_ex;
-    if(init_vfw_video_codec(sh)!=MPXP_Ok) return MPXP_False;
+    if(init_vfw_video_codec(priv)!=MPXP_Ok) return MPXP_False;
     MSG_V("INFO: Win32/VFW init OK!\n");
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh)
+static void uninit(vd_private_t *priv)
 {
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
-    vfw_close_video_codec(sh);
+    vfw_close_video_codec(priv);
     delete priv->o_bih;
-    delete sh->context;
+    delete priv;
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
-    priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
+    sh_video_t* sh = priv->sh;
     mp_image_t* mpi;
     HRESULT ret;
 
     if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh,
+    mpi=mpcodecs_get_image(priv->parent,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_WIDTH,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;

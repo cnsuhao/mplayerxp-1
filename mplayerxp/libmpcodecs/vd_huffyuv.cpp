@@ -40,19 +40,6 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(huffyuv)
 
-static const video_probe_t probes[] = {
-    { "huffyuv", "huffyuv", FOURCC_TAG('H','F','Y','U'), VCodecStatus_Working, {IMGFMT_YUY2,IMGFMT_BGR32,IMGFMT_BGR24}, {VideoFlag_None, VideoFlag_None } },
-    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
-};
-
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(fourcc==probes[i].fourcc)
-	    return &probes[i];
-    return NULL;
-}
-
 /*
  * Bitmap types
  */
@@ -90,7 +77,7 @@ typedef struct {
 /*
  * Decoder context
  */
-typedef struct priv_s {
+struct vd_private_t {
     // Real image depth
     int bitcount;
     // Prediction method
@@ -104,7 +91,23 @@ typedef struct priv_s {
     DecodeTable decode1, decode2, decode3;
     // Above line buffers
     unsigned char *abovebuf1, *abovebuf2;
-} priv_t;
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+
+static const video_probe_t probes[] = {
+    { "huffyuv", "huffyuv", FOURCC_TAG('H','F','Y','U'), VCodecStatus_Working, {IMGFMT_YUY2,IMGFMT_BGR32,IMGFMT_BGR24}, {VideoFlag_None, VideoFlag_None } },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *priv,uint32_t fourcc) {
+    UNUSED(priv);
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
 
 /*
  * Classic Huffman tables
@@ -174,11 +177,11 @@ unsigned char huff_decompress(unsigned int* in, unsigned int *pos,
 
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...)
+static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...)
 {
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
-	    if  (((priv_t *)(sh->context))->bitmaptype == BMPTYPE_YUV) {
+	    if  (priv->bitmaptype == BMPTYPE_YUV) {
 		if (*((int*)arg) == IMGFMT_YUY2)
 		    return MPXP_True;
 		else
@@ -193,24 +196,25 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...)
     return MPXP_Unknown;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 /*
  *
  * Init HuffYUV decoder
  *
  */
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque)
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
 {
+    sh_video_t* sh = priv->sh;
     MPXP_Rc vo_ret; // Video output init ret value
-    priv_t *priv; // Decoder context
     unsigned char *hufftable; // Compressed huffman tables
     BITMAPINFOHEADER *bih = sh->bih;
 
-    if ((priv = new(zeromem) priv_t) == NULL) {
-	MSG_ERR(MSGTR_OutOfMemory);
-	return MPXP_False;
-    }
-
-    sh->context = (any_t*)priv;
+    priv->parent = opaque;
 
     MSG_V( "[HuffYUV] Allocating above line buffer\n");
     if ((priv->abovebuf1 = new unsigned char [4*bih->biWidth]) == NULL) {
@@ -345,14 +349,14 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque)
  * Uninit HuffYUV decoder
  *
  */
-static void uninit(sh_video_t *sh)
+static void uninit(vd_private_t *priv)
 {
-    if (sh->context) {
-	if (((priv_t*)&sh->context)->abovebuf1)
-	    delete ((priv_t*)sh->context)->abovebuf1;
-	if (((priv_t*)&sh->context)->abovebuf2)
-	    delete ((priv_t*)sh->context)->abovebuf2;
-	delete sh->context;
+    if (priv) {
+	if (priv->abovebuf1)
+	    delete priv->abovebuf1;
+	if (priv->abovebuf2)
+	    delete priv->abovebuf2;
+	delete priv;
     }
 }
 
@@ -477,8 +481,9 @@ static void uninit(sh_video_t *sh)
  * Decode a HuffYUV frame
  *
  */
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
 {
+    sh_video_t* sh = priv->sh;
     mp_image_t* mpi;
     int pixel_ptr;
     unsigned char y1, y2, u, v, r, g, b;
@@ -488,7 +493,6 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
     int row, col;
     unsigned int pos = 32;
     const unsigned char *encoded = (const unsigned char *)frame->data;
-    priv_t *priv = (priv_t *) sh->context; // Decoder context
     unsigned char *abovebuf = priv->abovebuf1;
     unsigned char *curbuf = priv->abovebuf2;
     unsigned char *outptr;
@@ -501,9 +505,9 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
 
     /* Do not accept stride for rgb, it gives me wrong output :-( */
     if (priv->bitmaptype == BMPTYPE_YUV)
-	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w, sh->src_h);
+	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w, sh->src_h);
     else
-	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0,sh->src_w, sh->src_h);
+	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_TEMP, 0,sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     outptr = mpi->planes[0]; // Output image pointer

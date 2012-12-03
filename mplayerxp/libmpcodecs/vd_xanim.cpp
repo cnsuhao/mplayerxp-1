@@ -27,6 +27,11 @@ using namespace mpxp;
 #include "vd_internal.h"
 #include "codecs_ld.h"
 
+struct vd_private_t {
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+
 static const vd_info_t info = {
     "XAnim codecs",
     "xanim",
@@ -54,7 +59,8 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None } }
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) {
+    UNUSED(p);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -881,7 +887,8 @@ any_t*XA_YUV221111_Func(unsigned int image_type)
 /*************************** END OF XA CODEC BINARY INTERFACE ******************/
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
+    UNUSED(p);
     switch(cmd) {
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -894,20 +901,30 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *p,video_decoder_t* opaque){
+    sh_video_t* sh=p->sh;
+    p->parent=opaque;
     if(xacodec_init_video(sh,sh->codec->outfmt[sh->outfmtidx]))
 	return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
     return MPXP_False;
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
+static void uninit(vd_private_t *p){
     xacodec_exit();
+    delete p;
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
+    sh_video_t* sh = p->sh;
     mp_image_t* mpi;
     xacodec_image_t* image;
 
@@ -916,7 +933,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     image=xacodec_decode_frame(reinterpret_cast<uint8_t*>(frame->data),frame->len,(frame->flags&3)?1:0);
     if(!image) return NULL;
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,
+    mpi=mpcodecs_get_image(p->parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,
 	sh->src_w, sh->src_h);
     if(!mpi) return NULL;
 

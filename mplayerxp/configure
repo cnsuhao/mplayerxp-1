@@ -79,7 +79,6 @@ ENABLED_LIST=(
     "libdvdnav|build with libdvdnav support|http://dvd.sourceforge.net",
     "libdv|build with libdv support|http://libdv.sourceforge.net/",
     "libvcd|build with libvcd support|http://www.gnu.org/software/vcdimager",
-    "libvorbis|build with libvorbis support|http://www.vorbis.com",
     "libtheora|build with libtheora support|http://www.theora.org",
     "libbz2|build with libbz2 support|http://www.bzip.org"
 )
@@ -93,6 +92,7 @@ DISABLED_LIST=(
     "sdl|build with SDL video and audio output|http://www.libsdl.org",
     "sdl_image|build with SDL_image for screenshots|http://www.libsdl.org/projects/SDL_image",
     "im_sure_that_must_have_streaming| the key to unlock streaming"
+    "libvorbis|build with libvorbis support|http://www.vorbis.com",
 )
 
 AUTOCONF_LIST=(

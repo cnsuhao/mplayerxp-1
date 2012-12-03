@@ -8,6 +8,10 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "libao2/afmt.h"
 
+struct ad_private_t {
+    sh_audio_t* sh;
+};
+
 static const ad_info_t info = {
     "Uncompressed DVD/VOB LPCM audio decoder",
     "dvdpcm",
@@ -26,7 +30,8 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) {
+    UNUSED(ctx);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
@@ -34,9 +39,10 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
     return NULL;
 }
 
-MPXP_Rc init(sh_audio_t *sh)
+MPXP_Rc init(ad_private_t *priv)
 {
 /* DVD PCM Audio:*/
+    sh_audio_t* sh = priv->sh;
     sh->i_bps = 0;
     if(sh->codecdata_len==3){
 	// we have LPCM header:
@@ -72,19 +78,22 @@ MPXP_Rc init(sh_audio_t *sh)
     return MPXP_Ok;
 }
 
-MPXP_Rc preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh)
 {
     sh->audio_out_minsize=2048;
-    return MPXP_Ok;
+    ad_private_t* priv = new(zeromem) ad_private_t;
+    priv->sh = sh;
+    return priv;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *priv)
 {
-    UNUSED(sh);
+    delete priv;
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
+    sh_audio_t* sh = priv->sh;
     int skip;
     UNUSED(arg);
     switch(cmd) {
@@ -101,8 +110,9 @@ MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
+    sh_audio_t* sh_audio = priv->sh;
   unsigned j;
   unsigned len;
   float null_pts;

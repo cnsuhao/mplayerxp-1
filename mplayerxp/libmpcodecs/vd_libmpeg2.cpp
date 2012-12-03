@@ -101,7 +101,8 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fourcc) {
+    UNUSED(ctx);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -120,9 +121,11 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
 
 typedef struct mpeg2dec_s mpeg2dec_t;
 
-typedef struct priv_s {
-    mpeg2dec_t *mpeg2dec;
-}priv_t;
+struct vd_private_t {
+    sh_video_t* sh;
+    video_decoder_t* parent;
+    mpeg2dec_t* mpeg2dec;
+};
 
 typedef struct mpeg2_sequence_s {
     unsigned int width, height;
@@ -241,8 +244,7 @@ static MPXP_Rc load_lib( const char *libname )
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
     switch(cmd) {
 	case VDCTRL_RESYNC_STREAM:
 	    /*lib starts looking for the next sequence header.*/
@@ -257,23 +259,30 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
-    priv_t *priv;
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+    sh_video_t* sh = priv->sh;
     if(!load_lib("libmpeg2"SLIBSUFFIX)) return MPXP_False;
-    sh->context=priv=new(zeromem) priv_t;
-    if(!(priv->mpeg2dec=mpeg2_init(mpxp_context().mplayer_accel))) return MPXP_False;
+    priv->parent=opaque;
+    if(!(priv->mpeg2dec=mpeg2_init(mpxp_context().mplayer_accel))) {
+	return MPXP_False;
+    }
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+static void uninit(vd_private_t *priv){
     mpeg2_close(priv->mpeg2dec);
     delete priv;
     dlclose(dll_handle);
 }
 
-static void draw_frame(mp_image_t *mpi,sh_video_t *sh,unsigned w,const mpeg2_fbuf_t *src)
+static void draw_frame(mp_image_t *mpi,video_decoder_t *sh,unsigned w,const mpeg2_fbuf_t *src)
 {
     mpi->planes[0]=src->buf[0];
     mpi->planes[1]=src->buf[1];
@@ -286,8 +295,7 @@ static void draw_frame(mp_image_t *mpi,sh_video_t *sh,unsigned w,const mpeg2_fbu
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
     mp_image_t *mpi;
     const mpeg2_info_t *_info;
     int state,buf;
@@ -316,7 +324,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 			priv->mpeg2dec->decoder.mpq_store=mp_malloc(priv->mpeg2dec->decoder.mpq_stride*((_info->sequence->picture_height+15)>>4));
 		    }
 #endif
-		    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
+		    mpi=mpcodecs_get_image(priv->parent,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
 					,_info->sequence->width,_info->sequence->height);
 		    mpeg2_stride(priv->mpeg2dec,mpi->stride[0]);
 		    break;
@@ -336,7 +344,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 		    mpi->qscale=priv->mpeg2dec->decoder.mpq_store;
 		    mpi->qstride=priv->mpeg2dec->decoder.mpq_stride;
 #endif
-		    draw_frame (mpi,sh,_info->sequence->width,_info->display_fbuf);
+		    draw_frame (mpi,priv->parent,_info->sequence->width,_info->display_fbuf);
 		    return mpi;
 		}
 		break;

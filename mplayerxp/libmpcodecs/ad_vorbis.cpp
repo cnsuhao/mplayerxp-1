@@ -5,6 +5,10 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
+
+#include <math.h>
+#include <vorbis/codec.h>
+
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "ad_internal.h"
@@ -25,13 +29,24 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(vorbis)
 
+// This struct is also defined in demux_ogg.c => common header ?
+struct ad_private_t {
+    vorbis_info		vi; /* struct that stores all the static vorbis bitstream
+			    settings */
+    vorbis_comment	vc; /* struct that stores all the bitstream user comments */
+    vorbis_dsp_state	vd; /* central working state for the packet->PCM decoder */
+    vorbis_block	vb; /* local working space for packet->PCM decode */
+    sh_audio_t*		sh;
+};
+
 static const audio_probe_t probes[] = {
     { "vorbis", "vorbis", 0x566F, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
     { "vorbis", "vorbis", FOURCC_TAG('V','R','B','S'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag) {
+    UNUSED(priv);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
@@ -39,34 +54,22 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
     return NULL;
 }
 
-#include <math.h>
-#include <vorbis/codec.h>
-
-// This struct is also defined in demux_ogg.c => common header ?
-typedef struct priv_s {
-    vorbis_info      vi; /* struct that stores all the static vorbis bitstream
-			    settings */
-    vorbis_comment   vc; /* struct that stores all the bitstream user comments */
-    vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
-    vorbis_block     vb; /* local working space for packet->PCM decode */
-} priv_t;
-
-static MPXP_Rc preinit(sh_audio_t *sh)
+static ad_private_t* preinit(sh_audio_t *sh)
 {
-    if(!(sh->context=mp_malloc(sizeof(priv_t)))) return MPXP_False;
     sh->audio_out_minsize=1024*4; // 1024 samples/frame
-    return MPXP_Ok;
+    ad_private_t* priv = new(zeromem) ad_private_t;
+    priv->sh = sh;
+    return priv;
 }
 
-static MPXP_Rc init(sh_audio_t *sh)
+static MPXP_Rc init(ad_private_t *priv)
 {
     ogg_packet op;
     vorbis_comment vc;
-    priv_t *priv;
     float pts;
 
     /// Init the decoder with the 3 header packets
-    priv = reinterpret_cast<priv_t*>(sh->context);
+    sh_audio_t* sh = priv->sh;
     vorbis_info_init(&priv->vi);
     vorbis_comment_init(&vc);
     op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
@@ -74,7 +77,6 @@ static MPXP_Rc init(sh_audio_t *sh)
     /// Header
     if(vorbis_synthesis_headerin(&priv->vi,&vc,&op) <0) {
 	MSG_ERR("OggVorbis: initial (identification) header broken!\n");
-	delete priv;
 	return MPXP_False;
     }
     op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
@@ -82,14 +84,12 @@ static MPXP_Rc init(sh_audio_t *sh)
     /// Comments
     if(vorbis_synthesis_headerin(&priv->vi,&vc,&op) <0) {
 	MSG_ERR("OggVorbis: comment header broken!\n");
-	delete priv;
 	return MPXP_False;
     }
     op.bytes = ds_get_packet_r(sh->ds,&op.packet,&pts);
     //// Codebook
     if(vorbis_synthesis_headerin(&priv->vi,&vc,&op)<0) {
 	MSG_WARN("OggVorbis: codebook header broken!\n");
-	delete priv;
 	return MPXP_False;
     } else { /// Print the infos
 	char **ptr=vc.user_comments;
@@ -121,7 +121,6 @@ static MPXP_Rc init(sh_audio_t *sh)
     }
     // assume 128kbit if bitrate not specified in the header
     sh->i_bps=((priv->vi.bitrate_nominal>0) ? priv->vi.bitrate_nominal : 128000)/8;
-    sh->context = priv;
 
     /// Finish the decoder init
     vorbis_synthesis_init(&priv->vd,&priv->vi);
@@ -131,14 +130,14 @@ static MPXP_Rc init(sh_audio_t *sh)
     return MPXP_Ok;
 }
 
-static void uninit(sh_audio_t *sh)
+static void uninit(ad_private_t *priv)
 {
-    delete sh->context;
+    delete priv;
 }
 
-static MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+static MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
-    UNUSED(sh);
+    UNUSED(priv);
     UNUSED(cmd);
     UNUSED(arg);
     switch(cmd) {
@@ -150,13 +149,13 @@ static MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
+    sh_audio_t* sh = priv->sh;
 	unsigned len = 0;
 	int samples;
 	float **pcm;
 	ogg_packet op;
-	priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
 	op.b_o_s =  op.e_o_s = 0;
 	while(len < minlen) {
 	  /* if file contains audio only steam there is no pts */

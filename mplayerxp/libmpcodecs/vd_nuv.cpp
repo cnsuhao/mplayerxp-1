@@ -8,6 +8,11 @@ using namespace mpxp;
 #include "codecs_ld.h"
 #include "osdep/bswap.h"
 
+struct vd_private_t {
+    video_decoder_t* parent;
+    sh_video_t* sh;
+};
+
 static const vd_info_t info = {
     "NuppelVideo decoder",
     "nuv",
@@ -27,7 +32,8 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fourcc) {
+    UNUSED(ctx);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -36,7 +42,8 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *ctx,int cmd,any_t* arg,...){
+    sh_video_t* sh=ctx->sh;
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_I420 ||
@@ -48,20 +55,29 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+    sh_video_t* sh = priv->sh;
+    priv->parent = opaque;
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh) {}
+static void uninit(vd_private_t *ctx) { delete ctx; }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *ctx,const enc_frame_t* frame){
+    sh_video_t* sh = ctx->sh;
     mp_image_t* mpi;
     if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0,
+    mpi=mpcodecs_get_image(ctx->parent, MP_IMGTYPE_TEMP, 0,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 

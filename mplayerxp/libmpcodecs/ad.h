@@ -41,20 +41,21 @@ typedef struct audio_probe_s {
 }audio_probe_t;
 
 /* interface of video decoder drivers */
+struct ad_private_t;
 typedef struct ad_functions_s
 {
     const ad_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
-    const audio_probe_t*(* __FASTCALL__ probe)(sh_audio_t *,uint32_t wtag);
-    MPXP_Rc		(* __FASTCALL__ preinit)(sh_audio_t *);
-    MPXP_Rc		(* __FASTCALL__ init)(sh_audio_t *sh);
-    void		(* __FASTCALL__ uninit)(sh_audio_t *sh);
-    MPXP_Rc		(*control_ad)(sh_audio_t *sh,int cmd,any_t* arg, ...);
-    unsigned		(* __FASTCALL__ decode)(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
+    const audio_probe_t*(* __FASTCALL__ probe)(ad_private_t *,uint32_t wtag);
+    ad_private_t*		(* __FASTCALL__ preinit)(sh_audio_t *);
+    MPXP_Rc		(* __FASTCALL__ init)(ad_private_t *ctx);
+    void		(* __FASTCALL__ uninit)(ad_private_t *ctx);
+    MPXP_Rc		(*control_ad)(ad_private_t *ctx,int cmd,any_t* arg, ...);
+    unsigned		(* __FASTCALL__ decode)(ad_private_t *ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
 } ad_functions_t;
 
 extern const ad_functions_t* afm_find_driver(const char *name);
-extern const audio_probe_t* afm_probe_driver(sh_audio_t* sh);
+extern const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t* sh);
 #define FIX_APTS(sh_audio,pts,in_size) (sh_audio->i_bps?((float)(pts)+(float)(in_size)/(float)sh_audio->i_bps):((float)(pts)))
 
 #endif

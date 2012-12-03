@@ -31,7 +31,6 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(qtvideo)
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) { return NULL; }
 
 #include "osdep/bswap.h"
 
@@ -97,8 +96,17 @@ static    OSErr           (*QTNewGWorldFromPtr)(GWorldPtr *gw,
 				 long rowBytes);
 static    OSErr           (*NewHandleClear)(Size byteCount);
 
+struct vd_private_t {
+    uint32_t fourcc;
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) { return NULL; }
+
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
+    UNUSED(p);
     switch(cmd) {
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -120,8 +128,17 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
 }
 
 static int codec_inited=0;
+
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+    sh_video_t* sh = priv->sh;
+    priv->parent = opaque;
     long result = 1;
     ComponentResult cres;
     ComponentDescription desc;
@@ -254,7 +271,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 //    result = FindCodec ('SVQ1',anyCodec,&compressor,&decompressor );
 //    MSG_V("FindCodec SVQ1 returned:%i compressor: 0x%X decompressor: 0x%X\n",result,compressor,decompressor);
 
-    sh->context = (any_t*)kYUVSPixelFormat;
+    priv->fourcc = kYUVSPixelFormat;
 #if 1
     int imgfmt = sh->codec->outfmt[sh->outfmtidx];
     int qt_imgfmt;
@@ -292,7 +309,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 	    return MPXP_False;
     }
     MSG_V("imgfmt: %s qt_imgfmt: %.4s\n", vo_format_name(imgfmt), &qt_imgfmt);
-    sh->context = (any_t*)qt_imgfmt;
+    priv->fourcc = qt_imgfmt;
     if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;
 #else
     if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;
@@ -301,14 +318,16 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
+static void uninit(vd_private_t *p){
 #ifdef MACOSX
     ExitMovies();
 #endif
+    delete p;
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
+    sh_video_t* sh = p->sh;
     long result = 1;
     int i;
     mp_image_t* mpi;
@@ -316,7 +335,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 
     if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_STATIC, MP_IMGFLAG_PRESERVE,
+    mpi=mpcodecs_get_image(p->parent, MP_IMGTYPE_STATIC, MP_IMGFLAG_PRESERVE,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
@@ -328,7 +347,7 @@ if(!codec_inited){
     result = QTNewGWorldFromPtr(
 	&OutBufferGWorld,
 //        kYUVSPixelFormat, //pixel format of new GWorld == YUY2
-	OSType(sh->context),
+	OSType(p->fourcc),
 	&OutBufferRect,   //we should benchmark if yvu9 is faster for svq3, too
 	0,
 	0,
@@ -413,7 +432,7 @@ if(!codec_inited){
 //    for(i=0;i<8;i++)
 //	MSG_V("img_base[%d]=%p\n",i,((int*)decpar.dstPixMap.baseAddr)[i]);
 
-if((int)sh->context==0x73797639){	// Sorenson 16-bit YUV -> std YVU9
+if((int)p->fourcc==0x73797639){	// Sorenson 16-bit YUV -> std YVU9
 
     short *src0=(short *)((char*)decpar.dstPixMap.baseAddr+0x20);
 

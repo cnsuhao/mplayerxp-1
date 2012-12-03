@@ -83,7 +83,9 @@ LIBVD_EXTERN(lavc)
 
 
 static int vcodec_inited=0;
-typedef struct priv_s {
+struct vd_private_t {
+    video_decoder_t* parent;
+    sh_video_t* sh;
     int use_slices;
     int cap_slices;
     int use_dr1;
@@ -102,8 +104,8 @@ typedef struct priv_s {
     int b_count;
     int vo_inited;
     int hello_printed;
-    video_probe_t* probe;
-}priv_t;
+    const video_probe_t* probe;
+};
 static pp_context* ppContext=NULL;
 static void draw_slice(struct AVCodecContext *s, const AVFrame *src, int offset[4], int y, int type, int height);
 
@@ -128,10 +130,9 @@ const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
 };
 
 /* to set/get/query special features/parameters */
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
-    priv_t *ctx = reinterpret_cast<priv_t*>(sh->context);
+static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
     uint32_t out_fourcc;
-    AVCodecContext *avctx = ctx->ctx;
+    AVCodecContext *avctx = priv->ctx;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=PP_QUALITY_MAX;
@@ -191,14 +192,12 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fcc) {
+    UNUSED(ctx);
     unsigned i;
     unsigned char flag = CODECS_FLAG_NOFLIP;
     video_probe_t* vprobe = NULL;
-    priv_t* priv=reinterpret_cast<priv_t*>(sh->context);
     const char* what="AVCodecID";
-    if(!priv) priv=new(zeromem) priv_t;
-    sh->context = priv;
     if(!vcodec_inited){
 //	avcodec_init();
 	avcodec_register_all();
@@ -226,12 +225,14 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fcc) {
 	vprobe->flags[i]=video_flags_e(flag);
     }
     if(!i) { vprobe->pix_fmt[i]=IMGFMT_YV12; vprobe->flags[i]=video_flags_e(flag); }
-    priv->probe=vprobe;
     return vprobe;
 }
 
-static MPXP_Rc find_vdecoder(sh_video_t* sh) {
-    const video_probe_t* vprobe=probe(sh,sh->fourcc);
+static MPXP_Rc find_vdecoder(vd_private_t* ctx)
+{
+    sh_video_t* sh = ctx->sh;
+    const video_probe_t* vprobe=probe(ctx,sh->fourcc);
+    ctx->probe = vprobe;
     if(vprobe) {
 	sh->codec=new(zeromem) struct codecs_st;
 	strcpy(sh->codec->dll_name,vprobe->codec_dll);
@@ -243,20 +244,25 @@ static MPXP_Rc find_vdecoder(sh_video_t* sh) {
     return MPXP_False;
 }
 
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
     unsigned avc_version=0;
-    priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
     int pp_flags;
+    sh_video_t* sh = priv->sh;
     if(mp_conf.npp_options) pp2_init();
     if(!vcodec_inited){
 //	avcodec_init();
 	avcodec_register_all();
 	vcodec_inited=1;
     }
-    if(!priv) priv=new(zeromem) priv_t;
-    sh->context = priv;
+    priv->parent = opaque;
     priv->frame_number=-2;
-    if(!sh->codec) if(find_vdecoder(sh)!=MPXP_False) {
+    if(!sh->codec) if(find_vdecoder(priv)!=MPXP_False) {
 	MSG_ERR("Can't find lavc decoder\n");
 	return MPXP_False;
     }
@@ -429,8 +435,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+static void uninit(vd_private_t *priv){
     if (avcodec_close(priv->ctx) < 0)
 	MSG_ERR( MSGTR_CantCloseCodec);
     if (priv->ctx->extradata_size)
@@ -446,8 +451,7 @@ static void uninit(sh_video_t *sh){
 }
 
 static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
-    sh_video_t * sh = reinterpret_cast<sh_video_t*>(avctx->opaque);
-    priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
+    vd_private_t *priv = reinterpret_cast<vd_private_t*>(avctx->opaque);
     mp_image_t* mpi=NULL;
     int flags= MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE;
     int type= MP_IMGTYPE_IPB;
@@ -502,7 +506,7 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
     }
 
     MSG_V("ff width=%i height=%i\n",width,height);
-    mpi= mpcodecs_get_image(sh,type, flags, (width+align)&(~align), (height+align)&(~align));
+    mpi= mpcodecs_get_image(priv->parent,type, flags, (width+align)&(~align), (height+align)&(~align));
     if(mpi->flags & MP_IMGFLAG_DIRECT) mpi->flags |= MP_IMGFLAG_RENDERED;
     // Palette support: libavcodec copies palette to *data[1]
     if (mpi->bpp == 8) mpi->planes[1] = new unsigned char [AVPALETTE_SIZE];
@@ -537,8 +541,8 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
 
 static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
     mp_image_t* mpi= reinterpret_cast<mp_image_t*>(pic->opaque);
-    sh_video_t * sh = reinterpret_cast<sh_video_t*>(avctx->opaque);
-    priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
+    vd_private_t *priv = reinterpret_cast<vd_private_t*>(avctx->opaque);
+    sh_video_t * sh = priv->sh;
     int i;
 
     if(priv->ip_count <= 2 && priv->b_count<=1){
@@ -571,8 +575,8 @@ static void draw_slice(struct AVCodecContext *s,
 {
     UNUSED(offset);
     UNUSED(type);
-    sh_video_t *sh=reinterpret_cast<sh_video_t*>(s->opaque);
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+    vd_private_t *priv=reinterpret_cast<vd_private_t*>(s->opaque);
+    sh_video_t *sh=priv->sh;
     mp_image_t *mpi=priv->mpi;
     unsigned long long int total_frame;
     unsigned orig_idx = mpi->xp_idx;
@@ -635,7 +639,7 @@ static void draw_slice(struct AVCodecContext *s,
     src->pict_type==AV_PICTURE_TYPE_I?"i":"??"
     ,mpi->width,mpi->height,mpi->x,mpi->y,mpi->w,mpi->h);
     __MP_ATOMIC(sh->active_slices++);
-    mpcodecs_draw_slice (sh, mpi);
+    mpcodecs_draw_slice (priv->parent, mpi);
     mpi->xp_idx = orig_idx;
     __MP_ATOMIC(sh->active_slices--);
 }
@@ -650,15 +654,15 @@ typedef struct __attribute__((__packed__)) dp_hdr_s {
 } dp_hdr_t;
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
     int got_picture=0;
     int ret,has_b_frames;
     unsigned len=frame->len;
     any_t* data=frame->data;
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
     mp_image_t* mpi=NULL;
+    sh_video_t* sh = priv->sh;
 
-    priv->ctx->opaque=sh;
+    priv->ctx->opaque=priv;
     if(frame->len<=0) return NULL; // skipped frame
 
     priv->ctx->skip_frame=(frame->flags&3)?((frame->flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
@@ -673,7 +677,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 		 sh->fourcc==0x10000001 || /* mpeg1 may have b frames */
 		 priv->lavc_codec->id==CODEC_ID_SVQ3||
 		 1;
-    mpi= mpcodecs_get_image(sh,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
+    mpi= mpcodecs_get_image(priv->parent,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
 			    16,16);
     if(priv->cap_dr1 &&
        priv->lavc_codec->id != CODEC_ID_H264 &&
@@ -714,7 +718,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     if(!(frame->flags&3) && priv->use_slices)
     {
 	if(mpi) free_mp_image(mpi);
-	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->src_w, sh->src_h);
+	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->src_w, sh->src_h);
 	priv->mpi = mpi;
 	priv->frame_number++;
 	priv->ctx->draw_horiz_band=draw_slice;
@@ -739,7 +743,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
     if(!priv->ctx->draw_horiz_band)
     {
 	if(mpi) free_mp_image(mpi);
-	mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w,sh->src_h);
+	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w,sh->src_h);
 	if(!mpi){	// temporary!
 	    MSG_ERR("couldn't allocate image for lavc codec\n");
 	    return NULL;

@@ -28,10 +28,10 @@ dca_state_t* mpxp_dca_state;
 uint32_t mpxp_dca_accel=0;
 uint32_t mpxp_dca_flags=0;
 
-typedef struct priv_s {
+struct ad_private_t {
     float last_pts;
-}priv_t;
-
+    sh_audio_t* sh;
+};
 
 static const ad_info_t info = {
     "DTS Coherent Acoustics",
@@ -58,7 +58,8 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) {
+    UNUSED(ctx);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
@@ -66,13 +67,13 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
     return NULL;
 }
 
-int dca_fillbuff(sh_audio_t *sh_audio,float *pts){
+int dca_fillbuff(ad_private_t *priv,float *pts){
     int length=0,flen=0;
     int flags=0;
     int sample_rate=0;
     int bit_rate=0;
     float apts=0.,null_pts;
-    priv_t *priv=reinterpret_cast<priv_t*>(sh_audio->context);
+    sh_audio_t* sh_audio = priv->sh;
 
     sh_audio->a_in_buffer_len=0;
     /* sync frame:*/
@@ -125,8 +126,7 @@ static int dca_printinfo(sh_audio_t *sh_audio){
     return (flags&DCA_LFE) ? (channels+1) : channels;
 }
 
-
-MPXP_Rc preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh)
 {
     /*	DTS audio:
 	however many channels, 2 bytes in a word, 256 samples in a block, 6 blocks in a frame */
@@ -146,12 +146,14 @@ MPXP_Rc preinit(sh_audio_t *sh)
     }
     sh->audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh->afmt)*256*8;
     sh->audio_in_minsize=MAX_AC5_FRAME;
-    sh->context=mp_malloc(sizeof(priv_t));
-    return MPXP_Ok;
+    ad_private_t* priv = new(zeromem) ad_private_t;
+    priv->sh = sh;
+    return priv;
 }
 
-MPXP_Rc init(sh_audio_t *sh_audio)
+MPXP_Rc init(ad_private_t *priv)
 {
+    sh_audio_t* sh_audio = priv->sh;
     sample_t level=1, bias=384;
     float pts;
     int flags=0;
@@ -162,7 +164,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
 	MSG_ERR("dca init failed\n");
 	return MPXP_False;
     }
-    if(dca_fillbuff(sh_audio,&pts)<0){
+    if(dca_fillbuff(priv,&pts)<0){
 	MSG_ERR("dca sync failed\n");
 	return MPXP_False;
     }
@@ -202,13 +204,14 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     return MPXP_Ok;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *ctx)
 {
-    delete sh->context;
+    delete ctx;
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
+    sh_audio_t* sh = priv->sh;
     UNUSED(arg);
     switch(cmd) {
 	case ADCTRL_RESYNC_STREAM:
@@ -216,7 +219,7 @@ MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
 	    return MPXP_True;
 	case ADCTRL_SKIP_FRAME: {
 	    float pts;
-	    dca_fillbuff(sh,&pts); // skip AC3 frame
+	    dca_fillbuff(priv,&pts); // skip AC3 frame
 	    return MPXP_True;
 	}
 	default:
@@ -225,16 +228,16 @@ MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
     sample_t level=1, bias=384;
     unsigned i,nblocks,flags=mpxp_dca_flags|DCA_ADJUST_LEVEL;
     unsigned len=0;
-    priv_t *priv=reinterpret_cast<priv_t *>(sh_audio->context);
+    sh_audio_t* sh_audio = priv->sh;
     UNUSED(minlen);
     UNUSED(maxlen);
 	if(!sh_audio->a_in_buffer_len) {
-	    if(dca_fillbuff(sh_audio,pts)<0) return len; /* EOF */
+	    if(dca_fillbuff(priv,pts)<0) return len; /* EOF */
 	}
 	else *pts=priv->last_pts;
 	sh_audio->a_in_buffer_len=0;

@@ -26,7 +26,6 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(twin)
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
 
 /************************/
 /*** General settings ***/
@@ -202,7 +201,7 @@ static int   (__cdecl* TvqGetNumFixedBitsPerFrame_ptr)();
 #define	BYTE_BIT	8
 #define	BBUFSIZ		1024		/* Bit buffer size (bytes) */
 #define	BBUFLEN		(BBUFSIZ*BYTE_BIT)	/* Bit buffer length (bits) */
-typedef struct priv_s
+struct ad_private_t
 {
     float pts;
     WAVEFORMATEX o_wf;   // out format
@@ -216,7 +215,10 @@ typedef struct priv_s
     int ptr;           /* current point in the bit buffer */
     int nbuf;          /* bit buffer size */
     char buf[BBUFSIZ]; /* the bit buffer */
-}priv_t;
+    sh_audio_t* sh;
+};
+
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) { return NULL; }
 
 static HINSTANCE vqf_dll;
 
@@ -246,9 +248,9 @@ static int load_dll( const char *libname )
 	 TvqGetNumFixedBitsPerFrame_ptr;
 }
 
-static int init_vqf_audio_codec(sh_audio_t *sh_audio){
+static int init_vqf_audio_codec(ad_private_t *priv){
+    sh_audio_t* sh_audio = priv->sh;
     WAVEFORMATEX *in_fmt=sh_audio->wf;
-    priv_t*priv=reinterpret_cast<priv_t*>(sh_audio->context);
     int ver;
     MSG_V("======= Win32 (TWinVQ) AUDIO Codec init =======\n");
 
@@ -298,46 +300,48 @@ static int init_vqf_audio_codec(sh_audio_t *sh_audio){
     return 1;
 }
 
-static int close_vqf_audio_codec(sh_audio_t *sh_audio)
+static int close_vqf_audio_codec(ad_private_t *priv)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(sh_audio->context);
     TvqTerminate(&priv->index);
     return 1;
 }
 
-MPXP_Rc init(sh_audio_t *sh_audio)
+MPXP_Rc init(ad_private_t*p)
 {
-    UNUSED(sh_audio);
+    UNUSED(p);
     return MPXP_Ok;
 }
 
-MPXP_Rc preinit(sh_audio_t *sh_audio)
+ad_private_t* preinit(sh_audio_t *sh_audio)
 {
     /* Win32 VQF audio codec: */
-    priv_t *priv;
-    if(!(priv=new(zeromem) priv_t)) return MPXP_False;
-    sh_audio->context=priv;
+    ad_private_t *priv;
+    if(!(priv=new(zeromem) ad_private_t)) return NULL;
+    priv->sh = sh_audio;
     if(!load_dll((const char *)sh_audio->codec->dll_name)) {
 	MSG_ERR("win32.dll looks broken :(\n");
-	return MPXP_False;
+	delete priv;
+	return NULL;
     }
-    if(!init_vqf_audio_codec(sh_audio)){
+    if(!init_vqf_audio_codec(priv)){
 	MSG_ERR("TWinVQ initialization fail\n");
-	return MPXP_False;
+	delete priv;
+	return NULL;
     }
     MSG_V("INFO: TWinVQ audio codec init OK!\n");
-    return MPXP_Ok;
+    return priv;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *p)
 {
-    close_vqf_audio_codec(sh);
-    delete sh->context;
+    close_vqf_audio_codec(p);
+    delete p;
     FreeLibrary(vqf_dll);
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
+    sh_audio_t* sh_audio = priv->sh;
     int skip;
     UNUSED(arg);
     switch(cmd) {
@@ -360,14 +364,14 @@ MPXP_Rc control_ad(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
 static int bread(char	*data,    /* Output: Output data array */
 		  int	size,     /* Input:  Length of each data */
 		  int	nbits,    /* Input:  Number of bits to write */
-		  sh_audio_t *sh,  /* Input:  File pointer */
+		  ad_private_t *priv,  /* Input:  File pointer */
 		  float *pts)
 {
     /*--- Variables ---*/
     int	 ibits, iptr, idata, ibufadr, ibufbit, icl;
     unsigned char mask, tmpdat;
     int  retval;
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+    sh_audio_t* sh = priv->sh;
 
     /*--- Main operation ---*/
     retval = 0;
@@ -407,7 +411,7 @@ static int bread(char	*data,    /* Output: Output data array */
 
 static int get_bstm(int	*data,          /* Input: input data */
 		    unsigned nbits,         /* Input: number of bits */
-		    sh_audio_t *sh,          /* Input: bit file pointer */
+		    ad_private_t *priv,          /* Input: bit file pointer */
 		    float *pts)
 {
     unsigned	ibit;
@@ -421,7 +425,7 @@ static int get_bstm(int	*data,          /* Input: input data */
 			nbits, BITS_INT);
 		exit(1);
     }
-    retval = bread(tmpbit, sizeof(*tmpbit), nbits, sh, pts );
+    retval = bread(tmpbit, sizeof(*tmpbit), nbits, priv, pts );
     for (ibit=retval; ibit<nbits; ibit++){
 		tmpbit[ibit] = 0;
     }
@@ -440,7 +444,7 @@ static int GetVqInfo( tvqConfInfoSubBlock *cfg,
 			int bits1[],
 			int variableBits,
 			INDEX *_index,
-			sh_audio_t *sh)
+			ad_private_t *priv)
 {
 	int idiv;
 	int bitcount = 0;
@@ -449,13 +453,13 @@ static int GetVqInfo( tvqConfInfoSubBlock *cfg,
 		TvqUpdateVectorInfo( variableBits, &cfg->ndiv, bits0, bits1 ); // re-calculate VQ bits
 	}
 	for ( idiv=0; idiv<cfg->ndiv; idiv++ ){
-		bitcount += get_bstm(&_index->wvq[idiv],bits0[idiv],sh,&pts); /* CB 0 */
-		bitcount += get_bstm(&_index->wvq[idiv+cfg->ndiv],bits1[idiv],sh,&pts); /* CB 1 */
+		bitcount += get_bstm(&_index->wvq[idiv],bits0[idiv],priv,&pts); /* CB 0 */
+		bitcount += get_bstm(&_index->wvq[idiv+cfg->ndiv],bits1[idiv],priv,&pts); /* CB 1 */
 	}
 	return bitcount;
 }
 
-static int GetBseInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, sh_audio_t *sh)
+static int GetBseInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, ad_private_t *priv)
 {
 	int i_sup, isf, itmp, idiv;
 	int bitcount = 0;
@@ -464,70 +468,69 @@ static int GetBseInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index,
 		for ( isf=0; isf<cfg->nsf; isf++ ){
 			for ( idiv=0; idiv<cfg->fw_ndiv; idiv++ ){
 				itmp = idiv + ( isf + i_sup * cfg->nsf ) * cfg->fw_ndiv;
-				bitcount += get_bstm(&_index->fw[itmp],cfg->fw_nbit,sh,&pts);
+				bitcount += get_bstm(&_index->fw[itmp],cfg->fw_nbit,priv,&pts);
 			}
 		}
 	}
 	for ( i_sup=0; i_sup<cf->N_CH; i_sup++ ){
 		for ( isf=0; isf<cfg->nsf; isf++ ){
-			bitcount += get_bstm(&_index->fw_alf[i_sup * cfg->nsf + isf],cf->FW_ARSW_BITS,sh,&pts);
+			bitcount += get_bstm(&_index->fw_alf[i_sup * cfg->nsf + isf],cf->FW_ARSW_BITS,priv,&pts);
 		}
 	}
 	return bitcount;
 }
 
-static int GetGainInfo(tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, sh_audio_t *sh )
+static int GetGainInfo(tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, ad_private_t *priv )
 {
 	int i_sup, iptop, isf;
 	int bitcount = 0;
 	float pts;
 	for ( i_sup=0; i_sup<cf->N_CH; i_sup++ ){
 		iptop = ( cfg->nsubg + 1 ) * i_sup;
-		bitcount += get_bstm(&_index->pow[iptop], cf->GAIN_BITS,sh,&pts);
+		bitcount += get_bstm(&_index->pow[iptop], cf->GAIN_BITS,priv,&pts);
 		for ( isf=0; isf<cfg->nsubg; isf++ ){
-			bitcount += get_bstm(&_index->pow[iptop+isf+1], cf->SUB_GAIN_BITS,sh,&pts);
+			bitcount += get_bstm(&_index->pow[iptop+isf+1], cf->SUB_GAIN_BITS,priv,&pts);
 		}
 	}
 	return bitcount;
 }
 
-static int GetLspInfo( tvqConfInfo *cf, INDEX *_index, sh_audio_t *sh )
+static int GetLspInfo( tvqConfInfo *cf, INDEX *_index, ad_private_t *priv )
 {
 	int i_sup, itmp;
 	int bitcount = 0;
 	float pts;
 
 	for ( i_sup=0; i_sup<cf->N_CH; i_sup++ ){
-		bitcount += get_bstm(&_index->lsp[i_sup][0], cf->LSP_BIT0,sh,&pts); /* pred. switch */
-		bitcount += get_bstm(&_index->lsp[i_sup][1], cf->LSP_BIT1,sh,&pts); /* first stage */
+		bitcount += get_bstm(&_index->lsp[i_sup][0], cf->LSP_BIT0,priv,&pts); /* pred. switch */
+		bitcount += get_bstm(&_index->lsp[i_sup][1], cf->LSP_BIT1,priv,&pts); /* first stage */
 		for ( itmp=0; itmp<cf->LSP_SPLIT; itmp++ ){         /* second stage */
-			bitcount += get_bstm(&_index->lsp[i_sup][itmp+2], cf->LSP_BIT2,sh,&pts);
+			bitcount += get_bstm(&_index->lsp[i_sup][itmp+2], cf->LSP_BIT2,priv,&pts);
 		}
 	}
 
 	return bitcount;
 }
 
-static int GetPpcInfo( tvqConfInfo *cf, INDEX *_index, sh_audio_t *sh)
+static int GetPpcInfo( tvqConfInfo *cf, INDEX *_index, ad_private_t *priv)
 {
 	int idiv, i_sup;
 	int bitcount = 0;
-	priv_t*priv=reinterpret_cast<priv_t*>(sh->context);
 	float pts;
 
 	for ( idiv=0; idiv<cf->N_DIV_P; idiv++ ){
-		bitcount += get_bstm(&(_index->pls[idiv]), priv->bits_0[BLK_PPC][idiv],sh,&pts);       /*CB0*/
-		bitcount += get_bstm(&(_index->pls[idiv+cf->N_DIV_P]), priv->bits_1[BLK_PPC][idiv],sh,&pts);/*CB1*/
+		bitcount += get_bstm(&(_index->pls[idiv]), priv->bits_0[BLK_PPC][idiv],priv,&pts);       /*CB0*/
+		bitcount += get_bstm(&(_index->pls[idiv+cf->N_DIV_P]), priv->bits_1[BLK_PPC][idiv],priv,&pts);/*CB1*/
 	}
 	for (i_sup=0; i_sup<cf->N_CH; i_sup++){
-		bitcount += get_bstm(&(_index->pit[i_sup]), cf->BASF_BIT,sh,&pts);
-		bitcount += get_bstm(&(_index->pgain[i_sup]), cf->PGAIN_BIT,sh,&pts);
+		bitcount += get_bstm(&(_index->pit[i_sup]), cf->BASF_BIT,priv,&pts);
+		bitcount += get_bstm(&(_index->pgain[i_sup]), cf->PGAIN_BIT,priv,&pts);
 	}
 
 	return bitcount;
 }
 
-static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, sh_audio_t *sh)
+static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index, ad_private_t *priv)
 {
 	int i_sup, isf, itmp;
 	int bitcount = 0;
@@ -537,7 +540,7 @@ static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index,
 		for ( isf=0; isf<cfg->nsf; isf++){
 			int indexSfOffset = isf * ( cfg->ncrb - cfg->ebc_crb_base ) - cfg->ebc_crb_base;
 			for ( itmp=cfg->ebc_crb_base; itmp<cfg->ncrb; itmp++ ){
-				bitcount += get_bstm(&_index->bc[i_sup][itmp+indexSfOffset], cfg->ebc_bits,sh,&pts);
+				bitcount += get_bstm(&_index->bc[i_sup][itmp+indexSfOffset], cfg->ebc_bits,priv,&pts);
 			}
 		}
 	}
@@ -545,7 +548,7 @@ static int GetEbcInfo( tvqConfInfo *cf, tvqConfInfoSubBlock *cfg, INDEX *_index,
 	return bitcount;
 }
 
-static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
+static int vqf_read_frame(ad_private_t *priv,INDEX *_index,float *pts)
 {
 	/*--- Variables ---*/
 	tvqConfInfoSubBlock *cfg;
@@ -553,7 +556,6 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
 	int bitcount;
 	int numFixedBitsPerFrame = TvqGetNumFixedBitsPerFrame();
 	int btype;
-	priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
 
 	/*--- Initialization ---*/
 	variableBits = 0;
@@ -561,7 +563,7 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
 
 	/*--- read block independent factors ---*/
 	/* Window type */
-	bitcount += get_bstm( &_index->w_type, priv->cf.BITS_WTYPE, sh,pts);
+	bitcount += get_bstm( &_index->w_type, priv->cf.BITS_WTYPE,priv,pts);
 	if ( TvqWtypeToBtype( _index->w_type, &_index->btype ) ) {
 		MSG_ERR("Error: unknown window type: %d\n", _index->w_type);
 		return 0;
@@ -574,21 +576,21 @@ static int vqf_read_frame(sh_audio_t *sh,INDEX *_index,float *pts)
 	bitcount += variableBits;
 
 	/* Interleaved vector quantization */
-	bitcount += GetVqInfo( cfg, priv->bits_0[btype], priv->bits_1[btype], variableBits, _index, sh );
+	bitcount += GetVqInfo( cfg, priv->bits_0[btype], priv->bits_1[btype], variableBits, _index, priv);
 
 	/* Bark-scale envelope */
-	bitcount += GetBseInfo( &priv->cf, cfg, _index, sh );
+	bitcount += GetBseInfo( &priv->cf, cfg, _index, priv);
 	/* Gain */
-	bitcount += GetGainInfo( &priv->cf, cfg, _index, sh );
+	bitcount += GetGainInfo( &priv->cf, cfg, _index, priv);
 	/* LSP */
-	bitcount += GetLspInfo( &priv->cf, _index, sh );
+	bitcount += GetLspInfo( &priv->cf, _index, priv );
 	/* PPC */
 	if ( cfg->ppc_enable ){
-		bitcount += GetPpcInfo( &priv->cf, _index, sh );
+		bitcount += GetPpcInfo( &priv->cf, _index, priv);
 	}
 	/* Energy Balance Calibration */
 	if ( cfg->ebc_enable ){
-		bitcount += GetEbcInfo( &priv->cf, cfg, _index, sh );
+		bitcount += GetEbcInfo( &priv->cf, cfg, _index, priv);
 	}
 
 	return bitcount == numFixedBitsPerFrame ? bitcount/8 : 0;
@@ -616,16 +618,16 @@ static void frtobuf(float out[],       /* Input  --- input data frame */
 	}
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
 	unsigned l,len=0;
 	float null_pts;
-	priv_t *priv=reinterpret_cast<priv_t*>(sh_audio->context);
+	sh_audio_t* sh_audio = priv->sh;
 	UNUSED(maxlen);
 	while(len<minlen)
 	{
 	    float out[priv->framesize*sh_audio->nch];
-	    l=vqf_read_frame(sh_audio,&priv->index,len?&null_pts:pts);
+	    l=vqf_read_frame(priv,&priv->index,len?&null_pts:pts);
 	    if(!l) break;
 	    TvqDecodeFrame(&priv->index, out);
 	    frtobuf(out, (float *)buf, priv->framesize, sh_audio->nch);

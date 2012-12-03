@@ -27,10 +27,17 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(dmo)
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) { return NULL; }
+struct vd_private_t {
+    DMO_VideoDecoder* dmo;
+    sh_video_t*	sh;
+    video_decoder_t* parent;
+};
+
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) { return NULL; }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
+    UNUSED(p);
     switch(cmd){
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -46,10 +53,18 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
     unsigned int out_fmt;
-    if(!(sh->context=DMO_VideoDecoder_Open(sh->codec->dll_name,&sh->codec->guid, sh->bih, 0, 0))){
+    priv->parent = opaque;
+    sh_video_t* sh = priv->sh;
+    if(!(priv->dmo=DMO_VideoDecoder_Open(sh->codec->dll_name,&sh->codec->guid, sh->bih, 0, 0))){
 	MSG_ERR(MSGTR_MissingDLLcodec,sh->codec->dll_name);
 	MSG_HINT("Maybe you forget to upgrade your win32 codecs?? It's time to download the new\n"
 		 "package from:  ftp://mplayerhq.hu/MPlayer/releases/w32codec.tar.bz2!\n");
@@ -60,38 +75,40 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     switch(out_fmt){
     case IMGFMT_YUY2:
     case IMGFMT_UYVY:
-	DMO_VideoDecoder_SetDestFmt(reinterpret_cast<DMO_VideoDecoder*>(sh->context),16,out_fmt);break; // packed YUV
+	DMO_VideoDecoder_SetDestFmt(priv->dmo,16,out_fmt);break; // packed YUV
     case IMGFMT_YV12:
     case IMGFMT_I420:
     case IMGFMT_IYUV:
-	DMO_VideoDecoder_SetDestFmt(reinterpret_cast<DMO_VideoDecoder*>(sh->context),12,out_fmt);break; // planar YUV
+	DMO_VideoDecoder_SetDestFmt(priv->dmo,12,out_fmt);break; // planar YUV
     case IMGFMT_YVU9:
-	DMO_VideoDecoder_SetDestFmt(reinterpret_cast<DMO_VideoDecoder*>(sh->context),9,out_fmt);break;
+	DMO_VideoDecoder_SetDestFmt(priv->dmo,9,out_fmt);break;
     default:
-	DMO_VideoDecoder_SetDestFmt(reinterpret_cast<DMO_VideoDecoder*>(sh->context),out_fmt&255,0);    // RGB/BGR
+	DMO_VideoDecoder_SetDestFmt(priv->dmo,out_fmt&255,0);    // RGB/BGR
     }
-    DMO_VideoDecoder_StartInternal(reinterpret_cast<DMO_VideoDecoder*>(sh->context));
+    DMO_VideoDecoder_StartInternal(priv->dmo);
     MSG_V("INFO: Win32/DMOhow video codec init OK!\n");
     return MPXP_Ok;
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-    DMO_VideoDecoder_Destroy(reinterpret_cast<DMO_VideoDecoder*>(sh->context));
+static void uninit(vd_private_t *priv){
+    DMO_VideoDecoder_Destroy(priv->dmo);
+    delete priv;
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
+    sh_video_t* sh = p->sh;
     mp_image_t* mpi;
     if(frame->len<=0) return NULL; // skipped frame
 
     if(frame->flags&3){
 	// framedrop:
-	DMO_VideoDecoder_DecodeInternal(reinterpret_cast<DMO_VideoDecoder*>(sh->context), frame->data, frame->len, sh->ds->flags&1, NULL);
+	DMO_VideoDecoder_DecodeInternal(p->dmo, frame->data, frame->len, sh->ds->flags&1, NULL);
 	return NULL;
     }
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
+    mpi=mpcodecs_get_image(p->parent, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
@@ -100,7 +117,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 	return NULL;
     }
 
-    DMO_VideoDecoder_DecodeInternal(reinterpret_cast<DMO_VideoDecoder*>(sh->context), frame->data, frame->len, sh->ds->flags&1, reinterpret_cast<char*>(mpi->planes[0]));
+    DMO_VideoDecoder_DecodeInternal(p->dmo, frame->data, frame->len, sh->ds->flags&1, reinterpret_cast<char*>(mpi->planes[0]));
 
     return mpi;
 }

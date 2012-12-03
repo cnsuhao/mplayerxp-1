@@ -28,22 +28,6 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(real)
 
-static const audio_probe_t probes[] = {
-    { "realaudio", "14_4.so.6.0", FOURCC_TAG('1','4','_','4'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
-    { "realaudio", "28_8.so.6.0", FOURCC_TAG('2','8','_','8'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
-    { "realaudio", "cook.so.6.0", FOURCC_TAG('C','O','O','K'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
-    { "realaudio", "sipr.so.6.0", FOURCC_TAG('S','I','P','R'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
-    { "realaudio", "atrc.so.6.0", FOURCC_TAG('A','T','R','C'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
-    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
-};
-
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(wtag==probes[i].wtag)
-	    return &probes[i];
-    return NULL;
-}
 
 static any_t*handle=NULL;
 
@@ -84,12 +68,31 @@ typedef struct {
     any_t* extradata;
 } ra_init_t;
 
-typedef struct priv_s {
+struct ad_private_t {
     any_t*internal;
     float pts;
-} priv_t;
+    sh_audio_t* sh;
+};
 
-static MPXP_Rc preinit(sh_audio_t *sh){
+static const audio_probe_t probes[] = {
+    { "realaudio", "14_4.so.6.0", FOURCC_TAG('1','4','_','4'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "28_8.so.6.0", FOURCC_TAG('2','8','_','8'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "cook.so.6.0", FOURCC_TAG('C','O','O','K'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "sipr.so.6.0", FOURCC_TAG('S','I','P','R'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { "realaudio", "atrc.so.6.0", FOURCC_TAG('A','T','R','C'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
+    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
+};
+
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) {
+    UNUSED(p);
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    return &probes[i];
+    return NULL;
+}
+
+static ad_private_t* preinit(sh_audio_t *sh){
     // let's check if the driver is available, return 0 if not.
     // (you should do that if you use external lib(s) which is optional)
     unsigned int result;
@@ -97,11 +100,12 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     any_t* prop;
     char path[4096];
     char cpath[4096];
-    priv_t *priv;
-    sh->context=priv=new(zeromem) priv_t;
+    ad_private_t *priv;
+    priv=new(zeromem) ad_private_t;
+    priv->sh = sh;
     if(!(handle = dlopen (sh->codec->dll_name, RTLD_LAZY))) {
-	delete sh->context;
-	return MPXP_False;
+	delete priv;
+	return NULL;
     }
 
     raCloseCodec = (uint32_t (*)(uint32_t))ld_sym(handle, "RACloseCodec");
@@ -118,8 +122,8 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     if(!raCloseCodec || !raDecode || !raFreeDecoder ||
 	!raGetFlavorProperty || !(raOpenCodec2||raOpenCodec) || !raSetFlavor ||
 	!raInitDecoder){
-	    delete sh->context;
-	    return MPXP_False;
+	    delete priv;
+	    return NULL;
     }
 
     char *end;
@@ -144,8 +148,8 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     else result=raOpenCodec(&priv->internal);
     if(result){
 	MSG_WARN("Decoder open failed, error code: 0x%X\n",result);
-	delete sh->context;
-	return MPXP_False;
+	delete priv;
+	return NULL;
     }
 
     sh->rate=sh->wf->nSamplesPerSec;
@@ -165,8 +169,8 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     result=raInitDecoder(priv->internal,&init_data);
     if(result){
 	MSG_WARN("Decoder init failed, error code: 0x%X\n",result);
-	delete sh->context;
-	return MPXP_False;
+	delete priv;
+	return NULL;
     }
 
     if(raSetPwd){
@@ -177,8 +181,8 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     result=raSetFlavor(priv->internal,((short*)(sh->wf+1))[2]);
     if(result){
 	MSG_WARN("Decoder flavor setup failed, error code: 0x%X\n",result);
-	delete sh->context;
-	return MPXP_False;
+	delete priv;
+	return NULL;
     }
 
     prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],0,&len);
@@ -196,22 +200,21 @@ static MPXP_Rc preinit(sh_audio_t *sh){
     sh->audio_out_minsize=128000; // no idea how to get... :(
     sh->audio_in_minsize=((short*)(sh->wf+1))[1]*sh->wf->nBlockAlign;
 
-    return MPXP_True; // return values: 1=OK 0=ERROR
+    return priv; // return values: 1=OK 0=ERROR
 }
 
-static MPXP_Rc init(sh_audio_t *sh_audio){
+static MPXP_Rc init(ad_private_t *p){
     // initialize the decoder, set tables etc...
     // set sample format/rate parameters if you didn't do it in preinit() yet.
-    UNUSED(sh_audio);
+    UNUSED(p);
     return MPXP_Ok; // return values: 1=OK 0=ERROR
 }
 
-static void uninit(sh_audio_t *sh){
+static void uninit(ad_private_t *priv){
     // uninit the decoder etc...
-    priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
     if (raFreeDecoder) raFreeDecoder(long(priv->internal));
     if (raCloseCodec) raCloseCodec(long(priv->internal));
-    delete sh->context;
+    delete priv;
 }
 
 static const unsigned char sipr_swaps[38][2]={
@@ -221,8 +224,8 @@ static const unsigned char sipr_swaps[38][2]={
     {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
     {77,80} };
 
-static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
-  priv_t *priv = reinterpret_cast<priv_t*>(sh->context);
+static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
+    sh_audio_t* sh = priv->sh;
   float null_pts;
   int result;
   unsigned len=0;
@@ -296,8 +299,8 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
 	      // or -1 for EOF (or uncorrectable error)
 }
 
-static MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...){
-    UNUSED(sh);
+static MPXP_Rc control_ad(ad_private_t *p,int cmd,any_t* arg, ...){
+    UNUSED(p);
     UNUSED(arg);
     // various optional functions you MAY implement:
     switch(cmd){

@@ -29,26 +29,6 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(mp3)
 
-static const audio_probe_t probes[] = {
-    { "mp3lib", "libmpg123", 0x50, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "mp3lib", "libmpg123", 0x55, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "mp3lib", "libmpg123", 0x55005354, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "mp3lib", "libmpg123", 0x5000736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "mp3lib", "libmpg123", 0x5500736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "mp3lib", "libmpg123", FOURCC_TAG('.','M','P','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "mp3lib", "libmpg123", FOURCC_TAG('L','A','M','E'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { "mp3lib", "libmpg123", FOURCC_TAG('M','P','3',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
-    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
-};
-
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(wtag==probes[i].wtag)
-	    return &probes[i];
-    return NULL;
-}
-
 /** Opaque structure for the libmpg123 decoder handle. */
 struct mpg123_handle_struct;
 typedef struct mpg123_handle_struct mpg123_handle;
@@ -258,21 +238,44 @@ static MPXP_Rc load_dll(const char *libname) {
 	MPXP_Ok:MPXP_False;
 }
 
-MPXP_Rc preinit(sh_audio_t *sh)
-{
-    int rval;
-    sh->audio_out_minsize=9216;
-    rval = load_dll("libmpg123"SLIBSUFFIX); /* try standard libmpg123 first */
-    return rval?MPXP_Ok:MPXP_False;
-}
-
-typedef struct priv_s {
+struct ad_private_t {
     mpg123_handle *mh;
     off_t pos;
     float pts;
-}priv_t;
+    sh_audio_t* sh;
+};
 
-MPXP_Rc init(sh_audio_t *sh)
+static const audio_probe_t probes[] = {
+    { "mp3lib", "libmpg123", 0x50, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x55, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x55005354, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x5000736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", 0x5500736D, ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", FOURCC_TAG('.','M','P','3'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", FOURCC_TAG('L','A','M','E'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { "mp3lib", "libmpg123", FOURCC_TAG('M','P','3',' '), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S16_LE} },
+    { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
+};
+
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag) {
+    UNUSED(priv);
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    return &probes[i];
+    return NULL;
+}
+
+ad_private_t* preinit(sh_audio_t *sh)
+{
+    sh->audio_out_minsize=9216;
+    if(load_dll("libmpg123"SLIBSUFFIX)!=MPXP_Ok) return NULL;
+    ad_private_t* priv = new(zeromem) ad_private_t;
+    priv->sh = sh;
+    return priv;
+}
+
+MPXP_Rc init(ad_private_t *priv)
 {
     // MPEG Audio:
     float pts;
@@ -281,11 +284,9 @@ MPXP_Rc init(sh_audio_t *sh)
     int err=0,nch,enc;
     unsigned char *indata;
     struct mpg123_frameinfo fi;
-    priv_t *priv;
+    sh_audio_t* sh = priv->sh;
     sh->afmt=AFMT_FLOAT32;
     mpg123_init();
-    priv = new(zeromem) priv_t;
-    sh->context = priv;
     priv->mh = mpg123_new(NULL,&err);
     if(err) {
 	err_exit:
@@ -313,7 +314,6 @@ MPXP_Rc init(sh_audio_t *sh)
 	mpg123_close(priv->mh);
 	mpg123_delete(priv->mh);
 	mpg123_exit();
-	delete priv;
 	return MPXP_False;
     }
     mpg123_getformat(priv->mh, &rate, &nch, &enc);
@@ -344,9 +344,8 @@ MPXP_Rc init(sh_audio_t *sh)
     return MPXP_Ok;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *priv)
 {
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
     mpg123_close(priv->mh);
     mpg123_delete(priv->mh);
     mpg123_exit();
@@ -354,17 +353,17 @@ void uninit(sh_audio_t *sh)
     dlclose(dll_handle);
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
-    UNUSED(sh);
+    UNUSED(priv);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-    priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+    sh_audio_t* sh = priv->sh;
     unsigned char *indata=NULL,*outdata=NULL;
     int err=MPG123_OK,indata_size=0;
     off_t offset,cpos;

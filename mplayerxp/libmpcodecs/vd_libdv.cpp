@@ -20,6 +20,12 @@ using namespace mpxp;
 
 #include "vd_internal.h"
 
+struct vd_private_t {
+    dv_decoder_t*	dvd;
+    sh_video_t*		sh;
+    video_decoder_t*	parent;
+};
+
 static const vd_info_t info = {
     "Raw DV Video Decoder",
     "libdv",
@@ -52,7 +58,8 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *priv,uint32_t fourcc) {
+    UNUSED(priv);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -61,7 +68,10 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
+    UNUSED(priv);
+    UNUSED(cmd);
+    UNUSED(arg);
     return MPXP_Unknown;
 }
 
@@ -77,37 +87,46 @@ dv_decoder_t* init_global_rawdv_decoder(void)
     return global_rawdv_decoder;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque)
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
 {
-    sh->context = (any_t*)init_global_rawdv_decoder();
+    sh_video_t* sh = priv->sh;
+    priv->parent = opaque;
+    priv->dvd = init_global_rawdv_decoder();
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh) {}
+static void uninit(vd_private_t *priv) { delete priv; }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
 {
    mp_image_t* mpi;
-   dv_decoder_t *priv=reinterpret_cast<dv_decoder_t*>(sh->context);
+   dv_decoder_t *dvd=priv->dvd;
+   sh_video_t* sh = priv->sh;
 
    if(frame->len<=0 || (frame->flags&3)){
 //      fprintf(stderr,"decode() (rawdv) SKIPPED\n");
       return NULL; // skipped frame
    }
 
-   dv_parse_header(priv, reinterpret_cast<uint8_t*>(frame->data));
+   dv_parse_header(dvd, reinterpret_cast<uint8_t*>(frame->data));
 
-   mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, sh->src_w, sh->src_h);
+   mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, sh->src_w, sh->src_h);
 
    if(!mpi){	// temporary!
       MSG_ERR("couldn't allocate image for stderr codec\n");
       return NULL;
    }
 
-   dv_decode_full_frame(priv, reinterpret_cast<uint8_t*>(frame->data), e_dv_color_yuv, mpi->planes, reinterpret_cast<int*>(mpi->stride));
+   dv_decode_full_frame(dvd, reinterpret_cast<uint8_t*>(frame->data), e_dv_color_yuv, mpi->planes, reinterpret_cast<int*>(mpi->stride));
 
    return mpi;
 }

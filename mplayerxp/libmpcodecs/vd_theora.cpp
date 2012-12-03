@@ -35,7 +35,19 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+
+#define THEORA_NUM_HEADER_PACKETS 3
+
+struct vd_private_t {
+    theora_state	st;
+    theora_comment	cc;
+    theora_info		inf;
+    sh_video_t*		sh;
+    video_decoder_t*	parent;
+};
+
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *priv,uint32_t fourcc) {
+    UNUSED(priv);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -43,17 +55,9 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
     return NULL;
 }
 
-#define THEORA_NUM_HEADER_PACKETS 3
-
-
-typedef struct priv_s {
-    theora_state st;
-    theora_comment cc;
-    theora_info inf;
-} priv_t;
-
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
+    UNUSED(priv);
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12)
@@ -64,11 +68,17 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 /*
  * init driver
  */
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
-    priv_t *priv = NULL;
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+    sh_video_t* sh = priv->sh;
     int failed = 1;
     int errorCode = 0;
     ogg_packet op;
@@ -85,9 +95,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 
     /* this is not a loop, just a context, from which we can break on error */
     do {
-	priv = (priv_t *)mp_calloc (sizeof (priv_t), 1);
-	sh->context = priv;
-	if (!priv) break;
+	priv->parent = opaque;
 
 	theora_info_init(&priv->inf);
 	theora_comment_init(&priv->cc);
@@ -112,13 +120,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 	failed = 0;
     } while (0);
 
-    if (failed) {
-	if (priv) {
-	    delete priv;
-	    sh->context = NULL;
-	}
-	return MPXP_False;
-    }
+    if (failed) return MPXP_False;
 
     if(sh->aspect==0.0 && priv->inf.aspect_denominator!=0) {
 	sh->aspect = (float)(priv->inf.aspect_numerator * priv->inf.frame_width)/
@@ -133,21 +135,18 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 /*
  * uninit driver
  */
-static void uninit(sh_video_t *sh)
+static void uninit(vd_private_t *priv)
 {
-    priv_t *priv = (priv_t *)sh->context;
-    if (priv) {
-	theora_clear (&priv->st);
-	delete priv;
-    }
+    theora_clear (&priv->st);
+    delete priv;
 }
 
 /*
  * decode frame
  */
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
 {
-    priv_t *priv = (priv_t *)sh->context;
+    sh_video_t* sh = priv->sh;
     int errorCode = 0;
     ogg_packet op;
     yuv_buffer yuv;
@@ -172,7 +171,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame)
 	return NULL;
     }
 
-    mpi = mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
+    mpi = mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
 
     mpi->planes[0]=yuv.y;
     mpi->stride[0]=yuv.y_stride;

@@ -92,12 +92,12 @@ const vd_functions_t* vfm_find_driver(const char *name) {
     return NULL;
 }
 
-const video_probe_t* vfm_driver_probe(sh_video_t *sh) {
+const video_probe_t* vfm_driver_probe(vd_private_t* ctx,sh_video_t *sh) {
     unsigned i;
     const video_probe_t* probe;
     for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++) {
 	MSG_V("Probing: %s\n",mpcodecs_vd_drivers[i]->info->driver_name);
-	if((probe=mpcodecs_vd_drivers[i]->probe(sh,sh->fourcc))!=NULL) {
+	if((probe=mpcodecs_vd_drivers[i]->probe(ctx,sh->fourcc))!=NULL) {
 	    const char* pfcc = reinterpret_cast<const char*>(&sh->fourcc);
 	    MSG_V("Driver: %s supports these outfmt for %c%c%c%c fourcc:\n"
 		,mpcodecs_vd_drivers[i]->info->driver_name

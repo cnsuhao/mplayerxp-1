@@ -18,27 +18,24 @@ using namespace mpxp;
 #include "mp_conf_lavc.h"
 #include "codecs_ld.h"
 
-typedef struct priv_s {
-    AVCodecContext *lavc_ctx;
-    audio_probe_t*  probe;
-}priv_t;
+struct ad_private_t {
+    AVCodecContext*	lavc_ctx;
+    sh_audio_t*		sh;
+};
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag) {
     unsigned i;
     audio_probe_t* acodec = NULL;
     const char *what="AVCodecID";
-    priv_t* priv=reinterpret_cast<priv_t*>(sh->context);
     enum AVCodecID id = ff_codec_get_id(ff_codec_wav_tags,wtag);
     if (id <= 0) {
 	prn_err:
 	MSG_ERR("Cannot find %s for '0x%X' tag! Try force -ac option\n"
 		,what
-		,sh->wtag);
+		,wtag);
 	return NULL;
     }
     if(!priv){
-	priv=new(zeromem) priv_t;
-	sh->context=priv;
 //	avcodec_init();
 	avcodec_register_all();
     }
@@ -54,12 +51,12 @@ static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
 	if(codec->sample_fmts[i]==-1) break;
 	acodec->sample_fmt[i]=ff_codec_get_tag(ff_codec_wav_tags,id);
     }
-    priv->probe=acodec;
     return acodec;
 }
 
-struct codecs_st* __FASTCALL__ find_lavc_audio(sh_audio_t* sh) {
-    const audio_probe_t* aprobe=probe(sh,sh->wtag);
+struct codecs_st* __FASTCALL__ find_lavc_audio(ad_private_t* priv) {
+    sh_audio_t* sh = priv->sh;
+    const audio_probe_t* aprobe=probe(priv,sh->wtag);
     struct codecs_st* acodec = NULL;
     if(aprobe) {
 	acodec=new(zeromem) struct codecs_st;
@@ -88,22 +85,22 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(lavc)
 
-MPXP_Rc preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh)
 {
+    ad_private_t* priv = new(zeromem) ad_private_t;
     sh->audio_out_minsize=AVCODEC_MAX_AUDIO_FRAME_SIZE;
-    return MPXP_Ok;
+    priv->sh = sh;
+    return priv;
 }
 
-MPXP_Rc init(sh_audio_t *sh_audio)
+MPXP_Rc init(ad_private_t *priv)
 {
     int x;
     float pts;
     AVCodec *lavc_codec=NULL;
-    priv_t* priv=reinterpret_cast<priv_t*>(sh_audio->context);
+    sh_audio_t* sh_audio = priv->sh;
     MSG_V("LAVC audio codec\n");
     if(!priv){
-	priv=new(zeromem) priv_t;
-	sh_audio->context=priv;
 //	avcodec_init();
 	avcodec_register_all();
     }
@@ -145,7 +142,7 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     MSG_V("INFO: libavcodec init OK!\n");
 
     // Decode at least 1 byte:  (to get header filled)
-    x=decode(sh_audio,reinterpret_cast<unsigned char*>(sh_audio->a_buffer),1,sh_audio->a_buffer_size,&pts);
+    x=decode(priv,reinterpret_cast<unsigned char*>(sh_audio->a_buffer),1,sh_audio->a_buffer_size,&pts);
     if(x>0) sh_audio->a_buffer_len=x;
 
     sh_audio->nch=priv->lavc_ctx->channels;
@@ -169,21 +166,17 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     return MPXP_Ok;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *priv)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(sh->context);
     avcodec_close(priv->lavc_ctx);
     if (priv->lavc_ctx->extradata) delete priv->lavc_ctx->extradata;
     delete priv->lavc_ctx;
-    if(priv->probe) { delete priv->probe->codec_dll; delete priv->probe; }
     delete priv;
-    sh->context=NULL;
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
     UNUSED(arg);
-    priv_t* priv = reinterpret_cast<priv_t*>(sh->context);
     switch(cmd){
 	case ADCTRL_RESYNC_STREAM:
 	    avcodec_flush_buffers(priv->lavc_ctx);
@@ -193,9 +186,9 @@ MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-    priv_t* priv = reinterpret_cast<priv_t*>(sh_audio->context);
+    sh_audio_t* sh_audio = priv->sh;
     unsigned char *start=NULL;
     int y;
     unsigned len=0;

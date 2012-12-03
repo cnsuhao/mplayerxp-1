@@ -7,6 +7,11 @@ using namespace mpxp;
 #include "vd_internal.h"
 #include "osdep/bswap.h"
 
+struct vd_private_t {
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+
 static const vd_info_t info = {
     "RAW Uncompressed Video",
     "raw",
@@ -69,7 +74,8 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fourcc) {
+    UNUSED(ctx);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -78,7 +84,8 @@ static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(vd_private_t *ctx,int cmd,any_t* arg,...){
+    UNUSED(ctx);
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
 	    return MPXP_True;
@@ -87,8 +94,15 @@ static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+    sh_video_t* sh = priv->sh;
     // set format fourcc for raw RGB:
     if(sh->fourcc==0){
 	switch(sh->bih->biBitCount){
@@ -101,18 +115,20 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 	    MSG_WARN("RAW: depth %d not supported\n",sh->bih->biBitCount);
 	}
     }
+    priv->parent=opaque;
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh) { UNUSED(sh); }
+static void uninit(vd_private_t *ctx) { delete ctx; }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
+    sh_video_t* sh = priv->sh;
     mp_image_t* mpi;
     if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_EXPORT, 0, sh->src_w, sh->src_h);
+    mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, 0, sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     if(mpi->flags&MP_IMGFLAG_PLANAR){

@@ -26,19 +26,20 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(msacm)
 
-typedef struct priv_s {
+struct ad_private_t {
   float pts;
   WAVEFORMATEX o_wf;   // out format
   HACMSTREAM srcstream;  // handle
-}priv_t;
+  sh_audio_t* sh;
+};
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) { return NULL; }
 
-static int init_acm_audio_codec(sh_audio_t *sh_audio){
+static int init_acm_audio_codec(ad_private_t *priv){
+    sh_audio_t* sh_audio = priv->sh;
     HRESULT ret;
     WAVEFORMATEX *in_fmt=sh_audio->wf;
     unsigned int srcsize=0;
-    priv_t*priv=reinterpret_cast<priv_t*>(sh_audio->context);
 
     MSG_V("======= Win32 (ACM) AUDIO Codec init =======\n");
 
@@ -101,10 +102,10 @@ static int init_acm_audio_codec(sh_audio_t *sh_audio){
     return 1;
 }
 
-static int close_acm_audio_codec(sh_audio_t *sh_audio)
+static int close_acm_audio_codec(ad_private_t *priv)
 {
+    sh_audio_t* sh_audio = priv->sh;
     HRESULT ret;
-    priv_t *priv=reinterpret_cast<priv_t*>(sh_audio->context);
 
     ret = acmStreamClose(priv->srcstream, 0);
 
@@ -115,7 +116,7 @@ static int close_acm_audio_codec(sh_audio_t *sh_audio)
 	case ACMERR_CANCELED:
 	    MSG_DBG2( "ACM_Decoder: stream busy, waiting..\n");
 	    sleep(100);
-	    return(close_acm_audio_codec(sh_audio));
+	    return(close_acm_audio_codec(priv));
 	case ACMERR_UNPREPARED:
 	case ACMERR_NOTPOSSIBLE:
 	    return(0);
@@ -127,10 +128,11 @@ static int close_acm_audio_codec(sh_audio_t *sh_audio)
     return(1);
 }
 
-MPXP_Rc init(sh_audio_t *sh_audio)
+MPXP_Rc init(ad_private_t *priv)
 {
+    sh_audio_t* sh_audio = priv->sh;
     float pts;
-    int ret=decode(sh_audio,reinterpret_cast<unsigned char*>(sh_audio->a_buffer),4096,sh_audio->a_buffer_size,&pts);
+    int ret=decode(priv,reinterpret_cast<unsigned char*>(sh_audio->a_buffer),4096,sh_audio->a_buffer_size,&pts);
     if(ret<0){
 	MSG_INFO("ACM decoding error: %d\n",ret);
 	return MPXP_False;
@@ -139,29 +141,31 @@ MPXP_Rc init(sh_audio_t *sh_audio)
     return MPXP_Ok;
 }
 
-MPXP_Rc preinit(sh_audio_t *sh_audio)
+ad_private_t* preinit(sh_audio_t *sh_audio)
 {
   /* Win32 ACM audio codec: */
-  priv_t *priv;
-  if(!(priv=new(zeromem) priv_t)) return MPXP_False;
-  sh_audio->context=priv;
-  if(!init_acm_audio_codec(sh_audio)){
+  ad_private_t *priv;
+  if(!(priv=new(zeromem) ad_private_t)) return NULL;
+  priv->sh = sh_audio;
+  if(!init_acm_audio_codec(priv)){
     MSG_ERR(MSGTR_ACMiniterror);
-    return MPXP_False;
+    delete priv;
+    return NULL;
   }
   MSG_V("INFO: Win32/ACM init OK!\n");
-  return MPXP_Ok;
+  return priv;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *p)
 {
-  close_acm_audio_codec(sh);
-  delete sh->context;
+  close_acm_audio_codec(p);
+  delete p;
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
-  int skip;
+    sh_audio_t* sh_audio = priv->sh;
+    int skip;
     switch(cmd) {
 //	case ADCTRL_RESYNC_STREAM:
 //	     sh_audio->a_in_buffer_len=0;/* reset ACM/DShow audio buffer */
@@ -182,13 +186,13 @@ MPXP_Rc control_ad(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
+    sh_audio_t* sh_audio = priv->sh;
 	ACMSTREAMHEADER ash;
 	HRESULT hr;
 	DWORD srcsize=0;
 	DWORD len=minlen;
-	priv_t *priv=reinterpret_cast<priv_t*>(sh_audio->context);
 
 	acmStreamSize(priv->srcstream,len , &srcsize, ACM_STREAMSIZEF_DESTINATION);
 	MSG_V("acm says: srcsize=%ld  (bufflen=%d size=%d)  out_size=%d\n",srcsize,sh_audio->a_in_buffer_len,sh_audio->a_in_buffer_size,len);

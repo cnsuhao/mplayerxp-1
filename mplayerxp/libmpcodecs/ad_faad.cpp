@@ -35,9 +35,10 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(faad)
 
-typedef struct faad_priv_s {
-  float pts;
-}priv_t;
+struct ad_private_t {
+    float pts;
+    sh_audio_t* sh;
+};
 
 static const audio_probe_t probes[] = {
     { "faad", "libfaad",  0xFF,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
@@ -56,8 +57,8 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) {
-    UNUSED(sh);
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) {
+    UNUSED(ctx);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
@@ -178,16 +179,22 @@ static MPXP_Rc load_dll(const char *libname)
 
 }
 
-static MPXP_Rc preinit(sh_audio_t *sh)
+static ad_private_t* preinit(sh_audio_t *sh)
 {
     sh->audio_out_minsize=8192*FAAD_MAX_CHANNELS;
     sh->audio_in_minsize=FAAD_BUFFLEN;
-    if(!(sh->context=mp_malloc(sizeof(priv_t)))) return MPXP_False;
-    return load_dll("libfaad"SLIBSUFFIX);
+    ad_private_t* priv = new(zeromem) ad_private_t;
+    priv->sh = sh;
+    if(load_dll("libfaad"SLIBSUFFIX)!=MPXP_Ok) {
+	delete priv;
+	return NULL;
+    }
+    return priv;
 }
 
-static MPXP_Rc init(sh_audio_t *sh)
+static MPXP_Rc init(ad_private_t *priv)
 {
+    sh_audio_t* sh = priv->sh;
     unsigned long NeAAC_samplerate;
     unsigned char NeAAC_channels;
     float pts;
@@ -268,24 +275,24 @@ static MPXP_Rc init(sh_audio_t *sh)
     return MPXP_Ok;
 }
 
-static void uninit(sh_audio_t *sh)
+static void uninit(ad_private_t *priv)
 {
     MSG_V("FAAD: Closing decoder!\n");
     NeAACDecClose(NeAAC_hdec);
-    delete sh->context;
+    delete priv;
 }
 
-static MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+static MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
-    UNUSED(sh);
+    UNUSED(priv);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  priv_t *priv=reinterpret_cast<priv_t*>(sh->context);
+    sh_audio_t* sh = priv->sh;
   int j = 0;
   unsigned len = 0;
   any_t*NeAAC_sample_buffer;

@@ -6,6 +6,10 @@ using namespace mpxp;
 #include <unistd.h>
 #include "ad_internal.h"
 
+struct ad_private_t {
+    sh_audio_t* sh;
+};
+
 static const ad_info_t info = {
     "Null audio decoder",
     "null",
@@ -19,36 +23,37 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(null)
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) { return NULL; }
 
-MPXP_Rc init(sh_audio_t *sh)
+MPXP_Rc init(ad_private_t *priv)
 {
-    UNUSED(sh);
+    UNUSED(priv);
     return MPXP_Ok;
 }
 
-MPXP_Rc preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh)
 {
-    UNUSED(sh);
-    return MPXP_Ok;
+    ad_private_t* priv = new(zeromem) ad_private_t;
+    priv->sh = sh;
+    return priv;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *priv)
 {
-    UNUSED(sh);
+    delete priv;
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 {
-    UNUSED(sh);
+    UNUSED(priv);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-    UNUSED(sh_audio);
+    UNUSED(priv);
     UNUSED(buf);
     UNUSED(minlen);
     UNUSED(maxlen);

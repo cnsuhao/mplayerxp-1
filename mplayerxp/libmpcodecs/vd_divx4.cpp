@@ -38,25 +38,6 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(divx4)
 
-static const video_probe_t probes[] = {
-    { "divx", "libdivx.so",FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
-};
-
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(fourcc==probes[i].fourcc)
-	    return &probes[i];
-    return NULL;
-}
-
 #define DIVX4LINUX_BETA 0
 #define DIVX4LINUX	1
 #define DIVX5LINUX	2
@@ -148,19 +129,41 @@ typedef struct DecInit
     int isQ; ///< Reserved parameter, value ignored.
 }DecInit;
 
-
-typedef struct priv_s {
+struct vd_private_t {
     any_t*pHandle;
     LibQDecoreFunction* decoder;
     int resync;
-}priv_t;
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
 
 static LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
 static any_t*dll_handle;
 
+static const video_probe_t probes[] = {
+    { "divx", "libdivx.so",FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx.so",FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
+};
+
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) {
+    UNUSED(p);
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    return &probes[i];
+    return NULL;
+}
+
+
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
-    priv_t*p=reinterpret_cast<priv_t*>(sh->context);
+static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
+    sh_video_t* sh = p->sh;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=100;
@@ -208,11 +211,18 @@ static int load_lib( const char *libname )
   return getDecore_ptr != NULL;
 }
 
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
     DecInit dinit;
-    priv_t*p;
+    sh_video_t* sh = priv->sh;
     int bits=12;
+    priv->parent = opaque;
     if(!load_lib("libdivx"SLIBSUFFIX)) return MPXP_False;
     if(!(mpcodecs_config_vf(opaque,sh->src_w,sh->src_h))) return MPXP_False;
     switch(sh->codec->outfmt[sh->outfmtidx]){
@@ -223,9 +233,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 	    MSG_ERR("Unsupported out_fmt: 0x%X\n",sh->codec->outfmt[sh->outfmtidx]);
 	    return MPXP_False;
     }
-    if(!(p=new(zeromem) priv_t)) { MSG_ERR("Out of memory\n"); return MPXP_False; }
-    sh->context=p;
-    if(!(p->decoder=getDecore_ptr(sh->fourcc))) {
+    if(!(priv->decoder=getDecore_ptr(sh->fourcc))) {
 	char *fcc=(char *)&(sh->fourcc);
 	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",fcc[0],fcc[1],fcc[2],fcc[3]);
 	return MPXP_False;
@@ -239,7 +247,7 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
     dinit.formatOut.sizeMax=sh->src_w*sh->src_h*bits;
     dinit.formatIn.fourCC=sh->fourcc;
     dinit.formatIn.framePeriod=sh->fps;
-    if(p->decoder(NULL, DEC_OPT_INIT, (any_t*) &p->pHandle, &dinit)!=DEC_OK) {
+    if(priv->decoder(NULL, DEC_OPT_INIT, (any_t*) &priv->pHandle, &dinit)!=DEC_OK) {
 	char *fcc=(char *)&(dinit.formatOut);
 	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",fcc[0],fcc[1],fcc[2],fcc[3]);
     }
@@ -249,23 +257,22 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-    priv_t*p=reinterpret_cast<priv_t*>(sh->context);
-    p->decoder(p->pHandle, DEC_OPT_RELEASE, 0, 0);
+static void uninit(vd_private_t *priv){
+    priv->decoder(priv->pHandle, DEC_OPT_RELEASE, 0, 0);
     dlclose(dll_handle);
-    delete p;
+    delete priv;
 }
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
-    priv_t*p=reinterpret_cast<priv_t*>(sh->context);
+static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
+    sh_video_t* sh = p->sh;
     mp_image_t* mpi;
     DecFrame decFrame;
 
     memset(&decFrame,0,sizeof(DecFrame));
     if(frame->len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(sh, MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,
+    mpi=mpcodecs_get_image(p->parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 

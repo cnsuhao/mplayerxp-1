@@ -26,7 +26,7 @@ static const vd_info_t info = {
     "http://www.xvid.org",
 };
 
-typedef struct priv_s {
+struct vd_private_t {
     int			cs;
     unsigned char	img_type;
     any_t*		hdl;
@@ -35,7 +35,9 @@ typedef struct priv_s {
     int			pp_level;
     int			brightness;
     int			resync;
-} priv_t;
+    sh_video_t*		sh;
+    video_decoder_t*	parent;
+};
 
 static const config_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
@@ -87,7 +89,8 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(sh_video_t *sh,uint32_t fourcc) {
+static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fourcc) {
+    UNUSED(ctx);
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -314,12 +317,19 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 	return(0.0f);
 }
 #endif
+
+static vd_private_t* preinit(sh_video_t *sh){
+    vd_private_t* priv = new(zeromem) vd_private_t;
+    priv->sh=sh;
+    return priv;
+}
+
 // init driver
-static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
+static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
     xvid_gbl_info_t xvid_gbl_info;
     xvid_gbl_init_t xvid_ini;
     xvid_dec_create_t dec_p;
-    priv_t* priv;
+    sh_video_t* sh = priv->sh;
     int cs;
 
     if(!load_lib("libxvidcore"SLIBSUFFIX)) return MPXP_False;
@@ -417,11 +427,10 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 	,xvid_gbl_info.num_threads
 	,xvid_gbl_info.cpu_flags);
 
-    priv = new(zeromem) priv_t;
+    priv->parent = opaque;
     priv->cs = cs;
     priv->hdl = dec_p.handle;
     priv->vo_initialized = 0;
-    sh->context = priv;
 
     switch(cs) {
 	case XVID_CSP_INTERNAL:
@@ -434,12 +443,11 @@ static MPXP_Rc init(sh_video_t *sh,any_t* opaque){
 	    priv->img_type = MP_IMGTYPE_TEMP;
 	    break;
     }
-    return mpcodecs_config_vf(opaque, sh->src_w, sh->src_h);
+    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(sh_video_t *sh){
-    priv_t* priv = reinterpret_cast<priv_t*>(sh->context);
+static void uninit(vd_private_t *priv){
     if(!priv) return;
     (*xvid_decore_ptr)(priv->hdl,XVID_DEC_DESTROY, NULL, NULL);
     delete priv;
@@ -448,12 +456,12 @@ static void uninit(sh_video_t *sh){
 
 
 // decode a frame
-static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
+static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
     xvid_dec_frame_t dec;
     xvid_dec_stats_t stats;
     mp_image_t* mpi = NULL;
     int consumed;
-    priv_t* priv = reinterpret_cast<priv_t*>(sh->context);
+    sh_video_t* sh = priv->sh;
 
     if(frame->len <= 0) return NULL;
 
@@ -476,7 +484,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 
     if(frame->flags&3) dec.general |= XVID_DEC_DROP;
     dec.output.csp = priv->cs;
-    mpi = mpcodecs_get_image(sh, priv->img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
+    mpi = mpcodecs_get_image(priv->parent, priv->img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
 				 sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
     if(priv->cs != XVID_CSP_INTERNAL) {
@@ -511,8 +519,7 @@ static mp_image_t* decode(sh_video_t *sh,const enc_frame_t* frame){
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(sh_video_t *sh,int cmd,any_t* arg,...){
-    priv_t* priv = reinterpret_cast<priv_t*>(sh->context);
+static MPXP_Rc control_vd(vd_private_t* priv,int cmd,any_t* arg,...){
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=5;

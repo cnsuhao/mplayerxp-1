@@ -23,28 +23,29 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(dshow)
 
-typedef struct dshow_priv_s {
+struct ad_private_t {
     float pts;
     DS_AudioDecoder* ds_adec;
-}priv_t;
+    sh_audio_t* sh;
+};
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) { return NULL; }
 
-MPXP_Rc init(sh_audio_t *sh)
+MPXP_Rc init(ad_private_t *p)
 {
-  UNUSED(sh);
+  UNUSED(p);
   return MPXP_Ok;
 }
 
-MPXP_Rc preinit(sh_audio_t *sh_audio)
+ad_private_t* preinit(sh_audio_t *sh_audio)
 {
-    priv_t *priv;
-    if(!(priv=new(zeromem) priv_t)) return MPXP_False;
-    sh_audio->context=priv;
+    ad_private_t *priv;
+    if(!(priv=new(zeromem) ad_private_t)) return NULL;
+    priv->sh = sh_audio;
     if(!(priv->ds_adec=DS_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf))) {
 	MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
-	delete sh_audio->context;
-	return MPXP_False;
+	delete priv;
+	return NULL;
     }
     sh_audio->i_bps=sh_audio->wf->nAvgBytesPerSec;
     sh_audio->nch=sh_audio->wf->nChannels;
@@ -53,18 +54,18 @@ MPXP_Rc preinit(sh_audio_t *sh_audio)
     if(sh_audio->audio_in_minsize<8192) sh_audio->audio_in_minsize=8192;
     sh_audio->audio_out_minsize=16384;
     MSG_V("INFO: Win32/DShow init OK!\n");
-    return MPXP_Ok;
+    return priv;
 }
 
-void uninit(sh_audio_t *sh)
+void uninit(ad_private_t *priv)
 {
-    priv_t* priv = reinterpret_cast<priv_t*>(sh->context);
     DS_AudioDecoder_Destroy(priv->ds_adec);
     delete priv;
 }
 
-MPXP_Rc control_ad(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(ad_private_t *p,int cmd,any_t* arg, ...)
 {
+    sh_audio_t* sh_audio = p->sh;
     int skip;
     UNUSED(arg);
     switch(cmd) {
@@ -87,9 +88,9 @@ MPXP_Rc control_ad(sh_audio_t *sh_audio,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(sh_audio_t *sh_audio,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
 {
-  priv_t* priv = reinterpret_cast<priv_t*>(sh_audio->context);
+    sh_audio_t* sh_audio = priv->sh;
   unsigned len=0;
   UNUSED(minlen);
       { unsigned size_in=0;

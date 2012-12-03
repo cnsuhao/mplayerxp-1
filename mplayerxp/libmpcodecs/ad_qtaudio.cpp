@@ -33,7 +33,6 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(qtaudio)
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
 
 typedef struct OpaqueSoundConverter*	SoundConverter;
 typedef unsigned long			OSType;
@@ -157,7 +156,13 @@ static SoundComponentData		InputFormatInfo,OutputFormatInfo;
 static int InFrameSize;
 static int OutFrameSize;
 
-static MPXP_Rc preinit(sh_audio_t *sh){
+struct ad_private_t {
+    sh_audio_t* sh;
+};
+
+static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
+
+static ad_private_t* preinit(sh_audio_t *sh){
     int error;
     unsigned long FramesToGet=0; //how many frames the demuxer has to get
     unsigned long InputBufferSize=0; //size of the input buffer
@@ -166,20 +171,20 @@ static MPXP_Rc preinit(sh_audio_t *sh){
 
     if(mp_conf.s_cache_size) {
 	MSG_FATAL("Disabling sound:\nwin32 quicktime DLLs must be initialized in single-threaded mode! Try -nocache\n");
-	return MPXP_False;
+	return NULL;
     }
     MSG_INFO("win32 libquicktime loader (c) Sascha Sommer\n");
 
 #ifdef MACOSX
     EnterMovies();
 #else
-    if(loader_init()) return MPXP_False; // failed to load DLL
+    if(loader_init()) return NULL; // failed to load DLL
 
     MSG_V("loader_init DONE!\n");
 
     error = InitializeQTML(6+16);
     MSG_ERR("InitializeQTML:%i\n",error);
-    if(error) return MPXP_False;
+    if(error) return NULL;
 #endif
 
 #if 1
@@ -196,7 +201,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
 
     error = SoundConverterOpen(&InputFormatInfo, &OutputFormatInfo, &myConverter);
     MSG_V("SoundConverterOpen:%i\n",error);
-    if(error) return MPXP_False;
+    if(error) return NULL;
 
     if(sh->codecdata){
 	error = SoundConverterSetInfo(myConverter,siDecompressionParams,sh->codecdata);
@@ -220,7 +225,7 @@ static MPXP_Rc preinit(sh_audio_t *sh){
 
     error = SoundConverterBeginConversion(myConverter);
     MSG_V("SoundConverterBeginConversion:%i\n",error);
-    if(error) return MPXP_False;
+    if(error) return NULL;
 
     sh->audio_out_minsize=OutputBufferSize;
     sh->audio_in_minsize=InputBufferSize;
@@ -233,17 +238,19 @@ static MPXP_Rc preinit(sh_audio_t *sh){
 //InputBufferSize*WantedBufferSize/OutputBufferSize;
 
 #endif
-
-    return MPXP_Ok; // return values: 1=OK 0=ERROR
+    ad_private_t* priv = new(zeromem) ad_private_t;
+    priv->sh = sh;
+    return priv; // return values: 1=OK 0=ERROR
 }
 
-static MPXP_Rc init(sh_audio_t *sh_audio)
+static MPXP_Rc init(ad_private_t *p)
 {
-    UNUSED(sh_audio);
+    UNUSED(p);
     return MPXP_Ok; // return values: 1=OK 0=ERROR
 }
 
-static void uninit(sh_audio_t *sh){
+static void uninit(ad_private_t *p){
+    sh_audio_t* sh = p->sh;
     int error;
     unsigned long ConvertedFrames=0;
     unsigned long ConvertedBytes=0;
@@ -260,9 +267,11 @@ static void uninit(sh_audio_t *sh){
 #ifdef MACOSX
     ExitMovies();
 #endif
+    delete p;
 }
 
-static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
+static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
+    sh_audio_t* sh = priv->sh;
     int error;
     unsigned long FramesToGet=0; //how many frames the demuxer has to get
     unsigned long InputBufferSize=0; //size of the input buffer
@@ -307,9 +316,9 @@ static unsigned decode(sh_audio_t *sh,unsigned char *buf,unsigned minlen,unsigne
     return ConvertedBytes;
 }
 
-static MPXP_Rc control_ad(sh_audio_t *sh,int cmd,any_t* arg, ...){
+static MPXP_Rc control_ad(ad_private_t *p,int cmd,any_t* arg, ...){
     // various optional functions you MAY implement:
-    UNUSED(sh);
+    UNUSED(p);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
