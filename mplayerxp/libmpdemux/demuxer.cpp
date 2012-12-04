@@ -445,14 +445,4 @@ int Demuxer::switch_subtitle(int id) const
     return id;
 }
 
-sh_audio_t::~sh_audio_t(){
-    MSG_V("DEMUXER: freeing sh_audio at %p  \n",this);
-    if(wf) delete wf;
-}
-
-sh_video_t::~sh_video_t(){
-    MSG_V("DEMUXER: freeing sh_video at %p  \n",this);
-    if(bih) delete bih;
-}
-
 } // namespace mpxp

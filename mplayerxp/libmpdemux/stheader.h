@@ -79,6 +79,8 @@ namespace mpxp {
 	    sh_video_t() {}
 	    virtual ~sh_video_t();
 
+	    virtual int read_properties();
+	    virtual int read_frame(float* frame_time_ptr,float *v_pts,unsigned char** start,int force_fps);
     // input format
 	uint32_t	fourcc;
 	int		is_static; /* default: 0 - means movie; 1 - means picture (.jpg ...)*/
@@ -95,8 +97,6 @@ namespace mpxp {
 	BITMAPINFOHEADER*bih;		// in format
 	ImageDescription*ImageDesc;	// for quicktime codecs
     };
-    int video_read_properties(sh_video_t *sh_video);
-    int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,unsigned char** start,int force_fps);
 } //namespace mpxp
 #endif
 

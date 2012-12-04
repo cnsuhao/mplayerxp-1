@@ -395,7 +395,7 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
     if(shv && !veof)
     {
 	float v_pts;
-	in_size=video_read_frame(shv,&frame_time,&v_pts,&start,0);
+	in_size=shv->read_frame(&frame_time,&v_pts,&start,0);
 	cmd = check_cmd(priv);
 	if(cmd == -1) goto done;
 	else

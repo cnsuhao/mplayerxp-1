@@ -3045,9 +3045,6 @@ static void reset_fifos(ts_priv_t* priv, int a, int v, int s)
 		priv->fifo[2].offset = 0;
 	}
 }
-extern int videobuf_code_len;
-extern int sync_video_packet(Demuxer_Stream *);
-extern int skip_video_packet(Demuxer_Stream *);
 
 static void ts_seek(Demuxer *demuxer,const seek_args_t* seeka)
 {
@@ -3126,7 +3123,7 @@ static void ts_seek(Demuxer *demuxer,const seek_args_t* seeka)
 			}
 		}
 
-		i = sync_video_packet(d_video);
+		i = sync_video_packet(*d_video);
 		if((sh_video->fourcc == VIDEO_MPEG1) || (sh_video->fourcc == VIDEO_MPEG2))
 		{
 			if(i==0x1B3 || i==0x1B8) break; // found it!
@@ -3140,7 +3137,7 @@ static void ts_seek(Demuxer *demuxer,const seek_args_t* seeka)
 			if((i & ~0x60) == 0x105) break;
 		}
 
-		if(!i || !skip_video_packet(d_video)) break; // EOF?
+		if(!i || !skip_video_packet(*d_video)) break; // EOF?
 	}
 }
 

@@ -12,7 +12,7 @@ ifeq ($(HAVE_LIBDV),yes)
 CXXSRCS += demux_dv.cpp
 endif
 
-CXXSRCS += mp3_hdr.cpp video.cpp mpeg_hdr.cpp aviprint.cpp parse_mp4.cpp parse_es.cpp
+CXXSRCS += mp3_hdr.cpp stheader.cpp mpeg_hdr.cpp aviprint.cpp parse_mp4.cpp parse_es.cpp
 CXXSRCS += yuv4mpeg.cpp yuv4mpeg_ratio.cpp sub_cc.cpp sub_ty.cpp
 CXXSRCS += demux_aiff.cpp \
            demux_asf.cpp \

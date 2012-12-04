@@ -1054,7 +1054,7 @@ void MPXPSystem::read_video_properties() const {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     Demuxer_Stream *d_video=_demuxer->video;
     MP_UNIT("video_read_properties");
-    if(!video_read_properties(sh_video)) {
+    if(!sh_video->read_properties()) {
 	MSG_ERR("Video: can't read properties\n");
 	d_video->sh=NULL;
 	sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);

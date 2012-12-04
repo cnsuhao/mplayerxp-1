@@ -227,7 +227,7 @@ static int bmp_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 
   stream_reset(demuxer->stream);
   stream_seek(demuxer->stream, bmp_image->image_offset);
-  ds_read_packet(demuxer->video, demuxer->stream, bmp_image->image_size,
+  demuxer->video->read_packet(demuxer->stream, bmp_image->image_size,
     0, bmp_image->image_offset, DP_KEYFRAME);
   return 1;
 }

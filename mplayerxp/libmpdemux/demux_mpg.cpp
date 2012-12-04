@@ -591,11 +591,11 @@ static void mpgps_seek(Demuxer *demuxer,const seek_args_t* seeka){
 	      continue;
 	    }
 	  }
-	  i=sync_video_packet(d_video);
+	  i=sync_video_packet(*d_video);
 	  if(sh_video->fourcc == VIDEO_MPEG4) {
 	    if(i==0x1B6) {			//vop (frame) startcode
 	      int pos = videobuf_len;
-	      if(!read_video_packet(d_video)) break; // EOF
+	      if(!read_video_packet(*d_video)) break; // EOF
 	      if((videobuffer[pos+4] & 0x3F) == 0) break;//I-frame
 	    }
 	  } else if(sh_video->fourcc == VIDEO_H264){
@@ -603,7 +603,7 @@ static void mpgps_seek(Demuxer *demuxer,const seek_args_t* seeka){
 	  } else { //default VIDEO_MPEG1/VIDEO_MPEG2
 	    if(i==0x1B3 || i==0x1B8) break; // found it!
 	  }
-	  if(!i || !skip_video_packet(d_video)) break; // EOF?
+	  if(!i || !skip_video_packet(*d_video)) break; // EOF?
 	}
 }
 

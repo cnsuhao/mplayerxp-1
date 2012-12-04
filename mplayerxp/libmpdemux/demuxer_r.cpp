@@ -108,7 +108,7 @@ enc_frame_t* video_read_frame_r(sh_video_t* sh_video,int force_fps)
     double tt;
     LOCK_DEMUXER();
     if(mp_conf.benchmark) t=GetTimer();
-    retval = video_read_frame(sh_video,&frame_time,&v_pts,&start,force_fps);
+    retval = sh_video->read_frame(&frame_time,&v_pts,&start,force_fps);
     if(retval<=0) return NULL;
     frame=new_enc_frame(VideoFrame,retval,v_pts,frame_time);
     frame->data=start;

@@ -20,7 +20,7 @@ unsigned char videobuf_code[4];
 int videobuf_code_len=0;
 
 // sync video stream, and returns next packet code
-int sync_video_packet(Demuxer_Stream *ds){
+int sync_video_packet(Demuxer_Stream& ds){
   int skipped=0;
   // we need enough bytes in the buffer:
   while(videobuf_code_len<4){
@@ -29,7 +29,7 @@ int sync_video_packet(Demuxer_Stream *ds){
     c=demux_getc(ds);if(c<0){ return 0;} // EOF
     videobuf_code[videobuf_code_len++]=c;
 #else
-    videobuf_code[videobuf_code_len++]=ds->getch();
+    videobuf_code[videobuf_code_len++]=ds.getch();
 #endif
   }
   // sync packet:
@@ -43,7 +43,7 @@ int sync_video_packet(Demuxer_Stream *ds){
     videobuf_code[0]=videobuf_code[1];
     videobuf_code[1]=videobuf_code[2];
     videobuf_code[2]=videobuf_code[3];
-    c=ds->getch();if(c<0){ return 0;} // EOF
+    c=ds.getch();if(c<0){ return 0;} // EOF
     videobuf_code[3]=c;
   }
   if(skipped) MSG_DBG2("videobuf: %d bytes skipped  (next: 0x1%02X)\n",skipped,videobuf_code[3]);
@@ -51,7 +51,7 @@ int sync_video_packet(Demuxer_Stream *ds){
 }
 
 // return: packet length
-int read_video_packet(Demuxer_Stream *ds){
+int read_video_packet(Demuxer_Stream& ds){
 int packet_start;
 
   // SYNC STREAM
@@ -68,7 +68,7 @@ int packet_start;
   // READ PACKET:
   { unsigned int head=-1;
     while(videobuf_len<VIDEOBUFFER_SIZE){
-      int c=ds->getch();
+      int c=ds.getch();
       if(c<0) break; // EOF
       videobuffer[videobuf_len++]=c;
 #if 1
@@ -83,7 +83,7 @@ int packet_start;
     }
   }
 
-  if(ds->eof){
+  if(ds.eof){
     videobuf_code_len=0; // EOF, no next code
     return videobuf_len-packet_start;
   }
@@ -103,7 +103,7 @@ int packet_start;
 }
 
 // return: next packet code
-int skip_video_packet(Demuxer_Stream *ds){
+int skip_video_packet(Demuxer_Stream& ds){
 
   // SYNC STREAM
 //  if(!sync_video_packet(ds)) return 0; // cannot sync (EOF)

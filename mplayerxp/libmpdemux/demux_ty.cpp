@@ -809,9 +809,9 @@ static void ty_seek( Demuxer *demuxer, const seek_args_t* seeka )
 	   continue;
 	}
      }
-     i = sync_video_packet( d_video );
+     i = sync_video_packet(*d_video);
      if( i == 0x1B3 || i == 0x1B8 ) break; // found it!
-     if( !i || !skip_video_packet( d_video ) ) break; // EOF?
+     if( !i || !skip_video_packet(*d_video) ) break; // EOF?
    }
    if ( mp_conf.subcc_enabled )
       ty_ClearOSD( 0 );
