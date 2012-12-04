@@ -248,41 +248,45 @@ while(!stream_eof(demuxer->stream)){
 	MSG_V("\n");
 	// extract the title
 	if( apriv->contenth.title_size!=0 ) {
-	  string=(char*)mp_malloc(apriv->contenth.title_size);
-	  stream_read(demuxer->stream, string, apriv->contenth.title_size);
-	  pack_asf_string(string, apriv->contenth.title_size);
-	  demux_info_add(demuxer, INFOT_NAME, string);
+	    string=new char[apriv->contenth.title_size];
+	    stream_read(demuxer->stream, string, apriv->contenth.title_size);
+	    pack_asf_string(string, apriv->contenth.title_size);
+	    demuxer->info().add(INFOT_NAME, string);
+	    delete string;
 	}
 	// extract the author
 	if( apriv->contenth.author_size!=0 ) {
-	  string=(char*)mp_realloc((any_t*)string, apriv->contenth.author_size);
-	  stream_read(demuxer->stream, string, apriv->contenth.author_size);
-	  pack_asf_string(string, apriv->contenth.author_size);
-	  demux_info_add(demuxer, INFOT_AUTHOR, string);
+	    string=new char [apriv->contenth.author_size];
+	    stream_read(demuxer->stream, string, apriv->contenth.author_size);
+	    pack_asf_string(string, apriv->contenth.author_size);
+	    demuxer->info().add(INFOT_AUTHOR, string);
+	    delete string;
 	}
 	// extract the copyright
 	if( apriv->contenth.copyright_size!=0 ) {
-	  string=(char*)mp_realloc((any_t*)string, apriv->contenth.copyright_size);
-	  stream_read(demuxer->stream, string, apriv->contenth.copyright_size);
-	  pack_asf_string(string, apriv->contenth.copyright_size);
-	  demux_info_add(demuxer, INFOT_COPYRIGHT, string);
+	    string=new char [apriv->contenth.copyright_size];
+	    stream_read(demuxer->stream, string, apriv->contenth.copyright_size);
+	    pack_asf_string(string, apriv->contenth.copyright_size);
+	    demuxer->info().add(INFOT_COPYRIGHT, string);
+	    delete string;
 	}
 	// extract the comment
 	if( apriv->contenth.comment_size!=0 ) {
-	  string=(char*)mp_realloc((any_t*)string, apriv->contenth.comment_size);
-	  stream_read(demuxer->stream, string, apriv->contenth.comment_size);
-	  pack_asf_string(string, apriv->contenth.comment_size);
-	  demux_info_add(demuxer, INFOT_COMMENTS, string);
+	    string=new char [apriv->contenth.comment_size];
+	    stream_read(demuxer->stream, string, apriv->contenth.comment_size);
+	    pack_asf_string(string, apriv->contenth.comment_size);
+	    demuxer->info().add(INFOT_COMMENTS, string);
+	    delete string;
 	}
 	// extract the rating
 	if( apriv->contenth.rating_size!=0 ) {
-	  string=(char*)mp_realloc((any_t*)string, apriv->contenth.rating_size);
-	  stream_read(demuxer->stream, string, apriv->contenth.rating_size);
-	  pack_asf_string(string, apriv->contenth.comment_size);
-	  demux_info_add(demuxer, INFOT_RATING, string);
+	    string=new char [apriv->contenth.rating_size];
+	    stream_read(demuxer->stream, string, apriv->contenth.rating_size);
+	    pack_asf_string(string, apriv->contenth.comment_size);
+	    demuxer->info().add(INFOT_RATING, string);
+	    delete string;
 	}
 	MSG_V("\n");
-	delete string;
       break;
     }
     case ASF_GUID_PREFIX_stream_group: {

@@ -885,7 +885,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    buf = new char [len+1];
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
-		    demux_info_add(demuxer, INFOT_NAME, buf);
+		    demuxer->info().add( INFOT_NAME, buf);
 		    delete buf;
 		}
 
@@ -895,7 +895,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    buf = new char [len+1];
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
-		    demux_info_add(demuxer, INFOT_AUTHOR, buf);
+		    demuxer->info().add( INFOT_AUTHOR, buf);
 		    delete buf;
 		}
 
@@ -905,7 +905,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    buf = new char [len+1];
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
-		    demux_info_add(demuxer, INFOT_COPYRIGHT, buf);
+		    demuxer->info().add( INFOT_COPYRIGHT, buf);
 		    delete buf;
 		}
 
@@ -915,7 +915,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    buf = new char [len+1];
 		    stream_read(demuxer->stream, buf, len);
 		    buf[len] = 0;
-		    demux_info_add(demuxer, INFOT_COMMENTS, buf);
+		    demuxer->info().add( INFOT_COMMENTS, buf);
 		    delete buf;
 		}
 		break;
@@ -944,13 +944,13 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		tmp=stream_read_char(demuxer->stream);
 		stream_read(demuxer->stream,tmps,tmp);
 		tmps[tmp]=0;
-		if(!demux_info_get(demuxer, INFOT_DESCRIPTION))
-		    demux_info_add(demuxer, INFOT_DESCRIPTION, tmps);
+		if(!demuxer->info().get(INFOT_DESCRIPTION))
+		    demuxer->info().add( INFOT_DESCRIPTION, tmps);
 		tmp=stream_read_char(demuxer->stream);
 		stream_read(demuxer->stream,tmps,tmp);
 		tmps[tmp]=0;
-		if(!demux_info_get(demuxer, INFOT_MIME))
-		    demux_info_add(demuxer, INFOT_MIME, tmps);
+		if(!demuxer->info().get(INFOT_MIME))
+		    demuxer->info().add( INFOT_MIME, tmps);
 
 		/* Type specific header */
 		codec_data_size = stream_read_dword(demuxer->stream);
@@ -1002,21 +1002,21 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		      buft = new char [i+1];
 		      stream_read(demuxer->stream, buft, i);
 		      buft[i] = 0;
-		      demux_info_add(demuxer, INFOT_NAME, buft);
+		      demuxer->info().add( INFOT_NAME, buft);
 		      delete buft;
 		    }
 		    if ((i = stream_read_char(demuxer->stream)) != 0) {
 		      buft = new char [i+1];
 		      stream_read(demuxer->stream, buft, i);
 		      buft[i] = 0;
-		      demux_info_add(demuxer, INFOT_AUTHOR, buft);
+		      demuxer->info().add( INFOT_AUTHOR, buft);
 		      delete buft;
 		    }
 		    if ((i = stream_read_char(demuxer->stream)) != 0) {
 		      buft = new char [i+1];
 		      stream_read(demuxer->stream, buft, i);
 		      buft[i] = 0;
-		      demux_info_add(demuxer, INFOT_COPYRIGHT, buft);
+		      demuxer->info().add( INFOT_COPYRIGHT, buft);
 		      delete buft;
 		    }
 		    if ((i = stream_read_char(demuxer->stream)) != 0)

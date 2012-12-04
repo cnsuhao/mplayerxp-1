@@ -126,25 +126,25 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
 	    if(sid==mmioFOURCC('N','A','M','E'))
 	    {
 		memcpy(hi->Name,sdata,std::min(unsigned(BUFSIZ),slen));
-		demux_info_add(demuxer,INFOT_NAME,sdata);
+		demuxer->info().add(INFOT_NAME,sdata);
 	    }
 	    else
 	    if(sid==mmioFOURCC('A','U','T','H'))
 	    {
 		memcpy(hi->Auth,sdata,std::min(unsigned(BUFSIZ),slen));
-		demux_info_add(demuxer,INFOT_AUTHOR,sdata);
+		demuxer->info().add(INFOT_AUTHOR,sdata);
 	    }
 	    else
 	    if(sid==mmioFOURCC('C','O','M','T'))
 	    {
 		memcpy(hi->Comt,sdata,std::min(unsigned(BUFSIZ),slen));
-		demux_info_add(demuxer,INFOT_COMMENTS,sdata);
+		demuxer->info().add(INFOT_COMMENTS,sdata);
 	    }
 	    else
 	    if(sid==mmioFOURCC('(','c',')',' '))
 	    {
 		memcpy(hi->Cpyr,sdata,std::min(unsigned(BUFSIZ),slen));
-		demux_info_add(demuxer,INFOT_COPYRIGHT,sdata);
+		demuxer->info().add(INFOT_COPYRIGHT,sdata);
 	    }
 	    else
 	    if(sid==mmioFOURCC('F','I','L','E'))
@@ -152,13 +152,13 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
 		memcpy(hi->File,sdata,std::min(unsigned(BUFSIZ),slen));
 	    }
 	    else
-	    if(sid==mmioFOURCC('A','L','B','M')) demux_info_add(demuxer,INFOT_ALBUM,sdata);
+	    if(sid==mmioFOURCC('A','L','B','M')) demuxer->info().add(INFOT_ALBUM,sdata);
 	    else
-	    if(sid==mmioFOURCC('Y','E','A','R')) demux_info_add(demuxer,INFOT_DATE,sdata);
+	    if(sid==mmioFOURCC('Y','E','A','R')) demuxer->info().add(INFOT_DATE,sdata);
 	    else
-	    if(sid==mmioFOURCC('T','R','A','C')) demux_info_add(demuxer,INFOT_TRACK,sdata);
+	    if(sid==mmioFOURCC('T','R','A','C')) demuxer->info().add(INFOT_TRACK,sdata);
 	    else
-	    if(sid==mmioFOURCC('E','N','C','D')) demux_info_add(demuxer,INFOT_ENCODER,sdata);
+	    if(sid==mmioFOURCC('E','N','C','D')) demuxer->info().add(INFOT_ENCODER,sdata);
 	    else
 	    MSG_V("Unhandled subchunk '%c%c%c%c'='%s'\n",((char *)&sid)[0],((char *)&sid)[1],((char *)&sid)[2],((char *)&sid)[3],sdata);
 	    /* other stuff is unrecognized due untranslatable japan's idiomatics */

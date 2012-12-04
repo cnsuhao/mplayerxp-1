@@ -15,8 +15,6 @@ using namespace mpxp;
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
 
-#include "nls/nls.h"
-
 #include "osdep/fastmemcpy.h"
 #include "libvo/sub.h"
 #include "libao2/afmt.h"
@@ -92,10 +90,6 @@ static const demuxer_driver_t *ddrivers[] =
     NULL
 };
 
-struct demuxer_info_t {
-    char *id[INFOT_MAX];
-};
-
 void libmpdemux_register_options(m_config_t* cfg)
 {
     unsigned i;
@@ -120,11 +114,17 @@ demuxer_t* new_demuxer(stream_t *stream,int a_id,int v_id,int s_id){
   d->audio=new(zeromem) Demuxer_Stream(d,a_id);
   d->video=new(zeromem) Demuxer_Stream(d,v_id);
   d->sub=new(zeromem) Demuxer_Stream(d,s_id);
-  d->info=new(zeromem) demuxer_info_t;
   stream_reset(stream);
   stream_seek(stream,stream->start_pos);
   return d;
 }
+
+demuxer_t::demuxer_t()
+	:_info(new(zeromem) Demuxer_Info)
+{
+}
+
+demuxer_t::~demuxer_t() {}
 
 sh_audio_t *get_sh_audio(demuxer_t *demuxer, int id)
 {
@@ -216,7 +216,6 @@ void free_demuxer(demuxer_t *demuxer){
 	delete demuxer->audio; demuxer->audio=NULL;
 	delete demuxer->video; demuxer->video=NULL;
 	delete demuxer->sub; demuxer->sub=NULL;
-	demux_info_free(demuxer);
 	delete demuxer;
     }
 }
@@ -320,10 +319,10 @@ force_driver:
     demuxer=new_demux;
     MSG_OK("Using: %s\n",demuxer->driver->name);
     for(i=0;i<sizeof(stream_txt_ids)/sizeof(struct s_stream_txt_ids);i++)
-    if(!demux_info_get(demuxer,stream_txt_ids[i].demuxer_id)) {
+    if(!demuxer->info().get(stream_txt_ids[i].demuxer_id)) {
 	char stream_name[256];
 	if(stream_control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
-		demux_info_add(demuxer,stream_txt_ids[i].demuxer_id,stream_name);
+		demuxer->info().add(stream_txt_ids[i].demuxer_id,stream_name);
 	}
     }
     stream->demuxer=demuxer;
@@ -410,72 +409,6 @@ int demux_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     else MSG_WARN("Demuxer seek error\n");
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return 1;
-}
-
-static const char *info_names[INFOT_MAX] =
-{
-    "Author",
-    "Name",
-    "Subject",
-    "Copyright",
-    "Description",
-    "Album",
-    "Date",
-    "Track",
-    "Genre",
-    "Encoder",
-    "SrcMedia",
-    "WWW",
-    "Mail",
-    "Rating",
-    "Comments",
-    "Mime"
-};
-
-int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param)
-{
-    if(!opt || opt > INFOT_MAX)
-    {
-	MSG_WARN("Unknown info type %u\n",opt);
-	return 0;
-    }
-    opt--;
-    check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    if(demuxer->info->id[opt])
-    {
-	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],demuxer->info->id[opt]);
-	delete demuxer->info->id[opt];
-    }
-    demuxer->info->id[opt]=nls_recode2screen_cp(sub_data.cp,param,strlen(param));
-    return 1;
-}
-
-int demux_info_print(const demuxer_t *demuxer,const char *filename)
-{
-    unsigned i;
-    MSG_HINT(" CLIP INFO (%s):\n",filename);
-    for(i=0;i<INFOT_MAX;i++)
-	if(demuxer->info->id[i])
-	    MSG_HINT("   %s: %s\n",info_names[i],demuxer->info->id[i]);
-    return 0;
-}
-
-void demux_info_free(demuxer_t* demuxer)
-{
-    unsigned i;
-    if(demuxer->info)
-    {
-	demuxer_info_t*dinfo = demuxer->info;
-	for(i=0;i<INFOT_MAX;i++)
-	    if(dinfo->id[i])
-		delete dinfo->id[i];
-	delete dinfo;
-    }
-}
-
-const char* demux_info_get(const demuxer_t *demuxer, unsigned opt) {
-    if(!opt || opt > INFOT_MAX) return NULL;
-    return demuxer->info->id[opt-1];
 }
 
 /******************* Options stuff **********************/

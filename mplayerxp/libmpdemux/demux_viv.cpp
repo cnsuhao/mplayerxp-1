@@ -242,22 +242,22 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 	/* only for displaying some informations about movie*/
 	if (!strcmp(opt, "Title"))
 	{
-	    demux_info_add(demux, INFOT_NAME, param);
+	    demux->info().add( INFOT_NAME, param);
 	    priv->title = mp_strdup(param);
 	}
 	if (!strcmp(opt, "Author"))
 	{
-	    demux_info_add(demux, INFOT_AUTHOR, param);
+	    demux->info().add( INFOT_AUTHOR, param);
 	    priv->author = mp_strdup(param);
 	}
 	if (!strcmp(opt, "Copyright"))
 	{
-	    demux_info_add(demux, INFOT_COPYRIGHT, param);
+	    demux->info().add( INFOT_COPYRIGHT, param);
 	    priv->copyright = mp_strdup(param);
 	}
 	if (!strcmp(opt, "Producer"))
 	{
-	    demux_info_add(demux, INFOT_ENCODER, param);
+	    demux->info().add( INFOT_ENCODER, param);
 	    priv->producer = mp_strdup(param);
 	}
 

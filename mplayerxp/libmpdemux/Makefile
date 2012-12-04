@@ -49,7 +49,7 @@ endif
 CXXSRCS += mux_mpxp64.cpp mux_raw.cpp
 #SRCS+= mux_lavf.c
 
-CXXSRCS+= demuxer.cpp demuxer_packet.cpp demuxer_stream.cpp demuxer_r.cpp
+CXXSRCS+= demuxer.cpp demuxer_info.cpp demuxer_packet.cpp demuxer_stream.cpp demuxer_r.cpp
 CXXSRCS+= muxer.cpp mpdemux.cpp
 
 OBJS	= $(SRCS:.c=.o)

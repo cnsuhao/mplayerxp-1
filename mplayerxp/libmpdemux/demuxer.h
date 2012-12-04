@@ -5,6 +5,7 @@
 #include "libmpconf/cfgparser.h"
 #include "demuxer_packet.h"
 #include "demuxer_stream.h"
+#include "demuxer_info.h"
 
 #define MAX_PACK_BYTES (0x1024*0x1024*4)
 enum {
@@ -69,12 +70,13 @@ enum {
     DEMUX_PIN=RND_NUMBER2+RND_CHAR2
 };
 
-struct demuxer_info_t;
 struct demuxer_driver_t;
 struct demuxer_t : public Opaque {
     public:
-	demuxer_t() {}
-	virtual ~demuxer_t() {}
+	demuxer_t();
+	virtual ~demuxer_t();
+
+	Demuxer_Info&	info() const { return *_info; }
 
 	char		antiviral_hole[RND_CHAR3];
 	unsigned	pin;		/**< personal identification number */
@@ -94,9 +96,10 @@ struct demuxer_t : public Opaque {
 	int		synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
 
 	Opaque*		priv;		/**< private data of demuxer's driver.*/
-	demuxer_info_t*	info;		/**< human-readable info from stream/movie (like movie name,author,duration)*/
 	const demuxer_driver_t* driver;	/**< driver associated with this demuxer */
-} __attribute__ ((packed));
+    private:
+	LocalPtr<Demuxer_Info>	_info;	/**< human-readable info from stream/movie (like movie name,author,duration)*/
+};
 
 enum {
     DEMUX_SEEK_CUR	=0x00,
@@ -129,30 +132,6 @@ demuxer_t*  new_demuxers_demuxer(demuxer_t* vd, demuxer_t* ad, demuxer_t* sd);
 
 /* AVI demuxer params: */
 extern int index_mode;  /**< -1=untouched  0=don't use index  1=use (geneate) index */
-enum {
-    INFOT_NULL		=0,
-    INFOT_AUTHOR	=1,
-    INFOT_NAME		=2,
-    INFOT_SUBJECT	=3,
-    INFOT_COPYRIGHT	=4,
-    INFOT_DESCRIPTION	=5,
-    INFOT_ALBUM		=6,
-    INFOT_DATE		=7,
-    INFOT_TRACK		=8,
-    INFOT_GENRE		=9,
-    INFOT_ENCODER	=10,
-    INFOT_SOURCE_MEDIA	=11,
-    INFOT_WWW		=12,
-    INFOT_MAIL		=13,
-    INFOT_RATING	=14,
-    INFOT_COMMENTS	=15,
-    INFOT_MIME		=16,
-    INFOT_MAX		=16
-};
-int demux_info_add(demuxer_t *demuxer, unsigned opt, const char *param);
-const char* demux_info_get(const demuxer_t *demuxer, unsigned opt);
-int demux_info_print(const demuxer_t *demuxer,const char *filename);
-void demux_info_free(demuxer_t *demuxer);
 
 extern int demuxer_switch_audio(const demuxer_t *, int id);
 extern int demuxer_switch_video(const demuxer_t *, int id);

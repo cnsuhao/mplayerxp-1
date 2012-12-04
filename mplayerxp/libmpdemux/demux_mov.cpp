@@ -1410,17 +1410,17 @@ quit_vorbis_block:
 			switch(udta_id)
 			{
 			    case MOV_FOURCC(0xa9,'a','u','t'):
-				demux_info_add(demuxer, INFOT_AUTHOR, &text[2]);
+				demuxer->info().add( INFOT_AUTHOR, &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'c','p','y'):
-				demux_info_add(demuxer, INFOT_COPYRIGHT, &text[2]);
+				demuxer->info().add( INFOT_COPYRIGHT, &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'i','n','f'):
-				demux_info_add(demuxer, INFOT_DESCRIPTION, &text[2]);
+				demuxer->info().add( INFOT_DESCRIPTION, &text[2]);
 				break;
 			    case MOV_FOURCC('n','a','m','e'):
 			    case MOV_FOURCC(0xa9,'n','a','m'):
-				demux_info_add(demuxer, INFOT_NAME, &text[2]);
+				demuxer->info().add( INFOT_NAME, &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'A','R','T'):
 				MSG_V(" Artist: %s\n", &text[2]);
@@ -1429,16 +1429,16 @@ quit_vorbis_block:
 				MSG_V(" Director: %s\n", &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'c','m','t'):
-				demux_info_add(demuxer, INFOT_COMMENTS, &text[2]);
+				demuxer->info().add( INFOT_COMMENTS, &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'r','e','q'):
 				MSG_V(" Requirements: %s\n", &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'s','w','r'):
-				demux_info_add(demuxer, INFOT_ENCODER, &text[2]);
+				demuxer->info().add( INFOT_ENCODER, &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'d','a','y'):
-				demux_info_add(demuxer, INFOT_DATE, &text[2]);
+				demuxer->info().add( INFOT_DATE, &text[2]);
 				break;
 			    case MOV_FOURCC(0xa9,'f','m','t'):
 				MSG_V(" Format: %s\n", &text[2]);

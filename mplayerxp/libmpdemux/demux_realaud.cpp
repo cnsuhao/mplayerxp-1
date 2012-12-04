@@ -167,28 +167,28 @@ static demuxer_t * realaud_open(demuxer_t* demuxer)
 		buf = new char [i+1];
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
-		demux_info_add(demuxer, INFOT_NAME, buf);
+		demuxer->info().add( INFOT_NAME, buf);
 		delete buf;
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
 		buf = new char [i+1];
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
-		demux_info_add(demuxer, INFOT_AUTHOR, buf);
+		demuxer->info().add( INFOT_AUTHOR, buf);
 		delete buf;
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
 		buf = new char [i+1];
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
-		demux_info_add(demuxer, INFOT_COPYRIGHT, buf);
+		demuxer->info().add( INFOT_COPYRIGHT, buf);
 		delete buf;
 	}
 	if ((i = stream_read_char(demuxer->stream)) != 0) {
 		buf = new char [i+1];
 		stream_read(demuxer->stream, buf, i);
 		buf[i] = 0;
-		demux_info_add(demuxer, INFOT_COMMENTS, buf);
+		demuxer->info().add( INFOT_COMMENTS, buf);
 		delete buf;
 	}
 

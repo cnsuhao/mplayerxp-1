@@ -210,37 +210,37 @@ static void mpxpav64_put_fcnt(muxer_t *muxer,demuxer_t*dinfo)
     const char *sname;
     fpos=mpxpav64_open_header32(f,"FCNT");
 #ifdef USE_ICONV
-    if((sname=demux_info_get(dinfo,INFOT_AUTHOR))!=NULL)
+    if((sname=dinfo->info().get(INFOT_AUTHOR))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"AUTH",sname);
-    if((sname=demux_info_get(dinfo,INFOT_NAME))!=NULL)
+    if((sname=dinfo->info().get(INFOT_NAME))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"NAME",sname);
-    if((sname=demux_info_get(dinfo,INFOT_SUBJECT))!=NULL)
+    if((sname=dinfo->info().get(INFOT_SUBJECT))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"SUBJ",sname);
-    if((sname=demux_info_get(dinfo,INFOT_COPYRIGHT))!=NULL)
+    if((sname=dinfo->info().get(INFOT_COPYRIGHT))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"CPYR",sname);
-    if((sname=demux_info_get(dinfo,INFOT_DESCRIPTION))!=NULL)
+    if((sname=dinfo->info().get(INFOT_DESCRIPTION))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"DESC",sname);
-    if((sname=demux_info_get(dinfo,INFOT_ALBUM))!=NULL)
+    if((sname=dinfo->info().get(INFOT_ALBUM))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"ALBM",sname);
-    if((sname=demux_info_get(dinfo,INFOT_DATE))!=NULL)
+    if((sname=dinfo->info().get(INFOT_DATE))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"CRDT",sname);
-    if((sname=demux_info_get(dinfo,INFOT_TRACK))!=NULL)
+    if((sname=dinfo->info().get(INFOT_TRACK))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"TRCK",sname);
-    if((sname=demux_info_get(dinfo,INFOT_GENRE))!=NULL)
+    if((sname=dinfo->info().get(INFOT_GENRE))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"GENR",sname);
-    if((sname=demux_info_get(dinfo,INFOT_ENCODER))!=NULL)
+    if((sname=dinfo->info().get(INFOT_ENCODER))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"SOFT",sname);
-    if((sname=demux_info_get(dinfo,INFOT_SOURCE_MEDIA))!=NULL)
+    if((sname=dinfo->info().get(INFOT_SOURCE_MEDIA))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"SRCM",sname);
-    if((sname=demux_info_get(dinfo,INFOT_WWW))!=NULL)
+    if((sname=dinfo->info().get(INFOT_WWW))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"IURL",sname);
-    if((sname=demux_info_get(dinfo,INFOT_MAIL))!=NULL)
+    if((sname=dinfo->info().get(INFOT_MAIL))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"MAIL",sname);
-    if((sname=demux_info_get(dinfo,INFOT_RATING))!=NULL)
+    if((sname=dinfo->info().get(INFOT_RATING))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"RATE",sname);
-    if((sname=demux_info_get(dinfo,INFOT_COMMENTS))!=NULL)
+    if((sname=dinfo->info().get(INFOT_COMMENTS))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"CMTS",sname);
-    if((sname=demux_info_get(dinfo,INFOT_MIME))!=NULL)
+    if((sname=dinfo->info().get(INFOT_MIME))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"MIME",sname);
 #endif
     mpxpav64_close_header32(f,fpos);

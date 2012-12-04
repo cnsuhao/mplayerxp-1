@@ -262,14 +262,14 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 
     AVDictionaryEntry *tag = NULL;
     while((tag = av_dict_get(avfc->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
-	if(strcmp(tag->key,"title")==0)    demux_info_add(demuxer,INFOT_NAME,tag->value);
-	else if(strcmp(tag->key,"author")==0)demux_info_add(demuxer,INFOT_AUTHOR,tag->value);
-	else if(strcmp(tag->key,"copyright")==0)demux_info_add(demuxer,INFOT_COPYRIGHT,tag->value);
-	else if(strcmp(tag->key,"comment")==0) demux_info_add(demuxer,INFOT_COMMENTS,tag->value);
-	else if(strcmp(tag->key,"album")==0) demux_info_add(demuxer,INFOT_ALBUM,tag->value);
-	else if(strcmp(tag->key,"genre")==0) demux_info_add(demuxer,INFOT_GENRE,tag->value);
-	else if(strcmp(tag->key,"track")==0) demux_info_add(demuxer,INFOT_TRACK,tag->value);
-	else if(strcmp(tag->key,"date")==0) demux_info_add(demuxer,INFOT_DATE,tag->value);
+	if(strcmp(tag->key,"title")==0)    demuxer->info().add(INFOT_NAME,tag->value);
+	else if(strcmp(tag->key,"author")==0)demuxer->info().add(INFOT_AUTHOR,tag->value);
+	else if(strcmp(tag->key,"copyright")==0)demuxer->info().add(INFOT_COPYRIGHT,tag->value);
+	else if(strcmp(tag->key,"comment")==0) demuxer->info().add(INFOT_COMMENTS,tag->value);
+	else if(strcmp(tag->key,"album")==0) demuxer->info().add(INFOT_ALBUM,tag->value);
+	else if(strcmp(tag->key,"genre")==0) demuxer->info().add(INFOT_GENRE,tag->value);
+	else if(strcmp(tag->key,"track")==0) demuxer->info().add(INFOT_TRACK,tag->value);
+	else if(strcmp(tag->key,"date")==0) demuxer->info().add(INFOT_DATE,tag->value);
     }
 
     for(j=0; j<avfc->nb_streams; j++){

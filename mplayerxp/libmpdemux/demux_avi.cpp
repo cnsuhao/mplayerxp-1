@@ -477,7 +477,7 @@ while(1){
       chunksize-=len;
       buf[len]=0;
       MSG_V("%-10s: %s\n",hdr,buf);
-      if(infot!=-1) demux_info_add(demuxer, infot, buf);
+      if(infot!=-1) demuxer->info().add(infot, buf);
       else	    MSG_V("   %s: %s\n",hdr,buf);
     }
   }

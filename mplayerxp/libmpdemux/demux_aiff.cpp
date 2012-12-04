@@ -139,7 +139,7 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
 	char buf[chunk_size+1];
 	stream_read(s,buf,chunk_size);
 	buf[chunk_size]=0;
-	demux_info_add(demuxer, INFOT_NAME, buf);
+	demuxer->info().add(INFOT_NAME, buf);
 	if(priv->verc && (chunk_size&1)) stream_read_char(s);
     }
     else
@@ -148,7 +148,7 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
 	char buf[chunk_size+1];
 	stream_read(s,buf,chunk_size);
 	buf[chunk_size]=0;
-	demux_info_add(demuxer, INFOT_AUTHOR, buf);
+	demuxer->info().add(INFOT_AUTHOR, buf);
 	if(priv->verc && (chunk_size&1)) stream_read_char(s);
     }
     else
@@ -157,7 +157,7 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
 	char buf[chunk_size+1];
 	stream_read(s,buf,chunk_size);
 	buf[chunk_size]=0;
-	demux_info_add(demuxer, INFOT_COPYRIGHT, buf);
+	demuxer->info().add(INFOT_COPYRIGHT, buf);
 	if(priv->verc && (chunk_size&1)) stream_read_char(s);
     }
     else
@@ -166,7 +166,7 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
 	char buf[chunk_size+1];
 	stream_read(s,buf,chunk_size);
 	buf[chunk_size]=0;
-	demux_info_add(demuxer, INFOT_DESCRIPTION, buf);
+	demuxer->info().add(INFOT_DESCRIPTION, buf);
 	if(priv->verc && (chunk_size&1)) stream_read_char(s);
     }
     else

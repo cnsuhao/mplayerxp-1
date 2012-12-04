@@ -457,26 +457,26 @@ static int read_mp3v1_tags(demuxer_t *demuxer,uint8_t *hdr, off_t pos )
 	demuxer->movi_end = stream_tell(s)-3;
 	stream_read(s,buf,30);
 	buf[30] = '\0';
-	demux_info_add(demuxer,INFOT_NAME,buf);
+	demuxer->info().add(INFOT_NAME,buf);
 	stream_read(s,buf,30);
 	buf[30] = '\0';
-	demux_info_add(demuxer,INFOT_AUTHOR,buf);
+	demuxer->info().add(INFOT_AUTHOR,buf);
 	stream_read(s,buf,30);
 	buf[30] = '\0';
-	demux_info_add(demuxer,INFOT_ALBUM,buf);
+	demuxer->info().add(INFOT_ALBUM,buf);
 	stream_read(s,buf,4);
 	buf[4] = '\0';
-	demux_info_add(demuxer,INFOT_DATE,buf);
+	demuxer->info().add(INFOT_DATE,buf);
 	stream_read(s,buf,30);
 	buf[30] = '\0';
-	demux_info_add(demuxer,INFOT_COMMENTS,buf);
+	demuxer->info().add(INFOT_COMMENTS,buf);
 	if(buf[28] == 0 && buf[29] != 0) {
 	  uint8_t trk = (uint8_t)buf[29];
 	  sprintf(buf,"%d",trk);
-	  demux_info_add(demuxer,INFOT_TRACK,buf);
+	  demuxer->info().add(INFOT_TRACK,buf);
 	}
 	g = stream_read_char(s);
-	demux_info_add(demuxer,INFOT_GENRE,genres[g]);
+	demuxer->info().add(INFOT_GENRE,genres[g]);
       }
     }
     return 1;
@@ -567,21 +567,21 @@ static int read_id3v22_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
 	data[std::min(len,unsigned(4096))]=0;
 	switch(id)
 	{
-	    case mmioFOURCC(0,'T','T','1'): if(len>1) demux_info_add(demuxer,INFOT_DESCRIPTION,data+1); break;
-	    case mmioFOURCC(0,'T','T','2'): if(len>1) demux_info_add(demuxer,INFOT_NAME,data+1); break;
-	    case mmioFOURCC(0,'T','T','3'): if(len>1) demux_info_add(demuxer,INFOT_SUBJECT,data+1); break;
-	    case mmioFOURCC(0,'C','O','M'): if(len>4) demux_info_add(demuxer,INFOT_COMMENTS,data+4); break;
-	    case mmioFOURCC(0,'T','C','O'): if(len>1) demux_info_add(demuxer,INFOT_GENRE,genres[data[1]]); break;
-	    case mmioFOURCC(0,'T','C','R'): if(len>1) demux_info_add(demuxer,INFOT_COPYRIGHT,genres[data[1]]); break;
-	    case mmioFOURCC(0,'T','P','1'): if(len>1) demux_info_add(demuxer,INFOT_AUTHOR,data+1); break;
-	    case mmioFOURCC(0,'T','A','L'): if(len>1) demux_info_add(demuxer,INFOT_ALBUM,data+1); break;
-	    case mmioFOURCC(0,'T','R','K'): if(len>1) demux_info_add(demuxer,INFOT_TRACK,data+1); break;
-	    case mmioFOURCC(0,'T','Y','E'): if(len>1) demux_info_add(demuxer,INFOT_DATE,data+1); break;
-	    case mmioFOURCC(0,'T','E','N'): if(len>1) demux_info_add(demuxer,INFOT_ENCODER,data+1); break;
-	    case mmioFOURCC(0,'T','M','T'): if(len>1) demux_info_add(demuxer,INFOT_SOURCE_MEDIA,data+1); break;
-	    case mmioFOURCC(0,'T','F','T'): if(len>1) demux_info_add(demuxer,INFOT_MIME,data+1); break;
-	    case mmioFOURCC(0,'P','O','P'): if(len>1) demux_info_add(demuxer,INFOT_RATING,data+1); break;
-	    case mmioFOURCC(0,'W','X','X'): if(len>1) demux_info_add(demuxer,INFOT_WWW,data+1); break;
+	    case mmioFOURCC(0,'T','T','1'): if(len>1) demuxer->info().add(INFOT_DESCRIPTION,data+1); break;
+	    case mmioFOURCC(0,'T','T','2'): if(len>1) demuxer->info().add(INFOT_NAME,data+1); break;
+	    case mmioFOURCC(0,'T','T','3'): if(len>1) demuxer->info().add(INFOT_SUBJECT,data+1); break;
+	    case mmioFOURCC(0,'C','O','M'): if(len>4) demuxer->info().add(INFOT_COMMENTS,data+4); break;
+	    case mmioFOURCC(0,'T','C','O'): if(len>1) demuxer->info().add(INFOT_GENRE,genres[data[1]]); break;
+	    case mmioFOURCC(0,'T','C','R'): if(len>1) demuxer->info().add(INFOT_COPYRIGHT,genres[data[1]]); break;
+	    case mmioFOURCC(0,'T','P','1'): if(len>1) demuxer->info().add(INFOT_AUTHOR,data+1); break;
+	    case mmioFOURCC(0,'T','A','L'): if(len>1) demuxer->info().add(INFOT_ALBUM,data+1); break;
+	    case mmioFOURCC(0,'T','R','K'): if(len>1) demuxer->info().add(INFOT_TRACK,data+1); break;
+	    case mmioFOURCC(0,'T','Y','E'): if(len>1) demuxer->info().add(INFOT_DATE,data+1); break;
+	    case mmioFOURCC(0,'T','E','N'): if(len>1) demuxer->info().add(INFOT_ENCODER,data+1); break;
+	    case mmioFOURCC(0,'T','M','T'): if(len>1) demuxer->info().add(INFOT_SOURCE_MEDIA,data+1); break;
+	    case mmioFOURCC(0,'T','F','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
+	    case mmioFOURCC(0,'P','O','P'): if(len>1) demuxer->info().add(INFOT_RATING,data+1); break;
+	    case mmioFOURCC(0,'W','X','X'): if(len>1) demuxer->info().add(INFOT_WWW,data+1); break;
 	    case 0: goto end;
 	    default: MSG_WARN("Unhandled frame: %3s\n",buf); break;
 	}
@@ -640,21 +640,21 @@ static int read_id3v23_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
 	MSG_V("ID3: %4s len %u\n",buf,len);
 	switch(id)
 	{
-	    case mmioFOURCC('T','I','T','1'): if(len>1) demux_info_add(demuxer,INFOT_DESCRIPTION,data+1); break;
-	    case mmioFOURCC('T','I','T','2'): if(len>1) demux_info_add(demuxer,INFOT_NAME,data+1); break;
-	    case mmioFOURCC('T','I','T','3'): if(len>1) demux_info_add(demuxer,INFOT_SUBJECT,data+1); break;
-	    case mmioFOURCC('C','O','M','M'): if(len>4) demux_info_add(demuxer,INFOT_COMMENTS,data+4); break;
-	    case mmioFOURCC('T','C','O','N'): if(len>1) demux_info_add(demuxer,INFOT_GENRE,genres[data[1]]); break;
-	    case mmioFOURCC('T','P','E','1'): if(len>1) demux_info_add(demuxer,INFOT_AUTHOR,data+1); break;
-	    case mmioFOURCC('T','A','L','B'): if(len>1) demux_info_add(demuxer,INFOT_ALBUM,data+1); break;
-	    case mmioFOURCC('T','R','C','K'): if(len>1) demux_info_add(demuxer,INFOT_TRACK,data+1); break;
-	    case mmioFOURCC('T','Y','E','R'): if(len>1) demux_info_add(demuxer,INFOT_DATE,data+1); break;
-	    case mmioFOURCC('T','E','N','C'): if(len>1) demux_info_add(demuxer,INFOT_ENCODER,data+1); break;
-	    case mmioFOURCC('T','C','O','P'): if(len>1) demux_info_add(demuxer,INFOT_COPYRIGHT,data+1); break;
-	    case mmioFOURCC('T','M','E','D'): if(len>1) demux_info_add(demuxer,INFOT_SOURCE_MEDIA,data+1); break;
-	    case mmioFOURCC('T','F','L','T'): if(len>1) demux_info_add(demuxer,INFOT_MIME,data+1); break;
-	    case mmioFOURCC('P','O','P','M'): if(len>1) demux_info_add(demuxer,INFOT_RATING,data+1); break;
-	    case mmioFOURCC('W','X','X','X'): if(len>1) demux_info_add(demuxer,INFOT_WWW,data+1); break;
+	    case mmioFOURCC('T','I','T','1'): if(len>1) demuxer->info().add(INFOT_DESCRIPTION,data+1); break;
+	    case mmioFOURCC('T','I','T','2'): if(len>1) demuxer->info().add(INFOT_NAME,data+1); break;
+	    case mmioFOURCC('T','I','T','3'): if(len>1) demuxer->info().add(INFOT_SUBJECT,data+1); break;
+	    case mmioFOURCC('C','O','M','M'): if(len>4) demuxer->info().add(INFOT_COMMENTS,data+4); break;
+	    case mmioFOURCC('T','C','O','N'): if(len>1) demuxer->info().add(INFOT_GENRE,genres[data[1]]); break;
+	    case mmioFOURCC('T','P','E','1'): if(len>1) demuxer->info().add(INFOT_AUTHOR,data+1); break;
+	    case mmioFOURCC('T','A','L','B'): if(len>1) demuxer->info().add(INFOT_ALBUM,data+1); break;
+	    case mmioFOURCC('T','R','C','K'): if(len>1) demuxer->info().add(INFOT_TRACK,data+1); break;
+	    case mmioFOURCC('T','Y','E','R'): if(len>1) demuxer->info().add(INFOT_DATE,data+1); break;
+	    case mmioFOURCC('T','E','N','C'): if(len>1) demuxer->info().add(INFOT_ENCODER,data+1); break;
+	    case mmioFOURCC('T','C','O','P'): if(len>1) demuxer->info().add(INFOT_COPYRIGHT,data+1); break;
+	    case mmioFOURCC('T','M','E','D'): if(len>1) demuxer->info().add(INFOT_SOURCE_MEDIA,data+1); break;
+	    case mmioFOURCC('T','F','L','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
+	    case mmioFOURCC('P','O','P','M'): if(len>1) demuxer->info().add(INFOT_RATING,data+1); break;
+	    case mmioFOURCC('W','X','X','X'): if(len>1) demuxer->info().add(INFOT_WWW,data+1); break;
 	    case 0: goto end;
 	    default: MSG_V("Unhandled frame: %4s\n",buf); break;
 	}
@@ -717,21 +717,21 @@ static int read_id3v24_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
 	switch(id)
 	{
 	    /* first byte of data indicates encoding type: 0-ASCII (1-2)-UTF16(LE,BE) 3-UTF8 */
-	    case mmioFOURCC('T','I','T','1'): if(len>1) demux_info_add(demuxer,INFOT_DESCRIPTION,data+1); break;
-	    case mmioFOURCC('T','I','T','2'): if(len>1) demux_info_add(demuxer,INFOT_NAME,data+1); break;
-	    case mmioFOURCC('T','I','T','3'): if(len>1) demux_info_add(demuxer,INFOT_SUBJECT,data+1); break;
-	    case mmioFOURCC('C','O','M','M'): if(len>4) demux_info_add(demuxer,INFOT_COMMENTS,data+4); break;
-	    case mmioFOURCC('T','C','O','N'): if(len>1) demux_info_add(demuxer,INFOT_GENRE,genres[data[1]]); break;
-	    case mmioFOURCC('T','P','E','1'): if(len>1) demux_info_add(demuxer,INFOT_AUTHOR,data+1); break;
-	    case mmioFOURCC('T','A','L','B'): if(len>1) demux_info_add(demuxer,INFOT_ALBUM,data+1); break;
-	    case mmioFOURCC('T','R','C','K'): if(len>1) demux_info_add(demuxer,INFOT_TRACK,data+1); break;
-/*!*/	    case mmioFOURCC('T','D','R','C'): if(len>1) demux_info_add(demuxer,INFOT_DATE,data+1); break;
-	    case mmioFOURCC('T','E','N','C'): if(len>1) demux_info_add(demuxer,INFOT_ENCODER,data+1); break;
-	    case mmioFOURCC('T','C','O','P'): if(len>1) demux_info_add(demuxer,INFOT_COPYRIGHT,data+1); break;
-	    case mmioFOURCC('T','M','E','D'): if(len>1) demux_info_add(demuxer,INFOT_SOURCE_MEDIA,data+1); break;
-	    case mmioFOURCC('T','F','L','T'): if(len>1) demux_info_add(demuxer,INFOT_MIME,data+1); break;
-	    case mmioFOURCC('P','O','P','M'): if(len>1) demux_info_add(demuxer,INFOT_RATING,data+1); break;
-	    case mmioFOURCC('W','X','X','X'): if(len>1) demux_info_add(demuxer,INFOT_WWW,data+1); break;
+	    case mmioFOURCC('T','I','T','1'): if(len>1) demuxer->info().add(INFOT_DESCRIPTION,data+1); break;
+	    case mmioFOURCC('T','I','T','2'): if(len>1) demuxer->info().add(INFOT_NAME,data+1); break;
+	    case mmioFOURCC('T','I','T','3'): if(len>1) demuxer->info().add(INFOT_SUBJECT,data+1); break;
+	    case mmioFOURCC('C','O','M','M'): if(len>4) demuxer->info().add(INFOT_COMMENTS,data+4); break;
+	    case mmioFOURCC('T','C','O','N'): if(len>1) demuxer->info().add(INFOT_GENRE,genres[data[1]]); break;
+	    case mmioFOURCC('T','P','E','1'): if(len>1) demuxer->info().add(INFOT_AUTHOR,data+1); break;
+	    case mmioFOURCC('T','A','L','B'): if(len>1) demuxer->info().add(INFOT_ALBUM,data+1); break;
+	    case mmioFOURCC('T','R','C','K'): if(len>1) demuxer->info().add(INFOT_TRACK,data+1); break;
+/*!*/	    case mmioFOURCC('T','D','R','C'): if(len>1) demuxer->info().add(INFOT_DATE,data+1); break;
+	    case mmioFOURCC('T','E','N','C'): if(len>1) demuxer->info().add(INFOT_ENCODER,data+1); break;
+	    case mmioFOURCC('T','C','O','P'): if(len>1) demuxer->info().add(INFOT_COPYRIGHT,data+1); break;
+	    case mmioFOURCC('T','M','E','D'): if(len>1) demuxer->info().add(INFOT_SOURCE_MEDIA,data+1); break;
+	    case mmioFOURCC('T','F','L','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
+	    case mmioFOURCC('P','O','P','M'): if(len>1) demuxer->info().add(INFOT_RATING,data+1); break;
+	    case mmioFOURCC('W','X','X','X'): if(len>1) demuxer->info().add(INFOT_WWW,data+1); break;
 	    case 0: goto end;
 	    default: MSG_V("Unhandled frame: %4s\n",buf); break;
 	}
@@ -1260,7 +1260,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 			stream_read(s,note,rlen);
 			note[rlen]=0;
 			if(slen>rlen) stream_skip(s,slen-rlen);
-			demux_info_add(demuxer,INFOT_NAME,note);
+			demuxer->info().add(INFOT_NAME,note);
 			MSG_DBG2("RIFF 'labl' %u %s accepted\n",slen,note);
 		    }
 		    else
@@ -1271,7 +1271,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 			stream_read(s,note,rlen);
 			note[rlen]=0;
 			if(slen>rlen) stream_skip(s,slen-rlen);
-			demux_info_add(demuxer,INFOT_COMMENTS,note);
+			demuxer->info().add(INFOT_COMMENTS,note);
 			MSG_DBG2("RIFF 'note' %u %s accepted\n",slen,note);
 		    }
 		    else stream_skip(s,subchunk_size);

@@ -2002,7 +2002,7 @@ main:
     if(mp_conf.benchmark) init_benchmark();
 
     /* display clip info */
-    demux_info_print(MPXPSys.demuxer(),filename);
+    MPXPSys.demuxer()->info().print(filename);
 
 // TODO: rewrite test backtrace in .asm
 //    mpxp_test_backtrace();

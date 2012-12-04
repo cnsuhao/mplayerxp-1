@@ -98,6 +98,5 @@ static void demux_close_demuxers(demuxer_t* demuxer) {
   dd_priv_t* priv = static_cast<dd_priv_t*>(demuxer->priv);
 
   delete priv;
-  demux_info_free(demuxer);
   delete demuxer;
 }
