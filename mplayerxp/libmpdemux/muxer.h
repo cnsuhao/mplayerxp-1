@@ -47,7 +47,7 @@ typedef struct {
   // stream specific:
   WAVEFORMATEX *wf;
   BITMAPINFOHEADER *bih;   // in format
-  any_t* ImageDesc; // for quicktime codecs
+  ImageDescription* ImageDesc; // for quicktime codecs
   float aspect;
   // muxer of that stream
   struct muxer_t *muxer;

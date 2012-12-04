@@ -50,25 +50,25 @@ struct mpxpav64_priv_t : public Opaque {
 	unsigned idx_size[MAX_AV_STREAMS];
 };
 
-#define le2me_ImageDesc(h) {						\
-    (h)->idSize = le2me_32((h)->idSize);				\
-    (h)->cType = le2me_32((h)->cType);					\
-    (h)->resvd1 = le2me_32((h)->resvd1);				\
-    (h)->resvd2 = le2me_16((h)->resvd2);				\
-    (h)->dataRefIndex = le2me_16((h)->dataRefIndex);			\
-    (h)->version = le2me_16((h)->version);				\
-    (h)->revisionLevel = le2me_16((h)->revisionLevel);			\
-    (h)->vendor = le2me_32((h)->vendor);				\
-    (h)->temporalQuality = le2me_32((h)->temporalQuality);		\
-    (h)->spatialQuality = le2me_32((h)->spatialQuality);		\
-    (h)->width = le2me_16((h)->width);					\
-    (h)->height = le2me_16((h)->height);				\
-    (h)->vRes = le2me_32((h)->vRes);					\
-    (h)->hRes = le2me_32((h)->hRes);					\
-    (h)->dataSize = le2me_32((h)->dataSize);				\
-    (h)->frameCount = le2me_16((h)->frameCount);			\
-    (h)->depth = le2me_16((h)->depth);					\
-    (h)->clutID = le2me_16((h)->clutID);				\
+static void le2me_ImageDesc(ImageDescription* h) {
+    h->idSize = le2me_32(h->idSize);
+    h->cType = le2me_32(h->cType);
+    h->resvd1 = le2me_32(h->resvd1);
+    h->resvd2 = le2me_16(h->resvd2);
+    h->dataRefIndex = le2me_16(h->dataRefIndex);
+    h->version = le2me_16(h->version);
+    h->revisionLevel = le2me_16(h->revisionLevel);
+    h->vendor = le2me_32(h->vendor);
+    h->temporalQuality = le2me_32(h->temporalQuality);
+    h->spatialQuality = le2me_32(h->spatialQuality);
+    h->width = le2me_16(h->width);
+    h->height = le2me_16(h->height);
+    h->vRes = le2me_32(h->vRes);
+    h->hRes = le2me_32(h->hRes);
+    h->dataSize = le2me_32(h->dataSize);
+    h->frameCount = le2me_16(h->frameCount);
+    h->depth = le2me_16(h->depth);
+    h->clutID = le2me_16(h->clutID);
 }
 
 #define MAX_PACKS 4096
@@ -239,7 +239,7 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
 		}
 		else
 		{
-		    sh->ImageDesc = mp_malloc(fsize);
+		    sh->ImageDesc = (ImageDescription *)mp_malloc(fsize);
 		    stream_read(s,(char *)sh->ImageDesc,fsize);
 		    le2me_ImageDesc(((ImageDescription *)sh->ImageDesc));
 		}

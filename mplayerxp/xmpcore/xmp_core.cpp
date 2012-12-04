@@ -249,7 +249,7 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 	    unsigned asize;
 	    unsigned o_bps;
 	    unsigned min_reserv;
-	    o_bps=sha->afilter_inited?sha->af_bps:sha->o_bps;
+	    o_bps=sha->af_bps;
 	    if(xp_core->video)	asize = std::max(unsigned(3*sha->audio_out_minsize),
 						 unsigned(std::max( unsigned(3*MAX_OUTBURST),
 								    unsigned(o_bps*xp_core->num_v_buffs/shv->fps))))+MIN_BUFFER_RESERV;

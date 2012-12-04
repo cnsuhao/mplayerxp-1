@@ -45,15 +45,29 @@ extern int v_cont;
 extern int v_hue;
 extern int v_saturation;
 
-struct priv_t {
-    sh_video_t* parent;
-    const vd_functions_t* mpvdec;
-    any_t* libinput;
-    vd_private_t* ctx;
+struct decvideo_priv_t : public Opaque {
+    public:
+	decvideo_priv_t();
+	virtual ~decvideo_priv_t();
+
+	sh_video_t*		parent;
+	const vd_functions_t*	mpvdec;
+	any_t*			libinput;
+	vd_private_t*		ctx;
+	vf_stream_t*		vfilter;
+	int			vfilter_inited;
+	put_slice_info_t*	psi;
 };
 
+decvideo_priv_t::decvideo_priv_t()
+		:psi(new(zeromem) put_slice_info_t)
+{
+}
+
+decvideo_priv_t::~decvideo_priv_t() { delete psi; }
+
 MPXP_Rc mpcv_get_quality_max(video_decoder_t *opaque,unsigned *quality){
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     if(priv->mpvdec){
 	MPXP_Rc ret=priv->mpvdec->control_vd(priv->ctx,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
 	if(ret>=MPXP_Ok) return ret;
@@ -62,7 +76,7 @@ MPXP_Rc mpcv_get_quality_max(video_decoder_t *opaque,unsigned *quality){
 }
 
 MPXP_Rc mpcv_set_quality(video_decoder_t *opaque,int quality){
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     if(priv->mpvdec)
 	return priv->mpvdec->control_vd(priv->ctx,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
     return MPXP_False;
@@ -70,9 +84,8 @@ MPXP_Rc mpcv_set_quality(video_decoder_t *opaque,int quality){
 
 MPXP_Rc mpcv_set_colors(video_decoder_t *opaque,const char *item,int value)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
-    sh_video_t* sh_video = priv->parent;
-    vf_stream_t* vs=sh_video->vfilter;
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+    vf_stream_t* vs=priv->vfilter;
     vf_equalizer_t eq;
     eq.item=item;
     eq.value=value*10;
@@ -83,11 +96,11 @@ MPXP_Rc mpcv_set_colors(video_decoder_t *opaque,const char *item,int value)
 }
 
 void mpcv_uninit(video_decoder_t *opaque){
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     sh_video_t* sh_video = priv->parent;
     if(!sh_video->inited) { delete priv; delete opaque; return; }
     MSG_V("uninit video ...\n");
-    if(sh_video->vfilter && sh_video->vfilter_inited==1) vf_uninit(sh_video->vfilter);
+    if(priv->vfilter && priv->vfilter_inited==1) vf_uninit(priv->vfilter);
     priv->mpvdec->uninit(priv->ctx);
     sh_video->inited=0;
     delete priv;
@@ -99,7 +112,7 @@ void mpcv_uninit(video_decoder_t *opaque){
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
 
-static void mpcv_print_codec_info(const priv_t *priv) {
+static void mpcv_print_codec_info(decvideo_priv_t *priv) {
     sh_video_t* sh_video = priv->parent;
     MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
 	,mp_conf.video_codec?"Forcing":"Selected"
@@ -112,12 +125,12 @@ static void mpcv_print_codec_info(const priv_t *priv) {
 	,sh_video->fps);
     // Yeah! We got it!
     sh_video->inited=1;
-    sh_video->vf_flags=vf_query_flags(sh_video->vfilter);
+    priv->psi->vf_flags=vf_query_flags(priv->vfilter);
 #ifdef _OPENMP
     if(mp_conf.gomp) {
 	smp_num_cpus=omp_get_num_procs();
 	use_vf_threads=0;
-	if(((sh_video->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
+	if(((priv->psi->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
 	if(use_vf_threads)
 	    MSG_STATUS("[mpdec] will perform parallel video-filter on %u CPUs\n",smp_num_cpus);
     }
@@ -128,14 +141,14 @@ static void mpcv_print_codec_info(const priv_t *priv) {
 
 video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,any_t* libinput) {
     video_decoder_t* handle=new(zeromem) video_decoder_t;
-    priv_t* priv = new(zeromem) priv_t;
+    decvideo_priv_t* priv = new(zeromem) decvideo_priv_t;
     priv->parent=sh_video;
     priv->libinput=libinput;
     handle->vd_private=priv;
     /* Use lavc's drivers  as last hope */
     priv->mpvdec=vfm_find_driver("lavc");
     if(priv->mpvdec) {
-	if((priv->ctx=priv->mpvdec->preinit(sh_video))==NULL){
+	if((priv->ctx=priv->mpvdec->preinit(sh_video,priv->psi))==NULL){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 	    return NULL;
 	}
@@ -158,19 +171,19 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
     const video_probe_t* vprobe=NULL;
     sh_video->codec=NULL;
     video_decoder_t* handle=new(zeromem) video_decoder_t;
-    priv_t* priv = new(zeromem) priv_t;
+    decvideo_priv_t* priv = new(zeromem) decvideo_priv_t;
     priv->parent=sh_video;
     priv->libinput=libinput;
     handle->vd_private=priv;
 
     MP_UNIT("init_video_filters");
-    if(sh_video->vfilter_inited<=0) {
+    if(priv->vfilter_inited<=0) {
 	vf_conf_t conf;
 	conf.w=sh_video->src_w;
 	conf.h=sh_video->src_h;
 	conf.fourcc=sh_video->fourcc; // may be NULL ???
-	sh_video->vfilter=vf_init(libinput,&conf);
-	sh_video->vfilter_inited=1;
+	priv->vfilter=vf_init(libinput,&conf);
+	priv->vfilter_inited=1;
     }
 
     if(vfm) {
@@ -189,7 +202,7 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 	priv->mpvdec=vfm_find_driver(vfm);
     }
     if(priv->mpvdec) {
-	if((priv->ctx=priv->mpvdec->preinit(sh_video))==NULL){
+	if((priv->ctx=priv->mpvdec->preinit(sh_video,priv->psi))==NULL){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		delete sh_video->codec;
 		sh_video->codec=NULL;
@@ -199,7 +212,7 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 		sh_video->codec=NULL;
 	} else done=1;
     }
-    if(done) vf_showlist(sh_video->vfilter);
+    if(done) vf_showlist(priv->vfilter);
 
 #ifdef ENABLE_WIN32LOADER
     if(sh_video->codec) {
@@ -252,16 +265,15 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 
 void mpcodecs_draw_image(video_decoder_t* opaque,mp_image_t *mpi)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
-    sh_video_t* sh=priv->parent;
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     vf_stream_t* s;
     const unsigned h_step=16;
     unsigned num_slices = mpi->h/h_step;
-    s=sh->vfilter;
+    s=priv->vfilter;
 
   if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
     if(mpi->h%h_step) num_slices++;
-    if(sh->vf_flags&VF_FLAGS_SLICES)
+    if(priv->psi->vf_flags&VF_FLAGS_SLICES)
     {
 	unsigned j,i,y;
 	mp_image_t *ampi[num_slices];
@@ -312,23 +324,22 @@ void mpcodecs_draw_image(video_decoder_t* opaque,mp_image_t *mpi)
 
 static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned idx);
 int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
-    sh_video_t* sh_video = priv->parent;
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     vf_stream_t* s;
     mp_image_t *mpi=NULL;
     unsigned int t;
     unsigned int t2;
     double tt;
 
-    s=sh_video->vfilter;
+    s=priv->vfilter;
 
     t=GetTimer();
     vf_control(s,VFCTRL_START_FRAME,NULL);
 
-    sh_video->active_slices=0;
+    priv->psi->active_slices=0;
     mpi=priv->mpvdec->decode(priv->ctx, frame);
     MSG_DBG2("decvideo: decoding video %u bytes\n",frame->len);
-    while(sh_video->active_slices!=0) yield_timeslice();
+    while(priv->psi->active_slices!=0) yield_timeslice();
 /* ------------------------ frame decoded. -------------------- */
 
     if(!mpi) return 0; // error / skipped frame
@@ -362,7 +373,7 @@ int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
 
 void mpcv_resync_stream(video_decoder_t *opaque)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     sh_video_t* sh_video = priv->parent;
     if(sh_video)
     if(sh_video->inited && priv->mpvdec) priv->mpvdec->control_vd(priv->ctx,VDCTRL_RESYNC_STREAM,NULL);
@@ -373,7 +384,7 @@ static float sub_last_pts = -303;
 #endif
 static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
 {
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     sh_video_t* sh_video = priv->parent;
     Demuxer_Stream *d_dvdsub=sh_video->ds->demuxer->sub;
 #ifdef USE_SUB
@@ -436,13 +447,13 @@ static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
 #include "libvo/video_out.h"
 
 MPXP_Rc mpcodecs_config_vf(video_decoder_t *opaque, int w, int h){
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     sh_video_t* sh = priv->parent;
     int i,j;
     unsigned int out_fmt=0;
     int screen_size_x=0;//SCREEN_SIZE_X;
     int screen_size_y=0;//SCREEN_SIZE_Y;
-    vf_stream_t* s=sh->vfilter;
+    vf_stream_t* s=priv->vfilter;
     vf_conf_t conf;
     int palette=0;
 
@@ -517,7 +528,7 @@ csp_again:
 	    if(strcmp(vf_get_first_name(s),"fmtcvt")==0) vf_remove_first(s);
 	}
 	MSG_WARN(MSGTR_VOincompCodec);
-	sh->vfilter_inited=-1;
+	priv->vfilter_inited=-1;
 	return MPXP_False;	// failed
     }
 
@@ -595,7 +606,7 @@ csp_again:
 		vo_data->flags,
 		out_fmt)==0){
 		    MSG_WARN(MSGTR_CannotInitVO);
-		    sh->vfilter_inited=-1;
+		    priv->vfilter_inited=-1;
 		    return MPXP_False;
     }
     MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s')\n",
@@ -611,9 +622,9 @@ csp_again:
 // returns NULL or allocated mp_image_t*
 // Note: buffer allocation may be moved to mpcodecs_config_vf() later...
 mp_image_t* mpcodecs_get_image(video_decoder_t *opaque, int mp_imgtype, int mp_imgflag,int w, int h){
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
     sh_video_t* sh = priv->parent;
-    vf_stream_t* s = sh->vfilter;
+    vf_stream_t* s = priv->vfilter;
 //    MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
     mp_image_t* mpi=vf_get_new_image(s,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h,dae_curr_vdecoded(xp_core));
     mpi->x=mpi->y=0;
@@ -623,8 +634,7 @@ mp_image_t* mpcodecs_get_image(video_decoder_t *opaque, int mp_imgtype, int mp_i
 }
 
 void mpcodecs_draw_slice(video_decoder_t *opaque, mp_image_t*mpi) {
-    priv_t* priv=reinterpret_cast<priv_t*>(opaque->vd_private);
-    sh_video_t* sh = priv->parent;
-    vf_stream_t* vf = sh->vfilter;
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+    vf_stream_t* vf = priv->vfilter;
     vf_put_slice(vf,mpi);
 }

@@ -141,8 +141,9 @@ MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(sh_audio_t *sh_audio)
+ad_private_t* preinit(sh_audio_t *sh_audio,audio_filter_info_t* afi)
 {
+  UNUSED(afi);
   /* Win32 ACM audio codec: */
   ad_private_t *priv;
   if(!(priv=new(zeromem) ad_private_t)) return NULL;

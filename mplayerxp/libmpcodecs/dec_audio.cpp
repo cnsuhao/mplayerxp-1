@@ -29,18 +29,30 @@ using namespace mpxp;
 /* used for ac3surround decoder - set using -channels option */
 af_cfg_t af_cfg; // Configuration for audio filters
 
-typedef struct priv_s {
-    sh_audio_t* parent;
-    const ad_functions_t* mpadec;
-    ad_private_t* ctx;
-}priv_t;
+struct decaudio_priv_t : public Opaque {
+    public:
+	decaudio_priv_t();
+	virtual ~decaudio_priv_t();
+
+	sh_audio_t* parent;
+	const ad_functions_t* mpadec;
+	ad_private_t* ctx;
+	audio_filter_info_t* afi;
+};
+
+decaudio_priv_t::decaudio_priv_t()
+		:afi(new(zeromem) audio_filter_info_t)
+{
+}
+
+decaudio_priv_t::~decaudio_priv_t() { delete afi; }
 
 audio_decoder_t* mpca_init(sh_audio_t *sh_audio)
 {
     const char *afm=NULL,*ac=NULL;
     const audio_probe_t* aprobe=NULL;
     audio_decoder_t* handle=new(zeromem) audio_decoder_t;
-    priv_t* priv = new(zeromem) priv_t;
+    decaudio_priv_t* priv = new(zeromem) decaudio_priv_t;
     priv->parent=sh_audio;
     handle->ad_private=priv;
 
@@ -70,7 +82,7 @@ audio_decoder_t* mpca_init(sh_audio_t *sh_audio)
 	delete priv;
 	return NULL; // no such driver
     }
-    if((priv->ctx=priv->mpadec->preinit(sh_audio))==NULL) {
+    if((priv->ctx=priv->mpadec->preinit(sh_audio,priv->afi))==NULL) {
 	MSG_ERR(MSGTR_CODEC_CANT_PREINITA);
 	delete priv;
 	return NULL;
@@ -157,14 +169,14 @@ audio_decoder_t* mpca_init(sh_audio_t *sh_audio)
 
 void mpca_uninit(audio_decoder_t *opaque)
 {
-    priv_t* priv = reinterpret_cast<priv_t*>(opaque->ad_private);
+    decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque->ad_private);
     sh_audio_t* parent = priv->parent;
     if(!parent) { delete opaque; delete priv; return; }
-    if(priv->parent->afilter){
+    if(priv->afi->afilter){
 	MSG_V("Uninit audio filters...\n");
-	af_uninit(parent->afilter);
-	delete parent->afilter;
-	parent->afilter=NULL;
+	af_uninit(priv->afi->afilter);
+	delete priv->afi->afilter;
+	priv->afi->afilter=NULL;
     }
     if(parent->a_buffer) delete parent->a_buffer;
     parent->a_buffer=NULL;
@@ -184,7 +196,7 @@ void mpca_uninit(audio_decoder_t *opaque)
 MPXP_Rc mpca_preinit_filters(audio_decoder_t *opaque,
 	unsigned in_samplerate, unsigned in_channels, unsigned in_format,
 	unsigned* out_samplerate, unsigned* out_channels, unsigned* out_format){
-    priv_t* priv = reinterpret_cast<priv_t*>(opaque->ad_private);
+    decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque->ad_private);
     sh_audio_t* sh_audio = priv->parent;
     char strbuf[200];
     af_stream_t* afs=af_new(sh_audio);
@@ -223,7 +235,7 @@ MPXP_Rc mpca_preinit_filters(audio_decoder_t *opaque,
 	mpaf_fmt2str(afs->output.format,strbuf,200),
 	sh_audio->af_bps);
 
-    sh_audio->afilter=afs;
+    priv->afi->afilter=afs;
     return MPXP_Ok;
 }
 
@@ -232,10 +244,10 @@ MPXP_Rc mpca_init_filters(audio_decoder_t *opaque,
 	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
 	unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,
 	unsigned out_minsize, unsigned out_maxsize){
-    priv_t* priv = reinterpret_cast<priv_t*>(opaque->ad_private);
+    decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque->ad_private);
     sh_audio_t* sh_audio = priv->parent;
     char strbuf[200];
-    af_stream_t* afs=sh_audio->afilter;
+    af_stream_t* afs=priv->afi->afilter;
     if(!afs) afs = af_new(sh_audio);
 
     // input format: same as codec's output format:
@@ -257,7 +269,7 @@ MPXP_Rc mpca_init_filters(audio_decoder_t *opaque,
 
     // let's autoprobe it!
     if(MPXP_Ok != af_init(afs,1)){
-	sh_audio->afilter=NULL;
+	priv->afi->afilter=NULL;
 	delete afs;
 	return MPXP_False; // failed :(
     }
@@ -278,8 +290,8 @@ MPXP_Rc mpca_init_filters(audio_decoder_t *opaque,
     sh_audio->a_buffer_len=0;
 
     af_showconf(afs->first);
-    sh_audio->afilter=afs;
-    sh_audio->afilter_inited=1;
+    priv->afi->afilter=afs;
+    priv->afi->afilter_inited=1;
     return MPXP_Ok;
 }
 
@@ -289,13 +301,12 @@ MPXP_Rc mpca_reinit_filters(audio_decoder_t *opaque,
 	unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,
 	unsigned out_minsize, unsigned out_maxsize)
 {
-    priv_t* priv = reinterpret_cast<priv_t*>(opaque->ad_private);
-    sh_audio_t* sh_audio = priv->parent;
-    if(sh_audio->afilter){
+    decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque->ad_private);
+    if(priv->afi->afilter){
 	MSG_V("Uninit audio filters...\n");
-	af_uninit(sh_audio->afilter);
-	delete sh_audio->afilter;
-	sh_audio->afilter=NULL;
+	af_uninit(priv->afi->afilter);
+	delete priv->afi->afilter;
+	priv->afi->afilter=NULL;
     }
     return mpca_init_filters(opaque,in_samplerate,in_channels,
 				in_format,out_samplerate,
@@ -305,7 +316,7 @@ MPXP_Rc mpca_reinit_filters(audio_decoder_t *opaque,
 
 unsigned mpca_decode(audio_decoder_t *opaque,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float *pts)
 {
-    priv_t* priv = reinterpret_cast<priv_t*>(opaque->ad_private);
+    decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque->ad_private);
     sh_audio_t* sh_audio = priv->parent;
     unsigned len;
     unsigned cp_size,cp_tile;
@@ -333,7 +344,7 @@ unsigned mpca_decode(audio_decoder_t *opaque,unsigned char *buf,unsigned minlen,
     len=priv->mpadec->decode(priv->ctx,buf, minlen, maxlen,pts);
     if(len>buflen) MSG_WARN(MSGTR_CODEC_BUF_OVERFLOW,sh_audio->codec->driver_name,len,buflen);
     MSG_DBG2("decaudio: %i bytes %f pts min %i max %i buflen %i o_bps=%i f_bps=%i\n",len,*pts,minlen,maxlen,buflen,sh_audio->o_bps,sh_audio->af_bps);
-    if(len==0 || !sh_audio->afilter) return 0; // EOF?
+    if(len==0 || !priv->afi->afilter) return 0; // EOF?
     // run the filters:
     mp_aframe_t*  afd;  // filter input
     mp_aframe_t* pafd; // filter output
@@ -343,7 +354,7 @@ unsigned mpca_decode(audio_decoder_t *opaque,unsigned char *buf,unsigned minlen,
 			,0); // xp_idx
     afd->audio=buf;
     afd->len=len;
-    pafd=af_play(sh_audio->afilter,afd);
+    pafd=af_play(priv->afi->afilter,afd);
     afd->audio=NULL; // fake no buffer
 
     if(!pafd) {
@@ -372,7 +383,7 @@ unsigned mpca_decode(audio_decoder_t *opaque,unsigned char *buf,unsigned minlen,
 /* Note: it is called once after seeking, to resync. */
 void mpca_resync_stream(audio_decoder_t *opaque)
 {
-    priv_t* priv = reinterpret_cast<priv_t*>(opaque->ad_private);
+    decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque->ad_private);
     sh_audio_t* sh_audio = priv->parent;
     if(sh_audio) {
 	sh_audio->a_in_buffer_len=0; /* workaround */
@@ -384,7 +395,7 @@ void mpca_resync_stream(audio_decoder_t *opaque)
    of audio data - used to sync audio to video after seeking */
 void mpca_skip_frame(audio_decoder_t *opaque)
 {
-    priv_t* priv = reinterpret_cast<priv_t*>(opaque->ad_private);
+    decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque->ad_private);
     sh_audio_t* sh_audio = priv->parent;
     MPXP_Rc rc=MPXP_True;
     if(sh_audio)

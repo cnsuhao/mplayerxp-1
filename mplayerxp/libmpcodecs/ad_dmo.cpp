@@ -42,8 +42,9 @@ static MPXP_Rc init(ad_private_t *p)
     return MPXP_Ok;
 }
 
-static ad_private_t* preinit(sh_audio_t *sh_audio)
+static ad_private_t* preinit(sh_audio_t *sh_audio,audio_filter_info_t* afi)
 {
+    UNUSED(afi);
     ad_private_t*priv;
     int chans=(mp_conf.ao_channels==sh_audio->wf->nChannels) ?
 	mp_conf.ao_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);

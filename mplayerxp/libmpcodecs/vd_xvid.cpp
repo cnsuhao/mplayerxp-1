@@ -318,7 +318,8 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 }
 #endif
 
-static vd_private_t* preinit(sh_video_t *sh){
+static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+    UNUSED(psi);
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     return priv;

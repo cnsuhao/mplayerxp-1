@@ -56,8 +56,9 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag)
 // defined in vd_libdv.c:
 dv_decoder_t*  init_global_rawdv_decoder(void);
 
-static ad_private_t* preinit(sh_audio_t *sh_audio)
+static ad_private_t* preinit(sh_audio_t *sh_audio,audio_filter_info_t* afi)
 {
+    UNUSED(afi);
     sh_audio->audio_out_minsize=4*DV_AUDIO_MAX_SAMPLES*2;
     ad_private_t* priv = new(zeromem) ad_private_t;
     priv->sh = sh_audio;

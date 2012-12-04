@@ -47,6 +47,10 @@ typedef struct vd_info_s
     const char *url; /* URL of homepage */
 } vd_info_t;
 
+struct put_slice_info_t {
+    int			vf_flags;
+    unsigned		active_slices; // used in dec_video+vd_ffmpeg only!!!
+};
 /* interface of video decoder drivers */
 struct vd_private_t;
 typedef struct vd_functions_s
@@ -54,7 +58,7 @@ typedef struct vd_functions_s
     const vd_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
     const video_probe_t*(*__FASTCALL__ probe)(vd_private_t *ctx,uint32_t fourcc);
-    vd_private_t*	(*__FASTCALL__ preinit)(sh_video_t *sh);
+    vd_private_t*	(*__FASTCALL__ preinit)(sh_video_t *sh,put_slice_info_t* psi);
     MPXP_Rc		(*__FASTCALL__ init)(vd_private_t *ctx,video_decoder_t*opaque);
     void		(*__FASTCALL__ uninit)(vd_private_t *ctx);
     MPXP_Rc		(*control_vd)(vd_private_t *ctx,int cmd,any_t* arg, ...);

@@ -14,6 +14,8 @@ extern "C" {
 #include "xmpcore/mp_image.h"
 #include "demuxer_stream.h"
 
+struct ImageDescription;
+
 struct standard_header : public Opaque {
     public:
 	standard_header() {}
@@ -52,8 +54,6 @@ struct sh_audio_t : public standard_header  {
     unsigned		a_buffer_size;
 
 /* filter buffer */
-    af_stream_t*	afilter;
-    int			afilter_inited;
     unsigned		af_bps; // == samplerate*samplesize*channels   (after filters bytes/sec)
     char*		af_buffer;
     unsigned		af_buffer_len;
@@ -90,20 +90,13 @@ struct sh_video_t : public standard_header {
     float		fps;
     int			chapter_change;
     unsigned		src_w,src_h;// source picture size (filled by fileformat parser)
-//  int coded_w,coded_h; // coded size (filled by video codec)
     float		aspect;
     unsigned int	outfmtidx; // TODO: replace with out_fourcc
-/* vfilter chan */
-    vf_stream_t*	vfilter;
-    int			vfilter_inited;
-    int			vf_flags;
-    unsigned		active_slices; // used in dec_video+vd_ffmpeg only!!!
-//  unsigned int bitrate;
-    mp_image_t*		image;
+
 // win32 codec stuff:
     AVIStreamHeader	video;
-    BITMAPINFOHEADER*	bih;   // in format
-    any_t* ImageDesc;	// for quicktime codecs
+    BITMAPINFOHEADER*	bih;		// in format
+    ImageDescription*	ImageDesc;	// for quicktime codecs
 };
 
 sh_audio_t* get_sh_audio(demuxer_t *demuxer,int id);

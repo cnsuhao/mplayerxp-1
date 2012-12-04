@@ -37,8 +37,9 @@ MPXP_Rc init(ad_private_t *p)
   return MPXP_Ok;
 }
 
-ad_private_t* preinit(sh_audio_t *sh_audio)
+ad_private_t* preinit(sh_audio_t *sh_audio,audio_filter_info_t* afi)
 {
+    UNUSED(afi);
     ad_private_t *priv;
     if(!(priv=new(zeromem) ad_private_t)) return NULL;
     priv->sh = sh_audio;

@@ -2190,8 +2190,8 @@ static const videocodec_info_t vinfo[] = {
 static int
 demux_mkv_open_video (demuxer_t *demuxer, mkv_track_t *track, int vid)
 {
-  BITMAPINFOHEADER *bih;
-  any_t*ImageDesc = NULL;
+  BITMAPINFOHEADER* bih;
+  ImageDescription* ImageDesc = NULL;
   sh_video_t *sh_v;
 
   if (track->ms_compat)  /* MS compatibility mode */

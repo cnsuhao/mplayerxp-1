@@ -129,7 +129,8 @@ static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
 
 static int codec_inited=0;
 
-static vd_private_t* preinit(sh_video_t *sh){
+static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+    UNUSED(psi);
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     return priv;
@@ -261,7 +262,7 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
   fclose(f);
 }
 #else
-    if(!sh->ImageDesc) sh->ImageDesc=(sh->bih+1); // hack for SVQ3-in-AVI
+    if(!sh->ImageDesc) sh->ImageDesc=reinterpret_cast<ImageDescription*>(sh->bih+1); // hack for SVQ3-in-AVI
     MSG_V("ImageDescription size: %d\n",((ImageDescription*)(sh->ImageDesc))->idSize);
     framedescHandle=(ImageDescriptionHandle)NewHandleClear(((ImageDescription*)(sh->ImageDesc))->idSize);
     memcpy(*framedescHandle,sh->ImageDesc,((ImageDescription*)(sh->ImageDesc))->idSize);

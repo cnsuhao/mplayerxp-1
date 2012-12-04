@@ -10,6 +10,7 @@ using namespace mpxp;
 
 struct ad_private_t {
     sh_audio_t* sh;
+    audio_filter_info_t* afi;
 };
 
 static const ad_info_t info = {
@@ -87,11 +88,12 @@ MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
     sh->audio_out_minsize=16384;
     ad_private_t* priv = new(zeromem) ad_private_t;
     priv->sh = sh;
+    priv->afi = afi;
     return priv;
 }
 

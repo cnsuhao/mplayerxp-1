@@ -105,6 +105,7 @@ struct vd_private_t {
     int vo_inited;
     int hello_printed;
     const video_probe_t* probe;
+    put_slice_info_t*	psi;
 };
 static pp_context* ppContext=NULL;
 static void draw_slice(struct AVCodecContext *s, const AVFrame *src, int offset[4], int y, int type, int height);
@@ -244,9 +245,10 @@ static MPXP_Rc find_vdecoder(vd_private_t* ctx)
     return MPXP_False;
 }
 
-static vd_private_t* preinit(sh_video_t *sh){
+static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
+    priv->psi=psi;
     return priv;
 }
 
@@ -638,10 +640,10 @@ static void draw_slice(struct AVCodecContext *s,
     src->pict_type==AV_PICTURE_TYPE_P?"p":
     src->pict_type==AV_PICTURE_TYPE_I?"i":"??"
     ,mpi->width,mpi->height,mpi->x,mpi->y,mpi->w,mpi->h);
-    __MP_ATOMIC(sh->active_slices++);
+    __MP_ATOMIC(priv->psi->active_slices++);
     mpcodecs_draw_slice (priv->parent, mpi);
     mpi->xp_idx = orig_idx;
-    __MP_ATOMIC(sh->active_slices--);
+    __MP_ATOMIC(priv->psi->active_slices--);
 }
 
 /* copypaste from demux_real.c - it should match to get it working!*/
@@ -666,7 +668,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
     if(frame->len<=0) return NULL; // skipped frame
 
     priv->ctx->skip_frame=(frame->flags&3)?((frame->flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
-    if(priv->cap_slices)	priv->use_slices= !(sh->vf_flags&VF_FLAGS_SLICES)?0:(priv->ctx->skip_frame!=AVDISCARD_NONE)?0:1;
+    if(priv->cap_slices)	priv->use_slices= !(priv->psi->vf_flags&VF_FLAGS_SLICES)?0:(priv->ctx->skip_frame!=AVDISCARD_NONE)?0:1;
     else			priv->use_slices=0;
 /*
     if codec is capable DR1

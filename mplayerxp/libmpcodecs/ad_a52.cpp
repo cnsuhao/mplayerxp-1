@@ -128,7 +128,7 @@ static int a52_printinfo(sh_audio_t *sh_audio){
   return (flags&A52_LFE) ? (channels+1) : channels;
 }
 
-ad_private_t* preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
     ad_private_t* ctx=new(zeromem) ad_private_t;
   /* Dolby AC3 audio: */
@@ -141,9 +141,9 @@ ad_private_t* preinit(sh_audio_t *sh)
 #define A52_FMT24 AFMT_S24_LE
 #endif
   sh->afmt=bps2afmt(2);
-  if(af_query_fmt(sh->afilter,mpaf_format_e(AFMT_FLOAT32)) == MPXP_Ok||
-     af_query_fmt(sh->afilter,mpaf_format_e(A52_FMT32)) == MPXP_Ok ||
-     af_query_fmt(sh->afilter,mpaf_format_e(A52_FMT24)) == MPXP_Ok) {
+  if(af_query_fmt(afi->afilter,mpaf_format_e(AFMT_FLOAT32)) == MPXP_Ok||
+     af_query_fmt(afi->afilter,mpaf_format_e(A52_FMT32)) == MPXP_Ok ||
+     af_query_fmt(afi->afilter,mpaf_format_e(A52_FMT24)) == MPXP_Ok) {
     sh->afmt=AFMT_FLOAT32;
   }
   sh->audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh->afmt)*256*6;

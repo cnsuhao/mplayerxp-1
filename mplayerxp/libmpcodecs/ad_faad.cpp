@@ -38,6 +38,7 @@ LIBAD_EXTERN(faad)
 struct ad_private_t {
     float pts;
     sh_audio_t* sh;
+    audio_filter_info_t* afi;
 };
 
 static const audio_probe_t probes[] = {
@@ -179,12 +180,13 @@ static MPXP_Rc load_dll(const char *libname)
 
 }
 
-static ad_private_t* preinit(sh_audio_t *sh)
+static ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
     sh->audio_out_minsize=8192*FAAD_MAX_CHANNELS;
     sh->audio_in_minsize=FAAD_BUFFLEN;
     ad_private_t* priv = new(zeromem) ad_private_t;
     priv->sh = sh;
+    priv->afi = afi;
     if(load_dll("libfaad"SLIBSUFFIX)!=MPXP_Ok) {
 	delete priv;
 	return NULL;
@@ -223,9 +225,9 @@ static MPXP_Rc init(ad_private_t *priv)
 #endif
     /* Set the maximal quality */
     /* This is useful for expesive audio cards */
-    if(af_query_fmt(sh->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok ||
-	af_query_fmt(sh->afilter,afmt2mpaf(NeAAC_FMT32)) == MPXP_Ok ||
-	af_query_fmt(sh->afilter,afmt2mpaf(NeAAC_FMT24)) == MPXP_Ok) {
+    if(af_query_fmt(priv->afi->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok ||
+	af_query_fmt(priv->afi->afilter,afmt2mpaf(NeAAC_FMT32)) == MPXP_Ok ||
+	af_query_fmt(priv->afi->afilter,afmt2mpaf(NeAAC_FMT24)) == MPXP_Ok) {
 	    sh->afmt=AFMT_FLOAT32;
 	    NeAAC_conf->outputFormat=FAAD_FMT_FLOAT;
     } else {

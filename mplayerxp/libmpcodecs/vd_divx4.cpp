@@ -211,7 +211,8 @@ static int load_lib( const char *libname )
   return getDecore_ptr != NULL;
 }
 
-static vd_private_t* preinit(sh_video_t *sh){
+static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+    UNUSED(psi);
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     return priv;

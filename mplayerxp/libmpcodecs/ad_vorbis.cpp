@@ -37,6 +37,7 @@ struct ad_private_t {
     vorbis_dsp_state	vd; /* central working state for the packet->PCM decoder */
     vorbis_block	vb; /* local working space for packet->PCM decode */
     sh_audio_t*		sh;
+    audio_filter_info_t* afi;
 };
 
 static const audio_probe_t probes[] = {
@@ -54,11 +55,12 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag)
     return NULL;
 }
 
-static ad_private_t* preinit(sh_audio_t *sh)
+static ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
     sh->audio_out_minsize=1024*4; // 1024 samples/frame
     ad_private_t* priv = new(zeromem) ad_private_t;
     priv->sh = sh;
+    priv->afi = afi;
     return priv;
 }
 
@@ -114,9 +116,9 @@ static MPXP_Rc init(ad_private_t *priv)
 #define OGG_FMT16 AFMT_S16_LE
 #endif
     sh->afmt=OGG_FMT16;
-    if(af_query_fmt(sh->afilter,mpaf_format_e(AFMT_FLOAT32)) == MPXP_Ok||
-	af_query_fmt(sh->afilter,mpaf_format_e(OGG_FMT32)) == MPXP_Ok ||
-	af_query_fmt(sh->afilter,mpaf_format_e(OGG_FMT24)) == MPXP_Ok) {
+    if(af_query_fmt(priv->afi->afilter,mpaf_format_e(AFMT_FLOAT32)) == MPXP_Ok||
+	af_query_fmt(priv->afi->afilter,mpaf_format_e(OGG_FMT32)) == MPXP_Ok ||
+	af_query_fmt(priv->afi->afilter,mpaf_format_e(OGG_FMT24)) == MPXP_Ok) {
 	sh->afmt=OGG_FMT32;
     }
     // assume 128kbit if bitrate not specified in the header

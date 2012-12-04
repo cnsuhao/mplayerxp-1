@@ -126,7 +126,7 @@ static int dca_printinfo(sh_audio_t *sh_audio){
     return (flags&DCA_LFE) ? (channels+1) : channels;
 }
 
-ad_private_t* preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
     /*	DTS audio:
 	however many channels, 2 bytes in a word, 256 samples in a block, 6 blocks in a frame */
@@ -138,9 +138,9 @@ ad_private_t* preinit(sh_audio_t *sh)
 #define DCA_FMT24 AFMT_S24_LE
 #endif
     sh->afmt=bps2afmt(2);
-    if(	af_query_fmt(sh->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok||
-	af_query_fmt(sh->afilter,afmt2mpaf(DCA_FMT32)) == MPXP_Ok ||
-	af_query_fmt(sh->afilter,afmt2mpaf(DCA_FMT24)) == MPXP_Ok)
+    if(	af_query_fmt(afi->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok||
+	af_query_fmt(afi->afilter,afmt2mpaf(DCA_FMT32)) == MPXP_Ok ||
+	af_query_fmt(afi->afilter,afmt2mpaf(DCA_FMT24)) == MPXP_Ok)
     {
 	sh->afmt=AFMT_FLOAT32;
     }

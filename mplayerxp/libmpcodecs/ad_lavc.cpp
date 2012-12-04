@@ -21,6 +21,7 @@ using namespace mpxp;
 struct ad_private_t {
     AVCodecContext*	lavc_ctx;
     sh_audio_t*		sh;
+    audio_filter_info_t* afi;
 };
 
 static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag) {
@@ -85,11 +86,12 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(lavc)
 
-ad_private_t* preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
     ad_private_t* priv = new(zeromem) ad_private_t;
     sh->audio_out_minsize=AVCODEC_MAX_AUDIO_FRAME_SIZE;
     priv->sh = sh;
+    priv->afi = afi;
     return priv;
 }
 

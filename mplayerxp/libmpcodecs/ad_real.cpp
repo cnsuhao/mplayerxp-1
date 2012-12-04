@@ -92,7 +92,8 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) {
     return NULL;
 }
 
-static ad_private_t* preinit(sh_audio_t *sh){
+static ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi){
+    UNUSED(afi);
     // let's check if the driver is available, return 0 if not.
     // (you should do that if you use external lib(s) which is optional)
     unsigned int result;

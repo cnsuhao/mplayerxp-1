@@ -181,10 +181,10 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) 
 }
 
 
-ad_private_t* preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
     /* Dolby AC3 audio: */
-    ad_private_t* ctx=mpcodecs_ad_a52.preinit(sh);
+    ad_private_t* ctx=mpcodecs_ad_a52.preinit(sh,afi);
     sh->audio_out_minsize=4*256*6;
     sh->audio_in_minsize=3840;
     sh->nch=2;

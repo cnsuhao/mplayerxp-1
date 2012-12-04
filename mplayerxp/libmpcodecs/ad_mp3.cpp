@@ -266,8 +266,9 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag)
     return NULL;
 }
 
-ad_private_t* preinit(sh_audio_t *sh)
+ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
 {
+    UNUSED(afi);
     sh->audio_out_minsize=9216;
     if(load_dll("libmpg123"SLIBSUFFIX)!=MPXP_Ok) return NULL;
     ad_private_t* priv = new(zeromem) ad_private_t;
