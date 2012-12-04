@@ -35,27 +35,22 @@ using namespace mpxp;
 
 /// Vorbis decoder context : we need the vorbis_info for vorbis timestamping
 /// Shall we put this struct def in a common header ?
-typedef struct ov_struct_st {
+struct ogg_vorbis_struct {
+  int inited;
   vorbis_info      vi; /* struct that stores all the static vorbis bitstream
 			  settings */
   vorbis_comment   vc; /* struct that stores all the bitstream user comments */
-  vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
-  vorbis_block     vb; /* local working space for packet->PCM decode */
-  float            rg_scale; /* replaygain scale */
-#ifdef TREMOR
-  int              rg_scale_int;
+#ifdef HAVE_LIBTHEORA
+  theora_info           t_info;
+  theora_comment        t_comment;
 #endif
-} ov_struct_t;
-
-/* Theora decoder context : we won't be able to interpret granule positions
- * without using theora_granule_time with the theora_state of the stream.
- * This is duplicated in `vd_theora.c'; put this in a common header?
- */
-typedef struct theora_struct_st {
-    theora_state st;
-    theora_comment cc;
-    theora_info inf;
-} theora_struct_t;
+//  vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
+//  vorbis_block     vb; /* local working space for packet->PCM decode */
+//  float            rg_scale; /* replaygain scale */
+#ifdef TREMOR
+//  int              rg_scale_int;
+#endif
+};
 
 //// OggDS headers
 // Header for the new header format
@@ -123,7 +118,7 @@ typedef struct ogg_stream {
 
 struct ogg_demuxer_t : public Opaque {
     public:
-	ogg_demuxer_t() {}
+	ogg_demuxer_t();
 	virtual ~ogg_demuxer_t();
 
 	/// Physical stream state
@@ -137,12 +132,18 @@ struct ogg_demuxer_t : public Opaque {
 	int num_syncpoint;
 	off_t pos, last_size;
 	int64_t final_granulepos;
+	ogg_vorbis_struct* ov;
 
 	/* Used for subtitle switching. */
 	int n_text;
 	int *text_ids;
 	char **text_langs;
 };
+
+ogg_demuxer_t::ogg_demuxer_t()
+	    :ov(new(zeromem) ogg_vorbis_struct)
+{
+}
 
 ogg_demuxer_t::~ogg_demuxer_t() {
     unsigned i;
@@ -159,6 +160,7 @@ ogg_demuxer_t::~ogg_demuxer_t() {
 	    if (text_langs[i]) delete text_langs[i];
 	delete text_langs;
     }
+    delete ov;
 }
 
 #define NUM_VORBIS_HDR_PACKETS 3
@@ -354,7 +356,7 @@ static  int demux_ogg_get_page_stream(ogg_demuxer_t* ogg_d,ogg_stream_state** os
 
 }
 
-static unsigned char* demux_ogg_read_packet(ogg_stream_t* os,ogg_packet* pack,any_t*context,float* pts,int* flags, int samplesize) {
+static unsigned char* demux_ogg_read_packet(ogg_demuxer_t* ogg_d,ogg_stream_t* os,ogg_packet* pack,float* pts,int* flags, int samplesize) {
   unsigned char* data=NULL;
 
   *pts = 0;
@@ -362,23 +364,25 @@ static unsigned char* demux_ogg_read_packet(ogg_stream_t* os,ogg_packet* pack,an
 
   if(os->vorbis) {
     data = pack->packet;
-    if(*pack->packet & PACKET_TYPE_HEADER)
-      os->hdr_packets++;
-    else if (context )
-    {
-       vorbis_info *vi = &((ov_struct_t*)context)->vi;
+    if(*pack->packet & PACKET_TYPE_HEADER)  os->hdr_packets++;
+    else {
+	int32_t blocksize;
+	vorbis_info *vi = &ogg_d->ov->vi;
+	vorbis_comment *vc = &ogg_d->ov->vc;
 
-       // When we dump the audio, there is no vi, but we don't care of timestamp in this case
-       int32_t blocksize = vorbis_packet_blocksize(vi,pack) / samplesize;
-       // Calculate the timestamp if the packet don't have any
-       if(pack->granulepos == -1) {
-	  pack->granulepos = os->lastpos;
-	  if(os->lastsize > 0)
-	     pack->granulepos += os->lastsize;
-       }
-       *pts = pack->granulepos / (float)vi->rate;
-       os->lastsize = blocksize;
-       os->lastpos = pack->granulepos;
+	if (ogg_d->ov->inited) {
+	// When we dump the audio, there is no vi, but we don't care of timestamp in this case
+	    blocksize = vorbis_packet_blocksize(vi,pack) / samplesize;
+	    // Calculate the timestamp if the packet don't have any
+	    if(pack->granulepos == -1) {
+		pack->granulepos = os->lastpos;
+		if(os->lastsize > 0)
+		    pack->granulepos += os->lastsize;
+	    }
+	    *pts = pack->granulepos / (float)vi->rate;
+	    os->lastsize = blocksize;
+	    os->lastpos = pack->granulepos;
+	}
     }
   } else if (os->theora) {
      /* we pass complete packets to theora, mustn't strip the header! */
@@ -388,10 +392,9 @@ static unsigned char* demux_ogg_read_packet(ogg_stream_t* os,ogg_packet* pack,an
      /* header packets beginn on 1-bit: thus check (*data&0x80).  We don't
 	have theora_state st, until all header packets were passed to the
 	decoder. */
-     if (context != NULL && !(*data&0x80))
+     if (ogg_d->ov->inited && !(*data&0x80))
      {
-	theora_info *thi = ((theora_struct_t*)context)->st.i;
-	int keyframe_granule_shift=logf(thi->keyframe_frequency_force-1);
+	int keyframe_granule_shift=logf(ogg_d->ov->t_info.keyframe_frequency_force-1);
 	int64_t iframemask = (1 << keyframe_granule_shift) - 1;
 
 	if (pack->granulepos >= 0)
@@ -529,26 +532,19 @@ static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vor
 // return 1 if the packet was added, 0 otherwise
 static int demux_ogg_add_packet(Demuxer_Stream* ds,ogg_stream_t* os,int id,ogg_packet* pack) {
   demuxer_t* d = ds->demuxer;
+  ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(d->priv);
   Demuxer_Packet* dp;
   unsigned char* data;
   float pts = 0;
   int flags = 0;
-  any_t*context = NULL;
   int samplesize = 1;
 
   // If packet is an comment header then we try to get comments at first
   if (pack->bytes >= 7 && !memcmp(pack->packet, "\003vorbis", 7))
   {
-    vorbis_info vi;
-    vorbis_comment vc;
-
-    vorbis_info_init(&vi);
-    vorbis_comment_init(&vc);
-    vi.rate = 1L; // it's checked by vorbis_synthesis_headerin()
-    if(vorbis_synthesis_headerin(&vi, &vc, pack) == 0) // if no errors
-      demux_ogg_check_comments(d, os, id, &vc);
-    vorbis_comment_clear(&vc);
-    vorbis_info_clear(&vi);
+    ogg_d->ov->vi.rate = 1L; // it's checked by vorbis_synthesis_headerin()
+    if(vorbis_synthesis_headerin(&ogg_d->ov->vi, &ogg_d->ov->vc, pack) == 0) // if no errors
+      demux_ogg_check_comments(d, os, id, &ogg_d->ov->vc);
   }
   if (os->text) {
     if (id == d->sub->id) // don't want to add subtitles to the demuxer for now
@@ -567,12 +563,9 @@ static int demux_ogg_add_packet(Demuxer_Stream* ds,ogg_stream_t* os,int id,ogg_p
   // For vorbis packet the packet is the data, for other codec we must jump
   // the header
   if(ds == d->audio && ((sh_audio_t*)ds->sh)->wtag == FOURCC_VORBIS) {
-     context = ((sh_audio_t *)ds->sh)->context;
      samplesize = afmt2bps(((sh_audio_t *)ds->sh)->afmt);
   }
-  if (ds == d->video && ((sh_audio_t*)ds->sh)->wtag == FOURCC_THEORA)
-     context = ((sh_video_t *)ds->sh)->context;
-  data = demux_ogg_read_packet(os,pack,context,&pts,&flags,samplesize);
+  data = demux_ogg_read_packet(ogg_d,os,pack,&pts,&flags,samplesize);
 
   if(d->video->id < 0)
       ((sh_audio_t*)ds->sh)->a_pts = pts;
@@ -606,7 +599,6 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
   ogg_stream_t* os;
   ogg_packet op;
   int np,sid,p,samplesize=1;
-  any_t*context = NULL;
   off_t pos, last_pos;
   pos = last_pos = demuxer->movi_start;
 
@@ -622,15 +614,11 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
   // Get the serial number of the stream we use
   if(demuxer->video->id >= 0) {
     sid = demuxer->video->id;
-    /* demux_ogg_read_packet needs decoder context for Theora streams */
-    if (((sh_video_t*)demuxer->video->sh)->fourcc == FOURCC_THEORA)
-      context = ((sh_video_t*)demuxer->video->sh)->context;
   }
   else {
     sid = demuxer->audio->id;
     /* demux_ogg_read_packet needs decoder context for Vorbis streams */
     if(((sh_audio_t*)demuxer->audio->sh)->wtag == FOURCC_VORBIS) {
-      context = ((sh_audio_t*)demuxer->audio->sh)->context;
       samplesize = afmt2bps(((sh_audio_t*)demuxer->audio->sh)->afmt);
     }
   }
@@ -667,7 +655,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
     while(ogg_stream_packetout(oss,&op) == 1) {
       float pts;
       int flags;
-      demux_ogg_read_packet(os,&op,context,&pts,&flags,samplesize);
+      demux_ogg_read_packet(ogg_d,os,&op,&pts,&flags,samplesize);
       if(op.granulepos >= 0) ogg_d->final_granulepos = op.granulepos;
       if(index_mode == 2 && (flags || (os->vorbis && op.granulepos >= 0))) {
 	ogg_d->syncpoints = (ogg_syncpoint_t*)mp_realloc(ogg_d->syncpoints,(ogg_d->num_syncpoint+1)*sizeof(ogg_syncpoint_t));
@@ -779,6 +767,10 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
   ogg_sync_init(sync);
   stream_reset(s);
 
+  vorbis_info_init(&ogg_d->ov->vi);
+  vorbis_comment_init(&ogg_d->ov->vc);
+  ogg_d->ov->inited=1;
+
   while(1) {
     /// Try to get a page
     ogg_d->pos += ogg_d->last_size;
@@ -828,6 +820,10 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
     sh_a = NULL;
     sh_v = NULL;
 
+#ifdef HAVE_LIBTHEORA
+    theora_info_init (&ogg_d->ov->t_info);
+    theora_comment_init (&ogg_d->ov->t_comment);
+#endif
     // Check for Vorbis
     if(pack.bytes >= 7 && ! strncmp(reinterpret_cast<char*>(&pack.packet[1]),"vorbis", 6) ) {
       sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
@@ -842,27 +838,21 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 #ifdef HAVE_LIBTHEORA
     if (pack.bytes >= 7 && !strncmp (reinterpret_cast<char*>(&pack.packet[1]), "theora", 6)) {
 	int errorCode = 0;
-	theora_info inf;
-	theora_comment cc;
 
-	theora_info_init (&inf);
-	theora_comment_init (&cc);
-
-	errorCode = theora_decode_header (&inf, &cc, &pack);
+	errorCode = theora_decode_header (&ogg_d->ov->t_info, &ogg_d->ov->t_comment, &pack);
 	if (errorCode)
 	    MSG_ERR("Theora header parsing failed: %i \n",
 		   errorCode);
 	else {
 	    sh_v = new_sh_video(demuxer,ogg_d->num_sub);
 
-	    sh_v->context = NULL;
 	    sh_v->bih = new(zeromem) BITMAPINFOHEADER;
 	    sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	    sh_v->bih->biCompression= sh_v->fourcc = FOURCC_THEORA;
-	    sh_v->fps = ((double)inf.fps_numerator)/
-		(double)inf.fps_denominator;
-	    sh_v->src_w = sh_v->bih->biWidth = inf.frame_width;
-	    sh_v->src_h = sh_v->bih->biHeight = inf.frame_height;
+	    sh_v->fps = ((double)ogg_d->ov->t_info.fps_numerator)/
+		(double)ogg_d->ov->t_info.fps_denominator;
+	    sh_v->src_w = sh_v->bih->biWidth = ogg_d->ov->t_info.frame_width;
+	    sh_v->src_h = sh_v->bih->biHeight = ogg_d->ov->t_info.frame_height;
 	    sh_v->bih->biBitCount = 24;
 	    sh_v->bih->biPlanes = 3;
 	    sh_v->bih->biSizeImage = ((sh_v->bih->biBitCount/8) *
@@ -874,12 +864,14 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	    MSG_V(
 		   "Ogg : stream %d is theora v%i.%i.%i %i:%i, %.3f FPS,"
 		   " aspect %i:%i\n", ogg_d->num_sub,
-		   (int)inf.version_major,
-		   (int)inf.version_minor,
-		   (int)inf.version_subminor,
-		   inf.width, inf.height,
+		   (int)ogg_d->ov->t_info.version_major,
+		   (int)ogg_d->ov->t_info.version_minor,
+		   (int)ogg_d->ov->t_info.version_subminor,
+		   ogg_d->ov->t_info.width,
+		   ogg_d->ov->t_info.height,
 		   sh_v->fps,
-		   inf.aspect_numerator, inf.aspect_denominator);
+		   ogg_d->ov->t_info.aspect_numerator,
+		   ogg_d->ov->t_info.aspect_denominator);
 	    if(mp_conf.verbose>0) print_video_header(sh_v->bih,sizeof(BITMAPINFOHEADER));
 	}
     }
@@ -1188,13 +1180,11 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
   ogg_stream_state* oss;
   ogg_stream_t* os;
   Demuxer_Stream* ds;
-  sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   ogg_packet op;
   float rate;
   int i,sp,first=0,precision=1,do_seek=1;
   vorbis_info* vi = NULL;
   int64_t gp = 0, old_gp;
-  any_t*context = NULL;
   off_t pos, old_pos;
   int np;
   int is_gp_valid;
@@ -1204,16 +1194,10 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
 
   if(demuxer->video->id >= 0) {
     ds = demuxer->video;
-    /* demux_ogg_read_packet needs decoder context for Theora streams */
-    if (((sh_video_t*)demuxer->video->sh)->fourcc == FOURCC_THEORA)
-      context = ((sh_video_t*)demuxer->video->sh)->context;
     rate = ogg_d->subs[ds->id].samplerate;
   } else {
     ds = demuxer->audio;
-    /* demux_ogg_read_packet needs decoder context for Vorbis streams */
-    if(((sh_audio_t*)demuxer->audio->sh)->wtag == FOURCC_VORBIS)
-      context = ((sh_audio_t*)demuxer->audio->sh)->context;
-    vi = &((ov_struct_t*)((sh_audio_t*)ds->sh)->context)->vi;
+    vi = &ogg_d->ov->vi;
     rate = (float)vi->rate;
     samplesize = afmt2bps(((sh_audio_t*)ds->sh)->afmt);
   }
@@ -1317,7 +1301,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
 	break;
       }
       is_gp_valid = (op.granulepos >= 0);
-      demux_ogg_read_packet(os,&op,context,&pts,&is_keyframe,samplesize);
+      demux_ogg_read_packet(ogg_d,os,&op,&pts,&is_keyframe,samplesize);
       if (precision && is_gp_valid) {
 	precision--;
 	if (abs(gp - op.granulepos) > rate && (op.granulepos != old_gp)) {
@@ -1364,8 +1348,14 @@ static void ogg_close(demuxer_t* demuxer) {
 #ifdef USE_ICONV
   subcp_close();
 #endif
+#ifdef HAVE_LIBTHEORA
+    theora_comment_clear (&ogg_d->ov->t_comment);
+    theora_info_clear (&ogg_d->ov->t_info);
+#endif
+    vorbis_comment_clear(&ogg_d->ov->vc);
+    vorbis_info_clear(&ogg_d->ov->vi);
 
-  delete ogg_d;
+    delete ogg_d;
 }
 
 static MPXP_Rc ogg_control(const demuxer_t *demuxer,int cmd,any_t*args)

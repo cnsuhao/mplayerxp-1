@@ -104,7 +104,7 @@ const video_probe_t* vfm_driver_probe(vd_private_t* ctx,sh_video_t *sh) {
 		,pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
 	    for(i=0;i<Video_MaxOutFmt;i++) {
 		pfcc = reinterpret_cast<const char*>(&probe->pix_fmt[i]);
-		MSG_V("%c%c%c%c(f=%X) ",pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
+		MSG_V("%c%c%c%c (flg=%X) ",pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
 		if(probe->pix_fmt[i]==0||probe->pix_fmt[i]==-1) break;
 	    }
 	    MSG_V("\n");

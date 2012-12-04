@@ -191,6 +191,7 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 	if(priv->mpvdec) vprobe=priv->mpvdec->probe(priv->ctx,sh_video->fourcc);
     }
     else vprobe = vfm_driver_probe(priv->ctx,sh_video);
+
     if(vprobe) {
 	vfm=vprobe->driver;
 	/* fake struct codecs_st*/
@@ -199,8 +200,9 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 	strcpy(sh_video->codec->driver_name,vprobe->driver);
 	strcpy(sh_video->codec->codec_name,sh_video->codec->dll_name);
 	memcpy(sh_video->codec->outfmt,vprobe->pix_fmt,sizeof(vprobe->pix_fmt));
-	priv->mpvdec=vfm_find_driver(vfm);
-    }
+    } else return NULL;
+
+    priv->mpvdec=vfm_find_driver(vfm);
     if(priv->mpvdec) {
 	if((priv->ctx=priv->mpvdec->preinit(sh_video,priv->psi))==NULL){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);

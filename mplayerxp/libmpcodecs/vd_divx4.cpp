@@ -27,7 +27,7 @@ using namespace mpxp;
 
 static const vd_info_t info = {
     "DivX4Linux lib (divx4/5 mode)",
-    "divx4",
+    "divx",
     "Nickols_K",
     "http://labs.divx.com/DivXLinuxCodec"
 };

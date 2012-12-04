@@ -23,7 +23,7 @@ using namespace mpxp;
 
 static const vd_info_t info = {
     "libmpeg2 MPEG 1/2 Video decoder",
-    "libmpeg2",
+    "mpeg2",
     "A'rpi",
     "http://libmpeg2.sourceforge.net"
 };
