@@ -12,7 +12,7 @@ using namespace mpxp;
 #include "libvo/video_out.h"
 #include "libvo/dri_vo.h"
 #include "pp_msg.h"
-#include "mplayerxp.h" // vo_data
+#include "mplayerxp.h" // mpxp_context().video().output
 
 //===========================================================================//
 struct vf_priv_t {
@@ -26,7 +26,7 @@ static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigne
 
 static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
-    const vo_info_t *info = vo_data->get_info();
+    const vo_info_t *info = mpxp_context().video().output->get_info();
     MSG_INFO("VO-CONF: [%s] %dx%d => %dx%d %s %s%s%s%s\n",info->short_name,
 	 vf->priv->sw, vf->priv->sh,
 	 vf->priv->dw, vf->priv->dh,
@@ -63,7 +63,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps=query_format(vf,outfmt,d_width,d_height);// & VFCAP_ACCEPT_STRIDE;
 
-    if(MPXP_Ok!=vo_data->configure(vf->parent,width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
+    if(MPXP_Ok!=mpxp_context().video().output->configure(vf->parent,width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
 	return 0;
     vf->priv->is_planar=vo_describe_fourcc(outfmt,&vf->priv->vd);
     vf->conf.w=d_width;
@@ -81,12 +81,12 @@ static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request,any_t* dat
     case VFCTRL_SET_EQUALIZER: {
 	vf_equalizer_t *eq=reinterpret_cast<vf_equalizer_t*>(data);
 	if(!vo_config_count) return MPXP_False; // vo not configured?
-	return vo_data->ctrl(VOCTRL_SET_EQUALIZER, eq);
+	return mpxp_context().video().output->ctrl(VOCTRL_SET_EQUALIZER, eq);
     }
     case VFCTRL_GET_EQUALIZER: {
 	vf_equalizer_t *eq=reinterpret_cast<vf_equalizer_t*>(data);
 	if(!vo_config_count) return MPXP_False; // vo not configured?
-	return vo_data->ctrl(VOCTRL_GET_EQUALIZER, eq);
+	return mpxp_context().video().output->ctrl(VOCTRL_GET_EQUALIZER, eq);
     }
     }
     // return video_out->control_vf(request,data);
@@ -96,12 +96,12 @@ static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request,any_t* dat
 static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
     dri_surface_cap_t dcaps;
     int rflags;
-    uint32_t flags=vo_data->query_format(&fmt,w,h);
+    uint32_t flags=mpxp_context().video().output->query_format(&fmt,w,h);
     MSG_DBG2("[vf_vo] %i=query_format(%s)\n",flags,vo_format_name(fmt));
     rflags=0;
     UNUSED(vf);
     if(flags) {
-	vo_data->get_surface_caps(&dcaps);
+	mpxp_context().video().output->get_surface_caps(&dcaps);
 	if(dcaps.caps&DRI_CAP_UPSCALER) rflags |=VFCAP_HWSCALE_UP;
 	if(dcaps.caps&DRI_CAP_DOWNSCALER) rflags |=VFCAP_HWSCALE_DOWN;
 	if(rflags&(VFCAP_HWSCALE_UP|VFCAP_HWSCALE_DOWN)) rflags |= VFCAP_SWSCALE;
@@ -116,8 +116,8 @@ static void __FASTCALL__ get_image(vf_instance_t* vf,
 	mp_image_t *mpi){
     MPXP_Rc retval;
     UNUSED(vf);
-    int finalize = vo_data->is_final();
-    retval=vo_data->get_surface(mpi);
+    int finalize = mpxp_context().video().output->is_final();
+    retval=mpxp_context().video().output->get_surface(mpi);
     if(retval==MPXP_Ok) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
 	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
@@ -130,7 +130,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
   if(!vo_config_count) return 0; // vo not configured?
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf_first(vf)==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
 	MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
-	vo_data->draw_slice(mpi);
+	mpxp_context().video().output->draw_slice(mpi);
   }
   return 1;
 }

@@ -44,8 +44,8 @@ while(sh_audio){
   float pts=HUGE;
   int ret=0;
 
-  ao_data->pts=sh_audio->timer*90000.0;
-  playsize=ao_get_space(ao_data);
+  mpxp_context().audio().output->pts=sh_audio->timer*90000.0;
+  playsize=ao_get_space(mpxp_context().audio().output);
 
   if(!playsize) {
     if(sh_video)
@@ -87,9 +87,9 @@ while(sh_audio){
   }
   if(playsize>sh_audio->a_buffer_len) playsize=sh_audio->a_buffer_len;
 
-  if(xmp_test_model(XMP_Run_AudioPlayer)) dec_ahead_audio_delay=ao_get_delay(ao_data);
+  if(xmp_test_model(XMP_Run_AudioPlayer)) dec_ahead_audio_delay=ao_get_delay(mpxp_context().audio().output);
 
-  playsize=ao_play(ao_data,sh_audio->a_buffer,playsize,0);
+  playsize=ao_play(mpxp_context().audio().output,sh_audio->a_buffer,playsize,0);
 
   if(playsize>0){
       sh_audio->a_buffer_len-=playsize;
@@ -99,7 +99,7 @@ while(sh_audio){
       if(mpxp_context().use_pts_fix2) {
 	  if(sh_audio->a_pts != HUGE) {
 	      sh_audio->a_pts_pos-=playsize;
-	      if(sh_audio->a_pts_pos > -ao_get_delay(ao_data)*sh_audio->af_bps) {
+	      if(sh_audio->a_pts_pos > -ao_get_delay(mpxp_context().audio().output)*sh_audio->af_bps) {
 		  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
 	      } else {
 		  sh_audio->timer=sh_audio->a_pts-(float)sh_audio->a_pts_pos/(float)sh_audio->af_bps;
@@ -142,7 +142,7 @@ any_t* audio_play_routine( any_t* arg )
     int eof = 0;
     struct timeval now;
     float d;
-    const float MAX_AUDIO_TIME = (float)ao_get_space(ao_data) / sh_audio->af_bps + ao_get_delay(ao_data);
+    const float MAX_AUDIO_TIME = (float)ao_get_space(mpxp_context().audio().output) / sh_audio->af_bps + ao_get_delay(mpxp_context().audio().output);
     float min_audio_time = MAX_AUDIO_TIME;
     float min_audio, max_audio;
     int samples, collect_samples;
@@ -230,7 +230,7 @@ any_t* audio_play_routine( any_t* arg )
 	}
 
 	LOCK_AUDIO_PLAY();
-	d = ao_get_delay(ao_data) - min_audio_time;
+	d = ao_get_delay(mpxp_context().audio().output) - min_audio_time;
 	if( d > 0 ) {
 	    gettimeofday(&now,NULL);
 	    audio_play_timeout.tv_nsec = now.tv_usec * 1000 + d*1000000000l;

@@ -26,7 +26,7 @@ using namespace mpxp;
 #include "menu.h"
 #include "pp_msg.h"
 
-#include "mplayerxp.h" // vo_data
+#include "mplayerxp.h" // mpxp_context().video().output
 
 extern menu_info_t menu_info_cmdlist;
 extern menu_info_t menu_info_pt;
@@ -128,7 +128,7 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file) {
   int bl = BUF_STEP, br = 0;
   int f, fd;
 #ifndef HAVE_FREETYPE
-  if(vo_data->font == NULL)
+  if(mpxp_context().video().output->font == NULL)
     return 0;
 #endif
   fd = open(cfg_file, O_RDONLY);
@@ -269,8 +269,8 @@ void menu_read_key(menu_t* menu,int cmd) {
 // return the real height of a char:
 static inline int get_height(int c,int h){
     int font;
-    if ((font=vo_data->font->font[c])>=0)
-	if(h<vo_data->font->pic_a[font]->h) h=vo_data->font->pic_a[font]->h;
+    if ((font=mpxp_context().video().output->font->font[c])>=0)
+	if(h<mpxp_context().video().output->font->pic_a[font]->h) h=mpxp_context().video().output->font->pic_a[font]->h;
     return h;
 }
 
@@ -280,7 +280,7 @@ static void render_txt(const char *txt)
 #if 0
   while (*txt) {
     int c = utf8_get_char((const char**)&txt);
-    render_one_glyph(vo_data->font, c);
+    render_one_glyph(mpxp_context().video().output->font, c);
   }
 #endif
 }
@@ -335,7 +335,7 @@ static char *menu_fribidi(char *txt)
 void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
   const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi->imgfmt));
   int font;
-  int finalize=vo_data->is_final();
+  int finalize=mpxp_context().video().output->is_final();
 
 #ifdef USE_FRIBIDI
   txt = menu_fribidi(txt);
@@ -344,14 +344,14 @@ void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
 
   while (*txt) {
     int c=utf8_get_char((const char**)&txt);
-    if ((font=vo_data->font->font[c])>=0 && (x + vo_data->font->width[c] <= mpi->w) && (y + vo_data->font->pic_a[font]->h <= mpi->h))
-      draw_alpha->render(vo_data->font->width[c], vo_data->font->pic_a[font]->h,
-		 vo_data->font->pic_b[font]->bmp+vo_data->font->start[c],
-		 vo_data->font->pic_a[font]->bmp+vo_data->font->start[c],
-		 vo_data->font->pic_a[font]->w,
+    if ((font=mpxp_context().video().output->font->font[c])>=0 && (x + mpxp_context().video().output->font->width[c] <= mpi->w) && (y + mpxp_context().video().output->font->pic_a[font]->h <= mpi->h))
+      draw_alpha->render(mpxp_context().video().output->font->width[c], mpxp_context().video().output->font->pic_a[font]->h,
+		 mpxp_context().video().output->font->pic_b[font]->bmp+mpxp_context().video().output->font->start[c],
+		 mpxp_context().video().output->font->pic_a[font]->bmp+mpxp_context().video().output->font->start[c],
+		 mpxp_context().video().output->font->pic_a[font]->w,
 		 mpi->planes[0] + y * mpi->stride[0] + x * (mpi->bpp>>3),
 		 mpi->stride[0],finalize);
-    x+=vo_data->font->width[c]+vo_data->font->charspace;
+    x+=mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
   }
 
 }
@@ -364,7 +364,7 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
   int sx, xmin, xmax, xmid, xrmin;
   int ll = 0;
   int font;
-  int finalize=vo_data->is_final();
+  int finalize=mpxp_context().video().output->is_final();
   const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi->imgfmt));
 
 #ifdef USE_FRIBIDI
@@ -433,12 +433,12 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
   // Jump some the beginnig text if needed
   while(sy < ymin && *txt) {
     int c=utf8_get_char((const char**)&txt);
-    if(c == '\n' || (warp && ll + vo_data->font->width[c] > w)) {
+    if(c == '\n' || (warp && ll + mpxp_context().video().output->font->width[c] > w)) {
       ll = 0;
-      sy += vo_data->font->height + vspace;
+      sy += mpxp_context().video().output->font->height + vspace;
       if(c == '\n') continue;
     }
-    ll += vo_data->font->width[c]+vo_data->font->charspace;
+    ll += mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
   }
   if(*txt == '\0') // Nothing left to draw
       return;
@@ -448,7 +448,7 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
     int n;
 
     if(txt[0] == '\n') { // New line
-      sy += vo_data->font->height + vspace;
+      sy += mpxp_context().video().output->font->height + vspace;
       txt++;
       continue;
     }
@@ -456,11 +456,11 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
     // Get the length and end of this line
     for(n = 0, ll = 0 ; txt[n] != '\0' && txt[n] != '\n'  ; n++) {
       unsigned char c = txt[n];
-      if(warp && ll + vo_data->font->width[c]  > w)  break;
-      ll += vo_data->font->width[c]+vo_data->font->charspace;
+      if(warp && ll + mpxp_context().video().output->font->width[c]  > w)  break;
+      ll += mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
     }
     line_end = &txt[n];
-    ll -= vo_data->font->charspace;
+    ll -= mpxp_context().video().output->font->charspace;
 
 
     if(align & (MENU_TEXT_HCENTER|MENU_TEXT_RIGHT)) {
@@ -470,25 +470,25 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
 	  int mid = ll/2;
 	  // Find the middle point
 	  for(n--, ll = 0 ; n <= 0 ; n--) {
-	    ll += vo_data->font->width[(int)txt[n]]+vo_data->font->charspace;
-	    if(ll - vo_data->font->charspace > mid) break;
+	    ll += mpxp_context().video().output->font->width[(int)txt[n]]+mpxp_context().video().output->font->charspace;
+	    if(ll - mpxp_context().video().output->font->charspace > mid) break;
 	  }
-	  ll -= vo_data->font->charspace;
+	  ll -= mpxp_context().video().output->font->charspace;
 	  sx = xmid + mid - ll;
 	} else// MENU_TEXT_RIGHT)
-	  sx = xmax + vo_data->font->charspace;
+	  sx = xmax + mpxp_context().video().output->font->charspace;
 
 	// We are after the start point -> go back
 	if(sx > xmin) {
 	  for(n-- ; n <= 0 ; n--) {
 	    unsigned char c = txt[n];
-	    if(sx - vo_data->font->width[c] - vo_data->font->charspace < xmin) break;
-	    sx -= vo_data->font->width[c]+vo_data->font->charspace;
+	    if(sx - mpxp_context().video().output->font->width[c] - mpxp_context().video().output->font->charspace < xmin) break;
+	    sx -= mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
 	  }
 	} else { // We are before the start point -> go forward
 	  for( ; sx < xmin && (&txt[n]) != line_end ; n++) {
 	    unsigned char c = txt[n];
-	    sx += vo_data->font->width[c]+vo_data->font->charspace;
+	    sx += mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
 	  }
 	}
 	txt = &txt[n]; // Jump to the new start char
@@ -501,32 +501,32 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
     } else {
       for(sx = xrmin ;  sx < xmin && txt != line_end ; txt++) {
 	unsigned char c = txt[n];
-	sx += vo_data->font->width[c]+vo_data->font->charspace;
+	sx += mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
       }
     }
 
     while(sx < xmax && txt != line_end) {
       int c=utf8_get_char((const char**)&txt);
-      font = vo_data->font->font[c];
+      font = mpxp_context().video().output->font->font[c];
       if(font >= 0) {
-	int cs = (vo_data->font->pic_a[font]->h - vo_data->font->height) / 2;
-	if ((sx + vo_data->font->width[c] < xmax)  &&  (sy + vo_data->font->height < ymax) )
-	  draw_alpha->render(vo_data->font->width[c], vo_data->font->height,
-		     vo_data->font->pic_b[font]->bmp+vo_data->font->start[c] +
-		     cs * vo_data->font->pic_a[font]->w,
-		     vo_data->font->pic_a[font]->bmp+vo_data->font->start[c] +
-		     cs * vo_data->font->pic_a[font]->w,
-		     vo_data->font->pic_a[font]->w,
+	int cs = (mpxp_context().video().output->font->pic_a[font]->h - mpxp_context().video().output->font->height) / 2;
+	if ((sx + mpxp_context().video().output->font->width[c] < xmax)  &&  (sy + mpxp_context().video().output->font->height < ymax) )
+	  draw_alpha->render(mpxp_context().video().output->font->width[c], mpxp_context().video().output->font->height,
+		     mpxp_context().video().output->font->pic_b[font]->bmp+mpxp_context().video().output->font->start[c] +
+		     cs * mpxp_context().video().output->font->pic_a[font]->w,
+		     mpxp_context().video().output->font->pic_a[font]->bmp+mpxp_context().video().output->font->start[c] +
+		     cs * mpxp_context().video().output->font->pic_a[font]->w,
+		     mpxp_context().video().output->font->pic_a[font]->w,
 		     mpi->planes[0] + sy * mpi->stride[0] + sx * (mpi->bpp>>3),
 		     mpi->stride[0],finalize);
 	//	else
 	//printf("Can't draw '%c'\n",c);
       }
-      sx+=vo_data->font->width[c]+vo_data->font->charspace;
+      sx+=mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
     }
     txt = line_end;
     if(txt[0] == '\0') break;
-    sy += vo_data->font->height + vspace;
+    sy += mpxp_context().video().output->font->height + vspace;
   }
 }
 
@@ -535,9 +535,9 @@ int menu_text_length(const char* txt) {
   render_txt(txt);
   while (*txt) {
     int c=utf8_get_char((const char**)&txt);
-    l += vo_data->font->width[c]+vo_data->font->charspace;
+    l += mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
   }
-  return l - vo_data->font->charspace;
+  return l - mpxp_context().video().output->font->charspace;
 }
 
 void menu_text_size(const char* txt,int max_width, int vspace, int warp, int* _w, int* _h) {
@@ -547,18 +547,18 @@ void menu_text_size(const char* txt,int max_width, int vspace, int warp, int* _w
   render_txt(txt);
   while (*txt) {
     int c=utf8_get_char((const char**)&txt);
-    if(c == '\n' || (warp && i + vo_data->font->width[c] >= max_width)) {
+    if(c == '\n' || (warp && i + mpxp_context().video().output->font->width[c] >= max_width)) {
       if(*txt)
 	l++;
       i = 0;
       if(c == '\n') continue;
     }
-    i += vo_data->font->width[c]+vo_data->font->charspace;
+    i += mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
     if(i > w) w = i;
   }
 
   *_w = w;
-  *_h = (l-1) * (vo_data->font->height + vspace) + vo_data->font->height;
+  *_h = (l-1) * (mpxp_context().video().output->font->height + vspace) + mpxp_context().video().output->font->height;
 }
 
 
@@ -567,12 +567,12 @@ int menu_text_num_lines(const char* txt, int max_width) {
   render_txt(txt);
   while (*txt) {
     int c=utf8_get_char((const char**)&txt);
-    if(c == '\n' || i + vo_data->font->width[c] > max_width) {
+    if(c == '\n' || i + mpxp_context().video().output->font->width[c] > max_width) {
       l++;
       i = 0;
       if(c == '\n') continue;
     }
-    i += vo_data->font->width[c]+vo_data->font->charspace;
+    i += mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
   }
   return l;
 }
@@ -586,10 +586,10 @@ char* menu_text_get_next_line(char* txt, int max_width) {
       txt++;
       break;
     }
-    i += vo_data->font->width[c];
+    i += mpxp_context().video().output->font->width[c];
     if(i >= max_width)
       break;
-    i += vo_data->font->charspace;
+    i += mpxp_context().video().output->font->charspace;
   }
   return txt;
 }
@@ -610,7 +610,7 @@ void menu_draw_box(const mp_image_t* mpi,unsigned char grey,unsigned char alpha,
   if(g < 1) g = 1;
 
   {
-    int finalize = vo_data->is_final();
+    int finalize = mpxp_context().video().output->is_final();
     int stride = (w+7)&(~7); // round to 8
     unsigned char pic[stride*h],pic_alpha[stride*h];
     memset(pic,g,stride*h);

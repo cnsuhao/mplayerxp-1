@@ -576,7 +576,7 @@ MPXP_Rc __FASTCALL__ af_query_fmt (const af_stream_t* s,mpaf_format_e fmt)
 {
     af_instance_t* filt = s?s->first:NULL;
     const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_FORMAT,fmt);
+    if(strcmp(filt_name,"ao2")==0) return ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_FORMAT,fmt);
     else if(afmt2mpaf(fmt)==filt->conf.format) return MPXP_True;
     return MPXP_False;
 }
@@ -585,7 +585,7 @@ MPXP_Rc __FASTCALL__ af_query_rate (const af_stream_t* s,unsigned rate)
 {
     af_instance_t* filt = s?s->first:NULL;
     const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_RATE,rate);
+    if(strcmp(filt_name,"ao2")==0) return ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_RATE,rate);
     else if(rate==filt->conf.rate) return MPXP_True;
     return MPXP_False;
 }
@@ -594,7 +594,7 @@ MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch)
 {
     af_instance_t* filt = s?s->first:NULL;
     const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return ao_control(ao_data,AOCONTROL_QUERY_CHANNELS,nch);
+    if(strcmp(filt_name,"ao2")==0) return ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_CHANNELS,nch);
     else if(nch==filt->conf.nch) return MPXP_True;
     return MPXP_False;
 }

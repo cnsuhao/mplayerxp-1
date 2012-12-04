@@ -19,7 +19,7 @@ using namespace mpxp;
 #include "libvo/sub.h"
 #endif
 #include "pp_msg.h"
-#include "mplayerxp.h" // vo_data
+#include "mplayerxp.h" // mpxp_context().video().output
 
 struct vf_priv_t {
     int up_h,dn_h;
@@ -36,7 +36,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     vf->priv->w=width;
     vf->priv->h=height;
     if(vf->priv->dn_h==-1 || vf->priv->up_h==-1)
-	vf->priv->dn_h=vf->priv->up_h=(get_osd_height(vo_data,OSD_PB_START,0)*4)/3;
+	vf->priv->dn_h=vf->priv->up_h=(get_osd_height(mpxp_context().video().output,OSD_PB_START,0)*4)/3;
     h=height+vf->priv->up_h+vf->priv->dn_h;
     dh=d_height+vf->priv->up_h+vf->priv->dn_h;
     return vf_next_config(vf,width,h,d_width,dh,flags,outfmt);

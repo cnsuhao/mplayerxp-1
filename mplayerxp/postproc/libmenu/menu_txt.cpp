@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "libvo/video_out.h"
 #include "osdep/keycodes.h"
 #include "pp_msg.h"
-#include "mplayerxp.h" // vo_data
+#include "mplayerxp.h" // mpxp_context().video().output
 
 struct menu_priv_s {
   char** lines;
@@ -98,13 +98,13 @@ static void read_key(menu_t* menu,int c) {
 static void draw(menu_t* menu,mp_image_t* mpi) {
   int x = mpriv->minb;
   int y = mpriv->minb;
-  //int th = 2*mpriv->hspace + vo_data->font->height;
+  //int th = 2*mpriv->hspace + mpxp_context().video().output->font->height;
   int i,end;
 
   if(x < 0) x = 8;
   if(y < 0) y = 8;
 
-  mpriv->disp_lines = (mpi->h + mpriv->hspace  - 2*mpriv->minb) / (  vo_data->font->height + mpriv->hspace);
+  mpriv->disp_lines = (mpi->h + mpriv->hspace  - 2*mpriv->minb) / (  mpxp_context().video().output->font->height + mpriv->hspace);
   if(mpriv->num_lines - mpriv->cur_line < mpriv->disp_lines) {
     i = mpriv->num_lines - 1 - mpriv->disp_lines;
     if(i < 0) i = 0;
@@ -117,7 +117,7 @@ static void draw(menu_t* menu,mp_image_t* mpi) {
 
   for( ; i < end ; i++) {
     menu_draw_text(mpi,mpriv->lines[i],x,y);
-    y += vo_data->font->height + mpriv->hspace;
+    y += mpxp_context().video().output->font->height + mpriv->hspace;
   }
 
 }

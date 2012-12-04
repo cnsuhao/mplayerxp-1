@@ -894,9 +894,9 @@ void ty_processuserdata(const unsigned char* buf, int len )
 			// {
 	 //    printf( "OSD:%d:%s\n", index, ty_OSD1.text[ index ] );
 	 // }
-		   vo_data->sub = &ty_OSD1;
-		vo_osd_changed( OSDTYPE_SUBTITLE );
-			tyOSDUpdate = 0;
+		    mpxp_context().video().output->sub = &ty_OSD1;
+		    vo_osd_changed( OSDTYPE_SUBTITLE );
+		    tyOSDUpdate = 0;
 		}
 	}
 }

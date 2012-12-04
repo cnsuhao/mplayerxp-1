@@ -261,8 +261,6 @@ volatile MPXPSecureKeys* secure_keys;
 	     Decoding ahead
 **************************************************************************/
 static volatile char antiviral_hole4[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
-ao_data_t* ao_data=NULL;
-Video_Output* vo_data=NULL;
 /**************************************************************************/
 MPXPContext& mpxp_context() { return *MPXPCtx; }
 
@@ -315,8 +313,8 @@ static void mpxp_uninit_structs(void) {
 #ifdef ENABLE_WIN32LOADER
     free_codec_cfg();
 #endif
-    if(vo_data) delete vo_data;
-    if(ao_data) delete ao_data;
+    if(mpxp_context().video().output) delete mpxp_context().video().output;
+    if(mpxp_context().audio().output) delete mpxp_context().audio().output;
     xmp_uninit();
     mp_uninit_malloc(mp_conf.verbose);
 }
@@ -360,15 +358,15 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if (mask&INITED_SPUDEC){
 	inited_flags&=~INITED_SPUDEC;
 	MP_UNIT("uninit_spudec");
-	spudec_free(vo_data->spudec);
-	vo_data->spudec=NULL;
+	spudec_free(mpxp_context().video().output->spudec);
+	mpxp_context().video().output->spudec=NULL;
     }
 
     if (mask&INITED_VOBSUB){
 	inited_flags&=~INITED_VOBSUB;
 	MP_UNIT("uninit_vobsub");
-	vobsub_close(vo_data->vobsub);
-	vo_data->vobsub=NULL;
+	vobsub_close(mpxp_context().video().output->vobsub);
+	mpxp_context().video().output->vobsub=NULL;
     }
 
     if(mask&INITED_VCODEC){
@@ -381,8 +379,8 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_VO){
 	inited_flags&=~INITED_VO;
 	MP_UNIT("uninit_vo");
-	delete vo_data;
-	vo_data=NULL;
+	delete mpxp_context().video().output;
+	mpxp_context().video().output=NULL;
     }
 
     if(mask&INITED_ACODEC){
@@ -395,8 +393,8 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_AO){
 	inited_flags&=~INITED_AO;
 	MP_UNIT("uninit_ao");
-	ao_uninit(ao_data);
-	ao_data=NULL;
+	ao_uninit(mpxp_context().audio().output);
+	mpxp_context().audio().output=NULL;
     }
 
     if(mask&INITED_DEMUXER) uninit_demuxer();
@@ -415,7 +413,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
 	MP_UNIT("sub_free");
 	sub_free( mpxp_context().subtitles );
 	mp_conf.sub_name=NULL;
-	vo_data->sub=NULL;
+	mpxp_context().video().output->sub=NULL;
 	mpxp_context().subtitles=NULL;
     }
 #endif
@@ -577,7 +575,7 @@ static void get_mmx_optimizations( void )
 static void init_player( void )
 {
     if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0) {
-	vo_data->print_help();
+	mpxp_context().video().output->print_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
@@ -646,7 +644,7 @@ void show_long_help(void) {
     m_config_show_options(mpxp_context().mconfig);
     mp_input_print_binds(MPXPSys.libinput());
     print_stream_drivers();
-    vo_data->print_help();
+    mpxp_context().video().output->print_help();
     ao_print_help();
     vf_help();
     af_help();
@@ -685,7 +683,7 @@ void update_osd( float v_pts )
 	else --pts;
       }
       else osd_last_pts=pts;
-      vo_data->osd_text=osd_text_buffer;
+      mpxp_context().video().output->osd_text=osd_text_buffer;
       if (MPXPSys.osd_show_framedrop) {
 	  sprintf(osd_text_tmp, "Framedrop: %s",mp_conf.frame_dropping>1?"hard":mp_conf.frame_dropping?"vo":"none");
 	  MPXPSys.osd_show_framedrop--;
@@ -696,13 +694,13 @@ void update_osd( float v_pts )
 #else
 	  sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys.osd_function,pts/3600,(pts/60)%60,pts%60);
 #endif
-      if(strcmp(vo_data->osd_text, osd_text_tmp)) {
-	      strcpy(vo_data->osd_text, osd_text_tmp);
+      if(strcmp(mpxp_context().video().output->osd_text, osd_text_tmp)) {
+	      strcpy(mpxp_context().video().output->osd_text, osd_text_tmp);
 	      vo_osd_changed(OSDTYPE_OSD);
       }
   } else {
-      if(vo_data->osd_text) {
-      vo_data->osd_text=NULL;
+      if(mpxp_context().video().output->osd_text) {
+      mpxp_context().video().output->osd_text=NULL;
 	  vo_osd_changed(OSDTYPE_OSD);
       }
   }
@@ -725,8 +723,8 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 
 	// success:
 	/* FIXME there should be real seeking for vobsub */
-	if (vo_data->vobsub) vobsub_reset(vo_data->vobsub);
-	if (vo_data->spudec) spudec_reset(vo_data->spudec);
+	if (mpxp_context().video().output->vobsub) vobsub_reset(mpxp_context().video().output->vobsub);
+	if (mpxp_context().video().output->spudec) spudec_reset(mpxp_context().video().output->spudec);
 
 	if(sh_audio){
 	    sh_audio->chapter_change=0;
@@ -737,19 +735,19 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 	if(sh_video){
 	    MP_UNIT("seek_video_reset");
 	    mpcv_resync_stream(mpxp_context().video().decoder);
-	    vo_data->reset();
+	    mpxp_context().video().output->reset();
 	    sh_video->chapter_change=-1;
 	}
 
 	if(sh_audio){
 	    MP_UNIT("seek_audio_reset");
 	    mpca_resync_stream(mpxp_context().audio().decoder);
-	    ao_reset(ao_data); // stop audio, throwing away buffered data
+	    ao_reset(mpxp_context().audio().output); // stop audio, throwing away buffered data
 	}
 
-	if (vo_data->vobsub) {
+	if (mpxp_context().video().output->vobsub) {
 	    MP_UNIT("seek_vobsub_reset");
-	    vobsub_seek_r(vo_data->vobsub, _seek);
+	    vobsub_seek_r(mpxp_context().video().output->vobsub, _seek);
 	}
 
 #ifdef USE_OSD
@@ -758,8 +756,8 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 	    int len=((_demuxer->movi_end-_demuxer->movi_start)>>8);
 	    if (len>0){
 		if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25;
-		vo_data->osd_progbar_type=0;
-		vo_data->osd_progbar_value=(_demuxer->filepos-_demuxer->movi_start)/len;
+		mpxp_context().video().output->osd_progbar_type=0;
+		mpxp_context().video().output->osd_progbar_value=(_demuxer->filepos-_demuxer->movi_start)/len;
 		vo_osd_changed(OSDTYPE_PROGBAR);
 	    }
 	}
@@ -768,10 +766,10 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 	    max_pts_correction=0.1;
 	    if(osd) osd->visible=sh_video->fps<=60?sh_video->fps:25; // to rewert to PLAY pointer after 1 sec
 	    mpxp_context().bench->audio=0; mpxp_context().bench->audio_decode=0; mpxp_context().bench->video=0; mpxp_context().bench->vout=0;
-	    if(vo_data->spudec) {
+	    if(mpxp_context().video().output->spudec) {
 		unsigned char* packet=NULL;
 		while(ds_get_packet_sub_r(d_dvdsub,&packet)>0) ; // Empty stream
-		spudec_reset(vo_data->spudec);
+		spudec_reset(mpxp_context().video().output->spudec);
 	    }
 	}
     }
@@ -845,12 +843,12 @@ static void show_benchmark_status(void)
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
     if(xmp_test_model(XMP_Run_AudioPlayback))
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
-			,sh_audio->timer-ao_get_delay(ao_data)
+			,sh_audio->timer-ao_get_delay(mpxp_context().audio().output)
 			,(sh_audio->timer>0.5)?100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)sh_audio->timer:0
 			);
     else
 	MSG_STATUS("A:%6.1f %4.1f%%  B:%4.1f\r"
-		,sh_audio->timer-ao_get_delay(ao_data)
+		,sh_audio->timer-ao_get_delay(mpxp_context().audio().output)
 		,(sh_audio->timer>0.5)?100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)sh_audio->timer:0
 		,get_delay_audio_buffer()
 		);
@@ -881,13 +879,13 @@ static void mpxp_init_osd(void) {
 // check font
 #ifdef USE_OSD
     if(mp_conf.font_name){
-	vo_data->font=read_font_desc(mp_conf.font_name,mp_conf.font_factor,mp_conf.verbose>1);
-	if(!vo_data->font) MSG_ERR(MSGTR_CantLoadFont,mp_conf.font_name);
+	mpxp_context().video().output->font=read_font_desc(mp_conf.font_name,mp_conf.font_factor,mp_conf.verbose>1);
+	if(!mpxp_context().video().output->font) MSG_ERR(MSGTR_CantLoadFont,mp_conf.font_name);
     } else {
 	// try default:
-	vo_data->font=read_font_desc(get_path("font/font.desc"),mp_conf.font_factor,mp_conf.verbose>1);
-	if(!vo_data->font)
-	    vo_data->font=read_font_desc(DATADIR"/font/font.desc",mp_conf.font_factor,mp_conf.verbose>1);
+	mpxp_context().video().output->font=read_font_desc(get_path("font/font.desc"),mp_conf.font_factor,mp_conf.verbose>1);
+	if(!mpxp_context().video().output->font)
+	    mpxp_context().video().output->font=read_font_desc(DATADIR"/font/font.desc",mp_conf.font_factor,mp_conf.verbose>1);
     }
 #endif
     /* Configure menu here */
@@ -913,7 +911,7 @@ char* MPXPSystem::init_output_subsystems() {
     unsigned i;
     // check video_out driver name:
     MP_UNIT("vo_init");
-    vo_inited = (vo_data->init(mp_conf.video_driver)!=NULL)?1:0;
+    vo_inited = (mpxp_context().video().output->init(mp_conf.video_driver)!=NULL)?1:0;
 
     if(!vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
@@ -941,23 +939,23 @@ int MPXPSystem::init_vobsub(const char *filename) {
     int forced_subs_only=0;
     MP_UNIT("vobsub");
     if (mp_conf.vobsub_name){
-      vo_data->vobsub=vobsub_open(mp_conf.vobsub_name,mp_conf.spudec_ifo,1,&vo_data->spudec);
-      if(vo_data->vobsub==NULL)
+      mpxp_context().video().output->vobsub=vobsub_open(mp_conf.vobsub_name,mp_conf.spudec_ifo,1,&mpxp_context().video().output->spudec);
+      if(mpxp_context().video().output->vobsub==NULL)
 	MSG_ERR(MSGTR_CantLoadSub,mp_conf.vobsub_name);
       else {
 	inited_flags|=INITED_VOBSUB;
-	vobsub_set_from_lang(vo_data->vobsub, mp_conf.dvdsub_lang);
+	vobsub_set_from_lang(mpxp_context().video().output->vobsub, mp_conf.dvdsub_lang);
 	// check if vobsub requested only to display forced subtitles
-	forced_subs_only=vobsub_get_forced_subs_flag(vo_data->vobsub);
+	forced_subs_only=vobsub_get_forced_subs_flag(mpxp_context().video().output->vobsub);
       }
     }else if(mp_conf.sub_auto && filename && (strlen(filename)>=5)){
       /* try to autodetect vobsub from movie filename ::atmos */
       char *buf = new(zeromem) char[strlen(filename)-3];
       strncpy(buf, filename, strlen(filename)-4);
-      vo_data->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&vo_data->spudec);
+      mpxp_context().video().output->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&mpxp_context().video().output->spudec);
       delete buf;
     }
-    if(vo_data->vobsub)
+    if(mpxp_context().video().output->vobsub)
     {
       mp_conf.sub_auto=0; // don't do autosub for textsubs if vobsub found
       inited_flags|=INITED_VOBSUB;
@@ -1085,26 +1083,26 @@ void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int st
 	unsigned int palette[16], width, height;
 	MP_UNIT("spudec_init_vobsub");
 	if (vobsub_parse_ifo(NULL,mp_conf.spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
-	    vo_data->spudec=spudec_new_scaled(palette, sh_video->src_w, sh_video->src_h);
+	    mpxp_context().video().output->spudec=spudec_new_scaled(palette, sh_video->src_w, sh_video->src_h);
     }
 
-    if (vo_data->spudec==NULL) {
+    if (mpxp_context().video().output->spudec==NULL) {
 	unsigned *pal;
 	MP_UNIT("spudec_init");
 	if(stream_control(stream,SCTRL_VID_GET_PALETTE,&pal)==MPXP_Ok)
-	    vo_data->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
+	    mpxp_context().video().output->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
     }
 
-    if (vo_data->spudec==NULL) {
+    if (mpxp_context().video().output->spudec==NULL) {
 	MP_UNIT("spudec_init_normal");
-	vo_data->spudec=spudec_new_scaled(NULL, sh_video->src_w, sh_video->src_h);
-	spudec_set_font_factor(vo_data->spudec,mp_conf.font_factor);
+	mpxp_context().video().output->spudec=spudec_new_scaled(NULL, sh_video->src_w, sh_video->src_h);
+	spudec_set_font_factor(mpxp_context().video().output->spudec,mp_conf.font_factor);
     }
 
-    if (vo_data->spudec!=NULL) {
+    if (mpxp_context().video().output->spudec!=NULL) {
 	inited_flags|=INITED_SPUDEC;
 	// Apply current settings for forced subs
-	spudec_set_forced_subs_only(vo_data->spudec,forced_subs_only);
+	spudec_set_forced_subs_only(mpxp_context().video().output->spudec,forced_subs_only);
     }
 
 #ifdef USE_SUB
@@ -1175,13 +1173,13 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     } else {
-	if(!(ao_data=ao_init(ao_subdevice))) {
+	if(!(mpxp_context().audio().output=ao_init(ao_subdevice))) {
 	    MSG_ERR(MSGTR_CannotInitAO);
 	    d_audio->sh=NULL;
 	    sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	}
 	if(ao_subdevice) delete ao_subdevice;
-	ao_inited=ao_register(ao_data,mp_conf.audio_driver,0);
+	ao_inited=ao_register(mpxp_context().audio().output,mp_conf.audio_driver,0);
 	if (ao_inited!=MPXP_Ok){
 	    MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
 	    exit_player(MSGTR_Exit_error);
@@ -1195,12 +1193,12 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
     MPXP_Rc rc=MPXP_Ok;
     MP_UNIT("init_video_codec");
     sh_video->inited=0;
-    vo_data->flags=VOFLAG_NONE;
+    mpxp_context().video().output->flags=VOFLAG_NONE;
     /* configure flags */
-    if(vo_conf.fullscreen)	vo_data->FS_SET();
-    if(vo_conf.softzoom)	vo_data->ZOOM_SET();
-    if(vo_conf.flip>0)		vo_data->FLIP_SET();
-    if(vo_conf.vidmode)		vo_data->VM_SET();
+    if(vo_conf.fullscreen)	mpxp_context().video().output->FS_SET();
+    if(vo_conf.softzoom)	mpxp_context().video().output->ZOOM_SET();
+    if(vo_conf.flip>0)		mpxp_context().video().output->FLIP_SET();
+    if(vo_conf.vidmode)		mpxp_context().video().output->VM_SET();
     if((mpxp_context().video().decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,_libinput))) sh_video->inited=1;
 #ifdef ENABLE_WIN32LOADER
     if(!sh_video->inited) {
@@ -1250,7 +1248,7 @@ int MPXPSystem::configure_audio() {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     Demuxer_Stream *d_audio=_demuxer->audio;
     int rc=0;
-    const ao_info_t *info=ao_get_info(ao_data);
+    const ao_info_t *info=ao_get_info(mpxp_context().audio().output);
     MP_UNIT("setup_audio");
     MSG_V("AO: [%s] %iHz %s %s\n",
 	info->short_name,
@@ -1270,26 +1268,26 @@ int MPXPSystem::configure_audio() {
 	MSG_V("AO: Comment: %s\n", info->comment);
 
     MP_UNIT("af_preinit");
-    ao_data->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate;
-    ao_data->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
-    ao_data->format=sh_audio->afmt;
+    mpxp_context().audio().output->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate;
+    mpxp_context().audio().output->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
+    mpxp_context().audio().output->format=sh_audio->afmt;
 
     if(mpca_preinit_filters(mpxp_context().audio().decoder,
 	    // input:
 	    (int)(sh_audio->rate),
 	    sh_audio->nch, sh_audio->afmt,
 	    // output:
-	    &ao_data->samplerate, &ao_data->channels, &ao_data->format)!=MPXP_Ok){
+	    &mpxp_context().audio().output->samplerate, &mpxp_context().audio().output->channels, &mpxp_context().audio().output->format)!=MPXP_Ok){
 	    MSG_ERR("Audio filter chain preinit failed\n");
     } else {
 	MSG_V("AF_pre: %dHz %dch (%s) afmt=%08X sh_audio_min=%i\n",
-		ao_data->samplerate, ao_data->channels,
-		ao_format_name(ao_data->format),ao_data->format
+		mpxp_context().audio().output->samplerate, mpxp_context().audio().output->channels,
+		ao_format_name(mpxp_context().audio().output->format),mpxp_context().audio().output->format
 		,sh_audio->audio_out_minsize);
     }
 
-    if(MPXP_Ok!=ao_configure(ao_data,mp_conf.force_srate?mp_conf.force_srate:ao_data->samplerate,
-		    ao_data->channels,ao_data->format)) {
+    if(MPXP_Ok!=ao_configure(mpxp_context().audio().output,mp_conf.force_srate?mp_conf.force_srate:mpxp_context().audio().output->samplerate,
+		    mpxp_context().audio().output->channels,mpxp_context().audio().output->format)) {
 	MSG_ERR("Can't configure audio device\n");
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
@@ -1300,8 +1298,8 @@ int MPXPSystem::configure_audio() {
 	if(mpca_init_filters(mpxp_context().audio().decoder,
 	    sh_audio->rate,
 	    sh_audio->nch, mpaf_format_e(sh_audio->afmt),
-	    ao_data->samplerate, ao_data->channels, mpaf_format_e(ao_data->format),
-	    ao_data->outburst*4, ao_data->buffersize)!=MPXP_Ok) {
+	    mpxp_context().audio().output->samplerate, mpxp_context().audio().output->channels, mpaf_format_e(mpxp_context().audio().output->format),
+	    mpxp_context().audio().output->outburst*4, mpxp_context().audio().output->buffersize)!=MPXP_Ok) {
 		MSG_ERR("No matching audio filter found!\n");
 	    }
     }
@@ -1333,7 +1331,7 @@ void MPXPSystem::print_audio_status() const {
     unsigned ipts,rpts;
     unsigned char h,m,s,rh,rm,rs;
     static char ph=0,pm=0,ps=0;
-    ipts=(unsigned)(sh_audio->timer-ao_get_delay(ao_data));
+    ipts=(unsigned)(sh_audio->timer-ao_get_delay(mpxp_context().audio().output));
     rpts=_demuxer->movi_length-ipts;
     h = ipts/3600;
     m = (ipts/60)%60;
@@ -1359,7 +1357,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
     int rc=0;
     if(*osd_visible) {
 	if (!--(*osd_visible)) {
-	    vo_data->osd_progbar_type=-1; // disable
+	    mpxp_context().video().output->osd_progbar_type=-1; // disable
 	    vo_osd_changed(OSDTYPE_PROGBAR);
 	    if (!((osd_function == OSD_PAUSE)||(osd_function==OSD_DVDMENU)))
 		osd_function = OSD_PLAY;
@@ -1380,7 +1378,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 		*in_pause = 1;
 		return -1;
 	    }
-	    vo_data->pause();
+	    mpxp_context().video().output->pause();
 	}
 	if(mp_conf.verbose) {
 	    MSG_STATUS("\n------ PAUSED -------\r");
@@ -1392,11 +1390,11 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 		xp_core->in_pause=1;
 		while( !dec_ahead_can_aseek ) yield_timeslice();
 	    }
-	    ao_pause(ao_data);	// pause audio, keep data if possible
+	    ao_pause(mpxp_context().audio().output);	// pause audio, keep data if possible
 	}
 
 	while( (cmd = mp_input_get_cmd(_libinput,20,1,1)) == NULL) {
-	    if(sh_video && vo_inited) vo_data->check_events();
+	    if(sh_video && vo_inited) mpxp_context().video().output->check_events();
 	    yield_timeslice();
 	}
 
@@ -1407,14 +1405,14 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 
 	if(osd_function==OSD_PAUSE) osd_function=OSD_PLAY;
 	if (ao_inited==MPXP_Ok && sh_audio) {
-	    ao_resume(ao_data);	// resume audio
+	    ao_resume(mpxp_context().audio().output);	// resume audio
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		xp_core->in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
 	    }
 	}
 	if (vo_inited && sh_video)
-	    vo_data->resume();	// resume video
+	    mpxp_context().video().output->resume();	// resume video
 	*in_pause=0;
 	(void)GetRelativeTime();	// keep TF around FT in next cycle
     }
@@ -1507,17 +1505,17 @@ For future:
 		}
 		break;
 	    case MP_CMD_MUTE:
-		mixer_mute(ao_data);
+		mixer_mute(mpxp_context().audio().output);
 		break;
 	    case MP_CMD_VOLUME :  {
 		int v = cmd->args[0].v.i;
-		if(v > 0)	mixer_incvolume(ao_data);
-		else		mixer_decvolume(ao_data);
+		if(v > 0)	mixer_incvolume(mpxp_context().audio().output);
+		else		mixer_decvolume(mpxp_context().audio().output);
 #ifdef USE_OSD
 		if(mp_conf.osd_level){
 		    osd->visible=sh_video->fps; // 1 sec
-		    vo_data->osd_progbar_type=OSD_VOLUME;
-		    vo_data->osd_progbar_value=(mixer_getbothvolume(ao_data)*256.0)/100.0;
+		    mpxp_context().video().output->osd_progbar_type=OSD_VOLUME;
+		    mpxp_context().video().output->osd_progbar_value=(mixer_getbothvolume(mpxp_context().audio().output)*256.0)/100.0;
 		    vo_osd_changed(OSDTYPE_PROGBAR);
 		}
 #endif
@@ -1532,9 +1530,9 @@ For future:
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
-			vo_data->osd_progbar_type=OSD_CONTRAST;
-			vo_data->osd_progbar_value=((v_cont)<<8)/100;
-			vo_data->osd_progbar_value = ((v_cont+100)<<8)/200;
+			mpxp_context().video().output->osd_progbar_type=OSD_CONTRAST;
+			mpxp_context().video().output->osd_progbar_value=((v_cont)<<8)/100;
+			mpxp_context().video().output->osd_progbar_value = ((v_cont+100)<<8)/200;
 			vo_osd_changed(OSDTYPE_PROGBAR);
 		    }
 #endif
@@ -1550,9 +1548,9 @@ For future:
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
-			vo_data->osd_progbar_type=OSD_BRIGHTNESS;
-			vo_data->osd_progbar_value=((v_bright)<<8)/100;
-			vo_data->osd_progbar_value = ((v_bright+100)<<8)/200;
+			mpxp_context().video().output->osd_progbar_type=OSD_BRIGHTNESS;
+			mpxp_context().video().output->osd_progbar_value=((v_bright)<<8)/100;
+			mpxp_context().video().output->osd_progbar_value = ((v_bright+100)<<8)/200;
 			vo_osd_changed(OSDTYPE_PROGBAR);
 		    }
 #endif
@@ -1568,9 +1566,9 @@ For future:
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
-			vo_data->osd_progbar_type=OSD_HUE;
-			vo_data->osd_progbar_value=((v_hue)<<8)/100;
-			vo_data->osd_progbar_value = ((v_hue+100)<<8)/200;
+			mpxp_context().video().output->osd_progbar_type=OSD_HUE;
+			mpxp_context().video().output->osd_progbar_value=((v_hue)<<8)/100;
+			mpxp_context().video().output->osd_progbar_value = ((v_hue+100)<<8)/200;
 			vo_osd_changed(OSDTYPE_PROGBAR);
 		    }
 #endif
@@ -1586,9 +1584,9 @@ For future:
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
-			vo_data->osd_progbar_type=OSD_SATURATION;
-			vo_data->osd_progbar_value=((v_saturation)<<8)/100;
-			vo_data->osd_progbar_value = ((v_saturation+100)<<8)/200;
+			mpxp_context().video().output->osd_progbar_type=OSD_SATURATION;
+			mpxp_context().video().output->osd_progbar_value=((v_saturation)<<8)/100;
+			mpxp_context().video().output->osd_progbar_value = ((v_saturation+100)<<8)/200;
 			vo_osd_changed(OSDTYPE_PROGBAR);
 		    }
 #endif
@@ -1624,10 +1622,10 @@ For future:
 		}
 		break;
 	    case MP_CMD_VO_FULLSCREEN:
-		vo_data->fullscreen();
+		mpxp_context().video().output->fullscreen();
 		break;
 	    case MP_CMD_VO_SCREENSHOT:
-		vo_data->screenshot(dae_curr_vplayed(xp_core));
+		mpxp_context().video().output->screenshot(dae_curr_vplayed(xp_core));
 		break;
 	    case MP_CMD_SUB_POS: {
 		int v;
@@ -1697,7 +1695,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     mpxp_init_structs();
     MPXPSystem& MPXPSys=mpxp_context().MPXPSys;
-    vo_data=new(zeromem) Video_Output;
+    mpxp_context().video().output=new(zeromem) Video_Output;
     init_signal_handling();
 
     xmp_init();
@@ -1923,7 +1921,7 @@ play_next_file:
 	goto main;
     }
 
-    xp_core->num_v_buffs=vo_data->get_num_frames(); /* that really known after init_vcodecs */
+    xp_core->num_v_buffs=mpxp_context().video().output->get_num_frames(); /* that really known after init_vcodecs */
 
     if(mp_conf.autoq>0){
 	/* Auto quality option enabled*/
@@ -2050,7 +2048,7 @@ main:
 	    else MPXPSys.print_audio_status();
 	}
 	usleep(250000);
-	if(sh_video) vo_data->check_events();
+	if(sh_video) mpxp_context().video().output->check_events();
 #ifdef USE_OSD
 	while((MPXPSys.paint_osd(&osd.visible,&in_pause))!=0);
 #endif

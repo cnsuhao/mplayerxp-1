@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "libvo/video_out.h"
 #include "osdep/keycodes.h"
 
-#include "mplayerxp.h" // vo_data
+#include "mplayerxp.h" // mpxp_context().video().output
 
 #define IMPL 1
 #include "menu_list.h"
@@ -45,10 +45,10 @@ void menu_list_draw(menu_t* menu,mp_image_t* mpi) {
   dw = w - 2*mpriv->minb;
   ptr_l = mpriv->ptr ? menu_text_length(mpriv->ptr) : 0;
   // mpi is too small
-  if(h - vo_data->font->height <= 0 || w - ptr_l <= 0 || dw <= 0 || dh <= 0)
+  if(h - mpxp_context().video().output->font->height <= 0 || w - ptr_l <= 0 || dw <= 0 || dh <= 0)
     return;
 
-  th = menu_text_num_lines(mpriv->title,dw) * (mpriv->vspace + vo_data->font->height) + mpriv->vspace;
+  th = menu_text_num_lines(mpriv->title,dw) * (mpriv->vspace + mpxp_context().video().output->font->height) + mpriv->vspace;
 
   // the selected item is hidden, find a visible one
   if(mpriv->current->hide) {
@@ -78,17 +78,17 @@ void menu_list_draw(menu_t* menu,mp_image_t* mpi) {
   else
     y = mpriv->minb;
 
-  need_h = count * (mpriv->vspace + vo_data->font->height) - mpriv->vspace;
+  need_h = count * (mpriv->vspace + mpxp_context().video().output->font->height) - mpriv->vspace;
   if( need_h + th > dh) {
     int start,end;
-    mpriv->disp_lines = (dh + mpriv->vspace - th) / (mpriv->vspace + vo_data->font->height);
+    mpriv->disp_lines = (dh + mpriv->vspace - th) / (mpriv->vspace + mpxp_context().video().output->font->height);
     if(mpriv->disp_lines < 4) {
       th = 0;
-      mpriv->disp_lines = (dh + mpriv->vspace) / ( vo_data->font->height + mpriv->vspace);
+      mpriv->disp_lines = (dh + mpriv->vspace) / ( mpxp_context().video().output->font->height + mpriv->vspace);
     }
     // Too smoll
     if(mpriv->disp_lines < 1) return;
-    need_h = mpriv->disp_lines*(mpriv->vspace + vo_data->font->height) - mpriv->vspace;
+    need_h = mpriv->disp_lines*(mpriv->vspace + mpxp_context().video().output->font->height) - mpriv->vspace;
 
     start = sidx - (mpriv->disp_lines/2);
     if(start < 0) start = 0;
@@ -126,13 +126,13 @@ void menu_list_draw(menu_t* menu,mp_image_t* mpi) {
     dy += th;
   }
 
-  for( ; m != NULL && dy + vo_data->font->height < dh ; m = m->next ) {
+  for( ; m != NULL && dy + mpxp_context().video().output->font->height < dh ; m = m->next ) {
     if(m->hide) continue;
     if(m == mpriv->current) {
       if(mpriv->ptr_bg >= 0)
 	menu_draw_box(mpi,mpriv->ptr_bg,mpriv->ptr_bg_alpha,
 		      x < 0 ? (mpi->w-bg_w)/2 : x-mpriv->minb,dy+y-mpriv->vspace/2,
-		      bg_w,vo_data->font->height + mpriv->vspace);
+		      bg_w,mpxp_context().video().output->font->height + mpriv->vspace);
       if(ptr_l > 0)
 	menu_draw_text_full(mpi,mpriv->ptr,
 			    x < 0 ? (mpi->w - need_w) / 2 + ptr_l : x,
@@ -143,14 +143,14 @@ void menu_list_draw(menu_t* menu,mp_image_t* mpi) {
     } else if(mpriv->item_bg >= 0)
       menu_draw_box(mpi,mpriv->item_bg,mpriv->item_bg_alpha,
 		    x < 0 ? (mpi->w-bg_w)/2 : x-mpriv->minb,dy+y-mpriv->vspace/2,
-		    bg_w,vo_data->font->height + mpriv->vspace);
+		    bg_w,mpxp_context().video().output->font->height + mpriv->vspace);
     menu_draw_text_full(mpi,m->txt,
 			x < 0 ? (mpi->w - need_w) / 2  + ptr_l : x + ptr_l,
 			dy+y,dw-ptr_l,dh - dy,
 			mpriv->vspace,0,
 			MENU_TEXT_TOP|MENU_TEXT_LEFT,
 			MENU_TEXT_TOP|MENU_TEXT_LEFT);
-    dy +=  vo_data->font->height + mpriv->vspace;
+    dy +=  mpxp_context().video().output->font->height + mpriv->vspace;
   }
 
 }

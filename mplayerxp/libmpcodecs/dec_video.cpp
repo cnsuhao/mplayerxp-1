@@ -358,7 +358,7 @@ int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
 
     if(frame->flags) return 0;
     update_subtitle(opaque,frame->pts,mpi->xp_idx);
-    vo_data->flush_page(dae_curr_vdecoded(xp_core));
+    mpxp_context().video().output->flush_page(dae_curr_vdecoded(xp_core));
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
@@ -396,7 +396,7 @@ static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
       if(mp_conf.sub_fps==0) mp_conf.sub_fps=sh_video->fps;
       MP_UNIT("find_sub");
       if (pts > sub_last_pts || pts < sub_last_pts-1.0 ) {
-	 find_sub(mpxp_context().subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),vo_data); // FIXME! frame counter...
+	 find_sub(mpxp_context().subtitles,sub_uses_time?(100*pts):(pts*mp_conf.sub_fps),mpxp_context().video().output); // FIXME! frame counter...
 	 sub_last_pts = pts;
       }
       MP_UNIT(NULL);
@@ -416,31 +416,31 @@ static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
     }
   }else
 #endif
-   if(vo_data->spudec){
+   if(mpxp_context().video().output->spudec){
     unsigned char* packet=NULL;
     int len,timestamp;
     MP_UNIT("spudec");
-    spudec_now_pts(vo_data->spudec,90000*v_pts);
-    if(spudec_visible(vo_data->spudec)) {
-	vo_data->draw_spudec_direct(xp_idx);
+    spudec_now_pts(mpxp_context().video().output->spudec,90000*v_pts);
+    if(spudec_visible(mpxp_context().video().output->spudec)) {
+	mpxp_context().video().output->draw_spudec_direct(xp_idx);
     } else {
-	spudec_heartbeat(vo_data->spudec,90000*v_pts);
-	if (vo_data->vobsub) {
+	spudec_heartbeat(mpxp_context().video().output->spudec,90000*v_pts);
+	if (mpxp_context().video().output->vobsub) {
 	    if (v_pts >= 0) {
-		while((len=vobsub_get_packet(vo_data->vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
+		while((len=vobsub_get_packet(mpxp_context().video().output->vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
 		    timestamp -= v_pts*90000;
 		    MSG_V("\rVOB sub: len=%d v_pts=%5.3f sub=%5.3f ts=%d \n",len,v_pts,timestamp / 90000.0,timestamp);
-		    spudec_assemble(vo_data->spudec,packet,len,90000*d_dvdsub->pts);
+		    spudec_assemble(mpxp_context().video().output->spudec,packet,len,90000*d_dvdsub->pts);
 		}
 	    }
 	} else {
 	    while((len=ds_get_packet_sub_r(d_dvdsub,&packet))>0){
 		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
-		spudec_assemble(vo_data->spudec,packet,len,90000*d_dvdsub->pts);
+		spudec_assemble(mpxp_context().video().output->spudec,packet,len,90000*d_dvdsub->pts);
 	    }
 	}
 	/* detect wether the sub has changed or not */
-	if(spudec_changed(vo_data->spudec)) vo_data->draw_spudec_direct(xp_idx);
+	if(spudec_changed(mpxp_context().video().output->spudec)) mpxp_context().video().output->draw_spudec_direct(xp_idx);
 	MP_UNIT(NULL);
     }
   }
@@ -490,10 +490,10 @@ csp_again:
 		continue;
 	    }
 	    j=i;
-	    /*vo_data->flags=flags;*/
+	    /*mpxp_context().video().output->flags=flags;*/
 	    if(flags&VFCAP_CSP_SUPPORTED_BY_HW) break;
 	} else
-	if(!palette && !(vo_data->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
+	if(!palette && !(mpxp_context().video().output->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
 	    if(priv->mpvdec->control_vd(priv->ctx,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
 		palette=1;
@@ -539,13 +539,13 @@ csp_again:
 
     // autodetect flipping
     if(vo_conf.flip==0){
-	vo_data->FLIP_UNSET();
+	mpxp_context().video().output->FLIP_UNSET();
 	if(sh->codec->outflags[j]&CODECS_FLAG_FLIP)
 	    if(!(sh->codec->outflags[j]&CODECS_FLAG_NOFLIP))
-		vo_data->FLIP_SET();
+		mpxp_context().video().output->FLIP_SET();
     }
-    if(vo_data->flags&VFCAP_FLIPPED) vo_data->FLIP_REVERT();
-    if(vo_data->FLIP() && !(vo_data->flags&VFCAP_FLIP)){
+    if(mpxp_context().video().output->flags&VFCAP_FLIPPED) mpxp_context().video().output->FLIP_REVERT();
+    if(mpxp_context().video().output->FLIP() && !(mpxp_context().video().output->flags&VFCAP_FLIP)){
 	// we need to flip, but no flipping filter avail.
 	conf.w=sh->src_w;
 	conf.h=sh->src_h;
@@ -599,13 +599,13 @@ csp_again:
     MSG_V("vf->config(%dx%d->%dx%d,flags=0x%x,'%s',%s)\n",
 	sh->src_w,sh->src_h,
 	screen_size_x,screen_size_y,
-	vo_data->flags,
+	mpxp_context().video().output->flags,
 	"MPlayerXP",vo_format_name(out_fmt));
 
 //    MSG_DBG2("vf configuring: %s\n",vf->info->name);
     if(vf_config(s,sh->src_w,sh->src_h,
 		screen_size_x,screen_size_y,
-		vo_data->flags,
+		mpxp_context().video().output->flags,
 		out_fmt)==0){
 		    MSG_WARN(MSGTR_CannotInitVO);
 		    priv->vfilter_inited=-1;
@@ -614,7 +614,7 @@ csp_again:
     MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s')\n",
 	sh->src_w,sh->src_h,
 	screen_size_x,screen_size_y,
-	vo_data->flags,
+	mpxp_context().video().output->flags,
 	vo_format_name(out_fmt));
     return MPXP_True;
 }

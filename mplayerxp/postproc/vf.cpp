@@ -18,7 +18,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "libmpconf/codec-cfg.h"
 #include "pp_msg.h"
-#include "mplayerxp.h" // vo_data
+#include "mplayerxp.h" // mpxp_context().video().output
 
 extern const vf_info_t vf_info_1bpp;
 extern const vf_info_t vf_info_2xsai;
@@ -645,7 +645,7 @@ vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigne
 	    _this->conf.h=h;
 	    _this->conf.fourcc=fmt;
 	    if(reset_cache) mpxp_reset_vcache();
-	    vo_data->reset();
+	    mpxp_context().video().output->reset();
 	}
     }
     _this=first;

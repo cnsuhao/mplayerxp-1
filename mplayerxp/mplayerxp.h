@@ -125,10 +125,12 @@ namespace mpxp {
 
     struct audio_processing_t {
 	audio_decoder_t*	decoder;
+	ao_data_t*		output;
     };
 
     struct video_processing_t {
 	video_decoder_t*	decoder;
+	Video_Output*		output;
     };
 
     struct MPXPSystem;
@@ -196,7 +198,5 @@ namespace mpxp {
     void mp_register_options(m_config_t* cfg);
 
     extern play_tree_iter_t* playtree_iter;
-    extern ao_data_t* ao_data;
-    extern Video_Output* vo_data;
 }
 #endif

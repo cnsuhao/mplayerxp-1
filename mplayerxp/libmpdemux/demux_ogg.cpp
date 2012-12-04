@@ -318,7 +318,7 @@ static void demux_ogg_add_sub (ogg_stream_t* os,ogg_packet* pack) {
 #ifdef USE_ICONV
   subcp_recode1(&ogg_sub);
 #endif
-  vo_data->sub = &ogg_sub;
+  mpxp_context().video().output->sub = &ogg_sub;
   vo_osd_changed(OSDTYPE_SUBTITLE);
 }
 
@@ -573,7 +573,7 @@ static int demux_ogg_add_packet(Demuxer_Stream* ds,ogg_stream_t* os,int id,ogg_p
   /// Clear subtitles if necessary (for broken files)
   if ((clear_sub > 0) && (pts >= clear_sub)) {
     ogg_sub.lines = 0;
-    vo_data->sub = &ogg_sub;
+    mpxp_context().video().output->sub = &ogg_sub;
     vo_osd_changed(OSDTYPE_SUBTITLE);
     clear_sub = -1;
   }
@@ -1327,7 +1327,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
       }
       if(!precision && (is_keyframe || os->vorbis) ) {
 	ogg_sub.lines = 0;
-	vo_data->sub = &ogg_sub;
+	mpxp_context().video().output->sub = &ogg_sub;
 	vo_osd_changed(OSDTYPE_SUBTITLE);
 	clear_sub = -1;
 	demux_ogg_add_packet(ds,os,ds->id,&op);

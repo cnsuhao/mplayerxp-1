@@ -41,8 +41,8 @@ static void __show_status_line(float a_pts,float v_pts,float delay,float AV_dela
 }
 
 static void show_status_line_no_apts(sh_audio_t* sh_audio,float v_pts) {
-    if(mp_conf.av_sync_pts && sh_audio && (!xp_core->audio->eof || ao_get_delay(ao_data))) {
-	float a_pts = sh_audio->timer-ao_get_delay(ao_data);
+    if(mp_conf.av_sync_pts && sh_audio && (!xp_core->audio->eof || ao_get_delay(mpxp_context().audio().output))) {
+	float a_pts = sh_audio->timer-ao_get_delay(mpxp_context().audio().output);
 	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d\r"
 	,a_pts
 	,v_pts
@@ -70,7 +70,7 @@ static void vplayer_check_chapter_change(sh_audio_t* sh_audio,sh_video_t* sh_vid
 {
     if(mpxp_context().use_pts_fix2 && sh_audio) {
 	if(sh_video->chapter_change == -1) { /* First frame after seek */
-	    while(v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay(ao_data)==0.0)
+	    while(v_pts < 1.0 && sh_audio->timer==0.0 && ao_get_delay(mpxp_context().audio().output)==0.0)
 		yield_timeslice();	 /* Wait for audio to start play */
 	    if(sh_audio->timer > 2.0 && v_pts < 1.0) {
 		MSG_V("Video chapter change detected\n");
@@ -97,9 +97,9 @@ static float vplayer_compute_sleep_time(sh_audio_t* sh_audio,sh_video_t* sh_vide
 	/* FIXME!!! need the same technique to detect xp_core->audio->eof as for video_eof!
 	   often ao_get_delay() never returns 0 :( */
 	if(xp_core->audio->eof && !get_delay_audio_buffer()) goto nosound_model;
-	if((!xp_core->audio->eof || ao_get_delay(ao_data)) &&
+	if((!xp_core->audio->eof || ao_get_delay(mpxp_context().audio().output)) &&
 	(!mpxp_context().use_pts_fix2 || (!sh_audio->chapter_change && !sh_video->chapter_change)))
-	    sleep_time=screen_pts-((sh_audio->timer-ao_get_delay(ao_data))
+	    sleep_time=screen_pts-((sh_audio->timer-ao_get_delay(mpxp_context().audio().output))
 				+(mp_conf.av_sync_pts?0:xp_core->initial_apts));
 	else if(mpxp_context().use_pts_fix2 && sh_audio->chapter_change)
 	    sleep_time=0;
@@ -118,11 +118,11 @@ static int vplayer_do_sleep(sh_audio_t* sh_audio,int rtc_fd,float sleep_time)
 #define XP_MIN_AUDIOBUFF 0.05
 #define XP_MAX_TIMESLICE 0.1
     if(!xp_core->audio) sh_audio=NULL;
-    if(sh_audio && (!xp_core->audio->eof || ao_get_delay(ao_data)) && sleep_time>XP_MAX_TIMESLICE) {
+    if(sh_audio && (!xp_core->audio->eof || ao_get_delay(mpxp_context().audio().output)) && sleep_time>XP_MAX_TIMESLICE) {
 	float t;
 
 	if(xmp_test_model(XMP_Run_AudioPlayback)) {
-	    t=ao_get_delay(ao_data)-XP_MIN_AUDIOBUFF;
+	    t=ao_get_delay(mpxp_context().audio().output)-XP_MIN_AUDIOBUFF;
 	    if(t>XP_MAX_TIMESLICE)
 		t=XP_MAX_TIMESLICE;
 	} else
@@ -172,7 +172,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 ,xp_core->initial_apts
 ,xp_core->audio->eof
 ,sh_audio && !xp_core->audio->eof?d_audio->pts+(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps:0
-,sh_audio && !xp_core->audio->eof?sh_audio->timer-ao_get_delay(ao_data):0
+,sh_audio && !xp_core->audio->eof?sh_audio->timer-ao_get_delay(mpxp_context().audio().output):0
 ,shva.v_pts
 ,shva.stream_pts
 ,shva.duration);
@@ -183,7 +183,7 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
 	MP_UNIT("draw_osd");
 	update_osd(shva.v_pts);
-	vo_data->draw_osd(dae_next_played(xp_core->video));
+	mpxp_context().video().output->draw_osd(dae_next_played(xp_core->video));
 #endif
     }
     MP_UNIT("change_frame2");
@@ -210,12 +210,12 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
 	GetRelativeTime(); /* reset timer */
 	sleep_time=vplayer_compute_sleep_time(sh_audio,sh_video,&shva_prev,v_pts);
 
-	if(!(vo_data->flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
+	if(!(mpxp_context().video().output->flags&256)){ /* flag 256 means: libvo driver does its timing (dvb card) */
 	    if(!vplayer_do_sleep(sh_audio,mpxp_context().rtc_fd,sleep_time)) return 0;
 	}
 
 	player_idx=dae_next_played(xp_core->video);
-	vo_data->select_frame(player_idx);
+	mpxp_context().video().output->select_frame(player_idx);
 	dae_inc_played(xp_core->video);
 	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
 	t2=GetTimer()-t2;
@@ -233,11 +233,11 @@ MSG_INFO("xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f
      like playing 48KHz audio on 44.1KHz soundcard and other.
      Now we know PTS of every audio frame so don't need to have it */
   if(!xp_core->audio) sh_audio=NULL;
-  if(sh_audio && (!xp_core->audio->eof || ao_get_delay(ao_data)) && !mp_conf.av_sync_pts) {
+  if(sh_audio && (!xp_core->audio->eof || ao_get_delay(mpxp_context().audio().output)) && !mp_conf.av_sync_pts) {
     float a_pts=0;
 
     // unplayed bytes in our and soundcard/dma buffer:
-    float delay=ao_get_delay(ao_data)+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
+    float delay=ao_get_delay(mpxp_context().audio().output)+(float)sh_audio->a_buffer_len/(float)sh_audio->af_bps;
     if(xmp_test_model(XMP_Run_AudioPlayer))
 	delay += get_delay_audio_buffer();
 
