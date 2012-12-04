@@ -34,14 +34,14 @@ static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
 		     "*********************************************\n"
 		     "Try increase number of buffer for decoding ahead\n"
 		     "Exist: %u, need: %u\n"
-		     ,xp_core->num_v_buffs,(unsigned)(max_frame_delay*3*sh_video->fps)+3);
+		     ,mpxp_context().engine().xp_core->num_v_buffs,(unsigned)(max_frame_delay*3*sh_video->fps)+3);
 	prev_warn_delay=max_frame_delay;
     }
 }
 
 static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float drop_barrier) {
     unsigned rc=0;
-    float screen_pts=dae_played_frame(xp_core->video).v_pts-(mp_conf.av_sync_pts?0:xp_core->initial_apts);
+    float screen_pts=dae_played_frame(mpxp_context().engine().xp_core->video).v_pts-(mp_conf.av_sync_pts?0:mpxp_context().engine().xp_core->initial_apts);
     static float prev_delta=64;
     float delta,max_frame_delay;/* delay for decoding of top slow frame */
     max_frame_delay = mpxp_context().bench->max_video+mpxp_context().bench->max_vout;
@@ -49,7 +49,7 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
     /*
 	TODO:
 	    Replace the constants with some values which are depended on
-	    xp_core->num_v_buffs and max_frame_delay to find out the smoothest way
+	    mpxp_context().engine().xp_core->num_v_buffs and max_frame_delay to find out the smoothest way
 	    to display frames on slow machines.
 	MAYBE!!!: (won't work with some realmedia streams for example)
 	    Try to borrow avifile's logic (btw, GPL'ed ;) for very slow systems:
@@ -59,7 +59,7 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
     */
     delta=v_pts-screen_pts;
     if(max_frame_delay*3 > drop_barrier) {
-	if(drop_barrier < (float)(xp_core->num_v_buffs-2)/sh_video->fps) drop_barrier += 1/sh_video->fps;
+	if(drop_barrier < (float)(mpxp_context().engine().xp_core->num_v_buffs-2)/sh_video->fps) drop_barrier += 1/sh_video->fps;
 	else
 	if(mp_conf.verbose) show_warn_cant_sync(sh_video,max_frame_delay);
     }
@@ -76,7 +76,7 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
 	if(delta < drop_barrier*2/3) fr_skip_divisor=3;
 	else
 	fr_skip_divisor=4; /* delta < drop_barrier */
-	rc = (dae_curr_vdecoded(xp_core)%fr_skip_divisor)?0:1;
+	rc = (dae_curr_vdecoded(mpxp_context().engine().xp_core)%fr_skip_divisor)?0:1;
 	if(delta>prev_delta) rc=0;
     }
     MSG_D("DEC_AHEAD: max_frame_delay*3=%f drop_barrier=%f prev_delta=%f delta=%f(v_pts=%f screen_pts=%f) n_fr_to_drop=%u\n",max_frame_delay*3,drop_barrier,prev_delta,delta,v_pts,xp_screen_pts,xp_n_frame_to_drop);
@@ -87,10 +87,10 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
 static void reorder_pts_in_mpeg(void) {
     unsigned idx0=0, idx1, idx2, idx3;
 
-    idx1 = dae_curr_vdecoded(xp_core);
-    idx2 = dae_prev_vdecoded(xp_core);
-    xmp_frame_t* fra=xp_core->video->frame;
-    while( dae_curr_vplayed(xp_core) != idx2 &&
+    idx1 = dae_curr_vdecoded(mpxp_context().engine().xp_core);
+    idx2 = dae_prev_vdecoded(mpxp_context().engine().xp_core);
+    xmp_frame_t* fra=mpxp_context().engine().xp_core->video->frame;
+    while( dae_curr_vplayed(mpxp_context().engine().xp_core) != idx2 &&
 	   fra[idx2].v_pts > fra[idx1].v_pts &&
 	   fra[idx2].v_pts < fra[idx1].v_pts+1.0 ) {
 	float tmp;
@@ -100,16 +100,16 @@ static void reorder_pts_in_mpeg(void) {
 
 	fra[idx2].duration =   fra[idx1].v_pts - fra[idx2].v_pts;
 
-	idx3=(idx2-1)%xp_core->num_v_buffs;
+	idx3=(idx2-1)%mpxp_context().engine().xp_core->num_v_buffs;
 	if(fra[idx2].v_pts > fra[idx3].v_pts &&
 	   fra[idx2].v_pts - fra[idx3].v_pts < 1.0)
 		fra[idx3].duration = fra[idx2].v_pts - fra[idx3].v_pts;
 
-	if(idx1 != dae_curr_vdecoded(xp_core)) fra[idx1].duration = fra[idx0].v_pts - fra[idx1].v_pts;
+	if(idx1 != dae_curr_vdecoded(mpxp_context().engine().xp_core)) fra[idx1].duration = fra[idx0].v_pts - fra[idx1].v_pts;
 
 	idx0 = idx1;
 	idx1 = idx2;
-	idx2=(idx2-1)%xp_core->num_v_buffs;
+	idx2=(idx2-1)%mpxp_context().engine().xp_core->num_v_buffs;
     }
 }
 
@@ -131,28 +131,28 @@ any_t* xmp_video_decoder( any_t* arg )
 
     priv->state=Pth_Run;
     priv->dae->eof = 0;
-    if(xp_core->audio) xp_core->audio->eof=0;
+    if(mpxp_context().engine().xp_core->audio) mpxp_context().engine().xp_core->audio->eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
     __MP_UNIT(priv->p_idx,"dec_ahead");
     priv->pid = getpid();
-    if(!xmp_test_model(XMP_Run_VA_Decoder) && xp_core->audio)
+    if(!xmp_test_model(XMP_Run_VA_Decoder) && mpxp_context().engine().xp_core->audio)
 	priv->name = "video decoder";
-    drop_barrier=(float)(xp_core->num_v_buffs/2)*(1/sh_video->fps);
+    drop_barrier=(float)(mpxp_context().engine().xp_core->num_v_buffs/2)*(1/sh_video->fps);
     if(mp_conf.av_sync_pts == -1 && !mpxp_context().use_pts_fix2)
-	xp_core->bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
+	mpxp_context().engine().xp_core->bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
 			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS;
     else
-	xp_core->bad_pts = mp_conf.av_sync_pts?0:1;
+	mpxp_context().engine().xp_core->bad_pts = mp_conf.av_sync_pts?0:1;
 while(!priv->dae->eof){
     if(priv->state==Pth_Canceling) break;
     if(priv->state==Pth_Sleep) {
 pt_sleep:
 	priv->state=Pth_ASleep;
 	while(priv->state==Pth_ASleep) yield_timeslice();
-	if(xp_core->bad_pts) mpeg_timer=HUGE;
+	if(mpxp_context().engine().xp_core->bad_pts) mpeg_timer=HUGE;
 	continue;
     }
     __MP_UNIT(priv->p_idx,"dec_ahead 1");
@@ -160,7 +160,7 @@ pt_sleep:
 #if 0
     /* prevent reent access to non-reent demuxer */
     //if(sh_video->num_frames>200)  *((char*)0x100) = 1; // Testing crash
-    if(xp_core->audio && mp_conf.xp<XP_VAFull) {
+    if(mpxp_context().engine().xp_core->audio && mp_conf.xp<XP_VAFull) {
 	__MP_UNIT(priv->p_idx,"decode audio");
 	while(2==xp_thread_decode_audio()) ;
 	__MP_UNIT(priv->p_idx,"dec_ahead 2");
@@ -170,13 +170,13 @@ pt_sleep:
     frame=video_read_frame_r(sh_video,sh_video->fps);
     if(!frame) {
 	pt_exit_loop:
-	dae_decoded_mark_eof(xp_core->video);
+	dae_decoded_mark_eof(mpxp_context().engine().xp_core->video);
 	priv->dae->eof=1;
 	break;
     }
-    if(mp_conf.play_n_frames>0 && xp_core->video->num_decoded_frames >= mp_conf.play_n_frames) goto pt_exit_loop;
+    if(mp_conf.play_n_frames>0 && mpxp_context().engine().xp_core->video->num_decoded_frames >= mp_conf.play_n_frames) goto pt_exit_loop;
     /* frame was decoded into current decoder_idx */
-    if(xp_core->bad_pts) {
+    if(mpxp_context().engine().xp_core->bad_pts) {
 	if(mpeg_timer==HUGE) mpeg_timer=frame->pts;
 	else if( mpeg_timer-duration<frame->pts ) {
 	    mpeg_timer=frame->pts;
@@ -190,7 +190,7 @@ pt_sleep:
 	int cur_time;
 	cur_time = GetTimerMS();
 	/* Ugly solution: disable frame dropping right after seeking! */
-	if(cur_time - mpxp_context().seek_time > (xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
+	if(cur_time - mpxp_context().seek_time > (mpxp_context().engine().xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
     if(!finite(frame->pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",frame->pts);
     if(frame->type!=VideoFrame) escape_player("VideoDecoder doesn't parse non video frames",mp_conf.max_trace);
@@ -210,8 +210,8 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     else			drop_param=0;
     /* decode: */
     if(mpxp_context().output_quality) {
-	unsigned total = xp_core->num_v_buffs/2;
-	unsigned distance = dae_get_decoder_outrun(xp_core->video);
+	unsigned total = mpxp_context().engine().xp_core->num_v_buffs/2;
+	unsigned distance = dae_get_decoder_outrun(mpxp_context().engine().xp_core->video);
 	int our_quality;
 	our_quality = mpxp_context().output_quality*distance/total;
 	if(drop_param) mpcv_set_quality(mpxp_context().video().decoder,0);
@@ -220,22 +220,22 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     }
     frame->flags=drop_param;
     blit_frame=mpcv_decode(mpxp_context().video().decoder,frame);
-MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),frame->len,frame->pts);
+MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(mpxp_context().engine().xp_core),frame->len,frame->pts);
     if(mpxp_context().output_quality) {
 	if(drop_param) mpcv_set_quality(mpxp_context().video().decoder,mpxp_context().output_quality);
     }
     if(!blit_frame && drop_param) priv->dae->num_dropped_frames++;
     if(blit_frame) {
-	unsigned idx=dae_curr_vdecoded(xp_core);
-	if(xp_core->bad_pts)
-	    xp_core->video->frame[idx].v_pts=mpeg_timer;
+	unsigned idx=dae_curr_vdecoded(mpxp_context().engine().xp_core);
+	if(mpxp_context().engine().xp_core->bad_pts)
+	    mpxp_context().engine().xp_core->video->frame[idx].v_pts=mpeg_timer;
 	else
-	    xp_core->video->frame[idx].v_pts = frame->pts;
-	xp_core->video->frame[idx].duration=duration;
-	dae_decoded_clear_eof(xp_core->video);
-	if(!xp_core->bad_pts) {
-	    int _idx = dae_prev_vdecoded(xp_core);
-	    xp_core->video->frame[_idx].duration=frame->pts-xp_core->video->frame[_idx].v_pts;
+	    mpxp_context().engine().xp_core->video->frame[idx].v_pts = frame->pts;
+	mpxp_context().engine().xp_core->video->frame[idx].duration=duration;
+	dae_decoded_clear_eof(mpxp_context().engine().xp_core->video);
+	if(!mpxp_context().engine().xp_core->bad_pts) {
+	    int _idx = dae_prev_vdecoded(mpxp_context().engine().xp_core);
+	    mpxp_context().engine().xp_core->video->frame[_idx].duration=frame->pts-mpxp_context().engine().xp_core->video->frame[_idx].v_pts;
 	}
 	if(mp_conf.frame_reorder) reorder_pts_in_mpeg();
     } /* if (blit_frame) */
@@ -243,12 +243,12 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),frame->len,frame->pts
     /* ------------ sleep --------------- */
     /* sleep if thread is too fast ;) */
     if(blit_frame)
-    while(!dae_inc_decoded(xp_core->video)) {
+    while(!dae_inc_decoded(mpxp_context().engine().xp_core->video)) {
 	MSG_T("DEC_AHEAD: sleep: player=%i decoder=%i)\n"
 	    ,dae_curr_vplayed(),dae_curr_vdecoded());
 	if(priv->state==Pth_Canceling) goto pt_exit;
 	if(priv->state==Pth_Sleep) goto pt_sleep;
-	if(xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
+	if(mpxp_context().engine().xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
 	    __MP_UNIT(priv->p_idx,"decode audio");
 	    xp_thread_decode_audio(d_audio);
 	    __MP_UNIT(priv->p_idx,"dec_ahead 5");
@@ -259,8 +259,8 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(xp_core),frame->len,frame->pts
 /*------------------------ frame decoded. --------------------*/
 } /* while(!priv->dae->eof)*/
 
-if(xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
-    while(!xp_core->audio->eof && priv->state!=Pth_Canceling && priv->state!=Pth_Sleep) {
+if(mpxp_context().engine().xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
+    while(!mpxp_context().engine().xp_core->audio->eof && priv->state!=Pth_Canceling && priv->state!=Pth_Sleep) {
 	__MP_UNIT(priv->p_idx,"decode audio");
 	if(!xp_thread_decode_audio(d_audio)) yield_timeslice();
 	__MP_UNIT(priv->p_idx,NULL);
@@ -277,8 +277,8 @@ void sig_video_decode( void )
     MSG_T("sig_video_decode\n");
     mpxp_print_flush();
 
-    xp_core->video->eof = 1;
-    dae_decoded_mark_eof(xp_core->video);
+    mpxp_context().engine().xp_core->video->eof = 1;
+    dae_decoded_mark_eof(mpxp_context().engine().xp_core->video);
     /*
 	Unlock all mutex
 	( man page says it may deadlock, but what is worse deadlock here or later? )

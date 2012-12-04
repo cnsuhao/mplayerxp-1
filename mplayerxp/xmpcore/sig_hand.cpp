@@ -36,18 +36,18 @@ static void my_callback(int signo)
 {
     int i;
     pthread_t _self = pthread_self();
-    for(i=0; i < xp_core->num_threads && !pthread_equal(xp_core->mpxp_threads[i]->pth_id, _self); i++);
-    if(i >= xp_core->num_threads ||
-	!pthread_equal(xp_core->mpxp_threads[i]->pth_id, _self)) i = 0; /* Use 0 as default handler */
+    for(i=0; i < mpxp_context().engine().xp_core->num_threads && !pthread_equal(mpxp_context().engine().xp_core->mpxp_threads[i]->pth_id, _self); i++);
+    if(i >= mpxp_context().engine().xp_core->num_threads ||
+	!pthread_equal(mpxp_context().engine().xp_core->mpxp_threads[i]->pth_id, _self)) i = 0; /* Use 0 as default handler */
 
     MSG_FATAL("catching signal: %s in thread: %s (%i) in module: %s\n"
 	,strsignal(signo)
-	,xp_core->mpxp_threads[i]->name
+	,mpxp_context().engine().xp_core->mpxp_threads[i]->name
 	,i
-	,xp_core->mpxp_threads[i]->unit);
+	,mpxp_context().engine().xp_core->mpxp_threads[i]->unit);
     dump_trace();
 #ifdef NDEBUG
-    xp_core->mpxp_threads[i]->sigfunc();
+    mpxp_context().engine().xp_core->mpxp_threads[i]->sigfunc();
 #endif
     signal(signo,SIG_DFL); /* try coredump*/
 

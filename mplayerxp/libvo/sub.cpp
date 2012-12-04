@@ -518,7 +518,7 @@ void __FASTCALL__ vo_remove_text(const Video_Output*vo,unsigned idx,int dxs,int 
 //	  obj->flags&=~OSDFLAG_OLD_BBOX;
 	  if(obj->cleared_frames>=0) {
 	      obj->cleared_frames++;
-	      if(obj->cleared_frames>=xp_core->num_v_buffs)
+	      if(obj->cleared_frames>=mpxp_context().engine().xp_core->num_v_buffs)
 		  obj->cleared_frames=-1;  // All cleared stop
 	  }
       }

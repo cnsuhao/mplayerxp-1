@@ -240,7 +240,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	    } // if !DIRECT
 	} else {
 	    MSG_DBG2("vf_get_new_image forces xp_idx retrieving\n");
-	    mpi->xp_idx=dae_curr_vdecoded(xp_core);
+	    mpi->xp_idx=dae_curr_vdecoded(mpxp_context().engine().xp_core);
 	    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
 	}
 	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK && vf->start_slice)

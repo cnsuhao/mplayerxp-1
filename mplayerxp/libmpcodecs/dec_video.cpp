@@ -358,7 +358,7 @@ int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
 
     if(frame->flags) return 0;
     update_subtitle(opaque,frame->pts,mpi->xp_idx);
-    mpxp_context().video().output->flush_page(dae_curr_vdecoded(xp_core));
+    mpxp_context().video().output->flush_page(dae_curr_vdecoded(mpxp_context().engine().xp_core));
 
     t2=GetTimer()-t2;
     tt=t2*0.000001f;
@@ -628,7 +628,7 @@ mp_image_t* mpcodecs_get_image(video_decoder_t *opaque, int mp_imgtype, int mp_i
     sh_video_t* sh = priv->parent;
     vf_stream_t* s = priv->vfilter;
 //    MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
-    mp_image_t* mpi=vf_get_new_image(s,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h,dae_curr_vdecoded(xp_core));
+    mp_image_t* mpi=vf_get_new_image(s,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h,dae_curr_vdecoded(mpxp_context().engine().xp_core));
     mpi->x=mpi->y=0;
     if(mpi->xp_idx==XP_IDX_INVALID)
 	MSG_V("[mpcodecs_get_image] Incorrect mpi->xp_idx. Be ready for segfault!\n");

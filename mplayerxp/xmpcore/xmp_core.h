@@ -21,19 +21,19 @@ using namespace mpxp;
 namespace mpxp {
     enum xp_modes { XP_NA=0, XP_UniCore, XP_DualCore, XP_TripleCore, XP_MultiCore };
 
-    typedef struct xmp_frame_s {
+    struct xmp_frame_t {
 	float		v_pts;		/* presentation time-stamp from input stream
 					   __huge_valf indicates EOF */
 	float		duration;	/* frame duration */
 	any_t*		priv;
-    }xmp_frame_t;
+    };
 
-    struct dec_ahead_engine_s;
+    struct dec_ahead_engine_t;
 
-    typedef any_t* (*func_new_frame_priv_t)(struct dec_ahead_engine_s*);
-    typedef void   (*func_free_frame_priv_t)(struct dec_ahead_engine_s*,any_t*);
+    typedef any_t* (*func_new_frame_priv_t)(struct dec_ahead_engine_t*);
+    typedef void   (*func_free_frame_priv_t)(struct dec_ahead_engine_t*,any_t*);
 
-    typedef struct dec_ahead_engine_s {
+    struct dec_ahead_engine_t {
 	volatile unsigned	player_idx;	/* index of frame which is currently played */
 	volatile unsigned	decoder_idx;	/* index of frame which is currently decoded */
 	unsigned		nframes;	/* number of frames in buffer */
@@ -48,7 +48,7 @@ namespace mpxp {
 	long long int		num_played_frames;
 	long long int		num_decoded_frames; /* for frame dropping */
 	long long int		num_dropped_frames;
-    }dec_ahead_engine_t;
+    };
 
     enum { main_id=0 };
     enum { MAX_MPXP_THREADS=16 };
@@ -57,14 +57,14 @@ namespace mpxp {
     typedef any_t*(*mpxp_routine_t)(any_t*);
     typedef void (*sig_handler_t)(void);
 
-    typedef enum xmp_model {
+    enum xmp_model_e {
 	XMP_Run_AudioPlayer	=0x00000001,
 	XMP_Run_AudioPlayback	=0x00000002, /* audio player+decoder together */
 	XMP_Run_VideoPlayer	=0x00000004,
 	XMP_Run_VA_Decoder	=0x00000008, /* audio+video decoders together */
 	XMP_Run_AudioDecoder	=0x00000010,
 	XMP_Run_VideoDecoder	=0x00000020
-    }xmp_model_e;
+    };
 
     inline xmp_model_e operator~(xmp_model_e a) { return static_cast<xmp_model_e>(~static_cast<unsigned>(a)); }
     inline xmp_model_e operator|(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
@@ -74,7 +74,7 @@ namespace mpxp {
     inline xmp_model_e operator&=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
     inline xmp_model_e operator^=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
-    typedef struct mpxp_thread_s {
+    struct mpxp_thread_t {
 	unsigned	p_idx;
 	const char*	name;
 	const char*	unit;
@@ -84,15 +84,15 @@ namespace mpxp {
 	sig_handler_t	sigfunc;
 	dec_ahead_engine_t* dae;
 	volatile enum mpxp_thread_state state;
-    }mpxp_thread_t;
+    };
 
-    typedef struct initial_audio_pts_correction_s {
+    struct initial_audio_pts_correction_t {
 	int need_correction;
 	int pts_bytes;
 	int nbytes;
-    }initial_audio_pts_correction_t;
+    };
 
-    typedef struct xp_core_s {
+    struct xp_core_t {
 	xmp_model_e			flags;
 	dec_ahead_engine_t*		video;
 	dec_ahead_engine_t*		audio;
@@ -108,10 +108,9 @@ namespace mpxp {
 	int				bad_pts;     // for MPEGxx codecs
 	float			initial_apts;
 	initial_audio_pts_correction_t initial_apts_corr;
-    }xp_core_t;
-    extern xp_core_t *xp_core;
+    };
 
-    inline int	xmp_test_model(xmp_model_e value) { return (xp_core->flags&value)!=0; }
+    int		xmp_test_model(xmp_model_e value);
 
     void	xmp_init(void);
     void	xmp_uninit(void);

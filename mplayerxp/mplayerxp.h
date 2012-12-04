@@ -123,6 +123,13 @@ namespace mpxp {
 	double total_start;
     }time_usage_t;
 
+    struct MPXPSystem;
+    struct xp_core_t;
+    struct mpxp_engine_t {
+	MPXPSystem*	MPXPSys;
+	xp_core_t*	xp_core;
+    };
+
     struct audio_processing_t {
 	audio_decoder_t*	decoder;
 	ao_data_t*		output;
@@ -133,13 +140,13 @@ namespace mpxp {
 	Video_Output*		output;
     };
 
-    struct MPXPSystem;
     /* non-configurable through command line stuff */
     struct MPXPContext :public Opaque {
 	public:
 	    MPXPContext();
 	    virtual ~MPXPContext();
 
+	    virtual mpxp_engine_t& engine() const { return *_engine; }
 	    virtual audio_processing_t& audio() const { return *_audio; }
 	    virtual video_processing_t& video() const { return *_video; }
 
@@ -152,9 +159,9 @@ namespace mpxp {
 	    subtitle*		subtitles;
 	    m_config_t*		mconfig;
 	    time_usage_t*	bench;
-	    MPXPSystem&		MPXPSys;
 	    any_t*		msg_priv;
 	private:
+	    LocalPtr<mpxp_engine_t> _engine;
 	    LocalPtr<audio_processing_t> _audio;
 	    LocalPtr<video_processing_t> _video;
     };

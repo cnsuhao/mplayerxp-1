@@ -60,7 +60,7 @@ while(sh_audio){
   // Update buffer if needed
   MP_UNIT("mpca_decode");   // Enter AUDIO decoder module
   t=GetTimer();
-  while(sh_audio->a_buffer_len<playsize && !xp_core->audio->eof){
+  while(sh_audio->a_buffer_len<playsize && !mpxp_context().engine().xp_core->audio->eof){
       if(!xmp_test_model(XMP_Run_AudioPlayback)) {
 	  ret=read_audio_buffer(sh_audio,(unsigned char *)&sh_audio->a_buffer[sh_audio->a_buffer_len],
 			      playsize-sh_audio->a_buffer_len,sh_audio->a_buffer_size-sh_audio->a_buffer_len,&pts);
@@ -71,7 +71,7 @@ while(sh_audio){
     if(ret>0) sh_audio->a_buffer_len+=ret;
     else {
       if(!d_audio->eof) break;
-      xp_core->audio->eof=1;
+      mpxp_context().engine().xp_core->audio->eof=1;
       break;
     }
   }
@@ -201,7 +201,7 @@ any_t* audio_play_routine( any_t* arg )
 	    samples = 10;
 	    min_audio = MAX_AUDIO_TIME;
 	    max_audio = 0;
-	} else if( !xp_core->audio->eof && collect_samples) {
+	} else if( !mpxp_context().engine().xp_core->audio->eof && collect_samples) {
 	    if( dec_ahead_audio_delay < min_audio )
 		min_audio = dec_ahead_audio_delay;
 	    if( dec_ahead_audio_delay > max_audio )
@@ -258,7 +258,7 @@ any_t* audio_play_routine( any_t* arg )
 
 	__MP_UNIT(priv->p_idx,"audio pause");
 	LOCK_AUDIO_PLAY();
-	while( xp_core->in_pause && priv->state!=Pth_Canceling) {
+	while( mpxp_context().engine().xp_core->in_pause && priv->state!=Pth_Canceling) {
 	    pthread_cond_wait( &audio_play_cond, &audio_play_mutex );
 	}
 	UNLOCK_AUDIO_PLAY();

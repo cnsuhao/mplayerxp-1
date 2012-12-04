@@ -236,7 +236,7 @@ MP_Config::MP_Config() {
 MP_Config mp_conf;
 
 MPXPContext::MPXPContext()
-	    :MPXPSys(*new(zeromem)MPXPSystem),
+	    :_engine(new(zeromem) mpxp_engine_t),
 	    _audio(new(zeromem) audio_processing_t),
 	    _video(new(zeromem) video_processing_t)
 {
@@ -244,17 +244,17 @@ MPXPContext::MPXPContext()
     bench=new(zeromem) time_usage_t;
     use_pts_fix2=-1;
     rtc_fd=-1;
+    _engine->MPXPSys = new(zeromem) MPXPSystem;
 }
 
 MPXPContext::~MPXPContext()
 {
-    delete &MPXPSys;
+    delete _engine->MPXPSys;
     delete bench;
 }
 
 static volatile char antiviral_hole2[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 static LocalPtr<MPXPContext> MPXPCtx(new(zeromem) MPXPContext);
-xp_core_t* xp_core=NULL;
 static volatile char antiviral_hole3[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 volatile MPXPSecureKeys* secure_keys;
 /**************************************************************************
@@ -424,7 +424,7 @@ void exit_player(const char* why){
 
     fflush(stdout);
     fflush(stderr);
-    mpxp_context().MPXPSys.uninit_player(INITED_ALL);
+    mpxp_context().engine().MPXPSys->uninit_player(INITED_ALL);
 
     MP_UNIT("exit_player");
 
@@ -640,7 +640,7 @@ void show_help(void) {
 }
 
 void show_long_help(void) {
-    MPXPSystem& MPXPSys=mpxp_context().MPXPSys;
+    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     m_config_show_options(mpxp_context().mconfig);
     mp_input_print_binds(MPXPSys.libinput());
     print_stream_drivers();
@@ -669,7 +669,7 @@ void show_long_help(void) {
 //================= Update OSD ====================
 void update_osd( float v_pts )
 {
-    MPXPSystem& MPXPSys=mpxp_context().MPXPSys;
+    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     static char osd_text_buffer[64];
     static int osd_last_pts=-303;
 //================= Update OSD ====================
@@ -713,7 +713,7 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     Demuxer_Stream *d_dvdsub=_demuxer->sub;
     int seek_rval=1;
-    xp_core->audio->eof=0;
+    mpxp_context().engine().xp_core->audio->eof=0;
     if(_seek->secs || _seek->flags&DEMUX_SEEK_SET) {
 	seek_rval=demux_seek_r(_demuxer,_seek);
 	mpxp_context().mpxp_after_seek=25; /* 1 sec delay */
@@ -774,12 +774,12 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 	}
     }
 
-    if(sh_video) dae_wait_decoder_outrun(xp_core->video);
+    if(sh_video) dae_wait_decoder_outrun(mpxp_context().engine().xp_core->video);
 }
 
 void mpxp_reset_vcache(void)
 {
-    MPXPSystem& MPXPSys=mpxp_context().MPXPSys;
+    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(MPXPSys.demuxer()->video->sh);
     seek_args_t _seek = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
     if(sh_video) MPXPSys.seek(NULL,&_seek);
@@ -832,14 +832,14 @@ static void show_benchmark(void)
 	   100.0*mpxp_context().bench->demux/total_time_usage,
 	   100.0*mpxp_context().bench->c2/total_time_usage,
 	   100.0*tot/total_time_usage);
-    unsigned nframes=xp_core->video->num_played_frames;
+    unsigned nframes=mpxp_context().engine().xp_core->video->num_played_frames;
     MSG_INFO("\nREAL RESULTS: from %u was dropped=%u\n"
-	,nframes,xp_core->video->num_dropped_frames);
+	,nframes,mpxp_context().engine().xp_core->video->num_dropped_frames);
 }
 
 static void show_benchmark_status(void)
 {
-    MPXPSystem& MPXPSys=mpxp_context().MPXPSys;
+    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
     if(xmp_test_model(XMP_Run_AudioPlayback))
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
@@ -868,7 +868,7 @@ void MPXPSystem::init_keyboard_fifo()
 }
 
 void mplayer_put_key(int code){
-    MPXPSystem& MPXPSys=mpxp_context().MPXPSys;
+    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     mp_cmd_t* cmd;
     cmd=mp_input_get_cmd_from_keys(MPXPSys.libinput(),1,&code);
     mp_input_queue_cmd(MPXPSys.libinput(),cmd);
@@ -1310,18 +1310,18 @@ void MPXPSystem::run_ahead_engine() {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     MP_UNIT("init_xp");
-    if(sh_video && xp_core->num_v_buffs < 3) {/* we need at least 3 buffers to suppress screen judering */
-	MSG_FATAL("Not enough buffers for DECODING AHEAD!\nNeed %u buffers but exist only %u\n",3,xp_core->num_v_buffs);
+    if(sh_video && mpxp_context().engine().xp_core->num_v_buffs < 3) {/* we need at least 3 buffers to suppress screen judering */
+	MSG_FATAL("Not enough buffers for DECODING AHEAD!\nNeed %u buffers but exist only %u\n",3,mpxp_context().engine().xp_core->num_v_buffs);
 	exit_player("Try other '-vo' driver.\n");
     }
     if(xmp_init_engine(sh_video,sh_audio)!=0)
 	exit_player("Can't initialize decoding ahead!\n");
     if(xmp_run_decoders()!=0)
 	exit_player("Can't run decoding ahead!\n");
-    if(sh_video)	MSG_OK("Using DECODING AHEAD mplayer's core with %u video buffers\n",xp_core->num_v_buffs);
-    else 		MSG_OK("Using DECODING AHEAD mplayer's core with %u audio buffers\n",xp_core->num_a_buffs);
+    if(sh_video)	MSG_OK("Using DECODING AHEAD mplayer's core with %u video buffers\n",mpxp_context().engine().xp_core->num_v_buffs);
+    else 		MSG_OK("Using DECODING AHEAD mplayer's core with %u audio buffers\n",mpxp_context().engine().xp_core->num_a_buffs);
 /* reset counters */
-    if(sh_video) xp_core->video->num_dropped_frames=0;
+    if(sh_video) mpxp_context().engine().xp_core->video->num_dropped_frames=0;
     inited_flags|=INITED_XMP;
 }
 
@@ -1387,7 +1387,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 
 	if (ao_inited==MPXP_Ok && sh_audio) {
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
-		xp_core->in_pause=1;
+		mpxp_context().engine().xp_core->in_pause=1;
 		while( !dec_ahead_can_aseek ) yield_timeslice();
 	    }
 	    ao_pause(mpxp_context().audio().output);	// pause audio, keep data if possible
@@ -1407,7 +1407,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 	if (ao_inited==MPXP_Ok && sh_audio) {
 	    ao_resume(mpxp_context().audio().output);	// resume audio
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
-		xp_core->in_pause=0;
+		mpxp_context().engine().xp_core->in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
 	    }
 	}
@@ -1443,7 +1443,7 @@ For future:
 		i_abs = (cmd->nargs > 1) ? cmd->args[1].v.i : 0;
 		if(i_abs) {
 		    _seek->flags = DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
-		    if(sh_video) osd_function= (v > dae_played_frame(xp_core->video).v_pts) ? OSD_FFW : OSD_REW;
+		    if(sh_video) osd_function= (v > dae_played_frame(mpxp_context().engine().xp_core->video).v_pts) ? OSD_FFW : OSD_REW;
 		    _seek->secs = v/100.;
 		} else {
 		    _seek->flags = DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
@@ -1625,7 +1625,7 @@ For future:
 		mpxp_context().video().output->fullscreen();
 		break;
 	    case MP_CMD_VO_SCREENSHOT:
-		mpxp_context().video().output->screenshot(dae_curr_vplayed(xp_core));
+		mpxp_context().video().output->screenshot(dae_curr_vplayed(mpxp_context().engine().xp_core));
 		break;
 	    case MP_CMD_SUB_POS: {
 		int v;
@@ -1694,7 +1694,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     secure_keys=ptr_protector.protect(new MPXPSecureKeys(10));
 
     mpxp_init_structs();
-    MPXPSystem& MPXPSys=mpxp_context().MPXPSys;
+    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     mpxp_context().video().output=new(zeromem) Video_Output;
     init_signal_handling();
 
@@ -1752,7 +1752,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
       }
     }
 
-    xp_core->num_a_buffs = vo_conf.xp_buffs;
+    mpxp_context().engine().xp_core->num_a_buffs = vo_conf.xp_buffs;
 
     init_player();
 
@@ -1834,7 +1834,7 @@ play_next_file:
 
 //============ Open MPXPSys.demuxer()S --- DETECT file type =======================
     if(mp_conf.playbackspeed_factor!=1.0) mp_conf.has_audio=0;
-    xp_core->initial_apts=HUGE;
+    mpxp_context().engine().xp_core->initial_apts=HUGE;
     if(!mp_conf.has_audio) mp_conf.audio_id=-2;  // do NOT read audio packets...
     if(!mp_conf.has_video) mp_conf.video_id=-2;  // do NOT read video packets...
     if(!mp_conf.has_dvdsub) mp_conf.dvdsub_id=-2;// do NOT read subtitle packets...
@@ -1921,7 +1921,7 @@ play_next_file:
 	goto main;
     }
 
-    xp_core->num_v_buffs=mpxp_context().video().output->get_num_frames(); /* that really known after init_vcodecs */
+    mpxp_context().engine().xp_core->num_v_buffs=mpxp_context().video().output->get_num_frames(); /* that really known after init_vcodecs */
 
     if(mp_conf.autoq>0){
 	/* Auto quality option enabled*/
@@ -2016,19 +2016,19 @@ main:
  */
     mpxp_context().seek_time = GetTimerMS();
 
-    if(sh_video) dae_wait_decoder_outrun(xp_core->video);
+    if(sh_video) dae_wait_decoder_outrun(mpxp_context().engine().xp_core->video);
 
 // TODO: rewrite test backtrace in .asm
 //    mpxp_test_backtrace();
     if(xmp_run_players()!=0) exit_player("Can't run xp players!\n");
-    MSG_OK("Using the next %i threads:\n",xp_core->num_threads);
+    MSG_OK("Using the next %i threads:\n",mpxp_context().engine().xp_core->num_threads);
     unsigned idx;
-    for(idx=0;idx<xp_core->num_threads;idx++)
+    for(idx=0;idx<mpxp_context().engine().xp_core->num_threads;idx++)
 	MSG_OK("[%i] %s (id=%u, pth_id=%lu)\n"
 	,idx
-	,xp_core->mpxp_threads[idx]->name
-	,xp_core->mpxp_threads[idx]->pid
-	,xp_core->mpxp_threads[idx]->pth_id);
+	,mpxp_context().engine().xp_core->mpxp_threads[idx]->name
+	,mpxp_context().engine().xp_core->mpxp_threads[idx]->pid
+	,mpxp_context().engine().xp_core->mpxp_threads[idx]->pth_id);
 
 //==================== START PLAYING =======================
 
@@ -2038,11 +2038,11 @@ main:
     while(!eof){
 	int in_pause=0;
 
-	eof |= xp_core->audio->eof;
+	eof |= mpxp_context().engine().xp_core->audio->eof;
 /*========================== UPDATE TIMERS ============================*/
 	MP_UNIT("Update timers");
-	if(sh_audio) eof = xp_core->audio->eof;
-	if(sh_video) eof|=dae_played_eof(xp_core->video);
+	if(sh_audio) eof = mpxp_context().engine().xp_core->audio->eof;
+	if(sh_video) eof|=dae_played_eof(mpxp_context().engine().xp_core->video);
 	if(!sh_video) {
 	    if(mp_conf.benchmark && mp_conf.verbose) show_benchmark_status();
 	    else MPXPSys.print_audio_status();
@@ -2078,7 +2078,7 @@ main:
 	    if(mp_conf.loop_times==1) mp_conf.loop_times=-1;
 
 	    eof=0;
-	    xp_core->audio->eof=0;
+	    mpxp_context().engine().xp_core->audio->eof=0;
 	    seek_args.flags=DEMUX_SEEK_SET|DEMUX_SEEK_PERCENTS;
 	    seek_args.secs=0; // seek to start of movie (0%)
 	}
@@ -2089,14 +2089,14 @@ main:
 	    xmp_halt_threads(0);
 
 	    if(seek_args.secs && sh_video) {
-	    xmp_frame_t shvap = dae_played_frame(xp_core->video);
-	    xmp_frame_t shvad = dae_prev_decoded_frame(xp_core->video);
-		seek_args.secs -= (xp_core->bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
+	    xmp_frame_t shvap = dae_played_frame(mpxp_context().engine().xp_core->video);
+	    xmp_frame_t shvad = dae_prev_decoded_frame(mpxp_context().engine().xp_core->video);
+		seek_args.secs -= (mpxp_context().engine().xp_core->bad_pts?shvad.v_pts:d_video->pts)-shvap.v_pts;
 	    }
 
 	    MPXPSys.seek(&osd,&seek_args);
 
-	    xp_core->audio->eof=0;
+	    mpxp_context().engine().xp_core->audio->eof=0;
 	    seek_args.secs=0;
 	    seek_args.flags=DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS;
 
@@ -2162,7 +2162,7 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 	MPXPSys.vo_inited=0;
 	MPXPSys.ao_inited=MPXP_False;
 	eof = 0;
-	xp_core->audio->eof=0;
+	mpxp_context().engine().xp_core->audio->eof=0;
 	goto play_next_file;
     }
 

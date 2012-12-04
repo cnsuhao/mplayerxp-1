@@ -384,16 +384,16 @@ int get_free_audio_buffer(void)
 
 int xp_thread_decode_audio(Demuxer_Stream *d_audio)
 {
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(xp_core->audio->sh);
+    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(mpxp_context().engine().xp_core->audio->sh);
     sh_video_t* sh_video=NULL;
-    if(xp_core->video) sh_video=reinterpret_cast<sh_video_t*>(xp_core->video->sh);
+    if(mpxp_context().engine().xp_core->video) sh_video=reinterpret_cast<sh_video_t*>(mpxp_context().engine().xp_core->video->sh);
     int free_buf, vbuf_size, pref_buf;
     unsigned len=0;
 
     free_buf = get_free_audio_buffer();
 
     if( free_buf == -1 ) { /* End of file */
-	xp_core->audio->eof = 1;
+	mpxp_context().engine().xp_core->audio->eof = 1;
 	return 0;
     }
     if( free_buf < (int)sh_audio->audio_out_minsize ) /* full */
@@ -404,9 +404,9 @@ int xp_thread_decode_audio(Demuxer_Stream *d_audio)
     if( len < MAX_OUTBURST ) /* Buffer underrun */
 	return decode_audio_buffer(d_audio,MAX_OUTBURST);
 
-    if(xp_core->video) {
+    if(mpxp_context().engine().xp_core->video) {
 	/* Match video buffer */
-	vbuf_size = dae_get_decoder_outrun(xp_core->video);
+	vbuf_size = dae_get_decoder_outrun(mpxp_context().engine().xp_core->video);
 	pref_buf = vbuf_size / sh_video->fps * sh_audio->af_bps;
 	pref_buf -= len;
 	if( pref_buf > 0 ) {
@@ -435,8 +435,8 @@ any_t* a_dec_ahead_routine( any_t* arg )
     float d;
 
     priv->state=Pth_Run;
-    if(xp_core->video) xp_core->video->eof=0;
-    xp_core->audio->eof=0;
+    if(mpxp_context().engine().xp_core->video) mpxp_context().engine().xp_core->video->eof=0;
+    mpxp_context().engine().xp_core->audio->eof=0;
     MSG_T("\nDEC_AHEAD: entering...\n");
     priv->pid = getpid();
     __MP_UNIT(priv->p_idx,"dec_ahead");
@@ -450,7 +450,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	}
 	__MP_UNIT(priv->p_idx,"decode audio");
 	while((ret = xp_thread_decode_audio(d_audio)) == 2) {/* Almost empty buffer */
-	    if(xp_core->audio->eof) break;
+	    if(mpxp_context().engine().xp_core->audio->eof) break;
 	}
 	dec_ahead_can_adseek=1;
 
@@ -459,7 +459,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	__MP_UNIT(priv->p_idx,"sleep");
 	LOCK_AUDIO_DECODE();
 	if(priv->state!=Pth_Canceling) {
-	    if(xp_core->audio->eof) {
+	    if(mpxp_context().engine().xp_core->audio->eof) {
 		__MP_UNIT(priv->p_idx,"wait end of work");
 		pthread_cond_wait( &audio_decode_cond, &audio_decode_mutex );
 	    } else if(ret==0) { /* Full buffer or end of file */
@@ -471,7 +471,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 		    } else
 			timeout.tv_sec = audio_play_timeout.tv_sec;
 		} else {
-		    if(xp_core->in_pause)
+		    if(mpxp_context().engine().xp_core->in_pause)
 			d = 1.0;
 		    else
 			d = 0.1;

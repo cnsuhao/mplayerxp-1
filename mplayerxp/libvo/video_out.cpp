@@ -305,7 +305,7 @@ void Video_Output::dri_reconfig(int is_resize ) const
     dri_tune(priv.image_width,priv.image_height);
     /* TODO: smart analizer of scaling possibilities of vo_driver */
     if(is_resize) {
-	xp_core->in_resize=1;
+	mpxp_context().engine().xp_core->in_resize=1;
 	vf_reinit_vo(priv.parent,priv.dri.cap.w,priv.dri.cap.h,priv.dri.cap.fourcc,1);
     }
     vf_reinit_vo(priv.parent,priv.dri.cap.w,priv.dri.cap.h,priv.dri.cap.fourcc,0);

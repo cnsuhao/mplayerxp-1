@@ -222,7 +222,7 @@ static void audio_resume(ao_data_t* ao)
 // return: how many bytes can be played without blocking
 static unsigned get_space(const ao_data_t* ao){
     priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
-    float pts=dae_played_frame(xp_core->video).v_pts;
+    float pts=dae_played_frame(mpxp_context().engine().xp_core->video).v_pts;
     if(pts)
 	return ao->pts < pts + priv->fast * 30000 ? ao->outburst : 0;
     return ao->outburst;

@@ -59,32 +59,32 @@ namespace mpxp {
 #endif
 
 void xmp_init(void) {
-    xp_core=(xp_core_t*)mp_mallocz(sizeof(xp_core_t));
-    xp_core->initial_apts=HUGE;
+    mpxp_context().engine().xp_core=new(zeromem) xp_core_t;
+    mpxp_context().engine().xp_core->initial_apts=HUGE;
 }
 
 void xmp_uninit(void) {
-    delete xp_core->mpxp_threads[0];
-    delete xp_core;
-    xp_core=NULL;
+    delete mpxp_context().engine().xp_core->mpxp_threads[0];
+    delete mpxp_context().engine().xp_core;
+    mpxp_context().engine().xp_core=NULL;
 }
 
 unsigned xmp_register_main(sig_handler_t sigfunc) {
     unsigned idx=0;
-    xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
-    xp_core->mpxp_threads[idx]->p_idx=idx;
-    xp_core->mpxp_threads[idx]->pid=getpid();
-    xp_core->main_pth_id=xp_core->mpxp_threads[idx]->pth_id=pthread_self();
-    xp_core->mpxp_threads[idx]->name = "main";
-    xp_core->mpxp_threads[idx]->sigfunc = sigfunc;
-    xp_core->mpxp_threads[idx]->dae = NULL;
-    xp_core->num_threads++;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->p_idx=idx;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->pid=getpid();
+    mpxp_context().engine().xp_core->main_pth_id=mpxp_context().engine().xp_core->mpxp_threads[idx]->pth_id=pthread_self();
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->name = "main";
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->sigfunc = sigfunc;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->dae = NULL;
+    mpxp_context().engine().xp_core->num_threads++;
 
     return idx;
 }
 
 static void print_stopped_thread(unsigned idx) {
-    MSG_OK("*** stop thread: [%i] %s\n",idx,xp_core->mpxp_threads[idx]->name);
+    MSG_OK("*** stop thread: [%i] %s\n",idx,mpxp_context().engine().xp_core->mpxp_threads[idx]->name);
 }
 
 void xmp_killall_threads(pthread_t _self)
@@ -92,12 +92,12 @@ void xmp_killall_threads(pthread_t _self)
     unsigned i;
     for(i=0;i < MAX_MPXP_THREADS;i++) {
 	if( _self &&
-	    xp_core->mpxp_threads[i]->pth_id &&
-	    xp_core->mpxp_threads[i]->pth_id != xp_core->main_pth_id) {
-		pthread_kill(xp_core->mpxp_threads[i]->pth_id,SIGKILL);
+	    mpxp_context().engine().xp_core->mpxp_threads[i]->pth_id &&
+	    mpxp_context().engine().xp_core->mpxp_threads[i]->pth_id != mpxp_context().engine().xp_core->main_pth_id) {
+		pthread_kill(mpxp_context().engine().xp_core->mpxp_threads[i]->pth_id,SIGKILL);
 	    print_stopped_thread(i);
-	    delete xp_core->mpxp_threads[i];
-	    xp_core->mpxp_threads[i]=NULL;
+	    delete mpxp_context().engine().xp_core->mpxp_threads[i];
+	    mpxp_context().engine().xp_core->mpxp_threads[i]=NULL;
 	}
     }
 }
@@ -168,7 +168,7 @@ void dae_wait_decoder_outrun(const dec_ahead_engine_t* it) {
     if(it) {
 	do {
 	    yield_timeslice();
-	}while(dae_get_decoder_outrun(it) < xp_core->num_v_buffs/2);
+	}while(dae_get_decoder_outrun(it) < mpxp_context().engine().xp_core->num_v_buffs/2);
     }
 }
 
@@ -212,6 +212,8 @@ void dae_decoded_mark_eof(dec_ahead_engine_t* it) {
     it->frame[idx].v_pts=HUGE_VALF;
 }
 
+int xmp_test_model(xmp_model_e value) { return (mpxp_context().engine().xp_core->flags&value)!=0; }
+
 static xmp_model_e xmp_engine_compute_model(sh_video_t *shv, sh_audio_t *sha) {
     xmp_model_e rc;
     if(!shv && sha) {
@@ -239,10 +241,10 @@ static xmp_model_e xmp_engine_compute_model(sh_video_t *shv, sh_audio_t *sha) {
 
 int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 {
-    xp_core->flags=xmp_engine_compute_model(shv,sha);
+    mpxp_context().engine().xp_core->flags=xmp_engine_compute_model(shv,sha);
     if(shv) {
-	xp_core->video=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
-	dae_init(xp_core->video,xp_core->num_v_buffs,shv);
+	mpxp_context().engine().xp_core->video=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
+	dae_init(mpxp_context().engine().xp_core->video,mpxp_context().engine().xp_core->num_v_buffs,shv);
     }
     if(sha) {
 	if(xmp_test_model(XMP_Run_AudioPlayer)) {
@@ -250,18 +252,18 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 	    unsigned o_bps;
 	    unsigned min_reserv;
 	    o_bps=sha->af_bps;
-	    if(xp_core->video)	asize = std::max(unsigned(3*sha->audio_out_minsize),
+	    if(mpxp_context().engine().xp_core->video)	asize = std::max(unsigned(3*sha->audio_out_minsize),
 						 unsigned(std::max( unsigned(3*MAX_OUTBURST),
-								    unsigned(o_bps*xp_core->num_v_buffs/shv->fps))))+MIN_BUFFER_RESERV;
-	    else		asize = o_bps*xp_core->num_a_buffs;
+								    unsigned(o_bps*mpxp_context().engine().xp_core->num_v_buffs/shv->fps))))+MIN_BUFFER_RESERV;
+	    else		asize = o_bps*mpxp_context().engine().xp_core->num_a_buffs;
 	    /* FIXME: get better indices from asize/real_audio_packet_size */
 	    min_reserv = sha->audio_out_minsize;
 	    if (o_bps > sha->o_bps)
 		min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
 	    init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
 	}
-	xp_core->audio=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
-	dae_init(xp_core->audio,xp_core->num_a_buffs,sha);
+	mpxp_context().engine().xp_core->audio=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
+	dae_init(mpxp_context().engine().xp_core->audio,mpxp_context().engine().xp_core->num_a_buffs,sha);
     }
     return 0;
 }
@@ -270,20 +272,20 @@ void xmp_uninit_engine( int force )
 {
     xmp_stop_threads(force);
 
-    if(xp_core->video) {
-	dae_uninit(xp_core->video);
-	xp_core->video=NULL;
+    if(mpxp_context().engine().xp_core->video) {
+	dae_uninit(mpxp_context().engine().xp_core->video);
+	mpxp_context().engine().xp_core->video=NULL;
     }
 
-    if(xp_core->audio) { /* audio state doesn't matter on segfault :( */
+    if(mpxp_context().engine().xp_core->audio) { /* audio state doesn't matter on segfault :( */
 	uninit_audio_buffer();
-	xp_core->audio=NULL;
+	mpxp_context().engine().xp_core->audio=NULL;
     }
 }
 
 unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_routine_t routine,const char *name) {
     unsigned stacksize=10485760; // 10MB per thread
-    unsigned idx=xp_core->num_threads;
+    unsigned idx=mpxp_context().engine().xp_core->num_threads;
     int rc;
     if(idx>=MAX_MPXP_THREADS) return UINT_MAX;
     pthread_attr_t attr;
@@ -300,32 +302,32 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
     /* requires root privelegies */
     pthread_attr_setschedpolicy(&attr,SCHED_FIFO);
 #endif
-    xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
+    mpxp_context().engine().xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
 
-    xp_core->mpxp_threads[idx]->p_idx=idx;
-    xp_core->mpxp_threads[idx]->name=name;
-    xp_core->mpxp_threads[idx]->routine=routine;
-    xp_core->mpxp_threads[idx]->sigfunc=sigfunc;
-    xp_core->mpxp_threads[idx]->state=Pth_Stand;
-    xp_core->mpxp_threads[idx]->dae=dae;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->p_idx=idx;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->name=name;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->routine=routine;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->sigfunc=sigfunc;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->state=Pth_Stand;
+    mpxp_context().engine().xp_core->mpxp_threads[idx]->dae=dae;
 
-    rc=pthread_create(&xp_core->mpxp_threads[idx]->pth_id,&attr,routine,xp_core->mpxp_threads[idx]);
+    rc=pthread_create(&mpxp_context().engine().xp_core->mpxp_threads[idx]->pth_id,&attr,routine,mpxp_context().engine().xp_core->mpxp_threads[idx]);
     pthread_attr_destroy(&attr);
 
-    xp_core->num_threads++;
+    mpxp_context().engine().xp_core->num_threads++;
     return (rc?UINT_MAX:idx);
 }
 
 int xmp_run_decoders( void )
 {
     unsigned rc;
-    if(xp_core->audio && xmp_test_model(XMP_Run_AudioDecoder)) {
-	if((rc=xmp_register_thread(xp_core->audio,sig_audio_decode,a_dec_ahead_routine,"audio decoder"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
+    if(mpxp_context().engine().xp_core->audio && xmp_test_model(XMP_Run_AudioDecoder)) {
+	if((rc=xmp_register_thread(mpxp_context().engine().xp_core->audio,sig_audio_decode,a_dec_ahead_routine,"audio decoder"))==UINT_MAX) return rc;
+	while(mpxp_context().engine().xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
-    if(xp_core->video && xmp_test_model(XMP_Run_VideoDecoder|XMP_Run_VA_Decoder)) {
-	if((rc=xmp_register_thread(xp_core->video,sig_video_decode,xmp_video_decoder,"video+audio decoders"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
+    if(mpxp_context().engine().xp_core->video && xmp_test_model(XMP_Run_VideoDecoder|XMP_Run_VA_Decoder)) {
+	if((rc=xmp_register_thread(mpxp_context().engine().xp_core->video,sig_video_decode,xmp_video_decoder,"video+audio decoders"))==UINT_MAX) return rc;
+	while(mpxp_context().engine().xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
     return 0;
 }
@@ -333,13 +335,13 @@ int xmp_run_decoders( void )
 int xmp_run_players(void)
 {
     unsigned rc;
-    if(xp_core->audio && xmp_test_model(XMP_Run_AudioPlayer|XMP_Run_AudioPlayback)) {
-	if((rc=xmp_register_thread(xp_core->audio,sig_audio_play,audio_play_routine,"audio player"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
+    if(mpxp_context().engine().xp_core->audio && xmp_test_model(XMP_Run_AudioPlayer|XMP_Run_AudioPlayback)) {
+	if((rc=xmp_register_thread(mpxp_context().engine().xp_core->audio,sig_audio_play,audio_play_routine,"audio player"))==UINT_MAX) return rc;
+	while(mpxp_context().engine().xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
-    if(xp_core->video && xmp_test_model(XMP_Run_VideoPlayer)) {
-	if((rc=xmp_register_thread(xp_core->video,sig_video_play,xmp_video_player,"video player"))==UINT_MAX) return rc;
-	while(xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
+    if(mpxp_context().engine().xp_core->video && xmp_test_model(XMP_Run_VideoPlayer)) {
+	if((rc=xmp_register_thread(mpxp_context().engine().xp_core->video,sig_video_play,xmp_video_player,"video player"))==UINT_MAX) return rc;
+	while(mpxp_context().engine().xp_core->mpxp_threads[rc]->state!=Pth_Run) yield_timeslice();
     }
     return 0;
 }
@@ -348,15 +350,15 @@ int xmp_run_players(void)
 void xmp_stop_threads(int force)
 {
     unsigned i;
-    for(i=1;i<xp_core->num_threads;i++) {
-	if(force) pthread_kill(xp_core->mpxp_threads[i]->pth_id,SIGKILL);
+    for(i=1;i<mpxp_context().engine().xp_core->num_threads;i++) {
+	if(force) pthread_kill(mpxp_context().engine().xp_core->mpxp_threads[i]->pth_id,SIGKILL);
 	else {
-	    xp_core->mpxp_threads[i]->state=Pth_Canceling;
-	    while(xp_core->mpxp_threads[i]->state==Pth_Canceling) yield_timeslice();
+	    mpxp_context().engine().xp_core->mpxp_threads[i]->state=Pth_Canceling;
+	    while(mpxp_context().engine().xp_core->mpxp_threads[i]->state==Pth_Canceling) yield_timeslice();
 	}
 	print_stopped_thread(i);
-	delete xp_core->mpxp_threads[i];
-	xp_core->mpxp_threads[i]=NULL;
+	delete mpxp_context().engine().xp_core->mpxp_threads[i];
+	mpxp_context().engine().xp_core->mpxp_threads[i]=NULL;
     }
 }
 
@@ -364,9 +366,9 @@ void xmp_stop_threads(int force)
 void xmp_halt_threads(int is_reset_vcache)
 {
     unsigned i;
-    for(i=1;i<xp_core->num_threads;i++) {
-	xp_core->mpxp_threads[i]->state=Pth_Sleep;
-	while(xp_core->mpxp_threads[i]->state==Pth_Sleep) yield_timeslice();
+    for(i=1;i<mpxp_context().engine().xp_core->num_threads;i++) {
+	mpxp_context().engine().xp_core->mpxp_threads[i]->state=Pth_Sleep;
+	while(mpxp_context().engine().xp_core->mpxp_threads[i]->state==Pth_Sleep) yield_timeslice();
     }
 }
 
@@ -374,17 +376,17 @@ void xmp_halt_threads(int is_reset_vcache)
 void xmp_restart_threads(int xp_id)
 {
     /* reset counters */
-    dae_reset(xp_core->video);
+    dae_reset(mpxp_context().engine().xp_core->video);
     /* temporary solution */
     reset_audio_buffer();
     /* Ugly hack: but we should read audio packet before video after seeking.
        Else we'll get picture destortion on the screen */
-    xp_core->initial_apts=HUGE;
+    mpxp_context().engine().xp_core->initial_apts=HUGE;
 
     unsigned i;
-    for(i=1;i<xp_core->num_threads;i++) {
-	xp_core->mpxp_threads[i]->state=Pth_Run;
-	while(xp_core->mpxp_threads[i]->state==Pth_ASleep) yield_timeslice();
+    for(i=1;i<mpxp_context().engine().xp_core->num_threads;i++) {
+	mpxp_context().engine().xp_core->mpxp_threads[i]->state=Pth_Run;
+	while(mpxp_context().engine().xp_core->mpxp_threads[i]->state==Pth_ASleep) yield_timeslice();
     }
 }
 

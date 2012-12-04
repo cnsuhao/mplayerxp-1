@@ -38,7 +38,7 @@ static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
 {
     float retval;
     demuxer_t*demuxer=ds->demuxer;
-    xp_core->initial_apts_corr.need_correction=0;
+    mpxp_context().engine().xp_core->initial_apts_corr.need_correction=0;
     MSG_DBG2("initial_apts from: stream_pts=%f pts_bytes=%u got_bytes=%u i_bps=%u\n"
     ,ds->pts,ds->tell_pts(),nbytes,((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
     /* FIXUP AUDIO PTS*/
@@ -64,9 +64,9 @@ static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
 	retval = ds->pts+ds->pts_corr+((float)(ds->tell_pts()-nbytes))/(float)(((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
     else
     {
-	xp_core->initial_apts_corr.need_correction=1;
-	xp_core->initial_apts_corr.pts_bytes=ds->tell_pts();
-	xp_core->initial_apts_corr.nbytes=nbytes;
+	mpxp_context().engine().xp_core->initial_apts_corr.need_correction=1;
+	mpxp_context().engine().xp_core->initial_apts_corr.pts_bytes=ds->tell_pts();
+	mpxp_context().engine().xp_core->initial_apts_corr.nbytes=nbytes;
 	retval = ds->pts;
     }
     MSG_DBG2("initial_apts is: %f\n",retval);
@@ -83,7 +83,7 @@ int demux_getc_r(Demuxer_Stream *ds,float *pts)
     if(mp_conf.benchmark) t=GetTimer();
     retval = ds->getch();
     *pts=get_ds_stream_pts(ds,1);
-    if(xp_core->initial_apts == HUGE) xp_core->initial_apts=*pts;
+    if(mpxp_context().engine().xp_core->initial_apts == HUGE) mpxp_context().engine().xp_core->initial_apts=*pts;
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
@@ -134,7 +134,7 @@ int demux_read_data_r(Demuxer_Stream *ds,unsigned char* mem,int len,float *pts)
     if(mp_conf.benchmark) t=GetTimer();
     retval = ds->read_data(mem,len);
     *pts=get_ds_stream_pts(ds,retval);
-    if(xp_core->initial_apts == HUGE) xp_core->initial_apts=*pts;
+    if(mpxp_context().engine().xp_core->initial_apts == HUGE) mpxp_context().engine().xp_core->initial_apts=*pts;
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
@@ -158,7 +158,7 @@ int ds_get_packet_r(Demuxer_Stream *ds,unsigned char **start,float *pts)
     if(mp_conf.benchmark) t=GetTimer();
     retval = ds->get_packet(start);
     *pts=get_ds_stream_pts(ds,retval);
-    if(xp_core->initial_apts == HUGE) xp_core->initial_apts=*pts;
+    if(mpxp_context().engine().xp_core->initial_apts == HUGE) mpxp_context().engine().xp_core->initial_apts=*pts;
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
