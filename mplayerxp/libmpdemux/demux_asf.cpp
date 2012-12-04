@@ -121,7 +121,7 @@ static const char* asf_chunk_type(const uint8_t* guid) {
   }
 }
 
-static MPXP_Rc asf_probe(demuxer_t *demuxer){
+static MPXP_Rc asf_probe(Demuxer *demuxer){
   const unsigned char asfhdrguid[16]= {0x30,0x26,0xB2,0x75,0x8E,0x66,0xCF,0x11,0xA6,0xD9,0x00,0xAA,0x00,0x62,0xCE,0x6C};
   const unsigned char asf2hdrguid[16]={0xD1,0x29,0xE2,0xD6,0xDA,0x35,0xD1,0x11,0x90,0x34,0x00,0xA0,0xC9,0x03,0x49,0xBE};
   asf_priv_t* apriv;
@@ -150,11 +150,11 @@ static MPXP_Rc asf_probe(demuxer_t *demuxer){
     delete demuxer->priv;
     return MPXP_False; // invalid header???
   }
-  demuxer->file_format=DEMUXER_TYPE_ASF;
+  demuxer->file_format=Demuxer::Type_ASF;
   return MPXP_Ok;
 }
 
-static demuxer_t* asf_open(demuxer_t *demuxer){
+static Demuxer* asf_open(Demuxer *demuxer){
   static unsigned char buffer[2048];
   uint32_t* streams = NULL;
   int audio_streams=0;
@@ -189,7 +189,7 @@ while(!stream_eof(demuxer->stream)){
       stream_read(demuxer->stream,(char*) buffer,apriv->streamh.type_size);
       switch(ASF_LOAD_GUID_PREFIX(apriv->streamh.type)){
       case ASF_GUID_PREFIX_audio_stream: {
-	sh_audio_t* sh_audio=new_sh_audio(demuxer,apriv->streamh.stream_no & 0x7F);
+	sh_audio_t* sh_audio=demuxer->new_sh_audio(apriv->streamh.stream_no & 0x7F);
 	++audio_streams;
 	sh_audio->wf=(WAVEFORMATEX*)mp_calloc((apriv->streamh.type_size<sizeof(WAVEFORMATEX))?sizeof(WAVEFORMATEX):apriv->streamh.type_size,1);
 	memcpy(sh_audio->wf,buffer,apriv->streamh.type_size);
@@ -208,7 +208,7 @@ while(!stream_eof(demuxer->stream)){
 	break;
 	}
       case ASF_GUID_PREFIX_video_stream: {
-	sh_video_t* sh_video=new_sh_video(demuxer,apriv->streamh.stream_no & 0x7F);
+	sh_video_t* sh_video=demuxer->new_sh_video(apriv->streamh.stream_no & 0x7F);
 	unsigned int len=apriv->streamh.type_size-(4+4+1+2);
 	++video_streams;
 	sh_video->bih=(BITMAPINFOHEADER*)mp_mallocz(len<sizeof(BITMAPINFOHEADER)?sizeof(BITMAPINFOHEADER):len);
@@ -422,7 +422,7 @@ static void asf_descrambling(asf_priv_t *apriv, unsigned char *src,int len){
 }
 
 
-static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,int seq,unsigned long time,unsigned short dur,int offs,int keyframe){
+static int demux_asf_read_packet(Demuxer *demux,off_t dataoff,int len,int id,int seq,unsigned long time,unsigned short dur,int offs,int keyframe){
   Demuxer_Stream *ds=NULL;
   asf_priv_t *apriv=static_cast<asf_priv_t*>(demux->priv);
 
@@ -501,7 +501,7 @@ static int demux_asf_read_packet(demuxer_t *demux,off_t dataoff,int len,int id,i
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int asf_demux(demuxer_t *demux,Demuxer_Stream *ds){
+static int asf_demux(Demuxer *demux,Demuxer_Stream *ds){
 stream_t *stream=demux->stream;
 asf_priv_t *apriv=static_cast<asf_priv_t*>(demux->priv);
 int done=0;
@@ -690,7 +690,7 @@ return 0;
 }
 
 
-static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void asf_seek(Demuxer *demuxer,const seek_args_t* seeka){
     Demuxer_Stream *d_audio=demuxer->audio;
     Demuxer_Stream *d_video=demuxer->video;
     asf_priv_t *apriv=static_cast<asf_priv_t*>(demuxer->priv);
@@ -717,12 +717,12 @@ static void asf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
 }
 
-static void asf_close(demuxer_t *demuxer)
+static void asf_close(Demuxer *demuxer)
 {
     delete demuxer->priv;
 }
 
-static MPXP_Rc asf_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc asf_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

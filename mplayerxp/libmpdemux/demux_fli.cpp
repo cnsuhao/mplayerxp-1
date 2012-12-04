@@ -37,7 +37,7 @@ fli_frames_t::~fli_frames_t() {
     if(frame_size) delete frame_size;
 }
 
-static void fli_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void fli_seek(Demuxer *demuxer,const seek_args_t* seeka){
   fli_frames_t *frames = static_cast<fli_frames_t*>(demuxer->priv);
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
   int newpos=(seeka->flags&DEMUX_SEEK_SET)?0:frames->current_frame;
@@ -50,7 +50,7 @@ static void fli_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int fli_demux(demuxer_t *demuxer,Demuxer_Stream *__ds){
+static int fli_demux(Demuxer *demuxer,Demuxer_Stream *__ds){
   fli_frames_t *frames = static_cast<fli_frames_t*>(demuxer->priv);
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
 
@@ -75,16 +75,16 @@ static int fli_demux(demuxer_t *demuxer,Demuxer_Stream *__ds){
   return 1;
 }
 
-static MPXP_Rc fli_probe(demuxer_t* demuxer){
+static MPXP_Rc fli_probe(Demuxer* demuxer){
   unsigned magic_number;
   demuxer->movi_end = stream_skip(demuxer->stream,4);
   magic_number = stream_read_word_le(demuxer->stream);
   if ((magic_number != 0xAF11) && (magic_number != 0xAF12)) return MPXP_False;
-  demuxer->file_format=DEMUXER_TYPE_FLI;
+  demuxer->file_format=Demuxer::Type_FLI;
   return MPXP_Ok;
 }
 
-static demuxer_t* fli_open(demuxer_t* demuxer){
+static Demuxer* fli_open(Demuxer* demuxer){
   sh_video_t *sh_video = NULL;
   fli_frames_t *frames = new(zeromem) fli_frames_t;
   int frame_number;
@@ -124,7 +124,7 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
   frames->frame_size = new unsigned int [frames->num_frames];
 
   // create a new video stream header
-  sh_video = new_sh_video(demuxer, 0);
+  sh_video = demuxer->new_sh_video();
 
   // make sure the demuxer knows about the new video stream header
   // (even though new_sh_video() ought to take care of it)
@@ -187,7 +187,7 @@ static demuxer_t* fli_open(demuxer_t* demuxer){
     return demuxer;
 }
 
-static void fli_close(demuxer_t* demuxer) {
+static void fli_close(Demuxer* demuxer) {
     fli_frames_t *frames = static_cast<fli_frames_t*>(demuxer->priv);
 
     if(!frames) return;
@@ -195,7 +195,7 @@ static void fli_close(demuxer_t* demuxer) {
     delete frames;
 }
 
-static MPXP_Rc fli_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc fli_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

@@ -47,7 +47,9 @@ enum {
 };
 
 struct cache_vars_s;
-struct demuxer_t;
+namespace mpxp {
+    struct Demuxer;
+}
 /** Stream description */
 struct stream_t : public Opaque {
     public:
@@ -67,7 +69,7 @@ struct stream_t : public Opaque {
 	off_t		start_pos;	/**< real start of stream (without internet's headers) */
 	off_t		end_pos;	/**< real end of stream (media may be not fully filled) */
 	unsigned	sector_size; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
-	demuxer_t*	demuxer; /* parent demuxer */
+	Demuxer*	demuxer; /* parent demuxer */
 	struct cache_vars_s* cache_data;	/**< large cache */
 	Opaque*		priv;	/**< private data used by stream driver */
 	float		stream_pts;	/**< PTS correction for idiotics DVD's discontinuities */

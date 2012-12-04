@@ -39,7 +39,7 @@ y4m_priv_t::~y4m_priv_t() {
     delete si;
 }
 
-static MPXP_Rc y4m_probe(demuxer_t* demuxer){
+static MPXP_Rc y4m_probe(Demuxer* demuxer){
     int orig_pos = stream_tell(demuxer->stream);
     char buf[10];
     y4m_priv_t* priv;
@@ -67,7 +67,7 @@ static MPXP_Rc y4m_probe(demuxer_t* demuxer){
     MSG_DBG2("Success: YUV4MPEG2\n");
 
     stream_seek(demuxer->stream, orig_pos);
-    demuxer->file_format=DEMUXER_TYPE_Y4M;
+    demuxer->file_format=Demuxer::Type_Y4M;
     return MPXP_Ok;
 }
 
@@ -75,7 +75,7 @@ static MPXP_Rc y4m_probe(demuxer_t* demuxer){
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int y4m_demux(demuxer_t *demux,Demuxer_Stream *__ds) {
+static int y4m_demux(Demuxer *demux,Demuxer_Stream *__ds) {
     UNUSED(__ds);
   Demuxer_Stream *ds=demux->video;
   Demuxer_Packet *dp;
@@ -130,10 +130,10 @@ static int y4m_demux(demuxer_t *demux,Demuxer_Stream *__ds) {
   return 1;
 }
 
-static demuxer_t* y4m_open(demuxer_t* demuxer){
+static Demuxer* y4m_open(Demuxer* demuxer){
     y4m_priv_t* priv = static_cast<y4m_priv_t*>(demuxer->priv);
     y4m_ratio_t ratio;
-    sh_video_t* sh=new_sh_video(demuxer,0);
+    sh_video_t* sh=demuxer->new_sh_video();
     int err;
 
     priv->framenum = 0;
@@ -213,7 +213,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
 
 	sh->src_w = y4m_si_get_width(priv->si);
 	sh->src_h = y4m_si_get_height(priv->si);
-	demuxer->flags &= ~DEMUXF_SEEKABLE;
+	demuxer->flags &= ~Demuxer::Seekable;
     }
 
     sh->fourcc = mmioFOURCC('Y', 'V', '1', '2');
@@ -239,7 +239,7 @@ static demuxer_t* y4m_open(demuxer_t* demuxer){
     return demuxer;
 }
 
-static void y4m_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
+static void y4m_seek(Demuxer *demuxer,const seek_args_t* seeka) {
     sh_video_t* sh = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
     y4m_priv_t* priv = static_cast<y4m_priv_t*>(demuxer->priv);
     int rel_seek_frames = sh->fps*seeka->secs;
@@ -264,7 +264,7 @@ static void y4m_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
     }
 }
 
-static void y4m_close(demuxer_t *demuxer)
+static void y4m_close(Demuxer *demuxer)
 {
     y4m_priv_t* priv = static_cast<y4m_priv_t*>(demuxer->priv);
 
@@ -273,7 +273,7 @@ static void y4m_close(demuxer_t *demuxer)
     return;
 }
 
-static MPXP_Rc y4m_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc y4m_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

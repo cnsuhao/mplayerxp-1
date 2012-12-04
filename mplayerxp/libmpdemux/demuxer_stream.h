@@ -7,12 +7,12 @@ using namespace mpxp;
 #include <stdint.h>
 #include "demuxer_packet.h"
 
-struct demuxer_t;
 struct stream_t;
 namespace mpxp {
+    struct Demuxer;
     class Demuxer_Stream : public Opaque {
 	public:
-	    Demuxer_Stream(demuxer_t *demuxer,int id);
+	    Demuxer_Stream(Demuxer *demuxer,int id);
 	    virtual ~Demuxer_Stream();
 
 	    void	add_packet(Demuxer_Packet* dp);
@@ -50,7 +50,7 @@ namespace mpxp {
 	    float		prev_pts;	/**< PTS of previous packet (DVD's PTS correction) */
 	    float		pts_corr;	/**< PTS correction (DVD's PTS correction) */
 	    int			pts_flags;	/**< PTS flags like trigger for correction applying (DVD's PTS correction) */
-	    demuxer_t*		demuxer;	/**< parent demuxer structure (stream handler) */
+	    Demuxer*		demuxer;	/**< parent demuxer structure (stream handler) */
 	    int			pack_no;	/**< serial number of packet */
 	private:
 	    int			_pts_bytes;	/**< number of bytes read after last pts stamp */

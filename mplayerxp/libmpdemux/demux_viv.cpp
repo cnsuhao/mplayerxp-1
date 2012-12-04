@@ -128,7 +128,7 @@ static const config_t vivo_conf[] = {
 /* (audio headers are seperate - mostly with recordtype=3 or 4) */
 #define TEXTPARSE_ALL 1
 
-static void vivo_parse_text_header(demuxer_t *demux, int header_len)
+static void vivo_parse_text_header(Demuxer *demux, int header_len)
 {
     vivo_priv_t* priv = static_cast<vivo_priv_t*>(demux->priv);
     char *buf;
@@ -273,7 +273,7 @@ static void vivo_parse_text_header(demuxer_t *demux, int header_len)
 	delete param;
 }
 
-static MPXP_Rc vivo_probe(demuxer_t* demuxer){
+static MPXP_Rc vivo_probe(Demuxer* demuxer){
     int i=0;
     int len;
     int c;
@@ -327,7 +327,7 @@ static MPXP_Rc vivo_probe(demuxer_t* demuxer){
 #endif
 //    c=stream_read_char(demuxer->stream);
     stream_seek(demuxer->stream, orig_pos);
-    demuxer->file_format=DEMUXER_TYPE_VIVO;
+    demuxer->file_format=Demuxer::Type_VIVO;
     return MPXP_Ok;
 }
 
@@ -337,7 +337,7 @@ static int audio_rate=0;
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int vivo_demux(demuxer_t *demux,Demuxer_Stream *__ds){
+static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
   Demuxer_Stream *ds=NULL;
   int c;
   int len=0;
@@ -572,7 +572,7 @@ static int h263_decode_picture_header(const unsigned char *b_ptr)
     return 0;
 }
 
-static demuxer_t* vivo_open(demuxer_t* demuxer){
+static Demuxer* vivo_open(Demuxer* demuxer){
     vivo_priv_t* priv=static_cast<vivo_priv_t*>(demuxer->priv);
 
   if(!demuxer->video->fill_buffer()){
@@ -587,7 +587,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
   if (vivo_param.version != -1)
     priv->version = '0' + vivo_param.version;
 
-{		sh_video_t* sh=new_sh_video(demuxer,0);
+{		sh_video_t* sh=demuxer->new_sh_video();
 
 		/* viv1, viv2 (for better codecs.conf) */
 		sh->fourcc = mmioFOURCC('v', 'i', 'v', priv->version);
@@ -647,7 +647,7 @@ static demuxer_t* vivo_open(demuxer_t* demuxer){
 		demuxer->video->id=0;
 
 		/* disable seeking */
-		demuxer->flags &= ~DEMUXF_SEEKABLE;
+		demuxer->flags &= ~Demuxer::Seekable;
 
 		MSG_V("VIVO Video stream %d size: display: %dx%d, codec: %ux%u\n",
 		    demuxer->video->id, sh->src_w, sh->src_h, sh->bih->biWidth,
@@ -659,7 +659,7 @@ if (demuxer->audio->id >= -1){
   if(!demuxer->audio->fill_buffer()){
     MSG_ERR("VIVO: " MSGTR_MissingAudioStream);
   } else
-{		sh_audio_t* sh=new_sh_audio(demuxer,1);
+{		sh_audio_t* sh=demuxer->new_sh_audio();
 
 		/* Select audio codec */
 		if (priv->audio_codec == 0)
@@ -752,7 +752,7 @@ nosound:
     return demuxer;
 }
 
-static void vivo_close(demuxer_t *demuxer)
+static void vivo_close(Demuxer *demuxer)
 {
     vivo_priv_t* priv=static_cast<vivo_priv_t*>(demuxer->priv);
 
@@ -760,7 +760,7 @@ static void vivo_close(demuxer_t *demuxer)
     return;
 }
 
-static MPXP_Rc vivo_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc vivo_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

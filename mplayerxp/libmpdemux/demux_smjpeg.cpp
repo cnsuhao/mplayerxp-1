@@ -28,7 +28,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "demux_msg.h"
 
-static MPXP_Rc smjpeg_probe(demuxer_t* demuxer){
+static MPXP_Rc smjpeg_probe(Demuxer* demuxer){
     int orig_pos = stream_tell(demuxer->stream);
     char buf[8];
     int version;
@@ -54,7 +54,7 @@ static MPXP_Rc smjpeg_probe(demuxer_t* demuxer){
     }
 
     stream_seek(demuxer->stream, orig_pos);
-    demuxer->file_format=DEMUXER_TYPE_SMJPEG;
+    demuxer->file_format=Demuxer::Type_SMJPEG;
 
     return MPXP_Ok;
 }
@@ -63,7 +63,7 @@ static MPXP_Rc smjpeg_probe(demuxer_t* demuxer){
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int smjpeg_demux(demuxer_t *demux,Demuxer_Stream *__ds)
+static int smjpeg_demux(Demuxer *demux,Demuxer_Stream *__ds)
 {
     int dtype, dsize, dpts;
 
@@ -93,7 +93,7 @@ static int smjpeg_demux(demuxer_t *demux,Demuxer_Stream *__ds)
     return 1;
 }
 
-static demuxer_t* smjpeg_open(demuxer_t* demuxer){
+static Demuxer* smjpeg_open(Demuxer* demuxer){
     sh_video_t* sh_video;
     sh_audio_t* sh_audio;
     unsigned int htype = 0, hleng;
@@ -117,7 +117,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	switch(htype)
 	{
 	case mmioFOURCC('_','V','I','D'):
-	    sh_video = new_sh_video(demuxer, 0);
+	    sh_video = demuxer->new_sh_video();
 	    demuxer->video->sh = sh_video;
 	    sh_video->ds = demuxer->video;
 
@@ -139,7 +139,7 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	    sh_video->bih->biSizeImage = sh_video->src_w*sh_video->src_h;
 	    break;
 	case mmioFOURCC('_','S','N','D'):
-	    sh_audio = new_sh_audio(demuxer, 0);
+	    sh_audio = demuxer->new_sh_audio();
 	    demuxer->audio->sh = sh_audio;
 	    sh_audio->ds = demuxer->audio;
 
@@ -163,14 +163,14 @@ static demuxer_t* smjpeg_open(demuxer_t* demuxer){
 	}
     }
 
-    demuxer->flags &= ~DEMUXF_SEEKABLE;
+    demuxer->flags &= ~Demuxer::Seekable;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 
-static void smjpeg_close(demuxer_t *demuxer) { UNUSED(demuxer); }
+static void smjpeg_close(Demuxer *demuxer) { UNUSED(demuxer); }
 
-static MPXP_Rc smjpeg_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc smjpeg_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

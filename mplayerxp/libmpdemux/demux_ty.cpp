@@ -115,7 +115,7 @@ void ty_ClearOSD( int start );
 #define TMF_SIG "showing.xml"
 
 // ===========================================================================
-static int ty_tmf_filetoparts( demuxer_t *demux, TiVoInfo *tivo )
+static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
 {
    int     parts = 0;
 
@@ -191,7 +191,7 @@ static off_t tmf_filetooffset(TiVoInfo *tivo, int chunk)
 
 
 // ===========================================================================
-static int tmf_load_chunk( demuxer_t *demux, TiVoInfo *tivo,
+static int tmf_load_chunk( Demuxer *demux, TiVoInfo *tivo,
    unsigned char *buff, int readChunk )
 {
    off_t fileoffset;
@@ -336,7 +336,7 @@ static void demux_ty_FindESPacket( uint8_t nal,
 #define AUDIO_NAL 0xc0
 #define AC3_NAL 0xbd
 
-static int ty_demux( demuxer_t *demux, Demuxer_Stream *dsds )
+static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 {
    int              invalidType = 0;
    int              errorHeader = 0;
@@ -505,7 +505,7 @@ static int ty_demux( demuxer_t *demux, Demuxer_Stream *dsds )
 
    // Let's make a Video Demux Stream for MPlayer
    aid = 0x0;
-   if( !demux->v_streams[ aid ] ) new_sh_video( demux, aid );
+   if( !demux->v_streams[ aid ] ) demux->new_sh_video( aid );
    if( demux->video->id == -1 ) demux->video->id = aid;
    if( demux->video->id == aid )
    {
@@ -576,7 +576,7 @@ static int ty_demux( demuxer_t *demux, Demuxer_Stream *dsds )
 	       }
 
 	       demux->audio->id = aid;
-	       if( !demux->a_streams[ aid ] ) new_sh_audio( demux, aid );
+	       if( !demux->a_streams[ aid ] ) demux->new_sh_audio( aid );
 	       if( demux->audio->id == aid )
 	       {
 		  Demuxer_Stream *ds = demux->audio;
@@ -745,7 +745,7 @@ static int ty_demux( demuxer_t *demux, Demuxer_Stream *dsds )
    return 1;
 }
 
-static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
+static void ty_seek( Demuxer *demuxer, const seek_args_t* seeka )
 {
    Demuxer_Stream *d_audio = demuxer->audio;
    Demuxer_Stream *d_video = demuxer->video;
@@ -817,7 +817,7 @@ static void ty_seek( demuxer_t *demuxer, const seek_args_t* seeka )
       ty_ClearOSD( 0 );
 }
 
-static MPXP_Rc ty_control(const demuxer_t *demuxer,int cmd, any_t*arg )
+static MPXP_Rc ty_control(const Demuxer *demuxer,int cmd, any_t*arg )
 {
     UNUSED(demuxer);
     UNUSED(cmd);
@@ -834,7 +834,7 @@ static MPXP_Rc ty_control(const demuxer_t *demuxer,int cmd, any_t*arg )
     return MPXP_Unknown;
 }
 
-static void ty_close( demuxer_t *demux )
+static void ty_close( Demuxer *demux )
 {
     TiVoInfo* tivo = static_cast<TiVoInfo*>(demux->priv);
 
@@ -843,7 +843,7 @@ static void ty_close( demuxer_t *demux )
 }
 
 
-static MPXP_Rc ty_probe(demuxer_t* demuxer)
+static MPXP_Rc ty_probe(Demuxer* demuxer)
 {
   TiVoInfo *tivo = new(zeromem) TiVoInfo;
   demuxer->priv = tivo;
@@ -851,7 +851,7 @@ static MPXP_Rc ty_probe(demuxer_t* demuxer)
 }
 
 
-static demuxer_t* ty_open(demuxer_t* demuxer)
+static Demuxer* ty_open(Demuxer* demuxer)
 {
     sh_audio_t *sh_audio=NULL;
     sh_video_t *sh_video=NULL;

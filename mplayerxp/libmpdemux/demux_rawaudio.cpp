@@ -34,16 +34,16 @@ static const config_t rawaudio_conf[] = {
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
-static MPXP_Rc rawaudio_probe(demuxer_t* demuxer)
+static MPXP_Rc rawaudio_probe(Demuxer* demuxer)
 {
     if(demuxer->stream->type & STREAMTYPE_RAWAUDIO || use_rawaudio) {
-	demuxer->file_format=DEMUXER_TYPE_RAWAUDIO;
+	demuxer->file_format=Demuxer::Type_RAWAUDIO;
 	return MPXP_Ok;
     }
     return MPXP_False;
 }
 
-static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
+static Demuxer* rawaudio_open(Demuxer* demuxer) {
   unsigned samplesize;
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
@@ -52,7 +52,7 @@ static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
   stream_control(demuxer->stream,SCTRL_AUD_GET_SAMPLERATE,&samplerate);
   stream_control(demuxer->stream,SCTRL_AUD_GET_SAMPLESIZE,&samplesize);
   stream_control(demuxer->stream,SCTRL_AUD_GET_FORMAT,&wtag);
-  sh_audio = new_sh_audio(demuxer,0);
+  sh_audio = demuxer->new_sh_audio();
   sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = sh_audio->wtag = wtag;
   w->nChannels = sh_audio->nch = channels;
@@ -71,12 +71,12 @@ static demuxer_t* rawaudio_open(demuxer_t* demuxer) {
   demuxer->audio->sh = sh_audio;
   demuxer->audio->id = 0;
   sh_audio->ds = demuxer->audio;
-  if(!(demuxer->stream->type & STREAMTYPE_SEEKABLE)) demuxer->flags &= ~DEMUXF_SEEKABLE;
+  if(!(demuxer->stream->type & STREAMTYPE_SEEKABLE)) demuxer->flags &= ~Demuxer::Seekable;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
 
-static int rawaudio_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
+static int rawaudio_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
   off_t spos = stream_tell(demuxer->stream);
@@ -95,7 +95,7 @@ static int rawaudio_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
   return 1;
 }
 
-static void rawaudio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void rawaudio_seek(Demuxer *demuxer,const seek_args_t* seeka){
   stream_t* s = demuxer->stream;
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
@@ -106,9 +106,9 @@ static void rawaudio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   stream_seek(s,pos);
 }
 
-static void rawaudio_close(demuxer_t* demuxer) { UNUSED(demuxer); }
+static void rawaudio_close(Demuxer* demuxer) { UNUSED(demuxer); }
 
-static MPXP_Rc rawaudio_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc rawaudio_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

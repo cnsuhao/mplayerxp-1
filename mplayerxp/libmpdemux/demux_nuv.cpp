@@ -64,7 +64,7 @@ nuv_priv_t::~nuv_priv_t() {
 /**
  * Seek to a position relative to the current position, indicated in time.
  */
-static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
+static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 {
 #define MAX_TIME 1000000
 	nuv_priv_t* priv = static_cast<nuv_priv_t*>(demuxer->priv);
@@ -153,7 +153,7 @@ static void nuv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 }
 
 
-static int nuv_demux( demuxer_t *demuxer, Demuxer_Stream *__ds )
+static int nuv_demux( Demuxer *demuxer, Demuxer_Stream *__ds )
 {
 	struct rtframeheader rtjpeg_frameheader;
 	off_t orig_pos;
@@ -213,7 +213,7 @@ static int nuv_demux( demuxer_t *demuxer, Demuxer_Stream *__ds )
 }
 
 
-static demuxer_t* nuv_open ( demuxer_t* demuxer )
+static Demuxer* nuv_open ( Demuxer* demuxer )
 {
 	sh_video_t *sh_video = NULL;
 	sh_audio_t *sh_audio = NULL;
@@ -239,7 +239,7 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 	}
 
 	/* Create a new video stream header */
-	sh_video = new_sh_video ( demuxer, 0 );
+	sh_video = demuxer->new_sh_video();
 
 	/* Make sure the demuxer knows about the new video stream header
 	 * (even though new_sh_video() ought to take care of it)
@@ -271,7 +271,7 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
 
 	if (rtjpeg_fileheader.audioblocks != 0)
 	{
-	    sh_audio = new_sh_audio(demuxer, 0);
+	    sh_audio = demuxer->new_sh_audio();
 	    demuxer->audio->sh = sh_audio;
 	    sh_audio->ds = demuxer->audio;
 	    sh_audio->wtag = 0x1;
@@ -299,7 +299,7 @@ static demuxer_t* nuv_open ( demuxer_t* demuxer )
     return demuxer;
 }
 
-static MPXP_Rc nuv_probe ( demuxer_t* demuxer )
+static MPXP_Rc nuv_probe ( Demuxer* demuxer )
 {
     struct nuv_signature ns;
 
@@ -317,17 +317,17 @@ static MPXP_Rc nuv_probe ( demuxer_t* demuxer )
 
     /* Return to original position */
     stream_seek ( demuxer->stream, orig_pos );
-    demuxer->file_format=DEMUXER_TYPE_NUV;
+    demuxer->file_format=Demuxer::Type_NUV;
     return MPXP_Ok;
 }
 
-static void nuv_close(demuxer_t* demuxer) {
+static void nuv_close(Demuxer* demuxer) {
   nuv_priv_t* priv = static_cast<nuv_priv_t*>(demuxer->priv);
   if(!priv) return;
   delete priv;
 }
 
-static MPXP_Rc nuv_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc nuv_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

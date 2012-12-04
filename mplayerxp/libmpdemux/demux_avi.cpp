@@ -23,7 +23,7 @@ using namespace mpxp;
 #include "aviprint.h"
 #include "demux_msg.h"
 
-typedef int (*alt_demuxer_t)(demuxer_t *demux,Demuxer_Stream *__ds);
+typedef int (*alt_demuxer_t)(Demuxer *demux,Demuxer_Stream *__ds);
 struct avi_priv_t : public Opaque {
     public:
 	avi_priv_t() {}
@@ -119,7 +119,7 @@ static float get_avi_aspect(unsigned char id)
 
 extern const demuxer_driver_t demux_avi;
 
-static void read_avi_header(demuxer_t *demuxer,int index_mode){
+static void read_avi_header(Demuxer *demuxer,int index_mode){
 MainAVIHeader avih;
 sh_audio_t *sh_audio=NULL;
 sh_video_t *sh_video=NULL;
@@ -266,13 +266,13 @@ while(1){
 	MSG_FATAL("DVDS chunk found!!! Still is not suupported\n");
       }
       if(h.fccType==streamtypeVIDEO){
-	sh_video=new_sh_video(demuxer,stream_id);
+	sh_video=demuxer->new_sh_video(stream_id);
 	memcpy(&sh_video->video,&h,sizeof(h));
 //	demuxer->video->sh=sh_video;
       } else
       if(h.fccType==streamtypeAUDIO){
 	MSG_V("avi: Found audio stream\n");
-	sh_audio=new_sh_audio(demuxer,stream_id);
+	sh_audio=demuxer->new_sh_audio(stream_id);
 	memcpy(&sh_audio->audio,&h,sizeof(h));
 //	demuxer->audio->sh=sh_audio;
       }
@@ -763,7 +763,7 @@ skip_chunk:
 #undef MIN
 
 // Select ds from ID
-static Demuxer_Stream* demux_avi_select_stream(demuxer_t *demux,unsigned int id){
+static Demuxer_Stream* demux_avi_select_stream(Demuxer *demux,unsigned int id){
   int stream_id=avi_stream_id(id);
 
   if(demux->video->id==-1)
@@ -840,7 +840,7 @@ static int choose_chunk_len(unsigned int len1,unsigned int len2){
     return (len1<len2)? len1 : len2;
 }
 
-static int demux_avi_read_packet(demuxer_t *demux,Demuxer_Stream *ds,unsigned int id,unsigned int len,int idxpos,dp_flags_e flags){
+static int demux_avi_read_packet(Demuxer *demux,Demuxer_Stream *ds,unsigned int id,unsigned int len,int idxpos,dp_flags_e flags){
   avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
   int skip;
   float pts=0;
@@ -903,10 +903,10 @@ static int demux_avi_read_packet(demuxer_t *demux,Demuxer_Stream *ds,unsigned in
   return ds?1:0;
 }
 
-static int avi_read_ni(demuxer_t *demux,Demuxer_Stream* ds);
-static int avi_read_nini(demuxer_t *demux,Demuxer_Stream* ds);
+static int avi_read_ni(Demuxer *demux,Demuxer_Stream* ds);
+static int avi_read_nini(Demuxer *demux,Demuxer_Stream* ds);
 
-static int avi_demux(demuxer_t *demux,Demuxer_Stream *__ds){
+static int avi_demux(Demuxer *demux,Demuxer_Stream *__ds){
     avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
     if(priv->alt_demuxer) return priv->alt_demuxer(demux,__ds);
     unsigned int id=0;
@@ -934,7 +934,7 @@ do{
     }
 
     pos = (off_t)priv->idx_offset+avi_idx_offset(idx);
-    if((pos<demux->movi_start || pos>=demux->movi_end) && (demux->movi_end>demux->movi_start) && (demux->flags & DEMUXF_SEEKABLE)){
+    if((pos<demux->movi_start || pos>=demux->movi_end) && (demux->movi_end>demux->movi_start) && (demux->flags & Demuxer::Seekable)){
       MSG_V("ChunkOffset out of range!   idx=0x%X  \n",pos);
       continue;
     }
@@ -966,7 +966,7 @@ do{
     if(!(idx->dwFlags&AVIIF_KEYFRAME)) flags=DP_NONKEYFRAME;
   } else {
     demux->filepos=stream_tell(demux->stream);
-    if(demux->filepos>=demux->movi_end && demux->movi_end>demux->movi_start && (demux->flags & DEMUXF_SEEKABLE)){
+    if(demux->filepos>=demux->movi_end && demux->movi_end>demux->movi_start && (demux->flags & Demuxer::Seekable)){
 	stream_set_eof(demux->stream,1);
 	return 0;
     }
@@ -1008,7 +1008,7 @@ do{
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int avi_read_ni(demuxer_t *demux,Demuxer_Stream* ds){
+static int avi_read_ni(Demuxer *demux,Demuxer_Stream* ds){
 avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
 unsigned int id=0;
 unsigned int len;
@@ -1078,7 +1078,7 @@ do{
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int avi_read_nini(demuxer_t *demux,Demuxer_Stream* ds){
+static int avi_read_nini(Demuxer *demux,Demuxer_Stream* ds){
 avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
 unsigned int id=0;
 unsigned int len;
@@ -1130,7 +1130,7 @@ do{
 
 int index_mode=-1;  // -1=untouched  0=don't use index  1=use (geneate) index
 extern demuxer_driver_t demux_ogg;
-static demuxer_t* avi_open(demuxer_t* demuxer){
+static Demuxer* avi_open(Demuxer* demuxer){
     Demuxer_Stream *d_audio=demuxer->audio;
     Demuxer_Stream *d_video=demuxer->video;
     sh_audio_t *sh_audio=NULL;
@@ -1204,7 +1204,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
 	MSG_ERR("AVI_NI: " MSGTR_MissingAudioStream);
 	sh_audio=NULL;
     }
-  } else demuxer->flags &= ~DEMUXF_SEEKABLE;
+  } else demuxer->flags &= ~Demuxer::Seekable;
   if(!d_video->fill_buffer()){
     MSG_ERR("AVI: " MSGTR_MissingVideoStreamBug);
     return NULL;
@@ -1284,7 +1284,7 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
     return demuxer;
 }
 
-static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void avi_seek(Demuxer *demuxer,const seek_args_t* seeka){
     avi_priv_t *priv=static_cast<avi_priv_t*>(demuxer->priv);
     Demuxer_Stream *d_audio=demuxer->audio;
     Demuxer_Stream *d_video=demuxer->video;
@@ -1469,20 +1469,20 @@ static void avi_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 }
 
 #define formtypeON2             mmioFOURCC('O', 'N', '2', 'f')
-static MPXP_Rc avi_probe(demuxer_t *demuxer)
+static MPXP_Rc avi_probe(Demuxer *demuxer)
 {
   uint32_t riff,id;
 
   riff = stream_read_dword_le(demuxer->stream);
   stream_read_dword_le(demuxer->stream); /*filesize */
   id=stream_read_dword_le(demuxer->stream); /* "AVI " */
-  demuxer->file_format=DEMUXER_TYPE_AVI;
+  demuxer->file_format=Demuxer::Type_AVI;
   if(riff == mmioFOURCC('R','I','F','F') && id == formtypeAVI) return MPXP_Ok;
   if(riff == mmioFOURCC('O','N','2',' ') && id == formtypeON2) return MPXP_Ok;
   return MPXP_False;
 }
 
-static void avi_close(demuxer_t *demuxer)
+static void avi_close(Demuxer *demuxer)
 {
   avi_priv_t* priv=static_cast<avi_priv_t*>(demuxer->priv);
 
@@ -1491,7 +1491,7 @@ static void avi_close(demuxer_t *demuxer)
   delete priv;
 }
 
-static MPXP_Rc avi_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc avi_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

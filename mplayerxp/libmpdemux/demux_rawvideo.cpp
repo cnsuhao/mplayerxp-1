@@ -58,17 +58,17 @@ static const config_t rawvideo_conf[] = {
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
-static MPXP_Rc rawvideo_probe(demuxer_t* demuxer)
+static MPXP_Rc rawvideo_probe(Demuxer* demuxer)
 {
     if(demuxer->stream->type & STREAMTYPE_RAWVIDEO || priv.use_rawvideo) {
 	priv.fps=25;
-	demuxer->file_format=DEMUXER_TYPE_RAWVIDEO;
+	demuxer->file_format=Demuxer::Type_RAWVIDEO;
 	return MPXP_Ok;
     }
     return MPXP_False;
 }
 
-static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
+static Demuxer* rawvideo_open(Demuxer* demuxer) {
   sh_video_t* sh_video;
 
   switch(priv.size_id){
@@ -104,7 +104,7 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
       return NULL;
   }
 
-  sh_video = new_sh_video(demuxer,0);
+  sh_video = demuxer->new_sh_video();
   sh_video->fourcc=priv.format;
   sh_video->fps=priv.fps;
   sh_video->src_w=priv.width;
@@ -120,7 +120,7 @@ static demuxer_t* rawvideo_open(demuxer_t* demuxer) {
     return demuxer;
 }
 
-static int rawvideo_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
+static int rawvideo_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
 
   if(stream_eof(demuxer->stream)) return 0;
   if(ds!=demuxer->video) return 0;
@@ -130,7 +130,7 @@ static int rawvideo_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
   return 1;
 }
 
-static void rawvideo_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void rawvideo_seek(Demuxer *demuxer,const seek_args_t* seeka){
   stream_t* s = demuxer->stream;
   off_t pos;
 
@@ -141,9 +141,9 @@ static void rawvideo_seek(demuxer_t *demuxer,const seek_args_t* seeka){
 //  printf("demux_rawvideo: streamtell=%d\n",(int)stream_tell(demuxer->stream));
 }
 
-static void rawvideo_close(demuxer_t *demuxer) { UNUSED(demuxer); }
+static void rawvideo_close(Demuxer *demuxer) { UNUSED(demuxer); }
 
-static MPXP_Rc rawvideo_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc rawvideo_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

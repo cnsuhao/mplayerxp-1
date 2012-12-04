@@ -37,16 +37,16 @@ pthread_mutex_t demuxer_mutex=PTHREAD_MUTEX_INITIALIZER;
 static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
 {
     float retval;
-    demuxer_t*demuxer=ds->demuxer;
+    Demuxer* demuxer=ds->demuxer;
     mpxp_context().engine().xp_core->initial_apts_corr.need_correction=0;
     MSG_DBG2("initial_apts from: stream_pts=%f pts_bytes=%u got_bytes=%u i_bps=%u\n"
     ,ds->pts,ds->tell_pts(),nbytes,((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
     /* FIXUP AUDIO PTS*/
-    if((demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
-	demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
-	demuxer->file_format == DEMUXER_TYPE_H264_ES ||
-	demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
-	demuxer->file_format == DEMUXER_TYPE_MPEG_TS ||
+    if((demuxer->file_format == Demuxer::Type_MPEG_ES ||
+	demuxer->file_format == Demuxer::Type_MPEG4_ES ||
+	demuxer->file_format == Demuxer::Type_H264_ES ||
+	demuxer->file_format == Demuxer::Type_MPEG_PS ||
+	demuxer->file_format == Demuxer::Type_MPEG_TS ||
 	mp_conf.av_force_pts_fix) && mp_conf.av_sync_pts && mp_conf.av_force_pts_fix2!=1)
     {
 	if(ds->pts_flags && ds->pts < 1.0 && ds->prev_pts > 2.0)
@@ -181,7 +181,7 @@ int ds_get_packet_sub_r(Demuxer_Stream *ds,unsigned char **start) {
 }
 
 /* TODO : FIXME we need to redesign blocking of mutexes before enabling this function*/
-int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
+int demux_seek_r(Demuxer *demuxer,const seek_args_t* seeka)
 {
     int retval;
     unsigned int t=0;
@@ -189,7 +189,7 @@ int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka)
     double tt;
     LOCK_DEMUXER();
     if(mp_conf.benchmark) t=GetTimer();
-    retval = demux_seek(demuxer,seeka);
+    retval = demuxer->seek(seeka);
     if(mp_conf.benchmark)
     {
 	t2=GetTimer();t=t2-t;
@@ -208,23 +208,23 @@ void vobsub_seek_r(any_t* vobhandle,const seek_args_t* seeka) {
     UNLOCK_DEMUXER();
 }
 
-int demuxer_switch_audio_r(demuxer_t *d, int id)
+int demuxer_switch_audio_r(Demuxer *d, int id)
 {
     int retval;
-    __MP_SYNCHRONIZE(demuxer_mutex,retval=demuxer_switch_audio(d,id));
+    __MP_SYNCHRONIZE(demuxer_mutex,retval=d->switch_audio(id));
     return retval;
 }
 
-int demuxer_switch_video_r(demuxer_t *d, int id)
+int demuxer_switch_video_r(Demuxer *d, int id)
 {
     int retval;
-    __MP_SYNCHRONIZE(demuxer_mutex,retval=demuxer_switch_video(d,id));
+    __MP_SYNCHRONIZE(demuxer_mutex,retval=d->switch_video(id));
     return retval;
 }
 
-int demuxer_switch_subtitle_r(demuxer_t *d, int id)
+int demuxer_switch_subtitle_r(Demuxer *d, int id)
 {
     int retval;
-    __MP_SYNCHRONIZE(demuxer_mutex,retval=demuxer_switch_subtitle(d,id));
+    __MP_SYNCHRONIZE(demuxer_mutex,retval=d->switch_subtitle(id));
     return retval;
 }

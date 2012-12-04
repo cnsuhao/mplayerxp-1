@@ -182,7 +182,7 @@ static void parse_cryptokey(AVFormatContext *avfc, const char *str) {
 	*key++ = (char2int(str[0]) << 4) | char2int(str[1]);
 }
 
-static MPXP_Rc lavf_probe(demuxer_t *demuxer){
+static MPXP_Rc lavf_probe(Demuxer *demuxer){
     AVProbeData avpd;
     uint8_t buf[PROBE_BUF_SIZE];
     lavf_priv_t *priv;
@@ -222,12 +222,12 @@ static MPXP_Rc lavf_probe(demuxer_t *demuxer){
 	return MPXP_False;
     }else
 	MSG_V("LAVF_check: %s\n", priv->avif->long_name);
-    demuxer->file_format=DEMUXER_TYPE_ASF;
+    demuxer->file_format=Demuxer::Type_ASF;
 
     return MPXP_Ok;
 }
 
-static demuxer_t* lavf_open(demuxer_t *demuxer){
+static Demuxer* lavf_open(Demuxer *demuxer){
     AVFormatContext *avfc;
     lavf_priv_t *priv= static_cast<lavf_priv_t*>(demuxer->priv);
     unsigned j;
@@ -279,7 +279,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 	switch(codec->codec_type){
 	case AVMEDIA_TYPE_AUDIO:{
 	    WAVEFORMATEX *wf= (WAVEFORMATEX*)mp_calloc(sizeof(WAVEFORMATEX) + codec->extradata_size, 1);
-	    sh_audio_t* sh_audio=new_sh_audio(demuxer, i);
+	    sh_audio_t* sh_audio=demuxer->new_sh_audio(i);
 	    priv->audio_streams++;
 	    if(!codec->codec_tag)
 		codec->codec_tag= ff_codec_get_tag(ff_codec_wav_tags,codec->codec_id);
@@ -346,7 +346,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
 	    break;}
 	case AVMEDIA_TYPE_VIDEO:{
 	    BITMAPINFOHEADER *bih=(BITMAPINFOHEADER*)mp_calloc(sizeof(BITMAPINFOHEADER) + codec->extradata_size,1);
-	    sh_video_t* sh_video=new_sh_video(demuxer, i);
+	    sh_video_t* sh_video=demuxer->new_sh_video(i);
 
 	    priv->video_streams++;
 	    if(!codec->codec_tag)
@@ -413,7 +413,7 @@ static demuxer_t* lavf_open(demuxer_t *demuxer){
     return demuxer;
 }
 
-static int lavf_demux(demuxer_t *demux, Demuxer_Stream *dsds){
+static int lavf_demux(Demuxer *demux, Demuxer_Stream *dsds){
     UNUSED(dsds);
     lavf_priv_t *priv= static_cast<lavf_priv_t*>(demux->priv);
     AVPacket pkt;
@@ -468,14 +468,14 @@ static int lavf_demux(demuxer_t *demux, Demuxer_Stream *dsds){
     return 1;
 }
 
-static void lavf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void lavf_seek(Demuxer *demuxer,const seek_args_t* seeka){
     lavf_priv_t *priv = static_cast<lavf_priv_t*>(demuxer->priv);
     MSG_DBG2("lavf_demux(%p, %f, %d)\n", demuxer, seeka->secs, seeka->flags);
 
     av_seek_frame(priv->avfc, -1, priv->last_pts + seeka->secs*AV_TIME_BASE, seeka->secs < 0 ? AVSEEK_FLAG_BACKWARD : 0);
 }
 
-static MPXP_Rc lavf_control(const demuxer_t *demuxer, int cmd, any_t*arg)
+static MPXP_Rc lavf_control(const Demuxer *demuxer, int cmd, any_t*arg)
 {
     UNUSED(demuxer);
     UNUSED(cmd);
@@ -483,7 +483,7 @@ static MPXP_Rc lavf_control(const demuxer_t *demuxer, int cmd, any_t*arg)
     return MPXP_Unknown;
 }
 
-static void lavf_close(demuxer_t *demuxer)
+static void lavf_close(Demuxer *demuxer)
 {
     lavf_priv_t* priv = static_cast<lavf_priv_t*>(demuxer->priv);
     if (priv){

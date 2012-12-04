@@ -39,7 +39,7 @@ typedef struct{
 } headerInfo;
 
 
-static MPXP_Rc vqf_probe(demuxer_t* demuxer)
+static MPXP_Rc vqf_probe(Demuxer* demuxer)
 {
     char buf[12];
     stream_t *s;
@@ -49,7 +49,7 @@ static MPXP_Rc vqf_probe(demuxer_t* demuxer)
     return MPXP_False;
 }
 
-static demuxer_t* vqf_open(demuxer_t* demuxer) {
+static Demuxer* vqf_open(Demuxer* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
   stream_t *s;
@@ -57,7 +57,7 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
 
   s = demuxer->stream;
 
-  sh_audio = new_sh_audio(demuxer,0);
+  sh_audio = demuxer->new_sh_audio();
   sh_audio->wf = w = (WAVEFORMATEX*)mp_mallocz(sizeof(WAVEFORMATEX)+sizeof(headerInfo));
   hi = (headerInfo *)&w[1];
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('T','W','I','N'); /* TWinVQ */
@@ -188,7 +188,7 @@ static demuxer_t* vqf_open(demuxer_t* demuxer) {
     return demuxer;
 }
 
-static int vqf_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
+static int vqf_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
   off_t spos = stream_tell(demuxer->stream);
@@ -209,7 +209,7 @@ static int vqf_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
   return 1;
 }
 
-static void vqf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void vqf_seek(Demuxer *demuxer,const seek_args_t* seeka){
   stream_t* s = demuxer->stream;
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
@@ -220,9 +220,9 @@ static void vqf_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   stream_seek(s,pos);
 }
 
-static void vqf_close(demuxer_t* demuxer) { UNUSED(demuxer); }
+static void vqf_close(Demuxer* demuxer) { UNUSED(demuxer); }
 
-static MPXP_Rc vqf_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc vqf_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

@@ -47,7 +47,7 @@ struct realaud_priv_t : public Opaque {
 	float last_pts;
 };
 
-static MPXP_Rc realaud_probe(demuxer_t* demuxer)
+static MPXP_Rc realaud_probe(Demuxer* demuxer)
 {
     unsigned int chunk_id;
 
@@ -62,7 +62,7 @@ static MPXP_Rc realaud_probe(demuxer_t* demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int realaud_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
+static int realaud_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 {
 	realaud_priv_t *realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
 	int len;
@@ -95,7 +95,7 @@ static int realaud_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
 	return 1;
 }
 
-static demuxer_t * realaud_open(demuxer_t* demuxer)
+static Demuxer * realaud_open(Demuxer* demuxer)
 {
     realaud_priv_t* realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
     sh_audio_t *sh;
@@ -108,7 +108,7 @@ static demuxer_t * realaud_open(demuxer_t* demuxer)
     }
 
 	demuxer->priv = realaud_priv;
-	sh = new_sh_audio(demuxer, 0);
+	sh = demuxer->new_sh_audio();
 	demuxer->audio->id = 0;
 	sh->ds=demuxer->audio;
 	demuxer->audio->sh = sh;
@@ -266,7 +266,7 @@ static demuxer_t * realaud_open(demuxer_t* demuxer)
 	print_wave_header(sh->wf,sizeof(WAVEFORMATEX));
 
 	/* disable seeking */
-	demuxer->flags &= ~DEMUXF_SEEKABLE;
+	demuxer->flags &= ~Demuxer::Seekable;
 
 	if(!demuxer->audio->fill_buffer())
 		MSG_WARN("[RealAudio] No data.\n");
@@ -276,7 +276,7 @@ static demuxer_t * realaud_open(demuxer_t* demuxer)
 
 
 
-static void realaud_close(demuxer_t *demuxer)
+static void realaud_close(Demuxer *demuxer)
 {
     realaud_priv_t* realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
     if (realaud_priv)
@@ -287,7 +287,7 @@ static void realaud_close(demuxer_t *demuxer)
 
 #if 0
 /* please upload RV10 samples WITH INDEX CHUNK */
-int demux_seek_ra(demuxer_t *demuxer,const seek_args_t* seeka)
+int demux_seek_ra(Demuxer *demuxer,const seek_args_t* seeka)
 {
     real_priv_t *priv = demuxer->priv;
     Demuxer_Stream *d_audio = demuxer->audio;
@@ -301,7 +301,7 @@ int demux_seek_ra(demuxer_t *demuxer,const seek_args_t* seeka)
 }
 #endif
 
-static MPXP_Rc realaud_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc realaud_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

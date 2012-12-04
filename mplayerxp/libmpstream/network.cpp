@@ -63,35 +63,35 @@ static const struct {
 	int demuxer_type;
 } mime_type_table[] = {
 	// MP3 streaming, some MP3 streaming server answer with audio/mpeg
-	{ "audio/mpeg", DEMUXER_TYPE_AUDIO },
+	{ "audio/mpeg", Demuxer::Type_AUDIO },
 	// MPEG streaming
-	{ "video/mpeg", DEMUXER_TYPE_UNKNOWN },
-	{ "video/x-mpeg", DEMUXER_TYPE_UNKNOWN },
-	{ "video/x-mpeg2", DEMUXER_TYPE_UNKNOWN },
+	{ "video/mpeg", Demuxer::Type_UNKNOWN },
+	{ "video/x-mpeg", Demuxer::Type_UNKNOWN },
+	{ "video/x-mpeg2", Demuxer::Type_UNKNOWN },
 	// AVI ??? => video/x-msvideo
-	{ "video/x-msvideo", DEMUXER_TYPE_AVI },
+	{ "video/x-msvideo", Demuxer::Type_AVI },
 	// MOV => video/quicktime
-	{ "video/quicktime", DEMUXER_TYPE_MOV },
+	{ "video/quicktime", Demuxer::Type_MOV },
 	// ASF
-	{ "audio/x-ms-wax", DEMUXER_TYPE_ASF },
-	{ "audio/x-ms-wma", DEMUXER_TYPE_ASF },
-	{ "video/x-ms-asf", DEMUXER_TYPE_ASF },
-	{ "video/x-ms-afs", DEMUXER_TYPE_ASF },
-	{ "video/x-ms-wvx", DEMUXER_TYPE_ASF },
-	{ "video/x-ms-wmv", DEMUXER_TYPE_ASF },
-	{ "video/x-ms-wma", DEMUXER_TYPE_ASF },
+	{ "audio/x-ms-wax", Demuxer::Type_ASF },
+	{ "audio/x-ms-wma", Demuxer::Type_ASF },
+	{ "video/x-ms-asf", Demuxer::Type_ASF },
+	{ "video/x-ms-afs", Demuxer::Type_ASF },
+	{ "video/x-ms-wvx", Demuxer::Type_ASF },
+	{ "video/x-ms-wmv", Demuxer::Type_ASF },
+	{ "video/x-ms-wma", Demuxer::Type_ASF },
 	// Playlists
-	{ "video/x-ms-wmx", DEMUXER_TYPE_PLAYLIST },
-	{ "audio/x-scpls", DEMUXER_TYPE_PLAYLIST },
-	{ "audio/x-mpegurl", DEMUXER_TYPE_PLAYLIST },
-	{ "audio/x-pls", DEMUXER_TYPE_PLAYLIST },
+	{ "video/x-ms-wmx", Demuxer::Type_PLAYLIST },
+	{ "audio/x-scpls", Demuxer::Type_PLAYLIST },
+	{ "audio/x-mpegurl", Demuxer::Type_PLAYLIST },
+	{ "audio/x-pls", Demuxer::Type_PLAYLIST },
 	// Real Media
-	{ "audio/x-pn-realaudio", DEMUXER_TYPE_REAL },
+	{ "audio/x-pn-realaudio", Demuxer::Type_REAL },
 	// OGG Streaming
-	{ "application/x-ogg", DEMUXER_TYPE_OGG },
+	{ "application/x-ogg", Demuxer::Type_OGG },
 	// NullSoft Streaming Video
-	{ "video/nsv", DEMUXER_TYPE_NSV},
-	{ "misc/ultravox", DEMUXER_TYPE_NSV}
+	{ "video/nsv", Demuxer::Type_NSV},
+	{ "misc/ultravox", Demuxer::Type_NSV}
 };
 
 streaming_ctrl_t * streaming_ctrl_new(any_t*libinput) {
@@ -383,7 +383,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 	char *next_url;
 
 	URL_t *url = streaming_ctrl->url;
-	*file_format = DEMUXER_TYPE_UNKNOWN;
+	*file_format = Demuxer::Type_UNKNOWN;
 
 	do {
 		*fd_out = -1;
@@ -398,7 +398,7 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 
 		// Checking for PNM://
 		if( !strcasecmp(url->protocol, "pnm") ) {
-			*file_format = DEMUXER_TYPE_REAL;
+			*file_format = Demuxer::Type_REAL;
 			return 0;
 		}
 		// Checking for RTSP
@@ -422,12 +422,12 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 
 		// Checking for ASF
 		if( !strncasecmp(url->protocol, "mms", 3) ) {
-			*file_format = DEMUXER_TYPE_ASF;
+			*file_format = Demuxer::Type_ASF;
 			return 0;
 		}
 
 		if(!strcasecmp(url->protocol, "udp") ) {
-			*file_format = DEMUXER_TYPE_UNKNOWN;
+			*file_format = Demuxer::Type_UNKNOWN;
 			return 0;
 		}
 
@@ -479,9 +479,9 @@ autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_form
 						// otherwise it should be mp3. if there are more types consider adding mime type
 						// handling like later
 						if ( (field_data = http_get_field(http_hdr, "content-type")) != NULL && (!strcmp(field_data, "video/nsv") || !strcmp(field_data, "misc/ultravox")))
-							*file_format = DEMUXER_TYPE_NSV;
+							*file_format = Demuxer::Type_NSV;
 						else
-							*file_format = DEMUXER_TYPE_AUDIO;
+							*file_format = Demuxer::Type_AUDIO;
 						return 0;
 					}
 					case 400: // Server Full
@@ -845,7 +845,7 @@ int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *
 	}
 	stream->streaming_ctrl->url = check4proxies( url );
 
-	if (*demuxer_type != DEMUXER_TYPE_PLAYLIST){
+	if (*demuxer_type != Demuxer::Type_PLAYLIST){
 	ret = autodetectProtocol( stream->streaming_ctrl, &stream->fd, demuxer_type );
 	} else {
 	  ret=0;
@@ -885,12 +885,12 @@ int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *
 
 #ifdef HAVE_RTSP_SESSION_H
 	if( (!strcasecmp( stream->streaming_ctrl->url->protocol, "rtsp")) &&
-			(*demuxer_type == DEMUXER_TYPE_REAL)) {
+			(*demuxer_type == Demuxer::Type_REAL)) {
 		stream->fd = -1;
 		if ((ret = realrtsp_streaming_start( stream )) < 0) {
 		    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
 #ifdef STREAMING_LIVE_DOT_COM
-		    *demuxer_type =  DEMUXER_TYPE_RTP;
+		    *demuxer_type =  Demuxer::Type_RTP;
 		    goto stream_switch;
 #else
 		    MSG_ERR("RTSP support requires the \"LIVE.COM Streaming Media\" libraries!\n");
@@ -906,13 +906,13 @@ int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *
 			MSG_ERR("rtp_streaming_start(udp) failed\n");
 			return -1;
 		}
-		*demuxer_type =  DEMUXER_TYPE_UNKNOWN;
+		*demuxer_type =  Demuxer::Type_UNKNOWN;
 	} else
 
 	// For connection-oriented streams, we can usually determine the streaming type.
 stream_switch:
 	switch( *demuxer_type ) {
-		case DEMUXER_TYPE_ASF:
+		case Demuxer::Type_ASF:
 			// Send the appropriate HTTP request
 			// Need to filter the network stream.
 			// ASF raw stream is encapsulated.
@@ -937,7 +937,7 @@ stream_switch:
 			}
 			break;
 #ifdef STREAMING_LIVE_DOT_COM
-		case DEMUXER_TYPE_RTP:
+		case Demuxer::Type_RTP:
 			// RTSP/RTP streaming is handled separately:
 			ret = rtsp_streaming_start( stream );
 			if( ret<0 ) {
@@ -945,21 +945,21 @@ stream_switch:
 			}
 			break;
 #endif
-		case DEMUXER_TYPE_MPEG_ES:
-		case DEMUXER_TYPE_MPEG_PS:
-		case DEMUXER_TYPE_AVI:
-		case DEMUXER_TYPE_MOV:
-		case DEMUXER_TYPE_VIVO:
-		case DEMUXER_TYPE_FLI:
-		case DEMUXER_TYPE_REAL:
-		case DEMUXER_TYPE_Y4M:
-		case DEMUXER_TYPE_FILM:
-		case DEMUXER_TYPE_ROQ:
-		case DEMUXER_TYPE_AUDIO:
-		case DEMUXER_TYPE_OGG:
-		case DEMUXER_TYPE_PLAYLIST:
-		case DEMUXER_TYPE_UNKNOWN:
-		case DEMUXER_TYPE_NSV:
+		case Demuxer::Type_MPEG_ES:
+		case Demuxer::Type_MPEG_PS:
+		case Demuxer::Type_AVI:
+		case Demuxer::Type_MOV:
+		case Demuxer::Type_VIVO:
+		case Demuxer::Type_FLI:
+		case Demuxer::Type_REAL:
+		case Demuxer::Type_Y4M:
+		case Demuxer::Type_FILM:
+		case Demuxer::Type_ROQ:
+		case Demuxer::Type_AUDIO:
+		case Demuxer::Type_OGG:
+		case Demuxer::Type_PLAYLIST:
+		case Demuxer::Type_UNKNOWN:
+		case Demuxer::Type_NSV:
 			// Generic start, doesn't need to filter
 			// the network stream, it's a raw stream
 			ret = nop_streaming_start(libinput, stream );

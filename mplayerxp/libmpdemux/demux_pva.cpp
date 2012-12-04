@@ -73,7 +73,7 @@ struct pva_priv_t : public Opaque {
 	uint8_t synced_stream_id;
 };
 
-static int pva_sync(demuxer_t * demuxer)
+static int pva_sync(Demuxer * demuxer)
 {
 	uint8_t buffer[5]={0,0,0,0,0};
 	int count;
@@ -113,14 +113,14 @@ static int pva_sync(demuxer_t * demuxer)
 	}
 }
 
-static MPXP_Rc pva_probe(demuxer_t * demuxer)
+static MPXP_Rc pva_probe(Demuxer * demuxer)
 {
     uint8_t buffer[5]={0,0,0,0,0};
     MSG_V("Checking for PVA\n");
     stream_read(demuxer->stream,buffer,5);
     if(buffer[0]=='A' && buffer[1] == 'V' && buffer[4] == 0x55) {
 	MSG_DBG2("Success: PVA\n");
-	demuxer->file_format=DEMUXER_TYPE_PVA;
+	demuxer->file_format=Demuxer::Type_PVA;
 	return MPXP_Ok;
     } else {
 	MSG_DBG2("Failed: PVA\n");
@@ -128,10 +128,10 @@ static MPXP_Rc pva_probe(demuxer_t * demuxer)
     }
 }
 
-static demuxer_t* pva_open (demuxer_t * demuxer)
+static Demuxer* pva_open (Demuxer * demuxer)
 {
-    sh_video_t* sh_video = new_sh_video(demuxer,0);
-    sh_audio_t* sh_audio = new_sh_audio(demuxer,0);
+    sh_video_t* sh_video = demuxer->new_sh_video();
+    sh_audio_t* sh_audio = demuxer->new_sh_audio();
 
     pva_priv_t* priv;
 
@@ -139,7 +139,7 @@ static demuxer_t* pva_open (demuxer_t * demuxer)
     stream_seek(demuxer->stream,0);
 
     priv=new(zeromem) pva_priv_t;
-    demuxer->flags|=DEMUXF_SEEKABLE;
+    demuxer->flags|=Demuxer::Seekable;
 
     demuxer->priv=priv;
 
@@ -182,11 +182,11 @@ static demuxer_t* pva_open (demuxer_t * demuxer)
     return demuxer;
 }
 
-static int pva_get_payload(demuxer_t * d,pva_payload_t * payload);
+static int pva_get_payload(Demuxer * d,pva_payload_t * payload);
 
 // 0 = EOF or no stream found
 // 1 = successfully read a packet
-static int pva_demux(demuxer_t * demux,Demuxer_Stream *__ds)
+static int pva_demux(Demuxer * demux,Demuxer_Stream *__ds)
 {
 	uint8_t done=0;
 	Demuxer_Packet * dp;
@@ -270,7 +270,7 @@ static int pva_demux(demuxer_t * demux,Demuxer_Stream *__ds)
 	return 1;
 }
 
-static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
+static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 {
 	uint8_t flags,pes_head_len;
 	uint16_t pack_size;
@@ -462,7 +462,7 @@ static int pva_get_payload(demuxer_t * d,pva_payload_t * payload)
 	return 1;
 }
 
-static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
+static void pva_seek(Demuxer * demuxer,const seek_args_t* seeka)
 {
 	int total_bitrate=0;
 	off_t dest_offset;
@@ -496,7 +496,7 @@ static void pva_seek(demuxer_t * demuxer,const seek_args_t* seeka)
 
 }
 
-static void pva_close(demuxer_t * demuxer)
+static void pva_close(Demuxer * demuxer)
 {
     if(demuxer->priv) {
 	delete demuxer->priv;
@@ -504,7 +504,7 @@ static void pva_close(demuxer_t * demuxer)
     }
 }
 
-static MPXP_Rc pva_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc pva_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

@@ -40,7 +40,7 @@ struct nsv_priv_t : public Opaque {
 /**
  * Seeking still to be implemented
  */
-static void nsv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
+static void nsv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 {
     UNUSED(demuxer);
     UNUSED(seeka);
@@ -48,7 +48,7 @@ static void nsv_seek ( demuxer_t *demuxer, const seek_args_t* seeka )
 }
 
 
-static int nsv_demux ( demuxer_t *demuxer,Demuxer_Stream* __ds )
+static int nsv_demux ( Demuxer *demuxer,Demuxer_Stream* __ds )
 {
     unsigned char hdr[17];
     // for the extra data
@@ -142,7 +142,7 @@ static int nsv_demux ( demuxer_t *demuxer,Demuxer_Stream* __ds )
 }
 
 
-static demuxer_t* nsv_open ( demuxer_t* demuxer )
+static Demuxer* nsv_open ( Demuxer* demuxer )
 {
     // last 2 bytes 17 and 18 are unknown but right after that comes the length
     unsigned char hdr[17];
@@ -156,7 +156,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
     priv->video_pack_no=0;
 
       /* disable seeking yet to be fixed*/
-    demuxer->flags &= ~(DEMUXF_SEEKABLE);
+    demuxer->flags &= ~(Demuxer::Seekable);
 
     stream_read(demuxer->stream,hdr,4);
     if(stream_eof(demuxer->stream)) return 0;
@@ -220,7 +220,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
 	//   bytes 8-11   audio codec fourcc
 	// PCM fourcc needs extra parsing for every audio chunk, yet to implement
 	if((demuxer->audio->id != -2) && strncmp(reinterpret_cast<char*>(hdr+8),"NONE", 4)){//&&strncmp(hdr+8,"VLB ", 4)){
-	    sh_audio = new_sh_audio ( demuxer, 0 );
+	    sh_audio = demuxer->new_sh_audio();
 	    demuxer->audio->sh = sh_audio;
 	    sh_audio->wtag=mmioFOURCC(hdr[8],hdr[9],hdr[10],hdr[11]);
 	    sh_audio->ds = demuxer->audio;
@@ -232,7 +232,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
 
 	if ((demuxer->video->id != -2) && strncmp(reinterpret_cast<char*>(hdr+4),"NONE", 4)) {
 	    /* Create a new video stream header */
-	    sh_video = new_sh_video ( demuxer, 0 );
+	    sh_video = demuxer->new_sh_video();
 
 	    /* Make sure the demuxer knows about the new video stream header
 	     * (even though new_sh_video() ought to take care of it)
@@ -319,7 +319,7 @@ static demuxer_t* nsv_open ( demuxer_t* demuxer )
     return demuxer;
 }
 
-static MPXP_Rc nsv_probe ( demuxer_t* demuxer )
+static MPXP_Rc nsv_probe ( Demuxer* demuxer )
 {
     unsigned int id;
 
@@ -339,7 +339,7 @@ static MPXP_Rc nsv_probe ( demuxer_t* demuxer )
     return MPXP_Ok;
 }
 
-static void nsv_close(demuxer_t* demuxer) {
+static void nsv_close(Demuxer* demuxer) {
     nsv_priv_t* priv = static_cast<nsv_priv_t*>(demuxer->priv);
 
     if(!priv)
@@ -348,7 +348,7 @@ static void nsv_close(demuxer_t* demuxer) {
 
 }
 
-static MPXP_Rc nsv_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc nsv_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

@@ -119,7 +119,7 @@ static int check_cmd(dump_priv_t* priv)
   return retval;
 }
 
-void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
+void dump_mux_init(Demuxer *demuxer,any_t* libinput)
 {
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
     sh_video_t* shv=reinterpret_cast<sh_video_t*>(demuxer->video->sh);
@@ -223,7 +223,7 @@ void dump_mux_init(demuxer_t *demuxer,any_t* libinput)
     muxer_write_header(priv->muxer,demuxer);
 }
 
-void dump_mux_close(demuxer_t *demuxer)
+void dump_mux_close(Demuxer *demuxer)
 {
     dump_priv_t* priv=static_cast<dump_priv_t*>(demuxer->priv);
     Demuxer_Stream *d_audio=demuxer->audio;
@@ -283,7 +283,7 @@ void dump_mux_close(demuxer_t *demuxer)
 }
 
 
-void dump_mux(demuxer_t *demuxer,int use_pts,const char *seek_to_sec,unsigned play_n_frames)
+void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play_n_frames)
 {
     dump_priv_t* priv=static_cast<dump_priv_t*>(demuxer->priv);
     Demuxer_Stream *d_audio=demuxer->audio;

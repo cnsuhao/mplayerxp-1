@@ -19,7 +19,8 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "demux_msg.h"
 
-
+extern void ty_processuserdata(const unsigned char* buf, int len );
+namespace mpxp {
 /* biCompression constant */
 #define BI_RGB        0L
 
@@ -61,23 +62,23 @@ enum {
 	VIDEO_OTHER
 } video_codec;
 
-if((d_video->demuxer->file_format == DEMUXER_TYPE_PVA) ||
-   (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES) ||
-   (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS && ((! sh_video->fourcc) || (sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))) ||
-   (d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002)))
+if((d_video->demuxer->file_format == Demuxer::Type_PVA) ||
+   (d_video->demuxer->file_format == Demuxer::Type_MPEG_ES) ||
+   (d_video->demuxer->file_format == Demuxer::Type_MPEG_PS && ((! sh_video->fourcc) || (sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))) ||
+   (d_video->demuxer->file_format == Demuxer::Type_MPEG_TS && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002)))
 #ifdef STREAMING_LIVE_DOT_COM
-  || ((d_video->demuxer->file_format == DEMUXER_TYPE_RTP) && demux_is_mpeg_rtp_stream(d_video->demuxer))
+  || ((d_video->demuxer->file_format == Demuxer::Type_RTP) && demux_is_mpeg_rtp_stream(d_video->demuxer))
 #endif
   )
     video_codec = VIDEO_MPEG12;
-  else if((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000004)) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000004))
+  else if((d_video->demuxer->file_format == Demuxer::Type_MPEG4_ES) ||
+    ((d_video->demuxer->file_format == Demuxer::Type_MPEG_TS) && (sh_video->fourcc==0x10000004)) ||
+    ((d_video->demuxer->file_format == Demuxer::Type_MPEG_PS) && (sh_video->fourcc==0x10000004))
   )
     video_codec = VIDEO_MPEG4;
-  else if((d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000005)) ||
-    ((d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000005))
+  else if((d_video->demuxer->file_format == Demuxer::Type_H264_ES) ||
+    ((d_video->demuxer->file_format == Demuxer::Type_MPEG_TS) && (sh_video->fourcc==0x10000005)) ||
+    ((d_video->demuxer->file_format == Demuxer::Type_MPEG_PS) && (sh_video->fourcc==0x10000005))
   )
     video_codec = VIDEO_H264;
   else
@@ -86,7 +87,7 @@ if((d_video->demuxer->file_format == DEMUXER_TYPE_PVA) ||
 // Determine image properties:
 switch(video_codec){
  case VIDEO_OTHER: {
- if((d_video->demuxer->file_format == DEMUXER_TYPE_ASF) || (d_video->demuxer->file_format == DEMUXER_TYPE_AVI)) {
+ if((d_video->demuxer->file_format == Demuxer::Type_ASF) || (d_video->demuxer->file_format == Demuxer::Type_AVI)) {
   // display info:
 #if 0
     if(sh_video->bih->biCompression == BI_RGB &&
@@ -114,7 +115,8 @@ switch(video_codec){
 	(sh_video->fourcc == mmioFOURCC('m','p','e','g')) ||
 	(sh_video->fourcc == mmioFOURCC('M','P','E','G')))
     {
-	int saved_pos, saved_type;
+	int saved_pos;
+	Demuxer::demuxer_type_e saved_type;
 
 	/* demuxer pos saving is required for libavcodec mpeg decoder as it's
 	   reading the mpeg header self! */
@@ -122,7 +124,7 @@ switch(video_codec){
 //	saved_pos = d_video->buffer_pos;
 	saved_type = d_video->demuxer->file_format;
 
-	d_video->demuxer->file_format = DEMUXER_TYPE_MPEG_ES;
+	d_video->demuxer->file_format = Demuxer::Type_MPEG_ES;
 	video_read_properties(sh_video);
 	d_video->demuxer->file_format = saved_type;
 //	d_video->buffer_pos = saved_pos;
@@ -375,7 +377,6 @@ switch(video_codec){
 return 1;
 }
 
-extern void ty_processuserdata(const unsigned char* buf, int len );
 static void process_userdata(const unsigned char* buf,int len){
     int i;
     /* if the user data starts with "CC", assume it is a Closed Captions info packet */
@@ -396,7 +397,7 @@ static void process_userdata(const unsigned char* buf,int len){
 
 int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,unsigned char** start,int force_fps){
     Demuxer_Stream *d_video=sh_video->ds;
-    demuxer_t *demuxer=d_video->demuxer;
+    Demuxer *demuxer=d_video->demuxer;
     float frame_time=1;
     float pts1=d_video->pts;
     int picture_coding_type=0;
@@ -405,10 +406,10 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 
     *start=NULL;
 
-  if(demuxer->file_format==DEMUXER_TYPE_MPEG_ES ||
-	(demuxer->file_format==DEMUXER_TYPE_MPEG_PS && ((! sh_video->fourcc) || (sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002)))
-		  || demuxer->file_format==DEMUXER_TYPE_PVA ||
-		  ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))))
+  if(demuxer->file_format==Demuxer::Type_MPEG_ES ||
+	(demuxer->file_format==Demuxer::Type_MPEG_PS && ((! sh_video->fourcc) || (sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002)))
+		  || demuxer->file_format==Demuxer::Type_PVA ||
+		  ((demuxer->file_format==Demuxer::Type_MPEG_TS) && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))))
   {
 	int in_frame=0;
 	//float newfps;
@@ -478,8 +479,8 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	    telecine=1;
 	}
 
-  } else if((demuxer->file_format==DEMUXER_TYPE_MPEG4_ES) || ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000004)) ||
-	    ((demuxer->file_format==DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000004))
+  } else if((demuxer->file_format==Demuxer::Type_MPEG4_ES) || ((demuxer->file_format==Demuxer::Type_MPEG_TS) && (sh_video->fourcc==0x10000004)) ||
+	    ((demuxer->file_format==Demuxer::Type_MPEG_PS) && (sh_video->fourcc==0x10000004))
 	    ){
       //
 	while(videobuf_len<VIDEOBUFFER_SIZE-MAX_VIDEO_PACKET_SIZE){
@@ -491,8 +492,8 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	*start=videobuffer; in_size=videobuf_len;
 	videobuf_len=0;
 
-  } else if(demuxer->file_format==DEMUXER_TYPE_H264_ES || ((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && (sh_video->fourcc==0x10000005)) ||
-	    ((demuxer->file_format==DEMUXER_TYPE_MPEG_PS) && (sh_video->fourcc==0x10000005))
+  } else if(demuxer->file_format==Demuxer::Type_H264_ES || ((demuxer->file_format==Demuxer::Type_MPEG_TS) && (sh_video->fourcc==0x10000005)) ||
+	    ((demuxer->file_format==Demuxer::Type_MPEG_PS) && (sh_video->fourcc==0x10000005))
 	    ){
       //
 	while(videobuf_len<VIDEOBUFFER_SIZE-MAX_VIDEO_PACKET_SIZE){
@@ -526,18 +527,19 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
     if(!force_fps)
       switch(demuxer->file_format)
       {
-	case DEMUXER_TYPE_REAL:
-	case DEMUXER_TYPE_MATROSKA:
+	case Demuxer::Type_REAL:
+	case Demuxer::Type_MATROSKA:
 	if(d_video->pts>0 && pts1>0 && d_video->pts>pts1)
 	  frame_time=d_video->pts-pts1;
 	break;
+      default:
 #ifdef USE_TV
-      case DEMUXER_TYPE_TV:
+      case Demuxer::Type_TV:
 #endif
-      case DEMUXER_TYPE_MOV:
-      case DEMUXER_TYPE_FILM:
-      case DEMUXER_TYPE_VIVO:
-      case DEMUXER_TYPE_ASF: {
+      case Demuxer::Type_MOV:
+      case Demuxer::Type_FILM:
+      case Demuxer::Type_VIVO:
+      case Demuxer::Type_ASF: {
 	/* .ASF files has no fixed FPS - just frame durations! */
 	float next_pts = d_video->get_next_pts();
 	float d= next_pts > 0 ? next_pts - d_video->pts : d_video->pts-pts1;
@@ -553,15 +555,15 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
 	}
       }
     }
-    if(demuxer->file_format==DEMUXER_TYPE_MPEG_PS ||
-       demuxer->file_format==DEMUXER_TYPE_MPEG_ES ||
-       demuxer->file_format==DEMUXER_TYPE_MPEG_TS) d_video->pts+=frame_time;
+    if(demuxer->file_format==Demuxer::Type_MPEG_PS ||
+       demuxer->file_format==Demuxer::Type_MPEG_ES ||
+       demuxer->file_format==Demuxer::Type_MPEG_TS) d_video->pts+=frame_time;
     /* FIXUP VIDEO PTS*/
-    if((demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
-	demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
-	demuxer->file_format == DEMUXER_TYPE_H264_ES ||
-	demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
-	((demuxer->file_format==DEMUXER_TYPE_MPEG_TS) && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))) ||
+    if((demuxer->file_format == Demuxer::Type_MPEG_ES ||
+	demuxer->file_format == Demuxer::Type_MPEG4_ES ||
+	demuxer->file_format == Demuxer::Type_H264_ES ||
+	demuxer->file_format == Demuxer::Type_MPEG_PS ||
+	((demuxer->file_format==Demuxer::Type_MPEG_TS) && ((sh_video->fourcc==0x10000001) || (sh_video->fourcc==0x10000002))) ||
 	mp_conf.av_force_pts_fix) && mp_conf.av_sync_pts && mp_conf.av_force_pts_fix2!=1)
     {
 	if(d_video->pts_flags && d_video->pts < 1.0 && d_video->prev_pts > 2.0)
@@ -581,4 +583,4 @@ int video_read_frame(sh_video_t* sh_video,float* frame_time_ptr,float *v_pts,uns
     if(frame_time_ptr) *frame_time_ptr=frame_time;
     return in_size;
 }
-
+} // namespace mpxp

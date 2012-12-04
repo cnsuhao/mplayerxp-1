@@ -53,7 +53,7 @@ struct rawdv_frames_t : public Opaque
 	dv_decoder_t *decoder;
 };
 
-static void dv_seek(demuxer_t *demuxer,const seek_args_t* seeka)
+static void dv_seek(Demuxer *demuxer,const seek_args_t* seeka)
 {
    rawdv_frames_t *frames = reinterpret_cast<rawdv_frames_t*>(demuxer->priv);
    sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
@@ -73,7 +73,7 @@ static void dv_seek(demuxer_t *demuxer,const seek_args_t* seeka)
    frames->current_filepos=newpos*frames->frame_size;
 }
 
-static MPXP_Rc dv_probe(demuxer_t *demuxer)
+static MPXP_Rc dv_probe(Demuxer *demuxer)
 {
    unsigned char tmp_buffer[DV_PAL_FRAME_SIZE];
    int bytes_read=0;
@@ -103,7 +103,7 @@ static MPXP_Rc dv_probe(demuxer_t *demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int dv_demux(demuxer_t *demuxer, Demuxer_Stream *ds)
+static int dv_demux(Demuxer *demuxer, Demuxer_Stream *ds)
 {
    rawdv_frames_t *frames = static_cast<rawdv_frames_t*>(demuxer->priv);
    sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
@@ -135,7 +135,7 @@ static int dv_demux(demuxer_t *demuxer, Demuxer_Stream *ds)
    return 1;
 }
 
-static demuxer_t* dv_open(demuxer_t* demuxer)
+static Demuxer* dv_open(Demuxer* demuxer)
 {
    unsigned char dv_frame[DV_PAL_FRAME_SIZE];
    sh_video_t *sh_video = NULL;
@@ -159,13 +159,13 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 	   return NULL;
 
    // create a new video stream header
-   sh_video = new_sh_video(demuxer, 0);
+   sh_video = demuxer->new_sh_video();
    if (!sh_video)
 	   return NULL;
 
    // make sure the demuxer knows about the new video stream header
    // (even though new_sh_video() ought to take care of it)
-   demuxer->flags |= DEMUXF_SEEKABLE;
+   demuxer->flags |= Demuxer::Seekable;
    demuxer->video->sh = sh_video;
 
    // make sure that the video demuxer stream header knows about its
@@ -201,7 +201,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
 
    MSG_V("demux_open_rawdv() seek to %qu, size: %d, dv_dec->frame_size: %d\n",frames->current_filepos,frames->frame_size, dv_decoder->frame_size);
     if (dv_decoder->audio != NULL && demuxer->audio->id>=-1){
-	sh_audio_t *sh_audio =  new_sh_audio(demuxer, 0);
+	sh_audio_t *sh_audio = demuxer->new_sh_audio();
 	demuxer->audio->id = 0;
 	    demuxer->audio->sh = sh_audio;
 	    sh_audio->ds = demuxer->audio;
@@ -228,7 +228,7 @@ static demuxer_t* dv_open(demuxer_t* demuxer)
     return demuxer;
 }
 
-static void dv_close(demuxer_t* demuxer)
+static void dv_close(Demuxer* demuxer)
 {
     rawdv_frames_t *frames = static_cast<rawdv_frames_t*>(demuxer->priv);
 
@@ -236,7 +236,7 @@ static void dv_close(demuxer_t* demuxer)
     delete frames;
 }
 
-static MPXP_Rc dv_control(const demuxer_t *demuxer,int cmd, any_t*arg) {
+static MPXP_Rc dv_control(const Demuxer *demuxer,int cmd, any_t*arg) {
     return MPXP_Unknown;
 }
 

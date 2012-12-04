@@ -40,7 +40,7 @@ struct priv_t : public Opaque
 	int verc;
 };
 
-static MPXP_Rc aiff_probe(demuxer_t* demuxer)
+static MPXP_Rc aiff_probe(Demuxer* demuxer)
 {
   char buf[12];
   stream_t *s;
@@ -51,7 +51,7 @@ static MPXP_Rc aiff_probe(demuxer_t* demuxer)
   return MPXP_False;
 }
 
-static demuxer_t* aiff_open(demuxer_t* demuxer) {
+static Demuxer* aiff_open(Demuxer* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
   stream_t *s;
@@ -59,9 +59,9 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
   char preamble[8];
   s = demuxer->stream;
 
-  sh_audio = new_sh_audio(demuxer,0);
+  sh_audio = demuxer->new_sh_audio();
   demuxer->priv=priv=new(zeromem) priv_t;
-  sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
+  sh_audio->wf = w = new(zeromem) WAVEFORMATEX;
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('r','a','w',' '); /* S16BE */
   w->nChannels = sh_audio->nch =
   w->nSamplesPerSec = sh_audio->rate =
@@ -184,7 +184,7 @@ static demuxer_t* aiff_open(demuxer_t* demuxer) {
   return demuxer;
 }
 
-static int aiff_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
+static int aiff_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
   off_t spos = stream_tell(demuxer->stream);
@@ -204,7 +204,7 @@ static int aiff_demux(demuxer_t* demuxer, Demuxer_Stream *ds) {
   return 1;
 }
 
-static void aiff_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void aiff_seek(Demuxer *demuxer,const seek_args_t* seeka){
   stream_t* s = demuxer->stream;
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
@@ -215,12 +215,12 @@ static void aiff_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   stream_seek(s,pos);
 }
 
-static void aiff_close(demuxer_t* demuxer)
+static void aiff_close(Demuxer* demuxer)
 {
     delete demuxer->priv;
 }
 
-static MPXP_Rc aiff_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc aiff_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

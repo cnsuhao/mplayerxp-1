@@ -153,8 +153,8 @@ struct MPXPSystem {
 	virtual ~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);
-	demuxer_t*	demuxer() const { return _demuxer; }
-	demuxer_t*	assign_demuxer(demuxer_t* _d) { uninit_demuxer(); _demuxer=_d; if(_d) inited_flags|=INITED_DEMUXER; return _demuxer; }
+	Demuxer*	demuxer() const { return _demuxer; }
+	Demuxer*	assign_demuxer(Demuxer* _d) { uninit_demuxer(); _demuxer=_d; if(_d) inited_flags|=INITED_DEMUXER; return _demuxer; }
 	any_t*		libinput() const { return _libinput; }
 	void		uninit_demuxer();
 	void		uninit_input();
@@ -194,7 +194,7 @@ struct MPXPSystem {
     private:
 	any_t*		assign_libinput(any_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
 	char		antiviral_hole[RND_CHAR0];
-	demuxer_t*	_demuxer;
+	Demuxer*	_demuxer;
 	any_t*		_libinput;
 };
 
@@ -323,7 +323,7 @@ void MPXPSystem::uninit_demuxer() {
     if(inited_flags&INITED_DEMUXER) {
 	inited_flags&=~INITED_DEMUXER;
 	MP_UNIT("free_priv->demuxer");
-	free_demuxer(_demuxer);
+	delete _demuxer;
 	_demuxer=NULL;
     }
 }
@@ -1679,7 +1679,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     input_state_t input_state = { 0, 0, 0 };
     char *ao_subdevice;
     char* filename=NULL; //"MI2-Trailer.avi";
-    int file_format=DEMUXER_TYPE_UNKNOWN;
+    int file_format=Demuxer::Type_UNKNOWN;
 
 // movie info:
     int eof=0;
@@ -1955,11 +1955,11 @@ main:
 
     if(mp_conf.av_force_pts_fix2==1 ||
 	(mp_conf.av_force_pts_fix2==-1 && mp_conf.av_sync_pts &&
-	(d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
-	d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
-	d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
-	d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
-	d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS)))
+	(d_video->demuxer->file_format == Demuxer::Type_MPEG_ES ||
+	d_video->demuxer->file_format == Demuxer::Type_MPEG4_ES ||
+	d_video->demuxer->file_format == Demuxer::Type_H264_ES ||
+	d_video->demuxer->file_format == Demuxer::Type_MPEG_PS ||
+	d_video->demuxer->file_format == Demuxer::Type_MPEG_TS)))
 	    mpxp_context().use_pts_fix2=1;
     else
 	    mpxp_context().use_pts_fix2=0;

@@ -18,7 +18,7 @@ using namespace mpxp;
 muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags)
 {
     muxer_packet_t* retval;
-    retval = new muxer_packet_t;
+    retval = new(zeromem) muxer_packet_t;
     retval->data = mp_malloc(length);
     retval->pts=pts;
     memcpy(retval->data,data,length);

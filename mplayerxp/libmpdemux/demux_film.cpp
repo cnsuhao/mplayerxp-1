@@ -58,7 +58,7 @@ film_data_t::~film_data_t() {
   if(chunks) delete chunks;
 }
 
-static void film_seek(demuxer_t *demuxer, const seek_args_t* seeka)
+static void film_seek(Demuxer *demuxer, const seek_args_t* seeka)
 {
   film_data_t *film_data = static_cast<film_data_t*>(demuxer->priv);
   int new_current_chunk=(seeka->flags&DEMUX_SEEK_SET)?0:film_data->current_chunk;
@@ -91,7 +91,7 @@ MSG_V("  (flags = %X)  actual new chunk = %d (syncinfo1 = %08X)\n",
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int film_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
+static int film_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 {
   UNUSED(__ds);
   int i;
@@ -193,7 +193,7 @@ static int film_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
   return 1;
 }
 
-static MPXP_Rc film_probe(demuxer_t* demuxer)
+static MPXP_Rc film_probe(Demuxer* demuxer)
 {
   uint32_t chunk_type;
 
@@ -201,11 +201,11 @@ static MPXP_Rc film_probe(demuxer_t* demuxer)
   chunk_type = le2me_32(stream_read_fourcc(demuxer->stream));
   // validate the chunk type
   if (chunk_type != CHUNK_FILM) return MPXP_False;
-  demuxer->file_format=DEMUXER_TYPE_FILM;
+  demuxer->file_format=Demuxer::Type_FILM;
   return MPXP_Ok;
 }
 
-static demuxer_t* film_open(demuxer_t* demuxer)
+static Demuxer* film_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   sh_audio_t *sh_audio = NULL;
@@ -272,7 +272,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
       if (video_format)
       {
 	// create and initialize the video stream header
-	sh_video = new_sh_video(demuxer, 0);
+	sh_video = demuxer->new_sh_video();
 	demuxer->video->sh = sh_video;
 	sh_video->ds = demuxer->video;
 
@@ -305,7 +305,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
 	if (audio_channels > 0)
 	{
 	  // create and initialize the audio stream header
-	  sh_audio = new_sh_audio(demuxer, 0);
+	  sh_audio = demuxer->new_sh_audio();
 	  demuxer->audio->sh = sh_audio;
 	  sh_audio->ds = demuxer->audio;
 
@@ -336,7 +336,7 @@ static demuxer_t* film_open(demuxer_t* demuxer)
 	// otherwise, make some assumptions about the audio
 
 	// create and initialize the audio stream header
-	sh_audio = new_sh_audio(demuxer, 0);
+	sh_audio = demuxer->new_sh_audio();
 	demuxer->audio->sh = sh_audio;
 	sh_audio->ds = demuxer->audio;
 
@@ -435,14 +435,14 @@ static demuxer_t* film_open(demuxer_t* demuxer)
     return demuxer;
 }
 
-static void film_close(demuxer_t* demuxer) {
+static void film_close(Demuxer* demuxer) {
     film_data_t *film_data = reinterpret_cast<film_data_t*>(demuxer->priv);
 
     if(!film_data) return;
     delete film_data;
 }
 
-static MPXP_Rc film_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc film_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

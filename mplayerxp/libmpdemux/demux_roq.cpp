@@ -57,14 +57,14 @@ struct roq_data_t : public Opaque {
 // Check if a stream qualifies as a RoQ file based on the magic numbers
 // at the start of the file:
 //  84 10 FF FF FF FF xx xx
-static MPXP_Rc roq_probe(demuxer_t *demuxer)
+static MPXP_Rc roq_probe(Demuxer *demuxer)
 {
     stream_reset(demuxer->stream);
     stream_seek(demuxer->stream, demuxer->stream->start_pos);
 
     if ((stream_read_dword(demuxer->stream) == 0x8410FFFF) &&
 	((stream_read_dword(demuxer->stream) & 0xFFFF0000) == 0xFFFF0000)) {
-	demuxer->file_format=DEMUXER_TYPE_ROQ;
+	demuxer->file_format=Demuxer::Type_ROQ;
 	return MPXP_Ok;
     } else return MPXP_False;
 }
@@ -72,7 +72,7 @@ static MPXP_Rc roq_probe(demuxer_t *demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int roq_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
+static int roq_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 {
   sh_video_t *sh_video = reinterpret_cast<sh_video_t*>(demuxer->video->sh);
   roq_data_t *roq_data = static_cast<roq_data_t*>(demuxer->priv);
@@ -99,7 +99,7 @@ static int roq_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
   return 1;
 }
 
-static demuxer_t* roq_open(demuxer_t* demuxer)
+static Demuxer* roq_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   sh_audio_t *sh_audio = NULL;
@@ -138,7 +138,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
       else
       {
 	// this is a good opportunity to create a video stream header
-	sh_video = new_sh_video(demuxer, 0);
+	sh_video = demuxer->new_sh_video();
 	// make sure the demuxer knows about the new stream header
 	demuxer->video->sh = sh_video;
 	// make sure that the video demuxer stream header knows about its
@@ -163,7 +163,7 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
       if (sh_audio == NULL)
       {
 	// make the header first
-	sh_audio = new_sh_audio(demuxer, 0);
+	sh_audio = demuxer->new_sh_audio();
 	// make sure the demuxer knows about the new stream header
 	demuxer->audio->sh = sh_audio;
 	// make sure that the audio demuxer stream header knows about its
@@ -249,14 +249,14 @@ static demuxer_t* roq_open(demuxer_t* demuxer)
     return demuxer;
 }
 
-static void roq_close(demuxer_t* demuxer) {
+static void roq_close(Demuxer* demuxer) {
   roq_data_t *roq_data = static_cast<roq_data_t*>(demuxer->priv);
 
   if(!roq_data) return;
   delete roq_data;
 }
 
-static MPXP_Rc roq_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc roq_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

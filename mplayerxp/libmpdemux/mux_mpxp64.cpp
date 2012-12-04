@@ -203,7 +203,7 @@ static muxer_stream_t* mpxpav64_new_stream(muxer_t *muxer,int type)
     return s;
 }
 
-static void mpxpav64_put_fcnt(muxer_t *muxer,demuxer_t*dinfo)
+static void mpxpav64_put_fcnt(muxer_t *muxer,Demuxer*dinfo)
 {
     uint64_t fpos;
     FILE *f = muxer->file;
@@ -407,7 +407,7 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 }
 
 static int pass=0;
-static void mpxpav64_write_header(muxer_t *muxer,demuxer_t*dinfo)
+static void mpxpav64_write_header(muxer_t *muxer,Demuxer*dinfo)
 {
     priv_mpxpav64_t *pmpxpav64=(priv_mpxpav64_t *)muxer->priv;
     uint64_t hpos,fpos,tmp,flags=MPXPAV64_FP_FCNT_UTF16;

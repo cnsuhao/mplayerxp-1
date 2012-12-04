@@ -2,6 +2,7 @@
 #define __INCLUDE_DEMUXER_R 1
 
 #include <pthread.h>
+#include <stdint.h>
 
 #include "libmpstream/stream.h"
 #include "demuxer.h"
@@ -17,7 +18,7 @@ typedef struct enc_frame_s {
     float		pts;
     float		duration;
     unsigned		len;
-    any_t*		data;
+    uint8_t*		data;
     unsigned		flags; // codec specific flags. filled by video_decode
 }enc_frame_t;
 
@@ -32,11 +33,11 @@ extern int demux_read_data_r(Demuxer_Stream *ds,unsigned char* mem,int len,float
 extern int ds_get_packet_r(Demuxer_Stream *ds,unsigned char **start,float *pts);
 extern int ds_get_packet_sub_r(Demuxer_Stream *ds,unsigned char **start);
 
-extern int demux_seek_r(demuxer_t *demuxer,const seek_args_t* seeka);
+extern int demux_seek_r(Demuxer *demuxer,const seek_args_t* seeka);
 extern void vobsub_seek_r(any_t* vobhandle,const seek_args_t* seeka);
 
-extern int demuxer_switch_audio_r(demuxer_t *, int id);
-extern int demuxer_switch_video_r(demuxer_t *, int id);
-extern int demuxer_switch_subtitle_r(demuxer_t *, int id);
+extern int demuxer_switch_audio_r(Demuxer *, int id);
+extern int demuxer_switch_video_r(Demuxer *, int id);
+extern int demuxer_switch_subtitle_r(Demuxer *, int id);
 
 #endif

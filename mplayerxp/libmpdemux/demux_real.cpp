@@ -98,7 +98,7 @@ real_priv_t::~real_priv_t() {
 }
 
 /* originally from FFmpeg */
-static void get_str(int isbyte, demuxer_t *demuxer, char *buf, int buf_size)
+static void get_str(int isbyte, Demuxer *demuxer, char *buf, int buf_size)
 {
     int len;
 
@@ -114,7 +114,7 @@ static void get_str(int isbyte, demuxer_t *demuxer, char *buf, int buf_size)
     MSG_V("read_str: %d bytes read\n", len);
 }
 
-static void skip_str(int isbyte, demuxer_t *demuxer)
+static void skip_str(int isbyte, Demuxer *demuxer)
 {
     int len;
 
@@ -128,7 +128,7 @@ static void skip_str(int isbyte, demuxer_t *demuxer)
     MSG_V("skip_str: %d bytes skipped\n", len);
 }
 
-static void dump_index(demuxer_t *demuxer, int stream_id)
+static void dump_index(Demuxer *demuxer, int stream_id)
 {
     real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     real_index_table_t *index;
@@ -148,7 +148,7 @@ static void dump_index(demuxer_t *demuxer, int stream_id)
 	MSG_V("i: %d, pos: %d, timestamp: %d\n", i, index[i].offset, index[i].timestamp);
 }
 
-static int parse_index_chunk(demuxer_t *demuxer)
+static int parse_index_chunk(Demuxer *demuxer)
 {
     real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     int origpos = stream_tell(demuxer->stream);
@@ -213,7 +213,7 @@ read_index:
 	goto read_index;
 
 end:
-    demuxer->flags |= DEMUXF_SEEKABLE; /* got index, we're able to seek */
+    demuxer->flags |= Demuxer::Seekable; /* got index, we're able to seek */
     if (i == -256)
 	stream_reset(demuxer->stream);
     stream_seek(demuxer->stream, origpos);
@@ -223,7 +223,7 @@ end:
 	return 1;
 }
 
-static void add_index_item(demuxer_t *demuxer, int stream_id, int timestamp, int offset)
+static void add_index_item(Demuxer *demuxer, int stream_id, int timestamp, int offset)
 {
   if ((unsigned)stream_id < MAX_STREAMS)
   {
@@ -249,7 +249,7 @@ static void add_index_item(demuxer_t *demuxer, int stream_id, int timestamp, int
   }
 }
 
-static void add_index_segment(demuxer_t *demuxer, int seek_stream_id, int seek_timestamp)
+static void add_index_segment(Demuxer *demuxer, int seek_stream_id, int seek_timestamp)
 {
   int tag, len, stream_id, timestamp, flags;
   if (seek_timestamp != -1 && (unsigned)seek_stream_id >= MAX_STREAMS)
@@ -292,7 +292,7 @@ static void add_index_segment(demuxer_t *demuxer, int seek_stream_id, int seek_t
   }
 }
 
-static int generate_index(demuxer_t *demuxer)
+static int generate_index(Demuxer *demuxer)
 {
   real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
   int origpos = stream_tell(demuxer->stream);
@@ -323,7 +323,7 @@ static int generate_index(demuxer_t *demuxer)
   return 0;
 }
 
-static MPXP_Rc real_probe(demuxer_t* demuxer)
+static MPXP_Rc real_probe(Demuxer* demuxer)
 {
     real_priv_t *priv;
     int c;
@@ -338,7 +338,7 @@ static MPXP_Rc real_probe(demuxer_t* demuxer)
 
     priv = new(zeromem) real_priv_t;
     demuxer->priv = priv;
-    demuxer->file_format=DEMUXER_TYPE_REAL;
+    demuxer->file_format=Demuxer::Type_REAL;
     return MPXP_Ok;
 }
 
@@ -405,7 +405,7 @@ typedef struct dp_hdr_s {
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int real_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
+static int real_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 {
     real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     Demuxer_Stream *ds = NULL;
@@ -801,7 +801,7 @@ discard:
   }//    goto loop;
 }
 
-static demuxer_t* real_open(demuxer_t* demuxer)
+static Demuxer* real_open(Demuxer* demuxer)
 {
     real_priv_t* priv = static_cast<real_priv_t*>(demuxer->priv);
     int num_of_headers;
@@ -976,7 +976,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    MSG_V("Audio: can't find .ra in codec data\n");
 		} else {
 		    /* audio header */
-		    sh_audio_t *sh = new_sh_audio(demuxer, stream_id);
+		    sh_audio_t *sh = demuxer->new_sh_audio(stream_id);
 		    char buf[128]; /* for codec name */
 		    int frame_size;
 		    int sub_packet_size=0;
@@ -1186,7 +1186,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 #endif
 		}
 	  } else if (strstr(tmps,"X-MP3-draft-00")) {
-		    sh_audio_t *sh = new_sh_audio(demuxer, stream_id);
+		    sh_audio_t *sh = demuxer->new_sh_audio(stream_id);
 
 		    /* Emulate WAVEFORMATEX struct: */
 		    sh->wf = new(zeromem) WAVEFORMATEX;
@@ -1222,7 +1222,7 @@ static demuxer_t* real_open(demuxer_t* demuxer)
 		    MSG_V("Video: can't find VIDO in codec data\n");
 		} else {
 		    /* video header */
-		    sh_video_t *sh = new_sh_video(demuxer, stream_id);
+		    sh_video_t *sh = demuxer->new_sh_video(stream_id);
 
 		    sh->fourcc = stream_read_dword_le(demuxer->stream); /* fourcc */
 		    MSG_V("video fourcc: %.4s (%x)\n", (char *)&sh->fourcc, sh->fourcc);
@@ -1443,29 +1443,29 @@ header_end:
 	    if (priv->index_chunk_offset && (priv->index_chunk_offset < demuxer->movi_end))
 	    {
 		parse_index_chunk(demuxer);
-		demuxer->flags|=DEMUXF_SEEKABLE;
+		demuxer->flags|=Demuxer::Seekable;
 	    }
 	    break;
 	case 1: // use (generate index)
 	    if (priv->index_chunk_offset && (priv->index_chunk_offset < demuxer->movi_end))
 	    {
 		parse_index_chunk(demuxer);
-		demuxer->flags|=DEMUXF_SEEKABLE;
+		demuxer->flags|=Demuxer::Seekable;
 	    } else {
 		generate_index(demuxer);
-		demuxer->flags|=DEMUXF_SEEKABLE;
+		demuxer->flags|=Demuxer::Seekable;
 	    }
 	    break;
 	case 2: // force generating index
 	    generate_index(demuxer);
-	    demuxer->flags|=DEMUXF_SEEKABLE;
+	    demuxer->flags|=Demuxer::Seekable;
 	    break;
 	default: // do nothing
 	    break;
     }
 
     if(priv->is_multirate)
-	demuxer->flags&=~DEMUXF_SEEKABLE; // No seeking yet for multirate streams
+	demuxer->flags&=~Demuxer::Seekable; // No seeking yet for multirate streams
 
     // detect streams:
     if(demuxer->video->id==-1 && v_streams>0){
@@ -1491,7 +1491,7 @@ header_end:
     return demuxer;
 }
 
-static void real_close(demuxer_t *demuxer)
+static void real_close(Demuxer *demuxer)
 {
     real_priv_t* priv = static_cast<real_priv_t*>(demuxer->priv);
 
@@ -1500,7 +1500,7 @@ static void real_close(demuxer_t *demuxer)
 }
 
 /* please upload RV10 samples WITH INDEX CHUNK */
-static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
+static void real_seek(Demuxer *demuxer,const seek_args_t* seeka)
 {
     real_priv_t *priv = static_cast<real_priv_t*>(demuxer->priv);
     Demuxer_Stream *d_audio = demuxer->audio;
@@ -1592,7 +1592,7 @@ static void real_seek(demuxer_t *demuxer,const seek_args_t* seeka)
     return;
 }
 
-static MPXP_Rc real_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc real_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

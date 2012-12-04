@@ -13,7 +13,7 @@ Demuxer_Stream::~Demuxer_Stream(){
     free_packs();
 }
 
-Demuxer_Stream::Demuxer_Stream(demuxer_t *_demuxer,int _id)
+Demuxer_Stream::Demuxer_Stream(Demuxer *_demuxer,int _id)
 {
     fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
     pin=DS_PIN;
@@ -273,7 +273,7 @@ float Demuxer_Stream::get_next_pts() {
 	    MSG_HINT(MSGTR_MaybeNI);
 	    return -1;
 	}
-	if(!demux_fill_buffer(demuxer,this)) return -1;
+	if(!demuxer->fill_buffer(this)) return -1;
     }
     return _first->pts;
 }

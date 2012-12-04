@@ -3,6 +3,7 @@
 
 #include "mp_config.h"
 #include <stdlib.h>
+#include <stdint.h>
 
 namespace mpxp {
 
@@ -65,7 +66,7 @@ namespace mpxp {
 	unsigned	flags; /* currently unused */
 	float		pts;   /* PTS if this frame */
 	unsigned	xp_idx;/* index in ring buffer */
-	any_t*		audio; /* data of audio frame */
+	uint8_t*	audio; /* data of audio frame */
 	unsigned	len;   /* length of data */
     /*------ stream description ----------*/
 	unsigned	rate;  /* rate of audio */

@@ -326,7 +326,7 @@ mov_priv_t::~mov_priv_t() {
 
 #define MOV_FOURCC(a,b,c,d) ((a<<24)|(b<<16)|(c<<8)|(d))
 
-static MPXP_Rc mov_probe(demuxer_t* demuxer){
+static MPXP_Rc mov_probe(Demuxer* demuxer){
     int flags=0;
     int no=0;
     unsigned ver;
@@ -495,7 +495,7 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 	  if(flags==3){
 	    // if we're over the headers, then we can stop parsing here!
 	    demuxer->priv=priv;
-	    demuxer->file_format=DEMUXER_TYPE_MOV;
+	    demuxer->file_format=Demuxer::Type_MOV;
 	    return MPXP_Ok;
 	  }
 	  break;
@@ -521,14 +521,14 @@ static MPXP_Rc mov_probe(demuxer_t* demuxer){
 
     if(flags==3){
 	demuxer->priv=priv;
-	demuxer->file_format=DEMUXER_TYPE_MOV;
+	demuxer->file_format=Demuxer::Type_MOV;
 	return MPXP_Ok;
     }
     delete priv;
 
     if ((flags==5) || (flags==7)) // reference & header sent
     {
-	demuxer->file_format=DEMUXER_TYPE_MOV;
+	demuxer->file_format=Demuxer::Type_MOV;
 	return MPXP_Ok;
     }
     if(flags==1)
@@ -594,10 +594,10 @@ static unsigned int store_ughvlc(unsigned char *s, unsigned int v){
   return n;
 }
 
-static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
+static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
 			   off_t pos, off_t len, mov_track_t* trak);
 
-static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak){
+static void lschunks(Demuxer* demuxer,int level,off_t endpos,mov_track_t* trak){
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     while(1){
 	off_t pos;
@@ -671,7 +671,7 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 #endif
 		int version=0, adjust;
 		int is_vorbis = 0;
-		sh_audio_t* sh=new_sh_audio(demuxer,priv->track_db);
+		sh_audio_t* sh=demuxer->new_sh_audio(priv->track_db);
 		sh->wtag=trak->fourcc;
 
 		/* crude audio delay from editlist0 hack ::atm */
@@ -976,7 +976,7 @@ quit_vorbis_block:
 		int entry,flag, start, count_flag, end, palette_count, gray;
 		int hdr_ptr = 76;  // the byte just after depth
 		unsigned char *palette_map;
-		sh_video_t* sh=new_sh_video(demuxer,priv->track_db);
+		sh_video_t* sh=demuxer->new_sh_video(priv->track_db);
 		int depth;
 		sh->fourcc=trak->fourcc;
 
@@ -1491,7 +1491,7 @@ quit_vorbis_block:
     }
 }
 
-static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
+static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
 			   off_t pos, off_t len, mov_track_t* trak)
 {
   switch(id) {
@@ -1794,7 +1794,7 @@ static int lschunks_intrak(demuxer_t* demuxer, int level, unsigned int id,
   return 0;
 }
 
-static demuxer_t* mov_open(demuxer_t* demuxer){
+static Demuxer* mov_open(Demuxer* demuxer){
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     int t_no;
     int best_a_id=-1, best_a_len=0;
@@ -1930,7 +1930,7 @@ static mov_track_t *stream_track(mov_priv_t *priv, Demuxer_Stream *ds) {
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int mov_demux(demuxer_t *demuxer,Demuxer_Stream* ds){
+static int mov_demux(Demuxer *demuxer,Demuxer_Stream* ds){
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     mov_track_t* trak=NULL;
     float pts;
@@ -2061,7 +2061,7 @@ if(trak->samplesize){
 return pts;
 }
 
-static void mov_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void mov_seek(Demuxer *demuxer,const seek_args_t* seeka){
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     Demuxer_Stream* ds;
     mov_track_t* trak;
@@ -2087,14 +2087,14 @@ static void mov_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
 }
 
-static void mov_close(demuxer_t *demuxer)
+static void mov_close(Demuxer *demuxer)
 {
     mov_priv_t* priv = static_cast<mov_priv_t*>(demuxer->priv);
     if (!priv) return;
     delete priv;
 }
 
-static MPXP_Rc mov_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc mov_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

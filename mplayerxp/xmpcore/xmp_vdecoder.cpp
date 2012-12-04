@@ -118,7 +118,7 @@ any_t* xmp_video_decoder( any_t* arg )
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->dae->sh);
     Demuxer_Stream *d_video=sh_video->ds;
-    demuxer_t* demuxer=d_video->demuxer;
+    Demuxer* demuxer=d_video->demuxer;
     Demuxer_Stream* d_audio=demuxer->audio;
     enc_frame_t* frame;
 
@@ -139,11 +139,11 @@ any_t* xmp_video_decoder( any_t* arg )
 	priv->name = "video decoder";
     drop_barrier=(float)(mpxp_context().engine().xp_core->num_v_buffs/2)*(1/sh_video->fps);
     if(mp_conf.av_sync_pts == -1 && !mpxp_context().use_pts_fix2)
-	mpxp_context().engine().xp_core->bad_pts = d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_ES ||
-			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG4_ES ||
-			d_video->demuxer->file_format == DEMUXER_TYPE_H264_ES ||
-			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_PS ||
-			d_video->demuxer->file_format == DEMUXER_TYPE_MPEG_TS;
+	mpxp_context().engine().xp_core->bad_pts = d_video->demuxer->file_format == Demuxer::Type_MPEG_ES ||
+			d_video->demuxer->file_format == Demuxer::Type_MPEG4_ES ||
+			d_video->demuxer->file_format == Demuxer::Type_H264_ES ||
+			d_video->demuxer->file_format == Demuxer::Type_MPEG_PS ||
+			d_video->demuxer->file_format == Demuxer::Type_MPEG_TS;
     else
 	mpxp_context().engine().xp_core->bad_pts = mp_conf.av_sync_pts?0:1;
 while(!priv->dae->eof){

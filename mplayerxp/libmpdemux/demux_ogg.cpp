@@ -183,12 +183,12 @@ static subtitle ogg_sub;
 static float clear_sub;
 //FILE* subout;
 
-static MPXP_Rc ogg_probe(demuxer_t *demuxer)
+static MPXP_Rc ogg_probe(Demuxer *demuxer)
 {
     uint32_t fcc;
     fcc=me2be_32(stream_read_dword(demuxer->stream));
     if(fcc != mmioFOURCC('O','g','g','S')) return MPXP_False;
-    demuxer->file_format=DEMUXER_TYPE_OGG;
+    demuxer->file_format=Demuxer::Type_OGG;
     stream_seek(demuxer->stream,0);
     return MPXP_Ok;
 }
@@ -463,7 +463,7 @@ static int demux_ogg_check_lang(const char *clang,const char *langlist)
  *  \param demuxer The demuxer about whose subtitles we are inquiring.
  *  \param id The ogg track number of the subtitle track.
  */
-static int demux_ogg_sub_reverse_id(demuxer_t *demuxer, int id) {
+static int demux_ogg_sub_reverse_id(Demuxer *demuxer, int id) {
   ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   int i;
   for (i = 0; i < ogg_d->n_text; i++)
@@ -472,7 +472,7 @@ static int demux_ogg_sub_reverse_id(demuxer_t *demuxer, int id) {
 }
 
 /// Try to print out comments and also check for LANGUAGE= tag
-static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vorbis_comment *vc)
+static void demux_ogg_check_comments(Demuxer *d, ogg_stream_t *os, int id, vorbis_comment *vc)
 {
   const char *hdr;
   char *val=NULL;
@@ -531,7 +531,7 @@ static void demux_ogg_check_comments(demuxer_t *d, ogg_stream_t *os, int id, vor
 /// Calculate the timestamp and add the packet to the demux stream
 // return 1 if the packet was added, 0 otherwise
 static int demux_ogg_add_packet(Demuxer_Stream* ds,ogg_stream_t* os,int id,ogg_packet* pack) {
-  demuxer_t* d = ds->demuxer;
+  Demuxer* d = ds->demuxer;
   ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(d->priv);
   Demuxer_Packet* dp;
   unsigned char* data;
@@ -590,7 +590,7 @@ static int demux_ogg_add_packet(Demuxer_Stream* ds,ogg_stream_t* os,int id,ogg_p
 
 /// if -forceidx build a table of all syncpoints to make seeking easier
 /// otherwise try to get at least the final_granulepos
-static void demux_ogg_scan_stream(demuxer_t* demuxer) {
+static void demux_ogg_scan_stream(Demuxer* demuxer) {
   ogg_demuxer_t* ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   stream_t *s = demuxer->stream;
   ogg_sync_state* sync = &ogg_d->sync;
@@ -710,7 +710,7 @@ static void demux_ogg_scan_stream(demuxer_t* demuxer) {
   \param demuxer The demuxer for which the number of subtitle tracks
   should be returned.
 */
-static int demux_ogg_num_subs(demuxer_t *demuxer) {
+static int demux_ogg_num_subs(Demuxer *demuxer) {
   ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   return ogg_d->n_text;
 }
@@ -724,7 +724,7 @@ static int demux_ogg_num_subs(demuxer_t *demuxer) {
   \returns The Ogg stream number ( = page serial number) of the newly selected
   track.
 */
-static int demux_ogg_sub_id(demuxer_t *demuxer, int index) {
+static int demux_ogg_sub_id(Demuxer *demuxer, int index) {
   ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   return (index < 0) ? index : (index >= ogg_d->n_text) ? -1 : ogg_d->text_ids[index];
 }
@@ -733,15 +733,15 @@ static int demux_ogg_sub_id(demuxer_t *demuxer, int index) {
  *  \param demuxer The demuxer about whose subtitles we are inquiring.
  *  \param index The subtitle number.
  */
-char *demux_ogg_sub_lang(demuxer_t *demuxer, int index) {
+char *demux_ogg_sub_lang(Demuxer *demuxer, int index) {
   ogg_demuxer_t *ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   return (index < 0) ? NULL : (index >= ogg_d->n_text) ? NULL : ogg_d->text_langs[index];
 }
 
-static void ogg_close(demuxer_t* demuxer);
+static void ogg_close(Demuxer* demuxer);
 
 /// Open an ogg physical stream
-static demuxer_t * ogg_open(demuxer_t* demuxer) {
+static Demuxer * ogg_open(Demuxer* demuxer) {
   ogg_demuxer_t* ogg_d;
   stream_t *s;
   char* buf;
@@ -826,7 +826,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 #endif
     // Check for Vorbis
     if(pack.bytes >= 7 && ! strncmp(reinterpret_cast<char*>(&pack.packet[1]),"vorbis", 6) ) {
-      sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
+      sh_a = demuxer->new_sh_audio(ogg_d->num_sub);
       sh_a->wtag = FOURCC_VORBIS;
       ogg_d->subs[ogg_d->num_sub].vorbis = 1;
       ogg_d->subs[ogg_d->num_sub].id = n_audio;
@@ -844,7 +844,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	    MSG_ERR("Theora header parsing failed: %i \n",
 		   errorCode);
 	else {
-	    sh_v = new_sh_video(demuxer,ogg_d->num_sub);
+	    sh_v = demuxer->new_sh_video(ogg_d->num_sub);
 
 	    sh_v->bih = new(zeromem) BITMAPINFOHEADER;
 	    sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
@@ -877,7 +877,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
     }
 #endif
     else if (pack.bytes >= 4 && !strncmp (reinterpret_cast<char*>(&pack.packet[0]), "fLaC", 4)) {
-	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
+	sh_a = demuxer->new_sh_audio(ogg_d->num_sub);
 	sh_a->wtag =  mmioFOURCC('f', 'L', 'a', 'C');
 	ogg_d->subs[ogg_d->num_sub].id = n_audio;
 	n_audio++;
@@ -890,7 +890,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 
        // Old video header
       if(get_uint32 (reinterpret_cast<uint32_t*>(pack.packet+96)) == 0x05589f80 && pack.bytes >= 184) {
-	sh_v = new_sh_video(demuxer,ogg_d->num_sub);
+	sh_v = demuxer->new_sh_video(ogg_d->num_sub);
 	sh_v->bih = (BITMAPINFOHEADER*)mp_calloc(1,sizeof(BITMAPINFOHEADER));
 	sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	sh_v->bih->biCompression=
@@ -912,7 +912,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	// Old audio header
       } else if(get_uint32(reinterpret_cast<uint32_t*>(pack.packet+96)) == 0x05589F81) {
 	unsigned int extra_size;
-	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
+	sh_a = demuxer->new_sh_audio(ogg_d->num_sub);
 	extra_size = get_uint16(reinterpret_cast<uint16_t*>(pack.packet+140));
 	sh_a->wf = (WAVEFORMATEX*)mp_calloc(1,sizeof(WAVEFORMATEX)+extra_size);
 	sh_a->wtag = sh_a->wf->wFormatTag = get_uint16(reinterpret_cast<uint16_t*>(pack.packet+124));
@@ -940,7 +940,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
       stream_header *st = (stream_header*)(pack.packet+1);
       /// New video header
       if(strncmp(st->streamtype,"video",5) == 0) {
-	sh_v = new_sh_video(demuxer,ogg_d->num_sub);
+	sh_v = demuxer->new_sh_video(ogg_d->num_sub);
 	sh_v->bih = (BITMAPINFOHEADER*)mp_calloc(1,sizeof(BITMAPINFOHEADER));
 	sh_v->bih->biSize=sizeof(BITMAPINFOHEADER);
 	sh_v->bih->biCompression=
@@ -965,7 +965,7 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 	unsigned int extra_size = get_uint32 (reinterpret_cast<uint32_t*>(&st->size)) - sizeof(stream_header);
 	memcpy(buffer,st->subtype,4);
 	buffer[4] = '\0';
-	sh_a = new_sh_audio(demuxer,ogg_d->num_sub);
+	sh_a = demuxer->new_sh_audio(ogg_d->num_sub);
 	sh_a->wf = (WAVEFORMATEX*)mp_calloc(1,sizeof(WAVEFORMATEX)+extra_size);
 	sh_a->wtag =  sh_a->wf->wFormatTag = strtol(buffer, NULL, 16);
 	sh_a->nch = sh_a->wf->nChannels = get_uint16(reinterpret_cast<uint16_t*>(&st->sh.audio.channels));
@@ -1070,11 +1070,11 @@ static demuxer_t * ogg_open(demuxer_t* demuxer) {
 
   ogg_d->final_granulepos=0;
   if(!s->end_pos)
-    demuxer->flags &= ~(DEMUXF_SEEKABLE);
+    demuxer->flags &= ~(Demuxer::Seekable);
   else {
     demuxer->movi_start = s->start_pos; // Needed for XCD (Ogg written in MODE2)
     demuxer->movi_end = s->end_pos;
-    demuxer->flags |= DEMUXF_SEEKABLE;
+    demuxer->flags |= Demuxer::Seekable;
     demux_ogg_scan_stream(demuxer);
   }
     MSG_V("Ogg demuxer : found %d audio stream%s, %d video stream%s and %d text stream%s\n",n_audio,n_audio>1?"s":"",n_video,n_video>1?"s":"",ogg_d->n_text,ogg_d->n_text>1?"s":"");
@@ -1087,7 +1087,7 @@ err_out:
 }
 
 
-static int ogg_demux(demuxer_t *d,Demuxer_Stream *__ds) {
+static int ogg_demux(Demuxer *d,Demuxer_Stream *__ds) {
     UNUSED(__ds);
   ogg_demuxer_t* ogg_d;
   stream_t *s;
@@ -1173,7 +1173,7 @@ static int ogg_demux(demuxer_t *d,Demuxer_Stream *__ds) {
 
 }
 
-static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
+static void ogg_seek(Demuxer *demuxer,const seek_args_t* seeka) {
   ogg_demuxer_t* ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
   ogg_sync_state* sync = &ogg_d->sync;
   ogg_page* page= &ogg_d->page;
@@ -1340,7 +1340,7 @@ static void ogg_seek(demuxer_t *demuxer,const seek_args_t* seeka) {
 
 }
 
-static void ogg_close(demuxer_t* demuxer) {
+static void ogg_close(Demuxer* demuxer) {
   ogg_demuxer_t* ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
 
   if(!ogg_d) return;
@@ -1358,7 +1358,7 @@ static void ogg_close(demuxer_t* demuxer) {
     delete ogg_d;
 }
 
-static MPXP_Rc ogg_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc ogg_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

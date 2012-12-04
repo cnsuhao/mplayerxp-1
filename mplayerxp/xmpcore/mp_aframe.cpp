@@ -323,6 +323,6 @@ mp_aframe_t* new_mp_aframe_genome(const mp_aframe_t* in) {
     return out;
 }
 
-void mp_alloc_aframe(mp_aframe_t* it) { it->audio = mp_malloc(it->len); }
+void mp_alloc_aframe(mp_aframe_t* it) { it->audio = new uint8_t[it->len]; }
 
 } // namespace mpxp

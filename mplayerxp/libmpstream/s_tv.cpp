@@ -105,7 +105,7 @@ static const mrl_config_t tvopts_conf[]={
 */
 /* fill demux->video and demux->audio */
 
-int __FASTCALL__ demux_tv_fill_buffer(demuxer_t *demux, Demuxer_Stream *ds, tvi_handle_t *tvh)
+int __FASTCALL__ demux_tv_fill_buffer(Demuxer *demux, Demuxer_Stream *ds, tvi_handle_t *tvh)
 {
     Demuxer_Packet* dp;
     u_int len;
@@ -281,13 +281,13 @@ done:
 	return 1;
 }
 
-int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
+int __FASTCALL__ demux_open_tv(Demuxer *demuxer, tvi_handle_t *tvh)
 {
     sh_video_t *sh_video = NULL;
     sh_audio_t *sh_audio = NULL;
     const tvi_functions_t *funcs = tvh->functions;
 
-    sh_video = new_sh_video(demuxer, 0);
+    sh_video = demuxer->new_sh_video(0);
 
     /* get IMAGE FORMAT */
     funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_VID_GET_FORMAT, &sh_video->fourcc);
@@ -370,7 +370,7 @@ int __FASTCALL__ demux_open_tv(demuxer_t *demuxer, tvi_handle_t *tvh)
 		goto no_audio;
 	}
 
-	sh_audio = new_sh_audio(demuxer, 0);
+	sh_audio = demuxer->new_sh_audio(0);
 
 	funcs->control(reinterpret_cast<priv_s*>(tvh->priv), TVI_CONTROL_AUD_GET_SAMPLERATE,
 		   &sh_audio->rate);

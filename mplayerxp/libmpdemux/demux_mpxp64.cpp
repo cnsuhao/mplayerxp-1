@@ -137,7 +137,7 @@ static void print_StreamProp(mpxpav64StreamProperties_t *sp,char *mime,uint32_t 
 	,idxoff);
 }
 
-static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_off)
+static void mpxpav64_read_indexes(Demuxer *demuxer,unsigned id,uint64_t idx_off)
 {
     uint64_t i,fpos,iid;
     stream_t *s=demuxer->stream;
@@ -183,12 +183,12 @@ static void mpxpav64_read_indexes(demuxer_t *demuxer,unsigned id,uint64_t idx_of
     stream_seek(s,fpos);
 }
 
-static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
+static int mpxpav64_read_st64v(Demuxer *demuxer,unsigned hsize,unsigned id){
     mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     stream_t *s=demuxer->stream;
     uint32_t fourcc,fsize;
     int have_bih=0;
-    sh_video_t *sh=new_sh_video(demuxer,id);
+    sh_video_t *sh=demuxer->new_sh_video(id);
     do {
 	fourcc=stream_read_dword_le(s);
 	fsize=stream_read_dword_le(s);
@@ -258,11 +258,11 @@ static int mpxpav64_read_st64v(demuxer_t *demuxer,unsigned hsize,unsigned id){
     return have_bih;
 }
 
-static int mpxpav64_read_st64a(demuxer_t *demuxer,unsigned hsize,unsigned id){
+static int mpxpav64_read_st64a(Demuxer *demuxer,unsigned hsize,unsigned id){
     stream_t *s=demuxer->stream;
     uint32_t fourcc,fsize;
     int have_wf=0;
-    sh_audio_t *sh=new_sh_audio(demuxer,id);
+    sh_audio_t *sh=demuxer->new_sh_audio(id);
     do {
 	fourcc=stream_read_dword_le(s);
 	fsize=stream_read_dword_le(s);
@@ -307,7 +307,7 @@ static int mpxpav64_read_st64a(demuxer_t *demuxer,unsigned hsize,unsigned id){
     return have_wf;
 }
 
-static int mpxpav64_read_st64(demuxer_t *demuxer,unsigned hsize,unsigned id){
+static int mpxpav64_read_st64(Demuxer *demuxer,unsigned hsize,unsigned id){
     stream_t *s=demuxer->stream;
     mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     uint64_t idx_off;
@@ -359,7 +359,7 @@ static int mpxpav64_read_st64(demuxer_t *demuxer,unsigned hsize,unsigned id){
 }
 
 #ifdef USE_ICONV
-static void mpxpav64_read_fcnt(demuxer_t* demuxer,unsigned fsize)
+static void mpxpav64_read_fcnt(Demuxer* demuxer,unsigned fsize)
 {
     mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     stream_t *s=demuxer->stream;
@@ -419,7 +419,7 @@ static void mpxpav64_read_fcnt(demuxer_t* demuxer,unsigned fsize)
 }
 #endif
 
-static void mpxpav64_reset_prevs(demuxer_t *demuxer)
+static void mpxpav64_reset_prevs(Demuxer *demuxer)
 {
     mpxpav64_priv_t* priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     unsigned i;
@@ -433,7 +433,7 @@ static void mpxpav64_reset_prevs(demuxer_t *demuxer)
     priv->prev_id=0xFFFFFFFFUL;
 }
 
-static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
+static Demuxer* mpxpav64_open(Demuxer* demuxer){
     stream_t *s=demuxer->stream;
     uint64_t id,hsize,t;
     uint32_t fourcc;
@@ -526,7 +526,7 @@ static demuxer_t* mpxpav64_open(demuxer_t* demuxer){
     return demuxer;
 }
 
-static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float pts,int keyframe)
+static int mpxpav64_read_packet(Demuxer *demux,unsigned id,uint64_t len,float pts,int keyframe)
 {
     Demuxer_Stream *ds=NULL;
     stream_t* s=demux->stream;
@@ -577,7 +577,7 @@ static int mpxpav64_read_packet(demuxer_t *demux,unsigned id,uint64_t len,float 
 }
 
 /* DATx|stn|size|pts|stream data of size32 */
-static int mpxpav64_demux(demuxer_t *demux,Demuxer_Stream *__ds){
+static int mpxpav64_demux(Demuxer *demux,Demuxer_Stream *__ds){
     stream_t* s=demux->stream;
     mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demux->priv);
     uint8_t flg;
@@ -693,7 +693,7 @@ static int mpxpav64_demux(demuxer_t *demux,Demuxer_Stream *__ds){
     return 1;
 }
 
-static int mpxpav64_test_seekpoint(demuxer_t *demuxer)
+static int mpxpav64_test_seekpoint(Demuxer *demuxer)
 {
     stream_t* s=demuxer->stream;
     uint64_t len=0;
@@ -749,7 +749,7 @@ static int mpxpav64_test_seekpoint(demuxer_t *demuxer)
     return 0;
 }
 
-static int mpxpav64_sync(demuxer_t *demuxer)
+static int mpxpav64_sync(Demuxer *demuxer)
 {
     stream_t* s=demuxer->stream;
     char p[4];
@@ -774,7 +774,7 @@ static int mpxpav64_sync(demuxer_t *demuxer)
 }
 
 #define USE_INDEXES 1
-static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void mpxpav64_seek(Demuxer *demuxer,const seek_args_t* seeka){
     mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     float brate=priv->fprop.AveBitrate;
     off_t rel_seek_bytes=(seeka->flags&DEMUX_SEEK_PERCENTS)?
@@ -837,7 +837,7 @@ static void mpxpav64_seek(demuxer_t *demuxer,const seek_args_t* seeka){
     }
 }
 
-static MPXP_Rc mpxpav64_probe(demuxer_t *demuxer)
+static MPXP_Rc mpxpav64_probe(Demuxer *demuxer)
 {
   uint64_t id1,id2,id3;
   uint32_t id4;
@@ -850,7 +850,7 @@ static MPXP_Rc mpxpav64_probe(demuxer_t *demuxer)
   id3=stream_read_qword_le(demuxer->stream); /* AVDATA64 */
   stream_skip(demuxer->stream,8);
   id4=stream_read_dword_le(demuxer->stream); /* SEEK */
-  demuxer->file_format=DEMUXER_TYPE_ASF;
+  demuxer->file_format=Demuxer::Type_ASF;
   if(memcmp(&id1,"MPXPAV64",8)==0 &&
      memcmp(&id2,"HEADER64",8)==0 &&
      memcmp(&id3,"AVDATA64",8)==0 &&
@@ -858,7 +858,7 @@ static MPXP_Rc mpxpav64_probe(demuxer_t *demuxer)
   return MPXP_False;
 }
 
-static void mpxpav64_close(demuxer_t *demuxer)
+static void mpxpav64_close(Demuxer *demuxer)
 {
   unsigned i;
   mpxpav64_priv_t* priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
@@ -867,7 +867,7 @@ static void mpxpav64_close(demuxer_t *demuxer)
   delete priv;
 }
 
-static MPXP_Rc mpxpav64_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc mpxpav64_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

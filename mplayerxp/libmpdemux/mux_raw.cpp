@@ -65,7 +65,7 @@ static void rawfile_write_chunk(muxer_stream_t *s,size_t len,unsigned int flags,
     fwrite(s->buffer,len,1,muxer->file);
 }
 
-static void rawfile_write_header(muxer_t *muxer,demuxer_t*dinfo){
+static void rawfile_write_header(muxer_t *muxer,Demuxer*dinfo){
 }
 
 static void rawfile_write_index(muxer_t *muxer){

@@ -29,7 +29,7 @@ using namespace mpxp;
 static int demux_rw_seek(struct SDL_RWops *context, int offset, int whence)
 {
     unsigned long newpos=-1;
-    demuxer_t *demux = reinterpret_cast<demuxer_t*>(context->hidden.unknown.data1);
+    Demuxer *demux = reinterpret_cast<Demuxer*>(context->hidden.unknown.data1);
     switch(whence)
     {
 	case SEEK_SET:
@@ -51,7 +51,7 @@ static int demux_rw_seek(struct SDL_RWops *context, int offset, int whence)
 static int demux_rw_read(struct SDL_RWops *context, any_t*ptr, int size, int maxnum)
 {
     int retval;
-    demuxer_t *demux = reinterpret_cast<demuxer_t*>(context->hidden.unknown.data1);
+    Demuxer *demux = reinterpret_cast<Demuxer*>(context->hidden.unknown.data1);
     retval = stream_read(demux->stream,ptr,size*maxnum);
     return retval;
 }
@@ -66,7 +66,7 @@ static int demux_rw_close(struct SDL_RWops *context)
     return 0;
 }
 
-static void demux_dup_rw_stream(demuxer_t* demuxer, struct SDL_RWops*rwops)
+static void demux_dup_rw_stream(Demuxer* demuxer, struct SDL_RWops*rwops)
 {
     /* it's not a danger to mp_malloc 8 bytes */
     rwops->hidden.unknown.data1=demuxer;
@@ -84,16 +84,16 @@ static void demux_rw_close_stream(struct SDL_RWops*rwops)
 static SDL_RWops my_rw;
 static SDL_Surface *img;
 
-static MPXP_Rc bmp_probe(demuxer_t *demuxer)
+static MPXP_Rc bmp_probe(Demuxer *demuxer)
 {
     demux_dup_rw_stream(demuxer,&my_rw);
     stream_reset(demuxer->stream);
     img = IMG_Load_RW(&my_rw,0);
-    if(img) demuxer->file_format=DEMUXER_TYPE_BMP;
+    if(img) demuxer->file_format=Demuxer::Type_BMP;
     return img ? MPXP_Ok : MPXP_False;
 }
 
-static int bmp_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
+static int bmp_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 {
   UNUSED(__ds);
   unsigned lsize=((img->format->BitsPerPixel+7)/8)*img->w;
@@ -142,12 +142,12 @@ static int bmp_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
   return 1;
 }
 
-static demuxer_t* bmp_open(demuxer_t* demuxer)
+static Demuxer* bmp_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   unsigned npal_colors;
   // create a new video stream header
-  sh_video = new_sh_video(demuxer, 0);
+  sh_video = demuxer->new_sh_video();
   // make sure the demuxer knows about the new video stream header
   demuxer->video->sh = sh_video;
   // make sure that the video demuxer stream header knows about its
@@ -191,7 +191,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
     return demuxer;
 }
 
-static void bmp_close(demuxer_t* demuxer)
+static void bmp_close(Demuxer* demuxer)
 {
     UNUSED(demuxer);
     if(img) SDL_FreeSurface(img);
@@ -210,7 +210,7 @@ struct bmp_image_t : public Opaque {
 };
 
 // Check if a file is a BMP file depending on whether starts with 'BM'
-static MPXP_Rc bmp_probe(demuxer_t *demuxer)
+static MPXP_Rc bmp_probe(Demuxer *demuxer)
 {
   if (stream_read_word(demuxer->stream) == (('B' << 8) | 'M'))
     return MPXP_Ok;
@@ -221,7 +221,7 @@ static MPXP_Rc bmp_probe(demuxer_t *demuxer)
 // return value:
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
-static int bmp_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
+static int bmp_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 {
   bmp_image_t *bmp_image = static_cast<bmp_image_t*>(demuxer->priv);
 
@@ -232,7 +232,7 @@ static int bmp_demux(demuxer_t *demuxer,Demuxer_Stream *__ds)
   return 1;
 }
 
-static demuxer_t* bmp_open(demuxer_t* demuxer)
+static Demuxer* bmp_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   unsigned int filesize;
@@ -248,7 +248,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   stream_skip(demuxer->stream, 2);
 
   // create a new video stream header
-  sh_video = new_sh_video(demuxer, 0);
+  sh_video = demuxer->new_sh_video();
 
   // make sure the demuxer knows about the new video stream header
   demuxer->video->sh = sh_video;
@@ -295,7 +295,7 @@ static demuxer_t* bmp_open(demuxer_t* demuxer)
   return demuxer;
 }
 
-static void bmp_close(demuxer_t* demuxer) {
+static void bmp_close(Demuxer* demuxer) {
   bmp_image_t *bmp_image = static_cast<bmp_image_t*>(demuxer->priv);
 
   if(!bmp_image)
@@ -304,7 +304,7 @@ static void bmp_close(demuxer_t* demuxer) {
 }
 #endif
 
-static MPXP_Rc bmp_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc bmp_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

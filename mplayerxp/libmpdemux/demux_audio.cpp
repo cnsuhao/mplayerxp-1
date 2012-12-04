@@ -411,7 +411,7 @@ static int ac3_decode_header (const uint8_t * buf,unsigned* sample_rate,unsigned
     }
 }
 
-static void find_next_mp3_hdr(demuxer_t *demuxer,uint8_t *hdr) {
+static void find_next_mp3_hdr(Demuxer *demuxer,uint8_t *hdr) {
   int len;
   off_t spos;
   while(!stream_eof(demuxer->stream)) {
@@ -428,7 +428,7 @@ static void find_next_mp3_hdr(demuxer_t *demuxer,uint8_t *hdr) {
 }
 
 
-static int read_mp3v1_tags(demuxer_t *demuxer,uint8_t *hdr, off_t pos )
+static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
 {
     unsigned n;
     stream_t *s=demuxer->stream;
@@ -482,7 +482,7 @@ static int read_mp3v1_tags(demuxer_t *demuxer,uint8_t *hdr, off_t pos )
     return 1;
 }
 
-static int read_ac3_tags(demuxer_t *demuxer,uint8_t *hdr, off_t pos,unsigned *bitrate,unsigned *samplerate,unsigned *channels)
+static int read_ac3_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bitrate,unsigned *samplerate,unsigned *channels)
 {
     uint8_t b[8];
     unsigned n;
@@ -506,7 +506,7 @@ static int read_ac3_tags(demuxer_t *demuxer,uint8_t *hdr, off_t pos,unsigned *bi
     return 1;
 }
 
-static int read_ddca_tags(demuxer_t *demuxer,uint8_t *hdr, off_t pos,unsigned *bitrate,unsigned *samplerate,unsigned *channels)
+static int read_ddca_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bitrate,unsigned *samplerate,unsigned *channels)
 {
     uint8_t b[12];
     unsigned n;
@@ -545,7 +545,7 @@ static int read_ddca_tags(demuxer_t *demuxer,uint8_t *hdr, off_t pos,unsigned *b
 
 /* frame header */
 #define ID3V22_FRAME_HEADER_SIZE             6
-static int read_id3v22_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
+static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
     stream_t *s=demuxer->stream;
@@ -610,7 +610,7 @@ static int read_id3v22_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
 #define ID3V23_FRAME_GROUP_ID_FLAG      0x0020
 #define ID3V23_FRAME_ZERO_FLAG          0x1F1F
 
-static int read_id3v23_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
+static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
     stream_t *s=demuxer->stream;
@@ -686,7 +686,7 @@ static int read_id3v23_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
 #define ID3V24_FRAME_DATA_LEN_FLAG      0x0001
 #define ID3V24_FRAME_ZERO_FLAG          0x8FB0
 
-static int read_id3v24_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
+static int read_id3v24_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
     stream_t *s=demuxer->stream;
@@ -741,7 +741,7 @@ static int read_id3v24_tags(demuxer_t *demuxer,unsigned flags,unsigned hsize)
     return 1;
 }
 
-static int read_id3v2_tags(demuxer_t *demuxer)
+static int read_id3v2_tags(Demuxer *demuxer)
 {
     char buf[4];
     stream_t* s=demuxer->stream;
@@ -762,7 +762,7 @@ static int read_id3v2_tags(demuxer_t *demuxer)
     return 1;
 }
 
-static int audio_get_raw_id(demuxer_t *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
+static int audio_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
 {
   int retval=0;
   uint32_t fcc,fcc1,fmt;
@@ -800,7 +800,7 @@ static int audio_get_raw_id(demuxer_t *demuxer,off_t fptr,unsigned *brate,unsign
   return retval;
 }
 
-static MPXP_Rc audio_probe(demuxer_t* demuxer)
+static MPXP_Rc audio_probe(Demuxer* demuxer)
 {
   uint32_t fcc1,fcc2;
   stream_t *s;
@@ -864,7 +864,7 @@ static void  Xing_test(stream_t *s,uint8_t *hdr,da_priv_t *priv)
 
 extern const demuxer_driver_t demux_audio;
 
-static demuxer_t* audio_open(demuxer_t* demuxer) {
+static Demuxer* audio_open(Demuxer* demuxer) {
   stream_t *s;
   sh_audio_t* sh_audio;
   uint8_t hdr[HDR_SIZE];
@@ -1011,7 +1011,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
     MSG_ERR("Can't detect audio format\n");
     return NULL;
   }
-  sh_audio = new_sh_audio(demuxer,0);
+  sh_audio = demuxer->new_sh_audio();
   MSG_DBG2("mp3_header off: st_pos=%lu n=%lu HDR_SIZE=%u\n",st_pos,n,HDR_SIZE);
   demuxer->movi_start = stream_tell(s);
   demuxer->movi_end = s->end_pos;
@@ -1216,7 +1216,7 @@ static demuxer_t* audio_open(demuxer_t* demuxer) {
 		    MSG_DBG2("Found %u bytes WAVEFORMATEX\n",l);
 		    if(l < 16) {
 			MSG_ERR("Bad wav header length : too short !!!\n");
-			free_sh_audio(sh_audio);
+			delete sh_audio;
 			return NULL;
 		    }
 		    w->wFormatTag = sh_audio->wtag = stream_read_word_le(s);
@@ -1394,9 +1394,9 @@ static uint32_t mpc_get_bits(da_priv_t* priv, stream_t* s, int bits) {
   return out & mask;
 }
 
-static int audio_demux(demuxer_t *demuxer,Demuxer_Stream *ds) {
+static int audio_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   sh_audio_t* sh_audio;
-  demuxer_t* demux;
+  Demuxer* demux;
   da_priv_t* priv;
   stream_t* s;
   int frmt,seof;
@@ -1577,7 +1577,7 @@ static int audio_demux(demuxer_t *demuxer,Demuxer_Stream *ds) {
   return 0;
 }
 
-static void high_res_mp3_seek(demuxer_t *demuxer,float _time) {
+static void high_res_mp3_seek(Demuxer *demuxer,float _time) {
   uint8_t hdr[4];
   int len,nf;
   da_priv_t* priv = static_cast<da_priv_t*>(demuxer->priv);
@@ -1598,7 +1598,7 @@ static void high_res_mp3_seek(demuxer_t *demuxer,float _time) {
   }
 }
 
-static void high_res_ac3_seek(demuxer_t *demuxer,float _time) {
+static void high_res_ac3_seek(Demuxer *demuxer,float _time) {
   uint8_t hdr[8];
   int len,nf;
   unsigned tmp;
@@ -1620,7 +1620,7 @@ static void high_res_ac3_seek(demuxer_t *demuxer,float _time) {
   }
 }
 
-static void high_res_ddca_seek(demuxer_t *demuxer,float _time) {
+static void high_res_ddca_seek(Demuxer *demuxer,float _time) {
   uint8_t hdr[12];
   int len,nf;
   unsigned tmp;
@@ -1642,7 +1642,7 @@ static void high_res_ddca_seek(demuxer_t *demuxer,float _time) {
   }
 }
 
-static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
+static void audio_seek(Demuxer *demuxer,const seek_args_t* seeka){
   sh_audio_t* sh_audio;
   stream_t* s;
   int base,pos,frmt;
@@ -1764,14 +1764,14 @@ static void audio_seek(demuxer_t *demuxer,const seek_args_t* seeka){
   stream_seek(s,pos);
 }
 
-static void audio_close(demuxer_t* demuxer) {
+static void audio_close(Demuxer* demuxer) {
     da_priv_t* priv = static_cast<da_priv_t*>(demuxer->priv);
 
     if(!priv) return;
     delete priv;
 }
 
-static MPXP_Rc audio_control(const demuxer_t *demuxer,int cmd,any_t*args)
+static MPXP_Rc audio_control(const Demuxer *demuxer,int cmd,any_t*args)
 {
     UNUSED(demuxer);
     UNUSED(cmd);

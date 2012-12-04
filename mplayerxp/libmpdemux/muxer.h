@@ -68,7 +68,7 @@ typedef struct muxer_t{
   muxer_stream_t* streams[MUXER_MAX_STREAMS];
   void (*fix_parameters)(struct muxer_t *);
   void (*cont_write_chunk)(muxer_stream_t *,size_t,unsigned int flags, float pts);
-  void (*cont_write_header)(struct muxer_t *,demuxer_t *dinfo);
+  void (*cont_write_header)(struct muxer_t *,Demuxer* dinfo);
   void (*cont_write_index)(struct muxer_t *);
   muxer_stream_t* (*cont_new_stream)(struct muxer_t *,int);
   FILE* file;
