@@ -1129,7 +1129,6 @@ do{
 }
 
 int index_mode=-1;  // -1=untouched  0=don't use index  1=use (geneate) index
-extern demuxer_t* init_avi_with_ogg(demuxer_t* demuxer);
 extern demuxer_driver_t demux_ogg;
 static demuxer_t* avi_open(demuxer_t* demuxer){
     Demuxer_Stream *d_audio=demuxer->audio;
@@ -1281,31 +1280,6 @@ static demuxer_t* avi_open(demuxer_t* demuxer){
   sh_video->bih->biHeight,
   sh_video->bih->biBitCount,
   sh_video->fps);
-  {
-   sh_audio_t* sh_a;
-   sh_a = (sh_audio_t*)demuxer->audio->sh;
-#ifdef HAVE_LIBVORBIS
-   if(demuxer->audio->id != -2 && sh_a) {
-    /* support for Ogg-in-AVI: */
-     if(sh_a->wtag == mmioFOURCC('v','r','b','s'))
-       demuxer = init_avi_with_ogg(demuxer);
-     else if(sh_a->wtag == 0x674F) {
-       stream_t* s;
-       demuxer_t  *od;
-       s = new_ds_stream(demuxer->audio);
-       od = new_demuxer(s,-1,-2,-2);
-       od->file_format=DEMUXER_TYPE_OGG;
-       demux_ogg.probe(od);
-       if(!demux_ogg.open(od)) {
-	 MSG_ERR("Can't open OGG demuxer\n");
-	 free_stream(s);
-	 demuxer->audio->id = -2;
-       } else
-	 demuxer = new_demuxers_demuxer(demuxer,od,demuxer);
-     }
-   }
-#endif
-  }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }

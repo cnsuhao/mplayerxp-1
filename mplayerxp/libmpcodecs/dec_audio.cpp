@@ -73,7 +73,7 @@ audio_decoder_t* mpca_init(sh_audio_t *sh_audio)
 	strcpy(sh_audio->codec->driver_name,aprobe->driver);
 	strcpy(sh_audio->codec->codec_name,sh_audio->codec->dll_name);
 	memcpy(sh_audio->codec->outfmt,aprobe->sample_fmt,sizeof(aprobe->sample_fmt));
-    }
+    } else return NULL;
 
     priv->mpadec=afm_find_driver(afm);
     if(!priv->mpadec){
