@@ -13,9 +13,10 @@ struct demuxer_driver_t
 			 **/
     MPXP_Rc		(*probe)(Demuxer *d);
 			/** Opens stream.
-			  * @param d	_this demxuer
+			  * @param d	_this demuxer
+			  * @return priv_t*
 			 **/
-    Demuxer*		(*open)(Demuxer *d);
+    Opaque*		(*open)(Demuxer *d);
 			/** Reads and demuxes stream.
 			 * @param d	_this demuxer
 			 * @param ds	pointer to stream associated with demuxer

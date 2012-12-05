@@ -95,7 +95,7 @@ static int realaud_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 	return 1;
 }
 
-static Demuxer * realaud_open(Demuxer* demuxer)
+static Opaque* realaud_open(Demuxer* demuxer)
 {
     realaud_priv_t* realaud_priv = static_cast<realaud_priv_t*>(demuxer->priv);
     sh_audio_t *sh;
@@ -271,7 +271,7 @@ static Demuxer * realaud_open(Demuxer* demuxer)
 	if(!demuxer->audio->fill_buffer())
 		MSG_WARN("[RealAudio] No data.\n");
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return realaud_priv;
 }
 
 

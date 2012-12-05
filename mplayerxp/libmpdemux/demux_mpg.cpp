@@ -156,11 +156,11 @@ static int parse_psm(Demuxer *demux, int len) {
 }
 
 static void new_audio_stream(Demuxer *demux, int aid){
-  if(!demux->a_streams[aid]){
+  if(!demux->get_sh_audio(aid)){
     mpg_demuxer_t *mpg_d=static_cast<mpg_demuxer_t*>(demux->priv);
     sh_audio_t* sh_a;
     demux->new_sh_audio(aid);
-    sh_a = (sh_audio_t*)demux->a_streams[aid];
+    sh_a = demux->get_sh_audio(aid);
     switch(aid & 0xE0){  // 1110 0000 b  (high 3 bit: type  low 5: id)
       case 0x00: sh_a->wtag=AUDIO_MP2;break;
       case 0xA0: sh_a->wtag=AUDIO_LPCM_BE;break;
@@ -289,9 +289,9 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 	// subtitle:
 	aid&=0x1F;
 
-	if(!demux->s_streams[aid]){
+	if(!demux->get_sh_sub(aid)){
 	    MSG_V("==> Found subtitle: %d\n",aid);
-	    demux->s_streams[aid]=1;
+	    demux->new_sh_sub(aid);
 	}
 
 	if(demux->sub->id==aid){
@@ -308,7 +308,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
       if(demux->audio->id==aid){
 	int type;
 	ds=demux->audio;
-	if(!ds->sh) ds->sh=demux->a_streams[aid];
+	if(!ds->sh) ds->sh=demux->get_sh_audio(aid);
 	// READ Packet: Skip additional audio header data:
 	c=stream_read_char(demux->stream);//num of frames
 	type=stream_read_char(demux->stream);//startpos hi
@@ -361,7 +361,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
     new_audio_stream(demux, aid);
     if(demux->audio->id==aid){
       ds=demux->audio;
-      if(!ds->sh) ds->sh=demux->a_streams[aid];
+      if(!ds->sh) ds->sh=demux->get_sh_audio(aid);
       if(priv && ds->sh) {
 	sh_audio_t *sh = (sh_audio_t *)ds->sh;
 	if(priv->es_map[id - 0x1B0]) {
@@ -374,11 +374,11 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
   if(id>=0x1E0 && id<=0x1EF){
     // mpeg video
     int aid=id-0x1E0;
-    if(!demux->v_streams[aid]) demux->new_sh_video(aid);
+    if(!demux->get_sh_video(aid)) demux->new_sh_video(aid);
     if(demux->video->id==-1) demux->video->id=aid;
     if(demux->video->id==aid){
       ds=demux->video;
-      if(!ds->sh) ds->sh=demux->v_streams[aid];
+      if(!ds->sh) ds->sh=demux->get_sh_video(aid);
       if(priv && ds->sh) {
 	sh_video_t *sh = (sh_video_t *)ds->sh;
 	if(priv->es_map[id - 0x1B0]) {
@@ -760,9 +760,9 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
 	    demuxer->file_format==Demuxer::Type_MPEG4_ES ||
 	    demuxer->file_format==Demuxer::Type_H264_ES){ /* little hack, see above! */
 		mpg_d->alt_demuxer=mpges_demux;
-		if(!demuxer->v_streams[0]) demuxer->new_sh_video();
+		if(!demuxer->get_sh_video()) demuxer->new_sh_video();
 		if(demuxer->video->id==-1) demuxer->video->id=0;
-		demuxer->video->sh=demuxer->v_streams[0];
+		demuxer->video->sh=demuxer->get_sh_video();
 		stream_seek(demuxer->stream,demuxer->stream->start_pos);
 		return mpges_demux(demuxer,demuxer->video)?MPXP_Ok:MPXP_False;
 	} else {
@@ -785,7 +785,7 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
     return MPXP_False;
 }
 
-static Demuxer* mpgps_open(Demuxer*demuxer)
+static Opaque* mpgps_open(Demuxer*demuxer)
 {
     sh_video_t *sh_video=reinterpret_cast<sh_video_t*>(demuxer->video->sh);
     mpg_demuxer_t* mpg_d=static_cast<mpg_demuxer_t*>(demuxer->priv);
@@ -806,7 +806,7 @@ static Demuxer* mpgps_open(Demuxer*demuxer)
 	}
     }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return mpg_d;
 }
 
 static void mpgps_close(Demuxer*demuxer)
@@ -831,13 +831,13 @@ static MPXP_Rc mpgps_control(const Demuxer *demuxer,int cmd,any_t*arg)
 		    }
 		    do {
 			i = (i+1) % mpg_d->num_a_streams;
-			sh_a = (sh_audio_t*)demuxer->a_streams[mpg_d->a_stream_ids[i]];
+			sh_a = demuxer->get_sh_audio(mpg_d->a_stream_ids[i]);
 		    } while (sh_a->wtag != sh_audio->wtag);
 		} else {
 		    for (i = 0; i < mpg_d->num_a_streams; i++)
 			if (*((int*)arg) == mpg_d->a_stream_ids[i]) break;
 			if (i < mpg_d->num_a_streams)
-			    sh_a = (sh_audio_t*)demuxer->a_streams[*((int*)arg)];
+			    sh_a = demuxer->get_sh_audio(*((int*)arg));
 			if (sh_a->wtag != sh_audio->wtag)
 			    i = mpg_d->num_a_streams;
 		}

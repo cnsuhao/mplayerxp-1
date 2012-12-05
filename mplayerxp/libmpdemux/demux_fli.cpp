@@ -84,7 +84,7 @@ static MPXP_Rc fli_probe(Demuxer* demuxer){
   return MPXP_Ok;
 }
 
-static Demuxer* fli_open(Demuxer* demuxer){
+static Opaque* fli_open(Demuxer* demuxer){
   sh_video_t *sh_video = NULL;
   fli_frames_t *frames = new(zeromem) fli_frames_t;
   int frame_number;
@@ -182,9 +182,8 @@ static Demuxer* fli_open(Demuxer* demuxer){
     // save the actual number of frames indexed
     frames->num_frames = frame_number;
 
-    demuxer->priv = frames;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return frames;
 }
 
 static void fli_close(Demuxer* demuxer) {

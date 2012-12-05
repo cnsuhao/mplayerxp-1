@@ -51,7 +51,7 @@ static MPXP_Rc aiff_probe(Demuxer* demuxer)
   return MPXP_False;
 }
 
-static Demuxer* aiff_open(Demuxer* demuxer) {
+static Opaque* aiff_open(Demuxer* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
   stream_t *s;
@@ -60,7 +60,7 @@ static Demuxer* aiff_open(Demuxer* demuxer) {
   s = demuxer->stream;
 
   sh_audio = demuxer->new_sh_audio();
-  demuxer->priv=priv=new(zeromem) priv_t;
+  priv=new(zeromem) priv_t;
   sh_audio->wf = w = new(zeromem) WAVEFORMATEX;
   w->wFormatTag = 0x1; sh_audio->wtag = mmioFOURCC('r','a','w',' '); /* S16BE */
   w->nChannels = sh_audio->nch =
@@ -181,7 +181,7 @@ static Demuxer* aiff_open(Demuxer* demuxer) {
   demuxer->audio->sh = sh_audio;
   sh_audio->ds = demuxer->audio;
   stream_seek(s,demuxer->movi_start);
-  return demuxer;
+  return priv;
 }
 
 static int aiff_demux(Demuxer* demuxer, Demuxer_Stream *ds) {

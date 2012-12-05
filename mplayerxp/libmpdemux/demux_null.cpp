@@ -24,7 +24,7 @@ static MPXP_Rc null_probe(Demuxer* demuxer)
     return MPXP_False;
 }
 
-static Demuxer* null_open(Demuxer* demuxer) {
+static Opaque* null_open(Demuxer* demuxer) {
     return NULL;
 }
 

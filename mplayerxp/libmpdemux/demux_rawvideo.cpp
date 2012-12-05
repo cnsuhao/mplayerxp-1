@@ -68,7 +68,7 @@ static MPXP_Rc rawvideo_probe(Demuxer* demuxer)
     return MPXP_False;
 }
 
-static Demuxer* rawvideo_open(Demuxer* demuxer) {
+static Opaque* rawvideo_open(Demuxer* demuxer) {
   sh_video_t* sh_video;
 
   switch(priv.size_id){

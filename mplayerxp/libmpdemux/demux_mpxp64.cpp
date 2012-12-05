@@ -433,7 +433,7 @@ static void mpxpav64_reset_prevs(Demuxer *demuxer)
     priv->prev_id=0xFFFFFFFFUL;
 }
 
-static Demuxer* mpxpav64_open(Demuxer* demuxer){
+static Opaque* mpxpav64_open(Demuxer* demuxer){
     stream_t *s=demuxer->stream;
     uint64_t id,hsize,t;
     uint32_t fourcc;
@@ -523,7 +523,7 @@ static Demuxer* mpxpav64_open(Demuxer* demuxer){
     demuxer->movi_end=demuxer->movi_start+hsize;
     MSG_V("Found AVDATA64 at offset %016llX bytes\n",t);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static int mpxpav64_read_packet(Demuxer *demux,unsigned id,uint64_t len,float pts,int keyframe)
@@ -532,18 +532,18 @@ static int mpxpav64_read_packet(Demuxer *demux,unsigned id,uint64_t len,float pt
     stream_t* s=demux->stream;
 
     if(demux->video->id==-1)
-	if(demux->v_streams[id])
+	if(demux->get_sh_video(id))
 	    demux->video->id=id;
 
     if(demux->audio->id==-1)
-	if(demux->a_streams[id])
+	if(demux->get_sh_audio(id))
 	    demux->audio->id=id;
 
     if(id==(unsigned)demux->audio->id){
 	// audio
 	ds=demux->audio;
 	if(!ds->sh){
-	    ds->sh=demux->a_streams[id];
+	    ds->sh=demux->get_sh_audio(id);
 	    MSG_V("Auto-selected MPXPAV64 audio ID = %d\n",ds->id);
 	}
     } else
@@ -551,7 +551,7 @@ static int mpxpav64_read_packet(Demuxer *demux,unsigned id,uint64_t len,float pt
 	// video
 	ds=demux->video;
 	if(!ds->sh){
-	    ds->sh=demux->v_streams[id];
+	    ds->sh=demux->get_sh_video(id);
 	    MSG_V("Auto-selected MPXPAV64 video ID = %d\n",ds->id);
 	}
     }

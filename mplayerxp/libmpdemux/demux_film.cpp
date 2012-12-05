@@ -205,7 +205,7 @@ static MPXP_Rc film_probe(Demuxer* demuxer)
   return MPXP_Ok;
 }
 
-static Demuxer* film_open(Demuxer* demuxer)
+static Opaque* film_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   sh_audio_t *sh_audio = NULL;
@@ -432,7 +432,7 @@ static Demuxer* film_open(Demuxer* demuxer)
 
     demuxer->priv = film_data;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return film_data;
 }
 
 static void film_close(Demuxer* demuxer) {

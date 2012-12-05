@@ -1794,7 +1794,7 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
   return 0;
 }
 
-static Demuxer* mov_open(Demuxer* demuxer){
+static Opaque* mov_open(Demuxer* demuxer){
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     int t_no;
     int best_a_id=-1, best_a_len=0;
@@ -1817,10 +1817,10 @@ static Demuxer* mov_open(Demuxer* demuxer){
     for(t_no=0;t_no<priv->track_db;t_no++){
 	mov_track_t* trak=priv->tracks[t_no];
 	int len=(trak->samplesize) ? trak->chunks_size : trak->samples_size;
-	if(demuxer->a_streams[t_no]){ // need audio
+	if(demuxer->get_sh_audio(t_no)){ // need audio
 	    if(len>best_a_len){	best_a_len=len; best_a_id=t_no; }
 	}
-	if(demuxer->v_streams[t_no]){ // need video
+	if(demuxer->get_sh_video(t_no)){ // need video
 	    if(len>best_v_len){	best_v_len=len; best_v_id=t_no; }
 	}
     }
@@ -1831,7 +1831,7 @@ static Demuxer* mov_open(Demuxer* demuxer){
 
     // setup sh pointers:
     if(demuxer->audio->id>=0){
-	sh_audio_t* sh=reinterpret_cast<sh_audio_t*>(demuxer->a_streams[demuxer->audio->id]);
+	sh_audio_t* sh=demuxer->get_sh_audio(demuxer->audio->id);
 	if(sh){
 	    demuxer->audio->sh=sh; sh->ds=demuxer->audio;
 	} else {
@@ -1840,7 +1840,7 @@ static Demuxer* mov_open(Demuxer* demuxer){
 	}
     }
     if(demuxer->video->id>=0){
-	sh_video_t* sh=reinterpret_cast<sh_video_t*>(demuxer->v_streams[demuxer->video->id]);
+	sh_video_t* sh=demuxer->get_sh_video(demuxer->video->id);
 	if(sh){
 	    demuxer->video->sh=sh; sh->ds=demuxer->video;
 	} else {
@@ -1912,7 +1912,7 @@ static Demuxer* mov_open(Demuxer* demuxer){
     }
 #endif
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 /**

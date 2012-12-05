@@ -154,7 +154,7 @@ static MPXP_Rc asf_probe(Demuxer *demuxer){
   return MPXP_Ok;
 }
 
-static Demuxer* asf_open(Demuxer *demuxer){
+static Opaque* asf_open(Demuxer *demuxer){
   static unsigned char buffer[2048];
   uint32_t* streams = NULL;
   int audio_streams=0;
@@ -344,10 +344,10 @@ if(streams) {
   for(i = 0; i < stream_count; i++) {
     uint32_t id = streams[2*i];
     uint32_t rate = streams[2*i+1];
-    if(demuxer->v_streams[id] && rate > vr) {
+    if(demuxer->get_sh_video(id) && rate > vr) {
       vr = rate;
       best_video = id;
-    } else if(demuxer->a_streams[id] && rate > ar) {
+    } else if(demuxer->get_sh_audio(id) && rate > ar) {
       ar = rate;
       best_audio = id;
     }
@@ -400,7 +400,7 @@ if(!video_streams){
   }
 }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return apriv;
 }
 
 // based on asf file-wtag doc by Eugene [http://divx.euro.ru]
@@ -429,18 +429,18 @@ static int demux_asf_read_packet(Demuxer *demux,off_t dataoff,int len,int id,int
   MSG_DBG3("demux_asf.read_packet: id=%d seq=%d len=%d time=%u dur=%u offs=%i key=%i\n",id,seq,len,time,dur,offs,keyframe);
 
   if(demux->video->id==-1)
-    if(demux->v_streams[id])
+    if(demux->get_sh_video(id))
 	demux->video->id=id;
 
   if(demux->audio->id==-1)
-    if(demux->a_streams[id])
+    if(demux->get_sh_audio(id))
 	demux->audio->id=id;
 
   if(id==demux->audio->id){
       // audio
       ds=demux->audio;
       if(!ds->sh){
-	ds->sh=demux->a_streams[id];
+	ds->sh=demux->get_sh_audio(id);
 	MSG_V("Auto-selected ASF audio ID = %d\n",ds->id);
       }
   } else
@@ -448,7 +448,7 @@ static int demux_asf_read_packet(Demuxer *demux,off_t dataoff,int len,int id,int
       // video
       ds=demux->video;
       if(!ds->sh){
-	ds->sh=demux->v_streams[id];
+	ds->sh=demux->get_sh_video(id);
 	MSG_V("Auto-selected ASF video ID = %d\n",ds->id);
       }
   }

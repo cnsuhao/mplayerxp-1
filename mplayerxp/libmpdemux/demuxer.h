@@ -101,16 +101,23 @@ namespace mpxp {
 		Switch_Subs	=3
 	    };
 
+	    static Demuxer*		open(stream_t *stream,int aid,int vid,int sid);
+
+	    virtual MPXP_Rc		open();
+	    virtual int			demux(Demuxer_Stream* ds);
+
 	    virtual Demuxer_Info&	info() const { return *_info; }
 	    virtual int			fill_buffer(Demuxer_Stream *ds);
 	    virtual int			seek(const seek_args_t* seeka);
 
-	    virtual sh_audio_t*		get_sh_audio(int id) const;
-	    virtual sh_video_t*		get_sh_video(int id) const;
+	    virtual sh_audio_t*		get_sh_audio(int id=0) const;
+	    virtual sh_video_t*		get_sh_video(int id=0) const;
+	    virtual char		get_sh_sub(int id=0) const;
 	    virtual sh_audio_t*		new_sh_audio_aid(int id,int aid);
 	    sh_audio_t*			new_sh_audio(int i=0) { return new_sh_audio_aid(i, i); }
 	    virtual sh_video_t*		new_sh_video_vid(int id,int vid);
 	    sh_video_t*			new_sh_video(int i=0) { return new_sh_video_vid(i, i); }
+	    virtual char		new_sh_sub(int i=0);
 
 	    virtual int			switch_audio(int id) const;
 	    virtual int			switch_video(int id) const;
@@ -123,9 +130,6 @@ namespace mpxp {
 	    Demuxer_Stream*	audio;		/**< audio buffer/demuxer */
 	    Demuxer_Stream*	video;		/**< video buffer/demuxer */
 	    Demuxer_Stream*	sub;		/**< DVD's subtitle buffer/demuxer */
-	    sh_audio_t*		a_streams[MAX_A_STREAMS]; /**< audio streams (sh_audio_t) for multilanguage movies */
-	    sh_video_t*		v_streams[MAX_V_STREAMS]; /**< video streams (sh_video_t) for multipicture movies  */
-	    char		s_streams[MAX_S_STREAMS]; /**< DVD's subtitles (flag) streams for multilanguage movies */
 	    off_t		filepos;	/**< current pos. of input stream */
 	    off_t		movi_start;	/**< real start of movie within of stream */
 	    off_t		movi_end;	/**< real end of movie within of stream */
@@ -133,10 +137,11 @@ namespace mpxp {
 	    demuxer_flags_e	flags;		/**< set of DEMUXF_* bits */
 	    demuxer_type_e	file_format;	/**< file format: Type_*(mpeg/avi/asf). Will be replaced with properties in the further versions */
 	    int			synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
-
 	    Opaque*		priv;		/**< private data of demuxer's driver.*/
-	    const demuxer_driver_t* driver;	/**< driver associated with this demuxer */
 	private:
+	    void _init(stream_t *_stream,int a_id,int v_id,int s_id);
+
+	    LocalPtr<Opaque>		demuxer_priv;
 	    LocalPtr<Demuxer_Info>	_info;	/**< human-readable info from stream/movie (like movie name,author,duration)*/
     };
     inline Demuxer::demuxer_flags_e operator~(Demuxer::demuxer_flags_e a) { return static_cast<Demuxer::demuxer_flags_e>(~static_cast<unsigned>(a)); }
@@ -147,11 +152,8 @@ namespace mpxp {
     inline Demuxer::demuxer_flags_e operator&=(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
     inline Demuxer::demuxer_flags_e operator^=(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
-    Demuxer* demux_open(stream_t *stream,int aid,int vid,int sid);
-
     // This is defined here because demux_stream_t ins't defined in stream.h
-    stream_t* __FASTCALL__ new_ds_stream(Demuxer_Stream *ds);
-
-    Demuxer*  new_demuxers_demuxer(Demuxer* vd, Demuxer* ad, Demuxer* sd);
+    stream_t* __FASTCALL__	new_ds_stream(Demuxer_Stream *ds);
+    Demuxer*			new_demuxers_demuxer(Demuxer* vd, Demuxer* ad, Demuxer* sd);
 }// namespace mpxp
 #endif

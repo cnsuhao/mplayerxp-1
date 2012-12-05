@@ -775,8 +775,8 @@ got_video:
 
 if(stream_id<256){
 
-    if(demuxer->audio->id==-1 && demuxer->a_streams[stream_id]){
-	sh_audio_t *sh = reinterpret_cast<sh_audio_t*>(demuxer->a_streams[stream_id]);
+    if(demuxer->audio->id==-1 && demuxer->get_sh_audio(stream_id)){
+	sh_audio_t *sh = demuxer->get_sh_audio(stream_id);
 	demuxer->audio->id=stream_id;
 	sh->ds=demuxer->audio;
 	demuxer->audio->sh=sh;
@@ -784,8 +784,8 @@ if(stream_id<256){
 	goto got_audio;
     }
 
-    if(demuxer->video->id==-1 && demuxer->v_streams[stream_id]){
-	sh_video_t *sh = reinterpret_cast<sh_video_t*>(demuxer->v_streams[stream_id]);
+    if(demuxer->video->id==-1 && demuxer->get_sh_video(stream_id)){
+	sh_video_t *sh = demuxer->get_sh_video(stream_id);
 	demuxer->video->id=stream_id;
 	sh->ds=demuxer->video;
 	demuxer->video->sh=sh;
@@ -801,7 +801,7 @@ discard:
   }//    goto loop;
 }
 
-static Demuxer* real_open(Demuxer* demuxer)
+static Opaque* real_open(Demuxer* demuxer)
 {
     real_priv_t* priv = static_cast<real_priv_t*>(demuxer->priv);
     int num_of_headers;
@@ -1488,7 +1488,7 @@ header_end:
 	    sh->src_w,sh->src_h,sh->aspect,sh->fps);
     }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static void real_close(Demuxer *demuxer)

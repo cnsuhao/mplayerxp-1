@@ -298,6 +298,9 @@ static const char help_text[]=
 #ifndef MSGTR_VideoStreamRedefined
 #define MSGTR_VideoStreamRedefined "Warning! video stream header %d redefined!\n"
 #endif
+#ifndef MSGTR_SubStreamRedefined
+#define MSGTR_SubStreamRedefined "Warning! subtitle stream id: %d redefined!\n"
+#endif
 #ifndef MSGTR_TooManyAudioInBuffer
 #define MSGTR_TooManyAudioInBuffer "\nDEMUXER: Too many (%d in %d bytes) audio packets in the buffer!\n"
 #endif

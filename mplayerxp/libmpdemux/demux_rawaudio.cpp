@@ -43,7 +43,7 @@ static MPXP_Rc rawaudio_probe(Demuxer* demuxer)
     return MPXP_False;
 }
 
-static Demuxer* rawaudio_open(Demuxer* demuxer) {
+static Opaque* rawaudio_open(Demuxer* demuxer) {
   unsigned samplesize;
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;

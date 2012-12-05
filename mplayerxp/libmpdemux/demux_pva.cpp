@@ -128,7 +128,7 @@ static MPXP_Rc pva_probe(Demuxer * demuxer)
     }
 }
 
-static Demuxer* pva_open (Demuxer * demuxer)
+static Opaque* pva_open (Demuxer * demuxer)
 {
     sh_video_t* sh_video = demuxer->new_sh_video();
     sh_audio_t* sh_audio = demuxer->new_sh_audio();
@@ -179,7 +179,7 @@ static Demuxer* pva_open (Demuxer * demuxer)
     priv->last_video_pts=-1;
     priv->last_audio_pts=-1;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static int pva_get_payload(Demuxer * d,pva_payload_t * payload);

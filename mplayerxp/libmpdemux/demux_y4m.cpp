@@ -130,7 +130,7 @@ static int y4m_demux(Demuxer *demux,Demuxer_Stream *__ds) {
   return 1;
 }
 
-static Demuxer* y4m_open(Demuxer* demuxer){
+static Opaque* y4m_open(Demuxer* demuxer){
     y4m_priv_t* priv = static_cast<y4m_priv_t*>(demuxer->priv);
     y4m_ratio_t ratio;
     sh_video_t* sh=demuxer->new_sh_video();
@@ -236,7 +236,7 @@ static Demuxer* y4m_open(Demuxer* demuxer){
 	    demuxer->video->id, sh->src_w, sh->src_h, sh->bih->biWidth,
 	    sh->bih->biHeight);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static void y4m_seek(Demuxer *demuxer,const seek_args_t* seeka) {

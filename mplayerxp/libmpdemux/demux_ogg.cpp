@@ -741,7 +741,7 @@ char *demux_ogg_sub_lang(Demuxer *demuxer, int index) {
 static void ogg_close(Demuxer* demuxer);
 
 /// Open an ogg physical stream
-static Demuxer * ogg_open(Demuxer* demuxer) {
+static Opaque* ogg_open(Demuxer* demuxer) {
   ogg_demuxer_t* ogg_d;
   stream_t *s;
   char* buf;
@@ -1079,11 +1079,11 @@ static Demuxer * ogg_open(Demuxer* demuxer) {
   }
     MSG_V("Ogg demuxer : found %d audio stream%s, %d video stream%s and %d text stream%s\n",n_audio,n_audio>1?"s":"",n_video,n_video>1?"s":"",ogg_d->n_text,ogg_d->n_text>1?"s":"");
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return ogg_d;
 
 err_out:
   ogg_close(demuxer);
-  return 0;
+  return NULL;
 }
 
 

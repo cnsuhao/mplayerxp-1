@@ -767,18 +767,18 @@ static Demuxer_Stream* demux_avi_select_stream(Demuxer *demux,unsigned int id){
   int stream_id=avi_stream_id(id);
 
   if(demux->video->id==-1)
-    if(demux->v_streams[stream_id])
+    if(demux->get_sh_video(stream_id))
 	demux->video->id=stream_id;
 
   if(demux->audio->id==-1)
-    if(demux->a_streams[stream_id])
+    if(demux->get_sh_audio(stream_id))
 	demux->audio->id=stream_id;
 
   if(stream_id==demux->audio->id){
       if(!demux->audio->sh){
 	sh_audio_t* sh;
 	avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
-	demux->audio->sh=sh=reinterpret_cast<sh_audio_t*>(demux->a_streams[stream_id]);
+	demux->audio->sh=sh=demux->get_sh_audio(stream_id);
 	MSG_V("Auto-selected AVI audio ID = %d\n",demux->audio->id);
 	if(sh->wf){
 	  priv->audio_block_size=sh->wf->nBlockAlign;
@@ -804,7 +804,7 @@ static Demuxer_Stream* demux_avi_select_stream(Demuxer *demux,unsigned int id){
   }
   if(stream_id==demux->video->id){
       if(!demux->video->sh){
-	demux->video->sh=demux->v_streams[stream_id];
+	demux->video->sh=demux->get_sh_video(stream_id);
 	MSG_V("Auto-selected AVI video ID = %d\n",demux->video->id);
       }
       return demux->video;
@@ -1130,7 +1130,7 @@ do{
 
 int index_mode=-1;  // -1=untouched  0=don't use index  1=use (geneate) index
 extern demuxer_driver_t demux_ogg;
-static Demuxer* avi_open(Demuxer* demuxer){
+static Opaque* avi_open(Demuxer* demuxer){
     Demuxer_Stream *d_audio=demuxer->audio;
     Demuxer_Stream *d_video=demuxer->video;
     sh_audio_t *sh_audio=NULL;
@@ -1143,11 +1143,11 @@ static Demuxer* avi_open(Demuxer* demuxer){
     //---- AVI header:
     read_avi_header(demuxer,(demuxer->stream->type&STREAMTYPE_SEEKABLE)?index_mode:-2);
 
-  if(demuxer->audio->id>=0 && !demuxer->a_streams[demuxer->audio->id]){
+  if(demuxer->audio->id>=0 && !demuxer->get_sh_audio(demuxer->audio->id)){
       MSG_WARN("AVI: invalid audio stream ID: %d - ignoring (nosound)\n",demuxer->audio->id);
       demuxer->audio->id=-2; // disabled
   }
-  if(demuxer->video->id>=0 && !demuxer->v_streams[demuxer->video->id]){
+  if(demuxer->video->id>=0 && !demuxer->get_sh_video(demuxer->video->id)){
       MSG_WARN("AVI: invalid video stream ID: %d - ignoring (using default)\n",demuxer->video->id);
       demuxer->video->id=-1; // autodetect
   }
@@ -1281,7 +1281,7 @@ static Demuxer* avi_open(Demuxer* demuxer){
   sh_video->bih->biBitCount,
   sh_video->fps);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static void avi_seek(Demuxer *demuxer,const seek_args_t* seeka){

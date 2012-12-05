@@ -49,7 +49,7 @@ static MPXP_Rc vqf_probe(Demuxer* demuxer)
     return MPXP_False;
 }
 
-static Demuxer* vqf_open(Demuxer* demuxer) {
+static Opaque* vqf_open(Demuxer* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
   stream_t *s;

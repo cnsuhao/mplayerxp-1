@@ -93,7 +93,7 @@ static int smjpeg_demux(Demuxer *demux,Demuxer_Stream *__ds)
     return 1;
 }
 
-static Demuxer* smjpeg_open(Demuxer* demuxer){
+static Opaque* smjpeg_open(Demuxer* demuxer){
     sh_video_t* sh_video;
     sh_audio_t* sh_audio;
     unsigned int htype = 0, hleng;

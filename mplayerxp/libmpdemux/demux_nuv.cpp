@@ -212,8 +212,7 @@ static int nuv_demux( Demuxer *demuxer, Demuxer_Stream *__ds )
 	return 1;
 }
 
-
-static Demuxer* nuv_open ( Demuxer* demuxer )
+static Opaque* nuv_open ( Demuxer* demuxer )
 {
 	sh_video_t *sh_video = NULL;
 	sh_audio_t *sh_audio = NULL;
@@ -296,7 +295,7 @@ static Demuxer* nuv_open ( Demuxer* demuxer )
 	priv->index_list->next = NULL;
 	priv->current_position = priv->index_list;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static MPXP_Rc nuv_probe ( Demuxer* demuxer )

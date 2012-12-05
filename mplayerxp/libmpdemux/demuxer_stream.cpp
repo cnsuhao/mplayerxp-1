@@ -136,12 +136,8 @@ int Demuxer_Stream::fill_buffer() {
 	    MSG_HINT(MSGTR_MaybeNI);
 	    break;
 	}
-	if(!demuxer->driver){
-	     MSG_DBG2("ds_fill_buffer: demux->driver==NULL failed\n");
-	    break; // EOF
-	}
-	if(!demuxer->driver->demux(demuxer,this)){
-	    MSG_DBG2("ds_fill_buffer: demux->driver->demux() failed\n");
+	if(!demuxer->demux(this)){
+	    MSG_DBG2("ds_fill_buffer: demuxer->demux() failed\n");
 	    break; // EOF
 	}
     }

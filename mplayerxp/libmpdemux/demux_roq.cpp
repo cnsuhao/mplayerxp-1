@@ -99,7 +99,7 @@ static int roq_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
   return 1;
 }
 
-static Demuxer* roq_open(Demuxer* demuxer)
+static Opaque* roq_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   sh_audio_t *sh_audio = NULL;
@@ -243,10 +243,9 @@ static Demuxer* roq_open(Demuxer* demuxer)
     sh_audio->wf->nBlockAlign = largest_audio_chunk * 2;
 
     roq_data->current_chunk = 0;
-    demuxer->priv = roq_data;
     stream_reset(demuxer->stream);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return roq_data;
 }
 
 static void roq_close(Demuxer* demuxer) {

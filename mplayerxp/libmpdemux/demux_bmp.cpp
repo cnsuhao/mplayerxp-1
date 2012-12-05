@@ -142,7 +142,7 @@ static int bmp_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
   return 1;
 }
 
-static Demuxer* bmp_open(Demuxer* demuxer)
+static Opaque* bmp_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   unsigned npal_colors;
@@ -188,7 +188,7 @@ static Demuxer* bmp_open(Demuxer* demuxer)
 
 //  demuxer->priv = bmp_image;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return NULL;
 }
 
 static void bmp_close(Demuxer* demuxer)
@@ -232,7 +232,7 @@ static int bmp_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
   return 1;
 }
 
-static Demuxer* bmp_open(Demuxer* demuxer)
+static Opaque* bmp_open(Demuxer* demuxer)
 {
   sh_video_t *sh_video = NULL;
   unsigned int filesize;
@@ -290,9 +290,7 @@ static Demuxer* bmp_open(Demuxer* demuxer)
   sh_video->is_static = 1;
   sh_video->fps = 1;
 
-  demuxer->priv = bmp_image;
-
-  return demuxer;
+  return bmp_image;
 }
 
 static void bmp_close(Demuxer* demuxer) {

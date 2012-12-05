@@ -2437,9 +2437,6 @@ demux_mkv_open_audio (Demuxer *demuxer, mkv_track_t *track, int aid)
 	{
 	  MSG_WARN("[mkv] Unknown/unsupported audio codec ID '%s' for track %u or missing/faulty\n[mkv] private codec data.\n",
 		  track->codec_id, track->tnum);
-
-	  delete demuxer->a_streams[track->tnum];
-	  demuxer->a_streams[track->tnum]=0;
 	  return 1;
 	}
     }
@@ -2655,8 +2652,6 @@ demux_mkv_open_audio (Demuxer *demuxer, mkv_track_t *track, int aid)
     {  /* do nothing, still works */  }
   else if (!track->ms_compat || (track->private_size < sizeof(WAVEFORMATEX)))
     {
-      delete demuxer->a_streams[track->tnum];
-      demuxer->a_streams[track->tnum]=0;
       return 1;
     }
 
@@ -2806,7 +2801,7 @@ static MPXP_Rc mkv_probe(Demuxer *demuxer)
     return MPXP_Ok;
 }
 
-static Demuxer* mkv_open (Demuxer *demuxer)
+static Opaque* mkv_open(Demuxer *demuxer)
 {
   stream_t *s = demuxer->stream;
   mkv_demuxer_t *mkv_d;
@@ -2938,11 +2933,11 @@ static Demuxer* mkv_open (Demuxer *demuxer)
     track = demux_mkv_find_track_by_num (mkv_d, demuxer->video->id,
 					 MATROSKA_TRACK_VIDEO);
 
-  if (track && demuxer->v_streams[track->tnum])
+  if (track && demuxer->get_sh_video(track->tnum))
 	      {
 		MSG_V("[mkv] Will play video track %u.\n", track->tnum);
 		demuxer->video->id = track->tnum;
-		demuxer->video->sh = demuxer->v_streams[track->tnum];
+		demuxer->video->sh = demuxer->get_sh_video(track->tnum);
 	      }
   else
     {
@@ -2982,10 +2977,10 @@ static Demuxer* mkv_open (Demuxer *demuxer)
   else if (demuxer->audio->id != -2)  /* -2 = no audio at all */
     track = demux_mkv_find_track_by_num (mkv_d, demuxer->audio->id,
 					 MATROSKA_TRACK_AUDIO);
-  if (track && demuxer->a_streams[track->tnum])
+  if (track && demuxer->get_sh_audio(track->tnum))
     {
       demuxer->audio->id = track->tnum;
-      demuxer->audio->sh = demuxer->a_streams[track->tnum];
+      demuxer->audio->sh = demuxer->get_sh_audio(track->tnum);
     }
   else
     {
@@ -2999,7 +2994,7 @@ static Demuxer* mkv_open (Demuxer *demuxer)
     {
       if(mkv_d->tracks[i]->type != MATROSKA_TRACK_AUDIO)
 	  continue;
-      if(demuxer->a_streams[track->tnum])
+      if(demuxer->get_sh_audio(track->tnum))
 	{
 	  mkv_d->last_aid++;
 	  if(mkv_d->last_aid == MAX_A_STREAMS)
@@ -3071,7 +3066,7 @@ static Demuxer* mkv_open (Demuxer *demuxer)
 	}
     }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return mkv_d;
 }
 
 static void mkv_close (Demuxer *demuxer)
@@ -3999,14 +3994,14 @@ static MPXP_Rc mkv_control (const Demuxer *demuxer, int cmd, any_t*arg)
 #endif
 	case Demuxer::Switch_Audio:
 	    if (demuxer->audio && demuxer->audio->sh) {
-		sh_audio_t *sh = reinterpret_cast<sh_audio_t*>(demuxer->a_streams[demuxer->audio->id]);
+		sh_audio_t *sh = demuxer->get_sh_audio(demuxer->audio->id);
 		int aid = *(int*)arg;
 		if (aid < 0) aid = (sh->id + 1) % mkv_d->last_aid;
 		if (aid != sh->id) {
 		    mkv_track_t *track = demux_mkv_find_track_by_num (mkv_d, aid, MATROSKA_TRACK_AUDIO);
 		    if (track) {
 			demuxer->audio->id = track->tnum;
-			sh = reinterpret_cast<sh_audio_t*>(demuxer->a_streams[demuxer->audio->id]);
+			sh = demuxer->get_sh_audio(demuxer->audio->id);
 			demuxer->audio->free_packs();
 		    }
 		}

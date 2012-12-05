@@ -572,7 +572,7 @@ static int h263_decode_picture_header(const unsigned char *b_ptr)
     return 0;
 }
 
-static Demuxer* vivo_open(Demuxer* demuxer){
+static Opaque* vivo_open(Demuxer* demuxer){
     vivo_priv_t* priv=static_cast<vivo_priv_t*>(demuxer->priv);
 
   if(!demuxer->video->fill_buffer()){
@@ -749,7 +749,7 @@ nosound:
 }
 }
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static void vivo_close(Demuxer *demuxer)

@@ -227,7 +227,7 @@ static MPXP_Rc lavf_probe(Demuxer *demuxer){
     return MPXP_Ok;
 }
 
-static Demuxer* lavf_open(Demuxer *demuxer){
+static Opaque* lavf_open(Demuxer *demuxer){
     AVFormatContext *avfc;
     lavf_priv_t *priv= static_cast<lavf_priv_t*>(demuxer->priv);
     unsigned j;
@@ -341,7 +341,7 @@ static Demuxer* lavf_open(Demuxer *demuxer){
 		st->discard= AVDISCARD_ALL;
 	    else{
 		demuxer->audio->id = i;
-		demuxer->audio->sh= demuxer->a_streams[i];
+		demuxer->audio->sh= demuxer->get_sh_audio(i);
 	    }
 	    break;}
 	case AVMEDIA_TYPE_VIDEO:{
@@ -390,7 +390,7 @@ static Demuxer* lavf_open(Demuxer *demuxer){
 		st->discard= AVDISCARD_ALL;
 	    else{
 		demuxer->video->id = i;
-		demuxer->video->sh= demuxer->v_streams[i];
+		demuxer->video->sh= demuxer->get_sh_video(i);
 	    }
 	    break;}
 	default:
@@ -410,7 +410,7 @@ static Demuxer* lavf_open(Demuxer *demuxer){
 	demuxer->video->id=-2; // audio-only
     } //else if (best_video > 0 && demuxer->video->id == -1) demuxer->video->id = best_video;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static int lavf_demux(Demuxer *demux, Demuxer_Stream *dsds){
@@ -438,14 +438,14 @@ static int lavf_demux(Demuxer *demux, Demuxer_Stream *dsds){
 	// audio
 	ds=demux->audio;
 	if(!ds->sh){
-	    ds->sh=demux->a_streams[id];
+	    ds->sh=demux->get_sh_audio(id);
 	    MSG_V("Auto-selected LAVF audio ID = %d\n",ds->id);
 	}
     } else if(id==demux->video->id){
 	// video
 	ds=demux->video;
 	if(!ds->sh){
-	    ds->sh=demux->v_streams[id];
+	    ds->sh=demux->get_sh_video(id);
 	    MSG_V("Auto-selected LAVF video ID = %d\n",ds->id);
 	}
     } else {

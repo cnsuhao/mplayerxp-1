@@ -505,12 +505,12 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 
    // Let's make a Video Demux Stream for MPlayer
    aid = 0x0;
-   if( !demux->v_streams[ aid ] ) demux->new_sh_video( aid );
+   if( !demux->get_sh_video(aid)) demux->new_sh_video(aid);
    if( demux->video->id == -1 ) demux->video->id = aid;
    if( demux->video->id == aid )
    {
       Demuxer_Stream *ds = demux->video;
-      if( !ds->sh ) ds->sh = demux->v_streams[ aid ];
+      if( !ds->sh ) ds->sh = demux->get_sh_video(aid);
    }
 
    // ======================================================================
@@ -576,13 +576,13 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 	       }
 
 	       demux->audio->id = aid;
-	       if( !demux->a_streams[ aid ] ) demux->new_sh_audio( aid );
+	       if( !demux->get_sh_audio(aid) ) demux->new_sh_audio( aid );
 	       if( demux->audio->id == aid )
 	       {
 		  Demuxer_Stream *ds = demux->audio;
 		  if( !ds->sh ) {
 		    sh_audio_t* sh_a;
-		    ds->sh = demux->a_streams[ aid ];
+		    ds->sh = demux->get_sh_audio(aid);
 		    sh_a = (sh_audio_t*)ds->sh;
 		    switch(aid & 0xE0){  // 1110 0000 b  (high 3 bit: type  low 5: id)
 		      case 0x00: sh_a->wtag=0x50;break; // mpeg
@@ -851,7 +851,7 @@ static MPXP_Rc ty_probe(Demuxer* demuxer)
 }
 
 
-static Demuxer* ty_open(Demuxer* demuxer)
+static Opaque* ty_open(Demuxer* demuxer)
 {
     sh_audio_t *sh_audio=NULL;
     sh_video_t *sh_video=NULL;

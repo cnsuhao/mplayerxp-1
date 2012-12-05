@@ -142,7 +142,7 @@ static int nsv_demux ( Demuxer *demuxer,Demuxer_Stream* __ds )
 }
 
 
-static Demuxer* nsv_open ( Demuxer* demuxer )
+static Opaque* nsv_open( Demuxer* demuxer )
 {
     // last 2 bytes 17 and 18 are unknown but right after that comes the length
     unsigned char hdr[17];
@@ -316,7 +316,7 @@ static Demuxer* nsv_open ( Demuxer* demuxer )
     // seek to start of NSV header
     stream_seek(demuxer->stream,stream_tell(demuxer->stream)-17);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static MPXP_Rc nsv_probe ( Demuxer* demuxer )

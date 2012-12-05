@@ -928,7 +928,7 @@ static int parse_avc_sps(uint8_t *buf, int len, int *w, int *h)
 	return 1;
 }
 
-static Demuxer *ts_open(Demuxer * demuxer)
+static Opaque* ts_open(Demuxer* demuxer)
 {
 	int i;
 	uint8_t packet_size;
@@ -1057,7 +1057,7 @@ static Demuxer *ts_open(Demuxer * demuxer)
 
     demuxer->filepos = stream_tell(demuxer->stream);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
-    return demuxer;
+    return priv;
 }
 
 static void ts_close(Demuxer * demuxer)

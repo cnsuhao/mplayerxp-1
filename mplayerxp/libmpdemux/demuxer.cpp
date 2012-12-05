@@ -91,6 +91,18 @@ static const demuxer_driver_t *ddrivers[] =
     NULL
 };
 
+
+struct demuxer_priv_t : public Opaque {
+    public:
+	demuxer_priv_t() {}
+	virtual ~demuxer_priv_t() {}
+
+	sh_audio_t*		a_streams[MAX_A_STREAMS]; /**< audio streams (sh_audio_t) for multilanguage movies */
+	sh_video_t*		v_streams[MAX_V_STREAMS]; /**< video streams (sh_video_t) for multipicture movies  */
+	char			s_streams[MAX_S_STREAMS]; /**< DVD's subtitles (flag) streams for multilanguage movies */
+	const demuxer_driver_t*	driver;	/**< driver associated with this demuxer */
+};
+
 void libmpdemux_register_options(m_config_t* cfg)
 {
     unsigned i;
@@ -101,16 +113,8 @@ void libmpdemux_register_options(m_config_t* cfg)
     }
 }
 
-Demuxer::Demuxer()
-	:_info(new(zeromem) Demuxer_Info)
+void Demuxer::_init(stream_t *_stream,int a_id,int v_id,int s_id)
 {
-}
-
-Demuxer::Demuxer(stream_t *_stream,int a_id,int v_id,int s_id)
-	:_info(new(zeromem) Demuxer_Info)
-{
-  fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
-  pin=DEMUX_PIN;
   stream=_stream;
   movi_start=_stream->start_pos;
   movi_end=_stream->end_pos;
@@ -125,15 +129,33 @@ Demuxer::Demuxer(stream_t *_stream,int a_id,int v_id,int s_id)
   stream_seek(_stream,stream->start_pos);
 }
 
+Demuxer::Demuxer()
+	:demuxer_priv(new(zeromem) demuxer_priv_t),
+	_info(new(zeromem) Demuxer_Info)
+{
+  fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
+  pin=DEMUX_PIN;
+}
+
+Demuxer::Demuxer(stream_t *_stream,int a_id,int v_id,int s_id)
+	:demuxer_priv(new(zeromem) demuxer_priv_t),
+	_info(new(zeromem) Demuxer_Info)
+{
+  fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
+  pin=DEMUX_PIN;
+  _init(_stream,a_id,v_id,s_id);
+}
+
 Demuxer::~Demuxer() {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     unsigned i;
     MSG_V("DEMUXER: freeing demuxer at %p  \n",this);
 
-    if(driver) driver->close(this);
+    if(dpriv.driver) dpriv.driver->close(this);
 
     // free streams:
-    for(i=0;i<MAX_A_STREAMS;i++) if(a_streams[i]) delete a_streams[i];
-    for(i=0;i<MAX_V_STREAMS;i++) if(v_streams[i]) delete v_streams[i];
+    for(i=0;i<MAX_A_STREAMS;i++) if(dpriv.a_streams[i]) delete dpriv.a_streams[i];
+    for(i=0;i<MAX_V_STREAMS;i++) if(dpriv.v_streams[i]) delete dpriv.v_streams[i];
     // free demuxers:
     delete audio; audio=NULL;
     delete video; video=NULL;
@@ -142,70 +164,104 @@ Demuxer::~Demuxer() {
 
 sh_audio_t* Demuxer::get_sh_audio(int id) const
 {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     if(id > MAX_A_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested audio stream id overflow (%d > %d)\n",
 	    id, MAX_A_STREAMS);
 	return NULL;
     }
     check_pin("demuxer",pin,DEMUX_PIN);
-    return a_streams[id];
+    return dpriv.a_streams[id];
 }
 
 sh_audio_t* Demuxer::new_sh_audio_aid(int id,int aid) {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     if(id > MAX_A_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested audio stream id overflow (%d > %d)\n",
 	    id, MAX_A_STREAMS);
 	return NULL;
     }
-    if(a_streams[id]) {
+    if(dpriv.a_streams[id]) {
 	MSG_WARN(MSGTR_AudioStreamRedefined,id);
     } else {
 	sh_audio_t *sh;
 	MSG_V("==> Found audio stream: %d\n",id);
-	a_streams[id]=new(zeromem) sh_audio_t;
-	sh = a_streams[id];
+	dpriv.a_streams[id]=new(zeromem) sh_audio_t;
+	sh = dpriv.a_streams[id];
 	// set some defaults
 	sh->afmt=bps2afmt(2); /* PCM */
 	sh->audio_out_minsize=8192;/* default size, maybe not enough for Win32/ACM*/
 	  MSG_V("ID_AUDIO_ID=%d\n", aid);
     }
-    a_streams[id]->id = aid;
+    dpriv.a_streams[id]->id = aid;
     check_pin("demuxer",pin,DEMUX_PIN);
-    return a_streams[id];
+    return dpriv.a_streams[id];
 }
 
 sh_video_t* Demuxer::get_sh_video(int id) const
 {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     if(id > MAX_V_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested video stream id overflow (%d > %d)\n",
 	    id, MAX_V_STREAMS);
 	return NULL;
     }
     check_pin("demuxer",pin,DEMUX_PIN);
-    return v_streams[id];
+    return dpriv.v_streams[id];
 }
 
 sh_video_t* Demuxer::new_sh_video_vid(int id,int vid) {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     if(id > MAX_V_STREAMS-1 || id < 0) {
 	MSG_WARN("Requested video stream id overflow (%d > %d)\n",
 	    id, MAX_V_STREAMS);
 	return NULL;
     }
-    if(v_streams[id]) {
+    if(dpriv.v_streams[id]) {
 	MSG_WARN(MSGTR_VideoStreamRedefined,id);
     } else {
 	MSG_V("==> Found video stream: %d\n",id);
-	v_streams[id]=new(zeromem) sh_video_t;
+	dpriv.v_streams[id]=new(zeromem) sh_video_t;
 	  MSG_V("ID_VIDEO_ID=%d\n", vid);
     }
-    v_streams[id]->id = vid;
+    dpriv.v_streams[id]->id = vid;
     check_pin("demuxer",pin,DEMUX_PIN);
-    return v_streams[id];
+    return dpriv.v_streams[id];
+}
+
+char Demuxer::get_sh_sub(int id) const
+{
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
+    if(id > MAX_A_STREAMS-1 || id < 0) {
+	MSG_WARN("Requested sub stream id overflow (%d > %d)\n",
+	    id, MAX_A_STREAMS);
+	return NULL;
+    }
+    check_pin("demuxer",pin,DEMUX_PIN);
+    return dpriv.s_streams[id];
+}
+
+char Demuxer::new_sh_sub(int id) {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
+    if(id > MAX_V_STREAMS-1 || id < 0) {
+	MSG_WARN("Requested video stream id overflow (%d > %d)\n",
+	    id, MAX_V_STREAMS);
+	return NULL;
+    }
+    if(dpriv.s_streams[id]) {
+	MSG_WARN(MSGTR_SubStreamRedefined,id);
+    } else {
+	MSG_V("==> Found video stream: %d\n",id);
+	dpriv.s_streams[id]=1;
+    }
+    check_pin("demuxer",pin,DEMUX_PIN);
+    return dpriv.s_streams[id];
 }
 
 int Demuxer::fill_buffer(Demuxer_Stream *ds){
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     /* Note: parameter 'ds' can be NULL! */
-    return driver->demux(this,ds);
+    return dpriv.driver->demux(this,ds);
 }
 
 // ====================================================================
@@ -245,10 +301,10 @@ static const demuxer_driver_t* demux_find_driver(const char *name) {
     return NULL;
 }
 
-Demuxer* demux_open_stream(stream_t *stream,int audio_id,int video_id,int dvdsub_id)
+MPXP_Rc Demuxer::open()
 {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     unsigned i;
-    Demuxer *demuxer=NULL,*new_demux=NULL;
 
     i=0;
     if(demux_conf.type) {
@@ -260,59 +316,54 @@ Demuxer* demux_open_stream(stream_t *stream,int audio_id,int video_id,int dvdsub
 	}
 	MSG_V("Forcing %s ... ",drv->name);
 	/* don't remove it from loop!!! (for initializing) */
-	demuxer = new(zeromem) Demuxer(stream,audio_id,video_id,dvdsub_id);
-	stream_reset(demuxer->stream);
-	stream_seek(demuxer->stream,demuxer->stream->start_pos);
-	if(drv->probe(demuxer)!=MPXP_Ok) {
+	stream_reset(stream);
+	stream_seek(stream,stream->start_pos);
+	if(drv->probe(this)!=MPXP_Ok) {
 	    MSG_ERR("Can't probe stream with driver: '%s'\n",demux_conf.type);
 	    goto err_exit;
 	}
-	demuxer->driver = drv;
+	dpriv.driver = drv;
 	goto force_driver;
     }
 again:
     for(;ddrivers[i]!=&demux_null;i++) {
 	MSG_V("Probing %s ... ",ddrivers[i]->name);
 	/* don't remove it from loop!!! (for initializing) */
-	demuxer = new(zeromem) Demuxer(stream,audio_id,video_id,dvdsub_id);
-	stream_reset(demuxer->stream);
-	stream_seek(demuxer->stream,demuxer->stream->start_pos);
-	if(ddrivers[i]->probe(demuxer)==MPXP_Ok) {
+	stream_reset(stream);
+	stream_seek(stream,stream->start_pos);
+	if(ddrivers[i]->probe(this)==MPXP_Ok) {
 	    MSG_V("OK\n");
-	    demuxer->driver = ddrivers[i];
+	    dpriv.driver = ddrivers[i];
 	    break;
 	}
 	MSG_V("False\n");
-	delete demuxer; demuxer=NULL;
     }
-    if(!demuxer || !demuxer->driver) {
+    if(!dpriv.driver) {
 err_exit:
 	MSG_ERR(MSGTR_FormatNotRecognized);
-	if(demuxer) { delete demuxer; demuxer=NULL; }
-	return NULL;
+	return MPXP_False;
     }
 force_driver:
-    if(!(new_demux=demuxer->driver->open(demuxer))) {
-	MSG_ERR("Can't open stream with '%s'\n", demuxer->driver->name);
-	demuxer->driver=NULL;
+    if(!(priv=dpriv.driver->open(this))) {
+	MSG_ERR("Can't open stream with '%s'\n", dpriv.driver->name);
+	dpriv.driver=NULL;
 	i++;
 	if(demux_conf.type)	goto err_exit;
 	else			goto again;
     }
-    demuxer=new_demux;
-    MSG_OK("Using: %s\n",demuxer->driver->name);
+    MSG_OK("Using: %s\n",dpriv.driver->name);
     for(i=0;i<sizeof(stream_txt_ids)/sizeof(struct s_stream_txt_ids);i++)
-    if(!demuxer->info().get(stream_txt_ids[i].demuxer_id)) {
+    if(!info().get(stream_txt_ids[i].demuxer_id)) {
 	char stream_name[256];
-	if(stream_control(demuxer->stream,stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
-		demuxer->info().add(stream_txt_ids[i].demuxer_id,stream_name);
+	if(stream_control(stream,stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
+	    info().add(stream_txt_ids[i].demuxer_id,stream_name);
 	}
     }
-    stream->demuxer=demuxer;
-    return demuxer;
+    stream->demuxer=this;
+    return MPXP_Ok;
 }
 
-Demuxer* demux_open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
+Demuxer* Demuxer::open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
   stream_t *as = NULL,*ss = NULL;
   Demuxer *vd,*ad = NULL,*sd = NULL;
   int afmt = 0,sfmt = 0;
@@ -336,20 +387,26 @@ Demuxer* demux_open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
     }
   }
 
-  vd = demux_open_stream(vs,audio_id,video_id,dvdsub_id);
-  if(!vd)
+  vd = new(zeromem) Demuxer(vs,audio_id,video_id,dvdsub_id);
+  if(vd->open()!=MPXP_Ok) {
+    delete vd;
     return NULL;
+  }
   if(as) {
-    ad = demux_open_stream(as,audio_id,-2,-2);
-    if(!ad)
+    ad = new(zeromem) Demuxer(as,audio_id,-2,-2);
+    if(ad->open()!=MPXP_Ok) {
       MSG_WARN("Failed to open audio demuxer: %s\n",demux_conf.audio_stream);
+      delete ad; ad = NULL;
+    }
     else if(ad->audio->sh && ((sh_audio_t*)ad->audio->sh)->wtag == 0x55) // MP3
       m_config_set_flag(mpxp_context().mconfig,"mp3.hr-seek",1); // Enable high res seeking
   }
   if(ss) {
-    sd = demux_open_stream(ss,-2,-2,dvdsub_id);
-    if(!sd)
+    sd = new(zeromem) Demuxer(ss,-2,-2,dvdsub_id);
+    if(sd->open()!=MPXP_Ok) {
       MSG_WARN("Failed to open subtitles demuxer: %s\n",demux_conf.sub_stream);
+      delete sd; sd = NULL;
+    }
   }
 
   if(ad && sd)
@@ -362,6 +419,7 @@ Demuxer* demux_open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
 }
 
 int Demuxer::seek(const seek_args_t* seeka){
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(audio->sh);
 
     if(!(stream->type&STREAMTYPE_SEEKABLE))
@@ -386,7 +444,7 @@ int Demuxer::seek(const seek_args_t* seeka){
     audio->prev_pts=0;
 
     if(sh_audio) sh_audio->timer=0;
-    if(driver->seek) driver->seek(this,seeka);
+    if(dpriv.driver->seek) dpriv.driver->seek(this,seeka);
     else MSG_WARN("Demuxer seek error\n");
     check_pin("demuxer",pin,DEMUX_PIN);
     return 1;
@@ -410,10 +468,17 @@ void demuxer_register_options(m_config_t* cfg) {
   m_config_register_options(cfg,demuxer_opts);
 }
 
+int Demuxer::demux(Demuxer_Stream* ds) {
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
+    if(dpriv.driver) return dpriv.driver->demux(this,ds);
+    return 0;
+}
+
 MPXP_Rc Demuxer::ctrl(int cmd, any_t*arg) const {
 
-    if(driver)
-	return driver->control(this,cmd,arg);
+    demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
+    if(dpriv.driver)
+	return dpriv.driver->control(this,cmd,arg);
     check_pin("demuxer",pin,DEMUX_PIN);
     return MPXP_Unknown;
 }
