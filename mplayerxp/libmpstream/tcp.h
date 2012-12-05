@@ -23,7 +23,7 @@
 #define TCP_H
 
 /* Connect to a server using a TCP connection */
-int tcp_connect2Server (any_t* libinput,const char *host, int port, int verb);
+int tcp_connect2Server (libinput_t* libinput,const char *host, int port, int verb);
 
 enum {
     TCP_ERROR_TIMEOUT	=-3, /* connection timeout */

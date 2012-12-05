@@ -52,7 +52,7 @@ using namespace mpxp;
 // 		WMP sequence is MMSU then MMST and then HTTP.
 // 		In MPlayer case since HTTP support is more reliable,
 // 		we are doing HTTP first then we try MMST if HTTP fail.
-static int asf_http_streaming_start(any_t*,stream_t *stream, int *demuxer_type );
+static int asf_http_streaming_start(libinput_t*,stream_t *stream, int *demuxer_type );
 
 /*
  ASF streaming support several network protocol.
@@ -74,7 +74,7 @@ static int asf_http_streaming_start(any_t*,stream_t *stream, int *demuxer_type )
 		In MPlayer case since HTTP support is more reliable,
 		we are doing HTTP first then we try MMST if HTTP fail.
 */
-int asf_streaming_start(any_t* libinput, stream_t *stream, int *demuxer_type) {
+int asf_streaming_start(libinput_t* libinput, stream_t *stream, int *demuxer_type) {
     char *proto = stream->streaming_ctrl->url->protocol;
     int fd = -1;
     int port = stream->streaming_ctrl->url->port;
@@ -748,7 +748,7 @@ asf_http_parse_response(asf_http_streaming_ctrl_t *asf_http_ctrl, HTTP_header_t 
 	return 0;
 }
 
-static int asf_http_streaming_start(any_t*libinput, stream_t *stream, int *demuxer_type ) {
+static int asf_http_streaming_start(libinput_t*libinput, stream_t *stream, int *demuxer_type ) {
 	HTTP_header_t *http_hdr=NULL;
 	URL_t *url = stream->streaming_ctrl->url;
 	asf_http_streaming_ctrl_t *asf_http_ctrl;

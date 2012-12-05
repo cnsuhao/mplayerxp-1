@@ -526,7 +526,7 @@ int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	return 0;
 }
 
-MPXP_Rc __FASTCALL__ cddb_resolve(any_t*libinput,char **xmcd_file) {
+MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t*libinput,char **xmcd_file) {
     char cddb_cache_dir[] = DEFAULT_CACHE_DIR;
     char *home_dir = NULL;
     cddb_data_t cddb_data;

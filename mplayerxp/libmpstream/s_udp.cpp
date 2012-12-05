@@ -84,7 +84,7 @@ static int __FASTCALL__ udp_streaming_start (stream_t *stream)
 }
 
 extern int network_bandwidth;
-static MPXP_Rc __FASTCALL__ udp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ udp_open(libinput_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);

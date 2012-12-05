@@ -3,6 +3,10 @@
 #include <cdio/cdda.h>
 #include "libmpconf/cfgparser.h"
 
+namespace mpxp {
+    struct libinput_t;
+}
+
 typedef struct {
 	char cddb_hello[1024];
 	unsigned long disc_id;
@@ -15,7 +19,7 @@ typedef struct {
 	char *xmcd_file;
 	size_t xmcd_file_size;
 	any_t*user_data;
-	any_t*libinput;
+	libinput_t*libinput;
 } cddb_data_t;
 
 typedef struct {

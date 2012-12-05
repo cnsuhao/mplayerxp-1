@@ -60,7 +60,7 @@ struct vf_instance_t {
     /* configuration for outgoing stream */
     vf_conf_t	conf;
     /* event handler*/
-    any_t*	libinput;
+    libinput_t*	libinput;
 }__attribute__ ((packed));
 
 // control codes:
@@ -68,7 +68,7 @@ struct vf_instance_t {
 
 // functions:
 
-vf_instance_t* __FASTCALL__ vf_init_filter(any_t* libinput,const vf_conf_t* conf);
+vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t* libinput,const vf_conf_t* conf);
 vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigned h,unsigned fmt,int reset_cache);
 
 void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h);
@@ -78,7 +78,7 @@ mp_image_t* __FASTCALL__ vf_get_new_exportable_genome(vf_instance_t* vf, int mp_
 mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_image_t* mpi);
 int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned width,unsigned height);
 
-vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,any_t*libinput,const vf_conf_t* conf);
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,libinput_t*libinput,const vf_conf_t* conf);
 vf_instance_t* __FASTCALL__ vf_open_encoder(vf_instance_t* next,const char *name,const char *args);
 
 unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,const vf_conf_t* conf);

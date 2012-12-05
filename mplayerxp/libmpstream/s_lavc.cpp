@@ -64,7 +64,7 @@ static void __FASTCALL__ lavc_close(stream_t *stream)
 
 static const char prefix[] = "lavc://";
 
-static MPXP_Rc __FASTCALL__ lavc_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ lavc_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     URLContext *ctx = NULL;
     lavc_priv_t *p;

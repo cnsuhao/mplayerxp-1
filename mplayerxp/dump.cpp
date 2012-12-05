@@ -89,7 +89,7 @@ struct dump_priv_t : public Opaque {
 	uint64_t	vsize,asize,ssize;
 	float		timer_corr; /* use common time-base */
 	float		vtimer;
-	any_t*		libinput;
+	libinput_t*	libinput;
 };
 
 void __FASTCALL__ dump_stream_event_handler(stream_t *s,const stream_packet_t*sp)
@@ -119,7 +119,7 @@ static int check_cmd(dump_priv_t* priv)
   return retval;
 }
 
-void dump_mux_init(Demuxer *demuxer,any_t* libinput)
+void dump_mux_init(Demuxer *demuxer,libinput_t* libinput)
 {
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
     sh_video_t* shv=reinterpret_cast<sh_video_t*>(demuxer->video->sh);

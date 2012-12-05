@@ -19,7 +19,7 @@ using namespace mpxp;
 
 
 static track_t track_idx=255;
-static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _cdda_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *device;
@@ -39,7 +39,7 @@ static MPXP_Rc __FASTCALL__ _cdda_open(any_t*libinput,stream_t *stream,const cha
     return retval;
 }
 
-static MPXP_Rc __FASTCALL__ _cddb_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _cddb_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
 #ifdef HAVE_STREAMING
     const char *param;

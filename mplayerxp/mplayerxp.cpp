@@ -155,7 +155,7 @@ struct MPXPSystem {
 	void		uninit_player(unsigned int mask);
 	Demuxer*	demuxer() const { return _demuxer; }
 	Demuxer*	assign_demuxer(Demuxer* _d) { uninit_demuxer(); _demuxer=_d; if(_d) inited_flags|=INITED_DEMUXER; return _demuxer; }
-	any_t*		libinput() const { return _libinput; }
+	libinput_t*	libinput() const { return _libinput; }
 	void		uninit_demuxer();
 	void		uninit_input();
 
@@ -192,10 +192,10 @@ struct MPXPSystem {
 	int		osd_function;
 	play_tree_t*	playtree;
     private:
-	any_t*		assign_libinput(any_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
+	libinput_t*	assign_libinput(libinput_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
 	char		antiviral_hole[RND_CHAR0];
 	Demuxer*	_demuxer;
-	any_t*		_libinput;
+	libinput_t*	_libinput;
 };
 
 struct MPXPSecureKeys {

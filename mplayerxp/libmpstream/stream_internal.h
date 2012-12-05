@@ -1,6 +1,10 @@
 #ifndef __STEAM_INTERNAL_H_INCLUDED
 #define __STEAM_INTERNAL_H_INCLUDED 1
 
+namespace mpxp {
+    struct libinput_t;
+}
+
 /** Stream-driver interface */
 typedef struct stream_driver_s
 {
@@ -12,7 +16,7 @@ typedef struct stream_driver_s
 		  * @param filename	points MRL of stream (vcdnav://, file://, http://, ...)
 		  * @param flags	currently unused and filled as 0
 		**/
-    MPXP_Rc	(* __FASTCALL__ open)(any_t* libinput,stream_t *_this,const char *filename,unsigned flags);
+    MPXP_Rc	(* __FASTCALL__ open)(libinput_t* libinput,stream_t *_this,const char *filename,unsigned flags);
 
 		/** Reads next packet from stream
 		  * @param _this	points structure which identifies stream

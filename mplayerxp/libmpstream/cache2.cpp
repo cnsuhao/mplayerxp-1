@@ -266,7 +266,7 @@ static any_t*cache2_routine(any_t*arg)
     return arg;
 }
 
-int stream_enable_cache(stream_t *stream,any_t* libinput,int size,int _min,int prefill){
+int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,int prefill){
   int ss=stream->sector_size>1?stream->sector_size:STREAM_BUFFER_SIZE;
   cache_vars_t* c;
 

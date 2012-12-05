@@ -1,10 +1,14 @@
 #ifndef MPXP_MENU_H
 #define MPXP_MENU_H 1
 
+namespace mpxp {
+    struct libinput_t;
+}
+
 struct menu_priv_s;
 typedef struct  menu_s menu_t;
 
-struct  menu_s {
+struct menu_s {
   struct MPContext *ctx;
   void (*draw)(menu_t* menu,mp_image_t* mpi);
   void (*read_cmd)(menu_t* menu,int cmd);
@@ -15,7 +19,7 @@ struct  menu_s {
   int show; // Draw it ?
   int cl; // Close request (user sent a close cmd or
   menu_t* parent;
-  any_t*	libinput;
+  libinput_t*	libinput;
 };
 
 typedef struct menu_info_s {
@@ -44,7 +48,7 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file);
 void menu_unint(void);
 
 /// Open a menu defined in the config file
-menu_t* menu_open(const char *name,any_t*libinput);
+menu_t* menu_open(const char *name,libinput_t*libinput);
 
 void menu_draw(menu_t* menu,mp_image_t* mpi);
 void menu_read_cmd(menu_t* menu,int cmd);

@@ -28,7 +28,7 @@ struct file_priv_t : public Opaque {
 	off_t spos;
 };
 
-static MPXP_Rc __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ file_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
     UNUSED(libinput);
@@ -55,7 +55,7 @@ static MPXP_Rc __FASTCALL__ file_open(any_t*libinput,stream_t *stream,const char
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ stdin_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
+static MPXP_Rc __FASTCALL__ stdin_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);
     return file_open(NULL,stream,"-",flags);
 }

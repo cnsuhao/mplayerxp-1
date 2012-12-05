@@ -35,6 +35,8 @@ using namespace mpxp;
 #include "joystick.h"
 #include "osdep/getch2.h"
 
+namespace mpxp {
+
 #ifndef MP_MAX_KEY_FD
 #define MP_MAX_KEY_FD 10
 #endif
@@ -56,18 +58,17 @@ typedef int (*mp_cmd_func_t)(any_t* ctx,char* dest,int size); // These functions
 typedef void (*mp_close_func_t)(any_t* ctx); // These are used to close the driver
 
 
-typedef struct mp_cmd_bind {
+struct mp_cmd_bind_t {
     int		input[MP_MAX_KEY_DOWN+1];
     const char*	cmd;
-} mp_cmd_bind_t;
+};
 
-typedef struct mp_key_name {
+struct mp_key_name_t {
     int		key;
     const char*	name;
-} mp_key_name_t;
+};
 
-
-typedef struct mp_input_fd {
+struct mp_input_fd_t {
     any_t*		opaque;
     union {
 	mp_key_func_t	key_func;
@@ -78,17 +79,15 @@ typedef struct mp_input_fd {
     // This fields are for the cmd fds
     char*		buffer;
     int			pos,size;
-} mp_input_fd_t;
+};
 
-typedef struct mp_cmd_filter_st mp_cmd_filter_t;
-
-struct mp_cmd_filter_st {
+struct mp_cmd_filter_t {
     mp_input_cmd_filter	filter;
     any_t*		ctx;
     mp_cmd_filter_t*	next;
 };
 
-typedef struct priv_s {
+struct libinput_t {
     char		antiviral_hole[RND_CHAR1];
     // These are the user defined binds
     mp_cmd_bind_t*	cmd_binds;
@@ -111,15 +110,15 @@ typedef struct priv_s {
     int			in_file_fd;
     int			tim; //for getch2
     char		key_str[12];
-}priv_t;
+};
 
-typedef struct input_conf_s {
+struct input_conf_t {
     int		use_joystick,use_lirc,use_lircc;
     unsigned	ar_delay,ar_rate;
     const char*	js_dev;
     const char*	in_file;
     int		print_key_list,print_cmd_list;
-}input_conf_t;
+};
 static input_conf_t libinput_conf = { 1, 1, 1, 100, 8, "/dev/input/js0", NULL, 0, 0 };
 
 /// This array defines all know commands.
@@ -423,8 +422,8 @@ static const char* config_file = "input.conf";
 void (*mp_input_key_cb)(int code) = NULL;
 
 static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd); // This create a copy of a command (used by the auto repeat stuff)
-static int mp_input_print_key_list(any_t*);
-static int mp_input_print_cmd_list(any_t*);
+static int mp_input_print_key_list(libinput_t*);
+static int mp_input_print_cmd_list(libinput_t*);
 
 static const config_t joystick_conf[] = {
   { "on", &libinput_conf.use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of joystick" },
@@ -460,65 +459,65 @@ static const config_t mp_input_opts[] = {
 
 static int mp_input_default_key_func(any_t* fd);
 static int mp_input_default_cmd_func(any_t* fd,char* buf, int l);
-static const char* mp_input_get_key_name(any_t*,int key);
+static const char* mp_input_get_key_name(libinput_t*,int key);
 
-static MPXP_Rc mp_input_add_cmd_fd(any_t* handle,any_t* opaque, int sel, mp_cmd_func_t read_func, mp_close_func_t close_func) {
-    priv_t* priv = (priv_t*)handle;
-    if(priv->num_cmd_fd == MP_MAX_CMD_FD) {
+static MPXP_Rc mp_input_add_cmd_fd(libinput_t* handle,any_t* opaque, int sel, mp_cmd_func_t read_func, mp_close_func_t close_func) {
+    libinput_t& priv = *handle;
+    if(priv.num_cmd_fd == MP_MAX_CMD_FD) {
 	MSG_ERR("Too much command fd, unable to register fd\n");
 	return MPXP_False;
     }
 
-    memset(&priv->cmd_fds[priv->num_cmd_fd],0,sizeof(mp_input_fd_t));
-    priv->cmd_fds[priv->num_cmd_fd].opaque = opaque;
-    priv->cmd_fds[priv->num_cmd_fd].read.cmd_func = read_func ? read_func : mp_input_default_cmd_func;
-    priv->cmd_fds[priv->num_cmd_fd].close_func = close_func;
-    if(!sel) priv->cmd_fds[priv->num_cmd_fd].flags = MP_FD_NO_SELECT;
-    priv->num_cmd_fd++;
+    memset(&priv.cmd_fds[priv.num_cmd_fd],0,sizeof(mp_input_fd_t));
+    priv.cmd_fds[priv.num_cmd_fd].opaque = opaque;
+    priv.cmd_fds[priv.num_cmd_fd].read.cmd_func = read_func ? read_func : mp_input_default_cmd_func;
+    priv.cmd_fds[priv.num_cmd_fd].close_func = close_func;
+    if(!sel) priv.cmd_fds[priv.num_cmd_fd].flags = MP_FD_NO_SELECT;
+    priv.num_cmd_fd++;
 
     return MPXP_Ok;
 }
 
-static void mp_input_rm_cmd_fd(any_t* handle,any_t* fd) {
-    priv_t* priv = (priv_t*)handle;
+static void mp_input_rm_cmd_fd(libinput_t* handle,any_t* fd) {
+    libinput_t& priv = *handle;
     unsigned int i;
 
-    for(i = 0; i < priv->num_cmd_fd; i++) {
-	if(priv->cmd_fds[i].opaque == fd) break;
+    for(i = 0; i < priv.num_cmd_fd; i++) {
+	if(priv.cmd_fds[i].opaque == fd) break;
     }
-    if(i == priv->num_cmd_fd) return;
-    if(priv->cmd_fds[i].close_func) priv->cmd_fds[i].close_func(priv->cmd_fds[i].opaque);
-    if(priv->cmd_fds[i].buffer)     delete priv->cmd_fds[i].buffer;
-    if(i + 1 < priv->num_cmd_fd)    memmove(&priv->cmd_fds[i],&priv->cmd_fds[i+1],(priv->num_cmd_fd-i-1)*sizeof(mp_input_fd_t));
-    priv->num_cmd_fd--;
+    if(i == priv.num_cmd_fd) return;
+    if(priv.cmd_fds[i].close_func) priv.cmd_fds[i].close_func(priv.cmd_fds[i].opaque);
+    if(priv.cmd_fds[i].buffer)     delete priv.cmd_fds[i].buffer;
+    if(i + 1 < priv.num_cmd_fd)    memmove(&priv.cmd_fds[i],&priv.cmd_fds[i+1],(priv.num_cmd_fd-i-1)*sizeof(mp_input_fd_t));
+    priv.num_cmd_fd--;
 }
 
-static void mp_input_rm_key_fd(any_t* handle,any_t* fd) {
-    priv_t* priv = (priv_t*)handle;
+static void mp_input_rm_key_fd(libinput_t* handle,any_t* fd) {
+    libinput_t& priv = *handle;
     unsigned int i;
 
-    for(i = 0; i < priv->num_key_fd; i++) {
-	if(priv->key_fds[i].opaque == fd) break;
+    for(i = 0; i < priv.num_key_fd; i++) {
+	if(priv.key_fds[i].opaque == fd) break;
     }
-    if(i == priv->num_key_fd) return;
-    if(priv->key_fds[i].close_func) priv->key_fds[i].close_func(priv->key_fds[i].opaque);
-    if(i + 1 < priv->num_key_fd)    memmove(&priv->key_fds[i],&priv->key_fds[i+1],(priv->num_key_fd-i-1)*sizeof(mp_input_fd_t));
-    priv->num_key_fd--;
+    if(i == priv.num_key_fd) return;
+    if(priv.key_fds[i].close_func) priv.key_fds[i].close_func(priv.key_fds[i].opaque);
+    if(i + 1 < priv.num_key_fd)    memmove(&priv.key_fds[i],&priv.key_fds[i+1],(priv.num_key_fd-i-1)*sizeof(mp_input_fd_t));
+    priv.num_key_fd--;
 }
 
-static MPXP_Rc mp_input_add_key_fd(any_t* handle,any_t* opaque, int sel, mp_key_func_t read_func, mp_close_func_t close_func) {
-    priv_t* priv = (priv_t*)handle;
-    if(priv->num_key_fd == MP_MAX_KEY_FD) {
+static MPXP_Rc mp_input_add_key_fd(libinput_t* handle,any_t* opaque, int sel, mp_key_func_t read_func, mp_close_func_t close_func) {
+    libinput_t& priv = *handle;
+    if(priv.num_key_fd == MP_MAX_KEY_FD) {
 	MSG_ERR("Too much key fd, unable to register fd\n");
 	return MPXP_False;
     }
 
-    memset(&priv->key_fds[priv->num_key_fd],0,sizeof(mp_input_fd_t));
-    priv->key_fds[priv->num_key_fd].opaque = opaque;
-    priv->key_fds[priv->num_key_fd].read.key_func = read_func ? read_func : mp_input_default_key_func;
-    priv->key_fds[priv->num_key_fd].close_func = close_func;
-    if(!sel) priv->key_fds[priv->num_key_fd].flags |= MP_FD_NO_SELECT;
-    priv->num_key_fd++;
+    memset(&priv.key_fds[priv.num_key_fd],0,sizeof(mp_input_fd_t));
+    priv.key_fds[priv.num_key_fd].opaque = opaque;
+    priv.key_fds[priv.num_key_fd].read.key_func = read_func ? read_func : mp_input_default_key_func;
+    priv.key_fds[priv.num_key_fd].close_func = close_func;
+    if(!sel) priv.key_fds[priv.num_key_fd].flags |= MP_FD_NO_SELECT;
+    priv.num_key_fd++;
 
     return MPXP_Ok;
 }
@@ -638,17 +637,17 @@ mp_cmd_t* mp_input_parse_cmd(const char* _str) {
 }
 
 static int mp_input_default_key_func(any_t* fd) {
-    priv_t* priv = (priv_t*)fd;
+    libinput_t& priv = *reinterpret_cast<libinput_t*>(fd);
     int r,code=0;
     unsigned int l;
     l = 0;
-    if(priv->in_file_fd == 0) { // stdin is handled by getch2
-	code = getch2(priv->tim);
+    if(priv.in_file_fd == 0) { // stdin is handled by getch2
+	code = getch2(priv.tim);
 	if(code < 0) code = MP_INPUT_NOTHING;
     } else {
-	fcntl(priv->in_file_fd,F_SETFL,fcntl(priv->in_file_fd,F_GETFL)|O_NONBLOCK);
+	fcntl(priv.in_file_fd,F_SETFL,fcntl(priv.in_file_fd,F_GETFL)|O_NONBLOCK);
 	while(l < sizeof(int)) {
-	    r = read(priv->in_file_fd,(&code)+l,sizeof(int)-l);
+	    r = read(priv.in_file_fd,(&code)+l,sizeof(int)-l);
 	    if(r <= 0) break;
 	    l +=r;
 	}
@@ -726,10 +725,10 @@ static int mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 }
 
 static int mp_input_default_cmd_func(any_t* fd,char* buf, int l) {
-    priv_t* priv=(priv_t*)fd;
-    fcntl(priv->in_file_fd,F_SETFL,fcntl(priv->in_file_fd,F_GETFL)|O_NONBLOCK);
+    libinput_t& priv=*reinterpret_cast<libinput_t*>(fd);
+    fcntl(priv.in_file_fd,F_SETFL,fcntl(priv.in_file_fd,F_GETFL)|O_NONBLOCK);
     while(1) {
-	int r = read(priv->in_file_fd,buf,l);
+	int r = read(priv.in_file_fd,buf,l);
 	// Error ?
 	if(r < 0) {
 	    if(errno == EINTR) continue;
@@ -741,15 +740,15 @@ static int mp_input_default_cmd_func(any_t* fd,char* buf, int l) {
     }
 }
 
-void mp_input_add_cmd_filter(any_t* handle,mp_input_cmd_filter func, any_t* ctx) {
-    priv_t* priv = (priv_t*)handle;
+void mp_input_add_cmd_filter(libinput_t* handle,mp_input_cmd_filter func,any_t* ctx) {
+    libinput_t& priv = *handle;
     mp_cmd_filter_t* filter = new(zeromem) mp_cmd_filter_t;
 
     filter->filter = func;
     filter->ctx = ctx;
-    filter->next = priv->cmd_filters;
-    priv->cmd_filters = filter;
-    fill_false_pointers(priv->antiviral_hole,offsetof(priv_t,cmd_binds)-offsetof(priv_t,antiviral_hole));
+    filter->next = priv.cmd_filters;
+    priv.cmd_filters = filter;
+    fill_false_pointers(priv.antiviral_hole,offsetof(libinput_t,cmd_binds)-offsetof(libinput_t,antiviral_hole));
 }
 
 static const char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {
@@ -773,76 +772,76 @@ static const char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,
     return binds[j].cmd;
 }
 
-mp_cmd_t* mp_input_get_cmd_from_keys(any_t* handle,int n,int* keys) {
-    priv_t* priv = (priv_t*)handle;
+mp_cmd_t* mp_input_get_cmd_from_keys(libinput_t* handle,int n,int* keys) {
+    libinput_t& priv = *handle;
     const char* cmd = NULL;
     mp_cmd_t* ret;
 
-    if(priv->cmd_binds) cmd = mp_input_find_bind_for_key(priv->cmd_binds,n,keys);
+    if(priv.cmd_binds) cmd = mp_input_find_bind_for_key(priv.cmd_binds,n,keys);
     if(cmd == NULL)     cmd = mp_input_find_bind_for_key(def_cmd_binds,n,keys);
     if(cmd == NULL) {
-	MSG_WARN("No bind found for key %s",mp_input_get_key_name(priv,keys[0]));
+	MSG_WARN("No bind found for key %s",mp_input_get_key_name(&priv,keys[0]));
 	if(n > 1) {
 	    int s;
-	    for(s=1; s < n; s++) MSG_WARN("-%s",mp_input_get_key_name(priv,keys[s]));
+	    for(s=1; s < n; s++) MSG_WARN("-%s",mp_input_get_key_name(&priv,keys[s]));
 	}
 	MSG_WARN("                         \n");
 	return NULL;
     }
     ret =  mp_input_parse_cmd(cmd);
     if(!ret) {
-	MSG_ERR("Invalid command for binded key %s",mp_input_get_key_name(priv,priv->key_down[0]));
-	if(priv->num_key_down > 1) {
+	MSG_ERR("Invalid command for binded key %s",mp_input_get_key_name(&priv,priv.key_down[0]));
+	if(priv.num_key_down > 1) {
 	    unsigned int s;
-	    for(s=1; s < priv->num_key_down; s++) MSG_ERR("-%s",mp_input_get_key_name(priv,priv->key_down[s]));
+	    for(s=1; s < priv.num_key_down; s++) MSG_ERR("-%s",mp_input_get_key_name(&priv,priv.key_down[s]));
 	}
 	MSG_ERR(" : %s             \n",cmd);
     }
     return ret;
 }
 
-static int mp_input_read_key_code(any_t* handle,int tim) {
-    priv_t* priv = (priv_t*)handle;
+static int mp_input_read_key_code(libinput_t* handle,int tim) {
+    libinput_t& priv = *handle;
     int n=0;
     unsigned i;
 
-    if(priv->num_key_fd == 0) return MP_INPUT_NOTHING;
+    if(priv.num_key_fd == 0) return MP_INPUT_NOTHING;
 
     // Remove fd marked as dead and build the fd_set
     // n == number of fd's to be select() checked
-    for(i = 0; (unsigned int)i < priv->num_key_fd; i++) {
-	if( (priv->key_fds[i].flags & MP_FD_DEAD) ) {
-	    mp_input_rm_key_fd(priv,priv->key_fds[i].opaque);
+    for(i = 0; (unsigned int)i < priv.num_key_fd; i++) {
+	if( (priv.key_fds[i].flags & MP_FD_DEAD) ) {
+	    mp_input_rm_key_fd(&priv,priv.key_fds[i].opaque);
 	    i--;
 	    continue;
-	} else if(priv->key_fds[i].flags & MP_FD_NO_SELECT) continue;
+	} else if(priv.key_fds[i].flags & MP_FD_NO_SELECT) continue;
 	n++;
     }
 
-    if(priv->num_key_fd == 0) return MP_INPUT_NOTHING;
-    for(i = 0; i < priv->num_key_fd; i++) {
+    if(priv.num_key_fd == 0) return MP_INPUT_NOTHING;
+    for(i = 0; i < priv.num_key_fd; i++) {
 	int code = -1;
-	priv->tim = tim;
-	code = ((mp_key_func_t)priv->key_fds[i].read.key_func)(priv->key_fds[i].opaque);
+	priv.tim = tim;
+	code = ((mp_key_func_t)priv.key_fds[i].read.key_func)(priv.key_fds[i].opaque);
 	if(code >= 0) return code;
 
 	if(code == MP_INPUT_ERROR) MSG_ERR("Error on key input fd\n");
 	else if(code == MP_INPUT_DEAD) {
 	    MSG_ERR("Dead key input on fd\n");
-	    mp_input_rm_key_fd(priv,priv->key_fds[i].opaque);
+	    mp_input_rm_key_fd(&priv,priv.key_fds[i].opaque);
 	}
     }
     return MP_INPUT_NOTHING;
 }
 
-static mp_cmd_t* mp_input_read_keys(any_t*handle,int tim) {
-    priv_t* priv = (priv_t*)handle;
-    int code = mp_input_read_key_code(priv,tim);
+static mp_cmd_t* mp_input_read_keys(libinput_t*handle,int tim) {
+    libinput_t& priv = *handle;
+    int code = mp_input_read_key_code(&priv,tim);
     unsigned int j;
     mp_cmd_t* ret;
 
     if(mp_input_key_cb) {
-	for( ; code >= 0 ;   code = mp_input_read_key_code(priv,0) ) {
+	for( ; code >= 0 ;   code = mp_input_read_key_code(&priv,0) ) {
 	    if(code & MP_KEY_DOWN) continue;
 	    code &= ~(MP_KEY_DOWN|MP_NO_REPEAT_KEY);
 	    mp_input_key_cb(code);
@@ -850,103 +849,103 @@ static mp_cmd_t* mp_input_read_keys(any_t*handle,int tim) {
 	return NULL;
     }
 
-    for( ; code >= 0 ;   code = mp_input_read_key_code(priv,0) ) {
+    for( ; code >= 0 ;   code = mp_input_read_key_code(&priv,0) ) {
 	// key pushed
 	if(code & MP_KEY_DOWN) {
-	    if(priv->num_key_down > MP_MAX_KEY_DOWN) {
+	    if(priv.num_key_down > MP_MAX_KEY_DOWN) {
 		MSG_ERR("Too much key down at the same time\n");
 		continue;
 	    }
 	    code &= ~MP_KEY_DOWN;
 	    // Check if we don't already have this key as pushed
-	    for(j = 0; j < priv->num_key_down; j++) {
-		if(priv->key_down[j] == code)
+	    for(j = 0; j < priv.num_key_down; j++) {
+		if(priv.key_down[j] == code)
 		break;
 	    }
-	    if(j != priv->num_key_down) continue;
-	    priv->key_down[priv->num_key_down] = code;
-	    priv->num_key_down++;
-	    priv->last_key_down = GetTimer();
-	    priv->ar_state = 0;
+	    if(j != priv.num_key_down) continue;
+	    priv.key_down[priv.num_key_down] = code;
+	    priv.num_key_down++;
+	    priv.last_key_down = GetTimer();
+	    priv.ar_state = 0;
 	    continue;
 	}
 	// key released
 	// Check if the key is in the down key, driver which can't send push event
 	// send only release event
-	for(j = 0; j < priv->num_key_down; j++) {
-	    if(priv->key_down[j] == code) break;
+	for(j = 0; j < priv.num_key_down; j++) {
+	    if(priv.key_down[j] == code) break;
 	}
-	if(j == priv->num_key_down) { // key was not in the down keys : add it
-	    if(priv->num_key_down > MP_MAX_KEY_DOWN) {
+	if(j == priv.num_key_down) { // key was not in the down keys : add it
+	    if(priv.num_key_down > MP_MAX_KEY_DOWN) {
 		MSG_ERR("Too much key down at the same time\n");
 		continue;
 	    }
-	    priv->key_down[priv->num_key_down] = code;
-	    priv->num_key_down++;
-	    priv->last_key_down = 1;
+	    priv.key_down[priv.num_key_down] = code;
+	    priv.num_key_down++;
+	    priv.last_key_down = 1;
 	}
 	// We ignore key from last combination
-	ret = priv->last_key_down ? mp_input_get_cmd_from_keys(priv,priv->num_key_down,priv->key_down):NULL;
+	ret = priv.last_key_down ? mp_input_get_cmd_from_keys(&priv,priv.num_key_down,priv.key_down):NULL;
 	// Remove the key
-	if(j+1 < priv->num_key_down) memmove(&priv->key_down[j],&priv->key_down[j+1],(priv->num_key_down-(j+1))*sizeof(int));
-	priv->num_key_down--;
-	priv->last_key_down = 0;
-	priv->ar_state = -1;
-	if(priv->ar_cmd) {
-	    mp_cmd_free(priv->ar_cmd);
-	    priv->ar_cmd = NULL;
+	if(j+1 < priv.num_key_down) memmove(&priv.key_down[j],&priv.key_down[j+1],(priv.num_key_down-(j+1))*sizeof(int));
+	priv.num_key_down--;
+	priv.last_key_down = 0;
+	priv.ar_state = -1;
+	if(priv.ar_cmd) {
+	    mp_cmd_free(priv.ar_cmd);
+	    priv.ar_cmd = NULL;
 	}
 	if(ret) return ret;
     }
 
     // No input : autorepeat ?
-    if(libinput_conf.ar_rate > 0 && priv->ar_state >=0 && priv->num_key_down > 0 && !(priv->key_down[priv->num_key_down-1]&MP_NO_REPEAT_KEY)) {
+    if(libinput_conf.ar_rate > 0 && priv.ar_state >=0 && priv.num_key_down > 0 && !(priv.key_down[priv.num_key_down-1]&MP_NO_REPEAT_KEY)) {
 	unsigned int t = GetTimer();
 	// First time : wait delay
-	if(priv->ar_state == 0 && (t - priv->last_key_down) >= libinput_conf.ar_delay*1000) {
-	    priv->ar_cmd = mp_input_get_cmd_from_keys(priv,priv->num_key_down,priv->key_down);
-	    if(!priv->ar_cmd) {
-		priv->ar_state = -1;
+	if(priv.ar_state == 0 && (t - priv.last_key_down) >= libinput_conf.ar_delay*1000) {
+	    priv.ar_cmd = mp_input_get_cmd_from_keys(&priv,priv.num_key_down,priv.key_down);
+	    if(!priv.ar_cmd) {
+		priv.ar_state = -1;
 		return NULL;
 	    }
-	    priv->ar_state = 1;
-	    priv->last_ar = t;
-	    return mp_cmd_clone(priv->ar_cmd);
+	    priv.ar_state = 1;
+	    priv.last_ar = t;
+	    return mp_cmd_clone(priv.ar_cmd);
 	    // Then send rate / sec event
-	} else if(priv->ar_state == 1 && (t -priv->last_ar) >= 1000000/libinput_conf.ar_rate) {
-	    priv->last_ar = t;
-	    return mp_cmd_clone(priv->ar_cmd);
+	} else if(priv.ar_state == 1 && (t -priv.last_ar) >= 1000000/libinput_conf.ar_rate) {
+	    priv.last_ar = t;
+	    return mp_cmd_clone(priv.ar_cmd);
 	}
     }
     return NULL;
 }
 
-static mp_cmd_t* mp_input_read_cmds(any_t* handle) {
-    priv_t* priv = (priv_t*)handle;
+static mp_cmd_t* mp_input_read_cmds(libinput_t* handle) {
+    libinput_t& priv = *handle;
     int n = 0,got_cmd = 0;
     unsigned i;
     mp_cmd_t* ret;
     static int last_loop = 0;
 
-    if(priv->num_cmd_fd == 0) return NULL;
+    if(priv.num_cmd_fd == 0) return NULL;
 
-    for(i = 0; (unsigned int)i < priv->num_cmd_fd ; i++) {
-	if(priv->cmd_fds[i].flags&MP_FD_EOF) {
-	    mp_input_rm_cmd_fd(priv,priv->cmd_fds[i].opaque);
+    for(i = 0; (unsigned int)i < priv.num_cmd_fd ; i++) {
+	if(priv.cmd_fds[i].flags&MP_FD_EOF) {
+	    mp_input_rm_cmd_fd(&priv,priv.cmd_fds[i].opaque);
 	    i--;
 	    continue;
-	} else if(priv->cmd_fds[i].flags & MP_FD_NO_SELECT) continue;
-	if(priv->cmd_fds[i].flags & MP_FD_GOT_CMD) got_cmd = 1;
+	} else if(priv.cmd_fds[i].flags & MP_FD_NO_SELECT) continue;
+	if(priv.cmd_fds[i].flags & MP_FD_GOT_CMD) got_cmd = 1;
 	n++;
     }
-    if(priv->num_cmd_fd == 0) return NULL;
-    for(i = 0; i < priv->num_cmd_fd; i++) {
+    if(priv.num_cmd_fd == 0) return NULL;
+    for(i = 0; i < priv.num_cmd_fd; i++) {
 	int r = 0;
 	char* cmd;
-	r = mp_input_read_cmd(&priv->cmd_fds[i],&cmd);
+	r = mp_input_read_cmd(&priv.cmd_fds[i],&cmd);
 	if(r < 0) {
 	    if(r == MP_INPUT_ERROR) MSG_ERR("Error on cmd fd\n");
-	    else if(r == MP_INPUT_DEAD) priv->cmd_fds[i].flags |= MP_FD_DEAD;
+	    else if(r == MP_INPUT_DEAD) priv.cmd_fds[i].flags |= MP_FD_DEAD;
 	    continue;
 	}
 	ret = mp_input_parse_cmd(cmd);
@@ -959,26 +958,26 @@ static mp_cmd_t* mp_input_read_cmds(any_t* handle) {
     return NULL;
 }
 
-MPXP_Rc mp_input_queue_cmd(any_t* handle,mp_cmd_t* cmd) {
-    priv_t* priv = (priv_t*)handle;
-    if(priv->cmd_queue_length  >= CMD_QUEUE_SIZE) return MPXP_False;
-    priv->cmd_queue[priv->cmd_queue_end] = cmd;
-    priv->cmd_queue_end = (priv->cmd_queue_end + 1) % CMD_QUEUE_SIZE;
-    priv->cmd_queue_length++;
+MPXP_Rc mp_input_queue_cmd(libinput_t* handle,mp_cmd_t* cmd) {
+    libinput_t& priv = *handle;
+    if(priv.cmd_queue_length  >= CMD_QUEUE_SIZE) return MPXP_False;
+    priv.cmd_queue[priv.cmd_queue_end] = cmd;
+    priv.cmd_queue_end = (priv.cmd_queue_end + 1) % CMD_QUEUE_SIZE;
+    priv.cmd_queue_length++;
     return MPXP_Ok;
 }
 
-static mp_cmd_t* mp_input_get_queued_cmd(any_t* handle,int peek_only) {
-    priv_t* priv = (priv_t*)handle;
+static mp_cmd_t* mp_input_get_queued_cmd(libinput_t* handle,int peek_only) {
+    libinput_t& priv = *handle;
     mp_cmd_t* ret;
 
-    if(priv->cmd_queue_length == 0) return NULL;
+    if(priv.cmd_queue_length == 0) return NULL;
 
-    ret = priv->cmd_queue[priv->cmd_queue_start];
+    ret = priv.cmd_queue[priv.cmd_queue_start];
 
     if (!peek_only) {
-	priv->cmd_queue_length--;
-	priv->cmd_queue_start = (priv->cmd_queue_start + 1) % CMD_QUEUE_SIZE;
+	priv.cmd_queue_length--;
+	priv.cmd_queue_start = (priv.cmd_queue_start + 1) % CMD_QUEUE_SIZE;
     }
      return ret;
 }
@@ -987,26 +986,26 @@ static mp_cmd_t* mp_input_get_queued_cmd(any_t* handle,int peek_only) {
  * \param peek_only when set, the returned command stays in the queue.
  * Do not mp_free the returned cmd whe you set this!
  */
-mp_cmd_t* mp_input_get_cmd(any_t*handle,int tim, int paused, int peek_only) {
-    priv_t* priv = (priv_t*)handle;
+mp_cmd_t* mp_input_get_cmd(libinput_t*handle,int tim, int paused, int peek_only) {
+    libinput_t& priv = *handle;
     mp_cmd_t* ret = NULL;
     mp_cmd_filter_t* cf;
     int from_queue;
 
     from_queue = 1;
-    ret = mp_input_get_queued_cmd(priv,peek_only);
+    ret = mp_input_get_queued_cmd(&priv,peek_only);
     if(!ret) {
 	from_queue = 0;
-	ret = mp_input_read_keys(priv,tim);
-	if(!ret) ret = mp_input_read_cmds(priv);
+	ret = mp_input_read_keys(&priv,tim);
+	if(!ret) ret = mp_input_read_cmds(&priv);
     }
     if(!ret) return NULL;
 
-    for(cf = priv->cmd_filters ; cf ; cf = cf->next) {
+    for(cf = priv.cmd_filters ; cf ; cf = cf->next) {
 	if(cf->filter(ret,paused,cf->ctx)) return NULL;
     }
 
-    if (!from_queue && peek_only) mp_input_queue_cmd(priv,ret);
+    if (!from_queue && peek_only) mp_input_queue_cmd(&priv,ret);
 
     return ret;
 }
@@ -1044,8 +1043,8 @@ static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd) {
     return ret;
 }
 
-static const char* mp_input_get_key_name(any_t* handle,int key) {
-    priv_t* priv = (priv_t*)handle;
+static const char* mp_input_get_key_name(libinput_t* handle,int key) {
+    libinput_t& priv = *handle;
     unsigned i;
 
     for(i = 0; key_names[i].name != NULL; i++) {
@@ -1053,13 +1052,13 @@ static const char* mp_input_get_key_name(any_t* handle,int key) {
     }
 
     if(isascii(key)) {
-	snprintf(priv->key_str,12,"%c",(char)key);
-	return priv->key_str;
+	snprintf(priv.key_str,12,"%c",(char)key);
+	return priv.key_str;
     }
 
     // Print the hex key code
-    snprintf(priv->key_str,12,"%#-8x",key);
-    return priv->key_str;
+    snprintf(priv.key_str,12,"%#-8x",key);
+    return priv.key_str;
 }
 
 static int mp_input_get_key_from_name(char* name) {
@@ -1097,8 +1096,8 @@ static int mp_input_get_input_from_name(char* name,int* keys) {
     return 1;
 }
 
-static void mp_input_bind_keys(any_t* handle,int keys[MP_MAX_KEY_DOWN+1], char* cmd) {
-    priv_t* priv = (priv_t*)handle;
+static void mp_input_bind_keys(libinput_t* handle,int keys[MP_MAX_KEY_DOWN+1], char* cmd) {
+    libinput_t& priv = *handle;
     int i = 0,j;
     mp_cmd_bind_t* _bind = NULL;
 
@@ -1107,20 +1106,20 @@ static void mp_input_bind_keys(any_t* handle,int keys[MP_MAX_KEY_DOWN+1], char* 
     assert(cmd != NULL);
 #endif
 
-    if(priv->cmd_binds) {
-	for(i = 0; priv->cmd_binds[i].cmd != NULL ; i++) {
-	    for(j = 0 ; priv->cmd_binds[i].input[j] == keys[j]  && keys[j] != 0 ; j++) /* NOTHING */;
-	    if(keys[j] == 0 && priv->cmd_binds[i].input[j] == 0 ) {
-		_bind = &priv->cmd_binds[i];
+    if(priv.cmd_binds) {
+	for(i = 0; priv.cmd_binds[i].cmd != NULL ; i++) {
+	    for(j = 0 ; priv.cmd_binds[i].input[j] == keys[j]  && keys[j] != 0 ; j++) /* NOTHING */;
+	    if(keys[j] == 0 && priv.cmd_binds[i].input[j] == 0 ) {
+		_bind = &priv.cmd_binds[i];
 		break;
 	    }
 	}
     }
 
     if(!_bind) {
-	priv->cmd_binds = (mp_cmd_bind_t*)mp_realloc(priv->cmd_binds,(i+2)*sizeof(mp_cmd_bind_t));
-	memset(&priv->cmd_binds[i],0,2*sizeof(mp_cmd_bind_t));
-	_bind = &priv->cmd_binds[i];
+	priv.cmd_binds = (mp_cmd_bind_t*)mp_realloc(priv.cmd_binds,(i+2)*sizeof(mp_cmd_bind_t));
+	memset(&priv.cmd_binds[i],0,2*sizeof(mp_cmd_bind_t));
+	_bind = &priv.cmd_binds[i];
     }
     if(_bind->cmd) delete _bind->cmd;
     _bind->cmd = mp_strdup(cmd);
@@ -1137,8 +1136,8 @@ static void mp_input_free_binds(mp_cmd_bind_t* binds) {
 #define BS_MAX 256
 #define SPACE_CHAR " \n\r\t"
 
-static int mp_input_parse_config(any_t* handle,const char *file) {
-    priv_t* priv = (priv_t*)handle;
+static int mp_input_parse_config(libinput_t* handle,const char *file) {
+    libinput_t& priv = *handle;
     int fd;
     int bs = 0,r,eof = 0,comments = 0;
     char *iter,*end;
@@ -1175,7 +1174,7 @@ static int mp_input_parse_config(any_t* handle,const char *file) {
 	// Empty buffer : return
 	if(bs <= 1) {
 	    MSG_INFO("Input config file %s parsed : %d binds\n",file,n_binds);
-	    if(binds) priv->cmd_binds = binds;
+	    if(binds) priv.cmd_binds = binds;
 	    close(fd);
 	    return 1;
 	}
@@ -1235,8 +1234,8 @@ static int mp_input_parse_config(any_t* handle,const char *file) {
 	    // Found new line
 	    if(iter[0] == '\n' || iter[0] == '\r') {
 		int i;
-		MSG_ERR("No command found for key %s" ,mp_input_get_key_name(priv,keys[0]));
-		for(i = 1; keys[i] != 0 ; i++) MSG_ERR("-%s",mp_input_get_key_name(priv,keys[i]));
+		MSG_ERR("No command found for key %s" ,mp_input_get_key_name(&priv,keys[0]));
+		for(i = 1; keys[i] != 0 ; i++) MSG_ERR("-%s",mp_input_get_key_name(&priv,keys[i]));
 		MSG_ERR("\n");
 		keys[0] = 0;
 		if(iter > buffer) {
@@ -1261,7 +1260,7 @@ static int mp_input_parse_config(any_t* handle,const char *file) {
 	    strncpy(cmd,iter,end-iter);
 	    cmd[end-iter] = '\0';
 	    //printf("Set bind %d => %s\n",keys[0],cmd);
-	    mp_input_bind_keys(priv,keys,cmd);
+	    mp_input_bind_keys(&priv,keys,cmd);
 	    n_binds++;
 	    keys[0] = 0;
 	    end++;
@@ -1276,8 +1275,8 @@ static int mp_input_parse_config(any_t* handle,const char *file) {
     return 0;
 }
 
-static void mp_input_init(any_t* handle) {
-    priv_t* priv = (priv_t*)handle;
+static void mp_input_init(libinput_t* handle) {
+    libinput_t& priv = *handle;
     const char* file;
 
     file = config_file[0] != '/' ? get_path(config_file) : config_file;
@@ -1293,14 +1292,14 @@ static void mp_input_init(any_t* handle) {
 	any_t* joystick_fd;
 	joystick_fd = mp_input_joystick_open(libinput_conf.js_dev);
 	if(!joystick_fd) MSG_ERR("Can't init input joystick with using: %s\n",libinput_conf.js_dev);
-	else		 mp_input_add_key_fd(priv,joystick_fd,1,mp_input_joystick_read,(mp_close_func_t)mp_input_joystick_close);
+	else		 mp_input_add_key_fd(&priv,joystick_fd,1,mp_input_joystick_read,(mp_close_func_t)mp_input_joystick_close);
     }
 #endif
 
 #ifdef HAVE_LIRC
     if(libinput_conf.use_lirc) {
 	any_t* lirc_fd = mp_input_lirc_open();
-	if(lirc_fd) mp_input_add_cmd_fd(priv,lirc_fd,0,mp_input_lirc_read_cmd,mp_input_lirc_close);
+	if(lirc_fd) mp_input_add_cmd_fd(&priv,lirc_fd,0,mp_input_lirc_read_cmd,mp_input_lirc_close);
     }
 #endif
 
@@ -1314,41 +1313,41 @@ static void mp_input_init(any_t* handle) {
 	struct stat st;
 	if(stat(libinput_conf.in_file,&st)) MSG_ERR("Can't stat %s: %s\n",libinput_conf.in_file,strerror(errno));
 	else {
-	    priv->in_file_fd = open(libinput_conf.in_file,(S_ISFIFO(st.st_mode)?O_RDWR:O_RDONLY)|O_NONBLOCK);
-	    if(priv->in_file_fd >= 0) mp_input_add_cmd_fd(priv,priv,1,NULL,(mp_close_func_t)close);
+	    priv.in_file_fd = open(libinput_conf.in_file,(S_ISFIFO(st.st_mode)?O_RDWR:O_RDONLY)|O_NONBLOCK);
+	    if(priv.in_file_fd >= 0) mp_input_add_cmd_fd(&priv,&priv,1,NULL,(mp_close_func_t)close);
 	    else MSG_ERR("Can't open %s: %s\n",libinput_conf.in_file,strerror(errno));
 	}
     }
-    priv->in_file_fd = 0;
+    priv.in_file_fd = 0;
     getch2_enable();  // prepare stdin for hotkeys...
-    mp_input_add_key_fd(priv,priv,1,NULL,(mp_close_func_t)close);
+    mp_input_add_key_fd(&priv,&priv,1,NULL,(mp_close_func_t)close);
 }
 
-static void mp_input_uninit(any_t* handle) {
-    priv_t* priv = (priv_t*)handle;
+static void mp_input_uninit(libinput_t* handle) {
+    libinput_t& priv = *handle;
     unsigned int i;
 
-    for(i=0; i < priv->num_key_fd; i++) {
-	if(priv->key_fds[i].close_func) priv->key_fds[i].close_func(priv->key_fds[i].opaque);
+    for(i=0; i < priv.num_key_fd; i++) {
+	if(priv.key_fds[i].close_func) priv.key_fds[i].close_func(priv.key_fds[i].opaque);
     }
 
-    for(i=0; i < priv->num_cmd_fd; i++) {
-	if(priv->cmd_fds[i].close_func) priv->cmd_fds[i].close_func(priv->cmd_fds[i].opaque);
+    for(i=0; i < priv.num_cmd_fd; i++) {
+	if(priv.cmd_fds[i].close_func) priv.cmd_fds[i].close_func(priv.cmd_fds[i].opaque);
     }
 
-    if(priv->cmd_binds) {
+    if(priv.cmd_binds) {
 	for(i=0;;i++) {
-	    if(priv->cmd_binds[i].cmd != NULL) delete priv->cmd_binds[i].cmd;
+	    if(priv.cmd_binds[i].cmd != NULL) delete priv.cmd_binds[i].cmd;
 	    else break;
 	}
-	delete priv->cmd_binds;
-	priv->cmd_binds=NULL;
+	delete priv.cmd_binds;
+	priv.cmd_binds=NULL;
     }
-    if(priv->in_file_fd==0) getch2_disable();
+    if(priv.in_file_fd==0) getch2_disable();
 }
 
-any_t* mp_input_open(void) {
-    priv_t* priv=new(zeromem) priv_t;
+libinput_t* mp_input_open(void) {
+    libinput_t* priv=new(zeromem) libinput_t;
     priv->ar_state=-1;
     priv->in_file_fd=-1;
     mp_input_init(priv);
@@ -1357,7 +1356,7 @@ any_t* mp_input_open(void) {
     return priv;
 }
 
-void mp_input_close(any_t* handle) {
+void mp_input_close(libinput_t* handle) {
     mp_input_uninit(handle);
     delete handle;
 }
@@ -1366,19 +1365,19 @@ void mp_input_register_options(m_config_t* cfg) {
     m_config_register_options(cfg,mp_input_opts);
 }
 
-void mp_input_print_keys(any_t*handle) {
+void mp_input_print_keys(libinput_t*handle) {
     unsigned i;
     UNUSED(handle);
     MSG_INFO("List of available KEYS:\n");
     for(i= 0; key_names[i].name != NULL ; i++) MSG_INFO("%s\n",key_names[i].name);
 }
 
-static int mp_input_print_key_list(any_t*handle) {
+static int mp_input_print_key_list(libinput_t*handle) {
     mp_input_print_keys(handle);
     exit(0);
 }
 
-void mp_input_print_binds(any_t*handle) {
+void mp_input_print_binds(libinput_t*handle) {
     unsigned i,j;
     MSG_INFO("List of available key bindings:\n");
     for(i=0; def_cmd_binds[i].cmd != NULL ; i++) {
@@ -1389,7 +1388,7 @@ void mp_input_print_binds(any_t*handle) {
     }
 }
 
-void mp_input_print_cmds(any_t*handle) {
+void mp_input_print_cmds(libinput_t*handle) {
     const mp_cmd_t *cmd;
     int i,j;
     const char* type;
@@ -1419,13 +1418,13 @@ void mp_input_print_cmds(any_t*handle) {
     }
 }
 
-static int mp_input_print_cmd_list(any_t*handle) {
+static int mp_input_print_cmd_list(libinput_t*handle) {
     mp_input_print_cmds(handle);
     exit(0);
 }
 
-MPXP_Rc mp_input_check_interrupt(any_t* handle,int tim) {
-    priv_t* priv = (priv_t*)handle;
+MPXP_Rc mp_input_check_interrupt(libinput_t* handle,int tim) {
+    libinput_t* priv = (libinput_t*)handle;
     mp_cmd_t* cmd;
     if((cmd = mp_input_get_cmd(handle,tim,0,1)) == NULL) return MPXP_False;
     switch(cmd->id) {
@@ -1442,3 +1441,5 @@ MPXP_Rc mp_input_check_interrupt(any_t* handle,int tim) {
     mp_cmd_free(cmd);
     return MPXP_False;
 }
+
+} // namespace mpxp

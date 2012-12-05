@@ -88,7 +88,7 @@ static const stream_driver_t *sdrivers[] =
     NULL
 };
 
-stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler)
+stream_t* __FASTCALL__ open_stream(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler)
 {
     unsigned i,done;
     unsigned mrl_len;

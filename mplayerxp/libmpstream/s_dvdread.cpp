@@ -610,7 +610,7 @@ static void __FASTCALL__ dvd_close(dvd_priv_t *d) {
   dvd_angle=1;
 }
 
-static MPXP_Rc __FASTCALL__ __dvdread_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ __dvdread_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
     int dvd_title,last_title=-1;

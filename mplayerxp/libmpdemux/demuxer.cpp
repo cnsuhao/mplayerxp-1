@@ -15,6 +15,7 @@ using namespace mpxp;
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
 
+#include "input2/input.h"
 #include "osdep/fastmemcpy.h"
 #include "libvo/sub.h"
 #include "libao2/afmt.h"
@@ -367,7 +368,7 @@ Demuxer* Demuxer::open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
   stream_t *as = NULL,*ss = NULL;
   Demuxer *vd,*ad = NULL,*sd = NULL;
   int afmt = 0,sfmt = 0;
-  any_t* libinput=NULL;
+  libinput_t* libinput=NULL;
 #ifdef HAVE_STREAMIN
     libinput=vs->streaming_strl->libinput;
 #endif

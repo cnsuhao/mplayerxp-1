@@ -94,7 +94,7 @@ static const struct {
 	{ "misc/ultravox", Demuxer::Type_NSV}
 };
 
-streaming_ctrl_t * streaming_ctrl_new(any_t*libinput) {
+streaming_ctrl_t * streaming_ctrl_new(libinput_t*libinput) {
 	streaming_ctrl_t *streaming_ctrl;
 	streaming_ctrl = (streaming_ctrl_t*)mp_mallocz(sizeof(streaming_ctrl_t));
 	if( streaming_ctrl==NULL ) {
@@ -167,7 +167,7 @@ check4proxies( URL_t *url ) {
 	return url_out;
 }
 
-int http_send_request(any_t* libinput, URL_t *url, off_t pos ) {
+int http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
 	HTTP_header_t *http_hdr;
 	URL_t *server_url;
 	char str[256];
@@ -615,7 +615,7 @@ nop_streaming_seek( int fd, off_t pos, streaming_ctrl_t *stream_ctrl ) {
 }
 
 int
-nop_streaming_start(any_t* libinput, stream_t *stream ) {
+nop_streaming_start(libinput_t* libinput, stream_t *stream ) {
 	HTTP_header_t *http_hdr = NULL;
 	char *next_url=NULL;
 	URL_t *rd_url=NULL;
@@ -714,7 +714,7 @@ pnm_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctr
 }
 
 
-int pnm_streaming_start(any_t* libinput, stream_t *stream ) {
+int pnm_streaming_start(libinput_t* libinput, stream_t *stream ) {
 	int fd;
 	pnm_t *pnm;
 	if( stream==NULL ) return -1;
@@ -835,7 +835,7 @@ rtp_streaming_start( stream_t *stream, int raw_udp ) {
 }
 #endif
 
-int streaming_start(any_t* libinput,stream_t *stream, int *demuxer_type, URL_t *url) {
+int streaming_start(libinput_t* libinput,stream_t *stream, int *demuxer_type, URL_t *url) {
 	int ret;
 	if( stream==NULL ) return -1;
 

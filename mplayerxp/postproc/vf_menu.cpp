@@ -34,7 +34,7 @@ struct vf_priv_t {
   menu_t* root;
   menu_t* current;
   int passthrough;
-  any_t*  libinput;
+  libinput_t*  libinput;
 };
 
 static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi);

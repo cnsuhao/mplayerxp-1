@@ -486,7 +486,7 @@ static void __FASTCALL__ asx_parse_ref(ASX_Parser_t* parser, char** attribs, pla
 
 }
 
-static play_tree_t* __FASTCALL__ asx_parse_entryref(any_t* libinput,ASX_Parser_t* parser,char* buffer,char** _attribs) {
+static play_tree_t* __FASTCALL__ asx_parse_entryref(libinput_t* libinput,ASX_Parser_t* parser,char* buffer,char** _attribs) {
   play_tree_t* pt;
   char *href;
   stream_t* stream;
@@ -561,7 +561,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entry(ASX_Parser_t* parser,const char
 
 }
 
-static play_tree_t* __FASTCALL__ asx_parse_repeat(any_t*libinput,ASX_Parser_t* parser,const char* buffer,char** _attribs) {
+static play_tree_t* __FASTCALL__ asx_parse_repeat(libinput_t*libinput,ASX_Parser_t* parser,const char* buffer,char** _attribs) {
   char *element,*body,**attribs;
   play_tree_t *repeat, *list=NULL, *entry;
   char* count;
@@ -627,7 +627,7 @@ static play_tree_t* __FASTCALL__ asx_parse_repeat(any_t*libinput,ASX_Parser_t* p
 
 }
 
-play_tree_t* __FASTCALL__ asx_parser_build_tree(any_t*libinput,const char* buffer,int deep) {
+play_tree_t* __FASTCALL__ asx_parser_build_tree(libinput_t*libinput,const char* buffer,int deep) {
   char *element,*asx_body,**asx_attribs,*body, **attribs;
   int r;
   play_tree_t *asx,*entry,*list = NULL;

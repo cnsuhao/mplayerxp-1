@@ -39,7 +39,7 @@ struct oss_priv_t : public Opaque {
 	off_t spos;
 };
 
-static MPXP_Rc __FASTCALL__ oss_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ oss_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     char *args;
     char *oss_device,*comma;

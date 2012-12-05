@@ -202,7 +202,7 @@ static int __FASTCALL__ FtpSendCmd(const char *cmd,ftp_priv_t *nControl,char* rs
     return FtpSendCmd("\r\n", nControl, rsp);
 }
 
-static int __FASTCALL__ FtpOpenPort(any_t* libinput,ftp_priv_t* p) {
+static int __FASTCALL__ FtpOpenPort(libinput_t* libinput,ftp_priv_t* p) {
   int resp,fd;
   char rsp_txt[256];
   char* par,str[128];
@@ -354,7 +354,7 @@ static void __FASTCALL__ ftp_close(stream_t *s) {
     delete p;
 }
 
-static MPXP_Rc __FASTCALL__ ftp_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ ftp_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
   int len = 0,resp;
   ftp_priv_t* p;

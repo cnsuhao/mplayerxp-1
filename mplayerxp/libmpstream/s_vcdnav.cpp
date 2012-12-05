@@ -69,7 +69,7 @@ static void __FASTCALL__ _cdio_detect_media(char *device)
 
 static int __FASTCALL__ _vcdnav_read(stream_t *stream,stream_packet_t*sp);
 
-static MPXP_Rc __FASTCALL__ _vcdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _vcdnav_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     vcd_priv_t *priv;
     const char *param;

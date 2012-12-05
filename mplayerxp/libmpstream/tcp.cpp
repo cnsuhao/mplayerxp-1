@@ -59,7 +59,7 @@ static const char *af2String(int af) {
 // return -1 is unable to connect to a particular port
 
 static int
-connect2Server_with_af(any_t* libinput,const char *host, int port, int af,int verb) {
+connect2Server_with_af(libinput_t* libinput,const char *host, int port, int af,int verb) {
 	int socket_server_fd;
 	int err;
 	socklen_t err_len;
@@ -238,7 +238,7 @@ connect2Server_with_af(any_t* libinput,const char *host, int port, int af,int ve
 // return -1 is unable to connect to a particular port
 
 
-int tcp_connect2Server(any_t* libinput,const char *host, int  port, int verb) {
+int tcp_connect2Server(libinput_t* libinput,const char *host, int  port, int verb) {
 #ifdef HAVE_AF_INET6
     return connect2Server_with_af(libinput,host, port, network_prefer_ipv4 ? AF_INET:AF_INET6,verb);
 #else

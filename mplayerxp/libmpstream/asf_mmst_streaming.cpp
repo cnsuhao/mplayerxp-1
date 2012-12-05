@@ -491,7 +491,7 @@ static int asf_mmst_streaming_seek( int fd, off_t pos, streaming_ctrl_t *streami
 	streaming_ctrl=NULL;
 }
 
-int asf_mmst_streaming_start(any_t* libinput,stream_t *stream)
+int asf_mmst_streaming_start(libinput_t* libinput,stream_t *stream)
 {
   char                 str[1024];
   unsigned char        data[BUF_SIZE];

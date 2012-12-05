@@ -52,7 +52,7 @@ struct decvideo_priv_t : public Opaque {
 
 	sh_video_t*		parent;
 	const vd_functions_t*	mpvdec;
-	any_t*			libinput;
+	libinput_t*		libinput;
 	vd_private_t*		ctx;
 	vf_stream_t*		vfilter;
 	int			vfilter_inited;
@@ -139,7 +139,7 @@ static void mpcv_print_codec_info(decvideo_priv_t *priv) {
 #endif
 }
 
-video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,any_t* libinput) {
+video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t* libinput) {
     video_decoder_t* handle=new(zeromem) video_decoder_t;
     decvideo_priv_t* priv = new(zeromem) decvideo_priv_t;
     priv->parent=sh_video;
@@ -164,7 +164,7 @@ video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,any_t* libinput) {
     return handle;
 }
 
-video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,any_t*libinput){
+video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,libinput_t*libinput){
     UNUSED(codecname);
     UNUSED(status);
     int done=0;

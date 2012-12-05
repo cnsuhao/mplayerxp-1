@@ -7,7 +7,7 @@ using namespace mpxp;
 #include "stream.h"
 #include "stream_internal.h"
 
-static MPXP_Rc __FASTCALL__ null_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
+static MPXP_Rc __FASTCALL__ null_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
     UNUSED(filename);
     return MPXP_False;
 }

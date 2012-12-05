@@ -9,6 +9,10 @@
 using namespace mpxp;
 #include "xmpcore/xmp_enums.h"
 
+namespace mpxp {
+    struct libinput_t;
+}
+
 enum {
     STREAM_BUFFER_SIZE	=4096,
     VCD_SECTOR_SIZE	=2352,
@@ -80,7 +84,7 @@ struct stream_t : public Opaque {
 	stream_callback	event_handler;  /**< callback for streams which provide events */
 } __attribute__ ((packed));
 
-int stream_enable_cache(stream_t *stream,any_t* libinput,int size,int min,int prefill);
+int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int min,int prefill);
 void stream_disable_cache(stream_t *stream);
 
 #include <string.h>
@@ -111,7 +115,7 @@ void __FASTCALL__ stream_reset(stream_t *s);
 stream_t* __FASTCALL__ new_stream(int type);
 void __FASTCALL__ free_stream(stream_t *s);
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len);
-stream_t* __FASTCALL__ open_stream(any_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
+stream_t* __FASTCALL__ open_stream(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
 
 extern unsigned int __FASTCALL__ stream_read_word(stream_t *s);
 extern unsigned int __FASTCALL__ stream_read_dword(stream_t *s);

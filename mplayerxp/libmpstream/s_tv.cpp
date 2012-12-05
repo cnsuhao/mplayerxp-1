@@ -579,7 +579,7 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
     return 0;
 }
 
-static MPXP_Rc __FASTCALL__ _tv_open(any_t*libinput,stream_t*stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ _tv_open(libinput_t*libinput,stream_t*stream,const char *filename,unsigned flags)
 {
     UNUSED(flags);
     UNUSED(libinput);

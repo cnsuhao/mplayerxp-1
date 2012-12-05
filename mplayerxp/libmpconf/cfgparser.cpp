@@ -220,7 +220,7 @@ int m_config_pop(m_config_t* config) {
   return ret;
 }
 
-m_config_t* m_config_new(play_tree_t* pt,any_t*libinput) {
+m_config_t* m_config_new(play_tree_t* pt,libinput_t*libinput) {
   m_config_t* config;
 
 #ifdef MP_DEBUG

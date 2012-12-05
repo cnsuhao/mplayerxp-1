@@ -196,7 +196,7 @@ static const mrl_config_t dvdnavopts_conf[]={
 	{ NULL, NULL, 0, 0, 0 }
 };
 
-static MPXP_Rc __FASTCALL__ __dvdnav_open(any_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ __dvdnav_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     const char *param;
     char *dvd_device;

@@ -64,7 +64,7 @@ static void __FASTCALL__ rtsp_stream_close(stream_t*s)
   streaming_ctrl_free (s->streaming_ctrl);
 }
 
-static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
+static int __FASTCALL__ rtsp_streaming_start (libinput_t*libinput,stream_t *stream)
 {
   int fd;
   rtsp_session_t *rtsp;
@@ -137,7 +137,7 @@ static int __FASTCALL__ rtsp_streaming_start (any_t*libinput,stream_t *stream)
 
 extern int network_bandwidth;
 extern int index_mode;
-static MPXP_Rc __FASTCALL__ rtsp_open (any_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+static MPXP_Rc __FASTCALL__ rtsp_open(libinput_t* libinput,stream_t *stream,const char *filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);

@@ -203,7 +203,7 @@ void menu_dflt_read_key(menu_t* menu,int cmd) {
   }
 }
 
-menu_t* menu_open(const char *name,any_t* libinput) {
+menu_t* menu_open(const char *name,libinput_t* libinput) {
   menu_t* m;
   int i;
 

@@ -5,6 +5,10 @@
 #define __CFG_PARSER_H 1
 #include "xmpcore/xmp_enums.h"
 
+namespace mpxp {
+    struct libinput_t;
+}
+
 /* config types */
 enum {
     CONF_TYPE_FLAG	=0,
@@ -63,7 +67,7 @@ struct m_config {
     play_tree_t* last_entry; // last added entry
     play_tree_t* last_parent; // if last_entry is NULL we must create child of this
     int recursion_depth;
-    any_t*	libinput;
+    libinput_t*	libinput;
 };
 
 struct config_save {
@@ -89,7 +93,7 @@ MPXP_Rc m_config_parse_config_file(m_config_t *config,const char *conffile);
  */
 MPXP_Rc m_config_parse_command_line(m_config_t* config, int argc, char **argv, char **envp);
 
-m_config_t* m_config_new(play_tree_t* pt,any_t*libinput);
+m_config_t* m_config_new(play_tree_t* pt,libinput_t*libinput);
 
 void m_config_free(m_config_t* config);
 

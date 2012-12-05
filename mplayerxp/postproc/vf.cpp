@@ -290,7 +290,7 @@ static int __FASTCALL__ vf_default_query_format(vf_instance_t* vf, unsigned int 
     return 1;//vf_next_query_format(vf,fmt,w,h);
 }
 
-static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char *name,const char *args,any_t* libinput,const vf_conf_t* conf){
+static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char *name,const char *args,libinput_t* libinput,const vf_conf_t* conf){
     vf_instance_t* vf;
     int i;
     for(i=0;;i++){
@@ -323,7 +323,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
     return NULL;
 }
 
-vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,any_t*libinput,const vf_conf_t* conf){
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,libinput_t*libinput,const vf_conf_t* conf){
     if(strcmp(name,"vo")) {
 	MSG_V("Open video filter: [%s] <%ux%u %s>\n", name,conf->w,conf->h,vo_format_name(conf->fourcc));
     }
@@ -457,7 +457,7 @@ void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf){
 }
 
 extern vf_cfg_t vf_cfg;
-vf_instance_t* __FASTCALL__ vf_init_filter(any_t* libinput,const vf_conf_t* conf)
+vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t* libinput,const vf_conf_t* conf)
 {
     char *vf_last=NULL,*vf_name=vf_cfg.list;
     char *arg;
@@ -677,7 +677,7 @@ void vf_help(){
     MSG_INFO("\n");
 }
 
-vf_stream_t* vf_init(any_t* libinput,const vf_conf_t* conf) {
+vf_stream_t* vf_init(libinput_t* libinput,const vf_conf_t* conf) {
     vf_stream_t* s = new(zeromem) vf_stream_t;
     s->libinput=libinput;
     s->first=vf_init_filter(libinput,conf);
