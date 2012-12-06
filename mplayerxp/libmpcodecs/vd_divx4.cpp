@@ -141,18 +141,17 @@ static LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
 static any_t*dll_handle;
 
 static const video_probe_t probes[] = {
-    { "divx", "libdivx.so",FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
-    { "divx", "libdivx.so",FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','I','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','I','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','I','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','I','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
+    { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) {
-    UNUSED(p);
+static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -211,8 +210,9 @@ static int load_lib( const char *libname )
   return getDecore_ptr != NULL;
 }
 
-static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
     UNUSED(psi);
+    if(!load_lib(probe->codec_dll)) return NULL;
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     return priv;
@@ -224,7 +224,6 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
     sh_video_t* sh = priv->sh;
     int bits=12;
     priv->parent = opaque;
-    if(!load_lib("libdivx"SLIBSUFFIX)) return MPXP_False;
     if(!(mpcodecs_config_vf(opaque,sh->src_w,sh->src_h))) return MPXP_False;
     switch(sh->codec->outfmt[sh->outfmtidx]){
 	case IMGFMT_YV12:

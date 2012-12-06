@@ -145,18 +145,22 @@ video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t* libinput) {
     priv->parent=sh_video;
     priv->libinput=libinput;
     handle->vd_private=priv;
+    const video_probe_t* vprobe=NULL;
     /* Use lavc's drivers  as last hope */
     priv->mpvdec=vfm_find_driver("lavc");
     if(priv->mpvdec) {
-	if((priv->ctx=priv->mpvdec->preinit(sh_video,priv->psi))==NULL){
-	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-	    return NULL;
-	}
-	if(priv->mpvdec->init(priv->ctx,handle)!=MPXP_Ok){
-	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-	    return NULL;
-	}
+	if((vprobe=priv->mpvdec->probe(sh_video->fourcc))!=NULL) {
+	    if((priv->ctx=priv->mpvdec->preinit(vprobe,sh_video,priv->psi))==NULL){
+		MSG_ERR(MSGTR_CODEC_CANT_INITV);
+		return NULL;
+	    }
+	    if(priv->mpvdec->init(priv->ctx,handle)!=MPXP_Ok){
+		MSG_ERR(MSGTR_CODEC_CANT_INITV);
+		return NULL;
+	    }
+	} else goto err_out;
     } else {
+	err_out:
 	MSG_ERR("Cannot find lavc video decoder\n");
 	return NULL;
     }
@@ -188,9 +192,9 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 
     if(vfm) {
 	priv->mpvdec=vfm_find_driver(vfm);
-	if(priv->mpvdec) vprobe=priv->mpvdec->probe(priv->ctx,sh_video->fourcc);
+	if(priv->mpvdec) vprobe=priv->mpvdec->probe(sh_video->fourcc);
     }
-    else vprobe = vfm_driver_probe(priv->ctx,sh_video);
+    else vprobe = vfm_driver_probe(priv->ctx,sh_video,priv->psi);
 
     if(vprobe) {
 	vfm=vprobe->driver;
@@ -204,7 +208,7 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 
     priv->mpvdec=vfm_find_driver(vfm);
     if(priv->mpvdec) {
-	if((priv->ctx=priv->mpvdec->preinit(sh_video,priv->psi))==NULL){
+	if((priv->ctx=priv->mpvdec->preinit(vprobe,sh_video,priv->psi))==NULL){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		delete sh_video->codec;
 		sh_video->codec=NULL;

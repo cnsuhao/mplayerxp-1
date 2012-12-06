@@ -87,19 +87,21 @@ const ad_functions_t* afm_find_driver(const char *name) {
     return NULL;
 }
 
-const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t *sh) {
+const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t *sh,audio_filter_info_t* afi) {
     unsigned i;
     const audio_probe_t* probe;
     for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
 	MSG_V("Probing: %s\n",mpcodecs_ad_drivers[i]->info->driver_name);
-	if((probe=mpcodecs_ad_drivers[i]->probe(ctx,sh->wtag))!=NULL) {
+	if((probe=mpcodecs_ad_drivers[i]->probe(sh->wtag))!=NULL) {
+	    ad_private_t* priv=mpcodecs_ad_drivers[i]->preinit(probe,sh,afi);
 	    MSG_V("Driver: %s supports these outfmt for 0x%X wtag:\n"
-		,mpcodecs_ad_drivers[i]->info->driver_name,sh->wtag);
+		    ,mpcodecs_ad_drivers[i]->info->driver_name,sh->wtag);
 	    for(i=0;i<Audio_MaxOutSample;i++) {
-		MSG_V("%X ",probe->sample_fmt[i]);
-		if(probe->sample_fmt[i]==-1||probe->sample_fmt[i]==0) break;
+		    MSG_V("%X ",probe->sample_fmt[i]);
+		    if(probe->sample_fmt[i]==-1||probe->sample_fmt[i]==0) break;
 	    }
 	    MSG_V("\n");
+	    mpcodecs_ad_drivers[i]->uninit(priv);
 	    return probe;
 	}
     }

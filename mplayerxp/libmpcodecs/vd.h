@@ -57,8 +57,8 @@ typedef struct vd_functions_s
 {
     const vd_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
-    const video_probe_t*(*__FASTCALL__ probe)(vd_private_t *ctx,uint32_t fourcc);
-    vd_private_t*	(*__FASTCALL__ preinit)(sh_video_t *sh,put_slice_info_t* psi);
+    const video_probe_t*(*__FASTCALL__ probe)(uint32_t fourcc);
+    vd_private_t*	(*__FASTCALL__ preinit)(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi);
     MPXP_Rc		(*__FASTCALL__ init)(vd_private_t *ctx,video_decoder_t*opaque);
     void		(*__FASTCALL__ uninit)(vd_private_t *ctx);
     MPXP_Rc		(*control_vd)(vd_private_t *ctx,int cmd,any_t* arg, ...);
@@ -66,7 +66,7 @@ typedef struct vd_functions_s
 } vd_functions_t;
 
 extern const vd_functions_t* vfm_find_driver(const char *name);
-extern const video_probe_t* vfm_driver_probe(vd_private_t*ctx,sh_video_t *sh);
+extern const video_probe_t* vfm_driver_probe(vd_private_t*ctx,sh_video_t *sh,put_slice_info_t* psi);
 
 enum {
     VDCTRL_QUERY_FORMAT		=3, /* test for availabilty of a format */

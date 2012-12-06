@@ -59,8 +59,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None } }
 };
 
-static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) {
-    UNUSED(p);
+static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -582,10 +581,9 @@ int xacodec_exit(void)
 {
     int i;
     void (*close_func)();
-
+    if(!xacodec_driver) return TRUE;
     for (i=0; i < XA_CLOSE_FUNCS; i++)
-	if (xacodec_driver->close_func[i])
-	{
+	if (xacodec_driver->close_func[i]) {
 	    close_func = reinterpret_cast<void(*)()>(xacodec_driver->close_func[i]);
 	    close_func();
 	}
@@ -593,7 +591,7 @@ int xacodec_exit(void)
     if (xacodec_driver->decinfo != NULL)
 	delete xacodec_driver->decinfo;
     delete xacodec_driver;
-    return(TRUE);
+    return TRUE;
 }
 
 
@@ -901,7 +899,8 @@ static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+    UNUSED(probe);
     UNUSED(psi);
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;

@@ -23,7 +23,7 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(null)
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { UNUSED(wtag); return NULL; }
 
 MPXP_Rc init(ad_private_t *priv)
 {
@@ -31,8 +31,9 @@ MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
+ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
 {
+    UNUSED(probe);
     UNUSED(afi);
     ad_private_t* priv = new(zeromem) ad_private_t;
     priv->sh = sh;

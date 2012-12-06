@@ -29,7 +29,7 @@ struct ad_private_t {
     sh_audio_t* sh;
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
 
 MPXP_Rc init(ad_private_t *p)
 {
@@ -37,8 +37,9 @@ MPXP_Rc init(ad_private_t *p)
   return MPXP_Ok;
 }
 
-ad_private_t* preinit(sh_audio_t *sh_audio,audio_filter_info_t* afi)
+ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh_audio,audio_filter_info_t* afi)
 {
+    UNUSED(probe);
     UNUSED(afi);
     ad_private_t *priv;
     if(!(priv=new(zeromem) ad_private_t)) return NULL;

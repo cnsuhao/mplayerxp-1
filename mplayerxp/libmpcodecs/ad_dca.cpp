@@ -58,8 +58,7 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) {
-    UNUSED(ctx);
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
@@ -126,8 +125,9 @@ static int dca_printinfo(sh_audio_t *sh_audio){
     return (flags&DCA_LFE) ? (channels+1) : channels;
 }
 
-ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
+ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
 {
+    UNUSED(probe);
     /*	DTS audio:
 	however many channels, 2 bytes in a word, 256 samples in a block, 6 blocks in a frame */
 #ifdef WORDS_BIGENDIAN

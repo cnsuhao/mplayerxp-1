@@ -46,8 +46,7 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag) {
-    UNUSED(priv);
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
@@ -55,8 +54,9 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag)
     return NULL;
 }
 
-static ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
+static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
 {
+    UNUSED(probe);
     sh->audio_out_minsize=1024*4; // 1024 samples/frame
     ad_private_t* priv = new(zeromem) ad_private_t;
     priv->sh = sh;

@@ -171,9 +171,8 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) {
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     unsigned i;
-    UNUSED(ctx);
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
 	    return &probes[i];
@@ -181,10 +180,11 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* ctx,uint32_t wtag) 
 }
 
 
-ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
+ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
 {
+    UNUSED(probe);
     /* Dolby AC3 audio: */
-    ad_private_t* ctx=mpcodecs_ad_a52.preinit(sh,afi);
+    ad_private_t* ctx=mpcodecs_ad_a52.preinit(probe,sh,afi);
     sh->audio_out_minsize=4*256*6;
     sh->audio_in_minsize=3840;
     sh->nch=2;

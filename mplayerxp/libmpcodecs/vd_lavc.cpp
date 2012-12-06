@@ -193,8 +193,7 @@ static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fcc) {
-    UNUSED(ctx);
+static const video_probe_t* __FASTCALL__ probe(uint32_t fcc) {
     unsigned i;
     unsigned char flag = CODECS_FLAG_NOFLIP;
     video_probe_t* vprobe = NULL;
@@ -232,7 +231,7 @@ static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fcc) {
 static MPXP_Rc find_vdecoder(vd_private_t* ctx)
 {
     sh_video_t* sh = ctx->sh;
-    const video_probe_t* vprobe=probe(ctx,sh->fourcc);
+    const video_probe_t* vprobe=probe(sh->fourcc);
     ctx->probe = vprobe;
     if(vprobe) {
 	sh->codec=new(zeromem) struct codecs_st;
@@ -245,7 +244,8 @@ static MPXP_Rc find_vdecoder(vd_private_t* ctx)
     return MPXP_False;
 }
 
-static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+    UNUSED(probe);
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     priv->psi=psi;
@@ -438,12 +438,14 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
 
 // uninit driver
 static void uninit(vd_private_t *priv){
-    if (avcodec_close(priv->ctx) < 0)
-	MSG_ERR( MSGTR_CantCloseCodec);
-    if (priv->ctx->extradata_size)
-	delete priv->ctx->extradata;
-    delete priv->ctx;
-    delete priv->lavc_picture;
+    if(priv->ctx) {
+	if (avcodec_close(priv->ctx) < 0)
+	    MSG_ERR( MSGTR_CantCloseCodec);
+	if (priv->ctx->extradata_size)
+	    delete priv->ctx->extradata;
+	delete priv->ctx;
+	delete priv->lavc_picture;
+    }
     if(priv->probe) { delete priv->probe->codec_dll; delete priv->probe; }
     delete priv;
     if(ppContext) pp_free_context(ppContext);

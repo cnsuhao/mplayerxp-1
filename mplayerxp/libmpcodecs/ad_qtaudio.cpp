@@ -160,9 +160,10 @@ struct ad_private_t {
     sh_audio_t* sh;
 };
 
-static const audio_probe_t* __FASTCALL__ probe(sh_audio_t* sh,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
 
-static ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi){
+static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi){
+    UNUSED(probe);
     UNUSED(afi);
     int error;
     unsigned long FramesToGet=0; //how many frames the demuxer has to get

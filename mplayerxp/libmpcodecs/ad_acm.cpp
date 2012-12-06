@@ -33,7 +33,7 @@ struct ad_private_t {
   sh_audio_t* sh;
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
 
 static int init_acm_audio_codec(ad_private_t *priv){
     sh_audio_t* sh_audio = priv->sh;
@@ -141,8 +141,9 @@ MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(sh_audio_t *sh_audio,audio_filter_info_t* afi)
+ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh_audio,audio_filter_info_t* afi)
 {
+  UNUSED(probe);
   UNUSED(afi);
   /* Win32 ACM audio codec: */
   ad_private_t *priv;

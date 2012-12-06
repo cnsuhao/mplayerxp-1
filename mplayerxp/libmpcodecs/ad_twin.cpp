@@ -218,7 +218,7 @@ struct ad_private_t
     sh_audio_t* sh;
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) { return NULL; }
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
 
 static HINSTANCE vqf_dll;
 
@@ -312,14 +312,14 @@ MPXP_Rc init(ad_private_t*p)
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(sh_audio_t *sh_audio,audio_filter_info_t* afi)
+ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh_audio,audio_filter_info_t* afi)
 {
     UNUSED(afi);
     /* Win32 VQF audio codec: */
     ad_private_t *priv;
     if(!(priv=new(zeromem) ad_private_t)) return NULL;
     priv->sh = sh_audio;
-    if(!load_dll((const char *)sh_audio->codec->dll_name)) {
+    if(!load_dll(probe->codec_dll)) {
 	MSG_ERR("win32.dll looks broken :(\n");
 	delete priv;
 	return NULL;

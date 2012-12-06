@@ -100,8 +100,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(vd_private_t *priv,uint32_t fourcc) {
-    UNUSED(priv);
+static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -196,7 +195,8 @@ static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...)
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+    UNUSED(probe);
     UNUSED(psi);
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;

@@ -39,8 +39,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(vd_private_t *p,uint32_t fourcc) {
-    UNUSED(p);
+static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -122,7 +121,7 @@ static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
 }
 
 /* exits program when failure */
-static int load_syms(char *path) {
+static int load_lib(const char *path) {
     any_t*handle;
     char *error;
 
@@ -172,8 +171,9 @@ struct rv_init_t {
     int format;
 } rv_init_t;
 
-static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
     UNUSED(psi);
+    if(!load_lib(probe->codec_dll)) return NULL;
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     return priv;
@@ -193,8 +193,6 @@ static MPXP_Rc init(vd_private_t *p,video_decoder_t* opaque){
     }; // rv30
 
     MSG_V("realvideo codec id: 0x%08X  sub-id: 0x%08X\n",extrahdr[1],extrahdr[0]);
-
-    if(!load_syms(sh->codec->dll_name)) return MPXP_False;
 
     // only I420 supported
     if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;

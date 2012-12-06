@@ -46,51 +46,50 @@ static const config_t options[] = {
 LIBVD_EXTERN(xvid)
 
 static const video_probe_t probes[] = {
-    { "xvid", "libxvidcore", 0x4,                         VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", 0x10000004,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('3','I','V','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('B','L','Z','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('F','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('F','F','D','S'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('F','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','C','O','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','I','G','I'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','I','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','M','4','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','M','K','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','P','0','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','R','E','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('D','X','G','M'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('E','M','4','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('E','P','H','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('I','N','M','C'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('L','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('M','P','4','S'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('M','P','4','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('M','4','S','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('M','4','T','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('M','V','X','M'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('P','M','4','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('Q','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('R','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('S','E','D','G'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('S','I','P','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('S','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('S','N','4','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('U','L','D','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('U','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('V','I','D','M'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('V','S','P','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('W','A','W','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('X','V','I','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
-    { "xvid", "libxvidcore", FOURCC_TAG('X','V','I','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, 0x4,                         VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, 0x10000004,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('3','I','V','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('B','L','Z','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('F','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('F','F','D','S'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('F','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','C','O','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','I','G','I'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','I','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','I','V','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','M','4','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','M','K','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','P','0','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','R','E','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','X','5','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('D','X','G','M'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('E','M','4','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('E','P','H','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('I','N','M','C'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('L','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('M','P','4','S'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('M','P','4','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('M','4','S','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('M','4','T','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('M','V','X','M'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('P','M','4','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('Q','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('R','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('S','E','D','G'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('S','I','P','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('S','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('S','N','4','0'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('U','L','D','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('U','M','P','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('V','I','D','M'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('V','S','P','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('W','A','W','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('X','V','I','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
+    { "xvid", "libxvidcore"SLIBSUFFIX, FOURCC_TAG('X','V','I','X'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_YUY2, IMGFMT_UYVY, IMGFMT_YVYU, IMGFMT_BGR32, IMGFMT_BGR24, IMGFMT_BGR15, IMGFMT_BGR16}, {VideoFlag_None, VideoFlag_None } },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fourcc) {
-    UNUSED(ctx);
+static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -318,8 +317,9 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 }
 #endif
 
-static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
     UNUSED(psi);
+    if(!load_lib(probe->codec_dll)) return NULL;
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     return priv;
@@ -333,7 +333,6 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
     sh_video_t* sh = priv->sh;
     int cs;
 
-    if(!load_lib("libxvidcore"SLIBSUFFIX)) return MPXP_False;
 
     memset(&xvid_gbl_info, 0, sizeof(xvid_gbl_info_t));
     xvid_gbl_info.version = XVID_VERSION;
@@ -450,7 +449,7 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
 // uninit driver
 static void uninit(vd_private_t *priv){
     if(!priv) return;
-    (*xvid_decore_ptr)(priv->hdl,XVID_DEC_DESTROY, NULL, NULL);
+    if(priv->hdl) (*xvid_decore_ptr)(priv->hdl,XVID_DEC_DESTROY, NULL, NULL);
     delete priv;
     dlclose(dll_handle);
 }

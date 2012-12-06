@@ -51,8 +51,8 @@ typedef struct ad_functions_s
 {
     const ad_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
-    const audio_probe_t*(* __FASTCALL__ probe)(ad_private_t *,uint32_t wtag);
-    ad_private_t*		(* __FASTCALL__ preinit)(sh_audio_t *,audio_filter_info_t*);
+    const audio_probe_t*(* __FASTCALL__ probe)(uint32_t wtag);
+    ad_private_t*		(* __FASTCALL__ preinit)(const audio_probe_t*,sh_audio_t *,audio_filter_info_t*);
     MPXP_Rc		(* __FASTCALL__ init)(ad_private_t *ctx);
     void		(* __FASTCALL__ uninit)(ad_private_t *ctx);
     MPXP_Rc		(*control_ad)(ad_private_t *ctx,int cmd,any_t* arg, ...);
@@ -60,7 +60,7 @@ typedef struct ad_functions_s
 } ad_functions_t;
 
 extern const ad_functions_t* afm_find_driver(const char *name);
-extern const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t* sh);
+extern const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t*sh,audio_filter_info_t* afi);
 #define FIX_APTS(sh_audio,pts,in_size) (sh_audio->i_bps?((float)(pts)+(float)(in_size)/(float)sh_audio->i_bps):((float)(pts)))
 
 #endif

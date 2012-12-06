@@ -35,74 +35,73 @@ static const config_t options[] = {
 LIBVD_EXTERN(libmpeg2)
 
 static const video_probe_t probes[] = {
-    { "mpeg2", "libmpeg2", 0x10000001,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", 0x10000002,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('A','V','M','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('D','V','R',' '), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('L','M','P','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','1','V',' '), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','1','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','2','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','7','0','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','M','E','S'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','P','2','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','P','G','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','P','E','G'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','P','G','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','P','G','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','X','5','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('P','I','M','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('P','I','M','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','7'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','8'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','9'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('H','D','V','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','X','3','N'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','X','3','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','X','4','N'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','X','4','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('M','X','5','N'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','7'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','8'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','9'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','B'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','C'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','E'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','5','F'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','7'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','8'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','9'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','B'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','C'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','E'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
-    { "mpeg2", "libmpeg2", FOURCC_TAG('X','D','V','F'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, 0x10000001,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, 0x10000002,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('A','V','M','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('D','V','R',' '), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('L','M','P','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','1','V',' '), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','1','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','2','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','7','0','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','M','E','S'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','P','2','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','P','G','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','P','E','G'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','P','G','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','P','G','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','X','5','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('P','I','M','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('P','I','M','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','7'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','8'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','9'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('H','D','V','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','X','3','N'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','X','3','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','X','4','N'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','X','4','P'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('M','X','5','N'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','7'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','8'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','9'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','B'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','C'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','E'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','5','F'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','1'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','2'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','3'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','4'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','5'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','6'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','7'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','8'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','9'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','A'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','B'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','C'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','D'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','E'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
+    { "mpeg2", "libmpeg2"SLIBSUFFIX, FOURCC_TAG('X','D','V','F'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(vd_private_t *ctx,uint32_t fourcc) {
-    UNUSED(ctx);
+static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
@@ -259,8 +258,9 @@ static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
+static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
     UNUSED(psi);
+    if(!load_lib(probe->codec_dll)) return NULL;
     vd_private_t* priv = new(zeromem) vd_private_t;
     priv->sh=sh;
     return priv;
@@ -268,7 +268,6 @@ static vd_private_t* preinit(sh_video_t *sh,put_slice_info_t* psi){
 
 static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
     sh_video_t* sh = priv->sh;
-    if(!load_lib("libmpeg2"SLIBSUFFIX)) return MPXP_False;
     priv->parent=opaque;
     if(!(priv->mpeg2dec=mpeg2_init(mpxp_context().mplayer_accel))) {
 	return MPXP_False;
@@ -278,7 +277,7 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
 
 // uninit driver
 static void uninit(vd_private_t *priv){
-    mpeg2_close(priv->mpeg2dec);
+    if(priv->mpeg2dec) mpeg2_close(priv->mpeg2dec);
     delete priv;
     dlclose(dll_handle);
 }

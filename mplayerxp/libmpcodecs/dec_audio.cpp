@@ -60,9 +60,9 @@ audio_decoder_t* mpca_init(sh_audio_t *sh_audio)
 
     if(afm) {
 	priv->mpadec=afm_find_driver(afm);
-	if(priv->mpadec) aprobe=priv->mpadec->probe(priv->ctx,sh_audio->wtag);
+	if(priv->mpadec) aprobe=priv->mpadec->probe(sh_audio->wtag);
     }
-    else aprobe = afm_probe_driver(priv->ctx,sh_audio);
+    else aprobe = afm_probe_driver(priv->ctx,sh_audio,priv->afi);
 
     if(aprobe) {
 	afm=aprobe->driver;
@@ -82,7 +82,7 @@ audio_decoder_t* mpca_init(sh_audio_t *sh_audio)
 	delete priv;
 	return NULL; // no such driver
     }
-    if((priv->ctx=priv->mpadec->preinit(sh_audio,priv->afi))==NULL) {
+    if((priv->ctx=priv->mpadec->preinit(aprobe,sh_audio,priv->afi))==NULL) {
 	MSG_ERR(MSGTR_CODEC_CANT_PREINITA);
 	delete priv;
 	return NULL;

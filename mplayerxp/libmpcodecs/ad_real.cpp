@@ -83,8 +83,7 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) {
-    UNUSED(p);
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
@@ -92,22 +91,9 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* p,uint32_t wtag) {
     return NULL;
 }
 
-static ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi){
-    UNUSED(afi);
-    // let's check if the driver is available, return 0 if not.
-    // (you should do that if you use external lib(s) which is optional)
-    unsigned int result;
-    int len=0;
-    any_t* prop;
-    char path[4096];
-    char cpath[4096];
-    ad_private_t *priv;
-    priv=new(zeromem) ad_private_t;
-    priv->sh = sh;
-    if(!(handle = dlopen (sh->codec->dll_name, RTLD_LAZY))) {
-	delete priv;
-	return NULL;
-    }
+static MPXP_Rc load_dll(const char* name)
+{
+    if(!(handle = dlopen (name, RTLD_LAZY))) return MPXP_False;
 
     raCloseCodec = (uint32_t (*)(uint32_t))ld_sym(handle, "RACloseCodec");
     raDecode = (uint32_t (*)(any_t*,any_t*,uint32_t,any_t*,any_t*,uint32_t))ld_sym(handle, "RADecode");
@@ -120,12 +106,24 @@ static ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi){
     raSetDLLAccessPath = (void (*)(uint32_t))ld_sym(handle, "SetDLLAccessPath");
     raSetPwd = (void (*)(char*,char*))ld_sym(handle, "RASetPwd"); /* optional, used by SIPR */
 
-    if(!raCloseCodec || !raDecode || !raFreeDecoder ||
-	!raGetFlavorProperty || !(raOpenCodec2||raOpenCodec) || !raSetFlavor ||
-	!raInitDecoder){
-	    delete priv;
-	    return NULL;
-    }
+    return (raCloseCodec && raDecode && raFreeDecoder &&
+	raGetFlavorProperty && (raOpenCodec2||raOpenCodec) && raSetFlavor &&
+	raInitDecoder)?MPXP_Ok:MPXP_False;
+}
+
+static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi){
+    UNUSED(afi);
+    // let's check if the driver is available, return 0 if not.
+    // (you should do that if you use external lib(s) which is optional)
+    unsigned int result;
+    int len=0;
+    any_t* prop;
+    char path[4096];
+    char cpath[4096];
+    ad_private_t *priv;
+    if(load_dll(probe->codec_dll)!=MPXP_Ok) return NULL;
+    priv=new(zeromem) ad_private_t;
+    priv->sh = sh;
 
     char *end;
     strcpy(cpath,sh->codec->dll_name);

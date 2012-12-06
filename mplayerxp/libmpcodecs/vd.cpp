@@ -87,28 +87,33 @@ void libmpcodecs_vd_register_options(m_config_t* cfg)
 const vd_functions_t* vfm_find_driver(const char *name) {
     unsigned i;
     for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++)
-	if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,name)==0)
+	if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,name)==0) {
 	    return mpcodecs_vd_drivers[i];
+	}
     return NULL;
 }
 
-const video_probe_t* vfm_driver_probe(vd_private_t* ctx,sh_video_t *sh) {
+const video_probe_t* vfm_driver_probe(vd_private_t* ctx,sh_video_t *sh,put_slice_info_t* psi) {
     unsigned i;
     const video_probe_t* probe;
     for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++) {
 	MSG_V("Probing: %s\n",mpcodecs_vd_drivers[i]->info->driver_name);
-	if((probe=mpcodecs_vd_drivers[i]->probe(ctx,sh->fourcc))!=NULL) {
-	    const char* pfcc = reinterpret_cast<const char*>(&sh->fourcc);
-	    MSG_V("Driver: %s supports these outfmt for %c%c%c%c fourcc:\n"
-		,mpcodecs_vd_drivers[i]->info->driver_name
-		,pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
-	    for(i=0;i<Video_MaxOutFmt;i++) {
-		pfcc = reinterpret_cast<const char*>(&probe->pix_fmt[i]);
-		MSG_V("%c%c%c%c (flg=%X) ",pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
-		if(probe->pix_fmt[i]==0||probe->pix_fmt[i]==-1) break;
+	if((probe=mpcodecs_vd_drivers[i]->probe(sh->fourcc))!=NULL) {
+	    vd_private_t* priv=mpcodecs_vd_drivers[i]->preinit(probe,sh,psi);
+	    if(priv) {
+		const char* pfcc = reinterpret_cast<const char*>(&sh->fourcc);
+		MSG_V("Driver: %s supports these outfmt for %c%c%c%c fourcc:\n"
+		    ,mpcodecs_vd_drivers[i]->info->driver_name
+		    ,pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
+		for(i=0;i<Video_MaxOutFmt;i++) {
+		    pfcc = reinterpret_cast<const char*>(&probe->pix_fmt[i]);
+		    MSG_V("%c%c%c%c (flg=%X) ",pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
+		    if(probe->pix_fmt[i]==0||probe->pix_fmt[i]==-1) break;
+		}
+		MSG_V("\n");
+		mpcodecs_vd_drivers[i]->uninit(priv);
+		return probe;
 	    }
-	    MSG_V("\n");
-	    return probe;
 	}
     }
     return NULL;

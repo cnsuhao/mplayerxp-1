@@ -24,7 +24,7 @@ struct ad_private_t {
     audio_filter_info_t* afi;
 };
 
-static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag) {
+static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     unsigned i;
     audio_probe_t* acodec = NULL;
     const char *what="AVCodecID";
@@ -36,10 +36,8 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag)
 		,wtag);
 	return NULL;
     }
-    if(!priv){
-//	avcodec_init();
-	avcodec_register_all();
-    }
+//  avcodec_init();
+    avcodec_register_all();
     AVCodec *codec=avcodec_find_decoder(id);
     if(!codec) { what="AVCodec"; goto prn_err; }
 
@@ -57,7 +55,7 @@ static const audio_probe_t* __FASTCALL__ probe(ad_private_t* priv,uint32_t wtag)
 
 struct codecs_st* __FASTCALL__ find_lavc_audio(ad_private_t* priv) {
     sh_audio_t* sh = priv->sh;
-    const audio_probe_t* aprobe=probe(priv,sh->wtag);
+    const audio_probe_t* aprobe=probe(sh->wtag);
     struct codecs_st* acodec = NULL;
     if(aprobe) {
 	acodec=new(zeromem) struct codecs_st;
@@ -86,8 +84,9 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(lavc)
 
-ad_private_t* preinit(sh_audio_t *sh,audio_filter_info_t* afi)
+ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
 {
+    UNUSED(probe);
     ad_private_t* priv = new(zeromem) ad_private_t;
     sh->audio_out_minsize=AVCODEC_MAX_AUDIO_FRAME_SIZE;
     priv->sh = sh;
@@ -102,10 +101,9 @@ MPXP_Rc init(ad_private_t *priv)
     AVCodec *lavc_codec=NULL;
     sh_audio_t* sh_audio = priv->sh;
     MSG_V("LAVC audio codec\n");
-    if(!priv){
-//	avcodec_init();
-	avcodec_register_all();
-    }
+//  avcodec_init();
+    avcodec_register_all();
+
     lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh_audio->codec->dll_name);
     if(!lavc_codec) {
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh_audio->codec->dll_name);
