@@ -48,69 +48,68 @@ using namespace mpxp;
 #include "stream_msg.h"
 
 /* Variables for the command line option -user, -passwd & -bandwidth */
-char *network_username=NULL;
-char *network_password=NULL;
-int   network_bandwidth=0;
-int   network_cookies_enabled = 0;
-char *network_useragent=NULL;
+char*	network_username=NULL;
+char*	network_password=NULL;
+int	network_bandwidth=0;
+int	network_cookies_enabled = 0;
+char*	network_useragent=NULL;
 
 /* IPv6 options */
-int   network_prefer_ipv4 = 1;
-int   network_ipv4_only_proxy = 0;
+int	network_prefer_ipv4 = 1;
+int	network_ipv4_only_proxy = 0;
 
 static const struct {
-	const char *mime_type;
-	int demuxer_type;
+    const char *mime_type;
+    int demuxer_type;
 } mime_type_table[] = {
-	// MP3 streaming, some MP3 streaming server answer with audio/mpeg
-	{ "audio/mpeg", Demuxer::Type_AUDIO },
-	// MPEG streaming
-	{ "video/mpeg", Demuxer::Type_UNKNOWN },
-	{ "video/x-mpeg", Demuxer::Type_UNKNOWN },
-	{ "video/x-mpeg2", Demuxer::Type_UNKNOWN },
-	// AVI ??? => video/x-msvideo
-	{ "video/x-msvideo", Demuxer::Type_AVI },
-	// MOV => video/quicktime
-	{ "video/quicktime", Demuxer::Type_MOV },
-	// ASF
-	{ "audio/x-ms-wax", Demuxer::Type_ASF },
-	{ "audio/x-ms-wma", Demuxer::Type_ASF },
-	{ "video/x-ms-asf", Demuxer::Type_ASF },
-	{ "video/x-ms-afs", Demuxer::Type_ASF },
-	{ "video/x-ms-wvx", Demuxer::Type_ASF },
-	{ "video/x-ms-wmv", Demuxer::Type_ASF },
-	{ "video/x-ms-wma", Demuxer::Type_ASF },
-	// Playlists
-	{ "video/x-ms-wmx", Demuxer::Type_PLAYLIST },
-	{ "audio/x-scpls", Demuxer::Type_PLAYLIST },
-	{ "audio/x-mpegurl", Demuxer::Type_PLAYLIST },
-	{ "audio/x-pls", Demuxer::Type_PLAYLIST },
-	// Real Media
-	{ "audio/x-pn-realaudio", Demuxer::Type_REAL },
-	// OGG Streaming
-	{ "application/x-ogg", Demuxer::Type_OGG },
-	// NullSoft Streaming Video
-	{ "video/nsv", Demuxer::Type_NSV},
-	{ "misc/ultravox", Demuxer::Type_NSV}
+    // MP3 networking, some MP3 networking server answer with audio/mpeg
+    { "audio/mpeg", Demuxer::Type_AUDIO },
+    // MPEG networking
+    { "video/mpeg", Demuxer::Type_UNKNOWN },
+    { "video/x-mpeg", Demuxer::Type_UNKNOWN },
+    { "video/x-mpeg2", Demuxer::Type_UNKNOWN },
+    // AVI ??? => video/x-msvideo
+    { "video/x-msvideo", Demuxer::Type_AVI },
+    // MOV => video/quicktime
+    { "video/quicktime", Demuxer::Type_MOV },
+    // ASF
+    { "audio/x-ms-wax", Demuxer::Type_ASF },
+    { "audio/x-ms-wma", Demuxer::Type_ASF },
+    { "video/x-ms-asf", Demuxer::Type_ASF },
+    { "video/x-ms-afs", Demuxer::Type_ASF },
+    { "video/x-ms-wvx", Demuxer::Type_ASF },
+    { "video/x-ms-wmv", Demuxer::Type_ASF },
+    { "video/x-ms-wma", Demuxer::Type_ASF },
+    // Playlists
+    { "video/x-ms-wmx", Demuxer::Type_PLAYLIST },
+    { "audio/x-scpls", Demuxer::Type_PLAYLIST },
+    { "audio/x-mpegurl", Demuxer::Type_PLAYLIST },
+    { "audio/x-pls", Demuxer::Type_PLAYLIST },
+    // Real Media
+    { "audio/x-pn-realaudio", Demuxer::Type_REAL },
+    // OGG Streaming
+    { "application/x-ogg", Demuxer::Type_OGG },
+    // NullSoft Streaming Video
+    { "video/nsv", Demuxer::Type_NSV},
+    { "misc/ultravox", Demuxer::Type_NSV}
 };
 
-streaming_ctrl_t * streaming_ctrl_new(libinput_t*libinput) {
-	streaming_ctrl_t *streaming_ctrl;
-	streaming_ctrl = (streaming_ctrl_t*)mp_mallocz(sizeof(streaming_ctrl_t));
-	if( streaming_ctrl==NULL ) {
-		MSG_FATAL(MSGTR_OutOfMemory);
-		return NULL;
-	}
-	streaming_ctrl->libinput=libinput;
-	return streaming_ctrl;
+networking_t* new_networking(libinput_t*libinput) {
+    networking_t *networking = new(zeromem) networking_t;
+    if( networking==NULL ) {
+	MSG_FATAL(MSGTR_OutOfMemory);
+	return NULL;
+    }
+    networking->libinput=libinput;
+    return networking;
 }
 
-void streaming_ctrl_free( streaming_ctrl_t *streaming_ctrl ) {
-	if( streaming_ctrl==NULL ) return;
-	if( streaming_ctrl->url ) url_free( streaming_ctrl->url );
-	if( streaming_ctrl->buffer ) delete streaming_ctrl->buffer ;
-	if( streaming_ctrl->data ) delete streaming_ctrl->data ;
-	delete streaming_ctrl ;
+void free_networking( networking_t *networking ) {
+    if( networking==NULL ) return;
+    if( networking->url ) url_free( networking->url );
+    if( networking->buffer ) delete networking->buffer ;
+    if( networking->data ) delete networking->data ;
+    delete networking;
 }
 
 URL_t*
@@ -167,11 +166,11 @@ check4proxies( URL_t *url ) {
 	return url_out;
 }
 
-int http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
+net_fd_t http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
 	HTTP_header_t *http_hdr;
 	URL_t *server_url;
 	char str[256];
-	int fd=-1;
+	net_fd_t fd=-1;
 	int ret;
 	int proxy = 0;		// Boolean
 
@@ -325,17 +324,14 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 	return 0;
 }
 
-int
-http_seek( stream_t *stream, off_t pos ) {
+off_t http_seek(net_fd_t* fd, networking_t *networking, off_t pos ) {
 	HTTP_header_t *http_hdr = NULL;
-	int fd;
-	if( stream==NULL ) return 0;
 
-	if( stream->fd>0 ) closesocket(stream->fd); // need to reconnect to seek in http-stream
-	fd = http_send_request(stream->streaming_ctrl->libinput, stream->streaming_ctrl->url, pos );
-	if( fd<0 ) return 0;
+	if( *fd>0 ) closesocket(*fd); // need to reconnect to seek in http-stream
+	*fd = http_send_request(networking->libinput, networking->url, pos );
+	if( *fd<0 ) return 0;
 
-	http_hdr = http_read_response( fd );
+	http_hdr = http_read_response( *fd );
 
 	if( http_hdr==NULL ) return 0;
 
@@ -345,363 +341,311 @@ http_seek( stream_t *stream, off_t pos ) {
 			MSG_V("Content-Type: [%s]\n", http_get_field(http_hdr, "Content-Type") );
 			MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length") );
 			if( http_hdr->body_size>0 ) {
-				if( streaming_bufferize( stream->streaming_ctrl, http_hdr->body, http_hdr->body_size )<0 ) {
+				if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
 					http_free( http_hdr );
-					return -1;
+					return 0;
 				}
 			}
 			break;
 		default:
 			MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
-			close( fd );
-			fd = -1;
+			close( *fd );
+			*fd = -1;
 	}
-	stream->fd = fd;
 
 	if( http_hdr ) {
 		http_free( http_hdr );
-		stream->streaming_ctrl->data = NULL;
+		networking->data = NULL;
 	}
 
-	stream->pos=pos;
-
-	return 1;
+	return pos;
 }
 
 // By using the protocol, the extension of the file or the content-type
-// we might be able to guess the streaming type.
-int
-autodetectProtocol(streaming_ctrl_t *streaming_ctrl, int *fd_out, int *file_format) {
-	HTTP_header_t *http_hdr=NULL;
-	unsigned int i;
-	int fd=-1;
-	int redirect;
-	int auth_retry=0;
-	int seekable=0;
-	char *extension;
-	char *content_type;
-	char *next_url;
+// we might be able to guess the networking type.
+int autodetectProtocol(networking_t *networking, net_fd_t *fd_out) {
+    HTTP_header_t *http_hdr=NULL;
+    unsigned int i;
+    int fd=-1;
+    int redirect;
+    int auth_retry=0;
+    int seekable=0;
+    char *extension;
+    char *content_type;
+    char *next_url;
 
-	URL_t *url = streaming_ctrl->url;
-	*file_format = Demuxer::Type_UNKNOWN;
+    URL_t *url = networking->url;
 
-	do {
-		*fd_out = -1;
-		next_url = NULL;
-		extension = NULL;
-		content_type = NULL;
-		redirect = 0;
+    do {
+	*fd_out = -1;
+	next_url = NULL;
+	extension = NULL;
+	content_type = NULL;
+	redirect = 0;
 
-		if( url==NULL ) {
-			goto err_out;
-		}
-
-		// Checking for PNM://
-		if( !strcasecmp(url->protocol, "pnm") ) {
-			*file_format = Demuxer::Type_REAL;
-			return 0;
-		}
-		// Checking for RTSP
-		if( !strcasecmp(url->protocol, "rtsp") ) {
-			MSG_ERR("RTSP protocol support requires the \"LIVE.COM Streaming Media\" libraries!\n");
-			goto err_out;
-		}
+	if( url==NULL ) {
+	    goto err_out;
+	}
 
 #ifndef STREAMING_LIVE_DOT_COM
 	// Old, hacked RTP support, which works for MPEG Program Streams
 	//   RTP streams only:
-		// Checking for RTP
-		if( !strcasecmp(url->protocol, "rtp") ) {
-			if( url->port==0 ) {
-				MSG_ERR("You must enter a port number for RTP streams!\n");
-				goto err_out;
-			}
-			return 0;
-		}
+	// Checking for RTP
+	if( !strcasecmp(url->protocol, "rtp") ) {
+	    if( url->port==0 ) {
+		MSG_ERR("You must enter a port number for RTP streams!\n");
+		goto err_out;
+	    }
+	    return 0;
+	}
 #endif
+	// HTTP based protocol
+	if( !strcasecmp(url->protocol, "http") || !strcasecmp(url->protocol, "http_proxy") ) {
+	    fd = http_send_request(networking->libinput, url, 0 );
+	    if( fd<0 ) goto err_out;
 
-		// Checking for ASF
-		if( !strncasecmp(url->protocol, "mms", 3) ) {
-			*file_format = Demuxer::Type_ASF;
+	    http_hdr = http_read_response( fd );
+	    if( http_hdr==NULL ) goto err_out;
+	    *fd_out=fd;
+	    if( mp_conf.verbose ) http_debug_hdr( http_hdr );
+	    networking->data = (any_t*)http_hdr;
+
+	    // Check if we can make partial content requests and thus seek in http-streams
+	    if( http_hdr!=NULL && http_hdr->status_code==200 ) {
+		    char *accept_ranges;
+		    if( (accept_ranges = http_get_field(http_hdr,"Accept-Ranges")) != NULL )
+			seekable = strncmp(accept_ranges,"bytes",5)==0;
+	    }
+	    // Check if the response is an ICY status_code reason_phrase
+	    if( !strcasecmp(http_hdr->protocol, "ICY") ) {
+		switch( http_hdr->status_code ) {
+		    case 200: { // OK
+			char *field_data = NULL;
+			// note: I skip icy-notice1 and 2, as they contain html <BR>
+			// and are IMHO useless info ::atmos
+			if( (field_data = http_get_field(http_hdr, "icy-name")) != NULL )
+			    MSG_INFO("Name   : %s\n", field_data); field_data = NULL;
+			if( (field_data = http_get_field(http_hdr, "icy-genre")) != NULL )
+			    MSG_INFO("Genre  : %s\n", field_data); field_data = NULL;
+			if( (field_data = http_get_field(http_hdr, "icy-url")) != NULL )
+			    MSG_INFO("Website: %s\n", field_data); field_data = NULL;
+			// XXX: does this really mean public server? ::atmos
+			if( (field_data = http_get_field(http_hdr, "icy-pub")) != NULL )
+			    MSG_INFO("Public : %s\n", atoi(field_data)?"yes":"no"); field_data = NULL;
+			if( (field_data = http_get_field(http_hdr, "icy-br")) != NULL )
+			    MSG_INFO("Bitrate: %skbit/s\n", field_data); field_data = NULL;
 			return 0;
-		}
-
-		if(!strcasecmp(url->protocol, "udp") ) {
-			*file_format = Demuxer::Type_UNKNOWN;
-			return 0;
-		}
-
-		// HTTP based protocol
-		if( !strcasecmp(url->protocol, "http") || !strcasecmp(url->protocol, "http_proxy") ) {
-			fd = http_send_request(streaming_ctrl->libinput, url, 0 );
-			if( fd<0 ) {
-				goto err_out;
-			}
-
-			http_hdr = http_read_response( fd );
-			if( http_hdr==NULL ) {
-				goto err_out;
-			}
-
-			*fd_out=fd;
-			if( mp_conf.verbose ) {
-				http_debug_hdr( http_hdr );
-			}
-
-			streaming_ctrl->data = (any_t*)http_hdr;
-
-			// Check if we can make partial content requests and thus seek in http-streams
-			if( http_hdr!=NULL && http_hdr->status_code==200 ) {
-			    char *accept_ranges;
-			    if( (accept_ranges = http_get_field(http_hdr,"Accept-Ranges")) != NULL )
-				seekable = strncmp(accept_ranges,"bytes",5)==0;
-			}
-			// Check if the response is an ICY status_code reason_phrase
-			if( !strcasecmp(http_hdr->protocol, "ICY") ) {
-				switch( http_hdr->status_code ) {
-					case 200: { // OK
-						char *field_data = NULL;
-						// note: I skip icy-notice1 and 2, as they contain html <BR>
-						// and are IMHO useless info ::atmos
-						if( (field_data = http_get_field(http_hdr, "icy-name")) != NULL )
-							MSG_INFO("Name   : %s\n", field_data); field_data = NULL;
-						if( (field_data = http_get_field(http_hdr, "icy-genre")) != NULL )
-							MSG_INFO("Genre  : %s\n", field_data); field_data = NULL;
-						if( (field_data = http_get_field(http_hdr, "icy-url")) != NULL )
-							MSG_INFO("Website: %s\n", field_data); field_data = NULL;
-						// XXX: does this really mean public server? ::atmos
-						if( (field_data = http_get_field(http_hdr, "icy-pub")) != NULL )
-							MSG_INFO("Public : %s\n", atoi(field_data)?"yes":"no"); field_data = NULL;
-						if( (field_data = http_get_field(http_hdr, "icy-br")) != NULL )
-							MSG_INFO("Bitrate: %skbit/s\n", field_data); field_data = NULL;
-						// Ok, we have detected an mp3 stream
-						// If content-type == video/nsv we most likely have a winamp video stream
-						// otherwise it should be mp3. if there are more types consider adding mime type
-						// handling like later
-						if ( (field_data = http_get_field(http_hdr, "content-type")) != NULL && (!strcmp(field_data, "video/nsv") || !strcmp(field_data, "misc/ultravox")))
-							*file_format = Demuxer::Type_NSV;
-						else
-							*file_format = Demuxer::Type_AUDIO;
-						return 0;
-					}
-					case 400: // Server Full
-						MSG_ERR("Error: ICY-Server is full, skipping!\n");
-						goto err_out;
-					case 401: // Service Unavailable
-						MSG_ERR("Error: ICY-Server return service unavailable, skipping!\n");
-						goto err_out;
-					case 403: // Service Forbidden
-						MSG_ERR("Error: ICY-Server return 'Service Forbidden'\n");
-						goto err_out;
-					case 404: // Resource Not Found
-						MSG_ERR("Error: ICY-Server couldn't find requested stream, skipping!\n");
-						goto err_out;
-					default:
-						MSG_ERR("Error: unhandled ICY-Errorcode, contact MPlayer developers!\n");
-						goto err_out;
-				}
-			}
-
-			// Assume standard http if not ICY
-			switch( http_hdr->status_code ) {
-				case 200: // OK
-					// Look if we can use the Content-Type
-					content_type = http_get_field( http_hdr, "Content-Type" );
-					if( content_type!=NULL ) {
-						char *content_length = NULL;
-						MSG_V("Content-Type: [%s]\n", content_type );
-						if( (content_length = http_get_field(http_hdr, "Content-Length")) != NULL)
-							MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length"));
-						// Check in the mime type table for a demuxer type
-						for( i=0 ; i<(sizeof(mime_type_table)/sizeof(mime_type_table[0])) ; i++ ) {
-							if( !strcasecmp( content_type, mime_type_table[i].mime_type ) ) {
-								*file_format = mime_type_table[i].demuxer_type;
-								return seekable;
-							}
-						}
-					}
-					// Not found in the mime type table, don't fail,
-					// we should try raw HTTP
-					return 0;
-				// Redirect
-				case 301: // Permanently
-				case 302: // Temporarily
-					// TODO: RFC 2616, recommand to detect infinite redirection loops
-					next_url = http_get_field( http_hdr, "Location" );
-					if( next_url!=NULL ) {
-						streaming_ctrl->url = url = url_redirect( &url, next_url );
-						if (!strcasecmp(url->protocol, "mms")) {
-						    goto err_out;
-						}
-						if (strcasecmp(url->protocol, "http")) {
-						    MSG_WARN("Unsupported http %d redirect to %s protocol\n", http_hdr->status_code, url->protocol);
-						    goto err_out;
-						}
-						redirect = 1;
-					}
-					break;
-				case 401: // Authentication required
-					if( http_authenticate(http_hdr, url, &auth_retry)<0 ) goto err_out;
-					redirect = 1;
-					break;
-				default:
-					MSG_ERR("Server returned %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
-					goto err_out;
-			}
-		} else {
-			MSG_ERR("Unknown protocol '%s'\n", url->protocol );
+		    }
+		    case 400: // Server Full
+			MSG_ERR("Error: ICY-Server is full, skipping!\n");
+			goto err_out;
+		    case 401: // Service Unavailable
+			MSG_ERR("Error: ICY-Server return service unavailable, skipping!\n");
+			goto err_out;
+		    case 403: // Service Forbidden
+			MSG_ERR("Error: ICY-Server return 'Service Forbidden'\n");
+			goto err_out;
+		    case 404: // Resource Not Found
+			MSG_ERR("Error: ICY-Server couldn't find requested stream, skipping!\n");
+			goto err_out;
+		    default:
+			MSG_ERR("Error: unhandled ICY-Errorcode, contact MPlayer developers!\n");
 			goto err_out;
 		}
-	} while( redirect );
-err_out:
-	if (fd > 0) closesocket( fd );
-	fd = -1;
-	http_free( http_hdr );
-	http_hdr = NULL;
+	    }
 
-	return -1;
-}
-
-int
-streaming_bufferize( streaming_ctrl_t *streaming_ctrl,unsigned char *buffer, int size) {
-//printf("streaming_bufferize\n");
-	streaming_ctrl->buffer = (char*)mp_malloc(size);
-	if( streaming_ctrl->buffer==NULL ) {
-		MSG_FATAL(MSGTR_OutOfMemory);
-		return -1;
-	}
-	memcpy( streaming_ctrl->buffer, buffer, size );
-	streaming_ctrl->buffer_size = size;
-	return size;
-}
-
-int
-nop_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl ) {
-	int len=0;
-//printf("nop_streaming_read\n");
-	if( stream_ctrl->buffer_size!=0 ) {
-		int buffer_len = stream_ctrl->buffer_size-stream_ctrl->buffer_pos;
-//printf("%d bytes in buffer\n", stream_ctrl->buffer_size);
-		len = (size<buffer_len)?size:buffer_len;
-		memcpy( buffer, (stream_ctrl->buffer)+(stream_ctrl->buffer_pos), len );
-		stream_ctrl->buffer_pos += len;
-//printf("buffer_pos = %d\n", stream_ctrl->buffer_pos );
-		if( stream_ctrl->buffer_pos>=stream_ctrl->buffer_size ) {
-			delete stream_ctrl->buffer ;
-			stream_ctrl->buffer = NULL;
-			stream_ctrl->buffer_size = 0;
-			stream_ctrl->buffer_pos = 0;
-//printf("buffer cleaned\n");
-		}
-//printf("read %d bytes from buffer\n", len );
-	}
-
-	if( len<size ) {
-		int ret;
-		ret = read( fd, buffer+len, size-len );
-		if( ret<0 ) {
-			MSG_ERR("nop_streaming_read error : %s\n",strerror(errno));
-		}
-		len += ret;
-//printf("read %d bytes from network\n", len );
-	}
-
-	return len;
-}
-
-int
-nop_streaming_seek( int fd, off_t pos, streaming_ctrl_t *stream_ctrl ) {
-	return -1;
-}
-
-int
-nop_streaming_start(libinput_t* libinput, stream_t *stream ) {
-	HTTP_header_t *http_hdr = NULL;
-	char *next_url=NULL;
-	URL_t *rd_url=NULL;
-	int fd,ret;
-	if( stream==NULL ) return -1;
-
-	fd = stream->fd;
-	if( fd<0 ) {
-		fd = http_send_request(libinput, stream->streaming_ctrl->url,0);
-		if( fd<0 ) return -1;
-		http_hdr = http_read_response( fd );
-		if( http_hdr==NULL ) return -1;
-
-		switch( http_hdr->status_code ) {
-			case 200: // OK
-				MSG_V("Content-Type: [%s]\n", http_get_field(http_hdr, "Content-Type") );
-				MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length") );
-				if( http_hdr->body_size>0 ) {
-					if( streaming_bufferize( stream->streaming_ctrl, http_hdr->body, http_hdr->body_size )<0 ) {
-						http_free( http_hdr );
-						return -1;
-					}
-				}
-				break;
-			// Redirect
-			case 301: // Permanently
-			case 302: // Temporarily
-				ret=-1;
-				next_url = http_get_field( http_hdr, "Location" );
-
-				if (next_url != NULL)
-					rd_url=url_new(next_url);
-
-				if (next_url != NULL && rd_url != NULL) {
-					MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
-							stream->streaming_ctrl->url=check4proxies(rd_url);
-					ret=nop_streaming_start(libinput,stream); //recursively get streaming started
-				} else {
-					MSG_ERR("Redirection failed\n");
-					closesocket( fd );
-					fd = -1;
-				}
-				return ret;
-				break;
-			case 401: //Authorization required
-			case 403: //Forbidden
-			case 404: //Not found
-			case 500: //Server Error
-			default:
-				MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
-				closesocket( fd );
-				fd = -1;
-				return -1;
-				break;
-		}
-		stream->fd = fd;
-	} else {
-		http_hdr = (HTTP_header_t*)stream->streaming_ctrl->data;
-		if( http_hdr->body_size>0 ) {
-			if( streaming_bufferize( stream->streaming_ctrl, http_hdr->body, http_hdr->body_size )<0 ) {
-				http_free( http_hdr );
-				stream->streaming_ctrl->data = NULL;
-				return -1;
+	    // Assume standard http if not ICY
+	    switch( http_hdr->status_code ) {
+		case 200: // OK
+		    // Look if we can use the Content-Type
+		    content_type = http_get_field( http_hdr, "Content-Type" );
+		    if( content_type!=NULL ) {
+			char *content_length = NULL;
+			MSG_V("Content-Type: [%s]\n", content_type );
+			if( (content_length = http_get_field(http_hdr, "Content-Length")) != NULL)
+			    MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length"));
+			// Check in the mime type table for a demuxer type
+			for( i=0 ; i<(sizeof(mime_type_table)/sizeof(mime_type_table[0])) ; i++ ) {
+			    if( !strcasecmp( content_type, mime_type_table[i].mime_type ) ) {
+				return seekable;
+			    }
 			}
-		}
+		    }
+		    // Not found in the mime type table, don't fail,
+		    // we should try raw HTTP
+		    return 0;
+		// Redirect
+		    case 301: // Permanently
+		    case 302: // Temporarily
+			// TODO: RFC 2616, recommand to detect infinite redirection loops
+			next_url = http_get_field( http_hdr, "Location" );
+			if( next_url!=NULL ) {
+			    networking->url = url = url_redirect( &url, next_url );
+			    if (!strcasecmp(url->protocol, "mms")) goto err_out;
+			    if (strcasecmp(url->protocol, "http")) {
+				MSG_WARN("Unsupported http %d redirect to %s protocol\n", http_hdr->status_code, url->protocol);
+				goto err_out;
+			    }
+			    redirect = 1;
+			}
+			break;
+		    case 401: // Authentication required
+			if( http_authenticate(http_hdr, url, &auth_retry)<0 ) goto err_out;
+			redirect = 1;
+			break;
+		    default:
+			MSG_ERR("Server returned %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
+			goto err_out;
+	    }
+	} else {
+	    MSG_ERR("Unknown protocol '%s'\n", url->protocol );
+	    goto err_out;
 	}
+    } while( redirect );
+err_out:
+    if (fd > 0) closesocket( fd );
+    fd = -1;
+    http_free( http_hdr );
+    http_hdr = NULL;
 
-	if( http_hdr ) {
-		http_free( http_hdr );
-		stream->streaming_ctrl->data = NULL;
-	}
-
-	stream->streaming_ctrl->streaming_read = nop_streaming_read;
-	stream->streaming_ctrl->streaming_seek = nop_streaming_seek;
-	stream->streaming_ctrl->prebuffer_size = 64*1024;	// KBytes
-	stream->streaming_ctrl->buffering = 1;
-	stream->streaming_ctrl->status = streaming_playing_e;
-	return 0;
+    return -1;
 }
 
-void fixup_network_stream_cache(stream_t *stream) {
-  if(stream->streaming_ctrl->buffering) {
+int
+networking_bufferize( networking_t *networking,unsigned char *buffer, int size) {
+//printf("networking_bufferize\n");
+    networking->buffer = (char*)mp_malloc(size);
+    if( networking->buffer==NULL ) {
+	MSG_FATAL(MSGTR_OutOfMemory);
+	return -1;
+    }
+    memcpy( networking->buffer, buffer, size );
+    networking->buffer_size = size;
+    return size;
+}
+
+int
+nop_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl ) {
+    int len=0;
+//printf("nop_networking_read\n");
+    if( stream_ctrl->buffer_size!=0 ) {
+	int buffer_len = stream_ctrl->buffer_size-stream_ctrl->buffer_pos;
+//printf("%d bytes in buffer\n", stream_ctrl->buffer_size);
+	len = (size<buffer_len)?size:buffer_len;
+	memcpy( buffer, (stream_ctrl->buffer)+(stream_ctrl->buffer_pos), len );
+	stream_ctrl->buffer_pos += len;
+//printf("buffer_pos = %d\n", stream_ctrl->buffer_pos );
+	if( stream_ctrl->buffer_pos>=stream_ctrl->buffer_size ) {
+	    delete stream_ctrl->buffer ;
+	    stream_ctrl->buffer = NULL;
+	    stream_ctrl->buffer_size = 0;
+	    stream_ctrl->buffer_pos = 0;
+//printf("buffer cleaned\n");
+	}
+//printf("read %d bytes from buffer\n", len );
+    }
+    if( len<size ) {
+	int ret;
+	ret = read( fd, buffer+len, size-len );
+	if( ret<0 ) {
+	    MSG_ERR("nop_networking_read error : %s\n",strerror(errno));
+	}
+	len += ret;
+//printf("read %d bytes from network\n", len );
+    }
+    return len;
+}
+
+int
+nop_networking_seek( int fd, off_t pos, networking_t *stream_ctrl ) {
+    return -1;
+}
+
+int
+nop_networking_start(net_fd_t *fd,networking_t* networking ) {
+    HTTP_header_t *http_hdr = NULL;
+    char *next_url=NULL;
+    URL_t *rd_url=NULL;
+    int ret;
+
+    if( *fd<0 ) {
+	*fd = http_send_request(networking->libinput, networking->url,0);
+	if( *fd<0 ) return -1;
+	http_hdr = http_read_response( *fd );
+	if( http_hdr==NULL ) return -1;
+
+	switch( http_hdr->status_code ) {
+	    case 200: // OK
+		MSG_V("Content-Type: [%s]\n", http_get_field(http_hdr, "Content-Type") );
+		MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length") );
+		if( http_hdr->body_size>0 ) {
+		    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
+			http_free( http_hdr );
+			return -1;
+		    }
+		}
+		break;
+	    // Redirect
+	    case 301: // Permanently
+	    case 302: // Temporarily
+		ret=-1;
+		next_url = http_get_field( http_hdr, "Location" );
+
+		if (next_url != NULL)
+		    rd_url=url_new(next_url);
+
+		if (next_url != NULL && rd_url != NULL) {
+		    MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
+		    networking->url=check4proxies(rd_url);
+		    ret=nop_networking_start(fd,networking); //recursively get networking started
+		} else {
+		    MSG_ERR("Redirection failed\n");
+		    closesocket( *fd );
+		    *fd = -1;
+		}
+		return ret;
+		break;
+	    case 401: //Authorization required
+	    case 403: //Forbidden
+	    case 404: //Not found
+	    case 500: //Server Error
+	    default:
+		MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
+		closesocket( *fd );
+		*fd = -1;
+		return -1;
+		break;
+	}
+    } else {
+	http_hdr = (HTTP_header_t*)networking->data;
+	if( http_hdr->body_size>0 ) {
+	    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
+		http_free( http_hdr );
+		networking->data = NULL;
+		return -1;
+	    }
+	}
+    }
+
+    if( http_hdr ) {
+	http_free( http_hdr );
+	networking->data = NULL;
+    }
+
+    networking->networking_read = nop_networking_read;
+    networking->networking_seek = nop_networking_seek;
+    networking->prebuffer_size = 64*1024;	// KBytes
+    networking->buffering = 1;
+    networking->status = networking_playing_e;
+    return 0;
+}
+
+void fixup_network_stream_cache(networking_t *networking) {
+  if(networking->buffering) {
     if(mp_conf.s_cache_size<0) {
       // cache option not set, will use our computed value.
       // buffer in KBytes, *5 because the prefill is 20% of the buffer.
-      mp_conf.s_cache_size = (stream->streaming_ctrl->prebuffer_size/1024)*5;
+      mp_conf.s_cache_size = (networking->prebuffer_size/1024)*5;
       if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
     }
     MSG_INFO("[network] cache size set to: %i\n", mp_conf.s_cache_size);
@@ -709,93 +653,83 @@ void fixup_network_stream_cache(stream_t *stream) {
 }
 
 int
-pnm_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl ) {
-	return pnm_read(reinterpret_cast<pnm_t*>(stream_ctrl->data), buffer, size);
+pnm_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl ) {
+    return pnm_read(reinterpret_cast<pnm_t*>(stream_ctrl->data), buffer, size);
 }
 
 
-int pnm_streaming_start(libinput_t* libinput, stream_t *stream ) {
-	int fd;
-	pnm_t *pnm;
-	if( stream==NULL ) return -1;
+int pnm_networking_start(net_fd_t *fd,networking_t *networking ) {
+    pnm_t *pnm;
 
-	fd = tcp_connect2Server(libinput, stream->streaming_ctrl->url->hostname,
-	    stream->streaming_ctrl->url->port ? stream->streaming_ctrl->url->port : 7070, 0);
-	printf("PNM:// fd=%d\n",fd);
-	if(fd<0) return -1;
+    *fd = tcp_connect2Server(networking->libinput, networking->url->hostname,
+	    networking->url->port ? networking->url->port : 7070, 0);
+    MSG_V("PNM:// fd=%d\n",fd);
+    if(*fd<0) return -1;
 
-	pnm = pnm_connect(fd,stream->streaming_ctrl->url->file);
-	if(!pnm) return -2;
+    pnm = pnm_connect(fd,networking->url->file);
+    if(!pnm) return -2;
 
-	stream->fd=fd;
-	stream->streaming_ctrl->data=pnm;
+    networking->data=pnm;
 
-	stream->streaming_ctrl->streaming_read = pnm_streaming_read;
-//	stream->streaming_ctrl->streaming_seek = nop_streaming_seek;
-	stream->streaming_ctrl->prebuffer_size = 8*1024;  // 8 KBytes
-	stream->streaming_ctrl->buffering = 1;
-	stream->streaming_ctrl->status = streaming_playing_e;
-	return 0;
+    networking->networking_read = pnm_networking_read;
+    networking->prebuffer_size = 8*1024;  // 8 KBytes
+    networking->buffering = 1;
+    networking->status = networking_playing_e;
+    return 0;
 }
 
 #ifdef HAVE_RTSP_SESSION_H
 int
-realrtsp_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl ) {
-	return rtsp_session_read(stream_ctrl->data, buffer, size);
+realrtsp_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl ) {
+    return rtsp_session_read(stream_ctrl->data, buffer, size);
 }
 
 
 int
-realrtsp_streaming_start( stream_t *stream ) {
-	int fd;
-	rtsp_session_t *rtsp;
-	char *mrl;
-	char *file;
-	int port;
-	int redirected, temp;
-	if( stream==NULL ) return -1;
+realrtsp_networking_start( net_fd_t* fd, networking_t *stream ) {
+    rtsp_session_t *rtsp;
+    char *mrl;
+    char *file;
+    int port;
+    int redirected, temp;
+    if( stream==NULL ) return -1;
 
-	temp = 5; // counter so we don't get caught in infinite redirections (you never know)
+    temp = 5; // counter so we don't get caught in infinite redirections (you never know)
 
-	do {
+    do {
+	redirected = 0;
+	port = networking->url->port ? networking->url->port : 554;
+	*fd = tcp_connect2Server( networking->url->hostname, port, 1);
+	if(*fd<0 && !networking->url->port)
+		*fd = tcp_connect2Server( networking->url->hostname,port = 7070, 1 );
+	if(*fd<0) return -1;
 
-		redirected = 0;
-		port = stream->streaming_ctrl->url->port ? stream->streaming_ctrl->url->port : 554;
-		fd = tcp_connect2Server( stream->streaming_ctrl->url->hostname, port, 1);
-		if(fd<0 && !stream->streaming_ctrl->url->port)
-			fd = tcp_connect2Server( stream->streaming_ctrl->url->hostname,	port = 7070, 1 );
-		if(fd<0) return -1;
+	file = networking->url->file;
+	if (file[0] == '/') file++;
+	mrl = mp_malloc(sizeof(char)*(strlen(networking->url->hostname)+strlen(file)+16));
+	sprintf(mrl,"rtsp://%s:%i/%s",networking->url->hostname,port,file);
+	rtsp = rtsp_session_start(fd,&mrl, file,
+			networking->url->hostname, port, &redirected);
 
-		file = stream->streaming_ctrl->url->file;
-		if (file[0] == '/')
-		    file++;
-		mrl = mp_malloc(sizeof(char)*(strlen(stream->streaming_ctrl->url->hostname)+strlen(file)+16));
-		sprintf(mrl,"rtsp://%s:%i/%s",stream->streaming_ctrl->url->hostname,port,file);
-		rtsp = rtsp_session_start(fd,&mrl, file,
-			stream->streaming_ctrl->url->hostname, port, &redirected);
+	if ( redirected == 1 ) {
+	    url_free(networking->url);
+	    networking->url = url_new(mrl);
+	    closesocket(fd);
+	}
+	delete mrl;
+	temp--;
 
-		if ( redirected == 1 ) {
-			url_free(stream->streaming_ctrl->url);
-			stream->streaming_ctrl->url = url_new(mrl);
-			closesocket(fd);
-		}
+    } while( (redirected != 0) && (temp > 0) );
 
-		delete mrl;
-		temp--;
+    if(!rtsp) return -1;
 
-	} while( (redirected != 0) && (temp > 0) );
+    networking->data=rtsp;
 
-	if(!rtsp) return -1;
-
-	stream->fd=fd;
-	stream->streaming_ctrl->data=rtsp;
-
-	stream->streaming_ctrl->streaming_read = realrtsp_streaming_read;
-//	stream->streaming_ctrl->streaming_seek = nop_streaming_seek;
-	stream->streaming_ctrl->prebuffer_size = 128*1024;  // 8 KBytes
-	stream->streaming_ctrl->buffering = 1;
-	stream->streaming_ctrl->status = streaming_playing_e;
-	return 0;
+    networking->networking_read = realrtsp_networking_read;
+    networking->prebuffer_size = 128*1024;  // 8 KBytes
+    networking->buffering = 1;
+    networking->status = networking_playing_e;
+    return 0;
 }
 #endif // HAVE_RTSP_SESSION_H
 
@@ -803,193 +737,122 @@ realrtsp_streaming_start( stream_t *stream ) {
 #ifndef STREAMING_LIVE_DOT_COM
 
 static int
-rtp_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *streaming_ctrl ) {
+rtp_networking_read( int fd, char *buffer, int size, networking_t *networking ) {
     return read_rtp_from_server( fd, buffer, size );
 }
 
 static int
-rtp_streaming_start( stream_t *stream, int raw_udp ) {
-	streaming_ctrl_t *streaming_ctrl;
-	int fd;
+rtp_networking_start( net_fd_t* fd,networking_t* networking, int raw_udp ) {
 
-	if( stream==NULL ) return -1;
-	streaming_ctrl = stream->streaming_ctrl;
-	fd = stream->fd;
+    if( *fd<0 ) {
+	*fd = udp_open_socket( (networking->url) );
+	if( *fd<0 ) return -1;
+    }
 
-	if( fd<0 ) {
-		fd = udp_open_socket( (streaming_ctrl->url) );
-		if( fd<0 ) return -1;
-		stream->fd = fd;
-	}
-
-	if(raw_udp)
-		streaming_ctrl->streaming_read = nop_streaming_read;
-	else
-		streaming_ctrl->streaming_read = rtp_streaming_read;
-	streaming_ctrl->streaming_read = rtp_streaming_read;
-	streaming_ctrl->streaming_seek = nop_streaming_seek;
-	streaming_ctrl->prebuffer_size = 64*1024;	// KBytes
-	streaming_ctrl->buffering = 0;
-	streaming_ctrl->status = streaming_playing_e;
-	return 0;
+    if(raw_udp)
+	networking->networking_read = nop_networking_read;
+    else
+	networking->networking_read = rtp_networking_read;
+    networking->networking_read = rtp_networking_read;
+    networking->networking_seek = nop_networking_seek;
+    networking->prebuffer_size = 64*1024;	// KBytes
+    networking->buffering = 0;
+    networking->status = networking_playing_e;
+    return 0;
 }
 #endif
 
-int streaming_start(libinput_t* libinput,stream_t *stream, int *demuxer_type, URL_t *url) {
-	int ret;
-	if( stream==NULL ) return -1;
+int networking_start(net_fd_t* fd,networking_t* networking, URL_t *url) {
+    int ret;
 
-	stream->streaming_ctrl = streaming_ctrl_new(libinput);
-	if( stream->streaming_ctrl==NULL ) {
-		return -1;
+    networking->url = check4proxies( url );
+
+    ret = autodetectProtocol( networking, fd);
+
+    if( ret<0 ) return -1;
+    ret = -1;
+
+    // Get the bandwidth available
+    networking->bandwidth = network_bandwidth;
+
+    // For RTP streams, we usually don't know the stream type until we open it.
+    if( !strcasecmp( networking->url->protocol, "rtp")) {
+	if(*fd >= 0) {
+	    if(closesocket(*fd) < 0)
+	    MSG_ERR("networking_start : Closing socket %d failed %s\n",*fd,strerror(errno));
 	}
-	stream->streaming_ctrl->url = check4proxies( url );
-
-	if (*demuxer_type != Demuxer::Type_PLAYLIST){
-	ret = autodetectProtocol( stream->streaming_ctrl, &stream->fd, demuxer_type );
-	} else {
-	  ret=0;
+	*fd = -1;
+	ret = rtp_networking_start(fd, networking, 0);
+    } else if( !strcasecmp( networking->url->protocol, "pnm")) {
+	*fd = -1;
+	ret = pnm_networking_start(fd, networking);
+	if (ret == -1) {
+	    MSG_INFO("Can't connect with pnm, retrying with http.\n");
+	    return -1;
 	}
-
-	if( ret<0 ) {
-		return -1;
-	}
-	if( ret==1 ) {
-//		stream->flags |= STREAM_SEEK;
-//		stream->seek = http_seek;
-	}
-
-	ret = -1;
-
-	// Get the bandwidth available
-	stream->streaming_ctrl->bandwidth = network_bandwidth;
-
-	// For RTP streams, we usually don't know the stream type until we open it.
-	if( !strcasecmp( stream->streaming_ctrl->url->protocol, "rtp")) {
-		if(stream->fd >= 0) {
-			if(closesocket(stream->fd) < 0)
-				MSG_ERR("streaming_start : Closing socket %d failed %s\n",stream->fd,strerror(errno));
-		}
-		stream->fd = -1;
-		ret = rtp_streaming_start( stream, 0);
-	} else
-
-	if( !strcasecmp( stream->streaming_ctrl->url->protocol, "pnm")) {
-		stream->fd = -1;
-		ret = pnm_streaming_start(libinput, stream );
-		if (ret == -1) {
-		    MSG_INFO("Can't connect with pnm, retrying with http.\n");
-		    goto stream_switch;
-		}
-	} else
-
+    }
 #ifdef HAVE_RTSP_SESSION_H
-	if( (!strcasecmp( stream->streaming_ctrl->url->protocol, "rtsp")) &&
-			(*demuxer_type == Demuxer::Type_REAL)) {
-		stream->fd = -1;
-		if ((ret = realrtsp_streaming_start( stream )) < 0) {
-		    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
+    else if( !strcasecmp( networking->url->protocol, "rtsp")) {
+	*fd = -1;
+	if ((ret = realrtsp_networking_start( fd, networking )) < 0) {
+	    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
 #ifdef STREAMING_LIVE_DOT_COM
-		    *demuxer_type =  Demuxer::Type_RTP;
-		    goto stream_switch;
+	    ret = rtsp_networking_start( stream );
+	    if( ret<0 ) MSG_ERR("rtsp_networking_start failed\n");
+	    return ret;
 #else
-		    MSG_ERR("RTSP support requires the \"LIVE.COM Streaming Media\" libraries!\n");
-		    return -1;
+	    MSG_ERR("RTSP support requires the \"LIVE.COM Streaming Media\" libraries!\n");
+	    return -1;
 #endif
-		}
-	} else
-#endif
-	if(!strcasecmp( stream->streaming_ctrl->url->protocol, "udp")) {
-		stream->fd = -1;
-		ret = rtp_streaming_start(stream, 1);
-		if(ret<0) {
-			MSG_ERR("rtp_streaming_start(udp) failed\n");
-			return -1;
-		}
-		*demuxer_type =  Demuxer::Type_UNKNOWN;
-	} else
-
-	// For connection-oriented streams, we can usually determine the streaming type.
-stream_switch:
-	switch( *demuxer_type ) {
-		case Demuxer::Type_ASF:
-			// Send the appropriate HTTP request
-			// Need to filter the network stream.
-			// ASF raw stream is encapsulated.
-			// It can also be a playlist (redirector)
-			// so we need to pass demuxer_type too
-			ret = asf_streaming_start(stream->streaming_ctrl->libinput, stream, demuxer_type );
-			if( ret<0 ) {
-				//sometimes a file is just on a webserver and it is not streamed.
-				//try loading them default method as last resort for http protocol
-				if ( !strcasecmp(stream->streaming_ctrl->url->protocol, "http") ) {
-				MSG_STATUS("Trying default streaming for http protocol\n ");
-				//reset stream
-				close(stream->fd);
-				stream->fd=-1;
-				ret=nop_streaming_start(libinput,stream);
-				}
-
-			 if (ret<0) {
-				MSG_ERR("asf_streaming_start failed\n");
-				MSG_STATUS("Check if this is a playlist which requires -playlist option\nExample: mplayer -playlist <url>\n");
-			       }
-			}
-			break;
-#ifdef STREAMING_LIVE_DOT_COM
-		case Demuxer::Type_RTP:
-			// RTSP/RTP streaming is handled separately:
-			ret = rtsp_streaming_start( stream );
-			if( ret<0 ) {
-				MSG_ERR("rtsp_streaming_start failed\n");
-			}
-			break;
-#endif
-		case Demuxer::Type_MPEG_ES:
-		case Demuxer::Type_MPEG_PS:
-		case Demuxer::Type_AVI:
-		case Demuxer::Type_MOV:
-		case Demuxer::Type_VIVO:
-		case Demuxer::Type_FLI:
-		case Demuxer::Type_REAL:
-		case Demuxer::Type_Y4M:
-		case Demuxer::Type_FILM:
-		case Demuxer::Type_ROQ:
-		case Demuxer::Type_AUDIO:
-		case Demuxer::Type_OGG:
-		case Demuxer::Type_PLAYLIST:
-		case Demuxer::Type_UNKNOWN:
-		case Demuxer::Type_NSV:
-			// Generic start, doesn't need to filter
-			// the network stream, it's a raw stream
-			ret = nop_streaming_start(libinput, stream );
-			if( ret<0 ) {
-			    MSG_ERR("nop_streaming_start failed\n");
-			}
-			break;
-		default:
-			MSG_ERR("Unable to detect the streaming type\n");
-			ret = -1;
 	}
-
+    }
+#endif
+    else if(!strcasecmp( networking->url->protocol, "udp")) {
+	*fd = -1;
+	ret = rtp_networking_start(fd, networking, 1);
+	if(ret<0) {
+	    MSG_ERR("rtp_networking_start(udp) failed\n");
+	    return -1;
+	}
+    } else {
+	// Send the appropriate HTTP request
+	// Need to filter the network stream.
+	// ASF raw stream is encapsulated.
+	// It can also be a playlist (redirector)
+	// so we need to pass demuxer_type too
+	ret = asf_networking_start(fd,networking);
 	if( ret<0 ) {
-		streaming_ctrl_free( stream->streaming_ctrl );
-		stream->streaming_ctrl = NULL;
-	} else if( stream->streaming_ctrl->buffering ) {
-		if(mp_conf.s_cache_size<0) {
-			// cache option not set, will use our computed value.
-			// buffer in KBytes, *5 because the prefill is 20% of the buffer.
-			mp_conf.s_cache_size = (stream->streaming_ctrl->prebuffer_size/1024)*5;
-			if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
-		}
-		MSG_INFO("Cache size set to %d KBytes\n", mp_conf.s_cache_size);
+	    //sometimes a file is just on a webserver and it is not streamed.
+	    //try loading them default method as last resort for http protocol
+	    if ( !strcasecmp(networking->url->protocol, "http") ) {
+		MSG_STATUS("Trying default networking for http protocol\n ");
+		//reset stream
+		close(*fd);
+		*fd=-1;
+		ret=nop_networking_start(fd,networking);
+	    }
+	    if (ret<0) {
+		MSG_ERR("asf_networking_start failed\n");
+		MSG_STATUS("Check if this is a playlist which requires -playlist option\nExample: mplayer -playlist <url>\n");
+	    }
 	}
-
-	return ret;
+    }
+    if( ret<0 ) {
+	free_networking( networking );
+    } else if( networking->buffering ) {
+	if(mp_conf.s_cache_size<0) {
+	    // cache option not set, will use our computed value.
+	    // buffer in KBytes, *5 because the prefill is 20% of the buffer.
+	    mp_conf.s_cache_size = (networking->prebuffer_size/1024)*5;
+	    if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
+	}
+	MSG_INFO("Cache size set to %d KBytes\n", mp_conf.s_cache_size);
+    }
+    return ret;
 }
 
 int
-streaming_stop( stream_t *stream ) {
-	stream->streaming_ctrl->status = streaming_stopped_e;
-	return 0;
+networking_stop( networking_t *networking) {
+    networking->status = networking_stopped_e;
+    return 0;
 }

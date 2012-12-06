@@ -43,11 +43,12 @@ using namespace mpxp;
 #include "stream.h"
 #include "libmpconf/cfgparser.h"
 
-
 #include "cdd.h"
 #include "version.h"
 #include "network.h"
 #include "stream_msg.h"
+
+namespace mpxp {
 
 #define DEFAULT_FREEDB_SERVER	"freedb.freedb.org"
 #define DEFAULT_CACHE_DIR	"/.cddb/"
@@ -780,19 +781,19 @@ cd_info_t* __FASTCALL__ cddb_parse_xmcd(char *xmcd_file) {
 	return cd_info;
 }
 
-MPXP_Rc __FASTCALL__ open_cddb(stream_t *stream,const char *dev, const char *track) {
+cdda_priv* __FASTCALL__ open_cddb(libinput_t *libinput,const char *dev, const char *track) {
     cd_info_t *cd_info = NULL;
     char *xmcd_file = NULL;
     MPXP_Rc ret;
 
-    ret = cddb_resolve(stream->streaming_ctrl->libinput,&xmcd_file);
+    ret = cddb_resolve(libinput,&xmcd_file);
     if( ret==MPXP_False ) {
 	cd_info = cddb_parse_xmcd(xmcd_file);
 	delete xmcd_file;
 	cd_info_debug( cd_info );
+	return NULL;
     }
-    ret = open_cdda(stream, dev, track);
-
-    return ret;
+    return open_cdda(dev, track);
 }
+} // namespace mpxp
 #endif

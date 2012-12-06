@@ -26,154 +26,152 @@ using namespace mpxp;
 #include "librtsp/rtsp_session.h"
 #include "stream_msg.h"
 
+namespace mpxp {
+    class Rtsp_Stream_Interface : public Stream_Interface {
+	public:
+	    Rtsp_Stream_Interface();
+	    virtual ~Rtsp_Stream_Interface();
+
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+	    virtual stream_type_e type() const;
+	    virtual off_t	size() const;
+	    virtual off_t	sector_size() const;
+	private:
+	    int			start ();
+
+	    networking_t*	networking;
+	    net_fd_t		fd;
+    };
+
+Rtsp_Stream_Interface::Rtsp_Stream_Interface() {}
+Rtsp_Stream_Interface::~Rtsp_Stream_Interface() {}
+
 #define RTSP_DEFAULT_PORT 554
 
-static int __FASTCALL__ rtsp_stream_read(stream_t *s,stream_packet_t*sp)
+int Rtsp_Stream_Interface::read(stream_packet_t*sp)
 {
-  return rtsp_session_read (reinterpret_cast<rtsp_session_t*>(s->streaming_ctrl->data), sp->buf, sp->len);
+    return rtsp_session_read (reinterpret_cast<rtsp_session_t*>(networking->data), sp->buf, sp->len);
 }
 
-static off_t __FASTCALL__ rtsp_seek(stream_t *s,off_t newpos)
-{
-    UNUSED(s);
-    return newpos;
-}
+off_t Rtsp_Stream_Interface::seek(off_t newpos) { return newpos; }
+off_t Rtsp_Stream_Interface::tell() const { return 0; }
 
-static off_t __FASTCALL__ rtsp_tell(const stream_t *stream)
+MPXP_Rc Rtsp_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 {
-    UNUSED(stream);
-    return 0;
-}
-
-static MPXP_Rc __FASTCALL__ rtsp_ctrl(const stream_t *s,unsigned cmd,any_t*args)
-{
-    UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
     return MPXP_Unknown;
 }
 
-static void __FASTCALL__ rtsp_stream_close(stream_t*s)
+void Rtsp_Stream_Interface::close()
 {
-  rtsp_session_t *rtsp = NULL;
+    rtsp_session_t *rtsp = NULL;
 
-  rtsp = (rtsp_session_t *) s->streaming_ctrl->data;
-  if (rtsp)
-    rtsp_session_end (rtsp);
-  url_free(s->streaming_ctrl->url);
-  streaming_ctrl_free (s->streaming_ctrl);
+    rtsp = reinterpret_cast<rtsp_session_t*>(networking->data);
+    if (rtsp)
+	rtsp_session_end (rtsp);
+    url_free(networking->url);
+    free_networking(networking);
 }
 
-static int __FASTCALL__ rtsp_streaming_start (libinput_t*libinput,stream_t *stream)
+int Rtsp_Stream_Interface::start()
 {
-  int fd;
-  rtsp_session_t *rtsp;
-  char *mrl;
-  char *file;
-  int port;
-  int redirected, temp;
+    rtsp_session_t *rtsp;
+    char *mrl;
+    char *file;
+    int port;
+    int redirected, temp;
 
-  if (!stream)
-    return -1;
+    /* counter so we don't get caught in infinite redirections */
+    temp = 5;
 
-  /* counter so we don't get caught in infinite redirections */
-  temp = 5;
+    do {
+	redirected = 0;
 
-  do {
-    redirected = 0;
+	fd = tcp_connect2Server (networking->libinput,networking->url->hostname,
+	port = (networking->url->port ?
+		 networking->url->port :
+		 RTSP_DEFAULT_PORT), 1);
+	if (fd < 0 && !networking->url->port)
+	    fd = tcp_connect2Server (networking->libinput,networking->url->hostname,
+			port = 7070, 1);
+	if (fd < 0) return -1;
+	file = networking->url->file;
+	if (file[0] == '/') file++;
 
-    fd = tcp_connect2Server (libinput,stream->streaming_ctrl->url->hostname,
-			 port = (stream->streaming_ctrl->url->port ?
-				 stream->streaming_ctrl->url->port :
-				 RTSP_DEFAULT_PORT), 1);
+	mrl = new char [strlen (networking->url->hostname) + strlen (file) + 16];
 
-    if (fd < 0 && !stream->streaming_ctrl->url->port)
-      fd = tcp_connect2Server (libinput,stream->streaming_ctrl->url->hostname,
-			   port = 7070, 1);
+	sprintf (mrl, "rtsp://%s:%i/%s",networking->url->hostname, port, file);
 
-    if (fd < 0)
-      return -1;
+	rtsp = rtsp_session_start (fd, &mrl, file,
+			networking->url->hostname,
+			port, &redirected,
+			networking->bandwidth,
+			networking->url->username,
+			networking->url->password);
+	if (redirected == 1) {
+	    url_free (networking->url);
+	    networking->url = url_new (mrl);
+	    ::closesocket (fd);
+	}
+	delete mrl;
+	temp--;
+    } while ((redirected != 0) && (temp > 0));
 
-    file = stream->streaming_ctrl->url->file;
-    if (file[0] == '/')
-      file++;
+    if (!rtsp) return -1;
 
-    mrl = new char [strlen (stream->streaming_ctrl->url->hostname)
-		  + strlen (file) + 16];
+    networking->data = rtsp;
 
-    sprintf (mrl, "rtsp://%s:%i/%s",
-	     stream->streaming_ctrl->url->hostname, port, file);
+    networking->prebuffer_size = 128*1024;  // 640 KBytes
+    networking->buffering = 1;
+    networking->status = networking_playing_e;
 
-    rtsp = rtsp_session_start (fd, &mrl, file,
-			       stream->streaming_ctrl->url->hostname,
-			       port, &redirected,
-			       stream->streaming_ctrl->bandwidth,
-			       stream->streaming_ctrl->url->username,
-			       stream->streaming_ctrl->url->password);
-
-    if (redirected == 1)
-    {
-      url_free (stream->streaming_ctrl->url);
-      stream->streaming_ctrl->url = url_new (mrl);
-      closesocket (fd);
-    }
-
-    delete mrl;
-    temp--;
-  } while ((redirected != 0) && (temp > 0));
-
-  if (!rtsp)
-    return -1;
-
-  stream->fd = fd;
-  stream->streaming_ctrl->data = rtsp;
-
-  stream->streaming_ctrl->prebuffer_size = 128*1024;  // 640 KBytes
-  stream->streaming_ctrl->buffering = 1;
-  stream->streaming_ctrl->status = streaming_playing_e;
-
-  return 0;
+    return 0;
 }
 
 extern int network_bandwidth;
 extern int index_mode;
-static MPXP_Rc __FASTCALL__ rtsp_open(libinput_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+MPXP_Rc Rtsp_Stream_Interface::open(libinput_t* libinput,const char *filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);
     if(strncmp(filename,"rtsp://",7)!=0) return MPXP_False;
 
     MSG_V("STREAM_RTSP, URL: %s\n", filename);
-    stream->streaming_ctrl = streaming_ctrl_new (libinput);
-    if (!stream->streaming_ctrl) return MPXP_False;
+    networking = new_networking(libinput);
+    if (!networking) return MPXP_False;
 
-    stream->streaming_ctrl->bandwidth = network_bandwidth;
+    networking->bandwidth = network_bandwidth;
     url = url_new (filename);
-    stream->streaming_ctrl->url = check4proxies (url);
+    networking->url = check4proxies (url);
 
-    stream->fd = -1;
+    fd = -1;
     index_mode = -1; /* prevent most RTSP streams from locking due to -idx */
-    if (rtsp_streaming_start (libinput,stream) < 0) {
-	streaming_ctrl_free (stream->streaming_ctrl);
-	stream->streaming_ctrl = NULL;
+    if (start() < 0) {
+	free_networking(networking);
+	networking = NULL;
 	return MPXP_False;
     }
 
-    fixup_network_stream_cache (stream);
-    stream->type = STREAMTYPE_STREAM;
-    check_pin("stream",stream->pin,STREAM_PIN);
+    fixup_network_stream_cache (networking);
     return MPXP_Ok;
 }
+stream_type_e Rtsp_Stream_Interface::type() const { return STREAMTYPE_STREAM; }
+off_t	Rtsp_Stream_Interface::size() const { return -1; }
+off_t	Rtsp_Stream_Interface::sector_size() const { return 1; }
+
+static Stream_Interface* query_interface() { return new(zeromem) Rtsp_Stream_Interface; }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
-extern const stream_driver_t rtsp_stream =
+extern const stream_interface_info_t rtsp_stream =
 {
     "rtsp",
     "reads multimedia stream from Real Time Streaming Protocol (RTSP)",
-    rtsp_open,
-    rtsp_stream_read,
-    rtsp_seek,
-    rtsp_tell,
-    rtsp_stream_close,
-    rtsp_ctrl
+    query_interface
 };
+} // namespace mpxp

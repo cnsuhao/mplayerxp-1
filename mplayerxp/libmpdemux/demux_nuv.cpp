@@ -225,7 +225,7 @@ static Opaque* nuv_open ( Demuxer* demuxer )
 
 	/* Go to the start */
 	stream_reset(demuxer->stream);
-	stream_seek(demuxer->stream, demuxer->stream->start_pos);
+	stream_seek(demuxer->stream, demuxer->stream->start_pos());
 
 	stream_read ( demuxer->stream, (char*)& rtjpeg_fileheader, sizeof(rtjpeg_fileheader) );
 	le2me_rtfileheader(&rtjpeg_fileheader);

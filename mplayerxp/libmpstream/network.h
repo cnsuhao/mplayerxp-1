@@ -25,39 +25,43 @@
 
 #define BUFFER_SIZE		2048
 
-typedef enum {
-    streaming_stopped_e,
-    streaming_playing_e
-} streaming_status;
+namespace mpxp {
+    struct stream_t;
+    struct libinput_t;
+}
+typedef int net_fd_t;
+enum networking_status {
+    networking_stopped_e,
+    networking_playing_e
+};
 
-typedef struct streaming_control {
+struct networking_t {
     URL_t *url;
-    streaming_status status;
+    networking_status status;
     int buffering;	// boolean
     unsigned int prebuffer_size;
     char *buffer;
     unsigned int buffer_size;
     unsigned int buffer_pos;
     unsigned int bandwidth;	// The downstream available
-    int (*streaming_read)( int fd, char *buffer, int buffer_size, struct streaming_control *stream_ctrl );
-    int (*streaming_seek)( int fd, off_t pos, struct streaming_control *stream_ctrl );
+    int (*networking_read)( net_fd_t fd, char *buffer, int buffer_size, networking_t *stream_ctrl );
+    int (*networking_seek)( net_fd_t fd, off_t pos, networking_t *stream_ctrl );
     any_t*data;
     libinput_t* libinput;   /**< provides possibility to inperrupt network streams */
-} streaming_ctrl_t;
+};
 
-struct stream_t;
-extern void fixup_network_stream_cache(stream_t *s);
-extern int streaming_start(libinput_t* libinput,stream_t *stream, int *demuxer_type, URL_t *url);
-extern int streaming_bufferize( streaming_ctrl_t *streaming_ctrl,unsigned char *buffer, int size);
-extern streaming_ctrl_t *streaming_ctrl_new(libinput_t* libinput);
-extern void streaming_ctrl_free( streaming_ctrl_t *streaming_ctrl );
+extern void fixup_network_stream_cache(networking_t *s);
+extern int networking_start(net_fd_t* fd,networking_t *n, URL_t *url);
+extern int networking_bufferize(networking_t *networking,unsigned char *buffer, int size);
+extern networking_t *new_networking(libinput_t* libinput);
+extern void free_networking( networking_t *networking );
 extern URL_t* check4proxies( URL_t *url );
 
-int nop_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl );
-int nop_streaming_seek( int fd, off_t pos, streaming_ctrl_t *stream_ctrl );
+int nop_networking_read( net_fd_t fd, char *buffer, int size, networking_t *stream_ctrl );
+int nop_networking_seek( net_fd_t fd, off_t pos, networking_t *stream_ctrl );
 
 int http_send_request(libinput_t* libinput,URL_t *url, off_t pos);
-HTTP_header_t *http_read_response(int fd);
+HTTP_header_t *http_read_response(net_fd_t fd);
 
 int http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry);
 

@@ -52,7 +52,7 @@ static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
 	if(ds->pts_flags && ds->pts < 1.0 && ds->prev_pts > 2.0)
 	{
 	    float spts;
-	    spts=ds->demuxer->stream->stream_pts;
+	    spts=ds->demuxer->stream->stream_pts();
 	    ds->pts_corr=spts>0?spts:ds->prev_pts;
 	    ds->pts_flags=0;
 	    MSG_V("***PTS discontinuity happens*** correct audio %f pts as %f\n",ds->pts,ds->pts_corr);

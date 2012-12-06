@@ -174,7 +174,7 @@ static Opaque* pva_open (Demuxer * demuxer)
     sh_audio->ds=demuxer->audio;
 
     demuxer->movi_start=0;
-    demuxer->movi_end=demuxer->stream->end_pos;
+    demuxer->movi_end=demuxer->stream->end_pos();
 
     priv->last_video_pts=-1;
     priv->last_audio_pts=-1;

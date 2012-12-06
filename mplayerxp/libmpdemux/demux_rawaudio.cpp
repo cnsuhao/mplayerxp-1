@@ -36,7 +36,7 @@ static const config_t rawaudio_conf[] = {
 
 static MPXP_Rc rawaudio_probe(Demuxer* demuxer)
 {
-    if(demuxer->stream->type & STREAMTYPE_RAWAUDIO || use_rawaudio) {
+    if(demuxer->stream->type() & STREAMTYPE_RAWAUDIO || use_rawaudio) {
 	demuxer->file_format=Demuxer::Type_RAWAUDIO;
 	return MPXP_Ok;
     }
@@ -64,14 +64,14 @@ static Opaque* rawaudio_open(Demuxer* demuxer) {
   w->wBitsPerSample = samplesize*8;
   w->cbSize = 0;
   print_wave_header(w,sizeof(WAVEFORMATEX));
-  demuxer->movi_start = demuxer->stream->start_pos;
-  demuxer->movi_end = demuxer->stream->end_pos;
+  demuxer->movi_start = demuxer->stream->start_pos();
+  demuxer->movi_end = demuxer->stream->end_pos();
   demuxer->movi_length = (demuxer->movi_end-demuxer->movi_start)/w->nAvgBytesPerSec;
 
   demuxer->audio->sh = sh_audio;
   demuxer->audio->id = 0;
   sh_audio->ds = demuxer->audio;
-  if(!(demuxer->stream->type & STREAMTYPE_SEEKABLE)) demuxer->flags &= ~Demuxer::Seekable;
+  if(!(demuxer->stream->type() & STREAMTYPE_SEEKABLE)) demuxer->flags &= ~Demuxer::Seekable;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }

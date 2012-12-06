@@ -408,13 +408,13 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 	       {
 		  off_t offset;
 
-		  numberParts = demux->stream->end_pos / TIVO_PART_LENGTH;
+		  numberParts = demux->stream->end_pos() / TIVO_PART_LENGTH;
 		  offset = numberParts * TIVO_PART_LENGTH;
 
 		  MSG_DBG3( "ty:ty/ty+Number Parts %"PRId64"\n",
 		    (int64_t)numberParts );
 
-		  if ( offset + CHUNKSIZE < demux->stream->end_pos )
+		  if ( offset + CHUNKSIZE < demux->stream->end_pos() )
 		  {
 		     stream_seek( demux->stream, offset );
 		     readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
@@ -441,8 +441,8 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 	       }
 	 }
 
-	 if ( demux->stream->start_pos > 0 )
-	    filePos = demux->stream->start_pos;
+	 if ( demux->stream->start_pos() > 0 )
+	    filePos = demux->stream->start_pos();
 	 stream_seek( demux->stream, filePos );
 	 demux->filepos = stream_tell( demux->stream );
 	 tivo->whichChunk = filePos / CHUNKSIZE;
@@ -459,7 +459,7 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
    MSG_DBG3(
       "ty:ty which Chunk %d\n", tivo->whichChunk );
    MSG_DBG3(
-      "ty:file end_pos   %"PRIx64"\n", (int64_t)demux->stream->end_pos );
+      "ty:file end_pos   %"PRIx64"\n", (int64_t)demux->stream->end_pos());
    MSG_DBG3(
       "\nty:wanted current offset %"PRIx64"\n", (int64_t)stream_tell( demux->stream ) );
 

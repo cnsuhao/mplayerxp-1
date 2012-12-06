@@ -7,7 +7,7 @@ using namespace mpxp;
 #include "frequencies.h"
 
 /* --------------------------------------------------------------------- */
-
+namespace mpxp {
 /* US broadcast */
 static const struct CHANLIST ntsc_bcast[] = {
     { "2",	 55250 },
@@ -1066,3 +1066,4 @@ const struct CHANLISTS chanlists[] = {
 int chantab   = 5;
 const struct CHANLIST *chanlist  = europe_west;
 int chancount = CHAN_COUNT(europe_west);
+} // namespace mpxp

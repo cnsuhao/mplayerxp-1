@@ -561,7 +561,7 @@ static void mpgps_seek(Demuxer *demuxer,const seek_args_t* seeka){
     }
 
 	if(newpos<demuxer->movi_start){
-	    if(!(demuxer->stream->type&STREAMTYPE_PROGRAM)) demuxer->movi_start=0; // for VCD
+	    if(!(demuxer->stream->type()&STREAMTYPE_PROGRAM)) demuxer->movi_start=0; // for VCD
 	    if(newpos<demuxer->movi_start) newpos=demuxer->movi_start;
 	}
 
@@ -673,7 +673,7 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
     code = bswap_32(code);
     /* test stream only if stream is started from 0000001XX */
     if ((code & 0xffffff00) == 0x100) {
-	stream_seek(demuxer->stream,demuxer->stream->start_pos);
+	stream_seek(demuxer->stream,demuxer->stream->start_pos());
 	memset(&mpg_stat,0,sizeof(struct mpg_stat_s));
 
 	while(pes>=0){
@@ -763,7 +763,7 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
 		if(!demuxer->get_sh_video()) demuxer->new_sh_video();
 		if(demuxer->video->id==-1) demuxer->video->id=0;
 		demuxer->video->sh=demuxer->get_sh_video();
-		stream_seek(demuxer->stream,demuxer->stream->start_pos);
+		stream_seek(demuxer->stream,demuxer->stream->start_pos());
 		return mpges_demux(demuxer,demuxer->video)?MPXP_Ok:MPXP_False;
 	} else {
 	    /*

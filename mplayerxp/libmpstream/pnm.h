@@ -31,8 +31,9 @@
 /*#include "xine_internal.h" */
 
 typedef struct pnm_s pnm_t;
+typedef int net_fd_t;
 
-pnm_t*   pnm_connect (int fd,const char *url);
+pnm_t*   pnm_connect (net_fd_t* fd,const char *url);
 
 int      pnm_read (pnm_t *self, char *data, int len);
 void     pnm_close (pnm_t *self);

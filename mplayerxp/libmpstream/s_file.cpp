@@ -19,60 +19,67 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "stream_msg.h"
 
-struct file_priv_t : public Opaque {
-    public:
-	file_priv_t() {}
-	virtual ~file_priv_t() {}
+namespace mpxp {
+    class File_Stream_Interface : public Stream_Interface {
+	public:
+	    File_Stream_Interface();
+	    virtual ~File_Stream_Interface();
 
-	int was_open;
-	off_t spos;
-};
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+	    virtual stream_type_e type() const;
+	    virtual off_t	size() const;
+	    virtual off_t	sector_size() const;
+	private:
+	    int fd;
+	    int was_open;
+	    off_t spos;
+	    off_t end_pos;
+    };
 
-static MPXP_Rc __FASTCALL__ file_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+File_Stream_Interface::File_Stream_Interface():fd(0),was_open(0),spos(0) {}
+File_Stream_Interface::~File_Stream_Interface() {}
+
+MPXP_Rc File_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
 {
     UNUSED(flags);
     UNUSED(libinput);
-    file_priv_t* priv = new(zeromem) file_priv_t;
-    stream->priv=priv;
-    if(strcmp(filename,"-")==0) stream->fd=0;
-    else stream->fd=open(filename,O_RDONLY);
-    if(stream->fd<0) {
+    if(strcmp(filename,"-")==0) fd=0;
+    else fd=::open(filename,O_RDONLY);
+    if(fd<0) {
 	MSG_ERR("[s_file] Cannot open file: '%s'\n",filename);
-	delete stream->priv;
 	return MPXP_False;
     }
-    priv->was_open = stream->fd==0?0:1;
-    stream->end_pos = lseek(stream->fd,0,SEEK_END);
-    lseek(stream->fd,0,SEEK_SET);
-    if(stream->end_pos == -1)	stream->type = STREAMTYPE_STREAM;
-    else			stream->type = STREAMTYPE_SEEKABLE;
+    was_open = (fd==0)?0:1;
+    end_pos = ::lseek(fd,0,SEEK_END);
+    ::lseek(fd,0,SEEK_SET);
     /* decreasing number of packet from 256 to 10 speedups cache2 from 3.27% to 1.26%
        with full speed 1.04% for -nocache */
     /* Note: Please locate sector_size changinf after all read/write operations of open() function */
-    stream->sector_size=mp_conf.s_cache_size?mp_conf.s_cache_size*1024/10:STREAM_BUFFER_SIZE;
-    priv->spos = 0;
-    check_pin("stream",stream->pin,STREAM_PIN);
+    spos = 0;
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ stdin_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
-    UNUSED(filename);
-    return file_open(NULL,stream,"-",flags);
-}
+stream_type_e File_Stream_Interface::type() const { return (end_pos==-1)?STREAMTYPE_STREAM:STREAMTYPE_SEEKABLE; }
+off_t	File_Stream_Interface::size() const { return end_pos; }
+off_t	File_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
 
 #ifndef TEMP_FAILURE_RETRY
 #define TEMP_FAILURE_RETRY(x) (x)
 #endif
 
-static int __FASTCALL__ file_read(stream_t*stream,stream_packet_t*sp)
+int File_Stream_Interface::read(stream_packet_t*sp)
 {
 /*
     Should we repeate read() again on these errno: `EAGAIN', `EIO' ???
 */
-    file_priv_t*p=static_cast<file_priv_t*>(stream->priv);
     sp->type=0;
-    sp->len = TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,sp->len));
-    if(sp->len>0) p->spos += sp->len;
+    sp->len = TEMP_FAILURE_RETRY(::read(fd,sp->buf,sp->len));
+    if(sp->len>0) spos += sp->len;
     return sp->len;
 }
 
@@ -83,53 +90,60 @@ static int __FASTCALL__ file_read(stream_t*stream,stream_packet_t*sp)
        while (__result == -1LL && errno == EINTR);	\
        __result; }))
 
-static off_t __FASTCALL__ file_seek(stream_t*stream,off_t pos)
+off_t File_Stream_Interface::seek(off_t pos)
 {
-    file_priv_t*p=static_cast<file_priv_t*>(stream->priv);
-    p->spos=TEMP_FAILURE_RETRY64(lseek(stream->fd,pos,SEEK_SET));
-    return p->spos;
+    spos=TEMP_FAILURE_RETRY64(::lseek(fd,pos,SEEK_SET));
+    return spos;
 }
 
-static off_t __FASTCALL__ file_tell(const stream_t*stream)
+off_t File_Stream_Interface::tell() const
 {
-    file_priv_t*p=static_cast<file_priv_t*>(stream->priv);
-    return p->spos;
+    return spos;
 }
 
-static void __FASTCALL__ file_close(stream_t *stream)
+void File_Stream_Interface::close()
 {
-    int was_open = static_cast<file_priv_t*>(stream->priv)->was_open;
-    if(was_open) close(stream->fd);
-    delete stream->priv;
+    if(was_open) ::close(fd);
 }
 
-static MPXP_Rc __FASTCALL__ file_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
-    UNUSED(s);
+MPXP_Rc File_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     UNUSED(cmd);
     UNUSED(args);
     return MPXP_Unknown;
 }
 
-extern const stream_driver_t stdin_stream =
-{
-    "stdin://",
-    "reads multimedia stream from standard input",
-    stdin_open,
-    file_read,
-    file_seek,
-    file_tell,
-    file_close,
-    file_ctrl
-};
+static Stream_Interface* query_file_interface() { return new(zeromem) File_Stream_Interface; }
 
-extern const stream_driver_t file_stream =
+extern const stream_interface_info_t file_stream =
 {
     "file://",
     "reads multimedia stream from regular file",
-    file_open,
-    file_read,
-    file_seek,
-    file_tell,
-    file_close,
-    file_ctrl
+    query_file_interface
 };
+
+    class Stdin_Stream_Interface : public File_Stream_Interface {
+	public:
+	    Stdin_Stream_Interface();
+	    virtual ~Stdin_Stream_Interface();
+
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+    };
+
+Stdin_Stream_Interface::Stdin_Stream_Interface() {}
+Stdin_Stream_Interface::~Stdin_Stream_Interface() {}
+MPXP_Rc Stdin_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags) {
+    UNUSED(libinput);
+    UNUSED(filename);
+    return File_Stream_Interface::open(NULL,"-",flags);
+}
+
+static Stream_Interface* query_stdin_interface() { return new(zeromem) Stdin_Stream_Interface; }
+
+extern const stream_interface_info_t stdin_stream =
+{
+    "stdin://",
+    "reads multimedia stream from standard input",
+    query_stdin_interface
+};
+
+}

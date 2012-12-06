@@ -334,7 +334,7 @@ static MPXP_Rc nsv_probe ( Demuxer* demuxer )
 	return MPXP_False; // not an NSV file
 
     stream_reset(demuxer->stream); // clear EOF
-    stream_seek(demuxer->stream,demuxer->stream->start_pos);
+    stream_seek(demuxer->stream,demuxer->stream->start_pos());
 
     return MPXP_Ok;
 }

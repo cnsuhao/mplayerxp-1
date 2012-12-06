@@ -507,7 +507,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entryref(libinput_t* libinput,ASX_Par
     MSG_WARN("Can't open playlist %s\n",href);
     return NULL;
   }
-  if(!(stream->type & STREAMTYPE_TEXT)) {
+  if(!(stream->type() & STREAMTYPE_TEXT)) {
     MSG_WARN("URL %s dont point to a playlist\n",href);
     free_stream(stream);
     return NULL;

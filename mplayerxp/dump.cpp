@@ -44,7 +44,7 @@ void dump_stream(stream_t *stream)
   const char *ext,*name;
   MP_UNIT("dumpstream");
   stream_reset(stream);
-  stream_seek(stream,stream->start_pos);
+  stream_seek(stream,stream->start_pos());
   ext=".ext";
   if(!port)
   {

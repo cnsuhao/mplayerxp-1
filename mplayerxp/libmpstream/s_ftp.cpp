@@ -24,31 +24,49 @@ using namespace mpxp;
 #include "url.h"
 #include "stream_msg.h"
 
-struct ftp_priv_t;
-static int __FASTCALL__ FtpSendCmd(const char *cmd,ftp_priv_t *nControl,char* rsp);
+namespace mpxp {
+    class Ftp_Stream_Interface : public Stream_Interface {
+	public:
+	    Ftp_Stream_Interface();
+	    virtual ~Ftp_Stream_Interface();
 
-struct ftp_priv_t : public Opaque {
-    public:
-	ftp_priv_t() {}
-	virtual ~ftp_priv_t();
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+	    virtual stream_type_e type() const;
+	    virtual off_t	size() const;
+	    virtual off_t	sector_size() const;
+	private:
+	    static int		fd_can_read(int fd,int timeout);
+	    int			readline(char *buf,int max);
+	    int			readresp(char* rsp);
+	    int			OpenPort();
+	    int			OpenData(size_t newpos);
+	    int			SendCmd(const char *cmd,char* rsp);
 
-	const char* user;
-	const char* pass;
-	const char* host;
-	int port;
-	const char* filename;
-	URL_t *url;
+	    const char*	user;
+	    const char*	pass;
+	    const char*	host;
+	    int		port;
+	    const char*	filename;
+	    URL_t*	url;
+	    libinput_t* libinput;
 
-	char *cput,*cget;
-	int handle;
-	int cavail,cleft;
-	char *buf;
-	off_t spos;
-};
+	    char*	cput,*cget;
+	    net_fd_t	handle;
+	    int		cavail,cleft;
+	    char*	buf;
+	    off_t	spos;
+	    off_t	file_len;
+    };
 
-ftp_priv_t::~ftp_priv_t() {
-    FtpSendCmd("QUIT",this,NULL);
-    if(handle) closesocket(handle);
+Ftp_Stream_Interface::Ftp_Stream_Interface() {}
+Ftp_Stream_Interface::~Ftp_Stream_Interface() {
+    SendCmd("QUIT",NULL);
+    if(handle) ::closesocket(handle);
     if(buf) delete buf;
 }
 
@@ -60,16 +78,16 @@ ftp_priv_t::~ftp_priv_t() {
 
 // Check if there is something to read on a fd. This avoid hanging
 // forever if the network stop responding.
-static int __FASTCALL__ fd_can_read(int fd,int timeout) {
-  fd_set fds;
-  struct timeval tv;
+int Ftp_Stream_Interface::fd_can_read(int fd,int timeout) {
+    fd_set fds;
+    struct timeval tv;
 
-  FD_ZERO(&fds);
-  FD_SET(fd,&fds);
-  tv.tv_sec = timeout;
-  tv.tv_usec = 0;
+    FD_ZERO(&fds);
+    FD_SET(fd,&fds);
+    tv.tv_sec = timeout;
+    tv.tv_usec = 0;
 
-  return (select(fd+1, &fds, NULL, NULL, &tv) > 0);
+    return (::select(fd+1, &fds, NULL, NULL, &tv) > 0);
 }
 
 /*
@@ -77,67 +95,61 @@ static int __FASTCALL__ fd_can_read(int fd,int timeout) {
  *
  * return -1 on error or bytecount
  */
-static int __FASTCALL__ readline(char *buf,int max,ftp_priv_t *ctl)
+int Ftp_Stream_Interface::readline(char *_buf,int max)
 {
     int x,retval = 0;
-    char *end,*bp=buf;
+    char *end,*bp=_buf;
     int eof = 0;
 
     do {
-      if (ctl->cavail > 0) {
-	x = (max >= ctl->cavail) ? ctl->cavail : max-1;
-	end = (char*)memccpy(bp,ctl->cget,'\n',x);
-	if (end != NULL)
-	  x = end - bp;
-	retval += x;
-	bp += x;
-	*bp = '\0';
-	max -= x;
-	ctl->cget += x;
-	ctl->cavail -= x;
-	if (end != NULL) {
-	  bp -= 2;
-	  if (strcmp(bp,"\r\n") == 0) {
-	    *bp++ = '\n';
-	    *bp++ = '\0';
-	    --retval;
-	  }
-	  break;
+	if (cavail > 0) {
+	    x = (max >= cavail) ? cavail : max-1;
+	    end = (char*)memccpy(bp,cget,'\n',x);
+	    if (end != NULL) x = end - bp;
+	    retval += x;
+	    bp += x;
+	    *bp = '\0';
+	    max -= x;
+	    cget += x;
+	    cavail -= x;
+	    if (end != NULL) {
+		bp -= 2;
+		if (strcmp(bp,"\r\n") == 0) {
+		    *bp++ = '\n';
+		    *bp++ = '\0';
+		    --retval;
+		}
+		break;
+	    }
 	}
-      }
-      if (max == 1) {
-	*buf = '\0';
-	break;
-      }
-      if (ctl->cput == ctl->cget) {
-	ctl->cput = ctl->cget = ctl->buf;
-	ctl->cavail = 0;
-	ctl->cleft = BUFSIZE;
-      }
-      if(eof) {
-	if (retval == 0)
-	  retval = -1;
-	break;
-      }
-
-      if(!fd_can_read(ctl->handle, 15)) {
-	MSG_ERR("[ftp] read timed out\n");
-	retval = -1;
-	break;
-      }
-
-      if ((x = recv(ctl->handle,ctl->cput,ctl->cleft,0)) == -1) {
-	MSG_ERR("[ftp] read error: %s\n",strerror(errno));
-	retval = -1;
-	break;
-      }
-      if (x == 0)
-	eof = 1;
-      ctl->cleft -= x;
-      ctl->cavail += x;
-      ctl->cput += x;
+	if (max == 1) {
+	    *_buf = '\0';
+	    break;
+	}
+	if (cput == cget) {
+	    cput = cget = _buf;
+	    cavail = 0;
+	    cleft = BUFSIZE;
+	}
+	if(eof) {
+	    if (retval == 0) retval = -1;
+	    break;
+	}
+	if(!fd_can_read(handle, 15)) {
+	    MSG_ERR("[ftp] read timed out\n");
+	    retval = -1;
+	    break;
+	}
+	if ((x = recv(handle,cput,cleft,0)) == -1) {
+	    MSG_ERR("[ftp] read error: %s\n",strerror(errno));
+	    retval = -1;
+	    break;
+	}
+	if (x == 0) eof = 1;
+	cleft -= x;
+	cavail += x;
+	cput += x;
     } while (1);
-
     return retval;
 }
 
@@ -147,14 +159,13 @@ static int __FASTCALL__ readline(char *buf,int max,ftp_priv_t *ctl)
  * return 0 if first char doesn't match
  * return 1 if first char matches
  */
-static int __FASTCALL__ readresp(ftp_priv_t* ctl,char* rsp)
+int Ftp_Stream_Interface::readresp(char* rsp)
 {
     static char response[256];
     char match[5];
     int r;
 
-    if (readline(response,256,ctl) == -1)
-      return 0;
+    if (readline(response,256) == -1) return 0;
 
     r = atoi(response)/100;
     if(rsp) strcpy(rsp,response);
@@ -162,337 +173,289 @@ static int __FASTCALL__ readresp(ftp_priv_t* ctl,char* rsp)
     MSG_V("[ftp] < %s",response);
 
     if (response[3] == '-') {
-      strncpy(match,response,3);
-      match[3] = ' ';
-      match[4] = '\0';
-      do {
-	if (readline(response,256,ctl) == -1) {
-	  MSG_ERR("[ftp] Control socket read failed\n");
-	  return 0;
-	}
-	MSG_V("[ftp] < %s",response);
-      }	while (strncmp(response,match,4));
+	strncpy(match,response,3);
+	match[3] = ' ';
+	match[4] = '\0';
+	do {
+	    if (readline(response,256) == -1) {
+		MSG_ERR("[ftp] Control socket read failed\n");
+		return 0;
+	    }
+	    MSG_V("[ftp] < %s",response);
+	} while (strncmp(response,match,4));
     }
     return r;
 }
 
-
-static int __FASTCALL__ FtpSendCmd(const char *cmd,ftp_priv_t *nControl,char* rsp)
+int Ftp_Stream_Interface::SendCmd(const char *cmd,char* rsp)
 {
-  int l = strlen(cmd);
-  int hascrlf = cmd[l - 2] == '\r' && cmd[l - 1] == '\n';
+    int l = strlen(cmd);
+    int hascrlf = cmd[l - 2] == '\r' && cmd[l - 1] == '\n';
 
-  if(hascrlf && l == 2) MSG_V("\n");
-  else MSG_V("[ftp] > %s",cmd);
-  while(l > 0) {
-    int s = send(nControl->handle,cmd,l,0);
-
-    if(s <= 0) {
-      MSG_ERR("[ftp] write error: %s\n",strerror(errno));
-      return 0;
+    if(hascrlf && l == 2) MSG_V("\n");
+    else MSG_V("[ftp] > %s",cmd);
+    while(l > 0) {
+	int s = ::send(handle,cmd,l,0);
+	if(s <= 0) {
+	    MSG_ERR("[ftp] write error: %s\n",strerror(errno));
+	    return 0;
+	}
+	cmd += s;
+	l -= s;
     }
-
-    cmd += s;
-    l -= s;
-  }
-
-  if (hascrlf)
-    return readresp(nControl,rsp);
-  else
-    return FtpSendCmd("\r\n", nControl, rsp);
+    if (hascrlf) return readresp(rsp);
+    return SendCmd("\r\n", rsp);
 }
 
-static int __FASTCALL__ FtpOpenPort(libinput_t* libinput,ftp_priv_t* p) {
-  int resp,fd;
-  char rsp_txt[256];
-  char* par,str[128];
-  int num[6];
+int Ftp_Stream_Interface::OpenPort() {
+    int resp;
+    net_fd_t fd;
+    char rsp_txt[256];
+    char* par,str[128];
+    int num[6];
 
-  resp = FtpSendCmd("PASV",p,rsp_txt);
-  if(resp != 2) {
-    MSG_WARN("[ftp] command 'PASV' failed: %s\n",rsp_txt);
-    return 0;
-  }
-
-  par = strchr(rsp_txt,'(');
-
-  if(!par || !par[0] || !par[1]) {
-    MSG_ERR("[ftp] invalid server response: %s ??\n",rsp_txt);
-    return 0;
-  }
-
-  sscanf(par+1,"%u,%u,%u,%u,%u,%u",&num[0],&num[1],&num[2],
-	 &num[3],&num[4],&num[5]);
-  snprintf(str,127,"%d.%d.%d.%d",num[0],num[1],num[2],num[3]);
-  fd = tcp_connect2Server(libinput,str,(num[4]<<8)+num[5],0);
-
-  if(fd < 0)
-    MSG_ERR("[ftp] failed to create data connection\n");
-
-  return fd;
-}
-
-static int __FASTCALL__ FtpOpenData(stream_t* s,size_t newpos) {
-  ftp_priv_t* p = static_cast<ftp_priv_t*>(s->priv);
-  int resp;
-  char str[256],rsp_txt[256];
-
-  // Open a new connection
-  s->fd = FtpOpenPort(s->streaming_ctrl->libinput,p);
-
-  if(s->fd < 0) return 0;
-
-  if(newpos > 0) {
-    snprintf(str,255,"REST %"PRId64, (int64_t)newpos);
-
-    resp = FtpSendCmd(str,p,rsp_txt);
-    if(resp != 3) {
-      MSG_WARN("[ftp] command '%s' failed: %s\n",str,rsp_txt);
-      newpos = 0;
-    }
-  }
-
-  // Get the file
-  snprintf(str,255,"RETR %s",p->filename);
-  resp = FtpSendCmd(str,p,rsp_txt);
-
-  if(resp != 1) {
-    MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
-    return 0;
-  }
-
-  p->spos = s->pos = newpos;
-  return 1;
-}
-
-static int __FASTCALL__ ftp_read(stream_t *s,stream_packet_t*sp){
-  int r;
-
-  if(s->fd < 0 && !FtpOpenData(s,s->pos))
-    return -1;
-
-  if(!fd_can_read(s->fd, 15)) {
-    MSG_ERR("[ftp] read timed out\n");
-    return -1;
-  }
-  MSG_V("ftp read: %u bytes\n",sp->len);
-  r = recv(s->fd,sp->buf,sp->len,0);
-  (static_cast<ftp_priv_t *>(s->priv))->spos+=r;
-  return (r <= 0) ? -1 : r;
-}
-
-static off_t __FASTCALL__ ftp_seek(stream_t *s,off_t newpos) {
-  ftp_priv_t* p = static_cast<ftp_priv_t*>(s->priv);
-  int resp;
-  char rsp_txt[256];
-
-  if(p->spos==newpos) return p->spos;
-  MSG_V("ftp seek: %llu bytes\n",newpos);
-  if(s->pos > s->end_pos) return 0;
-
-  // Check to see if the server did not already terminate the transfer
-  if(fd_can_read(p->handle, 0)) {
-    if(readresp(p,rsp_txt) != 2)
-      MSG_WARN("[ftp] Warning the server didn't finished the transfer correctly: %s\n",rsp_txt);
-    closesocket(s->fd);
-    s->fd = -1;
-  }
-
-  // Close current download
-  if(s->fd >= 0) {
-    static const char pre_cmd[]={TELNET_IAC,TELNET_IP,TELNET_IAC,TELNET_SYNCH};
-    //int fl;
-
-
-    // First close the fd
-    closesocket(s->fd);
-    s->fd = 0;
-
-    // Send send the telnet sequence needed to make the server react
-
-    // Dunno if this is really needed, lftp have it. I let
-    // it here in case it turn out to be needed on some other OS
-    //fl=fcntl(p->handle,F_GETFL);
-    //fcntl(p->handle,F_SETFL,fl&~O_NONBLOCK);
-
-    // send only first byte as OOB due to OOB braindamage in many unices
-    send(p->handle,pre_cmd,1,MSG_OOB);
-    send(p->handle,pre_cmd+1,sizeof(pre_cmd)-1,0);
-
-    //fcntl(p->handle,F_SETFL,fl);
-
-    // Get the 426 Transfer aborted
-    // Or the 226 Transfer complete
-    resp = readresp(p,rsp_txt);
-    if(resp != 4 && resp != 2) {
-      MSG_ERR("[ftp] Server didn't abort correctly: %s\n",rsp_txt);
-      s->eof = 1;
-      return 0;
-    }
-    // Send the ABOR command
-    // Ignore the return code as sometimes it fail with "nothing to abort"
-    FtpSendCmd("ABOR",p,rsp_txt);
-  }
-  if(FtpOpenData(s,newpos)) p->spos=newpos;
-  return p->spos;
-}
-
-static off_t __FASTCALL__ ftp_tell(const stream_t*stream)
-{
-    ftp_priv_t*p=static_cast<ftp_priv_t*>(stream->priv);
-    return p->spos;
-}
-
-
-static void __FASTCALL__ ftp_close(stream_t *s) {
-    ftp_priv_t* p = static_cast<ftp_priv_t*>(s->priv);
-    if(s->fd > 0) {
-	closesocket(s->fd);
-	s->fd = 0;
-    }
-    if(!p) return;
-    delete p;
-}
-
-static MPXP_Rc __FASTCALL__ ftp_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
-{
-  int len = 0,resp;
-  ftp_priv_t* p;
-  URL_t* url;
-  char str[256],rsp_txt[256];
-  char *uname;
-
-  UNUSED(flags);
-  if(!(uname=new char [strlen(filename)+7])) return MPXP_False;
-  strcpy(uname,"ftp://");
-  strcat(uname,filename);
-  if(!(url=url_new(uname))) goto bad_url;
-  delete uname;
-//  url = check4proxies (rurl);
-  if(!(url->hostname && url->file)) {
-    bad_url:
-    MSG_ERR("[ftp] Bad url\n");
-    return MPXP_False;
-  }
-  stream->priv=p=new(zeromem) ftp_priv_t;
-  p->user=url->username?url->username:"anonymous";
-  p->pass=url->password?url->password:"no@spam";
-  p->host=url->hostname;
-  p->port=url->port?url->port:21;
-  p->filename=url->file;
-  MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n",p->user,p->pass,p->host,p->port,p->filename);
-
-  // Open the control connection
-  p->handle = tcp_connect2Server(libinput,p->host,p->port,1);
-
-  if(p->handle < 0) {
-    url_free(url);
-    delete p;
-    return MPXP_False;
-  }
-
-  // We got a connection, let's start serious things
-  stream->fd = -1;
-  p->buf = new char [BUFSIZE];
-
-  if (readresp(p, NULL) == 0) {
-    ftp_close(stream);
-    url_free(url);
-    return MPXP_False;
-  }
-  // Login
-  snprintf(str,255,"USER %s",p->user);
-  resp = FtpSendCmd(str,p,rsp_txt);
-
-  // password needed
-  if(resp == 3) {
-    snprintf(str,255,"PASS %s",p->pass);
-    resp = FtpSendCmd(str,p,rsp_txt);
+    resp = SendCmd("PASV",rsp_txt);
     if(resp != 2) {
-      MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
-      ftp_close(stream);
-      url_free(url);
-      return MPXP_False;
+	MSG_WARN("[ftp] command 'PASV' failed: %s\n",rsp_txt);
+	return 0;
     }
-  } else if(resp != 2) {
-    MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
-    ftp_close(stream);
-    url_free(url);
-    return MPXP_False;
-  }
+    par = strchr(rsp_txt,'(');
+    if(!par || !par[0] || !par[1]) {
+	MSG_ERR("[ftp] invalid server response: %s ??\n",rsp_txt);
+	return 0;
+    }
+    sscanf(par+1,"%u,%u,%u,%u,%u,%u",&num[0],&num[1],&num[2],&num[3],&num[4],&num[5]);
+    snprintf(str,127,"%d.%d.%d.%d",num[0],num[1],num[2],num[3]);
+    fd = tcp_connect2Server(libinput,str,(num[4]<<8)+num[5],0);
 
-  // Set the transfer type
-  resp = FtpSendCmd("TYPE I",p,rsp_txt);
-  if(resp != 2) {
-    MSG_ERR("[ftp] command 'TYPE I' failed: %s\n",rsp_txt);
-    ftp_close(stream);
-    url_free(url);
-    return MPXP_False;
-  }
+    if(fd < 0) MSG_ERR("[ftp] failed to create data connection\n");
+    return fd;
+}
 
-  // Get System of FTP
-  resp = FtpSendCmd("SYST",p,rsp_txt);
-  if(resp != 2) {
-    MSG_ERR("[ftp] command 'SYST' failed: %s\n",rsp_txt);
-    ftp_close(stream);
-    url_free(url);
-    return MPXP_False;
-  }
-  MSG_INFO("[ftp] System: %s\n",rsp_txt);
-  resp = FtpSendCmd("STAT",p,rsp_txt);
-  if(resp != 2) {
-    MSG_ERR("[ftp] command 'STAT' failed: %s\n",rsp_txt);
-    ftp_close(stream);
-    url_free(url);
-    return MPXP_False;
-  }
+int Ftp_Stream_Interface::OpenData(size_t newpos) {
+    int resp;
+    char str[256],rsp_txt[256];
 
-  // Get the filesize
-  snprintf(str,255,"SIZE %s",p->filename);
-  resp = FtpSendCmd(str,p,rsp_txt);
-  if(resp != 2) {
-    MSG_WARN("[ftp] command '%s' failed: %s\n",str,rsp_txt);
-  } else {
-    int dummy;
-    sscanf(rsp_txt,"%d %d",&dummy,&len);
-  }
+    // Open a new connection
+    handle = OpenPort();
 
-  stream->sector_size=BUFSIZE;
-  if(len) {
-    stream->type = STREAMTYPE_SEEKABLE;
-    stream->end_pos = len;
-  }
-  else {
-    stream->type = STREAMTYPE_STREAM;
-  }
-    p->spos=0;
+    if(handle < 0) return 0;
+
+    if(newpos > 0) {
+	snprintf(str,255,"REST %"PRId64, (int64_t)newpos);
+	resp = SendCmd(str,rsp_txt);
+	if(resp != 3) {
+	    MSG_WARN("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	    newpos = 0;
+	}
+    }
+    // Get the file
+    snprintf(str,255,"RETR %s",filename);
+    resp = SendCmd(str,rsp_txt);
+
+    if(resp != 1) {
+	MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	return 0;
+    }
+    spos = newpos;
+    return 1;
+}
+
+int Ftp_Stream_Interface::read(stream_packet_t*sp){
+    int r;
+
+    if(!OpenData(spos)) return -1;
+
+    if(!fd_can_read(handle, 15)) {
+	MSG_ERR("[ftp] read timed out\n");
+	return -1;
+    }
+    MSG_V("ftp read: %u bytes\n",sp->len);
+    r = ::recv(handle,sp->buf,sp->len,0);
+    spos+=r;
+    return (r <= 0) ? -1 : r;
+}
+
+off_t Ftp_Stream_Interface::seek(off_t newpos) {
+    int resp;
+    char rsp_txt[256];
+
+    if(spos==newpos) return spos;
+    MSG_V("ftp seek: %llu bytes\n",newpos);
+    if(spos > file_len) return 0;
+
+    // Check to see if the server did not already terminate the transfer
+    if(fd_can_read(handle, 0)) {
+	if(readresp(rsp_txt) != 2)
+	    MSG_WARN("[ftp] Warning the server didn't finished the transfer correctly: %s\n",rsp_txt);
+	::closesocket(handle);
+	handle = -1;
+    }
+
+    // Close current download
+    if(handle >= 0) {
+	static const char pre_cmd[]={TELNET_IAC,TELNET_IP,TELNET_IAC,TELNET_SYNCH};
+	//int fl;
+	// First close the fd
+	::closesocket(handle);
+	handle = -1;
+	// Send send the telnet sequence needed to make the server react
+
+	// send only first byte as OOB due to OOB braindamage in many unices
+	::send(handle,pre_cmd,1,MSG_OOB);
+	::send(handle,pre_cmd+1,sizeof(pre_cmd)-1,0);
+
+	// Get the 426 Transfer aborted
+	// Or the 226 Transfer complete
+	resp = readresp(rsp_txt);
+	if(resp != 4 && resp != 2) {
+	    MSG_ERR("[ftp] Server didn't abort correctly: %s\n",rsp_txt);
+	    return 0;
+	}
+	// Send the ABOR command
+	// Ignore the return code as sometimes it fail with "nothing to abort"
+	SendCmd("ABOR",rsp_txt);
+    }
+    if(OpenData(newpos)) spos=newpos;
+    return spos;
+}
+
+off_t Ftp_Stream_Interface::tell() const
+{
+    return spos;
+}
+
+
+void Ftp_Stream_Interface::close() {
+    if(handle > 0) {
+	::closesocket(handle);
+	handle = 0;
+    }
+}
+
+MPXP_Rc Ftp_Stream_Interface::open(libinput_t*_libinput,const char *_filename,unsigned flags)
+{
+    int resp;
+    char str[256],rsp_txt[256];
+    char *uname;
+
+    UNUSED(flags);
+    libinput=_libinput;
+    if(!(uname=new char [strlen(_filename)+7])) return MPXP_False;
+    strcpy(uname,"ftp://");
+    strcat(uname,_filename);
+    if(!(url=url_new(uname))) goto bad_url;
+    delete uname;
+//  url = check4proxies (rurl);
+    if(!(url->hostname && url->file)) {
+	bad_url:
+	MSG_ERR("[ftp] Bad url\n");
+	return MPXP_False;
+    }
+    user=url->username?url->username:"anonymous";
+    pass=url->password?url->password:"no@spam";
+    host=url->hostname;
+    port=url->port?url->port:21;
+    filename=url->file;
+    MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n",user,pass,host,port,filename);
+
+    // Open the control connection
+    handle = tcp_connect2Server(libinput,host,port,1);
+
+    if(handle < 0) {
+	url_free(url);
+	return MPXP_False;
+    }
+    // We got a connection, let's start serious things
+    buf = new char [BUFSIZE];
+    if (readresp(NULL) == 0) {
+	close();
+	url_free(url);
+	return MPXP_False;
+    }
+    // Login
+    snprintf(str,255,"USER %s",user);
+    resp = SendCmd(str,rsp_txt);
+    // password needed
+    if(resp == 3) {
+	snprintf(str,255,"PASS %s",pass);
+	resp = SendCmd(str,rsp_txt);
+	if(resp != 2) {
+	    MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	    close();
+	    url_free(url);
+	    return MPXP_False;
+	}
+    } else if(resp != 2) {
+	MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	close();
+	url_free(url);
+	return MPXP_False;
+    }
+
+    // Set the transfer type
+    resp = SendCmd("TYPE I",rsp_txt);
+    if(resp != 2) {
+	MSG_ERR("[ftp] command 'TYPE I' failed: %s\n",rsp_txt);
+	close();
+	url_free(url);
+	return MPXP_False;
+    }
+
+    // Get System of FTP
+    resp = SendCmd("SYST",rsp_txt);
+    if(resp != 2) {
+	MSG_ERR("[ftp] command 'SYST' failed: %s\n",rsp_txt);
+	close();
+	url_free(url);
+	return MPXP_False;
+    }
+    MSG_INFO("[ftp] System: %s\n",rsp_txt);
+    resp = SendCmd("STAT",rsp_txt);
+    if(resp != 2) {
+	MSG_ERR("[ftp] command 'STAT' failed: %s\n",rsp_txt);
+	close();
+	url_free(url);
+	return MPXP_False;
+    }
+
+    file_len=0;
+    // Get the filesize
+    snprintf(str,255,"SIZE %s",filename);
+    resp = SendCmd(str,rsp_txt);
+    if(resp != 2) {
+	MSG_WARN("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+    } else {
+	int dummy;
+	sscanf(rsp_txt,"%d %"PRId64,&dummy,&file_len);
+    }
+
+    spos=0;
     // The data connection is really opened only at the first
     // read/seek. This must be done when the cache is used
     // because the connection would stay open in the main process,
     // preventing correct abort with many servers.
-    stream->fd = -1;
 
     url_free(url);
-    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_Ok;
 }
+stream_type_e Ftp_Stream_Interface::type() const { return file_len?STREAMTYPE_SEEKABLE:STREAMTYPE_STREAM; }
+off_t	Ftp_Stream_Interface::size() const { return file_len; }
+off_t	Ftp_Stream_Interface::sector_size() const { return BUFSIZE; }
 
-static MPXP_Rc __FASTCALL__ ftp_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
-    UNUSED(s);
+MPXP_Rc Ftp_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     UNUSED(cmd);
     UNUSED(args);
     return MPXP_Unknown;
 }
 
+static Stream_Interface* query_interface() { return new(zeromem) Ftp_Stream_Interface; }
+
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
-extern const stream_driver_t ftp_stream =
+extern const stream_interface_info_t ftp_stream =
 {
     "ftp://",
     "reads multimedia stream from File Transfer Protocol (FTP)",
-    ftp_open,
-    ftp_read,
-    ftp_seek,
-    ftp_tell,
-    ftp_close,
-    ftp_ctrl
+    query_interface,
 };
+} // namespace mpxp

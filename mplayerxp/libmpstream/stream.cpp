@@ -25,36 +25,36 @@ using namespace mpxp;
 #include "libmpdemux/demuxer.h"
 #include "stream_msg.h"
 
-
+namespace mpxp {
 #ifdef HAVE_LIBCDIO_CDDA
-extern const stream_driver_t cdda_stream;
-extern const stream_driver_t cddb_stream;
+extern const stream_interface_info_t cdda_stream;
+extern const stream_interface_info_t cddb_stream;
 #endif
 #ifdef USE_DVDNAV
-extern const stream_driver_t dvdnav_stream;
+extern const stream_interface_info_t dvdnav_stream;
 #endif
 #ifdef USE_DVDREAD
-extern const stream_driver_t dvdread_stream;
+extern const stream_interface_info_t dvdread_stream;
 #endif
 #ifdef USE_TV
-extern const stream_driver_t tv_stream;
+extern const stream_interface_info_t tv_stream;
 #endif
 #ifdef HAVE_STREAMING
-extern const stream_driver_t ftp_stream;
-extern const stream_driver_t network_stream;
+extern const stream_interface_info_t ftp_stream;
+extern const stream_interface_info_t network_stream;
 #endif
 #ifdef USE_OSS_AUDIO
-extern const stream_driver_t oss_stream;
+extern const stream_interface_info_t oss_stream;
 #endif
 #ifdef USE_LIBVCD
-extern const stream_driver_t vcdnav_stream;
+extern const stream_interface_info_t vcdnav_stream;
 #endif
-extern const stream_driver_t lavc_stream;
-extern const stream_driver_t stdin_stream;
-extern const stream_driver_t file_stream;
-extern const stream_driver_t null_stream;
+extern const stream_interface_info_t lavs_stream;
+extern const stream_interface_info_t stdin_stream;
+extern const stream_interface_info_t file_stream;
+extern const stream_interface_info_t null_stream;
 
-static const stream_driver_t *sdrivers[] =
+static const stream_interface_info_t* sdrivers[] =
 {
 #ifdef HAVE_LIBCDIO_CDDA
     &cdda_stream,
@@ -81,13 +81,25 @@ static const stream_driver_t *sdrivers[] =
     &ftp_stream,
     &network_stream,
 #endif
-    &lavc_stream,
+    &lavs_stream,
     &stdin_stream,
     &file_stream,
     &null_stream,
     NULL
 };
 
+stream_type_e	stream_t::type() {
+    stream_type_e re=_type;
+    if(_type!=STREAMTYPE_Unknown) {
+	_type=STREAMTYPE_Unknown;
+    } else re = driver->type();
+    return re;
+}
+off_t		stream_t::start_pos() const { return driver->start_pos(); }
+off_t		stream_t::end_pos() const { return driver->size(); }
+unsigned	stream_t::sector_size() const { return driver->sector_size(); }
+float		stream_t::stream_pts() const { return driver->stream_pts(); }
+void		stream_t::type(stream_type_e t) { _type=t; }
 stream_t* __FASTCALL__ open_stream(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler)
 {
     unsigned i,done;
@@ -99,25 +111,31 @@ stream_t* __FASTCALL__ open_stream(libinput_t*libinput,const char* filename,int*
 	mrl_len=strlen(sdrivers[i]->mrl);
 	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0) {
 	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
-	    if(sdrivers[i]->open(libinput,stream,&filename[mrl_len],0)==MPXP_Ok) {
+	    Stream_Interface* drv = sdrivers[i]->query_interface();
+	    if(drv->open(libinput,&filename[mrl_len],0)==MPXP_Ok) {
 		MSG_V("OK\n");
 		*file_format = stream->file_format;
-		stream->driver=sdrivers[i];
+		stream->driver_info=sdrivers[i];
+		stream->driver=drv;
 		stream->event_handler=event_handler;
-		stream->buffer=(unsigned char*)mp_realloc(stream->buffer,stream->sector_size);
+		stream->buffer=(unsigned char*)mp_realloc(stream->buffer,stream->sector_size());
 		return stream;
 	    }
+	    delete drv;
 	    MSG_V("False\n");
 	}
     }
+    Stream_Interface* file_drv = file_stream.query_interface();
     /* Last hope if not mrl specified */
-    if(file_stream.open(libinput,stream,filename,0)) {
+    if(file_drv->open(libinput,filename,0)) {
 	*file_format = stream->file_format;
-	stream->driver=&file_stream;
+	stream->driver_info=&file_stream;
+	stream->driver=file_drv;
 	stream->event_handler=event_handler;
-	stream->buffer=(unsigned char *)mp_realloc(stream->buffer,stream->sector_size);
+	stream->buffer=(unsigned char *)mp_realloc(stream->buffer,stream->sector_size());
 	return stream;
     }
+    delete file_drv;
     delete stream->buffer;
     delete stream;
     return NULL;
@@ -143,23 +161,23 @@ int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
   while(1)
   {
     sp.type=0;
-    sp.len=s->sector_size;
+    sp.len=s->sector_size();
     sp.buf=(char *)s->buffer;
-    if(s->type==STREAMTYPE_DS) len = reinterpret_cast<Demuxer_Stream*>(s->priv)->read_data(s->buffer,s->sector_size);
-    else { if(!s->driver) { s->eof=1; return 0; } len = s->driver->read(s,&sp); }
+    if(s->type()==STREAMTYPE_DS) len = reinterpret_cast<Demuxer_Stream*>(s->priv)->read_data(s->buffer,s->sector_size());
+    else { if(!s->driver) { s->eof=1; return 0; } len = s->driver->read(&sp); }
     if(sp.type)
     {
 	if(s->event_handler) s->event_handler(s,&sp);
 	continue;
     }
-    if(s->driver->control(s,SCTRL_EOF,NULL)==MPXP_Ok)	legacy_eof=1;
+    if(s->driver->ctrl(SCTRL_EOF,NULL)==MPXP_Ok)	legacy_eof=1;
     else						legacy_eof=0;
     if(sp.len<=0 || legacy_eof)
     {
 	MSG_DBG3("nc_stream_read_cbuffer: Guess EOF\n");
 	s->eof=1;
 	s->buf_pos=s->buf_len=0;
-	if(errno) { MSG_WARN("nc_stream_read_cbuffer(drv:%s) error: %s\n",s->driver->mrl,strerror(errno)); errno=0; }
+	if(errno) { MSG_WARN("nc_stream_read_cbuffer(drv:%s) error: %s\n",s->driver_info->mrl,strerror(errno)); errno=0; }
 	return 0;
     }
     break;
@@ -167,14 +185,14 @@ int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s){
   s->buf_pos=0;
   s->buf_len=sp.len;
   s->pos += sp.len;
-  MSG_DBG3("nc_stream_read_cbuffer(%s) done[sector_size=%i len=%i]: buf_pos=%u buf_len=%u pos=%llu\n",s->driver->mrl,s->sector_size,len,s->buf_pos,s->buf_len,s->pos);
+  MSG_DBG3("nc_stream_read_cbuffer(%s) done[sector_size=%i len=%i]: buf_pos=%u buf_len=%u pos=%llu\n",s->driver_info->mrl,s->sector_size(),len,s->buf_pos,s->buf_len,s->pos);
   return s->buf_len;
 }
 
 int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos)
 {
   off_t newpos=pos;
-  unsigned sector_size=s->sector_size;
+  unsigned sector_size=s->sector_size();
 
   s->buf_pos=s->buf_len=0;
 //  newpos=pos&(~((long long)sector_size-1));
@@ -185,8 +203,8 @@ int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos)
   if(newpos==0 || newpos!=s->pos)
   {
     if(!s->driver) { s->eof=1; return 0; }
-    s->pos = s->driver->seek(s,newpos);
-    if(errno) { MSG_WARN("nc_stream_seek(drv:%s) error: %s\n",s->driver->mrl,strerror(errno)); errno=0; }
+    s->pos = s->driver->seek(newpos);
+    if(errno) { MSG_WARN("nc_stream_seek(drv:%s) error: %s\n",s->driver_info->mrl,strerror(errno)); errno=0; }
   }
   MSG_DBG3("nc_stream_seek_long after: %llu\n",s->pos);
 
@@ -224,10 +242,11 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   if(s==NULL) return NULL;
   s->fd=-1;
   s->pin=STREAM_PIN;
-  s->type=STREAMTYPE_MEMORY;
   s->buf_pos=0; s->buf_len=len;
-  s->start_pos=0; s->end_pos=len;
-  s->sector_size=1;
+// msy be methods of class Memory_Stream : public Stream
+//  s->type=STREAMTYPE_MEMORY;
+//  s->start_pos=0; s->end_pos=len;
+//  s->sector_size=1;
   s->buffer=new unsigned char [len];
   if(s->buffer==NULL) { delete s; return NULL; }
   stream_reset(s);
@@ -236,15 +255,15 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   return s;
 }
 
-stream_t* __FASTCALL__ new_stream(int type){
+stream_t* __FASTCALL__ new_stream(stream_type_e type){
   stream_t *s=new(zeromem) stream_t;
   if(s==NULL) return NULL;
 
   fill_false_pointers(s->antiviral_hole,reinterpret_cast<long>(&s->pin)-reinterpret_cast<long>(&s->antiviral_hole));
   s->pin=STREAM_PIN;
   s->fd=-1;
-  s->type=type;
-  s->sector_size=STREAM_BUFFER_SIZE;
+//  s->type=type;
+//  s->sector_size=STREAM_BUFFER_SIZE;
   s->buffer=new unsigned char [STREAM_BUFFER_SIZE];
   if(s->buffer==NULL) { delete s; return NULL; }
   s->buf_len=STREAM_BUFFER_SIZE;
@@ -253,10 +272,11 @@ stream_t* __FASTCALL__ new_stream(int type){
 }
 
 void __FASTCALL__ free_stream(stream_t *s){
-  MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",s->driver->mrl,strerror(errno));
+  MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",s->driver_info->mrl,strerror(errno));
   if(s->cache_data) stream_disable_cache(s);
-  if(s->driver) s->driver->close(s);
+  if(s->driver) s->driver->close();
   delete s->buffer;
+  delete s->driver;
   delete s;
 }
 
@@ -290,8 +310,8 @@ int __FASTCALL__ nc_stream_read(stream_t *s,any_t* _mem,int total){
     mem+=ilen; _total-=ilen;
   }
   ilen=_total;
-  ilen /= s->sector_size;
-  ilen *= s->sector_size;
+  ilen /= s->sector_size();
+  ilen *= s->sector_size();
   /*
       Perform direct reading to avoid an additional memcpy().
       This case happens for un-compressed streams or for movies with large image.
@@ -365,7 +385,7 @@ off_t __FASTCALL__ nc_stream_tell(stream_t *s){
 int __FASTCALL__ nc_stream_seek(stream_t *s,off_t pos){
 
   MSG_DBG3( "nc_stream_seek to %llu\n",(long long)pos);
-  if(s->type&STREAMTYPE_MEMORY)
+  if(s->type()&STREAMTYPE_MEMORY)
   {
     s->buf_pos=pos;
     return 1;
@@ -376,11 +396,11 @@ int __FASTCALL__ nc_stream_seek(stream_t *s,off_t pos){
     s->buf_pos=pos-FILE_POS(s);
     return 1;
   }
-  return (s->type&STREAMTYPE_SEEKABLE)?nc_stream_seek_long(s,pos):pos;
+  return (s->type()&STREAMTYPE_SEEKABLE)?nc_stream_seek_long(s,pos):pos;
 }
 
 int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len){
-  if(len<0 || (len>2*STREAM_BUFFER_SIZE && s->type&STREAMTYPE_SEEKABLE)){
+  if(len<0 || (len>2*STREAM_BUFFER_SIZE && s->type()&STREAMTYPE_SEEKABLE)){
     /* negative or big skip! */
     return nc_stream_seek(s,nc_stream_tell(s)+len);
   }
@@ -397,5 +417,6 @@ int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len){
 }
 
 MPXP_Rc __FASTCALL__ nc_stream_control(const stream_t *s,unsigned cmd,any_t*param) {
-    return s->driver->control(s,cmd,param);
+    return s->driver->ctrl(cmd,param);
 }
+} //namespace mpxp

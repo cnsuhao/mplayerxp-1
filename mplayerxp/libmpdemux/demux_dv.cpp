@@ -142,7 +142,7 @@ static Opaque* dv_open(Demuxer* demuxer)
    rawdv_frames_t *frames = new rawdv_frames_t;
    dv_decoder_t *dv_decoder=NULL;
 
-   MSG_V("demux_open_rawdv() end_pos %" PRId64"\n",(int64_t)demuxer->stream->end_pos);
+   MSG_V("demux_open_rawdv() end_pos %" PRId64"\n",(int64_t)demuxer->stream->end_pos());
 
    // go back to the beginning
    stream_reset(demuxer->stream);
@@ -197,7 +197,7 @@ static Opaque* dv_open(Demuxer* demuxer)
    frames->current_filepos=0;
    frames->current_frame=0;
    frames->frame_size=dv_decoder->frame_size;
-   frames->frame_number=demuxer->stream->end_pos/frames->frame_size;
+   frames->frame_number=demuxer->stream->end_pos()/frames->frame_size;
 
    MSG_V("demux_open_rawdv() seek to %qu, size: %d, dv_dec->frame_size: %d\n",frames->current_filepos,frames->frame_size, dv_decoder->frame_size);
     if (dv_decoder->audio != NULL && demuxer->audio->id>=-1){

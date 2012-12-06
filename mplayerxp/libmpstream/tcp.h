@@ -22,8 +22,9 @@
 #ifndef TCP_H
 #define TCP_H
 
+typedef int net_fd_t;
 /* Connect to a server using a TCP connection */
-int tcp_connect2Server (libinput_t* libinput,const char *host, int port, int verb);
+net_fd_t tcp_connect2Server (libinput_t* libinput,const char *host, int port, int verb);
 
 enum {
     TCP_ERROR_TIMEOUT	=-3, /* connection timeout */

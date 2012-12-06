@@ -24,104 +24,105 @@ using namespace mpxp;
 #include "url.h"
 #include "stream_msg.h"
 
-static int __FASTCALL__ udp_read(stream_t *s,stream_packet_t*sp)
+namespace mpxp {
+    class Udp_Stream_Interface : public Stream_Interface {
+	public:
+	    Udp_Stream_Interface();
+	    virtual ~Udp_Stream_Interface();
+
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+	    virtual stream_type_e type() const;
+	    virtual off_t	size() const;
+	    virtual off_t	sector_size() const;
+	private:
+	    int 		start ();
+
+	    networking_t*	networking;
+	    net_fd_t		fd;
+    };
+
+Udp_Stream_Interface::Udp_Stream_Interface() {}
+Udp_Stream_Interface::~Udp_Stream_Interface() {}
+
+int Udp_Stream_Interface::read(stream_packet_t*sp)
 {
-  return nop_streaming_read(s->fd,sp->buf,sp->len,s->streaming_ctrl);
+  return nop_networking_read(fd,sp->buf,sp->len,networking);
 }
 
-static off_t __FASTCALL__ udp_seek(stream_t *s,off_t newpos)
-{
-    UNUSED(s);
-    return newpos;
-}
+off_t Udp_Stream_Interface::seek(off_t newpos) { return newpos; }
+off_t Udp_Stream_Interface::tell() const { return 0; }
 
-static off_t __FASTCALL__ udp_tell(const stream_t *stream)
+MPXP_Rc Udp_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 {
-    UNUSED(stream);
-    return 0;
-}
-
-static MPXP_Rc __FASTCALL__ udp_ctrl(const stream_t *s,unsigned cmd,any_t*args)
-{
-    UNUSED(s);
     UNUSED(cmd);
     UNUSED(args);
     return MPXP_Unknown;
 }
 
-static void __FASTCALL__ udp_close(stream_t*stream)
+void Udp_Stream_Interface::close()
 {
-    url_free(stream->streaming_ctrl->url);
-    streaming_ctrl_free (stream->streaming_ctrl);
+    url_free(networking->url);
+    free_networking(networking);
 }
 
-static int __FASTCALL__ udp_streaming_start (stream_t *stream)
+int Udp_Stream_Interface::start ()
 {
-  streaming_ctrl_t *streaming_ctrl;
-  int fd;
-
-  if (!stream)
-    return -1;
-
-  streaming_ctrl = stream->streaming_ctrl;
-  fd = stream->fd;
-
-  if (fd < 0)
-  {
-    fd = udp_open_socket (streaming_ctrl->url);
-    if (fd < 0)
-      return -1;
-    stream->fd = fd;
-  }
-
-  streaming_ctrl->streaming_read = nop_streaming_read;
-  streaming_ctrl->streaming_seek = nop_streaming_seek;
-  streaming_ctrl->prebuffer_size = 64 * 1024; /* 64 KBytes */
-  streaming_ctrl->buffering = 0;
-  streaming_ctrl->status = streaming_playing_e;
-
-  return 0;
+    if (fd < 0) {
+	fd = udp_open_socket (networking->url);
+	if (fd < 0) return -1;
+    }
+    networking->networking_read = nop_networking_read;
+    networking->networking_seek = nop_networking_seek;
+    networking->prebuffer_size = 64 * 1024; /* 64 KBytes */
+    networking->buffering = 0;
+    networking->status = networking_playing_e;
+    return 0;
 }
 
 extern int network_bandwidth;
-static MPXP_Rc __FASTCALL__ udp_open(libinput_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+MPXP_Rc Udp_Stream_Interface::open(libinput_t* libinput,const char *filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);
     MSG_V("STREAM_UDP, URL: %s\n", filename);
-    stream->streaming_ctrl = streaming_ctrl_new (libinput);
-    if (!stream->streaming_ctrl) return MPXP_False;
+    networking = new_networking(libinput);
+    if (!networking) return MPXP_False;
 
-    stream->streaming_ctrl->bandwidth = network_bandwidth;
+    networking->bandwidth = network_bandwidth;
     url = url_new (filename);
-    stream->streaming_ctrl->url = check4proxies (url);
+    networking->url = check4proxies (url);
     if (url->port == 0) {
 	MSG_ERR("You must enter a port number for UDP streams!\n");
-	streaming_ctrl_free (stream->streaming_ctrl);
-	stream->streaming_ctrl = NULL;
+	free_networking (networking);
+	networking = NULL;
 	return MPXP_False;
     }
-    if (udp_streaming_start (stream) < 0) {
-	MSG_ERR("udp_streaming_start failed\n");
-	streaming_ctrl_free (stream->streaming_ctrl);
-	stream->streaming_ctrl = NULL;
+    if (start () < 0) {
+	MSG_ERR("udp_networking_start failed\n");
+	free_networking (networking);
+	networking = NULL;
 	return MPXP_False;
     }
-    stream->type = STREAMTYPE_STREAM;
-    fixup_network_stream_cache (stream);
-    check_pin("stream",stream->pin,STREAM_PIN);
+    fixup_network_stream_cache (networking);
     return MPXP_Ok;
 }
+stream_type_e Udp_Stream_Interface::type() const { return STREAMTYPE_STREAM; }
+off_t	Udp_Stream_Interface::size() const { return -1; }
+off_t	Udp_Stream_Interface::sector_size() const { return 1; }
+
+static Stream_Interface* query_interface() { return new(zeromem) Udp_Stream_Interface; }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
-const stream_driver_t udp_stream =
+extern const stream_interface_info_t rtsp_stream =
 {
     "udp://",
     "reads multimedia stream directly from User Datagram Protocol (UDP)",
-    udp_open,
-    udp_read,
-    udp_seek,
-    udp_tell,
-    udp_close,
-    udp_ctrl
+    query_interface
 };
+} // namespace mpxp
+

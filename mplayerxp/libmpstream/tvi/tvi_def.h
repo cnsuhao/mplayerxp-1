@@ -1,18 +1,20 @@
 #include <stdlib.h> /* mp_malloc */
 #include <string.h>
 
-struct priv_s;
-static int init(struct priv_s *priv);
-static int uninit(struct priv_s *priv);
-static int control(struct priv_s *priv, int cmd, any_t*arg);
-static int start(struct priv_s *priv);
-static double grab_video_frame(struct priv_s *priv, unsigned char *buffer, int len);
+namespace mpxp {
+    struct priv_t;
+}
+static int init(priv_t *priv);
+static int uninit(priv_t *priv);
+static int control(priv_t *priv, int cmd, any_t*arg);
+static int start(priv_t *priv);
+static double grab_video_frame(priv_t *priv, unsigned char *buffer, int len);
 #ifdef HAVE_TV_BSDBT848
-static double grabimmediate_video_frame(struct priv_s *priv, unsigned char *buffer, int len);
+static double grabimmediate_video_frame(priv_t *priv, unsigned char *buffer, int len);
 #endif
-static int get_video_framesize(struct priv_s *priv);
-static double grab_audio_frame(struct priv_s *priv, unsigned char *buffer, int len);
-static int get_audio_framesize(struct priv_s *priv);
+static int get_video_framesize(priv_t *priv);
+static double grab_audio_frame(priv_t *priv, unsigned char *buffer, int len);
+static int get_audio_framesize(priv_t *priv);
 
 static const tvi_functions_t functions =
 {
@@ -29,5 +31,7 @@ static const tvi_functions_t functions =
     get_audio_framesize
 };
 
-tvi_handle_t *new_handle();
-void free_handle(tvi_handle_t *h);
+namespace mpxp {
+    tvi_handle_t *new_handle();
+    void free_handle(tvi_handle_t *h);
+} // namespace mpxp

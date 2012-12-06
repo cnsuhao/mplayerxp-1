@@ -10,65 +10,63 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "stream_msg.h"
 
-struct lavc_priv_t : public Opaque {
-    public:
-	lavc_priv_t() {}
-	virtual ~lavc_priv_t();
+namespace mpxp {
+    class Lavs_Stream_Interface : public Stream_Interface {
+	public:
+	    Lavs_Stream_Interface();
+	    virtual ~Lavs_Stream_Interface();
 
-	URLContext *ctx;
-	off_t spos;
-};
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+	    virtual stream_type_e type() const;
+	    virtual off_t	size() const;
+	    virtual off_t	sector_size() const;
+	private:
+	    URLContext *ctx;
+	    off_t spos;
+	    off_t end_pos;
+    };
 
-lavc_priv_t::~lavc_priv_t() {
+Lavs_Stream_Interface::Lavs_Stream_Interface():ctx(NULL),end_pos(-1) {}
+Lavs_Stream_Interface::~Lavs_Stream_Interface() {
     if(ctx) ffurl_close(ctx);
 }
 
-static int lavc_int_cb(any_t*op) { return 0; } /* non interrupt blicking */
+static int lavc_int_cb(any_t*op) { UNUSED(op); return 0; } /* non interrupt blocking */
 static AVIOInterruptCB int_cb = { lavc_int_cb, NULL };
 
-static int __FASTCALL__ lavc_read(stream_t *s, stream_packet_t*sp)
+int Lavs_Stream_Interface::read(stream_packet_t*sp)
 {
-    lavc_priv_t*p=static_cast<lavc_priv_t*>(s->priv);
-    sp->len = ffurl_read_complete(p->ctx, reinterpret_cast<unsigned char*>(sp->buf), sp->len);
-    if(sp->len>0) p->spos += sp->len;
+    sp->len = ffurl_read_complete(ctx, reinterpret_cast<unsigned char*>(sp->buf), sp->len);
+    if(sp->len>0) spos += sp->len;
     return sp->len;
 }
 
-static off_t __FASTCALL__ lavc_seek(stream_t *s, off_t newpos)
+off_t Lavs_Stream_Interface::seek(off_t newpos)
 {
-    lavc_priv_t*p=static_cast<lavc_priv_t*>(s->priv);
-    p->spos = newpos;
-    p->spos = ffurl_seek(p->ctx, newpos, SEEK_SET);
-    return p->spos;
+    spos = newpos;
+    spos = ffurl_seek(ctx, newpos, SEEK_SET);
+    return spos;
 }
 
-static off_t lavc_tell(const stream_t *s)
-{
-    lavc_priv_t*p=static_cast<lavc_priv_t*>(s->priv);
-    return p->spos;
-}
+off_t Lavs_Stream_Interface::tell() const { return spos; }
 
-static MPXP_Rc __FASTCALL__ lavc_ctrl(const stream_t *s, unsigned cmd, any_t*arg)
+MPXP_Rc Lavs_Stream_Interface::ctrl(unsigned cmd, any_t*arg)
 {
-    UNUSED(s);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static void __FASTCALL__ lavc_close(stream_t *stream)
-{
-    lavc_priv_t*p=static_cast<lavc_priv_t*>(stream->priv);
-    delete p;
-}
+void Lavs_Stream_Interface::close() {}
 
-static const char prefix[] = "lavc://";
-
-static MPXP_Rc __FASTCALL__ lavc_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags)
+MPXP_Rc Lavs_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
 {
-    URLContext *ctx = NULL;
-    lavc_priv_t *p;
-    int64_t size;
+    int64_t _size;
 
     UNUSED(flags);
     UNUSED(libinput);
@@ -76,27 +74,22 @@ static MPXP_Rc __FASTCALL__ lavc_open(libinput_t*libinput,stream_t *stream,const
     MSG_V("[lavc] Opening %s\n", filename);
 
     if (ffurl_open(&ctx, filename, 0, &int_cb, NULL) < 0) return MPXP_False;
-    p = new(zeromem) lavc_priv_t;
-    p->ctx = ctx;
-    p->spos = 0;
-    size = ffurl_size(ctx);
-    if (size >= 0)
-	stream->end_pos = size;
-    stream->type = STREAMTYPE_SEEKABLE;
-    stream->priv = p;
-    if (ctx->is_streamed) stream->type = STREAMTYPE_STREAM;
-    check_pin("stream",stream->pin,STREAM_PIN);
+    spos = 0;
+    _size = ffurl_size(ctx);
+    if (_size >= 0) end_pos = _size;
     return MPXP_Ok;
 }
 
-extern const stream_driver_t lavc_stream =
+stream_type_e Lavs_Stream_Interface::type() const { return (ctx->is_streamed)?STREAMTYPE_STREAM:STREAMTYPE_SEEKABLE; }
+off_t	Lavs_Stream_Interface::size() const { return end_pos; }
+off_t	Lavs_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
+
+static Stream_Interface* query_interface() { return new(zeromem) Lavs_Stream_Interface; }
+
+extern const stream_interface_info_t lavs_stream =
 {
-    "lavc:",
+    "lavs://",
     "reads multimedia stream through lavc library",
-    lavc_open,
-    lavc_read,
-    lavc_seek,
-    lavc_tell,
-    lavc_close,
-    lavc_ctrl
+    query_interface
 };
+} // namespace mpxp

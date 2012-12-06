@@ -580,7 +580,7 @@ int sh_video_t::read_frame(float* frame_time_ptr,float *v_pts,unsigned char** st
 	if(d_video.pts_flags && d_video.pts < 1.0 && d_video.prev_pts > 2.0)
 	{
 	    float spts;
-	    spts=d_video.demuxer->stream->stream_pts;
+	    spts=d_video.demuxer->stream->stream_pts();
 	    d_video.pts_corr=spts>0?spts:d_video.prev_pts;
 	    d_video.pts_flags=0;
 	    MSG_V("***PTS discontinuity happens*** correcting video %f pts as %f\n",d_video.pts,d_video.pts_corr);

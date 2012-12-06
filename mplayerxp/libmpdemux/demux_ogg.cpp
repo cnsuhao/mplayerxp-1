@@ -668,7 +668,7 @@ static void demux_ogg_scan_stream(Demuxer* demuxer) {
     if(p > 1 || (p == 1 && ! ogg_page_continued(page)))
       last_pos = pos;
     pos += np;
-    if(index_mode == 2) MSG_V("Building syncpoint table %d%%\r",(int)(pos*100/s->end_pos));
+    if(index_mode == 2) MSG_V("Building syncpoint table %d%%\r",(int)(pos*100/s->end_pos()));
   }
   if(index_mode == 2) MSG_V("\n");
 
@@ -1033,7 +1033,7 @@ static Opaque* ogg_open(Demuxer* demuxer) {
 	}
       }
       /// Add the header packets if the stream isn't seekable
-      if(ds && !s->end_pos) {
+      if(ds && !s->end_pos()) {
 	/// Finish the page, otherwise packets will be lost
 	do {
 	  demux_ogg_add_packet(ds,&ogg_d->subs[ogg_d->num_sub],ogg_d->num_sub,&pack);
@@ -1069,11 +1069,11 @@ static Opaque* ogg_open(Demuxer* demuxer) {
   }
 
   ogg_d->final_granulepos=0;
-  if(!s->end_pos)
+  if(!s->end_pos())
     demuxer->flags &= ~(Demuxer::Seekable);
   else {
-    demuxer->movi_start = s->start_pos; // Needed for XCD (Ogg written in MODE2)
-    demuxer->movi_end = s->end_pos;
+    demuxer->movi_start = s->start_pos(); // Needed for XCD (Ogg written in MODE2)
+    demuxer->movi_end = s->end_pos();
     demuxer->flags |= Demuxer::Seekable;
     demux_ogg_scan_stream(demuxer);
   }

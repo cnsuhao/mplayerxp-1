@@ -146,11 +146,11 @@ static int64_t mpxp_seek(any_t*opaque, int64_t pos, int whence){
     if(whence == SEEK_CUR)
 	pos +=stream_tell(stream);
     else if(whence == SEEK_END)
-	pos += stream->end_pos;
+	pos += stream->end_pos();
     else if(whence != SEEK_SET)
 	return -1;
 
-    if(pos<stream->end_pos && stream->eof)
+    if(pos<stream->end_pos() && stream->eof)
 	stream_reset(stream);
     if(stream_seek(stream, pos)==0)
 	return -1;

@@ -12,7 +12,7 @@ using namespace mpxp;
 #ifdef TEST_MRL
 #include <stdio.h>
 #endif
-
+namespace mpxp {
 const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port)
 {
     unsigned ssize;
@@ -180,3 +180,5 @@ const char * mrl_parse_params(const char *param, const mrl_config_t * args)
     if(value) delete value;
     return param;
 }
+} // namespace mpxp
+

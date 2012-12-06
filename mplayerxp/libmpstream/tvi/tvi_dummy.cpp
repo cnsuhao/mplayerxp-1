@@ -9,7 +9,9 @@ using namespace mpxp;
 #include <stdio.h>
 #include "libvo/img_format.h"
 #include "tv.h"
+#include "tvi_def.h"
 
+namespace mpxp {
 /* information about this file */
 static const tvi_info_t info = {
 	"NULL-TV",
@@ -19,7 +21,7 @@ static const tvi_info_t info = {
 };
 
 /* private data's */
-struct priv_s {
+struct priv_t {
     int width;
     int height;
 };
@@ -34,7 +36,7 @@ tvi_handle_t *tvi_init_dummy(const char *device)
 }
 
 /* initialisation */
-static int init(struct priv_s *priv)
+static int init(priv_t *priv)
 {
     priv->width = 320;
     priv->height = 200;
@@ -42,19 +44,19 @@ static int init(struct priv_s *priv)
 }
 
 /* that's the real start, we'got the format parameters (checked with control) */
-static int start(struct priv_s *priv)
+static int start(priv_t *priv)
 {
     UNUSED(priv);
     return 1;
 }
 
-static int uninit(struct priv_s *priv)
+static int uninit(priv_t *priv)
 {
     UNUSED(priv);
     return 1;
 }
 
-static int control(struct priv_s *priv, int cmd, any_t*arg)
+static int control(priv_t *priv, int cmd, any_t*arg)
 {
     switch(cmd)
     {
@@ -90,7 +92,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 }
 
 #ifdef HAVE_TV_BSDBT848
-static double grabimmediate_video_frame(struct priv_s *priv,unsigned char *buffer, int len)
+static double grabimmediate_video_frame(priv_t *priv,unsigned char *buffer, int len)
 {
     UNUSED(priv);
     memset(buffer, 0xCC, len);
@@ -98,27 +100,27 @@ static double grabimmediate_video_frame(struct priv_s *priv,unsigned char *buffe
 }
 #endif
 
-static double grab_video_frame(struct priv_s *priv,unsigned char *buffer, int len)
+static double grab_video_frame(priv_t *priv,unsigned char *buffer, int len)
 {
     UNUSED(priv);
     memset(buffer, 0x42, len);
     return 1;
 }
 
-static int get_video_framesize(struct priv_s *priv)
+static int get_video_framesize(priv_t *priv)
 {
     /* YV12 */
     return(priv->width*priv->height*12/8);
 }
 
-static double grab_audio_frame(struct priv_s *priv,unsigned char *buffer, int len)
+static double grab_audio_frame(priv_t *priv,unsigned char *buffer, int len)
 {
     UNUSED(priv);
     memset(buffer, 0x42, len);
     return 1;
 }
 
-static int get_audio_framesize(struct priv_s *priv)
+static int get_audio_framesize(priv_t *priv)
 {
     UNUSED(priv);
     return 1;
@@ -132,7 +134,7 @@ tvi_handle_t *new_handle()
 
     if (!h)
 	return(NULL);
-    h->priv = (struct priv_s *)mp_mallocz(sizeof(struct priv_s));
+    h->priv = (priv_t *)mp_mallocz(sizeof(priv_t));
     if (!h->priv)
     {
 	delete h;
@@ -156,3 +158,4 @@ void free_handle(tvi_handle_t *h)
 	delete h;
     }
 }
+} // namespace mpxp

@@ -444,13 +444,13 @@ static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
       if(stream_eof(s))
 	return 0;
     }
-    if(s->end_pos) {
+    if(s->end_pos()) {
       char tag[4];
-      stream_seek(s,s->end_pos-128);
+      stream_seek(s,s->end_pos()-128);
       stream_read(s,tag,3);
       tag[3] = '\0';
       if(strcmp(tag,"TAG"))
-	demuxer->movi_end = s->end_pos;
+	demuxer->movi_end = s->end_pos();
       else {
 	char buf[31];
 	uint8_t g;
@@ -487,7 +487,7 @@ static int read_ac3_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bitr
     uint8_t b[8];
     unsigned n;
     stream_t *s=demuxer->stream;
-    demuxer->movi_end = s->end_pos;
+    demuxer->movi_end = s->end_pos();
     memcpy(b,hdr,4);
     stream_seek(s,pos+4);
     stream_read(s,&b[4],4);
@@ -511,7 +511,7 @@ static int read_ddca_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bit
     uint8_t b[12];
     unsigned n;
     stream_t *s=demuxer->stream;
-    demuxer->movi_end = s->end_pos;
+    demuxer->movi_end = s->end_pos();
     memcpy(b,hdr,4);
     stream_seek(s,pos+4);
     stream_read(s,&b[4],8);
@@ -882,7 +882,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
   priv = new(zeromem) da_priv_t;
   s = demuxer->stream;
   stream_reset(s);
-  stream_seek(s,s->start_pos);
+  stream_seek(s,s->start_pos());
   while(n < 5 && !stream_eof(s))
   {
     st_pos = stream_tell(s);
@@ -1014,7 +1014,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
   sh_audio = demuxer->new_sh_audio();
   MSG_DBG2("mp3_header off: st_pos=%lu n=%lu HDR_SIZE=%u\n",st_pos,n,HDR_SIZE);
   demuxer->movi_start = stream_tell(s);
-  demuxer->movi_end = s->end_pos;
+  demuxer->movi_end = s->end_pos();
   switch(frmt) {
   case RAW_FLAC:
   {
@@ -1101,7 +1101,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
 	w->nBlockAlign = sh_audio->nch*afmt2bps(sh_audio->afmt);
 	w->wBitsPerSample = 8*afmt2bps(sh_audio->afmt);
 	w->cbSize = 0;
-	demuxer->movi_start = demuxer->stream->start_pos+hsize;
+	demuxer->movi_start = demuxer->stream->start_pos()+hsize;
 	demuxer->movi_end = demuxer->movi_start+hsize+dsize;
 	demuxer->movi_length = (demuxer->movi_end-demuxer->movi_start)/w->nAvgBytesPerSec;
     }
@@ -1158,7 +1158,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
     priv->pos = 32; // empty bit buffer
     priv->length = 1152 * frames / (float)sh_audio->wf->nSamplesPerSec;
     demuxer->movi_start = 24; /* skip header */
-    demuxer->movi_end = s->end_pos;
+    demuxer->movi_end = s->end_pos();
     if (demuxer->movi_end > demuxer->movi_start && priv->length > 1)
       sh_audio->wf->nAvgBytesPerSec = (demuxer->movi_end - demuxer->movi_start) / priv->length;
     else
@@ -1340,10 +1340,10 @@ static Opaque* audio_open(Demuxer* demuxer) {
 	stream_seek(s,data_off);
 	stream_read(s,hdr,4);
 	MSG_DBG2("Trying id3v1 at %llX\n",data_off);
-	if(!read_mp3v1_tags(demuxer,hdr,data_off)) demuxer->movi_end = s->end_pos;
+	if(!read_mp3v1_tags(demuxer,hdr,data_off)) demuxer->movi_end = s->end_pos();
     }
     else
-	demuxer->movi_end = s->end_pos;
+	demuxer->movi_end = s->end_pos();
     stream_seek(s,data_off);
   } break;
   }

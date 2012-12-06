@@ -29,6 +29,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "stream_msg.h"
 
+namespace mpxp {
 #define CPF_EMPTY	0x00000001UL
 #define CPF_EOF		0x80000000UL
 #define CPF_DONE	0x40000000UL /* special case for dvd packets to exclude them from sending again */
@@ -104,18 +105,18 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
   readpos=c->read_filepos;
   in_cache=(readpos>=START_FILEPOS(c)&&readpos<END_FILEPOS(c));
   new_start = readpos - c->back_size;
-  if(new_start<c->stream->start_pos) new_start=c->stream->start_pos;
+  if(new_start<c->stream->start_pos()) new_start=c->stream->start_pos();
   seek_eof=0;
-  if(!in_cache && c->stream->type&STREAMTYPE_SEEKABLE) {
+  if(!in_cache && c->stream->type()&STREAMTYPE_SEEKABLE) {
 	/* seeking... */
 	MSG_DBG2("Out of boundaries... seeking to %lli {in_cache(%i) %lli<%lli>%lli} \n"
 	,new_start,in_cache,START_FILEPOS(c),readpos,END_FILEPOS(c));
 	if(c->stream->eof || c->eof) nc_stream_reset(c->stream);
-	c->stream->driver->seek(c->stream,new_start);
-	if(errno) { MSG_WARN("c2_seek(drv:%s) error: %s\n",c->stream->driver->mrl,strerror(errno)); errno=0; }
-	if((c->packets[c->first].filepos=c->stream->driver->tell(c->stream))<0) seek_eof=1;
+	c->stream->driver->seek(new_start);
+	if(errno) { MSG_WARN("c2_seek(drv:%s) error: %s\n",c->stream->driver_info->mrl,strerror(errno)); errno=0; }
+	if((c->packets[c->first].filepos=c->stream->driver->tell())<0) seek_eof=1;
 	c->last=c->first;
-	if(c->packets[c->first].filepos < new_start-(off_t)c->stream->sector_size)
+	if(c->packets[c->first].filepos < new_start-(off_t)c->stream->sector_size())
 	    MSG_WARN("CACHE2: found wrong offset after seeking %lli (wanted: %lli)\n",c->packets[c->first].filepos,new_start);
 	MSG_DBG2("Seek done. new pos: %lli\n",START_FILEPOS(c));
   } else {
@@ -143,8 +144,8 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
   {
     CACHE2_PACKET_TLOCK(cidx);
     c->packets[cidx].sp.len=c->sector_size;
-    c->packets[cidx].filepos = c->stream->driver->tell(c->stream);
-    c->stream->driver->read(c->stream,&c->packets[cidx].sp);
+    c->packets[cidx].filepos = c->stream->driver->tell();
+    c->stream->driver->read(&c->packets[cidx].sp);
     MSG_DBG2("CACHE2: read_packet at %lli (wanted %u got %u type %i)",c->packets[cidx].filepos,c->sector_size,c->packets[cidx].sp.len,c->packets[cidx].sp.type);
     if(mp_conf.verbose>1)
 	if(c->packets[cidx].sp.len>8) {
@@ -162,7 +163,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 	c->eof=1;
 	c->packets[cidx].state&=~CPF_EMPTY;
 	c->packets[cidx].state&=~CPF_DONE;
-	if(errno) { MSG_WARN("c2_fill_buffer(drv:%s) error: %s\n",c->stream->driver->mrl,strerror(errno)); errno=0; }
+	if(errno) { MSG_WARN("c2_fill_buffer(drv:%s) error: %s\n",c->stream->driver_info->mrl,strerror(errno)); errno=0; }
 	CACHE2_PACKET_TUNLOCK(cidx);
 	break;
     }
@@ -267,10 +268,10 @@ static any_t*cache2_routine(any_t*arg)
 }
 
 int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,int prefill){
-  int ss=stream->sector_size>1?stream->sector_size:STREAM_BUFFER_SIZE;
+  int ss=stream->sector_size()>1?stream->sector_size():STREAM_BUFFER_SIZE;
   cache_vars_t* c;
 
-  if (!(stream->type&STREAMTYPE_SEEKABLE) && stream->fd < 0) {
+  if (!(stream->type()&STREAMTYPE_SEEKABLE) && stream->fd < 0) {
     // The stream has no 'fd' behind it, so is non-cacheable
     MSG_WARN("\rThis stream is non-cacheable\n");
     return 1;
@@ -282,7 +283,7 @@ int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,
   if(!c) return 0;
   c->stream=stream;
   c->prefill=size*prefill;
-  c->read_filepos=stream->start_pos;
+  c->read_filepos=stream->start_pos();
 
   unsigned rc;
   if((rc=xmp_register_thread(NULL,sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return 0;
@@ -292,7 +293,7 @@ int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,
 	START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),_min,c->eof,ss);
   while((c->read_filepos<START_FILEPOS(c) || END_FILEPOS(c)-c->read_filepos<_min)
 	&& !c->eof && CP_NEXT(c,c->last)!=c->first){
-	if(!(stream->type&STREAMTYPE_SEEKABLE))
+	if(!(stream->type()&STREAMTYPE_SEEKABLE))
 	MSG_STATUS("\rCache fill: %5.2f%% (%d bytes)    ",
 	    100.0*(float)(END_FILEPOS(c)-c->read_filepos)/(float)(c->buffer_size),
 	    END_FILEPOS(c)-c->read_filepos);
@@ -352,8 +353,8 @@ static void __FASTCALL__ c2_stream_reset(cache_vars_t* c)
 	cidx=c->first;
 	do{ c->packets[cidx].state|=CPF_EMPTY; cidx=CP_NEXT(c,cidx); }while(cidx!=c->first);
 	c->last=c->first;
-	c->read_filepos=c->stream->start_pos;
-	c->stream->driver->seek(c->stream,c->read_filepos);
+	c->read_filepos=c->stream->start_pos();
+	c->stream->driver->seek(c->read_filepos);
     }
 }
 
@@ -364,7 +365,7 @@ static int __FASTCALL__ c2_stream_seek_long(cache_vars_t* c,off_t pos){
   while(c->in_fill) yield_timeslice();
   CACHE2_LOCK(c);
   if(c->eof) c2_stream_reset(c);
-  C2_ASSERT(pos < c->stream->start_pos);
+  C2_ASSERT(pos < c->stream->start_pos());
   c->read_filepos=pos;
   CACHE2_UNLOCK(c);
   c2_stream_fill_buffer(c);
@@ -672,4 +673,4 @@ unsigned int __FASTCALL__ stream_read_int24(stream_t *s){
   y=(y<<8)|stream_read_char(s);
   return y;
 }
-
+} // namespace mpxp

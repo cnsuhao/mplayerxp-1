@@ -3,6 +3,7 @@
 #define __MPXP_MRL_H 1
 
 #include "mp_config.h"
+namespace mpxp {
 /** Parses line which contains MRL and splits it on components.
   * @param line		source line to be parsed
   * @param user		buffer which will contain username if present (maybe NULL)
@@ -21,26 +22,25 @@
   *				  x11://~username:passwd@localhost:8081#bpp=32
   * @see		mrl_parse_params
 **/
-extern const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port);
+    extern const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port);
 
-enum {
-    MRL_TYPE_PRINT	=0, /**< NoType! Just printout value of argument */
-    MRL_TYPE_BOOL	=1, /**< Boolean type. Accepts "on" "off" "yes" "no" "1" "0" values */
-    MRL_TYPE_INT	=2, /**< Integer type. Accepts any values in min-max range */
-    MRL_TYPE_FLOAT	=3, /**< Float type. Accepts any values in min-max range */
-    MRL_TYPE_STRING	=4  /**< String type. Accepts any values */
-};
+    enum {
+	MRL_TYPE_PRINT	=0, /**< NoType! Just printout value of argument */
+	MRL_TYPE_BOOL	=1, /**< Boolean type. Accepts "on" "off" "yes" "no" "1" "0" values */
+	MRL_TYPE_INT	=2, /**< Integer type. Accepts any values in min-max range */
+	MRL_TYPE_FLOAT	=3, /**< Float type. Accepts any values in min-max range */
+	MRL_TYPE_STRING	=4  /**< String type. Accepts any values */
+    };
 /** Structurizes argument's parsing
   * @note		all string arguments will be allocated by mp_malloc() function
 **/
-typedef struct mrl_config
-{
-    const char*	arg;		/**< Name of argument */
-    any_t* const value;		/**< Pointer to buffer where value will be saved */
-    unsigned	type;		/**< Type of value */
-    float	min;		/**< Minimal value of argument */
-    float	max;		/**< Maximal value of argument */
-}mrl_config_t;
+    struct mrl_config_t {
+	const char*	arg;		/**< Name of argument */
+	any_t* const	value;		/**< Pointer to buffer where value will be saved */
+	unsigned	type;		/**< Type of value */
+	float	min;		/**< Minimal value of argument */
+	float	max;		/**< Maximal value of argument */
+    };
 
 /** Parses parameters of MRL line and fill corresponded structure.
   * @param param	buffer with parameters (it's return value of mrl_parse_line())
@@ -51,5 +51,6 @@ typedef struct mrl_config
   *			may want to use non-standard arguments for plugin.
   * @see		mrl_parse_line
 **/
-extern const char *	mrl_parse_params(const char *param,const mrl_config_t * args);
+    extern const char *	mrl_parse_params(const char *param,const mrl_config_t * args);
+} // namespace mpxp
 #endif

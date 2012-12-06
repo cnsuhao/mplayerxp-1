@@ -205,7 +205,7 @@ static int get_data (int s,unsigned char *buf, size_t count)
 
 }
 
-static int get_header (int s, uint8_t *header, streaming_ctrl_t *streaming_ctrl)
+static int get_header (int s, uint8_t *header, networking_t *networking)
 {
   unsigned char  pre_header[8];
   int            header_len;
@@ -240,7 +240,7 @@ static int get_header (int s, uint8_t *header, streaming_ctrl_t *streaming_ctrl)
       if ( (header[header_len-1] == 1) && (header[header_len-2]==1)) {
 
 
-     if( streaming_bufferize( streaming_ctrl, header, header_len )<0 ) {
+     if( networking_bufferize( networking, header, header_len )<0 ) {
 				return -1;
 	 }
 
@@ -363,7 +363,7 @@ static int interp_header (uint8_t *header, int header_len)
 }
 
 
-static int get_media_packet (int s, int padding, streaming_ctrl_t *stream_ctrl) {
+static int get_media_packet (int s, int padding, networking_t *stream_ctrl) {
   unsigned char  pre_header[8];
   unsigned char  data[BUF_SIZE];
 
@@ -394,7 +394,7 @@ static int get_media_packet (int s, int padding, streaming_ctrl_t *stream_ctrl) 
       return 0;
     }
 
-    streaming_bufferize(stream_ctrl, data, padding);
+    networking_bufferize(stream_ctrl, data, padding);
 
   } else {
 
@@ -454,7 +454,7 @@ static int get_media_packet (int s, int padding, streaming_ctrl_t *stream_ctrl) 
 
 static int packet_length1;
 
-static int asf_mmst_streaming_read( int fd, char *buffer, int size, streaming_ctrl_t *stream_ctrl )
+static int asf_mmst_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl )
 {
   int len;
 
@@ -482,16 +482,16 @@ static int asf_mmst_streaming_read( int fd, char *buffer, int size, streaming_ct
 
 }
 
-static int asf_mmst_streaming_seek( int fd, off_t pos, streaming_ctrl_t *streaming_ctrl )
+static int asf_mmst_networking_seek( int fd, off_t pos, networking_t *networking )
 {
 	return -1;
 	// Shut up gcc warning
 	fd++;
 	pos++;
-	streaming_ctrl=NULL;
+	networking=NULL;
 }
 
-int asf_mmst_streaming_start(libinput_t* libinput,stream_t *stream)
+int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
 {
   char                 str[1024];
   unsigned char        data[BUF_SIZE];
@@ -499,12 +499,12 @@ int asf_mmst_streaming_start(libinput_t* libinput,stream_t *stream)
   int                  asf_header_len;
   int                  len, i, packet_length;
   char                *path, *unescpath;
-  URL_t *url1 = stream->streaming_ctrl->url;
-  int s = stream->fd;
+  URL_t *url1 = networking->url;
+  net_fd_t s = *fd;
 
   if( s>0 ) {
-	  closesocket( stream->fd );
-	  stream->fd = -1;
+    closesocket( *fd );
+    *fd = -1;
   }
 
   /* parse url */
@@ -524,7 +524,7 @@ int asf_mmst_streaming_start(libinput_t* libinput,stream_t *stream)
   if( url1->port==0 ) {
 	url1->port=1755;
   }
-  s = tcp_connect2Server(libinput, url1->hostname, url1->port, 0);
+  s = tcp_connect2Server(networking->libinput, url1->hostname, url1->port, 0);
   if( s<0 ) {
 	  delete path;
 	  return s;
@@ -592,7 +592,7 @@ int asf_mmst_streaming_start(libinput_t* libinput,stream_t *stream)
   num_stream_ids = 0;
   /* get_headers(s, asf_header);  */
 
-  asf_header_len = get_header (s, asf_header, stream->streaming_ctrl);
+  asf_header_len = get_header (s, asf_header, networking);
 //  printf("---------------------------------- asf_header %d\n",asf_header);
   if (asf_header_len==0) { //error reading header
     closesocket(s);
@@ -646,11 +646,11 @@ int asf_mmst_streaming_start(libinput_t* libinput,stream_t *stream)
 
   send_command (s, 0x07, 1, 0xFFFF | stream_ids[0] << 16, 24, data);
 
-  stream->fd = s;
-  stream->streaming_ctrl->streaming_read = asf_mmst_streaming_read;
-  stream->streaming_ctrl->streaming_seek = asf_mmst_streaming_seek;
-  stream->streaming_ctrl->buffering = 1;
-  stream->streaming_ctrl->status = streaming_playing_e;
+  *fd = s;
+  networking->networking_read = asf_mmst_networking_read;
+  networking->networking_seek = asf_mmst_networking_seek;
+  networking->buffering = 1;
+  networking->status = networking_playing_e;
 
   packet_length1 = packet_length;
   MSG_V("mmst packet_length = %d\n",packet_length);

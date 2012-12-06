@@ -15,6 +15,7 @@ using namespace mpxp;
 #include "cdd.h"
 #include "stream_msg.h"
 
+namespace mpxp {
 static int speed = -1;
 static int search_overlap = -1;
 static int no_skip = 0;
@@ -74,7 +75,7 @@ static unsigned cdda_parse_tracks(unsigned char *arr,unsigned nelem,const char *
     return rval;
 }
 
-MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
+cdda_priv* __FASTCALL__ open_cdda(const char* dev,const char* arg) {
     unsigned cd_tracks;
     cdda_priv* priv;
     unsigned int audiolen=0;
@@ -89,7 +90,7 @@ MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
     if(!priv->cd) {
 	MSG_ERR("Can't open cdda device: %s\n",dev);
 	delete priv;
-	return MPXP_False;
+	return NULL;
     }
 
     cdio_cddap_verbose_set(priv->cd, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT);
@@ -98,7 +99,7 @@ MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
 	MSG_ERR("Can't open disc\n");
 	cdda_close(priv->cd);
 	delete priv;
-	return MPXP_False;
+	return NULL;
     }
 
     cd_tracks=cdio_cddap_tracks(priv->cd);
@@ -129,12 +130,11 @@ MPXP_Rc __FASTCALL__ open_cdda(stream_t *st,const char* dev,const char* arg) {
     if(speed) cdio_cddap_speed_set(priv->cd,speed);
 
     priv->sector = priv->start_sector;
-    st->type = STREAMTYPE_SEEKABLE|STREAMTYPE_RAWAUDIO;
-    st->priv = priv;
-    st->start_pos = priv->start_sector*CDIO_CD_FRAMESIZE_RAW;
-    st->end_pos = priv->end_sector*CDIO_CD_FRAMESIZE_RAW;
-    return MPXP_Ok;
+    return priv;
 }
+
+off_t	__FASTCALL__	cdda_start(cdda_priv* priv) { return priv->start_sector*CDIO_CD_FRAMESIZE_RAW; }
+off_t	__FASTCALL__	cdda_size(cdda_priv* priv) { return priv->end_sector*CDIO_CD_FRAMESIZE_RAW; }
 
 static lsn_t map_sector(cdda_priv*p,lsn_t sector,track_t *tr)
 {
@@ -171,8 +171,7 @@ static unsigned long psa(cdda_priv*p,unsigned long sector)
     return 0;
 }
 
-int __FASTCALL__ read_cdda(const stream_t* s,char *buf,track_t *tr) {
-  cdda_priv* p = static_cast<cdda_priv*>(s->priv);
+int __FASTCALL__ read_cdda(cdda_priv* p,char *buf,track_t *tr) {
   track_t i=255;
 
   if(cdio_cddap_read(p->cd, buf, p->sector, 1)==0) {
@@ -195,8 +194,7 @@ int __FASTCALL__ read_cdda(const stream_t* s,char *buf,track_t *tr) {
   return CDIO_CD_FRAMESIZE_RAW;
 }
 
-void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *tr) {
-    cdda_priv* p = static_cast<cdda_priv*>(s->priv);
+void __FASTCALL__ seek_cdda(cdda_priv* p,off_t pos,track_t *tr) {
     long sec;
     long seeked_track=0;
     track_t j=255;
@@ -212,13 +210,11 @@ void __FASTCALL__ seek_cdda(stream_t* s,off_t pos,track_t *tr) {
     p->sector=seeked_track;
 }
 
-off_t __FASTCALL__ tell_cdda(const stream_t* s) {
-  const cdda_priv* p = static_cast<const cdda_priv*>(s->priv);
+off_t __FASTCALL__ tell_cdda(const cdda_priv* p) {
   return p->sector*CDIO_CD_FRAMESIZE_RAW;
 }
 
-void __FASTCALL__ close_cdda(stream_t* s) {
-  cdda_priv* p = static_cast<cdda_priv*>(s->priv);
+void __FASTCALL__ close_cdda(cdda_priv* p) {
   delete p;
 }
 
@@ -226,5 +222,5 @@ cdda_priv::cdda_priv() {}
 cdda_priv::~cdda_priv() {
     cdio_cddap_close(cd);
 }
-
+} // namespace mpxp
 #endif

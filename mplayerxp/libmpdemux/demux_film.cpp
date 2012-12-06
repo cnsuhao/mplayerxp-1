@@ -228,7 +228,7 @@ static Opaque* film_open(Demuxer* demuxer)
 
   // go back to the beginning
   stream_reset(demuxer->stream);
-  stream_seek(demuxer->stream, demuxer->stream->start_pos);
+  stream_seek(demuxer->stream, demuxer->stream->start_pos());
 
   // read the master chunk type
   chunk_type = stream_read_fourcc(demuxer->stream);
@@ -245,7 +245,7 @@ static Opaque* film_open(Demuxer* demuxer)
   header_size = stream_read_dword(demuxer->stream);
   film_data->film_version = stream_read_fourcc(demuxer->stream);
   demuxer->movi_start = header_size;
-  demuxer->movi_end = demuxer->stream->end_pos;
+  demuxer->movi_end = demuxer->stream->end_pos();
   header_size -= 16;
 
   MSG_HINT( "FILM version %.4s\n",

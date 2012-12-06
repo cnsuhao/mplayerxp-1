@@ -2,7 +2,8 @@
 #define __ASF_STEAMING_H_INCLUDED 1
 #include "stream.h"
 
-extern int asf_streaming_start(libinput_t* libinput, stream_t *stream, int *demuxer_type);
-extern int asf_mmst_streaming_start(libinput_t* libinput,stream_t *stream);
+typedef int net_fd_t;
+extern int asf_networking_start(net_fd_t* fd, networking_t *networking);
+extern int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking);
 
 #endif

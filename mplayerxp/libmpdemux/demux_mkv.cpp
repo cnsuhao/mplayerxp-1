@@ -2791,7 +2791,7 @@ static MPXP_Rc mkv_probe(Demuxer *demuxer)
     stream_t *s = demuxer->stream;
     int version;
     char *str;
-    stream_seek(s, s->start_pos);
+    stream_seek(s, s->start_pos());
     str = ebml_read_header (s, &version);
     if (str == NULL || strcmp (str, "matroska") || version > 1) {
 	MSG_DBG2( "[mkv] no head found\n");
@@ -2809,7 +2809,7 @@ static Opaque* mkv_open(Demuxer *demuxer)
   int i, version, cont = 0;
   char *str;
 
-  stream_seek(s, s->start_pos);
+  stream_seek(s, s->start_pos());
   str = ebml_read_header (s, &version);
   if (str == NULL || strcmp (str, "matroska") || version > 2) {
       MSG_DBG2( "[mkv] no head found\n");
@@ -3045,12 +3045,12 @@ static Opaque* mkv_open(Demuxer *demuxer)
 	}
     }
 
-  if (s->end_pos == 0 || (mkv_d->indexes == NULL && index_mode < 0))
+  if (s->end_pos() == 0 || (mkv_d->indexes == NULL && index_mode < 0))
     demuxer->flags &= ~(Demuxer::Seekable);
   else
     {
-      demuxer->movi_start = s->start_pos;
-      demuxer->movi_end = s->end_pos;
+      demuxer->movi_start = s->start_pos();
+      demuxer->movi_end = s->end_pos();
       demuxer->flags |= Demuxer::Seekable;
       if (mkv_d->chapters && dvd_chapter>1 && dvd_chapter<=mkv_d->num_chapters)
 	{

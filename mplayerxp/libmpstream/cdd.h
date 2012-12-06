@@ -5,9 +5,8 @@
 
 namespace mpxp {
     struct libinput_t;
-}
 
-typedef struct {
+    struct cddb_data_t {
 	char cddb_hello[1024];
 	unsigned long disc_id;
 	unsigned int tracks;
@@ -20,13 +19,13 @@ typedef struct {
 	size_t xmcd_file_size;
 	any_t*user_data;
 	libinput_t*libinput;
-} cddb_data_t;
+    };
 
-typedef struct {
+    struct cd_toc_t {
 	unsigned int min, sec, frame;
-} cd_toc_t;
+    };
 
-typedef struct cd_track {
+    struct cd_track_t {
 	char *name;
 	unsigned int track_nb;
 	unsigned int min;
@@ -34,11 +33,11 @@ typedef struct cd_track {
 	unsigned int msec;
 	unsigned long frame_begin;
 	unsigned long frame_length;
-	struct cd_track *prev;
-	struct cd_track *next;
-} cd_track_t;
+	cd_track_t *prev;
+	cd_track_t *next;
+    };
 
-typedef struct {
+    struct cd_info_t {
 	char *artist;
 	char *album;
 	char *genre;
@@ -49,39 +48,42 @@ typedef struct {
 	cd_track_t *first;
 	cd_track_t *last;
 	cd_track_t *current;
-} cd_info_t;
+    };
 
-typedef struct my_track_s {
+    struct my_track_t {
 	int play;
 	lsn_t start_sector;
 	lsn_t end_sector;
-}my_track_t;
+    };
 
-struct cdda_priv : public Opaque {
-    public:
-	cdda_priv();
-	virtual ~cdda_priv();
+    struct cdda_priv : public Opaque {
+	public:
+	    cdda_priv();
+	    virtual ~cdda_priv();
 
-	cdrom_drive_t* cd;
-	my_track_t tracks[256]; /* hope that's enough */
-	unsigned min;
-	unsigned sec;
-	unsigned msec;
-	lsn_t sector;
-	lsn_t start_sector;
-	lsn_t end_sector;
-};
+	    cdrom_drive_t* cd;
+	    my_track_t tracks[256]; /* hope that's enough */
+	    unsigned min;
+	    unsigned sec;
+	    unsigned msec;
+	    lsn_t sector;
+	    lsn_t start_sector;
+	    lsn_t end_sector;
+    };
 
-cd_info_t*  __FASTCALL__ cd_info_new();
-void	    __FASTCALL__ cd_info_free(cd_info_t *cd_info);
-cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name, unsigned int track_nb, unsigned int min, unsigned int sec, unsigned int msec, unsigned long frame_begin, unsigned long frame_length);
-cd_track_t* __FASTCALL__ cd_info_get_track(cd_info_t *cd_info, unsigned int track_nb);
+    cd_info_t*  __FASTCALL__ cd_info_new();
+    void	    __FASTCALL__ cd_info_free(cd_info_t *cd_info);
+    cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name, unsigned int track_nb, unsigned int min, unsigned int sec, unsigned int msec, unsigned long frame_begin, unsigned long frame_length);
+    cd_track_t* __FASTCALL__ cd_info_get_track(cd_info_t *cd_info, unsigned int track_nb);
 
-MPXP_Rc __FASTCALL__	open_cdda(stream_t*,const char* dev,const char* track);
-MPXP_Rc __FASTCALL__	open_cddb(stream_t*,const char* dev,const char* track);
-int     __FASTCALL__	read_cdda(const stream_t* s,char *buf,track_t* trackidx);
-void    __FASTCALL__	seek_cdda(stream_t* s,off_t pos,track_t *trackidx);
-off_t   __FASTCALL__	tell_cdda(const stream_t* s);
-void    __FASTCALL__	close_cdda(stream_t* s);
-void cdda_register_options(m_config_t* cfg);
+    cdda_priv* __FASTCALL__	open_cdda(const char* dev,const char* track);
+    cdda_priv* __FASTCALL__	open_cddb(libinput_t*,const char* dev,const char* track);
+    int     __FASTCALL__	read_cdda(cdda_priv* s,char *buf,track_t* trackidx);
+    void    __FASTCALL__	seek_cdda(cdda_priv* s,off_t pos,track_t *trackidx);
+    off_t   __FASTCALL__	tell_cdda(const cdda_priv* s);
+    void    __FASTCALL__	close_cdda(cdda_priv*);
+    off_t	__FASTCALL__	cdda_start(cdda_priv*);
+    off_t	__FASTCALL__	cdda_size(cdda_priv*);
+    void cdda_register_options(m_config_t* cfg);
+} // namespace mpxp
 #endif // __CDD_H__

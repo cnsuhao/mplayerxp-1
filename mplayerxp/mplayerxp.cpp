@@ -1608,7 +1608,7 @@ For future:
 	    case MP_CMD_DVDNAV:
 		if(stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
 		    if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
-			    stream->type|=STREAMTYPE_MENU;
+			    stream->type(STREAMTYPE_MENU);
 			    state->need_repaint=1;
 		    }
 		    osd_function=OSD_DVDMENU;
@@ -1815,7 +1815,7 @@ play_next_file:
     }
     MPXPSys.inited_flags|=INITED_STREAM;
 
-    if(stream->type & STREAMTYPE_TEXT) {
+    if(stream->type() & STREAMTYPE_TEXT) {
 	eof=MPXPSys.handle_playlist(filename);
 	goto goto_next_file;
     }

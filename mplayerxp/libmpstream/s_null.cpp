@@ -7,43 +7,52 @@ using namespace mpxp;
 #include "stream.h"
 #include "stream_internal.h"
 
-static MPXP_Rc __FASTCALL__ null_open(libinput_t*libinput,stream_t *stream,const char *filename,unsigned flags) {
+namespace mpxp {
+    class Null_Stream_Interface : public Stream_Interface {
+	public:
+	    Null_Stream_Interface();
+	    virtual ~Null_Stream_Interface();
+
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+	    virtual stream_type_e type() const;
+	    virtual off_t	size() const;
+	    virtual off_t	sector_size() const;
+    };
+
+Null_Stream_Interface::Null_Stream_Interface() {}
+Null_Stream_Interface::~Null_Stream_Interface() {}
+
+MPXP_Rc Null_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags) {
+    UNUSED(libinput);
     UNUSED(filename);
+    UNUSED(flags);
     return MPXP_False;
 }
 
-static int __FASTCALL__ null_read(stream_t*stream,stream_packet_t*sp)
-{
-    return 0;
-}
-
-static off_t __FASTCALL__ null_seek(stream_t*stream,off_t pos)
-{
-    return pos;
-}
-
-static off_t __FASTCALL__ null_tell(const stream_t*stream)
-{
-    return 0;
-}
-
-static void __FASTCALL__ null_close(stream_t *stream) {}
-
-static MPXP_Rc __FASTCALL__ null_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
-    UNUSED(s);
+int	Null_Stream_Interface::read(stream_packet_t*sp) {  return 0; }
+off_t	Null_Stream_Interface::seek(off_t pos) { return pos; }
+off_t	Null_Stream_Interface::tell() const { return 0; }
+void	Null_Stream_Interface::close() {}
+MPXP_Rc Null_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     UNUSED(cmd);
     UNUSED(args);
     return MPXP_Unknown;
 }
+stream_type_e Null_Stream_Interface::type() const { return STREAMTYPE_STREAM; }
+off_t	Null_Stream_Interface::size() const { return 0; }
+off_t	Null_Stream_Interface::sector_size() const { return 0; }
 
-extern const stream_driver_t null_stream =
+static Stream_Interface* query_interface() { return new(zeromem) Null_Stream_Interface; }
+
+extern const stream_interface_info_t null_stream =
 {
     "null://",
     "not a driver",
-    null_open,
-    null_read,
-    null_seek,
-    null_tell,
-    null_close,
-    null_ctrl
+    query_interface,
 };
+} // namespace mpxp

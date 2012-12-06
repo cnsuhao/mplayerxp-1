@@ -134,12 +134,12 @@ typedef enum {
 } ASF_StreamType_e;
 
 typedef struct {
-	ASF_StreamType_e streaming_type;
+	ASF_StreamType_e networking_type;
 	int request;
 	int packet_size;
 	int *audio_streams,n_audio,*video_streams,n_video;
 	int audio_id, video_id;
-} asf_http_streaming_ctrl_t;
+} asf_http_networking_t;
 
 
 /*

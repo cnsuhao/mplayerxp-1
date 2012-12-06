@@ -7,9 +7,9 @@ using namespace mpxp;
 #include <stdint.h>
 #include "demuxer_packet.h"
 
-struct stream_t;
 namespace mpxp {
     struct Demuxer;
+    struct stream_t;
     class Demuxer_Stream : public Opaque {
 	public:
 	    Demuxer_Stream(Demuxer *demuxer,int id);

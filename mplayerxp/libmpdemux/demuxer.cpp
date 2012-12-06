@@ -117,8 +117,8 @@ void libmpdemux_register_options(m_config_t* cfg)
 void Demuxer::_init(stream_t *_stream,int a_id,int v_id,int s_id)
 {
   stream=_stream;
-  movi_start=_stream->start_pos;
-  movi_end=_stream->end_pos;
+  movi_start=_stream->start_pos();
+  movi_end=_stream->end_pos();
   movi_length=UINT_MAX;
   flags|=Seekable;
   synced=0;
@@ -127,7 +127,7 @@ void Demuxer::_init(stream_t *_stream,int a_id,int v_id,int s_id)
   video=new(zeromem) Demuxer_Stream(this,v_id);
   sub=new(zeromem) Demuxer_Stream(this,s_id);
   stream_reset(_stream);
-  stream_seek(_stream,stream->start_pos);
+  stream_seek(_stream,stream->start_pos());
 }
 
 Demuxer::Demuxer()
@@ -318,7 +318,7 @@ MPXP_Rc Demuxer::open()
 	MSG_V("Forcing %s ... ",drv->name);
 	/* don't remove it from loop!!! (for initializing) */
 	stream_reset(stream);
-	stream_seek(stream,stream->start_pos);
+	stream_seek(stream,stream->start_pos());
 	if(drv->probe(this)!=MPXP_Ok) {
 	    MSG_ERR("Can't probe stream with driver: '%s'\n",demux_conf.type);
 	    goto err_exit;
@@ -331,7 +331,7 @@ again:
 	MSG_V("Probing %s ... ",ddrivers[i]->name);
 	/* don't remove it from loop!!! (for initializing) */
 	stream_reset(stream);
-	stream_seek(stream,stream->start_pos);
+	stream_seek(stream,stream->start_pos());
 	if(ddrivers[i]->probe(this)==MPXP_Ok) {
 	    MSG_V("OK\n");
 	    dpriv.driver = ddrivers[i];
@@ -423,7 +423,7 @@ int Demuxer::seek(const seek_args_t* seeka){
     demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(audio->sh);
 
-    if(!(stream->type&STREAMTYPE_SEEKABLE))
+    if(!(stream->type()&STREAMTYPE_SEEKABLE))
     {
 	MSG_WARN("Stream is not seekable\n");
 	return 0;

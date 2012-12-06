@@ -158,7 +158,7 @@ while(1){
       if(!demuxer->movi_start) demuxer->movi_start=stream_tell(demuxer->stream);
       demuxer->movi_end=stream_tell(demuxer->stream)+len;
       MSG_V("Found movie at 0x%X - 0x%X\n",(int)demuxer->movi_start,(int)demuxer->movi_end);
-      if(demuxer->stream->end_pos>demuxer->movi_end) demuxer->movi_end=demuxer->stream->end_pos;
+      if(demuxer->stream->end_pos()>demuxer->movi_end) demuxer->movi_end=demuxer->stream->end_pos();
       if(index_mode==-2 || index_mode==2 || index_mode==0)
 	break; // reading from non-seekable source (stdin) or forced index or no index forced
       if(list_end>0) stream_seek(demuxer->stream,list_end); // skip movi
@@ -609,7 +609,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 
     if (mp_conf.verbose>=2) print_index(priv->idx, priv->idx_size);
 
-    demuxer->movi_end=demuxer->stream->end_pos;
+    demuxer->movi_end=demuxer->stream->end_pos();
 
 freeout:
 
@@ -1141,7 +1141,7 @@ static Opaque* avi_open(Demuxer* demuxer){
     demuxer->priv=priv;
 
     //---- AVI header:
-    read_avi_header(demuxer,(demuxer->stream->type&STREAMTYPE_SEEKABLE)?index_mode:-2);
+    read_avi_header(demuxer,(demuxer->stream->type()&STREAMTYPE_SEEKABLE)?index_mode:-2);
 
   if(demuxer->audio->id>=0 && !demuxer->get_sh_audio(demuxer->audio->id)){
       MSG_WARN("AVI: invalid audio stream ID: %d - ignoring (nosound)\n",demuxer->audio->id);

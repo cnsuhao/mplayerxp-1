@@ -60,7 +60,7 @@ static const config_t rawvideo_conf[] = {
 
 static MPXP_Rc rawvideo_probe(Demuxer* demuxer)
 {
-    if(demuxer->stream->type & STREAMTYPE_RAWVIDEO || priv.use_rawvideo) {
+    if(demuxer->stream->type() & STREAMTYPE_RAWVIDEO || priv.use_rawvideo) {
 	priv.fps=25;
 	demuxer->file_format=Demuxer::Type_RAWVIDEO;
 	return MPXP_Ok;
@@ -110,8 +110,8 @@ static Opaque* rawvideo_open(Demuxer* demuxer) {
   sh_video->src_w=priv.width;
   sh_video->src_h=priv.height;
 
-  demuxer->movi_start = demuxer->stream->start_pos;
-  demuxer->movi_end = demuxer->stream->end_pos;
+  demuxer->movi_start = demuxer->stream->start_pos();
+  demuxer->movi_end = demuxer->stream->end_pos();
   demuxer->movi_length = (demuxer->movi_end-demuxer->movi_start)/(priv.fps*priv.imgsize);
 
   demuxer->video->sh = sh_video;

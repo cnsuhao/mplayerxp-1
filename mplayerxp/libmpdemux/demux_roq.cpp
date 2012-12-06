@@ -60,7 +60,7 @@ struct roq_data_t : public Opaque {
 static MPXP_Rc roq_probe(Demuxer *demuxer)
 {
     stream_reset(demuxer->stream);
-    stream_seek(demuxer->stream, demuxer->stream->start_pos);
+    stream_seek(demuxer->stream, demuxer->stream->start_pos());
 
     if ((stream_read_dword(demuxer->stream) == 0x8410FFFF) &&
 	((stream_read_dword(demuxer->stream) & 0xFFFF0000) == 0xFFFF0000)) {
@@ -118,7 +118,7 @@ static Opaque* roq_open(Demuxer* demuxer)
   roq_data->chunks = NULL;
 
   // position the stream and start traversing
-  stream_seek(demuxer->stream, demuxer->stream->start_pos+6);
+  stream_seek(demuxer->stream, demuxer->stream->start_pos()+6);
   fps = stream_read_word_le(demuxer->stream);
   while (!stream_eof(demuxer->stream))
   {

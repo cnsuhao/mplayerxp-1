@@ -72,29 +72,22 @@ using namespace mpxp;
 #define HEADER_SIZE 4096
 
 struct pnm_s {
+    net_fd_t	s;
+    char*	path;
+    char	buffer[BUF_SIZE]; /* scratch buffer */
+    /* receive buffer */
+    uint8_t	recv[BUF_SIZE];
+    int		recv_size;
+    int		recv_read;
 
-  int           s;
-
-//  char         *host;
-//  int           port;
-  char         *path;
-//  char         *url;
-
-  char          buffer[BUF_SIZE]; /* scratch buffer */
-
-  /* receive buffer */
-  uint8_t       recv[BUF_SIZE];
-  int           recv_size;
-  int           recv_read;
-
-  uint8_t       header[HEADER_SIZE];
-  int           header_len;
-  int           header_read;
-  unsigned int  seq_num[4];     /* two streams with two indices   */
-  unsigned int  seq_current[2]; /* seqs of last stream chunk read */
-  uint32_t      ts_current;     /* timestamp of current chunk     */
-  uint32_t      ts_last[2];     /* timestamps of last chunks      */
-  unsigned int  packet;         /* number of last recieved packet */
+    uint8_t	header[HEADER_SIZE];
+    int		header_len;
+    int		header_read;
+    unsigned	seq_num[4];     /* two streams with two indices   */
+    unsigned	seq_current[2]; /* seqs of last stream chunk read */
+    uint32_t	ts_current;     /* timestamp of current chunk     */
+    uint32_t	ts_last[2];     /* timestamps of last chunks      */
+    unsigned	packet;         /* number of last recieved packet */
 };
 
 /*
@@ -772,13 +765,13 @@ static int pnm_get_stream_chunk(pnm_t *p) {
 }
 
 // pnm_t *pnm_connect(const char *mrl) {
-pnm_t *pnm_connect(int fd,const char *path) {
+pnm_t *pnm_connect(int* fd,const char *path) {
 
   pnm_t *p=new pnm_t;
   int need_response=0;
 
   p->path=mp_strdup(path);
-  p->s=fd;
+  p->s=*fd;
 
   pnm_send_request(p,pnm_available_bandwidths[10]);
   if (!pnm_get_headers(p, &need_response)) {

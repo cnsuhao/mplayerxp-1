@@ -58,7 +58,7 @@ static const char *af2String(int af) {
 // return -2 for fatal error, like unable to resolve name, connection timeout...
 // return -1 is unable to connect to a particular port
 
-static int
+static net_fd_t
 connect2Server_with_af(libinput_t* libinput,const char *host, int port, int af,int verb) {
 	int socket_server_fd;
 	int err;
@@ -238,7 +238,7 @@ connect2Server_with_af(libinput_t* libinput,const char *host, int port, int af,i
 // return -1 is unable to connect to a particular port
 
 
-int tcp_connect2Server(libinput_t* libinput,const char *host, int  port, int verb) {
+net_fd_t tcp_connect2Server(libinput_t* libinput,const char *host, int  port, int verb) {
 #ifdef HAVE_AF_INET6
     return connect2Server_with_af(libinput,host, port, network_prefer_ipv4 ? AF_INET:AF_INET6,verb);
 #else

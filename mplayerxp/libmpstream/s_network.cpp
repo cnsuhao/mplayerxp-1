@@ -19,103 +19,102 @@ using namespace mpxp;
 #include "url.h"
 #include "network.h"
 
+namespace mpxp {
+    class Network_Stream_Interface : public Stream_Interface {
+	public:
+	    Network_Stream_Interface();
+	    virtual ~Network_Stream_Interface();
 
-extern int stream_open_mf(char * filename,stream_t * stream);
+	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+	    virtual stream_type_e type() const;
+	    virtual off_t	size() const;
+	    virtual off_t	sector_size() const;
+	private:
+	    URL_t*		url;
+	    off_t		spos;
+	    net_fd_t		fd;
+	    networking_t*	networking;
+    };
 
-struct network_priv_t : public Opaque {
-    public:
-	network_priv_t() {}
-	virtual ~network_priv_t();
-
-	URL_t *url;
-	off_t  spos;
-};
-
-network_priv_t::~network_priv_t() {
+Network_Stream_Interface::Network_Stream_Interface() {}
+Network_Stream_Interface::~Network_Stream_Interface() {
+    url_free(url);
     delete url;
 }
 
-static MPXP_Rc __FASTCALL__ network_open(libinput_t* libinput,stream_t *stream,const char *filename,unsigned flags)
+MPXP_Rc Network_Stream_Interface::open(libinput_t* libinput,const char *filename,unsigned flags)
 {
-    URL_t* url;
     UNUSED(flags);
     url = url_new(filename);
     if(url) {
-	if(streaming_start(libinput,stream, &stream->file_format, url)<0){
+	networking=new_networking(libinput);
+	if(networking_start(&fd,networking,url)<0){
 	    MSG_ERR(MSGTR_UnableOpenURL, filename);
 	    url_free(url);
+	    free_networking(networking);
 	    return MPXP_False;
 	}
 	MSG_INFO(MSGTR_ConnToServer, url->hostname);
-	network_priv_t* priv;
-	priv=new(zeromem) network_priv_t;
-	stream->priv=priv;
-	priv->url = url;
-	priv->spos = 0;
-	stream->type = STREAMTYPE_STREAM;
-	stream->sector_size=STREAM_BUFFER_SIZE;
+	spos = 0;
 	return MPXP_Ok;
     }
-    check_pin("stream",stream->pin,STREAM_PIN);
     return MPXP_False;
 }
+stream_type_e Network_Stream_Interface::type() const { return STREAMTYPE_STREAM; }
+off_t	Network_Stream_Interface::size() const { return STREAM_BUFFER_SIZE; }
+off_t	Network_Stream_Interface::sector_size() const { return -1; }
 
-static int __FASTCALL__ network_read(stream_t *stream,stream_packet_t*sp)
+int Network_Stream_Interface::read(stream_packet_t*sp)
 {
-    network_priv_t *p=static_cast<network_priv_t*>(stream->priv);
     sp->type=0;
-    if( stream->streaming_ctrl!=NULL ) {
-	    sp->len=stream->streaming_ctrl->streaming_read(stream->fd,sp->buf,STREAM_BUFFER_SIZE, stream->streaming_ctrl);
-    } else {
-      sp->len=TEMP_FAILURE_RETRY(read(stream->fd,sp->buf,STREAM_BUFFER_SIZE));
-    }
-    p->spos += sp->len;
+    if(networking!=NULL)sp->len=networking->networking_read(fd,sp->buf,STREAM_BUFFER_SIZE, networking);
+    else		sp->len=TEMP_FAILURE_RETRY(::read(fd,sp->buf,STREAM_BUFFER_SIZE));
+    spos += sp->len;
     return sp->len;
 }
 
-static off_t __FASTCALL__ network_seek(stream_t *stream,off_t pos)
+off_t Network_Stream_Interface::seek(off_t pos)
 {
     off_t newpos=0;
-    network_priv_t *p=static_cast<network_priv_t*>(stream->priv);
-    if( stream->streaming_ctrl!=NULL ) {
-      newpos=stream->streaming_ctrl->streaming_seek( stream->fd, pos, stream->streaming_ctrl );
-      if( newpos<0 ) {
-	MSG_WARN("Stream not seekable!\n");
-	return 1;
-      }
+    if(networking!=NULL) {
+	newpos=networking->networking_seek( fd, pos, networking );
+	if( newpos<0 ) {
+	    MSG_WARN("Stream not seekable!\n");
+	    return 1;
+	}
     }
-    p->spos=newpos;
+    spos=newpos;
     return newpos;
 }
 
-static off_t __FASTCALL__ network_tell(const stream_t *stream)
+off_t Network_Stream_Interface::tell() const
 {
-    network_priv_t *p=static_cast<network_priv_t*>(stream->priv);
-    return p->spos;
+    return spos;
 }
 
-static void __FASTCALL__ network_close(stream_t *stream)
+void Network_Stream_Interface::close()
 {
-    delete stream->priv;
-    if(stream->fd>0) close(stream->fd);
+    if(fd>0) ::close(fd);
 }
 
-static MPXP_Rc __FASTCALL__ network_ctrl(const stream_t *s,unsigned cmd,any_t*args) {
-    UNUSED(s);
+MPXP_Rc Network_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     UNUSED(cmd);
     UNUSED(args);
     return MPXP_Unknown;
 }
 
-extern const stream_driver_t network_stream =
+static Stream_Interface* query_interface() { return new(zeromem) Network_Stream_Interface; }
+
+extern const stream_interface_info_t network_stream =
 {
     "inet:",
     "reads multimedia stream from any known network protocol. Example: inet:http://myserver.com",
-    network_open,
-    network_read,
-    network_seek,
-    network_tell,
-    network_close,
-    network_ctrl
+    query_interface
 };
+} // namespace mpxp
 #endif
