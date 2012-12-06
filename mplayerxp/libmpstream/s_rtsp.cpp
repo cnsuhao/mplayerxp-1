@@ -162,7 +162,7 @@ MPXP_Rc Rtsp_Stream_Interface::open(libinput_t* libinput,const char *filename,un
     return MPXP_Ok;
 }
 stream_type_e Rtsp_Stream_Interface::type() const { return STREAMTYPE_STREAM; }
-off_t	Rtsp_Stream_Interface::size() const { return -1; }
+off_t	Rtsp_Stream_Interface::size() const { return 0; }
 off_t	Rtsp_Stream_Interface::sector_size() const { return 1; }
 
 static Stream_Interface* query_interface() { return new(zeromem) Rtsp_Stream_Interface; }

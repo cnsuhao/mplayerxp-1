@@ -43,8 +43,10 @@ namespace mpxp {
 
 Network_Stream_Interface::Network_Stream_Interface() {}
 Network_Stream_Interface::~Network_Stream_Interface() {
-    url_free(url);
-    delete url;
+    if(url) {
+	url_free(url);
+	delete url;
+    }
 }
 
 MPXP_Rc Network_Stream_Interface::open(libinput_t* libinput,const char *filename,unsigned flags)
@@ -56,7 +58,9 @@ MPXP_Rc Network_Stream_Interface::open(libinput_t* libinput,const char *filename
 	if(networking_start(&fd,networking,url)<0){
 	    MSG_ERR(MSGTR_UnableOpenURL, filename);
 	    url_free(url);
+	    url=NULL;
 	    free_networking(networking);
+	    networking=NULL;
 	    return MPXP_False;
 	}
 	MSG_INFO(MSGTR_ConnToServer, url->hostname);
@@ -66,8 +70,8 @@ MPXP_Rc Network_Stream_Interface::open(libinput_t* libinput,const char *filename
     return MPXP_False;
 }
 stream_type_e Network_Stream_Interface::type() const { return STREAMTYPE_STREAM; }
-off_t	Network_Stream_Interface::size() const { return STREAM_BUFFER_SIZE; }
-off_t	Network_Stream_Interface::sector_size() const { return -1; }
+off_t	Network_Stream_Interface::size() const { return 0; }
+off_t	Network_Stream_Interface::sector_size() const { return 1; }
 
 int Network_Stream_Interface::read(stream_packet_t*sp)
 {
@@ -112,7 +116,7 @@ static Stream_Interface* query_interface() { return new(zeromem) Network_Stream_
 
 extern const stream_interface_info_t network_stream =
 {
-    "inet:",
+    "*://",
     "reads multimedia stream from any known network protocol. Example: inet:http://myserver.com",
     query_interface
 };

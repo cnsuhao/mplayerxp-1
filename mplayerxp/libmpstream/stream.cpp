@@ -109,9 +109,10 @@ stream_t* __FASTCALL__ open_stream(libinput_t*libinput,const char* filename,int*
     done=0;
     for(i=0;sdrivers[i]!=&null_stream;i++) {
 	mrl_len=strlen(sdrivers[i]->mrl);
-	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0) {
+	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0||sdrivers[i]->mrl[0]=='*') {
 	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
 	    Stream_Interface* drv = sdrivers[i]->query_interface();
+	    if(sdrivers[i]->mrl[0]=='*') mrl_len=0;
 	    if(drv->open(libinput,&filename[mrl_len],0)==MPXP_Ok) {
 		MSG_V("OK\n");
 		*file_format = stream->file_format;
