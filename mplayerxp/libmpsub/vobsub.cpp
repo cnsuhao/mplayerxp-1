@@ -80,6 +80,7 @@ typedef struct {
     unsigned char *packet;
     unsigned int packet_reserve;
     unsigned int packet_size;
+    int fd;
 } mpeg_t;
 
 static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
@@ -97,7 +98,7 @@ static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 	err = fd < 0;
 	if (!err) {
 	    res->stream = new_stream(STREAMTYPE_SEEKABLE);
-	    res->stream->fd = fd;
+	    res->fd = fd;
 	    err = res->stream == NULL;
 	    if (err)
 		close(fd);
@@ -115,7 +116,7 @@ static void __FASTCALL__ mpeg_free(mpeg_t *mpeg)
     int fd;
     if (mpeg->packet)
 	delete mpeg->packet;
-    fd = mpeg->stream->fd;
+    fd = mpeg->fd;
     free_stream(mpeg->stream);
     close(fd);
     delete mpeg;

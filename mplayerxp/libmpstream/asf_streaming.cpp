@@ -28,10 +28,9 @@ using namespace mpxp;
 #include "stream_msg.h"
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-#define	ASF_LOAD_GUID_PREFIX(guid)	(*(uint32_t *)(guid))
+static inline uint32_t ASF_LOAD_GUID_PREFIX(uint8_t* guid) { return *(uint32_t*)guid; }
 #else
-#define	ASF_LOAD_GUID_PREFIX(guid)	\
-	((guid)[3] << 24 | (guid)[2] << 16 | (guid)[1] << 8 | (guid)[0])
+static inline uint32_t ASF_LOAD_GUID_PREFIX(uint8_t* guid) { return bswap_32(*(uint32_t*)guid); }
 #endif
 
 // ASF networking support several network protocol.
@@ -52,7 +51,7 @@ using namespace mpxp;
 // 		WMP sequence is MMSU then MMST and then HTTP.
 // 		In MPlayer case since HTTP support is more reliable,
 // 		we are doing HTTP first then we try MMST if HTTP fail.
-static int asf_http_networking_start(net_fd_t* fd, networking_t *networking );
+static int asf_http_networking_start(Tcp& fd, networking_t *networking );
 
 /*
  ASF networking support several network protocol.
@@ -74,10 +73,10 @@ static int asf_http_networking_start(net_fd_t* fd, networking_t *networking );
 		In MPlayer case since HTTP support is more reliable,
 		we are doing HTTP first then we try MMST if HTTP fail.
 */
-int asf_networking_start(net_fd_t* fd, networking_t *networking) {
+int asf_networking_start(Tcp& tcp, networking_t *networking) {
     char *proto = networking->url->protocol;
-    *fd = -1;
     int port = networking->url->port;
+    int rc;
 
     // Is protocol even valid mms,mmsu,mmst,http,http_proxy?
     if (!(!strncasecmp(proto, "mmst", 4) || !strncasecmp(proto, "mmsu", 4) ||
@@ -91,30 +90,30 @@ int asf_networking_start(net_fd_t* fd, networking_t *networking) {
     if (!strncasecmp(proto, "mmsu", 4) || !strncasecmp(proto, "mms", 3)) {
 	MSG_V("Trying ASF/UDP...\n");
 	//fd = asf_mmsu_networking_start( stream );
-	if( *fd>-1 ) return 0; //mmsu support is not implemented yet - using this code
+	//mmsu support is not implemented yet - using this code
 	MSG_V("  ===> ASF/UDP failed\n");
-	if( *fd==-2 ) return -1;
+	return -1;
     }
 
     //Is protocol mms or mmst?
     if (!strncasecmp(proto, "mmst", 4) || !strncasecmp(proto, "mms", 3)) {
 	MSG_V("Trying ASF/TCP...\n");
-	*fd = asf_mmst_networking_start(fd,networking);
+	rc = asf_mmst_networking_start(tcp,networking);
 	networking->url->port = port;
-	if( *fd>-1 ) return 0;
+	if( rc>-1 ) return 0;
 	MSG_V("  ===> ASF/TCP failed\n");
-	if( *fd==-2 ) return -1;
+	if( rc==-2 ) return -1;
     }
 
     //Is protocol http, http_proxy, or mms?
     if (!strncasecmp(proto, "http_proxy", 10) || !strncasecmp(proto, "http", 4) ||
 	!strncasecmp(proto, "mms", 3)) {
 	MSG_V("Trying ASF/HTTP...\n");
-	*fd = asf_http_networking_start(fd,networking);
+	rc = asf_http_networking_start(tcp,networking);
 	networking->url->port = port;
-	if( *fd>-1 ) return 0;
+	if( rc>-1 ) return 0;
 	MSG_V("  ===> ASF/HTTP failed\n");
-	if( *fd==-2 ) return -1;
+	if( rc==-2 ) return -1;
     }
     //everything failed
     return -1;
@@ -186,7 +185,7 @@ static int max_idx(int s_count, int *s_rates, int bound) {
 }
 
 static int
-asf_networking_parse_header(int fd, networking_t* networking) {
+asf_networking_parse_header(Tcp& tcp, networking_t* networking) {
   ASF_header_t asfh;
   ASF_stream_chunck_t chunk;
   asf_http_networking_t* asf_ctrl = (asf_http_networking_t*) networking->data;
@@ -206,7 +205,7 @@ asf_networking_parse_header(int fd, networking_t* networking) {
 	// So we need to retrieve all the chunk before starting to parse the header.
   do {
 	  for( r=0; r < (int)sizeof(ASF_stream_chunck_t) ; ) {
-		i = nop_networking_read(fd,((char*)&chunk)+r,sizeof(ASF_stream_chunck_t) - r,networking);
+		i = nop_networking_read(tcp,((char*)&chunk)+r,sizeof(ASF_stream_chunck_t) - r,networking);
 		if(i <= 0) return -1;
 		r += i;
 	  }
@@ -239,7 +238,7 @@ asf_networking_parse_header(int fd, networking_t* networking) {
 	  buffer_size += size;
 
 	  for(r = 0; r < size;) {
-	    i = nop_networking_read(fd,buffer+r,size-r,networking);
+	    i = nop_networking_read(tcp,buffer+r,size-r,networking);
 	    if(i < 0) {
 		    MSG_ERR("Error while reading network stream\n");
 		    return -1;
@@ -438,7 +437,7 @@ len_err_out:
 }
 
 static int
-asf_http_networking_read( int fd, char *buffer, int size, networking_t *networking ) {
+asf_http_networking_read( Tcp& tcp, char *buffer, int size, networking_t *networking ) {
   static ASF_stream_chunck_t chunk;
   int read,chunk_size = 0;
   static int rest = 0, drop_chunk = 0, waiting = 0;
@@ -448,7 +447,7 @@ asf_http_networking_read( int fd, char *buffer, int size, networking_t *networki
     if (rest == 0 && waiting == 0) {
       read = 0;
       while(read < (int)sizeof(ASF_stream_chunck_t)){
-	int r = nop_networking_read( fd, ((char*)&chunk) + read,
+	int r = nop_networking_read( tcp, ((char*)&chunk) + read,
 				    sizeof(ASF_stream_chunck_t)-read,
 				    networking );
 	if(r <= 0){
@@ -490,7 +489,7 @@ asf_http_networking_read( int fd, char *buffer, int size, networking_t *networki
 	chunk_size = size;
       }
       while(read < chunk_size) {
-	int got = nop_networking_read( fd,buffer+read,chunk_size-read,networking );
+	int got = nop_networking_read( tcp,buffer+read,chunk_size-read,networking );
 	if(got <= 0) {
 	  if(got < 0)
 	    MSG_ERR("Error while reading chunk\n");
@@ -514,12 +513,11 @@ asf_http_networking_read( int fd, char *buffer, int size, networking_t *networki
 }
 
 static int
-asf_http_networking_seek( int fd, off_t pos, networking_t *networking ) {
-	return -1;
-	// to shut up gcc warning
-	fd++;
-	pos++;
-	networking=NULL;
+asf_http_networking_seek( Tcp& tcp, off_t pos, networking_t *networking ) {
+    UNUSED(tcp);
+    UNUSED(pos);
+    UNUSED(networking);
+    return -1;
 }
 
 static int
@@ -743,7 +741,7 @@ asf_http_parse_response(asf_http_networking_t *asf_http_ctrl, HTTP_header_t *htt
 	return 0;
 }
 
-static int asf_http_networking_start(net_fd_t* fd, networking_t *networking) {
+static int asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 	HTTP_header_t *http_hdr=NULL;
 	URL_t *url = networking->url;
 	asf_http_networking_t *asf_http_ctrl;
@@ -765,20 +763,20 @@ static int asf_http_networking_start(net_fd_t* fd, networking_t *networking) {
 
 	do {
 		done = 1;
-		if( *fd>0 ) closesocket( *fd );
+		tcp.close();
 
 		if( !strcasecmp( url->protocol, "http_proxy" ) ) {
 			if( url->port==0 ) url->port = 8080;
 		} else {
 			if( url->port==0 ) url->port = 80;
 		}
-		*fd = tcp_connect2Server(networking->libinput, url->hostname, url->port, 0);
-		if( *fd<0 ) return 0;
+		tcp.open(networking->libinput, url->hostname, url->port, Tcp::IP4);
+		if( !tcp.established()) return 0;
 
 		http_hdr = asf_http_request( networking );
 		MSG_DBG2("Request [%s]\n", http_hdr->buffer );
 		for(i=0; i < (int)http_hdr->buffer_size ; ) {
-			int r = send( *fd, http_hdr->buffer+i, http_hdr->buffer_size-i, 0);
+			int r = tcp.write((uint8_t*)(http_hdr->buffer+i), http_hdr->buffer_size-i);
 			if(r <0) {
 				MSG_ERR("Socket write error : %s\n",strerror(errno));
 				return -1;
@@ -788,7 +786,7 @@ static int asf_http_networking_start(net_fd_t* fd, networking_t *networking) {
 		http_free( http_hdr );
 		http_hdr = http_new_header();
 		do {
-			i = recv( *fd, buffer, BUFFER_SIZE, 0);
+			i = tcp.read((uint8_t*)buffer, BUFFER_SIZE);
 			if( i<=0 ) {
 				perror("read");
 				http_free( http_hdr );
@@ -819,7 +817,7 @@ static int asf_http_networking_start(net_fd_t* fd, networking_t *networking) {
 				if( asf_http_ctrl->request==1 ) {
 					if( asf_http_ctrl->networking_type!=ASF_PlainText_e ) {
 						// First request, we only got the ASF header.
-						ret = asf_networking_parse_header(*fd,networking);
+						ret = asf_networking_parse_header(tcp,networking);
 						if(ret < 0) return -1;
 						if(asf_http_ctrl->n_audio == 0 && asf_http_ctrl->n_video == 0) {
 							MSG_ERR("No stream found\n");
@@ -850,14 +848,13 @@ static int asf_http_networking_start(net_fd_t* fd, networking_t *networking) {
 			case ASF_Unknown_e:
 			default:
 				MSG_ERR("Unknown ASF networking type\n");
-				closesocket(*fd);
+				tcp.close();
 				http_free( http_hdr );
 				return -1;
 		}
 	// Check if we got a redirect.
 	} while(!done);
 
-	fd = fd;
 	if( asf_http_ctrl->networking_type==ASF_PlainText_e || asf_http_ctrl->networking_type==ASF_Redirector_e ) {
 		networking->networking_read = nop_networking_read;
 		networking->networking_seek = nop_networking_seek;

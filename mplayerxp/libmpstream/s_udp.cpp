@@ -20,6 +20,7 @@ using namespace mpxp;
 #include "stream.h"
 #include "stream_internal.h"
 #include "help_mp.h"
+#include "tcp.h"
 #include "udp.h"
 #include "url.h"
 #include "stream_msg.h"
@@ -43,15 +44,16 @@ namespace mpxp {
 	    int 		start ();
 
 	    networking_t*	networking;
-	    net_fd_t		fd;
+	    Udp			udp;
+	    Tcp			tcp;
     };
 
-Udp_Stream_Interface::Udp_Stream_Interface() {}
+Udp_Stream_Interface::Udp_Stream_Interface():udp(-1),tcp(-1) {}
 Udp_Stream_Interface::~Udp_Stream_Interface() {}
 
 int Udp_Stream_Interface::read(stream_packet_t*sp)
 {
-  return nop_networking_read(fd,sp->buf,sp->len,networking);
+  return nop_networking_read(tcp,sp->buf,sp->len,networking);
 }
 
 off_t Udp_Stream_Interface::seek(off_t newpos) { return newpos; }
@@ -72,10 +74,11 @@ void Udp_Stream_Interface::close()
 
 int Udp_Stream_Interface::start ()
 {
-    if (fd < 0) {
-	fd = udp_open_socket (networking->url);
-	if (fd < 0) return -1;
+    if (!udp.established()) {
+	udp.open(networking->url);
+	if (!udp.established()) return -1;
     }
+    tcp=udp.socket();
     networking->networking_read = nop_networking_read;
     networking->networking_seek = nop_networking_seek;
     networking->prebuffer_size = 64 * 1024; /* 64 KBytes */

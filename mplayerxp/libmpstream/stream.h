@@ -69,7 +69,6 @@ namespace mpxp {
 
 	    char		antiviral_hole[RND_CHAR3];
 	    unsigned		pin;		/**< personal identification number */
-	    int			fd;		/**< file handler */
 	    off_t		pos;		/**< SOF offset from begin of stream */
 	    int			eof;		/**< indicates EOF */
 	    void		type(stream_type_e);/**< assign new propertie for the stream (see STREAMTYPE_ for detail) */

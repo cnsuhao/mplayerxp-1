@@ -17,6 +17,7 @@ using namespace mpxp;
 #include "stream_msg.h"
 
 #include "url.h"
+#include "tcp.h"
 #include "network.h"
 
 namespace mpxp {
@@ -37,11 +38,11 @@ namespace mpxp {
 	private:
 	    URL_t*		url;
 	    off_t		spos;
-	    net_fd_t		fd;
+	    Tcp			tcp;
 	    networking_t*	networking;
     };
 
-Network_Stream_Interface::Network_Stream_Interface() {}
+Network_Stream_Interface::Network_Stream_Interface():tcp(-1) {}
 Network_Stream_Interface::~Network_Stream_Interface() {
     if(url) {
 	url_free(url);
@@ -55,7 +56,7 @@ MPXP_Rc Network_Stream_Interface::open(libinput_t* libinput,const char *filename
     url = url_new(filename);
     if(url) {
 	networking=new_networking(libinput);
-	if(networking_start(&fd,networking,url)<0){
+	if(networking_start(tcp,networking,url)<0){
 	    MSG_ERR(MSGTR_UnableOpenURL, filename);
 	    url_free(url);
 	    url=NULL;
@@ -76,8 +77,8 @@ off_t	Network_Stream_Interface::sector_size() const { return 1; }
 int Network_Stream_Interface::read(stream_packet_t*sp)
 {
     sp->type=0;
-    if(networking!=NULL)sp->len=networking->networking_read(fd,sp->buf,STREAM_BUFFER_SIZE, networking);
-    else		sp->len=TEMP_FAILURE_RETRY(::read(fd,sp->buf,STREAM_BUFFER_SIZE));
+    if(networking!=NULL)sp->len=networking->networking_read(tcp,sp->buf,STREAM_BUFFER_SIZE, networking);
+    else		sp->len=TEMP_FAILURE_RETRY(tcp.read((uint8_t*)sp->buf,STREAM_BUFFER_SIZE));
     spos += sp->len;
     return sp->len;
 }
@@ -86,7 +87,7 @@ off_t Network_Stream_Interface::seek(off_t pos)
 {
     off_t newpos=0;
     if(networking!=NULL) {
-	newpos=networking->networking_seek( fd, pos, networking );
+	newpos=networking->networking_seek(tcp, pos, networking );
 	if( newpos<0 ) {
 	    MSG_WARN("Stream not seekable!\n");
 	    return 1;
@@ -103,7 +104,7 @@ off_t Network_Stream_Interface::tell() const
 
 void Network_Stream_Interface::close()
 {
-    if(fd>0) ::close(fd);
+    tcp.close();
 }
 
 MPXP_Rc Network_Stream_Interface::ctrl(unsigned cmd,any_t*args) {

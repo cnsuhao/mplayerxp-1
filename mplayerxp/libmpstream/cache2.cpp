@@ -271,7 +271,7 @@ int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,
   int ss=stream->sector_size()>1?stream->sector_size():STREAM_BUFFER_SIZE;
   cache_vars_t* c;
 
-  if (!(stream->type()&STREAMTYPE_SEEKABLE) && stream->fd < 0) {
+  if (!(stream->type()&STREAMTYPE_SEEKABLE)) {
     // The stream has no 'fd' behind it, so is non-cacheable
     MSG_WARN("\rThis stream is non-cacheable\n");
     return 1;

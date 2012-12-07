@@ -18,17 +18,44 @@
  *  along with this program; if not, write to the Free Software Foundation,
  *  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
+#ifndef TCP_H_INCLUDED
+#define TCP_H_INCLUDED 1
+#include <stdint.h>
+#include "input2/input.h"
 
-#ifndef TCP_H
-#define TCP_H
+namespace mpxp {
 
-typedef int net_fd_t;
-/* Connect to a server using a TCP connection */
-net_fd_t tcp_connect2Server (libinput_t* libinput,const char *host, int port, int verb);
+    typedef int net_fd_t;
+    class Tcp {
+	public:
+	    enum tcp_af_e {
+		IP4=0,
+		IP6
+	    };
+	    enum tcp_error_e {
+		Err_Timeout	=-3, /* connection timeout */
+		Err_Fatal	=-2, /* unable to resolve name */
+		Err_Port	=-1, /* unable to connect to a particular port */
+		Err_None	=0   /* no error */
+	    };
+	    Tcp(net_fd_t fd);
+	    Tcp(libinput_t* libinput,const char *host,int port,tcp_af_e af=Tcp::IP4);
+	    virtual ~Tcp();
 
-enum {
-    TCP_ERROR_TIMEOUT	=-3, /* connection timeout */
-    TCP_ERROR_FATAL	=-2, /* unable to resolve name */
-    TCP_ERROR_PORT	=-1  /* unable to connect to a particular port */
-};
+	    Tcp&	operator=(Tcp& other);
+	    Tcp&	operator=(net_fd_t fd);
+
+	    virtual int		established() const;
+	    virtual int		has_data(int timeout) const;
+	    virtual tcp_error_e	error() const;
+
+	    virtual void	open(libinput_t* libinput,const char *host,int port,tcp_af_e af=Tcp::IP4);
+	    virtual int		read(uint8_t* buf,unsigned len,int flags=0);
+	    virtual int		write(const uint8_t* buf,unsigned len,int flags=0) const;
+	    virtual void	close();
+	private:
+	    net_fd_t	_fd;
+	    tcp_error_e	_error;
+    };
+} // namespace mpxp
 #endif /* TCP_H */

@@ -47,6 +47,7 @@ using namespace mpxp;
 #include <string.h>
 #include <inttypes.h>
 
+#include "tcp.h"
 #include "url.h"
 #include "rtp.h"
 #include "rtsp.h"
@@ -77,7 +78,7 @@ struct rtsp_session_s {
 };
 
 //rtsp_session_t *rtsp_session_start(char *mrl) {
-rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
+rtsp_session_t *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
   int port, int *redir, uint32_t bandwidth, char *user, char *pass) {
 
   rtsp_session_t *rtsp_session = NULL;
@@ -94,7 +95,7 @@ rtsp_session_t *rtsp_session_start(int fd, char **mrl, char *path, char *host,
   *redir = 0;
 
   /* connect to server */
-  rtsp_session->s=rtsp_connect(fd,*mrl,path,host,port,NULL);
+  rtsp_session->s=rtsp_connect(tcp,*mrl,path,host,port,NULL);
   if (!rtsp_session->s)
   {
     MSG_ERR("rtsp_session: failed to connect to server %s\n", path);
@@ -266,8 +267,9 @@ int rtsp_session_read (rtsp_session_t *self, char *data, int len) {
   else if (self->rtp_session)
   {
     int l = 0;
+    Tcp tcp(self->rtp_session->rtp_socket);
 
-    l = read_rtp_from_server (self->rtp_session->rtp_socket, data, len);
+    l = read_rtp_from_server (tcp, data, len);
     /* send RTSP and RTCP keepalive  */
     rtcp_send_rr (self->s, self->rtp_session);
 

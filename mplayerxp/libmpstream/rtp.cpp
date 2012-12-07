@@ -31,6 +31,7 @@ using namespace mpxp;
 /* MPEG-2 TS RTP stack */
 
 #define DEBUG        1
+#include "tcp.h"
 #include "rtp.h"
 #include "stream_msg.h"
 
@@ -67,7 +68,7 @@ struct rtpbuffer
 };
 static struct rtpbuffer rtpbuf;
 
-static int getrtp2(int fd, struct rtpheader *rh, char** data, int* lengthData);
+static int getrtp2(Tcp& fd, struct rtpheader *rh, char** data, int* lengthData);
 
 // RTP Reordering functions
 // Algorithm works as follows:
@@ -90,7 +91,7 @@ static void rtp_cache_reset(unsigned short seq)
 }
 
 // Write in a cache the rtp packet in right rtp sequence order
-static int rtp_cache(int fd, char *buffer, int length)
+static int rtp_cache(Tcp& tcp, char *buffer, int length)
 {
 	struct rtpheader rh;
 	int newseq;
@@ -98,7 +99,7 @@ static int rtp_cache(int fd, char *buffer, int length)
 	unsigned short seq;
 	static int is_first = 1;
 
-	getrtp2(fd, &rh, &data, &length);
+	getrtp2(tcp, &rh, &data, &length);
 	if(!length)
 		return 0;
 	seq = rh.b.sequence;
@@ -159,7 +160,7 @@ feed:
 
 // Get next packet in cache
 // Look in cache to get first packet in sequence
-static int rtp_get_next(int fd, char *buffer, int length)
+static int rtp_get_next(Tcp& tcp, char *buffer, int length)
 {
 	int i;
 	unsigned short nextseq;
@@ -168,7 +169,7 @@ static int rtp_get_next(int fd, char *buffer, int length)
 	for (i=0; i < MAXRTPPACKETSIN -3; i++) {
 		if (rtpbuf.len[rtpbuf.first] != 0) break;
 
-		length = rtp_cache(fd, buffer, length) ;
+		length = rtp_cache(tcp, buffer, length) ;
 
 		// returns on first packet in sequence
 		if (length > 0) {
@@ -202,7 +203,7 @@ static int rtp_get_next(int fd, char *buffer, int length)
 
 
 // Read next rtp packet using cache
-int read_rtp_from_server(net_fd_t fd, char *buffer, int length) {
+int read_rtp_from_server(Tcp& tcp, char *buffer, int length) {
 	// Following test is ASSERT (i.e. uneuseful if code is correct)
 	if(buffer==NULL || length<STREAM_BUFFER_SIZE) {
 		MSG_ERR("RTP buffer invalid; no data return from network\n");
@@ -210,20 +211,20 @@ int read_rtp_from_server(net_fd_t fd, char *buffer, int length) {
 	}
 
 	// loop just to skip empty packets
-	while ((length = rtp_get_next(fd, buffer, length)) == 0) {
+	while ((length = rtp_get_next(tcp, buffer, length)) == 0) {
 		MSG_ERR("Got empty packet from RTP cache!?\n");
 	}
 
 	return(length);
 }
 
-static int getrtp2(int fd, struct rtpheader *rh, char** data, int* lengthData) {
+static int getrtp2(Tcp& tcp, struct rtpheader *rh, char** data, int* lengthData) {
   static char buf[1600];
   unsigned int intP;
   char* charP = (char*) &intP;
   int headerSize;
   int lengthPacket;
-  lengthPacket=recv(fd,buf,1590,0);
+  lengthPacket=tcp.read((uint8_t*)(buf),1590);
   if (lengthPacket<0)
     MSG_ERR("rtp: socket read error\n");
   else if (lengthPacket<12)

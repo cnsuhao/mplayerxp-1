@@ -44,6 +44,7 @@ using namespace mpxp;
 #include "libmpconf/cfgparser.h"
 
 #include "cdd.h"
+#include "tcp.h"
 #include "version.h"
 #include "network.h"
 #include "stream_msg.h"
@@ -142,7 +143,8 @@ unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
 
 int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP_header_t*,cddb_data_t*), cddb_data_t *cddb_data) {
 	char request[4096];
-	int fd, ret = 0;
+	int ret = 0;
+	Tcp* tcp;
 	URL_t *url;
 	HTTP_header_t *http_hdr;
 
@@ -157,15 +159,16 @@ int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP
 		return -1;
 	}
 
-	fd = http_send_request(cddb_data->libinput,url,0);
-	if( fd<0 ) {
+	tcp = http_send_request(cddb_data->libinput,url,0);
+	if( !tcp ) {
 		MSG_ERR("failed to send the http request\n");
 		return -1;
 	}
 
-	http_hdr = http_read_response( fd );
+	http_hdr = http_read_response( *tcp );
 	if( http_hdr==NULL ) {
 		MSG_ERR("Failed to read the http response\n");
+		delete tcp;
 		return -1;
 	}
 
@@ -185,6 +188,7 @@ int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP
 
 	http_free( http_hdr );
 	url_free( url );
+	delete tcp;
 
 	return ret;
 }

@@ -166,11 +166,11 @@ check4proxies( URL_t *url ) {
 	return url_out;
 }
 
-net_fd_t http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
+Tcp* http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
 	HTTP_header_t *http_hdr;
 	URL_t *server_url;
 	char str[256];
-	net_fd_t fd=-1;
+	Tcp* tcp=NULL;
 	int ret;
 	int proxy = 0;		// Boolean
 
@@ -215,19 +215,17 @@ net_fd_t http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
 
 	if( proxy ) {
 		if( url->port==0 ) url->port = 8080;			// Default port for the proxy server
-		fd = tcp_connect2Server(libinput, url->hostname, url->port, 0);
+		tcp = new Tcp(libinput, url->hostname, url->port, Tcp::IP4);
 		url_free( server_url );
 		server_url = NULL;
 	} else {
 		if( server_url->port==0 ) server_url->port = 80;	// Default port for the web server
-		fd = tcp_connect2Server(libinput, server_url->hostname, server_url->port, 0);
+		tcp = new Tcp(libinput, server_url->hostname, server_url->port, Tcp::IP4);
 	}
-	if( fd<0 ) {
-		goto err_out;
-	}
+	if(!tcp->established()) goto err_out;
 	MSG_DBG2("Request: [%s]\n", http_hdr->buffer );
 
-	ret = send( fd, http_hdr->buffer, http_hdr->buffer_size, 0);
+	ret = tcp->write((uint8_t*)(http_hdr->buffer), http_hdr->buffer_size);
 	if( ret!=(int)http_hdr->buffer_size ) {
 		MSG_ERR("Error while sending HTTP request: didn't sent all the request\n");
 		goto err_out;
@@ -235,17 +233,16 @@ net_fd_t http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
 
 	http_free( http_hdr );
 
-	return fd;
+	return tcp;
 err_out:
-	if (fd > 0) closesocket(fd);
+	if (tcp) delete tcp;
 	http_free(http_hdr);
 	if (proxy && server_url)
 		url_free(server_url);
-	return -1;
+	return NULL;
 }
 
-HTTP_header_t *
-http_read_response( int fd ) {
+HTTP_header_t* http_read_response( Tcp& tcp ) {
 	HTTP_header_t *http_hdr;
 	char response[BUFFER_SIZE];
 	int i;
@@ -256,7 +253,7 @@ http_read_response( int fd ) {
 	}
 
 	do {
-		i = recv( fd, response, BUFFER_SIZE, 0);
+		i = tcp.read((uint8_t*)response, BUFFER_SIZE);
 		if( i<0 ) {
 			MSG_ERR("Read failed\n");
 			http_free( http_hdr );
@@ -324,46 +321,48 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 	return 0;
 }
 
-off_t http_seek(net_fd_t* fd, networking_t *networking, off_t pos ) {
-	HTTP_header_t *http_hdr = NULL;
+off_t http_seek(Tcp& tcp, networking_t *networking, off_t pos ) {
+    HTTP_header_t *http_hdr = NULL;
+    Tcp* other_tcp;
 
-	if( *fd>0 ) closesocket(*fd); // need to reconnect to seek in http-stream
-	*fd = http_send_request(networking->libinput, networking->url, pos );
-	if( *fd<0 ) return 0;
+    tcp.close();
+    other_tcp = http_send_request(networking->libinput, networking->url, pos );
+    if(! other_tcp->established() ) return 0;
+    tcp=*other_tcp;
+    delete other_tcp;
 
-	http_hdr = http_read_response( *fd );
+    http_hdr = http_read_response(tcp);
 
-	if( http_hdr==NULL ) return 0;
+    if( http_hdr==NULL ) return 0;
 
-	switch( http_hdr->status_code ) {
-		case 200:
-		case 206: // OK
-			MSG_V("Content-Type: [%s]\n", http_get_field(http_hdr, "Content-Type") );
-			MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length") );
-			if( http_hdr->body_size>0 ) {
-				if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
-					http_free( http_hdr );
-					return 0;
-				}
-			}
-			break;
-		default:
-			MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
-			close( *fd );
-			*fd = -1;
-	}
+    switch( http_hdr->status_code ) {
+	case 200:
+	case 206: // OK
+	    MSG_V("Content-Type: [%s]\n", http_get_field(http_hdr, "Content-Type") );
+	    MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length") );
+	    if( http_hdr->body_size>0 ) {
+		if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
+		    http_free( http_hdr );
+		    return 0;
+		}
+	    }
+	    break;
+	default:
+	    MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
+	    tcp.close();
+    }
 
-	if( http_hdr ) {
-		http_free( http_hdr );
-		networking->data = NULL;
-	}
+    if( http_hdr ) {
+	http_free( http_hdr );
+	networking->data = NULL;
+    }
 
-	return pos;
+    return pos;
 }
 
 // By using the protocol, the extension of the file or the content-type
 // we might be able to guess the networking type.
-int autodetectProtocol(networking_t *networking, net_fd_t *fd_out) {
+int autodetectProtocol(networking_t *networking, Tcp& tcp) {
     HTTP_header_t *http_hdr=NULL;
     unsigned int i;
     int fd=-1;
@@ -377,7 +376,6 @@ int autodetectProtocol(networking_t *networking, net_fd_t *fd_out) {
     URL_t *url = networking->url;
 
     do {
-	*fd_out = -1;
 	next_url = NULL;
 	extension = NULL;
 	content_type = NULL;
@@ -401,12 +399,11 @@ int autodetectProtocol(networking_t *networking, net_fd_t *fd_out) {
 #endif
 	// HTTP based protocol
 	if( !strcasecmp(url->protocol, "http") || !strcasecmp(url->protocol, "http_proxy") ) {
-	    fd = http_send_request(networking->libinput, url, 0 );
-	    if( fd<0 ) goto err_out;
+	    tcp = *http_send_request(networking->libinput, url, 0 );
+	    if(!tcp.established()) goto err_out;
 
-	    http_hdr = http_read_response( fd );
+	    http_hdr = http_read_response(tcp);
 	    if( http_hdr==NULL ) goto err_out;
-	    *fd_out=fd;
 	    if( mp_conf.verbose ) http_debug_hdr( http_hdr );
 	    networking->data = (any_t*)http_hdr;
 
@@ -525,7 +522,7 @@ networking_bufferize( networking_t *networking,unsigned char *buffer, int size) 
 }
 
 int
-nop_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl ) {
+nop_networking_read(Tcp& tcp, char *buffer, int size, networking_t *stream_ctrl ) {
     int len=0;
 //printf("nop_networking_read\n");
     if( stream_ctrl->buffer_size!=0 ) {
@@ -546,7 +543,7 @@ nop_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl )
     }
     if( len<size ) {
 	int ret;
-	ret = read( fd, buffer+len, size-len );
+	ret = tcp.read((uint8_t*)(buffer+len), size-len);
 	if( ret<0 ) {
 	    MSG_ERR("nop_networking_read error : %s\n",strerror(errno));
 	}
@@ -557,21 +554,24 @@ nop_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl )
 }
 
 int
-nop_networking_seek( int fd, off_t pos, networking_t *stream_ctrl ) {
+nop_networking_seek(Tcp& tcp, off_t pos, networking_t *n ) {
+    UNUSED(tcp);
+    UNUSED(pos);
+    UNUSED(n);
     return -1;
 }
 
 int
-nop_networking_start(net_fd_t *fd,networking_t* networking ) {
+nop_networking_start(Tcp& tcp,networking_t* networking ) {
     HTTP_header_t *http_hdr = NULL;
     char *next_url=NULL;
     URL_t *rd_url=NULL;
     int ret;
 
-    if( *fd<0 ) {
-	*fd = http_send_request(networking->libinput, networking->url,0);
-	if( *fd<0 ) return -1;
-	http_hdr = http_read_response( *fd );
+    if( !tcp.established() ) {
+	tcp = *http_send_request(networking->libinput, networking->url,0);
+	if( !tcp.established() ) return -1;
+	http_hdr = http_read_response(tcp);
 	if( http_hdr==NULL ) return -1;
 
 	switch( http_hdr->status_code ) {
@@ -597,11 +597,10 @@ nop_networking_start(net_fd_t *fd,networking_t* networking ) {
 		if (next_url != NULL && rd_url != NULL) {
 		    MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
 		    networking->url=check4proxies(rd_url);
-		    ret=nop_networking_start(fd,networking); //recursively get networking started
+		    ret=nop_networking_start(tcp,networking); //recursively get networking started
 		} else {
 		    MSG_ERR("Redirection failed\n");
-		    closesocket( *fd );
-		    *fd = -1;
+		    tcp.close();
 		}
 		return ret;
 		break;
@@ -611,8 +610,7 @@ nop_networking_start(net_fd_t *fd,networking_t* networking ) {
 	    case 500: //Server Error
 	    default:
 		MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
-		closesocket( *fd );
-		*fd = -1;
+		tcp.close();
 		return -1;
 		break;
 	}
@@ -653,20 +651,20 @@ void fixup_network_stream_cache(networking_t *networking) {
 }
 
 int
-pnm_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl ) {
+pnm_networking_read(Tcp& tcp, char *buffer, int size, networking_t *stream_ctrl ) {
+    UNUSED(tcp);
     return pnm_read(reinterpret_cast<pnm_t*>(stream_ctrl->data), buffer, size);
 }
 
 
-int pnm_networking_start(net_fd_t *fd,networking_t *networking ) {
+int pnm_networking_start(Tcp& tcp,networking_t *networking ) {
     pnm_t *pnm;
 
-    *fd = tcp_connect2Server(networking->libinput, networking->url->hostname,
-	    networking->url->port ? networking->url->port : 7070, 0);
-    MSG_V("PNM:// fd=%d\n",fd);
-    if(*fd<0) return -1;
+    tcp.open(networking->libinput, networking->url->hostname,
+	    networking->url->port ? networking->url->port : 7070);
+    if(!tcp.established()) return -1;
 
-    pnm = pnm_connect(fd,networking->url->file);
+    pnm = pnm_connect(tcp,networking->url->file);
     if(!pnm) return -2;
 
     networking->data=pnm;
@@ -737,16 +735,18 @@ realrtsp_networking_start( net_fd_t* fd, networking_t *stream ) {
 #ifndef STREAMING_LIVE_DOT_COM
 
 static int
-rtp_networking_read( int fd, char *buffer, int size, networking_t *networking ) {
-    return read_rtp_from_server( fd, buffer, size );
+rtp_networking_read(Tcp& tcp, char *buffer, int size, networking_t *networking ) {
+    UNUSED(networking);
+    return read_rtp_from_server(tcp, buffer, size );
 }
 
 static int
-rtp_networking_start( net_fd_t* fd,networking_t* networking, int raw_udp ) {
+rtp_networking_start(Tcp& tcp,networking_t* networking, int raw_udp ) {
 
-    if( *fd<0 ) {
-	*fd = udp_open_socket( (networking->url) );
-	if( *fd<0 ) return -1;
+    if( !tcp.established() ) {
+	Udp* udp(new(zeromem) Udp(networking->url));
+	tcp = udp->socket();
+	if( !tcp.established()) return -1;
     }
 
     if(raw_udp)
@@ -762,12 +762,12 @@ rtp_networking_start( net_fd_t* fd,networking_t* networking, int raw_udp ) {
 }
 #endif
 
-int networking_start(net_fd_t* fd,networking_t* networking, URL_t *url) {
+int networking_start(Tcp& tcp,networking_t* networking, URL_t *url) {
     int ret;
 
     networking->url = check4proxies( url );
 
-    ret = autodetectProtocol( networking, fd);
+    ret = autodetectProtocol( networking, tcp);
 
     if( ret<0 ) return -1;
     ret = -1;
@@ -777,15 +777,11 @@ int networking_start(net_fd_t* fd,networking_t* networking, URL_t *url) {
 
     // For RTP streams, we usually don't know the stream type until we open it.
     if( !strcasecmp( networking->url->protocol, "rtp")) {
-	if(*fd >= 0) {
-	    if(closesocket(*fd) < 0)
-	    MSG_ERR("networking_start : Closing socket %d failed %s\n",*fd,strerror(errno));
-	}
-	*fd = -1;
-	ret = rtp_networking_start(fd, networking, 0);
+	if(tcp.established()) tcp.close();
+	ret = rtp_networking_start(tcp, networking, 0);
     } else if( !strcasecmp( networking->url->protocol, "pnm")) {
-	*fd = -1;
-	ret = pnm_networking_start(fd, networking);
+	tcp.close();
+	ret = pnm_networking_start(tcp, networking);
 	if (ret == -1) {
 	    MSG_INFO("Can't connect with pnm, retrying with http.\n");
 	    return -1;
@@ -794,10 +790,10 @@ int networking_start(net_fd_t* fd,networking_t* networking, URL_t *url) {
 #ifdef HAVE_RTSP_SESSION_H
     else if( !strcasecmp( networking->url->protocol, "rtsp")) {
 	*fd = -1;
-	if ((ret = realrtsp_networking_start( fd, networking )) < 0) {
+	if ((ret = realrtsp_networking_start( tcp, networking )) < 0) {
 	    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
 #ifdef STREAMING_LIVE_DOT_COM
-	    ret = rtsp_networking_start( stream );
+	    ret = rtsp_networking_start( tcp, networking );
 	    if( ret<0 ) MSG_ERR("rtsp_networking_start failed\n");
 	    return ret;
 #else
@@ -808,8 +804,8 @@ int networking_start(net_fd_t* fd,networking_t* networking, URL_t *url) {
     }
 #endif
     else if(!strcasecmp( networking->url->protocol, "udp")) {
-	*fd = -1;
-	ret = rtp_networking_start(fd, networking, 1);
+	tcp.close();
+	ret = rtp_networking_start(tcp, networking, 1);
 	if(ret<0) {
 	    MSG_ERR("rtp_networking_start(udp) failed\n");
 	    return -1;
@@ -820,16 +816,15 @@ int networking_start(net_fd_t* fd,networking_t* networking, URL_t *url) {
 	// ASF raw stream is encapsulated.
 	// It can also be a playlist (redirector)
 	// so we need to pass demuxer_type too
-	ret = asf_networking_start(fd,networking);
+	ret = asf_networking_start(tcp,networking);
 	if( ret<0 ) {
 	    //sometimes a file is just on a webserver and it is not streamed.
 	    //try loading them default method as last resort for http protocol
 	    if ( !strcasecmp(networking->url->protocol, "http") ) {
 		MSG_STATUS("Trying default networking for http protocol\n ");
 		//reset stream
-		close(*fd);
-		*fd=-1;
-		ret=nop_networking_start(fd,networking);
+		tcp.close();
+		ret=nop_networking_start(tcp,networking);
 	    }
 	    if (ret<0) {
 		MSG_ERR("asf_networking_start failed\n");

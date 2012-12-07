@@ -17,9 +17,24 @@
  *  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef UDP_H
-#define UDP_H
+#ifndef UDP_H_INCLUDED
+#define UDP_H_INCLUDED 1
 
-int udp_open_socket (URL_t *url);
-
+namespace mpxp {
+    typedef int net_fd_t;
+    class Udp {
+	public:
+	    Udp(net_fd_t fd);
+	    Udp(const URL_t* url,int reuse_socket=0);
+	    virtual ~Udp();
+	
+	    void	open(const URL_t* url,int reuse_socket=0);
+	    net_fd_t	socket() const { return _fd; }
+	    int		established() const;
+	    int		error() const { return _error; }
+	private:
+	    net_fd_t	_fd;
+	    int		_error;
+    };
+} // namespace mpxp
 #endif /* UDP_H */

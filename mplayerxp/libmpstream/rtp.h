@@ -9,6 +9,6 @@
 #define RTP_H
 #include "network.h"
 
-int read_rtp_from_server(net_fd_t fd, char *buffer, int length);
+int read_rtp_from_server(Tcp& fd, char *buffer, int length);
 
 #endif

@@ -47,7 +47,7 @@ enum {
 
 typedef struct rtsp_s rtsp_t;
 
-rtsp_t*  rtsp_connect (int fd, char *mrl, char *path, char *host, int port, char *user_agent);
+rtsp_t*  rtsp_connect (Tcp& tcp, char *mrl, char *path, char *host, int port, char *user_agent);
 
 int rtsp_request_options(rtsp_t *s, const char *what);
 int rtsp_request_describe(rtsp_t *s, const char *what);

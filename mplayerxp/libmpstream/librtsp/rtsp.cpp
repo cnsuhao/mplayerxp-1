@@ -54,6 +54,7 @@ using namespace mpxp;
 #include <sys/types.h>
 #include <inttypes.h>
 
+#include "tcp.h"
 #include "rtsp.h"
 #include "rtsp_session.h"
 #include "osdep/timer.h"
@@ -69,7 +70,7 @@ using namespace mpxp;
 
 struct rtsp_s {
 
-  int           s;
+  Tcp*         tcp;
 
   char         *host;
   int           port;
@@ -117,14 +118,14 @@ struct rtsp_s {
  * network utilities
  */
 
-static int write_stream(int s, const char *buf, int len) {
+static int write_stream(Tcp& tcp, const char *buf, int len) {
   int total, timeout;
 
   total = 0; timeout = 30;
   while (total < len){
     int n;
 
-    n = send (s, &buf[total], len - total, 0);
+    n = tcp.write((uint8_t*)(&buf[total]), len - total);
 
     if (n > 0)
       total += n;
@@ -143,7 +144,7 @@ static int write_stream(int s, const char *buf, int len) {
   return total;
 }
 
-static ssize_t read_stream(int fd, any_t*buf, size_t count) {
+static ssize_t read_stream(Tcp& tcp, any_t*buf, size_t count) {
 
   ssize_t ret, total;
 
@@ -151,29 +152,12 @@ static ssize_t read_stream(int fd, any_t*buf, size_t count) {
 
   while (total < count) {
 
-    ret=recv (fd, ((uint8_t*)buf)+total, count-total, 0);
+    ret=tcp.read(((uint8_t*)buf)+total, count-total);
 
     if (ret<0) {
-      if(errno == EAGAIN) {
-	fd_set rset;
-	struct timeval timeout;
-
-	FD_ZERO (&rset);
-	FD_SET  (fd, &rset);
-
-	timeout.tv_sec  = 30;
-	timeout.tv_usec = 0;
-
-	if (select (fd+1, &rset, NULL, NULL, &timeout) <= 0) {
-	  return -1;
-	}
-	continue;
-      }
-
-      MSG_ERR("rtsp: read error.\n");
-      return ret;
-    } else
-      total += ret;
+      if(errno == EAGAIN) if(!tcp.has_data(0)) return -1;
+      continue;
+    } else total += ret;
 
     /* end of stream */
     if (!ret) break;
@@ -193,9 +177,9 @@ static char *rtsp_get(rtsp_t *s) {
   char *buffer = new char [BUF_SIZE];
   char *string = NULL;
 
-  read_stream(s->s, buffer, 1);
+  read_stream(*s->tcp, buffer, 1);
   while (n<BUF_SIZE) {
-    read_stream(s->s, &(buffer[n]), 1);
+    read_stream(*s->tcp, &(buffer[n]), 1);
     if ((buffer[n-1]==0x0d)&&(buffer[n]==0x0a)) break;
     n++;
   }
@@ -233,7 +217,7 @@ static void rtsp_put(rtsp_t *s, const char *string) {
   buf[len]=0x0d;
   buf[len+1]=0x0a;
 
-  write_stream(s->s, buf, len+2);
+  write_stream(*s->tcp, buf, len+2);
 
 #ifdef LOG
   MSG_INFO(" done.\n");
@@ -522,7 +506,7 @@ int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
   int i,seq;
 
   if (size>=4) {
-    i=read_stream(s->s, buffer, 4);
+    i=read_stream(*s->tcp, buffer, 4);
     if (i<4) return i;
     if (((buffer[0]=='S')&&(buffer[1]=='E')&&(buffer[2]=='T')&&(buffer[3]=='_')) ||
 	((buffer[0]=='O')&&(buffer[1]=='P')&&(buffer[2]=='T')&&(buffer[3]=='I'))) // OPTIONS
@@ -554,14 +538,14 @@ int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
       rtsp_put(s, rest);
       delete rest;
       rtsp_put(s, "");
-      i=read_stream(s->s, buffer, size);
+      i=read_stream(*s->tcp, buffer, size);
     } else
     {
-      i=read_stream(s->s, buffer+4, size-4);
+      i=read_stream(*s->tcp, buffer+4, size-4);
       i+=4;
     }
   } else
-    i=read_stream(s->s, buffer, size);
+    i=read_stream(*s->tcp, buffer, size);
 #ifdef LOG
   MSG_INFO("librtsp: << %d of %d bytes\n", i, size);
 #endif
@@ -574,7 +558,7 @@ int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
  */
 
 //rtsp_t *rtsp_connect(const char *mrl, const char *user_agent) {
-rtsp_t *rtsp_connect(int fd, char* mrl, char *path, char *host, int port, char *user_agent) {
+rtsp_t *rtsp_connect(Tcp& tcp, char* mrl, char *path, char *host, int port, char *user_agent) {
 
   rtsp_t *s=new rtsp_t;
   int i;
@@ -604,9 +588,9 @@ rtsp_t *rtsp_connect(int fd, char* mrl, char *path, char *host, int port, char *
     path++;
   if ((s->param = strchr(s->path, '?')) != NULL)
     s->param++;
-  s->s = fd;
+  s->tcp = &tcp;
 
-  if (s->s < 0) {
+  if (!tcp.established()) {
     MSG_ERR("rtsp: failed to connect to '%s'\n", s->host);
     rtsp_close(s);
     return NULL;
@@ -640,7 +624,7 @@ void rtsp_close(rtsp_t *s) {
   {
     if (s->server_state == RTSP_PLAYING)
       rtsp_request_teardown (s, NULL);
-    closesocket (s->s);
+    s->tcp->close();
   }
 
   if (s->path) delete s->path;

@@ -45,10 +45,10 @@ namespace mpxp {
 	    int			start ();
 
 	    networking_t*	networking;
-	    net_fd_t		fd;
+	    Tcp			tcp;
     };
 
-Rtsp_Stream_Interface::Rtsp_Stream_Interface() {}
+Rtsp_Stream_Interface::Rtsp_Stream_Interface():tcp(-1) {}
 Rtsp_Stream_Interface::~Rtsp_Stream_Interface() {}
 
 #define RTSP_DEFAULT_PORT 554
@@ -93,14 +93,14 @@ int Rtsp_Stream_Interface::start()
     do {
 	redirected = 0;
 
-	fd = tcp_connect2Server (networking->libinput,networking->url->hostname,
-	port = (networking->url->port ?
-		 networking->url->port :
-		 RTSP_DEFAULT_PORT), 1);
-	if (fd < 0 && !networking->url->port)
-	    fd = tcp_connect2Server (networking->libinput,networking->url->hostname,
-			port = 7070, 1);
-	if (fd < 0) return -1;
+	tcp.open(networking->libinput,networking->url->hostname,
+		port = (networking->url->port ?
+			networking->url->port :
+			RTSP_DEFAULT_PORT));
+	if (!tcp.established() && !networking->url->port)
+	    tcp.open(networking->libinput,networking->url->hostname,
+			port = 7070);
+	if (!tcp.established()) return -1;
 	file = networking->url->file;
 	if (file[0] == '/') file++;
 
@@ -108,7 +108,7 @@ int Rtsp_Stream_Interface::start()
 
 	sprintf (mrl, "rtsp://%s:%i/%s",networking->url->hostname, port, file);
 
-	rtsp = rtsp_session_start (fd, &mrl, file,
+	rtsp = rtsp_session_start (tcp, &mrl, file,
 			networking->url->hostname,
 			port, &redirected,
 			networking->bandwidth,
@@ -117,7 +117,7 @@ int Rtsp_Stream_Interface::start()
 	if (redirected == 1) {
 	    url_free (networking->url);
 	    networking->url = url_new (mrl);
-	    ::closesocket (fd);
+	    tcp.close();
 	}
 	delete mrl;
 	temp--;
@@ -150,7 +150,7 @@ MPXP_Rc Rtsp_Stream_Interface::open(libinput_t* libinput,const char *filename,un
     url = url_new (filename);
     networking->url = check4proxies (url);
 
-    fd = -1;
+    tcp.close();
     index_mode = -1; /* prevent most RTSP streams from locking due to -idx */
     if (start() < 0) {
 	free_networking(networking);

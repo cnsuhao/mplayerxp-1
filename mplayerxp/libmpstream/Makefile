@@ -7,7 +7,7 @@ DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 CXXSRCS=  s_file.cpp s_lavc.cpp s_null.cpp s_tv.cpp
-CXXSRCS+= mrl.cpp stream.cpp url.cpp cache2.cpp 
+CXXSRCS+= mrl.cpp stream.cpp url.cpp cache2.cpp
 ifeq ($(HAVE_LIBCDIO_CDDA),yes)
 CXXSRCS += s_cdd.cpp
 CXXSRCS += cdda.cpp

@@ -40,7 +40,6 @@ namespace mpxp {
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
 	private:
-	    static int		fd_can_read(int fd,int timeout);
 	    int			readline(char *buf,int max);
 	    int			readresp(char* rsp);
 	    int			OpenPort();
@@ -56,17 +55,16 @@ namespace mpxp {
 	    libinput_t* libinput;
 
 	    char*	cput,*cget;
-	    net_fd_t	handle;
+	    Tcp		tcp;
 	    int		cavail,cleft;
 	    char*	buf;
 	    off_t	spos;
 	    off_t	file_len;
     };
 
-Ftp_Stream_Interface::Ftp_Stream_Interface() {}
+Ftp_Stream_Interface::Ftp_Stream_Interface():tcp(-1) {}
 Ftp_Stream_Interface::~Ftp_Stream_Interface() {
     SendCmd("QUIT",NULL);
-    if(handle) ::closesocket(handle);
     if(buf) delete buf;
 }
 
@@ -75,20 +73,6 @@ Ftp_Stream_Interface::~Ftp_Stream_Interface() {
 #define TELNET_IAC      255             /* interpret as command: */
 #define TELNET_IP       244             /* interrupt process--permanently */
 #define TELNET_SYNCH    242             /* for telfunc calls */
-
-// Check if there is something to read on a fd. This avoid hanging
-// forever if the network stop responding.
-int Ftp_Stream_Interface::fd_can_read(int fd,int timeout) {
-    fd_set fds;
-    struct timeval tv;
-
-    FD_ZERO(&fds);
-    FD_SET(fd,&fds);
-    tv.tv_sec = timeout;
-    tv.tv_usec = 0;
-
-    return (::select(fd+1, &fds, NULL, NULL, &tv) > 0);
-}
 
 /*
  * read a line of text
@@ -135,12 +119,12 @@ int Ftp_Stream_Interface::readline(char *_buf,int max)
 	    if (retval == 0) retval = -1;
 	    break;
 	}
-	if(!fd_can_read(handle, 15)) {
+	if(!tcp.has_data(15)) {
 	    MSG_ERR("[ftp] read timed out\n");
 	    retval = -1;
 	    break;
 	}
-	if ((x = recv(handle,cput,cleft,0)) == -1) {
+	if ((x = tcp.read((uint8_t*)cput,cleft)) == -1) {
 	    MSG_ERR("[ftp] read error: %s\n",strerror(errno));
 	    retval = -1;
 	    break;
@@ -195,7 +179,7 @@ int Ftp_Stream_Interface::SendCmd(const char *cmd,char* rsp)
     if(hascrlf && l == 2) MSG_V("\n");
     else MSG_V("[ftp] > %s",cmd);
     while(l > 0) {
-	int s = ::send(handle,cmd,l,0);
+	int s = tcp.write((const uint8_t*)cmd,l);
 	if(s <= 0) {
 	    MSG_ERR("[ftp] write error: %s\n",strerror(errno));
 	    return 0;
@@ -226,10 +210,10 @@ int Ftp_Stream_Interface::OpenPort() {
     }
     sscanf(par+1,"%u,%u,%u,%u,%u,%u",&num[0],&num[1],&num[2],&num[3],&num[4],&num[5]);
     snprintf(str,127,"%d.%d.%d.%d",num[0],num[1],num[2],num[3]);
-    fd = tcp_connect2Server(libinput,str,(num[4]<<8)+num[5],0);
+    tcp.open(libinput,str,(num[4]<<8)+num[5]);
 
     if(fd < 0) MSG_ERR("[ftp] failed to create data connection\n");
-    return fd;
+    return 1;
 }
 
 int Ftp_Stream_Interface::OpenData(size_t newpos) {
@@ -237,9 +221,9 @@ int Ftp_Stream_Interface::OpenData(size_t newpos) {
     char str[256],rsp_txt[256];
 
     // Open a new connection
-    handle = OpenPort();
+    OpenPort();
 
-    if(handle < 0) return 0;
+    if(tcp.established()) return 0;
 
     if(newpos > 0) {
 	snprintf(str,255,"REST %"PRId64, (int64_t)newpos);
@@ -266,12 +250,12 @@ int Ftp_Stream_Interface::read(stream_packet_t*sp){
 
     if(!OpenData(spos)) return -1;
 
-    if(!fd_can_read(handle, 15)) {
+    if(!tcp.has_data(15)) {
 	MSG_ERR("[ftp] read timed out\n");
 	return -1;
     }
     MSG_V("ftp read: %u bytes\n",sp->len);
-    r = ::recv(handle,sp->buf,sp->len,0);
+    r = tcp.read((uint8_t*)sp->buf,sp->len);
     spos+=r;
     return (r <= 0) ? -1 : r;
 }
@@ -285,25 +269,21 @@ off_t Ftp_Stream_Interface::seek(off_t newpos) {
     if(spos > file_len) return 0;
 
     // Check to see if the server did not already terminate the transfer
-    if(fd_can_read(handle, 0)) {
+    if(tcp.has_data(0)) {
 	if(readresp(rsp_txt) != 2)
 	    MSG_WARN("[ftp] Warning the server didn't finished the transfer correctly: %s\n",rsp_txt);
-	::closesocket(handle);
-	handle = -1;
+	tcp.close();
     }
 
     // Close current download
-    if(handle >= 0) {
+    if(tcp.established()) {
 	static const char pre_cmd[]={TELNET_IAC,TELNET_IP,TELNET_IAC,TELNET_SYNCH};
 	//int fl;
-	// First close the fd
-	::closesocket(handle);
-	handle = -1;
 	// Send send the telnet sequence needed to make the server react
 
 	// send only first byte as OOB due to OOB braindamage in many unices
-	::send(handle,pre_cmd,1,MSG_OOB);
-	::send(handle,pre_cmd+1,sizeof(pre_cmd)-1,0);
+	tcp.write((uint8_t*)pre_cmd,1,MSG_OOB);
+	tcp.write((uint8_t*)(pre_cmd+1),sizeof(pre_cmd)-1);
 
 	// Get the 426 Transfer aborted
 	// Or the 226 Transfer complete
@@ -315,6 +295,8 @@ off_t Ftp_Stream_Interface::seek(off_t newpos) {
 	// Send the ABOR command
 	// Ignore the return code as sometimes it fail with "nothing to abort"
 	SendCmd("ABOR",rsp_txt);
+	// close the fd
+	tcp.close();
     }
     if(OpenData(newpos)) spos=newpos;
     return spos;
@@ -327,10 +309,7 @@ off_t Ftp_Stream_Interface::tell() const
 
 
 void Ftp_Stream_Interface::close() {
-    if(handle > 0) {
-	::closesocket(handle);
-	handle = 0;
-    }
+    if(tcp.established()) tcp.close();
 }
 
 MPXP_Rc Ftp_Stream_Interface::open(libinput_t*_libinput,const char *_filename,unsigned flags)
@@ -360,9 +339,9 @@ MPXP_Rc Ftp_Stream_Interface::open(libinput_t*_libinput,const char *_filename,un
     MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n",user,pass,host,port,filename);
 
     // Open the control connection
-    handle = tcp_connect2Server(libinput,host,port,1);
+    tcp.open(libinput,host,port);
 
-    if(handle < 0) {
+    if(!tcp.established()) {
 	url_free(url);
 	return MPXP_False;
     }

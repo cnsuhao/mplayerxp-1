@@ -35,20 +35,13 @@ using namespace mpxp;
 #include "tcp.h"
 #include "stream_msg.h"
 
-/* IPv6 options */
-extern int   network_prefer_ipv4;
-
-#define IP_NAME (network_prefer_ipv4?"ipv4":"ipv6")
+namespace mpxp {
 
 // Converts an address family constant to a string
-
-static const char *af2String(int af) {
+static const char *af2String(Tcp::tcp_af_e af) {
 	switch (af) {
-		case AF_INET:	return "AF_INET";
-
-#ifdef HAVE_AF_INET6
-		case AF_INET6:	return "AF_INET6";
-#endif
+		case Tcp::IP4:	return "IPv4";
+		case Tcp::IP6:	return "IPv6";
 		default:	return "Unknown address family!";
 	}
 }
@@ -58,192 +51,218 @@ static const char *af2String(int af) {
 // return -2 for fatal error, like unable to resolve name, connection timeout...
 // return -1 is unable to connect to a particular port
 
-static net_fd_t
-connect2Server_with_af(libinput_t* libinput,const char *host, int port, int af,int verb) {
-	int socket_server_fd;
-	int err;
-	socklen_t err_len;
-	int ret,count = 0;
-	fd_set set;
-	struct timeval tv;
-	union {
-		struct sockaddr_in four;
-#ifdef HAVE_AF_INET6
-		struct sockaddr_in6 six;
-#endif
-	} server_address;
-	size_t server_address_size;
-	any_t*our_s_addr;	// Pointer to sin_addr or sin6_addr
-	struct hostent *hp=NULL;
-	char buf[255];
+void Tcp::open(libinput_t* libinput,const char *host, int port, tcp_af_e af) {
+    socklen_t err_len;
+    int ret,count = 0;
+    fd_set set;
+    struct timeval tv;
+    union {
+	struct sockaddr_in four;
+	struct sockaddr_in6 six;
+    } server_address;
+    size_t server_address_size;
+    any_t*our_s_addr;	// Pointer to sin_addr or sin6_addr
+    struct hostent *hp=NULL;
+    char buf[255];
 
 #ifdef HAVE_WINSOCK2
-	u_long val;
-	int to;
+    u_long val;
+    int to;
 #else
-	struct timeval to;
+    struct timeval to;
 #endif
 
-	MSG_V("[tcp%s] Trying to resolv host '%s' For AF %s\n", IP_NAME, host, af2String(af));
-	socket_server_fd = socket(af, SOCK_STREAM, 0);
+    MSG_V("[tcp%s] Trying to resolv host '%s'\n", af2String(af), host);
+    _fd = ::socket(af==Tcp::IP4?AF_INET:AF_INET6, SOCK_STREAM, 0);
 
-	if( socket_server_fd==-1 ) {
-		return TCP_ERROR_FATAL;
-	}
+    if( _fd==-1 ) {
+	_error=Tcp::Err_Fatal;
+	return;
+    }
 
 #if defined(SO_RCVTIMEO) && defined(SO_SNDTIMEO)
 #ifdef HAVE_WINSOCK2
-	/* timeout in milliseconds */
-	to = 10 * 1000;
+    /* timeout in milliseconds */
+    to = 10 * 1000;
 #else
-	to.tv_sec = 10;
-	to.tv_usec = 0;
+    to.tv_sec = 10;
+    to.tv_usec = 0;
 #endif
-	setsockopt(socket_server_fd, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof(to));
-	setsockopt(socket_server_fd, SOL_SOCKET, SO_SNDTIMEO, &to, sizeof(to));
+    ::setsockopt(_fd, SOL_SOCKET, SO_RCVTIMEO, &to, sizeof(to));
+    ::setsockopt(_fd, SOL_SOCKET, SO_SNDTIMEO, &to, sizeof(to));
 #endif
 
-	switch (af) {
-		case AF_INET:  our_s_addr = (any_t*) &server_address.four.sin_addr; break;
-#ifdef HAVE_AF_INET6
-		case AF_INET6: our_s_addr = (any_t*) &server_address.six.sin6_addr; break;
-#endif
-		default:
-			MSG_ERR("[tcp%s] UnknownAF: %i\n", IP_NAME, af);
-			return TCP_ERROR_FATAL;
-	}
+    switch (af) {
+	case Tcp::IP4: our_s_addr = (any_t*) &server_address.four.sin_addr; break;
+	case Tcp::IP6: our_s_addr = (any_t*) &server_address.six.sin6_addr; break;
+	default:
+	    MSG_ERR("[tcp%s] UnknownAF: %i\n", af2String(af), af);
+	    _error=Tcp::Err_Fatal;
+	    return;
+    }
 
-	memset(&server_address, 0, sizeof(server_address));
+    memset(&server_address, 0, sizeof(server_address));
 
-	MSG_V("[tcp%s] PreResolving Host '%s' For AF %s\n", IP_NAME, host, af2String(af));
+    MSG_V("[tcp%s] PreResolving Host '%s'\n",af2String(af), host);
 #ifndef HAVE_WINSOCK2
 #ifdef USE_ATON
-	if (inet_aton(host, our_s_addr)!=1)
+    if (::inet_aton(host, our_s_addr)!=1)
 #else
-	if (inet_pton(af, host, our_s_addr)!=1)
+    if (::inet_pton(af==Tcp::IP4?AF_INET:AF_INET6, host, our_s_addr)!=1)
 #endif
 #else
-	if ( inet_addr(host)==INADDR_NONE )
+    if (::inet_addr(host)==INADDR_NONE )
 #endif
-	{
-		MSG_V("[tcp%s] Resolving Host '%s' For AF %s\n", IP_NAME, host, af2String(af));
+    {
+	MSG_V("[tcp%s] Resolving Host '%s'\n",af2String(af), host);
 
 #ifdef HAVE_GETHOSTBYNAME2
-		hp=(struct hostent*)gethostbyname2( host, af );
+	hp=(struct hostent*)::gethostbyname2( host, af==Tcp::IP4?AF_INET:AF_INET6 );
 #else
-		hp=(struct hostent*)gethostbyname( host );
+	hp=(struct hostent*)::gethostbyname( host );
 #endif
-		if( hp==NULL ) {
-			MSG_V("[tcp%s] Can't resolv: %s '%s'\n", IP_NAME, af2String(af), host);
-			return TCP_ERROR_FATAL;
-		}
-
-		memcpy( our_s_addr, (any_t*)hp->h_addr_list[0], hp->h_length );
+	if( hp==NULL ) {
+	    MSG_V("[tcp%s] Can't resolv: %s\n",af2String(af), host);
+	    _error=Tcp::Err_Fatal;
+	    return;
 	}
+
+	memcpy( our_s_addr, (any_t*)hp->h_addr_list[0], hp->h_length );
+    }
 #ifdef HAVE_WINSOCK2
-	else {
-		unsigned long addr = inet_addr(host);
-		memcpy( our_s_addr, (any_t*)&addr, sizeof(addr) );
-	}
+    else {
+	unsigned long addr = inet_addr(host);
+	memcpy( our_s_addr, (any_t*)&addr, sizeof(addr) );
+    }
 #endif
 
-	switch (af) {
-		case AF_INET:
-			server_address.four.sin_family=af;
-			server_address.four.sin_port=htons(port);
-			server_address_size = sizeof(server_address.four);
-			break;
-#ifdef HAVE_AF_INET6
-		case AF_INET6:
-			server_address.six.sin6_family=af;
-			server_address.six.sin6_port=htons(port);
-			server_address_size = sizeof(server_address.six);
-			break;
-#endif
-		default:
-			MSG_ERR("[tcp%s] UnknownAF: %i\n", IP_NAME, af);
-			return TCP_ERROR_FATAL;
-	}
+    switch (af) {
+	case Tcp::IP4:
+	    server_address.four.sin_family=AF_INET;
+	    server_address.four.sin_port=htons(port);
+	    server_address_size = sizeof(server_address.four);
+	    break;
+	case Tcp::IP6:
+	    server_address.six.sin6_family=AF_INET6;
+	    server_address.six.sin6_port=htons(port);
+	    server_address_size = sizeof(server_address.six);
+	    break;
+	default:
+	    MSG_ERR("[tcp%s] UnknownAF: %i\n",af2String(af), af);
+	    _error = Tcp::Err_Fatal;
+	    return;
+    }
 
 #if defined(USE_ATON) || defined(HAVE_WINSOCK2)
-	strncpy( buf, inet_ntoa( *((struct in_addr*)our_s_addr) ), 255);
+    strncpy( buf, ::inet_ntoa( *((struct in_addr*)our_s_addr) ), 255);
 #else
-	inet_ntop(af, our_s_addr, buf, 255);
+    ::inet_ntop(af==Tcp::IP4?AF_INET:AF_INET6, our_s_addr, buf, 255);
 #endif
-	MSG_INFO("[tcp%s] Connecting to server: %s (%s:%i)\n", IP_NAME, host, buf , port );
+    MSG_INFO("[tcp%s] Connecting to server: %s (%s:%i)\n",af2String(af),host,buf,port);
 
-	// Turn the socket as non blocking so we can timeout on the connection
+    // Turn the socket as non blocking so we can timeout on the connection
 #ifndef HAVE_WINSOCK2
-	fcntl( socket_server_fd, F_SETFL, fcntl(socket_server_fd, F_GETFL) | O_NONBLOCK );
+    ::fcntl( _fd, F_SETFL, ::fcntl(_fd, F_GETFL) | O_NONBLOCK );
 #else
-	val = 1;
-	ioctlsocket( socket_server_fd, FIONBIO, &val );
+    val = 1;
+    ::ioctlsocket( _fd, FIONBIO, &val );
 #endif
-	if( connect( socket_server_fd, (struct sockaddr*)&server_address, server_address_size )==-1 ) {
+    if(::connect( _fd, (struct sockaddr*)&server_address, server_address_size )==-1 ) {
 #ifndef HAVE_WINSOCK2
-		if( errno!=EINPROGRESS ) {
+	if( errno!=EINPROGRESS ) {
 #else
-		if( (WSAGetLastError() != WSAEINPROGRESS) && (WSAGetLastError() != WSAEWOULDBLOCK) ) {
+	if( (WSAGetLastError() != WSAEINPROGRESS) && (WSAGetLastError() != WSAEWOULDBLOCK) ) {
 #endif
-			MSG_V("[tcp%s] Can't connect to server: %s\n", IP_NAME, af2String(af));
-			closesocket(socket_server_fd);
-			return TCP_ERROR_PORT;
-		}
+	    MSG_V("[tcp%s] Can't connect to server: %s\n",af2String(af),host);
+	    ::closesocket(_fd);
+	    _fd=-1;
+	    _error=Tcp::Err_Port;
+	    return;
 	}
+    }
+    tv.tv_sec = 0;
+    tv.tv_usec = 500000;
+    FD_ZERO( &set );
+    FD_SET( _fd, &set );
+    // When the connection will be made, we will have a writeable fd
+    while((ret = ::select(FD_SETSIZE, NULL, &set, NULL, &tv)) == 0) {
+	if(count > 30 || mp_input_check_interrupt(libinput,500)==MPXP_Ok) {
+	    if(count > 30)
+		MSG_ERR("[tcp%s] Connecting timeout\n",af2String(af));
+	    else
+		MSG_V("[tcp%s] Connection interrupted by user\n",af2String(af));
+	    _error=Tcp::Err_Timeout;
+	    return;
+	}
+	count++;
+	FD_ZERO( &set );
+	FD_SET( _fd, &set );
 	tv.tv_sec = 0;
 	tv.tv_usec = 500000;
-	FD_ZERO( &set );
-	FD_SET( socket_server_fd, &set );
-	// When the connection will be made, we will have a writeable fd
-	while((ret = select(FD_SETSIZE, NULL, &set, NULL, &tv)) == 0) {
-	      if(count > 30 || mp_input_check_interrupt(libinput,500)==MPXP_Ok) {
-		if(count > 30)
-		  MSG_ERR("[tcp%s] Connecting timeout\n",IP_NAME);
-		else
-		  MSG_V("[tcp%s] Connection interrupted by user\n",IP_NAME);
-		return TCP_ERROR_TIMEOUT;
-	      }
-	      count++;
-	      FD_ZERO( &set );
-	      FD_SET( socket_server_fd, &set );
-	      tv.tv_sec = 0;
-	      tv.tv_usec = 500000;
-	}
-	if (ret < 0) MSG_ERR("[tcp%s] Select failed\n",IP_NAME);
+    }
+    if (ret < 0) MSG_ERR("[tcp%s] Select failed\n",af2String(af));
 
-	// Turn back the socket as blocking
+    // Turn back the socket as blocking
 #ifndef HAVE_WINSOCK2
-	fcntl( socket_server_fd, F_SETFL, fcntl(socket_server_fd, F_GETFL) & ~O_NONBLOCK );
+    ::fcntl( _fd, F_SETFL, ::fcntl(_fd, F_GETFL) & ~O_NONBLOCK );
 #else
-	val = 0;
-	ioctlsocket( socket_server_fd, FIONBIO, &val );
+    val = 0;
+    ::ioctlsocket( _fd, FIONBIO, &val );
 #endif
-	// Check if there were any errors
-	err_len = sizeof(int);
-	ret =  getsockopt(socket_server_fd,SOL_SOCKET,SO_ERROR,&err,&err_len);
-	if(ret < 0) {
-		MSG_ERR("[tcp%s] Get socket option failed: %s\n",IP_NAME,strerror(errno));
-		return TCP_ERROR_FATAL;
-	}
-	if(err > 0) {
-		MSG_ERR("[tcp%s] Connection error: %s\n",IP_NAME,strerror(err));
-		return TCP_ERROR_PORT;
-	}
-
-    return socket_server_fd;
+    // Check if there were any errors
+    err_len = sizeof(int);
+    ret = ::getsockopt(_fd,SOL_SOCKET,SO_ERROR,&_error,&err_len);
+    if(ret < 0) {
+	MSG_ERR("[tcp%s] Get socket option failed: %s\n",af2String(af),strerror(errno));
+	_error=Tcp::Err_Fatal;
+	return;
+    }
+    if(_error > 0) {
+	MSG_ERR("[tcp%s] Connection error: %s\n",af2String(af),strerror(_error));
+	_error=Tcp::Err_Port;
+	return;
+    }
 }
 
-// Connect to a server using a TCP connection
-// return -2 for fatal error, like unable to resolve name, connection timeout...
-// return -1 is unable to connect to a particular port
-
-
-net_fd_t tcp_connect2Server(libinput_t* libinput,const char *host, int  port, int verb) {
-#ifdef HAVE_AF_INET6
-    return connect2Server_with_af(libinput,host, port, network_prefer_ipv4 ? AF_INET:AF_INET6,verb);
-#else
-    network_prefer_ipv4=1;
-    return connect2Server_with_af(libinput,host, port, AF_INET,verb);
-#endif
-
+Tcp::Tcp(libinput_t* libinput,const char *host,int port,tcp_af_e af)
+    :_fd(-1),
+    _error(Tcp::Err_None)
+{
+    open(libinput,host,port,af);
 }
+
+Tcp::Tcp(net_fd_t fd)
+    :_fd(fd),
+    _error(Tcp::Err_None)
+{
+}
+
+Tcp::~Tcp() { if(_fd>0) close(); }
+
+void Tcp::close() { if(_fd>0) ::closesocket(_fd); _fd=-1; }
+
+int Tcp::has_data(int timeout) const {
+    fd_set fds;
+    struct timeval tv;
+
+    FD_ZERO(&fds);
+    FD_SET(_fd,&fds);
+    tv.tv_sec = timeout;
+    tv.tv_usec = 0;
+
+    return (::select(_fd+1, &fds, NULL, NULL, &tv) > 0);
+}
+
+Tcp& Tcp::operator=(Tcp& other) {
+    _fd = other._fd; _error=other._error;
+    other._fd = 0;
+    return *this;
+}
+Tcp& Tcp::operator=(net_fd_t fd) { _fd=fd; _error=Tcp::Err_None; return *this; }
+
+int Tcp::read(uint8_t* buf,unsigned len,int flags) { return ::recv(_fd,buf,len,flags); }
+int Tcp::write(const uint8_t* buf,unsigned len,int flags) const { return ::send(_fd,buf,len,flags); }
+int Tcp::established() const { return _fd > 0; }
+Tcp::tcp_error_e Tcp::error() const { return _error; }
+
+} // namespace mpxp

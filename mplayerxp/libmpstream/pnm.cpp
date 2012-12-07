@@ -47,6 +47,7 @@ using namespace mpxp;
 #include <winsock2.h>
 #endif
 
+#include "tcp.h"
 #include "pnm.h"
 
 #define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
@@ -72,7 +73,7 @@ using namespace mpxp;
 #define HEADER_SIZE 4096
 
 struct pnm_s {
-    net_fd_t	s;
+    Tcp*	tcp;
     char*	path;
     char	buffer[BUF_SIZE]; /* scratch buffer */
     /* receive buffer */
@@ -94,11 +95,11 @@ struct pnm_s {
  * utility macros
  */
 
-#define BE_16(x)  be2me_16(*((uint16_t *)x))
-#define BE_32(x)  be2me_16(*((uint32_t *)x))
+static inline uint16_t BE_16(uint8_t* x) { return be2me_16(*((uint16_t *)x)); }
+static inline uint32_t BE_32(uint8_t* x) { return be2me_32(*((uint32_t *)x)); }
 
 /* D means direct (no pointer) */
-#define BE_16D(x) BE_16(x)
+static inline uint16_t BE_16D(uint8_t* x) { return BE_16(x); }
 
 /* sizes */
 #define PREAMBLE_SIZE 8
@@ -194,14 +195,14 @@ const unsigned char after_chunks[]={
 
 static void hexdump (char *buf, int length);
 
-static int rm_write(int s, const char *buf, int len) {
+static int rm_write(Tcp& tcp, const char *buf, int len) {
   int total, timeout;
 
   total = 0; timeout = 30;
   while (total < len){
     int n;
 
-    n = send (s, &buf[total], len - total, 0);
+    n = tcp.write ((const uint8_t*)&buf[total], len - total);
 
     if (n > 0)
       total += n;
@@ -220,7 +221,7 @@ static int rm_write(int s, const char *buf, int len) {
   return total;
 }
 
-static ssize_t rm_read(int fd, any_t*buf, size_t count) {
+static ssize_t rm_read(Tcp& tcp, any_t*buf, size_t count) {
 
   ssize_t ret, total;
 
@@ -228,20 +229,7 @@ static ssize_t rm_read(int fd, any_t*buf, size_t count) {
 
   while (total < count) {
 
-    fd_set rset;
-    struct timeval timeout;
-
-    FD_ZERO (&rset);
-    FD_SET  (fd, &rset);
-
-    timeout.tv_sec  = 3;
-    timeout.tv_usec = 0;
-
-    if (select (fd+1, &rset, NULL, NULL, &timeout) <= 0) {
-      return -1;
-    }
-
-    ret=recv (fd, ((uint8_t*)buf)+total, count-total, 0);
+    ret=tcp.read (((uint8_t*)buf)+total, count-total);
 
     if (ret<=0) {
       printf ("input_pnm: read error.\n");
@@ -306,16 +294,16 @@ static unsigned int pnm_get_chunk(pnm_t *p,
     return -1;
 
   /* get first PREAMBLE_SIZE bytes and ignore checksum */
-  rm_read (p->s, data, CHECKSUM_SIZE);
+  rm_read (*p->tcp, data, CHECKSUM_SIZE);
   if (data[0] == 0x72)
-    rm_read (p->s, data, PREAMBLE_SIZE);
+    rm_read (*p->tcp, data, PREAMBLE_SIZE);
   else
-    rm_read (p->s, data+CHECKSUM_SIZE, PREAMBLE_SIZE-CHECKSUM_SIZE);
+    rm_read (*p->tcp, data+CHECKSUM_SIZE, PREAMBLE_SIZE-CHECKSUM_SIZE);
 
   max -= PREAMBLE_SIZE;
 
-  *chunk_type = BE_32(data);
-  chunk_size = BE_32(data+4);
+  *chunk_type = BE_32((uint8_t*)data);
+  chunk_size = BE_32((uint8_t*)(data+4));
 
   switch (*chunk_type) {
     case PNA_TAG:
@@ -323,7 +311,7 @@ static unsigned int pnm_get_chunk(pnm_t *p,
       ptr=data+PREAMBLE_SIZE;
       if (max < 1)
 	return -1;
-      rm_read (p->s, ptr++, 1);
+      rm_read (*p->tcp, ptr++, 1);
       max -= 1;
 
       while(1) {
@@ -331,19 +319,19 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 
 	if (max < 2)
 	  return -1;
-	rm_read (p->s, ptr, 2);
+	rm_read (*p->tcp, ptr, 2);
 	max -= 2;
 	if (*ptr == 'X') /* checking for server message */
 	{
 	  printf("input_pnm: got a message from server:\n");
 	  if (max < 1)
 	    return -1;
-	  rm_read (p->s, ptr+2, 1);
+	  rm_read (*p->tcp, ptr+2, 1);
 	  max = -1;
-	  n=BE_16(ptr+1);
+	  n=BE_16((uint8_t*)(ptr+1));
 	  if (max < n)
 	    return -1;
-	  rm_read (p->s, ptr+3, n);
+	  rm_read (*p->tcp, ptr+3, n);
 	  max -= n;
 	  ptr[3+n]=0;
 	  printf("%s\n",ptr+3);
@@ -365,14 +353,14 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 	n=ptr[1];
 	if (max < n)
 	  return -1;
-	rm_read (p->s, ptr+2, n);
+	rm_read (*p->tcp, ptr+2, n);
 	max -= n;
 	ptr+=(n+2);
       }
       /* the checksum of the next chunk is ignored here */
       if (max < 1)
 	return -1;
-      rm_read (p->s, ptr+2, 1);
+      rm_read (*p->tcp, ptr+2, 1);
       ptr+=3;
       chunk_size=ptr-data;
       break;
@@ -384,12 +372,12 @@ static unsigned int pnm_get_chunk(pnm_t *p,
       if (chunk_size > max || chunk_size < PREAMBLE_SIZE) {
 	printf("error: max chunk size exeeded (max was 0x%04x)\n", max);
 #ifdef LOG
-	n=rm_read (p->s, &data[PREAMBLE_SIZE], 0x100 - PREAMBLE_SIZE);
+	n=rm_read (*p->tcp, &data[PREAMBLE_SIZE], 0x100 - PREAMBLE_SIZE);
 	hexdump(data,n+PREAMBLE_SIZE);
 #endif
 	return -1;
       }
-      rm_read (p->s, &data[PREAMBLE_SIZE], chunk_size-PREAMBLE_SIZE);
+      rm_read (*p->tcp, &data[PREAMBLE_SIZE], chunk_size-PREAMBLE_SIZE);
       break;
     default:
       *chunk_type = 0;
@@ -457,7 +445,7 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
 
   /* client id string */
   p->buffer[c]=PNA_CLIENT_STRING;
-  i16=BE_16D((strlen(client_string)-1)); /* dont know why do we have -1 here */
+  i16=BE_16D((uint8_t*)((strlen(client_string)-1))); /* dont know why do we have -1 here */
   memcpy(&p->buffer[c+1],&i16,2);
   memcpy(&p->buffer[c+3],client_string,strlen(client_string)+1);
   c=c+3+strlen(client_string)+1;
@@ -465,7 +453,7 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   /* file path */
   p->buffer[c]=0;
   p->buffer[c+1]=PNA_PATH_REQUEST;
-  i16=BE_16D(strlen(p->path));
+  i16=BE_16D((uint8_t*)(strlen(p->path)));
   memcpy(&p->buffer[c+2],&i16,2);
   memcpy(&p->buffer[c+4],p->path,strlen(p->path));
   c=c+4+strlen(p->path);
@@ -474,7 +462,7 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   p->buffer[c]='y';
   p->buffer[c+1]='B';
 
-  rm_write(p->s,p->buffer,c+2);
+  rm_write(*p->tcp,p->buffer,c+2);
 }
 
 /*
@@ -491,7 +479,7 @@ static void pnm_send_response(pnm_t *p, const char *response) {
 
   memcpy(&p->buffer[3], response, size);
 
-  rm_write (p->s, p->buffer, size+3);
+  rm_write (*p->tcp, p->buffer, size+3);
 
 }
 
@@ -554,7 +542,7 @@ static int pnm_get_headers(pnm_t *p, int *need_response) {
 
   /* read challenge */
   memcpy (p->buffer, ptr, PREAMBLE_SIZE);
-  rm_read (p->s, &p->buffer[PREAMBLE_SIZE], 64);
+  rm_read (*p->tcp, &p->buffer[PREAMBLE_SIZE], 64);
 
   /* now write a data header */
   memcpy(ptr, pnm_data_header, PNM_DATA_HEADER_SIZE);
@@ -650,7 +638,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   /* realplayer seems to do that every 43th package */
   if ((p->packet%43) == 42)
   {
-    rm_write(p->s,&keepalive,1);
+    rm_write(*p->tcp,&keepalive,1);
   }
 
   /* data chunks begin with: 'Z' <o> <o> <i1> 'Z' <i2>
@@ -659,13 +647,13 @@ static int pnm_get_stream_chunk(pnm_t *p) {
    * <i2> is a 8 bit index which counts from 0x10 to somewhere
    */
 
-  n = rm_read (p->s, p->buffer, 8);
+  n = rm_read (*p->tcp, p->buffer, 8);
   if (n<8) return 0;
 
   /* skip 8 bytes if 0x62 is read */
   if (p->buffer[0] == 0x62)
   {
-    n = rm_read (p->s, p->buffer, 8);
+    n = rm_read (*p->tcp, p->buffer, 8);
     if (n<8) return 0;
 #ifdef LOG
     printf("input_pnm: had to seek 8 bytes on 0x62\n");
@@ -675,9 +663,9 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   /* a server message */
   if (p->buffer[0] == 'X')
   {
-    int size=BE_16(&p->buffer[1]);
+    int size=BE_16((uint8_t*)(&p->buffer[1]));
 
-    rm_read (p->s, &p->buffer[8], size-5);
+    rm_read (*p->tcp, &p->buffer[8], size-5);
     p->buffer[size+3]=0;
     printf("input_pnm: got message from server while reading stream:\n%s\n", &p->buffer[3]);
     return 0;
@@ -698,7 +686,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
     for (i=1; i<8; i++) {
       p->buffer[i-1]=p->buffer[i];
     }
-    rm_read (p->s, &p->buffer[7], 1);
+    rm_read (*p->tcp, &p->buffer[7], 1);
     n++;
   }
 
@@ -715,8 +703,8 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   }
 
   /* check offsets */
-  fof1=BE_16(&p->buffer[1]);
-  fof2=BE_16(&p->buffer[3]);
+  fof1=BE_16((uint8_t*)(&p->buffer[1]));
+  fof2=BE_16((uint8_t*)(&p->buffer[3]));
   if (fof1 != fof2)
   {
     printf("input_pnm: frame offsets are different: 0x%04x 0x%04x\n",fof1,fof2);
@@ -724,10 +712,10 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   }
 
   /* get first index */
-  p->seq_current[0]=BE_16(&p->buffer[5]);
+  p->seq_current[0]=BE_16((uint8_t*)(&p->buffer[5]));
 
   /* now read the rest of stream chunk */
-  n = rm_read (p->s, &p->recv[5], fof1-5);
+  n = rm_read (*p->tcp, &p->recv[5], fof1-5);
   if (n<(fof1-5)) return 0;
 
   /* get second index */
@@ -747,7 +735,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   p->recv[0]=0;        /* object version */
   p->recv[1]=0;
 
-  fof2=BE_16(&fof2);
+  fof2=BE_16((uint8_t*)(&fof2));
   memcpy(&p->recv[2], &fof2, 2);
   /*p->recv[2]=(fof2>>8)%0xff;*/   /* length */
   /*p->recv[3]=(fof2)%0xff;*/
@@ -765,13 +753,13 @@ static int pnm_get_stream_chunk(pnm_t *p) {
 }
 
 // pnm_t *pnm_connect(const char *mrl) {
-pnm_t *pnm_connect(int* fd,const char *path) {
+pnm_t *pnm_connect(Tcp& tcp,const char *path) {
 
   pnm_t *p=new pnm_t;
   int need_response=0;
 
   p->path=mp_strdup(path);
-  p->s=*fd;
+  p->tcp=&tcp;
 
   pnm_send_request(p,pnm_available_bandwidths[10]);
   if (!pnm_get_headers(p, &need_response)) {
@@ -836,8 +824,9 @@ int pnm_peek_header (pnm_t *self, char *data) {
 
 void pnm_close(pnm_t *p) {
 
-  if (p->s >= 0) closesocket(p->s);
+  if (p->tcp->established()) p->tcp->close();
   delete p->path;
+  delete p->tcp;
   delete p;
 }
 

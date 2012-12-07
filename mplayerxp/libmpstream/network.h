@@ -28,8 +28,8 @@
 namespace mpxp {
     struct stream_t;
     struct libinput_t;
+    class Tcp;
 }
-typedef int net_fd_t;
 enum networking_status {
     networking_stopped_e,
     networking_playing_e
@@ -44,24 +44,24 @@ struct networking_t {
     unsigned int buffer_size;
     unsigned int buffer_pos;
     unsigned int bandwidth;	// The downstream available
-    int (*networking_read)( net_fd_t fd, char *buffer, int buffer_size, networking_t *stream_ctrl );
-    int (*networking_seek)( net_fd_t fd, off_t pos, networking_t *stream_ctrl );
+    int (*networking_read)( Tcp& fd, char *buffer, int buffer_size, networking_t *stream_ctrl );
+    int (*networking_seek)( Tcp& fd, off_t pos, networking_t *stream_ctrl );
     any_t*data;
     libinput_t* libinput;   /**< provides possibility to inperrupt network streams */
 };
 
 extern void fixup_network_stream_cache(networking_t *s);
-extern int networking_start(net_fd_t* fd,networking_t *n, URL_t *url);
+extern int networking_start(Tcp& fd,networking_t *n, URL_t *url);
 extern int networking_bufferize(networking_t *networking,unsigned char *buffer, int size);
 extern networking_t *new_networking(libinput_t* libinput);
 extern void free_networking( networking_t *networking );
 extern URL_t* check4proxies( URL_t *url );
 
-int nop_networking_read( net_fd_t fd, char *buffer, int size, networking_t *stream_ctrl );
-int nop_networking_seek( net_fd_t fd, off_t pos, networking_t *stream_ctrl );
+int nop_networking_read(Tcp& fd, char *buffer, int size, networking_t *stream_ctrl );
+int nop_networking_seek(Tcp& fd, off_t pos, networking_t *stream_ctrl );
 
-int http_send_request(libinput_t* libinput,URL_t *url, off_t pos);
-HTTP_header_t *http_read_response(net_fd_t fd);
+Tcp* http_send_request(libinput_t* libinput,URL_t *url, off_t pos);
+HTTP_header_t *http_read_response(Tcp& fd);
 
 int http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry);
 

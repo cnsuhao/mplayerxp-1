@@ -241,7 +241,6 @@ void __FASTCALL__ nc_stream_reset(stream_t *s){
 stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   stream_t *s=new(zeromem) stream_t;
   if(s==NULL) return NULL;
-  s->fd=-1;
   s->pin=STREAM_PIN;
   s->buf_pos=0; s->buf_len=len;
 // msy be methods of class Memory_Stream : public Stream
@@ -257,12 +256,12 @@ stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
 }
 
 stream_t* __FASTCALL__ new_stream(stream_type_e type){
+    UNUSED(type);
   stream_t *s=new(zeromem) stream_t;
   if(s==NULL) return NULL;
 
   fill_false_pointers(s->antiviral_hole,reinterpret_cast<long>(&s->pin)-reinterpret_cast<long>(&s->antiviral_hole));
   s->pin=STREAM_PIN;
-  s->fd=-1;
 //  s->type=type;
 //  s->sector_size=STREAM_BUFFER_SIZE;
   s->buffer=new unsigned char [STREAM_BUFFER_SIZE];

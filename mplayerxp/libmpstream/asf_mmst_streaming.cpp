@@ -61,7 +61,7 @@ static int seq_num;
 static int num_stream_ids;
 static int stream_ids[MAX_STREAMS];
 
-static int get_data (int s,unsigned char *buf, size_t count);
+static int get_data (Tcp& s,unsigned char *buf, size_t count);
 
 static void put_32 (command_t *cmd, uint32_t value)
 {
@@ -88,7 +88,7 @@ static uint32_t get_32 (unsigned char *cmd, int offset)
   return ret;
 }
 
-static void send_command (int s, int command, uint32_t switches,
+static void send_command (Tcp& tcp, int command, uint32_t switches,
 			  uint32_t extra, int length,
 			  unsigned char *data)
 {
@@ -117,7 +117,7 @@ static void send_command (int s, int command, uint32_t switches,
   if (length & 7)
     memset(&cmd.buf[48 + length], 0, 8 - (length & 7));
 
-  if (send (s, cmd.buf, len8*8+48, 0) != (len8*8+48)) {
+  if (tcp.write (cmd.buf, len8*8+48) != (len8*8+48)) {
     MSG_ERR ("write error\n");
   }
 }
@@ -157,7 +157,7 @@ static void string_utf16(unsigned char *dest,const char *src, int len)
 #endif
 }
 
-static void get_answer (int s)
+static void get_answer (Tcp& tcp)
 {
   unsigned char data[BUF_SIZE];
   int   command = 0x1b;
@@ -165,7 +165,7 @@ static void get_answer (int s)
   while (command == 0x1b) {
     int len;
 
-    len = recv (s, data, BUF_SIZE, 0) ;
+    len = tcp.read(data, BUF_SIZE);
     if (!len) {
       MSG_ERR ("\nalert! eof\n");
       return;
@@ -174,18 +174,18 @@ static void get_answer (int s)
     command = get_32 (data, 36) & 0xFFFF;
 
     if (command == 0x1b)
-      send_command (s, 0x1b, 0, 0, 0, data);
+      send_command (tcp, 0x1b, 0, 0, 0, data);
   }
 }
 
-static int get_data (int s,unsigned char *buf, size_t count)
+static int get_data (Tcp& tcp,unsigned char *buf, size_t count)
 {
   ssize_t  len;
   size_t total = 0;
 
   while (total < count) {
 
-    len = recv (s, &buf[total], count-total, 0);
+    len = tcp.read(&buf[total], count-total);
 
     if (len<=0) {
       MSG_ERR ("read error:");
@@ -205,7 +205,7 @@ static int get_data (int s,unsigned char *buf, size_t count)
 
 }
 
-static int get_header (int s, uint8_t *header, networking_t *networking)
+static int get_header (Tcp& tcp, uint8_t *header, networking_t *networking)
 {
   unsigned char  pre_header[8];
   int            header_len;
@@ -213,7 +213,7 @@ static int get_header (int s, uint8_t *header, networking_t *networking)
   header_len = 0;
 
   while (1) {
-    if (!get_data (s, pre_header, 8)) {
+    if (!get_data (tcp, pre_header, 8)) {
       MSG_ERR ("pre-header read failed\n");
       return 0;
     }
@@ -230,7 +230,7 @@ static int get_header (int s, uint8_t *header, networking_t *networking)
 	return 0;
       }
 
-      if (!get_data (s, &header[header_len], packet_len)) {
+      if (!get_data (tcp, &header[header_len], packet_len)) {
 	MSG_ERR("header data read failed\n");
 	return 0;
       }
@@ -256,7 +256,7 @@ static int get_header (int s, uint8_t *header, networking_t *networking)
       int command;
       unsigned char data[BUF_SIZE];
 
-      if (!get_data (s, (unsigned char*)&packet_len, 4)) {
+      if (!get_data (tcp, (unsigned char*)&packet_len, 4)) {
 	MSG_ERR ("packet_len read failed\n");
 	return 0;
       }
@@ -270,7 +270,7 @@ static int get_header (int s, uint8_t *header, networking_t *networking)
 	return 0;
       }
 
-      if (!get_data (s, data, packet_len)) {
+      if (!get_data (tcp, data, packet_len)) {
 	MSG_ERR ("command data read failed\n");
 	return 0;
       }
@@ -280,7 +280,7 @@ static int get_header (int s, uint8_t *header, networking_t *networking)
 //      printf ("command: %02x\n", command);
 
       if (command == 0x1b)
-	send_command (s, 0x1b, 0, 0, 0, data);
+	send_command (tcp, 0x1b, 0, 0, 0, data);
 
     }
 
@@ -363,11 +363,11 @@ static int interp_header (uint8_t *header, int header_len)
 }
 
 
-static int get_media_packet (int s, int padding, networking_t *stream_ctrl) {
+static int get_media_packet (Tcp& tcp, int padding, networking_t *stream_ctrl) {
   unsigned char  pre_header[8];
   unsigned char  data[BUF_SIZE];
 
-  if (!get_data (s, pre_header, 8)) {
+  if (!get_data (tcp, pre_header, 8)) {
     MSG_ERR ("pre-header read failed\n");
     return 0;
   }
@@ -389,7 +389,7 @@ static int get_media_packet (int s, int padding, networking_t *stream_ctrl) {
       return 0;
     }
 
-    if (!get_data (s, data, packet_len)) {
+    if (!get_data (tcp, data, packet_len)) {
       MSG_ERR ("media data read failed\n");
       return 0;
     }
@@ -401,7 +401,7 @@ static int get_media_packet (int s, int padding, networking_t *stream_ctrl) {
     int32_t packet_len;
     int command;
 
-    if (!get_data (s, (unsigned char*)&packet_len, 4)) {
+    if (!get_data (tcp, (unsigned char*)&packet_len, 4)) {
       MSG_ERR ("packet_len read failed\n");
       return 0;
     }
@@ -413,7 +413,7 @@ static int get_media_packet (int s, int padding, networking_t *stream_ctrl) {
 	return 0;
     }
 
-    if (!get_data (s, data, packet_len)) {
+    if (!get_data (tcp, data, packet_len)) {
       MSG_ERR ("command data read failed\n");
       return 0;
     }
@@ -430,7 +430,7 @@ static int get_media_packet (int s, int padding, networking_t *stream_ctrl) {
 //    printf ("\ncommand packet detected, len=%d  cmd=0x%X\n", packet_len, command);
 
     if (command == 0x1b)
-      send_command (s, 0x1b, 0, 0, 0, data);
+      send_command (tcp, 0x1b, 0, 0, 0, data);
     else if (command == 0x1e) {
       MSG_OK ("everything done. Thank you for downloading a media file containing proprietary and patentend technology.\n");
       return 0;
@@ -454,13 +454,13 @@ static int get_media_packet (int s, int padding, networking_t *stream_ctrl) {
 
 static int packet_length1;
 
-static int asf_mmst_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl )
+static int asf_mmst_networking_read(Tcp& tcp, char *buffer, int size, networking_t *stream_ctrl )
 {
   int len;
 
   while( stream_ctrl->buffer_size==0 ) {
 	  // buffer is empty - fill it!
-	  int ret = get_media_packet( fd, packet_length1, stream_ctrl);
+	  int ret = get_media_packet(tcp, packet_length1, stream_ctrl);
 	  if( ret<0 ) {
 		  MSG_ERR("get_media_packet error : %s\n",strerror(errno));
 		  return -1;
@@ -482,16 +482,15 @@ static int asf_mmst_networking_read( int fd, char *buffer, int size, networking_
 
 }
 
-static int asf_mmst_networking_seek( int fd, off_t pos, networking_t *networking )
+static int asf_mmst_networking_seek(Tcp& tcp, off_t pos, networking_t *networking )
 {
-	return -1;
-	// Shut up gcc warning
-	fd++;
-	pos++;
-	networking=NULL;
+    UNUSED(tcp);
+    UNUSED(pos);
+    UNUSED(networking);
+    return -1;
 }
 
-int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
+int asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
 {
   char                 str[1024];
   unsigned char        data[BUF_SIZE];
@@ -500,12 +499,8 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
   int                  len, i, packet_length;
   char                *path, *unescpath;
   URL_t *url1 = networking->url;
-  net_fd_t s = *fd;
 
-  if( s>0 ) {
-    closesocket( *fd );
-    *fd = -1;
-  }
+  tcp.close();
 
   /* parse url */
   path = strchr(url1->file,'/') + 1;
@@ -524,10 +519,10 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
   if( url1->port==0 ) {
 	url1->port=1755;
   }
-  s = tcp_connect2Server(networking->libinput, url1->hostname, url1->port, 0);
-  if( s<0 ) {
+  tcp.open(networking->libinput, url1->hostname, url1->port, Tcp::IP4);
+  if( !tcp.established()) {
 	  delete path;
-	  return s;
+	  return -1;
   }
   MSG_INFO ("connected\n");
 
@@ -551,9 +546,9 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
   snprintf (str, 1023, "\034\003NSPlayer/7.0.0.1956; {33715801-BAB3-9D85-24E9-03B90328270A}; Host: %s", url1->hostname);
   string_utf16 (data, str, strlen(str));
 // send_command(s, commandno ....)
-  send_command (s, 1, 0, 0x0004000b, strlen(str) * 2+2, data);
+  send_command (tcp, 1, 0, 0x0004000b, strlen(str) * 2+2, data);
 
-  len = recv (s, data, BUF_SIZE, 0) ;
+  len = tcp.read (data, BUF_SIZE);
 
   /*This sends details of the local machine IP address to a Funnel system at the server.
   * Also, the TCP or UDP transport selection is sent.
@@ -565,19 +560,19 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
 
   string_utf16 (&data[8], "\002\000\\\\192.168.0.1\\TCP\\1037", 24);
   memset (data, 0, 8);
-  send_command (s, 2, 0, 0, 24*2+10, data);
+  send_command (tcp, 2, 0, 0, 24*2+10, data);
 
-  len = recv (s, data, BUF_SIZE, 0) ;
+  len = tcp.read(data, BUF_SIZE);
 
   /* This command sends file path (at server) and file name request to the server.
   * 0x5 */
 
   string_utf16 (&data[8], path, strlen(path));
   memset (data, 0, 8);
-  send_command (s, 5, 0, 0, strlen(path)*2+10, data);
+  send_command (tcp, 5, 0, 0, strlen(path)*2+10, data);
   delete path;
 
-  get_answer (s);
+  get_answer (tcp);
 
   /* The ASF header chunk request. Includes ?session' variable for pre header value.
   * After this command is sent,
@@ -587,15 +582,15 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
   memset (data, 0, 40);
   data[32] = 2;
 
-  send_command (s, 0x15, 1, 0, 40, data);
+  send_command (tcp, 0x15, 1, 0, 40, data);
 
   num_stream_ids = 0;
   /* get_headers(s, asf_header);  */
 
-  asf_header_len = get_header (s, asf_header, networking);
+  asf_header_len = get_header (tcp, asf_header, networking);
 //  printf("---------------------------------- asf_header %d\n",asf_header);
   if (asf_header_len==0) { //error reading header
-    closesocket(s);
+    tcp.close();
     return -1;
   }
   packet_length = interp_header (asf_header, asf_header_len);
@@ -617,7 +612,7 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
     data[2] = 0xFF;
     data[3] = 0xFF;
     data[4] = mp_conf.audio_id;
-    send_command(s, 0x33, num_stream_ids, 0xFFFF | mp_conf.audio_id << 16, 8, data);
+    send_command(tcp, 0x33, num_stream_ids, 0xFFFF | mp_conf.audio_id << 16, 8, data);
   } else {
   for (i=1; i<num_stream_ids; i++) {
     data [ (i-1) * 6 + 2 ] = 0xFF;
@@ -626,10 +621,10 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
     data [ (i-1) * 6 + 5 ] = 0x00;
   }
 
-  send_command (s, 0x33, num_stream_ids, 0xFFFF | stream_ids[0] << 16, (num_stream_ids-1)*6+2 , data);
+  send_command (tcp, 0x33, num_stream_ids, 0xFFFF | stream_ids[0] << 16, (num_stream_ids-1)*6+2 , data);
   }
 
-  get_answer (s);
+  get_answer (tcp);
 
   /* Start sending file from packet xx.
   * This command is also used for resume downloads or requesting a lost packet.
@@ -644,9 +639,8 @@ int asf_mmst_networking_start(net_fd_t* fd, networking_t *networking)
 
   data[20] = 0x04;
 
-  send_command (s, 0x07, 1, 0xFFFF | stream_ids[0] << 16, 24, data);
+  send_command (tcp, 0x07, 1, 0xFFFF | stream_ids[0] << 16, 24, data);
 
-  *fd = s;
   networking->networking_read = asf_mmst_networking_read;
   networking->networking_seek = asf_mmst_networking_seek;
   networking->buffering = 1;
