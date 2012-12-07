@@ -40,7 +40,7 @@ namespace mpxp {
 	    virtual off_t	tell() const;
 	    virtual void	close();
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
-	    virtual stream_type_e type() const;
+	    virtual Stream::type_e type() const;
 	    virtual off_t	start_pos() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
@@ -158,7 +158,7 @@ MPXP_Rc VcdNav_Stream_Interface::open(libinput_t*libinput,const char *filename,u
     MSG_DBG2("vcdnav_open start=%i end=%i\n",lsn,total);
     return MPXP_Ok;
 }
-stream_type_e VcdNav_Stream_Interface::type() const { return STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM; }
+Stream::type_e VcdNav_Stream_Interface::type() const { return Stream::Type_Seekable|Stream::Type_Program; }
 off_t	VcdNav_Stream_Interface::start_pos() const { return start*sizeof(vcdsector_t); }
 off_t	VcdNav_Stream_Interface::size() const { return (start+total)*sizeof(vcdsector_t); }
 off_t	VcdNav_Stream_Interface::sector_size() const { return sizeof(vcdsector_t); }

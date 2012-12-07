@@ -26,7 +26,7 @@
 #define BUFFER_SIZE		2048
 
 namespace mpxp {
-    struct stream_t;
+    struct Stream;
     struct libinput_t;
     class Tcp;
 }

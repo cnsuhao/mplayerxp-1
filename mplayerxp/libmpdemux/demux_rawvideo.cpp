@@ -60,7 +60,7 @@ static const config_t rawvideo_conf[] = {
 
 static MPXP_Rc rawvideo_probe(Demuxer* demuxer)
 {
-    if(demuxer->stream->type() & STREAMTYPE_RAWVIDEO || priv.use_rawvideo) {
+    if(demuxer->stream->type() & Stream::Type_RawVideo || priv.use_rawvideo) {
 	priv.fps=25;
 	demuxer->file_format=Demuxer::Type_RAWVIDEO;
 	return MPXP_Ok;
@@ -131,7 +131,7 @@ static int rawvideo_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
 }
 
 static void rawvideo_seek(Demuxer *demuxer,const seek_args_t* seeka){
-  stream_t* s = demuxer->stream;
+  Stream* s = demuxer->stream;
   off_t pos;
 
   pos =(seeka->flags & DEMUX_SEEK_SET)?demuxer->movi_start:stream_tell(s);

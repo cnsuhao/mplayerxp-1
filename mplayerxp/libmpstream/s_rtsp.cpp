@@ -38,7 +38,7 @@ namespace mpxp {
 	    virtual off_t	tell() const;
 	    virtual void	close();
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
-	    virtual stream_type_e type() const;
+	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
 	private:
@@ -162,7 +162,7 @@ MPXP_Rc Rtsp_Stream_Interface::open(libinput_t* libinput,const char *filename,un
     fixup_network_stream_cache (networking);
     return MPXP_Ok;
 }
-stream_type_e Rtsp_Stream_Interface::type() const { return STREAMTYPE_STREAM; }
+Stream::type_e Rtsp_Stream_Interface::type() const { return Stream::Type_Stream; }
 off_t	Rtsp_Stream_Interface::size() const { return 0; }
 off_t	Rtsp_Stream_Interface::sector_size() const { return 1; }
 

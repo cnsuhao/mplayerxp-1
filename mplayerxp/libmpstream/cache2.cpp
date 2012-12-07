@@ -52,7 +52,7 @@ typedef struct cache_vars_s {
   int eof;
   /* reader's pointers: */
   off_t read_filepos;
-  stream_t* stream; /* parent stream */
+  Stream* stream; /* parent stream */
   /* thread related stuff */
   int in_fill;
   pthread_mutex_t mutex;
@@ -107,11 +107,11 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
   new_start = readpos - c->back_size;
   if(new_start<c->stream->start_pos()) new_start=c->stream->start_pos();
   seek_eof=0;
-  if(!in_cache && c->stream->type()&STREAMTYPE_SEEKABLE) {
+  if(!in_cache && c->stream->type()&Stream::Type_Seekable) {
 	/* seeking... */
 	MSG_DBG2("Out of boundaries... seeking to %lli {in_cache(%i) %lli<%lli>%lli} \n"
 	,new_start,in_cache,START_FILEPOS(c),readpos,END_FILEPOS(c));
-	if(c->stream->eof || c->eof) nc_stream_reset(c->stream);
+	if(c->stream->eof() || c->eof) c->stream->reset();
 	c->stream->driver->seek(new_start);
 	if(errno) { MSG_WARN("c2_seek(drv:%s) error: %s\n",c->stream->driver_info->mrl,strerror(errno)); errno=0; }
 	if((c->packets[c->first].filepos=c->stream->driver->tell())<0) seek_eof=1;
@@ -267,11 +267,11 @@ static any_t*cache2_routine(any_t*arg)
     return arg;
 }
 
-int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,int prefill){
+int stream_enable_cache(Stream *stream,libinput_t* libinput,int size,int _min,int prefill){
   int ss=stream->sector_size()>1?stream->sector_size():STREAM_BUFFER_SIZE;
   cache_vars_t* c;
 
-  if (!(stream->type()&STREAMTYPE_SEEKABLE)) {
+  if (!(stream->type()&Stream::Type_Seekable)) {
     // The stream has no 'fd' behind it, so is non-cacheable
     MSG_WARN("\rThis stream is non-cacheable\n");
     return 1;
@@ -293,7 +293,7 @@ int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,
 	START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),_min,c->eof,ss);
   while((c->read_filepos<START_FILEPOS(c) || END_FILEPOS(c)-c->read_filepos<_min)
 	&& !c->eof && CP_NEXT(c,c->last)!=c->first){
-	if(!(stream->type()&STREAMTYPE_SEEKABLE))
+	if(!(stream->type()&Stream::Type_Seekable))
 	MSG_STATUS("\rCache fill: %5.2f%% (%d bytes)    ",
 	    100.0*(float)(END_FILEPOS(c)-c->read_filepos)/(float)(c->buffer_size),
 	    END_FILEPOS(c)-c->read_filepos);
@@ -309,7 +309,7 @@ int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int _min,
     return 1; // parent exits
 }
 
-void stream_disable_cache(stream_t *st)
+void stream_disable_cache(Stream *st)
 {
   cache_vars_t* c;
   c=st->cache_data;
@@ -343,7 +343,7 @@ static void __FASTCALL__ c2_stream_reset(cache_vars_t* c)
     unsigned cidx;
     int was_eof;
     MSG_DBG2("c2_stream_reset\n");
-    nc_stream_reset(c->stream);
+    c->stream->reset();
     cidx=c->first;
     was_eof=0;
     do{ was_eof |= (c->packets[cidx].state&CPF_EOF); c->packets[cidx].state&=~CPF_EOF; cidx=CP_NEXT(c,cidx); }while(cidx!=c->first);
@@ -567,30 +567,30 @@ static void __FASTCALL__ c2_stream_set_eof(cache_vars_t*c,int eof)
 /*
     main interface here!
 */
-int __FASTCALL__ stream_read(stream_t *s,any_t* _mem,int total)
+int __FASTCALL__ stream_read(Stream *s,any_t* _mem,int total)
 {
     char *mem = reinterpret_cast<char*>(_mem);
     if(s->cache_data)	return c2_stream_read(s->cache_data,mem,total);
     else		return nc_stream_read(s,mem,total);
 }
 
-int __FASTCALL__ stream_eof(stream_t *s)
+int __FASTCALL__ stream_eof(Stream *s)
 {
     if(s->cache_data) return c2_stream_eof(s->cache_data);
-    else return s->eof;
+    else return s->eof();
 }
 
-void __FASTCALL__ stream_set_eof(stream_t *s,int eof)
+void __FASTCALL__ stream_set_eof(Stream *s,int eof)
 {
     if(!eof) stream_reset(s);
     else
     {
 	if(s->cache_data)	c2_stream_set_eof(s->cache_data,eof);
-	else			s->eof=eof;
+	else			s->eof(eof);
     }
 }
 
-int __FASTCALL__ stream_read_char(stream_t *s)
+int __FASTCALL__ stream_read_char(Stream *s)
 {
     if(s->cache_data)
     {
@@ -601,72 +601,72 @@ int __FASTCALL__ stream_read_char(stream_t *s)
     else return nc_stream_read_char(s);
 }
 
-off_t __FASTCALL__ stream_tell(stream_t *s)
+off_t __FASTCALL__ stream_tell(Stream *s)
 {
     if(s->cache_data)	return c2_stream_tell(s->cache_data);
     else		return nc_stream_tell(s);
 }
 
-int __FASTCALL__ stream_seek(stream_t *s,off_t pos)
+int __FASTCALL__ stream_seek(Stream *s,off_t pos)
 {
     if(s->cache_data)	return c2_stream_seek(s->cache_data,pos);
     else		return nc_stream_seek(s,pos);
 }
 
-int __FASTCALL__ stream_skip(stream_t *s,off_t len)
+int __FASTCALL__ stream_skip(Stream *s,off_t len)
 {
     if(s->cache_data)	return c2_stream_skip(s->cache_data,len);
     else		return nc_stream_skip(s,len);
 }
 
-MPXP_Rc __FASTCALL__ stream_control(const stream_t *s,unsigned cmd,any_t*param)
+MPXP_Rc __FASTCALL__ stream_control(const Stream *s,unsigned cmd,any_t*param)
 {
     return nc_stream_control(s,cmd,param);
 }
 
-void __FASTCALL__ stream_reset(stream_t *s)
+void __FASTCALL__ stream_reset(Stream *s)
 {
     if(s->cache_data)	c2_stream_reset(s->cache_data);
-    else		nc_stream_reset(s);
+    else		s->reset();
 }
 
-unsigned int __FASTCALL__ stream_read_word(stream_t *s){
+unsigned int __FASTCALL__ stream_read_word(Stream *s){
   unsigned short retval;
   stream_read(s,(char *)&retval,2);
   return me2be_16(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_dword(stream_t *s){
+unsigned int __FASTCALL__ stream_read_dword(Stream *s){
   unsigned int retval;
   stream_read(s,(char *)&retval,4);
   return me2be_32(retval);
 }
 
-uint64_t __FASTCALL__ stream_read_qword(stream_t *s){
+uint64_t __FASTCALL__ stream_read_qword(Stream *s){
   uint64_t retval;
   stream_read(s,(char *)&retval,8);
   return me2be_64(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_word_le(stream_t *s){
+unsigned int __FASTCALL__ stream_read_word_le(Stream *s){
   unsigned short retval;
   stream_read(s,(char *)&retval,2);
   return me2le_16(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_dword_le(stream_t *s){
+unsigned int __FASTCALL__ stream_read_dword_le(Stream *s){
   unsigned int retval;
   stream_read(s,(char *)&retval,4);
   return me2le_32(retval);
 }
 
-uint64_t __FASTCALL__ stream_read_qword_le(stream_t *s){
+uint64_t __FASTCALL__ stream_read_qword_le(Stream *s){
   uint64_t retval;
   stream_read(s,(char *)&retval,8);
   return me2le_64(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_int24(stream_t *s){
+unsigned int __FASTCALL__ stream_read_int24(Stream *s){
   unsigned int y;
   y = stream_read_char(s);
   y=(y<<8)|stream_read_char(s);

@@ -502,7 +502,7 @@ static int demux_asf_read_packet(Demuxer *demux,off_t dataoff,int len,int id,int
 //     0 = EOF or no stream found
 //     1 = successfully read a packet
 static int asf_demux(Demuxer *demux,Demuxer_Stream *ds){
-stream_t *stream=demux->stream;
+Stream *stream=demux->stream;
 asf_priv_t *apriv=static_cast<asf_priv_t*>(demux->priv);
 int done=0;
 while(!done)

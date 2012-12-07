@@ -336,7 +336,7 @@ void MPXPSystem::uninit_input() {
     }
 }
 void MPXPSystem::uninit_player(unsigned int mask){
-    stream_t* stream=NULL;
+    Stream* stream=NULL;
     sh_audio_t* sh_audio=NULL;
     sh_video_t* sh_video=NULL;
     if(_demuxer) {
@@ -402,7 +402,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_STREAM){
 	inited_flags&=~INITED_STREAM;
 	MP_UNIT("uninit_stream");
-	if(stream) free_stream(stream);
+	if(stream) delete stream;
 	stream=NULL;
     }
 
@@ -791,7 +791,7 @@ void mpxp_resync_audio_stream(void)
     mpca_resync_stream(mpxp_context().audio().decoder);
 }
 
-static void __FASTCALL__ mpxp_stream_event_handler(stream_t *s,const stream_packet_t *sp)
+static void __FASTCALL__ mpxp_stream_event_handler(Stream *s,const stream_packet_t *sp)
 {
     stream_control(s,SCRTL_EVT_HANDLE,(any_t*)sp);
 }
@@ -964,7 +964,7 @@ int MPXPSystem::init_vobsub(const char *filename) {
 }
 
 int MPXPSystem::handle_playlist(const char *filename) const {
-    stream_t* stream=_demuxer->stream;
+    Stream* stream=_demuxer->stream;
     int eof=0;
     play_tree_t* entry;
     // Handle playlist
@@ -1000,7 +1000,7 @@ int MPXPSystem::handle_playlist(const char *filename) const {
 
 void MPXPSystem::init_dvd_nls() const {
 /* Add NLS support here */
-    stream_t* stream=_demuxer->stream;
+    Stream* stream=_demuxer->stream;
     char *lang;
     if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
     MP_UNIT("dvd lang->id");
@@ -1078,7 +1078,7 @@ void MPXPSystem::read_video_properties() const {
 
 void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
-    stream_t* stream=_demuxer->stream;
+    Stream* stream=_demuxer->stream;
     if (mp_conf.spudec_ifo) {
 	unsigned int palette[16], width, height;
 	MP_UNIT("spudec_init_vobsub");
@@ -1351,7 +1351,7 @@ void MPXPSystem::print_audio_status() const {
 
 #ifdef USE_OSD
 int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
-    const stream_t* stream=_demuxer->stream;
+    const Stream* stream=_demuxer->stream;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int rc=0;
@@ -1421,7 +1421,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 #endif
 
 int MPXPSystem::handle_input(seek_args_t* _seek,osd_args_t* osd,input_state_t* state) {
-    stream_t* stream=_demuxer->stream;
+    Stream* stream=_demuxer->stream;
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int v_bright=0;
     int v_cont=0;
@@ -1608,7 +1608,7 @@ For future:
 	    case MP_CMD_DVDNAV:
 		if(stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
 		    if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
-			    stream->type(STREAMTYPE_MENU);
+			    stream->type(Stream::Type_Menu);
 			    state->need_repaint=1;
 		    }
 		    osd_function=OSD_DVDMENU;
@@ -1674,7 +1674,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     mpxp_init_antiviral_protection(1);
     mpxp_test_backtrace();
     int i;
-    stream_t* stream=NULL;
+    Stream* stream=NULL;
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
     char *ao_subdevice;
@@ -1785,7 +1785,7 @@ play_next_file:
 
     MP_UNIT("mplayer");
     if(!input_state.after_dvdmenu && MPXPSys.demuxer()) {
-	free_stream(MPXPSys.demuxer()->stream);
+	delete MPXPSys.demuxer()->stream;
 	MPXPSys.demuxer()->stream=NULL;
 	MPXPSys.inited_flags&=~INITED_STREAM;
 	MPXPSys.uninit_demuxer();
@@ -1807,15 +1807,15 @@ play_next_file:
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
     MP_UNIT("open_stream");
-    if(!input_state.after_dvdmenu) stream=open_stream(MPXPSys.libinput(),filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler);
-    if(!stream) { // error...
+    if(!input_state.after_dvdmenu) stream=new(zeromem) Stream;
+    if(stream->open(MPXPSys.libinput(),filename,&file_format,stream_dump_type>1?dump_stream_event_handler:mpxp_stream_event_handler)!=MPXP_Ok) { // error...
 	MSG_ERR("Can't open: %s\n",filename);
 	eof = MPXPSys.libmpdemux_was_interrupted(PT_NEXT_ENTRY);
 	goto goto_next_file;
     }
     MPXPSys.inited_flags|=INITED_STREAM;
 
-    if(stream->type() & STREAMTYPE_TEXT) {
+    if(stream->type() & Stream::Type_Text) {
 	eof=MPXPSys.handle_playlist(filename);
 	goto goto_next_file;
     }

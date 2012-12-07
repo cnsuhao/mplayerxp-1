@@ -114,7 +114,7 @@ enum {
 
 
 static uint32_t
-ebml_read_id (stream_t *s, int *length)
+ebml_read_id (Stream *s, int *length)
 {
   int i, len_mask = 0x80;
   uint32_t id;
@@ -182,7 +182,7 @@ ebml_read_vlen_int (uint8_t *buffer, int *length)
  * Read: element content length.
  */
 static uint64_t
-ebml_read_length (stream_t *s, int *length)
+ebml_read_length (Stream *s, int *length)
 {
   int i, j, num_ffs = 0, len_mask = 0x80;
   uint64_t len;
@@ -211,7 +211,7 @@ ebml_read_length (stream_t *s, int *length)
  * Read the next element as an unsigned int.
  */
 static uint64_t
-ebml_read_uint (stream_t *s, uint64_t *length)
+ebml_read_uint (Stream *s, uint64_t *length)
 {
   uint64_t len, value = 0;
   int l;
@@ -232,7 +232,7 @@ ebml_read_uint (stream_t *s, uint64_t *length)
  * Read the next element as a signed int.
  */
 static int64_t
-ebml_read_int (stream_t *s, uint64_t *length)
+ebml_read_int (Stream *s, uint64_t *length)
 {
   int64_t value = 0;
   uint64_t len;
@@ -259,7 +259,7 @@ ebml_read_int (stream_t *s, uint64_t *length)
  * Read the next element as a float.
  */
 static long double
-ebml_read_float (stream_t *s, uint64_t *length)
+ebml_read_float (Stream *s, uint64_t *length)
 {
   long double value;
   uint64_t len;
@@ -307,7 +307,7 @@ ebml_read_float (stream_t *s, uint64_t *length)
  * Read the next element as an ASCII string.
  */
 static char *
-ebml_read_ascii (stream_t *s, uint64_t *length)
+ebml_read_ascii (Stream *s, uint64_t *length)
 {
   uint64_t len;
   char *str;
@@ -334,7 +334,7 @@ ebml_read_ascii (stream_t *s, uint64_t *length)
  * Read the next element as a UTF-8 string.
  */
 static char *
-ebml_read_utf8 (stream_t *s, uint64_t *length)
+ebml_read_utf8 (Stream *s, uint64_t *length)
 {
   return ebml_read_ascii (s, length);
 }
@@ -343,7 +343,7 @@ ebml_read_utf8 (stream_t *s, uint64_t *length)
  * Skip the next element.
  */
 static int
-ebml_read_skip (stream_t *s, uint64_t *length)
+ebml_read_skip (Stream *s, uint64_t *length)
 {
   uint64_t len;
   int l;
@@ -364,7 +364,7 @@ ebml_read_skip (stream_t *s, uint64_t *length)
  * are supposed to be sub-elements which can be read separately.
  */
 static uint32_t
-ebml_read_master (stream_t *s, uint64_t *length)
+ebml_read_master (Stream *s, uint64_t *length)
 {
   uint64_t len;
   uint32_t id;
@@ -387,7 +387,7 @@ ebml_read_master (stream_t *s, uint64_t *length)
  * Read an EBML header.
  */
 static char *
-ebml_read_header (stream_t *s, int *version)
+ebml_read_header (Stream *s, int *version)
 {
   uint64_t length, l, num;
   uint32_t id;
@@ -1055,7 +1055,7 @@ static int
 demux_mkv_read_info (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t length, l;
   int il;
   uint64_t tc_scale = 1000000;
@@ -1114,7 +1114,7 @@ demux_mkv_free_encodings(mkv_content_encoding_t *encodings, int numencodings)
 static int
 demux_mkv_read_trackencodings (Demuxer *demuxer, mkv_track_t *track)
 {
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   mkv_content_encoding_t *ce, e;
   uint64_t len, length, l;
   int il, n;
@@ -1266,7 +1266,7 @@ err_out:
 static int
 demux_mkv_read_trackaudio (Demuxer *demuxer, mkv_track_t *track)
 {
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t len, length, l;
   int il;
 
@@ -1324,7 +1324,7 @@ demux_mkv_read_trackaudio (Demuxer *demuxer, mkv_track_t *track)
 static int
 demux_mkv_read_trackvideo (Demuxer *demuxer, mkv_track_t *track)
 {
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t len, length, l;
   int il;
 
@@ -1404,7 +1404,7 @@ static int
 demux_mkv_read_trackentry (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   mkv_track_t *track;
   uint64_t len, length, l;
   int il;
@@ -1585,7 +1585,7 @@ static int
 demux_mkv_read_tracks (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t length, l;
   int il;
 
@@ -1620,7 +1620,7 @@ static int
 demux_mkv_read_cues (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t length, l, time, track, pos;
   off_t off;
   int i, il;
@@ -1736,7 +1736,7 @@ static int
 demux_mkv_read_chapters (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t length, l;
   int il;
 
@@ -1880,7 +1880,7 @@ static int
 demux_mkv_read_attachments (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t length, l;
   int il;
 
@@ -1995,7 +1995,7 @@ static int
 demux_mkv_read_seekhead (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t length, l, seek_pos, saved_pos, num;
   uint32_t seek_id;
   int i, il, res = 0;
@@ -2788,7 +2788,7 @@ static int demux_mkv_reverse_id(mkv_demuxer_t *d, int num, int type)
 
 static MPXP_Rc mkv_probe(Demuxer *demuxer)
 {
-    stream_t *s = demuxer->stream;
+    Stream *s = demuxer->stream;
     int version;
     char *str;
     stream_seek(s, s->start_pos());
@@ -2803,7 +2803,7 @@ static MPXP_Rc mkv_probe(Demuxer *demuxer)
 
 static Opaque* mkv_open(Demuxer *demuxer)
 {
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   mkv_demuxer_t *mkv_d;
   mkv_track_t *track;
   int i, version, cont = 0;
@@ -3671,7 +3671,7 @@ static int mkv_demux (Demuxer *demuxer, Demuxer_Stream *ds)
 {
   UNUSED(ds);
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   uint64_t l;
   int il, tmp;
 
@@ -3821,7 +3821,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
   mkv_d->free_cached_dps ();
   if (!(seeka->flags & 2))  /* time in secs */
     {
-      stream_t *s = demuxer->stream;
+      Stream *s = demuxer->stream;
       int64_t target_timecode = 0, diff, min_diff=0xFFFFFFFFFFFFFFFLL;
       int i;
 
@@ -3846,7 +3846,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
 	      else
 		stream_seek (s, stream_tell (s) + mkv_d->cluster_size);
 	      /* parse all the clusters upto target_filepos */
-	      while (!s->eof && stream_tell(s) < (off_t) target_filepos)
+	      while (!s->eof() && stream_tell(s) < (off_t) target_filepos)
 		{
 		  switch (ebml_read_id (s, &i))
 		    {
@@ -3860,7 +3860,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
 		    }
 		  ebml_read_skip (s, NULL);
 		}
-	      if (s->eof)
+	      if (s->eof())
 		stream_reset(s);
 	    }
 
@@ -3942,7 +3942,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
   else
     {
       mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-      stream_t *s = demuxer->stream;
+      Stream *s = demuxer->stream;
       uint64_t target_filepos;
       mkv_index_t *_index = NULL;
       int i;

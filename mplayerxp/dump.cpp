@@ -36,7 +36,7 @@ int  dump_parse(const char *param)
     return type;
 }
 
-void dump_stream(stream_t *stream)
+void dump_stream(Stream *stream)
 {
   char buf[4096];
   int len;
@@ -92,7 +92,7 @@ struct dump_priv_t : public Opaque {
 	libinput_t*	libinput;
 };
 
-void __FASTCALL__ dump_stream_event_handler(stream_t *s,const stream_packet_t*sp)
+void __FASTCALL__ dump_stream_event_handler(Stream *s,const stream_packet_t*sp)
 {
 }
 

@@ -59,7 +59,7 @@ namespace mpxp {
 	    virtual off_t	tell() const;
 	    virtual void	close();
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
-	    virtual stream_type_e type() const;
+	    virtual Stream::type_e type() const;
 	    virtual off_t	start_pos() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
@@ -228,11 +228,11 @@ MPXP_Rc DvdNav_Stream_Interface::open(libinput_t*libinput,const char *_filename,
     }
     return MPXP_Ok;
 }
-stream_type_e DvdNav_Stream_Interface::type() const {
+Stream::type_e DvdNav_Stream_Interface::type() const {
     if(	dvdnav_is_domain_vmgm(dvdnav) ||
 	dvdnav_is_domain_vtsm(dvdnav) || menu_mode )
-		return STREAMTYPE_MENU|STREAMTYPE_SEEKABLE;
-    return STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM;
+		return Stream::Type_Menu|Stream::Type_Seekable;
+    return Stream::Type_Seekable|Stream::Type_Program;
 }
 off_t	DvdNav_Stream_Interface::start_pos() const { return cpos; }
 off_t	DvdNav_Stream_Interface::size() const { return -1; }

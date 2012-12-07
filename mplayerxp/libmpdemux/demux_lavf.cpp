@@ -129,19 +129,19 @@ static unsigned int mpxp_codec_get_tag(const mpxpCodecTag *tags, uint32_t id)
 }
 
 static int mpxp_read(any_t*opaque, unsigned char *buf, int size){
-    stream_t* stream=reinterpret_cast<stream_t*>(opaque);
+    Stream* stream=reinterpret_cast<Stream*>(opaque);
     int ret;
 
     if(stream_eof(stream)) //needed?
 	return -1;
     ret=stream_read(stream, buf, size);
 
-    MSG_DBG2("%d=mp_read(%p, %p, %d), eof:%d\n", ret, stream, buf, size, stream->eof);
+    MSG_DBG2("%d=mp_read(%p, %p, %d), eof:%d\n", ret, stream, buf, size, stream->eof());
     return ret;
 }
 
 static int64_t mpxp_seek(any_t*opaque, int64_t pos, int whence){
-    stream_t* stream=reinterpret_cast<stream_t*>(opaque);
+    Stream* stream=reinterpret_cast<Stream*>(opaque);
     MSG_DBG2("mpxp_seek(%p, %d, %d)\n", stream, (int)pos, whence);
     if(whence == SEEK_CUR)
 	pos +=stream_tell(stream);
@@ -150,7 +150,7 @@ static int64_t mpxp_seek(any_t*opaque, int64_t pos, int whence){
     else if(whence != SEEK_SET)
 	return -1;
 
-    if(pos<stream->end_pos() && stream->eof)
+    if(pos<stream->end_pos() && stream->eof())
 	stream_reset(stream);
     if(stream_seek(stream, pos)==0)
 	return -1;

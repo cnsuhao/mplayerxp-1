@@ -452,7 +452,7 @@ static int real_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 	len = stream_read_word(demuxer->stream);
     } else if ((version == 0x494e) && (len == 0x4458)) {
 	MSG_V("demux_real: Found INDX chunk. EOF.\n");
-	demuxer->stream->eof=1;
+	demuxer->stream->eof(1);
 	return 0;
     }
 

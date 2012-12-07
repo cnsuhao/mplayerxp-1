@@ -60,7 +60,7 @@ namespace mpxp {
 	    virtual off_t	tell() const;
 	    virtual void	close();
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
-	    virtual stream_type_e type() const;
+	    virtual Stream::type_e type() const;
 	    virtual off_t	start_pos() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
@@ -712,7 +712,7 @@ MPXP_Rc DvdRead_Stream_Interface::open(libinput_t*libinput,const char *filename,
     spos=0;
     return MPXP_Ok;
 }
-stream_type_e DvdRead_Stream_Interface::type() const { return STREAMTYPE_SEEKABLE|STREAMTYPE_PROGRAM; }
+Stream::type_e DvdRead_Stream_Interface::type() const { return Stream::Type_Seekable|Stream::Type_Program; }
 off_t	DvdRead_Stream_Interface::start_pos() const { return (off_t)cur_pack*2048; }
 off_t	DvdRead_Stream_Interface::size() const { return _end_pos; }
 off_t	DvdRead_Stream_Interface::sector_size() const { return 2048; }

@@ -592,7 +592,7 @@ static int demux_ogg_add_packet(Demuxer_Stream* ds,ogg_stream_t* os,int id,ogg_p
 /// otherwise try to get at least the final_granulepos
 static void demux_ogg_scan_stream(Demuxer* demuxer) {
   ogg_demuxer_t* ogg_d = static_cast<ogg_demuxer_t*>(demuxer->priv);
-  stream_t *s = demuxer->stream;
+  Stream *s = demuxer->stream;
   ogg_sync_state* sync = &ogg_d->sync;
   ogg_page* page= &ogg_d->page;
   ogg_stream_state* oss;
@@ -635,7 +635,7 @@ static void demux_ogg_scan_stream(Demuxer* demuxer) {
     if(np <= 0) { // We need more data
       char* buf = ogg_sync_buffer(sync,BLOCK_SIZE);
       int len = stream_read(s,buf,BLOCK_SIZE);
-      if(len == 0 && s->eof)
+      if(len == 0 && s->eof())
 	break;
       ogg_sync_wrote(sync,len);
       continue;
@@ -690,7 +690,7 @@ static void demux_ogg_scan_stream(Demuxer* demuxer) {
     if(np <= 0) { // We need more data
       char* buf = ogg_sync_buffer(sync,BLOCK_SIZE);
       int len = stream_read(s,buf,BLOCK_SIZE);
-      if(len == 0 && s->eof) {
+      if(len == 0 && s->eof()) {
 	MSG_ERR("EOF while trying to get the first page !!!!\n");
 	break;
       }
@@ -743,7 +743,7 @@ static void ogg_close(Demuxer* demuxer);
 /// Open an ogg physical stream
 static Opaque* ogg_open(Demuxer* demuxer) {
   ogg_demuxer_t* ogg_d;
-  stream_t *s;
+  Stream *s;
   char* buf;
   int np,s_no, n_audio = 0, n_video = 0;
   int audio_id = -1, video_id = -1, text_id = -1;
@@ -785,7 +785,7 @@ static Opaque* ogg_open(Demuxer* demuxer) {
       int len;
       buf = ogg_sync_buffer(sync,BLOCK_SIZE);
       len = stream_read(s,buf,BLOCK_SIZE);
-      if(len == 0 && s->eof) {
+      if(len == 0 && s->eof()) {
 	goto err_out;
       }
       ogg_sync_wrote(sync,len);
@@ -1090,7 +1090,7 @@ err_out:
 static int ogg_demux(Demuxer *d,Demuxer_Stream *__ds) {
     UNUSED(__ds);
   ogg_demuxer_t* ogg_d;
-  stream_t *s;
+  Stream *s;
   Demuxer_Stream *ds;
   ogg_sync_state* sync;
   ogg_stream_state* os;
@@ -1131,7 +1131,7 @@ static int ogg_demux(Demuxer *d,Demuxer_Stream *__ds) {
 	    /// We need more data
 	    buf = ogg_sync_buffer(sync,BLOCK_SIZE);
 	    len = stream_read(s,buf,BLOCK_SIZE);
-	    if(len == 0 && s->eof) {
+	    if(len == 0 && s->eof()) {
 	      MSG_DBG2("Ogg : Stream EOF !!!!\n");
 	      return 0;
 	    }
@@ -1274,7 +1274,7 @@ static void ogg_seek(Demuxer *demuxer,const seek_args_t* seeka) {
     if(np <= 0) { // We need more data
       char* buf = ogg_sync_buffer(sync,BLOCK_SIZE);
       int len = stream_read(demuxer->stream,buf,BLOCK_SIZE);
-       if(len == 0 && demuxer->stream->eof) {
+       if(len == 0 && demuxer->stream->eof()) {
 	MSG_ERR("EOF while trying to seek !!!!\n");
 	break;
       }

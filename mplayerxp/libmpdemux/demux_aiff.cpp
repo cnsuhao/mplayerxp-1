@@ -43,7 +43,7 @@ struct priv_t : public Opaque
 static MPXP_Rc aiff_probe(Demuxer* demuxer)
 {
   char buf[12];
-  stream_t *s;
+  Stream *s;
   s = demuxer->stream;
   stream_read(s,buf,12);
   if(*((uint32_t *)&buf[0])==mmioFOURCC('F','O','R','M') && *((uint32_t *)&buf[8])==mmioFOURCC('A','I','F','F')) return MPXP_Ok;
@@ -54,7 +54,7 @@ static MPXP_Rc aiff_probe(Demuxer* demuxer)
 static Opaque* aiff_open(Demuxer* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
-  stream_t *s;
+  Stream *s;
   priv_t *priv;
   char preamble[8];
   s = demuxer->stream;
@@ -205,7 +205,7 @@ static int aiff_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
 }
 
 static void aiff_seek(Demuxer *demuxer,const seek_args_t* seeka){
-  stream_t* s = demuxer->stream;
+  Stream* s = demuxer->stream;
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
 

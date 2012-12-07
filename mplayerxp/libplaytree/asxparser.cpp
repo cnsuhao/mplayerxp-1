@@ -489,7 +489,7 @@ static void __FASTCALL__ asx_parse_ref(ASX_Parser_t* parser, char** attribs, pla
 static play_tree_t* __FASTCALL__ asx_parse_entryref(libinput_t* libinput,ASX_Parser_t* parser,char* buffer,char** _attribs) {
   play_tree_t* pt;
   char *href;
-  stream_t* stream;
+  Stream* stream;
   play_tree_parser_t* ptp;
   int f;
   UNUSED(buffer);
@@ -502,14 +502,15 @@ static play_tree_t* __FASTCALL__ asx_parse_entryref(libinput_t* libinput,ASX_Par
     asx_warning_attrib_required(parser,"ENTRYREF" ,"HREF" );
     return NULL;
   }
-  stream=open_stream(libinput,href,&f,NULL);
-  if(!stream) {
+  stream=new(zeromem) Stream;
+  if(stream->open(libinput,href,&f,NULL)!=MPXP_Ok) {
     MSG_WARN("Can't open playlist %s\n",href);
+    delete stream;
     return NULL;
   }
-  if(!(stream->type() & STREAMTYPE_TEXT)) {
+  if(!(stream->type() & Stream::Type_Text)) {
     MSG_WARN("URL %s dont point to a playlist\n",href);
-    free_stream(stream);
+    delete stream;
     return NULL;
   }
 
@@ -520,7 +521,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entryref(libinput_t* libinput,ASX_Par
   pt = play_tree_parser_get_play_tree(libinput,ptp);
 
   play_tree_parser_free(ptp);
-  free_stream(stream);
+  delete stream;
 
   //MSG_INFO("Need to implement entryref\n");
 

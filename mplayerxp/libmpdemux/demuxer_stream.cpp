@@ -77,7 +77,7 @@ void Demuxer_Stream::add_packet(Demuxer_Packet* dp){
 	    dp->length(),dp->pts,(unsigned int)dp->pos,demuxer->audio->_packs,demuxer->video->_packs);
 }
 
-void Demuxer_Stream::read_packet(stream_t *stream,int len,float _pts,off_t _pos,dp_flags_e _flags){
+void Demuxer_Stream::read_packet(Stream *stream,int len,float _pts,off_t _pos,dp_flags_e _flags){
     Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
     len=stream_read(stream,dp->buffer(),len);
     dp->resize(len);

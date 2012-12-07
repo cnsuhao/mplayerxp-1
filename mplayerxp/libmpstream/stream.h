@@ -23,26 +23,6 @@ namespace mpxp {
 	MAX_STREAM_PROTOCOLS=10
     };
 
-    enum stream_type_e {
-	STREAMTYPE_Unknown	=0x00000000, /**< Stream resides on remote filesystem (doesn't provide seek functionality). */
-	STREAMTYPE_STREAM	=0x00000001, /**< Stream resides on remote filesystem (doesn't provide seek functionality). */
-	STREAMTYPE_SEEKABLE	=0x00000002, /**< Stream is seekable (resides on local filesystem). */
-	STREAMTYPE_MEMORY	=0x00000004, /**< Stream is memory cache (doesn't provide seek/read functionality). */
-	STREAMTYPE_TEXT		=0x00000008, /**< Stream is non-media stream (redirector, playlist, ...). */
-	STREAMTYPE_DS		=0x00000010, /**< Stream is mapped on the other demuxer. */
-	STREAMTYPE_RAWAUDIO	=0x00000020, /**< Stream contains raw audio without headers. */
-	STREAMTYPE_RAWVIDEO	=0x00000040, /**< Stream contains raw video without headers. */
-	STREAMTYPE_PROGRAM	=0x00000080, /**< Stream contains program (non-media) headers (VCD,DVD,http,...) */
-	STREAMTYPE_MENU		=0x00000100, /**< Stream contains DVD menu... */
-    };
-    inline stream_type_e operator~(stream_type_e a) { return static_cast<stream_type_e>(~static_cast<unsigned>(a)); }
-    inline stream_type_e operator|(stream_type_e a, stream_type_e b) { return static_cast<stream_type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
-    inline stream_type_e operator&(stream_type_e a, stream_type_e b) { return static_cast<stream_type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
-    inline stream_type_e operator^(stream_type_e a, stream_type_e b) { return static_cast<stream_type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline stream_type_e operator|=(stream_type_e a, stream_type_e b) { return (a=static_cast<stream_type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline stream_type_e operator&=(stream_type_e a, stream_type_e b) { return (a=static_cast<stream_type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline stream_type_e operator^=(stream_type_e a, stream_type_e b) { return (a=static_cast<stream_type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
-
     /** Stream packet description */
     struct stream_packet_t {
 	int	type;	/**< 0 - means raw data; other values depends on stream type */
@@ -50,8 +30,8 @@ namespace mpxp {
 	int len;	/**< length of buffer */
     };
 
-    struct stream_t;
-    typedef void (* __FASTCALL__ stream_callback)(stream_t *s,const stream_packet_t*);
+    struct Stream;
+    typedef void (* __FASTCALL__ stream_callback)(Stream *s,const stream_packet_t*);
 
     enum {
 	STREAM_PIN=RND_NUMBER2+RND_CHAR3
@@ -62,28 +42,45 @@ namespace mpxp {
     class Stream_Interface;
     struct stream_interface_info_t;
     /** Stream description */
-    struct stream_t : public Opaque {
+    struct Stream : public Opaque {
 	public:
-	    stream_t():_type(STREAMTYPE_Unknown) {}
-	    virtual ~stream_t() {}
+	    enum type_e {
+		Type_Unknown	=0x00000000, /**< Stream resides on remote filesystem (doesn't provide seek functionality). */
+		Type_Stream	=0x00000001, /**< Stream resides on remote filesystem (doesn't provide seek functionality). */
+		Type_Seekable	=0x00000002, /**< Stream is seekable (resides on local filesystem). */
+		Type_Memory	=0x00000004, /**< Stream is memory cache (doesn't provide seek/read functionality). */
+		Type_Text	=0x00000008, /**< Stream is non-media stream (redirector, playlist, ...). */
+		Type_DS		=0x00000010, /**< Stream is mapped on the other demuxer. */
+		Type_RawAudio	=0x00000020, /**< Stream contains raw audio without headers. */
+		Type_RawVideo	=0x00000040, /**< Stream contains raw video without headers. */
+		Type_Program	=0x00000080, /**< Stream contains program (non-media) headers (VCD,DVD,http,...) */
+		Type_Menu	=0x00000100, /**< Stream contains DVD menu... */
+	    };
+	    Stream(type_e type=Stream::Type_Unknown);
+	    virtual ~Stream();
+
+	    MPXP_Rc		open(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
+	    void		reset();
+	    void		type(type_e);/**< assign new propertie for the stream (see STREAMTYPE_ for detail) */
+	    type_e		type();		/**< properties of the stream (see STREAMTYPE_ for detail) */
+	    off_t		pos() const;	/**< SOF offset from begin of stream */
+	    void		pos(off_t);	/**< SOF offset from begin of stream */
+	    int			eof() const;	/**< indicates EOF */
+	    void		eof(int);	/**< set EOF */
+	    off_t		start_pos() const;	/**< real start of stream (without internet's headers) */
+	    off_t		end_pos() const;	/**< real end of stream (media may be not fully filled) */
+	    unsigned		sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
+	    float		stream_pts() const;	/**< PTS correction for idiotics DVD's discontinuities */
 
 	    char		antiviral_hole[RND_CHAR3];
 	    unsigned		pin;		/**< personal identification number */
-	    off_t		pos;		/**< SOF offset from begin of stream */
-	    int			eof;		/**< indicates EOF */
-	    void		type(stream_type_e);/**< assign new propertie for the stream (see STREAMTYPE_ for detail) */
-	    stream_type_e	type();		/**< properties of the stream (see STREAMTYPE_ for detail) */
 	    int			file_format;	/**< detected file format (by http:// protocol for example) */
 	    unsigned int	buf_pos; /**< position whitin of small cache */
 	    unsigned int	buf_len; /**< length of small cache */
 	    unsigned char*	buffer;/**< buffer of small cache */
-	    off_t		start_pos() const;	/**< real start of stream (without internet's headers) */
-	    off_t		end_pos() const;	/**< real end of stream (media may be not fully filled) */
-	    unsigned		sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
 	    Demuxer*		demuxer; /* parent demuxer */
 	    struct cache_vars_s*cache_data;	/**< large cache */
 	    Opaque*		priv;	/**< private data used by stream driver */
-	    float		stream_pts() const;	/**< PTS correction for idiotics DVD's discontinuities */
 #ifdef HAVE_STREAMING
 	    networking_t*	networking; /**< callback for internet networking control */
 #endif
@@ -91,48 +88,53 @@ namespace mpxp {
 	    const stream_interface_info_t* driver_info;
 	    stream_callback	event_handler;  /**< callback for streams which provide events */
 	private:
-	    stream_type_e	_type;
-    } __attribute__ ((packed));
+	    type_e	_type;
+	    off_t	_pos;		/**< SOF offset from begin of stream */
+	    int		_eof;		/**< indicates EOF */
+    };
+    inline Stream::type_e operator~(Stream::type_e a) { return static_cast<Stream::type_e>(~static_cast<unsigned>(a)); }
+    inline Stream::type_e operator|(Stream::type_e a, Stream::type_e b) { return static_cast<Stream::type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
+    inline Stream::type_e operator&(Stream::type_e a, Stream::type_e b) { return static_cast<Stream::type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
+    inline Stream::type_e operator^(Stream::type_e a, Stream::type_e b) { return static_cast<Stream::type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
+    inline Stream::type_e operator|=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline Stream::type_e operator&=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline Stream::type_e operator^=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
-    int stream_enable_cache(stream_t *stream,libinput_t* libinput,int size,int min,int prefill);
-    void stream_disable_cache(stream_t *stream);
+    int stream_enable_cache(Stream *stream,libinput_t* libinput,int size,int min,int prefill);
+    void stream_disable_cache(Stream *stream);
 
 /* this block describes interface to non-cache stream functions */
-    extern int __FASTCALL__ nc_stream_read_cbuffer(stream_t *s);
-    extern int __FASTCALL__ nc_stream_seek_long(stream_t *s,off_t pos);
-    extern void __FASTCALL__ nc_stream_reset(stream_t *s);
-    extern int __FASTCALL__ nc_stream_read_char(stream_t *s);
-    extern int __FASTCALL__ nc_stream_read(stream_t *s,any_t* mem,int total);
-    extern off_t __FASTCALL__ nc_stream_tell(stream_t *s);
-    extern int __FASTCALL__ nc_stream_seek(stream_t *s,off_t pos);
-    extern int __FASTCALL__ nc_stream_skip(stream_t *s,off_t len);
+    extern int __FASTCALL__ nc_stream_read_cbuffer(Stream *s);
+    extern int __FASTCALL__ nc_stream_seek_long(Stream *s,off_t pos);
+    extern int __FASTCALL__ nc_stream_read_char(Stream *s);
+    extern int __FASTCALL__ nc_stream_read(Stream *s,any_t* mem,int total);
+    extern off_t __FASTCALL__ nc_stream_tell(Stream *s);
+    extern int __FASTCALL__ nc_stream_seek(Stream *s,off_t pos);
+    extern int __FASTCALL__ nc_stream_skip(Stream *s,off_t len);
 
-    extern MPXP_Rc __FASTCALL__ nc_stream_control(const stream_t *s,unsigned cmd,any_t*param);
+    extern MPXP_Rc __FASTCALL__ nc_stream_control(const Stream *s,unsigned cmd,any_t*param);
 
 /* this block describes interface to cache/non-cache stream functions */
-    extern int __FASTCALL__ stream_read_char(stream_t *s);
-    extern int __FASTCALL__ stream_read(stream_t *s,any_t* mem,int total);
-    extern off_t __FASTCALL__ stream_tell(stream_t *s);
-    extern int __FASTCALL__ stream_seek(stream_t *s,off_t pos);
-    extern int __FASTCALL__ stream_skip(stream_t *s,off_t len);
-    extern int __FASTCALL__ stream_eof(stream_t *s);
-    extern void __FASTCALL__ stream_set_eof(stream_t *s,int eof);
-    extern MPXP_Rc __FASTCALL__ stream_control(const stream_t *s,unsigned cmd,any_t*param);
+    extern int __FASTCALL__ stream_read_char(Stream *s);
+    extern int __FASTCALL__ stream_read(Stream *s,any_t* mem,int total);
+    extern off_t __FASTCALL__ stream_tell(Stream *s);
+    extern int __FASTCALL__ stream_seek(Stream *s,off_t pos);
+    extern int __FASTCALL__ stream_skip(Stream *s,off_t len);
+    extern int __FASTCALL__ stream_eof(Stream *s);
+    extern void __FASTCALL__ stream_set_eof(Stream *s,int eof);
+    extern MPXP_Rc __FASTCALL__ stream_control(const Stream *s,unsigned cmd,any_t*param);
 
-    void __FASTCALL__ stream_reset(stream_t *s);
-    stream_t* __FASTCALL__ new_stream(stream_type_e type);
-    void __FASTCALL__ free_stream(stream_t *s);
-    stream_t* __FASTCALL__ new_memory_stream(const unsigned char* data,int len);
-    stream_t* __FASTCALL__ open_stream(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
+    void __FASTCALL__ stream_reset(Stream *s);
+    Stream* __FASTCALL__ new_memory_stream(const unsigned char* data,int len);
 
-    extern unsigned int __FASTCALL__ stream_read_word(stream_t *s);
-    extern unsigned int __FASTCALL__ stream_read_dword(stream_t *s);
-    extern unsigned int __FASTCALL__ stream_read_word_le(stream_t *s);
-    extern unsigned int __FASTCALL__ stream_read_dword_le(stream_t *s);
-    extern uint64_t     __FASTCALL__ stream_read_qword(stream_t *s);
-    extern uint64_t     __FASTCALL__ stream_read_qword_le(stream_t *s);
-    extern unsigned int __FASTCALL__ stream_read_int24(stream_t *s);
-    static inline uint32_t stream_read_fourcc(stream_t* s) { return stream_read_dword_le(s); }
+    extern unsigned int __FASTCALL__ stream_read_word(Stream *s);
+    extern unsigned int __FASTCALL__ stream_read_dword(Stream *s);
+    extern unsigned int __FASTCALL__ stream_read_word_le(Stream *s);
+    extern unsigned int __FASTCALL__ stream_read_dword_le(Stream *s);
+    extern uint64_t     __FASTCALL__ stream_read_qword(Stream *s);
+    extern uint64_t     __FASTCALL__ stream_read_qword_le(Stream *s);
+    extern unsigned int __FASTCALL__ stream_read_int24(Stream *s);
+    static inline uint32_t stream_read_fourcc(Stream* s) { return stream_read_dword_le(s); }
 
 /*
     Stream control definitions

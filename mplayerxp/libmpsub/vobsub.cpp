@@ -74,7 +74,7 @@ static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, FILE *stream)
  **********************************************************************/
 
 typedef struct {
-    stream_t *stream;
+    Stream *stream;
     unsigned int pts;
     int aid;
     unsigned char *packet;
@@ -97,7 +97,7 @@ static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 	fd = open(filename, O_RDONLY);
 	err = fd < 0;
 	if (!err) {
-	    res->stream = new_stream(STREAMTYPE_SEEKABLE);
+	    res->stream = new(zeromem) Stream(Stream::Type_Seekable);
 	    res->fd = fd;
 	    err = res->stream == NULL;
 	    if (err)
@@ -117,7 +117,7 @@ static void __FASTCALL__ mpeg_free(mpeg_t *mpeg)
     if (mpeg->packet)
 	delete mpeg->packet;
     fd = mpeg->fd;
-    free_stream(mpeg->stream);
+    delete mpeg->stream;
     close(fd);
     delete mpeg;
 }

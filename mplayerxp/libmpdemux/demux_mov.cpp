@@ -1327,7 +1327,7 @@ quit_vorbis_block:
 	    unsigned char* moov_buf=new unsigned char[moov_sz+16];
 	    int zret;
 	    z_stream zstrm;
-	    stream_t* backup;
+	    Stream* backup;
 
 	    if (moov_sz > std::numeric_limits<size_t>::max() - 16) {
 	      MSG_ERR( "Invalid cmvd atom size %d\n", moov_sz);

@@ -114,7 +114,7 @@ void libmpdemux_register_options(m_config_t* cfg)
     }
 }
 
-void Demuxer::_init(stream_t *_stream,int a_id,int v_id,int s_id)
+void Demuxer::_init(Stream *_stream,int a_id,int v_id,int s_id)
 {
   stream=_stream;
   movi_start=_stream->start_pos();
@@ -138,7 +138,7 @@ Demuxer::Demuxer()
   pin=DEMUX_PIN;
 }
 
-Demuxer::Demuxer(stream_t *_stream,int a_id,int v_id,int s_id)
+Demuxer::Demuxer(Stream *_stream,int a_id,int v_id,int s_id)
 	:demuxer_priv(new(zeromem) demuxer_priv_t),
 	_info(new(zeromem) Demuxer_Info)
 {
@@ -364,8 +364,8 @@ force_driver:
     return MPXP_Ok;
 }
 
-Demuxer* Demuxer::open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
-  stream_t *as = NULL,*ss = NULL;
+Demuxer* Demuxer::open(Stream *vs,int audio_id,int video_id,int dvdsub_id){
+  Stream *as = NULL,*ss = NULL;
   Demuxer *vd,*ad = NULL,*sd = NULL;
   int afmt = 0,sfmt = 0;
   libinput_t* libinput=NULL;
@@ -374,16 +374,18 @@ Demuxer* Demuxer::open(stream_t *vs,int audio_id,int video_id,int dvdsub_id){
 #endif
 
   if(demux_conf.audio_stream) {
-    as = open_stream(libinput,demux_conf.audio_stream,&afmt,NULL);
-    if(!as) {
+    as = new(zeromem) Stream();
+    if(as->open(libinput,demux_conf.audio_stream,&afmt,NULL)!=MPXP_Ok) {
       MSG_ERR("Can't open audio stream: %s\n",demux_conf.audio_stream);
+      delete as;
       return NULL;
     }
   }
   if(demux_conf.sub_stream) {
-    ss = open_stream(libinput,demux_conf.sub_stream,&sfmt,NULL);
-    if(!ss) {
+    ss = new(zeromem) Stream();
+    if(ss->open(libinput,demux_conf.sub_stream,&sfmt,NULL)!=MPXP_Ok) {
       MSG_ERR("Can't open subtitles stream: %s\n",demux_conf.sub_stream);
+      delete ss;
       return NULL;
     }
   }
@@ -423,7 +425,7 @@ int Demuxer::seek(const seek_args_t* seeka){
     demuxer_priv_t& dpriv = static_cast<demuxer_priv_t&>(*demuxer_priv);
     sh_audio_t *sh_audio=reinterpret_cast<sh_audio_t*>(audio->sh);
 
-    if(!(stream->type()&STREAMTYPE_SEEKABLE))
+    if(!(stream->type()&Stream::Type_Seekable))
     {
 	MSG_WARN("Stream is not seekable\n");
 	return 0;

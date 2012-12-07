@@ -340,7 +340,7 @@ parse_textplain(play_tree_parser_t* p) {
   return entry;
 }
 
-play_tree_t* parse_playtree(libinput_t*libinput,stream_t * stream) {
+play_tree_t* parse_playtree(libinput_t*libinput,Stream * stream) {
   play_tree_parser_t* p;
   play_tree_t* ret;
 
@@ -360,22 +360,23 @@ play_tree_t* parse_playtree(libinput_t*libinput,stream_t * stream) {
 }
 
 play_tree_t* parse_playlist_file(libinput_t*libinput,const char* file) {
-  stream_t *stream;
+  Stream *stream;
   play_tree_t* ret;
   int ff;
 
   MSG_V("Parsing playlist file %s...\n",file);
   ff=0;
-  stream = open_stream(libinput,file,&ff,NULL);
-  stream->type(STREAMTYPE_TEXT);
+  stream = new(zeromem) Stream;
+  stream->open(libinput,file,&ff,NULL);
+  stream->type(Stream::Type_Text);
   ret = parse_playtree(libinput,stream);
-  free_stream(stream);
+  delete stream;
 
   return ret;
 
 }
 
-play_tree_parser_t* play_tree_parser_new(stream_t * stream,int deep) {
+play_tree_parser_t* play_tree_parser_new(Stream * stream,int deep) {
   play_tree_parser_t* p;
 
   p = (play_tree_parser_t*)mp_calloc(1,sizeof(play_tree_parser_t));

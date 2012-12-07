@@ -36,7 +36,7 @@ static const config_t rawaudio_conf[] = {
 
 static MPXP_Rc rawaudio_probe(Demuxer* demuxer)
 {
-    if(demuxer->stream->type() & STREAMTYPE_RAWAUDIO || use_rawaudio) {
+    if(demuxer->stream->type() & Stream::Type_RawAudio || use_rawaudio) {
 	demuxer->file_format=Demuxer::Type_RAWAUDIO;
 	return MPXP_Ok;
     }
@@ -71,7 +71,7 @@ static Opaque* rawaudio_open(Demuxer* demuxer) {
   demuxer->audio->sh = sh_audio;
   demuxer->audio->id = 0;
   sh_audio->ds = demuxer->audio;
-  if(!(demuxer->stream->type() & STREAMTYPE_SEEKABLE)) demuxer->flags &= ~Demuxer::Seekable;
+  if(!(demuxer->stream->type() & Stream::Type_Seekable)) demuxer->flags &= ~Demuxer::Seekable;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
@@ -96,7 +96,7 @@ static int rawaudio_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
 }
 
 static void rawaudio_seek(Demuxer *demuxer,const seek_args_t* seeka){
-  stream_t* s = demuxer->stream;
+  Stream* s = demuxer->stream;
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
 

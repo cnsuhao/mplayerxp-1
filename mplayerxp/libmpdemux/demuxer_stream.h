@@ -9,14 +9,14 @@ using namespace mpxp;
 
 namespace mpxp {
     struct Demuxer;
-    struct stream_t;
+    struct Stream;
     class Demuxer_Stream : public Opaque {
 	public:
 	    Demuxer_Stream(Demuxer *demuxer,int id);
 	    virtual ~Demuxer_Stream();
 
 	    void	add_packet(Demuxer_Packet* dp);
-	    void	read_packet(stream_t *stream,int len,float pts,off_t pos,dp_flags_e flags);
+	    void	read_packet(Stream *stream,int len,float pts,off_t pos,dp_flags_e flags);
 	    int		read_data(unsigned char* mem,int len);
 	    void	free_packs();
 	    void	free_packs_until_pts(float pts);

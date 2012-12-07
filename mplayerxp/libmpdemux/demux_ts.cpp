@@ -392,7 +392,7 @@ static MPXP_Rc ts_probe(Demuxer * demuxer)
 	while(((c=stream_read_char(demuxer->stream)) != 0x47)
 		&& (c >= 0)
 		&& (i < MAX_CHECK_SIZE)
-		&& ! demuxer->stream->eof
+		&& ! demuxer->stream->eof()
 	) i++;
 
 
@@ -652,7 +652,7 @@ static off_t ts_detect_streams(Demuxer *demuxer, tsdemux_init_t *param)
 	while(1)
 	{
 		pos = stream_tell(demuxer->stream);
-		if(pos > end_pos || demuxer->stream->eof)
+		if(pos > end_pos || demuxer->stream->eof())
 			break;
 
 		if(ts_parse(demuxer, &es, tmp, 1))
@@ -883,7 +883,7 @@ static off_t ts_detect_streams(Demuxer *demuxer, tsdemux_init_t *param)
 
 	if(video_found || audio_found)
 	{
-		if(demuxer->stream->eof && (ret == 0))
+		if(demuxer->stream->eof() && (ret == 0))
 			ret = init_pos;
 		MSG_INFO( " PROGRAM N. %d\n", param->prog);
 	}
@@ -1484,13 +1484,13 @@ static int pes_parse2(unsigned char *buf, uint16_t packet_len, ES_stream_t *es, 
 
 
 
-static int ts_sync(stream_t *stream)
+static int ts_sync(Stream *stream)
 {
 	int c=0;
 
 	MSG_DBG2( "TS_SYNC \n");
 
-	while(((c=stream_read_char(stream)) != 0x47) && ! stream->eof);
+	while(((c=stream_read_char(stream)) != 0x47) && ! stream->eof());
 
 	if(c == 0x47)
 		return c;
@@ -2588,7 +2588,7 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 	int buf_size, is_start, pid, base;
 	int len, cc, cc_ok, afc, retv = 0, is_video, is_audio, is_sub;
 	ts_priv_t * priv = static_cast<ts_priv_t*>(demuxer->priv);
-	stream_t *stream = demuxer->stream;
+	Stream *stream = demuxer->stream;
 	unsigned char *p;
 	Demuxer_Stream *ds = NULL;
 	Demuxer_Packet **dp = NULL;

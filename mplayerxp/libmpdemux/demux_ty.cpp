@@ -122,7 +122,7 @@ static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
    stream_seek(demux->stream, 0);
 
    MSG_DBG3("Dumping tar contents\n" );
-   while (!demux->stream->eof)
+   while (!demux->stream->eof())
    {
       char    header[ 512 ];
       char    *name;
@@ -360,7 +360,7 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 #endif
    MSG_DBG3( "ty:ty processing\n" );
 
-   if( demux->stream->eof ) return 0;
+   if( demux->stream->eof()) return 0;
 
    // ======================================================================
    // If we haven't figured out the size of the stream, let's do so
@@ -465,7 +465,7 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 
    if ( tivo->size > 0 && stream_tell( demux->stream ) > tivo->size )
    {
-	 demux->stream->eof = 1;
+	 demux->stream->eof(1);
 	 return 0;
    }
 

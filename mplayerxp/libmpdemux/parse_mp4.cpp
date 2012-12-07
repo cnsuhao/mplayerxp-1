@@ -18,7 +18,7 @@ using namespace mpxp;
 
 #define freereturn(a,b) delete a; return b
 
-int mp4_read_descr_len(stream_t *s) {
+int mp4_read_descr_len(Stream *s) {
   uint8_t b;
   uint8_t numBytes = 0;
   uint32_t length = 0;
@@ -35,7 +35,7 @@ int mp4_read_descr_len(stream_t *s) {
 /* parse the data part of MP4 esds atoms */
 int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   /* create memory stream from data */
-  stream_t *s = new_memory_stream(data, datalen);
+  Stream *s = new_memory_stream(data, datalen);
   uint8_t len;
 #ifdef MP4_DUMPATOM
   {int i;

@@ -31,7 +31,7 @@ namespace mpxp {
 	    virtual off_t	tell() const;
 	    virtual void	close();
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
-	    virtual stream_type_e type() const;
+	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
 	private:
@@ -64,7 +64,7 @@ MPXP_Rc File_Stream_Interface::open(libinput_t*libinput,const char *filename,uns
     return MPXP_Ok;
 }
 
-stream_type_e File_Stream_Interface::type() const { return (end_pos==-1)?STREAMTYPE_STREAM:STREAMTYPE_SEEKABLE; }
+Stream::type_e File_Stream_Interface::type() const { return (end_pos==-1)?Stream::Type_Stream:Stream::Type_Seekable; }
 off_t	File_Stream_Interface::size() const { return end_pos; }
 off_t	File_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
 

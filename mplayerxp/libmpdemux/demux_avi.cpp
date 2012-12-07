@@ -1141,7 +1141,7 @@ static Opaque* avi_open(Demuxer* demuxer){
     demuxer->priv=priv;
 
     //---- AVI header:
-    read_avi_header(demuxer,(demuxer->stream->type()&STREAMTYPE_SEEKABLE)?index_mode:-2);
+    read_avi_header(demuxer,(demuxer->stream->type()&Stream::Type_Seekable)?index_mode:-2);
 
   if(demuxer->audio->id>=0 && !demuxer->get_sh_audio(demuxer->audio->id)){
       MSG_WARN("AVI: invalid audio stream ID: %d - ignoring (nosound)\n",demuxer->audio->id);

@@ -48,7 +48,7 @@ namespace mpxp {
     struct Demuxer : public Opaque {
 	public:
 	    Demuxer();
-	    Demuxer(stream_t *stream,int a_id,int v_id,int s_id);
+	    Demuxer(Stream *stream,int a_id,int v_id,int s_id);
 	    virtual ~Demuxer();
 
 	    enum demuxer_type_e {
@@ -101,7 +101,7 @@ namespace mpxp {
 		Switch_Subs	=3
 	    };
 
-	    static Demuxer*		open(stream_t *stream,int aid,int vid,int sid);
+	    static Demuxer*		open(Stream* stream,int aid,int vid,int sid);
 
 	    virtual MPXP_Rc		open();
 	    virtual int			demux(Demuxer_Stream* ds);
@@ -126,7 +126,7 @@ namespace mpxp {
 
 	    char		antiviral_hole[RND_CHAR3];
 	    unsigned		pin;		/**< personal identification number */
-	    stream_t*		stream;		/**< stream for movie reading */
+	    Stream*		stream;		/**< stream for movie reading */
 	    Demuxer_Stream*	audio;		/**< audio buffer/demuxer */
 	    Demuxer_Stream*	video;		/**< video buffer/demuxer */
 	    Demuxer_Stream*	sub;		/**< DVD's subtitle buffer/demuxer */
@@ -139,7 +139,7 @@ namespace mpxp {
 	    int			synced;		/**< indicates stream synchronisation. TODO: mpg->priv */
 	    Opaque*		priv;		/**< private data of demuxer's driver.*/
 	private:
-	    void _init(stream_t *_stream,int a_id,int v_id,int s_id);
+	    void _init(Stream *_stream,int a_id,int v_id,int s_id);
 
 	    LocalPtr<Opaque>		demuxer_priv;
 	    LocalPtr<Demuxer_Info>	_info;	/**< human-readable info from stream/movie (like movie name,author,duration)*/
@@ -153,7 +153,7 @@ namespace mpxp {
     inline Demuxer::demuxer_flags_e operator^=(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     // This is defined here because demux_stream_t ins't defined in stream.h
-    stream_t* __FASTCALL__	new_ds_stream(Demuxer_Stream *ds);
+    Stream* __FASTCALL__	new_ds_stream(Demuxer_Stream *ds);
     Demuxer*			new_demuxers_demuxer(Demuxer* vd, Demuxer* ad, Demuxer* sd);
 }// namespace mpxp
 #endif

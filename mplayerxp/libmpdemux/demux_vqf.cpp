@@ -42,7 +42,7 @@ typedef struct{
 static MPXP_Rc vqf_probe(Demuxer* demuxer)
 {
     char buf[12];
-    stream_t *s;
+    Stream *s;
     s = demuxer->stream;
     stream_read(s,buf,12);
     if(memcmp(buf,"TWIN",4)==0) return MPXP_Ok; /*version: 97012000*/
@@ -52,7 +52,7 @@ static MPXP_Rc vqf_probe(Demuxer* demuxer)
 static Opaque* vqf_open(Demuxer* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
-  stream_t *s;
+  Stream *s;
   headerInfo *hi;
 
   s = demuxer->stream;
@@ -210,7 +210,7 @@ static int vqf_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
 }
 
 static void vqf_seek(Demuxer *demuxer,const seek_args_t* seeka){
-  stream_t* s = demuxer->stream;
+  Stream* s = demuxer->stream;
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
 

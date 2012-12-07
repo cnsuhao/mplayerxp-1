@@ -52,7 +52,7 @@ namespace mpxp {
 		**/
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param) = 0;
 		/** Return type of stream */
-	    virtual stream_type_e	type() const = 0;
+	    virtual Stream::type_e	type() const = 0;
 		/** Return length of stream or -1 - if unknown */
 	    virtual off_t		start_pos() const { return 0; }
 		/** Return length of stream or -1 - if unknown */

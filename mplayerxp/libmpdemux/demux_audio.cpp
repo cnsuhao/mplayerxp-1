@@ -431,7 +431,7 @@ static void find_next_mp3_hdr(Demuxer *demuxer,uint8_t *hdr) {
 static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
 {
     unsigned n;
-    stream_t *s=demuxer->stream;
+    Stream *s=demuxer->stream;
     for(n = 0; n < 5 ; n++) {
       MSG_DBG2("read_mp3v1_tags\n");
       pos = mp_decode_mp3_header(hdr,NULL,NULL,NULL,NULL);
@@ -486,7 +486,7 @@ static int read_ac3_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bitr
 {
     uint8_t b[8];
     unsigned n;
-    stream_t *s=demuxer->stream;
+    Stream *s=demuxer->stream;
     demuxer->movi_end = s->end_pos();
     memcpy(b,hdr,4);
     stream_seek(s,pos+4);
@@ -510,7 +510,7 @@ static int read_ddca_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bit
 {
     uint8_t b[12];
     unsigned n;
-    stream_t *s=demuxer->stream;
+    Stream *s=demuxer->stream;
     demuxer->movi_end = s->end_pos();
     memcpy(b,hdr,4);
     stream_seek(s,pos+4);
@@ -548,7 +548,7 @@ static int read_ddca_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bit
 static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
-    stream_t *s=demuxer->stream;
+    Stream *s=demuxer->stream;
     if(	flags==ID3V22_ZERO_FLAG ||
 	flags==ID3V22_UNSYNCH_FLAG ||
 	flags==ID3V22_COMPRESS_FLAG) return 0;
@@ -613,7 +613,7 @@ static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
-    stream_t *s=demuxer->stream;
+    Stream *s=demuxer->stream;
     if(	flags==ID3V23_ZERO_FLAG ||
 	flags==ID3V23_UNSYNCH_FLAG) return 0;
     if( flags==ID3V23_EXT_HEADER_FLAG )
@@ -689,7 +689,7 @@ static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 static int read_id3v24_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
-    stream_t *s=demuxer->stream;
+    Stream *s=demuxer->stream;
     if(	flags==ID3V24_ZERO_FLAG ||
 	flags==ID3V24_UNSYNCH_FLAG) return 0;
     if( flags==ID3V24_EXT_HEADER_FLAG )
@@ -744,7 +744,7 @@ static int read_id3v24_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 static int read_id3v2_tags(Demuxer *demuxer)
 {
     char buf[4];
-    stream_t* s=demuxer->stream;
+    Stream* s=demuxer->stream;
     unsigned vers,rev,flags,hsize;
     stream_seek(s,3); /* skip 'ID3' */
     vers=stream_read_char(s);
@@ -767,7 +767,7 @@ static int audio_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned
   int retval=0;
   uint32_t fcc,fcc1,fmt;
   uint8_t *p,b[32];
-  stream_t *s;
+  Stream *s;
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   stream_seek(s,fptr);
@@ -803,7 +803,7 @@ static int audio_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned
 static MPXP_Rc audio_probe(Demuxer* demuxer)
 {
   uint32_t fcc1,fcc2;
-  stream_t *s;
+  Stream *s;
   uint8_t *p;
   s = demuxer->stream;
   fcc1=stream_read_dword(s);
@@ -829,7 +829,7 @@ static MPXP_Rc audio_probe(Demuxer* demuxer)
 #define FRAMES_AND_BYTES (FRAMES_FLAG | BYTES_FLAG)
 #define MPG_MD_MONO     3
 
-static void  Xing_test(stream_t *s,uint8_t *hdr,da_priv_t *priv)
+static void  Xing_test(Stream *s,uint8_t *hdr,da_priv_t *priv)
 {
     off_t fpos;
     unsigned mpeg1, mode, sr_index;
@@ -865,7 +865,7 @@ static void  Xing_test(stream_t *s,uint8_t *hdr,da_priv_t *priv)
 extern const demuxer_driver_t demux_audio;
 
 static Opaque* audio_open(Demuxer* demuxer) {
-  stream_t *s;
+  Stream *s;
   sh_audio_t* sh_audio;
   uint8_t hdr[HDR_SIZE];
   uint32_t fcc,fcc2;
@@ -1375,7 +1375,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
   return priv;
 }
 
-static uint32_t mpc_get_bits(da_priv_t* priv, stream_t* s, int bits) {
+static uint32_t mpc_get_bits(da_priv_t* priv, Stream* s, int bits) {
   uint32_t out = priv->dword;
   uint32_t mask = (1 << bits) - 1;
   priv->pos += bits;
@@ -1398,7 +1398,7 @@ static int audio_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   sh_audio_t* sh_audio;
   Demuxer* demux;
   da_priv_t* priv;
-  stream_t* s;
+  Stream* s;
   int frmt,seof;
 #ifdef MP_DEBUG
   assert(ds != NULL);
@@ -1552,7 +1552,7 @@ static int audio_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
     s = demux->stream;
     sh_audio = reinterpret_cast<sh_audio_t*>(ds->sh);
 
-    if (s->eof) return 0;
+    if (s->eof()) return 0;
 
     bit_len = mpc_get_bits(priv, s, 20);
     Demuxer_Packet* dp=new(zeromem) Demuxer_Packet((bit_len + 7) / 8);
@@ -1644,7 +1644,7 @@ static void high_res_ddca_seek(Demuxer *demuxer,float _time) {
 
 static void audio_seek(Demuxer *demuxer,const seek_args_t* seeka){
   sh_audio_t* sh_audio;
-  stream_t* s;
+  Stream* s;
   int base,pos,frmt;
   float len;
   da_priv_t* priv;
@@ -1672,7 +1672,7 @@ static void audio_seek(Demuxer *demuxer,const seek_args_t* seeka){
 	}
 	mpc_get_bits(priv, s, bit_len % 32);
 	priv->last_pts += priv->pts_per_packet;
-	if (s->eof) break;
+	if (s->eof()) break;
     }
     return;
   }

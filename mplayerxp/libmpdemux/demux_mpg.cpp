@@ -79,7 +79,7 @@ static struct mpg_stat_s {
  int num_mp3audio_packets;
 }mpg_stat;
 
-static unsigned int read_mpeg_timestamp(stream_t *s,int c){
+static unsigned int read_mpeg_timestamp(Stream *s,int c){
   int d,e;
   unsigned int pts;
   d=stream_read_word(s);
@@ -561,7 +561,7 @@ static void mpgps_seek(Demuxer *demuxer,const seek_args_t* seeka){
     }
 
 	if(newpos<demuxer->movi_start){
-	    if(!(demuxer->stream->type()&STREAMTYPE_PROGRAM)) demuxer->movi_start=0; // for VCD
+	    if(!(demuxer->stream->type()&Stream::Type_Program)) demuxer->movi_start=0; // for VCD
 	    if(newpos<demuxer->movi_start) newpos=demuxer->movi_start;
 	}
 
