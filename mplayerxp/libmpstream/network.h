@@ -51,7 +51,7 @@ struct networking_t {
 };
 
 extern void fixup_network_stream_cache(networking_t *s);
-extern int networking_start(Tcp& fd,networking_t *n, URL_t *url);
+extern MPXP_Rc networking_start(Tcp& fd,networking_t *n, URL_t *url);
 extern int networking_bufferize(networking_t *networking,unsigned char *buffer, int size);
 extern networking_t *new_networking(libinput_t* libinput);
 extern void free_networking( networking_t *networking );

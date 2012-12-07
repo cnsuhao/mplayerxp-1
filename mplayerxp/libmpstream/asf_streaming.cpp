@@ -51,7 +51,7 @@ static inline uint32_t ASF_LOAD_GUID_PREFIX(uint8_t* guid) { return bswap_32(*(u
 // 		WMP sequence is MMSU then MMST and then HTTP.
 // 		In MPlayer case since HTTP support is more reliable,
 // 		we are doing HTTP first then we try MMST if HTTP fail.
-static int asf_http_networking_start(Tcp& fd, networking_t *networking );
+static MPXP_Rc asf_http_networking_start(Tcp& fd, networking_t *networking );
 
 /*
  ASF networking support several network protocol.
@@ -73,17 +73,17 @@ static int asf_http_networking_start(Tcp& fd, networking_t *networking );
 		In MPlayer case since HTTP support is more reliable,
 		we are doing HTTP first then we try MMST if HTTP fail.
 */
-int asf_networking_start(Tcp& tcp, networking_t *networking) {
+MPXP_Rc asf_networking_start(Tcp& tcp, networking_t *networking) {
     char *proto = networking->url->protocol;
     int port = networking->url->port;
-    int rc;
+    MPXP_Rc rc;
 
     // Is protocol even valid mms,mmsu,mmst,http,http_proxy?
     if (!(!strncasecmp(proto, "mmst", 4) || !strncasecmp(proto, "mmsu", 4) ||
 	!strncasecmp(proto, "http_proxy", 10) || !strncasecmp(proto, "mms", 3) ||
 	!strncasecmp(proto, "http", 4))) {
 	MSG_ERR("Unknown protocol: %s\n", proto );
-	return -1;
+	return MPXP_False;
     }
 
     // Is protocol mms or mmsu?
@@ -92,7 +92,7 @@ int asf_networking_start(Tcp& tcp, networking_t *networking) {
 	//fd = asf_mmsu_networking_start( stream );
 	//mmsu support is not implemented yet - using this code
 	MSG_V("  ===> ASF/UDP failed\n");
-	return -1;
+	return MPXP_False;
     }
 
     //Is protocol mms or mmst?
@@ -100,9 +100,9 @@ int asf_networking_start(Tcp& tcp, networking_t *networking) {
 	MSG_V("Trying ASF/TCP...\n");
 	rc = asf_mmst_networking_start(tcp,networking);
 	networking->url->port = port;
-	if( rc>-1 ) return 0;
+	if( rc==MPXP_Ok ) return MPXP_Ok;
 	MSG_V("  ===> ASF/TCP failed\n");
-	if( rc==-2 ) return -1;
+	return MPXP_False;
     }
 
     //Is protocol http, http_proxy, or mms?
@@ -111,12 +111,12 @@ int asf_networking_start(Tcp& tcp, networking_t *networking) {
 	MSG_V("Trying ASF/HTTP...\n");
 	rc = asf_http_networking_start(tcp,networking);
 	networking->url->port = port;
-	if( rc>-1 ) return 0;
+	if( rc==MPXP_Ok ) return MPXP_Ok;
 	MSG_V("  ===> ASF/HTTP failed\n");
-	if( rc==-2 ) return -1;
+	return MPXP_False;
     }
     //everything failed
-    return -1;
+    return MPXP_False;
 }
 
 static int
@@ -184,256 +184,235 @@ static int max_idx(int s_count, int *s_rates, int bound) {
   return best;
 }
 
-static int
+static MPXP_Rc
 asf_networking_parse_header(Tcp& tcp, networking_t* networking) {
-  ASF_header_t asfh;
-  ASF_stream_chunck_t chunk;
-  asf_http_networking_t* asf_ctrl = (asf_http_networking_t*) networking->data;
-  char* buffer=NULL, *chunk_buffer=NULL;
-  int i,r,size,pos = 0;
-  int start;
-  int buffer_size = 0;
-  int chunk_size2read = 0;
-  int bw = networking->bandwidth;
-  int *v_rates = NULL, *a_rates = NULL;
-  int v_rate = 0, a_rate = 0, a_idx = -1, v_idx = -1;
+    ASF_header_t asfh;
+    ASF_stream_chunck_t chunk;
+    asf_http_networking_t* asf_ctrl = (asf_http_networking_t*) networking->data;
+    char* buffer=NULL, *chunk_buffer=NULL;
+    int i,r,size,pos = 0;
+    int start;
+    int buffer_size = 0;
+    int chunk_size2read = 0;
+    int bw = networking->bandwidth;
+    int *v_rates = NULL, *a_rates = NULL;
+    int v_rate = 0, a_rate = 0, a_idx = -1, v_idx = -1;
 
-  if(asf_ctrl == NULL) return -1;
+    if(asf_ctrl == NULL) return MPXP_False;
 
-	// The ASF header can be in several network chunks. For example if the content description
-	// is big, the ASF header will be split in 2 network chunk.
-	// So we need to retrieve all the chunk before starting to parse the header.
-  do {
-	  for( r=0; r < (int)sizeof(ASF_stream_chunck_t) ; ) {
-		i = nop_networking_read(tcp,((char*)&chunk)+r,sizeof(ASF_stream_chunck_t) - r,networking);
-		if(i <= 0) return -1;
-		r += i;
-	  }
-	  // Endian handling of the stream chunk
-	  le2me_ASF_stream_chunck_t(&chunk);
-	  size = asf_networking( &chunk, &r) - sizeof(ASF_stream_chunck_t);
-	  if(r) MSG_WARN("Warning : drop header ????\n");
-	  if(size < 0){
-		MSG_ERR("Error while parsing chunk header\n");
-		return -1;
-	  }
-	  if (chunk.type != ASF_STREAMING_HEADER) {
+    // The ASF header can be in several network chunks. For example if the content description
+    // is big, the ASF header will be split in 2 network chunk.
+    // So we need to retrieve all the chunk before starting to parse the header.
+    do {
+	for( r=0; r < (int)sizeof(ASF_stream_chunck_t) ; ) {
+	    i = nop_networking_read(tcp,((char*)&chunk)+r,sizeof(ASF_stream_chunck_t) - r,networking);
+	    if(i <= 0) return MPXP_False;
+	    r += i;
+	}
+	// Endian handling of the stream chunk
+	le2me_ASF_stream_chunck_t(&chunk);
+	size = asf_networking( &chunk, &r) - sizeof(ASF_stream_chunck_t);
+	if(r) MSG_WARN("Warning : drop header ????\n");
+	if(size < 0){
+	    MSG_ERR("Error while parsing chunk header\n");
+	    return MPXP_False;
+	}
+	if (chunk.type != ASF_STREAMING_HEADER) {
 	    MSG_ERR("Don't got a header as first chunk !!!!\n");
-	    return -1;
-	  }
-
-	  // audit: do not overflow buffer_size
-	  if (size > std::numeric_limits<size_t>::max() - buffer_size) return -1;
-	  buffer = (char*) mp_malloc(size+buffer_size);
-	  if(buffer == NULL) {
+	    return MPXP_False;
+	}
+	// audit: do not overflow buffer_size
+	if (size > std::numeric_limits<size_t>::max() - buffer_size) return MPXP_False;
+	buffer = (char*) mp_malloc(size+buffer_size);
+	if(buffer == NULL) {
 	    MSG_FATAL("Error can't allocate %d bytes buffer\n",size+buffer_size);
-	    return -1;
-	  }
-	  if( chunk_buffer!=NULL ) {
-		memcpy( buffer, chunk_buffer, buffer_size );
-		delete chunk_buffer ;
-	  }
-	  chunk_buffer = buffer;
-	  buffer += buffer_size;
-	  buffer_size += size;
+	    return MPXP_False;
+	}
+	if( chunk_buffer!=NULL ) {
+	    memcpy( buffer, chunk_buffer, buffer_size );
+	    delete chunk_buffer ;
+	}
+	chunk_buffer = buffer;
+	buffer += buffer_size;
+	buffer_size += size;
 
-	  for(r = 0; r < size;) {
+	for(r = 0; r < size;) {
 	    i = nop_networking_read(tcp,buffer+r,size-r,networking);
 	    if(i < 0) {
-		    MSG_ERR("Error while reading network stream\n");
-		    return -1;
+		MSG_ERR("Error while reading network stream\n");
+		return MPXP_False;
 	    }
 	    r += i;
-	  }
-
-	  if( chunk_size2read==0 ) {
-		if(size < (int)sizeof(asfh)) {
-		    MSG_ERR("Error chunk is too small\n");
-		    return -1;
-		} else MSG_DBG2("Got chunk\n");
-		memcpy(&asfh,buffer,sizeof(asfh));
-		le2me_ASF_header_t(&asfh);
-		chunk_size2read = asfh.objh.size;
-		MSG_DBG2("Size 2 read=%d\n", chunk_size2read);
-	  }
-  } while( buffer_size<chunk_size2read);
-  buffer = chunk_buffer;
-  size = buffer_size;
-
-  if(asfh.cno > 256) {
-    MSG_ERR("Error sub chunks number is invalid\n");
-    return -1;
-  }
-
-  start = sizeof(asfh);
-
-  pos = find_asf_guid(buffer, asf_file_header_guid, start, size);
-  if (pos >= 0) {
-    ASF_file_header_t *fileh = (ASF_file_header_t *) &buffer[pos];
-    pos += sizeof(ASF_file_header_t);
-    if (pos > size) goto len_err_out;
-      le2me_ASF_file_header_t(fileh);
-/*
-      if(fileh.packetsize != fileh.packetsize2) {
-	printf("Error packetsize check don't match\n");
-	return -1;
-      }
-*/
-      asf_ctrl->packet_size = fileh->max_packet_size;
-      // before playing.
-      // preroll: time in ms to bufferize before playing
-      networking->prebuffer_size = (unsigned int)(((double)fileh->preroll/1000.0)*((double)fileh->max_bitrate/8.0));
-  }
-
-  pos = start;
-  while ((pos = find_asf_guid(buffer, asf_stream_header_guid, pos, size)) >= 0)
-  {
-    ASF_stream_header_t *streamh = (ASF_stream_header_t *)&buffer[pos];
-    pos += sizeof(ASF_stream_header_t);
-    if (pos > size) goto len_err_out;
-      le2me_ASF_stream_header_t(streamh);
-      switch(ASF_LOAD_GUID_PREFIX(streamh->type)) {
-      case 0xF8699E40 : // audio stream
-	if(asf_ctrl->audio_streams == NULL){
-	  asf_ctrl->audio_streams = (int*)mp_malloc(sizeof(int));
-	  asf_ctrl->n_audio = 1;
-	} else {
-	  asf_ctrl->n_audio++;
-	  asf_ctrl->audio_streams = (int*)mp_realloc(asf_ctrl->audio_streams,
-						     asf_ctrl->n_audio*sizeof(int));
 	}
-	asf_ctrl->audio_streams[asf_ctrl->n_audio-1] = streamh->stream_no;
-	break;
-      case 0xBC19EFC0 : // video stream
-	if(asf_ctrl->video_streams == NULL){
-	  asf_ctrl->video_streams = (int*)mp_malloc(sizeof(int));
-	  asf_ctrl->n_video = 1;
-	} else {
-	  asf_ctrl->n_video++;
-	  asf_ctrl->video_streams = (int*)mp_realloc(asf_ctrl->video_streams,
+
+	if( chunk_size2read==0 ) {
+	    if(size < (int)sizeof(asfh)) {
+		MSG_ERR("Error chunk is too small\n");
+		return MPXP_False;
+	    } else MSG_DBG2("Got chunk\n");
+	    memcpy(&asfh,buffer,sizeof(asfh));
+	    le2me_ASF_header_t(&asfh);
+	    chunk_size2read = asfh.objh.size;
+	    MSG_DBG2("Size 2 read=%d\n", chunk_size2read);
+	}
+    } while( buffer_size<chunk_size2read);
+    buffer = chunk_buffer;
+    size = buffer_size;
+
+    if(asfh.cno > 256) {
+	MSG_ERR("Error sub chunks number is invalid\n");
+	return MPXP_False;
+    }
+
+    start = sizeof(asfh);
+
+    pos = find_asf_guid(buffer, asf_file_header_guid, start, size);
+    if (pos >= 0) {
+	ASF_file_header_t *fileh = (ASF_file_header_t *) &buffer[pos];
+	pos += sizeof(ASF_file_header_t);
+	if (pos > size) goto len_err_out;
+	le2me_ASF_file_header_t(fileh);
+	asf_ctrl->packet_size = fileh->max_packet_size;
+	// before playing.
+	// preroll: time in ms to bufferize before playing
+	networking->prebuffer_size = (unsigned int)(((double)fileh->preroll/1000.0)*((double)fileh->max_bitrate/8.0));
+    }
+
+    pos = start;
+    while ((pos = find_asf_guid(buffer, asf_stream_header_guid, pos, size)) >= 0) {
+	ASF_stream_header_t *streamh = (ASF_stream_header_t *)&buffer[pos];
+	pos += sizeof(ASF_stream_header_t);
+	if (pos > size) goto len_err_out;
+	le2me_ASF_stream_header_t(streamh);
+	switch(ASF_LOAD_GUID_PREFIX(streamh->type)) {
+	    case 0xF8699E40 : // audio stream
+		if(asf_ctrl->audio_streams == NULL){
+		    asf_ctrl->audio_streams = (int*)mp_malloc(sizeof(int));
+		    asf_ctrl->n_audio = 1;
+		} else {
+		    asf_ctrl->n_audio++;
+		    asf_ctrl->audio_streams = (int*)mp_realloc(asf_ctrl->audio_streams,
+							asf_ctrl->n_audio*sizeof(int));
+		}
+		asf_ctrl->audio_streams[asf_ctrl->n_audio-1] = streamh->stream_no;
+		break;
+	    case 0xBC19EFC0 : // video stream
+		if(asf_ctrl->video_streams == NULL){
+		    asf_ctrl->video_streams = (int*)mp_malloc(sizeof(int));
+		    asf_ctrl->n_video = 1;
+		} else {
+		    asf_ctrl->n_video++;
+		    asf_ctrl->video_streams = (int*)mp_realloc(asf_ctrl->video_streams,
 						     asf_ctrl->n_video*sizeof(int));
+		}
+		asf_ctrl->video_streams[asf_ctrl->n_video-1] = streamh->stream_no;
+		break;
 	}
-	asf_ctrl->video_streams[asf_ctrl->n_video-1] = streamh->stream_no;
-	break;
-      }
-  }
+    }
 
-  // always allocate to avoid lots of ifs later
-  v_rates =new(zeromem) int [asf_ctrl->n_video];
-  a_rates =new(zeromem) int [asf_ctrl->n_audio];
+    // always allocate to avoid lots of ifs later
+    v_rates =new(zeromem) int [asf_ctrl->n_video];
+    a_rates =new(zeromem) int [asf_ctrl->n_audio];
 
-  pos = find_asf_guid(buffer, asf_stream_group_guid, start, size);
-  if (pos >= 0) {
-    // stream bitrate properties object
+    pos = find_asf_guid(buffer, asf_stream_group_guid, start, size);
+    if (pos >= 0) {
+	// stream bitrate properties object
 	int stream_count;
 	char *ptr = &buffer[pos];
 
 	MSG_V("Stream bitrate properties object\n");
-		stream_count = le2me_16(*(uint16_t*)ptr);
-		ptr += sizeof(uint16_t);
-		if (ptr > &buffer[size]) goto len_err_out;
-		MSG_V(" stream count=[0x%x][%u]\n",
-			stream_count, stream_count );
-		for( i=0 ; i<stream_count ; i++ ) {
-			uint32_t rate;
-			int id;
-			int j;
-			id = le2me_16(*(uint16_t*)ptr);
-			ptr += sizeof(uint16_t);
-			if (ptr > &buffer[size]) goto len_err_out;
-			memcpy(&rate, ptr, sizeof(uint32_t));// workaround unaligment bug on sparc
-			ptr += sizeof(uint32_t);
-			if (ptr > &buffer[size]) goto len_err_out;
-			rate = le2me_32(rate);
-			MSG_V(
-				"  stream id=[0x%x][%u]\n", id, id);
-			MSG_V(
-				"  max bitrate=[0x%x][%u]\n", rate, rate);
-			for (j = 0; j < asf_ctrl->n_video; j++) {
-			  if (id == asf_ctrl->video_streams[j]) {
-			    MSG_V("  is video stream\n");
-			    v_rates[j] = rate;
-			    break;
-			  }
-			}
-			for (j = 0; j < asf_ctrl->n_audio; j++) {
-			  if (id == asf_ctrl->audio_streams[j]) {
-			    MSG_V( "  is audio stream\n");
-			    a_rates[j] = rate;
-			    break;
-			  }
-			}
+	stream_count = le2me_16(*(uint16_t*)ptr);
+	ptr += sizeof(uint16_t);
+	if (ptr > &buffer[size]) goto len_err_out;
+	MSG_V(" stream count=[0x%x][%u]\n",stream_count, stream_count );
+	for( i=0 ; i<stream_count ; i++ ) {
+	    uint32_t rate;
+	    int id;
+	    int j;
+	    id = le2me_16(*(uint16_t*)ptr);
+	    ptr += sizeof(uint16_t);
+	    if (ptr > &buffer[size]) goto len_err_out;
+	    memcpy(&rate, ptr, sizeof(uint32_t));// workaround unaligment bug on sparc
+	    ptr += sizeof(uint32_t);
+	    if (ptr > &buffer[size]) goto len_err_out;
+	    rate = le2me_32(rate);
+	    MSG_V("  stream id=[0x%x][%u]\n", id, id);
+	    MSG_V("  max bitrate=[0x%x][%u]\n", rate, rate);
+	    for (j = 0; j < asf_ctrl->n_video; j++) {
+		if (id == asf_ctrl->video_streams[j]) {
+		    MSG_V("  is video stream\n");
+		    v_rates[j] = rate;
+		    break;
 		}
-  }
-  delete buffer;
-
-  // automatic stream selection based on bandwidth
-  if (bw == 0) bw = INT_MAX;
-  MSG_V( "Max bandwidth set to %d\n", bw);
-
-  if (asf_ctrl->n_audio) {
-    // find lowest-bitrate audio stream
-    a_rate = a_rates[0];
-    a_idx = 0;
-    for (i = 0; i < asf_ctrl->n_audio; i++) {
-      if (a_rates[i] < a_rate) {
-	a_rate = a_rates[i];
-	a_idx = i;
-      }
+	    }
+	    for (j = 0; j < asf_ctrl->n_audio; j++) {
+		if (id == asf_ctrl->audio_streams[j]) {
+		    MSG_V( "  is audio stream\n");
+		    a_rates[j] = rate;
+		    break;
+		}
+	    }
+	}
     }
-    if (max_idx(asf_ctrl->n_video, v_rates, bw - a_rate) < 0) {
-      // both audio and video are not possible, try video only next
-      a_idx = -1;
-      a_rate = 0;
+    delete buffer;
+
+    // automatic stream selection based on bandwidth
+    if (bw == 0) bw = INT_MAX;
+    MSG_V( "Max bandwidth set to %d\n", bw);
+
+    if (asf_ctrl->n_audio) {
+	// find lowest-bitrate audio stream
+	a_rate = a_rates[0];
+	a_idx = 0;
+	for (i = 0; i < asf_ctrl->n_audio; i++) {
+	    if (a_rates[i] < a_rate) {
+		a_rate = a_rates[i];
+		a_idx = i;
+	    }
+	}
+	if (max_idx(asf_ctrl->n_video, v_rates, bw - a_rate) < 0) {
+	    // both audio and video are not possible, try video only next
+	    a_idx = -1;
+	    a_rate = 0;
+	}
     }
-  }
-  // find best video stream
-  v_idx = max_idx(asf_ctrl->n_video, v_rates, bw - a_rate);
-  if (v_idx >= 0)
-    v_rate = v_rates[v_idx];
+    // find best video stream
+    v_idx = max_idx(asf_ctrl->n_video, v_rates, bw - a_rate);
+    if (v_idx >= 0) v_rate = v_rates[v_idx];
+    // find best audio stream
+    a_idx = max_idx(asf_ctrl->n_audio, a_rates, bw - v_rate);
 
-  // find best audio stream
-  a_idx = max_idx(asf_ctrl->n_audio, a_rates, bw - v_rate);
+    delete v_rates;
+    delete a_rates;
 
-  delete v_rates;
-  delete a_rates;
+    if (a_idx < 0 && v_idx < 0) {
+	MSG_FATAL( "bandwidth too small, file cannot be played!\n");
+	return MPXP_False;
+    }
 
-  if (a_idx < 0 && v_idx < 0) {
-    MSG_FATAL( "bandwidth too small, "
-	    "file cannot be played!\n");
-    return -1;
-  }
-
-  if (mp_conf.audio_id > 0)
     // a audio stream was forced
-    asf_ctrl->audio_id = mp_conf.audio_id;
-  else if (a_idx >= 0)
-    asf_ctrl->audio_id = asf_ctrl->audio_streams[a_idx];
-  else if (asf_ctrl->n_audio) {
-    MSG_WARN( "bandwidth too small, "
-	    "deselected audio stream\n");
-    mp_conf.audio_id = -2;
-  }
+    if (mp_conf.audio_id > 0) asf_ctrl->audio_id = mp_conf.audio_id;
+    else if (a_idx >= 0) asf_ctrl->audio_id = asf_ctrl->audio_streams[a_idx];
+    else if (asf_ctrl->n_audio) {
+	MSG_WARN( "bandwidth too small, deselected audio stream\n");
+	mp_conf.audio_id = -2;
+    }
 
-  if (mp_conf.video_id > 0)
     // a video stream was forced
-    asf_ctrl->video_id = mp_conf.video_id;
-  else if (v_idx >= 0)
-    asf_ctrl->video_id = asf_ctrl->video_streams[v_idx];
-  else if (asf_ctrl->n_video) {
-    MSG_WARN( "bandwidth too small, "
-	    "deselected video stream\n");
-    mp_conf.video_id = -2;
-  }
-
-  return 1;
+    if (mp_conf.video_id > 0) asf_ctrl->video_id = mp_conf.video_id;
+    else if (v_idx >= 0) asf_ctrl->video_id = asf_ctrl->video_streams[v_idx];
+    else if (asf_ctrl->n_video) {
+	MSG_WARN( "bandwidth too small, deselected video stream\n");
+	mp_conf.video_id = -2;
+    }
+    return MPXP_Ok;
 
 len_err_out:
-  MSG_FATAL( "Invalid length in ASF header!\n");
-  if (buffer) delete buffer;
-  if (v_rates) delete v_rates;
-  if (a_rates) delete a_rates;
-  return -1;
+    MSG_FATAL( "Invalid length in ASF header!\n");
+    if (buffer) delete buffer;
+    if (v_rates) delete v_rates;
+    if (a_rates) delete a_rates;
+    return MPXP_False;
 }
 
 static int
@@ -741,131 +720,129 @@ asf_http_parse_response(asf_http_networking_t *asf_http_ctrl, HTTP_header_t *htt
 	return 0;
 }
 
-static int asf_http_networking_start(Tcp& tcp, networking_t *networking) {
-	HTTP_header_t *http_hdr=NULL;
-	URL_t *url = networking->url;
-	asf_http_networking_t *asf_http_ctrl;
-	char buffer[BUFFER_SIZE];
-	int i, ret;
-	int done;
-	int auth_retry = 0;
+static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
+    HTTP_header_t *http_hdr=NULL;
+    URL_t *url = networking->url;
+    asf_http_networking_t *asf_http_ctrl;
+    char buffer[BUFFER_SIZE];
+    int i, ret;
+    int done;
+    int auth_retry = 0;
 
-	asf_http_ctrl = new(zeromem) asf_http_networking_t;
-	if( asf_http_ctrl==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return -1;
-	}
-	asf_http_ctrl->networking_type = ASF_Unknown_e;
-	asf_http_ctrl->request = 1;
-	asf_http_ctrl->audio_streams = asf_http_ctrl->video_streams = NULL;
-	asf_http_ctrl->n_audio = asf_http_ctrl->n_video = 0;
-	networking->data = (any_t*)asf_http_ctrl;
+    asf_http_ctrl = new(zeromem) asf_http_networking_t;
+    if( asf_http_ctrl==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	return MPXP_False;
+    }
+    asf_http_ctrl->networking_type = ASF_Unknown_e;
+    asf_http_ctrl->request = 1;
+    asf_http_ctrl->audio_streams = asf_http_ctrl->video_streams = NULL;
+    asf_http_ctrl->n_audio = asf_http_ctrl->n_video = 0;
+    networking->data = (any_t*)asf_http_ctrl;
 
-	do {
-		done = 1;
-		tcp.close();
+    do {
+	done = 1;
+	tcp.close();
 
-		if( !strcasecmp( url->protocol, "http_proxy" ) ) {
-			if( url->port==0 ) url->port = 8080;
-		} else {
-			if( url->port==0 ) url->port = 80;
-		}
-		tcp.open(networking->libinput, url->hostname, url->port, Tcp::IP4);
-		if( !tcp.established()) return 0;
-
-		http_hdr = asf_http_request( networking );
-		MSG_DBG2("Request [%s]\n", http_hdr->buffer );
-		for(i=0; i < (int)http_hdr->buffer_size ; ) {
-			int r = tcp.write((uint8_t*)(http_hdr->buffer+i), http_hdr->buffer_size-i);
-			if(r <0) {
-				MSG_ERR("Socket write error : %s\n",strerror(errno));
-				return -1;
-			}
-			i += r;
-		}
-		http_free( http_hdr );
-		http_hdr = http_new_header();
-		do {
-			i = tcp.read((uint8_t*)buffer, BUFFER_SIZE);
-			if( i<=0 ) {
-				perror("read");
-				http_free( http_hdr );
-				return -1;
-			}
-			http_response_append( http_hdr, buffer, i );
-		} while( !http_is_header_entire( http_hdr ) );
-		if( mp_conf.verbose>0 ) {
-			http_hdr->buffer[http_hdr->buffer_size]='\0';
-			MSG_DBG2("Response [%s]\n", http_hdr->buffer );
-		}
-		ret = asf_http_parse_response(asf_http_ctrl, http_hdr);
-		if( ret<0 ) {
-			MSG_ERR("Failed to parse header\n");
-			http_free( http_hdr );
-			return -1;
-		}
-		switch( asf_http_ctrl->networking_type ) {
-			case ASF_Live_e:
-			case ASF_Prerecorded_e:
-			case ASF_PlainText_e:
-				if( http_hdr->body_size>0 ) {
-					if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
-						http_free( http_hdr );
-						return -1;
-					}
-				}
-				if( asf_http_ctrl->request==1 ) {
-					if( asf_http_ctrl->networking_type!=ASF_PlainText_e ) {
-						// First request, we only got the ASF header.
-						ret = asf_networking_parse_header(tcp,networking);
-						if(ret < 0) return -1;
-						if(asf_http_ctrl->n_audio == 0 && asf_http_ctrl->n_video == 0) {
-							MSG_ERR("No stream found\n");
-							return -1;
-						}
-						asf_http_ctrl->request++;
-						done = 0;
-					} else {
-						done = 1;
-					}
-				}
-				break;
-			case ASF_Redirector_e:
-				if( http_hdr->body_size>0 ) {
-					if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
-						http_free( http_hdr );
-						return -1;
-					}
-				}
-//				type |= STREAMTYPE_TEXT;
-				done = 1;
-				break;
-			case ASF_Authenticate_e:
-				if( http_authenticate( http_hdr, url, &auth_retry)<0 ) return -1;
-				asf_http_ctrl->networking_type = ASF_Unknown_e;
-				done = 0;
-				break;
-			case ASF_Unknown_e:
-			default:
-				MSG_ERR("Unknown ASF networking type\n");
-				tcp.close();
-				http_free( http_hdr );
-				return -1;
-		}
-	// Check if we got a redirect.
-	} while(!done);
-
-	if( asf_http_ctrl->networking_type==ASF_PlainText_e || asf_http_ctrl->networking_type==ASF_Redirector_e ) {
-		networking->networking_read = nop_networking_read;
-		networking->networking_seek = nop_networking_seek;
+	if( !strcasecmp( url->protocol, "http_proxy" ) ) {
+	    if( url->port==0 ) url->port = 8080;
 	} else {
-		networking->networking_read = asf_http_networking_read;
-		networking->networking_seek = asf_http_networking_seek;
-		networking->buffering = 1;
+	    if( url->port==0 ) url->port = 80;
 	}
-	networking->status = networking_playing_e;
+	tcp.open(networking->libinput, url->hostname, url->port, Tcp::IP4);
+	if( !tcp.established()) return MPXP_False;
 
+	http_hdr = asf_http_request( networking );
+	MSG_DBG2("Request [%s]\n", http_hdr->buffer );
+	for(i=0; i < (int)http_hdr->buffer_size ; ) {
+	    int r = tcp.write((uint8_t*)(http_hdr->buffer+i), http_hdr->buffer_size-i);
+	    if(r<0) {
+		MSG_ERR("Socket write error : %s\n",strerror(errno));
+		return MPXP_False;
+	    }
+	    i += r;
+	}
 	http_free( http_hdr );
-	return 0;
+	http_hdr = http_new_header();
+	do {
+	    i = tcp.read((uint8_t*)buffer, BUFFER_SIZE);
+	    if( i<=0 ) {
+		perror("read");
+		http_free( http_hdr );
+		return MPXP_False;
+	    }
+	    http_response_append( http_hdr, buffer, i );
+	} while( !http_is_header_entire( http_hdr ) );
+	if( mp_conf.verbose>0 ) {
+	    http_hdr->buffer[http_hdr->buffer_size]='\0';
+	    MSG_DBG2("Response [%s]\n", http_hdr->buffer );
+	}
+	ret = asf_http_parse_response(asf_http_ctrl, http_hdr);
+	if( ret<0 ) {
+	    MSG_ERR("Failed to parse header\n");
+	    http_free( http_hdr );
+	    return MPXP_False;
+	}
+	switch( asf_http_ctrl->networking_type ) {
+	    case ASF_Live_e:
+	    case ASF_Prerecorded_e:
+	    case ASF_PlainText_e:
+		if( http_hdr->body_size>0 ) {
+		    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
+			http_free( http_hdr );
+			return MPXP_False;
+		    }
+		}
+		if( asf_http_ctrl->request==1 ) {
+		    if( asf_http_ctrl->networking_type!=ASF_PlainText_e ) {
+			// First request, we only got the ASF header.
+			ret = asf_networking_parse_header(tcp,networking);
+			if(ret < 0) return MPXP_False;
+			if(asf_http_ctrl->n_audio == 0 && asf_http_ctrl->n_video == 0) {
+			    MSG_ERR("No stream found\n");
+			    return MPXP_False;
+			}
+			asf_http_ctrl->request++;
+			done = 0;
+		    } else done = 1;
+		}
+		break;
+	    case ASF_Redirector_e:
+		if( http_hdr->body_size>0 ) {
+		    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
+			http_free( http_hdr );
+			return MPXP_False;
+		    }
+		}
+//		type |= STREAMTYPE_TEXT;
+		done = 1;
+		break;
+	    case ASF_Authenticate_e:
+		if( http_authenticate( http_hdr, url, &auth_retry)<0 ) return MPXP_False;
+		asf_http_ctrl->networking_type = ASF_Unknown_e;
+		done = 0;
+		break;
+	    case ASF_Unknown_e:
+	    default:
+		MSG_ERR("Unknown ASF networking type\n");
+		tcp.close();
+		http_free( http_hdr );
+		return MPXP_False;
+	}
+    // Check if we got a redirect.
+    } while(!done);
+
+    if( asf_http_ctrl->networking_type==ASF_PlainText_e || asf_http_ctrl->networking_type==ASF_Redirector_e ) {
+	networking->networking_read = nop_networking_read;
+	networking->networking_seek = nop_networking_seek;
+    } else {
+	networking->networking_read = asf_http_networking_read;
+	networking->networking_seek = asf_http_networking_seek;
+	networking->buffering = 1;
+    }
+    networking->status = networking_playing_e;
+
+    http_free( http_hdr );
+    return MPXP_Ok;
 }
 

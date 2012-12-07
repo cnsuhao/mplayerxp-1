@@ -56,7 +56,7 @@ MPXP_Rc Network_Stream_Interface::open(libinput_t* libinput,const char *filename
     url = url_new(filename);
     if(url) {
 	networking=new_networking(libinput);
-	if(networking_start(tcp,networking,url)<0){
+	if(networking_start(tcp,networking,url)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_UnableOpenURL, filename);
 	    url_free(url);
 	    url=NULL;

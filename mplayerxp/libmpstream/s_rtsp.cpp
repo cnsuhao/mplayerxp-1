@@ -42,7 +42,7 @@ namespace mpxp {
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
 	private:
-	    int			start ();
+	    MPXP_Rc		start ();
 
 	    networking_t*	networking;
 	    Tcp			tcp;
@@ -77,9 +77,10 @@ void Rtsp_Stream_Interface::close()
 	rtsp_session_end (rtsp);
     url_free(networking->url);
     free_networking(networking);
+    networking=NULL;
 }
 
-int Rtsp_Stream_Interface::start()
+MPXP_Rc Rtsp_Stream_Interface::start()
 {
     rtsp_session_t *rtsp;
     char *mrl;
@@ -100,7 +101,7 @@ int Rtsp_Stream_Interface::start()
 	if (!tcp.established() && !networking->url->port)
 	    tcp.open(networking->libinput,networking->url->hostname,
 			port = 7070);
-	if (!tcp.established()) return -1;
+	if (!tcp.established()) return MPXP_False;
 	file = networking->url->file;
 	if (file[0] == '/') file++;
 
@@ -123,7 +124,7 @@ int Rtsp_Stream_Interface::start()
 	temp--;
     } while ((redirected != 0) && (temp > 0));
 
-    if (!rtsp) return -1;
+    if (!rtsp) return MPXP_False;
 
     networking->data = rtsp;
 
@@ -131,7 +132,7 @@ int Rtsp_Stream_Interface::start()
     networking->buffering = 1;
     networking->status = networking_playing_e;
 
-    return 0;
+    return MPXP_Ok;
 }
 
 extern int network_bandwidth;
@@ -152,7 +153,7 @@ MPXP_Rc Rtsp_Stream_Interface::open(libinput_t* libinput,const char *filename,un
 
     tcp.close();
     index_mode = -1; /* prevent most RTSP streams from locking due to -idx */
-    if (start() < 0) {
+    if (start() != MPXP_Ok) {
 	free_networking(networking);
 	networking = NULL;
 	return MPXP_False;

@@ -5,7 +5,7 @@
 namespace mpxp {
     class Tcp;
 }
-extern int asf_networking_start(Tcp& fd, networking_t *networking);
-extern int asf_mmst_networking_start(Tcp& fd, networking_t *networking);
+extern MPXP_Rc asf_networking_start(Tcp& fd, networking_t *networking);
+extern MPXP_Rc asf_mmst_networking_start(Tcp& fd, networking_t *networking);
 
 #endif

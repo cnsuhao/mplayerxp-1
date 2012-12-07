@@ -490,169 +490,161 @@ static int asf_mmst_networking_seek(Tcp& tcp, off_t pos, networking_t *networkin
     return -1;
 }
 
-int asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
+MPXP_Rc asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
 {
-  char                 str[1024];
-  unsigned char        data[BUF_SIZE];
-  uint8_t              asf_header[HDR_BUF_SIZE];
-  int                  asf_header_len;
-  int                  len, i, packet_length;
-  char                *path, *unescpath;
-  URL_t *url1 = networking->url;
+    char	str[1024];
+    uint8_t	data[BUF_SIZE];
+    uint8_t	asf_header[HDR_BUF_SIZE];
+    int		asf_header_len;
+    int		len, i, packet_length;
+    char*	path, *unescpath;
+    URL_t* url1 = networking->url;
 
-  tcp.close();
+    tcp.close();
 
-  /* parse url */
-  path = strchr(url1->file,'/') + 1;
+    /* parse url */
+    path = strchr(url1->file,'/') + 1;
 
-  /* mmst filename are not url_escaped by MS MediaPlayer and are expected as
-   * "plain text" by the server, so need to decode it here
-   */
-  unescpath=new char [strlen(path)+1];
-  if (!unescpath) {
+    /* mmst filename are not url_escaped by MS MediaPlayer and are expected as
+    * "plain text" by the server, so need to decode it here
+    */
+    unescpath=new char [strlen(path)+1];
+    if (!unescpath) {
 	MSG_FATAL("Memory allocation failed!\n");
-	return -1;
-  }
-  url2string(unescpath,path);
-  path=unescpath;
+	return MPXP_False;
+    }
+    url2string(unescpath,path);
+    path=unescpath;
 
-  if( url1->port==0 ) {
-	url1->port=1755;
-  }
-  tcp.open(networking->libinput, url1->hostname, url1->port, Tcp::IP4);
-  if( !tcp.established()) {
-	  delete path;
-	  return -1;
-  }
-  MSG_INFO ("connected\n");
+    if( url1->port==0 ) url1->port=1755;
+    tcp.open(networking->libinput, url1->hostname, url1->port, Tcp::IP4);
+    if( !tcp.established()) {
+	delete path;
+	return MPXP_False;
+    }
+    MSG_INFO ("connected\n");
 
-  seq_num=0;
+    seq_num=0;
 
-  /*
-  * Send the initial connect info including player version no. Client GUID (random) and the host address being connected to.
-  * This command is sent at the very start of protocol initiation. It sends local information to the serve
-  * cmd 1 0x01
-  * */
+    /*
+    * Send the initial connect info including player version no. Client GUID (random) and the host address being connected to.
+    * This command is sent at the very start of protocol initiation. It sends local information to the serve
+    * cmd 1 0x01
+    * */
 
-  /* prepare for the url encoding conversion */
+    /* prepare for the url encoding conversion */
 #ifdef USE_ICONV
 #ifdef USE_LANGINFO
-  url_conv = iconv_open("UTF-16LE",nl_langinfo(CODESET));
+    url_conv = iconv_open("UTF-16LE",nl_langinfo(CODESET));
 #else
-  url_conv = iconv_open("UTF-16LE", NULL);
+    url_conv = iconv_open("UTF-16LE", NULL);
 #endif
 #endif
 
-  snprintf (str, 1023, "\034\003NSPlayer/7.0.0.1956; {33715801-BAB3-9D85-24E9-03B90328270A}; Host: %s", url1->hostname);
-  string_utf16 (data, str, strlen(str));
+    snprintf (str, 1023, "\034\003NSPlayer/7.0.0.1956; {33715801-BAB3-9D85-24E9-03B90328270A}; Host: %s", url1->hostname);
+    string_utf16 (data, str, strlen(str));
 // send_command(s, commandno ....)
-  send_command (tcp, 1, 0, 0x0004000b, strlen(str) * 2+2, data);
+    send_command (tcp, 1, 0, 0x0004000b, strlen(str) * 2+2, data);
 
-  len = tcp.read (data, BUF_SIZE);
+    len = tcp.read (data, BUF_SIZE);
 
-  /*This sends details of the local machine IP address to a Funnel system at the server.
-  * Also, the TCP or UDP transport selection is sent.
-  *
-  * here 192.168.0.129 is local ip address TCP/UDP states the tronsport we r using
-  * and 1037 is the  local TCP or UDP socket number
-  * cmd 2 0x02
-  *  */
+    /*This sends details of the local machine IP address to a Funnel system at the server.
+    * Also, the TCP or UDP transport selection is sent.
+    *
+    * here 192.168.0.129 is local ip address TCP/UDP states the tronsport we r using
+    * and 1037 is the  local TCP or UDP socket number
+    * cmd 2 0x02
+    *  */
 
-  string_utf16 (&data[8], "\002\000\\\\192.168.0.1\\TCP\\1037", 24);
-  memset (data, 0, 8);
-  send_command (tcp, 2, 0, 0, 24*2+10, data);
+    string_utf16 (&data[8], "\002\000\\\\192.168.0.1\\TCP\\1037", 24);
+    memset (data, 0, 8);
+    send_command (tcp, 2, 0, 0, 24*2+10, data);
 
-  len = tcp.read(data, BUF_SIZE);
+    len = tcp.read(data, BUF_SIZE);
 
-  /* This command sends file path (at server) and file name request to the server.
-  * 0x5 */
+    /* This command sends file path (at server) and file name request to the server.
+    * 0x5 */
 
-  string_utf16 (&data[8], path, strlen(path));
-  memset (data, 0, 8);
-  send_command (tcp, 5, 0, 0, strlen(path)*2+10, data);
-  delete path;
+    string_utf16 (&data[8], path, strlen(path));
+    memset (data, 0, 8);
+    send_command (tcp, 5, 0, 0, strlen(path)*2+10, data);
+    delete path;
 
-  get_answer (tcp);
+    get_answer (tcp);
 
-  /* The ASF header chunk request. Includes ?session' variable for pre header value.
-  * After this command is sent,
-  * the server replies with 0x11 command and then the header chunk with header data follows.
-  * 0x15 */
+    /* The ASF header chunk request. Includes ?session' variable for pre header value.
+    * After this command is sent,
+    * the server replies with 0x11 command and then the header chunk with header data follows.
+    * 0x15 */
 
-  memset (data, 0, 40);
-  data[32] = 2;
+    memset (data, 0, 40);
+    data[32] = 2;
 
-  send_command (tcp, 0x15, 1, 0, 40, data);
+    send_command (tcp, 0x15, 1, 0, 40, data);
 
-  num_stream_ids = 0;
-  /* get_headers(s, asf_header);  */
+    num_stream_ids = 0;
+    /* get_headers(s, asf_header);  */
 
-  asf_header_len = get_header (tcp, asf_header, networking);
+    asf_header_len = get_header (tcp, asf_header, networking);
 //  printf("---------------------------------- asf_header %d\n",asf_header);
-  if (asf_header_len==0) { //error reading header
-    tcp.close();
-    return -1;
-  }
-  packet_length = interp_header (asf_header, asf_header_len);
+    if (asf_header_len==0) { //error reading header
+	tcp.close();
+	return MPXP_False;
+    }
+    packet_length = interp_header (asf_header, asf_header_len);
 
+    /*
+    * This command is the media stream MBR selector. Switches are always 6 bytes in length.
+    * After all switch elements, data ends with bytes [00 00] 00 20 ac 40 [02].
+    * Where:
+    * [00 00] shows 0x61 0x00 (on the first 33 sent) or 0xff 0xff for ASF files, and with no ending data for WMV files.
+    * It is not yet understood what all this means.
+    * And the last [02] byte is probably the header ?session' value.
+    *
+    *  0x33 */
 
-  /*
-  * This command is the media stream MBR selector. Switches are always 6 bytes in length.
-  * After all switch elements, data ends with bytes [00 00] 00 20 ac 40 [02].
-  * Where:
-  * [00 00] shows 0x61 0x00 (on the first 33 sent) or 0xff 0xff for ASF files, and with no ending data for WMV files.
-  * It is not yet understood what all this means.
-  * And the last [02] byte is probably the header ?session' value.
-  *
-  *  0x33 */
+    memset (data, 0, 40);
 
-  memset (data, 0, 40);
+    if (mp_conf.audio_id > 0) {
+	data[2] = 0xFF;
+	data[3] = 0xFF;
+	data[4] = mp_conf.audio_id;
+	send_command(tcp, 0x33, num_stream_ids, 0xFFFF | mp_conf.audio_id << 16, 8, data);
+    } else {
+	for (i=1; i<num_stream_ids; i++) {
+	    data [ (i-1) * 6 + 2 ] = 0xFF;
+	    data [ (i-1) * 6 + 3 ] = 0xFF;
+	    data [ (i-1) * 6 + 4 ] = stream_ids[i];
+	    data [ (i-1) * 6 + 5 ] = 0x00;
+	}
+	send_command (tcp, 0x33, num_stream_ids, 0xFFFF | stream_ids[0] << 16, (num_stream_ids-1)*6+2 , data);
+    }
 
-  if (mp_conf.audio_id > 0) {
-    data[2] = 0xFF;
-    data[3] = 0xFF;
-    data[4] = mp_conf.audio_id;
-    send_command(tcp, 0x33, num_stream_ids, 0xFFFF | mp_conf.audio_id << 16, 8, data);
-  } else {
-  for (i=1; i<num_stream_ids; i++) {
-    data [ (i-1) * 6 + 2 ] = 0xFF;
-    data [ (i-1) * 6 + 3 ] = 0xFF;
-    data [ (i-1) * 6 + 4 ] = stream_ids[i];
-    data [ (i-1) * 6 + 5 ] = 0x00;
-  }
+    get_answer (tcp);
 
-  send_command (tcp, 0x33, num_stream_ids, 0xFFFF | stream_ids[0] << 16, (num_stream_ids-1)*6+2 , data);
-  }
+    /* Start sending file from packet xx.
+    * This command is also used for resume downloads or requesting a lost packet.
+    * Also used for seeking by sending a play point value which seeks to the media time point.
+    * Includes ?session' value in pre header and the maximum media stream time.
+    * 0x07 */
 
-  get_answer (tcp);
+    memset (data, 0, 40);
 
-  /* Start sending file from packet xx.
-  * This command is also used for resume downloads or requesting a lost packet.
-  * Also used for seeking by sending a play point value which seeks to the media time point.
-  * Includes ?session' value in pre header and the maximum media stream time.
-  * 0x07 */
+    for (i=8; i<16; i++) data[i] = 0xFF;
+    data[20] = 0x04;
 
-  memset (data, 0, 40);
+    send_command (tcp, 0x07, 1, 0xFFFF | stream_ids[0] << 16, 24, data);
 
-  for (i=8; i<16; i++)
-    data[i] = 0xFF;
+    networking->networking_read = asf_mmst_networking_read;
+    networking->networking_seek = asf_mmst_networking_seek;
+    networking->buffering = 1;
+    networking->status = networking_playing_e;
 
-  data[20] = 0x04;
-
-  send_command (tcp, 0x07, 1, 0xFFFF | stream_ids[0] << 16, 24, data);
-
-  networking->networking_read = asf_mmst_networking_read;
-  networking->networking_seek = asf_mmst_networking_seek;
-  networking->buffering = 1;
-  networking->status = networking_playing_e;
-
-  packet_length1 = packet_length;
-  MSG_V("mmst packet_length = %d\n",packet_length);
+    packet_length1 = packet_length;
+    MSG_V("mmst packet_length = %d\n",packet_length);
 
 #ifdef USE_ICONV
-  if (url_conv != (iconv_t)(-1))
-    iconv_close(url_conv);
+    if (url_conv != (iconv_t)(-1)) iconv_close(url_conv);
 #endif
-
-  return 0;
+    return MPXP_Ok;
 }

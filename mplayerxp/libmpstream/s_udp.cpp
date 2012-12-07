@@ -41,7 +41,7 @@ namespace mpxp {
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
 	private:
-	    int 		start ();
+	    MPXP_Rc		start ();
 
 	    networking_t*	networking;
 	    Udp			udp;
@@ -70,13 +70,14 @@ void Udp_Stream_Interface::close()
 {
     url_free(networking->url);
     free_networking(networking);
+    networking=NULL;
 }
 
-int Udp_Stream_Interface::start ()
+MPXP_Rc Udp_Stream_Interface::start ()
 {
     if (!udp.established()) {
 	udp.open(networking->url);
-	if (!udp.established()) return -1;
+	if (!udp.established()) return MPXP_False;
     }
     tcp=udp.socket();
     networking->networking_read = nop_networking_read;
@@ -84,7 +85,7 @@ int Udp_Stream_Interface::start ()
     networking->prebuffer_size = 64 * 1024; /* 64 KBytes */
     networking->buffering = 0;
     networking->status = networking_playing_e;
-    return 0;
+    return MPXP_Ok;
 }
 
 extern int network_bandwidth;
@@ -105,7 +106,7 @@ MPXP_Rc Udp_Stream_Interface::open(libinput_t* libinput,const char *filename,uns
 	networking = NULL;
 	return MPXP_False;
     }
-    if (start () < 0) {
+    if (start () !=MPXP_Ok) {
 	MSG_ERR("udp_networking_start failed\n");
 	free_networking (networking);
 	networking = NULL;
