@@ -301,13 +301,11 @@ void mpcodecs_draw_image(video_decoder_t* opaque,mp_image_t *mpi)
 		for(i=j;i<smp_num_cpus;i++) {
 		    MSG_DBG2("parallel: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h);
 		    vf_put_slice(s,ampi[i]);
-		    free_mp_image(ampi[i]);
 		}
 	    }
 	    for(;j<num_slices;j++) {
 		MSG_DBG2("par_tail: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h);
 		vf_put_slice(s,ampi[j]);
-		free_mp_image(ampi[j]);
 	    }
 	}
 	else
@@ -317,9 +315,9 @@ void mpcodecs_draw_image(video_decoder_t* opaque,mp_image_t *mpi)
 	    for(i=0;i<num_slices;i++) {
 		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i -> [%i]\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h,ampi[i]->xp_idx);
 		vf_put_slice(s,ampi[i]);
-		free_mp_image(ampi[i]);
 	    }
 	}
+	for(i=0;i<num_slices;i++) free_mp_image(ampi[i]);
     } else {
 	MSG_DBG2("Put whole frame[%ux%u]\n",mpi->width,mpi->height);
 	vf_put_slice(s,mpi);

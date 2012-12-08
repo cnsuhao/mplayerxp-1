@@ -577,7 +577,7 @@ MPXP_Rc Video_Output::draw_slice(const mp_image_t *mpi) const
 	    ps_src[i] = mpi->planes[i]+(y*mpi->stride[i])+x+priv.ps_off[i];
 	}
 	for(i=0;i<4;i++) {
-	    if(mpi->stride[i]) {
+	    if(mpi->stride[i] && dstStride[i]) {
 		if(finalize)
 		    stream_copy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
 		else
