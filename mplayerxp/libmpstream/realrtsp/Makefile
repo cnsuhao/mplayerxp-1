@@ -2,7 +2,7 @@ include ../../mp_config.mak
 
 LIBNAME = librealrtsp.a
 
-CXXSRCS= real.cpp xbuffer.cpp asmrp.cpp md5.cpp rmff.cpp sdpplin.cpp
+CXXSRCS= real.cpp xbuffer.cpp asmrp.cpp rmff.cpp sdpplin.cpp
 SRCS =
 OBJS=$(SRCS:.c=.o)
 CXXOBJS=$(CXXSRCS:.cpp=.o)

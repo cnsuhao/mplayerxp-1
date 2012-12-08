@@ -48,6 +48,7 @@ namespace mpxp {
 	    virtual int		established() const;
 	    virtual int		has_data(int timeout) const;
 	    virtual tcp_error_e	error() const;
+	    virtual libinput_t*	get_libinput() const;
 
 	    virtual void	open(const char *host,int port,tcp_af_e af=Tcp::IP4);
 	    virtual int		read(uint8_t* buf,unsigned len,int flags=0);

@@ -46,20 +46,18 @@ namespace mpxp {
 
 	    networking_t*	networking;
 	    Tcp			tcp;
-	    libinput_t*		libinput;
     };
 
 Rtsp_Stream_Interface::Rtsp_Stream_Interface(libinput_t* _libinput)
 			:Stream_Interface(_libinput),
-			tcp(_libinput,-1),
-			libinput(_libinput) {}
+			tcp(_libinput,-1) {}
 Rtsp_Stream_Interface::~Rtsp_Stream_Interface() {}
 
 #define RTSP_DEFAULT_PORT 554
 
 int Rtsp_Stream_Interface::read(stream_packet_t*sp)
 {
-    return rtsp_session_read (libinput,reinterpret_cast<rtsp_session_t*>(networking->data), sp->buf, sp->len);
+    return rtsp_session_read (tcp,reinterpret_cast<rtsp_session_t*>(networking->data), sp->buf, sp->len);
 }
 
 off_t Rtsp_Stream_Interface::seek(off_t newpos) { return newpos; }

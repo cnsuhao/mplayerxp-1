@@ -44,6 +44,7 @@ using namespace mpxp;
 #ifndef STREAMING_LIVE_DOT_COM
 #include "rtp.h"
 #endif
+#include "librtsp/rtsp_session.h"
 #include "version.h"
 #include "stream_msg.h"
 
@@ -666,41 +667,42 @@ MPXP_Rc pnm_networking_start(Tcp& tcp,networking_t *networking ) {
     return MPXP_Ok;
 }
 
-#ifdef HAVE_RTSP_SESSION_H
 int
-realrtsp_networking_read( int fd, char *buffer, int size, networking_t *stream_ctrl ) {
-    return rtsp_session_read(stream_ctrl->data, buffer, size);
+realrtsp_networking_read( Tcp& tcp, char *buffer, int size, networking_t *networking ) {
+    return rtsp_session_read(tcp,reinterpret_cast<rtsp_session_t*>(networking->data), buffer, size);
 }
 
-MPXP_Rc realrtsp_networking_start( net_fd_t* fd, networking_t *stream ) {
+MPXP_Rc realrtsp_networking_start( Tcp& tcp, networking_t *networking ) {
     rtsp_session_t *rtsp;
     char *mrl;
     char *file;
     int port;
     int redirected, temp;
-    if( stream==NULL ) return MPXP_False;
 
     temp = 5; // counter so we don't get caught in infinite redirections (you never know)
 
     do {
 	redirected = 0;
 	port = networking->url->port ? networking->url->port : 554;
-	*fd = tcp_connect2Server( networking->url->hostname, port, 1);
-	if(*fd<0 && !networking->url->port)
-		*fd = tcp_connect2Server( networking->url->hostname,port = 7070, 1 );
-	if(*fd<0) return MPXP_False;
+	tcp.close();
+	tcp.open( networking->url->hostname, port, Tcp::IP4);
+	if(!tcp.established() && !networking->url->port)
+	    tcp.open( networking->url->hostname,port = 7070, Tcp::IP4);
+	if(!tcp.established()) return MPXP_False;
 
 	file = networking->url->file;
 	if (file[0] == '/') file++;
-	mrl = mp_malloc(sizeof(char)*(strlen(networking->url->hostname)+strlen(file)+16));
+	mrl = new char [strlen(networking->url->hostname)+strlen(file)+16];
 	sprintf(mrl,"rtsp://%s:%i/%s",networking->url->hostname,port,file);
-	rtsp = rtsp_session_start(fd,&mrl, file,
-			networking->url->hostname, port, &redirected);
+	rtsp = rtsp_session_start(tcp,&mrl, file,
+			networking->url->hostname, port, &redirected,
+			network_bandwidth,networking->url->username,
+			networking->url->password);
 
 	if ( redirected == 1 ) {
 	    url_free(networking->url);
 	    networking->url = url_new(mrl);
-	    closesocket(fd);
+	    tcp.close();
 	}
 	delete mrl;
 	temp--;
@@ -717,7 +719,6 @@ MPXP_Rc realrtsp_networking_start( net_fd_t* fd, networking_t *stream ) {
     networking->status = networking_playing_e;
     return MPXP_Ok;
 }
-#endif // HAVE_RTSP_SESSION_H
 
 
 #ifndef STREAMING_LIVE_DOT_COM
@@ -774,7 +775,6 @@ MPXP_Rc networking_start(Tcp& tcp,networking_t* networking, URL_t *url) {
 	    return MPXP_False;
 	}
     }
-#ifdef HAVE_RTSP_SESSION_H
     else if( !strcasecmp( networking->url->protocol, "rtsp")) {
 	if ((rc = realrtsp_networking_start( tcp, networking )) < 0) {
 	    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
@@ -788,7 +788,6 @@ MPXP_Rc networking_start(Tcp& tcp,networking_t* networking, URL_t *url) {
 #endif
 	}
     }
-#endif
     else if(!strcasecmp( networking->url->protocol, "udp")) {
 	tcp.close();
 	rc = rtp_networking_start(tcp, networking, 1);

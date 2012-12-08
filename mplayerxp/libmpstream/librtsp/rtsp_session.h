@@ -36,7 +36,7 @@ typedef struct rtsp_session_s rtsp_session_t;
 rtsp_session_t *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
   int port, int *redir, uint32_t bandwidth, char *user, char *pass);
 
-int rtsp_session_read(libinput_t* libinput,rtsp_session_t *session, char *data, int len);
+int rtsp_session_read(Tcp& tcp,rtsp_session_t *session, char *data, int len);
 
 void rtsp_session_end(rtsp_session_t *session);
 
