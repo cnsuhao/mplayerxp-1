@@ -356,11 +356,10 @@ force_driver:
     for(i=0;i<sizeof(stream_txt_ids)/sizeof(struct s_stream_txt_ids);i++)
     if(!info().get(stream_txt_ids[i].demuxer_id)) {
 	char stream_name[256];
-	if(stream_control(stream,stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
+	if(stream->ctrl(stream_txt_ids[i].stream_id,stream_name) == MPXP_Ok) {
 	    info().add(stream_txt_ids[i].demuxer_id,stream_name);
 	}
     }
-    stream->demuxer=this;
     return MPXP_Ok;
 }
 

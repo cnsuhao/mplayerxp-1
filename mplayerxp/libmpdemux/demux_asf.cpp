@@ -333,14 +333,6 @@ while(!stream_eof(demuxer->stream)){
 
 if(streams) {
   uint32_t vr = 0, ar = 0,i;
-#ifdef HAVE_STREAMING
-  if( demuxer->stream->networking!=NULL ) {
-	  if( demuxer->stream->networking->bandwidth!=0 && demuxer->stream->networking->data!=NULL ) {
-		  best_audio = ((asf_http_networking_t*)demuxer->stream->networking->data)->audio_id;
-		  best_video = ((asf_http_networking_t*)demuxer->stream->networking->data)->video_id;
-	  }
-  } else
-#endif
   for(i = 0; i < stream_count; i++) {
     uint32_t id = streams[2*i];
     uint32_t rate = streams[2*i+1];

@@ -98,9 +98,15 @@ Stream::Stream(Stream::type_e t)
     reset();
 }
 
+Stream::Stream(Demuxer_Stream* ds) {
+    _type=Stream::Type_DS;
+    driver=ds->demuxer->stream->driver;
+    priv = ds;
+}
+
 Stream::~Stream(){
     MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",driver_info->mrl,strerror(errno));
-    if(driver) driver->close();
+    if(driver) close();
     delete buffer;
     delete driver;
 }
@@ -161,6 +167,11 @@ MPXP_Rc		Stream::open(libinput_t*libinput,const char* filename,int* ff,stream_ca
     delete buffer;
     return MPXP_False;
 }
+MPXP_Rc Stream::ctrl(unsigned cmd,any_t* param) { return driver->ctrl(cmd,param); }
+int	Stream::read(stream_packet_t * sp) { return driver->read(sp); }
+off_t	Stream::seek(off_t off) { return driver->seek(off); }
+off_t	Stream::tell() const { return driver->tell(); }
+void	Stream::close() { driver->close(); }
 
 void Stream::reset(){
     if(_eof){
@@ -191,15 +202,15 @@ int __FASTCALL__ nc_stream_read_cbuffer(Stream *s){
     sp.type=0;
     sp.len=s->sector_size();
     sp.buf=(char *)s->buffer;
-    if(s->type()==Stream::Type_DS) len = reinterpret_cast<Demuxer_Stream*>(s->priv)->read_data(s->buffer,s->sector_size());
-    else { if(!s->driver) { s->eof(1); return 0; } len = s->driver->read(&sp); }
+    if(s->type()==Stream::Type_DS) len = reinterpret_cast<Demuxer_Stream*>(s)->read_data(s->buffer,s->sector_size());
+    else len = s->read(&sp);
     if(sp.type)
     {
 	if(s->event_handler) s->event_handler(s,&sp);
 	continue;
     }
-    if(s->driver->ctrl(SCTRL_EOF,NULL)==MPXP_Ok)	legacy_eof=1;
-    else						legacy_eof=0;
+    if(s->ctrl(SCTRL_EOF,NULL)==MPXP_Ok)legacy_eof=1;
+    else				legacy_eof=0;
     if(sp.len<=0 || legacy_eof)
     {
 	MSG_DBG3("nc_stream_read_cbuffer: Guess EOF\n");
@@ -230,8 +241,7 @@ int __FASTCALL__ nc_stream_seek_long(Stream *s,off_t pos)
   MSG_DBG3("nc_stream_seek_long to %llu\n",newpos);
   if(newpos==0 || newpos!=s->pos())
   {
-    if(!s->driver) { s->eof(1); return 0; }
-    s->pos(s->driver->seek(newpos));
+    s->pos(s->seek(newpos));
     if(errno) { MSG_WARN("nc_stream_seek(drv:%s) error: %s\n",s->driver_info->mrl,strerror(errno)); errno=0; }
   }
   MSG_DBG3("nc_stream_seek_long after: %llu\n",s->pos());
@@ -273,14 +283,6 @@ Stream* __FASTCALL__ new_memory_stream(const unsigned char* data,int len){
   s->pos(len);
   memcpy(s->buffer,data,len);
   return s;
-}
-
-Stream* __FASTCALL__ new_ds_stream(Demuxer_Stream *ds) {
-    Stream* s = new(zeromem) Stream(Stream::Type_DS);
-    s->driver=ds->demuxer->stream->driver;
-    s->priv = ds;
-    check_pin("stream",ds->pin,DS_PIN);
-    return s;
 }
 
 int __FASTCALL__ nc_stream_read_char(Stream *s)
@@ -411,7 +413,4 @@ int __FASTCALL__ nc_stream_skip(Stream *s,off_t len){
   return 1;
 }
 
-MPXP_Rc __FASTCALL__ nc_stream_control(const Stream *s,unsigned cmd,any_t*param) {
-    return s->driver->ctrl(cmd,param);
-}
 } //namespace mpxp

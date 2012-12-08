@@ -81,10 +81,10 @@ static Opaque* rawvideo_open(Demuxer* demuxer) {
   case 7: priv.width=1408;priv.height=1152;break;
   case 8: priv.width=352; priv.height=240; break;
   }
-  stream_control(demuxer->stream,SCTRL_VID_GET_WIDTH,&priv.width);
-  stream_control(demuxer->stream,SCTRL_VID_GET_HEIGHT,&priv.height);
-  stream_control(demuxer->stream,SCTRL_VID_GET_FORMAT,&priv.format);
-  stream_control(demuxer->stream,SCTRL_VID_GET_FPS,&priv.fps);
+  demuxer->stream->ctrl(SCTRL_VID_GET_WIDTH,&priv.width);
+  demuxer->stream->ctrl(SCTRL_VID_GET_HEIGHT,&priv.height);
+  demuxer->stream->ctrl(SCTRL_VID_GET_FORMAT,&priv.format);
+  demuxer->stream->ctrl(SCTRL_VID_GET_FPS,&priv.fps);
 
   if(!priv.width || !priv.height){
       MSG_ERR("rawvideo: width or height not specified!\n");

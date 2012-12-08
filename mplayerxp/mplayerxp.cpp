@@ -793,7 +793,7 @@ void mpxp_resync_audio_stream(void)
 
 static void __FASTCALL__ mpxp_stream_event_handler(Stream *s,const stream_packet_t *sp)
 {
-    stream_control(s,SCRTL_EVT_HANDLE,(any_t*)sp);
+    s->ctrl(SCRTL_EVT_HANDLE,(any_t*)sp);
 }
 
 static void init_benchmark(void)
@@ -1007,7 +1007,7 @@ void MPXPSystem::init_dvd_nls() const {
     if(mp_conf.audio_lang) {
 	lang=new char [std::max(strlen(mp_conf.audio_lang)+1,size_t(4))];
 	strcpy(lang,mp_conf.audio_lang);
-	if(mp_conf.audio_id==-1 && stream_control(stream,SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
+	if(mp_conf.audio_id==-1 && stream->ctrl(SCTRL_LNG_GET_AID,lang)==MPXP_Ok) {
 	    mp_conf.audio_id=*(int *)lang;
 	}
 	delete lang;
@@ -1015,7 +1015,7 @@ void MPXPSystem::init_dvd_nls() const {
     if(mp_conf.dvdsub_lang) {
 	lang=new char [std::max(strlen(mp_conf.dvdsub_lang)+1,size_t(4))];
 	strcpy(lang,mp_conf.dvdsub_lang);
-	if(mp_conf.dvdsub_id==-1 && stream_control(stream,SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
+	if(mp_conf.dvdsub_id==-1 && stream->ctrl(SCTRL_LNG_GET_SID,lang)==MPXP_Ok) {
 	    mp_conf.dvdsub_id=*(int *)lang;
 	}
 	delete lang;
@@ -1089,7 +1089,7 @@ void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int st
     if (mpxp_context().video().output->spudec==NULL) {
 	unsigned *pal;
 	MP_UNIT("spudec_init");
-	if(stream_control(stream,SCTRL_VID_GET_PALETTE,&pal)==MPXP_Ok)
+	if(stream->ctrl(SCTRL_VID_GET_PALETTE,&pal)==MPXP_Ok)
 	    mpxp_context().video().output->spudec=spudec_new_scaled(pal,sh_video->src_w, sh_video->src_h);
     }
 
@@ -1351,7 +1351,7 @@ void MPXPSystem::print_audio_status() const {
 
 #ifdef USE_OSD
 int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
-    const Stream* stream=_demuxer->stream;
+    Stream* stream=_demuxer->stream;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int rc=0;
@@ -1365,7 +1365,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
     }
     if(osd_function==OSD_DVDMENU) {
 	rect_highlight_t hl;
-	if(stream_control(stream,SCTRL_VID_GET_HILIGHT,&hl)==MPXP_Ok) {
+	if(stream->ctrl(SCTRL_VID_GET_HILIGHT,&hl)==MPXP_Ok) {
 	    osd_set_nav_box (hl.sx, hl.sy, hl.ex, hl.ey);
 	    MSG_V("Set nav box: %i %i %i %i\n",hl.sx, hl.sy, hl.ex, hl.ey);
 	    vo_osd_changed (OSDTYPE_DVDNAV);
@@ -1603,10 +1603,10 @@ For future:
 		else			cmd->id=MP_CMD_TV_STEP_CHANNEL_DOWN;
 	    case MP_CMD_TV_STEP_NORM:
 	    case MP_CMD_TV_STEP_CHANNEL_LIST:
-		stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->id);
+		stream->ctrl(SCRTL_MPXP_CMD,(any_t*)cmd->id);
 		break;
 	    case MP_CMD_DVDNAV:
-		if(stream_control(stream,SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
+		if(stream->ctrl(SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
 		    if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
 			    stream->type(Stream::Type_Menu);
 			    state->need_repaint=1;

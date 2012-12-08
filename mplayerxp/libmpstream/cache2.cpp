@@ -112,9 +112,9 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 	MSG_DBG2("Out of boundaries... seeking to %lli {in_cache(%i) %lli<%lli>%lli} \n"
 	,new_start,in_cache,START_FILEPOS(c),readpos,END_FILEPOS(c));
 	if(c->stream->eof() || c->eof) c->stream->reset();
-	c->stream->driver->seek(new_start);
+	c->stream->seek(new_start);
 	if(errno) { MSG_WARN("c2_seek(drv:%s) error: %s\n",c->stream->driver_info->mrl,strerror(errno)); errno=0; }
-	if((c->packets[c->first].filepos=c->stream->driver->tell())<0) seek_eof=1;
+	if((c->packets[c->first].filepos=c->stream->tell())<0) seek_eof=1;
 	c->last=c->first;
 	if(c->packets[c->first].filepos < new_start-(off_t)c->stream->sector_size())
 	    MSG_WARN("CACHE2: found wrong offset after seeking %lli (wanted: %lli)\n",c->packets[c->first].filepos,new_start);
@@ -144,8 +144,8 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
   {
     CACHE2_PACKET_TLOCK(cidx);
     c->packets[cidx].sp.len=c->sector_size;
-    c->packets[cidx].filepos = c->stream->driver->tell();
-    c->stream->driver->read(&c->packets[cidx].sp);
+    c->packets[cidx].filepos = c->stream->tell();
+    c->stream->read(&c->packets[cidx].sp);
     MSG_DBG2("CACHE2: read_packet at %lli (wanted %u got %u type %i)",c->packets[cidx].filepos,c->sector_size,c->packets[cidx].sp.len,c->packets[cidx].sp.type);
     if(mp_conf.verbose>1)
 	if(c->packets[cidx].sp.len>8) {
@@ -154,7 +154,7 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 		MSG_DBG2("%02X ",(int)(unsigned char)c->packets[cidx].sp.buf[i]);
 	}
     MSG_DBG2("\n");
-    if(stream_control(c->stream,SCTRL_EOF,NULL)==MPXP_Ok) legacy_eof=1;
+    if(c->stream->ctrl(SCTRL_EOF,NULL)==MPXP_Ok) legacy_eof=1;
     else	legacy_eof=0;
     if(c->packets[cidx].sp.len < 0 || (c->packets[cidx].sp.len == 0 && c->packets[cidx].sp.type == 0) || legacy_eof || seek_eof) {
 	/* EOF */
@@ -354,7 +354,7 @@ static void __FASTCALL__ c2_stream_reset(cache_vars_t* c)
 	do{ c->packets[cidx].state|=CPF_EMPTY; cidx=CP_NEXT(c,cidx); }while(cidx!=c->first);
 	c->last=c->first;
 	c->read_filepos=c->stream->start_pos();
-	c->stream->driver->seek(c->read_filepos);
+	c->stream->seek(c->read_filepos);
     }
 }
 
@@ -617,11 +617,6 @@ int __FASTCALL__ stream_skip(Stream *s,off_t len)
 {
     if(s->cache_data)	return c2_stream_skip(s->cache_data,len);
     else		return nc_stream_skip(s,len);
-}
-
-MPXP_Rc __FASTCALL__ stream_control(const Stream *s,unsigned cmd,any_t*param)
-{
-    return nc_stream_control(s,cmd,param);
 }
 
 void __FASTCALL__ stream_reset(Stream *s)

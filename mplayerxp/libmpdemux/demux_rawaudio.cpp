@@ -48,10 +48,10 @@ static Opaque* rawaudio_open(Demuxer* demuxer) {
   sh_audio_t* sh_audio;
   WAVEFORMATEX* w;
 
-  stream_control(demuxer->stream,SCTRL_AUD_GET_CHANNELS,&channels);
-  stream_control(demuxer->stream,SCTRL_AUD_GET_SAMPLERATE,&samplerate);
-  stream_control(demuxer->stream,SCTRL_AUD_GET_SAMPLESIZE,&samplesize);
-  stream_control(demuxer->stream,SCTRL_AUD_GET_FORMAT,&wtag);
+  demuxer->stream->ctrl(SCTRL_AUD_GET_CHANNELS,&channels);
+  demuxer->stream->ctrl(SCTRL_AUD_GET_SAMPLERATE,&samplerate);
+  demuxer->stream->ctrl(SCTRL_AUD_GET_SAMPLESIZE,&samplesize);
+  demuxer->stream->ctrl(SCTRL_AUD_GET_FORMAT,&wtag);
   sh_audio = demuxer->new_sh_audio();
   sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
   w->wFormatTag = sh_audio->wtag = wtag;

@@ -39,7 +39,7 @@ namespace mpxp {
     };
 
     struct cache_vars_s;
-    struct Demuxer;
+    class Demuxer_Stream;
     class Stream_Interface;
     struct stream_interface_info_t;
     /** Stream description */
@@ -58,20 +58,27 @@ namespace mpxp {
 		Type_Menu	=0x00000100, /**< Stream contains DVD menu... */
 	    };
 	    Stream(type_e type=Stream::Type_Unknown);
+	    Stream(Demuxer_Stream* ds);
 	    virtual ~Stream();
 
-	    MPXP_Rc		open(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
-	    void		reset();
-	    void		type(type_e);/**< assign new propertie for the stream (see STREAMTYPE_ for detail) */
-	    type_e		type();		/**< properties of the stream (see STREAMTYPE_ for detail) */
-	    off_t		pos() const;	/**< SOF offset from begin of stream */
-	    void		pos(off_t);	/**< SOF offset from begin of stream */
-	    int			eof() const;	/**< indicates EOF */
-	    void		eof(int);	/**< set EOF */
-	    off_t		start_pos() const;	/**< real start of stream (without internet's headers) */
-	    off_t		end_pos() const;	/**< real end of stream (media may be not fully filled) */
-	    unsigned		sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
-	    float		stream_pts() const;	/**< PTS correction for idiotics DVD's discontinuities */
+	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	seek(off_t off);
+	    virtual off_t	tell() const;
+	    virtual void	close();
+	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
+
+	    virtual void	reset();
+	    virtual void	type(type_e);/**< assign new propertie for the stream (see STREAMTYPE_ for detail) */
+	    virtual type_e	type();		/**< properties of the stream (see STREAMTYPE_ for detail) */
+	    virtual off_t	pos() const;	/**< SOF offset from begin of stream */
+	    virtual void	pos(off_t);	/**< SOF offset from begin of stream */
+	    virtual int		eof() const;	/**< indicates EOF */
+	    virtual void	eof(int);	/**< set EOF */
+	    virtual off_t	start_pos() const;	/**< real start of stream (without internet's headers) */
+	    virtual off_t	end_pos() const;	/**< real end of stream (media may be not fully filled) */
+	    virtual unsigned	sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
+	    virtual float	stream_pts() const;	/**< PTS correction for idiotics DVD's discontinuities */
 
 	    char		antiviral_hole[RND_CHAR3];
 	    unsigned		pin;		/**< personal identification number */
@@ -79,19 +86,15 @@ namespace mpxp {
 	    unsigned int	buf_pos; /**< position whitin of small cache */
 	    unsigned int	buf_len; /**< length of small cache */
 	    unsigned char*	buffer;/**< buffer of small cache */
-	    Demuxer*		demuxer; /* parent demuxer */
 	    struct cache_vars_s*cache_data;	/**< large cache */
-	    Opaque*		priv;	/**< private data used by stream driver */
-#ifdef HAVE_STREAMING
-	    networking_t*	networking; /**< callback for internet networking control */
-#endif
-	    Stream_Interface *driver; /**< low-level stream driver */
 	    const stream_interface_info_t* driver_info;
 	    stream_callback	event_handler;  /**< callback for streams which provide events */
 	private:
-	    type_e	_type;
-	    off_t	_pos;		/**< SOF offset from begin of stream */
-	    int		_eof;		/**< indicates EOF */
+	    Stream_Interface*	driver; /**< low-level stream driver */
+	    Opaque*		priv;	/**< private data used by stream driver */
+	    type_e		_type;
+	    off_t		_pos;	/**< SOF offset from begin of stream */
+	    int			_eof;	/**< indicates EOF */
     };
     inline Stream::type_e operator~(Stream::type_e a) { return static_cast<Stream::type_e>(~static_cast<unsigned>(a)); }
     inline Stream::type_e operator|(Stream::type_e a, Stream::type_e b) { return static_cast<Stream::type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
@@ -113,8 +116,6 @@ namespace mpxp {
     extern int __FASTCALL__ nc_stream_seek(Stream *s,off_t pos);
     extern int __FASTCALL__ nc_stream_skip(Stream *s,off_t len);
 
-    extern MPXP_Rc __FASTCALL__ nc_stream_control(const Stream *s,unsigned cmd,any_t*param);
-
 /* this block describes interface to cache/non-cache stream functions */
     extern int __FASTCALL__ stream_read_char(Stream *s);
     extern int __FASTCALL__ stream_read(Stream *s,any_t* mem,int total);
@@ -123,7 +124,6 @@ namespace mpxp {
     extern int __FASTCALL__ stream_skip(Stream *s,off_t len);
     extern int __FASTCALL__ stream_eof(Stream *s);
     extern void __FASTCALL__ stream_set_eof(Stream *s,int eof);
-    extern MPXP_Rc __FASTCALL__ stream_control(const Stream *s,unsigned cmd,any_t*param);
 
     void __FASTCALL__ stream_reset(Stream *s);
     Stream* __FASTCALL__ new_memory_stream(const unsigned char* data,int len);
